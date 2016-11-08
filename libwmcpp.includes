@@ -1,0 +1,7 @@
+/usr/avr/include
+/usr/include/simavr
+include
+example
+.
+tests
+host
