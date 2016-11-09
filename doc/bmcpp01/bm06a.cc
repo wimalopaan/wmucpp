@@ -16,23 +16,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include <stdint.h>
 
-#include "config.h"
 
-#include <avr/io.h>
-#if __has_include(<avr/avr_mcu_section.h>)
-# include <avr/avr_mcu_section.h>
-#endif
+volatile uint8_t global = 3; //-
+volatile bool b = false;
+volatile bool c = false;
 
-class SimAVRDebugConsole final {
-public:
-    SimAVRDebugConsole() = delete;
-    template<uint16_t N>
-    static void init() {
-    }
-    static bool put(uint8_t item) {
-        GPIOR0 = item;
-        return true;
-    }
-};
+//[value
+bool foo(uint8_t x) {
+    global = x; //-
+    return b;
+}
+
+bool foo(uint8_t x, uint8_t y) {
+    global = x + y; //-
+    return b;
+}
+//]
+//[main
+int main()
+{
+    uint8_t a = 42;
+    uint8_t b = 43;
+
+    c = foo(a);
+    c = b && foo(a, b);
+
+    while(true);
+}
+//]

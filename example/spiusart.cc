@@ -24,7 +24,7 @@
 #include "mcu/avr/usart.h"
 #include "mcu/avr/swusart.h"
 #include "hal/event.h"
-#include "ports.h"
+#include "mcu/ports.h"
 #include "hal/softtimer.h"
 #include "std/literals.h"
 #include "mcu/avr/isr.h"

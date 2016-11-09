@@ -8,3 +8,4 @@ host
 test
 include/mcu/avr
 include/mcu
+doc/bmcpp01

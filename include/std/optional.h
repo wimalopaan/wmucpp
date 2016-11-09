@@ -35,6 +35,11 @@ public:
         mValue(value)
     {
     }
+    optional(const volatile T& value) :
+        mValid(true),
+        mValue(value)
+    {
+    }
     optional(T&& value) :
         mValid(true),
         mValue(std::move(value))

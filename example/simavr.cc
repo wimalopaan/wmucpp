@@ -46,7 +46,7 @@ namespace std {
     std::basic_ostream<terminal> cout;
     std::lineTerminator<CRLF> endl;
 }
-#include "simpletest.h"
+#include "test/simpletest.h"
 
 SIMPLETEST("a") {
     return true;

@@ -1,5 +1,5 @@
 /*
- * WMuCpp - Bare Metal C++ 
+ * WMuCpp - Bare Metal C++
  * Copyright (C) 2013, 2014, 2015, 2016 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,23 +16,41 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include <stdint.h>
+#include <stdbool.h>
 
-#include "config.h"
+volatile uint8_t global = 3;
+volatile uint8_t global2 = 0;
+volatile bool b = false;
 
-#include <avr/io.h>
-#if __has_include(<avr/avr_mcu_section.h>)
-# include <avr/avr_mcu_section.h>
-#endif
-
-class SimAVRDebugConsole final {
-public:
-    SimAVRDebugConsole() = delete;
-    template<uint16_t N>
-    static void init() {
-    }
-    static bool put(uint8_t item) {
-        GPIOR0 = item;
+//[pointer
+bool foo1(uint8_t* x) {
+    if (b) {
+        *x = global;
         return true;
     }
-};
+    return false;
+}
+bool foo2(uint16_t* x) {
+    if (b) {
+        *x = global * global;
+        return true;
+    }
+    return false;
+}
+//]
+//[main
+int main()
+{
+    uint8_t x = 0;
+    if (foo1(&x)) {
+        global2 = x;
+    }
+    uint16_t y = 0;
+    if (foo2(&y)) {
+        global2 = y;
+    }
+
+    while(true);
+}
+//]

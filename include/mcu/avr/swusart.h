@@ -113,7 +113,7 @@ public:
         SWUsartRxTx<N>::rx::template dir<AVR::Input>();
         SWUsartRxTx<N>::rx::on();
     }
-    static bool put(const uint8_t& item) {
+    static bool put(uint8_t item) {
         if (sendQueue.push_back(item)) {
             mcuInterrupts->timsk |= _BV(OCIE1A);
             return true;

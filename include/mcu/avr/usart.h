@@ -144,7 +144,7 @@ public:
             return {};
         }
     }
-    static bool put(const uint8_t& item) {
+    static bool put(uint8_t item) {
         if(sendQueue().push_back(item)) {
             getBaseAddr<typename MCU::Usart, N>()->ucsrb |= _BV(UDRIE0);
             return true;

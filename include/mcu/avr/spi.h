@@ -108,7 +108,7 @@ public:
         return getBaseAddr<typename MCU::Spi, N>()->spsr & _BV(SPIF);
     }
 
-    static bool put(const uint8_t& c) {
+    static bool put(uint8_t c) {
         if (getBaseAddr<typename MCU::Spi, N>()->spsr & _BV(SPIF)) {
             return false;
         }
