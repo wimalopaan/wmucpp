@@ -22,7 +22,6 @@
 # include <avr/io.h>
 #endif
 
-#include "config.h"
 #include "mcu/mcu.h"
 
 // todo: Vordefinierte Pins aus pin-defs.txt generieren

@@ -19,8 +19,6 @@
 #pragma once
 
 #include <stdint.h>
-#include "std/limits.h"
-#include "units/physical.h"
 
 #if __has_include(<avr/io.h>)
 # include <avr/io.h>
@@ -87,27 +85,27 @@ typedef AVR::ATMegaNone DefaultMcuType;
 #endif
 
 
-namespace AVR {
-namespace Util {
+//namespace AVR {
+//namespace Util {
 
-template<typename T>
-struct TimerSetupData final {
-    const uint16_t prescaler;
-    const T ocr;
-};
+//template<typename T>
+//struct TimerSetupData final {
+//    const uint16_t prescaler;
+//    const T ocr;
+//};
 
-template<typename MCUTimer, typename T>
-constexpr TimerSetupData<T> calculate(const std::hertz& ftimer) {
-    using pRow = typename MCUTimer::mcu_timer_type::template PrescalerRow<MCUTimer::number>;
-    for(const auto& p : pRow::values) {
-        const auto tv = (Config::fMcu / ftimer) / p;
-        if (tv < std::numerical_limits<T>::max()) {
-            return {p, static_cast<T>(tv)};
-        }
-    }
-    return {0, 0};
-}
+//template<typename MCUTimer, typename T>
+//constexpr TimerSetupData<T> calculate(const std::hertz& ftimer) {
+//    using pRow = typename MCUTimer::mcu_timer_type::template PrescalerRow<MCUTimer::number>;
+//    for(const auto& p : pRow::values) {
+//        const auto tv = (Config::fMcu / ftimer) / p;
+//        if (tv < std::numerical_limits<T>::max()) {
+//            return {p, static_cast<T>(tv)};
+//        }
+//    }
+//    return {0, 0};
+//}
 
-}
-}
+//}
+//}
 
