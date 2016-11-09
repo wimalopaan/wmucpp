@@ -16,25 +16,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
-#include "std/types.h"
+#pragma once
 
-volatile bool b = true;
+#include "config.h"
+#include "units/duration.h"
 
-std::optional<uint7_t> foo() {
-    if (b) {
-        return uint7_t{(uint8_t)random()};
-    }
-    else {
-        return {};
-    }
+namespace Util {
+
+#if !defined(__HAS_DELAY_CYCLES) || !defined(__OPTIMIZE__)
+//# error "No builtin_avr_delay_cycles()"
+#endif
+
+__inline__ void delay(const std::microseconds&) __attribute__((__always_inline__));
+__inline__ void delay(const std::milliseconds&) __attribute__((__always_inline__));
+
+void delay(const std::microseconds& d) {
+    __builtin_avr_delay_cycles(((F_CPU) / 1e6) * d.value);
 }
 
-int main()
-{
-    if(auto x = foo()) {
-        uint8_t y = *x;
-    }
+void delay(const std::milliseconds& d) {
+    __builtin_avr_delay_cycles(((F_CPU) / 1e3) * d.value);
+}
 
-    return 0;
 }

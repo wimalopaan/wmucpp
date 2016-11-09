@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "disable.h"
+#include "util/disable.h"
 
 #define USE_C
 

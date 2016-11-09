@@ -16,25 +16,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
-#include "std/types.h"
+#pragma once
 
-volatile bool b = true;
+#include "mcu/ports.h"
 
-std::optional<uint7_t> foo() {
-    if (b) {
-        return uint7_t{(uint8_t)random()};
+template<typename Pin>
+class DCF77 final  {
+public:
+    static void init() {
+        Pin::template dir<AVR::Input>();
+        Pin::pullup();
     }
-    else {
-        return {};
-    }
-}
+    static void periodic() {
 
-int main()
-{
-    if(auto x = foo()) {
-        uint8_t y = *x;
     }
-
-    return 0;
-}
+private:
+};

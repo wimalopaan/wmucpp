@@ -16,25 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
-#include "std/types.h"
+#include <stdint.h>
 
-volatile bool b = true;
+volatile uint8_t x = 42;
 
-std::optional<uint7_t> foo() {
-    if (b) {
-        return uint7_t{(uint8_t)random()};
-    }
-    else {
-        return {};
-    }
+void foo() {
+    x += 1;
 }
 
-int main()
-{
-    if(auto x = foo()) {
-        uint8_t y = *x;
-    }
-
-    return 0;
+int main() {
+    foo();
 }

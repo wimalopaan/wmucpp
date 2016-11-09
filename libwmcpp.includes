@@ -5,3 +5,6 @@ example
 .
 tests
 host
+test
+include/mcu/avr
+include/mcu

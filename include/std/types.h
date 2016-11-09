@@ -16,25 +16,37 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
-#include "std/types.h"
+#pragma once
 
-volatile bool b = true;
+#include <stdint.h>
+#include "std/optional.h"
 
-std::optional<uint7_t> foo() {
-    if (b) {
-        return uint7_t{(uint8_t)random()};
+struct uint7_t final {
+    uint7_t(uint8_t v) : value(v) {}
+    uint8_t pad : 1, value : 7;
+    operator uint8_t() const {
+        return value;
     }
-    else {
-        return {};
-    }
-}
+};
 
-int main()
-{
-    if(auto x = foo()) {
-        uint8_t y = *x;
-    }
+namespace std {
 
-    return 0;
+template<>
+class optional<uint7_t> {
+public:
+    optional() = default;
+    optional(const uint7_t& value) : data{(uint8_t)((value.value & 0x7f) | 0x80)} {}
+    explicit operator bool() const {
+        return data & 0x80;
+    }
+    explicit operator bool() {
+        return data & 0x80;
+    }
+    uint7_t operator*() const {
+        return uint7_t{(uint8_t)(data & 0x7f)};
+    }
+private:
+    uint8_t data{0};
+};
+
 }

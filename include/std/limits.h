@@ -16,25 +16,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
+#pragma once
+
+#include <stdint.h>
 #include "std/types.h"
 
-volatile bool b = true;
+namespace std {
 
-std::optional<uint7_t> foo() {
-    if (b) {
-        return uint7_t{(uint8_t)random()};
-    }
-    else {
-        return {};
-    }
-}
+template<typename T>
+struct numerical_limits;
 
-int main()
-{
-    if(auto x = foo()) {
-        uint8_t y = *x;
-    }
+template<>
+struct numerical_limits<uint8_t> {
+    static constexpr uint8_t max() {return UINT8_MAX;}
+    static constexpr uint8_t min() {return 0;}
+};
 
-    return 0;
+template<>
+struct numerical_limits<uint16_t> {
+    static constexpr uint16_t max() {return UINT16_MAX;}
+    static constexpr uint16_t min() {return 0;}
+};
+
+template<>
+struct numerical_limits<uint7_t> {
+    static constexpr uint8_t max() {return 127;}
+    static constexpr uint8_t min() {return 0;}
+};
+
 }

@@ -1,7 +1,5 @@
 
-all: example host
-
-clean: example host
+all: example host test
 
 .PHONY: test example clean host
 

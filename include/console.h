@@ -19,8 +19,8 @@
 #pragma once
 
 #include "config.h"
-#include "util.h"
-#include "pgmstring.h"
+#include "util/util.h"
+#include "container/pgmstring.h"
 
 namespace std {
 
