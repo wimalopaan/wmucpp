@@ -1,4 +1,4 @@
-targets = test01
+targets = test01 test02
 
 all: $(targets)
 

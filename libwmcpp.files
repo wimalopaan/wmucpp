@@ -126,3 +126,15 @@ doc/bmcpp03/bm04a.cc
 doc/bmcpp03/bm04b.c
 doc/bmcpp03/bm05a.cc
 doc/bmcpp03/bm05b.c
+doc/bmcpp03/bm06a.cc
+include/std/initializer_list.h
+host/test02.cc
+doc/bmcpp03/bm06b.c
+doc/bmcpp04/bm01a.cc
+doc/bmcpp04/bm01b.c
+doc/bmcpp04/Makefile
+doc/bmcpp04/bm02a.cc
+doc/bmcpp04/bm02b.c
+doc/bmcpp04/simavrconsole.c
+doc/bmcpp04/bm03a.cc
+doc/bmcpp04/bm03b.c

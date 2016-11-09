@@ -12,3 +12,5 @@ doc/bmcpp01
 doc/bmcpp02
 doc/bmcpp03
 doc
+include/std
+doc/bmcpp04

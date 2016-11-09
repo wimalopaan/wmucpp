@@ -6,12 +6,19 @@ all: bm01b.s bm01b.elf bm01b.size
 all: bm02a.s bm02a.elf bm02a.size
 all: bm02b.s bm02b.elf bm02b.size
 all: bm03a.s bm03a.elf bm03a.size
-all: bm04a.s bm04a.elf bm04a.size
-all: bm04b.s bm04b.elf bm04b.size
-all: bm05a.s bm05a.elf bm05a.size
-all: bm05b.s bm05b.elf bm05b.size
-all: bm06a.s bm06a.elf bm06a.size
-all: bm06b.s bm06b.elf bm06b.size
+all: bm03b.s bm03b.elf bm03b.size
+#all: bm04a.s bm04a.elf bm04a.size
+#all: bm04b.s bm04b.elf bm04b.size
+#all: bm05a.s bm05a.elf bm05a.size
+#all: bm05b.s bm05b.elf bm05b.size
+#all: bm06a.s bm06a.elf bm06a.size
+#all: bm06b.s bm06b.elf bm06b.size
+
+bm02a.elf: bm02a.o simavrconsole.o
+	$(CC) $(LDFLAGS) -o $@ bm02a.o simavrconsole.o
+
+bm02b.elf: bm02b.o simavrconsole.o
+	$(CC) $(LDFLAGS) -o $@ bm02b.o simavrconsole.o
 
 CCSRC = $(wildcard *.cc)
 CCOBJ = $(patsubst %.cc, %.o, $(CCSRC))
@@ -66,6 +73,7 @@ CFLAGS += $(MCUFLAGS)
 ASMFLAGS +=  -Wa,-adhln
 
 LDFLAGS = $(MCUFLAGS) -Wl,-Map=main.map,--cref
+LDFLAGS += "-Wl,--section-start=.mmcu=0x910000"
 
 AVRDUDE_PROGRAMMER = avrisp2
 AVRDUDE_PORT = usb

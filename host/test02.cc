@@ -16,21 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include <array>
 
-#include <avr/io.h>
-#if __has_include(<avr/avr_mcu_section.h>)
-# include <avr/avr_mcu_section.h>
-#endif
-
-class SimAVRDebugConsole final {
-public:
-    SimAVRDebugConsole() = delete;
-    template<uint16_t N>
-    static void init() {
-    }
-    static bool put(uint8_t item) {
-        GPIOR0 = item;
-        return true;
-    }
-};
+int main()
+{
+    std::array<int, 3> a = {1, 2, 3};
+}

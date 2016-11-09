@@ -1,6 +1,6 @@
 /*
- * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * ++C - C++ introduction
+ * Copyright (C) 2013, 2014, 2015, 2016 Wilhelm Meier <wilhelm.meier@hs-kl.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,22 +15,33 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <stdint.h>
+#include <stdbool.h>
 
-#pragma once
+volatile uint8_t a = 0;
+volatile uint8_t b = 0;
 
-#include <avr/io.h>
-#if __has_include(<avr/avr_mcu_section.h>)
-# include <avr/avr_mcu_section.h>
-#endif
+volatile uint8_t x = 1;
 
-class SimAVRDebugConsole final {
-public:
-    SimAVRDebugConsole() = delete;
-    template<uint16_t N>
-    static void init() {
+void initB() {
+    a = 1;
+}
+
+void initA() {
+    b = 2;
+}
+
+int main()
+{
+    const uint8_t a = 1;
+    const uint8_t b = 1;
+
+    if (x == a) {
+        initA();
     }
-    static bool put(uint8_t item) {
-        GPIOR0 = item;
-        return true;
+    if (x == b) {
+        initB();
     }
-};
+
+    while(true);
+}

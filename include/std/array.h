@@ -20,6 +20,7 @@
 
 #include <stdint.h>
 #include "util/dassert.h"
+#include "std/initializer_list.h"
 
 namespace std {
 
@@ -27,6 +28,13 @@ template<typename T, uint8_t Size>
 struct array final
 {
     typedef T type;
+
+    constexpr array() = default;
+
+    template<typename... TT>
+    constexpr array(TT&&... pp) : data{pp...}{
+    }
+
     constexpr const T* begin() const {
         return &data[0];
     }
