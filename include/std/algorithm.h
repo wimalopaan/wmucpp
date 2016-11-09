@@ -19,11 +19,17 @@
 #pragma once
 
 #include <stdint.h>
+#include <stddef.h>
 
 namespace std {
 
 template<typename C>
 constexpr auto begin(const C& c) -> decltype(c.begin()) {
+    return c.begin();
+}
+
+template<typename C>
+constexpr auto begin(C& c) -> decltype(c.begin()) {
     return c.begin();
 }
 
@@ -39,6 +45,11 @@ constexpr T* end( T (&array)[N]) {
 
 template<typename C>
 constexpr auto end(const C& c) -> decltype(c.end()) {
+    return c.end();
+}
+
+template<typename C>
+constexpr auto end(C& c) -> decltype(c.end()) {
     return c.end();
 }
 

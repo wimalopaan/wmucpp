@@ -16,13 +16,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "std/array.h"
 
-#ifndef NDEBUG
-# define assert(x) assertFunction(x, __PRETTY_FUNCTION__, __FILE__, __LINE__)
-void assertFunction(bool b, const char* function, const char* file, unsigned int line);
-#else
+volatile uint8_t global = 0;
 
-#define assert(x)
+int main()
+{
+    std::array<uint8_t, 10> a;
 
-#endif
+    for(uint8_t i = 0; i < sizeof(a); ++i) {
+        a[i] = global;
+    }
+    while(true);
+}

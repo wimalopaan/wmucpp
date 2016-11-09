@@ -33,7 +33,7 @@ struct array final
     constexpr const T* end() const {
         return &data[Size];
     }
-    constexpr T* begin(){
+    constexpr T* begin() {
         return &data[0];
     }
     constexpr T* end() {

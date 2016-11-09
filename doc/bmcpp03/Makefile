@@ -3,6 +3,13 @@ F_OSC = 20000000
 
 all: bm01a.s bm01a.elf bm01a.size
 all: bm01b.s bm01b.elf bm01b.size
+all: bm02a.s bm02a.elf bm02a.size
+all: bm02b.s bm02b.elf bm02b.size
+all: bm03a.s bm03a.elf bm03a.size
+all: bm04a.s bm04a.elf bm04a.size
+all: bm04b.s bm04b.elf bm04b.size
+all: bm05a.s bm05a.elf bm05a.size
+all: bm05b.s bm05b.elf bm05b.size
 
 CCSRC = $(wildcard *.cc)
 CCOBJ = $(patsubst %.cc, %.o, $(CCSRC))

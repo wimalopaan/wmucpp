@@ -10,3 +10,5 @@ include/mcu/avr
 include/mcu
 doc/bmcpp01
 doc/bmcpp02
+doc/bmcpp03
+doc

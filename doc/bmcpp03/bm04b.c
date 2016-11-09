@@ -16,13 +16,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include <stdint.h>
+#include <stdbool.h>
 
-#ifndef NDEBUG
-# define assert(x) assertFunction(x, __PRETTY_FUNCTION__, __FILE__, __LINE__)
-void assertFunction(bool b, const char* function, const char* file, unsigned int line);
-#else
+volatile uint8_t global = 0;
 
-#define assert(x)
+void foo(const uint8_t* a, uint8_t size) {
+    for(const uint8_t* p = a; p != a + size; ++p) {
+        global += *p;
+    }
+}
 
-#endif
+int main()
+{
+    uint8_t a[10] = {};
+
+    foo(a, sizeof(a));
+
+    while(true);
+}
