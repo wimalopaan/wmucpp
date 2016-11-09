@@ -111,3 +111,5 @@ include/pin-defs.h
 test/test.cc
 test/test00.cc
 tests/algorithm.c
+Makefile
+Makefile.include

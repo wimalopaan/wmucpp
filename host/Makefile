@@ -1,48 +1,30 @@
+# -*- mode: makefile-gmake; -*-
+# $Id: Makefile.include 1209 2016-07-01 07:53:57Z wimalopaan $
+#
+# ++C - C++ introduction
+# Copyright (C) 2013, 2014, 2015, 2016 Wilhelm Meier <wilhelm.meier@hs-kl.de>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 targets = test01 test02
 
-all: $(targets)
-
-CCSRC = $(wildcard *.cc)
-CCOBJ = $(patsubst %.cc, %.o, $(CCSRC))
-CCDEP = $(patsubst %.cc, %.d, $(CCSRC))
-
-CSRC = $(wildcard *.c)
-COBJ = $(patsubst %.c, %.o, $(CSRC))
-CDEP = $(patsubst %.c, %.d, $(CSRC))
-
-SRC += $(CCSRC) 
-SRC += $(CSRC) 
-
-OBJ += $(CCOBJ)
-OBJ += $(COBJ)
-
-DEP += $(CCDEP)
-DEP += $(CDEP)
+-include ../Makefile.include
 
 CXX = clang++
-
-STDFLAGS += -std=c++1z
-CXXFLAGS += -I../include
-CXXFLAGS += -g -Wall -Wextra -Wconversion 
-
-%.d: %.cc
-	$(CXX) -MM -MG $(CXXFLAGS) $< | sed 's/$*\.o/& $@ $<.extract/g' > $@
-
-%.o: %.cc
-	$(COMPILE.cc) $(STDFLAGS) $(OUTPUT_OPTION) $(shell pwd)/$<
-
-#%: %.cc
-#	$(COMPILE.cc) $(STDFLAGS) $(OUTPUT_OPTION) $(shell pwd)/$<
-
-%: %.cc
-	$(CXX) $(CXXFLAGS) $(STDFLAGS) $(OUTPUT_OPTION) $(shell pwd)/$<
-
-clean:
-	$(RM) $(OBJ)
-	$(RM) $(DEP)
-	$(RM) $(targets)
-	$(RM) *.hex
-	$(RM) *.elf
-	$(RM) *.map
-	$(RM) *.lss
-	$(RM) *.eep
+CC = g++
+LDFLAGS =
+CXXFLAGS = -g -std=c++1z
+CXXFLAGS += -Wall -Wextra
+MCUFLAGS =
