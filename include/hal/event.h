@@ -21,7 +21,7 @@
 #include <stdint.h>
 
 #include "config.h"
-#include "mcu/mcu.h"
+#include "mcu/avr8.h"
 #include "util/bits.h"
 #include "mcu/avr/mcutimer.h"
 #include "container/fifo.h"

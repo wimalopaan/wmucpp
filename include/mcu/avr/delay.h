@@ -23,13 +23,16 @@
 
 namespace Util {
 
-#if !defined(__HAS_DELAY_CYCLES) || !defined(__OPTIMIZE__)
-//# error "No builtin_avr_delay_cycles()"
+#if !defined(__BUILTIN_AVR_DELAY_CYCLES) || !defined(__OPTIMIZE__)
+# ifndef __GLIBCXX__
+#  error "No builtin_avr_delay_cycles()"
+# endif
 #endif
 
 __inline__ void delay(const std::microseconds&) __attribute__((__always_inline__));
 __inline__ void delay(const std::milliseconds&) __attribute__((__always_inline__));
 
+#ifdef __AVR__
 void delay(const std::microseconds& d) {
     __builtin_avr_delay_cycles(((F_CPU) / 1e6) * d.value);
 }
@@ -37,5 +40,6 @@ void delay(const std::microseconds& d) {
 void delay(const std::milliseconds& d) {
     __builtin_avr_delay_cycles(((F_CPU) / 1e3) * d.value);
 }
+#endif
 
 }

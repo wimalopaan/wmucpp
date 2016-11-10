@@ -37,9 +37,9 @@ constexpr uint16_t calculatePwm() {
 }
 
 template<typename MCUTimer>
-class SoftPWMBase {
+class SoftPPMBase {
 public:
-    SoftPWMBase() = delete;
+    SoftPPMBase() = delete;
     static constexpr auto mcuTimer = MCUTimer::mcuTimer;
     static constexpr auto mcuInterrupts = MCUTimer::mcuInterrupts;
     static constexpr uint16_t prescaler = calculatePwm<MCUTimer, uint16_t>();
@@ -58,18 +58,18 @@ public:
     }
 };
 template<typename MCUTimer>
-constexpr std::hertz SoftPWMBase<MCUTimer>::timerFrequency;
+constexpr std::hertz SoftPPMBase<MCUTimer>::timerFrequency;
 
 template<typename MCUTimer, typename... Pins>
-class SoftPWM : public SoftPWMBase<MCUTimer> {
+class SoftPPM : public SoftPPMBase<MCUTimer> {
 public:
-    SoftPWM() = delete;
+    SoftPPM() = delete;
     static constexpr const uint8_t numberOfChannels = sizeof...(Pins);
 
-    using SoftPWMBase<MCUTimer>::timerInit;
-    using SoftPWMBase<MCUTimer>::ocMin;
-    using SoftPWMBase<MCUTimer>::ocMax;
-    using SoftPWMBase<MCUTimer>::mcuTimer;
+    using SoftPPMBase<MCUTimer>::timerInit;
+    using SoftPPMBase<MCUTimer>::ocMin;
+    using SoftPPMBase<MCUTimer>::ocMax;
+    using SoftPPMBase<MCUTimer>::mcuTimer;
 
     static void init() {
         (Pins::low(), ...);
@@ -132,10 +132,10 @@ private:
     static uint16_t ocrbValues[numberOfChannels];
 };
 template<typename MCUTimer, typename... Pins>
-uint8_t SoftPWM<MCUTimer, Pins...>::actual = 0;
+uint8_t SoftPPM<MCUTimer, Pins...>::actual = 0;
 
 template<typename MCUTimer, typename... Pins>
-uint16_t SoftPWM<MCUTimer, Pins...>::ocrbValues[SoftPWM<MCUTimer, Pins...>::numberOfChannels] = {};
+uint16_t SoftPPM<MCUTimer, Pins...>::ocrbValues[SoftPPM<MCUTimer, Pins...>::numberOfChannels] = {};
 
 
 

@@ -21,7 +21,7 @@
 #include <stdint.h>
 
 #include "config.h"
-#include "mcu/mcu.h"
+#include "mcu/avr8.h"
 #include "mcu/avr/isr.h"
 #include "container/fifo.h"
 #include "hal/event.h"

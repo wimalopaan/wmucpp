@@ -19,7 +19,7 @@
 #pragma once
 
 #include "config.h"
-#include "mcu/mcu.h"
+#include "mcu/avr8.h"
 #include "mcu/ports.h"
 
 namespace AVR {

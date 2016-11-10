@@ -22,7 +22,7 @@
 # include <avr/io.h>
 #endif
 
-#include "mcu/mcu.h"
+#include "mcu/avr8.h"
 
 // todo: Vordefinierte Pins aus pin-defs.txt generieren
 // todo: mit __has_include inkludieren
@@ -31,11 +31,17 @@ namespace AVR {
 
 struct Output final {
     Output() = delete;
-    static constexpr bool value = true;
+    template<typename Port, uint8_t mask>
+    static void set() {
+        Port::dir() |= mask;
+    }
 };
 struct Input final {
     Input() = delete;
-    static constexpr bool value = false;
+    template<typename Port, uint8_t mask>
+    static void set() {
+        Port::dir() |= mask;
+    }
 };
 
 template<typename MCUPort, typename Name>
@@ -45,6 +51,10 @@ struct Port final {
     Port() = delete;
     static void set(uint8_t v) {
         getBaseAddr<MCUPort, Name>()->out = v;
+    }
+    template<uint8_t V>
+    static void set() {
+        getBaseAddr<MCUPort, Name>()->out = V;
     }
     static volatile uint8_t& get() {
         return getBaseAddr<MCUPort, Name>()->out;
@@ -84,12 +94,7 @@ struct Pin final {
     }
     template<typename Dir>
     static void dir() {
-        if (Dir::value) {
-            Port::dir() |= pinMask;
-        }
-        else {
-            Port::dir() &= ~pinMask;
-        }
+        Dir::template set<Port, pinMask>();
     }
     static bool read() {
         return Port::read() & pinMask;
@@ -110,16 +115,5 @@ struct NoPin final {
     static void dir() {}
     static bool read() {return false;}
 };
-
-
-template<bool Bool, typename P>
-void set(P){
-    if(Bool == true) {
-        getBaseAddr<typename P::mcuport_type, typename P::name_type>()->out = 0xff;;
-    }
-    else {
-        getBaseAddr<typename P::mcuport_type, typename P::name_type>()->out = 0x00;;
-    }
-}
 
 }

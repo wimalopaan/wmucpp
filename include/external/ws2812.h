@@ -21,7 +21,7 @@
 #include <util/delay.h>
 
 #include "config.h"
-#include "mcu/mcu.h"
+#include "mcu/avr8.h"
 #include "mcu/ports.h"
 
 struct cRGB {

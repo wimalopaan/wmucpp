@@ -19,6 +19,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stddef.h>
 
 #include "container/pgmstring.h"
 

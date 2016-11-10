@@ -21,7 +21,7 @@
 #include <stdint.h>
 
 #include "config.h"
-#include "mcu/mcu.h"
+#include "mcu/avr8.h"
 #include "mcu/avr/isr.h"
 #include "container/fifo.h"
 #include "hal/event.h"
@@ -93,6 +93,9 @@ class Spi final : public SpiBase<Spi<N, MCU>> {
 
     using spiPort = SpiPort<N, MCU>;
 public:
+    typedef MCU mcu_type;
+    static constexpr const uint8_t number = N;
+
     Spi() = delete;
 
     template<typename Mode>

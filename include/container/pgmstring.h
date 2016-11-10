@@ -22,10 +22,15 @@
 # include <avr/pgmspace.h>
 #endif
 
+#ifndef __AVR__
+# undef PROGMEM
+# define PROGMEM
+#endif
+
 // this is a g++ / clang++ extension
 
 template<typename C, C... CC>
-class PgmString;
+struct PgmString;
 
 template<typename C, C... CC>
 constexpr PgmString<C, CC...> operator"" _pgm();
@@ -36,7 +41,7 @@ struct  PgmStringView {
 
 template<typename C, C... CC>
 struct PgmString final {
-    friend class PgmStringView;
+    friend struct PgmStringView;
     friend PgmString<C, CC...> operator"" _pgm<>();
     template<typename Stream, typename C1, C1... CC1> friend Stream& operator<<(Stream& out, const PgmString<C1, CC1...>& s);
     template<uint8_t, typename, char> friend class StringBuffer;

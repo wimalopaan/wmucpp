@@ -81,7 +81,7 @@ include/mcu/avr/ppm.h
 include/mcu/avr/spi.h
 include/mcu/avr/swusart.h
 include/mcu/avr/usart.h
-include/mcu/mcu.h
+include/mcu/avr8.h
 include/mcu/ports.h
 include/simavr/simavrdebugconsole.h
 include/std/algorithm.h
@@ -108,8 +108,12 @@ include/util/util.h
 include/config.h
 include/console.h
 include/pin-defs.h
-test/test.cc
-test/test00.cc
-tests/algorithm.c
+test/simavr.cc
+tests/algorithm.h
 Makefile
 Makefile.include
+tests/percent.h
+test/Makefile
+test/host.cc
+doc/bmcpp04/Makefile
+test/simavrconsole.c

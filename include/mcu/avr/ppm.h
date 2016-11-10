@@ -19,7 +19,7 @@
 #pragma once
 
 #include "config.h"
-#include "mcu/mcu.h"
+#include "mcu/avr8.h"
 #include "units/physical.h"
 
 // todo: generalisieren als PinChangeDecoder, auch fuer mehrere Pins je Port, die sich ändern
@@ -49,7 +49,7 @@ public:
     PpmDecoder() = delete;
 
     typedef typename PinChange::pin_type pin_type;
-    typedef MCUTimer mcutimer_type;
+    typedef MCUTimer mcu_timer_type;
 
     static constexpr auto mcuTimer = MCUTimer::mcuTimer;
     static constexpr uint16_t prescaler = calculatePpm<MCUTimer, uint8_t>();

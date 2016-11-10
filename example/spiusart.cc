@@ -19,7 +19,7 @@
 #include <stdlib.h>
 
 #include "spiusart.h"
-#include "mcu/mcu.h"
+#include "mcu/avr8.h"
 #include "mcu/avr/mcutimer.h"
 #include "mcu/avr/usart.h"
 #include "mcu/avr/swusart.h"

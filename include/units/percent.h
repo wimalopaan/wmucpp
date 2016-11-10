@@ -19,7 +19,7 @@
 #pragma once
 
 #include <stdint.h>
-#include "util/dassert.h"
+#include "util/util.h"
 
 namespace std {
 
@@ -27,12 +27,18 @@ struct percent {
     constexpr explicit percent(uint8_t p) : value(p) {
         assert(value <= 100);
     }
-    uint8_t value = 0;
+    const uint8_t value = 0;
 };
 
-namespace literals {
-namespace percent {
+bool operator==(std::percent lhs, std::percent rhs) {
+    return lhs.value == rhs.value;
+}
+bool operator!=(std::percent lhs, std::percent rhs) {
+    return !(lhs == rhs);
+}
 
+namespace literals {
+namespace quantity {
 
 constexpr std::percent operator"" _ppc(unsigned long long v) {
     return std::percent{static_cast<uint8_t>(v)};
@@ -44,21 +50,29 @@ constexpr std::percent operator"" _ppc(unsigned long long v) {
 template<typename T>
 constexpr percent scale(const T& value, const T& min, const T& max) {
     if (value < min) {
-        return std::percent{0};
+        return std::percent{0U};
     }
     else if (value > max) {
-        return std::percent{max};
+        return std::percent{100U};
     }
     else {
         return std::percent{(uint8_t)(((value - min) * 100) / (max - min))};
     }
 }
 
-// todo: 16bit: Aufteilen in MSB und LSB
-
 template<typename T>
-constexpr T expand(const percent& p, const T& min, const T& max) {
+constexpr T expand(percent p, const T& min, const T& max) {
     return min + ((max - min) * p.value) / 100;
+}
+
+
+template<>
+constexpr uint16_t expand<uint16_t>(percent p, const uint16_t& min, const uint16_t& max) {
+    const uint16_t delta = max - min;
+    const uint8_t deltaH = Util::upperHalf(delta);
+    const uint8_t deltaL = Util::lowerHalf(delta);
+    const uint16_t y = p.value * deltaH;
+    return min + (y << 1) + (y >> 1) + (y >> 4) - (y >> 9) + (p.value * deltaL) / 100;
 }
 
 

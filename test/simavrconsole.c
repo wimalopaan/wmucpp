@@ -1,3 +1,4 @@
+
 /*
  * WMuCpp - Bare Metal C++
  * Copyright (C) 2013, 2014, 2015, 2016 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
@@ -16,35 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include <avr/io.h>
 
-#include <stdint.h>
+#if __has_include(<avr/avr_mcu_section.h>)
+# include <avr/avr_mcu_section.h>
+#endif
 
-namespace std {
 
-template<typename T>
-struct pair {
-    T first;
-    T second;
-};
-
-template<typename T>
-struct combinedType;
-
-template<>
-struct combinedType<uint8_t> {
-    typedef uint16_t type;
-    static constexpr const uint8_t shift = 8;
-};
-
-template<typename T>
-typename combinedType<T>::type combinedValue(volatile const pair<T>& p) {
-    return (p.first << combinedType<T>::shift) + p.second;
-}
-
-template<typename T>
-typename combinedType<T>::type combinedValue(const pair<T>& p) {
-    return (p.first << combinedType<T>::shift) + p.second;
-}
-
-}
+AVR_MCU_SIMAVR_CONSOLE(&GPIOR0);

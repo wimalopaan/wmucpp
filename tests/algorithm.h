@@ -16,14 +16,5 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdint.h>
+#include "test/simpletest.h"
 
-volatile uint8_t x = 42;
-
-void foo() {
-    x += 1;
-}
-
-int main() {
-    foo();
-}

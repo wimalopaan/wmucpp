@@ -18,9 +18,23 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-MCU = atmega1284p
+MCU = atmega328p
 F_OSC = 20000000
 
-targets += test.s
+targets += simavr.elf host
+
+host: CXX = g++
+host: CC = g++
+host: LDFLAGS =
+host: CPPFLAGS = -DF_CPU=1000000
+host: CXXFLAGS = -g -std=c++1z
+host: CXXFLAGS += -Wall -Wextra
+host: CXXFLAGS += -I ../include
+host: CXXFLAGS += -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics  -funsigned-char -funsigned-bitfields -fshort-enums
+host: MCUFLAGS =
+
+
+simavr.elf: simavr.o simavrconsole.o
+	$(CC) $(LDFLAGS) -o $@ simavr.o simavrconsole.o
 
 -include ../Makefile.include

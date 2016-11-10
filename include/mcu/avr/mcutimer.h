@@ -20,7 +20,7 @@
 
 #include <stdint.h>
 
-#include "mcu/mcu.h"
+#include "mcu/avr8.h"
 #include "units/physical.h"
 
 namespace AVR {
@@ -34,7 +34,7 @@ struct TimerBase
 {
     TimerBase() = delete;
     static constexpr auto mcuInterrupts = getBaseAddr<typename MCU::TimerInterrupts, N>();
-    using mcu = MCU;
+    typedef MCU mcu_type;
 };
 
 template<uint8_t N, typename MCU = DefaultMcuType>
@@ -42,10 +42,8 @@ class Timer8Bit : public TimerBase<MCU, N> {
 public:
     static constexpr uint8_t number = N;
     static constexpr auto mcuTimer = getBaseAddr<typename MCU::Timer8Bit, N>();
-
     typedef typename MCU::Timer8Bit mcu_timer_type;
-
-    typedef uint8_t valueType;
+    typedef uint8_t value_type;
 
     Timer8Bit() = delete;
 
@@ -74,9 +72,10 @@ private:
 template<uint8_t N>
 struct Timer8Bit<N, ATMega8> : public TimerBase<ATMega8, N>
 {
-    typedef uint8_t valueType;
-    Timer8Bit() = delete;
     static constexpr auto mcuTimer = getBaseAddr<typename ATMega8::Timer8Bit, N>();
+    typedef uint8_t value_type;
+
+    Timer8Bit() = delete;
 
     template<int PreScale>
     static void prescale() {
@@ -100,12 +99,11 @@ template<uint8_t N, typename MCU = DefaultMcuType>
 struct Timer16Bit: public TimerBase<MCU, N>
 {
     static constexpr uint8_t number = N;
+    static constexpr auto mcuTimer = getBaseAddr<typename MCU::Timer16Bit, N>();
     typedef typename MCU::Timer16Bit mcu_timer_type;
-
     typedef uint16_t valueType;
 
     Timer16Bit() = delete;
-    static constexpr auto mcuTimer = getBaseAddr<typename MCU::Timer16Bit, N>();
 
     template<int PreScale>
     static void prescale() {

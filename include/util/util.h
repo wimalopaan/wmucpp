@@ -106,4 +106,24 @@ void putl(const char* str) {
     Device::put('\n');
 }
 
+template<typename T>
+struct fragmentType;
+
+template<>
+struct fragmentType<uint16_t> {
+    typedef uint8_t type;
+    static constexpr const uint8_t shift = 8;
+};
+
+template<typename T>
+constexpr auto upperHalf(const T& v) -> typename fragmentType<T>::type {
+    return v >> fragmentType<T>::shift;
+}
+
+template<typename T>
+constexpr auto lowerHalf(const T& v) -> typename fragmentType<T>::type {
+    return v;
+}
+
+
 }

@@ -1,6 +1,6 @@
 #include "main.h"
 #include "std/limits.h"
-#include "mcu/mcu.h"
+#include "mcu/avr8.h"
 #include "mcu/avr/mcutimer.h"
 #include "mcu/avr/usart.h"
 #include "hal/event.h"
@@ -183,7 +183,7 @@ int main()
     SSpi0::init();
     buttonController::init();
 
-    using namespace std::literals::percent;
+    using namespace std::literals::quantity;
 //    softPwm::init();
 //    softPwm::pwm(50_ppc, 0);
     hardPwm::init();

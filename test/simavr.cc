@@ -1,5 +1,5 @@
 /*
- * WMuCpp - Bare Metal C++
+ * WMuCpp - Bare Metal C++ 
  * Copyright (C) 2013, 2014, 2015, 2016 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,35 +16,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "console.h"
+#include "simavr/simavrdebugconsole.h"
 
-#include <stdint.h>
+using terminal = SimAVRDebugConsole;
 
 namespace std {
-
-template<typename T>
-struct pair {
-    T first;
-    T second;
-};
-
-template<typename T>
-struct combinedType;
-
-template<>
-struct combinedType<uint8_t> {
-    typedef uint16_t type;
-    static constexpr const uint8_t shift = 8;
-};
-
-template<typename T>
-typename combinedType<T>::type combinedValue(volatile const pair<T>& p) {
-    return (p.first << combinedType<T>::shift) + p.second;
+    std::basic_ostream<terminal> cout;
+    std::lineTerminator<CRLF> endl;
 }
 
-template<typename T>
-typename combinedType<T>::type combinedValue(const pair<T>& p) {
-    return (p.first << combinedType<T>::shift) + p.second;
-}
+#include "../tests/percent.h"
 
+int main(){
+    while(true);
 }

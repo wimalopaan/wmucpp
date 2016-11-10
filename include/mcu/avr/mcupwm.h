@@ -26,6 +26,7 @@ namespace AVR {
 
 template<typename MCUTimer>
 class PWM {
+    typedef MCUTimer mcu_timer_type;
     static constexpr const auto mcuTimer = MCUTimer::mcuTimer;
     static constexpr const auto mcuInterrupts = MCUTimer::mcuInterrupts;
     static constexpr auto ocMax = std::numerical_limits<typename MCUTimer::valueType>::max();

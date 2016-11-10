@@ -29,6 +29,8 @@
 
 #pragma once
 
+#ifndef __GLIBCXX__
+
 #include <stddef.h>
 
 #pragma GCC system_header
@@ -97,3 +99,4 @@ namespace std
 
 #pragma GCC visibility pop
 
+#endif

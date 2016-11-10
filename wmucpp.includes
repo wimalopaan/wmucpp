@@ -11,3 +11,6 @@ include/test
 include/units
 include/util
 .
+tests
+test
+doc/bmcpp04

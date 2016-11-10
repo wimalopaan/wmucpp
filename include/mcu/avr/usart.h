@@ -21,7 +21,7 @@
 #include <stdint.h>
 
 #include "config.h"
-#include "mcu/mcu.h"
+#include "mcu/avr8.h"
 #include "mcu/avr/isr.h"
 #include "container/fifo.h"
 #include "hal/event.h"
@@ -112,6 +112,8 @@ class Usart : public UsartBase<Usart<N, MCU>>
     friend void ::USART1_UDRE_vect();
 public:
     typedef MCU mcu_type;
+    typedef PA protocoll_adapter_type;
+
     static constexpr uint8_t number = N;
     static_assert(N < 2, "wrong number of usart");
 
@@ -119,13 +121,9 @@ public:
     template<uint32_t Baud>
     static void init() {
         static_assert(Baud >= 2400, "USART should use a valid baud rate >= 2400");
-        // todo: F_CPU raus
-        getBaseAddr<typename MCU::Usart, N>()->ubbrl = Ubrr<F_CPU, Baud>::value & 0xff;
-        getBaseAddr<typename MCU::Usart, N>()->ubbrh = (Ubrr<F_CPU, Baud>::value >> 8) & 0xff;
-        // enable receive and send
-        // enable receiving interrupts
+        getBaseAddr<typename MCU::Usart, N>()->ubbrl = Ubrr<Config::fMcu.value, Baud>::value & 0xff;
+        getBaseAddr<typename MCU::Usart, N>()->ubbrh = (Ubrr<Config::fMcu.value, Baud>::value >> 8) & 0xff;
         getBaseAddr<typename MCU::Usart, N>()->ucsrb |= _BV(TXEN0) | _BV(RXEN0) | _BV(RXCIE0);
-        // asynchronous mode, no parity, 1 stop, 8 data bits
         getBaseAddr<typename MCU::Usart, N>()->ucsrc |= _BV(UCSZ01) | _BV(UCSZ00);
     }
     static bool get(uint8_t& item) {
