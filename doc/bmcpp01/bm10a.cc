@@ -16,20 +16,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//#include "console.h"
-//#include "simavrdebugconsole.h"
+#include <stdint.h>
+#include "std/types.h"
+#include "std/optional.h"
 
-//using terminal = SimAVRDebugConsole;
+volatile uint7_t global{3};
+volatile uint7_t global2{0};
+volatile bool b = false;
 
-//namespace std {
-//    std::basic_ostream<terminal> cout;
-//    std::lineTerminator<CRLF> endl;
-//}
-
+////[opt
+std::optional<uint7_t> foo1() {
+    if (b) {
+        return global;
+    }
+    return {};
+}
+//]
+//[main
 int main()
 {
-    while(true) {
-
+    if (auto r = foo1()) {
+        global2 = *r;
     }
-//   std::cout << "Hello" << std::endl;
+
+    while(true);
 }
+//]

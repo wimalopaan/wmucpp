@@ -16,25 +16,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <avr/pgmspace.h>
-#include <util/delay.h>
+#include <stdint.h>
+#include "std/types.h"
+#include "std/optional.h"
 
+volatile uint8_t global{3};
+volatile uint8_t global2{0};
+volatile bool b = false;
+
+////[opt
+std::optional<uint8_t> foo1() {
+    if (b) {
+        return global;
+    }
+    return {};
+}
+//]
+//[main
 int main()
 {
-    static const char fs1[] PROGMEM = "xydd";
-    {
-        const char* ptr = &fs1[0];
-        char c = 0;
-        while (c = pgm_read_byte(ptr++)) {
-            _delay_us(1.0);
-        };
+    if (auto r = foo1()) {
+        global2 = *r;
     }
-    static const char fs2[] PROGMEM = "xydd";
-    {
-        const char* ptr = &fs2[0];
-        char c = 0;
-        while (c = pgm_read_byte(ptr++)) {
-            _delay_us(1.0);
-        };
-    }
+
+    while(true);
 }
+//]

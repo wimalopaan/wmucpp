@@ -22,11 +22,30 @@
 #include "std/optional.h"
 
 struct uint7_t final {
-    uint7_t(uint8_t v) : value(v) {}
-    uint8_t pad : 1, value : 7;
-    operator uint8_t() const {
+    constexpr explicit uint7_t(const uint8_t& v) : pad(0), value(v) {}
+
+    constexpr explicit uint7_t(const uint7_t& v) : pad(0), value(v) {}
+    explicit uint7_t(volatile uint7_t& v) : pad(0), value(v) {}
+
+    constexpr uint7_t(uint7_t&&) = default;
+    constexpr uint7_t& operator=(uint7_t&&) = default;
+    void operator=(uint7_t&& rhs) volatile {
+        value = rhs.value;
+    }
+
+    uint7_t& operator=(const uint7_t&) = default;
+
+    void operator=(volatile uint7_t& rhs) volatile {
+        value = rhs.value;
+    }
+
+    constexpr operator uint8_t() const {
         return value;
     }
+    operator uint8_t() const volatile {
+        return value;
+    }
+    uint8_t pad : 1, value : 7;
 };
 
 namespace std {
@@ -34,19 +53,20 @@ namespace std {
 template<>
 class optional<uint7_t> {
 public:
-    optional() = default;
-    optional(const uint7_t& value) : data{(uint8_t)((value.value & 0x7f) | 0x80)} {}
-    explicit operator bool() const {
+    constexpr optional() = default;
+    constexpr optional(uint7_t value) : data{(uint8_t)(value.value | 0x80)} {}
+    constexpr explicit operator bool() const {
         return data & 0x80;
     }
-    explicit operator bool() {
+    constexpr explicit operator bool() {
         return data & 0x80;
     }
-    uint7_t operator*() const {
-        return uint7_t{(uint8_t)(data & 0x7f)};
+    constexpr uint7_t operator*() const {
+        return uint7_t{data};
     }
 private:
     uint8_t data{0};
 };
+
 
 }

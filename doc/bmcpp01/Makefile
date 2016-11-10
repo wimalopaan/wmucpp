@@ -37,6 +37,10 @@ targets +=  bm08a.s bm08a.elf bm08a.size
 targets +=  bm08b.s bm08b.elf bm08b.size
 targets +=  bm09a.s bm09a.elf bm09a.size
 targets +=  bm09b.s bm09b.elf bm09b.size
+targets +=  bm10a.s bm10a.elf bm10a.size
+targets +=  bm10b.s bm10b.elf bm10b.size
+targets +=  bm11a.s bm11a.elf bm11a.size
+targets +=  bm11b.s bm11b.elf bm11b.size
 
 -include ../../Makefile.include
 

@@ -88,6 +88,7 @@ public:
     static std::optional<uint7_t> create(std::milliseconds millis, TimerFlags flags){
         Scoped<DisbaleInterrupt> di;
         if (auto index = timers().insert({millis / Config::Timer::resolution, millis  / Config::Timer::resolution, flags})) {
+            assert(*index <= std::numerical_limits<uint7_t>::max());
             return uint7_t{*index};
         }
         return {};

@@ -38,13 +38,14 @@ public:
         ClockPin::low();
         DataPin::low();
     }
+
     static bool put(uint8_t value) {
         if (useDelay) Util::delay(Config::SoftSpiMaster::pulseDelay);
         CSPin::low();
-        for(uint8_t i = 0; i < 8; ++i) {
+        for(uint8_t i = 0; i < 8; ++i) { // todo: generic
             if (useDelay) Util::delay(Config::SoftSpiMaster::pulseDelay);
             ClockPin::low();
-            if (value & 0x80) {
+            if (value & 0x80) { // todo:: generic
                 DataPin::high();
             }
             else {

@@ -18,7 +18,10 @@
 
 #pragma once
 
+#ifndef __GLIBCXX__
+
 namespace std {
+
 template< class T > struct remove_reference      {
     typedef T type;
 };
@@ -36,3 +39,4 @@ typename remove_reference<T>::type&& move(T&& arg)
 }
 
 }
+#endif

@@ -1,5 +1,5 @@
 /*
- * WMuCpp - Bare Metal C++ 
+ * WMuCpp - Bare Metal C++
  * Copyright (C) 2013, 2014, 2015, 2016 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,23 +16,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <util/delay.h>
-#include "container/pgmstring.h"
+#include <stdint.h>
+#include <stdbool.h>
 
+volatile uint8_t global = 3;
+volatile uint8_t global2 = 0;
+volatile bool b = false;
+
+//[pointer
+bool foo1(uint8_t* x) {
+    if (b) {
+        *x = global;
+        return true;
+    }
+    return false;
+}//]
+//[main
 int main()
 {
-    auto fs1 = "xydd"_pgm;
-    {
-        const char* ptr = fs1.str();
-        while (char c = pgm_read_byte(ptr++)) {
-            _delay_us(1.0);
-        };
+    uint8_t x = 0;
+    if (foo1(&x)) {
+        global2 = x;
     }
-    auto fs2 = "xydd"_pgm;
-    {
-        const char* ptr = fs2.str();
-        while (char c = pgm_read_byte(ptr++)) {
-            _delay_us(1.0);
-        };
-    }
+
+    while(true);
 }
+//]

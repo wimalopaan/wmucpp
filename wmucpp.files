@@ -44,12 +44,6 @@ example/simavr.h
 example/simavrconsole.c
 example/spiusart.cc
 example/spiusart.h
-example/test1.cc
-example/test10.cc
-example/test11.cc
-example/test12.c
-example/test2.cc
-example/test5.cc
 host/test01.cc
 host/test02.cc
 include/container/fifo.h
@@ -117,3 +111,11 @@ test/Makefile
 test/host.cc
 doc/bmcpp04/Makefile
 test/simavrconsole.c
+tests/duration.h
+tests/physical.h
+tests/types.h
+doc/bmcpp01/bm10a.cc
+doc/bmcpp01/bm10b.cc
+doc/bmcpp01/Makefile
+doc/bmcpp01/bm11a.cc
+doc/bmcpp01/bm11b.c

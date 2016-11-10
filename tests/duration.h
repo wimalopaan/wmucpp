@@ -16,9 +16,45 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "container/pgmstring.h"
+#pragma once
 
+#include "units/duration.h"
+#include "units/physical.h"
 
-int main()
-{
-}
+#include "test/simpletest.h"
+
+#undef SIMPLETESTPREFIX
+#define SIMPLETESTPREFIX duration
+
+SIMPLETEST("duration01") {
+    auto d = 1_ms;
+    if (d.value != 1) return false;
+    return true;
+};
+
+SIMPLETEST("duration02") {
+    auto d = 1_us;
+    if (d.value != 1) return false;
+    return true;
+};
+
+SIMPLETEST("duration03") {
+    auto d = 1_s;
+    if (d.value != 1) return false;
+    return true;
+};
+
+SIMPLETEST("duration04") {
+    auto d = 1_s;
+    std::milliseconds d2 = d;
+    if (d2.value != 1000) return false;
+    return true;
+};
+
+SIMPLETEST("duration05") {
+    auto d1 = 20_ms;
+    auto d2 = 5_ms;
+    auto q = d1 / d2;
+    if (q != 4) return false;
+    return true;
+};

@@ -26,7 +26,11 @@
 #define CAT2(X, Y) X ## Y
 #define CAT(X, Y) CAT2(X, Y)
 
-#define SIMPLETEST(name) static SimpleTest::SimpleTestCase CAT(SimpleTestCaseOnLine, __LINE__) = \
+#ifndef SIMPLETESTPREFIX
+# define SIMPLETESTPREFIX x
+#endif
+
+#define SIMPLETEST(name) static SimpleTest::SimpleTestCase CAT(SIMPLETESTPREFIX, CAT(SimpleTestCaseOnLine, __LINE__)) = \
     SimpleTest::SimpleTestCase(name, __FILE__, __LINE__) = []
 
 namespace SimpleTest {

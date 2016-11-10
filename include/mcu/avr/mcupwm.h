@@ -50,7 +50,7 @@ public:
     }
     template<typename Channel>
     static void pwm(const std::percent& p) {
-        typename MCUTimer::valueType v = std::expand(p, uint16_t(0), std::numerical_limits<typename MCUTimer::valueType>::max());
+        typename MCUTimer::valueType v = std::expand(p, typename MCUTimer::valueType(0), std::numerical_limits<typename MCUTimer::valueType>::max());
         Channel::ocr(v);
     }
 };

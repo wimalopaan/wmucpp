@@ -14,3 +14,5 @@ include/util
 tests
 test
 doc/bmcpp04
+doc/bmcpp03
+doc/bmcpp01

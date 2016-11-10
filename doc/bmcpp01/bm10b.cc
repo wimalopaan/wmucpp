@@ -1,5 +1,5 @@
 /*
- * WMuCpp - Bare Metal C++ 
+ * WMuCpp - Bare Metal C++
  * Copyright (C) 2013, 2014, 2015, 2016 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,25 +16,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
-#include "std/types.h"
+#include <stdint.h>
+#include <stdbool.h>
 
-volatile bool b = true;
+volatile uint8_t global = 3;
+volatile uint8_t global2 = 0;
+volatile bool b = false;
 
-std::optional<uint7_t> foo() {
+//[pointer
+bool foo1(uint8_t* x) {
     if (b) {
-        return uint7_t{(uint8_t)random()};
+        *x = global;
+        return true;
     }
-    else {
-        return {};
-    }
+    return false;
 }
-
+//]
+//[main
 int main()
 {
-    if(auto x = foo()) {
-        uint8_t y = *x;
+    uint8_t x = 0;
+    if (foo1(&x)) {
+        global2 = x;
     }
 
-    return 0;
+    while(true);
 }
+//]

@@ -75,8 +75,18 @@ using microseconds = duration<uint16_t, std::micro>;
 using milliseconds = duration<uint16_t, std::milli>;
 using seconds = duration<uint16_t>;
 
-uint16_t operator/(const std::milliseconds& lhs, const std::milliseconds& rhs) {
+constexpr uint16_t operator/(const std::milliseconds& lhs, const std::milliseconds& rhs) {
     return lhs.value / rhs.value;
+}
+
+template<typename R, typename P>
+constexpr bool operator==(const duration<R, P>& lhs, const duration<R, P>& rhs) {
+    return lhs.value == rhs.value;
+}
+
+template<typename R, typename P>
+constexpr bool operator!=(const duration<R, P>& lhs, const duration<R, P>& rhs) {
+    return !(lhs == rhs);
 }
 
 }

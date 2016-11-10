@@ -30,10 +30,10 @@ struct percent {
     const uint8_t value = 0;
 };
 
-bool operator==(std::percent lhs, std::percent rhs) {
+constexpr bool operator==(std::percent lhs, std::percent rhs) {
     return lhs.value == rhs.value;
 }
-bool operator!=(std::percent lhs, std::percent rhs) {
+constexpr bool operator!=(std::percent lhs, std::percent rhs) {
     return !(lhs == rhs);
 }
 

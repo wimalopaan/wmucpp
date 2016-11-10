@@ -26,7 +26,7 @@ template<typename MCUTimer, typename T>
 constexpr uint16_t calculatePwm() {
     using pRow = typename MCUTimer::mcu_timer_type::template PrescalerRow<MCUTimer::number>;
     for(const auto& p : pRow::values) {
-        const std::hertz f = Config::fMcu / p;
+        const std::hertz f = Config::fMcu / (uint32_t)p;
         const uint32_t ppmMin = 1_ms * f;
         const uint32_t ppmMax = 20_ms * f;
         if ((ppmMax < std::numerical_limits<T>::max()) && (ppmMin > 1)) {
@@ -42,7 +42,7 @@ public:
     SoftPPMBase() = delete;
     static constexpr auto mcuTimer = MCUTimer::mcuTimer;
     static constexpr auto mcuInterrupts = MCUTimer::mcuInterrupts;
-    static constexpr uint16_t prescaler = calculatePwm<MCUTimer, uint16_t>();
+    static constexpr uint32_t prescaler = calculatePwm<MCUTimer, uint16_t>();
     static constexpr std::hertz timerFrequency = Config::fMcu / prescaler;
     static constexpr uint16_t ocMin = 1_ms * timerFrequency;
     static constexpr uint16_t ocMax = 2_ms * timerFrequency;

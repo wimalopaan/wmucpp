@@ -192,6 +192,7 @@ public:
         rb.stop_byte = 0x7d;
         uint8_t* p = (uint8_t*) &rb;
         rb.parity = 0;
+        // todo: check-sum with callback
         for(uint8_t i = 0; i < sizeof(rb) - 1; ++i) {
             rb.parity += *p;
             Usart::put(*p++);
@@ -225,6 +226,7 @@ public:
 
         uint8_t* p = (uint8_t*) &ra;
         ra.parity = 0;
+        // todo: check-sum with callback
         for(uint8_t i = 0; i < sizeof(ra) - 1; ++i) {
             ra.parity += *p;
             Usart::put(*p++);

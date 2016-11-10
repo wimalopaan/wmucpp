@@ -23,6 +23,8 @@
 
 namespace std {
 
+#ifndef __GLIBCXX__
+
 template<typename C>
 constexpr auto begin(const C& c) -> decltype(c.begin()) {
     return c.begin();
@@ -99,5 +101,5 @@ void iota(ForwardIterator first, ForwardIterator last, T value)
         ++value;
     }
 }
-
+#endif
 }

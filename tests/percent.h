@@ -16,9 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
 #include "units/percent.h"
 
 #include "test/simpletest.h"
+
+#undef SIMPLETESTPREFIX
+#define SIMPLETESTPREFIX percent
 
 SIMPLETEST("percent01") {
     using namespace std::literals::quantity;

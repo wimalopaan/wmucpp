@@ -60,10 +60,20 @@ constexpr uint32_t operator/(const frequency<Rep, Div>& fl, const frequency<Rep,
 }
 
 template<typename Rep, typename Div>
-constexpr frequency<Rep, Div> operator/(const frequency<Rep, Div>& fl, uint16_t d)
-{
-    return {fl.value / d};
+constexpr frequency<Rep, Div> operator/(const frequency<Rep, Div>& fl, Rep d) {
+    return {(Rep)(fl.value / d)};
 }
+
+template<typename Rep, typename Div>
+constexpr bool operator==(const frequency<Rep, Div>& lhs, const frequency<Rep, Div>& rhs) {
+    return lhs.value == rhs.value;
+}
+
+template<typename Rep, typename Div>
+constexpr bool operator!=(const frequency<Rep, Div>& lhs, const frequency<Rep, Div>& rhs) {
+    return !(lhs == rhs);
+}
+
 template<typename Duration, typename Frequency>
 constexpr uint32_t operator*(const Duration& dt, const Frequency& f) {
     return (dt.value * f.value * Frequency::divider_type::denom) / Duration::period_type::denom;

@@ -16,27 +16,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdint.h>
-#include <stdlib.h>
+#pragma once
 
-volatile bool b = true;
+#include "std/types.h"
 
-uint8_t foo() {
-    if (b) {
-        return (random() & 0x7f) | 0x80;
-    }
-    else {
-        return 0;
-    }
-}
+#include "test/simpletest.h"
 
+#undef SIMPLETESTPREFIX
+#define SIMPLETESTPREFIX types
 
-int main()
-{
-    auto x = foo();
-    if(x & 0x80) {
-        uint8_t y = x & 0x7f;
-    }
+SIMPLETEST("types01") {
+    std::optional<uint7_t> o;
+    if (o) return false;
+    return true;
+};
 
-    return 0;
-}
+SIMPLETEST("types02") {
+    std::optional<uint7_t> o = (uint7_t)1;
+    if (!o) return false;
+    if (*o != 1) return false;
+    return true;
+};

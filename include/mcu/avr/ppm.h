@@ -29,7 +29,7 @@ template<typename MCUTimer, typename T>
 constexpr uint16_t calculatePpm() {
     using pRow = typename MCUTimer::mcu_timer_type::template PrescalerRow<MCUTimer::number>;
     for(const auto& p : pRow::values) {
-        const std::hertz f = Config::fMcu / p;
+        const std::hertz f = Config::fMcu / (uint32_t)p;
         const uint16_t ppmMin = 1_ms * f;
         const uint16_t ppmMax = 2_ms * f;
         if ((ppmMax < std::numerical_limits<T>::max()) && (ppmMin > 10)) {
@@ -53,7 +53,7 @@ public:
 
     static constexpr auto mcuTimer = MCUTimer::mcuTimer;
     static constexpr uint16_t prescaler = calculatePpm<MCUTimer, uint8_t>();
-    static constexpr std::hertz timerFrequency = Config::fMcu / prescaler;
+    static constexpr std::hertz timerFrequency = Config::fMcu / (uint32_t)prescaler;
     static constexpr uint8_t ppmMin = 1_ms * timerFrequency;
     static constexpr uint8_t ppmMax = 2_ms * timerFrequency;
 

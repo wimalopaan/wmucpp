@@ -26,7 +26,11 @@ namespace std {
     std::lineTerminator<CRLF> endl;
 }
 
+#include "../tests/duration.h"
+#include "../tests/algorithm.h"
 #include "../tests/percent.h"
+#include "../tests/physical.h"
+#include "../tests/types.h"
 
 int main(){
     while(true);
