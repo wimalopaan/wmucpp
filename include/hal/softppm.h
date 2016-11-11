@@ -29,7 +29,7 @@ constexpr uint16_t calculatePwm() {
         const std::hertz f = Config::fMcu / (uint32_t)p;
         const uint32_t ppmMin = 1_ms * f;
         const uint32_t ppmMax = 20_ms * f;
-        if ((ppmMax < std::numerical_limits<T>::max()) && (ppmMin > 1)) {
+        if ((ppmMax < std::numeric_limits<T>::max()) && (ppmMin > 1)) {
             return p;
         }
     }

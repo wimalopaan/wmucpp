@@ -22,10 +22,11 @@
 
 #include "config.h"
 #include "mcu/avr8.h"
-#include "util/bits.h"
 #include "mcu/avr/mcutimer.h"
-#include "container/fifo.h"
+#include "mcu/atomic.h"
+#include "util/bits.h"
 #include "util/disable.h"
+#include "container/fifo.h"
 
 enum class EventType : uint8_t {
     NoEvent,
@@ -54,7 +55,7 @@ typedef Event<uint8_t> Event8u_t;
 namespace AVR {
 template<uint8_t N, typename PA, typename MCU> class Usart;
 template<uint8_t N, typename MCU> class Spi;
-template<uint8_t N> class SWUsart;
+template<uint8_t N, typename MCU> class SWUsart;
 }
 
 namespace Hott {
@@ -66,16 +67,18 @@ class PeriodicGroup {
     friend void ::TIMER0_COMPA_vect();
 public:
     static void periodic() {
-        if (tickCounter > 0) {
-            --tickCounter;
+        if (tickOccurred.testAndClear()) {
             (PP::periodic(),...); // fold
         }
     }
+    static void tick() {
+        tickOccurred.set();
+    }
 private:
-    static uint8_t tickCounter;
+    static volatile AtomicFlagU8 tickOccurred;
 };
 template<typename... PP>
-uint8_t PeriodicGroup<PP...>::tickCounter = 0;
+volatile AtomicFlagU8 PeriodicGroup<PP...>::tickOccurred;
 
 template<typename... EE>
 class EventHandlerGroup {
@@ -105,7 +108,7 @@ class EventManager final
     template<uint8_t> friend class Hott::SensorProtocollAdapter;
     template<uint8_t N, typename MCU> friend class AVR::Usart;
     template<uint8_t N, typename MCU> friend class AVR::Spi;
-    template<uint8_t N> friend class SWUsart;
+    template<uint8_t N, typename MCU> friend class SWUsart;
 public:
     EventManager() = delete;
     static bool enqueue(const Event8u_t& event) {

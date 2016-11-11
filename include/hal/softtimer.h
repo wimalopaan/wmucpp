@@ -59,7 +59,7 @@ constexpr TimerSetupData<T> calculate(const std::hertz& ftimer) {
     using pRow = typename MCUTimer::mcu_timer_type::template PrescalerRow<MCUTimer::number>;
     for(const auto& p : pRow::values) {
         const auto tv = (Config::fMcu / ftimer) / p;
-        if (tv < std::numerical_limits<T>::max()) {
+        if (tv < std::numeric_limits<T>::max()) {
             return {p, static_cast<T>(tv)};
         }
     }
@@ -88,7 +88,7 @@ public:
     static std::optional<uint7_t> create(std::milliseconds millis, TimerFlags flags){
         Scoped<DisbaleInterrupt> di;
         if (auto index = timers().insert({millis / Config::Timer::resolution, millis  / Config::Timer::resolution, flags})) {
-            assert(*index <= std::numerical_limits<uint7_t>::max());
+            assert(*index <= std::numeric_limits<uint7_t>::max());
             return uint7_t{*index};
         }
         return {};

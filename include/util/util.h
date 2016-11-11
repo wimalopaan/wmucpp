@@ -20,6 +20,7 @@
 
 #include "std/array.h"
 #include "mcu/avr/delay.h"
+#include "std/limits.h"
 
 namespace Util {
 
@@ -115,6 +116,12 @@ struct fragmentType<uint16_t> {
     static constexpr const uint8_t shift = 8;
 };
 
+template<>
+struct fragmentType<uint32_t> {
+    typedef uint16_t type;
+    static constexpr const uint8_t shift = 16;
+};
+
 template<typename T>
 constexpr auto upperHalf(const T& v) -> typename fragmentType<T>::type {
     return v >> fragmentType<T>::shift;
@@ -124,6 +131,19 @@ template<typename T>
 constexpr auto lowerHalf(const T& v) -> typename fragmentType<T>::type {
     return v;
 }
+
+template<typename C, typename F>
+auto parity(const C& c, const F& f) -> typename C::item_type {
+    typename C::item_type parity = 0;
+    auto p = (const typename C::item_type*)&c;
+    static_assert(sizeof(C) < std::numeric_limits<uint8_t>::max(),"wrong size");
+    for(uint8_t i = 0; i < sizeof(C); ++i) {
+        f(*p);
+        parity += *p++;
+    }
+    return parity;
+}
+
 
 
 }

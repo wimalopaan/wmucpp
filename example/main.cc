@@ -71,11 +71,11 @@ using rcUsart = AVR::Usart<1, Hott::SumDProtocollAdapter<0>>;
 
 using sampler = PeriodicGroup<buttonController, systemTimer, dcfDecoder>;
 
-using pwmTimer = AVR::Timer16Bit<3>;
+//using pwmTimer = AVR::Timer16Bit<3>;
 //using pwmPin = AVR::Pin<PortD, 6>;
 //using softPwm = SoftPWM<pwmTimer, pwmPin>;
 
-using hardPwm = AVR::PWM<pwmTimer>;
+//using hardPwm = AVR::PWM<pwmTimer>;
 
 using led = AVR::Pin<PortB, 0>;
 //using led = AVR::Pin<PortB, 2>;
@@ -141,6 +141,7 @@ public:
 
         std::percent pv = std::scale(Hott::SumDProtocollAdapter<0>::value8Bit(0),
                                Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit);
+        std::cout << "pv: " << pv.value << std::endl;
 //        softPwm::pwm(pv, 0);
     }
 };
@@ -186,8 +187,8 @@ int main()
     using namespace std::literals::quantity;
 //    softPwm::init();
 //    softPwm::pwm(50_ppc, 0);
-    hardPwm::init();
-    hardPwm::pwm<hardPwm::A>(50_ppc);
+//    hardPwm::init();
+//    hardPwm::pwm<hardPwm::A>(50_ppc);
 
     dcfDecoder::init();
 
@@ -267,7 +268,7 @@ ISR(SPI_STC_vect) {
     AVR::Spi<0>::isr();
 }
 ISR(TIMER0_COMPA_vect) {
-    ++sampler::tickCounter;
+    sampler::tick();
 }
 ISR(TIMER3_COMPA_vect) {
 //    softPwm::isrA();

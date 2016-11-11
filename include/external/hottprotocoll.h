@@ -49,6 +49,7 @@ struct SumDMsg {
 };
 
 struct TextMsg {
+    typedef uint8_t item_type;
     uint8_t start_byte;		//#01 Starting constant value == 0x7b
     uint8_t esc;				//#02 Escape (higher-ranking menu in text mode or Text mode leave)
     //0x00 to stay normal
@@ -61,10 +62,11 @@ struct TextMsg {
     // Bit 7 = 1 -> Inverse character display
     // Display 21x8
     uint8_t stop_byte;		//#172 constant value 0x7d
-    uint8_t parity;			//#173 Checksum / parity
+//    uint8_t parity;			//#173 Checksum / parity
 };
 
 struct GamMsg {
+    typedef uint8_t item_type;
     uint8_t start_byte;          //#01 start byte constant value 0x7c
     uint8_t gam_sensor_id;       //#02 EAM sensort id. constat value 0x8d=GENRAL AIR MODULE
     uint8_t warning_beeps;       //#03 1=A 2=B ... 0x1a=Z  0 = no alarm
@@ -161,7 +163,7 @@ struct GamMsg {
     uint8_t pressure;                        //#42 High pressure up to 16bar. 0,1bar scale. 20 == 2.0bar
     uint8_t version;                         //#43 version number (Bytes 35 .43 new but not yet in the record in the display!)
     uint8_t stop_byte;                       //#44 stop byte 0x7D
-    uint8_t parity;                          //#45 CHECKSUM CRC/Parity (calculated dynamicaly)
+//    uint8_t parity;                          //#45 CHECKSUM CRC/Parity (calculated dynamicaly)
 };
 
 }

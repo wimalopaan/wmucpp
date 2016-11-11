@@ -32,7 +32,7 @@ constexpr uint16_t calculatePpm() {
         const std::hertz f = Config::fMcu / (uint32_t)p;
         const uint16_t ppmMin = 1_ms * f;
         const uint16_t ppmMax = 2_ms * f;
-        if ((ppmMax < std::numerical_limits<T>::max()) && (ppmMin > 10)) {
+        if ((ppmMax < std::numeric_limits<T>::max()) && (ppmMin > 10)) {
             return p;
         }
     }
@@ -50,6 +50,7 @@ public:
 
     typedef typename PinChange::pin_type pin_type;
     typedef MCUTimer mcu_timer_type;
+    typedef typename MCUTimer::mcu_type mcu_type;
 
     static constexpr auto mcuTimer = MCUTimer::mcuTimer;
     static constexpr uint16_t prescaler = calculatePpm<MCUTimer, uint8_t>();
@@ -73,7 +74,7 @@ public:
         MCUTimer::start();
     }
 
-    static volatile uint8_t& value() {
+    static uint8_t value() {
         return period;
     }
 

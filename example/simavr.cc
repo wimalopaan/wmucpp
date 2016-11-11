@@ -30,7 +30,6 @@
 #include "hal/ppmswitch.h"
 #include "container/pgmstring.h"
 #include "container/stringbuffer.h"
-#include "flash.h"
 #include "hal/softppm.h"
 #include "console.h"
 #include "simavr/simavrdebugconsole.h"
@@ -136,7 +135,7 @@ int main(void) {
 }
 
 ISR(TIMER0_COMPA_vect) {
-    ++sampler::tickCounter;
+    sampler::tick();
 }
 
 ISR(TIMER1_COMPA_vect) {

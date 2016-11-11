@@ -40,7 +40,7 @@ struct Input final {
     Input() = delete;
     template<typename Port, uint8_t mask>
     static void set() {
-        Port::dir() |= mask;
+        Port::dir() &= ~mask;
     }
 };
 
@@ -117,3 +117,14 @@ struct NoPin final {
 };
 
 }
+
+template<typename Pin>
+struct Set {
+    static void input() {
+        Pin::template dir<AVR::Input>();
+    }
+    static void output() {
+        Pin::template dir<AVR::Output>();
+    }
+};
+

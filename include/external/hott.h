@@ -19,7 +19,7 @@
 #include <stdint.h>
 
 #include "config.h"
-#include "util/delay.h"
+#include "util/util.h"
 #include "hal/event.h"
 #include "external/hottprotocoll.h"
 
@@ -190,15 +190,12 @@ public:
         rb.rpm = 111;
         rb.rpm2 = 222;
         rb.stop_byte = 0x7d;
-        uint8_t* p = (uint8_t*) &rb;
-        rb.parity = 0;
-        // todo: check-sum with callback
-        for(uint8_t i = 0; i < sizeof(rb) - 1; ++i) {
-            rb.parity += *p;
-            Usart::put(*p++);
-            Util::delay(hottDelay2);
-        }
-        Usart::put(*p); // parity
+
+        Usart::put(Util::parity(rb, [](uint8_t v){
+                       Usart::put(v);
+                       Util::delay(hottDelay2);
+                   }));
+
         Usart::waitSendComplete();
         Usart::template rxEnable<true>();
     }
@@ -224,15 +221,11 @@ public:
 
         ra.text[mRow + 1][mColumn] =  '>';
 
-        uint8_t* p = (uint8_t*) &ra;
-        ra.parity = 0;
-        // todo: check-sum with callback
-        for(uint8_t i = 0; i < sizeof(ra) - 1; ++i) {
-            ra.parity += *p;
-            Usart::put(*p++);
-            Util::delay(hottDelay2);
-        }
-        Usart::put(*p); // parity
+        Usart::put(Util::parity(ra, [](uint8_t v){
+                       Usart::put(v);
+                       Util::delay(hottDelay2);
+                   }));
+
         Usart::waitSendComplete();
         Usart::template rxEnable<true>();
     }

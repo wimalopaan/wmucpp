@@ -16,24 +16,3 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
-
-#if __has_include(<avr/io.h>)
-# include <avr/io.h>
-#endif
-
-#if __has_include(<avr/avr_mcu_section.h>)
-# include <avr/avr_mcu_section.h>
-#endif
-
-class SimAVRDebugConsole final {
-public:
-    SimAVRDebugConsole() = delete;
-    template<uint16_t N>
-    static void init() {
-    }
-    static bool put(uint8_t item) {
-        GPIOR0 = item;
-        return true;
-    }
-};

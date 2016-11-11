@@ -122,7 +122,7 @@ ISR(SPI_STC_vect) {
 }
 
 ISR(TIMER0_COMPA_vect) {
-    ++sampler::tickCounter;
+    sampler::tick();
 }
 
 ISR(USART_RX_vect) {

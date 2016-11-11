@@ -31,6 +31,7 @@ namespace std {
 #include "../tests/percent.h"
 #include "../tests/physical.h"
 #include "../tests/types.h"
+#include "../tests/atomic.h"
 
 int main(){
     while(true);

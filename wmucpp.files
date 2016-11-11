@@ -34,9 +34,6 @@ doc/bmcpp04/bm02b.c
 doc/bmcpp04/bm03a.cc
 doc/bmcpp04/bm03b.c
 doc/bmcpp04/simavrconsole.c
-example/flash.c
-example/flash.h
-example/isrtest1.cc
 example/main.cc
 example/main.h
 example/simavr.cc
@@ -119,3 +116,16 @@ doc/bmcpp01/bm10b.cc
 doc/bmcpp01/Makefile
 doc/bmcpp01/bm11a.cc
 doc/bmcpp01/bm11b.c
+include/mcu/register.h
+doc/bmcpp02/bm02a.cc
+doc/bmcpp02/Makefile
+example/Makefile
+doc/bmcpp02/bm03a.cc
+example/blink.cc
+example/frequency.cc
+include/mcu/atomic.h
+tests/atomic.h
+doc/bmcpp03/bm10a.cc
+doc/bmcpp03/Makefile
+doc/bmcpp03/bm11a.cc
+doc/bmcpp03/bm12a.cc

@@ -20,6 +20,8 @@
 
 #include "mcu/ports.h"
 
+// todo: zu Ende
+
 template<typename Pin>
 class DCF77 final  {
 public:
@@ -28,7 +30,6 @@ public:
         Pin::pullup();
     }
     static void periodic() {
-
     }
 private:
 };

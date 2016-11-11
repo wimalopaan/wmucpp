@@ -18,22 +18,49 @@
 
 #pragma once
 
-#if __has_include(<avr/io.h>)
-# include <avr/io.h>
-#endif
+#include "mcu/atomic.h"
 
-#if __has_include(<avr/avr_mcu_section.h>)
-# include <avr/avr_mcu_section.h>
-#endif
+#include "test/simpletest.h"
 
-class SimAVRDebugConsole final {
-public:
-    SimAVRDebugConsole() = delete;
-    template<uint16_t N>
-    static void init() {
-    }
-    static bool put(uint8_t item) {
-        GPIOR0 = item;
-        return true;
-    }
+#undef SIMPLETESTPREFIX
+#define SIMPLETESTPREFIX atomic
+
+SIMPLETEST("atomic01") {
+    AtomicFlagU4 f;
+
+    if (f.testAndClear()) return false;
+
+    return true;
+};
+
+SIMPLETEST("atomic02") {
+    AtomicFlagU4 f;
+    f.set();
+
+    if (!f.testAndClear()) return false;
+    if (f.testAndClear()) return false;
+
+    return true;
+};
+
+SIMPLETEST("atomic03") {
+    AtomicFlagU4 f(true);
+
+    if (!f.testAndClear()) return false;
+    if (f.testAndClear()) return false;
+
+    return true;
+};
+
+SIMPLETEST("atomic03") {
+    AtomicFlagU4 f(true);
+
+    if (!f.testAndClear()) return false;
+
+    f.set();
+
+    if (!f.testAndClear()) return false;
+    if (f.testAndClear()) return false;
+
+    return true;
 };

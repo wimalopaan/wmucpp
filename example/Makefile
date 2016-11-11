@@ -21,12 +21,9 @@
 MCU = atmega1284p
 F_OSC = 20000000
 
-targets +=  main.elf main.size spiusart.elf spiusart.size
-#targets +=  main.elf main.hex main.size spiusart.elf spiusart.hex spiusart.size
+targets +=  main.elf main.size
 targets +=  simavr.elf simavr.size
-#targets +=  isrtest1.elf isrtest1.size test1.elf test1.size test2.elf test2.size test5.elf test5.size
-#targets +=  test10.elf test10.size test11.elf test11.size test12.elf test12.size
-#targets +=  spiusart.elf spiusart.hex spiusart.size
+targets +=  spiusart.elf spiusart.size
 
 spiusart.elf spiusart.pgr: MCU = atmega328p
 spiusart.elf spiusart.pgr: F_OSC = 16000000
@@ -34,14 +31,8 @@ spiusart.elf spiusart.pgr: F_OSC = 16000000
 simavr.elf: LDFLAGS += "-Wl,--section-start=.mmcu=0x910000" # special flags for simavr
 simavr.elf: MCU = atmega328p
 simavr.elf: F_OSC = 20000000
-simavr.elf: simavr.o simavrconsole.o flash.o
+simavr.elf: simavr.o simavrconsole.o
 	$(CC) $(LDFLAGS) -o $@ simavr.o simavrconsole.o flash.o
-
-test10.elf: LDFLAGS += "-Wl,--section-start=.mmcu=0x910000" # special flags for simavr
-test10.elf: MCU = atmega1284p
-test10.elf: F_OSC = 20000000
-test10.elf: test10.o simavrconsole.o
-	$(CC) $(LDFLAGS) -o $@ test10.o simavrconsole.o
 
 -include ../Makefile.include
 

@@ -48,11 +48,12 @@ struct PCNumber<D> {
     static constexpr uint8_t number = 3;
 };
 
-template<typename Pin>
+template<typename Pin, typename MCU = DefaultMcuType>
 class PinChange final {
+    typedef MCU mcu_type;
     static constexpr uint8_t pcGroupNumber = PCNumber<typename Pin::port::name_type>::number;
-    static constexpr auto pc = getBaseAddr<DefaultMcuType::PCInterrupts, pcGroupNumber>();
-    static constexpr auto interrupts = getBaseAddr<DefaultMcuType::Interrupt>();
+    static constexpr auto pc = getBaseAddr<typename MCU::PCInterrupts, pcGroupNumber>();
+    static constexpr auto interrupts = getBaseAddr<typename MCU::Interrupt>();
 public:
     typedef Pin pin_type;
 

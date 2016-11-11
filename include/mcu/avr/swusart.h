@@ -76,8 +76,7 @@ struct SWUsartOCRA<2400> {
     static constexpr uint16_t value =  (Config::fMcu / 2400_Hz ) / prescaler;
 };
 
-// todo: besser den HW-Timer als template-parameter angeben
-template<uint8_t N>
+template<uint8_t N, typename MCU = DefaultMcuType>
 class SWUsart final {
     friend void ::TIMER1_COMPA_vect();
     friend void ::TIMER1_COMPB_vect();
@@ -87,8 +86,11 @@ class SWUsart final {
 
     static constexpr uint8_t timerNumber = 2 * N + 1;
 
-    static constexpr auto timer = AVR::getBaseAddr<DefaultMcuType::Timer16Bit, timerNumber>();
-    static constexpr auto mcuInterrupts = AVR::getBaseAddr<typename DefaultMcuType::TimerInterrupts, timerNumber>();
+    static constexpr auto timer = AVR::getBaseAddr<typename MCU::Timer16Bit, timerNumber>();
+    static constexpr auto mcuInterrupts = AVR::getBaseAddr<typename MCU::TimerInterrupts, timerNumber>();
+
+    typedef MCU mcu_type;
+    typedef typename MCU::Timer16Bit mcu_timer_type;
 
 public:
     SWUsart() = delete;
@@ -183,11 +185,11 @@ private:
     static volatile uint8_t inbits;
 };
 
-template<uint8_t Timer>
-std::FiFo<uint8_t, Config::Usart::SendQueueLength> SWUsart<Timer>::sendQueue;
-template<uint8_t Timer>
-volatile uint16_t SWUsart<Timer>::outframe = 0x0001;
-template<uint8_t Timer>
-volatile uint16_t SWUsart<Timer>::inframe = 0;
-template<uint8_t Timer>
-volatile uint8_t SWUsart<Timer>::inbits = 0;
+template<uint8_t Timer, typename MCU>
+std::FiFo<uint8_t, Config::Usart::SendQueueLength> SWUsart<Timer, MCU>::sendQueue;
+template<uint8_t Timer, typename MCU>
+volatile uint16_t SWUsart<Timer, MCU>::outframe = 0x0001;
+template<uint8_t Timer, typename MCU>
+volatile uint16_t SWUsart<Timer, MCU>::inframe = 0;
+template<uint8_t Timer, typename MCU>
+volatile uint8_t SWUsart<Timer, MCU>::inbits = 0;

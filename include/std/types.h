@@ -21,6 +21,10 @@
 #include <stdint.h>
 #include "std/optional.h"
 
+struct uint4_t {
+    uint8_t upper : 4, lower : 4;
+};
+
 struct uint7_t final {
     constexpr explicit uint7_t(const uint8_t& v) : pad(0), value(v) {}
 

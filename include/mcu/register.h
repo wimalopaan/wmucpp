@@ -16,15 +16,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "util/disable.h"
+#pragma once
 
-#define USE_C
+#include <stdint.h>
+#include "mcu/avr8.h"
 
-int main() {
-#ifdef USE_C
-    sei();
-    cli();
-#else
-    Scoped<EnableInterrupt> ei;
-#endif
+// todo: wozu?
+
+namespace AVR {
+
+template<typename T, typename Component>
+struct Register {
+    static constexpr uint8_t bval0  = 1U;
+    static constexpr uint8_t bval1  = 1U << 1U;
+    static constexpr uint8_t bval2  = 1U << 2U;
+    static constexpr uint8_t bval3  = 1U << 3U;
+    static constexpr uint8_t bval4  = 1U << 4U;
+    static constexpr uint8_t bval5  = 1U << 5U;
+    static constexpr uint8_t bval6  = 1U << 6U;
+    static constexpr uint8_t bval7  = 1U << 7U;
+
+    static constexpr auto cAddress = AVR::getBaseAddr<Component>();
+
+};
+
 }

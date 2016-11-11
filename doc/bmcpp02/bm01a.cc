@@ -24,7 +24,7 @@ using Led1 = AVR::Pin<PortB, 0>;
 //[main
 int main()
 {
-    Led1::dir<AVR::Output>();
+    Led1::template dir<AVR::Output>();
     Led1::high();
 
     while(true) {

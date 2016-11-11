@@ -21,27 +21,47 @@
 #include <stdint.h>
 #include "std/types.h"
 
-namespace std {
+#if __has_include(<avr/builtins.h>)
+# include <avr/builtins.h>
+#endif
 
 template<typename T>
-struct numeric_limits;
+class AtomicFlag;
 
 template<>
-struct numeric_limits<uint8_t> {
-    static constexpr uint8_t max() {return UINT8_MAX;}
-    static constexpr uint8_t min() {return 0;}
+class AtomicFlag<uint4_t> {
+public:
+    AtomicFlag(bool v = false) : flag{0, v} {}
+    inline bool testAndClear() volatile {
+        flag.upper = 0;
+        flags = __builtin_avr_swap(flags);
+        return flag.upper;
+    }
+    inline void set() volatile {
+        flag.lower = 1;
+    }
+private:
+    union {
+        uint4_t flag{0, 0};
+        uint8_t flags;
+    };
 };
+
+typedef AtomicFlag<uint4_t> AtomicFlagU4;
 
 template<>
-struct numeric_limits<uint16_t> {
-    static constexpr uint16_t max() {return UINT16_MAX;}
-    static constexpr uint16_t min() {return 0;}
+class AtomicFlag<uint8_t> {
+public:
+    inline bool testAndClear() volatile {
+        flags &= 0x0f;
+        flags = __builtin_avr_swap(flags);
+        return flags & 0xf0;
+    }
+    inline void set() volatile {
+        flags = 0x01;
+    }
+private:
+    uint8_t flags = 0;
 };
 
-template<>
-struct numeric_limits<uint7_t> {
-    static constexpr uint8_t max() {return UINT8_MAX / 2 - 1;}
-    static constexpr uint8_t min() {return 0;}
-};
-
-}
+typedef AtomicFlag<uint8_t> AtomicFlagU8;

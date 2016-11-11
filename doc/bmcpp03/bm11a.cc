@@ -16,24 +16,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "mcu/atomic.h"
 
-#if __has_include(<avr/io.h>)
-# include <avr/io.h>
-#endif
+volatile AtomicFlagU8 x;
 
-#if __has_include(<avr/avr_mcu_section.h>)
-# include <avr/avr_mcu_section.h>
-#endif
+volatile uint8_t y = 0;
 
-class SimAVRDebugConsole final {
-public:
-    SimAVRDebugConsole() = delete;
-    template<uint16_t N>
-    static void init() {
+int main()
+{
+    x.set();
+    if (x.testAndClear()) {
+        y = 1;
     }
-    static bool put(uint8_t item) {
-        GPIOR0 = item;
-        return true;
-    }
-};
+    while(true);
+}

@@ -16,3 +16,5 @@ test
 doc/bmcpp04
 doc/bmcpp03
 doc/bmcpp01
+doc/bmcpp02
+/usr/avr/include

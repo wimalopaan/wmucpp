@@ -26,10 +26,11 @@ namespace AVR {
 
 template<typename MCUTimer>
 class PWM {
+    typedef typename MCUTimer::mcu_type mcu_type;
     typedef MCUTimer mcu_timer_type;
     static constexpr const auto mcuTimer = MCUTimer::mcuTimer;
     static constexpr const auto mcuInterrupts = MCUTimer::mcuInterrupts;
-    static constexpr auto ocMax = std::numerical_limits<typename MCUTimer::valueType>::max();
+    static constexpr auto ocMax = std::numeric_limits<typename MCUTimer::valueType>::max();
 public:
     struct A {
         static void ocr(const uint16_t& v) {
@@ -50,7 +51,7 @@ public:
     }
     template<typename Channel>
     static void pwm(const std::percent& p) {
-        typename MCUTimer::valueType v = std::expand(p, typename MCUTimer::valueType(0), std::numerical_limits<typename MCUTimer::valueType>::max());
+        typename MCUTimer::valueType v = std::expand(p, typename MCUTimer::valueType(0), std::numeric_limits<typename MCUTimer::valueType>::max());
         Channel::ocr(v);
     }
 };
