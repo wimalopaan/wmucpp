@@ -59,8 +59,8 @@ using ws2812_B = AVR::Pin<PortC, 2>;
 
 using ppmInputPin = AVR::Pin<PortC, 0>;
 using pinChangeHandlerPpm = AVR::PinChange<ppmInputPin>;
-using ppmTimer = AVR::Timer8Bit<2>;
-using ppm1 = PpmDecoder<pinChangeHandlerPpm, ppmTimer>;
+using ppmTimerInput = AVR::Timer8Bit<2>;
+using ppm1 = PpmDecoder<pinChangeHandlerPpm, ppmTimerInput>;
 using ppmSwitch = PpmSwitch<0, ppm1>;
 
 using systemClock = AVR::Timer8Bit<0>;
@@ -71,9 +71,12 @@ using rcUsart = AVR::Usart<1, Hott::SumDProtocollAdapter<0>>;
 
 using sampler = PeriodicGroup<buttonController, systemTimer, dcfDecoder>;
 
-//using pwmTimer = AVR::Timer16Bit<3>;
-//using pwmPin = AVR::Pin<PortD, 6>;
-//using softPwm = SoftPWM<pwmTimer, pwmPin>;
+using ppmTimerOutput = AVR::Timer16Bit<3>;
+using ppmPin1 = AVR::Pin<PortD, 7>;
+using ppmPin2 = AVR::Pin<PortD, 6>;
+using softPpm = SoftPPM<ppmTimerOutput, ppmPin1>;
+
+using testPin = AVR::Pin<PortD, 5>;
 
 //using hardPwm = AVR::PWM<pwmTimer>;
 
@@ -142,7 +145,7 @@ public:
         std::percent pv = std::scale(Hott::SumDProtocollAdapter<0>::value8Bit(0),
                                Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit);
         std::cout << "pv: " << pv.value << std::endl;
-//        softPwm::pwm(pv, 0);
+        softPpm::ppm(pv, 0);
     }
 };
 
@@ -185,17 +188,20 @@ int main()
     buttonController::init();
 
     using namespace std::literals::quantity;
-//    softPwm::init();
-//    softPwm::pwm(50_ppc, 0);
-//    hardPwm::init();
+    softPpm::init();
+    softPpm::ppm(50_ppc, 0);
+
+    //    hardPwm::init();
 //    hardPwm::pwm<hardPwm::A>(50_ppc);
+
+//    testPin::dir<AVR::Output>();
 
     dcfDecoder::init();
 
     led::dir<AVR::Output>();
 
     pinChangeHandlerPpm::init();
-    PpmDecoder<pinChangeHandlerPpm, ppmTimer>::init();
+    PpmDecoder<pinChangeHandlerPpm, ppmTimerInput>::init();
 
     std::cout << "RC Controller 0.1"_pgm << std::endl;
 
@@ -207,20 +213,7 @@ int main()
 
     systemTimer::create(1000_ms, TimerFlags::Periodic);
 
-    std::cout << Config() << std::endl;
-
-    std::cout << "ppmtimer: "_pgm << ppm1::timerFrequency << std::endl;
-    std::cout << "prescaler: "_pgm << ppm1::prescaler << std::endl;
-    std::cout << "ppmMin: "_pgm << ppm1::ppmMin << std::endl;
-    std::cout << "ppmMax: "_pgm << ppm1::ppmMax << std::endl;
-    std::cout << "ppmMid: "_pgm << ppm1::ppmMid << std::endl;
-    std::cout << "ppmDelta: "_pgm << ppm1::ppmDelta << std::endl;
-    std::cout << "ppmMidLow: "_pgm << ppm1::ppmMidLow << std::endl;
-    std::cout << "ppmMidHigh: "_pgm << ppm1::ppmMidHigh << std::endl;
-    std::cout << "ppmMaxLow: "_pgm << ppm1::ppmMaxLow << std::endl;
-    std::cout << "ppmMinHigh: "_pgm << ppm1::ppmMinHigh << std::endl;
-
-//    std::cout << "pwm pre: "_pgm << softPwm::prescaler << std::endl;
+//    std::cout << Config() << std::endl;
 
     using handler = EventHandlerGroup<TimerHandler,
                                 HottBinaryHandler, HottBroadcastHandler, HottTextHandler, TestHandler,
@@ -271,10 +264,10 @@ ISR(TIMER0_COMPA_vect) {
     sampler::tick();
 }
 ISR(TIMER3_COMPA_vect) {
-//    softPwm::isrA();
+    softPpm::isrA();
 }
 ISR(TIMER3_COMPB_vect) {
-//    softPwm::isrB();
+    softPpm::isrB();
 }
 ISR(USART0_RX_vect) {
     sensorUsart::rx_isr();

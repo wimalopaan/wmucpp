@@ -62,9 +62,9 @@ using ppmTimer = AVR::Timer8Bit<2>;
 using ppm1 = PpmDecoder<pinChangeHandlerPpm, ppmTimer>;
 using ppmSwitch = PpmSwitch<0, ppm1>;
 
-using pwmTimer = AVR::Timer16Bit<1>;
-using pwmPin = AVR::Pin<PortD, 6>;
-using softPwm = SoftPPM<pwmTimer, pwmPin>;
+//using pwmTimer = AVR::Timer16Bit<1>;
+//using pwmPin = AVR::Pin<PortD, 6>;
+//using softPwm = SoftPPM<pwmTimer, pwmPin>;
 
 struct EventHandlerParameter {
     std::optional<uint7_t> timerId1;
@@ -121,9 +121,9 @@ int main(void) {
     std::cout << "ppmMaxLow: "_pgm << ppm1::ppmMaxLow << std::endl;
     std::cout << "ppmMinHigh: "_pgm << ppm1::ppmMinHigh << std::endl;
 
-    std::cout << "softPwm p: "_pgm << softPwm::prescaler << std::endl;
-    std::cout << "softPwm ocmin: "_pgm << softPwm::ocMin << std::endl;
-    std::cout << "softPwm ocmax: "_pgm << softPwm::ocMax << std::endl;
+//    std::cout << "softPwm p: "_pgm << softPwm::prescaler << std::endl;
+//    std::cout << "softPwm ocmin: "_pgm << softPwm::ocMin << std::endl;
+//    std::cout << "softPwm ocmax: "_pgm << softPwm::ocMax << std::endl;
 
 
     evp.timerId1 = systemTimer::create(1000_ms, TimerFlags::Periodic);
@@ -139,9 +139,9 @@ ISR(TIMER0_COMPA_vect) {
 }
 
 ISR(TIMER1_COMPA_vect) {
-    softPwm::isrA();
+//    softPwm::isrA();
 }
 
 ISR(TIMER1_COMPB_vect) {
-    softPwm::isrB();
+//    softPwm::isrB();
 }

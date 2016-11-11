@@ -53,7 +53,7 @@ public:
         mcuTimer->ocra = ocFrame;
         mcuTimer->tccrb |= _BV(WGM12);
         mcuInterrupts->tifr  |= _BV(OCF1A) | _BV(OCF1B);
-        mcuInterrupts->timsk |= _BV(OCIE0A) | _BV(OCIE0B);
+        mcuInterrupts->timsk |= _BV(OCIE0A);
         MCUTimer::template prescale<prescaler>();
     }
 };
@@ -66,6 +66,8 @@ public:
     SoftPPM() = delete;
     static constexpr const uint8_t numberOfChannels = sizeof...(Pins);
 
+    using SoftPPMBase<MCUTimer>::mcuInterrupts;
+
     using SoftPPMBase<MCUTimer>::timerInit;
     using SoftPPMBase<MCUTimer>::ocMin;
     using SoftPPMBase<MCUTimer>::ocMax;
@@ -75,10 +77,10 @@ public:
         (Pins::low(), ...);
         (Pins::template dir<AVR::Output>(), ...);
         timerInit();
-        std::iota(std::begin(ocrbValues), std::end(ocrbValues), (ocMax + ocMin) / 2);
+        std::iota(std::begin(ocrbValues), std::end(ocrbValues), (ocMax + ocMin) / 2, (ocMax + ocMin) / 2);
     }
 
-    static void pwm(const std::percent& width, uint8_t channel) {
+    static void ppm(const std::percent& width, uint8_t channel) {
         assert(channel < numberOfChannels);
         uint16_t ocr = std::expand(width, ocMin, ocMax);
         uint16_t diff = ocr - ocrbValues[channel];
@@ -101,41 +103,63 @@ public:
             P::low();
         }
     };
+
     template<uint8_t N, typename P, typename... PP>
-    struct OffOnN {
+    struct OffN {
         static void check(uint8_t i) {
-            if (i == (N - 1))  {
-                P::high();
-            }
-            else {
+            if ((numberOfChannels - 1 - i) == (N - 1))  {
                 P::low();
             }
-            OffOnN<N - 1, PP..., void>::check(i);
+            OffN<N - 1, PP..., void>::check(i);
         }
     };
     template<typename... PP>
-    struct OffOnN<0, void, PP...> {
+    struct OffN<0, void, PP...> {
         static void check(uint8_t) {}
     };
+
+    template<uint8_t N, typename P, typename... PP>
+    struct OnN {
+        static void check(uint8_t i) {
+            if ((numberOfChannels - 1 - i) == (N - 1))  {
+                P::high();
+            }
+            OnN<N - 1, PP..., void>::check(i);
+        }
+    };
+    template<typename... PP>
+    struct OnN<0, void, PP...> {
+        static void check(uint8_t) {}
+    };
+
     static void isrA() { // CTC
         actual = 0;
         mcuTimer->ocrb = ocrbValues[0];
+        mcuInterrupts->timsk |= _BV(OCIE0B);
         First<Pins...>::high();
     }
     static void isrB() {
-        OffOnN<numberOfChannels, Pins...>::check(actual);
-        actual = (actual + 1) & numberOfChannels;
-        mcuTimer->ocrb = ocrbValues[actual];
+        OffN<numberOfChannels, Pins...>::check(actual);
+        actual = (actual + 1) % numberOfChannels;
+        if (actual != 0) {
+            OnN<numberOfChannels, Pins...>::check(actual);
+            mcuTimer->ocrb = ocrbValues[actual];
+        }
+        else {
+            if (numberOfChannels > 1) {
+                mcuInterrupts->timsk &= ~_BV(OCIE0B);
+            }
+        }
     }
 private:
-    static uint8_t actual;
-    static uint16_t ocrbValues[numberOfChannels];
+    static volatile uint8_t actual;
+    static volatile uint16_t ocrbValues[numberOfChannels];
 };
 template<typename MCUTimer, typename... Pins>
-uint8_t SoftPPM<MCUTimer, Pins...>::actual = 0;
+volatile uint8_t SoftPPM<MCUTimer, Pins...>::actual = 0;
 
 template<typename MCUTimer, typename... Pins>
-uint16_t SoftPPM<MCUTimer, Pins...>::ocrbValues[SoftPPM<MCUTimer, Pins...>::numberOfChannels] = {};
+volatile uint16_t SoftPPM<MCUTimer, Pins...>::ocrbValues[SoftPPM<MCUTimer, Pins...>::numberOfChannels] = {};
 
 
 

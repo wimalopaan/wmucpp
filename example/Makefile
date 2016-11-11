@@ -32,7 +32,7 @@ simavr.elf: LDFLAGS += "-Wl,--section-start=.mmcu=0x910000" # special flags for 
 simavr.elf: MCU = atmega328p
 simavr.elf: F_OSC = 20000000
 simavr.elf: simavr.o simavrconsole.o
-	$(CC) $(LDFLAGS) -o $@ simavr.o simavrconsole.o flash.o
+	$(CC) $(LDFLAGS) -o $@ simavr.o simavrconsole.o
 
 -include ../Makefile.include
 

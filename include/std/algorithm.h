@@ -101,5 +101,14 @@ void iota(ForwardIterator first, ForwardIterator last, T value)
         ++value;
     }
 }
+
+template<class ForwardIterator, class T>
+void iota(ForwardIterator first, ForwardIterator last, T value, T increment)
+{
+    while(first != last) {
+        *first++ = value;
+        value += increment;
+    }
+}
 #endif
 }

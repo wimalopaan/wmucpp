@@ -20,5 +20,5 @@
 
 int main()
 {
-    std::array<int, 3> a = {1, 2, 3};
+//    std::array<int, 3> a = {{1, 2, 3}};
 }
