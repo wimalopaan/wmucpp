@@ -18,10 +18,28 @@
 
 #pragma once
 
-#include "mcu/atomic.h"
+#include "std/limits.h"
 
-#include "test/simpletest.h"
+namespace AVR {
+namespace Util {
 
-#undef SIMPLETESTPREFIX
-#define SIMPLETESTPREFIX atomic
+template<typename T>
+struct TimerSetupData final {
+    const uint16_t prescaler;
+    const T ocr;
+};
 
+template<typename MCUTimer>
+constexpr TimerSetupData<typename MCUTimer::value_type> calculate(const std::hertz& ftimer) {
+    using pRow = typename MCUTimer::mcu_timer_type::template PrescalerRow<MCUTimer::number>;
+    for(const auto& p : pRow::values) {
+        const auto tv = (Config::fMcu / ftimer) / p;
+        if (tv < std::numeric_limits<typename MCUTimer::value_type>::max()) {
+            return {p, static_cast<typename MCUTimer::value_type>(tv)};
+        }
+    }
+    return {0, 0};
+}
+
+}
+}

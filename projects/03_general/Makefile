@@ -17,25 +17,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-all: doc example host test
+MCU = atmega328p
+F_OSC = 20000000
 
-.PHONY: test example clean host doc
+targets +=  spiusart.elf spiusart.size
+targets +=  simavr.elf simavr.size
 
-test:
-	make -C test all
+spiusart.elf spiusart.pgr: MCU = atmega328p
+spiusart.elf spiusart.pgr: F_OSC = 16000000
 
-host:
-	make -C host all
+simavr.elf: LDFLAGS += "-Wl,--section-start=.mmcu=0x910000" # special flags for simavr
+#simavr.elf: MCU = atmega1284p
+simavr.elf: MCU = atmega328p
+simavr.elf: F_OSC = 20000000
+simavr.elf: simavr.o simavrconsole.o
+	$(CC) $(LDFLAGS) -o $@ simavr.o simavrconsole.o
 
-example:
-	make -C example all
 
-doc:
-	make -C doc all
-
-clean:
-	make -C doc clean
-	make -C example clean
-	make -C test clean
-	make -C host clean
+-include ../../Makefile.include
 

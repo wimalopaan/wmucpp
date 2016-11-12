@@ -25,43 +25,5 @@
 # include <avr/builtins.h>
 #endif
 
-template<typename T>
-class AtomicFlag;
 
-template<>
-class AtomicFlag<uint4_t> {
-public:
-    AtomicFlag(bool v = false) : flag{0, v} {}
-    inline bool testAndClear() volatile {
-        flag.upper = 0;
-        flags = __builtin_avr_swap(flags);
-        return flag.upper;
-    }
-    inline void set() volatile {
-        flag.lower = 1;
-    }
-private:
-    union {
-        uint4_t flag{0, 0};
-        uint8_t flags;
-    };
-};
-
-typedef AtomicFlag<uint4_t> AtomicFlagU4;
-
-template<>
-class AtomicFlag<uint8_t> {
-public:
-    inline bool testAndClear() volatile {
-        flags &= 0x0f;
-        flags = __builtin_avr_swap(flags);
-        return flags & 0xf0;
-    }
-    inline void set() volatile {
-        flags = 0x01;
-    }
-private:
-    uint8_t flags = 0;
-};
-
-typedef AtomicFlag<uint8_t> AtomicFlagU8;
+// nicht möglich, das AVR-Architektur kein atomic-swap oder test-and-set bietet

@@ -16,17 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "mcu/atomic.h"
-
-volatile AtomicFlagU8 x;
-
-volatile uint8_t y = 0;
-
 int main()
 {
-    x.set();
-    if (x.testAndClear()) {
-        y = 1;
-    }
     while(true);
 }

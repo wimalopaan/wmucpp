@@ -24,6 +24,8 @@
 #include "external/dcf77.h"
 #include "hal/softppm.h"
 #include "mcu/avr/mcupwm.h"
+#include "hal/softpwm.h"
+#include "hal/constantrate.h"
 
 #include <stdlib.h>
 
@@ -69,16 +71,24 @@ using systemTimer = Timer<systemClock>;
 using sensorUsart = AVR::Usart<0, Hott::SensorProtocollAdapter<0>> ;
 using rcUsart = AVR::Usart<1, Hott::SumDProtocollAdapter<0>>;
 
-using sampler = PeriodicGroup<buttonController, systemTimer, dcfDecoder>;
 
 using ppmTimerOutput = AVR::Timer16Bit<3>;
 using ppmPin1 = AVR::Pin<PortD, 7>;
 using ppmPin2 = AVR::Pin<PortD, 6>;
 using softPpm = SoftPPM<ppmTimerOutput, ppmPin1>;
 
-using testPin = AVR::Pin<PortD, 5>;
+// todo: auf pwm verzichten, dafür ConstantRateAdapter mit Timer 1
+//using hardPwm = AVR::PWM<1>;
 
-//using hardPwm = AVR::PWM<pwmTimer>;
+using crTimer= AVR::Timer16Bit<1>;
+using crAdapter = ConstantRateAdapter<crTimer>;
+
+using softPwmPin1 = AVR::Pin<PortB, 1>;
+using softPwm = SoftPWM<softPwmPin1>;
+
+using sampler = PeriodicGroup<buttonController, systemTimer, dcfDecoder, softPwm>; // werden alle resolution ms aufgerufen
+
+//using testPin = AVR::Pin<PortD, 5>;
 
 using led = AVR::Pin<PortB, 0>;
 //using led = AVR::Pin<PortB, 2>;
@@ -99,6 +109,7 @@ class HottBinaryHandler : public EventHandler<EventType::HottBinaryRequest> {
 public:
     static void process(const uint8_t&) {
         Hott::SensorProtocoll<sensorUsart>::hott_response();
+        crAdapter::start();
     }
 };
 
@@ -135,17 +146,20 @@ public:
         WS2812<2, ws2812_A>::set({16, (uint8_t)((count++ % 2) * 16), 16});
         std::cout << "ppm:"_pgm << ppm1::value() << std::endl;
         std::cout << "c0: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(0) << std::endl;
-        std::cout << "c1: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(1) << std::endl;
-        std::cout << "c2: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(2) << std::endl;
-        std::cout << "c3: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(3) << std::endl;
-        std::cout << "c4: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(4) << std::endl;
-        std::cout << "c5: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(5) << std::endl;
-        std::cout << "nn: "_pgm << Hott::SumDProtocollAdapter<0>::numberOfChannels() << std::endl;
+//        std::cout << "c1: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(1) << std::endl;
+//        std::cout << "c2: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(2) << std::endl;
+//        std::cout << "c3: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(3) << std::endl;
+//        std::cout << "c4: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(4) << std::endl;
+//        std::cout << "c5: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(5) << std::endl;
+//        std::cout << "nn: "_pgm << Hott::SumDProtocollAdapter<0>::numberOfChannels() << std::endl;
 
         std::percent pv = std::scale(Hott::SumDProtocollAdapter<0>::value8Bit(0),
                                Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit);
         std::cout << "pv: " << pv.value << std::endl;
         softPpm::ppm(pv, 0);
+
+        std::cout << "spwm period: "_pgm << softPwm::period() << std::endl;
+
     }
 };
 
@@ -191,8 +205,9 @@ int main()
     softPpm::init();
     softPpm::ppm(50_ppc, 0);
 
-    //    hardPwm::init();
-//    hardPwm::pwm<hardPwm::A>(50_ppc);
+//    hardPwm::init();
+//    hardPwm::pwm<hardPwm::A>(90_ppc);
+//    hardPwm::pwm<hardPwm::B>(50_ppc);
 
 //    testPin::dir<AVR::Output>();
 
@@ -224,6 +239,8 @@ int main()
     EventManager::run<sampler, handler>([](){
         led::toggle();
         ppmSwitch::process(ppm1::value());
+        softPwm::freeRun();
+        crAdapter::periodic();
     });
 
     return 0;
@@ -235,7 +252,6 @@ void assertFunction(bool b, const char* function, const char* file, unsigned int
         abort();
     }
 }
-
 
 ISR(PCINT0_vect) {
 
@@ -249,13 +265,14 @@ ISR(PCINT2_vect) {
 ISR(PCINT3_vect) {
 }
 ISR(TIMER1_COMPA_vect) {
-    SWUsart<0>::isr_compa();
+    crAdapter::rateTick();
+//    SWUsart<0>::isr_compa();
 }
 ISR(TIMER1_COMPB_vect) {
-    SWUsart<0>::isr_compb();
+//    SWUsart<0>::isr_compb();
 }
 ISR(TIMER1_CAPT_vect) {
-    SWUsart<0>::isr_icp();
+//    SWUsart<0>::isr_icp();
 }
 ISR(SPI_STC_vect) {
     AVR::Spi<0>::isr();

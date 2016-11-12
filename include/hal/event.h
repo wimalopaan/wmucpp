@@ -67,18 +67,19 @@ class PeriodicGroup {
     friend void ::TIMER0_COMPA_vect();
 public:
     static void periodic() {
-        if (tickOccurred.testAndClear()) {
+        if (tickCounter > 0) {
+            --tickCounter;
             (PP::periodic(),...); // fold
         }
     }
     static void tick() {
-        tickOccurred.set();
+        ++tickCounter;
     }
 private:
-    static volatile AtomicFlagU8 tickOccurred;
+    static volatile uint8_t tickCounter;
 };
 template<typename... PP>
-volatile AtomicFlagU8 PeriodicGroup<PP...>::tickOccurred;
+volatile uint8_t PeriodicGroup<PP...>::tickCounter = 0;
 
 template<typename... EE>
 class EventHandlerGroup {

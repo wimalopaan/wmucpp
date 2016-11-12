@@ -22,12 +22,35 @@
 #include "std/traits.h"
 
 namespace std {
-
 template<typename E>
 struct enable_bitmask_operators final {
     static const bool enable = false;
 };
 }
+
+namespace Util {
+    template<typename T>
+    constexpr uint8_t numberOfBits() {
+        return sizeof(T) * 8;
+    }
+    template<typename Bit, typename T>
+    constexpr bool isSet(T v) {
+        return Bit::template Value<T>::value & v;
+    }
+    struct MSB {
+        template<typename T>
+        struct Value {
+            static constexpr const T value = (1 << (numberOfBits<T>() - 1));
+        };
+    };  
+    struct LSB {
+        template<typename T>
+        struct Value {
+            static constexpr const T value = 1;
+        };
+    };  
+}
+
 
 template<typename E>
 typename std::enable_if<std::enable_bitmask_operators<E>::enable,E>::type
@@ -59,3 +82,4 @@ bool isset(E flags) {
     typedef typename std::underlying_type<E>::type underlying;
     return static_cast<underlying>(flags) != 0;
 }
+

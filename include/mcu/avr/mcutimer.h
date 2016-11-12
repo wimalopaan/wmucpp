@@ -101,7 +101,7 @@ struct Timer16Bit: public TimerBase<MCU, N>
     static constexpr uint8_t number = N;
     static constexpr auto mcuTimer = getBaseAddr<typename MCU::Timer16Bit, N>();
     typedef typename MCU::Timer16Bit mcu_timer_type;
-    typedef uint16_t valueType;
+    typedef uint16_t value_type;
 
     Timer16Bit() = delete;
 

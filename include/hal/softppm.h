@@ -104,6 +104,7 @@ public:
         }
     };
 
+    // todo: etwas eleganter !!!
     template<uint8_t N, typename P, typename... PP>
     struct OffN {
         static void check(uint8_t i) {

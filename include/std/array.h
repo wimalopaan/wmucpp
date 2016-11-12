@@ -32,7 +32,7 @@ struct array final
     constexpr array() = default;
 
     template<typename... TT>
-    constexpr array(TT&&... pp) : data{pp...}{}
+    constexpr array(TT&&... pp) : data{(T)pp...}{}
 
     constexpr const T* begin() const {
         return &data[0];

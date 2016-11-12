@@ -24,13 +24,43 @@
 
 namespace AVR {
 
-template<typename MCUTimer>
+// todo: fertig machen
+
+template<uint8_t TimerN, typename MCU = DefaultMcuType>
+struct PwmParamter;
+
+template<>
+struct PwmParamter<0, ATMega1284P> {
+};
+template<>
+struct PwmParamter<1, ATMega1284P> {
+    using PortD = AVR::Port<ATMega1284P::PortRegister, AVR::D>;
+    typedef AVR::Pin<PortD, 5> pwmA;
+    typedef AVR::Pin<PortD, 4> pwmB;
+
+    typedef AVR::Timer16Bit<1, ATMega1284P> timer_type;
+};
+template<>
+struct PwmParamter<2, ATMega1284P> {
+};
+template<>
+struct PwmParamter<3, ATMega1284P> {
+    using PortB = AVR::Port<ATMega1284P::PortRegister, AVR::B>;
+    typedef AVR::Pin<PortB, 6> pwmA;
+    typedef AVR::Pin<PortB, 7> pwmB;
+
+    typedef AVR::Timer16Bit<1, ATMega1284P> timer_type;
+
+};
+
+template<uint8_t TimerN, typename MCU = DefaultMcuType>
 class PWM {
-    typedef typename MCUTimer::mcu_type mcu_type;
-    typedef MCUTimer mcu_timer_type;
-    static constexpr const auto mcuTimer = MCUTimer::mcuTimer;
-    static constexpr const auto mcuInterrupts = MCUTimer::mcuInterrupts;
-    static constexpr auto ocMax = std::numeric_limits<typename MCUTimer::valueType>::max();
+    typedef MCU mcu_type;
+    typedef typename PwmParamter<TimerN, MCU>::timer_type timer_type;
+    using MCUTimer = typename timer_type::mcu_timer_type;
+    static constexpr const auto mcuTimer = getBaseAddr<MCUTimer, TimerN>();
+    using pwmA = typename PwmParamter<TimerN, MCU>::pwmA;
+    using pwmB = typename PwmParamter<TimerN, MCU>::pwmB;
 public:
     struct A {
         static void ocr(const uint16_t& v) {
@@ -44,14 +74,16 @@ public:
     };
 
     static void init() {
-        MCUTimer::template prescale<1024>();
-        mcuTimer->tccrb |= _BV(WGM12);
-        mcuInterrupts->tifr  |= _BV(OCF1A) | _BV(OCF1B);
-        mcuInterrupts->timsk |= _BV(OCIE0A) | _BV(OCIE0B);
+        pwmA::template dir<AVR::Output>();
+        pwmB::template dir<AVR::Output>();
+        timer_type::template prescale<256>();
+        mcuTimer->tccra |= _BV(COM1A1) | _BV(COM1A0) | _BV(COM1B1) | _BV(COM1B0); // non-inverting mode
+        mcuTimer->tccra |= _BV(WGM10) | _BV(WGM11) ; // 10-bit fast PWM
+        mcuTimer->tccrb |= _BV(WGM12); // 10-bit fast PWM
     }
     template<typename Channel>
     static void pwm(const std::percent& p) {
-        typename MCUTimer::valueType v = std::expand(p, typename MCUTimer::valueType(0), std::numeric_limits<typename MCUTimer::valueType>::max());
+        typename timer_type::value_type v = std::expand(p, typename timer_type::value_type(0), (uint16_t)0x03ff);
         Channel::ocr(v);
     }
 };

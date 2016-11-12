@@ -83,6 +83,12 @@ constexpr std::microseconds operator/(uint16_t v, const std::hertz& f) {
     return std::microseconds{(uint16_t)(((uint32_t)v * std::microseconds::period_type::denom) / f.value)};
 }
 
+constexpr std::hertz operator/(uint16_t v, const std::microseconds& f) {
+    uint32_t x = v;
+    uint32_t fl = f.value;
+    return {(uint32_t)((x * std::microseconds::period_type::denom) / fl)};
+}
+
 template<typename T>
 constexpr std::milliseconds duration_cast(const std::microseconds&);
 

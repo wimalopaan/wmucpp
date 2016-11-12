@@ -1,5 +1,4 @@
 # -*- mode: makefile-gmake; -*-
-# $Id: Makefile.include 1209 2016-07-01 07:53:57Z wimalopaan $
 #
 # WMuCpp - Bare Metal C++ 
 # Copyright (C) 2013, 2014, 2015, 2016 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
@@ -22,17 +21,6 @@ MCU = atmega1284p
 F_OSC = 20000000
 
 targets +=  main.elf main.size
-targets +=  simavr.elf simavr.size
-targets +=  spiusart.elf spiusart.size
-
-spiusart.elf spiusart.pgr: MCU = atmega328p
-spiusart.elf spiusart.pgr: F_OSC = 16000000
-
-simavr.elf: LDFLAGS += "-Wl,--section-start=.mmcu=0x910000" # special flags for simavr
-simavr.elf: MCU = atmega328p
-simavr.elf: F_OSC = 20000000
-simavr.elf: simavr.o simavrconsole.o
-	$(CC) $(LDFLAGS) -o $@ simavr.o simavrconsole.o
 
 -include ../Makefile.include
 

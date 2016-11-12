@@ -17,11 +17,3 @@
  */
 
 #pragma once
-
-#include "mcu/atomic.h"
-
-#include "test/simpletest.h"
-
-#undef SIMPLETESTPREFIX
-#define SIMPLETESTPREFIX atomic
-

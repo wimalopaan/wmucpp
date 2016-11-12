@@ -180,18 +180,17 @@ public:
     static void hott_response() {
         Util::delay(hottDelay1);
         Usart::template rxEnable<false>();
-        static GamMsg rb = {};
-        rb.start_byte = 0x7c;
-        rb.gam_sensor_id = 0x8d;
-        rb.sensor_id = 0xd0;
-        rb.cell[0] = 111;
-        rb.cell[1] = 222;
-        rb.cell[2] = 10;
-        rb.rpm = 111;
-        rb.rpm2 = 222;
-        rb.stop_byte = 0x7d;
+        hottBinaryResponse.start_byte = 0x7c;
+        hottBinaryResponse.gam_sensor_id = 0x8d;
+        hottBinaryResponse.sensor_id = 0xd0;
+        hottBinaryResponse.cell[0] = 111;
+        hottBinaryResponse.cell[1] = 222;
+        hottBinaryResponse.cell[2] = 10;
+        hottBinaryResponse.rpm = 111;
+        hottBinaryResponse.rpm2 = 222;
+        hottBinaryResponse.stop_byte = 0x7d;
 
-        Usart::put(Util::parity(rb, [](uint8_t v){
+        Usart::put(Util::parity(hottBinaryResponse, [](uint8_t v){
                        Usart::put(v);
                        Util::delay(hottDelay2);
                    }));
@@ -204,24 +203,23 @@ public:
         Util::delay(hottDelay1);
         Usart::template rxEnable<false>();
 
-        static TextMsg ra = {};
-        ra.start_byte = 0x7b;
-        ra.stop_byte = 0x7d;
-        ra.esc = 0;
+        hottTextResponse.start_byte = 0x7b;
+        hottTextResponse.stop_byte = 0x7d;
+        hottTextResponse.esc = 0;
 
-        ra.text[0].insertAtFill(0, "WM Sensor 0.1"_pgm);
+        hottTextResponse.text[0].insertAtFill(0, "WM Sensor 0.1"_pgm);
 
-        ra.text[1].insertAtFill(0, " Test2"_pgm);
-        ra.text[2].insertAtFill(0, " Test3"_pgm);
-        ra.text[3].insertAtFill(0, " Test4"_pgm);
-        ra.text[4].insertAtFill(0, " Test5"_pgm);
-        ra.text[5].insertAtFill(0, " Test6"_pgm);
-        ra.text[6].insertAtFill(0, " Test7"_pgm);
-        ra.text[7].insertAtFill(0, " Test8"_pgm);
+        hottTextResponse.text[1].insertAtFill(0, " Test2"_pgm);
+        hottTextResponse.text[2].insertAtFill(0, " Test3"_pgm);
+        hottTextResponse.text[3].insertAtFill(0, " Test4"_pgm);
+        hottTextResponse.text[4].insertAtFill(0, " Test5"_pgm);
+        hottTextResponse.text[5].insertAtFill(0, " Test6"_pgm);
+        hottTextResponse.text[6].insertAtFill(0, " Test7"_pgm);
+        hottTextResponse.text[7].insertAtFill(0, " Test8"_pgm);
 
-        ra.text[mRow + 1][mColumn] =  '>';
+        hottTextResponse.text[mRow + 1][mColumn] =  '>';
 
-        Usart::put(Util::parity(ra, [](uint8_t v){
+        Usart::put(Util::parity(hottTextResponse, [](uint8_t v){
                        Usart::put(v);
                        Util::delay(hottDelay2);
                    }));
@@ -256,6 +254,9 @@ private:
     static uint8_t mRow;
     static uint8_t mColumn;
     static uint8_t mKey;
+
+    static GamMsg hottBinaryResponse;
+    static TextMsg hottTextResponse;
 };
 template<typename U>
 uint8_t SensorProtocoll<U>::mKey = 0;
@@ -263,6 +264,10 @@ template<typename U>
 uint8_t SensorProtocoll<U>::mRow = 0;
 template<typename U>
 uint8_t SensorProtocoll<U>::mColumn = 0;
+template<typename U>
+GamMsg SensorProtocoll<U>::hottBinaryResponse = {};
+template<typename U>
+TextMsg SensorProtocoll<U>::hottTextResponse = {};
 
 class HottSwitchDecoder {
 public:

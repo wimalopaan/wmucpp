@@ -20,9 +20,8 @@
 
 #include "config.h"
 #include "mcu/ports.h"
-#include "std/array.h"
-#include "std/iterator.h"
 #include "mcu/avr/delay.h"
+#include "util/bits.h"
 
 template<typename DataPin, typename ClockPin, typename CSPin, bool useDelay = false>
 class SoftSpiMaster final {
@@ -39,13 +38,14 @@ public:
         DataPin::low();
     }
 
-    static bool put(uint8_t value) {
+    template<typename T>
+    static bool put(T value) {
         if (useDelay) Util::delay(Config::SoftSpiMaster::pulseDelay);
         CSPin::low();
-        for(uint8_t i = 0; i < 8; ++i) { // todo: generic
+        for(uint8_t i = 0; i < Util::numberOfBits<T>(); ++i) {
             if (useDelay) Util::delay(Config::SoftSpiMaster::pulseDelay);
             ClockPin::low();
-            if (value & 0x80) { // todo:: generic
+            if (Util::isSet<Util::MSB>(value)) {
                 DataPin::high();
             }
             else {

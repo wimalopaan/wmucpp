@@ -40,6 +40,7 @@ struct ATMega1284P final
         template<int N> struct Address;
     };
     struct Timer8Bit {
+        typedef uint8_t value_type;
         volatile uint8_t tccra;
         volatile uint8_t tccrb;
         volatile uint8_t tcnt;
@@ -61,12 +62,18 @@ struct ATMega1284P final
     };
 
     struct Timer16Bit {
+        typedef uint16_t value_type;
         volatile uint8_t tccra;
         volatile uint8_t tccrb;
         volatile uint8_t tccrc;
         volatile uint8_t reserved;
-        volatile uint8_t tcntl;
-        volatile uint8_t tcnth;
+        union {
+            struct {
+                volatile uint8_t tcntl;
+                volatile uint8_t tcnth;
+            };
+            volatile uint16_t tcnt;
+        };
         union {
             struct {
                 volatile uint8_t icrl;

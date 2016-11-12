@@ -18,7 +18,6 @@
 
 #include <stdint.h>
 
-
 volatile uint8_t global = 3; //-
 volatile bool b = false;
 volatile bool c = false;

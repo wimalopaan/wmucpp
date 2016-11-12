@@ -18,13 +18,13 @@
 
 #include "config.h"
 #include "mcu/avr/isr.h"
+#include "mcu/avr/util.h"
 #include "util/bits.h"
 #include "container/fixedvector.h"
 #include "std/optional.h"
 #include "util/disable.h"
 #include "hal/event.h"
 #include "std/types.h"
-#include "std/limits.h"
 
 enum class TimerFlags : uint8_t {
     NoTimer =    0,
@@ -45,28 +45,7 @@ struct underlying_type<TimerFlags> {
 };
 }
 
-namespace AVR {
-namespace Util {
 
-template<typename T>
-struct TimerSetupData final {
-    const uint16_t prescaler;
-    const T ocr;
-};
-
-template<typename MCUTimer, typename T>
-constexpr TimerSetupData<T> calculate(const std::hertz& ftimer) {
-    using pRow = typename MCUTimer::mcu_timer_type::template PrescalerRow<MCUTimer::number>;
-    for(const auto& p : pRow::values) {
-        const auto tv = (Config::fMcu / ftimer) / p;
-        if (tv < std::numeric_limits<T>::max()) {
-            return {p, static_cast<T>(tv)};
-        }
-    }
-    return {0, 0};
-}
-}
-}
 template<typename MCUTimer>
 class Timer final {
 public:
@@ -76,7 +55,7 @@ public:
         // todo: no structured bindings in c++1z
         // constexpr auto [xx,yy]  = AVR::Util::calculate<systemClock, uint8_t>(1000_Hz);
 
-        constexpr auto t = AVR::Util::calculate<MCUTimer, uint8_t>(Config::Timer::frequency);
+        constexpr auto t = AVR::Util::calculate<MCUTimer>(Config::Timer::frequency);
         static_assert(t.prescaler != 0, "falscher wert für p");
 
         MCUTimer::template prescale<t.prescaler>();

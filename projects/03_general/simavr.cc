@@ -66,6 +66,8 @@ using ppmSwitch = PpmSwitch<0, ppm1>;
 //using pwmPin = AVR::Pin<PortD, 6>;
 //using softPwm = SoftPPM<pwmTimer, pwmPin>;
 
+using crTimer = AVR::Timer16Bit<1>;
+
 struct EventHandlerParameter {
     std::optional<uint7_t> timerId1;
     std::optional<uint7_t> timerId2;
@@ -97,11 +99,22 @@ int main(void) {
 
     Scoped<EnableInterrupt> interruptEnabler;
 
-    constexpr auto t = AVR::Util::calculate<systemClock, uint8_t>(Config::Timer::frequency);
+    constexpr auto t = AVR::Util::calculate<systemClock>(Config::Timer::frequency);
     static_assert(t.prescaler != 0, "falscher wert für p");
-
     std::cout << "pre: "_pgm << t.prescaler << std::endl;
     std::cout << "ocr: "_pgm << t.ocr << std::endl;
+
+    constexpr const std::hertz f = 1 / 1600_us;
+    constexpr auto crt = AVR::Util::calculate<crTimer>(f);
+    std::cout << "crt f: "_pgm << f << std::endl;
+    std::cout << "crt pre: "_pgm << crt.prescaler << std::endl;
+    std::cout << "crt ocr: "_pgm << crt.ocr << std::endl;
+
+    uint32_t a = 1000;
+    uint32_t b = 1000;
+    uint32_t x = a * b;
+
+    std::cout << "x::: " << x << std::endl;
 
     std::cout << Config() << std::endl;
 

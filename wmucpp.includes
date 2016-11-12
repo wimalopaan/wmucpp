@@ -18,3 +18,8 @@ doc/bmcpp03
 doc/bmcpp01
 doc/bmcpp02
 /usr/avr/include
+host
+projects
+projects/01_clock
+projects/02_rc
+projects/03_general

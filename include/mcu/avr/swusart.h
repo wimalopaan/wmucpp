@@ -28,7 +28,8 @@
 #include "mcu/avr/mcutimer.h"
 #include "mcu/ports.h"
 
-template<uint8_t N, typename MCU = DefaultMcuType> struct SWUsartRxTx;
+template<uint8_t N, typename MCU = DefaultMcuType>
+struct SWUsartRxTx;
 
 // todo: testen auf icp3 bei atmega1284p
 
