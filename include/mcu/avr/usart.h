@@ -154,6 +154,9 @@ public:
             ::Util::delay(1_us);
         }
     }
+    static bool isEmpty() {
+        return sendQueue().empty();
+    }
 
     template<bool enable>
     static void rxEnable() {

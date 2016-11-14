@@ -19,43 +19,63 @@
 #pragma once
 
 #include <stdint.h>
-
-// todo: abstrahieren als Algorithmus
-// First
-// ForEach
-// s.a. SoftPPM
+#include "units/percent.h"
+#include "util/dassert.h"
 
 template<typename... Pins>
 class SoftPWM {
+    template<uint8_t N, typename P, typename... PP>
+    struct Checker {
+        static void checkOff(uint16_t v) {
+            if (v > SoftPWM<Pins...>::mThresh[N]) {
+                P::low();
+            }
+            Checker<N + 1, PP..., void>::checkOff(v);
+        }  
+        static void checkOn() {
+            if (SoftPWM<Pins...>::mThresh[N] > 0) {
+                P::high();
+            }
+            Checker<N + 1, PP..., void>::checkOn();
+        }  
+    };
+    template<typename... PP>
+    struct Checker<sizeof...(Pins), void, PP...> {
+        static void checkOff(uint16_t) {}  
+        static void checkOn() {}  
+    };
+    
 public:
     static void init() {
         (Pins::template dir<AVR::Output>(),...);
         (Pins::low(),...);
     }
-
     static void freeRun() {
         ++freeCounter;
-        if (freeCounter > (mPeriod / 2)) {
-            (Pins::low(),...);
-        }
+        Checker<0, Pins...>::checkOff(freeCounter);
     }
-
     static void periodic() {
-        mPeriod = freeCounter;
+        mPeriod = std::max(freeCounter, mPeriod);
         freeCounter = 0;
-        (Pins::high(),...);
+        Checker<0, Pins...>::checkOn();
     }
-
     static const volatile uint16_t& period() {
         return mPeriod;
     }
-
+    static void pwm(const std::percent& p, uint8_t index) {
+        assert(index < sizeof...(Pins...));
+        mThresh[index] = std::expand(p, 0U, mPeriod);
+    }
+    
 private:
-    static volatile uint16_t mPeriod;
-    static volatile uint16_t freeCounter;
+    static uint16_t mThresh[sizeof...(Pins)];
+    static uint16_t mPeriod;
+    static uint16_t freeCounter;
 };
 
 template<typename... Pins>
-volatile uint16_t SoftPWM<Pins...>::freeCounter = 0;
+uint16_t SoftPWM<Pins...>::freeCounter = 0;
 template<typename... Pins>
-volatile uint16_t SoftPWM<Pins...>::mPeriod = 0;
+uint16_t SoftPWM<Pins...>::mPeriod = 0;
+template<typename... Pins>
+uint16_t SoftPWM<Pins...>::mThresh[sizeof...(Pins)] = {};

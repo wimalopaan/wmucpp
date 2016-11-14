@@ -11,7 +11,7 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -19,16 +19,66 @@
 #pragma once
 
 #include <stdint.h>
+#include "util/bits.h"
+#include "std/algorithm.h"
+#include "units/physical.h"
 
-template<typename Buffer, typename Device, typename CounterType = uint8_t>
-class ConstanteRateWriter {
+template<typename Pin, uint8_t V>
+class TestBitShifter {
 public:
     static void rateProcess() {
+        if (Util::isSet<Util::MSB>(value)) {
+            Pin::high();
+        }
+        else {
+            Pin::low();
+        }
+        value <<= 1;
+    }
+    static void start() {
+        value = V;
     }
     static void reset() {
+        value = V;
+    }
+    static void init() {
+        Pin::template dir<AVR::Output>();
+        Pin::low();
+    }
+private:
+    static uint8_t value;
+};
+template<typename Pin, uint8_t V>
+uint8_t TestBitShifter<Pin, V>::value = V;
+
+template<typename Buffer, typename Device, typename CounterType = uint8_t>
+class ConstanteRateWriter { // todo: renamae to Hott::Sensor...
+public:
+    static void rateProcess() {
+        if (counter == 0) {
+            Device::template rxEnable<false>();
+        }
+        if (counter < Buffer::size()) {
+            if (auto data = Buffer::get(counter++)) {
+                Device::put(*data);
+            }
+        }
+        else {
+            if (!Device::isEmpty()) {
+                return;
+            }
+            else {
+                Device::template rxEnable<true>();
+            }
+        }
+    }
+    static void start() {
+        Buffer::reset();
         counter = 0;
     }
-
+    static void init() {
+        Buffer::init();
+    }
 private:
     static CounterType counter;
 };
@@ -41,14 +91,20 @@ class ConstantRateAdapter {
 public:
     static void periodic() {
         if (tickCounter > 0) {
-            --tickCounter;
+            tickCounter = 0;
             (Writers::rateProcess(),...);
         }
     }
-    static void start() {
-        (Writers::reset(),...);
+    static constexpr void init() {
+        Timer::mcuTimer->tccrb |= _BV(WGM12);;
+        Timer::mcuInterrupts->tifr  |= _BV(OCF1A) | _BV(OCF1B);
+        Timer::mcuInterrupts->timsk |= _BV(OCIE0A);
+        
+        (Writers::init(),...);
     }
-
+    static void start() {
+        (Writers::start(),...);
+    }
     static void rateTick() {
         ++tickCounter;
     }

@@ -23,3 +23,4 @@ projects
 projects/01_clock
 projects/02_rc
 projects/03_general
+include/external/hott

@@ -79,6 +79,10 @@ constexpr uint16_t operator/(const std::milliseconds& lhs, const std::millisecon
     return lhs.value / rhs.value;
 }
 
+constexpr uint16_t operator/(const std::microseconds& lhs, const std::microseconds& rhs) {
+    return lhs.value / rhs.value;
+}
+
 template<typename R, typename P>
 constexpr bool operator==(const duration<R, P>& lhs, const duration<R, P>& rhs) {
     return lhs.value == rhs.value;

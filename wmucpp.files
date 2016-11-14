@@ -44,8 +44,7 @@ include/container/fixedvector.h
 include/container/pgmstring.h
 include/container/stringbuffer.h
 include/external/dcf77.h
-include/external/hott.h
-include/external/hottprotocoll.h
+include/external/hott/hott.h
 include/external/ws2812.h
 include/hal/button.h
 include/hal/event.h
@@ -139,3 +138,8 @@ projects/03_general/simavr.h
 projects/03_general/simavrconsole.c
 projects/03_general/spiusart.cc
 projects/03_general/spiusart.h
+include/external/hott/sensorprotocolladapter.h
+include/external/hott/sumdprotocolladapter.h
+include/external/hott/sumdprotocoll.h
+include/external/hott/sensorprotocoll.h
+include/external/hott/sensorprotocollbuffer.h

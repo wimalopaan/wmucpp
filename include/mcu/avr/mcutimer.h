@@ -106,11 +106,14 @@ struct Timer16Bit: public TimerBase<MCU, N>
     Timer16Bit() = delete;
 
     template<int PreScale>
-    static void prescale() {
+    static constexpr void prescale() {
         mcuTimer->tccrb |= MCU::Timer16Bit::template Prescaler<PreScale>::value;
     }
+    
     static void start(){
     }
+    // todo: template  
+    // modi: CTC, OCIEA, OCIEB, ...
     static void mode(const TimerMode& mode) {
         if (mode == TimerMode::CTC) {
             TimerBase<MCU, N>::mcuInterrupts->timsk |= _BV(OCIE0A);

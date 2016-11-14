@@ -23,28 +23,30 @@
 
 namespace std {
 
-template<typename T, uint8_t Capacity>
+template<typename T, uint8_t Capacity, typename CapType = uint8_t>
 class FixedVector final {
 public:
     // no iterator because of removal
-    T& operator[](uint8_t index) {
+    T& operator[](CapType index) {
         assert(index < Capacity);
         return data[index];
     }
-    const T& operator[](uint8_t index) const {
+    const T& operator[](CapType index) const {
         assert(index < Capacity);
         return data[index];
     }
 
-    static constexpr const uint8_t capacity = Capacity;
-
-    constexpr uint8_t size() const {
+    static constexpr const CapType capacity = Capacity;
+    typedef CapType size_type;
+    typedef T value_type;
+    
+    constexpr CapType size() const {
         return mSize;
     }
 
     // requires bool() Operator of elements
-    std::optional<uint8_t> insert(const T& item) {
-        for(uint8_t i = 0; i < Capacity; ++i) {
+    std::optional<CapType> insert(const T& item) {
+        for(CapType i = 0; i < Capacity; ++i) {
             if (!data[i]) {
                 data[i] = item;
                 ++mSize;
@@ -55,7 +57,7 @@ public:
     }
 
     // preserve index
-    void removeAt(uint8_t index) {
+    void removeAt(CapType index) {
         assert(index < Capacity);
         data[index] = T();
         --mSize;
@@ -63,7 +65,7 @@ public:
 
 private:
     T data[Capacity] = {};
-    uint8_t mSize = 0;
+    CapType mSize = 0;
 };
 
 }

@@ -1,6 +1,6 @@
 /*
- * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * ++C - C++ introduction
+ * Copyright (C) 2013, 2014, 2015, 2016 Wilhelm Meier <wilhelm.meier@hs-kl.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -11,42 +11,32 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #pragma once
 
-#include "config.h"
-#include "container/stringbuffer.h"
+#include <stdint.h>
 #include "std/array.h"
 #include "std/pair.h"
+#include "container/stringbuffer.h"
 
 #pragma pack(push)
 #pragma pack(1)
 
 namespace Hott {
 
+constexpr const uint8_t keyRight = 14;
+constexpr const uint8_t keyLeft  =  7;
+constexpr const uint8_t keyUp    = 11;
+constexpr const uint8_t keyDown  = 13;
+constexpr const uint8_t keySet   =  9;
 
-struct SumDMsg {
-    static constexpr uint16_t ExtendedLow = 0x1c20;
-    static constexpr uint16_t Low = 0x2260;
-    static constexpr uint16_t Mid = 0x2ee0;
-    static constexpr uint16_t High = 0x3b60;
-    static constexpr uint16_t ExtendedHigh = 0x41a0;
+constexpr const auto hottDelayBeforeAnswer = 5000_us;
+constexpr const auto hottDelayBetweenBytes = 1600_us;
 
-    static constexpr uint8_t ExtendedLow8Bit = ExtendedLow >> 8;
-    static constexpr uint8_t Low8Bit = Low >> 8;
-    static constexpr uint8_t Mid8Bit = Mid >> 8;
-    static constexpr uint8_t High8Bit = High >> 8;
-    static constexpr uint8_t ExtendedHigh8Bit = ExtendedHigh >> 8;
-
-    static constexpr const uint8_t MaxChannels = 32;
-    volatile uint8_t  nChannels = 0;
-    volatile std::array<std::pair<uint8_t>, MaxChannels> channelData = {};
-    volatile uint16_t crc = 0;
-};
 
 struct TextMsg {
     typedef uint8_t item_type;
@@ -62,7 +52,7 @@ struct TextMsg {
     // Bit 7 = 1 -> Inverse character display
     // Display 21x8
     uint8_t stop_byte;		//#172 constant value 0x7d
-//    uint8_t parity;			//#173 Checksum / parity
+    uint8_t parity;			//#173 Checksum / parity
 };
 
 struct GamMsg {
@@ -163,7 +153,7 @@ struct GamMsg {
     uint8_t pressure;                        //#42 High pressure up to 16bar. 0,1bar scale. 20 == 2.0bar
     uint8_t version;                         //#43 version number (Bytes 35 .43 new but not yet in the record in the display!)
     uint8_t stop_byte;                       //#44 stop byte 0x7D
-//    uint8_t parity;                          //#45 CHECKSUM CRC/Parity (calculated dynamicaly)
+    uint8_t parity;                          //#45 CHECKSUM CRC/Parity (calculated dynamicaly)
 };
 
 }

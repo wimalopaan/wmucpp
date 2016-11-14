@@ -16,7 +16,7 @@
 #include "mcu/avr/ppm.h"
 #include "hal/ppmswitch.h"
 #include "util/fsm.h"
-#include "external/hott.h"
+#include "external/hott/hott.h"
 #include "util/delay.h"
 #include "console.h"
 #include "hal/softspimaster.h"
@@ -80,8 +80,12 @@ using softPpm = SoftPPM<ppmTimerOutput, ppmPin1>;
 // todo: auf pwm verzichten, dafür ConstantRateAdapter mit Timer 1
 //using hardPwm = AVR::PWM<1>;
 
-using crTimer= AVR::Timer16Bit<1>;
-using crAdapter = ConstantRateAdapter<crTimer>;
+
+using crTestPin = AVR::Pin<PortB, 2>;
+using crTimer = AVR::Timer16Bit<1>;
+using crWriter = ConstanteRateWriter<Hott::SensorProtocollBuffer<0>, sensorUsart>;
+using crAdapter = ConstantRateAdapter<crTimer, crWriter, TestBitShifter<crTestPin, 0x55>>;
+
 
 using softPwmPin1 = AVR::Pin<PortB, 1>;
 using softPwm = SoftPWM<softPwmPin1>;
@@ -108,7 +112,7 @@ public:
 class HottBinaryHandler : public EventHandler<EventType::HottBinaryRequest> {
 public:
     static void process(const uint8_t&) {
-        Hott::SensorProtocoll<sensorUsart>::hott_response();
+//        std::cout << "hbb"_pgm << std::endl;
         crAdapter::start();
     }
 };
@@ -126,7 +130,7 @@ class HottBroadcastHandler : public EventHandler<EventType::HottSensorBroadcast>
 public:
     static void process(const uint8_t&) {
         std::cout << "hbr"_pgm << std::endl;
-        Hott::SensorProtocoll<sensorUsart>::hott_response();
+        crAdapter::start();
     }
 };
 
@@ -134,8 +138,7 @@ class HottTextHandler : public EventHandler<EventType::HottAsciiRequest> {
 public:
     static void process(const uint8_t&) {
         std::cout << "hba"_pgm << std::endl;
-        Hott::SensorProtocoll<sensorUsart>::hott_responseAscii();
-
+//        Hott::SensorProtocoll<sensorUsart>::hott_responseAscii();
     }
 };
 
@@ -158,6 +161,8 @@ public:
         std::cout << "pv: " << pv.value << std::endl;
         softPpm::ppm(pv, 0);
 
+        softPwm::pwm(pv, 0);
+        
         std::cout << "spwm period: "_pgm << softPwm::period() << std::endl;
 
     }
@@ -213,6 +218,13 @@ int main()
 
     dcfDecoder::init();
 
+    constexpr std::hertz fCr = 1 / Hott::hottDelayBetweenBytes;
+    constexpr auto tsd = AVR::Util::calculate<crTimer>(fCr);
+    crTimer::prescale<tsd.prescaler>();
+    crTimer::mcuTimer->ocra = tsd.ocr;
+    crAdapter::init();
+    
+    
     led::dir<AVR::Output>();
 
     pinChangeHandlerPpm::init();
@@ -237,7 +249,7 @@ int main()
                                 Button0Handler>;
 
     EventManager::run<sampler, handler>([](){
-        led::toggle();
+//        led::toggle();
         ppmSwitch::process(ppm1::value());
         softPwm::freeRun();
         crAdapter::periodic();
@@ -266,6 +278,7 @@ ISR(PCINT3_vect) {
 }
 ISR(TIMER1_COMPA_vect) {
     crAdapter::rateTick();
+    led::toggle();
 //    SWUsart<0>::isr_compa();
 }
 ISR(TIMER1_COMPB_vect) {

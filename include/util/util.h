@@ -144,6 +144,8 @@ auto parity(const C& c, const F& f) -> typename C::item_type {
     return parity;
 }
 
-
+constexpr bool isPowerof2(int v) {
+    return v && ((v & (v - 1)) == 0);
+}
 
 }

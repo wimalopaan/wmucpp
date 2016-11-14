@@ -17,7 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-MCU = atmega328p
+#MCU = atmega328p
+MCU = atmega1284p
 F_OSC = 20000000
 
 targets +=  bm01.s bm01.elf bm01.size

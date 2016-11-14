@@ -32,21 +32,19 @@ using hertz = frequency<uint32_t, ratio<1, 1>>;
 using megahertz = frequency<uint8_t, ratio<1, 1000000>>;
 
 template<>
-struct frequency<uint32_t>
-{
+struct frequency<uint32_t> {
     typedef ratio<1, 1> divider_type;
     typedef uint32_t value_type;
 
-    uint32_t value = 0;
+    const uint32_t value = 0;
 };
 
 template<>
-struct frequency<uint8_t, ratio<1, 1000000>>
-{
+struct frequency<uint8_t, ratio<1, 1000000>> {
     typedef ratio<1, 1000000> divider_type;
     typedef uint8_t value_type;
 
-    uint8_t value = 0;
+    const uint8_t value = 0;
 
     constexpr operator hertz() const{
         return {static_cast<uint32_t>(value * megahertz::divider_type::denom)};
