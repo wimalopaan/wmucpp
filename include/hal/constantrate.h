@@ -52,9 +52,11 @@ template<typename Pin, uint8_t V>
 uint8_t TestBitShifter<Pin, V>::value = V;
 
 template<typename Buffer, typename Device, typename CounterType = uint8_t>
-class ConstanteRateWriter { // todo: renamae to Hott::Sensor...
+class ConstanteRateWriter { 
 public:
     static void rateProcess() {
+        if (!mEnable) return;
+        
         if (counter == 0) {
             Device::template rxEnable<false>();
         }
@@ -72,6 +74,10 @@ public:
             }
         }
     }
+    static void enable(bool e) {
+        mEnable = e;
+    }
+
     static void start() {
         Buffer::reset();
         counter = 0;
@@ -80,10 +86,13 @@ public:
         Buffer::init();
     }
 private:
+    static bool mEnable;
     static CounterType counter;
 };
 template<typename Buffer, typename Device, typename CounterType>
 CounterType ConstanteRateWriter<Buffer, Device, CounterType>::counter = 0;
+template<typename Buffer, typename Device, typename CounterType>
+bool ConstanteRateWriter<Buffer, Device, CounterType>::mEnable = true;
 
 
 template<typename Timer, typename... Writers >

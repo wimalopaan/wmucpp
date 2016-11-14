@@ -81,14 +81,16 @@ using softPpm = SoftPPM<ppmTimerOutput, ppmPin1>;
 //using hardPwm = AVR::PWM<1>;
 
 
-using crTestPin = AVR::Pin<PortB, 2>;
+using crTestPin = AVR::Pin<PortB, 1>;
 using crTimer = AVR::Timer16Bit<1>;
-using crWriter = ConstanteRateWriter<Hott::SensorProtocollBuffer<0>, sensorUsart>;
-using crAdapter = ConstantRateAdapter<crTimer, crWriter, TestBitShifter<crTestPin, 0x55>>;
+using crWriterSensorBinary = ConstanteRateWriter<Hott::SensorProtocollBuffer<0>, sensorUsart>;
+using crWriterSensorText = ConstanteRateWriter<Hott::SensorTextProtocollBuffer<0>, sensorUsart>;
+using crAdapter = ConstantRateAdapter<crTimer, crWriterSensorBinary, crWriterSensorText, TestBitShifter<crTestPin, 0x55>>;
 
 
-using softPwmPin1 = AVR::Pin<PortB, 1>;
-using softPwm = SoftPWM<softPwmPin1>;
+using softPwmPin1 = AVR::Pin<PortB, 2>;
+using softPwmPin2 = AVR::Pin<PortB, 3>;
+using softPwm = SoftPWM<softPwmPin1, softPwmPin2>;
 
 using sampler = PeriodicGroup<buttonController, systemTimer, dcfDecoder, softPwm>; // werden alle resolution ms aufgerufen
 
@@ -113,6 +115,8 @@ class HottBinaryHandler : public EventHandler<EventType::HottBinaryRequest> {
 public:
     static void process(const uint8_t&) {
 //        std::cout << "hbb"_pgm << std::endl;
+        crWriterSensorBinary::enable(true);
+        crWriterSensorText::enable(false);
         crAdapter::start();
     }
 };
@@ -130,6 +134,8 @@ class HottBroadcastHandler : public EventHandler<EventType::HottSensorBroadcast>
 public:
     static void process(const uint8_t&) {
         std::cout << "hbr"_pgm << std::endl;
+        crWriterSensorBinary::enable(true);
+        crWriterSensorText::enable(false);
         crAdapter::start();
     }
 };
@@ -139,6 +145,9 @@ public:
     static void process(const uint8_t&) {
         std::cout << "hba"_pgm << std::endl;
 //        Hott::SensorProtocoll<sensorUsart>::hott_responseAscii();
+        crWriterSensorBinary::enable(false);
+        crWriterSensorText::enable(true);
+        crAdapter::start();
     }
 };
 
@@ -162,6 +171,7 @@ public:
         softPpm::ppm(pv, 0);
 
         softPwm::pwm(pv, 0);
+        softPwm::pwm(pv, 1);
         
         std::cout << "spwm period: "_pgm << softPwm::period() << std::endl;
 
@@ -222,8 +232,8 @@ int main()
     constexpr auto tsd = AVR::Util::calculate<crTimer>(fCr);
     crTimer::prescale<tsd.prescaler>();
     crTimer::mcuTimer->ocra = tsd.ocr;
+
     crAdapter::init();
-    
     
     led::dir<AVR::Output>();
 
@@ -278,7 +288,7 @@ ISR(PCINT3_vect) {
 }
 ISR(TIMER1_COMPA_vect) {
     crAdapter::rateTick();
-    led::toggle();
+//    led::toggle();
 //    SWUsart<0>::isr_compa();
 }
 ISR(TIMER1_COMPB_vect) {

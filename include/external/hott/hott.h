@@ -24,38 +24,16 @@
 #include "external/hott/sensorprotocoll.h"
 #include "external/hott/sensorprotocolladapter.h"
 #include "external/hott/sensorprotocollbuffer.h"
+#include "external/hott/sensortextprotocollbuffer.h"
 #include "external/hott/sumdprotocoll.h"
 #include "external/hott/sumdprotocolladapter.h"
 
 namespace Hott {
 
-
 template<typename Usart>
 class SensorProtocoll final {
 public:
     SensorProtocoll() = delete;
-
-//    static void hott_response() {
-//        Util::delay(hottDelay1);
-//        Usart::template rxEnable<false>();
-//        hottBinaryResponse.start_byte = 0x7c;
-//        hottBinaryResponse.gam_sensor_id = 0x8d;
-//        hottBinaryResponse.sensor_id = 0xd0;
-//        hottBinaryResponse.cell[0] = 111;
-//        hottBinaryResponse.cell[1] = 222;
-//        hottBinaryResponse.cell[2] = 10;
-//        hottBinaryResponse.rpm = 111;
-//        hottBinaryResponse.rpm2 = 222;
-//        hottBinaryResponse.stop_byte = 0x7d;
-
-//        Usart::put(Util::parity(hottBinaryResponse, [](uint8_t v){
-//                       Usart::put(v);
-//                       Util::delay(hottDelay2);
-//                   }));
-
-//        Usart::waitSendComplete();
-//        Usart::template rxEnable<true>();
-//    }
 
 //    static void hott_responseAscii(void) {
 //        Util::delay(hottDelayBeforeAnswer);

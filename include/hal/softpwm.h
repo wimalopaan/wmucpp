@@ -63,7 +63,7 @@ public:
         return mPeriod;
     }
     static void pwm(const std::percent& p, uint8_t index) {
-        assert(index < sizeof...(Pins...));
+        assert(index < sizeof...(Pins));
         mThresh[index] = std::expand(p, 0U, mPeriod);
     }
     

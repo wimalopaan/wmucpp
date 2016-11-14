@@ -143,3 +143,4 @@ include/external/hott/sumdprotocolladapter.h
 include/external/hott/sumdprotocoll.h
 include/external/hott/sensorprotocoll.h
 include/external/hott/sensorprotocollbuffer.h
+include/external/hott/sensortextprotocollbuffer.h

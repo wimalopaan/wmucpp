@@ -22,6 +22,8 @@ F_OSC = 20000000
 
 targets += simavr.elf host
 
+CPPFLAGS += -DNDEBUG
+
 host: CXX = g++
 host: CC = g++
 host: LDFLAGS =

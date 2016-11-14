@@ -21,6 +21,8 @@
 MCU = atmega1284p
 F_OSC = 20000000
 
+CPPFLAGS += -DNDEBUG
+
 targets +=  bm01.s bm01.elf bm01.size
 targets +=  bm02.s bm02.elf bm02.size
 targets +=  bm03a.s bm03a.elf bm03a.size

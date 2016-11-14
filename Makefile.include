@@ -54,7 +54,8 @@ MCUFLAGS = -mmcu=$(MCU)
 
 SIMAVR = ~/Projekte/simavr/simavr/run_avr
 
-CXXFLAGS += -DNDEBUG
+#CPPFLAGS += -DNDEBUG
+
 CXXFLAGS += -Os -std=c++1z
 #CXXFLAGS += -nostdlib -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics
 CXXFLAGS += -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics #-Wgnu-string-literal-operator-template
@@ -67,7 +68,6 @@ CXXFLAGS += -I/usr/include/simavr
 CXXFLAGS += -I/usr/avr/include
 CXXFLAGS += $(MCUFLAGS)
 
-CFLAGS += -DNDEBUG
 #CFLAGS += -Os -std=gnu11
 CFLAGS += -Os -std=c11
 CFLAGS += -funsigned-char -funsigned-bitfields -fshort-enums
@@ -130,10 +130,10 @@ AVRDUDE = avrdude
 	$(NM) -n $< > $@
 
 %.elf: %.cc
-	$(CXX) $(CXXFLAGS) $< --output $@ $(LDFLAGS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< --output $@ $(LDFLAGS)
 
 %.elf: %.c
-	$(CC) $(CFLAGS) $< --output $@ $(LDFLAGS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $< --output $@ $(LDFLAGS)
 
 %.hex: %.elf
 	$(OBJCOPY) -O ihex -R .eeprom $< $@
