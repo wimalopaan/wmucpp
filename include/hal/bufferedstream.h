@@ -11,20 +11,37 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#pragma once 
 
 #include <stdint.h>
+#include "container/fifo.h"
 
-template<typename... Writers >
-class VariableRateAdapter {
+template<typename Device, uint16_t Size>
+class BufferedStream {
 public:
+    typedef Device device_type;
+    static constexpr const uint16_t size = Size;
+    
+    template<uint8_t Baud>
+    static void init() {
+        Device::template init<Baud>();
+    }
+
+    static bool put(uint8_t v) {
+        return fifo.push_back(v);
+    }
     static void periodic() {
-        (Writers::periodic(),...);
+        if (auto v = fifo.pop_front()) {
+            Device::put(*v);
+        }
     }
 private:
+    static std::FiFo<uint8_t, Size> fifo;
 };
+template<typename Device, uint16_t Size>
+std::FiFo<uint8_t, Size> BufferedStream<Device, Size>::fifo;

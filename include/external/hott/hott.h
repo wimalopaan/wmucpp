@@ -63,25 +63,25 @@ public:
 //        Usart::waitSendComplete();
 //        Usart::template rxEnable<true>();
 //    }
-    static void key(uint8_t k) {
-        switch (k) {
-        case keyDown:
-            mRow = (mRow + 1) % mNumberOfRows;
-            break;
-        case keyUp:
-            mRow = (mRow - 1 + mNumberOfRows) % mNumberOfRows;
-            break;
-        case keyRight:
-            mColumn = (mColumn + 1) % mNumberOfColumns;
-            break;
-        case keyLeft:
-            mColumn = (mColumn - 1 + mNumberOfColumns) % mNumberOfColumns;
-            break;
-        default:
-            break;
-        }
-        mKey = k;
-    }
+//    static void key(uint8_t k) {
+//        switch (k) {
+//        case keyDown:
+//            mRow = (mRow + 1) % mNumberOfRows;
+//            break;
+//        case keyUp:
+//            mRow = (mRow - 1 + mNumberOfRows) % mNumberOfRows;
+//            break;
+//        case keyRight:
+//            mColumn = (mColumn + 1) % mNumberOfColumns;
+//            break;
+//        case keyLeft:
+//            mColumn = (mColumn - 1 + mNumberOfColumns) % mNumberOfColumns;
+//            break;
+//        default:
+//            break;
+//        }
+//        mKey = k;
+//    }
 
 private:
     static constexpr const uint8_t mNumberOfRows = 7;

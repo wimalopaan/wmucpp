@@ -26,6 +26,8 @@
 #include "mcu/avr/mcupwm.h"
 #include "hal/softpwm.h"
 #include "hal/constantrate.h"
+#include "hal/variablerate.h"
+#include "hal/bufferedstream.h"
 
 #include <stdlib.h>
 
@@ -42,10 +44,14 @@ using SoftSPIClock = AVR::Pin<PortA, 1>;
 using SoftSPISS = AVR::Pin<PortA, 2>;
 using SSpi0 = SoftSpiMaster<SoftSPIData, SoftSPIClock, SoftSPISS>;
 
-using terminal = SSpi0;
+//using terminal = SSpi0;
+using bufferedTerminal = BufferedStream<SSpi0, 128>;
+using vrAdapter = VariableRateAdapter<bufferedTerminal>;
+
 
 namespace std {
-    std::basic_ostream<terminal> cout;
+    std::basic_ostream<bufferedTerminal> cout;
+//    std::basic_ostream<terminal> cout;
     std::lineTerminator<CRLF> endl;
 }
 
@@ -79,7 +85,6 @@ using softPpm = SoftPPM<ppmTimerOutput, ppmPin1>;
 
 // todo: auf pwm verzichten, dafür ConstantRateAdapter mit Timer 1
 //using hardPwm = AVR::PWM<1>;
-
 
 using crTestPin = AVR::Pin<PortB, 1>;
 using crTimer = AVR::Timer16Bit<1>;
@@ -125,7 +130,7 @@ class HottKeyHandler : public EventHandler<EventType::HottAsciiKey> {
 public:
     static void process(const uint8_t& v) {
         std::cout << "k: "_pgm << v << std::endl;
-        Hott::SensorProtocoll<sensorUsart>::key(v);
+//        Hott::SensorProtocoll<sensorUsart>::key(v);
 
     }
 };
@@ -144,7 +149,6 @@ class HottTextHandler : public EventHandler<EventType::HottAsciiRequest> {
 public:
     static void process(const uint8_t&) {
         std::cout << "hba"_pgm << std::endl;
-//        Hott::SensorProtocoll<sensorUsart>::hott_responseAscii();
         crWriterSensorBinary::enable(false);
         crWriterSensorText::enable(true);
         crAdapter::start();
@@ -209,7 +213,8 @@ int main()
     Scoped<EnableInterrupt> interruptEnabler;
 
     systemTimer::init();
-    terminal::init<0>();
+//    terminal::init<0>();
+    bufferedTerminal::init<0>();
 
     sensorUsart::init<19200>();
     rcUsart::init<115200>();
@@ -263,6 +268,7 @@ int main()
         ppmSwitch::process(ppm1::value());
         softPwm::freeRun();
         crAdapter::periodic();
+        vrAdapter::periodic();
     });
 
     return 0;
