@@ -88,7 +88,7 @@ struct SpiBase {
 
 template<uint8_t N, typename MCU = DefaultMcuType>
 class Spi final : public SpiBase<Spi<N, MCU>> {
-    static_assert(N < 2, "wrong spi number");
+    static_assert(N < MCU::Spi::count, "wrong spi number");
     friend void ::SPI_STC_vect();
 
     using spiPort = SpiPort<N, MCU>;

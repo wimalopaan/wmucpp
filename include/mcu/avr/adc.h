@@ -11,23 +11,36 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "mcu/ports.h"
+#pragma once
 
-using namespace AVR;
-using PortB = Port<DefaultMcuType::PortRegister, AVR::B>;
-using led = Pin<PortB, 0>;
+#include <stdint.h>
 
-int main()
-{
-    led::dir<Output>();        
-    led::high();
+namespace AVR {
+
+template<uint8_t N, typename MCU = DefaultMcuType>
+class Adc final {
+    static_assert(N < MCU::Adc::count, "wrong adc number"); 
+    static constexpr auto base = getBaseAddr<typename MCU::Adc, N>();
+
+public:
+    typedef MCU mcu_type;
+    static constexpr const uint8_t number = N;
+    Adc() = delete;
+
+    static void init() {
+        
+    }
     
-    while(true) {
-        led::toggle();        
-    }    
+    static void channel(uint8_t ch) {
+        assert(ch < MCU::Adc::template Parameter<0>::numberOfChannels);
+    }
+    
+private:
+};
+
 }

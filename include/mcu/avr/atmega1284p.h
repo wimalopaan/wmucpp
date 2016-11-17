@@ -25,10 +25,11 @@
 
 namespace AVR {
 
-struct ATMega1284P final
+struct ATMega1284P final 
 {
     ATMega1284P() = delete;
     struct Usart {
+        static constexpr const uint8_t count = 2;
         volatile uint8_t ucsra;
         volatile uint8_t ucsrb;
         volatile uint8_t ucsrc;
@@ -40,6 +41,7 @@ struct ATMega1284P final
         template<int N> struct Address;
     };
     struct Timer8Bit {
+        static constexpr const uint8_t count = 2;
         typedef uint8_t value_type;
         volatile uint8_t tccra;
         volatile uint8_t tccrb;
@@ -50,7 +52,6 @@ struct ATMega1284P final
         template<int N, int F> struct Prescaler;
         template<int N> struct PrescalerRow;
     };
-
     enum class Timer8BitTccra: uint8_t {
         None    = 0,
         WGM0    = 1 << 0,
@@ -62,6 +63,7 @@ struct ATMega1284P final
     };
 
     struct Timer16Bit {
+        static constexpr const uint8_t count = 2;
         typedef uint16_t value_type;
         volatile uint8_t tccra;
         volatile uint8_t tccrb;
@@ -115,10 +117,27 @@ struct ATMega1284P final
     };
 
     struct Spi {
+        static constexpr const uint8_t count = 1;
         volatile uint8_t spcr;
         volatile uint8_t spsr;
         volatile uint8_t spdr;
         template<int N> struct Address;
+    };
+
+    struct Adc {
+        static constexpr const uint8_t count = 1;
+        union {
+            struct {
+                volatile uint8_t adcl;
+                volatile uint8_t adch;
+            };
+            volatile uint16_t adc;
+        };
+        volatile uint8_t adcsra;
+        volatile uint8_t adcsrb;
+        volatile uint8_t admux;
+        template<int N> struct Address;
+        template<int N> struct Parameter;
     };
 
     struct PortRegister {
@@ -137,6 +156,12 @@ struct ATMega1284P final
         static constexpr uint8_t address = 0x3b;
     };
 };
+
+template<>
+struct ATMega1284P::Adc::Parameter<0> {
+    static constexpr uint8_t numberOfChannels = 8;
+};
+
 template<>
 struct ATMega1284P::PortRegister::Address<A> {
     static constexpr uint8_t value = 0x20;
@@ -169,6 +194,11 @@ struct ATMega1284P::PCInterrupts::Address<2> {
 template<>
 struct ATMega1284P::PCInterrupts::Address<3> {
     static constexpr uint8_t value = 0x73;
+};
+
+template<>
+struct ATMega1284P::Adc::Address<0> {
+    static constexpr uint8_t value = 0x78;
 };
 
 template<>
@@ -301,7 +331,6 @@ struct ATMega1284P::Timer16Bit::Address<3> {
 };
 
 }
-
 
 
 #pragma pack(pop)

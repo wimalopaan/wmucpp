@@ -56,7 +56,7 @@ SIMAVR = ~/Projekte/simavr/simavr/run_avr
 
 #CPPFLAGS += -DNDEBUG
 
-CXXFLAGS += -Os -std=c++1z
+CXXFLAGS += -Os -std=c++17
 #CXXFLAGS += -nostdlib -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics
 CXXFLAGS += -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics #-Wgnu-string-literal-operator-template
 CXXFLAGS += -funsigned-char -funsigned-bitfields -fshort-enums

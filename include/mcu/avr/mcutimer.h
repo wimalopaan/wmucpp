@@ -21,6 +21,7 @@
 #include <stdint.h>
 
 #include "mcu/avr8.h"
+#include "mcu/avr/isr.h"
 #include "units/physical.h"
 
 namespace AVR {
@@ -40,6 +41,8 @@ struct TimerBase
 template<uint8_t N, typename MCU = DefaultMcuType>
 class Timer8Bit : public TimerBase<MCU, N> {
 public:
+    // todo: umstellen auf anderen zähler
+//    static_assert(N < MCU::Timer8Bit::count, "wrong number");
     static constexpr uint8_t number = N;
     static constexpr auto mcuTimer = getBaseAddr<typename MCU::Timer8Bit, N>();
     typedef typename MCU::Timer8Bit mcu_timer_type;
@@ -98,6 +101,7 @@ struct Timer8Bit<N, ATMegaNone> : public TimerBase<ATMegaNone, N>
 template<uint8_t N, typename MCU = DefaultMcuType>
 struct Timer16Bit: public TimerBase<MCU, N>
 {
+    typedef AVR::ISR::Timer<N> isr_type;
     static constexpr uint8_t number = N;
     static constexpr auto mcuTimer = getBaseAddr<typename MCU::Timer16Bit, N>();
     typedef typename MCU::Timer16Bit mcu_timer_type;
@@ -110,13 +114,20 @@ struct Timer16Bit: public TimerBase<MCU, N>
         mcuTimer->tccrb |= MCU::Timer16Bit::template Prescaler<PreScale>::value;
     }
     
+    static void ocra(uint16_t v) {
+        mcuTimer->ocra = v;
+    }
+    
     static void start(){
     }
+
     // todo: template  
     // modi: CTC, OCIEA, OCIEB, ...
     static void mode(const TimerMode& mode) {
         if (mode == TimerMode::CTC) {
             TimerBase<MCU, N>::mcuInterrupts->timsk |= _BV(OCIE0A);
+//            mcuTimer->tccra = _BV(WGM01);
+            mcuTimer->tccrb |= _BV(WGM12);
         }
     }
 };

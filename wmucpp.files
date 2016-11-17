@@ -145,3 +145,13 @@ include/external/hott/sensorprotocoll.h
 include/external/hott/sensorprotocollbuffer.h
 include/external/hott/sensortextprotocollbuffer.h
 include/hal/bufferedstream.h
+include/mcu/avr/adc.h
+doc/bmcpp99/Makefile
+doc/bmcpp99/bm01a.cc
+doc/bmcpp99/simavrconsole.c
+doc/bmcpp99/bm01b.c
+example/blink.h
+example/systemtick.cc
+example/systemtick.h
+example/simavrconsole.c
+example/simpleisr.cc

@@ -22,6 +22,7 @@
 #include "util/bits.h"
 #include "std/algorithm.h"
 #include "units/physical.h"
+#include "mcu/avr/isr.h"
 
 template<typename Pin, uint8_t V>
 class TestBitShifter {
@@ -96,7 +97,8 @@ bool ConstanteRateWriter<Buffer, Device, CounterType>::mEnable = true;
 
 
 template<typename Timer, typename... Writers >
-class ConstantRateAdapter {
+class ConstantRateAdapter : public IsrBaseHandler<typename Timer::isr_type::CompareA> {
+    template<typename... II> friend class IsrRegistrar;
 public:
     static void periodic() {
         if (tickCounter > 0) {
@@ -117,6 +119,7 @@ public:
     static void rateTick() {
         ++tickCounter;
     }
+    constexpr static auto isr = rateTick;
 private:
     static uint8_t tickCounter;
 };

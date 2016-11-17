@@ -14,6 +14,7 @@
 #include "external/ws2812.h"
 #include "mcu/avr/pinchange.h"
 #include "mcu/avr/ppm.h"
+#include "mcu/avr/adc.h"
 #include "hal/ppmswitch.h"
 #include "util/fsm.h"
 #include "external/hott/hott.h"
@@ -91,7 +92,6 @@ using crTimer = AVR::Timer16Bit<1>;
 using crWriterSensorBinary = ConstanteRateWriter<Hott::SensorProtocollBuffer<0>, sensorUsart>;
 using crWriterSensorText = ConstanteRateWriter<Hott::SensorTextProtocollBuffer<0>, sensorUsart>;
 using crAdapter = ConstantRateAdapter<crTimer, crWriterSensorBinary, crWriterSensorText, TestBitShifter<crTestPin, 0x55>>;
-
 
 using softPwmPin1 = AVR::Pin<PortB, 2>;
 using softPwmPin2 = AVR::Pin<PortB, 3>;
@@ -179,6 +179,9 @@ public:
         
         std::cout << "spwm period: "_pgm << softPwm::period() << std::endl;
 
+        std::microseconds ptime = std::duration_cast<std::microseconds>(Config::Timer::resolution) / softPwm::period();
+
+        std::cout << "spwm ptime: "_pgm << ptime << std::endl;
     }
 };
 
@@ -208,8 +211,14 @@ public:
     }
 };
 
+//struct TestISRDoubleDef : public IsrBaseHandler<AVR::ISR::Int<0>> {
+//};
+
+using isrRegistrar = IsrRegistrar<ppm1, crAdapter>;
+
 int main()
 {
+    isrRegistrar::init();
     Scoped<EnableInterrupt> interruptEnabler;
 
     systemTimer::init();
@@ -288,12 +297,14 @@ ISR(PCINT1_vect) {
 
 }
 ISR(PCINT2_vect) {
-    ppm1::isr2();
+    isrRegistrar::isr<AVR::ISR::PcInt<2>>();
+//    ppm1::isr();
 }
 ISR(PCINT3_vect) {
 }
 ISR(TIMER1_COMPA_vect) {
-    crAdapter::rateTick();
+    isrRegistrar::isr<AVR::ISR::Timer<1>::CompareA>();
+//    crAdapter::rateTick();
 //    led::toggle();
 //    SWUsart<0>::isr_compa();
 }

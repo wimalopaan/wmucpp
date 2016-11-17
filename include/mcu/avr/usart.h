@@ -115,7 +115,7 @@ public:
     typedef PA protocoll_adapter_type;
 
     static constexpr uint8_t number = N;
-    static_assert(N < 2, "wrong number of usart");
+    static_assert(N < MCU::Usart::count, "wrong number of usart");
 
     Usart() = delete;
     template<uint32_t Baud>

@@ -29,6 +29,7 @@ struct ATMega328P final
 {
     ATMega328P() = delete;
     struct Usart {
+        static constexpr const uint8_t count = 1;
         volatile uint8_t ucsra;
         volatile uint8_t ucsrb;
         volatile uint8_t ucsrc;
@@ -40,6 +41,7 @@ struct ATMega328P final
         template<int N> struct Address;
     };
     struct Timer8Bit {
+        static constexpr const uint8_t count = 2;
         volatile uint8_t tccra;
         volatile uint8_t tccrb;
         volatile uint8_t tcnt;
@@ -61,6 +63,7 @@ struct ATMega328P final
     };
 
     struct Timer16Bit {
+        static constexpr const uint8_t count = 1;
         volatile uint8_t tccra;
         volatile uint8_t tccrb;
         volatile uint8_t tccrc;
@@ -108,6 +111,7 @@ struct ATMega328P final
     };
 
     struct Spi {
+        static constexpr const uint8_t count = 1;
         volatile uint8_t spcr;
         volatile uint8_t spsr;
         volatile uint8_t spdr;
@@ -270,6 +274,7 @@ template<>
 struct ATMega328P::Timer16Bit::Prescaler<1024> {
     static constexpr uint8_t value = _BV(CS12) | _BV(CS10);
 };
+
 
 }
 #pragma pack(pop)

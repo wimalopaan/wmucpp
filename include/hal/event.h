@@ -133,7 +133,6 @@ public:
             if (auto event = fifo().pop_front()) {
                 EE::process(*event);
             }
-
         }
     }
 private:

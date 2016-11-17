@@ -19,62 +19,58 @@
 #include <array>
 #include <string>
 #include <iostream>
+#include <algorithm>
+#include <vector>
 
 struct Digital {
-    static constexpr const char name[] = "D";
+    static constexpr const char name[] = "Digital";
+    static constexpr const uint16_t baseAddress = 0x100;
 };
 struct Analog {
-    static constexpr const char name[] = "A";
+    static constexpr const char name[] = "Aanalog";
+    static constexpr const uint16_t baseAddress = 0x200;
 };
+
+template<typename Type> class Actor;
+template<typename Type> std::ostream& operator<<(std::ostream& o, const Actor<Type>& a);
 
 template<typename Type>
 class Actor
 {
+    friend std::ostream& operator<< <>(std::ostream& o, const Actor<Type>& a);
 public:
-    Actor(const std::string& baseName = Type::name) : name(baseName + std::to_string(numberOfActors)), 
-        number(numberOfActors++) {}
-    static size_t numberOfActors;
+    Actor(int id) : name(std::string{Type::name} + std::to_string(id)), mId(id), address(Type::baseAddress + mId) {}
+private:
     std::string name;
-    const size_t number;
+    size_t mId;
+    uint16_t address;
 };
-template<typename Type>
-size_t Actor<Type>::numberOfActors = 0;
 
 template<typename Type>
 std::ostream& operator<<(std::ostream& o, const Actor<Type>& a) {
-    return o << a.name;
+    return o << a.name << " : " << a.address;
 }
 
-template<typename Type>
-class Actor2
-{
-public:
-    Actor2(int id) : name(std::string{Type::name} + std::to_string(id)), 
-        mId(id) {}
-    std::string name;
-    const size_t mId;
-};
-
-template<typename Type>
-std::ostream& operator<<(std::ostream& o, const Actor2<Type>& a) {
-    return o << a.name;
+Actor<Digital> operator"" _da(unsigned long long v) {
+    return Actor<Digital>(v);
 }
 
-Actor2<Digital> operator"" _da(unsigned long long v) {
-    return Actor2<Digital>(v);
-}
-
-Actor2<Analog> operator"" _aa(unsigned long long v) {
-    return Actor2<Analog>(v);
+Actor<Analog> operator"" _aa(unsigned long long v) {
+    return Actor<Analog>(v);
 }
 
 int main()
 {
-    std::array<Actor2<Digital>, 3> actors3 = {{1_da, 3_da, 2_da}};
-    std::array<Actor2<Analog>, 3> actors4 = {{1_aa, 3_aa, 2_aa}};
+    std::array<Actor<Digital>, 3> actors1 = {{1_da, 3_da, 2_da}};
+    std::array<Actor<Analog>, 3>  actors2 = {{1_aa, 3_aa, 2_aa}};
+ 
+    std::vector<Actor<Digital>> v;
+    int startId = 0;
+    std::generate_n(std::back_inserter(v), 10, [&](){return Actor<Digital>(startId++);});
     
-    std::array<Actor<Digital>, 3> actors1;
-    std::array<Actor<Analog>, 3> actors2;
+    for(const auto& a: v) {
+        std::cout << a << std::endl;
+    }
     
     for(const auto& a: actors1) {
         std::cout << a << std::endl;
@@ -82,6 +78,4 @@ int main()
     for(const auto& a: actors2) {
         std::cout << a << std::endl;
     }
-
-
 }

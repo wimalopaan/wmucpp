@@ -31,4 +31,12 @@ struct enable_if<true, T> {
     typedef T type;
 };
 
+template<bool B, class T = void>
+struct enable_if_not {};
+
+template<class T>
+struct enable_if_not<false, T> {
+    typedef T type;
+};
+
 }

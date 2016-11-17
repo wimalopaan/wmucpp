@@ -95,4 +95,11 @@ constexpr std::milliseconds duration_cast<std::milliseconds>(const std::microsec
     return std::milliseconds{(uint16_t)(us.value / 1000)};
 }
 
+template<typename T>
+constexpr std::microseconds duration_cast(const std::milliseconds&);
+template<>
+constexpr std::microseconds duration_cast<std::microseconds>(const std::milliseconds& ms) {
+    return std::microseconds{(uint16_t)(ms.value * 1000)};
+}
+
 }

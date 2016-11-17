@@ -11,23 +11,41 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "mcu/ports.h"
+#include "mcu/avr8.h"
+#include "mcu/avr/isr.h"
 
-using namespace AVR;
-using PortB = Port<DefaultMcuType::PortRegister, AVR::B>;
-using led = Pin<PortB, 0>;
+volatile uint8_t x = 0;
+
+struct Handler1 final : public IsrBaseHandler<AVR::ISR::Int<0>>
+{
+    static void isr() {
+        ++x;
+    }
+};
+
+struct Handler2 final : public IsrBaseHandler<AVR::ISR::Int<1>>
+{
+    static void isr() {
+        ++x;
+    }
+};
+
+using isrRegistrar = IsrRegistrar<Handler1, Handler2>;
 
 int main()
 {
-    led::dir<Output>();        
-    led::high();
-    
-    while(true) {
-        led::toggle();        
-    }    
+    isrRegistrar::init();    
+}
+
+ISR(TIMER0_COMPA_vect) {
+    isrRegistrar::isr<AVR::ISR::Timer<0>::CompareA>();
+}
+
+ISR(TIMER0_COMPB_vect) {
+    isrRegistrar::isr<AVR::ISR::Timer<0>::CompareB>();
 }

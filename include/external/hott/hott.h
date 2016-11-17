@@ -30,6 +30,8 @@
 
 namespace Hott {
 
+// todo: ersetzen
+
 template<typename Usart>
 class SensorProtocoll final {
 public:

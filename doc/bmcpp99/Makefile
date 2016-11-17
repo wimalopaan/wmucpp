@@ -17,24 +17,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-MCU = atmega1284p
+MCU = atmega328p
 F_OSC = 20000000
 
-targets +=  main.elf main.size
-targets +=  blink.elf blink.size
-targets +=  systemtick.elf 
-targets +=  simpleisr.elf 
+targets +=  bm01a.s bm01a.elf bm01a.size
+targets +=  bm01b.s bm01b.elf bm01b.size
 
-blink.elf: MCU=atmega328p
+-include ../../Makefile.include
 
-systemtick.elf: MCU=atmega328p
-systemtick.elf: systemtick.o simavrconsole.o
-	$(CC) $(LDFLAGS) -o $@ systemtick.o simavrconsole.o
+bm01a.elf: bm01a.o simavrconsole.o
+	$(CC) $(LDFLAGS) -o $@ bm01a.o simavrconsole.o
 
-simpleisr.elf: CPPFLAGS=-DNDEBUG
-simpleisr.elf: MCU=atmega328p
-simpleisr.elf: simpleisr.o simavrconsole.o
-	$(CC) $(LDFLAGS) -o $@ simpleisr.o simavrconsole.o
 
--include ../Makefile.include
+bm01b.elf: bm01b.o simavrconsole.o
+	$(CC) $(LDFLAGS) -o $@ bm01b.o simavrconsole.o
 

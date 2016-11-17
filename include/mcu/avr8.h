@@ -47,11 +47,10 @@ struct ATMega1284P;
 struct ATMega328P;
 
 }
-
-#include "mcu/avr/atmega8.h"
+#include "mcu/avr/atmega1284p.h"
 #include "mcu/avr/atmega328p.h"
 #include "mcu/avr/atmega328pb.h"
-#include "mcu/avr/atmega1284p.h"
+#include "mcu/avr/atmega8.h"
 
 namespace AVR {
 
@@ -76,6 +75,8 @@ constexpr Component* getBaseAddr() {
 typedef AVR::ATMega1284P DefaultMcuType;
 #elif defined(__AVR_ATmega328P__)
 typedef AVR::ATMega328P DefaultMcuType;
+#elif defined(__AVR_ATmega328PB__)
+typedef AVR::ATMega328PB DefaultMcuType;
 #elif defined(__AVR_ATmega8__)
 typedef AVR::ATMega8 DefaultMcuType;
 #elif defined(__AVR_ATtiny85__)

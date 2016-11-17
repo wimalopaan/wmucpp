@@ -11,23 +11,25 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "mcu/ports.h"
+#include <stdint.h>
+#include <avr/interrupt.h>
 
-using namespace AVR;
-using PortB = Port<DefaultMcuType::PortRegister, AVR::B>;
-using led = Pin<PortB, 0>;
+volatile uint8_t x = 0;
+volatile uint8_t y = 0;
 
 int main()
 {
-    led::dir<Output>();        
-    led::high();
-    
-    while(true) {
-        led::toggle();        
-    }    
+}
+
+ISR(TIMER0_COMPA_vect) {
+    ++x;
+}
+
+ISR(TIMER0_COMPB_vect) {
+    ++x;
 }

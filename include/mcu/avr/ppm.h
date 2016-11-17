@@ -20,6 +20,7 @@
 
 #include "config.h"
 #include "mcu/avr8.h"
+#include "mcu/avr/isr.h"
 #include "units/physical.h"
 
 // todo: generalisieren als PinChangeDecoder, auch fuer mehrere Pins je Port, die sich ändern
@@ -40,7 +41,8 @@ constexpr uint16_t calculatePpm() {
 }
 
 template<typename PinChange, typename MCUTimer>
-class PpmDecoder final {
+class PpmDecoder final : public IsrBaseHandler<AVR::ISR::PcInt<PinChange::pcGroupNumber>>{
+    template<typename... II> friend class IsrRegistrar;
     friend void ::PCINT0_vect();
     friend void ::PCINT1_vect();
     friend void ::PCINT2_vect();
@@ -73,17 +75,12 @@ public:
         MCUTimer::mode(AVR::TimerMode::Normal);
         MCUTimer::start();
     }
-
     static uint8_t value() {
         return period;
     }
 
 private:
-    static void isr0() {
-    }
-    static void isr1() {
-    }
-    static void isr2() {
+    static void isr() {
         if (!pin_type::read()) { // high -> low
             uint8_t v = mcuTimer->tcnt;
             period = (v + 256 - timerStartValue) % 256;
@@ -91,8 +88,6 @@ private:
         else { // low -> high
             timerStartValue = mcuTimer->tcnt;
         }
-    }
-    static void isr3() {
     }
     static volatile uint8_t period;
     static volatile uint8_t timerStartValue;

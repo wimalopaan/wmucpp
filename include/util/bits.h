@@ -24,7 +24,7 @@
 namespace std {
 template<typename E>
 struct enable_bitmask_operators final {
-    static const bool enable = false;
+    static constexpr const bool enable = false;
 };
 }
 
@@ -49,6 +49,10 @@ namespace Util {
             static constexpr const T value = 1;
         };
     };  
+    template<typename T>
+    constexpr uint8_t numberOfOnes(T x) {
+        return x ? int(x & 0x01) + numberOfOnes(x>>1) : 0;
+    }
 }
 
 

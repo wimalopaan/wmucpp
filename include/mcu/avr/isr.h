@@ -18,6 +18,9 @@
 
 #pragma once
 
+#include <stdint.h>
+#include "util/bits.h"
+
 #if __has_include(<avr/interrupt.h>)
 # include <avr/interrupt.h>
 
@@ -51,3 +54,133 @@ extern "C" {
 }
 
 #endif
+
+template<typename... HH>
+struct IsrRegistrar {
+    static void init() {
+        constexpr uint64_t all = (HH::mask | ...);
+        static_assert(Util::numberOfOnes(all) == sizeof...(HH), "Isr double defined");
+    }
+    template<uint8_t N, typename H, typename... Hp>
+    struct Caller {
+        static void call(uint8_t n) {
+            if (n == H::number) {
+                H::isr();
+            }
+            Caller<N-1, Hp..., void>::call(n);
+        }
+    };
+    template<typename... Hp>
+    struct Caller<0, void, Hp...> {
+        static void call(uint8_t) {}
+    };
+    
+    template<typename INT>
+    static void isr() {
+        Caller<sizeof...(HH), HH...>::call(INT::number);
+    }
+};
+
+template<typename I>
+struct IsrBaseHandler {
+    typedef I isr_type;
+    static constexpr const uint8_t number = I::number;
+    static constexpr const uint64_t mask = (1 << I::number);    
+    static void isr() {}
+};
+
+namespace AVR {
+namespace ISR {
+
+template<uint8_t N>
+struct Int;
+
+template<>
+struct Int<0> {
+    static constexpr const uint32_t number = INT0_vect_num;
+};
+template<>
+struct Int<1> {
+    static constexpr const uint32_t number = INT1_vect_num;
+};
+#ifdef INT2_vect_num
+template<>
+struct Int<2> {
+    static constexpr const uint32_t number = INT2_vect_num;
+};
+#endif
+
+template<uint8_t N>
+struct PcInt;
+
+template<>
+struct PcInt<0>{
+    static constexpr const uint32_t number = PCINT0_vect_num;
+};
+template<>
+struct PcInt<1>  {
+    static constexpr const uint32_t number = PCINT1_vect_num;
+};
+template<>
+struct PcInt<2>  {
+    static constexpr const uint32_t number = PCINT2_vect_num;
+};
+#ifdef PCINT3_vect_num
+template<>
+struct PcInt<3>  {
+    static constexpr const uint32_t number = PCINT3_vect_num;
+};
+#endif
+struct Wdt  {
+    static constexpr const uint32_t number = WDT_vect_num;
+};
+
+template<uint8_t N>
+struct Timer;
+
+template<>
+struct Timer<2> {
+    struct CompareA  {
+        static constexpr const uint32_t number = TIMER2_COMPA_vect_num;
+    };
+    struct CompareB  {
+        static constexpr const uint32_t number = TIMER2_COMPB_vect_num;
+    };
+    struct Overflow  {
+        static constexpr const uint32_t number = TIMER2_OVF_vect_num;
+    };
+};
+template<>
+struct Timer<1> {
+    struct Capture  {
+        static constexpr const uint32_t number = TIMER1_CAPT_vect_num;
+    };
+    struct CompareA  {
+        static constexpr const uint32_t number = TIMER1_COMPA_vect_num;
+    };
+    struct CompareB  {
+        static constexpr const uint32_t number = TIMER1_COMPB_vect_num;
+    };
+    struct Overflow  {
+        static constexpr const uint32_t number = TIMER1_OVF_vect_num;
+    };
+};
+template<>
+struct Timer<0> {
+    struct CompareA  {
+        static constexpr const uint32_t number = TIMER0_COMPA_vect_num;
+    };
+    struct CompareB  {
+        static constexpr const uint32_t number = TIMER0_COMPB_vect_num;
+    };
+    struct Overflow  {
+        static constexpr const uint32_t number = TIMER0_OVF_vect_num;
+    };
+};
+struct SpiStc  {
+    static constexpr const uint32_t number = SPI_STC_vect_num;
+};
+
+
+}
+}
