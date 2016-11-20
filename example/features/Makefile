@@ -17,14 +17,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-targets = test01 test02 test03
+MCU = atmega328p
+F_OSC = 20000000
 
--include ../Makefile.include
+LOADLIBES = simavrconsole.o
 
-#CXX = g++
-CXX = clang++
-CC = g++
-LDFLAGS =
-CXXFLAGS = -g -std=c++1z
-CXXFLAGS += -Wall -Wextra
-MCUFLAGS =
+targets += simavrconsole.o
+
+targets += blink.elf
+
+-include ../../Makefile.include
+

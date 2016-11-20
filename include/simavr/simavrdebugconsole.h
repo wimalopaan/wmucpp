@@ -21,9 +21,12 @@
 #if __has_include(<avr/io.h>)
 # include <avr/io.h>
 #endif
-
 #if __has_include(<avr/avr_mcu_section.h>)
 # include <avr/avr_mcu_section.h>
+#endif
+
+#ifndef GPIOR0
+# define GPIOR0 _SFR_IO8(0x5c)
 #endif
 
 class SimAVRDebugConsole final {

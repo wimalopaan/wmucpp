@@ -52,14 +52,16 @@ private:
 template<typename Pin, uint8_t V>
 uint8_t TestBitShifter<Pin, V>::value = V;
 
-template<typename Buffer, typename Device, typename CounterType = uint8_t>
+template<typename Buffer, typename Device, typename CounterType = uint16_t, bool disableRx = true>
 class ConstanteRateWriter { 
 public:
     static void rateProcess() {
         if (!mEnable) return;
         
         if (counter == 0) {
-            Device::template rxEnable<false>();
+            if constexpr(disableRx) {
+                Device::template rxEnable<false>();
+            }
         }
         if (counter < Buffer::size()) {
             if (auto data = Buffer::get(counter++)) {
@@ -71,12 +73,15 @@ public:
                 return;
             }
             else {
-                Device::template rxEnable<true>();
+                if constexpr(disableRx) {
+                    Device::template rxEnable<true>();
+                }
             }
         }
     }
-    static void enable(bool e) {
-        mEnable = e;
+    template<bool E>
+    static void enable() {
+        mEnable = E;
     }
 
     static void start() {
@@ -90,14 +95,13 @@ private:
     static bool mEnable;
     static CounterType counter;
 };
-template<typename Buffer, typename Device, typename CounterType>
-CounterType ConstanteRateWriter<Buffer, Device, CounterType>::counter = 0;
-template<typename Buffer, typename Device, typename CounterType>
-bool ConstanteRateWriter<Buffer, Device, CounterType>::mEnable = true;
+template<typename Buffer, typename Device, typename CounterType, bool disableRx>
+CounterType ConstanteRateWriter<Buffer, Device, CounterType, disableRx>::counter = 0;
+template<typename Buffer, typename Device, typename CounterType, bool disableRx>
+bool ConstanteRateWriter<Buffer, Device, CounterType, disableRx>::mEnable = true;
 
-
-template<typename Timer, typename... Writers >
-class ConstantRateAdapter : public IsrBaseHandler<typename Timer::isr_type::CompareA> {
+template<typename Timer, typename Int, typename... Writers >
+class ConstantRateAdapter : public IsrBaseHandler<Int> {
     template<typename... II> friend class IsrRegistrar;
 public:
     static void periodic() {
@@ -107,11 +111,12 @@ public:
         }
     }
     static constexpr void init() {
-        Timer::mcuTimer->tccrb |= _BV(WGM12);;
-        Timer::mcuInterrupts->tifr  |= _BV(OCF1A) | _BV(OCF1B);
-        Timer::mcuInterrupts->timsk |= _BV(OCIE0A);
+        Timer::mcuTimer()->tccrb |= _BV(WGM12);;
+        Timer::mcuInterrupts()->tifr  |= _BV(OCF1A) | _BV(OCF1B);
+        Timer::mcuInterrupts()->timsk |= _BV(OCIE0A);
         
         (Writers::init(),...);
+        
     }
     static void start() {
         (Writers::start(),...);
@@ -124,5 +129,5 @@ private:
     static uint8_t tickCounter;
 };
 
-template<typename Timer, typename... Writers>
-uint8_t ConstantRateAdapter<Timer, Writers...>::tickCounter = 0;
+template<typename Timer, typename Int, typename... Writers>
+uint8_t ConstantRateAdapter<Timer, Int, Writers...>::tickCounter = 0;

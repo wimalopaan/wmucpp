@@ -31,6 +31,7 @@ struct TimerSetupData final {
 
 template<typename MCUTimer>
 constexpr TimerSetupData<typename MCUTimer::value_type> calculate(const std::hertz& ftimer) {
+//    static_assert(MCUTimer::hasOcrA || MCUTimer::hasOcrB, "need ocra or ocrb");
     using pRow = typename MCUTimer::mcu_timer_type::template PrescalerRow<MCUTimer::number>;
     for(const auto& p : pRow::values) {
         const auto tv = (Config::fMcu / ftimer) / p;

@@ -17,14 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-targets = test01 test02 test03
+MCU = atmega8
+F_OSC = 8000000
 
--include ../Makefile.include
+targets += simpleisr.elf
 
-#CXX = g++
-CXX = clang++
-CC = g++
-LDFLAGS =
-CXXFLAGS = -g -std=c++1z
-CXXFLAGS += -Wall -Wextra
-MCUFLAGS =
+-include ../../Makefile.include
+

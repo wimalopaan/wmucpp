@@ -50,10 +50,10 @@ public:
     static constexpr uint16_t ocFrame = 20_ms * timerFrequency;
 
     static void timerInit() {
-        mcuTimer->ocra = ocFrame;
-        mcuTimer->tccrb |= _BV(WGM12);
-        mcuInterrupts->tifr  |= _BV(OCF1A) | _BV(OCF1B);
-        mcuInterrupts->timsk |= _BV(OCIE0A);
+        mcuTimer()->ocra = ocFrame;
+        mcuTimer()->tccrb |= _BV(WGM12);
+        mcuInterrupts()->tifr  |= _BV(OCF1A) | _BV(OCF1B);
+        mcuInterrupts()->timsk |= _BV(OCIE0A);
         MCUTimer::template prescale<prescaler>();
     }
 };
@@ -111,13 +111,15 @@ public:
             if ((numberOfChannels - 1 - i) == (N - 1))  {
                 P::low();
             }
-            OffN<N - 1, PP..., void>::check(i);
+            if constexpr((N - 1) > 0) {
+                OffN<N - 1, PP..., void>::check(i);
+            }
         }
     };
-    template<typename... PP>
-    struct OffN<0, void, PP...> {
-        static void check(uint8_t) {}
-    };
+//    template<typename... PP>
+//    struct OffN<0, void, PP...> {
+//        static void check(uint8_t) {}
+//    };
 
     template<uint8_t N, typename P, typename... PP>
     struct OnN {
@@ -125,18 +127,20 @@ public:
             if ((numberOfChannels - 1 - i) == (N - 1))  {
                 P::high();
             }
-            OnN<N - 1, PP..., void>::check(i);
+            if constexpr((N - 1) > 0) {
+                OnN<N - 1, PP..., void>::check(i);
+            }
         }
     };
-    template<typename... PP>
-    struct OnN<0, void, PP...> {
-        static void check(uint8_t) {}
-    };
+//    template<typename... PP>
+//    struct OnN<0, void, PP...> {
+//        static void check(uint8_t) {}
+//    };
 
     static void isrA() { // CTC
         actual = 0;
-        mcuTimer->ocrb = ocrbValues[0];
-        mcuInterrupts->timsk |= _BV(OCIE0B);
+        mcuTimer()->ocrb = ocrbValues[0];
+        mcuInterrupts()->timsk |= _BV(OCIE0B);
         First<Pins...>::high();
     }
     static void isrB() {
@@ -144,11 +148,11 @@ public:
         actual = (actual + 1) % numberOfChannels;
         if (actual != 0) {
             OnN<numberOfChannels, Pins...>::check(actual);
-            mcuTimer->ocrb = ocrbValues[actual];
+            mcuTimer()->ocrb = ocrbValues[actual];
         }
         else {
-            if (numberOfChannels > 1) {
-                mcuInterrupts->timsk &= ~_BV(OCIE0B);
+            if constexpr(numberOfChannels > 1) {
+                mcuInterrupts()->timsk &= ~_BV(OCIE0B);
             }
         }
     }

@@ -21,18 +21,18 @@
 #include <stdint.h>
 #include "container/pgmstring.h"
 #include "std/algorithm.h"
+#include "std/traits.h"
 #include "util/dassert.h"
 
 #include <avr/pgmspace.h>
 
-// todo: typw-ctor fuer PgmString
-
-template<uint8_t L, typename T = char, char Fill = ' '>
+template<uint8_t Length, typename T = char, char Fill = ' '>
 class StringBuffer final {
     template<uint8_t N, typename, char> friend class StringBuffer;
 public:
     typedef T type;
-    static constexpr const uint8_t size = L;
+    typedef typename std::conditional<Length <= 255, uint8_t, uint16_t>::type size_type;
+    static constexpr const size_type size = Length;
 
     StringBuffer() = default;
     StringBuffer(const StringBuffer&) = delete;
@@ -46,36 +46,36 @@ public:
 
     template<uint8_t M>
     void insertAt(uint8_t position, const StringBuffer<M, T>& sb) {
-        assert(position < L);
+        assert(position < Length);
         insertAt(position, sb.data);
     }
 
     template<typename C, C... CC>
     void insertAt(uint8_t position, const PgmString<C, CC...>& ps) {
-        static_assert(L > ps.size, "wrong length");
-        assert(position < L);
+        static_assert(Length > ps.size, "wrong length");
+        assert(position < Length);
         const char* ptr = ps.data;
         // todo: memcpy_P
 //        memcpy_p(data + position, ps.data, min(L-position, ps.size));
-        for(uint8_t i = position, j = 0; (i < L) && (j < ps.size); ++i, ++j) {
+        for(uint8_t i = position, j = 0; (i < Length) && (j < ps.size); ++i, ++j) {
             data[i] = pgm_read_byte(ptr++);
         }
     }
     template<typename C, C... CC>
     void insertAtFill(uint8_t position, const PgmString<C, CC...>& ps) {
-        static_assert(L > ps.size, "wrong length");
+        static_assert(Length > ps.size, "wrong length");
         const char* ptr = ps.data;
         uint8_t i = position;
-        for(uint8_t j = 0; (i < L) && (j < ps.size); ++i, ++j) {
+        for(uint8_t j = 0; (i < Length) && (j < ps.size); ++i, ++j) {
             data[i] = pgm_read_byte(ptr++);
         }
-        for(; i < L; ++i) {
+        for(; i < Length; ++i) {
             data[i] = Fill;
         }
     }
     void insertAt(uint8_t position, const char* s) {
-        assert(position < L);
-        for(uint8_t i = position; (i < L) && (*s != '\0'); ++i) {
+        assert(position < Length);
+        for(uint8_t i = position; (i < Length) && (*s != '\0'); ++i) {
             data[i] = *s++;
         }
     }
@@ -95,20 +95,20 @@ public:
         return &data[0];
     }
     constexpr const T* end() const {
-        return &data[L];
+        return &data[Length];
     }
     constexpr T* begin(){
         return &data[0];
     }
     constexpr T* end() {
-        return &data[L];
+        return &data[Length];
     }
 private:
-    T data[L] = {};
+    T data[Length] = {};
 };
 
-template<typename Stream, uint8_t L, typename T, char fill>
-Stream& operator<<(Stream& out, const StringBuffer<L, T, fill>& sb) {
+template<typename Stream, uint8_t Length, typename T, char fill>
+Stream& operator<<(Stream& out, const StringBuffer<Length, T, fill>& sb) {
     for(const auto& c : sb) {
         out << c;
     }

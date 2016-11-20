@@ -11,23 +11,29 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "mcu/ports.h"
+template<int N>
+void ttt() {}
 
-using namespace AVR;
-using PortB = Port<DefaultMcuType::PortRegister, AVR::B>;
-using led = Pin<PortB, 0>;
+constexpr int bar(const int v) {
+    if (v > 0){
+        return v * 2;
+    }
+    return 2;
+}
 
-int main()
-{
-    led::dir<Output>();        
-    led::high();
-    
-    while(true) {
-        led::toggle();        
-    }    
+constexpr int foo(const int v) {
+//    constexpr auto x =  bar(v);
+//    ttt<x>();
+    return v;
+}
+
+int main() {
+    constexpr auto a = foo(1);
+    constexpr auto b = bar(1);
+    ttt<b>();
 }

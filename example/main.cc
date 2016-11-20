@@ -91,7 +91,7 @@ using crTestPin = AVR::Pin<PortB, 1>;
 using crTimer = AVR::Timer16Bit<1>;
 using crWriterSensorBinary = ConstanteRateWriter<Hott::SensorProtocollBuffer<0>, sensorUsart>;
 using crWriterSensorText = ConstanteRateWriter<Hott::SensorTextProtocollBuffer<0>, sensorUsart>;
-using crAdapter = ConstantRateAdapter<crTimer, crWriterSensorBinary, crWriterSensorText, TestBitShifter<crTestPin, 0x55>>;
+using crAdapter = ConstantRateAdapter<crTimer, AVR::ISR::Timer<1>::CompareA, crWriterSensorBinary, crWriterSensorText, TestBitShifter<crTestPin, 0x55>>;
 
 using softPwmPin1 = AVR::Pin<PortB, 2>;
 using softPwmPin2 = AVR::Pin<PortB, 3>;
@@ -111,24 +111,24 @@ struct EventHandlerParameter {
 
 class Button0Handler: public EventHandler<EventType::ButtonPress0> {
 public:
-    static void process(const uint8_t&) {
+    static void process(uint8_t) {
         std::cout << "button 0 press"_pgm << std::endl;
     }
 };
 
 class HottBinaryHandler : public EventHandler<EventType::HottBinaryRequest> {
 public:
-    static void process(const uint8_t&) {
+    static void process(uint8_t) {
 //        std::cout << "hbb"_pgm << std::endl;
-        crWriterSensorBinary::enable(true);
-        crWriterSensorText::enable(false);
+        crWriterSensorBinary::enable<true>();
+        crWriterSensorText::enable<false>();
         crAdapter::start();
     }
 };
 
 class HottKeyHandler : public EventHandler<EventType::HottAsciiKey> {
 public:
-    static void process(const uint8_t& v) {
+    static void process(uint8_t v) {
         std::cout << "k: "_pgm << v << std::endl;
 //        Hott::SensorProtocoll<sensorUsart>::key(v);
 
@@ -137,27 +137,27 @@ public:
 
 class HottBroadcastHandler : public EventHandler<EventType::HottSensorBroadcast> {
 public:
-    static void process(const uint8_t&) {
+    static void process(uint8_t) {
         std::cout << "hbr"_pgm << std::endl;
-        crWriterSensorBinary::enable(true);
-        crWriterSensorText::enable(false);
+        crWriterSensorBinary::enable<true>();
+        crWriterSensorText::enable<false>();
         crAdapter::start();
     }
 };
 
 class HottTextHandler : public EventHandler<EventType::HottAsciiRequest> {
 public:
-    static void process(const uint8_t&) {
+    static void process(uint8_t) {
         std::cout << "hba"_pgm << std::endl;
-        crWriterSensorBinary::enable(false);
-        crWriterSensorText::enable(true);
+        crWriterSensorBinary::enable<false>();
+        crWriterSensorText::enable<true>();
         crAdapter::start();
     }
 };
 
 class TimerHandler : public EventHandler<EventType::Timer> {
 public:
-    static void process(const uint8_t&) {
+    static void process(uint8_t) {
         static uint8_t count = 0;
         WS2812<2, ws2812_A>::set({16, (uint8_t)((count++ % 2) * 16), 16});
         std::cout << "ppm:"_pgm << ppm1::value() << std::endl;
@@ -187,32 +187,29 @@ public:
 
 class TestHandler : public EventHandler<EventType::Test> {
 public:
-    static void process(const uint8_t&) {
+    static void process(uint8_t) {
         std::cout << "t"_pgm << std::endl;
     }
 };
 
 class PpmUpHandler : public EventHandler<EventType::Ppm1Up> {
 public:
-    static void process(const uint8_t&) {
+    static void process(uint8_t) {
         std::cout << "ppm1up"_pgm << std::endl;
     }
 };
 class PpmDownHandler : public EventHandler<EventType::Ppm1Down> {
 public:
-    static void process(const uint8_t&) {
+    static void process(uint8_t) {
         std::cout << "ppm1down"_pgm << std::endl;
     }
 };
 class UsartHandler : public EventHandler<EventType::UsartRecv0> {
 public:
-    static void process(const uint8_t& v) {
+    static void process(uint8_t v) {
         std::cout << "u: "_pgm << v << std::endl;
     }
 };
-
-//struct TestISRDoubleDef : public IsrBaseHandler<AVR::ISR::Int<0>> {
-//};
 
 using isrRegistrar = IsrRegistrar<ppm1, crAdapter>;
 
@@ -245,7 +242,7 @@ int main()
     constexpr std::hertz fCr = 1 / Hott::hottDelayBetweenBytes;
     constexpr auto tsd = AVR::Util::calculate<crTimer>(fCr);
     crTimer::prescale<tsd.prescaler>();
-    crTimer::mcuTimer->ocra = tsd.ocr;
+    crTimer::ocra<tsd.ocr>();
 
     crAdapter::init();
     
@@ -285,7 +282,7 @@ int main()
 
 void assertFunction(bool b, const char* function, const char* file, unsigned int line) {
     if (!b) {
-        std::cout << "Assertion failed: " << function << "," << file << "," << line << std::endl;
+        std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;
         abort();
     }
 }

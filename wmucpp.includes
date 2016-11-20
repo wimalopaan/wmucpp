@@ -25,3 +25,8 @@ projects/02_rc
 projects/03_general
 include/external/hott
 doc/bmcpp99
+example/atmega1284p
+example/atmega328
+example/atmega328pb
+example/atmega8
+example/features

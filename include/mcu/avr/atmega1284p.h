@@ -25,6 +25,8 @@
 
 namespace AVR {
 
+// todo: make addresses uintptr_t
+
 struct ATMega1284P final 
 {
     ATMega1284P() = delete;
@@ -51,6 +53,7 @@ struct ATMega1284P final
         template<int N> struct Address;
         template<int N, int F> struct Prescaler;
         template<int N> struct PrescalerRow;
+        template<uint8_t N> struct Flags; 
     };
     enum class Timer8BitTccra: uint8_t {
         None    = 0,
@@ -114,6 +117,7 @@ struct ATMega1284P final
         template<uint8_t N> struct Address {
             static constexpr uint8_t value = 0x35 + N;
         };
+        template<uint8_t N> struct Flags; 
     };
 
     struct Spi {
@@ -155,6 +159,21 @@ struct ATMega1284P final
         volatile uint8_t eicra;
         static constexpr uint8_t address = 0x3b;
     };
+};
+
+#if defined(__AVR_ATmega1284P__)
+
+template<>
+struct ATMega1284P::TimerInterrupts::Flags<0> {
+    static constexpr uint8_t ociea = _BV(OCIE0A);
+};
+template<>
+struct ATMega1284P::TimerInterrupts::Flags<1> {
+    static constexpr uint8_t ociea = _BV(OCIE1A);
+};
+template<>
+struct ATMega1284P::TimerInterrupts::Flags<2> {
+    static constexpr uint8_t ociea = _BV(OCIE2A);
 };
 
 template<>
@@ -224,6 +243,10 @@ struct ATMega1284P::Timer8Bit::Address<2> {
 
 //Timer0
 template<>
+struct ATMega1284P::Timer8Bit::Flags<0> {
+    static constexpr uint8_t wgm1 = _BV(WGM01);
+};
+template<>
 struct ATMega1284P::Timer8Bit::PrescalerRow<0> {
     static constexpr uint16_t values[] = {1024, 256, 64, 8, 1};
 };
@@ -253,6 +276,10 @@ struct ATMega1284P::Timer8Bit::Prescaler<0, 1024> {
 };
 
 // Timer2
+template<>
+struct ATMega1284P::Timer8Bit::Flags<2> {
+    static constexpr uint8_t wgm1 = _BV(WGM21);
+};
 template<>
 struct ATMega1284P::Timer8Bit::PrescalerRow<2> {
     static constexpr uint16_t values[] = {1, 8, 32, 64, 128, 256, 1024};
@@ -329,6 +356,8 @@ template<>
 struct ATMega1284P::Timer16Bit::Address<3> {
     static constexpr uint8_t value = 0x90;
 };
+
+#endif
 
 }
 

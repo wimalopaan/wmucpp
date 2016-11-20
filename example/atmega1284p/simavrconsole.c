@@ -22,5 +22,12 @@
 # include <avr/avr_mcu_section.h>
 #endif
 
+#ifndef GPIOR0
+# if defined(__AVR_ATmega8__)
+#  define GPIOR0 _SFR_IO8(0x5c)
+# else
+#  warning "Need GPIOR0 for simavr-Console to work"
+# endif 
+#endif
 
 AVR_MCU_SIMAVR_CONSOLE(&GPIOR0);

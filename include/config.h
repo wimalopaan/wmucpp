@@ -18,6 +18,8 @@
 
 #pragma once
 
+#define __STDC_LIMIT_MACROS
+
 #include "std/literals.h"
 
 // todo: todolist
@@ -52,7 +54,6 @@ struct Config final
     struct Usart {
         static constexpr uint8_t SendQueueLength = 64;
         static constexpr uint8_t RecvQueueLength = 0;
-        typedef uint8_t SizeType;
     };
     struct SoftSpiMaster {
         static constexpr std::microseconds pulseDelay = 1_us;

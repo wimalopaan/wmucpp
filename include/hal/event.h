@@ -90,14 +90,16 @@ class EventHandlerGroup {
             if (e.type == T::eventType) {
                 T::process(e.value);
             }
-            Processor<N - 1, TT..., void>::process(e);
+            if constexpr((N - 1) > 0) {
+                Processor<N - 1, TT..., void>::process(e);
+            }
         }
     };
-    template<typename... TT>
-    class Processor<0, void, TT...> {
-    public:
-        static void process(const Event8u_t&) {}
-    };
+//    template<typename... TT>
+//    class Processor<0, void, TT...> {
+//    public:
+//        static void process(const Event8u_t&) {}
+//    };
 public:
     static void process(const Event8u_t& event) {
         Processor<sizeof...(EE), EE...>::process(event);

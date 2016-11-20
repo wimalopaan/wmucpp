@@ -11,42 +11,25 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+struct A {
+    static constexpr bool hasBar = false;
+};
 
-namespace std {
 
 template<typename T>
-struct underlying_type;
-
-template<bool B, class T = void>
-struct enable_if {};
-
-template<class T>
-struct enable_if<true, T> {
-    typedef T type;
-};
-
-template<bool B, class T = void>
-struct enable_if_not {};
-
-template<class T>
-struct enable_if_not<false, T> {
-    typedef T type;
-};
-
-template<bool B, class T, class F>
-struct conditional { 
-    typedef T type; 
-};
- 
-template<class T, class F>
-struct conditional<false, T, F> { 
-    typedef F type; 
-};
-
+void foo() {
+    if constexpr (T::hasBar) {
+        T::bar();
+    }    
 }
+
+int main() {
+    
+    foo<A>();
+}
+

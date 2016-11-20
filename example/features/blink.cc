@@ -16,37 +16,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "mcu/ports.h"
 
-namespace std {
+using namespace AVR;
+using PortB = Port<DefaultMcuType::PortRegister, AVR::B>;
+using led = Pin<PortB, 0>;
 
-template<typename T>
-struct underlying_type;
+int main()
+{
+    Set<led>::output();
+//    led::dir<Output>();        
 
-template<bool B, class T = void>
-struct enable_if {};
-
-template<class T>
-struct enable_if<true, T> {
-    typedef T type;
-};
-
-template<bool B, class T = void>
-struct enable_if_not {};
-
-template<class T>
-struct enable_if_not<false, T> {
-    typedef T type;
-};
-
-template<bool B, class T, class F>
-struct conditional { 
-    typedef T type; 
-};
- 
-template<class T, class F>
-struct conditional<false, T, F> { 
-    typedef F type; 
-};
-
+    led::high();
+    while(true) {
+        led::toggle();        
+    }    
 }

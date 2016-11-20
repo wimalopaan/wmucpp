@@ -19,34 +19,36 @@
 #include <stdint.h>
 
 #include "std/optional.h"
+#include "std/traits.h"
 #include "util/dassert.h"
 
 namespace std {
 
-template<typename T, uint8_t Capacity, typename CapType = uint8_t>
+template<typename T, uint8_t Capacity>
 class FixedVector final {
 public:
+    typedef typename std::conditional<Capacity <= 255, uint8_t, uint16_t>::type size_type;
+    
     // no iterator because of removal
-    T& operator[](CapType index) {
+    T& operator[](size_type index) {
         assert(index < Capacity);
         return data[index];
     }
-    const T& operator[](CapType index) const {
+    const T& operator[](size_type index) const {
         assert(index < Capacity);
         return data[index];
     }
 
-    static constexpr const CapType capacity = Capacity;
-    typedef CapType size_type;
+    static constexpr const size_type capacity = Capacity;
     typedef T value_type;
     
-    constexpr CapType size() const {
+    constexpr size_type size() const {
         return mSize;
     }
 
     // requires bool() Operator of elements
-    std::optional<CapType> insert(const T& item) {
-        for(CapType i = 0; i < Capacity; ++i) {
+    std::optional<size_type> insert(const T& item) {
+        for(auto i = 0; i < Capacity; ++i) {
             if (!data[i]) {
                 data[i] = item;
                 ++mSize;
@@ -57,7 +59,7 @@ public:
     }
 
     // preserve index
-    void removeAt(CapType index) {
+    void removeAt(size_type index) {
         assert(index < Capacity);
         data[index] = T();
         --mSize;
@@ -65,7 +67,7 @@ public:
 
 private:
     T data[Capacity] = {};
-    CapType mSize = 0;
+    size_type mSize = 0;
 };
 
 }

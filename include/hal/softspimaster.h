@@ -40,10 +40,10 @@ public:
 
     template<typename T>
     static bool put(T value) {
-        if (useDelay) Util::delay(Config::SoftSpiMaster::pulseDelay);
+        if constexpr(useDelay) Util::delay(Config::SoftSpiMaster::pulseDelay);
         CSPin::low();
         for(uint8_t i = 0; i < Util::numberOfBits<T>(); ++i) {
-            if (useDelay) Util::delay(Config::SoftSpiMaster::pulseDelay);
+            if constexpr(useDelay) Util::delay(Config::SoftSpiMaster::pulseDelay);
             ClockPin::low();
             if (Util::isSet<Util::MSB>(value)) {
                 DataPin::high();
@@ -51,12 +51,12 @@ public:
             else {
                 DataPin::low();
             }
-            if (useDelay) Util::delay(Config::SoftSpiMaster::pulseDelay);
+            if constexpr(useDelay) Util::delay(Config::SoftSpiMaster::pulseDelay);
             ClockPin::high();
             value <<= 1; // shift next bit
         }
         ClockPin::low();
-        if (useDelay) Util::delay(Config::SoftSpiMaster::pulseDelay);
+        if constexpr(useDelay) Util::delay(Config::SoftSpiMaster::pulseDelay);
         CSPin::high();
         DataPin::low();
         return true;

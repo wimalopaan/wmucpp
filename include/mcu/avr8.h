@@ -55,18 +55,18 @@ struct ATMega328P;
 namespace AVR {
 
 template<typename Component>
-constexpr Component* getBaseAddr() {
+constexpr inline Component* getBaseAddr() {
     return reinterpret_cast<Component*>(Component::address);
 }
 
 template<typename Component, int Number>
-constexpr Component* getBaseAddr() {
+constexpr inline Component* getBaseAddr() {
     return reinterpret_cast<Component*>(Component::template Address<Number>::value);
 }
 
 template<typename Component, typename Letter>
-constexpr Component* getBaseAddr() {
-    return reinterpret_cast<Component*>(Component::template Address<Letter>::value);
+constexpr inline Component* getBaseAddr() {
+    return reinterpret_cast<Component* const>(Component::template Address<Letter>::value);
 }
 
 }

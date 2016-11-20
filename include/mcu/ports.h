@@ -24,9 +24,6 @@
 
 #include "mcu/avr8.h"
 
-// todo: Vordefinierte Pins aus pin-defs.txt generieren
-// todo: mit __has_include inkludieren
-
 namespace AVR {
 
 struct Output final {
@@ -62,14 +59,18 @@ struct Port final {
     static void dir(uint8_t v) {
         getBaseAddr<MCUPort, Name>()->ddr = v;
     }
+    template<uint8_t V>
+    static void dir() {
+        getBaseAddr<MCUPort, Name>()->ddr = V;
+    }
     static volatile uint8_t& dir() {
         return getBaseAddr<MCUPort, Name>()->ddr;
     }
     static volatile uint8_t& read() {
         return getBaseAddr<MCUPort, Name>()->in;
     }
-    static constexpr uint16_t address() {
-        return reinterpret_cast<uint16_t>(&getBaseAddr<MCUPort, Name>()->out);
+    static constexpr uintptr_t address() {
+        return reinterpret_cast<uintptr_t>(&getBaseAddr<MCUPort, Name>()->out);
     }
 };
 

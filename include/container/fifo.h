@@ -21,14 +21,17 @@
 #include <stdint.h>
 
 #include "std/optional.h"
+#include "std/traits.h"
 
 namespace std {
 
-template<typename T, uint16_t Size = 32, typename SizeType = uint8_t>
+template<typename T, uint16_t Size = 32>
 class FiFo final {
 public:
+    typedef typename std::conditional< Size <= 255, uint8_t, uint16_t>::type size_type;
+    
     bool push_back(const T& item) {
-        SizeType next = (in + 1) % Size;
+        size_type next = (in + 1) % Size;
         if (out == next) {
             return false;
         }
@@ -58,11 +61,11 @@ public:
     bool empty() const {
         return in == out;
     }
-    static constexpr const SizeType size = Size;
+    static constexpr const size_type size = Size;
 private:
     T data[Size] = {};
-    SizeType in = 0;
-    SizeType out = 0;
+    size_type in = 0;
+    size_type out = 0;
 };
 
 }

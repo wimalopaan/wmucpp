@@ -50,10 +50,12 @@ struct PCNumber<D> {
 
 template<typename Pin, typename MCU = DefaultMcuType>
 class PinChange final {
-    static constexpr auto interrupts = getBaseAddr<typename MCU::Interrupt>();
+//    static constexpr auto interrupts = getBaseAddr<typename MCU::Interrupt>();
+    static constexpr auto interrupts = getBaseAddr<typename MCU::Interrupt>;
 public:
     static constexpr uint8_t pcGroupNumber = PCNumber<typename Pin::port::name_type>::number;
-    static constexpr auto pc = getBaseAddr<typename MCU::PCInterrupts, pcGroupNumber>();
+//    static constexpr auto pc = getBaseAddr<typename MCU::PCInterrupts, pcGroupNumber>();
+    static constexpr auto pc = getBaseAddr<typename MCU::PCInterrupts, pcGroupNumber>;
     typedef MCU mcu_type;
     typedef Pin pin_type;
 
@@ -62,9 +64,9 @@ public:
     static void init() {
         Pin::template dir<Input>();
         Pin::on();
-        pc->pcmsk = Pin::pinMask;
-        interrupts->pcifr |= _BV(pcGroupNumber);
-        interrupts->pcicr |= _BV(pcGroupNumber);
+        pc()->pcmsk = Pin::pinMask;
+        interrupts()->pcifr |= _BV(pcGroupNumber);
+        interrupts()->pcicr |= _BV(pcGroupNumber);
     }
 };
 

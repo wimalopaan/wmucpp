@@ -55,29 +55,31 @@ extern "C" {
 
 #endif
 
+// todo: uint64_t parameterierbar
+
 template<typename... HH>
 struct IsrRegistrar {
+    static_assert(sizeof...(HH) <= 64, "too much different interrupts");
+    static constexpr uint64_t all = (HH::mask | ...);
     static void init() {
-        constexpr uint64_t all = (HH::mask | ...);
         static_assert(Util::numberOfOnes(all) == sizeof...(HH), "Isr double defined");
     }
-    template<uint8_t N, typename H, typename... Hp>
+    template<uint8_t In, uint8_t N, typename H, typename... Hp>
     struct Caller {
-        static void call(uint8_t n) {
-            if (n == H::number) {
+        static constexpr void call() {
+            if (In == H::number) {
                 H::isr();
             }
-            Caller<N-1, Hp..., void>::call(n);
+            if constexpr((N-1) > 0) {
+                Caller<In, N-1, Hp..., void>::call();
+            }
         }
-    };
-    template<typename... Hp>
-    struct Caller<0, void, Hp...> {
-        static void call(uint8_t) {}
     };
     
     template<typename INT>
     static void isr() {
-        Caller<sizeof...(HH), HH...>::call(INT::number);
+        static_assert(all & ((uint64_t)1 << INT::number), "isr not set");
+        Caller<INT::number, sizeof...(HH), HH...>::call();
     }
 };
 
@@ -85,8 +87,7 @@ template<typename I>
 struct IsrBaseHandler {
     typedef I isr_type;
     static constexpr const uint8_t number = I::number;
-    static constexpr const uint64_t mask = (1 << I::number);    
-    static void isr() {}
+    static constexpr const uint64_t mask = ((uint64_t)1 << I::number);    
 };
 
 namespace AVR {
@@ -113,27 +114,35 @@ struct Int<2> {
 template<uint8_t N>
 struct PcInt;
 
+#ifdef PCINT0_vect_num
 template<>
 struct PcInt<0>{
     static constexpr const uint32_t number = PCINT0_vect_num;
 };
+#endif
+#ifdef PCINT1_vect_num
 template<>
 struct PcInt<1>  {
     static constexpr const uint32_t number = PCINT1_vect_num;
 };
+#endif
+#ifdef PCINT2_vect_num
 template<>
 struct PcInt<2>  {
     static constexpr const uint32_t number = PCINT2_vect_num;
 };
+#endif
 #ifdef PCINT3_vect_num
 template<>
 struct PcInt<3>  {
     static constexpr const uint32_t number = PCINT3_vect_num;
 };
 #endif
+#ifdef WDT_vect_num
 struct Wdt  {
     static constexpr const uint32_t number = WDT_vect_num;
 };
+#endif
 
 template<uint8_t N>
 struct Timer;
@@ -141,10 +150,19 @@ struct Timer;
 template<>
 struct Timer<2> {
     struct CompareA  {
+#ifdef TIMER2_COMPA_vect_num
         static constexpr const uint32_t number = TIMER2_COMPA_vect_num;
+#endif
     };
     struct CompareB  {
+#ifdef TIMER2_COMPB_vect_num
         static constexpr const uint32_t number = TIMER2_COMPB_vect_num;
+#endif
+    };
+    struct Compare  {
+#ifdef TIMER2_COMP_vect_num
+        static constexpr const uint32_t number = TIMER2_COMP_vect_num;
+#endif
     };
     struct Overflow  {
         static constexpr const uint32_t number = TIMER2_OVF_vect_num;
@@ -168,10 +186,14 @@ struct Timer<1> {
 template<>
 struct Timer<0> {
     struct CompareA  {
+#ifdef TIMER0_COMPA_vect_num
         static constexpr const uint32_t number = TIMER0_COMPA_vect_num;
+#endif
     };
     struct CompareB  {
+#ifdef TIMER0_COMPB_vect_num
         static constexpr const uint32_t number = TIMER0_COMPB_vect_num;
+#endif
     };
     struct Overflow  {
         static constexpr const uint32_t number = TIMER0_OVF_vect_num;

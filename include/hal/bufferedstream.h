@@ -19,13 +19,16 @@
 #pragma once 
 
 #include <stdint.h>
+#include "std/traits.h"
 #include "container/fifo.h"
 
 template<typename Device, uint16_t Size>
 class BufferedStream {
 public:
     typedef Device device_type;
-    static constexpr const uint16_t size = Size;
+
+    typedef typename std::conditional<Size <= 255, uint8_t, uint16_t>::type size_type;
+    static constexpr const size_type  size = Size;
     
     template<uint8_t Baud>
     static void init() {

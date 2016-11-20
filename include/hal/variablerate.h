@@ -26,5 +26,4 @@ public:
     static void periodic() {
         (Writers::periodic(),...);
     }
-private:
 };

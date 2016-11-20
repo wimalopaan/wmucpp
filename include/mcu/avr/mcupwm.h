@@ -63,12 +63,12 @@ class PWM {
     using pwmB = typename PwmParamter<TimerN, MCU>::pwmB;
 public:
     struct A {
-        static void ocr(const uint16_t& v) {
+        static void ocr(const typename timer_type::value_type& v) {
             mcuTimer->ocra = v;
         }
     };
     struct B {
-        static void ocr(const uint16_t& v) {
+        static void ocr(const typename timer_type::value_type& v) {
             mcuTimer->ocrb = v;
         }
     };
@@ -77,8 +77,8 @@ public:
         pwmA::template dir<AVR::Output>();
         pwmB::template dir<AVR::Output>();
         timer_type::template prescale<256>();
-        mcuTimer->tccra |= _BV(COM1A1) | _BV(COM1A0) | _BV(COM1B1) | _BV(COM1B0); // non-inverting mode
-        mcuTimer->tccra |= _BV(WGM10) | _BV(WGM11) ; // 10-bit fast PWM
+        mcuTimer->tccra |= _BV(COM1A1) | _BV(COM1A0) | _BV(COM1B1) | _BV(COM1B0) // non-inverting mode
+                                       | _BV(WGM10) | _BV(WGM11) ; // 10-bit fast PWM
         mcuTimer->tccrb |= _BV(WGM12); // 10-bit fast PWM
     }
     template<typename Channel>

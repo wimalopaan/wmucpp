@@ -82,11 +82,11 @@ public:
 private:
     static void isr() {
         if (!pin_type::read()) { // high -> low
-            uint8_t v = mcuTimer->tcnt;
+            uint8_t v = mcuTimer()->tcnt;
             period = (v + 256 - timerStartValue) % 256;
         }
         else { // low -> high
-            timerStartValue = mcuTimer->tcnt;
+            timerStartValue = mcuTimer()->tcnt;
         }
     }
     static volatile uint8_t period;

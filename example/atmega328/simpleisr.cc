@@ -19,6 +19,7 @@
 #include "config.h"
 #include "mcu/avr/mcutimer.h"
 #include "mcu/avr/util.h"
+#include "mcu/ports.h"
 #include "util/disable.h"
 #include "console.h"
 #include "simavr/simavrdebugconsole.h"
@@ -32,6 +33,15 @@ volatile uint8_t a2 = 0;
 using timer1 = AVR::Timer8Bit<0>;
 using timer2 = AVR::Timer16Bit<1>;
 using timer3 = AVR::Timer8Bit<2>;
+
+using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
+using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
+using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
+
+using Pin0 = AVR::Pin<PortB, 0>;
+using Pin1 = AVR::Pin<PortB, 1>;
+using Pin2 = AVR::Pin<PortC, 0>;
+using Pin3 = AVR::Pin<PortD, 0>;
 
 struct Handler1 : public IsrBaseHandler<AVR::ISR::Timer<0>::CompareA> {
     static void isr() {
@@ -62,10 +72,14 @@ int main() {
     
     isrRegistrar::init();
     
+    static_assert(timer1::hasOcrA, "need ocra");
+    
     constexpr auto t1 = AVR::Util::calculate<timer1>(100_Hz);
     timer1::prescale<t1.prescaler>();
     timer1::ocra(t1.ocr);
     timer1::mode(AVR::TimerMode::CTC);
+
+    static_assert(timer2::hasOcrA, "need ocra");
 
     constexpr auto t2 = AVR::Util::calculate<timer2>(1_Hz);
     timer2::prescale<t2.prescaler>();
@@ -76,6 +90,8 @@ int main() {
     timer3::prescale<t3.prescaler>();
     timer3::ocra(t3.ocr);
     timer3::mode(AVR::TimerMode::CTC);
+    
+    static_assert(timer3::hasOcrA, "need ocra");
     
     while(true) {
         Util::delay(500_ms);
@@ -93,3 +109,9 @@ ISR(TIMER2_COMPA_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<2>::CompareA>();
 }
 
+void assertFunction(bool b, const char* function, const char* file, unsigned int line) {
+    if (!b) {
+        std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;
+        abort();
+    }
+}

@@ -50,6 +50,7 @@ struct ATMega328P final
         template<int N> struct Address;
         template<int N, int F> struct Prescaler;
         template<int N> struct PrescalerRow;
+        template<uint8_t N> struct Flags; 
     };
 
     enum class Timer8BitTccra: uint8_t {
@@ -108,6 +109,7 @@ struct ATMega328P final
         template<uint8_t N> struct Address {
             static constexpr uint8_t value = 0x35 + N;
         };
+        template<uint8_t N> struct Flags;       
     };
 
     struct Spi {
@@ -134,6 +136,23 @@ struct ATMega328P final
         static constexpr uint8_t address = 0x3b;
     };
 };
+
+#if defined(__AVR_ATmega328P__)
+
+template<>
+struct ATMega328P::TimerInterrupts::Flags<0> {
+    static constexpr uint8_t ociea = _BV(OCIE0A);
+};
+template<>
+struct ATMega328P::TimerInterrupts::Flags<1> {
+    static constexpr uint8_t ociea = _BV(OCIE1A);
+};
+template<>
+struct ATMega328P::TimerInterrupts::Flags<2> {
+    static constexpr uint8_t ociea = _BV(OCIE2A);
+};
+
+
 template<>
 struct ATMega328P::PortRegister::Address<B> {
     static constexpr uint8_t value = 0x23;
@@ -178,6 +197,14 @@ struct ATMega328P::Timer8Bit::Address<2> {
 };
 
 //Timer0
+template<>
+struct ATMega328P::Timer8Bit::Flags<0> {
+    static constexpr uint8_t wgm1 = _BV(WGM01);
+};
+template<>
+struct ATMega328P::Timer8Bit::Flags<2> {
+    static constexpr uint8_t wgm1 = _BV(WGM01);
+};
 template<>
 struct ATMega328P::Timer8Bit::PrescalerRow<0> {
     static constexpr uint16_t values[] = {1024, 256, 64, 8, 1};
@@ -275,6 +302,7 @@ struct ATMega328P::Timer16Bit::Prescaler<1024> {
     static constexpr uint8_t value = _BV(CS12) | _BV(CS10);
 };
 
+#endif
 
 }
 #pragma pack(pop)

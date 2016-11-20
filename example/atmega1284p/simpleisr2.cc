@@ -17,37 +17,47 @@
  */
 
 #include "config.h"
-#include "mcu/avr8.h"
-#include "mcu/avr/isr.h"
 #include "mcu/avr/mcutimer.h"
 #include "mcu/avr/util.h"
+#include "mcu/ports.h"
 #include "util/disable.h"
+#include "console.h"
+#include "simavr/simavrdebugconsole.h"
 
-volatile uint8_t x = 0;
+#include <stdlib.h> // abort()
 
 using timer1 = AVR::Timer8Bit<0>;
 
-struct Handler1 final : public IsrBaseHandler<AVR::ISR::Timer<0>::CompareA>
-{
+using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
+using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
+using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
+using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
+
+using Pin0 = AVR::Pin<PortA, 0>;
+using Pin1 = AVR::Pin<PortB, 0>;
+using Pin2 = AVR::Pin<PortC, 0>;
+using Pin3 = AVR::Pin<PortD, 0>;
+
+struct Handler1 : public IsrBaseHandler<AVR::ISR::Timer<0>::CompareA> {
     static void isr() {
-        ++x;
+        Pin1::toggle();
     }
 };
 
-struct Handler2 final : public IsrBaseHandler<AVR::ISR::Timer<0>::CompareB>
-{
-    static void isr() {
-        ++x;
-    }
-};
+using isrRegistrar = IsrRegistrar<Handler1>;
 
-using isrRegistrar = IsrRegistrar<Handler1, Handler2>;
+using terminal = SimAVRDebugConsole;
+namespace std {
+    std::basic_ostream<terminal> cout;
+    std::lineTerminator<CRLF> endl;
+}
 
-int main()
-{
+int main() {
     Scoped<EnableInterrupt> interruptEnabler;
     
     isrRegistrar::init();
+
+    static_assert(timer1::hasOcrA, "need OcrA");
     
     constexpr auto t1 = AVR::Util::calculate<timer1>(100_Hz);
     timer1::prescale<t1.prescaler>();
@@ -55,14 +65,10 @@ int main()
     timer1::mode(AVR::TimerMode::CTC);
     
     while(true) {
-        
-    }
+    }    
 }
 
 ISR(TIMER0_COMPA_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<0>::CompareA>();
 }
 
-ISR(TIMER0_COMPB_vect) {
-    isrRegistrar::isr<AVR::ISR::Timer<0>::CompareB>();
-}

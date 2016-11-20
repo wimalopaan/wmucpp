@@ -20,10 +20,15 @@
 #include <avr/interrupt.h>
 
 volatile uint8_t x = 0;
-volatile uint8_t y = 0;
 
 int main()
 {
+    sei();
+    TCCR0B |= _BV(CS01) | _BV(CS11);
+    OCR0A = 195;
+    TIMSK0 |= 13;
+    TCCR0A = 12;
+    while(1) {}
 }
 
 ISR(TIMER0_COMPA_vect) {

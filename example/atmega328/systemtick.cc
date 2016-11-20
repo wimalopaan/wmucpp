@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define __STDC_LIMIT_MACROS
+
 #include "mcu/ports.h"
 #include "hal/softtimer.h"
 #include "console.h"
@@ -36,7 +38,7 @@ namespace std {
 
 class TimerHandler : public EventHandler<EventType::Timer> {
 public:
-    static void process(const uint8_t&) {
+    static void process(uint8_t) {
         std::cout << "Hello"_pgm << std::endl;
     }
 };
@@ -55,7 +57,7 @@ ISR(TIMER0_COMPA_vect) {
 
 void assertFunction(bool b, const char* function, const char* file, unsigned int line) {
     if (!b) {
-        std::cout << "Assertion failed: " << function << "," << file << "," << line << std::endl;
+        std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;
         abort();
     }
 }

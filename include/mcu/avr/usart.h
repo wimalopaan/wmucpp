@@ -136,7 +136,7 @@ public:
     }
     static std::optional<uint8_t> get() {
         if (Config::Usart::RecvQueueLength > 0) {
-            return recvQueue.pop_front();
+            return recvQueue().pop_front();
         }
         else {
             return {};
@@ -172,17 +172,17 @@ public:
     }
 
 private:
-    static std::FiFo<uint8_t, Config::Usart::SendQueueLength, Config::Usart::SizeType>& sendQueue() {
-        static std::FiFo<uint8_t, Config::Usart::SendQueueLength, Config::Usart::SizeType> mSendQueue;
+    static std::FiFo<uint8_t, Config::Usart::SendQueueLength>& sendQueue() {
+        static std::FiFo<uint8_t, Config::Usart::SendQueueLength> mSendQueue;
         return mSendQueue;
     }
-    static std::FiFo<uint8_t, Config::Usart::RecvQueueLength, Config::Usart::SizeType>& recvQueue() {
-        static std::FiFo<uint8_t, Config::Usart::RecvQueueLength, Config::Usart::SizeType> mRecvQueue;
+    static std::FiFo<uint8_t, Config::Usart::RecvQueueLength>& recvQueue() {
+        static std::FiFo<uint8_t, Config::Usart::RecvQueueLength> mRecvQueue;
         return mRecvQueue;
     }
 
     inline static void rx_isr() {
-        if (getBaseAddr<typename MCU::Usart, N>()->ucsra & (_BV(FE0) || _BV(UPE0) || _BV(DOR0))) {
+        if (getBaseAddr<typename MCU::Usart, N>()->ucsra & (_BV(FE0) | _BV(UPE0) | _BV(DOR0))) {
             if (getBaseAddr<typename MCU::Usart, N>()->ucsra & _BV(FE0)) {
                 getBaseAddr<typename MCU::Usart, N>()->udr;
                 EventManager::enqueueISR({UsartEventType<N>::eventFe, 0});

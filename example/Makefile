@@ -20,21 +20,10 @@
 MCU = atmega1284p
 F_OSC = 20000000
 
+subdirs = atmega8 atmega328 atmega328pb atmega1284p 
+subdirs += features
+
 targets +=  main.elf main.size
-targets +=  blink.elf blink.size
-targets +=  systemtick.elf 
-targets +=  simpleisr.elf 
-
-blink.elf: MCU=atmega328p
-
-systemtick.elf: MCU=atmega328p
-systemtick.elf: systemtick.o simavrconsole.o
-	$(CC) $(LDFLAGS) -o $@ systemtick.o simavrconsole.o
-
-simpleisr.elf: CPPFLAGS=-DNDEBUG
-simpleisr.elf: MCU=atmega328p
-simpleisr.elf: simpleisr.o simavrconsole.o
-	$(CC) $(LDFLAGS) -o $@ simpleisr.o simavrconsole.o
 
 -include ../Makefile.include
 

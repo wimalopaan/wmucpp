@@ -45,21 +45,19 @@ struct underlying_type<TimerFlags> {
 };
 }
 
-
 template<typename MCUTimer>
 class Timer final {
 public:
     Timer() = delete;
 
+    static_assert(MCUTimer::hasOcrA, "need OcrA");
+    
     static void init() {
-        // todo: no structured bindings in c++1z
-        // constexpr auto [xx,yy]  = AVR::Util::calculate<systemClock, uint8_t>(1000_Hz);
-
         constexpr auto t = AVR::Util::calculate<MCUTimer>(Config::Timer::frequency);
         static_assert(t.prescaler != 0, "falscher wert für p");
 
         MCUTimer::template prescale<t.prescaler>();
-        MCUTimer::ocra(t.ocr);
+        MCUTimer::template ocra<t.ocr>();
         MCUTimer::mode(AVR::TimerMode::CTC);
         MCUTimer::start();
     }

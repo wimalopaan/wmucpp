@@ -17,14 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-targets = test01 test02 test03
+MCU = atmega328pb
+F_OSC = 20000000
 
--include ../Makefile.include
+targets += 
 
-#CXX = g++
-CXX = clang++
-CC = g++
-LDFLAGS =
-CXXFLAGS = -g -std=c++1z
-CXXFLAGS += -Wall -Wextra
-MCUFLAGS =
+-include ../../Makefile.include
+

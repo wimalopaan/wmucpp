@@ -11,42 +11,23 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include <avr/io.h>
 
-namespace std {
+#if __has_include(<avr/avr_mcu_section.h>)
+# include <avr/avr_mcu_section.h>
+#endif
 
-template<typename T>
-struct underlying_type;
+#ifndef GPIOR0
+# if defined(__AVR_ATmega8__)
+#  define GPIOR0 _SFR_IO8(0x5c)
+# else
+#  warning "Need GPIOR0 for simavr-Console to work"
+# endif 
+#endif
 
-template<bool B, class T = void>
-struct enable_if {};
-
-template<class T>
-struct enable_if<true, T> {
-    typedef T type;
-};
-
-template<bool B, class T = void>
-struct enable_if_not {};
-
-template<class T>
-struct enable_if_not<false, T> {
-    typedef T type;
-};
-
-template<bool B, class T, class F>
-struct conditional { 
-    typedef T type; 
-};
- 
-template<class T, class F>
-struct conditional<false, T, F> { 
-    typedef F type; 
-};
-
-}
+AVR_MCU_SIMAVR_CONSOLE(&GPIOR0);
