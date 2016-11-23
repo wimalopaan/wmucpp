@@ -37,6 +37,11 @@ namespace Util {
     constexpr bool isSet(T v) {
         return Bit::template Value<T>::value & v;
     }
+    template<typename Bit, typename T>
+    constexpr bool set(T& v) {
+        return v |= Bit::template Value<T>::value;
+    }
+    
     struct MSB {
         template<typename T>
         struct Value {

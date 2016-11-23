@@ -28,6 +28,7 @@ struct ratio final {
     static constexpr intmax_t denom = denominator;
 };
 
+using centimicro = ratio<1, 10000000>;
 using micro = ratio<1, 1000000>;
 using milli = ratio<1, 1000>;
 using centi = ratio<1, 100>;

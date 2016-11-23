@@ -29,16 +29,27 @@ namespace Util {
 # endif
 #endif
 
+__inline__ void delay(const std::centimicroseconds&) __attribute__((__always_inline__));
 __inline__ void delay(const std::microseconds&) __attribute__((__always_inline__));
 __inline__ void delay(const std::milliseconds&) __attribute__((__always_inline__));
 
 #ifdef __AVR__
+
+template<uint8_t Div>
+void delayNth(const std::microseconds& d) {
+    __builtin_avr_delay_cycles((F_CPU / (1000000 * Div)) * d.value);
+}
+
+void delay(const std::centimicroseconds& d) {
+    __builtin_avr_delay_cycles((F_CPU / (1000000 * 10)) * d.value);
+}
+
 void delay(const std::microseconds& d) {
-    __builtin_avr_delay_cycles(((F_CPU) / 1e6) * d.value);
+    __builtin_avr_delay_cycles((F_CPU / 1000000) * d.value);
 }
 
 void delay(const std::milliseconds& d) {
-    __builtin_avr_delay_cycles(((F_CPU) / 1e3) * d.value);
+    __builtin_avr_delay_cycles((F_CPU / 1000) * d.value);
 }
 #endif
 

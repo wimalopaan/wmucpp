@@ -95,11 +95,6 @@ class EventHandlerGroup {
             }
         }
     };
-//    template<typename... TT>
-//    class Processor<0, void, TT...> {
-//    public:
-//        static void process(const Event8u_t&) {}
-//    };
 public:
     static void process(const Event8u_t& event) {
         Processor<sizeof...(EE), EE...>::process(event);

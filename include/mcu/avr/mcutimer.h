@@ -37,7 +37,6 @@ template<typename MCU, uint8_t N>
 struct TimerBase
 {
     TimerBase() = delete;
-//    static constexpr auto mcuInterrupts = getBaseAddr<typename MCU::TimerInterrupts, N>();
     static constexpr auto mcuInterrupts = getBaseAddr<typename MCU::TimerInterrupts, N>;
     typedef MCU mcu_type;
 };
@@ -48,7 +47,6 @@ public:
     // todo: umstellen auf anderen zähler
 //    static_assert(N < MCU::Timer8Bit::count, "wrong number");
     static constexpr uint8_t number = N;
-//    static constexpr auto mcuTimer = getBaseAddr<typename MCU::Timer8Bit, N>();
     static constexpr auto mcuTimer = getBaseAddr<typename MCU::Timer8Bit, N>;
     typedef typename MCU::Timer8Bit mcu_timer_type;
     typedef uint8_t value_type;
@@ -78,9 +76,7 @@ public:
     // todo: template
     static void mode(const TimerMode& mode) {
         if (mode == TimerMode::CTC) {
-//            TimerBase<MCU, N>::mcuInterrupts->timsk |= _BV(OCIE0A);
             TimerBase<MCU, N>::mcuInterrupts()->timsk |= MCU::TimerInterrupts::template Flags<N>::ociea;
-//            mcuTimer->tccra = _BV(WGM01);
             mcuTimer()->tccra = MCU::Timer8Bit::template Flags<N>::wgm1;
         }
         else if (mode == TimerMode::Normal) {
@@ -92,7 +88,6 @@ template<uint8_t N>
 struct Timer8Bit<N, ATMega8> : public TimerBase<ATMega8, N>
 {
     static constexpr uint8_t number = N;
-//    static constexpr auto mcuTimer = getBaseAddr<typename ATMega8::Timer8Bit, N>();
     static constexpr auto mcuTimer = getBaseAddr<typename ATMega8::Timer8Bit, N>;
     typedef typename ATMega8::Timer8Bit mcu_timer_type;
     typedef uint8_t value_type;
@@ -112,9 +107,7 @@ struct Timer8Bit<N, ATMega8> : public TimerBase<ATMega8, N>
     
     static void mode(const TimerMode& mode) {
         if (mode == TimerMode::CTC) {
-//            TimerBase<MCU, N>::mcuInterrupts->timsk |= _BV(OCIE0A);
 //            TimerBase<ATMega8, N>::mcuInterrupts->timsk |= ATMega8::TimerInterrupts::template Flags<N>::ociea;
-//            mcuTimer->tccra = _BV(WGM01);
             mcuTimer()->tccr = ATMega8::Timer8Bit::template Flags<N>::wgm1;
         }
         else if (mode == TimerMode::Normal) {
@@ -137,7 +130,6 @@ struct Timer16Bit: public TimerBase<MCU, N>
 {
     typedef AVR::ISR::Timer<N> isr_type;
     static constexpr uint8_t number = N;
-//    static constexpr auto mcuTimer = getBaseAddr<typename MCU::Timer16Bit, N>();
     static constexpr auto mcuTimer = getBaseAddr<typename MCU::Timer16Bit, N>;
     typedef typename MCU::Timer16Bit mcu_timer_type;
     typedef uint16_t value_type;
@@ -176,7 +168,6 @@ struct Timer16Bit: public TimerBase<MCU, N>
         if (mode == TimerMode::CTC) {
 //            TimerBase<MCU, N>::mcuInterrupts->timsk |= _BV(OCIE0A);
             TimerBase<MCU, N>::mcuInterrupts()->timsk |= MCU::TimerInterrupts::template Flags<N>::ociea;
-//            mcuTimer->tccra = _BV(WGM01);
             mcuTimer()->tccrb |= _BV(WGM12);
         }
     }

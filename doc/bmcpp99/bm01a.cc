@@ -54,9 +54,7 @@ int main()
     timer1::ocra<t1.ocr>();
     timer1::mode(AVR::TimerMode::CTC);
     
-    while(true) {
-        
-    }
+    while(true) {}
 }
 
 ISR(TIMER0_COMPA_vect) {

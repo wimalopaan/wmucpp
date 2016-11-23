@@ -55,12 +55,14 @@ extern "C" {
 
 #endif
 
-// todo: uint64_t parameterierbar
-
 template<typename... HH>
 struct IsrRegistrar {
+    typedef uint64_t mask_type;
+    
     static_assert(sizeof...(HH) <= 64, "too much different interrupts");
-    static constexpr uint64_t all = (HH::mask | ...);
+    
+    static constexpr mask_type all = (HH::mask | ...);
+    
     static void init() {
         static_assert(Util::numberOfOnes(all) == sizeof...(HH), "Isr double defined");
     }
@@ -78,7 +80,7 @@ struct IsrRegistrar {
     
     template<typename INT>
     static void isr() {
-        static_assert(all & ((uint64_t)1 << INT::number), "isr not set");
+        static_assert(all & ((mask_type)1 << INT::number), "isr not set");
         Caller<INT::number, sizeof...(HH), HH...>::call();
     }
 };

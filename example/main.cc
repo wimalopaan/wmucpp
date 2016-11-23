@@ -29,8 +29,10 @@
 #include "hal/constantrate.h"
 #include "hal/variablerate.h"
 #include "hal/bufferedstream.h"
+#include "external/onewire.h"
+#include "external/ds18b20.h"
 
-#include <stdlib.h>
+#include <stdlib.h> // abort()
 
 // 20MHz full-swing
 // sudo avrdude -p atmega1284P -P usb -c avrisp2 -U lfuse:w:0xf7:m -U hfuse:w:0xd1:m -U efuse:w:0xfc:m
@@ -44,6 +46,11 @@ using SoftSPIData = AVR::Pin<PortA, 0>;
 using SoftSPIClock = AVR::Pin<PortA, 1>;
 using SoftSPISS = AVR::Pin<PortA, 2>;
 using SSpi0 = SoftSpiMaster<SoftSPIData, SoftSPIClock, SoftSPISS>;
+
+using oneWirePin = AVR::Pin<PortA, 5>;
+using oneWireMaster = OneWire::Master<oneWirePin, OneWire::Normal>;
+using ds18b20 = DS18B20<oneWireMaster>;
+using asyncDS18b20 = OWBitShifter<ds18b20, Config::Timer::resolution>;
 
 //using terminal = SSpi0;
 using bufferedTerminal = BufferedStream<SSpi0, 128>;
@@ -91,13 +98,14 @@ using crTestPin = AVR::Pin<PortB, 1>;
 using crTimer = AVR::Timer16Bit<1>;
 using crWriterSensorBinary = ConstanteRateWriter<Hott::SensorProtocollBuffer<0>, sensorUsart>;
 using crWriterSensorText = ConstanteRateWriter<Hott::SensorTextProtocollBuffer<0>, sensorUsart>;
-using crAdapter = ConstantRateAdapter<crTimer, AVR::ISR::Timer<1>::CompareA, crWriterSensorBinary, crWriterSensorText, TestBitShifter<crTestPin, 0x55>>;
+using crAdapter = ConstantRateAdapter<crTimer, AVR::ISR::Timer<1>::CompareA, 
+                                      crWriterSensorBinary, crWriterSensorText, TestBitShifter<crTestPin, 0x55>>;
 
 using softPwmPin1 = AVR::Pin<PortB, 2>;
 using softPwmPin2 = AVR::Pin<PortB, 3>;
 using softPwm = SoftPWM<softPwmPin1, softPwmPin2>;
 
-using sampler = PeriodicGroup<buttonController, systemTimer, dcfDecoder, softPwm>; // werden alle resolution ms aufgerufen
+using sampler = PeriodicGroup<buttonController, systemTimer, dcfDecoder, softPwm, asyncDS18b20>; // werden alle resolution ms aufgerufen
 
 //using testPin = AVR::Pin<PortD, 5>;
 
@@ -113,6 +121,13 @@ class Button0Handler: public EventHandler<EventType::ButtonPress0> {
 public:
     static void process(uint8_t) {
         std::cout << "button 0 press"_pgm << std::endl;
+//        std::array<uint8_t, ds18b20::romSize> ds18b20Id;
+//        ds18b20::readRom(ds18b20Id);
+//        for(auto v : ds18b20Id) {
+//            std::cout << v << " ";
+//        }
+//        std::cout << std::endl;
+        asyncDS18b20::reset();
     }
 };
 
@@ -176,12 +191,11 @@ public:
 
         softPwm::pwm(pv, 0);
         softPwm::pwm(pv, 1);
-        
         std::cout << "spwm period: "_pgm << softPwm::period() << std::endl;
 
-        std::microseconds ptime = std::duration_cast<std::microseconds>(Config::Timer::resolution) / softPwm::period();
-
-        std::cout << "spwm ptime: "_pgm << ptime << std::endl;
+        std::cout << "ow ct: "_pgm << asyncDS18b20::mCycleTime << std::endl;;
+        std::cout << "r c: "_pgm << asyncDS18b20::mResetCycles << std::endl;;
+        std::cout << "p: "_pgm << asyncDS18b20::mPresence << std::endl;;
     }
 };
 
@@ -251,6 +265,8 @@ int main()
     pinChangeHandlerPpm::init();
     PpmDecoder<pinChangeHandlerPpm, ppmTimerInput>::init();
 
+    ds18b20::init();
+    
     std::cout << "RC Controller 0.1"_pgm << std::endl;
 
     WS2812<2, ws2812_A>::init();
@@ -270,11 +286,12 @@ int main()
                                 Button0Handler>;
 
     EventManager::run<sampler, handler>([](){
-//        led::toggle();
+        led::toggle();
         ppmSwitch::process(ppm1::value());
         softPwm::freeRun();
         crAdapter::periodic();
         vrAdapter::periodic();
+        asyncDS18b20::freeRun();
     });
 
     return 0;

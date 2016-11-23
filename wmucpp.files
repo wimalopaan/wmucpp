@@ -172,3 +172,5 @@ doc/bmcpp01/bm20a.cc
 doc/bmcpp01/bm21a.cc
 example/features/Makefile
 example/features/simavrconsole.c
+include/external/onewire.h
+include/external/ds18b20.h

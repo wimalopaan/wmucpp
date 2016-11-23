@@ -18,15 +18,20 @@
 
 #pragma once
 
+#include "config.h"
 #include "std/limits.h"
+#include "units/physical.h"
 
 namespace AVR {
 namespace Util {
 
 template<typename T>
 struct TimerSetupData final {
-    const uint16_t prescaler;
-    const T ocr;
+    const uint16_t prescaler = 0;
+    const T ocr = 0;
+    explicit constexpr operator bool() const {
+        return (prescaler > 0) && (ocr > 0);
+    }
 };
 
 template<typename MCUTimer>
@@ -39,7 +44,7 @@ constexpr TimerSetupData<typename MCUTimer::value_type> calculate(const std::her
             return {p, static_cast<typename MCUTimer::value_type>(tv)};
         }
     }
-    return {0, 0};
+    return {};
 }
 
 }

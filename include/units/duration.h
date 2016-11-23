@@ -50,6 +50,13 @@ struct duration<uint16_t, std::micro>
 };
 
 template<>
+struct duration<uint16_t, std::centimicro>
+{
+    typedef std::centimicro period_type;
+    uint16_t value = 0;
+};
+
+template<>
 struct duration<uint16_t>
 {
     typedef std::ratio<1,1> period_type;
@@ -71,6 +78,7 @@ bool operator==(const T& lhs, const T& rhs) {
     return lhs.value == rhs.value;
 }
 
+using centimicroseconds = duration<uint16_t, std::centimicro>;
 using microseconds = duration<uint16_t, std::micro>;
 using milliseconds = duration<uint16_t, std::milli>;
 using seconds = duration<uint16_t>;
@@ -85,6 +93,11 @@ constexpr uint16_t operator/(const std::microseconds& lhs, const std::microsecon
 
 constexpr std::microseconds operator/(const std::microseconds& lhs, uint16_t v) {
     return {(uint16_t)(lhs.value / v)};
+}
+
+template<typename R, typename P>
+constexpr duration<R, P> operator-(const duration<R, P>& t1, const duration<R, P>& t2) {
+    return duration<R, P>{t1.value - t2.value};
 }
 
 template<typename R, typename P>
