@@ -49,4 +49,15 @@ struct conditional<false, T, F> {
     typedef F type; 
 };
 
+template<class T, class U>
+struct is_same final {
+    static constexpr bool value = false;
+};
+ 
+template<class T>
+struct is_same<T, T> final {
+    static constexpr bool value = true;
+};
+
+
 }

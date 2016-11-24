@@ -91,6 +91,20 @@ struct IsrBaseHandler {
     static constexpr const uint8_t number = I::number;
     static constexpr const uint64_t mask = ((uint64_t)1 << I::number);    
 };
+template<>
+struct IsrBaseHandler<void> {
+    typedef void isr_type;
+    static constexpr const uint8_t number = 0;
+    static constexpr const uint64_t mask = 0;    
+};
+
+template<typename I, typename... Hs>
+struct IsrDistributor final : public IsrBaseHandler<I> {
+    static_assert(Util::numberOfOnes((Hs::mask | ...)) == 1, "all sub-handler must use same isr");
+    static void isr() {
+        (Hs::isr(), ...);
+    }
+};
 
 namespace AVR {
 namespace ISR {

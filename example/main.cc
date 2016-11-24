@@ -17,8 +17,8 @@
 #include "mcu/avr/adc.h"
 #include "hal/ppmswitch.h"
 #include "util/fsm.h"
-#include "external/hott/hott.h"
 #include "util/delay.h"
+#include "external/hott/hott.h"
 #include "console.h"
 #include "hal/softspimaster.h"
 #include "hal/button.h"
@@ -49,8 +49,9 @@ using SSpi0 = SoftSpiMaster<SoftSPIData, SoftSPIClock, SoftSPISS>;
 
 using oneWirePin = AVR::Pin<PortA, 5>;
 using oneWireMaster = OneWire::Master<oneWirePin, OneWire::Normal>;
-using ds18b20 = DS18B20<oneWireMaster>;
-using asyncDS18b20 = OWBitShifter<ds18b20, Config::Timer::resolution>;
+using oneWireMasterAsync = OneWire::MasterAsync<oneWireMaster, Hott::hottDelayBetweenBytes>;
+using ds18b20 = DS18B20<oneWireMasterAsync>;
+using ds18b20sync = DS18B20<oneWireMaster>;
 
 //using terminal = SSpi0;
 using bufferedTerminal = BufferedStream<SSpi0, 128>;
@@ -94,18 +95,22 @@ using softPpm = SoftPPM<ppmTimerOutput, ppmPin1>;
 // todo: auf pwm verzichten, dafür ConstantRateAdapter mit Timer 1
 //using hardPwm = AVR::PWM<1>;
 
+
 using crTestPin = AVR::Pin<PortB, 1>;
 using crTimer = AVR::Timer16Bit<1>;
 using crWriterSensorBinary = ConstanteRateWriter<Hott::SensorProtocollBuffer<0>, sensorUsart>;
 using crWriterSensorText = ConstanteRateWriter<Hott::SensorTextProtocollBuffer<0>, sensorUsart>;
-using crAdapter = ConstantRateAdapter<crTimer, AVR::ISR::Timer<1>::CompareA, 
-                                      crWriterSensorBinary, crWriterSensorText, TestBitShifter<crTestPin, 0x55>>;
+//using crAdapter = ConstantRateAdapter<crTimer, AVR::ISR::Timer<1>::CompareA, crWriterSensorBinary, crWriterSensorText, TestBitShifter<crTestPin, 0x55>>;
+using crAdapterHott = ConstantRateAdapter<crTimer, AVR::ISR::Timer<1>::CompareA, crWriterSensorBinary, crWriterSensorText>;
+using crAdapterOneWire = ConstantRateAdapter<void, AVR::ISR::Timer<1>::CompareA, oneWireMasterAsync>;
+
+using isrDistributor = IsrDistributor<AVR::ISR::Timer<1>::CompareA, crAdapterHott, crAdapterOneWire>;
 
 using softPwmPin1 = AVR::Pin<PortB, 2>;
 using softPwmPin2 = AVR::Pin<PortB, 3>;
 using softPwm = SoftPWM<softPwmPin1, softPwmPin2>;
 
-using sampler = PeriodicGroup<buttonController, systemTimer, dcfDecoder, softPwm, asyncDS18b20>; // werden alle resolution ms aufgerufen
+using sampler = PeriodicGroup<buttonController, systemTimer, dcfDecoder, softPwm>; // werden alle resolution ms aufgerufen
 
 //using testPin = AVR::Pin<PortD, 5>;
 
@@ -117,17 +122,28 @@ struct EventHandlerParameter {
     std::optional<uint7_t> timerId1;
 };
 
+class OneWireHandler: public EventHandler<EventType::OneWireRecvComplete> {
+public:
+    static void process(uint8_t) {
+        std::cout << "ow complete"_pgm << std::endl;
+        
+        for(uint8_t i = 0; i < ds18b20::scratchpadSize; ++i) {
+            if (auto v = oneWireMasterAsync::get()) {
+                std::cout << *v << ' ';
+            }
+        }
+        std::cout << std::endl;
+    }
+};
+
 class Button0Handler: public EventHandler<EventType::ButtonPress0> {
 public:
     static void process(uint8_t) {
         std::cout << "button 0 press"_pgm << std::endl;
-//        std::array<uint8_t, ds18b20::romSize> ds18b20Id;
-//        ds18b20::readRom(ds18b20Id);
-//        for(auto v : ds18b20Id) {
-//            std::cout << v << " ";
-//        }
-//        std::cout << std::endl;
-        asyncDS18b20::reset();
+        ds18b20::reset();
+        ds18b20::command(OneWire::Command::SkipRom);        
+        ds18b20::command(OneWire::Command::ReadScratchpad);        
+        ds18b20::startGet<ds18b20::scratchpadSize>();
     }
 };
 
@@ -137,7 +153,7 @@ public:
 //        std::cout << "hbb"_pgm << std::endl;
         crWriterSensorBinary::enable<true>();
         crWriterSensorText::enable<false>();
-        crAdapter::start();
+        crAdapterHott::start();
     }
 };
 
@@ -156,7 +172,7 @@ public:
         std::cout << "hbr"_pgm << std::endl;
         crWriterSensorBinary::enable<true>();
         crWriterSensorText::enable<false>();
-        crAdapter::start();
+        crAdapterHott::start();
     }
 };
 
@@ -166,7 +182,7 @@ public:
         std::cout << "hba"_pgm << std::endl;
         crWriterSensorBinary::enable<false>();
         crWriterSensorText::enable<true>();
-        crAdapter::start();
+        crAdapterHott::start();
     }
 };
 
@@ -193,9 +209,7 @@ public:
         softPwm::pwm(pv, 1);
         std::cout << "spwm period: "_pgm << softPwm::period() << std::endl;
 
-        std::cout << "ow ct: "_pgm << asyncDS18b20::mCycleTime << std::endl;;
-        std::cout << "r c: "_pgm << asyncDS18b20::mResetCycles << std::endl;;
-        std::cout << "p: "_pgm << asyncDS18b20::mPresence << std::endl;;
+        ds18b20::convert();
     }
 };
 
@@ -225,7 +239,7 @@ public:
     }
 };
 
-using isrRegistrar = IsrRegistrar<ppm1, crAdapter>;
+using isrRegistrar = IsrRegistrar<ppm1, isrDistributor>;
 
 int main()
 {
@@ -258,15 +272,29 @@ int main()
     crTimer::prescale<tsd.prescaler>();
     crTimer::ocra<tsd.ocr>();
 
-    crAdapter::init();
+    ds18b20::init();
+    
+    crAdapterHott::init();
+    crAdapterOneWire::init();
+
+
+    std::array<uint8_t, ds18b20::romSize> ds18b20Id;
+    ds18b20sync::readRom(ds18b20Id);
+    for(auto v : ds18b20Id) {
+        std::cout << v << " ";
+    }
+    std::cout << std::endl;
+
+    
+    std::array<uint8_t, 3> ds18b20Conf;
+    ds18b20Conf[2] = 0x7f;
+    ds18b20sync::writeScratchpad(ds18b20Conf);
     
     led::dir<AVR::Output>();
 
     pinChangeHandlerPpm::init();
     PpmDecoder<pinChangeHandlerPpm, ppmTimerInput>::init();
 
-    ds18b20::init();
-    
     std::cout << "RC Controller 0.1"_pgm << std::endl;
 
     WS2812<2, ws2812_A>::init();
@@ -283,15 +311,15 @@ int main()
                                 HottBinaryHandler, HottBroadcastHandler, HottTextHandler, TestHandler,
                                 PpmDownHandler, PpmUpHandler,
                                 UsartHandler, HottKeyHandler,
-                                Button0Handler>;
+                                Button0Handler, OneWireHandler>;
 
     EventManager::run<sampler, handler>([](){
         led::toggle();
         ppmSwitch::process(ppm1::value());
         softPwm::freeRun();
-        crAdapter::periodic();
+        crAdapterHott::periodic();
         vrAdapter::periodic();
-        asyncDS18b20::freeRun();
+        crAdapterOneWire::periodic();
     });
 
     return 0;

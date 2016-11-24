@@ -111,10 +111,12 @@ public:
         }
     }
     static constexpr void init() {
-        Timer::mcuTimer()->tccrb |= _BV(WGM12);;
-        Timer::mcuInterrupts()->tifr  |= _BV(OCF1A) | _BV(OCF1B);
-        Timer::mcuInterrupts()->timsk |= _BV(OCIE0A);
-        
+        if constexpr(!std::is_same<Timer, void>::value) {
+            Timer::mcuTimer()->tccrb |= _BV(WGM12);;
+            Timer::mcuInterrupts()->tifr  |= _BV(OCF1A) | _BV(OCF1B);
+            Timer::mcuInterrupts()->timsk |= _BV(OCIE0A);
+        }
+
         (Writers::init(),...);
         
     }
