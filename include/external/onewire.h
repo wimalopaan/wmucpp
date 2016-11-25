@@ -26,6 +26,7 @@
 #include "container/fifo.h"
 #include "util/disable.h"
 #include "util/dassert.h"
+#include "std/array.h"
 
 namespace OneWire {
 namespace detail {}
@@ -38,7 +39,7 @@ struct Parameter;
 
 template<>
 struct Parameter<Normal> {
-    static constexpr std::microseconds recovery = 10_us;
+    static constexpr std::microseconds recovery = 20_us;
     static constexpr std::microseconds pre = 6_us;
     static constexpr std::microseconds zeroTotal = 60_us;
     static constexpr std::microseconds sampleAfterPre = 9_us;
@@ -55,7 +56,7 @@ struct Parameter<OverDrive> {
     static constexpr std::centimicroseconds presenceAfterReset{85};
 };
 
-enum class Command {ReadRom = 0x33, SkipRom = 0xcc, Convert = 0x44, ReadScratchpad = 0xbe, WriteScratchpad = 0x4e};
+enum class Command {ReadRom = 0x33, SkipRom = 0xcc, MatchRom = 0x55, SearchRom = 0xf0, Convert = 0x44, ReadScratchpad = 0xbe, WriteScratchpad = 0x4e};
 
 template<typename OWMaster, const std::microseconds& delay, uint16_t BSize = 16>
 class MasterAsync final {
@@ -129,7 +130,8 @@ public:
         default:
             break;
         }        
-    }
+    } 
+    
     static bool reset() {
         pin_type::low();
         Set<pin_type>::output();
@@ -252,7 +254,58 @@ public:
             byte >>= 1;
         }        
     }
+    static constexpr uint8_t LastDevice = 0x00;
+    static constexpr uint8_t SearchFirst = 0xff;
+    static constexpr uint8_t Error = 0xff;
+    static constexpr uint8_t PresenceError = 0xfe;
+    static constexpr uint8_t romSize = 8;
     
+    static uint8_t searchRom(uint8_t diff, std::array<uint8_t, romSize>& rom) {
+        uint8_t i = romSize * 8;
+        uint8_t j = 8;
+        uint8_t next_diff = LastDevice;
+        bool  b = false;
+        uint8_t* id = &rom[0];
+        
+        if(!reset()) {
+            return PresenceError;
+        }
+        
+        put(static_cast<uint8_t>(Command::SearchRom));
+        
+        do {
+            j = 8;                          // 8 bits
+            do {
+                b = readBit();         // read bit
+                if (readBit()) {      // read complement bit
+                    if (b) {               // 0b11
+                        return Error; // data error <--- early exit!
+                    }
+                }
+                else {
+                    if (!b) {              // 0b00 = 2 devices
+                        if( (diff > i) || ((*id & 1) && diff != i) ) {
+                            b = true;          // now 1
+                            next_diff = i;  // next pass 0
+                        }
+                    }
+                }
+                writeBit(b);             // write bit
+                *id >>= 1;
+                if (b) {
+                    *id |= 0x80;            // store bit
+                }
+                
+                i--;
+                
+            } while( --j );
+            
+            id++;                           // next byte
+        
+        } while(i);
+    
+        return next_diff;                   // to continue search
+    }
 };
 
 }

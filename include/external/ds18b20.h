@@ -54,7 +54,18 @@ public:
     static void command(OneWire::Command cmd) {
         OneWireMaster::put(static_cast<uint8_t>(cmd));
     }
-    
+
+    template<uint8_t N = readScratchpadSize>
+    static void startGet(std::array<uint8_t, romSize>& rom) {
+        reset();
+        command(OneWire::Command::MatchRom);
+        for(uint8_t i = 0; i < rom.size; ++i) {
+            OneWireMaster::put(rom[i]);
+        }
+        command(OneWire::Command::ReadScratchpad);
+        startGet<N>();
+    }
+
     static bool convert() {
         if (!OneWireMaster::reset()) {
             return false;
@@ -75,8 +86,12 @@ public:
                 rom[i] = OneWireMaster::get();
             }   
         }
+        if (!std::crc8(rom)) {
+            return false;
+        }
         return true;
     }
+
     static bool readScratchpad(std::array<uint8_t, readScratchpadSize>& sp) {
         static_assert(!OneWireMaster::isAsync, "sync interface shall use sync OneWireMaster");
         if (!OneWireMaster::reset()) {
@@ -89,6 +104,23 @@ public:
         }
         return true;
     }
+
+    static bool readScratchpad(std::array<uint8_t, romSize>& rom, std::array<uint8_t, readScratchpadSize>& sp) {
+        static_assert(!OneWireMaster::isAsync, "sync interface shall use sync OneWireMaster");
+        if (!OneWireMaster::reset()) {
+            return false;
+        }
+        command(OneWire::Command::MatchRom);
+        for(uint8_t i = 0; i < rom.size; ++i) {
+            OneWireMaster::put(rom[i]);
+        }
+        command(OneWire::Command::ReadScratchpad);
+        for(uint8_t i = 0; i < sp.size; ++i) {
+            sp[i] = OneWireMaster::get();
+        }
+        return true;
+    }
+    
     static bool writeScratchpad(std::array<uint8_t, writeScratchpadSize>& sp) {
         static_assert(!OneWireMaster::isAsync, "sync interface shall use sync OneWireMaster");
         if (!OneWireMaster::reset()) {

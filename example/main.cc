@@ -31,6 +31,7 @@
 #include "hal/bufferedstream.h"
 #include "external/onewire.h"
 #include "external/ds18b20.h"
+#include "std/array.h"
 
 #include <stdlib.h> // abort()
 
@@ -51,7 +52,8 @@ using oneWirePin = AVR::Pin<PortA, 5>;
 using oneWireMaster = OneWire::Master<oneWirePin, OneWire::Normal>;
 using oneWireMasterAsync = OneWire::MasterAsync<oneWireMaster, Hott::hottDelayBetweenBytes>;
 using ds18b20 = DS18B20<oneWireMasterAsync>;
-using ds18b20sync = DS18B20<oneWireMaster>;
+
+std::array<std::array<uint8_t, oneWireMaster::romSize>, 5> dsIds;
 
 //using terminal = SSpi0;
 using bufferedTerminal = BufferedStream<SSpi0, 128>;
@@ -204,17 +206,18 @@ public:
         softPwm::pwm(pv, 1);
         std::cout << "spwm period: "_pgm << softPwm::period() << std::endl;
 
-        if ((count & 0x03) == 0x00) {
+        if ((count & 0x03) == 0) {
             if (!ds18b20::convert()) {
                 std::cout << "convert error" << std::endl;
             }
         }
-        if ((count & 0x03) == 0x02) {
-            // todo: to ds18b20 class
-            ds18b20::reset();
-            ds18b20::command(OneWire::Command::SkipRom);        
-            ds18b20::command(OneWire::Command::ReadScratchpad);        
-            ds18b20::startGet();
+        else {
+            if ((count & 0x03) == 0x02) {
+                ds18b20::startGet(dsIds[0]);
+            }
+            if ((count & 0x03) == 0x03) {
+                ds18b20::startGet(dsIds[1]);
+            }
         }
     }
 };
@@ -283,17 +286,32 @@ int main()
     crAdapterHott::init();
     crAdapterOneWire::init();
 
-
-    std::array<uint8_t, ds18b20::romSize> ds18b20Id;
-    ds18b20sync::readRom(ds18b20Id);
-    for(auto v : ds18b20Id) {
-        std::cout << v << " ";
+    uint8_t diff = oneWireMaster::SearchFirst;
+    for(uint8_t i = 0; i < dsIds.size; ++i) {
+        diff = oneWireMaster::searchRom(diff, dsIds[i]);
+        if ((diff != oneWireMaster::Error) && (diff != oneWireMaster::PresenceError)) {
+            for(auto v : dsIds[i]) {
+                std::cout << v << ' ';
+            }
+            std::cout << std::endl;
+        }
+        else {
+            if (diff == oneWireMaster::PresenceError) {
+                std::cout << "presence eror"_pgm << std::endl;
+            }
+            else {
+                std::cout << "search eror"_pgm << std::endl;
+            }
+            break;
+        }
+        if (diff == oneWireMaster::LastDevice) {
+            break;
+        }
     }
-    std::cout << std::endl;
-
-    std::array<uint8_t, ds18b20sync::writeScratchpadSize> ds18b20Conf;
-    ds18b20Conf[2] = static_cast<uint8_t>(ds18b20sync::Resolution::R10bit);
-    ds18b20sync::writeScratchpad(ds18b20Conf);
+    
+//    std::array<uint8_t, ds18b20sync::writeScratchpadSize> ds18b20Conf;
+//    ds18b20Conf[2] = static_cast<uint8_t>(ds18b20sync::Resolution::R10bit);
+//    ds18b20sync::writeScratchpad(ds18b20Conf);
     
     led::dir<AVR::Output>();
 
@@ -366,6 +384,8 @@ ISR(SPI_STC_vect) {
     AVR::Spi<0>::isr();
 }
 ISR(TIMER0_COMPA_vect) {
+    // todo: auf isrRegistrar umbauen
+//    isrRegistrar::isr<AVR::ISR::Timer<0>::CompareA>();
     sampler::tick();
 }
 ISR(TIMER3_COMPA_vect) {
