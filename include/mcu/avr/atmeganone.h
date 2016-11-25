@@ -19,6 +19,8 @@
 #pragma pack(push)
 #pragma pack(1)
 
+#include <stdint.h>
+
 // todo: precaler rows
 namespace AVR {
 

@@ -295,13 +295,9 @@ public:
                 if (b) {
                     *id |= 0x80;            // store bit
                 }
-                
                 i--;
-                
-            } while( --j );
-            
+            } while(--j);
             id++;                           // next byte
-        
         } while(i);
     
         return next_diff;                   // to continue search

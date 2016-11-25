@@ -94,8 +94,8 @@ using ppmPin1 = AVR::Pin<PortD, 7>;
 using ppmPin2 = AVR::Pin<PortD, 6>;
 using softPpm = SoftPPM<ppmTimerOutput, ppmPin1>;
 
-// todo: auf pwm verzichten, dafür ConstantRateAdapter mit Timer 1
-//using hardPwm = AVR::PWM<1>;
+// todo: testen, ob das mit PpmChange vereinbar ist
+using hardPwm = AVR::PWM<2>;
 
 
 using crTestPin = AVR::Pin<PortB, 1>;

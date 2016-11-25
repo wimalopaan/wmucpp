@@ -16,32 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
-
-#include <stdint.h>
-#include <mcu/avr8.h>
-
-namespace AVR {
-
-template<uint8_t N, typename MCU = DefaultMcuType>
-class Adc final {
-    static_assert(N < MCU::Adc::count, "wrong adc number"); 
-    static constexpr auto base = getBaseAddr<typename MCU::Adc, N>();
-
-public:
-    typedef MCU mcu_type;
-    static constexpr const uint8_t number = N;
-    Adc() = delete;
-
-    static void init() {
-        
-    }
+int main()
+{
     
-    static void channel(uint8_t ch) {
-        assert(ch < MCU::Adc::template Parameter<0>::numberOfChannels);
-    }
-    
-private:
-};
-
 }

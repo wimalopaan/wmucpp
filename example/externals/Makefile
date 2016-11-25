@@ -17,13 +17,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-MCU = atmega1284p
+MCU = atmega328p
 F_OSC = 20000000
 
-subdirs = atmega8 atmega328 atmega328pb atmega1284p 
-subdirs += features externals
+#LOADLIBES = simavrconsole.o
 
-targets +=  main.elf main.size
+#targets += simavrconsole.o
 
--include ../Makefile.include
+targets += button.elf
+
+-include ../../Makefile.include
 

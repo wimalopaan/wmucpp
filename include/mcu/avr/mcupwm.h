@@ -19,6 +19,7 @@
 #pragma once
 
 #include "mcu/avr/mcutimer.h"
+#include "mcu/ports.h"
 #include "units/percent.h"
 #include "std/limits.h"
 
