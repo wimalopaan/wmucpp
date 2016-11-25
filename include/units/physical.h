@@ -102,4 +102,9 @@ constexpr std::microseconds duration_cast<std::microseconds>(const std::millisec
     return std::microseconds{(uint16_t)(ms.value * 1000)};
 }
 
+struct DeciCelsius {
+    int8_t degrees = 0;
+    uint8_t milliDegree = 0;
+};
+
 }

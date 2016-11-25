@@ -19,6 +19,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "util/disable.h"
 #include "units/duration.h"
 #include "sumdprotocoll.h"
 

@@ -111,4 +111,34 @@ void iota(ForwardIterator first, ForwardIterator last, T value, T increment)
     }
 }
 #endif
+
+template<typename C>
+bool crc8(const C& data) {
+    uint8_t  crc = 0;
+	
+    for (typename C::size_type loop_count = 0; loop_count < C::size; loop_count++) {
+        uint8_t b = data[loop_count];
+		
+        uint8_t bit_counter = 8;
+		do {
+            uint8_t feedback_bit = (crc ^ b) & 0x01;
+	
+			if ( feedback_bit == 0x01 ) {
+				crc = crc ^ 0x18; //0X18 = X^8+X^5+X^4+X^0
+			}
+			crc = (crc >> 1) & 0x7F;
+			if ( feedback_bit == 0x01 ) {
+				crc = crc | 0x80;
+			}
+		
+			b = b >> 1;
+			bit_counter--;
+		
+		} while (bit_counter > 0);
+	}
+	return (crc == 0);
+}
+    
+
+
 }

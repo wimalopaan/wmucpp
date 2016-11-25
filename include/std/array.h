@@ -28,7 +28,8 @@ template<typename T, uint8_t Size>
 struct array final
 {
     typedef T type;
-
+    typedef uint8_t size_type;
+    
     constexpr array() = default;
 
     template<typename... TT>

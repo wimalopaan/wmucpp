@@ -21,12 +21,15 @@
 #include <stdint.h>
 #include "std/array.h"
 #include "std/pair.h"
+#include "std/literals.h"
 #include "container/stringbuffer.h"
 
 #pragma pack(push)
 #pragma pack(1)
 
 namespace Hott {
+
+using namespace std::literals::chrono;
 
 constexpr const uint8_t keyRight = 14;
 constexpr const uint8_t keyLeft  =  7;

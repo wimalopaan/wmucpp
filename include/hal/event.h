@@ -42,7 +42,8 @@ enum class EventType : uint8_t {
     Ppm1Up, Ppm1Down, Ppm2Up, Ppm2Down,
     ButtonPress,
     ButtonPress0, ButtonPress1, ButtonPress2, ButtonPress3, ButtonPress4, ButtonPress5, ButtonPress6, ButtonPress7,
-    OneWireRecvComplete
+    OneWireRecvComplete,
+    DS18B20Measurement, DS18B20Error
 };
 
 template<typename T>

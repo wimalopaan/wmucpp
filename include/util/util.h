@@ -21,6 +21,7 @@
 #include "std/array.h"
 #include "mcu/avr/delay.h"
 #include "std/limits.h"
+#include "util/bits.h"
 
 namespace Util {
 
@@ -30,6 +31,11 @@ template<>
 struct BufferSize<uint8_t>{
     BufferSize() = delete;
     static constexpr uint8_t size = 4;
+};
+template<>
+struct BufferSize<int8_t>{
+    BufferSize() = delete;
+    static constexpr uint8_t size = 5;
 };
 template<>
 struct BufferSize<uint16_t>{
@@ -47,16 +53,27 @@ struct Utoa final {
     static inline void convert(T v, B& buffer) {
         buffer[N - 1] = '0' + v % 10;
         v /= 10;
-        Utoa<N - 1, T, B>::convert(v, buffer);
+        if constexpr((N  - 1) > 0) {
+            Utoa<N - 1, T, B>::convert(v, buffer);
+        }
     }
-};
-template<typename T, typename B>
-struct Utoa<0, T, B> {
-    static inline void convert(T, B& ) {}
 };
 
 template<typename T>
 inline void utoa(T v, std::array<char, BufferSize<T>::size>& buffer) {
+    static_assert(std::is_unsigned<T>::value, "must use unsigned type");
+    Utoa<BufferSize<T>::size - 1, T, std::array<char, BufferSize<T>::size> >::convert(v, buffer);
+}
+
+template<typename T>
+inline void itoa(T v, std::array<char, BufferSize<T>::size>& buffer) {
+    static_assert(!std::is_unsigned<T>::value, "must use signed type");
+    if (v < 0) {
+        buffer[0] = '-';
+    }
+    else {
+        buffer[0] = '+';
+    }
     Utoa<BufferSize<T>::size - 1, T, std::array<char, BufferSize<T>::size> >::convert(v, buffer);
 }
 

@@ -25,6 +25,7 @@
 #include "hal/event.h"
 #include "container/fifo.h"
 #include "util/disable.h"
+#include "util/dassert.h"
 
 namespace OneWire {
 namespace detail {}
@@ -61,10 +62,12 @@ class MasterAsync final {
     enum class State : uint8_t {Inactive, ResetWait, Sending, Reading};
     
     static_assert(delay >= OneWire::Parameter<OneWire::Normal>::reset, "delay too short");
+    
 public:
-    typedef typename OWMaster::pin_type  pin_type;
+    typedef typename OWMaster::pin_type pin_type;
     typedef OneWire::Normal mode_type;
-
+    static constexpr bool isAsync = true;
+    
     MasterAsync() = delete;
     
     static void rateProcess() { // called every delay us
@@ -111,11 +114,15 @@ public:
                 }
             }
             else {
-                mRecvQueue.push_back(data);
+                bool ok = mRecvQueue.push_back(data);
+                assert(ok);
                 --mBytesToRead;
-                mState = State::Inactive;
                 if (mBytesToRead == 0) {
+                    mState = State::Inactive;
                     EventManager::enqueue({EventType::OneWireRecvComplete, 0});
+                }
+                else {
+                    mBitCount = 0;
                 }
             }
             break;
@@ -142,6 +149,7 @@ public:
     }
     template<uint8_t N>
     static void startGet() {
+        assert(mBytesToRead == 0);
         mBytesToRead = N;        
     }
     static bool devivesPresent() {
@@ -176,6 +184,7 @@ public:
     typedef Pin pin_type;
     typedef Mode mode_type;
     static constexpr bool internal_pullup = InternalPullup;
+    static constexpr bool isAsync = false;
     
     static void init() {
         Set<Pin>::output();

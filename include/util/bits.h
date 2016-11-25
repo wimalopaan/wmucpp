@@ -22,10 +22,17 @@
 #include "std/traits.h"
 
 namespace std {
+
 template<typename E>
 struct enable_bitmask_operators final {
     static constexpr const bool enable = false;
 };
+
+template<typename T>
+struct is_unsigned final {
+    static constexpr bool value = (T(0) < T(-1));
+};
+
 }
 
 namespace Util {
@@ -58,6 +65,8 @@ namespace Util {
     constexpr uint8_t numberOfOnes(T x) {
         return x ? int(x & 0x01) + numberOfOnes(x>>1) : 0;
     }
+
+    
 }
 
 

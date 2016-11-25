@@ -68,6 +68,17 @@ Stream& operator<<(Stream& o, uint8_t v) {
     }
     return o;
 }
+
+template<typename Stream>
+Stream& operator<<(Stream& o, int8_t v) {
+    if (!Config::disableCout) {
+        std::array<char, 5> buffer;
+        Util::itoa(v, buffer);
+        Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(&buffer[0]);
+    }
+    return o;
+}
+
 template<typename Stream>
 Stream& operator<<(Stream& o, uint16_t v) {
     if (!Config::disableCout) {
@@ -138,6 +149,14 @@ template<typename Stream>
 Stream& operator<<(Stream& o, const std::microseconds& d) {
     if (!Config::disableCout) {
         return o << d.value << "us";
+    }
+    return o;
+}
+
+template<typename Stream>
+Stream& operator<<(Stream& o, const std::DeciCelsius& t) {
+    if (!Config::disableCout) {
+        return o << t.degrees << "."_pgm << t.milliDegree << "°C";
     }
     return o;
 }

@@ -122,17 +122,16 @@ struct EventHandlerParameter {
     std::optional<uint7_t> timerId1;
 };
 
-class OneWireHandler: public EventHandler<EventType::OneWireRecvComplete> {
+class DS18B20MeasurementHandler: public EventHandler<EventType::DS18B20Measurement> {
 public:
     static void process(uint8_t) {
-        std::cout << "ow complete"_pgm << std::endl;
-        
-        for(uint8_t i = 0; i < ds18b20::scratchpadSize; ++i) {
-            if (auto v = oneWireMasterAsync::get()) {
-                std::cout << *v << ' ';
-            }
-        }
-        std::cout << std::endl;
+        std::cout << "t: " << ds18b20::temperature<std::DeciCelsius>() << std::endl;
+    }
+};
+class DS18B20ErrorHandler: public EventHandler<EventType::DS18B20Error> {
+public:
+    static void process(uint8_t) {
+        std::cout << "t: error" << std::endl;
     }
 };
 
@@ -140,10 +139,6 @@ class Button0Handler: public EventHandler<EventType::ButtonPress0> {
 public:
     static void process(uint8_t) {
         std::cout << "button 0 press"_pgm << std::endl;
-        ds18b20::reset();
-        ds18b20::command(OneWire::Command::SkipRom);        
-        ds18b20::command(OneWire::Command::ReadScratchpad);        
-        ds18b20::startGet<ds18b20::scratchpadSize>();
     }
 };
 
@@ -209,7 +204,18 @@ public:
         softPwm::pwm(pv, 1);
         std::cout << "spwm period: "_pgm << softPwm::period() << std::endl;
 
-        ds18b20::convert();
+        if ((count & 0x03) == 0x00) {
+            if (!ds18b20::convert()) {
+                std::cout << "convert error" << std::endl;
+            }
+        }
+        if ((count & 0x03) == 0x02) {
+            // todo: to ds18b20 class
+            ds18b20::reset();
+            ds18b20::command(OneWire::Command::SkipRom);        
+            ds18b20::command(OneWire::Command::ReadScratchpad);        
+            ds18b20::startGet();
+        }
     }
 };
 
@@ -285,9 +291,8 @@ int main()
     }
     std::cout << std::endl;
 
-    
-    std::array<uint8_t, 3> ds18b20Conf;
-    ds18b20Conf[2] = 0x7f;
+    std::array<uint8_t, ds18b20sync::writeScratchpadSize> ds18b20Conf;
+    ds18b20Conf[2] = static_cast<uint8_t>(ds18b20sync::Resolution::R10bit);
     ds18b20sync::writeScratchpad(ds18b20Conf);
     
     led::dir<AVR::Output>();
@@ -311,7 +316,8 @@ int main()
                                 HottBinaryHandler, HottBroadcastHandler, HottTextHandler, TestHandler,
                                 PpmDownHandler, PpmUpHandler,
                                 UsartHandler, HottKeyHandler,
-                                Button0Handler, OneWireHandler>;
+                                Button0Handler, 
+                                ds18b20, DS18B20ErrorHandler, DS18B20MeasurementHandler>;
 
     EventManager::run<sampler, handler>([](){
         led::toggle();

@@ -22,15 +22,18 @@
 #include "std/algorithm.h"
 #include "external/onewire.h"
 
+
 template<typename OneWireMaster, bool Single = true>
 class DS18B20 final : public EventHandler<EventType::OneWireRecvComplete> {
 public:
-  
+    enum class Resolution {R9bit = 0x1f, R10bit = 0x3f, R11bit = 0x5f, R12bit = 0x7f};
+    
     typedef OneWireMaster owmaster_type;
     static constexpr bool single = Single;
     
     static constexpr uint8_t romSize = 8;
-    static constexpr uint8_t scratchpadSize = 9;
+    static constexpr uint8_t readScratchpadSize = 9;
+    static constexpr uint8_t writeScratchpadSize = 3;
     
     DS18B20() = delete;
     
@@ -38,8 +41,9 @@ public:
         OneWireMaster::reset();
     }
     
-    template<uint8_t N>
+    template<uint8_t N = readScratchpadSize>
     static void startGet() {
+        static_assert(OneWireMaster::isAsync, "async interface shall use async OneWireMaster");
         OneWireMaster::template startGet<N>();
     }
     
@@ -59,7 +63,9 @@ public:
         command(OneWire::Command::Convert);
         return true;
     }
+    
     static bool readRom(std::array<uint8_t, romSize>& rom) {
+        static_assert(!OneWireMaster::isAsync, "sync interface shall use sync OneWireMaster");
         if (!OneWireMaster::reset()) {
             return false;
         }
@@ -71,7 +77,8 @@ public:
         }
         return true;
     }
-    static bool readScratchpad(std::array<uint8_t, scratchpadSize>& sp) {
+    static bool readScratchpad(std::array<uint8_t, readScratchpadSize>& sp) {
+        static_assert(!OneWireMaster::isAsync, "sync interface shall use sync OneWireMaster");
         if (!OneWireMaster::reset()) {
             return false;
         }
@@ -82,7 +89,8 @@ public:
         }
         return true;
     }
-    static bool writeScratchpad(std::array<uint8_t, 3>& sp) {
+    static bool writeScratchpad(std::array<uint8_t, writeScratchpadSize>& sp) {
+        static_assert(!OneWireMaster::isAsync, "sync interface shall use sync OneWireMaster");
         if (!OneWireMaster::reset()) {
             return false;
         }
@@ -93,12 +101,43 @@ public:
         }
         return true;
     }
-    static void process(uint8_t) {
-        for(uint8_t i = 0; i < scratchpadSize; ++i) {
-            if (auto v = OneWireMaster::get()) {
-            }
+
+    template<typename T>
+    static T temperature() {
+        if constexpr(std::is_same<T, std::DeciCelsius>::value) {
+            uint8_t valueL = scratchPad()[0];
+            uint8_t valueH = scratchPad()[1];
+            int8_t degree = (valueH << 4) | (valueL >> 4);
+            uint8_t f1 = ((valueL & 0x07) * 25) / 4;
+            uint8_t f2 = (valueL & 0x80) * 50;
+            return T{degree, (uint8_t)(f1 + f2)};
         }
     }
-    
+
+    static void process(uint8_t) {
+        static_assert(OneWireMaster::isAsync, "async interface shall use async OneWireMaster");
+        bool ok = true;
+        for(uint8_t i = 0; i < readScratchpadSize; ++i) {
+            if (auto v = OneWireMaster::get()) {
+                scratchPad()[i] = *v;
+            }
+            else {
+                ok = false;
+            }
+        }
+        if (!std::crc8(scratchPad())) {
+            ok = false;
+        }
+        if (ok) {
+            EventManager::enqueue({EventType::DS18B20Measurement, 0});
+        } 
+        else {
+            EventManager::enqueue({EventType::DS18B20Error, 0});
+        }
+    }
+private:
+    static std::array<uint8_t, readScratchpadSize>& scratchPad() {
+        static std::array<uint8_t, readScratchpadSize> mScratchPad;
+        return mScratchPad;
+    }
 };
-        

@@ -19,7 +19,7 @@
 #pragma once
 
 #include <stdint.h>
-
+#include "hal/event.h"
 #include "sensorprotocoll.h"
 
 namespace Hott {

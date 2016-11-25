@@ -20,6 +20,7 @@
 
 #include <stdint.h>
 #include "std/array.h"
+#include "std/pair.h"
 
 #pragma pack(push)
 #pragma pack(1)
