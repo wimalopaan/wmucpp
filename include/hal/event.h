@@ -99,7 +99,9 @@ class EventHandlerGroup {
     };
 public:
     static void process(const Event8u_t& event) {
-        Processor<sizeof...(EE), EE...>::process(event);
+        if constexpr(sizeof... (EE) > 0) {
+            Processor<sizeof...(EE), EE...>::process(event);
+        }
     }
 };
 

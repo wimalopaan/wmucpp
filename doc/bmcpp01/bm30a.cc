@@ -16,20 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "mcu/ports.h"
-#include "units/duration.h"
-#include "mcu/avr/delay.h"
-
-using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
-using led = AVR::Pin<PortB, 0>;
-
-int main() {
-    Set<led>::output();
-
-    auto t = 100_ms;
-    t += 1_ms;    
-    while(true) {
-        Util::delay(t);
-        led::toggle();
-    }    
+int main()
+{
+    
 }

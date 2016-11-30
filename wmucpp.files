@@ -176,7 +176,7 @@ include/external/onewire.h
 include/external/ds18b20.h
 example/features/delay.cc
 example/features/mcutimer.cc
-example/features/events.cc
+example/features/eventhandler.cc
 example/features/mcupwm.cc
 example/features/softpwm.cc
 example/features/ppmout.cc
@@ -196,3 +196,11 @@ example/features/softusart.cc
 example/externals/ws2812.cc
 example/externals/dcf77.cc
 example/features/console.cc
+example/features/ports.cc
+include/external/lcd.h
+example/externals/irmp.cc
+include/external/irmp.h
+example/features/events.cc
+doc/bmcpp01/bm30a.cc
+doc/bmcpp01/bm30b.c
+include/util/fixedpoint.h

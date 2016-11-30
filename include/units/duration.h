@@ -101,6 +101,17 @@ constexpr duration<R, P> operator-(const duration<R, P>& t1, const duration<R, P
 }
 
 template<typename R, typename P>
+constexpr duration<R, P> operator+(const duration<R, P>& t1, const duration<R, P>& t2) {
+    return duration<R, P>{t1.value + t2.value};
+}
+
+template<typename R, typename P>
+constexpr duration<R, P>& operator+=(duration<R, P>& t1, const duration<R, P>& t2) {
+    t1.value += t2.value;
+    return t1;
+}
+
+template<typename R, typename P>
 constexpr bool operator==(const duration<R, P>& lhs, const duration<R, P>& rhs) {
     return lhs.value == rhs.value;
 }

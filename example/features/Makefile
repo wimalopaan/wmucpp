@@ -25,6 +25,11 @@ LOADLIBES = simavrconsole.o
 targets += simavrconsole.o
 
 targets += blink.elf
+targets += console.elf
+targets += delay.elf
+targets += ports.elf
+targets += eventhandler.elf
+targets += events.elf
 
 -include ../../Makefile.include
 

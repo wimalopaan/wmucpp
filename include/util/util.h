@@ -22,6 +22,7 @@
 #include "mcu/avr/delay.h"
 #include "std/limits.h"
 #include "util/bits.h"
+#include "util/fixedpoint.h"
 
 namespace Util {
 
@@ -33,6 +34,16 @@ struct BufferSize<uint8_t>{
     static constexpr uint8_t size = 4;
 };
 template<>
+struct BufferSize<Fraction<uint8_t>>{
+    BufferSize() = delete;
+    static constexpr uint8_t size = 10;
+};
+template<>
+struct BufferSize<Fraction<uint16_t>>{
+    BufferSize() = delete;
+    static constexpr uint8_t size = 18;
+};
+template<>
 struct BufferSize<int8_t>{
     BufferSize() = delete;
     static constexpr uint8_t size = 5;
@@ -41,6 +52,11 @@ template<>
 struct BufferSize<uint16_t>{
     BufferSize() = delete;
     static constexpr uint8_t size = 6;
+};
+template<>
+struct BufferSize<int16_t>{
+    BufferSize() = delete;
+    static constexpr uint8_t size = 7;
 };
 template<>
 struct BufferSize<uint32_t>{
@@ -59,22 +75,41 @@ struct Utoa final {
     }
 };
 
+template<int N, typename T, typename B>
+struct Ftoa final {
+    static inline void convert(Fraction<T> f, B& buffer) {
+        typename Util::enclosingType<T>::type v = f.value;
+        v *= 10;
+        buffer[N] = '0' + (v >> (sizeof(T) * 8));
+        v &= T(-1);
+        if constexpr(N  < B::size - 2) {
+            Ftoa<N + 1, T, B>::convert(Fraction<T>{T(v)}, buffer);
+        }
+    }
+};
+
 template<typename T>
 inline void utoa(T v, std::array<char, BufferSize<T>::size>& buffer) {
     static_assert(std::is_unsigned<T>::value, "must use unsigned type");
     Utoa<BufferSize<T>::size - 1, T, std::array<char, BufferSize<T>::size> >::convert(v, buffer);
+}
+template<typename T>
+inline void utoa(Fraction<T> v, std::array<char, BufferSize<Fraction<T>>::size>& buffer) {
+    buffer[0] = '.';
+    Ftoa<1, T, std::array<char, BufferSize<Fraction<T>>::size>>::convert(v, buffer);
 }
 
 template<typename T>
 inline void itoa(T v, std::array<char, BufferSize<T>::size>& buffer) {
     static_assert(!std::is_unsigned<T>::value, "must use signed type");
     if (v < 0) {
+        Utoa<BufferSize<T>::size - 1, T, std::array<char, BufferSize<T>::size> >::convert((typename Unsigned<T>::type)(-v), buffer);
         buffer[0] = '-';
     }
     else {
+        Utoa<BufferSize<T>::size - 1, T, std::array<char, BufferSize<T>::size> >::convert((typename Unsigned<T>::type)v, buffer);
         buffer[0] = '+';
     }
-    Utoa<BufferSize<T>::size - 1, T, std::array<char, BufferSize<T>::size> >::convert(v, buffer);
 }
 
 template<typename Device, bool ensure = false>

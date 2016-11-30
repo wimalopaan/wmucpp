@@ -28,11 +28,14 @@ struct enable_bitmask_operators final {
     static constexpr const bool enable = false;
 };
 
+#ifndef __GLIBCXX__
+
 template<typename T>
 struct is_unsigned final {
     static constexpr bool value = (T(0) < T(-1));
 };
 
+#endif
 }
 
 namespace Util {
@@ -66,6 +69,16 @@ namespace Util {
         return x ? int(x & 0x01) + numberOfOnes(x>>1) : 0;
     }
 
+    template<typename T>
+    struct enclosingType;
+    template<>
+    struct enclosingType<uint8_t> {
+        typedef uint16_t type;
+    };
+    template<>
+    struct enclosingType<uint16_t> {
+        typedef uint32_t type;
+    };
     
 }
 

@@ -34,5 +34,26 @@ namespace std {
 #include "../tests/atomic.h"
 
 int main(){
+//    std::cout << -1 << std::endl;
+    
+    
+    constexpr FixedPoint<int16_t, 4> f = 1.75_fp;
+    std::cout << f << std::endl;    
+
+    constexpr FixedPoint<int16_t, 4> f2;
+    std::cout << f2 << std::endl;    
+
+    constexpr FixedPoint<uint16_t, 4> f3(1.3);
+    std::cout << f3 << std::endl;    
+    
+    constexpr FixedPoint<int16_t, 4> f4(-1.25);
+    std::cout << f4 << std::endl;    
+
+    constexpr FixedPoint<int16_t, 4> f5(-0.1);
+    std::cout << f5 << std::endl;    
+
+    constexpr Fraction<uint8_t> fr1{1};
+    std::cout << fr1 << std::endl;
+    
     while(true);
 }

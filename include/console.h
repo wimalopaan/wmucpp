@@ -20,6 +20,7 @@
 
 #include "config.h"
 #include "util/util.h"
+#include "util/fixedpoint.h"
 #include "container/pgmstring.h"
 
 namespace std {
@@ -62,7 +63,7 @@ Stream& operator<<(Stream& o, char c) {
 template<typename Stream>
 Stream& operator<<(Stream& o, uint8_t v) {
     if (!Config::disableCout) {
-        std::array<char, 4> buffer;
+        std::array<char, Util::BufferSize<uint8_t>::size> buffer;
         Util::utoa(v, buffer);
         Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(&buffer[0]);
     }
@@ -72,7 +73,7 @@ Stream& operator<<(Stream& o, uint8_t v) {
 template<typename Stream>
 Stream& operator<<(Stream& o, int8_t v) {
     if (!Config::disableCout) {
-        std::array<char, 5> buffer;
+        std::array<char, Util::BufferSize<int8_t>::size> buffer;
         Util::itoa(v, buffer);
         Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(&buffer[0]);
     }
@@ -82,7 +83,7 @@ Stream& operator<<(Stream& o, int8_t v) {
 template<typename Stream>
 Stream& operator<<(Stream& o, uint16_t v) {
     if (!Config::disableCout) {
-        std::array<char, 6> buffer;
+        std::array<char, Util::BufferSize<uint16_t>::size> buffer;
         Util::utoa(v, buffer);
         Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(&buffer[0]);
     }
@@ -90,9 +91,19 @@ Stream& operator<<(Stream& o, uint16_t v) {
 }
 
 template<typename Stream>
+Stream& operator<<(Stream& o, int16_t v) {
+    if (!Config::disableCout) {
+        std::array<char, Util::BufferSize<int16_t>::size> buffer;
+        Util::itoa(v, buffer);
+        Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(&buffer[0]);
+    }
+    return o;
+}
+ 
+template<typename Stream>
 Stream& operator<<(Stream& o, uint32_t v) {
     if (!Config::disableCout) {
-        std::array<char, 12> buffer;
+        std::array<char, Util::BufferSize<uint32_t>::size> buffer;
         Util::utoa(v, buffer);
         Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(&buffer[0]);
     }
@@ -154,14 +165,6 @@ Stream& operator<<(Stream& o, const std::microseconds& d) {
 }
 
 template<typename Stream>
-Stream& operator<<(Stream& o, const std::DeciCelsius& t) {
-    if (!Config::disableCout) {
-        return o << t.degrees << "."_pgm << t.milliDegree << "°C";
-    }
-    return o;
-}
-
-template<typename Stream>
 Stream& operator<<(Stream& o, bool b) {
     if (!Config::disableCout) {
         if (b) {
@@ -170,6 +173,33 @@ Stream& operator<<(Stream& o, bool b) {
         else {
             return o << "false";
         }
+    }
+    return o;
+}
+
+template<typename Stream, typename T>
+Stream& operator<<(Stream& o, const Fraction<T>& f) {
+    std::array<char, Util::BufferSize<Fraction<T>>::size> buffer;
+    Util::utoa(f, buffer);
+    Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(&buffer[0]);
+    return o;    
+}
+
+template<typename Stream>
+Stream& operator<<(Stream& o, const FixedPoint<uint16_t, 4>& f) {
+    if (!Config::disableCout) {
+        o << f.integerAbs() << f.fraction();
+    }
+    return o;
+}
+
+template<typename Stream>
+Stream& operator<<(Stream& o, const FixedPoint<int16_t, 4>& f) {
+    if (!Config::disableCout) {
+        if (f.raw() < 0) {
+            o << '-';
+        }
+        o << f.integerAbs() << f.fraction();
     }
     return o;
 }

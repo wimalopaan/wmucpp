@@ -127,7 +127,7 @@ struct EventHandlerParameter {
 class DS18B20MeasurementHandler: public EventHandler<EventType::DS18B20Measurement> {
 public:
     static void process(uint8_t) {
-        std::cout << "t: " << ds18b20::temperature<std::DeciCelsius>() << std::endl;
+        std::cout << "t: " << ds18b20::temperature() << std::endl;
     }
 };
 class DS18B20ErrorHandler: public EventHandler<EventType::DS18B20Error> {

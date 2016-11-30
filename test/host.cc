@@ -18,88 +18,35 @@
 
 #include <iostream>
 
-//#include "../tests/algorithm.h"
+#include "../tests/algorithm.h"
 //#include "../tests/percent.h"
 //#include "../tests/duration.h"
 //#include "../tests/physical.h"
-//#include "../tests/types.h"
-//#include "../tests/atomic.h"
+#include "../tests/types.h"
+#include "../tests/atomic.h"
 
-//int main(){
-//}
+#include <math.h>
+#include "util/fixedpoint.h"
 
-//void assertFunction(bool b, const char *function, const char *file, unsigned int line) {
-//    if (!b) {
-//        std::cout << "Assertion failed in: " << function << " file: " << file << " line: " << line << std::endl;
-//    }
-//}
-
-#include <memory>
-#include <set>
-#include <functional>
-
-struct A {
-    int value;
-    A(int _value) : value(_value) {}
-};
-bool operator<(const A& lhs, const A& rhs) {
-    std::cout << __PRETTY_FUNCTION__ << std::endl;
-    return lhs.value < rhs.value;
-}
-
-namespace std {
-template<>
-struct less<std::shared_ptr<A>> {
-      bool operator()(const std::shared_ptr<A> &lh, const std::shared_ptr<A> &rh) {
-          std::cout << __PRETTY_FUNCTION__ << std::endl;
-          return *lh < *rh;
-      }
-}; 
-}
-
-struct B {
-    typedef std::shared_ptr<A> ptr_t;
-    typedef std::set<ptr_t> set_t;
+int main(){
     
-    int num;
-
-    set_t data;
+    constexpr FixedPoint<int16_t, 4> f1 = 1.75_fp;          
+    constexpr FixedPoint<int16_t, 4> f2(0.5);          
+    constexpr FixedPoint<int16_t, 4> f3(-0.5);
     
-    B(int _num) : num(_num) {}
-};
-bool operator<(const B& lhs, const B& rhs) {
-    return lhs.num< rhs.num;
+    std::cout << f3.raw() << std::endl;
+    std::cout << f3.integer() << std::endl;
+    std::cout << f3.fractional() << std::endl;
+
+    constexpr FixedPoint<int16_t, 4> f4(-1.5);
+    std::cout << f4.integer() << std::endl;
+    std::cout << f4.fractional() << std::endl;
+    
 }
 
-namespace std {
-template<>
-struct less<std::shared_ptr<B>> {
-      bool operator()(const std::shared_ptr<B> &lh, const std::shared_ptr<B> &rh) {
-          std::cout << __PRETTY_FUNCTION__ << std::endl;
-          return *lh < *rh;
-      }
-}; 
+void assertFunction(bool b, const char *function, const char *file, unsigned int line) {
+    if (!b) {
+        std::cout << "Assertion failed in: " << function << " file: " << file << " line: " << line << std::endl;
+    }
 }
 
-struct C {
-    typedef std::shared_ptr<B> ptr_t;
-    typedef std::set<ptr_t> set_t;
-    set_t data;
-};
-
-
-int main() {
-  B::ptr_t a1(new A(1));
-  B::ptr_t a2(new A(2));
-
-  C::ptr_t b(new B(1));
-
-  b->data.insert(a1);
-  b->data.insert(a2);
-
-  C c;
-
-  c.data.insert(b);
-  c.data.insert(b);
-
-}

@@ -20,6 +20,8 @@
 
 namespace std {
 
+#ifndef __GLIBCXX__
+
 template<typename T>
 struct underlying_type;
 
@@ -59,5 +61,34 @@ struct is_same<T, T> final {
     static constexpr bool value = true;
 };
 
+template<typename T>
+struct is_integral final {
+    static constexpr bool value = false;
+};
+template<>
+struct is_integral<uint8_t> final {
+    static constexpr bool value = true;
+};
+template<>
+struct is_integral<int8_t> final {
+    static constexpr bool value = true;
+};
+template<>
+struct is_integral<uint16_t> final {
+    static constexpr bool value = true;
+};
+template<>
+struct is_integral<int16_t> final {
+    static constexpr bool value = true;
+};
+template<>
+struct is_integral<uint32_t> final {
+    static constexpr bool value = true;
+};
+template<>
+struct is_integral<int32_t> final {
+    static constexpr bool value = true;
+};
 
+#endif
 }

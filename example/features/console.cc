@@ -15,3 +15,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include "console.h"
+#include "simavr/simavrdebugconsole.h"
+#include "mcu/avr/usart.h"
+#include "mcu/avr/util.h"
+
+//using terminal = AVR::Usart<0>;
+using terminal = SimAVRDebugConsole;
+
+namespace std {
+    std::basic_ostream<terminal> cout;
+    std::lineTerminator<CRLF> endl;
+}
+
+int main(){
+    terminal::init<19200>();
+    while(true) {
+        std::cout << "Hello World"_pgm << std::endl;
+        Util::delay(1000_ms);        
+    }    
+}

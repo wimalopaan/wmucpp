@@ -20,6 +20,7 @@
 
 #include "std/array.h"
 #include "std/algorithm.h"
+#include "util/fixedpoint.h"
 #include "external/onewire.h"
 
 
@@ -134,16 +135,18 @@ public:
         return true;
     }
 
-    template<typename T>
-    static T temperature() {
-        if constexpr(std::is_same<T, std::DeciCelsius>::value) {
-            uint8_t valueL = scratchPad()[0];
-            uint8_t valueH = scratchPad()[1];
-            int8_t degree = (valueH << 4) | (valueL >> 4);
-            uint8_t f1 = ((valueL & 0x07) * 25) / 4;
-            uint8_t f2 = (valueL & 0x80) * 50;
-            return T{degree, (uint8_t)(f1 + f2)};
-        }
+    static FixedPoint<int16_t, 4> temperature() {
+        union {
+            int16_t value;
+            struct {
+                int8_t valueL;
+                int8_t valueH;
+            };
+        } v;
+        v.valueL = scratchPad()[0];
+        v.valueH = scratchPad()[1];
+        
+        return FixedPoint<int16_t, 4>::fromRaw(v.value);
     }
 
     static void process(uint8_t) {
@@ -157,15 +160,12 @@ public:
                 ok = false;
             }
         }
-        if (!std::crc8(scratchPad())) {
-            ok = false;
-        }
+        ok &= !std::crc8(scratchPad());
+        
         if (ok) {
             EventManager::enqueue({EventType::DS18B20Measurement, 0});
         } 
-        else {
-            EventManager::enqueue({EventType::DS18B20Error, 0});
-        }
+        EventManager::enqueue({EventType::DS18B20Error, 0});
     }
 private:
     static std::array<uint8_t, readScratchpadSize>& scratchPad() {

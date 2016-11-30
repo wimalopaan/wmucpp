@@ -19,6 +19,7 @@
 #pragma once
 
 #include <util/delay.h>
+#include <avr/interrupt.h>
 
 #include "config.h"
 #include "mcu/avr8.h"

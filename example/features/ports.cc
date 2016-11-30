@@ -17,19 +17,23 @@
  */
 
 #include "mcu/ports.h"
-#include "units/duration.h"
-#include "mcu/avr/delay.h"
 
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
-using led = AVR::Pin<PortB, 0>;
+using driver = AVR::Pin<PortB, 0>;
+using button = AVR::Pin<PortB, 1>;
 
-int main() {
-    Set<led>::output();
+int main()
+{
+    Set<driver>::output();
+    driver::high();
+    
+    Set<button>::input();
+    button::pullup();
 
-    auto t = 100_ms;
-    t += 1_ms;    
     while(true) {
-        Util::delay(t);
-        led::toggle();
+        auto state = button::read();
+        if(state) {
+            driver::low();
+        }
     }    
 }

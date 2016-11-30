@@ -15,3 +15,45 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include "console.h"
+#include "mcu/ports.h"
+#include "mcu/avr/mcutimer.h"
+#include "mcu/avr/util.h"
+#include "hal/event.h"
+#include "util/disable.h"
+
+#include "simavr/simavrdebugconsole.h"
+
+using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
+using led = AVR::Pin<PortB, 0>;
+
+using systemClock = AVR::Timer8Bit<0>;
+
+struct TestHandler : public EventHandler<EventType::Test> {
+    static void process(uint8_t) {
+        led::toggle();
+    }
+};
+
+int main() {
+    Set<led>::output();
+    constexpr auto timerParameter = AVR::Util::calculate<systemClock>(80_Hz);
+    static_assert(timerParameter.prescaler > 0, "wrong timer parameter");
+    
+    // todo: systemClock::setup<timerParameter>()
+    
+    systemClock::prescale<timerParameter.prescaler>();
+    systemClock::ocra<timerParameter.ocr>();
+    
+    {
+        Scoped<EnableInterrupt> ie;
+        using emptyPeriodicGroup = PeriodicGroup<>;
+        using eventHandlerGroup = EventHandlerGroup<TestHandler>;
+        EventManager::run<emptyPeriodicGroup, eventHandlerGroup>([](){});
+    }
+}
+
+ISR(TIMER0_COMPA_vect) {
+    EventManager::enqueue({EventType::Test, 0});
+}
