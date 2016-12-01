@@ -26,6 +26,7 @@ F_OSC = 20000000
 
 targets += button.elf
 targets += ds18b20.elf
+targets += ds18b20async.elf
 targets += onewire.elf
 
 -include ../../Makefile.include
