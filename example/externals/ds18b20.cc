@@ -48,6 +48,7 @@ std::array<OneWire::ow_rom_t, 5> dsIds;
 
 int main()
 {
+    terminal::init();
     ds18b20::init();
     
     auto nDevs = oneWireMaster::findDevices(dsIds);

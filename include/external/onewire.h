@@ -70,8 +70,9 @@ struct Parameter;
 template<>
 struct Parameter<Normal> {
     static constexpr std::microseconds recovery = 20_us;
-    static constexpr std::microseconds pre = 6_us;
-    static constexpr std::microseconds zeroTotal = 60_us;
+    static constexpr std::microseconds writeZeroTime = 60_us;
+    static constexpr std::microseconds writeOneTime = 6_us;
+    static constexpr std::microseconds readLow = 6_us;
     static constexpr std::microseconds sampleAfterPre = 9_us;
     static constexpr std::microseconds reset = 480_us;
     static constexpr std::microseconds presenceAfterReset= 70_us;
@@ -131,7 +132,7 @@ public:
             break;
         case State::Sending:
             if (mBitCount++ < 8) {
-                OWMaster::writeBit(data & 0x01);
+                OWMaster::template writeBit<false>(data & 0x01);
                 data >>= 1;
             }
             else {
@@ -141,7 +142,7 @@ public:
         case State::Reading:
             if (mBitCount++ < 8) {
                 data >>= 1;
-                if (OWMaster::readBit()) {
+                if (OWMaster::template readBit<false>()) {
                     data |= 0x80;
                 }
             }
@@ -150,8 +151,8 @@ public:
                 assert(ok);
                 --mBytesToRead;
                 if (mBytesToRead == 0) {
-                    mState = State::Inactive;
                     EventManager::enqueue({EventType::OneWireRecvComplete, 0});
+                    mState = State::Inactive;
                 }
                 else {
                     data = 0;
@@ -163,6 +164,7 @@ public:
             break;
         }        
     } 
+    static constexpr auto periodic = rateProcess;
     
     static bool reset() {
         pin_type::low();
@@ -224,29 +226,37 @@ public:
         Set<Pin>::output();
         Pin::high();
     }
+
+    template<bool UseRecovery = true>
     static void writeBit(bool bit) {
-        Util::delay(Parameter<Mode>::recovery);
+        if constexpr(UseRecovery) {
+            Util::delay(Parameter<Mode>::recovery);
+        }
         {
             Scoped<DisbaleInterrupt> di;
             Pin::low();
             Set<Pin>::output();
-            Util::delay(Parameter<Mode>::pre); 
+            Util::delay(Parameter<Mode>::writeOneTime); 
             if (bit) {
                 Set<Pin>::input();
                 Pin::pullup();      
             }
-            Util::delay(Parameter<Mode>::zeroTotal - Parameter<Mode>::pre);
+            Util::delay(Parameter<Mode>::writeZeroTime - Parameter<Mode>::writeOneTime);
         }
         Set<Pin>::input();
         Pin::pullup();      
     }    
+
+    template<bool UseRecovery = true>
     static bool readBit() {
-        Util::delay(Parameter<Mode>::recovery);
+        if constexpr(UseRecovery) {
+            Util::delay(Parameter<Mode>::recovery);
+        }
         {
             Scoped<DisbaleInterrupt> di;
             Pin::low();
             Set<Pin>::output();
-            Util::delay(Parameter<Mode>::pre); 
+            Util::delay(Parameter<Mode>::readLow); 
             Set<Pin>::input();
             Pin::pullup();      
             Util::delay(Parameter<Mode>::sampleAfterPre);

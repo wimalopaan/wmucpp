@@ -30,6 +30,7 @@ targets += delay.elf
 targets += ports.elf
 targets += eventhandler.elf
 targets += events.elf
+targets += interrupts.elf
 
 -include ../../Makefile.include
 

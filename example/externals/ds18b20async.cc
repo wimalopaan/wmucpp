@@ -62,13 +62,16 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
     static void process(uint8_t timer) {
         if (timer == *pTimer) {
             std::cout << "Periodic timer"_pgm << std::endl;
-            ds18b20::convert();
-            mTimer = systemTimer::create(750_ms, TimerFlags::OneShot);
+            if (ds18b20::convert()) {
+                systemTimer::start(*mTimer);
+            }
+            else {
+                std::cout << "convert error"_pgm << std::endl;
+            }
         }
-        if (timer == *mTimer) {
+        else if (timer == *mTimer) {
             std::cout << "Measurement timer"_pgm << std::endl;
             ds18b20::startGet(dsIds[0]);
-            mTimer = std::optional<uint7_t>();
         }
     }
 };
@@ -80,15 +83,17 @@ struct MeasuremntHandler : public EventHandler<EventType::DS18B20Measurement> {
 
 struct ErrorHandler : public EventHandler<EventType::DS18B20Error> {
     static void process(uint8_t) {
-        std::cout << "Error"_pgm << std::endl;        
+        std::cout << "Error"_pgm << std::endl;       
+        
     }
 };
 
-using periodicGroup = PeriodicGroup<systemTimer>;
-using eventHandlerGroup = EventHandlerGroup<TimerHandler, MeasuremntHandler, ErrorHandler>;
+using periodicGroup = PeriodicGroup<systemTimer, oneWireMasterAsync>;
+using eventHandlerGroup = EventHandlerGroup<TimerHandler, MeasuremntHandler, ErrorHandler, ds18b20>;
 
 int main()
 {
+    terminal::init();
     systemTimer::init();
     
     ds18b20::init();
@@ -98,7 +103,9 @@ int main()
         std::cout << id << std::endl;
     }
     
-    pTimer = systemTimer::create(3000_ms, TimerFlags::Periodic);
+    pTimer = systemTimer::create(5000_ms, TimerFlags::Periodic);
+    mTimer = systemTimer::create(750_ms, TimerFlags::OneShot);
+    systemTimer::stop(*mTimer);
     
     {
         Scoped<EnableInterrupt> ie;
@@ -113,6 +120,6 @@ ISR(TIMER0_COMPA_vect) {
 void assertFunction(bool b, const char* function, const char* file, unsigned int line) {
     if (!b) {
         std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;
-        abort();
+//        abort();
     }
 }

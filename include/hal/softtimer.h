@@ -74,11 +74,20 @@ public:
         return create(static_cast<std::milliseconds>(secs), flags);
     }
 
-    static void remove(uint8_t id) {
+    static void remove(uint7_t id) {
         Scoped<DisbaleInterrupt> di;
         timers().removeAt(id);
     }
 
+    static void start(uint7_t id) {
+        timers()[id].flags &= ~TimerFlags::Disabled;
+        timers()[id].ticksLeft = timers()[id].ticks;
+    }
+
+    static void stop(uint7_t id) {
+        timers()[id].flags |= TimerFlags::Disabled;
+    }
+    
     static void periodic() {
         using namespace std::literals::chrono;
         for(uint8_t i = 0; i < timers().capacity; ++i) {

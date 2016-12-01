@@ -207,23 +207,23 @@ public:
         softPwm::pwm(pv, 1);
         std::cout << "spwm period: "_pgm << softPwm::period() << std::endl;
 
-//        if ((count & 0x03) == 0) {
-//            if (!ds18b20::convert()) {
-//                std::cout << "convert error" << std::endl;
+        if ((count & 0x03) == 0) {
+            if (!ds18b20::convert()) {
+                std::cout << "convert error" << std::endl;
+            }
+        }
+        else {
+            if ((count & 0x03) == 0x02) {
+//                ds18b20::startGet(dsIds[0]);
+                ds18b20::reset();
+                ds18b20::command(OneWire::Command::SkipRom);
+                ds18b20::command(OneWire::Command::ReadScratchpad);
+                ds18b20::startGet();
+            }
+//            if ((count & 0x03) == 0x03) {
+//                ds18b20::startGet(dsIds[1]);
 //            }
-//        }
-//        else {
-//            if ((count & 0x03) == 0x02) {
-////                ds18b20::startGet(dsIds[0]);
-//                ds18b20::reset();
-//                ds18b20::command(OneWire::Command::SkipRom);
-//                ds18b20::command(OneWire::Command::ReadScratchpad);
-//                ds18b20::startGet();
-//            }
-////            if ((count & 0x03) == 0x03) {
-////                ds18b20::startGet(dsIds[1]);
-////            }
-//        }
+        }
     }
 };
 

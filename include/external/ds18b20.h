@@ -41,6 +41,7 @@ public:
     DS18B20() = delete;
     
     static void init() {
+        OneWireMaster::init();
         OneWireMaster::reset();
     }
     
@@ -159,7 +160,7 @@ public:
                 ok = false;
             }
         }
-        ok &= !std::crc8(scratchPad());
+        ok &= std::crc8(scratchPad());
         
         if (ok) {
             EventManager::enqueue({EventType::DS18B20Measurement, 0});
