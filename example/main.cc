@@ -52,8 +52,9 @@ using oneWirePin = AVR::Pin<PortA, 5>;
 using oneWireMaster = OneWire::Master<oneWirePin, OneWire::Normal>;
 using oneWireMasterAsync = OneWire::MasterAsync<oneWireMaster, Hott::hottDelayBetweenBytes>;
 using ds18b20 = DS18B20<oneWireMasterAsync>;
+using ds18b20sync = DS18B20<oneWireMaster>;
 
-std::array<std::array<uint8_t, oneWireMaster::romSize>, 5> dsIds;
+std::array<OneWire::ow_rom_t, 5> dsIds;
 
 //using terminal = SSpi0;
 using bufferedTerminal = BufferedStream<SSpi0, 128>;
@@ -95,7 +96,7 @@ using ppmPin2 = AVR::Pin<PortD, 6>;
 using softPpm = SoftPPM<ppmTimerOutput, ppmPin1>;
 
 // todo: testen, ob das mit PpmChange vereinbar ist
-using hardPwm = AVR::PWM<2>;
+//using hardPwm = AVR::PWM<2>;
 
 
 using crTestPin = AVR::Pin<PortB, 1>;
@@ -206,19 +207,23 @@ public:
         softPwm::pwm(pv, 1);
         std::cout << "spwm period: "_pgm << softPwm::period() << std::endl;
 
-        if ((count & 0x03) == 0) {
-            if (!ds18b20::convert()) {
-                std::cout << "convert error" << std::endl;
-            }
-        }
-        else {
-            if ((count & 0x03) == 0x02) {
-                ds18b20::startGet(dsIds[0]);
-            }
-            if ((count & 0x03) == 0x03) {
-                ds18b20::startGet(dsIds[1]);
-            }
-        }
+//        if ((count & 0x03) == 0) {
+//            if (!ds18b20::convert()) {
+//                std::cout << "convert error" << std::endl;
+//            }
+//        }
+//        else {
+//            if ((count & 0x03) == 0x02) {
+////                ds18b20::startGet(dsIds[0]);
+//                ds18b20::reset();
+//                ds18b20::command(OneWire::Command::SkipRom);
+//                ds18b20::command(OneWire::Command::ReadScratchpad);
+//                ds18b20::startGet();
+//            }
+////            if ((count & 0x03) == 0x03) {
+////                ds18b20::startGet(dsIds[1]);
+////            }
+//        }
     }
 };
 
@@ -286,28 +291,20 @@ int main()
     crAdapterHott::init();
     crAdapterOneWire::init();
 
-    uint8_t diff = oneWireMaster::SearchFirst;
-    for(uint8_t i = 0; i < dsIds.size; ++i) {
-        diff = oneWireMaster::searchRom(diff, dsIds[i]);
-        if ((diff != oneWireMaster::Error) && (diff != oneWireMaster::PresenceError)) {
-            for(auto v : dsIds[i]) {
-                std::cout << v << ' ';
-            }
-            std::cout << std::endl;
-        }
-        else {
-            if (diff == oneWireMaster::PresenceError) {
-                std::cout << "presence eror"_pgm << std::endl;
-            }
-            else {
-                std::cout << "search eror"_pgm << std::endl;
-            }
-            break;
-        }
-        if (diff == oneWireMaster::LastDevice) {
-            break;
-        }
-    }
+    auto nDevs = oneWireMaster::findDevices(dsIds);
+    
+    ds18b20sync::convert();
+    Util::delay(800_ms);
+    std::array<uint8_t, ds18b20sync::readScratchpadSize> sp;
+    ds18b20sync::readScratchpad(sp);
+    
+    std::cout << "t: " << sp[0] << std::endl;
+    std::cout << "t: " << sp[1] << std::endl;
+    
+    auto fp = FixedPoint<int16_t, 4>::fromRaw(sp[1] << 8 | sp[0]);
+    
+    std::cout << "t: " << fp << std::endl;
+    
     
 //    std::array<uint8_t, ds18b20sync::writeScratchpadSize> ds18b20Conf;
 //    ds18b20Conf[2] = static_cast<uint8_t>(ds18b20sync::Resolution::R10bit);

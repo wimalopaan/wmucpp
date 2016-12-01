@@ -54,6 +54,10 @@ int main(){
 
     constexpr Fraction<uint8_t> fr1{1};
     std::cout << fr1 << std::endl;
+
+    std::array<uint8_t, 8> b;
+    b[0] = 1;
+    std::cout << std::crc8(b) << std::endl;
     
     while(true);
 }

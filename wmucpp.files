@@ -204,3 +204,4 @@ example/features/events.cc
 doc/bmcpp01/bm30a.cc
 doc/bmcpp01/bm30b.c
 include/util/fixedpoint.h
+example/externals/ds18b20async.cc

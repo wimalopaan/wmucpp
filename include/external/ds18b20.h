@@ -23,7 +23,7 @@
 #include "util/fixedpoint.h"
 #include "external/onewire.h"
 
-
+// todo: use Single
 template<typename OneWireMaster, bool Single = true>
 class DS18B20 final : public EventHandler<EventType::OneWireRecvComplete> {
 public:
@@ -32,9 +32,11 @@ public:
     typedef OneWireMaster owmaster_type;
     static constexpr bool single = Single;
     
-    static constexpr uint8_t romSize = 8;
     static constexpr uint8_t readScratchpadSize = 9;
     static constexpr uint8_t writeScratchpadSize = 3;
+    
+    typedef std::array<uint8_t, readScratchpadSize> ds18b20_rsp_t;
+    typedef std::array<uint8_t, writeScratchpadSize> ds18b20_wsp_t;
     
     DS18B20() = delete;
     
@@ -57,7 +59,7 @@ public:
     }
 
     template<uint8_t N = readScratchpadSize>
-    static void startGet(std::array<uint8_t, romSize>& rom) {
+    static void startGet(OneWire::ow_rom_t& rom) {
         reset();
         command(OneWire::Command::MatchRom);
         for(uint8_t i = 0; i < rom.size; ++i) {
@@ -76,14 +78,14 @@ public:
         return true;
     }
     
-    static bool readRom(std::array<uint8_t, romSize>& rom) {
+    static bool readRom(OneWire::ow_rom_t& rom) {
         static_assert(!OneWireMaster::isAsync, "sync interface shall use sync OneWireMaster");
         if (!OneWireMaster::reset()) {
             return false;
         }
         command(OneWire::Command::ReadRom);
         if constexpr(Single) {
-            for(uint8_t i = 0; i < romSize; ++i) {
+            for(uint8_t i = 0; i < rom.size; ++i) {
                 rom[i] = OneWireMaster::get();
             }   
         }
@@ -93,7 +95,7 @@ public:
         return true;
     }
 
-    static bool readScratchpad(std::array<uint8_t, readScratchpadSize>& sp) {
+    static bool readScratchpad(ds18b20_rsp_t& sp) {
         static_assert(!OneWireMaster::isAsync, "sync interface shall use sync OneWireMaster");
         if (!OneWireMaster::reset()) {
             return false;
@@ -106,7 +108,7 @@ public:
         return true;
     }
 
-    static bool readScratchpad(std::array<uint8_t, romSize>& rom, std::array<uint8_t, readScratchpadSize>& sp) {
+    static bool readScratchpad(const OneWire::ow_rom_t& rom, ds18b20_rsp_t& sp) {
         static_assert(!OneWireMaster::isAsync, "sync interface shall use sync OneWireMaster");
         if (!OneWireMaster::reset()) {
             return false;
@@ -122,7 +124,7 @@ public:
         return true;
     }
     
-    static bool writeScratchpad(std::array<uint8_t, writeScratchpadSize>& sp) {
+    static bool writeScratchpad(ds18b20_wsp_t& sp) {
         static_assert(!OneWireMaster::isAsync, "sync interface shall use sync OneWireMaster");
         if (!OneWireMaster::reset()) {
             return false;
@@ -136,23 +138,20 @@ public:
     }
 
     static FixedPoint<int16_t, 4> temperature() {
-        union {
-            int16_t value;
-            struct {
-                int8_t valueL;
-                int8_t valueH;
-            };
-        } v;
-        v.valueL = scratchPad()[0];
-        v.valueH = scratchPad()[1];
-        
-        return FixedPoint<int16_t, 4>::fromRaw(v.value);
+        return temperature(scratchPad());
     }
 
+    static FixedPoint<int16_t, 4> temperature(ds18b20_rsp_t& sp) {
+        uint16_t valueL = sp[0];
+        uint16_t valueH = sp[1];
+        
+        return FixedPoint<int16_t, 4>::fromRaw(valueH << 8 | valueL);
+    }
+    
     static void process(uint8_t) {
         static_assert(OneWireMaster::isAsync, "async interface shall use async OneWireMaster");
         bool ok = true;
-        for(uint8_t i = 0; i < readScratchpadSize; ++i) {
+        for(uint8_t i = 0; i < scratchPad().size; ++i) {
             if (auto v = OneWireMaster::get()) {
                 scratchPad()[i] = *v;
             }
@@ -165,11 +164,13 @@ public:
         if (ok) {
             EventManager::enqueue({EventType::DS18B20Measurement, 0});
         } 
-        EventManager::enqueue({EventType::DS18B20Error, 0});
+        else {
+            EventManager::enqueue({EventType::DS18B20Error, 0});
+        }
     }
 private:
-    static std::array<uint8_t, readScratchpadSize>& scratchPad() {
-        static std::array<uint8_t, readScratchpadSize> mScratchPad;
+    static ds18b20_rsp_t& scratchPad() {
+        static ds18b20_rsp_t mScratchPad;
         return mScratchPad;
     }
 };

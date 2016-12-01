@@ -28,14 +28,6 @@ struct enable_bitmask_operators final {
     static constexpr const bool enable = false;
 };
 
-#ifndef __GLIBCXX__
-
-template<typename T>
-struct is_unsigned final {
-    static constexpr bool value = (T(0) < T(-1));
-};
-
-#endif
 }
 
 namespace Util {

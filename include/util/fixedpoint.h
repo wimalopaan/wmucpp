@@ -20,9 +20,7 @@
 
 #include <stdint.h>
 
-#if __has_include(<iostream>)
-# include <iostream>
-#endif
+#include "std/traits.h"
 
 template<typename T>
 struct Unsigned;
@@ -78,8 +76,8 @@ public:
     constexpr explicit FixedPoint(double v) : mValue(v * one) {}
     constexpr FixedPoint() = default;
     
-    static FixedPoint<Type, fractionalBits> fromRaw(Type raw) {
-        return FixedPoint<Type, fractionalBits>(raw);
+    static FixedPoint<Type, fractionalBits> fromRaw(unsigned_type raw) {
+        return FixedPoint<Type, fractionalBits>{raw};
     }
     
     unsigned_type integerAbs() const {
@@ -107,6 +105,7 @@ public:
         return mValue;
     }
 private:
+    FixedPoint(unsigned_type v) : mValue(v){}
     const Type mValue = 0;
 };
 

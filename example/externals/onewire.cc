@@ -15,3 +15,47 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include <stdlib.h>
+
+#include "mcu/ports.h"
+#include "external/ds18b20.h"
+#include "hal/softspimaster.h"
+#include "console.h"
+
+using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
+using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
+using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
+using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
+
+using SoftSPIData = AVR::Pin<PortA, 0>;
+using SoftSPIClock = AVR::Pin<PortA, 1>;
+using SoftSPISS = AVR::Pin<PortA, 2>;
+using SSpi0 = SoftSpiMaster<SoftSPIData, SoftSPIClock, SoftSPISS>;
+
+using terminal = SSpi0;
+
+namespace std {
+    std::basic_ostream<terminal> cout;
+    std::lineTerminator<CRLF> endl;
+}
+
+using oneWirePin = AVR::Pin<PortA, 5>;
+using oneWireMaster = OneWire::Master<oneWirePin, OneWire::Normal>;
+
+std::array<OneWire::ow_rom_t, 5> dsIds;
+
+int main()
+{
+    oneWireMaster::findDevices(dsIds);
+    for(const auto& id : dsIds) {
+        std::cout << id << std::endl;
+    }
+}
+
+void assertFunction(bool b, const char* function, const char* file, unsigned int line) {
+    if (!b) {
+        std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;
+        abort();
+    }
+}

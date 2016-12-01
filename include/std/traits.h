@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 namespace std {
 
 #ifndef __GLIBCXX__
@@ -89,6 +91,12 @@ template<>
 struct is_integral<int32_t> final {
     static constexpr bool value = true;
 };
+
+template<typename T>
+struct is_unsigned final {
+    static constexpr bool value = (T(0) < T(-1));
+};
+
 
 #endif
 }

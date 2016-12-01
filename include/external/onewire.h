@@ -27,9 +27,39 @@
 #include "util/disable.h"
 #include "util/dassert.h"
 #include "std/array.h"
+#include "std/algorithm.h"
+#include "container/pgmstring.h"
 
 namespace OneWire {
-namespace detail {}
+
+struct Rom {
+    template<typename Stream> friend Stream& operator<<(Stream& o, const Rom& rom);
+    
+    static constexpr uint8_t size = 8;
+    uint8_t& operator[](uint8_t index) {
+        return data[index];
+    }
+    const uint8_t& operator[](uint8_t index) const {
+        return data[index];
+    }
+    explicit operator bool() const {
+        return !std::all_of(std::begin(data), std::end(data), [](uint8_t v){return v == 0;}) && std::crc8(data);
+    }
+private:
+    std::array<uint8_t, size> data;
+};
+typedef Rom ow_rom_t;
+
+template<typename Stream>
+Stream& operator<<(Stream& o, const Rom& rom) {
+    o << "OneWireId["_pgm;
+    for(const auto& v : rom.data) {
+        o << v << ',';
+    }
+    o << static_cast<bool>(rom);
+    o << ']';
+    return o;
+}
 
 struct Normal {};
 struct OverDrive{};
@@ -56,7 +86,8 @@ struct Parameter<OverDrive> {
     static constexpr std::centimicroseconds presenceAfterReset{85};
 };
 
-enum class Command {ReadRom = 0x33, SkipRom = 0xcc, MatchRom = 0x55, SearchRom = 0xf0, Convert = 0x44, ReadScratchpad = 0xbe, WriteScratchpad = 0x4e};
+enum class Command {ReadRom = 0x33, SkipRom = 0xcc, MatchRom = 0x55, SearchRom = 0xf0, 
+                    Convert = 0x44, ReadScratchpad = 0xbe, WriteScratchpad = 0x4e};
 
 template<typename OWMaster, const std::microseconds& delay, uint16_t BSize = 16>
 class MasterAsync final {
@@ -123,6 +154,7 @@ public:
                     EventManager::enqueue({EventType::OneWireRecvComplete, 0});
                 }
                 else {
+                    data = 0;
                     mBitCount = 0;
                 }
             }
@@ -194,10 +226,10 @@ public:
     }
     static void writeBit(bool bit) {
         Util::delay(Parameter<Mode>::recovery);
-        Pin::low();
-        Set<Pin>::output();
         {
             Scoped<DisbaleInterrupt> di;
+            Pin::low();
+            Set<Pin>::output();
             Util::delay(Parameter<Mode>::pre); 
             if (bit) {
                 Set<Pin>::input();
@@ -258,10 +290,24 @@ public:
     static constexpr uint8_t SearchFirst = 0xff;
     static constexpr uint8_t Error = 0xff;
     static constexpr uint8_t PresenceError = 0xfe;
-    static constexpr uint8_t romSize = 8;
+
+    template<uint8_t MaxDevices>
+    static uint8_t findDevices(std::array<ow_rom_t, MaxDevices>& devices) {
+        auto diff = SearchFirst;
+        for(uint8_t i = 0; i < devices.size; ++i) {
+            diff = searchRom(diff, devices[i]);
+            if ((diff == Error) || (diff == PresenceError)) {
+                return i;
+            }
+            else if (diff == LastDevice) {
+                return i + 1;
+            }
+        }
+        return MaxDevices;
+    }
     
-    static uint8_t searchRom(uint8_t diff, std::array<uint8_t, romSize>& rom) {
-        uint8_t i = romSize * 8;
+    static uint8_t searchRom(uint8_t diff, ow_rom_t& rom) {
+        uint8_t i = ow_rom_t::size * 8;
         uint8_t j = 8;
         uint8_t next_diff = LastDevice;
         bool  b = false;

@@ -110,19 +110,68 @@ void iota(ForwardIterator first, ForwardIterator last, T value, T increment)
         value += increment;
     }
 }
+
+template<class InputIt, class T>
+InputIt find(InputIt first, InputIt last, const T& value)
+{
+    for (; first != last; ++first) {
+        if (*first == value) {
+            return first;
+        }
+    }
+    return last;
+}
+
+template<class InputIt, class UnaryPredicate>
+InputIt find_if(InputIt first, InputIt last, UnaryPredicate p)
+{
+    for (; first != last; ++first) {
+        if (p(*first)) {
+            return first;
+        }
+    }
+    return last;
+}
+
+template<class InputIt, class UnaryPredicate>
+InputIt find_if_not(InputIt first, InputIt last, UnaryPredicate q)
+{
+    for (; first != last; ++first) {
+        if (!q(*first)) {
+            return first;
+        }
+    }
+    return last;
+}
+
+template< class InputIt, class UnaryPredicate >
+bool all_of(InputIt first, InputIt last, UnaryPredicate p)
+{
+    return std::find_if_not(first, last, p) == last;
+}
+
+template< class InputIt, class UnaryPredicate >
+bool any_of(InputIt first, InputIt last, UnaryPredicate p)
+{
+    return std::find_if(first, last, p) != last;
+}
+
+template< class InputIt, class UnaryPredicate >
+bool none_of(InputIt first, InputIt last, UnaryPredicate p)
+{
+    return std::find_if(first, last, p) == last;
+}
+
 #endif
 
 template<typename C>
 bool crc8(const C& data) {
-    uint8_t  crc = 0;
-	
-    for (typename C::size_type loop_count = 0; loop_count < C::size; loop_count++) {
+    uint8_t crc = 0;
+    for(typename C::size_type loop_count = 0; loop_count < C::size; loop_count++) {
         uint8_t b = data[loop_count];
-		
         uint8_t bit_counter = 8;
 		do {
             uint8_t feedback_bit = (crc ^ b) & 0x01;
-	
 			if ( feedback_bit == 0x01 ) {
 				crc = crc ^ 0x18; //0X18 = X^8+X^5+X^4+X^0
 			}
@@ -130,7 +179,6 @@ bool crc8(const C& data) {
 			if ( feedback_bit == 0x01 ) {
 				crc = crc | 0x80;
 			}
-		
 			b = b >> 1;
 			bit_counter--;
 		
