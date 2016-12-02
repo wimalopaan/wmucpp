@@ -31,6 +31,8 @@ targets += onewire.elf
 targets += ws2812.elf
 targets += analog.elf
 targets += analogevent.elf
+targets += akku.elf
+targets += ds1307.elf
 
 -include ../../Makefile.include
 

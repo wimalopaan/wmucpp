@@ -47,6 +47,16 @@ struct ATMega1284P final
         volatile uint8_t reserved2;
         template<int N> struct Address;
     };
+    struct TWI {
+        static constexpr const uint8_t count = 1;
+        volatile uint8_t twbr;
+        volatile uint8_t twsr;
+        volatile uint8_t twar;
+        volatile uint8_t twdr;
+        volatile uint8_t twcr;
+        volatile uint8_t twamr;
+        template<int N> struct Address;
+    };
     struct Timer8Bit {
         static constexpr const uint8_t count = 2;
         typedef uint8_t value_type;
@@ -226,6 +236,11 @@ struct ATMega1284P::PCInterrupts::Address<3> {
 template<>
 struct ATMega1284P::Adc::Address<0> {
     static constexpr uint8_t value = 0x78;
+};
+
+template<>
+struct ATMega1284P::TWI::Address<0> {
+    static constexpr uint8_t value = 0xb8;
 };
 
 template<>

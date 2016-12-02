@@ -208,3 +208,8 @@ example/externals/ds18b20async.cc
 include/hal/adccontroller.h
 example/externals/analogevent.cc
 include/external/lm35.h
+example/externals/akku.cc
+include/external/serialvoltage.h
+include/mcu/avr/twi.h
+example/externals/ds1307.cc
+include/external/ds1307.h

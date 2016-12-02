@@ -29,8 +29,12 @@
 #include "hal/constantrate.h"
 #include "hal/variablerate.h"
 #include "hal/bufferedstream.h"
+#include "hal/adccontroller.h"
 #include "external/onewire.h"
 #include "external/ds18b20.h"
+#include "external/ds1307.h"
+#include "external/lm35.h"
+#include "mcu/avr/twi.h"
 #include "std/array.h"
 
 #include <stdlib.h> // abort()
@@ -58,8 +62,6 @@ std::array<OneWire::ow_rom_t, 5> dsIds;
 
 //using terminal = SSpi0;
 using bufferedTerminal = BufferedStream<SSpi0, 128>;
-using vrAdapter = VariableRateAdapter<bufferedTerminal>;
-
 
 namespace std {
     std::basic_ostream<bufferedTerminal> cout;
@@ -74,10 +76,19 @@ using buttonController = ButtonController<button0, button1>;
 using dcfPin = AVR::Pin<PortA, 7>;
 using dcfDecoder = DCF77<dcfPin>;
 
-using ws2812_A = AVR::Pin<PortC, 1>;
-using ws2812_B = AVR::Pin<PortC, 2>;
+using adc = AVR::Adc<0>;
+using adcController = AdcController<adc, 6>;
+using lm35 = LM35<adcController, 0>;
 
-using ppmInputPin = AVR::Pin<PortC, 0>;
+using TwiMaster = TWI::Master<0>;
+using ds1307 = DS1307<TwiMaster>;
+
+using vrAdapter = VariableRateAdapter<bufferedTerminal, adcController>;
+
+using ws2812_A = AVR::Pin<PortC, 2>;
+//using ws2812_B = AVR::Pin<PortC, 2>;
+
+using ppmInputPin = AVR::Pin<PortC, 3>;
 using pinChangeHandlerPpm = AVR::PinChange<ppmInputPin>;
 using ppmTimerInput = AVR::Timer8Bit<2>;
 using ppm1 = PpmDecoder<pinChangeHandlerPpm, ppmTimerInput>;
@@ -91,8 +102,8 @@ using rcUsart = AVR::Usart<1, Hott::SumDProtocollAdapter<0>>;
 
 
 using ppmTimerOutput = AVR::Timer16Bit<3>;
-using ppmPin1 = AVR::Pin<PortC, 3>;
-using ppmPin2 = AVR::Pin<PortC, 4>;
+using ppmPin1 = AVR::Pin<PortC, 4>;
+using ppmPin2 = AVR::Pin<PortC, 5>;
 using softPpm = SoftPPM<ppmTimerOutput, ppmPin1, ppmPin2>;
 
 // todo: testen, ob das mit PpmChange vereinbar ist
@@ -192,6 +203,7 @@ public:
         if (timer == *pTimer) {
             static uint8_t count = 0;
             WS2812<2, ws2812_A>::set({16, (uint8_t)((count++ % 2) * 16), 16});
+            std::cout << "Temp lm35: "_pgm << lm35::temperature() << std::endl;
             std::cout << "ppm:"_pgm << ppm1::value() << std::endl;
             std::cout << "c0: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(0) << std::endl;
     //        std::cout << "c1: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(1) << std::endl;
@@ -262,7 +274,8 @@ int main()
     rcUsart::init<115200>();
     SSpi0::init();
     buttonController::init();
-
+    adcController::init();
+    
     using namespace std::literals::quantity;
     softPpm::init();
     softPpm::ppm(50_ppc, 0);
@@ -299,8 +312,8 @@ int main()
     WS2812<2, ws2812_A>::init();
     WS2812<2, ws2812_A>::off();
 
-    WS2812<2, ws2812_B>::init();
-    WS2812<2, ws2812_B>::off();
+//    WS2812<2, ws2812_B>::init();
+//    WS2812<2, ws2812_B>::off();
 
     pTimer = systemTimer::create(1000_ms, TimerFlags::Periodic);
     tTimer = systemTimer::create(5000_ms, TimerFlags::Periodic);
