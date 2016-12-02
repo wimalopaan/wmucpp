@@ -192,6 +192,13 @@ Stream& operator<<(Stream& o, const FixedPoint<uint16_t, 4>& f) {
     }
     return o;
 }
+template<typename Stream>
+Stream& operator<<(Stream& o, const FixedPoint<uint16_t, 8>& f) {
+    if (!Config::disableCout) {
+        o << f.integerAbs() << f.fraction();
+    }
+    return o;
+}
 
 template<typename Stream>
 Stream& operator<<(Stream& o, const FixedPoint<int16_t, 4>& f) {

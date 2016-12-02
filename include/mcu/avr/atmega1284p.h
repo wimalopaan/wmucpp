@@ -36,8 +36,13 @@ struct ATMega1284P final
         volatile uint8_t ucsrb;
         volatile uint8_t ucsrc;
         volatile uint8_t reserved1;
-        volatile uint8_t ubbrl;
-        volatile uint8_t ubbrh;
+        union {
+            struct {
+                volatile uint8_t ubbrl;
+                volatile uint8_t ubbrh;
+            };
+            volatile uint16_t ubbr;
+        };
         volatile uint8_t udr;
         volatile uint8_t reserved2;
         template<int N> struct Address;
@@ -140,6 +145,9 @@ struct ATMega1284P final
         volatile uint8_t adcsra;
         volatile uint8_t adcsrb;
         volatile uint8_t admux;
+        volatile uint8_t reserved;
+        volatile uint8_t didr0;
+        volatile uint8_t didr1;
         template<int N> struct Address;
         template<int N> struct Parameter;
     };

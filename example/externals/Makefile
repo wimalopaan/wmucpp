@@ -28,6 +28,9 @@ targets += button.elf
 targets += ds18b20.elf
 targets += ds18b20async.elf
 targets += onewire.elf
+targets += ws2812.elf
+targets += analog.elf
+targets += analogevent.elf
 
 -include ../../Makefile.include
 

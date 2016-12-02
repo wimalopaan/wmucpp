@@ -16,7 +16,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-int main() 
-{
+#pragma once
+
+#include "mcu/avr/adc.h"
+#include "util/fixedpoint.h"
+
+template<typename Controller, uint8_t Index>
+class LM35 {
+public:
+    typedef Controller controller_type;
+    static constexpr uint8_t index = Index;
     
-}
+    static constexpr double VoltPerDegree{0.01};
+    static constexpr auto VBit = Controller::mcu_adc_type::VBit;
+    static constexpr FixedPoint<uint16_t, 8> degreeScale{VBit / VoltPerDegree};
+    
+    static FixedPoint<uint16_t, 8> temperature() {
+        return FixedPoint<uint16_t, 8>::fromRaw(degreeScale.raw() * Controller::value(index));
+    }
+};

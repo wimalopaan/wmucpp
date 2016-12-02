@@ -121,8 +121,9 @@ public:
     template<uint32_t Baud>
     static void init() {
         static_assert(Baud >= 2400, "USART should use a valid baud rate >= 2400");
-        getBaseAddr<typename MCU::Usart, N>()->ubbrl = Ubrr<Config::fMcu.value, Baud>::value & 0xff;
-        getBaseAddr<typename MCU::Usart, N>()->ubbrh = (Ubrr<Config::fMcu.value, Baud>::value >> 8) & 0xff;
+        getBaseAddr<typename MCU::Usart, N>()->ubbr = Ubrr<Config::fMcu.value, Baud>::value;
+//        getBaseAddr<typename MCU::Usart, N>()->ubbrl = Ubrr<Config::fMcu.value, Baud>::value & 0xff;
+//        getBaseAddr<typename MCU::Usart, N>()->ubbrh = (Ubrr<Config::fMcu.value, Baud>::value >> 8) & 0xff;
         getBaseAddr<typename MCU::Usart, N>()->ucsrb |= _BV(TXEN0) | _BV(RXEN0) | _BV(RXCIE0);
         getBaseAddr<typename MCU::Usart, N>()->ucsrc |= _BV(UCSZ01) | _BV(UCSZ00);
     }

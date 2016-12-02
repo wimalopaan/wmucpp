@@ -21,6 +21,7 @@
 #include <stdint.h>
 
 #include "std/traits.h"
+#include "util/bits.h"
 
 template<typename T>
 struct Unsigned;
@@ -113,3 +114,8 @@ constexpr FixedPoint<int16_t, 4> operator"" _fp(long double v) {
     return FixedPoint<int16_t, 4>{(double)v};
 }
 
+template<typename T, uint8_t FB>
+FixedPoint<T, FB> operator*(FixedPoint<T, FB> lhs, FixedPoint<T, FB> rhs) {
+    typename Util::enclosingType<T>::type p = lhs.raw() * rhs.raw();
+    return FixedPoint<T, FB>::fromRaw(p >> FB);
+}

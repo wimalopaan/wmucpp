@@ -91,12 +91,12 @@ using rcUsart = AVR::Usart<1, Hott::SumDProtocollAdapter<0>>;
 
 
 using ppmTimerOutput = AVR::Timer16Bit<3>;
-using ppmPin1 = AVR::Pin<PortD, 7>;
-using ppmPin2 = AVR::Pin<PortD, 6>;
-using softPpm = SoftPPM<ppmTimerOutput, ppmPin1>;
+using ppmPin1 = AVR::Pin<PortC, 3>;
+using ppmPin2 = AVR::Pin<PortC, 4>;
+using softPpm = SoftPPM<ppmTimerOutput, ppmPin1, ppmPin2>;
 
 // todo: testen, ob das mit PpmChange vereinbar ist
-//using hardPwm = AVR::PWM<2>;
+using hardPwm = AVR::PWM<2>;
 
 
 using crTestPin = AVR::Pin<PortB, 1>;
@@ -118,8 +118,6 @@ using sampler = PeriodicGroup<buttonController, systemTimer, dcfDecoder, softPwm
 //using testPin = AVR::Pin<PortD, 5>;
 
 using led = AVR::Pin<PortB, 0>;
-//using led = AVR::Pin<PortB, 2>;
-//using led2 = AVR::Pin<PortC, 3>;
 
 struct EventHandlerParameter {
     std::optional<uint7_t> timerId1;
@@ -184,45 +182,41 @@ public:
     }
 };
 
+decltype(systemTimer::create(1000_ms, TimerFlags::Periodic)) pTimer;
+decltype(systemTimer::create(1000_ms, TimerFlags::Periodic)) mTimer;
+decltype(systemTimer::create(1000_ms, TimerFlags::Periodic)) tTimer;
+
 class TimerHandler : public EventHandler<EventType::Timer> {
 public:
-    static void process(uint8_t) {
-        static uint8_t count = 0;
-        WS2812<2, ws2812_A>::set({16, (uint8_t)((count++ % 2) * 16), 16});
-        std::cout << "ppm:"_pgm << ppm1::value() << std::endl;
-        std::cout << "c0: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(0) << std::endl;
-//        std::cout << "c1: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(1) << std::endl;
-//        std::cout << "c2: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(2) << std::endl;
-//        std::cout << "c3: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(3) << std::endl;
-//        std::cout << "c4: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(4) << std::endl;
-//        std::cout << "c5: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(5) << std::endl;
-//        std::cout << "nn: "_pgm << Hott::SumDProtocollAdapter<0>::numberOfChannels() << std::endl;
-
-        std::percent pv = std::scale(Hott::SumDProtocollAdapter<0>::value8Bit(0),
-                               Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit);
-        std::cout << "pv: " << pv.value << std::endl;
-        softPpm::ppm(pv, 0);
-
-        softPwm::pwm(pv, 0);
-        softPwm::pwm(pv, 1);
-        std::cout << "spwm period: "_pgm << softPwm::period() << std::endl;
-
-        if ((count & 0x03) == 0) {
-            if (!ds18b20::convert()) {
-                std::cout << "convert error" << std::endl;
+    static void process(uint8_t timer) {
+        if (timer == *pTimer) {
+            static uint8_t count = 0;
+            WS2812<2, ws2812_A>::set({16, (uint8_t)((count++ % 2) * 16), 16});
+            std::cout << "ppm:"_pgm << ppm1::value() << std::endl;
+            std::cout << "c0: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(0) << std::endl;
+    //        std::cout << "c1: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(1) << std::endl;
+    //        std::cout << "c2: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(2) << std::endl;
+    //        std::cout << "c3: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(3) << std::endl;
+    //        std::cout << "c4: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(4) << std::endl;
+    //        std::cout << "c5: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(5) << std::endl;
+    //        std::cout << "nn: "_pgm << Hott::SumDProtocollAdapter<0>::numberOfChannels() << std::endl;
+    
+            std::percent pv = std::scale(Hott::SumDProtocollAdapter<0>::value8Bit(0),
+                                   Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit);
+            std::cout << "pv: " << pv.value << std::endl;
+            softPpm::ppm(pv, 0);
+    
+            softPwm::pwm(pv, 0);
+            softPwm::pwm(pv, 1);
+            std::cout << "spwm period: "_pgm << softPwm::period() << std::endl;
+        }
+        else if (timer == *tTimer) {
+            if (ds18b20::convert()) {
+                systemTimer::start(*mTimer);
             }
         }
-        else {
-            if ((count & 0x03) == 0x02) {
-//                ds18b20::startGet(dsIds[0]);
-                ds18b20::reset();
-                ds18b20::command(OneWire::Command::SkipRom);
-                ds18b20::command(OneWire::Command::ReadScratchpad);
-                ds18b20::startGet();
-            }
-//            if ((count & 0x03) == 0x03) {
-//                ds18b20::startGet(dsIds[1]);
-//            }
+        else if (timer == *mTimer) {
+            ds18b20::startGet(dsIds[0]);
         }
     }
 };
@@ -273,9 +267,9 @@ int main()
     softPpm::init();
     softPpm::ppm(50_ppc, 0);
 
-//    hardPwm::init();
-//    hardPwm::pwm<hardPwm::A>(90_ppc);
-//    hardPwm::pwm<hardPwm::B>(50_ppc);
+    hardPwm::init();
+    hardPwm::pwm<hardPwm::A>(90_ppc);
+    hardPwm::pwm<hardPwm::B>(50_ppc);
 
 //    testPin::dir<AVR::Output>();
 
@@ -292,24 +286,9 @@ int main()
     crAdapterOneWire::init();
 
     auto nDevs = oneWireMaster::findDevices(dsIds);
-    
-    ds18b20sync::convert();
-    Util::delay(800_ms);
-    std::array<uint8_t, ds18b20sync::readScratchpadSize> sp;
-    ds18b20sync::readScratchpad(sp);
-    
-    std::cout << "t: " << sp[0] << std::endl;
-    std::cout << "t: " << sp[1] << std::endl;
-    
-    auto fp = FixedPoint<int16_t, 4>::fromRaw(sp[1] << 8 | sp[0]);
-    
-    std::cout << "t: " << fp << std::endl;
-    
-    
-//    std::array<uint8_t, ds18b20sync::writeScratchpadSize> ds18b20Conf;
-//    ds18b20Conf[2] = static_cast<uint8_t>(ds18b20sync::Resolution::R10bit);
-//    ds18b20sync::writeScratchpad(ds18b20Conf);
-    
+    std::cout << dsIds[0] << std::endl; 
+    std::cout << dsIds[1] << std::endl; 
+            
     led::dir<AVR::Output>();
 
     pinChangeHandlerPpm::init();
@@ -323,8 +302,11 @@ int main()
     WS2812<2, ws2812_B>::init();
     WS2812<2, ws2812_B>::off();
 
-    systemTimer::create(1000_ms, TimerFlags::Periodic);
-
+    pTimer = systemTimer::create(1000_ms, TimerFlags::Periodic);
+    tTimer = systemTimer::create(5000_ms, TimerFlags::Periodic);
+    mTimer = systemTimer::create(750_ms, TimerFlags::OneShot);
+    systemTimer::stop(*mTimer);
+    
 //    std::cout << Config() << std::endl;
 
     using handler = EventHandlerGroup<TimerHandler,
