@@ -11,16 +11,26 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- 
+
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
 
-#include <stdint.h>
+// sudo avrdude -p attiny84 -P usb -c avrisp2 -U lfuse:w:0xe2:m -U hfuse:w:0xdf:m -U efuse:w:0xff:m
 
-template<typename Controller, uint8_t Cells>
-class SerialVoltage {
-    
-};
+#include "mcu/ports.h"
+
+using namespace AVR;
+using PortB = Port<DefaultMcuType::PortRegister, AVR::B>;
+using led = Pin<PortB, 0>;
+
+int main()
+{
+    Set<led>::output();
+
+    led::high();
+    while(true) {
+        led::toggle();        
+    }    
+}

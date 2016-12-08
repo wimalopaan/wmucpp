@@ -23,6 +23,8 @@
 #include "mcu/avr/delay.h"
 #include "util/bits.h"
 
+// todo: BitMode
+
 template<typename DataPin, typename ClockPin, typename CSPin, bool useDelay = false>
 class SoftSpiMaster final {
 public:

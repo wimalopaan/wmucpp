@@ -50,17 +50,44 @@ int main()
 
     std::cout << "DS1307 example"_pgm << std::endl;
     
-    ds1307::init();
-    ds1307::squareWave<true>();
+    TwiMaster::init<ds1307::fSCL>();
+
+    std::array<TWI::Address, 5> i2cAddresses;
+    TwiMaster::findDevices(i2cAddresses);
+    for(const auto& d : i2cAddresses) {
+        std::cout << d << std::endl;
+    }
     
+    ds1307::init();
+    ds1307::halt<false>();
+    
+    if (!ds1307::squareWave<false>()) {
+        std::cout << "Error"_pgm << std::endl;
+    }
+    
+    if (auto v = ds1307::readControlRegister()) {
+        std::cout << "Control Register: "_pgm << *v << std::endl;
+    }
+    
+    uint8_t c = 0;
     while (true) {
         Util::delay(750_ms);
+        ds1307::writeToRam(0, ++c);
+        if (auto v = ds1307::readFromRam(0)) {
+            std::cout << "Ram: "_pgm << *v << std::endl;
+        }
+        
+        if (ds1307::readTimeInfo()) {
+            std::cout << "TI[0]: "_pgm << ds1307::timeInfo()[0] << std::endl;
+        }
     }
 }
 
+#ifndef NDEBUG
 void assertFunction(bool b, const char* function, const char* file, unsigned int line) {
     if (!b) {
         std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;
         abort();
     }
 }
+#endif

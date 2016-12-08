@@ -19,8 +19,10 @@
 #pragma once
 
 #ifndef NDEBUG
+// todo: Umstellen auf pgm Strings
 # define assert(x) assertFunction(x, __PRETTY_FUNCTION__, __FILE__, __LINE__)
 void assertFunction(bool b, const char* function, const char* file, unsigned int line);
+
 #else
 
 #define assert(x)

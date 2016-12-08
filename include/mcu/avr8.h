@@ -24,22 +24,9 @@
 # include <avr/io.h>
 #endif
 
+#include "avr/avr8defs.h"
+
 namespace AVR {
-struct A {
-    static constexpr char letter = 'A';
-};
-struct B {
-    static constexpr char letter = 'B';
-};
-struct C {
-    static constexpr char letter = 'C';
-};
-struct D {
-    static constexpr char letter = 'D';
-};
-struct E {
-    static constexpr char letter = 'E';
-};
 
 struct ATMegaNone;
 struct ATMega8;
@@ -47,10 +34,12 @@ struct ATMega1284P;
 struct ATMega328P;
 
 }
+
 #include "mcu/avr/atmega1284p.h"
 #include "mcu/avr/atmega328p.h"
 #include "mcu/avr/atmega328pb.h"
 #include "mcu/avr/atmega8.h"
+#include "mcu/avr/attiny84.h"
 
 namespace AVR {
 
@@ -81,6 +70,8 @@ typedef AVR::ATMega328PB DefaultMcuType;
 typedef AVR::ATMega8 DefaultMcuType;
 #elif defined(__AVR_ATtiny85__)
 typedef AVR::ATTiny85 DefaultMcuType;
+#elif defined(__AVR_ATtiny84__)
+typedef AVR::ATTiny84 DefaultMcuType;
 #else
 typedef AVR::ATMegaNone DefaultMcuType;
 #endif

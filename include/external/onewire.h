@@ -90,6 +90,9 @@ struct Parameter<OverDrive> {
 enum class Command {ReadRom = 0x33, SkipRom = 0xcc, MatchRom = 0x55, SearchRom = 0xf0, 
                     Convert = 0x44, ReadScratchpad = 0xbe, WriteScratchpad = 0x4e};
 
+
+// todo: asynchrone Schnittstelle wie bei I2C gestalten
+
 template<typename OWMaster, const std::microseconds& delay, uint16_t BSize = 16>
 class MasterAsync final {
     enum class State : uint8_t {Inactive, ResetWait, Sending, Reading};

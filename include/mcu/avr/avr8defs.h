@@ -11,7 +11,7 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- 
+
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -20,7 +20,26 @@
 
 #include <stdint.h>
 
-template<typename Controller, uint8_t Cells>
-class SerialVoltage {
-    
+#if __has_include(<avr/io.h>)
+# include <avr/io.h>
+#endif
+
+namespace AVR {
+
+struct A {
+    static constexpr char letter = 'A';
 };
+struct B {
+    static constexpr char letter = 'B';
+};
+struct C {
+    static constexpr char letter = 'C';
+};
+struct D {
+    static constexpr char letter = 'D';
+};
+struct E {
+    static constexpr char letter = 'E';
+};
+
+}

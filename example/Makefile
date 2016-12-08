@@ -21,6 +21,7 @@ MCU = atmega1284p
 F_OSC = 20000000
 
 subdirs = atmega8 atmega328 atmega328pb atmega1284p 
+subdirs += attiny84 attiny85
 subdirs += features externals
 
 targets +=  main.elf main.size

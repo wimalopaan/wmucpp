@@ -31,3 +31,5 @@ example/atmega328pb
 example/atmega8
 example/features
 example/externals
+example/attiny84
+example/attiny85

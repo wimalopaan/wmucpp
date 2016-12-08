@@ -20,6 +20,8 @@
 
 #include <stdint.h>
 
+#include "avr8defs.h"
+
 #pragma pack(push)
 #pragma pack(1)
 

@@ -16,7 +16,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "config.h"
+#include "external/ws2812.h"
+#include "mcu/avr/delay.h"
+
+using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
+using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
+using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
+using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
+
+using ws2812_Pin = AVR::Pin<PortC, 2>;
+using leds = WS2812<2, ws2812_Pin>;
+
 int main() 
 {
+    leds::init();
+    leds::off();
     
+    uint8_t counter = 0;
+    while(true) {
+        Util::delay(10_ms);
+        
+        cRGB color = {counter, counter, counter};
+        leds::set(color);
+        
+        ++counter;
+    }
 }

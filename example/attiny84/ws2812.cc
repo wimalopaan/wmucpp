@@ -16,11 +16,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "config.h"
+#include "external/ws2812.h"
+#include "mcu/avr/delay.h"
 
-#include <stdint.h>
+using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 
-template<typename Controller, uint8_t Cells>
-class SerialVoltage {
+using led = AVR::Pin<PortB, 0>;
+
+using ws2812_Pin = AVR::Pin<PortB, 1>;
+using leds = WS2812<3, ws2812_Pin>;
+
+int main() 
+{
+    Set<led>::output();
+    led::high();
     
-};
+    leds::init();
+    leds::off();
+    
+    uint8_t counter = 0;
+    while(true) {
+        led::toggle();
+        Util::delay(10_ms);
+        
+        cRGB color = {counter, counter, counter};
+        leds::set(color);
+        
+        ++counter;
+    }
+}

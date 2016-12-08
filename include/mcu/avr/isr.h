@@ -50,6 +50,8 @@ extern "C" {
     void PCINT1_vect(void);
     void PCINT2_vect(void);
     void PCINT3_vect(void);
+    
+    void USI_OVF_vect(void);
 
 }
 
@@ -116,10 +118,12 @@ template<>
 struct Int<0> {
     static constexpr const uint32_t number = INT0_vect_num;
 };
+#ifdef INT1_vect_num
 template<>
 struct Int<1> {
     static constexpr const uint32_t number = INT1_vect_num;
 };
+#endif
 #ifdef INT2_vect_num
 template<>
 struct Int<2> {
@@ -180,45 +184,67 @@ struct Timer<2> {
         static constexpr const uint32_t number = TIMER2_COMP_vect_num;
 #endif
     };
+#ifdef TIMER2_OVF_vect_num
     struct Overflow  {
         static constexpr const uint32_t number = TIMER2_OVF_vect_num;
     };
+#endif
 };
 template<>
 struct Timer<1> {
     struct Capture  {
         static constexpr const uint32_t number = TIMER1_CAPT_vect_num;
     };
+#ifdef TIMER1_COMPA_vect_num
     struct CompareA  {
         static constexpr const uint32_t number = TIMER1_COMPA_vect_num;
     };
+#endif
+#ifdef TIMER1_COMPB_vect_num
     struct CompareB  {
         static constexpr const uint32_t number = TIMER1_COMPB_vect_num;
     };
+#endif
+#ifdef TIMER1_OVF_vect_num
     struct Overflow  {
         static constexpr const uint32_t number = TIMER1_OVF_vect_num;
     };
+#endif
 };
 template<>
 struct Timer<0> {
-    struct CompareA  {
 #ifdef TIMER0_COMPA_vect_num
+    struct CompareA  {
         static constexpr const uint32_t number = TIMER0_COMPA_vect_num;
-#endif
     };
-    struct CompareB  {
+#endif
 #ifdef TIMER0_COMPB_vect_num
+    struct CompareB  {
         static constexpr const uint32_t number = TIMER0_COMPB_vect_num;
-#endif
     };
+#endif
+#ifdef TIMER1_OVF_vect_num
     struct Overflow  {
         static constexpr const uint32_t number = TIMER0_OVF_vect_num;
     };
+#endif
 };
+#ifdef SPI_STC_vect_num
 struct SpiStc  {
     static constexpr const uint32_t number = SPI_STC_vect_num;
 };
+#endif
 
+template<uint8_t> struct Usi;
+
+template<>
+struct Usi<0> {
+#ifdef USI_OVF_vect_num
+    struct Overflow {
+        static constexpr const uint32_t number = USI_OVF_vect_num;
+    };
+#endif
+};
 
 }
 }

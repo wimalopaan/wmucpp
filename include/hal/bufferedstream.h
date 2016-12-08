@@ -22,7 +22,14 @@
 #include "std/traits.h"
 #include "container/fifo.h"
 
-template<typename Device, uint16_t Size>
+// todo: Mode: BitMode oder ByteMode
+
+struct ByteMode {
+};
+struct BitMode {
+};
+
+template<typename Device, uint16_t Size, typename Mode = ByteMode>
 class BufferedStream {
 public:
     typedef Device device_type;
@@ -46,5 +53,5 @@ public:
 private:
     static std::FiFo<uint8_t, Size> fifo;
 };
-template<typename Device, uint16_t Size>
-std::FiFo<uint8_t, Size> BufferedStream<Device, Size>::fifo;
+template<typename Device, uint16_t Size, typename Mode>
+std::FiFo<uint8_t, Size> BufferedStream<Device, Size, Mode>::fifo;

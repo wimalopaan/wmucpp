@@ -213,3 +213,13 @@ include/external/serialvoltage.h
 include/mcu/avr/twi.h
 example/externals/ds1307.cc
 include/external/ds1307.h
+example/externals/ds1307async.cc
+include/mcu/avr/attiny84.h
+include/mcu/avr/avr8defs.h
+example/attiny84/Makefile
+example/attiny85/Makefile
+example/attiny84/blink.cc
+example/attiny84/ws2812.cc
+include/mcu/avr/usi.h
+example/attiny84/spi.cc
+example/attiny84/console.cc

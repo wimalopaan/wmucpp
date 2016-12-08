@@ -11,22 +11,20 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- 
+
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
+
+// sudo avrdude -p attiny84 -P usb -c avrisp2 -U lfuse:w:0xe2:m -U hfuse:w:0xdf:m -U efuse:w:0xff:m
 
 #include "mcu/ports.h"
-#include "external/ds18b20.h"
 #include "hal/softspimaster.h"
 #include "console.h"
 
 using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
-using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
-using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
 
 using SoftSPIData = AVR::Pin<PortA, 0>;
 using SoftSPIClock = AVR::Pin<PortA, 1>;
@@ -40,42 +38,12 @@ namespace std {
     std::lineTerminator<CRLF> endl;
 }
 
-using oneWirePin = AVR::Pin<PortA, 5>;
-using oneWireMaster = OneWire::Master<oneWirePin, OneWire::Normal>;
-using ds18b20 = DS18B20<oneWireMaster>;
-
-std::array<OneWire::ow_rom_t, 5> dsIds;
-
-int main()
+int main() 
 {
     terminal::init();
-    ds18b20::init();
+
+    std::cout << "attiny console test"_pgm << std::endl;
     
-    oneWireMaster::findDevices(dsIds);
-    for(const auto& id : dsIds) {
-        std::cout << id << std::endl;
-    }
-
-    while (true) {
-        ds18b20::convert();
-        Util::delay(750_ms);
-        for(const auto& id : dsIds) {
-            if (id) {
-                ds18b20::ds18b20_rsp_t sp;
-                ds18b20::readScratchpad(id, sp);
-                auto t = ds18b20::temperature(sp);
-                std::cout << "temperature "_pgm << id << " : "_pgm << t << std::endl;
-            }
-        }
-    }
+    while(true) {
+    }    
 }
-
-#ifndef NDEBUG
-
-void assertFunction(bool b, const char* function, const char* file, unsigned int line) {
-    if (!b) {
-        std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;
-        abort();
-    }
-}
-#endif

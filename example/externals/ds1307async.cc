@@ -19,14 +19,24 @@
 #include <stdlib.h>
 
 #include "mcu/ports.h"
-#include "external/ds18b20.h"
+#include "mcu/avr/twi.h"
+#include "external/ds1307.h"
 #include "hal/softspimaster.h"
+#include "hal/event.h"
+#include "hal/softtimer.h"
 #include "console.h"
 
 using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
 using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
+
+using systemClock = AVR::Timer8Bit<0>;
+using systemTimer = Timer<systemClock>;
+
+using TwiMaster = TWI::Master<0>;
+using TwiMasterAsync = TWI::MasterAsync<TwiMaster>;
+using ds1307 = DS1307<TwiMasterAsync>;
 
 using SoftSPIData = AVR::Pin<PortA, 0>;
 using SoftSPIClock = AVR::Pin<PortA, 1>;
@@ -40,38 +50,54 @@ namespace std {
     std::lineTerminator<CRLF> endl;
 }
 
-using oneWirePin = AVR::Pin<PortA, 5>;
-using oneWireMaster = OneWire::Master<oneWirePin, OneWire::Normal>;
-using ds18b20 = DS18B20<oneWireMaster>;
+struct DS1307handler: public EventHandler<EventType::DS1307TimeAvailable> {
+    static void process(uint8_t) {
+        std::cout << "ds1307 time"_pgm << std::endl;
+    }  
+};
 
-std::array<OneWire::ow_rom_t, 5> dsIds;
+struct DS1307handlerError: public EventHandler<EventType::DS1307Error> {
+    static void process(uint8_t) {
+        std::cout << "ds1307 error"_pgm << std::endl;
+    }  
+};
+
+struct TWIHandlerError: public EventHandler<EventType::TWIError> {
+    static void process(uint8_t) {
+        std::cout << "twi error"_pgm << std::endl;
+    }  
+};
+
+struct TimerHandler : public EventHandler<EventType::Timer> {
+    static void process(uint8_t) {
+        std::cout << "timer"_pgm << std::endl;
+        ds1307::startReadTimeInfo();
+    }
+};
+
+using periodicGroup = PeriodicGroup<systemTimer>;
+using eventHandlerGroup = EventHandlerGroup<TimerHandler, TWIHandlerError, ds1307, DS1307handler, DS1307handlerError>;
 
 int main()
 {
     terminal::init();
-    ds18b20::init();
+    systemTimer::init();
+    ds1307::init();
+    ds1307::squareWave<true>();
     
-    oneWireMaster::findDevices(dsIds);
-    for(const auto& id : dsIds) {
-        std::cout << id << std::endl;
-    }
+    std::cout << "DS1307 async example"_pgm << std::endl;
 
-    while (true) {
-        ds18b20::convert();
-        Util::delay(750_ms);
-        for(const auto& id : dsIds) {
-            if (id) {
-                ds18b20::ds18b20_rsp_t sp;
-                ds18b20::readScratchpad(id, sp);
-                auto t = ds18b20::temperature(sp);
-                std::cout << "temperature "_pgm << id << " : "_pgm << t << std::endl;
-            }
-        }
+    systemTimer::create(1000_ms, TimerFlags::Periodic);
+    
+    {
+        Scoped<EnableInterrupt> ei;
+        EventManager::run<periodicGroup, eventHandlerGroup>([](){
+            TwiMasterAsync::periodic();
+        });
     }
 }
 
 #ifndef NDEBUG
-
 void assertFunction(bool b, const char* function, const char* file, unsigned int line) {
     if (!b) {
         std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;
@@ -79,3 +105,7 @@ void assertFunction(bool b, const char* function, const char* file, unsigned int
     }
 }
 #endif
+
+ISR(TIMER0_COMPA_vect) {
+    periodicGroup::tick();
+}

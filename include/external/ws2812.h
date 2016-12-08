@@ -34,11 +34,13 @@ struct cRGB {
 template<uint8_t N, typename Pin>
 class WS2812 final {
 public:
+    static constexpr uint8_t number = N;
+    typedef Pin pin_type;
+    
     WS2812() = delete;
     static void init() {
         Pin::template dir<AVR::Output>();
     }
-
     static void off() {
         set(cRGB());
     }
@@ -121,7 +123,7 @@ private:
         uint8_t sreg_prev = SREG;
         cli();
 
-        for(uint8_t* data = reinterpret_cast<uint8_t*>(leds); data < reinterpret_cast<uint8_t*>(&leds[N]); ++data) {
+        for(const uint8_t* data = reinterpret_cast<uint8_t*>(leds); data < reinterpret_cast<uint8_t*>(&leds[N]); ++data) {
             asm volatile(
                         "       ldi   %0,8  \n\t"
                         "loop%=:            \n\t"

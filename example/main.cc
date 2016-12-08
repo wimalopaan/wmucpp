@@ -56,12 +56,11 @@ using oneWirePin = AVR::Pin<PortA, 5>;
 using oneWireMaster = OneWire::Master<oneWirePin, OneWire::Normal>;
 using oneWireMasterAsync = OneWire::MasterAsync<oneWireMaster, Hott::hottDelayBetweenBytes>;
 using ds18b20 = DS18B20<oneWireMasterAsync>;
-using ds18b20sync = DS18B20<oneWireMaster>;
 
 std::array<OneWire::ow_rom_t, 5> dsIds;
 
 //using terminal = SSpi0;
-using bufferedTerminal = BufferedStream<SSpi0, 128>;
+using bufferedTerminal = BufferedStream<SSpi0, 512>;
 
 namespace std {
     std::basic_ostream<bufferedTerminal> cout;
@@ -81,7 +80,8 @@ using adcController = AdcController<adc, 6>;
 using lm35 = LM35<adcController, 0>;
 
 using TwiMaster = TWI::Master<0>;
-using ds1307 = DS1307<TwiMaster>;
+using TwiMasterAsync = TWI::MasterAsync<TwiMaster>;
+using ds1307 = DS1307<TwiMasterAsync>;
 
 using vrAdapter = VariableRateAdapter<bufferedTerminal, adcController>;
 
@@ -132,6 +132,24 @@ using led = AVR::Pin<PortB, 0>;
 
 struct EventHandlerParameter {
     std::optional<uint7_t> timerId1;
+};
+
+struct DS1307handler: public EventHandler<EventType::DS1307TimeAvailable> {
+    static void process(uint8_t) {
+        std::cout << "ds1307 time"_pgm << std::endl;
+    }  
+};
+
+struct DS1307handlerError: public EventHandler<EventType::DS1307Error> {
+    static void process(uint8_t) {
+        std::cout << "ds1307 error"_pgm << std::endl;
+    }  
+};
+
+struct TWIHandlerError: public EventHandler<EventType::TWIError> {
+    static void process(uint8_t) {
+        std::cout << "twi error"_pgm << std::endl;
+    }  
 };
 
 class DS18B20MeasurementHandler: public EventHandler<EventType::DS18B20Measurement> {
@@ -203,6 +221,9 @@ public:
         if (timer == *pTimer) {
             static uint8_t count = 0;
             WS2812<2, ws2812_A>::set({16, (uint8_t)((count++ % 2) * 16), 16});
+            
+            ds1307::startReadTimeInfo();
+                      
             std::cout << "Temp lm35: "_pgm << lm35::temperature() << std::endl;
             std::cout << "ppm:"_pgm << ppm1::value() << std::endl;
             std::cout << "c0: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(0) << std::endl;
@@ -286,6 +307,9 @@ int main()
 
 //    testPin::dir<AVR::Output>();
 
+    ds1307::init();
+    ds1307::squareWave<true>();
+    
     dcfDecoder::init();
 
     constexpr std::hertz fCr = 1 / Hott::hottDelayBetweenBytes;
@@ -293,14 +317,15 @@ int main()
     crTimer::prescale<tsd.prescaler>();
     crTimer::ocra<tsd.ocr>();
 
-    ds18b20::init();
-    
     crAdapterHott::init();
     crAdapterOneWire::init();
+    
+    ds18b20::init();
 
-    auto nDevs = oneWireMaster::findDevices(dsIds);
-    std::cout << dsIds[0] << std::endl; 
-    std::cout << dsIds[1] << std::endl; 
+    oneWireMaster::findDevices(dsIds);
+    for(const auto& id : dsIds) {
+        std::cout << id << std::endl;
+    }
             
     led::dir<AVR::Output>();
 
@@ -327,7 +352,8 @@ int main()
                                 PpmDownHandler, PpmUpHandler,
                                 UsartHandler, HottKeyHandler,
                                 Button0Handler, 
-                                ds18b20, DS18B20ErrorHandler, DS18B20MeasurementHandler>;
+                                ds18b20, DS18B20ErrorHandler, DS18B20MeasurementHandler,
+                                TWIHandlerError, ds1307, DS1307handler, DS1307handlerError>;
 
     EventManager::run<sampler, handler>([](){
         led::toggle();
@@ -336,13 +362,15 @@ int main()
         crAdapterHott::periodic();
         vrAdapter::periodic();
         crAdapterOneWire::periodic();
+        TwiMasterAsync::periodic();
     });
 
     return 0;
 }
 
 void assertFunction(bool b, const char* function, const char* file, unsigned int line) {
-    if (!b) {
+
+   if (!b) {
         std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;
         abort();
     }

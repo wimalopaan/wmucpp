@@ -116,10 +116,6 @@ public:
             }
         }
     };
-//    template<typename... PP>
-//    struct OffN<0, void, PP...> {
-//        static void check(uint8_t) {}
-//    };
 
     template<uint8_t N, typename P, typename... PP>
     struct OnN {
@@ -132,10 +128,6 @@ public:
             }
         }
     };
-//    template<typename... PP>
-//    struct OnN<0, void, PP...> {
-//        static void check(uint8_t) {}
-//    };
 
     static void isrA() { // CTC
         actual = 0;

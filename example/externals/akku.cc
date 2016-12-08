@@ -1,6 +1,6 @@
 /*
- * ++C - C++ introduction
- * Copyright (C) 2013, 2014, 2015, 2016 Wilhelm Meier <wilhelm.meier@hs-kl.de>
+ * WMuCpp - Bare Metal C++ 
+ * Copyright (C) 2013, 2014, 2015, 2016 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -82,9 +82,11 @@ ISR(TIMER0_COMPA_vect) {
     pGroup::tick();
 }
 
+#ifndef NDEBUG
 void assertFunction(bool b, const char* function, const char* file, unsigned int line) {
     if (!b) {
         std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;
         abort();
     }
 }
+#endif

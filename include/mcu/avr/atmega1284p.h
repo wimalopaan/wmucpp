@@ -20,6 +20,8 @@
 
 #include <stdint.h>
 
+#include "avr8defs.h"
+
 #pragma pack(push)
 #pragma pack(1)
 
@@ -56,6 +58,8 @@ struct ATMega1284P final
         volatile uint8_t twcr;
         volatile uint8_t twamr;
         template<int N> struct Address;
+        template<int N> struct PrescalerRow;
+        template<int N, int F> struct Prescaler;
     };
     struct Timer8Bit {
         static constexpr const uint8_t count = 2;
@@ -241,6 +245,26 @@ struct ATMega1284P::Adc::Address<0> {
 template<>
 struct ATMega1284P::TWI::Address<0> {
     static constexpr uint8_t value = 0xb8;
+};
+template<>
+struct ATMega1284P::TWI::PrescalerRow<0> {
+    static constexpr uint8_t values[] = {1, 4, 16, 64};
+};
+template<>
+struct ATMega1284P::TWI::Prescaler<0, 1> {
+    static constexpr uint8_t value = 0x00;
+};
+template<>
+struct ATMega1284P::TWI::Prescaler<0, 4> {
+    static constexpr uint8_t value = 0x01;
+};
+template<>
+struct ATMega1284P::TWI::Prescaler<0, 16> {
+    static constexpr uint8_t value = 0x02;
+};
+template<>
+struct ATMega1284P::TWI::Prescaler<0, 64> {
+    static constexpr uint8_t value = 0x03;
 };
 
 template<>

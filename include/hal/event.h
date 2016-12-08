@@ -44,6 +44,8 @@ enum class EventType : uint8_t {
     ButtonPress0, ButtonPress1, ButtonPress2, ButtonPress3, ButtonPress4, ButtonPress5, ButtonPress6, ButtonPress7,
     OneWireRecvComplete,
     DS18B20Measurement, DS18B20Error,
+    TWIRecvComplete, TWISendComplete, TWIError,
+    DS1307TimeAvailable, DS1307Error,
     AdcConversion
 };
 
