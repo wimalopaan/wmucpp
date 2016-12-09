@@ -20,7 +20,6 @@
 #pragma once
 
 #include <stdint.h>
-
 #include "mcu/avr8.h"
 #include "mcu/ports.h"
 #include "mcu/avr/isr.h"
@@ -28,6 +27,20 @@
 #include "std/traits.h"
 
 namespace AVR {
+
+struct I2C {
+    template<typename SDAPin, typename SCLPin>
+    static void init() {
+        
+    }
+};
+struct SPI {
+    template<typename SDAPin, typename SCLPin>
+    static void init() {
+        
+    }
+    
+};
 
 template<uint8_t N, typename MCU = DefaultMcuType> struct UsiPort;
 
@@ -40,25 +53,34 @@ struct UsiPort<0, AVR::ATTiny84> {
     typedef AVR::Pin<PortA, 6> mosi_pin;
 };
 
-template<uint8_t N, typename SSPin = void, typename MCU = DefaultMcuType>
+template<uint8_t N, typename SSPin = void, typename Inserter = void, typename MCU = DefaultMcuType>
 class Usi final : public IsrBaseHandler<AVR::ISR::Usi<0>::Overflow> {
     static constexpr auto mcu_usi = getBaseAddr<typename MCU::USI, N>;
     
     Usi() = delete;
     
 public:
+    template<typename Mode = SPI>
     static void init() {
         if constexpr(!std::is_same<SSPin, void>::value) {
             SSPin::template dir<Input>();
             SSPin::pullup();
         }
 
+        Mode::template init<typename UsiPort<N, MCU>::mosi_pin, typename UsiPort<N, MCU>::clock_pin>();
+        
         UsiPort<N, MCU>::clock_pin::template dir<Input>();
         UsiPort<N, MCU>::clock_pin::pullup();
         UsiPort<N, MCU>::mosi_pin::template dir<Input>();
         UsiPort<N, MCU>::mosi_pin::pullup();
-        UsiPort<N, MCU>::miso_pin::template dir<Output>();
-        
+
+        if constexpr(std::is_same<typename UsiPort<N, MCU>::miso_pin, SSPin>::value) {
+            UsiPort<N, MCU>::miso_pin::template dir<Input>();
+            UsiPort<N, MCU>::miso_pin::pullup();
+        }
+        else {
+            UsiPort<N, MCU>::miso_pin::template dir<Output>();
+        }
         mcu_usi()->usicr = _BV(USIWM0) | _BV(USICS1) | _BV(USIOIE);        
         mcu_usi()->usisr = _BV(USIOIF);        
     }
@@ -80,8 +102,11 @@ public:
     }
     
     static void isr() {
+        mcu_usi()->usisr = _BV(USIOIF);        
+        if constexpr(!std::is_same<Inserter, void>::value) {
+            Inserter::insert(mcu_usi()->usibr);
+        }
     }
-
 private:
 };
 

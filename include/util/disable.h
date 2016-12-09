@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "std/traits.h"
+
 #if __has_include(<avr/interrupt.h>)
 # include <avr/interrupt.h>
 #else

@@ -24,6 +24,8 @@
 #include "config.h"
 #include "mcu/avr8.h"
 #include "mcu/ports.h"
+#include "util/dassert.h"
+#include "std/array.h"
 
 struct cRGB {
     uint8_t g = 0;
@@ -34,8 +36,9 @@ struct cRGB {
 template<uint8_t N, typename Pin>
 class WS2812 final {
 public:
-    static constexpr uint8_t number = N;
+    static constexpr uint8_t size = N;
     typedef Pin pin_type;
+    typedef cRGB item_type;
     
     WS2812() = delete;
     static void init() {
@@ -44,18 +47,30 @@ public:
     static void off() {
         set(cRGB());
     }
+    template<bool writeOut = true>
     static void set(uint8_t number, const cRGB& color) {
+        assert(number < N);
         leds[number] = color;
-        write();
-    }
-    static void set(const cRGB& color) {
-        for(uint8_t i = 0; i < N; ++i) {
-            leds[i] = color;
+        if constexpr(writeOut) {
+            write();
         }
-        write();
+    }
+    template<bool writeOut = true>
+    static void set(const cRGB& color) {
+        for(auto& l : leds) {
+            l = color;
+        }
+        if constexpr(writeOut) {
+            write();
+        }
+    }
+    static constexpr cRGB& elementAt(uint8_t index) {
+//        assert(index < N);
+        return leds[index];
     }
 private:
-    static cRGB leds[N];
+    static std::array<cRGB, N> leds;
+public:
     static void write() {
     // Timing in ns
 #define w_zeropulse   350
@@ -123,7 +138,7 @@ private:
         uint8_t sreg_prev = SREG;
         cli();
 
-        for(const uint8_t* data = reinterpret_cast<uint8_t*>(leds); data < reinterpret_cast<uint8_t*>(&leds[N]); ++data) {
+        for(const uint8_t* data = reinterpret_cast<uint8_t*>(&leds[0]); data < reinterpret_cast<uint8_t*>(&leds[N - 1] + 1); ++data) {
             asm volatile(
                         "       ldi   %0,8  \n\t"
                         "loop%=:            \n\t"
@@ -189,4 +204,4 @@ private:
 };
 
 template<uint8_t N, typename Pin>
-cRGB WS2812<N, Pin>::leds[N];
+std::array<cRGB, N> WS2812<N, Pin>::leds;

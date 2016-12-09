@@ -18,13 +18,32 @@
 
 #pragma once
 
-#ifndef NDEBUG
-// todo: Umstellen auf pgm Strings
-# define assert(x) assertFunction(x, __PRETTY_FUNCTION__, __FILE__, __LINE__)
-constexpr void assertFunction(bool b, const char* function, const char* file, unsigned int line);
+#include <stdint.h>
 
-#else
+#include "mcu/avr/isr.h"
+#include "mcu/avr/usi.h"
+#include "mcu/avr/twiaddress.h"
+#include "std/array.h"
 
-#define assert(x)
-
-#endif
+template<typename USI, const TWI::Address& Address, uint8_t Size>
+class I2CSlave final {
+    I2CSlave() = delete;
+public:
+    struct I2CSlaveHandlerOvfl  : public IsrBaseHandler<AVR::ISR::Usi<0>::Overflow> {
+        static inline void isr() {
+            
+        }
+        
+    };
+    struct I2CSlaveHandlerStart  : public IsrBaseHandler<AVR::ISR::Usi<0>::Start> {
+        static inline void isr() {
+            
+        }
+        
+    };
+    static inline void init() {
+        USI::init();
+    }
+private:
+    static std::array<uint8_t, Size> data;
+};

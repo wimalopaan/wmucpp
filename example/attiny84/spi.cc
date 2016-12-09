@@ -44,11 +44,8 @@ namespace std {
     std::lineTerminator<CRLF> endl;
 }
 
-using isrRegistrar = IsrRegistrar<Usi>;
-
 int main() 
 {
-    isrRegistrar::init();
     terminal::init();
     
     led::dir<AVR::Output>();
@@ -67,8 +64,4 @@ int main()
             }
         }
     }    
-}
-
-ISR(USI_OVF_vect) {
-    isrRegistrar::isr<AVR::ISR::Usi<0>::Overflow>();
 }

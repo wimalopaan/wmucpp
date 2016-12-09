@@ -71,7 +71,7 @@ struct IsrRegistrar {
     template<uint8_t In, uint8_t N, typename H, typename... Hp>
     struct Caller {
         static constexpr void call() {
-            if (In == H::number) {
+            if constexpr (In == H::number) {
                 H::isr();
             }
             if constexpr((N-1) > 0) {
@@ -242,6 +242,11 @@ struct Usi<0> {
 #ifdef USI_OVF_vect_num
     struct Overflow {
         static constexpr const uint32_t number = USI_OVF_vect_num;
+    };
+#endif
+#ifdef USI_STR_vect_num
+    struct Start {
+        static constexpr const uint32_t number = USI_STR_vect_num;
     };
 #endif
 };

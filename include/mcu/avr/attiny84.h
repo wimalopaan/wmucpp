@@ -66,10 +66,22 @@ struct ATTiny84 final {
     };
     struct Interrupt {
         volatile uint8_t gifr;
-        volatile uint8_t gicr;
-        static constexpr uint8_t address = 0x3a;
+        volatile uint8_t gimsk;
+        static constexpr uint8_t address = 0x5a;
     };
+    struct PCInterrupts {
+        volatile uint8_t pcmsk;
+        template<int N> struct Address;
+    };
+};
 
+template<>
+struct ATTiny84::PCInterrupts::Address<0> {
+    static constexpr uint8_t value = 0x32;
+};
+template<>
+struct ATTiny84::PCInterrupts::Address<1> {
+    static constexpr uint8_t value = 0x40;
 };
 
 template<>

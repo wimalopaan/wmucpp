@@ -43,3 +43,11 @@ int main()
         ++counter;
     }
 }
+#ifndef NDEBUG
+constexpr void assertFunction(bool b, const char*, const char*, unsigned int) {
+   if (!b) {
+       while(true) {
+       }
+   }
+}
+#endif

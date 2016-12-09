@@ -223,3 +223,12 @@ example/attiny84/ws2812.cc
 include/mcu/avr/usi.h
 example/attiny84/spi.cc
 example/attiny84/console.cc
+example/atmega1284p/usitiny.cc
+example/attiny84/spiws2812.cc
+example/atmega1284p/usitiny.h
+include/mcu/i2cslave.h
+example/attiny84/i2cslave.c
+example/attiny84/i2cslave.h
+example/externals/i2cattiny.cc
+example/attiny84/i2cram.cc
+include/mcu/avr/twiaddress.h

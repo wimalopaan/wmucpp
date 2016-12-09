@@ -19,7 +19,7 @@
 #include <stdlib.h>
 
 #include "mcu/ports.h"
-#include "external/ds18b20.h"
+#include "mcu/avr/twi.h"
 #include "hal/softspimaster.h"
 #include "console.h"
 
@@ -27,6 +27,8 @@ using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
 using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
+
+using TwiMaster = TWI::Master<0>;
 
 using SoftSPIData = AVR::Pin<PortA, 0>;
 using SoftSPIClock = AVR::Pin<PortA, 1>;
@@ -40,38 +42,45 @@ namespace std {
     std::lineTerminator<CRLF> endl;
 }
 
-using oneWirePin = AVR::Pin<PortA, 5>;
-using oneWireMaster = OneWire::Master<oneWirePin, OneWire::Normal>;
-using ds18b20 = DS18B20<oneWireMaster>;
-
-std::array<OneWire::ow_rom_t, 5> dsIds;
+static constexpr auto fTWI = 100000_Hz;
+static constexpr TWI::Address attiny{53};
 
 int main()
 {
     terminal::init();
-    ds18b20::init();
+
+    std::cout << "ATTiny USI I2C Example"_pgm << std::endl;
     
-    oneWireMaster::findDevices(dsIds);
-    for(const auto& id : dsIds) {
-        std::cout << id << std::endl;
+    TwiMaster::init<fTWI>();
+
+    std::array<TWI::Address, 5> i2cAddresses;
+    TwiMaster::findDevices(i2cAddresses);
+    for(const auto& d : i2cAddresses) {
+        std::cout << d << std::endl;
     }
 
+    
+    uint8_t c = 0;
     while (true) {
-        ds18b20::convert();
         Util::delay(750_ms);
-        for(const auto& id : dsIds) {
-            if (id) {
-                ds18b20::ds18b20_rsp_t sp;
-                ds18b20::readScratchpad(id, sp);
-                auto t = ds18b20::temperature(sp);
-                std::cout << "temperature "_pgm << id << " : "_pgm << t << std::endl;
-            }
-        }
+        
+        std::array<uint8_t, 3> data;
+        data[0] = 0;
+        data[1] = c++;
+        data[2] = c++;
+        
+        TwiMaster::write(data, attiny);
+        
+        Util::delay(750_ms);
+        
+        TwiMaster::readWithPointer<attiny>(data, 0);
+        
+        std::cout << data << std::endl;
+        
     }
 }
 
 #ifndef NDEBUG
-
 constexpr void assertFunction(bool b, const char* function, const char* file, unsigned int line) {
     if (!b) {
         std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;

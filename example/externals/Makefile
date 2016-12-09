@@ -34,6 +34,7 @@ targets += analogevent.elf
 targets += akku.elf
 targets += ds1307.elf
 targets += ds1307async.elf
+targets += i2cattiny.elf
 
 -include ../../Makefile.include
 

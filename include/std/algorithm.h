@@ -55,6 +55,13 @@ constexpr auto end(C& c) -> decltype(c.end()) {
     return c.end();
 }
 
+template<typename ForwardIt, typename T>
+void fill(ForwardIt first, ForwardIt last, const T& value){
+    for (; first != last; ++first) {
+        *first = value;
+    }
+}
+
 template<typename IIt, typename OIt>
 OIt copy(IIt first, IIt last, OIt out) {
     while (first != last) {

@@ -21,6 +21,7 @@ MCU = atmega1284p
 F_OSC = 20000000
 
 targets += simpleisr2.elf
+targets += usitiny.elf
 
 -include ../../Makefile.include
 

@@ -192,6 +192,7 @@ Stream& operator<<(Stream& o, const FixedPoint<uint16_t, 4>& f) {
     }
     return o;
 }
+
 template<typename Stream>
 Stream& operator<<(Stream& o, const FixedPoint<uint16_t, 8>& f) {
     if (!Config::disableCout) {
@@ -207,6 +208,18 @@ Stream& operator<<(Stream& o, const FixedPoint<int16_t, 4>& f) {
             o << '-';
         }
         o << f.integerAbs() << f.fraction();
+    }
+    return o;
+}
+
+template<typename Stream, typename T, uint8_t L>
+Stream& operator<<(Stream& o, const std::array<T, L>& a) {
+    if (!Config::disableCout) {
+        o << "{ "_pgm;
+        for(const auto& i : a) {
+            o << i << ' ';
+        }
+        o << '}';
     }
     return o;
 }

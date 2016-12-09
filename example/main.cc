@@ -368,13 +368,14 @@ int main()
     return 0;
 }
 
-void assertFunction(bool b, const char* function, const char* file, unsigned int line) {
-
+#ifndef NDEBUG
+constexpr void assertFunction(bool b, const char* function, const char* file, unsigned int line) {
    if (!b) {
         std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;
         abort();
     }
 }
+#endif
 
 ISR(PCINT0_vect) {
 

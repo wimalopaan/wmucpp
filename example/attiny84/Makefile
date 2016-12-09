@@ -27,6 +27,9 @@ targets +=  blink.elf
 targets +=  ws2812.elf
 targets +=  spi.elf
 targets +=  console.elf
+targets +=  spiws2812.elf
+targets +=  i2cslave.elf
+targets +=  i2cram.elf
 
 -include ../../Makefile.include
 

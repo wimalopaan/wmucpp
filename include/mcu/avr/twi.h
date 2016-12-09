@@ -27,8 +27,11 @@
 #include "util/dassert.h"
 #include "hal/event.h"
 
+#include "mcu/avr/twiaddress.h"
+
 namespace TWI {
 
+/*
 struct Write {
     static constexpr bool write = true;
 };
@@ -108,6 +111,7 @@ public:
 private:
     const uint8_t mAddress = 0;    
 };
+*/
 
 template<typename TWIMaster, uint8_t BSize = 16, bool UseSendEvent = false>
 class MasterAsync final {
@@ -461,7 +465,7 @@ public:
     
     template<uint8_t L>
     static bool write(const std::array<uint8_t, L>& data, Address address) {
-        bool ok = start<true>(address);
+        bool ok = start<Write>(address);
         for(uint8_t i = 0; i < data.size; ++i) {
             ok &= write(data[i]);
         }

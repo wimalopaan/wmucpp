@@ -117,7 +117,41 @@ struct NoPin final {
     static bool read() {return false;}
 };
 
+struct ActiveLow {
+    template<typename Pin>
+    static void activate() {
+        Pin::low();
+    }
+    template<typename Pin>
+    static void inactivate() {
+        Pin::high();
+    }
+};
+struct ActiveHighl {
+    template<typename Pin>
+    static void activate() {
+        Pin::high();
+    }
+    template<typename Pin>
+    static void inactivate() {
+        Pin::low();
+    }    
+};
+
+template<typename Pin, typename Mode>
+struct ScopedPin {
+    ScopedPin() {
+        Mode::template activate<Pin>();
+    }
+    ~ScopedPin() {
+        Mode::template inactivate<Pin>();
+    }
+};
+
+
 }
+
+
 
 template<typename Pin>
 struct Set {
