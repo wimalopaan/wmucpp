@@ -49,6 +49,7 @@ public:
             CSPin::low();
             if constexpr(useDelay) Util::delay(Config::SoftSpiMaster::pulseDelay);
         }
+        // fixme: make meta-function
         for(uint8_t i = 0; i < Util::numberOfBits<T>(); ++i) {
             pulseNextBit();
 //            if constexpr(useDelay) Util::delay(Config::SoftSpiMaster::pulseDelay);

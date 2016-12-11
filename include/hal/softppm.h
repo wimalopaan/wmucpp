@@ -85,7 +85,6 @@ public:
         uint16_t ocr = std::expand(width, ocMin, ocMax);
         uint16_t diff = ocr - ocrbValues[channel];
         {
-            // todo: check
             Scoped<DisbaleInterrupt> di;
             ocrbValues[channel] = ocr;
             for(uint8_t i = channel + 1; i < numberOfChannels; ++i) {
@@ -104,7 +103,7 @@ public:
         }
     };
 
-    // todo: etwas eleganter !!!
+    // todo: etwas eleganter !!! Auf die Klasse verzichten, weil keine partielle Spezialisierung mehr erforderlich wegen constexpr
     template<uint8_t N, typename P, typename... PP>
     struct OffN {
         static void check(uint8_t i) {

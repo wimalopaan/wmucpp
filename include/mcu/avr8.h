@@ -40,6 +40,7 @@ struct ATMega328P;
 #include "mcu/avr/atmega328pb.h"
 #include "mcu/avr/atmega8.h"
 #include "mcu/avr/attiny84.h"
+#include "mcu/avr/attiny85.h"
 
 namespace AVR {
 

@@ -35,10 +35,8 @@ using SoftSPIClock = AVR::Pin<PortA, 1>;
 using SoftSPISS = AVR::Pin<PortA, 2>;
 using SSpi0 = SoftSpiMaster<SoftSPIData, SoftSPIClock, SoftSPISS>;
 
-using Usi = AVR::Usi<0>;
-
 constexpr TWI::Address address{0x53};
-
+using Usi = AVR::Usi<0>;
 using i2c = I2CSlave<Usi, address, 64 * 3>;
 
 using terminal = SSpi0;

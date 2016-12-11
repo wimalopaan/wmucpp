@@ -91,7 +91,7 @@ enum class Command {ReadRom = 0x33, SkipRom = 0xcc, MatchRom = 0x55, SearchRom =
                     Convert = 0x44, ReadScratchpad = 0xbe, WriteScratchpad = 0x4e};
 
 
-// todo: asynchrone Schnittstelle wie bei I2C gestalten
+// fixme: asynchrone Schnittstelle wie bei I2C gestalten
 
 template<typename OWMaster, const std::microseconds& delay, uint16_t BSize = 16>
 class MasterAsync final {

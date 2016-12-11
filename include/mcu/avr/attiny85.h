@@ -20,26 +20,27 @@
 
 #include <stdint.h>
 
+#include "avr8defs.h"
+
 #pragma pack(push)
 #pragma pack(1)
 
 namespace AVR {
 
-struct ATTiny85 final
-{
+struct ATTiny85 final {
     ATTiny85() = delete;
     struct Timer8Bit {
-        volatile uint8_t ocra;
         volatile uint8_t ocrb;
+        volatile uint8_t ocra;
         volatile uint8_t tccra;
-        volatile uint8_t padding[0x32 - 0x2a - 1];
+        volatile uint8_t padding[0x32 - 0x2A - 1];
         volatile uint8_t tcnt;
         volatile uint8_t tccrb;
         template<int N> struct Address;
         template<int N, int F> struct Prescaler;
         template<int N> struct PrescalerRow;
     };
-    struct Timer8BitA {
+    struct Timer8BitHighSpeed {
         volatile uint8_t ocrb;
         volatile uint8_t gtccr;
         volatile uint8_t ocrc;
@@ -50,8 +51,13 @@ struct ATTiny85 final
         template<int N, int F> struct Prescaler;
         template<int N> struct PrescalerRow;
     };
+    
     struct USI {
-
+        volatile uint8_t usicr;
+        volatile uint8_t usisr;
+        volatile uint8_t usidr;
+        volatile uint8_t usibr;
+        template<int N> struct Address;
     };
 
     struct PortRegister {
@@ -60,45 +66,64 @@ struct ATTiny85 final
         volatile uint8_t out;
         template<typename P> struct Address;
     };
-    struct Interrupt {
+    struct TimerInterrupts {
         volatile uint8_t tifr;
         volatile uint8_t timsk;
-        volatile uint8_t gifr;
-        volatile uint8_t gicr;
-        static constexpr uint8_t address = 0x38;
+        template<uint8_t N> struct Address;
+        template<uint8_t N> struct Flags;       
     };
+    struct Interrupt {
+        volatile uint8_t gifr;
+        volatile uint8_t gimsk;
+        static constexpr uint8_t address = 0x5a;
+    };
+    struct PCInterrupts {
+        volatile uint8_t pcmsk;
+        template<int N> struct Address;
+    };
+};
 
+template<>
+struct ATTiny85::PCInterrupts::Address<0> {
+    static constexpr uint8_t value = 0x35;
+};
+
+template<>
+struct ATTiny85::USI::Address<0> {
+    static constexpr uint8_t value = 0x2d;
+};
+
+template<>
+struct ATTiny85::PortRegister::Address<B> {
+    static constexpr uint8_t value = 0x36;
+};
+
+template<>
+struct ATTiny85::Timer8Bit::Address<0> {
+    static constexpr uint8_t value = 0x48;
 };
 template<>
-struct ATMega8::PortRegister::Address<B> {
-    static constexpr uint8_t value = 0x16;
-};
-template<>
-struct ATMega8::Timer8Bit::Address<0> {
-    static constexpr uint8_t value = 0x28;
-};
-template<>
-struct ATMega8::Timer8Bit::Prescaler<0> {
+struct ATTiny85::Timer8Bit::Prescaler<0, 0> {
     static constexpr uint8_t value = 0x00;
 };
 template<>
-struct ATMega8::Timer8Bit::Prescaler<1> {
+struct ATTiny85::Timer8Bit::Prescaler<0, 1> {
     static constexpr uint8_t value = _BV(CS00);
 };
 template<>
-struct ATMega8::Timer8Bit::Prescaler<8> {
+struct ATTiny85::Timer8Bit::Prescaler<0, 8> {
     static constexpr uint8_t value = _BV(CS01);
 };
 template<>
-struct ATMega8::Timer8Bit::Prescaler<64> {
+struct ATTiny85::Timer8Bit::Prescaler<0, 64> {
     static constexpr uint8_t value = _BV(CS01) | _BV(CS00);
 };
 template<>
-struct ATMega8::Timer8Bit::Prescaler<256> {
+struct ATTiny85::Timer8Bit::Prescaler<0, 256> {
     static constexpr uint8_t value = _BV(CS02);
 };
 template<>
-struct ATMega8::Timer8Bit::Prescaler<1024> {
+struct ATTiny85::Timer8Bit::Prescaler<0, 1024> {
     static constexpr uint8_t value = _BV(CS02) | _BV(CS00);
 };
 

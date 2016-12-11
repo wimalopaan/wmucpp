@@ -28,6 +28,7 @@
 
 namespace AVR {
 
+// fixme: eränzen
 struct I2C {
     template<typename SDAPin, typename SCLPin>
     static void init() {

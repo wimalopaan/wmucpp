@@ -232,3 +232,7 @@ example/attiny84/i2cslave.h
 example/externals/i2cattiny.cc
 example/attiny84/i2cram.cc
 include/mcu/avr/twiaddress.h
+example/attiny85/i2cslave.c
+example/attiny85/i2cslave.h
+example/attiny85/blink.cc
+example/attiny85/ws2812.cc

@@ -18,12 +18,16 @@
 #
 
 MCU = attiny85
-F_OSC = 8000000
+F_OSC = 16000000
+
+# sudo avrdude -p attiny85 -P usb -c avrisp2 -U -U lfuse:w:0xf1:m -U hfuse:w:0xdf:m -U efuse:w:0xff:m
 
 #LOADLIBES = simavrconsole.o
 
 #targets += simavrconsole.o
-#targets +=  blink.elf
+targets +=  blink.elf
+targets +=  i2cslave.elf
+targets +=  ws2812.elf
 
 -include ../../Makefile.include
 
