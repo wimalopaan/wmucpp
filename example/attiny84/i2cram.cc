@@ -25,6 +25,24 @@
 #include "hal/softspimaster.h"
 #include "console.h"
 
+template<uint8_t NumberOfRegisters>
+class RegisterMachine final {
+public:
+    static uint8_t& cell(uint8_t index) {
+        assert(index < mData.size);
+        return mData[index];        
+    }
+    static void process() {
+        for(uint8_t i = 0; i < mData.size / 2; ++i) {
+            mData[i + mData.size / 2] = mData[i] + 1;
+        }
+    }
+private:
+    static std::array<uint8_t, NumberOfRegisters> mData;
+};
+template<uint8_t NumberOfRegisters>
+std::array<uint8_t, NumberOfRegisters> RegisterMachine<NumberOfRegisters>::mData;
+
 using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 
@@ -35,9 +53,12 @@ using SoftSPIClock = AVR::Pin<PortA, 1>;
 using SoftSPISS = AVR::Pin<PortA, 2>;
 using SSpi0 = SoftSpiMaster<SoftSPIData, SoftSPIClock, SoftSPISS>;
 
+using virtualRAM = RegisterMachine<16>;
+//using virtualRAM = I2C::RamRegisterMachine<16>;
+
 constexpr TWI::Address address{0x53};
 using Usi = AVR::Usi<0>;
-using i2c = I2CSlave<Usi, address, 64 * 3>;
+using i2c = I2C::I2CSlave<Usi, address, virtualRAM>;
 
 using terminal = SSpi0;
 
@@ -61,6 +82,7 @@ int main()
     
     while(true) {
         led::toggle();
+        virtualRAM::process();
     }    
 }
 ISR(USI_OVF_vect) {

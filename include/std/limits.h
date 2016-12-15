@@ -21,7 +21,7 @@
 #define __STDC_LIMIT_MACROS
 
 #include <stdint.h>
-#include "std/types.h"
+//#include "std/types.h"
 
 namespace std {
 
@@ -38,12 +38,6 @@ template<>
 struct numeric_limits<uint16_t> {
     static constexpr uint16_t max() {return UINT16_MAX;}
     static constexpr uint16_t min() {return 0;}
-};
-
-template<>
-struct numeric_limits<uint7_t> {
-    static constexpr uint8_t max() {return UINT8_MAX / 2 - 1;}
-    static constexpr uint8_t min() {return 0;}
 };
 
 }

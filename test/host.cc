@@ -17,30 +17,51 @@
  */
 
 #include <iostream>
+#include <iterator>
+//#include "../tests/algorithm.h"
+////#include "../tests/percent.h"
+////#include "../tests/duration.h"
+////#include "../tests/physical.h"
+//#include "../tests/types.h"
+//#include "../tests/atomic.h"
 
-#include "../tests/algorithm.h"
-//#include "../tests/percent.h"
-//#include "../tests/duration.h"
-//#include "../tests/physical.h"
-#include "../tests/types.h"
-#include "../tests/atomic.h"
+//#include <math.h>
+//#include "util/fixedpoint.h"
 
-#include <math.h>
-#include "util/fixedpoint.h"
+#include <numeric>
+#include <array>
+#include <utility>
 
-int main(){
+constexpr int foo(size_t v) {
+    return v + 0x30;
+}
+
+template<typename F, size_t... II>
+constexpr auto createArray(F f, std::index_sequence<II...>) {
+    return std::array<int, sizeof...(II)> {{f(II)...,}};
+}
+        
+int main()
+{
+    constexpr auto a = createArray(foo, std::make_index_sequence<10>{});
+//    constexpr auto b = createArray([](size_t){return 1;}, std::make_index_sequence<10>{});
     
-    constexpr FixedPoint<int16_t, 4> f1 = 1.75_fp;          
-    constexpr FixedPoint<int16_t, 4> f2(0.5);          
-    constexpr FixedPoint<int16_t, 4> f3(-0.5);
+    std::copy(std::begin(a), std::end(a), std::ostream_iterator<double>(std::cout, ", "));
     
-    std::cout << f3.raw() << std::endl;
-    std::cout << f3.integer() << std::endl;
-    std::cout << f3.fractional() << std::endl;
+//    constexpr auto a = createArray2(foo, 1, 2);
+    
+    
+//    constexpr FixedPoint<int16_t, 4> f1 = 1.75_fp;          
+//    constexpr FixedPoint<int16_t, 4> f2(0.5);          
+//    constexpr FixedPoint<int16_t, 4> f3(-0.5);
+    
+//    std::cout << f3.raw() << std::endl;
+//    std::cout << f3.integer() << std::endl;
+//    std::cout << f3.fractional() << std::endl;
 
-    constexpr FixedPoint<int16_t, 4> f4(-1.5);
-    std::cout << f4.integer() << std::endl;
-    std::cout << f4.fractional() << std::endl;
+//    constexpr FixedPoint<int16_t, 4> f4(-1.5);
+//    std::cout << f4.integer() << std::endl;
+//    std::cout << f4.fractional() << std::endl;
     
 }
 

@@ -24,17 +24,7 @@ F_OSC = 20000000
 
 #targets += simavrconsole.o
 
-targets += button.elf
-targets += ds18b20.elf
-targets += ds18b20async.elf
-targets += onewire.elf
-targets += ws2812.elf
-targets += analog.elf
-targets += analogevent.elf
-targets += akku.elf
-targets += ds1307.elf
-targets += ds1307async.elf
-targets += i2cattiny.elf
+targets += register.elf register.s
 
 -include ../../Makefile.include
 

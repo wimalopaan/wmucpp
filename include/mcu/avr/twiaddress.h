@@ -44,9 +44,12 @@ public:
     static constexpr uint8_t lowest = 0x08;
     static constexpr uint8_t highest = 0x77;
     
+    constexpr Address() {}
     explicit constexpr Address(uint8_t a) : mDevice(a) {}
 
-    constexpr Address() {}
+    static Address fromBusValue(uint8_t busValue) {
+        return Address{(uint8_t)(busValue >> 1)};
+    }
     
     Address& operator++() {
         ++mDevice;

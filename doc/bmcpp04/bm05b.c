@@ -1,6 +1,6 @@
 /*
- * ++C - C++ introduction
- * Copyright (C) 2013, 2014, 2015, 2016 Wilhelm Meier <wilhelm.meier@hs-kl.de>
+ * WMuCpp - Bare Metal C++ 
+ * Copyright (C) 2013, 2014, 2015, 2016 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -11,7 +11,30 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- 
+
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include <stdint.h>
+typedef uint32_t size_t;
+
+#define Size 10
+#define NumberOfIndices 3
+
+uint8_t foo(size_t v) {
+    return v + 1;
+}
+
+int main()
+{
+    uint8_t values[Size] = {1, 1, 1};
+    
+    int indices[NumberOfIndices] = {foo(0), foo(1), foo(2)};
+    
+    uint8_t sum = 0;
+    for(uint8_t l = 0; l < NumberOfIndices; ++l) {
+        sum += values[indices[l]];
+    }
+    return sum;    
+}

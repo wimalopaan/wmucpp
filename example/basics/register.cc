@@ -1,6 +1,6 @@
 /*
- * ++C - C++ introduction
- * Copyright (C) 2013, 2014, 2015, 2016 Wilhelm Meier <wilhelm.meier@hs-kl.de>
+ * WMuCpp - Bare Metal C++ 
+ * Copyright (C) 2013, 2014, 2015, 2016 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,3 +15,33 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include "mcu/avr8.h"
+#include "mcu/ports.h"
+
+inline void* operator new(unsigned int, void* ptr) {
+  return ptr;
+}
+
+inline void operator delete(void*, unsigned int) noexcept {
+  return;
+}
+void inline operator delete(void*) noexcept {
+  return;
+}
+
+int main() {
+    AVR::getBaseAddr<DefaultMcuType::PortRegister, AVR::B>()->out = 0;  
+    
+    using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
+
+    PortB::set<0>();
+    PortB::set(0);
+
+    AVR::ATMega1284P::PortRegister* p = new(reinterpret_cast<void*>(0x23)) AVR::ATMega1284P::PortRegister;
+    p->out = 0;
+    
+    delete p;
+    
+    while(true) {}
+}

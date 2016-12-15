@@ -44,6 +44,8 @@ struct ATMega328P;
 
 namespace AVR {
 
+// todo: change to non constexpr here, since reinterpret_cast renders it non-constexpr at all
+
 template<typename Component>
 constexpr inline Component* getBaseAddr() {
     return reinterpret_cast<Component*>(Component::address);

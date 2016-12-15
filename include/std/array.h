@@ -20,7 +20,7 @@
 
 #include <stdint.h>
 #include "util/dassert.h"
-#include "std/initializer_list.h"
+//#include "std/initializer_list.h"
 
 namespace std {
 
@@ -30,10 +30,11 @@ struct array final
     typedef T type;
     typedef uint8_t size_type;
     
-    constexpr array() = default;
-
-    template<typename... TT>
-    constexpr array(TT&&... pp) : data{(T)pp...}{}
+//    constexpr array() = default;
+    
+//    template<typename... TT>
+//    constexpr array(TT&&... pp) : data{(T)pp...}{
+//    }
 
     constexpr const T* begin() const {
         return &data[0];
@@ -60,7 +61,7 @@ struct array final
         return data[index];
     }
     static constexpr uint8_t size = Size;
-private:
+//private:
     T data[Size] = {};
 };
 

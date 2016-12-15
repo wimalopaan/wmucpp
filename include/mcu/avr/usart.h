@@ -24,8 +24,9 @@
 #include "mcu/avr8.h"
 #include "mcu/avr/isr.h"
 #include "container/fifo.h"
-#include "hal/event.h"
 #include "util/util.h"
+#include "hal/event.h"
+//#include "hal/protocolladapter.h"
 
 namespace AVR {
 
@@ -93,15 +94,15 @@ struct UsartEventType<2> {
 template<typename Derived>
 struct UsartBase {};
 
-class NullProtocollAdapter final {
-public:
-    NullProtocollAdapter() = delete;
-    static constexpr bool process(uint8_t) {
-        return false;
-    }
-};
+//class NullProtocollAdapter final {
+//public:
+//    NullProtocollAdapter() = delete;
+//    static constexpr bool process(uint8_t) {
+//        return false;
+//    }
+//};
 
-template<uint8_t N, typename PA = NullProtocollAdapter, typename MCU = DefaultMcuType>
+template<uint8_t N, typename PA = void, typename MCU = DefaultMcuType>
 class Usart : public UsartBase<Usart<N, MCU>>
 {
     friend void ::USART_RX_vect();
@@ -202,8 +203,13 @@ private:
                 }
             }
             else {
-                if (!PA::process(c)) {
+                if constexpr(std::is_same<PA, void>::value) {
                     EventManager::enqueueISR({UsartEventType<N>::event, c});
+                }
+                else {
+                    if (!PA::process(c)) {
+                        EventManager::enqueueISR({UsartEventType<N>::event, c});
+                    }
                 }
             }
         }

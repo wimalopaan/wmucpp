@@ -1,6 +1,6 @@
 /*
- * ++C - C++ introduction
- * Copyright (C) 2013, 2014, 2015, 2016 Wilhelm Meier <wilhelm.meier@hs-kl.de>
+ * WMuCpp - Bare Metal C++ 
+ * Copyright (C) 2013, 2014, 2015, 2016 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,3 +15,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include <stdint.h>
+#include "std/array.h"
+
+typedef uint32_t size_t;
+
+int main()
+{
+    constexpr int Size = 10;
+    std::array<uint8_t, Size> values = {1, 1, 1};
+    
+    uint8_t sum = 0;
+    sum += values[1];
+    sum += values[2];
+    sum += values[3];
+    return sum;    
+}
+
+constexpr void assertFunction(bool, const char*, const char*, unsigned int) {
+}
+

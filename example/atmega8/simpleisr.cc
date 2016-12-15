@@ -95,7 +95,7 @@ int main() {
 
     constexpr auto ok = setup<timer1, f>();
     
-//    static_assert(setup<timer1>(100_Hz), "setup");
+//    static_assert(ok, "setup");
 
     static_assert(timer2::hasOcrA, "need ocra");
 

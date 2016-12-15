@@ -20,6 +20,70 @@
 
 #include <stdint.h>
 #include "std/optional.h"
+#include "std/limits.h"
+#include "util/dassert.h"
+
+template<typename T>
+class uint_NaN final {
+    static constexpr T NaN = std::numeric_limits<uint8_t>::max();
+public:
+    explicit constexpr uint_NaN(T v = 0) : mValue(v) {
+        assert(mValue != NaN);
+    }
+    void setNaN() volatile {
+        mValue = NaN;
+    }
+    volatile uint_NaN& operator=(T v) volatile {
+        assert(mValue != NaN);
+        mValue = v;
+        return *this;
+    }
+    uint_NaN& operator=(T v){
+        assert(mValue != NaN);
+        mValue = v;
+        return *this;
+    }
+    explicit operator bool() volatile const {
+        return mValue != NaN;
+    }
+    explicit operator bool() const {
+        return mValue != NaN;
+    }
+    operator T() const {
+        assert(mValue != NaN);
+        return mValue;
+    }
+    T operator*() volatile {
+        assert(mValue != NaN);
+        return mValue;
+    }
+    T operator*() {
+        assert(mValue != NaN);
+        return mValue;
+    }
+    volatile uint_NaN& operator++() volatile {
+        ++mValue;
+        return *this;
+    }
+    uint_NaN& operator++() {
+        ++mValue;
+        return *this;
+    }
+    constexpr bool operator==(uint_NaN& rhs) volatile {
+        if (*this && rhs) {
+            return mValue == rhs.mValue;
+        }
+        return false;
+    }
+    constexpr bool operator<=(uint_NaN& rhs) volatile {
+        if (*this && rhs) {
+            return mValue <= rhs.mValue;
+        }
+        return false;
+    }
+private:
+    T mValue = 0;
+};
 
 struct uint4_t {
     uint8_t upper : 4, lower : 4;
@@ -70,6 +134,12 @@ public:
     }
 private:
     uint8_t data{0};
+};
+
+template<>
+struct numeric_limits<uint7_t> {
+    static constexpr uint8_t max() {return UINT8_MAX / 2 - 1;}
+    static constexpr uint8_t min() {return 0;}
 };
 
 

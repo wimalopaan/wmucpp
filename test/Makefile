@@ -24,7 +24,8 @@ targets += simavr.elf host
 
 CPPFLAGS += -DNDEBUG
 
-host: CXX = g++
+#host: CXX = g++
+host: CXX = clang++
 host: CC = g++
 host: LDFLAGS =
 host: CPPFLAGS = -DF_CPU=1000000

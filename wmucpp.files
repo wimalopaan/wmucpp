@@ -49,6 +49,7 @@ include/external/ws2812.h
 include/hal/button.h
 include/hal/event.h
 include/hal/ppmswitch.h
+include/hal/protocolladapter.h
 include/hal/softppm.h
 include/hal/softspimaster.h
 include/hal/softtimer.h
@@ -236,3 +237,11 @@ example/attiny85/i2cslave.c
 example/attiny85/i2cslave.h
 example/attiny85/blink.cc
 example/attiny85/ws2812.cc
+doc/bmcpp04/bm05a.cc
+doc/bmcpp04/bm06a.cc
+doc/bmcpp04/bm07a.cc
+doc/bmcpp04/bm05b.c
+doc/bmcpp04/bm05bb.c
+doc/bmcpp04/bm05aa.cc
+example/basics/Makefile
+example/basics/register.cc
