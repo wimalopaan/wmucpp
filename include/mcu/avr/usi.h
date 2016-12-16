@@ -64,6 +64,13 @@ struct UsiPort<0, AVR::ATTiny84> {
     typedef AVR::Pin<PortA, 5> miso_pin;
     typedef AVR::Pin<PortA, 6> mosi_pin;
 };
+template<>
+struct UsiPort<0, AVR::ATTiny85> {
+    using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
+    typedef AVR::Pin<PortB, 2> clock_pin;
+    typedef AVR::Pin<PortB, 1> miso_pin;
+    typedef AVR::Pin<PortB, 0> mosi_pin;
+};
 
 template<uint8_t N, typename SSPin = void, typename Inserter = void, typename MCU = DefaultMcuType>
 class Usi final : public IsrBaseHandler<AVR::ISR::Usi<0>::Overflow> {

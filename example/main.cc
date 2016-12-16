@@ -73,7 +73,7 @@ using button1 = Button<1, AVR::Pin<PortA, 4>>;
 using buttonController = ButtonController<button0, button1>;
 
 using dcfPin = AVR::Pin<PortA, 7>;
-using dcfDecoder = DCF77<dcfPin>;
+using dcfDecoder = DCF77<dcfPin, Config::Timer::frequency, EventManager, true>;
 
 using adc = AVR::Adc<0>;
 using adcController = AdcController<adc, 6>;
@@ -134,6 +134,32 @@ struct EventHandlerParameter {
     std::optional<uint7_t> timerId1;
 };
 
+struct DCFReceive0Handler : public EventHandler<EventType::DCFReceive0> {
+    static void process(uint8_t n) {
+        std::cout << "dcf 0 : "_pgm << n << std::endl;
+    }  
+};
+struct DCFReceive1Handler : public EventHandler<EventType::DCFReceive1> {
+    static void process(uint8_t n) {
+        std::cout << "dcf 1 : "_pgm << n << std::endl;
+    }  
+};
+struct DCFSyncHandler : public EventHandler<EventType::DCFSync> {
+    static void process(uint8_t) {
+        std::cout << "dcf sync  "_pgm << dcfDecoder::dateTime() << std::endl;
+    }  
+};
+struct DCFErrorHandler : public EventHandler<EventType::DCFError> {
+    static void process(uint8_t) {
+        std::cout << "dcf error"_pgm << std::endl;
+    }  
+};
+struct DCFParityHandler : public EventHandler<EventType::DCFParityError> {
+    static void process(uint8_t) {
+        std::cout << "dcf parity error"_pgm << std::endl;
+    }  
+};
+
 struct DS1307handler: public EventHandler<EventType::DS1307TimeAvailable> {
     static void process(uint8_t) {
         std::cout << "ds1307 time"_pgm << std::endl;
@@ -187,7 +213,6 @@ public:
     static void process(uint8_t v) {
         std::cout << "k: "_pgm << v << std::endl;
 //        Hott::SensorProtocoll<sensorUsart>::key(v);
-
     }
 };
 
@@ -309,6 +334,14 @@ int main()
 
     ds1307::init();
     ds1307::squareWave<true>();
+
+    TwiMaster::init<ds1307::fSCL>();
+    
+    std::array<TWI::Address, 5> i2cAddresses;
+    TwiMaster::findDevices(i2cAddresses);
+    for(const auto& d : i2cAddresses) {
+        std::cout << d << std::endl;
+    }
     
     dcfDecoder::init();
 
@@ -353,7 +386,8 @@ int main()
                                 UsartHandler, HottKeyHandler,
                                 Button0Handler, 
                                 ds18b20, DS18B20ErrorHandler, DS18B20MeasurementHandler,
-                                TWIHandlerError, ds1307, DS1307handler, DS1307handlerError>;
+                                TWIHandlerError, ds1307, DS1307handler, DS1307handlerError,
+                                DCFReceive0Handler, DCFReceive1Handler, DCFSyncHandler, DCFErrorHandler, DCFParityHandler>;
 
     EventManager::run<sampler, handler>([](){
         led::toggle();

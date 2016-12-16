@@ -34,6 +34,7 @@ doc/bmcpp04/bm02b.c
 doc/bmcpp04/bm03a.cc
 doc/bmcpp04/bm03b.c
 doc/bmcpp04/simavrconsole.c
+example/attiny85/i2cram.cc
 example/main.cc
 example/main.h
 example/simavr.h
@@ -45,6 +46,7 @@ include/container/pgmstring.h
 include/container/stringbuffer.h
 include/external/dcf77.h
 include/external/hott/hott.h
+include/external/i2cram.h
 include/external/ws2812.h
 include/hal/button.h
 include/hal/event.h
@@ -81,12 +83,14 @@ include/std/memory.h
 include/std/optional.h
 include/std/pair.h
 include/std/ratio.h
+include/std/time.h
 include/std/traits.h
 include/std/types.h
 include/test/simpletest.h
 include/units/duration.h
 include/units/percent.h
 include/units/physical.h
+include/util/bcd.h
 include/util/bits.h
 include/util/dassert.h
 include/util/disable.h

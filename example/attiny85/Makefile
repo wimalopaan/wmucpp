@@ -27,6 +27,7 @@ F_OSC = 16000000
 #targets += simavrconsole.o
 targets +=  blink.elf
 targets +=  i2cslave.elf
+targets +=  i2cram.elf
 targets +=  ws2812.elf
 
 -include ../../Makefile.include

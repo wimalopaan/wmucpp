@@ -19,13 +19,15 @@
 #pragma once
 
 #include <stdint.h>
+
+#include "util/dassert.h"
 #include "util/util.h"
 
 namespace std {
 
 struct percent {
     constexpr explicit percent(uint8_t p) : value(p) {
-        assert(value <= 100);
+//        assert(value <= 100);
     }
     const uint8_t value = 0;
 };

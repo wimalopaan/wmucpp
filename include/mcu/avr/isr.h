@@ -192,9 +192,11 @@ struct Timer<2> {
 };
 template<>
 struct Timer<1> {
+#ifdef TIMER1_CAPT_vect_num
     struct Capture  {
         static constexpr const uint32_t number = TIMER1_CAPT_vect_num;
     };
+#endif
 #ifdef TIMER1_COMPA_vect_num
     struct CompareA  {
         static constexpr const uint32_t number = TIMER1_COMPA_vect_num;
@@ -247,6 +249,10 @@ struct Usi<0> {
 #ifdef USI_STR_vect_num
     struct Start {
         static constexpr const uint32_t number = USI_STR_vect_num;
+    };
+#elif defined(USI_START_vect_num)
+    struct Start {
+        static constexpr const uint32_t number = USI_START_vect_num;
     };
 #endif
 };
