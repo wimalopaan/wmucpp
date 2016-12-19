@@ -135,7 +135,7 @@ ISR(TIMER2_COMP_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<2>::Compare>();
 }
 
-constexpr void assertFunction(bool b, const char* function, const char* file, unsigned int line) {
+void assertFunction(bool b, const char* function, const char* file, unsigned int line) {
     if (!b) {
         std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;
         abort();

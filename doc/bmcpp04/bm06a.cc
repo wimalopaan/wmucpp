@@ -17,16 +17,9 @@
  */
 
 #include <stdint.h>
+#include <stddef.h>
 #include "std/array.h"
 
-typedef uint32_t size_t;
-
-namespace std { 
-template<size_t... Is>
-struct index_sequence {   
-};
-
-}
 
 constexpr int foo(size_t v) {
     return v + 0x30;
@@ -42,6 +35,6 @@ int main()
     std::array<size_t, 10> c = {1, 2};
 
 }
-constexpr void assertFunction(bool, const char* , const char *, unsigned int) {
+void assertFunction(bool, const char* , const char *, unsigned int) {
 }
 

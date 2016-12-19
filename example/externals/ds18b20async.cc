@@ -119,10 +119,8 @@ ISR(TIMER0_COMPA_vect) {
 
 #ifndef NDEBUG
 
-constexpr void assertFunction(bool b, const char* function, const char* file, unsigned int line) {
-    if (!b) {
-        std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;
-        abort();
-    }
+void assertFunction(const char*, const char* function, const char* file, unsigned int line) {
+    std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;
+    while(true) {};    
 }
 #endif

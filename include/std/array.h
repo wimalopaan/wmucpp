@@ -20,6 +20,8 @@
 
 #include <stdint.h>
 #include "util/dassert.h"
+#include "std/utility.h"
+
 //#include "std/initializer_list.h"
 
 namespace std {
@@ -65,5 +67,19 @@ struct array final
     T data[Size] = {};
 };
 
+namespace detail {
+template <class T, uint8_t N, size_t... I>
+constexpr std::array<std::remove_cv_t<T>, N>
+    to_array_impl(T(&a)[N], std::index_sequence<I...>)
+{
+    return { {a[I]...} };
+}
+}
+ 
+template <class T, uint8_t N>
+constexpr std::array<std::remove_cv_t<T>, N> to_array(T (&a)[N])
+{
+    return detail::to_array_impl(a, std::make_index_sequence<N>{});
+}
 
 }

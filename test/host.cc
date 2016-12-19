@@ -31,6 +31,7 @@
 #include <numeric>
 #include <array>
 #include <utility>
+#include <cassert>
 
 constexpr int foo(size_t v) {
     return v + 0x30;
@@ -66,6 +67,7 @@ int main()
 }
 
 void assertFunction(bool b, const char *function, const char *file, unsigned int line) {
+    assert(b);
     if (!b) {
         std::cout << "Assertion failed in: " << function << " file: " << file << " line: " << line << std::endl;
     }

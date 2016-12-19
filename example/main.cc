@@ -34,6 +34,7 @@
 #include "external/ds18b20.h"
 #include "external/ds1307.h"
 #include "external/lm35.h"
+#include "external/i2cram.h"
 #include "mcu/avr/twi.h"
 #include "std/array.h"
 
@@ -82,6 +83,9 @@ using lm35 = LM35<adcController, 0>;
 using TwiMaster = TWI::Master<0>;
 using TwiMasterAsync = TWI::MasterAsync<TwiMaster>;
 using ds1307 = DS1307<TwiMasterAsync>;
+
+static constexpr TWI::Address i2cramAddress{0x54};
+using i2cram = I2CRam<TwiMasterAsync, i2cramAddress>;
 
 using vrAdapter = VariableRateAdapter<bufferedTerminal, adcController>;
 
@@ -132,6 +136,18 @@ using led = AVR::Pin<PortB, 0>;
 
 struct EventHandlerParameter {
     std::optional<uint7_t> timerId1;
+};
+
+struct I2CRamHandler: public EventHandler<EventType::I2CRamValueAvailable> {
+    static void process(uint8_t v) {
+        std::cout << "i2c ram value: "_pgm << v << std::endl;
+    }  
+};
+
+struct I2CRamErrorHandler: public EventHandler<EventType::I2CRamError> {
+    static void process(uint8_t) {
+        std::cout << "i2c ram error"_pgm << std::endl;
+    }
 };
 
 struct DCFReceive0Handler : public EventHandler<EventType::DCFReceive0> {
@@ -247,8 +263,17 @@ public:
             static uint8_t count = 0;
             WS2812<2, ws2812_A>::set({16, (uint8_t)((count++ % 2) * 16), 16});
             
+            if (count % 2) {
+                i2cram::startWrite(0, count * 64);
+            }
+            else {
+//                if (!i2cram::startRead(0)) {
+//                    std::cout << "start read error"_pgm << std::endl;
+//                }
+            }
+            
             ds1307::startReadTimeInfo();
-                      
+            
             std::cout << "Temp lm35: "_pgm << lm35::temperature() << std::endl;
             std::cout << "ppm:"_pgm << ppm1::value() << std::endl;
             std::cout << "c0: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(0) << std::endl;
@@ -337,6 +362,8 @@ int main()
 
     TwiMaster::init<ds1307::fSCL>();
     
+    i2cram::init<ds1307::fSCL>();
+    
     std::array<TWI::Address, 5> i2cAddresses;
     TwiMaster::findDevices(i2cAddresses);
     for(const auto& d : i2cAddresses) {
@@ -386,8 +413,9 @@ int main()
                                 UsartHandler, HottKeyHandler,
                                 Button0Handler, 
                                 ds18b20, DS18B20ErrorHandler, DS18B20MeasurementHandler,
-                                TWIHandlerError, ds1307, DS1307handler, DS1307handlerError,
-                                DCFReceive0Handler, DCFReceive1Handler, DCFSyncHandler, DCFErrorHandler, DCFParityHandler>;
+                                TWIHandlerError, ds1307, DS1307handler, DS1307handlerError, i2cram,
+                                DCFReceive0Handler, DCFReceive1Handler, DCFSyncHandler, DCFErrorHandler, DCFParityHandler,
+                                I2CRamHandler, I2CRamErrorHandler>;
 
     EventManager::run<sampler, handler>([](){
         led::toggle();
@@ -403,11 +431,9 @@ int main()
 }
 
 #ifndef NDEBUG
-constexpr void assertFunction(bool b, const char* function, const char* file, unsigned int line) {
-   if (!b) {
-        std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;
-        abort();
-    }
+void assertFunction(const char*, const char* function, const char* file, unsigned int line) {
+    std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;
+    while(true) {};
 }
 #endif
 

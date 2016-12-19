@@ -5,7 +5,7 @@
 
 // Note: The LSB is the I2C r/w flag and must not be used for addressing!
 //#define 	SLAVE_ADDR_ATTINY       0b00110100
-#define 	SLAVE_ADDR_ATTINY       (54 << 1)
+#define 	SLAVE_ADDR_ATTINY       (0x54 << 1)
 
 #include "i2cslave.h"
 

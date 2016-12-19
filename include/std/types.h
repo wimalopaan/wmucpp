@@ -24,6 +24,41 @@
 #include "util/dassert.h"
 
 template<typename T>
+class uint_bounded {
+public:
+    explicit constexpr uint_bounded(T v = 0) : mValue(v) {}
+    
+    constexpr bool operator>(T rhs) {
+        return mValue > rhs;
+    }
+
+    uint_bounded& operator--() {
+        if (mValue > 0) {
+            --mValue;
+        }
+        return *this;
+    }
+    uint_bounded& operator++() {
+        if (mValue < std::numeric_limits<T>::max()) {
+            ++mValue;
+        }
+        return *this;
+    }
+    
+    constexpr bool operator==(T rhs) {
+        return mValue == rhs;
+    }
+
+    constexpr uint_bounded& operator=(T rhs) {
+        mValue = rhs;
+        return *this;
+    }
+
+private:
+    T mValue{0};
+};
+
+template<typename T>
 class uint_NaN final {
     static constexpr T NaN = std::numeric_limits<uint8_t>::max();
 public:

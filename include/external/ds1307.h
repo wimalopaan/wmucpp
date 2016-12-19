@@ -24,10 +24,11 @@
 #include "util/dassert.h"
 #include "mcu/avr/twi.h"
 
+// todo: set time from DateTime::TimeTM
+
 template<typename TWIMaster>
 class DS1307 : public EventHandler<EventType::TWIRecvComplete> {
 public:
-    
     static constexpr TWI::Address Address{0x68};
     static constexpr const std::hertz fSCL = 100000_Hz;
     

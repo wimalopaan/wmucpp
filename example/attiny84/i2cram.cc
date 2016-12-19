@@ -28,6 +28,7 @@
 template<uint8_t NumberOfRegisters>
 class RegisterMachine final {
 public:
+    static constexpr uint8_t size = NumberOfRegisters;
     static uint8_t& cell(uint8_t index) {
         assert(index < mData.size);
         return mData[index];        
@@ -93,9 +94,8 @@ ISR(USI_STR_vect) {
 }
 
 #ifndef NDEBUG
-constexpr void assertFunction(bool b, const char* function, const char* file, unsigned int line) {
-   if (!b) {
-        std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;
-    }
+void assertFunction(const char*, const char* function, const char* file, unsigned int line) {
+    std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;
+    while(true) {};
 }
 #endif

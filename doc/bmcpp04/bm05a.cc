@@ -18,65 +18,8 @@
 
 #include <stdint.h>
 #include "std/array.h"
+#include "std/utility.h"
 
-typedef uint32_t size_t;
-
-namespace std { 
-
-template<typename T, T... I>
-struct integer_sequence{
-    using type = T;
-    static constexpr T size = sizeof...(I);
-    /// Generate an integer_sequence with an additional element.
-    template<T N>
-    using append = integer_sequence<T, I..., N>;
-    
-    using next = append<size>;
-};
-template<typename T, T... I>
-constexpr T integer_sequence<T, I...>::size;
-
-template<size_t... I>
-using index_sequence = integer_sequence<size_t, I...>;
-
-namespace detail {
-template<typename T, T Nt, size_t N>
-struct iota {
-    static_assert( Nt >= 0, "N cannot be negative" );   
-    using type = typename iota<T, Nt-1, N-1>::type::next;
-};
-
-template<typename T, T Nt>
-struct iota<T, Nt, 0ul> {
-    using type = integer_sequence<T>;
-};
-}
-
-// make_integer_sequence<T, 2> := iota<T, 2, 2>::type
-//                             := iota<T, 1, 1>::type::next
-//                             := iota<T, 0, 0>::type::next::next
-//                             := integer_sequence<T>::next::next
-//                             := integer_sequence<T>::append<0>::next
-//                             := integer_sequence<T, 0>::next
-//                             := integer_sequence<T, 0>::append<1>
-//                             := integer_sequence<T, 0, 1>
-
-// make_integer_sequence<T, 1> := iota<T, 1, 1>::type
-//                             := iota<T, 0, 0>::type::next
-//                             := integer_sequence<T>::next
-//                             := integer_sequence<T>::append<0>
-//                             := integer_sequence<T, 0>
-
-// make_integer_sequence<T, N> is an alias for integer_sequence<T, 0,...N-1>
-template<typename T, T N>
-using make_integer_sequence = typename detail::iota<T, N, N>::type;
-
-template<int N>
-using make_index_sequence = make_integer_sequence<size_t, N>;
-
-template<typename... Args>
-using index_sequence_for = make_index_sequence<sizeof...(Args)>;
-}
 
 constexpr uint8_t foo(size_t v) {
     return v + 0x30;
@@ -104,9 +47,9 @@ int main()
     return sum;    
 }
 
-constexpr void assertFunction(bool b, const char*, const char*, unsigned int) {
-        if (!b) {
-    //        std::cout << "Assertion failed in: " << function << " file: " << file << " line: " << line << std::endl;
-        }
+void assertFunction(const char*, const char*, const char*, unsigned int) {
+//    std::cout << "Assertion failed in: " << function << " file: " << file << " line: " << line << std::endl;
+    while(true) {};
+    
 }
 

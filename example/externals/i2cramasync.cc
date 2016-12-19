@@ -19,12 +19,11 @@
 #include <stdlib.h>
 
 #include "mcu/ports.h"
-#include "mcu/avr/adc.h"
+#include "mcu/avr/twi.h"
+#include "external/i2cram.h"
 #include "hal/softspimaster.h"
-#include "hal/adccontroller.h"
-#include "hal/softtimer.h"
 #include "hal/event.h"
-#include "external/lm35.h"
+#include "hal/softtimer.h"
 #include "console.h"
 
 using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
@@ -35,6 +34,12 @@ using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
 using systemClock = AVR::Timer8Bit<0>;
 using systemTimer = Timer<systemClock>;
 
+static constexpr std::hertz fI2C{100000};
+static constexpr TWI::Address i2cramAddress{0x54};
+using TwiMaster = TWI::Master<0>;
+using TwiMasterAsync = TWI::MasterAsync<TwiMaster>;
+using i2cram = I2CRam<TwiMasterAsync, i2cramAddress>;
+
 using SoftSPIData = AVR::Pin<PortA, 0>;
 using SoftSPIClock = AVR::Pin<PortA, 1>;
 using SoftSPISS = AVR::Pin<PortA, 2>;
@@ -42,47 +47,67 @@ using SSpi0 = SoftSpiMaster<SoftSPIData, SoftSPIClock, SoftSPISS>;
 
 using terminal = SSpi0;
 
-using adc = AVR::Adc<0>;
-using adcController = AdcController<adc, 6, 7>;
-using lm35 = LM35<adcController, 0>;
-
 namespace std {
     std::basic_ostream<terminal> cout;
     std::lineTerminator<CRLF> endl;
 }
 
+struct DS1307handler: public EventHandler<EventType::I2CRamValueAvailable> {
+    static void process(uint8_t v) {
+        std::cout << "ram: "_pgm << v << std::endl;
+    }  
+};
+
+struct DS1307handlerError: public EventHandler<EventType::I2CRamError> {
+    static void process(uint8_t) {
+        std::cout << "ram error"_pgm << std::endl;
+    }  
+};
+
+struct TWIHandlerError: public EventHandler<EventType::TWIError> {
+    static void process(uint8_t v) {
+        std::cout << "twi error: "_pgm << v << std::endl;
+    }  
+};
+
 struct TimerHandler : public EventHandler<EventType::Timer> {
     static void process(uint8_t) {
-        std::cout << "Value: "_pgm << adcController::value(0) << std::endl;
-        std::cout << "Voltage: "_pgm << adcController::voltage(0) << std::endl;
-        std::cout << "Temp: "_pgm << lm35::temperature() << std::endl;
+        std::cout << "timer"_pgm << std::endl;
+        if (!i2cram::startWrite(0, 1)) {
+            std::cout << "send error"_pgm << std::endl;
+        }
+        if (!i2cram::startRead(0)) {
+            std::cout << "send error"_pgm << std::endl;
+        }
     }
 };
 
-using pGroup = PeriodicGroup<systemTimer, adcController>;
-using eGroup = EventHandlerGroup<TimerHandler>;
+using periodicGroup = PeriodicGroup<systemTimer>;
+using eventHandlerGroup = EventHandlerGroup<TimerHandler, TWIHandlerError, i2cram, DS1307handler, DS1307handlerError>;
 
-int main() {
+int main()
+{
     terminal::init();
     systemTimer::init();
     
-    adcController::init();
+    i2cram::init<fI2C>();
     
-    std::cout << "Analog Test with Events"_pgm << std::endl;
-    
-    std::cout << "Channels: "_pgm << adcController::channels[0] << std::endl;
-    std::cout << "Channels: "_pgm << adcController::channels[1] << std::endl;
+    std::cout << "I2C Ram (attiny) async example"_pgm << std::endl;
+
+    std::array<TWI::Address, 5> i2cAddresses;
+    TwiMaster::findDevices(i2cAddresses);
+    for(const auto& d : i2cAddresses) {
+        std::cout << d << std::endl;
+    }
     
     systemTimer::create(1000_ms, TimerFlags::Periodic);
     
     {
-        Scoped<EnableInterrupt> ie;
-        EventManager::run<pGroup, eGroup>();
+        Scoped<EnableInterrupt> ei;
+        EventManager::run<periodicGroup, eventHandlerGroup>([](){
+            TwiMasterAsync::periodic();
+        });
     }
-
-}
-ISR(TIMER0_COMPA_vect) {
-    pGroup::tick();
 }
 
 #ifndef NDEBUG
@@ -91,3 +116,7 @@ void assertFunction(const char*, const char* function, const char* file, unsigne
     while(true) {};
 }
 #endif
+
+ISR(TIMER0_COMPA_vect) {
+    periodicGroup::tick();
+}

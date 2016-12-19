@@ -31,6 +31,7 @@ namespace I2C {
 template<uint8_t NumberOfRegisters>
 class RamRegisterMachine final {
 public:
+    static constexpr uint8_t size = NumberOfRegisters;
     static uint8_t& cell(uint8_t index) {
         assert(index < mData.size);
         return mData[index];        
@@ -113,7 +114,7 @@ public:
             case State::USI_SLAVE_GET_DATA_AND_SEND_ACK:
                 data = USI::mcu_usi()->usidr; 					// Read data received
                 if (!index) { 		// First access, read buffer position
-                    if (data <= *index) {		// Check if address within buffer size
+                    if (data < RegisterMachine::size) {		// Check if address within buffer size
                         index = data; 		// Set position as received
                     }
                     else {

@@ -80,8 +80,7 @@ int main()
     }    
 }
 #ifndef NDEBUG
-constexpr void assertFunction(bool b, const char*, const char* , unsigned int) {
-   if (!b) {
-    }
+void assertFunction(const char*, const char*, const char* , unsigned int) {
+    while(true) {};
 }
 #endif

@@ -17,9 +17,8 @@
  */
 
 #include <stdint.h>
+#include <stddef.h>
 #include "std/array.h"
-
-typedef uint32_t size_t;
 
 int main()
 {
@@ -33,6 +32,6 @@ int main()
     return sum;    
 }
 
-constexpr void assertFunction(bool, const char*, const char*, unsigned int) {
+void assertFunction(bool, const char*, const char*, unsigned int) {
 }
 

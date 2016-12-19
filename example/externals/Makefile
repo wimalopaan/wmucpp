@@ -35,6 +35,9 @@ targets += akku.elf
 targets += ds1307.elf
 targets += ds1307async.elf
 targets += i2cattiny.elf
+targets += i2cram.elf
+targets += i2cramasync.elf
+targets += tle5205.elf
 
 -include ../../Makefile.include
 

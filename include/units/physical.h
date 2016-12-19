@@ -64,6 +64,12 @@ constexpr bool operator<(const frequency<Rep, Div>& fl, const frequency<Rep, Div
 }
 
 template<typename Rep, typename Div>
+constexpr bool operator>=(const frequency<Rep, Div>& fl, const frequency<Rep, Div>& fr)
+{
+    return !(fl.value < fr.value);
+}
+
+template<typename Rep, typename Div>
 constexpr frequency<Rep, Div> operator/(const frequency<Rep, Div>& fl, Rep d) {
     return {(Rep)(fl.value / d)};
 }

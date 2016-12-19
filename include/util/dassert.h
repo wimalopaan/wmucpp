@@ -18,10 +18,16 @@
 
 #pragma once
 
+extern void assertFunction(const char* expr, const char* function, const char* file, unsigned int line) noexcept __attribute__ ((__noreturn__));
+
 #ifndef NDEBUG
-constexpr void assertFunction(bool b, const char* function, const char* file, unsigned int line);
+
 // todo: Umstellen auf pgm Strings
-# define assert(x) assertFunction(x, __PRETTY_FUNCTION__, __FILE__, __LINE__)
+
+#define assert(expr)							\
+  ((expr)								\
+   ? (void) (0)						\
+   : assertFunction (#expr, __PRETTY_FUNCTION__, __FILE__, __LINE__))
 
 #else
 

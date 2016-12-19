@@ -22,37 +22,55 @@
 #include "mcu/avr/usi.h"
 #include "mcu/i2cslave.h"
 #include "util/disable.h"
-
-template<uint8_t NumberOfRegisters>
-class RegisterMachine final {
-public:
-    static constexpr uint8_t size = NumberOfRegisters;
-    static uint8_t& cell(uint8_t index) {
-        assert(index < mData.size);
-        return mData[index];        
-    }
-    static void process() {
-        for(uint8_t i = 0; i < mData.size / 2; ++i) {
-            mData[i + mData.size / 2] = 2 * mData[i];
-        }
-    }
-private:
-    static std::array<uint8_t, NumberOfRegisters> mData;
-};
-template<uint8_t NumberOfRegisters>
-std::array<uint8_t, NumberOfRegisters> RegisterMachine<NumberOfRegisters>::mData;
+#include "external/ws2812.h"
 
 using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 
+static constexpr uint8_t NLeds = 3;
+
+using ws2812_Pin = AVR::Pin<PortB, 4>;
+using leds = WS2812<NLeds, ws2812_Pin>;
+
+template<typename Leds>
+class LedMachine final {
+public:
+    static constexpr uint8_t size = Leds::size;
+    typedef Leds led_type;
+    
+    static volatile uint8_t& cell(uint8_t index) {
+        needUpdate = true;
+        if (index == 0) {
+            return mColor.r;
+        }
+        else if (index == 1) {
+            return mColor.g;
+        }
+        return mColor.b;
+    }
+    static void process() {
+        if (needUpdate) {
+            cRGB c{mColor.r, mColor.g, mColor.b};
+            Leds::set(c);
+            needUpdate = false;
+        }
+    }
+private:
+    volatile static bool needUpdate;
+    volatile static cRGB mColor;
+};
+template<typename Leds>
+volatile cRGB LedMachine<Leds>::mColor;
+template<typename Leds>
+volatile bool LedMachine<Leds>::needUpdate = false;
+
 using led = AVR::Pin<PortB, 3>;
 
-using virtualRAM = RegisterMachine<16>;
-//using virtualRAM = I2C::RamRegisterMachine<16>;
+using virtualLED= LedMachine<leds>;
 
 constexpr TWI::Address address{0x54};
 using Usi = AVR::Usi<0>;
-using i2c = I2C::I2CSlave<Usi, address, virtualRAM>;
+using i2c = I2C::I2CSlave<Usi, address, virtualLED>;
 
 using isrRegistrar = IsrRegistrar<i2c::I2CSlaveHandlerOvfl, i2c::I2CSlaveHandlerStart>;
 
@@ -63,11 +81,14 @@ int main()
     led::high();
     
     i2c::init();
-
+    
+    leds::init();
+    leds::off();
+    
     while(true) {
         Scoped<EnableInterrupt> ei;
         led::toggle();
-        virtualRAM::process();
+        virtualLED::process();
     }    
 }
 ISR(USI_OVF_vect) {

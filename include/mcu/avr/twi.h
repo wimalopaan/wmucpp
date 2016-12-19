@@ -47,6 +47,7 @@ public:
     }
 
     static void rateProcess() {
+        static State mState;
         static uint8_t lastAddress = 0;
         switch(mState) {
         case State::Inactive:
@@ -65,6 +66,7 @@ public:
                 uint8_t twst = (mcuTwi()->twsr & TW_STATUS_MASK) & 0xF8;
                 if ( (twst != TW_START) && (twst != TW_REP_START)) {
                     mState = State::Error;
+                    EventManager::enqueue({EventType::TWIError, 1});
                 }
                 else {
                     mState = State::WriteAddress;
@@ -86,6 +88,7 @@ public:
             }
             else {
                 mState = State::Error;
+                EventManager::enqueue({EventType::TWIError, 2});
             }
             break;
         case State::ReadAddressWait:
@@ -94,6 +97,7 @@ public:
                 uint8_t twst = (mcuTwi()->twsr & TW_STATUS_MASK) & 0xF8;
                 if ( (twst != TW_MT_SLA_ACK) && (twst != TW_MR_SLA_ACK) ) {
                     mState = State::Error;
+                    EventManager::enqueue({EventType::TWIError, 3});
                 }
                 else {
                     if (auto data = mSendQueue.pop_front()) {
@@ -107,6 +111,7 @@ public:
                     }
                     else {
                         mState = State::Error;
+                        EventManager::enqueue({EventType::TWIError, 4});
                     }
                 }
             }
@@ -117,6 +122,7 @@ public:
                 uint8_t twst = (mcuTwi()->twsr & TW_STATUS_MASK) & 0xF8;
                 if ( (twst != TW_MT_SLA_ACK) && (twst != TW_MR_SLA_ACK) ) {
                     mState = State::Error;
+                    EventManager::enqueue({EventType::TWIError, 5});
                 }
                 else {
                     mState = State::Writing;
@@ -125,6 +131,7 @@ public:
                     }
                     else {
                         mState = State::Error;
+                        EventManager::enqueue({EventType::TWIError, 6});
                     }
                 }
             }
@@ -150,8 +157,9 @@ public:
             if (TWIMaster::transmissionCompleted()) {
                 // check value of TWI Status Register. Mask prescaler bits
                 uint8_t twst = (mcuTwi()->twsr & TW_STATUS_MASK) & 0xF8;
-                if( twst != TW_MT_DATA_ACK) {
+                if (twst != TW_MT_DATA_ACK) {
                     mState = State::Error;
+                    EventManager::enqueue({EventType::TWIError, 7});
                 }
                 else {
                     --mBytesToWrite;
@@ -185,6 +193,7 @@ public:
                 }   
                 else {
                     mState = State::Error;
+                    EventManager::enqueue({EventType::TWIError, 8});
                 }
             } 
             break;
@@ -200,8 +209,9 @@ public:
             }
             break;
         case State::Error:
-            EventManager::enqueue({EventType::TWIError, 0});
+//            EventManager::enqueue({EventType::TWIError, 0});
             mSendQueue.clear();
+            mRecvQueue.clear();
             mState = State::Inactive;
             break;
         default:
@@ -253,18 +263,15 @@ public:
     }
 
 private:
-    static State mState;
     static std::FiFo<uint8_t, BSize> mRecvQueue;
     static std::FiFo<uint8_t, BSize> mSendQueue;
-    static uint8_t mBytesToRead;
-    static uint8_t mBytesToWrite;
+    static uint_bounded<uint8_t> mBytesToRead;
+    static uint_bounded<uint8_t> mBytesToWrite;
 };
 template<typename TWIMaster, uint8_t BSize, bool UseSendEvent>
-typename MasterAsync<TWIMaster, BSize, UseSendEvent>::State MasterAsync<TWIMaster, BSize, UseSendEvent>::mState = MasterAsync<TWIMaster, BSize>::State::Inactive;
+uint_bounded<uint8_t> MasterAsync<TWIMaster, BSize, UseSendEvent>::mBytesToRead;
 template<typename TWIMaster, uint8_t BSize, bool UseSendEvent>
-uint8_t MasterAsync<TWIMaster, BSize, UseSendEvent>::mBytesToRead = 0;
-template<typename TWIMaster, uint8_t BSize, bool UseSendEvent>
-uint8_t MasterAsync<TWIMaster, BSize, UseSendEvent>::mBytesToWrite = 0;
+uint_bounded<uint8_t> MasterAsync<TWIMaster, BSize, UseSendEvent>::mBytesToWrite;
 template<typename TWIMaster, uint8_t BSize, bool UseSendEvent>
 std::FiFo<uint8_t, BSize> MasterAsync<TWIMaster, BSize, UseSendEvent>::mRecvQueue;
 template<typename TWIMaster, uint8_t BSize, bool UseSendEvent>

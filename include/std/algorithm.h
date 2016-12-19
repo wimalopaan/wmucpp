@@ -21,9 +21,32 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "std/memory.h"
+
 namespace std {
 
 #ifndef __GLIBCXX__
+
+template<typename T>
+struct less {
+    constexpr bool operator()(const T &lhs, const T &rhs) const  {
+        return lhs < rhs;
+    }
+};
+
+template<typename T>
+struct greater {
+    constexpr bool operator()(const T &lhs, const T &rhs) const  {
+        return lhs > rhs;
+    }
+};
+
+template<typename T>
+constexpr void swap(T& a, T& b) {
+    T tmp = std::move(a);
+    a = std::move(b);
+    b = std::move(tmp);
+}
 
 template<typename C>
 constexpr auto begin(const C& c) -> decltype(c.begin()) {
@@ -63,7 +86,7 @@ void fill(ForwardIt first, ForwardIt last, const T& value){
 }
 
 template<typename IIt, typename OIt>
-OIt copy(IIt first, IIt last, OIt out) {
+constexpr OIt copy(IIt first, IIt last, OIt out) {
     while (first != last) {
             *out++ = *first++;
         }

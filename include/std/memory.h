@@ -33,8 +33,7 @@ template< class T > struct remove_reference<T&&> {
 };
 
 template <typename T>
-typename remove_reference<T>::type&& move(T&& arg)
-{
+constexpr typename remove_reference<T>::type&& move(T&& arg) {
   return static_cast<typename remove_reference<T>::type&&>(arg);
 }
 

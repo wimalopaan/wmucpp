@@ -23,6 +23,8 @@
 #endif
 
 #include "mcu/avr8.h"
+#include "std/traits.h"
+#include "util/algorithm.h"
 
 namespace AVR {
 
@@ -72,6 +74,45 @@ struct Port final {
     static constexpr uintptr_t address() {
         return reinterpret_cast<uintptr_t>(&getBaseAddr<MCUPort, Name>()->out);
     }
+};
+
+// todo: generelle lösung nth_element<>
+template<typename... Pins>
+class PinSet final {
+public:
+    static_assert(sizeof... (Pins) <= 8, "too much pins in PinSet");
+    static constexpr uint8_t size = sizeof...(Pins);
+    static constexpr uint8_t pinNumbers[] = {Pins::number...};
+    static constexpr uint8_t setMask = (Pins::pinMask | ... | 0);
+    
+    typedef typename ::Util::nth_element<0, Pins...>::port port_type;
+    
+    static_assert((std::is_same<port_type, typename Pins::port>::value && ... && true), "");
+    
+    static void allOn() {
+        port_type::get() |= setMask;
+    }
+    static void allOff() {
+        port_type::get() &= ~setMask;
+    }
+    static void on(uint8_t pinMask) {
+    }
+    template<typename... PP>
+    static void on() {
+        constexpr uint8_t invertedMask = ~setMask;
+        constexpr uint8_t mask = (PP::pinMask | ... | 0);
+        static_assert(((mask & invertedMask) == 0), "");
+        port_type::get() |= mask;
+    }    
+    template<typename... PP>
+    static void off() {
+        constexpr uint8_t invertedMask = ~setMask;
+        constexpr uint8_t mask = (PP::pinMask | ... | 0);
+        static_assert(((mask & invertedMask) == 0), "");
+        port_type::get() &= ~mask;
+    }    
+private:
+    PinSet() = delete;
 };
 
 template<typename Port, uint8_t PinNumber>
@@ -148,10 +189,7 @@ struct ScopedPin {
     }
 };
 
-
 }
-
-
 
 template<typename Pin>
 struct Set {
