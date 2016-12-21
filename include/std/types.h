@@ -68,10 +68,10 @@ public:
     void setNaN() volatile {
         mValue = NaN;
     }
-    volatile uint_NaN& operator=(T v) volatile {
+    void operator=(T v) volatile {
         assert(mValue != NaN);
         mValue = v;
-        return *this;
+//        return *this;
     }
     uint_NaN& operator=(T v){
         assert(mValue != NaN);
@@ -96,9 +96,9 @@ public:
         assert(mValue != NaN);
         return mValue;
     }
-    volatile uint_NaN& operator++() volatile {
+    void operator++() volatile {
         ++mValue;
-        return *this;
+//        return *this;
     }
     uint_NaN& operator++() {
         ++mValue;

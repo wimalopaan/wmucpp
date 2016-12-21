@@ -30,7 +30,7 @@ enum class TimerMode : uint8_t {Normal = 0, CTC, NumberOfModes};
 
 template<typename Timer, uint8_t N, TimerMode Mode>
 struct TimerFlags {
-    
+    // todo: umstellen   
 };
 
 template<typename MCU, uint8_t N>

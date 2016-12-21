@@ -438,30 +438,31 @@ void assertFunction(const char*, const char* function, const char* file, unsigne
 #endif
 
 ISR(PCINT0_vect) {
-
+//    isrRegistrar::isr<AVR::ISR::PcInt<0>>();
 }
 ISR(PCINT1_vect) {
-
+//    isrRegistrar::isr<AVR::ISR::PcInt<1>>();
 }
 ISR(PCINT2_vect) {
     isrRegistrar::isr<AVR::ISR::PcInt<2>>();
-//    ppm1::isr();
 }
 ISR(PCINT3_vect) {
+//    isrRegistrar::isr<AVR::ISR::PcInt<3>>();
 }
 ISR(TIMER1_COMPA_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<1>::CompareA>();
-//    crAdapter::rateTick();
-//    led::toggle();
 //    SWUsart<0>::isr_compa();
 }
 ISR(TIMER1_COMPB_vect) {
+//    isrRegistrar::isr<AVR::ISR::Timer<1>::CompareB>();
 //    SWUsart<0>::isr_compb();
 }
 ISR(TIMER1_CAPT_vect) {
+//    isrRegistrar::isr<AVR::ISR::Timer<1>::Capture>();
 //    SWUsart<0>::isr_icp();
 }
 ISR(SPI_STC_vect) {
+//    isrRegistrar::isr<AVR::ISR::Spi<0>::Stc>();
     AVR::Spi<0>::isr();
 }
 ISR(TIMER0_COMPA_vect) {
@@ -470,9 +471,11 @@ ISR(TIMER0_COMPA_vect) {
     sampler::tick();
 }
 ISR(TIMER3_COMPA_vect) {
+//    isrRegistrar::isr<AVR::ISR::Timer<3>::CompareA>();
     softPpm::isrA();
 }
 ISR(TIMER3_COMPB_vect) {
+//    isrRegistrar::isr<AVR::ISR::Timer<3>::CompareB>();
     softPpm::isrB();
 }
 ISR(USART0_RX_vect) {

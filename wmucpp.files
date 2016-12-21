@@ -34,10 +34,12 @@ doc/bmcpp04/bm02b.c
 doc/bmcpp04/bm03a.cc
 doc/bmcpp04/bm03b.c
 doc/bmcpp04/simavrconsole.c
+doc/bmcpp99/bm02a.cc
 example/attiny85/i2cram.cc
 example/attiny85/i2cws2812.cc
 example/externals/i2cram.cc
 example/externals/i2cramasync.cc
+example/externals/rpm.cc
 example/externals/tle5205.cc
 example/main.cc
 example/main.h
@@ -51,6 +53,7 @@ include/container/stringbuffer.h
 include/external/dcf77.h
 include/external/hott/hott.h
 include/external/i2cram.h
+include/external/rpm.h
 include/external/tle5205.h
 include/external/ws2812.h
 include/hal/button.h
@@ -60,6 +63,7 @@ include/hal/protocolladapter.h
 include/hal/softppm.h
 include/hal/softspimaster.h
 include/hal/softtimer.h
+include/mcu/avr/adcomparator.h
 include/mcu/avr/atmega1284p.h
 include/mcu/avr/atmega328p.h
 include/mcu/avr/atmega328pb.h

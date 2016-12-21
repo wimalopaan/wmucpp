@@ -53,6 +53,7 @@ extern "C" {
     
     void USI_OVF_vect(void);
 
+    void ANALOG_COMP_vect(void);
 }
 
 #endif
@@ -168,6 +169,29 @@ template<uint8_t N>
 struct Timer;
 
 template<>
+struct Timer<3> {
+    struct CompareA  {
+#ifdef TIMER3_COMPA_vect_num
+        static constexpr const uint32_t number = TIMER3_COMPA_vect_num;
+#endif
+    };
+    struct CompareB  {
+#ifdef TIMER3_COMPB_vect_num
+        static constexpr const uint32_t number = TIMER3_COMPB_vect_num;
+#endif
+    };
+    struct Compare  {
+#ifdef TIMER3_COMP_vect_num
+        static constexpr const uint32_t number = TIMER3_COMP_vect_num;
+#endif
+    };
+#ifdef TIMER3_OVF_vect_num
+    struct Overflow  {
+        static constexpr const uint32_t number = TIMER3_OVF_vect_num;
+    };
+#endif
+};
+template<>
 struct Timer<2> {
     struct CompareA  {
 #ifdef TIMER2_COMPA_vect_num
@@ -231,13 +255,21 @@ struct Timer<0> {
     };
 #endif
 };
+
+template<uint8_t N>
+struct Spi;
+
+template<>
+struct Spi<0> {
 #ifdef SPI_STC_vect_num
-struct SpiStc  {
+struct Stc  {
     static constexpr const uint32_t number = SPI_STC_vect_num;
 };
 #endif
+};
 
-template<uint8_t> struct Usi;
+template<uint8_t> 
+struct Usi;
 
 template<>
 struct Usi<0> {
@@ -253,6 +285,26 @@ struct Usi<0> {
 #elif defined(USI_START_vect_num)
     struct Start {
         static constexpr const uint32_t number = USI_START_vect_num;
+    };
+#endif
+};
+
+template<uint8_t> 
+struct Usart;
+
+template<>
+struct Usart<0> {
+    
+};
+
+template<uint8_t> 
+struct AdComparator;
+
+template<> 
+struct AdComparator<0> {
+#ifdef ANALOG_COMP_vect_num
+    struct Edge {
+        static constexpr const uint32_t number = ANALOG_COMP_vect_num;
     };
 #endif
 };

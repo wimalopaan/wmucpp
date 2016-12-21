@@ -48,7 +48,8 @@ enum class EventType : uint8_t {
     DS1307TimeAvailable, DS1307Error,
     I2CRamError, I2CRamValueAvailable,
     AdcConversion,
-    DCFReceive0, DCFReceive1, DCFSync, DCFParityError, DCFError
+    DCFReceive0, DCFReceive1, DCFSync, DCFParityError, DCFError,
+    TLE5205Error
 };
 
 template<typename T>

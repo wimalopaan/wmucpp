@@ -27,7 +27,7 @@ namespace std {
 
 struct percent {
     constexpr explicit percent(uint8_t p) : value(p) {
-//        assert(value <= 100);
+        assert(value <= 100);
     }
     const uint8_t value = 0;
 };
@@ -37,6 +37,9 @@ constexpr bool operator==(std::percent lhs, std::percent rhs) {
 }
 constexpr bool operator!=(std::percent lhs, std::percent rhs) {
     return !(lhs == rhs);
+}
+constexpr bool operator>(std::percent lhs, std::percent rhs) {
+    return lhs.value > rhs.value;
 }
 
 namespace literals {

@@ -95,8 +95,6 @@ public:
     static void allOff() {
         port_type::get() &= ~setMask;
     }
-    static void on(uint8_t pinMask) {
-    }
     template<typename... PP>
     static void on() {
         constexpr uint8_t invertedMask = ~setMask;
@@ -110,7 +108,12 @@ public:
         constexpr uint8_t mask = (PP::pinMask | ... | 0);
         static_assert(((mask & invertedMask) == 0), "");
         port_type::get() &= ~mask;
-    }    
+    }  
+    template<typename Dir>
+    static void dir() {
+        (Pins::template dir<Dir>(),...);
+    }
+
 private:
     PinSet() = delete;
 };

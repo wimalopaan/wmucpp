@@ -22,7 +22,7 @@
 #include "util/dassert.h"
 
 template<typename MCUAdc, uint8_t... Channels>
-class AdcController {
+class AdcController final {
     enum class State {Start, Converting, ConversionComplete};
     
 public:

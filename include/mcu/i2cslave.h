@@ -174,8 +174,6 @@ public:
         USI::template init<AVR::I2C>();
     }
 private:
-//    static volatile std::array<uint8_t, Size> rxBuffer;
-//    static volatile std::array<uint8_t, Size> txBuffer;
     static volatile uint_NaN<uint8_t> index;
     static volatile State state;
 };
@@ -184,10 +182,4 @@ volatile State I2CSlave<USI, Address, RegisterMachine>::state = State::USI_SLAVE
 
 template<typename USI, const TWI::Address& Address, typename RegisterMachine>
 volatile uint_NaN<uint8_t> I2CSlave<USI, Address, RegisterMachine>::index;
-
-//template<typename USI, const TWI::Address& Address, uint8_t Size, typename PA>
-//volatile std::array<uint8_t, Size> I2CSlave<USI, Address, Size, PA>::rxBuffer;
-
-//template<typename USI, const TWI::Address& Address, uint8_t Size, typename PA>
-//volatile std::array<uint8_t, Size> I2CSlave<USI, Address, Size, PA>::txBuffer;
 }

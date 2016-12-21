@@ -22,12 +22,15 @@ F_OSC = 20000000
 
 targets +=  bm01a.s bm01a.elf bm01a.size
 targets +=  bm01b.s bm01b.elf bm01b.size
+targets +=  bm02a.s bm02a.elf bm02a.size
 
 -include ../../Makefile.include
 
 bm01a.elf: bm01a.o simavrconsole.o
 	$(CC) $(LDFLAGS) -o $@ bm01a.o simavrconsole.o
 
+bm02a.elf: bm02a.o simavrconsole.o
+	$(CC) $(LDFLAGS) -o $@ bm02a.o simavrconsole.o
 
 bm01b.elf: bm01b.o simavrconsole.o
 	$(CC) $(LDFLAGS) -o $@ bm01b.o simavrconsole.o

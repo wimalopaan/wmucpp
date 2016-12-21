@@ -166,6 +166,12 @@ struct ATMega1284P final
         template<int N> struct Parameter;
     };
 
+    struct AdComparator {
+        static constexpr const uint8_t count = 1;
+        volatile uint8_t acsr;
+        template<int N> struct Address;
+    };
+    
     struct PortRegister {
         volatile uint8_t in;
         volatile uint8_t ddr;
@@ -240,6 +246,11 @@ struct ATMega1284P::PCInterrupts::Address<3> {
 template<>
 struct ATMega1284P::Adc::Address<0> {
     static constexpr uint8_t value = 0x78;
+};
+
+template<>
+struct ATMega1284P::AdComparator::Address<0> {
+    static constexpr uint8_t value = 0x50;
 };
 
 template<>

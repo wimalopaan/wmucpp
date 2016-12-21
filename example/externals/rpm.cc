@@ -16,14 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config.h"
-#include "mcu/avr8.h"
 #include "mcu/ports.h"
-#include "mcu/avr/isr.h"
+#include "external/rpm.h"
 #include "mcu/avr/mcutimer.h"
+#include "mcu/avr/isr.h"
 #include "hal/softspimaster.h"
 #include "util/disable.h"
-#include "external/tle5205.h"
 #include "console.h"
 
 using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
@@ -31,17 +29,12 @@ using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
 using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
 
-using Tle5205In1 = AVR::Pin<PortB, 0>;
-using Tle5205In2 = AVR::Pin<PortB, 1>;
-using Tle5205Error = AVR::Pin<PortB, 2>;
-
 using led = AVR::Pin<PortB, 3>;
 
-using tleTimer = AVR::Timer8Bit<0>;
+using rpmTimer = AVR::Timer8Bit<0>;
+using rpm = RpmFromAnalogComparator<0, rpmTimer>;
 
-using hbridge = TLE5205<Tle5205In1, Tle5205In2, Tle5205Error, tleTimer>;
-
-using isrRegistrar = IsrRegistrar<hbridge::PwmOnHandler, hbridge::PwmOffHandler>;
+using isrRegistrar = IsrRegistrar<rpm>;
 
 using SoftSPIData = AVR::Pin<PortA, 0>;
 using SoftSPIClock = AVR::Pin<PortA, 1>;
@@ -55,46 +48,27 @@ namespace std {
     std::lineTerminator<CRLF> endl;
 }
 
-static constexpr std::hertz pwmFrequency = 1000_Hz;
-
 int main() {
     isrRegistrar::init();
-    terminal::init();
+    rpm::init();
+
     led::template dir<AVR::Output>();
+    led::off();
     
-    hbridge::init<pwmFrequency>();
-    
-    {
-        Scoped<EnableInterrupt> ei;
-        std::cout << "tle5205 example"_pgm << std::endl;
+    while(true) {
+        Scoped<EnableInterrupt> ei;        
+        std::cout << "RPM with AComparator example"_pgm << std::endl;
         
-        constexpr auto prescaler = AVR::Util::prescalerForAbove<tleTimer>(pwmFrequency);
-        std::cout << "prescaler: "_pgm << prescaler << std::endl;
-
-        using namespace std::literals::quantity;
-        hbridge::pwm(25_ppc);
-        
-//        hbridge::direction() = hbridge::Direction{false};
-        
-        while(true) {
-            Util::delay(100_ms);
-            led::toggle();
-            hbridge::periodic();
-        }
-    }    
+    }
 }
 
-ISR(TIMER0_COMPA_vect) {
-    isrRegistrar::isr<AVR::ISR::Timer<0>::CompareA>();
+ISR(ANALOG_COMP_vect) {
+    led::toggle();
+    isrRegistrar::isr<AVR::ISR::AdComparator<0>::Edge>();
 }
-
-ISR(TIMER0_OVF_vect) {
-    isrRegistrar::isr<AVR::ISR::Timer<0>::Overflow>();
-}
-
 
 #ifndef NDEBUG
 void assertFunction(const char*, const char*, const char*, unsigned int) {
-       while(true) {}
+    while(true) {};
 }
 #endif
