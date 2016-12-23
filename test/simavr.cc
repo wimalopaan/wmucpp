@@ -59,5 +59,6 @@ int main(){
     b[0] = 1;
     std::cout << std::crc8(b) << std::endl;
     
+    
     while(true);
 }

@@ -19,6 +19,7 @@
 #pragma once
 
 #include "config.h"
+#include "avr8defs.h"
 #include "std/limits.h"
 #include "units/physical.h"
 #include "util/algorithm.h"
@@ -35,17 +36,42 @@ struct TimerSetupData final {
     }
 };
 
+template<uint8_t N>
+constexpr std::array<AVR::PrescalerPair::scale_type, N> prescalerValues(const AVR::PrescalerPair(&a)[N]) {
+    std::array<AVR::PrescalerPair::scale_type, N> values;
+    for(uint8_t i = 0; i < N; ++i) {
+        values[i] = a[i].scale;
+    }
+    return values;
+}
+
+template<AVR::PrescalerPair::scale_type Prescale, uint8_t N>
+constexpr uint8_t bitsFrom(const AVR::PrescalerPair(&a)[N]) {
+    for(const auto pair: a) {
+        if (pair.scale == Prescale) {
+            return pair.bits;
+        }
+    }
+    return 0;
+}
+
 template<typename MCUTimer>
 constexpr TimerSetupData<typename MCUTimer::value_type> calculate(const std::hertz& ftimer) {
 //    static_assert(MCUTimer::hasOcrA || MCUTimer::hasOcrB, "need ocra or ocrb");
-    using pRow = typename MCUTimer::mcu_timer_type::template PrescalerRow<MCUTimer::number>;
-    auto p = std::to_array(pRow::values);
+
+    using pBits = typename MCUTimer::mcu_timer_type::template PrescalerBits<MCUTimer::number>;
+    auto p = prescalerValues(pBits::values);
+    
+//    using pRow = typename MCUTimer::mcu_timer_type::template PrescalerRow<MCUTimer::number>;
+//    auto p = std::to_array(pRow::values);
     auto sortedPRow = ::Util::sort(p);
     // todo: use right order: aufsteigend (s.u.)
     for(const auto& p : sortedPRow) {
-        const auto tv = (Config::fMcu / ftimer) / p;
-        if (tv < std::numeric_limits<typename MCUTimer::value_type>::max()) {
-            return {p, static_cast<typename MCUTimer::value_type>(tv)};
+        if (p > 0) {
+            const auto tv = (Config::fMcu / ftimer) / p;
+            if (tv < std::numeric_limits<typename MCUTimer::value_type>::max()) {
+                return {p, static_cast<typename MCUTimer::value_type>(tv)};
+            }
         }
     }
     return {};
@@ -54,8 +80,10 @@ constexpr TimerSetupData<typename MCUTimer::value_type> calculate(const std::her
 
 template<typename MCUTimer>
 constexpr uint16_t prescalerForAbove(const std::hertz& ftimer) {
-    using pRow = typename MCUTimer::mcu_timer_type::template PrescalerRow<MCUTimer::number>;
-    auto p = std::to_array(pRow::values);
+    using pBits = typename MCUTimer::mcu_timer_type::template PrescalerBits<MCUTimer::number>;
+    auto p = prescalerValues(pBits::values);
+//    using pRow = typename MCUTimer::mcu_timer_type::template PrescalerRow<MCUTimer::number>;
+//    auto p = std::to_array(pRow::values);
     auto sortedPRow = ::Util::sort(p, std::greater<uint16_t>());
     
     for(const auto& p : sortedPRow) {

@@ -29,9 +29,11 @@ using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
 using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
 
-using led = AVR::Pin<PortB, 3>;
+using led = AVR::Pin<PortB, 4>;
 
 using rpmTimer = AVR::Timer8Bit<0>;
+//using rpmTimer = AVR::Timer16Bit<1>;
+
 using rpm = RpmFromAnalogComparator<0, rpmTimer>;
 
 using isrRegistrar = IsrRegistrar<rpm>;
@@ -55,10 +57,14 @@ int main() {
     led::template dir<AVR::Output>();
     led::off();
     
-    while(true) {
+    {
         Scoped<EnableInterrupt> ei;        
         std::cout << "RPM with AComparator example"_pgm << std::endl;
         
+        while(true) {
+            std::cout << "Period: "_pgm << rpm::period() << std::endl;
+//            std::cout << "frequency: "_pgm << rpm::frequency() << std::endl;
+        }
     }
 }
 

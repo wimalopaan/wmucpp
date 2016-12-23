@@ -25,11 +25,16 @@
 
 // todo: generalisieren als PinChangeDecoder, auch fuer mehrere Pins je Port, die sich ändern
 
-
+// todo: in Util::AVR
 template<typename MCUTimer, typename T>
 constexpr uint16_t calculatePpm() {
-    using pRow = typename MCUTimer::mcu_timer_type::template PrescalerRow<MCUTimer::number>;
-    for(const auto& p : pRow::values) {
+    using pBits = typename MCUTimer::mcu_timer_type::template PrescalerBits<MCUTimer::number>;
+    auto p = AVR::Util::prescalerValues(pBits::values);
+    auto sortedPRow = ::Util::sort(p);
+
+//    using pRow = typename MCUTimer::mcu_timer_type::template PrescalerRow<MCUTimer::number>;
+//    for(const auto& p : pRow::values) {
+    for(const auto& p : sortedPRow) {
         const std::hertz f = Config::fMcu / (uint32_t)p;
         const uint16_t ppmMin = 1_ms * f;
         const uint16_t ppmMax = 2_ms * f;
@@ -81,6 +86,7 @@ public:
 
 private:
     static void isr() {
+        // todo: anpassen auf timer value_type;
         if (!pin_type::read()) { // high -> low
             uint8_t v = mcuTimer()->tcnt;
             period = (v + 256 - timerStartValue) % 256;

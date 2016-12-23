@@ -37,8 +37,9 @@ struct ATTiny85 final {
         volatile uint8_t tcnt;
         volatile uint8_t tccrb;
         template<int N> struct Address;
-        template<int N, int F> struct Prescaler;
-        template<int N> struct PrescalerRow;
+        template<int N> struct PrescalerBits;
+//        template<int N, int F> struct Prescaler;
+//        template<int N> struct PrescalerRow;
     };
     struct Timer8BitHighSpeed {
         volatile uint8_t ocrb;
@@ -48,8 +49,9 @@ struct ATTiny85 final {
         volatile uint8_t tcnt;
         volatile uint8_t tccr;
         template<int N> struct Address;
-        template<int N, int F> struct Prescaler;
-        template<int N> struct PrescalerRow;
+        template<int N> struct PrescalerBits;
+//        template<int N, int F> struct Prescaler;
+//        template<int N> struct PrescalerRow;
     };
     
     struct USI {
@@ -102,30 +104,42 @@ template<>
 struct ATTiny85::Timer8Bit::Address<0> {
     static constexpr uint8_t value = 0x48;
 };
+
 template<>
-struct ATTiny85::Timer8Bit::Prescaler<0, 0> {
-    static constexpr uint8_t value = 0x00;
+struct ATTiny85::Timer8Bit::PrescalerBits<0> {
+    static constexpr AVR::PrescalerPair values[] = {
+        {_BV(CS02) |             _BV(CS00), 1024},
+        {_BV(CS02)                        , 256},
+        {            _BV(CS01) | _BV(CS00), 64},
+        {            _BV(CS01)            , 8},
+        {                        _BV(CS00), 1},
+        {0                                , 0}
+    };
 };
-template<>
-struct ATTiny85::Timer8Bit::Prescaler<0, 1> {
-    static constexpr uint8_t value = _BV(CS00);
-};
-template<>
-struct ATTiny85::Timer8Bit::Prescaler<0, 8> {
-    static constexpr uint8_t value = _BV(CS01);
-};
-template<>
-struct ATTiny85::Timer8Bit::Prescaler<0, 64> {
-    static constexpr uint8_t value = _BV(CS01) | _BV(CS00);
-};
-template<>
-struct ATTiny85::Timer8Bit::Prescaler<0, 256> {
-    static constexpr uint8_t value = _BV(CS02);
-};
-template<>
-struct ATTiny85::Timer8Bit::Prescaler<0, 1024> {
-    static constexpr uint8_t value = _BV(CS02) | _BV(CS00);
-};
+//template<>
+//struct ATTiny85::Timer8Bit::Prescaler<0, 0> {
+//    static constexpr uint8_t value = 0x00;
+//};
+//template<>
+//struct ATTiny85::Timer8Bit::Prescaler<0, 1> {
+//    static constexpr uint8_t value = _BV(CS00);
+//};
+//template<>
+//struct ATTiny85::Timer8Bit::Prescaler<0, 8> {
+//    static constexpr uint8_t value = _BV(CS01);
+//};
+//template<>
+//struct ATTiny85::Timer8Bit::Prescaler<0, 64> {
+//    static constexpr uint8_t value = _BV(CS01) | _BV(CS00);
+//};
+//template<>
+//struct ATTiny85::Timer8Bit::Prescaler<0, 256> {
+//    static constexpr uint8_t value = _BV(CS02);
+//};
+//template<>
+//struct ATTiny85::Timer8Bit::Prescaler<0, 1024> {
+//    static constexpr uint8_t value = _BV(CS02) | _BV(CS00);
+//};
 
 }
 #pragma pack(pop)

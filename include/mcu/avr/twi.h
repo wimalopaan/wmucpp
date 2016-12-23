@@ -24,6 +24,7 @@
 #include "container/fifo.h"
 #include "container/pgmstring.h"
 #include "std/array.h"
+#include "std/types.h"
 #include "util/dassert.h"
 #include "hal/event.h"
 

@@ -19,18 +19,51 @@
 #pragma once
 
 #include <stdint.h>
-#include <mcu/avr/adcomparator.h>
-#include <mcu/avr/isr.h>
+#include "mcu/avr/adcomparator.h"
+#include "mcu/avr/isr.h"
+#include "std/limits.h"
+#include "util/bits.h"
+#include "util/disable.h"
+#include "units/physical.h"
 
 template<uint8_t ADCompNumber, typename MCUTimer>
 class RpmFromAnalogComparator final : public IsrBaseHandler<typename AVR::ISR::AdComparator<ADCompNumber>::Edge> {
+    RpmFromAnalogComparator() = delete;
 public:
+    typedef typename MCUTimer::mcu_type mcu_type;
+    typedef MCUTimer mcu_timer_type;
+    typedef typename MCUTimer::value_type value_type;
+    static constexpr auto mcuTimer = MCUTimer::mcuTimer;
+    
     static void init() {
         AVR::AdComparator<ADCompNumber>::init();
     }
     
-    static void isr() {
+    static value_type period() {
+        if constexpr(mcu_type::template is_atomic<value_type>()) {
+            return mPeriod;
+        }
+        else {
+            Scoped<DisbaleInterrupt> di;
+            return mPeriod;
+        }
     }
-
+    
+//    static std::hertz frequency() {
+////        return mcu_timer_type::frequency();
+//    }
+    
+    static void isr() {
+//        mPeriod = (mcuTimer()->tcnt - mTimerStartValue + std::numeric_limits<value_type>::max() + 1) % (std::numeric_limits<value_type>::max() + 1);
+//        mTimerStartValue = mcuTimer()->tcnt;
+    }
 private:
+    static volatile value_type mTimerStartValue;
+    static volatile value_type mPeriod;
 };
+
+template<uint8_t ADCompNumber, typename MCUTimer>
+volatile typename RpmFromAnalogComparator<ADCompNumber, MCUTimer>::value_type RpmFromAnalogComparator<ADCompNumber, MCUTimer>::mPeriod = 0;
+
+template<uint8_t ADCompNumber, typename MCUTimer>
+volatile typename RpmFromAnalogComparator<ADCompNumber, MCUTimer>::value_type RpmFromAnalogComparator<ADCompNumber, MCUTimer>::mTimerStartValue = 0;

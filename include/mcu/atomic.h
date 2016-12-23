@@ -19,11 +19,10 @@
 #pragma once
 
 #include <stdint.h>
-#include "std/types.h"
 
 #if __has_include(<avr/builtins.h>)
 # include <avr/builtins.h>
 #endif
 
-
 // nicht möglich, das AVR-Architektur kein atomic-swap oder test-and-set bietet
+

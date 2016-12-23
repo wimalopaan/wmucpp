@@ -11,34 +11,42 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
-
-#define __STDC_LIMIT_MACROS
-
 #include <stdint.h>
 
-namespace std {
+template<typename Component, int Number>
+inline Component* getBaseAddr() {
+    return reinterpret_cast<Component*>(Component::template Address<Number>::value);
+}
 
-template<typename T>
-struct numeric_limits;
-
+struct MCU {
+    struct Gpio {
+        volatile uint8_t ddr;
+        volatile uint8_t in;
+        volatile uint8_t out;
+        template<int N> struct Address;
+    };
+};
 template<>
-struct numeric_limits<uint8_t> {
-    typedef uint8_t type;
-    static constexpr uint8_t max() {return UINT8_MAX;}
-    static constexpr uint8_t min() {return 0;}
+struct MCU::Gpio::Address<0> {
+    static constexpr uintptr_t value = 0x55;
 };
 
-template<>
-struct numeric_limits<uint16_t> {
-    typedef uint16_t type;
-    static constexpr uint16_t max() {return UINT16_MAX;}
-    static constexpr uint16_t min() {return 0;}
+template<typename Port, uint8_t PinNumber>
+struct Pin {
+    static constexpr auto gpio = getBaseAddr<MCU::Gpio, 0>;
+    static void init() {
+        gpio()->ddr |= (1 << PinNumber);
+        gpio()->out |= (1 << PinNumber);
+    }
 };
 
+int main() {
+    using led = Pin<MCU::Gpio, 0>;
+    led::init();
+    while(true) {}
 }

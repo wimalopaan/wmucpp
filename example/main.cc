@@ -35,6 +35,7 @@
 #include "external/ds1307.h"
 #include "external/lm35.h"
 #include "external/i2cram.h"
+#include "external/rpm.h"
 #include "mcu/avr/twi.h"
 #include "std/array.h"
 
@@ -113,8 +114,6 @@ using softPpm = SoftPPM<ppmTimerOutput, ppmPin1, ppmPin2>;
 // todo: testen, ob das mit PpmChange vereinbar ist
 using hardPwm = AVR::PWM<2>;
 
-
-using crTestPin = AVR::Pin<PortB, 1>;
 using crTimer = AVR::Timer16Bit<1>;
 using crWriterSensorBinary = ConstanteRateWriter<Hott::SensorProtocollBuffer<0>, sensorUsart>;
 using crWriterSensorText = ConstanteRateWriter<Hott::SensorTextProtocollBuffer<0>, sensorUsart>;
@@ -124,15 +123,16 @@ using crAdapterOneWire = ConstantRateAdapter<void, AVR::ISR::Timer<1>::CompareA,
 
 using isrDistributor = IsrDistributor<AVR::ISR::Timer<1>::CompareA, crAdapterHott, crAdapterOneWire>;
 
-using softPwmPin1 = AVR::Pin<PortB, 2>;
-using softPwmPin2 = AVR::Pin<PortB, 3>;
+using softPwmPin1 = AVR::Pin<PortB, 5>;
+using softPwmPin2 = AVR::Pin<PortB, 6>;
 using softPwm = SoftPWM<softPwmPin1, softPwmPin2>;
 
 using sampler = PeriodicGroup<buttonController, systemTimer, dcfDecoder, softPwm>; // werden alle resolution ms aufgerufen
 
-//using testPin = AVR::Pin<PortD, 5>;
+using led0 = AVR::Pin<PortC, 6>;
+using led1 = AVR::Pin<PortC, 7>;
 
-using led = AVR::Pin<PortB, 0>;
+using rpm = RpmFromAnalogComparator<0, ppmTimerInput>;
 
 struct EventHandlerParameter {
     std::optional<uint7_t> timerId1;
@@ -330,7 +330,7 @@ public:
     }
 };
 
-using isrRegistrar = IsrRegistrar<ppm1, isrDistributor>;
+using isrRegistrar = IsrRegistrar<ppm1, isrDistributor, rpm>;
 
 int main()
 {
@@ -347,10 +347,14 @@ int main()
     buttonController::init();
     adcController::init();
     
+    rpm::init();
+    
     using namespace std::literals::quantity;
     softPpm::init();
     softPpm::ppm(50_ppc, 0);
 
+    softPwm::init();
+    
     hardPwm::init();
     hardPwm::pwm<hardPwm::A>(90_ppc);
     hardPwm::pwm<hardPwm::B>(50_ppc);
@@ -387,7 +391,8 @@ int main()
         std::cout << id << std::endl;
     }
             
-    led::dir<AVR::Output>();
+    led0::dir<AVR::Output>();
+    led1::dir<AVR::Output>();
 
     pinChangeHandlerPpm::init();
     PpmDecoder<pinChangeHandlerPpm, ppmTimerInput>::init();
@@ -418,7 +423,7 @@ int main()
                                 I2CRamHandler, I2CRamErrorHandler>;
 
     EventManager::run<sampler, handler>([](){
-        led::toggle();
+        led0::toggle();
         ppmSwitch::process(ppm1::value());
         softPwm::freeRun();
         crAdapterHott::periodic();
@@ -489,5 +494,9 @@ ISR(USART1_RX_vect) {
 }
 ISR(USART1_UDRE_vect){
     rcUsart::tx_isr();
+}
+ISR(ANALOG_COMP_vect) {
+    led1::toggle();
+//    isrRegistrar::isr<AVR::ISR::AdComparator<0>::Edge>();
 }
 

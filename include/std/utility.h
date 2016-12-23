@@ -23,7 +23,8 @@
 
 namespace std { 
 
- 
+#ifndef __GLIBCXX__
+
 template< class T > struct remove_const          { typedef T type; };
 template< class T > struct remove_const<const T> { typedef T type; };
  
@@ -96,4 +97,7 @@ using make_index_sequence = make_integer_sequence<size_t, N>;
 
 template<typename... Args>
 using index_sequence_for = make_index_sequence<sizeof...(Args)>;
+
+#endif
+
 }

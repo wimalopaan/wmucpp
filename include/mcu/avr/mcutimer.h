@@ -22,6 +22,7 @@
 
 #include "mcu/avr8.h"
 #include "mcu/avr/isr.h"
+#include "mcu/avr/util.h"
 #include "units/physical.h"
 
 namespace AVR {
@@ -59,7 +60,8 @@ public:
 
     template<int PreScale>
     static void prescale() {
-        mcuTimer()->tccrb |= MCU::Timer8Bit::template Prescaler<N, PreScale>::value;
+//        mcuTimer()->tccrb |= MCU::Timer8Bit::template Prescaler<N, PreScale>::value;
+        mcuTimer()->tccrb |= AVR::Util::bitsFrom<PreScale>(MCU::Timer8Bit::template PrescalerBits<N>::values);
     }
 
     static void start(){
@@ -100,7 +102,8 @@ struct Timer8Bit<N, ATMega8> : public TimerBase<ATMega8, N>
 
     template<int PreScale>
     static constexpr void prescale() {
-        mcuTimer()->tccr |= ATMega8::Timer8Bit::template Prescaler<PreScale>::value;
+//        mcuTimer()->tccr |= ATMega8::Timer8Bit::template Prescaler<PreScale>::value;
+        mcuTimer()->tccr |= AVR::Util::bitsFrom<PreScale>(ATMega8::Timer8Bit::template PrescalerBits<N>::values);
     }
     static void start(){
     }
@@ -142,7 +145,8 @@ struct Timer16Bit: public TimerBase<MCU, N>
 
     template<int PreScale>
     static void prescale() {
-        mcuTimer()->tccrb |= MCU::Timer16Bit::template Prescaler<PreScale>::value;
+//        mcuTimer()->tccrb |= MCU::Timer16Bit::template Prescaler<PreScale>::value;
+        mcuTimer()->tccrb |= AVR::Util::bitsFrom<PreScale>(MCU::Timer16Bit::template PrescalerBits<N>::values);
     }
     
     static void ocra(uint16_t v) {

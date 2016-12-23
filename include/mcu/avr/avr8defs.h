@@ -26,6 +26,13 @@
 
 namespace AVR {
 
+struct PrescalerPair {
+    typedef uint8_t  bits_type;
+    typedef uint16_t scale_type;
+    uint8_t  bits;
+    uint16_t scale;
+};
+
 struct A {
     static constexpr char letter = 'A';
 };

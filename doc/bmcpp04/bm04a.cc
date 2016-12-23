@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdint.h>
+
 template<int N>
 void ttt() {}
 
@@ -32,8 +34,39 @@ constexpr int foo(const int v) {
     return v;
 }
 
+template <uintptr_t port, uint8_t bit>
+class GpioOut
+{
+public:
+    constexpr GpioOut(bool initState) {
+        set(initState);
+        *ddrReg() |= 1 << bit;
+    }
+
+    void set(bool state) {
+        if (state)
+        {
+            *portReg() |= 1 << bit;
+        } else {
+            *portReg() &= ~(1 <<bit);
+        }
+    }
+//private:
+    inline uint8_t volatile *portReg() {
+        return reinterpret_cast<uint8_t volatile *>(port);
+    }
+    inline uint8_t volatile *ddrReg() {
+        return portReg() - 1;
+    }
+};
+
 int main() {
-    constexpr auto a = foo(1);
-    constexpr auto b = bar(1);
-    ttt<b>();
+//    constexpr auto a = foo(1);
+//    constexpr auto b = bar(1);
+//    ttt<b>();
+    
+    GpioOut<0x55, 0> p(false);
+    
+    auto x = p.portReg();
+    while(true) {}
 }

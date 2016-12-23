@@ -44,8 +44,10 @@ public:
     static constexpr auto mcuAdComparator = getBaseAddr<typename MCU::AdComparator, N>;
     
     static void init() {
-        mcuAdComparator()->acsr = _BV(ACD) | _BV(ACBG) | _BV(ACIE) | _BV(ACI) | _BV(ACIS1) | _BV(ACIS0);
-        parameter::ain1::template dir<AVR::Input>();
+//        mcuAdComparator()->acsr = _BV(ACBG) | _BV(ACI) | _BV(ACIS1) | _BV(ACIS0);
+//        mcuAdComparator()->acsr = _BV(ACBG) | _BV(ACIE) | _BV(ACI) | _BV(ACIS1) | _BV(ACIS0);
+        mcuAdComparator()->acsr =  _BV(ACIE) | _BV(ACI) | _BV(ACIS1) | _BV(ACIS0);
+//        parameter::ain1::template dir<AVR::Input>();
     }
     
 private:
