@@ -19,24 +19,25 @@
 #pragma once
 
 #include <stdint.h>
-#include "mcu/avr/adcomparator.h"
+//#include "mcu/avr/adcomparator.h"
 #include "mcu/avr/isr.h"
 #include "std/limits.h"
 #include "util/bits.h"
 #include "util/disable.h"
 #include "units/physical.h"
 
-template<uint8_t ADCompNumber, typename MCUTimer>
-class RpmFromAnalogComparator final : public IsrBaseHandler<typename AVR::ISR::AdComparator<ADCompNumber>::Edge> {
-    RpmFromAnalogComparator() = delete;
+template<typename InterruptSource, typename Interrupt, typename MCUTimer>
+class RpmFromInterruptSource final : public IsrBaseHandler<Interrupt> {
+    RpmFromInterruptSource() = delete;
 public:
     typedef typename MCUTimer::mcu_type mcu_type;
     typedef MCUTimer mcu_timer_type;
     typedef typename MCUTimer::value_type value_type;
+    
     static constexpr auto mcuTimer = MCUTimer::mcuTimer;
     
     static void init() {
-        AVR::AdComparator<ADCompNumber>::init();
+        InterruptSource::init();
     }
     
     static value_type period() {
@@ -62,8 +63,8 @@ private:
     static volatile value_type mPeriod;
 };
 
-template<uint8_t ADCompNumber, typename MCUTimer>
-volatile typename RpmFromAnalogComparator<ADCompNumber, MCUTimer>::value_type RpmFromAnalogComparator<ADCompNumber, MCUTimer>::mPeriod = 0;
+template<typename InterruptSource, typename Interrupt, typename MCUTimer>
+volatile typename RpmFromInterruptSource<InterruptSource, Interrupt, MCUTimer>::value_type RpmFromInterruptSource<InterruptSource, Interrupt, MCUTimer>::mPeriod = 0;
 
-template<uint8_t ADCompNumber, typename MCUTimer>
-volatile typename RpmFromAnalogComparator<ADCompNumber, MCUTimer>::value_type RpmFromAnalogComparator<ADCompNumber, MCUTimer>::mTimerStartValue = 0;
+template<typename InterruptSource, typename Interrupt, typename MCUTimer>
+volatile typename RpmFromInterruptSource<InterruptSource, Interrupt, MCUTimer>::value_type RpmFromInterruptSource<InterruptSource, Interrupt, MCUTimer>::mTimerStartValue = 0;

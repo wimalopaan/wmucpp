@@ -76,7 +76,6 @@ struct Port final {
     }
 };
 
-// todo: generelle lösung nth_element<>
 template<typename... Pins>
 class PinSet final {
 public:
@@ -87,7 +86,7 @@ public:
     
     typedef typename ::Util::nth_element<0, Pins...>::port port_type;
     
-    static_assert((std::is_same<port_type, typename Pins::port>::value && ... && true), "");
+    static_assert((std::is_same<port_type, typename Pins::port>::value && ... && true), "must use same port");
     
     static void allOn() {
         port_type::get() |= setMask;

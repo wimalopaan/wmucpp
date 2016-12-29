@@ -31,6 +31,7 @@ targets += ports.elf
 targets += eventhandler.elf
 targets += events.elf
 targets += interrupts.elf
+targets += pinchange.elf
 
 -include ../../Makefile.include
 

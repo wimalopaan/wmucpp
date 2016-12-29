@@ -41,8 +41,10 @@ example/attiny85/i2cram.cc
 example/attiny85/i2cws2812.cc
 example/externals/i2cram.cc
 example/externals/i2cramasync.cc
+example/externals/pinchange.cc
 example/externals/rpm.cc
 example/externals/tle5205.cc
+example/features/Makefile
 example/main.cc
 example/main.h
 example/simavr.h

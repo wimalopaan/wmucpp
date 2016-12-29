@@ -132,7 +132,7 @@ using sampler = PeriodicGroup<buttonController, systemTimer, dcfDecoder, softPwm
 using led0 = AVR::Pin<PortC, 6>;
 using led1 = AVR::Pin<PortC, 7>;
 
-using rpm = RpmFromAnalogComparator<0, ppmTimerInput>;
+//using rpm = RpmFromInterruptSource<0, ppmTimerInput>;
 
 struct EventHandlerParameter {
     std::optional<uint7_t> timerId1;
@@ -330,7 +330,8 @@ public:
     }
 };
 
-using isrRegistrar = IsrRegistrar<ppm1, isrDistributor, rpm>;
+//using isrRegistrar = IsrRegistrar<ppm1, isrDistributor, rpm>;
+using isrRegistrar = IsrRegistrar<ppm1, isrDistributor>;
 
 int main()
 {
@@ -347,7 +348,7 @@ int main()
     buttonController::init();
     adcController::init();
     
-    rpm::init();
+//    rpm::init();
     
     using namespace std::literals::quantity;
     softPpm::init();

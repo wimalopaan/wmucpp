@@ -39,6 +39,7 @@ targets += i2cram.elf
 targets += i2cramasync.elf
 targets += tle5205.elf
 targets += rpm.elf
+targets += pinchange.elf
 
 -include ../../Makefile.include
 
