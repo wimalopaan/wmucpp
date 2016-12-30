@@ -97,13 +97,13 @@ public:
         port_type::get() &= ~setMask;
     }
     static uint8_t read() {
-        return port_type::get() & setMask;
+        return port_type::read() & setMask;
     }
     template<typename... PP>
     static void on() {
         constexpr uint8_t invertedMask = ~setMask;
         constexpr uint8_t mask = (PP::pinMask | ... | 0);
-        static_assert(((mask & invertedMask) == 0), "");
+        static_assert(((mask & invertedMask) == 0), "Pin not in PinSet");
         port_type::get() |= mask;
     }    
     static constexpr auto& pullup = on;
@@ -111,7 +111,7 @@ public:
     static void off() {
         constexpr uint8_t invertedMask = ~setMask;
         constexpr uint8_t mask = (PP::pinMask | ... | 0);
-        static_assert(((mask & invertedMask) == 0), "");
+        static_assert(((mask & invertedMask) == 0), "Pin not in PinSet");
         port_type::get() &= ~mask;
     }  
     template<typename Dir>

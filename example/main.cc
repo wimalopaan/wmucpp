@@ -425,7 +425,7 @@ int main()
                                 I2CRamHandler, I2CRamErrorHandler>;
 
     EventManager::run<sampler, handler>([](){
-        led0::toggle();
+//        led0::toggle();
         ppmSwitch::process(ppm1::value<0>());
         softPwm::freeRun();
         crAdapterHott::periodic();
@@ -451,6 +451,7 @@ ISR(PCINT1_vect) {
 //    isrRegistrar::isr<AVR::ISR::PcInt<1>>();
 }
 ISR(PCINT2_vect) {
+    led1::toggle();
     isrRegistrar::isr<AVR::ISR::PcInt<2>>();
 }
 ISR(PCINT3_vect) {
@@ -498,7 +499,7 @@ ISR(USART1_UDRE_vect){
     rcUsart::tx_isr();
 }
 ISR(ANALOG_COMP_vect) {
-    led1::toggle();
+//    led1::toggle();
 //    isrRegistrar::isr<AVR::ISR::AdComparator<0>::Edge>();
 }
 

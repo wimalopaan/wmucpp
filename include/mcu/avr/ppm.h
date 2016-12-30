@@ -106,17 +106,15 @@ public:
 private:
     template<uint8_t N>
     static inline void check(uint8_t last, uint8_t value) {
-        if constexpr(N > 0) {
-            if ((last ^ value) & pinset_type::pinMasks[N]) {
-                if (!(value & pinset_type::pinMasks[N])) { // high -> low
-                    value_type v = mcuTimer()->tcnt;
-                    period[N] = (v + (std::numeric_limits<value_type>::max() + 1) - timerStartValue[N]) % (std::numeric_limits<value_type>::max() + 1);
-                    
-                }
-                else { // low ->high
-                    timerStartValue[N] = mcuTimer()->tcnt;
-                }
+        if ((last ^ value) & pinset_type::pinMasks[N]) {
+            if (!(value & pinset_type::pinMasks[N])) { // high -> low
+                period[N] = (mcuTimer()->tcnt + std::numeric_limits<value_type>::module() - timerStartValue[N]) % std::numeric_limits<value_type>::module();
             }
+            else { // low ->high
+                timerStartValue[N] = mcuTimer()->tcnt;
+            }
+        }
+        if constexpr(N > 0) {
             check<N - 1>(last, value);
         }
     }
@@ -124,16 +122,8 @@ private:
     static void isr() {
         static uint8_t last_value = 0;
         uint8_t v = pinset_type::read();
-
         check<pinset_type::size - 1>(last_value, v);
-        
-//        if (!pin_type::read()) { // high -> low
-//            value_type v = mcuTimer()->tcnt;
-//            period = (v + (std::numeric_limits<value_type>::max() + 1) - timerStartValue) % (std::numeric_limits<value_type>::max() + 1);
-//        }
-//        else { // low -> high
-//            timerStartValue = mcuTimer()->tcnt;
-//        }
+        last_value = v;
     }
     static volatile std::array<value_type, pinset_type::size> period;
     static volatile std::array<value_type, pinset_type::size> timerStartValue;
