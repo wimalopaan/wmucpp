@@ -21,6 +21,7 @@
 #include <stdint.h>
 
 #include "std/ratio.h"
+#include "std/traits.h"
 #include "units/duration.h"
 
 namespace std {
@@ -73,6 +74,13 @@ template<typename Rep, typename Div>
 constexpr frequency<Rep, Div> operator/(const frequency<Rep, Div>& fl, Rep d) {
     return {(Rep)(fl.value / d)};
 }
+
+//template<typename Rep, typename Div, typename D>
+//constexpr 
+//typename std::enable_if<sizeof(Div) >= sizeof(D), frequency<Rep, Div>>::type 
+//operator/(const frequency<Rep, Div>& fl, D d) {
+//    return {(Rep)(fl.value / d)};
+//}
 
 template<typename Rep, typename Div>
 constexpr bool operator==(const frequency<Rep, Div>& lhs, const frequency<Rep, Div>& rhs) {

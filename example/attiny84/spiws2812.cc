@@ -61,8 +61,9 @@ using SSpi0 = SoftSpiMaster<SoftSPIData, SoftSPIClock, SoftSPISS>;
 using inserter = Inserter<leds>;
 
 using usiSS = AVR::Pin<PortA, 5>;
+using usiSSSet = AVR::PinSet<usiSS>;
 using usi = AVR::Usi<0, usiSS, inserter>;
-using usiPinChange = AVR::PinChange<usiSS>;
+using usiPinChange = AVR::PinChange<usiSSSet>;
 
 using terminal = SSpi0;
 

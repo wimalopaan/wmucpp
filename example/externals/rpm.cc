@@ -22,8 +22,8 @@
 #include "mcu/avr/pinchange.h"
 #include "hal/softspimaster.h"
 #include "util/disable.h"
-#include "console.h"
 #include "external/rpm.h"
+#include "console.h"
 
 using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
@@ -32,14 +32,14 @@ using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
 
 using reflex = AVR::Pin<PortB, 0>;
 using reflexSet = AVR::PinSet<reflex>;
-using reflexPinChange = AVR::PinChange<reflex>;
+using reflexPinChange = AVR::PinChange<reflexSet>;
 
 using led = AVR::Pin<PortB, 4>;
 
-using rpmTimer = AVR::Timer8Bit<0>;
-//using rpmTimer = AVR::Timer16Bit<1>;
+//using rpmTimer = AVR::Timer8Bit<0>;
+using rpmTimer = AVR::Timer16Bit<1>;
 
-using rpm = RpmFromInterruptSource<reflexPinChange, AVR::ISR::PcInt<reflexPinChange::pcGroupNumber>, rpmTimer>;
+using rpm = RpmFromInterruptSource<reflexPinChange, rpmTimer>;
 
 using isrRegistrar = IsrRegistrar<rpm>;
 
@@ -58,24 +58,28 @@ namespace std {
 int main() {
     isrRegistrar::init();
     rpm::init();
-
+    terminal::init();
+    
     led::template dir<AVR::Output>();
     led::off();
     
     {
         Scoped<EnableInterrupt> ei;        
-        std::cout << "RPM with AComparator example"_pgm << std::endl;
+        std::cout << "RPM with PinChange example"_pgm << std::endl;
+        std::cout << "timer f: "_pgm << rpmTimer::frequency() << std::endl;
+        std::cout << "timer p: "_pgm << rpmTimer::prescaler() << std::endl;
         
         while(true) {
-            std::cout << "Period: "_pgm << rpm::period() << std::endl;
-//            std::cout << "frequency: "_pgm << rpm::frequency() << std::endl;
+            Util::delay(1000_ms);
+            std::cout << "rpm: "_pgm << rpm::rpm() << std::endl;
+            rpm::reset();
         }
     }
 }
 
-ISR(PCINT0_vect) {
+ISR(PCINT1_vect) {
     led::toggle();
-    isrRegistrar::isr<AVR::ISR::PcInt<reflexPinChange::pcGroupNumber>>();
+    isrRegistrar::isr<AVR::ISR::PcInt<1>>();
 }
 
 #ifndef NDEBUG

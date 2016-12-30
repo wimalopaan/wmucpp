@@ -20,6 +20,7 @@
 
 #include "config.h"
 #include "mcu/avr8.h"
+#include "mcu/avr/isr.h"
 #include "mcu/ports.h"
 
 namespace AVR {
@@ -48,42 +49,44 @@ struct PCNumber<D> {
     static constexpr uint8_t number = 3;
 };
 
-template<typename Pin, typename MCU = DefaultMcuType>
+template<typename PSet, typename MCU = DefaultMcuType>
 class PinChange final {
     static constexpr auto interrupts = getBaseAddr<typename MCU::Interrupt>;
 public:
-    static constexpr uint8_t pcGroupNumber = PCNumber<typename Pin::port::name_type>::number;
+    static constexpr uint8_t pcGroupNumber = PCNumber<typename PSet::port_type::name_type>::number;
     static constexpr auto pc = getBaseAddr<typename MCU::PCInterrupts, pcGroupNumber>;
     typedef MCU mcu_type;
-    typedef Pin pin_type;
+    typedef PSet pinset_type;
 
+    typedef AVR::ISR::PcInt<pcGroupNumber> interrupt_type;
+    
     PinChange() = delete;
 
     static void init() {
-        Pin::template dir<Input>();
-        Pin::on();
-        pc()->pcmsk = Pin::pinMask;
+        PSet::template dir<Input>();
+        PSet::allPullup();
+        pc()->pcmsk = PSet::setMask;
         interrupts()->pcifr |= _BV(pcGroupNumber);
         interrupts()->pcicr |= _BV(pcGroupNumber);
     }
 };
 
-template<typename Pin>
-class PinChange<Pin, ATTiny84> final {
+template<typename PinSet>
+class PinChange<PinSet, ATTiny84> final {
     typedef ATTiny84 MCU;
     static constexpr auto interrupts = getBaseAddr<typename MCU::Interrupt>;
 public:
-    static constexpr uint8_t pcGroupNumber = PCNumber<typename Pin::port::name_type>::number;
+    static constexpr uint8_t pcGroupNumber = PCNumber<typename PinSet::port_type::name_type>::number;
     static constexpr auto pc = getBaseAddr<typename MCU::PCInterrupts, pcGroupNumber>;
     typedef MCU mcu_type;
-    typedef Pin pin_type;
+    typedef PinSet pinset_type;
 
     PinChange() = delete;
 
     static void init() {
-        Pin::template dir<Input>();
-        Pin::pullup();
-        pc()->pcmsk = Pin::pinMask;
+        PinSet::template dir<Input>();
+        PinSet::allPullup();
+        pc()->pcmsk = PinSet::setMask;
         interrupts()->gifr |= _BV(pcGroupNumber + 4);
         interrupts()->gimsk |= _BV(pcGroupNumber + 4);
     }

@@ -18,8 +18,6 @@
 
 #pragma once
 
-#define __STDC_LIMIT_MACROS
-
 #include <stdint.h>
 
 namespace std {
@@ -30,15 +28,17 @@ struct numeric_limits;
 template<>
 struct numeric_limits<uint8_t> {
     typedef uint8_t type;
-    static constexpr uint8_t max() {return UINT8_MAX;}
+    static constexpr uint8_t max() {return 255;}
     static constexpr uint8_t min() {return 0;}
+    static constexpr uint16_t module() {return 256;}
 };
 
 template<>
 struct numeric_limits<uint16_t> {
     typedef uint16_t type;
-    static constexpr uint16_t max() {return UINT16_MAX;}
+    static constexpr uint16_t max() {return 65535;}
     static constexpr uint16_t min() {return 0;}
+    static constexpr uint32_t module() {return 65536;}
 };
 
 }

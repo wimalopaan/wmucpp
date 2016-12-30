@@ -48,6 +48,7 @@ public:
     // todo: umstellen auf anderen zähler
 //    static_assert(N < MCU::Timer8Bit::count, "wrong number");
     static constexpr uint8_t number = N;
+    static constexpr uint8_t csBitMask = 0x07;
     static constexpr auto mcuTimer = getBaseAddr<typename MCU::Timer8Bit, N>;
     typedef typename MCU::Timer8Bit mcu_timer_type;
     typedef uint8_t value_type;
@@ -60,10 +61,18 @@ public:
 
     template<int PreScale>
     static void prescale() {
-//        mcuTimer()->tccrb |= MCU::Timer8Bit::template Prescaler<N, PreScale>::value;
         mcuTimer()->tccrb |= AVR::Util::bitsFrom<PreScale>(MCU::Timer8Bit::template PrescalerBits<N>::values);
     }
 
+    static std::hertz frequency() {
+        return Config::fMcu / (uint32_t)prescaler();
+    }
+
+    static AVR::PrescalerPair::scale_type prescaler() {
+        const uint8_t bits = mcuTimer()->tccrb & csBitMask;
+        return AVR::Util::bitsToPrescale(bits, MCU::Timer8Bit::template PrescalerBits<N>::values);
+    }
+    
     static void start(){
     }
 
@@ -102,7 +111,6 @@ struct Timer8Bit<N, ATMega8> : public TimerBase<ATMega8, N>
 
     template<int PreScale>
     static constexpr void prescale() {
-//        mcuTimer()->tccr |= ATMega8::Timer8Bit::template Prescaler<PreScale>::value;
         mcuTimer()->tccr |= AVR::Util::bitsFrom<PreScale>(ATMega8::Timer8Bit::template PrescalerBits<N>::values);
     }
     static void start(){
@@ -133,6 +141,7 @@ struct Timer16Bit: public TimerBase<MCU, N>
 {
     typedef AVR::ISR::Timer<N> isr_type;
     static constexpr uint8_t number = N;
+    static constexpr uint8_t csBitMask = 0x07;
     static constexpr auto mcuTimer = getBaseAddr<typename MCU::Timer16Bit, N>;
     typedef typename MCU::Timer16Bit mcu_timer_type;
     typedef uint16_t value_type;
@@ -145,10 +154,18 @@ struct Timer16Bit: public TimerBase<MCU, N>
 
     template<int PreScale>
     static void prescale() {
-//        mcuTimer()->tccrb |= MCU::Timer16Bit::template Prescaler<PreScale>::value;
         mcuTimer()->tccrb |= AVR::Util::bitsFrom<PreScale>(MCU::Timer16Bit::template PrescalerBits<N>::values);
     }
     
+    static std::hertz frequency() {
+        return Config::fMcu / (uint32_t)prescaler();
+    }
+
+    static AVR::PrescalerPair::scale_type prescaler() {
+        const uint8_t bits = mcuTimer()->tccrb & csBitMask;
+        return AVR::Util::bitsToPrescale(bits, MCU::Timer16Bit::template PrescalerBits<N>::values);
+    }
+
     static void ocra(uint16_t v) {
         mcuTimer()->ocra = v;
     }

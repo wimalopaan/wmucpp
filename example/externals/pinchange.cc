@@ -32,7 +32,8 @@ using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
 using led = AVR::Pin<PortB, 4>;
 
 using rpmPin = AVR::Pin<PortB, 0>;
-using rpmPinChange = AVR::PinChange<rpmPin>;
+using rpmPinSet = AVR::PinSet<rpmPin>;
+using rpmPinChange = AVR::PinChange<rpmPinSet>;
 using rpmTimer = AVR::Timer8Bit<2>;
 
 //using isrRegistrar = IsrRegistrar<rpm>;

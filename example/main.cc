@@ -94,7 +94,8 @@ using ws2812_A = AVR::Pin<PortC, 2>;
 //using ws2812_B = AVR::Pin<PortC, 2>;
 
 using ppmInputPin = AVR::Pin<PortC, 3>;
-using pinChangeHandlerPpm = AVR::PinChange<ppmInputPin>;
+using ppmPinSet = AVR::PinSet<ppmInputPin>;
+using pinChangeHandlerPpm = AVR::PinChange<ppmPinSet>;
 using ppmTimerInput = AVR::Timer8Bit<2>;
 using ppm1 = PpmDecoder<pinChangeHandlerPpm, ppmTimerInput>;
 using ppmSwitch = PpmSwitch<0, ppm1>;
@@ -275,7 +276,7 @@ public:
             ds1307::startReadTimeInfo();
             
             std::cout << "Temp lm35: "_pgm << lm35::temperature() << std::endl;
-            std::cout << "ppm:"_pgm << ppm1::value() << std::endl;
+            std::cout << "ppm:"_pgm << ppm1::value<0>() << std::endl;
             std::cout << "c0: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(0) << std::endl;
     //        std::cout << "c1: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(1) << std::endl;
     //        std::cout << "c2: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(2) << std::endl;
@@ -425,7 +426,7 @@ int main()
 
     EventManager::run<sampler, handler>([](){
         led0::toggle();
-        ppmSwitch::process(ppm1::value());
+        ppmSwitch::process(ppm1::value<0>());
         softPwm::freeRun();
         crAdapterHott::periodic();
         vrAdapter::periodic();
