@@ -29,6 +29,10 @@ namespace AVR {
 
 struct ATTiny25 final {
     ATTiny25() = delete;
+
+    template<typename T>
+    static constexpr bool is_atomic() {return false;}
+    
     struct Timer8Bit {
         volatile uint8_t ocrb;
         volatile uint8_t ocra;
@@ -84,6 +88,9 @@ struct ATTiny25 final {
         template<int N> struct Address;
     };
 };
+
+template<>
+constexpr bool ATTiny25::is_atomic<uint8_t>() {return true;}
 
 template<>
 struct ATTiny25::TimerInterrupts::Address<0> {

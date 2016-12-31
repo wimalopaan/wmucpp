@@ -40,6 +40,7 @@ Stream& operator<<(Stream& o, const RPM& rpm) {
     return o;
 }
 
+// todo: Drehzahlbereich festlegen -> Timerprescaler
 template<typename InterruptSource, typename MCUTimer, uint8_t IntsPerRotation = 2>
 class RpmFromInterruptSource final : public IsrBaseHandler<typename InterruptSource::interrupt_type> {
     RpmFromInterruptSource() = delete;
@@ -51,7 +52,7 @@ public:
     static constexpr auto mcuTimer = MCUTimer::mcuTimer;
     
     static void init() {
-        MCUTimer::template prescale<1024>();
+        MCUTimer::template prescale<8192>();
         MCUTimer::mode(AVR::TimerMode::Normal);
         InterruptSource::init();
     }

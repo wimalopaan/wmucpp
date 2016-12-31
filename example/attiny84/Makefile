@@ -20,6 +20,9 @@
 MCU = attiny84
 F_OSC = 8000000
 
+# 8 Mhz, 6k 4ms, 2,7V Brownout
+# sudo avrdude -p attiny84 -P usb -c avrisp2 -U -U lfuse:w:0xd2:m -U hfuse:w:0xdd:m -U efuse:w:0xff:m
+
 #LOADLIBES = simavrconsole.o
 
 #targets += simavrconsole.o

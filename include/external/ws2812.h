@@ -65,7 +65,7 @@ public:
         }
     }
     static constexpr cRGB& elementAt(uint8_t index) {
-//        assert(index < N);
+        assert(index < N);
         return leds[index];
     }
 private:

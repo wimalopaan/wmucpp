@@ -16,14 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// sudo avrdude -p attiny84 -P usb -c avrisp2 -U lfuse:w:0xe2:m -U hfuse:w:0xdf:m -U efuse:w:0xff:m
-
 #include "mcu/avr8.h"
 #include "mcu/ports.h"
 #include "mcu/avr/usi.h"
 #include "mcu/i2cslave.h"
 #include "hal/softspimaster.h"
 #include "util/disable.h"
+#include "external/ws2812.h"
+
 #include "console.h"
 
 template<uint8_t NumberOfRegisters>
@@ -34,9 +34,6 @@ public:
         assert(index < mData.size);
         return mData[index];        
     }
-    static void process() {
-    }
-private:
     static volatile std::array<uint8_t, NumberOfRegisters> mData;
 };
 template<uint8_t NumberOfRegisters>
@@ -46,6 +43,8 @@ using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 
 using led = AVR::Pin<PortB, 0>;
+using ws2812pin = AVR::Pin<PortB, 1>;
+using leds = WS2812<60, ws2812pin>;
 
 using SoftSPIData = AVR::Pin<PortA, 0>;
 using SoftSPIClock = AVR::Pin<PortA, 1>;
@@ -74,6 +73,9 @@ int main()
     
     led::dir<AVR::Output>();
     led::high();
+
+    leds::init();
+    leds::off();
     
     i2c::init();
 
@@ -83,7 +85,9 @@ int main()
         Scoped<EnableInterrupt> ei;
         while(true) {
             led::toggle();
-            virtualRAM::process();
+            cRGB color = {virtualRAM::mData[0] % 5, 1, 1};
+            leds::set(color);
+            Util::delay(100_ms);
         }    
     }    
 }

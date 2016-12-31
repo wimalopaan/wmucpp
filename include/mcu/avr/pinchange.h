@@ -91,6 +91,8 @@ public:
     typedef MCU mcu_type;
     typedef PinSet pinset_type;
 
+    typedef AVR::ISR::PcInt<pcGroupNumber> interrupt_type;
+
     PinChange() = delete;
 
     static void init() {
@@ -102,5 +104,29 @@ public:
     }
 };
 
+template<typename PinSet>
+class PinChange<PinSet, ATTiny25> final {
+    typedef ATTiny25 MCU;
+    static constexpr auto interrupts = getBaseAddr<typename MCU::Interrupt>;
+public:
+    static constexpr uint8_t pcGroupNumber = 0;
+    static constexpr auto pc = getBaseAddr<typename MCU::PCInterrupts, pcGroupNumber>;
+    typedef MCU mcu_type;
+    typedef PinSet pinset_type;
+
+    typedef AVR::ISR::PcInt<pcGroupNumber> interrupt_type;
+    
+    PinChange() = delete;
+
+    static void init() {
+        PinSet::template dir<Input>();
+        PinSet::allPullup();
+        pc()->pcmsk = PinSet::setMask;
+#ifdef PCIF
+        interrupts()->gifr |= _BV(PCIF);
+        interrupts()->gimsk |= _BV(PCIE);
+#endif
+    }
+};
 
 }

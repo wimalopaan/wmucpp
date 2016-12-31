@@ -297,6 +297,7 @@ public:
             if (count % 2) {
                 i2cram::startWrite(0, count);
                 i2cled::startWrite(0, count * 64);
+//                i2crpm::startWrite(0, 0);
             }
             else {
                 if (!i2cram::startRead(0)) {
@@ -304,6 +305,9 @@ public:
                 }
                 if (!i2cled::startRead(0)) {
                     std::cout << "start read led error"_pgm << std::endl;
+                }
+                if (!i2crpm::startRead(0)) {
+                    std::cout << "start read rpm error"_pgm << std::endl;
                 }
             }
             
@@ -456,7 +460,7 @@ int main()
                                 UsartHandler, HottKeyHandler,
                                 Button0Handler, 
                                 ds18b20, DS18B20ErrorHandler, DS18B20MeasurementHandler,
-                                TWIHandlerError, ds1307, DS1307handler, DS1307handlerError, i2cram, i2cled,
+                                TWIHandlerError, ds1307, DS1307handler, DS1307handlerError, i2cram, i2cled, i2crpm,
                                 DCFReceive0Handler, DCFReceive1Handler, DCFSyncHandler, DCFErrorHandler, DCFParityHandler,
                                 I2CRamHandler, I2CRamErrorHandler,
                                 I2CLedHandler, I2CLedErrorHandler,

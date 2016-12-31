@@ -25,7 +25,7 @@ using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using led = AVR::Pin<PortB, 0>;
 
 using ws2812_Pin = AVR::Pin<PortB, 1>;
-using leds = WS2812<3, ws2812_Pin>;
+using leds = WS2812<30, ws2812_Pin>;
 
 int main() 
 {

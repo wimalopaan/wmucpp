@@ -20,37 +20,34 @@
 #include "mcu/avr8.h"
 #include "mcu/ports.h"
 #include "mcu/avr/usi.h"
+#include "mcu/avr/isr.h"
 #include "mcu/avr/pinchange.h"
 #include "mcu/avr/mcutimer.h"
 #include "mcu/i2cslave.h"
 #include "util/disable.h"
 #include "external/rpm.h"
 
+using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
+using led = AVR::Pin<PortB, 3>;
+
 template<uint8_t NumberOfRegisters>
 class RegisterMachine final {
 public:
     static constexpr uint8_t size = NumberOfRegisters;
-    static uint8_t& cell(uint8_t index) {
+    static volatile uint8_t& cell(uint8_t index) {
         assert(index < mData.size);
         return mData[index];        
     }
-    static void process() {
-    }
-private:
-    static std::array<uint8_t, NumberOfRegisters> mData;
+    static volatile std::array<uint8_t, NumberOfRegisters> mData;
 };
 template<uint8_t NumberOfRegisters>
-std::array<uint8_t, NumberOfRegisters> RegisterMachine<NumberOfRegisters>::mData;
+volatile std::array<uint8_t, NumberOfRegisters> RegisterMachine<NumberOfRegisters>::mData;
 
-using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
-
-using led = AVR::Pin<PortB, 3>;
-
-using virtualRAM = RegisterMachine<4>;
+using RpmMachine = RegisterMachine<8>;
 
 constexpr TWI::Address address{0x55};
 using Usi = AVR::Usi<0>;
-using i2c = I2C::I2CSlave<Usi, address, virtualRAM>;
+using i2c = I2C::I2CSlave<Usi, address, RpmMachine>;
 
 using reflex = AVR::Pin<PortB, 4>;
 using reflexSet = AVR::PinSet<reflex>;
@@ -64,23 +61,33 @@ using isrRegistrar = IsrRegistrar<i2c::I2CSlaveHandlerOvfl, i2c::I2CSlaveHandler
 
 int main() 
 {
-    isrRegistrar::init();
     led::dir<AVR::Output>();
     led::high();
     
+    isrRegistrar::init();
     i2c::init();
+    
+    rpm::init();
 
-    while(true) {
+    {
         Scoped<EnableInterrupt> ei;
-        led::toggle();
-        virtualRAM::process();
-    }    
+        while(true) {
+            uint8_t r = rpm::period();
+            RpmMachine::mData[0] = r;
+        }    
+    }
 }
+
 ISR(USI_OVF_vect) {
     isrRegistrar::isr<AVR::ISR::Usi<0>::Overflow>();
 }
+
 ISR(USI_START_vect) {
     isrRegistrar::isr<AVR::ISR::Usi<0>::Start>();
+}
+ISR(PCINT0_vect) {
+    led::toggle();
+    isrRegistrar::isr<AVR::ISR::PcInt<0>>();
 }
 
 #ifndef NDEBUG

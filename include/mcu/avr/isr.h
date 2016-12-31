@@ -52,6 +52,7 @@ extern "C" {
     void PCINT3_vect(void);
     
     void USI_OVF_vect(void);
+    void USI_START_vect(void);
 
     void ANALOG_COMP_vect(void);
 }
@@ -63,12 +64,11 @@ struct IsrRegistrar {
     typedef uint64_t mask_type;
     
     static_assert(sizeof...(HH) <= 64, "too much different interrupts");
-    
     static constexpr mask_type all = (HH::mask | ...);
+    static_assert(Util::numberOfOnes(all) == sizeof...(HH), "Isr double defined");
     
-    static void init() {
-        static_assert(Util::numberOfOnes(all) == sizeof...(HH), "Isr double defined");
-    }
+    static void init() {}
+
     template<uint8_t In, uint8_t N, typename H, typename... Hp>
     struct Caller {
         static constexpr void call() {
