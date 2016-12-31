@@ -23,26 +23,24 @@
 #include "mcu/avr/usi.h"
 #include "mcu/i2cslave.h"
 #include "hal/softspimaster.h"
+#include "util/disable.h"
 #include "console.h"
 
 template<uint8_t NumberOfRegisters>
 class RegisterMachine final {
 public:
     static constexpr uint8_t size = NumberOfRegisters;
-    static uint8_t& cell(uint8_t index) {
+    static volatile uint8_t& cell(uint8_t index) {
         assert(index < mData.size);
         return mData[index];        
     }
     static void process() {
-        for(uint8_t i = 0; i < mData.size / 2; ++i) {
-            mData[i + mData.size / 2] = mData[i] + 1;
-        }
     }
 private:
-    static std::array<uint8_t, NumberOfRegisters> mData;
+    static volatile std::array<uint8_t, NumberOfRegisters> mData;
 };
 template<uint8_t NumberOfRegisters>
-std::array<uint8_t, NumberOfRegisters> RegisterMachine<NumberOfRegisters>::mData;
+volatile std::array<uint8_t, NumberOfRegisters> RegisterMachine<NumberOfRegisters>::mData;
 
 using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
@@ -54,8 +52,7 @@ using SoftSPIClock = AVR::Pin<PortA, 1>;
 using SoftSPISS = AVR::Pin<PortA, 2>;
 using SSpi0 = SoftSpiMaster<SoftSPIData, SoftSPIClock, SoftSPISS>;
 
-using virtualRAM = RegisterMachine<16>;
-//using virtualRAM = I2C::RamRegisterMachine<16>;
+using virtualRAM = RegisterMachine<2>;
 
 constexpr TWI::Address address{0x53};
 using Usi = AVR::Usi<0>;
@@ -72,6 +69,7 @@ using isrRegistrar = IsrRegistrar<i2c::I2CSlaveHandlerOvfl, i2c::I2CSlaveHandler
 
 int main() 
 {
+    isrRegistrar::init();
     terminal::init();
     
     led::dir<AVR::Output>();
@@ -79,11 +77,14 @@ int main()
     
     i2c::init();
 
-    std::cout << "attiny i2c slave test"_pgm << std::endl;
-    
-    while(true) {
-        led::toggle();
-        virtualRAM::process();
+    std::cout << "attiny i2c ram slave test"_pgm << std::endl;
+
+    {
+        Scoped<EnableInterrupt> ei;
+        while(true) {
+            led::toggle();
+            virtualRAM::process();
+        }    
     }    
 }
 ISR(USI_OVF_vect) {

@@ -17,14 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-MCU = atmega1284p
-F_OSC = 20000000
+MCU = attiny25
+F_OSC = 16000000
 
-subdirs = atmega8 atmega328 atmega328pb atmega1284p 
-subdirs += attiny84 attiny85 attiny25
-subdirs += features externals
+# sudo avrdude -p attiny25 -P usb -c avrisp2 -U lfuse:w:0xe2:m -U hfuse:w:0xdf:m -U efuse:w:0xff:m
 
-targets +=  main.elf main.size
+#LOADLIBES = simavrconsole.o
 
--include ../Makefile.include
+#targets += simavrconsole.o
+targets +=  rpm.elf
+
+-include ../../Makefile.include
 

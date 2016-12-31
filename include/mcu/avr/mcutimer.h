@@ -95,6 +95,60 @@ public:
     }
 };
 
+template<>
+class Timer8Bit<1, ATTiny25> : public TimerBase<ATTiny25, 1> {
+public:
+    // todo: umstellen auf anderen zähler
+//    static_assert(N < MCU::Timer8Bit::count, "wrong number");
+    static constexpr uint8_t number = 1;
+    static constexpr uint8_t csBitMask = 0x0f;
+    static constexpr auto mcuTimer = getBaseAddr<typename ATTiny25::Timer8BitHighSpeed, 1>;
+    typedef typename ATTiny25::Timer8Bit mcu_timer_type;
+    typedef uint8_t value_type;
+
+    static constexpr const bool hasOcrA = true;
+    static constexpr const bool hasOcrB = true;
+    static constexpr const bool hasOcrC = true;
+    static constexpr const bool hasOverflow = true;
+
+    Timer8Bit() = delete;
+
+    template<int PreScale>
+    static void prescale() {
+        mcuTimer()->tccr |= AVR::Util::bitsFrom<PreScale>(ATTiny25::Timer8BitHighSpeed::template PrescalerBits<1>::values);
+    }
+
+    static std::hertz frequency() {
+        return Config::fMcu / (uint32_t)prescaler();
+    }
+
+    static AVR::PrescalerPair::scale_type prescaler() {
+        const uint8_t bits = mcuTimer()->tccr & csBitMask;
+        return AVR::Util::bitsToPrescale(bits, ATTiny25::Timer8BitHighSpeed::template PrescalerBits<1>::values);
+    }
+    
+    static void start(){
+    }
+
+    static void ocra(uint8_t v) {
+        mcuTimer()->ocra = v;
+    }
+    template<uint8_t V>
+    static void ocra() {
+        mcuTimer()->ocra = V;
+    }
+
+    // todo: template
+    static void mode(const TimerMode& mode) {
+        if (mode == TimerMode::CTC) {
+            TimerBase<ATTiny25, 0>::mcuInterrupts()->timsk |= ATTiny25::TimerInterrupts::template Flags<1>::ociea;
+        }
+        else if (mode == TimerMode::Normal) {
+        }
+    }
+};
+
+
 template<uint8_t N>
 struct Timer8Bit<N, ATMega8> : public TimerBase<ATMega8, N>
 {
@@ -189,7 +243,10 @@ struct Timer16Bit: public TimerBase<MCU, N>
         if (mode == TimerMode::CTC) {
 //            TimerBase<MCU, N>::mcuInterrupts->timsk |= _BV(OCIE0A);
             TimerBase<MCU, N>::mcuInterrupts()->timsk |= MCU::TimerInterrupts::template Flags<N>::ociea;
+            // fixme: WGM12
+#ifdef WGM12
             mcuTimer()->tccrb |= _BV(WGM12);
+#endif
         }
     }
 };

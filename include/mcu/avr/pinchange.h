@@ -25,26 +25,36 @@
 
 namespace AVR {
 
-template<typename Name>
+template<typename Name, typename MCU = DefaultMcuType>
 struct PCNumber;
 
-template<>
-struct PCNumber<A> {
+template<typename MCU>
+struct PCNumber<A, MCU> {
     PCNumber() = delete;
     static constexpr uint8_t number = 0;
 };
-template<>
-struct PCNumber<B> {
+template<typename MCU>
+struct PCNumber<B, MCU> {
     PCNumber() = delete;
     static constexpr uint8_t number = 1;
 };
 template<>
-struct PCNumber<C> {
+struct PCNumber<B, ATTiny85> {
+    PCNumber() = delete;
+    static constexpr uint8_t number = 0;
+};
+template<>
+struct PCNumber<B, ATTiny25> {
+    PCNumber() = delete;
+    static constexpr uint8_t number = 0;
+};
+template<typename MCU>
+struct PCNumber<C, MCU> {
     PCNumber() = delete;
     static constexpr uint8_t number = 2;
 };
-template<>
-struct PCNumber<D> {
+template<typename MCU>
+struct PCNumber<D, MCU> {
     PCNumber() = delete;
     static constexpr uint8_t number = 3;
 };

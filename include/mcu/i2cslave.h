@@ -86,10 +86,16 @@ public:
                 if (!index) { 		// No buffer position given, set buffer address to 0
                     index = 0;
                 }	
+                else {
+                    assert(index);
+                    if (!(*index < RegisterMachine::size)) {
+                        index = 0;
+                    }
+                }
+                assert(index);
                 USI::mcu_usi()->usidr = RegisterMachine::cell(*index); 	// Send data byte
                 
                 ++index; 					// Increment buffer address for next byte
-                
                 state = State::USI_SLAVE_REQUEST_REPLY_FROM_SEND_DATA;
                 USI::setSendData();
                 break;
@@ -122,6 +128,11 @@ public:
                     }				
                 }
                 else {					// Ongoing access, receive data
+                    assert(index);
+                    if (!(*index < RegisterMachine::size)) {
+                        index = 0;
+                    }
+                    assert(index);
                     RegisterMachine::cell(*index) = data; 				// Write data to buffer
                     ++index; 							// Increment buffer address for next write access
                 }
@@ -172,6 +183,7 @@ public:
     };
     static inline void init() {
         USI::template init<AVR::I2C>();
+        state = State::USI_SLAVE_CHECK_ADDRESS;
     }
 private:
     static volatile uint_NaN<uint8_t> index;

@@ -85,8 +85,14 @@ using TwiMaster = TWI::Master<0>;
 using TwiMasterAsync = TWI::MasterAsync<TwiMaster>;
 using ds1307 = DS1307<TwiMasterAsync>;
 
-static constexpr TWI::Address i2cramAddress{0x54};
+static constexpr TWI::Address i2cramAddress{0x53};
 using i2cram = I2CRam<TwiMasterAsync, i2cramAddress>;
+
+static constexpr TWI::Address i2cledAddress{0x54};
+using i2cled = I2CRam<TwiMasterAsync, i2cledAddress, I2CLedParameter>;
+
+static constexpr TWI::Address i2crpmAddress{0x55};
+using i2crpm = I2CRam<TwiMasterAsync, i2crpmAddress, I2CRpmParameter>;
 
 using vrAdapter = VariableRateAdapter<bufferedTerminal, adcController>;
 
@@ -137,6 +143,30 @@ using led1 = AVR::Pin<PortC, 7>;
 
 struct EventHandlerParameter {
     std::optional<uint7_t> timerId1;
+};
+
+struct I2CRpmHandler: public EventHandler<EventType::I2CRpmValueAvailable> {
+    static void process(uint8_t v) {
+        std::cout << "i2c rpm value: "_pgm << v << std::endl;
+    }  
+};
+
+struct I2CRpmErrorHandler: public EventHandler<EventType::I2CRpmError> {
+    static void process(uint8_t) {
+        std::cout << "i2c rpm error"_pgm << std::endl;
+    }
+};
+
+struct I2CLedHandler: public EventHandler<EventType::I2CLedValueAvailable> {
+    static void process(uint8_t v) {
+        std::cout << "i2c led value: "_pgm << v << std::endl;
+    }  
+};
+
+struct I2CLedErrorHandler: public EventHandler<EventType::I2CLedError> {
+    static void process(uint8_t) {
+        std::cout << "i2c led error"_pgm << std::endl;
+    }
 };
 
 struct I2CRamHandler: public EventHandler<EventType::I2CRamValueAvailable> {
@@ -265,12 +295,16 @@ public:
             WS2812<2, ws2812_A>::set({16, (uint8_t)((count++ % 2) * 16), 16});
             
             if (count % 2) {
-                i2cram::startWrite(0, count * 64);
+                i2cram::startWrite(0, count);
+                i2cled::startWrite(0, count * 64);
             }
             else {
-//                if (!i2cram::startRead(0)) {
-//                    std::cout << "start read error"_pgm << std::endl;
-//                }
+                if (!i2cram::startRead(0)) {
+                    std::cout << "start read ram error"_pgm << std::endl;
+                }
+                if (!i2cled::startRead(0)) {
+                    std::cout << "start read led error"_pgm << std::endl;
+                }
             }
             
             ds1307::startReadTimeInfo();
@@ -369,6 +403,8 @@ int main()
     TwiMaster::init<ds1307::fSCL>();
     
     i2cram::init<ds1307::fSCL>();
+    i2cled::init<ds1307::fSCL>();
+    i2crpm::init<ds1307::fSCL>();
     
     std::array<TWI::Address, 5> i2cAddresses;
     TwiMaster::findDevices(i2cAddresses);
@@ -420,9 +456,11 @@ int main()
                                 UsartHandler, HottKeyHandler,
                                 Button0Handler, 
                                 ds18b20, DS18B20ErrorHandler, DS18B20MeasurementHandler,
-                                TWIHandlerError, ds1307, DS1307handler, DS1307handlerError, i2cram,
+                                TWIHandlerError, ds1307, DS1307handler, DS1307handlerError, i2cram, i2cled,
                                 DCFReceive0Handler, DCFReceive1Handler, DCFSyncHandler, DCFErrorHandler, DCFParityHandler,
-                                I2CRamHandler, I2CRamErrorHandler>;
+                                I2CRamHandler, I2CRamErrorHandler,
+                                I2CLedHandler, I2CLedErrorHandler,
+                                I2CRpmHandler, I2CRpmErrorHandler>;
 
     EventManager::run<sampler, handler>([](){
 //        led0::toggle();

@@ -25,7 +25,22 @@
 #include "hal/event.h"
 #include "util/dassert.h"
 
-template<typename TWIMaster, const TWI::Address& Address>
+struct I2CRamParameter {
+    static constexpr EventType eventValueAvailable = EventType::I2CRamValueAvailable;
+    static constexpr EventType eventError = EventType::I2CRamError;
+};
+
+struct I2CLedParameter {
+    static constexpr EventType eventValueAvailable = EventType::I2CLedValueAvailable;
+    static constexpr EventType eventError = EventType::I2CLedError;
+};
+
+struct I2CRpmParameter {
+    static constexpr EventType eventValueAvailable = EventType::I2CRpmValueAvailable;
+    static constexpr EventType eventError = EventType::I2CRpmError;
+};
+
+template<typename TWIMaster, const TWI::Address& Address, typename Parameter = I2CRamParameter>
 class I2CRam : public EventHandler<EventType::TWIRecvComplete> {
 public:
     template<const std::hertz& fSCL>
@@ -48,6 +63,7 @@ public:
     static bool startRead(uint8_t index) {
         return TWIMaster::template startReadWithPointer<Address>(TWI::Range{index, 1});
     }
+
     static bool startWrite(uint8_t index, uint8_t value) {
         std::array<uint8_t, 2> data;
         data[0] = index;
@@ -58,10 +74,10 @@ public:
     static void process(uint8_t address) {
         if (TWI::Address{address} == Address) {
             if (auto v = TWIMaster::get()) {
-                EventManager::enqueue({EventType::I2CRamValueAvailable, *v});
+                EventManager::enqueue({Parameter::eventValueAvailable, *v});
             }
             else {
-                EventManager::enqueue({EventType::I2CRamError, 0});
+                EventManager::enqueue({Parameter::eventError, 0});
             }
         }
     }

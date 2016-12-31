@@ -20,8 +20,11 @@
 #include "mcu/avr8.h"
 #include "mcu/ports.h"
 #include "mcu/avr/usi.h"
+#include "mcu/avr/pinchange.h"
+#include "mcu/avr/mcutimer.h"
 #include "mcu/i2cslave.h"
 #include "util/disable.h"
+#include "external/rpm.h"
 
 template<uint8_t NumberOfRegisters>
 class RegisterMachine final {
@@ -32,9 +35,6 @@ public:
         return mData[index];        
     }
     static void process() {
-        for(uint8_t i = 0; i < mData.size / 2; ++i) {
-            mData[i + mData.size / 2] = 2 * mData[i];
-        }
     }
 private:
     static std::array<uint8_t, NumberOfRegisters> mData;
@@ -42,18 +42,25 @@ private:
 template<uint8_t NumberOfRegisters>
 std::array<uint8_t, NumberOfRegisters> RegisterMachine<NumberOfRegisters>::mData;
 
-using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 
 using led = AVR::Pin<PortB, 3>;
 
-using virtualRAM = RegisterMachine<16>;
+using virtualRAM = RegisterMachine<4>;
 
-constexpr TWI::Address address{0x54};
+constexpr TWI::Address address{0x55};
 using Usi = AVR::Usi<0>;
 using i2c = I2C::I2CSlave<Usi, address, virtualRAM>;
 
-using isrRegistrar = IsrRegistrar<i2c::I2CSlaveHandlerOvfl, i2c::I2CSlaveHandlerStart>;
+using reflex = AVR::Pin<PortB, 4>;
+using reflexSet = AVR::PinSet<reflex>;
+using reflexPinChange = AVR::PinChange<reflexSet>;
+
+using rpmTimer = AVR::Timer8Bit<1>;
+
+using rpm = RpmFromInterruptSource<reflexPinChange, rpmTimer>;
+
+using isrRegistrar = IsrRegistrar<i2c::I2CSlaveHandlerOvfl, i2c::I2CSlaveHandlerStart, rpm>;
 
 int main() 
 {

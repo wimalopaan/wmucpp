@@ -47,6 +47,8 @@ enum class EventType : uint8_t {
     TWIRecvComplete, TWISendComplete, TWIError,
     DS1307TimeAvailable, DS1307Error,
     I2CRamError, I2CRamValueAvailable,
+    I2CLedError, I2CLedValueAvailable,
+    I2CRpmError, I2CRpmValueAvailable,
     AdcConversion,
     DCFReceive0, DCFReceive1, DCFSync, DCFParityError, DCFError,
     TLE5205Error
