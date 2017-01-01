@@ -25,7 +25,7 @@
 #include "mcu/avr/swusart.h"
 #include "hal/event.h"
 #include "mcu/ports.h"
-#include "hal/softtimer.h"
+#include "hal/alarmtimer.h"
 #include "std/literals.h"
 #include "mcu/avr/isr.h"
 #include "mcu/avr/spi.h"
@@ -47,7 +47,7 @@ using ledBlink = AVR::Pin<PortD, 7>;
 using ledOverrun = AVR::Pin<PortD, 6>;
 
 using systemClock = AVR::Timer8Bit<0>;
-using systemTimer = Timer<systemClock>;
+using systemTimer = AlarmTimer<systemClock>;
 
 using sampler = PeriodicGroup<systemTimer>;
 
@@ -89,7 +89,7 @@ int main()
 
     std::cout << Config() << std::endl;
 
-    systemTimer::create(1_s, TimerFlags::Periodic);
+    systemTimer::create(1_s, AlarmFlags::Periodic);
 
     spiInput::init<AVR::SpiSlave>();
 

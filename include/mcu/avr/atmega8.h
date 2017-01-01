@@ -40,8 +40,6 @@ struct ATMega8 final
         volatile uint8_t tcnt;
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
-//        template<int F> struct Prescaler;
-//        template<int N> struct PrescalerRow;
         template<uint8_t N> struct Flags; 
     };
     struct Timer16Bit {
@@ -72,8 +70,6 @@ struct ATMega8 final
         volatile uint8_t tccra;
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
-//        template<int F> struct Prescaler;
-//        template<int N> struct PrescalerRow;
     };
     struct PortRegister {
         volatile uint8_t in;
@@ -144,15 +140,11 @@ template<>
 struct ATMega8::Timer8Bit::Flags<2> {
     static constexpr uint8_t wgm1 = _BV(WGM11);
 };
+
 template<>
 struct ATMega8::Timer8Bit::Address<0> {
     static constexpr uint8_t value = 0x53;
 };
-template<>
-struct ATMega8::Timer8Bit::Address<2> {
-    static constexpr uint8_t value = 0x45;
-};
-
 template<>
 struct ATMega8::Timer8Bit::PrescalerBits<0> {
     static constexpr AVR::PrescalerPair values[] = {
@@ -163,6 +155,11 @@ struct ATMega8::Timer8Bit::PrescalerBits<0> {
         {                        _BV(CS00), 1},
         {0                                , 0}
     };
+};
+
+template<>
+struct ATMega8::Timer8Bit::Address<2> {
+    static constexpr uint8_t value = 0x45;
 };
 template<>
 struct ATMega8::Timer8Bit::PrescalerBits<2> {
@@ -175,38 +172,7 @@ struct ATMega8::Timer8Bit::PrescalerBits<2> {
         {0                                , 0}
     };
 };
-//template<>
-//struct ATMega8::Timer8Bit::PrescalerRow<0> {
-//    static constexpr uint16_t values[] = {1024, 256, 64, 8, 1};
-//};
-//template<>
-//struct ATMega8::Timer8Bit::PrescalerRow<2> {
-//    static constexpr uint16_t values[] = {1024, 256, 64, 8, 1};
-//};
-//template<>
-//struct ATMega8::Timer8Bit::Prescaler<0> {
-//    static constexpr uint8_t value = 0x00;
-//};
-//template<>
-//struct ATMega8::Timer8Bit::Prescaler<1> {
-//    static constexpr uint8_t value = _BV(CS00);
-//};
-//template<>
-//struct ATMega8::Timer8Bit::Prescaler<8> {
-//    static constexpr uint8_t value = _BV(CS01);
-//};
-//template<>
-//struct ATMega8::Timer8Bit::Prescaler<64> {
-//    static constexpr uint8_t value = _BV(CS01) | _BV(CS00);
-//};
-//template<>
-//struct ATMega8::Timer8Bit::Prescaler<256> {
-//    static constexpr uint8_t value = _BV(CS02);
-//};
-//template<>
-//struct ATMega8::Timer8Bit::Prescaler<1024> {
-//    static constexpr uint8_t value = _BV(CS02) | _BV(CS00);
-//};
+
 template<>
 struct ATMega8::Timer16Bit::Address<1> {
     static constexpr uint8_t value = 0x46;
@@ -222,30 +188,6 @@ struct ATMega8::Timer16Bit::PrescalerBits<1> {
         {0                                , 0}
     };
 };
-//template<>
-//struct ATMega8::Timer16Bit::PrescalerRow<1> {
-//    static constexpr uint16_t values[] = {1, 8, 64, 256, 1024};
-//};
-//template<>
-//struct ATMega8::Timer16Bit::Prescaler<1> {
-//    static constexpr uint8_t value = _BV(CS10);
-//};
-//template<>
-//struct ATMega8::Timer16Bit::Prescaler<8> {
-//    static constexpr uint8_t value = _BV(CS11);
-//};
-//template<>
-//struct ATMega8::Timer16Bit::Prescaler<64> {
-//    static constexpr uint8_t value = _BV(CS11) | _BV(CS10);
-//};
-//template<>
-//struct ATMega8::Timer16Bit::Prescaler<256> {
-//    static constexpr uint8_t value = _BV(CS12);
-//};
-//template<>
-//struct ATMega8::Timer16Bit::Prescaler<1024> {
-//    static constexpr uint8_t value = _BV(CS12) | _BV(CS10);
-//};
 
 #endif
 

@@ -19,14 +19,14 @@
 #define __STDC_LIMIT_MACROS
 
 #include "mcu/ports.h"
-#include "hal/softtimer.h"
+#include "hal/alarmtimer.h"
 #include "console.h"
 #include "simavr/simavrdebugconsole.h"
 
 #include <stdlib.h>
 
 using systemClock = AVR::Timer8Bit<0>;
-using systemTimer = Timer<systemClock>;
+using systemTimer = AlarmTimer<systemClock>;
 
 using sampler = PeriodicGroup<systemTimer>;
 
@@ -47,7 +47,7 @@ int main()
 {
     Scoped<EnableInterrupt> interruptEnabler;
     systemTimer::init();
-    auto tid1 = systemTimer::create(1000_ms, TimerFlags::Periodic);
+    auto tid1 = systemTimer::create(1000_ms, AlarmFlags::Periodic);
     using handler = EventHandlerGroup<TimerHandler>;
     EventManager::run<sampler, handler>([](){});
 }

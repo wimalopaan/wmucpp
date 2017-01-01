@@ -22,7 +22,7 @@
 #include "mcu/avr8.h"
 #include "util/dassert.h"
 #include "mcu/ports.h"
-#include "hal/softtimer.h"
+#include "hal/alarmtimer.h"
 #include "util/disable.h"
 #include "hal/event.h"
 #include "mcu/avr/ppm.h"
@@ -35,7 +35,7 @@
 #include "simavr/simavrdebugconsole.h"
 
 using systemClock = AVR::Timer8Bit<0>;
-using systemTimer = Timer<systemClock>;
+using systemTimer = AlarmTimer<systemClock>;
 
 using terminal = SimAVRDebugConsole;
 
@@ -139,8 +139,8 @@ int main(void) {
 //    std::cout << "softPwm ocmax: "_pgm << softPwm::ocMax << std::endl;
 
 
-    evp.timerId1 = systemTimer::create(1000_ms, TimerFlags::Periodic);
-    evp.timerId2 = systemTimer::create(10_s, TimerFlags::Periodic);
+    evp.timerId1 = systemTimer::create(1000_ms, AlarmFlags::Periodic);
+    evp.timerId2 = systemTimer::create(10_s, AlarmFlags::Periodic);
 
     using handler = EventHandlerGroup<TimerHandler>;
 

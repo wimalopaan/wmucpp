@@ -18,15 +18,7 @@
 
 #pragma once
 
-#define __STDC_LIMIT_MACROS
-
 #include "std/literals.h"
-
-// todo: todolist
-// todo: DCF Modul portieren
-// todo: LCD portieren
-// todo: IR portieren
-// todo: freie funktionen bevorzugen, z.B. für Standard-initialisierungen
 
 #ifndef HAS_CONFIG
 

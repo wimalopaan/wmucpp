@@ -22,7 +22,7 @@
 
 #include "std/array.h"
 #include "util/dassert.h"
-#include "mcu/avr/twi.h"
+#include "mcu/avr/twimaster.h"
 
 // todo: set time from DateTime::TimeTM
 

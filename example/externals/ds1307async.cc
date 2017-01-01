@@ -19,11 +19,11 @@
 #include <stdlib.h>
 
 #include "mcu/ports.h"
-#include "mcu/avr/twi.h"
+#include "mcu/avr/twimaster.h"
 #include "external/ds1307.h"
 #include "hal/softspimaster.h"
 #include "hal/event.h"
-#include "hal/softtimer.h"
+#include "hal/alarmtimer.h"
 #include "console.h"
 
 using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
@@ -32,7 +32,7 @@ using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
 using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
 
 using systemClock = AVR::Timer8Bit<0>;
-using systemTimer = Timer<systemClock>;
+using systemTimer = AlarmTimer<systemClock>;
 
 using TwiMaster = TWI::Master<0>;
 using TwiMasterAsync = TWI::MasterAsync<TwiMaster>;
@@ -87,7 +87,7 @@ int main()
     
     std::cout << "DS1307 async example"_pgm << std::endl;
 
-    systemTimer::create(1000_ms, TimerFlags::Periodic);
+    systemTimer::create(1000_ms, AlarmFlags::Periodic);
     
     {
         Scoped<EnableInterrupt> ei;

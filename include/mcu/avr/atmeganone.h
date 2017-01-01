@@ -21,7 +21,6 @@
 
 #include <stdint.h>
 
-// todo: precaler rows
 namespace AVR {
 
 struct ATMegaNone final

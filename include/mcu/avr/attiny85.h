@@ -38,8 +38,6 @@ struct ATTiny85 final {
         volatile uint8_t tccrb;
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
-//        template<int N, int F> struct Prescaler;
-//        template<int N> struct PrescalerRow;
     };
     struct Timer8BitHighSpeed {
         volatile uint8_t ocrb;
@@ -50,8 +48,6 @@ struct ATTiny85 final {
         volatile uint8_t tccr;
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
-//        template<int N, int F> struct Prescaler;
-//        template<int N> struct PrescalerRow;
     };
     
     struct USI {
@@ -116,30 +112,32 @@ struct ATTiny85::Timer8Bit::PrescalerBits<0> {
         {0                                , 0}
     };
 };
-//template<>
-//struct ATTiny85::Timer8Bit::Prescaler<0, 0> {
-//    static constexpr uint8_t value = 0x00;
-//};
-//template<>
-//struct ATTiny85::Timer8Bit::Prescaler<0, 1> {
-//    static constexpr uint8_t value = _BV(CS00);
-//};
-//template<>
-//struct ATTiny85::Timer8Bit::Prescaler<0, 8> {
-//    static constexpr uint8_t value = _BV(CS01);
-//};
-//template<>
-//struct ATTiny85::Timer8Bit::Prescaler<0, 64> {
-//    static constexpr uint8_t value = _BV(CS01) | _BV(CS00);
-//};
-//template<>
-//struct ATTiny85::Timer8Bit::Prescaler<0, 256> {
-//    static constexpr uint8_t value = _BV(CS02);
-//};
-//template<>
-//struct ATTiny85::Timer8Bit::Prescaler<0, 1024> {
-//    static constexpr uint8_t value = _BV(CS02) | _BV(CS00);
-//};
+
+template<>
+struct ATTiny85::Timer8BitHighSpeed::Address<1> {
+    static constexpr uint8_t value = 0x4B;
+};
+template<>
+struct ATTiny85::Timer8BitHighSpeed::PrescalerBits<1> {
+    static constexpr AVR::PrescalerPair values[] = {
+        {15, 16384},
+        {14, 8192},
+        {13, 4096},
+        {12, 2048},
+        {11, 1024},
+        {10, 512},
+        { 9, 256},
+        { 8, 128},
+        { 7, 64},
+        { 6, 32},
+        { 5, 16},
+        { 4, 8},
+        { 3, 4},
+        { 2, 2},
+        { 1, 1},
+        { 0, 0}
+    };
+};
 
 }
 #pragma pack(pop)

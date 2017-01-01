@@ -6,7 +6,7 @@
 #include "hal/event.h"
 #include "mcu/ports.h"
 #include "units/physical.h"
-#include "hal/softtimer.h"
+#include "hal/alarmtimer.h"
 #include "std/literals.h"
 #include "mcu/avr/isr.h"
 #include "mcu/avr/spi.h"
@@ -36,7 +36,7 @@
 #include "external/lm35.h"
 #include "external/i2cram.h"
 #include "external/rpm.h"
-#include "mcu/avr/twi.h"
+#include "mcu/avr/twimaster.h"
 #include "std/array.h"
 
 #include <stdlib.h> // abort()
@@ -107,7 +107,7 @@ using ppm1 = PpmDecoder<pinChangeHandlerPpm, ppmTimerInput>;
 using ppmSwitch = PpmSwitch<0, ppm1>;
 
 using systemClock = AVR::Timer8Bit<0>;
-using systemTimer = Timer<systemClock>;
+using systemTimer = AlarmTimer<systemClock>;
 
 using sensorUsart = AVR::Usart<0, Hott::SensorProtocollAdapter<0>> ;
 using rcUsart = AVR::Usart<1, Hott::SumDProtocollAdapter<0>>;
@@ -283,9 +283,9 @@ public:
     }
 };
 
-decltype(systemTimer::create(1000_ms, TimerFlags::Periodic)) pTimer;
-decltype(systemTimer::create(1000_ms, TimerFlags::Periodic)) mTimer;
-decltype(systemTimer::create(1000_ms, TimerFlags::Periodic)) tTimer;
+decltype(systemTimer::create(1000_ms, AlarmFlags::Periodic)) pTimer;
+decltype(systemTimer::create(1000_ms, AlarmFlags::Periodic)) mTimer;
+decltype(systemTimer::create(1000_ms, AlarmFlags::Periodic)) tTimer;
 
 class TimerHandler : public EventHandler<EventType::Timer> {
 public:
@@ -447,9 +447,9 @@ int main()
 //    WS2812<2, ws2812_B>::init();
 //    WS2812<2, ws2812_B>::off();
 
-    pTimer = systemTimer::create(1000_ms, TimerFlags::Periodic);
-    tTimer = systemTimer::create(5000_ms, TimerFlags::Periodic);
-    mTimer = systemTimer::create(750_ms, TimerFlags::OneShot);
+    pTimer = systemTimer::create(1000_ms, AlarmFlags::Periodic);
+    tTimer = systemTimer::create(5000_ms, AlarmFlags::Periodic);
+    mTimer = systemTimer::create(750_ms, AlarmFlags::OneShot);
     systemTimer::stop(*mTimer);
     
 //    std::cout << Config() << std::endl;

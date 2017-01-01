@@ -42,8 +42,6 @@ struct ATTiny25 final {
         volatile uint8_t tccrb;
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
-//        template<int N, int F> struct Prescaler;
-//        template<int N> struct PrescalerRow;
     };
     struct Timer8BitHighSpeed {
         volatile uint8_t ocrb;
@@ -54,8 +52,6 @@ struct ATTiny25 final {
         volatile uint8_t tccr;
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
-//        template<int N, int F> struct Prescaler;
-//        template<int N> struct PrescalerRow;
     };
     
     struct USI {
@@ -128,11 +124,6 @@ struct ATTiny25::Timer8Bit::Address<0> {
 };
 
 template<>
-struct ATTiny25::Timer8BitHighSpeed::Address<1> {
-    static constexpr uint8_t value = 0x4B;
-};
-
-template<>
 struct ATTiny25::Timer8Bit::PrescalerBits<0> {
     static constexpr AVR::PrescalerPair values[] = {
         {_BV(CS02) |             _BV(CS00), 1024},
@@ -142,6 +133,11 @@ struct ATTiny25::Timer8Bit::PrescalerBits<0> {
         {                        _BV(CS00), 1},
         {0                                , 0}
     };
+};
+
+template<>
+struct ATTiny25::Timer8BitHighSpeed::Address<1> {
+    static constexpr uint8_t value = 0x4B;
 };
 template<>
 struct ATTiny25::Timer8BitHighSpeed::PrescalerBits<1> {

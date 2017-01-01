@@ -21,14 +21,13 @@
 #include <stdint.h>
 #include "compat/twi.h"
 #include "mcu/avr8.h"
+#include "mcu/avr/twiaddress.h"
 #include "container/fifo.h"
 #include "container/pgmstring.h"
 #include "std/array.h"
 #include "std/types.h"
 #include "util/dassert.h"
 #include "hal/event.h"
-
-#include "mcu/avr/twiaddress.h"
 
 namespace TWI {
 
@@ -210,7 +209,6 @@ public:
             }
             break;
         case State::Error:
-//            EventManager::enqueue({EventType::TWIError, 0});
             mSendQueue.clear();
             mRecvQueue.clear();
             mState = State::Inactive;

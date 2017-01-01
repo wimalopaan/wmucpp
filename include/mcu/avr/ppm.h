@@ -25,8 +25,6 @@
 #include "util/disable.h"
 #include "units/physical.h"
 
-// todo: generalisieren als PinChangeDecoder, auch fuer mehrere Pins je Port, die sich ändern
-
 // todo: in Util::AVR
 template<typename MCUTimer, typename T>
 constexpr uint16_t calculatePpm() {
@@ -55,7 +53,6 @@ class PpmDecoder final : public IsrBaseHandler<AVR::ISR::PcInt<PinChange::pcGrou
 public:
     PpmDecoder() = delete;
 
-//    typedef typename PinChange::pin_type pin_type;
     typedef MCUTimer mcu_timer_type;
     typedef typename MCUTimer::value_type  value_type;
     typedef typename MCUTimer::mcu_type mcu_type;

@@ -19,11 +19,11 @@
 #include <stdlib.h>
 
 #include "mcu/ports.h"
-#include "mcu/avr/twi.h"
+#include "mcu/avr/twimaster.h"
 #include "external/i2cram.h"
 #include "hal/softspimaster.h"
 #include "hal/event.h"
-#include "hal/softtimer.h"
+#include "hal/alarmtimer.h"
 #include "console.h"
 
 using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
@@ -32,7 +32,7 @@ using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
 using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
 
 using systemClock = AVR::Timer8Bit<0>;
-using systemTimer = Timer<systemClock>;
+using systemTimer = AlarmTimer<systemClock>;
 
 static constexpr std::hertz fI2C{100000};
 static constexpr TWI::Address i2cramAddress{0x54};
@@ -100,7 +100,7 @@ int main()
         std::cout << d << std::endl;
     }
     
-    systemTimer::create(1000_ms, TimerFlags::Periodic);
+    systemTimer::create(1000_ms, AlarmFlags::Periodic);
     
     {
         Scoped<EnableInterrupt> ei;

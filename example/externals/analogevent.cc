@@ -22,7 +22,7 @@
 #include "mcu/avr/adc.h"
 #include "hal/softspimaster.h"
 #include "hal/adccontroller.h"
-#include "hal/softtimer.h"
+#include "hal/alarmtimer.h"
 #include "hal/event.h"
 #include "external/lm35.h"
 #include "console.h"
@@ -33,7 +33,7 @@ using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
 using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
 
 using systemClock = AVR::Timer8Bit<0>;
-using systemTimer = Timer<systemClock>;
+using systemTimer = AlarmTimer<systemClock>;
 
 using SoftSPIData = AVR::Pin<PortA, 0>;
 using SoftSPIClock = AVR::Pin<PortA, 1>;
@@ -73,7 +73,7 @@ int main() {
     std::cout << "Channels: "_pgm << adcController::channels[0] << std::endl;
     std::cout << "Channels: "_pgm << adcController::channels[1] << std::endl;
     
-    systemTimer::create(1000_ms, TimerFlags::Periodic);
+    systemTimer::create(1000_ms, AlarmFlags::Periodic);
     
     {
         Scoped<EnableInterrupt> ie;

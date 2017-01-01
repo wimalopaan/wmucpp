@@ -21,7 +21,7 @@
 #include "mcu/ports.h"
 #include "external/ds18b20.h"
 #include "hal/softspimaster.h"
-#include "hal/softtimer.h"
+#include "hal/alarmtimer.h"
 #include "hal/event.h"
 #include "container/pgmstring.h"
 #include "console.h"
@@ -32,7 +32,7 @@ using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
 using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
 
 using systemClock = AVR::Timer8Bit<0>;
-using systemTimer = Timer<systemClock>;
+using systemTimer = AlarmTimer<systemClock>;
 
 using SoftSPIData = AVR::Pin<PortA, 0>;
 using SoftSPIClock = AVR::Pin<PortA, 1>;
@@ -103,8 +103,8 @@ int main()
         std::cout << id << std::endl;
     }
     
-    pTimer = systemTimer::create(5000_ms, TimerFlags::Periodic);
-    mTimer = systemTimer::create(750_ms, TimerFlags::OneShot);
+    pTimer = systemTimer::create(5000_ms, AlarmFlags::Periodic);
+    mTimer = systemTimer::create(750_ms, AlarmFlags::OneShot);
     systemTimer::stop(*mTimer);
     
     {

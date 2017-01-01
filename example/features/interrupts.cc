@@ -21,7 +21,7 @@
 #include "mcu/ports.h"
 #include "mcu/avr/mcutimer.h"
 #include "mcu/avr/util.h"
-#include "hal/softtimer.h"
+#include "hal/alarmtimer.h"
 #include "util/disable.h"
 
 #include "simavr/simavrdebugconsole.h"

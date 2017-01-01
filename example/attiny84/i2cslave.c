@@ -247,7 +247,6 @@ ISR( USI_START_VECTOR )
 	
 	while (	( PIN_USI & ( 1 << PIN_USI_SCL ) ) &&	!( ( PIN_USI & ( 1 << PIN_USI_SDA ) ) ));// SCL his high and SDA is low
 
-    // fixme: should read scl
 	if ( !( PIN_USI & ( 1 << PIN_USI_SCL ) ) ) 
 		{	// A Stop Condition did not occur
 		USICR =

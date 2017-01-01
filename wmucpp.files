@@ -62,6 +62,7 @@ include/external/i2cram.h
 include/external/rpm.h
 include/external/tle5205.h
 include/external/ws2812.h
+include/hal/alarmtimer.h
 include/hal/button.h
 include/hal/event.h
 include/hal/ppmswitch.h
@@ -85,6 +86,8 @@ include/mcu/avr/pinchange.h
 include/mcu/avr/ppm.h
 include/mcu/avr/spi.h
 include/mcu/avr/swusart.h
+include/mcu/avr/twimaster.h
+include/mcu/avr/twislave.h
 include/mcu/avr/usart.h
 include/mcu/avr8.h
 include/mcu/ports.h
@@ -233,7 +236,6 @@ example/externals/analogevent.cc
 include/external/lm35.h
 example/externals/akku.cc
 include/external/serialvoltage.h
-include/mcu/avr/twi.h
 example/externals/ds1307.cc
 include/external/ds1307.h
 example/externals/ds1307async.cc

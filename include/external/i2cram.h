@@ -21,7 +21,7 @@
 #include <stdint.h>
 
 #include "std/array.h"
-#include "mcu/avr/twi.h"
+#include "mcu/avr/twimaster.h"
 #include "hal/event.h"
 #include "util/dassert.h"
 

@@ -16,19 +16,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #pragma once
 
 #include <stdint.h>
 #include "mcu/avr8.h"
 #include "mcu/ports.h"
 #include "mcu/avr/isr.h"
-
 #include "std/traits.h"
 
 namespace AVR {
 
-// fixme: ergänzen
 struct I2C {
     static constexpr uint8_t usicr = _BV(USISIE) | _BV(USIWM1) | _BV(USICS1);
     static constexpr uint8_t usisr = _BV(USISIF) | _BV(USIOIF) | _BV(USIPF) | _BV(USIDC);
@@ -81,9 +78,7 @@ struct UsiPort<0, AVR::ATTiny25> {
 
 template<uint8_t N, typename SSPin = void, typename Inserter = void, typename MCU = DefaultMcuType>
 class Usi final : public IsrBaseHandler<AVR::ISR::Usi<0>::Overflow> {
-    
     Usi() = delete;
-    
 public:
     static constexpr auto mcu_usi = getBaseAddr<typename MCU::USI, N>;
     

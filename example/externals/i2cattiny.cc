@@ -19,7 +19,7 @@
 #include <stdlib.h>
 
 #include "mcu/ports.h"
-#include "mcu/avr/twi.h"
+#include "mcu/avr/twimaster.h"
 #include "hal/softspimaster.h"
 #include "console.h"
 
