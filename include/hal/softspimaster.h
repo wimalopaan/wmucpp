@@ -49,12 +49,12 @@ public:
             CSPin::low();
             if constexpr(useDelay) Util::delay(Config::SoftSpiMaster::pulseDelay);
         }
-        // fixme: make meta-function
         PulseBits<Util::numberOfBits<T>()>();
-        
+        // todo: check code size for template        
 //        for(uint8_t i = 0; i < Util::numberOfBits<T>(); ++i) {
 //            pulseNextBit();
 //        }
+
         if constexpr(!std::is_same<CSPin, void>::value) {
             if constexpr(useDelay) Util::delay(Config::SoftSpiMaster::pulseDelay);
             CSPin::high();
@@ -63,27 +63,27 @@ public:
         return true;
     }
     
-    static void setData(uint8_t data) {
+    static inline void setData(uint8_t data) {
         mData = data;
     }
 
-    static void pulseNextBit() {
-        if (Util::isSet<Util::MSB>(mData)) {
-            DataPin::high();
-        }
-        else {
-            DataPin::low();
-        }
-        if constexpr(useDelay) Util::delay(Config::SoftSpiMaster::pulseDelay);
-        ClockPin::high();
-        mData <<= 1; // shift next bit
-        if constexpr(useDelay) Util::delay(Config::SoftSpiMaster::pulseDelay);
-        ClockPin::low();
-    }
+//    static inline void pulseNextBit() {
+//        if (Util::isSet<Util::MSB>(mData)) {
+//            DataPin::high();
+//        }
+//        else {
+//            DataPin::low();
+//        }
+//        if constexpr(useDelay) Util::delay(Config::SoftSpiMaster::pulseDelay);
+//        ClockPin::high();
+//        mData <<= 1; // shift next bit
+//        if constexpr(useDelay) Util::delay(Config::SoftSpiMaster::pulseDelay);
+//        ClockPin::low();
+//    }
 
 private:
     template<uint8_t Bits>
-    static void PulseBits() {
+    static inline void PulseBits() {
         if (Util::isSet<Util::MSB>(mData)) {
             DataPin::high();
         }
