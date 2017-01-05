@@ -1,5 +1,6 @@
+
 /*
- * WMuCpp - Bare Metal C++ 
+ * WMuCpp - Bare Metal C++
  * Copyright (C) 2013, 2014, 2015, 2016 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -11,28 +12,16 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- 
+
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "console.h"
-#include "mcu/ports.h"
-#include "hal/event.h"
+#include <avr/io.h>
 
-#include "simavr/simavrdebugconsole.h"
+#if __has_include(<avr/avr_mcu_section.h>)
+# include <avr/avr_mcu_section.h>
+#endif
 
-using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
-using led = AVR::Pin<PortB, 0>;
 
-using emptyPeriodicGroup = PeriodicGroup<void>;
-using emptyEventHandlerGroup = EventHandlerGroup<>;
-
-void foo() {
-    led::toggle();
-}
-
-int main() {
-    Set<led>::output();
-    EventManager::run<emptyPeriodicGroup, emptyEventHandlerGroup>(foo);
-}
+AVR_MCU_SIMAVR_CONSOLE(&GPIOR0);

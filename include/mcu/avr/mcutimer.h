@@ -27,12 +27,7 @@
 
 namespace AVR {
 
-enum class TimerMode : uint8_t {Normal = 0, CTC, NumberOfModes};
-
-template<typename Timer, uint8_t N, TimerMode Mode>
-struct TimerFlags {
-    // todo: umstellen   
-};
+enum class TimerMode : uint8_t {Normal = 0, CTC, OverflowInterrupt, NumberOfModes};
 
 template<typename MCU, uint8_t N>
 struct TimerBase
@@ -45,8 +40,6 @@ struct TimerBase
 template<uint8_t N, typename MCU = DefaultMcuType>
 class Timer8Bit : public TimerBase<MCU, N> {
 public:
-    // todo: umstellen auf anderen zähler
-//    static_assert(N < MCU::Timer8Bit::count, "wrong number");
     static constexpr uint8_t number = N;
     static constexpr uint8_t csBitMask = 0x07;
     static constexpr auto mcuTimer = getBaseAddr<typename MCU::Timer8Bit, N>;
@@ -61,7 +54,9 @@ public:
 
     template<int PreScale>
     static void prescale() {
-        mcuTimer()->tccrb |= AVR::Util::bitsFrom<PreScale>(MCU::Timer8Bit::template PrescalerBits<N>::values);
+        constexpr uint8_t bits = AVR::Util::bitsFrom<PreScale>(MCU::Timer8Bit::template PrescalerBits<N>::values);
+        static_assert(bits != 0, "wrong prescaler");
+        mcuTimer()->tccrb |= bits;
     }
 
     static std::hertz frequency() {
@@ -84,7 +79,10 @@ public:
         mcuTimer()->ocra = V;
     }
 
-    // todo: template
+    static inline volatile uint8_t& counter() {
+        return mcuTimer()->tcnt;
+    }
+
     static void mode(const TimerMode& mode) {
         if (mode == TimerMode::CTC) {
             TimerBase<MCU, N>::mcuInterrupts()->timsk |= MCU::TimerInterrupts::template Flags<N>::ociea;
@@ -92,14 +90,16 @@ public:
         }
         else if (mode == TimerMode::Normal) {
         }
+        else if (mode == TimerMode::OverflowInterrupt) {
+            TimerBase<MCU, N>::mcuInterrupts()->timsk |= MCU::TimerInterrupts::template Flags<N>::toie;
+//            TimerBase<MCU, N>::mcuInterrupts()->timsk |= _BV(TOIE0);
+        }
     }
 };
 
 template<>
 class Timer8Bit<1, ATTiny25> : public TimerBase<ATTiny25, 1> {
 public:
-    // todo: umstellen auf anderen zähler
-//    static_assert(N < MCU::Timer8Bit::count, "wrong number");
     static constexpr uint8_t number = 1;
     static constexpr uint8_t csBitMask = 0x0f;
     static constexpr auto mcuTimer = getBaseAddr<typename ATTiny25::Timer8BitHighSpeed, 1>;
@@ -115,7 +115,9 @@ public:
 
     template<int PreScale>
     static void prescale() {
-        mcuTimer()->tccr |= AVR::Util::bitsFrom<PreScale>(ATTiny25::Timer8BitHighSpeed::template PrescalerBits<1>::values);
+        constexpr uint8_t bits = AVR::Util::bitsFrom<PreScale>(ATTiny25::Timer8BitHighSpeed::template PrescalerBits<1>::values);
+        static_assert(bits != 0, "wrong prescaler");
+        mcuTimer()->tccr |= bits;
     }
 
     static std::hertz frequency() {
@@ -138,7 +140,10 @@ public:
         mcuTimer()->ocra = V;
     }
 
-    // todo: template
+    static inline volatile uint8_t& counter() {
+        return mcuTimer()->tcnt;
+    }
+    
     static void mode(const TimerMode& mode) {
         if (mode == TimerMode::CTC) {
             TimerBase<ATTiny25, 0>::mcuInterrupts()->timsk |= ATTiny25::TimerInterrupts::template Flags<1>::ociea;
@@ -165,14 +170,16 @@ struct Timer8Bit<N, ATMega8> : public TimerBase<ATMega8, N>
 
     template<int PreScale>
     static constexpr void prescale() {
-        mcuTimer()->tccr |= AVR::Util::bitsFrom<PreScale>(ATMega8::Timer8Bit::template PrescalerBits<N>::values);
+        constexpr uint8_t bits = AVR::Util::bitsFrom<PreScale>(ATMega8::Timer8Bit::template PrescalerBits<N>::values);
+        static_assert(bits != 0, "wrong prescaler");
+        mcuTimer()->tccr |= bits;
     }
     static void start(){
     }
     
     static void mode(const TimerMode& mode) {
         if (mode == TimerMode::CTC) {
-//            TimerBase<ATMega8, N>::mcuInterrupts->timsk |= ATMega8::TimerInterrupts::template Flags<N>::ociea;
+            TimerBase<ATMega8, N>::mcuInterrupts->timsk |= ATMega8::TimerInterrupts::template Flags<N>::ociea;
             mcuTimer()->tccr = ATMega8::Timer8Bit::template Flags<N>::wgm1;
         }
         else if (mode == TimerMode::Normal) {
@@ -208,7 +215,9 @@ struct Timer16Bit: public TimerBase<MCU, N>
 
     template<int PreScale>
     static void prescale() {
-        mcuTimer()->tccrb |= AVR::Util::bitsFrom<PreScale>(MCU::Timer16Bit::template PrescalerBits<N>::values);
+        constexpr uint8_t bits = AVR::Util::bitsFrom<PreScale>(MCU::Timer16Bit::template PrescalerBits<N>::values);
+        static_assert(bits != 0, "wrong prescaler");
+        mcuTimer()->tccrb |= bits;
     }
     
     static std::hertz frequency() {
@@ -227,26 +236,19 @@ struct Timer16Bit: public TimerBase<MCU, N>
     static void ocra() {
         mcuTimer()->ocra = V;
     }
+
+    static inline volatile uint16_t& counter() {
+        return mcuTimer()->tcnt;
+    }
     
     static void start(){
     }
 
-    // todo: template  
-    // modi: CTC, OCIEA, OCIEB, ...
-    
-    template<TimerMode Mode>
-    static void mode() {
-        mcuTimer()->tccrb = TimerFlags<Timer16Bit, N, Mode>::value;
-    }
-
     static void mode(const TimerMode& mode) {
         if (mode == TimerMode::CTC) {
-//            TimerBase<MCU, N>::mcuInterrupts->timsk |= _BV(OCIE0A);
             TimerBase<MCU, N>::mcuInterrupts()->timsk |= MCU::TimerInterrupts::template Flags<N>::ociea;
-            // fixme: WGM12
-#ifdef WGM12
-            mcuTimer()->tccrb |= _BV(WGM12);
-#endif
+            mcuTimer()->tccrb = MCU::Timer16Bit::template Flags<N>::wgm2;
+//            mcuTimer()->tccrb |= _BV(WGM12);
         }
     }
 };

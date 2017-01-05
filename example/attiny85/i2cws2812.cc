@@ -97,9 +97,9 @@ ISR(USI_OVF_vect) {
 ISR(USI_START_vect) {
     isrRegistrar::isr<AVR::ISR::Usi<0>::Start>();
 }
-
 #ifndef NDEBUG
-void assertFunction(const char*, const char*, const char*, unsigned int) {
-    while(true) {};
+void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) {
+//    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
+    while(true) {}
 }
 #endif

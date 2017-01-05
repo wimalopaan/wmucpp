@@ -23,6 +23,7 @@
 #include "config.h"
 #include "mcu/avr8.h"
 #include "mcu/avr/mcutimer.h"
+#include "mcu/avr/isr.h"
 #include "mcu/atomic.h"
 #include "util/bits.h"
 #include "util/disable.h"
@@ -72,9 +73,9 @@ namespace Hott {
 template<uint8_t N> class SensorProtocollAdapter;
 }
 
-template<typename... PP>
-class PeriodicGroup {
-    friend void ::TIMER0_COMPA_vect();
+template<typename Interrupt = void, typename... PP>
+class PeriodicGroup : public IsrBaseHandler<Interrupt> {
+    
 public:
     static void periodic() {
         if (tickCounter > 0) {
@@ -82,14 +83,15 @@ public:
             (PP::periodic(),...); // fold
         }
     }
-    static void tick() {
+    static void isr() {
+        static_assert(Interrupt::number >= 0, "wrong interrupt number");
         ++tickCounter;
     }
 private:
     static volatile uint8_t tickCounter;
 };
-template<typename... PP>
-volatile uint8_t PeriodicGroup<PP...>::tickCounter = 0;
+template<typename Int, typename... PP>
+volatile uint8_t PeriodicGroup<Int, PP...>::tickCounter = 0;
 
 template<typename... EE>
 class EventHandlerGroup {

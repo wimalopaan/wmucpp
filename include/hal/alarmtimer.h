@@ -54,7 +54,7 @@ public:
     
     static void init() {
         constexpr auto t = AVR::Util::calculate<MCUTimer>(Config::Timer::frequency);
-        static_assert(t.prescaler != 0, "falscher wert für p");
+        static_assert(t, "falscher wert für p");
 
         MCUTimer::template prescale<t.prescaler>();
         MCUTimer::template ocra<t.ocr>();

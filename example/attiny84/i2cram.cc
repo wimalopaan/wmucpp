@@ -85,7 +85,7 @@ int main()
         Scoped<EnableInterrupt> ei;
         while(true) {
             led::toggle();
-            cRGB color = {virtualRAM::mData[0] % 5, 1, 1};
+            cRGB color = {(uint8_t)(virtualRAM::mData[0] % 5), 1, 1};
             leds::set(color);
             Util::delay(100_ms);
         }    
@@ -99,8 +99,8 @@ ISR(USI_STR_vect) {
 }
 
 #ifndef NDEBUG
-void assertFunction(const char*, const char* function, const char* file, unsigned int line) {
-    std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;
-    while(true) {};
+void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) {
+    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
+    while(true) {}
 }
 #endif

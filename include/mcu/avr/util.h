@@ -72,7 +72,7 @@ constexpr TimerSetupData<typename MCUTimer::value_type> calculate(const std::her
     using pBits = typename MCUTimer::mcu_timer_type::template PrescalerBits<MCUTimer::number>;
     auto p = prescalerValues(pBits::values);
     
-    auto sortedPRow = ::Util::sort(p);
+    auto sortedPRow = ::Util::sort(p); // aufsteigend
     for(const auto& p : sortedPRow) {
         if (p > 0) {
             const auto tv = (Config::fMcu / ftimer) / p;

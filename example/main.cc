@@ -38,8 +38,7 @@
 #include "external/rpm.h"
 #include "mcu/avr/twimaster.h"
 #include "std/array.h"
-
-#include <stdlib.h> // abort()
+#include "util/memory.h"
 
 // 20MHz full-swing
 // sudo avrdude -p atmega1284P -P usb -c avrisp2 -U lfuse:w:0xf7:m -U hfuse:w:0xd1:m -U efuse:w:0xfc:m
@@ -134,7 +133,7 @@ using softPwmPin1 = AVR::Pin<PortB, 5>;
 using softPwmPin2 = AVR::Pin<PortB, 6>;
 using softPwm = SoftPWM<softPwmPin1, softPwmPin2>;
 
-using sampler = PeriodicGroup<buttonController, systemTimer, dcfDecoder, softPwm>; // werden alle resolution ms aufgerufen
+using sampler = PeriodicGroup<AVR::ISR::Timer<0>::CompareA, buttonController, systemTimer, dcfDecoder, softPwm>; // werden alle resolution ms aufgerufen
 
 using led0 = AVR::Pin<PortC, 6>;
 using led1 = AVR::Pin<PortC, 7>;
@@ -291,6 +290,9 @@ class TimerHandler : public EventHandler<EventType::Timer> {
 public:
     static void process(uint8_t timer) {
         if (timer == *pTimer) {
+
+            std::cout << "unused: "_pgm << Util::Memory::getUnusedMemory() << std::endl;   
+
             static uint8_t count = 0;
             WS2812<2, ws2812_A>::set({16, (uint8_t)((count++ % 2) * 16), 16});
             
@@ -369,8 +371,9 @@ public:
     }
 };
 
-//using isrRegistrar = IsrRegistrar<ppm1, isrDistributor, rpm>;
-using isrRegistrar = IsrRegistrar<ppm1, isrDistributor>;
+using isrRegistrar = IsrRegistrar<ppm1, isrDistributor, sampler, 
+                                  sensorUsart::RxHandler, sensorUsart::TxHandler, rcUsart::RxHandler, rcUsart::TxHandler,
+                                  softPpm::OCAHandler, softPpm::OCBHandler>;
 
 int main()
 {
@@ -420,6 +423,7 @@ int main()
 
     constexpr std::hertz fCr = 1 / Hott::hottDelayBetweenBytes;
     constexpr auto tsd = AVR::Util::calculate<crTimer>(fCr);
+    static_assert(tsd, "wrong parameter");
     crTimer::prescale<tsd.prescaler>();
     crTimer::ocra<tsd.ocr>();
 
@@ -480,9 +484,9 @@ int main()
 }
 
 #ifndef NDEBUG
-void assertFunction(const char*, const char* function, const char* file, unsigned int line) {
-    std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;
-    while(true) {};
+void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) {
+    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
+    while(true) {}
 }
 #endif
 
@@ -513,32 +517,40 @@ ISR(TIMER1_CAPT_vect) {
 }
 ISR(SPI_STC_vect) {
 //    isrRegistrar::isr<AVR::ISR::Spi<0>::Stc>();
-    AVR::Spi<0>::isr();
+//    AVR::Spi<0>::isr();
 }
 ISR(TIMER0_COMPA_vect) {
     // todo: auf isrRegistrar umbauen
-//    isrRegistrar::isr<AVR::ISR::Timer<0>::CompareA>();
-    sampler::tick();
+    isrRegistrar::isr<AVR::ISR::Timer<0>::CompareA>();
+//    sampler::isr();
 }
+
+// todo: isrReg
+
 ISR(TIMER3_COMPA_vect) {
-//    isrRegistrar::isr<AVR::ISR::Timer<3>::CompareA>();
-    softPpm::isrA();
+    isrRegistrar::isr<AVR::ISR::Timer<3>::CompareA>();
+//    softPpm::isrA();
 }
 ISR(TIMER3_COMPB_vect) {
-//    isrRegistrar::isr<AVR::ISR::Timer<3>::CompareB>();
-    softPpm::isrB();
+    isrRegistrar::isr<AVR::ISR::Timer<3>::CompareB>();
+//    softPpm::isrB();
 }
+
 ISR(USART0_RX_vect) {
-    sensorUsart::rx_isr();
+    isrRegistrar::isr<AVR::ISR::Usart<0>::RX>();
+//    sensorUsart::rx_isr();
 }
 ISR(USART0_UDRE_vect){
-    sensorUsart::tx_isr();
+    isrRegistrar::isr<AVR::ISR::Usart<0>::UDREmpty>();
+//    sensorUsart::tx_isr();
 }
 ISR(USART1_RX_vect) {
-    rcUsart::rx_isr();
+    isrRegistrar::isr<AVR::ISR::Usart<1>::RX>();
+//    rcUsart::rx_isr();
 }
 ISR(USART1_UDRE_vect){
-    rcUsart::tx_isr();
+    isrRegistrar::isr<AVR::ISR::Usart<1>::UDREmpty>();
+//    rcUsart::tx_isr();
 }
 ISR(ANALOG_COMP_vect) {
 //    led1::toggle();

@@ -19,6 +19,8 @@
 #pragma once
 
 #include <stdint.h>
+#include "units/duration.h"
+#include "units/physical.h"
 #include "std/literals.h"
 
 using namespace std::literals::chrono;

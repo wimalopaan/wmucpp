@@ -36,9 +36,8 @@
 // 16 MHz full swing
 // sudo avrdude -p atmega328p -P usb -c avrisp2 -U lfuse:w:0xf7:m -U hfuse:w:0xd9:m -U efuse:w:0xff:m
 
-
 using spiInput = AVR::Spi<0>;
-using usartOutput = AVR::Usart<0>;
+//using usartOutput = AVR::Usart<0>;
 //using terminal = SWUsart<0>;
 using terminal = AVR::Usart<0>;
 
@@ -49,7 +48,9 @@ using ledOverrun = AVR::Pin<PortD, 6>;
 using systemClock = AVR::Timer8Bit<0>;
 using systemTimer = AlarmTimer<systemClock>;
 
-using sampler = PeriodicGroup<systemTimer>;
+using sampler = PeriodicGroup<AVR::ISR::Timer<0>::CompareA, systemTimer>;
+
+using isrReg = IsrRegistrar<sampler, spiInput, terminal::RxHandler, terminal::TxHandler>; 
 
 namespace std {
     std::basic_ostream<terminal> cout;
@@ -79,13 +80,13 @@ public:
 
 int main()
 {
-    Scoped<EnableInterrupt> interruptEnabler;
+    isrReg::init();
     systemTimer::init();
 
     terminal::init<19200>();
-    usartOutput::init<19200>();
+//    usartOutput::init<19200>();
 
-    std::cout << "Spi Usart Bridge 0.1" << std::endl;
+    std::cout << "Spi Usart Bridge 0.3" << std::endl;
 
     std::cout << Config() << std::endl;
 
@@ -95,39 +96,40 @@ int main()
 
     using handler = EventHandlerGroup<Spi0handler, Timerhandler>;
 
-    EventManager::run<sampler, handler>();
-
-    return 0;
+    {
+        Scoped<EnableInterrupt> interruptEnabler;
+        EventManager::run<sampler, handler>();
+    }
 }
 
 void assertFunction(bool b, const char* function, const char* file, unsigned int line) {
     if (!b) {
         std::cout << "Assertion failed: " << function << "," << file << "," << line << std::endl;
-        abort();
+        while(true) {}
     }
 }
 
 ISR(TIMER1_COMPA_vect) {
-    SWUsart<0>::isr_compa();
+//    isrReg::isr<AVR::ISR::Timer<1>::CompareA>();
+//    SWUsart<0>::isr_compa();
 }
 ISR(TIMER1_COMPB_vect) {
-    SWUsart<0>::isr_compb();
+//    isrReg::isr<AVR::ISR::Timer<1>::CompareB>();
+//    SWUsart<0>::isr_compb();
 }
 ISR(TIMER1_CAPT_vect) {
-    SWUsart<0>::isr_icp();
+//    isrReg::isr<AVR::ISR::Timer<1>::Capture>();
+//    SWUsart<0>::isr_icp();
 }
-
 ISR(SPI_STC_vect) {
-    AVR::Spi<0>::isr();
+    isrReg::isr<AVR::ISR::Spi<0>::Stc>();
 }
-
 ISR(TIMER0_COMPA_vect) {
-    sampler::tick();
+    isrReg::isr<AVR::ISR::Timer<0>::CompareA>();
 }
-
 ISR(USART_RX_vect) {
-    AVR::Usart<0>::rx_isr();
+    isrReg::isr<AVR::ISR::Usart<0>::RX>();
 }
 ISR(USART_UDRE_vect){
-    AVR::Usart<0>::tx_isr();
+    isrReg::isr<AVR::ISR::Usart<0>::UDREmpty>();
 }

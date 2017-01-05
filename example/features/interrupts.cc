@@ -37,7 +37,7 @@ using isrReg = IsrRegistrar<>;
 int main() {
     Set<led>::output();
     constexpr auto timerParameter = AVR::Util::calculate<systemClock>(80_Hz);
-    static_assert(timerParameter.prescaler > 0, "wrong timer parameter");
+    static_assert(timerParameter, "wrong timer parameter");
     
     // todo: systemClock::setup<timerParameter>()
     

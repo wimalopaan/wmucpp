@@ -32,6 +32,7 @@ targets += eventhandler.elf
 targets += events.elf
 targets += interrupts.elf
 targets += pinchange.elf
+targets += softusart.elf
 
 -include ../../Makefile.include
 

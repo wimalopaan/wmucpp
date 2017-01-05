@@ -47,9 +47,10 @@ int main()
     return sum;    
 }
 
-void assertFunction(const char*, const char*, const char*, unsigned int) {
-//    std::cout << "Assertion failed in: " << function << " file: " << file << " line: " << line << std::endl;
-    while(true) {};
-    
+#ifndef NDEBUG
+void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) {
+//    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
+    while(true) {}
 }
+#endif
 

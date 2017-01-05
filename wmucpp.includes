@@ -35,3 +35,5 @@ example/attiny84
 example/attiny85
 example/basics
 example/attiny25
+doc
+doc/bmcpp10

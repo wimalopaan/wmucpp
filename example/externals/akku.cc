@@ -56,8 +56,10 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
     }
 };
 
-using pGroup = PeriodicGroup<systemTimer, adcController>;
+using pGroup = PeriodicGroup<AVR::ISR::Timer<0>::CompareA, systemTimer, adcController>;
 using eGroup = EventHandlerGroup<TimerHandler>;
+
+using isrReg = IsrRegistrar<pGroup>;
 
 int main() {
     terminal::init();
@@ -79,12 +81,12 @@ int main() {
 
 }
 ISR(TIMER0_COMPA_vect) {
-    pGroup::tick();
+    isrReg::isr<AVR::ISR::Timer<0>::CompareA>();
+//    pGroup::tick();
 }
-
 #ifndef NDEBUG
-void assertFunction(const char*, const char* function, const char* file, unsigned int line) {
-    std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;
-    while(true) {};
+void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) {
+    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
+    while(true) {}
 }
 #endif

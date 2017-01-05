@@ -88,8 +88,10 @@ struct ErrorHandler : public EventHandler<EventType::DS18B20Error> {
     }
 };
 
-using periodicGroup = PeriodicGroup<systemTimer, oneWireMasterAsync>;
+using periodicGroup = PeriodicGroup<AVR::ISR::Timer<0>::CompareA, systemTimer, oneWireMasterAsync>;
 using eventHandlerGroup = EventHandlerGroup<TimerHandler, MeasuremntHandler, ErrorHandler, ds18b20>;
+
+using isrReg = IsrRegistrar<periodicGroup>;
 
 int main()
 {
@@ -114,13 +116,12 @@ int main()
 
 }
 ISR(TIMER0_COMPA_vect) {
-    periodicGroup::tick();
+    isrReg::isr<AVR::ISR::Timer<0>::CompareA>();
+//    periodicGroup::tick();
 }
-
 #ifndef NDEBUG
-
-void assertFunction(const char*, const char* function, const char* file, unsigned int line) {
-    std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;
-    while(true) {};    
+void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) {
+    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
+    while(true) {}
 }
 #endif

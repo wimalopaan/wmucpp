@@ -36,8 +36,13 @@ struct ATMega328P final
         volatile uint8_t ucsrb;
         volatile uint8_t ucsrc;
         volatile uint8_t reserved1;
-        volatile uint8_t ubbrl;
-        volatile uint8_t ubbrh;
+        union {
+            struct {
+                volatile uint8_t ubbrl;
+                volatile uint8_t ubbrh;
+            };
+            volatile uint16_t ubbr;
+        };
         volatile uint8_t udr;
         volatile uint8_t reserved2;
         template<int N> struct Address;
@@ -52,16 +57,6 @@ struct ATMega328P final
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
         template<uint8_t N> struct Flags; 
-    };
-
-    enum class Timer8BitTccra: uint8_t {
-        None    = 0,
-        WGM0    = 1 << 0,
-        WGM1    = 1 << 1,
-        COMB0   = 1 << 4,
-        COMB1   = 1 << 5,
-        COMA0   = 1 << 6,
-        COMA1   = 1 << 7
     };
 
     struct Timer16Bit {
@@ -95,6 +90,7 @@ struct ATMega328P final
         };
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
+        template<uint8_t N> struct Flags; 
     };
 
     struct PCInterrupts {
@@ -137,19 +133,29 @@ struct ATMega328P final
     };
 };
 
-#if defined(__AVR_ATmega328P__)
-
 template<>
 struct ATMega328P::TimerInterrupts::Flags<0> {
+#if defined(OCIE0A)
     static constexpr uint8_t ociea = _BV(OCIE0A);
+#endif
+#if defined(TOIE0)
+    static constexpr uint8_t toie = _BV(TOIE0);
+#endif
 };
 template<>
 struct ATMega328P::TimerInterrupts::Flags<1> {
+#if defined(OCIE1A)
     static constexpr uint8_t ociea = _BV(OCIE1A);
+#endif
 };
 template<>
 struct ATMega328P::TimerInterrupts::Flags<2> {
+#if defined(OCIE2A)
     static constexpr uint8_t ociea = _BV(OCIE2A);
+#endif
+#if defined(TOIE2)
+    static constexpr uint8_t toie = _BV(TOIE2);
+#endif
 };
 
 template<>
@@ -194,7 +200,9 @@ struct ATMega328P::Timer8Bit::Address<0> {
 };
 template<>
 struct ATMega328P::Timer8Bit::Flags<0> {
+#if defined(WGM01)
     static constexpr uint8_t wgm1 = _BV(WGM01);
+#endif
 };
 template<>
 struct ATMega328P::Timer8Bit::PrescalerBits<0> {
@@ -215,7 +223,9 @@ struct ATMega328P::Timer8Bit::Address<2> {
 };
 template<>
 struct ATMega328P::Timer8Bit::Flags<2> {
-    static constexpr uint8_t wgm1 = _BV(WGM01);
+#if defined(WGM21)
+    static constexpr uint8_t wgm1 = _BV(WGM21);
+#endif
 };
 template<>
 struct ATMega328P::Timer8Bit::PrescalerBits<2> {
@@ -247,8 +257,12 @@ struct ATMega328P::Timer16Bit::PrescalerBits<1> {
         {0                                , 0}
     };
 };
-
+template<>
+struct ATMega328P::Timer16Bit::Flags<1> {
+#if defined(WGM12)
+    static constexpr uint8_t wgm2 = _BV(WGM12);
 #endif
+};
 
 }
 #pragma pack(pop)

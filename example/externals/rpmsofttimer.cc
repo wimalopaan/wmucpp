@@ -16,19 +16,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
-
 #include "mcu/ports.h"
-#include "mcu/avr/adc.h"
+#include "mcu/avr/mcutimer.h"
+#include "mcu/avr/isr.h"
+#include "mcu/avr/pinchange.h"
 #include "hal/softspimaster.h"
-#include "hal/adccontroller.h"
+#include "hal/softtimer.h"
+#include "util/disable.h"
+#include "external/rpm.h"
 #include "console.h"
-#include "mcu/avr/delay.h"
 
 using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
 using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
+
+using reflex = AVR::Pin<PortB, 0>;
+using reflexSet = AVR::PinSet<reflex>;
+using reflexPinChange = AVR::PinChange<reflexSet>;
+
+using led = AVR::Pin<PortB, 4>;
+
+using mcuTimer = AVR::Timer8Bit<0>;
+using rpmTimer = SoftTimer<mcuTimer, uint16_t>;
+
+using rpm = RpmFromInterruptSource<reflexPinChange, rpmTimer>;
+
+using isrRegistrar = IsrRegistrar<rpm, rpmTimer>;
 
 using SoftSPIData = AVR::Pin<PortA, 0>;
 using SoftSPIClock = AVR::Pin<PortA, 1>;
@@ -37,37 +51,43 @@ using SSpi0 = SoftSpiMaster<SoftSPIData, SoftSPIClock, SoftSPISS>;
 
 using terminal = SSpi0;
 
-using adc = AVR::Adc<0>;
-using adcController = AdcController<adc, 6, 7>;
-
 namespace std {
     std::basic_ostream<terminal> cout;
     std::lineTerminator<CRLF> endl;
 }
 
 int main() {
+    isrRegistrar::init();
+    rpm::init();
     terminal::init();
-    adcController::init();
     
-    std::cout << "Analog Test"_pgm << std::endl;
+    led::template dir<AVR::Output>();
+    led::off();
     
-    std::cout << "Channels: "_pgm << adcController::channels[0] << std::endl;
-    std::cout << "Channels: "_pgm << adcController::channels[1] << std::endl;
-
-    uint8_t counter = 0;
-    uint8_t c = 0;
+    {
+        Scoped<EnableInterrupt> ei;        
+        std::cout << "RPM with PinChange example"_pgm << std::endl;
+        std::cout << "timer f: "_pgm << rpmTimer::frequency() << std::endl;
+        std::cout << "timer p: "_pgm << rpmTimer::prescaler() << std::endl;
         
-    while (true) {
-        Util::delay(10_ms);
-        adcController::periodic();
-        if (++counter == 100) {
-            std::cout << ++c << " Value: " << adcController::value(0) << std::endl;
+        while(true) {
+            Util::delay(1000_ms);
+            std::cout << "rpm: "_pgm << rpm::rpm() << std::endl;
+            rpm::reset();
         }
     }
 }
+
+ISR(PCINT1_vect) {
+    led::toggle();
+    isrRegistrar::isr<AVR::ISR::PcInt<1>>();
+}
+ISR(TIMER0_OVF_vect) {
+    isrRegistrar::isr<AVR::ISR::Timer<0>::Overflow>();
+}
+
 #ifndef NDEBUG
-void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) {
-    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
-    while(true) {}
+void assertFunction(const char*, const char*, const char*, unsigned int) {
+    while(true) {};
 }
 #endif

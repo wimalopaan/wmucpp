@@ -18,17 +18,17 @@
 #
 
 MCU = atmega328p
+#MCU = atmega1284p
 F_OSC = 20000000
 
-#LOADLIBES = simavrconsole.o
-
-simpleisr.elf : LOADLIBES = simavrconsole.o
-systemtick.elf : LOADLIBES = simavrconsole.o
+bm01a.elf : LOADLIBES = simavrconsole.o
 
 targets += simavrconsole.o
-targets +=  simpleisr.elf systemtick.elf
-
-targets += lcd.elf
+targets +=  bm01a.s bm01a.elf 
 
 -include ../../Makefile.include
+
+#bm01a.elf: bm01a.o simavrconsole.o
+#	$(CC) $(LDFLAGS) -o $@ bm01a.o simavrconsole.o
+
 

@@ -25,6 +25,8 @@
 #include "hal/event.h"
 #include "util/dassert.h"
 
+// todo: umbenennen: I2CGeneric
+
 struct I2CRamParameter {
     static constexpr EventType eventValueAvailable = EventType::I2CRamValueAvailable;
     static constexpr EventType eventError = EventType::I2CRamError;

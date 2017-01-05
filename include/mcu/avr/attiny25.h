@@ -42,6 +42,7 @@ struct ATTiny25 final {
         volatile uint8_t tccrb;
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
+        template<uint8_t N> struct Flags; 
     };
     struct Timer8BitHighSpeed {
         volatile uint8_t ocrb;
@@ -52,6 +53,7 @@ struct ATTiny25 final {
         volatile uint8_t tccr;
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
+        template<uint8_t N> struct Flags; 
     };
     
     struct USI {
@@ -98,10 +100,22 @@ struct ATTiny25::TimerInterrupts::Address<1> {
 };
 
 template<>
-struct ATTiny25::TimerInterrupts::Flags<1> {
-    static constexpr uint8_t ociea = _BV(OCIE1A);
-    static constexpr uint8_t wgm1  = _BV(OCIE1A);
+struct ATTiny25::TimerInterrupts::Flags<0> {
+#ifdef OCIE0A
+    static constexpr uint8_t ociea = _BV(OCIE0A);
+#endif
+#if defined(TOIE0)
+    static constexpr uint8_t toie = _BV(TOIE0);
+#endif
 };
+
+template<>
+struct ATTiny25::TimerInterrupts::Flags<1> {
+#ifdef OCIE1A
+    static constexpr uint8_t ociea = _BV(OCIE1A);
+#endif
+};
+
 
 template<>
 struct ATTiny25::PCInterrupts::Address<0> {
@@ -133,6 +147,12 @@ struct ATTiny25::Timer8Bit::PrescalerBits<0> {
         {                        _BV(CS00), 1},
         {0                                , 0}
     };
+};
+template<>
+struct ATTiny25::Timer8Bit::Flags<0> {
+#if defined(WGM01)
+    static constexpr uint8_t wgm1 = _BV(WGM01);
+#endif
 };
 
 template<>

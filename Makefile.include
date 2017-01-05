@@ -105,10 +105,10 @@ NM = avr-nm
 AVRDUDE = avrdude
 
 %.s: %.cc
-	$(CXX) $(CXXFLAGS) $(ASMFLAGS) -S -o $@ $<
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(ASMFLAGS) -S -o $@ $<
 
 %.s: %.c
-	$(CC) $(CFLAGS) $(ASMFLAGS) -S -o $@ $<
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(ASMFLAGS) -S -o $@ $<
 
 %.size: %.elf
 	avr-size $< > $@

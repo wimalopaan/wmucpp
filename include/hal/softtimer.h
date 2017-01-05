@@ -17,3 +17,52 @@
  */
 
 #pragma once
+
+#include "mcu/avr/mcutimer.h"
+#include "mcu/avr/isr.h"
+#include "util/disable.h"
+
+template<typename MCUTimer, typename ValueType>
+class SoftTimer : public IsrBaseHandler<typename AVR::ISR::Timer<MCUTimer::number>::Overflow> {
+    static_assert(sizeof(ValueType) > sizeof(typename MCUTimer::value_type), "ValueType must be larger than mcutimer::value_type");
+    SoftTimer() = delete;
+public:
+    typedef typename MCUTimer::mcu_timer_type mcu_timer_type;
+    typedef typename MCUTimer::mcu_type mcu_type;
+    
+    static constexpr uint8_t number = MCUTimer::number;
+    
+    typedef ValueType value_type;
+    
+    template<int PreScale>
+    static inline void prescale() {
+        MCUTimer::template prescale<PreScale>();
+    }   
+    static std::hertz frequency() {
+        return MCUTimer::frequency();
+    }
+
+    static AVR::PrescalerPair::scale_type prescaler() {
+        return MCUTimer::prescaler();
+    }
+    
+    static inline void mode(const AVR::TimerMode& mode) {
+        // fixme: flag handling
+        MCUTimer::mode(mode);
+        MCUTimer::mode(AVR::TimerMode::OverflowInterrupt);
+    }
+    
+    static inline volatile ValueType counter() {
+        Scoped<DisbaleInterrupt> di;
+        return (mCounter << Util::numberOfBits<typename MCUTimer::value_type>()) + MCUTimer::counter();
+    }
+    
+    static void isr() {
+        ++mCounter;
+    }
+    
+private:
+    static volatile ValueType mCounter;
+};
+template<typename MCUTimer, typename ValueType>
+volatile ValueType SoftTimer<MCUTimer, ValueType>::mCounter = 0;

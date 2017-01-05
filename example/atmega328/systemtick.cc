@@ -16,19 +16,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define __STDC_LIMIT_MACROS
-
 #include "mcu/ports.h"
+#include "mcu/avr/isr.h"
 #include "hal/alarmtimer.h"
-#include "console.h"
 #include "simavr/simavrdebugconsole.h"
-
-#include <stdlib.h>
+#include "util/dassert.h"
+#include "console.h"
 
 using systemClock = AVR::Timer8Bit<0>;
 using systemTimer = AlarmTimer<systemClock>;
 
-using sampler = PeriodicGroup<systemTimer>;
+using sampler = PeriodicGroup<AVR::ISR::Timer<0>::CompareA, systemTimer>;
+
+using isrReg = IsrRegistrar<sampler>;
 
 using terminal = SimAVRDebugConsole;
 namespace std {
@@ -51,13 +51,15 @@ int main()
     using handler = EventHandlerGroup<TimerHandler>;
     EventManager::run<sampler, handler>([](){});
 }
+
 ISR(TIMER0_COMPA_vect) {
-    sampler::tick();
+    isrReg::isr<AVR::ISR::Timer<0>::CompareA>();
+//    sampler::tick();
 }
 
-void assertFunction(bool b, const char* function, const char* file, unsigned int line) {
-    if (!b) {
-        std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;
-        abort();
-    }
+#ifndef NDEBUG
+void assertFunction(const char* e, const char* function, const char* file, unsigned int line) {
+    std::cout << "Assertion failed: "_pgm << e << function << ","_pgm << file << ","_pgm << line << std::endl;
+    while(true) {}
 }
+#endif

@@ -24,8 +24,6 @@
 #include "console.h"
 #include "simavr/simavrdebugconsole.h"
 
-#include <stdlib.h> // abort()
-
 volatile uint8_t a0 = 0;
 volatile uint8_t a1 = 0;
 volatile uint8_t a2 = 0;
@@ -109,9 +107,9 @@ ISR(TIMER2_COMPA_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<2>::CompareA>();
 }
 
-void assertFunction(bool b, const char* function, const char* file, unsigned int line) {
-    if (!b) {
-        std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;
-        abort();
-    }
+#ifndef NDEBUG
+void assertFunction(const char* e, const char* function, const char* file, unsigned int line) {
+    std::cout << "Assertion failed: "_pgm << e << function << ","_pgm << file << ","_pgm << line << std::endl;
+    while(true){}
 }
+#endif

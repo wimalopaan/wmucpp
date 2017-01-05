@@ -64,7 +64,7 @@ struct IsrRegistrar {
     typedef uint64_t mask_type;
     
     static_assert(sizeof...(HH) <= 64, "too much different interrupts");
-    static constexpr mask_type all = (HH::mask | ...);
+    static constexpr mask_type all = (HH::isr_mask | ...);
     static_assert(Util::numberOfOnes(all) == sizeof...(HH), "Isr double defined");
     
     static void init() {}
@@ -72,7 +72,7 @@ struct IsrRegistrar {
     template<uint8_t In, uint8_t N, typename H, typename... Hp>
     struct Caller {
         static constexpr void call() {
-            if constexpr (In == H::number) {
+            if constexpr (In == H::isr_number) {
                 H::isr();
             }
             if constexpr((N-1) > 0) {
@@ -91,19 +91,19 @@ struct IsrRegistrar {
 template<typename I>
 struct IsrBaseHandler {
     typedef I isr_type;
-    static constexpr const uint8_t number = I::number;
-    static constexpr const uint64_t mask = ((uint64_t)1 << I::number);    
+    static constexpr const uint8_t isr_number = I::number;
+    static constexpr const uint64_t isr_mask = ((uint64_t)1 << I::number);    
 };
 template<>
 struct IsrBaseHandler<void> {
     typedef void isr_type;
-    static constexpr const uint8_t number = 0;
-    static constexpr const uint64_t mask = 0;    
+    static constexpr const uint8_t isr_number = 0;
+    static constexpr const uint64_t isr_mask = 0;    
 };
 
 template<typename I, typename... Hs>
 struct IsrDistributor final : public IsrBaseHandler<I> {
-    static_assert(Util::numberOfOnes((Hs::mask | ...)) == 1, "all sub-handler must use same isr");
+    static_assert(Util::numberOfOnes((Hs::isr_mask | ...)) == 1, "all sub-handler must use same isr");
     static void isr() {
         (Hs::isr(), ...);
     }
@@ -249,7 +249,7 @@ struct Timer<0> {
         static constexpr const uint32_t number = TIMER0_COMPB_vect_num;
     };
 #endif
-#ifdef TIMER1_OVF_vect_num
+#ifdef TIMER0_OVF_vect_num
     struct Overflow  {
         static constexpr const uint32_t number = TIMER0_OVF_vect_num;
     };
@@ -264,6 +264,19 @@ struct Spi<0> {
 #ifdef SPI_STC_vect_num
 struct Stc  {
     static constexpr const uint32_t number = SPI_STC_vect_num;
+};
+#endif
+#ifdef SPI0_STC_vect_num
+struct Stc  {
+    static constexpr const uint32_t number = SPI0_STC_vect_num;
+};
+#endif
+};
+template<>
+struct Spi<1> {
+#ifdef SPI1_STC_vect_num
+struct Stc  {
+    static constexpr const uint32_t number = SPI1_STC_vect_num;
 };
 #endif
 };
@@ -294,7 +307,39 @@ struct Usart;
 
 template<>
 struct Usart<0> {
-    
+#ifdef USART_RX_vect_num
+    struct RX {
+        static constexpr const uint32_t number = USART_RX_vect_num;
+    };
+#endif
+#ifdef USART0_RX_vect_num
+    struct RX {
+        static constexpr const uint32_t number = USART0_RX_vect_num;
+    };
+#endif
+#ifdef USART_UDRE_vect_num
+    struct UDREmpty {
+        static constexpr const uint32_t number = USART_UDRE_vect_num;
+    };
+#endif
+#ifdef USART0_UDRE_vect_num
+    struct UDREmpty {
+        static constexpr const uint32_t number = USART0_UDRE_vect_num;
+    };
+#endif
+};
+template<>
+struct Usart<1> {
+#ifdef USART1_RX_vect_num
+    struct RX {
+        static constexpr const uint32_t number = USART1_RX_vect_num;
+    };
+#endif
+#ifdef USART1_UDRE_vect_num
+    struct UDREmpty {
+        static constexpr const uint32_t number = USART1_UDRE_vect_num;
+    };
+#endif
 };
 
 template<uint8_t> 

@@ -70,6 +70,7 @@ struct ATMega8 final
         volatile uint8_t tccra;
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
+        template<uint8_t N> struct Flags; 
     };
     struct PortRegister {
         volatile uint8_t in;
@@ -92,8 +93,6 @@ struct ATMega8 final
         template<uint8_t N> struct Flags; 
     };
 };
-
-#if defined(__AVR_ATmega8__)
 
 template<>
 struct ATMega8::TimerInterrupts::Address<0> {
@@ -133,12 +132,10 @@ struct ATMega8::Usart::Address<0> {
 };
 
 template<>
-struct ATMega8::Timer8Bit::Flags<0> {
-    static constexpr uint8_t wgm1 = _BV(WGM11);
-};
-template<>
 struct ATMega8::Timer8Bit::Flags<2> {
-    static constexpr uint8_t wgm1 = _BV(WGM11);
+#if defined(WGM21)
+    static constexpr uint8_t wgm1 = _BV(WGM21);
+#endif
 };
 
 template<>
@@ -188,8 +185,12 @@ struct ATMega8::Timer16Bit::PrescalerBits<1> {
         {0                                , 0}
     };
 };
-
+template<>
+struct ATMega8::Timer16Bit::Flags<1> {
+#if defined(WGM12)
+    static constexpr uint8_t wgm2 = _BV(WGM12);
 #endif
+};
 
 }
 #pragma pack(pop)

@@ -39,7 +39,7 @@ using systemTimer = AlarmTimer<systemClock>;
 
 using terminal = SimAVRDebugConsole;
 
-using sampler = PeriodicGroup<systemTimer>;
+using sampler = PeriodicGroup<AVR::ISR::Timer<0>::CompareA, systemTimer>;
 
 namespace std {
     std::basic_ostream<terminal> cout;
@@ -57,7 +57,8 @@ using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
 
 
 using ppmInputPin = AVR::Pin<PortC, 0>;
-using pinChangeHandlerPpm = AVR::PinChange<ppmInputPin>;
+using ppmInputset = AVR::PinSet<ppmInputPin>;
+using pinChangeHandlerPpm = AVR::PinChange<ppmInputset>;
 using ppmTimer = AVR::Timer8Bit<2>;
 using ppm1 = PpmDecoder<pinChangeHandlerPpm, ppmTimer>;
 using ppmSwitch = PpmSwitch<0, ppm1>;
@@ -67,6 +68,9 @@ using ppmSwitch = PpmSwitch<0, ppm1>;
 //using softPwm = SoftPPM<pwmTimer, pwmPin>;
 
 using crTimer = AVR::Timer16Bit<1>;
+
+using isrReg = IsrRegistrar<sampler>;
+
 
 struct EventHandlerParameter {
     std::optional<uint7_t> timerId1;
@@ -100,12 +104,13 @@ int main(void) {
     Scoped<EnableInterrupt> interruptEnabler;
 
     constexpr auto t = AVR::Util::calculate<systemClock>(Config::Timer::frequency);
-    static_assert(t.prescaler != 0, "falscher wert für p");
+    static_assert(t, "falscher wert für p");
     std::cout << "pre: "_pgm << t.prescaler << std::endl;
     std::cout << "ocr: "_pgm << t.ocr << std::endl;
 
     constexpr const std::hertz f = 1 / 1600_us;
     constexpr auto crt = AVR::Util::calculate<crTimer>(f);
+    static_assert(crt, "falscher wert für p");
     std::cout << "crt f: "_pgm << f << std::endl;
     std::cout << "crt pre: "_pgm << crt.prescaler << std::endl;
     std::cout << "crt ocr: "_pgm << crt.ocr << std::endl;
@@ -148,8 +153,11 @@ int main(void) {
 }
 
 ISR(TIMER0_COMPA_vect) {
-    sampler::tick();
+    isrReg::isr<AVR::ISR::Timer<0>::CompareA>();
+//    sampler::tick();
 }
+
+// todo: isrReg
 
 ISR(TIMER1_COMPA_vect) {
 //    softPwm::isrA();

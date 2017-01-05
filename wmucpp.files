@@ -1,3 +1,4 @@
+doc/Makefile
 doc/bmcpp01/bm01.cc
 doc/bmcpp01/bm02.cc
 doc/bmcpp01/bm03a.cc
@@ -36,7 +37,11 @@ doc/bmcpp04/bm02b.c
 doc/bmcpp04/bm03a.cc
 doc/bmcpp04/bm03b.c
 doc/bmcpp04/simavrconsole.c
+doc/bmcpp10/Makefile
+doc/bmcpp10/bm01a.cc
+doc/bmcpp10/simavrconsole.c
 doc/bmcpp99/bm02a.cc
+example/atmega328/lcd.cc
 example/attiny25/Makefile
 example/attiny25/rpm.cc
 example/attiny85/i2cram.cc
@@ -45,6 +50,7 @@ example/externals/i2cram.cc
 example/externals/i2cramasync.cc
 example/externals/pinchange.cc
 example/externals/rpm.cc
+example/externals/rpmsofttimer.cc
 example/externals/tle5205.cc
 example/features/Makefile
 example/main.cc
@@ -116,6 +122,7 @@ include/util/bits.h
 include/util/dassert.h
 include/util/disable.h
 include/util/fsm.h
+include/util/memory.h
 include/util/util.h
 include/config.h
 include/console.h

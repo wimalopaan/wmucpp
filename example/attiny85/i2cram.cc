@@ -20,6 +20,7 @@
 #include "mcu/avr8.h"
 #include "mcu/ports.h"
 #include "mcu/avr/usi.h"
+#include "mcu/avr/isr.h"
 #include "mcu/i2cslave.h"
 #include "util/disable.h"
 
@@ -77,7 +78,8 @@ ISR(USI_START_vect) {
 }
 
 #ifndef NDEBUG
-void assertFunction(const char*, const char*, const char*, unsigned int) {
-    while(true) {};
+void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) {
+//    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
+    while(true) {}
 }
 #endif

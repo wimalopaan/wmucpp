@@ -40,19 +40,39 @@ Stream& operator<<(Stream& o, const RPM& rpm) {
     return o;
 }
 
+// 1Hz messbar mit 16-bit Zähler
+// Ftimer >= 65535Hz
+template<typename MCUTimer>
+constexpr uint16_t calculateRpm() {
+    using pBits = typename MCUTimer::mcu_timer_type::template PrescalerBits<MCUTimer::number>;
+    auto p = AVR::Util::prescalerValues(pBits::values);
+    auto sortedPRow = ::Util::sort(p, std::greater<AVR::PrescalerPair::scale_type>()); // absteigend
+
+    for(const auto& p : sortedPRow) {
+        if (p > 0) {
+            const std::hertz f = Config::fMcu / (uint32_t)p;
+            if (f >= 65535_Hz) {
+                return p;
+            }
+        }
+    }
+    return 0;
+}
+
 // todo: Drehzahlbereich festlegen -> Timerprescaler
 template<typename InterruptSource, typename MCUTimer, uint8_t IntsPerRotation = 2>
 class RpmFromInterruptSource final : public IsrBaseHandler<typename InterruptSource::interrupt_type> {
     RpmFromInterruptSource() = delete;
 public:
-    typedef typename MCUTimer::mcu_type mcu_type;
-    typedef MCUTimer mcu_timer_type;
+    typedef typename MCUTimer::mcu_type   mcu_type;
+    typedef          MCUTimer             mcu_timer_type;
     typedef typename MCUTimer::value_type value_type;
     
-    static constexpr auto mcuTimer = MCUTimer::mcuTimer;
+    static_assert(sizeof (value_type) >= 2, "timer at least 16bit");
     
     static void init() {
-        MCUTimer::template prescale<8192>();
+        constexpr auto prescaler = calculateRpm<MCUTimer>();
+        MCUTimer::template prescale<prescaler>();
         MCUTimer::mode(AVR::TimerMode::Normal);
         InterruptSource::init();
     }
@@ -85,8 +105,8 @@ public:
     static void isr() {
         ++mIntCount;
         if (mIntCount == IntsPerRotation) {
-            mPeriod = (mcuTimer()->tcnt - mTimerStartValue + std::numeric_limits<value_type>::module()) % std::numeric_limits<value_type>::module();
-            mTimerStartValue = mcuTimer()->tcnt;
+            mPeriod = (MCUTimer::counter() - mTimerStartValue + std::numeric_limits<value_type>::module()) % std::numeric_limits<value_type>::module();
+            mTimerStartValue = MCUTimer::counter();
             mIntCount = 0;
         }
     }

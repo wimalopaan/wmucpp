@@ -87,16 +87,17 @@ struct SpiBase {
 };
 
 template<uint8_t N, typename MCU = DefaultMcuType>
-class Spi final : public SpiBase<Spi<N, MCU>> {
+class Spi final : public SpiBase<Spi<N, MCU>>, public IsrBaseHandler<typename AVR::ISR::Spi<N>::Stc> {
     static_assert(N < MCU::Spi::count, "wrong spi number");
+
     friend void ::SPI_STC_vect();
 
     using spiPort = SpiPort<N, MCU>;
+    Spi() = delete;
+
 public:
     typedef MCU mcu_type;
-    static constexpr const uint8_t number = N;
-
-    Spi() = delete;
+//    static constexpr const uint8_t number = N;
 
     template<typename Mode>
     static void init() {
@@ -124,11 +125,11 @@ public:
         overrun = false;
         return oBefore;
     }
-private:
     static void isr() {
         uint8_t c = getBaseAddr<typename MCU::Spi, N>()->spdr;
         overrun |= !EventManager::enqueueISR({SpiEvent<N>::event, c});
     }
+private:
     static bool overrun;
 };
 template<uint8_t N, typename MCU>

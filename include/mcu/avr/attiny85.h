@@ -38,6 +38,7 @@ struct ATTiny85 final {
         volatile uint8_t tccrb;
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
+        template<uint8_t N> struct Flags; 
     };
     struct Timer8BitHighSpeed {
         volatile uint8_t ocrb;
@@ -48,6 +49,7 @@ struct ATTiny85 final {
         volatile uint8_t tccr;
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
+        template<uint8_t N> struct Flags; 
     };
     
     struct USI {

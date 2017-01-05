@@ -18,10 +18,25 @@
 
 #pragma once
 
-// todo: Umstellen auf pgm Strings
-extern void assertFunction(const char* expr, const char* function, const char* file, unsigned int line) noexcept __attribute__ ((__noreturn__));
+#include "container/pgmstring.h"
+
+#define PGMSUFFIX pgm
+#define PASTER(x,y) x ## _ ## y
+#define EVALUATOR(x,y)  PASTER(x,y)
+#define PGMSTRING(string) EVALUATOR(string, PGMSUFFIX)
+
+extern void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept __attribute__ ((__noreturn__));
+
 #ifndef NDEBUG
-# define assert(expr) ((expr) ? (void) (0) : assertFunction (#expr, __PRETTY_FUNCTION__, __FILE__, __LINE__))
+# define assert(expr) ((expr) ? (void) (0) : assertFunction(PgmStringView{PGMSTRING(#expr).data}, PgmStringView{PGMSTRING(__FILE__).data}, __LINE__))
 #else
 # define assert(x)
 #endif
+
+//// todo: Umstellen auf pgm Strings
+//extern void assertFunction(const char* expr, const char* function, const char* file, unsigned int line) noexcept __attribute__ ((__noreturn__));
+//#ifndef NDEBUG
+//# define assert(expr) ((expr) ? (void) (0) : assertFunction (#expr, __PRETTY_FUNCTION__, __FILE__, __LINE__))
+//#else
+//# define assert(x)
+//#endif

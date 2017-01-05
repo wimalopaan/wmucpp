@@ -41,6 +41,7 @@ struct ATTiny84 final {
         volatile uint8_t ocrb;
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
+        template<uint8_t N> struct Flags; 
     };
     
     struct USI {

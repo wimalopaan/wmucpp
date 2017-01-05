@@ -113,21 +113,21 @@ Stream& operator<<(Stream& o, uint32_t v) {
 template<typename Stream>
 Stream& operator<<(Stream& o, const std::lineTerminator<std::CRLF>&) {
     if (!Config::disableCout) {
-        return o << "\r\n";
+        return o << '\r' << '\n';
     }
     return o;
 }
 template<typename Stream>
 Stream& operator<<(Stream& o, const std::lineTerminator<std::CR>&) {
     if (!Config::disableCout) {
-        return o << "\r";
+        return o << '\r';
     }
     return o;
 }
 template<typename Stream>
 Stream& operator<<(Stream& o, const std::lineTerminator<std::LF>&) {
     if (!Config::disableCout) {
-        return o << "\n";
+        return o << '\n';
     }
     return o;
 }

@@ -19,17 +19,16 @@
 #pragma once
 
 #include "mcu/ports.h"
+#include "mcu/avr/isr.h"
 #include "units/percent.h"
 #include "util/disable.h"
 
 template<typename MCUTimer, typename T>
 constexpr uint16_t calculatePwm() {
-//    using pRow = typename MCUTimer::mcu_timer_type::template PrescalerRow<MCUTimer::number>;
     using pBits = typename MCUTimer::mcu_timer_type::template PrescalerBits<MCUTimer::number>;
     auto p = AVR::Util::prescalerValues(pBits::values);
     auto sortedPRow = ::Util::sort(p);
 
-//    for(const auto& p : pRow::values) {
     for(const auto& p : sortedPRow) {
         if (p > 0) {
             const std::hertz f = Config::fMcu / (uint32_t)p;
@@ -50,11 +49,16 @@ public:
     static constexpr auto mcuTimer = MCUTimer::mcuTimer;
     static constexpr auto mcuInterrupts = MCUTimer::mcuInterrupts;
     static constexpr uint32_t prescaler = calculatePwm<MCUTimer, uint16_t>();
+    static_assert(prescaler > 0, "wrong prescaler");
     static constexpr std::hertz timerFrequency = Config::fMcu / prescaler;
     static constexpr uint16_t ocMin = 1_ms * timerFrequency;
+    static_assert(ocMin > 0, "wrong oc value");
     static constexpr uint16_t ocMax = 2_ms * timerFrequency;
+    static_assert(ocMax > 0, "wrong oc value");
     static constexpr uint16_t ocDelta = ocMax - ocMin;
+    static_assert(ocDelta > 0, "wrong oc value");
     static constexpr uint16_t ocFrame = 20_ms * timerFrequency;
+    static_assert(ocFrame > 0, "wrong oc value");
 
     static void timerInit() {
         mcuTimer()->ocra = ocFrame;
@@ -69,12 +73,13 @@ constexpr std::hertz SoftPPMBase<MCUTimer>::timerFrequency;
 
 template<typename MCUTimer, typename... Pins>
 class SoftPPM : public SoftPPMBase<MCUTimer> {
-public:
     SoftPPM() = delete;
+public:
+    static_assert(std::is_same<typename MCUTimer::value_type, uint16_t>::value, "must use 16bit timer");
+    
     static constexpr const uint8_t numberOfChannels = sizeof...(Pins);
 
     using SoftPPMBase<MCUTimer>::mcuInterrupts;
-
     using SoftPPMBase<MCUTimer>::timerInit;
     using SoftPPMBase<MCUTimer>::ocMin;
     using SoftPPMBase<MCUTimer>::ocMax;
@@ -135,25 +140,48 @@ public:
         }
     };
 
-    static void isrA() { // CTC
-        actual = 0;
-        mcuTimer()->ocrb = ocrbValues[0];
-        mcuInterrupts()->timsk |= _BV(OCIE0B);
-        First<Pins...>::high();
-    }
-    static void isrB() {
-        OffN<numberOfChannels, Pins...>::check(actual);
-        actual = (actual + 1) % numberOfChannels;
-        if (actual != 0) {
-            OnN<numberOfChannels, Pins...>::check(actual);
-            mcuTimer()->ocrb = ocrbValues[actual];
+    struct OCAHandler : public IsrBaseHandler<typename AVR::ISR::Timer<MCUTimer::number>::CompareA> {
+        static void isr() {
+            actual = 0;
+            mcuTimer()->ocrb = ocrbValues[0];
+            mcuInterrupts()->timsk |= _BV(OCIE0B);
+            First<Pins...>::high();
         }
-        else {
-            if constexpr(numberOfChannels > 1) {
-                mcuInterrupts()->timsk &= ~_BV(OCIE0B);
+    };
+    struct OCBHandler : public IsrBaseHandler<typename AVR::ISR::Timer<MCUTimer::number>::CompareB> {
+        static void isr() {
+            OffN<numberOfChannels, Pins...>::check(actual);
+            actual = (actual + 1) % numberOfChannels;
+            if (actual != 0) {
+                OnN<numberOfChannels, Pins...>::check(actual);
+                mcuTimer()->ocrb = ocrbValues[actual];
+            }
+            else {
+                if constexpr(numberOfChannels > 1) {
+                    mcuInterrupts()->timsk &= ~_BV(OCIE0B);
+                }
             }
         }
-    }
+    };
+//    static void isrA() { // CTC
+//        actual = 0;
+//        mcuTimer()->ocrb = ocrbValues[0];
+//        mcuInterrupts()->timsk |= _BV(OCIE0B);
+//        First<Pins...>::high();
+//    }
+//    static void isrB() {
+//        OffN<numberOfChannels, Pins...>::check(actual);
+//        actual = (actual + 1) % numberOfChannels;
+//        if (actual != 0) {
+//            OnN<numberOfChannels, Pins...>::check(actual);
+//            mcuTimer()->ocrb = ocrbValues[actual];
+//        }
+//        else {
+//            if constexpr(numberOfChannels > 1) {
+//                mcuInterrupts()->timsk &= ~_BV(OCIE0B);
+//            }
+//        }
+//    }
 private:
     static volatile uint8_t actual;
     static volatile uint16_t ocrbValues[numberOfChannels];

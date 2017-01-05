@@ -24,6 +24,7 @@
 #include "mcu/avr/pinchange.h"
 #include "mcu/avr/mcutimer.h"
 #include "mcu/i2cslave.h"
+#include "hal/softtimer.h"
 #include "util/disable.h"
 #include "external/rpm.h"
 
@@ -43,7 +44,7 @@ public:
 template<uint8_t NumberOfRegisters>
 volatile std::array<uint8_t, NumberOfRegisters> RegisterMachine<NumberOfRegisters>::mData;
 
-using RpmMachine = RegisterMachine<8>;
+using RpmMachine = RegisterMachine<4>;
 
 constexpr TWI::Address address{0x55};
 using Usi = AVR::Usi<0>;
@@ -53,11 +54,12 @@ using reflex = AVR::Pin<PortB, 4>;
 using reflexSet = AVR::PinSet<reflex>;
 using reflexPinChange = AVR::PinChange<reflexSet>;
 
-using rpmTimer = AVR::Timer8Bit<1>;
+using mcuTimer = AVR::Timer8Bit<0>;
+using rpmTimer = SoftTimer<mcuTimer, uint16_t>;
 
 using rpm = RpmFromInterruptSource<reflexPinChange, rpmTimer>;
 
-using isrRegistrar = IsrRegistrar<i2c::I2CSlaveHandlerOvfl, i2c::I2CSlaveHandlerStart, rpm>;
+using isrRegistrar = IsrRegistrar<i2c::I2CSlaveHandlerOvfl, i2c::I2CSlaveHandlerStart, rpmTimer, rpm>;
 
 int main() 
 {
@@ -72,8 +74,13 @@ int main()
     {
         Scoped<EnableInterrupt> ei;
         while(true) {
-            uint8_t r = rpm::period();
-            RpmMachine::mData[0] = r;
+            auto pp = rpm::period();
+            RpmMachine::mData[0] = pp;
+            RpmMachine::mData[1] = pp >> 8;
+            
+            auto rr = rpm::rpm();
+            RpmMachine::mData[2] = rr.mValue;
+            RpmMachine::mData[3] = rr.mValue >> 8;
         }    
     }
 }
@@ -89,9 +96,16 @@ ISR(PCINT0_vect) {
     led::toggle();
     isrRegistrar::isr<AVR::ISR::PcInt<0>>();
 }
+ISR(TIMER0_OVF_vect) {
+    isrRegistrar::isr<AVR::ISR::Timer<0>::Overflow>();
+}
+//ISR(TIMER1_OVF_vect) {
+//    isrRegistrar::isr<AVR::ISR::Timer<1>::Overflow>();
+//}
 
 #ifndef NDEBUG
-void assertFunction(const char*, const char*, const char*, unsigned int) {
-    while(true) {};
+void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) {
+//    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
+    while(true) {}
 }
 #endif
