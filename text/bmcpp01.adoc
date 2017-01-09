@@ -1,0 +1,76 @@
+// -*- mode: adoc ; fill-column: 120 -*-
+
+// WMuCpp - Bare Metal C++ 
+// Copyright (C) 2016 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+
+= bmCpp
+Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+:revnumber: 0.01
+:revdate: 01.01.1970
+:revremark: undefined
+:lang: de
+:toc:
+:toc-title: Inhalt
+:toclevels: 4
+:numbered:
+:src_numbered: 
+:icons: font
+:icontype: svg
+:figure-caption: Abbildung
+:website: https://sourceforge.net/projects/wmucpp
+:keywords: Programmieren, Programming, Microcontroller, MCU
+:description: Eine Einführung in BareMetal C++
+:title: BMCpp - Eine besondere Einführung in Cpp für eingebettete Systeme
+:sectanchors:
+:sectlinks:
+:experimental:
+:copyright: Wilhelm Meier
+:duration: 90
+:source-highlighter: coderay
+:coderay-css: style
+:source-highlighter: pygments
+:pygments-css: class
+:status:
+:menu:
+:navigation:
+:split:
+:goto:
+:blank:
+:deckjs_theme: swiss
+:showtitle:
+:deckjs_transition: horizontal-slide
+//:stylesdir: ./css
+//:stylesheet: deckjs.css
+:docinfo1:
+:stem:
+:customcss: css/deckjs.css
+// not working
+:revealjs_theme: black
+:revealjs_slidenumber: true
+// for attributes in link:[] macro like link:xxx[window="_blank"]
+:linkattrs:
+
+include::bmcppdefs.adoc[]
+
+:srcdir: ../doc/bmcpp01
+
+
+== Einführung
+
+Bla
+
+include::{srcbase}/{srcdir}/{extractordir}/bm01.cc.all[]

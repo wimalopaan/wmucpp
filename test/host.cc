@@ -41,30 +41,44 @@ template<typename F, size_t... II>
 constexpr auto createArray(F f, std::index_sequence<II...>) {
     return std::array<int, sizeof...(II)> {{f(II)...,}};
 }
-        
-int main()
-{
-    constexpr auto a = createArray(foo, std::make_index_sequence<10>{});
-//    constexpr auto b = createArray([](size_t){return 1;}, std::make_index_sequence<10>{});
-    
-    std::copy(std::begin(a), std::end(a), std::ostream_iterator<double>(std::cout, ", "));
-    
-//    constexpr auto a = createArray2(foo, 1, 2);
-    
-    
-//    constexpr FixedPoint<int16_t, 4> f1 = 1.75_fp;          
-//    constexpr FixedPoint<int16_t, 4> f2(0.5);          
-//    constexpr FixedPoint<int16_t, 4> f3(-0.5);
-    
-//    std::cout << f3.raw() << std::endl;
-//    std::cout << f3.integer() << std::endl;
-//    std::cout << f3.fractional() << std::endl;
+ 
 
-//    constexpr FixedPoint<int16_t, 4> f4(-1.5);
-//    std::cout << f4.integer() << std::endl;
-//    std::cout << f4.fractional() << std::endl;
-    
+int main(){
+  std::array<char, 120> txText{"radio tx \0"};
+  std::array<char, 20>  dBuffer{"35929910576AB235\0"};
+
+  std::copy(std::begin(dBuffer), std::end(dBuffer), std::begin(txText) + 9);
+
+  printf("\n%s", &txText[0]);
+
+  return 0;
+
 }
+
+
+//int main()
+//{
+//    constexpr auto a = createArray(foo, std::make_index_sequence<10>{});
+////    constexpr auto b = createArray([](size_t){return 1;}, std::make_index_sequence<10>{});
+    
+//    std::copy(std::begin(a), std::end(a), std::ostream_iterator<double>(std::cout, ", "));
+    
+////    constexpr auto a = createArray2(foo, 1, 2);
+    
+    
+////    constexpr FixedPoint<int16_t, 4> f1 = 1.75_fp;          
+////    constexpr FixedPoint<int16_t, 4> f2(0.5);          
+////    constexpr FixedPoint<int16_t, 4> f3(-0.5);
+    
+////    std::cout << f3.raw() << std::endl;
+////    std::cout << f3.integer() << std::endl;
+////    std::cout << f3.fractional() << std::endl;
+
+////    constexpr FixedPoint<int16_t, 4> f4(-1.5);
+////    std::cout << f4.integer() << std::endl;
+////    std::cout << f4.fractional() << std::endl;
+    
+//}
 
 void assertFunction(bool b, const char *function, const char *file, unsigned int line) {
     assert(b);

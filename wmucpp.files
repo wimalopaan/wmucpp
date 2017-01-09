@@ -1,3 +1,7 @@
+text/bmcppdefs.adoc
+text/Makefile
+text/bmcpp01.adoc
+text/bmcpp01.adoc
 doc/Makefile
 doc/bmcpp01/bm01.cc
 doc/bmcpp01/bm02.cc
@@ -41,6 +45,7 @@ doc/bmcpp10/Makefile
 doc/bmcpp10/bm01a.cc
 doc/bmcpp10/simavrconsole.c
 doc/bmcpp99/bm02a.cc
+example/atmega328/i2cslave.cc
 example/atmega328/lcd.cc
 example/attiny25/Makefile
 example/attiny25/rpm.cc

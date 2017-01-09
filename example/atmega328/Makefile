@@ -29,6 +29,7 @@ targets += simavrconsole.o
 targets +=  simpleisr.elf systemtick.elf
 
 targets += lcd.elf
+targets += i2cslave.elf
 
 -include ../../Makefile.include
 

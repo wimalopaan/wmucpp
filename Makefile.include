@@ -38,6 +38,8 @@ COBJ = $(patsubst %.c, %.o, $(CSRC))
 CDEP = $(patsubst %.c, %.d, $(CSRC))
 CASM = $(patsubst %.c, %.s, $(CSRC))
 
+HSRC = $(wildcard *.h)
+
 SRC += $(CCSRC) 
 SRC += $(CSRC) 
 
@@ -54,6 +56,15 @@ MCUFLAGS = -mmcu=$(MCU)
 
 SIMAVR = ~/Projekte/simavr/simavr/run_avr
 
+EXTRACTOR = $(HOME)/Projekte/wmgit/extract/extractor
+EXTRACTDIR = .extractor
+EXTRACTDIRNC = .extractornc
+SRCHI = source-highlight
+
+cchtml = $(patsubst %.cc, %.cc.html, $(CCSRC))
+chtml = $(patsubst %.cc, %.cc.html, $(CSRC))
+hhtml = $(patsubst %.h, %.h.html, $(HSRC))
+shtml: $(cchtml) $(chtml) $(hhtml)
 
 #CPPFLAGS += -DNDEBUG
 
@@ -144,6 +155,45 @@ AVRDUDE = avrdude
 
 %.d: %.cc
 	$(CXX) -MM -MG $(CXXFLAGS) $< | sed 's/$*\.o/& $@ $*.elf $<.extract/g' > $@
+
+%.cc.extract: %.cc
+	$(EXTRACTOR) -lcpp -aA2 -o$@ -d$(EXTRACTDIR) $<
+
+%.h.extract: %.h
+	$(EXTRACTOR) -lcpp -aA2 -o$@ -d$(EXTRACTDIR) $<
+
+%.cc.extractnc: %.cc
+	$(EXTRACTOR) -lcpp -aA2 --sc -d$(EXTRACTDIRNC) -o$@ $<
+
+%.h.extractnc: %.h
+	$(EXTRACTOR) -lcpp -aA2 --sc -d$(EXTRACTDIRNC) -o$@ $<
+
+%.cc.html: %.cc
+	$(EXTRACTOR) -x --eb --io $< | $(SRCHI) -scpp > $@
+
+%.h.html: %.h
+	$(EXTRACTOR) -x --eb --io $< | $(SRCHI) -scpp > $@
+
+%.out: %
+	./$< $(PARGS) > $@
+
+%.aout: %
+	echo -n ".{output-caption} {counter:output}. Ausgabe des Programms: \`" > $@
+	echo -n $< >> $@
+	echo "\`" >> $@
+	echo "[role=\"output\"]" >> $@
+	echo "...." >> $@
+	-SIMPLETEST=${SIMPLETEST} ./$< $(PARGS) >> $@ 2>&1
+	echo "...." >> $@
+
+%.aout2: %
+	echo -n ".{output-caption} {counter:output}. Ausgabe des Programms: \`" > $@
+	echo -n $< >> $@
+	echo "\`" >> $@
+	echo "[role=\"output\"]" >> $@
+	echo "...." >> $@
+	-SIMPLETEST=${SIMPLETEST} ./$< $(PARGS) >> $@ 2>/dev/null
+	echo "...." >> $@
 
 subclean:
 	@for d in ${subdirs}; do \

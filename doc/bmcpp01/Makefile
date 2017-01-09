@@ -23,6 +23,10 @@ F_OSC = 20000000
 
 CPPFLAGS += -DNDEBUG
 
+targets += shtml
+
+targets += bm01.cc.extract
+
 targets +=  bm01.s bm01.elf bm01.size
 targets +=  bm02.s bm02.elf bm02.size
 targets +=  bm03a.s bm03a.elf bm03a.size
