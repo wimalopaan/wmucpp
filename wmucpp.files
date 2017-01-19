@@ -1,3 +1,10 @@
+doc/bmcpp99/bm10a.cc
+example/atmega8/blink.cc
+example/atmega8/blink.h
+example/basics/register01.cc
+example/basics/register02.cc
+include/util/outputparameter.h
+include/util/static_container.h
 text/bmcppdefs.adoc
 text/Makefile
 text/bmcpp01.adoc

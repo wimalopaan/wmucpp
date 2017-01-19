@@ -68,7 +68,32 @@ struct ATMega1284P final
     struct Timer8Bit {
         static constexpr const uint8_t count = 2;
         typedef uint8_t value_type;
-        volatile uint8_t tccra;
+
+        // todo: finish all ControlRegister and DataRegister
+        
+        enum class TCCRA : uint8_t {
+#ifdef COM0A0
+            coma0 = (1 << COM0A0),
+#endif
+#ifdef COM0A1
+            coma1 = (1 << COM0A1),
+#endif
+#ifdef COM0B0
+            comb0 = (1 << COM0B0),
+#endif
+#ifdef COM0B1
+            comb1 = (1 << COM0B1),
+#endif
+#ifdef WGM00
+            wgm0 = (1 << WGM00),
+#endif        
+#ifdef WGM01
+            wgm1 = (1 << WGM01)
+#endif        
+        };
+        ControlRegister<Timer8Bit, TCCRA> tccra;
+//        volatile uint8_t tccra;
+
         volatile uint8_t tccrb;
         volatile uint8_t tcnt;
         volatile uint8_t ocra;
@@ -81,7 +106,30 @@ struct ATMega1284P final
     struct Timer16Bit {
         static constexpr const uint8_t count = 2;
         typedef uint16_t value_type;
-        volatile uint8_t tccra;
+
+        enum class TCCRA : uint8_t {
+#ifdef COM1A0
+            coma0 = (1 << COM1A0),
+#endif
+#ifdef COM1A1
+            coma1 = (1 << COM1A1),
+#endif
+#ifdef COM1B0
+            comb0 = (1 << COM1B0),
+#endif
+#ifdef COM1B1
+            comb1 = (1 << COM1B1),
+#endif
+#ifdef WGM10
+            wgm0 = (1 << WGM10),
+#endif        
+#ifdef WGM11
+            wgm1 = (1 << WGM11)
+#endif        
+        };
+        ControlRegister<Timer16Bit, TCCRA> tccra;
+
+//        volatile uint8_t tccra;
         volatile uint8_t tccrb;
         volatile uint8_t tccrc;
         volatile uint8_t reserved;

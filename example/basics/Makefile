@@ -17,7 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-MCU = atmega1284p
+#MCU = atmega1284p
+MCU = atmega328p
 F_OSC = 20000000
 
 #LOADLIBES = simavrconsole.o
@@ -25,6 +26,8 @@ F_OSC = 20000000
 #targets += simavrconsole.o
 
 targets += register.elf register.s
+targets += register01.elf register01.s
+targets += register02.elf register02.s
 
 -include ../../Makefile.include
 

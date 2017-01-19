@@ -1,6 +1,6 @@
 /*
- * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * ++C - C++ introduction
+ * Copyright (C) 2013, 2014, 2015, 2016 Wilhelm Meier <wilhelm.meier@hs-kl.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -11,44 +11,36 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #pragma once
 
-#include <stdint.h>
+namespace Util
+{
+    template <typename T>
+    class output_parameter
+    {
+    public:
+        using parameter_type = T;
 
-#if __has_include(<avr/io.h>)
-# include <avr/io.h>
-#endif
+        explicit output_parameter(T& obj) : parameter(obj) {}
 
-#include "../register.h"
+        output_parameter& operator=(const output_parameter&) = delete;
+        output_parameter& operator=(output_parameter&&) = delete;
 
-namespace AVR {
+        operator T&() {
+            return parameter;
+        }
+        
+    private:
+        T& parameter;
+    };
 
-struct PrescalerPair {
-    typedef uint8_t  bits_type;
-    typedef uint16_t scale_type;
-    uint8_t  bits;
-    uint16_t scale;
-};
-
-struct A {
-    static constexpr char letter = 'A';
-};
-struct B {
-    static constexpr char letter = 'B';
-};
-struct C {
-    static constexpr char letter = 'C';
-};
-struct D {
-    static constexpr char letter = 'D';
-};
-struct E {
-    static constexpr char letter = 'E';
-};
-
+    template <typename T>
+    output_parameter<T> out(T& obj) {
+        return output_parameter<T>(obj);
+    }
 }

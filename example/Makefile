@@ -22,7 +22,7 @@ F_OSC = 20000000
 
 subdirs = atmega8 atmega328 atmega328pb atmega1284p 
 subdirs += attiny84 attiny85 attiny25
-subdirs += features externals
+subdirs += features externals basics
 
 targets +=  main.elf main.size
 

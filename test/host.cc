@@ -43,17 +43,17 @@ constexpr auto createArray(F f, std::index_sequence<II...>) {
 }
  
 
-int main(){
-  std::array<char, 120> txText{"radio tx \0"};
-  std::array<char, 20>  dBuffer{"35929910576AB235\0"};
+//int main(){
+//  std::array<char, 120> txText{"radio tx \0"};
+//  std::array<char, 20>  dBuffer{"35929910576AB235\0"};
 
-  std::copy(std::begin(dBuffer), std::end(dBuffer), std::begin(txText) + 9);
+//  std::copy(std::begin(dBuffer), std::end(dBuffer), std::begin(txText) + 9);
 
-  printf("\n%s", &txText[0]);
+//  printf("\n%s", &txText[0]);
 
-  return 0;
+//  return 0;
 
-}
+//}
 
 
 //int main()
@@ -87,3 +87,34 @@ void assertFunction(bool b, const char *function, const char *file, unsigned int
     }
 }
 
+enum class A {
+    a = 1 << 0, 
+    b = 1 << 1, 
+    c = 1 << 2
+};
+
+template<typename T, T... Values>
+struct static_container final {};
+
+template<typename T, typename... Ts>
+constexpr auto make_static_container(T t0, Ts... ts) {
+    return static_container<T, t0, ts...>{};
+}
+
+template<A... Flags>
+void inline set() {
+    std::cout << sizeof... (Flags) << std::endl;
+}
+
+template<typename F, F... FF>
+void inline set(static_container<F, FF...>) {
+    std::cout << sizeof... (FF) << std::endl;
+}
+
+int main() {
+    constexpr static_container<A, A::a, A::b> sc1{};
+//    constexpr auto sc2 = make_static_container(A::a, A::c);
+ 
+    set(sc1);    
+//    set(sc2);    
+}

@@ -43,7 +43,6 @@ using remove_const_t    = typename remove_const<T>::type;
 template< class T >
 using remove_volatile_t = typename remove_volatile<T>::type;
 
-
 template<typename T, T... I>
 struct integer_sequence{
     using type = T;

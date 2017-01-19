@@ -23,6 +23,7 @@ F_OSC = 20000000
 targets +=  bm01a.s bm01a.elf bm01a.size
 targets +=  bm01b.s bm01b.elf bm01b.size
 targets +=  bm02a.s bm02a.elf bm02a.size
+targets +=  bm10a.elf
 
 -include ../../Makefile.include
 

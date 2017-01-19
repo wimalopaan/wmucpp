@@ -24,12 +24,14 @@
 #include "util/bits.h"
 #include "util/fixedpoint.h"
 
+#include "util/outputparameter.h"
+
 namespace Util {
 
 template<typename V> struct BufferSize;
 
 template<>
-struct BufferSize<uint8_t>{
+struct BufferSize<uint8_t> final {
     BufferSize() = delete;
     static constexpr uint8_t size = 4;
 };
@@ -63,6 +65,8 @@ struct BufferSize<uint32_t>{
     BufferSize() = delete;
     static constexpr uint8_t size = 12;
 };
+
+// todo: use output_parameter<T> template to clearify usage
 
 template<int N, typename T, typename B>
 struct Utoa final {
@@ -184,17 +188,17 @@ constexpr auto lowerHalf(const T& v) -> typename fragmentType<T>::type {
     return v;
 }
 
-template<typename C, typename F>
-auto parity(const C& c, const F& f) -> typename C::item_type {
-    typename C::item_type parity = 0;
-    auto p = (const typename C::item_type*)&c;
-    static_assert(sizeof(C) < std::numeric_limits<uint8_t>::max(),"wrong size");
-    for(uint8_t i = 0; i < sizeof(C); ++i) {
-        f(*p);
-        parity += *p++;
-    }
-    return parity;
-}
+//template<typename C, typename F>
+//auto parity(const C& c, const F& f) -> typename C::item_type {
+//    typename C::item_type parity = 0;
+//    auto p = (const typename C::item_type*)&c;
+//    static_assert(sizeof(C) < std::numeric_limits<uint8_t>::max(),"wrong size");
+//    for(uint8_t i = 0; i < sizeof(C); ++i) {
+//        f(*p);
+//        parity += *p++;
+//    }
+//    return parity;
+//}
 
 constexpr bool isPowerof2(int v) {
     return v && ((v & (v - 1)) == 0);

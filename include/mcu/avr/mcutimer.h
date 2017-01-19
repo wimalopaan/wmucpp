@@ -83,10 +83,16 @@ public:
         return mcuTimer()->tcnt;
     }
 
+//    using ta = typename MCU::Timer8Bit::TCCRA;
+    
     static void mode(const TimerMode& mode) {
         if (mode == TimerMode::CTC) {
             TimerBase<MCU, N>::mcuInterrupts()->timsk |= MCU::TimerInterrupts::template Flags<N>::ociea;
-            mcuTimer()->tccra = MCU::Timer8Bit::template Flags<N>::wgm1;
+            
+            // todo: test and cleanup
+            
+            mcuTimer()->tccra.template set<MCU::Timer8Bit::TCCRA::wgm1>();
+//                        mcuTimer()->tccra = MCU::Timer8Bit::template Flags<N>::wgm1;
         }
         else if (mode == TimerMode::Normal) {
         }

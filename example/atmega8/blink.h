@@ -18,23 +18,21 @@
 
 #pragma once
 
-//#define __STDC_LIMIT_MACROS
-
-#include <stdint.h>
+#define HAS_CONFIG
 
 #include "std/literals.h"
-
-#define HAS_CONFIG
 
 using namespace std::literals::chrono;
 using namespace std::literals::physical;
 
 struct Config final
 {
+    Config() = delete; // one should use a similar copy in own project
+
     static constexpr std::megahertz fMcuMhz {F_CPU / 1000000};
     static constexpr std::hertz fMcu{F_CPU};
 
-    static_assert(fMcuMhz.value <= 20, "F_CPU too high");
+    static_assert(fMcuMhz.value <= 32, "F_CPU too high");
     static_assert(fMcuMhz.value >=  1, "F_CPU too low");
 
     struct Timer {
@@ -46,9 +44,8 @@ struct Config final
         static constexpr uint8_t EventQueueLength = 32;
     };
     struct Usart {
-        typedef uint8_t SizeType;
-        static constexpr SizeType SendQueueLength = 64;
-        static constexpr SizeType RecvQueueLength = 0;
+        static constexpr uint8_t SendQueueLength = 64;
+        static constexpr uint8_t RecvQueueLength = 0;
     };
     struct SoftSpiMaster {
         static constexpr std::microseconds pulseDelay = 1_us;
@@ -56,7 +53,6 @@ struct Config final
     struct Button {
         static constexpr uint8_t buttonTicksForPressed = 100_ms * Timer::frequency;
     };
-
     static constexpr bool ensureTerminalOutput = true;
     static constexpr bool disableCout = false;
 };
@@ -67,8 +63,8 @@ constexpr uint8_t Config::Timer::NumberOfTimers;
 constexpr std::hertz Config::Timer::frequency;
 constexpr std::milliseconds Config::Timer::resolution;
 constexpr uint8_t Config::EventManager::EventQueueLength;
-constexpr Config::Usart::SizeType Config::Usart::SendQueueLength;
-constexpr Config::Usart::SizeType Config::Usart::RecvQueueLength;
+constexpr uint8_t Config::Usart::SendQueueLength;
+constexpr uint8_t Config::Usart::RecvQueueLength;
 constexpr bool Config::ensureTerminalOutput;
 constexpr bool Config::disableCout;
 constexpr std::microseconds Config::SoftSpiMaster::pulseDelay;

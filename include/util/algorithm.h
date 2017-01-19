@@ -23,6 +23,7 @@
 #include "std/array.h"
 
 namespace Util {
+
 template <uint8_t I, typename T, typename ...Ts>
 struct nth_element_impl {
     using type = typename nth_element_impl<I-1, Ts...>::type;

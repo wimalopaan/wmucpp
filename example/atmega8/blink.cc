@@ -1,6 +1,6 @@
 /*
- * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * ++C - C++ introduction
+ * Copyright (C) 2013, 2014, 2015, 2016 Wilhelm Meier <wilhelm.meier@hs-kl.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -11,44 +11,31 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "blink.h"
 
-#include <stdint.h>
+#include "mcu/ports.h"
+#include "mcu/avr/delay.h"
 
-#if __has_include(<avr/io.h>)
-# include <avr/io.h>
-#endif
+using namespace AVR;
+using PortB = Port<DefaultMcuType::PortRegister, AVR::B>;
+using led = Pin<PortB, 0>;
 
-#include "../register.h"
+// externer takt
+// sudo avrdude -p atmega8 -P usb -c avrisp2 -U lfuse:w:0xe0:m -U hfuse:w:0xd9:m
 
-namespace AVR {
+int main()
+{
+    Set<led>::output();
+    led::dir<Output>();        
 
-struct PrescalerPair {
-    typedef uint8_t  bits_type;
-    typedef uint16_t scale_type;
-    uint8_t  bits;
-    uint16_t scale;
-};
-
-struct A {
-    static constexpr char letter = 'A';
-};
-struct B {
-    static constexpr char letter = 'B';
-};
-struct C {
-    static constexpr char letter = 'C';
-};
-struct D {
-    static constexpr char letter = 'D';
-};
-struct E {
-    static constexpr char letter = 'E';
-};
-
+    led::high();
+    while(true) {
+        Util::delay(500_us);
+        led::toggle();        
+    }    
 }

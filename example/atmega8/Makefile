@@ -18,9 +18,12 @@
 #
 
 MCU = atmega8
-F_OSC = 8000000
+F_OSC = 20000000
+
+blink.elf: F_OSC = 24000000
 
 targets += simpleisr.elf
+targets += blink.elf
 
 -include ../../Makefile.include
 
