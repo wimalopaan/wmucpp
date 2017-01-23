@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,22 @@
 template<typename Data, typename RS, typename RW, typename E, uint8_t Lines = 2, uint8_t Columns = 16>
 class LcdHD44780 final {
     LcdHD44780() = delete;
+    
+    static_assert(Data::size == 4, "wrong number ofpins in PinSet");
+
 public:
+    static constexpr uint8_t lineLength = 0x40;
+    static constexpr uint8_t lineStartPosition[] = {0x00, 0x40, 0x14, 0x54};
+
+    static_assert(Lines <= sizeof(lineStartPosition), ""); 
+    
+    static constexpr uint8_t clearBit  = 0;
+    static constexpr uint8_t homeBit   = 1;
+    static constexpr uint8_t ddramBit  = 7;
+    static constexpr uint8_t busyBit   = 7;
+    
+    static constexpr auto enableDelay = 20_us;
+    
     static void init() {
         Data::template dir<AVR::Output>();
         RS::template dir<AVR::Output>();
@@ -38,28 +53,93 @@ public:
         Util::delay(16_ms);
         
         Data::set(0x03);
-        toggleE();
+        toggle<E>();
         Util::delay(5_ms);
         Data::set(0x03);
-        toggleE();
+        toggle<E>();
         Util::delay(1_ms);
         Data::set(0x03);
-        toggleE();
+        toggle<E>();
         Util::delay(1_ms);
         
         Data::set(0x02);
-        toggleE();
+        toggle<E>();
         Util::delay(1_ms);
+        Data::template dir<AVR::Input>();
     }
-private:
-    static void write(uint8_t) {
+    static void clear() {
+        writeCommand(1 << clearBit);
+    }
+    static void home() {
+        writeCommand(1 << homeBit);
+    }
+    static void newLine() {
+        uint8_t line = waitBusy();
+        line = (line + 1) % Lines;
+        writeCommand((1 << ddramBit) + line);
+    }
+
+    static void writeData(uint8_t data) {
+        waitBusy();
+        RS::high();
+        write(data);
+    }
+    static void writeCommand(uint8_t data) {
+        waitBusy();
+        RS::low();
+        write(data);
+    }
+    static uint8_t readData() {
+        waitBusy();
+        RS::high();
+        return read();
+    }
+    static uint8_t readCommand() {
+        waitBusy();
+        RS::low();
+        return read();
+    }
+    static bool put(char c) {
         
+        return true;
     }
-    
-    static void toggleE() {
-        E::on();
-        Util::delay(20_us);
-        E::off();
+
+private:
+    static void write(uint8_t data) {
+        RW::low();        
+        Data::template dir<AVR::Output>();
+        Data::set((data >> 4) & 0x0f);
+        toggle<E>();
+        Data::set(data & 0x0f);
+        toggle<E>();
+        Data::template dir<AVR::Input>();
+    }
+    static uint8_t read() {
+        RW::high();
+        Data::template dir<AVR::Input>();
+        E::high();
+        Util::delay(enableDelay);
+        uint8_t data = Data::read() << 4;
+        E::low();
+        Util::delay(enableDelay);
+        E::high();
+        Util::delay(enableDelay);
+        data |= Data::read() & 0x0f;
+        E::low();
+        return data;
+    }
+    static uint8_t waitBusy() {
+        while (readCommand() & (1 << busyBit)) {
+        }
+        Util::delay(4_us);
+        return readCommand(); // Address Counter
+    }
+
+    template<typename Pin>
+    static void toggle() {
+        Pin::on();
+        Util::delay(enableDelay);
+        Pin::off();
     }
 };
 

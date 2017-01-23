@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,17 @@
 #include "util/bits.h"
 #include "std/algorithm.h"
 
+namespace std {
+
+template<class T, T v>
+struct integral_constant {
+    static constexpr T value = v;
+    typedef T value_type;
+    typedef integral_constant type; // using injected-class-name
+    constexpr operator value_type() const noexcept { return value; }
+    constexpr value_type operator()() const noexcept { return value; } //since c++14
+};
+}
 
 // Bit Fields sind für Register ungeeeignet, da die Anordnung im Speicher nicht garantiert ist.
 // http://en.cppreference.com/w/cpp/language/bit_field
@@ -80,6 +91,16 @@ constexpr auto timer0 = AVR::getBaseAddr<AVR::ATTest::Timer8Bit, 0>;
 //constexpr auto make_static_container() {
 //    return Util::static_container<T, t0, ts...>{};
 //}
+
+using namespace Util;
+
+template<typename T, T... Values>
+constexpr auto make_static_container(std::integral_constant<T, Values>...) noexcept {
+    return static_container<T, Values...>{};
+}
+
+//template<typename T>
+//std::integral_constant(T v) -> std::integral_constant<T, v>;
 
 int main() {
     using ta = AVR::ATTest::Timer8Bit::TCCRA;

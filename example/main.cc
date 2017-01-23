@@ -1,3 +1,21 @@
+/*
+ * WMuCpp - Bare Metal C++ 
+ * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "main.h"
 #include "std/limits.h"
 #include "mcu/avr8.h"
@@ -505,24 +523,18 @@ ISR(PCINT3_vect) {
 }
 ISR(TIMER1_COMPA_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<1>::CompareA>();
-//    SWUsart<0>::isr_compa();
 }
 ISR(TIMER1_COMPB_vect) {
 //    isrRegistrar::isr<AVR::ISR::Timer<1>::CompareB>();
-//    SWUsart<0>::isr_compb();
 }
 ISR(TIMER1_CAPT_vect) {
 //    isrRegistrar::isr<AVR::ISR::Timer<1>::Capture>();
-//    SWUsart<0>::isr_icp();
 }
 ISR(SPI_STC_vect) {
 //    isrRegistrar::isr<AVR::ISR::Spi<0>::Stc>();
-//    AVR::Spi<0>::isr();
 }
 ISR(TIMER0_COMPA_vect) {
-    // todo: auf isrRegistrar umbauen
     isrRegistrar::isr<AVR::ISR::Timer<0>::CompareA>();
-//    sampler::isr();
 }
 
 // todo: isrReg

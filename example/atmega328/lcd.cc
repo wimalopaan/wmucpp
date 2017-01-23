@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,14 +50,20 @@ namespace std {
 
 int main() {
     lcd::init();
+
+    std::basic_ostream<lcd> lout;
     
     {
         Scoped<EnableInterrupt> ei;
+        
+        lout << "test" << std::endl;
+        
         while(true) {}
     }
 }
+
 #ifndef NDEBUG
-void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) {
+void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
     std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
     while(true) {}
 }

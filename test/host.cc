@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -96,10 +96,18 @@ enum class A {
 template<typename T, T... Values>
 struct static_container final {};
 
-template<typename T, typename... Ts>
-constexpr auto make_static_container(T t0, Ts... ts) {
-    return static_container<T, t0, ts...>{};
+//template<typename T, typename... Ts>
+//constexpr auto make_static_container(T t0, Ts... ts) {
+//    return static_container<T, t0, ts...>{};
+//}
+
+template<typename T, T... Values>
+constexpr auto make_static_container(std::integral_constant<T, Values>...) noexcept {
+    return static_container<T, Values...>{};
 }
+
+//template<typename T>
+//std::integral_constant(T v) -> std::integral_constant<T, v>;
 
 template<A... Flags>
 void inline set() {
@@ -110,6 +118,7 @@ template<typename F, F... FF>
 void inline set(static_container<F, FF...>) {
     std::cout << sizeof... (FF) << std::endl;
 }
+
 
 int main() {
     constexpr static_container<A, A::a, A::b> sc1{};
