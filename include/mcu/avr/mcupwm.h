@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,7 +45,9 @@ struct PwmParamter<0, ATMega1284P> {
     using ta = AVR::ATMega1284P::Timer8Bit::TCCRA;
     static constexpr ::Util::static_container<ta, ta::coma0, ta::coma1, ta::comb0, ta::comb1, ta::wgm0, ta::wgm1> tccra{}; 
     
-    static constexpr uint8_t tccrb = 0;
+    using tb = AVR::ATMega1284P::Timer8Bit::TCCRB;
+    static constexpr ::Util::static_container<tb> tccrb{}; 
+//    static constexpr uint8_t tccrb = 0;
     static constexpr uint8_t top = 0xff;
 };
 template<>
@@ -61,7 +63,9 @@ struct PwmParamter<1, ATMega1284P> {
     using ta = AVR::ATMega1284P::Timer16Bit::TCCRA;
     static constexpr ::Util::static_container<ta, ta::coma0, ta::coma1, ta::comb0, ta::comb1, ta::wgm0, ta::wgm1> tccra{}; 
     
-    static constexpr uint8_t tccrb = _BV(WGM12); // 10-bit fast PWM
+    using tb = AVR::ATMega1284P::Timer16Bit::TCCRB;
+    static constexpr ::Util::static_container<tb, tb::wgm2> tccrb{}; 
+//    static constexpr uint8_t tccrb = _BV(WGM12); // 10-bit fast PWM
     static constexpr value_type top = 0x3ff;
 };
 template<>
@@ -77,7 +81,9 @@ struct PwmParamter<2, ATMega1284P> {
     using ta = AVR::ATMega1284P::Timer8Bit::TCCRA;
     static constexpr ::Util::static_container<ta, ta::coma0, ta::coma1, ta::comb0, ta::comb1, ta::wgm0, ta::wgm1> tccra{}; 
 
-    static constexpr uint8_t tccrb = 0;
+    using tb = AVR::ATMega1284P::Timer8Bit::TCCRB;
+    static constexpr ::Util::static_container<tb> tccrb{}; 
+//    static constexpr uint8_t tccrb = 0;
     static constexpr uint8_t top = 0xff;
 };
 template<>
@@ -93,7 +99,9 @@ struct PwmParamter<3, ATMega1284P> {
     using ta = AVR::ATMega1284P::Timer16Bit::TCCRA;
     static constexpr ::Util::static_container<ta, ta::coma0, ta::coma1, ta::comb0, ta::comb1, ta::wgm0, ta::wgm1> tccra{}; 
 
-    static constexpr uint8_t tccrb = _BV(WGM32); // 10-bit fast PWM
+    using tb = AVR::ATMega1284P::Timer16Bit::TCCRB;
+    static constexpr ::Util::static_container<tb, tb::wgm2> tccrb{}; 
+//    static constexpr uint8_t tccrb = _BV(WGM32); // 10-bit fast PWM
     static constexpr value_type top = 0x3ff;
 };
 
@@ -123,7 +131,7 @@ public:
         timer_type::template prescale<256>();
 //        mcuTimer()->tccra |= PwmParamter<TimerN, MCU>::tccra;
         mcuTimer()->tccra.set(PwmParamter<TimerN, MCU>::tccra);
-        mcuTimer()->tccrb |= PwmParamter<TimerN, MCU>::tccrb;
+        mcuTimer()->tccrb.set(PwmParamter<TimerN, MCU>::tccrb);
     }
     template<typename Channel>
     static void pwm(const std::percent& p) {

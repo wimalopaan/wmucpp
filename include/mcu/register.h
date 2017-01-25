@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,6 +30,16 @@ namespace AVR {
 struct ReadWrite {};
 struct ReadOnly{};
 
+template<typename BitType, uint8_t StartBit, uint8_t Span>
+struct ControlRegisterPart {
+    
+};
+
+template<typename... Parts>
+struct ControlRegisterParts {
+    
+};
+
 template<typename Component, typename BitType, typename ValueType = uint8_t>
 struct ControlRegister {
     typedef Component component_type;
@@ -55,8 +65,8 @@ struct ControlRegister {
     void inline set() {
         static_assert(sizeof...(Flags) <= 8, "too much flags");
         constexpr auto v = (static_cast<value_type>(Flags) | ... | 0);
-        constexpr auto n = Util::numberOfOnes(v);        
-        static_assert(n == sizeof... (Flags), "use different flags");
+//        constexpr auto n = Util::numberOfOnes(v);        
+//        static_assert(n == sizeof... (Flags), "use different flags");
         hwRegister = v;
     }
 
@@ -64,8 +74,8 @@ struct ControlRegister {
     void inline add() {
         static_assert(sizeof...(Flags) <= 8, "too much flags");
         constexpr auto v = (static_cast<value_type>(Flags) | ... | 0);
-        constexpr auto n = Util::numberOfOnes(v);        
-        static_assert(n == sizeof... (Flags), "use different flags");
+//        constexpr auto n = Util::numberOfOnes(v);        
+//        static_assert(n == sizeof... (Flags), "use different flags");
         hwRegister |= v;
     }
 
@@ -77,7 +87,12 @@ struct ControlRegister {
         static_assert(n == sizeof... (Flags), "use different flags");
         hwRegister &= ~v;
     }
-    
+    template<uint8_t Mask>
+    BitType get() {
+        return static_cast<BitType>(hwRegister & Mask);
+    }
+
+private:
     volatile value_type hwRegister;
 };
 

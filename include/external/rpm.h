@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ template<typename MCUTimer>
 constexpr uint16_t calculateRpm() {
     using pBits = typename MCUTimer::mcu_timer_type::template PrescalerBits<MCUTimer::number>;
     auto p = AVR::Util::prescalerValues(pBits::values);
-    auto sortedPRow = ::Util::sort(p, std::greater<AVR::PrescalerPair::scale_type>()); // absteigend
+    auto sortedPRow = ::Util::sort(p, std::greater<typename AVR::PrescalerPair<typename MCUTimer::tccrb_type>::scale_type>()); // absteigend
 
     for(const auto& p : sortedPRow) {
         if (p > 0) {

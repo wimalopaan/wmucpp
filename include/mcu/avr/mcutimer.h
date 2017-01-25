@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,6 +44,8 @@ public:
     static constexpr uint8_t csBitMask = 0x07;
     static constexpr auto mcuTimer = getBaseAddr<typename MCU::Timer8Bit, N>;
     typedef typename MCU::Timer8Bit mcu_timer_type;
+    typedef typename MCU::Timer8Bit::TCCRA tccra_type;
+    typedef typename MCU::Timer8Bit::TCCRB tccrb_type;
     typedef uint8_t value_type;
 
     static constexpr const bool hasOcrA = true;
@@ -54,17 +56,18 @@ public:
 
     template<int PreScale>
     static void prescale() {
-        constexpr uint8_t bits = AVR::Util::bitsFrom<PreScale>(MCU::Timer8Bit::template PrescalerBits<N>::values);
-        static_assert(bits != 0, "wrong prescaler");
-        mcuTimer()->tccrb |= bits;
+        constexpr tccrb_type bits = AVR::Util::bitsFrom<PreScale>(MCU::Timer8Bit::template PrescalerBits<N>::values);
+        static_assert(isset(bits), "wrong prescaler");
+        mcuTimer()->tccrb.template add<bits>();
     }
 
     static std::hertz frequency() {
         return Config::fMcu / (uint32_t)prescaler();
     }
 
-    static AVR::PrescalerPair::scale_type prescaler() {
-        const uint8_t bits = mcuTimer()->tccrb & csBitMask;
+    static typename AVR::PrescalerPair<tccrb_type>::scale_type prescaler() {
+//        const uint8_t bits = mcuTimer()->tccrb.get() & csBitMask;
+        const auto bits = mcuTimer()->tccrb.template get<csBitMask>();
         return AVR::Util::bitsToPrescale(bits, MCU::Timer8Bit::template PrescalerBits<N>::values);
     }
     
@@ -103,69 +106,70 @@ public:
     }
 };
 
+//template<>
+//class Timer8Bit<1, ATTiny25> : public TimerBase<ATTiny25, 1> {
+//public:
+//    static constexpr uint8_t number = 1;
+//    static constexpr uint8_t csBitMask = 0x0f;
+//    static constexpr auto mcuTimer = getBaseAddr<typename ATTiny25::Timer8BitHighSpeed, 1>;
+//    typedef typename ATTiny25::Timer8Bit mcu_timer_type;
+//    typedef uint8_t value_type;
+
+//    static constexpr const bool hasOcrA = true;
+//    static constexpr const bool hasOcrB = true;
+//    static constexpr const bool hasOcrC = true;
+//    static constexpr const bool hasOverflow = true;
+
+//    Timer8Bit() = delete;
+
+//    template<int PreScale>
+//    static void prescale() {
+//        constexpr uint8_t bits = AVR::Util::bitsFrom<PreScale>(ATTiny25::Timer8BitHighSpeed::template PrescalerBits<1>::values);
+//        static_assert(bits != 0, "wrong prescaler");
+//        mcuTimer()->tccr |= bits;
+//    }
+
+//    static std::hertz frequency() {
+//        return Config::fMcu / (uint32_t)prescaler();
+//    }
+
+//    static AVR::PrescalerPair::scale_type prescaler() {
+//        const uint8_t bits = mcuTimer()->tccr & csBitMask;
+//        return AVR::Util::bitsToPrescale(bits, ATTiny25::Timer8BitHighSpeed::template PrescalerBits<1>::values);
+//    }
+    
+//    static void start(){
+//    }
+
+//    static void ocra(uint8_t v) {
+//        mcuTimer()->ocra = v;
+//    }
+//    template<uint8_t V>
+//    static void ocra() {
+//        mcuTimer()->ocra = V;
+//    }
+
+//    static inline volatile uint8_t& counter() {
+//        return mcuTimer()->tcnt;
+//    }
+    
+//    static void mode(const TimerMode& mode) {
+//        if (mode == TimerMode::CTC) {
+//            TimerBase<ATTiny25, 0>::mcuInterrupts()->timsk |= ATTiny25::TimerInterrupts::template Flags<1>::ociea;
+//        }
+//        else if (mode == TimerMode::Normal) {
+//        }
+//    }
+//};
+
+#if defined(__AVR_ATmega8__)
+
 template<>
-class Timer8Bit<1, ATTiny25> : public TimerBase<ATTiny25, 1> {
-public:
-    static constexpr uint8_t number = 1;
-    static constexpr uint8_t csBitMask = 0x0f;
-    static constexpr auto mcuTimer = getBaseAddr<typename ATTiny25::Timer8BitHighSpeed, 1>;
-    typedef typename ATTiny25::Timer8Bit mcu_timer_type;
-    typedef uint8_t value_type;
-
-    static constexpr const bool hasOcrA = true;
-    static constexpr const bool hasOcrB = true;
-    static constexpr const bool hasOcrC = true;
-    static constexpr const bool hasOverflow = true;
-
-    Timer8Bit() = delete;
-
-    template<int PreScale>
-    static void prescale() {
-        constexpr uint8_t bits = AVR::Util::bitsFrom<PreScale>(ATTiny25::Timer8BitHighSpeed::template PrescalerBits<1>::values);
-        static_assert(bits != 0, "wrong prescaler");
-        mcuTimer()->tccr |= bits;
-    }
-
-    static std::hertz frequency() {
-        return Config::fMcu / (uint32_t)prescaler();
-    }
-
-    static AVR::PrescalerPair::scale_type prescaler() {
-        const uint8_t bits = mcuTimer()->tccr & csBitMask;
-        return AVR::Util::bitsToPrescale(bits, ATTiny25::Timer8BitHighSpeed::template PrescalerBits<1>::values);
-    }
-    
-    static void start(){
-    }
-
-    static void ocra(uint8_t v) {
-        mcuTimer()->ocra = v;
-    }
-    template<uint8_t V>
-    static void ocra() {
-        mcuTimer()->ocra = V;
-    }
-
-    static inline volatile uint8_t& counter() {
-        return mcuTimer()->tcnt;
-    }
-    
-    static void mode(const TimerMode& mode) {
-        if (mode == TimerMode::CTC) {
-            TimerBase<ATTiny25, 0>::mcuInterrupts()->timsk |= ATTiny25::TimerInterrupts::template Flags<1>::ociea;
-        }
-        else if (mode == TimerMode::Normal) {
-        }
-    }
-};
-
-
-template<uint8_t N>
-struct Timer8Bit<N, ATMega8> : public TimerBase<ATMega8, N>
+struct Timer8Bit<0, ATMega8> : public TimerBase<ATMega8, 0>
 {
-    static constexpr uint8_t number = N;
-    static constexpr auto mcuTimer = getBaseAddr<typename ATMega8::Timer8Bit, N>;
-    typedef typename ATMega8::Timer8Bit mcu_timer_type;
+    static constexpr uint8_t number = 0;
+    static constexpr auto mcuTimer = getBaseAddr<typename ATMega8::Timer8BitSimple, 0>;
+    typedef typename ATMega8::Timer8BitSimple mcu_timer_type;
     typedef uint8_t value_type;
 
     static constexpr const bool hasOcrA = false;
@@ -176,7 +180,7 @@ struct Timer8Bit<N, ATMega8> : public TimerBase<ATMega8, N>
 
     template<int PreScale>
     static constexpr void prescale() {
-        constexpr uint8_t bits = AVR::Util::bitsFrom<PreScale>(ATMega8::Timer8Bit::template PrescalerBits<N>::values);
+        constexpr auto bits = AVR::Util::bitsFrom<PreScale>(ATMega8::Timer8BitSimple::template PrescalerBits<0>::values);
         static_assert(bits != 0, "wrong prescaler");
         mcuTimer()->tccr |= bits;
     }
@@ -185,13 +189,51 @@ struct Timer8Bit<N, ATMega8> : public TimerBase<ATMega8, N>
     
     static void mode(const TimerMode& mode) {
         if (mode == TimerMode::CTC) {
-            TimerBase<ATMega8, N>::mcuInterrupts->timsk |= ATMega8::TimerInterrupts::template Flags<N>::ociea;
-            mcuTimer()->tccr = ATMega8::Timer8Bit::template Flags<N>::wgm1;
+            // todo: flags
+            
+//            TimerBase<ATMega8, N>::mcuInterrupts->timsk |= ATMega8::TimerInterrupts::template Flags<N>::ociea;
+//            mcuTimer()->tccr = ATMega8::Timer8Bit::template Flags<N>::wgm1;
         }
         else if (mode == TimerMode::Normal) {
         }
     }
 };
+template<>
+struct Timer8Bit<2, ATMega8> : public TimerBase<ATMega8, 2>
+{
+    static constexpr uint8_t number = 2;
+    static constexpr auto mcuTimer = getBaseAddr<typename ATMega8::Timer8BitSimple2, 2>;
+    typedef typename ATMega8::Timer8BitSimple2 mcu_timer_type;
+    typedef uint8_t value_type;
+
+    static constexpr const bool hasOcrA = false;
+    static constexpr const bool hasOcrB = false;
+    static constexpr const bool hasOverflow = true;
+    
+    Timer8Bit() = delete;
+
+    template<int PreScale>
+    static constexpr void prescale() {
+        constexpr auto bits = AVR::Util::bitsFrom<PreScale>(ATMega8::Timer8BitSimple2::template PrescalerBits<2>::values);
+        static_assert(bits != 0, "wrong prescaler");
+        mcuTimer()->tccr |= bits;
+    }
+    static void start(){
+    }
+    
+    static void mode(const TimerMode& mode) {
+        if (mode == TimerMode::CTC) {
+            // todo: flags
+            
+//            TimerBase<ATMega8, N>::mcuInterrupts->timsk |= ATMega8::TimerInterrupts::template Flags<N>::ociea;
+//            mcuTimer()->tccr = ATMega8::Timer8Bit::template Flags<N>::wgm1;
+        }
+        else if (mode == TimerMode::Normal) {
+        }
+    }
+};
+
+#endif
 
 template<uint8_t N>
 struct Timer8Bit<N, ATMegaNone> : public TimerBase<ATMegaNone, N>
@@ -211,6 +253,8 @@ struct Timer16Bit: public TimerBase<MCU, N>
     static constexpr uint8_t csBitMask = 0x07;
     static constexpr auto mcuTimer = getBaseAddr<typename MCU::Timer16Bit, N>;
     typedef typename MCU::Timer16Bit mcu_timer_type;
+    typedef typename MCU::Timer16Bit::TCCRA tccra_type;
+    typedef typename MCU::Timer16Bit::TCCRB tccrb_type;
     typedef uint16_t value_type;
 
     static constexpr const bool hasOcrA = true;
@@ -221,17 +265,18 @@ struct Timer16Bit: public TimerBase<MCU, N>
 
     template<int PreScale>
     static void prescale() {
-        constexpr uint8_t bits = AVR::Util::bitsFrom<PreScale>(MCU::Timer16Bit::template PrescalerBits<N>::values);
-        static_assert(bits != 0, "wrong prescaler");
-        mcuTimer()->tccrb |= bits;
+        constexpr auto bits = AVR::Util::bitsFrom<PreScale>(MCU::Timer16Bit::template PrescalerBits<N>::values);
+        static_assert(isset(bits), "wrong prescaler");
+        mcuTimer()->tccrb.template set<bits>();
     }
     
     static std::hertz frequency() {
         return Config::fMcu / (uint32_t)prescaler();
     }
 
-    static AVR::PrescalerPair::scale_type prescaler() {
-        const uint8_t bits = mcuTimer()->tccrb & csBitMask;
+    static typename AVR::PrescalerPair<tccrb_type>::scale_type prescaler() {
+        // todo: check
+        const auto bits = mcuTimer()->tccrb.template get<csBitMask>();
         return AVR::Util::bitsToPrescale(bits, MCU::Timer16Bit::template PrescalerBits<N>::values);
     }
 
@@ -253,7 +298,8 @@ struct Timer16Bit: public TimerBase<MCU, N>
     static void mode(const TimerMode& mode) {
         if (mode == TimerMode::CTC) {
             TimerBase<MCU, N>::mcuInterrupts()->timsk |= MCU::TimerInterrupts::template Flags<N>::ociea;
-            mcuTimer()->tccrb = MCU::Timer16Bit::template Flags<N>::wgm2;
+            mcuTimer()->tccrb.template set<MCU::Timer16Bit::TCCRB::wgm2>();
+//            mcuTimer()->tccrb = MCU::Timer16Bit::template Flags<N>::wgm2;
 //            mcuTimer()->tccrb |= _BV(WGM12);
         }
     }

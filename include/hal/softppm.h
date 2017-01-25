@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -62,9 +62,13 @@ public:
 
     static void timerInit() {
         mcuTimer()->ocra = ocFrame;
-        mcuTimer()->tccrb |= _BV(WGM12);
+        mcuTimer()->tccrb.template add<MCUTimer::tccrb_type::wgm2>();
+        // todo: flags
         mcuInterrupts()->tifr  |= _BV(OCF1A) | _BV(OCF1B);
         mcuInterrupts()->timsk |= _BV(OCIE0A);
+//        mcuTimer()->tccrb |= _BV(WGM12);
+//        mcuInterrupts()->tifr  |= _BV(OCF1A) | _BV(OCF1B);
+//        mcuInterrupts()->timsk |= _BV(OCIE0A);
         MCUTimer::template prescale<prescaler>();
     }
 };

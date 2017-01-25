@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,8 +24,15 @@ namespace std {
 
 #ifndef __GLIBCXX__
 
-template<typename T>
-struct underlying_type;
+//template<typename T>
+//struct underlying_type;
+/// The underlying type of an enum.
+template<typename _Tp>
+  struct underlying_type
+  {
+    typedef __underlying_type(_Tp) type;
+  };
+
 
 template<bool B, class T = void>
 struct enable_if {};

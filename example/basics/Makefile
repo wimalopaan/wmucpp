@@ -1,7 +1,7 @@
 # -*- mode: makefile-gmake; -*-
 #
 # WMuCpp - Bare Metal C++ 
-# Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+# Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,6 +28,10 @@ F_OSC = 20000000
 targets += register.elf register.s
 targets += register01.elf register01.s
 targets += register02.elf register02.s
+targets += register03.elf register03.s
+targets += register04.elf register04.s
+targets += register05.elf register05.s
+targets += register10.elf register10.s
 
 -include ../../Makefile.include
 

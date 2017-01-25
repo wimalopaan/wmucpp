@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -81,6 +81,7 @@ public:
     }
 };
 
+#if defined(__AVR_ATtiny84__)
 template<typename PinSet>
 class PinChange<PinSet, ATTiny84> final {
     typedef ATTiny84 MCU;
@@ -103,7 +104,9 @@ public:
         interrupts()->gimsk |= _BV(pcGroupNumber + 4);
     }
 };
+#endif
 
+#if defined(__AVR_ATtiny25__)
 template<typename PinSet>
 class PinChange<PinSet, ATTiny25> final {
     typedef ATTiny25 MCU;
@@ -128,5 +131,6 @@ public:
 #endif
     }
 };
+#endif
 
 }

@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@ class SoftTimer : public IsrBaseHandler<typename AVR::ISR::Timer<MCUTimer::numbe
 public:
     typedef typename MCUTimer::mcu_timer_type mcu_timer_type;
     typedef typename MCUTimer::mcu_type mcu_type;
+    typedef typename MCUTimer::tccrb_type tccrb_type;
     
     static constexpr uint8_t number = MCUTimer::number;
     
@@ -42,7 +43,7 @@ public:
         return MCUTimer::frequency();
     }
 
-    static AVR::PrescalerPair::scale_type prescaler() {
+    static auto prescaler() {
         return MCUTimer::prescaler();
     }
     

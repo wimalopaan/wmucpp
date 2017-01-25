@@ -3,6 +3,10 @@ example/atmega8/blink.cc
 example/atmega8/blink.h
 example/basics/register01.cc
 example/basics/register02.cc
+example/basics/register03.cc
+example/basics/register04.cc
+example/basics/register05.cc
+example/basics/register10.cc
 include/util/outputparameter.h
 include/util/static_container.h
 text/bmcppdefs.adoc

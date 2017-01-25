@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,6 +27,8 @@
 
 //#include <math.h>
 //#include "util/fixedpoint.h"
+
+#include "util/bits.h"
 
 #include <numeric>
 #include <array>
@@ -87,43 +89,68 @@ void assertFunction(bool b, const char *function, const char *file, unsigned int
     }
 }
 
-enum class A {
-    a = 1 << 0, 
-    b = 1 << 1, 
-    c = 1 << 2
-};
+//enum class A {
+//    a = 1 << 0, 
+//    b = 1 << 1, 
+//    c = 1 << 2
+//};
 
-template<typename T, T... Values>
-struct static_container final {};
+//template<typename T, T... Values>
+//struct static_container final {};
 
 //template<typename T, typename... Ts>
 //constexpr auto make_static_container(T t0, Ts... ts) {
 //    return static_container<T, t0, ts...>{};
 //}
 
-template<typename T, T... Values>
-constexpr auto make_static_container(std::integral_constant<T, Values>...) noexcept {
-    return static_container<T, Values...>{};
-}
+//template<typename T, T... Values>
+//constexpr auto make_static_container(std::integral_constant<T, Values>...) noexcept {
+//    return static_container<T, Values...>{};
+//}
 
 //template<typename T>
 //std::integral_constant(T v) -> std::integral_constant<T, v>;
 
-template<A... Flags>
-void inline set() {
-    std::cout << sizeof... (Flags) << std::endl;
-}
+//template<A... Flags>
+//void inline set() {
+//    std::cout << sizeof... (Flags) << std::endl;
+//}
 
-template<typename F, F... FF>
-void inline set(static_container<F, FF...>) {
-    std::cout << sizeof... (FF) << std::endl;
-}
+//template<typename F, F... FF>
+//void inline set(static_container<F, FF...>) {
+//    std::cout << sizeof... (FF) << std::endl;
+//}
 
+
+//int main() {
+//    constexpr static_container<A, A::a, A::b> sc1{};
+////    constexpr auto sc2 = make_static_container(A::a, A::c);
+ 
+//    set(sc1);    
+////    set(sc2);    
+//}
+
+enum class AlarmFlags : uint8_t {
+    NoTimer =    0,
+    Periodic =   1 << 0,
+    OneShot  =   1 << 1,
+    AutoDelete = 1 << 2,
+    Disabled   = 1 << 3
+};
+
+namespace std {
+template<>
+struct enable_bitmask_operators<AlarmFlags>{
+    static const bool enable = true;
+};
+}
 
 int main() {
-    constexpr static_container<A, A::a, A::b> sc1{};
-//    constexpr auto sc2 = make_static_container(A::a, A::c);
- 
-    set(sc1);    
-//    set(sc2);    
+    AlarmFlags f1 = AlarmFlags::NoTimer;
+    AlarmFlags f2 = AlarmFlags::Periodic;
+
+    AlarmFlags f3 = AlarmFlags::Disabled | AlarmFlags::AutoDelete;
+    
+    std::cout << static_cast<int>(f2 | AlarmFlags::Disabled) << std::endl;    
+    std::cout << static_cast<int>(f3) << std::endl;    
 }

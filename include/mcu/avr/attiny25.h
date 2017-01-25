@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -64,10 +64,31 @@ struct ATTiny25 final {
 //        volatile uint8_t tccra;
         volatile uint8_t padding[0x32 - 0x2A - 1];
         volatile uint8_t tcnt;
-        volatile uint8_t tccrb;
+        enum class TCCRB : uint8_t {
+#ifdef FOC0A
+            foca = (1 << FOC0A),
+#endif
+#ifdef FOC0B
+            focb = (1 << FOC0B),
+#endif
+#ifdef WGM02
+            wgm2 = (1 << WGM02),
+#endif
+#ifdef CS02
+            cs2 = (1 << CS02),
+#endif
+#ifdef CS01
+            cs1 = (1 << CS01),
+#endif
+#ifdef CS00
+            cs0 = (1 << CS00),
+#endif
+        };
+        ControlRegister<Timer8Bit, TCCRB> tccrb;
+//        volatile uint8_t tccrb;
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
-        template<uint8_t N> struct Flags; 
+//        template<uint8_t N> struct Flags; 
     };
     struct Timer8BitHighSpeed {
         volatile uint8_t ocrb;
@@ -75,7 +96,36 @@ struct ATTiny25 final {
         volatile uint8_t ocrc;
         volatile uint8_t ocra;
         volatile uint8_t tcnt;
-        volatile uint8_t tccr;
+        enum class TCCR : uint8_t {
+#ifdef CTC1
+            ctc = (1 << CTC1),
+#endif
+#ifdef PWM1A
+            pwma = (1 << PWM1A),
+#endif
+#ifdef COM1A1
+            coma1 = (1 << COM1A1),
+#endif
+#ifdef COM1A0
+            coma0 = (1 << COM1A0),
+#endif
+#ifdef CS13
+            cs3 = (1 << CS13),
+#else
+            cs3 = 0,
+#endif
+#ifdef CS12
+            cs2 = (1 << CS12),
+#endif
+#ifdef CS11
+            cs1 = (1 << CS11),
+#endif
+#ifdef CS10
+            cs0 = (1 << CS10),
+#endif
+        };
+        ControlRegister<Timer8BitHighSpeed, TCCR> tccr;
+//        volatile uint8_t tccr;
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
         template<uint8_t N> struct Flags; 
@@ -161,23 +211,27 @@ template<>
 struct ATTiny25::Timer8Bit::Address<0> {
     static constexpr uint8_t value = 0x48;
 };
+}
+namespace std {
+template<>
+struct enable_bitmask_operators<AVR::ATTiny25::Timer8Bit::TCCRA> {
+    static constexpr bool enable = true;
+};
+template<>
+struct enable_bitmask_operators<AVR::ATTiny25::Timer8Bit::TCCRB> {
+    static constexpr bool enable = true;
+};
+template<>
+struct enable_bitmask_operators<AVR::ATTiny25::Timer8BitHighSpeed::TCCR> {
+    static constexpr bool enable = true;
+};
+}
+
+namespace AVR {
 
 template<>
 struct ATTiny25::Timer8Bit::PrescalerBits<0> {
-    static constexpr AVR::PrescalerPair values[] = {
-        {_BV(CS02) |             _BV(CS00), 1024},
-        {_BV(CS02)                        , 256},
-        {            _BV(CS01) | _BV(CS00), 64},
-        {            _BV(CS01)            , 8},
-        {                        _BV(CS00), 1},
-        {0                                , 0}
-    };
-};
-template<>
-struct ATTiny25::Timer8Bit::Flags<0> {
-#if defined(WGM01)
-    static constexpr uint8_t wgm1 = _BV(WGM01);
-#endif
+    static constexpr auto values = prescalerValues10Bit<ATTiny25::Timer8Bit::TCCRB>;
 };
 
 template<>
@@ -186,24 +240,7 @@ struct ATTiny25::Timer8BitHighSpeed::Address<1> {
 };
 template<>
 struct ATTiny25::Timer8BitHighSpeed::PrescalerBits<1> {
-    static constexpr AVR::PrescalerPair values[] = {
-        {15, 16384},
-        {14, 8192},
-        {13, 4096},
-        {12, 2048},
-        {11, 1024},
-        {10, 512},
-        { 9, 256},
-        { 8, 128},
-        { 7, 64},
-        { 6, 32},
-        { 5, 16},
-        { 4, 8},
-        { 3, 4},
-        { 2, 2},
-        { 1, 1},
-        { 0, 0}
-    };
+    static constexpr auto values = prescalerValues14Bit<ATTiny25::Timer8BitHighSpeed::TCCR>;
 };
 
 }

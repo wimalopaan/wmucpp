@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,15 +24,57 @@
 # include <avr/io.h>
 #endif
 
+#include "std/array.h"
 #include "../register.h"
 
 namespace AVR {
 
+template<typename TCCR_TYPE>
 struct PrescalerPair {
-    typedef uint8_t  bits_type;
+    typedef TCCR_TYPE  bits_type;
     typedef uint16_t scale_type;
-    uint8_t  bits;
-    uint16_t scale;
+    const TCCR_TYPE  bits;
+    const uint16_t scale;
+};
+
+template<typename CS>
+constexpr std::array<PrescalerPair<CS>, 6> prescalerValues10Bit = {
+    PrescalerPair<CS>{CS::cs2          | CS::cs0, 1024},
+    PrescalerPair<CS>{CS::cs2                   , 256},
+    PrescalerPair<CS>{         CS::cs1 | CS::cs0, 64},
+    PrescalerPair<CS>{         CS::cs1          , 8},
+    PrescalerPair<CS>{                   CS::cs0, 1},
+    PrescalerPair<CS>{static_cast<CS>(0)        , 0},
+};
+template<typename CS>
+constexpr std::array<PrescalerPair<CS>, 8> prescalerValues10BitExtended = {
+    PrescalerPair<CS>{CS::cs2 | CS::cs1 | CS::cs0, 1024},
+    PrescalerPair<CS>{CS::cs2 | CS::cs1          , 256},
+    PrescalerPair<CS>{CS::cs2           | CS::cs0, 128},
+    PrescalerPair<CS>{CS::cs2                    , 64},
+    PrescalerPair<CS>{          CS::cs1 | CS::cs0, 32},
+    PrescalerPair<CS>{          CS::cs1          , 8},
+    PrescalerPair<CS>{                    CS::cs0, 1},
+    PrescalerPair<CS>{static_cast<CS>(0)         , 0}
+};
+template<typename CS>
+constexpr std::array<PrescalerPair<CS>, 16> prescalerValues14Bit = {
+    PrescalerPair<CS>{CS::cs3 | CS::cs2 | CS::cs1 | CS::cs0, 16384},
+    PrescalerPair<CS>{CS::cs3 | CS::cs2 | CS::cs1          , 8192},
+    PrescalerPair<CS>{CS::cs3 | CS::cs2 |           CS::cs0, 4096},
+    PrescalerPair<CS>{CS::cs3 | CS::cs2                    , 2048},
+    PrescalerPair<CS>{CS::cs3 |           CS::cs1 | CS::cs0, 1024},
+    PrescalerPair<CS>{CS::cs3 |           CS::cs1          , 512},
+    PrescalerPair<CS>{CS::cs3 |                     CS::cs0, 256},
+    PrescalerPair<CS>{CS::cs3                              , 128},
+    PrescalerPair<CS>{          CS::cs2 | CS::cs1 | CS::cs0, 64},
+    PrescalerPair<CS>{          CS::cs2 | CS::cs1          , 32},
+    PrescalerPair<CS>{          CS::cs2 |           CS::cs0, 16},
+    PrescalerPair<CS>{          CS::cs2                    , 8},
+    PrescalerPair<CS>{                    CS::cs1 | CS::cs0, 4},
+    PrescalerPair<CS>{                    CS::cs1          , 2},
+    PrescalerPair<CS>{                              CS::cs0, 1},
+    PrescalerPair<CS>{static_cast<CS>(0)                   , 0}
 };
 
 struct A {

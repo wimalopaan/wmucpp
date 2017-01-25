@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,8 @@
 #include "std/traits.h"
 
 namespace std {
+
+// todo: move to namespace Util
 
 template<typename E>
 struct enable_bitmask_operators final {
@@ -74,26 +76,28 @@ namespace Util {
     
 }
 
-
 template<typename E>
+constexpr
 typename std::enable_if<std::enable_bitmask_operators<E>::enable,E>::type
-operator|(E lhs,E rhs){
+operator|(E lhs, E rhs){
     typedef typename std::underlying_type<E>::type underlying;
     return static_cast<E>(
                 static_cast<underlying>(lhs) | static_cast<underlying>(rhs));
 }
 
 template<typename E>
+constexpr
 typename std::enable_if<std::enable_bitmask_operators<E>::enable,E>::type&
-operator|=(E& lhs,E rhs){
+operator|=(E& lhs, E rhs){
     typedef typename std::underlying_type<E>::type underlying;
     return lhs = static_cast<E>(
                 static_cast<underlying>(lhs) | static_cast<underlying>(rhs));
 }
 
 template<typename E>
+constexpr
 typename std::enable_if<std::enable_bitmask_operators<E>::enable,E>::type
-operator&(E lhs,E rhs){
+operator&(E lhs, E rhs){
     typedef typename std::underlying_type<E>::type underlying;
     return static_cast<E>(
                 static_cast<underlying>(lhs) & static_cast<underlying>(rhs)
@@ -101,8 +105,9 @@ operator&(E lhs,E rhs){
 }
 
 template<typename E>
+constexpr
 typename std::enable_if<std::enable_bitmask_operators<E>::enable,E>::type&
-operator&=(E& lhs,E rhs){
+operator&=(E& lhs, E rhs){
     typedef typename std::underlying_type<E>::type underlying;
     return lhs = static_cast<E>(
                 static_cast<underlying>(lhs) & static_cast<underlying>(rhs)
@@ -110,6 +115,7 @@ operator&=(E& lhs,E rhs){
 }
 
 template<typename E>
+constexpr
 typename std::enable_if<std::enable_bitmask_operators<E>::enable,E>::type
 operator~(E rhs){
     typedef typename std::underlying_type<E>::type underlying;
@@ -119,7 +125,7 @@ operator~(E rhs){
 }
 
 template<typename E>
-bool isset(E flags) {
+constexpr bool isset(E flags) {
     typedef typename std::underlying_type<E>::type underlying;
     return static_cast<underlying>(flags) != 0;
 }

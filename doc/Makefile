@@ -2,7 +2,7 @@
 # $Id: Makefile.include 1209 2016-07-01 07:53:57Z wimalopaan $
 #
 # WMuCpp - Bare Metal C++ 
-# Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+# Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

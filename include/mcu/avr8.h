@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,13 +38,13 @@ struct ATTiny25;
 
 }
 
-#include "mcu/avr/atmega1284p.h"
-#include "mcu/avr/atmega328p.h"
-#include "mcu/avr/atmega328pb.h"
-#include "mcu/avr/atmega8.h"
-#include "mcu/avr/attiny84.h"
-#include "mcu/avr/attiny85.h"
-#include "mcu/avr/attiny25.h"
+//#include "mcu/avr/atmega1284p.h"
+//#include "mcu/avr/atmega328p.h"
+//#include "mcu/avr/atmega328pb.h"
+//#include "mcu/avr/atmega8.h"
+//#include "mcu/avr/attiny84.h"
+//#include "mcu/avr/attiny85.h"
+//#include "mcu/avr/attiny25.h"
 
 namespace AVR {
 
@@ -68,18 +68,25 @@ constexpr inline Component* getBaseAddr() {
 }
 
 #if defined(__AVR_ATmega1284P__)
+# include "mcu/avr/atmega1284p.h"
 typedef AVR::ATMega1284P DefaultMcuType;
 #elif defined(__AVR_ATmega328P__)
+# include "mcu/avr/atmega328p.h"
 typedef AVR::ATMega328P DefaultMcuType;
 #elif defined(__AVR_ATmega328PB__)
+#include "mcu/avr/atmega328pb.h"
 typedef AVR::ATMega328PB DefaultMcuType;
 #elif defined(__AVR_ATmega8__)
+#include "mcu/avr/atmega8.h"
 typedef AVR::ATMega8 DefaultMcuType;
 #elif defined(__AVR_ATtiny85__)
 typedef AVR::ATTiny85 DefaultMcuType;
+#include "mcu/avr/attiny85.h"
 #elif defined(__AVR_ATtiny25__)
 typedef AVR::ATTiny25 DefaultMcuType;
+#include "mcu/avr/attiny25.h"
 #elif defined(__AVR_ATtiny84__)
+#include "mcu/avr/attiny84.h"
 typedef AVR::ATTiny84 DefaultMcuType;
 #else
 typedef AVR::ATMegaNone DefaultMcuType;

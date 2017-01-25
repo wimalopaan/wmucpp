@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -65,12 +65,10 @@ struct ATMega1284P final
         template<int N> struct PrescalerRow;
         template<int N, int F> struct Prescaler;
     };
+    // todo: finish all ControlRegister and DataRegister
     struct Timer8Bit {
         static constexpr const uint8_t count = 2;
         typedef uint8_t value_type;
-
-        // todo: finish all ControlRegister and DataRegister
-        
         enum class TCCRA : uint8_t {
 #ifdef COM0A0
             coma0 = (1 << COM0A0),
@@ -94,13 +92,33 @@ struct ATMega1284P final
         ControlRegister<Timer8Bit, TCCRA> tccra;
 //        volatile uint8_t tccra;
 
-        volatile uint8_t tccrb;
+        enum class TCCRB : uint8_t {
+#ifdef FOC0A
+            foca = (1 << FOC0A),
+#endif
+#ifdef FOC0B
+            focb = (1 << FOC0B),
+#endif
+#ifdef WGM02
+            wgm2 = (1 << WGM02),
+#endif
+#ifdef CS02
+            cs2 = (1 << CS02),
+#endif
+#ifdef CS01
+            cs1 = (1 << CS01),
+#endif
+#ifdef CS00
+            cs0 = (1 << CS00),
+#endif
+        };
+        ControlRegister<Timer8Bit, TCCRB> tccrb;
+//        volatile uint8_t tccrb;
         volatile uint8_t tcnt;
         volatile uint8_t ocra;
         volatile uint8_t ocrb;
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
-        template<uint8_t N> struct Flags; 
     };
 
     struct Timer16Bit {
@@ -130,7 +148,31 @@ struct ATMega1284P final
         ControlRegister<Timer16Bit, TCCRA> tccra;
 
 //        volatile uint8_t tccra;
-        volatile uint8_t tccrb;
+        enum class TCCRB : uint8_t {
+#ifdef ICNC1
+            icnc = (1 << ICNC1),
+#endif
+#ifdef ICES1
+            ices = (1 << ICES1),
+#endif
+#ifdef WGM13
+            wgm3 = (1 << WGM13),
+#endif
+#ifdef WGM12
+            wgm2 = (1 << WGM12),
+#endif
+#ifdef CS12
+            cs2 = (1 << CS12),
+#endif
+#ifdef CS11
+            cs1 = (1 << CS11),
+#endif
+#ifdef CS10
+            cs0 = (1 << CS10),
+#endif
+        };
+        ControlRegister<Timer16Bit, TCCRB> tccrb;
+//        volatile uint8_t tccrb;
         volatile uint8_t tccrc;
         volatile uint8_t reserved;
         union {
@@ -163,7 +205,6 @@ struct ATMega1284P final
         };
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
-        template<uint8_t N> struct Flags; 
     };
 
     struct PCInterrupts {
@@ -232,6 +273,29 @@ struct ATMega1284P final
 };
 template<>
 constexpr bool ATMega1284P::is_atomic<uint8_t>() {return true;}
+
+}
+
+namespace std {
+template<>
+struct enable_bitmask_operators<AVR::ATMega1284P::Timer8Bit::TCCRA> {
+    static constexpr bool enable = true;
+};
+template<>
+struct enable_bitmask_operators<AVR::ATMega1284P::Timer8Bit::TCCRB> {
+    static constexpr bool enable = true;
+};
+template<>
+struct enable_bitmask_operators<AVR::ATMega1284P::Timer16Bit::TCCRA> {
+    static constexpr bool enable = true;
+};
+template<>
+struct enable_bitmask_operators<AVR::ATMega1284P::Timer16Bit::TCCRB> {
+    static constexpr bool enable = true;
+};
+}
+
+namespace AVR {
 
 template<>
 struct ATMega1284P::TimerInterrupts::Flags<0> {
@@ -351,21 +415,8 @@ struct ATMega1284P::Timer8Bit::Address<0> {
     static constexpr uint8_t value = 0x44;
 };
 template<>
-struct ATMega1284P::Timer8Bit::Flags<0> {
-#if defined(WGM01)
-    static constexpr uint8_t wgm1 = _BV(WGM01);
-#endif
-};
-template<>
 struct ATMega1284P::Timer8Bit::PrescalerBits<0> {
-    static constexpr AVR::PrescalerPair values[] = {
-        {_BV(CS02) | _BV(CS00), 1024},
-        {_BV(CS02)            , 256},
-        {_BV(CS01) | _BV(CS00), 64},
-        {_BV(CS01)            , 8},
-        {_BV(CS00)            , 1},
-        {0                    , 0}
-    };
+    static constexpr auto values = prescalerValues10Bit<ATMega1284P::Timer8Bit::TCCRB>;
 };
 
 // Timer2
@@ -374,23 +425,8 @@ struct ATMega1284P::Timer8Bit::Address<2> {
     static constexpr uint8_t value = 0xb0;
 };
 template<>
-struct ATMega1284P::Timer8Bit::Flags<2> {
-#if defined(WGM21)
-    static constexpr uint8_t wgm1 = _BV(WGM21);
-#endif
-};
-template<>
 struct ATMega1284P::Timer8Bit::PrescalerBits<2> {
-    static constexpr AVR::PrescalerPair values[] = {
-        {_BV(CS02) | _BV(CS01) | _BV(CS00), 1024},
-        {_BV(CS02) | _BV(CS01)            , 256},
-        {_BV(CS02)             | _BV(CS00), 128},
-        {_BV(CS02)                        , 64},
-        {            _BV(CS01) | _BV(CS00), 32},
-        {            _BV(CS01)            , 8},
-        {                        _BV(CS00), 1},
-        {0                                , 0}
-    };
+    static constexpr auto values = prescalerValues10BitExtended<ATMega1284P::Timer8Bit::TCCRB>;
 };
 
 // Timer 1 (16bit)
@@ -400,20 +436,7 @@ struct ATMega1284P::Timer16Bit::Address<1> {
 };
 template<>
 struct ATMega1284P::Timer16Bit::PrescalerBits<1> {
-    static constexpr AVR::PrescalerPair values[] = {
-        {_BV(CS12) |             _BV(CS10), 1024},
-        {_BV(CS12)                        , 256},
-        {            _BV(CS11) | _BV(CS10), 64},
-        {            _BV(CS11)            , 8},
-        {                        _BV(CS10), 1},
-        {0                                , 0}
-    };
-};
-template<>
-struct ATMega1284P::Timer16Bit::Flags<1> {
-#if defined(WGM12)
-    static constexpr uint8_t wgm2 = _BV(WGM12);
-#endif
+    static constexpr auto values = prescalerValues10Bit<ATMega1284P::Timer16Bit::TCCRB>;
 };
 
 // Timer 3 (16bit)
@@ -423,17 +446,9 @@ struct ATMega1284P::Timer16Bit::Address<3> {
 };
 template<>
 struct ATMega1284P::Timer16Bit::PrescalerBits<3> {
-    static constexpr AVR::PrescalerPair values[] = {
-        {_BV(CS12) |             _BV(CS10), 1024},
-        {_BV(CS12)                        , 256},
-        {            _BV(CS11) | _BV(CS10), 64},
-        {            _BV(CS11)            , 8},
-        {                        _BV(CS10), 1},
-        {0                                , 0}
-    };
+    static constexpr auto values = prescalerValues10Bit<ATMega1284P::Timer16Bit::TCCRB>;
 };
 
 }
-
 
 #pragma pack(pop)

@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,27 +36,45 @@ struct TimerSetupData final {
     }
 };
 
-template<uint8_t N>
-constexpr std::array<AVR::PrescalerPair::scale_type, N> prescalerValues(const AVR::PrescalerPair(&a)[N]) {
-    std::array<AVR::PrescalerPair::scale_type, N> values;
+template<typename T, uint8_t N>
+constexpr std::array<typename AVR::PrescalerPair<T>::scale_type, N> prescalerValues(const std::array<AVR::PrescalerPair<T>, N>& a) {
+    std::array<typename AVR::PrescalerPair<T>::scale_type, N> values;
     for(uint8_t i = 0; i < N; ++i) {
         values[i] = a[i].scale;
     }
     return values;
 }
+//template<uint8_t N>
+//constexpr std::array<AVR::PrescalerPair::scale_type, N> prescalerValues(const AVR::PrescalerPair(&a)[N]) {
+//    std::array<AVR::PrescalerPair::scale_type, N> values;
+//    for(uint8_t i = 0; i < N; ++i) {
+//        values[i] = a[i].scale;
+//    }
+//    return values;
+//}
 
-template<AVR::PrescalerPair::scale_type Prescale, uint8_t N>
-constexpr uint8_t bitsFrom(const AVR::PrescalerPair(&a)[N]) {
+template<uint16_t Prescale, typename T, uint8_t N>
+constexpr typename AVR::PrescalerPair<T>::bits_type bitsFrom(const std::array<AVR::PrescalerPair<T>, N>& a) {
     for(const auto pair: a) {
         if (pair.scale == Prescale) {
             return pair.bits;
         }
     }
-    return 0;
+    return static_cast<typename AVR::PrescalerPair<T>::bits_type>(0);
 }
+//template<AVR::PrescalerPair::scale_type Prescale, uint8_t N>
+//constexpr uint8_t bitsFrom(const AVR::PrescalerPair(&a)[N]) {
+//    for(const auto pair: a) {
+//        if (pair.scale == Prescale) {
+//            return pair.bits;
+//        }
+//    }
+//    return 0;
+//}
 
-template<uint8_t N>
-constexpr AVR::PrescalerPair::scale_type bitsToPrescale(AVR::PrescalerPair::bits_type bits, const AVR::PrescalerPair(&a)[N]) {
+
+template<typename T, uint8_t N>
+constexpr uint16_t bitsToPrescale(T bits, const std::array<AVR::PrescalerPair<T>, N>& a) {
     for(const auto& pair : a) {
         if (bits == pair.bits) {
             return pair.scale;
@@ -64,6 +82,15 @@ constexpr AVR::PrescalerPair::scale_type bitsToPrescale(AVR::PrescalerPair::bits
     }
     return 0;
 }
+//template<uint8_t N>
+//constexpr AVR::PrescalerPair::scale_type bitsToPrescale(AVR::PrescalerPair::bits_type bits, const AVR::PrescalerPair(&a)[N]) {
+//    for(const auto& pair : a) {
+//        if (bits == pair.bits) {
+//            return pair.scale;
+//        }
+//    }
+//    return 0;
+//}
 
 template<typename MCUTimer>
 constexpr TimerSetupData<typename MCUTimer::value_type> calculate(const std::hertz& ftimer) {

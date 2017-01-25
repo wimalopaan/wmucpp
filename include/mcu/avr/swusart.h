@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -156,9 +156,16 @@ public:
         timer()->ocra= tsd.ocr;
 //        timer()->ocral = SWUsartOCRA<Baud>::value;
 //        timer()->ocrah = (SWUsartOCRA<Baud>::value >> 8) & 0xff;
-        timer()->tccrb |= _BV(WGM12);
-        timer()->tccrb |= _BV(ICNC1);
-        timer()->tccrb &= ~_BV(ICES1);
+
+        // todo: check
+        
+        timer()->tccrb.template add<mcu_timer_type::TCCRB::wgm2>();
+        timer()->tccrb.template add<mcu_timer_type::TCCRB::icnc>();
+        timer()->tccrb.template clear<mcu_timer_type::TCCRB::ices>();
+
+        //        timer()->tccrb |= _BV(WGM12);
+//        timer()->tccrb |= _BV(ICNC1);
+//        timer()->tccrb &= ~_BV(ICES1);
 
         mcuInterrupts()->timsk |= _BV(ICIE1);
         mcuInterrupts()->tifr  |= _BV(ICF1) | _BV(OCF1B);

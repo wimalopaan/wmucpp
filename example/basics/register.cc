@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ int main() {
     PortB::set<0>();
     PortB::set(0);
 
-    AVR::ATMega1284P::PortRegister* p = new(reinterpret_cast<void*>(0x23)) AVR::ATMega1284P::PortRegister;
+    DefaultMcuType::PortRegister* p = new(reinterpret_cast<void*>(0x23)) DefaultMcuType::PortRegister;
     p->out = 0;
     
     delete p;
