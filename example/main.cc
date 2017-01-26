@@ -335,7 +335,7 @@ public:
                 }
             }
             
-//            ds1307::startReadTimeInfo();
+            ds1307::startReadTimeInfo();
             
             std::cout << "Temp lm35: "_pgm << lm35::temperature() << std::endl;
             std::cout << "ppm:"_pgm << ppm1::value<0>() << std::endl;
