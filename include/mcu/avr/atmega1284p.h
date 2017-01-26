@@ -70,47 +70,23 @@ struct ATMega1284P final
         static constexpr const uint8_t count = 2;
         typedef uint8_t value_type;
         enum class TCCRA : uint8_t {
-#ifdef COM0A0
             coma0 = (1 << COM0A0),
-#endif
-#ifdef COM0A1
             coma1 = (1 << COM0A1),
-#endif
-#ifdef COM0B0
             comb0 = (1 << COM0B0),
-#endif
-#ifdef COM0B1
             comb1 = (1 << COM0B1),
-#endif
-#ifdef WGM00
             wgm0 = (1 << WGM00),
-#endif        
-#ifdef WGM01
             wgm1 = (1 << WGM01)
-#endif        
         };
         ControlRegister<Timer8Bit, TCCRA> tccra;
 //        volatile uint8_t tccra;
 
         enum class TCCRB : uint8_t {
-#ifdef FOC0A
             foca = (1 << FOC0A),
-#endif
-#ifdef FOC0B
             focb = (1 << FOC0B),
-#endif
-#ifdef WGM02
             wgm2 = (1 << WGM02),
-#endif
-#ifdef CS02
             cs2 = (1 << CS02),
-#endif
-#ifdef CS01
             cs1 = (1 << CS01),
-#endif
-#ifdef CS00
             cs0 = (1 << CS00),
-#endif
         };
         ControlRegister<Timer8Bit, TCCRB> tccrb;
 //        volatile uint8_t tccrb;
@@ -126,50 +102,24 @@ struct ATMega1284P final
         typedef uint16_t value_type;
 
         enum class TCCRA : uint8_t {
-#ifdef COM1A0
             coma0 = (1 << COM1A0),
-#endif
-#ifdef COM1A1
             coma1 = (1 << COM1A1),
-#endif
-#ifdef COM1B0
             comb0 = (1 << COM1B0),
-#endif
-#ifdef COM1B1
             comb1 = (1 << COM1B1),
-#endif
-#ifdef WGM10
             wgm0 = (1 << WGM10),
-#endif        
-#ifdef WGM11
             wgm1 = (1 << WGM11)
-#endif        
         };
         ControlRegister<Timer16Bit, TCCRA> tccra;
 
 //        volatile uint8_t tccra;
         enum class TCCRB : uint8_t {
-#ifdef ICNC1
             icnc = (1 << ICNC1),
-#endif
-#ifdef ICES1
             ices = (1 << ICES1),
-#endif
-#ifdef WGM13
             wgm3 = (1 << WGM13),
-#endif
-#ifdef WGM12
             wgm2 = (1 << WGM12),
-#endif
-#ifdef CS12
             cs2 = (1 << CS12),
-#endif
-#ifdef CS11
             cs1 = (1 << CS11),
-#endif
-#ifdef CS10
             cs0 = (1 << CS10),
-#endif
         };
         ControlRegister<Timer16Bit, TCCRB> tccrb;
 //        volatile uint8_t tccrb;
@@ -299,27 +249,17 @@ namespace AVR {
 
 template<>
 struct ATMega1284P::TimerInterrupts::Flags<0> {
-#if defined(OCIE0A)
     static constexpr uint8_t ociea = _BV(OCIE0A);
-#endif
-#if defined(TOIE0)
     static constexpr uint8_t toie = _BV(TOIE0);
-#endif
 };
 template<>
 struct ATMega1284P::TimerInterrupts::Flags<1> {
-#if defined(OCIE1A)
     static constexpr uint8_t ociea = _BV(OCIE1A);
-#endif
 };
 template<>
 struct ATMega1284P::TimerInterrupts::Flags<2> {
-#if defined(OCIE2A)
     static constexpr uint8_t ociea = _BV(OCIE2A);
-#endif
-#if defined(TOIE2)
     static constexpr uint8_t toie = _BV(TOIE2);
-#endif
 };
 
 template<>
@@ -375,6 +315,8 @@ template<>
 struct ATMega1284P::TWI::Address<0> {
     static constexpr uint8_t value = 0xb8;
 };
+
+// todo: zusammenfassen wie bei Timer
 template<>
 struct ATMega1284P::TWI::PrescalerRow<0> {
     static constexpr uint8_t values[] = {1, 4, 16, 64};

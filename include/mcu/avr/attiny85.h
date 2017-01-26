@@ -33,51 +33,25 @@ struct ATTiny85 final {
         volatile uint8_t ocrb;
         volatile uint8_t ocra;
         enum class TCCRA : uint8_t {
-#ifdef COM0A0
             coma0 = (1 << COM0A0),
-#endif
-#ifdef COM0A1
             coma1 = (1 << COM0A1),
-#endif
-#ifdef COM0B0
             comb0 = (1 << COM0B0),
-#endif
-#ifdef COM0B1
             comb1 = (1 << COM0B1),
-#endif
-#ifdef WGM00
             wgm0 = (1 << WGM00),
-#endif        
-#ifdef WGM01
             wgm1 = (1 << WGM01)
-#endif        
         };
         ControlRegister<Timer8Bit, TCCRA> tccra;
-//        volatile uint8_t tccra;
         volatile uint8_t padding[0x32 - 0x2A - 1];
         volatile uint8_t tcnt;
         enum class TCCRB : uint8_t {
-#ifdef FOC0A
             foca = (1 << FOC0A),
-#endif
-#ifdef FOC0B
             focb = (1 << FOC0B),
-#endif
-#ifdef WGM02
             wgm2 = (1 << WGM02),
-#endif
-#ifdef CS02
             cs2 = (1 << CS02),
-#endif
-#ifdef CS01
             cs1 = (1 << CS01),
-#endif
-#ifdef CS00
             cs0 = (1 << CS00),
-#endif
         };
         ControlRegister<Timer8Bit, TCCRB> tccrb;
-//        volatile uint8_t tccrb;
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
         template<uint8_t N> struct Flags; 
@@ -89,38 +63,18 @@ struct ATTiny85 final {
         volatile uint8_t ocra;
         volatile uint8_t tcnt;
         enum class TCCR : uint8_t {
-#ifdef CTC1
             ctc = (1 << CTC1),
-#endif
-#ifdef PWM1A
             pwma = (1 << PWM1A),
-#endif
-#ifdef COM1A1
             coma1 = (1 << COM1A1),
-#endif
-#ifdef COM1A0
             coma0 = (1 << COM1A0),
-#endif
-#ifdef CS13
             cs3 = (1 << CS13),
-#else
-            cs3 = 0,
-#endif
-#ifdef CS12
             cs2 = (1 << CS12),
-#endif
-#ifdef CS11
             cs1 = (1 << CS11),
-#endif
-#ifdef CS10
             cs0 = (1 << CS10),
-#endif
         };
         ControlRegister<Timer8BitHighSpeed, TCCR> tccr;
-//        volatile uint8_t tccr;
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
-//        template<uint8_t N> struct Flags; 
     };
     
     struct USI {

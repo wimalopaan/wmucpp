@@ -31,51 +31,25 @@ struct ATTiny84 final {
     ATTiny84() = delete;
     struct Timer8Bit {
         enum class TCCRA : uint8_t {
-#ifdef COM0A0
             coma0 = (1 << COM0A0),
-#endif
-#ifdef COM0A1
             coma1 = (1 << COM0A1),
-#endif
-#ifdef COM0B0
             comb0 = (1 << COM0B0),
-#endif
-#ifdef COM0B1
             comb1 = (1 << COM0B1),
-#endif
-#ifdef WGM00
             wgm0 = (1 << WGM00),
-#endif        
-#ifdef WGM01
             wgm1 = (1 << WGM01)
-#endif        
         };
         ControlRegister<Timer8Bit, TCCRA> tccra;
-//        volatile uint8_t tccra;
         volatile uint8_t unused1;
         volatile uint8_t tcnt;
         enum class TCCRB : uint8_t {
-#ifdef FOC0A
             foca = (1 << FOC0A),
-#endif
-#ifdef FOC0B
             focb = (1 << FOC0B),
-#endif
-#ifdef WGM02
             wgm2 = (1 << WGM02),
-#endif
-#ifdef CS02
             cs2 = (1 << CS02),
-#endif
-#ifdef CS01
             cs1 = (1 << CS01),
-#endif
-#ifdef CS00
             cs0 = (1 << CS00),
-#endif
         };
         ControlRegister<Timer8Bit, TCCRB> tccrb;
-//        volatile uint8_t tccrb;
         volatile uint8_t unused2;
         volatile uint8_t unused3;
         volatile uint8_t ocra;
@@ -83,7 +57,6 @@ struct ATTiny84 final {
         volatile uint8_t ocrb;
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
-//        template<uint8_t N> struct Flags; 
     };
     
     struct USI {

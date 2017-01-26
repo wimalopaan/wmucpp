@@ -281,6 +281,7 @@ struct TwiSetupData {
     const uint8_t twbr = 0;
 };
 
+// todo: sorting?
 template<typename TWI, uint8_t N>
 constexpr TwiSetupData calculateNextPossibleBelow(const std::hertz& fTwi) {
     using pRow = typename TWI::template PrescalerRow<N>;

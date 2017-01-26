@@ -38,15 +38,9 @@ struct ATMega8 final
     struct Timer8BitSimple {
         volatile uint8_t tcnt;
         enum class TCCR : uint8_t {
-#ifdef CS02
             cs2 = (1 << CS02),
-#endif
-#ifdef CS01
             cs1 = (1 << CS01),
-#endif
-#ifdef CS00
             cs0 = (1 << CS00),
-#endif
         };
         ControlRegister<Timer8BitSimple, TCCR> tccr;
         
@@ -58,30 +52,12 @@ struct ATMega8 final
         volatile uint8_t ocr;
         volatile uint8_t tcnt;
         enum class TCCR : uint8_t {
-#ifdef FOC2
             foc = (1 << FOC2),
-#endif
-#ifdef WGM20
             wgm0 = (1 << WGM20),
-#endif
-#ifdef WGM21
             wgm1 = (1 << WGM21),
-#endif
-#ifdef CS22
             cs2 = (1 << CS22),
-#else
-            cs2 = 0,
-#endif
-#ifdef CS21
             cs1 = (1 << CS21),
-#else
-            cs1 = 0,
-#endif
-#ifdef CS20
             cs0 = (1 << CS20),
-#else
-            cs0 = 0,
-#endif
         };
         
         ControlRegister<Timer8BitSimple2, TCCR> tccr;
