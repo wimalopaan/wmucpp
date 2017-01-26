@@ -61,6 +61,7 @@ public:
     static_assert(ocFrame > 0, "wrong oc value");
 
     static void timerInit() {
+        MCUTimer::template prescale<prescaler>();
         mcuTimer()->ocra = ocFrame;
         mcuTimer()->tccrb.template add<MCUTimer::tccrb_type::wgm2>();
         // todo: flags
@@ -69,7 +70,6 @@ public:
 //        mcuTimer()->tccrb |= _BV(WGM12);
 //        mcuInterrupts()->tifr  |= _BV(OCF1A) | _BV(OCF1B);
 //        mcuInterrupts()->timsk |= _BV(OCIE0A);
-        MCUTimer::template prescale<prescaler>();
     }
 };
 template<typename MCUTimer>

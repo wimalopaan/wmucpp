@@ -43,10 +43,11 @@ struct PwmParamter<0, ATMega1284P> {
 //                                     | _BV(WGM00) | _BV(WGM01) ; // 8-bit fast PWM
     
     using ta = AVR::ATMega1284P::Timer8Bit::TCCRA;
-    static constexpr ::Util::static_container<ta, ta::coma0, ta::coma1, ta::comb0, ta::comb1, ta::wgm0, ta::wgm1> tccra{}; 
+    static constexpr ta tccra = ta::coma0 | ta::coma1 | ta::comb0 | ta::comb1 | ta::wgm0 | ta::wgm1;
     
     using tb = AVR::ATMega1284P::Timer8Bit::TCCRB;
-    static constexpr ::Util::static_container<tb> tccrb{}; 
+    static constexpr tb tccrb{0};
+    
 //    static constexpr uint8_t tccrb = 0;
     static constexpr uint8_t top = 0xff;
 };
@@ -61,10 +62,10 @@ struct PwmParamter<1, ATMega1284P> {
 //                                     | _BV(WGM10) | _BV(WGM11) ; // 10-bit fast PWM
 
     using ta = AVR::ATMega1284P::Timer16Bit::TCCRA;
-    static constexpr ::Util::static_container<ta, ta::coma0, ta::coma1, ta::comb0, ta::comb1, ta::wgm0, ta::wgm1> tccra{}; 
+    static constexpr ta tccra = ta::coma0 | ta::coma1 | ta::comb0 | ta::comb1 | ta::wgm0 | ta::wgm1; 
     
     using tb = AVR::ATMega1284P::Timer16Bit::TCCRB;
-    static constexpr ::Util::static_container<tb, tb::wgm2> tccrb{}; 
+    static constexpr tb tccrb{tb::wgm2}; 
 //    static constexpr uint8_t tccrb = _BV(WGM12); // 10-bit fast PWM
     static constexpr value_type top = 0x3ff;
 };
@@ -79,10 +80,10 @@ struct PwmParamter<2, ATMega1284P> {
 //                                     | _BV(WGM20) | _BV(WGM21) ; // 8-bit fast PWM
     
     using ta = AVR::ATMega1284P::Timer8Bit::TCCRA;
-    static constexpr ::Util::static_container<ta, ta::coma0, ta::coma1, ta::comb0, ta::comb1, ta::wgm0, ta::wgm1> tccra{}; 
+    static constexpr ta tccra = ta::coma0 | ta::coma1 | ta::comb0 | ta::comb1 | ta::wgm0 | ta::wgm1; 
 
     using tb = AVR::ATMega1284P::Timer8Bit::TCCRB;
-    static constexpr ::Util::static_container<tb> tccrb{}; 
+    static constexpr tb tccrb{}; 
 //    static constexpr uint8_t tccrb = 0;
     static constexpr uint8_t top = 0xff;
 };
@@ -97,10 +98,10 @@ struct PwmParamter<3, ATMega1284P> {
 //                                     | _BV(WGM30) | _BV(WGM31) ; // 10-bit fast PWM
     
     using ta = AVR::ATMega1284P::Timer16Bit::TCCRA;
-    static constexpr ::Util::static_container<ta, ta::coma0, ta::coma1, ta::comb0, ta::comb1, ta::wgm0, ta::wgm1> tccra{}; 
+    static constexpr ta tccra = ta::coma0 | ta::coma1 | ta::comb0 | ta::comb1 | ta::wgm0 | ta::wgm1; 
 
     using tb = AVR::ATMega1284P::Timer16Bit::TCCRB;
-    static constexpr ::Util::static_container<tb, tb::wgm2> tccrb{}; 
+    static constexpr tb tccrb{tb::wgm2}; 
 //    static constexpr uint8_t tccrb = _BV(WGM32); // 10-bit fast PWM
     static constexpr value_type top = 0x3ff;
 };

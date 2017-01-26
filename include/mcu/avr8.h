@@ -38,14 +38,6 @@ struct ATTiny25;
 
 }
 
-//#include "mcu/avr/atmega1284p.h"
-//#include "mcu/avr/atmega328p.h"
-//#include "mcu/avr/atmega328pb.h"
-//#include "mcu/avr/atmega8.h"
-//#include "mcu/avr/attiny84.h"
-//#include "mcu/avr/attiny85.h"
-//#include "mcu/avr/attiny25.h"
-
 namespace AVR {
 
 // todo: change to non constexpr here, since reinterpret_cast renders it non-constexpr at all

@@ -30,68 +30,31 @@ namespace AVR {
 struct ReadWrite {};
 struct ReadOnly{};
 
-template<typename BitType, uint8_t StartBit, uint8_t Span>
-struct ControlRegisterPart {
-    
-};
-
-template<typename... Parts>
-struct ControlRegisterParts {
-    
-};
-
 template<typename Component, typename BitType, typename ValueType = uint8_t>
 struct ControlRegister {
     typedef Component component_type;
     typedef ValueType value_type;    
     typedef BitType bit_type;
     
-    template<typename... Flags>
-    void inline set(Flags... f) {
-        static_assert((std::is_same<bit_type, Flags>::value && ... && true), "wrong flag type");
-        static_assert(sizeof...(Flags) <= 8, "too much flags");
-        value_type v = (static_cast<value_type>(f) | ... | 0);
-        value_type n = Util::numberOfOnes(v);        
-        assert(n == sizeof... (Flags));
-        hwRegister = v;
+    void inline set(BitType v) {
+        hwRegister = static_cast<value_type>(v);
     }
-
-    template<typename F, F... FF>
-    void inline set(Util::static_container<F, FF...>) {
-        set<FF...>();
-    }
-    
-    template<BitType... Flags>
+    template<BitType F>
     void inline set() {
-        static_assert(sizeof...(Flags) <= 8, "too much flags");
-        constexpr auto v = (static_cast<value_type>(Flags) | ... | 0);
-//        constexpr auto n = Util::numberOfOnes(v);        
-//        static_assert(n == sizeof... (Flags), "use different flags");
-        hwRegister = v;
+        hwRegister = static_cast<value_type>(F);
     }
-
-    template<BitType... Flags>
+    template<BitType F>
     void inline add() {
-        static_assert(sizeof...(Flags) <= 8, "too much flags");
-        constexpr auto v = (static_cast<value_type>(Flags) | ... | 0);
-//        constexpr auto n = Util::numberOfOnes(v);        
-//        static_assert(n == sizeof... (Flags), "use different flags");
-        hwRegister |= v;
+        hwRegister |= static_cast<value_type>(F);
     }
-
-    template<BitType... Flags>
+    template<BitType F>
     void inline clear() {
-        static_assert(sizeof...(Flags) <= 8, "too much flags");
-        constexpr auto v = (static_cast<value_type>(Flags) | ... | 0);
-        constexpr auto n = Util::numberOfOnes(v);        
-        static_assert(n == sizeof... (Flags), "use different flags");
-        hwRegister &= ~v;
+        hwRegister &= ~static_cast<value_type>(F);
     }
     template<uint8_t Mask>
     BitType get() {
         return static_cast<BitType>(hwRegister & Mask);
     }
-
 private:
     volatile value_type hwRegister;
 };
@@ -107,7 +70,7 @@ struct DataRegister {
     inline void operator=(value_type v) {
         hwRegister = v;
     }
-    
+private:    
     volatile value_type hwRegister;
 };
 

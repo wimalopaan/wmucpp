@@ -29,7 +29,7 @@ int main() {
     using tfb = tt::TCCRB;
     
     auto t0 = AVR::getBaseAddr<tt, 0>();
-    t0->tccrb.set(tfb::cs0, tfb::cs1);
+    t0->tccrb.set(tfb::cs0 | tfb::cs1);
             
     constexpr auto tsd = AVR::Util::calculate<AVR::Timer8Bit<0>>(1000_Hz);
     

@@ -78,7 +78,7 @@ ISR(USI_START_vect) {
 }
 
 #ifndef NDEBUG
-void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) {
+void assertFunction(const PgmStringView&, const PgmStringView&, unsigned int) noexcept {
 //    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
     while(true) {}
 }

@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//#define NDEBUG
+
 #include "main.h"
 #include "std/limits.h"
 #include "mcu/avr8.h"
@@ -111,7 +113,9 @@ using i2cled = I2CRam<TwiMasterAsync, i2cledAddress, I2CLedParameter>;
 static constexpr TWI::Address i2crpmAddress{0x55};
 using i2crpm = I2CRam<TwiMasterAsync, i2crpmAddress, I2CRpmParameter>;
 
-using vrAdapter = VariableRateAdapter<bufferedTerminal, adcController>;
+using vrAdapter = VariableRateAdapter<bufferedTerminal
+                                    , adcController
+>;
 
 using ws2812_A = AVR::Pin<PortC, 2>;
 //using ws2812_B = AVR::Pin<PortC, 2>;
@@ -128,7 +132,6 @@ using systemTimer = AlarmTimer<systemClock>;
 
 using sensorUsart = AVR::Usart<0, Hott::SensorProtocollAdapter<0>> ;
 using rcUsart = AVR::Usart<1, Hott::SumDProtocollAdapter<0>>;
-
 
 using ppmTimerOutput = AVR::Timer16Bit<3>;
 using ppmPin1 = AVR::Pin<PortC, 4>;
@@ -151,7 +154,8 @@ using softPwmPin1 = AVR::Pin<PortB, 5>;
 using softPwmPin2 = AVR::Pin<PortB, 6>;
 using softPwm = SoftPWM<softPwmPin1, softPwmPin2>;
 
-using sampler = PeriodicGroup<AVR::ISR::Timer<0>::CompareA, buttonController, systemTimer, dcfDecoder, softPwm>; // werden alle resolution ms aufgerufen
+using sampler = PeriodicGroup<AVR::ISR::Timer<0>::CompareA, buttonController, systemTimer, dcfDecoder, softPwm
+                                >; // werden alle resolution ms aufgerufen
 
 using led0 = AVR::Pin<PortC, 6>;
 using led1 = AVR::Pin<PortC, 7>;
@@ -331,7 +335,7 @@ public:
                 }
             }
             
-            ds1307::startReadTimeInfo();
+//            ds1307::startReadTimeInfo();
             
             std::cout << "Temp lm35: "_pgm << lm35::temperature() << std::endl;
             std::cout << "ppm:"_pgm << ppm1::value<0>() << std::endl;
@@ -389,9 +393,12 @@ public:
     }
 };
 
-using isrRegistrar = IsrRegistrar<ppm1, isrDistributor, sampler, 
+using isrRegistrar = IsrRegistrar<
+                                ppm1, 
+                                isrDistributor, sampler, 
                                   sensorUsart::RxHandler, sensorUsart::TxHandler, rcUsart::RxHandler, rcUsart::TxHandler,
-                                  softPpm::OCAHandler, softPpm::OCBHandler>;
+                                  softPpm::OCAHandler, softPpm::OCBHandler
+>;
 
 int main()
 {
@@ -482,7 +489,8 @@ int main()
                                 UsartHandler, HottKeyHandler,
                                 Button0Handler, 
                                 ds18b20, DS18B20ErrorHandler, DS18B20MeasurementHandler,
-                                TWIHandlerError, ds1307, DS1307handler, DS1307handlerError, i2cram, i2cled, i2crpm,
+                                TWIHandlerError, 
+                                ds1307, DS1307handler, DS1307handlerError, i2cram, i2cled, i2crpm,
                                 DCFReceive0Handler, DCFReceive1Handler, DCFSyncHandler, DCFErrorHandler, DCFParityHandler,
                                 I2CRamHandler, I2CRamErrorHandler,
                                 I2CLedHandler, I2CLedErrorHandler,
@@ -536,8 +544,6 @@ ISR(SPI_STC_vect) {
 ISR(TIMER0_COMPA_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<0>::CompareA>();
 }
-
-// todo: isrReg
 
 ISR(TIMER3_COMPA_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<3>::CompareA>();

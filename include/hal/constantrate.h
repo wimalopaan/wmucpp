@@ -110,10 +110,12 @@ public:
             (Writers::rateProcess(),...);
         }
     }
+    
+    // todo: auch tifr, timsk umstellen
+    
     static constexpr void init() {
         if constexpr(!std::is_same<Timer, void>::value) {
-            Timer::mcuTimer()->tccrb.template set<Timer::mcu_timer_type::TCCRB::wgm2>();
-//            Timer::mcuTimer()->tccrb |= _BV(WGM12);;
+            Timer::mcuTimer()->tccrb.template add<Timer::mcu_timer_type::TCCRB::wgm2>();
             Timer::mcuInterrupts()->tifr  |= _BV(OCF1A) | _BV(OCF1B);
             Timer::mcuInterrupts()->timsk |= _BV(OCIE0A);
         }
