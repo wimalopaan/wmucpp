@@ -37,21 +37,20 @@ struct ATMega8 final
     };
     struct Timer8BitSimple {
         static constexpr const uint8_t count = 1;
-        volatile uint8_t tcnt;
+        DataRegister<Timer8BitSimple, ReadWrite> tcnt;
         enum class TCCR : uint8_t {
             cs2 = (1 << CS02),
             cs1 = (1 << CS01),
             cs0 = (1 << CS00),
         };
         ControlRegister<Timer8BitSimple, TCCR> tccr;
-        
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
     };
     struct Timer8BitSimple2 {
         static constexpr const uint8_t count = 1;
         volatile uint8_t ocr;
-        volatile uint8_t tcnt;
+        DataRegister<Timer8BitSimple2, ReadWrite> tcnt;
         enum class TCCR : uint8_t {
             foc = (1 << FOC2),
             wgm0 = (1 << WGM20),
@@ -76,22 +75,9 @@ struct ATMega8 final
             };
             volatile uint16_t icr;
         };
-        union {
-            struct {
-                volatile uint8_t ocrbl;
-                volatile uint8_t ocrbh;
-            };
-            volatile uint16_t ocrb;
-        };
-        union {
-            struct {
-                volatile uint8_t ocral;
-                volatile uint8_t ocrah;
-            };
-            volatile uint16_t ocra;
-        };
-        volatile uint8_t tcntl;
-        volatile uint8_t tcnth;
+        DataRegister<Timer16Bit, ReadWrite, uint16_t> ocrb;
+        DataRegister<Timer16Bit, ReadWrite, uint16_t> ocra;
+        DataRegister<Timer16Bit, ReadWrite, uint16_t> tcnt;
 
         enum class TCCRB : uint8_t {
             icnc = (1 << ICNC1),

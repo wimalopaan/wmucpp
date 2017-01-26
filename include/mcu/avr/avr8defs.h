@@ -46,6 +46,10 @@ constexpr std::array<PrescalerPair<CS>, 6> prescalerValues10Bit = {
     PrescalerPair<CS>{                   CS::cs0, 1},
     PrescalerPair<CS>{static_cast<CS>(0)        , 0},
 };
+
+template<typename CS>
+constexpr CS csMask10Bit = {CS::cs2 | CS::cs1 | CS::cs0};
+
 template<typename CS>
 constexpr std::array<PrescalerPair<CS>, 8> prescalerValues10BitExtended = {
     PrescalerPair<CS>{CS::cs2 | CS::cs1 | CS::cs0, 1024},
@@ -76,6 +80,9 @@ constexpr std::array<PrescalerPair<CS>, 16> prescalerValues14Bit = {
     PrescalerPair<CS>{                              CS::cs0, 1},
     PrescalerPair<CS>{static_cast<CS>(0)                   , 0}
 };
+
+template<typename CS>
+constexpr CS csMask14Bit = {CS::cs3 | CS::cs2 | CS::cs1 | CS::cs0};
 
 struct A {
     static constexpr char letter = 'A';

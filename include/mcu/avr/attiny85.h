@@ -30,8 +30,8 @@ namespace AVR {
 struct ATTiny85 final {
     ATTiny85() = delete;
     struct Timer8Bit {
-        volatile uint8_t ocrb;
-        volatile uint8_t ocra;
+        DataRegister<Timer8Bit, ReadWrite> ocrb;
+        DataRegister<Timer8Bit, ReadWrite> ocra;
         enum class TCCRA : uint8_t {
             coma0 = (1 << COM0A0),
             coma1 = (1 << COM0A1),
@@ -42,7 +42,7 @@ struct ATTiny85 final {
         };
         ControlRegister<Timer8Bit, TCCRA> tccra;
         volatile uint8_t padding[0x32 - 0x2A - 1];
-        volatile uint8_t tcnt;
+        DataRegister<Timer8Bit, ReadWrite> tcnt;
         enum class TCCRB : uint8_t {
             foca = (1 << FOC0A),
             focb = (1 << FOC0B),
@@ -54,14 +54,13 @@ struct ATTiny85 final {
         ControlRegister<Timer8Bit, TCCRB> tccrb;
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
-        template<uint8_t N> struct Flags; 
     };
     struct Timer8BitHighSpeed {
-        volatile uint8_t ocrb;
+        DataRegister<Timer8Bit, ReadWrite> ocrb;
         volatile uint8_t gtccr;
-        volatile uint8_t ocrc;
-        volatile uint8_t ocra;
-        volatile uint8_t tcnt;
+        DataRegister<Timer8Bit, ReadWrite> ocrc;
+        DataRegister<Timer8Bit, ReadWrite> ocra;
+        DataRegister<Timer8Bit, ReadWrite> tcnt;
         enum class TCCR : uint8_t {
             ctc = (1 << CTC1),
             pwma = (1 << PWM1A),

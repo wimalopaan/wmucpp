@@ -117,12 +117,12 @@ class PWM {
 public:
     struct A {
         static void ocr(const typename timer_type::value_type& v) {
-            mcuTimer()->ocra = v;
+            *mcuTimer()->ocra = v;
         }
     };
     struct B {
         static void ocr(const typename timer_type::value_type& v) {
-            mcuTimer()->ocrb = v;
+            *mcuTimer()->ocrb = v;
         }
     };
 

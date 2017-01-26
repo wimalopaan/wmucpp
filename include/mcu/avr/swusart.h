@@ -115,8 +115,8 @@ public:
     };
     struct StartBitHandler : public IsrBaseHandler<typename AVR::ISR::Timer<mcu_timer_number>::Capture> {
         static void isr() {
-            uint16_t ocra = timer()->ocra;
-            timer()->ocrb = (timer()->icr + ocra / 2) % ocra;
+            uint16_t ocra = *timer()->ocra;
+            *timer()->ocrb = (timer()->icr + ocra / 2) % ocra;
     
             mcuInterrupts()->tifr |= _BV(OCF1B);
             mcuInterrupts()->timsk = (mcuInterrupts()->timsk & ~(_BV(ICIE1))) | _BV(OCIE1B);
@@ -153,7 +153,7 @@ public:
         AVR::Timer16Bit<mcu_timer_number>::template prescale<tsd.prescaler>();
 //        AVR::Timer16Bit<timerNumber>::template prescale<SWUsartOCRA<Baud>::prescaler>();
         
-        timer()->ocra= tsd.ocr;
+        *timer()->ocra= tsd.ocr;
 //        timer()->ocral = SWUsartOCRA<Baud>::value;
 //        timer()->ocrah = (SWUsartOCRA<Baud>::value >> 8) & 0xff;
 

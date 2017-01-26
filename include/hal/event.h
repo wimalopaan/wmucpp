@@ -34,9 +34,9 @@ enum class EventType : uint8_t {
     Test,
     Timer,
     UsartRecv0, UsartRecv1, UsartRecv2,
-    UsartFe0, UsartFe1, UsartFe2,
-    UsartUpe0, UsartUpe1, UsartUpe2,
-    UsartDor0, UsartDor1, UsartDor2,
+    UsartFe, // UsartFe1, UsartFe2,
+    UsartUpe, // UsartUpe1, UsartUpe2,
+    UsartDor, // UsartDor1, UsartDor2,
     SwUsartRecv0, SwUsartRecv1,
     Spi0, Spi1,
     HottBinaryRequest, HottAsciiRequest, HottSensorBroadcast, HottAsciiKey,
@@ -52,11 +52,19 @@ enum class EventType : uint8_t {
     I2CRpmError, I2CRpmValueAvailable,
     AdcConversion,
     DCFReceive0, DCFReceive1, DCFSync, DCFParityError, DCFError,
-    TLE5205Error
+    TLE5205Error,
+    NullPAEvent
 };
 
 template<typename T>
 struct Event final {
+    Event() = default;
+    Event(const volatile Event& e) : type(e.type), value(e.value) {}
+    Event(EventType t, T v) : type(t), value(v) {}
+    void operator=(const volatile Event& e) volatile {
+        type = e.type;
+        value = e.value;
+    }
     EventType type;
     T value;
 };
@@ -151,8 +159,8 @@ private:
         return fifo().push_back(event);
     }
     // header only: to avoid static data member
-    static std::FiFo<Event8u_t, Config::EventManager::EventQueueLength>& fifo() {
-        static std::FiFo<Event8u_t, Config::EventManager::EventQueueLength> fifo;
+    static volatile std::FiFo<Event8u_t, Config::EventManager::EventQueueLength>& fifo()  {
+        static volatile std::FiFo<Event8u_t, Config::EventManager::EventQueueLength> fifo;
         return fifo;
     }
 };

@@ -103,7 +103,7 @@ struct IsrBaseHandler<void> {
 
 template<typename I, typename... Hs>
 struct IsrDistributor final : public IsrBaseHandler<I> {
-    static_assert(Util::numberOfOnes((Hs::isr_mask | ...)) == 1, "all sub-handler must use same isr");
+    static_assert((sizeof...(Hs) == 0) || (Util::numberOfOnes((Hs::isr_mask | ... | 0)) == 1), "all sub-handler must use same isr");
     static void isr() {
         (Hs::isr(), ...);
     }

@@ -41,11 +41,12 @@ template<uint8_t N, typename MCU = DefaultMcuType>
 class Timer8Bit : public TimerBase<MCU, N> {
 public:
     static constexpr uint8_t number = N;
-    static constexpr uint8_t csBitMask = 0x07;
     static constexpr auto mcuTimer = getBaseAddr<typename MCU::Timer8Bit, N>;
     typedef typename MCU::Timer8Bit mcu_timer_type;
     typedef typename MCU::Timer8Bit::TCCRA tccra_type;
     typedef typename MCU::Timer8Bit::TCCRB tccrb_type;
+//    static constexpr auto csBitMask = AVR::csMask10Bit<tccrb_type>;
+    static constexpr uint8_t csBitMask = 0x07;
     typedef uint8_t value_type;
 
     static constexpr const bool hasOcrA = true;
@@ -75,15 +76,15 @@ public:
     }
 
     static void ocra(uint8_t v) {
-        mcuTimer()->ocra = v;
+        *mcuTimer()->ocra = v;
     }
     template<uint8_t V>
     static void ocra() {
-        mcuTimer()->ocra = V;
+        *mcuTimer()->ocra = V;
     }
 
-    static inline volatile uint8_t& counter() {
-        return mcuTimer()->tcnt;
+    static inline volatile const uint8_t& counter() {
+        return *mcuTimer()->tcnt;
     }
 
 //    using ta = typename MCU::Timer8Bit::TCCRA;
@@ -111,10 +112,11 @@ template<>
 class Timer8Bit<1, ATTiny25> : public TimerBase<ATTiny25, 1> {
 public:
     static constexpr uint8_t number = 1;
-    static constexpr uint8_t csBitMask = 0x0f;
     static constexpr auto mcuTimer = getBaseAddr<typename ATTiny25::Timer8BitHighSpeed, 1>;
     typedef typename ATTiny25::Timer8BitHighSpeed mcu_timer_type;
     typedef typename ATTiny25::Timer8BitHighSpeed::TCCR tccr_type;
+//    static constexpr auto csBitMask = AVR::csMask14Bit<tccr_type>;
+    static constexpr uint8_t csBitMask = 0x0f;
     typedef uint8_t value_type;
 
     static constexpr const bool hasOcrA = true;
@@ -253,11 +255,12 @@ struct Timer16Bit: public TimerBase<MCU, N>
 {
     typedef AVR::ISR::Timer<N> isr_type;
     static constexpr uint8_t number = N;
-    static constexpr uint8_t csBitMask = 0x07;
     static constexpr auto mcuTimer = getBaseAddr<typename MCU::Timer16Bit, N>;
     typedef typename MCU::Timer16Bit mcu_timer_type;
     typedef typename MCU::Timer16Bit::TCCRA tccra_type;
     typedef typename MCU::Timer16Bit::TCCRB tccrb_type;
+    static constexpr uint8_t csBitMask = 0x07;
+//    static constexpr auto csBitMask = AVR::csMask10Bit<tccrb_type>;
     typedef uint16_t value_type;
 
     static constexpr const bool hasOcrA = true;
@@ -284,15 +287,15 @@ struct Timer16Bit: public TimerBase<MCU, N>
     }
 
     static void ocra(uint16_t v) {
-        mcuTimer()->ocra = v;
+        *mcuTimer()->ocra = v;
     }
     template<uint16_t V>
     static void ocra() {
-        mcuTimer()->ocra = V;
+        *mcuTimer()->ocra = V;
     }
 
-    static inline volatile uint16_t& counter() {
-        return mcuTimer()->tcnt;
+    static inline volatile const uint16_t& counter() {
+        return *mcuTimer()->tcnt;
     }
     
     static void start(){

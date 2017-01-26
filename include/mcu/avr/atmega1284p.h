@@ -38,7 +38,18 @@ struct ATMega1284P final
     
     struct Usart {
         static constexpr const uint8_t count = 2;
-        volatile uint8_t ucsra;
+        enum class UCSRA : uint8_t {
+            rxc = (1 << RXC0),
+            txc = (1 << TXC0),
+            udre = (1 << UDRE0),
+            fe = (1 << FE0),
+            dor = (1 << DOR0),
+            upe = (1 << UPE0),
+            u2x = (1 << U2X0),
+            mpcm = (1 << MPCM0)
+        };
+        ControlRegister<Usart, UCSRA> ucsra;
+        
         volatile uint8_t ucsrb;
         volatile uint8_t ucsrc;
         volatile uint8_t reserved1;
@@ -49,7 +60,7 @@ struct ATMega1284P final
             };
             volatile uint16_t ubbr;
         };
-        volatile uint8_t udr;
+        DataRegister<Usart, ReadWrite> udr;
         volatile uint8_t reserved2;
         template<int N> struct Address;
     };
@@ -78,8 +89,6 @@ struct ATMega1284P final
             wgm1 = (1 << WGM01)
         };
         ControlRegister<Timer8Bit, TCCRA> tccra;
-//        volatile uint8_t tccra;
-
         enum class TCCRB : uint8_t {
             foca = (1 << FOC0A),
             focb = (1 << FOC0B),
@@ -89,10 +98,9 @@ struct ATMega1284P final
             cs0 = (1 << CS00),
         };
         ControlRegister<Timer8Bit, TCCRB> tccrb;
-//        volatile uint8_t tccrb;
-        volatile uint8_t tcnt;
-        volatile uint8_t ocra;
-        volatile uint8_t ocrb;
+        DataRegister<Timer8Bit, ReadWrite> tcnt;
+        DataRegister<Timer8Bit, ReadWrite> ocra;
+        DataRegister<Timer8Bit, ReadWrite> ocrb;
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
     };
@@ -100,7 +108,6 @@ struct ATMega1284P final
     struct Timer16Bit {
         static constexpr const uint8_t count = 2;
         typedef uint16_t value_type;
-
         enum class TCCRA : uint8_t {
             coma0 = (1 << COM1A0),
             coma1 = (1 << COM1A1),
@@ -111,7 +118,6 @@ struct ATMega1284P final
         };
         ControlRegister<Timer16Bit, TCCRA> tccra;
 
-//        volatile uint8_t tccra;
         enum class TCCRB : uint8_t {
             icnc = (1 << ICNC1),
             ices = (1 << ICES1),
@@ -122,37 +128,12 @@ struct ATMega1284P final
             cs0 = (1 << CS10),
         };
         ControlRegister<Timer16Bit, TCCRB> tccrb;
-//        volatile uint8_t tccrb;
         volatile uint8_t tccrc;
         volatile uint8_t reserved;
-        union {
-            struct {
-                volatile uint8_t tcntl;
-                volatile uint8_t tcnth;
-            };
-            volatile uint16_t tcnt;
-        };
-        union {
-            struct {
-                volatile uint8_t icrl;
-                volatile uint8_t icrh;
-            };
-            volatile uint16_t icr;
-        };
-        union {
-            struct {
-                volatile uint8_t ocral;
-                volatile uint8_t ocrah;
-            };
-            volatile uint16_t ocra;
-        };
-        union {
-            struct {
-                volatile uint8_t ocrbl;
-                volatile uint8_t ocrbh;
-            };
-            volatile uint16_t ocrb;
-        };
+        DataRegister<Timer16Bit, ReadWrite, uint16_t> tcnt;
+        DataRegister<Timer16Bit, ReadWrite, uint16_t> icr;
+        DataRegister<Timer16Bit, ReadWrite, uint16_t> ocra;
+        DataRegister<Timer16Bit, ReadWrite, uint16_t> ocrb;
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
     };
@@ -227,6 +208,10 @@ constexpr bool ATMega1284P::is_atomic<uint8_t>() {return true;}
 }
 
 namespace std {
+template<>
+struct enable_bitmask_operators<AVR::ATMega1284P::Usart::UCSRA> {
+    static constexpr bool enable = true;
+};
 template<>
 struct enable_bitmask_operators<AVR::ATMega1284P::Timer8Bit::TCCRA> {
     static constexpr bool enable = true;

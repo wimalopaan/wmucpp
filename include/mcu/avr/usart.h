@@ -69,32 +69,31 @@ template<>
 struct UsartEventType<0> {
     UsartEventType() = delete;
     static constexpr EventType event = EventType::UsartRecv0;
-    static constexpr EventType eventFe = EventType::UsartFe0;
-    static constexpr EventType eventUpe = EventType::UsartUpe0;
-    static constexpr EventType eventDor = EventType::UsartDor0;
+    static constexpr EventType eventFe = EventType::UsartFe;
+    static constexpr EventType eventUpe = EventType::UsartUpe;
+    static constexpr EventType eventDor = EventType::UsartDor;
 };
 template<>
 struct UsartEventType<1> {
     UsartEventType() = delete;
     static constexpr EventType event = EventType::UsartRecv1;
-    static constexpr EventType eventFe = EventType::UsartFe1;
-    static constexpr EventType eventUpe = EventType::UsartUpe1;
-    static constexpr EventType eventDor = EventType::UsartDor1;
+    static constexpr EventType eventFe = EventType::UsartFe;
+    static constexpr EventType eventUpe = EventType::UsartUpe;
+    static constexpr EventType eventDor = EventType::UsartDor;
 };
 template<>
 struct UsartEventType<2> {
     UsartEventType() = delete;
     static constexpr EventType event = EventType::UsartRecv2;
-    static constexpr EventType eventFe = EventType::UsartFe2;
-    static constexpr EventType eventUpe = EventType::UsartUpe2;
-    static constexpr EventType eventDor = EventType::UsartDor2;
+    static constexpr EventType eventFe = EventType::UsartFe;
+    static constexpr EventType eventUpe = EventType::UsartUpe;
+    static constexpr EventType eventDor = EventType::UsartDor;
 };
 
 template<typename MCU, uint8_t N>
 struct UsartBase {
     typedef MCU mcu_type;
     static constexpr uint8_t number = N;
-    static constexpr auto mcu_usart = getBaseAddr<typename MCU::Usart, N>;
 };
 
 template<uint8_t N, typename PA = void, typename MCU = DefaultMcuType>
@@ -110,28 +109,29 @@ class Usart : public UsartBase<MCU, N>
     Usart() = delete;
     
 public:
-    static constexpr auto mcu_usart = UsartBase<MCU, N>::mcu_usart;
+    typedef typename MCU::Usart usart_type;
+    typedef typename usart_type::UCSRA ucsra_type;
+    
+    static constexpr auto mcu_usart = getBaseAddr<typename MCU::Usart, N>;
     typedef PA protocoll_adapter_type;
     static_assert(N < MCU::Usart::count, "wrong number of usart");
 
     struct RxHandler : public IsrBaseHandler<typename AVR::ISR::Usart<N>::RX> {
         static void isr() {
-            if (mcu_usart()->ucsra & (_BV(FE0) | _BV(UPE0) | _BV(DOR0))) {
-                if (mcu_usart()->ucsra & _BV(FE0)) {
-                    mcu_usart()->udr;
-                    EventManager::enqueueISR({UsartEventType<N>::eventFe, 0});
+            const auto status = mcu_usart()->ucsra.template get<ucsra_type::fe | ucsra_type::upe | ucsra_type::dor>();
+            const uint8_t c = *mcu_usart()->udr;
+            if (isset(status)) {
+                if (isset(status | ucsra_type::fe)) {
+                    EventManager::enqueueISR({UsartEventType<N>::eventFe, N});
                 }
-                if (mcu_usart()->ucsra & _BV(UPE0)) {
-                    mcu_usart()->udr;
-                    EventManager::enqueueISR({UsartEventType<N>::eventUpe, 0});
+                if (isset(status | ucsra_type::upe)) {
+                    EventManager::enqueueISR({UsartEventType<N>::eventUpe, N});
                 }
-                if (mcu_usart()->ucsra & _BV(DOR0)) {
-                    mcu_usart()->udr;
-                    EventManager::enqueueISR({UsartEventType<N>::eventDor, 0});
+                if (isset(status | ucsra_type::dor)) {
+                    EventManager::enqueueISR({UsartEventType<N>::eventDor, N});
                 }
             } else {
-                const uint8_t c = mcu_usart()->udr;
-                if(Config::Usart::RecvQueueLength > 0) {
+                if constexpr (Config::Usart::RecvQueueLength > 0) {
                     if (recvQueue().push_back(c)) {
                         EventManager::enqueueISR({UsartEventType<N>::event, c});
                     }
@@ -152,24 +152,22 @@ public:
     struct TxHandler : public IsrBaseHandler<typename AVR::ISR::Usart<N>::UDREmpty> {
         static void isr() {
             if (auto c = sendQueue().pop_front()) {
-                mcu_usart()->udr = *c;;
+                *mcu_usart()->udr = *c;;
             }
             else {
                 mcu_usart()->ucsrb &= ~_BV(UDRIE0);
             }
         }
     };
-
-    
     template<uint32_t Baud>
     static void init() {
         static_assert(Baud >= 2400, "USART should use a valid baud rate >= 2400");
         mcu_usart()->ubbr = Ubrr<Config::fMcu.value, Baud>::value;
+        mcu_usart()->ucsrc |= _BV(UCSZ01) | _BV(UCSZ00);
         mcu_usart()->ucsrb |= _BV(TXEN0) | _BV(RXEN0) | _BV(RXCIE0);
-        getBaseAddr<typename MCU::Usart, N>()->ucsrc |= _BV(UCSZ01) | _BV(UCSZ00);
     }
     static bool get(uint8_t& item) {
-        if (Config::Usart::RecvQueueLength > 0) {
+        if constexpr (Config::Usart::RecvQueueLength > 0) {
             return recvQueue().pop_front(item);
         }
         else {
@@ -177,7 +175,7 @@ public:
         }
     }
     static std::optional<uint8_t> get() {
-        if (Config::Usart::RecvQueueLength > 0) {
+        if constexpr (Config::Usart::RecvQueueLength > 0) {
             return recvQueue().pop_front();
         }
         else {
@@ -186,7 +184,7 @@ public:
     }
     static bool put(uint8_t item) {
         if(sendQueue().push_back(item)) {
-            getBaseAddr<typename MCU::Usart, N>()->ucsrb |= _BV(UDRIE0);
+            mcu_usart()->ucsrb |= _BV(UDRIE0);
             return true;
         }
         return false;
@@ -199,71 +197,29 @@ public:
     static bool isEmpty() {
         return sendQueue().empty();
     }
-
+    // todo: flags
     template<bool enable>
     static void rxEnable() {
         if (enable) {
             if(Config::Usart::RecvQueueLength > 0) {
                 recvQueue().clear();
             }
-            getBaseAddr<typename MCU::Usart, N>()->ucsrb |= _BV(RXEN0);
+            mcu_usart()->ucsrb |= _BV(RXEN0);
         }
         else {
-            getBaseAddr<typename MCU::Usart, N>()->ucsrb &= ~_BV(RXEN0);
+            mcu_usart()->ucsrb &= ~_BV(RXEN0);
         }
     }
 
 private:
-    static std::FiFo<uint8_t, Config::Usart::SendQueueLength>& sendQueue() {
-        static std::FiFo<uint8_t, Config::Usart::SendQueueLength> mSendQueue;
+    static volatile std::FiFo<uint8_t, Config::Usart::SendQueueLength>& sendQueue() {
+        static volatile std::FiFo<uint8_t, Config::Usart::SendQueueLength> mSendQueue;
         return mSendQueue;
     }
-    static std::FiFo<uint8_t, Config::Usart::RecvQueueLength>& recvQueue() {
-        static std::FiFo<uint8_t, Config::Usart::RecvQueueLength> mRecvQueue;
+    static volatile std::FiFo<uint8_t, Config::Usart::RecvQueueLength>& recvQueue() {
+        static volatile std::FiFo<uint8_t, Config::Usart::RecvQueueLength> mRecvQueue;
         return mRecvQueue;
     }
-
-//    inline static void rx_isr() {
-//        if (getBaseAddr<typename MCU::Usart, N>()->ucsra & (_BV(FE0) | _BV(UPE0) | _BV(DOR0))) {
-//            if (getBaseAddr<typename MCU::Usart, N>()->ucsra & _BV(FE0)) {
-//                getBaseAddr<typename MCU::Usart, N>()->udr;
-//                EventManager::enqueueISR({UsartEventType<N>::eventFe, 0});
-//            }
-//            if (getBaseAddr<typename MCU::Usart, N>()->ucsra & _BV(UPE0)) {
-//                getBaseAddr<typename MCU::Usart, N>()->udr;
-//                EventManager::enqueueISR({UsartEventType<N>::eventUpe, 0});
-//            }
-//            if (getBaseAddr<typename MCU::Usart, N>()->ucsra & _BV(DOR0)) {
-//                getBaseAddr<typename MCU::Usart, N>()->udr;
-//                EventManager::enqueueISR({UsartEventType<N>::eventDor, 0});
-//            }
-//        } else {
-//            const uint8_t c = getBaseAddr<typename MCU::Usart, N>()->udr;
-//            if(Config::Usart::RecvQueueLength > 0) {
-//                if (recvQueue().push_back(c)) {
-//                    EventManager::enqueueISR({UsartEventType<N>::event, c});
-//                }
-//            }
-//            else {
-//                if constexpr(std::is_same<PA, void>::value) {
-//                    EventManager::enqueueISR({UsartEventType<N>::event, c});
-//                }
-//                else {
-//                    if (!PA::process(c)) {
-//                        EventManager::enqueueISR({UsartEventType<N>::event, c});
-//                    }
-//                }
-//            }
-//        }
-//    }
-//    inline static void tx_isr() {
-//        if (auto c = sendQueue().pop_front()) {
-//            getBaseAddr<typename MCU::Usart, N>()->udr = *c;;
-//        }
-//        else {
-//            getBaseAddr<typename MCU::Usart, N>()->ucsrb &= ~_BV(UDRIE0);
-//        }
-//    }
 };
 
 }

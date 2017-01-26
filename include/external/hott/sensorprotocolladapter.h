@@ -24,6 +24,18 @@
 
 namespace Hott {
     
+template<uint8_t N>
+struct NullPA {
+    inline static bool process(uint8_t) { // from isr only
+        static uint8_t counter = 0;
+        if (++counter > 100) {
+            EventManager::enqueue({EventType::NullPAEvent, N});
+            counter = 0;
+        }
+        return true;
+    }    
+};
+
 template<uint8_t M>
 class SensorProtocollAdapter final {
     enum class hottstate {Undefined = 0, Request1, RequestA1, NumberOfStates};

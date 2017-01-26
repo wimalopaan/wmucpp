@@ -83,13 +83,16 @@ private:
             break;
         case sumdstate::ChannelDataL:
             msg().channelData[channel].second = c;
-            state = sumdstate::ChannelDataL;
+            state = sumdstate::ChannelDataH;
             ++channel;
             if (channel < msg().nChannels) {
                 state = sumdstate::ChannelDataH;
             }
             else {
                 state = sumdstate::CrcH;
+                channel = 0;
+            }
+            if (channel >= SumDMsg::MaxChannels) {
                 channel = 0;
             }
             break;

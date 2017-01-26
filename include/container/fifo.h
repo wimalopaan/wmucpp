@@ -30,7 +30,7 @@ class FiFo final {
 public:
     typedef typename std::conditional< Size <= 255, uint8_t, uint16_t>::type size_type;
     
-    bool push_back(const T& item) {
+    bool push_back(volatile const T& item) volatile {
         size_type next = (in + 1) % Size;
         if (out == next) {
             return false;
@@ -39,7 +39,16 @@ public:
         in = next;
         return true;
     }
-    bool pop_front(T& item) {
+    bool push_back(const T& item) volatile {
+        size_type next = (in + 1) % Size;
+        if (out == next) {
+            return false;
+        }
+        data[in] = item;
+        in = next;
+        return true;
+    }
+    bool pop_front(T& item) volatile {
         if (in == out) {
             return false;
         }
@@ -47,7 +56,7 @@ public:
         out = (out + 1) % Size;
         return true;
     }
-    std::optional<T>  pop_front() {
+    std::optional<T> pop_front() volatile {
         if (in == out) {
             return {};
         }
@@ -55,10 +64,10 @@ public:
         out = (out + 1) % Size;
         return item;
     }
-    void clear() {
+    void clear() volatile {
         in = out = 0;
     }
-    bool empty() const {
+    bool empty() volatile const {
         return in == out;
     }
     static constexpr const size_type size = Size;

@@ -105,10 +105,10 @@ private:
     static inline void check(uint8_t last, uint8_t value) {
         if ((last ^ value) & pinset_type::pinMasks[N]) {
             if (!(value & pinset_type::pinMasks[N])) { // high -> low
-                period[N] = (mcuTimer()->tcnt + std::numeric_limits<value_type>::module() - timerStartValue[N]) % std::numeric_limits<value_type>::module();
+                period[N] = (*mcuTimer()->tcnt + std::numeric_limits<value_type>::module() - timerStartValue[N]) % std::numeric_limits<value_type>::module();
             }
             else { // low ->high
-                timerStartValue[N] = mcuTimer()->tcnt;
+                timerStartValue[N] = *mcuTimer()->tcnt;
             }
         }
         if constexpr(N > 0) {

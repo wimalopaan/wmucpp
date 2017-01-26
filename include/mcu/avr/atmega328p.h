@@ -32,7 +32,17 @@ struct ATMega328P final
     ATMega328P() = delete;
     struct Usart {
         static constexpr const uint8_t count = 1;
-        volatile uint8_t ucsra;
+        enum class UCSRA : uint8_t {
+            rxc = (1 << RXC0),
+            txc = (1 << TXC0),
+            udre = (1 << UDRE0),
+            fe = (1 << FE0),
+            dor = (1 << DOR0),
+            upe = (1 << UPE0),
+            u2x = (1 << U2X0),
+            mpcm = (1 << MPCM0)
+        };
+        ControlRegister<Usart, UCSRA> ucsra;
         volatile uint8_t ucsrb;
         volatile uint8_t ucsrc;
         volatile uint8_t reserved1;
@@ -43,7 +53,7 @@ struct ATMega328P final
             };
             volatile uint16_t ubbr;
         };
-        volatile uint8_t udr;
+        DataRegister<Usart, ReadWrite> udr;
         volatile uint8_t reserved2;
         template<int N> struct Address;
     };
@@ -69,10 +79,9 @@ struct ATMega328P final
         };
         
         ControlRegister<Timer8Bit, TCCRB> tccrb;
-        volatile uint8_t tcnt;
-        volatile uint8_t ocra;
-        volatile uint8_t ocrb;
-        // todo: together in one map struct
+        DataRegister<Timer8Bit, ReadWrite> tcnt;
+        DataRegister<Timer8Bit, ReadWrite> ocra;
+        DataRegister<Timer8Bit, ReadWrite> ocrb;
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
     };
@@ -101,8 +110,7 @@ struct ATMega328P final
         ControlRegister<Timer16Bit, TCCRB> tccrb;
         volatile uint8_t tccrc;
         volatile uint8_t reserved;
-        volatile uint8_t tcntl;
-        volatile uint8_t tcnth;
+        DataRegister<Timer16Bit, ReadWrite, uint16_t> tcnt;
         union {
             struct {
                 volatile uint8_t icrl;
@@ -110,21 +118,8 @@ struct ATMega328P final
             };
             volatile uint16_t icr;
         };
-        union {
-            struct {
-                volatile uint8_t ocral;
-                volatile uint8_t ocrah;
-            };
-            volatile uint16_t ocra;
-        };
-        union {
-            struct {
-                volatile uint8_t ocrbl;
-                volatile uint8_t ocrbh;
-            };
-            volatile uint16_t ocrb;
-        };
-        // todo: put together
+        DataRegister<Timer16Bit, ReadWrite, uint16_t> ocra;
+        DataRegister<Timer16Bit, ReadWrite, uint16_t> ocrb;
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
     };
@@ -167,6 +162,10 @@ struct ATMega328P final
 }
 
 namespace std {
+template<>
+struct enable_bitmask_operators<AVR::ATMega328P::Usart::UCSRA> {
+    static constexpr bool enable = true;
+};
 template<>
 struct enable_bitmask_operators<AVR::ATMega328P::Timer8Bit::TCCRA> {
     static constexpr bool enable = true;

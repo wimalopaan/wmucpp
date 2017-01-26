@@ -47,7 +47,7 @@ struct ATTiny25 final {
         
         ControlRegister<Timer8Bit, TCCRA> tccra;
         volatile uint8_t padding[0x32 - 0x2A - 1];
-        volatile uint8_t tcnt;
+        DataRegister<Timer8Bit, ReadWrite> tcnt;
         enum class TCCRB : uint8_t {
             foca = (1 << FOC0A),
             focb = (1 << FOC0B),

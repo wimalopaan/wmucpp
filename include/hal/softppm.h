@@ -62,7 +62,7 @@ public:
 
     static void timerInit() {
         MCUTimer::template prescale<prescaler>();
-        mcuTimer()->ocra = ocFrame;
+        *mcuTimer()->ocra = ocFrame;
         mcuTimer()->tccrb.template add<MCUTimer::tccrb_type::wgm2>();
         // todo: flags
         mcuInterrupts()->tifr  |= _BV(OCF1A) | _BV(OCF1B);
@@ -147,7 +147,7 @@ public:
     struct OCAHandler : public IsrBaseHandler<typename AVR::ISR::Timer<MCUTimer::number>::CompareA> {
         static void isr() {
             actual = 0;
-            mcuTimer()->ocrb = ocrbValues[0];
+            *mcuTimer()->ocrb = ocrbValues[0];
             mcuInterrupts()->timsk |= _BV(OCIE0B);
             First<Pins...>::high();
         }
@@ -158,7 +158,7 @@ public:
             actual = (actual + 1) % numberOfChannels;
             if (actual != 0) {
                 OnN<numberOfChannels, Pins...>::check(actual);
-                mcuTimer()->ocrb = ocrbValues[actual];
+                *mcuTimer()->ocrb = ocrbValues[actual];
             }
             else {
                 if constexpr(numberOfChannels > 1) {

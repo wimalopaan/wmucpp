@@ -58,10 +58,20 @@
 #include "external/rpm.h"
 #include "mcu/avr/twimaster.h"
 #include "std/array.h"
+
+#define MEM
+#ifdef MEM
 #include "util/memory.h"
+#endif
 
 // 20MHz full-swing
 // sudo avrdude -p atmega1284P -P usb -c avrisp2 -U lfuse:w:0xf7:m -U hfuse:w:0xd1:m -U efuse:w:0xfc:m
+
+#define OW
+#define I2C
+#define PPMIN
+#define PPMOUT
+#define HOTT
 
 using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
@@ -73,12 +83,13 @@ using SoftSPIClock = AVR::Pin<PortA, 1>;
 using SoftSPISS = AVR::Pin<PortA, 2>;
 using SSpi0 = SoftSpiMaster<SoftSPIData, SoftSPIClock, SoftSPISS>;
 
+#ifdef OW
 using oneWirePin = AVR::Pin<PortA, 5>;
 using oneWireMaster = OneWire::Master<oneWirePin, OneWire::Normal>;
 using oneWireMasterAsync = OneWire::MasterAsync<oneWireMaster, Hott::hottDelayBetweenBytes>;
 using ds18b20 = DS18B20<oneWireMasterAsync>;
-
 std::array<OneWire::ow_rom_t, 5> dsIds;
+#endif
 
 //using terminal = SSpi0;
 using bufferedTerminal = BufferedStream<SSpi0, 512>;
@@ -100,6 +111,7 @@ using adc = AVR::Adc<0>;
 using adcController = AdcController<adc, 6>;
 using lm35 = LM35<adcController, 0>;
 
+#ifdef I2C
 using TwiMaster = TWI::Master<0>;
 using TwiMasterAsync = TWI::MasterAsync<TwiMaster>;
 using ds1307 = DS1307<TwiMasterAsync>;
@@ -112,49 +124,78 @@ using i2cled = I2CRam<TwiMasterAsync, i2cledAddress, I2CLedParameter>;
 
 static constexpr TWI::Address i2crpmAddress{0x55};
 using i2crpm = I2CRam<TwiMasterAsync, i2crpmAddress, I2CRpmParameter>;
+#endif
 
-using vrAdapter = VariableRateAdapter<bufferedTerminal
-                                    , adcController
->;
+using vrAdapter = VariableRateAdapter<bufferedTerminal, adcController>;
 
 using ws2812_A = AVR::Pin<PortC, 2>;
 //using ws2812_B = AVR::Pin<PortC, 2>;
 
+#ifdef PPMIN
 using ppmInputPin = AVR::Pin<PortC, 3>;
 using ppmPinSet = AVR::PinSet<ppmInputPin>;
 using pinChangeHandlerPpm = AVR::PinChange<ppmPinSet>;
 using ppmTimerInput = AVR::Timer8Bit<2>;
 using ppm1 = PpmDecoder<pinChangeHandlerPpm, ppmTimerInput>;
 using ppmSwitch = PpmSwitch<0, ppm1>;
+#endif
 
 using systemClock = AVR::Timer8Bit<0>;
 using systemTimer = AlarmTimer<systemClock>;
 
+#ifdef HOTT
 using sensorUsart = AVR::Usart<0, Hott::SensorProtocollAdapter<0>> ;
 using rcUsart = AVR::Usart<1, Hott::SumDProtocollAdapter<0>>;
+//using sensorUsart = AVR::Usart<0, Hott::NullPA<0>> ;
+//using rcUsart = AVR::Usart<1, Hott::NullPA<1>>;
+#endif
 
+#ifdef PPMOUT
 using ppmTimerOutput = AVR::Timer16Bit<3>;
 using ppmPin1 = AVR::Pin<PortC, 4>;
 using ppmPin2 = AVR::Pin<PortC, 5>;
 using softPpm = SoftPPM<ppmTimerOutput, ppmPin1, ppmPin2>;
+#endif
 
-// todo: testen, ob das mit PpmChange vereinbar ist
+#ifdef HPWM
 using hardPwm = AVR::PWM<2>;
+#endif
 
 using crTimer = AVR::Timer16Bit<1>;
+#ifdef HOTT
 using crWriterSensorBinary = ConstanteRateWriter<Hott::SensorProtocollBuffer<0>, sensorUsart>;
 using crWriterSensorText = ConstanteRateWriter<Hott::SensorTextProtocollBuffer<0>, sensorUsart>;
 //using crAdapter = ConstantRateAdapter<crTimer, AVR::ISR::Timer<1>::CompareA, crWriterSensorBinary, crWriterSensorText, TestBitShifter<crTestPin, 0x55>>;
 using crAdapterHott = ConstantRateAdapter<crTimer, AVR::ISR::Timer<1>::CompareA, crWriterSensorBinary, crWriterSensorText>;
+#else
+using crAdapterHott = ConstantRateAdapter<crTimer, AVR::ISR::Timer<1>::CompareA>;
+#endif
+#ifdef OW
+#ifndef HOTT
+using crAdapterOneWire = ConstantRateAdapter<crTimer, AVR::ISR::Timer<1>::CompareA, oneWireMasterAsync>;
+#else
 using crAdapterOneWire = ConstantRateAdapter<void, AVR::ISR::Timer<1>::CompareA, oneWireMasterAsync>;
+#endif
+#endif
+using isrDistributor = IsrDistributor<AVR::ISR::Timer<1>::CompareA 
+#ifdef HOTT
+, crAdapterHott
+#endif
+#ifdef OW
+, crAdapterOneWire
+#endif
+>;
 
-using isrDistributor = IsrDistributor<AVR::ISR::Timer<1>::CompareA, crAdapterHott, crAdapterOneWire>;
-
+#ifdef SPWM
 using softPwmPin1 = AVR::Pin<PortB, 5>;
 using softPwmPin2 = AVR::Pin<PortB, 6>;
 using softPwm = SoftPWM<softPwmPin1, softPwmPin2>;
+#endif
 
-using sampler = PeriodicGroup<AVR::ISR::Timer<0>::CompareA, buttonController, systemTimer, dcfDecoder, softPwm
+using sampler = PeriodicGroup<AVR::ISR::Timer<0>::CompareA, buttonController, systemTimer, dcfDecoder
+#ifdef SPWM
+, softPwm
+#endif
                                 >; // werden alle resolution ms aufgerufen
 
 using led0 = AVR::Pin<PortC, 6>;
@@ -164,6 +205,12 @@ using led1 = AVR::Pin<PortC, 7>;
 
 struct EventHandlerParameter {
     std::optional<uint7_t> timerId1;
+};
+
+struct NullPAHandler: public EventHandler<EventType::NullPAEvent> {
+    static void process(uint8_t v) {
+        std::cout << "Null PA"_pgm << v << std::endl;
+    }  
 };
 
 struct I2CRpmHandler: public EventHandler<EventType::I2CRpmValueAvailable> {
@@ -249,7 +296,9 @@ struct TWIHandlerError: public EventHandler<EventType::TWIError> {
 class DS18B20MeasurementHandler: public EventHandler<EventType::DS18B20Measurement> {
 public:
     static void process(uint8_t) {
+#ifdef OW
         std::cout << "t: " << ds18b20::temperature() << std::endl;
+#endif
     }
 };
 class DS18B20ErrorHandler: public EventHandler<EventType::DS18B20Error> {
@@ -270,9 +319,11 @@ class HottBinaryHandler : public EventHandler<EventType::HottBinaryRequest> {
 public:
     static void process(uint8_t) {
 //        std::cout << "hbb"_pgm << std::endl;
+#ifdef HOTT
         crWriterSensorBinary::enable<true>();
         crWriterSensorText::enable<false>();
         crAdapterHott::start();
+#endif
     }
 };
 
@@ -288,9 +339,11 @@ class HottBroadcastHandler : public EventHandler<EventType::HottSensorBroadcast>
 public:
     static void process(uint8_t) {
         std::cout << "hbr"_pgm << std::endl;
+#ifdef HOTT
         crWriterSensorBinary::enable<true>();
         crWriterSensorText::enable<false>();
         crAdapterHott::start();
+#endif
     }
 };
 
@@ -298,9 +351,11 @@ class HottTextHandler : public EventHandler<EventType::HottAsciiRequest> {
 public:
     static void process(uint8_t) {
         std::cout << "hba"_pgm << std::endl;
+#ifdef HOTT
         crWriterSensorBinary::enable<false>();
         crWriterSensorText::enable<true>();
         crAdapterHott::start();
+#endif
     }
 };
 
@@ -313,15 +368,18 @@ public:
     static void process(uint8_t timer) {
         if (timer == *pTimer) {
 
+#ifdef MEM
             std::cout << "unused: "_pgm << Util::Memory::getUnusedMemory() << std::endl;   
+#endif
 
             static uint8_t count = 0;
             WS2812<2, ws2812_A>::set({16, (uint8_t)((count++ % 2) * 16), 16});
             
+#ifdef I2C
             if (count % 2) {
                 i2cram::startWrite(0, count);
                 i2cled::startWrite(0, count * 64);
-//                i2crpm::startWrite(0, 0);
+                i2crpm::startWrite(0, 0);
             }
             else {
                 if (!i2cram::startRead(0)) {
@@ -334,11 +392,13 @@ public:
                     std::cout << "start read rpm error"_pgm << std::endl;
                 }
             }
-            
             ds1307::startReadTimeInfo();
+#endif
             
             std::cout << "Temp lm35: "_pgm << lm35::temperature() << std::endl;
+#ifdef PPMIN
             std::cout << "ppm:"_pgm << ppm1::value<0>() << std::endl;
+#endif
             std::cout << "c0: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(0) << std::endl;
     //        std::cout << "c1: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(1) << std::endl;
     //        std::cout << "c2: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(2) << std::endl;
@@ -350,19 +410,25 @@ public:
             std::percent pv = std::scale(Hott::SumDProtocollAdapter<0>::value8Bit(0),
                                    Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit);
             std::cout << "pv: " << pv.value << std::endl;
+#ifdef SPWM
             softPpm::ppm(pv, 0);
     
             softPwm::pwm(pv, 0);
             softPwm::pwm(pv, 1);
             std::cout << "spwm period: "_pgm << softPwm::period() << std::endl;
+#endif
         }
         else if (timer == *tTimer) {
+#ifdef OW
             if (ds18b20::convert()) {
                 systemTimer::start(*mTimer);
             }
+#endif
         }
         else if (timer == *mTimer) {
+#ifdef OW
             ds18b20::startGet(dsIds[0]);
+#endif
         }
     }
 };
@@ -392,25 +458,46 @@ public:
         std::cout << "u: "_pgm << v << std::endl;
     }
 };
+class UsartFeHandler : public EventHandler<EventType::UsartFe> {
+public:
+    static void process(uint8_t v) {
+        std::cout << "usart fe: "_pgm << v << std::endl;
+    }
+};
+class UsartUpeHandler : public EventHandler<EventType::UsartUpe> {
+public:
+    static void process(uint8_t v) {
+        std::cout << "usart upe: "_pgm << v << std::endl;
+    }
+};
+class UsartDorHandler : public EventHandler<EventType::UsartDor> {
+public:
+    static void process(uint8_t v) {
+        std::cout << "usart dor: "_pgm << v << std::endl;
+    }
+};
 
 using isrRegistrar = IsrRegistrar<
-                                ppm1, 
-                                isrDistributor, sampler, 
-                                  sensorUsart::RxHandler, sensorUsart::TxHandler, rcUsart::RxHandler, rcUsart::TxHandler,
-                                  softPpm::OCAHandler, softPpm::OCBHandler
+#ifdef PPMIN
+            ppm1, 
+#endif
+                                isrDistributor, sampler
+#ifdef HOTT
+, sensorUsart::RxHandler, sensorUsart::TxHandler, rcUsart::RxHandler, rcUsart::TxHandler
+#endif
+#ifdef PPMOUT
+                                  ,softPpm::OCAHandler, softPpm::OCBHandler
+#endif
 >;
 
 int main()
 {
     isrRegistrar::init();
-    Scoped<EnableInterrupt> interruptEnabler;
 
     systemTimer::init();
 //    terminal::init<0>();
     bufferedTerminal::init<0>();
 
-    sensorUsart::init<19200>();
-    rcUsart::init<115200>();
     SSpi0::init();
     buttonController::init();
     adcController::init();
@@ -418,17 +505,23 @@ int main()
 //    rpm::init();
     
     using namespace std::literals::quantity;
+#ifdef PPMOUT
     softPpm::init();
     softPpm::ppm(50_ppc, 0);
-
+#endif
+#ifdef SPWM
     softPwm::init();
+#endif
     
+#ifdef HPWM
     hardPwm::init();
     hardPwm::pwm<hardPwm::A>(90_ppc);
     hardPwm::pwm<hardPwm::B>(50_ppc);
-
+#endif
+    
 //    testPin::dir<AVR::Output>();
 
+#ifdef I2C
     ds1307::init();
     ds1307::squareWave<true>();
 
@@ -443,6 +536,7 @@ int main()
     for(const auto& d : i2cAddresses) {
         std::cout << d << std::endl;
     }
+#endif
     
     dcfDecoder::init();
 
@@ -452,22 +546,30 @@ int main()
     crTimer::prescale<tsd.prescaler>();
     crTimer::ocra<tsd.ocr>();
 
-    crAdapterHott::init();
-    crAdapterOneWire::init();
+    std::cout << "pre: "_pgm << tsd.prescaler << std::endl;
+    std::cout << "ocr: "_pgm << tsd.ocr << std::endl;
     
+#ifdef HOTT
+    crAdapterHott::init();
+#endif
+#ifdef OW
+    crAdapterOneWire::init();
     ds18b20::init();
 
     oneWireMaster::findDevices(dsIds);
     for(const auto& id : dsIds) {
         std::cout << id << std::endl;
     }
+#endif
             
     led0::dir<AVR::Output>();
     led1::dir<AVR::Output>();
 
+#ifdef PPMIN
     pinChangeHandlerPpm::init();
     PpmDecoder<pinChangeHandlerPpm, ppmTimerInput>::init();
-
+#endif
+    
     std::cout << "RC Controller 0.1"_pgm << std::endl;
 
     WS2812<2, ws2812_A>::init();
@@ -481,30 +583,56 @@ int main()
     mTimer = systemTimer::create(750_ms, AlarmFlags::OneShot);
     systemTimer::stop(*mTimer);
     
-//    std::cout << Config() << std::endl;
+    std::cout << "---" << std::endl;
 
     using handler = EventHandlerGroup<TimerHandler,
+                                NullPAHandler,
+                                UsartFeHandler, UsartUpeHandler, UsartDorHandler,
                                 HottBinaryHandler, HottBroadcastHandler, HottTextHandler, TestHandler,
                                 PpmDownHandler, PpmUpHandler,
                                 UsartHandler, HottKeyHandler,
                                 Button0Handler, 
-                                ds18b20, DS18B20ErrorHandler, DS18B20MeasurementHandler,
-                                TWIHandlerError, 
+                                DCFReceive0Handler, DCFReceive1Handler, DCFSyncHandler, DCFErrorHandler, DCFParityHandler
+#ifdef OW
+                                ,ds18b20, DS18B20ErrorHandler, DS18B20MeasurementHandler
+#endif
+#ifdef I2C
+                                ,TWIHandlerError, 
                                 ds1307, DS1307handler, DS1307handlerError, i2cram, i2cled, i2crpm,
-                                DCFReceive0Handler, DCFReceive1Handler, DCFSyncHandler, DCFErrorHandler, DCFParityHandler,
                                 I2CRamHandler, I2CRamErrorHandler,
                                 I2CLedHandler, I2CLedErrorHandler,
-                                I2CRpmHandler, I2CRpmErrorHandler>;
+                                I2CRpmHandler, I2CRpmErrorHandler
+#endif
+    >;
 
-    EventManager::run<sampler, handler>([](){
-//        led0::toggle();
-        ppmSwitch::process(ppm1::value<0>());
-        softPwm::freeRun();
-        crAdapterHott::periodic();
-        vrAdapter::periodic();
-        crAdapterOneWire::periodic();
-        TwiMasterAsync::periodic();
-    });
+#ifdef HOTT
+    sensorUsart::init<19200>();
+    rcUsart::init<115200>();
+#endif
+    
+    {
+//        Scoped<EnableInterrupt> interruptEnabler;
+        
+        EventManager::run<sampler, handler>([](){
+    //        led0::toggle();
+    #ifdef PPMIN
+            ppmSwitch::process(ppm1::value<0>());
+    #endif
+    #ifdef SPWM
+            softPwm::freeRun();
+    #endif
+    #ifdef HOTT
+            crAdapterHott::periodic();
+    #endif
+            vrAdapter::periodic();
+    #ifdef OW
+            crAdapterOneWire::periodic();
+    #endif
+    #ifdef I2C
+            TwiMasterAsync::periodic();
+    #endif
+        });
+    }
 
     return 0;
 }
@@ -523,13 +651,16 @@ ISR(PCINT1_vect) {
 //    isrRegistrar::isr<AVR::ISR::PcInt<1>>();
 }
 ISR(PCINT2_vect) {
+#ifdef PPMIN
     led1::toggle();
     isrRegistrar::isr<AVR::ISR::PcInt<2>>();
+#endif
 }
 ISR(PCINT3_vect) {
 //    isrRegistrar::isr<AVR::ISR::PcInt<3>>();
 }
 ISR(TIMER1_COMPA_vect) {
+//    led0::toggle();
     isrRegistrar::isr<AVR::ISR::Timer<1>::CompareA>();
 }
 ISR(TIMER1_COMPB_vect) {
@@ -542,33 +673,39 @@ ISR(SPI_STC_vect) {
 //    isrRegistrar::isr<AVR::ISR::Spi<0>::Stc>();
 }
 ISR(TIMER0_COMPA_vect) {
+    led0::toggle();
     isrRegistrar::isr<AVR::ISR::Timer<0>::CompareA>();
 }
-
 ISR(TIMER3_COMPA_vect) {
+#ifdef PPMOUT
     isrRegistrar::isr<AVR::ISR::Timer<3>::CompareA>();
-//    softPpm::isrA();
+#endif
 }
 ISR(TIMER3_COMPB_vect) {
+#ifdef PPMOUT
     isrRegistrar::isr<AVR::ISR::Timer<3>::CompareB>();
-//    softPpm::isrB();
+#endif
 }
 
 ISR(USART0_RX_vect) {
+#ifdef HOTT
     isrRegistrar::isr<AVR::ISR::Usart<0>::RX>();
-//    sensorUsart::rx_isr();
+#endif
 }
 ISR(USART0_UDRE_vect){
+#ifdef HOTT
     isrRegistrar::isr<AVR::ISR::Usart<0>::UDREmpty>();
-//    sensorUsart::tx_isr();
+#endif
 }
 ISR(USART1_RX_vect) {
+#ifdef HOTT
     isrRegistrar::isr<AVR::ISR::Usart<1>::RX>();
-//    rcUsart::rx_isr();
+#endif
 }
 ISR(USART1_UDRE_vect){
+#ifdef HOTT
     isrRegistrar::isr<AVR::ISR::Usart<1>::UDREmpty>();
-//    rcUsart::tx_isr();
+#endif
 }
 ISR(ANALOG_COMP_vect) {
 //    led1::toggle();

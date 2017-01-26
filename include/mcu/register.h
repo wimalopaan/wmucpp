@@ -51,10 +51,19 @@ struct ControlRegister {
     void inline clear() {
         hwRegister &= ~static_cast<value_type>(F);
     }
+    template<BitType Mask>
+    inline BitType get() {
+        return static_cast<BitType>(hwRegister & static_cast<value_type>(Mask));
+    }
     template<uint8_t Mask>
-    BitType get() {
+    inline BitType get() {
         return static_cast<BitType>(hwRegister & Mask);
     }
+    template<BitType F>
+    bool inline isSet() {
+        return hwRegister & static_cast<value_type>(F);
+    }
+
 private:
     volatile value_type hwRegister;
 };
@@ -67,9 +76,14 @@ struct DataRegister {
     // SFINAE
     template<typename Dummy = void, 
              typename Dummy2 = typename std::enable_if<std::is_same<Mode, ReadWrite>::value, Dummy>::type>
-    inline void operator=(value_type v) {
-        hwRegister = v;
+    inline volatile value_type& operator*() {
+        return hwRegister;
     }
+    
+    inline const volatile value_type& operator*() const {
+        return hwRegister;
+    }
+    
 private:    
     volatile value_type hwRegister;
 };

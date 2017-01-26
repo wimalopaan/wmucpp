@@ -40,7 +40,7 @@ struct ATTiny84 final {
         };
         ControlRegister<Timer8Bit, TCCRA> tccra;
         volatile uint8_t unused1;
-        volatile uint8_t tcnt;
+        DataRegister<Timer8Bit, ReadWrite> tcnt;
         enum class TCCRB : uint8_t {
             foca = (1 << FOC0A),
             focb = (1 << FOC0B),
@@ -52,9 +52,9 @@ struct ATTiny84 final {
         ControlRegister<Timer8Bit, TCCRB> tccrb;
         volatile uint8_t unused2;
         volatile uint8_t unused3;
-        volatile uint8_t ocra;
+        DataRegister<Timer8Bit, ReadWrite> ocra;
         volatile uint8_t padding[0x3c - 0x36 - 1];
-        volatile uint8_t ocrb;
+        DataRegister<Timer8Bit, ReadWrite> ocrb;
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
     };

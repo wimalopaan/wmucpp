@@ -40,11 +40,13 @@ public:
         mValue(value)
     {
     }
-    optional(T&& value) :
-        mValid(true),
-        mValue(std::move(value))
-    {
-    }
+    // todo: volatile?
+    
+//    optional(volatile T&& value) :
+//        mValid(true),
+//        mValue(std::move(value))
+//    {
+//    }
     explicit operator bool() const // safe-bool
     {
         return mValid;
