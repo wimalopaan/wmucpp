@@ -43,7 +43,8 @@ public:
     static constexpr bool isAsync = true;
     typedef TWIMaster master_type;
     static constexpr auto tw_status_mask = TWIMaster::tw_status_mask;
-    typedef typename TWIMaster::tws  tws;
+    typedef typename TWIMaster::tws tws;
+    typedef typename TWIMaster::twc twc;
     
     template<const std::hertz& fSCL>
     static void init() {
@@ -61,7 +62,8 @@ public:
             break;
         case State::StartWrite:
             // send START condition
-            mcuTwi()->twcr = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
+            mcuTwi()->twcr.template set<twc::twint | twc::twsta | twc::twen>();
+//            mcuTwi()->twcr = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
             mState = State::StartWriteWait;                
             break;
         case State::StartWriteWait:
@@ -84,7 +86,8 @@ public:
             if (auto address = mSendQueue.pop_front()) {
                 lastAddress = *address;
                 *mcuTwi()->twdr = *address;
-                mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN);
+                mcuTwi()->twcr.template set<twc::twint | twc::twen>();
+//                mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN);
                 if (BusAddress<Write>::isWrite(*address)) {
                     mState = State::WriteAddressWait;
                 }
@@ -151,7 +154,8 @@ public:
             // send data to the previously addressed device
                 if (auto data = mSendQueue.pop_front()) {
                     *mcuTwi()->twdr = *data;
-                    mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN);
+                    mcuTwi()->twcr.template set<twc::twint | twc::twen>();
+//                    mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN);
                     mState = State::WritingWait;
                 }
             }
@@ -180,11 +184,13 @@ public:
             }
             break;
         case State::Reading:
-            mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN) | (1<<TWEA);
+            mcuTwi()->twcr.template set<twc::twint | twc::twen | twc::twea>();
+//            mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN) | (1<<TWEA);
             mState = State::ReadingWait;
             break;
         case State::ReadLast:
-            mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN) ;
+            mcuTwi()->twcr.template set<twc::twint | twc::twen>();
+//            mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN) ;
             mState = State::ReadingWait;
             break;
         case State::ReadingWait:
@@ -211,12 +217,14 @@ public:
             break;
         case State::Stop:
             /* send stop condition */
-             mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN) | (1<<TWSTO);
+            mcuTwi()->twcr.template set<twc::twint | twc::twen | twc::twsto>();
+//             mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN) | (1<<TWSTO);
             mState = State::StopWait;             
             break;
         case State::StopWait:
             // wait until stop condition is executed and bus released
-            if (!(mcuTwi()->twcr & (1<<TWSTO))) {
+            if (!(mcuTwi()->twcr.template isSet<twc::twsto>())) {
+//            if (!(mcuTwi()->twcr & (1<<TWSTO))) {
                 mState = State::Inactive;
             }
             break;
@@ -293,7 +301,6 @@ struct TwiSetupData {
     const uint8_t twbr = 0;
 };
 
-// todo: sorting?
 template<typename TWI, uint8_t N>
 constexpr TwiSetupData calculateNextPossibleBelow(const std::hertz& fTwi) {
     using pRow = typename TWI::template PrescalerRow<N>;
@@ -317,6 +324,7 @@ public:
     typedef MCU mcu_type;     
     typedef typename mcu_type::TWI mcu_twi_type;     
     typedef typename mcu_type::TWI::TWS tws;     
+    typedef typename mcu_type::TWI::TWC twc;     
     typedef typename MCU::TWI::template PrescalerRow<N> ps;
     static constexpr uint8_t number = N;
          
@@ -338,7 +346,8 @@ public:
     }
 
     static bool transmissionCompleted() {
-        return mcuTwi()->twcr & (1<<TWINT);
+        return mcuTwi()->twcr.template isSet<twc::twint>();
+//        return mcuTwi()->twcr & (1<<TWINT);
     }
     
     static std::optional<Address> nextAddress(Address startAdress = TWI::minimumAddress) {
@@ -375,7 +384,8 @@ public:
 //        uint8_t twst = 0;
     
         // send START condition
-        mcuTwi()->twcr = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
+        mcuTwi()->twcr.template set<twc::twint | twc::twsta | twc::twen>();
+//        mcuTwi()->twcr = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
     
         // wait until transmission completed
         while(!transmissionCompleted());
@@ -390,7 +400,8 @@ public:
     
         // send device address
         *mcuTwi()->twdr = busAddress.value();
-        mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN);
+        mcuTwi()->twcr.template set<twc::twint | twc::twen>();
+//        mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN);
     
         // wail until transmission completed and ACK/NACK has been received
         while(!transmissionCompleted());
@@ -407,10 +418,12 @@ public:
     
     static void stop() {
         /* send stop condition */
-         mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN) | (1<<TWSTO);
+        mcuTwi()->twcr.template set<twc::twint | twc::twen | twc::twsto>();
+//         mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN) | (1<<TWSTO);
          
          // wait until stop condition is executed and bus released
-         while(mcuTwi()->twcr & (1<<TWSTO));
+        while(mcuTwi()->twcr.template isSet<twc::twsto>());
+//         while(mcuTwi()->twcr & (1<<TWSTO));
     }
     
     template<uint8_t L>
@@ -463,7 +476,8 @@ public:
         
         // send data to the previously addressed device
         *mcuTwi()->twdr = data;
-        mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN);
+        mcuTwi()->twcr.template set<twc::twint | twc::twen>();
+//        mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN);
     
         // wait until transmission completed
         while(!transmissionCompleted());
@@ -481,7 +495,8 @@ public:
         
         // send data to the previously addressed device
         *mcuTwi()->twdr = Data;
-        mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN);
+        mcuTwi()->twcr.template set<twc::twint | twc::twen>();
+//        mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN);
     
         // wait until transmission completed
         while(!transmissionCompleted());
@@ -495,13 +510,15 @@ public:
     }
     
     static uint8_t read() {
-        mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN) | (1<<TWEA);
+        mcuTwi()->twcr.template set<twc::twint | twc::twen | twc::twea>();
+//        mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN) | (1<<TWEA);
         while(!transmissionCompleted());    
         return *mcuTwi()->twdr;    
     }
     
     static uint8_t readBeforeStop() {
-        mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN);
+        mcuTwi()->twcr.template set<twc::twint | twc::twen>();
+//        mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN);
         while(!transmissionCompleted());
         return *mcuTwi()->twdr;
     }

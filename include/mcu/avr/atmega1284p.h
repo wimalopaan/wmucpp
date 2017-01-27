@@ -95,13 +95,21 @@ struct ATMega1284P final
             twMtDataAck = TW_MT_DATA_ACK,
             twMtDataNack = TW_MT_DATA_NACK,
             twMrSlaAck = TW_MR_SLA_ACK,
-            twMrSlaNack = TW_MR_SLA_NACK,
-            
+            twMrSlaNack = TW_MR_SLA_NACK
         };
         ControlRegister<TWI, TWS> twsr;
         DataRegister<TWI, ReadWrite> twar;
         DataRegister<TWI, ReadWrite> twdr;
-        volatile uint8_t twcr;
+        enum class TWC : uint8_t {
+            twint = (1 << TWINT),
+            twea = (1 << TWEA),
+            twsta = (1 << TWSTA),
+            twsto = (1 << TWSTO),
+            twwc = (1 << TWWC),
+            twen = (1 << TWEN),
+            twie = (1 << TWIE)
+        };
+        ControlRegister<TWI, TWC> twcr;
         DataRegister<TWI, ReadWrite> twamr;
         template<int N> struct Address;
         template<int N> struct PrescalerRow;
@@ -241,6 +249,10 @@ constexpr bool ATMega1284P::is_atomic<uint8_t>() {return true;}
 namespace std {
 template<>
 struct enable_bitmask_operators<AVR::ATMega1284P::TWI::TWS> {
+    static constexpr bool enable = true;
+};
+template<>
+struct enable_bitmask_operators<AVR::ATMega1284P::TWI::TWC> {
     static constexpr bool enable = true;
 };
 template<>
