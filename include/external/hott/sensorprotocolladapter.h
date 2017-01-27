@@ -24,11 +24,11 @@
 
 namespace Hott {
     
-template<uint8_t N>
+template<uint16_t N, uint16_t Thresh, typename CT = uint16_t>
 struct NullPA {
     inline static bool process(uint8_t) { // from isr only
-        static uint8_t counter = 0;
-        if (++counter > 100) {
+        static CT counter = 0;
+        if (++counter > Thresh) {
             EventManager::enqueue({EventType::NullPAEvent, N});
             counter = 0;
         }

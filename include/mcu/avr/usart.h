@@ -111,9 +111,9 @@ class Usart : public UsartBase<MCU, N>
 public:
     typedef typename MCU::Usart usart_type;
     typedef typename usart_type::UCSRA ucsra_type;
+    typedef PA protocoll_adapter_type;
     
     static constexpr auto mcu_usart = getBaseAddr<typename MCU::Usart, N>;
-    typedef PA protocoll_adapter_type;
     static_assert(N < MCU::Usart::count, "wrong number of usart");
 
     struct RxHandler : public IsrBaseHandler<typename AVR::ISR::Usart<N>::RX> {
@@ -200,7 +200,7 @@ public:
     // todo: flags
     template<bool enable>
     static void rxEnable() {
-        if (enable) {
+        if constexpr (enable) {
             if(Config::Usart::RecvQueueLength > 0) {
                 recvQueue().clear();
             }

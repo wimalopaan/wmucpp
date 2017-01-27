@@ -83,7 +83,6 @@ template<uint8_t N> class SensorProtocollAdapter;
 
 template<typename Interrupt = void, typename... PP>
 class PeriodicGroup : public IsrBaseHandler<Interrupt> {
-    
 public:
     static void periodic() {
         if (tickCounter > 0) {
@@ -126,7 +125,7 @@ public:
 class EventManager final
 {
     template<uint8_t> friend class Hott::SensorProtocollAdapter;
-    template<uint8_t N, typename MCU> friend class AVR::Usart;
+    template<uint8_t N, typename PA, typename MCU> friend class AVR::Usart;
     template<uint8_t N, typename MCU> friend class AVR::Spi;
     template<uint8_t N, typename MCU> friend class SWUsart;
 public:
