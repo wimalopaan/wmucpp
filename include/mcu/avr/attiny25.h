@@ -93,7 +93,6 @@ struct ATTiny25 final {
             tc =  (1 << USITC)
         };
         ControlRegister<USI, USIC> usicr;
-//        volatile uint8_t usicr;
         enum class USIS : uint8_t {
             sif  = (1 << USISIF),            
             oif  = (1 << USIOIF),            
@@ -105,7 +104,6 @@ struct ATTiny25 final {
             cnt0 = (1 << USICNT0) 
         };
         ControlRegister<USI, USIS> usisr;
-//        volatile uint8_t usisr;
         DataRegister<USI, ReadWrite> usidr;
         DataRegister<USI, ReadWrite> usibr;
         template<int N> struct Address;
