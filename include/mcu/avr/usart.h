@@ -97,20 +97,14 @@ struct UsartBase {
 };
 
 template<uint8_t N, typename PA = void, typename MCU = DefaultMcuType>
-class Usart : public UsartBase<MCU, N>
+class Usart final : public UsartBase<MCU, N>
 {
-    friend void ::USART_RX_vect();
-    friend void ::USART_UDRE_vect();
-    friend void ::USART0_RX_vect();
-    friend void ::USART0_UDRE_vect();
-    friend void ::USART1_RX_vect();
-    friend void ::USART1_UDRE_vect();
-    
     Usart() = delete;
-    
 public:
     typedef typename MCU::Usart usart_type;
     typedef typename usart_type::UCSRA ucsra_type;
+    typedef typename usart_type::UCSRB ucsrb_type;
+    typedef typename usart_type::UCSRC ucsrc_type;
     typedef PA protocoll_adapter_type;
     
     static constexpr auto mcu_usart = getBaseAddr<typename MCU::Usart, N>;
@@ -155,16 +149,16 @@ public:
                 *mcu_usart()->udr = *c;;
             }
             else {
-                mcu_usart()->ucsrb &= ~_BV(UDRIE0);
+                mcu_usart()->ucsrb.template clear<ucsrb_type::udrie>();
             }
         }
     };
     template<uint32_t Baud>
     static void init() {
         static_assert(Baud >= 2400, "USART should use a valid baud rate >= 2400");
-        mcu_usart()->ubbr = Ubrr<Config::fMcu.value, Baud>::value;
-        mcu_usart()->ucsrc |= _BV(UCSZ01) | _BV(UCSZ00);
-        mcu_usart()->ucsrb |= _BV(TXEN0) | _BV(RXEN0) | _BV(RXCIE0);
+        *mcu_usart()->ubbr = Ubrr<Config::fMcu.value, Baud>::value;
+        mcu_usart()->ucsrc.template add<ucsrc_type::ucsz1 | ucsrc_type::ucsz0>();
+        mcu_usart()->ucsrb.template add<ucsrb_type::txen | ucsrb_type::rxen | ucsrb_type::rxcie>();
     }
     static bool get(uint8_t& item) {
         if constexpr (Config::Usart::RecvQueueLength > 0) {
@@ -184,7 +178,7 @@ public:
     }
     static bool put(uint8_t item) {
         if(sendQueue().push_back(item)) {
-            mcu_usart()->ucsrb |= _BV(UDRIE0);
+            mcu_usart()->ucsrb.template add<ucsrb_type::udrie>();
             return true;
         }
         return false;
@@ -197,17 +191,16 @@ public:
     static bool isEmpty() {
         return sendQueue().empty();
     }
-    // todo: flags
     template<bool enable>
     static void rxEnable() {
         if constexpr (enable) {
             if(Config::Usart::RecvQueueLength > 0) {
                 recvQueue().clear();
             }
-            mcu_usart()->ucsrb |= _BV(RXEN0);
+            mcu_usart()->ucsrb.template add<ucsrb_type::rxen>();
         }
         else {
-            mcu_usart()->ucsrb &= ~_BV(RXEN0);
+            mcu_usart()->ucsrb.template clear<ucsrb_type::rxen>();
         }
     }
 

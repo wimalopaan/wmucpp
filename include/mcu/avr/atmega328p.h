@@ -43,16 +43,30 @@ struct ATMega328P final
             mpcm = (1 << MPCM0)
         };
         ControlRegister<Usart, UCSRA> ucsra;
-        volatile uint8_t ucsrb;
-        volatile uint8_t ucsrc;
-        volatile uint8_t reserved1;
-        union {
-            struct {
-                volatile uint8_t ubbrl;
-                volatile uint8_t ubbrh;
-            };
-            volatile uint16_t ubbr;
+        enum class UCSRB : uint8_t {
+            rxcie = (1 << RXCIE0),
+            txcie = (1 << TXCIE0),
+            udrie = (1 << UDRIE0),
+            rxen = (1 << RXEN0),
+            txen = (1 << TXEN0),
+            ucsz2 = (1 << UCSZ02),
+            rxb8 = (1 << RXB80),
+            txb8 = (1 << TXB80)
         };
+        ControlRegister<Usart, UCSRB> ucsrb;
+        enum class UCSRC : uint8_t {
+            umsel0 = (1 << UMSEL00),
+            umsel1 = (1 << UMSEL01),
+            upm1 = (1 << UPM01),
+            upm0 = (1 << UPM00),
+            usbs = (1 << USBS0),
+            ucsz0 = (1 << UCSZ00),
+            ucsz1 = (1 << UCSZ01),
+            ucpol = (1 << UCPOL0)
+         };
+        ControlRegister<Usart, UCSRC> ucsrc;
+        volatile uint8_t reserved1;
+        DataRegister<Usart, ReadWrite, uint16_t> ubbr;
         DataRegister<Usart, ReadWrite> udr;
         volatile uint8_t reserved2;
         template<int N> struct Address;
@@ -164,6 +178,14 @@ struct ATMega328P final
 namespace std {
 template<>
 struct enable_bitmask_operators<AVR::ATMega328P::Usart::UCSRA> {
+    static constexpr bool enable = true;
+};
+template<>
+struct enable_bitmask_operators<AVR::ATMega328P::Usart::UCSRB> {
+    static constexpr bool enable = true;
+};
+template<>
+struct enable_bitmask_operators<AVR::ATMega328P::Usart::UCSRC> {
     static constexpr bool enable = true;
 };
 template<>
