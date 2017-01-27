@@ -79,14 +79,23 @@ struct ATTiny25 final {
         ControlRegister<Timer8BitHighSpeed, TCCR> tccr;
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
-//        template<uint8_t N> struct Flags; 
     };
     
     struct USI {
+        enum class USIC : uint8_t {
+            sie = (1 << USISIE),
+            oie = (1 << USIOIE),
+            wm1 = (1 << USIWM1),
+            wm0 = (1 << USIWM0),
+            cs1 = (1 << USICS1),
+            cs0 = (1 << USICS0),
+            clk = (1 << USICLK),
+            tc =  (1 << USITC)
+        };
         volatile uint8_t usicr;
         volatile uint8_t usisr;
-        volatile uint8_t usidr;
-        volatile uint8_t usibr;
+        DataRegister<USI, ReadWrite> usidr;
+        DataRegister<USI, ReadWrite> usibr;
         template<int N> struct Address;
     };
 

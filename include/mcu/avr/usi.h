@@ -121,13 +121,13 @@ public:
     
     static uint8_t get() {
         while(!(mcu_usi()->usisr & _BV(USIOIF)));
-        return mcu_usi()->usibr;
+        return *mcu_usi()->usibr;
     }
     
     static void isr() {
         mcu_usi()->usisr = _BV(USIOIF);        
         if constexpr(!std::is_same<Inserter, void>::value) {
-            Inserter::insert(mcu_usi()->usibr);
+            Inserter::insert(*mcu_usi()->usibr);
         }
     }
     
@@ -137,7 +137,7 @@ public:
         mcu_usi()->usisr = (0 << USISIF) | (1 << USIOIF) | (1 << USIPF) | (1 << USIDC) | (0x0 << USICNT0);
     }    
     static void inline setSendAck() {
-        mcu_usi()->usidr = 0;
+        *mcu_usi()->usidr = 0;
         sda_pin::template dir<AVR::Output>();
         mcu_usi()->usisr  = (0 << USISIF) | (1 << USIOIF) | (1 << USIPF) | (1 << USIDC) | ( 0x0E << USICNT0);
     }
@@ -150,7 +150,7 @@ public:
         mcu_usi()->usisr =	(0 << USISIF) | (1 << USIOIF) | (1 << USIPF) | (1 << USIDC) | (0x0 << USICNT0); \
     }
     static void inline setReadAck() {
-        mcu_usi()->usidr = 0;
+        *mcu_usi()->usidr = 0;
         sda_pin::template dir<AVR::Input>();
         mcu_usi()->usisr  = (0 << USISIF) | (1 << USIOIF) | (1 << USIPF) | (1 << USIDC) | (0x0E << USICNT0);
     }

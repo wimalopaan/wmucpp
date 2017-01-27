@@ -113,7 +113,6 @@ struct ATMega1284P final
         DataRegister<TWI, ReadWrite> twamr;
         template<int N> struct Address;
         template<int N> struct PrescalerRow;
-        template<int N, int F> struct Prescaler;
     };
     // todo: finish all ControlRegister and DataRegister
     struct Timer8Bit {
@@ -356,27 +355,9 @@ struct ATMega1284P::TWI::Address<0> {
     static constexpr uint8_t value = 0xb8;
 };
 
-// todo: zusammenfassen wie bei Timer
 template<>
 struct ATMega1284P::TWI::PrescalerRow<0> {
     static constexpr auto values = twiPrescalerBit<ATMega1284P::TWI::TWS>;
-//    static constexpr uint8_t values[] = {1, 4, 16, 64};
-};
-template<>
-struct ATMega1284P::TWI::Prescaler<0, 1> {
-    static constexpr uint8_t value = 0x00;
-};
-template<>
-struct ATMega1284P::TWI::Prescaler<0, 4> {
-    static constexpr uint8_t value = 0x01;
-};
-template<>
-struct ATMega1284P::TWI::Prescaler<0, 16> {
-    static constexpr uint8_t value = 0x02;
-};
-template<>
-struct ATMega1284P::TWI::Prescaler<0, 64> {
-    static constexpr uint8_t value = 0x03;
 };
 
 template<>

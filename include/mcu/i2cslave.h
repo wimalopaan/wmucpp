@@ -50,6 +50,9 @@ enum class State { USI_SLAVE_CHECK_ADDRESS, USI_SLAVE_SEND_DATA, USI_SLAVE_REQUE
 template<typename USI, const TWI::Address& Address, typename RegisterMachine = void>
 class I2CSlave final {
     I2CSlave() = delete;
+    
+    static constexpr auto mcu_usi = USI::mcu_usi;
+    
 public:
     struct I2CSlaveHandlerOvfl  : public IsrBaseHandler<AVR::ISR::Usi<0>::Overflow> {
         static inline void isr() {
@@ -57,8 +60,8 @@ public:
             switch (state) {
             //###### Address mode: check address and send ACK (and next USI_SLAVE_SEND_DATA) if OK, else reset USI
             case State::USI_SLAVE_CHECK_ADDRESS:
-                if (USI::mcu_usi()->usidr == 0 || (TWI::Address::fromBusValue(USI::mcu_usi()->usidr) == Address)) {     // If adress is either 0 or own address
-                    if (USI::mcu_usi()->usidr & 0x01) {
+                if (*mcu_usi()->usidr == 0 || (TWI::Address::fromBusValue(*mcu_usi()->usidr) == Address)) {     // If adress is either 0 or own address
+                    if (*mcu_usi()->usidr & 0x01) {
                         state = State::USI_SLAVE_SEND_DATA;		// Master Write Data Mode - Slave transmit
                     }
                     else {
@@ -76,7 +79,7 @@ public:
                 // Check reply and goto USI_SLAVE_SEND_DATA if OK, 
                 // else reset USI
             case State::USI_SLAVE_CHECK_REPLY_FROM_SEND_DATA:
-                if (USI::mcu_usi()->usidr) {
+                if (*mcu_usi()->usidr) {
                     USI::setTwiStartConditionMode();	// If NACK, the master does not want more data
                     return;
                 }
@@ -93,7 +96,7 @@ public:
                     }
                 }
                 assert(index);
-                USI::mcu_usi()->usidr = RegisterMachine::cell(*index); 	// Send data byte
+                *mcu_usi()->usidr = RegisterMachine::cell(*index); 	// Send data byte
                 
                 ++index; 					// Increment buffer address for next byte
                 state = State::USI_SLAVE_REQUEST_REPLY_FROM_SEND_DATA;
@@ -118,7 +121,7 @@ public:
                 // Copy data from USIDR and send ACK
                 // Next USI_SLAVE_REQUEST_DATA
             case State::USI_SLAVE_GET_DATA_AND_SEND_ACK:
-                data = USI::mcu_usi()->usidr; 					// Read data received
+                data = *mcu_usi()->usidr; 					// Read data received
                 if (!index) { 		// First access, read buffer position
                     if (data < RegisterMachine::size) {		// Check if address within buffer size
                         index = data; 		// Set position as received
