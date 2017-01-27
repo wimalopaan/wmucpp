@@ -23,19 +23,31 @@
 #if __has_include(<avr/io.h>)
 # include <avr/io.h>
 #endif
+#if __has_include(<util/twi.h>)
+# include <util/twi.h>
+#endif
 
 #include "std/array.h"
 #include "../register.h"
 
 namespace AVR {
 
-template<typename TCCR_TYPE>
+template<typename BitsType>
 struct PrescalerPair {
-    typedef TCCR_TYPE  bits_type;
+    typedef BitsType  bits_type;
     typedef uint16_t scale_type;
-    const TCCR_TYPE  bits;
+    const BitsType  bits;
     const uint16_t scale;
 };
+
+template<typename CS>
+constexpr std::array<PrescalerPair<CS>, 4> twiPrescalerBit = {
+    PrescalerPair<CS>{CS::twps1 | CS::twps0, 64},
+    PrescalerPair<CS>{CS::twps1           , 16},
+    PrescalerPair<CS>{            CS::twps0,  4},
+    PrescalerPair<CS>{static_cast<CS>(0) ,  1},
+};
+
 
 template<typename CS>
 constexpr std::array<PrescalerPair<CS>, 6> prescalerValues10Bit = {

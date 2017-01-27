@@ -22,6 +22,7 @@
 #include "compat/twi.h"
 #include "mcu/avr8.h"
 #include "mcu/avr/twiaddress.h"
+#include "mcu/avr/util.h"
 #include "container/fifo.h"
 #include "container/pgmstring.h"
 #include "std/array.h"
@@ -30,6 +31,7 @@
 #include "hal/event.h"
 
 namespace TWI {
+
 
 template<typename TWIMaster, uint8_t BSize = 16, bool UseSendEvent = false>
 class MasterAsync final {
@@ -40,6 +42,8 @@ public:
     MasterAsync() = delete;
     static constexpr bool isAsync = true;
     typedef TWIMaster master_type;
+    static constexpr auto tw_status_mask = TWIMaster::tw_status_mask;
+    typedef typename TWIMaster::tws  tws;
     
     template<const std::hertz& fSCL>
     static void init() {
@@ -63,8 +67,10 @@ public:
         case State::StartWriteWait:
             if (TWIMaster::transmissionCompleted()) {
                 // check value of TWI Status Register. Mask prescaler bits.
-                uint8_t twst = (mcuTwi()->twsr & TW_STATUS_MASK) & 0xF8;
-                if ( (twst != TW_START) && (twst != TW_REP_START)) {
+                auto twst = mcuTwi()->twsr.template get<tw_status_mask>();
+//                uint8_t twst = (mcuTwi()->twsr & TW_STATUS_MASK) & 0xF8;
+                if ( (twst != tws::twStart) && (twst != tws::twRepStart)) {
+//                if ( (twst != TW_START) && (twst != TW_REP_START)) {
                     mState = State::Error;
                     EventManager::enqueue({EventType::TWIError, 1});
                 }
@@ -77,7 +83,7 @@ public:
             // send device address
             if (auto address = mSendQueue.pop_front()) {
                 lastAddress = *address;
-                mcuTwi()->twdr = *address;
+                *mcuTwi()->twdr = *address;
                 mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN);
                 if (BusAddress<Write>::isWrite(*address)) {
                     mState = State::WriteAddressWait;
@@ -94,8 +100,10 @@ public:
         case State::ReadAddressWait:
             if (TWIMaster::transmissionCompleted()) {
                 // check value of TWI Status Register. Mask prescaler bits.
-                uint8_t twst = (mcuTwi()->twsr & TW_STATUS_MASK) & 0xF8;
-                if ( (twst != TW_MT_SLA_ACK) && (twst != TW_MR_SLA_ACK) ) {
+//                uint8_t twst = (mcuTwi()->twsr & TW_STATUS_MASK) & 0xF8;
+                auto twst = mcuTwi()->twsr.template get<tw_status_mask>();
+                if ( (twst != tws::twMtSlaAck) && (twst != tws::twMrSlaAck) ) {
+//                    if ( (twst != TW_MT_SLA_ACK) && (twst != TW_MR_SLA_ACK) ) {
                     mState = State::Error;
                     EventManager::enqueue({EventType::TWIError, 3});
                 }
@@ -119,8 +127,10 @@ public:
         case State::WriteAddressWait:
             if (TWIMaster::transmissionCompleted()) {
                 // check value of TWI Status Register. Mask prescaler bits.
-                uint8_t twst = (mcuTwi()->twsr & TW_STATUS_MASK) & 0xF8;
-                if ( (twst != TW_MT_SLA_ACK) && (twst != TW_MR_SLA_ACK) ) {
+                auto twst = mcuTwi()->twsr.template get<tw_status_mask>();
+//                uint8_t twst = (mcuTwi()->twsr & TW_STATUS_MASK) & 0xF8;
+                if ( (twst != tws::twMtSlaAck) && (twst != tws::twMrSlaAck) ) {
+//                if ( (twst != TW_MT_SLA_ACK) && (twst != TW_MR_SLA_ACK) ) {
                     mState = State::Error;
                     EventManager::enqueue({EventType::TWIError, 5});
                 }
@@ -140,7 +150,7 @@ public:
             if (mBytesToWrite > 0) {
             // send data to the previously addressed device
                 if (auto data = mSendQueue.pop_front()) {
-                    mcuTwi()->twdr = *data;
+                    *mcuTwi()->twdr = *data;
                     mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN);
                     mState = State::WritingWait;
                 }
@@ -156,8 +166,10 @@ public:
         case State::WritingWait:
             if (TWIMaster::transmissionCompleted()) {
                 // check value of TWI Status Register. Mask prescaler bits
-                uint8_t twst = (mcuTwi()->twsr & TW_STATUS_MASK) & 0xF8;
-                if (twst != TW_MT_DATA_ACK) {
+                auto twst = mcuTwi()->twsr.template get<tw_status_mask>();
+//                uint8_t twst = (mcuTwi()->twsr & TW_STATUS_MASK) & 0xF8;
+                if (twst != tws::twMtDataAck) {
+//                if (twst != TW_MT_DATA_ACK) {
                     mState = State::Error;
                     EventManager::enqueue({EventType::TWIError, 7});
                 }
@@ -177,7 +189,7 @@ public:
             break;
         case State::ReadingWait:
             if(TWIMaster::transmissionCompleted()) {
-                uint8_t v = mcuTwi()->twdr;
+                uint8_t v = *mcuTwi()->twdr;
                 --mBytesToRead;
                 if (mRecvQueue.push_back(v)) {
                     if (mBytesToRead > 1) {
@@ -277,7 +289,7 @@ template<typename TWIMaster, uint8_t BSize, bool UseSendEvent>
 std::FiFo<uint8_t, BSize> MasterAsync<TWIMaster, BSize, UseSendEvent>::mSendQueue;
 
 struct TwiSetupData {
-    const uint8_t prescale = 0;
+    const uint16_t prescale = 0;
     const uint8_t twbr = 0;
 };
 
@@ -285,7 +297,9 @@ struct TwiSetupData {
 template<typename TWI, uint8_t N>
 constexpr TwiSetupData calculateNextPossibleBelow(const std::hertz& fTwi) {
     using pRow = typename TWI::template PrescalerRow<N>;
-    for(const auto& p : pRow::values) {
+    auto pv = AVR::Util::prescalerValues(pRow::values);
+    auto sortedp = ::Util::sort(pv);
+    for(const auto& p : sortedp) {
         for(uint16_t twbr = 0; twbr <= 255; ++twbr) {
             uint32_t div = 16 + 2 * twbr * p;
             std::hertz f = Config::fMcu / div;
@@ -302,18 +316,25 @@ class Master final {
 public:
     typedef MCU mcu_type;     
     typedef typename mcu_type::TWI mcu_twi_type;     
+    typedef typename mcu_type::TWI::TWS tws;     
+    typedef typename MCU::TWI::template PrescalerRow<N> ps;
     static constexpr uint8_t number = N;
          
     Master() = delete;
     
     static constexpr bool isAsync = false;
     static constexpr const auto mcuTwi = AVR::getBaseAddr<typename MCU::TWI, N>;
+
+    static constexpr auto tw_status_mask = tws::tws7 | tws::tws6 | tws::tws5 | tws::tws4 | tws::tws3;
     
     template<const std::hertz& fSCL>
     static void init() {
         constexpr auto tsd = calculateNextPossibleBelow<mcu_twi_type, N>(fSCL);
-        mcuTwi()->twsr = MCU::TWI::template Prescaler<N, tsd.prescale>::value;                         
-        mcuTwi()->twbr = tsd.twbr;  
+        const auto bits = AVR::Util::bitsFrom<tsd.prescale>(ps::values);
+
+        mcuTwi()->twsr.template set<bits>();          
+//        mcuTwi()->twsr = MCU::TWI::template Prescaler<N, tsd.prescale>::value;                         
+        *mcuTwi()->twbr = tsd.twbr;  
     }
 
     static bool transmissionCompleted() {
@@ -351,7 +372,7 @@ public:
     
     template<typename Mode>
     static bool start(BusAddress<Mode> busAddress) {
-        uint8_t twst = 0;
+//        uint8_t twst = 0;
     
         // send START condition
         mcuTwi()->twcr = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
@@ -360,21 +381,25 @@ public:
         while(!transmissionCompleted());
     
         // check value of TWI Status Register. Mask prescaler bits.
-        twst = (mcuTwi()->twsr & TW_STATUS_MASK) & 0xF8;
-        if ( (twst != TW_START) && (twst != TW_REP_START)) {
+        auto twst = mcuTwi()->twsr.template get<tw_status_mask>();
+//        twst = (mcuTwi()->twsr & TW_STATUS_MASK) & 0xF8;
+        if ( (twst != tws::twStart) && (twst != tws::twRepStart)) {
+//        if ( (twst != TW_START) && (twst != TW_REP_START)) {
             return false;
         }
     
         // send device address
-        mcuTwi()->twdr = busAddress.value();
+        *mcuTwi()->twdr = busAddress.value();
         mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN);
     
         // wail until transmission completed and ACK/NACK has been received
         while(!transmissionCompleted());
     
         // check value of TWI Status Register. Mask prescaler bits.
-        twst = (mcuTwi()->twsr & TW_STATUS_MASK) & 0xF8;
-        if ( (twst != TW_MT_SLA_ACK) && (twst != TW_MR_SLA_ACK) ) {
+        twst = mcuTwi()->twsr.template get<tw_status_mask>();
+//        twst = (mcuTwi()->twsr & TW_STATUS_MASK) & 0xF8;
+        if ( (twst != tws::twMtSlaAck) && (twst != tws::twMrSlaAck) ) {
+//        if ( (twst != TW_MT_SLA_ACK) && (twst != TW_MR_SLA_ACK) ) {
             return false;
         }
         return true;
@@ -434,47 +459,51 @@ public:
     }
     
     static bool write(uint8_t data) {
-        uint8_t   twst = 0;
+//        uint8_t   twst = 0;
         
         // send data to the previously addressed device
-        mcuTwi()->twdr = data;
+        *mcuTwi()->twdr = data;
         mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN);
     
         // wait until transmission completed
         while(!transmissionCompleted());
     
         // check value of TWI Status Register. Mask prescaler bits
-        twst = (mcuTwi()->twsr & TW_STATUS_MASK) & 0xF8;
-        if( twst != TW_MT_DATA_ACK) return false;
+//        twst = (mcuTwi()->twsr & TW_STATUS_MASK) & 0xF8;
+        auto twst = mcuTwi()->twsr.template get<tw_status_mask>();
+        if( twst != tws::twMtDataAck) return false;
+//        if( twst != TW_MT_DATA_ACK) return false;
         return true;       
     }
     template<uint8_t Data>
     static bool write() {
-        uint8_t   twst = 0;
+//        uint8_t   twst = 0;
         
         // send data to the previously addressed device
-        mcuTwi()->twdr = Data;
+        *mcuTwi()->twdr = Data;
         mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN);
     
         // wait until transmission completed
         while(!transmissionCompleted());
     
         // check value of TWI Status Register. Mask prescaler bits
-        twst = (mcuTwi()->twsr & TW_STATUS_MASK) & 0xF8;
-        if( twst != TW_MT_DATA_ACK) return false;
+        auto twst = mcuTwi()->twsr.template get<tw_status_mask>();
+//        twst = (mcuTwi()->twsr & TW_STATUS_MASK) & 0xF8;
+        if( twst != tws::twMtDataAck) return false;
+//        if( twst != TW_MT_DATA_ACK) return false;
         return true;       
     }
     
     static uint8_t read() {
         mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN) | (1<<TWEA);
         while(!transmissionCompleted());    
-        return mcuTwi()->twdr;    
+        return *mcuTwi()->twdr;    
     }
     
     static uint8_t readBeforeStop() {
         mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN);
         while(!transmissionCompleted());
-        return mcuTwi()->twdr;
+        return *mcuTwi()->twdr;
     }
 private:
 };

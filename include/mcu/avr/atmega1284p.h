@@ -79,12 +79,30 @@ struct ATMega1284P final
     };
     struct TWI {
         static constexpr const uint8_t count = 1;
-        volatile uint8_t twbr;
-        volatile uint8_t twsr;
-        volatile uint8_t twar;
-        volatile uint8_t twdr;
+        DataRegister<TWI, ReadWrite> twbr;
+        enum class TWS : uint8_t {
+            tws7 = (1 << TWS7),
+            tws6 = (1 << TWS6),
+            tws5 = (1 << TWS5),
+            tws4 = (1 << TWS4),
+            tws3 = (1 << TWS3),
+            twps1 = (1 << TWPS1),
+            twps0 = (1 << TWPS0),
+            twStart = TW_START,
+            twRepStart = TW_REP_START,
+            twMtSlaAck = TW_MT_SLA_ACK,
+            twMtSlaNack = TW_MT_SLA_NACK,
+            twMtDataAck = TW_MT_DATA_ACK,
+            twMtDataNack = TW_MT_DATA_NACK,
+            twMrSlaAck = TW_MR_SLA_ACK,
+            twMrSlaNack = TW_MR_SLA_NACK,
+            
+        };
+        ControlRegister<TWI, TWS> twsr;
+        DataRegister<TWI, ReadWrite> twar;
+        DataRegister<TWI, ReadWrite> twdr;
         volatile uint8_t twcr;
-        volatile uint8_t twamr;
+        DataRegister<TWI, ReadWrite> twamr;
         template<int N> struct Address;
         template<int N> struct PrescalerRow;
         template<int N, int F> struct Prescaler;
@@ -222,6 +240,10 @@ constexpr bool ATMega1284P::is_atomic<uint8_t>() {return true;}
 
 namespace std {
 template<>
+struct enable_bitmask_operators<AVR::ATMega1284P::TWI::TWS> {
+    static constexpr bool enable = true;
+};
+template<>
 struct enable_bitmask_operators<AVR::ATMega1284P::Usart::UCSRA> {
     static constexpr bool enable = true;
 };
@@ -325,7 +347,8 @@ struct ATMega1284P::TWI::Address<0> {
 // todo: zusammenfassen wie bei Timer
 template<>
 struct ATMega1284P::TWI::PrescalerRow<0> {
-    static constexpr uint8_t values[] = {1, 4, 16, 64};
+    static constexpr auto values = twiPrescalerBit<ATMega1284P::TWI::TWS>;
+//    static constexpr uint8_t values[] = {1, 4, 16, 64};
 };
 template<>
 struct ATMega1284P::TWI::Prescaler<0, 1> {
