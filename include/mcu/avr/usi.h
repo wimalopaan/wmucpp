@@ -26,9 +26,14 @@
 
 namespace AVR {
 
+template<typename MCU = DefaultMcuType>
 struct I2C {
-    static constexpr uint8_t usicr = _BV(USISIE) | _BV(USIWM1) | _BV(USICS1);
-    static constexpr uint8_t usisr = _BV(USISIF) | _BV(USIOIF) | _BV(USIPF) | _BV(USIDC);
+    typedef typename MCU::USI::USIC uc;
+    typedef typename MCU::USI::USIS us;
+    static constexpr auto usicr      = uc::sie     | uc::wm1     | uc::cs1;
+//    static constexpr uint8_t usicr = _BV(USISIE) | _BV(USIWM1) | _BV(USICS1);
+    static constexpr auto usisr      = us::sif     | us::oif     | us::pf     | us::dc;
+//    static constexpr uint8_t usisr = _BV(USISIF) | _BV(USIOIF) | _BV(USIPF) | _BV(USIDC);
     template<typename SDAPin, typename SCLPin>
     static void init() {
         SCLPin::template dir<Output>();
@@ -40,9 +45,14 @@ struct I2C {
         SDAPin::pullup();
     }
 };
+template<typename MCU = DefaultMcuType>
 struct SPI {
-    static constexpr uint8_t usicr = _BV(USIWM0) | _BV(USICS1) | _BV(USIOIE);
-    static constexpr uint8_t usisr = _BV(USIOIF);
+    typedef typename MCU::USI::USIC uc;
+    typedef typename MCU::USI::USIS us;
+    static constexpr auto      usicr = uc::wm0     | uc::cs1     | uc::oie;
+//    static constexpr uint8_t usicr = _BV(USIWM0) | _BV(USICS1) | _BV(USIOIE);
+    static constexpr auto      usisr = us::oif;
+//    static constexpr uint8_t usisr = _BV(USIOIF);
     template<typename SDAPin, typename SCLPin>
     static void init() {
         SCLPin::template dir<Input>();
@@ -81,14 +91,16 @@ class Usi final : public IsrBaseHandler<AVR::ISR::Usi<0>::Overflow> {
     Usi() = delete;
 public:
     static constexpr auto mcu_usi = getBaseAddr<typename MCU::USI, N>;
-    
+    typedef MCU mcu_type;
+    typedef typename MCU::USI::USIC uc;
+    typedef typename MCU::USI::USIS us;
     typedef typename UsiPort<N, MCU>::mosi_pin mosi_pin;
     using sda_pin = mosi_pin;
     typedef typename UsiPort<N, MCU>::miso_pin miso_pin;
     typedef typename UsiPort<N, MCU>::clock_pin clock_pin;
     using scl_pin = clock_pin;
     
-    template<typename Mode = SPI>
+    template<typename Mode = SPI<MCU>>
     static void init() {
         if constexpr(!std::is_same<SSPin, void>::value) {
             SSPin::template dir<Input>();
@@ -104,8 +116,10 @@ public:
         else {
             miso_pin::template dir<Output>();
         }
-        mcu_usi()->usicr = Mode::usicr;        
-        mcu_usi()->usisr = Mode::usisr;        
+        mcu_usi()->usicr.template set<Mode::usicr>();        
+//        mcu_usi()->usicr = Mode::usicr;        
+        mcu_usi()->usisr.template set<Mode::usisr>();        
+//        mcu_usi()->usisr = Mode::usisr;        
     }
 
     static bool select() {
@@ -120,39 +134,47 @@ public:
     }
     
     static uint8_t get() {
-        while(!(mcu_usi()->usisr & _BV(USIOIF)));
+        while(!(mcu_usi()->usisr.template isSet<us::oif>()));
+//        while(!(mcu_usi()->usisr & _BV(USIOIF)));
         return *mcu_usi()->usibr;
     }
     
     static void isr() {
-        mcu_usi()->usisr = _BV(USIOIF);        
+        mcu_usi()->usisr.template set<us::oif>();        
+//        mcu_usi()->usisr = _BV(USIOIF);        
         if constexpr(!std::is_same<Inserter, void>::value) {
             Inserter::insert(*mcu_usi()->usibr);
         }
     }
     
     static void inline setTwiStartConditionMode() {
-        mcu_usi()->usicr = (1 << USISIE) | (0 << USIOIE) | (1 << USIWM1) | (0 << USIWM0) | (1 << USICS1) | 
-                           (0 << USICS0) | (0 << USICLK)  | (0 << USITC); 
-        mcu_usi()->usisr = (0 << USISIF) | (1 << USIOIF) | (1 << USIPF) | (1 << USIDC) | (0x0 << USICNT0);
+        mcu_usi()->usicr.template set<uc::sie | uc::wm1 | uc::cs1>();
+//        mcu_usi()->usicr = (1 << USISIE) | (0 << USIOIE) | (1 << USIWM1) | (0 << USIWM0) | (1 << USICS1) | 
+//                           (0 << USICS0) | (0 << USICLK)  | (0 << USITC); 
+        mcu_usi()->usisr.template set<us::oif | us::pf | us::dc>();
+//        mcu_usi()->usisr = (0 << USISIF) | (1 << USIOIF) | (1 << USIPF) | (1 << USIDC) | (0x0 << USICNT0);
     }    
     static void inline setSendAck() {
         *mcu_usi()->usidr = 0;
         sda_pin::template dir<AVR::Output>();
-        mcu_usi()->usisr  = (0 << USISIF) | (1 << USIOIF) | (1 << USIPF) | (1 << USIDC) | ( 0x0E << USICNT0);
+        mcu_usi()->usisr.template set<us::oif | us::pf | us::dc | us::cnt3 | us::cnt2 | us::cnt1>();
+//        mcu_usi()->usisr  = (0 << USISIF) | (1 << USIOIF) | (1 << USIPF) | (1 << USIDC) | ( 0x0E << USICNT0);
     }
     static void inline setSendData() {
         sda_pin::template dir<AVR::Output>();
-        mcu_usi()->usisr = (0 << USISIF) | (1 << USIOIF) | (1 << USIPF) | (1 << USIDC) | (0x0 << USICNT0);         
+        mcu_usi()->usisr.template set<us::oif | us::pf | us::dc>();
+//        mcu_usi()->usisr = (0 << USISIF) | (1 << USIOIF) | (1 << USIPF) | (1 << USIDC) | (0x0 << USICNT0);         
     }
     static void inline setReadData() {
         sda_pin::template dir<AVR::Input>();
-        mcu_usi()->usisr =	(0 << USISIF) | (1 << USIOIF) | (1 << USIPF) | (1 << USIDC) | (0x0 << USICNT0); \
+        mcu_usi()->usisr.template set<us::oif | us::pf | us::dc>();
+//        mcu_usi()->usisr =	(0 << USISIF) | (1 << USIOIF) | (1 << USIPF) | (1 << USIDC) | (0x0 << USICNT0); 
     }
     static void inline setReadAck() {
         *mcu_usi()->usidr = 0;
         sda_pin::template dir<AVR::Input>();
-        mcu_usi()->usisr  = (0 << USISIF) | (1 << USIOIF) | (1 << USIPF) | (1 << USIDC) | (0x0E << USICNT0);
+        mcu_usi()->usisr.template set<us::oif | us::pf | us::dc | us::cnt3 | us::cnt2 | us::cnt1>();
+//        mcu_usi()->usisr  = (0 << USISIF) | (1 << USIOIF) | (1 << USIPF) | (1 << USIDC) | (0x0E << USICNT0);
     }
     
 private:

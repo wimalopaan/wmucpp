@@ -68,10 +68,22 @@ struct ATTiny84 final {
             cs1 = (1 << USICS1),
             cs0 = (1 << USICS0),
             clk = (1 << USICLK),
-            tc =  (1 << USITC)
+            tc  = (1 << USITC)
         };
-        volatile uint8_t usicr;
-        volatile uint8_t usisr;
+        ControlRegister<USI, USIC> usicr;
+//        volatile uint8_t usicr;
+        enum class USIS : uint8_t {
+            sif  = (1 << USISIF),            
+            oif  = (1 << USIOIF),            
+            pf   = (1 << USIPF),            
+            dc   = (1 << USIDC),            
+            cnt3 = (1 << USICNT3),            
+            cnt2 = (1 << USICNT2),            
+            cnt1 = (1 << USICNT1),            
+            cnt0 = (1 << USICNT0) 
+        };
+        ControlRegister<USI, USIS> usisr;
+//        volatile uint8_t usisr;
         DataRegister<USI, ReadWrite> usidr;
         DataRegister<USI, ReadWrite> usibr;
         template<int N> struct Address;
@@ -129,6 +141,14 @@ struct ATTiny84::Timer8Bit::Address<0> {
 };
 }
 namespace std {
+template<>
+struct enable_bitmask_operators<AVR::ATTiny84::USI::USIC> {
+    static constexpr bool enable = true;
+};
+template<>
+struct enable_bitmask_operators<AVR::ATTiny84::USI::USIS> {
+    static constexpr bool enable = true;
+};
 template<>
 struct enable_bitmask_operators<AVR::ATTiny84::Timer8Bit::TCCRA> {
     static constexpr bool enable = true;

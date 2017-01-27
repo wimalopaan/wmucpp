@@ -73,6 +73,8 @@
 #define PPMOUT
 #define HOTT
 
+#define SLAVE84
+
 using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
@@ -116,8 +118,10 @@ using TwiMaster = TWI::Master<0>;
 using TwiMasterAsync = TWI::MasterAsync<TwiMaster>;
 using ds1307 = DS1307<TwiMasterAsync>;
 
+#ifdef SLAVE84
 static constexpr TWI::Address i2cramAddress{0x53};
 using i2cram = I2CRam<TwiMasterAsync, i2cramAddress>;
+#endif
 
 static constexpr TWI::Address i2cledAddress{0x54};
 using i2cled = I2CRam<TwiMasterAsync, i2cledAddress, I2CLedParameter>;
@@ -377,14 +381,18 @@ public:
             
 #ifdef I2C
             if (count % 2) {
+#ifdef SLAVE84
                 i2cram::startWrite(0, count);
+#endif
                 i2cled::startWrite(0, count * 64);
                 i2crpm::startWrite(0, 0);
             }
             else {
+#ifdef SLAVE84
                 if (!i2cram::startRead(0)) {
                     std::cout << "start read ram error"_pgm << std::endl;
                 }
+#endif
                 if (!i2cled::startRead(0)) {
                     std::cout << "start read led error"_pgm << std::endl;
                 }
@@ -527,7 +535,9 @@ int main()
 
     TwiMaster::init<ds1307::fSCL>();
     
+#ifdef SLAVE84
     i2cram::init<ds1307::fSCL>();
+#endif
     i2cled::init<ds1307::fSCL>();
     i2crpm::init<ds1307::fSCL>();
     
@@ -598,7 +608,11 @@ int main()
 #endif
 #ifdef I2C
                                 ,TWIHandlerError, 
-                                ds1307, DS1307handler, DS1307handlerError, i2cram, i2cled, i2crpm,
+                                ds1307, DS1307handler, DS1307handlerError
+#ifdef SLAVE84
+    , i2cram
+#endif
+    , i2cled, i2crpm,
                                 I2CRamHandler, I2CRamErrorHandler,
                                 I2CLedHandler, I2CLedErrorHandler,
                                 I2CRpmHandler, I2CRpmErrorHandler

@@ -34,6 +34,13 @@ public:
         assert(index < mData.size);
         return mData[index];        
     }
+    static void clear()  {
+        for(uint8_t i = 0; i < mData.size; ++i) {
+            mData[i] = 0;
+        }
+    }
+
+//private:
     static volatile std::array<uint8_t, NumberOfRegisters> mData;
 };
 template<uint8_t NumberOfRegisters>
@@ -81,11 +88,13 @@ int main()
 
     std::cout << "attiny i2c ram slave test"_pgm << std::endl;
 
+    virtualRAM::clear();
+    
     {
         Scoped<EnableInterrupt> ei;
         while(true) {
             led::toggle();
-            cRGB color = {(uint8_t)(virtualRAM::mData[0] % 5), 1, 1};
+            cRGB color = {(uint8_t)(virtualRAM::mData[0] % 10), 0, 1};
             leds::set(color);
             Util::delay(100_ms);
         }    

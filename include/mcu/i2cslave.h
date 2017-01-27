@@ -52,6 +52,9 @@ class I2CSlave final {
     I2CSlave() = delete;
     
     static constexpr auto mcu_usi = USI::mcu_usi;
+    typedef typename USI::mcu_type mcu_type;
+    typedef typename mcu_type::USI::USIC uc;
+    typedef typename mcu_type::USI::USIS us;
     
 public:
     struct I2CSlaveHandlerOvfl  : public IsrBaseHandler<AVR::ISR::Usi<0>::Overflow> {
@@ -162,30 +165,32 @@ public:
             while (USI::clock_pin::read() && !USI::mosi_pin::read());// SCL his high and SDA is low
             
             if (!USI::clock_pin::read()) {	// A Stop Condition did not occur
-                USI::mcu_usi()->usicr =
-                        ( 1 << USISIE ) |								// Keep Start Condition Interrupt enabled to detect RESTART
-                        ( 1 << USIOIE ) |								// Enable Overflow Interrupt
-                        ( 1 << USIWM1 ) | ( 1 << USIWM0 ) |			    // Set USI in Two-wire mode, hold SCL low on USI Counter overflow
-                        ( 1 << USICS1 ) | ( 0 << USICS0 ) | ( 0 << USICLK ) |	// 4-Bit Counter Source = external, both edges; Clock Source = External, positive edge	
-                        ( 0 << USITC );									// No toggle clock-port pin
+                mcu_usi()->usicr.template set<uc::sie | uc::oie | uc::wm1 | uc::wm0 | uc::cs1>();
+//                USI::mcu_usi()->usicr =
+//                        ( 1 << USISIE ) |								// Keep Start Condition Interrupt enabled to detect RESTART
+//                        ( 1 << USIOIE ) |								// Enable Overflow Interrupt
+//                        ( 1 << USIWM1 ) | ( 1 << USIWM0 ) |			    // Set USI in Two-wire mode, hold SCL low on USI Counter overflow
+//                        ( 1 << USICS1 ) | ( 0 << USICS0 ) | ( 0 << USICLK ) |	// 4-Bit Counter Source = external, both edges; Clock Source = External, positive edge	
+//                        ( 0 << USITC );									// No toggle clock-port pin
                 
             }
             else {	// A Stop Condition did occur
-                USI::mcu_usi()->usicr =
-                        ( 1 << USISIE ) |								// Enable Start Condition Interrupt
-                        ( 0 << USIOIE ) |								// Disable Overflow Interrupt
-                        ( 1 << USIWM1 ) | ( 0 << USIWM0 ) |			    // Set USI in Two-wire mode, no USI Counter overflow hold
-                        ( 1 << USICS1 ) | ( 0 << USICS0 ) | ( 0 << USICLK ) |		// 4-Bit Counter Source = external, both edges; Clock Source = external, positive edge
-                        ( 0 << USITC );									// No toggle clock-port pin
+                mcu_usi()->usicr.template set<uc::sie | uc::wm1 | uc::cs1>();
+//                USI::mcu_usi()->usicr =
+//                        ( 1 << USISIE ) |								// Enable Start Condition Interrupt
+//                        ( 0 << USIOIE ) |								// Disable Overflow Interrupt
+//                        ( 1 << USIWM1 ) | ( 0 << USIWM0 ) |			    // Set USI in Two-wire mode, no USI Counter overflow hold
+//                        ( 1 << USICS1 ) | ( 0 << USICS0 ) | ( 0 << USICLK ) |		// 4-Bit Counter Source = external, both edges; Clock Source = external, positive edge
+//                        ( 0 << USITC );									// No toggle clock-port pin
             } 
-            
-            USI::mcu_usi()->usisr = ( 1 << USISIF ) | ( 1 << USIOIF ) |	// Clear interrupt flags - resetting the Start Condition Flag will release SCL
-                                    ( 1 << USIPF ) |( 1 << USIDC ) |
-                                    ( 0x0 << USICNT0);								// Set USI to sample 8 bits (count 16 external SCL pin toggles)
+            mcu_usi()->usisr.template set<us::sif | us::oif | us::pf | us::dc>();
+//            USI::mcu_usi()->usisr = ( 1 << USISIF ) | ( 1 << USIOIF ) |	// Clear interrupt flags - resetting the Start Condition Flag will release SCL
+//                                    ( 1 << USIPF ) |( 1 << USIDC ) |
+//                                    ( 0x0 << USICNT0);								// Set USI to sample 8 bits (count 16 external SCL pin toggles)
         }
     };
     static inline void init() {
-        USI::template init<AVR::I2C>();
+        USI::template init<AVR::I2C<mcu_type>>();
         state = State::USI_SLAVE_CHECK_ADDRESS;
     }
 private:
@@ -197,4 +202,5 @@ volatile State I2CSlave<USI, Address, RegisterMachine>::state = State::USI_SLAVE
 
 template<typename USI, const TWI::Address& Address, typename RegisterMachine>
 volatile uint_NaN<uint8_t> I2CSlave<USI, Address, RegisterMachine>::index;
+
 }
