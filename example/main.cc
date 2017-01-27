@@ -72,8 +72,11 @@
 #define PPMIN
 #define PPMOUT
 #define HOTT
-
+#define DCF
+#define LMADC
 #define SLAVE84
+#define SLAVE85
+#define SLAVE25
 
 using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
@@ -106,12 +109,16 @@ using button0 = Button<0, AVR::Pin<PortA, 3>>;
 using button1 = Button<1, AVR::Pin<PortA, 4>>;
 using buttonController = ButtonController<button0, button1>;
 
+#ifdef DCF
 using dcfPin = AVR::Pin<PortA, 7>;
 using dcfDecoder = DCF77<dcfPin, Config::Timer::frequency, EventManager, true>;
+#endif
 
+#ifdef LMADC
 using adc = AVR::Adc<0>;
 using adcController = AdcController<adc, 6>;
 using lm35 = LM35<adcController, 0>;
+#endif
 
 #ifdef I2C
 using TwiMaster = TWI::Master<0>;
@@ -123,14 +130,23 @@ static constexpr TWI::Address i2cramAddress{0x53};
 using i2cram = I2CRam<TwiMasterAsync, i2cramAddress>;
 #endif
 
+#ifdef SLAVE85
 static constexpr TWI::Address i2cledAddress{0x54};
 using i2cled = I2CRam<TwiMasterAsync, i2cledAddress, I2CLedParameter>;
+#endif
 
+#ifdef SLAVE25
 static constexpr TWI::Address i2crpmAddress{0x55};
 using i2crpm = I2CRam<TwiMasterAsync, i2crpmAddress, I2CRpmParameter>;
 #endif
 
-using vrAdapter = VariableRateAdapter<bufferedTerminal, adcController>;
+#endif
+
+using vrAdapter = VariableRateAdapter<bufferedTerminal
+#ifdef LMADC
+, adcController
+#endif
+>;
 
 using ws2812_A = AVR::Pin<PortC, 2>;
 //using ws2812_B = AVR::Pin<PortC, 2>;
@@ -196,7 +212,10 @@ using softPwmPin2 = AVR::Pin<PortB, 6>;
 using softPwm = SoftPWM<softPwmPin1, softPwmPin2>;
 #endif
 
-using sampler = PeriodicGroup<AVR::ISR::Timer<0>::CompareA, buttonController, systemTimer, dcfDecoder
+using sampler = PeriodicGroup<AVR::ISR::Timer<0>::CompareA, buttonController, systemTimer
+#ifdef DCF
+, dcfDecoder
+#endif
 #ifdef SPWM
 , softPwm
 #endif
@@ -265,7 +284,9 @@ struct DCFReceive1Handler : public EventHandler<EventType::DCFReceive1> {
 };
 struct DCFSyncHandler : public EventHandler<EventType::DCFSync> {
     static void process(uint8_t) {
+#ifdef DCF
         std::cout << "dcf sync  "_pgm << dcfDecoder::dateTime() << std::endl;
+#endif
     }  
 };
 struct DCFErrorHandler : public EventHandler<EventType::DCFError> {
@@ -384,8 +405,12 @@ public:
 #ifdef SLAVE84
                 i2cram::startWrite(0, count);
 #endif
+#ifdef SLAVE85
                 i2cled::startWrite(0, count * 64);
+#endif
+#ifdef SLAVE25
                 i2crpm::startWrite(0, 0);
+#endif
             }
             else {
 #ifdef SLAVE84
@@ -393,17 +418,22 @@ public:
                     std::cout << "start read ram error"_pgm << std::endl;
                 }
 #endif
+#ifdef SLAVE85
                 if (!i2cled::startRead(0)) {
                     std::cout << "start read led error"_pgm << std::endl;
                 }
+#endif
+#ifdef SLAVE25
                 if (!i2crpm::startRead(0)) {
                     std::cout << "start read rpm error"_pgm << std::endl;
                 }
+#endif
             }
             ds1307::startReadTimeInfo();
 #endif
-            
+#ifdef LMADC
             std::cout << "Temp lm35: "_pgm << lm35::temperature() << std::endl;
+#endif
 #ifdef PPMIN
             std::cout << "ppm:"_pgm << ppm1::value<0>() << std::endl;
 #endif
@@ -418,9 +448,11 @@ public:
             std::percent pv = std::scale(Hott::SumDProtocollAdapter<0>::value8Bit(0),
                                    Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit);
             std::cout << "pv: " << pv.value << std::endl;
-#ifdef SPWM
+            
+#ifdef PPMOUT
             softPpm::ppm(pv, 0);
-    
+#endif
+#ifdef SPWM
             softPwm::pwm(pv, 0);
             softPwm::pwm(pv, 1);
             std::cout << "spwm period: "_pgm << softPwm::period() << std::endl;
@@ -508,8 +540,9 @@ int main()
 
     SSpi0::init();
     buttonController::init();
+#ifdef LMADC
     adcController::init();
-    
+#endif
 //    rpm::init();
     
     using namespace std::literals::quantity;
@@ -538,8 +571,12 @@ int main()
 #ifdef SLAVE84
     i2cram::init<ds1307::fSCL>();
 #endif
+#ifdef SLAVE85
     i2cled::init<ds1307::fSCL>();
+#endif
+#ifdef SLAVE25
     i2crpm::init<ds1307::fSCL>();
+#endif
     
     std::array<TWI::Address, 5> i2cAddresses;
     TwiMaster::findDevices(i2cAddresses);
@@ -548,8 +585,10 @@ int main()
     }
 #endif
     
+#ifdef DCF
     dcfDecoder::init();
-
+#endif
+    
     constexpr std::hertz fCr = 1 / Hott::hottDelayBetweenBytes;
     constexpr auto tsd = AVR::Util::calculate<crTimer>(fCr);
     static_assert(tsd, "wrong parameter");
@@ -612,8 +651,13 @@ int main()
 #ifdef SLAVE84
     , i2cram
 #endif
-    , i2cled, i2crpm,
-                                I2CRamHandler, I2CRamErrorHandler,
+#ifdef SLAVE85
+    , i2cled
+#endif
+#ifdef SLAVE25
+    , i2crpm
+#endif
+                              , I2CRamHandler, I2CRamErrorHandler,
                                 I2CLedHandler, I2CLedErrorHandler,
                                 I2CRpmHandler, I2CRpmErrorHandler
 #endif
