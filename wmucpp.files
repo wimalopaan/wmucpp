@@ -1,3 +1,10 @@
+boards/Makefile
+boards/unimaxi/Makefile
+boards/unimaxi/atmega1284p/Makefile
+boards/unimaxi/atmega328p/Makefile
+boards/unimaxi/attiny84/Makefile
+boards/unimaxi/attiny85_1/Makefile
+boards/unimaxi/attiny85_2/Makefile
 doc/bmcpp99/bm10a.cc
 example/atmega8/blink.cc
 example/atmega8/blink.h

@@ -17,10 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-MCU = atmega1284p
-F_OSC = 20000000
+MCU = attiny84
+F_OSC = 8000000
 
-subdirs = atmega12840 atmega328p attiny84 attiny85_1 attiny85_2
+subdirs = 
 
 #targets +=  main.elf main.size
 

@@ -38,3 +38,10 @@ example/attiny25
 doc
 doc/bmcpp10
 text
+boards
+boards/unimaxi
+boards/unimaxi/atmega1284p
+boards/unimaxi/atmega328p
+boards/unimaxi/attiny84
+boards/unimaxi/attiny85_1
+boards/unimaxi/attiny85_2
