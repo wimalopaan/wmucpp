@@ -100,12 +100,22 @@ struct ATTiny84 final {
         template<uint8_t N> struct Flags;       
     };
     struct Interrupt {
-        volatile uint8_t gifr;
-        volatile uint8_t gimsk;
+        enum class GIFlags : uint8_t {
+            intf = (1 << INTF0),
+            pcif0 = (1 << PCIF0),
+            pcif1 = (1 << PCIF1)
+        };
+        ControlRegister<Interrupt, GIFlags> gifr;
+        enum class GIMask : uint8_t {
+            ie   = (1 << INT0),
+            pcie0 = (1 << PCIE0),
+            pcie1 = (1 << PCIE1),
+        };
+        ControlRegister<Interrupt, GIMask> gimsk;
         static constexpr uint8_t address = 0x5a;
     };
     struct PCInterrupts {
-        volatile uint8_t pcmsk;
+        DataRegister<PCInterrupts, ReadWrite> pcmsk;
         template<int N> struct Address;
     };
 };

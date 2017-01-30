@@ -177,7 +177,7 @@ struct ATMega1284P final
     };
 
     struct PCInterrupts {
-        volatile uint8_t pcmsk;
+        DataRegister<PCInterrupts, ReadWrite> pcmsk;
         template<int N> struct Address;
     };
 
@@ -231,11 +231,23 @@ struct ATMega1284P final
         template<typename P> struct Address;
     };
     struct Interrupt {
-        volatile uint8_t pcifr;
+        enum class PCFlags : uint8_t {
+            if3 = (1 << PCIF3),
+            if2 = (1 << PCIF2),
+            if1 = (1 << PCIF1),
+            if0 = (1 << PCIF0)
+        };
+        ControlRegister<Interrupt, PCFlags> pcifr;
         volatile uint8_t eifr;
         volatile uint8_t eimsk;
         volatile uint8_t padding[0x68 - 0x3b - 1 - 2];
-        volatile uint8_t pcicr;
+        enum class PCMask : uint8_t {
+            ie3 = (1 << PCIE3),
+            ie2 = (1 << PCIE2),
+            ie1 = (1 << PCIE1),
+            ie0 = (1 << PCIE0)
+        };
+        ControlRegister<Interrupt, PCMask> pcicr;
         volatile uint8_t eicra;
         static constexpr uint8_t address = 0x3b;
     };

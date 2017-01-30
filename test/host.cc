@@ -130,27 +130,66 @@ void assertFunction(bool b, const char *function, const char *file, unsigned int
 ////    set(sc2);    
 //}
 
-enum class AlarmFlags : uint8_t {
-    NoTimer =    0,
-    Periodic =   1 << 0,
-    OneShot  =   1 << 1,
-    AutoDelete = 1 << 2,
-    Disabled   = 1 << 3
-};
+//enum class AlarmFlags : uint8_t {
+//    NoTimer =    0,
+//    Periodic =   1 << 0,
+//    OneShot  =   1 << 1,
+//    AutoDelete = 1 << 2,
+//    Disabled   = 1 << 3
+//};
 
-namespace std {
-template<>
-struct enable_bitmask_operators<AlarmFlags>{
-    static const bool enable = true;
-};
-}
+//namespace std {
+//template<>
+//struct enable_bitmask_operators<AlarmFlags>{
+//    static const bool enable = true;
+//};
+//}
 
-int main() {
-    AlarmFlags f1 = AlarmFlags::NoTimer;
-    AlarmFlags f2 = AlarmFlags::Periodic;
+//int main() {
+//    AlarmFlags f1 = AlarmFlags::NoTimer;
+//    AlarmFlags f2 = AlarmFlags::Periodic;
 
-    AlarmFlags f3 = AlarmFlags::Disabled | AlarmFlags::AutoDelete;
+//    AlarmFlags f3 = AlarmFlags::Disabled | AlarmFlags::AutoDelete;
     
-    std::cout << static_cast<int>(f2 | AlarmFlags::Disabled) << std::endl;    
-    std::cout << static_cast<int>(f3) << std::endl;    
+//    std::cout << static_cast<int>(f2 | AlarmFlags::Disabled) << std::endl;    
+//    std::cout << static_cast<int>(f3) << std::endl;    
+//}
+
+struct AT1 {
+    static constexpr int x = 0;
+};
+
+struct AT2 {
+    static constexpr int y = 0;
+};
+
+struct AT3 {
+    static constexpr int x = 0;
+};
+
+template<typename T>
+struct Part {
+    static constexpr uint8_t x = T::x;
+};
+
+template<typename T>
+struct Feature {
+    static constexpr Part<T> b;
+};
+
+template<>
+struct Feature<AT2> {
+    static constexpr int b = 0;
+};
+
+volatile int q = 0;
+
+int main()
+{
+    Feature<AT1> x1;
+    q = x1.b.x;
+    Feature<AT2> x2;
+    q = x2.b;
+    Feature<AT3> x3;
+    q = x3.b.x;
 }
