@@ -147,8 +147,8 @@ public:
             }
             break;
         }
-
     }
+    static constexpr auto rateProcess = periodic;
     static const DateTime::TimeTm& dateTime() {
         return dcfTime;
     }

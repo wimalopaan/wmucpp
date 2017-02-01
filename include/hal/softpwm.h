@@ -60,6 +60,8 @@ public:
         freeCounter = 0;
         Checker<0, Pins...>::checkOn();
     }
+    static constexpr auto rateProcess = periodic;
+    
     static const volatile uint16_t& period() {
         return mPeriod;
     }

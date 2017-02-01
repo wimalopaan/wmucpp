@@ -21,6 +21,7 @@
 
 #define MEM
 #define OneWire
+#define DCF
 //#define I2C
 //#define HOTT
 
@@ -33,6 +34,10 @@
 #include "hal/constantrate.h"
 
 #include "external/ws2812.h"
+
+#ifdef DCF
+# include "external/dcf77.h"
+#endif
 
 #ifdef OneWire
 # include "external/onewire.h"
@@ -68,7 +73,7 @@ using systemTimer = AVR::Timer8Bit<0>;
 using alarmTimer = AlarmTimer<systemTimer>;
 
 // Timer1
-//using constantRateTimer = AVR::Timer16Bit<1>;
+using constantRateTimer = AVR::Timer16Bit<1>;
 #ifdef HOTT
 constexpr const auto constantRatePeriod = Hott::hottDelayBetweenBytes;
 #else
@@ -84,6 +89,12 @@ using leds = WS2812<4, AVR::Pin<PortC, 4>>;
 using ppm4out = AVR::Pin<PortA, 4>;
 using ppm3out = AVR::Pin<PortA, 5>;
 
+using select1 = AVR::Pin<PortC, 5>;
+#ifdef DCF
+using dcfPin = select1;
+using dcfDecoder = DCF77<dcfPin, Config::Timer::frequency, EventManager, true>;
+#endif
+
 #ifdef OneWire
 using oneWirePin = AVR::Pin<PortC, 7>;
 using oneWireMaster = OneWire::Master<oneWirePin, OneWire::Normal>;
@@ -92,15 +103,16 @@ using ds18b20 = DS18B20<oneWireMasterAsync>;
 std::array<OneWire::ow_rom_t, 5> dsIds;
 #endif
 
-//using devicesConstantRateAdapter = ConstantRateAdapter<constantRateTimer, AVR::ISR::Timer<1>::CompareA 
-//#ifdef OneWire
-//                                                        ,oneWireMasterAsync
-//#endif
-//>;
+using devicesConstantRateAdapter = ConstantRateAdapter<constantRateTimer, AVR::ISR::Timer<1>::CompareA 
+#ifdef OneWire
+                                                        ,oneWireMasterAsync
+#endif
+>;
 
 using bufferedTerminal = BufferedStream<SSpi0, 512>;
-using systemConstantRateAdapter = ConstantRateAdapter<void, AVR::ISR::Timer<0>::CompareA, 
-                                                    alarmTimer, bufferedTerminal>;
+using systemConstantRateAdapter = ConstantRateAdapter<void, AVR::ISR::Timer<0>::CompareA
+                                                    , alarmTimer
+                                                    , dcfDecoder>;
 
 namespace std {
     std::basic_ostream<bufferedTerminal> cout;
@@ -108,7 +120,7 @@ namespace std {
 }
 
 using isrRegistrar = IsrRegistrar<systemConstantRateAdapter
-//, devicesConstantRateAdapter
+, devicesConstantRateAdapter
 >;
 
 const auto periodicTimer = alarmTimer::create(1000_ms, AlarmFlags::Periodic);
@@ -140,36 +152,67 @@ struct Initializer {
     }
 };
 
+struct DCFReceive0Handler : public EventHandler<EventType::DCFReceive0> {
+    static void process(uint8_t n) {
+        std::cout << "dcf 0 : "_pgm << n << std::endl;
+    }  
+};
+struct DCFReceive1Handler : public EventHandler<EventType::DCFReceive1> {
+    static void process(uint8_t n) {
+        std::cout << "dcf 1 : "_pgm << n << std::endl;
+    }  
+};
+struct DCFSyncHandler : public EventHandler<EventType::DCFSync> {
+    static void process(uint8_t) {
+        std::cout << "dcf sync  "_pgm << dcfDecoder::dateTime() << std::endl;
+    }  
+};
+struct DCFErrorHandler : public EventHandler<EventType::DCFError> {
+    static void process(uint8_t) {
+        std::cout << "dcf error"_pgm << std::endl;
+    }  
+};
+struct DCFParityHandler : public EventHandler<EventType::DCFParityError> {
+    static void process(uint8_t) {
+        std::cout << "dcf parity error"_pgm << std::endl;
+    }  
+};
+
 int main() {
     Initializer<isrRegistrar, statusLed, leds, systemConstantRateAdapter, 
             bufferedTerminal>::init();
     statusLed::off();
     leds::off();
     SSpi0::init();
+    dcfDecoder::init();
     
     ppm4out::dir<AVR::Output>();
     ppm3out::dir<AVR::Output>();
     
     // todo: zusammenfassen    
     constexpr std::hertz constantRateFrequency = 1 / constantRatePeriod;
-//    constexpr auto tsd = AVR::Util::calculate<constantRateTimer>(constantRateFrequency);
-//    static_assert(tsd, "wrong parameter");
-//    constantRateTimer::prescale<tsd.prescaler>();
-//    constantRateTimer::ocra<tsd.ocr>();
+    constexpr auto tsd = AVR::Util::calculate<constantRateTimer>(constantRateFrequency);
+    static_assert(tsd, "wrong parameter");
+    constantRateTimer::prescale<tsd.prescaler>();
+    constantRateTimer::ocra<tsd.ocr>();
     
-//    devicesConstantRateAdapter::init();
-    
-//    alarmTimer::start(*periodicTimer);
+    devicesConstantRateAdapter::init();
     
     // todo: WatchDog
     {
         Scoped<EnableInterrupt> interruptEnabler;
         
-        using allEventHandler = EventHandlerGroup<TimerHandler>;
+        using allEventHandler = EventHandlerGroup<TimerHandler
+#ifdef DCF
+                                , DCFReceive0Handler, DCFReceive1Handler, DCFSyncHandler, DCFErrorHandler, DCFParityHandler
+#endif
+
+        >;
         
         std::cout << "UniMaxi 0.1"_pgm << std::endl;
 
         EventManager::run2<allEventHandler>([](){
+            bufferedTerminal::periodic();
             systemConstantRateAdapter::periodic();
 //            devicesConstantRateAdapter::periodic();
         });
@@ -181,7 +224,7 @@ ISR(TIMER0_COMPA_vect) {
 }
 ISR(TIMER1_COMPA_vect) {
     ppm3out::toggle();
-//    isrRegistrar::isr<AVR::ISR::Timer<1>::CompareA>();
+    isrRegistrar::isr<AVR::ISR::Timer<1>::CompareA>();
 }
 
 #ifndef NDEBUG

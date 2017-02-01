@@ -31,6 +31,7 @@
 #include "hal/alarmtimer.h"
 #include "hal/softpwm.h"
 #include "hal/bufferedstream.h"
+#include "hal/constantrate.h"
 #include "units/percent.h"
 #include "std/literals.h"
 #include "external/ws2812.h"
@@ -72,9 +73,9 @@ using lcdStream = BufferedStream<lcd, 64>;
 using systemClock = AVR::Timer8Bit<0>;
 using systemTimer = AlarmTimer<systemClock>;
 
-using sampler = PeriodicGroup<AVR::ISR::Timer<0>::CompareA, systemTimer, lcdPwm>;
+using systemConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<0>::CompareA, systemTimer, lcdPwm>;
 
-using isrReg = IsrRegistrar<sampler, spiInput, terminal::RxHandler, terminal::TxHandler>; 
+using isrReg = IsrRegistrar<systemConstantRate, spiInput, terminal::RxHandler, terminal::TxHandler>; 
 
 template<typename Led>
 class Blinker {
@@ -154,19 +155,9 @@ struct Timerhandler: public EventHandler<EventType::Timer> {
         static uint8_t counter = 0;
         ++counter;
         
-        auto xy = lcd::position();
-        
-        std::cout << "x: " << xy->first << " y: " << xy->second << std::endl;
-        
-        if (counter % 2) {
-            lcdcout << "a"_pgm;
-        }
-        else {
-            lcdcout << "b"_pgm << lcdendl;
-        }
         std::percent v = std::scale(counter % 10, 0, 9);
         
-        lcdPwm::pwm(50_ppc, 0);
+        lcdPwm::pwm(v, 0);
         
         blinker::tick();
     }
@@ -194,7 +185,8 @@ int main()
     
     {
         Scoped<EnableInterrupt> interruptEnabler;
-        EventManager::run<sampler, handler>([](){
+        EventManager::run2<handler>([](){
+            systemConstantRate::periodic();
             lcdPwm::freeRun();
             lcdStream::periodic();
             if (spiInput::leak()) {
