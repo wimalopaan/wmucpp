@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -82,7 +82,7 @@ template<uint8_t N> class SensorProtocollAdapter;
 }
 
 template<typename Interrupt = void, typename... PP>
-class PeriodicGroup : public IsrBaseHandler<Interrupt> {
+class [[deprecated]] PeriodicGroup : public IsrBaseHandler<Interrupt> {
 public:
     static void periodic() {
         if (tickCounter > 0) {
@@ -134,8 +134,17 @@ public:
         return fifo().push_back(event); // lockfree fifo
     }
 
+    template<typename EE, typename P>
+    static void run2(const P& periodic) {
+        while(true) {
+            periodic();
+            if (auto event = fifo().pop_front()) {
+                EE::process(*event);
+            }
+        }
+    }
     template<typename PP, typename EE, typename P>
-    static void run(const P& periodic) {
+    [[deprecated]] static void run(const P& periodic) {
         while(true) {
             PP::periodic();
             periodic();

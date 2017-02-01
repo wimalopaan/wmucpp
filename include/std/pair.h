@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++
- * Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,10 +22,10 @@
 
 namespace std {
 
-template<typename T>
+template<typename T, typename U>
 struct pair {
     T first;
-    T second;
+    U second;
 };
 
 template<typename T>
@@ -38,12 +38,12 @@ struct combinedType<uint8_t> {
 };
 
 template<typename T>
-typename combinedType<T>::type combinedValue(volatile const pair<T>& p) {
+typename combinedType<T>::type combinedValue(volatile const pair<T, T>& p) {
     return (p.first << combinedType<T>::shift) + p.second;
 }
 
 template<typename T>
-typename combinedType<T>::type combinedValue(const pair<T>& p) {
+typename combinedType<T>::type combinedValue(const pair<T, T>& p) {
     return (p.first << combinedType<T>::shift) + p.second;
 }
 

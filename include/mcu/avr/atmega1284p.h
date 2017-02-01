@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -250,6 +250,31 @@ struct ATMega1284P final
         ControlRegister<Interrupt, PCMask> pcicr;
         volatile uint8_t eicra;
         static constexpr uint8_t address = 0x3b;
+    };
+    
+    struct Reset {
+        enum class ResetFlags : uint8_t {
+            wdr = (1 << WDRF),
+            bor = (1 << BORF),
+            extrf = (1 << EXTRF),
+            por = (1 << PORF)
+        };
+        ControlRegister<Reset, ResetFlags> mcusr;
+        static constexpr uint8_t address = 0x54;
+    };
+    struct WatchDog {
+        enum class WatchDogFlags : uint8_t {
+            wdif = (1 << WDIF),
+            wdie = (1 << WDIE),
+            wdce = (1 << WDCE),
+            wde  = (1 << WDE),
+            wdp3 = (1 << WDP3),
+            wdp2 = (1 << WDP2),
+            wdp1 = (1 << WDP1),
+            wdp0 = (1 << WDP0)
+        };
+        ControlRegister<Reset, WatchDogFlags> wdtcsr;
+        static constexpr uint8_t address = 0x60;
     };
 };
 template<>

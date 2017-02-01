@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 #include "util/dassert.h"
 #include "console.h"
 
-using systemClock = AVR::Timer8Bit<0>;
+using systemClock= AVR::Timer8Bit<0>;
 using systemTimer = AlarmTimer<systemClock>;
 
 using sampler = PeriodicGroup<AVR::ISR::Timer<0>::CompareA, systemTimer>;

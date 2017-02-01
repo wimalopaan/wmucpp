@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@ struct SumDMsg {
 
     static constexpr const uint8_t MaxChannels = 32;
     volatile uint8_t  nChannels = 0;
-    volatile std::array<std::pair<uint8_t>, MaxChannels> channelData = {};
+    volatile std::array<std::pair<uint8_t, uint8_t>, MaxChannels> channelData = {};
     volatile uint16_t crc = 0;
 };
 

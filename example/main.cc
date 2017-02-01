@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -181,12 +181,12 @@ using softPpm = SoftPPM<ppmTimerOutput, ppmPin1, ppmPin2>;
 using hardPwm = AVR::PWM<2>;
 #endif
 
-using crTimer = AVR::Timer16Bit<1>;
+using constantRateTimer = AVR::Timer16Bit<1>;
 #ifdef HOTT
 using crWriterSensorBinary = ConstanteRateWriter<Hott::SensorProtocollBuffer<0>, sensorUsart>;
 using crWriterSensorText = ConstanteRateWriter<Hott::SensorTextProtocollBuffer<0>, sensorUsart>;
 //using crAdapter = ConstantRateAdapter<crTimer, AVR::ISR::Timer<1>::CompareA, crWriterSensorBinary, crWriterSensorText, TestBitShifter<crTestPin, 0x55>>;
-using crAdapterHott = ConstantRateAdapter<crTimer, AVR::ISR::Timer<1>::CompareA, crWriterSensorBinary, crWriterSensorText>;
+using crAdapterHott = ConstantRateAdapter<constantRateTimer, AVR::ISR::Timer<1>::CompareA, crWriterSensorBinary, crWriterSensorText>;
 #else
 using crAdapterHott = ConstantRateAdapter<crTimer, AVR::ISR::Timer<1>::CompareA>;
 #endif
@@ -590,10 +590,10 @@ int main()
 #endif
     
     constexpr std::hertz fCr = 1 / Hott::hottDelayBetweenBytes;
-    constexpr auto tsd = AVR::Util::calculate<crTimer>(fCr);
+    constexpr auto tsd = AVR::Util::calculate<constantRateTimer>(fCr);
     static_assert(tsd, "wrong parameter");
-    crTimer::prescale<tsd.prescaler>();
-    crTimer::ocra<tsd.ocr>();
+    constantRateTimer::prescale<tsd.prescaler>();
+    constantRateTimer::ocra<tsd.ocr>();
 
     std::cout << "pre: "_pgm << tsd.prescaler << std::endl;
     std::cout << "ocr: "_pgm << tsd.ocr << std::endl;

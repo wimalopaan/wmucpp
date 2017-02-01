@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -60,6 +60,10 @@ struct Ubrr<16000000, 9600> {
 template<>
 struct Ubrr<16000000, 19200> {
     static constexpr uint16_t value = 51;
+};
+template<>
+struct Ubrr<8000000, 19200> {
+    static constexpr uint16_t value = 25;
 };
 
 template<int U>

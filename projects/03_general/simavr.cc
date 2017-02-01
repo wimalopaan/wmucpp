@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -67,7 +67,7 @@ using ppmSwitch = PpmSwitch<0, ppm1>;
 //using pwmPin = AVR::Pin<PortD, 6>;
 //using softPwm = SoftPPM<pwmTimer, pwmPin>;
 
-using crTimer = AVR::Timer16Bit<1>;
+using constantRateTimer = AVR::Timer16Bit<1>;
 
 using isrReg = IsrRegistrar<sampler>;
 
@@ -109,7 +109,7 @@ int main(void) {
     std::cout << "ocr: "_pgm << t.ocr << std::endl;
 
     constexpr const std::hertz f = 1 / 1600_us;
-    constexpr auto crt = AVR::Util::calculate<crTimer>(f);
+    constexpr auto crt = AVR::Util::calculate<constantRateTimer>(f);
     static_assert(crt, "falscher wert für p");
     std::cout << "crt f: "_pgm << f << std::endl;
     std::cout << "crt pre: "_pgm << crt.prescaler << std::endl;

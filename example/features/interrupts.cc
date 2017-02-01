@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,20 +29,20 @@
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using led = AVR::Pin<PortB, 0>;
 
-using systemClock = AVR::Timer8Bit<0>;
+using systemTimer = AVR::Timer8Bit<0>;
 
 
 using isrReg = IsrRegistrar<>;
 
 int main() {
     Set<led>::output();
-    constexpr auto timerParameter = AVR::Util::calculate<systemClock>(80_Hz);
+    constexpr auto timerParameter = AVR::Util::calculate<systemTimer>(80_Hz);
     static_assert(timerParameter, "wrong timer parameter");
     
     // todo: systemClock::setup<timerParameter>()
     
-    systemClock::prescale<timerParameter.prescaler>();
-    systemClock::ocra<timerParameter.ocr>();
+    systemTimer::prescale<timerParameter.prescaler>();
+    systemTimer::ocra<timerParameter.ocr>();
     
     {
         Scoped<EnableInterrupt> ie;

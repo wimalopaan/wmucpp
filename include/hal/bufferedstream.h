@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ public:
     typedef typename std::conditional<Size <= 255, uint8_t, uint16_t>::type size_type;
     static constexpr const size_type  size = Size;
     
-    template<uint8_t Baud>
+    template<uint8_t Baud = 0>
     static void init() {
         Device::template init<Baud>();
     }
@@ -50,6 +50,7 @@ public:
             Device::put(*v);
         }
     }
+    static constexpr auto rateProcess = periodic;
 private:
     static std::FiFo<uint8_t, Size> fifo;
 };

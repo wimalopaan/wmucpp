@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -259,6 +259,7 @@ struct Timer16Bit: public TimerBase<MCU, N>
     typedef typename MCU::Timer16Bit mcu_timer_type;
     typedef typename MCU::Timer16Bit::TCCRA tccra_type;
     typedef typename MCU::Timer16Bit::TCCRB tccrb_type;
+    // todo: change
     static constexpr uint8_t csBitMask = 0x07;
 //    static constexpr auto csBitMask = AVR::csMask10Bit<tccrb_type>;
     typedef uint16_t value_type;

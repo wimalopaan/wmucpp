@@ -1,10 +1,17 @@
 boards/Makefile
 boards/unimaxi/Makefile
 boards/unimaxi/atmega1284p/Makefile
+boards/unimaxi/atmega1284p/main.cc
 boards/unimaxi/atmega328p/Makefile
+boards/unimaxi/atmega328p/main.cc
+boards/unimaxi/atmega328p/main.h
+boards/unimaxi/atmega328p/test.cc
 boards/unimaxi/attiny84/Makefile
+boards/unimaxi/attiny84/main.cc
 boards/unimaxi/attiny85_1/Makefile
+boards/unimaxi/attiny85_1/main.cc
 boards/unimaxi/attiny85_2/Makefile
+boards/unimaxi/attiny85_2/main.cc
 doc/bmcpp99/bm10a.cc
 example/atmega8/blink.cc
 example/atmega8/blink.h
@@ -14,6 +21,7 @@ example/basics/register03.cc
 example/basics/register04.cc
 example/basics/register05.cc
 example/basics/register10.cc
+include/mcu/avr/watchdog.h
 include/util/outputparameter.h
 include/util/static_container.h
 text/bmcppdefs.adoc

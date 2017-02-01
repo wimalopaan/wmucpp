@@ -1,7 +1,7 @@
 # -*- mode: makefile-gmake; -*-
 #
 # WMuCpp - Bare Metal C++ 
-# Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+# Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,9 +20,9 @@
 MCU = atmega1284p
 F_OSC = 20000000
 
-subdirs = atmega12840 atmega328p attiny84 attiny85_1 attiny85_2
+subdirs =
 
-#targets +=  main.elf main.size
+targets +=  main.elf
 
--include ../../Makefile.include
+-include ../../../Makefile.include
 

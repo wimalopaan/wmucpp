@@ -1,7 +1,7 @@
 # -*- mode: makefile-gmake; -*-
 #
 # WMuCpp - Bare Metal C++ 
-# Copyright (C) 2013, 2014, 2015, 2016, 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+# Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,9 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-all: doc example host test projects
+all: doc example host test projects boards
 
-.PHONY: test example clean host doc projects
+.PHONY: test example clean host doc projects boards
 
 test:
 	make -C test all
@@ -36,10 +36,14 @@ doc:
 projects:
 	make -C projects all
 
+boards:
+	make -C boards all
+
 clean:
 	make -C doc clean
 	make -C example clean
 	make -C test clean
 	make -C host clean
 	make -C projects clean
+	make -C boards clean
 
