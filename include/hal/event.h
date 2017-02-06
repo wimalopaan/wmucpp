@@ -53,6 +53,7 @@ enum class EventType : uint8_t {
     AdcConversion,
     DCFReceive0, DCFReceive1, DCFSync, DCFParityError, DCFError,
     TLE5205Error,
+    ExternalInterrupt,
     NullPAEvent
 };
 
@@ -82,7 +83,9 @@ template<uint8_t N> class SensorProtocollAdapter;
 }
 
 template<typename Interrupt = void, typename... PP>
-class [[deprecated]] PeriodicGroup : public IsrBaseHandler<Interrupt> {
+class 
+//        [[deprecated]] 
+        PeriodicGroup : public IsrBaseHandler<Interrupt> {
 public:
     static void periodic() {
         if (tickCounter > 0) {
@@ -105,22 +108,39 @@ class EventHandlerGroup {
     template<int N, typename T, typename... TT>
     class Processor final {
     public:
-        static void process(const Event8u_t& e) {
+        static bool process(const Event8u_t& e) {
+            bool processed = false;
             if (e.type == T::eventType) {
-                T::process(e.value);
+                processed = T::process(e.value) || processed;
             }
             if constexpr((N - 1) > 0) {
-                Processor<N - 1, TT..., void>::process(e);
+                processed = Processor<N - 1, TT..., void>::process(e) || processed;
             }
+            return processed;
         }
     };
 public:
-    static void process(const Event8u_t& event) {
+    static bool process(const Event8u_t& event) {
         if constexpr(sizeof... (EE) > 0) {
-            Processor<sizeof...(EE), EE...>::process(event);
+            return Processor<sizeof...(EE), EE...>::process(event);
+        }
+        else {
+            return false;
         }
     }
-};
+    static constexpr uint8_t numberOfEvents = sizeof...(EE);
+    static constexpr EventType events[] = {EE::eventType...};
+    static constexpr bool uniqueEvents = [](){
+        for(uint8_t i = 0; i < (numberOfEvents - 1); ++i) {
+            for(uint8_t k = (i + 1); k < numberOfEvents; ++k) {
+                if (events[i] == events[k]) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }();
+ };
 
 class EventManager final
 {
@@ -131,7 +151,11 @@ class EventManager final
 public:
     EventManager() = delete;
     static bool enqueue(const Event8u_t& event) {
-        return fifo().push_back(event); // lockfree fifo
+        if (!fifo().push_back(event)) { // lockfree fifo
+            leakedEvent() = true;
+            return false;
+        }
+        return true;
     }
 
     template<typename EE, typename P>
@@ -139,17 +163,22 @@ public:
         while(true) {
             periodic();
             if (auto event = fifo().pop_front()) {
-                EE::process(*event);
+                if (!EE::process(*event)) {
+                    unprocessedEvent() = true;
+                }
             }
         }
     }
     template<typename PP, typename EE, typename P>
-    [[deprecated]] static void run(const P& periodic) {
+//    [[deprecated]] 
+    static void run(const P& periodic) {
         while(true) {
             PP::periodic();
             periodic();
             if (auto event = fifo().pop_front()) {
-                EE::process(*event);
+                if (!EE::process(*event)) {
+                    unprocessedEvent() = true;
+                }
             }
         }
     }
@@ -158,13 +187,27 @@ public:
         while(true) {
             PP::periodic();
             if (auto event = fifo().pop_front()) {
-                EE::process(*event);
+                if (!EE::process(*event)) {
+                    unprocessedEvent() = true;
+                }
             }
         }
     }
+    static bool& unprocessedEvent() {
+        static bool unprocessed = false;
+        return unprocessed;
+    }
+    static bool& leakedEvent() {
+        static bool leaked = false;
+        return leaked;
+    }
 private:
     static bool enqueueISR(const Event8u_t& event) {
-        return fifo().push_back(event);
+        if (!fifo().push_back(event)) {
+            leakedEvent() = true;
+            return false;
+        }
+        return true;
     }
     // header only: to avoid static data member
     static volatile std::FiFo<Event8u_t, Config::EventManager::EventQueueLength>& fifo()  {

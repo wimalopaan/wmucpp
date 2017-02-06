@@ -52,10 +52,11 @@ namespace std {
 }
 
 struct TimerHandler : public EventHandler<EventType::Timer> {
-    static void process(uint8_t) {
+    static bool process(uint8_t) {
         std::cout << "Value: "_pgm << adcController::value(0) << std::endl;
         std::cout << "Voltage: "_pgm << adcController::voltage(0) << std::endl;
         std::cout << "Temp: "_pgm << lm35::temperature() << std::endl;
+        return true;
     }
 };
 

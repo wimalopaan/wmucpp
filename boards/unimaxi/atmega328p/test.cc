@@ -141,7 +141,7 @@ sampler
 //};
 
 struct Timerhandler: public EventHandler<EventType::Timer> {
-    static void process(const uint8_t&) {
+    static bool process(const uint8_t&) {
         static uint8_t counter = 0;
         ++counter;
         if (counter % 2) {
@@ -152,6 +152,7 @@ struct Timerhandler: public EventHandler<EventType::Timer> {
             led::set(c);
         }
 //        blinker::tick();
+        return true;
     }
 };
 
@@ -188,7 +189,7 @@ int main()
 }
 
 #ifndef NDEBUG
-void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
+void assertFunction(const PgmStringView&, const PgmStringView& , unsigned int ) noexcept {
 //    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
     while(true) {}
 }

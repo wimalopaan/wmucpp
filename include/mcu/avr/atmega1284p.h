@@ -114,7 +114,6 @@ struct ATMega1284P final
         template<int N> struct Address;
         template<int N> struct PrescalerRow;
     };
-    // todo: finish all ControlRegister and DataRegister
     struct Timer8Bit {
         static constexpr const uint8_t count = 2;
         typedef uint8_t value_type;
@@ -238,8 +237,18 @@ struct ATMega1284P final
             if0 = (1 << PCIF0)
         };
         ControlRegister<Interrupt, PCFlags> pcifr;
-        volatile uint8_t eifr;
-        volatile uint8_t eimsk;
+        enum class EIFlags : uint8_t {
+            int2 = (1 << INTF2),
+            int1 = (1 << INTF1),
+            int0 = (1 << INTF0)
+        };
+        ControlRegister<Interrupt, EIFlags> eifr;
+        enum class EIMask : uint8_t {
+            int2 = (1 << INT2),
+            int1 = (1 << INT1),
+            int0 = (1 << INT0)
+        };
+        ControlRegister<Interrupt, EIMask> eimsk;
         volatile uint8_t padding[0x68 - 0x3b - 1 - 2];
         enum class PCMask : uint8_t {
             ie3 = (1 << PCIE3),
@@ -248,7 +257,15 @@ struct ATMega1284P final
             ie0 = (1 << PCIE0)
         };
         ControlRegister<Interrupt, PCMask> pcicr;
-        volatile uint8_t eicra;
+        enum class EIControl : uint8_t {
+            isc21 = (1 << ISC21),
+            isc20 = (1 << ISC20),
+            isc11 = (1 << ISC11),
+            isc10 = (1 << ISC10),
+            isc01 = (1 << ISC01),
+            isc00 = (1 << ISC00)
+        };
+        ControlRegister<Interrupt, EIControl> eicra;
         static constexpr uint8_t address = 0x3b;
     };
     

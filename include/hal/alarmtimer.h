@@ -88,6 +88,10 @@ public:
         timers()[id].flags |= AlarmFlags::Disabled;
     }
     
+    static bool isActive(uint7_t id) {
+        return !isset((timers()[id].flags & AlarmFlags::Disabled));
+    }
+
     static void periodic() {
         using namespace std::literals::chrono;
         for(uint8_t i = 0; i < timers().capacity; ++i) {

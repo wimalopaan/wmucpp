@@ -38,7 +38,7 @@ static constexpr std::hertz fI2C{100000};
 static constexpr TWI::Address i2cramAddress{0x54};
 using TwiMaster = TWI::Master<0>;
 using TwiMasterAsync = TWI::MasterAsync<TwiMaster>;
-using i2cram = I2CRam<TwiMasterAsync, i2cramAddress>;
+using i2cram = I2CGeneric<TwiMasterAsync, i2cramAddress>;
 
 using SoftSPIData = AVR::Pin<PortA, 0>;
 using SoftSPIClock = AVR::Pin<PortA, 1>;
@@ -53,25 +53,28 @@ namespace std {
 }
 
 struct DS1307handler: public EventHandler<EventType::I2CRamValueAvailable> {
-    static void process(uint8_t v) {
+    static bool process(uint8_t v) {
         std::cout << "ram: "_pgm << v << std::endl;
+        return true;
     }  
 };
 
 struct DS1307handlerError: public EventHandler<EventType::I2CRamError> {
-    static void process(uint8_t) {
+    static bool process(uint8_t) {
         std::cout << "ram error"_pgm << std::endl;
+        return true;
     }  
 };
 
 struct TWIHandlerError: public EventHandler<EventType::TWIError> {
-    static void process(uint8_t v) {
+    static bool process(uint8_t v) {
         std::cout << "twi error: "_pgm << v << std::endl;
+        return true;
     }  
 };
 
 struct TimerHandler : public EventHandler<EventType::Timer> {
-    static void process(uint8_t) {
+    static bool process(uint8_t) {
         std::cout << "timer"_pgm << std::endl;
         if (!i2cram::startWrite(0, 1)) {
             std::cout << "send error"_pgm << std::endl;
@@ -79,6 +82,7 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
         if (!i2cram::startRead(0)) {
             std::cout << "send error"_pgm << std::endl;
         }
+        return true;
     }
 };
 

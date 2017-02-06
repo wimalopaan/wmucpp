@@ -187,6 +187,38 @@ struct Pin final {
     static constexpr auto& isHigh = read;
 };
 
+template<typename Pin,  const std::microseconds& PulseWidth = Config::zeroMicroSeconds, bool ActiveLow = true>
+struct SinglePulse final {
+    SinglePulse() {
+        init();
+    }    
+    static void init() {
+        if constexpr(ActiveLow) {
+            Pin::high();
+        }
+        else {
+            Pin::low();
+        }
+        Pin::template dir<Output>();
+    }
+    static void trigger(){
+        if constexpr(ActiveLow) {
+            Pin::low();
+            if constexpr(PulseWidth != Config::zeroMicroSeconds) {
+                ::Util::delay(PulseWidth);                                
+            }
+            Pin::high();
+        }
+        else {
+            Pin::high();
+            if constexpr(PulseWidth != Config::zeroMicroSeconds) {
+                ::Util::delay(PulseWidth);                                
+            }
+            Pin::low();
+        }
+    }
+};
+
 struct NoPin final {
     NoPin() = delete;
     static constexpr uint8_t number = 0;

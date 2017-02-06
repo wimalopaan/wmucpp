@@ -47,20 +47,20 @@ namespace std {
     std::lineTerminator<CRLF> endl;
 }
 
-class Spi0handler: public EventHandler<EventType::Spi0> {
-public:
-    static void process(const uint8_t& v) {
+struct  Spi0handler: public EventHandler<EventType::Spi0> {
+    static bool process(const uint8_t& v) {
         Util::put<terminal, true>((char)v);
+        return true;
     }
 };
 
-class Timerhandler: public EventHandler<EventType::Timer> {
-public:
-    static void process(const uint8_t&) {
+struct Timerhandler: public EventHandler<EventType::Timer> {
+    static bool process(const uint8_t&) {
         if (spiInput::leak()) {
         }
         else {
         }
+        return true;
     }
 };
 

@@ -27,6 +27,7 @@
 #include "mcu/avr/isr.h"
 #include "mcu/avr/spi.h"
 #include "mcu/avr/delay.h"
+#include "mcu/avr/twislave.h"
 #include "hal/event.h"
 #include "hal/alarmtimer.h"
 #include "hal/softpwm.h"
@@ -74,8 +75,6 @@ using systemClock = AVR::Timer8Bit<0>;
 using systemTimer = AlarmTimer<systemClock>;
 
 using systemConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<0>::CompareA, systemTimer, lcdPwm>;
-
-using isrReg = IsrRegistrar<systemConstantRate, spiInput, terminal::RxHandler, terminal::TxHandler>; 
 
 template<typename Led>
 class Blinker {
@@ -133,6 +132,39 @@ std::array<cRGB, (uint8_t)Blinker<Led>::State::NumberOfStates> Blinker<Led>::mSt
 
 using blinker = Blinker<led>;
 
+// todo: auslagern
+template<uint8_t NumberOfRegisters>
+class RamRegisterMachine final {
+    RamRegisterMachine() = delete;
+public:
+    static constexpr uint8_t size = NumberOfRegisters;
+    static volatile uint8_t& cell(uint8_t index) {
+        assert(index < data().size);
+        return data()[index];        
+    }
+    static void clear()  {
+        for(auto& v: data()) {
+            v = 0;
+        }
+    }
+    static volatile bool& needUpdate() {
+        static volatile bool update = false;
+        return update;
+    }
+private:
+    static volatile std::array<uint8_t, NumberOfRegisters>& data() {
+        static volatile std::array<uint8_t, NumberOfRegisters> mData;
+        return mData;
+    }
+};
+
+using virtualRAM = RamRegisterMachine<8>;
+
+constexpr TWI::Address address{0x59};
+using i2c = TWI::Slave<0, address, virtualRAM>;
+
+using isrReg = IsrRegistrar<systemConstantRate, spiInput, terminal::RxHandler, terminal::TxHandler, i2c>; 
+
 namespace std {
 std::basic_ostream<terminal> cout;
 std::lineTerminator<CRLF> endl;
@@ -142,14 +174,14 @@ std::basic_ostream<lcdStream> lcdcout;
 std::lineTerminator<std::LF> lcdendl;
 
 struct Spi0handler: public EventHandler<EventType::Spi0> {
-    static void process(const uint8_t& v) {
+    static bool process(const uint8_t& v) {
         Util::put<terminal, true>((char)v);
+        return true;
     }
 };
 
 struct Timerhandler: public EventHandler<EventType::Timer> {
-    
-    static void process(const uint8_t&) {
+    static bool process(const uint8_t&) {
         using namespace std::literals::quantity;
         
         static uint8_t counter = 0;
@@ -158,8 +190,9 @@ struct Timerhandler: public EventHandler<EventType::Timer> {
         std::percent v = std::scale(counter % 10, 0, 9);
         
         lcdPwm::pwm(v, 0);
-        
         blinker::tick();
+
+        return true;
     }
 };
 
@@ -171,6 +204,7 @@ int main()
     terminal::init<19200>();
     lcdPwm::init();    
     lcd::init();
+    i2c::init();
     
     std::cout << "UniMaxi (HW 0.2) m328 (Spi Uart Lcd) 0.91"_pgm << std::endl;
     lcdcout << "UniMaxi (HW 0.2) m328 (Spi Uart Lcd) 0.91"_pgm << lcdendl;
@@ -211,6 +245,9 @@ ISR(TIMER1_COMPB_vect) {
 }
 ISR(TIMER1_CAPT_vect) {
     //    isrReg::isr<AVR::ISR::Timer<1>::Capture>();
+}
+ISR(TWI_vect) {
+    isrReg::isr<AVR::ISR::Twi<0>>();
 }
 ISR(SPI_STC_vect) {
     isrReg::isr<AVR::ISR::Spi<0>::Stc>();

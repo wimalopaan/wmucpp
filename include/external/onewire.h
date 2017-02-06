@@ -215,7 +215,7 @@ bool MasterAsync<OWMaster, delay, BSize>::mDevicesPresent = false;
 template<typename OWMaster, const std::microseconds& delay, uint16_t BSize>
 uint8_t MasterAsync<OWMaster, delay, BSize>::mBytesToRead = 0;
 
-template<typename Pin, typename Mode, bool InternalPullup = true>
+template<typename Pin, typename Mode, bool InternalPullup = true, bool ParasitePower = false>
 class Master final {
 public:
     Master() = delete;
@@ -248,6 +248,10 @@ public:
         }
         Set<Pin>::input();
         Pin::pullup();      
+        if constexpr (ParasitePower) {
+            Set<Pin>::output();
+            Pin::high();
+        }
     }    
 
     template<bool UseRecovery = true>
@@ -263,7 +267,15 @@ public:
             Set<Pin>::input();
             Pin::pullup();      
             Util::delay(Parameter<Mode>::sampleAfterPre);
-            return Pin::read();
+            if constexpr (ParasitePower) {
+                bool b = Pin::read();
+                Set<Pin>::output();
+                Pin::high();
+                return b;                
+            }
+            else {
+                return Pin::read();
+            }
         }
     }
     static bool reset() {
@@ -279,6 +291,10 @@ public:
             }
             Util::delay(Parameter<Mode>::presenceAfterReset);
             presence = !Pin::read(); // actice low
+            if constexpr (ParasitePower) {
+                Set<Pin>::output();
+                Pin::high();
+            }
         }
         Util::delay(Parameter<Mode>::reset - Parameter<Mode>::presenceAfterReset);    
         return presence;

@@ -28,22 +28,6 @@
 
 namespace I2C {
 
-template<uint8_t NumberOfRegisters>
-class RamRegisterMachine final {
-public:
-    static constexpr uint8_t size = NumberOfRegisters;
-    static uint8_t& cell(uint8_t index) {
-        assert(index < mData.size);
-        return mData[index];        
-    }
-    static void process() {
-    }
-private:
-    static std::array<uint8_t, NumberOfRegisters> mData;
-};
-template<uint8_t NumberOfRegisters>
-std::array<uint8_t, NumberOfRegisters> RamRegisterMachine<NumberOfRegisters>::mData;
-
 enum class State { USI_SLAVE_CHECK_ADDRESS, USI_SLAVE_SEND_DATA, USI_SLAVE_REQUEST_REPLY_FROM_SEND_DATA,
                            USI_SLAVE_CHECK_REPLY_FROM_SEND_DATA, USI_SLAVE_REQUEST_DATA, USI_SLAVE_GET_DATA_AND_SEND_ACK};
 

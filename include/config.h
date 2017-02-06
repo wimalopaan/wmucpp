@@ -53,6 +53,7 @@ struct Config final
     struct Button {
         static constexpr uint8_t buttonTicksForPressed = 100_ms * Timer::frequency;
     };
+    static constexpr std::microseconds zeroMicroSeconds{0};
     static constexpr bool ensureTerminalOutput = true;
     static constexpr bool disableCout = false;
 };

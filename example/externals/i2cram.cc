@@ -32,7 +32,7 @@ using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
 static constexpr std::hertz fI2C{100000};
 static constexpr TWI::Address i2cramAddress{0x54};
 using TwiMaster = TWI::Master<0>;
-using i2cram = I2CRam<TwiMaster, i2cramAddress>;
+using i2cram = I2CGeneric<TwiMaster, i2cramAddress>;
 
 using SoftSPIData = AVR::Pin<PortA, 0>;
 using SoftSPIClock = AVR::Pin<PortA, 1>;

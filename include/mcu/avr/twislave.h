@@ -18,133 +18,100 @@
 
 #pragma once
 
-// twi / i2c slave für atmega 
-// http://rn-wissen.de/wiki/index.php?title=TWI_Slave_mit_avr-gcc
-
 #include "compat/twi.h"
 #include "mcu/avr8.h"
 #include "mcu/avr/twiaddress.h"
-#include "container/fifo.h"
+#include "mcu/avr/isr.h"
+#include "std/array.h"
+#include "std/types.h"
 
 namespace TWI {
-class Slave final {
+
+template<uint8_t N, const TWI::Address& Address, typename RegisterMachine = void, typename MCU = DefaultMcuType>
+class Slave final : public IsrBaseHandler<AVR::ISR::Twi<0>> {
     Slave() = delete;
 public:
+    typedef MCU                         mcu_type;     
+    typedef typename mcu_type::TWI      mcu_twi_type;     
+    typedef typename mcu_type::TWI::TWS tws;     
+    typedef typename mcu_type::TWI::TWC twc;     
+    typedef typename MCU::TWI::template PrescalerRow<N> ps;
+    static constexpr uint8_t number = N;
+    
+    static constexpr const auto mcu_twi = AVR::getBaseAddr<typename MCU::TWI, N>;
+
+    static constexpr auto tw_status_mask = tws::tws7 | tws::tws6 | tws::tws5 | tws::tws4 | tws::tws3;
+    static constexpr auto twcr_ack  = twc::twen | twc::twie | twc::twint | twc::twea;
+    static constexpr auto twcr_nack = twc::twen | twc::twie | twc::twint;
+    static constexpr auto twcr_reset = twc::twen | twc::twie | twc::twint | twc::twea | twc::twsto;
+    
     static void init() {
-        
+        BusAddress<Write> busAddress{Address};
+        *mcu_twi()->twar = busAddress.value();
+        mcu_twi()->twcr.template clear<twc::twsta | twc::twsta>();
+        mcu_twi()->twcr.template set<twc::twea | twc::twen | twc::twie>();
+        index().setNaN();
+    }
+    static void isr() {
+        auto twst = mcu_twi()->twsr.template get<tw_status_mask>();
+        switch(twst) {
+        case tws::twSrSlaAck:
+            mcu_twi()->twcr.template set<twcr_ack>();
+            index().setNaN();
+            break;
+        case tws::twSrDataAck:
+        {
+            uint8_t data = *mcu_twi()->twdr;
+            if (!index()) {
+                if (data < RegisterMachine::size) {
+                    index() = data;
+                }
+                else {
+                    index() = 0;
+                }
+                mcu_twi()->twcr.template set<twcr_ack>();
+            }
+            else {
+                if (*index() < RegisterMachine::size) {
+                    RegisterMachine::cell(*index()) = data;
+                    RegisterMachine::needUpdate() = true;
+                }
+                ++index();
+                mcu_twi()->twcr.template set<twcr_ack>();
+            }
+        }
+            break;
+        case tws::twStSlaAck:
+        case tws::twStDataAck:
+            if (!index()) {
+                index() = 0;
+            }
+            if (*index() < RegisterMachine::size) {
+                *mcu_twi()->twdr = RegisterMachine::cell(*index());
+                ++index();
+            }
+            else {
+                *mcu_twi()->twdr = 0;
+            }
+            mcu_twi()->twcr.template set<twcr_ack>();
+            break;
+        case tws::twSrStop:
+            mcu_twi()->twcr.template set<twcr_ack>();
+            break;
+        case tws::twStDataNack:
+        case tws::twSrDataNack:
+        case tws::twStLastData:
+        default:
+            mcu_twi()->twcr.template set<twcr_reset>();
+            break;
+        }
+    }
+private:
+    static auto& index() {
+        static volatile uint_NaN<uint8_t> r_index;
+        return r_index;
     }
 
-private:
 };
 
 }
-
-//volatile uint8_t buffer_adr; //"Adressregister" für den Buffer
-
-///*Initaliserung des TWI-Inteface. Muss zu Beginn aufgerufen werden, sowie bei einem Wechsel der Slave Adresse
-//Parameter adr: gewünschte Slave-Adresse
-//*/
-//void init_twi_slave(uint8_t adr)
-//{
-//    TWAR= adr; //Adresse setzen
-//	TWCR &= ~(1<<TWSTA)|(1<<TWSTO);
-//	TWCR|= (1<<TWEA) | (1<<TWEN)|(1<<TWIE); 	
-//	buffer_adr=0xFF;  
-//}
-
-
-////Je nach Statuscode in TWSR müssen verschiedene Bitmuster in TWCR geschreiben werden(siehe Tabellen im Datenblatt!). 
-////Makros für die verwendeten Bitmuster:
-
-////ACK nach empfangenen Daten senden/ ACK nach gesendeten Daten erwarten
-//#define TWCR_ACK TWCR = (1<<TWEN)|(1<<TWIE)|(1<<TWINT)|(1<<TWEA)|(0<<TWSTA)|(0<<TWSTO)|(0<<TWWC);  
-
-////NACK nach empfangenen Daten senden/ NACK nach gesendeten Daten erwarten     
-//#define TWCR_NACK TWCR = (1<<TWEN)|(1<<TWIE)|(1<<TWINT)|(0<<TWEA)|(0<<TWSTA)|(0<<TWSTO)|(0<<TWWC);
-
-////switch to the non adressed slave mode...
-//#define TWCR_RESET TWCR = (1<<TWEN)|(1<<TWIE)|(1<<TWINT)|(1<<TWEA)|(0<<TWSTA)|(1<<TWSTO)|(0<<TWWC);  
-
-
-///*ISR, die bei einem Ereignis auf dem Bus ausgelöst wird. Im Register TWSR befindet sich dann 
-//ein Statuscode, anhand dessen die Situation festgestellt werden kann.
-//*/
-//ISR (TWI_vect)  
-//{
-//uint8_t data=0;
-
-//switch (TW_STATUS) //TWI-Statusregister prüfen und nötige Aktion bestimmen 
-//{
-
-//// Slave Receiver 
-
-//case TW_SR_SLA_ACK: // 0x60 Slave Receiver, Slave wurde adressiert	
-//	TWCR_ACK; // nächstes Datenbyte empfangen, ACK danach senden
-//	buffer_adr=0xFF; //Bufferposition ist undefiniert
-//break;
-	
-//case TW_SR_DATA_ACK: // 0x80 Slave Receiver, ein Datenbyte wurde empfangen
-//	data=TWDR; //Empfangene Daten auslesen
-//	if (buffer_adr == 0xFF) //erster Zugriff, Bufferposition setzen
-//		{
-//			//Kontrolle ob gewünschte Adresse im erlaubten bereich
-//			if(data<i2c_buffer_size+1)
-//				{
-//					buffer_adr= data; //Bufferposition wie adressiert setzen
-//				}
-//			else
-//				{
-//					buffer_adr=0; //Adresse auf Null setzen. Ist das sinnvoll? TO DO!
-//				}				
-//			TWCR_ACK;	// nächstes Datenbyte empfangen, ACK danach, um nächstes Byte anzufordern
-//		}
-//	else //weiterer Zugriff, nachdem die Position im Buffer gesetzt wurde. NUn die Daten empfangen und speichern
-//		{
-		
-//			if(buffer_adr<i2c_buffer_size+1)
-//				{
-//						i2cdata[buffer_adr]=data; //Daten in Buffer schreibe	
-//				}
-//			buffer_adr++; //Buffer-Adresse weiterzählen für nächsten Schreibzugriff
-//			TWCR_ACK;	
-//		}
-//break;
-
-
-////Slave transmitter
-
-//case TW_ST_SLA_ACK: //0xA8 Slave wurde im Lesemodus adressiert und hat ein ACK zurückgegeben.
-//	//Hier steht kein break! Es wird also der folgende Code ebenfalls ausgeführt!
-	
-//case TW_ST_DATA_ACK: //0xB8 Slave Transmitter, Daten wurden angefordert
-
-//	if (buffer_adr == 0xFF) //zuvor keine Leseadresse angegeben! 
-//		{
-//			buffer_adr=0;
-//		}	
-		
-//	if(buffer_adr<i2c_buffer_size+1)	
-//		{
-//			TWDR = i2cdata[buffer_adr]; //Datenbyte senden
-//			buffer_adr++; //bufferadresse für nächstes Byte weiterzählen
-//		}
-//	else
-//		{
-//			TWDR=0; //Kein Daten mehr im Buffer
-//		}
-//	TWCR_ACK;
-//break;
-//case TW_SR_STOP:
-//            TWCR_ACK;
-//        break;
-//case TW_ST_DATA_NACK: // 0xC0 Keine Daten mehr gefordert 
-//case TW_SR_DATA_NACK: // 0x88 
-//case TW_ST_LAST_DATA: // 0xC8  Last data byte in TWDR has been transmitted (TWEA = “0”); ACK has been received
-//default: 	
-//    TWCR_RESET;
-//break;
-	
-//} //end.switch (TW_STATUS)
-//} //end.ISR(TWI_vect)
-
-////Ende von twislave.c////

@@ -36,12 +36,18 @@ public:
         TWIMaster::template init<fSCL>();
     }
     template<bool On>
-    static void halt() {
-        static_assert(!TWIMaster::isAsync, "use only with synchron TWI Master");
+    static bool halt() {
+//        static_assert(!TWIMaster::isAsync, "use only with synchron TWI Master");
         std::array<uint8_t, 2> data;
         data[0] = 0x00;
         data[1] = On ? 0x80 : 0x00;
-        TWIMaster::template write<Address>(data);
+        if constexpr(TWIMaster::isAsync) {
+            return TWIMaster::template startWrite<Address>(data);
+        }
+        else {
+            return TWIMaster::template write<Address>(data);
+        }
+//        TWIMaster::template write<Address>(data);
     }
 
     template<bool On>
@@ -129,7 +135,7 @@ public:
         return mTimeInfo;
     }
 
-    static void process(uint8_t address) {
+    static bool process(uint8_t address) {
         if (TWI::Address{address} == Address) {
             for(uint8_t i = 0; i < mTimeInfo.size; ++i) {
                 if (auto v = TWIMaster::get()) {
@@ -137,11 +143,13 @@ public:
                 }
                 else {
                     EventManager::enqueue({EventType::DS1307Error, 0});
-                    return;
+                    return true;
                 }
             }
             EventManager::enqueue({EventType::DS1307TimeAvailable, 0});
+            return true;
         }
+        return false;
     }
 
 private:

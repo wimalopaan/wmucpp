@@ -127,17 +127,17 @@ using ds1307 = DS1307<TwiMasterAsync>;
 
 #ifdef SLAVE84
 static constexpr TWI::Address i2cramAddress{0x53};
-using i2cram = I2CRam<TwiMasterAsync, i2cramAddress>;
+using i2cram = I2CGeneric<TwiMasterAsync, i2cramAddress>;
 #endif
 
 #ifdef SLAVE85
 static constexpr TWI::Address i2cledAddress{0x54};
-using i2cled = I2CRam<TwiMasterAsync, i2cledAddress, I2CLedParameter>;
+using i2cled = I2CGeneric<TwiMasterAsync, i2cledAddress, I2CLedParameter>;
 #endif
 
 #ifdef SLAVE25
 static constexpr TWI::Address i2crpmAddress{0x55};
-using i2crpm = I2CRam<TwiMasterAsync, i2crpmAddress, I2CRpmParameter>;
+using i2crpm = I2CGeneric<TwiMasterAsync, i2crpmAddress, I2CRpmParameter>;
 #endif
 
 #endif
@@ -231,156 +231,171 @@ struct EventHandlerParameter {
 };
 
 struct NullPAHandler: public EventHandler<EventType::NullPAEvent> {
-    static void process(uint8_t v) {
+    static bool process(uint8_t v) {
         std::cout << "Null PA"_pgm << v << std::endl;
+        return true;
     }  
 };
 
 struct I2CRpmHandler: public EventHandler<EventType::I2CRpmValueAvailable> {
-    static void process(uint8_t v) {
+    static bool process(uint8_t v) {
         std::cout << "i2c rpm value: "_pgm << v << std::endl;
+        return true;
     }  
 };
 
 struct I2CRpmErrorHandler: public EventHandler<EventType::I2CRpmError> {
-    static void process(uint8_t) {
+    static bool process(uint8_t) {
         std::cout << "i2c rpm error"_pgm << std::endl;
+        return true;
     }
 };
 
 struct I2CLedHandler: public EventHandler<EventType::I2CLedValueAvailable> {
-    static void process(uint8_t v) {
+    static bool process(uint8_t v) {
         std::cout << "i2c led value: "_pgm << v << std::endl;
+        return true;
     }  
 };
 
 struct I2CLedErrorHandler: public EventHandler<EventType::I2CLedError> {
-    static void process(uint8_t) {
+    static bool process(uint8_t) {
         std::cout << "i2c led error"_pgm << std::endl;
+        return true;
     }
 };
 
 struct I2CRamHandler: public EventHandler<EventType::I2CRamValueAvailable> {
-    static void process(uint8_t v) {
+    static bool process(uint8_t v) {
         std::cout << "i2c ram value: "_pgm << v << std::endl;
+        return true;
     }  
 };
 
 struct I2CRamErrorHandler: public EventHandler<EventType::I2CRamError> {
-    static void process(uint8_t) {
+    static bool process(uint8_t) {
         std::cout << "i2c ram error"_pgm << std::endl;
+        return true;
     }
 };
 
 struct DCFReceive0Handler : public EventHandler<EventType::DCFReceive0> {
-    static void process(uint8_t n) {
+    static bool process(uint8_t n) {
         std::cout << "dcf 0 : "_pgm << n << std::endl;
+        return true;
     }  
 };
 struct DCFReceive1Handler : public EventHandler<EventType::DCFReceive1> {
-    static void process(uint8_t n) {
+    static bool process(uint8_t n) {
         std::cout << "dcf 1 : "_pgm << n << std::endl;
+        return true;
     }  
 };
 struct DCFSyncHandler : public EventHandler<EventType::DCFSync> {
-    static void process(uint8_t) {
+    static bool process(uint8_t) {
 #ifdef DCF
         std::cout << "dcf sync  "_pgm << dcfDecoder::dateTime() << std::endl;
 #endif
+        return true;
     }  
 };
 struct DCFErrorHandler : public EventHandler<EventType::DCFError> {
-    static void process(uint8_t) {
+    static bool process(uint8_t) {
         std::cout << "dcf error"_pgm << std::endl;
+        return true;
     }  
 };
 struct DCFParityHandler : public EventHandler<EventType::DCFParityError> {
-    static void process(uint8_t) {
+    static bool process(uint8_t) {
         std::cout << "dcf parity error"_pgm << std::endl;
+        return true;
     }  
 };
 
 struct DS1307handler: public EventHandler<EventType::DS1307TimeAvailable> {
-    static void process(uint8_t) {
+    static bool process(uint8_t) {
         std::cout << "ds1307 time"_pgm << std::endl;
+        return true;
     }  
 };
 
 struct DS1307handlerError: public EventHandler<EventType::DS1307Error> {
-    static void process(uint8_t) {
+    static bool process(uint8_t) {
         std::cout << "ds1307 error"_pgm << std::endl;
+        return true;
     }  
 };
 
 struct TWIHandlerError: public EventHandler<EventType::TWIError> {
-    static void process(uint8_t) {
+    static bool process(uint8_t) {
         std::cout << "twi error"_pgm << std::endl;
+        return true;
     }  
 };
 
-class DS18B20MeasurementHandler: public EventHandler<EventType::DS18B20Measurement> {
-public:
-    static void process(uint8_t) {
+struct DS18B20MeasurementHandler: public EventHandler<EventType::DS18B20Measurement> {
+    static bool process(uint8_t) {
 #ifdef OW
         std::cout << "t: " << ds18b20::temperature() << std::endl;
 #endif
+        return true;
     }
 };
-class DS18B20ErrorHandler: public EventHandler<EventType::DS18B20Error> {
-public:
-    static void process(uint8_t) {
+struct DS18B20ErrorHandler: public EventHandler<EventType::DS18B20Error> {
+    static bool process(uint8_t) {
         std::cout << "t: error" << std::endl;
+        return true;
     }
 };
 
-class Button0Handler: public EventHandler<EventType::ButtonPress0> {
-public:
-    static void process(uint8_t) {
+struct  Button0Handler: public EventHandler<EventType::ButtonPress0> {
+    static bool process(uint8_t) {
         std::cout << "button 0 press"_pgm << std::endl;
+        return true;
     }
 };
 
-class HottBinaryHandler : public EventHandler<EventType::HottBinaryRequest> {
-public:
-    static void process(uint8_t) {
+struct HottBinaryHandler : public EventHandler<EventType::HottBinaryRequest> {
+    static bool process(uint8_t) {
 //        std::cout << "hbb"_pgm << std::endl;
 #ifdef HOTT
         crWriterSensorBinary::enable<true>();
         crWriterSensorText::enable<false>();
         crAdapterHott::start();
 #endif
+        return true;
     }
 };
 
-class HottKeyHandler : public EventHandler<EventType::HottAsciiKey> {
-public:
-    static void process(uint8_t v) {
+struct HottKeyHandler : public EventHandler<EventType::HottAsciiKey> {
+    static bool process(uint8_t v) {
         std::cout << "k: "_pgm << v << std::endl;
 //        Hott::SensorProtocoll<sensorUsart>::key(v);
+        return true;
     }
 };
 
-class HottBroadcastHandler : public EventHandler<EventType::HottSensorBroadcast> {
-public:
-    static void process(uint8_t) {
+struct HottBroadcastHandler : public EventHandler<EventType::HottSensorBroadcast> {
+    static bool process(uint8_t) {
         std::cout << "hbr"_pgm << std::endl;
 #ifdef HOTT
         crWriterSensorBinary::enable<true>();
         crWriterSensorText::enable<false>();
         crAdapterHott::start();
 #endif
+        return true;
     }
 };
 
-class HottTextHandler : public EventHandler<EventType::HottAsciiRequest> {
-public:
-    static void process(uint8_t) {
+struct HottTextHandler : public EventHandler<EventType::HottAsciiRequest> {
+    static bool process(uint8_t) {
         std::cout << "hba"_pgm << std::endl;
 #ifdef HOTT
         crWriterSensorBinary::enable<false>();
         crWriterSensorText::enable<true>();
         crAdapterHott::start();
 #endif
+        return true;
     }
 };
 
@@ -388,9 +403,8 @@ decltype(systemTimer::create(1000_ms, AlarmFlags::Periodic)) pTimer;
 decltype(systemTimer::create(1000_ms, AlarmFlags::Periodic)) mTimer;
 decltype(systemTimer::create(1000_ms, AlarmFlags::Periodic)) tTimer;
 
-class TimerHandler : public EventHandler<EventType::Timer> {
-public:
-    static void process(uint8_t timer) {
+struct TimerHandler : public EventHandler<EventType::Timer> {
+    static bool process(uint8_t timer) {
         if (timer == *pTimer) {
 
 #ifdef MEM
@@ -470,50 +484,51 @@ public:
             ds18b20::startGet(dsIds[0]);
 #endif
         }
+        return true;
     }
 };
 
-class TestHandler : public EventHandler<EventType::Test> {
-public:
-    static void process(uint8_t) {
+struct TestHandler : public EventHandler<EventType::Test> {
+    static bool process(uint8_t) {
         std::cout << "t"_pgm << std::endl;
+        return true;
     }
 };
 
-class PpmUpHandler : public EventHandler<EventType::Ppm1Up> {
-public:
-    static void process(uint8_t) {
+struct PpmUpHandler : public EventHandler<EventType::Ppm1Up> {
+    static bool process(uint8_t) {
         std::cout << "ppm1up"_pgm << std::endl;
+        return true;
     }
 };
-class PpmDownHandler : public EventHandler<EventType::Ppm1Down> {
-public:
-    static void process(uint8_t) {
+struct PpmDownHandler : public EventHandler<EventType::Ppm1Down> {
+    static bool  process(uint8_t) {
         std::cout << "ppm1down"_pgm << std::endl;
+        return true;
     }
 };
-class UsartHandler : public EventHandler<EventType::UsartRecv0> {
-public:
-    static void process(uint8_t v) {
+struct UsartHandler : public EventHandler<EventType::UsartRecv0> {
+    static bool process(uint8_t v) {
         std::cout << "u: "_pgm << v << std::endl;
+        return true;
     }
 };
-class UsartFeHandler : public EventHandler<EventType::UsartFe> {
-public:
-    static void process(uint8_t v) {
+struct UsartFeHandler : public EventHandler<EventType::UsartFe> {
+    static bool process(uint8_t v) {
         std::cout << "usart fe: "_pgm << v << std::endl;
+        return true;
     }
 };
-class UsartUpeHandler : public EventHandler<EventType::UsartUpe> {
-public:
-    static void process(uint8_t v) {
+struct UsartUpeHandler : public EventHandler<EventType::UsartUpe> {
+    static bool process(uint8_t v) {
         std::cout << "usart upe: "_pgm << v << std::endl;
+        return true;
     }
 };
-class UsartDorHandler : public EventHandler<EventType::UsartDor> {
-public:
-    static void process(uint8_t v) {
+struct UsartDorHandler : public EventHandler<EventType::UsartDor> {
+    static bool process(uint8_t v) {
         std::cout << "usart dor: "_pgm << v << std::endl;
+        return true;
     }
 };
 
@@ -663,6 +678,8 @@ int main()
 #endif
     >;
 
+    static_assert(!handler::uniqueEvents);
+    
 #ifdef HOTT
     sensorUsart::init<19200>();
     rcUsart::init<115200>();

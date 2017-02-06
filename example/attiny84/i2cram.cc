@@ -39,7 +39,6 @@ public:
             mData[i] = 0;
         }
     }
-
 //private:
     static volatile std::array<uint8_t, NumberOfRegisters> mData;
 };

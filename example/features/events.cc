@@ -31,8 +31,9 @@ using led = AVR::Pin<PortB, 0>;
 using systemTimer = AVR::Timer8Bit<0>;
 
 struct TestHandler : public EventHandler<EventType::Test> {
-    static void process(uint8_t) {
+    static bool process(uint8_t) {
         led::toggle();
+        return true;
     }
 };
 

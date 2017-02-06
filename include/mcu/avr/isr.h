@@ -302,6 +302,16 @@ struct Usi<0> {
 #endif
 };
 
+template<uint8_t>
+struct Twi;
+template<>
+struct Twi<0> {
+#ifdef TWI_vect_num
+    static constexpr const uint32_t number = TWI_vect_num;
+#endif
+};
+
+
 template<uint8_t> 
 struct Usart;
 

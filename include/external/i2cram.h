@@ -25,8 +25,6 @@
 #include "hal/event.h"
 #include "util/dassert.h"
 
-// todo: umbenennen: I2CGeneric
-
 struct I2CRamParameter {
     static constexpr EventType eventValueAvailable = EventType::I2CRamValueAvailable;
     static constexpr EventType eventError = EventType::I2CRamError;
@@ -43,7 +41,7 @@ struct I2CRpmParameter {
 };
 
 template<typename TWIMaster, const TWI::Address& Address, typename Parameter = I2CRamParameter>
-class I2CRam : public EventHandler<EventType::TWIRecvComplete> {
+class I2CGeneric : public EventHandler<EventType::TWIRecvComplete> {
 public:
     template<const std::hertz& fSCL>
     static void init() {
@@ -73,7 +71,7 @@ public:
         return TWIMaster::template startWrite<Address>(data);        
     }
     
-    static void process(uint8_t address) {
+    static bool process(uint8_t address) {
         if (TWI::Address{address} == Address) {
             if (auto v = TWIMaster::get()) {
                 EventManager::enqueue({Parameter::eventValueAvailable, *v});
@@ -81,7 +79,9 @@ public:
             else {
                 EventManager::enqueue({Parameter::eventError, 0});
             }
+            return true;
         }
+        return false;
     }
 private:
 };

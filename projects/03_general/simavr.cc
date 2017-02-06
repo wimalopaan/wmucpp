@@ -79,15 +79,15 @@ struct EventHandlerParameter {
 
 EventHandlerParameter evp;
 
-class TimerHandler : public EventHandler<EventType::Timer> {
-public:
-    static void process(const uint8_t& tid) {
+struct TimerHandler : public EventHandler<EventType::Timer> {
+    static bool process(const uint8_t& tid) {
         if (tid == *evp.timerId1) {
             std::cout << "timer1"_pgm << std::endl;
         }
         if (tid == *evp.timerId2) {
             std::cout << "timer2"_pgm << std::endl;
         }
+        return true;
     }
 };
 

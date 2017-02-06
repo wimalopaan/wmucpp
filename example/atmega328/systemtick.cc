@@ -36,10 +36,10 @@ namespace std {
     std::lineTerminator<CRLF> endl;
 }
 
-class TimerHandler : public EventHandler<EventType::Timer> {
-public:
-    static void process(uint8_t) {
+struct TimerHandler : public EventHandler<EventType::Timer> {
+    static bool process(uint8_t) {
         std::cout << "Hello"_pgm << std::endl;
+        return true;
     }
 };
 

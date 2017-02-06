@@ -51,27 +51,31 @@ namespace std {
 }
 
 struct DS1307handler: public EventHandler<EventType::DS1307TimeAvailable> {
-    static void process(uint8_t) {
+    static bool process(uint8_t) {
         std::cout << "ds1307 time"_pgm << std::endl;
+        return true;
     }  
 };
 
 struct DS1307handlerError: public EventHandler<EventType::DS1307Error> {
-    static void process(uint8_t) {
+    static bool process(uint8_t) {
         std::cout << "ds1307 error"_pgm << std::endl;
+        return true;
     }  
 };
 
 struct TWIHandlerError: public EventHandler<EventType::TWIError> {
-    static void process(uint8_t) {
+    static bool process(uint8_t) {
         std::cout << "twi error"_pgm << std::endl;
+        return true;
     }  
 };
 
 struct TimerHandler : public EventHandler<EventType::Timer> {
-    static void process(uint8_t) {
+    static bool process(uint8_t) {
         std::cout << "timer"_pgm << std::endl;
         ds1307::startReadTimeInfo();
+        return true;
     }
 };
 

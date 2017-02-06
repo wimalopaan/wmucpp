@@ -322,7 +322,7 @@ template<uint8_t N, typename MCU = DefaultMcuType>
 class Master final {
 public:
     typedef MCU mcu_type;     
-    typedef typename mcu_type::TWI mcu_twi_type;     
+    typedef typename mcu_type::TWI      mcu_twi_type;     
     typedef typename mcu_type::TWI::TWS tws;     
     typedef typename mcu_type::TWI::TWC twc;     
     typedef typename MCU::TWI::template PrescalerRow<N> ps;

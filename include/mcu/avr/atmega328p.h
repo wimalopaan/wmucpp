@@ -71,6 +71,51 @@ struct ATMega328P final
         volatile uint8_t reserved2;
         template<int N> struct Address;
     };
+    struct TWI {
+        static constexpr const uint8_t count = 1;
+        DataRegister<TWI, ReadWrite> twbr;
+        enum class TWS : uint8_t {
+            tws7 = (1 << TWS7),
+            tws6 = (1 << TWS6),
+            tws5 = (1 << TWS5),
+            tws4 = (1 << TWS4),
+            tws3 = (1 << TWS3),
+            twps1 = (1 << TWPS1),
+            twps0 = (1 << TWPS0),
+            twStart = TW_START,
+            twRepStart = TW_REP_START,
+            twMtSlaAck = TW_MT_SLA_ACK,
+            twMtSlaNack = TW_MT_SLA_NACK,
+            twMtDataAck = TW_MT_DATA_ACK,
+            twMtDataNack = TW_MT_DATA_NACK,
+            twMrSlaAck = TW_MR_SLA_ACK,
+            twMrSlaNack = TW_MR_SLA_NACK,
+            twSrSlaAck = TW_SR_SLA_ACK,
+            twSrDataAck = TW_SR_DATA_ACK,
+            twStSlaAck = TW_ST_SLA_ACK,
+            twStDataAck = TW_ST_DATA_ACK,
+            twSrStop = TW_SR_STOP,
+            twStDataNack = TW_ST_DATA_NACK,
+            twSrDataNack = TW_SR_DATA_NACK,
+            twStLastData = TW_ST_LAST_DATA
+        };
+        ControlRegister<TWI, TWS> twsr;
+        DataRegister<TWI, ReadWrite> twar;
+        DataRegister<TWI, ReadWrite> twdr;
+        enum class TWC : uint8_t {
+            twint = (1 << TWINT),
+            twea = (1 << TWEA),
+            twsta = (1 << TWSTA),
+            twsto = (1 << TWSTO),
+            twwc = (1 << TWWC),
+            twen = (1 << TWEN),
+            twie = (1 << TWIE)
+        };
+        ControlRegister<TWI, TWC> twcr;
+        DataRegister<TWI, ReadWrite> twamr;
+        template<int N> struct Address;
+        template<int N> struct PrescalerRow;
+    };
     struct Timer8Bit {
         static constexpr const uint8_t count = 2;
         typedef uint8_t value_type;
@@ -214,6 +259,14 @@ template<>
 struct enable_bitmask_operators<AVR::ATMega328P::Timer16Bit::TCCRB> {
     static constexpr bool enable = true;
 };
+template<>
+struct enable_bitmask_operators<AVR::ATMega328P::TWI::TWS> {
+    static constexpr bool enable = true;
+};
+template<>
+struct enable_bitmask_operators<AVR::ATMega328P::TWI::TWC> {
+    static constexpr bool enable = true;
+};
 }
 
 namespace AVR {
@@ -259,6 +312,10 @@ struct ATMega328P::PCInterrupts::Address<2> {
     static constexpr uint8_t value = 0x6d;
 };
 
+template<>
+struct ATMega328P::TWI::Address<0> {
+    static constexpr uint8_t value = 0xb8;
+};
 template<>
 struct ATMega328P::Spi::Address<0> {
     static constexpr uint8_t value = 0x4c;
