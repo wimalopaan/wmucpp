@@ -76,6 +76,7 @@ public:
     static void periodic() {
         (Buttons::sample(), ...);
     }
+    static constexpr auto rateProcess = periodic;
 };
 
 template<uint8_t N, typename Pin, bool UseEvent = true, int Thresh = Config::Button::buttonTicksForPressed> // call sample every 1ms -> 50ms Threshold

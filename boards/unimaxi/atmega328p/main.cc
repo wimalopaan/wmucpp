@@ -33,6 +33,8 @@
 #include "hal/softpwm.h"
 #include "hal/bufferedstream.h"
 #include "hal/constantrate.h"
+#include "hal/button.h"
+#include "hal/rotaryencoder.h"
 #include "units/percent.h"
 #include "std/literals.h"
 #include "external/ws2812.h"
@@ -56,6 +58,14 @@ using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using fetPin = AVR::Pin<PortB, 1>;
 using lcdPwm = SoftPWM<fetPin>;
 
+using buttonPin = AVR::Pin<PortB, 0>;
+using button0 = Button<0, buttonPin>;
+using buttonController = ButtonController<button0>;
+
+using rotaryPin1 = AVR::Pin<PortD, 2>;
+using rotaryPin2 = AVR::Pin<PortD, 3>;
+using rotaryEncoder = RotaryEncoder<rotaryPin1, rotaryPin2>;
+
 using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
 using LcdDB4 = AVR::Pin<PortC, 0>;
 using LcdDB5 = AVR::Pin<PortC, 1>;
@@ -74,12 +84,14 @@ using lcdStream = BufferedStream<lcd, 64>;
 using systemClock = AVR::Timer8Bit<0>;
 using systemTimer = AlarmTimer<systemClock>;
 
-using systemConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<0>::CompareA, systemTimer, lcdPwm>;
+using systemConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<0>::CompareA, systemTimer, lcdPwm, 
+                                                buttonController, rotaryEncoder>;
 
 template<typename Led>
 class Blinker {
 public:
-    enum class State {Normal, Failure1, Failure2, Off, NumberOfStates};
+    enum class State {Normal, Failure0_1, Failure0_2, Failure1_1, Failure1_2, Off, NumberOfStates};
+    static constexpr uint8_t failureBlinkCount = 3;
     static void init() {
         Led::init();
         Led::off();
@@ -91,13 +103,26 @@ public:
         case State::Normal:
             mState = State::Off;
             break;
-        case State::Failure1:
+        case State::Failure0_1:
             ++counter;
-            mState = State::Failure2;
+            mState = State::Failure0_2;
             break;
-        case State::Failure2:
-            if (counter < 10) {
-                mState = State::Failure1;
+        case State::Failure0_2:
+            if (counter < failureBlinkCount) {
+                mState = State::Failure0_1;
+            }
+            else {
+                mState = State::Normal;
+                counter = 0;
+            }
+            break;
+        case State::Failure1_1:
+            ++counter;
+            mState = State::Failure1_2;
+            break;
+        case State::Failure1_2:
+            if (counter < failureBlinkCount) {
+                mState = State::Failure1_1;
             }
             else {
                 mState = State::Normal;
@@ -112,8 +137,11 @@ public:
             break;
         }
     }
-    static void failure() {
-        mState = State::Failure1;
+    static void failure0() {
+        mState = State::Failure0_1;
+    }
+    static void failure1() {
+        mState = State::Failure1_1;
     }
 
 private:
@@ -124,10 +152,12 @@ template<typename Led>
 typename Blinker<Led>::State Blinker<Led>::mState = Blinker<Led>::State::Off;
 template<typename Led>
 std::array<cRGB, (uint8_t)Blinker<Led>::State::NumberOfStates> Blinker<Led>::mStateColors = {
-                                                                                            cRGB{0, 128, 0},
-                                                                                            cRGB{128, 0, 0},
-                                                                                            cRGB{64, 0, 64},
-                                                                                            cRGB{0, 0, 0},
+                                                                                            cRGB{0  , 128,   0},
+                                                                                            cRGB{128,   0,   0},
+                                                                                            cRGB{0  ,   0,   0},
+                                                                                            cRGB{0,     0, 128},
+                                                                                            cRGB{0  ,   0,   0},
+                                                                                            cRGB{0  ,   0,   0},
                                                                                             };
 
 using blinker = Blinker<led>;
@@ -164,6 +194,9 @@ struct Timerhandler: public EventHandler<EventType::Timer> {
         lcdPwm::pwm(v, 0);
         blinker::tick();
 
+        lcd::home();
+        lcdcout << "R: " << rotaryEncoder::value();
+        
         return true;
     }
 };
@@ -177,6 +210,8 @@ int main()
     lcdPwm::init();    
     lcd::init();
     i2c::init();
+    buttonController::init();
+    rotaryEncoder::init();
     
     std::cout << "UniMaxi (HW 0.2) m328 (Spi Uart Lcd) 0.91"_pgm << std::endl;
     lcdcout << "UniMaxi (HW 0.2) m328 (Spi Uart Lcd) 0.91"_pgm << lcdendl;
@@ -197,11 +232,15 @@ int main()
             lcdPwm::freeRun();
             lcdStream::periodic();
             if (spiInput::leak()) {
-                blinker::failure();
+                blinker::failure0();
             }
             if (i2c::isChanged()) {
                 i2c::isChanged() = false;
                 lcd::put(i2c::registers());
+            }
+            if (EventManager::unprocessedEvent()) {
+                EventManager::unprocessedEvent() = false;
+                blinker::failure1();
             }
         });
     }
