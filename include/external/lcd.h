@@ -23,6 +23,7 @@
 #include "mcu/avr/delay.h"
 
 #include "std/pair.h"
+#include "std/types.h"
 
 namespace LCD { 
 
@@ -43,16 +44,25 @@ template<typename Type>
 struct Parameter;
 
 template<>
+struct Parameter<Lcd2x8> {
+    static constexpr uint8_t rows = 2;
+    static constexpr uint8_t cols = 8;
+    static constexpr uint8_t rowStartAddress[rows] = {0x00, 0x40};
+    typedef Splitted_NaN<uint8_t, 1, 3> position_t;
+};
+template<>
 struct Parameter<Lcd2x16> {
     static constexpr uint8_t rows = 2;
     static constexpr uint8_t cols = 16;
     static constexpr uint8_t rowStartAddress[rows] = {0x00, 0x40};
+    typedef Splitted_NaN<uint8_t, 1, 4> position_t;
 };
 template<>
 struct Parameter<Lcd2x20> {
     static constexpr uint8_t rows = 2;
     static constexpr uint8_t cols = 20;
     static constexpr uint8_t rowStartAddress[rows] = {0x00, 0x40};
+    typedef Splitted_NaN<uint8_t, 1, 5> position_t;
 };
 
 
@@ -93,6 +103,14 @@ struct std::enable_bitmask_operators<LCD::Instruction> {
 };
 
 namespace LCD {
+
+struct Row {
+    uint8_t value = 0;
+};
+struct Column {
+    uint8_t value = 0;
+};
+
 template<typename Data, typename RS, typename RW, typename E, typename Type>
 class HD44780 final {
     HD44780() = delete;
@@ -103,6 +121,7 @@ public:
     static constexpr auto enableDelay = 20_us;
     
     typedef Parameter<Type> param_type;
+    typedef typename Parameter<Type>::position_t position_t;
     
     static void init() {
         Data::template dir<AVR::Output>();
@@ -143,6 +162,7 @@ public:
     }
     static void home() {
         writeCommand(Instruction::home);
+        actualRow = 0;
     }
     static void writeData(uint8_t data) {
         waitBusy();
@@ -170,7 +190,7 @@ public:
     static bool put(char c) {
         if (c == '\n') {
             actualRow = (actualRow + 1) % param_type::rows;
-            setPosition(actualRow, 0);
+            setPosition(Row{actualRow}, Column{0});
         }
         else {
             auto xy = position();            
@@ -183,19 +203,44 @@ public:
         }
         return true;
     }
-    static std::optional<std::pair<uint8_t, uint8_t>> position() {
+    template<uint8_t Size>
+    static void put(const volatile std::array<uint8_t, Size>& data) {
+        setPosition(Row{0}, Column{0});
+        auto it = data.begin();
+        for(uint8_t row = 0; row < param_type::rows; ++row) {
+            for(uint8_t column = 0; column < param_type::cols; ++column) {
+                put(*it++);
+            }
+            put('\n');
+        }
+    }
+
+    static position_t position() {
         uint8_t address = waitBusy();
         for(uint8_t row = 0; row < Parameter<Type>::rows; ++row) {
             if ((param_type::rowStartAddress[row] <= address) && 
                     (address < (param_type::rowStartAddress[row] + param_type::cols))) {
                 actualRow = row;
-                return std::pair<uint8_t, uint8_t>{row, static_cast<uint8_t>(address - param_type::rowStartAddress[row])};
+                uint8_t column = address - param_type::rowStartAddress[row];
+                return position_t(row, column);
             }
         }
-        return{};
+        return position_t();
     }
-    static void setPosition(uint8_t row, uint8_t column) {
-        writeAddress(param_type::rowStartAddress[row] + column);
+//    static std::optional<std::pair<uint8_t, uint8_t>> position() {
+//        uint8_t address = waitBusy();
+//        for(uint8_t row = 0; row < Parameter<Type>::rows; ++row) {
+//            if ((param_type::rowStartAddress[row] <= address) && 
+//                    (address < (param_type::rowStartAddress[row] + param_type::cols))) {
+//                actualRow = row;
+//                return std::pair<uint8_t, uint8_t>{row, static_cast<uint8_t>(address - param_type::rowStartAddress[row])};
+//            }
+//        }
+//        return{};
+//    }
+    static void setPosition(Row row, Column column) {
+        actualRow = row.value;
+        writeAddress(param_type::rowStartAddress[row.value] + column.value);
     }
 
 private:

@@ -23,6 +23,30 @@
 #include "std/limits.h"
 #include "util/dassert.h"
 
+template<typename U, uint8_t FirstBits, uint8_t SecondBits>
+class Splitted_NaN {
+    static_assert((FirstBits + SecondBits) <= sizeof(U) * 8, "too much bits for type U");
+    static constexpr U firstMask = (1 << FirstBits) - 1;
+    static constexpr U secondMask = (1 << SecondBits) - 1;
+public:
+    Splitted_NaN() = default;
+    Splitted_NaN(U first, U second) : value(((first & firstMask) << SecondBits) | (second & SecondBits)) {
+        assert((first & ~firstMask) == 0);
+        assert((second & ~secondMask) == 0);
+    }
+    U first() const {
+        return (value >> SecondBits);
+    }
+    U second() const {
+        return (value & secondMask);
+    }
+    explicit operator bool() const {
+        return (value != std::numeric_limits<U>::max());
+    }
+private:
+    U value = std::numeric_limits<U>::max();
+};
+
 template<typename T>
 class uint_bounded {
 public:

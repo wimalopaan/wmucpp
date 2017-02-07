@@ -27,9 +27,10 @@
 
 namespace TWI {
 
-template<uint8_t N, const TWI::Address& Address, typename RegisterMachine = void, typename MCU = DefaultMcuType>
+template<uint8_t N, const TWI::Address& Address, uint8_t Size, typename MCU = DefaultMcuType>
 class Slave final : public IsrBaseHandler<AVR::ISR::Twi<0>> {
     Slave() = delete;
+    
 public:
     typedef MCU                         mcu_type;     
     typedef typename mcu_type::TWI      mcu_twi_type;     
@@ -41,9 +42,9 @@ public:
     static constexpr const auto mcu_twi = AVR::getBaseAddr<typename MCU::TWI, N>;
 
     static constexpr auto tw_status_mask = tws::tws7 | tws::tws6 | tws::tws5 | tws::tws4 | tws::tws3;
-    static constexpr auto twcr_ack  = twc::twen | twc::twie | twc::twint | twc::twea;
-    static constexpr auto twcr_nack = twc::twen | twc::twie | twc::twint;
-    static constexpr auto twcr_reset = twc::twen | twc::twie | twc::twint | twc::twea | twc::twsto;
+    static constexpr auto twcr_ack       = twc::twen | twc::twie | twc::twint | twc::twea;
+    static constexpr auto twcr_nack      = twc::twen | twc::twie | twc::twint;
+    static constexpr auto twcr_reset     = twc::twen | twc::twie | twc::twint | twc::twea | twc::twsto;
     
     static void init() {
         BusAddress<Write> busAddress{Address};
@@ -63,7 +64,7 @@ public:
         {
             uint8_t data = *mcu_twi()->twdr;
             if (!index()) {
-                if (data < RegisterMachine::size) {
+                if (data < Size) {
                     index() = data;
                 }
                 else {
@@ -72,11 +73,11 @@ public:
                 mcu_twi()->twcr.template set<twcr_ack>();
             }
             else {
-                if (*index() < RegisterMachine::size) {
-                    RegisterMachine::cell(*index()) = data;
-                    RegisterMachine::needUpdate() = true;
+                if (*index() < Size) {
+                    registers()[*index()] = data;
+                    isChanged() = true;
+                    ++index();
                 }
-                ++index();
                 mcu_twi()->twcr.template set<twcr_ack>();
             }
         }
@@ -86,8 +87,8 @@ public:
             if (!index()) {
                 index() = 0;
             }
-            if (*index() < RegisterMachine::size) {
-                *mcu_twi()->twdr = RegisterMachine::cell(*index());
+            if (*index() < Size) {
+                *mcu_twi()->twdr = registers()[*index()];
                 ++index();
             }
             else {
@@ -106,12 +107,19 @@ public:
             break;
         }
     }
+    static auto& isChanged() {
+        static volatile bool changed = false;
+        return changed;
+    }
+    static auto& registers() {
+        static volatile std::array<uint8_t, Size> rm;
+        return rm;
+    }
 private:
     static auto& index() {
         static volatile uint_NaN<uint8_t> r_index;
         return r_index;
     }
-
 };
 
 }

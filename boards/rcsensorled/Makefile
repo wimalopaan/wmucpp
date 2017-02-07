@@ -17,12 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-MCU = atmega1284p
+MCU = atmega328pb
 F_OSC = 20000000
 
-subdirs = unimaxi rcsensorled
+subdirs =
 
-#targets +=  main.elf main.size
+#targets +=  main.elf
 
--include ../Makefile.include
+-include ../../Makefile.include
 

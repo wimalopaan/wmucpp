@@ -98,6 +98,7 @@ using ppm4out = AVR::Pin<PortA, 4>;
 using ppm3out = AVR::Pin<PortA, 5>;
 
 using select1 = AVR::Pin<PortC, 5>;
+
 #ifdef DCF
 using dcfPin = select1;
 using dcfDecoder = DCF77<dcfPin, Config::Timer::frequency, EventManager, true>;
@@ -123,6 +124,10 @@ struct MCP23008Parameter {
 };
 constexpr TWI::Address mcp23008Address{35};
 using mcp23008 = I2CGeneric<TwiMasterAsync, mcp23008Address, MCP23008Parameter>;
+
+constexpr TWI::Address lcdAddress{0x59};
+using lcd = I2CGeneric<TwiMasterAsync, lcdAddress>;
+
 #endif
 
 using devicesConstantRateAdapter = ConstantRateAdapter<constantRateTimer, AVR::ISR::Timer<1>::CompareA 
@@ -175,6 +180,8 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
 #ifdef I2C
                 ds1307::startReadTimeInfo();
                 mcp23008::startWrite(0x09, ~counter);
+                
+                lcd::startWrite(0, 'a' + (counter % 10));
 #endif
 #ifdef OW
                 
@@ -349,7 +356,7 @@ int main() {
         ds1307::halt<false>();
         ds1307::squareWave<true>();
         
-        std::array<TWI::Address, 5> i2cAddresses;
+        std::array<TWI::Address, 10> i2cAddresses;
         TwiMaster::findDevices(i2cAddresses);
         for(const auto& d : i2cAddresses) {
             std::cout << d << std::endl;

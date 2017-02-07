@@ -132,36 +132,8 @@ std::array<cRGB, (uint8_t)Blinker<Led>::State::NumberOfStates> Blinker<Led>::mSt
 
 using blinker = Blinker<led>;
 
-// todo: auslagern
-template<uint8_t NumberOfRegisters>
-class RamRegisterMachine final {
-    RamRegisterMachine() = delete;
-public:
-    static constexpr uint8_t size = NumberOfRegisters;
-    static volatile uint8_t& cell(uint8_t index) {
-        assert(index < data().size);
-        return data()[index];        
-    }
-    static void clear()  {
-        for(auto& v: data()) {
-            v = 0;
-        }
-    }
-    static volatile bool& needUpdate() {
-        static volatile bool update = false;
-        return update;
-    }
-private:
-    static volatile std::array<uint8_t, NumberOfRegisters>& data() {
-        static volatile std::array<uint8_t, NumberOfRegisters> mData;
-        return mData;
-    }
-};
-
-using virtualRAM = RamRegisterMachine<8>;
-
 constexpr TWI::Address address{0x59};
-using i2c = TWI::Slave<0, address, virtualRAM>;
+using i2c = TWI::Slave<0, address, lcd::param_type::rows * lcd::param_type::cols>;
 
 using isrReg = IsrRegistrar<systemConstantRate, spiInput, terminal::RxHandler, terminal::TxHandler, i2c>; 
 
@@ -217,6 +189,7 @@ int main()
     
     using handler = EventHandlerGroup<Spi0handler, Timerhandler>;
     
+    std::fill(i2c::registers().begin(), i2c::registers().end(), ' ');
     {
         Scoped<EnableInterrupt> interruptEnabler;
         EventManager::run2<handler>([](){
@@ -225,6 +198,10 @@ int main()
             lcdStream::periodic();
             if (spiInput::leak()) {
                 blinker::failure();
+            }
+            if (i2c::isChanged()) {
+                i2c::isChanged() = false;
+                lcd::put(i2c::registers());
             }
         });
     }

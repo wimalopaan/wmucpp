@@ -44,10 +44,22 @@ struct array final
     constexpr const T* end() const {
         return &data[Size];
     }
+    constexpr const volatile T* begin() const volatile {
+        return &data[0];
+    }
+    constexpr const volatile T* end() const volatile {
+        return &data[Size];
+    }
     constexpr T* begin() {
         return &data[0];
     }
     constexpr T* end() {
+        return &data[Size];
+    }
+    constexpr volatile T* begin() volatile {
+        return &data[0];
+    }
+    constexpr volatile T* end() volatile {
         return &data[Size];
     }
     constexpr T& operator[](uint8_t index) {

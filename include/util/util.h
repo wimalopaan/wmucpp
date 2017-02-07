@@ -188,18 +188,6 @@ constexpr auto lowerHalf(const T& v) -> typename fragmentType<T>::type {
     return v;
 }
 
-//template<typename C, typename F>
-//auto parity(const C& c, const F& f) -> typename C::item_type {
-//    typename C::item_type parity = 0;
-//    auto p = (const typename C::item_type*)&c;
-//    static_assert(sizeof(C) < std::numeric_limits<uint8_t>::max(),"wrong size");
-//    for(uint8_t i = 0; i < sizeof(C); ++i) {
-//        f(*p);
-//        parity += *p++;
-//    }
-//    return parity;
-//}
-
 constexpr bool isPowerof2(int v) {
     return v && ((v & (v - 1)) == 0);
 }

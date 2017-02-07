@@ -1,4 +1,6 @@
 boards/Makefile
+boards/rcsensorled/Makefile
+boards/rcsensorled/main.cc
 boards/unimaxi/Makefile
 boards/unimaxi/atmega1284p/Makefile
 boards/unimaxi/atmega1284p/main.cc
