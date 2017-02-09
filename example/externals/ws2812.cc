@@ -28,6 +28,8 @@ using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
 using ws2812_Pin = AVR::Pin<PortC, 2>;
 using leds = WS2812<2, ws2812_Pin>;
 
+typedef leds::color_type Color;
+
 int main() 
 {
     leds::init();
@@ -37,7 +39,7 @@ int main()
     while(true) {
         Util::delay(10_ms);
         
-        cRGB color = {counter, counter, counter};
+        Color color{counter};
         leds::set(color);
         
         ++counter;

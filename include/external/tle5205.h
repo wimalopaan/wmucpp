@@ -38,7 +38,9 @@ public:
     typedef ErrPin err_pin;
     typedef MCUTimer mcu_timer_type;
     typedef typename MCUTimer::value_type value_type;
- 
+    typedef typename MCUTimer::flags_type flags_type;
+    typedef typename MCUTimer::mask_type mask_type;
+    
     static_assert(MCUTimer::hasOcrA, "need ocra");
     static_assert(MCUTimer::hasOverflow, "need overflow");
     
@@ -67,11 +69,13 @@ public:
     static void pwm(const std::percent& p) {
         using namespace std::literals::quantity;
         if (p > 0_ppc) {
-            MCUTimer::mcuInterrupts()->timsk |= _BV(OCIE0A) | _BV(TOIE0);
+            MCUTimer::mcuInterrupts()->timsk.template add<mask_type::ociea | mask_type::toie>();
+//            MCUTimer::mcuInterrupts()->timsk |= _BV(OCIE0A) | _BV(TOIE0);
             MCUTimer::ocra(std::expand(p, value_type{0}, std::numeric_limits<value_type>::max()));        
         }
         else {
-            MCUTimer::mcuInterrupts()->timsk &= ~(_BV(OCIE0A) | _BV(TOIE0));
+            MCUTimer::mcuInterrupts()->timsk.template clear<mask_type::ociea | mask_type::toie>();
+//            MCUTimer::mcuInterrupts()->timsk &= ~(_BV(OCIE0A) | _BV(TOIE0));
         }
     }
     

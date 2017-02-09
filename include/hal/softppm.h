@@ -65,8 +65,10 @@ public:
         *mcuTimer()->ocra = ocFrame;
         mcuTimer()->tccrb.template add<MCUTimer::tccrb_type::wgm2>();
         // todo: flags
-        mcuInterrupts()->tifr  |= _BV(OCF1A) | _BV(OCF1B);
-        mcuInterrupts()->timsk |= _BV(OCIE0A);
+        mcuInterrupts()->tifr.template add<MCUTimer::flags_type::ocfa | MCUTimer::flags_type::ocfb>();
+//        mcuInterrupts()->tifr  |= _BV(OCF1A) | _BV(OCF1B);
+        mcuInterrupts()->timsk.template add<MCUTimer::mask_type::ociea>();
+//        mcuInterrupts()->timsk |= _BV(OCIE0A);
 //        mcuTimer()->tccrb |= _BV(WGM12);
 //        mcuInterrupts()->tifr  |= _BV(OCF1A) | _BV(OCF1B);
 //        mcuInterrupts()->timsk |= _BV(OCIE0A);
@@ -148,7 +150,8 @@ public:
         static void isr() {
             actual = 0;
             *mcuTimer()->ocrb = ocrbValues[0];
-            mcuInterrupts()->timsk |= _BV(OCIE0B);
+            mcuInterrupts()->timsk.template add<MCUTimer::mask_type::ociea>();
+//            mcuInterrupts()->timsk |= _BV(OCIE0B);
             First<Pins...>::high();
         }
     };
@@ -162,30 +165,12 @@ public:
             }
             else {
                 if constexpr(numberOfChannels > 1) {
-                    mcuInterrupts()->timsk &= ~_BV(OCIE0B);
+                    mcuInterrupts()->timsk.template clear<MCUTimer::mask_type::ocieb>();
+//                    mcuInterrupts()->timsk &= ~_BV(OCIE0B);
                 }
             }
         }
     };
-//    static void isrA() { // CTC
-//        actual = 0;
-//        mcuTimer()->ocrb = ocrbValues[0];
-//        mcuInterrupts()->timsk |= _BV(OCIE0B);
-//        First<Pins...>::high();
-//    }
-//    static void isrB() {
-//        OffN<numberOfChannels, Pins...>::check(actual);
-//        actual = (actual + 1) % numberOfChannels;
-//        if (actual != 0) {
-//            OnN<numberOfChannels, Pins...>::check(actual);
-//            mcuTimer()->ocrb = ocrbValues[actual];
-//        }
-//        else {
-//            if constexpr(numberOfChannels > 1) {
-//                mcuInterrupts()->timsk &= ~_BV(OCIE0B);
-//            }
-//        }
-//    }
 private:
     static volatile uint8_t actual;
     static volatile uint16_t ocrbValues[numberOfChannels];

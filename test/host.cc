@@ -184,6 +184,13 @@ struct Feature<AT2> {
 
 volatile int q = 0;
 
+template<typename T = uint8_t>
+struct Red {
+    T value = 0;  
+};
+
+Red<> x;
+
 int main()
 {
     Feature<AT1> x1;

@@ -56,6 +56,29 @@ struct PCNumber<D, MCU> {
     static constexpr auto mask = MCU::Interrupt::PCMask::ie3;
     static constexpr uint8_t interruptNumber = 3;
 };
+#if defined(__AVR_ATmega328PB__)
+template<>
+struct PCNumber<B, ATMega328PB> {
+    PCNumber() = delete;
+    static constexpr auto flag   = ATMega328PB::Interrupt::PCFlags::if0;
+    static constexpr auto mask = ATMega328PB::Interrupt::PCMask::ie0;
+    static constexpr uint8_t interruptNumber = 0;
+};
+template<>
+struct PCNumber<C, ATMega328PB> {
+    PCNumber() = delete;
+    static constexpr auto flag   = ATMega328PB::Interrupt::PCFlags::if1;
+    static constexpr auto mask = ATMega328PB::Interrupt::PCMask::ie1;
+    static constexpr uint8_t interruptNumber = 1;
+};
+template<>
+struct PCNumber<D, ATMega328PB> {
+    PCNumber() = delete;
+    static constexpr auto flag   = ATMega328PB::Interrupt::PCFlags::if2;
+    static constexpr auto mask = ATMega328PB::Interrupt::PCMask::ie2;
+    static constexpr uint8_t interruptNumber = 2;
+};
+#endif
 #if defined(__AVR_ATtiny84__)
 template<>
 struct PCNumber<A, ATTiny84> {

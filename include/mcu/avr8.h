@@ -32,6 +32,7 @@ struct ATMegaNone;
 struct ATMega8;
 struct ATMega1284P;
 struct ATMega328P;
+struct ATMega328PB;
 struct ATTiny84;
 struct ATTiny85;
 struct ATTiny25;

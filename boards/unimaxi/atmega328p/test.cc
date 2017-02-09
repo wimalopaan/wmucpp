@@ -63,6 +63,8 @@ using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
 using ledPin = AVR::Pin<PortD, 4>;
 using led = WS2812<2, ledPin>;
 
+typedef led::color_type Color;
+
 using systemClock = AVR::Timer8Bit<0>;
 using systemTimer = AlarmTimer<systemClock>;
 
@@ -148,7 +150,7 @@ struct Timerhandler: public EventHandler<EventType::Timer> {
             led::off();
         }
         else {
-            cRGB c = {64, 0, 0};
+            Color c{64};
             led::set(c);
         }
 //        blinker::tick();

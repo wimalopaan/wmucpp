@@ -26,6 +26,7 @@ using led = AVR::Pin<PortB, 3>;
 
 using ws2812_Pin = AVR::Pin<PortB, 4>;
 using leds = WS2812<3, ws2812_Pin>;
+typedef leds::color_type Color;
 
 int main() 
 {
@@ -40,7 +41,7 @@ int main()
         led::toggle();
         Util::delay(10_ms);
         
-        cRGB color = {counter, counter, counter};
+        Color color{counter};
         leds::set(color);
         
         ++counter;

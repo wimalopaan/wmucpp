@@ -55,7 +55,9 @@ public:
 private:
 };
 
-std::array<cRGB, 64> leds;
+typedef cRGB<ColorSequenceRGB> Color;
+
+std::array<Color, 64> leds;
 
 using byteWriter = ByteWriter<SSpi0>;
 
@@ -73,7 +75,7 @@ int main()
             AVR::ScopedPin<UsiSelect, AVR::ActiveLow> ss;
             Util::delay(Config::SoftSpiMaster::pulseDelay);
             uint8_t v = (counter++ % 2) * 10;
-            std::fill(std::begin(leds), std::end(leds), cRGB{v, v, v});
+            std::fill(std::begin(leds), std::end(leds), Color{Red{v}, Green{v}, Blue{v}});
             byteWriter::put(leds);
             Util::delay(Config::SoftSpiMaster::pulseDelay);
         }

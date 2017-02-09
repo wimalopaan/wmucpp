@@ -412,7 +412,7 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
 #endif
 
             static uint8_t count = 0;
-            WS2812<2, ws2812_A>::set({16, (uint8_t)((count++ % 2) * 16), 16});
+//            WS2812<2, ws2812_A>::set({16, (uint8_t)((count++ % 2) * 16), 16});
             
 #ifdef I2C
             if (count % 2) {

@@ -119,10 +119,27 @@ struct ATMega8 final
     };
     class TimerInterrupts {
     public:
-        volatile uint8_t tifr;
-        volatile uint8_t timsk;
-        template<uint8_t N> struct Address;
-        template<uint8_t N> struct Flags; 
+        enum class Flags : uint8_t {
+            ocf2  = (1 << OCF2),
+            tov2  = (1 << TOV2),
+            icf1  = (1 << ICF1),
+            ocf1a = (1 << OCF1A),
+            ocf1b = (1 << OCF1B),
+            tov1  = (1 << TOV1),
+            tov0  = (1 << TOV0)
+        };
+        ControlRegister<TimerInterrupts, Flags> tifr;
+        enum class Mask : uint8_t {
+            ocie2  = (1 << OCIE2),
+            toie2  = (1 << TOIE2),
+            ticie1 = (1 << TICIE1),
+            ocie1a = (1 << OCIE1A),
+            ocie1b = (1 << OCIE1B),
+            toie1  = (1 << TOIE1),
+            toie0  = (1 << TOIE0)
+        };
+        ControlRegister<TimerInterrupts, Mask> timsk;
+        static constexpr uint8_t address = 0x58;
     };
 };
 }
@@ -147,26 +164,6 @@ struct enable_bitmask_operators<AVR::ATMega8::Timer16Bit::TCCRB> {
 }
 
 namespace AVR {
-
-template<>
-struct ATMega8::TimerInterrupts::Address<0> {
-    static constexpr uint8_t value = 0x58;
-};
-template<>
-struct ATMega8::TimerInterrupts::Address<1> {
-    static constexpr uint8_t value = 0x58;
-};
-template<>
-struct ATMega8::TimerInterrupts::Address<2> {
-    static constexpr uint8_t value = 0x58;
-};
-template<>
-struct ATMega8::TimerInterrupts::Flags<0> {
-};
-template<>
-struct ATMega8::TimerInterrupts::Flags<1> {
-    static constexpr uint8_t ociea = _BV(OCIE1A);
-};
 
 template<>
 struct ATMega8::PortRegister::Address<B> {

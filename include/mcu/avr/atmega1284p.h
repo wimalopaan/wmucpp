@@ -181,13 +181,56 @@ struct ATMega1284P final
     };
 
     struct TimerInterrupts {
-        volatile uint8_t tifr;
-        volatile uint8_t padding[0x6E - 0x35 - 1];
-        volatile uint8_t timsk;
-        template<uint8_t N> struct Address {
-            static constexpr uint8_t value = 0x35 + N;
+        enum class Flags : uint8_t {
+            icf  = (1 << ICF1),
+            ocfb = (1 << OCF1B),
+            ocfa = (1 << OCF1A),
+            tov  = (1 << TOV1)
         };
-        template<uint8_t N> struct Flags; 
+        ControlRegister<TimerInterrupts, Flags> tifr;
+        volatile uint8_t padding[0x6E - 0x35 - 1];
+        enum class Mask : uint8_t {
+            icie  = (1 << ICIE1),
+            ocieb = (1 << OCIE1B),
+            ociea = (1 << OCIE1A),
+            toie  = (1 << TOIE1)
+        };
+        ControlRegister<TimerInterrupts, Mask> timsk;
+        template<uint8_t N> struct Address;
+    };
+    struct Timer8Interrupts {
+        enum class Flags : uint8_t {
+            ocfb = (1 << OCF0B),
+            ocfa = (1 << OCF0A),
+            tov  = (1 << TOV0)
+        };
+        ControlRegister<Timer8Interrupts, Flags> tifr;
+        volatile uint8_t padding[0x6E - 0x35 - 1];
+        enum class Mask : uint8_t {
+            ocieb = (1 << OCIE0B),
+            ociea = (1 << OCIE0A),
+            toie  = (1 << TOIE0)
+        };
+        ControlRegister<Timer8Interrupts, Mask> timsk;
+        template<uint8_t N> struct Address;
+    };
+    struct Timer16Interrupts {
+        enum class Flags : uint8_t {
+            icf  = (1 << ICF1),
+            ocfb = (1 << OCF1B),
+            ocfa = (1 << OCF1A),
+            tov  = (1 << TOV1)
+        };
+        ControlRegister<Timer16Interrupts, Flags> tifr;
+        volatile uint8_t padding[0x6E - 0x35 - 1];
+        enum class Mask : uint8_t {
+            icie  = (1 << ICIE1),
+            ocieb = (1 << OCIE1B),
+            ociea = (1 << OCIE1A),
+            toie  = (1 << TOIE1)
+        };
+        ControlRegister<Timer16Interrupts, Mask> timsk;
+        template<uint8_t N> struct Address;
     };
 
     struct Spi {
@@ -301,6 +344,22 @@ constexpr bool ATMega1284P::is_atomic<uint8_t>() {return true;}
 
 namespace std {
 template<>
+struct enable_bitmask_operators<AVR::ATMega1284P::Timer8Interrupts::Flags> {
+    static constexpr bool enable = true;
+};
+template<>
+struct enable_bitmask_operators<AVR::ATMega1284P::Timer8Interrupts::Mask> {
+    static constexpr bool enable = true;
+};
+template<>
+struct enable_bitmask_operators<AVR::ATMega1284P::Timer16Interrupts::Flags> {
+    static constexpr bool enable = true;
+};
+template<>
+struct enable_bitmask_operators<AVR::ATMega1284P::Timer16Interrupts::Mask> {
+    static constexpr bool enable = true;
+};
+template<>
 struct enable_bitmask_operators<AVR::ATMega1284P::TWI::TWS> {
     static constexpr bool enable = true;
 };
@@ -336,24 +395,17 @@ template<>
 struct enable_bitmask_operators<AVR::ATMega1284P::Timer16Bit::TCCRB> {
     static constexpr bool enable = true;
 };
+template<>
+struct enable_bitmask_operators<AVR::ATMega1284P::TimerInterrupts::Flags> {
+    static constexpr bool enable = true;
+};
+template<>
+struct enable_bitmask_operators<AVR::ATMega1284P::TimerInterrupts::Mask> {
+    static constexpr bool enable = true;
+};
 }
 
 namespace AVR {
-
-template<>
-struct ATMega1284P::TimerInterrupts::Flags<0> {
-    static constexpr uint8_t ociea = _BV(OCIE0A);
-    static constexpr uint8_t toie = _BV(TOIE0);
-};
-template<>
-struct ATMega1284P::TimerInterrupts::Flags<1> {
-    static constexpr uint8_t ociea = _BV(OCIE1A);
-};
-template<>
-struct ATMega1284P::TimerInterrupts::Flags<2> {
-    static constexpr uint8_t ociea = _BV(OCIE2A);
-    static constexpr uint8_t toie = _BV(TOIE2);
-};
 
 template<>
 struct ATMega1284P::Adc::Parameter<0> {
@@ -425,6 +477,23 @@ struct ATMega1284P::Usart::Address<0> {
 template<>
 struct ATMega1284P::Usart::Address<1> {
     static constexpr uint8_t value = 0xc8;
+};
+
+template<>
+struct ATMega1284P::Timer8Interrupts::Address<0> {
+    static constexpr uint8_t value = 0x35;
+};
+template<>
+struct ATMega1284P::Timer16Interrupts::Address<1> {
+    static constexpr uint8_t value = 0x36;
+};
+template<>
+struct ATMega1284P::Timer8Interrupts::Address<2> {
+    static constexpr uint8_t value = 0x37;
+};
+template<>
+struct ATMega1284P::Timer16Interrupts::Address<3> {
+    static constexpr uint8_t value = 0x38;
 };
 
 //Timer0

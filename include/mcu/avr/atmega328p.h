@@ -186,14 +186,39 @@ struct ATMega328P final
         DataRegister<PCInterrupts, ReadWrite> pcmsk;
         template<int N> struct Address;
     };
-    struct TimerInterrupts {
-        volatile uint8_t tifr;
-        volatile uint8_t padding[0x6E - 0x35 - 1];
-        volatile uint8_t timsk;
-        template<uint8_t N> struct Address {
-            static constexpr uint8_t value = 0x35 + N;
+    struct Timer8Interrupts {
+        enum class Flags : uint8_t {
+            ocfb = (1 << OCF0B),
+            ocfa = (1 << OCF0A),
+            tov  = (1 << TOV0)
         };
-        template<uint8_t N> struct Flags;       
+        ControlRegister<Timer8Interrupts, Flags> tifr;
+        volatile uint8_t padding[0x6E - 0x35 - 1];
+        enum class Mask : uint8_t {
+            ocieb = (1 << OCIE0B),
+            ociea = (1 << OCIE0A),
+            toie  = (1 << TOIE0)
+        };
+        ControlRegister<Timer8Interrupts, Mask> timsk;
+        template<uint8_t N> struct Address;
+    };
+    struct Timer16Interrupts {
+        enum class Flags : uint8_t {
+            icf  = (1 << ICF1),
+            ocfb = (1 << OCF1B),
+            ocfa = (1 << OCF1A),
+            tov  = (1 << TOV1)
+        };
+        ControlRegister<Timer16Interrupts, Flags> tifr;
+        volatile uint8_t padding[0x6E - 0x35 - 1];
+        enum class Mask : uint8_t {
+            icie  = (1 << ICIE1),
+            ocieb = (1 << OCIE1B),
+            ociea = (1 << OCIE1A),
+            toie  = (1 << TOIE1)
+        };
+        ControlRegister<Timer16Interrupts, Mask> timsk;
+        template<uint8_t N> struct Address;
     };
     struct Spi {
         static constexpr const uint8_t count = 1;
@@ -231,6 +256,22 @@ struct ATMega328P final
 }
 
 namespace std {
+template<>
+struct enable_bitmask_operators<AVR::ATMega328P::Timer8Interrupts::Flags> {
+    static constexpr bool enable = true;
+};
+template<>
+struct enable_bitmask_operators<AVR::ATMega328P::Timer8Interrupts::Mask> {
+    static constexpr bool enable = true;
+};
+template<>
+struct enable_bitmask_operators<AVR::ATMega328P::Timer16Interrupts::Flags> {
+    static constexpr bool enable = true;
+};
+template<>
+struct enable_bitmask_operators<AVR::ATMega328P::Timer16Interrupts::Mask> {
+    static constexpr bool enable = true;
+};
 template<>
 struct enable_bitmask_operators<AVR::ATMega328P::Usart::UCSRA> {
     static constexpr bool enable = true;
@@ -272,21 +313,6 @@ struct enable_bitmask_operators<AVR::ATMega328P::TWI::TWC> {
 namespace AVR {
     
 template<>
-struct ATMega328P::TimerInterrupts::Flags<0> {
-    static constexpr uint8_t ociea = _BV(OCIE0A);
-    static constexpr uint8_t toie = _BV(TOIE0);
-};
-template<>
-struct ATMega328P::TimerInterrupts::Flags<1> {
-    static constexpr uint8_t ociea = _BV(OCIE1A);
-};
-template<>
-struct ATMega328P::TimerInterrupts::Flags<2> {
-    static constexpr uint8_t ociea = _BV(OCIE2A);
-    static constexpr uint8_t toie = _BV(TOIE2);
-};
-
-template<>
 struct ATMega328P::PortRegister::Address<B> {
     static constexpr uint8_t value = 0x23;
 };
@@ -323,6 +349,23 @@ struct ATMega328P::Spi::Address<0> {
 template<>
 struct ATMega328P::Usart::Address<0> {
     static constexpr uint8_t value = 0xc0;
+};
+
+template<>
+struct ATMega328P::Timer8Interrupts::Address<0> {
+    static constexpr uint8_t value = 0x35;
+};
+template<>
+struct ATMega328P::Timer16Interrupts::Address<1> {
+    static constexpr uint8_t value = 0x36;
+};
+template<>
+struct ATMega328P::Timer8Interrupts::Address<2> {
+    static constexpr uint8_t value = 0x37;
+};
+template<>
+struct ATMega328P::Timer16Interrupts::Address<3> {
+    static constexpr uint8_t value = 0x38;
 };
 
 //Timer0

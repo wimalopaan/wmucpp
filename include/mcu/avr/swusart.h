@@ -31,8 +31,6 @@
 template<uint8_t N, typename MCU = DefaultMcuType>
 struct SWUsartRxTx;
 
-// todo: testen auf icp3 bei atmega1284p
-
 template<>
 struct SWUsartRxTx<0, AVR::ATMega1284P> {
     SWUsartRxTx() = delete;
@@ -56,6 +54,14 @@ struct SWUsartRxTx<0, AVR::ATMega328P> {
     using tx = AVR::Pin<PortB, 1>;
 };
 
+template<>
+struct SWUsartRxTx<1, AVR::ATMega328PB> {
+    SWUsartRxTx() = delete;
+    using PortE = AVR::Port<DefaultMcuType::PortRegister, AVR::E>;
+    using rx = AVR::Pin<PortE, 2>; // icp3
+    using tx = AVR::Pin<PortE, 1>;
+};
+
 template<uint8_t N> struct SWUsartEventMapper;
 template<>
 struct SWUsartEventMapper<0> {
@@ -68,15 +74,6 @@ struct SWUsartEventMapper<1> {
     constexpr static EventType event = EventType::SwUsartRecv1;
 };
 
-//template<uint16_t Baud> struct SWUsartOCRA;
-
-//template<>
-//struct SWUsartOCRA<2400> {
-//    SWUsartOCRA() = delete;
-//    static constexpr uint16_t prescaler = 64;
-//    static constexpr uint16_t value =  (Config::fMcu / 2400_Hz ) / prescaler;
-//};
-
 template<uint8_t N, typename MCU = DefaultMcuType>
 class SWUsart final {
     static_assert(N < 2, "wrong swusart number");
@@ -84,10 +81,11 @@ class SWUsart final {
     static constexpr uint8_t mcu_timer_number = 2 * N + 1;
 
     static constexpr auto timer = AVR::getBaseAddr<typename MCU::Timer16Bit, mcu_timer_number>;
-    static constexpr auto mcuInterrupts = AVR::getBaseAddr<typename MCU::TimerInterrupts, mcu_timer_number>;
+    static constexpr auto mcuInterrupts = AVR::getBaseAddr<typename MCU::Timer16Interrupts, mcu_timer_number>;
 
     typedef MCU mcu_type;
     typedef typename MCU::Timer16Bit mcu_timer_type;
+    typedef typename MCU::Timer16Interrupts int_type;
 
     SWUsart() = delete;
 public:
@@ -108,7 +106,7 @@ public:
                 }
                 else {
                     outframe = 0x0001;
-                    mcuInterrupts()->timsk &=  ~(_BV(OCIE1A));
+                    mcuInterrupts()->timsk.template clear<int_type::Mask::ociea>();
                 }
             }
         }
@@ -118,8 +116,9 @@ public:
             uint16_t ocra = *timer()->ocra;
             *timer()->ocrb = (timer()->icr + ocra / 2) % ocra;
     
-            mcuInterrupts()->tifr |= _BV(OCF1B);
-            mcuInterrupts()->timsk = (mcuInterrupts()->timsk & ~(_BV(ICIE1))) | _BV(OCIE1B);
+            mcuInterrupts()->tifr.template add<int_type::Flags::ocfb>();
+            mcuInterrupts()->timsk.template clear<int_type::Mask::icie>();
+            mcuInterrupts()->timsk.template add<int_type::Mask::ocieb>();
             inframe = 0;
             inbits = 0;
         }
@@ -134,8 +133,9 @@ public:
             if (inbits == 9) {
                 uint8_t c = 0xff & (inframe >> 1);
                 EventManager::enqueueISR({SWUsartEventMapper<N>::event, c});
-                mcuInterrupts()->timsk = (mcuInterrupts()->timsk & ~(_BV(OCIE1B))) | _BV(ICIE1);
-                mcuInterrupts()->tifr |= _BV(ICF1);
+                mcuInterrupts()->timsk.template clear<int_type::Mask::ocieb>();
+                mcuInterrupts()->timsk.template add<int_type::Mask::icie>();
+                mcuInterrupts()->tifr.template add<int_type::Flags::icf>();
                 inframe = 0;
                 inbits = 0;
             }
@@ -149,27 +149,16 @@ public:
         constexpr auto tsd = AVR::Util::calculate<AVR::Timer16Bit<mcu_timer_number>>(std::hertz{Baud});
         static_assert(tsd, "can't calculate timer setup");
         
-        // todo: testen
         AVR::Timer16Bit<mcu_timer_number>::template prescale<tsd.prescaler>();
-//        AVR::Timer16Bit<timerNumber>::template prescale<SWUsartOCRA<Baud>::prescaler>();
         
         *timer()->ocra= tsd.ocr;
-//        timer()->ocral = SWUsartOCRA<Baud>::value;
-//        timer()->ocrah = (SWUsartOCRA<Baud>::value >> 8) & 0xff;
 
-        // todo: check
-        
         timer()->tccrb.template add<mcu_timer_type::TCCRB::wgm2>();
         timer()->tccrb.template add<mcu_timer_type::TCCRB::icnc>();
         timer()->tccrb.template clear<mcu_timer_type::TCCRB::ices>();
 
-        //        timer()->tccrb |= _BV(WGM12);
-//        timer()->tccrb |= _BV(ICNC1);
-//        timer()->tccrb &= ~_BV(ICES1);
-
-        mcuInterrupts()->timsk |= _BV(ICIE1);
-        mcuInterrupts()->tifr  |= _BV(ICF1) | _BV(OCF1B);
-        mcuInterrupts()->tifr  |= _BV(OCF1A);
+        mcuInterrupts()->timsk.template add<int_type::Mask::icie>();
+        mcuInterrupts()->tifr.template add<int_type::Flags::icf | int_type::Flags::ocfb | int_type::Flags::ocfa>();
 
         SWUsartRxTx<N>::tx::template dir<AVR::Output>();
         SWUsartRxTx<N>::tx::on();
@@ -179,7 +168,7 @@ public:
     }
     static bool put(uint8_t item) {
         if (sendQueue.push_back(item)) {
-            mcuInterrupts()->timsk |= _BV(OCIE1A);
+            mcuInterrupts()->timsk.template add<int_type::Mask::ociea>();
             return true;
         }
         return false;
@@ -196,51 +185,6 @@ public:
         }
     }
 private:
-//    static void isr_compa() {
-//        if (outframe != 0x0001) {
-//            if (outframe & 0x0001) {
-//                SWUsartRxTx<N>::tx::on();
-//            }
-//            else {
-//                SWUsartRxTx<N>::tx::off();
-//            }
-//            outframe = (outframe >> 1);
-//        }
-//        else {
-//            if (auto c = sendQueue.pop_front()) {
-//                outframe = (3 << 9) | ((uint8_t)*c << 1);
-//            }
-//            else {
-//                outframe = 0x0001;
-//                mcuInterrupts()->timsk &=  ~(_BV(OCIE1A));
-//            }
-//        }
-//    }
-//    static void isr_icp() {
-//        uint16_t ocra = timer()->ocra;
-//        timer()->ocrb = (timer()->icr + ocra / 2) % ocra;
-
-//        mcuInterrupts()->tifr |= _BV(OCF1B);
-//        mcuInterrupts()->timsk = (mcuInterrupts()->timsk & ~(_BV(ICIE1))) | _BV(OCIE1B);
-//        inframe = 0;
-//        inbits = 0;
-//    }
-//    static void isr_compb() {
-//        inframe >>= 1;
-//        if (SWUsartRxTx<N>::rx::read()) {
-//            inframe |= (1 << 8);
-//        }
-//        ++inbits;
-//        if (inbits == 9) {
-//            uint8_t c = 0xff & (inframe >> 1);
-//            EventManager::enqueueISR({SWUsartEventMapper<N>::event, c});
-//            mcuInterrupts()->timsk = (mcuInterrupts()->timsk & ~(_BV(OCIE1B))) | _BV(ICIE1);
-//            mcuInterrupts()->tifr |= _BV(ICF1);
-//            inframe = 0;
-//            inbits = 0;
-//        }
-//    }
-
     static std::FiFo<uint8_t, Config::Usart::SendQueueLength> sendQueue;
     static volatile uint16_t outframe;
     static volatile uint16_t inframe;

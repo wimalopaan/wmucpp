@@ -52,6 +52,8 @@ using led = AVR::Pin<PortB, 0>;
 using ws2812pin = AVR::Pin<PortB, 1>;
 using leds = WS2812<60, ws2812pin>;
 
+typedef leds::color_type Color;
+
 using SoftSPIData = AVR::Pin<PortA, 0>;
 using SoftSPIClock = AVR::Pin<PortA, 1>;
 using SoftSPISS = AVR::Pin<PortA, 2>;
@@ -93,7 +95,7 @@ int main()
         Scoped<EnableInterrupt> ei;
         while(true) {
             led::toggle();
-            cRGB color = {(uint8_t)(virtualRAM::mData[0] % 10), 0, 1};
+            Color color = {Red{(uint8_t)(virtualRAM::mData[0] % 10)}, Green{0}, Blue{1}};
             leds::set(color);
             Util::delay(100_ms);
         }    

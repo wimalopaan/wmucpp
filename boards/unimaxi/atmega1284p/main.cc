@@ -97,6 +97,8 @@ using leds = WS2812<4, AVR::Pin<PortC, 4>>;
 using ppm4out = AVR::Pin<PortA, 4>;
 using ppm3out = AVR::Pin<PortA, 5>;
 
+typedef leds::color_type Color;
+
 using select1 = AVR::Pin<PortC, 5>;
 
 #ifdef DCF
@@ -188,7 +190,7 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
 #endif
             }
             else {
-                cRGB c = {128, 0, 0};
+                Color c = {Red{128}};
                 statusLed::set(c);
             }
 #ifdef MEM
@@ -372,11 +374,11 @@ int main() {
             TwiMasterAsync::periodic();
 #endif
             if (EventManager::unprocessedEvent()) {
-                cRGB c = {255, 255, 255};
+                Color c {255};
                 statusLed::set(c);
             }
             if (EventManager::leakedEvent()) {
-                cRGB c = {255, 0, 255};
+                Color c = {Red{255}, Green{0}, Blue{255}};
                 statusLed::set(c);
             }
         });

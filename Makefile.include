@@ -106,6 +106,8 @@ AVRDUDE_FLAGS = -p $(MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER)
 AVRDUDE_FLAGS += $(AVRDUDE_NO_VERIFY)
 AVRDUDE_FLAGS += $(AVRDUDE_VERBOSE)
 AVRDUDE_FLAGS += $(AVRDUDE_ERASE_COUNTER)
+AVRDUDE_FLAGS += -C+/home/lmeier/Projekte/wmucpp/avrdude.conf
+
 CC = /usr/local/avr/bin/avr-gcc
 #CXX = avr-g++
 CXX = /usr/local/avr/bin/avr-g++

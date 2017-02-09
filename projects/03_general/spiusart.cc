@@ -43,6 +43,8 @@ using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
 using ledPin = AVR::Pin<PortD, 2>;
 using led = WS2812<1, ledPin>;
 
+typedef led::color_type Color;
+
 using systemClock = AVR::Timer8Bit<0>;
 using systemTimer = AlarmTimer<systemClock>;
 
@@ -90,17 +92,17 @@ public:
     }
 
 private:
-    static std::array<cRGB, (uint8_t)State::NumberOfStates> mStateColors;
+    static std::array<Color, (uint8_t)State::NumberOfStates> mStateColors;
     static State mState;
 };
 template<typename Led>
 typename Blinker<Led>::State Blinker<Led>::mState = Blinker<Led>::State::Off;
 template<typename Led>
-std::array<cRGB, (uint8_t)Blinker<Led>::State::NumberOfStates> Blinker<Led>::mStateColors = {
-                                                                                            cRGB{0, 128, 0},
-                                                                                            cRGB{128, 0, 0},
-                                                                                            cRGB{64, 0, 64},
-                                                                                            cRGB{0, 0, 0},
+std::array<Color, (uint8_t)Blinker<Led>::State::NumberOfStates> Blinker<Led>::mStateColors = {
+                                                                                            Color{Green{128}},
+                                                                                            Color{Red{128}},
+                                                                                            Color{Red{64}, Green{0}, Blue{64}},
+                                                                                            Color{0},
                                                                                             };
 
 using blinker = Blinker<led>;

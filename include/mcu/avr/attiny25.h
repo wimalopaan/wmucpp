@@ -115,11 +115,27 @@ struct ATTiny25 final {
         volatile uint8_t out;
         template<typename P> struct Address;
     };
-    struct TimerInterrupts {
-        volatile uint8_t tifr;
-        volatile uint8_t timsk;
-        template<uint8_t N> struct Address;
-        template<uint8_t N> struct Flags;       
+    class TimerInterrupts {
+    public:
+        enum class Flags : uint8_t {
+            ocf1a = (1 << OCF1A),
+            ocf1b = (1 << OCF1B),
+            ocf0a = (1 << OCF0A),
+            ocf0b = (1 << OCF0B),
+            tov1  = (1 << TOV1),
+            tov0  = (1 << TOV0)
+        };
+        ControlRegister<TimerInterrupts, Flags> tifr;
+        enum class Mask : uint8_t {
+            ocie1a = (1 << OCIE1A),
+            ocie1b = (1 << OCIE1B),
+            ocie0a = (1 << OCIE0A),
+            ocie0b = (1 << OCIE0B),
+            toie1  = (1 << TOIE1),
+            toie0  = (1 << TOIE0)
+        };
+        ControlRegister<TimerInterrupts, Mask> timsk;
+        static constexpr uint8_t address = 0x58;
     };
     struct Interrupt {
         enum class GIFlags : uint8_t {
@@ -142,27 +158,6 @@ struct ATTiny25 final {
 
 template<>
 constexpr bool ATTiny25::is_atomic<uint8_t>() {return true;}
-
-template<>
-struct ATTiny25::TimerInterrupts::Address<0> {
-    static constexpr uint8_t value = 0x58;
-};
-template<>
-struct ATTiny25::TimerInterrupts::Address<1> {
-    static constexpr uint8_t value = 0x58;
-};
-
-template<>
-struct ATTiny25::TimerInterrupts::Flags<0> {
-    static constexpr uint8_t ociea = _BV(OCIE0A);
-    static constexpr uint8_t toie = _BV(TOIE0);
-};
-
-template<>
-struct ATTiny25::TimerInterrupts::Flags<1> {
-    static constexpr uint8_t ociea = _BV(OCIE1A);
-};
-
 
 template<>
 struct ATTiny25::PCInterrupts::Address<0> {

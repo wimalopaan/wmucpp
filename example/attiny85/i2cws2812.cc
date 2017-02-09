@@ -32,6 +32,8 @@ static constexpr uint8_t NLeds = 3;
 using ws2812_Pin = AVR::Pin<PortB, 4>;
 using leds = WS2812<NLeds, ws2812_Pin>;
 
+typedef leds::color_type Color;
+
 template<typename Leds>
 class LedMachine final {
 public:
@@ -50,17 +52,17 @@ public:
     }
     static void process() {
         if (needUpdate) {
-            cRGB c{mColor.r, mColor.g, mColor.b};
+            Color c = mColor;
             Leds::set(c);
             needUpdate = false;
         }
     }
 private:
     volatile static bool needUpdate;
-    volatile static cRGB mColor;
+    volatile static Color mColor;
 };
 template<typename Leds>
-volatile cRGB LedMachine<Leds>::mColor;
+volatile Color LedMachine<Leds>::mColor;
 template<typename Leds>
 volatile bool LedMachine<Leds>::needUpdate = false;
 

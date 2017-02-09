@@ -34,6 +34,8 @@ using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using ledPin = AVR::Pin<PortB, 1>;
 using led = WS2812<1, ledPin>;
 
+typedef led::color_type Color;
+
 using i2cInterruptPin = AVR::Pin<PortB, 0>;
 
 constexpr auto interruptPulseWidth = 10_us;
@@ -83,7 +85,7 @@ int main()
     virtualRAM::clear();
     
     {
-        cRGB red{128, 0, 0};
+        Color red{128};
         Scoped<EnableInterrupt> ei;
         while(true) {
             static uint8_t counter = 0;

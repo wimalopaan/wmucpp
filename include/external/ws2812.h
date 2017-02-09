@@ -21,34 +21,75 @@
 #include <util/delay.h>
 #include <avr/interrupt.h>
 
-#include "config.h"
 #include "mcu/avr8.h"
 #include "mcu/ports.h"
 #include "util/dassert.h"
 #include "std/array.h"
 
-struct cRGB {
+struct ColorSequenceRGB {};
+struct ColorSequenceGRB {};
+
+struct Red {
+    uint8_t value = 0;  
+};
+
+struct Green {
+    uint8_t value = 0;  
+};
+struct Blue {
+    uint8_t value = 0;  
+};
+
+template<typename C = ColorSequenceRGB>
+struct cRGB;
+
+template<>
+struct cRGB<ColorSequenceRGB> {
+    constexpr cRGB() {}
+    cRGB(const volatile cRGB& o) : r(o.r), g(o.g), b(o.b) {}
+    constexpr explicit cRGB(uint8_t v) : r(v), g(v), b(v) {}
+    constexpr cRGB(Red red, Green green, Blue blue) : r(red.value), g(green.value), b(blue.value) {}
+    constexpr cRGB(Red v) : r(v.value) {}
+    constexpr cRGB(Green v) : g(v.value) {}
+    constexpr cRGB(Blue v) : b(v.value) {}
+    uint8_t r = 0;
+    uint8_t g = 0;
+    uint8_t b = 0;
+};
+
+template<>
+struct cRGB<ColorSequenceGRB> {
+    constexpr cRGB() {}
+    cRGB(const volatile cRGB& o) : g(o.g), r(o.r), b(o.b) {}
+    constexpr explicit cRGB(uint8_t v) : g(v), r(v), b(v) {}
+    constexpr cRGB(Red red, Green green, Blue blue) : g(green.value), r(red.value), b(blue.value) {}
+    constexpr cRGB(Red v) : r(v.value) {}
+    constexpr cRGB(Green v) : g(v.value) {}
+    constexpr cRGB(Blue v) : b(v.value) {}
     uint8_t g = 0;
     uint8_t r = 0;
     uint8_t b = 0;
 };
 
-template<uint8_t N, typename Pin>
+template<uint8_t N, typename Pin, typename ColorComp = ColorSequenceRGB>
 class WS2812 final {
+    WS2812() = delete;
 public:
     static constexpr uint8_t size = N;
     typedef Pin pin_type;
-    typedef cRGB item_type;
+    typedef cRGB<ColorComp> item_type;
     
-    WS2812() = delete;
+    typedef ColorComp color_sequence;
+    typedef cRGB<ColorComp> color_type;
+    
     static void init() {
         Pin::template dir<AVR::Output>();
     }
     static void off() {
-        set(cRGB());
+        set(cRGB<ColorComp>());
     }
     template<bool writeOut = true>
-    static void set(uint8_t number, const cRGB& color) {
+    static void set(uint8_t number, const item_type& color) {
         assert(number < N);
         leds[number] = color;
         if constexpr(writeOut) {
@@ -56,7 +97,7 @@ public:
         }
     }
     template<bool writeOut = true>
-    static void set(const cRGB& color) {
+    static void set(const item_type& color) {
         for(auto& l : leds) {
             l = color;
         }
@@ -64,12 +105,12 @@ public:
             write();
         }
     }
-    static constexpr cRGB& elementAt(uint8_t index) {
+    static constexpr item_type& elementAt(uint8_t index) {
         assert(index < N);
         return leds[index];
     }
 private:
-    static std::array<cRGB, N> leds;
+    static std::array<item_type, N> leds;
 public:
     static void write() {
     // Timing in ns
@@ -138,7 +179,8 @@ public:
         uint8_t sreg_prev = SREG;
         cli();
 
-        for(const uint8_t* data = reinterpret_cast<uint8_t*>(&leds[0]); data < reinterpret_cast<uint8_t*>(&leds[N - 1] + 1); ++data) {
+        for(const uint8_t* data = reinterpret_cast<uint8_t*>(&leds[0]); 
+            data < reinterpret_cast<uint8_t*>(&leds[N - 1] + 1); ++data) {
             asm volatile(
                         "       ldi   %0,8  \n\t"
                         "loop%=:            \n\t"
@@ -203,5 +245,5 @@ public:
     }
 };
 
-template<uint8_t N, typename Pin>
-std::array<cRGB, N> WS2812<N, Pin>::leds;
+template<uint8_t N, typename Pin, typename CC>
+std::array<cRGB<CC>, N> WS2812<N, Pin, CC>::leds;

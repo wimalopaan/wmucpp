@@ -69,6 +69,11 @@ struct IsrRegistrar {
     
     static void init() {}
 
+    template<typename I>
+    static constexpr bool isSet() {
+        return all & ((uint64_t)1 << I::number);
+    }
+    
     template<uint8_t In, uint8_t N, typename H, typename... Hp>
     struct Caller {
         static constexpr void call() {
@@ -170,6 +175,11 @@ struct Timer;
 
 template<>
 struct Timer<3> {
+#ifdef TIMER3_CAPT_vect_num
+    struct Capture  {
+        static constexpr const uint32_t number = TIMER3_CAPT_vect_num;
+    };
+#endif
     struct CompareA  {
 #ifdef TIMER3_COMPA_vect_num
         static constexpr const uint32_t number = TIMER3_COMPA_vect_num;
@@ -310,7 +320,6 @@ struct Twi<0> {
     static constexpr const uint32_t number = TWI_vect_num;
 #endif
 };
-
 
 template<uint8_t> 
 struct Usart;
