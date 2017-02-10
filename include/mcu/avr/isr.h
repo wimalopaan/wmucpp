@@ -174,12 +174,40 @@ template<uint8_t N>
 struct Timer;
 
 template<>
-struct Timer<3> {
-#ifdef TIMER3_CAPT_vect_num
+struct Timer<4> {
     struct Capture  {
-        static constexpr const uint32_t number = TIMER3_CAPT_vect_num;
-    };
+#ifdef TIMER4_CAPT_vect_num
+        static constexpr const uint32_t number = TIMER4_CAPT_vect_num;
 #endif
+    };
+    struct CompareA  {
+#ifdef TIMER4_COMPA_vect_num
+        static constexpr const uint32_t number = TIMER4_COMPA_vect_num;
+#endif
+    };
+    struct CompareB  {
+#ifdef TIMER4_COMPB_vect_num
+        static constexpr const uint32_t number = TIMER4_COMPB_vect_num;
+#endif
+    };
+    struct Compare  {
+#ifdef TIMER4_COMP_vect_num
+        static constexpr const uint32_t number = TIMER4_COMP_vect_num;
+#endif
+    };
+    struct Overflow  {
+#ifdef TIMER4_OVF_vect_num
+        static constexpr const uint32_t number = TIMER4_OVF_vect_num;
+#endif
+    };
+};
+template<>
+struct Timer<3> {
+    struct Capture  {
+#ifdef TIMER3_CAPT_vect_num
+        static constexpr const uint32_t number = TIMER3_CAPT_vect_num;
+#endif
+    };
     struct CompareA  {
 #ifdef TIMER3_COMPA_vect_num
         static constexpr const uint32_t number = TIMER3_COMPA_vect_num;
@@ -195,11 +223,11 @@ struct Timer<3> {
         static constexpr const uint32_t number = TIMER3_COMP_vect_num;
 #endif
     };
-#ifdef TIMER3_OVF_vect_num
     struct Overflow  {
+#ifdef TIMER3_OVF_vect_num
         static constexpr const uint32_t number = TIMER3_OVF_vect_num;
-    };
 #endif
+    };
 };
 template<>
 struct Timer<2> {
@@ -218,52 +246,52 @@ struct Timer<2> {
         static constexpr const uint32_t number = TIMER2_COMP_vect_num;
 #endif
     };
-#ifdef TIMER2_OVF_vect_num
     struct Overflow  {
+#ifdef TIMER2_OVF_vect_num
         static constexpr const uint32_t number = TIMER2_OVF_vect_num;
-    };
 #endif
+    };
 };
 template<>
 struct Timer<1> {
-#ifdef TIMER1_CAPT_vect_num
     struct Capture  {
+#ifdef TIMER1_CAPT_vect_num
         static constexpr const uint32_t number = TIMER1_CAPT_vect_num;
-    };
 #endif
-#ifdef TIMER1_COMPA_vect_num
+    };
     struct CompareA  {
+#ifdef TIMER1_COMPA_vect_num
         static constexpr const uint32_t number = TIMER1_COMPA_vect_num;
-    };
 #endif
-#ifdef TIMER1_COMPB_vect_num
+    };
     struct CompareB  {
+#ifdef TIMER1_COMPB_vect_num
         static constexpr const uint32_t number = TIMER1_COMPB_vect_num;
-    };
 #endif
-#ifdef TIMER1_OVF_vect_num
+    };
     struct Overflow  {
+#ifdef TIMER1_OVF_vect_num
         static constexpr const uint32_t number = TIMER1_OVF_vect_num;
-    };
 #endif
+    };
 };
 template<>
 struct Timer<0> {
-#ifdef TIMER0_COMPA_vect_num
     struct CompareA  {
+#ifdef TIMER0_COMPA_vect_num
         static constexpr const uint32_t number = TIMER0_COMPA_vect_num;
-    };
 #endif
-#ifdef TIMER0_COMPB_vect_num
+    };
     struct CompareB  {
+#ifdef TIMER0_COMPB_vect_num
         static constexpr const uint32_t number = TIMER0_COMPB_vect_num;
-    };
 #endif
-#ifdef TIMER0_OVF_vect_num
+    };
     struct Overflow  {
+#ifdef TIMER0_OVF_vect_num
         static constexpr const uint32_t number = TIMER0_OVF_vect_num;
-    };
 #endif
+    };
 };
 
 template<uint8_t N>
@@ -271,24 +299,22 @@ struct Spi;
 
 template<>
 struct Spi<0> {
-#ifdef SPI_STC_vect_num
 struct Stc  {
+#ifdef SPI_STC_vect_num
     static constexpr const uint32_t number = SPI_STC_vect_num;
-};
 #endif
 #ifdef SPI0_STC_vect_num
-struct Stc  {
     static constexpr const uint32_t number = SPI0_STC_vect_num;
-};
 #endif
+};
 };
 template<>
 struct Spi<1> {
-#ifdef SPI1_STC_vect_num
 struct Stc  {
+#ifdef SPI1_STC_vect_num
     static constexpr const uint32_t number = SPI1_STC_vect_num;
-};
 #endif
+};
 };
 
 template<uint8_t> 
@@ -296,20 +322,18 @@ struct Usi;
 
 template<>
 struct Usi<0> {
-#ifdef USI_OVF_vect_num
     struct Overflow {
+#ifdef USI_OVF_vect_num
         static constexpr const uint32_t number = USI_OVF_vect_num;
-    };
 #endif
+    };
+    struct Start {
 #ifdef USI_STR_vect_num
-    struct Start {
         static constexpr const uint32_t number = USI_STR_vect_num;
-    };
 #elif defined(USI_START_vect_num)
-    struct Start {
         static constexpr const uint32_t number = USI_START_vect_num;
-    };
 #endif
+    };
 };
 
 template<uint8_t>
@@ -326,39 +350,35 @@ struct Usart;
 
 template<>
 struct Usart<0> {
-#ifdef USART_RX_vect_num
     struct RX {
+#ifdef USART_RX_vect_num
         static constexpr const uint32_t number = USART_RX_vect_num;
-    };
 #endif
 #ifdef USART0_RX_vect_num
-    struct RX {
         static constexpr const uint32_t number = USART0_RX_vect_num;
-    };
 #endif
-#ifdef USART_UDRE_vect_num
-    struct UDREmpty {
-        static constexpr const uint32_t number = USART_UDRE_vect_num;
     };
+    struct UDREmpty {
+#ifdef USART_UDRE_vect_num
+        static constexpr const uint32_t number = USART_UDRE_vect_num;
 #endif
 #ifdef USART0_UDRE_vect_num
-    struct UDREmpty {
         static constexpr const uint32_t number = USART0_UDRE_vect_num;
-    };
 #endif
+    };
 };
 template<>
 struct Usart<1> {
-#ifdef USART1_RX_vect_num
     struct RX {
+#ifdef USART1_RX_vect_num
         static constexpr const uint32_t number = USART1_RX_vect_num;
-    };
 #endif
-#ifdef USART1_UDRE_vect_num
+    };
     struct UDREmpty {
+#ifdef USART1_UDRE_vect_num
         static constexpr const uint32_t number = USART1_UDRE_vect_num;
-    };
 #endif
+    };
 };
 
 template<uint8_t> 
@@ -366,11 +386,11 @@ struct AdComparator;
 
 template<> 
 struct AdComparator<0> {
-#ifdef ANALOG_COMP_vect_num
     struct Edge {
+#ifdef ANALOG_COMP_vect_num
         static constexpr const uint32_t number = ANALOG_COMP_vect_num;
-    };
 #endif
+    };
 };
 
 }

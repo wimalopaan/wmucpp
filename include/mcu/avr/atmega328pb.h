@@ -35,7 +35,7 @@ struct ATMega328PB final
     ATMega328PB() = delete;
     
     struct Usart {
-        static constexpr const uint8_t count = 1;
+        static constexpr const uint8_t count = 2;
         enum class UCSRA : uint8_t {
             rxc = (1 << RXC0),
             txc = (1 << TXC0),
@@ -359,6 +359,10 @@ struct ATMega328PB::Spi::Address<0> {
 template<>
 struct ATMega328PB::Usart::Address<0> {
     static constexpr uint8_t value = 0xc0;
+};
+template<>
+struct ATMega328PB::Usart::Address<1> {
+    static constexpr uint8_t value = 0xc8;
 };
 
 template<>

@@ -37,9 +37,9 @@ public:
     typedef typename std::conditional<Size <= 255, uint8_t, uint16_t>::type size_type;
     static constexpr const size_type  size = Size;
     
-    template<uint8_t Baud = 0>
+    template<uint16_t Baudrate = 0>
     static void init() {
-        Device::template init<Baud>();
+        Device::template init<Baudrate>();
     }
 
     static bool put(uint8_t v) {

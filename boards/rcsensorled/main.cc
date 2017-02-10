@@ -25,12 +25,17 @@
 #include "mcu/avr/swusart.h"
 #include "mcu/avr/isr.h"
 #include "mcu/avr/pinchange.h"
+#include "mcu/avr/usart.h"
 #include "hal/event.h"
 #include "hal/alarmtimer.h"
 #include "hal/constantrate.h"
+#include "hal/bufferedstream.h"
 #include "external/ws2812.h"
 #include "external/tle5205.h"
 #include "external/rpm.h"
+#include "external/hott/hott.h"
+#include "appl/blink.h"
+
 #include "console.h"
 
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
@@ -58,32 +63,147 @@ using reflexPinChange = AVR::PinChange<reflexPinSet>;
 using rpmTimer = AVR::Timer16Bit<1>; // timer 1
 using rpm = RpmFromInterruptSource<reflexPinChange, rpmTimer>;
 
-using terminal = SWUsart<1>; // timer 3 (icp3)
+using debugUart = SWUsart<1>; // timer 3 (icp3)
+using terminal = BufferedStream<debugUart, 256>;
 
 using systemClock = AVR::Timer8Bit<0>; // timer 0
-using systemTimer = AlarmTimer<systemClock>;
+using alarmTimer = AlarmTimer<systemClock>;
 
-using systemConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<0>::CompareA, systemTimer>;
+using systemConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<0>::CompareA, alarmTimer>;
 
+using sensorRateTimer = AVR::Timer16Bit<4>; // timer 4
+
+using sensorUsart = AVR::Usart<0, Hott::SensorProtocollAdapter<0>> ;
+using rcUsart = AVR::Usart<1, Hott::SumDProtocollAdapter<0>>;
+
+using crWriterSensorBinary = ConstanteRateWriter<Hott::SensorProtocollBuffer<0>, sensorUsart>;
+using crWriterSensorText = ConstanteRateWriter<Hott::SensorTextProtocollBuffer<0>, sensorUsart>;
+using crAdapterHott = ConstantRateAdapter<sensorRateTimer, AVR::ISR::Timer<4>::CompareA, 
+                                          crWriterSensorBinary, crWriterSensorText>;
 
 using isrRegistrar = IsrRegistrar<systemConstantRate, 
                                   hbridge::PwmOnHandler, hbridge::PwmOffHandler,
-                                  terminal::ReceiveBitHandler, terminal::TransmitBitHandler, terminal::StartBitHandler,
-                                  rpm>;
+                                  debugUart::ReceiveBitHandler, debugUart::TransmitBitHandler, debugUart::StartBitHandler,
+                                  rpm,
+                                  crAdapterHott, 
+                                  sensorUsart::RxHandler, sensorUsart::TxHandler, rcUsart::RxHandler, rcUsart::TxHandler
+>;
 
+
+namespace Constant {
 static constexpr std::hertz pwmFrequency = 1000_Hz;
+static constexpr Color cOff{0};
+static constexpr Color cRed{Red{128}};
+static constexpr Color cBlue{Blue{128}};
+static constexpr Color cGreen{Green{128}};
+}
+
+using statusLed = Blinker<led, Constant::cGreen>;
 
 namespace std {
 std::basic_ostream<terminal> cout;
 std::lineTerminator<CRLF> endl;
 }
 
-int main()
-{
+const auto periodicTimer = alarmTimer::create(500_ms, AlarmFlags::Periodic);
+
+struct TimerHandler : public EventHandler<EventType::Timer> {
+    static bool process(uint8_t timer) {
+        if (timer == *periodicTimer) {
+            static uint8_t counter = 0;
+            ++counter;
+            statusLed::tick();
+            std::cout << "counter: "_pgm << counter << std::endl;
+        }
+        return true;
+    }
+};
+struct HottBinaryHandler : public EventHandler<EventType::HottBinaryRequest> {
+    static bool process(uint8_t) {
+//        std::cout << "hbb"_pgm << std::endl;
+        crWriterSensorBinary::enable<true>();
+        crWriterSensorText::enable<false>();
+        crAdapterHott::start();
+        return true;
+    }
+};
+
+struct HottKeyHandler : public EventHandler<EventType::HottAsciiKey> {
+    static bool process(uint8_t v) {
+        std::cout << "k: "_pgm << v << std::endl;
+//        Hott::SensorProtocoll<sensorUsart>::key(v);
+        return true;
+    }
+};
+
+struct HottBroadcastHandler : public EventHandler<EventType::HottSensorBroadcast> {
+    static bool process(uint8_t) {
+        std::cout << "hbr"_pgm << std::endl;
+        crWriterSensorBinary::enable<true>();
+        crWriterSensorText::enable<false>();
+        crAdapterHott::start();
+        return true;
+    }
+};
+
+struct HottTextHandler : public EventHandler<EventType::HottAsciiRequest> {
+    static bool process(uint8_t) {
+        std::cout << "hba"_pgm << std::endl;
+        crWriterSensorBinary::enable<false>();
+        crWriterSensorText::enable<true>();
+        crAdapterHott::start();
+        return true;
+    }
+};
+struct Usart0Handler : public EventHandler<EventType::UsartRecv0> {
+    static bool process(uint8_t) {
+        statusLed::blink(Blue{32}, 2);
+        return true;
+    }
+};
+struct Usart1Handler : public EventHandler<EventType::UsartRecv1> {
+    static bool process(uint8_t) {
+        statusLed::blink(Blue{32}, 2);
+        return true;
+    }
+};
+struct UsartFeHandler : public EventHandler<EventType::UsartFe> {
+    static bool process(uint8_t) {
+        statusLed::blink(Color{Red{32}, Green{0}, Blue{32}}, 3);
+        return true;
+    }
+};
+struct UsartUpeHandler : public EventHandler<EventType::UsartUpe> {
+    static bool process(uint8_t) {
+        statusLed::blink(Color{Red{32}, Green{0}, Blue{32}}, 4);
+        return true;
+    }
+};
+struct UsartDorHandler : public EventHandler<EventType::UsartDor> {
+    static bool process(uint8_t) {
+        statusLed::blink(Color{Red{32}, Green{0}, Blue{32}}, 5);
+        return true;
+    }
+};
+
+
+int main() {
     isrRegistrar::init();
-    hbridge::init<pwmFrequency>();
+    alarmTimer::init();
+    hbridge::init<Constant::pwmFrequency>();
     terminal::init<2400>();
     rpm::init();
+    
+    constexpr std::hertz fCr = 1 / Hott::hottDelayBetweenBytes;
+    constexpr auto tsd = AVR::Util::calculate<sensorRateTimer>(fCr);
+    static_assert(tsd, "wrong parameter");
+    sensorRateTimer::prescale<tsd.prescaler>();
+    sensorRateTimer::ocra<tsd.ocr>();
+    
+    crAdapterHott::init();
+
+    sensorUsart::init<19200>();
+    rcUsart::init<115200>();
     
     leds1Pin::template dir<AVR::Output>();
     leds2Pin::template dir<AVR::Output>();
@@ -91,41 +211,53 @@ int main()
     led::init();
     led::off();    
     
-    const Color red{Red{16}};
-
-    uint8_t counter = 0;
     {
         Scoped<EnableInterrupt> ei;
 
         using namespace std::literals::quantity;
-        hbridge::pwm(15_ppc);
+        hbridge::pwm(0_ppc);
+        hbridge::direction() = hbridge::Direction{false};
         
         std::cout << "RC SensorLed 0.1"_pgm << std::endl;
+
+        using allEventHandler = EventHandlerGroup<
+                                  TimerHandler,
+        UsartFeHandler, UsartUpeHandler, UsartDorHandler, Usart0Handler, Usart1Handler,
+        HottBinaryHandler, HottBroadcastHandler, HottTextHandler        
+#ifdef I2C
+                                , TWIHandlerError 
+                                , ds1307, DS1307handler, DS1307handlerError
+#endif
+#ifdef OW   
+                                , ds18b20
+                                , DS18B20MeasurementHandler, DS18B20ErrorHandler
+#endif
+        >;
         
-        while(true) {
-            std::cout << "A: "_pgm << counter << std::endl;      
-            Util::delay(500_ms);
-            leds2Pin::toggle();
-            if ((++counter % 2) == 0) {
-                led::set(red);
-            }
-            else {
-                led::off();
-            }
+        EventManager::run2<allEventHandler>([](){
+            terminal::periodic();
+            systemConstantRate::periodic();
+            crAdapterHott::periodic();
             hbridge::periodic();
-            std::cout << "rpm: "_pgm << rpm::rpm() << std::endl;
-            std::cout << "per: "_pgm << rpm::period() << std::endl;
-            rpm::reset();            
-        }
+            if (EventManager::unprocessedEvent()) {
+                EventManager::unprocessedEvent() = false;
+                statusLed::blink(Constant::cRed, 10);
+            }
+            if (EventManager::leakedEvent()) {
+                EventManager::leakedEvent() = false;
+                statusLed::blink(Constant::cBlue, 10);
+            }
+        });
     }
 }
 
 ISR(TIMER0_COMPA_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<0>::CompareA>();
 }
-//ISR(TIMER1_COMPA_vect) {
-//    isrRegistrar::isr<AVR::ISR::Timer<1>::CompareA>();
-//}
+ISR(TIMER4_COMPA_vect) {
+    leds1Pin::toggle();
+    isrRegistrar::isr<AVR::ISR::Timer<4>::CompareA>();
+}
 ISR(TIMER2_COMPA_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<2>::CompareA>();
 }
@@ -142,13 +274,25 @@ ISR(TIMER3_CAPT_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<3>::Capture>();
 }
 ISR(PCINT1_vect) {
-    leds1Pin::toggle();
     isrRegistrar::isr<AVR::ISR::PcInt<1>>();
+}
+ISR(USART0_RX_vect) {
+    isrRegistrar::isr<AVR::ISR::Usart<0>::RX>();
+}
+ISR(USART0_UDRE_vect){
+    isrRegistrar::isr<AVR::ISR::Usart<0>::UDREmpty>();
+}
+ISR(USART1_RX_vect) {
+    isrRegistrar::isr<AVR::ISR::Usart<1>::RX>();
+}
+ISR(USART1_UDRE_vect){
+    isrRegistrar::isr<AVR::ISR::Usart<1>::UDREmpty>();
 }
 
 
 #ifndef NDEBUG
-void assertFunction(const char*, const char*, const char*, unsigned int) {
-       while(true) {}
+void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
+    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
+    while(true) {}
 }
 #endif

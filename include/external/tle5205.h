@@ -70,12 +70,10 @@ public:
         using namespace std::literals::quantity;
         if (p > 0_ppc) {
             MCUTimer::mcuInterrupts()->timsk.template add<mask_type::ociea | mask_type::toie>();
-//            MCUTimer::mcuInterrupts()->timsk |= _BV(OCIE0A) | _BV(TOIE0);
             MCUTimer::ocra(std::expand(p, value_type{0}, std::numeric_limits<value_type>::max()));        
         }
         else {
             MCUTimer::mcuInterrupts()->timsk.template clear<mask_type::ociea | mask_type::toie>();
-//            MCUTimer::mcuInterrupts()->timsk &= ~(_BV(OCIE0A) | _BV(TOIE0));
         }
     }
     

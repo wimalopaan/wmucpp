@@ -160,6 +160,8 @@ public:
 
     template<typename EE, typename P>
     static void run2(const P& periodic) {
+        leakedEvent() = false;
+        unprocessedEvent() = false;
         while(true) {
             periodic();
             if (auto event = fifo().pop_front()) {
@@ -172,6 +174,8 @@ public:
     template<typename PP, typename EE, typename P>
 //    [[deprecated]] 
     static void run(const P& periodic) {
+        leakedEvent() = false;
+        unprocessedEvent() = false;
         while(true) {
             PP::periodic();
             periodic();
@@ -184,6 +188,8 @@ public:
     }
     template<typename PP, typename EE>
     static void run() {
+        leakedEvent() = false;
+        unprocessedEvent() = false;
         while(true) {
             PP::periodic();
             if (auto event = fifo().pop_front()) {

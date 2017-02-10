@@ -32,7 +32,6 @@ struct ColorSequenceGRB {};
 struct Red {
     uint8_t value = 0;  
 };
-
 struct Green {
     uint8_t value = 0;  
 };

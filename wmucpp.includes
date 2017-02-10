@@ -46,3 +46,4 @@ boards/unimaxi/attiny84
 boards/unimaxi/attiny85_1
 boards/unimaxi/attiny85_2
 boards/rcsensorled
+include/appl

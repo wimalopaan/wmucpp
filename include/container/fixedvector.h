@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
 #include <stdint.h>
 
 #include "std/optional.h"
@@ -46,6 +48,15 @@ public:
         return mSize;
     }
 
+    void clear() {
+        mSize = 0;
+    }
+    
+    void push_back(const T& item) {
+        assert(mSize < Capacity);
+        data[mSize++] = item;
+    }
+
     // requires bool() Operator of elements
     std::optional<size_type> insert(const T& item) {
         for(auto i = 0; i < Capacity; ++i) {
@@ -64,7 +75,30 @@ public:
         data[index] = T();
         --mSize;
     }
-
+    constexpr const T* begin() const {
+        return &data[0];
+    }
+    constexpr const T* end() const {
+        return &data[Capacity];
+    }
+    constexpr const volatile T* begin() const volatile {
+        return &data[0];
+    }
+    constexpr const volatile T* end() const volatile {
+        return &data[Capacity];
+    }
+    constexpr T* begin() {
+        return &data[0];
+    }
+    constexpr T* end() {
+        return &data[Capacity];
+    }
+    constexpr volatile T* begin() volatile {
+        return &data[0];
+    }
+    constexpr volatile T* end() volatile {
+        return &data[Capacity];
+    }
 private:
     T data[Capacity] = {};
     size_type mSize = 0;
