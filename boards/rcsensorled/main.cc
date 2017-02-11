@@ -35,6 +35,7 @@
 #include "external/rpm.h"
 #include "external/hott/hott.h"
 #include "appl/blink.h"
+#include "appl/exponential.h"
 
 #include "console.h"
 
@@ -61,10 +62,12 @@ using reflexPinSet = AVR::PinSet<reflexPin>;
 using reflexPinChange = AVR::PinChange<reflexPinSet>;
 
 using rpmTimer = AVR::Timer16Bit<1>; // timer 1
-using rpm = RpmFromInterruptSource<reflexPinChange, rpmTimer>;
+constexpr std::RPM MaximumRpm{12000};
+using rpm = RpmFromInterruptSource<reflexPinChange, rpmTimer, MaximumRpm>;
 
 using debugUart = SWUsart<1>; // timer 3 (icp3)
-using terminal = BufferedStream<debugUart, 256>;
+//using terminal = BufferedStream<debugUart, 256>;
+using terminal = debugUart;
 
 using systemClock = AVR::Timer8Bit<0>; // timer 0
 using alarmTimer = AlarmTimer<systemClock>;
@@ -107,6 +110,8 @@ std::lineTerminator<CRLF> endl;
 
 const auto periodicTimer = alarmTimer::create(500_ms, AlarmFlags::Periodic);
 
+const auto measurementTimer = alarmTimer::create(100_ms, AlarmFlags::Periodic);
+
 struct TimerHandler : public EventHandler<EventType::Timer> {
     static bool process(uint8_t timer) {
         if (timer == *periodicTimer) {
@@ -114,13 +119,35 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
             ++counter;
             statusLed::tick();
             std::cout << "counter: "_pgm << counter << std::endl;
+
+            std::percent pv = std::scale(Hott::SumDProtocollAdapter<0>::value8Bit(0),
+                                   Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit);
+            std::cout << "pv: " << pv.value << std::endl;
+            std::cout << "rpm: " << Hott::SensorProtocollBuffer<0>::rpm1() << std::endl;
+        }
+        if (timer == *measurementTimer) {
+            static ExponentialFilter<32, uint16_t> filter;
+            auto r = rpm::rpm();
+            rpm::reset();
+            
+            if (r) {
+                std::RPM r2{filter(r.value())};
+                Hott::SensorProtocollBuffer<0>::rpm1(r2);
+            }
+            else {
+                static uint8_t counter = 0;
+                if (++counter > 10) {
+                    counter = 0;
+                    filter.clear();
+                    Hott::SensorProtocollBuffer<0>::rpm1(std::RPM{0});
+                }
+            }
         }
         return true;
     }
 };
 struct HottBinaryHandler : public EventHandler<EventType::HottBinaryRequest> {
     static bool process(uint8_t) {
-//        std::cout << "hbb"_pgm << std::endl;
         crWriterSensorBinary::enable<true>();
         crWriterSensorText::enable<false>();
         crAdapterHott::start();
@@ -186,6 +213,18 @@ struct UsartDorHandler : public EventHandler<EventType::UsartDor> {
     }
 };
 
+struct HBridgeError : public EventHandler<EventType::TLE5205Error> {
+    static bool process(uint8_t) {
+        statusLed::blink(Color{Red{0}, Green{32}, Blue{32}}, 5);
+        return true;
+    }
+};
+
+void updateControls() {
+    std::percent pv = std::scale(Hott::SumDProtocollAdapter<0>::value8Bit(0),
+                           Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit);
+    hbridge::pwm(pv);
+}
 
 int main() {
     isrRegistrar::init();
@@ -222,8 +261,9 @@ int main() {
 
         using allEventHandler = EventHandlerGroup<
                                   TimerHandler,
-        UsartFeHandler, UsartUpeHandler, UsartDorHandler, Usart0Handler, Usart1Handler,
-        HottBinaryHandler, HottBroadcastHandler, HottTextHandler        
+                                  HBridgeError,
+                                  UsartFeHandler, UsartUpeHandler, UsartDorHandler, Usart0Handler, Usart1Handler,
+                                  HottBinaryHandler, HottBroadcastHandler, HottTextHandler        
 #ifdef I2C
                                 , TWIHandlerError 
                                 , ds1307, DS1307handler, DS1307handlerError
@@ -235,7 +275,7 @@ int main() {
         >;
         
         EventManager::run2<allEventHandler>([](){
-            terminal::periodic();
+            updateControls();
             systemConstantRate::periodic();
             crAdapterHott::periodic();
             hbridge::periodic();

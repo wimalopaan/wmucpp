@@ -22,6 +22,7 @@
 
 #include "std/ratio.h"
 #include "std/traits.h"
+#include "std/limits.h"
 #include "units/duration.h"
 
 namespace std {
@@ -121,5 +122,27 @@ template<>
 constexpr std::microseconds duration_cast<std::microseconds>(const std::milliseconds& ms) {
     return std::microseconds{(uint16_t)(ms.value * 1000)};
 }
+
+class RPM {
+public:
+    explicit constexpr RPM() : mValue(std::numeric_limits<uint16_t>::max()) {}
+    explicit constexpr RPM(uint16_t v) : mValue{v} {}
+    explicit constexpr RPM(const std::hertz& f) : mValue(f.value * 60) {}
+    
+    constexpr explicit operator bool() const {
+        return mValue != std::numeric_limits<uint16_t>::max();        
+    }
+    constexpr uint16_t value() const {
+        if (mValue < std::numeric_limits<uint16_t>::max()) {
+            return mValue;
+        }
+        else {
+            return 0;
+        }
+    }
+private:
+    uint16_t mValue = 0;
+};
+
 
 }

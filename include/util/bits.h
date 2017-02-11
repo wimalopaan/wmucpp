@@ -73,7 +73,6 @@ namespace Util {
     struct enclosingType<uint16_t> {
         typedef uint32_t type;
     };
-    
 }
 
 template<typename E>

@@ -20,25 +20,12 @@
 
 #include <stdint.h>
 #include "std/limits.h"
+#include "std/types.h"
 #include "mcu/avr/isr.h"
 #include "mcu/avr/mcutimer.h"
 #include "util/bits.h"
 #include "util/disable.h"
 #include "units/physical.h"
-
-struct RPM {
-    explicit RPM(uint16_t v) : mValue{v} {}
-    explicit RPM(const std::hertz& f) : mValue(f.value * 60) {}
-    uint16_t mValue = 0;
-};
-
-template<typename Stream>
-Stream& operator<<(Stream& o, const RPM& rpm) {
-    if (!Config::disableCout) {
-        return o << rpm.mValue << "RPM";
-    }
-    return o;
-}
 
 // 1Hz messbar mit 16-bit Zähler
 // Ftimer >= 65535Hz
@@ -60,7 +47,7 @@ constexpr uint16_t calculateRpm() {
 }
 
 // todo: Drehzahlbereich festlegen -> Timerprescaler
-template<typename InterruptSource, typename MCUTimer, uint8_t IntsPerRotation = 2>
+template<typename InterruptSource, typename MCUTimer, const std::RPM& MaxRpm, uint8_t IntsPerRotation = 2, uint8_t MinMeasurements = 2>
 class RpmFromInterruptSource final : public IsrBaseHandler<typename InterruptSource::interrupt_type> {
     RpmFromInterruptSource() = delete;
 public:
@@ -69,9 +56,12 @@ public:
     typedef typename MCUTimer::value_type value_type;
     
     static_assert(sizeof (value_type) >= 2, "timer at least 16bit");
+    static constexpr auto prescaler = calculateRpm<MCUTimer>();
+    static constexpr std::hertz fTimer = Config::fMcu / (uint32_t)prescaler;
+    
+    static constexpr auto minPeriod = (fTimer.value * 60) / MaxRpm.value();
     
     static void init() {
-        constexpr auto prescaler = calculateRpm<MCUTimer>();
         MCUTimer::template prescale<prescaler>();
         MCUTimer::mode(AVR::TimerMode::Normal);
         InterruptSource::init();
@@ -79,49 +69,65 @@ public:
     
     static value_type period() {
         if constexpr(mcu_type::template is_atomic<value_type>()) {
-            return mPeriod;
+            return actualPeriod();
         }
         else {
             Scoped<DisbaleInterrupt> di;
-            return mPeriod;
+            return actualPeriod();
         }
+    }
+
+    static value_type filteredPeriod() {
+        if (measurements() > MinMeasurements) {
+            if (actualPeriod() >= minPeriod) {
+                return actualPeriod();
+            }
+        }
+        return 0;
     }
     
     static void reset() {
-        mPeriod = 0;
+        measurements()= 0;
     }
     
     static std::hertz frequency() {
-        if (mPeriod > 0) {
-            return mcu_timer_type::frequency() / (uint32_t)mPeriod;
+        if (filteredPeriod() > 0) {
+            return mcu_timer_type::frequency() / (uint32_t)filteredPeriod();
         }
         return {0};
     }
 
-    static RPM rpm() {
-        return RPM{frequency()};
+    static std::RPM rpm() {
+        if (frequency().value > 0) {
+            return std::RPM{frequency()};
+        }
+        return std::RPM{};
     }
     
     static void isr() {
-        ++mIntCount;
-        if (mIntCount == IntsPerRotation) {
-            mPeriod = (MCUTimer::counter() - mTimerStartValue + std::numeric_limits<value_type>::module()) % std::numeric_limits<value_type>::module();
-            mTimerStartValue = MCUTimer::counter();
-            mIntCount = 0;
+        if (++intCount() == IntsPerRotation) {
+            actualPeriod() = (MCUTimer::counter() - timerStartValue() + std::numeric_limits<value_type>::module()) % std::numeric_limits<value_type>::module();
+            timerStartValue() = MCUTimer::counter();
+            intCount() = 0;
+            ++measurements();
         }
     }
 private:
-    static volatile value_type mTimerStartValue;
-    static volatile value_type mPeriod;
-    static volatile uint8_t mIntCount;
+    static auto& timerStartValue() {
+        static volatile value_type sTimerStartValue = 0;
+        return sTimerStartValue;
+    }
+    static auto& actualPeriod() {
+        static volatile value_type sPeriod = 0;
+        return sPeriod;
+    }
+    static auto& intCount() {
+        static volatile uint8_t sIntCount = 0;
+        return sIntCount;
+    }
+    static auto& measurements() {
+        static volatile uint_bounded<uint8_t> sMeasurements{0};
+        return sMeasurements;
+    }
 };
-
-template<typename InterruptSource, typename MCUTimer, uint8_t IntsPerRotation>
-volatile typename RpmFromInterruptSource<InterruptSource, MCUTimer, IntsPerRotation>::value_type RpmFromInterruptSource<InterruptSource, MCUTimer, IntsPerRotation>::mPeriod = 0;
-
-template<typename InterruptSource, typename MCUTimer, uint8_t IntsPerRotation>
-volatile typename RpmFromInterruptSource<InterruptSource, MCUTimer, IntsPerRotation>::value_type RpmFromInterruptSource<InterruptSource, MCUTimer, IntsPerRotation>::mTimerStartValue = 0;
-
-template<typename InterruptSource, typename MCUTimer, uint8_t IntsPerRotation>
-volatile uint8_t RpmFromInterruptSource<InterruptSource, MCUTimer, IntsPerRotation>::mIntCount = 0;
 

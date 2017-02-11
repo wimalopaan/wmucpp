@@ -56,7 +56,9 @@ using reflexPinChange = AVR::PinChange<reflexSet>;
 using mcuTimer = AVR::Timer8Bit<0>;
 using rpmTimer = SoftTimer<mcuTimer, uint16_t>;
 
-using rpm = RpmFromInterruptSource<reflexPinChange, rpmTimer>;
+constexpr std::RPM MaximumRpm{15000};
+
+using rpm = RpmFromInterruptSource<reflexPinChange, rpmTimer, MaximumRpm>;
 
 using isrRegistrar = IsrRegistrar<i2c::I2CSlaveHandlerOvfl, i2c::I2CSlaveHandlerStart, rpmTimer, rpm>;
 
@@ -78,8 +80,8 @@ int main()
             RpmMachine::mData[1] = pp >> 8;
             
             auto rr = rpm::rpm();
-            RpmMachine::mData[2] = rr.mValue;
-            RpmMachine::mData[3] = rr.mValue >> 8;
+            RpmMachine::mData[2] = rr.value();
+            RpmMachine::mData[3] = rr.value() >> 8;
         }    
     }
 }

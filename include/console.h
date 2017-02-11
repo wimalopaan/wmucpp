@@ -260,3 +260,12 @@ Stream& operator<<(Stream& out, const PgmStringView& s) {
     };
     return out;
 }
+
+template<typename Stream>
+Stream& operator<<(Stream& o, const std::RPM& rpm) {
+    if (!Config::disableCout) {
+        return o << rpm.value() << "RPM";
+    }
+    return o;
+}
+

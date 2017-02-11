@@ -22,6 +22,7 @@
 
 #include "std/optional.h"
 #include "units/duration.h"
+#include "units/physical.h"
 #include "sensorprotocoll.h"
 
 namespace Hott {
@@ -69,6 +70,15 @@ public:
         hottBinaryResponse.stop_byte = 0x7d;
     }
     
+    static void rpm1(const std::RPM& v) {
+        if (v) {
+            hottBinaryResponse.rpm = v.value() / 10;
+        }
+    }
+    static std::RPM rpm1() {
+        return std::RPM{hottBinaryResponse.rpm * 10};
+    }
+
 private:
     static GamMsg hottBinaryResponse;
 };

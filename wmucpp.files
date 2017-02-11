@@ -25,6 +25,7 @@ example/basics/register04.cc
 example/basics/register05.cc
 example/basics/register10.cc
 include/appl/blink.h
+include/appl/exponential.h
 include/hal/rotaryencoder.h
 include/mcu/avr/watchdog.h
 include/util/outputparameter.h

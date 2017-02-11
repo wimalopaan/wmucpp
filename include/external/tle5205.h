@@ -74,6 +74,7 @@ public:
         }
         else {
             MCUTimer::mcuInterrupts()->timsk.template clear<mask_type::ociea | mask_type::toie>();
+            pinset::template on<InPin1, InPin2>();
         }
     }
     
@@ -94,7 +95,7 @@ public:
     static void periodic() {
         if (!err_pin::read()) {
             // todo: Status: direction , error in ein byte
-            EventManager::enqueue({EventType::TLE5205Error, 0}); 
+//            EventManager::enqueue({EventType::TLE5205Error, 0}); 
         }
     }
 private:

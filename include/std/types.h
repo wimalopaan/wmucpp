@@ -55,12 +55,19 @@ public:
     constexpr bool operator>(T rhs) {
         return mValue > rhs;
     }
-
+    constexpr bool operator>(T rhs) volatile {
+        return mValue > rhs;
+    }
     uint_bounded& operator--() {
         if (mValue > 0) {
             --mValue;
         }
         return *this;
+    }
+    void operator++() volatile {
+        if (mValue < std::numeric_limits<T>::max()) {
+            ++mValue;
+        }
     }
     uint_bounded& operator++() {
         if (mValue < std::numeric_limits<T>::max()) {
@@ -76,6 +83,9 @@ public:
     constexpr uint_bounded& operator=(T rhs) {
         mValue = rhs;
         return *this;
+    }
+    constexpr void operator=(T rhs) volatile {
+        mValue = rhs;
     }
 
 private:
