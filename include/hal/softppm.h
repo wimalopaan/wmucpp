@@ -101,10 +101,15 @@ public:
     static void ppm(const std::percent& width, uint8_t channel) {
         assert(channel < numberOfChannels);
         uint16_t ocr = std::expand(width, ocMin, ocMax);
-        uint16_t diff = ocr - ocrbValues[channel];
         {
             Scoped<DisbaleInterrupt> di;
-            ocrbValues[channel] = ocr;
+            uint16_t start = 0;
+            for(uint8_t i = 0; i < channel; ++i) {
+                start += ocrbValues[i];
+            }
+            uint16_t end = start + ocr;
+            int16_t diff = ocr - ocrbValues[channel];
+            ocrbValues[channel] = end;
             for(uint8_t i = channel + 1; i < numberOfChannels; ++i) {
                 ocrbValues[i] += diff;
             }
@@ -150,7 +155,7 @@ public:
         static void isr() {
             actual = 0;
             *mcuTimer()->ocrb = ocrbValues[0];
-            mcuInterrupts()->timsk.template add<MCUTimer::mask_type::ociea>();
+            mcuInterrupts()->timsk.template add<MCUTimer::mask_type::ocieb>();
 //            mcuInterrupts()->timsk |= _BV(OCIE0B);
             First<Pins...>::high();
         }
@@ -171,9 +176,9 @@ public:
             }
         }
     };
-private:
     static volatile uint8_t actual;
     static volatile uint16_t ocrbValues[numberOfChannels];
+private:
 };
 template<typename MCUTimer, typename... Pins>
 volatile uint8_t SoftPPM<MCUTimer, Pins...>::actual = 0;

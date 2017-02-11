@@ -78,6 +78,9 @@ public:
     static std::RPM rpm1() {
         return std::RPM{hottBinaryResponse.rpm * 10};
     }
+    static void temp1(uint8_t v) {
+        hottBinaryResponse.temperature1 = v;
+    }
 
 private:
     static GamMsg hottBinaryResponse;
