@@ -23,6 +23,10 @@ F_OSC = 20000000
 subdirs =
 
 targets +=  main.elf
+targets += owtest01.elf
+
+owtest01.elf: owtest01.o ow.o
+	$(CC) $(LDFLAGS) -o $@ owtest01.o ow.o
 
 -include ../../../Makefile.include
 

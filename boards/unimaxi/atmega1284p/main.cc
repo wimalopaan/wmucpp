@@ -24,6 +24,8 @@
 #define DCF
 #define I2C
 //#define HOTT
+//#define BTerm
+#define I2CInt
 
 #include "mcu/ports.h"
 #include "mcu/avr/isr.h"
@@ -42,6 +44,8 @@
 #ifdef OW
 # include "external/onewire.h"
 # include "external/ds18b20.h"
+# include "external/ds2401.h"
+# include "external/ds24b33.h"
 #endif
 
 #ifdef I2C
@@ -75,22 +79,26 @@ using SoftSPIData = AVR::Pin<PortB, 1>;
 using SoftSPIClock = AVR::Pin<PortB, 0>;
 using SoftSPISS = AVR::Pin<PortC, 3>;
 using SSpi0 = SoftSpiMaster<SoftSPIData, SoftSPIClock, SoftSPISS>;
+using terminal = SSpi0;
+using bufferedTerminal = BufferedStream<SSpi0, 512>;
 
 // Timer0
 using systemTimer = AVR::Timer8Bit<0>;
 using alarmTimer = AlarmTimer<systemTimer>;
 
 // Timer1
-using constantRateTimer = AVR::Timer16Bit<1>;
+// ppm test
+
+// Timer2
+// pwm test
+
+// Timer3
+using constantRateTimer = AVR::Timer16Bit<3>;
 #ifdef HOTT
 constexpr const auto constantRatePeriod = Hott::hottDelayBetweenBytes;
 #else
 constexpr const auto constantRatePeriod = 1000_us;
 #endif
-
-// Timer2
-
-// Timer3
 
 using statusLed = WS2812<1, AVR::Pin<PortC, 6>>;
 using leds = WS2812<4, AVR::Pin<PortC, 4>>;
@@ -112,7 +120,15 @@ using oneWireMaster = OneWire::Master<oneWirePin, OneWire::Normal>;
 //using oneWireMaster = OneWire::Master<oneWirePin, OneWire::Normal, true, true>;
 using oneWireMasterAsync = OneWire::MasterAsync<oneWireMaster, constantRatePeriod>;
 using ds18b20 = DS18B20<oneWireMasterAsync>;
+using ds2401  = DS2401<oneWireMasterAsync>;
+using ds24b33 = DS24B33<oneWireMasterAsync>;
+
 std::array<OneWire::ow_rom_t, 5> dsIds;
+
+OneWire::ow_rom_t tSensorId;
+OneWire::ow_rom_t boardId;
+OneWire::ow_rom_t eepromId;
+
 #endif
 
 #ifdef I2C
@@ -132,13 +148,12 @@ using lcd = I2CGeneric<TwiMasterAsync, lcdAddress>;
 
 #endif
 
-using devicesConstantRateAdapter = ConstantRateAdapter<constantRateTimer, AVR::ISR::Timer<1>::CompareA 
+using devicesConstantRateAdapter = ConstantRateAdapter<constantRateTimer, AVR::ISR::Timer<constantRateTimer::number>::CompareA 
 #ifdef OW
                                                         ,oneWireMasterAsync
 #endif
 >;
 
-using bufferedTerminal = BufferedStream<SSpi0, 512>;
 using systemConstantRateAdapter = ConstantRateAdapter<void, AVR::ISR::Timer<0>::CompareA
                                                     , alarmTimer
 #ifdef DCF
@@ -146,22 +161,29 @@ using systemConstantRateAdapter = ConstantRateAdapter<void, AVR::ISR::Timer<0>::
 #endif
 >;
 
+#ifdef I2CInt
 struct I2CInterrupt : public IsrBaseHandler<AVR::ISR::Int<2>> {
     static void isr() {
         EventManager::enqueue({EventType::ExternalInterrupt, 2});
     }
 };
-
+#endif
 
 namespace std {
+#ifdef BTerm
     std::basic_ostream<bufferedTerminal> cout;
+#else
+std::basic_ostream<terminal> cout;
+#endif
     std::lineTerminator<CRLF> endl;
 }
 
 using isrRegistrar = IsrRegistrar<
                                   systemConstantRateAdapter
                                 , devicesConstantRateAdapter
+#ifdef I2CInt
                                 , I2CInterrupt
+#endif
 >;
 
 const auto periodicTimer = alarmTimer::create(1000_ms, AlarmFlags::Periodic);
@@ -201,14 +223,14 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
         if (timer == *temperaturTimer) {
             if (!alarmTimer::isActive(*measurementTimer)) {
                 if (ds18b20::convert()) {
-                    std::cout << "start ds18b20"_pgm << std::endl;
+//                    std::cout << "start ds18b20"_pgm << std::endl;
                     alarmTimer::start(*measurementTimer);
                 }
             }
         }
         if (timer == *measurementTimer) {
-            std::cout << "get ds18b20"_pgm << std::endl;
-            ds18b20::startGet(dsIds[0]);
+//            std::cout << "get ds18b20"_pgm << std::endl;
+            ds18b20::startGet(tSensorId);
         }
 #endif
         return true;
@@ -241,13 +263,13 @@ struct TWIHandlerError: public EventHandler<EventType::TWIError> {
 #ifdef DCF
 struct DCFReceive0Handler : public EventHandler<EventType::DCFReceive0> {
     static bool process(uint8_t n) {
-        std::cout << "dcf 0 : "_pgm << n << std::endl;
+//        std::cout << "dcf 0 : "_pgm << n << std::endl;
         return true;
     }  
 };
 struct DCFReceive1Handler : public EventHandler<EventType::DCFReceive1> {
     static bool process(uint8_t n) {
-        std::cout << "dcf 1 : "_pgm << n << std::endl;
+//        std::cout << "dcf 1 : "_pgm << n << std::endl;
         return true;
     }  
 };
@@ -287,22 +309,29 @@ struct DS18B20ErrorHandler: public EventHandler<EventType::DS18B20Error> {
 
 struct ExternalInterruptHandler: public EventHandler<EventType::ExternalInterrupt> {
     static bool process(uint8_t i) {
-        std::cout << "external interrupt: "_pgm << i << std::endl;
+//        std::cout << "external interrupt: "_pgm << i << std::endl;
         return true;
     }
 };
 
 int main() {
     Initializer<isrRegistrar, statusLed, leds, systemConstantRateAdapter, 
-            bufferedTerminal>::init();
+        #ifdef BTerm
+            bufferedTerminal
+        #else
+            terminal
+        #endif
+            >::init();
     statusLed::off();
     leds::off();
-    SSpi0::init();
 
 #ifdef OW
     ds18b20::init();
 #endif
-
+#ifdef I2C
+    TwiMaster::init<ds1307::fSCL>();
+    ds1307::init();
+#endif
 #ifdef DCF
     dcfDecoder::init();
 #endif
@@ -321,16 +350,19 @@ int main() {
     
     // todo: WatchDog
     
+#ifdef I2CInt
     constexpr auto interrupts = AVR::getBaseAddr<AVR::ATMega1284P::Interrupt>;
     interrupts()->eicra.set<AVR::ATMega1284P::Interrupt::EIControl::isc21>();
     interrupts()->eimsk.set<AVR::ATMega1284P::Interrupt::EIMask::int2>();
-    
+#endif
     {
         Scoped<EnableInterrupt> interruptEnabler;
         
         using allEventHandler = EventHandlerGroup<
                                   TimerHandler
+#ifdef I2CInt
                                 , ExternalInterruptHandler
+#endif
 #ifdef DCF
                                 , DCFReceive0Handler, DCFReceive1Handler, DCFSyncHandler, DCFErrorHandler, DCFParityHandler
 #endif
@@ -344,17 +376,28 @@ int main() {
 #endif
         >;
         
-        std::cout << "UniMaxi 0.1"_pgm << std::endl;
+        std::cout << "UniMaxi 0.2"_pgm << std::endl;
 
 #ifdef OW
         oneWireMaster::findDevices(dsIds);
         for(const auto& id : dsIds) {
             std::cout << id << std::endl;
+            if (id.familiy() == ds18b20::family) {
+                tSensorId = id;
+            }
+            else if(id.familiy() == ds2401::family) {
+                boardId = id;
+            }
+            else if(id.familiy() == ds24b33::family) {
+                eepromId = id;
+            }
         }
+        std::cout << "Temp:   " << tSensorId << std::endl;
+        std::cout << "Board:  " << boardId  << std::endl;
+        std::cout << "EEProm: " << eepromId << std::endl;
+        
 #endif
 #ifdef I2C
-        TwiMaster::init<ds1307::fSCL>();
-        ds1307::init();
         ds1307::halt<false>();
         ds1307::squareWave<true>();
         
@@ -367,7 +410,9 @@ int main() {
         mcp23008::startWrite(0x00, 0x00); // output
 #endif    
         EventManager::run2<allEventHandler>([](){
+#ifdef BTerm
             bufferedTerminal::periodic();
+#endif
             systemConstantRateAdapter::periodic();
             devicesConstantRateAdapter::periodic();
 #ifdef I2C
@@ -388,13 +433,17 @@ int main() {
 ISR(TIMER0_COMPA_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<0>::CompareA>();
 }
-ISR(TIMER1_COMPA_vect) {
-    isrRegistrar::isr<AVR::ISR::Timer<1>::CompareA>();
+//ISR(TIMER1_COMPA_vect) {
+//    isrRegistrar::isr<AVR::ISR::Timer<1>::CompareA>();
+//}
+ISR(TIMER3_COMPA_vect) {
+    isrRegistrar::isr<AVR::ISR::Timer<3>::CompareA>();
 }
+#ifdef I2CInt
 ISR(INT2_vect) {
     isrRegistrar::isr<AVR::ISR::Int<2>>();
 }
-
+#endif
 
 #ifndef NDEBUG
 void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {

@@ -16,39 +16,80 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
 
+// 20MHz full-swing
+// sudo avrdude -p atmega1284P -P usb -c avrisp2 -U lfuse:w:0xf7:m -U hfuse:w:0xd1:m -U efuse:w:0xfc:m
+
+//#define MEM
+#define OW
+//#define DCF
+//#define I2C
+//#define HOTT
+#define BTerm
+//#define I2CInt
+
+#include <stdint.h>
 #include <string.h>
 
 #include "mcu/ports.h"
-#include "external/ds18b20.h"
-#include "external/onewire.h"
+#include "mcu/avr/isr.h"
+
 #include "hal/softspimaster.h"
+#include "hal/bufferedstream.h"
+#include "hal/alarmtimer.h"
+#include "hal/constantrate.h"
+
+#include "external/ws2812.h"
+
+#ifdef DCF
+# include "external/dcf77.h"
+#endif
+
+#ifdef OW
+# include "external/onewire.h"
+# include "external/ds18b20.h"
+#endif
+
+#ifdef I2C
+# include "external/ds1307.h"
+# include "external/i2cram.h"
+#endif
+
+#ifdef HOTT
+# include "external/hott/hott.h"
+#endif
+
 #include "console.h"
 
-#include "ow.h"
+#ifdef MEM
+# include "util/memory.h"
+#endif
 
 using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
 using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
 
-using SoftSPIData = AVR::Pin<PortA, 0>;
-using SoftSPIClock = AVR::Pin<PortA, 1>;
-using SoftSPISS = AVR::Pin<PortA, 2>;
+using SoftSPIData = AVR::Pin<PortB, 1>;
+using SoftSPIClock = AVR::Pin<PortB, 0>;
+using SoftSPISS = AVR::Pin<PortC, 3>;
 using SSpi0 = SoftSpiMaster<SoftSPIData, SoftSPIClock, SoftSPISS>;
-
 using terminal = SSpi0;
+//using bufferedTerminal = BufferedStream<SSpi0, 512>;
+
+using oneWirePin = AVR::Pin<PortC, 7>;
+using oneWireMaster = OneWire::Master<oneWirePin, OneWire::Normal>;
+//using oneWireMaster = OneWire::Master<oneWirePin, OneWire::Normal, true, true>;
+//using oneWireMasterAsync = OneWire::MasterAsync<oneWireMaster, constantRatePeriod>;
+//using ds18b20 = DS18B20<oneWireMasterAsync>;
+std::array<OneWire::ow_rom_t, 5> dsIds;
+
+#include "ow.h"
 
 namespace std {
     std::basic_ostream<terminal> cout;
     std::lineTerminator<CRLF> endl;
 }
-
-using oneWirePin = AVR::Pin<PortA, 5>;
-using oneWireMaster = OneWire::Master<oneWirePin, OneWire::Normal, false, false>;
-
-std::array<OneWire::ow_rom_t, 5> dsIds;
 
 #define MAX_ROMS 10
 typedef uint8_t rom_t[MAX_ROMS][8];
@@ -56,7 +97,7 @@ uint8_t buffer[9] = {0x10,  0x1D, 0x9E, 0x09, 0x02, 0x08, 0x00, 0x55, 0x00};  //
 rom_t roms;
 
 int scan_bus(rom_t rom_list, uint8_t cmd) {
-  uint8_t i = 0, rc = 0;
+  uint8_t i, j, rc;
 
   onewire_search_init(buffer);
 
@@ -116,14 +157,14 @@ int main() {
       
         
         
-        oneWireMaster::findDevices(dsIds);
+        uint8_t n = oneWireMaster::findDevices(dsIds);
+        std::cout << "n: " << n << std::endl;
         for(const auto& id : dsIds) {
             std::cout << id << std::endl;
         }
         Util::delay(1000_ms);
     }
 }
-
 #ifndef NDEBUG
 void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) {
     std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;

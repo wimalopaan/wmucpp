@@ -21,17 +21,51 @@
 #include "mcu/avr8.h"
 #include "mcu/avr/util.h"
 #include "mcu/avr/mcutimer.h"
+#include "mcu/avr/mcupwm.h"
 #include "mcu/ports.h"
 #include "mcu/avr/isr.h"
 #include "hal/event.h"
 #include "units/percent.h"
 
-template<typename InPin1, typename InPin2, typename ErrPin, typename MCUTimer>
-class TLE5205 {
-public:
+struct TLE5205Base {
     struct Direction {
         bool isClockWise = true;
     };
+};
+
+template<uint8_t N, typename ErrPin, typename MCU = DefaultMcuType>
+class TLE5205Hard : public TLE5205Base {
+public:
+    using mcu_pwm = AVR::PWM<N, MCU>;
+    
+    typedef ErrPin err_pin;
+
+    template<const std::hertz& MinFrequency>
+    static void init() {
+        mcu_pwm::template init<MinFrequency>();        
+        err_pin::template dir<AVR::Input>();
+        err_pin::pullup();
+    }
+    static void pwm(const std::percent& p) {
+        if (direction().isClockWise) {
+            mcu_pwm::template pwm<typename mcu_pwm::A>(p);
+            mcu_pwm::template pwm<typename mcu_pwm::A>(std::percent{0});
+        }
+        else {
+            mcu_pwm::template pwm<typename mcu_pwm::A>(p);
+            mcu_pwm::template pwm<typename mcu_pwm::B>(p);
+        }
+    }
+    static Direction& direction() {
+        static Direction dir;
+        return dir;
+    }
+private:
+};
+
+template<typename InPin1, typename InPin2, typename ErrPin, typename MCUTimer>
+class TLE5205Soft : public TLE5205Base {
+public:
     
     typedef InPin1 pin1_pin;
     typedef InPin2 pin2_pin;

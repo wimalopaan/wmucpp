@@ -99,5 +99,42 @@ constexpr uint16_t prescalerForAbove(const std::hertz& ftimer) {
     return 0;
 }
 
+template<typename MCUTimer, typename T>
+constexpr uint16_t calculatePpmInParameter() {
+    using pBits = typename MCUTimer::mcu_timer_type::template PrescalerBits<MCUTimer::number>;
+    auto p = AVR::Util::prescalerValues(pBits::values);
+    auto sortedPRow = ::Util::sort(p);
+
+    for(const auto& p : sortedPRow) {
+        const std::hertz f = Config::fMcu / (uint32_t)p;
+        const uint16_t ppmMin = 1_ms * f;
+        const uint16_t ppmMax = 2_ms * f;
+        if ((ppmMax < std::numeric_limits<T>::max()) && (ppmMin > 10)) {
+            return p;
+        }
+    }
+    return 0;
+}
+
+template<typename MCUTimer, typename T>
+constexpr uint16_t calculatePpmOutParameter() {
+    using pBits = typename MCUTimer::mcu_timer_type::template PrescalerBits<MCUTimer::number>;
+    auto p = AVR::Util::prescalerValues(pBits::values);
+    auto sortedPRow = ::Util::sort(p); // aufsteigend
+
+    for(const auto& p : sortedPRow) {
+        if (p > 0) {
+            const std::hertz f = Config::fMcu / (uint32_t)p;
+            const uint32_t ppmMin = 1_ms * f;
+            const uint32_t ppmMax = 20_ms * f;
+            if ((ppmMax < std::numeric_limits<T>::max()) && (ppmMin > 1)) {
+                return p;
+            }
+        }
+    }
+    return 0;
+}
+
+
 }
 }

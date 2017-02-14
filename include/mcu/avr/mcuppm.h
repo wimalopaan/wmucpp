@@ -11,31 +11,51 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #pragma once
 
-#include "mcu/avr/mcutimer.h"
 #include "mcu/ports.h"
-#include "mcu/register.h"
+#include "mcu/avr/isr.h"
 #include "mcu/avr/groups.h"
+#include "mcu/avr/ppmbase.h"
+#include "mcu/avr/util.h"
 #include "units/percent.h"
-#include "std/limits.h"
+#include "util/disable.h"
 
 namespace AVR {
 
 template<uint8_t TimerN, typename MCU = DefaultMcuType>
-class PWM {
+class PPM final : PPMBase<typename AVR::TimerParameter<TimerN, MCU>::timer_type> {
+    PPM() = delete;
+public:
     typedef MCU mcu_type;
     typedef typename AVR::TimerParameter<TimerN, MCU>::timer_type timer_type;
     using MCUTimer = typename timer_type::mcu_timer_type;
-    static constexpr const auto mcuTimer = getBaseAddr<MCUTimer, TimerN>;
-    using pwmA = typename AVR::TimerParameter<TimerN, MCU>::ocAPin;
-    using pwmB = typename AVR::TimerParameter<TimerN, MCU>::ocBPin;
-public:
+    static constexpr const auto mcuTimer = AVR::getBaseAddr<MCUTimer, TimerN>;
+    using ocAPin = typename AVR::TimerParameter<TimerN, MCU>::ocAPin;
+    using ocBPin = typename AVR::TimerParameter<TimerN, MCU>::ocAPin;
+
+    using PPMBase<timer_type>::ocMin;
+    using PPMBase<timer_type>::ocMax;
+    using PPMBase<timer_type>::ocFrame;
+    using PPMBase<timer_type>::prescaler;
+    using PPMBase<timer_type>::mcuInterrupts;
+    
+    static void init() {
+        ocAPin::template dir<AVR::Output>();
+        ocBPin::template dir<AVR::Output>();
+
+        timer_type::template prescale<prescaler>();
+        
+        *mcuTimer()->icr = ocFrame;
+        mcuTimer()->tccra.set(AVR::TimerParameter<TimerN, MCU>::FastPwm2::tccra);
+        mcuTimer()->tccrb.set(AVR::TimerParameter<TimerN, MCU>::FastPwm2::tccrb);
+    }
+
     struct A {
         static void ocr(const typename timer_type::value_type& v) {
             *mcuTimer()->ocra = v;
@@ -46,23 +66,14 @@ public:
             *mcuTimer()->ocrb = v;
         }
     };
-
-    template<const std::hertz& MinFrequency>
-    static void init() {
-        pwmA::template dir<AVR::Output>();
-        pwmB::template dir<AVR::Output>();
-
-        constexpr auto prescaler = AVR::Util::prescalerForAbove<timer_type>(MinFrequency);
-        static_assert(prescaler > 0, "wrong prescaler");
-        timer_type::template prescale<prescaler>();
-        mcuTimer()->tccra.set(AVR::TimerParameter<TimerN, MCU>::FastPwm1::tccra);
-        mcuTimer()->tccrb.set(AVR::TimerParameter<TimerN, MCU>::FastPwm1::tccrb);
-    }
     template<typename Channel>
-    static void pwm(const std::percent& p) {
-        typename timer_type::value_type v = std::expand(p, typename timer_type::value_type(0), AVR::TimerParameter<TimerN, MCU>::FastPwm1::top);
-        Channel::ocr(v);
+    static void ppm(const std::percent& width) {
+        uint16_t ocr = std::expand(width, ocMin, ocMax);
+        Channel::ocr(ocr);
     }
+    
+private:
 };
+
 
 }

@@ -46,6 +46,8 @@ using ds18b20 = DS18B20<oneWireMaster>;
 
 std::array<OneWire::ow_rom_t, 5> dsIds;
 
+OneWire::ow_rom_t tsensorId;
+
 int main()
 {
     terminal::init();
@@ -54,6 +56,9 @@ int main()
     oneWireMaster::findDevices(dsIds);
     for(const auto& id : dsIds) {
         std::cout << id << std::endl;
+        if (id.familiy() == ds18b20::family) {
+            tsensorId = id;
+        }
     }
 
     while (true) {
@@ -69,13 +74,9 @@ int main()
         }
     }
 }
-
 #ifndef NDEBUG
-
-void assertFunction(bool b, const char* function, const char* file, unsigned int line) {
-    if (!b) {
-        std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;
-        abort();
-    }
+void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) {
+    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
+    while(true) {}
 }
 #endif

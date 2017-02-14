@@ -174,13 +174,7 @@ struct ATMega328PB final
         volatile uint8_t tccrc;
         volatile uint8_t reserved;
         DataRegister<Timer16Bit, ReadWrite, uint16_t> tcnt;
-        union {
-            struct {
-                volatile uint8_t icrl;
-                volatile uint8_t icrh;
-            };
-            volatile uint16_t icr;
-        };
+        DataRegister<Timer16Bit, ReadWrite, uint16_t> icr;
         DataRegister<Timer16Bit, ReadWrite, uint16_t> ocra;
         DataRegister<Timer16Bit, ReadWrite, uint16_t> ocrb;
         template<int N> struct Address;

@@ -25,23 +25,6 @@
 #include "util/disable.h"
 #include "units/physical.h"
 
-// todo: in Util::AVR
-template<typename MCUTimer, typename T>
-constexpr uint16_t calculatePpm() {
-    using pBits = typename MCUTimer::mcu_timer_type::template PrescalerBits<MCUTimer::number>;
-    auto p = AVR::Util::prescalerValues(pBits::values);
-    auto sortedPRow = ::Util::sort(p);
-
-    for(const auto& p : sortedPRow) {
-        const std::hertz f = Config::fMcu / (uint32_t)p;
-        const uint16_t ppmMin = 1_ms * f;
-        const uint16_t ppmMax = 2_ms * f;
-        if ((ppmMax < std::numeric_limits<T>::max()) && (ppmMin > 10)) {
-            return p;
-        }
-    }
-    return 0;
-}
 
 template<typename PinChange, typename MCUTimer>
 class PpmDecoder final : public IsrBaseHandler<AVR::ISR::PcInt<PinChange::pcInterruptNumber>>{
@@ -59,7 +42,7 @@ public:
     typedef typename PinChange::pinset_type pinset_type;
     
     static constexpr auto mcuTimer = MCUTimer::mcuTimer;
-    static constexpr uint16_t prescaler = calculatePpm<MCUTimer, value_type>();
+    static constexpr uint16_t prescaler = AVR::Util::calculatePpmInParameter<MCUTimer, value_type>();
     static constexpr std::hertz timerFrequency = Config::fMcu / (uint32_t)prescaler;
     static constexpr value_type ppmMin = 1_ms * timerFrequency;
     static constexpr value_type ppmMax = 2_ms * timerFrequency;

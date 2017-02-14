@@ -39,7 +39,7 @@ using led = AVR::Pin<PortB, 3>;
 
 using tleTimer = AVR::Timer8Bit<0>;
 
-using hbridge = TLE5205<Tle5205In1, Tle5205In2, Tle5205Error, tleTimer>;
+using hbridge = TLE5205Soft<Tle5205In1, Tle5205In2, Tle5205Error, tleTimer>;
 
 using isrRegistrar = IsrRegistrar<hbridge::PwmOnHandler, hbridge::PwmOffHandler>;
 

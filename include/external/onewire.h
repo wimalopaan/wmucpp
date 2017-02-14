@@ -36,13 +36,19 @@ struct Rom {
     template<typename Stream> friend Stream& operator<<(Stream& o, const Rom& rom);
     
     static constexpr uint8_t size = 8;
-    uint8_t& operator[](uint8_t index) {
+    
+    inline uint8_t& operator[](uint8_t index) {
         return data[index];
     }
-    const uint8_t& operator[](uint8_t index) const {
+    inline uint8_t operator[](uint8_t index) const {
         return data[index];
     }
-    explicit operator bool() const {
+    
+    inline uint8_t familiy() const {
+        return data[0];
+    }
+    
+    inline explicit operator bool() const {
         return !std::all_of(std::begin(data), std::end(data), [](uint8_t v){return v == 0;}) && std::crc8(data);
     }
 private:
@@ -69,13 +75,26 @@ struct Parameter;
 
 template<>
 struct Parameter<Normal> {
-    static constexpr std::microseconds recovery = 20_us;
-    static constexpr std::microseconds writeZeroTime = 60_us;
-    static constexpr std::microseconds writeOneTime = 6_us;
-    static constexpr std::microseconds readLow = 6_us;
-    static constexpr std::microseconds sampleAfterPre = 9_us;
+    static constexpr std::microseconds start = 6_us;
+    static constexpr std::microseconds tA = start;
+    static constexpr std::microseconds writeOneWait = 64_us;
+    static constexpr std::microseconds tB = writeOneWait;
+    static constexpr std::microseconds writeZero = 60_us;
+    static constexpr std::microseconds tC = writeZero;
+    static constexpr std::microseconds writeZeroWait = 10_us;
+    static constexpr std::microseconds tD = writeZeroWait;
+    static constexpr std::microseconds waitForSampleAfterStart = 9_us;
+    static constexpr std::microseconds tE = waitForSampleAfterStart;
+    static constexpr std::microseconds waitAfterSample = 55_us;
+    static constexpr std::microseconds tF = waitAfterSample;
     static constexpr std::microseconds reset = 480_us;
-    static constexpr std::microseconds presenceAfterReset= 70_us;
+    static constexpr std::microseconds tH = reset;
+    static constexpr std::microseconds waitForPresenceAfterReset= 70_us;
+    static constexpr std::microseconds tI = waitForPresenceAfterReset;
+    static constexpr std::microseconds waitAfterPresence = 410_us;
+    static constexpr std::microseconds tJ = waitAfterPresence;
+    
+    static constexpr std::microseconds recovery = 10_us;
 };
 
 template<>
@@ -124,11 +143,8 @@ public:
         case State::ResetWait:
         {
             Scoped<DisbaleInterrupt> di;
-            Set<pin_type>::input();
-            if constexpr(OWMaster::internal_pullup) {
-                pin_type::pullup();
-            }
-            Util::delay(Parameter<mode_type>::presenceAfterReset);
+            OWMaster::pinTriState();
+            Util::delay(Parameter<mode_type>::waitForPresenceAfterReset);
             mDevicesPresent = !pin_type::read(); // actice low
         }
             mState = State::Inactive;
@@ -170,8 +186,7 @@ public:
     static constexpr auto periodic = rateProcess;
     
     static bool reset() {
-        pin_type::low();
-        Set<pin_type>::output();
+        OWMaster::pinLow();
         mState = State::ResetWait;
         return true;
     }
@@ -229,74 +244,78 @@ public:
         Set<Pin>::output();
         Pin::high();
     }
-
-    template<bool UseRecovery = true>
+    static inline void pinLow() {
+        Pin::low();
+        Set<Pin>::output();
+    }
+    static inline void pinTriState() {
+        Set<Pin>::input();
+        if constexpr(InternalPullup) {
+            Pin::pullup();      
+        }
+    }
+    static inline void pinHigh() {
+        Pin::high();
+        Set<Pin>::output();
+    }
+    
+    template<bool UseRecovery = false>
     static void writeBit(bool bit) {
         if constexpr(UseRecovery) {
             Util::delay(Parameter<Mode>::recovery);
         }
         {
             Scoped<DisbaleInterrupt> di;
-            Pin::low();
-            Set<Pin>::output();
-            Util::delay(Parameter<Mode>::writeOneTime); 
+            pinLow();
             if (bit) {
-                Set<Pin>::input();
-                Pin::pullup();      
+                Util::delay(Parameter<Mode>::start); 
+                pinTriState();
+                Util::delay(Parameter<Mode>::writeOneWait); 
             }
-            Util::delay(Parameter<Mode>::writeZeroTime - Parameter<Mode>::writeOneTime);
+            else {
+                Util::delay(Parameter<Mode>::writeZero); 
+                pinTriState();
+                Util::delay(Parameter<Mode>::writeZeroWait); 
+            }
         }
-        Set<Pin>::input();
-        Pin::pullup();      
         if constexpr (ParasitePower) {
-            Set<Pin>::output();
-            Pin::high();
+            pinHigh();
         }
     }    
 
-    template<bool UseRecovery = true>
+    template<bool UseRecovery = false>
     static bool readBit() {
         if constexpr(UseRecovery) {
             Util::delay(Parameter<Mode>::recovery);
         }
         {
             Scoped<DisbaleInterrupt> di;
-            Pin::low();
-            Set<Pin>::output();
-            Util::delay(Parameter<Mode>::readLow); 
-            Set<Pin>::input();
-            Pin::pullup();      
-            Util::delay(Parameter<Mode>::sampleAfterPre);
-            if constexpr (ParasitePower) {
-                bool b = Pin::read();
-                Set<Pin>::output();
-                Pin::high();
-                return b;                
+            pinLow();
+            Util::delay(Parameter<Mode>::start); 
+            pinTriState();
+            Util::delay(Parameter<Mode>::waitForSampleAfterStart);
+            bool value = Pin::read();
+            if constexpr(ParasitePower) {
+                pinHigh();
             }
-            else {
-                return Pin::read();
-            }
+            Util::delay(Parameter<Mode>::waitAfterSample);
+            return value;
         }
     }
     static bool reset() {
         bool presence = false;
-        Pin::low();
-        Set<Pin>::output();
+        pinLow();
         Util::delay(Parameter<Mode>::reset);       
         {
             Scoped<DisbaleInterrupt> di;
-            Set<Pin>::input();
-            if constexpr(InternalPullup) {
-                Pin::pullup();
-            }
-            Util::delay(Parameter<Mode>::presenceAfterReset);
+            pinTriState();
+            Util::delay(Parameter<Mode>::waitForPresenceAfterReset);
             presence = !Pin::read(); // actice low
             if constexpr (ParasitePower) {
-                Set<Pin>::output();
-                Pin::high();
+                pinHigh();
             }
         }
-        Util::delay(Parameter<Mode>::reset - Parameter<Mode>::presenceAfterReset);    
+        Util::delay(Parameter<Mode>::waitAfterPresence);    
         return presence;
     }
     static uint8_t get() {
@@ -315,67 +334,120 @@ public:
             byte >>= 1;
         }        
     }
-    static constexpr uint8_t LastDevice = 0x00;
-    static constexpr uint8_t SearchFirst = 0xff;
-    static constexpr uint8_t Error = 0xff;
-    static constexpr uint8_t PresenceError = 0xfe;
 
+    enum class Result : uint8_t {
+        ok = 0,
+        no_presence = 1,
+        crc_error = 2,
+        scan_error = 3,
+        last_code = 4,
+        gnd_short = 5
+    };
+    
     template<uint8_t MaxDevices>
     static uint8_t findDevices(std::array<ow_rom_t, MaxDevices>& devices) {
-        auto diff = SearchFirst;
+        Rom rom;
+        searchRom2(nullptr);
         for(uint8_t i = 0; i < devices.size; ++i) {
-            diff = searchRom(diff, devices[i]);
-            if ((diff == Error) || (diff == PresenceError)) {
-                return i;
-            }
-            else if (diff == LastDevice) {
-                return i + 1;
+            auto result = searchRom2(&rom);
+            if ((result == Result::ok) || (result == Result::last_code)) {
+                devices[i] = rom;
+                if (result == Result::last_code) {
+                    return i + 1;
+                }
             }
         }
         return MaxDevices;
     }
     
-    static uint8_t searchRom(uint8_t diff, ow_rom_t& rom) {
-        uint8_t i = ow_rom_t::size * 8;
-        uint8_t j = 8;
-        uint8_t next_diff = LastDevice;
-        bool  b = false;
-        uint8_t* id = &rom[0];
+    
+    static Result searchRom2(ow_rom_t* rom = nullptr) {
+        uint8_t bit = 0;
+        uint8_t max_conf_zero = 0;        // last bit conflict that was resolved to zero
+        static uint8_t max_conf_old = 64;    // last bit conflict that was resolved to zero in last scan
+        uint8_t branch_flag = 0;          // indicate new scan branch, new ROM code found  
         
-        if(!reset()) {
-            return PresenceError;
+        if (rom == nullptr) {    // init search
+            max_conf_old=64;
+            return Result::ok;
+        }
+        
+        if (!reset()) {
+            return Result::no_presence;
         }
         
         put(static_cast<uint8_t>(Command::SearchRom));
         
-        do {
-            j = 8;                          // 8 bits
-            do {
-                b = readBit();         // read bit
-                if (readBit()) {      // read complement bit
-                    if (b) {               // 0b11
-                        return Error; // data error <--- early exit!
-                    }
+        uint8_t rom_tmp = (*rom)[0];
+        uint8_t i = 0;
+        uint8_t mask = 1;
+        
+        // scan all 64 ROM bits
+        
+        for(uint8_t j = 0; j < 64; ++j) {
+            bit = 0;
+            if (readBit()) {
+                bit = 1;
+            }
+            if (readBit()) {
+                bit |= 2;
+            }
+            switch(bit) {
+            case 0:     // bit conflict, more than one device with different bit
+                if (j < max_conf_old) {         // below last zero branch conflict level, keep current bit
+                    if (rom_tmp & mask) {       // last bit was 1
+                        bit = 1;
+                    } else {                    // last bit was 0
+                        bit = 0;
+                        max_conf_zero = j;
+                        branch_flag = 1;
+                    }                        
+                } else if (j == max_conf_old) { // last zero branch conflict, now enter new path
+                    bit = 1;
+                } else {                        // above last scan conflict level
+                    bit = 0;                    // scan 0 branch first
+                    max_conf_zero = j;
+                    branch_flag = 1;
                 }
-                else {
-                    if (!b) {              // 0b00 = 2 devices
-                        if( (diff > i) || ((*id & 1) && diff != i) ) {
-                            b = true;          // now 1
-                            next_diff = i;  // next pass 0
-                        }
-                    }
+                break;
+            case 1:
+            case 2: // no bit conflict
+                // do nothing, just go on with current bit
+                break;
+            case 3:     // no response
+                return Result::scan_error;
+                break;
+            }
+            
+            // write bit to OneWire and ROM code
+            
+            if (bit & 1) {
+                writeBit(true);
+                rom_tmp |= mask;
+            } else {
+                writeBit(false);
+                rom_tmp &= ~mask;
+            }
+            
+            mask <<= 1;
+            if (mask == 0) {
+                mask = 1;
+                (*rom)[i] = rom_tmp;            // update tmp data
+                i++;
+                if (i<8) {
+                    rom_tmp  = (*rom)[i];       // read new data
                 }
-                writeBit(b);             // write bit
-                *id >>= 1;
-                if (b) {
-                    *id |= 0x80;            // store bit
-                }
-                i--;
-            } while(--j);
-            id++;                           // next byte
-        } while(i);
+            }
+        }
     
-        return next_diff;                   // to continue search
+        max_conf_old = max_conf_zero;
+    
+        if (branch_flag) {
+            return Result::ok;
+        } else {
+            return Result::last_code;
+        }
+    
     }
 };
 

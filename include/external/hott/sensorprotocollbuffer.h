@@ -78,8 +78,11 @@ public:
     static std::RPM rpm1() {
         return std::RPM{hottBinaryResponse.rpm * 10};
     }
-    static void temp1(uint8_t v) {
-        hottBinaryResponse.temperature1 = v;
+    static void temp1(FixedPoint<int, 4> v) {
+        hottBinaryResponse.temperature1 = v.integer() + 20;
+    }
+    static void temp2(FixedPoint<int, 4> v) {
+        hottBinaryResponse.temperature2 = v.integer() + 20;
     }
 
 private:

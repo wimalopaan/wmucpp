@@ -115,9 +115,7 @@ public:
         if constexpr(!std::is_same<Timer, void>::value) {
             Timer::mcuTimer()->tccrb.template add<Timer::mcu_timer_type::TCCRB::wgm2>();
             Timer::mcuInterrupts()->tifr.template add<Timer::flags_type::ocfa | Timer::flags_type::ocfb>();
-//            Timer::mcuInterrupts()->tifr  |= _BV(OCF1A) | _BV(OCF1B);
             Timer::mcuInterrupts()->timsk.template add<Timer::mask_type::ociea>();
-//            Timer::mcuInterrupts()->timsk |= _BV(OCIE0A);
         }
         (Writers::init(),...);
     }

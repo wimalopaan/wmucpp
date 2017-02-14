@@ -11,59 +11,18 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #pragma once
 
-#include "std/traits.h"
+#include "std/array.h"
+#include "external/onewire.h"
 
-#if __has_include(<avr/interrupt.h>)
-# include <avr/interrupt.h>
-#else
-# define sei()
-# define cli()
-#endif
-
-struct EnableInterrupt {};
-struct DisbaleInterrupt {};
-
-// todo: Restore State (SREG)
-
-template<typename T, bool Active = true>
-class Scoped;
-
-template<bool Active>
-class Scoped<EnableInterrupt, Active> final
-{
+template<typename OneWireMaster>
+class DS2401 final : public EventHandler<EventType::OneWireRecvComplete> {
 public:
-    inline Scoped() {
-        if constexpr(Active) {
-            sei();
-        }
-    }
-    inline ~Scoped() {
-        if constexpr(Active) {
-            cli();
-        }
-    }
+    static constexpr uint8_t family = 0x01;
 };
-
-template<bool Active>
-class Scoped<DisbaleInterrupt, Active> final
-{
-public:
-    inline Scoped() {
-        if constexpr(Active) {
-            cli();
-        }
-    }
-    inline ~Scoped() {
-        if constexpr(Active) {
-            sei();
-        }
-    }
-};
-

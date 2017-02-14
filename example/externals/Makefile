@@ -42,5 +42,9 @@ targets += rpm.elf
 targets += rpmsofttimer.elf
 targets += pinchange.elf
 
+onewire.elf: onewire.o ow.o
+	$(CC) $(LDFLAGS) -o $@ onewire.o ow.o
+
+
 -include ../../Makefile.include
 

@@ -29,6 +29,8 @@ class DS18B20 final : public EventHandler<EventType::OneWireRecvComplete> {
 public:
     enum class Resolution {R9bit = 0x1f, R10bit = 0x3f, R11bit = 0x5f, R12bit = 0x7f};
     
+    static constexpr uint8_t family = 0x28;
+    
     typedef OneWireMaster owmaster_type;
     static constexpr bool single = Single;
     
