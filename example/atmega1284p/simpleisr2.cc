@@ -57,8 +57,6 @@ int main() {
     
     isrRegistrar::init();
 
-    static_assert(timer1::hasOcrA, "need OcrA");
-    
     constexpr auto t1 = AVR::Util::calculate<timer1>(100_Hz);
     timer1::prescale<t1.prescaler>();
     timer1::ocra<t1.ocr>();

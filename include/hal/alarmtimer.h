@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
 #include "config.h"
 #include "mcu/avr/isr.h"
 #include "mcu/avr/util.h"
@@ -50,8 +52,6 @@ class AlarmTimer final {
 public:
     AlarmTimer() = delete;
 
-    static_assert(MCUTimer::hasOcrA, "need OcrA");
-    
     static void init() {
         constexpr auto t = AVR::Util::calculate<MCUTimer>(Config::Timer::frequency);
         static_assert(t, "falscher wert für p");

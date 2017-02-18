@@ -70,14 +70,10 @@ int main() {
     
     isrRegistrar::init();
     
-    static_assert(timer1::hasOcrA, "need ocra");
-    
     constexpr auto t1 = AVR::Util::calculate<timer1>(100_Hz);
     timer1::prescale<t1.prescaler>();
     timer1::ocra(t1.ocr);
     timer1::mode(AVR::TimerMode::CTC);
-
-    static_assert(timer2::hasOcrA, "need ocra");
 
     constexpr auto t2 = AVR::Util::calculate<timer2>(1_Hz);
     timer2::prescale<t2.prescaler>();
@@ -88,8 +84,6 @@ int main() {
     timer3::prescale<t3.prescaler>();
     timer3::ocra(t3.ocr);
     timer3::mode(AVR::TimerMode::CTC);
-    
-    static_assert(timer3::hasOcrA, "need ocra");
     
     while(true) {
         Util::delay(500_ms);

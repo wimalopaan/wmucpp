@@ -75,7 +75,7 @@ typedef Event<uint8_t> Event8u_t;
 namespace AVR {
 template<uint8_t N, typename PA, typename MCU> class Usart;
 template<uint8_t N, typename MCU> class Spi;
-template<uint8_t N, typename MCU> class SWUsart;
+//template<uint8_t N, typename MCU = DefaultMcuType> class SWUsart;
 }
 
 namespace Hott {

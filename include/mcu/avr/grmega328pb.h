@@ -37,7 +37,9 @@ struct TimerParameter<0, ATMega328PB> {
     using tb = AVR::ATMega328PB::Timer8Bit::TCCRB;
 
     struct FastPwm1 { // FastPWM 8/10-Bit
-        static constexpr ta tccra = ta::coma0 | ta::coma1 | ta::comb0 | ta::comb1 | ta::wgm0 | ta::wgm1;
+        static constexpr ta cha = ta::coma0 | ta::coma1;
+        static constexpr ta chb = ta::comb0 | ta::comb1; 
+        static constexpr ta tccra = cha | chb | ta::wgm0 | ta::wgm1; 
         static constexpr tb tccrb{0};
         static constexpr uint8_t top = 0xff;
     };
@@ -54,12 +56,16 @@ struct TimerParameter<1, ATMega328PB> {
     using ta = AVR::ATMega328PB::Timer16Bit::TCCRA;
     using tb = AVR::ATMega328PB::Timer16Bit::TCCRB;
     struct FastPwm1 {
-        static constexpr ta tccra = ta::coma0 | ta::coma1 | ta::comb0 | ta::comb1 | ta::wgm0 | ta::wgm1; 
+        static constexpr ta cha = ta::coma0 | ta::coma1;
+        static constexpr ta chb = ta::comb0 | ta::comb1; 
+        static constexpr ta tccra = cha | chb | ta::wgm0 | ta::wgm1; 
         static constexpr tb tccrb{tb::wgm2}; 
         static constexpr value_type top = 0x3ff;
     };
     struct FastPwm2 { // FastPWM top=icr
-        static constexpr ta tccra = ta::coma1 | ta::comb1 | ta::wgm1;
+        static constexpr ta cha = ta::coma1;
+        static constexpr ta chb = ta::comb1; 
+        static constexpr ta tccra = cha | chb | ta::wgm1;
         static constexpr tb tccrb = tb::wgm2 | tb::wgm3; 
     };
 };

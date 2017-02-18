@@ -31,7 +31,7 @@ namespace I2C {
 enum class State { USI_SLAVE_CHECK_ADDRESS, USI_SLAVE_SEND_DATA, USI_SLAVE_REQUEST_REPLY_FROM_SEND_DATA,
                            USI_SLAVE_CHECK_REPLY_FROM_SEND_DATA, USI_SLAVE_REQUEST_DATA, USI_SLAVE_GET_DATA_AND_SEND_ACK};
 
-template<typename USI, const TWI::Address& Address, typename RegisterMachine = void>
+template<typename USI, const TWI::Address& Address, uint8_t Size = 8>
 class I2CSlave final {
     I2CSlave() = delete;
     
@@ -78,12 +78,12 @@ public:
                 }	
                 else {
                     assert(index);
-                    if (!(*index < RegisterMachine::size)) {
+                    if (!(*index < Size)) {
                         index = 0;
                     }
                 }
                 assert(index);
-                *mcu_usi()->usidr = RegisterMachine::cell(*index); 	// Send data byte
+                *mcu_usi()->usidr = registers()[*index]; 	// Send data byte
                 
                 ++index; 					// Increment buffer address for next byte
                 state = State::USI_SLAVE_REQUEST_REPLY_FROM_SEND_DATA;
@@ -110,7 +110,7 @@ public:
             case State::USI_SLAVE_GET_DATA_AND_SEND_ACK:
                 data = *mcu_usi()->usidr; 					// Read data received
                 if (!index) { 		// First access, read buffer position
-                    if (data < RegisterMachine::size) {		// Check if address within buffer size
+                    if (data < Size) {		// Check if address within buffer size
                         index = data; 		// Set position as received
                     }
                     else {
@@ -119,11 +119,11 @@ public:
                 }
                 else {					// Ongoing access, receive data
                     assert(index);
-                    if (!(*index < RegisterMachine::size)) {
+                    if (!(*index < Size)) {
                         index = 0;
                     }
                     assert(index);
-                    RegisterMachine::cell(*index) = data; 				// Write data to buffer
+                    registers()[*index] = data; 				// Write data to buffer
                     ++index; 							// Increment buffer address for next write access
                 }
                 state = State::USI_SLAVE_REQUEST_DATA;	// Next USI_SLAVE_REQUEST_DATA
@@ -161,14 +161,18 @@ public:
         USI::template init<AVR::I2C<mcu_type>>();
         state = State::USI_SLAVE_CHECK_ADDRESS;
     }
+    static auto& registers() {
+        static volatile std::array<uint8_t, Size> rm;
+        return rm;
+    }
 private:
     static volatile uint_NaN<uint8_t> index;
     static volatile State state;
 };
-template<typename USI, const TWI::Address& Address, typename RegisterMachine>
-volatile State I2CSlave<USI, Address, RegisterMachine>::state = State::USI_SLAVE_CHECK_ADDRESS;
+template<typename USI, const TWI::Address& Address, uint8_t Size>
+volatile State I2CSlave<USI, Address, Size>::state = State::USI_SLAVE_CHECK_ADDRESS;
 
-template<typename USI, const TWI::Address& Address, typename RegisterMachine>
-volatile uint_NaN<uint8_t> I2CSlave<USI, Address, RegisterMachine>::index;
+template<typename USI, const TWI::Address& Address, uint8_t Size>
+volatile uint_NaN<uint8_t> I2CSlave<USI, Address, Size>::index;
 
 }

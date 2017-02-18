@@ -35,12 +35,12 @@ struct TimerParameter<0, ATMega1284P> {
     typedef timer_type::value_type value_type;
     
     using ta = AVR::ATMega1284P::Timer8Bit::TCCRA;
-    static constexpr ta tccra = ta::coma0 | ta::coma1 | ta::comb0 | ta::comb1 | ta::wgm0 | ta::wgm1;
-    
     using tb = AVR::ATMega1284P::Timer8Bit::TCCRB;
-    static constexpr tb tccrb{0};
-    
-    static constexpr uint8_t top = 0xff;
+    struct FastPwm1 {
+        static constexpr ta tccra = ta::coma0 | ta::coma1 | ta::comb0 | ta::comb1 | ta::wgm0 | ta::wgm1;
+        static constexpr tb tccrb{0};
+        static constexpr uint8_t top = 0xff;
+    };
 };
 template<>
 struct TimerParameter<1, ATMega1284P> {
@@ -51,12 +51,20 @@ struct TimerParameter<1, ATMega1284P> {
     typedef timer_type::value_type value_type;
 
     using ta = AVR::ATMega1284P::Timer16Bit::TCCRA;
-    static constexpr ta tccra = ta::coma0 | ta::coma1 | ta::comb0 | ta::comb1 | ta::wgm0 | ta::wgm1; 
-    
     using tb = AVR::ATMega1284P::Timer16Bit::TCCRB;
-    static constexpr tb tccrb{tb::wgm2}; 
-
-    static constexpr value_type top = 0x3ff;
+    struct FastPwm1 {
+        static constexpr ta cha = ta::coma0 | ta::coma1;
+        static constexpr ta chb = ta::comb0 | ta::comb1; 
+        static constexpr ta tccra = cha | chb | ta::wgm0 | ta::wgm1; 
+        static constexpr tb tccrb = tb::wgm2; 
+        static constexpr value_type top = 0x3ff;
+    };    
+    struct FastPwm2 { // FastPWM top=icr
+        static constexpr ta cha = ta::coma1;
+        static constexpr ta chb = ta::comb1; 
+        static constexpr ta tccra = cha | chb | ta::wgm1;
+        static constexpr tb tccrb = tb::wgm2 | tb::wgm3; 
+    };
 };
 template<>
 struct TimerParameter<2, ATMega1284P> {
@@ -67,12 +75,19 @@ struct TimerParameter<2, ATMega1284P> {
     typedef timer_type::value_type value_type;
     
     using ta = AVR::ATMega1284P::Timer8Bit::TCCRA;
-    static constexpr ta tccra = ta::coma0 | ta::coma1 | ta::comb0 | ta::comb1 | ta::wgm0 | ta::wgm1; 
-
     using tb = AVR::ATMega1284P::Timer8Bit::TCCRB;
-    static constexpr tb tccrb{}; 
-
-    static constexpr uint8_t top = 0xff;
+    struct FastPwm1 {
+        static constexpr ta cha = ta::coma0 | ta::coma1;
+        static constexpr ta chb = ta::comb0 | ta::comb1; 
+        static constexpr ta tccra = cha | chb | ta::wgm0 | ta::wgm1; 
+        static constexpr tb tccrb{}; 
+        static constexpr uint8_t top = 0xff;
+    };
+    struct FastPwm2 { // FastPWM top=oxff
+        static constexpr ta tccra = ta::coma1 | ta::comb1 | ta::wgm1 | ta::wgm0;
+        static constexpr tb tccrb{}; 
+        static constexpr uint8_t top = 0xff;
+    };
 };
 template<>
 struct TimerParameter<3, ATMega1284P> {

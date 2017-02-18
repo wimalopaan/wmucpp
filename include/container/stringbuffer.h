@@ -107,6 +107,55 @@ private:
     T data[Length] = {};
 };
 
+template<uint8_t Begin, uint8_t Length, typename ItemType = char>
+class StringBufferView {
+public:
+    typedef ItemType type;
+    
+    template<uint8_t SBLength, typename T, char Fill>
+    StringBufferView(StringBuffer<SBLength, T, Fill>& stringBuffer) : data(stringBuffer.begin() + Begin) {
+        static_assert((Begin + Length) <= SBLength, "wrong begin or length");
+    }
+    static constexpr uint8_t size = Length;
+    
+    constexpr const ItemType& operator[](uint8_t index) const {
+        assert(index < size);
+        return data[index];
+    }
+    constexpr ItemType& operator[](uint8_t index) {
+        assert(index < size);
+        return data[index];
+    }
+private:
+    ItemType* data = nullptr;
+};
+
+
+template<typename Buffer>
+class BufferDevice {
+public:
+    BufferDevice(Buffer& b) : mBuffer(b) {}
+    
+    bool put(typename Buffer::type c) {
+        if (counter < Buffer::size) {
+            mBuffer[counter] = c;
+            ++counter;
+        }
+        return true;  
+    }
+    Buffer& buffer() {
+        return mBuffer;
+    }
+    void rewind() {
+        counter = 0;
+    }
+
+private:
+    Buffer& mBuffer;
+    uint8_t counter = 0;
+};
+
+
 template<typename Stream, uint8_t Length, typename T, char fill>
 Stream& operator<<(Stream& out, const StringBuffer<Length, T, fill>& sb) {
     for(const auto& c : sb) {

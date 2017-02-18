@@ -72,7 +72,7 @@ using virtualLED= LedMachine<leds>;
 
 constexpr TWI::Address address{0x54};
 using Usi = AVR::Usi<0>;
-using i2c = I2C::I2CSlave<Usi, address, virtualLED>;
+using i2c = I2C::I2CSlave<Usi, address, virtualLED::size>;
 
 using isrRegistrar = IsrRegistrar<i2c::I2CSlaveHandlerOvfl, i2c::I2CSlaveHandlerStart>;
 

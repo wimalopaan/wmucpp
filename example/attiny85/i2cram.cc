@@ -24,35 +24,14 @@
 #include "mcu/i2cslave.h"
 #include "util/disable.h"
 
-template<uint8_t NumberOfRegisters>
-class RegisterMachine final {
-public:
-    static constexpr uint8_t size = NumberOfRegisters;
-    static uint8_t& cell(uint8_t index) {
-        assert(index < mData.size);
-        return mData[index];        
-    }
-    static void process() {
-        for(uint8_t i = 0; i < mData.size / 2; ++i) {
-            mData[i + mData.size / 2] = 2 * mData[i];
-        }
-    }
-private:
-    static std::array<uint8_t, NumberOfRegisters> mData;
-};
-template<uint8_t NumberOfRegisters>
-std::array<uint8_t, NumberOfRegisters> RegisterMachine<NumberOfRegisters>::mData;
-
 using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 
 using led = AVR::Pin<PortB, 3>;
 
-using virtualRAM = RegisterMachine<16>;
-
 constexpr TWI::Address address{0x54};
 using Usi = AVR::Usi<0>;
-using i2c = I2C::I2CSlave<Usi, address, virtualRAM>;
+using i2c = I2C::I2CSlave<Usi, address, 16>;
 
 using isrRegistrar = IsrRegistrar<i2c::I2CSlaveHandlerOvfl, i2c::I2CSlaveHandlerStart>;
 
@@ -67,7 +46,6 @@ int main()
     while(true) {
         Scoped<EnableInterrupt> ei;
         led::toggle();
-        virtualRAM::process();
     }    
 }
 ISR(USI_OVF_vect) {

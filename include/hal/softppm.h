@@ -25,40 +25,38 @@
 #include "units/percent.h"
 #include "util/disable.h"
 
-template<typename MCUTimer, typename... Pins>
-class SoftPPM final : public PPMBase<MCUTimer> {
+template<typename Timer, typename... Pins>
+class SoftPPM final {
     SoftPPM() = delete;
 
 public:
-    static_assert(std::is_same<typename MCUTimer::value_type, uint16_t>::value, "must use 16bit timer");
+    static_assert(std::is_same<typename Timer::value_type, uint16_t>::value, "must use 16bit timer");
     
     static constexpr const uint8_t numberOfChannels = sizeof...(Pins);
+    static constexpr auto mcuTimer = Timer::mcuTimer;
+    static constexpr auto mcuInterrupts = Timer::mcuInterrupts;
 
-    using PPMBase<MCUTimer>::mcuInterrupts;
-    using PPMBase<MCUTimer>::ocMin;
-    using PPMBase<MCUTimer>::ocMax;
-    using PPMBase<MCUTimer>::ocFrame;
-    using PPMBase<MCUTimer>::mcuTimer;
-    using PPMBase<MCUTimer>::prescaler;
-
+    using parameter = PPMParameter<Timer>;
+    
     static void timerInit() {
-        MCUTimer::template prescale<prescaler>();
-        *mcuTimer()->ocra = ocFrame;
-        mcuTimer()->tccrb.template add<MCUTimer::tccrb_type::wgm2>();
-        mcuInterrupts()->tifr.template add<MCUTimer::flags_type::ocfa | MCUTimer::flags_type::ocfb>();
-        mcuInterrupts()->timsk.template add<MCUTimer::mask_type::ociea>();
+        Timer::template prescale<parameter::prescaler>();
+        *mcuTimer()->ocra = parameter::ocFrame;
+        mcuTimer()->tccrb.template add<Timer::tccrb_type::wgm2>();
+        mcuInterrupts()->tifr.template add<Timer::flags_type::ocfa | Timer::flags_type::ocfb>();
+        mcuInterrupts()->timsk.template add<Timer::mask_type::ociea>();
     }
     
     static void init() {
         (Pins::low(), ...);
         (Pins::template dir<AVR::Output>(), ...);
         timerInit();
-        std::iota(std::begin(ocrbValues), std::end(ocrbValues), (ocMax + ocMin) / 2, (ocMax + ocMin) / 2);
+        constexpr auto medium = (parameter::ocMax + parameter::ocMin) / 2;
+        std::iota(std::begin(ocrbValues), std::end(ocrbValues), medium, medium);
     }
 
     static void ppm(const std::percent& width, uint8_t channel) {
         assert(channel < numberOfChannels);
-        uint16_t ocr = std::expand(width, ocMin, ocMax);
+        uint16_t ocr = std::expand(width, parameter::ocMin, parameter::ocMax);
         {
             Scoped<DisbaleInterrupt> di;
             uint16_t start = 0;
@@ -109,15 +107,15 @@ public:
         }
     };
 
-    struct OCAHandler : public IsrBaseHandler<typename AVR::ISR::Timer<MCUTimer::number>::CompareA> {
+    struct OCAHandler : public IsrBaseHandler<typename AVR::ISR::Timer<Timer::number>::CompareA> {
         static void isr() {
             actual = 0;
             *mcuTimer()->ocrb = ocrbValues[0];
-            mcuInterrupts()->timsk.template add<MCUTimer::mask_type::ocieb>();
+            mcuInterrupts()->timsk.template add<Timer::mask_type::ocieb>();
             First<Pins...>::high();
         }
     };
-    struct OCBHandler : public IsrBaseHandler<typename AVR::ISR::Timer<MCUTimer::number>::CompareB> {
+    struct OCBHandler : public IsrBaseHandler<typename AVR::ISR::Timer<Timer::number>::CompareB> {
         static void isr() {
             OffN<numberOfChannels, Pins...>::check(actual);
             actual = (actual + 1) % numberOfChannels;
@@ -127,7 +125,7 @@ public:
             }
             else {
                 if constexpr(numberOfChannels > 1) {
-                    mcuInterrupts()->timsk.template clear<MCUTimer::mask_type::ocieb>();
+                    mcuInterrupts()->timsk.template clear<Timer::mask_type::ocieb>();
                 }
             }
         }

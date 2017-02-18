@@ -23,6 +23,7 @@
 #include "std/limits.h"
 #include "util/bits.h"
 #include "util/fixedpoint.h"
+#include "container/stringbuffer.h"
 
 #include "util/outputparameter.h"
 
@@ -97,6 +98,13 @@ inline void utoa(T v, std::array<char, BufferSize<T>::size>& buffer) {
     static_assert(std::is_unsigned<T>::value, "must use unsigned type");
     Utoa<BufferSize<T>::size - 1, T, std::array<char, BufferSize<T>::size> >::convert(v, buffer);
 }
+
+template<typename T, uint8_t Start>
+inline void utoa(T v, StringBufferView<Start, BufferSize<T>::size>& buffer) {
+    static_assert(std::is_unsigned<T>::value, "must use unsigned type");
+    Utoa<BufferSize<T>::size - 1, T, StringBufferView<Start, BufferSize<T>::size> >::convert(v, buffer);
+}
+
 template<typename T>
 inline void utoa(Fraction<T> v, std::array<char, BufferSize<Fraction<T>>::size>& buffer) {
     buffer[0] = '.';

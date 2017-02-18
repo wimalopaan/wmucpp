@@ -26,6 +26,16 @@
 //#define HOTT
 //#define BTerm
 #define I2CInt
+#define LEDS1
+//#define SOFTPWM
+//#define HARDPWM
+//#define SOFTPPM
+//#define HARDPPM1
+//#define HARDPPM2
+//#define SWUSART
+
+// todo:: HC-05 mit Uart verbinden
+// todo:: HC-05 EN-Pin trennen
 
 #include "mcu/ports.h"
 #include "mcu/avr/isr.h"
@@ -57,11 +67,26 @@
 # include "external/hott/hott.h"
 #endif
 
-#include "console.h"
+#if defined(SOFTPWM) || defined(HARDPWM)
+# include "external/tle5205.h"
+#endif
+#if defined(HARDPPM1) || defined(HARDPPM2)
+# include "mcu/avr/mcuppm.h"
+#endif
+
+#ifdef SOFTPPM
+# include "hal/softppm.h"
+#endif
+
+#ifdef SWUSART
+# include "mcu/avr/swusart.h"
+#endif
 
 #ifdef MEM
 # include "util/memory.h"
 #endif
+
+#include "console.h"
 
 template<typename... Components>
 struct Initializer {
@@ -87,10 +112,33 @@ using systemTimer = AVR::Timer8Bit<0>;
 using alarmTimer = AlarmTimer<systemTimer>;
 
 // Timer1
-// ppm test
+#ifdef HARDPWM
+using hbridge = TLE5205Hard<1, void>;
+#elif defined(HARDPPM1)
+using ppm = AVR::PPM<1>;
+#elif defined(SOFTPPM)
+using ppm3out = AVR::Pin<PortA, 5>;
+using ppm4out = AVR::Pin<PortA, 4>;
+using ppmTimerOutput = AVR::Timer16Bit<1>;
+using softPpm = SoftPPM<ppmTimerOutput, ppm3out, ppm4out>;
+#elif defined(SWUSART)
+using swusart = SWUsart<0>;
+#endif
 
 // Timer2
+// ppm test
+#ifdef HARDPPM2
+using ppm = AVR::PPM<2>;
+#else
+# ifdef SOFTPWM
 // pwm test
+using Tle5205In1 = AVR::Pin<PortD, 4>;
+using Tle5205In2 = AVR::Pin<PortD, 5>;
+//using Tle5205Error = AVR::Pin<PortD, 2>; / select1
+using tleTimer = AVR::Timer8Bit<2>; 
+using hbridge = TLE5205Soft<Tle5205In1, Tle5205In2, void, tleTimer>;
+# endif
+#endif
 
 // Timer3
 using constantRateTimer = AVR::Timer16Bit<3>;
@@ -101,11 +149,11 @@ constexpr const auto constantRatePeriod = 1000_us;
 #endif
 
 using statusLed = WS2812<1, AVR::Pin<PortC, 6>>;
+typedef statusLed::color_type StatusColor;
+#ifdef LEDS1
 using leds = WS2812<4, AVR::Pin<PortC, 4>>;
-using ppm4out = AVR::Pin<PortA, 4>;
-using ppm3out = AVR::Pin<PortA, 5>;
-
 typedef leds::color_type Color;
+#endif
 
 using select1 = AVR::Pin<PortC, 5>;
 
@@ -148,6 +196,7 @@ using lcd = I2CGeneric<TwiMasterAsync, lcdAddress>;
 
 #endif
 
+
 using devicesConstantRateAdapter = ConstantRateAdapter<constantRateTimer, AVR::ISR::Timer<constantRateTimer::number>::CompareA 
 #ifdef OW
                                                         ,oneWireMasterAsync
@@ -184,7 +233,20 @@ using isrRegistrar = IsrRegistrar<
 #ifdef I2CInt
                                 , I2CInterrupt
 #endif
+#ifdef SOFTPWM
+                                , hbridge::PwmOnHandler, hbridge::PwmOffHandler
+#endif
+#ifdef SOFTPPM
+                                , softPpm::OCAHandler, softPpm::OCBHandler
+#endif
+#ifdef SWUSART
+                                , swusart::StartBitHandler, swusart::ReceiveBitHandler, swusart::TransmitBitHandler
+#endif
 >;
+
+namespace Constant {
+static constexpr std::hertz pwmFrequency = 100_Hz;
+}
 
 const auto periodicTimer = alarmTimer::create(1000_ms, AlarmFlags::Periodic);
 #ifdef OW
@@ -196,9 +258,13 @@ const auto measurementTimer = alarmTimer::create(750_ms, AlarmFlags::OneShot | A
 struct TimerHandler : public EventHandler<EventType::Timer> {
     static bool process(uint8_t timer) {
         static uint8_t counter = 0;
-        ppm4out::toggle();
         if (timer == *periodicTimer) {
             ++counter;
+#ifdef LEDS1
+            Color color{Blue{10}};
+            leds::set<false>(Color{0});
+            leds::set(counter % 4, color);
+#endif
             if (counter % 2) {
                 statusLed::off();
 #ifdef I2C
@@ -212,9 +278,13 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
 #endif
             }
             else {
-                Color c = {Red{128}};
+                StatusColor c = {Red{128}};
                 statusLed::set(c);
             }
+#ifdef SWUSART
+            std::basic_ostream<swusart> btStream;
+            btStream << "Bla" << std::endl;
+#endif
 #ifdef MEM
             std::cout << "unused memory: "_pgm << Util::Memory::getUnusedMemory() << std::endl;   
 #endif
@@ -315,7 +385,11 @@ struct ExternalInterruptHandler: public EventHandler<EventType::ExternalInterrup
 };
 
 int main() {
-    Initializer<isrRegistrar, statusLed, leds, systemConstantRateAdapter, 
+    Initializer<isrRegistrar, statusLed, 
+        #ifdef LEDS1
+            leds, 
+        #endif
+            systemConstantRateAdapter, 
         #ifdef BTerm
             bufferedTerminal
         #else
@@ -323,8 +397,9 @@ int main() {
         #endif
             >::init();
     statusLed::off();
+#ifdef LEDS1
     leds::off();
-
+#endif
 #ifdef OW
     ds18b20::init();
 #endif
@@ -335,9 +410,20 @@ int main() {
 #ifdef DCF
     dcfDecoder::init();
 #endif
+#if defined(SOFTPWM) || defined(HARDPWM)
+    hbridge::init<Constant::pwmFrequency>();
+    hbridge::direction() = TLE5205Base::Direction{false};
+    hbridge::pwm(10_ppc);
+#elif defined(HARDPPM1)
+    ppm::init();
+//    ppm::ppm<ppm::A>(0_ppc);
+//    ppm::ppm<ppm::B>(50_ppc);
+#elif defined(SOFTPPM)
+    softPpm::init();
+#elif defined (SWUSART)
+    swusart::init<9600>();
+#endif
     
-    ppm4out::dir<AVR::Output>();
-    ppm3out::dir<AVR::Output>();
     
     // todo: zusammenfassen    
     constexpr std::hertz constantRateFrequency = 1 / constantRatePeriod;
@@ -419,11 +505,11 @@ int main() {
             TwiMasterAsync::periodic();
 #endif
             if (EventManager::unprocessedEvent()) {
-                Color c {255};
+                StatusColor c{255};
                 statusLed::set(c);
             }
             if (EventManager::leakedEvent()) {
-                Color c = {Red{255}, Green{0}, Blue{255}};
+                StatusColor c = {Red{255}, Green{0}, Blue{255}};
                 statusLed::set(c);
             }
         });
@@ -433,9 +519,32 @@ int main() {
 ISR(TIMER0_COMPA_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<0>::CompareA>();
 }
-//ISR(TIMER1_COMPA_vect) {
-//    isrRegistrar::isr<AVR::ISR::Timer<1>::CompareA>();
-//}
+#ifdef SOFTPPM
+ISR(TIMER1_COMPA_vect) {
+    isrRegistrar::isr<AVR::ISR::Timer<1>::CompareA>();
+}
+ISR(TIMER1_COMPB_vect) {
+    isrRegistrar::isr<AVR::ISR::Timer<1>::CompareB>();
+}
+#elif defined SWUSART
+ISR(TIMER1_CAPT_vect) {
+    isrRegistrar::isr<AVR::ISR::Timer<1>::Capture>();
+}
+ISR(TIMER1_COMPA_vect) {
+    isrRegistrar::isr<AVR::ISR::Timer<1>::CompareA>();
+}
+ISR(TIMER1_COMPB_vect) {
+    isrRegistrar::isr<AVR::ISR::Timer<1>::CompareB>();
+}
+#endif
+#ifdef SOFTPWM
+ISR(TIMER2_OVF_vect) {
+    isrRegistrar::isr<AVR::ISR::Timer<2>::Overflow>();
+}
+ISR(TIMER2_COMPA_vect) {
+    isrRegistrar::isr<AVR::ISR::Timer<2>::CompareA>();
+}
+#endif
 ISR(TIMER3_COMPA_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<3>::CompareA>();
 }

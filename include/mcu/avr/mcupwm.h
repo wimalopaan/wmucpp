@@ -37,11 +37,25 @@ class PWM {
     using pwmB = typename AVR::TimerParameter<TimerN, MCU>::ocBPin;
 public:
     struct A {
+        static void off() {
+            mcuTimer()->tccra.template clear<AVR::TimerParameter<TimerN, MCU>::FastPwm1::cha>();
+            pwmA::high();
+        }
+        static void on() {
+            mcuTimer()->tccra.template add<AVR::TimerParameter<TimerN, MCU>::FastPwm1::cha>();
+        }
         static void ocr(const typename timer_type::value_type& v) {
             *mcuTimer()->ocra = v;
         }
     };
     struct B {
+        static void off() {
+            mcuTimer()->tccra.template clear<AVR::TimerParameter<TimerN, MCU>::FastPwm1::chb>();
+            pwmB::high();
+        }
+        static void on() {
+            mcuTimer()->tccra.template add<AVR::TimerParameter<TimerN, MCU>::FastPwm1::chb>();
+        }
         static void ocr(const typename timer_type::value_type& v) {
             *mcuTimer()->ocrb = v;
         }
@@ -55,13 +69,21 @@ public:
         constexpr auto prescaler = AVR::Util::prescalerForAbove<timer_type>(MinFrequency);
         static_assert(prescaler > 0, "wrong prescaler");
         timer_type::template prescale<prescaler>();
-        mcuTimer()->tccra.set(AVR::TimerParameter<TimerN, MCU>::FastPwm1::tccra);
-        mcuTimer()->tccrb.set(AVR::TimerParameter<TimerN, MCU>::FastPwm1::tccrb);
+        mcuTimer()->tccra.template set<AVR::TimerParameter<TimerN, MCU>::FastPwm1::tccra>();
+        mcuTimer()->tccrb.template add<AVR::TimerParameter<TimerN, MCU>::FastPwm1::tccrb>();
+        *mcuTimer()->ocra = 0;
+        *mcuTimer()->ocrb = 0;
     }
     template<typename Channel>
     static void pwm(const std::percent& p) {
-        typename timer_type::value_type v = std::expand(p, typename timer_type::value_type(0), AVR::TimerParameter<TimerN, MCU>::FastPwm1::top);
-        Channel::ocr(v);
+        if (p > std::percent{0}) {
+            typename timer_type::value_type v = std::expand(p, typename timer_type::value_type(0), AVR::TimerParameter<TimerN, MCU>::FastPwm1::top);
+            Channel::on();
+            Channel::ocr(v);
+        }
+        else {
+            Channel::off();
+        }
     }
 };
 

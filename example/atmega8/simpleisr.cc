@@ -71,54 +71,16 @@ namespace std {
     std::lineTerminator<CRLF> endl;
 }
 
-template<typename T, const std::hertz& f>
-constexpr bool setup() {
-    if constexpr(T::hasOcrA) {
-        constexpr auto t1 = AVR::Util::calculate<T>(f);
-        T::template prescale<t1.prescaler>();
-        T::ocra(t1.ocr);
-        T::mode(AVR::TimerMode::CTC);
-        return true;
-    }
-    return false;
-}
-
-// to config?
-constexpr auto f = 100_Hz;
-
 int main() {
     Scoped<EnableInterrupt> interruptEnabler;
     
     isrRegistrar::init();
-    
-    static_assert(timer1::hasOverflow, "need overflow");
-
-    constexpr auto ok = setup<timer1, f>();
-    
-//    static_assert(ok, "setup");
-
-    static_assert(timer2::hasOcrA, "need ocra");
-
-    auto ok2 = setup<timer2, f>();
     
     constexpr auto t2 = AVR::Util::calculate<timer2>(1_Hz);
     timer2::prescale<t2.prescaler>();
     timer2::ocra<t2.ocr>();
     timer2::mode(AVR::TimerMode::CTC);
 
-    static_assert(timer3::hasOverflow, "need overflow");
-    
-    setup<timer3, f>();
-
-//    if constexpr(timer3::hasOcrA) {
-//        constexpr auto t3 = AVR::Util::calculate<timer3>(1000_Hz);
-//        timer3::prescale<t3.prescaler>();
-////        timer3::ocra(t3.ocr);
-//        timer3::mode(AVR::TimerMode::CTC);
-//    }
-
-    
-    
     while(true) {
         Util::delay(500_ms);
         std::cout << "A0: " << a0 << " A1: " << a1 << " A2: " << a2 << std::endl; 

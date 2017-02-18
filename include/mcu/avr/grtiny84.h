@@ -16,20 +16,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+
 #pragma once
 
-#if defined(__AVR_ATmega328PB__)
-# include "grmega328pb.h"
-#endif
-#if defined(__AVR_ATmega328P__)
-# include "grmega328p.h"
-#endif
-#if defined(__AVR_ATmega1284P__)
-# include "grmega1284p.h"
-#endif
-#if defined(__AVR_ATtiny84__)
-# include "grtiny84.h"
-#endif
-#if defined(__AVR_ATtiny85__)
-# include "grtiny85.h"
-#endif
+#include <stdint.h>
+
+namespace AVR {
+
+template<uint8_t TimerN, typename MCU = DefaultMcuType>
+struct TimerParameter;
+
+template<>
+struct TimerParameter<0, ATTiny84> {
+    using PortA = AVR::Port<ATTiny84::PortRegister, AVR::A>;
+    using PortB = AVR::Port<ATTiny84::PortRegister, AVR::B>;
+    typedef AVR::Pin<PortB, 2> ocAPin;
+    typedef AVR::Pin<PortA, 7> ocBPin;
+    typedef AVR::Timer8Bit<0, ATTiny84> timer_type;
+    typedef timer_type::value_type value_type;
+    
+    using ta = AVR::ATTiny84::Timer8Bit::TCCRA;
+    using tb = AVR::ATTiny84::Timer8Bit::TCCRB;
+    static constexpr ta tccra = ta::coma0 | ta::coma1 | ta::comb0 | ta::comb1 | ta::wgm0 | ta::wgm1;
+    static constexpr tb tccrb{0};
+    
+    static constexpr uint8_t top = 0xff;
+};
+
+}

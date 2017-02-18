@@ -110,23 +110,39 @@ struct ATTiny85 final {
         volatile uint8_t out;
         template<typename P> struct Address;
     };
-    struct TimerInterrupts {
-        volatile uint8_t tifr;
-        volatile uint8_t timsk;
-        template<uint8_t N> struct Address;
-        template<uint8_t N> struct Flags;       
+    class TimerInterrupts {
+    public:
+        enum class Flags : uint8_t {
+            ocf1a = (1 << OCF1A),
+            ocf1b = (1 << OCF1B),
+            ocf0a = (1 << OCF0A),
+            ocf0b = (1 << OCF0B),
+            tov1  = (1 << TOV1),
+            tov0  = (1 << TOV0)
+        };
+        ControlRegister<TimerInterrupts, Flags> tifr;
+        enum class Mask : uint8_t {
+            ocie1a = (1 << OCIE1A),
+            ocie1b = (1 << OCIE1B),
+            ocie0a = (1 << OCIE0A),
+            ocie0b = (1 << OCIE0B),
+            toie1  = (1 << TOIE1),
+            toie0  = (1 << TOIE0)
+        };
+        ControlRegister<TimerInterrupts, Mask> timsk;
+        static constexpr uint8_t address = 0x58;
     };
     struct Interrupt {
-        enum class GIF : uint8_t {
+        enum class GIFlags : uint8_t {
             intf = (1 << INTF0),
             pcif = (1 << PCIF)
         };
-        ControlRegister<Interrupt, GIF> gifr;
-        enum class GIM : uint8_t {
+        ControlRegister<Interrupt, GIFlags> gifr;
+        enum class GIMask : uint8_t {
             ie   = (1 << INT0),
             pcie = (1 << PCIE)
         };
-        ControlRegister<Interrupt, GIM> gimsk;
+        ControlRegister<Interrupt, GIMask> gimsk;
         static constexpr uint8_t address = 0x5a;
     };
     struct PCInterrupts {

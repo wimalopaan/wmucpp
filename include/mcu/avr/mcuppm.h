@@ -29,51 +29,63 @@
 namespace AVR {
 
 template<uint8_t TimerN, typename MCU = DefaultMcuType>
-class PPM final : PPMBase<typename AVR::TimerParameter<TimerN, MCU>::timer_type> {
+class PPM final {
     PPM() = delete;
 public:
     typedef MCU mcu_type;
     typedef typename AVR::TimerParameter<TimerN, MCU>::timer_type timer_type;
     using MCUTimer = typename timer_type::mcu_timer_type;
-    static constexpr const auto mcuTimer = AVR::getBaseAddr<MCUTimer, TimerN>;
     using ocAPin = typename AVR::TimerParameter<TimerN, MCU>::ocAPin;
-    using ocBPin = typename AVR::TimerParameter<TimerN, MCU>::ocAPin;
+    using ocBPin = typename AVR::TimerParameter<TimerN, MCU>::ocBPin;
+    static constexpr const auto mcuTimer = AVR::getBaseAddr<MCUTimer, TimerN>;
 
-    using PPMBase<timer_type>::ocMin;
-    using PPMBase<timer_type>::ocMax;
-    using PPMBase<timer_type>::ocFrame;
-    using PPMBase<timer_type>::prescaler;
-    using PPMBase<timer_type>::mcuInterrupts;
+    using parameter = PPMParameter<typename AVR::TimerParameter<TimerN, MCU>::timer_type>;
     
     static void init() {
         ocAPin::template dir<AVR::Output>();
         ocBPin::template dir<AVR::Output>();
 
-        timer_type::template prescale<prescaler>();
+        timer_type::template prescale<parameter::prescaler>();
         
-        *mcuTimer()->icr = ocFrame;
-        mcuTimer()->tccra.set(AVR::TimerParameter<TimerN, MCU>::FastPwm2::tccra);
-        mcuTimer()->tccrb.set(AVR::TimerParameter<TimerN, MCU>::FastPwm2::tccrb);
+        *mcuTimer()->icr = parameter::ocFrame;
+        mcuTimer()->tccra.template set<AVR::TimerParameter<TimerN, MCU>::FastPwm2::tccra>();
+        mcuTimer()->tccrb.template add<AVR::TimerParameter<TimerN, MCU>::FastPwm2::tccrb>();
+        constexpr typename timer_type::value_type medium = (parameter::ocMin + parameter::ocMax) / 2;
+        *mcuTimer()->ocra = medium;
+        *mcuTimer()->ocrb = medium;
     }
 
     struct A {
+        static void off() {
+            mcuTimer()->tccra.template clear<AVR::TimerParameter<TimerN, MCU>::FastPwm2::cha>();
+            ocAPin::low();
+        }
+        static void on() {
+            mcuTimer()->tccra.template add<AVR::TimerParameter<TimerN, MCU>::FastPwm2::cha>();
+        }
         static void ocr(const typename timer_type::value_type& v) {
             *mcuTimer()->ocra = v;
         }
     };
     struct B {
+        static void off() {
+            mcuTimer()->tccra.template clear<AVR::TimerParameter<TimerN, MCU>::FastPwm2::chb>();
+            ocBPin::low();
+        }
+        static void on() {
+            mcuTimer()->tccra.template add<AVR::TimerParameter<TimerN, MCU>::FastPwm2::chb>();
+        }
         static void ocr(const typename timer_type::value_type& v) {
             *mcuTimer()->ocrb = v;
         }
     };
+    
     template<typename Channel>
     static void ppm(const std::percent& width) {
-        uint16_t ocr = std::expand(width, ocMin, ocMax);
+        uint16_t ocr = std::expand(width, parameter::ocMin, parameter::ocMax);
         Channel::ocr(ocr);
     }
-    
 private:
 };
-
 
 }

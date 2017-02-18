@@ -58,6 +58,40 @@ struct ATTiny84 final {
         template<int N> struct Address;
         template<int N> struct PrescalerBits;
     };
+    struct Timer16Bit {
+        static constexpr const uint8_t count = 1;
+        volatile uint8_t tccrc;
+        volatile uint8_t reserved;
+        DataRegister<Timer16Bit, ReadWrite, uint16_t> icr;
+        volatile uint8_t reserved2;
+        volatile uint8_t reserved3;
+        DataRegister<Timer16Bit, ReadWrite, uint16_t> ocrb;
+        DataRegister<Timer16Bit, ReadWrite, uint16_t> ocra;
+        DataRegister<Timer16Bit, ReadWrite, uint16_t> tcnt;
+        enum class TCCRB : uint8_t {
+            icnc = (1 << ICNC1),
+            ices = (1 << ICES1),
+            wgm3 = (1 << WGM13),
+            wgm2 = (1 << WGM12),
+            cs2 = (1 << CS12),
+            cs1 = (1 << CS11),
+            cs0 = (1 << CS10),
+        };
+        ControlRegister<Timer16Bit, TCCRB> tccrb;
+        typedef uint16_t value_type;
+        enum class TCCRA : uint8_t {
+            coma0 = (1 << COM1A0),
+            coma1 = (1 << COM1A1),
+            comb0 = (1 << COM1B0),
+            comb1 = (1 << COM1B1),
+            wgm0 = (1 << WGM10),
+            wgm1 = (1 << WGM11)
+        };
+        ControlRegister<Timer16Bit, TCCRA> tccra;
+
+        template<int N> struct Address;
+        template<int N> struct PrescalerBits;
+    };
     
     struct USI {
         enum class USIC : uint8_t {
@@ -93,11 +127,37 @@ struct ATTiny84 final {
         volatile uint8_t out;
         template<typename P> struct Address;
     };
-    struct TimerInterrupts {
-        volatile uint8_t tifr;
-        volatile uint8_t timsk;
+    struct Timer8Interrupts {
+        enum class Flags : uint8_t {
+            ocfb = (1 << OCF0B),
+            ocfa = (1 << OCF0A),
+            tov  = (1 << TOV0)
+        };
+        ControlRegister<Timer8Interrupts, Flags> tifr;
+        enum class Mask : uint8_t {
+            ocieb = (1 << OCIE0B),
+            ociea = (1 << OCIE0A),
+            toie  = (1 << TOIE0)
+        };
+        ControlRegister<Timer8Interrupts, Mask> timsk;
         template<uint8_t N> struct Address;
-        template<uint8_t N> struct Flags;       
+    };
+    struct Timer16Interrupts {
+        enum class Flags : uint8_t {
+            icf  = (1 << ICF1),
+            ocfb = (1 << OCF1B),
+            ocfa = (1 << OCF1A),
+            tov  = (1 << TOV1)
+        };
+        ControlRegister<Timer16Interrupts, Flags> tifr;
+        enum class Mask : uint8_t {
+            icie  = (1 << ICIE1),
+            ocieb = (1 << OCIE1B),
+            ociea = (1 << OCIE1A),
+            toie  = (1 << TOIE1)
+        };
+        ControlRegister<Timer16Interrupts, Mask> timsk;
+        template<uint8_t N> struct Address;
     };
     struct Interrupt {
         enum class GIFlags : uint8_t {
@@ -147,7 +207,12 @@ template<>
 struct ATTiny84::Timer8Bit::Address<0> {
     static constexpr uint8_t value = 0x50;
 };
+template<>
+struct ATTiny84::Timer16Bit::Address<1> {
+    static constexpr uint8_t value = 0x42;
+};
 }
+
 namespace std {
 template<>
 struct enable_bitmask_operators<AVR::ATTiny84::USI::USIC> {
@@ -165,12 +230,42 @@ template<>
 struct enable_bitmask_operators<AVR::ATTiny84::Timer8Bit::TCCRB> {
     static constexpr bool enable = true;
 };
+template<>
+struct enable_bitmask_operators<AVR::ATTiny84::Timer16Bit::TCCRA> {
+    static constexpr bool enable = true;
+};
+template<>
+struct enable_bitmask_operators<AVR::ATTiny84::Timer16Bit::TCCRB> {
+    static constexpr bool enable = true;
+};
+template<>
+struct enable_bitmask_operators<AVR::ATTiny84::Timer16Interrupts::Flags> {
+    static constexpr bool enable = true;
+};
+template<>
+struct enable_bitmask_operators<AVR::ATTiny84::Timer16Interrupts::Mask> {
+    static constexpr bool enable = true;
+};
 }
 
 namespace AVR {
+
+template<>
+struct ATTiny84::Timer8Interrupts::Address<0> {
+    static constexpr uint8_t value = 0x58;
+};
+template<>
+struct ATTiny84::Timer16Interrupts::Address<1> {
+    static constexpr uint8_t value = 0x2b;
+};
+
 template<>
 struct ATTiny84::Timer8Bit::PrescalerBits<0> {
         static constexpr auto values = AVR::prescalerValues10Bit<ATTiny84::Timer8Bit::TCCRB>;
+};
+template<>
+struct ATTiny84::Timer16Bit::PrescalerBits<1> {
+    static constexpr auto values = AVR::prescalerValues10Bit<ATTiny84::Timer16Bit::TCCRB>;
 };
 
 }

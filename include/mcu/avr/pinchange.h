@@ -194,8 +194,8 @@ public:
         PinSet::template dir<Input>();
         PinSet::allPullup();
         *pc()->pcmsk = PinSet::setMask;
-        interrupts()->gifr.template add<AVR::ATTiny25::Interrupt::GIFlags::pcif>();
-        interrupts()->gimsk.template add<AVR::ATTiny25::Interrupt::GIMask::pcie>();
+        interrupts()->gifr.template add<AVR::ATTiny85::Interrupt::GIFlags::pcif>();
+        interrupts()->gimsk.template add<AVR::ATTiny85::Interrupt::GIMask::pcie>();
     }
 };
 #endif

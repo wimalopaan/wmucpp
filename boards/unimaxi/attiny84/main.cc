@@ -25,51 +25,39 @@
 #include "mcu/avr/mcutimer.h"
 #include "mcu/avr/delay.h"
 #include "mcu/avr/usi.h"
-
+#include "hal/softppm.h"
 #include "hal/alarmtimer.h"
-
 #include "external/ws2812.h"
 
+using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
-using ledPin = AVR::Pin<PortB, 1>;
-using led = WS2812<1, ledPin>;
 
+using ledPin = AVR::Pin<PortB, 1>;
+using led = WS2812<2, ledPin>;
 typedef led::color_type Color;
+
+using leds2Pin = AVR::Pin<PortA, 2>;
+using leds2 = WS2812<4, leds2Pin>;
+
+using ppm3Out = AVR::Pin<PortB, 2>;
+using ppm4Out = AVR::Pin<PortA, 7>;
+using ppmTimer = AVR::Timer16Bit<1>;
+using ppm = SoftPPM<ppmTimer, ppm3Out, ppm4Out>;
 
 using i2cInterruptPin = AVR::Pin<PortB, 0>;
 
 constexpr auto interruptPulseWidth = 10_us;
 using i2cInterrupt = AVR::SinglePulse<i2cInterruptPin, interruptPulseWidth>;
 
-template<uint8_t NumberOfRegisters>
-class RegisterMachine final {
-public:
-    static constexpr uint8_t size = NumberOfRegisters;
-    static volatile uint8_t& cell(uint8_t index) {
-        assert(index < mData.size);
-        return mData[index];        
-    }
-    static void clear()  {
-        for(uint8_t i = 0; i < mData.size; ++i) {
-            mData[i] = 0;
-        }
-    }
-//private:
-    static volatile std::array<uint8_t, NumberOfRegisters> mData;
-};
-template<uint8_t NumberOfRegisters>
-volatile std::array<uint8_t, NumberOfRegisters> RegisterMachine<NumberOfRegisters>::mData;
-
 using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 
-using virtualRAM = RegisterMachine<2>;
-
 constexpr TWI::Address address{0x53};
 using Usi = AVR::Usi<0>;
-using i2c = I2C::I2CSlave<Usi, address, virtualRAM>;
+using i2c = I2C::I2CSlave<Usi, address, 2>;
 
-using isrRegistrar = IsrRegistrar<i2c::I2CSlaveHandlerOvfl, i2c::I2CSlaveHandlerStart>;
+using isrRegistrar = IsrRegistrar<i2c::I2CSlaveHandlerOvfl, i2c::I2CSlaveHandlerStart,
+                                  ppm::OCAHandler, ppm::OCBHandler>;
 
 int main() 
 {
@@ -78,20 +66,22 @@ int main()
     led::init();
     led::off();
     
+    leds2::init();
+    leds2::off();
+    
+    ppm::init();
+    
     i2cInterrupt::init();
     
     i2c::init();
 
-    virtualRAM::clear();
-    
     {
-        Color red{128};
         Scoped<EnableInterrupt> ei;
         while(true) {
             static uint8_t counter = 0;
             Util::delay(100_ms);
             if (++counter % 2) {
-                led::set(red);
+                led::set(Color(Red{16}));
             }
             else {
                 led::off();
@@ -102,6 +92,13 @@ int main()
         }    
     }    
 }
+ISR(TIM1_COMPA_vect) {
+    isrRegistrar::isr<AVR::ISR::Timer<1>::CompareA>();
+}
+ISR(TIM1_COMPB_vect) {
+    isrRegistrar::isr<AVR::ISR::Timer<1>::CompareB>();
+}
+
 ISR(USI_OVF_vect) {
     isrRegistrar::isr<AVR::ISR::Usi<0>::Overflow>();
 }

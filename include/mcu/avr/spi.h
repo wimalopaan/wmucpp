@@ -116,10 +116,13 @@ public:
         if (getBaseAddr<typename MCU::Spi, N>()->spsr & _BV(SPIF)) {
             return false;
         }
+        // todo: nach dem Transfer wieder auf high()
         spiPort::ss::off();
         getBaseAddr<typename MCU::Spi, N>()->spdr = c;
         return true;
     }
+    
+    // todo: mit EventManager doppelt
     static bool leak() {
         bool oBefore = overrun;
         overrun = false;

@@ -40,20 +40,14 @@ constexpr const uint8_t keySet   =  9;
 constexpr const auto hottDelayBeforeAnswer = 5000_us;
 constexpr const auto hottDelayBetweenBytes = 1600_us;
 
-
 struct TextMsg {
     typedef uint8_t item_type;
+    static constexpr uint8_t rows = 8;
+    static constexpr uint8_t columns = 21;
     uint8_t start_byte;		//#01 Starting constant value == 0x7b
     uint8_t esc;				//#02 Escape (higher-ranking menu in text mode or Text mode leave)
-    //0x00 to stay normal
-    //0x01 to exit
-    //I will send 2 times, so the ESCAPE works really well, so two data frames with 0x01 in byte 2
     uint8_t warning_beeps;	//#03 1=A 2=B ...
-
-    std::array<StringBuffer<21>, 8> text;
-
-    // Bit 7 = 1 -> Inverse character display
-    // Display 21x8
+    std::array<StringBuffer<columns>, rows> text;
     uint8_t stop_byte;		//#172 constant value 0x7d
     uint8_t parity;			//#173 Checksum / parity
 };

@@ -28,11 +28,10 @@ namespace Hott {
 
 template<uint8_t N>
 class SensorTextProtocollBuffer {
+    SensorTextProtocollBuffer() = delete;
 public:
     static constexpr const uint8_t number = N;
     static constexpr const uint8_t cyclesBeforeAnswer = Hott::hottDelayBeforeAnswer / Hott::hottDelayBetweenBytes;
-    
-    SensorTextProtocollBuffer() = delete;
 
     static std::optional<uint8_t> get(uint8_t index) {
         if (index < cyclesBeforeAnswer) {
@@ -62,8 +61,7 @@ public:
         hottTextResponse.stop_byte = 0x7d;
         hottTextResponse.esc = 0;
         
-        hottTextResponse.text[0].insertAtFill(0, "WM Sensor 0.1"_pgm);
-        
+        hottTextResponse.text[0].insertAtFill(0, " Test1"_pgm);
         hottTextResponse.text[1].insertAtFill(0, " Test2"_pgm);
         hottTextResponse.text[2].insertAtFill(0, " Test3"_pgm);
         hottTextResponse.text[3].insertAtFill(0, " Test4"_pgm);
@@ -72,7 +70,10 @@ public:
         hottTextResponse.text[6].insertAtFill(0, " Test7"_pgm);
         hottTextResponse.text[7].insertAtFill(0, " Test8"_pgm);
     }
-    
+    static auto& text() {
+        return hottTextResponse.text;
+    }
+
 private:
     static TextMsg hottTextResponse;
 };

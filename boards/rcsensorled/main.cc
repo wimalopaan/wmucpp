@@ -40,6 +40,7 @@
 #include "external/tle5205.h"
 #include "external/rpm.h"
 #include "external/hott/hott.h"
+#include "container/stringbuffer.h"
 #include "appl/blink.h"
 #include "appl/exponential.h"
 
@@ -55,7 +56,7 @@ using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
 using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
 using PortE = AVR::Port<DefaultMcuType::PortRegister, AVR::E>;
 
-using ledPin = AVR::Pin<PortD, 6>;
+using ledPin = AVR::Pin<PortD, 4>;
 using led = WS2812<1, ledPin, ColorSequenceGRB>;
 typedef led::color_type Color;
 
@@ -64,13 +65,11 @@ using leds1 = WS2812<8, leds1Pin, ColorSequenceGRB, false>;
 typedef leds1::color_type Color1;
 
 using leds2Pin = AVR::Pin<PortB, 0>;
+using leds2 = WS2812<8, leds2Pin, ColorSequenceGRB, false>;
+typedef leds2::color_type Color2;
 
-//using Tle5205In1 = AVR::Pin<PortD, 5>;
-//using Tle5205In2 = AVR::Pin<PortD, 4>;
 using Tle5205Error = AVR::Pin<PortD, 2>;
-//using tleTimer = AVR::Timer8Bit<0>; // timer 0
-//using hbridge = TLE5205Soft<Tle5205In1, Tle5205In2, Tle5205Error, tleTimer>;
-using hbridge = TLE5205Hard<0, Tle5205Error>;
+using hbridge = TLE5205Hard<0, Tle5205Error>; // timer 0
 
 using reflexPin = AVR::Pin<PortC, 3>;
 using reflexPinSet = AVR::PinSet<reflexPin>;
@@ -80,45 +79,44 @@ using rpmTimer = AVR::Timer16Bit<3>; // timer 3
 constexpr std::RPM MaximumRpm{12000};
 using rpm = RpmFromInterruptSource<reflexPinChange, rpmTimer, MaximumRpm>;
 
-using SoftSPIData = AVR::Pin<PortE, 1>;
-using SoftSPIClock = AVR::Pin<PortE, 2>;
-using SSpi0 = SoftSpiMaster<SoftSPIData, SoftSPIClock, leds2Pin>;
-using terminal = BufferedStream<SSpi0, 512>;
+using SoftSPIData = AVR::Pin<PortC, 4>;
+using SoftSPIClock = AVR::Pin<PortC, 5>;
+using SoftSPISS = AVR::Pin<PortD, 3>;
+using SSpi0 = SoftSpiMaster<SoftSPIData, SoftSPIClock, SoftSPISS>;
+using terminal = SSpi0;
 
 using systemClock = AVR::Timer8Bit<2>; // timer 2
 using alarmTimer = AlarmTimer<systemClock>;
 
 using systemConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<2>::CompareA, alarmTimer>;
 
-using hardPpm = AVR::PPM<1>;
-//using ppmTimerOutput = AVR::Timer16Bit<1>; // timer 1
-//using ppmPin1 = AVR::Pin<PortB, 1>;
-//using ppmPin2 = AVR::Pin<PortB, 2>;
-//using softPpm = SoftPPM<ppmTimerOutput, ppmPin1, ppmPin2>;
+using hardPpm = AVR::PPM<1>; // timer1
 
 using oneWirePin = AVR::Pin<PortD, 7>;
 using oneWireMaster = OneWire::Master<oneWirePin, OneWire::Normal>;
 using oneWireMasterAsync = OneWire::MasterAsync<oneWireMaster, Hott::hottDelayBetweenBytes>;
 using ds18b20 = DS18B20<oneWireMasterAsync>;
+
 std::array<OneWire::ow_rom_t, 5> dsIds;
+std::array<OneWire::ow_rom_t, 5> tempIds;
 
 using sensorRateTimer = AVR::Timer16Bit<4>; // timer 4
 
 using sensorUsart = AVR::Usart<0, Hott::SensorProtocollAdapter<0>> ;
 using rcUsart = AVR::Usart<1, Hott::SumDProtocollAdapter<0>>;
 
-using crWriterSensorBinary = ConstanteRateWriter<Hott::SensorProtocollBuffer<0>, sensorUsart>;
-using crWriterSensorText = ConstanteRateWriter<Hott::SensorTextProtocollBuffer<0>, sensorUsart>;
+using sensorData = Hott::SensorProtocollBuffer<0>;
+using menuData = Hott::SensorTextProtocollBuffer<0>;
+using crWriterSensorBinary = ConstanteRateWriter<sensorData, sensorUsart>;
+using crWriterSensorText = ConstanteRateWriter<menuData, sensorUsart>;
 using crAdapterHott = ConstantRateAdapter<sensorRateTimer, AVR::ISR::Timer<4>::CompareA, 
                                           crWriterSensorBinary, crWriterSensorText, oneWireMasterAsync>;
 
 
 using isrRegistrar = IsrRegistrar<systemConstantRate, 
-//                                  hbridge::PwmOnHandler, hbridge::PwmOffHandler,
                                   rpm,
                                   crAdapterHott, 
                                   sensorUsart::RxHandler, sensorUsart::TxHandler, rcUsart::RxHandler, rcUsart::TxHandler
-//                                  softPpm::OCAHandler, softPpm::OCBHandler
 >;
 
 
@@ -128,6 +126,10 @@ static constexpr Color cOff{0};
 static constexpr Color cRed{Red{32}};
 static constexpr Color cBlue{Blue{32}};
 static constexpr Color cGreen{Green{32}};
+
+static constexpr auto title = "RC SensorLed 0.1"_pgm;
+
+
 }
 
 using statusLed = Blinker<led, Constant::cGreen>;
@@ -148,6 +150,22 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
             static uint8_t counter = 0;
             ++counter;
             statusLed::tick();
+           
+            menuData::text()[1].insertAt(0, "bla");
+
+            StringBufferView<15, 4> sbv(menuData::text()[1]);
+            BufferDevice sbvDev(sbv);
+            sbvDev << counter;
+            
+            uint8_t line = 2;
+            for(const auto& id: tempIds) {
+                menuData::text()[line].insertAt(0, "Temp: "_pgm);
+                StringBufferView<10, 4> sbv(menuData::text()[line]);
+                BufferDevice sbvDev(sbv);
+                sbvDev << id.familiy();
+                ++line;
+            }            
+            
 #ifdef MEM
             std::cout << "unused: "_pgm << Util::Memory::getUnusedMemory() << std::endl;   
 #endif
@@ -193,7 +211,6 @@ struct HottBinaryHandler : public EventHandler<EventType::HottBinaryRequest> {
 struct HottKeyHandler : public EventHandler<EventType::HottAsciiKey> {
     static bool process(uint8_t v) {
         std::cout << "k: "_pgm << v << std::endl;
-//        Hott::SensorProtocoll<sensorUsart>::key(v);
         return true;
     }
 };
@@ -280,20 +297,24 @@ struct DS18B20ErrorHandler: public EventHandler<EventType::DS18B20Error> {
 using namespace std::literals::quantity;
 
 void updateControls() {
+    static uint8_t counter = 0;
     std::percent pv1 = std::scale(Hott::SumDProtocollAdapter<0>::value8Bit(0),
                            Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit);
     hbridge::pwm(pv1);
     std::percent pv2 = std::scale(Hott::SumDProtocollAdapter<0>::value8Bit(2),
                            Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit);
     hardPpm::ppm<hardPpm::A>(pv2);
-//    softPpm::ppm(pv2, 0);
     std::percent pv3 = std::scale(Hott::SumDProtocollAdapter<0>::value8Bit(3),
                            Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit);
     hardPpm::ppm<hardPpm::B>(pv3);
-//    softPpm::ppm(pv3, 1);
     
     Color1 c1{Red{std::expand(pv2, (uint8_t)0, (uint8_t)128)}};
-    leds1::set(c1);
+    if (++counter == 0) {
+        leds1::set(c1);
+    }
+    else if (counter == 1) {
+        leds2::set(c1);
+    }
 }
 
 int main() {
@@ -317,34 +338,39 @@ int main() {
     leds1::init();
     leds1::set(Constant::cBlue);
     
-//    leds1Pin::template dir<AVR::Output>();
-//    leds2Pin::template dir<AVR::Output>();
+    leds2::init();
+    leds2::set(Constant::cBlue);
     
     led::init();
     led::off();    
     
     hardPpm::init();
-//    softPpm::init();
     ds18b20::init();
 
+    menuData::text()[0].insertAt(0, Constant::title);
+    
     {
         Scoped<EnableInterrupt> ei;
 
         hbridge::pwm(0_ppc);
         hbridge::direction() = hbridge::Direction{false};
         
-        std::cout << "RC SensorLed 0.1"_pgm << std::endl;
+        std::cout << Constant::title << std::endl;
     
         oneWireMaster::findDevices(dsIds);
+        uint8_t tsNumber = 0;
         for(const auto& id : dsIds) {
             std::cout << id << std::endl;
+            if (id.familiy() == ds18b20::family) {
+                tempIds[tsNumber++] = id;
+            }
         }
 
         using allEventHandler = EventHandlerGroup<
                                   TimerHandler,
                                   HBridgeError,
                                   UsartFeHandler, UsartUpeHandler, UsartDorHandler, Usart0Handler, Usart1Handler,
-                                  HottBinaryHandler, HottBroadcastHandler, HottTextHandler        
+                                  HottBinaryHandler, HottBroadcastHandler, HottTextHandler, HottKeyHandler
 #ifdef I2C
                                 , TWIHandlerError 
                                 , ds1307, DS1307handler, DS1307handlerError
@@ -355,10 +381,8 @@ int main() {
         
         EventManager::run2<allEventHandler>([](){
             updateControls();
-            terminal::periodic();
             systemConstantRate::periodic();
             crAdapterHott::periodic();
-//            hbridge::periodic();
             if (EventManager::unprocessedEvent()) {
                 EventManager::unprocessedEvent() = false;
                 statusLed::blink(Constant::cRed, 10);
@@ -371,16 +395,19 @@ int main() {
     }
 }
 
+// Timer 0
 // PWM
 //ISR(TIMER0_COMPA_vect) {
 //    isrRegistrar::isr<AVR::ISR::Timer<0>::CompareA>();
 //}
 
+// Timer 1
 // PPM
 //ISR(TIMER1_COMPA_vect) {
 //    isrRegistrar::isr<AVR::ISR::Timer<1>::CompareA>();
 //}
 
+// Timer 2
 // SystemClock
 ISR(TIMER2_COMPA_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<2>::CompareA>();
@@ -389,6 +416,7 @@ ISR(TIMER2_COMPA_vect) {
 //    isrRegistrar::isr<AVR::ISR::Timer<2>::Overflow>();
 //}
 
+// Timer 3
 // RPM
 //ISR(TIMER3_COMPA_vect) {
 //    isrRegistrar::isr<AVR::ISR::Timer<3>::CompareA>();
@@ -400,6 +428,7 @@ ISR(TIMER2_COMPA_vect) {
 //    isrRegistrar::isr<AVR::ISR::Timer<3>::Capture>();
 //}
 
+// Timer 4
 // Sensor Constant Rate
 ISR(TIMER4_COMPA_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<4>::CompareA>();

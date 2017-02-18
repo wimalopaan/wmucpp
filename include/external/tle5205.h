@@ -33,23 +33,26 @@ struct TLE5205Base {
     };
 };
 
-template<uint8_t N, typename ErrPin, typename MCU = DefaultMcuType>
+template<uint8_t TimerN, typename ErrPin, typename MCU = DefaultMcuType>
 class TLE5205Hard : public TLE5205Base {
 public:
-    using mcu_pwm = AVR::PWM<N, MCU>;
+    using mcu_pwm = AVR::PWM<TimerN, MCU>;
     
     typedef ErrPin err_pin;
 
     template<const std::hertz& MinFrequency>
     static void init() {
         mcu_pwm::template init<MinFrequency>();        
-        err_pin::template dir<AVR::Input>();
-        err_pin::pullup();
+        
+        if constexpr(!std::is_same<err_pin, void>::value) {
+            err_pin::template dir<AVR::Input>();
+            err_pin::pullup();
+        }
     }
     static void pwm(const std::percent& p) {
         if (direction().isClockWise) {
             mcu_pwm::template pwm<typename mcu_pwm::A>(p);
-            mcu_pwm::template pwm<typename mcu_pwm::A>(std::percent{0});
+            mcu_pwm::template pwm<typename mcu_pwm::B>(std::percent{0});
         }
         else {
             mcu_pwm::template pwm<typename mcu_pwm::A>(p);
@@ -63,24 +66,21 @@ public:
 private:
 };
 
-template<typename InPin1, typename InPin2, typename ErrPin, typename MCUTimer>
+template<typename InPin1, typename InPin2, typename ErrPin, typename Timer>
 class TLE5205Soft : public TLE5205Base {
 public:
     
     typedef InPin1 pin1_pin;
     typedef InPin2 pin2_pin;
     typedef ErrPin err_pin;
-    typedef MCUTimer mcu_timer_type;
-    typedef typename MCUTimer::value_type value_type;
-    typedef typename MCUTimer::flags_type flags_type;
-    typedef typename MCUTimer::mask_type mask_type;
-    
-    static_assert(MCUTimer::hasOcrA, "need ocra");
-    static_assert(MCUTimer::hasOverflow, "need overflow");
+    typedef Timer mcu_timer_type;
+    typedef typename Timer::value_type value_type;
+    typedef typename Timer::flags_type flags_type;
+    typedef typename Timer::mask_type mask_type;
     
     using pinset = AVR::PinSet<InPin1, InPin2>;
     
-    struct PwmOnHandler : public IsrBaseHandler<typename AVR::ISR::Timer<MCUTimer::number>::Overflow> {
+    struct PwmOnHandler : public IsrBaseHandler<typename AVR::ISR::Timer<Timer::number>::Overflow> {
         static void isr() {
             if (direction().isClockWise) {
                 pinset::template off<InPin1, InPin2>();
@@ -90,7 +90,7 @@ public:
             }
         }
     };
-    struct PwmOffHandler : public IsrBaseHandler<typename AVR::ISR::Timer<MCUTimer::number>::CompareA> {
+    struct PwmOffHandler : public IsrBaseHandler<typename AVR::ISR::Timer<Timer::number>::CompareA> {
         static void isr() {
             pinset::template on<InPin1, InPin2>();
         }
@@ -103,27 +103,29 @@ public:
     static void pwm(const std::percent& p) {
         using namespace std::literals::quantity;
         if (p > 0_ppc) {
-            MCUTimer::mcuInterrupts()->timsk.template add<mask_type::ociea | mask_type::toie>();
-            MCUTimer::ocra(std::expand(p, value_type{0}, std::numeric_limits<value_type>::max()));        
+            Timer::mcuInterrupts()->timsk.template add<mask_type::ociea | mask_type::toie>();
+            Timer::ocra(std::expand(p, value_type{0}, std::numeric_limits<value_type>::max()));        
         }
         else {
-            MCUTimer::mcuInterrupts()->timsk.template clear<mask_type::ociea | mask_type::toie>();
+            Timer::mcuInterrupts()->timsk.template clear<mask_type::ociea | mask_type::toie>();
             pinset::template on<InPin1, InPin2>();
         }
     }
     
     template<const std::hertz& MinFrequency>
     static void init() {
-        constexpr auto prescaler = AVR::Util::prescalerForAbove<MCUTimer>(MinFrequency);
+        constexpr auto prescaler = AVR::Util::prescalerForAbove<Timer>(MinFrequency);
         static_assert(prescaler > 0, "wrong prescaler");
-        MCUTimer::template prescale<prescaler>();
+        Timer::template prescale<prescaler>();
         
-        MCUTimer::mode(AVR::TimerMode::Normal);        
-        MCUTimer::ocra(0);        
+        Timer::mode(AVR::TimerMode::Normal);        
+        Timer::ocra(0);        
         pinset::template dir<AVR::Output>();
         pinset::allOn();
-        err_pin::template dir<AVR::Input>();
-        err_pin::pullup();
+        if constexpr(!std::is_same<err_pin, void>::value) {
+            err_pin::template dir<AVR::Input>();
+            err_pin::pullup();
+        }
     }
     
     static void periodic() {

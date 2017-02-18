@@ -257,16 +257,22 @@ struct Timer<1> {
     struct Capture  {
 #ifdef TIMER1_CAPT_vect_num
         static constexpr const uint32_t number = TIMER1_CAPT_vect_num;
+#elif defined(TIM1_CAPT_vect_num)
+        static constexpr const uint32_t number = TIM1_CAPT_vect_num;
 #endif
     };
     struct CompareA  {
 #ifdef TIMER1_COMPA_vect_num
         static constexpr const uint32_t number = TIMER1_COMPA_vect_num;
+#elif defined(TIM1_COMPA_vect_num)
+        static constexpr const uint32_t number = TIM1_COMPA_vect_num;
 #endif
     };
     struct CompareB  {
 #ifdef TIMER1_COMPB_vect_num
         static constexpr const uint32_t number = TIMER1_COMPB_vect_num;
+#elif defined(TIM1_COMPB_vect_num)
+        static constexpr const uint32_t number = TIM1_COMPB_vect_num;
 #endif
     };
     struct Overflow  {

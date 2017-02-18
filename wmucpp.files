@@ -38,6 +38,8 @@ include/mcu/avr/grmega1284p.h
 include/mcu/avr/grmega328p.h
 include/mcu/avr/grmega328pb.h
 include/mcu/avr/groups.h
+include/mcu/avr/grtiny84.h
+include/mcu/avr/grtiny85.h
 include/mcu/avr/mcuppm.h
 include/mcu/avr/ppmbase.h
 include/mcu/avr/watchdog.h

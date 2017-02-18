@@ -26,25 +26,6 @@
 
 #include "console.h"
 
-template<uint8_t NumberOfRegisters>
-class RegisterMachine final {
-public:
-    static constexpr uint8_t size = NumberOfRegisters;
-    static volatile uint8_t& cell(uint8_t index) {
-        assert(index < mData.size);
-        return mData[index];        
-    }
-    static void clear()  {
-        for(uint8_t i = 0; i < mData.size; ++i) {
-            mData[i] = 0;
-        }
-    }
-//private:
-    static volatile std::array<uint8_t, NumberOfRegisters> mData;
-};
-template<uint8_t NumberOfRegisters>
-volatile std::array<uint8_t, NumberOfRegisters> RegisterMachine<NumberOfRegisters>::mData;
-
 using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 
@@ -59,11 +40,9 @@ using SoftSPIClock = AVR::Pin<PortA, 1>;
 using SoftSPISS = AVR::Pin<PortA, 2>;
 using SSpi0 = SoftSpiMaster<SoftSPIData, SoftSPIClock, SoftSPISS>;
 
-using virtualRAM = RegisterMachine<2>;
-
 constexpr TWI::Address address{0x53};
 using Usi = AVR::Usi<0>;
-using i2c = I2C::I2CSlave<Usi, address, virtualRAM>;
+using i2c = I2C::I2CSlave<Usi, address, 2>;
 
 using terminal = SSpi0;
 
@@ -89,13 +68,11 @@ int main()
 
     std::cout << "attiny i2c ram slave test"_pgm << std::endl;
 
-    virtualRAM::clear();
-    
     {
         Scoped<EnableInterrupt> ei;
         while(true) {
             led::toggle();
-            Color color = {Red{(uint8_t)(virtualRAM::mData[0] % 10)}, Green{0}, Blue{1}};
+            Color color = {Red{(uint8_t)(i2c::registers()[0] % 10)}, Green{0}, Blue{1}};
             leds::set(color);
             Util::delay(100_ms);
         }    

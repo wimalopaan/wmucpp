@@ -31,12 +31,14 @@
 template<uint8_t N, typename MCU = DefaultMcuType>
 struct SWUsartRxTx;
 
+// todo: den tx-Pin frei wählbar machen
+
 template<>
 struct SWUsartRxTx<0, AVR::ATMega1284P> {
     SWUsartRxTx() = delete;
     using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
     using rx = AVR::Pin<PortD, 6>; // icp1
-    using tx = AVR::Pin<PortD, 5>;
+    using tx = AVR::Pin<PortD, 7>;
 };
 template<>
 struct SWUsartRxTx<1, AVR::ATMega1284P> {
@@ -114,7 +116,7 @@ public:
     struct StartBitHandler : public IsrBaseHandler<typename AVR::ISR::Timer<mcu_timer_number>::Capture> {
         static void isr() {
             uint16_t ocra = *timer()->ocra;
-            *timer()->ocrb = (timer()->icr + ocra / 2) % ocra;
+            *timer()->ocrb = (*timer()->icr + ocra / 2) % ocra;
     
             mcuInterrupts()->tifr.template add<int_type::Flags::ocfb>();
             mcuInterrupts()->timsk.template clear<int_type::Mask::icie>();

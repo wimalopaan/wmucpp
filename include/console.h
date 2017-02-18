@@ -51,12 +51,25 @@ Stream& operator<<(Stream& o, const char* str) {
     }
     return o;
 }
+template<typename Buffer>
+BufferDevice<Buffer>& operator<<(BufferDevice<Buffer>& o, const char* str) {
+    while(*str) {
+        o.put(*str++);
+    }
+    return o;
+}
+
 
 template<typename Stream>
 Stream& operator<<(Stream& o, char c) {
     if (!Config::disableCout) {
         Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(c);
     }
+    return o;
+}
+template<typename Buffer>
+BufferDevice<Buffer>& operator<<(BufferDevice<Buffer>& o, char c) {
+    o.put(c);
     return o;
 }
 
@@ -67,6 +80,11 @@ Stream& operator<<(Stream& o, uint8_t v) {
         Util::utoa(v, buffer);
         Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(&buffer[0]);
     }
+    return o;
+}
+template<typename Buffer>
+BufferDevice<Buffer>& operator<<(BufferDevice<Buffer>& o, uint8_t v) {
+    Util::utoa(v, o.buffer());
     return o;
 }
 

@@ -30,24 +30,10 @@
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using led = AVR::Pin<PortB, 3>;
 
-template<uint8_t NumberOfRegisters>
-class RegisterMachine final {
-public:
-    static constexpr uint8_t size = NumberOfRegisters;
-    static volatile uint8_t& cell(uint8_t index) {
-        assert(index < mData.size);
-        return mData[index];        
-    }
-    static volatile std::array<uint8_t, NumberOfRegisters> mData;
-};
-template<uint8_t NumberOfRegisters>
-volatile std::array<uint8_t, NumberOfRegisters> RegisterMachine<NumberOfRegisters>::mData;
-
-using RpmMachine = RegisterMachine<4>;
 
 constexpr TWI::Address address{0x55};
 using Usi = AVR::Usi<0>;
-using i2c = I2C::I2CSlave<Usi, address, RpmMachine>;
+using i2c = I2C::I2CSlave<Usi, address, 4>;
 
 using reflex = AVR::Pin<PortB, 4>;
 using reflexSet = AVR::PinSet<reflex>;
@@ -76,12 +62,12 @@ int main()
         Scoped<EnableInterrupt> ei;
         while(true) {
             auto pp = rpm::period();
-            RpmMachine::mData[0] = pp;
-            RpmMachine::mData[1] = pp >> 8;
+            i2c::registers()[0] = pp;
+            i2c::registers()[1] = pp >> 8;
             
             auto rr = rpm::rpm();
-            RpmMachine::mData[2] = rr.value();
-            RpmMachine::mData[3] = rr.value() >> 8;
+            i2c::registers()[2] = rr.value();
+            i2c::registers()[3] = rr.value() >> 8;
         }    
     }
 }
