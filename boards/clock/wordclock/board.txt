@@ -1,0 +1,3 @@
+Name: wordclock (altes board mit RTC, LDR, LM35, ESP8266, IR, ...)
+
+Beschreibung:

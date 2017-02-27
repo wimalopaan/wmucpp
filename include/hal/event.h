@@ -51,7 +51,7 @@ enum class EventType : uint8_t {
     I2CLedError, I2CLedValueAvailable,
     I2CRpmError, I2CRpmValueAvailable,
     AdcConversion,
-    DCFReceive0, DCFReceive1, DCFSync, DCFParityError, DCFError,
+    DCFReceive0, DCFReceive1, DCFDecode, DCFSync, DCFParityError, DCFError,
     TLE5205Error,
     ExternalInterrupt,
     NullPAEvent

@@ -1,0 +1,8 @@
+Name: universal01
+
+Beschreibung:
+
+Uhren basierend auf diesem Board
+
+- 4x4
+- 60er Ring

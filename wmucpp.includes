@@ -47,3 +47,7 @@ boards/unimaxi/attiny85_1
 boards/unimaxi/attiny85_2
 boards/rcsensorled
 include/appl
+boards/clock
+boards/clock/universal
+boards/protector
+boards/clock/wordclock

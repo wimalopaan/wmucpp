@@ -1,6 +1,13 @@
 avrdude.conf
 boards/Makefile
+boards/clock/Makefile
+boards/clock/main.cc
+boards/clock/universal/board.txt
+boards/clock/wordclock/board.txt
+boards/clock/wordclock/main.cc
+boards/protector/board.txt
 boards/rcsensorled/Makefile
+boards/rcsensorled/board.txt
 boards/rcsensorled/main.cc
 boards/unimaxi/Makefile
 boards/unimaxi/atmega1284p/Makefile
@@ -18,6 +25,7 @@ boards/unimaxi/attiny85_1/Makefile
 boards/unimaxi/attiny85_1/main.cc
 boards/unimaxi/attiny85_2/Makefile
 boards/unimaxi/attiny85_2/main.cc
+boards/unimaxi/board.txt
 doc/bmcpp99/bm10a.cc
 example/atmega8/blink.cc
 example/atmega8/blink.h
@@ -31,9 +39,12 @@ example/externals/ow.cc
 example/externals/ow.h
 include/appl/blink.h
 include/appl/exponential.h
+include/appl/ledflash.h
+include/appl/twostateblinker.h
 include/external/ds2401.h
 include/external/ds24b33.h
 include/hal/rotaryencoder.h
+include/mcu/avr/atmega88p.h
 include/mcu/avr/grmega1284p.h
 include/mcu/avr/grmega328p.h
 include/mcu/avr/grmega328pb.h
@@ -43,6 +54,7 @@ include/mcu/avr/grtiny85.h
 include/mcu/avr/mcuppm.h
 include/mcu/avr/ppmbase.h
 include/mcu/avr/watchdog.h
+include/std/chrono.h
 include/util/outputparameter.h
 include/util/static_container.h
 text/bmcppdefs.adoc

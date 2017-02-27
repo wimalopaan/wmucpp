@@ -66,6 +66,9 @@ typedef AVR::ATMega1284P DefaultMcuType;
 #elif defined(__AVR_ATmega328P__)
 # include "mcu/avr/atmega328p.h"
 typedef AVR::ATMega328P DefaultMcuType;
+#elif defined(__AVR_ATmega88P__)
+# include "mcu/avr/atmega88p.h"
+typedef AVR::ATMega88P DefaultMcuType;
 #elif defined(__AVR_ATmega328PB__)
 #include "mcu/avr/atmega328pb.h"
 typedef AVR::ATMega328PB DefaultMcuType;

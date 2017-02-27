@@ -333,13 +333,13 @@ struct TWIHandlerError: public EventHandler<EventType::TWIError> {
 #ifdef DCF
 struct DCFReceive0Handler : public EventHandler<EventType::DCFReceive0> {
     static bool process(uint8_t n) {
-//        std::cout << "dcf 0 : "_pgm << n << std::endl;
+        std::cout << "dcf 0 : "_pgm << n << std::endl;
         return true;
     }  
 };
 struct DCFReceive1Handler : public EventHandler<EventType::DCFReceive1> {
     static bool process(uint8_t n) {
-//        std::cout << "dcf 1 : "_pgm << n << std::endl;
+        std::cout << "dcf 1 : "_pgm << n << std::endl;
         return true;
     }  
 };

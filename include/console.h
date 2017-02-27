@@ -21,6 +21,7 @@
 #include "config.h"
 #include "util/util.h"
 #include "util/fixedpoint.h"
+#include "std/time.h"
 #include "container/pgmstring.h"
 
 namespace std {
@@ -285,5 +286,11 @@ Stream& operator<<(Stream& o, const std::RPM& rpm) {
         return o << rpm.value() << "RPM";
     }
     return o;
+}
+
+template<typename Stream>
+Stream& operator<<(Stream& out, const DateTime::TimeTm& t) {
+    return out << "Time["_pgm << (uint8_t)t.mTime.tm_mday << '/' << (uint8_t)(t.mTime.tm_mon + 1) << '/' << (uint16_t)(t.mTime.tm_year + 1900) << ' '
+               << (uint8_t)t.mTime.tm_hour << ':' << (uint8_t)t.mTime.tm_min << ':' << (uint8_t)t.mTime.tm_sec << ']';
 }
 

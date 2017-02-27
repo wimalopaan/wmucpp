@@ -72,13 +72,14 @@ CXXFLAGS += -Os -std=c++17
 #CXXFLAGS += -nostdlib -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics
 CXXFLAGS += -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics #-Wgnu-string-literal-operator-template
 CXXFLAGS += -funsigned-char -funsigned-bitfields -fshort-enums
+CXXFLAGS += -fconcepts
 CXXFLAGS += -Wall -Wextra
 CXXFLAGS += -DF_OSC=$(F_OSC) -DF_CPU=$(F_OSC)
-CXXFLAGS += -I. -I../../include -I../../include/std
+CXXFLAGS += -I/usr/local/avr/avr/include
+CXXFLAGS += -I. -I../../include
 CXXFLAGS += -I../include -I../../../include
 CXXFLAGS += -I/usr/include/simavr
 #CXXFLAGS += -I/usr/avr/include
-CXXFLAGS += -I/usr/local/avr/include
 CXXFLAGS += $(MCUFLAGS)
 
 #CFLAGS += -Os -std=gnu11
@@ -86,11 +87,11 @@ CFLAGS += -Os -std=c11
 CFLAGS += -funsigned-char -funsigned-bitfields -fshort-enums
 CFLAGS += -Wall -Wextra
 CFLAGS += -DF_OSC=$(F_OSC) -DF_CPU=$(F_OSC)
+CFLAGS += -I/usr/local/avr/avr/include
 CFLAGS += -I. -I../../include
 CFLAGS += -I../include
 CFLAGS += -I/usr/include/simavr
 #CFLAGS += -I/usr/avr/include
-CFLAGS += -I/usr/local/avr/include
 CFLAGS += $(MCUFLAGS)
 
 #ASMFLAGS += -fverbose-asm

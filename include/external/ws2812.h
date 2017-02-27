@@ -26,7 +26,7 @@
 #include "util/dassert.h"
 #include "util/disable.h"
 #include "std/array.h"
-
+  
 struct ColorSequenceRGB {};
 struct ColorSequenceGRB {};
 
@@ -52,6 +52,28 @@ struct cRGB<ColorSequenceRGB> {
     constexpr cRGB(Red v) : r(v.value) {}
     constexpr cRGB(Green v) : g(v.value) {}
     constexpr cRGB(Blue v) : b(v.value) {}
+    constexpr cRGB& operator+=(const cRGB& c) {
+        if (r > 0) {
+            r = (r + c.r) / 2;
+        }
+        else {
+            r = c.r;
+        }
+        if (g > 0) {
+            g = (g + c.g) / 2;
+        }
+        else {
+            g = c.g;
+        }
+        if (b > 0) {
+            b = (b + c.b) / 2;
+        }
+        else {
+            b = c.b;
+        }
+        return *this;
+    }
+
     uint8_t r = 0;
     uint8_t g = 0;
     uint8_t b = 0;
@@ -66,6 +88,27 @@ struct cRGB<ColorSequenceGRB> {
     constexpr cRGB(Red v) : r(v.value) {}
     constexpr cRGB(Green v) : g(v.value) {}
     constexpr cRGB(Blue v) : b(v.value) {}
+    constexpr cRGB& operator+=(const cRGB& c) {
+        if (r > 0) {
+            r = (r + c.r) / 2;
+        }
+        else {
+            r = c.r;
+        }
+        if (g > 0) {
+            g = (g + c.g) / 2;
+        }
+        else {
+            g = c.g;
+        }
+        if (b > 0) {
+            b = (b + c.b) / 2;
+        }
+        else {
+            b = c.b;
+        }
+        return *this;
+    }
     uint8_t g = 0;
     uint8_t r = 0;
     uint8_t b = 0;
@@ -92,6 +135,14 @@ public:
     static void set(uint8_t number, const item_type& color) {
         assert(number < N);
         leds[number] = color;
+        if constexpr(writeOut) {
+            write();
+        }
+    }
+    template<bool writeOut = true>
+    static void add(uint8_t number, const item_type& color) {
+        assert(number < N);
+        leds[number] += color;
         if constexpr(writeOut) {
             write();
         }

@@ -82,10 +82,14 @@ public:
                 state = State::Sync;
                 lowCount = 0;
                 // Sync
+                if constexpr(!std::is_same<EventManager, void>::value) {
+                    EventManager::enqueue({EventType::DCFSync, 0});                
+                }
                 if (bitCounter >= 58) {
-                    decodeDcfBits();
-                    if constexpr(!std::is_same<EventManager, void>::value) {
-                        EventManager::enqueue({EventType::DCFSync, 0});                
+                    if (decodeDcfBits()) {
+                        if constexpr(!std::is_same<EventManager, void>::value) {
+                            EventManager::enqueue({EventType::DCFDecode, 0});                
+                        }
                     }
                 }
                 dcfBits.bits = 0;
@@ -176,7 +180,7 @@ private:
         return true;
     }
     
-    static void decodeDcfBits() {
+    static bool decodeDcfBits() {
         if (checkDcfBits()) {
             dcfTime = DateTime::TimeTm(
                           DateTime::Day{(uint8_t)(dcfBits.components.day10 * 10 + dcfBits.components.day1)},
@@ -187,11 +191,13 @@ private:
                           DateTime::Second{0},
                           dcfBits.components.dst    
                           ); 
+            return true;
         }   
         else {
             if constexpr(!std::is_same<EventManager, void>::value) {
                 EventManager::enqueue({EventType::DCFParityError, 0});                
             }
+            return false;
         }
     }
     static DateTime::TimeTm dcfTime;
