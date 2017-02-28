@@ -26,20 +26,24 @@
 namespace std {
 
 struct percent {
-    constexpr explicit percent(uint8_t p) : value(p) {
-        assert(value <= 100);
+    constexpr explicit percent(uint8_t p) : mValue(p) {
+        assert(mValue <= 100);
     }
-    const uint8_t value = 0;
+    constexpr uint8_t value() const {
+        return mValue;
+    }
+private:
+    uint8_t mValue = 0;
 };
 
 constexpr bool operator==(std::percent lhs, std::percent rhs) {
-    return lhs.value == rhs.value;
+    return lhs.value() == rhs.value();
 }
 constexpr bool operator!=(std::percent lhs, std::percent rhs) {
     return !(lhs == rhs);
 }
 constexpr bool operator>(std::percent lhs, std::percent rhs) {
-    return lhs.value > rhs.value;
+    return lhs.value() > rhs.value();
 }
 
 namespace literals {
@@ -67,7 +71,7 @@ constexpr percent scale(const T& value, const T& min, const T& max) {
 
 template<typename T>
 constexpr T expand(percent p, const T& min, const T& max) {
-    return min + ((max - min) * p.value) / 100;
+    return min + ((max - min) * p.value()) / 100;
 }
 
 
@@ -76,8 +80,8 @@ constexpr uint16_t expand<uint16_t>(percent p, const uint16_t& min, const uint16
     const uint16_t delta = max - min;
     const uint8_t deltaH = Util::upperHalf(delta);
     const uint8_t deltaL = Util::lowerHalf(delta);
-    const uint16_t y = p.value * deltaH;
-    return min + (y << 1) + (y >> 1) + (y >> 4) - (y >> 9) + (p.value * deltaL) / 100;
+    const uint16_t y = p.value() * deltaH;
+    return min + (y << 1) + (y >> 1) + (y >> 4) - (y >> 9) + (p.value() * deltaL) / 100;
 }
 
 

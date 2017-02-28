@@ -25,9 +25,11 @@
 #include "mcu/avr8.h"
 #include "mcu/ports.h"
 #include "mcu/avr/usart.h"
+#include "mcu/avr/adc.h"
 #include "hal/event.h"
 #include "hal/constantrate.h"
 #include "hal/alarmtimer.h"
+#include "hal/adccontroller.h"
 #include "external/ws2812.h"
 #include "external/dcf77.h"
 #include "appl/blink.h"
@@ -35,6 +37,9 @@
 #include "std/chrono.h"
 
 #include "console.h"
+
+constexpr bool use4x4    = false;
+constexpr bool useRing60 = true;
 
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
@@ -45,7 +50,7 @@ using leds1Pin = AVR::Pin<PortB, 1>;
 using leds2Pin = AVR::Pin<PortB, 2>;
 using ppm1Pin  = AVR::Pin<PortB, 3>;
 
-using lightPin = AVR::Pin<PortC, 0>;
+using adc = AdcController<AVR::Adc<0>, 0>;
 
 using rxdPin         = AVR::Pin<PortD, 0>;
 using txdPin         = AVR::Pin<PortD, 1>;
@@ -60,7 +65,7 @@ using led = WS2812<1, ledPin, ColorSequenceGRB>;
 using Color = led::color_type;
 
 namespace Constant {
-static constexpr uint8_t brightness = 64;
+static constexpr uint8_t brightness = 255;
 static constexpr Color cOff{0};
 static constexpr Color cRed{Red{brightness}};
 static constexpr Color cBlue{Blue{std::min((int)std::numeric_limits<uint8_t>::max(), 2 * brightness)}};
@@ -71,9 +76,11 @@ static constexpr Color cCyan{Red{0}, Green{brightness}, Blue{brightness}};
 static constexpr Color cWhite{Red{brightness}, Green{brightness}, Blue{brightness}};
 static constexpr Color cWhiteLow{Red{brightness / 10}, Green{brightness / 10}, Blue{brightness / 10}};
 
+static constexpr uint16_t analogBrightnessMaximum = 400;
+
 static constexpr uint32_t secondsPerDay = (uint32_t)60 * 60 * 24;
 
-static constexpr auto title = "Clock Test - Board Universal 01"_pgm;
+static constexpr auto title = "Clock Uni 01"_pgm;
 }
 
 using statusLed = LedFlash<led>;
@@ -118,14 +125,19 @@ public:
         Leds::template set<false>(Constant::cOff);
         for(uint8_t i = 0; i < size; ++i) {
             if ((i % minuteTick) == 0) {
-                Leds::template set<false>(i, tickColor);
+                Leds::template set<false>(i, tickColor * brightness());
             }
         }
         
-        Leds::template set<false>(((t.hours().value % hours * minuteTick) + (t.minutes().value * minuteTick) / size) % size, hourColor);
-        Leds::template add<false>(t.minutes().value, minuteColor);
-        Leds::template add<false>(t.seconds().value, secondColor);
+        Leds::template set<false>(((t.hours().value % hours * minuteTick) + (t.minutes().value * minuteTick) / size) % size, hourColor * brightness());
+        Leds::template add<false>(t.minutes().value, minuteColor * brightness());
+        Leds::template add<false>(t.seconds().value, secondColor * brightness());
         Leds::write();
+    }
+    
+    static std::percent& brightness() {
+        static std::percent p = 100_ppc;
+        return p;
     }
 };
 
@@ -179,7 +191,10 @@ public:
             }
         }
     }
-private:
+    static std::percent& brightness() {
+        static std::percent p = 100_ppc;
+        return p;
+    }
 };
 
 using display = TimerDisplay4x4<leds1>;
@@ -195,6 +210,8 @@ const auto secondsTimer = alarmTimer::create(1000_ms, AlarmFlags::Periodic);
 const auto preStartTimer = alarmTimer::create(3000_ms, AlarmFlags::OneShot | AlarmFlags::Disabled);
 
 std::chrono::system_clock<> systemClock;
+
+std::percent brightness = 100_ppc;
 
 struct ClockStateMachine {
     enum class State : uint8_t {PreStart, Start, Sync1, Sync2, Clock, Error};
@@ -256,28 +273,34 @@ struct ClockStateMachine {
             state = newState;
             switch (state) {
             case State::PreStart:
+                std::cout << "S: PreStart"_pgm << std::endl;
                 statusLed::steadyColor(Constant::cOff);
                 powerSwitchPin::off();
                 break;
             case State::Start:
-                statusLed::steadyColor(Constant::cBlue);
+                std::cout << "S: Start"_pgm << std::endl;
+                statusLed::steadyColor(Constant::cBlue * brightness);
                 powerSwitchPin::off();
                 break;
             case State::Sync1:
-                statusLed::steadyColor(Constant::cYellow);
+                std::cout << "S: Sync1"_pgm << std::endl;
+                statusLed::steadyColor(Constant::cYellow * brightness);
                 powerSwitchPin::off();
                 break;
             case State::Sync2:
-                statusLed::steadyColor(Constant::cCyan);
+                std::cout << "S: Sync2"_pgm << std::endl;
+                statusLed::steadyColor(Constant::cCyan * brightness);
                 powerSwitchPin::off();
                 break;
             case State::Clock:
-                statusLed::steadyColor(Constant::cGreen);
+                std::cout << "S: Clock"_pgm << std::endl;
+                statusLed::steadyColor(Constant::cGreen * brightness);
                 systemClock = std::chrono::system_clock<>::from(dcfDecoder::dateTime());
                 powerSwitchPin::on();
                 break;
             case State::Error:
-                statusLed::steadyColor(Constant::cMagenta);
+                std::cout << "S: Error"_pgm << std::endl;
+                statusLed::steadyColor(Constant::cMagenta * brightness);
                 powerSwitchPin::off();
                 break;
             }
@@ -288,16 +311,22 @@ struct ClockStateMachine {
 struct TimerHandler : public EventHandler<EventType::Timer> {
     static bool process(uint8_t timer) {
         if (timer == *blinkTimer) {
-            statusLed::tick();
+            statusLed::tick(brightness);
         }
         else if (timer == *secondsTimer) {
+            std::cout << "light: "_pgm << brightness << std::endl;
             if (systemClock) {
-                display::set(systemClock);
-                display2::set(systemClock);
+                if constexpr(use4x4) {
+                    display::set(systemClock);
+                }
+                if constexpr(useRing60) {
+                    display2::set(systemClock);
+                }
                 
                 std::cout << systemClock.dateTime() << std::endl;
                 
                 if ((systemClock.value() % Constant::secondsPerDay) == 0) {
+                    systemClock = -1;
                     ClockStateMachine::process(ClockStateMachine::Event::ReSync);
                     std::cout << "ReSync"_pgm << std::endl;
                 }
@@ -332,13 +361,13 @@ struct UsartDorHandler : public EventHandler<EventType::UsartDor> {
 };
 struct DCFReceive0Handler : public EventHandler<EventType::DCFReceive0> {
     static bool process(uint8_t) {
-        statusLed::flash(Constant::cRed, 1);
+        statusLed::flash(Constant::cRed * brightness, 1);
         return true;
     }  
 };
 struct DCFReceive1Handler : public EventHandler<EventType::DCFReceive1> {
     static bool process(uint8_t) {
-        statusLed::flash(Constant::cRed, 2);
+        statusLed::flash(Constant::cRed * brightness, 2);
         return true;
     }  
 };
@@ -385,14 +414,29 @@ int main()
     
     statusLed::init();
     
-    display::init();
-    display2::init();
+    if constexpr(use4x4) {
+        display::init();
+    }
+    if constexpr(useRing60) {
+        display2::init();
+    }
+
+    adc::init();
     
     {
         Scoped<EnableInterrupt> ei;
         std::cout << Constant::title << std::endl;
         alarmTimer::start(*preStartTimer);
         EventManager::run2<allEventHandler>([](){
+            adc::periodic();
+            brightness = std::scale(adc::value(0), adc::value_type(0), adc::value_type(Constant::analogBrightnessMaximum));
+            if constexpr(useRing60) {
+                display2::brightness() = brightness;
+            }
+            if constexpr(use4x4) {
+                display::brightness() = brightness;
+            }
+
             systemConstantRate::periodic();
             if (EventManager::unprocessedEvent()) {
                 EventManager::unprocessedEvent() = false;

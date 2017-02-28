@@ -27,9 +27,11 @@ class AdcController final {
     
 public:
     typedef MCUAdc mcu_adc_type;
+    typedef typename MCUAdc::value_type value_type;
     
     static constexpr uint8_t channels[] = {Channels...};
     static constexpr uint8_t NumberOfChannels = sizeof... (Channels);    
+    
     static void init() {
         MCUAdc::init();
         MCUAdc::channel(channels[0]);
@@ -52,9 +54,6 @@ public:
             mActualChannel = (mActualChannel + 1) % NumberOfChannels;
             MCUAdc::channel(channels[mActualChannel]);
             state = State::Start;
-            break;
-        default:
-            assert(false);
             break;
         }
     }

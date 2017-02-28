@@ -44,6 +44,10 @@ struct ControlRegister {
         hwRegister = static_cast<value_type>(F);
     }
     template<BitType F>
+    void inline setPartial(BitType v) {
+        hwRegister = (hwRegister & static_cast<value_type>(~F)) | static_cast<value_type>(v);
+    }
+    template<BitType F>
     void inline add() {
         hwRegister |= static_cast<value_type>(F);
     }

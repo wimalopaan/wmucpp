@@ -243,16 +243,35 @@ struct ATMega1284P final
 
     struct Adc {
         static constexpr const uint8_t count = 1;
-        union {
-            struct {
-                volatile uint8_t adcl;
-                volatile uint8_t adch;
-            };
-            volatile uint16_t adc;
+        DataRegister<Adc, ReadOnly, uint16_t> adc;
+        enum class SRA : uint8_t {
+            aden = (1 << ADEN),
+            adsc = (1 << ADSC),
+            adate = (1 << ADATE),
+            adif = (1 << ADIF),
+            adie = (1 << ADIE),
+            adps2 = (1 << ADPS2),
+            adps1 = (1 << ADPS1),
+            adps0 = (1 << ADPS0)
         };
-        volatile uint8_t adcsra;
-        volatile uint8_t adcsrb;
-        volatile uint8_t admux;
+        ControlRegister<Adc, SRA> adcsra;
+        enum class SRB : uint8_t {
+            acme = (1 << ACME),
+            adts2 = (1 << ADTS2),
+            adts1 = (1 << ADTS1),
+            adts0 = (1 << ADTS0)
+        };
+        ControlRegister<Adc, SRB> adcsrb;
+        enum class MUX : uint8_t {
+            refs1 = (1 << REFS1),
+            refs0 = (1 << REFS0),
+            adlar = (1 << ADLAR),
+            mux3  = (1 << MUX3),            
+            mux2  = (1 << MUX2),            
+            mux1  = (1 << MUX1),            
+            mux0  = (1 << MUX0) 
+        };
+        ControlRegister<Adc, MUX> admux;
         volatile uint8_t reserved;
         volatile uint8_t didr0;
         volatile uint8_t didr1;
@@ -401,6 +420,18 @@ struct enable_bitmask_operators<AVR::ATMega1284P::TimerInterrupts::Flags> {
 };
 template<>
 struct enable_bitmask_operators<AVR::ATMega1284P::TimerInterrupts::Mask> {
+    static constexpr bool enable = true;
+};
+template<>
+struct enable_bitmask_operators<AVR::ATMega1284P::Adc::SRA> {
+    static constexpr bool enable = true;
+};
+template<>
+struct enable_bitmask_operators<AVR::ATMega1284P::Adc::SRB> {
+    static constexpr bool enable = true;
+};
+template<>
+struct enable_bitmask_operators<AVR::ATMega1284P::Adc::MUX> {
     static constexpr bool enable = true;
 };
 }

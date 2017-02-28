@@ -461,7 +461,7 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
     
             std::percent pv = std::scale(Hott::SumDProtocollAdapter<0>::value8Bit(0),
                                    Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit);
-            std::cout << "pv: " << pv.value << std::endl;
+            std::cout << "pv: " << pv.value() << std::endl;
             
 #ifdef PPMOUT
             softPpm::ppm(pv, 0);

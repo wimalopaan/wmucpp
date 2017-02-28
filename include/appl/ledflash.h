@@ -31,14 +31,14 @@ public:
         Led::off();
     }
     
-    static void tick() {
+    static void tick(const std::percent& brightness) {
         static uint8_t mFlash = 0;
         if (mFlashTickCount > 0) {
             if ((++mFlash % 2) != 0) {
-                Led::set(mFlashColor);                
+                Led::set(mFlashColor * brightness);                
             }
             else {
-                Led::set(mSteakColor);
+                Led::set(mSteakColor * brightness);
             }
             if (mFlash >= mFlashTickCount) {
                 mFlash = mFlashTickCount = 0;

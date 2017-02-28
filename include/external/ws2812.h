@@ -26,7 +26,8 @@
 #include "util/dassert.h"
 #include "util/disable.h"
 #include "std/array.h"
-  
+#include "units/percent.h"
+
 struct ColorSequenceRGB {};
 struct ColorSequenceGRB {};
 
@@ -73,11 +74,21 @@ struct cRGB<ColorSequenceRGB> {
         }
         return *this;
     }
+    constexpr cRGB& operator*=(const std::percent& p) {
+        g = std::expand(p, uint8_t(0), g);
+        r = std::expand(p, uint8_t(0), r);
+        b = std::expand(p, uint8_t(0), b);
+        return *this;        
+    }
 
     uint8_t r = 0;
     uint8_t g = 0;
     uint8_t b = 0;
 };
+
+cRGB<ColorSequenceRGB> operator*(cRGB<ColorSequenceRGB> c, const std::percent& p) {
+    return c *= p;
+}
 
 template<>
 struct cRGB<ColorSequenceGRB> {
@@ -109,10 +120,20 @@ struct cRGB<ColorSequenceGRB> {
         }
         return *this;
     }
+    constexpr cRGB& operator*=(const std::percent& p) {
+        g = std::expand(p, uint8_t(0), g);
+        r = std::expand(p, uint8_t(0), r);
+        b = std::expand(p, uint8_t(0), b);
+        return *this;        
+    }
     uint8_t g = 0;
     uint8_t r = 0;
     uint8_t b = 0;
 };
+
+cRGB<ColorSequenceGRB> operator*(cRGB<ColorSequenceGRB> c, const std::percent& p) {
+    return c *= p;
+}
 
 template<uint8_t N, typename Pin, typename ColorComp = ColorSequenceRGB, bool DisableInterruptsFull = false>
 class WS2812 final {

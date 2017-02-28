@@ -22,6 +22,7 @@
 #include "util/util.h"
 #include "util/fixedpoint.h"
 #include "std/time.h"
+#include "units/percent.h"
 #include "container/pgmstring.h"
 
 namespace std {
@@ -284,6 +285,14 @@ template<typename Stream>
 Stream& operator<<(Stream& o, const std::RPM& rpm) {
     if (!Config::disableCout) {
         return o << rpm.value() << "RPM";
+    }
+    return o;
+}
+
+template<typename Stream>
+Stream& operator<<(Stream& o, const std::percent& p) {
+    if (!Config::disableCout) {
+        return o << p.value() << "%";
     }
     return o;
 }
