@@ -122,6 +122,7 @@ public:
     static void set(const Clock& clock) {
         DateTime::TimeTm t = clock.dateTime();
         
+        // todo: minimale Helligkeit, so dass es nicht ganz auf null geht
         Leds::template set<false>(Constant::cOff);
         for(uint8_t i = 0; i < size; ++i) {
             if ((i % minuteTick) == 0) {
@@ -141,6 +142,7 @@ public:
     }
 };
 
+// todo: Farbein einbauen
 template<typename Leds>
 class TimerDisplay4x4 {
     TimerDisplay4x4() = delete;
@@ -213,6 +215,8 @@ std::chrono::system_clock<> systemClock;
 
 std::percent brightness = 100_ppc;
 
+
+// todo: für ReSync erweitern: falls Resync nicht erfolgreich -> Zeit beibehalten und ReSyncCounter irgendwie anzeigen (Farbe ander 12).
 struct ClockStateMachine {
     enum class State : uint8_t {PreStart, Start, Sync1, Sync2, Clock, Error};
     enum class Event : uint8_t {Reset, Start, DCFSync, DCFDecode, DCFError, ReSync};

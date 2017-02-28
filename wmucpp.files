@@ -3,6 +3,7 @@ boards/Makefile
 boards/clock/Makefile
 boards/clock/main.cc
 boards/clock/universal/board.txt
+boards/clock/wordclock/Makefile
 boards/clock/wordclock/board.txt
 boards/clock/wordclock/main.cc
 boards/protector/board.txt
@@ -41,6 +42,7 @@ include/appl/blink.h
 include/appl/exponential.h
 include/appl/ledflash.h
 include/appl/twostateblinker.h
+include/appl/wordclock.h
 include/external/ds2401.h
 include/external/ds24b33.h
 include/hal/rotaryencoder.h

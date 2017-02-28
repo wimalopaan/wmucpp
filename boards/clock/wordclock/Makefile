@@ -17,11 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-MCU = atmega88p
+MCU = atmega1284p
 F_OSC = 20000000
 
-subdirs = wordclock
+subdirs =
 
 targets +=  main.elf
 
--include ../../Makefile.include
+-include ../../../Makefile.include
