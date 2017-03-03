@@ -71,7 +71,7 @@ public:
     }    
     constexpr TimeTm(Day day, Month month, Year year, Hour hour, Minute minute, Second second, bool dst) 
         : mTime{(int8_t)second.value, (int8_t)minute.value, (int8_t)hour.value, (int8_t)day.value, 0, 
-                (int8_t)month.value, (int16_t)year.value, 0, dst ? ONE_HOUR : 0}
+                (int8_t)month.value, (int16_t)year.value, 0, dst ? 1 : 0}
     {
     }
                                                                    

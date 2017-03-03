@@ -54,6 +54,7 @@ enum class EventType : uint8_t {
     DCFReceive0, DCFReceive1, DCFDecode, DCFSync, DCFParityError, DCFError,
     TLE5205Error,
     ExternalInterrupt,
+    IREvent, IREventRepeat,
     NullPAEvent
 };
 

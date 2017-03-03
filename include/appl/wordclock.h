@@ -18,89 +18,260 @@
 
 #pragma once
 
-enum wColor {cSubst = 0, cVerb, cMinute, cPrep, cQuarter, cHour, cMinuteRemainder, cOff, cNumberOfColors = cOff};
-typedef enum wColor color_t;
+#include <stdint.h>
 
-enum word {Es = 0,
-           Ist,
-           Fuenf1,
-           Zehn1,
-           Zwanzig,
-           Drei1,
-           Viertel,
-           Nach,
-           Vor,
-           Halb,
-           Zwoelf,
-           Zwei,
-           Ein,
-           Eins,
-           Sieben,
-           Drei2,
-           Fuenf2,
-           Elf,
-           Neun,
-           Vier,
-           Acht,
-           Zehn2,
-           Sechs,
-           Uhr,
-           Minute1,
-           Minute2,
-           Minute3,
-           Minute4,
-           UNDEF
-          };
+#include "std/time.h"
+#include "external/ws2812.h"
+#include "container/pgmarray.h"
 
+static volatile uint8_t x = 0;
 
-static uint8_t testCounter = 0;
+template<typename LedPin, typename ColorSequence = ColorSequenceRGB>
+class WordclockDisplay {
+    WordclockDisplay() = delete;
+public:
+    struct WordLeds {
+        const uint8_t startPosition = 0;
+        const uint8_t length = 0;
+        static WordLeds createFrom(const std::array<uint8_t, 2>& bytes) {
+            return {bytes[0], bytes[1]};
+        }
+    };
 
-struct wordCode {
-    uint8_t startPosition;
-    uint8_t length;
+    static constexpr uint8_t mLines = 11;
+    static constexpr uint8_t mRows = 10;
+    static constexpr uint8_t mNumberOfLeds = mLines * mRows + 4;
+    
+    using leds = WS2812<mNumberOfLeds, LedPin, ColorSequence, true>;
+    typedef typename leds::color_type Color;
+    
+    enum class WordColor : uint8_t {cSubst = 0, cVerb, cMinute, cPrep, cQuarter, cHour, cMinuteRemainder, cOff, cNumberOfColors = cOff};
+    static constexpr uint8_t numberOfColors = static_cast<uint8_t>(WordColor::cNumberOfColors);
+    
+    enum class  Word : uint8_t {Es = 0, Ist, Fuenf1, Zehn1, Zwanzig, Drei1, Viertel, Nach, Vor, Halb, Zwoelf, Zwei, Ein, Eins, Sieben, Drei2,
+                               Fuenf2, Elf, Neun, Vier, Acht, Zehn2, Sechs, Uhr, Minute1, Minute2, Minute3, Minute4, NumberOfWords};
+    static constexpr uint8_t numberOfWords = static_cast<uint8_t>(Word::NumberOfWords);
+
+    struct Constants {
+        struct Words {
+            static constexpr WordLeds Es{0 + 0 * mLines, 2};
+            static constexpr WordLeds Ist{3 + 0 * mLines, 3}; // Ist
+            static constexpr WordLeds Fuenf1{7 + 0 * mLines, 4}; // Fünf1
+            static constexpr WordLeds Zehn1{7 + 1 * mLines, 4}; // Zehn1
+            static constexpr WordLeds Zwanzig{0 + 1 * mLines, 7}; // Zwanzig
+            static constexpr WordLeds Drei1{0 + 2 * mLines, 4}; // Drei1
+            static constexpr WordLeds Viertel{4 + 2 * mLines, 7}; // Viertel
+            static constexpr WordLeds Nach{5 + 3 * mLines, 4}; // Nach
+            static constexpr WordLeds Vor{2 + 3 * mLines, 3}; // Vor
+            static constexpr WordLeds Halb{0 + 4 * mLines, 4}; // Halb
+            static constexpr WordLeds Zwoelf{5 + 4 * mLines, 5}; // Zwölf
+            static constexpr WordLeds Zwei{7 + 5 * mLines, 4}; // Zwei
+            static constexpr WordLeds Ein{6 + 5 * mLines, 3}; // Ein
+            static constexpr WordLeds Eins{5 + 5 * mLines, 4}; // Eins
+            static constexpr WordLeds Sieben{0 + 5 * mLines, 6}; // Sieben
+            static constexpr WordLeds Drei2{1 + 6 * mLines, 4}; // Drei2
+            static constexpr WordLeds Fuenf2{7 + 6 * mLines, 4}; // Fünf2
+            static constexpr WordLeds Elf{8 + 7 * mLines, 3}; // Elf
+            static constexpr WordLeds Neun{4 + 7 * mLines, 4}; // Neun
+            static constexpr WordLeds Vier{0 + 7 * mLines, 4}; // Vier
+            static constexpr WordLeds Acht{1 + 8 * mLines, 4}; // Acht
+            static constexpr WordLeds Zehn2{5 + 8 * mLines, 4}; // Zehn2
+            static constexpr WordLeds Sechs{5 + 9 * mLines, 5}; // Sechs
+            static constexpr WordLeds Uhr{0 + 9 * mLines, 3}; // Uhr
+            static constexpr WordLeds Minute1{0 + 10 * mLines, 1}; // Minute1
+            static constexpr WordLeds Minute2{0 + 10 * mLines, 2}; // Minute2
+            static constexpr WordLeds Minute3{0 + 10 * mLines, 3}; // Minute3
+            static constexpr WordLeds Minute4{0 + 10 * mLines, 4}; // Minute4
+            static constexpr WordLeds K{2 + 0 * mLines, 1}; // K
+            
+            static constexpr PgmArray<WordLeds, Es, Ist, Fuenf1, Zehn1, Zwanzig, Drei1, Viertel, Nach, Vor, Halb, Zwoelf, Zwei, Ein, Eins,
+            Sieben, Drei2, Fuenf2, Elf, Neun, Vier, Acht, Zehn2, Sechs, Uhr, Minute1, Minute2, Minute3, Minute4, K> words{};
+        };
+        struct Colors {
+            static constexpr Color Subst{Red{255}};  // cSubst
+            static constexpr Color Verb{Red{255}, Green{255}, Blue{0}};  // cVerb
+            static constexpr Color Minute{Red{255},   Green{0}, Blue{255}};  // cMinute
+            static constexpr Color Prep{Green{255}};  // cPrep
+            static constexpr Color Quarter{Blue{255}};  // cQuarter
+            static constexpr Color Hour{Red{0},   Green{255}, Blue{255}};  // cHour
+            static constexpr Color MinuteRemainder{64};  // cMinuteRemainder
+            static constexpr Color Off{0};  // cNumberOfColors = cOff
+            static constexpr PgmArray<Color, Subst, Verb, Minute, Prep, Quarter, Hour, MinuteRemainder, Off> colors{};
+        };
+    };
+    
+    static void init() {
+        leds::init();
+        leds::off();
+    }
+    
+    template<typename Clock>
+    static void set(const Clock& clock) {
+        DateTime::TimeTm t = clock.dateTime();
+        auto minute = t.minutes().value;
+        auto hour   = t.hours().value;
+        auto seconds = t.seconds().value;
+        
+        leds::template set<false>(Color{0});
+    
+        if (seconds == 0) {
+            switchColorBase();
+        }   
+        
+        hour %= 12;
+    
+        if (hour == 0) {
+            hour = 12;
+        }
+    
+        wordClockSetLeds(Word::Es, WordColor::cSubst);
+        wordClockSetLeds(Word::Ist, WordColor::cVerb);
+    
+        if (minute < 5) {
+            wordClockSetLeds(Word::Uhr, WordColor::cHour);
+        }
+        else if (minute < 10) {
+            wordClockSetLeds(Word::Fuenf1, WordColor::cMinute);
+            wordClockSetLeds(Word::Nach, WordColor::cPrep);
+        }
+        else if (minute < 15) {
+            wordClockSetLeds(Word::Zehn1, WordColor::cMinute);
+            wordClockSetLeds(Word::Nach, WordColor::cPrep);
+        }
+        else if (minute < 20) {
+            wordClockSetLeds(Word::Viertel, WordColor::cQuarter);
+            wordClockSetLeds(Word::Nach, WordColor::cPrep);
+        }
+        else if (minute < 25) {
+            wordClockSetLeds(Word::Zwanzig, WordColor::cMinute);
+            wordClockSetLeds(Word::Nach, WordColor::cPrep);
+        }
+        else if (minute < 30) {
+            wordClockSetLeds(Word::Fuenf1, WordColor::cMinute);
+            wordClockSetLeds(Word::Vor, WordColor::cPrep);
+            wordClockSetLeds(Word::Halb, WordColor::cQuarter);
+            ++hour;
+        }
+        else if (minute < 35) {
+            wordClockSetLeds(Word::Halb, WordColor::cQuarter);
+            ++hour;
+        }
+        else if (minute < 40) {
+            wordClockSetLeds(Word::Fuenf1, WordColor::cMinute);
+            wordClockSetLeds(Word::Nach, WordColor::cPrep);
+            wordClockSetLeds(Word::Halb, WordColor::cQuarter);
+            ++hour;
+        }
+        else if (minute < 45) {
+            wordClockSetLeds(Word::Zehn1, WordColor::cMinute);
+            wordClockSetLeds(Word::Nach, WordColor::cPrep);
+            wordClockSetLeds(Word::Halb, WordColor::cQuarter);
+            ++hour;
+        }
+        else if (minute < 50) {
+            wordClockSetLeds(Word::Viertel, WordColor::cQuarter);
+            wordClockSetLeds(Word::Vor, WordColor::cPrep);
+            ++hour;
+        }
+        else if (minute < 55) {
+            wordClockSetLeds(Word::Zehn1, WordColor::cMinute);
+            wordClockSetLeds(Word::Vor, WordColor::cPrep);
+            ++hour;
+        }
+        else if (minute < 60) {
+            wordClockSetLeds(Word::Fuenf1, WordColor::cMinute);
+            wordClockSetLeds(Word::Vor, WordColor::cPrep);
+            ++hour;
+        }
+    
+        switch(hour) {
+        case 1:
+        case 13:
+            if (minute < 5) {
+                wordClockSetLeds(Word::Ein, WordColor::cHour);
+            }
+            else {
+                wordClockSetLeds(Word::Eins, WordColor::cHour);
+            }
+            break;
+        case 2:
+            wordClockSetLeds(Word::Zwei, WordColor::cHour);
+            break;
+        case 3:
+            wordClockSetLeds(Word::Drei2, WordColor::cHour);
+            break;
+        case 4:
+            wordClockSetLeds(Word::Vier, WordColor::cHour);
+            break;
+        case 5:
+            wordClockSetLeds(Word::Fuenf2, WordColor::cHour);
+            break;
+        case 6:
+            wordClockSetLeds(Word::Sechs, WordColor::cHour);
+            break;
+        case 7:
+            wordClockSetLeds(Word::Sieben, WordColor::cHour);
+            break;
+        case 8:
+            wordClockSetLeds(Word::Acht, WordColor::cHour);
+            break;
+        case 9:
+            wordClockSetLeds(Word::Neun, WordColor::cHour);
+            break;
+        case 10:
+            wordClockSetLeds(Word::Zehn2, WordColor::cHour);
+            break;
+        case 11:
+            wordClockSetLeds(Word::Elf, WordColor::cHour);
+            break;
+        case 12:
+            wordClockSetLeds(Word::Zwoelf, WordColor::cHour);
+            break;
+        default:
+            break;
+        }
+    
+        switch (minute % 5) {
+        case 1:
+            wordClockSetLeds(Word::Minute1, WordColor::cMinuteRemainder);
+            break;
+        case 2:
+            wordClockSetLeds(Word::Minute2, WordColor::cMinuteRemainder);
+            break;
+        case 3:
+            wordClockSetLeds(Word::Minute3, WordColor::cMinuteRemainder);
+            break;
+        case 4:
+            wordClockSetLeds(Word::Minute4, WordColor::cMinuteRemainder);
+            break;
+        default:
+            break;
+        }
+        leds::write();
+    }
+    static std::percent& brightness() {
+        static std::percent b = 100_ppc;
+        return b;
+    }
+ 
+private:
+    static uint8_t colorBase;
+    
+    static inline void switchColorBase() {
+        colorBase = (colorBase + 1) % numberOfColors;
+    }
+    
+    static void wordClockSetLeds(Word w, WordColor color){
+        auto c = Constants::Colors::colors[(colorBase + static_cast<int>(color)) % numberOfColors] * brightness();
+
+        for(uint8_t i = 0; (i < Constants::Words::words[static_cast<uint8_t>(w)].length) && (i < mLines); ++i) {
+            leds::template set<false>(Constants::Words::words[static_cast<uint8_t>(w)].startPosition + i, c);
+        }
+    }
 };
+template<typename LedPin, typename ColorSequence>
+uint8_t WordclockDisplay<LedPin, ColorSequence>::colorBase = 0;
 
-typedef struct wordCode wordCode_t;
-
-#define ML 11
-#define MR 10
-
-#define LEDS  ((ML * MR) + 4)
-
-static struct cRGB leds[LEDS] = {};
-
-// Schlangenverdrahtung!
-static const wordCode_t words[] PROGMEM = {
-    {0 + 0 * ML, 2}, // Es
-    {3 + 0 * ML, 3}, // Ist
-    {7 + 0 * ML, 4}, // Fünf1
-    {7 + 1 * ML, 4}, // Zehn1
-    {0 + 1 * ML, 7}, // Zwanzig
-    {0 + 2 * ML, 4}, // Drei1
-    {4 + 2 * ML, 7}, // Viertel
-    {5 + 3 * ML, 4}, // Nach
-    {2 + 3 * ML, 3}, // Vor
-    {0 + 4 * ML, 4}, // Halb
-    {5 + 4 * ML, 5}, // Zwölf
-    {7 + 5 * ML, 4}, // Zwei
-    {6 + 5 * ML, 3}, // Ein
-    {5 + 5 * ML, 4}, // Eins
-    {0 + 5 * ML, 6}, // Sieben
-    {1 + 6 * ML, 4}, // Drei2
-    {7 + 6 * ML, 4}, // Fünf2
-    {8 + 7 * ML, 3}, // Elf
-    {4 + 7 * ML, 4}, // Neun
-    {0 + 7 * ML, 4}, // Vier
-    {1 + 8 * ML, 4}, // Acht
-    {5 + 8 * ML, 4}, // Zehn2
-    {5 + 9 * ML, 5}, // Sechs
-    {0 + 9 * ML, 3}, // Uhr
-    {0 + 10 * ML, 1}, // Minute1
-    {0 + 10 * ML, 2}, // Minute2
-    {0 + 10 * ML, 3}, // Minute3
-    {0 + 10 * ML, 4}, // Minute4
-    {2 + 0 * ML, 1}, // K
-};
 // Z-Verdrahtung
 /*
 static wordCode_t words[] = {
@@ -136,232 +307,6 @@ static wordCode_t words[] = {
 };
 */
 
-static struct cRGB colors[cNumberOfColors + 1] = {
-{255,   0,   0},  // cSubst
-{255, 255,   0},  // cVerb
-{255,   0, 255},  // cMinute
-{0,   255, 0  },  // cPrep
-{0,   0,   255},  // cQuarter
-{0,   255, 255},  // cHour
-{ 64,  64,  64},  // cMinuteRemainder
-{  0,   0,   0},  // cNumberOfColors = cOff
-};
 
-void scaleColors(uint8_t brightness)
-{
-    uint8_t c = 0;
-    if (brightness > 150) {
-        c = 255;
-    }
-    else if (brightness < 50) {
-        c = 32;
-    }
-    else {
-        c = (((int)brightness - 50) * (255 - 32)) / (150 - 50) + 32;
-    }
 
-    for(uint8_t i = 0; i < cNumberOfColors; ++i) {
-
-    }
-}
-
-static uint8_t colorBase = 0;
-static bool needToChangeColor = true;
-
-void switchColorBase()
-{
-    colorBase = (colorBase + 1) % cNumberOfColors;
-}
-
-void wordClockSetLeds(enum word w, color_t color)
-{
-    if (w >= UNDEF) {
-        return;
-    }
-    struct cRGB c = colors[(colorBase + color) % cNumberOfColors];
-    for(uint8_t i = 0; (i < pgm_read_byte(&words[w].length)) && (i < ML); ++i) {
-        leds[pgm_read_byte(&words[w].startPosition) + i] = c;
-    }
-}
-
-void wordClockDisplay(uint8_t hour, uint8_t minute, uint8_t second)
-{
-    clearLeds();
-
-    uint8_t sx = second / 10;
-    uint8_t sy = second % 10;
-
-    if (sy > 0) {
-        for(uint8_t x = 0; x <= sx; ++x) {
-            if (x < sx) {
-                for(uint8_t y = 0; y < 10; ++y) {
-                    uint8_t index = 0;
-                    if ((y % 2) == 0) {
-                        index = (MR - y) * 11 + x;
-                    }
-                    else {
-                        index = 10 + (MR - y) * 11 - x;
-                    }
-                    const struct cRGB cs = {16, 16, 16};
-                    leds[index] = cs;
-                }
-            }
-            else {
-                for(uint8_t y = 0; y <= sy; ++y) {
-                    uint8_t index = 0;
-                    if ((y % 2) == 0) {
-                        index = (MR - y) * 11 + x;
-                    }
-                    else {
-                        index = 10 + (MR - y) * 11 - x;
-                    }
-                    const struct cRGB cs = {16, 16, 16};
-                    leds[index] = cs;
-                }
-            }
-        }
-    }
-
-    if ((minute % 5) == 0) {
-        if (needToChangeColor) {
-            switchColorBase();
-            needToChangeColor = false;
-        }
-    }
-    else {
-        needToChangeColor = true;
-    }
-
-    hour %= 12;
-
-    if (hour == 0) {
-        hour = 12;
-    }
-
-    wordClockSetLeds(Es, cSubst);
-    wordClockSetLeds(Ist, cVerb);
-
-    if (minute < 5) {
-        wordClockSetLeds(Uhr, cHour);
-    }
-    else if (minute < 10) {
-        wordClockSetLeds(Fuenf1, cMinute);
-        wordClockSetLeds(Nach, cPrep);
-    }
-    else if (minute < 15) {
-        wordClockSetLeds(Zehn1, cMinute);
-        wordClockSetLeds(Nach, cPrep);
-    }
-    else if (minute < 20) {
-        wordClockSetLeds(Viertel, cQuarter);
-        wordClockSetLeds(Nach, cPrep);
-    }
-    else if (minute < 25) {
-        wordClockSetLeds(Zwanzig, cMinute);
-        wordClockSetLeds(Nach, cPrep);
-    }
-    else if (minute < 30) {
-        wordClockSetLeds(Fuenf1, cMinute);
-        wordClockSetLeds(Vor, cPrep);
-        wordClockSetLeds(Halb, cQuarter);
-        ++hour;
-    }
-    else if (minute < 35) {
-        wordClockSetLeds(Halb, cQuarter);
-        ++hour;
-    }
-    else if (minute < 40) {
-        wordClockSetLeds(Fuenf1, cMinute);
-        wordClockSetLeds(Nach, cPrep);
-        wordClockSetLeds(Halb, cQuarter);
-        ++hour;
-    }
-    else if (minute < 45) {
-        wordClockSetLeds(Zehn1, cMinute);
-        wordClockSetLeds(Nach, cPrep);
-        wordClockSetLeds(Halb, cQuarter);
-        ++hour;
-    }
-    else if (minute < 50) {
-        wordClockSetLeds(Viertel, cQuarter);
-        wordClockSetLeds(Vor, cPrep);
-        ++hour;
-    }
-    else if (minute < 55) {
-        wordClockSetLeds(Zehn1, cMinute);
-        wordClockSetLeds(Vor, cPrep);
-        ++hour;
-    }
-    else if (minute < 60) {
-        wordClockSetLeds(Fuenf1, cMinute);
-        wordClockSetLeds(Vor, cPrep);
-        ++hour;
-    }
-
-    switch(hour) {
-    case 1:
-    case 13:
-        if (minute < 5) {
-            wordClockSetLeds(Ein, cHour);
-        }
-        else {
-            wordClockSetLeds(Eins, cHour);
-        }
-        break;
-    case 2:
-        wordClockSetLeds(Zwei, cHour);
-        break;
-    case 3:
-        wordClockSetLeds(Drei2, cHour);
-        break;
-    case 4:
-        wordClockSetLeds(Vier, cHour);
-        break;
-    case 5:
-        wordClockSetLeds(Fuenf2, cHour);
-        break;
-    case 6:
-        wordClockSetLeds(Sechs, cHour);
-        break;
-    case 7:
-        wordClockSetLeds(Sieben, cHour);
-        break;
-    case 8:
-        wordClockSetLeds(Acht, cHour);
-        break;
-    case 9:
-        wordClockSetLeds(Neun, cHour);
-        break;
-    case 10:
-        wordClockSetLeds(Zehn2, cHour);
-        break;
-    case 11:
-        wordClockSetLeds(Elf, cHour);
-        break;
-    case 12:
-        wordClockSetLeds(Zwoelf, cHour);
-        break;
-    default:
-        break;
-    }
-
-    switch (minute % 5) {
-    case 1:
-        wordClockSetLeds(Minute1, cMinuteRemainder);
-        break;
-    case 2:
-        wordClockSetLeds(Minute2, cMinuteRemainder);
-        break;
-    case 3:
-        wordClockSetLeds(Minute3, cMinuteRemainder);
-        break;
-    case 4:
-        wordClockSetLeds(Minute4, cMinuteRemainder);
-        needToChangeColor = true;
-        break;
-    default:
-        break;
-    }
-    ws2812_setleds(leds, LEDS);
-}
 

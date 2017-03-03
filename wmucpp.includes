@@ -51,3 +51,4 @@ boards/clock
 boards/clock/universal
 boards/protector
 boards/clock/wordclock
+3rdparty/irmp

@@ -22,6 +22,8 @@ F_OSC = 20000000
 
 subdirs =
 
+CXXFLAGS += -I../../../3rdparty
+
 targets +=  main.elf
 
 -include ../../../Makefile.include

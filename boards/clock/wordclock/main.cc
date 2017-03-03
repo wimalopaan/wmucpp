@@ -39,6 +39,25 @@
 #include "appl/wordclock.h"
 #include "console.h"
 
+extern "C" {
+
+// uncomment in original files
+struct IrmpData {
+    uint8_t                             protocol;                                   // protocol, e.g. NEC_PROTOCOL
+    uint16_t                            address;                                    // address
+    uint16_t                            command;                                    // command
+    uint8_t                             flags;                                      // flags, e.g. repetition
+} __attribute__ ((__packed__));
+typedef struct IrmpData IRMP_DATA;
+
+extern void                             irmp_init (void);
+extern uint_fast8_t                     irmp_get_data (IRMP_DATA *);
+extern uint_fast8_t                     irmp_ISR (void);
+
+}
+constexpr uint8_t IRMP_FLAG_REPETITION = 0x01;
+
+
 using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
@@ -50,28 +69,16 @@ using iRPin          = AVR::Pin<PortA, 2>;
 using dcfPin         = AVR::Pin<PortA, 3>;
 using powerSwitchPin = AVR::Pin<PortA, 4>;
 using ledsPin        = AVR::Pin<PortD, 4>;
+using testPin        = AVR::Pin<PortD, 5>;
 using debugPin       = AVR::Pin<PortD, 7>;
 
 namespace Constant {
-static constexpr uint8_t brightness = 255;
-//static constexpr Color cOff{0};
-//static constexpr Color cRed{Red{brightness}};
-//static constexpr Color cBlue{Blue{std::min((int)std::numeric_limits<uint8_t>::max(), 2 * brightness)}};
-//static constexpr Color cGreen{Green{brightness / 2}};
-//static constexpr Color cYellow{Red{brightness}, Green{brightness}, Blue{0}};
-//static constexpr Color cMagenta{Red{brightness}, Green{0}, Blue{brightness}};
-//static constexpr Color cCyan{Red{0}, Green{brightness}, Blue{brightness}};
-//static constexpr Color cWhite{Red{brightness}, Green{brightness}, Blue{brightness}};
-//static constexpr Color cWhiteLow{Red{brightness / 10}, Green{brightness / 10}, Blue{brightness / 10}};
-
 static constexpr uint16_t analogBrightnessMaximum = 1023;
-
 static constexpr uint32_t secondsPerDay = (uint32_t)60 * 60 * 24;
-
 static constexpr auto title = "Wordclock 01"_pgm;
 }
 
-using leds = WS2812<110, ledsPin, ColorSequenceGRB>;
+using display = WordclockDisplay<ledsPin, ColorSequenceGRB>;
 
 using temp = LM35<adc, 1>;
 
@@ -84,8 +91,22 @@ using dcfDecoder = DCF77<dcfPin, Config::Timer::frequency, EventManager, true>;
 
 using systemConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<0>::CompareA, alarmTimer, dcfDecoder>;
 
-using isrRegistrar = IsrRegistrar<systemConstantRate, terminal::RxHandler, terminal::TxHandler>;
+struct IrDecoder {
+    static void init() {
+        irmp_init();
+    }
+    static void rateProcess() {
+//        testPin::toggle();
+        irmp_ISR();        
+    }
+};
 
+using irDecoder = IrDecoder;
+
+using irTimer = AVR::Timer8Bit<2>; // timer 2
+using irConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<2>::CompareA, irDecoder>;
+
+using isrRegistrar = IsrRegistrar<systemConstantRate, terminal::RxHandler, terminal::TxHandler, irConstantRate>;
 
 namespace std {
 std::basic_ostream<terminal> cout;
@@ -97,8 +118,6 @@ const auto secondsTimer = alarmTimer::create(1000_ms, AlarmFlags::Periodic);
 const auto preStartTimer = alarmTimer::create(3000_ms, AlarmFlags::OneShot | AlarmFlags::Disabled);
 
 std::chrono::system_clock<> systemClock;
-
-std::percent brightness = 100_ppc;
 
 struct ClockStateMachine {
     enum class State : uint8_t {PreStart, Start, Sync1, Sync2, Clock, Error};
@@ -195,11 +214,11 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
             debugPin::toggle();
         }
         else if (timer == *secondsTimer) {
-            std::cout << "light: "_pgm << brightness << std::endl;
+            std::cout << "light: "_pgm << display::brightness() << std::endl;
             std::cout << "temp: "_pgm << temp::temperature() << std::endl;
             if (systemClock) {
-                
                 std::cout << systemClock.dateTime() << std::endl;
+                display::set(systemClock);
                 
                 if ((systemClock.value() % Constant::secondsPerDay) == 0) {
                     systemClock = -1;
@@ -269,23 +288,51 @@ struct DCFParityHandler : public EventHandler<EventType::DCFParityError> {
         return true;
     }  
 };
+struct IRHandler : public EventHandler<EventType::IREvent> {
+    static bool process(uint8_t c) {
+        std::cout << "IR: "_pgm << c << std::endl;
+        return true;
+    }  
+};
+struct IRRepeatHandler : public EventHandler<EventType::IREventRepeat> {
+    static bool process(uint8_t c) {
+        std::cout << "IR R: "_pgm << c << std::endl;
+        return true;
+    }  
+};
 
 using allEventHandler = EventHandlerGroup<TimerHandler, UsartFeHandler, UsartUpeHandler, UsartDorHandler, Usart0Handler,
-                                        DCFReceive0Handler, DCFReceive1Handler, DCFDecodeHandler, DCFSyncHandler, DCFErrorHandler, DCFParityHandler>;
+                                          DCFReceive0Handler, DCFReceive1Handler, DCFDecodeHandler, DCFSyncHandler, DCFErrorHandler, DCFParityHandler,
+                                          IRHandler, IRRepeatHandler>;
 
-int main()
-{   
-    set_zone(ONE_HOUR); // europe central time
-    set_dst(eu_dst);
-    
+constexpr std::hertz fIr = 15000_Hz;
+
+int main() {   
     debugPin::dir<AVR::Output>();
     debugPin::off();
+    
+    constexpr auto tsd = AVR::Util::calculate<irTimer>(fIr);
+    static_assert(tsd, "wrong parameter");
+    irTimer::prescale<tsd.prescaler>();
+    irTimer::ocra<tsd.ocr>();
+    irTimer::mode(AVR::TimerMode::CTC);
+    
+    irConstantRate::init();
     
     isrRegistrar::init();
     alarmTimer::init();
     
+    Util::delay(100_ms);
+    
+    display::init();
+    
+    Util::delay(100_ms);
+    
     powerSwitchPin::dir<AVR::Output>();    
     powerSwitchPin::off();    
+    
+    testPin::dir<AVR::Output>();
+    testPin::low();
     
     terminal::init<19200>();
     
@@ -297,9 +344,16 @@ int main()
         alarmTimer::start(*preStartTimer);
         EventManager::run2<allEventHandler>([](){
             adc::periodic();
-            brightness = std::scale(adc::value(0), adc::value_type(0), adc::value_type(Constant::analogBrightnessMaximum));
+            display::brightness() = std::scale(adc::value(0), adc::value_type(0), adc::value_type(Constant::analogBrightnessMaximum));
 
             systemConstantRate::periodic();
+            irConstantRate::periodic();
+            
+            IRMP_DATA irmp_data;
+            if (irmp_get_data(&irmp_data)) {
+                EventManager::enqueue({(irmp_data.flags & IRMP_FLAG_REPETITION) ? EventType::IREventRepeat : EventType::IREvent , uint8_t(irmp_data.command)});
+            }
+            
             if (EventManager::unprocessedEvent()) {
                 EventManager::unprocessedEvent() = false;
             }
@@ -312,6 +366,10 @@ int main()
 
 ISR(TIMER0_COMPA_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<0>::CompareA>();
+}
+ISR(TIMER2_COMPA_vect) {
+    isrRegistrar::isr<AVR::ISR::Timer<2>::CompareA>();
+    testPin::toggle();
 }
 ISR(USART1_RX_vect) {
     isrRegistrar::isr<AVR::ISR::Usart<1>::RX>();
@@ -326,3 +384,12 @@ void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsign
     while(true) {}
 }
 #endif
+
+constexpr uint32_t finterrupts = fIr.value;
+#define F_INTERRUPTS finterrupts
+
+// uncomment in original file
+#define input(x) iRPin::read()
+
+// this must be the last statement!!!
+#include "irmp/irmp.c"

@@ -33,6 +33,10 @@ targets +=  bm05b.s bm05b.elf bm05b.size
 targets +=  bm05bb.s bm05bb.elf bm05bb.size
 targets +=  bm06a.s bm06a.elf bm06a.size
 targets +=  bm07a.s bm07a.elf bm07a.size
+targets +=  bm10a.s bm10a.elf
+targets +=  bm11a.s bm11a.elf
+
+CPPFLAGS += -DNDEBUG
 
 -include ../../Makefile.include
 

@@ -65,7 +65,7 @@ constexpr percent scale(const T& value, const T& min, const T& max) {
         return std::percent{100U};
     }
     else {
-        return std::percent{(uint8_t)(((value - min) * 100) / (max - min))};
+        return std::percent{(uint8_t)((static_cast<typename Util::enclosingType<T>::type>(value - min) * 100) / (max - min))};
     }
 }
 

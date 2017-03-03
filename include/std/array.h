@@ -80,6 +80,7 @@ struct array final
 };
 
 namespace detail {
+
 template <class T, uint8_t N, size_t... I>
 constexpr std::array<std::remove_cv_t<T>, N>
     to_array_impl(T(&a)[N], std::index_sequence<I...>)

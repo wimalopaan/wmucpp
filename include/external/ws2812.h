@@ -46,8 +46,13 @@ struct cRGB;
 
 template<>
 struct cRGB<ColorSequenceRGB> {
+    static cRGB createFrom(const std::array<uint8_t, 3> bytes) {
+        return {Red{bytes[0]}, Green{bytes[1]}, Blue{bytes[2]}};
+    }
+
     constexpr cRGB() {}
     cRGB(const volatile cRGB& o) : r(o.r), g(o.g), b(o.b) {}
+    constexpr cRGB(const cRGB& o) : r(o.r), g(o.g), b(o.b) {}
     constexpr explicit cRGB(uint8_t v) : r(v), g(v), b(v) {}
     constexpr cRGB(Red red, Green green, Blue blue) : r(red.value), g(green.value), b(blue.value) {}
     constexpr cRGB(Red v) : r(v.value) {}
@@ -92,8 +97,12 @@ cRGB<ColorSequenceRGB> operator*(cRGB<ColorSequenceRGB> c, const std::percent& p
 
 template<>
 struct cRGB<ColorSequenceGRB> {
+    static cRGB createFrom(const std::array<uint8_t, 3> bytes) {
+        return {Red{bytes[0]}, Green{bytes[1]}, Blue{bytes[2]}};
+    }
     constexpr cRGB() {}
     cRGB(const volatile cRGB& o) : g(o.g), r(o.r), b(o.b) {}
+    constexpr cRGB(const cRGB& o) : g(o.g), r(o.r), b(o.b) {}
     constexpr explicit cRGB(uint8_t v) : g(v), r(v), b(v) {}
     constexpr cRGB(Red red, Green green, Blue blue) : g(green.value), r(red.value), b(blue.value) {}
     constexpr cRGB(Red v) : r(v.value) {}

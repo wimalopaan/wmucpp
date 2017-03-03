@@ -81,6 +81,7 @@ CXXFLAGS += -I../include -I../../../include
 CXXFLAGS += -I/usr/include/simavr
 #CXXFLAGS += -I/usr/avr/include
 CXXFLAGS += $(MCUFLAGS)
+#CXXFLAGS += -fno-tree-switch-conversion
 
 #CFLAGS += -Os -std=gnu11
 CFLAGS += -Os -std=c11
