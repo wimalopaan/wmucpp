@@ -28,7 +28,7 @@
 
 template<uint8_t Length, typename T = char, char Fill = ' '>
 class StringBuffer final {
-    template<uint8_t N, typename, char> friend class StringBuffer;
+//    template<uint8_t N, typename, char> friend class StringBuffer;
 public:
     typedef T type;
     typedef typename std::conditional<Length <= 255, uint8_t, uint16_t>::type size_type;

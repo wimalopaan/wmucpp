@@ -31,9 +31,10 @@
 #endif
 
 template<typename T, const T&... Ts>
-struct PgmArray final {
+class PgmArray final {
+    PgmArray() = delete;
+public:
     static constexpr uint8_t Size = sizeof... (Ts);
-    static constexpr const T data[] PROGMEM = {Ts...}; 
     
     T operator[](uint8_t index) const {
         if constexpr(std::is_same<uint8_t, T>::value) {
@@ -47,9 +48,26 @@ struct PgmArray final {
             return T::createFrom(bytes);
         }
     }
+private:
+    static constexpr T data[] PROGMEM = {Ts...}; 
 };
 template<typename T, const T&... Ts>
 constexpr const T PgmArray<T, Ts...>::data[] PROGMEM;
+
+template<uint8_t... Ts>
+class PgmBytes final {
+    PgmBytes() = delete;
+public:
+    static constexpr uint8_t Size = sizeof... (Ts);
+    
+    uint8_t operator[](uint8_t index) const {
+            return pgm_read_byte(&data[index]);
+    }
+private:
+    static constexpr uint8_t data[] PROGMEM = {Ts...}; 
+};
+template<uint8_t... Ts>
+constexpr uint8_t PgmBytes<Ts...>::data[] PROGMEM;
 
 
 

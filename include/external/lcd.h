@@ -203,7 +203,7 @@ public:
         }
         return true;
     }
-    template<uint8_t Size>
+    template<uint16_t Size>
     static void put(const volatile std::array<uint8_t, Size>& data) {
         setPosition(Row{0}, Column{0});
         auto it = data.begin();

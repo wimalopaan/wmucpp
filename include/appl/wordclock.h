@@ -36,9 +36,9 @@ public:
         }
     };
 
-    static constexpr uint8_t mLines = 11;
+    static constexpr uint8_t mColumns = 11;
     static constexpr uint8_t mRows = 10;
-    static constexpr uint8_t mNumberOfLeds = mLines * mRows + 4;
+    static constexpr uint8_t mNumberOfLeds = mColumns * mRows + 4;
     
     using leds = WS2812<mNumberOfLeds, LedPin, ColorSequence, true>;
     typedef typename leds::color_type Color;
@@ -52,35 +52,35 @@ public:
 
     struct Constants {
         struct Words {
-            static constexpr WordLeds Es{0 + 0 * mLines, 2};
-            static constexpr WordLeds Ist{3 + 0 * mLines, 3}; // Ist
-            static constexpr WordLeds Fuenf1{7 + 0 * mLines, 4}; // Fünf1
-            static constexpr WordLeds Zehn1{7 + 1 * mLines, 4}; // Zehn1
-            static constexpr WordLeds Zwanzig{0 + 1 * mLines, 7}; // Zwanzig
-            static constexpr WordLeds Drei1{0 + 2 * mLines, 4}; // Drei1
-            static constexpr WordLeds Viertel{4 + 2 * mLines, 7}; // Viertel
-            static constexpr WordLeds Nach{5 + 3 * mLines, 4}; // Nach
-            static constexpr WordLeds Vor{2 + 3 * mLines, 3}; // Vor
-            static constexpr WordLeds Halb{0 + 4 * mLines, 4}; // Halb
-            static constexpr WordLeds Zwoelf{5 + 4 * mLines, 5}; // Zwölf
-            static constexpr WordLeds Zwei{7 + 5 * mLines, 4}; // Zwei
-            static constexpr WordLeds Ein{6 + 5 * mLines, 3}; // Ein
-            static constexpr WordLeds Eins{5 + 5 * mLines, 4}; // Eins
-            static constexpr WordLeds Sieben{0 + 5 * mLines, 6}; // Sieben
-            static constexpr WordLeds Drei2{1 + 6 * mLines, 4}; // Drei2
-            static constexpr WordLeds Fuenf2{7 + 6 * mLines, 4}; // Fünf2
-            static constexpr WordLeds Elf{8 + 7 * mLines, 3}; // Elf
-            static constexpr WordLeds Neun{4 + 7 * mLines, 4}; // Neun
-            static constexpr WordLeds Vier{0 + 7 * mLines, 4}; // Vier
-            static constexpr WordLeds Acht{1 + 8 * mLines, 4}; // Acht
-            static constexpr WordLeds Zehn2{5 + 8 * mLines, 4}; // Zehn2
-            static constexpr WordLeds Sechs{5 + 9 * mLines, 5}; // Sechs
-            static constexpr WordLeds Uhr{0 + 9 * mLines, 3}; // Uhr
-            static constexpr WordLeds Minute1{0 + 10 * mLines, 1}; // Minute1
-            static constexpr WordLeds Minute2{0 + 10 * mLines, 2}; // Minute2
-            static constexpr WordLeds Minute3{0 + 10 * mLines, 3}; // Minute3
-            static constexpr WordLeds Minute4{0 + 10 * mLines, 4}; // Minute4
-            static constexpr WordLeds K{2 + 0 * mLines, 1}; // K
+            static constexpr WordLeds Es{0 + 0 * mColumns, 2};
+            static constexpr WordLeds Ist{3 + 0 * mColumns, 3}; // Ist
+            static constexpr WordLeds Fuenf1{7 + 0 * mColumns, 4}; // Fünf1
+            static constexpr WordLeds Zehn1{7 + 1 * mColumns, 4}; // Zehn1
+            static constexpr WordLeds Zwanzig{0 + 1 * mColumns, 7}; // Zwanzig
+            static constexpr WordLeds Drei1{0 + 2 * mColumns, 4}; // Drei1
+            static constexpr WordLeds Viertel{4 + 2 * mColumns, 7}; // Viertel
+            static constexpr WordLeds Nach{5 + 3 * mColumns, 4}; // Nach
+            static constexpr WordLeds Vor{2 + 3 * mColumns, 3}; // Vor
+            static constexpr WordLeds Halb{0 + 4 * mColumns, 4}; // Halb
+            static constexpr WordLeds Zwoelf{5 + 4 * mColumns, 5}; // Zwölf
+            static constexpr WordLeds Zwei{7 + 5 * mColumns, 4}; // Zwei
+            static constexpr WordLeds Ein{6 + 5 * mColumns, 3}; // Ein
+            static constexpr WordLeds Eins{5 + 5 * mColumns, 4}; // Eins
+            static constexpr WordLeds Sieben{0 + 5 * mColumns, 6}; // Sieben
+            static constexpr WordLeds Drei2{1 + 6 * mColumns, 4}; // Drei2
+            static constexpr WordLeds Fuenf2{7 + 6 * mColumns, 4}; // Fünf2
+            static constexpr WordLeds Elf{8 + 7 * mColumns, 3}; // Elf
+            static constexpr WordLeds Neun{4 + 7 * mColumns, 4}; // Neun
+            static constexpr WordLeds Vier{0 + 7 * mColumns, 4}; // Vier
+            static constexpr WordLeds Acht{1 + 8 * mColumns, 4}; // Acht
+            static constexpr WordLeds Zehn2{5 + 8 * mColumns, 4}; // Zehn2
+            static constexpr WordLeds Sechs{5 + 9 * mColumns, 5}; // Sechs
+            static constexpr WordLeds Uhr{0 + 9 * mColumns, 3}; // Uhr
+            static constexpr WordLeds Minute1{0 + 10 * mColumns, 1}; // Minute1
+            static constexpr WordLeds Minute2{0 + 10 * mColumns, 2}; // Minute2
+            static constexpr WordLeds Minute3{0 + 10 * mColumns, 3}; // Minute3
+            static constexpr WordLeds Minute4{0 + 10 * mColumns, 4}; // Minute4
+            static constexpr WordLeds K{2 + 0 * mColumns, 1}; // K
             
             static constexpr PgmArray<WordLeds, Es, Ist, Fuenf1, Zehn1, Zwanzig, Drei1, Viertel, Nach, Vor, Halb, Zwoelf, Zwei, Ein, Eins,
             Sieben, Drei2, Fuenf2, Elf, Neun, Vier, Acht, Zehn2, Sechs, Uhr, Minute1, Minute2, Minute3, Minute4, K> words{};
@@ -102,7 +102,10 @@ public:
         leds::init();
         leds::off();
     }
-    
+    static void clear() {
+        leds::off();
+    }
+
     template<typename Clock>
     static void set(const Clock& clock) {
         DateTime::TimeTm t = clock.dateTime();
@@ -262,7 +265,7 @@ private:
     static void wordClockSetLeds(Word w, WordColor color){
         auto c = Constants::Colors::colors[(colorBase + static_cast<int>(color)) % numberOfColors] * brightness();
 
-        for(uint8_t i = 0; (i < Constants::Words::words[static_cast<uint8_t>(w)].length) && (i < mLines); ++i) {
+        for(uint8_t i = 0; (i < Constants::Words::words[static_cast<uint8_t>(w)].length) && (i < mColumns); ++i) {
             leds::template set<false>(Constants::Words::words[static_cast<uint8_t>(w)].startPosition + i, c);
         }
     }

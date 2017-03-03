@@ -265,7 +265,7 @@ public:
         return ok;
     }
     
-    template<const Address& address, uint8_t L>
+    template<const Address& address, uint16_t L>
     static bool startWrite(const std::array<uint8_t, L>& data) {
         bool ok = true;
         auto a = BusAddress<Write>(address);
@@ -359,7 +359,7 @@ public:
         return {};
     }
 
-    template<uint8_t MaxDevices>
+    template<uint16_t MaxDevices>
     static uint8_t findDevices(std::array<Address, MaxDevices>& devices) {
         auto start = TWI::minimumAddress;
         for(uint8_t i = 0; i < devices.size; ++i) {
@@ -426,7 +426,7 @@ public:
 //         while(mcuTwi()->twcr & (1<<TWSTO));
     }
     
-    template<uint8_t L>
+    template<uint16_t L>
     static bool write(const std::array<uint8_t, L>& data, Address address) {
         bool ok = start<Write>(address);
         for(uint8_t i = 0; i < data.size; ++i) {
@@ -436,7 +436,7 @@ public:
         return ok;
     }
     
-    template<const Address& address, uint8_t L>
+    template<const Address& address, uint16_t L>
     static bool write(const std::array<uint8_t, L>& data) {
         bool ok = start<Write>(address);
         for(uint8_t i = 0; i < data.size; ++i) {
@@ -446,7 +446,7 @@ public:
         return ok;
     }
 
-    template<const Address& address, uint8_t Pointer, uint8_t L>
+    template<const Address& address, uint8_t Pointer, uint16_t L>
     static bool readWithPointer(std::array<uint8_t, L>& data) {
         bool ok = start<Write>(address);
         ok &= write<Pointer>();
@@ -459,7 +459,7 @@ public:
         return ok;
     }
 
-    template<const Address& address, uint8_t L>
+    template<const Address& address, uint16_t L>
     static bool readWithPointer(std::array<uint8_t, L>& data, uint8_t pointer) {
         bool ok = start<Write>(address);
         ok &= write(pointer);

@@ -232,7 +232,7 @@ Stream& operator<<(Stream& o, const FixedPoint<int16_t, 4>& f) {
     return o;
 }
 
-template<typename Stream, typename T, uint8_t L>
+template<typename Stream, typename T, uint16_t L>
 Stream& operator<<(Stream& o, const std::array<T, L>& a) {
     if (!Config::disableCout) {
         o << "{ "_pgm;

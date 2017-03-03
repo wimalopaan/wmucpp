@@ -22,15 +22,13 @@
 #include "util/dassert.h"
 #include "std/utility.h"
 
-//#include "std/initializer_list.h"
-
 namespace std {
 
-template<typename T, uint8_t Size>
+template<typename T, uint16_t Size>
 struct array final
 {
     typedef T type;
-    typedef uint8_t size_type;
+    typedef uint16_t size_type;
     
 //    constexpr array() = default;
     
@@ -74,7 +72,7 @@ struct array final
         assert(index < Size);
         return data[index];
     }
-    static constexpr uint8_t size = Size;
+    static constexpr size_type size = Size;
 //private:
     T data[Size] = {};
 };

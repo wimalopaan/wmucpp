@@ -37,7 +37,7 @@ struct nth_element_impl<0, T, Ts...> {
 template <uint8_t I, typename ...Ts>
 using nth_element = typename nth_element_impl<I, Ts...>::type;
 
-template <typename T, uint8_t N, typename Comp = std::less<T>>
+template <typename T, uint16_t N, typename Comp = std::less<T>>
 constexpr std::array<T, N> sort(std::array<T, N> array, Comp compare = std::less<T>()) {
     for(uint8_t i = 0; i < (N - 1); ++i) {
         if (!compare(array[i], array[i + 1])) {

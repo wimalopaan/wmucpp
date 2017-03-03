@@ -27,7 +27,7 @@
 
 namespace TWI {
 
-template<uint8_t N, const TWI::Address& Address, uint8_t Size, typename MCU = DefaultMcuType>
+template<uint8_t N, const TWI::Address& Address, uint16_t Size, typename MCU = DefaultMcuType>
 class Slave final : public IsrBaseHandler<AVR::ISR::Twi<0>> {
     Slave() = delete;
     

@@ -36,7 +36,7 @@ struct TimerSetupData final {
     }
 };
 
-template<typename T, uint8_t N>
+template<typename T, uint16_t N>
 constexpr std::array<typename AVR::PrescalerPair<T>::scale_type, N> prescalerValues(const std::array<AVR::PrescalerPair<T>, N>& a) {
     std::array<typename AVR::PrescalerPair<T>::scale_type, N> values;
     for(uint8_t i = 0; i < N; ++i) {
@@ -45,7 +45,7 @@ constexpr std::array<typename AVR::PrescalerPair<T>::scale_type, N> prescalerVal
     return values;
 }
 
-template<uint16_t Prescale, typename T, uint8_t N>
+template<uint16_t Prescale, typename T, uint16_t N>
 constexpr typename AVR::PrescalerPair<T>::bits_type bitsFrom(const std::array<AVR::PrescalerPair<T>, N>& a) {
     for(const auto pair: a) {
         if (pair.scale == Prescale) {
@@ -55,7 +55,7 @@ constexpr typename AVR::PrescalerPair<T>::bits_type bitsFrom(const std::array<AV
     return static_cast<typename AVR::PrescalerPair<T>::bits_type>(0);
 }
 
-template<typename T, uint8_t N>
+template<typename T, uint16_t N>
 constexpr uint16_t bitsToPrescale(T bits, const std::array<AVR::PrescalerPair<T>, N>& a) {
     for(const auto& pair : a) {
         if (bits == pair.bits) {

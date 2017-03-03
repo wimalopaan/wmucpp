@@ -38,6 +38,8 @@
 #include "appl/blink.h"
 #include "appl/ledflash.h"
 #include "appl/wordclock.h"
+#include "appl/fonts.h"
+#include "appl/shiftdisplay.h"
 #include "console.h"
 
 using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
@@ -58,9 +60,12 @@ namespace Constant {
 static constexpr uint16_t analogBrightnessMaximum = 1023;
 static constexpr uint32_t secondsPerDay = (uint32_t)60 * 60 * 24;
 static constexpr auto title = "Wordclock 01"_pgm;
+static constexpr uint8_t textLength = 64;
 }
 
 using display = WordclockDisplay<ledsPin, ColorSequenceGRB>;
+
+using shifttext = ShiftDisplay<display::leds, display::mColumns, display::mRows, Constant::textLength, Font<5,7>>;
 
 using temp = LM35<adc, 1>;
 
@@ -189,6 +194,11 @@ struct ClockStateMachine {
     }        
 };
 
+struct GlobalStateMachine {
+    enum class State : uint8_t {};
+    enum class Event : uint8_t {};
+};
+
 struct TimerHandler : public EventHandler<EventType::Timer> {
     static bool process(uint8_t timer) {
         if (timer == *blinkTimer) {
@@ -289,6 +299,8 @@ using allEventHandler = EventHandlerGroup<TimerHandler, UsartFeHandler, UsartUpe
 constexpr std::hertz fIr = 15000_Hz;
 
 int main() {   
+    terminal::init<19200>();
+    
     debugPin::dir<AVR::Output>();
     debugPin::off();
     
@@ -307,17 +319,25 @@ int main() {
     powerSwitchPin::on();    
     
     Util::delay(500_ms);
-    
     display::init();
     
-    Util::delay(300_ms);
+    StringBuffer<Constant::textLength> sb;
+    sb.insertAt(0, Constant::title);
+    shifttext::set(sb);
+    
+    for(uint8_t i = 0; i < 30; ++i) {
+        shifttext::write();
+        shifttext::shift();
+        Util::delay(200_ms);
+    }
+
+    display::clear();
+    Util::delay(1000_ms);
     
     powerSwitchPin::off();    
     
     testPin::dir<AVR::Output>();
     testPin::low();
-    
-    terminal::init<19200>();
     
     adc::init();
     

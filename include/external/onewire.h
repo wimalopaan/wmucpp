@@ -344,7 +344,7 @@ public:
         gnd_short = 5
     };
     
-    template<uint8_t MaxDevices>
+    template<uint16_t MaxDevices>
     static uint8_t findDevices(std::array<ow_rom_t, MaxDevices>& devices) {
         Rom rom;
         searchRom2(nullptr);
