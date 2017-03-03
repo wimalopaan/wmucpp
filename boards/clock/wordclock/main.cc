@@ -33,30 +33,12 @@
 #include "external/ws2812.h"
 #include "external/dcf77.h"
 #include "external/lm35.h"
+#include "external/irmp.h"
 #include "std/chrono.h"
 #include "appl/blink.h"
 #include "appl/ledflash.h"
 #include "appl/wordclock.h"
 #include "console.h"
-
-extern "C" {
-
-// uncomment in original files
-struct IrmpData {
-    uint8_t                             protocol;                                   // protocol, e.g. NEC_PROTOCOL
-    uint16_t                            address;                                    // address
-    uint16_t                            command;                                    // command
-    uint8_t                             flags;                                      // flags, e.g. repetition
-} __attribute__ ((__packed__));
-typedef struct IrmpData IRMP_DATA;
-
-extern void                             irmp_init (void);
-extern uint_fast8_t                     irmp_get_data (IRMP_DATA *);
-extern uint_fast8_t                     irmp_ISR (void);
-
-}
-constexpr uint8_t IRMP_FLAG_REPETITION = 0x01;
-
 
 using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
@@ -93,11 +75,10 @@ using systemConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<0>::Compare
 
 struct IrDecoder {
     static void init() {
-        irmp_init();
+        Irmp::irmp_init();
     }
     static void rateProcess() {
-//        testPin::toggle();
-        irmp_ISR();        
+        Irmp::irmp_ISR();        
     }
 };
 
@@ -322,13 +303,15 @@ int main() {
     isrRegistrar::init();
     alarmTimer::init();
     
-    Util::delay(100_ms);
+    powerSwitchPin::dir<AVR::Output>();    
+    powerSwitchPin::on();    
+    
+    Util::delay(500_ms);
     
     display::init();
     
-    Util::delay(100_ms);
+    Util::delay(300_ms);
     
-    powerSwitchPin::dir<AVR::Output>();    
     powerSwitchPin::off();    
     
     testPin::dir<AVR::Output>();
@@ -349,9 +332,9 @@ int main() {
             systemConstantRate::periodic();
             irConstantRate::periodic();
             
-            IRMP_DATA irmp_data;
+            Irmp::IRMP_DATA irmp_data;
             if (irmp_get_data(&irmp_data)) {
-                EventManager::enqueue({(irmp_data.flags & IRMP_FLAG_REPETITION) ? EventType::IREventRepeat : EventType::IREvent , uint8_t(irmp_data.command)});
+                EventManager::enqueue({(irmp_data.flags & Irmp::Repetition) ? EventType::IREventRepeat : EventType::IREvent , uint8_t(irmp_data.command)});
             }
             
             if (EventManager::unprocessedEvent()) {
@@ -369,7 +352,6 @@ ISR(TIMER0_COMPA_vect) {
 }
 ISR(TIMER2_COMPA_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<2>::CompareA>();
-    testPin::toggle();
 }
 ISR(USART1_RX_vect) {
     isrRegistrar::isr<AVR::ISR::Usart<1>::RX>();
@@ -386,10 +368,17 @@ void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsign
 #endif
 
 constexpr uint32_t finterrupts = fIr.value;
+
+static_assert(finterrupts >= 10000, "IR Interrupts frequeny too low");
+static_assert(finterrupts <= 20000, "IR Interrupts frequeny too high");
+
 #define F_INTERRUPTS finterrupts
 
 // uncomment in original file
 #define input(x) iRPin::read()
 
+namespace Irmp {
 // this must be the last statement!!!
 #include "irmp/irmp.c"
+}
+

@@ -24,8 +24,6 @@
 #include "external/ws2812.h"
 #include "container/pgmarray.h"
 
-static volatile uint8_t x = 0;
-
 template<typename LedPin, typename ColorSequence = ColorSequenceRGB>
 class WordclockDisplay {
     WordclockDisplay() = delete;

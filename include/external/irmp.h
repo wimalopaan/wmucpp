@@ -15,7 +15,33 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef IRMP_H
-#define IRMP_H
 
-#endif // IRMP_H
+#pragma once
+
+#include <stdint.h>
+
+namespace Irmp {
+
+extern "C" {
+
+// uncomment in original files
+struct IrmpData {
+    uint8_t                             protocol;                                   // protocol, e.g. NEC_PROTOCOL
+    uint16_t                            address;                                    // address
+    uint16_t                            command;                                    // command
+    uint8_t                             flags;                                      // flags, e.g. repetition
+} __attribute__ ((__packed__));
+
+typedef struct IrmpData IRMP_DATA;
+
+extern void                             irmp_init (void);
+extern uint_fast8_t                     irmp_get_data (IRMP_DATA *);
+extern uint_fast8_t                     irmp_ISR (void);
+
+}
+
+constexpr uint8_t Repetition = 0x01;
+
+}
+
+
