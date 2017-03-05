@@ -7,6 +7,8 @@ avrdude.conf
 boards/Makefile
 boards/clock/Makefile
 boards/clock/main.cc
+boards/clock/nixie/Makefile
+boards/clock/nixie/main.cc
 boards/clock/universal/board.txt
 boards/clock/wordclock/Makefile
 boards/clock/wordclock/board.txt

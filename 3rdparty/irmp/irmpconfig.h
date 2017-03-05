@@ -52,8 +52,8 @@
 // typical protocols, disable here!             Enable  Remarks                 F_INTERRUPTS            Program Space
 #define IRMP_SUPPORT_SIRCS_PROTOCOL             1       // Sony SIRCS           >= 10000                 ~150 bytes
 #define IRMP_SUPPORT_NEC_PROTOCOL               1       // NEC + APPLE          >= 10000                 ~300 bytes
-#define IRMP_SUPPORT_SAMSUNG_PROTOCOL           1       // Samsung + Samsg32    >= 10000                 ~300 bytes
-#define IRMP_SUPPORT_KASEIKYO_PROTOCOL          1       // Kaseikyo             >= 10000                 ~250 bytes
+#define IRMP_SUPPORT_SAMSUNG_PROTOCOL           0       // Samsung + Samsg32    >= 10000                 ~300 bytes
+#define IRMP_SUPPORT_KASEIKYO_PROTOCOL          0       // Kaseikyo             >= 10000                 ~250 bytes
 
 // more protocols, enable here!                 Enable  Remarks                 F_INTERRUPTS            Program Space
 #define IRMP_SUPPORT_JVC_PROTOCOL               0       // JVC                  >= 10000                 ~150 bytes
@@ -99,7 +99,7 @@
 #define IRMP_SUPPORT_PANASONIC_PROTOCOL         0       // PANASONIC Beamer     >= 10000                 ~250 bytes
 #define IRMP_SUPPORT_MITSU_HEAVY_PROTOCOL       0       // Mitsubishi Aircond   >= 10000                 ~250 bytes
 #define IRMP_SUPPORT_VINCENT_PROTOCOL           0       // VINCENT              >= 10000                 ~250 bytes
-#define IRMP_SUPPORT_SAMSUNGAH_PROTOCOL         1       // SAMSUNG AH           >= 10000                 ~250 bytes
+#define IRMP_SUPPORT_SAMSUNGAH_PROTOCOL         0       // SAMSUNG AH           >= 10000                 ~250 bytes
 #define IRMP_SUPPORT_RADIO1_PROTOCOL            0       // RADIO, e.g. TEVION   >= 10000                 ~250 bytes (experimental)
 
 /*---------------------------------------------------------------------------------------------------------------------------------------------------

@@ -23,7 +23,7 @@
 #include "mcu/avr/delay.h"
 #include "util/bits.h"
 
-// todo: BitMode
+// todo: BitMode (fuer Constant / Variable-Rate)
 
 template<typename DataPin, typename ClockPin, typename CSPin = void, bool useDelay = false>
 class SoftSpiMaster final {
@@ -49,11 +49,11 @@ public:
             CSPin::low();
             if constexpr(useDelay) Util::delay(Config::SoftSpiMaster::pulseDelay);
         }
-        PulseBits<Util::numberOfBits<T>()>();
-        // todo: check code size for template        
-//        for(uint8_t i = 0; i < Util::numberOfBits<T>(); ++i) {
-//            pulseNextBit();
-//        }
+//        PulseBits<Util::numberOfBits<T>()>();
+
+        for(uint8_t i = 0; i < Util::numberOfBits<T>(); ++i) {
+            pulseNextBit();
+        }
 
         if constexpr(!std::is_same<CSPin, void>::value) {
             if constexpr(useDelay) Util::delay(Config::SoftSpiMaster::pulseDelay);
@@ -67,23 +67,7 @@ public:
         mData = data;
     }
 
-//    static inline void pulseNextBit() {
-//        if (Util::isSet<Util::MSB>(mData)) {
-//            DataPin::high();
-//        }
-//        else {
-//            DataPin::low();
-//        }
-//        if constexpr(useDelay) Util::delay(Config::SoftSpiMaster::pulseDelay);
-//        ClockPin::high();
-//        mData <<= 1; // shift next bit
-//        if constexpr(useDelay) Util::delay(Config::SoftSpiMaster::pulseDelay);
-//        ClockPin::low();
-//    }
-
-private:
-    template<uint8_t Bits>
-    static inline void PulseBits() {
+    static inline void pulseNextBit() {
         if (Util::isSet<Util::MSB>(mData)) {
             DataPin::high();
         }
@@ -95,11 +79,27 @@ private:
         mData <<= 1; // shift next bit
         if constexpr(useDelay) Util::delay(Config::SoftSpiMaster::pulseDelay);
         ClockPin::low();
-        
-        if constexpr(Bits > 0) {
-            PulseBits<Bits - 1>();
-        }
     }
+
+private:
+//    template<uint8_t Bits>
+//    static inline void PulseBits() {
+//        if (Util::isSet<Util::MSB>(mData)) {
+//            DataPin::high();
+//        }
+//        else {
+//            DataPin::low();
+//        }
+//        if constexpr(useDelay) Util::delay(Config::SoftSpiMaster::pulseDelay);
+//        ClockPin::high();
+//        mData <<= 1; // shift next bit
+//        if constexpr(useDelay) Util::delay(Config::SoftSpiMaster::pulseDelay);
+//        ClockPin::low();
+        
+//        if constexpr((Bits - 1) > 0) {
+//            PulseBits<Bits - 1>();
+//        }
+//    }
     static uint8_t mData;
 };
 template<typename DataPin, typename ClockPin, typename CSPin, bool useDelay>
