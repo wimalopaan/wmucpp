@@ -16,9 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+
 // sudo avrdude -p atmega88p -P usb -c avrisp2 -U lfuse:w:0xd0:m -U hfuse:w:0xdf:m -U efuse:w:0xf9:m
 
 #include <stdlib.h>
+#include <util/eu_dst.h>
 
 #include "mcu/avr8.h"
 #include "mcu/ports.h"
@@ -28,27 +30,32 @@
 #include "hal/constantrate.h"
 #include "hal/alarmtimer.h"
 #include "hal/adccontroller.h"
-#include "hal/softspimaster.h"
 #include "external/ws2812.h"
 #include "external/dcf77.h"
 #include "appl/ledflash.h"
 #include "appl/clockstatemachine.h"
+#include "appl/timerdisplay4x4.h"
 #include "std/chrono.h"
 
 #include "console.h"
+
+constexpr bool use4x4    = false;
 
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
 using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
 
 using iRPin    = AVR::Pin<PortB, 0>;
-using spiSSPin = AVR::Pin<PortB, 1>;
+using leds1Pin = AVR::Pin<PortB, 1>;
+using leds2Pin = AVR::Pin<PortB, 2>;
+using ppm1Pin  = AVR::Pin<PortB, 3>;
 
 using adc = AdcController<AVR::Adc<0>, 0>;
 
 using rxdPin         = AVR::Pin<PortD, 0>;
 using txdPin         = AVR::Pin<PortD, 1>;
 using dcfPin         = AVR::Pin<PortD, 2>;
+using ppm2Pin        = AVR::Pin<PortD, 3>;
 using powerSwitchPin = AVR::Pin<PortD, 4>;
 using spiClockPin    = AVR::Pin<PortD, 5>;
 using spiDataPin     = AVR::Pin<PortD, 6>;
@@ -57,57 +64,6 @@ using ledPin         = AVR::Pin<PortD, 7>;
 using led = WS2812<1, ledPin, ColorSequenceGRB>;
 using Color = led::color_type;
 
-using spi = SoftSpiMaster<spiDataPin, spiClockPin, spiSSPin>;
-
-template<typename Spi>
-class TimeBCDSerial {
-public:
-    struct Time {};
-    struct Date {};
-    
-    static void init() {
-        Spi::init();
-        for(const auto& b: data()) {
-            Spi::put(b);
-        }
-    }
-
-    template<typename Clock, typename Mode = Time>
-    static void set(const Clock& clock) {
-        DateTime::TimeTm t = clock.dateTime();
-        if constexpr (std::is_same<Mode, Time>::value) {
-            auto hour   = t.hours().value;
-            auto minute = t.minutes().value;
-            auto seconds = t.seconds().value;
-            
-            data()[2] = ((hour % 10) << 4) + hour / 10;
-            data()[1] = ((minute % 10) << 4) + minute / 10;
-            data()[0] = ((seconds % 10) << 4) + seconds / 10;
-        }
-        else {
-            auto year = t.year().value - 100;
-            auto month = t.month().value;
-            auto day = t.day().value;
-            
-            data()[2] = ((day % 10) << 4) + day/ 10;
-            data()[1] = ((month % 10) << 4) + month / 10;
-            data()[0] = ((year % 10) << 4) + year / 10;
-        }
-        
-        for(const auto& b: data()) {
-            Spi::put(b);
-        }
-    }    
-private:
-    static auto& data() {
-        static std::array<uint8_t, 3> mData;
-        return mData;
-    }
-};
-
-using display = TimeBCDSerial<spi>;
-
-// todo: belegt RAM im data segment ?
 namespace Constant {
 static constexpr uint8_t brightness = 255;
 static constexpr Color cOff{0};
@@ -124,10 +80,12 @@ static constexpr uint16_t analogBrightnessMaximum = 400;
 
 static constexpr uint32_t secondsPerDay = (uint32_t)60 * 60 * 24;
 
-static constexpr auto title = "NixieClock 01"_pgm;
+static constexpr auto title = "Clock 4x4"_pgm;
 }
 
 using statusLed = LedFlash<led>;
+
+using leds1 = WS2812<16, leds1Pin, ColorSequenceGRB>;
 
 using terminal = AVR::Usart<0, void>;
 
@@ -139,6 +97,9 @@ using dcfDecoder = DCF77<dcfPin, Config::Timer::frequency, EventManager, true>;
 using systemConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<0>::CompareA, alarmTimer, dcfDecoder>;
 
 using isrRegistrar = IsrRegistrar<systemConstantRate, terminal::RxHandler, terminal::TxHandler>;
+
+
+using display = TimerDisplay4x4<leds1, Constant::cBlue>;
 
 namespace std {
 std::basic_ostream<terminal> cout;
@@ -153,7 +114,6 @@ std::chrono::system_clock<> systemClock;
 
 std::percent brightness = 100_ppc;
 
-// todo: für ReSync erweitern: falls Resync nicht erfolgreich -> Zeit beibehalten und ReSyncCounter irgendwie anzeigen (Farbe ander 12).
 template<typename PowerPin = void>
 struct StateManager{
     using State = typename ClockStateMachine::State;
@@ -161,30 +121,35 @@ struct StateManager{
         switch(state) {
         case State::PreStart:
             std::cout << "S: PreStart"_pgm << std::endl;
+            statusLed::steadyColor(Constant::cOff);
             if constexpr(!std::is_same<PowerPin, void>::value) {
                 powerSwitchPin::off();
             }
             break;
         case State::Start:
             std::cout << "S: Start"_pgm << std::endl;
+            statusLed::steadyColor(Constant::cBlue * brightness);
             if constexpr(!std::is_same<PowerPin, void>::value) {
                 powerSwitchPin::off();
             }
             break;
         case State::Sync1:
             std::cout << "S: Sync1"_pgm << std::endl;
+            statusLed::steadyColor(Constant::cYellow * brightness);
             if constexpr(!std::is_same<PowerPin, void>::value) {
                 powerSwitchPin::off();
             }
             break;
         case State::Sync2:
             std::cout << "S: Sync2"_pgm << std::endl;
+            statusLed::steadyColor(Constant::cCyan * brightness);
             if constexpr(!std::is_same<PowerPin, void>::value) {
                 powerSwitchPin::off();
             }
             break;
         case State::Clock:
             std::cout << "S: Clock"_pgm << std::endl;
+            statusLed::steadyColor(Constant::cGreen * brightness);
             systemClock = std::chrono::system_clock<>::from(dcfDecoder::dateTime());
             if constexpr(!std::is_same<PowerPin, void>::value) {
                 powerSwitchPin::on();
@@ -192,6 +157,7 @@ struct StateManager{
             break;
         case State::Error:
             std::cout << "S: Error"_pgm << std::endl;
+            statusLed::steadyColor(Constant::cMagenta * brightness);
             if constexpr(!std::is_same<PowerPin, void>::value) {
                 powerSwitchPin::off();
             }
@@ -200,33 +166,7 @@ struct StateManager{
     }        
 };
 
-struct LightManager{
-    using State = typename ClockStateMachine::State;
-    static void process(State state) {
-        switch(state) {
-        case State::PreStart:
-            statusLed::steadyColor(Constant::cOff);
-            break;
-        case State::Start:
-            statusLed::steadyColor(Constant::cBlue);
-            break;
-        case State::Sync1:
-            statusLed::steadyColor(Constant::cYellow);
-            break;
-        case State::Sync2:
-            statusLed::steadyColor(Constant::cCyan);
-            break;
-        case State::Clock:
-            statusLed::steadyColor(Constant::cGreen);
-            break;
-        case State::Error:
-            statusLed::steadyColor(Constant::cMagenta);
-            break;
-        }
-    }        
-};
-
-using clockFSM = ClockStateMachine::Machine<StateManager<powerSwitchPin>, void, LightManager>;
+using clockFSM = ClockStateMachine::Machine<StateManager<powerSwitchPin>>;
 
 struct TimerHandler : public EventHandler<EventType::Timer> {
     static bool process(uint8_t timer) {
@@ -236,13 +176,8 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
         else if (timer == *secondsTimer) {
             std::cout << "light: "_pgm << brightness << std::endl;
             if (systemClock) {
-                if ((systemClock.value() % 30) == 0) {
-                    display::set<decltype(systemClock), display::Date>(systemClock);
-                } 
-                else {
-                    display::set(systemClock);
-                }
-
+                display::set(systemClock);
+                
                 std::cout << systemClock.dateTime() << std::endl;
                 
                 if ((systemClock.value() % Constant::secondsPerDay) == 0) {
@@ -281,17 +216,13 @@ struct UsartDorHandler : public EventHandler<EventType::UsartDor> {
 };
 struct DCFReceive0Handler : public EventHandler<EventType::DCFReceive0> {
     static bool process(uint8_t) {
-        if (clockFSM::state() != ClockStateMachine::State::Clock) {
-            statusLed::flash(Constant::cRed, 1);
-        }
+        statusLed::flash(Constant::cRed * brightness, 1);
         return true;
     }  
 };
 struct DCFReceive1Handler : public EventHandler<EventType::DCFReceive1> {
     static bool process(uint8_t) {
-        if (clockFSM::state() != ClockStateMachine::State::Clock) {
-            statusLed::flash(Constant::cRed, 2);
-        }
+        statusLed::flash(Constant::cRed * brightness, 2);
         return true;
     }  
 };
@@ -319,32 +250,26 @@ struct DCFParityHandler : public EventHandler<EventType::DCFParityError> {
         return true;
     }  
 };
-struct IRHandler : public EventHandler<EventType::IREvent> {
-    static bool process(uint8_t c) {
-        std::cout << "IR: "_pgm << c << std::endl;
-        return true;
-    }  
-};
-struct IRRepeatHandler : public EventHandler<EventType::IREventRepeat> {
-    static bool process(uint8_t c) {
-        std::cout << "IR R: "_pgm << c << std::endl;
-        return true;
-    }  
-};
 
 using allEventHandler = EventHandlerGroup<TimerHandler, UsartFeHandler, UsartUpeHandler, UsartDorHandler, Usart0Handler,
                                         DCFReceive0Handler, DCFReceive1Handler, DCFDecodeHandler, DCFSyncHandler, DCFErrorHandler, DCFParityHandler>;
 
-constexpr std::hertz fIr = 15000_Hz;
-
-int main() {   
-    powerSwitchPin::dir<AVR::Output>();    
-    powerSwitchPin::off();    
+int main(){   
+//    set_zone(ONE_HOUR); // europe central time
+//    set_dst(eu_dst);
+    
     isrRegistrar::init();
     alarmTimer::init();
+    
+    powerSwitchPin::dir<AVR::Output>();    
+    powerSwitchPin::off();    
+    
     terminal::init<19200>();
+    
     statusLed::init();
+    
     display::init();
+
     adc::init();
     
     {
@@ -354,8 +279,9 @@ int main() {
         EventManager::run2<allEventHandler>([](){
             adc::periodic();
             brightness = std::scale(adc::value(0), adc::value_type(0), adc::value_type(Constant::analogBrightnessMaximum));
-            brightness = std::min(brightness, 1_ppc);
-            
+  
+            display::brightness = brightness;
+
             systemConstantRate::periodic();
             if (EventManager::unprocessedEvent()) {
                 EventManager::unprocessedEvent() = false;

@@ -153,7 +153,5 @@ public:
     }
 
 private:
-    static std::array<uint8_t, 7> mTimeInfo;   
+    inline static std::array<uint8_t, 7> mTimeInfo;   
 };
-template<typename TWIMaster>
-std::array<uint8_t, 7> DS1307<TWIMaster>::mTimeInfo;

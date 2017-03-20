@@ -38,17 +38,19 @@ public:
                 Led::set(mFlashColor * brightness);                
             }
             else {
-                Led::set(mSteakColor * brightness);
+                Led::set(mSteadyColor * brightness);
             }
             if (mFlash >= mFlashTickCount) {
                 mFlash = mFlashTickCount = 0;
             }
         }
+        else {
+            Led::set(mSteadyColor * brightness);
+        }
     }
 
     static void steadyColor(const Color& c) {
-        mSteakColor= c;
-        Led::set(mSteakColor);
+        mSteadyColor= c;
     }
     static void flash(const Color& c, uint8_t flashCount) {
         assert(flashCount < 128);
@@ -57,15 +59,7 @@ public:
     }
 
 private:
-    static uint8_t mFlashTickCount;
-    static Color mSteakColor;
-    static Color mFlashColor;
+    inline static uint8_t mFlashTickCount = 0;
+    inline static Color mSteadyColor{0};
+    inline static Color mFlashColor{32};
 };
-
-template<typename Led>
-uint8_t LedFlash<Led>::mFlashTickCount{0};
-
-template<typename Led>
-typename LedFlash<Led>::Color LedFlash<Led>::mSteakColor{0};
-template<typename Led>
-typename LedFlash<Led>::Color LedFlash<Led>::mFlashColor{32};

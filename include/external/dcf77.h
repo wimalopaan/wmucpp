@@ -200,10 +200,10 @@ private:
             return false;
         }
     }
-    static DateTime::TimeTm dcfTime;
-    static uint8_t highCount;
-    static uint8_t lowCount;
-    static uint8_t bitCounter;
+    inline static DateTime::TimeTm dcfTime;
+    inline static uint8_t highCount = 0;
+    inline static uint8_t lowCount = 0;
+    inline static uint8_t bitCounter = 0;
     union DcfBits {
         uint64_t bits = 0;
         uint8_t  bytes[NumberOfDCFBytes];
@@ -233,7 +233,7 @@ private:
                         unused    : 1;
         } __attribute__((packed)) components;
     };
-    static DcfBits dcfBits;
+    inline static DcfBits dcfBits;
     static inline void setBit(uint8_t number) {
         if (number < bitCounterMax) {
             dcfBits.bytes[number / 8] |= _BV(number % 8);
@@ -251,13 +251,3 @@ private:
         }
     }
 };
-template<typename Pin, const std::hertz& samplingFrequency, typename EM, bool Invert>
-DateTime::TimeTm  DCF77<Pin, samplingFrequency, EM, Invert>::dcfTime;
-template<typename Pin, const std::hertz& samplingFrequency, typename EM, bool Invert>
-uint8_t DCF77<Pin, samplingFrequency, EM, Invert>::highCount = 0;
-template<typename Pin, const std::hertz& samplingFrequency, typename EM, bool Invert>
-uint8_t DCF77<Pin, samplingFrequency, EM, Invert>::lowCount = 0;
-template<typename Pin, const std::hertz& samplingFrequency, typename EM, bool Invert>
-uint8_t DCF77<Pin, samplingFrequency, EM, Invert>::bitCounter = 0;
-template<typename Pin, const std::hertz& samplingFrequency, typename EM, bool Invert>
-typename DCF77<Pin, samplingFrequency, EM, Invert>::DcfBits DCF77<Pin, samplingFrequency, EM, Invert>::dcfBits;

@@ -33,81 +33,69 @@ public:
         Led::off();
     }
     static void blink(const Color& color, uint8_t blinks) {
-        colors().clear();
-        colors().push_back(Color{0});
-        colors().push_back(color);
-        count() = blinks;
-        actualColor() = 0;
-        actualCount() = 0;
+        colors.clear();
+        colors.push_back(Color{0});
+        colors.push_back(color);
+        count = blinks;
+        actualColor = 0;
+        actualCount = 0;
     }
     static void blink(const Color& color1, const Color& color2, uint8_t blinks) {
-        colors().clear();
-        colors().push_back(color1);
-        colors().push_back(color2);
-        count() = blinks;
-        actualColor() = 0;
-        actualCount() = 0;
+        colors.clear();
+        colors.push_back(color1);
+        colors.push_back(color2);
+        count = blinks;
+        actualColor = 0;
+        actualCount = 0;
     }
     template<uint8_t N>
     static void blink(const std::array<Color, N>& bcolors, uint8_t blinks) {
         static_assert(N <= MaximumColors, "too many colors");
-        colors().clear();
+        colors.clear();
         // todo: use algorithm and back_inserter
         for( const auto& c: bcolors) {
-            colors().push_back(c);
+            colors.push_back(c);
         }
-        count() = blinks;
-        actualColor() = 0;
-        actualCount() = 0;
+        count = blinks;
+        actualColor = 0;
+        actualCount = 0;
     }
         
     static void tick() {
-        if (count()) {
-            if (actualCount() < *count()) {
-                assert(actualColor() < colors().size());
-                Led::set(colors()[actualColor()]);
-                actualColor() = (actualColor() + 1) % colors().size();
-                if (actualColor() == 0) {
-                    ++actualCount();
+        if (count) {
+            if (actualCount < *count) {
+                assert(actualColor < colors.size());
+                Led::set(colors[actualColor]);
+                actualColor = (actualColor + 1) % colors.size();
+                if (actualColor == 0) {
+                    ++actualCount;
                 }
             }
             else {
-                count().setNaN();
-                actualCount() = 0;
-                actualColor() = 0;
+                count.setNaN();
+                actualCount = 0;
+                actualColor = 0;
             }
         }
         else {
-            if (actualCount() == 0) {
+            if (actualCount == 0) {
                 Led::off();
-                ++actualCount();
+                ++actualCount;
             }
             else {
                 Led::set(SteadyColor);
-                actualCount() = 0;
+                actualCount = 0;
             }
         }
     }
 
 private:
-    static auto& colors() {
-        static std::FixedVector<Color, MaximumColors> colors;
-        return colors;
-    }
-    static auto& count() {
-        static uint_NaN<uint8_t> count = [](){
+    inline static std::FixedVector<Color, MaximumColors> colors;
+    inline static uint_NaN<uint8_t> count = [](){
             uint_NaN<uint8_t> v;
             v.setNaN();
             return v;
         }();
-        return count;
-    }
-    static auto& actualColor() {
-        static uint8_t actual = 0;
-        return  actual;
-    }
-    static auto& actualCount() {
-        static uint8_t actual = 0;
-        return  actual;
-    }
+    inline static uint8_t actualColor = 0;
+    inline static uint8_t actualCount = 0;  // c++17
 };

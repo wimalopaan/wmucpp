@@ -86,9 +86,6 @@ public:
     }
 
 private:
-    static GamMsg hottBinaryResponse;
+    inline static GamMsg hottBinaryResponse;
 };
-template<uint8_t N>
-GamMsg SensorProtocollBuffer<N>::hottBinaryResponse;
-
 }

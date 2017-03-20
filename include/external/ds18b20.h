@@ -141,7 +141,7 @@ public:
     }
 
     static FixedPoint<int16_t, 4> temperature() {
-        return temperature(scratchPad());
+        return temperature(mScratchPad);
     }
 
     static FixedPoint<int16_t, 4> temperature(ds18b20_rsp_t& sp) {
@@ -154,15 +154,15 @@ public:
     static bool process(uint8_t) {
         static_assert(OneWireMaster::isAsync, "async interface shall use async OneWireMaster");
         bool ok = true;
-        for(uint8_t i = 0; i < scratchPad().size; ++i) {
+        for(uint8_t i = 0; i < mScratchPad.size; ++i) {
             if (auto v = OneWireMaster::get()) {
-                scratchPad()[i] = *v;
+                mScratchPad[i] = *v;
             }
             else {
                 ok = false;
             }
         }
-        ok &= std::crc8(scratchPad());
+        ok &= std::crc8(mScratchPad);
         
         if (ok) {
             EventManager::enqueue({EventType::DS18B20Measurement, 0});
@@ -173,8 +173,5 @@ public:
         return true;
     }
 private:
-    static ds18b20_rsp_t& scratchPad() {
-        static ds18b20_rsp_t mScratchPad;
-        return mScratchPad;
-    }
+    inline static ds18b20_rsp_t mScratchPad;
 };

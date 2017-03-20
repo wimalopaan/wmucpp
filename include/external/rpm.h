@@ -69,25 +69,25 @@ public:
     
     static value_type period() {
         if constexpr(mcu_type::template is_atomic<value_type>()) {
-            return actualPeriod();
+            return mActualPeriod();
         }
         else {
             Scoped<DisbaleInterrupt> di;
-            return actualPeriod();
+            return mActualPeriod;
         }
     }
 
     static value_type filteredPeriod() {
-        if (measurements() > MinMeasurements) {
-            if (actualPeriod() >= minPeriod) {
-                return actualPeriod();
+        if (mMeasurements > MinMeasurements) {
+            if (mActualPeriod >= minPeriod) {
+                return mActualPeriod;
             }
         }
         return 0;
     }
     
     static void reset() {
-        measurements()= 0;
+        mMeasurements = 0;
     }
     
     static std::hertz frequency() {
@@ -105,29 +105,17 @@ public:
     }
     
     static void isr() {
-        if (++intCount() == IntsPerRotation) {
-            actualPeriod() = (MCUTimer::counter() - timerStartValue() + std::numeric_limits<value_type>::module()) % std::numeric_limits<value_type>::module();
-            timerStartValue() = MCUTimer::counter();
-            intCount() = 0;
-            ++measurements();
+        if (++mIntCount == IntsPerRotation) {
+            mActualPeriod = (MCUTimer::counter() - mTimerStartValue + std::numeric_limits<value_type>::module()) % std::numeric_limits<value_type>::module();
+            mTimerStartValue = MCUTimer::counter();
+            mIntCount = 0;
+            ++mMeasurements;
         }
     }
 private:
-    static auto& timerStartValue() {
-        static volatile value_type sTimerStartValue = 0;
-        return sTimerStartValue;
-    }
-    static auto& actualPeriod() {
-        static volatile value_type sPeriod = 0;
-        return sPeriod;
-    }
-    static auto& intCount() {
-        static volatile uint8_t sIntCount = 0;
-        return sIntCount;
-    }
-    static auto& measurements() {
-        static volatile uint_bounded<uint8_t> sMeasurements{0};
-        return sMeasurements;
-    }
+    inline static volatile value_type mTimerStartValue = 0;
+    inline static volatile value_type mActualPeriod = 0;
+    inline static volatile uint8_t mIntCount = 0;
+    inline static volatile uint_bounded<uint8_t> mMeasurements{0};
 };
 

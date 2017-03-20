@@ -256,7 +256,7 @@ public:
     }
  
 private:
-    static uint8_t colorBase;
+    inline static uint8_t colorBase = 0;
     
     static inline void switchColorBase() {
         colorBase = (colorBase + 1) % numberOfColors;
@@ -270,8 +270,6 @@ private:
         }
     }
 };
-template<typename LedPin, typename ColorSequence>
-uint8_t WordclockDisplay<LedPin, ColorSequence>::colorBase = 0;
 
 // Z-Verdrahtung
 /*

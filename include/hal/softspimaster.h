@@ -100,7 +100,5 @@ private:
 //            PulseBits<Bits - 1>();
 //        }
 //    }
-    static uint8_t mData;
+    inline static uint8_t mData = 0;
 };
-template<typename DataPin, typename ClockPin, typename CSPin, bool useDelay>
-uint8_t SoftSpiMaster<DataPin, ClockPin, CSPin, useDelay>::mData = 0;

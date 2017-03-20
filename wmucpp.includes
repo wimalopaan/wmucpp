@@ -53,3 +53,5 @@ boards/protector
 boards/clock/wordclock
 3rdparty/irmp
 boards/clock/nixie
+boards/clock/4x4
+boards/clock/ring60

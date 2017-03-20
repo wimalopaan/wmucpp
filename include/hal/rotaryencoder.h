@@ -34,20 +34,16 @@ public:
     }
     static void rateProcess() {
         uint8_t newState = (Pin1::read() ? 2 : 0) + (Pin2::read() ? 1 : 0);    
-        uint8_t offset = transitionTable[lastState()][newState];
+        uint8_t offset = transitionTable[mLastState][newState];
         value() += offset;
-        lastState() = newState;
+        mLastState = newState;
     }
     static ValueType& value() {
         static ValueType v = 0;        
         return v;
     }   
-
 private:
-    static uint8_t& lastState() {
-        static uint8_t ls = 0;
-        return ls;
-    }
+    inline static uint8_t mLastState = 0;
     static constexpr uint8_t numberOfStates = 4;
     static constexpr int8_t transitionTable[numberOfStates][numberOfStates] = {
         { 0, 1, -1, 0},

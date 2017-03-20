@@ -279,9 +279,7 @@ private:
         Pin::off();
     }
     
-    static uint8_t actualRow;
+    inline static uint8_t actualRow = 0;
 };
-template<typename Data, typename RS, typename RW, typename E, typename Type>
-uint8_t HD44780<Data, RS, RW, E, Type>::actualRow = 0;
 
 }

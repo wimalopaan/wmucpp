@@ -44,8 +44,8 @@ public:
     };
 
     Char operator[](uint8_t c) const {
-        assert(c >= 0x20);
-        uint16_t o = (c - 0x20) * Width;
+        assert(c >= ' ');
+        uint16_t o = (c - ' ') * Width;
         assert(o < sizeof(data));
         return Char{o};
     }

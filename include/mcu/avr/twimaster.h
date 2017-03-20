@@ -282,19 +282,11 @@ public:
     }
 
 private:
-    static std::FiFo<uint8_t, BSize> mRecvQueue;
-    static std::FiFo<uint8_t, BSize> mSendQueue;
-    static uint_bounded<uint8_t> mBytesToRead;
-    static uint_bounded<uint8_t> mBytesToWrite;
+    inline static std::FiFo<uint8_t, BSize> mRecvQueue;
+    inline static std::FiFo<uint8_t, BSize> mSendQueue;
+    inline static uint_bounded<uint8_t> mBytesToRead;
+    inline static uint_bounded<uint8_t> mBytesToWrite;
 };
-template<typename TWIMaster, uint8_t BSize, bool UseSendEvent>
-uint_bounded<uint8_t> MasterAsync<TWIMaster, BSize, UseSendEvent>::mBytesToRead;
-template<typename TWIMaster, uint8_t BSize, bool UseSendEvent>
-uint_bounded<uint8_t> MasterAsync<TWIMaster, BSize, UseSendEvent>::mBytesToWrite;
-template<typename TWIMaster, uint8_t BSize, bool UseSendEvent>
-std::FiFo<uint8_t, BSize> MasterAsync<TWIMaster, BSize, UseSendEvent>::mRecvQueue;
-template<typename TWIMaster, uint8_t BSize, bool UseSendEvent>
-std::FiFo<uint8_t, BSize> MasterAsync<TWIMaster, BSize, UseSendEvent>::mSendQueue;
 
 struct TwiSetupData {
     const uint16_t prescale = 0;

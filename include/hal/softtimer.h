@@ -63,7 +63,5 @@ public:
     }
     
 private:
-    static volatile ValueType mCounter;
+    inline static volatile ValueType mCounter = 0;
 };
-template<typename MCUTimer, typename ValueType>
-volatile ValueType SoftTimer<MCUTimer, ValueType>::mCounter = 0;

@@ -45,6 +45,9 @@ constexpr bool operator!=(std::percent lhs, std::percent rhs) {
 constexpr bool operator>(std::percent lhs, std::percent rhs) {
     return lhs.value() > rhs.value();
 }
+constexpr bool operator<(std::percent lhs, std::percent rhs) {
+    return lhs.value() < rhs.value();
+}
 
 namespace literals {
 namespace quantity {

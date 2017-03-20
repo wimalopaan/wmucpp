@@ -51,32 +51,32 @@ public:
         *mcu_twi()->twar = busAddress.value();
         mcu_twi()->twcr.template clear<twc::twsta | twc::twsta>();
         mcu_twi()->twcr.template set<twc::twea | twc::twen | twc::twie>();
-        index().setNaN();
+        index.setNaN();
     }
     static void isr() {
         auto twst = mcu_twi()->twsr.template get<tw_status_mask>();
         switch(twst) {
         case tws::twSrSlaAck:
             mcu_twi()->twcr.template set<twcr_ack>();
-            index().setNaN();
+            index.setNaN();
             break;
         case tws::twSrDataAck:
         {
             uint8_t data = *mcu_twi()->twdr;
-            if (!index()) {
+            if (!index) {
                 if (data < Size) {
-                    index() = data;
+                    index = data;
                 }
                 else {
-                    index() = 0;
+                    index = 0;
                 }
                 mcu_twi()->twcr.template set<twcr_ack>();
             }
             else {
-                if (*index() < Size) {
-                    registers()[*index()] = data;
+                if (*index < Size) {
+                    registers()[*index] = data;
                     isChanged() = true;
-                    ++index();
+                    ++index;
                 }
                 mcu_twi()->twcr.template set<twcr_ack>();
             }
@@ -84,12 +84,12 @@ public:
             break;
         case tws::twStSlaAck:
         case tws::twStDataAck:
-            if (!index()) {
-                index() = 0;
+            if (!index) {
+                index = 0;
             }
-            if (*index() < Size) {
-                *mcu_twi()->twdr = registers()[*index()];
-                ++index();
+            if (*index < Size) {
+                *mcu_twi()->twdr = registers()[*index];
+                ++index;
             }
             else {
                 *mcu_twi()->twdr = 0;
@@ -116,10 +116,7 @@ public:
         return rm;
     }
 private:
-    static auto& index() {
-        static volatile uint_NaN<uint8_t> r_index;
-        return r_index;
-    }
+    inline static volatile uint_NaN<uint8_t> index;
 };
 
 }

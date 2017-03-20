@@ -69,6 +69,15 @@ public:
     Hour hours() const {
         return {static_cast<uint8_t>(mTime.tm_hour)};
     }    
+    Day day() const {
+        return {static_cast<uint8_t>(mTime.tm_mday)};
+    }    
+    Year year () const {
+        return {static_cast<uint16_t>(mTime.tm_year)};
+    }    
+    Month month() const {
+        return {static_cast<uint8_t>(mTime.tm_mon)};
+    }    
     constexpr TimeTm(Day day, Month month, Year year, Hour hour, Minute minute, Second second, bool dst) 
         : mTime{(int8_t)second.value, (int8_t)minute.value, (int8_t)hour.value, (int8_t)day.value, 0, 
                 (int8_t)month.value, (int16_t)year.value, 0, dst ? 1 : 0}

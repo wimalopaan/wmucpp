@@ -73,8 +73,5 @@ public:
     }
 
 private:
-    static State state;
+    inline static State state = State::Undefined;
 };
-
-template<int N, typename Decoder>
-typename PpmSwitch<N, Decoder>::State PpmSwitch<N, Decoder>::state = PpmSwitch<N, Decoder>::State::Undefined;

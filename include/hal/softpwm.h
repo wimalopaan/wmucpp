@@ -71,14 +71,7 @@ public:
     }
     
 private:
-    static uint16_t mThresh[sizeof...(Pins)];
-    static uint16_t mPeriod;
-    static uint16_t freeCounter;
+    inline static uint16_t mThresh[sizeof...(Pins)] = {};
+    inline static uint16_t mPeriod = 0;
+    inline static uint16_t freeCounter = 0;
 };
-
-template<typename... Pins>
-uint16_t SoftPWM<Pins...>::freeCounter = 0;
-template<typename... Pins>
-uint16_t SoftPWM<Pins...>::mPeriod = 0;
-template<typename... Pins>
-uint16_t SoftPWM<Pins...>::mThresh[sizeof...(Pins)] = {};

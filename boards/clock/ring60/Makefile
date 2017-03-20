@@ -20,8 +20,10 @@
 MCU = atmega88p
 F_OSC = 20000000
 
-subdirs = wordclock nixie 4x4 ring60
+subdirs = 
 
-targets +=  main.elf
+targets +=  main.elf main.s
 
--include ../../Makefile.include
+CXXFLAGS += -I../../../3rdparty
+
+-include ../../../Makefile.include

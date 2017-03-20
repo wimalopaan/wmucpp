@@ -64,7 +64,7 @@ public:
 
     static std::optional<uint7_t> create(std::milliseconds millis, AlarmFlags flags){
         Scoped<DisbaleInterrupt> di;
-        if (auto index = timers().insert({millis / Config::Timer::resolution, millis  / Config::Timer::resolution, flags})) {
+        if (auto index = mTimers.insert({millis / Config::Timer::resolution, millis  / Config::Timer::resolution, flags})) {
             assert(*index <= std::numeric_limits<uint7_t>::max());
             return uint7_t{*index};
         }
@@ -76,26 +76,26 @@ public:
 
     static void remove(uint7_t id) {
         Scoped<DisbaleInterrupt> di;
-        timers().removeAt(id);
+        mTimers.removeAt(id);
     }
 
     static void start(uint7_t id) {
-        timers()[id].flags &= ~AlarmFlags::Disabled;
-        timers()[id].ticksLeft = timers()[id].ticks;
+        mTimers[id].flags &= ~AlarmFlags::Disabled;
+        mTimers[id].ticksLeft = mTimers[id].ticks;
     }
 
     static void stop(uint7_t id) {
-        timers()[id].flags |= AlarmFlags::Disabled;
+        mTimers[id].flags |= AlarmFlags::Disabled;
     }
     
     static bool isActive(uint7_t id) {
-        return !isset((timers()[id].flags & AlarmFlags::Disabled));
+        return !isset((mTimers[id].flags & AlarmFlags::Disabled));
     }
 
     static void periodic() {
         using namespace std::literals::chrono;
-        for(uint8_t i = 0; i < timers().capacity; ++i) {
-            if (auto& t = timers()[i]) {
+        for(uint8_t i = 0; i < mTimers.capacity; ++i) {
+            if (auto& t = mTimers[i]) {
                 if ((--t.ticksLeft == 0) && !isset(t.flags & AlarmFlags::Disabled)) {
                     EventManager::enqueue({EventType::Timer, i});
                     if (isset(t.flags & AlarmFlags::Periodic)) {
@@ -122,9 +122,5 @@ private:
         AlarmFlags flags = AlarmFlags::NoTimer;
     };
 
-    // header only: to avoid static data member
-    static std::FixedVector<TimerImpl, Config::Timer::NumberOfTimers>& timers() {
-        static std::FixedVector<TimerImpl, Config::Timer::NumberOfTimers> timers;
-        return timers;
-    }
+    inline static std::FixedVector<TimerImpl, Config::Timer::NumberOfTimers> mTimers;
 };

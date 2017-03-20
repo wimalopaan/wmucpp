@@ -133,9 +133,7 @@ public:
         overrun |= !EventManager::enqueueISR({SpiEvent<N>::event, c});
     }
 private:
-    static bool overrun;
+    inline static bool overrun = false;
 };
-template<uint8_t N, typename MCU>
-bool Spi<N, MCU>::overrun = false;
 
 }

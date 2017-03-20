@@ -99,10 +99,8 @@ public:
         ++tickCounter;
     }
 private:
-    static volatile uint8_t tickCounter;
+    inline static volatile uint8_t tickCounter = 0;
 };
-template<typename Int, typename... PP>
-volatile uint8_t PeriodicGroup<Int, PP...>::tickCounter = 0;
 
 template<typename... EE>
 class EventHandlerGroup {
@@ -152,7 +150,7 @@ class EventManager final
 public:
     EventManager() = delete;
     static bool enqueue(const Event8u_t& event) {
-        if (!fifo().push_back(event)) { // lockfree fifo
+        if (!mFifo.push_back(event)) { // lockfree fifo
             leakedEvent() = true;
             return false;
         }
@@ -165,7 +163,7 @@ public:
         unprocessedEvent() = false;
         while(true) {
             periodic();
-            if (auto event = fifo().pop_front()) {
+            if (auto event = mFifo.pop_front()) {
                 if (!EE::process(*event)) {
                     unprocessedEvent() = true;
                 }
@@ -180,7 +178,7 @@ public:
         while(true) {
             PP::periodic();
             periodic();
-            if (auto event = fifo().pop_front()) {
+            if (auto event = mFifo.pop_front()) {
                 if (!EE::process(*event)) {
                     unprocessedEvent() = true;
                 }
@@ -193,7 +191,7 @@ public:
         unprocessedEvent() = false;
         while(true) {
             PP::periodic();
-            if (auto event = fifo().pop_front()) {
+            if (auto event = mFifo.pop_front()) {
                 if (!EE::process(*event)) {
                     unprocessedEvent() = true;
                 }
@@ -210,17 +208,13 @@ public:
     }
 private:
     static bool enqueueISR(const Event8u_t& event) {
-        if (!fifo().push_back(event)) {
+        if (!mFifo.push_back(event)) {
             leakedEvent() = true;
             return false;
         }
         return true;
     }
-    // header only: to avoid static data member
-    static volatile std::FiFo<Event8u_t, Config::EventManager::EventQueueLength>& fifo()  {
-        static volatile std::FiFo<Event8u_t, Config::EventManager::EventQueueLength> fifo;
-        return fifo;
-    }
+    inline static volatile std::FiFo<Event8u_t, Config::EventManager::EventQueueLength> mFifo;
 };
 
 template<EventType Type>

@@ -39,15 +39,15 @@ public:
             }
             typename Font::Char pattern = font[c]; 
             for(uint8_t col = 0; col < Font::Width; ++col) {
-                if (position >= bitmap().size) {
+                if (position >= mBitmap.size) {
                     break;
                 }
                 if (auto bits = pattern[col]; bits != 0) {
-                    bitmap()[position++] = bits;
+                    mBitmap[position++] = bits;
                 }
             }
             for(uint8_t col = 0; col < Space; ++col) {
-                bitmap()[position++] = 0;
+                mBitmap[position++] = 0;
             }
         }
     }
@@ -66,7 +66,7 @@ public:
                 else {
                     index = 11 + y * 11 + x;
                 }
-                if (bitmap()[x + startInBitmap()] & mask) {
+                if (mBitmap[x + mStartInBitmap] & mask) {
                     Leds::template set<false>(index, Color{255});
                 }
                 else {
@@ -78,20 +78,11 @@ public:
         Leds::write();
     }
     static void shift() {
-        startInBitmap() = (startInBitmap() + 1) % bitmap().size;
+        mStartInBitmap = (mStartInBitmap + 1) % mBitmap.size;
     }
 
 private:
-    static auto& bitmap() {
-        static std::array<uint8_t, TextLength * (Font::Width + Space)> mBitmap;
-        return mBitmap;
-    }
-
+    inline static std::array<uint8_t, TextLength * (Font::Width + Space)> mBitmap;
     static Font font;
-    
-    static auto& startInBitmap() {
-        static uint8_t mStartInBitmap;
-        return mStartInBitmap;
-    }
-
+    inline static uint8_t mStartInBitmap;
 };

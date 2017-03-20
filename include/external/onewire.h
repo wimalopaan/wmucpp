@@ -210,25 +210,13 @@ public:
         return mDevicesPresent;
     }
 private:
-    static std::FiFo<uint8_t, BSize> mRecvQueue;
-    static std::FiFo<uint8_t, BSize> mSendQueue;
-    static uint8_t mBitCount;
-    static State mState;
-    static bool mDevicesPresent;
-    static uint8_t mBytesToRead;
+    inline static std::FiFo<uint8_t, BSize> mRecvQueue;
+    inline static std::FiFo<uint8_t, BSize> mSendQueue;
+    inline static uint8_t mBitCount = 0;
+    inline static State mState = State::Inactive;
+    inline static bool mDevicesPresent = false;
+    inline static uint8_t mBytesToRead = 0;
 };
-template<typename OWMaster, const std::microseconds& delay, uint16_t BSize>
-std::FiFo<uint8_t, BSize> MasterAsync<OWMaster, delay, BSize>::mRecvQueue;
-template<typename OWMaster, const std::microseconds& delay, uint16_t BSize>
-std::FiFo<uint8_t, BSize> MasterAsync<OWMaster, delay, BSize>::mSendQueue;
-template<typename OWMaster, const std::microseconds& delay, uint16_t BSize>
-uint8_t MasterAsync<OWMaster, delay, BSize>::mBitCount = 0;
-template<typename OWMaster, const std::microseconds& delay, uint16_t BSize>
-typename MasterAsync<OWMaster, delay, BSize>::State MasterAsync<OWMaster, delay, BSize>::mState = MasterAsync<OWMaster, delay, BSize>::State::Inactive;
-template<typename OWMaster, const std::microseconds& delay, uint16_t BSize>
-bool MasterAsync<OWMaster, delay, BSize>::mDevicesPresent = false;
-template<typename OWMaster, const std::microseconds& delay, uint16_t BSize>
-uint8_t MasterAsync<OWMaster, delay, BSize>::mBytesToRead = 0;
 
 template<typename Pin, typename Mode, bool InternalPullup = true, bool ParasitePower = false>
 class Master final {

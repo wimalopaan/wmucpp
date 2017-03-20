@@ -5,10 +5,14 @@
 3rdparty/irmp/irmpsystem.h
 avrdude.conf
 boards/Makefile
+boards/clock/4x4/Makefile
+boards/clock/4x4/main.cc
 boards/clock/Makefile
 boards/clock/main.cc
 boards/clock/nixie/Makefile
 boards/clock/nixie/main.cc
+boards/clock/ring60/Makefile
+boards/clock/ring60/main.cc
 boards/clock/universal/board.txt
 boards/clock/wordclock/Makefile
 boards/clock/wordclock/board.txt
@@ -51,10 +55,12 @@ example/basics/register10.cc
 example/externals/ow.cc
 example/externals/ow.h
 include/appl/blink.h
+include/appl/clockstatemachine.h
 include/appl/exponential.h
 include/appl/fonts.h
 include/appl/ledflash.h
 include/appl/shiftdisplay.h
+include/appl/timerdisplay4x4.h
 include/appl/twostateblinker.h
 include/appl/wordclock.h
 include/container/pgmarray.h

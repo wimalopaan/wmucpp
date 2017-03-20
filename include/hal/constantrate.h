@@ -47,10 +47,8 @@ public:
         Pin::low();
     }
 private:
-    static uint8_t value;
+    inline static uint8_t value = V;
 };
-template<typename Pin, uint8_t V>
-uint8_t TestBitShifter<Pin, V>::value = V;
 
 template<typename Buffer, typename Device, typename CounterType = uint16_t, bool disableRx = true>
 class ConstanteRateWriter { 
@@ -92,13 +90,9 @@ public:
         Buffer::init();
     }
 private:
-    static bool mEnable;
-    static CounterType counter;
+    inline static bool mEnable = true;
+    inline static CounterType counter = 0;
 };
-template<typename Buffer, typename Device, typename CounterType, bool disableRx>
-CounterType ConstanteRateWriter<Buffer, Device, CounterType, disableRx>::counter = 0;
-template<typename Buffer, typename Device, typename CounterType, bool disableRx>
-bool ConstanteRateWriter<Buffer, Device, CounterType, disableRx>::mEnable = true;
 
 template<typename Timer, typename Int, typename... Writers >
 class ConstantRateAdapter : public IsrBaseHandler<Int> {
@@ -128,8 +122,5 @@ public:
     }
     constexpr static auto isr = rateTick;
 private:
-    static uint8_t tickCounter;
+    inline static uint8_t tickCounter = 0;
 };
-
-template<typename Timer, typename Int, typename... Writers>
-uint8_t ConstantRateAdapter<Timer, Int, Writers...>::tickCounter = 0;

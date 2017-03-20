@@ -49,11 +49,6 @@ public:
     }
 
 private:
-    static Color mOffColor;
-    static Color mOnColor;
+    inline static Color mOffColor{0};
+    inline static Color mOnColor{Green{32}};
 };
-
-template<typename Led>
-typename TwoStateBlinker<Led>::Color TwoStateBlinker<Led>::mOffColor{0};
-template<typename Led>
-typename TwoStateBlinker<Led>::Color TwoStateBlinker<Led>::mOnColor{Green{32}};

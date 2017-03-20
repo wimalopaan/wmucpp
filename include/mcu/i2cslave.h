@@ -166,13 +166,8 @@ public:
         return rm;
     }
 private:
-    static volatile uint_NaN<uint8_t> index;
-    static volatile State state;
+    inline static volatile uint_NaN<uint8_t> index;
+    inline static volatile State state = State::USI_SLAVE_CHECK_ADDRESS;
 };
-template<typename USI, const TWI::Address& Address, uint8_t Size>
-volatile State I2CSlave<USI, Address, Size>::state = State::USI_SLAVE_CHECK_ADDRESS;
-
-template<typename USI, const TWI::Address& Address, uint8_t Size>
-volatile uint_NaN<uint8_t> I2CSlave<USI, Address, Size>::index;
 
 }

@@ -191,7 +191,7 @@ public:
         return leds[index];
     }
 private:
-    static std::array<item_type, N> leds;
+    inline static std::array<item_type, N> leds;
 public:
     static void write() {
         // Timing in ns
@@ -329,6 +329,3 @@ public:
         //        SREG=sreg_prev;
     }
 };
-
-template<uint8_t N, typename Pin, typename CC, bool DisableInts>
-std::array<cRGB<CC>, N> WS2812<N, Pin, CC, DisableInts>::leds;

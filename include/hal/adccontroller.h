@@ -68,11 +68,6 @@ public:
     }
 
 private:
-    static typename MCUAdc::value_type values[NumberOfChannels];
-    static uint8_t mActualChannel;
+    inline static typename MCUAdc::value_type values[NumberOfChannels] = {};
+    inline static uint8_t mActualChannel = 0;
 };
-
-template<typename MCUAdc, uint8_t... Channels>
-typename MCUAdc::value_type AdcController<MCUAdc, Channels...>::values[NumberOfChannels] = {};
-template<typename MCUAdc, uint8_t... Channels>
-uint8_t AdcController<MCUAdc, Channels...>::mActualChannel = 0;

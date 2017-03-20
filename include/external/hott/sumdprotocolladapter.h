@@ -36,13 +36,13 @@ public:
 
     static uint16_t value(uint8_t channel) {
         Scoped<DisbaleInterrupt> di;
-        return std::combinedValue(msg().channelData[channel]);
+        return std::combinedValue(mMsg.channelData[channel]);
     }
     static uint8_t value8Bit(uint8_t channel) {
-        return msg().channelData[channel].first;
+        return mMsg.channelData[channel].first;
     }
     static uint8_t numberOfChannels() {
-        return msg().nChannels;
+        return mMsg.nChannels;
     }
 private:
     inline static bool process(uint8_t c) { // from isr only
@@ -70,22 +70,22 @@ private:
             }
             break;
         case sumdstate::StartNormal:
-            msg().nChannels = c;
+            mMsg.nChannels = c;
             state = sumdstate::ChannelDataH;
             break;
         case sumdstate::StartFailSafe:
-            msg().nChannels = c;
+            mMsg.nChannels = c;
             state = sumdstate::ChannelDataH;
             break;
         case sumdstate::ChannelDataH:
-            msg().channelData[channel].first = c;
+            mMsg.channelData[channel].first = c;
             state = sumdstate::ChannelDataL;
             break;
         case sumdstate::ChannelDataL:
-            msg().channelData[channel].second = c;
+            mMsg.channelData[channel].second = c;
             state = sumdstate::ChannelDataH;
             ++channel;
-            if (channel < msg().nChannels) {
+            if (channel < mMsg.nChannels) {
                 state = sumdstate::ChannelDataH;
             }
             else {
@@ -97,11 +97,11 @@ private:
             }
             break;
         case sumdstate::CrcH:
-            msg().crc = c << 8;
+            mMsg.crc = c << 8;
             state = sumdstate::CrcL;
             break;
         case sumdstate::CrcL:
-            msg().crc |= c;
+            mMsg.crc |= c;
             state = sumdstate::Undefined;
             break;
         default:
@@ -110,10 +110,8 @@ private:
         }
         return true;
     }
-    static volatile SumDMsg& msg() {
-        static volatile SumDMsg data;
-        return data;
-    }
+    
+    inline static volatile SumDMsg mMsg;
 };
 
 }

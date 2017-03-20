@@ -187,17 +187,8 @@ public:
         }
     }
 private:
-    static std::FiFo<uint8_t, Config::Usart::SendQueueLength> sendQueue;
-    static volatile uint16_t outframe;
-    static volatile uint16_t inframe;
-    static volatile uint8_t inbits;
+    inline static std::FiFo<uint8_t, Config::Usart::SendQueueLength> sendQueue;
+    inline static volatile uint16_t outframe = 0x0001;
+    inline static volatile uint16_t inframe = 0;
+    inline static volatile uint8_t inbits = 0;
 };
-
-template<uint8_t Timer, typename MCU>
-std::FiFo<uint8_t, Config::Usart::SendQueueLength> SWUsart<Timer, MCU>::sendQueue;
-template<uint8_t Timer, typename MCU>
-volatile uint16_t SWUsart<Timer, MCU>::outframe = 0x0001;
-template<uint8_t Timer, typename MCU>
-volatile uint16_t SWUsart<Timer, MCU>::inframe = 0;
-template<uint8_t Timer, typename MCU>
-volatile uint8_t SWUsart<Timer, MCU>::inbits = 0;

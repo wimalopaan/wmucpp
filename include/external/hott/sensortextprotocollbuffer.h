@@ -75,9 +75,7 @@ public:
     }
 
 private:
-    static TextMsg hottTextResponse;
+    inline static TextMsg hottTextResponse;
 };
-template<uint8_t N>
-TextMsg SensorTextProtocollBuffer<N>::hottTextResponse;
 
 }

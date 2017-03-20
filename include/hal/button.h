@@ -92,17 +92,14 @@ public:
         Pin::template dir<AVR::Input>();
         Pin::pullup();
     }
-    static Data& data() {
-        static Data mData {0, 0};
-        return mData;
-    }
+    inline static Data mData {0, 0};
 private:
     static void sample() {
         if (!Pin::isHigh()) { // pressed (active low)
-            if (!data().state) { // not pressed
-                if (++data().count >= Thresh) {
-                    data().state = 1;
-                    data().count = 0;
+            if (!mData.state) { // not pressed
+                if (++mData.count >= Thresh) {
+                    mData.state = 1;
+                    mData.count = 0;
                     if (UseEvent) {
                         EventManager::enqueue({ButtonEvent<N>::event, N});
                     }
@@ -110,9 +107,9 @@ private:
             }
         }
         else { // not pressed
-            if (data().state) {
-                data().state = 0;
-                data().count = 0;
+            if (mData.state) {
+                mData.state = 0;
+                mData.count = 0;
             }
         }
     }

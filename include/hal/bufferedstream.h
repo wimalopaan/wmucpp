@@ -52,7 +52,5 @@ public:
     }
     static constexpr auto rateProcess = periodic;
 private:
-    static std::FiFo<uint8_t, Size> fifo;
+    inline static std::FiFo<uint8_t, Size> fifo;
 };
-template<typename Device, uint16_t Size, typename Mode>
-std::FiFo<uint8_t, Size> BufferedStream<Device, Size, Mode>::fifo;

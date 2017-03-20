@@ -130,15 +130,10 @@ public:
             }
         }
     };
-    static volatile uint8_t actual;
-    static volatile uint16_t ocrbValues[numberOfChannels];
 private:
+    inline static volatile uint8_t actual = 0;
+    inline static volatile uint16_t ocrbValues[numberOfChannels] = {};
 };
-template<typename MCUTimer, typename... Pins>
-volatile uint8_t SoftPPM<MCUTimer, Pins...>::actual = 0;
-
-template<typename MCUTimer, typename... Pins>
-volatile uint16_t SoftPPM<MCUTimer, Pins...>::ocrbValues[SoftPPM<MCUTimer, Pins...>::numberOfChannels] = {};
 
 
 
