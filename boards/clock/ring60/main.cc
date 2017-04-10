@@ -16,8 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
+// 20Mhz extern
 // sudo avrdude -p atmega88p -P usb -c avrisp2 -U lfuse:w:0xd0:m -U hfuse:w:0xdf:m -U efuse:w:0xf9:m
+
+// 8Mhz RC intern
+// sudo avrdude -p atmega328p -P usb -c avrisp2 -U lfuse:w:0xe2:m -U hfuse:w:0xd9:m -U efuse:w:0xff:m
 
 #include <stdlib.h>
 #include <util/eu_dst.h>
@@ -26,6 +29,7 @@
 #include "mcu/ports.h"
 #include "mcu/avr/usart.h"
 #include "mcu/avr/adc.h"
+#include "mcu/avr/clock.h"
 #include "hal/event.h"
 #include "hal/constantrate.h"
 #include "hal/alarmtimer.h"
@@ -34,6 +38,8 @@
 #include "external/dcf77.h"
 #include "appl/blink.h"
 #include "appl/ledflash.h"
+#include "appl/timerdisplayring60.h"
+#include "appl/timerdisplay4x4.h"
 #include "std/chrono.h"
 
 #include "console.h"
@@ -85,121 +91,32 @@ static constexpr auto title = "Clock Uni 01"_pgm;
 
 using statusLed = LedFlash<led>;
 
-using leds1 = WS2812<16, leds1Pin, ColorSequenceGRB>;
-using leds2 = WS2812<60, leds2Pin, ColorSequenceGRB>;
+using leds1 = WS2812<16, leds2Pin, ColorSequenceGRB>;
+using leds2 = WS2812<60, leds1Pin, ColorSequenceGRB>;
 
 using terminal = AVR::Usart<0, void>;
 
-using systemTimer = AVR::Timer8Bit<0>; // timer 0
-using alarmTimer  = AlarmTimer<systemTimer>;
+using systemTimer = AVR::Timer16Bit<1>; // timer 1
 
-using dcfDecoder = DCF77<dcfPin, Config::Timer::frequency, EventManager, true>;
+struct LocalConfig {
+    static constexpr AVR::Util::TimerSetupData tsd = AVR::Util::caculateForExactFrequencyAbove<systemTimer>(Config::Timer::frequency);
+    static_assert(tsd, "wrong timer parameter");
+    static constexpr std::milliseconds reso = std::duration_cast<std::milliseconds>(1 / tsd.f);
+    static constexpr std::hertz exactFrequency = tsd.f;
+};
 
-using systemConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<0>::CompareA, alarmTimer, dcfDecoder>;
+
+using alarmTimer  = AlarmTimer<systemTimer, LocalConfig::reso>;
+
+using dcfDecoder = DCF77<dcfPin, LocalConfig::exactFrequency, EventManager, true>;
+
+using oscillator = AVR::Clock<LocalConfig::exactFrequency>;
+
+using systemConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<1>::CompareA, alarmTimer, dcfDecoder, oscillator>;
 
 using isrRegistrar = IsrRegistrar<systemConstantRate, terminal::RxHandler, terminal::TxHandler>;
 
-template<typename Leds, 
-         const typename Leds::color_type& tickColor,
-         const typename Leds::color_type& hourColor,
-         const typename Leds::color_type& minuteColor,
-         const typename Leds::color_type& secondColor
-         >
-class TimerDisplay60 {
-    TimerDisplay60() = delete;
-public:
-    static constexpr uint8_t size = 60;
-    static constexpr uint8_t hours = 12;
-    static constexpr uint8_t minuteTick = 5;
-    
-    static_assert(Leds::size == size, "wrong number of leds");
-
-    static void init() {
-        Leds::init();
-    }
-    
-    template<typename Clock>
-    static void set(const Clock& clock) {
-        DateTime::TimeTm t = clock.dateTime();
-        
-        // todo: minimale Helligkeit, so dass es nicht ganz auf null geht
-        Leds::template set<false>(Constant::cOff);
-        for(uint8_t i = 0; i < size; ++i) {
-            if ((i % minuteTick) == 0) {
-                Leds::template set<false>(i, tickColor * brightness());
-            }
-        }
-        
-        Leds::template set<false>(((t.hours().value % hours * minuteTick) + (t.minutes().value * minuteTick) / size) % size, hourColor * brightness());
-        Leds::template add<false>(t.minutes().value, minuteColor * brightness());
-        Leds::template add<false>(t.seconds().value, secondColor * brightness());
-        Leds::write();
-    }
-    
-    static std::percent& brightness() {
-        static std::percent p = 100_ppc;
-        return p;
-    }
-};
-
-// todo: Farbein einbauen
-template<typename Leds>
-class TimerDisplay4x4 {
-    TimerDisplay4x4() = delete;
-public:
-    static constexpr uint8_t size = 16;
-    static_assert(Leds::size == size, "wrong number of leds");
-
-    static void init() {
-        Leds::init();
-    }
-
-    template<typename Clock>
-    static void set(const Clock& clock) {
-        DateTime::TimeTm t = clock.dateTime();
-        uint8_t min1   = t.minutes().value % 10;
-        uint8_t min10  = t.minutes().value / 10;
-        uint8_t hour1  = t.hours().value % 10;
-        uint8_t hour10 = t.hours().value / 10;
-        
-        setNibble<0>(min1);
-        setNibble<1>(min10);
-        setNibble<2>(hour1);
-        setNibble<3>(hour10);
-        
-        Leds::write();
-    }
-    
-    template<uint8_t N>
-    static void setNibble(uint8_t v) {
-        if constexpr((N % 2) == 0) {
-            for(uint8_t i = 0; i < 4; ++i) {
-                if (v & (1 << i)) {
-                    Leds::template set<false>(4 * N + i, Constant::cBlue);
-                }
-                else {
-                    Leds::template set<false>(4 * N + i, Constant::cOff);
-                }
-            }
-        }
-        else {
-            for(uint8_t i = 0; i < 4; ++i) {
-                if (v & (1 << i)) {
-                    Leds::template set<false>(4 * (N + 1) - 1 - i, Constant::cBlue);
-                }
-                else {
-                    Leds::template set<false>(4 * (N + 1) - 1 - i, Constant::cOff);
-                }
-            }
-        }
-    }
-    static std::percent& brightness() {
-        static std::percent p = 100_ppc;
-        return p;
-    }
-};
-
-using display = TimerDisplay4x4<leds1>;
+using display = TimerDisplay4x4<leds1, Constant::cBlue>;
 using display2 = TimerDisplay60<leds2, Constant::cWhiteLow, Constant::cBlue, Constant::cGreen, Constant::cRed>;
 
 namespace std {
@@ -378,8 +295,33 @@ struct DCFReceive1Handler : public EventHandler<EventType::DCFReceive1> {
 struct DCFDecodeHandler : public EventHandler<EventType::DCFDecode> {
     static bool process(uint8_t) {
         ClockStateMachine::process(ClockStateMachine::Event::DCFDecode);
+        
+        static uint8_t intervall = 0;
+                
+        if (auto m = oscillator::actualMeasurementDuration(dcfDecoder::dateTime()); m && *m >= oscillator::mIntervalls[intervall]) {
+            oscillator::referenceTime(dcfDecoder::dateTime());
+            std::cout << "Delta: "_pgm << oscillator::delta() << std::endl;
+            std::cout << "Durat: "_pgm << oscillator::lastMeasurementDuration().value << std::endl;
+            
+            if (auto delta = oscillator::delta(); delta != 0) {
+                if ((abs(delta) >= thresh)) {
+                    if (delta > 0) {
+                        oscillator::adjust(-1);
+                    }
+                    else {
+                        oscillator::adjust(1);
+                    }
+                    std::cout << "OSCCAL: "_pgm << oscillator::calibration() << std::endl;
+                }
+                else {
+                    intervall = std::min((uint8_t)(intervall + 1), (uint8_t)(oscillator::mIntervalls.size - 1));
+                    std::cout << "interval: "_pgm << oscillator::mIntervalls[intervall].value << std::endl;
+                }
+            }
+        }
         return true;
     }  
+    inline static constexpr int32_t thresh = 10;
 };
 struct DCFSyncHandler : public EventHandler<EventType::DCFSync> {
     static bool process(uint8_t) {
@@ -403,19 +345,12 @@ struct DCFParityHandler : public EventHandler<EventType::DCFParityError> {
 using allEventHandler = EventHandlerGroup<TimerHandler, UsartFeHandler, UsartUpeHandler, UsartDorHandler, Usart0Handler,
                                         DCFReceive0Handler, DCFReceive1Handler, DCFDecodeHandler, DCFSyncHandler, DCFErrorHandler, DCFParityHandler>;
 
-int main()
-{   
-    set_zone(ONE_HOUR); // europe central time
-    set_dst(eu_dst);
-    
-    isrRegistrar::init();
-    alarmTimer::init();
-    
+int main() {   
     powerSwitchPin::dir<AVR::Output>();    
     powerSwitchPin::off();    
-    
+
+    isrRegistrar::init();
     terminal::init<19200>();
-    
     statusLed::init();
     
     if constexpr(use4x4) {
@@ -424,6 +359,11 @@ int main()
     if constexpr(useRing60) {
         display2::init();
     }
+
+    systemTimer::template prescale<LocalConfig::tsd.prescaler>();
+    systemTimer::template ocra<LocalConfig::tsd.ocr - 1>();
+    systemTimer::mode(AVR::TimerMode::CTC);
+    systemTimer::start();
 
     adc::init();
     
@@ -434,11 +374,13 @@ int main()
         EventManager::run2<allEventHandler>([](){
             adc::periodic();
             brightness = std::scale(adc::value(0), adc::value_type(0), adc::value_type(Constant::analogBrightnessMaximum));
+            brightness = std::max(brightness, 1_ppc);
+            
             if constexpr(useRing60) {
-                display2::brightness() = brightness;
+                display2::brightness(brightness);
             }
             if constexpr(use4x4) {
-                display::brightness() = brightness;
+                display::brightness = brightness;
             }
 
             systemConstantRate::periodic();
@@ -454,8 +396,8 @@ int main()
     }
 }
 
-ISR(TIMER0_COMPA_vect) {
-    isrRegistrar::isr<AVR::ISR::Timer<0>::CompareA>();
+ISR(TIMER1_COMPA_vect) {
+    isrRegistrar::isr<AVR::ISR::Timer<1>::CompareA>();
 }
 ISR(USART_RX_vect) {
     isrRegistrar::isr<AVR::ISR::Usart<0>::RX>();

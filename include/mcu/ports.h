@@ -26,7 +26,9 @@
 # include <avr/pgmspace.h>
 #endif
 
+#include "config.h"
 #include "mcu/avr8.h"
+#include "mcu/concepts.h"
 #include "std/traits.h"
 #include "util/algorithm.h"
 
@@ -158,7 +160,7 @@ private:
     PinSet() = delete;
 };
 
-template<typename Port, uint8_t PinNumber>
+template<MCU::Port Port, uint8_t PinNumber>
 struct Pin final {
     static_assert(PinNumber < 8, "wrong pin number");
     Pin() = delete;
@@ -187,7 +189,7 @@ struct Pin final {
     static constexpr auto& isHigh = read;
 };
 
-template<typename Pin,  const std::microseconds& PulseWidth = Config::zeroMicroSeconds, bool ActiveLow = true>
+template<MCU::Pin Pin,  const std::microseconds& PulseWidth = Config::zeroMicroSeconds, bool ActiveLow = true>
 struct SinglePulse final {
     SinglePulse() {
         init();
@@ -234,27 +236,27 @@ struct NoPin final {
 };
 
 struct ActiveLow {
-    template<typename Pin>
+    template<MCU::Pin Pin>
     static void activate() {
         Pin::low();
     }
-    template<typename Pin>
+    template<MCU::Pin Pin>
     static void inactivate() {
         Pin::high();
     }
 };
-struct ActiveHighl {
-    template<typename Pin>
+struct ActiveHigh {
+    template<MCU::Pin Pin>
     static void activate() {
         Pin::high();
     }
-    template<typename Pin>
+    template<MCU::Pin Pin>
     static void inactivate() {
         Pin::low();
     }    
 };
 
-template<typename Pin, typename Mode>
+template<MCU::Pin Pin, typename Mode>
 struct ScopedPin {
     ScopedPin() {
         Mode::template activate<Pin>();

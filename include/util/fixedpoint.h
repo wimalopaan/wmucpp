@@ -24,30 +24,30 @@
 #include "util/bits.h"
 
 template<typename T>
-struct Unsigned;
+struct UnsignedFor;
 
 template<>
-struct Unsigned<int8_t> {
+struct UnsignedFor<int8_t> {
     typedef uint8_t type;
 };
 template<>
-struct Unsigned<int16_t> {
+struct UnsignedFor<int16_t> {
     typedef uint16_t type;
 };
 template<>
-struct Unsigned<int32_t> {
+struct UnsignedFor<int32_t> {
     typedef uint32_t type;
 };
 template<>
-struct Unsigned<uint8_t> {
+struct UnsignedFor<uint8_t> {
     typedef uint8_t type;
 };
 template<>
-struct Unsigned<uint16_t> {
+struct UnsignedFor<uint16_t> {
     typedef uint16_t type;
 };
 template<>
-struct Unsigned<uint32_t> {
+struct UnsignedFor<uint32_t> {
     typedef uint32_t type;
 };
 
@@ -67,7 +67,7 @@ class FixedPoint final {
 
 public:
     typedef Type value_type;
-    typedef typename Unsigned<Type>::type unsigned_type;
+    typedef typename UnsignedFor<Type>::type unsigned_type;
     static constexpr unsigned_type fractional_mask = (1 << fractionalBits) - 1;
     static constexpr unsigned_type integral_mask = ~((1 << fractionalBits) - 1);
     static constexpr uint8_t fractional_bits = fractionalBits;

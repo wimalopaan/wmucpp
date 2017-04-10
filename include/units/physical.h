@@ -23,6 +23,7 @@
 #include "std/ratio.h"
 #include "std/traits.h"
 #include "std/limits.h"
+#include "std/concepts.h"
 #include "units/duration.h"
 
 namespace std {
@@ -53,6 +54,15 @@ struct frequency<uint8_t, ratio<1, 1000000>> {
     }
 };
 
+template<typename Rep, typename Div, Integral I>
+constexpr frequency<Rep, Div> operator*(I i, const frequency<Rep, Div>& f) {
+    return {f.value * i};
+}
+template<typename Rep, typename Div, Integral I>
+constexpr frequency<Rep, Div> operator*(const frequency<Rep, Div>& f, I i) {
+    return {f.value * i};
+}
+
 template<typename Rep, typename Div>
 constexpr uint32_t operator/(const frequency<Rep, Div>& fl, const frequency<Rep, Div>& fr)
 {
@@ -72,16 +82,15 @@ constexpr bool operator>=(const frequency<Rep, Div>& fl, const frequency<Rep, Di
 }
 
 template<typename Rep, typename Div>
-constexpr frequency<Rep, Div> operator/(const frequency<Rep, Div>& fl, Rep d) {
-    return {(Rep)(fl.value / d)};
+constexpr bool operator<=(const frequency<Rep, Div>& fl, const frequency<Rep, Div>& fr)
+{
+    return fl.value <= fr.value;
 }
 
-//template<typename Rep, typename Div, typename D>
-//constexpr 
-//typename std::enable_if<sizeof(Div) >= sizeof(D), frequency<Rep, Div>>::type 
-//operator/(const frequency<Rep, Div>& fl, D d) {
-//    return {(Rep)(fl.value / d)};
-//}
+template<typename Rep, typename Div, Integral I>
+constexpr frequency<Rep, Div> operator/(const frequency<Rep, Div>& fl, I d) {
+    return {(Rep)(fl.value / d)};
+}
 
 template<typename Rep, typename Div>
 constexpr bool operator==(const frequency<Rep, Div>& lhs, const frequency<Rep, Div>& rhs) {

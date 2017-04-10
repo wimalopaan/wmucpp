@@ -22,6 +22,7 @@
 #include <stddef.h>
 
 #include "std/memory.h"
+#include "std/concepts.h"
 
 namespace std {
 
@@ -194,7 +195,7 @@ bool none_of(InputIt first, InputIt last, UnaryPredicate p)
 
 #endif
 
-template<typename C>
+template<Range C>
 bool crc8(const C& data) {
     uint8_t crc = 0;
     for(typename C::size_type loop_count = 0; loop_count < C::size; loop_count++) {

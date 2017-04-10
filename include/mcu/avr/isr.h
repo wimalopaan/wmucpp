@@ -19,6 +19,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "mcu/concepts.h"
 #include "util/bits.h"
 
 #if __has_include(<avr/interrupt.h>)
@@ -60,6 +61,7 @@ extern "C" {
 #endif
 
 template<typename... HH>
+//template<MCU::ISR... HH>
 struct IsrRegistrar {
     typedef uint64_t mask_type;
     
@@ -69,12 +71,12 @@ struct IsrRegistrar {
     
     static void init() {}
 
-    template<typename I>
+    template<MCU::Interrupt I>
     static constexpr bool isSet() {
         return all & ((uint64_t)1 << I::number);
     }
     
-    template<uint8_t In, uint8_t N, typename H, typename... Hp>
+    template<uint8_t In, uint8_t N, MCU::IServiceR H, MCU::IServiceR... Hp>
     struct Caller {
         static constexpr void call() {
             if constexpr (In == H::isr_number) {
@@ -86,14 +88,14 @@ struct IsrRegistrar {
         }
     };
     
-    template<typename INT>
+    template<MCU::Interrupt INT>
     static void isr() {
         static_assert(all & ((mask_type)1 << INT::number), "isr not set");
         Caller<INT::number, sizeof...(HH), HH...>::call();
     }
 };
 
-template<typename I>
+template<MCU::Interrupt I>
 struct IsrBaseHandler {
     typedef I isr_type;
     static constexpr const uint8_t isr_number = I::number;
@@ -106,7 +108,7 @@ struct IsrBaseHandler<void> {
     static constexpr const uint64_t isr_mask = 0;    
 };
 
-template<typename I, typename... Hs>
+template<typename I, MCU::IServiceR... Hs>
 struct IsrDistributor final : public IsrBaseHandler<I> {
     static_assert((sizeof...(Hs) == 0) || (Util::numberOfOnes((Hs::isr_mask | ... | 0)) == 1), "all sub-handler must use same isr");
     static void isr() {

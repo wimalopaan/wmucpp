@@ -131,6 +131,16 @@ Stream& operator<<(Stream& o, uint32_t v) {
 }
 
 template<typename Stream>
+Stream& operator<<(Stream& o, int32_t v) {
+    if (!Config::disableCout) {
+        std::array<char, Util::BufferSize<int32_t>::size> buffer;
+        Util::itoa(v, buffer);
+        Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(&buffer[0]);
+    }
+    return o;
+}
+
+template<typename Stream>
 Stream& operator<<(Stream& o, const std::lineTerminator<std::CRLF>&) {
     if (!Config::disableCout) {
         return o << '\r' << '\n';
@@ -258,7 +268,7 @@ Stream& operator<<(Stream& o, const Config&) {
         o << "ensureTerminalOutput: "_pgm << Config::ensureTerminalOutput << "\r\n"_pgm;
         o << "disableCout: "_pgm << Config::disableCout << "\r\n"_pgm;
         o << "SoftSpiMaster::pulseDelay: "_pgm << Config::SoftSpiMaster::pulseDelay << "\r\n"_pgm;
-        o << "Button::buttonTicksForPressed: "_pgm << Config::Button::buttonTicksForPressed << "\r\n"_pgm;
+//        o << "Button::buttonTicksForPressed: "_pgm << Config::Button::buttonTicksForPressed << "\r\n"_pgm;
     }
     return o;
 }

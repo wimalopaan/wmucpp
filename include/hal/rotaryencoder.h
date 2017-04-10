@@ -32,6 +32,7 @@ public:
         Pin1::pullup();
         Pin2::pullup();
     }
+    static void start() {}
     static void rateProcess() {
         uint8_t newState = (Pin1::read() ? 2 : 0) + (Pin2::read() ? 1 : 0);    
         uint8_t offset = transitionTable[mLastState][newState];

@@ -23,6 +23,8 @@
 #include "std/time.h"
 #include "units/percent.h"
 
+#include "timedisplays.h"
+
 // todo: Farben einbauen
 template<typename Leds, const typename Leds::color_type& Color1>
 class TimerDisplay4x4 final {
@@ -38,7 +40,7 @@ public:
     }
 
     template<typename Clock>
-    static void set(const Clock& clock) {
+    static void set(const Clock& clock, TimeDisplay::Mode Mode = TimeDisplay::Mode::Time) {
         DateTime::TimeTm t = clock.dateTime();
         uint8_t min1   = t.minutes().value % 10;
         uint8_t min10  = t.minutes().value / 10;

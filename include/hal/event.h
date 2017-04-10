@@ -28,6 +28,7 @@
 #include "util/bits.h"
 #include "util/disable.h"
 #include "container/fifo.h"
+#include "hal/concepts.h"
 
 enum class EventType : uint8_t {
     NoEvent,
@@ -52,6 +53,7 @@ enum class EventType : uint8_t {
     I2CRpmError, I2CRpmValueAvailable,
     AdcConversion,
     DCFReceive0, DCFReceive1, DCFDecode, DCFSync, DCFParityError, DCFError,
+    SystemClockSet,
     TLE5205Error,
     ExternalInterrupt,
     IREvent, IREventRepeat,
@@ -83,7 +85,7 @@ namespace Hott {
 template<uint8_t N> class SensorProtocollAdapter;
 }
 
-template<typename Interrupt = void, typename... PP>
+template<MCU::Interrupt Interrupt = void, typename... PP>
 class 
 //        [[deprecated]] 
         PeriodicGroup : public IsrBaseHandler<Interrupt> {
@@ -103,6 +105,7 @@ private:
 };
 
 template<typename... EE>
+//template<HAL::EventHandler... EE>
 class EventHandlerGroup {
     template<int N, typename T, typename... TT>
     class Processor final {
@@ -157,7 +160,22 @@ public:
         return true;
     }
 
-    template<typename EE, typename P>
+//    template<HAL::EventHandlerGroup<Event8u_t>... EE, HAL::CallableObject P>
+//    static void run3(const P& periodic) {
+//        leakedEvent() = false;
+//        unprocessedEvent() = false;
+//        while(true) {
+//            periodic();
+//            if (auto event = mFifo.pop_front()) {
+//                bool processed = (EE::process(*event) || ...);
+//                if (!processed) {
+//                    unprocessedEvent() = true;
+//                }
+//            }
+//        }
+//    }
+    
+    template<HAL::EventHandlerGroup<Event8u_t> EE, HAL::CallableObject P>
     static void run2(const P& periodic) {
         leakedEvent() = false;
         unprocessedEvent() = false;
@@ -170,7 +188,7 @@ public:
             }
         }
     }
-    template<typename PP, typename EE, typename P>
+    template<HAL::StaticPeriodic PP, HAL::EventHandlerGroup<Event8u_t> EE, HAL::CallableObject P>
 //    [[deprecated]] 
     static void run(const P& periodic) {
         leakedEvent() = false;
@@ -185,7 +203,7 @@ public:
             }
         }
     }
-    template<typename PP, typename EE>
+    template<HAL::StaticPeriodic PP, HAL::EventHandlerGroup<Event8u_t> EE>
     static void run() {
         leakedEvent() = false;
         unprocessedEvent() = false;

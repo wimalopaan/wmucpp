@@ -27,7 +27,8 @@ namespace std {
 template<typename T, uint16_t Size>
 struct array final
 {
-    typedef T type;
+//    typedef T type;
+    typedef T value_type;
     typedef uint16_t size_type;
     
 //    constexpr array() = default;

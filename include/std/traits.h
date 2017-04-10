@@ -104,6 +104,11 @@ struct is_unsigned final {
     static constexpr bool value = (T(0) < T(-1));
 };
 
+template<typename T>
+struct is_signed final {
+    static constexpr bool value = (T(-1) < T(0));
+};
+
 
 #endif
 }

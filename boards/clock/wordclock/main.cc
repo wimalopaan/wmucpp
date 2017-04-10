@@ -71,10 +71,18 @@ using temp = LM35<adc, 1>;
 
 using terminal = AVR::Usart<1, void>;
 
-using systemTimer = AVR::Timer8Bit<0>; // timer 0
-using alarmTimer  = AlarmTimer<systemTimer>;
+using systemTimer = AVR::Timer16Bit<1>; // timer 1
 
-using dcfDecoder = DCF77<dcfPin, Config::Timer::frequency, EventManager, true>;
+struct LocalConfig {
+    static constexpr AVR::Util::TimerSetupData tsd = AVR::Util::caculateForExactFrequencyAbove<systemTimer>(Config::Timer::frequency);
+    static_assert(tsd, "wrong timer parameter");
+    static constexpr std::milliseconds reso = std::duration_cast<std::milliseconds>(1 / tsd.f);
+    static constexpr std::hertz exactFrequency = tsd.f;
+};
+
+using alarmTimer  = AlarmTimer<systemTimer, LocalConfig::reso>;
+
+using dcfDecoder = DCF77<dcfPin, LocalConfig::exactFrequency, EventManager, true>;
 
 using systemConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<0>::CompareA, alarmTimer, dcfDecoder>;
 
@@ -85,6 +93,7 @@ struct IrDecoder {
     static void rateProcess() {
         Irmp::irmp_ISR();        
     }
+    static void start() {}
 };
 
 using irDecoder = IrDecoder;
@@ -326,11 +335,18 @@ using allEventHandler = EventHandlerGroup<TimerHandler, UsartFeHandler, UsartUpe
 constexpr std::hertz fIr = 15000_Hz;
 
 int main() {   
-    terminal::init<19200>();
+    isrRegistrar::init();
     
     debugPin::dir<AVR::Output>();
     debugPin::off();
     
+    terminal::init<19200>();
+    
+    systemTimer::template prescale<LocalConfig::tsd.prescaler>();
+    systemTimer::template ocra<LocalConfig::tsd.ocr - 1>();
+    systemTimer::mode(AVR::TimerMode::CTC);
+    systemTimer::start();
+
     constexpr auto tsd = AVR::Util::calculate<irTimer>(fIr);
     static_assert(tsd, "wrong parameter");
     irTimer::prescale<tsd.prescaler>();
@@ -339,8 +355,6 @@ int main() {
     
     irConstantRate::init();
     
-    isrRegistrar::init();
-    alarmTimer::init();
     
     powerSwitchPin::dir<AVR::Output>();    
     powerSwitchPin::on();    

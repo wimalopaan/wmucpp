@@ -21,6 +21,7 @@
 #include <stdint.h>
 
 #include "std/ratio.h"
+#include "std/concepts.h"
 
 namespace std {
 
@@ -28,7 +29,7 @@ template<typename Representation, typename Period = ratio<1, 1>>
 struct duration;
 
 template<>
-struct duration<uint16_t, std::milli>
+struct duration<uint16_t, std::milli> final
 {
     typedef std::milli period_type;
     uint16_t value = 0;
@@ -39,7 +40,7 @@ struct duration<uint16_t, std::milli>
 };
 
 template<>
-struct duration<uint16_t, std::micro>
+struct duration<uint16_t, std::micro> final
 {
     typedef std::micro period_type;
     uint16_t value = 0;
@@ -50,14 +51,14 @@ struct duration<uint16_t, std::micro>
 };
 
 template<>
-struct duration<uint16_t, std::centimicro>
+struct duration<uint16_t, std::centimicro> final
 {
     typedef std::centimicro period_type;
     uint16_t value = 0;
 };
 
 template<>
-struct duration<uint16_t>
+struct duration<uint16_t> final
 {
     typedef std::ratio<1,1> period_type;
 
@@ -72,6 +73,14 @@ struct duration<uint16_t>
     }
 };
 
+template<>
+struct duration<uint32_t> final
+{
+    typedef std::ratio<1,1> period_type;
+
+    uint32_t value = 0;
+};
+
 
 template<typename T>
 bool operator==(const T& lhs, const T& rhs) {
@@ -82,6 +91,7 @@ using centimicroseconds = duration<uint16_t, std::centimicro>;
 using microseconds = duration<uint16_t, std::micro>;
 using milliseconds = duration<uint16_t, std::milli>;
 using seconds = duration<uint16_t>;
+using wideSeconds = duration<uint32_t>;
 
 constexpr uint16_t operator/(const std::milliseconds& lhs, const std::milliseconds& rhs) {
     return lhs.value / rhs.value;
@@ -91,8 +101,16 @@ constexpr uint16_t operator/(const std::microseconds& lhs, const std::microsecon
     return lhs.value / rhs.value;
 }
 
-constexpr std::microseconds operator/(const std::microseconds& lhs, uint16_t v) {
+template<Integral F>
+//requires Integral<F>()
+constexpr std::microseconds operator/(const std::microseconds& lhs, F v) {
     return {(uint16_t)(lhs.value / v)};
+}
+
+template<Integral F>
+//requires Integral<F>()
+constexpr std::wideSeconds operator*(const std::wideSeconds& lhs, F v) {
+    return {lhs.value * v};
 }
 
 template<typename R, typename P>

@@ -18,8 +18,11 @@
 
 #pragma once
 
-#include "config.h"
 #include "units/duration.h"
+#include "std/literals.h"
+
+using namespace std::literals::chrono;
+using namespace std::literals::physical;
 
 namespace Util {
 

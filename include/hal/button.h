@@ -76,6 +76,7 @@ public:
     static void periodic() {
         (Buttons::sample(), ...);
     }
+    static void start() {}
     static constexpr auto rateProcess = periodic;
 };
 

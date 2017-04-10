@@ -288,7 +288,7 @@ struct ATTest::Timer8Bit<0>::PrescalerBits {
 struct EnumTraitsBase {
     template<typename T>
     static constexpr auto minimumEnumValue(const T& values) {
-        typedef typename std::underlying_type<typename T::type>::type UT;
+        typedef typename std::underlying_type<typename T::value_type>::type UT;
         auto min = static_cast<UT>(values[0]); 
         for(size_t i = 1; i < values.size; ++i) {
             auto v = static_cast<UT>(values[i]);
@@ -300,7 +300,7 @@ struct EnumTraitsBase {
     };
     template<typename T>
     static constexpr auto maximumEnumValue(const T& values) {
-        typedef typename std::underlying_type<typename T::type>::type UT;
+        typedef typename std::underlying_type<typename T::value_type>::type UT;
         auto max = static_cast<UT>(values[0]); 
         for(size_t i = 1; i < values.size; ++i) {
             auto v = static_cast<UT>(values[i]);

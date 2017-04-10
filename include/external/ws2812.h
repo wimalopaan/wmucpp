@@ -144,7 +144,7 @@ cRGB<ColorSequenceGRB> operator*(cRGB<ColorSequenceGRB> c, const std::percent& p
     return c *= p;
 }
 
-template<uint8_t N, typename Pin, typename ColorComp = ColorSequenceRGB, bool DisableInterruptsFull = false>
+template<uint8_t N, MCU::Pin Pin, typename ColorComp = ColorSequenceRGB, bool DisableInterruptsFull = false>
 class WS2812 final {
     WS2812() = delete;
 public:

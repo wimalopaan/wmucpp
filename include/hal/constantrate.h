@@ -19,10 +19,19 @@
 #pragma once
 
 #include <stdint.h>
-#include "util/bits.h"
-#include "std/algorithm.h"
-#include "units/physical.h"
 #include "mcu/avr/isr.h"
+#include "std/algorithm.h"
+#include "util/bits.h"
+#include "units/physical.h"
+
+template<typename W>
+concept bool CRWriter() { 
+    return requires (W w) { 
+        W::init();
+        W::start();
+        W::rateProcess();
+    };
+}
 
 template<typename Pin, uint8_t V>
 class TestBitShifter {
@@ -94,7 +103,7 @@ private:
     inline static CounterType counter = 0;
 };
 
-template<typename Timer, typename Int, typename... Writers >
+template<MCU::Timer Timer, MCU::Interrupt Int, CRWriter... Writers >
 class ConstantRateAdapter : public IsrBaseHandler<Int> {
     template<typename... II> friend class IsrRegistrar;
 public:
@@ -122,5 +131,5 @@ public:
     }
     constexpr static auto isr = rateTick;
 private:
-    inline static uint8_t tickCounter = 0;
+    inline static volatile uint8_t tickCounter = 0;
 };

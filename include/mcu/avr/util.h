@@ -31,6 +31,8 @@ template<typename T>
 struct TimerSetupData final {
     const uint16_t prescaler = 0;
     const T ocr = 0;
+    const std::hertz f{0};
+    const bool isExact = false;
     explicit constexpr operator bool() const {
         return (prescaler > 0) && (ocr > 0);
     }
@@ -72,26 +74,24 @@ constexpr TimerSetupData<typename MCUTimer::value_type> calculate(const std::her
     using pBits = typename MCUTimer::mcu_timer_type::template PrescalerBits<MCUTimer::number>;
     auto p = prescalerValues(pBits::values);
     
-    auto sortedPRow = ::Util::sort(p); // aufsteigend
-    for(const auto& p : sortedPRow) {
+    for(const auto& p : ::Util::sort(p)) { // aufsteigend
         if (p > 0) {
             const auto tv = (Config::fMcu / ftimer) / p;
             if (tv < std::numeric_limits<typename MCUTimer::value_type>::max()) {
-                return {p, static_cast<typename MCUTimer::value_type>(tv)};
+                const bool exact = ((Config::fMcu.value / p) % tv) == 0;
+                return {p, static_cast<typename MCUTimer::value_type>(tv), Config::fMcu / tv / uint32_t(p), exact};
             }
         }
     }
     return {};
 }
 
-
 template<typename MCUTimer>
 constexpr uint16_t prescalerForAbove(const std::hertz& ftimer) {
     using pBits = typename MCUTimer::mcu_timer_type::template PrescalerBits<MCUTimer::number>;
     auto p = prescalerValues(pBits::values);
-    auto sortedPRow = ::Util::sort(p, std::greater<uint16_t>());
-    for(const auto& p : sortedPRow) {
-        auto f = Config::fMcu / (uint32_t)p;
+    for(const auto& p : ::Util::sort(p, std::greater<uint16_t>())) {
+        auto f = Config::fMcu / p;
         if (f >= ftimer) {
             return p;
         }
@@ -103,10 +103,9 @@ template<typename MCUTimer, typename T>
 constexpr uint16_t calculatePpmInParameter() {
     using pBits = typename MCUTimer::mcu_timer_type::template PrescalerBits<MCUTimer::number>;
     auto p = AVR::Util::prescalerValues(pBits::values);
-    auto sortedPRow = ::Util::sort(p);
 
-    for(const auto& p : sortedPRow) {
-        const std::hertz f = Config::fMcu / (uint32_t)p;
+    for(const auto& p : ::Util::sort(p)) {
+        const std::hertz f = Config::fMcu / p;
         const uint16_t ppmMin = 1_ms * f;
         const uint16_t ppmMax = 2_ms * f;
         if ((ppmMax < std::numeric_limits<T>::max()) && (ppmMin > 10)) {
@@ -120,11 +119,10 @@ template<typename MCUTimer, typename T>
 constexpr uint16_t calculatePpmOutParameter() {
     using pBits = typename MCUTimer::mcu_timer_type::template PrescalerBits<MCUTimer::number>;
     auto p = AVR::Util::prescalerValues(pBits::values);
-    auto sortedPRow = ::Util::sort(p); // aufsteigend
 
-    for(const auto& p : sortedPRow) {
+    for(const auto& p : ::Util::sort(p)) {
         if (p > 0) {
-            const std::hertz f = Config::fMcu / (uint32_t)p;
+            const std::hertz f = Config::fMcu / p;
             const uint32_t ppmMin = 1_ms * f;
             const uint32_t ppmMax = 20_ms * f;
             if ((ppmMax < std::numeric_limits<T>::max()) && (ppmMin > 1)) {
@@ -134,6 +132,31 @@ constexpr uint16_t calculatePpmOutParameter() {
     }
     return 0;
 }
+
+template<typename MCUTimer>
+constexpr TimerSetupData<typename MCUTimer::value_type> caculateForExactFrequencyAbove(const std::hertz& f) {
+    using pBits = typename MCUTimer::mcu_timer_type::template PrescalerBits<MCUTimer::number>;
+    auto p = AVR::Util::prescalerValues(pBits::values);
+    
+    for(const auto& p : ::Util::sort(p, std::greater<uint16_t>())) { // absteigend
+        if (p > 0) {
+            const auto timerStartValue = (Config::fMcu / f) / p;
+            const decltype(timerStartValue) tmax = std::numeric_limits<typename MCUTimer::value_type>::max();
+            for(auto tx = std::min(timerStartValue, tmax); tx > 0; --tx) {
+                const auto fx = (Config::fMcu / p) / tx;
+                if (fx <= (2 * f)) {
+                    uint32_t uf = Config::fMcu.value;
+                    const auto rx = uf % (p * tx); 
+                    if (rx == 0) {
+                        return {p, static_cast<typename MCUTimer::value_type>(tx), fx, true};
+                    }
+                }
+            }
+        }
+    }
+    return{0};
+}
+
 
 
 }

@@ -17,11 +17,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-MCU = atmega88p
+MCU = atmega328p
 F_OSC = 20000000
+#F_OSC = 8000000
 
-subdirs = wordclock nixie 4x4 ring60 universal_mg
+subdirs = 
 
-targets +=  main.elf
+targets +=  main.elf main.s
+targets +=  test.elf test.s
 
--include ../../Makefile.include
+#test.elf: test.o simavrconsole.o
+#	$(CC) $(LDFLAGS) -o $@ test.o simavrconsole.o
+	
+
+CXXFLAGS += -I../../../3rdparty
+
+-include ../../../Makefile.include

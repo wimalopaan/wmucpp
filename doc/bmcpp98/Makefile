@@ -17,11 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-MCU = atmega88p
-F_OSC = 20000000
+MCU = attiny85
+F_OSC = 8000000
 
-subdirs = wordclock nixie 4x4 ring60 universal_mg
-
-targets +=  main.elf
+targets +=  bm05a.elf bm05a.s
 
 -include ../../Makefile.include
+
+bm05a.elf: bm05a.o simavrconsole.o
+	$(CC) $(LDFLAGS) -o $@ bm05a.o simavrconsole.o
+

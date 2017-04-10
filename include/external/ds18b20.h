@@ -92,7 +92,8 @@ public:
                 rom[i] = OneWireMaster::get();
             }   
         }
-        if (!std::crc8(rom)) {
+        if (!rom) {
+//        if (!std::crc8(rom)) {
             return false;
         }
         return true;

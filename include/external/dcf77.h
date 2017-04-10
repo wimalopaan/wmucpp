@@ -29,7 +29,7 @@
 #include "hal/event.h"
 
 using namespace std::literals::quantity;
-template<typename Pin, const std::hertz& samplingFrequency, typename EventManager = void, bool Invert = false>
+template<MCU::Pin Pin, const std::hertz& samplingFrequency, typename EventManager = void, bool Invert = false>
 class DCF77 final  {
     static constexpr std::milliseconds zeroTime = 100_ms;
     static constexpr std::milliseconds oneTime = 200_ms;
@@ -53,7 +53,12 @@ public:
         Pin::template dir<AVR::Input>();
         Pin::pullup();
     }
-    
+    static void start() {
+        highCount = 0;
+        lowCount = 0;
+        bitCounter = 0;
+    }
+
     static void periodic() {
         static State state = State::Undefined;
         if constexpr(!Invert) {

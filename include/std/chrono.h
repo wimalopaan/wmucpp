@@ -40,7 +40,6 @@ public:
     
     DateTime::TimeTm dateTime() const {
         return *localtime(&counterSinceEpoch);
-        
     }
     
     const Rep& value() const {

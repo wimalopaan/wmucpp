@@ -19,6 +19,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <std/types.h>
 
 template<typename Led>
 class LedFlash {
@@ -30,36 +31,49 @@ public:
         Led::init();
         Led::off();
     }
-    
+    static void enable() {
+        mFlashTickCount = 0;
+    }
+    static void disable() {
+        mFlashTickCount.setNaN();
+    }
     static void tick(const std::percent& brightness) {
         static uint8_t mFlash = 0;
-        if (mFlashTickCount > 0) {
-            if ((++mFlash % 2) != 0) {
-                Led::set(mFlashColor * brightness);                
+        if (mFlashTickCount) {
+            if (mFlashTickCount > 0) {
+                if ((++mFlash % 2) != 0) {
+                    Led::set(mFlashColor * brightness);                
+                }
+                else {
+                    Led::set(mSteadyColor * brightness);
+                }
+                if (mFlash >= mFlashTickCount) {
+                    mFlash = 0;
+                    mFlashTickCount = 0;
+                }
             }
             else {
-                Led::set(mSteadyColor * brightness);
+                update(brightness);
             }
-            if (mFlash >= mFlashTickCount) {
-                mFlash = mFlashTickCount = 0;
-            }
-        }
-        else {
-            Led::set(mSteadyColor * brightness);
         }
     }
-
     static void steadyColor(const Color& c) {
         mSteadyColor= c;
     }
+    static void update(const std::percent& brightness) {
+        Led::set(mSteadyColor * brightness);
+    }
+    
     static void flash(const Color& c, uint8_t flashCount) {
         assert(flashCount < 128);
         mFlashColor = c;
-        mFlashTickCount = 2 * flashCount;
+        if (mFlashTickCount) {
+            mFlashTickCount = 2 * flashCount;
+        }
     }
-
+    
 private:
-    inline static uint8_t mFlashTickCount = 0;
+    inline static uint_NaN<uint8_t> mFlashTickCount{0};
     inline static Color mSteadyColor{0};
     inline static Color mFlashColor{32};
 };

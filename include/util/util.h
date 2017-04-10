@@ -64,6 +64,11 @@ struct BufferSize<int16_t>{
 template<>
 struct BufferSize<uint32_t>{
     BufferSize() = delete;
+    static constexpr uint8_t size = 11;
+};
+template<>
+struct BufferSize<int32_t>{
+    BufferSize() = delete;
     static constexpr uint8_t size = 12;
 };
 
@@ -115,11 +120,11 @@ template<typename T>
 inline void itoa(T v, std::array<char, BufferSize<T>::size>& buffer) {
     static_assert(!std::is_unsigned<T>::value, "must use signed type");
     if (v < 0) {
-        Utoa<BufferSize<T>::size - 1, T, std::array<char, BufferSize<T>::size> >::convert((typename Unsigned<T>::type)(-v), buffer);
+        Utoa<BufferSize<T>::size - 1, T, std::array<char, BufferSize<T>::size> >::convert((typename UnsignedFor<T>::type)(-v), buffer);
         buffer[0] = '-';
     }
     else {
-        Utoa<BufferSize<T>::size - 1, T, std::array<char, BufferSize<T>::size> >::convert((typename Unsigned<T>::type)v, buffer);
+        Utoa<BufferSize<T>::size - 1, T, std::array<char, BufferSize<T>::size> >::convert((typename UnsignedFor<T>::type)v, buffer);
         buffer[0] = '+';
     }
 }

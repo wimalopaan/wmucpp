@@ -51,6 +51,7 @@ public:
         (Pins::template dir<AVR::Output>(),...);
         (Pins::low(),...);
     }
+    static void start() {}
     static void freeRun() {
         ++freeCounter;
         Checker<0, Pins...>::checkOff(freeCounter);

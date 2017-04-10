@@ -24,6 +24,7 @@
 # include <avr/io.h>
 #endif
 
+#include "mcu/concepts.h"
 #include "mcu/avr/avr8defs.h"
 
 namespace AVR {

@@ -47,11 +47,14 @@ struct underlying_type<AlarmFlags> {
 };
 }
 
-template<typename MCUTimer>
+template<MCU::Timer MCUTimer, const std::milliseconds& Resolution = Config::Timer::resolution>
 class AlarmTimer final {
 public:
     AlarmTimer() = delete;
 
+    typedef MCUTimer timer_type;
+    static constexpr std::milliseconds resolution = Resolution;
+    
     static void init() {
         constexpr auto t = AVR::Util::calculate<MCUTimer>(Config::Timer::frequency);
         static_assert(t, "falscher wert für p");
@@ -64,7 +67,7 @@ public:
 
     static std::optional<uint7_t> create(std::milliseconds millis, AlarmFlags flags){
         Scoped<DisbaleInterrupt> di;
-        if (auto index = mTimers.insert({millis / Config::Timer::resolution, millis  / Config::Timer::resolution, flags})) {
+        if (auto index = mTimers.insert({millis / resolution, millis  / resolution, flags})) {
             assert(*index <= std::numeric_limits<uint7_t>::max());
             return uint7_t{*index};
         }
@@ -78,6 +81,7 @@ public:
         Scoped<DisbaleInterrupt> di;
         mTimers.removeAt(id);
     }
+    static void start() {}
 
     static void start(uint7_t id) {
         mTimers[id].flags &= ~AlarmFlags::Disabled;
@@ -112,6 +116,10 @@ public:
         }
     }
     static constexpr auto rateProcess = periodic;
+    
+    static const auto& timers() {
+        return mTimers;
+    }
 private:
     struct TimerImpl final {
         inline explicit operator bool() {

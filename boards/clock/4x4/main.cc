@@ -147,6 +147,13 @@ struct StateManager{
                 powerSwitchPin::off();
             }
             break;
+        case State::Sync3:
+            std::cout << "S: Sync3"_pgm << std::endl;
+            statusLed::steadyColor(Constant::cRed * brightness);
+            if constexpr(!std::is_same<PowerPin, void>::value) {
+                powerSwitchPin::off();
+            }
+            break;
         case State::Clock:
             std::cout << "S: Clock"_pgm << std::endl;
             statusLed::steadyColor(Constant::cGreen * brightness);

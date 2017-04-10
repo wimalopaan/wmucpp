@@ -24,6 +24,7 @@
 namespace DateTime {
 class TimeTm;
 }
+
 template<typename Stream> Stream& operator<<(Stream& out, const DateTime::TimeTm& t);
 
 namespace DateTime {
@@ -73,10 +74,10 @@ public:
         return {static_cast<uint8_t>(mTime.tm_mday)};
     }    
     Year year () const {
-        return {static_cast<uint16_t>(mTime.tm_year)};
+        return {static_cast<uint16_t>(mTime.tm_year + 1900)};
     }    
     Month month() const {
-        return {static_cast<uint8_t>(mTime.tm_mon)};
+        return {static_cast<uint8_t>(mTime.tm_mon + 1)};
     }    
     constexpr TimeTm(Day day, Month month, Year year, Hour hour, Minute minute, Second second, bool dst) 
         : mTime{(int8_t)second.value, (int8_t)minute.value, (int8_t)hour.value, (int8_t)day.value, 0, 

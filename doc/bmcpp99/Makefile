@@ -27,6 +27,7 @@ targets +=  bm10a.elf
 targets +=  bm20a.elf bm20a.s
 targets +=  bm21a.elf bm21a.s
 targets +=  bm30a.elf bm30a.s
+targets +=  bm05a.elf bm05a.s
 
 -include ../../Makefile.include
 
@@ -38,4 +39,7 @@ bm02a.elf: bm02a.o simavrconsole.o
 
 bm01b.elf: bm01b.o simavrconsole.o
 	$(CC) $(LDFLAGS) -o $@ bm01b.o simavrconsole.o
+
+bm05a.elf: bm05a.o simavrconsole.o
+	$(CC) $(LDFLAGS) -o $@ bm05a.o simavrconsole.o
 

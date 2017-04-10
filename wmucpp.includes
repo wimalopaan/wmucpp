@@ -55,3 +55,5 @@ boards/clock/wordclock
 boards/clock/nixie
 boards/clock/4x4
 boards/clock/ring60
+boards/clock/universal_mg
+doc/bmcpp98

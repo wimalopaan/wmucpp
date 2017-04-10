@@ -31,9 +31,10 @@
 #include "hal/softspimaster.h"
 #include "external/ws2812.h"
 #include "external/dcf77.h"
+#include "std/chrono.h"
 #include "appl/ledflash.h"
 #include "appl/clockstatemachine.h"
-#include "std/chrono.h"
+#include "appl/timebcdserial.h"
 
 #include "console.h"
 
@@ -59,52 +60,6 @@ using Color = led::color_type;
 
 using spi = SoftSpiMaster<spiDataPin, spiClockPin, spiSSPin>;
 
-template<typename Spi>
-class TimeBCDSerial {
-public:
-    struct Time {};
-    struct Date {};
-    
-    static void init() {
-        Spi::init();
-        for(const auto& b: data()) {
-            Spi::put(b);
-        }
-    }
-
-    template<typename Clock, typename Mode = Time>
-    static void set(const Clock& clock) {
-        DateTime::TimeTm t = clock.dateTime();
-        if constexpr (std::is_same<Mode, Time>::value) {
-            auto hour   = t.hours().value;
-            auto minute = t.minutes().value;
-            auto seconds = t.seconds().value;
-            
-            data()[2] = ((hour % 10) << 4) + hour / 10;
-            data()[1] = ((minute % 10) << 4) + minute / 10;
-            data()[0] = ((seconds % 10) << 4) + seconds / 10;
-        }
-        else {
-            auto year = t.year().value - 100;
-            auto month = t.month().value;
-            auto day = t.day().value;
-            
-            data()[2] = ((day % 10) << 4) + day/ 10;
-            data()[1] = ((month % 10) << 4) + month / 10;
-            data()[0] = ((year % 10) << 4) + year / 10;
-        }
-        
-        for(const auto& b: data()) {
-            Spi::put(b);
-        }
-    }    
-private:
-    static auto& data() {
-        static std::array<uint8_t, 3> mData;
-        return mData;
-    }
-};
-
 using display = TimeBCDSerial<spi>;
 
 // todo: belegt RAM im data segment ?
@@ -122,21 +77,30 @@ static constexpr Color cCyan{Red{0}, Green{brightness}, Blue{brightness}};
 
 static constexpr uint16_t analogBrightnessMaximum = 400;
 
-static constexpr uint32_t secondsPerDay = (uint32_t)60 * 60 * 24;
+static constexpr uint32_t secondsPerHour= (uint32_t)60 * 60;
+static constexpr uint32_t secondsPerDay = secondsPerHour * 24;
 
-static constexpr auto title = "NixieClock 01"_pgm;
+static constexpr auto title = "NixieClock 02"_pgm;
 }
 
 using statusLed = LedFlash<led>;
 
 using terminal = AVR::Usart<0, void>;
 
-using systemTimer = AVR::Timer8Bit<0>; // timer 0
-using alarmTimer  = AlarmTimer<systemTimer>;
+using systemTimer = AVR::Timer16Bit<1>; // timer 1
 
-using dcfDecoder = DCF77<dcfPin, Config::Timer::frequency, EventManager, true>;
+struct LocalConfig {
+    static constexpr AVR::Util::TimerSetupData tsd = AVR::Util::caculateForExactFrequencyAbove<systemTimer>(Config::Timer::frequency);
+    static_assert(tsd, "wrong timer parameter");
+    static constexpr std::milliseconds reso = std::duration_cast<std::milliseconds>(1 / tsd.f);
+    static constexpr std::hertz exactFrequency = tsd.f;
+};
 
-using systemConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<0>::CompareA, alarmTimer, dcfDecoder>;
+using alarmTimer  = AlarmTimer<systemTimer, LocalConfig::reso>;
+
+using dcfDecoder = DCF77<dcfPin, LocalConfig::exactFrequency, EventManager, true>;
+
+using systemConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<1>::CompareA, alarmTimer, dcfDecoder>;
 
 using isrRegistrar = IsrRegistrar<systemConstantRate, terminal::RxHandler, terminal::TxHandler>;
 
@@ -183,6 +147,12 @@ struct StateManager{
                 powerSwitchPin::off();
             }
             break;
+        case State::Sync3:
+            std::cout << "S: Sync3"_pgm << std::endl;
+            if constexpr(!std::is_same<PowerPin, void>::value) {
+                powerSwitchPin::off();
+            }
+            break;
         case State::Clock:
             std::cout << "S: Clock"_pgm << std::endl;
             systemClock = std::chrono::system_clock<>::from(dcfDecoder::dateTime());
@@ -216,6 +186,9 @@ struct LightManager{
         case State::Sync2:
             statusLed::steadyColor(Constant::cCyan);
             break;
+        case State::Sync3:
+            statusLed::steadyColor(Constant::cRed);
+            break;
         case State::Clock:
             statusLed::steadyColor(Constant::cGreen);
             break;
@@ -237,7 +210,7 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
             std::cout << "light: "_pgm << brightness << std::endl;
             if (systemClock) {
                 if ((systemClock.value() % 30) == 0) {
-                    display::set<decltype(systemClock), display::Date>(systemClock);
+                    display::set(systemClock, TimeDisplay::Mode::Date);
                 } 
                 else {
                     display::set(systemClock);
@@ -245,7 +218,7 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
 
                 std::cout << systemClock.dateTime() << std::endl;
                 
-                if ((systemClock.value() % Constant::secondsPerDay) == 0) {
+                if ((systemClock.value() % Constant::secondsPerDay) == (4 * Constant::secondsPerHour)) {
                     systemClock = -1;
                     clockFSM::process(ClockStateMachine::Event::ReSync);
                     std::cout << "ReSync"_pgm << std::endl;
@@ -341,7 +314,12 @@ int main() {
     powerSwitchPin::dir<AVR::Output>();    
     powerSwitchPin::off();    
     isrRegistrar::init();
-    alarmTimer::init();
+    
+    systemTimer::template prescale<LocalConfig::tsd.prescaler>();
+    systemTimer::template ocra<LocalConfig::tsd.ocr - 1>();
+    systemTimer::mode(AVR::TimerMode::CTC);
+    systemTimer::start();
+    
     terminal::init<19200>();
     statusLed::init();
     display::init();
@@ -369,8 +347,8 @@ int main() {
     }
 }
 
-ISR(TIMER0_COMPA_vect) {
-    isrRegistrar::isr<AVR::ISR::Timer<0>::CompareA>();
+ISR(TIMER1_COMPA_vect) {
+    isrRegistrar::isr<AVR::ISR::Timer<1>::CompareA>();
 }
 ISR(USART_RX_vect) {
     isrRegistrar::isr<AVR::ISR::Usart<0>::RX>();
