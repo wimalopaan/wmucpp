@@ -50,6 +50,8 @@ doc/bmcpp99/bm10a.cc
 doc/bmcpp99/bm20a.cc
 doc/bmcpp99/bm21a.cc
 doc/bmcpp99/bm30a.cc
+doc/bmcpp99/bm40a.cc
+doc/bmcpp99/bm41a.cc
 example/atmega8/blink.cc
 example/atmega8/blink.h
 example/basics/register01.cc
@@ -65,6 +67,7 @@ include/appl/clockstatemachine.h
 include/appl/exponential.h
 include/appl/fonts.h
 include/appl/ledflash.h
+include/appl/radioclock.h
 include/appl/shiftdisplay.h
 include/appl/timebcdserial.h
 include/appl/timedisplays.h

@@ -24,6 +24,8 @@
 #include "external/ws2812.h"
 #include "container/pgmarray.h"
 
+#include "timedisplays.h"
+
 template<typename LedPin, typename ColorSequence = ColorSequenceRGB>
 class WordclockDisplay {
     WordclockDisplay() = delete;
@@ -107,7 +109,7 @@ public:
     }
 
     template<typename Clock>
-    static void set(const Clock& clock) {
+    static void set(const Clock& clock, TimeDisplay::Mode = TimeDisplay::Mode::Time) {
         DateTime::TimeTm t = clock.dateTime();
         auto minute = t.minutes().value;
         auto hour   = t.hours().value;
@@ -250,20 +252,23 @@ public:
         }
         leds::write();
     }
-    static std::percent& brightness() {
-        static std::percent b = 100_ppc;
-        return b;
+    static const std::percent& brightness() {
+        return mBrightness;
+    }
+    static void brightness(const std::percent& b) {
+        mBrightness = b;
     }
  
 private:
-    inline static uint8_t colorBase = 0;
+    inline static std::percent mBrightness = 100_ppc;
+    inline static uint8_t mColorBase = 0;
     
     static inline void switchColorBase() {
-        colorBase = (colorBase + 1) % numberOfColors;
+        mColorBase = (mColorBase + 1) % numberOfColors;
     }
     
     static void wordClockSetLeds(Word w, WordColor color){
-        auto c = Constants::Colors::colors[(colorBase + static_cast<int>(color)) % numberOfColors] * brightness();
+        auto c = Constants::Colors::colors[(mColorBase + static_cast<int>(color)) % numberOfColors] * brightness();
 
         for(uint8_t i = 0; (i < Constants::Words::words[static_cast<uint8_t>(w)].length) && (i < mColumns); ++i) {
             leds::template set<false>(Constants::Words::words[static_cast<uint8_t>(w)].startPosition + i, c);

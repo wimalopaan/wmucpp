@@ -16,8 +16,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
-
-namespace TimeDisplay {
-    enum class Mode {Time, Date};
+template<typename F>
+concept bool FCallable() {
+    return requires(F) {
+        F::f();
+    };
+}
+class Test1 {
+public:
+//    template<FCallable P>
+    template<FCallable P, FCallable... Pp> // internal error of g++
+//    template<typename... P>
+    static void g() {
+//        (P::f(), ...);
+        P::f();
+    }
+};
+class A {
+public:
+    static void f() {}
+};
+int main() {
+    Test1::template g<A>();
 }

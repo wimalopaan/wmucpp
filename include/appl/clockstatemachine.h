@@ -20,14 +20,15 @@
 
 #include <stdint.h>
 
-struct ClockStateMachine {
+struct ClockStateMachine final {
     
     enum class State : uint8_t {PreStart, Start, Sync1, Sync2, Sync3, Clock, Error};
     enum class Event : uint8_t {Reset, Start, DCFSync, DCFDecode, DCFError, ReSync};
     
     // todo: für ReSync erweitern: falls Resync nicht erfolgreich -> Zeit beibehalten und ReSyncCounter irgendwie anzeigen (Farbe ander 12).
     template<typename StateEntryCallback = void, typename StateExitCallback = void, typename ProcessCallback = void>
-    struct Machine {
+    struct Machine final {
+        Machine() = delete;
     private:
         inline static State mState = State::PreStart; // c++17
     public:

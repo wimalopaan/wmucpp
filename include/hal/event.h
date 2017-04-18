@@ -57,7 +57,9 @@ enum class EventType : uint8_t {
     TLE5205Error,
     ExternalInterrupt,
     IREvent, IREventRepeat,
-    NullPAEvent
+    NullPAEvent,
+    RadioClockReset, RadioClockStart, RadioClockReady,
+    ApplicationEvent
 };
 
 template<typename T>
@@ -160,20 +162,21 @@ public:
         return true;
     }
 
+    template<typename... EE, HAL::CallableObject P>
 //    template<HAL::EventHandlerGroup<Event8u_t>... EE, HAL::CallableObject P>
-//    static void run3(const P& periodic) {
-//        leakedEvent() = false;
-//        unprocessedEvent() = false;
-//        while(true) {
-//            periodic();
-//            if (auto event = mFifo.pop_front()) {
-//                bool processed = (EE::process(*event) || ...);
-//                if (!processed) {
-//                    unprocessedEvent() = true;
-//                }
-//            }
-//        }
-//    }
+    static void run3(const P& periodic) {
+        leakedEvent() = false;
+        unprocessedEvent() = false;
+        while(true) {
+            periodic();
+            if (auto event = mFifo.pop_front()) {
+                bool processed = (EE::process(*event) || ...);
+                if (!processed) {
+                    unprocessedEvent() = true;
+                }
+            }
+        }
+    }
     
     template<HAL::EventHandlerGroup<Event8u_t> EE, HAL::CallableObject P>
     static void run2(const P& periodic) {

@@ -76,7 +76,7 @@ int main()
 
     systemTimer::create(1_s, AlarmFlags::Periodic);
 
-    spiInput::init<AVR::SpiSlave>();
+    spiInput::init<AVR::SpiSlave<>>();
 
     using handler = EventHandlerGroup<Spi0handler, Timerhandler>;
 

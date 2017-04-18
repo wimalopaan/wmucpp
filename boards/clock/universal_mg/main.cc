@@ -45,15 +45,17 @@
 #include "appl/timebcdserial.h"
 #include "appl/timerdisplay4x4.h"
 #include "appl/timerdisplayring60.h"
+#include "appl/radioclock.h"
+#include "appl/wordclock.h"
 
 #include "console.h"
 
-static constexpr bool useLight = true;
-static constexpr bool useIR = true;
+static constexpr bool useLight = false;
+static constexpr bool useIR = false;
 
-enum class DisplayType {Matrix4x4, Ring60, Nixie, BigLeds, One, TwoServo, FourServo};
+enum class DisplayType {Matrix4x4, Ring60, Nixie, WordClock, BigLeds, One, TwoServo, FourServo};
 
-static constexpr DisplayType displayType = DisplayType::Ring60;
+static constexpr DisplayType displayType = DisplayType::WordClock;
 
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
@@ -101,12 +103,13 @@ static constexpr uint16_t analogBrightnessMaximum = 400;
 static constexpr uint32_t secondsPerHour= (uint32_t)60 * 60;
 static constexpr uint32_t secondsPerDay = secondsPerHour * 24;
 
-static constexpr auto title = "Universal 02"_pgm;
+static constexpr auto title = "Universal 03"_pgm;
 }
 
 using displayNixie = TimeBCDSerial<spi>;
 using display4x4 = TimerDisplay4x4<display4x4Leds, Constant::cBlue>;
 using displayRing60 = TimerDisplay60<display60Leds, Constant::cWhiteLow, Constant::cBlue, Constant::cGreen, Constant::cRed>;
+using displayWC = WordclockDisplay<d0_ss_Pin, ColorSequenceGRB>;
 
 template<DisplayType Type>
 struct MetaDisplay {};
@@ -118,6 +121,10 @@ struct MetaDisplay<DisplayType::Matrix4x4> {
 template<>
 struct MetaDisplay<DisplayType::Ring60> {
     typedef displayRing60 display_type; 
+};
+template<>
+struct MetaDisplay<DisplayType::WordClock> {
+    typedef displayWC display_type; 
 };
 using display = MetaDisplay<displayType>::display_type;
 
@@ -231,7 +238,9 @@ struct StateManager{
     }        
 };
 
-using clockFSM = ClockStateMachine::Machine<StateManager, void, void>;
+//using clockFSM = ClockStateMachine::Machine<StateManager, void, void>;
+using radioClock = RadioClock<dcfDecoder, StateManager>;
+
 
 struct GlobalStateMachine {
     enum class State : uint8_t {Init, Start, Clock, Date, Temp, Text};
@@ -302,7 +311,8 @@ struct GlobalStateMachine {
                 break;
             case State::Start:
                 std::cout << "G: Start"_pgm << std::endl;
-                clockFSM::process(ClockStateMachine::Event::ReSync);
+                EventManager::enqueue({EventType::RadioClockReset, 0});
+//                clockFSM::process(ClockStateMachine::Event::ReSync);
                 break;
             case State::Clock:
                 std::cout << "G: Clock"_pgm << std::endl;
@@ -379,57 +389,58 @@ struct UsartDorHandler : public EventHandler<EventType::UsartDor> {
         return true;
     }
 };
-struct DCFReceive0Handler : public EventHandler<EventType::DCFReceive0> {
-    static bool process(uint8_t) {
-        statusLed::flash(Constant::cRed, 1);
-        return true;
-    }  
-};
-struct DCFReceive1Handler : public EventHandler<EventType::DCFReceive1> {
-    static bool process(uint8_t) {
-        statusLed::flash(Constant::cBlue, 2);
-        return true;
-    }  
-};
-struct DCFDecodeHandler : public EventHandler<EventType::DCFDecode> {
-    static bool process(uint8_t) {
-        clockFSM::process(ClockStateMachine::Event::DCFDecode);
+
+//struct DCFReceive0Handler : public EventHandler<EventType::DCFReceive0> {
+//    static bool process(uint8_t) {
+//        statusLed::flash(Constant::cRed, 1);
+//        return true;
+//    }  
+//};
+//struct DCFReceive1Handler : public EventHandler<EventType::DCFReceive1> {
+//    static bool process(uint8_t) {
+//        statusLed::flash(Constant::cBlue, 2);
+//        return true;
+//    }  
+//};
+//struct DCFDecodeHandler : public EventHandler<EventType::DCFDecode> {
+//    static bool process(uint8_t) {
+//        clockFSM::process(ClockStateMachine::Event::DCFDecode);
         
-        oscillator::referenceTime(dcfDecoder::dateTime());
+//        oscillator::referenceTime(dcfDecoder::dateTime());
         
-        std::cout << "Delta: "_pgm << oscillator::delta() << std::endl;
-        std::cout << "Durat: "_pgm << oscillator::lastMeasurementDuration().value << std::endl;
+//        std::cout << "Delta: "_pgm << oscillator::delta() << std::endl;
+//        std::cout << "Durat: "_pgm << oscillator::lastMeasurementDuration().value << std::endl;
         
-        if (auto delta = oscillator::delta(); delta != 0) {
-            if (delta > 0) {
-                oscillator::adjust(-1);
-            }
-            else {
-                oscillator::adjust(1);
-            }
-        }
-        std::cout << "OSCCAL: "_pgm << oscillator::calibration() << std::endl;
-        return true;
-    }  
-};
-struct DCFSyncHandler : public EventHandler<EventType::DCFSync> {
-    static bool process(uint8_t) {
-        clockFSM::process(ClockStateMachine::Event::DCFSync);
-        return true;
-    }  
-};
-struct DCFErrorHandler : public EventHandler<EventType::DCFError> {
-    static bool process(uint8_t) {
-        clockFSM::process(ClockStateMachine::Event::DCFError);
-        return true;
-    }  
-};
-struct DCFParityHandler : public EventHandler<EventType::DCFParityError> {
-    static bool process(uint8_t) {
-        clockFSM::process(ClockStateMachine::Event::DCFError);
-        return true;
-    }  
-};
+//        if (auto delta = oscillator::delta(); delta != 0) {
+//            if (delta > 0) {
+//                oscillator::adjust(-1);
+//            }
+//            else {
+//                oscillator::adjust(1);
+//            }
+//        }
+//        std::cout << "OSCCAL: "_pgm << oscillator::calibration() << std::endl;
+//        return true;
+//    }  
+//};
+//struct DCFSyncHandler : public EventHandler<EventType::DCFSync> {
+//    static bool process(uint8_t) {
+//        clockFSM::process(ClockStateMachine::Event::DCFSync);
+//        return true;
+//    }  
+//};
+//struct DCFErrorHandler : public EventHandler<EventType::DCFError> {
+//    static bool process(uint8_t) {
+//        clockFSM::process(ClockStateMachine::Event::DCFError);
+//        return true;
+//    }  
+//};
+//struct DCFParityHandler : public EventHandler<EventType::DCFParityError> {
+//    static bool process(uint8_t) {
+//        clockFSM::process(ClockStateMachine::Event::DCFError);
+//        return true;
+//    }  
+//};
 struct IRHandler : public EventHandler<EventType::IREvent> {
     static bool process(uint8_t c) {
         std::cout << "IR: "_pgm << c << std::endl;
@@ -452,9 +463,10 @@ struct SystemClockSet : public EventHandler<EventType::SystemClockSet> {
 };
 
 using allEventHandler = EventHandlerGroup<TimerHandler, UsartFeHandler, UsartUpeHandler, UsartDorHandler, Usart0Handler,
-                                        DCFReceive0Handler, DCFReceive1Handler, DCFDecodeHandler, DCFSyncHandler, DCFErrorHandler, DCFParityHandler,
+//                                        DCFReceive0Handler, DCFReceive1Handler, DCFDecodeHandler, DCFSyncHandler, DCFErrorHandler, DCFParityHandler,
                                         IRHandler, IRRepeatHandler,
                                         SystemClockSet>;
+
 
 constexpr std::hertz fIr = 15000_Hz;
 
@@ -465,6 +477,7 @@ int main() {
     terminal::init<19200>();
     statusLed::init();
     display::init();
+    radioClock::init();
     
     systemTimer::template prescale<LocalConfig::tsd.prescaler>();
     systemTimer::template ocra<LocalConfig::tsd.ocr - 1>();
@@ -492,7 +505,7 @@ int main() {
         
         alarmTimer::start(*preStartTimer);
         
-        EventManager::run2<allEventHandler>([](){
+        EventManager::run3<allEventHandler, radioClock::HandlerGroup>([](){
             if constexpr(useLight) {
                 adc::periodic();
                 brightness = std::scale(adc::value(0), adc::value_type(0), adc::value_type(Constant::analogBrightnessMaximum));

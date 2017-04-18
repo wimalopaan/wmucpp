@@ -29,17 +29,21 @@
 
 namespace AVR {
 
+template<typename MCU = DefaultMcuType>
 struct SpiMaster final {
     SpiMaster() = delete;
-    static constexpr uint8_t spcr = _BV(SPIE) | _BV(SPE) | _BV(MSTR) | _BV(SPR0) | _BV(SPR1);
+//    static constexpr uint8_t spcr = _BV(SPIE) | _BV(SPE) | _BV(MSTR) | _BV(SPR0) | _BV(SPR1);
+    static constexpr auto spcr = MCU::Spi::CR::spie | MCU::Spi::CR::spe | MCU::Spi::CR::mstr | MCU::Spi::CR::spr1 | MCU::Spi::CR::spr0;
     typedef AVR::Output mosi_dir;
     typedef AVR::Input  miso_dir;
     typedef AVR::Output sck_dir;
     typedef AVR::Output ss_dir;
 };
+template<typename MCU = DefaultMcuType>
 struct SpiSlave final {
     SpiSlave() = delete;
-    static constexpr uint8_t spcr = _BV(SPIE) | _BV(SPE);
+//    static constexpr uint8_t spcr = _BV(SPIE) | _BV(SPE);
+    static constexpr auto spcr = MCU::Spi::CR::spie | MCU::Spi::CR::spe;
     typedef AVR::Input  mosi_dir;
     typedef AVR::Output miso_dir;
     typedef AVR::Input  sck_dir;
@@ -106,19 +110,21 @@ public:
         spiPort::sck::template dir<typename Mode::sck_dir>();
         spiPort::ss::template dir<typename Mode::ss_dir>();
         spiPort::ss::on();
-        getBaseAddr<typename MCU::Spi, N>()->spcr = Mode::spcr;
+        getBaseAddr<typename MCU::Spi, N>()->spcr.template set<Mode::spcr>();
     }
     static bool isReady() {
-        return getBaseAddr<typename MCU::Spi, N>()->spsr & _BV(SPIF);
+//        return getBaseAddr<typename MCU::Spi, N>()->spsr & _BV(SPIF);
+        return getBaseAddr<typename MCU::Spi, N>()->spsr.template is_set<MCU::Spi::SR::spif>();
     }
 
     static bool put(uint8_t c) {
-        if (getBaseAddr<typename MCU::Spi, N>()->spsr & _BV(SPIF)) {
+//        if (getBaseAddr<typename MCU::Spi, N>()->spsr & _BV(SPIF)) {
+        if (getBaseAddr<typename MCU::Spi, N>()->spsr.template is_set<MCU::Spi::SR::spif>()) {
             return false;
         }
         // todo: nach dem Transfer wieder auf high()
         spiPort::ss::off();
-        getBaseAddr<typename MCU::Spi, N>()->spdr = c;
+        *getBaseAddr<typename MCU::Spi, N>()->spdr = c;
         return true;
     }
     
@@ -129,7 +135,7 @@ public:
         return oBefore;
     }
     static void isr() {
-        uint8_t c = getBaseAddr<typename MCU::Spi, N>()->spdr;
+        uint8_t c = *getBaseAddr<typename MCU::Spi, N>()->spdr;
         overrun |= !EventManager::enqueueISR({SpiEvent<N>::event, c});
     }
 private:

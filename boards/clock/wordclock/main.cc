@@ -388,7 +388,7 @@ int main() {
         alarmTimer::start(*preStartTimer);
         EventManager::run2<allEventHandler>([](){
             adc::periodic();
-            display::brightness() = std::scale(adc::value(0), adc::value_type(0), adc::value_type(Constant::analogBrightnessMaximum));
+            display::brightness(std::scale(adc::value(0), adc::value_type(0), adc::value_type(Constant::analogBrightnessMaximum)));
 
             systemConstantRate::periodic();
             irConstantRate::periodic();

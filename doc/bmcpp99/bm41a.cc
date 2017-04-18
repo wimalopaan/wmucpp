@@ -16,8 +16,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+template<typename X> concept bool C = true;
 
-namespace TimeDisplay {
-    enum class Mode {Time, Date};
+// fine
+template<C... X>
+void bar(X...)
+{}
+
+struct foo {
+    // error: invalid use of pack expansion expression
+    template<C... X>
+    void bar(X...)
+    {}
+};
+
+int main()
+{
+    bar();
+//    foo {}.bar();
 }

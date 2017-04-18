@@ -111,7 +111,7 @@ struct IsrBaseHandler<void> {
 template<typename I, MCU::IServiceR... Hs>
 struct IsrDistributor final : public IsrBaseHandler<I> {
     static_assert((sizeof...(Hs) == 0) || (Util::numberOfOnes((Hs::isr_mask | ... | 0)) == 1), "all sub-handler must use same isr");
-    static void isr() {
+    inline static void isr() {
         (Hs::isr(), ...);
     }
 };
