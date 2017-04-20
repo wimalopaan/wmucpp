@@ -19,6 +19,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <ctype.h>
 #include "std/array.h"
 #include "container/stringbuffer.h"
 #include "container/pgmstring.h"
@@ -34,7 +35,7 @@ public:
         uint8_t position = 0;
         for(uint8_t i = 0; i < L; ++i) {
             uint8_t c = string[i];
-            if (c < ' ') {
+            if (iscntrl(c)) {
                 break;
             }
             typename Font::Char pattern = font[c]; 
@@ -80,9 +81,12 @@ public:
     static void shift() {
         mStartInBitmap = (mStartInBitmap + 1) % mBitmap.size;
     }
+    static void reset() {
+        mStartInBitmap = 0;
+    }
 
 private:
     inline static std::array<uint8_t, TextLength * (Font::Width + Space)> mBitmap;
-    static Font font;
-    inline static uint8_t mStartInBitmap;
+    inline static Font font;
+    inline static uint8_t mStartInBitmap = 0;
 };

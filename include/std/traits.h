@@ -28,11 +28,9 @@ namespace std {
 //struct underlying_type;
 /// The underlying type of an enum.
 template<typename _Tp>
-  struct underlying_type
-  {
+struct underlying_type {
     typedef __underlying_type(_Tp) type;
-  };
-
+};
 
 template<bool B, class T = void>
 struct enable_if {};

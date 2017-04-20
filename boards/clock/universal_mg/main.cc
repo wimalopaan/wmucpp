@@ -47,11 +47,14 @@
 #include "appl/timerdisplayring60.h"
 #include "appl/radioclock.h"
 #include "appl/wordclock.h"
+#include "appl/fonts.h"
+#include "appl/shiftdisplay.h"
 
 #include "console.h"
 
-static constexpr bool useLight = false;
-static constexpr bool useIR = false;
+static constexpr bool useLight = true;
+static constexpr bool useIR = true;
+static constexpr bool useText = true;
 
 enum class DisplayType {Matrix4x4, Ring60, Nixie, WordClock, BigLeds, One, TwoServo, FourServo};
 
@@ -104,12 +107,17 @@ static constexpr uint32_t secondsPerHour= (uint32_t)60 * 60;
 static constexpr uint32_t secondsPerDay = secondsPerHour * 24;
 
 static constexpr auto title = "Universal 03"_pgm;
+
+static constexpr uint8_t textLength = 64;
 }
 
-using displayNixie = TimeBCDSerial<spi>;
-using display4x4 = TimerDisplay4x4<display4x4Leds, Constant::cBlue>;
+using displayNixie  = TimeBCDSerial<spi>;
+using display4x4    = TimerDisplay4x4<display4x4Leds, Constant::cBlue>;
 using displayRing60 = TimerDisplay60<display60Leds, Constant::cWhiteLow, Constant::cBlue, Constant::cGreen, Constant::cRed>;
-using displayWC = WordclockDisplay<d0_ss_Pin, ColorSequenceGRB>;
+using displayWC     = WordclockDisplay<d0_ss_Pin, ColorSequenceGRB>;
+
+//using shifttext = std::conditional<useText, ShiftDisplay<displayWC::leds, displayWC::mColumns, displayWC::mRows, Constant::textLength, Font<5,7>>, void>::type;
+using shifttext = ShiftDisplay<displayWC::leds, displayWC::mColumns, displayWC::mRows, Constant::textLength, Font<5,7>>;
 
 template<DisplayType Type>
 struct MetaDisplay {};
@@ -179,9 +187,8 @@ std::chrono::system_clock<> systemClock;
 
 std::percent brightness = 10_ppc;
 
-// todo: für ReSync erweitern: falls Resync nicht erfolgreich -> Zeit beibehalten und ReSyncCounter irgendwie anzeigen (Farbe ander 12).
 struct StateManager{
-    using State = typename ClockStateMachine::State;
+    using State = RadioClock::State;
     static void enter(State state) {
         switch(state) {
         case State::PreStart:
@@ -197,22 +204,8 @@ struct StateManager{
             statusLed::steadyColor(Constant::cBlue);
             statusLed::update(brightness);
             break;
-        case State::Sync1:
-            std::cout << "S: Sync1"_pgm << std::endl;
-            powerSwitchPin::off();
-            statusLed::disable();
-            statusLed::steadyColor(Constant::cYellow);
-            statusLed::update(brightness);
-            break;
-        case State::Sync2:
-            std::cout << "S: Sync2"_pgm << std::endl;
-            powerSwitchPin::off();
-            statusLed::disable();
-            statusLed::steadyColor(Constant::cCyan);
-            statusLed::update(brightness);
-            break;
-        case State::Sync3:
-            std::cout << "S: Sync3"_pgm << std::endl;
+        case State::Sync:
+            std::cout << "S: Sync"_pgm << std::endl;
             powerSwitchPin::off();
             statusLed::disable();
             statusLed::steadyColor(Constant::cRed);
@@ -221,14 +214,13 @@ struct StateManager{
         case State::Clock:
             std::cout << "S: Clock"_pgm << std::endl;
             systemClock = std::chrono::system_clock<>::from(dcfDecoder::dateTime());
-            EventManager::enqueue({EventType::SystemClockSet, 0});
+            EventManager::enqueue(EventType::SystemClockSet);
             powerSwitchPin::on();
             statusLed::enable();
             statusLed::steadyColor(Constant::cGreen);
             break;
         case State::Error:
             std::cout << "S: Error"_pgm << std::endl;
-            break;
             powerSwitchPin::off();
             statusLed::disable();
             statusLed::steadyColor(Constant::cMagenta);
@@ -238,9 +230,15 @@ struct StateManager{
     }        
 };
 
-//using clockFSM = ClockStateMachine::Machine<StateManager, void, void>;
-using radioClock = RadioClock<dcfDecoder, StateManager>;
-
+static void flash(bool bit) {
+    if (bit) {
+        statusLed::flash(Constant::cRed * brightness, 2);
+    }
+    else {
+        statusLed::flash(Constant::cRed * brightness, 1);
+    }
+}
+using radioClock = RadioClock::Clock<dcfDecoder, StateManager, flash>;
 
 struct GlobalStateMachine {
     enum class State : uint8_t {Init, Start, Clock, Date, Temp, Text};
@@ -311,8 +309,7 @@ struct GlobalStateMachine {
                 break;
             case State::Start:
                 std::cout << "G: Start"_pgm << std::endl;
-                EventManager::enqueue({EventType::RadioClockReset, 0});
-//                clockFSM::process(ClockStateMachine::Event::ReSync);
+                EventManager::enqueue(EventType::RadioClockStart);
                 break;
             case State::Clock:
                 std::cout << "G: Clock"_pgm << std::endl;
@@ -352,7 +349,7 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
                 else {
                     display::set(systemClock);
                 }
-
+                
                 std::cout << systemClock.dateTime() << std::endl;
                 
                 if ((systemClock.value() % Constant::secondsPerDay) == (4 * Constant::secondsPerHour)) {
@@ -390,63 +387,25 @@ struct UsartDorHandler : public EventHandler<EventType::UsartDor> {
     }
 };
 
-//struct DCFReceive0Handler : public EventHandler<EventType::DCFReceive0> {
-//    static bool process(uint8_t) {
-//        statusLed::flash(Constant::cRed, 1);
-//        return true;
-//    }  
-//};
-//struct DCFReceive1Handler : public EventHandler<EventType::DCFReceive1> {
-//    static bool process(uint8_t) {
-//        statusLed::flash(Constant::cBlue, 2);
-//        return true;
-//    }  
-//};
-//struct DCFDecodeHandler : public EventHandler<EventType::DCFDecode> {
-//    static bool process(uint8_t) {
-//        clockFSM::process(ClockStateMachine::Event::DCFDecode);
-        
-//        oscillator::referenceTime(dcfDecoder::dateTime());
-        
-//        std::cout << "Delta: "_pgm << oscillator::delta() << std::endl;
-//        std::cout << "Durat: "_pgm << oscillator::lastMeasurementDuration().value << std::endl;
-        
-//        if (auto delta = oscillator::delta(); delta != 0) {
-//            if (delta > 0) {
-//                oscillator::adjust(-1);
-//            }
-//            else {
-//                oscillator::adjust(1);
-//            }
-//        }
-//        std::cout << "OSCCAL: "_pgm << oscillator::calibration() << std::endl;
-//        return true;
-//    }  
-//};
-//struct DCFSyncHandler : public EventHandler<EventType::DCFSync> {
-//    static bool process(uint8_t) {
-//        clockFSM::process(ClockStateMachine::Event::DCFSync);
-//        return true;
-//    }  
-//};
-//struct DCFErrorHandler : public EventHandler<EventType::DCFError> {
-//    static bool process(uint8_t) {
-//        clockFSM::process(ClockStateMachine::Event::DCFError);
-//        return true;
-//    }  
-//};
-//struct DCFParityHandler : public EventHandler<EventType::DCFParityError> {
-//    static bool process(uint8_t) {
-//        clockFSM::process(ClockStateMachine::Event::DCFError);
-//        return true;
-//    }  
-//};
 struct IRHandler : public EventHandler<EventType::IREvent> {
     static bool process(uint8_t c) {
         std::cout << "IR: "_pgm << c << std::endl;
-        globalFSM::process(globalFSM::Event::StateSwitchFw);
+        if (mLastCode != 0) {
+            if (c == mLastCode) {
+                globalFSM::process(globalFSM::Event::StateSwitchFw);
+            }
+            else {
+                globalFSM::process(globalFSM::Event::StateSwitchBw);
+            }
+        }    
+        else {
+            globalFSM::process(globalFSM::Event::StateSwitchFw);
+            mLastCode = c;
+        }
         return true;
     }  
+    static inline uint8_t mLastCode = 0;
+    
 };
 struct IRRepeatHandler : public EventHandler<EventType::IREventRepeat> {
     static bool process(uint8_t c) {
@@ -463,12 +422,12 @@ struct SystemClockSet : public EventHandler<EventType::SystemClockSet> {
 };
 
 using allEventHandler = EventHandlerGroup<TimerHandler, UsartFeHandler, UsartUpeHandler, UsartDorHandler, Usart0Handler,
-//                                        DCFReceive0Handler, DCFReceive1Handler, DCFDecodeHandler, DCFSyncHandler, DCFErrorHandler, DCFParityHandler,
-                                        IRHandler, IRRepeatHandler,
-                                        SystemClockSet>;
-
+IRHandler, IRRepeatHandler,
+SystemClockSet>;
 
 constexpr std::hertz fIr = 15000_Hz;
+
+
 
 int main() {   
     powerSwitchPin::dir<AVR::Output>();    
@@ -477,6 +436,7 @@ int main() {
     terminal::init<19200>();
     statusLed::init();
     display::init();
+    dcfDecoder::init();
     radioClock::init();
     
     systemTimer::template prescale<LocalConfig::tsd.prescaler>();
@@ -495,13 +455,26 @@ int main() {
         irTimer::mode(AVR::TimerMode::CTC);
         irConstantRate::init();
     }
-
+    
     {
         Scoped<EnableInterrupt> ei;
         std::cout << Constant::title << std::endl;
         
         std::cout << "OSCCAL: "_pgm << oscillator::calibration() << std::endl;
         std::cout << "f systemtimer: "_pgm << LocalConfig::tsd.f << std::endl;
+        
+        if constexpr(useText) {
+            powerSwitchPin::on();    
+            StringBuffer<Constant::textLength> sb;
+            sb.insertAtFill(0, Constant::title);
+            shifttext::set(sb);
+            for(uint8_t i = 0; i < Constant::title.size + 1; ++i) {
+                shifttext::write();
+                shifttext::shift();
+                Util::delay(300_ms);
+            }
+            powerSwitchPin::off();    
+        }
         
         alarmTimer::start(*preStartTimer);
         
@@ -511,7 +484,7 @@ int main() {
                 brightness = std::scale(adc::value(0), adc::value_type(0), adc::value_type(Constant::analogBrightnessMaximum));
                 brightness = std::max(brightness, 1_ppc);
             }
-
+            
             systemConstantRate::periodic();
             if constexpr(useIR) {
                 irConstantRate::periodic();
@@ -520,7 +493,7 @@ int main() {
                     EventManager::enqueue({(irmp_data.flags & Irmp::Repetition) ? EventType::IREventRepeat : EventType::IREvent , uint8_t(irmp_data.command)});
                 }
             }
-
+            
             if (EventManager::unprocessedEvent()) {
                 EventManager::unprocessedEvent() = false;
                 statusLed::enable();

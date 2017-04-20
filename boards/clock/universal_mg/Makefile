@@ -23,8 +23,9 @@ F_OSC = 20000000
 
 subdirs = 
 
-targets +=  main.elf main.s
-targets +=  test.elf test.s
+targets +=  main.elf
+targets +=  test.elf 
+targets +=  testleds.elf
 
 #test.elf: test.o simavrconsole.o
 #	$(CC) $(LDFLAGS) -o $@ test.o simavrconsole.o

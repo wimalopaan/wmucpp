@@ -27,10 +27,10 @@
 #include "timedisplays.h"
 
 template<typename LedPin, typename ColorSequence = ColorSequenceRGB>
-class WordclockDisplay {
+class WordclockDisplay final {
     WordclockDisplay() = delete;
 public:
-    struct WordLeds {
+    struct WordLeds final {
         const uint8_t startPosition = 0;
         const uint8_t length = 0;
         static WordLeds createFrom(const std::array<uint8_t, 2>& bytes) {
@@ -102,13 +102,13 @@ public:
     
     static void init() {
         leds::init();
-        leds::off();
+        clear();
     }
     static void clear() {
         leds::off();
     }
 
-    template<typename Clock>
+    template<std::Clock Clock>
     static void set(const Clock& clock, TimeDisplay::Mode = TimeDisplay::Mode::Time) {
         DateTime::TimeTm t = clock.dateTime();
         auto minute = t.minutes().value;

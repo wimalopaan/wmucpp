@@ -1,6 +1,6 @@
 /*
- * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * ++C - C++ introduction
+ * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.meier@hs-kl.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,10 +16,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "std/traits.h"
 
-#include "std/concepts.h"
+constexpr bool useF = true;
 
-namespace TimeDisplay {
-    enum class Mode {Time, Date};
+struct A {
+    static void f() {}
+};
+
+using a = std::conditional<useF, A, void>::type;
+
+int main() {
+    if constexpr(useF) {
+        a::f();
+    }
 }

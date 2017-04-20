@@ -17,6 +17,7 @@ boards/clock/universal/board.txt
 boards/clock/universal_mg/Makefile
 boards/clock/universal_mg/main.cc
 boards/clock/universal_mg/test.cc
+boards/clock/universal_mg/testleds.cc
 boards/clock/wordclock/Makefile
 boards/clock/wordclock/board.txt
 boards/clock/wordclock/main.cc
@@ -52,6 +53,7 @@ doc/bmcpp99/bm21a.cc
 doc/bmcpp99/bm30a.cc
 doc/bmcpp99/bm40a.cc
 doc/bmcpp99/bm41a.cc
+doc/bmcpp99/bm42a.cc
 example/atmega8/blink.cc
 example/atmega8/blink.h
 example/basics/register01.cc

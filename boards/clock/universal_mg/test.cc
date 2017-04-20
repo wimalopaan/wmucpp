@@ -64,6 +64,9 @@ using ledPin         = AVR::Pin<PortB, 7>;
 using led = WS2812<1, ledPin, ColorSequenceGRB>;
 using Color = led::color_type;
 
+using display = WS2812<10 * 11 + 4, d0_ss_Pin, ColorSequenceGRB>;
+
+
 // todo: belegt RAM im data segment ?
 namespace Constant {
 static constexpr uint8_t brightness = 255;
@@ -203,13 +206,9 @@ using allEventHandler = EventHandlerGroup<TimerHandler, UsartFeHandler, UsartUpe
 
 int main() {   
     powerSwitchPin::dir<AVR::Output>();    
-    powerSwitchPin::off();    
+    powerSwitchPin::on();    
     
-    d0_ss_Pin::dir<AVR::Output>();
-    d1_data_Pin::dir<AVR::Output>();
-    
-    d0_ss_Pin::off();
-    d1_data_Pin::off();
+    display::init();
     
     isrRegistrar::init();
     terminal::init<19200>();
@@ -227,12 +226,16 @@ int main() {
         std::cout << "f prescaler: "_pgm << LocalConfig::tsd.prescaler << std::endl;
         std::cout << "f ocr: "_pgm << LocalConfig::tsd.ocr << std::endl;
         std::cout << "f reso: "_pgm << LocalConfig::reso << std::endl;
-        
         std::cout << "a reso: "_pgm << alarmTimer::resolution << std::endl;
-     
-        for(const auto& t: alarmTimer::timers()) {
-            std::cout << t.ticks << std::endl;
+    
+        while(true) {
+            for(uint8_t i = 0; i < display::size; ++i) {
+                display::set(i, Constant::cWhiteLow);
+                Util::delay(100_ms);
+            }
+            display::set(Constant::cOff);
         }
+        
         
         EventManager::run2<allEventHandler>([](){
             systemConstantRate::periodic();
@@ -241,7 +244,6 @@ int main() {
 }
 
 ISR(TIMER1_COMPA_vect) {
-    d0_ss_Pin::toggle();
     isrRegistrar::isr<AVR::ISR::Timer<1>::CompareA>();
 }
 #ifndef SIMAVR

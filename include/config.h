@@ -29,45 +29,33 @@ struct Config final
 {
     Config() = delete; // one should use a similar copy in own project
 
-    static constexpr std::megahertz fMcuMhz {F_CPU / 1000000};
-    static constexpr std::hertz fMcu{F_CPU};
+    inline static constexpr std::megahertz fMcuMhz {F_CPU / 1000000};
+    inline static constexpr std::hertz fMcu{F_CPU};
 
     static_assert(fMcuMhz.value <= 20, "F_CPU too high");
     static_assert(fMcuMhz.value >=  1, "F_CPU too low");
 
     struct Timer {
-        static constexpr uint8_t NumberOfTimers = 8;
-        static constexpr std::hertz frequency = 100_Hz;
-        static constexpr std::milliseconds resolution = std::duration_cast<std::milliseconds>(1 / frequency);
+        inline static constexpr uint8_t NumberOfTimers = 8;
+        inline static constexpr std::hertz frequency = 100_Hz;
+        inline static constexpr std::milliseconds resolution = std::duration_cast<std::milliseconds>(1 / frequency);
     };
     struct EventManager {
-        static constexpr uint8_t EventQueueLength = 32;
+        inline static constexpr uint8_t EventQueueLength = 32;
     };
     struct Usart {
-        static constexpr uint8_t SendQueueLength = 64;
-        static constexpr uint8_t RecvQueueLength = 0;
+        inline static constexpr uint8_t SendQueueLength = 64;
+        inline static constexpr uint8_t RecvQueueLength = 0;
     };
     struct SoftSpiMaster {
-        static constexpr std::microseconds pulseDelay = 1_us;
+        inline static constexpr std::microseconds pulseDelay = 1_us;
     };
     struct Button {
-        static constexpr uint8_t buttonTicksForPressed = 100_ms * Timer::frequency;
+        inline static constexpr uint8_t buttonTicksForPressed = 100_ms * Timer::frequency;
     };
-    static constexpr std::microseconds zeroMicroSeconds{0};
-    static constexpr bool ensureTerminalOutput = true;
-    static constexpr bool disableCout = false;
+    inline static constexpr std::microseconds zeroMicroSeconds{0};
+    inline static constexpr bool ensureTerminalOutput = true;
+    inline static constexpr bool disableCout = false;
 };
-
-constexpr std::hertz Config::fMcu;
-constexpr std::megahertz Config::fMcuMhz;
-constexpr uint8_t Config::Timer::NumberOfTimers;
-constexpr std::hertz Config::Timer::frequency;
-constexpr std::milliseconds Config::Timer::resolution;
-constexpr uint8_t Config::EventManager::EventQueueLength;
-constexpr uint8_t Config::Usart::SendQueueLength;
-constexpr uint8_t Config::Usart::RecvQueueLength;
-constexpr bool Config::ensureTerminalOutput;
-constexpr bool Config::disableCout;
-constexpr std::microseconds Config::SoftSpiMaster::pulseDelay;
 
 #endif

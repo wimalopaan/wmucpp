@@ -52,13 +52,13 @@ enum class EventType : uint8_t {
     I2CLedError, I2CLedValueAvailable,
     I2CRpmError, I2CRpmValueAvailable,
     AdcConversion,
-    DCFReceive0, DCFReceive1, DCFDecode, DCFSync, DCFParityError, DCFError,
+    DCFReceive0, DCFReceive1, DCFDecode, DCFSync, DCFParityError, DCFError, 
     SystemClockSet,
     TLE5205Error,
     ExternalInterrupt,
     IREvent, IREventRepeat,
     NullPAEvent,
-    RadioClockReset, RadioClockStart, RadioClockReady,
+    RadioClockReset, RadioClockStart, 
     ApplicationEvent
 };
 
@@ -66,13 +66,13 @@ template<typename T>
 struct Event final {
     Event() = default;
     Event(const volatile Event& e) : type(e.type), value(e.value) {}
-    Event(EventType t, T v) : type(t), value(v) {}
+    Event(EventType t, T v = 0) : type(t), value(v) {}
     void operator=(const volatile Event& e) volatile {
         type = e.type;
         value = e.value;
     }
-    EventType type;
-    T value;
+    EventType type = EventType::NoEvent;
+    T value{};
 };
 
 typedef Event<uint8_t> Event8u_t;

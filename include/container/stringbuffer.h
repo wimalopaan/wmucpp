@@ -28,7 +28,6 @@
 
 template<uint8_t Length, typename T = char, char Fill = ' '>
 class StringBuffer final {
-//    template<uint8_t N, typename, char> friend class StringBuffer;
 public:
     typedef T type;
     typedef typename std::conditional<Length <= 255, uint8_t, uint16_t>::type size_type;
@@ -55,8 +54,6 @@ public:
         static_assert(Length > ps.size, "wrong length");
         assert(position < Length);
         const char* ptr = ps.data;
-        // todo: memcpy_P
-//        memcpy_p(data + position, ps.data, min(L-position, ps.size));
         for(uint8_t i = position, j = 0; (i < Length) && (j < ps.size); ++i, ++j) {
             data[i] = pgm_read_byte(ptr++);
         }

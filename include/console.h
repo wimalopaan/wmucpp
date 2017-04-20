@@ -268,7 +268,7 @@ Stream& operator<<(Stream& o, const Config&) {
         o << "ensureTerminalOutput: "_pgm << Config::ensureTerminalOutput << "\r\n"_pgm;
         o << "disableCout: "_pgm << Config::disableCout << "\r\n"_pgm;
         o << "SoftSpiMaster::pulseDelay: "_pgm << Config::SoftSpiMaster::pulseDelay << "\r\n"_pgm;
-//        o << "Button::buttonTicksForPressed: "_pgm << Config::Button::buttonTicksForPressed << "\r\n"_pgm;
+        o << "Button::buttonTicksForPressed: "_pgm << Config::Button::buttonTicksForPressed << "\r\n"_pgm;
     }
     return o;
 }

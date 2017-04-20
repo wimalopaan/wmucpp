@@ -25,7 +25,8 @@ namespace DateTime {
 class TimeTm;
 }
 
-template<typename Stream> Stream& operator<<(Stream& out, const DateTime::TimeTm& t);
+template<typename Stream> 
+Stream& operator<<(Stream& out, const DateTime::TimeTm& t);
 
 namespace DateTime {
 
