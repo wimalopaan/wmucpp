@@ -19,6 +19,7 @@
 #pragma once
 
 #include "std/traits.h"
+#include "std/memory.h"
 
 #if __has_include(<avr/interrupt.h>)
 # include <avr/interrupt.h>
@@ -30,9 +31,9 @@
 struct EnableInterrupt {};
 struct DisbaleInterrupt {};
 
-// todo: Restore State (SREG)
+struct Transaction {};
 
-template<typename T, bool Active = true>
+template<typename T = Transaction, bool Active = true, typename F1 = void, typename F2 = void>
 class Scoped;
 
 template<bool Active>
@@ -66,4 +67,28 @@ public:
         }
     }
 };
+
+template<typename F1, typename F2>
+class Scoped<Transaction, true, F1, F2> final
+{
+public:
+    inline Scoped(F1 f1, F2 f2) : f2(std::move(f2)) {
+        f1();
+    }
+    Scoped(const Scoped&) = delete;
+    Scoped(Scoped&&) = delete;
+    
+    Scoped& operator=(const Scoped&) = delete;
+    Scoped& operator=(Scoped&&) = delete;
+    
+    inline ~Scoped() {
+        f2();
+    }
+private:
+    F2 f2;
+};
+
+// explicit deduction guide
+template<typename F1, typename F2>
+Scoped(F1 f1, F2 f2) -> Scoped<Transaction, true, F1, F2>;
 

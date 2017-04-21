@@ -206,7 +206,7 @@ struct ClockStateMachine {
 struct GlobalStateMachine {
     enum class State : uint8_t {Clock, Date, Temp, Text};
     enum class Event : uint8_t {StateSwitch, FastTick, SecondTick};
-    static void process(Event e) {
+    static void process(Event) {
         static State state = State::Text;
         State newState = state;
         switch(state) {

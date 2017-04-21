@@ -55,10 +55,7 @@
 static constexpr bool useLight = true;
 static constexpr bool useIR = true;
 static constexpr bool useText = true;
-
-enum class DisplayType {Matrix4x4, Ring60, Nixie, WordClock, BigLeds, One, TwoServo, FourServo};
-
-static constexpr DisplayType displayType = DisplayType::WordClock;
+static constexpr bool useRCCalibration = false;
 
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
@@ -88,7 +85,6 @@ using Color = led::color_type;
 
 using spi = SoftSpiMaster<d1_data_Pin, d2_clck_Pin, d0_ss_Pin>;
 
-// todo: belegt RAM im data segment ?
 namespace Constant {
 static constexpr uint8_t brightness = 255;
 static constexpr Color cOff{0};
@@ -106,9 +102,9 @@ static constexpr uint16_t analogBrightnessMaximum = 400;
 static constexpr uint32_t secondsPerHour= (uint32_t)60 * 60;
 static constexpr uint32_t secondsPerDay = secondsPerHour * 24;
 
-static constexpr auto title = "Universal 03"_pgm;
+static constexpr auto title = "SW = Wordclock 1.0; HW = Universal-MG 01"_pgm;
 
-static constexpr uint8_t textLength = 64;
+static constexpr uint8_t textLength = std::max(uint8_t(64), title.size);
 }
 
 using displayNixie  = TimeBCDSerial<spi>;
@@ -116,25 +112,11 @@ using display4x4    = TimerDisplay4x4<display4x4Leds, Constant::cBlue>;
 using displayRing60 = TimerDisplay60<display60Leds, Constant::cWhiteLow, Constant::cBlue, Constant::cGreen, Constant::cRed>;
 using displayWC     = WordclockDisplay<d0_ss_Pin, ColorSequenceGRB>;
 
+using display       = displayWC;
+
 //using shifttext = std::conditional<useText, ShiftDisplay<displayWC::leds, displayWC::mColumns, displayWC::mRows, Constant::textLength, Font<5,7>>, void>::type;
 using shifttext = ShiftDisplay<displayWC::leds, displayWC::mColumns, displayWC::mRows, Constant::textLength, Font<5,7>>;
 
-template<DisplayType Type>
-struct MetaDisplay {};
-
-template<>
-struct MetaDisplay<DisplayType::Matrix4x4> {
-    typedef display4x4 display_type; 
-};
-template<>
-struct MetaDisplay<DisplayType::Ring60> {
-    typedef displayRing60 display_type; 
-};
-template<>
-struct MetaDisplay<DisplayType::WordClock> {
-    typedef displayWC display_type; 
-};
-using display = MetaDisplay<displayType>::display_type;
 
 using terminal = AVR::Usart<0, void>;
 namespace std {
@@ -250,10 +232,18 @@ struct GlobalStateMachine {
             if (e == Event::Start) {
                 newState = State::Start;
             }
+            else if (e == Event::FastTick) {
+                statusLed::tick(brightness);
+            }
             break;
         case State::Start:
             if (e == Event::Clock) {
                 newState = State::Clock;
+            }
+            else if (e == Event::SecondTick) {
+            }
+            else if (e == Event::FastTick) {
+                statusLed::tick(brightness);
             }
             break;
         case State::Clock:
@@ -266,6 +256,16 @@ struct GlobalStateMachine {
             else if (e == Event::Start) {
                 newState = State::Start;
             }
+            else if (e == Event::SecondTick) {
+                if constexpr(useLight) {
+                    std::cout << "light: "_pgm << brightness << std::endl;
+                    display::brightness(brightness);
+                }
+                display::set(systemClock);
+            }
+            else if (e == Event::FastTick) {
+                statusLed::tick(brightness);
+            }
             break;
         case State::Date:
             if (e == Event::StateSwitchFw) {
@@ -277,6 +277,18 @@ struct GlobalStateMachine {
             else if (e == Event::Start) {
                 newState = State::Start;
             }
+            else if (e == Event::SecondTick) {
+                StringBuffer<30> sb;
+                isotime_r(&systemClock.dateTime().tm(), sb.begin());
+                shifttext::set(sb);
+                shifttext::write();
+            }
+            else if (e == Event::FastTick) {
+                statusLed::tick(brightness);
+                shifttext::shift();
+                shifttext::write();
+            }
+            break;
             break;
         case State::Temp:
             if (e == Event::StateSwitchFw) {
@@ -299,6 +311,11 @@ struct GlobalStateMachine {
             else if (e == Event::Start) {
                 newState = State::Start;
             }
+            else if (e == Event::FastTick) {
+                statusLed::tick(brightness);
+                shifttext::shift();
+                shifttext::write();
+            }
             break;
         }
         if (newState != mState) {
@@ -313,14 +330,25 @@ struct GlobalStateMachine {
                 break;
             case State::Clock:
                 std::cout << "G: Clock"_pgm << std::endl;
+                display::clear();
                 break;
             case State::Date:
+                display::clear();
+                shifttext::clear();
+                shifttext::reset();
                 std::cout << "G: Date"_pgm << std::endl;
                 break;
             case State::Temp:
+                display::clear();
+                shifttext::clear();
+                shifttext::reset();
                 std::cout << "G: Temp"_pgm << std::endl;
                 break;
             case State::Text:
+                display::clear();
+                shifttext::clear();
+                shifttext::reset();
+                shifttext::set(Constant::title);
                 std::cout << "G: Text"_pgm << std::endl;
                 break;
             }
@@ -335,30 +363,18 @@ using globalFSM = GlobalStateMachine;
 struct TimerHandler : public EventHandler<EventType::Timer> {
     static bool process(uint8_t timer) {
         if (timer == *blinkTimer) {
-            statusLed::tick(brightness);
+            globalFSM::process(globalFSM::Event::FastTick);
         }
         else if (timer == *secondsTimer) {
-            if constexpr(useLight) {
-                std::cout << "light: "_pgm << brightness << std::endl;
-                display::brightness(brightness);
-            }
             if (systemClock) {
-                if ((systemClock.value() % 30) == 0) {
-                    display::set(systemClock, TimeDisplay::Mode::Date);
-                } 
-                else {
-                    display::set(systemClock);
-                }
-                
-                std::cout << systemClock.dateTime() << std::endl;
-                
                 if ((systemClock.value() % Constant::secondsPerDay) == (4 * Constant::secondsPerHour)) {
                     systemClock = -1;
-                    globalFSM::process(globalFSM::Event::Start);
                     std::cout << "ReSync"_pgm << std::endl;
+                    globalFSM::process(globalFSM::Event::Start);
                 }
             }
             systemClock.tick();            
+            globalFSM::process(globalFSM::Event::SecondTick);
         }
         else if (timer == *preStartTimer) {
             globalFSM::process(globalFSM::Event::Start);
@@ -427,8 +443,6 @@ SystemClockSet>;
 
 constexpr std::hertz fIr = 15000_Hz;
 
-
-
 int main() {   
     powerSwitchPin::dir<AVR::Output>();    
     powerSwitchPin::off();    
@@ -464,16 +478,16 @@ int main() {
         std::cout << "f systemtimer: "_pgm << LocalConfig::tsd.f << std::endl;
         
         if constexpr(useText) {
-            powerSwitchPin::on();    
-            StringBuffer<Constant::textLength> sb;
-            sb.insertAtFill(0, Constant::title);
-            shifttext::set(sb);
-            for(uint8_t i = 0; i < Constant::title.size + 1; ++i) {
+            Scoped st{
+                [](){powerSwitchPin::on();},
+                [](){powerSwitchPin::off();}
+            };
+            shifttext::set(Constant::title);
+            for(uint8_t i = 0; i < (Constant::title.size + 1) * shifttext::font().Width; ++i) {
                 shifttext::write();
                 shifttext::shift();
                 Util::delay(300_ms);
             }
-            powerSwitchPin::off();    
         }
         
         alarmTimer::start(*preStartTimer);

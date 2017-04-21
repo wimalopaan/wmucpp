@@ -38,15 +38,7 @@ public:
             if (iscntrl(c)) {
                 break;
             }
-            typename Font::Char pattern = font[c]; 
-            for(uint8_t col = 0; col < Font::Width; ++col) {
-                if (position >= mBitmap.size) {
-                    break;
-                }
-                if (auto bits = pattern[col]; bits != 0) {
-                    mBitmap[position++] = bits;
-                }
-            }
+            position = insertBitmap(position, mFont[c]);
             for(uint8_t col = 0; col < Space; ++col) {
                 mBitmap[position++] = 0;
             }
@@ -54,6 +46,17 @@ public:
     }
     template<typename C, C... Cs>
     static void set(const PgmString<C, Cs...>& pgm) {
+        uint8_t position = 0;
+        for(uint8_t i = 0; i < pgm.size; ++i) {
+            uint8_t c = pgm_read_byte(&pgm.data[i]);
+            if (iscntrl(c)) {
+                break;
+            }
+            position = insertBitmap(position, mFont[c]);
+            for(uint8_t col = 0; col < Space; ++col) {
+                mBitmap[position++] = 0;
+            }
+        }
     }
 
     static void write() {
@@ -84,9 +87,27 @@ public:
     static void reset() {
         mStartInBitmap = 0;
     }
+    static void clear() {
+        std::fill(std::begin(mBitmap), std::end(mBitmap), 0);
+    }
 
+    static const Font& font() {
+        return mFont;
+    }
 private:
-    inline static std::array<uint8_t, TextLength * (Font::Width + Space)> mBitmap;
-    inline static Font font;
+    static uint8_t insertBitmap(uint8_t position, const typename Font::Char& fontChar) {
+        for(uint8_t col = 0; col < Font::Width; ++col) {
+            if (position >= mBitmap.size) {
+                break;
+            }
+            if (auto bits = fontChar[col]; bits != 0) {
+                mBitmap[position++] = bits;
+            }
+        }
+        return position;
+    }
+
+    inline static std::array<uint8_t, TextLength * (Font::Width + Space)> mBitmap = {};
+    inline static const Font mFont;
     inline static uint8_t mStartInBitmap = 0;
 };

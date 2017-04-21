@@ -110,6 +110,8 @@ public:
 
     template<std::Clock Clock>
     static void set(const Clock& clock, TimeDisplay::Mode = TimeDisplay::Mode::Time) {
+        if (!clock) return;
+        
         DateTime::TimeTm t = clock.dateTime();
         auto minute = t.minutes().value;
         auto hour   = t.hours().value;
