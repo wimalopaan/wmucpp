@@ -18,3 +18,35 @@
 
 #pragma once
 
+#include <stdint.h>
+
+#include "concepts.h"
+
+namespace BCD {
+
+template<typename T>
+struct Digits;
+
+template<>
+struct Digits<uint8_t> {
+    static constexpr uint8_t value = 3;
+};
+template<>
+struct Digits<uint16_t> {
+    static constexpr uint8_t value = 5;
+};
+
+template<typename To, Util::Array C>
+To uconvert(const C& c) {
+    To v = 0;
+    for(uint8_t i = 0; (i < Digits<To>::value) && (i < c.size()); ++i) {
+        uint8_t d = c[i] - '0';
+        if (d < 10) {
+            v = v * 10 + d;
+        }
+    }
+    return v;
+}
+
+
+}

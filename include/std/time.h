@@ -28,6 +28,10 @@ class TimeTm;
 template<typename Stream> 
 Stream& operator<<(Stream& out, const DateTime::TimeTm& t);
 
+namespace std::detail {
+template<MCU::Stream Stream> void out(const DateTime::TimeTm& t);
+}
+
 namespace DateTime {
 
 struct Second {
@@ -51,6 +55,7 @@ struct Year {
 
 class TimeTm {
     template<typename Stream> friend Stream& ::operator<<(Stream& out, const TimeTm& t);
+    template<MCU::Stream Stream> friend void std::detail::out(const TimeTm& t);
     
 public:
     typedef struct tm tm_t;
@@ -62,22 +67,26 @@ public:
     constexpr TimeTm(const tm_t& t) : mTime(t) {}
     constexpr TimeTm() = default;
 
-    Second seconds() const {
+    TimeTm(time_t tt) {
+        localtime_r(&tt, &mTime);
+    }
+    
+    constexpr Second seconds() const {
         return {static_cast<uint8_t>(mTime.tm_sec)};
     }    
-    Minute minutes() const {
+    constexpr Minute minutes() const {
         return {static_cast<uint8_t>(mTime.tm_min)};
     }    
-    Hour hours() const {
+    constexpr Hour hours() const {
         return {static_cast<uint8_t>(mTime.tm_hour)};
     }    
-    Day day() const {
+    constexpr Day day() const {
         return {static_cast<uint8_t>(mTime.tm_mday)};
     }    
-    Year year () const {
+    constexpr Year year () const {
         return {static_cast<uint16_t>(mTime.tm_year + 1900)};
     }    
-    Month month() const {
+    constexpr Month month() const {
         return {static_cast<uint8_t>(mTime.tm_mon + 1)};
     }    
     constexpr TimeTm(Day day, Month month, Year year, Hour hour, Minute minute, Second second, bool dst) 

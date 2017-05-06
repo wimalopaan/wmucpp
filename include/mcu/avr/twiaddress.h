@@ -20,6 +20,14 @@
 #include "container/pgmstring.h"
 
 namespace TWI {
+class Address;
+}
+
+namespace std::detail {
+template<MCU::Stream Stream> void out(const TWI::Address& rom);
+}
+
+namespace TWI {
 
 struct Write {
     static constexpr bool write = true;
@@ -37,6 +45,7 @@ template<typename Mode> class BusAddress;
 
 class Address {
     template<typename Stream> friend Stream& operator<<(Stream& o, const TWI::Address& a);
+    template<MCU::Stream Stream> friend void std::detail::out(const TWI::Address& a);
     template<typename Mode> friend class BusAddress;
     friend bool operator<(Address lhs, Address rhs);
     friend bool operator==(Address lhs, Address rhs);
@@ -104,4 +113,14 @@ private:
     const uint8_t mAddress = 0;    
 };
 
+}
+
+namespace std {
+template<MCU::Stream Stream, typename... TT> void out(TT... v);
+namespace detail {
+template<MCU::Stream Stream>
+void out(const TWI::Address& a) {
+    std::out<Stream>("I2C["_pgm, a.mDevice, ']');
+}
+}
 }

@@ -22,9 +22,14 @@ MCU = atmega328p
 F_OSC = 20000000
 
 bm01a.elf : LOADLIBES = simavrconsole.o
+bm02a.elf : LOADLIBES = simavrconsole.o
+bm03a.elf : LOADLIBES = simavrconsole.o
 
 targets += simavrconsole.o
 targets +=  bm01a.s bm01a.elf 
+targets +=  bm02a.s bm02a.elf 
+targets +=  bm03a.s bm03a.elf 
+targets +=  bm04a.s bm04a.elf 
 
 -include ../../Makefile.include
 

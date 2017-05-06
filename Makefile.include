@@ -56,6 +56,7 @@ MCUFLAGS = -mmcu=$(MCU)
 
 SIMAVR = ~/Projekte/simavr/simavr/run_avr
 
+AXTRACTOR = $(HOME)/Projekte/wmgit/extract/axtractor
 EXTRACTOR = $(HOME)/Projekte/wmgit/extract/extractor
 EXTRACTDIR = .extractor
 EXTRACTDIRNC = .extractornc
@@ -64,7 +65,8 @@ SRCHI = source-highlight
 cchtml = $(patsubst %.cc, %.cc.html, $(CCSRC))
 chtml = $(patsubst %.cc, %.cc.html, $(CSRC))
 hhtml = $(patsubst %.h, %.h.html, $(HSRC))
-shtml: $(cchtml) $(chtml) $(hhtml)
+ahtml = $(patsubst %.s, %.s.html, $(ASM))
+shtml: $(cchtml) $(chtml) $(hhtml) $(ahtml)
 
 #CPPFLAGS += -DNDEBUG
 
@@ -95,7 +97,7 @@ CFLAGS += -I/usr/include/simavr
 #CFLAGS += -I/usr/avr/include
 CFLAGS += $(MCUFLAGS)
 
-#ASMFLAGS += -fverbose-asm
+ASMFLAGS += -fverbose-asm
 ASMFLAGS +=  -Wa,-adhln
 
 LDFLAGS = $(MCUFLAGS) -Wl,-Map=main.map,--cref
@@ -166,6 +168,9 @@ AVRDUDE = avrdude
 %.h.extract: %.h
 	$(EXTRACTOR) -lcpp -aA2 -o$@ -d$(EXTRACTDIR) $<
 
+%.s.axtract: %.s
+	$(AXTRACTOR) -o$@ $<
+
 %.cc.extractnc: %.cc
 	$(EXTRACTOR) -lcpp -aA2 --sc -d$(EXTRACTDIRNC) -o$@ $<
 
@@ -177,6 +182,9 @@ AVRDUDE = avrdude
 
 %.h.html: %.h
 	$(EXTRACTOR) -x --eb --io $< | $(SRCHI) -scpp > $@
+
+%.s.html: %.s
+	$(SRCHI) -sasm -i $< -o $@
 
 %.out: %
 	./$< $(PARGS) > $@

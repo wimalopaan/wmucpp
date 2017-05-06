@@ -16,18 +16,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdint.h>
+#include "mcu/avr8.h"
+#include "mcu/ports.h"
+#include "console.h"
+#include "simavr/simavrdebugconsole.h"
 
-volatile uint8_t x = 0;
-volatile uint8_t y = 0;
+using terminalDevice = SimAVRDebugConsole;
+using terminal = std::basic_ostream<terminalDevice>;
 
-constexpr uint16_t size = 10;
-constexpr uint16_t offset = 1; // wenn offset == 0 (vollständige Initialisierung), kommen Initialisierungsdaten in data, sonst (partielle Initialisieung) im Code
+namespace std {
+    constexpr terminal cout;
+    constexpr std::lineTerminator<CRLF> endl;
+}
 
-int main() {
-    constexpr const uint8_t array[size + offset] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}; // im Stack
-    
-    y = array[x];
-    
+int main()
+{
+    uint8_t x = 1;
+    uint8_t y = 2;
+    std::out<terminal>(x, ' ', y, std::endl);
     while(true) {}
 }
+
+//#ifndef NDEBUG
+//void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) {
+//    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
+//    while(true) {}
+//}
+//#endif

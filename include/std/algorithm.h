@@ -193,6 +193,19 @@ bool none_of(InputIt first, InputIt last, UnaryPredicate p)
     return std::find_if(first, last, p) == last;
 }
 
+template<class InputIt1, class InputIt2>
+constexpr bool equal(InputIt1 first1, InputIt1 last1, 
+           InputIt2 first2)
+{
+    for (; first1 != last1; ++first1, ++first2) {
+        if (*first1 != *first2) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
 #endif
 
 template<Range C>

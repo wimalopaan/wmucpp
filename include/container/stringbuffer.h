@@ -32,6 +32,7 @@ public:
     typedef T type;
     typedef typename std::conditional<Length <= 255, uint8_t, uint16_t>::type size_type;
     static constexpr const size_type size = Length;
+    static constexpr const size_type length = Length;
 
     StringBuffer() = default;
     StringBuffer(const StringBuffer&) = delete;
@@ -108,11 +109,36 @@ template<uint8_t Begin, uint8_t Length, typename ItemType = char>
 class StringBufferView {
 public:
     typedef ItemType type;
-    
-    template<uint8_t SBLength, typename T, char Fill>
-    StringBufferView(StringBuffer<SBLength, T, Fill>& stringBuffer) : data(stringBuffer.begin() + Begin) {
-        static_assert((Begin + Length) <= SBLength, "wrong begin or length");
+    static constexpr uint8_t size = Length;
+
+    template<typename C>
+    StringBufferView(const C& c) : data((const ItemType*)c.begin() + Begin) {
+        static_assert((Begin + Length) <= C::length, "wrong begin or length");
     }
+    const ItemType* begin() const {
+        return data;
+    }
+    const ItemType* end() const {
+        return data + Length;
+    }
+    constexpr const ItemType& operator[](uint8_t index) const {
+        assert(index < size);
+        return data[index];
+    }
+private:
+    const ItemType* const data = nullptr;
+};
+
+template<uint8_t Begin, uint8_t Length, typename ItemType = char>
+class StringBufferPart {
+public:
+    typedef ItemType type;
+
+    template<typename C>
+    StringBufferPart(C& c) : data(c.begin() + Begin) {
+        static_assert((Begin + Length) <= C::length, "wrong begin or length");
+    }
+
     static constexpr uint8_t size = Length;
     
     constexpr const ItemType& operator[](uint8_t index) const {
@@ -124,7 +150,7 @@ public:
         return data[index];
     }
 private:
-    ItemType* data = nullptr;
+    ItemType* const data = nullptr;
 };
 
 
@@ -156,6 +182,14 @@ private:
 template<typename Stream, uint8_t Length, typename T, char fill>
 Stream& operator<<(Stream& out, const StringBuffer<Length, T, fill>& sb) {
     for(const auto& c : sb) {
+        out << c;
+    }
+    return out;
+}
+
+template<typename Stream, uint8_t Begin, uint8_t Length, typename T>
+Stream& operator<<(Stream& out, const StringBufferView<Begin, Length, T>& sbv) {
+    for(const auto& c : sbv) {
         out << c;
     }
     return out;

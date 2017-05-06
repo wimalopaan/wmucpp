@@ -16,18 +16,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdint.h>
+#include <stdbool.h>
 
-volatile uint8_t x = 0;
-volatile uint8_t y = 0;
+#include <avr/io.h>
 
-constexpr uint16_t size = 10;
-constexpr uint16_t offset = 1; // wenn offset == 0 (vollständige Initialisierung), kommen Initialisierungsdaten in data, sonst (partielle Initialisieung) im Code
+//[main
+int main()
+{
+    DDRB &= ~(_BV(1));
+    PORTB |= _BV(1);
 
-int main() {
-    constexpr const uint8_t array[size + offset] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}; // im Stack
-    
-    y = array[x];
-    
-    while(true) {}
+    DDRB |= _BV(0);
+    PORTB |= _BV(0);
+
+    while(true) {
+        if (PINB & _BV(1)) {
+            PORTB ^= _BV(0);
+        }
+    }
 }
+//]

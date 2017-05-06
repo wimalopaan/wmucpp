@@ -22,10 +22,10 @@
 volatile uint8_t global = 0; //-
 
 //[pointer
-void fooA(uint8_t* x) {
+void fooA(volatile uint8_t* x) {
     *x = global; //-
 }
-void fooB(uint8_t* x, uint8_t* y) {
+void fooB(volatile uint8_t* x, volatile uint8_t* y) {
     *x = global; //-
     *y = global; //-
 }
@@ -33,8 +33,8 @@ void fooB(uint8_t* x, uint8_t* y) {
 //[main
 int main()
 {
-    uint8_t a = 42;
-    uint8_t b = 43;
+    volatile uint8_t a = 42;
+    volatile uint8_t b = 43;
 
     fooA(&a);
     fooB(&a, &b);

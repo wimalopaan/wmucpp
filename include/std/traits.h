@@ -97,14 +97,45 @@ struct is_integral<int32_t> final {
     static constexpr bool value = true;
 };
 
+//template<typename T>
+//struct is_unsigned final {
+//    static constexpr bool value = (T(0) < T(-1));
+//};
+//template<typename T>
+//struct is_signed final {
+//    static constexpr bool value = (T(-1) < T(0));
+//};
 template<typename T>
 struct is_unsigned final {
-    static constexpr bool value = (T(0) < T(-1));
+    static constexpr bool value = false;
 };
-
+template<>
+struct is_unsigned<uint8_t> {
+    static constexpr bool value = true;
+};
+template<>
+struct is_unsigned<uint16_t> {
+    static constexpr bool value = true;
+};
+template<>
+struct is_unsigned<uint32_t> {
+    static constexpr bool value = true;
+};
 template<typename T>
 struct is_signed final {
-    static constexpr bool value = (T(-1) < T(0));
+    static constexpr bool value = false;
+};
+template<>
+struct is_signed<int8_t> {
+    static constexpr bool value = true;
+};
+template<>
+struct is_signed<int16_t> {
+    static constexpr bool value = true;
+};
+template<>
+struct is_signed<int32_t> {
+    static constexpr bool value = true;
 };
 
 

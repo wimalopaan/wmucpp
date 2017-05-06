@@ -41,6 +41,7 @@ struct  PgmStringView {
 
 template<typename C, C... CC>
 struct PgmString final {
+    typedef char value_type;
     friend struct PgmStringView;
     friend PgmString<C, CC...> operator"" _pgm<>();
     template<typename Stream, typename C1, C1... CC1> friend Stream& operator<<(Stream& out, const PgmString<C1, CC1...>& s);
@@ -48,6 +49,10 @@ struct PgmString final {
 
     static constexpr uint8_t size = sizeof...(CC);
     static constexpr const char data[] PROGMEM = {CC..., '\0'};
+    
+    char operator[](uint8_t index) const {
+            return pgm_read_byte(&data[index]);
+    }
 };
 
 template<typename C, C... CC>

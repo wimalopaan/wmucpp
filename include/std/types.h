@@ -96,8 +96,10 @@ template<typename T>
 class uint_NaN final {
     static constexpr T NaN = std::numeric_limits<uint8_t>::max();
 public:
-    explicit constexpr uint_NaN(T v = 0) : mValue(v) {
+    explicit constexpr uint_NaN(T v) : mValue(v) {
         assert(mValue != NaN);
+    }
+    explicit constexpr uint_NaN() : mValue(NaN) {
     }
     void setNaN() volatile {
         mValue = NaN;
@@ -114,10 +116,10 @@ public:
     explicit operator bool() volatile const {
         return mValue != NaN;
     }
-    explicit operator bool() const {
+    constexpr explicit operator bool() const {
         return mValue != NaN;
     }
-    operator T() const {
+    constexpr operator T() const {
         assert(mValue != NaN);
         return mValue;
     }

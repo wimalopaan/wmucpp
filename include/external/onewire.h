@@ -31,9 +31,18 @@
 #include "container/pgmstring.h"
 
 namespace OneWire {
+struct Rom;
+}
+
+namespace std::detail {
+template<MCU::Stream Stream> void out(const OneWire::Rom& rom);
+}
+
+namespace OneWire {
 
 struct Rom {
     template<typename Stream> friend Stream& operator<<(Stream& o, const Rom& rom);
+    template<MCU::Stream Stream> friend void std::detail::out(const OneWire::Rom& rom);
     
     static constexpr uint8_t size = 8;
     
@@ -439,4 +448,18 @@ public:
     }
 };
 
+}
+
+namespace std {
+template<MCU::Stream Stream, typename... TT> void out(TT... v);
+namespace detail {
+template<MCU::Stream Stream>
+void out(const OneWire::Rom& rom) {
+    std::out<Stream>("OneWireId["_pgm);
+    for(const auto& v : rom.data) {
+        std::out<Stream>(v, ',');
+    }
+    std::out<Stream>(static_cast<bool>(rom), ']');
+}
+}
 }

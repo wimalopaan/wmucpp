@@ -153,14 +153,14 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
            
             menuData::text()[1].insertAt(0, "bla");
 
-            StringBufferView<15, 4> sbv(menuData::text()[1]);
+            StringBufferPart<15, 4> sbv(menuData::text()[1]);
             BufferDevice sbvDev(sbv);
             sbvDev << counter;
             
             uint8_t line = 2;
             for(const auto& id: tempIds) {
                 menuData::text()[line].insertAt(0, "Temp: "_pgm);
-                StringBufferView<10, 4> sbv(menuData::text()[line]);
+                StringBufferPart<10, 4> sbv(menuData::text()[line]);
                 BufferDevice sbvDev(sbv);
                 sbvDev << id.familiy();
                 ++line;

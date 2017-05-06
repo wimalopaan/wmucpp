@@ -17,17 +17,12 @@
  */
 
 #include <stdint.h>
+#include <avr/interrupt.h>
 
-volatile uint8_t x = 0;
-volatile uint8_t y = 0;
-
-constexpr uint16_t size = 10;
-constexpr uint16_t offset = 1; // wenn offset == 0 (vollständige Initialisierung), kommen Initialisierungsdaten in data, sonst (partielle Initialisieung) im Code
+volatile uint8_t global;
 
 int main() {
-    constexpr const uint8_t array[size + offset] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}; // im Stack
-    
-    y = array[x];
-    
-    while(true) {}
+    sei();
+    cli();
+    while(1) {}
 }

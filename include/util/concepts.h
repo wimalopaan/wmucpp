@@ -16,18 +16,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdint.h>
+#pragma once
 
-volatile uint8_t x = 0;
-volatile uint8_t y = 0;
+namespace Util {
 
-constexpr uint16_t size = 10;
-constexpr uint16_t offset = 1; // wenn offset == 0 (vollständige Initialisierung), kommen Initialisierungsdaten in data, sonst (partielle Initialisieung) im Code
+template<typename A>
+concept bool Array() { 
+    return requires (A a) { 
+        typename A::value_type;
+        a[0];
+        a.size;
+    };
+}
 
-int main() {
-    constexpr const uint8_t array[size + offset] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}; // im Stack
-    
-    y = array[x];
-    
-    while(true) {}
 }

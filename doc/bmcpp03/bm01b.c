@@ -29,5 +29,4 @@ int main()
         a[i] = global;
     }
     while(true);
-
 }

@@ -104,7 +104,8 @@ using SoftSPIData = AVR::Pin<PortB, 1>;
 using SoftSPIClock = AVR::Pin<PortB, 0>;
 using SoftSPISS = AVR::Pin<PortC, 3>;
 using SSpi0 = SoftSpiMaster<SoftSPIData, SoftSPIClock, SoftSPISS>;
-using terminal = SSpi0;
+using terminalDevice = SSpi0;
+using terminal = std::basic_ostream<terminalDevice>;
 using bufferedTerminal = BufferedStream<SSpi0, 512>;
 
 // Timer0
@@ -220,11 +221,11 @@ struct I2CInterrupt : public IsrBaseHandler<AVR::ISR::Int<2>> {
 
 namespace std {
 #ifdef BTerm
-    std::basic_ostream<bufferedTerminal> cout;
+//    std::basic_ostream<bufferedTerminal> cout;
 #else
-std::basic_ostream<terminal> cout;
+//std::basic_ostream<terminal> cout;
 #endif
-    std::lineTerminator<CRLF> endl;
+//    std::lineTerminator<CRLF> endl;
 }
 
 using isrRegistrar = IsrRegistrar<
@@ -286,7 +287,7 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
             btStream << "Bla" << std::endl;
 #endif
 #ifdef MEM
-            std::cout << "unused memory: "_pgm << Util::Memory::getUnusedMemory() << std::endl;   
+            std::outl<terminal>("unused memory: "_pgm, Util::Memory::getUnusedMemory());   
 #endif
         }
 #ifdef OW
@@ -310,21 +311,21 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
 #ifdef I2C
 struct DS1307handler: public EventHandler<EventType::DS1307TimeAvailable> {
     static bool process(uint8_t) {
-        std::cout << "ds1307 time"_pgm << std::endl;
+        std::outl<terminal>("ds1307 time"_pgm);
         return true;
     }  
 };
 
 struct DS1307handlerError: public EventHandler<EventType::DS1307Error> {
     static bool process(uint8_t) {
-        std::cout << "ds1307 error"_pgm << std::endl;
+        std::out<terminal>("ds1307 error"_pgm);
         return true;
     }  
 };
 
 struct TWIHandlerError: public EventHandler<EventType::TWIError> {
     static bool process(uint8_t) {
-        std::cout << "twi error"_pgm << std::endl;
+        std::outl<terminal>("twi error"_pgm);
         return true;
     }  
 };
@@ -333,31 +334,31 @@ struct TWIHandlerError: public EventHandler<EventType::TWIError> {
 #ifdef DCF
 struct DCFReceive0Handler : public EventHandler<EventType::DCFReceive0> {
     static bool process(uint8_t n) {
-        std::cout << "dcf 0 : "_pgm << n << std::endl;
+        std::outl<terminal>("dcf 0 : "_pgm, n);
         return true;
     }  
 };
 struct DCFReceive1Handler : public EventHandler<EventType::DCFReceive1> {
     static bool process(uint8_t n) {
-        std::cout << "dcf 1 : "_pgm << n << std::endl;
+        std::outl<terminal>("dcf 1 : "_pgm, n);
         return true;
     }  
 };
 struct DCFSyncHandler : public EventHandler<EventType::DCFSync> {
     static bool process(uint8_t) {
-        std::cout << "dcf sync  "_pgm << dcfDecoder::dateTime() << std::endl;
+        std::outl<terminal>("dcf sync  "_pgm, dcfDecoder::dateTime());
         return true;
     }  
 };
 struct DCFErrorHandler : public EventHandler<EventType::DCFError> {
     static bool process(uint8_t) {
-        std::cout << "dcf error"_pgm << std::endl;
+        std::outl<terminal>("dcf error"_pgm);
         return true;
     }  
 };
 struct DCFParityHandler : public EventHandler<EventType::DCFParityError> {
     static bool process(uint8_t) {
-        std::cout << "dcf parity error"_pgm << std::endl;
+        std::outl<terminal>("dcf parity error"_pgm);
         return true;
     }  
 };
@@ -365,13 +366,13 @@ struct DCFParityHandler : public EventHandler<EventType::DCFParityError> {
 #ifdef OW
 struct DS18B20MeasurementHandler: public EventHandler<EventType::DS18B20Measurement> {
     static bool process(uint8_t) {
-        std::cout << "temp: "_pgm << ds18b20::temperature() << std::endl;
+        std::outl<terminal>("temp: "_pgm, ds18b20::temperature());
         return true;
     }
 };
 struct DS18B20ErrorHandler: public EventHandler<EventType::DS18B20Error> {
     static bool process(uint8_t) {
-        std::cout << "t: error"_pgm << std::endl;
+        std::outl<terminal>("t: error"_pgm);
         return true;
     }
 };
@@ -393,7 +394,7 @@ int main() {
         #ifdef BTerm
             bufferedTerminal
         #else
-            terminal
+            terminalDevice
         #endif
             >::init();
     statusLed::off();
@@ -462,12 +463,12 @@ int main() {
 #endif
         >;
         
-        std::cout << "UniMaxi 0.2"_pgm << std::endl;
+        std::outl<terminal>("UniMaxi 0.2"_pgm);
 
 #ifdef OW
         oneWireMaster::findDevices(dsIds);
         for(const auto& id : dsIds) {
-            std::cout << id << std::endl;
+            std::outl<terminal>(id);
             if (id.familiy() == ds18b20::family) {
                 tSensorId = id;
             }
@@ -478,9 +479,9 @@ int main() {
                 eepromId = id;
             }
         }
-        std::cout << "Temp:   " << tSensorId << std::endl;
-        std::cout << "Board:  " << boardId  << std::endl;
-        std::cout << "EEProm: " << eepromId << std::endl;
+        std::outl<terminal>("Temp: "_pgm, tSensorId);
+        std::outl<terminal>("Board: "_pgm, boardId);
+        std::outl<terminal>("EEProm: "_pgm, eepromId);
         
 #endif
 #ifdef I2C
@@ -490,7 +491,7 @@ int main() {
         std::array<TWI::Address, 10> i2cAddresses;
         TwiMaster::findDevices(i2cAddresses);
         for(const auto& d : i2cAddresses) {
-            std::cout << d << std::endl;
+            std::outl<terminal>(d);
         }
         
         mcp23008::startWrite(0x00, 0x00); // output
@@ -556,7 +557,7 @@ ISR(INT2_vect) {
 
 #ifndef NDEBUG
 void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
-    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
+    std::outl<terminal>("Assertion failed: "_pgm, expr, ',', file, ',', line);
     while(true) {}
 }
 #endif

@@ -22,7 +22,7 @@
 volatile uint8_t global = 0;
 
 void foo(const std::array<uint8_t, 10>& a) {
-    for(auto i : a) {
+    for(const auto& i : a) {
         global += i;
     }
 }

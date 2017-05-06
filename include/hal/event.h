@@ -59,6 +59,8 @@ enum class EventType : uint8_t {
     IREvent, IREventRepeat,
     NullPAEvent,
     RadioClockReset, RadioClockStart, 
+    Esp_OK, Esp_Error, Esp_CData, Esp_IData, Esp_Response, Esp_Test,
+    EspTimeAvailable, EspTimeError,
     ApplicationEvent
 };
 
@@ -85,6 +87,10 @@ template<uint8_t N, typename MCU> class Spi;
 
 namespace Hott {
 template<uint8_t N> class SensorProtocollAdapter;
+}
+
+namespace Esp8266 {
+template<uint8_t N, uint8_t Size> class ATProtocollAdapter;
 }
 
 template<MCU::Interrupt Interrupt = void, typename... PP>
@@ -149,6 +155,7 @@ public:
 class EventManager final
 {
     template<uint8_t> friend class Hott::SensorProtocollAdapter;
+    template<uint8_t> friend class Esp8266::ATProtocollAdapter;
     template<uint8_t N, typename PA, typename MCU> friend class AVR::Usart;
     template<uint8_t N, typename MCU> friend class AVR::Spi;
     template<uint8_t N, typename MCU> friend class SWUsart;

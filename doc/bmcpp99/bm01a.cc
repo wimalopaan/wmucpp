@@ -28,13 +28,13 @@ volatile uint8_t x = 0;
 using timer1 = AVR::Timer8Bit<0>;
 
 struct Handler1 final : public IsrBaseHandler<AVR::ISR::Timer<0>::CompareA> {
-    static void isr() {
+    static void isr() asm("handler1"){
         ++x;
     }
 };
 
 struct Handler2 final : public IsrBaseHandler<AVR::ISR::Timer<0>::CompareB> {
-    static void isr() {
+    static void isr() asm("handler2"){
         --x; // ist diese ISR gleich zu Handler1, so wird sie aufgerufen -> das verursacht erhöhten Aufwand durch push/pop Sequenzen
     }
 };
@@ -52,13 +52,17 @@ int main()
     timer1::ocra<t1.ocr>();
     timer1::mode(AVR::TimerMode::CTC);
     
-    while(true) {}
+    while(true) {
+        Handler1::isr();
+    }
 }
 
+ISR(TIMER0_COMPA_vect) asm("isr1");
 ISR(TIMER0_COMPA_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<0>::CompareA>(); // hier findet sogar inlining statt
 }
 
-ISR(TIMER0_COMPB_vect) {
+ISR(TIMER0_COMPB_vect) asm("isr2");
+ISR(TIMER0_COMPB_vect){
     isrRegistrar::isr<AVR::ISR::Timer<0>::CompareB>(); // auch hier inlining
 }

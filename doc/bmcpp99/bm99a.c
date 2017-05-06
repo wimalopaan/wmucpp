@@ -16,18 +16,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdint.h>
+#include <avr/io.h>
+#include <avr/interrupt.h>
+#define F_CPU 16000000UL
+#include <util/delay.h>
 
-volatile uint8_t x = 0;
-volatile uint8_t y = 0;
+int main(void)
+{
 
-constexpr uint16_t size = 10;
-constexpr uint16_t offset = 1; // wenn offset == 0 (vollständige Initialisierung), kommen Initialisierungsdaten in data, sonst (partielle Initialisieung) im Code
+  DDRB = 0xff;                        
+  DDRC = 0xff; 
+  PORTD = 0xff;                      
+//  GICR |= (1 << INT1);               
+  MCUCR |= (1 << ISC10)|(1<<ISC11);              
+  sei();  
+                            
+  while(1){  
+      PORTC=0xff;
+      _delay_ms(1);
+      PORTC=0x00;
+      _delay_ms(1);
+  }                                                    
+}
 
-int main() {
-    constexpr const uint8_t array[size + offset] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}; // im Stack
-    
-    y = array[x];
-    
-    while(true) {}
+ISR(INT1_vect, ISR_NAKED) {
+  PORTB=0xff;
+  PORTB=0x00;
 }

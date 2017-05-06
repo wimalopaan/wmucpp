@@ -18,13 +18,9 @@
 
 #include "util/disable.h"
 
-#define USE_C
+volatile uint8_t global;
 
 int main() {
-#ifdef USE_C
-    sei();
-    cli();
-#else
     Scoped<EnableInterrupt> ei;
-#endif
+    while(true) {}
 }

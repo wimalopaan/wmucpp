@@ -40,6 +40,14 @@ concept bool Port() {
     };
 }
 
+template<typename S>
+concept bool Stream() { 
+    return requires (S s) { 
+        typename S::device_type;
+        typename S::line_terminator_type;
+    };
+}
+
 template<typename P>
 concept bool Pin() { 
     return std::is_same<P, void>::value || requires (P p) { 

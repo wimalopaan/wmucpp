@@ -19,17 +19,17 @@
 #include <stdint.h>
 #include "std/array.h"
 
-volatile uint8_t x = 0;
+volatile uint8_t x = 3;
 volatile uint8_t y = 0;
 
-constexpr uint16_t size = 100;
-constexpr uint16_t offset = 1; // wenn offset == 0, kommt alles in data segment, andernfalls auf den Stack
+constexpr uint16_t size = 200;
+constexpr uint16_t offset = 0; // wenn offset == 0 (vollständige Initialisierung), kommen Initialisierungsdaten in data, sonst (partielle Initialisieung) im Code
 
 int main() {
-    constexpr const auto array = [](){
+    constexpr const auto array = [](){ // auf dem stack
         std::array<uint8_t, size + offset> a;
-        for(std::remove_cv_t<decltype(size)> i = 0; i < size; ++i) {
-            a[i] = i + 1;
+        for(uint16_t i = 0; i < size; ++i) {
+            a[i] = i;
         }
         return a;
     }();

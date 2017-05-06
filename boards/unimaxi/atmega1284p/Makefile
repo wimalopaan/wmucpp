@@ -22,8 +22,11 @@ F_OSC = 20000000
 
 subdirs =
 
-targets +=  main.elf
+# avr-nm -S -n -C -t d esptest.elf 
+
+targets += main.elf
 targets += owtest01.elf
+targets += esptest.elf esptest.s
 
 owtest01.elf: owtest01.o ow.o
 	$(CC) $(LDFLAGS) -o $@ owtest01.o ow.o

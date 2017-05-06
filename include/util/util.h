@@ -23,6 +23,7 @@
 #include "std/limits.h"
 #include "util/bits.h"
 #include "util/fixedpoint.h"
+#include "util/concepts.h"
 #include "container/stringbuffer.h"
 
 #include "util/outputparameter.h"
@@ -105,9 +106,9 @@ inline void utoa(T v, std::array<char, BufferSize<T>::size>& buffer) {
 }
 
 template<typename T, uint8_t Start>
-inline void utoa(T v, StringBufferView<Start, BufferSize<T>::size>& buffer) {
+inline void utoa(T v, StringBufferPart<Start, BufferSize<T>::size>& buffer) {
     static_assert(std::is_unsigned<T>::value, "must use unsigned type");
-    Utoa<BufferSize<T>::size - 1, T, StringBufferView<Start, BufferSize<T>::size> >::convert(v, buffer);
+    Utoa<BufferSize<T>::size - 1, T, StringBufferPart<Start, BufferSize<T>::size> >::convert(v, buffer);
 }
 
 template<typename T>
@@ -156,7 +157,7 @@ void put(char c) {
     }
 }
 
-template<typename Device, typename C, bool ensure = false>
+template<typename Device, Util::Array C, bool ensure = false>
 void put(const C& c) {
     for(uint8_t i = 0; i < c.size; ++i) {
         if (ensure) {
@@ -204,5 +205,7 @@ constexpr auto lowerHalf(const T& v) -> typename fragmentType<T>::type {
 constexpr bool isPowerof2(int v) {
     return v && ((v & (v - 1)) == 0);
 }
+
+
 
 }

@@ -27,6 +27,7 @@ boards/rcsensorled/board.txt
 boards/rcsensorled/main.cc
 boards/unimaxi/Makefile
 boards/unimaxi/atmega1284p/Makefile
+boards/unimaxi/atmega1284p/esptest.cc
 boards/unimaxi/atmega1284p/main.cc
 boards/unimaxi/atmega1284p/ow.cc
 boards/unimaxi/atmega1284p/ow.h
@@ -42,8 +43,16 @@ boards/unimaxi/attiny85_1/main.cc
 boards/unimaxi/attiny85_2/Makefile
 boards/unimaxi/attiny85_2/main.cc
 boards/unimaxi/board.txt
+doc/bmcpp02/bm02b.c
+doc/bmcpp02/bm03b.c
+doc/bmcpp02/bm04a.cc
+doc/bmcpp03/bm07a.cc
+doc/bmcpp03/bm08a.cc
 doc/bmcpp04/bm10a.cc
 doc/bmcpp04/bm11a.cc
+doc/bmcpp10/bm02a.cc
+doc/bmcpp10/bm03a.cc
+doc/bmcpp10/bm04a.cc
 doc/bmcpp98/Makefile
 doc/bmcpp98/bm05a.cc
 doc/bmcpp99/bm05a.cc
@@ -54,6 +63,7 @@ doc/bmcpp99/bm30a.cc
 doc/bmcpp99/bm40a.cc
 doc/bmcpp99/bm41a.cc
 doc/bmcpp99/bm42a.cc
+doc/bmcpp99/bm99a.c
 example/atmega8/blink.cc
 example/atmega8/blink.h
 example/basics/register01.cc
@@ -77,9 +87,12 @@ include/appl/timerdisplay4x4.h
 include/appl/timerdisplayring60.h
 include/appl/twostateblinker.h
 include/appl/wordclock.h
+include/container/boundedbuffer.h
 include/container/pgmarray.h
 include/external/ds2401.h
 include/external/ds24b33.h
+include/external/esp8266/esp8266.h
+include/external/esp8266/esptimeclient.h
 include/hal/concepts.h
 include/hal/rotaryencoder.h
 include/mcu/avr/atmega88p.h
@@ -97,6 +110,7 @@ include/mcu/avr/watchdog.h
 include/mcu/concepts.h
 include/std/chrono.h
 include/std/concepts.h
+include/util/concepts.h
 include/util/outputparameter.h
 include/util/static_container.h
 text/bmcppdefs.adoc

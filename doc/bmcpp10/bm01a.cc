@@ -38,11 +38,12 @@ using LcdE  = AVR::Pin<PortB, 0>;
 
 using LcdData = AVR::PinSet<LcdDB4, LcdDB5, LcdDB6, LcdDB7>;
 
-using terminal = SimAVRDebugConsole;
+using terminalDevice = SimAVRDebugConsole;
+using terminal = std::basic_ostream<terminalDevice>;
 
 namespace std {
-    std::basic_ostream<terminal> cout;
-    std::lineTerminator<CRLF> endl;
+    constexpr terminal cout;
+    constexpr std::lineTerminator<CRLF> endl;
 }
 
 volatile uint8_t x = 5;
@@ -68,8 +69,10 @@ int main()
     std::cout << PortC::get() << std::endl;    
     
     LcdData::set(x);
-    std::cout << PortC::get() << std::endl;   
+//    std::cout << PortC::get() << std::endl;   
 
+    std::out<terminal>(PortC::get(), std::endl);
+    
     std::cout << "unused: "_pgm << Util::Memory::getUnusedMemory() << std::endl;   
     
     while(true) {}

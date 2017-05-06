@@ -25,11 +25,11 @@ concept bool FCallable() {
 class Test1 {
 public:
 //    template<FCallable P>
-    template<FCallable P, FCallable... Pp> // internal error of g++
-//    template<typename... P>
+//    template<FCallable P, FCallable... Pp> // internal error of g++
+    template<typename... P>
     static void g() {
-//        (P::f(), ...);
-        P::f();
+        (P::f(), ...);
+//        P::f();
     }
 };
 class A {
