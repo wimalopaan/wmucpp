@@ -48,6 +48,7 @@ struct basic_ostream final {
 };
 
 template<MCU::Stream Stream, typename... TT> void out(TT... v);
+template<MCU::Stream Stream, typename... TT> void outl(TT... v);
 
 namespace detail {
 template<MCU::Stream Stream, Unsigned V> // concept
@@ -69,6 +70,10 @@ void out(char v) {
 template<MCU::Stream Stream>
 void out(std::lineTerminator<CRLF>) {
     Util::put<typename Stream::device_type, Config::ensureTerminalOutput>('\r');
+    Util::put<typename Stream::device_type, Config::ensureTerminalOutput>('\n');
+}
+template<MCU::Stream Stream>
+void out(std::lineTerminator<LF>) {
     Util::put<typename Stream::device_type, Config::ensureTerminalOutput>('\n');
 }
 template<MCU::Stream Stream, typename C, C... CC>
@@ -96,7 +101,6 @@ void out(const Fraction<T>& f) {
     Util::utoa(f, buffer);
     Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(&buffer[0]);
 }
-
 template<MCU::Stream Stream>
 void out(const FixedPoint<int16_t, 4>& f) {
     if (f.raw() < 0) {
@@ -104,6 +108,36 @@ void out(const FixedPoint<int16_t, 4>& f) {
     }
     out<Stream>(f.integerAbs());
     out<Stream>(f.fraction());
+}
+template<MCU::Stream Stream>
+void out(const std::hertz& f) {
+    out<Stream>(f.value);
+    out<Stream>("Hz"_pgm);
+}
+template<MCU::Stream Stream>
+void out(const std::milliseconds& d) {
+    out<Stream>(d.value);
+    out<Stream>("ms"_pgm);
+}
+template<MCU::Stream Stream>
+void out(const std::microseconds& d) {
+    out<Stream>(d.value);
+    out<Stream>("us"_pgm);
+}
+template<MCU::Stream Stream>
+void out(const Config&) {
+    std::outl<Stream>("fMcu: "_pgm, Config::fMcu);
+    std::outl<Stream>("fMcuMhZ: "_pgm, Config::fMcuMhz);
+    std::outl<Stream>("Timer::NumberOfTimers: "_pgm, Config::Timer::NumberOfTimers);
+    std::outl<Stream>("Timer::frequency: "_pgm, Config::Timer::frequency);
+    std::outl<Stream>("Timer::resolution: "_pgm, Config::Timer::resolution);
+    std::outl<Stream>("EventManager::EventQueueLength: "_pgm, Config::EventManager::EventQueueLength);
+    std::outl<Stream>("Usart::SendQueueLength: "_pgm, Config::Usart::SendQueueLength);
+    std::outl<Stream>("Usart::ReceiveQueueLength: "_pgm, Config::Usart::RecvQueueLength);
+    std::outl<Stream>("ensureTerminalOutput: "_pgm, Config::ensureTerminalOutput);
+    std::outl<Stream>("disableCout: "_pgm, Config::disableCout);
+    std::outl<Stream>("SoftSpiMaster::pulseDelay: "_pgm, Config::SoftSpiMaster::pulseDelay);
+    std::outl<Stream>("Button::buttonTicksForPressed: "_pgm, Config::Button::buttonTicksForPressed);
 }
 
 } // detail

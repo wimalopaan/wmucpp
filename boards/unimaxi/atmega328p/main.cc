@@ -48,7 +48,8 @@
 // sudo avrdude -p atmega328p -P usb -c avrisp2 -U lfuse:w:0xe2:m -U hfuse:w:0xd9:m -U efuse:w:0xff:m
 
 using spiInput = AVR::Spi<0>;
-using terminal = AVR::Usart<0>;
+using terminalDevive = AVR::Usart<0>;
+using terminal = std::basic_ostream<terminalDevive>;
 
 using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
 using ledPin = AVR::Pin<PortD, 4>;
@@ -80,7 +81,7 @@ using LcdE  = AVR::Pin<PortD, 7>;
 using LcdData = AVR::PinSet<LcdDB4, LcdDB5, LcdDB6, LcdDB7>;
 
 using lcd = LCD::HD44780<LcdData, LcdRS, LcdRW, LcdE, LCD::Lcd2x16>;
-using lcdStream = BufferedStream<lcd, 64>;
+using lcdStream = BufferedStream<lcd, 64, std::lineTerminator<std::LF>>;
 
 using systemClock = AVR::Timer8Bit<0>;
 using systemTimer = AlarmTimer<systemClock>;
@@ -166,19 +167,19 @@ using blinker = Blinker<led>;
 constexpr TWI::Address address{0x59};
 using i2c = TWI::Slave<0, address, lcd::param_type::rows * lcd::param_type::cols>;
 
-using isrReg = IsrRegistrar<systemConstantRate, spiInput, terminal::RxHandler, terminal::TxHandler, i2c>; 
+using isrReg = IsrRegistrar<systemConstantRate, spiInput, terminalDevive::RxHandler, terminalDevive::TxHandler, i2c>; 
 
-namespace std {
-std::basic_ostream<terminal> cout;
-std::lineTerminator<CRLF> endl;
-}
+//namespace std {
+//terminal cout;
+//std::lineTerminator<CRLF> endl;
+//}
 
-std::basic_ostream<lcdStream> lcdcout;
-std::lineTerminator<std::LF> lcdendl;
+//std::basic_ostream<lcdStream> lcdcout;
+//std::lineTerminator<std::LF> lcdendl;
 
 struct Spi0handler: public EventHandler<EventType::Spi0> {
     static bool process(const uint8_t& v) {
-        Util::put<terminal, true>((char)v);
+        Util::put<terminalDevive, true>((char)v);
         return true;
     }
 };
@@ -196,7 +197,8 @@ struct Timerhandler: public EventHandler<EventType::Timer> {
         blinker::tick();
 
         lcd::home();
-        lcdcout << "R: " << rotaryEncoder::value();
+//        lcdcout << "R: " << rotaryEncoder::value();
+        std::out<lcdStream>("R: "_pgm, rotaryEncoder::value());
         
         return true;
     }
@@ -207,17 +209,17 @@ int main()
     isrReg::init();
     blinker::init();
     systemTimer::init();
-    terminal::init<19200>();
+    terminalDevive::init<19200>();
     lcdPwm::init();    
     lcd::init();
     i2c::init();
     buttonController::init();
     rotaryEncoder::init();
     
-    std::cout << "UniMaxi (HW 0.2) m328 (Spi Uart Lcd) 0.91"_pgm << std::endl;
-    lcdcout << "UniMaxi (HW 0.2) m328 (Spi Uart Lcd) 0.91"_pgm << lcdendl;
+    std::outl<terminal>("UniMaxi (HW 0.2) m328 (Spi Uart Lcd) 0.92"_pgm);
+    std::outl<lcdStream>("UniMaxi (HW 0.2) m328 (Spi Uart Lcd) 0.92"_pgm);
     
-    std::cout << Config() << std::endl;
+    std::outl<terminal>(Config());
     
     systemTimer::create(500_ms, AlarmFlags::Periodic);
     
@@ -249,7 +251,7 @@ int main()
 
 #ifndef NDEBUG
 void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
-    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
+    std::outl<terminal>("Assertion failed: "_pgm, expr, ',', file, ',', line);
     while(true) {}
 }
 #endif

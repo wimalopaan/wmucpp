@@ -98,7 +98,7 @@ std::array<OneWire::ow_rom_t, 5> dsIds;
 #endif
 
 //using terminal = SSpi0;
-using bufferedTerminal = BufferedStream<SSpi0, 512>;
+using bufferedTerminal = BufferedStream<SSpi0, 512, std::lineTerminator<std::CRLF>>;
 
 namespace std {
     std::basic_ostream<bufferedTerminal> cout;

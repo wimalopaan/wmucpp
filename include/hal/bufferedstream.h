@@ -29,10 +29,11 @@ struct ByteMode {
 struct BitMode {
 };
 
-template<typename Device, uint16_t Size, typename Mode = ByteMode>
+template<typename Device, uint16_t Size, typename LT, typename Mode = ByteMode>
 class BufferedStream {
 public:
     typedef Device device_type;
+    typedef LT line_terminator_type;
 
     typedef typename std::conditional<Size <= 255, uint8_t, uint16_t>::type size_type;
     static constexpr const size_type  size = Size;

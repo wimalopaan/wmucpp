@@ -106,7 +106,7 @@ using SoftSPISS = AVR::Pin<PortC, 3>;
 using SSpi0 = SoftSpiMaster<SoftSPIData, SoftSPIClock, SoftSPISS>;
 using terminalDevice = SSpi0;
 using terminal = std::basic_ostream<terminalDevice>;
-using bufferedTerminal = BufferedStream<SSpi0, 512>;
+using bufferedTerminal = BufferedStream<SSpi0, 512, std::lineTerminator<std::CRLF>>;
 
 // Timer0
 using systemTimer = AVR::Timer8Bit<0>;
