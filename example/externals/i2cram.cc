@@ -71,10 +71,8 @@ int main()
 }
 
 #ifndef NDEBUG
-void assertFunction(bool b, const char* function, const char* file, unsigned int line) {
-    if (!b) {
-        std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;
-        while(true) {};
-    }
+void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
+//    std::outl<terminal>("Assertion failed: "_pgm, expr, ',', file, ',', line);
+    while(true) {}
 }
 #endif

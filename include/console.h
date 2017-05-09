@@ -53,13 +53,13 @@ template<MCU::Stream Stream, typename... TT> void outl(TT... v);
 namespace detail {
 template<MCU::Stream Stream, Unsigned V> // concept
 void out(V v) {
-    std::array<char, Util::BufferSize<V>::size> buffer;
-    Util::utoa(v, buffer);
+    std::array<char, Util::numberOfDigits<V>()> buffer;
+    Util::itoa(v, buffer);
     Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(&buffer[0]);
 }
 template<MCU::Stream Stream, Signed V> // concept
 void out(V v) {
-    std::array<char, Util::BufferSize<V>::size> buffer;
+    std::array<char, Util::numberOfDigits<V>()> buffer;
     Util::itoa(v, buffer);
     Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(&buffer[0]);
 }
@@ -83,6 +83,15 @@ void out(const PgmString<C, CC...>& s) {
         Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(c);
     };   
 }
+template<MCU::Stream Stream, uint16_t L>
+void out(const std::array<char, L>& a) {
+    for(char c : a) {
+        if (c == '\0') {
+            break;
+        }
+        Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(c);
+    };   
+}
 template<MCU::Stream Stream>
 void out(const PgmStringView& s) {
     const char * ptr = s.ptrToPgmData;
@@ -97,8 +106,8 @@ void out(const DateTime::TimeTm& t) {
 }
 template<MCU::Stream Stream, typename T>
 void out(const Fraction<T>& f) {
-    std::array<char, Util::BufferSize<Fraction<T>>::size> buffer;
-    Util::utoa(f, buffer);
+    std::array<char, Util::numberOfDigits<Fraction<T>>()> buffer;
+    Util::ftoa(f, buffer);
     Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(&buffer[0]);
 }
 template<MCU::Stream Stream>
@@ -191,7 +200,7 @@ Stream& operator<<(Stream& o, uint8_t v) {
 }
 template<typename Buffer>
 BufferDevice<Buffer>& operator<<(BufferDevice<Buffer>& o, uint8_t v) {
-    Util::utoa(v, o.buffer());
+    Util::itoa(v, o.buffer());
     return o;
 }
 
@@ -305,8 +314,8 @@ Stream& operator<<(Stream& o, bool b) {
 
 template<typename Stream, typename T>
 Stream& operator<<(Stream& o, const Fraction<T>& f) {
-    std::array<char, Util::BufferSize<Fraction<T>>::size> buffer;
-    Util::utoa(f, buffer);
+    std::array<char, Util::numberOfDigits<Fraction<T>>()> buffer;
+    Util::ftoa(f, buffer);
     Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(&buffer[0]);
     return o;    
 }

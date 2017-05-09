@@ -24,12 +24,20 @@ F_OSC = 20000000
 bm01a.elf : LOADLIBES = simavrconsole.o
 bm02a.elf : LOADLIBES = simavrconsole.o
 bm03a.elf : LOADLIBES = simavrconsole.o
+bm10a.elf bm10b.elf: LOADLIBES = simavrconsole.o
+bm11a.elf : LOADLIBES = simavrconsole.o
 
 targets += simavrconsole.o
 targets +=  bm01a.s bm01a.elf 
 targets +=  bm02a.s bm02a.elf 
+targets +=  bm02x.s bm02x.elf 
+targets +=  bm02y.s bm02y.elf 
+targets +=  bm02z.s bm02z.elf 
 targets +=  bm03a.s bm03a.elf 
 targets +=  bm04a.s bm04a.elf 
+targets +=  bm10a.s bm10a.elf 
+targets +=  bm10b.s bm10b.elf 
+targets +=  bm11a.s bm11a.elf 
 
 -include ../../Makefile.include
 

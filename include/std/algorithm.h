@@ -205,6 +205,15 @@ constexpr bool equal(InputIt1 first1, InputIt1 last1,
     return true;
 }
 
+template<typename It>
+void reverse(It first, It last) {
+    while(first < last) {
+        using std::swap;
+        swap(*first, *last);
+        ++first;
+        --last;
+    }
+}
 
 #endif
 

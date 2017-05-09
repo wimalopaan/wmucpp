@@ -58,8 +58,8 @@ ISR(TIMER0_COMPA_vect) {
 }
 
 #ifndef NDEBUG
-void assertFunction(const char* e, const char* function, const char* file, unsigned int line) {
-    std::cout << "Assertion failed: "_pgm << e << function << ","_pgm << file << ","_pgm << line << std::endl;
+void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
+    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
     while(true) {}
 }
 #endif

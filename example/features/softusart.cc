@@ -33,23 +33,19 @@
 #include "console.h"
 
 using spiInput = AVR::Spi<0>;
-using terminal = SWUsart<0>;
+using terminalDevive = SWUsart<0>;
+using terminal = std::basic_ostream<terminalDevive>;
 
 using systemClock = AVR::Timer8Bit<0>;
 using systemTimer = AlarmTimer<systemClock>;
 
 using sampler = PeriodicGroup<AVR::ISR::Timer<0>::CompareA, systemTimer>;
 
-using isrReg = IsrRegistrar<sampler, spiInput, terminal::ReceiveBitHandler, terminal::TransmitBitHandler, terminal::StartBitHandler>; 
-
-namespace std {
-    std::basic_ostream<terminal> cout;
-    std::lineTerminator<CRLF> endl;
-}
+using isrReg = IsrRegistrar<sampler, spiInput, terminalDevive::ReceiveBitHandler, terminalDevive::TransmitBitHandler, terminalDevive::StartBitHandler>; 
 
 struct  Spi0handler: public EventHandler<EventType::Spi0> {
     static bool process(const uint8_t& v) {
-        Util::put<terminal, true>((char)v);
+//        Util::put<terminalDevive, true>((char)v);
         return true;
     }
 };
@@ -70,9 +66,9 @@ int main()
     isrReg::init();
     systemTimer::init();
 
-    terminal::init<2400>();
+    terminalDevive::init<2400>();
 
-    std::cout << "Spi Usart Bridge Test 0.1" << std::endl;
+    std::outl<terminal>("Spi Usart Bridge Test 0.1"_pgm);
 
     systemTimer::create(1_s, AlarmFlags::Periodic);
 
@@ -86,12 +82,12 @@ int main()
     }
 }
 
-void assertFunction(bool b, const char* function, const char* file, unsigned int line) {
-    if (!b) {
-        std::cout << "Assertion failed: " << function << "," << file << "," << line << std::endl;
-        while(true) {}
-    }
+#ifndef NDEBUG
+void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
+    std::outl<terminal>("Assertion failed: "_pgm, expr, ',', file, ',', line);
+    while(true) {}
 }
+#endif
 
 ISR(TIMER1_COMPA_vect) {
     isrReg::isr<AVR::ISR::Timer<1>::CompareA>();

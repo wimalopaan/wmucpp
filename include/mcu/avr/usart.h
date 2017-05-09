@@ -130,7 +130,7 @@ public:
                 }
             } else {
                 if constexpr (Config::Usart::RecvQueueLength > 0) {
-                    if (recvQueue().push_back(c)) {
+                    if (mRecvQueue.push_back(c)) {
                         EventManager::enqueueISR({UsartEventType<N>::event, c});
                     }
                 }
@@ -149,7 +149,7 @@ public:
     };
     struct TxHandler : public IsrBaseHandler<typename AVR::ISR::Usart<N>::UDREmpty> {
         static void isr() {
-            if (auto c = sendQueue().pop_front()) {
+            if (auto c = mSendQueue.pop_front()) {
                 *mcu_usart()->udr = *c;;
             }
             else {
@@ -166,7 +166,7 @@ public:
     }
     static bool get(uint8_t& item) {
         if constexpr (Config::Usart::RecvQueueLength > 0) {
-            return recvQueue().pop_front(item);
+            return mRecvQueue.pop_front(item);
         }
         else {
             return false;
@@ -174,32 +174,32 @@ public:
     }
     static std::optional<uint8_t> get() {
         if constexpr (Config::Usart::RecvQueueLength > 0) {
-            return recvQueue().pop_front();
+            return mRecvQueue.pop_front();
         }
         else {
             return {};
         }
     }
     static bool put(uint8_t item) {
-        if(sendQueue().push_back(item)) {
+        if(mSendQueue.push_back(item)) {
             mcu_usart()->ucsrb.template add<ucsrb_type::udrie>();
             return true;
         }
         return false;
     }
     static void waitSendComplete() {
-        while(!sendQueue().empty()) {
+        while(!mSendQueue.empty()) {
             ::Util::delay(1_us);
         }
     }
     static bool isEmpty() {
-        return sendQueue().empty();
+        return mSendQueue.empty();
     }
     template<bool enable>
     static void rxEnable() {
         if constexpr (enable) {
             if(Config::Usart::RecvQueueLength > 0) {
-                recvQueue().clear();
+                mRecvQueue.clear();
             }
             mcu_usart()->ucsrb.template add<ucsrb_type::rxen>();
         }
@@ -208,15 +208,8 @@ public:
         }
     }
 
-private:
-    static volatile std::FiFo<uint8_t, Config::Usart::SendQueueLength>& sendQueue() {
-        static volatile std::FiFo<uint8_t, Config::Usart::SendQueueLength> mSendQueue;
-        return mSendQueue;
-    }
-    static volatile std::FiFo<uint8_t, Config::Usart::RecvQueueLength>& recvQueue() {
-        static volatile std::FiFo<uint8_t, Config::Usart::RecvQueueLength> mRecvQueue;
-        return mRecvQueue;
-    }
+    inline static volatile std::FiFo<uint8_t, Config::Usart::SendQueueLength> mSendQueue;
+    inline static volatile std::FiFo<uint8_t, Config::Usart::RecvQueueLength> mRecvQueue;
 };
 
 }

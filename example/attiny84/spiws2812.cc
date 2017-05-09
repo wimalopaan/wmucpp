@@ -65,12 +65,8 @@ using usiSSSet = AVR::PinSet<usiSS>;
 using usi = AVR::Usi<0, usiSS, inserter>;
 using usiPinChange = AVR::PinChange<usiSSSet>;
 
-using terminal = SSpi0;
-
-namespace std {
-    std::basic_ostream<terminal> cout;
-    std::lineTerminator<CRLF> endl;
-}
+using terminalDevice = SSpi0;
+using terminal = std::basic_ostream<terminalDevice>;
 
 struct PCHandler : public IsrBaseHandler<AVR::ISR::PcInt<0>> {
     static inline void isr() {
@@ -90,7 +86,7 @@ using isrRegistrar = IsrRegistrar<PCHandler, usi>;
 int main() 
 {
     isrRegistrar::init();
-    terminal::init();
+    terminalDevice::init();
     
     usiPinChange::init();
     
@@ -102,7 +98,7 @@ int main()
     
     usi::init();
 
-    std::cout << "attiny usi ws2812 test"_pgm << std::endl;
+    std::outl<terminal>("attiny usi ws2812 test"_pgm);
     
     {
         Scoped<EnableInterrupt> ei;
@@ -124,9 +120,8 @@ ISR(USI_OVF_vect) {
 }
 
 #ifndef NDEBUG
-void assertFunction(bool b, const char* function, const char* file, unsigned int line) {
-   if (!b) {
-        std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;
-    }
+void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
+    std::outl<terminal>("Assertion failed: "_pgm, expr, ',', file, ',', line);
+    while(true) {}
 }
 #endif

@@ -16,30 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "mcu/avr8.h"
-#include "mcu/ports.h"
-#include "console.h"
-#include "simavr/simavrdebugconsole.h"
+#include <stdint.h>
 
-using terminalDevice = SimAVRDebugConsole;
-using terminal = std::basic_ostream<terminalDevice>;
+const __flash uint32_t stamp = 6658687;
 
-namespace std {
-    constexpr terminal cout;
-    constexpr std::lineTerminator<CRLF> endl;
+volatile uint32_t test;
+
+int main() {
+    test = stamp;
+    
+    while(1) {}
 }
-
-int main()
-{
-    uint8_t x = 1;
-    uint8_t y = 2;
-    std::out<terminal>(x, ' ', y, std::endl);
-    while(true) {}
-}
-
-#ifndef NDEBUG
-void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
-    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
-    while(true) {}
-}
-#endif

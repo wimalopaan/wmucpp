@@ -81,6 +81,33 @@ namespace Util {
     struct enclosingType<int8_t> {
         typedef int16_t type;
     };
+    
+    template<typename T>
+    struct fragmentType;
+    
+    template<>
+    struct fragmentType<uint16_t> {
+        typedef uint8_t type;
+        static constexpr const uint8_t shift = 8;
+    };
+    
+    template<>
+    struct fragmentType<uint32_t> {
+        typedef uint16_t type;
+        static constexpr const uint8_t shift = 16;
+    };
+    
+    template<typename T>
+    constexpr auto upperHalf(const T& v) -> typename fragmentType<T>::type {
+        return v >> fragmentType<T>::shift;
+    }
+    
+    template<typename T>
+    constexpr auto lowerHalf(const T& v) -> typename fragmentType<T>::type {
+        return v;
+    }
+    
+    
 }
 
 template<typename E>

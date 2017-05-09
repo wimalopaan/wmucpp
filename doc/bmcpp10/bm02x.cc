@@ -24,16 +24,6 @@
 #include "std/types.h"
 #include "std/algorithm.h"
 
-#include "console.h"
-#include "simavr/simavrdebugconsole.h"
-
-using terminal = SimAVRDebugConsole;
-
-namespace std {
-    constexpr std::basic_ostream<terminal> cout;
-    constexpr std::lineTerminator<CRLF> endl;
-}
-
 namespace DateTime {
 
 constexpr uint32_t dateToJulianDayNumber(const DateTime::TimeTm& date)
@@ -128,41 +118,17 @@ private:
 
 }
 
-constexpr DateTime::CompilationDate cdate;
-
 //constexpr auto cdate2 = std::to_array(__DATE__);
+
+constexpr DateTime::CompilationDate cdate;
+volatile uint32_t test;
 
 int main() {
     uint32_t d = cdate.value();
-    
-    volatile uint32_t dd = 2 * d;
-    
-    std::cout << d << std::endl;
-    std::cout << cdate.date() << std::endl;
-    
-//    volatile char m1 = cdate2[0];
-//    volatile char m2 = cdate2[1];
-//    volatile char m3 = cdate2[2];
 
-    
-//    for(const char& c : cdate2) {
-//        m1 = c;    
-//    }
-    
-//    volatile char mx1 = __DATE__[0];
-//    constexpr char mx2 = __DATE__[1];
-    
-//    for(const char& c : __DATE__) {
-//        mx1 = c;
-//    }
+    test = d;
     
     while(true) {
     }
 }
 
-#ifndef NDEBUG
-void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
-    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
-    while(true) {}
-}
-#endif

@@ -18,6 +18,10 @@
 
 #pragma once
 
+#ifdef __STDC_LIMIT_MACROS
+# define STDC_LIMIT_MACROS_WAS_SET
+#endif
+#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 
 namespace std {
@@ -28,17 +32,47 @@ struct numeric_limits;
 template<>
 struct numeric_limits<uint8_t> {
     typedef uint8_t type;
-    static constexpr uint8_t max() {return 255;}
+    static constexpr uint8_t max() {return UINT8_MAX;}
     static constexpr uint8_t min() {return 0;}
-    static constexpr uint16_t module() {return 256;}
+    static constexpr uint16_t module() {return UINT8_MAX + 1;}
 };
 
 template<>
 struct numeric_limits<uint16_t> {
     typedef uint16_t type;
-    static constexpr uint16_t max() {return 65535;}
+    static constexpr uint16_t max() {return UINT16_MAX;}
     static constexpr uint16_t min() {return 0;}
-    static constexpr uint32_t module() {return 65536;}
+    static constexpr uint32_t module() {return UINT16_MAX + 1;}
+};
+template<>
+struct numeric_limits<uint32_t> {
+    typedef uint32_t type;
+    static constexpr uint32_t max() {return UINT32_MAX;}
+    static constexpr uint32_t min() {return 0;}
+    static constexpr uint64_t module() {return UINT32_MAX + 1;}
+};
+template<>
+struct numeric_limits<int8_t> {
+    typedef int8_t type;
+    static constexpr int8_t max() {return INT8_MAX;}
+    static constexpr int8_t min() {return INT8_MIN;}
 };
 
+template<>
+struct numeric_limits<int16_t> {
+    typedef int16_t type;
+    static constexpr int16_t max() {return INT16_MAX;}
+    static constexpr int16_t min() {return INT16_MIN;}
+};
+template<>
+struct numeric_limits<int32_t> {
+    typedef int32_t type;
+    static constexpr int32_t max() {return INT32_MAX;}
+    static constexpr int32_t min() {return INT32_MIN;}
+};
+
+
+#ifndef STDC_LIMIT_MACROS_WAS_SET
+# undef __STDC_LIMIT_MACROS
+#endif
 }

@@ -132,7 +132,7 @@ private:
 template<uint8_t Begin, uint8_t Length, typename ItemType = char>
 class StringBufferPart {
 public:
-    typedef ItemType type;
+    typedef ItemType value_type;
 
     template<typename C>
     StringBufferPart(C& c) : data(c.begin() + Begin) {
@@ -159,7 +159,7 @@ class BufferDevice {
 public:
     BufferDevice(Buffer& b) : mBuffer(b) {}
     
-    bool put(typename Buffer::type c) {
+    bool put(typename Buffer::value_type c) {
         if (counter < Buffer::size) {
             mBuffer[counter] = c;
             ++counter;

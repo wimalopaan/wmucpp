@@ -97,7 +97,9 @@ ISR(TIMER2_COMP_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<2>::Compare>();
 }
 
-void assertFunction(const char*, const char* function, const char* file, unsigned int line) {
-    std::cout << "Assertion failed: "_pgm << function << ","_pgm << file << ","_pgm << line << std::endl;
+#ifndef NDEBUG
+void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
+    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
     while(true) {}
 }
+#endif

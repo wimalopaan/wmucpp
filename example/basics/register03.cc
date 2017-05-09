@@ -297,7 +297,7 @@ struct EnumTraitsBase {
             }
         }
         return min;
-    };
+    }
     template<typename T>
     static constexpr auto maximumEnumValue(const T& values) {
         typedef typename std::underlying_type<typename T::value_type>::type UT;
@@ -309,7 +309,7 @@ struct EnumTraitsBase {
             }
         }
         return max;
-    };
+    }
 };
 
 template<>

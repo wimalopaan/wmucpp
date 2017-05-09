@@ -70,7 +70,7 @@ shtml: $(cchtml) $(chtml) $(hhtml) $(ahtml)
 
 #CPPFLAGS += -DNDEBUG
 
-CXXFLAGS += -Os -std=c++17
+CXXFLAGS += -Os -std=c++17 -pedantic
 #CXXFLAGS += -nostdlib -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics
 CXXFLAGS += -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics #-Wgnu-string-literal-operator-template
 CXXFLAGS += -funsigned-char -funsigned-bitfields -fshort-enums
@@ -85,8 +85,8 @@ CXXFLAGS += -I/usr/include/simavr
 CXXFLAGS += $(MCUFLAGS)
 #CXXFLAGS += -fno-tree-switch-conversion
 
-#CFLAGS += -Os -std=gnu11
-CFLAGS += -Os -std=c11
+CFLAGS += -Os -std=gnu11 # wegen __flash
+#CFLAGS += -Os -std=c11 -pedantic
 CFLAGS += -funsigned-char -funsigned-bitfields -fshort-enums
 CFLAGS += -Wall -Wextra
 CFLAGS += -DF_OSC=$(F_OSC) -DF_CPU=$(F_OSC)

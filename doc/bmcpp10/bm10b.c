@@ -16,30 +16,37 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "mcu/avr8.h"
-#include "mcu/ports.h"
-#include "console.h"
-#include "simavr/simavrdebugconsole.h"
+#include <stdint.h>
+#include <stdlib.h>
 
-using terminalDevice = SimAVRDebugConsole;
-using terminal = std::basic_ostream<terminalDevice>;
-
-namespace std {
-    constexpr terminal cout;
-    constexpr std::lineTerminator<CRLF> endl;
-}
-
-int main()
-{
-    uint8_t x = 1;
-    uint8_t y = 2;
-    std::out<terminal>(x, ' ', y, std::endl);
-    while(true) {}
-}
-
-#ifndef NDEBUG
-void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
-    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
-    while(true) {}
-}
+#if __has_include(<avr/io.h>)
+# include <avr/io.h>
 #endif
+#if __has_include(<avr/avr_mcu_section.h>)
+# include <avr/avr_mcu_section.h>
+#endif
+
+#ifndef GPIOR0
+# define GPIOR0 _SFR_IO8(0x5c)
+#endif
+
+AVR_MCU_SIMAVR_CONSOLE(&GPIOR0);
+
+int main() {
+    uint8_t x = 42;
+    uint8_t base = 10;
+    const uint8_t size = 4;    
+    
+    char data[size];
+    itoa(x, data, base);
+    
+    for(uint8_t i = 0; i < size; ++i) {
+        if (data[i] == '\0') {
+            break;
+        }
+        GPIOR0 = data[i];
+    }
+    GPIOR0 = '\r';
+    while(1) {}
+    
+}

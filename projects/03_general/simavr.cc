@@ -91,12 +91,12 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
     }
 };
 
-void assertFunction(bool b, const char* function, const char* file, unsigned int line) {
-    if (!b) {
-        std::cout << "Assertion failed: " << function << "," << file << "," << line << std::endl;
-        abort();
-    }
+#ifndef NDEBUG
+void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
+//    std::outl<terminal>("Assertion failed: "_pgm, expr, ',', file, ',', line);
+    while(true) {}
 }
+#endif
 
 int main(void) {
     std::cout << "simavr"_pgm << std::endl;

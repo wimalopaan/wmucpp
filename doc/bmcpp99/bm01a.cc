@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//#define NDEBUG
+
 #include "config.h"
 #include "mcu/avr8.h"
 #include "mcu/avr/isr.h"

@@ -16,30 +16,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "mcu/avr8.h"
-#include "mcu/ports.h"
-#include "console.h"
-#include "simavr/simavrdebugconsole.h"
+#define NDEBUG
 
-using terminalDevice = SimAVRDebugConsole;
-using terminal = std::basic_ostream<terminalDevice>;
+#include <stdint.h>
 
-namespace std {
-    constexpr terminal cout;
-    constexpr std::lineTerminator<CRLF> endl;
-}
+#include "std/limits.h"
+#include "std/traits.h"
+#include "std/concepts.h"
+#include "std/array.h"
+#include "std/algorithm.h"
 
-int main()
-{
-    uint8_t x = 1;
-    uint8_t y = 2;
-    std::out<terminal>(x, ' ', y, std::endl);
+#include "util/util.h"
+
+int main() {
+    Fraction<uint8_t> x{128};
+    constexpr uint8_t base = 10;
+    
+    std::array<char, Util::numberOfDigits<decltype(x), base>()> data; // StringBuffer
+    
+    Util::ftoa(x, data);
+    
+    for(auto c: data) {
+        if (c == '\0') {
+            break;
+        }
+        GPIOR0 = c;
+    }
+    GPIOR0 = '\r';
     while(true) {}
 }
 
-#ifndef NDEBUG
-void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
-    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
-    while(true) {}
-}
-#endif

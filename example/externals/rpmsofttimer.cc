@@ -88,7 +88,8 @@ ISR(TIMER0_OVF_vect) {
 }
 
 #ifndef NDEBUG
-void assertFunction(const char*, const char*, const char*, unsigned int) {
-    while(true) {};
+void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
+//    std::outl<terminal>("Assertion failed: "_pgm, expr, ',', file, ',', line);
+    while(true) {}
 }
 #endif

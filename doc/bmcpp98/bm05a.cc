@@ -53,4 +53,9 @@ int main() {
 //    std::cout << prescaler2.isExact << std::endl;
     
 }
-
+#ifndef NDEBUG
+void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
+    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
+    while(true) {}
+}
+#endif

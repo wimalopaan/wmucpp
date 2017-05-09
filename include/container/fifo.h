@@ -72,9 +72,33 @@ public:
     }
     static constexpr const size_type size = Size;
 private:
-    T data[Size] = {};
     size_type in = 0;
     size_type out = 0;
+    T data[Size] = {};
+};
+
+template<typename T>
+class FiFo<T, 0> final { // needed to prevent warning for zero-sized array
+public:
+    bool push_back(volatile const T& item) volatile {
+        return false;
+    }
+    bool push_back(const T& item) volatile {
+        return false;
+    }
+    bool pop_front(T& item) volatile {
+        return false;
+    }
+    std::optional<T> pop_front() volatile {
+        return {};
+    }
+    void clear() volatile {
+    }
+    bool empty() volatile const {
+        return true;
+    }
+    static constexpr const uint8_t size = 0;
+private:
 };
 
 }

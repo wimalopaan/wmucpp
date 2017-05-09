@@ -43,6 +43,9 @@ boards/unimaxi/attiny85_1/main.cc
 boards/unimaxi/attiny85_2/Makefile
 boards/unimaxi/attiny85_2/main.cc
 boards/unimaxi/board.txt
+doc/bmcpp01/bm40a.cc
+doc/bmcpp01/bm40b.c
+doc/bmcpp01/bm50a.cc
 doc/bmcpp02/bm02b.c
 doc/bmcpp02/bm03b.c
 doc/bmcpp02/bm04a.cc
@@ -51,8 +54,14 @@ doc/bmcpp03/bm08a.cc
 doc/bmcpp04/bm10a.cc
 doc/bmcpp04/bm11a.cc
 doc/bmcpp10/bm02a.cc
+doc/bmcpp10/bm02x.cc
+doc/bmcpp10/bm02y.c
+doc/bmcpp10/bm02z.c
 doc/bmcpp10/bm03a.cc
 doc/bmcpp10/bm04a.cc
+doc/bmcpp10/bm10a.cc
+doc/bmcpp10/bm10b.c
+doc/bmcpp10/bm11a.cc
 doc/bmcpp98/Makefile
 doc/bmcpp98/bm05a.cc
 doc/bmcpp99/bm05a.cc
