@@ -87,6 +87,7 @@
 #endif
 
 #include "console.h"
+#include "util/fixedpoint.h"
 
 template<typename... Components>
 struct Initializer {

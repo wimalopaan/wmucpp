@@ -18,15 +18,21 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #include "std/array.h"
 #include "mcu/avr/delay.h"
 #include "std/limits.h"
+#include "std/traits.h"
+#include "std/concepts.h"
 #include "util/bits.h"
-#include "util/fixedpoint.h"
 #include "util/concepts.h"
 #include "container/stringbuffer.h"
 
 #include "util/outputparameter.h"
+
+template<typename T> struct Fraction;
+
 
 namespace Util {
 
@@ -161,10 +167,12 @@ template<uint8_t Position, typename T, uint16_t L>
 auto ftoa(T& v, std::array<char, L>& data) -> decltype(data)& {
     typedef typename Util::fragmentType<T>::type FT;
     v *= 10;
-    data[Position] = '0' + (v >> ((sizeof(FT)) * 8));
-    v &= FT(-1);
-    if constexpr(Position < data.size - 2) {
-        return ftoa<Position + 1>(v, data);
+    if (v != 0) {
+        data[Position] = '0' + (v >> ((sizeof(FT)) * 8));
+        v &= FT(-1);
+        if constexpr(Position < data.size - 2) {
+            return ftoa<Position + 1>(v, data);
+        }
     }
     return data;    
 }

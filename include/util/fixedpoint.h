@@ -19,9 +19,11 @@
 #pragma once
 
 #include <stdint.h>
-
+#include "config.h"
+#include "mcu/concepts.h"
 #include "std/traits.h"
 #include "util/bits.h"
+#include "util/util.h"
 
 template<typename T>
 struct UnsignedFor;
@@ -59,7 +61,6 @@ struct Fraction final {
     constexpr explicit Fraction(T v) : value(v) {} 
     const T value = 0;
 };
-
 
 template<typename Type, uint8_t fractionalBits>
 class FixedPoint final {
@@ -118,4 +119,60 @@ template<typename T, uint8_t FB>
 FixedPoint<T, FB> operator*(FixedPoint<T, FB> lhs, FixedPoint<T, FB> rhs) {
     typename Util::enclosingType<T>::type p = lhs.raw() * rhs.raw();
     return FixedPoint<T, FB>::fromRaw(p >> FB);
+}
+
+namespace std {
+
+template<MCU::Stream Stream, typename... TT> void out(TT... v);
+template<MCU::Stream Stream, typename... TT> void outl(TT... v);
+
+} // std
+
+namespace std::detail {
+
+template<MCU::Stream Stream, typename T>
+void out(const Fraction<T>& f) {
+    std::array<char, Util::numberOfDigits<Fraction<T>>()> buffer;
+    Util::ftoa(f, buffer);
+    Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(&buffer[0]);
+}
+
+
+template<MCU::Stream Stream>
+void out(const FixedPoint<int16_t, 4>& f) {
+    using std::out;
+    if (f.raw() < 0) {
+        out<Stream>('-');
+    }
+    out<Stream>(f.integerAbs());
+    out<Stream>(f.fraction());
+}
+
+} // detail
+
+template<typename Stream>
+Stream& operator<<(Stream& o, const FixedPoint<uint16_t, 4>& f) {
+    if (!Config::disableCout) {
+        o << f.integerAbs() << f.fraction();
+    }
+    return o;
+}
+
+template<typename Stream>
+Stream& operator<<(Stream& o, const FixedPoint<uint16_t, 8>& f) {
+    if (!Config::disableCout) {
+        o << f.integerAbs() << f.fraction();
+    }
+    return o;
+}
+
+template<typename Stream>
+Stream& operator<<(Stream& o, const FixedPoint<int16_t, 4>& f) {
+    if (!Config::disableCout) {
+        if (f.raw() < 0) {
+            o << '-';
+        }
+        o << f.integerAbs() << f.fraction();
+    }
+    return o;
 }

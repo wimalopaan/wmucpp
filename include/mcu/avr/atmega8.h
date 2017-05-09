@@ -68,13 +68,7 @@ struct ATMega8 final
     
     struct Timer16Bit {
         static constexpr const uint8_t count = 1;
-        union {
-            struct {
-                volatile uint8_t icrl;
-                volatile uint8_t icrh;
-            };
-            volatile uint16_t icr;
-        };
+        DataRegister<Timer16Bit, ReadWrite, uint16_t> icr;
         DataRegister<Timer16Bit, ReadWrite, uint16_t> ocrb;
         DataRegister<Timer16Bit, ReadWrite, uint16_t> ocra;
         DataRegister<Timer16Bit, ReadWrite, uint16_t> tcnt;

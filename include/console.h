@@ -21,7 +21,7 @@
 #include "config.h"
 #include "mcu/concepts.h"
 #include "util/util.h"
-#include "util/fixedpoint.h"
+//#include "util/fixedpoint.h"
 #include "std/time.h"
 #include "std/concepts.h"
 #include "units/percent.h"
@@ -104,20 +104,20 @@ void out(const DateTime::TimeTm& t) {
     std::out<Stream>("Time["_pgm, (uint8_t)t.mTime.tm_mday, '/', (uint8_t)(t.mTime.tm_mon + 1), '/', (uint16_t)(t.mTime.tm_year + 1900), ' '
                , (uint8_t)t.mTime.tm_hour, ':', (uint8_t)t.mTime.tm_min, ':', (uint8_t)t.mTime.tm_sec, ']');
 }
-template<MCU::Stream Stream, typename T>
-void out(const Fraction<T>& f) {
-    std::array<char, Util::numberOfDigits<Fraction<T>>()> buffer;
-    Util::ftoa(f, buffer);
-    Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(&buffer[0]);
-}
-template<MCU::Stream Stream>
-void out(const FixedPoint<int16_t, 4>& f) {
-    if (f.raw() < 0) {
-        out<Stream>('-');
-    }
-    out<Stream>(f.integerAbs());
-    out<Stream>(f.fraction());
-}
+//template<MCU::Stream Stream, typename T>
+//void out(const Fraction<T>& f) {
+//    std::array<char, Util::numberOfDigits<Fraction<T>>()> buffer;
+//    Util::ftoa(f, buffer);
+//    Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(&buffer[0]);
+//}
+//template<MCU::Stream Stream>
+//void out(const FixedPoint<int16_t, 4>& f) {
+//    if (f.raw() < 0) {
+//        out<Stream>('-');
+//    }
+//    out<Stream>(f.integerAbs());
+//    out<Stream>(f.fraction());
+//}
 template<MCU::Stream Stream>
 void out(const std::hertz& f) {
     out<Stream>(f.value);
@@ -320,32 +320,32 @@ Stream& operator<<(Stream& o, const Fraction<T>& f) {
     return o;    
 }
 
-template<typename Stream>
-Stream& operator<<(Stream& o, const FixedPoint<uint16_t, 4>& f) {
-    if (!Config::disableCout) {
-        o << f.integerAbs() << f.fraction();
-    }
-    return o;
-}
+//template<typename Stream>
+//Stream& operator<<(Stream& o, const FixedPoint<uint16_t, 4>& f) {
+//    if (!Config::disableCout) {
+//        o << f.integerAbs() << f.fraction();
+//    }
+//    return o;
+//}
 
-template<typename Stream>
-Stream& operator<<(Stream& o, const FixedPoint<uint16_t, 8>& f) {
-    if (!Config::disableCout) {
-        o << f.integerAbs() << f.fraction();
-    }
-    return o;
-}
+//template<typename Stream>
+//Stream& operator<<(Stream& o, const FixedPoint<uint16_t, 8>& f) {
+//    if (!Config::disableCout) {
+//        o << f.integerAbs() << f.fraction();
+//    }
+//    return o;
+//}
 
-template<typename Stream>
-Stream& operator<<(Stream& o, const FixedPoint<int16_t, 4>& f) {
-    if (!Config::disableCout) {
-        if (f.raw() < 0) {
-            o << '-';
-        }
-        o << f.integerAbs() << f.fraction();
-    }
-    return o;
-}
+//template<typename Stream>
+//Stream& operator<<(Stream& o, const FixedPoint<int16_t, 4>& f) {
+//    if (!Config::disableCout) {
+//        if (f.raw() < 0) {
+//            o << '-';
+//        }
+//        o << f.integerAbs() << f.fraction();
+//    }
+//    return o;
+//}
 
 template<typename Stream, typename T, uint16_t L>
 Stream& operator<<(Stream& o, const std::array<T, L>& a) {

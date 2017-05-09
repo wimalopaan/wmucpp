@@ -17,6 +17,7 @@
  */
 
 #include "console.h"
+#include "util/fixedpoint.h"
 #include "simavr/simavrdebugconsole.h"
 
 using terminal = SimAVRDebugConsole;
@@ -35,7 +36,6 @@ namespace std {
 
 int main(){
 //    std::cout << -1 << std::endl;
-    
     
     constexpr FixedPoint<int16_t, 4> f = 1.75_fp;
     std::cout << f << std::endl;    
