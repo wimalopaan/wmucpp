@@ -32,16 +32,6 @@
 #include "units/duration.h"
 #include "console.h"
 
-#define V3
-
-#ifdef V2
-# include "itoa2.h"
-#endif
-
-#ifdef V3
-# include "itoa3.h"
-#endif
-
 auto date = PGMSTRING(__DATE__);
 
 using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
@@ -125,7 +115,7 @@ int main() {
         
         std::outl<terminal>("---"_pgm);
         
-        for(auto d : Util::detail::LookupTable<2, 10>::data) {
+        for(auto d : Util::detail::Convert<2,10>::lookupTable) {
             for(auto c : d) {
                 std::out<terminal>(c);
             }

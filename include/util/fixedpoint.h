@@ -25,41 +25,6 @@
 #include "util/bits.h"
 #include "util/util.h"
 
-template<typename T>
-struct UnsignedFor;
-
-template<>
-struct UnsignedFor<int8_t> {
-    typedef uint8_t type;
-};
-template<>
-struct UnsignedFor<int16_t> {
-    typedef uint16_t type;
-};
-template<>
-struct UnsignedFor<int32_t> {
-    typedef uint32_t type;
-};
-template<>
-struct UnsignedFor<int64_t> {
-    typedef uint64_t type;
-};
-template<>
-struct UnsignedFor<uint8_t> {
-    typedef uint8_t type;
-};
-template<>
-struct UnsignedFor<uint16_t> {
-    typedef uint16_t type;
-};
-template<>
-struct UnsignedFor<uint32_t> {
-    typedef uint32_t type;
-};
-template<>
-struct UnsignedFor<uint64_t> {
-    typedef uint64_t type;
-};
 
 template<typename T>
 struct Fraction final {
@@ -76,7 +41,7 @@ class FixedPoint final {
 
 public:
     typedef Type value_type;
-    typedef typename UnsignedFor<Type>::type unsigned_type;
+    typedef typename Util::UnsignedFor<Type>::type unsigned_type;
     static constexpr unsigned_type fractional_mask = (1 << fractionalBits) - 1;
     static constexpr unsigned_type integral_mask = ~((1 << fractionalBits) - 1);
     static constexpr uint8_t fractional_bits = fractionalBits;

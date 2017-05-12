@@ -107,6 +107,45 @@ auto itoa(const T& value, C& data) -> decltype(data)& {
     return detail::itoa<Base>(value, data);
 }
 
+namespace V2 {
+
+template<uint8_t Base = 10, uint8_t offset = 0, std::Unsigned T = uint8_t, uint16_t L = 0>
+void itoa(const T& value, std::array<char, L>& data) {
+    static_assert(L >= Util::numberOfDigits<T, Base>(), "wrong length");
+    auto length = detail::Convert<2, Base>::digits(value);
+    if constexpr(std::is_same<T, uint64_t>::value) {
+        using fragmentType = typename Util::fragmentType<T>::type;
+        constexpr auto maximumPower = detail::Convert<2, Base>::template maxPower<fragmentType>;
+        if (length > maximumPower) {
+            uint32_t v1 = value / detail::Convert<2, Base>::template powers<fragmentType>[maximumPower];
+            uint32_t v2 = value - v1;
+            detail::itoa<Base>(v1 , length, &data[0] + offset);
+            detail::itoa<Base>(v2 , length - maximumPower, &data[0] + offset);
+        }
+        else {
+            detail::itoa<Base>(value, length, &data[0] + offset);
+        }
+    }
+    else {
+        detail::itoa<Base>(value, length, &data[0] + offset);
+    }
+}
+
+template<uint8_t Base = 10, std::Signed T = uint8_t, uint16_t L = 0>
+void itoa(const T& value, std::array<char, L>& data) {
+    static_assert(L >= Util::numberOfDigits<T, Base>(), "wrong length");
+    typedef typename UnsignedFor<T>::type uType;
+    if (value < 0) {
+        data[0] = '-';
+        itoa<Base, 1>(static_cast<uType>(-value), data);
+    }
+    else {
+        itoa<Base>(static_cast<uType>(value), data);
+    }
+}
+
+} // V2
+
 template<Fractional T, uint16_t L>
 auto ftoa(const T& f, std::array<char, L>& data) -> decltype(data)& {
     static_assert(L >= Util::numberOfDigits<T, 10>(), "wrong char buffer length");

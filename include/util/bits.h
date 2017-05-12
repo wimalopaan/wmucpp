@@ -33,6 +33,43 @@ struct enable_bitmask_operators final {
 }
 
 namespace Util {
+template<typename T>
+struct UnsignedFor;
+
+template<>
+struct UnsignedFor<int8_t> {
+    typedef uint8_t type;
+};
+template<>
+struct UnsignedFor<int16_t> {
+    typedef uint16_t type;
+};
+template<>
+struct UnsignedFor<int32_t> {
+    typedef uint32_t type;
+};
+template<>
+struct UnsignedFor<int64_t> {
+    typedef uint64_t type;
+};
+template<>
+struct UnsignedFor<uint8_t> {
+    typedef uint8_t type;
+};
+template<>
+struct UnsignedFor<uint16_t> {
+    typedef uint16_t type;
+};
+template<>
+struct UnsignedFor<uint32_t> {
+    typedef uint32_t type;
+};
+template<>
+struct UnsignedFor<uint64_t> {
+    typedef uint64_t type;
+};
+
+
     template<typename T>
     constexpr uint8_t numberOfBits() {
         return sizeof(T) * 8;
