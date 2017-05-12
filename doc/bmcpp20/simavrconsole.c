@@ -1,5 +1,6 @@
+
 /*
- * WMuCpp - Bare Metal C++ 
+ * WMuCpp - Bare Metal C++
  * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -11,37 +12,16 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- 
+
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define NDEBUG
+#include <avr/io.h>
 
-#include <stdint.h>
+#if __has_include(<avr/avr_mcu_section.h>)
+# include <avr/avr_mcu_section.h>
+#endif
 
-#include "std/limits.h"
-#include "std/traits.h"
-#include "std/concepts.h"
-#include "std/array.h"
-#include "std/algorithm.h"
 
-#include "util/util.h"
-
-int main() {
-    uint8_t x = 42;
-    constexpr uint8_t base = 10;
-    std::array<char, Util::numberOfDigits<decltype(x), base>() + 1> data; // StringBuffer
-    
-    Util::itoa<base>(x, data);
-    
-    for(auto c: data) {
-        if (c == '\0') {
-            break;
-        }
-        GPIOR0 = c;
-    }
-    GPIOR0 = '\r';
-    while(true) {}
-}
-
+AVR_MCU_SIMAVR_CONSOLE(&GPIOR0);

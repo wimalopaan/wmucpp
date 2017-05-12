@@ -52,6 +52,12 @@ struct numeric_limits<uint32_t> {
     static constexpr uint64_t module() {return UINT32_MAX + 1;}
 };
 template<>
+struct numeric_limits<uint64_t> {
+    typedef uint64_t type;
+    static constexpr uint64_t max() {return UINT64_MAX;}
+    static constexpr uint64_t min() {return 0;}
+};
+template<>
 struct numeric_limits<int8_t> {
     typedef int8_t type;
     static constexpr int8_t max() {return INT8_MAX;}
@@ -69,6 +75,12 @@ struct numeric_limits<int32_t> {
     typedef int32_t type;
     static constexpr int32_t max() {return INT32_MAX;}
     static constexpr int32_t min() {return INT32_MIN;}
+};
+template<>
+struct numeric_limits<int64_t> {
+    typedef int64_t type;
+    static constexpr int64_t max() {return INT64_MAX;}
+    static constexpr int64_t min() {return INT64_MIN;}
 };
 
 

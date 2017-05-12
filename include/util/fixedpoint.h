@@ -41,6 +41,10 @@ struct UnsignedFor<int32_t> {
     typedef uint32_t type;
 };
 template<>
+struct UnsignedFor<int64_t> {
+    typedef uint64_t type;
+};
+template<>
 struct UnsignedFor<uint8_t> {
     typedef uint8_t type;
 };
@@ -51,6 +55,10 @@ struct UnsignedFor<uint16_t> {
 template<>
 struct UnsignedFor<uint32_t> {
     typedef uint32_t type;
+};
+template<>
+struct UnsignedFor<uint64_t> {
+    typedef uint64_t type;
 };
 
 template<typename T>
@@ -152,7 +160,7 @@ void out(const FixedPoint<int16_t, 4>& f) {
 
 template<typename Stream>
 Stream& operator<<(Stream& o, const FixedPoint<uint16_t, 4>& f) {
-    if (!Config::disableCout) {
+    if constexpr(!Config::disableCout) {
         o << f.integerAbs() << f.fraction();
     }
     return o;
@@ -160,7 +168,7 @@ Stream& operator<<(Stream& o, const FixedPoint<uint16_t, 4>& f) {
 
 template<typename Stream>
 Stream& operator<<(Stream& o, const FixedPoint<uint16_t, 8>& f) {
-    if (!Config::disableCout) {
+    if constexpr(!Config::disableCout) {
         o << f.integerAbs() << f.fraction();
     }
     return o;
@@ -168,7 +176,7 @@ Stream& operator<<(Stream& o, const FixedPoint<uint16_t, 8>& f) {
 
 template<typename Stream>
 Stream& operator<<(Stream& o, const FixedPoint<int16_t, 4>& f) {
-    if (!Config::disableCout) {
+    if constexpr (!Config::disableCout) {
         if (f.raw() < 0) {
             o << '-';
         }

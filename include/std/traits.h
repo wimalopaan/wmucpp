@@ -96,6 +96,14 @@ template<>
 struct is_integral<int32_t> final {
     static constexpr bool value = true;
 };
+template<>
+struct is_integral<uint64_t> final {
+    static constexpr bool value = true;
+};
+template<>
+struct is_integral<int64_t> final {
+    static constexpr bool value = true;
+};
 
 //template<typename T>
 //struct is_unsigned final {
@@ -121,6 +129,10 @@ template<>
 struct is_unsigned<uint32_t> {
     static constexpr bool value = true;
 };
+template<>
+struct is_unsigned<uint64_t> {
+    static constexpr bool value = true;
+};
 template<typename T>
 struct is_signed final {
     static constexpr bool value = false;
@@ -135,6 +147,10 @@ struct is_signed<int16_t> {
 };
 template<>
 struct is_signed<int32_t> {
+    static constexpr bool value = true;
+};
+template<>
+struct is_signed<int64_t> {
     static constexpr bool value = true;
 };
 

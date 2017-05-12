@@ -66,7 +66,7 @@ private:
     volatile value_type hwRegister;
 };
 
-struct MCU final {
+struct MCU1 final {
     struct CompA {
         enum class Flags1 {
             f1 = (1 << 0),
@@ -87,12 +87,12 @@ struct MCU final {
 };
 
 int main() {
-    const auto c = reinterpret_cast<MCU::CompA*>(0x28);
+    const auto c = reinterpret_cast<MCU1::CompA*>(0x28);
 
-    using F1 = MCU::CompA::Flags1;
+    using F1 = MCU1::CompA::Flags1;
     c->part1.set(F1::f1, F1::f1);
 
-    using F2 = MCU::CompA::Flags2;
+    using F2 = MCU1::CompA::Flags2;
     c->part2.set(F2::f1);
     
     c->part2.add<F2::f2>();

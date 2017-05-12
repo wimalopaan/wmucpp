@@ -27,6 +27,15 @@
 # define PROGMEM
 #endif
 
+#include <stdint.h>
+
+#include "config.h"
+#include "mcu/concepts.h"
+
+namespace Util {
+template<typename Device, bool ensure = false> void put(char c);
+}
+
 // this is a g++ / clang++ extension
 
 template<typename C, C... CC>
@@ -63,4 +72,20 @@ constexpr PgmString<C, CC...> operator"" _pgm(){
     return PgmString<C, CC...>();
 }
 
+namespace std::detail {
 
+template<MCU::Stream Stream, typename C, C... CC>
+void out(const PgmString<C, CC...>& s) {
+    const char * ptr = s.data;
+    while (char c = pgm_read_byte(ptr++)) {
+        Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(c);
+    };   
+}
+
+} // std::detail
+
+template<typename Stream, typename C, C... CC>
+Stream& operator<<(Stream& out, const PgmString<C, CC...>& s) {
+    std::detail::template out<Stream>(s);
+    return out;
+}

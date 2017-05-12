@@ -96,6 +96,11 @@ namespace Util {
         typedef uint16_t type;
         static constexpr const uint8_t shift = 16;
     };
+    template<>
+    struct fragmentType<uint64_t> {
+        typedef uint32_t type;
+        static constexpr const uint8_t shift = 32;
+    };
     
     template<typename T>
     constexpr auto upperHalf(const T& v) -> typename fragmentType<T>::type {

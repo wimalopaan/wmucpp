@@ -19,12 +19,17 @@
 #pragma once
 
 #include <stdint.h>
+
+#include "util/dassert.h"
+
 #include "container/pgmstring.h"
 #include "std/algorithm.h"
 #include "std/traits.h"
 #include "util/dassert.h"
 
-#include <avr/pgmspace.h>
+template<typename C, C... CC> struct PgmString;
+
+//#include <avr/pgmspace.h>
 
 template<uint8_t Length, typename T = char, char Fill = ' '>
 class StringBuffer final {
@@ -62,10 +67,9 @@ public:
     template<typename C, C... CC>
     void insertAtFill(uint8_t position, const PgmString<C, CC...>& ps) {
         static_assert(Length > ps.size, "wrong length");
-        const char* ptr = ps.data;
         uint8_t i = position;
         for(uint8_t j = 0; (i < Length) && (j < ps.size); ++i, ++j) {
-            data[i] = pgm_read_byte(ptr++);
+            data[i] = ps[j];
         }
         for(; i < Length; ++i) {
             data[i] = Fill;

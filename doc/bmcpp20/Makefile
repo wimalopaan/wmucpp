@@ -17,20 +17,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-MCU = atmega1284p
-F_OSC = 20000000
+MCU = atmega328p
+F_OSC = 12000000
+#MCU = atmega1284p
+#F_OSC = 20000000
 
-subdirs =
+bm01a.elf : LOADLIBES = simavrconsole.o
+bm02a.elf : LOADLIBES = simavrconsole.o
 
-# avr-nm -S -n -C -t d esptest.elf 
+targets += simavrconsole.o
+targets +=  bm01a.s bm01a.elf 
+targets +=  bm02a.s bm02a.elf 
 
-targets += main.elf
-targets += owtest01.elf
-targets += esptest.elf esptest.s
-targets += itoatest.elf itoatest.s
+-include ../../Makefile.include
 
-owtest01.elf: owtest01.o ow.o
-	$(CC) $(LDFLAGS) -o $@ owtest01.o ow.o
+#bm01a.elf: bm01a.o simavrconsole.o
+#	$(CC) $(LDFLAGS) -o $@ bm01a.o simavrconsole.o
 
--include ../../../Makefile.include
 

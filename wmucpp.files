@@ -28,6 +28,10 @@ boards/rcsensorled/main.cc
 boards/unimaxi/Makefile
 boards/unimaxi/atmega1284p/Makefile
 boards/unimaxi/atmega1284p/esptest.cc
+boards/unimaxi/atmega1284p/itoa.h
+boards/unimaxi/atmega1284p/itoa2.h
+boards/unimaxi/atmega1284p/itoa3.h
+boards/unimaxi/atmega1284p/itoatest.cc
 boards/unimaxi/atmega1284p/main.cc
 boards/unimaxi/atmega1284p/ow.cc
 boards/unimaxi/atmega1284p/ow.h
@@ -62,6 +66,11 @@ doc/bmcpp10/bm04a.cc
 doc/bmcpp10/bm10a.cc
 doc/bmcpp10/bm10b.c
 doc/bmcpp10/bm11a.cc
+doc/bmcpp20/Makefile
+doc/bmcpp20/bm01a.cc
+doc/bmcpp20/bm02a.cc
+doc/bmcpp20/itoa.h
+doc/bmcpp20/simavrconsole.c
 doc/bmcpp98/Makefile
 doc/bmcpp98/bm05a.cc
 doc/bmcpp99/bm05a.cc

@@ -29,12 +29,33 @@
 #include "util/concepts.h"
 #include "container/stringbuffer.h"
 
-#include "util/outputparameter.h"
-
 template<typename T> struct Fraction;
 
-
 namespace Util {
+
+//namespace detail {
+//    template<uint8_t N> struct DType;
+//    template<> 
+//    struct DType<2> {
+//        typedef uint16_t dtype;
+//        constexpr inline static uint8_t dimension = 100;
+//    };
+//    template<> 
+//    struct DType<4> {
+//        typedef uint32_t dtype;
+//        constexpr inline static uint16_t dimension = 10000;
+//    };
+//    template<uint8_t N = 2> 
+//    struct DLookupTable {
+//        constexpr static inline auto data = [](){
+//            std::array<typename DType<N>::dtype ,DType<N>::dimension> data;
+//            for(typename DType<N>::dtype i = 0; i < DType<N>::dimension; ++i) {
+//                data[i] = ('0' + i % 10) + (('0' + (i / 10)) << 8);
+//            }
+//            return data;
+//        }();
+//    };
+//}
 
 template<std::Integral T, uint8_t Base = 10>
 constexpr uint8_t numberOfDigits() {
@@ -141,7 +162,7 @@ auto itoa(const T& value, C& data) -> decltype(data)& {
 template<uint8_t Base = 10, std::Integral T = uint8_t, uint16_t L = 0>
 auto itoa(const T& value, std::array<char, L>& data) -> decltype(data)& {
     static_assert((Base >= 2) && (Base <= 16), "wrong base");
-    static_assert(L >= Util::numberOfDigits<T, Base>(), "wrong char buffer length");
+    static_assert(L > Util::numberOfDigits<T, Base>(), "wrong char buffer length");
     
     return detail::itoa<Base>(value, data);
 }
@@ -177,7 +198,7 @@ auto ftoa(T& v, std::array<char, L>& data) -> decltype(data)& {
     return data;    
 }
 
-}
+} // detail
 
 template<Fractional T, uint16_t L>
 auto ftoa(const T& f, std::array<char, L>& data) -> decltype(data)& {
@@ -188,112 +209,11 @@ auto ftoa(const T& f, std::array<char, L>& data) -> decltype(data)& {
 }
 
 
-// ----------------------------------------
-
-//template<typename V> struct BufferSize;
-
-//template<>
-//struct BufferSize<Fraction<uint8_t>>{
-//    BufferSize() = delete;
-//    static constexpr uint8_t size = 10;
-//};
-//template<>
-//struct BufferSize<Fraction<uint16_t>>{
-//    BufferSize() = delete;
-//    static constexpr uint8_t size = 18;
-//};
-//template<>
-//struct BufferSize<uint8_t> final {
-//    BufferSize() = delete;
-//    static constexpr uint8_t size = 4;
-//};
-//template<>
-//struct BufferSize<int8_t>{
-//    BufferSize() = delete;
-//    static constexpr uint8_t size = 5;
-//};
-//template<>
-//struct BufferSize<uint16_t>{
-//    BufferSize() = delete;
-//    static constexpr uint8_t size = 6;
-//};
-//template<>
-//struct BufferSize<int16_t>{
-//    BufferSize() = delete;
-//    static constexpr uint8_t size = 7;
-//};
-//template<>
-//struct BufferSize<uint32_t>{
-//    BufferSize() = delete;
-//    static constexpr uint8_t size = 11;
-//};
-//template<>
-//struct BufferSize<int32_t>{
-//    BufferSize() = delete;
-//    static constexpr uint8_t size = 12;
-//};
-
-// todo: use output_parameter<T> template to clearify usage
-
-//template<int N, typename T, typename B>
-//struct Utoa final {
-//    static inline void convert(T v, B& buffer) {
-//        buffer[N - 1] = '0' + v % 10;
-//        v /= 10;
-//        if constexpr((N  - 1) > 0) {
-//            Utoa<N - 1, T, B>::convert(v, buffer);
-//        }
-//    }
-//};
-
-//template<int N, typename T, typename B>
-//struct Ftoa final {
-//    static inline void convert(Fraction<T> f, B& buffer) {
-//        typename Util::enclosingType<T>::type v = f.value;
-//        v *= 10;
-//        buffer[N] = '0' + (v >> (sizeof(T) * 8));
-//        v &= T(-1);
-//        if constexpr(N  < B::size - 2) {
-//            Ftoa<N + 1, T, B>::convert(Fraction<T>{T(v)}, buffer);
-//        }
-//    }
-//};
-
-//template<typename T>
-//inline void utoa(T v, std::array<char, BufferSize<T>::size>& buffer) {
-//    static_assert(std::is_unsigned<T>::value, "must use unsigned type");
-//    Utoa<BufferSize<T>::size - 1, T, std::array<char, BufferSize<T>::size> >::convert(v, buffer);
-//}
-
-//template<typename T, uint8_t Start>
-//inline void utoa(T v, StringBufferPart<Start, BufferSize<T>::size>& buffer) {
-//    static_assert(std::is_unsigned<T>::value, "must use unsigned type");
-//    Utoa<BufferSize<T>::size - 1, T, StringBufferPart<Start, BufferSize<T>::size> >::convert(v, buffer);
-//}
-
-//template<typename T>
-//inline void utoa(Fraction<T> v, std::array<char, BufferSize<Fraction<T>>::size>& buffer) {
-//    buffer[0] = '.';
-//    Ftoa<1, T, std::array<char, BufferSize<Fraction<T>>::size>>::convert(v, buffer);
-//}
-
-//template<typename T>
-//inline void itoa(T v, std::array<char, BufferSize<T>::size>& buffer) {
-//    static_assert(!std::is_unsigned<T>::value, "must use signed type");
-//    if (v < 0) {
-//        Utoa<BufferSize<T>::size - 1, T, std::array<char, BufferSize<T>::size> >::convert((typename UnsignedFor<T>::type)(-v), buffer);
-//        buffer[0] = '-';
-//    }
-//    else {
-//        Utoa<BufferSize<T>::size - 1, T, std::array<char, BufferSize<T>::size> >::convert((typename UnsignedFor<T>::type)v, buffer);
-//        buffer[0] = '+';
-//    }
-//}
 
 template<typename Device, bool ensure = false>
 void put(const char* str) {
     while(*str) {
-        if (ensure) {
+        if constexpr(ensure) {
             while(!Device::put(*str)) {
                 Util::delay(1_us);
             }
@@ -307,7 +227,7 @@ void put(const char* str) {
 
 template<typename Device, bool ensure = false>
 void put(char c) {
-    if (ensure) {
+    if constexpr(ensure) {
         while(!Device::put(c)) {
             Util::delay(1_us);
         }
@@ -320,7 +240,7 @@ void put(char c) {
 template<typename Device, Util::Array C, bool ensure = false>
 void put(const C& c) {
     for(uint8_t i = 0; i < c.size; ++i) {
-        if (ensure) {
+        if constexpr(ensure) {
             while(!Device::put(c[i])) {
                 Util::delay(1_us);
             }
@@ -337,11 +257,8 @@ void putl(const char* str) {
     Device::put('\n');
 }
 
-
 constexpr bool isPowerof2(int v) {
     return v && ((v & (v - 1)) == 0);
 }
 
-
-
-}
+} // Util
