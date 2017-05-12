@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 namespace Util {
 
 template<typename A>
@@ -26,6 +28,16 @@ concept bool Array() {
         typename A::value_type;
         a[0];
         a.size;
+    };
+}
+
+template<typename T>
+concept bool Fractional = !std::is_integral<T>::value;
+
+template<typename D>
+concept bool Device() {
+    return requires(D d) {
+        D::put((char)0);
     };
 }
 

@@ -59,3 +59,4 @@ boards/clock/universal_mg
 doc/bmcpp98
 include/external/esp8266
 doc/bmcpp20
+include/util/detail

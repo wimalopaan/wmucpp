@@ -72,7 +72,7 @@ int main()
     std::cout << PortC::get() << std::endl;    
     
     LcdData::set(x);
-//    std::cout << PortC::get() << std::endl;   
+    std::cout << PortC::get() << std::endl;   
 
     std::out<terminal>(PortC::get(), std::endl);
     

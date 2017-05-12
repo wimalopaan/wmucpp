@@ -29,33 +29,11 @@
 #include "util/concepts.h"
 #include "container/stringbuffer.h"
 
+#include "detail/util_detail.h"
+
 template<typename T> struct Fraction;
 
 namespace Util {
-
-//namespace detail {
-//    template<uint8_t N> struct DType;
-//    template<> 
-//    struct DType<2> {
-//        typedef uint16_t dtype;
-//        constexpr inline static uint8_t dimension = 100;
-//    };
-//    template<> 
-//    struct DType<4> {
-//        typedef uint32_t dtype;
-//        constexpr inline static uint16_t dimension = 10000;
-//    };
-//    template<uint8_t N = 2> 
-//    struct DLookupTable {
-//        constexpr static inline auto data = [](){
-//            std::array<typename DType<N>::dtype ,DType<N>::dimension> data;
-//            for(typename DType<N>::dtype i = 0; i < DType<N>::dimension; ++i) {
-//                data[i] = ('0' + i % 10) + (('0' + (i / 10)) << 8);
-//            }
-//            return data;
-//        }();
-//    };
-//}
 
 template<std::Integral T, uint8_t Base = 10>
 constexpr uint8_t numberOfDigits() {
@@ -74,10 +52,7 @@ constexpr uint8_t numberOfDigits() {
     return number;
 }
 
-template<typename T>
-concept bool Fractional = !std::is_integral<T>::value;
-
-template<Fractional T, uint8_t Base = 10>
+template<Util::Fractional T, uint8_t Base = 10>
 constexpr uint8_t numberOfDigits() {
     if constexpr(std::is_same<Fraction<uint8_t>, T>::value) {
         return 10;
@@ -87,24 +62,6 @@ constexpr uint8_t numberOfDigits() {
     }
 }
 
-namespace detail {
-template<int Position, uint8_t Base = 10, std::Integral T = uint8_t>
-uint8_t itoa_single(T& value, std::array<char, Util::numberOfDigits<T, Base>()>& data) {
-    if constexpr(Position >= 0) {
-        uint8_t fraction = value % Base;
-        if (fraction < 10) {
-            data[Position] = '0' + fraction;
-        }
-        else {
-            data[Position] = 'a' - 10 + fraction;
-        }
-        value /= Base;
-        return itoa_single<Position - 1, Base, T>(value, data);
-    }
-    return 0;
-}
-
-} // detail
 
 template<uint8_t Base = 10, std::Integral T = uint8_t>
 auto itoa_r(T value, std::array<char, Util::numberOfDigits<T, Base>()>& data) -> decltype(data)& {
@@ -126,38 +83,6 @@ auto itoa_r(T value, std::array<char, Util::numberOfDigits<T, Base>()>& data) ->
     }
     return data;
 }
-
-namespace detail {
-template<uint8_t Base = 10, std::Integral T = uint8_t, uint16_t L = 0, typename C = void>
-auto itoa(const T& value, C& data) -> decltype(data)& {
-    T v = value;
-    if constexpr(std::is_signed<T>::value) {
-        if (value < 0) {
-            v = -value; 
-        }
-    }
-    uint8_t position = std::numeric_limits<uint8_t>::max();
-    do {
-        uint8_t fraction = v % Base;
-        if (fraction < 10) {
-            data[++position] = '0' + fraction;
-        }
-        else {
-            data[++position] = 'a' - 10 + fraction;
-        }
-        v /= Base;
-    } while(v > 0);
-    
-    if constexpr(std::is_signed<T>::value) {
-        if (value < 0) {
-            data[++position] = '-';
-        }
-    }    
-    data[position + 1] = '\0';    
-    std::reverse(&data[0], &data[position]);
-    return data;
-}
-} // detail
 
 template<uint8_t Base = 10, std::Integral T = uint8_t, uint16_t L = 0>
 auto itoa(const T& value, std::array<char, L>& data) -> decltype(data)& {
@@ -182,24 +107,6 @@ auto itoa(const T& value, C& data) -> decltype(data)& {
     return detail::itoa<Base>(value, data);
 }
 
-namespace detail {
-
-template<uint8_t Position, typename T, uint16_t L>
-auto ftoa(T& v, std::array<char, L>& data) -> decltype(data)& {
-    typedef typename Util::fragmentType<T>::type FT;
-    v *= 10;
-    if (v != 0) {
-        data[Position] = '0' + (v >> ((sizeof(FT)) * 8));
-        v &= FT(-1);
-        if constexpr(Position < data.size - 2) {
-            return ftoa<Position + 1>(v, data);
-        }
-    }
-    return data;    
-}
-
-} // detail
-
 template<Fractional T, uint16_t L>
 auto ftoa(const T& f, std::array<char, L>& data) -> decltype(data)& {
     static_assert(L >= Util::numberOfDigits<T, 10>(), "wrong char buffer length");
@@ -208,9 +115,7 @@ auto ftoa(const T& f, std::array<char, L>& data) -> decltype(data)& {
     return detail::ftoa<1>(v, data);    
 }
 
-
-
-template<typename Device, bool ensure = false>
+template<Util::Device Device, bool ensure = false>
 void put(const char* str) {
     while(*str) {
         if constexpr(ensure) {
@@ -237,7 +142,7 @@ void put(char c) {
     }
 }
 
-template<typename Device, Util::Array C, bool ensure = false>
+template<Util::Device Device, Util::Array C, bool ensure = false>
 void put(const C& c) {
     for(uint8_t i = 0; i < c.size; ++i) {
         if constexpr(ensure) {
@@ -251,7 +156,7 @@ void put(const C& c) {
     }
 }
 
-template<typename Device>
+template<Util::Device Device>
 void putl(const char* str) {
     Device::put(str);
     Device::put('\n');
