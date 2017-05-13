@@ -30,6 +30,7 @@ namespace AVR {
 
 struct ReadWrite {};
 struct ReadOnly{};
+struct UnUsed{};
 
 template<typename Component, typename BitType, typename ValueType = uint8_t>
 struct ControlRegister {
@@ -74,20 +75,39 @@ private:
 };
 
 template<typename Component, typename Mode = ReadWrite, typename ValueType = uint8_t>
-struct DataRegister {
+struct DataRegister;
+
+template<typename Component, typename ValueType>
+struct DataRegister<Component, UnUsed, ValueType> {
+    typedef Component component_type;
+    typedef ValueType value_type;    
+private:    
+    volatile value_type hwRegister; // needed to occupy space
+};
+
+template<typename Component, typename ValueType>
+struct DataRegister<Component, ReadOnly, ValueType> {
     typedef Component component_type;
     typedef ValueType value_type;    
 
-    // SFINAE
-    template<typename Dummy = void, 
-             typename Dummy2 = typename std::enable_if<std::is_same<Mode, ReadWrite>::value, Dummy>::type>
+    inline const volatile value_type& operator*() const {
+        return hwRegister;
+    }
+private:    
+    volatile value_type hwRegister;
+};
+
+template<typename Component, typename ValueType>
+struct DataRegister<Component, ReadWrite, ValueType> {
+    typedef Component component_type;
+    typedef ValueType value_type;    
+
     inline volatile value_type& operator*() {
         return hwRegister;
     }
     inline const volatile value_type& operator*() const {
         return hwRegister;
     }
-    
 private:    
     volatile value_type hwRegister;
 };
