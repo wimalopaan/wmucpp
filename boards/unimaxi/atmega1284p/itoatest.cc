@@ -96,7 +96,10 @@ struct UsartUpeHandler: public EventHandler<EventType::UsartUpe> {
 struct Measure {
     uint64_t value = 0;
     std::milliseconds time;
+    uint8_t type = 0;
 };
+
+constexpr uint8_t Base = 10;
 
 int main() {
     isrRegistrar::init();
@@ -113,8 +116,6 @@ int main() {
     {
         Scoped<EnableInterrupt> interruptEnabler;
         
-        std::outl<terminal>("---"_pgm);
-        
         for(auto d : Util::detail::Convert<2,10>::lookupTable) {
             for(auto c : d) {
                 std::out<terminal>(c);
@@ -129,62 +130,50 @@ int main() {
         std::array<char, Util::numberOfDigits<uint64_t>() + 1> data;
         
         for(uint8_t p = 1; p < times.size; ++p) {
-//            if (value <= std::numeric_limits<uint8_t>::max()) {
-//                uint8_t lv = value;
-//                uint32_t start = CTHandler::mCounter;
-//                for(uint16_t n = 0; n < iterations; ++n) {
-//#ifdef V1
-//                    Util::itoa<10>(lv, data);
-//#else
-//                    itoa_(lv, &data[0]);
-//#endif
-//                }
-//                uint32_t end = CTHandler::mCounter;            
-//                times[p].value = value;
-//                times[p].time = std::milliseconds{static_cast<uint16_t>(end - start)};
-//            }
-//            else if (value <= std::numeric_limits<uint16_t>::max()) {
-//                uint16_t lv = value;
-//                uint32_t start = CTHandler::mCounter;
-//                for(uint16_t n = 0; n < iterations; ++n) {
-//#ifdef V1
-//                    Util::itoa<10>(lv, data);
-//#else
-//                    itoa_(lv, &data[0]);
-//#endif
-//                }
-//                uint32_t end = CTHandler::mCounter;            
-//                times[p].value = value;
-//                times[p].time = std::milliseconds{static_cast<uint16_t>(end - start)};
-//            }
-//            else if (value <= std::numeric_limits<uint32_t>::max()) {
-//                uint32_t lv = value;
-//                uint32_t start = CTHandler::mCounter;
-//                for(uint16_t n = 0; n < iterations; ++n) {
-//#ifdef V1
-//                    Util::itoa<10>(lv, data);
-//#else
-//                    itoa_(lv, &data[0]);
-//#endif
-//                }
-//                uint32_t end = CTHandler::mCounter;            
-//                times[p].value = value;
-//                times[p].time = std::milliseconds{static_cast<uint16_t>(end - start)};
-//            }
-//            else if (value <= std::numeric_limits<uint64_t>::max()) {
-//                uint64_t lv = value;
-//                uint32_t start = CTHandler::mCounter;
-//                for(uint16_t n = 0; n < iterations; ++n) {
-//#ifdef V1
-//                    Util::itoa<10>(lv, data);
-//#else
-//                    itoa_(lv, &data[0]);
-//#endif
-//                }
-//                uint32_t end = CTHandler::mCounter;            
-//                times[p].value = value;
-//                times[p].time = std::milliseconds{static_cast<uint16_t>(end - start)};
-//            }
+            if (value <= std::numeric_limits<uint8_t>::max()) {
+                uint8_t lv = value;
+                uint32_t start = CTHandler::mCounter;
+                for(uint16_t n = 0; n < iterations; ++n) {
+                    Util::V2::itoa<Base>(lv, data);
+                }
+                uint32_t end = CTHandler::mCounter;            
+                times[p].value = value;
+                times[p].time = std::milliseconds{static_cast<uint16_t>(end - start)};
+                times[p].type = 1;
+            }
+            else if (value <= std::numeric_limits<uint16_t>::max()) {
+                uint16_t lv = value;
+                uint32_t start = CTHandler::mCounter;
+                for(uint16_t n = 0; n < iterations; ++n) {
+                    Util::V2::itoa<Base>(lv, data);
+                }
+                uint32_t end = CTHandler::mCounter;            
+                times[p].value = value;
+                times[p].time = std::milliseconds{static_cast<uint16_t>(end - start)};
+                times[p].type = 2;
+            }
+            else if (value <= std::numeric_limits<uint32_t>::max()) {
+                uint32_t lv = value;
+                uint32_t start = CTHandler::mCounter;
+                for(uint16_t n = 0; n < iterations; ++n) {
+                    Util::V2::itoa<Base>(lv, data);
+                }
+                uint32_t end = CTHandler::mCounter;            
+                times[p].value = value;
+                times[p].time = std::milliseconds{static_cast<uint16_t>(end - start)};
+                times[p].type = 3;
+            }
+            else if (value <= std::numeric_limits<uint64_t>::max()) {
+                uint64_t lv = value;
+                uint32_t start = CTHandler::mCounter;
+                for(uint16_t n = 0; n < iterations; ++n) {
+                    Util::V2::itoa<Base>(lv, data);
+                }
+                uint32_t end = CTHandler::mCounter;            
+                times[p].value = value;
+                times[p].time = std::milliseconds{static_cast<uint16_t>(end - start)};
+                times[p].type = 4;
+            }
             value *= 10;
         }
         
