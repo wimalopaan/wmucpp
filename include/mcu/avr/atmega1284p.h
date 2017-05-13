@@ -286,7 +286,8 @@ struct ATMega1284P final
     };
     
     struct PortRegister {
-        volatile std::byte in;
+        DataRegister<PortRegister, ReadOnly, std::byte> in;
+//        volatile std::byte in;
         volatile std::byte ddr;
         volatile std::byte out;
         template<typename P> struct Address;

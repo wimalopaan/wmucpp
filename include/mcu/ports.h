@@ -74,8 +74,11 @@ struct Port final {
     static inline volatile std::byte& dir() {
         return getBaseAddr<MCUPort, Name>()->ddr;
     }
-    static inline volatile std::byte& read() {
-        return getBaseAddr<MCUPort, Name>()->in;
+//    static inline volatile std::byte& read() {
+//        return *(getBaseAddr<MCUPort, Name>()->in);
+//    }
+    static inline std::byte read() {
+        return *(getBaseAddr<MCUPort, Name>()->in);
     }
     static inline constexpr uintptr_t address() {
         return reinterpret_cast<uintptr_t>(&getBaseAddr<MCUPort, Name>()->out);
