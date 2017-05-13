@@ -55,30 +55,27 @@ struct Port final {
     typedef Name name_type;
     Port() = delete;
     static inline void set(std::byte v) {
-        getBaseAddr<MCUPort, Name>()->out = v;
+        *getBaseAddr<MCUPort, Name>()->out = v;
     }
     template<std::byte V>
     static inline void set() {
-        getBaseAddr<MCUPort, Name>()->out = V;
+        *getBaseAddr<MCUPort, Name>()->out = V;
     }
     static inline volatile std::byte& get() {
-        return getBaseAddr<MCUPort, Name>()->out;
+        return *getBaseAddr<MCUPort, Name>()->out;
     }
     static inline void dir(std::byte v) {
-        getBaseAddr<MCUPort, Name>()->ddr = v;
+        *getBaseAddr<MCUPort, Name>()->ddr = v;
     }
     template<uint8_t V>
     static inline void dir() {
-        getBaseAddr<MCUPort, Name>()->ddr = V;
+        *getBaseAddr<MCUPort, Name>()->ddr = V;
     }
     static inline volatile std::byte& dir() {
-        return getBaseAddr<MCUPort, Name>()->ddr;
+        return *getBaseAddr<MCUPort, Name>()->ddr;
     }
-//    static inline volatile std::byte& read() {
-//        return *(getBaseAddr<MCUPort, Name>()->in);
-//    }
     static inline std::byte read() {
-        return *(getBaseAddr<MCUPort, Name>()->in);
+        return *getBaseAddr<MCUPort, Name>()->in;
     }
     static inline constexpr uintptr_t address() {
         return reinterpret_cast<uintptr_t>(&getBaseAddr<MCUPort, Name>()->out);

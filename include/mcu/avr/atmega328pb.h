@@ -227,9 +227,8 @@ struct ATMega328PB final
     };
     struct PortRegister {
         DataRegister<PortRegister, ReadOnly, std::byte> in;
-//        volatile std::byte in;
-        volatile std::byte ddr;
-        volatile std::byte out;
+        DataRegister<PortRegister, ReadWrite, std::byte> ddr;
+        DataRegister<PortRegister, ReadWrite, std::byte> out;
         template<typename P> struct Address;
     };
     struct Interrupt {
