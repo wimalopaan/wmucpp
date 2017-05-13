@@ -71,6 +71,8 @@
 
 namespace _3rdParty {
 
+namespace detail {
+
 static const char lut[] =
         "0001020304050607080910111213141516171819"
         "2021222324252627282930313233343536373839"
@@ -171,41 +173,43 @@ static inline char* itoa_32(uint32_t u, char* p, uint32_t d, uint8_t n) {
     return p;
 }
 
-char* itoa_(uint8_t u, char* p) {
-    uint8_t d = 0;
-    uint8_t n;
-    if (u >  99) n = digits_8(u,  10, d, p, 3);
-    else              n = digits_8(u,   1, d, p, 2);
-    return itoa_8( u, p, d, n );
 }
 
-char* itoa_(uint16_t u, char* p) {
+inline char* itoa_(uint8_t u, char* p) {
+    uint8_t d = 0;
+    uint8_t n;
+    if (u >  99) n = detail::digits_8(u,  10, d, p, 3);
+    else              n = detail::digits_8(u,   1, d, p, 2);
+    return detail::itoa_8( u, p, d, n );
+}
+
+inline char* itoa_(uint16_t u, char* p) {
     uint8_t lower = u;
     if (lower == u) return itoa_(lower, p);
     
     uint16_t d = 0;
     uint8_t n;
-    if (u >  9999) n = digits_16(u,  1000, d, p, 5);
-    else if (u <   100) n = digits_16(u,     1, d, p, 2);
-    else                n = digits_16(u,   100, d, p, 4);
-    return itoa_16( u, p, d, n );
+    if (u >  9999) n = detail::digits_16(u,  1000, d, p, 5);
+    else if (u <   100) n = detail::digits_16(u,     1, d, p, 2);
+    else                n = detail::digits_16(u,   100, d, p, 4);
+    return detail::itoa_16( u, p, d, n );
 }
 
-char* itoa_(uint32_t u, char* p) {
+inline char* itoa_(uint32_t u, char* p) {
     uint16_t lower = u;
     if (lower == u) return itoa_(lower, p);
     
     uint32_t d = 0;
     uint8_t n;
-    if (u >  99999999) n = digits_32(u, 100000000, d, p, 10);
-    else if (u <       100) n = digits_32(u,         1, d, p,  2);
-    else if (u <     10000) n = digits_32(u,       100, d, p,  4);
-    else if (u <   1000000) n = digits_32(u,     10000, d, p,  6);
-    else                    n = digits_32(u,   1000000, d, p,  8);
-    return itoa_32( u, p, d, n );
+    if (u >  99999999) n = detail::digits_32(u, 100000000, d, p, 10);
+    else if (u <       100) n = detail::digits_32(u,         1, d, p,  2);
+    else if (u <     10000) n = detail::digits_32(u,       100, d, p,  4);
+    else if (u <   1000000) n = detail::digits_32(u,     10000, d, p,  6);
+    else                    n = detail::digits_32(u,   1000000, d, p,  8);
+    return detail::itoa_32( u, p, d, n );
 }
 
-char* itoa_(uint64_t u, char* p) {
+inline char* itoa_(uint64_t u, char* p) {
     uint32_t lower = u;
     if (lower == u) return itoa_(lower, p);
     
@@ -216,11 +220,11 @@ char* itoa_(uint64_t u, char* p) {
     p  = itoa_(upper, p);
     u -= upper * 1000000000;
     d  =      u / 100000000;
-    p  = out<char>('0'+d, p);
-    return itoa_32( u, p, d, 9 );
+    p  = detail::out<char>('0'+d, p);
+    return detail::itoa_32( u, p, d, 9 );
 }
 
-char* itoa_(int8_t i, char* p) {
+inline char* itoa_(int8_t i, char* p) {
     uint8_t u;
     if (i < 0) {
         *p++ = '-';
@@ -232,7 +236,7 @@ char* itoa_(int8_t i, char* p) {
     return itoa_(u, p);
 }
 
-char* itoa_(int16_t i, char* p) {
+inline char* itoa_(int16_t i, char* p) {
     uint16_t u;
     if (i < 0) {
         *p++ = '-';
@@ -244,7 +248,7 @@ char* itoa_(int16_t i, char* p) {
     return itoa_(u, p);
 }
 
-char* itoa_(int32_t i, char* p) {
+inline char* itoa_(int32_t i, char* p) {
     uint32_t u;
     if (i < 0) {
         *p++ = '-';
@@ -256,7 +260,7 @@ char* itoa_(int32_t i, char* p) {
     return itoa_(u, p);
 }
 
-char* itoa_(int64_t i, char* p) {
+inline char* itoa_(int64_t i, char* p) {
     uint64_t u;
     if (i < 0) {
         *p++ = '-';
