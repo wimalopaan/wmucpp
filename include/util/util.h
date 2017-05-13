@@ -158,12 +158,12 @@ template<Util::Device Device, bool ensure = false>
 void put(const char* str) {
     while(*str) {
         if constexpr(ensure) {
-            while(!Device::put(*str)) {
+            while(!Device::put(std::byte{*str})) {
                 Util::delay(1_us);
             }
         }
         else {
-            Device::put(*str);
+            Device::put(std::byte{*str});
         }
         ++str;
     }
@@ -172,12 +172,24 @@ void put(const char* str) {
 template<typename Device, bool ensure = false>
 void put(char c) {
     if constexpr(ensure) {
-        while(!Device::put(c)) {
+        while(!Device::put(std::byte{c})) {
             Util::delay(1_us);
         }
     }
     else {
-        Device::put(c);
+        Device::put(std::byte{c});
+    }
+}
+
+template<typename Device, bool ensure = false>
+void put(std::byte b) {
+    if constexpr(ensure) {
+        while(!Device::put(b)) {
+            Util::delay(1_us);
+        }
+    }
+    else {
+        Device::put(b);
     }
 }
 
@@ -185,12 +197,12 @@ template<Util::Device Device, Util::Array C, bool ensure = false>
 void put(const C& c) {
     for(uint8_t i = 0; i < c.size; ++i) {
         if constexpr(ensure) {
-            while(!Device::put(c[i])) {
+            while(!Device::put(std::byte{c[i]})) {
                 Util::delay(1_us);
             }
         }
         else {
-            Device::put(c[i]);
+            Device::put(std::byte{c[i]});
         }
     }
 }
@@ -198,7 +210,7 @@ void put(const C& c) {
 template<Util::Device Device>
 void putl(const char* str) {
     Device::put(str);
-    Device::put('\n');
+    Device::put(std::byte{'\n'});
 }
 
 constexpr bool isPowerof2(int v) {

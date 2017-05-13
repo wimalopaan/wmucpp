@@ -178,14 +178,14 @@ using isrReg = IsrRegistrar<systemConstantRate, spiInput, terminalDevive::RxHand
 //std::lineTerminator<std::LF> lcdendl;
 
 struct Spi0handler: public EventHandler<EventType::Spi0> {
-    static bool process(const uint8_t& v) {
-        Util::put<terminalDevive, true>((char)v);
+    static bool process(std::byte v) {
+        Util::put<terminalDevive, true>(v);
         return true;
     }
 };
 
 struct Timerhandler: public EventHandler<EventType::Timer> {
-    static bool process(const uint8_t&) {
+    static bool process(std::byte){
         using namespace std::literals::quantity;
         
         static uint8_t counter = 0;
@@ -227,7 +227,7 @@ int main()
     
     using handler = EventHandlerGroup<Spi0handler, Timerhandler>;
     
-    std::fill(i2c::registers().begin(), i2c::registers().end(), ' ');
+    std::fill(i2c::registers().begin(), i2c::registers().end(), std::byte{' '});
     {
         Scoped<EnableInterrupt> interruptEnabler;
         EventManager::run2<handler>([](){

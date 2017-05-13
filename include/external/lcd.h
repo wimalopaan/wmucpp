@@ -134,19 +134,19 @@ public:
         E::off();
         Util::delay(16_ms);
         
-        Data::set(static_cast<uint8_t>(Instruction::function | Instruction::I8bit) >> 4);
+        Data::set(std::byte(Instruction::function | Instruction::I8bit) >> 4);
         toggle<E>();
         Util::delay(5_ms);
         
-        Data::set(static_cast<uint8_t>(Instruction::function | Instruction::I8bit) >> 4);
+        Data::set(std::byte(Instruction::function | Instruction::I8bit) >> 4);
         toggle<E>();
         Util::delay(1_ms);
         
-        Data::set(static_cast<uint8_t>(Instruction::function | Instruction::I8bit) >> 4);
+        Data::set(std::byte(Instruction::function | Instruction::I8bit) >> 4);
         toggle<E>();
         Util::delay(1_ms);
         
-        Data::set(static_cast<uint8_t>(Instruction::function | Instruction::I4bit) >> 4);
+        Data::set(std::byte(Instruction::function | Instruction::I4bit) >> 4);
         toggle<E>();
         Util::delay(5_ms);
         
@@ -164,7 +164,7 @@ public:
         writeCommand(Instruction::home);
         actualRow = 0;
     }
-    static void writeData(uint8_t data) {
+    static void writeData(std::byte data) {
         waitBusy();
         RS::high();
         write(data);
@@ -172,23 +172,23 @@ public:
     static void writeCommand(Instruction instruction) {
         waitBusy();
         RS::low();
-        write(static_cast<uint8_t>(instruction));
+        write(std::byte(instruction));
     }
     static void writeAddress(uint8_t a) {
         waitBusy();
         RS::low();
-        write(static_cast<uint8_t>(Instruction::ddram) | (a & 0x7f));
+        write(std::byte(Instruction::ddram) | std::byte(a & 0x7f));
     }
-    static uint8_t readData() {
+    static std::byte readData() {
         RS::high();
         return read();
     }
-    static uint8_t readCommand() {
+    static std::byte readCommand() {
         RS::low();
         return read();
     }
-    static bool put(char c) {
-        if (c == '\n') {
+    static bool put(std::byte c) {
+        if (c == std::byte{'\n'}) {
             actualRow = (actualRow + 1) % param_type::rows;
             setPosition(Row{actualRow}, Column{0});
         }
@@ -204,19 +204,19 @@ public:
         return true;
     }
     template<uint16_t Size>
-    static void put(const volatile std::array<uint8_t, Size>& data) {
+    static void put(const volatile std::array<std::byte, Size>& data) {
         setPosition(Row{0}, Column{0});
         auto it = data.begin();
         for(uint8_t row = 0; row < param_type::rows; ++row) {
             for(uint8_t column = 0; column < param_type::cols; ++column) {
                 put(*it++);
             }
-            put('\n');
+            put(std::byte{'\n'});
         }
     }
 
     static position_t position() {
-        uint8_t address = waitBusy();
+        uint8_t address = std::to_integer<uint8_t>(waitBusy());
         for(uint8_t row = 0; row < Parameter<Type>::rows; ++row) {
             if ((param_type::rowStartAddress[row] <= address) && 
                     (address < (param_type::rowStartAddress[row] + param_type::cols))) {
@@ -244,31 +244,31 @@ public:
     }
 
 private:
-    static void write(uint8_t data) {
+    static void write(std::byte data) {
         RW::low();        
         Data::template dir<AVR::Output>();
-        Data::set((data >> 4) & 0x0f);
+        Data::set((data >> 4) & std::byte{0x0f});
         toggle<E>();
-        Data::set(data & 0x0f);
+        Data::set(data & std::byte(0x0f));
         toggle<E>();
         Data::template dir<AVR::Input>();
     }
-    static uint8_t read() {
+    static std::byte read() {
         RW::high();
         Data::template dir<AVR::Input>();
         E::high();
         Util::delay(enableDelay);
-        uint8_t data = Data::read() << 4;
+        std::byte data = Data::read() << 4;
         E::low();
         Util::delay(enableDelay);
         E::high();
         Util::delay(enableDelay);
-        data |= Data::read() & 0x0f;
+        data |= Data::read() & std::byte{0x0f};
         E::low();
         return data;
     }
-    static uint8_t waitBusy() {
-        while (readCommand() & static_cast<uint8_t>(Instruction::readBusy));
+    static std::byte waitBusy() {
+        while (std::any(readCommand() & std::byte(Instruction::readBusy)));
         Util::delay(4_us);
         return readCommand(); // Address Counter
     }

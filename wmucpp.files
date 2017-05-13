@@ -123,6 +123,7 @@ include/mcu/avr/mcuppm.h
 include/mcu/avr/ppmbase.h
 include/mcu/avr/watchdog.h
 include/mcu/concepts.h
+include/std/byte.h
 include/std/chrono.h
 include/std/concepts.h
 include/util/concepts.h

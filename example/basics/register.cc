@@ -31,15 +31,15 @@ void inline operator delete(void*) noexcept {
 }
 
 int main() {
-    AVR::getBaseAddr<DefaultMcuType::PortRegister, AVR::B>()->out = 0;  
+    AVR::getBaseAddr<DefaultMcuType::PortRegister, AVR::B>()->out = 0_B;  
     
     using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 
-    PortB::set<0>();
-    PortB::set(0);
+    PortB::set<0_B>();
+    PortB::set(0_B);
 
     DefaultMcuType::PortRegister* p = new(reinterpret_cast<void*>(0x23)) DefaultMcuType::PortRegister;
-    p->out = 0;
+    p->out = 0_B;
     
     delete p;
     

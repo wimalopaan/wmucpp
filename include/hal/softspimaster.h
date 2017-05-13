@@ -22,10 +22,11 @@
 #include "mcu/ports.h"
 #include "mcu/avr/delay.h"
 #include "util/bits.h"
+#include "std/byte.h"
 
 // todo: BitMode (fuer Constant / Variable-Rate)
 
-template<typename DataPin, typename ClockPin, typename CSPin = void, bool useDelay = false>
+template<typename DataPin, typename ClockPin, typename CSPin = void, bool useDelay = false, typename T = std::byte>
 class SoftSpiMaster final {
 public:
     SoftSpiMaster() = delete;
@@ -42,7 +43,6 @@ public:
         DataPin::low();
     }
 
-    template<typename T>
     static bool put(T value) {
         mData = value;
         if constexpr(!std::is_same<CSPin, void>::value) {
@@ -63,7 +63,7 @@ public:
         return true;
     }
     
-    static inline void setData(uint8_t data) {
+    static inline void setData(std::byte data) {
         mData = data;
     }
 
@@ -100,5 +100,5 @@ private:
 //            PulseBits<Bits - 1>();
 //        }
 //    }
-    inline static uint8_t mData = 0;
+    inline static T mData{0};
 };

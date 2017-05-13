@@ -117,7 +117,7 @@ public:
         return getBaseAddr<typename MCU::Spi, N>()->spsr.template is_set<MCU::Spi::SR::spif>();
     }
 
-    static bool put(uint8_t c) {
+    static bool put(std::byte c) {
 //        if (getBaseAddr<typename MCU::Spi, N>()->spsr & _BV(SPIF)) {
         if (getBaseAddr<typename MCU::Spi, N>()->spsr.template is_set<MCU::Spi::SR::spif>()) {
             return false;
@@ -136,7 +136,7 @@ public:
     }
     static void isr() {
         uint8_t c = *getBaseAddr<typename MCU::Spi, N>()->spdr;
-        overrun |= !EventManager::enqueueISR({SpiEvent<N>::event, c});
+        overrun |= !EventManager::enqueueISR({SpiEvent<N>::event, std::byte{c}});
     }
 private:
     inline static bool overrun = false;

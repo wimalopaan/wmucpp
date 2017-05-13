@@ -37,7 +37,7 @@ namespace std {
 }
 
 struct TimerHandler : public EventHandler<EventType::Timer> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::cout << "Hello"_pgm << std::endl;
         return true;
     }

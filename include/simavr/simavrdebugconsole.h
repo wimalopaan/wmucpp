@@ -25,6 +25,8 @@
 # include <avr/avr_mcu_section.h>
 #endif
 
+#include "std/byte.h"
+
 #ifndef GPIOR0
 # define GPIOR0 _SFR_IO8(0x5c)
 #endif
@@ -35,8 +37,8 @@ public:
     template<uint16_t N>
     static void init() {
     }
-    static bool put(uint8_t item) {
-        GPIOR0 = item;
+    static bool put(std::byte item) {
+        GPIOR0 = (uint8_t)item;
         return true;
     }
 };

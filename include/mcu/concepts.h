@@ -19,6 +19,7 @@
 #pragma once
 
 #include "std/traits.h"
+#include "std/byte.h"
 
 namespace MCU {
 
@@ -34,8 +35,8 @@ concept bool Timer() {
 template<typename P>
 concept bool Port() { 
     return requires (P p) { 
-        p.template set<0>();
-        p.set(0);
+        p.template set<std::byte{0}>();
+        p.set(std::byte{0});
         p.get();
     };
 }

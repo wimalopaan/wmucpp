@@ -71,13 +71,14 @@ public:
         return TWIMaster::template startWrite<Address>(data);        
     }
     
-    static bool process(uint8_t address) {
+    static bool process(std::byte b) {
+        auto address = std::to_integer<uint8_t>(b);
         if (TWI::Address{address} == Address) {
             if (auto v = TWIMaster::get()) {
-                EventManager::enqueue({Parameter::eventValueAvailable, *v});
+                EventManager::enqueue({Parameter::eventValueAvailable, std::byte{*v}});
             }
             else {
-                EventManager::enqueue({Parameter::eventError, 0});
+                EventManager::enqueue({Parameter::eventError});
             }
             return true;
         }

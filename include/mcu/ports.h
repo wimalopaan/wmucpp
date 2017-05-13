@@ -36,14 +36,14 @@ namespace AVR {
 
 struct Output final {
     Output() = delete;
-    template<typename Port, uint8_t mask>
+    template<typename Port, std::byte mask>
     static inline void set() {
         Port::dir() |= mask;
     }
 };
 struct Input final {
     Input() = delete;
-    template<typename Port, uint8_t mask>
+    template<typename Port, std::byte mask>
     static inline void set() {
         Port::dir() &= ~mask;
     }
@@ -54,27 +54,27 @@ struct Port final {
     typedef MCUPort mcuport_type;
     typedef Name name_type;
     Port() = delete;
-    static inline void set(uint8_t v) {
+    static inline void set(std::byte v) {
         getBaseAddr<MCUPort, Name>()->out = v;
     }
-    template<uint8_t V>
+    template<std::byte V>
     static inline void set() {
         getBaseAddr<MCUPort, Name>()->out = V;
     }
-    static inline volatile uint8_t& get() {
+    static inline volatile std::byte& get() {
         return getBaseAddr<MCUPort, Name>()->out;
     }
-    static inline void dir(uint8_t v) {
+    static inline void dir(std::byte v) {
         getBaseAddr<MCUPort, Name>()->ddr = v;
     }
     template<uint8_t V>
     static inline void dir() {
         getBaseAddr<MCUPort, Name>()->ddr = V;
     }
-    static inline volatile uint8_t& dir() {
+    static inline volatile std::byte& dir() {
         return getBaseAddr<MCUPort, Name>()->ddr;
     }
-    static inline volatile uint8_t& read() {
+    static inline volatile std::byte& read() {
         return getBaseAddr<MCUPort, Name>()->in;
     }
     static inline constexpr uintptr_t address() {
@@ -89,17 +89,17 @@ public:
     
     static constexpr uint8_t size = sizeof...(Pins);
     static constexpr uint8_t pinNumbers[] = {Pins::number...};
-    static constexpr uint8_t pinMasks[] = {Pins::pinMask...};
-    static constexpr uint8_t setMask = (Pins::pinMask | ... | 0);
+    static constexpr std::byte pinMasks[] = {Pins::pinMask...};
+    static constexpr std::byte setMask = (Pins::pinMask | ... | std::byte{0});
     
     static constexpr auto calculatePatterns = [](){
         constexpr uint16_t numberOfPatterns = (1 << size);
-        std::array<uint8_t, numberOfPatterns> data;
+        std::array<std::byte, numberOfPatterns> data;
         for(uint8_t value = 0; value < numberOfPatterns; ++value) {
-            uint8_t pattern = 0;
-            uint8_t vv = value;
+            std::byte pattern{0};
+            std::byte vv{value};
             for(uint8_t bit = 0; bit < size; ++bit) {
-                if (vv & 0x01) {
+                if (std::any(vv & std::byte{0x01})) {
                     pattern |= pinMasks[bit];
                 }
                 vv >>= 1;
@@ -123,32 +123,32 @@ public:
     static inline void allOff() {
         port_type::get() &= ~setMask;
     }
-    static inline uint8_t read() {
+    static inline std::byte read() {
         return port_type::read() & setMask;
     }
     template<typename... PP>
     static inline void on() {
-        constexpr uint8_t invertedMask = ~setMask;
-        constexpr uint8_t mask = (PP::pinMask | ... | 0);
-        static_assert(((mask & invertedMask) == 0), "Pin not in PinSet");
+        constexpr std::byte invertedMask = ~setMask;
+        constexpr std::byte mask = (PP::pinMask | ... | std::byte{0});
+        static_assert((std::none(mask & invertedMask)), "Pin not in PinSet");
         port_type::get() |= mask;
     }    
     static constexpr auto& pullup = on;
     template<typename... PP>
     static inline void off() {
-        constexpr uint8_t invertedMask = ~setMask;
-        constexpr uint8_t mask = (PP::pinMask | ... | 0);
-        static_assert(((mask & invertedMask) == 0), "Pin not in PinSet");
+        constexpr std::byte invertedMask = ~setMask;
+        constexpr std::byte mask = (PP::pinMask | ... | std::byte{0});
+        static_assert((std::none(mask & invertedMask)), "Pin not in PinSet");
         port_type::get() &= ~mask;
     }  
     template<typename Dir>
     static inline void dir() {
         (Pins::template dir<Dir>(),...);
     }
-    static inline void set(uint8_t v) {
-        constexpr uint8_t value_mask = (1 << size) - 1;
-        assert((v & ~value_mask) == 0);
-        port_type::get() = (port_type::get() & ~setMask) | pgm_read_byte(&valueBitsPGM[v]); 
+    static inline void set(std::byte v) {
+        constexpr std::byte value_mask{(1 << size) - 1};
+        assert((v & ~value_mask) == std::byte{0});
+        port_type::get() = (port_type::get() & ~setMask) | std::byte{pgm_read_byte(&valueBitsPGM[std::to_integer<uint8_t>(v)])}; 
     }
     template<uint8_t V>
     static inline void set() {
@@ -166,7 +166,7 @@ struct Pin final {
     Pin() = delete;
     typedef Port port;
     static constexpr uint8_t number = PinNumber;
-    static constexpr uint8_t pinMask = (1 << PinNumber);
+    static constexpr std::byte pinMask{(1 << PinNumber)};
     static inline void on() {
         Port::get() |= pinMask;
     }
@@ -184,7 +184,7 @@ struct Pin final {
         Dir::template set<Port, pinMask>();
     }
     static inline bool read() {
-        return Port::read() & pinMask;
+        return (Port::read() & pinMask) != std::byte{0};
     }
     static constexpr auto& isHigh = read;
 };

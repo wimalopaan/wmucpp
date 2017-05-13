@@ -71,7 +71,7 @@ struct ATMega328PB final
         ControlRegister<Usart, UCSRC> ucsrc;
         volatile uint8_t reserved1;
         DataRegister<Usart, ReadWrite, uint16_t> ubbr;
-        DataRegister<Usart, ReadWrite> udr;
+        DataRegister<Usart, ReadWrite, std::byte> udr;
         volatile uint8_t reserved2;
         template<int N> struct Address;
     };
@@ -105,7 +105,7 @@ struct ATMega328PB final
         };
         ControlRegister<TWI, TWS> twsr;
         DataRegister<TWI, ReadWrite> twar;
-        DataRegister<TWI, ReadWrite> twdr;
+        DataRegister<TWI, ReadWrite, std::byte> twdr;
         enum class TWC : uint8_t {
             twint = (1 << TWINT),
             twea = (1 << TWEA),
@@ -181,7 +181,7 @@ struct ATMega328PB final
         template<int N> struct PrescalerBits;
     };
     struct PCInterrupts {
-        DataRegister<PCInterrupts, ReadWrite> pcmsk;
+        DataRegister<PCInterrupts, ReadWrite, std::byte> pcmsk;
         template<int N> struct Address;
     };
     struct Timer8Interrupts {
@@ -226,9 +226,9 @@ struct ATMega328PB final
         template<int N> struct Address;
     };
     struct PortRegister {
-        volatile uint8_t in;
-        volatile uint8_t ddr;
-        volatile uint8_t out;
+        volatile std::byte in;
+        volatile std::byte ddr;
+        volatile std::byte out;
         template<typename P> struct Address;
     };
     struct Interrupt {

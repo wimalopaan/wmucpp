@@ -77,7 +77,8 @@ using i2c = I2C::I2CSlave<Usi, address, 2>;
 using isrRegistrar = IsrRegistrar<systemConstantRate, i2c::I2CSlaveHandlerOvfl, i2c::I2CSlaveHandlerStart, rpmTimer, rpm>;
 
 struct TimerHandler : public EventHandler<EventType::Timer> {
-    static bool process(uint8_t t) {
+    static bool process(std::byte b) {
+        auto t = std::to_integer<uint7_t>(b);
         if (t == *periodicTimer) {
             static uint8_t counter = 0;
             if (++counter == 0) {

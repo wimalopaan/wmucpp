@@ -31,7 +31,7 @@ using led = AVR::Pin<PortB, 0>;
 using systemTimer = AVR::Timer8Bit<0>;
 
 struct TestHandler : public EventHandler<EventType::Test> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         led::toggle();
         return true;
     }
@@ -54,5 +54,5 @@ int main() {
 }
 
 ISR(TIMER0_COMPA_vect) {
-    EventManager::enqueue({EventType::Test, 0});
+    EventManager::enqueue({EventType::Test});
 }

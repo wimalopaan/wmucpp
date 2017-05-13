@@ -85,9 +85,9 @@ public:
 
 private:
     template<uint8_t N>
-    static inline void check(uint8_t last, uint8_t value) {
-        if ((last ^ value) & pinset_type::pinMasks[N]) {
-            if (!(value & pinset_type::pinMasks[N])) { // high -> low
+    static inline void check(std::byte last, std::byte value) {
+        if (std::any((last ^ value) & pinset_type::pinMasks[N])) {
+            if (std::none(value & pinset_type::pinMasks[N])) { // high -> low
                 period[N] = (*mcuTimer()->tcnt + std::numeric_limits<value_type>::module() - timerStartValue[N]) % std::numeric_limits<value_type>::module();
             }
             else { // low ->high
@@ -100,8 +100,8 @@ private:
     }
 
     static void isr() {
-        static uint8_t last_value = 0;
-        uint8_t v = pinset_type::read();
+        static std::byte last_value{0};
+        std::byte v = pinset_type::read();
         check<pinset_type::size - 1>(last_value, v);
         last_value = v;
     }

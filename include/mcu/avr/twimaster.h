@@ -74,7 +74,7 @@ public:
                 if ( (twst != tws::twStart) && (twst != tws::twRepStart)) {
 //                if ( (twst != TW_START) && (twst != TW_REP_START)) {
                     mState = State::Error;
-                    EventManager::enqueue({EventType::TWIError, 1});
+                    EventManager::enqueue({EventType::TWIError, std::byte{1}});
                 }
                 else {
                     mState = State::WriteAddress;
@@ -97,7 +97,7 @@ public:
             }
             else {
                 mState = State::Error;
-                EventManager::enqueue({EventType::TWIError, 2});
+                EventManager::enqueue({EventType::TWIError, std::byte{2}});
             }
             break;
         case State::ReadAddressWait:
@@ -108,7 +108,7 @@ public:
                 if ( (twst != tws::twMtSlaAck) && (twst != tws::twMrSlaAck) ) {
 //                    if ( (twst != TW_MT_SLA_ACK) && (twst != TW_MR_SLA_ACK) ) {
                     mState = State::Error;
-                    EventManager::enqueue({EventType::TWIError, 3});
+                    EventManager::enqueue({EventType::TWIError, std::byte{3}});
                 }
                 else {
                     if (auto data = mSendQueue.pop_front()) {
@@ -122,7 +122,7 @@ public:
                     }
                     else {
                         mState = State::Error;
-                        EventManager::enqueue({EventType::TWIError, 4});
+                        EventManager::enqueue({EventType::TWIError, std::byte{4}});
                     }
                 }
             }
@@ -135,7 +135,7 @@ public:
                 if ( (twst != tws::twMtSlaAck) && (twst != tws::twMrSlaAck) ) {
 //                if ( (twst != TW_MT_SLA_ACK) && (twst != TW_MR_SLA_ACK) ) {
                     mState = State::Error;
-                    EventManager::enqueue({EventType::TWIError, 5});
+                    EventManager::enqueue({EventType::TWIError, std::byte{5}});
                 }
                 else {
                     mState = State::Writing;
@@ -144,7 +144,7 @@ public:
                     }
                     else {
                         mState = State::Error;
-                        EventManager::enqueue({EventType::TWIError, 6});
+                        EventManager::enqueue({EventType::TWIError, std::byte{6}});
                     }
                 }
             }
@@ -162,7 +162,7 @@ public:
             else {
                 mState = State::Stop;
                 if constexpr(UseSendEvent) {
-                    EventManager::enqueue({EventType::TWISendComplete, lastAddress >> 1});
+                    EventManager::enqueue({EventType::TWISendComplete, std::byte{lastAddress >> 1}});
                     lastAddress = 0;
                 }
             }
@@ -175,7 +175,7 @@ public:
                 if (twst != tws::twMtDataAck) {
 //                if (twst != TW_MT_DATA_ACK) {
                     mState = State::Error;
-                    EventManager::enqueue({EventType::TWIError, 7});
+                    EventManager::enqueue({EventType::TWIError, std::byte{7}});
                 }
                 else {
                     --mBytesToWrite;
@@ -206,12 +206,13 @@ public:
                     }
                     else {
                         mState = State::Stop;
-                        EventManager::enqueue({EventType::TWIRecvComplete, BusAddress<Write>::deviceAddressValue(lastAddress)});
+                        EventManager::enqueue({EventType::TWIRecvComplete, 
+                                               std::byte{BusAddress<Write>::deviceAddressValue(lastAddress)}});
                     }
                 }   
                 else {
                     mState = State::Error;
-                    EventManager::enqueue({EventType::TWIError, 8});
+                    EventManager::enqueue({EventType::TWIError, std::byte{8}});
                 }
             } 
             break;

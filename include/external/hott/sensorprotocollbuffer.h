@@ -35,16 +35,16 @@ public:
     
     SensorProtocollBuffer() = delete;
 
-    static std::optional<uint8_t> get(uint8_t index) {
+    static std::optional<std::byte> get(uint8_t index) {
         if (index < cyclesBeforeAnswer) {
             return {};
         }
         else {
             index -= cyclesBeforeAnswer;
             if (index < sizeof(hottBinaryResponse)) {
-                constexpr const uint8_t* ptr = (const uint8_t*) &hottBinaryResponse;  
-                const uint8_t value = ptr[index];
-                hottBinaryResponse.parity += value;
+                constexpr const std::byte* ptr = (const std::byte*) &hottBinaryResponse;  
+                const std::byte value = ptr[index];
+                hottBinaryResponse.parity += std::to_integer<uint8_t>(value);
                 return value;    
             }
             else {

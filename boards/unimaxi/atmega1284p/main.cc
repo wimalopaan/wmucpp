@@ -215,7 +215,7 @@ using systemConstantRateAdapter = ConstantRateAdapter<void, AVR::ISR::Timer<0>::
 #ifdef I2CInt
 struct I2CInterrupt : public IsrBaseHandler<AVR::ISR::Int<2>> {
     static void isr() {
-        EventManager::enqueue({EventType::ExternalInterrupt, 2});
+        EventManager::enqueue({EventType::ExternalInterrupt, 2_B});
     }
 };
 #endif
@@ -258,7 +258,9 @@ const auto measurementTimer = alarmTimer::create(750_ms, AlarmFlags::OneShot | A
 
 
 struct TimerHandler : public EventHandler<EventType::Timer> {
-    static bool process(uint8_t timer) {
+    static bool process(std::byte b) {
+        auto timer = std::to_integer<uint7_t>(b);
+        
         static uint8_t counter = 0;
         if (timer == *periodicTimer) {
             ++counter;
@@ -311,21 +313,21 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
 
 #ifdef I2C
 struct DS1307handler: public EventHandler<EventType::DS1307TimeAvailable> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::outl<terminal>("ds1307 time"_pgm);
         return true;
     }  
 };
 
 struct DS1307handlerError: public EventHandler<EventType::DS1307Error> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::out<terminal>("ds1307 error"_pgm);
         return true;
     }  
 };
 
 struct TWIHandlerError: public EventHandler<EventType::TWIError> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::outl<terminal>("twi error"_pgm);
         return true;
     }  
@@ -334,31 +336,31 @@ struct TWIHandlerError: public EventHandler<EventType::TWIError> {
 
 #ifdef DCF
 struct DCFReceive0Handler : public EventHandler<EventType::DCFReceive0> {
-    static bool process(uint8_t n) {
+    static bool process(std::byte n) {
         std::outl<terminal>("dcf 0 : "_pgm, n);
         return true;
     }  
 };
 struct DCFReceive1Handler : public EventHandler<EventType::DCFReceive1> {
-    static bool process(uint8_t n) {
+    static bool process(std::byte n) {
         std::outl<terminal>("dcf 1 : "_pgm, n);
         return true;
     }  
 };
 struct DCFSyncHandler : public EventHandler<EventType::DCFSync> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::outl<terminal>("dcf sync  "_pgm, dcfDecoder::dateTime());
         return true;
     }  
 };
 struct DCFErrorHandler : public EventHandler<EventType::DCFError> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::outl<terminal>("dcf error"_pgm);
         return true;
     }  
 };
 struct DCFParityHandler : public EventHandler<EventType::DCFParityError> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::outl<terminal>("dcf parity error"_pgm);
         return true;
     }  
@@ -366,13 +368,13 @@ struct DCFParityHandler : public EventHandler<EventType::DCFParityError> {
 #endif
 #ifdef OW
 struct DS18B20MeasurementHandler: public EventHandler<EventType::DS18B20Measurement> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::outl<terminal>("temp: "_pgm, ds18b20::temperature());
         return true;
     }
 };
 struct DS18B20ErrorHandler: public EventHandler<EventType::DS18B20Error> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::outl<terminal>("t: error"_pgm);
         return true;
     }
@@ -380,7 +382,7 @@ struct DS18B20ErrorHandler: public EventHandler<EventType::DS18B20Error> {
 #endif
 
 struct ExternalInterruptHandler: public EventHandler<EventType::ExternalInterrupt> {
-    static bool process(uint8_t i) {
+    static bool process(std::byte) {
 //        std::cout << "external interrupt: "_pgm << i << std::endl;
         return true;
     }

@@ -179,7 +179,7 @@ public:
                 assert(ok);
                 --mBytesToRead;
                 if (mBytesToRead == 0) {
-                    EventManager::enqueue({EventType::OneWireRecvComplete, 0});
+                    EventManager::enqueue({EventType::OneWireRecvComplete});
                     mState = State::Inactive;
                 }
                 else {

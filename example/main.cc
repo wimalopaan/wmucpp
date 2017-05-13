@@ -232,68 +232,68 @@ struct EventHandlerParameter {
 };
 
 struct NullPAHandler: public EventHandler<EventType::NullPAEvent> {
-    static bool process(uint8_t v) {
-        std::cout << "Null PA"_pgm << v << std::endl;
+    static bool process(std::byte v) {
+        std::cout << "Null PA"_pgm << std::to_integer<uint8_t>(v) << std::endl;
         return true;
     }  
 };
 
 struct I2CRpmHandler: public EventHandler<EventType::I2CRpmValueAvailable> {
-    static bool process(uint8_t v) {
-        std::cout << "i2c rpm value: "_pgm << v << std::endl;
+    static bool process(std::byte v) {
+        std::cout << "i2c rpm value: "_pgm << std::to_integer<uint8_t>(v) << std::endl;
         return true;
     }  
 };
 
 struct I2CRpmErrorHandler: public EventHandler<EventType::I2CRpmError> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::cout << "i2c rpm error"_pgm << std::endl;
         return true;
     }
 };
 
 struct I2CLedHandler: public EventHandler<EventType::I2CLedValueAvailable> {
-    static bool process(uint8_t v) {
-        std::cout << "i2c led value: "_pgm << v << std::endl;
+    static bool process(std::byte v) {
+        std::cout << "i2c led value: "_pgm << std::to_integer<uint8_t>(v) << std::endl;
         return true;
     }  
 };
 
 struct I2CLedErrorHandler: public EventHandler<EventType::I2CLedError> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::cout << "i2c led error"_pgm << std::endl;
         return true;
     }
 };
 
 struct I2CRamHandler: public EventHandler<EventType::I2CRamValueAvailable> {
-    static bool process(uint8_t v) {
-        std::cout << "i2c ram value: "_pgm << v << std::endl;
+    static bool process(std::byte b) {
+        std::cout << "i2c ram value: "_pgm << std::to_integer<uint8_t>(b) << std::endl;
         return true;
     }  
 };
 
 struct I2CRamErrorHandler: public EventHandler<EventType::I2CRamError> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::cout << "i2c ram error"_pgm << std::endl;
         return true;
     }
 };
 
 struct DCFReceive0Handler : public EventHandler<EventType::DCFReceive0> {
-    static bool process(uint8_t n) {
-        std::cout << "dcf 0 : "_pgm << n << std::endl;
+    static bool process(std::byte n) {
+        std::cout << "dcf 0 : "_pgm << std::to_integer<uint8_t>(n) << std::endl;
         return true;
     }  
 };
 struct DCFReceive1Handler : public EventHandler<EventType::DCFReceive1> {
-    static bool process(uint8_t n) {
-        std::cout << "dcf 1 : "_pgm << n << std::endl;
+    static bool process(std::byte n) {
+        std::cout << "dcf 1 : "_pgm << std::to_integer<uint8_t>(n) << std::endl;
         return true;
     }  
 };
 struct DCFSyncHandler : public EventHandler<EventType::DCFSync> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
 #ifdef DCF
         std::cout << "dcf sync  "_pgm << dcfDecoder::dateTime() << std::endl;
 #endif
@@ -301,41 +301,41 @@ struct DCFSyncHandler : public EventHandler<EventType::DCFSync> {
     }  
 };
 struct DCFErrorHandler : public EventHandler<EventType::DCFError> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::cout << "dcf error"_pgm << std::endl;
         return true;
     }  
 };
 struct DCFParityHandler : public EventHandler<EventType::DCFParityError> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::cout << "dcf parity error"_pgm << std::endl;
         return true;
     }  
 };
 
 struct DS1307handler: public EventHandler<EventType::DS1307TimeAvailable> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::cout << "ds1307 time"_pgm << std::endl;
         return true;
     }  
 };
 
 struct DS1307handlerError: public EventHandler<EventType::DS1307Error> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::cout << "ds1307 error"_pgm << std::endl;
         return true;
     }  
 };
 
 struct TWIHandlerError: public EventHandler<EventType::TWIError> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::cout << "twi error"_pgm << std::endl;
         return true;
     }  
 };
 
 struct DS18B20MeasurementHandler: public EventHandler<EventType::DS18B20Measurement> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
 #ifdef OW
         std::cout << "t: " << ds18b20::temperature() << std::endl;
 #endif
@@ -343,21 +343,21 @@ struct DS18B20MeasurementHandler: public EventHandler<EventType::DS18B20Measurem
     }
 };
 struct DS18B20ErrorHandler: public EventHandler<EventType::DS18B20Error> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::cout << "t: error" << std::endl;
         return true;
     }
 };
 
 struct  Button0Handler: public EventHandler<EventType::ButtonPress0> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::cout << "button 0 press"_pgm << std::endl;
         return true;
     }
 };
 
 struct HottBinaryHandler : public EventHandler<EventType::HottBinaryRequest> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
 //        std::cout << "hbb"_pgm << std::endl;
 #ifdef HOTT
         crWriterSensorBinary::enable<true>();
@@ -369,15 +369,15 @@ struct HottBinaryHandler : public EventHandler<EventType::HottBinaryRequest> {
 };
 
 struct HottKeyHandler : public EventHandler<EventType::HottAsciiKey> {
-    static bool process(uint8_t v) {
-        std::cout << "k: "_pgm << v << std::endl;
+    static bool process(std::byte v) {
+        std::cout << "k: "_pgm << std::to_integer<uint8_t>(v) << std::endl;
 //        Hott::SensorProtocoll<sensorUsart>::key(v);
         return true;
     }
 };
 
 struct HottBroadcastHandler : public EventHandler<EventType::HottSensorBroadcast> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::cout << "hbr"_pgm << std::endl;
 #ifdef HOTT
         crWriterSensorBinary::enable<true>();
@@ -389,7 +389,7 @@ struct HottBroadcastHandler : public EventHandler<EventType::HottSensorBroadcast
 };
 
 struct HottTextHandler : public EventHandler<EventType::HottAsciiRequest> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::cout << "hba"_pgm << std::endl;
 #ifdef HOTT
         crWriterSensorBinary::enable<false>();
@@ -405,7 +405,8 @@ decltype(systemTimer::create(1000_ms, AlarmFlags::Periodic)) mTimer;
 decltype(systemTimer::create(1000_ms, AlarmFlags::Periodic)) tTimer;
 
 struct TimerHandler : public EventHandler<EventType::Timer> {
-    static bool process(uint8_t timer) {
+    static bool process(std::byte p) {
+        uint7_t timer = std::to_integer<uint7_t>(p);
         if (timer == *pTimer) {
 
 #ifdef MEM
@@ -490,45 +491,45 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
 };
 
 struct TestHandler : public EventHandler<EventType::Test> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::cout << "t"_pgm << std::endl;
         return true;
     }
 };
 
 struct PpmUpHandler : public EventHandler<EventType::Ppm1Up> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::cout << "ppm1up"_pgm << std::endl;
         return true;
     }
 };
 struct PpmDownHandler : public EventHandler<EventType::Ppm1Down> {
-    static bool  process(uint8_t) {
+    static bool  process(std::byte) {
         std::cout << "ppm1down"_pgm << std::endl;
         return true;
     }
 };
 struct UsartHandler : public EventHandler<EventType::UsartRecv0> {
-    static bool process(uint8_t v) {
-        std::cout << "u: "_pgm << v << std::endl;
+    static bool process(std::byte v) {
+        std::cout << "u: "_pgm << std::to_integer<uint8_t>(v) << std::endl;
         return true;
     }
 };
 struct UsartFeHandler : public EventHandler<EventType::UsartFe> {
-    static bool process(uint8_t v) {
-        std::cout << "usart fe: "_pgm << v << std::endl;
+    static bool process(std::byte v) {
+        std::cout << "usart fe: "_pgm << std::to_integer<uint8_t>(v) << std::endl;
         return true;
     }
 };
 struct UsartUpeHandler : public EventHandler<EventType::UsartUpe> {
-    static bool process(uint8_t v) {
-        std::cout << "usart upe: "_pgm << v << std::endl;
+    static bool process(std::byte v) {
+        std::cout << "usart upe: "_pgm << std::to_integer<uint8_t>(v) << std::endl;
         return true;
     }
 };
 struct UsartDorHandler : public EventHandler<EventType::UsartDor> {
-    static bool process(uint8_t v) {
-        std::cout << "usart dor: "_pgm << v << std::endl;
+    static bool process(std::byte v) {
+        std::cout << "usart dor: "_pgm << std::to_integer<uint8_t>(v) << std::endl;
         return true;
     }
 };

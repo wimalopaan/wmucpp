@@ -29,11 +29,12 @@
 
 #include <stdint.h>
 
+#include "std/byte.h"
 #include "config.h"
 #include "mcu/concepts.h"
 
 namespace Util {
-template<typename Device, bool ensure = false> void put(char c);
+template<typename Device, bool ensure = false> void put(std::byte  c);
 }
 
 // this is a g++ / clang++ extension
@@ -78,7 +79,7 @@ template<MCU::Stream Stream, typename C, C... CC>
 void out(const PgmString<C, CC...>& s) {
     const char * ptr = s.data;
     while (char c = pgm_read_byte(ptr++)) {
-        Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(c);
+        Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(std::byte{c});
     };   
 }
 

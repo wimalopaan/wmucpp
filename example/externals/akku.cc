@@ -52,7 +52,7 @@ namespace std {
 }
 
 struct TimerHandler : public EventHandler<EventType::Timer> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         return true;
     }
 };

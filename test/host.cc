@@ -28,12 +28,15 @@
 //#include <math.h>
 //#include "util/fixedpoint.h"
 
-#include "util/bits.h"
 
 #include <numeric>
 #include <array>
 #include <utility>
 #include <cassert>
+#include <cstddef> // std::byte (clang ??)
+
+//#include "std/byte.h"
+#include "util/bits.h"
 
 constexpr int foo(size_t v) {
     return v + 0x30;
@@ -174,7 +177,7 @@ struct Part {
 
 template<typename T>
 struct Feature {
-    static constexpr Part<T> b;
+    static constexpr Part<T> b{};
 };
 
 template<>

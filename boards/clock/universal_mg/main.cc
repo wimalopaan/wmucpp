@@ -118,9 +118,11 @@ using display       = displayWC;
 using shifttext = ShiftDisplay<displayWC::leds, displayWC::mColumns, displayWC::mRows, Constant::textLength, Font<5,7>>;
 
 
-using terminal = AVR::Usart<0, void>;
+using terminalDevice = AVR::Usart<0, void>;
+using terminal = std::basic_ostream<terminalDevice>;
+
 namespace std {
-std::basic_ostream<terminal> cout;
+std::basic_ostream<terminalDevice> cout;
 std::lineTerminator<CRLF> endl;
 }
 
@@ -159,7 +161,7 @@ using irDecoder = IrDecoder;
 using irTimer = AVR::Timer8Bit<2>; // timer 2
 using irConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<2>::CompareA, irDecoder>;
 
-using isrRegistrar = IsrRegistrar<systemConstantRate, terminal::RxHandler, terminal::TxHandler, irConstantRate>;
+using isrRegistrar = IsrRegistrar<systemConstantRate, terminalDevice::RxHandler, terminalDevice::TxHandler, irConstantRate>;
 
 const auto blinkTimer = alarmTimer::create(100_ms, AlarmFlags::Periodic);
 const auto secondsTimer = alarmTimer::create(1000_ms, AlarmFlags::Periodic);
@@ -361,7 +363,8 @@ private:
 using globalFSM = GlobalStateMachine;
 
 struct TimerHandler : public EventHandler<EventType::Timer> {
-    static bool process(uint8_t timer) {
+    static bool process(std::byte b) {
+        auto timer = std::to_integer<uint7_t>(b);
         if (timer == *blinkTimer) {
             globalFSM::process(globalFSM::Event::FastTick);
         }
@@ -383,30 +386,30 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
     }
 };
 struct Usart0Handler : public EventHandler<EventType::UsartRecv0> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         return true;
     }
 };
 struct UsartFeHandler : public EventHandler<EventType::UsartFe> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         return true;
     }
 };
 struct UsartUpeHandler : public EventHandler<EventType::UsartUpe> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         return true;
     }
 };
 struct UsartDorHandler : public EventHandler<EventType::UsartDor> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         return true;
     }
 };
 
 struct IRHandler : public EventHandler<EventType::IREvent> {
-    static bool process(uint8_t c) {
-        std::cout << "IR: "_pgm << c << std::endl;
-        if (mLastCode != 0) {
+    static bool process(std::byte c) {
+        std::outl<terminal>("IR: "_pgm, c);
+        if (mLastCode != 0_B) {
             if (c == mLastCode) {
                 globalFSM::process(globalFSM::Event::StateSwitchFw);
             }
@@ -420,18 +423,18 @@ struct IRHandler : public EventHandler<EventType::IREvent> {
         }
         return true;
     }  
-    static inline uint8_t mLastCode = 0;
+    static inline std::byte mLastCode = 0_B;
     
 };
 struct IRRepeatHandler : public EventHandler<EventType::IREventRepeat> {
-    static bool process(uint8_t c) {
-        std::cout << "IR R: "_pgm << c << std::endl;
+    static bool process(std::byte c) {
+        std::outl<terminal>("IR R: "_pgm, c);
         return true;
     }  
 };
 struct SystemClockSet : public EventHandler<EventType::SystemClockSet> {
-    static bool process(uint8_t c) {
-        std::cout << "Clock set"_pgm << c << std::endl;
+    static bool process(std::byte c) {
+        std::outl<terminal>("Clock set"_pgm, c);
         globalFSM::process(globalFSM::Event::Clock);
         return true;
     }  
@@ -447,7 +450,7 @@ int main() {
     powerSwitchPin::dir<AVR::Output>();    
     powerSwitchPin::off();    
     isrRegistrar::init();
-    terminal::init<19200>();
+    terminalDevice::init<19200>();
     statusLed::init();
     display::init();
     dcfDecoder::init();
@@ -504,7 +507,8 @@ int main() {
                 irConstantRate::periodic();
                 Irmp::IRMP_DATA irmp_data;
                 if (irmp_get_data(&irmp_data)) {
-                    EventManager::enqueue({(irmp_data.flags & Irmp::Repetition) ? EventType::IREventRepeat : EventType::IREvent , uint8_t(irmp_data.command)});
+                    EventManager::enqueue({(irmp_data.flags & Irmp::Repetition) ? EventType::IREventRepeat : EventType::IREvent , 
+                                           std::byte(irmp_data.command)});
                 }
             }
             

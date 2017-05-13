@@ -89,7 +89,8 @@ namespace Constant {
 const auto periodicTimer = alarmTimer::create(1000_ms, AlarmFlags::Periodic);
 
 struct TimerHandler : public EventHandler<EventType::Timer> {
-    static bool process(uint8_t timer) {
+    static bool process(std::byte b) {
+        auto timer = std::to_integer<uint7_t>(b);
         static uint8_t counter = 0;
         if (timer == *periodicTimer) {
             ++counter;
@@ -106,31 +107,32 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
 };
 
 struct UsartFeHandler: public EventHandler<EventType::UsartFe> {
-    static bool process(uint8_t n) {
+    static bool process(std::byte  n) {
         std::outl<terminal>("Usart Fe  "_pgm,  n);
         return true;
     }
 };
 struct UsartDorHandler: public EventHandler<EventType::UsartDor> {
-    static bool process(uint8_t n) {
+    static bool process(std::byte n) {
         std::outl<terminal>("Usart Dor "_pgm, n);
         return true;
     }
 };
 struct UsartUpeHandler: public EventHandler<EventType::UsartUpe> {
-    static bool process(uint8_t n) {
+    static bool process(std::byte n) {
         std::outl<terminal>("Usart Upe "_pgm, n);
         return true;
     }
 };
 struct UsartRx0: public EventHandler<EventType::UsartRecv0> {
-    static bool process(uint8_t c) {
+    static bool process(std::byte c) {
         std::outl<terminal>("Usart rx0 "_pgm, c);
         return true;
     }
 };
 struct UsartRx1: public EventHandler<EventType::UsartRecv1> {
-    static bool process(uint8_t c) {
+    static bool process(std::byte b) {
+        auto c = std::to_integer<uint8_t>(b);
         if (c == 'r') {
             std::outl<terminal>("reset"_pgm);
 //            esp::send(Esp8266::Command::Reset);

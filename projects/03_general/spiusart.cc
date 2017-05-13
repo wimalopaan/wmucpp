@@ -113,14 +113,14 @@ std::lineTerminator<CRLF> endl;
 }
 
 struct Spi0handler: public EventHandler<EventType::Spi0> {
-    static bool process(const uint8_t& v) {
-        Util::put<terminal, true>((char)v);
+    static bool process(std::byte v) {
+        Util::put<terminal, true>(v);
         return true;
     }
 };
 
 struct Timerhandler: public EventHandler<EventType::Timer> {
-    static bool process(const uint8_t&) {
+    static bool process(std::byte) {
         blinker::tick();
         return true;
     }

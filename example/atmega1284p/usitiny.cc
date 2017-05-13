@@ -45,14 +45,12 @@ public:
 
     template<typename C>
     static void put(const C& container) {
-        const uint8_t* ptr = reinterpret_cast<const uint8_t*>(&container[0]);   
-        const uint8_t* end = reinterpret_cast<const uint8_t*>(&container[container.size - 1] + 1);   
+        const std::byte* ptr = reinterpret_cast<const std::byte*>(&container[0]);   
+        const std::byte* end = reinterpret_cast<const std::byte*>(&container[container.size - 1] + 1);   
         for(; ptr < end; ++ptr) {
             Device::put(*ptr);
         }
     }
- 
-private:
 };
 
 typedef cRGB<ColorSequenceRGB> Color;

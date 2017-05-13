@@ -85,7 +85,8 @@ static constexpr auto title = "NixieClock 02"_pgm;
 
 using statusLed = LedFlash<led>;
 
-using terminal = AVR::Usart<0, void>;
+using terminalDevice = AVR::Usart<0, void>;
+using terminal = std::basic_ostream<terminalDevice>;
 
 using systemTimer = AVR::Timer16Bit<1>; // timer 1
 
@@ -102,10 +103,10 @@ using dcfDecoder = DCF77<dcfPin, LocalConfig::exactFrequency, EventManager, true
 
 using systemConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<1>::CompareA, alarmTimer, dcfDecoder>;
 
-using isrRegistrar = IsrRegistrar<systemConstantRate, terminal::RxHandler, terminal::TxHandler>;
+using isrRegistrar = IsrRegistrar<systemConstantRate, terminalDevice::RxHandler, terminalDevice::TxHandler>;
 
 namespace std {
-std::basic_ostream<terminal> cout;
+std::basic_ostream<terminalDevice> cout;
 std::lineTerminator<CRLF> endl;
 }
 
@@ -202,7 +203,8 @@ struct LightManager{
 using clockFSM = ClockStateMachine::Machine<StateManager<powerSwitchPin>, void, LightManager>;
 
 struct TimerHandler : public EventHandler<EventType::Timer> {
-    static bool process(uint8_t timer) {
+    static bool process(std::byte b) {
+        auto timer = std::to_integer<uint7_t>(b);
         if (timer == *blinkTimer) {
             statusLed::tick(brightness);
         }
@@ -233,27 +235,27 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
     }
 };
 struct Usart0Handler : public EventHandler<EventType::UsartRecv0> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         return true;
     }
 };
 struct UsartFeHandler : public EventHandler<EventType::UsartFe> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         return true;
     }
 };
 struct UsartUpeHandler : public EventHandler<EventType::UsartUpe> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         return true;
     }
 };
 struct UsartDorHandler : public EventHandler<EventType::UsartDor> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         return true;
     }
 };
 struct DCFReceive0Handler : public EventHandler<EventType::DCFReceive0> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         if (clockFSM::state() != ClockStateMachine::State::Clock) {
             statusLed::flash(Constant::cRed, 1);
         }
@@ -261,7 +263,7 @@ struct DCFReceive0Handler : public EventHandler<EventType::DCFReceive0> {
     }  
 };
 struct DCFReceive1Handler : public EventHandler<EventType::DCFReceive1> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         if (clockFSM::state() != ClockStateMachine::State::Clock) {
             statusLed::flash(Constant::cRed, 2);
         }
@@ -269,38 +271,38 @@ struct DCFReceive1Handler : public EventHandler<EventType::DCFReceive1> {
     }  
 };
 struct DCFDecodeHandler : public EventHandler<EventType::DCFDecode> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         clockFSM::process(ClockStateMachine::Event::DCFDecode);
         return true;
     }  
 };
 struct DCFSyncHandler : public EventHandler<EventType::DCFSync> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         clockFSM::process(ClockStateMachine::Event::DCFSync);
         return true;
     }  
 };
 struct DCFErrorHandler : public EventHandler<EventType::DCFError> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         clockFSM::process(ClockStateMachine::Event::DCFError);
         return true;
     }  
 };
 struct DCFParityHandler : public EventHandler<EventType::DCFParityError> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         clockFSM::process(ClockStateMachine::Event::DCFError);
         return true;
     }  
 };
 struct IRHandler : public EventHandler<EventType::IREvent> {
-    static bool process(uint8_t c) {
-        std::cout << "IR: "_pgm << c << std::endl;
+    static bool process(std::byte c) {
+        std::out<terminal>("IR: "_pgm, c);
         return true;
     }  
 };
 struct IRRepeatHandler : public EventHandler<EventType::IREventRepeat> {
-    static bool process(uint8_t c) {
-        std::cout << "IR R: "_pgm << c << std::endl;
+    static bool process(std::byte c) {
+        std::outl<terminal>("IR R: "_pgm, c);
         return true;
     }  
 };
@@ -320,7 +322,7 @@ int main() {
     systemTimer::mode(AVR::TimerMode::CTC);
     systemTimer::start();
     
-    terminal::init<19200>();
+    terminalDevice::init<19200>();
     statusLed::init();
     display::init();
     adc::init();

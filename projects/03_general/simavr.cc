@@ -80,7 +80,8 @@ struct EventHandlerParameter {
 EventHandlerParameter evp;
 
 struct TimerHandler : public EventHandler<EventType::Timer> {
-    static bool process(const uint8_t& tid) {
+    static bool process(std::byte b) {
+        auto tid = std::to_integer<uint7_t>(b);
         if (tid == *evp.timerId1) {
             std::cout << "timer1"_pgm << std::endl;
         }

@@ -83,7 +83,8 @@ using SoftSPIData = AVR::Pin<PortC, 4>;
 using SoftSPIClock = AVR::Pin<PortC, 5>;
 using SoftSPISS = AVR::Pin<PortD, 3>;
 using SSpi0 = SoftSpiMaster<SoftSPIData, SoftSPIClock, SoftSPISS>;
-using terminal = SSpi0;
+using terminalDevice = SSpi0;
+using terminal = std::basic_ostream<terminalDevice>;
 
 using systemClock = AVR::Timer8Bit<2>; // timer 2
 using alarmTimer = AlarmTimer<systemClock>;
@@ -135,7 +136,7 @@ static constexpr auto title = "RC SensorLed 0.1"_pgm;
 using statusLed = Blinker<led, Constant::cGreen>;
 
 namespace std {
-std::basic_ostream<terminal> cout;
+std::basic_ostream<terminalDevice> cout;
 std::lineTerminator<CRLF> endl;
 }
 
@@ -145,7 +146,8 @@ const auto tTimer = alarmTimer::create(5000_ms, AlarmFlags::Periodic);
 const auto mTimer = alarmTimer::create(750_ms, AlarmFlags::OneShot | AlarmFlags::Disabled);
 
 struct TimerHandler : public EventHandler<EventType::Timer> {
-    static bool process(uint8_t timer) {
+    static bool process(std::byte b) {
+        auto timer = std::to_integer<uint7_t>(b);
         if (timer == *periodicTimer) {
             static uint8_t counter = 0;
             ++counter;
@@ -200,7 +202,7 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
     }
 };
 struct HottBinaryHandler : public EventHandler<EventType::HottBinaryRequest> {
-    static bool process(uint8_t) {
+    static bool process(std::byte t) {
         crWriterSensorBinary::enable<true>();
         crWriterSensorText::enable<false>();
         crAdapterHott::start();
@@ -209,14 +211,14 @@ struct HottBinaryHandler : public EventHandler<EventType::HottBinaryRequest> {
 };
 
 struct HottKeyHandler : public EventHandler<EventType::HottAsciiKey> {
-    static bool process(uint8_t v) {
-        std::cout << "k: "_pgm << v << std::endl;
+    static bool process(std::byte v) {
+        std::outl<terminal>("k: "_pgm, v);
         return true;
     }
 };
 
 struct HottBroadcastHandler : public EventHandler<EventType::HottSensorBroadcast> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
 //        std::cout << "hbr"_pgm << std::endl;
         crWriterSensorBinary::enable<true>();
         crWriterSensorText::enable<false>();
@@ -226,7 +228,7 @@ struct HottBroadcastHandler : public EventHandler<EventType::HottSensorBroadcast
 };
 
 struct HottTextHandler : public EventHandler<EventType::HottAsciiRequest> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
 //        std::cout << "hba"_pgm << std::endl;
         crWriterSensorBinary::enable<false>();
         crWriterSensorText::enable<true>();
@@ -235,52 +237,52 @@ struct HottTextHandler : public EventHandler<EventType::HottAsciiRequest> {
     }
 };
 struct Usart0Handler : public EventHandler<EventType::UsartRecv0> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         statusLed::blink(Blue{32}, 2);
         return true;
     }
 };
 struct Usart1Handler : public EventHandler<EventType::UsartRecv1> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         statusLed::blink(Blue{32}, 2);
         return true;
     }
 };
 struct UsartFeHandler : public EventHandler<EventType::UsartFe> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         statusLed::blink(Color{Red{32}, Green{0}, Blue{32}}, 3);
         return true;
     }
 };
 struct UsartUpeHandler : public EventHandler<EventType::UsartUpe> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         statusLed::blink(Color{Red{32}, Green{0}, Blue{32}}, 4);
         return true;
     }
 };
 struct UsartDorHandler : public EventHandler<EventType::UsartDor> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         statusLed::blink(Color{Red{32}, Green{0}, Blue{32}}, 5);
         return true;
     }
 };
 
 struct HBridgeError : public EventHandler<EventType::TLE5205Error> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         statusLed::blink(Color{Red{0}, Green{32}, Blue{32}}, 5);
         return true;
     }
 };
 
 struct TWIHandlerError: public EventHandler<EventType::TWIError> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::cout << "twi error"_pgm << std::endl;
         return true;
     }  
 };
 
 struct DS18B20MeasurementHandler: public EventHandler<EventType::DS18B20Measurement> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         auto t = ds18b20::temperature();
         std::cout << "t: " << t << std::endl;
         Hott::SensorProtocollBuffer<0>::temp1(t);
@@ -288,7 +290,7 @@ struct DS18B20MeasurementHandler: public EventHandler<EventType::DS18B20Measurem
     }
 };
 struct DS18B20ErrorHandler: public EventHandler<EventType::DS18B20Error> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::cout << "t: error" << std::endl;
         return true;
     }
@@ -321,7 +323,7 @@ int main() {
     isrRegistrar::init();
     alarmTimer::init();
     hbridge::init<Constant::pwmFrequency>();
-    terminal::init<0>();
+    terminalDevice::init<0>();
     rpm::init();
     
     constexpr std::hertz fCr = 1 / Hott::hottDelayBetweenBytes;

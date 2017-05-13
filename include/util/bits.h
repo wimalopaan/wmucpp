@@ -76,7 +76,12 @@ struct UnsignedFor<uint64_t> {
     }
     template<typename Bit, typename T>
     constexpr bool isSet(T v) {
-        return Bit::template Value<T>::value & v;
+        if constexpr(std::is_same<T, std::byte>::value) {
+            return std::to_integer<uint8_t>(Bit::template Value<T>::value) & std::to_integer<uint8_t>(v);
+        }
+        else {
+            return Bit::template Value<T>::value & v;
+        }
     }
     template<typename Bit, typename T>
     constexpr bool set(T& v) {
@@ -86,7 +91,7 @@ struct UnsignedFor<uint64_t> {
     struct MSB {
         template<typename T>
         struct Value {
-            static constexpr const T value = (1 << (numberOfBits<T>() - 1));
+            static constexpr const T value{1 << (numberOfBits<T>() - 1)};
         };
     };  
     struct LSB {

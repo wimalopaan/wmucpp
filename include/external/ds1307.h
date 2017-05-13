@@ -135,18 +135,19 @@ public:
         return mTimeInfo;
     }
 
-    static bool process(uint8_t address) {
+    static bool process(std::byte b) {
+        auto address = std::to_integer<uint8_t>(b);
         if (TWI::Address{address} == Address) {
             for(uint8_t i = 0; i < mTimeInfo.size; ++i) {
                 if (auto v = TWIMaster::get()) {
                     mTimeInfo[i] = *v;
                 }
                 else {
-                    EventManager::enqueue({EventType::DS1307Error, 0});
+                    EventManager::enqueue({EventType::DS1307Error});
                     return true;
                 }
             }
-            EventManager::enqueue({EventType::DS1307TimeAvailable, 0});
+            EventManager::enqueue({EventType::DS1307TimeAvailable});
             return true;
         }
         return false;

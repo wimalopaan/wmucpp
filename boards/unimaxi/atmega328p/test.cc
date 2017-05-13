@@ -143,7 +143,7 @@ sampler
 //};
 
 struct Timerhandler: public EventHandler<EventType::Timer> {
-    static bool process(const uint8_t&) {
+    static bool process(std::byte) {
         static uint8_t counter = 0;
         ++counter;
         if (counter % 2) {

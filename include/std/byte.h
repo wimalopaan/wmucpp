@@ -15,7 +15,72 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef BYTE_H
-#define BYTE_H
 
-#endif // BYTE_H
+#pragma once
+
+#include <std/concepts.h>
+
+namespace std {
+
+enum class byte : unsigned char {};
+
+template<std::Integral T>
+constexpr T to_integer(byte b) noexcept {
+    return T((uint8_t)b);
+}
+
+constexpr bool any(std::byte b) {
+    return b != std::byte{0};
+}
+constexpr bool none(std::byte b) {
+    return b == std::byte{0};
+}
+
+template<typename IType>
+constexpr byte& operator<<=(byte& b, IType shift) noexcept {
+    return b = byte(static_cast<uint8_t>(b) << shift);
+}
+template<typename IType>
+constexpr byte& operator>>=(byte& b, IType shift) noexcept {
+    return b = byte(static_cast<uint8_t>(b) >> shift);
+}
+
+template<typename IType>
+constexpr byte operator>>(byte b, IType shift) noexcept {
+    return byte(static_cast<uint8_t>(b) >> shift);
+}
+template<typename IType>
+constexpr byte operator<<(byte b, IType shift) noexcept {
+    return byte(static_cast<uint8_t>(b) << shift);
+}
+
+constexpr byte operator&(byte a, byte b) {
+    return byte{static_cast<uint8_t>(static_cast<uint8_t>(a) & static_cast<uint8_t>(b))};
+}
+constexpr byte operator|(byte a, byte b) {
+    return byte{static_cast<uint8_t>(static_cast<uint8_t>(a) | static_cast<uint8_t>(b))};
+}
+constexpr byte operator^(byte a, byte b) {
+    return byte{static_cast<uint8_t>(static_cast<uint8_t>(a) ^ static_cast<uint8_t>(b))};
+}
+void operator&=(volatile byte& a, byte b) {
+    a = byte{static_cast<uint8_t>(static_cast<uint8_t>(a) & static_cast<uint8_t>(b))};
+}
+constexpr byte& operator|=(byte& a, byte b) {
+    return a = byte{static_cast<uint8_t>(static_cast<uint8_t>(a) | static_cast<uint8_t>(b))};
+}
+void operator|=(volatile byte& a, byte b) {
+    a = byte{static_cast<uint8_t>(static_cast<uint8_t>(a) | static_cast<uint8_t>(b))};
+}
+void operator^=(volatile byte& a, byte b) {
+    a = byte{static_cast<uint8_t>(static_cast<uint8_t>(a) ^ static_cast<uint8_t>(b))};
+}
+constexpr byte operator~(byte b) {
+    return b = byte(~static_cast<uint8_t>(b));
+}
+
+} // std
+
+constexpr std::byte operator"" _B(unsigned long long v) {
+    return std::byte{static_cast<uint8_t>(v)};
+}

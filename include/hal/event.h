@@ -68,7 +68,7 @@ template<typename T>
 struct Event final {
     Event() = default;
     Event(const volatile Event& e) : type(e.type), value(e.value) {}
-    Event(EventType t, T v = 0) : type(t), value(v) {}
+    Event(EventType t, T v = T{0}) : type(t), value(v) {}
     void operator=(const volatile Event& e) volatile {
         type = e.type;
         value = e.value;
@@ -77,7 +77,8 @@ struct Event final {
     T value{};
 };
 
-typedef Event<uint8_t> Event8u_t;
+//typedef Event<uint8_t> Event8u_t;
+typedef Event<std::byte> EventByte_t;
 
 namespace AVR {
 template<uint8_t N, typename PA, typename MCU> class Usart;
@@ -118,7 +119,7 @@ class EventHandlerGroup {
     template<int N, typename T, typename... TT>
     class Processor final {
     public:
-        static bool process(const Event8u_t& e) {
+        static bool process(const EventByte_t& e) {
             bool processed = false;
             if (e.type == T::eventType) {
                 processed = T::process(e.value) || processed;
@@ -130,7 +131,7 @@ class EventHandlerGroup {
         }
     };
 public:
-    static bool process(const Event8u_t& event) {
+    static bool process(const EventByte_t& event) {
         if constexpr(sizeof... (EE) > 0) {
             return Processor<sizeof...(EE), EE...>::process(event);
         }
@@ -161,7 +162,7 @@ class EventManager final
     template<uint8_t N, typename MCU> friend class SWUsart;
 public:
     EventManager() = delete;
-    static bool enqueue(const Event8u_t& event) {
+    static bool enqueue(const EventByte_t& event) {
         if (!mFifo.push_back(event)) { // lockfree fifo
             leakedEvent() = true;
             return false;
@@ -185,7 +186,7 @@ public:
         }
     }
     
-    template<HAL::EventHandlerGroup<Event8u_t> EE, HAL::CallableObject P>
+    template<HAL::EventHandlerGroup<EventByte_t> EE, HAL::CallableObject P>
     static void run2(const P& periodic) {
         leakedEvent() = false;
         unprocessedEvent() = false;
@@ -198,7 +199,7 @@ public:
             }
         }
     }
-    template<HAL::StaticPeriodic PP, HAL::EventHandlerGroup<Event8u_t> EE, HAL::CallableObject P>
+    template<HAL::StaticPeriodic PP, HAL::EventHandlerGroup<EventByte_t> EE, HAL::CallableObject P>
 //    [[deprecated]] 
     static void run(const P& periodic) {
         leakedEvent() = false;
@@ -213,7 +214,7 @@ public:
             }
         }
     }
-    template<HAL::StaticPeriodic PP, HAL::EventHandlerGroup<Event8u_t> EE>
+    template<HAL::StaticPeriodic PP, HAL::EventHandlerGroup<EventByte_t> EE>
     static void run() {
         leakedEvent() = false;
         unprocessedEvent() = false;
@@ -235,14 +236,14 @@ public:
         return leaked;
     }
 private:
-    static bool enqueueISR(const Event8u_t& event) {
+    static bool enqueueISR(const EventByte_t& event) {
         if (!mFifo.push_back(event)) {
             leakedEvent() = true;
             return false;
         }
         return true;
     }
-    inline static volatile std::FiFo<Event8u_t, Config::EventManager::EventQueueLength> mFifo;
+    inline static volatile std::FiFo<EventByte_t, Config::EventManager::EventQueueLength> mFifo;
 };
 
 template<EventType Type>

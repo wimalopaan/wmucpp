@@ -254,8 +254,8 @@ public:
         
         uint8_t ctr;
         
-        uint8_t masklo = ~Pin::pinMask  & Pin::port::get();
-        uint8_t maskhi = Pin::pinMask | Pin::port::get();
+        std::byte masklo = ~Pin::pinMask & Pin::port::get();
+        std::byte maskhi = Pin::pinMask | Pin::port::get();
         
         //        uint8_t sreg_prev = SREG;
         //        cli();

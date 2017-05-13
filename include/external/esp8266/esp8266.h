@@ -140,7 +140,8 @@ class ATProtocollAdapter final {
 public:
     static constexpr uint8_t size = Size;
     
-    inline static bool process(uint8_t c) { // from isr only
+    inline static bool process(std::byte b) { // from isr only
+        auto c = std::to_integer<uint8_t>(b);
         switch (mState) {
         case State::Undefined:
             if (c == 'O') {

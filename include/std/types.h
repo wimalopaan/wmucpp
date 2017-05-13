@@ -188,6 +188,13 @@ struct uint7_t final {
 namespace std {
 
 template<>
+struct is_integral<uint7_t> final {
+    static constexpr bool value = true;
+};
+
+
+
+template<>
 class optional<uint7_t> {
 public:
     constexpr optional() = default;

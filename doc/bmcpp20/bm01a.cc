@@ -213,6 +213,71 @@ int main() {
     for(uint8_t i = 0; i < times.size; ++i) {
         std::outl<terminal>(i, " : V : "_pgm, times[i].type, ',', times[i].value, ',', times[i].time);
     }        
+
+    value = 1;
+    
+    for(uint8_t p = 1; p < times.size; ++p) {
+        if (value <= std::numeric_limits<uint8_t>::max()) {
+            uint8_t lv = value;
+            uint32_t start = CTHandler::mCounter;
+            for(uint16_t n = 0; n < iterations; ++n) {
+                itoa(lv, &data[0], 10);
+            }
+            uint32_t end = CTHandler::mCounter;            
+            times[p].value = value;
+            times[p].time = std::milliseconds{static_cast<uint16_t>(end - start)};
+            times[p].type = 1;
+        }
+        else if (value <= std::numeric_limits<uint16_t>::max()) {
+            uint16_t lv = value;
+            uint32_t start = CTHandler::mCounter;
+            for(uint16_t n = 0; n < iterations; ++n) {
+                itoa(lv, &data[0], 10);
+            }
+            uint32_t end = CTHandler::mCounter;            
+            times[p].value = value;
+            times[p].time = std::milliseconds{static_cast<uint16_t>(end - start)};
+            times[p].type = 2;
+        }
+        else if (value <= std::numeric_limits<uint32_t>::max()) {
+            uint32_t lv = value;
+            uint32_t start = CTHandler::mCounter;
+            for(uint16_t n = 0; n < iterations; ++n) {
+                itoa(lv, &data[0], 10);
+            }
+            uint32_t end = CTHandler::mCounter;            
+            times[p].value = value;
+            times[p].time = std::milliseconds{static_cast<uint16_t>(end - start)};
+            times[p].type = 3;
+        }
+        else if (value <= std::numeric_limits<uint64_t>::max()) {
+            uint64_t lv = value;
+            uint32_t start = CTHandler::mCounter;
+            for(uint16_t n = 0; n < iterations; ++n) {
+                itoa(lv, &data[0], 10);
+            }
+            uint32_t end = CTHandler::mCounter;            
+            times[p].value = value;
+            times[p].time = std::milliseconds{static_cast<uint16_t>(end - start)};
+            times[p].type = 4;
+        }
+        value *= 10;
+    }
+    
+    for(uint8_t i = 0; i < times.size; ++i) {
+        std::outl<terminal>(i, " : V : "_pgm, ',', times[i].type,  ',', times[i].value, ',', times[i].time);
+    }        
+
+    value = 1;    
+    for(uint8_t p = 1; p < times.size; ++p) {
+        auto lv = value;    
+        itoa(lv, &data[0], 10);
+        
+        std::outl<terminal>(p, ',', lv, ',', data);
+        
+        value *= 10;
+    }
+    
     while(true) {}
 }
 

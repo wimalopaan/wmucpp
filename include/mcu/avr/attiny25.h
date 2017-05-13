@@ -110,9 +110,9 @@ struct ATTiny25 final {
     };
 
     struct PortRegister {
-        volatile uint8_t in;
-        volatile uint8_t ddr;
-        volatile uint8_t out;
+        volatile std::byte in;
+        volatile std::byte ddr;
+        volatile std::byte out;
         template<typename P> struct Address;
     };
     class TimerInterrupts {
@@ -151,7 +151,7 @@ struct ATTiny25 final {
         static constexpr uint8_t address = 0x5a;
     };
     struct PCInterrupts {
-        DataRegister<PCInterrupts, ReadWrite> pcmsk;
+        DataRegister<PCInterrupts, ReadWrite, std::byte> pcmsk;
         template<int N> struct Address;
     };
 };

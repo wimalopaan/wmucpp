@@ -32,7 +32,7 @@ public:
     static void init() {
         Spi::init();
         for(const auto& b: mData) {
-            Spi::put(b);
+            Spi::put(std::byte{b});
         }
     }
 
@@ -59,7 +59,7 @@ public:
         }
         
         for(const auto& b: mData) {
-            Spi::put(b);
+            Spi::put(std::byte{b});
         }
     }    
 private:

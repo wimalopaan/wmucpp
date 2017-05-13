@@ -88,12 +88,12 @@ public:
                 lowCount = 0;
                 // Sync
                 if constexpr(!std::is_same<EventManager, void>::value) {
-                    EventManager::enqueue({EventType::DCFSync, 0});                
+                    EventManager::enqueue({EventType::DCFSync});                
                 }
                 if (bitCounter >= 58) {
                     if (decodeDcfBits()) {
                         if constexpr(!std::is_same<EventManager, void>::value) {
-                            EventManager::enqueue({EventType::DCFDecode, 0});                
+                            EventManager::enqueue({EventType::DCFDecode});                
                         }
                     }
                 }
@@ -139,7 +139,7 @@ public:
             break;
         case State::Error:
             if constexpr(!std::is_same<EventManager, void>::value) {
-                EventManager::enqueue({EventType::DCFError, 0});                
+                EventManager::enqueue({EventType::DCFError});                
             }
             lowCount = highCount = 0;
             state = State::Undefined;            
@@ -200,7 +200,7 @@ private:
         }   
         else {
             if constexpr(!std::is_same<EventManager, void>::value) {
-                EventManager::enqueue({EventType::DCFParityError, 0});                
+                EventManager::enqueue({EventType::DCFParityError});                
             }
             return false;
         }
@@ -243,7 +243,7 @@ private:
         if (number < bitCounterMax) {
             dcfBits.bytes[number / 8] |= _BV(number % 8);
             if constexpr(!std::is_same<EventManager, void>::value) {
-                EventManager::enqueue({EventType::DCFReceive1, number});                
+                EventManager::enqueue({EventType::DCFReceive1, std::byte{number}});                
             }
         }
     }
@@ -251,7 +251,7 @@ private:
         if (number < bitCounterMax) {
             dcfBits.bytes[number / 8] &= ~(_BV(number % 8));
             if constexpr(!std::is_same<EventManager, void>::value) {
-                EventManager::enqueue({EventType::DCFReceive0, number});                
+                EventManager::enqueue({EventType::DCFReceive0, std::byte{number}});                
             }
         }
     }

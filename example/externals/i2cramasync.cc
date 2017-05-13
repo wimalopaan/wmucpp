@@ -53,28 +53,28 @@ namespace std {
 }
 
 struct DS1307handler: public EventHandler<EventType::I2CRamValueAvailable> {
-    static bool process(uint8_t v) {
-        std::cout << "ram: "_pgm << v << std::endl;
+    static bool process(std::byte v) {
+        std::cout << "ram: "_pgm << std::to_integer<uint8_t>(v) << std::endl;
         return true;
     }  
 };
 
 struct DS1307handlerError: public EventHandler<EventType::I2CRamError> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::cout << "ram error"_pgm << std::endl;
         return true;
     }  
 };
 
 struct TWIHandlerError: public EventHandler<EventType::TWIError> {
-    static bool process(uint8_t v) {
-        std::cout << "twi error: "_pgm << v << std::endl;
+    static bool process(std::byte v) {
+        std::cout << "twi error: "_pgm << std::to_integer<uint8_t>(v) << std::endl;
         return true;
     }  
 };
 
 struct TimerHandler : public EventHandler<EventType::Timer> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::cout << "timer"_pgm << std::endl;
         if (!i2cram::startWrite(0, 1)) {
             std::cout << "send error"_pgm << std::endl;

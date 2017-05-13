@@ -134,7 +134,7 @@ public:
             ++inbits;
             if (inbits == 9) {
                 uint8_t c = 0xff & (inframe >> 1);
-                EventManager::enqueueISR({SWUsartEventMapper<N>::event, c});
+                EventManager::enqueueISR({SWUsartEventMapper<N>::event, std::byte{c}});
                 mcuInterrupts()->timsk.template clear<int_type::Mask::ocieb>();
                 mcuInterrupts()->timsk.template add<int_type::Mask::icie>();
                 mcuInterrupts()->tifr.template add<int_type::Flags::icf>();
@@ -168,7 +168,7 @@ public:
         SWUsartRxTx<N>::rx::template dir<AVR::Input>();
         SWUsartRxTx<N>::rx::on();
     }
-    static bool put(uint8_t item) {
+    static bool put(std::byte item) {
         if (sendQueue.push_back(item)) {
             mcuInterrupts()->timsk.template add<int_type::Mask::ociea>();
             return true;
@@ -187,7 +187,7 @@ public:
         }
     }
 private:
-    inline static std::FiFo<uint8_t, Config::Usart::SendQueueLength> sendQueue;
+    inline static std::FiFo<std::byte, Config::Usart::SendQueueLength> sendQueue;
     inline static volatile uint16_t outframe = 0x0001;
     inline static volatile uint16_t inframe = 0;
     inline static volatile uint8_t inbits = 0;

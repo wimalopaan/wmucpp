@@ -50,7 +50,7 @@ public:
         case State::Low:
             if (ppmValue >= Decoder::ppmMidLow) {
                 state = State::Medium;
-                EventManager::enqueue({EventType::Ppm1Down, ppmValue});
+                EventManager::enqueue({EventType::Ppm1Down, std::byte{ppmValue}});
             }
             break;
         case State::Medium:
@@ -64,7 +64,7 @@ public:
         case State::High:
             if (ppmValue <= Decoder::ppmMidHigh) {
                 state = State::Medium;
-                EventManager::enqueue({EventType::Ppm1Up, ppmValue});
+                EventManager::enqueue({EventType::Ppm1Up, std::byte{ppmValue}});
             }
             break;
         default:

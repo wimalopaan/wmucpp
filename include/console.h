@@ -64,6 +64,14 @@ void out(V v) {
     Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(&buffer[0]);
 }
 template<MCU::Stream Stream>
+void out(std::byte b) {
+    constexpr uint8_t Base = 16;
+    std::array<char, Util::numberOfDigits<uint8_t, Base>() + 1> buffer;
+    Util::itoa<Base>(std::to_integer<uint8_t>(b), buffer);
+    out<Stream>("0x"_pgm);
+    Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(&buffer[0]);
+}
+template<MCU::Stream Stream>
 void out(char v) {
     Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(v);
 }
@@ -149,7 +157,7 @@ void outl(TT... v) {
 
 }
 
-template<typename Stream>
+template<MCU::Stream Stream>
 Stream& operator<<(Stream& o, const char* str) {
     if constexpr(!Config::disableCout) {
         Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(str);
@@ -165,7 +173,7 @@ BufferDevice<Buffer>& operator<<(BufferDevice<Buffer>& o, const char* str) {
 }
 
 
-template<typename Stream>
+template<MCU::Stream Stream>
 Stream& operator<<(Stream& o, char c) {
     if constexpr(!Config::disableCout) {
         Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(c);
@@ -178,7 +186,7 @@ BufferDevice<Buffer>& operator<<(BufferDevice<Buffer>& o, char c) {
     return o;
 }
 
-template<typename Stream>
+template<MCU::Stream Stream>
 Stream& operator<<(Stream& o, uint8_t v) {
     if constexpr(!Config::disableCout) {
         std::detail::out<Stream>(v);
@@ -191,7 +199,7 @@ BufferDevice<Buffer>& operator<<(BufferDevice<Buffer>& o, uint8_t v) {
     return o;
 }
 
-template<typename Stream>
+template<MCU::Stream Stream>
 Stream& operator<<(Stream& o, int8_t v) {
     if constexpr(!Config::disableCout) {
         std::detail::out<Stream>(v);
@@ -199,7 +207,7 @@ Stream& operator<<(Stream& o, int8_t v) {
     return o;
 }
 
-template<typename Stream>
+template<MCU::Stream Stream>
 Stream& operator<<(Stream& o, uint16_t v) {
     if constexpr(!Config::disableCout) {
         std::detail::out<Stream>(v);
@@ -207,7 +215,7 @@ Stream& operator<<(Stream& o, uint16_t v) {
     return o;
 }
 
-template<typename Stream>
+template<MCU::Stream Stream>
 Stream& operator<<(Stream& o, int16_t v) {
     if constexpr(!Config::disableCout) {
         std::detail::out<Stream>(v);
@@ -215,7 +223,7 @@ Stream& operator<<(Stream& o, int16_t v) {
     return o;
 }
  
-template<typename Stream>
+template<MCU::Stream Stream>
 Stream& operator<<(Stream& o, uint32_t v) {
     if constexpr(!Config::disableCout) {
         std::detail::out<Stream>(v);
@@ -223,7 +231,7 @@ Stream& operator<<(Stream& o, uint32_t v) {
     return o;
 }
 
-template<typename Stream>
+template<MCU::Stream Stream>
 Stream& operator<<(Stream& o, int32_t v) {
     if constexpr(!Config::disableCout) {
         std::detail::out<Stream>(v);
@@ -231,7 +239,7 @@ Stream& operator<<(Stream& o, int32_t v) {
     return o;
 }
 
-template<typename Stream>
+template<MCU::Stream Stream>
 Stream& operator<<(Stream& o, const std::lineTerminator<std::CRLF>& t) {
     if constexpr(!Config::disableCout) {
         std::detail::out<Stream>(t);
@@ -239,14 +247,14 @@ Stream& operator<<(Stream& o, const std::lineTerminator<std::CRLF>& t) {
     }
     return o;
 }
-template<typename Stream>
+template<MCU::Stream Stream>
 Stream& operator<<(Stream& o, const std::lineTerminator<std::CR>&) {
     if constexpr(!Config::disableCout) {
         return o << '\r';
     }
     return o;
 }
-template<typename Stream>
+template<MCU::Stream Stream>
 Stream& operator<<(Stream& o, const std::lineTerminator<std::LF>&) {
     if constexpr(!Config::disableCout) {
         return o << '\n';
@@ -254,7 +262,7 @@ Stream& operator<<(Stream& o, const std::lineTerminator<std::LF>&) {
     return o;
 }
 
-template<typename Stream>
+template<MCU::Stream Stream>
 Stream& operator<<(Stream& o, const std::hertz& f) {
     if constexpr(!Config::disableCout) {
         return o << f.value << "Hz"_pgm;
@@ -262,7 +270,7 @@ Stream& operator<<(Stream& o, const std::hertz& f) {
     return o;
 }
 
-template<typename Stream>
+template<MCU::Stream Stream>
 Stream& operator<<(Stream& o, const std::megahertz& f) {
     if constexpr(!Config::disableCout) {
         return o << f.value << "MHz"_pgm;
@@ -270,7 +278,7 @@ Stream& operator<<(Stream& o, const std::megahertz& f) {
     return o;
 }
 
-template<typename Stream>
+template<MCU::Stream Stream>
 Stream& operator<<(Stream& o, const std::milliseconds& d) {
     if constexpr(!Config::disableCout) {
         return o << d.value << "ms"_pgm;
@@ -278,7 +286,7 @@ Stream& operator<<(Stream& o, const std::milliseconds& d) {
     return o;
 }
 
-template<typename Stream>
+template<MCU::Stream Stream>
 Stream& operator<<(Stream& o, const std::microseconds& d) {
     if constexpr(!Config::disableCout) {
         return o << d.value << "us"_pgm;
@@ -286,7 +294,7 @@ Stream& operator<<(Stream& o, const std::microseconds& d) {
     return o;
 }
 
-template<typename Stream>
+template<MCU::Stream Stream>
 Stream& operator<<(Stream& o, bool b) {
     if constexpr(!Config::disableCout) {
         if (b) {
@@ -299,7 +307,7 @@ Stream& operator<<(Stream& o, bool b) {
     return o;
 }
 
-template<typename Stream, typename T>
+template<MCU::Stream Stream, typename T>
 Stream& operator<<(Stream& o, const Fraction<T>& f) {
     std::array<char, Util::numberOfDigits<Fraction<T>>()> buffer;
     Util::ftoa(f, buffer);
@@ -307,7 +315,7 @@ Stream& operator<<(Stream& o, const Fraction<T>& f) {
     return o;    
 }
 
-template<typename Stream, typename T, uint16_t L>
+template<MCU::Stream Stream, typename T, uint16_t L>
 Stream& operator<<(Stream& o, const std::array<T, L>& a) {
     if constexpr(!Config::disableCout) {
         o << "{ "_pgm;
@@ -319,7 +327,7 @@ Stream& operator<<(Stream& o, const std::array<T, L>& a) {
     return o;
 }
 
-template<typename Stream>
+template<MCU::Stream Stream>
 Stream& operator<<(Stream& o, const Config&) {
     if constexpr(!Config::disableCout) {
         o << "fMcu: "_pgm << Config::fMcu << "\r\n"_pgm;
@@ -347,7 +355,7 @@ Stream& operator<<(Stream& o, const Config&) {
 //    return out;
 //}
 
-template<typename Stream>
+template<MCU::Stream Stream>
 Stream& operator<<(Stream& out, const PgmStringView& s) {
     const char * ptr = s.ptrToPgmData;
     while (char c = pgm_read_byte(ptr++)) {
@@ -356,7 +364,7 @@ Stream& operator<<(Stream& out, const PgmStringView& s) {
     return out;
 }
 
-template<typename Stream>
+template<MCU::Stream Stream>
 Stream& operator<<(Stream& o, const std::RPM& rpm) {
     if constexpr(!Config::disableCout) {
         return o << rpm.value() << "RPM"_pgm;
@@ -364,7 +372,7 @@ Stream& operator<<(Stream& o, const std::RPM& rpm) {
     return o;
 }
 
-template<typename Stream>
+template<MCU::Stream Stream>
 Stream& operator<<(Stream& o, const std::percent& p) {
     if constexpr(!Config::disableCout) {
         return o << p.value() << '%';

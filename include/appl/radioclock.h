@@ -97,7 +97,7 @@ class Clock final {
     using clockFSM = StateMachine<DcfDecoder, StateEntry>;
     
     struct DCFReceive0Handler : public EventHandler<EventType::DCFReceive0> {
-        static bool process(uint8_t) {
+        static bool process(std::byte) {
             if constexpr(flash) {
                 flash(false);
                 return true;
@@ -106,7 +106,7 @@ class Clock final {
         }  
     };
     struct DCFReceive1Handler : public EventHandler<EventType::DCFReceive1> {
-        static bool process(uint8_t) {
+        static bool process(std::byte) {
             if constexpr(flash) {
                 flash(true);
                 return true;
@@ -115,37 +115,37 @@ class Clock final {
         }  
     };
     struct DCFDecodeHandler : public EventHandler<EventType::DCFDecode> {
-        static bool process(uint8_t) {
+        static bool process(std::byte) {
             clockFSM::process(Event::DCFDecode);
             return true;
         }  
     };
     struct DCFSyncHandler : public EventHandler<EventType::DCFSync> {
-        static bool process(uint8_t) {
+        static bool process(std::byte) {
             clockFSM::process(Event::DCFSync);
             return true;
         }  
     };
     struct DCFErrorHandler : public EventHandler<EventType::DCFError> {
-        static bool process(uint8_t) {
+        static bool process(std::byte) {
             clockFSM::process(Event::DCFError);
             return true;
         }  
     };
     struct DCFParityHandler : public EventHandler<EventType::DCFParityError> {
-        static bool process(uint8_t) {
+        static bool process(std::byte) {
             clockFSM::process(Event::DCFError);
             return true;
         }  
     };
     struct ResetHandler : public EventHandler<EventType::RadioClockReset> {
-        static bool process(uint8_t) {
+        static bool process(std::byte) {
             clockFSM::process(Event::Reset);
             return true;
         }  
     };
     struct StartHandler : public EventHandler<EventType::RadioClockStart> {
-        static bool process(uint8_t) {
+        static bool process(std::byte) {
             clockFSM::process(Event::Start);
             return true;
         }  

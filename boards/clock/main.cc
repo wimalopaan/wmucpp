@@ -313,7 +313,8 @@ struct ClockStateMachine {
 };
 
 struct TimerHandler : public EventHandler<EventType::Timer> {
-    static bool process(uint8_t timer) {
+    static bool process(std::byte b) {
+        auto timer = std::to_integer<uint7_t>(b);
         if (timer == *blinkTimer) {
             statusLed::tick(brightness);
         }
@@ -344,57 +345,57 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
     }
 };
 struct Usart0Handler : public EventHandler<EventType::UsartRecv0> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         return true;
     }
 };
 struct UsartFeHandler : public EventHandler<EventType::UsartFe> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         return true;
     }
 };
 struct UsartUpeHandler : public EventHandler<EventType::UsartUpe> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         return true;
     }
 };
 struct UsartDorHandler : public EventHandler<EventType::UsartDor> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         return true;
     }
 };
 struct DCFReceive0Handler : public EventHandler<EventType::DCFReceive0> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         statusLed::flash(Constant::cRed * brightness, 1);
         return true;
     }  
 };
 struct DCFReceive1Handler : public EventHandler<EventType::DCFReceive1> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         statusLed::flash(Constant::cRed * brightness, 2);
         return true;
     }  
 };
 struct DCFDecodeHandler : public EventHandler<EventType::DCFDecode> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         ClockStateMachine::process(ClockStateMachine::Event::DCFDecode);
         return true;
     }  
 };
 struct DCFSyncHandler : public EventHandler<EventType::DCFSync> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         ClockStateMachine::process(ClockStateMachine::Event::DCFSync);
         return true;
     }  
 };
 struct DCFErrorHandler : public EventHandler<EventType::DCFError> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         ClockStateMachine::process(ClockStateMachine::Event::DCFError);
         return true;
     }  
 };
 struct DCFParityHandler : public EventHandler<EventType::DCFParityError> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         ClockStateMachine::process(ClockStateMachine::Event::DCFError);
         return true;
     }  

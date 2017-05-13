@@ -43,7 +43,7 @@ public:
         Device::template init<Baudrate>();
     }
 
-    static bool put(uint8_t v) {
+    static bool put(std::byte v) {
         return fifo.push_back(v);
     }
     static void periodic() {
@@ -53,5 +53,5 @@ public:
     }
     static constexpr auto rateProcess = periodic;
 private:
-    inline static std::FiFo<uint8_t, Size> fifo;
+    inline static std::FiFo<std::byte, Size> fifo;
 };

@@ -75,19 +75,19 @@ using isrRegistrar = IsrRegistrar<CTHandler,
 terminalDevice::RxHandler, terminalDevice::TxHandler>;
 
 struct UsartFeHandler: public EventHandler<EventType::UsartFe> {
-    static bool process(uint8_t n) {
+    static bool process(std::byte n) {
         std::outl<terminal>("Usart Fe  "_pgm,  n);
         return true;
     }
 };
 struct UsartDorHandler: public EventHandler<EventType::UsartDor> {
-    static bool process(uint8_t n) {
+    static bool process(std::byte n) {
         std::outl<terminal>("Usart Dor "_pgm, n);
         return true;
     }
 };
 struct UsartUpeHandler: public EventHandler<EventType::UsartUpe> {
-    static bool process(uint8_t n) {
+    static bool process(std::byte n) {
         std::outl<terminal>("Usart Upe "_pgm, n);
         return true;
     }

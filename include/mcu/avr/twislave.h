@@ -62,10 +62,10 @@ public:
             break;
         case tws::twSrDataAck:
         {
-            uint8_t data = *mcu_twi()->twdr;
+            std::byte data = *mcu_twi()->twdr;
             if (!index) {
-                if (data < Size) {
-                    index = data;
+                if (std::to_integer<uint8_t>(data) < Size) {
+                    index = std::to_integer<uint8_t>(data);
                 }
                 else {
                     index = 0;
@@ -74,7 +74,7 @@ public:
             }
             else {
                 if (*index < Size) {
-                    registers()[*index] = data;
+                    mRegisters[*index] = data;
                     isChanged() = true;
                     ++index;
                 }
@@ -88,11 +88,11 @@ public:
                 index = 0;
             }
             if (*index < Size) {
-                *mcu_twi()->twdr = registers()[*index];
+                *mcu_twi()->twdr = mRegisters[*index];
                 ++index;
             }
             else {
-                *mcu_twi()->twdr = 0;
+                *mcu_twi()->twdr = std::byte{0};
             }
             mcu_twi()->twcr.template set<twcr_ack>();
             break;
@@ -112,9 +112,10 @@ public:
         return changed;
     }
     static auto& registers() {
-        static volatile std::array<uint8_t, Size> rm;
-        return rm;
+        return mRegisters;
     }
+
+    inline static volatile std::array<std::byte, Size> mRegisters;
 private:
     inline static volatile uint_NaN<uint8_t> index;
 };

@@ -59,7 +59,8 @@ std::optional<uint7_t> pTimer;
 std::optional<uint7_t> mTimer;
 
 struct TimerHandler : public EventHandler<EventType::Timer> {
-    static bool process(uint8_t timer) {
+    static bool process(std::byte b) {
+        auto timer = std::to_integer<uint7_t>(b);
         if (timer == *pTimer) {
             std::cout << "Periodic timer"_pgm << std::endl;
             if (ds18b20::convert()) {
@@ -77,14 +78,14 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
     }
 };
 struct MeasuremntHandler : public EventHandler<EventType::DS18B20Measurement> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::cout << "Temperature: "_pgm << ds18b20::temperature() << std::endl;
         return true;
     }
 };
 
 struct ErrorHandler : public EventHandler<EventType::DS18B20Error> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         std::cout << "Error"_pgm << std::endl;       
         return true;
     }

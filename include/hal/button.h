@@ -102,7 +102,7 @@ private:
                     mData.state = 1;
                     mData.count = 0;
                     if (UseEvent) {
-                        EventManager::enqueue({ButtonEvent<N>::event, N});
+                        EventManager::enqueue({ButtonEvent<N>::event, std::byte{N}});
                     }
                 }
             }

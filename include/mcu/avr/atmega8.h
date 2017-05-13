@@ -99,9 +99,9 @@ struct ATMega8 final
         template<uint8_t N> struct Flags; 
     };
     struct PortRegister {
-        volatile uint8_t in;
-        volatile uint8_t ddr;
-        volatile uint8_t out;
+        volatile std::byte in;
+        volatile std::byte ddr;
+        volatile std::byte out;
         template<typename P> struct Address;
     };
     struct Interrupt {

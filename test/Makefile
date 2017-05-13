@@ -24,12 +24,12 @@ targets += simavr.elf host
 
 CPPFLAGS += -DNDEBUG
 
-#host: CXX = g++
-host: CXX = clang++
+host: CXX = /usr/local/bin/g++
+#host: CXX = clang++
 host: CC = g++
 host: LDFLAGS =
 host: CPPFLAGS = -DF_CPU=1000000
-host: CXXFLAGS = -g -std=c++1z
+host: CXXFLAGS = -g -std=c++17 -fconcepts
 host: CXXFLAGS += -Wall -Wextra
 host: CXXFLAGS += -I ../include
 host: CXXFLAGS += -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics  -funsigned-char -funsigned-bitfields -fshort-enums

@@ -22,6 +22,7 @@
 #include "std/traits.h"
 #include "std/algorithm.h"
 #include "std/utility.h"
+#include "std/byte.h"
 #include "util/util.h"
 #include "util/static_container.h"
 
@@ -83,7 +84,6 @@ struct DataRegister {
     inline volatile value_type& operator*() {
         return hwRegister;
     }
-    
     inline const volatile value_type& operator*() const {
         return hwRegister;
     }

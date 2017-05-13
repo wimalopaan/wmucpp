@@ -26,10 +26,10 @@ namespace Hott {
     
 template<uint16_t N, uint16_t Thresh, typename CT = uint16_t>
 struct NullPA {
-    inline static bool process(uint8_t) { // from isr only
+    inline static bool process(std::byte) { // from isr only
         static CT counter = 0;
         if (++counter > Thresh) {
-            EventManager::enqueue({EventType::NullPAEvent, N});
+            EventManager::enqueue({EventType::NullPAEvent, std::byte{N}});
             counter = 0;
         }
         return true;
@@ -43,34 +43,34 @@ class SensorProtocollAdapter final {
 public:
     SensorProtocollAdapter() = delete;
 private:
-    inline static bool process(uint8_t c) { // from isr only
+    inline static bool process(std::byte c) { // from isr only
         static hottstate state = hottstate::Undefined;
         switch (state) {
         case hottstate::Undefined:
-            if (c == 0x80) {
+            if (c == std::byte{0x80}) {
                 state = hottstate::Request1;
             }
-            if (c == 0x7f) {
+            if (c == std::byte{0x7f}) {
                 state = hottstate::RequestA1;
             }
             break;
         case hottstate::RequestA1:
-            if (c == 0x0f) {
-                EventManager::enqueueISR({EventType::HottAsciiRequest, 0});
+            if (c == std::byte{0x0f}) {
+                EventManager::enqueueISR({EventType::HottAsciiRequest, std::byte{0}});
                 state = hottstate::Undefined;
             }
             else {
-                EventManager::enqueueISR({EventType::HottAsciiKey, c});
+                EventManager::enqueueISR({EventType::HottAsciiKey, std::byte{c}});
                 state = hottstate::Undefined;
             }
             break;
         case hottstate::Request1:
-            if (c == 0x8d) {
-                EventManager::enqueueISR({EventType::HottBinaryRequest, 0});
+            if (c == std::byte{0x8d}) {
+                EventManager::enqueueISR({EventType::HottBinaryRequest, std::byte{0}});
                 state = hottstate::Undefined;
             }
-            else if (c == 0x80) {
-                EventManager::enqueueISR({EventType::HottSensorBroadcast, 0});
+            else if (c == std::byte{0x80}) {
+                EventManager::enqueueISR({EventType::HottSensorBroadcast, std::byte{0}});
                 state = hottstate::Undefined;
             }
             else {

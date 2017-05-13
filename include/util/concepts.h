@@ -19,6 +19,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "std/byte.h"
 
 namespace Util {
 
@@ -37,7 +38,7 @@ concept bool Fractional = !std::is_integral<T>::value;
 template<typename D>
 concept bool Device() {
     return requires(D d) {
-        D::put((char)0);
+        D::put(std::byte{0});
     };
 }
 

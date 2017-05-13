@@ -152,7 +152,7 @@ public:
         return FixedPoint<int16_t, 4>::fromRaw(valueH << 8 | valueL);
     }
     
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         static_assert(OneWireMaster::isAsync, "async interface shall use async OneWireMaster");
         bool ok = true;
         for(uint8_t i = 0; i < mScratchPad.size; ++i) {
@@ -166,10 +166,10 @@ public:
         ok &= std::crc8(mScratchPad);
         
         if (ok) {
-            EventManager::enqueue({EventType::DS18B20Measurement, 0});
+            EventManager::enqueue({EventType::DS18B20Measurement});
         } 
         else {
-            EventManager::enqueue({EventType::DS18B20Error, 0});
+            EventManager::enqueue({EventType::DS18B20Error});
         }
         return true;
     }

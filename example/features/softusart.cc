@@ -44,14 +44,14 @@ using sampler = PeriodicGroup<AVR::ISR::Timer<0>::CompareA, systemTimer>;
 using isrReg = IsrRegistrar<sampler, spiInput, terminalDevive::ReceiveBitHandler, terminalDevive::TransmitBitHandler, terminalDevive::StartBitHandler>; 
 
 struct  Spi0handler: public EventHandler<EventType::Spi0> {
-    static bool process(const uint8_t& v) {
+    static bool process(std::byte) {
 //        Util::put<terminalDevive, true>((char)v);
         return true;
     }
 };
 
 struct Timerhandler: public EventHandler<EventType::Timer> {
-    static bool process(const uint8_t&) {
+    static bool process(std::byte) {
         if (spiInput::leak()) {
         }
         else {

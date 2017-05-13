@@ -101,7 +101,7 @@ public:
         for(uint8_t i = 0; i < mTimers.capacity; ++i) {
             if (auto& t = mTimers[i]) {
                 if ((--t.ticksLeft == 0) && !isset(t.flags & AlarmFlags::Disabled)) {
-                    EventManager::enqueue({EventType::Timer, i});
+                    EventManager::enqueue({EventType::Timer, std::byte{i}});
                     if (isset(t.flags & AlarmFlags::Periodic)) {
                         t.ticksLeft = t.ticks;
                     }

@@ -28,14 +28,14 @@ struct A {
     static constexpr const uint8_t value = 1;
     static void init() {
         a = 1;
-        SimAVRDebugConsole::put('a');
+        SimAVRDebugConsole::put(std::byte{'a'});
     }
 };
 struct B {
     static constexpr const uint8_t value = 1;
     static void init() {
         b = 2;
-        SimAVRDebugConsole::put('b');
+        SimAVRDebugConsole::put(std::byte{'b'});
     }
 };
 
@@ -85,8 +85,8 @@ int main()
 {
     ForEachCheck<A, B>::init(x);
 
-    SimAVRDebugConsole::put('\r');
-    SimAVRDebugConsole::put('\n');
+    SimAVRDebugConsole::put(std::byte{'\r'});
+    SimAVRDebugConsole::put(std::byte{'\n'});
 
     while(true);
 

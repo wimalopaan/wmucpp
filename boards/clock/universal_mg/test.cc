@@ -126,7 +126,8 @@ const auto secondsTimer = alarmTimer::create(1000_ms, AlarmFlags::Periodic);
 std::chrono::system_clock<> systemClock;
 
 struct TimerHandler : public EventHandler<EventType::Timer> {
-    static bool process(uint8_t timer) {
+    static bool process(std::byte b) {
+        auto timer = std::to_integer<uint7_t>(b);
         if (timer == *secondsTimer) {
             systemClock.tick();
             if (systemClock) {
@@ -140,37 +141,37 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
     }
 };
 struct Usart0Handler : public EventHandler<EventType::UsartRecv0> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         return true;
     }
 };
 struct UsartFeHandler : public EventHandler<EventType::UsartFe> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         return true;
     }
 };
 struct UsartUpeHandler : public EventHandler<EventType::UsartUpe> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         return true;
     }
 };
 struct UsartDorHandler : public EventHandler<EventType::UsartDor> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         return true;
     }
 };
 struct DCFReceive0Handler : public EventHandler<EventType::DCFReceive0> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         return true;
     }  
 };
 struct DCFReceive1Handler : public EventHandler<EventType::DCFReceive1> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         return true;
     }  
 };
 struct DCFDecodeHandler : public EventHandler<EventType::DCFDecode> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         if (!systemClock) {
             std::cout << "set time"_pgm << std::endl;
             systemClock = std::chrono::system_clock<>::from(dcfDecoder::dateTime());
@@ -186,17 +187,17 @@ struct DCFDecodeHandler : public EventHandler<EventType::DCFDecode> {
     inline static uint8_t mCount = 0;
 };
 struct DCFSyncHandler : public EventHandler<EventType::DCFSync> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         return true;
     }  
 };
 struct DCFErrorHandler : public EventHandler<EventType::DCFError> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         return true;
     }  
 };
 struct DCFParityHandler : public EventHandler<EventType::DCFParityError> {
-    static bool process(uint8_t) {
+    static bool process(std::byte) {
         return true;
     }  
 };

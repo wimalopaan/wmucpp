@@ -45,13 +45,13 @@ public:
         return mMsg.nChannels;
     }
 private:
-    inline static bool process(uint8_t c) { // from isr only
+    inline static bool process(std::byte  c) { // from isr only
         static sumdstate state = sumdstate::Undefined;
         static uint8_t channel = 0;
 
         switch (state) {
         case sumdstate::Undefined:
-            if (c == 0xa8) {
+            if (c == std::byte{0xa8}) {
                 state = sumdstate::Start1;
             }
             else {
@@ -59,10 +59,10 @@ private:
             }
             break;
         case sumdstate::Start1:
-            if (c == 0x01) {
+            if (c == std::byte{0x01}) {
                 state = sumdstate::StartNormal;
             }
-            else if (c == 0x81) {
+            else if (c == std::byte{0x81}) {
                 state = sumdstate::StartFailSafe;
             }
             else {
@@ -70,19 +70,19 @@ private:
             }
             break;
         case sumdstate::StartNormal:
-            mMsg.nChannels = c;
+            mMsg.nChannels = std::to_integer<uint8_t>(c);
             state = sumdstate::ChannelDataH;
             break;
         case sumdstate::StartFailSafe:
-            mMsg.nChannels = c;
+            mMsg.nChannels = std::to_integer<uint8_t>(c);
             state = sumdstate::ChannelDataH;
             break;
         case sumdstate::ChannelDataH:
-            mMsg.channelData[channel].first = c;
+            mMsg.channelData[channel].first = std::to_integer<uint8_t>(c);
             state = sumdstate::ChannelDataL;
             break;
         case sumdstate::ChannelDataL:
-            mMsg.channelData[channel].second = c;
+            mMsg.channelData[channel].second = std::to_integer<uint8_t>(c);
             state = sumdstate::ChannelDataH;
             ++channel;
             if (channel < mMsg.nChannels) {
@@ -97,11 +97,11 @@ private:
             }
             break;
         case sumdstate::CrcH:
-            mMsg.crc = c << 8;
+            mMsg.crc = std::to_integer<uint8_t>(c) << 8;
             state = sumdstate::CrcL;
             break;
         case sumdstate::CrcL:
-            mMsg.crc |= c;
+            mMsg.crc |= std::to_integer<uint8_t>(c);
             state = sumdstate::Undefined;
             break;
         default:

@@ -33,16 +33,16 @@ public:
     static constexpr const uint8_t number = N;
     static constexpr const uint8_t cyclesBeforeAnswer = Hott::hottDelayBeforeAnswer / Hott::hottDelayBetweenBytes;
 
-    static std::optional<uint8_t> get(uint8_t index) {
+    static std::optional<std::byte> get(uint8_t index) {
         if (index < cyclesBeforeAnswer) {
             return {};
         }
         else {
             index -= cyclesBeforeAnswer;
             if (index < sizeof(hottTextResponse)) {
-                constexpr const uint8_t* ptr = (const uint8_t*) &hottTextResponse;  
-                const uint8_t value = ptr[index];
-                hottTextResponse.parity += value;
+                constexpr const std::byte* ptr = (const std::byte*) &hottTextResponse;  
+                const auto value = ptr[index];
+                hottTextResponse.parity += std::to_integer<uint8_t>(value);
                 return value;    
             }
             else {

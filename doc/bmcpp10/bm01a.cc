@@ -49,7 +49,7 @@ namespace std {
     constexpr std::lineTerminator<CRLF> endl;
 }
 
-volatile uint8_t x = 5;
+volatile std::byte x{5};
 
 int main()
 {
@@ -57,24 +57,24 @@ int main()
 
     LcdData::allOff();
 
-    LcdData::set(13);
+    LcdData::set(std::byte{13});
     
     LcdData::set<13>();
     LcdData::set<1>();
     LcdData::set<5>();
 
-    std::cout << PortC::get() << std::endl;    
+    std::cout << std::to_integer<uint8_t>(PortC::get()) << std::endl;    
 
     LcdRS::on();
-    std::cout << PortC::get() << std::endl;    
+    std::cout << std::to_integer<uint8_t>(PortC::get()) << std::endl;    
 
     LcdRS::off();
-    std::cout << PortC::get() << std::endl;    
+    std::cout << std::to_integer<uint8_t>(PortC::get()) << std::endl;    
     
     LcdData::set(x);
-    std::cout << PortC::get() << std::endl;   
+    std::cout << std::to_integer<uint8_t>(PortC::get()) << std::endl;   
 
-    std::out<terminal>(PortC::get(), std::endl);
+    std::outl<terminal>(std::to_integer<uint8_t>(PortC::get()));
     
     std::cout << "unused: "_pgm << Util::Memory::getUnusedMemory() << std::endl;   
     
