@@ -112,7 +112,7 @@ struct ATMega328P final
             twie = (1 << TWIE)
         };
         ControlRegister<TWI, TWC> twcr;
-        DataRegister<TWI, ReadWrite> twamr;
+        DataRegister<TWI, ReadWrite, std::byte> twamr;
         template<int N> struct Address;
         template<int N> struct PrescalerRow;
     };
@@ -268,8 +268,8 @@ struct ATMega328P final
         };
         ControlRegister<Adc, MUX> admux;
         volatile uint8_t reserved;
-        volatile uint8_t didr0;
-        volatile uint8_t didr1;
+        DataRegister<Adc, UnUsed> didr0;
+        DataRegister<Adc, UnUsed> didr1;
         template<int N> struct Address;
         template<int N> struct Parameter;
     };

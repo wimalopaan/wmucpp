@@ -33,10 +33,16 @@ struct ReadOnly{};
 struct UnUsed{};
 
 template<typename Component, typename BitType, typename ValueType = uint8_t>
-struct ControlRegister {
+struct ControlRegister final {
     typedef Component component_type;
     typedef ValueType value_type;    
     typedef BitType bit_type;
+    
+    ControlRegister() = delete;
+    ControlRegister(const ControlRegister&) = delete;
+    ControlRegister(ControlRegister&&) = delete;
+    ControlRegister& operator=(const ControlRegister&) = delete;
+    ControlRegister& operator=(ControlRegister&&) = delete;
     
     void inline set(BitType v) {
         hwRegister = static_cast<value_type>(v);
@@ -78,17 +84,27 @@ template<typename Component, typename Mode = ReadWrite, typename ValueType = uin
 struct DataRegister;
 
 template<typename Component, typename ValueType>
-struct DataRegister<Component, UnUsed, ValueType> {
+struct DataRegister<Component, UnUsed, ValueType> final {
     typedef Component component_type;
     typedef ValueType value_type;    
+    DataRegister() = delete;
+    DataRegister(const DataRegister&) = delete;
+    DataRegister(DataRegister&&) = delete;
+    DataRegister& operator=(const DataRegister&) = delete;
+    DataRegister& operator=(DataRegister&&) = delete;
 private:    
     volatile value_type hwRegister; // needed to occupy space
 };
 
 template<typename Component, typename ValueType>
-struct DataRegister<Component, ReadOnly, ValueType> {
+struct DataRegister<Component, ReadOnly, ValueType> final {
     typedef Component component_type;
     typedef ValueType value_type;    
+    DataRegister() = delete;
+    DataRegister(const DataRegister&) = delete;
+    DataRegister(DataRegister&&) = delete;
+    DataRegister& operator=(const DataRegister&) = delete;
+    DataRegister& operator=(DataRegister&&) = delete;
 
     inline const volatile value_type& operator*() const {
         return hwRegister;
@@ -98,9 +114,14 @@ private:
 };
 
 template<typename Component, typename ValueType>
-struct DataRegister<Component, ReadWrite, ValueType> {
+struct DataRegister<Component, ReadWrite, ValueType> final {
     typedef Component component_type;
     typedef ValueType value_type;    
+    DataRegister() = delete;
+    DataRegister(const DataRegister&) = delete;
+    DataRegister(DataRegister&&) = delete;
+    DataRegister& operator=(const DataRegister&) = delete;
+    DataRegister& operator=(DataRegister&&) = delete;
 
     inline volatile value_type& operator*() {
         return hwRegister;

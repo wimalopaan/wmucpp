@@ -38,10 +38,14 @@ int main() {
     PortB::set<0_B>();
     PortB::set(0_B);
 
-    DefaultMcuType::PortRegister* p = new(reinterpret_cast<void*>(0x23)) DefaultMcuType::PortRegister;
-    *p->out = 0_B;
     
-    delete p;
+    // not pssible
+//    *AVR::getBaseAddr<DefaultMcuType::Adc, 0>()->didr0 = 0;
+    
+    // not possible
+//    DefaultMcuType::PortRegister* p = new(reinterpret_cast<void*>(0x23)) DefaultMcuType::PortRegister;
+//    *p->out = 0_B;
+//    delete p;
     
     while(true) {}
 }
