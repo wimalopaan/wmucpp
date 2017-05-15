@@ -32,6 +32,13 @@ concept bool Array() {
     };
 }
 
+template<typename S>
+concept bool Subscriptable() { 
+    return requires (S s) { 
+        s[0];
+    };
+}
+
 template<typename T>
 concept bool Fractional = !std::is_integral<T>::value;
 

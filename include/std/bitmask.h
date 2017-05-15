@@ -1,6 +1,6 @@
 /*
- * ++C - C++ introduction
- * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.meier@hs-kl.de>
+ * WMuCpp - Bare Metal C++ 
+ * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,7 +15,105 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef BITMASK_H
-#define BITMASK_H
 
-#endif // BITMASK_H
+#pragma once
+
+namespace std {
+
+template<typename E>
+struct enable_bitmask_operators final {
+    static constexpr const bool enable = false;
+};
+
+} // std
+
+template<typename E>
+constexpr
+typename std::enable_if<std::enable_bitmask_operators<E>::enable,E>::type
+operator|(E lhs, E rhs){
+    typedef typename std::underlying_type<E>::type underlying;
+    return static_cast<E>(
+                static_cast<underlying>(lhs) | static_cast<underlying>(rhs));
+}
+
+template<typename E>
+constexpr
+typename std::enable_if<std::enable_bitmask_operators<E>::enable,E>::type&
+operator|=(E& lhs, E rhs){
+    typedef typename std::underlying_type<E>::type underlying;
+    return lhs = static_cast<E>(
+                     static_cast<underlying>(lhs) | static_cast<underlying>(rhs));
+}
+template<typename E>
+constexpr void operator|=(typename std::enable_if<std::enable_bitmask_operators<E>::enable, volatile E>::type& lhs, E rhs){
+    typedef typename std::underlying_type<E>::type underlying;
+    lhs = static_cast<E>(
+              static_cast<underlying>(lhs) | static_cast<underlying>(rhs)
+              );
+}
+
+template<typename E>
+constexpr
+typename std::enable_if<std::enable_bitmask_operators<E>::enable,E>::type
+operator&(E lhs, E rhs){
+    typedef typename std::underlying_type<E>::type underlying;
+    return static_cast<E>(
+                static_cast<underlying>(lhs) & static_cast<underlying>(rhs)
+                );
+}
+
+template<typename E>
+constexpr
+typename std::enable_if<std::enable_bitmask_operators<E>::enable,E>::type&
+operator&=(E& lhs, E rhs){
+    typedef typename std::underlying_type<E>::type underlying;
+    return lhs = static_cast<E>(
+                     static_cast<underlying>(lhs) & static_cast<underlying>(rhs)
+                     );
+}
+
+template<typename E>
+constexpr void operator&=(typename std::enable_if<std::enable_bitmask_operators<E>::enable, volatile E>::type& lhs, E rhs){
+    typedef typename std::underlying_type<E>::type underlying;
+    lhs = static_cast<E>(
+              static_cast<underlying>(lhs) & static_cast<underlying>(rhs)
+              );
+}
+
+template<typename E>
+constexpr
+typename std::enable_if<std::enable_bitmask_operators<E>::enable,E>::type
+operator~(E rhs){
+    typedef typename std::underlying_type<E>::type underlying;
+    return static_cast<E>(
+                ~static_cast<underlying>(rhs)
+                );
+}
+
+template<typename E>
+constexpr
+typename std::enable_if<std::enable_bitmask_operators<E>::enable,E>::type
+operator^(E lhs, E rhs){
+    typedef typename std::underlying_type<E>::type underlying;
+    return static_cast<E>(
+                static_cast<underlying>(lhs) ^ static_cast<underlying>(rhs)
+                );
+}
+
+template<typename E>
+constexpr
+typename std::enable_if<std::enable_bitmask_operators<E>::enable,E>::type&
+operator^=(E& lhs, E rhs){
+    typedef typename std::underlying_type<E>::type underlying;
+    return lhs = static_cast<E>(
+                     static_cast<underlying>(lhs) ^ static_cast<underlying>(rhs)
+                     );
+}
+
+template<typename E>
+constexpr void operator^=(typename std::enable_if<std::enable_bitmask_operators<E>::enable, volatile E>::type& lhs, E rhs){
+    typedef typename std::underlying_type<E>::type underlying;
+    lhs = static_cast<E>(
+              static_cast<underlying>(lhs) ^ static_cast<underlying>(rhs)
+              );
+}

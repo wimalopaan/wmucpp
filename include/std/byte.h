@@ -19,25 +19,21 @@
 #pragma once
 
 #include "std/concepts.h"
+#include "std/bitmask.h"
 
 namespace std {
 
 enum class byte : uint8_t {};
 
-template<std::Integral T>
-constexpr T to_integer(byte b) noexcept {
-    return T((uint8_t)b);
-}
-
-}
-
-#include "util/bits.h"
-
-namespace std {
 template<>
 struct enable_bitmask_operators<byte> {
     static constexpr bool enable = true;
 };
+
+template<std::Integral T>
+constexpr T to_integer(byte b) noexcept {
+    return T((uint8_t)b);
+}
 
 constexpr bool any(std::byte b) {
     return b != std::byte{0};
