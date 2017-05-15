@@ -75,6 +75,7 @@ doc/bmcpp20/bm02a.cc
 doc/bmcpp20/bm03a.cc
 doc/bmcpp20/bm04a.cc
 doc/bmcpp20/bm05a.cc
+doc/bmcpp20/bm06a.cc
 doc/bmcpp20/simavrconsole.c
 doc/bmcpp98/Makefile
 doc/bmcpp98/bm05a.cc
@@ -131,6 +132,7 @@ include/mcu/avr/mcuppm.h
 include/mcu/avr/ppmbase.h
 include/mcu/avr/watchdog.h
 include/mcu/concepts.h
+include/std/bitmask.h
 include/std/byte.h
 include/std/chrono.h
 include/std/concepts.h

@@ -218,6 +218,7 @@ int main()
     
     std::outl<terminal>("UniMaxi (HW 0.2) m328 (Spi Uart Lcd) 0.92"_pgm);
     std::outl<lcdStream>("UniMaxi (HW 0.2) m328 (Spi Uart Lcd) 0.92"_pgm);
+//    std::outl<lcdStream>("UniMaxi"_pgm);
     
     std::outl<terminal>(Config());
     
@@ -239,7 +240,7 @@ int main()
             }
             if (i2c::isChanged()) {
                 i2c::isChanged() = false;
-                lcd::put(i2c::registers());
+                lcd::put(i2c::registers()[0]);
             }
             if (EventManager::unprocessedEvent()) {
                 EventManager::unprocessedEvent() = false;

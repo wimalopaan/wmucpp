@@ -57,7 +57,7 @@ struct Config
     };
 
     static constexpr std::microseconds zeroMicroSeconds{0};
-    static constexpr bool ensureTerminalOutput = true;
+    static constexpr bool ensureTerminalOutput = false;
     static constexpr bool disableCout = false;
 };
 

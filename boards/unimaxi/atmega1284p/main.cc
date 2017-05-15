@@ -382,8 +382,8 @@ struct DS18B20ErrorHandler: public EventHandler<EventType::DS18B20Error> {
 #endif
 
 struct ExternalInterruptHandler: public EventHandler<EventType::ExternalInterrupt> {
-    static bool process(std::byte) {
-//        std::cout << "external interrupt: "_pgm << i << std::endl;
+    static bool process(std::byte b) {
+        std::outl<terminal>("external interrupt: "_pgm, b);;
         return true;
     }
 };
