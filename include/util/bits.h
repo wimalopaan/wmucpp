@@ -174,6 +174,13 @@ operator|=(E& lhs, E rhs){
     return lhs = static_cast<E>(
                 static_cast<underlying>(lhs) | static_cast<underlying>(rhs));
 }
+template<typename E>
+constexpr void operator|=(typename std::enable_if<std::enable_bitmask_operators<E>::enable, volatile E>::type& lhs, E rhs){
+    typedef typename std::underlying_type<E>::type underlying;
+    lhs = static_cast<E>(
+              static_cast<underlying>(lhs) | static_cast<underlying>(rhs)
+              );
+}
 
 template<typename E>
 constexpr
@@ -196,6 +203,14 @@ operator&=(E& lhs, E rhs){
 }
 
 template<typename E>
+constexpr void operator&=(typename std::enable_if<std::enable_bitmask_operators<E>::enable, volatile E>::type& lhs, E rhs){
+    typedef typename std::underlying_type<E>::type underlying;
+    lhs = static_cast<E>(
+              static_cast<underlying>(lhs) & static_cast<underlying>(rhs)
+              );
+}
+
+template<typename E>
 constexpr
 typename std::enable_if<std::enable_bitmask_operators<E>::enable,E>::type
 operator~(E rhs){
@@ -203,6 +218,34 @@ operator~(E rhs){
     return static_cast<E>(
                 ~static_cast<underlying>(rhs)
                 );
+}
+
+template<typename E>
+constexpr
+typename std::enable_if<std::enable_bitmask_operators<E>::enable,E>::type
+operator^(E lhs, E rhs){
+    typedef typename std::underlying_type<E>::type underlying;
+    return static_cast<E>(
+                static_cast<underlying>(lhs) ^ static_cast<underlying>(rhs)
+                );
+}
+
+template<typename E>
+constexpr
+typename std::enable_if<std::enable_bitmask_operators<E>::enable,E>::type&
+operator^=(E& lhs, E rhs){
+    typedef typename std::underlying_type<E>::type underlying;
+    return lhs = static_cast<E>(
+                static_cast<underlying>(lhs) ^ static_cast<underlying>(rhs)
+                );
+}
+
+template<typename E>
+constexpr void operator^=(typename std::enable_if<std::enable_bitmask_operators<E>::enable, volatile E>::type& lhs, E rhs){
+    typedef typename std::underlying_type<E>::type underlying;
+    lhs = static_cast<E>(
+              static_cast<underlying>(lhs) ^ static_cast<underlying>(rhs)
+              );
 }
 
 template<typename E>

@@ -6,6 +6,8 @@
 #include "console.h"
 #include "simavr/simavrdebugconsole.h"
 
+#include "../3rdparty/itoa/itoa.h"
+
 using terminalDevice = SimAVRDebugConsole;
 using terminal = std::basic_ostream<terminalDevice>;
 
@@ -14,9 +16,8 @@ constexpr uint8_t Base = 10;
 
 int main() {
     Scoped<EnableInterrupt> interruptEnabler;
-//    uint64_t value = 1234;
     uint32_t value = 1234;
-    Util::V2::itoa<Base>(value, string);
+    _3rdParty::itoa_(value, &string[0]);
     std::outl<terminal>(string);
 
     while(true) {}

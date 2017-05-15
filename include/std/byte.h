@@ -1,6 +1,6 @@
 /*
- * ++C - C++ introduction
- * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.meier@hs-kl.de>
+ * WMuCpp - Bare Metal C++ 
+ * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,16 +18,26 @@
 
 #pragma once
 
-#include <std/concepts.h>
+#include "std/concepts.h"
 
 namespace std {
 
-enum class byte : unsigned char {};
+enum class byte : uint8_t {};
 
 template<std::Integral T>
 constexpr T to_integer(byte b) noexcept {
     return T((uint8_t)b);
 }
+
+}
+
+#include "util/bits.h"
+
+namespace std {
+template<>
+struct enable_bitmask_operators<byte> {
+    static constexpr bool enable = true;
+};
 
 constexpr bool any(std::byte b) {
     return b != std::byte{0};
@@ -52,31 +62,6 @@ constexpr byte operator>>(byte b, IType shift) noexcept {
 template<typename IType>
 constexpr byte operator<<(byte b, IType shift) noexcept {
     return byte(static_cast<uint8_t>(b) << shift);
-}
-
-constexpr byte operator&(byte a, byte b) {
-    return byte{static_cast<uint8_t>(static_cast<uint8_t>(a) & static_cast<uint8_t>(b))};
-}
-constexpr byte operator|(byte a, byte b) {
-    return byte{static_cast<uint8_t>(static_cast<uint8_t>(a) | static_cast<uint8_t>(b))};
-}
-constexpr byte operator^(byte a, byte b) {
-    return byte{static_cast<uint8_t>(static_cast<uint8_t>(a) ^ static_cast<uint8_t>(b))};
-}
-void operator&=(volatile byte& a, byte b) {
-    a = byte{static_cast<uint8_t>(static_cast<uint8_t>(a) & static_cast<uint8_t>(b))};
-}
-constexpr byte& operator|=(byte& a, byte b) {
-    return a = byte{static_cast<uint8_t>(static_cast<uint8_t>(a) | static_cast<uint8_t>(b))};
-}
-void operator|=(volatile byte& a, byte b) {
-    a = byte{static_cast<uint8_t>(static_cast<uint8_t>(a) | static_cast<uint8_t>(b))};
-}
-void operator^=(volatile byte& a, byte b) {
-    a = byte{static_cast<uint8_t>(static_cast<uint8_t>(a) ^ static_cast<uint8_t>(b))};
-}
-constexpr byte operator~(byte b) {
-    return b = byte(~static_cast<uint8_t>(b));
 }
 
 } // std

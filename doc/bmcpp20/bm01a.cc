@@ -243,7 +243,7 @@ int main() {
             uint32_t lv = value;
             uint32_t start = CTHandler::mCounter;
             for(uint16_t n = 0; n < iterations; ++n) {
-                itoa(lv, &data[0], 10);
+                ltoa(lv, &data[0], 10);
             }
             uint32_t end = CTHandler::mCounter;            
             times[p].value = value;
@@ -254,7 +254,7 @@ int main() {
             uint64_t lv = value;
             uint32_t start = CTHandler::mCounter;
             for(uint16_t n = 0; n < iterations; ++n) {
-                itoa(lv, &data[0], 10);
+                ltoa(lv, &data[0], 10);
             }
             uint32_t end = CTHandler::mCounter;            
             times[p].value = value;
@@ -271,7 +271,7 @@ int main() {
     value = 1;    
     for(uint8_t p = 1; p < times.size; ++p) {
         auto lv = value;    
-        itoa(lv, &data[0], 10);
+        ltoa(lv, &data[0], 10);
         
         std::outl<terminal>(p, ',', lv, ',', data);
         

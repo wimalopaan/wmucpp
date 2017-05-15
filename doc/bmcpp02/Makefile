@@ -21,6 +21,7 @@
 MCU = atmega328p
 F_OSC = 20000000
 
+targets +=  bm00a.s bm00a.elf
 targets +=  bm01a.s bm01a.elf bm01a.size
 targets +=  bm01b.s bm01b.elf bm01b.size
 targets +=  bm02a.s bm02a.elf bm02a.size
@@ -31,6 +32,8 @@ targets +=  bm04a.s bm04a.elf bm04a.size
 targets +=  bm10a.s bm10a.elf bm10a.size
 targets +=  bm11a.s bm11a.elf bm11a.size
 targets +=  bm12a.s bm12a.elf bm12a.size
+targets +=  bm21a.s bm21a.elf
+targets +=  bm22a.s bm22a.elf
 
 -include ../../Makefile.include
 

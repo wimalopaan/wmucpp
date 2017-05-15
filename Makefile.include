@@ -73,7 +73,8 @@ shtml: $(cchtml) $(chtml) $(hhtml) $(ahtml)
 CXXFLAGS += -Os -std=c++17 -pedantic
 #CXXFLAGS += -nostdlib -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics
 CXXFLAGS += -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics #-Wgnu-string-literal-operator-template
-CXXFLAGS += -funsigned-char -funsigned-bitfields -fshort-enums
+CXXFLAGS += -funsigned-char -funsigned-bitfields -fshort-enums 
+#CXXFLAGS += -ffunction-sections  -fdata-sections # seperate sections -> see --gc-sections 
 CXXFLAGS += -fconcepts
 CXXFLAGS += -Wall -Wextra
 CXXFLAGS += -DF_OSC=$(F_OSC) -DF_CPU=$(F_OSC)
@@ -100,7 +101,8 @@ CFLAGS += $(MCUFLAGS)
 ASMFLAGS += -fverbose-asm
 ASMFLAGS +=  -Wa,-adhln
 
-LDFLAGS = $(MCUFLAGS) -Wl,-Map=main.map,--cref
+LDFLAGS = $(MCUFLAGS) -Wl,-Map=main.map,--cref #-Wl,--gc-sections # remove unused function (s.a. byte.h) 
+#LDFLAGS += "-Wl,--undefined=_mmcu,--section-start=.mmcu=0x910000" # simavrconsole.c
 LDFLAGS += "-Wl,--section-start=.mmcu=0x910000"
 
 AVRDUDE_PROGRAMMER = avrisp2

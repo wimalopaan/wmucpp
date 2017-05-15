@@ -27,7 +27,6 @@ namespace std {
 template<typename T, uint16_t Size>
 struct array final
 {
-//    typedef T type;
     typedef T value_type;
     typedef uint16_t size_type;
     
@@ -61,21 +60,21 @@ struct array final
     constexpr volatile T* end() volatile {
         return &data[Size];
     }
-    constexpr T& operator[](uint8_t index) {
+    inline constexpr T& operator[](uint8_t index) {
         assert(index < Size);
         return data[index];
     }
-    constexpr volatile T& operator[](uint8_t index) volatile {
+    inline constexpr volatile T& operator[](uint8_t index) volatile {
         assert(index < Size);
         return data[index];
     }
-    constexpr const T& operator[](uint8_t index) const {
+    inline constexpr const T& operator[](uint8_t index) const {
         assert(index < Size);
         return data[index];
     }
     static constexpr size_type size = Size;
 //private:
-    T data[Size] = {};
+    T data[Size] = {}; // rely on aggregate initialization
 };
 
 namespace detail {

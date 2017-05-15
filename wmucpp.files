@@ -48,9 +48,14 @@ boards/unimaxi/board.txt
 doc/bmcpp01/bm40a.cc
 doc/bmcpp01/bm40b.c
 doc/bmcpp01/bm50a.cc
+doc/bmcpp01/bm60a.cc
+doc/bmcpp01/bm61a.cc
+doc/bmcpp02/bm00a.cc
 doc/bmcpp02/bm02b.c
 doc/bmcpp02/bm03b.c
 doc/bmcpp02/bm04a.cc
+doc/bmcpp02/bm21a.cc
+doc/bmcpp02/bm22a.cc
 doc/bmcpp03/bm07a.cc
 doc/bmcpp03/bm08a.cc
 doc/bmcpp04/bm10a.cc
@@ -67,6 +72,9 @@ doc/bmcpp10/bm11a.cc
 doc/bmcpp20/Makefile
 doc/bmcpp20/bm01a.cc
 doc/bmcpp20/bm02a.cc
+doc/bmcpp20/bm03a.cc
+doc/bmcpp20/bm04a.cc
+doc/bmcpp20/bm05a.cc
 doc/bmcpp20/simavrconsole.c
 doc/bmcpp98/Makefile
 doc/bmcpp98/bm05a.cc

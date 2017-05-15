@@ -16,7 +16,7 @@ int main() {
     Scoped<EnableInterrupt> interruptEnabler;
 //    uint64_t value = 1234;
     uint32_t value = 1234;
-    Util::V2::itoa<Base>(value, string);
+    Util::itoa<Base>(value, string);
     std::outl<terminal>(string);
 
     while(true) {}

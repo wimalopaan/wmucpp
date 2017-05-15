@@ -21,9 +21,11 @@
 #include "util/concepts.h"
 
 namespace Util {
+
 template<std::Integral T, uint8_t Base = 10> constexpr uint8_t numberOfDigits();
 
 namespace detail {
+
 template<int Position, uint8_t Base = 10, std::Integral T = uint8_t>
 uint8_t itoa_single(T& value, std::array<char, Util::numberOfDigits<T, Base>()>& data) {
     if constexpr(Position >= 0) {
@@ -38,36 +40,6 @@ uint8_t itoa_single(T& value, std::array<char, Util::numberOfDigits<T, Base>()>&
         return itoa_single<Position - 1, Base, T>(value, data);
     }
     return 0;
-}
-
-template<uint8_t Base = 10, std::Integral T = uint8_t, uint16_t L = 0, typename C = void>
-auto itoa(const T& value, C& data) -> decltype(data)& {
-    T v = value;
-    if constexpr(std::is_signed<T>::value) {
-        if (value < 0) {
-            v = -value; 
-        }
-    }
-    uint8_t position = std::numeric_limits<uint8_t>::max();
-    do {
-        uint8_t fraction = v % Base;
-        if (fraction < 10) {
-            data[++position] = '0' + fraction;
-        }
-        else {
-            data[++position] = 'a' - 10 + fraction;
-        }
-        v /= Base;
-    } while(v > 0);
-    
-    if constexpr(std::is_signed<T>::value) {
-        if (value < 0) {
-            data[++position] = '-';
-        }
-    }    
-    data[position + 1] = '\0';    
-    std::reverse(&data[0], &data[position]);
-    return data;
 }
 
 template<uint8_t Position, typename T, uint16_t L>
@@ -182,6 +154,31 @@ void itoa(T value, uint8_t length, char* data) {
     }
 }
 
+
+template<uint8_t Base = 10, std::Integral T = uint8_t, uint16_t L = 0, typename C = void>
+auto itoa(const T& value, C& data) -> decltype(data)& {
+    T v = value;
+    if constexpr(std::is_signed<T>::value) {
+        if (value < 0) {
+            v = -value; 
+        }
+    }
+    uint8_t position = std::numeric_limits<uint8_t>::max();
+    do {
+        uint8_t fraction = v % Base;
+        data[++position] = Convert<2, Base>::toChar(fraction);
+        v /= Base;
+    } while(v > 0);
+    
+    if constexpr(std::is_signed<T>::value) {
+        if (value < 0) {
+            data[++position] = '-';
+        }
+    }    
+    data[position + 1] = '\0';    
+    std::reverse(&data[0], &data[position]);
+    return data;
+}
 
 
 

@@ -1,4 +1,3 @@
-
 /*
  * WMuCpp - Bare Metal C++
  * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
@@ -17,11 +16,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <avr/io.h>
+#include "mcu/ports.h"
 
-#if __has_include(<avr/avr_mcu_section.h>)
-# include <avr/avr_mcu_section.h>
-#endif
+using PortB = AVR::Port<AVR::ATMega328P::PortRegister, AVR::B>;
+using Led1 = AVR::Pin<PortB, 0>;
 
-AVR_MCU_SIMAVR_CONSOLE(&GPIOR0);
-//const uint8_t _mmcu[2] _MMCU_ = { AVR_MMCU_TAG, 0 };
+//[main
+int main()
+{
+    Led1::template dir<AVR::Output>();
+    Led1::high();
+
+    while(true) {
+        Led1::toggle();
+    }
+}
+//]

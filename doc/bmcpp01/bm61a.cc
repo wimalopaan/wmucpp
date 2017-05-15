@@ -1,6 +1,5 @@
-
 /*
- * WMuCpp - Bare Metal C++
+ * WMuCpp - Bare Metal C++ 
  * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -12,16 +11,7 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#include <avr/io.h>
-
-#if __has_include(<avr/avr_mcu_section.h>)
-# include <avr/avr_mcu_section.h>
-#endif
-
-AVR_MCU_SIMAVR_CONSOLE(&GPIOR0);
-//const uint8_t _mmcu[2] _MMCU_ = { AVR_MMCU_TAG, 0 };
