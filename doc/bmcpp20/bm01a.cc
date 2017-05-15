@@ -37,16 +37,6 @@
 using terminalDevice = SimAVRDebugConsole;
 using terminal = std::basic_ostream<terminalDevice>;
 
-//using terminalDevice = AVR::Usart<1>;
-//using terminal = std::basic_ostream<terminalDevice>;
-
-namespace UtilN {
-namespace detail {
-
-} // detail
-
-} // UtilN
-
 using constantRateTimer = AVR::Timer16Bit<1>;
 constexpr const auto constantRatePeriod = 1000_us;
 
@@ -81,13 +71,6 @@ int main() {
     
     constexpr uint8_t Base = 10;
 
-//    for(auto d: UtilN::detail::Convert<uint8_t, 2, Base>::lookupTable) {
-//        for(auto c : d) {
-//            std::out<terminal>(c);
-//        }
-//        std::outl<terminal>();
-//    }
-    
     {
         uint64_t value = 65536;
         Util::V2::itoa<Base>(value, string);

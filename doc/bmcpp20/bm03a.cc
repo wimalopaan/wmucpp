@@ -9,11 +9,11 @@
 using terminalDevice = SimAVRDebugConsole;
 using terminal = std::basic_ostream<terminalDevice>;
 
-std::array<char, Util::numberOfDigits<uint64_t>() + 1> string;
 constexpr uint8_t Base = 10;
+std::array<char, Util::numberOfDigits<uint64_t, Base>() + 1> string;
 
 int main() {
-    Scoped<EnableInterrupt> interruptEnabler;
+//    Scoped<EnableInterrupt> interruptEnabler;
     uint32_t value = 1234;
     ltoa(value, &string[0], 10);
     std::outl<terminal>(string);

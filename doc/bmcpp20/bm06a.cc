@@ -13,7 +13,7 @@ constexpr uint8_t Base = 16;
 std::array<char, Util::numberOfDigits<uint64_t, Base>() + 1> string;
 
 int main() {
-    Scoped<EnableInterrupt> interruptEnabler;
+//    Scoped<EnableInterrupt> interruptEnabler;
 //    uint64_t value = 1234;
     uint16_t value = 0x04;
     Util::itoa_r<Base>(value, string);
