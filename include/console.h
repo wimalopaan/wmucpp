@@ -67,7 +67,7 @@ template<MCU::Stream Stream>
 void out(std::byte b) {
     constexpr uint8_t Base = 16;
     std::array<char, Util::numberOfDigits<uint8_t, Base>() + 1> buffer;
-    Util::itoa<Base>(std::to_integer<uint8_t>(b), buffer);
+    Util::itoa_r<Base>(std::to_integer<uint8_t>(b), buffer);
     out<Stream>("0x"_pgm);
     Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(&buffer[0]);
 }

@@ -24,5 +24,7 @@ int main() {
     x = std::byte{32};
     x |= std::byte{10};
     
+//    x * 10; // nicht möglich
+    
     while (true) {}
 }

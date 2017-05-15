@@ -63,23 +63,23 @@ constexpr uint8_t numberOfDigits() {
 }
 
 
-template<uint8_t Base = 10, std::Integral T = uint8_t>
-auto itoa_r(T value, std::array<char, Util::numberOfDigits<T, Base>()>& data) -> decltype(data)& {
+template<uint8_t Base = 10, std::Integral T = uint8_t, uint16_t L>
+auto itoa_r(T value, std::array<char, L>& data) -> decltype(data)& {
     static_assert((Base >= 2) && (Base <= 16), "wrong base");
+    static_assert(L > Util::numberOfDigits<T, Base>(), "wrong length");
+    constexpr uint8_t Position = Util::numberOfDigits<T, Base>() - 1;
     T v = value;
     if constexpr(std::is_signed<T>::value) {
         if (value < 0) {
             v = -value; 
         }
-    }
-    if constexpr(std::is_signed<T>::value) {
-        uint8_t last = detail::itoa_single<data.size - 1, Base, T>(v, data);
+        uint8_t last = detail::itoa_single<Position, Base, T>(v, data);
         if (value < 0) {
             data[last] = '-';
         }
     }   
     else {
-        detail::itoa_single<data.size - 1, Base, T>(v, data);
+        detail::itoa_single<Position, Base, T>(v, data);
     }
     return data;
 }
@@ -88,7 +88,6 @@ template<uint8_t Base = 10, std::Integral T = uint8_t, uint16_t L = 0>
 auto itoa(const T& value, std::array<char, L>& data) -> decltype(data)& {
     static_assert((Base >= 2) && (Base <= 16), "wrong base");
     static_assert(L > Util::numberOfDigits<T, Base>(), "wrong char buffer length");
-    
     return detail::itoa<Base>(value, data);
 }
 
