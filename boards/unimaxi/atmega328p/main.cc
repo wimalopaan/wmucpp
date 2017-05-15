@@ -240,6 +240,7 @@ int main()
             }
             if (i2c::isChanged()) {
                 i2c::isChanged() = false;
+                lcd::setPosition(LCD::Row{1}, LCD::Column{0});
                 lcd::put(i2c::registers()[0]);
             }
             if (EventManager::unprocessedEvent()) {

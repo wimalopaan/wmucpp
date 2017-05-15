@@ -84,13 +84,6 @@ template<MCU::Stream Stream>
 void out(std::lineTerminator<LF>) {
     Util::put<typename Stream::device_type, Config::ensureTerminalOutput>('\n');
 }
-//template<MCU::Stream Stream, typename C, C... CC>
-//void out(const PgmString<C, CC...>& s) {
-//    const char * ptr = s.data;
-//    while (char c = pgm_read_byte(ptr++)) {
-//        Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(c);
-//    };   
-//}
 template<MCU::Stream Stream, uint16_t L>
 void out(const std::array<char, L>& a) {
     for(char c : a) {
@@ -171,8 +164,6 @@ BufferDevice<Buffer>& operator<<(BufferDevice<Buffer>& o, const char* str) {
     }
     return o;
 }
-
-
 template<MCU::Stream Stream>
 Stream& operator<<(Stream& o, char c) {
     if constexpr(!Config::disableCout) {
