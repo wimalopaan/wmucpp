@@ -381,7 +381,7 @@ int main() {
                 display2::brightness(brightness);
             }
             if constexpr(use4x4) {
-                display::brightness = brightness;
+                display::brightness(brightness);
             }
 
             systemConstantRate::periodic();

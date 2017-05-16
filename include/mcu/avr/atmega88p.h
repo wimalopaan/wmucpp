@@ -286,6 +286,10 @@ struct ATMega88P final
         volatile uint8_t eicra;
         static constexpr uint8_t address = 0x3b;
     };
+    struct Clock {
+        DataRegister<Clock, ReadWrite, uint8_t> osccal;
+        static constexpr uint8_t address = 0x66;
+    };
 };
 }
 

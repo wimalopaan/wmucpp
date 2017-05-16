@@ -37,6 +37,10 @@ public:
 
     static void init() {
         Leds::init();
+        clear();
+    }
+    static void clear() {
+        Leds::off();
     }
 
     template<typename Clock>
@@ -60,7 +64,7 @@ public:
         if constexpr((N % 2) == 0) {
             for(uint8_t i = 0; i < 4; ++i) {
                 if (v & (1 << i)) {
-                    Leds::template set<false>(4 * N + i, Color1);
+                    Leds::template set<false>(4 * N + i, Color1 * brightness());
                 }
                 else {
                     Leds::template set<false>(4 * N + i, Color{0});
@@ -70,7 +74,7 @@ public:
         else {
             for(uint8_t i = 0; i < 4; ++i) {
                 if (v & (1 << i)) {
-                    Leds::template set<false>(4 * (N + 1) - 1 - i, Color1);
+                    Leds::template set<false>(4 * (N + 1) - 1 - i, Color1 * brightness());
                 }
                 else {
                     Leds::template set<false>(4 * (N + 1) - 1 - i, Color{0});
@@ -78,6 +82,13 @@ public:
             }
         }
     }
-    inline static std::percent brightness = 100_ppc;
+    static const std::percent& brightness() {
+        return mBrightness;
+    }
+    static void brightness(const std::percent& b) {
+        mBrightness = b;
+    }
+private:
+    inline static std::percent mBrightness = 100_ppc;
 };
 
