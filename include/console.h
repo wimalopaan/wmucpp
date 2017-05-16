@@ -107,6 +107,12 @@ void out(const DateTime::TimeTm& t) {
 }
 
 template<MCU::Stream Stream>
+void out(const std::percent& p) {
+    out<Stream>(p.value());
+    out<Stream>('%');
+}
+
+template<MCU::Stream Stream>
 void out(const std::hertz& f) {
     out<Stream>(f.value);
     out<Stream>("Hz"_pgm);

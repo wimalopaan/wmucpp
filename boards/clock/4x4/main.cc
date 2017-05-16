@@ -16,53 +16,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 // sudo avrdude -p atmega88p -P usb -c avrisp2 -U lfuse:w:0xd0:m -U hfuse:w:0xdf:m -U efuse:w:0xf9:m
 
-#include <stdlib.h>
-#include <util/eu_dst.h>
+#define NDEBUG
 
-#include "mcu/avr8.h"
-#include "mcu/ports.h"
-#include "mcu/avr/usart.h"
-#include "mcu/avr/adc.h"
+#include <stdlib.h>
+
+#include "../../include/universal01.h"
+
 #include "hal/event.h"
 #include "hal/constantrate.h"
 #include "hal/alarmtimer.h"
-#include "hal/adccontroller.h"
-#include "external/ws2812.h"
-#include "external/dcf77.h"
 #include "appl/ledflash.h"
 #include "appl/clockstatemachine.h"
 #include "appl/timerdisplay4x4.h"
 #include "std/chrono.h"
-
 #include "console.h"
-
-constexpr bool use4x4    = false;
-
-using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
-using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
-using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
-
-using iRPin    = AVR::Pin<PortB, 0>;
-using leds1Pin = AVR::Pin<PortB, 1>;
-using leds2Pin = AVR::Pin<PortB, 2>;
-using ppm1Pin  = AVR::Pin<PortB, 3>;
-
-using adc = AdcController<AVR::Adc<0>, 0>;
-
-using rxdPin         = AVR::Pin<PortD, 0>;
-using txdPin         = AVR::Pin<PortD, 1>;
-using dcfPin         = AVR::Pin<PortD, 2>;
-using ppm2Pin        = AVR::Pin<PortD, 3>;
-using powerSwitchPin = AVR::Pin<PortD, 4>;
-using spiClockPin    = AVR::Pin<PortD, 5>;
-using spiDataPin     = AVR::Pin<PortD, 6>;
-using ledPin         = AVR::Pin<PortD, 7>;
-
-using led = WS2812<1, ledPin, ColorSequenceGRB>;
-using Color = led::color_type;
 
 namespace Constant {
 static constexpr uint8_t brightness = 255;
@@ -87,7 +56,8 @@ using statusLed = LedFlash<led>;
 
 using leds1 = WS2812<16, leds1Pin, ColorSequenceGRB>;
 
-using terminal = AVR::Usart<0, void>;
+using terminalDevive = AVR::Usart<0, void>;
+using terminal = std::basic_ostream<terminalDevive>;
 
 using systemTimer = AVR::Timer8Bit<0>; // timer 0
 using alarmTimer  = AlarmTimer<systemTimer>;
@@ -96,15 +66,9 @@ using dcfDecoder = DCF77<dcfPin, Config::Timer::frequency, EventManager, true>;
 
 using systemConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<0>::CompareA, alarmTimer, dcfDecoder>;
 
-using isrRegistrar = IsrRegistrar<systemConstantRate, terminal::RxHandler, terminal::TxHandler>;
-
+using isrRegistrar = IsrRegistrar<systemConstantRate, terminalDevive::RxHandler, terminalDevive::TxHandler>;
 
 using display = TimerDisplay4x4<leds1, Constant::cBlue>;
-
-namespace std {
-std::basic_ostream<terminal> cout;
-std::lineTerminator<CRLF> endl;
-}
 
 const auto blinkTimer = alarmTimer::create(100_ms, AlarmFlags::Periodic);
 const auto secondsTimer = alarmTimer::create(1000_ms, AlarmFlags::Periodic);
@@ -120,42 +84,42 @@ struct StateManager{
     static void enter(State state) {
         switch(state) {
         case State::PreStart:
-            std::cout << "S: PreStart"_pgm << std::endl;
+            std::outl<terminal>("S: PreStart"_pgm);
             statusLed::steadyColor(Constant::cOff);
             if constexpr(!std::is_same<PowerPin, void>::value) {
                 powerSwitchPin::off();
             }
             break;
         case State::Start:
-            std::cout << "S: Start"_pgm << std::endl;
+            std::outl<terminal>("S: Start"_pgm);
             statusLed::steadyColor(Constant::cBlue * brightness);
             if constexpr(!std::is_same<PowerPin, void>::value) {
                 powerSwitchPin::off();
             }
             break;
         case State::Sync1:
-            std::cout << "S: Sync1"_pgm << std::endl;
+            std::outl<terminal>("S: Sync1"_pgm);
             statusLed::steadyColor(Constant::cYellow * brightness);
             if constexpr(!std::is_same<PowerPin, void>::value) {
                 powerSwitchPin::off();
             }
             break;
         case State::Sync2:
-            std::cout << "S: Sync2"_pgm << std::endl;
+            std::outl<terminal>("S: Sync2"_pgm);
             statusLed::steadyColor(Constant::cCyan * brightness);
             if constexpr(!std::is_same<PowerPin, void>::value) {
                 powerSwitchPin::off();
             }
             break;
         case State::Sync3:
-            std::cout << "S: Sync3"_pgm << std::endl;
+            std::outl<terminal>("S: Sync3"_pgm);
             statusLed::steadyColor(Constant::cRed * brightness);
             if constexpr(!std::is_same<PowerPin, void>::value) {
                 powerSwitchPin::off();
             }
             break;
         case State::Clock:
-            std::cout << "S: Clock"_pgm << std::endl;
+            std::out<terminal>("S: Clock"_pgm);
             statusLed::steadyColor(Constant::cGreen * brightness);
             systemClock = std::chrono::system_clock<>::from(dcfDecoder::dateTime());
             if constexpr(!std::is_same<PowerPin, void>::value) {
@@ -163,7 +127,7 @@ struct StateManager{
             }
             break;
         case State::Error:
-            std::cout << "S: Error"_pgm << std::endl;
+            std::outl<terminal>("S: Error"_pgm);
             statusLed::steadyColor(Constant::cMagenta * brightness);
             if constexpr(!std::is_same<PowerPin, void>::value) {
                 powerSwitchPin::off();
@@ -182,16 +146,16 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
             statusLed::tick(brightness);
         }
         else if (timer == *secondsTimer) {
-            std::cout << "light: "_pgm << brightness << std::endl;
+            std::outl<terminal>("light: "_pgm, brightness);
             if (systemClock) {
                 display::set(systemClock);
                 
-                std::cout << systemClock.dateTime() << std::endl;
+                std::outl<terminal>(systemClock.dateTime());
                 
                 if ((systemClock.value() % Constant::secondsPerDay) == 0) {
                     systemClock = -1;
                     clockFSM::process(ClockStateMachine::Event::ReSync);
-                    std::cout << "ReSync"_pgm << std::endl;
+                    std::outl<terminal>("ReSync"_pgm);
                 }
             }
             systemClock.tick();            
@@ -263,26 +227,18 @@ using allEventHandler = EventHandlerGroup<TimerHandler, UsartFeHandler, UsartUpe
                                         DCFReceive0Handler, DCFReceive1Handler, DCFDecodeHandler, DCFSyncHandler, DCFErrorHandler, DCFParityHandler>;
 
 int main(){   
-//    set_zone(ONE_HOUR); // europe central time
-//    set_dst(eu_dst);
-    
     isrRegistrar::init();
     alarmTimer::init();
-    
     powerSwitchPin::dir<AVR::Output>();    
     powerSwitchPin::off();    
-    
-    terminal::init<19200>();
-    
+    terminalDevive::init<19200>();
     statusLed::init();
-    
     display::init();
-
     adc::init();
     
     {
         Scoped<EnableInterrupt> ei;
-        std::cout << Constant::title << std::endl;
+        std::outl<terminal>(Constant::title);
         alarmTimer::start(*preStartTimer);
         EventManager::run2<allEventHandler>([](){
             adc::periodic();
@@ -315,7 +271,7 @@ ISR(USART_UDRE_vect){
 
 #ifndef NDEBUG
 void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
-    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
+    std::outl<terminal>("Assertion failed: "_pgm, expr, ',', file, ',', line);
     while(true) {}
 }
 #endif
