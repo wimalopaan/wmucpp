@@ -150,7 +150,7 @@ struct ATMega328PB final
     };
 
     struct Timer16Bit {
-        static constexpr const uint8_t count = 1;
+        static constexpr const uint8_t count = 3;
         typedef uint16_t value_type;
         enum class TCCRA : uint8_t {
             coma0 = (1 << COM1A0),
@@ -181,10 +181,12 @@ struct ATMega328PB final
         template<int N> struct PrescalerBits;
     };
     struct PCInterrupts {
+        static constexpr const uint8_t count = 3;
         DataRegister<PCInterrupts, ReadWrite, std::byte> pcmsk;
         template<int N> struct Address;
     };
     struct Timer8Interrupts {
+        static constexpr const uint8_t count = 2;
         enum class Flags : uint8_t {
             ocfb = (1 << OCF0B),
             ocfa = (1 << OCF0A),
@@ -201,6 +203,7 @@ struct ATMega328PB final
         template<uint8_t N> struct Address;
     };
     struct Timer16Interrupts {
+        static constexpr const uint8_t count = 3;
         enum class Flags : uint8_t {
             icf  = (1 << ICF1),
             ocfb = (1 << OCF1B),

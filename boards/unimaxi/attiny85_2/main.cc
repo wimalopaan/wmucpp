@@ -122,13 +122,6 @@ int main()
     }
 }
 ISR(PCINT0_vect) {
-//    static uint8_t t = 0;
-//    if ((++t % 2) == 0) {
-//        led::off();
-//    }
-//    else {
-//        led::set(Color{Blue{128}});
-//    }
     isrRegistrar::isr<AVR::ISR::PcInt<0>>();
 }
 ISR(TIMER0_OVF_vect) {

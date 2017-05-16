@@ -30,6 +30,7 @@ namespace AVR {
 struct ATTiny84 final {
     ATTiny84() = delete;
     struct Timer8Bit {
+        static constexpr const uint8_t count = 1;
         enum class TCCRA : uint8_t {
             coma0 = (1 << COM0A0),
             coma1 = (1 << COM0A1),
@@ -94,6 +95,7 @@ struct ATTiny84 final {
     };
     
     struct USI {
+        static constexpr const uint8_t count = 1;
         enum class USIC : uint8_t {
             sie = (1 << USISIE),
             oie = (1 << USIOIE),
@@ -128,6 +130,7 @@ struct ATTiny84 final {
         template<typename P> struct Address;
     };
     struct Timer8Interrupts {
+        static constexpr const uint8_t count = 1;
         enum class Flags : uint8_t {
             ocfb = (1 << OCF0B),
             ocfa = (1 << OCF0A),
@@ -143,6 +146,7 @@ struct ATTiny84 final {
         template<uint8_t N> struct Address;
     };
     struct Timer16Interrupts {
+        static constexpr const uint8_t count = 1;
         enum class Flags : uint8_t {
             icf  = (1 << ICF1),
             ocfb = (1 << OCF1B),
@@ -175,6 +179,7 @@ struct ATTiny84 final {
         static constexpr uint8_t address = 0x5a;
     };
     struct PCInterrupts {
+        static constexpr const uint8_t count = 2;
         DataRegister<PCInterrupts, ReadWrite, std::byte> pcmsk;
         template<int N> struct Address;
     };

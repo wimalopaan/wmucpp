@@ -34,6 +34,7 @@ struct ATTiny25 final {
     static constexpr bool is_atomic() {return false;}
     
     struct Timer8Bit {
+        static constexpr const uint8_t count = 1;
         DataRegister<Timer8Bit> ocrb;
         DataRegister<Timer8Bit> ocra;
         enum class TCCRA : uint8_t {
@@ -61,6 +62,7 @@ struct ATTiny25 final {
         template<int N> struct PrescalerBits;
     };
     struct Timer8BitHighSpeed {
+        static constexpr const uint8_t count = 1;
         volatile uint8_t ocrb;
         volatile uint8_t gtccr;
         volatile uint8_t ocrc;
@@ -82,6 +84,7 @@ struct ATTiny25 final {
     };
     
     struct USI {
+        static constexpr const uint8_t count = 1;
         enum class USIC : uint8_t {
             sie = (1 << USISIE),
             oie = (1 << USIOIE),
@@ -151,6 +154,7 @@ struct ATTiny25 final {
         static constexpr uint8_t address = 0x5a;
     };
     struct PCInterrupts {
+        static constexpr const uint8_t count = 1;
         DataRegister<PCInterrupts, ReadWrite, std::byte> pcmsk;
         template<int N> struct Address;
     };

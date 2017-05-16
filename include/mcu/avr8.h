@@ -44,17 +44,17 @@ namespace AVR {
 
 // todo: change to non constexpr here, since reinterpret_cast renders it non-constexpr at all
 
-template<typename Component>
+template<MCU::SingleComponent Component>
 constexpr inline Component* getBaseAddr() {
     return reinterpret_cast<Component*>(Component::address);
 }
 
-template<typename Component, int Number>
+template<MCU::MultipleComponent Component, int Number>
 constexpr inline Component* getBaseAddr() {
     return reinterpret_cast<Component*>(Component::template Address<Number>::value);
 }
 
-template<typename Component, typename Letter>
+template<typename Component, MCU::Letter Letter>
 constexpr inline Component* getBaseAddr() {
     return reinterpret_cast<Component* const>(Component::template Address<Letter>::value);
 }

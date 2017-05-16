@@ -177,10 +177,12 @@ struct ATMega88P final
         template<int N> struct PrescalerBits;
     };
     struct PCInterrupts {
+        static constexpr const uint8_t count = 3;
         DataRegister<PCInterrupts, ReadWrite, std::byte> pcmsk;
         template<int N> struct Address;
     };
     struct Timer8Interrupts {
+        static constexpr const uint8_t count = 2;
         enum class Flags : uint8_t {
             ocfb = (1 << OCF0B),
             ocfa = (1 << OCF0A),
@@ -197,6 +199,7 @@ struct ATMega88P final
         template<uint8_t N> struct Address;
     };
     struct Timer16Interrupts {
+        static constexpr const uint8_t count = 1;
         enum class Flags : uint8_t {
             icf  = (1 << ICF1),
             ocfb = (1 << OCF1B),

@@ -49,7 +49,7 @@ struct Input final {
     }
 };
 
-template<typename MCUPort, typename Name>
+template<typename MCUPort, MCU::Letter Name>
 struct Port final {
     typedef MCUPort mcuport_type;
     typedef Name name_type;

@@ -41,7 +41,7 @@ concept bool EventHandlerGroup() {
     };
 }
 
-// todo: produces internal compiler error
+// note: produces internal compiler error (s.a. EventHandler)
 template<typename EH>
 concept bool EventHandler() {
     return requires(EH eh) {
