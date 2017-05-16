@@ -28,8 +28,8 @@ public:
 //    template<FCallable P, FCallable... Pp> // internal error of g++
     template<typename... P>
     static void g() {
+//        (Pp::f(), ...);
         (P::f(), ...);
-//        P::f();
     }
 };
 class A {
