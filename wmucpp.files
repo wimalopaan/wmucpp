@@ -22,6 +22,9 @@ boards/clock/universal_mg/testleds.cc
 boards/clock/wordclock/Makefile
 boards/clock/wordclock/board.txt
 boards/clock/wordclock/main.cc
+boards/include/steuersensormodul01.h
+boards/include/universal01.h
+boards/include/universal02mg.h
 boards/protector/board.txt
 boards/rcsensorled/Makefile
 boards/rcsensorled/board.txt

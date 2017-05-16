@@ -61,3 +61,4 @@ include/external/esp8266
 doc/bmcpp20
 include/util/detail
 3rdparty/itoa
+boards/include
