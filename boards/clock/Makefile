@@ -20,7 +20,7 @@
 MCU = atmega88p
 F_OSC = 20000000
 
-subdirs = wordclock nixie 4x4 ring60 universal_mg
+subdirs = wordclock nixie 4x4 ring60 universal_mg oneled
 
 targets +=  main.elf
 
