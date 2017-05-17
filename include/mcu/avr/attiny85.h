@@ -153,6 +153,10 @@ struct ATTiny85 final {
         DataRegister<PCInterrupts, ReadWrite, std::byte> pcmsk;
         template<int N> struct Address;
     };
+    struct Clock {
+        DataRegister<Clock, ReadWrite, uint8_t> osccal;
+        static constexpr uint8_t address = 0x51;
+    };
 };
 
 template<>
