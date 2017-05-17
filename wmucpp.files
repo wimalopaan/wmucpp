@@ -12,6 +12,8 @@ boards/clock/Makefile
 boards/clock/main.cc
 boards/clock/nixie/Makefile
 boards/clock/nixie/main.cc
+boards/clock/oneled/Makefile
+boards/clock/oneled/main.cc
 boards/clock/ring60/Makefile
 boards/clock/ring60/main.cc
 boards/clock/universal/board.txt
@@ -22,6 +24,7 @@ boards/clock/universal_mg/testleds.cc
 boards/clock/wordclock/Makefile
 boards/clock/wordclock/board.txt
 boards/clock/wordclock/main.cc
+boards/include/oneled01.h
 boards/include/steuersensormodul01.h
 boards/include/universal01.h
 boards/include/universal02mg.h
