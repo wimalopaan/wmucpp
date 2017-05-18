@@ -21,6 +21,8 @@ MCU = attiny85
 F_OSC = 8000000
 
 targets +=  bm05a.elf bm05a.s
+targets +=  bm01a.elf bm01a.s
+targets +=  bm02a.elf bm02a.s
 
 -include ../../Makefile.include
 

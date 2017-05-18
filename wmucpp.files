@@ -84,6 +84,8 @@ doc/bmcpp20/bm05a.cc
 doc/bmcpp20/bm06a.cc
 doc/bmcpp20/simavrconsole.c
 doc/bmcpp98/Makefile
+doc/bmcpp98/bm01a.cc
+doc/bmcpp98/bm02a.cc
 doc/bmcpp98/bm05a.cc
 doc/bmcpp99/bm05a.cc
 doc/bmcpp99/bm10a.cc
