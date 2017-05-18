@@ -57,11 +57,28 @@ struct SWUsartRxTx<0, AVR::ATMega328P> {
 };
 
 template<>
+struct SWUsartRxTx<0, AVR::ATMega328PB> {
+    SWUsartRxTx() = delete;
+    using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
+    using rx = AVR::Pin<PortB, 0>; // icp1
+    using tx = AVR::Pin<PortB, 1>;
+};
+
+template<>
 struct SWUsartRxTx<1, AVR::ATMega328PB> {
     SWUsartRxTx() = delete;
     using PortE = AVR::Port<DefaultMcuType::PortRegister, AVR::E>;
     using rx = AVR::Pin<PortE, 2>; // icp3
     using tx = AVR::Pin<PortE, 1>;
+};
+
+template<>
+struct SWUsartRxTx<0, AVR::ATTiny84> {
+    SWUsartRxTx() = delete;
+    using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
+    using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
+    using rx = AVR::Pin<PortA, 7>; // icp
+    using tx = AVR::Pin<PortB, 2>;
 };
 
 template<uint8_t N> struct SWUsartEventMapper;
@@ -77,7 +94,11 @@ struct SWUsartEventMapper<1> {
 };
 
 template<uint8_t N, typename MCU = DefaultMcuType>
-class SWUsart final {
+class SWUsart;
+
+template<uint8_t N, typename MCU>
+requires AVR::ATMegaB<MCU>() || ((N == 0) && AVR::ATTinyB<MCU>())
+class SWUsart<N, MCU> final {
     static_assert(N < 2, "wrong swusart number");
 
     static constexpr uint8_t mcu_timer_number = 2 * N + 1;
@@ -177,13 +198,16 @@ public:
     }
     template<bool enable>
     static void rxEnable() {
-        mcuInterrupts()->tifr  |= _BV(ICF1);
+        mcuInterrupts()->tifr.template add<int_type::Flags::icf>();
+//        mcuInterrupts()->tifr  |= _BV(ICF1);
         if constexpr (enable) {
-            mcuInterrupts()->timsk = (mcuInterrupts()->timsk & ~(_BV(OCIE1B))) | _BV(ICIE1);
+            mcuInterrupts()->timsk.template clear<int_type::Mask::ocieb | int_type::Mask::icie>();
+//            mcuInterrupts()->timsk = (mcuInterrupts()->timsk & ~(_BV(OCIE1B))) | _BV(ICIE1);
         }
         else {
-            mcuInterrupts()->timsk &=  ~(_BV(OCIE1A));
-            mcuInterrupts()->timsk &=  ~(_BV(ICIE1));
+            mcuInterrupts()->timsk.template clear<int_type::Mask::ociea | int_type::Mask::icie>();
+//            mcuInterrupts()->timsk &=  ~(_BV(OCIE1A));
+//            mcuInterrupts()->timsk &=  ~(_BV(ICIE1));
         }
     }
 private:
@@ -191,4 +215,58 @@ private:
     inline static volatile uint16_t outframe = 0x0001;
     inline static volatile uint16_t inframe = 0;
     inline static volatile uint8_t inbits = 0;
+};
+
+
+// todo: TxPin konfigurierbar machen
+template<uint8_t N, AVR::ATTinyA MCU>
+class SWUsart<N, MCU> final {
+    static_assert(N < 2, "wrong swusart number");
+    
+    static constexpr uint8_t mcu_timer_number = N;
+    
+    using mcu_timer_type = typename std::conditional<(N == 0), typename MCU::Timer8Bit, typename MCU::Timer8BitHighSpeed>::type;
+    
+    static constexpr auto timer = AVR::getBaseAddr<mcu_timer_type, mcu_timer_number>;
+    static constexpr auto mcuInterrupts = AVR::getBaseAddr<typename MCU::TimerInterrupts>;
+
+    typedef typename MCU::TimerInterrupts int_type;
+public:
+    SWUsart() = delete;
+
+    template<uint16_t Baud>
+    static void init() {
+        static_assert(Baud >= 2400, "SWUSART should use a valid baud rate >= 2400");
+    }
+    static bool put(std::byte item) {
+        if (sendQueue.push_back(item)) {
+            return true;
+        }
+        return false;
+    }
+    struct TransmitBitHandler : public IsrBaseHandler<typename AVR::ISR::Timer<mcu_timer_number>::CompareA> {
+        static void isr() {
+            if (outframe != 0x0001) {
+                if (outframe & 0x0001) {
+                    SWUsartRxTx<N>::tx::on();
+                }
+                else {
+                    SWUsartRxTx<N>::tx::off();
+                }
+                outframe = (outframe >> 1);
+            }
+            else {
+                if (auto c = sendQueue.pop_front()) {
+                    outframe = (3 << 9) | ((uint8_t)*c << 1);
+                }
+                else {
+                    outframe = 0x0001;
+                    mcuInterrupts()->timsk.template clear<int_type::Mask::ociea>();
+                }
+            }
+        }
+    };
+private:    
+    inline static std::FiFo<std::byte, Config::Usart::SendQueueLength> sendQueue;
+    inline static volatile uint16_t outframe = 0x0001;
 };

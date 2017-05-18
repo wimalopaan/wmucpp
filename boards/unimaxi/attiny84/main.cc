@@ -25,9 +25,14 @@
 #include "mcu/avr/mcutimer.h"
 #include "mcu/avr/delay.h"
 #include "mcu/avr/usi.h"
+#include "mcu/avr/swusart.h"
 #include "hal/softppm.h"
 #include "hal/alarmtimer.h"
 #include "external/ws2812.h"
+#include "console.h"
+
+//#define USE_PPM
+#define USE_SWUART
 
 using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
@@ -41,23 +46,32 @@ using leds2 = WS2812<4, leds2Pin>;
 
 using ppm3Out = AVR::Pin<PortB, 2>;
 using ppm4Out = AVR::Pin<PortA, 7>;
+#ifdef USE_PPM
 using ppmTimer = AVR::Timer16Bit<1>;
 using ppm = SoftPPM<ppmTimer, ppm3Out, ppm4Out>;
-
+#endif
 using i2cInterruptPin = AVR::Pin<PortB, 0>;
 
 constexpr auto interruptPulseWidth = 10_us;
 using i2cInterrupt = AVR::SinglePulse<i2cInterruptPin, interruptPulseWidth>;
 
-using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
-using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
-
 constexpr TWI::Address address{0x53};
 using Usi = AVR::Usi<0>;
 using i2c = I2C::I2CSlave<Usi, address, 2>;
 
-using isrRegistrar = IsrRegistrar<i2c::I2CSlaveHandlerOvfl, i2c::I2CSlaveHandlerStart,
-                                  ppm::OCAHandler, ppm::OCBHandler>;
+#ifdef USE_SWUART
+using uart = SWUsart<0>;
+using terminal = std::basic_ostream<uart>;
+#endif
+
+using isrRegistrar = IsrRegistrar<i2c::I2CSlaveHandlerOvfl, i2c::I2CSlaveHandlerStart
+#ifdef USE_PPM
+                                  ,ppm::OCAHandler, ppm::OCBHandler
+#endif
+#ifdef USE_SWUART
+                                  ,uart::TransmitBitHandler
+#endif
+>;
 
 int main() 
 {
@@ -69,7 +83,9 @@ int main()
     leds2::init();
     leds2::off();
     
+#ifdef USE_PPM
     ppm::init();
+#endif
     
     i2cInterrupt::init();
     
@@ -77,6 +93,10 @@ int main()
 
     {
         Scoped<EnableInterrupt> ei;
+        
+#ifdef USE_SWUART
+        std::outl<terminal>("attiny84"_pgm);
+#endif
         while(true) {
             static uint8_t counter = 0;
             Util::delay(100_ms);
@@ -92,12 +112,19 @@ int main()
         }    
     }    
 }
+#ifdef USE_PPM
 ISR(TIM1_COMPA_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<1>::CompareA>();
 }
 ISR(TIM1_COMPB_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<1>::CompareB>();
 }
+#endif
+#ifdef USE_SWUART
+ISR(TIM1_COMPA_vect) {
+    isrRegistrar::isr<AVR::ISR::Timer<1>::CompareA>();
+}
+#endif
 
 ISR(USI_OVF_vect) {
     isrRegistrar::isr<AVR::ISR::Usi<0>::Overflow>();
