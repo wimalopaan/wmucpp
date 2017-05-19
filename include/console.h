@@ -146,12 +146,17 @@ void out(const Config&) {
 } // detail
 
 template<MCU::Stream Stream, typename... TT>
-void out(TT... v) {
-    ((detail::out<Stream>(v)),...);
+void out(TT... v __attribute__((unused))) {
+    if constexpr(!std::is_same<typename Stream::device_type, void>::value) {
+        ((detail::out<Stream>(v)),...);
+    }
+    
 }
 template<MCU::Stream Stream, typename... TT>
-void outl(TT... v) {
-    ((detail::out<Stream>(v)),..., detail::out<Stream>(typename Stream::line_terminator_type()));
+void outl(TT... v __attribute__((unused))) {
+    if constexpr(!std::is_same<typename Stream::device_type, void>::value) {
+        ((detail::out<Stream>(v)),..., detail::out<Stream>(typename Stream::line_terminator_type()));
+    }
 }
 
 }
