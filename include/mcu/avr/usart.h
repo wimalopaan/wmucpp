@@ -100,6 +100,27 @@ struct UsartBase {
     static constexpr uint8_t number = N;
 };
 
+namespace Util {
+
+template<typename T>
+struct RxHandler {
+    typedef typename T::RxHandler type;    
+};
+template<>
+struct RxHandler<void> {
+    typedef void type;
+};
+template<typename T>
+struct TxHandler {
+    typedef typename T::TxHandler type;    
+};
+template<>
+struct TxHandler<void> {
+    typedef void type;
+};
+
+} //!Util
+
 template<uint8_t N, typename PA = void, typename MCU = DefaultMcuType>
 class Usart final : public UsartBase<MCU, N>
 {
