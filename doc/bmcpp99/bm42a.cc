@@ -24,10 +24,17 @@ struct A {
     static void f() {}
 };
 
-using a = std::conditional<useF, A, void>::type;
+using a = typename std::conditional<useF, A, void>::type;
+
+template<typename F>
+struct Appl {
+    static void main() {
+        if constexpr(std::is_same<F, A>::value) {
+            F::f();
+        }
+    }
+};
 
 int main() {
-    if constexpr(useF) {
-        a::f();
-    }
+    Appl<a>::main();
 }
