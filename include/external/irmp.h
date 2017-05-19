@@ -34,9 +34,9 @@ struct IrmpData {
 
 typedef struct IrmpData IRMP_DATA;
 
-extern void                             irmp_init (void);
-extern uint_fast8_t                     irmp_get_data (IRMP_DATA *);
-extern uint_fast8_t                     irmp_ISR (void);
+extern void         inline irmp_init (void);
+extern uint_fast8_t inline irmp_get_data (IRMP_DATA *);
+extern uint_fast8_t inline irmp_ISR (void);
 
 }
 
