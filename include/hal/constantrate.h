@@ -26,7 +26,7 @@
 
 template<typename W>
 concept bool CRWriter() { 
-    return requires (W w) { 
+    return std::is_same<W, void>::value || requires (W w) { 
         W::init();
         W::start();
         W::rateProcess();
@@ -103,14 +103,40 @@ private:
     inline static CounterType counter = 0;
 };
 
+namespace detail {
+template<typename T>
+struct Mapper {
+    static void rateProcess() {
+        T::rateProcess();
+    }
+    static void init() {
+        T::init();
+    }
+    static void start() {
+        T::start();
+    }
+};
+template<>
+struct Mapper<void> {
+    static void rateProcess() {
+    }
+    static void init() {
+    }
+    static void start() {
+    }
+};
+
+} // !detail
+
 template<MCU::Timer Timer, MCU::Interrupt Int, CRWriter... Writers >
 class ConstantRateAdapter : public IsrBaseHandler<Int> {
     template<typename... II> friend class IsrRegistrar;
+    
 public:
     static void periodic() {
         if (tickCounter > 0) {
             tickCounter = 0;
-            (Writers::rateProcess(),...);
+            (detail::Mapper<Writers>::rateProcess(),...);
         }
     }
     
@@ -121,10 +147,10 @@ public:
             Timer::mcuInterrupts()->tifr.template add<Timer::flags_type::ocfa | Timer::flags_type::ocfb>();
             Timer::mcuInterrupts()->timsk.template add<Timer::mask_type::ociea>();
         }
-        (Writers::init(),...);
+        (detail::Mapper<Writers>::init(),...);
     }
     static void start() {
-        (Writers::start(),...);
+        (detail::Mapper<Writers>::start(),...);
     }
     static void rateTick() {
         ++tickCounter;
