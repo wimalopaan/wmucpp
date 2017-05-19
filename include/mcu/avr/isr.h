@@ -60,14 +60,30 @@ extern "C" {
 
 #endif
 
+namespace ISR {
+namespace detail {
+template<typename ISR>
+struct Mask {
+    static constexpr auto value = ISR::isr_mask;
+};
+template<>
+struct Mask<void> {
+    static constexpr auto value = 0;
+};
+
+}
+}
+
 template<typename... HH>
-//template<MCU::ISR... HH>
+//template<MCU::ISR... HH> // todo: ICE triggered?
 struct IsrRegistrar {
     typedef uint64_t mask_type;
     
     static_assert(sizeof...(HH) <= 64, "too much different interrupts");
-    static constexpr mask_type all = (HH::isr_mask | ... | 0);
-    static_assert(Util::numberOfOnes(all) == sizeof...(HH), "Isr double defined");
+    static constexpr mask_type all = (ISR::detail::Mask<HH>::value | ... | 0);
+    static constexpr auto numberOfNonVoidHandler = ((ISR::detail::Mask<HH>::value > 0 ? 1 : 0) + ... + 0);
+    
+    static_assert(Util::numberOfOnes(all) == numberOfNonVoidHandler, "Isr double defined");
     
     static void init() {}
 
@@ -79,8 +95,10 @@ struct IsrRegistrar {
     template<uint8_t In, uint8_t N, MCU::IServiceR H, MCU::IServiceR... Hp>
     struct Caller {
         static constexpr void call() {
-            if constexpr (In == H::isr_number) {
-                H::isr();
+            if constexpr(!std::is_same<H, void>::value) {
+                if constexpr (In == H::isr_number) {
+                    H::isr();
+                }
             }
             if constexpr((N-1) > 0) {
                 Caller<In, N-1, Hp..., void>::call();
