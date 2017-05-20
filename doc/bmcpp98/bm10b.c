@@ -1,6 +1,6 @@
 /*
- * ++C - C++ introduction
- * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.meier@hs-kl.de>
+ * WMuCpp - Bare Metal C++ 
+ * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,3 +15,35 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include <stdint.h>
+
+#define USE_A1
+#define USE_B
+
+volatile uint8_t x_a = 0;
+
+inline void A1_f() {
+    x_a = 1;
+}
+inline void A2_f() {
+    x_a = 2;
+}
+
+volatile uint8_t x_b = 0;
+inline void B_f() {
+    x_b = 3;
+}
+
+int main() {
+#ifdef USE_A1
+    A1_f();
+#else
+    A2_f();
+#endif
+    
+#ifdef USE_B
+    B_f();
+#endif
+    while(1) {}
+}

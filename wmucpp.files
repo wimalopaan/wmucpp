@@ -87,6 +87,9 @@ doc/bmcpp98/Makefile
 doc/bmcpp98/bm01a.cc
 doc/bmcpp98/bm02a.cc
 doc/bmcpp98/bm05a.cc
+doc/bmcpp98/bm10a.cc
+doc/bmcpp98/bm10b.c
+doc/bmcpp98/bm20b.c
 doc/bmcpp99/bm05a.cc
 doc/bmcpp99/bm10a.cc
 doc/bmcpp99/bm20a.cc
@@ -98,6 +101,7 @@ doc/bmcpp99/bm42a.cc
 doc/bmcpp99/bm99a.c
 example/atmega8/blink.cc
 example/atmega8/blink.h
+example/attiny84/timer.cc
 example/basics/register01.cc
 example/basics/register02.cc
 example/basics/register03.cc

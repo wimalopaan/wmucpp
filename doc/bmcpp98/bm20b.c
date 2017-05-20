@@ -1,6 +1,6 @@
 /*
- * ++C - C++ introduction
- * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.meier@hs-kl.de>
+ * WMuCpp - Bare Metal C++ 
+ * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,3 +15,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+void f1(const char* p) {
+    volatile char first = p[0];
+}
+
+void f2(const char (*p)[10]) {
+    volatile char first = (*p)[0];
+}
+
+int main() {
+    const char s1[] = "abc";
+    const char s2[10] = "abc";
+    
+    f1(s1);
+    f2(s1); // decay
+
+    f1(s2);
+    f2(s2); // decay
+
+    f1(&s2); // incompatible
+    f2(&s2); // ok!!!
+    
+    const char* cs1 = s1;
+    const char* cs2 = s2; // decay
+
+    f1(cs1); 
+    f2(cs2); // decay
+}

@@ -33,6 +33,7 @@ targets +=  console.elf
 targets +=  spiws2812.elf
 targets +=  i2cslave.elf
 targets +=  i2cram.elf
+targets +=  timer.elf
 
 -include ../../Makefile.include
 
