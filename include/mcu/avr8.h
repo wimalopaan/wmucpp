@@ -31,6 +31,7 @@ namespace AVR {
 
 struct ATMegaNone;
 struct ATMega8;
+struct ATMega88P;
 struct ATMega1284P;
 struct ATMega328P;
 struct ATMega328PB;
@@ -39,20 +40,20 @@ struct ATTiny85;
 struct ATTiny25;
 
 template<typename T>
-concept bool ATTinyA() {
+concept bool ATTiny_X5() {
     return std::is_same<T, ATTiny25>::value || std::is_same<T, ATTiny85>::value;
 }
 template<typename T>
-concept bool ATTinyB() {
+concept bool ATTiny_X4() {
     return std::is_same<T, ATTiny84>::value;
 }
 template<typename T>
-concept bool ATMegaA() {
+concept bool ATMega_8() {
     return std::is_same<T, ATMega8>::value;
 }
 template<typename T>
-concept bool ATMegaB() {
-    return std::is_same<T, ATMega1284P>::value || std::is_same<T, ATMega328P>::value || std::is_same<T, ATMega328PB>::value;
+concept bool ATMega_X8() {
+    return std::is_same<T, ATMega1284P>::value || std::is_same<T, ATMega328P>::value || std::is_same<T, ATMega328PB>::value || std::is_same<T, ATMega88P>::value;
 }
 
 // todo: change to non constexpr here, since reinterpret_cast renders it non-constexpr at all
