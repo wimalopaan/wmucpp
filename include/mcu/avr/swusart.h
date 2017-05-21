@@ -97,7 +97,7 @@ template<uint8_t N, typename MCU = DefaultMcuType>
 class SWUsart;
 
 template<uint8_t N, typename MCU>
-requires AVR::ATMegaB<MCU>() || ((N == 0) && AVR::ATTinyB<MCU>())
+requires AVR::ATMega_X8<MCU>() || ((N == 0) && AVR::ATTiny_X4<MCU>())
 class SWUsart<N, MCU> final {
     static_assert(N < 2, "wrong swusart number");
 
@@ -219,7 +219,7 @@ private:
 
 
 // todo: TxPin konfigurierbar machen
-template<uint8_t N, AVR::ATTinyA MCU>
+template<uint8_t N, AVR::ATTiny_X5 MCU>
 class SWUsart<N, MCU> final {
     static_assert(N < 2, "wrong swusart number");
     
