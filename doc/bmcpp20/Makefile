@@ -28,6 +28,7 @@ bm03a.elf : LOADLIBES = simavrconsole.o
 bm04a.elf : LOADLIBES = simavrconsole.o
 bm05a.elf : LOADLIBES = simavrconsole.o
 bm06a.elf : LOADLIBES = simavrconsole.o
+bm10a.elf : LOADLIBES = simavrconsole.o
 
 targets += simavrconsole.o
 targets +=  bm01a.s bm01a.elf 
@@ -36,6 +37,7 @@ targets +=  bm03a.s bm03a.elf
 targets +=  bm04a.s bm04a.elf 
 targets +=  bm05a.s bm05a.elf 
 targets +=  bm06a.s bm06a.elf 
+targets +=  bm10a.s bm10a.elf 
 
 -include ../../Makefile.include
 
