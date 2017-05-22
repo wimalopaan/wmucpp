@@ -18,6 +18,8 @@
 
 #pragma once
 
+// todo: mit constraints wieder vereinheitlichen ohne ifdef
+
 #if defined(__AVR_ATmega328PB__)
 # include "grmega328pb.h"
 #endif
