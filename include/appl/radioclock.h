@@ -92,7 +92,8 @@ public:
     }        
 };
 
-template<typename DcfDecoder, typename StateEntry = void, auto flash = nullptr>
+// todo: make flash a type
+template<typename DcfDecoder, typename StateEntry = void, auto flash = nullptr, typename RCCalibrator = void>
 class Clock final {
     using clockFSM = StateMachine<DcfDecoder, StateEntry>;
     
@@ -117,6 +118,9 @@ class Clock final {
     struct DCFDecodeHandler : public EventHandler<EventType::DCFDecode> {
         static bool process(std::byte) {
             clockFSM::process(Event::DCFDecode);
+            if constexpr(!std::is_same<RCCalibrator, void>::value) {
+                RCCalibrator::calibrate();
+            }
             return true;
         }  
     };
