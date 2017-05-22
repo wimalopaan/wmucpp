@@ -40,7 +40,7 @@ class Timer8Bit;
 
 //template<uint8_t N, AVR::ATMega_X8 MCU>
 template<uint8_t N, typename MCU>
-requires AVR::ATMega_X8<MCU>() || ((N == 0) && (AVR::ATTiny_X4<MCU>()))
+requires AVR::ATMega_X4<MCU>() || AVR::ATMega_X8<MCU>() || ((N == 0) && (AVR::ATTiny_X4<MCU>()))
 class Timer8Bit<N, MCU> : public TimerBase<MCU, N> {
     Timer8Bit() = delete;
 public:
@@ -337,7 +337,7 @@ struct Timer16Bit;
 
 //template<uint8_t N, AVR::ATMega_X8 MCU>
 template<uint8_t N, typename MCU>
-requires AVR::ATMega_X8<MCU>() || ((N == 1) && AVR::ATTiny_X4<MCU>())
+requires AVR::ATMega_X4<MCU>() || AVR::ATMega_X8<MCU>() || ((N == 1) && AVR::ATTiny_X4<MCU>())
 struct Timer16Bit<N, MCU>: public TimerBase<MCU, N>
 {
     typedef AVR::ISR::Timer<N> isr_type;

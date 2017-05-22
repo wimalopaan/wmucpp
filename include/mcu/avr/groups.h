@@ -18,20 +18,9 @@
 
 #pragma once
 
-// todo: mit constraints wieder vereinheitlichen ohne ifdef
+// fixme: mit constraints wieder vereinheitlichen ohne ifdef
 
-#if defined(__AVR_ATmega328PB__)
-# include "grmega328pb.h"
-#endif
-#if defined(__AVR_ATmega328P__)
-# include "grmega328p.h"
-#endif
-#if defined(__AVR_ATmega1284P__)
-# include "grmega1284p.h"
-#endif
-#if defined(__AVR_ATtiny84__)
-# include "grtiny84.h"
-#endif
-#if defined(__AVR_ATtiny85__)
-# include "grtiny85.h"
-#endif
+#include "grmega_x4.h"
+#include "grmega_x8.h"
+#include "grtiny_x4.h"
+#include "grtiny_x5.h"

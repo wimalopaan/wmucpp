@@ -19,22 +19,23 @@
 #pragma once
 
 #include <stdint.h>
+#include "mcu/avr8.h"
 
 namespace AVR {
 
-template<uint8_t TimerN, typename MCU = DefaultMcuType>
+template<uint8_t TimerN, typename MCU>
 struct TimerParameter;
 
-template<>
-struct TimerParameter<0, ATTiny85> {
-    using PortD = AVR::Port<ATTiny85::PortRegister, AVR::D>;
+template<AVR::ATTiny_X5 MCU>
+struct TimerParameter<0, MCU> {
+    using PortD = AVR::Port<typename MCU::PortRegister, AVR::D>;
     typedef AVR::Pin<PortD, 6> ocAPin;
     typedef AVR::Pin<PortD, 5> ocBPin;
-    typedef AVR::Timer8Bit<0, ATTiny85> timer_type;
-    typedef timer_type::value_type value_type;
+    typedef AVR::Timer8Bit<0, MCU> timer_type;
+    typedef typename timer_type::value_type value_type;
     
-    using ta = AVR::ATTiny85::Timer8Bit::TCCRA;
-    using tb = AVR::ATTiny85::Timer8Bit::TCCRB;
+    using ta = typename MCU::Timer8Bit::TCCRA;
+    using tb = typename MCU::Timer8Bit::TCCRB;
     
     static constexpr ta tccra = ta::coma0 | ta::coma1 | ta::comb0 | ta::comb1 | ta::wgm0 | ta::wgm1;
     static constexpr tb tccrb{0};

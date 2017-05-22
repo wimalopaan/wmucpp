@@ -16,27 +16,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #pragma once
 
 #include <stdint.h>
+#include "mcu/avr8.h"
 
 namespace AVR {
 
-template<uint8_t TimerN, typename MCU = DefaultMcuType>
+template<uint8_t TimerN, typename MCU>
 struct TimerParameter;
 
-template<>
-struct TimerParameter<0, ATTiny84> {
-    using PortA = AVR::Port<ATTiny84::PortRegister, AVR::A>;
-    using PortB = AVR::Port<ATTiny84::PortRegister, AVR::B>;
+template<AVR::ATTiny_X4 MCU>
+struct TimerParameter<0, MCU> {
+    using PortA = AVR::Port<typename MCU::PortRegister, AVR::A>;
+    using PortB = AVR::Port<typename MCU::PortRegister, AVR::B>;
     typedef AVR::Pin<PortB, 2> ocAPin;
     typedef AVR::Pin<PortA, 7> ocBPin;
-    typedef AVR::Timer8Bit<0, ATTiny84> timer_type;
-    typedef timer_type::value_type value_type;
+    typedef AVR::Timer8Bit<0, MCU > timer_type;
+    typedef typename timer_type::value_type value_type;
     
-    using ta = AVR::ATTiny84::Timer8Bit::TCCRA;
-    using tb = AVR::ATTiny84::Timer8Bit::TCCRB;
+    using ta = typename MCU::Timer8Bit::TCCRA;
+    using tb = typename MCU::Timer8Bit::TCCRB;
     static constexpr ta tccra = ta::coma0 | ta::coma1 | ta::comb0 | ta::comb1 | ta::wgm0 | ta::wgm1;
     static constexpr tb tccrb{0};
     

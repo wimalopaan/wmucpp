@@ -27,6 +27,8 @@
 using terminalDevice = SimAVRDebugConsole;
 using terminal = std::basic_ostream<terminalDevice>;
 
+// todo: nicht notwendig
+
 template<typename U, U... Values>
 class EnumIterator {
 public:

@@ -83,6 +83,7 @@ doc/bmcpp20/bm04a.cc
 doc/bmcpp20/bm05a.cc
 doc/bmcpp20/bm06a.cc
 doc/bmcpp20/bm10a.cc
+doc/bmcpp20/bm20a.cc
 doc/bmcpp20/simavrconsole.c
 doc/bmcpp98/Makefile
 doc/bmcpp98/bm01a.cc
@@ -135,12 +136,11 @@ include/hal/rotaryencoder.h
 include/mcu/avr/atmega88p.h
 include/mcu/avr/clock.h
 include/mcu/avr/eeprom.h
-include/mcu/avr/grmega1284p.h
-include/mcu/avr/grmega328p.h
-include/mcu/avr/grmega328pb.h
+include/mcu/avr/grmega_x4.h
+include/mcu/avr/grmega_x8.h
 include/mcu/avr/groups.h
-include/mcu/avr/grtiny84.h
-include/mcu/avr/grtiny85.h
+include/mcu/avr/grtiny_x4.h
+include/mcu/avr/grtiny_x5.h
 include/mcu/avr/mcuppm.h
 include/mcu/avr/ppmbase.h
 include/mcu/avr/watchdog.h

@@ -19,22 +19,23 @@
 #pragma once
 
 #include <stdint.h>
+#include "mcu/avr8.h"
 
 namespace AVR {
 
 template<uint8_t TimerN, typename MCU = DefaultMcuType>
 struct TimerParameter;
 
-template<>
-struct TimerParameter<0, ATMega328PB> {
-    using PortD = AVR::Port<ATMega328PB::PortRegister, AVR::D>;
+template<AVR::ATMega_X8 MCU>
+struct TimerParameter<0, MCU> final {
+    using PortD = AVR::Port<typename MCU::PortRegister, AVR::D>;
     typedef AVR::Pin<PortD, 6> ocAPin;
     typedef AVR::Pin<PortD, 5> ocBPin;
-    typedef AVR::Timer8Bit<0, ATMega328PB> timer_type;
-    typedef timer_type::value_type value_type;
+    typedef AVR::Timer8Bit<0, MCU> timer_type;
+    typedef typename timer_type::value_type value_type;
     
-    using ta = AVR::ATMega328PB::Timer8Bit::TCCRA;
-    using tb = AVR::ATMega328PB::Timer8Bit::TCCRB;
+    using ta = typename MCU::Timer8Bit::TCCRA;
+    using tb = typename MCU::Timer8Bit::TCCRB;
 
     struct FastPwm1 { // FastPWM 8/10-Bit
         static constexpr ta cha = ta::coma0 | ta::coma1;
@@ -45,16 +46,16 @@ struct TimerParameter<0, ATMega328PB> {
     };
     
 };
-template<>
-struct TimerParameter<1, ATMega328PB> {
-    using PortB = AVR::Port<ATMega328PB::PortRegister, AVR::B>;
+template<AVR::ATMega_X8 MCU>
+struct TimerParameter<1, MCU> {
+    using PortB = AVR::Port<typename MCU::PortRegister, AVR::B>;
     typedef AVR::Pin<PortB, 1> ocAPin;
     typedef AVR::Pin<PortB, 2> ocBPin;
-    typedef AVR::Timer16Bit<1, ATMega328PB> timer_type;
-    typedef timer_type::value_type value_type;
+    typedef AVR::Timer16Bit<1, MCU> timer_type;
+    typedef typename timer_type::value_type value_type;
 
-    using ta = AVR::ATMega328PB::Timer16Bit::TCCRA;
-    using tb = AVR::ATMega328PB::Timer16Bit::TCCRB;
+    using ta = typename MCU::Timer16Bit::TCCRA;
+    using tb = typename MCU::Timer16Bit::TCCRB;
     struct FastPwm1 {
         static constexpr ta cha = ta::coma0 | ta::coma1;
         static constexpr ta chb = ta::comb0 | ta::comb1; 
@@ -69,17 +70,17 @@ struct TimerParameter<1, ATMega328PB> {
         static constexpr tb tccrb = tb::wgm2 | tb::wgm3; 
     };
 };
-template<>
-struct TimerParameter<2, ATMega328PB> {
-    using PortD = AVR::Port<ATMega328PB::PortRegister, AVR::D>;
-    using PortB = AVR::Port<ATMega328PB::PortRegister, AVR::B>;
+template<AVR::ATMega_X8 MCU>
+struct TimerParameter<2, MCU> {
+    using PortD = AVR::Port<typename MCU::PortRegister, AVR::D>;
+    using PortB = AVR::Port<typename MCU::PortRegister, AVR::B>;
     typedef AVR::Pin<PortB, 3> ocAPin;
     typedef AVR::Pin<PortD, 3> ocBPin;
-    typedef AVR::Timer8Bit<2, ATMega328PB> timer_type;
-    typedef timer_type::value_type value_type;
+    typedef AVR::Timer8Bit<2, MCU> timer_type;
+    typedef typename timer_type::value_type value_type;
     
-    using ta = AVR::ATMega328PB::Timer8Bit::TCCRA;
-    using tb = AVR::ATMega328PB::Timer8Bit::TCCRB;
+    using ta = typename MCU::Timer8Bit::TCCRA;
+    using tb = typename MCU::Timer8Bit::TCCRB;
     struct FastPwm1 {
         static constexpr ta tccra = ta::coma0 | ta::coma1 | ta::comb0 | ta::comb1 | ta::wgm0 | ta::wgm1;
         static constexpr tb tccrb{0};
@@ -87,32 +88,32 @@ struct TimerParameter<2, ATMega328PB> {
     };
     
 };
-template<>
-struct TimerParameter<3, ATMega328PB> {
-    using PortD = AVR::Port<ATMega328PB::PortRegister, AVR::D>;
+template<AVR::ATMega_X8 MCU>
+struct TimerParameter<3, MCU> {
+    using PortD = AVR::Port<typename MCU::PortRegister, AVR::D>;
     typedef AVR::Pin<PortD, 0> ocAPin;
     typedef AVR::Pin<PortD, 2> ocBPin;
-    typedef AVR::Timer16Bit<3, ATMega328PB> timer_type;
-    typedef timer_type::value_type value_type;
+    typedef AVR::Timer16Bit<3, MCU> timer_type;
+    typedef typename timer_type::value_type value_type;
 
-    using ta = AVR::ATMega328PB::Timer16Bit::TCCRA;
-    using tb = AVR::ATMega328PB::Timer16Bit::TCCRB;
+    using ta = typename MCU::Timer16Bit::TCCRA;
+    using tb = typename MCU::Timer16Bit::TCCRB;
     struct FastPwm1 {
         static constexpr ta tccra = ta::coma0 | ta::coma1 | ta::comb0 | ta::comb1 | ta::wgm0 | ta::wgm1; 
         static constexpr tb tccrb{tb::wgm2}; 
         static constexpr value_type top = 0x3ff;
     };
 };
-template<>
-struct TimerParameter<4, ATMega328PB> {
-    using PortD = AVR::Port<ATMega328PB::PortRegister, AVR::D>;
+template<AVR::ATMega_X8 MCU>
+struct TimerParameter<4, MCU> {
+    using PortD = AVR::Port<typename MCU::PortRegister, AVR::D>;
     typedef AVR::Pin<PortD, 1> ocAPin;
     typedef AVR::Pin<PortD, 2> ocBPin;
-    typedef AVR::Timer16Bit<4, ATMega328PB> timer_type;
-    typedef timer_type::value_type value_type;
+    typedef AVR::Timer16Bit<4, MCU> timer_type;
+    typedef typename timer_type::value_type value_type;
 
-    using ta = AVR::ATMega328PB::Timer16Bit::TCCRA;
-    using tb = AVR::ATMega328PB::Timer16Bit::TCCRB;
+    using ta = typename MCU::Timer16Bit::TCCRA;
+    using tb = typename MCU::Timer16Bit::TCCRB;
     
     struct FastPwm1 {
         static constexpr ta tccra = ta::coma0 | ta::coma1 | ta::comb0 | ta::comb1 | ta::wgm0 | ta::wgm1; 
