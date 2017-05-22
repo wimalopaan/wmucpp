@@ -428,8 +428,6 @@ int main() {
     swusart::init<9600>();
 #endif
     
-    
-    // todo: zusammenfassen    
     constexpr std::hertz constantRateFrequency = 1 / constantRatePeriod;
     constexpr auto tsd = AVR::Util::calculate<constantRateTimer>(constantRateFrequency);
     static_assert(tsd, "wrong parameter");

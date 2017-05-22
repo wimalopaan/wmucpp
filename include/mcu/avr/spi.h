@@ -32,7 +32,6 @@ namespace AVR {
 template<typename MCU = DefaultMcuType>
 struct SpiMaster final {
     SpiMaster() = delete;
-//    static constexpr uint8_t spcr = _BV(SPIE) | _BV(SPE) | _BV(MSTR) | _BV(SPR0) | _BV(SPR1);
     static constexpr auto spcr = MCU::Spi::CR::spie | MCU::Spi::CR::spe | MCU::Spi::CR::mstr | MCU::Spi::CR::spr1 | MCU::Spi::CR::spr0;
     typedef AVR::Output mosi_dir;
     typedef AVR::Input  miso_dir;
@@ -42,7 +41,6 @@ struct SpiMaster final {
 template<typename MCU = DefaultMcuType>
 struct SpiSlave final {
     SpiSlave() = delete;
-//    static constexpr uint8_t spcr = _BV(SPIE) | _BV(SPE);
     static constexpr auto spcr = MCU::Spi::CR::spie | MCU::Spi::CR::spe;
     typedef AVR::Input  mosi_dir;
     typedef AVR::Output miso_dir;
@@ -101,7 +99,7 @@ class Spi final : public SpiBase<Spi<N, MCU>>, public IsrBaseHandler<typename AV
 
 public:
     typedef MCU mcu_type;
-//    static constexpr const uint8_t number = N;
+    static constexpr const uint8_t number = N;
 
     template<typename Mode>
     static void init() {
@@ -113,22 +111,19 @@ public:
         getBaseAddr<typename MCU::Spi, N>()->spcr.template set<Mode::spcr>();
     }
     static bool isReady() {
-//        return getBaseAddr<typename MCU::Spi, N>()->spsr & _BV(SPIF);
         return getBaseAddr<typename MCU::Spi, N>()->spsr.template is_set<MCU::Spi::SR::spif>();
     }
 
     static bool put(std::byte c) {
-//        if (getBaseAddr<typename MCU::Spi, N>()->spsr & _BV(SPIF)) {
         if (getBaseAddr<typename MCU::Spi, N>()->spsr.template is_set<MCU::Spi::SR::spif>()) {
             return false;
         }
-        // todo: nach dem Transfer wieder auf high()
+        // todo: nach dem Transfer wieder auf high() ?
         spiPort::ss::off();
         *getBaseAddr<typename MCU::Spi, N>()->spdr = c;
         return true;
     }
     
-    // todo: mit EventManager doppelt
     static bool leak() {
         bool oBefore = overrun;
         overrun = false;

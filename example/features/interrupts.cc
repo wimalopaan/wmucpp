@@ -39,8 +39,6 @@ int main() {
     constexpr auto timerParameter = AVR::Util::calculate<systemTimer>(80_Hz);
     static_assert(timerParameter, "wrong timer parameter");
     
-    // todo: systemClock::setup<timerParameter>()
-    
     systemTimer::prescale<timerParameter.prescaler>();
     systemTimer::ocra<timerParameter.ocr>();
     

@@ -52,7 +52,6 @@ public:
     static void blink(const std::array<Color, N>& bcolors, uint8_t blinks) {
         static_assert(N <= MaximumColors, "too many colors");
         colors.clear();
-        // todo: use algorithm and back_inserter
         for( const auto& c: bcolors) {
             colors.push_back(c);
         }
