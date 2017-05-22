@@ -277,9 +277,7 @@ struct ATMega1284P final
         ControlRegister<Adc, MUX> admux;
         volatile uint8_t reserved;
         DataRegister<Adc, UnUsed> didr0;
-//        volatile uint8_t didr0;
         DataRegister<Adc, UnUsed> didr1;
-//        volatile uint8_t didr1;
         template<int N> struct Address;
         template<int N> struct Parameter;
     };
@@ -445,7 +443,14 @@ namespace AVR {
 
 template<>
 struct ATMega1284P::Adc::Parameter<0> {
-    static constexpr uint8_t numberOfChannels = 8;
+    static constexpr auto channelMasks = std::make_array(MUX{0}, 
+                                                         MUX::mux0,
+                                                         MUX::mux1,
+                                                         MUX::mux1 | MUX::mux0,
+                                                         MUX::mux2,
+                                                         MUX::mux2 | MUX::mux0,
+                                                         MUX::mux2 | MUX::mux1 | MUX::mux0
+                                                         );
 };
 
 template<>

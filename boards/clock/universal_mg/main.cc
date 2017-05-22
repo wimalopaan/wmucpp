@@ -71,7 +71,7 @@ using d3_Pin = AVR::Pin<PortD, 3>;
 using display4x4Leds = WS2812<16, displayLedsPin, ColorSequenceGRB>;
 using display60Leds = WS2812<60, displayLedsPin, ColorSequenceGRB>;
 
-using adc = AdcController<AVR::Adc<0>, 1>;
+using adc = AdcController<AVR::Adc<0, AVR::Resolution<10>>, 1>;
 
 using rxdPin         = AVR::Pin<PortD, 0>;
 using txdPin         = AVR::Pin<PortD, 1>;

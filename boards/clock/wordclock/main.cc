@@ -47,7 +47,7 @@ using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
 using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
 
-using adc = AdcController<AVR::Adc<0>, 0, 1>;
+using adc = AdcController<AVR::Adc<0, AVR::Resolution<10>>, 0, 1>;
 
 using iRPin          = AVR::Pin<PortA, 2>;
 using dcfPin         = AVR::Pin<PortA, 3>;

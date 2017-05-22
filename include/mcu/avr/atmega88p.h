@@ -423,7 +423,14 @@ struct ATMega88P::Adc::Address<0> {
 };
 template<>
 struct ATMega88P::Adc::Parameter<0> {
-    static constexpr uint8_t numberOfChannels = 8;
+    static constexpr auto channelMasks = std::make_array(MUX{0}, 
+                                                         MUX::mux0,
+                                                         MUX::mux1,
+                                                         MUX::mux1 | MUX::mux0,
+                                                         MUX::mux2,
+                                                         MUX::mux2 | MUX::mux0,
+                                                         MUX::mux2 | MUX::mux1 | MUX::mux0
+                                                         );
 };
 
 //Timer0

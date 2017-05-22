@@ -42,7 +42,7 @@ using SSpi0 = SoftSpiMaster<SoftSPIData, SoftSPIClock, SoftSPISS>;
 
 using terminal = SSpi0;
 
-using adc = AVR::Adc<0>;
+using adc = AVR::Adc<0, AVR::Resolution<10>>;
 using adcController = AdcController<adc, 6, 7>;
 //using akkuMonitor = SerialVoltage<adcController>;
 

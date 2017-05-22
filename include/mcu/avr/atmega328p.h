@@ -241,7 +241,13 @@ struct ATMega328P final
     };
     struct Adc {
         static constexpr const uint8_t count = 1;
-        DataRegister<Adc, ReadOnly, uint16_t> adc;
+        union {
+            struct {
+                DataRegister<Adc, ReadOnly, uint8_t> adcl;
+                DataRegister<Adc, ReadOnly, uint8_t> adch;
+            };
+            DataRegister<Adc, ReadOnly, uint16_t> adc;
+        };
         enum class SRA : uint8_t {
             aden = (1 << ADEN),
             adsc = (1 << ADSC),
@@ -478,7 +484,14 @@ struct ATMega328P::Adc::Address<0> {
 };
 template<>
 struct ATMega328P::Adc::Parameter<0> {
-    static constexpr uint8_t numberOfChannels = 8;
+    static constexpr auto channelMasks = std::make_array(MUX{0}, 
+                                                         MUX::mux0,
+                                                         MUX::mux1,
+                                                         MUX::mux1 | MUX::mux0,
+                                                         MUX::mux2,
+                                                         MUX::mux2 | MUX::mux0,
+                                                         MUX::mux2 | MUX::mux1 | MUX::mux0
+                                                         );
 };
 
 }

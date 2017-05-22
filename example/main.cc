@@ -116,7 +116,7 @@ using dcfDecoder = DCF77<dcfPin, Config::Timer::frequency, EventManager, true>;
 #endif
 
 #ifdef LMADC
-using adc = AVR::Adc<0>;
+using adc = AVR::Adc<0, AVR::Resolution<10>>;
 using adcController = AdcController<adc, 6>;
 using lm35 = LM35<adcController, 0>;
 #endif

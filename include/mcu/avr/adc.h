@@ -38,16 +38,27 @@ struct AdcParameter<0, ATMega1284P> {
     static constexpr double VBit = VRef / (1 << bits);
 };
 
-template<uint8_t N, typename MCU = DefaultMcuType>
+template<uint8_t T>
+struct Resolution;
+
+template<>
+struct Resolution<10> {
+    typedef uint16_t type;
+};
+template<>
+struct Resolution<8> {
+    typedef uint8_t type;
+};
+
+template<uint8_t N, typename Reso = Resolution<10>, typename MCU = DefaultMcuType>
 class Adc final {
     static_assert(N < MCU::Adc::count, "wrong adc number"); 
     
 public:
     static constexpr auto mcuAdc = getBaseAddr<typename MCU::Adc, N>;
     static constexpr auto channelMask = MCU::Adc::MUX::mux2 | MCU::Adc::MUX::mux1 | MCU::Adc::MUX::mux0;
-//    static constexpr uint8_t channelMask = 0x07;
 
-    typedef uint16_t value_type;
+    typedef typename Reso::type value_type;
     typedef FixedPoint<uint16_t, 8> voltage_type;
     
     static constexpr value_type value_mask = (1 << AdcParameter<N, MCU>::bits) - 1;
@@ -55,30 +66,36 @@ public:
     
     typedef MCU mcu_type;
     static constexpr const uint8_t number = N;
-
+    typedef typename MCU::Adc::template Parameter<N> mcuadc_parameter_type;
+    
     Adc() = delete;
 
     static void init() {
-        mcuAdc()->admux.template add<MCU::Adc::MUX::refs1 | MCU::Adc::MUX::refs0>();
-//        mcuAdc()->admux = _BV(REFS1) | _BV(REFS0);
+        if constexpr(std::is_same<typename Reso::type, uint8_t>::value) {
+            mcuAdc()->admux.template add<MCU::Adc::MUX::refs1 | MCU::Adc::MUX::refs0 | MCU::Adc::MUX::adlar>();
+        }
+        else {
+            mcuAdc()->admux.template add<MCU::Adc::MUX::refs1 | MCU::Adc::MUX::refs0>();
+        }
         mcuAdc()->adcsra.template add<MCU::Adc::SRA::aden | MCU::Adc::SRA::adps2 | MCU::Adc::SRA::adps1 | MCU::Adc::SRA::adps0>();
-//        mcuAdc()->adcsra = _BV(ADEN) | _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0);
-//        mcuAdc()->adcsrb = 0; // nach reset 0
     }
     
     static void startConversion() {
         assert(conversionReady());
         mcuAdc()->adcsra.template add<MCU::Adc::SRA::adsc>();
-//        mcuAdc()->adcsra |= _BV(ADSC);
     }
     
     static bool conversionReady() {
         return !mcuAdc()->adcsra.template isSet<MCU::Adc::SRA::adsc>();
-//        return !(mcuAdc()->adcsra & _BV(ADSC));
     }
     
-    static uint16_t value() {
-        return *mcuAdc()->adc;
+    static typename Reso::type value() {
+        if constexpr(std::is_same<typename Reso::type, uint8_t>::value) {
+            return *mcuAdc()->adch;
+        }
+        else {
+            return *mcuAdc()->adc;
+        }
     }
     
     static FixedPoint<uint16_t, 8> toVoltage(uint16_t v) {
@@ -86,14 +103,8 @@ public:
     }
     
     static void channel(uint8_t ch) {
-        assert(ch < MCU::Adc::template Parameter<0>::numberOfChannels);
-        
-        typename MCU::Adc::MUX mask{0};
-        if (ch & 0x01) mask |= MCU::Adc::MUX::mux0;
-        if (ch & 0x02) mask |= MCU::Adc::MUX::mux1;
-        if (ch & 0x04) mask |= MCU::Adc::MUX::mux2;
-        mcuAdc()->admux.template setPartial<channelMask>(mask);
-//        mcuAdc()->admux = (mcuAdc()->admux & ~channelMask) | (ch & channelMask);
+        assert(ch < mcuadc_parameter_type::channelMasks.size);
+        mcuAdc()->admux.template setPartial<channelMask>(mcuadc_parameter_type::channelMasks[ch]);
     }
 };
 

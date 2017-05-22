@@ -56,7 +56,7 @@ using leds1Pin = AVR::Pin<PortB, 1>;
 using leds2Pin = AVR::Pin<PortB, 2>;
 using ppm1Pin  = AVR::Pin<PortB, 3>;
 
-using adc = AdcController<AVR::Adc<0>, 0>;
+using adc = AdcController<AVR::Adc<0, AVR::Resolution<10>>, 0>;
 
 using rxdPin         = AVR::Pin<PortD, 0>;
 using txdPin         = AVR::Pin<PortD, 1>;

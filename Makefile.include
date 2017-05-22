@@ -70,7 +70,7 @@ shtml: $(cchtml) $(chtml) $(hhtml) $(ahtml)
 
 #CPPFLAGS += -DNDEBUG
 
-CXXFLAGS += -Os -std=c++17 -pedantic
+CXXFLAGS += -Os -std=c++17 # -pedantic
 #CXXFLAGS += -nostdlib -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics
 CXXFLAGS += -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics #-Wgnu-string-literal-operator-template
 CXXFLAGS += -funsigned-char -funsigned-bitfields -fshort-enums 
