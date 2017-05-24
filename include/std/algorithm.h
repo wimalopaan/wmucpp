@@ -134,7 +134,7 @@ void iota(ForwardIterator first, ForwardIterator last, T value)
 }
 
 template<class ForwardIterator, class T>
-void iota(ForwardIterator first, ForwardIterator last, T value, T increment)
+constexpr void iota(ForwardIterator first, ForwardIterator last, T value, T increment)
 {
     while(first != last) {
         *first++ = value;

@@ -32,6 +32,9 @@ struct percent {
     constexpr uint8_t value() const {
         return mValue;
     }
+    void operator=(const percent& rhs) volatile {
+        mValue = rhs.mValue;
+    };
 private:
     uint8_t mValue = 0;
 };
@@ -60,16 +63,69 @@ constexpr std::percent operator"" _ppc(unsigned long long v) {
 }
 
 template<typename T>
-constexpr percent scale(const T& value, const T& min, const T& max) {
+constexpr percent scale(const T& value, const std::remove_volatile_t<T> min, const std::remove_volatile_t<T> max) {
+    if (value < min) {
+        return std::percent{0u};
+    }
+    else if (value > max) {
+        return std::percent{100u};
+    }
+    else {
+        return std::percent{(uint8_t)((static_cast<typename Util::enclosingType<std::remove_volatile_t<T>>::type>(value - min) * 100u) / (max - min))};
+    }
+}
+
+constexpr percent scale(uint8_t value) {
+    return std::percent{(uint8_t)((uint8_t)(value / 4u) + (uint8_t)(value / 8u) + (uint8_t)(value / 64u))};
+}
+
+template<typename T, T min = 0, T max = std::numeric_limits<T>::max()>
+class FastScaler final {
+private:
+    struct ScaleData {
+        uint8_t numberOfDivisions;
+        std::array<T, sizeof(T) * 8> divisions;
+    };
+    inline static constexpr auto data = []() {
+        double factor = 100.0 / (max - min);
+        std::array<T, sizeof(T) * 8> divisions;
+        uint8_t d = 0;
+        for(uint8_t i = 0; i < divisions.size - 1; ++i) {
+            uint64_t divisor = ((uint64_t)(1) << (i + 1));
+            double f = 1.0 / divisor;
+            if (f < factor) {
+                divisions[d++] = divisor;
+                factor -= f;
+            }
+        }
+        return ScaleData{d, divisions};        
+    }();
+    template<uint8_t F>
+    static constexpr T scale_r(T value) {
+        if constexpr(data.divisions[F] == 0) {
+            (void) value;
+            return 0;
+        }
+        else {
+            return value / data.divisions[F] + scale_r<F+1>(value);
+        }
+    }
+public:
+    inline static constexpr std::percent scale(T value) {
+        return std::percent{(uint8_t)(scale_r<0>(value - min))};
+    }
+};
+
+template<uint64_t min = 0, uint64_t max = std::numeric_limits<uint64_t>::max(), typename T = uint8_t>
+std::percent fastScale(T value) {
+    typedef typename std::remove_cv<T>::type U;
     if (value < min) {
         return std::percent{0U};
     }
     else if (value > max) {
         return std::percent{100U};
     }
-    else {
-        return std::percent{(uint8_t)((static_cast<typename Util::enclosingType<T>::type>(value - min) * 100) / (max - min))};
-    }
+    return FastScaler<U, U(min), U(max)>::scale(value);    
 }
 
 template<typename T>

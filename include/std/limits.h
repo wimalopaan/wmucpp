@@ -36,6 +36,13 @@ struct numeric_limits<uint8_t> {
     static constexpr uint8_t min() {return 0;}
     static constexpr uint16_t module() {return UINT8_MAX + 1;}
 };
+template<>
+struct numeric_limits<volatile uint8_t> {
+    typedef uint8_t type;
+    static constexpr uint8_t max() {return UINT8_MAX;}
+    static constexpr uint8_t min() {return 0;}
+    static constexpr uint16_t module() {return UINT8_MAX + 1;}
+};
 
 template<>
 struct numeric_limits<uint16_t> {
