@@ -226,7 +226,13 @@ struct ATMega88P final
     };
     struct Adc {
         static constexpr const uint8_t count = 1;
-        DataRegister<Adc, ReadOnly, uint16_t> adc;
+        union {
+            struct {
+                DataRegister<Adc, ReadOnly, uint8_t> adcl;
+                DataRegister<Adc, ReadOnly, uint8_t> adch;
+            };
+            DataRegister<Adc, ReadOnly, uint16_t> adc;
+        };
         enum class SRA : uint8_t {
             aden = (1 << ADEN),
             adsc = (1 << ADSC),
