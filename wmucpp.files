@@ -76,6 +76,7 @@ doc/bmcpp10/bm10a.cc
 doc/bmcpp10/bm10b.c
 doc/bmcpp10/bm11a.cc
 doc/bmcpp20/Makefile
+doc/bmcpp20/ascale.s
 doc/bmcpp20/bm01a.cc
 doc/bmcpp20/bm02a.cc
 doc/bmcpp20/bm03a.cc
@@ -84,6 +85,15 @@ doc/bmcpp20/bm05a.cc
 doc/bmcpp20/bm06a.cc
 doc/bmcpp20/bm10a.cc
 doc/bmcpp20/bm20a.cc
+doc/bmcpp20/bm30a.cc
+doc/bmcpp20/bm31a.cc
+doc/bmcpp20/bm32a.cc
+doc/bmcpp20/bm33a.cc
+doc/bmcpp20/bm34a.cc
+doc/bmcpp20/bm35a.cc
+doc/bmcpp20/bm36a.cc
+doc/bmcpp20/bm37a.cc
+doc/bmcpp20/bm38a.cc
 doc/bmcpp20/simavrconsole.c
 doc/bmcpp98/Makefile
 doc/bmcpp98/bm01a.cc
