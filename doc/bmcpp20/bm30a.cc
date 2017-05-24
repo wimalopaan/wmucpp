@@ -20,6 +20,7 @@ using terminal = std::basic_ostream<terminalDevice>;
 using namespace std::literals::quantity;
 
 volatile uint8_t y = 42;
+volatile uint16_t y2 = 42;
 volatile std::percent z = 0_ppc;
 
 namespace detail {
@@ -92,6 +93,7 @@ std::percent scale_naiv(uint8_t value, uint8_t min, uint8_t max) {
     return std::percent{(uint8_t)(((uint16_t)((value - min) * 100u)) / (uint8_t)(max - min))};
 }
 
+// inlining findet in jedem Fall statt
 static inline
 uint8_t scale (uint8_t value, uint8_t min, uint8_t max)
 {
@@ -124,6 +126,7 @@ const uint16_t iterations = 10000;
 std::array<Measure, 20> times;
 
 extern "C" {
+// todo: checking bounds
 uint8_t ascale(uint8_t, uint8_t, uint8_t);
 }
 
@@ -227,12 +230,34 @@ int main() {
         times[algo].name.insertAt(0, "8 scale1"_pgm);
         times[algo++].time = std::milliseconds{static_cast<uint16_t>(end - start)};
     }
+    {
+        y2 = 0;
+        uint32_t start = CTHandler::mCounter;
+        for(uint16_t n = 0; n < iterations; ++n) {
+            z = std::fastScale<0, 255>(y);
+            ++y;
+        }
+        uint32_t end = CTHandler::mCounter;            
+        times[algo].name.insertAt(0, "9 fast 16bit"_pgm);
+        times[algo++].time = std::milliseconds{static_cast<uint16_t>(end - start)};
+    }
+    {
+        y2 = 0;
+        uint32_t start = CTHandler::mCounter;
+        for(uint16_t n = 0; n < iterations; ++n) {
+            z = std::scale(y2, 0, 255);
+            ++y;
+        }
+        uint32_t end = CTHandler::mCounter;            
+        times[algo].name.insertAt(0, "10 scale 16bit var"_pgm);
+        times[algo++].time = std::milliseconds{static_cast<uint16_t>(end - start)};
+    }
     
     for(uint8_t i = 0; i < times.size; ++i) {
         std::outl<terminal>(times[i].name, " : "_pgm, times[i].time);
     }        
     
-    y = 42;
+    y2 = y = 42;
     {
         auto p = scale_naiv(y, uint8_t(0), uint8_t(255));
         std::outl<terminal>(p);
@@ -258,13 +283,24 @@ int main() {
         std::outl<terminal>(p);
     }
     {
-        auto p = ascale(y, 0, 255);
+        auto p = std::percent{ascale(y, 0, 255)};
         std::outl<terminal>(p);
     }
     {
         auto p = std::percent{scale1(y)};
         std::outl<terminal>(p);
     }
+    {
+        auto p = std::fastScale<0, 255>(y2);
+        std::outl<terminal>(p);
+    }
+    
+    {
+        for(auto v : std::FastDownScaler<uint8_t, 0, 150>::data.divisions) {
+            std::outl<terminal>(v);
+        }
+    }
+    
     
     while(true) {}
 }

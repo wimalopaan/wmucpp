@@ -19,26 +19,33 @@
 #define NDEBUG
 
 #include "mcu/avr8.h"
+#include "units/percent.h"
+#include "console.h"
+#include "simavr/simavrdebugconsole.h"
 
-volatile uint8_t y = 42;
-volatile uint8_t z = 0;
+using namespace std::literals::quantity;
 
-// inlining findet in jedem Fall statt
-//static inline
-uint8_t scale (uint8_t value, uint8_t min, uint8_t max)
-{
-    return ((value - min) * 100u) / ((uint16_t) (uint8_t)(max - min));
-}
+volatile auto y = [](){
+    std::array<uint8_t, 10> a;
+//    std::iota(std::begin(a), std::end(a), 1);
+    return a;
+}();
 
-uint8_t scale1 (uint8_t value)
-{
-    return scale (value, 0, 255);
-}
+volatile std::percent z = 0_ppc;
+
+template<uint8_t Begin, uint8_t End, typename T>
+struct Generator {
+    static void generate(T value) {
+        z = std::fastScale<0, Begin>(value);
+        if constexpr(Begin < End) {
+            Generator<Begin + 1, End, uint8_t>::generate(value);
+        }
+    }
+};
 
 int main() {
-    y = 42;
-    {
-        z = scale1(y);
+    for(auto x : y) {
+        Generator<101, 255, uint8_t>::generate(x);    
     }
     while(true) {}
 }

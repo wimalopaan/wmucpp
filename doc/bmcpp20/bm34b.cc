@@ -19,27 +19,21 @@
 #define NDEBUG
 
 #include "mcu/avr8.h"
+#include "units/percent.h"
+#include "console.h"
+#include "simavr/simavrdebugconsole.h"
+
+using namespace std::literals::quantity;
 
 volatile uint8_t y = 42;
-volatile uint8_t z = 0;
-
-// inlining findet in jedem Fall statt
-//static inline
-uint8_t scale (uint8_t value, uint8_t min, uint8_t max)
-{
-    return ((value - min) * 100u) / ((uint16_t) (uint8_t)(max - min));
-}
-
-uint8_t scale1 (uint8_t value)
-{
-    return scale (value, 0, 255);
-}
+volatile std::percent z = 0_ppc;
 
 int main() {
-    y = 42;
+    y = 5;
     {
-        z = scale1(y);
+        z = std::fastScale<0, 10>(y);
     }
+    
     while(true) {}
 }
 

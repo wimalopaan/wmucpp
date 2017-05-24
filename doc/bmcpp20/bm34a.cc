@@ -33,7 +33,6 @@ int main() {
     {
         z = std::fastScale<0, 255>(y);
     }
-    
     while(true) {}
 }
 
