@@ -451,7 +451,7 @@ public:
 }
 
 namespace std {
-template<MCU::Stream Stream, typename... TT> void out(TT... v);
+template<MCU::Stream Stream, typename... TT> void out(const TT&... v);
 namespace detail {
 template<MCU::Stream Stream>
 void out(const OneWire::Rom& rom) {

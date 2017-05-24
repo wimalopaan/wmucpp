@@ -96,8 +96,8 @@ FixedPoint<T, FB> operator*(FixedPoint<T, FB> lhs, FixedPoint<T, FB> rhs) {
 
 namespace std {
 
-template<MCU::Stream Stream, typename... TT> void out(TT... v);
-template<MCU::Stream Stream, typename... TT> void outl(TT... v);
+template<MCU::Stream Stream, typename... TT> void out(const TT&... v);
+template<MCU::Stream Stream, typename... TT> void outl(const TT&... v);
 
 } // std
 
