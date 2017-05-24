@@ -17,10 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-#MCU = atmega88p
-#F_OSC = 20000000
-MCU = atmega328p
-F_OSC = 8000000
+MCU = atmega88p
+F_OSC = 20000000
+
+#MCU = atmega328p
+#F_OSC = 8000000
 
 subdirs = 
 

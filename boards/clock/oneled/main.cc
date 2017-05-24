@@ -150,7 +150,7 @@ static void flash(bool bit) {
 //        statusLed::flash(Constant::cRed * brightness, 1);
     }
 }
-using radioClock = RadioClock::Clock<dcfDecoder, StateManager, flash>;
+using radioClock = RadioClock::Clock<dcfDecoder, StateManager, void>;
 
 template<typename SiftText = void>
 struct GlobalStateMachine {

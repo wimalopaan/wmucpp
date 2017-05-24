@@ -214,14 +214,33 @@ struct StateManager{
     }        
 };
 
-static void flash(bool bit) {
-    if (bit) {
-        statusLed::flash(Constant::cRed * brightness, 2);
-    }
-    else {
-        statusLed::flash(Constant::cRed * brightness, 1);
-    }
+template<typename Led, typename BC = void>
+class Flasher {
+public:
+    static void flash(bool bit) {
+        if constexpr(!std::is_same<Led, void>::value) {
+            if constexpr(std::is_same<BC, void>::value) {
+                if (bit) {
+                    Led::flash(Constant::cRed, 2);
+                }
+                else {
+                    Led::flash(Constant::cRed, 1);
+                }
+            }
+            else {
+                if (bit) {
+                    Led::flash(Constant::cRed * BC::brightness, 2);
+                }
+                else {
+                    Led::flash(Constant::cRed * BC::brightness, 1);
+                }
+            }
+        }
 }
+};
+
+using flash = Flasher<statusLed>;
+
 using radioClock = RadioClock::Clock<dcfDecoder, StateManager, flash>;
 
 struct GlobalStateMachine {
