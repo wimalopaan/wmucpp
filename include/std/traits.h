@@ -19,14 +19,13 @@
 #pragma once
 
 #include <stdint.h>
+#include "std/utility.h"
 
 namespace std {
 
 #ifndef __GLIBCXX__
 
-//template<typename T>
-//struct underlying_type;
-/// The underlying type of an enum.
+// The underlying type of an enum.
 template<typename _Tp>
 struct underlying_type {
     typedef __underlying_type(_Tp) type;
@@ -68,92 +67,78 @@ struct is_same<T, T> final {
     static constexpr bool value = true;
 };
 
-template<typename T>
-struct is_integral final {
-    static constexpr bool value = false;
-};
-template<>
-struct is_integral<uint8_t> final {
-    static constexpr bool value = true;
-};
-template<>
-struct is_integral<int8_t> final {
-    static constexpr bool value = true;
-};
-template<>
-struct is_integral<uint16_t> final {
-    static constexpr bool value = true;
-};
-template<>
-struct is_integral<int16_t> final {
-    static constexpr bool value = true;
-};
-template<>
-struct is_integral<uint32_t> final {
-    static constexpr bool value = true;
-};
-template<>
-struct is_integral<int32_t> final {
-    static constexpr bool value = true;
-};
-template<>
-struct is_integral<uint64_t> final {
-    static constexpr bool value = true;
-};
-template<>
-struct is_integral<int64_t> final {
-    static constexpr bool value = true;
+template<typename T1, typename T2>
+struct logic_or : public std::conditional<T1::value, T1, T2>::type {};
+
+template<typename T1, typename T2>
+struct logic_and : public std::conditional<T1::value, T2, T1>::type {};
+
+template<typename T, T v>
+struct integral_constant {
+    inline static constexpr T value = v;
+    typedef T value_type;
+    typedef integral_constant<T, v> type;
+    constexpr operator T() const {return v;}
 };
 
-//template<typename T>
-//struct is_unsigned final {
-//    static constexpr bool value = (T(0) < T(-1));
-//};
-//template<typename T>
-//struct is_signed final {
-//    static constexpr bool value = (T(-1) < T(0));
-//};
-template<typename T>
-struct is_unsigned final {
-    static constexpr bool value = false;
-};
-template<>
-struct is_unsigned<uint8_t> {
-    static constexpr bool value = true;
-};
-template<>
-struct is_unsigned<uint16_t> {
-    static constexpr bool value = true;
-};
-template<>
-struct is_unsigned<uint32_t> {
-    static constexpr bool value = true;
-};
-template<>
-struct is_unsigned<uint64_t> {
-    static constexpr bool value = true;
-};
-template<typename T>
-struct is_signed final {
-    static constexpr bool value = false;
-};
-template<>
-struct is_signed<int8_t> {
-    static constexpr bool value = true;
-};
-template<>
-struct is_signed<int16_t> {
-    static constexpr bool value = true;
-};
-template<>
-struct is_signed<int32_t> {
-    static constexpr bool value = true;
-};
-template<>
-struct is_signed<int64_t> {
-    static constexpr bool value = true;
-};
+typedef integral_constant<bool, true>  true_type;
+typedef integral_constant<bool, false> false_type;
 
+template<typename T>
+struct logic_not : public integral_constant<bool, !T::value> {};
 
+namespace detail {
+    template<typename T>
+    struct is_integral_base : public false_type {};
+    template<>
+    struct is_integral_base<uint8_t> : public true_type {
+    };
+    template<>
+    struct is_integral_base<int8_t> : public true_type {
+    };
+    template<>
+    struct is_integral_base<uint16_t> : public true_type {
+    };
+    template<>
+    struct is_integral_base<int16_t> : public true_type {
+    };
+    template<>
+    struct is_integral_base<uint32_t> : public true_type {
+    };
+    template<>
+    struct is_integral_base<int32_t> : public true_type {
+    };
+    template<>
+    struct is_integral_base<uint64_t> : public true_type {
+    };
+    template<>
+    struct is_integral_base<int64_t> : public true_type {
+    };
+    
+    template<typename T>
+    struct is_floatingpoint_helper : public false_type {};
+    template<>
+    struct is_floatingpoint_helper<float> : public true_type {};
+    template<>
+    struct is_floatingpoint_helper<double> : public true_type {};
+    
+    template<typename T>
+    struct is_signed_helper: public integral_constant<bool, T(-1) < T(0)> {};
+    
+} // !detail
+
+template<typename T>
+struct is_integral : public detail::is_integral_base<typename std::remove_cv<T>::type> {
+};
+template<typename T>
+struct is_floating_point : public detail::is_floatingpoint_helper<typename std::remove_cv<T>::type> {
+};
+template<typename T>
+struct is_arithmatic : public logic_or<is_integral<T>, is_floating_point<T>>::type {};
+template<typename T>
+struct is_signed : public logic_and<is_arithmatic<T>, detail::is_signed_helper<T>>::type {};
+template<typename T>
+struct is_unsigned : public logic_and<is_arithmatic<T>, logic_not<is_signed<T>>>::type {};
+        
 #endif
 }

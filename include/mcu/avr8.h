@@ -24,6 +24,7 @@
 # include <avr/io.h>
 #endif
 
+#include "mcu/mcu.h"
 #include "mcu/concepts.h"
 #include "mcu/avr/avr8defs.h"
 
@@ -38,11 +39,6 @@ struct ATMega328PB;
 struct ATTiny84;
 struct ATTiny85;
 struct ATTiny25;
-
-//template<typename T>
-//concept bool ATMega_328PB() {
-//    return std::is_same<T, ATMega328PB>::value;
-//}
 
 template<typename T>
 concept bool ATTiny_X5() {
@@ -79,7 +75,7 @@ constexpr inline Component* getBaseAddr() {
 
 template<typename Component, MCU::Letter Letter>
 constexpr inline Component* getBaseAddr() {
-    return reinterpret_cast<Component* const>(Component::template Address<Letter>::value);
+    return reinterpret_cast<Component*>(Component::template Address<Letter>::value);
 }
 
 }

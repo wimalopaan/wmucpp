@@ -191,7 +191,7 @@ struct Timerhandler: public EventHandler<EventType::Timer> {
         static uint8_t counter = 0;
         ++counter;
         
-        std::percent v = std::scale(counter % 10, 0, 9);
+        std::percent v = std::scale(counter % 10u, 0, 9);
         
         lcdPwm::pwm(v, 0);
         blinker::tick();

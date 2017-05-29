@@ -11,7 +11,7 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -19,141 +19,156 @@
 #pragma once
 
 #include <stdint.h>
-
+#include "std/types.h"
 #include "util/dassert.h"
 #include "util/util.h"
+#include "util/rational.h"
 
 namespace std {
-
-struct percent {
-    constexpr explicit percent(uint8_t p) : mValue(p) {
-        assert(mValue <= 100);
-    }
-    constexpr uint8_t value() const {
-        return mValue;
-    }
-    void operator=(const percent& rhs) volatile {
-        mValue = rhs.mValue;
+    
+    struct percent {
+        constexpr explicit percent(uint8_t p) : mValue(p) {
+            assert(mValue <= 100);
+        }
+        constexpr uint8_t value() const {
+            return mValue;
+        }
+        void operator=(const percent& rhs) volatile {
+            mValue = rhs.mValue;
+        };
+    private:
+        uint8_t mValue = 0;
     };
-private:
-    uint8_t mValue = 0;
-};
-
-constexpr bool operator==(std::percent lhs, std::percent rhs) {
-    return lhs.value() == rhs.value();
-}
-constexpr bool operator!=(std::percent lhs, std::percent rhs) {
-    return !(lhs == rhs);
-}
-constexpr bool operator>(std::percent lhs, std::percent rhs) {
-    return lhs.value() > rhs.value();
-}
-constexpr bool operator<(std::percent lhs, std::percent rhs) {
-    return lhs.value() < rhs.value();
-}
-
-namespace literals {
-namespace quantity {
-
-constexpr std::percent operator"" _ppc(unsigned long long v) {
-    return std::percent{static_cast<uint8_t>(v)};
-}
-
-}
-}
-
-template<typename T>
-constexpr percent scale(const T& value, const std::remove_volatile_t<T> min, const std::remove_volatile_t<T> max) {
-    if (value < min) {
-        return std::percent{0u};
+    
+    constexpr bool operator==(std::percent lhs, std::percent rhs) {
+        return lhs.value() == rhs.value();
     }
-    else if (value > max) {
-        return std::percent{100u};
+    constexpr bool operator!=(std::percent lhs, std::percent rhs) {
+        return !(lhs == rhs);
     }
-    else {
-        return std::percent{(uint8_t)((static_cast<typename Util::enclosingType<std::remove_volatile_t<T>>::type>(value - min) * 100u) / (max - min))};
+    constexpr bool operator>(std::percent lhs, std::percent rhs) {
+        return lhs.value() > rhs.value();
     }
-}
-
-constexpr percent scale(uint8_t value) {
-    return std::percent{(uint8_t)((uint8_t)(value / 4u) + (uint8_t)(value / 8u) + (uint8_t)(value / 64u))};
-}
-
-template<typename T, T min = 0, T max = std::numeric_limits<T>::max()>
-class FastDownScaler final {
-    static_assert(((max - min) > 100), "wrong range");
-public:
-//private:
-    inline static constexpr uint8_t maximumNumberOfDivisions = sizeof(T) * 8 - 1 ;
-    struct ScaleData {
-        uint8_t numberOfDivisions;
-        std::array<T, maximumNumberOfDivisions> divisions;
-    };
-    inline static constexpr auto data = []() {
-        double factor = 100.0 / (max - min);
-        std::array<T, maximumNumberOfDivisions> divisions;
-        uint8_t d = 0;
-        for(uint8_t i = 0; i < divisions.size; ++i) {
-            uint64_t divisor = ((uint64_t)(1) << (i + 1));
-            double f = 1.0 / divisor;
-            if (f < factor) {
-                divisions[d++] = divisor;
-                factor -= f;
+    constexpr bool operator<(std::percent lhs, std::percent rhs) {
+        return lhs.value() < rhs.value();
+    }
+    
+    namespace literals {
+        namespace quantity {
+            
+            constexpr std::percent operator"" _ppc(unsigned long long v) {
+                return std::percent{static_cast<uint8_t>(v)};
             }
+            
         }
-        if ((d < maximumNumberOfDivisions) && (factor >= (1.0 / ((uint64_t)1 << (maximumNumberOfDivisions + 1)) ))) {
-            divisions[d++] = ((uint64_t)1 << (maximumNumberOfDivisions - 1));
+    }
+    
+    template<std::Unsigned T>
+    constexpr percent scale(const T& value, const std::remove_volatile_t<T> min, const std::remove_volatile_t<T> max) {
+        if (value < min) {
+            return std::percent{0u};
         }
-        return ScaleData{d, divisions};        
-    }();
-    template<uint8_t F>
-    static constexpr T scale_r(T value) {
-        if constexpr((F >= maximumNumberOfDivisions) || (data.divisions[F] == 0)) {
-            (void) value;
-            return 0;
+        else if (value > max) {
+            return std::percent{100u};
         }
         else {
-            return value / data.divisions[F] + scale_r<F+1>(value);
+            return std::percent{(uint8_t)((static_cast<typename Util::enclosingType<std::remove_volatile_t<T>>::type>(value - min) * 100u) / (max - min))};
         }
     }
-public:
-    inline static constexpr std::percent scale(T value) {
-        return std::percent{(uint8_t)(scale_r<0>(value - min))};
+    
+    template<typename T, T L, T U>
+    constexpr percent scale(const uint_ranged<T, L, U>& value) {
+        return percent{(uint8_t)Util::RationalDivider<typename std::remove_cv<T>::type, 100, U-L>::scale(value.toInt() - L)};
     }
-};
-
-template<uint64_t min = 0, uint64_t max = std::numeric_limits<uint64_t>::max(), typename T = uint8_t>
-std::percent fastScale(T value) {
-    static_assert(max > min, "wrong range");
-    typedef typename std::remove_cv<T>::type U;
-    if (value < min) {
-        return std::percent{0};
+    template<MCU::RegisterType T, T L, T U>
+    constexpr percent scale(uint_ranged<T, L, U> value) {
+        return percent{(uint8_t)Util::RationalDivider<typename std::remove_cv<T>::type, 100, U-L>::scale(value.toInt() - L)};
     }
-    else if (value > max) {
-        return std::percent{100};
+//    template<uint8_t L, uint8_t U>
+//    constexpr percent scale(uint_ranged<uint8_t, L, U> value) {
+//        return percent{(uint8_t)Util::RationalDivider<uint8_t, 100, U-L>::scale(value.toInt() - L)};
+//    }
+//    template<typename T, T L, T U>
+//    constexpr percent scale(const volatile uint_ranged<T, L, U>& value) {
+//        return percent{(uint8_t)Util::RationalDivider<typename std::remove_cv<T>::type, 100, U-L>::scale(value.toInt() - L)};
+//    }
+    
+    //[[depracated("experimental")]] constexpr percent scale(uint8_t value) {
+    //    uint16_t v = (value << 8);
+    //    return std::percent{(uint8_t)(((v / 4u) + (v / 8u) + (v / 64u)) >> 8)};
+    //}
+    
+    template<typename T, T min = 0, T max = std::numeric_limits<T>::max()>
+    class FastDownScaler final {
+        static_assert(((max - min) > 100), "wrong range");
+    private:
+        inline static constexpr uint8_t maximumNumberOfDivisions = sizeof(T) * 8 - 1 ;
+        struct ScaleData {
+            uint8_t numberOfDivisions;
+            std::array<T, maximumNumberOfDivisions> divisions;
+        };
+        inline static constexpr auto data = []() {
+            double factor = 100.0 / (max - min);
+            std::array<T, maximumNumberOfDivisions> divisions;
+            uint8_t d = 0;
+            for(uint8_t i = 0; i < divisions.size; ++i) {
+                uint64_t divisor = ((uint64_t)(1) << (i + 1));
+                double f = 1.0 / divisor;
+                if (f < factor) {
+                    divisions[d++] = divisor;
+                    factor -= f;
+                }
+            }
+            return ScaleData{d, divisions};        
+        }();
+        template<uint8_t F>
+        static constexpr T scale_r(T value) {
+            if constexpr((F >= maximumNumberOfDivisions) || (data.divisions[F] == 0)) {
+                (void) value;
+                return 0;
+            }
+            else {
+                // Wandlungsfehler
+                return value / data.divisions[F] + scale_r<F+1>(value);
+            }
+        }
+    public:
+        inline static constexpr std::percent scale(T value) {
+            return std::percent{(uint8_t)(scale_r<0>(value - min))};
+        }
+    };
+    
+    template<uint64_t min = 0, uint64_t max = std::numeric_limits<uint64_t>::max(), std::Unsigned T = uint8_t>
+    std::percent fastScale(T value) {
+        static_assert(max > min, "wrong range");
+        typedef typename std::remove_cv<T>::type U;
+        if (value < min) {
+            return std::percent{0};
+        }
+        else if (value > max) {
+            return std::percent{100};
+        }
+        if constexpr((max - min) > 100) {
+            return FastDownScaler<U, U(min), U(max)>::scale(value);    
+        }
+        else {
+            return std::percent{(uint8_t)((value - U(min)) * (100 / (max -min)))};   
+        }
     }
-    if constexpr((max - min) > 100) {
-        return FastDownScaler<U, U(min), U(max)>::scale(value);    
+    
+    // todo: bessere Version mit rational.h
+    template<typename T>
+    constexpr T expand(percent p, const T& min, const T& max) {
+        return min + ((max - min) * p.value()) / 100u;
     }
-    else {
-        return std::percent{(uint8_t)((value - U(min)) * (100 / (max -min)))};   
+    
+    template<>
+    constexpr uint16_t expand<uint16_t>(percent p, const uint16_t& min, const uint16_t& max) {
+        const uint16_t delta = max - min;
+        const uint8_t deltaH = Util::upperHalf(delta);
+        const uint8_t deltaL = Util::lowerHalf(delta);
+        const uint16_t y = p.value() * deltaH;
+        return min + (y << 1) + (y >> 1) + (y >> 4) - (y >> 9) + (p.value() * deltaL) / 100u;
     }
-}
 
-template<typename T>
-constexpr T expand(percent p, const T& min, const T& max) {
-    return min + ((max - min) * p.value()) / 100u;
-}
-
-
-template<>
-constexpr uint16_t expand<uint16_t>(percent p, const uint16_t& min, const uint16_t& max) {
-    const uint16_t delta = max - min;
-    const uint8_t deltaH = Util::upperHalf(delta);
-    const uint8_t deltaL = Util::lowerHalf(delta);
-    const uint16_t y = p.value() * deltaH;
-    return min + (y << 1) + (y >> 1) + (y >> 4) - (y >> 9) + (p.value() * deltaL) / 100u;
-}
-
-
-}
+} // !std

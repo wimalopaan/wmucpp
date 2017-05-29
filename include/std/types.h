@@ -23,7 +23,7 @@
 #include "std/limits.h"
 #include "util/dassert.h"
 
-template<typename U, uint8_t FirstBits, uint8_t SecondBits>
+template<std::Unsigned U, uint8_t FirstBits, uint8_t SecondBits>
 class Splitted_NaN {
     static_assert((FirstBits + SecondBits) <= sizeof(U) * 8, "too much bits for type U");
     static constexpr U firstMask = (1 << FirstBits) - 1;
@@ -47,8 +47,68 @@ private:
     U value = std::numeric_limits<U>::max();
 };
 
-template<typename T>
-class uint_bounded {
+template<std::Unsigned T = uint8_t, T LowerBound = 0, T UpperBound = std::numeric_limits<T>::max()>
+class uint_ranged final {
+public:
+    inline static constexpr T Lower = LowerBound;
+    inline static constexpr T Upper = UpperBound;
+    typedef T type;
+    
+    constexpr uint_ranged(T v = 0) : mValue(v) {
+        assert(v >= LowerBound);
+        assert(v <= UpperBound);
+    }
+    
+    constexpr uint_ranged(const volatile uint_ranged& o) : mValue(o.mValue) {}
+    
+    constexpr bool operator>(T rhs) {
+        return mValue > rhs;
+    }
+    constexpr bool operator>(T rhs) volatile {
+        return mValue > rhs;
+    }
+    uint_ranged& operator--() {
+        if (mValue > LowerBound) {
+            --mValue;
+        }
+        return *this;
+    }
+    void operator++() volatile {
+        if (mValue < UpperBound) {
+            ++mValue;
+        }
+    }
+    uint_ranged& operator++() {
+        if (mValue < UpperBound) {
+            ++mValue;
+        }
+        return *this;
+    }
+    constexpr bool operator==(T rhs) {
+        return mValue == rhs;
+    }
+    constexpr uint_ranged& operator=(T rhs) {
+        mValue = rhs;
+        return *this;
+    }
+    constexpr void operator=(T rhs) volatile {
+        mValue = rhs;
+    }
+    constexpr operator T() const {
+        return mValue;
+    }
+    constexpr T toInt() const {
+        return mValue;
+    }
+    constexpr T toInt() volatile const {
+        return mValue;
+    }
+private:
+    T mValue{0};
+};
+
+template<std::Unsigned T>
+class uint_bounded final {
 public:
     explicit constexpr uint_bounded(T v = 0) : mValue(v) {}
     
@@ -75,11 +135,9 @@ public:
         }
         return *this;
     }
-    
     constexpr bool operator==(T rhs) {
         return mValue == rhs;
     }
-
     constexpr uint_bounded& operator=(T rhs) {
         mValue = rhs;
         return *this;
@@ -92,7 +150,7 @@ private:
     T mValue{0};
 };
 
-template<typename T>
+template<std::Unsigned T>
 class uint_NaN final {
     static constexpr T NaN = std::numeric_limits<uint8_t>::max();
 public:

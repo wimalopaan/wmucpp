@@ -333,8 +333,9 @@ int main() {
         alarmTimer::start(*preStartTimer);
         EventManager::run2<allEventHandler>([](){
             adc::periodic();
-            brightness = std::scale(adc::value(0), adc::value_type(0), adc::value_type(Constant::analogBrightnessMaximum));
-            brightness = std::min(brightness, 1_ppc);
+            // todo: move out
+//            brightness = std::scale(adc::value(0), adc::value_type(0), adc::value_type(Constant::analogBrightnessMaximum));
+//            brightness = std::min(brightness, 1_ppc);
             
             systemConstantRate::periodic();
             if (EventManager::unprocessedEvent()) {

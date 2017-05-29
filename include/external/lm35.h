@@ -32,6 +32,6 @@ public:
     static constexpr FixedPoint<uint16_t, 8> degreeScale{VBit / VoltPerDegree};
     
     static FixedPoint<uint16_t, 8> temperature() {
-        return FixedPoint<uint16_t, 8>::fromRaw(degreeScale.raw() * Controller::value(index));
+        return FixedPoint<uint16_t, 8>::fromRaw(degreeScale.raw() * Controller::value(index).toInt());
     }
 };

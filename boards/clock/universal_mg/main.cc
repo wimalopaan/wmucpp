@@ -517,8 +517,9 @@ int main() {
         EventManager::run3<allEventHandler, radioClock::HandlerGroup>([](){
             if constexpr(useLight) {
                 adc::periodic();
-                brightness = std::scale(adc::value(0), adc::value_type(0), adc::value_type(Constant::analogBrightnessMaximum));
-                brightness = std::max(brightness, 1_ppc);
+                // todo: move to BrigthnessController
+//                brightness = std::scale(adc::value(0), adc::value_type(0), adc::value_type(Constant::analogBrightnessMaximum));
+//                brightness = std::max(brightness, 1_ppc);
             }
             
             systemConstantRate::periodic();

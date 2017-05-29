@@ -21,6 +21,7 @@
 #ifdef __STDC_LIMIT_MACROS
 # define STDC_LIMIT_MACROS_WAS_SET
 #endif
+
 #define __STDC_LIMIT_MACROS
 #include <stdint.h>
 
@@ -49,14 +50,14 @@ struct numeric_limits<uint16_t> {
     typedef uint16_t type;
     static constexpr uint16_t max() {return UINT16_MAX;}
     static constexpr uint16_t min() {return 0;}
-    static constexpr uint32_t module() {return UINT16_MAX + 1;}
+    static constexpr uint32_t module() {return (uint32_t)UINT16_MAX + 1;}
 };
 template<>
 struct numeric_limits<uint32_t> {
     typedef uint32_t type;
     static constexpr uint32_t max() {return UINT32_MAX;}
     static constexpr uint32_t min() {return 0;}
-    static constexpr uint64_t module() {return UINT32_MAX + 1;}
+    static constexpr uint64_t module() {return (uint64_t)UINT32_MAX + 1;}
 };
 template<>
 struct numeric_limits<uint64_t> {

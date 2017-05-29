@@ -56,6 +56,7 @@ doc/bmcpp01/bm40b.c
 doc/bmcpp01/bm50a.cc
 doc/bmcpp01/bm60a.cc
 doc/bmcpp01/bm61a.cc
+doc/bmcpp01/bm70a.cc
 doc/bmcpp02/bm00a.cc
 doc/bmcpp02/bm02b.c
 doc/bmcpp02/bm03b.c
@@ -86,6 +87,7 @@ doc/bmcpp20/bm06a.cc
 doc/bmcpp20/bm10a.cc
 doc/bmcpp20/bm20a.cc
 doc/bmcpp20/bm30a.cc
+doc/bmcpp20/bm30b.cc
 doc/bmcpp20/bm31a.cc
 doc/bmcpp20/bm32a.cc
 doc/bmcpp20/bm33a.cc
@@ -96,6 +98,9 @@ doc/bmcpp20/bm35a.cc
 doc/bmcpp20/bm36a.cc
 doc/bmcpp20/bm37a.cc
 doc/bmcpp20/bm38a.cc
+doc/bmcpp20/bm50a.cc
+doc/bmcpp20/bm51a.cc
+doc/bmcpp20/bm52a.cc
 doc/bmcpp20/simavrconsole.c
 doc/bmcpp98/Makefile
 doc/bmcpp98/bm01a.cc
@@ -137,6 +142,7 @@ include/appl/timerdisplay4x4.h
 include/appl/timerdisplayring60.h
 include/appl/twostateblinker.h
 include/appl/wordclock.h
+include/compiler/compiler.h
 include/container/boundedbuffer.h
 include/container/pgmarray.h
 include/external/ds2401.h
@@ -157,6 +163,7 @@ include/mcu/avr/mcuppm.h
 include/mcu/avr/ppmbase.h
 include/mcu/avr/watchdog.h
 include/mcu/concepts.h
+include/mcu/mcu.h
 include/std/bitmask.h
 include/std/byte.h
 include/std/chrono.h
@@ -164,6 +171,7 @@ include/std/concepts.h
 include/util/concepts.h
 include/util/detail/util_detail.h
 include/util/outputparameter.h
+include/util/rational.h
 include/util/static_container.h
 text/bmcppdefs.adoc
 text/Makefile

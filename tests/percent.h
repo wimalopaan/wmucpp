@@ -34,7 +34,7 @@ SIMPLETEST("percent01") {
 
 SIMPLETEST("percent02") {
     using namespace std::literals::quantity;
-    auto x = std::scale(50, 0, 100);
+    auto x = std::scale(50u, 0u, 100u);
     if (x != 50_ppc) return false;
     return true;
 };
@@ -46,16 +46,9 @@ SIMPLETEST("percent01") {
     return true;
 };
 
-SIMPLETEST("percent03") {
-    using namespace std::literals::quantity;
-    auto x = std::scale(-1, 0, 100);
-    if (x != 0_ppc) return false;
-    return true;
-};
-
 SIMPLETEST("percent04") {
     using namespace std::literals::quantity;
-    auto x = std::scale(200, 0, 100);
+    auto x = std::scale(200u, 0u, 100u);
     if (x != 100_ppc) return false;
     return true;
 };

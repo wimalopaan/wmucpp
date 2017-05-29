@@ -18,81 +18,86 @@
 
 #pragma once
 
+#include "mcu/mcu.h"
 #include "std/traits.h"
 #include "std/byte.h"
 
 namespace MCU {
-
-template<typename T>
-concept bool Timer() {
-    return std::is_same<T, void>::value || requires(T t) {
-        T::mcuTimer();
-        T::mcuInterrupts();
-        T::template prescale<1>();
-    };
-}
-
-template<typename P>
-concept bool Port() { 
-    return requires (P p) { 
-        p.template set<std::byte{0}>();
-        p.set(std::byte{0});
-        p.get();
-    };
-}
-
-template<typename S>
-concept bool Stream() { 
-    return requires (S s) { 
-        typename S::device_type;
-        typename S::line_terminator_type;
-    };
-}
-
-template<typename P>
-concept bool Pin() { 
-    return std::is_same<P, void>::value || requires (P p) { 
-        p.on();
-        p.off();
-    };
-}
-
-template<typename I>
-concept bool Interrupt() { 
-    return std::is_same<I, void>::value || requires (I i) {
-        I::number;
-    };
-}
-
-template<typename I>
-concept bool IServiceR() { 
-    return std::is_same<I, void>::value || requires (I i) {
-        I::isr();
-        I::isr_number;
-    };
-}
-
-template<typename L>
-concept bool Letter() {
-    return requires(L l) {
-        L::letter;
-    };
-}
-
-template<typename C>
-concept bool SingleComponent() {
-    return requires(C c) {
-        C::address;
-    };
-}
-
-template<typename C>
-concept bool MultipleComponent() {
-    return requires(C c) {
-        C::count;
-//        C::template Address<0>::value; // not possible beacuse of timer numbering scheme 
-    };
-}
-
-
+    template<typename T>
+    concept bool RegisterType() {
+        return is_register_type<T, Compiler::compiler_type>::value;
+    }
+    
+    template<typename T>
+    concept bool Timer() {
+        return std::is_same<T, void>::value || requires(T t) {
+            T::mcuTimer();
+            T::mcuInterrupts();
+            T::template prescale<1>();
+        };
+    }
+    
+    template<typename P>
+    concept bool Port() { 
+        return requires (P p) { 
+            p.template set<std::byte{0}>();
+            p.set(std::byte{0});
+            p.get();
+        };
+    }
+    
+    template<typename S>
+    concept bool Stream() { 
+        return requires (S s) { 
+            typename S::device_type;
+            typename S::line_terminator_type;
+        };
+    }
+    
+    template<typename P>
+    concept bool Pin() { 
+        return std::is_same<P, void>::value || requires (P p) { 
+            p.on();
+            p.off();
+        };
+    }
+    
+    template<typename I>
+    concept bool Interrupt() { 
+        return std::is_same<I, void>::value || requires (I i) {
+            I::number;
+        };
+    }
+    
+    template<typename I>
+    concept bool IServiceR() { 
+        return std::is_same<I, void>::value || requires (I i) {
+            I::isr();
+            I::isr_number;
+        };
+    }
+    
+    template<typename L>
+    concept bool Letter() {
+        return requires(L l) {
+            L::letter;
+        };
+    }
+    
+    template<typename C>
+    concept bool SingleComponent() {
+        return requires(C c) {
+            C::address;
+        };
+    }
+    
+    template<typename C>
+    concept bool MultipleComponent() {
+        return requires(C c) {
+            C::count;
+            //        C::template Address<0>::value; // not possible beacuse of timer numbering scheme 
+        };
+    }
+    
+    
 }

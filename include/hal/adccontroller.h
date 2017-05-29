@@ -20,6 +20,7 @@
 
 #include "mcu/avr/adc.h"
 #include "util/dassert.h"
+#include "util/rational.h"
 
 template<typename MCUAdc, uint8_t... Channels>
 class AdcController final {

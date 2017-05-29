@@ -61,7 +61,7 @@ int main() {
         Util::delay(10_ms);
         adcController::periodic();
         if (++counter == 100) {
-            std::cout << ++c << " Value: " << adcController::value(0) << std::endl;
+            std::cout << ++c << " Value: " << adcController::value(0).toInt() << std::endl;
         }
     }
 }

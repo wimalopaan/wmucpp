@@ -21,9 +21,11 @@
 #include <stdint.h>
 #include "mcu/avr8.h"
 #include "mcu/ports.h"
+#include "std/types.h"
 #include "hal/event.h"
 #include "util/dassert.h"
 #include "util/fixedpoint.h"
+#include "util/rational.h"
 
 namespace AVR {
 
@@ -43,11 +45,11 @@ struct Resolution;
 
 template<>
 struct Resolution<10> {
-    typedef uint16_t type;
+    typedef uint_ranged<uint16_t, 0, 1023> type;
 };
 template<>
 struct Resolution<8> {
-    typedef uint8_t type;
+    typedef uint_ranged<uint8_t, 0, 255> type;
 };
 
 template<uint8_t N, typename Reso = Resolution<10>, typename MCU = DefaultMcuType>
@@ -91,10 +93,10 @@ public:
     
     static typename Reso::type value() {
         if constexpr(std::is_same<typename Reso::type, uint8_t>::value) {
-            return *mcuAdc()->adch;
+            return typename Reso::type{*mcuAdc()->adch};
         }
         else {
-            return *mcuAdc()->adc;
+            return typename Reso::type{*mcuAdc()->adc};
         }
     }
     

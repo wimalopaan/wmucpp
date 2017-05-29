@@ -21,7 +21,8 @@
 #include <stdint.h>
 #include "std/traits.h"
 #include "std/bitmask.h"
-
+#include "std/byte.h"
+#include "std/limits.h"
 
 namespace Util {
     
@@ -83,7 +84,7 @@ namespace Util {
     struct MSB {
         template<typename T>
         struct Value {
-            static constexpr const T value{1 << (numberOfBits<T>() - 1)};
+            static constexpr const T value{T(1) << (numberOfBits<T>() - 1)};
         };
     };  
     struct LSB {
@@ -149,6 +150,14 @@ namespace Util {
     constexpr auto lowerHalf(const T& v) -> typename fragmentType<T>::type {
         return v;
     }
+    
+    template<uint64_t V>
+    struct TypeForValue {
+        using type = typename std::conditional<(V > std::numeric_limits<uint32_t>::max()), uint64_t, 
+                              typename std::conditional<(V > std::numeric_limits<uint16_t>::max()), uint32_t,
+                                typename std::conditional<(V > std::numeric_limits<uint8_t>::max()), uint16_t, uint8_t>::type>::type>::type;
+    };
+    
     
 } // Util
 

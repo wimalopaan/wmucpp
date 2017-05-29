@@ -374,8 +374,9 @@ int main() {
         alarmTimer::start(*preStartTimer);
         EventManager::run2<allEventHandler>([](){
             adc::periodic();
-            brightness = std::scale(adc::value(0), adc::value_type(0), adc::value_type(Constant::analogBrightnessMaximum));
-            brightness = std::max(brightness, 1_ppc);
+            // todo: move to BrightnesController
+//            brightness = std::scale(adc::value(0), adc::value_type(0), adc::value_type(Constant::analogBrightnessMaximum));
+//            brightness = std::max(brightness, 1_ppc);
             
             if constexpr(useRing60) {
                 display2::brightness(brightness);

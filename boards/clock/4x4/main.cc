@@ -635,8 +635,9 @@ namespace detail {
 //                leds2Pin::toggle();
                 if constexpr(!std::is_same<BC, void>::value && !std::is_same<Adc, void>::value) {
                     Adc::periodic();
-                    BC::brightness = std::fastScale(Adc::value(0));
-                    BC::brightness = std::max(BC::brightness, 1_ppc);
+                    // todo: don't use scale and max here, store raw value in BrightnessController
+//                    BC::brightness = std::fastScale(Adc::value(0));
+//                    BC::brightness = std::max(BC::brightness, 1_ppc);
                 }
                 systemConstantRate::periodic();
                 if constexpr(!std::is_same<IrDec, void>::value) {
