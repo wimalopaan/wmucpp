@@ -11,39 +11,41 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define NDEBUG
+
 #include <stdint.h>
+#include "util/bits.h"
+#include "std/limits.h"
+#include "mcu/avr8.h"
+#include "mcu/avr/isr.h"
+#include "mcu/avr/mcutimer.h"
+#include "mcu/ports.h"
+#include "hal/constantrate.h"
+#include "std/array.h"
+#include "std/concepts.h"
+#include "std/types.h"
+#include "util/disable.h"
+#include "util/bits.h"
+#include "util/rational.h"
+#include "container/stringbuffer.h"
+#include "console.h"
+#include "simavr/simavrdebugconsole.h"
 
+using terminalDevice = SimAVRDebugConsole;
+using terminal = std::basic_ostream<terminalDevice>;
 
-volatile uint8_t global = 3; //-
-volatile bool b = false;
-volatile bool c = false;
+volatile uint_ranged<uint8_t, 0, 200> y = 42;
+volatile std::percent z{0};
 
-//[ref
-bool foo(uint8_t& x) {
-    x = global; //-
-    return b;
+int main() {
+    {
+        z = std::scale(y);
+    }
+    while(true) {}
 }
 
-bool foo(uint8_t& x, uint8_t& y) {
-    global = x + y; //-
-    x = global;
-    return b;
-}
-//]
-//[main
-int main()
-{
-    uint8_t a = 42;
-    uint8_t b = 43;
-
-    c = foo(a);
-    c = b && foo(a, b);
-
-    while(true);
-}
-//]

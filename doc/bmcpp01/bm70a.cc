@@ -11,39 +11,33 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdint.h>
+#include "std/traits.h"
+#include "mcu/concepts.h"
 
+volatile uint8_t x = 0;
 
-volatile uint8_t global = 3; //-
-volatile bool b = false;
-volatile bool c = false;
-
-//[ref
-bool foo(uint8_t& x) {
-    x = global; //-
-    return b;
+template<typename T>
+void foo(const T& v) {
+    x = 2 * v;    
 }
 
-bool foo(uint8_t& x, uint8_t& y) {
-    global = x + y; //-
-    x = global;
-    return b;
+template<MCU::RegisterType T>
+void foo(T v) {
+    x = v;    
 }
-//]
-//[main
-int main()
-{
-    uint8_t a = 42;
-    uint8_t b = 43;
 
-    c = foo(a);
-    c = b && foo(a, b);
+int main() {
+    uint8_t y = 2;
+    foo(y);
 
-    while(true);
+    uint16_t z = 3;
+    foo(z);
+    
+    while(true) {}
 }
-//]

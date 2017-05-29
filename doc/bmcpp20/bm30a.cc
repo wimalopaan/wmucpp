@@ -168,7 +168,7 @@ int main() {
         y = 0;
         uint32_t start = CTHandler::mCounter;
         for(uint16_t n = 0; n < iterations; ++n) {
-            z = std::scale(y);
+//            z = std::scale(y);
             ++y;
         }
         uint32_t end = CTHandler::mCounter;            
@@ -266,10 +266,10 @@ int main() {
         auto p = std::scale(y, uint8_t(0), uint8_t(255));
         std::outl<terminal>(p);
     }
-    {
-        auto p = std::scale(y);
-        std::outl<terminal>(p);
-    }
+//    {
+//        auto p = std::scale(y);
+//        std::outl<terminal>(p);
+//    }
     {
         auto p = std::fastScale<0, 255>(y);
         std::outl<terminal>(p);
@@ -295,12 +295,14 @@ int main() {
         std::outl<terminal>(p);
     }
     
-    {
-        for(auto v : std::FastDownScaler<uint8_t, 0, 150>::data.divisions) {
-            std::outl<terminal>(v);
-        }
-    }
-    
+//    {
+//        for(uint8_t i = 0; i < 255; ++i) {
+//            auto p = std::scale(i);
+//            std::out<terminal>(p, " --- "_pgm);
+//            p = scale_naiv(i, uint8_t(0), uint8_t(255));
+//            std::outl<terminal>(p);
+//        }
+//    }
     
     while(true) {}
 }

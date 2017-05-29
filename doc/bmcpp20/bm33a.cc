@@ -31,7 +31,7 @@ volatile std::percent z = 0_ppc;
 int main() {
     y = 42;
     {
-        z = std::scale(y);
+//        z = std::scale(y);
     }
     while(true) {}
 }
