@@ -101,6 +101,9 @@ doc/bmcpp20/bm38a.cc
 doc/bmcpp20/bm50a.cc
 doc/bmcpp20/bm51a.cc
 doc/bmcpp20/bm52a.cc
+doc/bmcpp20/bm53a.cc
+doc/bmcpp20/bm60a.cc
+doc/bmcpp20/bm61a.cc
 doc/bmcpp20/simavrconsole.c
 doc/bmcpp98/Makefile
 doc/bmcpp98/bm01a.cc

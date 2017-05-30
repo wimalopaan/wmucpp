@@ -34,6 +34,7 @@ bm10a.elf : LOADLIBES = simavrconsole.o
 bm30a.elf : LOADLIBES = simavrconsole.o ascale.o
 bm30b.elf : LOADLIBES = simavrconsole.o
 bm50a.elf : LOADLIBES = simavrconsole.o
+bm60a.elf : LOADLIBES = simavrconsole.o
 bm51a.elf : LOADLIBES = simavrconsole.o
 #bm37a.elf:  LOADLIBES = ascale.o
 
@@ -61,6 +62,9 @@ targets +=  bm38a.s bm38a.elf
 targets +=  bm50a.s bm50a.elf 
 targets +=  bm51a.s bm51a.elf 
 targets +=  bm52a.s bm52a.elf 
+targets +=  bm53a.s bm53a.elf 
+targets +=  bm60a.s bm60a.elf 
+targets +=  bm61a.s bm61a.elf 
 
 -include ../../Makefile.include
 
