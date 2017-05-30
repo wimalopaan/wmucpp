@@ -28,7 +28,7 @@
 #endif
 
 #include "std/array.h"
-#include "../register.h"
+#include "mcu/register.h"
 
 namespace AVR {
     
@@ -112,4 +112,4 @@ namespace AVR {
         static constexpr char letter = 'E';
     };
     
-}
+} //!AVR

@@ -30,6 +30,9 @@ namespace std {
         constexpr explicit percent(uint8_t p) : mValue(p) {
             assert(mValue <= 100);
         }
+        constexpr percent(const percent& o) : mValue(o.mValue) {}
+        percent(const volatile percent& o) : mValue(o.mValue) {}
+        
         constexpr uint8_t value() const {
             return mValue;
         }
@@ -155,20 +158,14 @@ namespace std {
             return std::percent{(uint8_t)((value - U(min)) * (100 / (max -min)))};   
         }
     }
-    
-    // todo: bessere Version mit rational.h
+    // todo: don't use this one
+    template<typename T>
+    constexpr T expand1(percent p, const T& min, const T& max) {
+        return Util::RationalDivider<T, 1, 100>::scale(min + ((max - min) * p.value()));
+    }
     template<typename T>
     constexpr T expand(percent p, const T& min, const T& max) {
         return min + ((max - min) * p.value()) / 100u;
     }
     
-    template<>
-    constexpr uint16_t expand<uint16_t>(percent p, const uint16_t& min, const uint16_t& max) {
-        const uint16_t delta = max - min;
-        const uint8_t deltaH = Util::upperHalf(delta);
-        const uint8_t deltaL = Util::lowerHalf(delta);
-        const uint16_t y = p.value() * deltaH;
-        return min + (y << 1) + (y >> 1) + (y >> 4) - (y >> 9) + (p.value() * deltaL) / 100u;
-    }
-
 } // !std

@@ -77,27 +77,4 @@ namespace MCU {
         };
     }
     
-    template<typename L>
-    concept bool Letter() {
-        return requires(L l) {
-            L::letter;
-        };
-    }
-    
-    template<typename C>
-    concept bool SingleComponent() {
-        return requires(C c) {
-            C::address;
-        };
-    }
-    
-    template<typename C>
-    concept bool MultipleComponent() {
-        return requires(C c) {
-            C::count;
-            //        C::template Address<0>::value; // not possible beacuse of timer numbering scheme 
-        };
-    }
-    
-    
-}
+} // !MCU
