@@ -77,7 +77,7 @@ constexpr TimerSetupData<typename MCUTimer::value_type> calculate(const std::her
     for(const auto& p : ::Util::sort(p)) { // aufsteigend
         if (p > 0) {
             const auto tv = (Config::fMcu / ftimer) / p;
-            if (tv < std::numeric_limits<typename MCUTimer::value_type>::max()) {
+            if ((tv > 0) && (tv < std::numeric_limits<typename MCUTimer::value_type>::max())) {
                 const bool exact = ((Config::fMcu.value / p) % tv) == 0;
                 return {p, static_cast<typename MCUTimer::value_type>(tv), Config::fMcu / tv / uint32_t(p), exact};
             }
@@ -91,9 +91,11 @@ constexpr uint16_t prescalerForAbove(const std::hertz& ftimer) {
     using pBits = typename MCUTimer::mcu_timer_type::template PrescalerBits<MCUTimer::number>;
     auto p = prescalerValues(pBits::values);
     for(const auto& p : ::Util::sort(p, std::greater<uint16_t>())) {
-        auto f = Config::fMcu / p;
-        if (f >= ftimer) {
-            return p;
+        if (p > 0) {
+            auto f = Config::fMcu / p;
+            if (f >= ftimer) {
+                return p;
+            }
         }
     }
     return 0;
@@ -105,11 +107,13 @@ constexpr uint16_t calculatePpmInParameter() {
     auto p = AVR::Util::prescalerValues(pBits::values);
 
     for(const auto& p : ::Util::sort(p)) {
-        const std::hertz f = Config::fMcu / p;
-        const uint16_t ppmMin = 1_ms * f;
-        const uint16_t ppmMax = 2_ms * f;
-        if ((ppmMax < std::numeric_limits<T>::max()) && (ppmMin > 10)) {
-            return p;
+        if (p > 0) {
+            const std::hertz f = Config::fMcu / p;
+            const uint16_t ppmMin = 1_ms * f;
+            const uint16_t ppmMax = 2_ms * f;
+            if ((ppmMax < std::numeric_limits<T>::max()) && (ppmMin > 10)) {
+                return p;
+            }
         }
     }
     return 0;
