@@ -31,6 +31,7 @@
 #include "mcu/concepts.h"
 #include "std/traits.h"
 #include "util/algorithm.h"
+#include "util/disable.h"
 
 namespace AVR {
 
@@ -160,7 +161,7 @@ private:
     PinSet() = delete;
 };
 
-template<MCU::Port Port, uint8_t PinNumber>
+template<MCU::Port Port, uint8_t PinNumber, bool disableInterrupts = false>
 struct Pin final {
     static_assert(PinNumber < 8, "wrong pin number");
     Pin() = delete;
@@ -168,15 +169,18 @@ struct Pin final {
     static constexpr uint8_t number = PinNumber;
     static constexpr std::byte pinMask{(1 << PinNumber)};
     static inline void on() {
+        Scoped<DisbaleInterrupt, disableInterrupts> di;
         Port::get() |= pinMask;
     }
     static constexpr auto& high = on;
     static constexpr auto& pullup = on;
     static inline void off() {
+        Scoped<DisbaleInterrupt, disableInterrupts> di;
         Port::get() &= ~pinMask;
     }
     static constexpr auto& low = off;
     static inline void toggle() {
+        Scoped<DisbaleInterrupt, disableInterrupts> di;
         Port::get() ^= pinMask;
     }
     template<typename Dir>
