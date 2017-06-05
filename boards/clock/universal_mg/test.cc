@@ -39,6 +39,7 @@
 #include "external/ws2812.h"
 #include "external/dcf77.h"
 #include "std/chrono.h"
+#include "appl/twostateblinker.h"
 #ifdef SIMAVR
 # include "simavr/simavrdebugconsole.h"
 #endif
@@ -64,8 +65,9 @@ using ledPin         = AVR::Pin<PortB, 7>;
 using led = WS2812<1, ledPin, ColorSequenceGRB>;
 using Color = led::color_type;
 
-using display = WS2812<10 * 11 + 4, d0_ss_Pin, ColorSequenceGRB>;
+using blinker = TwoStateBlinker<led>;
 
+using display = WS2812<10 * 11 + 4, d0_ss_Pin, ColorSequenceGRB>;
 
 // todo: belegt RAM im data segment ?
 namespace Constant {
@@ -129,6 +131,7 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
     static bool process(std::byte b) {
         auto timer = std::to_integer<uint7_t>(b);
         if (timer == *secondsTimer) {
+            blinker::tick();
             systemClock.tick();
             if (systemClock) {
                 std::cout << "sc: "_pgm << systemClock.dateTime() << std::endl;
@@ -210,6 +213,7 @@ int main() {
     powerSwitchPin::on();    
     
     display::init();
+    blinker::init();
     
     isrRegistrar::init();
     terminal::init<19200>();
@@ -229,14 +233,11 @@ int main() {
         std::cout << "f reso: "_pgm << LocalConfig::reso << std::endl;
         std::cout << "a reso: "_pgm << alarmTimer::resolution << std::endl;
     
-        while(true) {
-            for(uint8_t i = 0; i < display::size; ++i) {
-                display::set(i, Constant::cWhiteLow);
-                Util::delay(100_ms);
-            }
-            display::set(Constant::cOff);
+        for(uint8_t i = 0; i < display::size; ++i) {
+            display::set(i, Constant::cWhiteLow);
+            Util::delay(100_ms);
         }
-        
+        display::set(Constant::cOff);
         
         EventManager::run2<allEventHandler>([](){
             systemConstantRate::periodic();

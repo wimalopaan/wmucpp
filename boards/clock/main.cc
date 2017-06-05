@@ -446,11 +446,9 @@ int main()
 
             systemConstantRate::periodic();
             if (EventManager::unprocessedEvent()) {
-                EventManager::unprocessedEvent() = false;
                 statusLed::flash(Constant::cMagenta, 10);
             }
             if (EventManager::leakedEvent()) {
-                EventManager::leakedEvent() = false;
                 statusLed::flash(Constant::cYellow, 10);
             }
         });

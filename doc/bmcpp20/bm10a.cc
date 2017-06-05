@@ -39,7 +39,8 @@ public:
     inline static constexpr std::array<UT, sizeof...(Values)> values = {static_cast<UT>(Values)...};
     
     inline static constexpr bool unique = [](){
-        const auto sortedValues = Util::sort(values);
+        auto vv = values;
+        const auto sortedValues = Util::sort(vv);
         for(size_t i = 1; i < sortedValues.size; ++i) {
             if (sortedValues[i - 1] == sortedValues[i]) {
                 return false;

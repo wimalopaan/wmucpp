@@ -645,7 +645,6 @@ namespace detail {
                     IrDec::check();
                 }
                 if (EventManager::unprocessedEvent()) {
-                    EventManager::unprocessedEvent() = false;
                     if constexpr(!std::is_same<StatusLed, void>::value) {
                         StatusLed::enable();
                         StatusLed::flash(Constant::cMagenta, 10);
@@ -653,7 +652,6 @@ namespace detail {
                     std::outl<terminal>("upe"_pgm);
                 }
                 if (EventManager::leakedEvent()) {
-                    EventManager::leakedEvent() = false;
                     if constexpr(!std::is_same<StatusLed, void>::value) {
                         StatusLed::enable();
                         StatusLed::flash(Constant::cYellow, 10);

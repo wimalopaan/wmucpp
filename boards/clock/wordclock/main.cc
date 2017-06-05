@@ -400,12 +400,9 @@ int main() {
             if (irmp_get_data(&irmp_data)) {
                 EventManager::enqueue({(irmp_data.flags & Irmp::Repetition) ? EventType::IREventRepeat : EventType::IREvent , std::byte(irmp_data.command)});
             }
-            
             if (EventManager::unprocessedEvent()) {
-                EventManager::unprocessedEvent() = false;
             }
             if (EventManager::leakedEvent()) {
-                EventManager::leakedEvent() = false;
             }
         });
     }

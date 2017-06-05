@@ -533,13 +533,11 @@ int main() {
             }
             
             if (EventManager::unprocessedEvent()) {
-                EventManager::unprocessedEvent() = false;
                 statusLed::enable();
                 statusLed::flash(Constant::cMagenta, 10);
                 std::cout << "unprocessed event"_pgm << std::endl;
             }
             if (EventManager::leakedEvent()) {
-                EventManager::leakedEvent() = false;
                 statusLed::enable();
                 statusLed::flash(Constant::cYellow, 10);
                 std::cout << "leaked event"_pgm << std::endl;

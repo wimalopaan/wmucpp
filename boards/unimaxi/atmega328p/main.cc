@@ -244,7 +244,6 @@ int main()
                 lcd::put(i2c::registers()[0]);
             }
             if (EventManager::unprocessedEvent()) {
-                EventManager::unprocessedEvent() = false;
                 blinker::failure1();
             }
         });

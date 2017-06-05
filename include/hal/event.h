@@ -153,18 +153,18 @@ public:
     }();
  };
 
-class EventManager final
-{
+template<uint8_t QLength = Config::EventManager::EventQueueLength>
+class EventManagerT final {
     template<uint8_t> friend class Hott::SensorProtocollAdapter;
     template<uint8_t> friend class Esp8266::ATProtocollAdapter;
     template<uint8_t N, typename PA, typename MCU> friend class AVR::Usart;
     template<uint8_t N, typename MCU> friend class AVR::Spi;
     template<uint8_t N, typename MCU> friend class SWUsart;
 public:
-    EventManager() = delete;
+    EventManagerT() = delete;
     static bool enqueue(const EventByte_t& event) {
         if (!mFifo.push_back(event)) { // lockfree fifo
-            leakedEvent() = true;
+            mLeaked = true;
             return false;
         }
         return true;
@@ -173,14 +173,14 @@ public:
     template<typename... EE, HAL::CallableObject P>
 //    template<HAL::EventHandlerGroup<Event8u_t>... EE, HAL::CallableObject P>
     static void run3(const P& periodic) {
-        leakedEvent() = false;
-        unprocessedEvent() = false;
+        mLeaked = false;
+        mUnprocessed = false;
         while(true) {
             periodic();
             if (auto event = mFifo.pop_front()) {
                 bool processed = (EE::process(*event) || ...);
                 if (!processed) {
-                    unprocessedEvent() = true;
+                    mUnprocessed = true;
                 }
             }
         }
@@ -188,13 +188,13 @@ public:
     
     template<HAL::EventHandlerGroup<EventByte_t> EE, HAL::CallableObject P>
     static void run2(const P& periodic) {
-        leakedEvent() = false;
-        unprocessedEvent() = false;
+        mLeaked = false;
+        mUnprocessed = false;
         while(true) {
             periodic();
             if (auto event = mFifo.pop_front()) {
                 if (!EE::process(*event)) {
-                    unprocessedEvent() = true;
+                    mUnprocessed = true;
                 }
             }
         }
@@ -202,53 +202,59 @@ public:
     template<HAL::StaticPeriodic PP, HAL::EventHandlerGroup<EventByte_t> EE, HAL::CallableObject P>
 //    [[deprecated]] 
     static void run(const P& periodic) {
-        leakedEvent() = false;
-        unprocessedEvent() = false;
+        mLeaked = false;
+        mUnprocessed = false;
         while(true) {
             PP::periodic();
             periodic();
             if (auto event = mFifo.pop_front()) {
                 if (!EE::process(*event)) {
-                    unprocessedEvent() = true;
+                    mUnprocessed = true;
                 }
             }
         }
     }
     template<HAL::StaticPeriodic PP, HAL::EventHandlerGroup<EventByte_t> EE>
     static void run() {
-        leakedEvent() = false;
-        unprocessedEvent() = false;
+        mLeaked = false;
+        mUnprocessed = false;
         while(true) {
             PP::periodic();
             if (auto event = mFifo.pop_front()) {
                 if (!EE::process(*event)) {
-                    unprocessedEvent() = true;
+                    mUnprocessed = true;
                 }
             }
         }
     }
-    static bool& unprocessedEvent() {
-        static bool unprocessed = false;
-        return unprocessed;
+    static bool unprocessedEvent() {
+        bool v = mUnprocessed;
+        mUnprocessed = false;
+        return v;
     }
-    static bool& leakedEvent() {
-        static bool leaked = false;
-        return leaked;
+    static bool leakedEvent() {
+        bool v = mLeaked;
+        mLeaked = false;
+        return v;
     }
 private:
     static bool enqueueISR(const EventByte_t& event) {
         if (!mFifo.push_back(event)) {
-            leakedEvent() = true;
+            mLeaked = true;
             return false;
         }
         return true;
     }
-    inline static volatile std::FiFo<EventByte_t, Config::EventManager::EventQueueLength> mFifo;
+    inline static bool mUnprocessed = false;
+    inline static bool mLeaked = false;
+    inline static volatile std::FiFo<EventByte_t, QLength> mFifo;
 };
+
+using EventManager = EventManagerT<>;
 
 template<EventType Type>
 struct EventHandler {
     EventHandler() = delete;
-    friend class EventManager;
+//    friend class EventManager;
     static constexpr EventType eventType = Type;
 };

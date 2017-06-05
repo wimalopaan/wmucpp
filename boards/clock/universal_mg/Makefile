@@ -18,7 +18,7 @@
 #
 
 MCU = atmega328p
-F_OSC = 20000000
+F_OSC = 16000000
 #F_OSC = 8000000
 
 subdirs = 

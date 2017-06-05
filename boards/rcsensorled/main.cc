@@ -386,11 +386,9 @@ int main() {
             systemConstantRate::periodic();
             crAdapterHott::periodic();
             if (EventManager::unprocessedEvent()) {
-                EventManager::unprocessedEvent() = false;
                 statusLed::blink(Constant::cRed, 10);
             }
             if (EventManager::leakedEvent()) {
-                EventManager::leakedEvent() = false;
                 statusLed::blink(Constant::cBlue, 10);
             }
         });
