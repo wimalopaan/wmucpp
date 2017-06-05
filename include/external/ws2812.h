@@ -46,7 +46,7 @@ struct cRGB;
 
 template<>
 struct cRGB<ColorSequenceRGB> {
-    static cRGB createFrom(const std::array<uint8_t, 3> bytes) {
+    static constexpr cRGB createFrom(const std::array<uint8_t, 3> bytes) {
         return {Red{bytes[0]}, Green{bytes[1]}, Blue{bytes[2]}};
     }
 
@@ -91,13 +91,13 @@ struct cRGB<ColorSequenceRGB> {
     uint8_t b = 0;
 };
 
-cRGB<ColorSequenceRGB> operator*(cRGB<ColorSequenceRGB> c, const std::percent& p) {
+constexpr cRGB<ColorSequenceRGB> operator*(cRGB<ColorSequenceRGB> c, const std::percent& p) {
     return c *= p;
 }
 
 template<>
 struct cRGB<ColorSequenceGRB> {
-    static cRGB createFrom(const std::array<uint8_t, 3> bytes) {
+    static constexpr cRGB createFrom(const std::array<uint8_t, 3> bytes) {
         return {Red{bytes[0]}, Green{bytes[1]}, Blue{bytes[2]}};
     }
     constexpr cRGB() {}
@@ -140,7 +140,7 @@ struct cRGB<ColorSequenceGRB> {
     uint8_t b = 0;
 };
 
-cRGB<ColorSequenceGRB> operator*(cRGB<ColorSequenceGRB> c, const std::percent& p) {
+constexpr cRGB<ColorSequenceGRB> operator*(cRGB<ColorSequenceGRB> c, const std::percent& p) {
     return c *= p;
 }
 
