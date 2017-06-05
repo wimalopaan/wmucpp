@@ -30,6 +30,7 @@ namespace AVR {
 struct ATTiny85 final {
     ATTiny85() = delete;
     struct Timer8Bit {
+        typedef uint8_t value_type;
         static constexpr const uint8_t count = 1;
         DataRegister<Timer8Bit, ReadWrite> ocrb;
         DataRegister<Timer8Bit, ReadWrite> ocra;
@@ -57,6 +58,7 @@ struct ATTiny85 final {
         template<int N> struct PrescalerBits;
     };
     struct Timer8BitHighSpeed {
+        typedef uint8_t value_type;
         static constexpr const uint8_t count = 1;
         DataRegister<Timer8Bit, ReadWrite> ocrb;
         volatile uint8_t gtccr;

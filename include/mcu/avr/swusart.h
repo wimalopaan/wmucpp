@@ -81,6 +81,14 @@ struct SWUsartRxTx<0, AVR::ATTiny84> {
     using tx = AVR::Pin<PortB, 2>;
 };
 
+template<>
+struct SWUsartRxTx<0, AVR::ATTiny85> {
+    SWUsartRxTx() = delete;
+    using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
+    using rx = AVR::Pin<PortB, 2>; // int 0
+    using tx = AVR::Pin<PortB, 3>;
+};
+
 template<uint8_t N> struct SWUsartEventMapper;
 template<>
 struct SWUsartEventMapper<0> {
@@ -199,15 +207,11 @@ public:
     template<bool enable>
     static void rxEnable() {
         mcuInterrupts()->tifr.template add<int_type::Flags::icf>();
-//        mcuInterrupts()->tifr  |= _BV(ICF1);
         if constexpr (enable) {
             mcuInterrupts()->timsk.template clear<int_type::Mask::ocieb | int_type::Mask::icie>();
-//            mcuInterrupts()->timsk = (mcuInterrupts()->timsk & ~(_BV(OCIE1B))) | _BV(ICIE1);
         }
         else {
             mcuInterrupts()->timsk.template clear<int_type::Mask::ociea | int_type::Mask::icie>();
-//            mcuInterrupts()->timsk &=  ~(_BV(OCIE1A));
-//            mcuInterrupts()->timsk &=  ~(_BV(ICIE1));
         }
     }
 private:
@@ -237,9 +241,32 @@ public:
     template<uint16_t Baud>
     static void init() {
         static_assert(Baud >= 2400, "SWUSART should use a valid baud rate >= 2400");
+
+        constexpr auto tsd = AVR::Util::calculate<AVR::Timer8Bit<mcu_timer_number>>(std::hertz{Baud});
+        static_assert(tsd, "can't calculate timer setup");
+        
+        AVR::Timer8Bit<mcu_timer_number>::template prescale<tsd.prescaler>();
+        *timer()->ocra = tsd.ocr;
+
+        timer()->tccra.template add<mcu_timer_type::TCCRA::wgm1>();
+
+        if constexpr(N == 0) {
+            mcuInterrupts()->tifr.template add<int_type::Flags::ocf0a>();
+        }
+        else {
+            mcuInterrupts()->tifr.template add<int_type::Flags::ocf1a>();
+        }
+        SWUsartRxTx<N>::tx::template dir<AVR::Output>();
+        SWUsartRxTx<N>::tx::on();
     }
     static bool put(std::byte item) {
         if (sendQueue.push_back(item)) {
+            if constexpr(N == 0) {
+                mcuInterrupts()->timsk.template add<int_type::Mask::ocie0a>();
+            }
+            else {
+                mcuInterrupts()->timsk.template add<int_type::Mask::ocie1a>();
+            }
             return true;
         }
         return false;
@@ -261,7 +288,12 @@ public:
                 }
                 else {
                     outframe = 0x0001;
-                    mcuInterrupts()->timsk.template clear<int_type::Mask::ociea>();
+                    if constexpr(N == 0) {
+                        mcuInterrupts()->timsk.template clear<int_type::Mask::ocie0a>();
+                    }
+                    else {
+                        mcuInterrupts()->timsk.template clear<int_type::Mask::ocie1a>();
+                    }
                 }
             }
         }
