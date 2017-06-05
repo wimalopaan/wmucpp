@@ -92,7 +92,7 @@ public:
     }
     
     static typename Reso::type value() {
-        if constexpr(std::is_same<typename Reso::type, uint8_t>::value) {
+        if constexpr(std::is_same<typename Reso::type, Resolution<8>::type>::value) {
             return typename Reso::type{*mcuAdc()->adch};
         }
         else {
