@@ -28,6 +28,7 @@ template<typename T, uint16_t Size>
 struct array final
 {
     typedef T value_type;
+    // todo: make dependent on size
     typedef uint16_t size_type;
     
 //    constexpr array() = default;
