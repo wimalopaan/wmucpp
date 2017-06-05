@@ -32,6 +32,7 @@ class SoftPPM final {
 public:
     static_assert(std::is_same<typename Timer::value_type, uint16_t>::value, "must use 16bit timer");
     
+    // constexpr umrechnen der Pins... in ein constexpr array mit Masken und ... s.a PinSet
     static constexpr const uint8_t numberOfChannels = sizeof...(Pins);
     static constexpr auto mcuTimer = Timer::mcuTimer;
     static constexpr auto mcuInterrupts = Timer::mcuInterrupts;
