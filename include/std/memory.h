@@ -21,21 +21,21 @@
 #ifndef __GLIBCXX__
 
 namespace std {
-
-template< class T > struct remove_reference      {
-    typedef T type;
-};
-template< class T > struct remove_reference<T&>  {
-    typedef T type;
-};
-template< class T > struct remove_reference<T&&> {
-    typedef T type;
-};
-
-template <typename T>
-constexpr typename remove_reference<T>::type&& move(T&& arg) {
-  return static_cast<typename remove_reference<T>::type&&>(arg);
-}
-
+    
+    template< class T > struct remove_reference      {
+        typedef T type;
+    };
+    template< class T > struct remove_reference<T&>  {
+        typedef T type;
+    };
+    template< class T > struct remove_reference<T&&> {
+        typedef T type;
+    };
+    
+    template <typename T>
+    constexpr typename remove_reference<T>::type&& move(T&& arg) {
+        return static_cast<typename remove_reference<T>::type&&>(arg);
+    }
+    
 }
 #endif
