@@ -39,7 +39,7 @@
 using terminalDevice = SimAVRDebugConsole;
 using terminal = std::basic_ostream<terminalDevice>;
 
-volatile uint_ranged<uint8_t, 0, 200> y = 42;
+uint_ranged<uint8_t, 0, 200> y = 42;
 volatile std::percent z{0};
 
 int main() {

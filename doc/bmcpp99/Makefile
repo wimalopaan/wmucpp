@@ -20,6 +20,8 @@
 MCU = atmega328p
 F_OSC = 20000000
 
+bm50a.elf: LOADLIBES=simavrconsole.o
+
 targets = shtml
 
 targets +=  bm01a.s bm01a.elf bm01a.size bm01a.cc.extract bm01a.s.axtract
@@ -33,7 +35,9 @@ targets +=  bm05a.elf bm05a.s
 #targets +=  bm40a.elf bm40a.s
 targets +=  bm41a.elf bm41a.s
 targets +=  bm42a.elf bm42a.s
+targets +=  bm50a.elf bm50a.s
 targets +=  bm99a.elf bm99a.s
+targets += sort.h.extract
 
 -include ../../Makefile.include
 

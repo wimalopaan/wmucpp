@@ -15,3 +15,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+constexpr int size = 31; // wesentlich anders als bei 32
+
+typedef struct {
+  int a[size];
+  int b;
+} X;
+
+int test1 (volatile X* x) {
+  return x->b + x->a[0];
+}
+
+int test2 (volatile int* array, volatile int* b) {
+  return *b + array[0];
+}
+
+volatile X x;
+
+volatile int a[size];
+volatile int b;
+
+int main() {
+    test1(&x);
+    test2(a, &b);    
+}

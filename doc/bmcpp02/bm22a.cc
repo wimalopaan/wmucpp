@@ -35,7 +35,7 @@ struct MCUx {
 };
 template<>
 struct MCUx::Gpio::Address<0> {
-    static constexpr uintptr_t value = 0x55;
+    static constexpr uintptr_t value = 0x30;
 };
 
 template<typename Port, uint8_t PinNumber>
