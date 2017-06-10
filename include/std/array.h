@@ -28,8 +28,8 @@ template<typename T, uint16_t Size>
 struct array final
 {
     typedef T value_type;
-    // todo: make dependent on size
-    typedef uint16_t size_type;
+    typedef typename std::conditional<(Size < 256), uint8_t, uint16_t>::type size_type;
+    typedef typename std::conditional<(Size < 128), int8_t, int16_t>::type signed_size_type;
     
 //    constexpr array() = default;
     
