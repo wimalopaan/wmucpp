@@ -38,10 +38,11 @@ NUP = pdfnup
 NUPFLAGSL += -q --nup 1x2 --no-landscape --keepinfo --frame true
 NUPFLAGSP += -q --nup 2x1 --keepinfo --frame true
 
-all: html #pdf src # check
+all: html pdf #src # check
 
 
 sources += $(wildcard bmcpp??.adoc)
+sources += qsort.adoc
 
 .PHONY: html src pdf images clean
 
