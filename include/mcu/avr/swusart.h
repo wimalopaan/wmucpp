@@ -271,7 +271,7 @@ public:
         }
         return false;
     }
-    struct TransmitBitHandler : public IsrBaseHandler<typename AVR::ISR::Timer<mcu_timer_number>::CompareA> {
+    struct TxHandler : public IsrBaseHandler<typename AVR::ISR::Timer<mcu_timer_number>::CompareA> {
         static void isr() {
             if (outframe != 0x0001) {
                 if (outframe & 0x0001) {

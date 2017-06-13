@@ -25,8 +25,8 @@
 #include <stdlib.h>
 #include <util/eu_dst.h>
 
-#include "mcu/avr8.h"
-#include "mcu/ports.h"
+#include "../../include/universal02mg.h"
+
 #include "mcu/avr/usart.h"
 #include "mcu/avr/adc.h"
 #include "mcu/avr/clock.h"
@@ -35,10 +35,10 @@
 #include "hal/alarmtimer.h"
 #include "hal/adccontroller.h"
 #include "hal/softspimaster.h"
-#include "external/ws2812.h"
 #include "external/dcf77.h"
 #include "external/irmp.h"
 #include "std/chrono.h"
+#include "units/percent.h"
 #include "appl/blink.h"
 #include "appl/ledflash.h"
 #include "appl/clockstatemachine.h"
@@ -52,89 +52,70 @@
 
 #include "console.h"
 
+static constexpr bool useStatusLed = true;
+static constexpr bool useText = false;
+static constexpr bool useUsart = true;
 static constexpr bool useLight = true;
 static constexpr bool useIR = true;
-static constexpr bool useText = true;
 static constexpr bool useRCCalibration = false;
-
-using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
-using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
-using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
-
-using iRPin    = AVR::Pin<PortB, 0>;
-using d0_ss_Pin = AVR::Pin<PortD, 6>;
-using d1_data_Pin = AVR::Pin<PortD, 5>;
-using displayLedsPin = d1_data_Pin;
-using d2_clck_Pin = AVR::Pin<PortB, 3>;
-using d3_Pin = AVR::Pin<PortD, 3>;
 
 using display4x4Leds = WS2812<16, displayLedsPin, ColorSequenceGRB>;
 using display60Leds = WS2812<60, displayLedsPin, ColorSequenceGRB>;
 
-using adc = AdcController<AVR::Adc<0, AVR::Resolution<10>>, 1>;
-
-using rxdPin         = AVR::Pin<PortD, 0>;
-using txdPin         = AVR::Pin<PortD, 1>;
-using dcfPin         = AVR::Pin<PortC, 2>;
-using powerSwitchPin = AVR::Pin<PortD, 2>;
-
-using ledPin         = AVR::Pin<PortB, 7>;
-
-using led = WS2812<1, ledPin, ColorSequenceGRB>;
-using Color = led::color_type;
+using adc = std::conditional<useLight, AdcController<AVR::Adc<0, AVR::Resolution<8>>, 1>, void>::type;
 
 using spi = SoftSpiMaster<d1_data_Pin, d2_clck_Pin, d0_ss_Pin>;
 
 namespace Constant {
-static constexpr uint8_t brightness = 255;
-static constexpr Color cOff{0};
-static constexpr Color cRed{Red{brightness}};
-static constexpr Color cBlue{Blue{std::min((int)std::numeric_limits<uint8_t>::max(), 2 * brightness)}};
-static constexpr Color cGreen{Green{brightness / 2}};
-static constexpr Color cYellow{Red{brightness}, Green{brightness}, Blue{0}};
-static constexpr Color cMagenta{Red{brightness}, Green{0}, Blue{brightness}};
-static constexpr Color cCyan{Red{0}, Green{brightness}, Blue{brightness}};
-static constexpr Color cWhite{Red{brightness}, Green{brightness}, Blue{brightness}};
-static constexpr Color cWhiteLow{Red{brightness / 10}, Green{brightness / 10}, Blue{brightness / 10}};
-
-static constexpr uint16_t analogBrightnessMaximum = 400;
-
-static constexpr uint32_t secondsPerHour= (uint32_t)60 * 60;
-static constexpr uint32_t secondsPerDay = secondsPerHour * 24;
-
-static constexpr auto title = "SW = Wordclock 1.0; HW = Universal-MG 01"_pgm;
-
-static constexpr uint8_t textLength = std::max(uint8_t(64), title.size);
+    static constexpr uint8_t brightness = 255;
+    static constexpr Color cOff{0};
+    static constexpr Color cRed{Red{brightness}};
+    static constexpr Color cBlue{Blue{std::min((int)std::numeric_limits<uint8_t>::max(), 2 * brightness)}};
+    static constexpr Color cGreen{Green{brightness / 2}};
+    static constexpr Color cYellow{Red{brightness}, Green{brightness}, Blue{0}};
+    static constexpr Color cMagenta{Red{brightness}, Green{0}, Blue{brightness}};
+    static constexpr Color cCyan{Red{0}, Green{brightness}, Blue{brightness}};
+    static constexpr Color cWhite{Red{brightness}, Green{brightness}, Blue{brightness}};
+    static constexpr Color cWhiteLow{Red{brightness / 10}, Green{brightness / 10}, Blue{brightness / 10}};
+    
+    static constexpr uint16_t analogBrightnessMaximum = 400;
+    
+    static constexpr uint32_t secondsPerHour= (uint32_t)60 * 60;
+    static constexpr uint32_t secondsPerDay = secondsPerHour * 24;
+    
+    static constexpr auto title = "SW = Universalclock 1.0; HW = Universal-MG 02"_pgm;
+    
+    static constexpr uint8_t textLength = std::max(uint8_t(64), title.size);
 }
 
 using displayNixie  = TimeBCDSerial<spi>;
-using display4x4    = TimerDisplay4x4<display4x4Leds, Constant::cBlue>;
+//using display4x4    = TimerDisplay4x4<display4x4Leds, Constant::cBlue>;
 using displayRing60 = TimerDisplay60<display60Leds, Constant::cWhiteLow, Constant::cBlue, Constant::cGreen, Constant::cRed>;
 using displayWC     = WordclockDisplay<d0_ss_Pin, ColorSequenceGRB>;
 
-using display       = displayWC;
+using display       = displayRing60;
 
-//using shifttext = std::conditional<useText, ShiftDisplay<displayWC::leds, displayWC::mColumns, displayWC::mRows, Constant::textLength, Font<5,7>>, void>::type;
-using shifttext = ShiftDisplay<displayWC::leds, displayWC::mColumns, displayWC::mRows, Constant::textLength, Font<5,7>>;
+using shifttext = std::conditional<useText, ShiftDisplay<displayWC::leds, displayWC::mColumns, displayWC::mRows, Constant::textLength, Font<5,7>>, void>::type;
 
-
-using terminalDevice = AVR::Usart<0, void>;
+using terminalDevice = std::conditional<useUsart, AVR::Usart<0, void>, void>::type;
 using terminal = std::basic_ostream<terminalDevice>;
 
 namespace std {
-std::basic_ostream<terminalDevice> cout;
-std::lineTerminator<CRLF> endl;
+    std::basic_ostream<terminalDevice> cout;
+    std::lineTerminator<CRLF> endl;
 }
 
-using statusLed = LedFlash<led>;
+using statusLed = std::conditional<useStatusLed, LedFlash<led>, void>::type;
 
 using systemTimer = AVR::Timer16Bit<1>;
+using irTimer = AVR::Timer8Bit<2>; // timer 2
 
 struct LocalConfig {
     static constexpr AVR::Util::TimerSetupData tsd = AVR::Util::caculateForExactFrequencyAbove<systemTimer>(Config::Timer::frequency);
     static_assert(tsd, "wrong timer parameter");
     static constexpr std::milliseconds reso = std::duration_cast<std::milliseconds>(1 / tsd.f);
     static constexpr std::hertz exactFrequency = tsd.f;
+    static constexpr AVR::Util::TimerSetupData tsdir = AVR::Util::calculate<irTimer>(10000_Hz);
 };
 
 using alarmTimer  = AlarmTimer<systemTimer, LocalConfig::reso>;
@@ -154,11 +135,17 @@ struct IrDecoder {
     }
     static inline void start() {
     }
+    static inline void check() {
+        Irmp::IRMP_DATA irmp_data{};
+        if (irmp_get_data(&irmp_data)) {
+            EventManager::enqueue({(irmp_data.flags & Irmp::Repetition) ? EventType::IREventRepeat : EventType::IREvent , 
+                                   std::byte(irmp_data.command)});
+        }
+    }
 };
 
-using irDecoder = IrDecoder;
+using irDecoder = std::conditional<useIR, IrDecoder, void>::type;
 
-using irTimer = AVR::Timer8Bit<2>; // timer 2
 using irConstantRate = ConstantRateAdapter<2, void, AVR::ISR::Timer<2>::CompareA, irDecoder>;
 
 using isrRegistrar = IsrRegistrar<systemConstantRate, terminalDevice::RxHandler, terminalDevice::TxHandler, irConstantRate>;
@@ -169,46 +156,78 @@ const auto preStartTimer = alarmTimer::create(240_s, AlarmFlags::OneShot | Alarm
 
 std::chrono::system_clock<> systemClock;
 
-std::percent brightness = 10_ppc;
+template<typename Adc>
+struct BrightnessControl {
+    static std::percent brightness() {
+        if constexpr(std::is_same<Adc, void>::value) {
+            return 100_ppc;            
+        }
+        else {
+            auto av = Adc::value(0);
+            return std::percent{std::scale(av)};        
+        }
+    }
+};
 
+using brightnessController = std::conditional<useLight, BrightnessControl<adc>, void>::type;
+
+template<typename StatusLed, typename BrightnessController = void>
 struct StateManager{
+    static constexpr bool useStatusLed = !std::is_same<StatusLed, void>::value;
+    static constexpr bool useBrightness= !std::is_same<BrightnessController, void>::value;
     using State = RadioClock::State;
     static void enter(State state) {
         switch(state) {
         case State::PreStart:
-            std::cout << "S: PreStart"_pgm << std::endl;
+            std::outl<terminal>("S: PreStart"_pgm);
             powerSwitchPin::off();
-            statusLed::steadyColor(Constant::cOff);
-            statusLed::enable();
+            if constexpr(useStatusLed) {
+                StatusLed::steadyColor(Constant::cOff);
+                StatusLed::enable();
+            }
             break;
         case State::Start:
-            std::cout << "S: Start"_pgm << std::endl;
+            std::outl<terminal>("S: Start"_pgm);
             powerSwitchPin::off();
-            statusLed::disable();
-            statusLed::steadyColor(Constant::cBlue);
-            statusLed::update(brightness);
+            if constexpr(useStatusLed) {
+                StatusLed::disable();
+                StatusLed::steadyColor(Constant::cBlue);
+                if constexpr(useBrightness) {
+                    StatusLed::update(BrightnessController::brightness());
+                }
+            }
             break;
         case State::Sync:
-            std::cout << "S: Sync"_pgm << std::endl;
+            std::outl<terminal>("S: Sync"_pgm);
             powerSwitchPin::off();
-            statusLed::disable();
-            statusLed::steadyColor(Constant::cRed);
-            statusLed::update(brightness);
+            if constexpr(useStatusLed) {
+                StatusLed::disable();
+                StatusLed::steadyColor(Constant::cRed);
+                if constexpr(useBrightness) {
+                    StatusLed::update(BrightnessController::brightness());
+                }
+            }
             break;
         case State::Clock:
-            std::cout << "S: Clock"_pgm << std::endl;
+            std::outl<terminal>("S: Clock"_pgm);
             systemClock = std::chrono::system_clock<>::from(dcfDecoder::dateTime());
             EventManager::enqueue(EventType::SystemClockSet);
             powerSwitchPin::on();
-            statusLed::enable();
-            statusLed::steadyColor(Constant::cGreen);
+            if constexpr(useStatusLed) {
+                StatusLed::enable();
+                StatusLed::steadyColor(Constant::cGreen);
+            }
             break;
         case State::Error:
-            std::cout << "S: Error"_pgm << std::endl;
+            std::outl<terminal>("S: Error"_pgm);
             powerSwitchPin::off();
-            statusLed::disable();
-            statusLed::steadyColor(Constant::cMagenta);
-            statusLed::update(brightness);
+            if constexpr(useStatusLed) {
+                StatusLed::disable();
+                StatusLed::steadyColor(Constant::cMagenta);
+                if constexpr(useBrightness) {
+                    StatusLed::update(BrightnessController::brightness());
+                }
+            }
             break;
         }
     }        
@@ -236,14 +255,18 @@ public:
                 }
             }
         }
-}
+    }
 };
 
 using flash = Flasher<statusLed>;
 
-using radioClock = RadioClock::Clock<dcfDecoder, StateManager, flash>;
+using radioClock = RadioClock::Clock<dcfDecoder, StateManager<statusLed, brightnessController>, flash>;
 
+template<typename ShiftText = void, typename StatusLed = void, typename BC = void>
 struct GlobalStateMachine {
+    static constexpr bool useStatusLed = !std::is_same<StatusLed, void>::value;
+    static constexpr bool useShiftText = !std::is_same<ShiftText, void>::value;
+    static constexpr bool useBrightness = !std::is_same<BC, void>::value;
     enum class State : uint8_t {Init, Start, Clock, Date, Temp, Text};
     enum class Event : uint8_t {Start, Clock, StateSwitchFw, StateSwitchBw, FastTick, SecondTick};
     static void process(Event e) {
@@ -254,7 +277,19 @@ struct GlobalStateMachine {
                 newState = State::Start;
             }
             else if (e == Event::FastTick) {
-                statusLed::tick(brightness);
+                if constexpr(useStatusLed) {
+                    if constexpr(useBrightness) {
+                        StatusLed::tick(BC::brightness);
+                    }
+                    else {
+                        StatusLed::tick(100_ppc);
+                    }
+                }
+            }
+            else if (e == Event::SecondTick) {
+                if constexpr(useBrightness) {
+                    std::outl<terminal>("light: "_pgm, BC::brightness());
+                }
             }
             break;
         case State::Start:
@@ -262,9 +297,19 @@ struct GlobalStateMachine {
                 newState = State::Clock;
             }
             else if (e == Event::SecondTick) {
+                if constexpr(useBrightness) {
+                    std::outl<terminal>("light: "_pgm, BC::brightness());
+                }
             }
             else if (e == Event::FastTick) {
-                statusLed::tick(brightness);
+                if constexpr(useStatusLed) {
+                    if constexpr(useBrightness) {
+                        StatusLed::tick(BC::brightness);
+                    }
+                    else {
+                        StatusLed::tick(100_ppc);
+                    }
+                }
             }
             break;
         case State::Clock:
@@ -278,14 +323,21 @@ struct GlobalStateMachine {
                 newState = State::Start;
             }
             else if (e == Event::SecondTick) {
-                if constexpr(useLight) {
-                    std::cout << "light: "_pgm << brightness << std::endl;
-                    display::brightness(brightness);
+                if constexpr(useBrightness) {
+                    std::outl<terminal>("light: "_pgm, BC::brightness());
+                    display::brightness(BC::brightness());
                 }
                 display::set(systemClock);
             }
             else if (e == Event::FastTick) {
-                statusLed::tick(brightness);
+                if constexpr(useStatusLed) {
+                    if constexpr(useBrightness) {
+                        StatusLed::tick(BC::brightness());
+                    }
+                    else {
+                        StatusLed::tick(100_ppc);
+                    }
+                }
             }
             break;
         case State::Date:
@@ -299,15 +351,26 @@ struct GlobalStateMachine {
                 newState = State::Start;
             }
             else if (e == Event::SecondTick) {
-                StringBuffer<30> sb;
-                isotime_r(&systemClock.dateTime().tm(), sb.begin());
-                shifttext::set(sb);
-                shifttext::write();
+                if constexpr(useShiftText) {
+                    StringBuffer<30> sb;
+                    isotime_r(&systemClock.dateTime().tm(), sb.begin());
+                    ShiftText::set(sb);
+                    ShiftText::write();
+                }
             }
             else if (e == Event::FastTick) {
-                statusLed::tick(brightness);
-                shifttext::shift();
-                shifttext::write();
+                if constexpr(useStatusLed) {
+                    if constexpr(useBrightness) {
+                        StatusLed::tick(BC::brightness);
+                    }
+                    else {
+                        StatusLed::tick(100_ppc);
+                    }
+                }
+                if constexpr(useShiftText) {
+                    ShiftText::shift();
+                    ShiftText::write();
+                }
             }
             break;
             break;
@@ -333,9 +396,16 @@ struct GlobalStateMachine {
                 newState = State::Start;
             }
             else if (e == Event::FastTick) {
-                statusLed::tick(brightness);
-                shifttext::shift();
-                shifttext::write();
+                if constexpr(useStatusLed) {
+                    if constexpr(useBrightness) {
+                        StatusLed::tick(BC::brightness);
+                    }
+                    else {
+                        StatusLed::tick(100_ppc);
+                    }
+                }
+                //                shifttext::shift();
+                //                shifttext::write();
             }
             break;
         }
@@ -343,34 +413,34 @@ struct GlobalStateMachine {
             mState = newState;
             switch(mState) {
             case State::Init:
-                std::cout << "G: Init"_pgm << std::endl;
+                std::outl<terminal>("G: Init"_pgm);
                 break;
             case State::Start:
-                std::cout << "G: Start"_pgm << std::endl;
+                std::outl<terminal>("G: Start"_pgm);
                 EventManager::enqueue(EventType::RadioClockStart);
                 break;
             case State::Clock:
-                std::cout << "G: Clock"_pgm << std::endl;
+                std::outl<terminal>("G: Clock"_pgm);
                 display::clear();
                 break;
             case State::Date:
                 display::clear();
-                shifttext::clear();
-                shifttext::reset();
-                std::cout << "G: Date"_pgm << std::endl;
+                //                shifttext::clear();
+                //                shifttext::reset();
+                std::outl<terminal>("G: Date"_pgm);
                 break;
             case State::Temp:
                 display::clear();
-                shifttext::clear();
-                shifttext::reset();
-                std::cout << "G: Temp"_pgm << std::endl;
+                //                shifttext::clear();
+                //                shifttext::reset();
+                std::outl<terminal>("G: Temp"_pgm);
                 break;
             case State::Text:
                 display::clear();
-                shifttext::clear();
-                shifttext::reset();
-                shifttext::set(Constant::title);
-                std::cout << "G: Text"_pgm << std::endl;
+                //                shifttext::clear();
+                //                shifttext::reset();
+                //                shifttext::set(Constant::title);
+                std::outl<terminal>("G: Text"_pgm);
                 break;
             }
         }
@@ -379,7 +449,7 @@ private:
     inline static State mState = State::Init;
 };
 
-using globalFSM = GlobalStateMachine;
+using globalFSM = GlobalStateMachine<shifttext, void, brightnessController>;
 
 struct TimerHandler : public EventHandler<EventType::Timer> {
     static bool process(std::byte b) {
@@ -459,91 +529,120 @@ struct SystemClockSet : public EventHandler<EventType::SystemClockSet> {
     }  
 };
 
-using allEventHandler = EventHandlerGroup<TimerHandler, UsartFeHandler, UsartUpeHandler, UsartDorHandler, Usart0Handler,
+using allEventHandler = EventHandlerGroup<TimerHandler, 
+UsartFeHandler, UsartUpeHandler, UsartDorHandler, Usart0Handler,
 IRHandler, IRRepeatHandler,
 SystemClockSet>;
 
-constexpr std::hertz fIr = 15000_Hz;
 
-int main() {   
-    powerSwitchPin::dir<AVR::Output>();    
-    powerSwitchPin::off();    
-    isrRegistrar::init();
-    terminalDevice::init<19200>();
-    statusLed::init();
-    display::init();
-    dcfDecoder::init();
-    radioClock::init();
+namespace detail {
     
-    systemTimer::template prescale<LocalConfig::tsd.prescaler>();
-    systemTimer::template ocra<LocalConfig::tsd.ocr - 1>();
-    systemTimer::mode(AVR::TimerMode::CTC);
-    systemTimer::start();
-    
-    if constexpr(useLight) {
-        adc::init();
-    }
-    if constexpr(useIR) {
-        constexpr auto tsd = AVR::Util::calculate<irTimer>(fIr);
-        static_assert(tsd, "wrong parameter");
-        irTimer::prescale<tsd.prescaler>();
-        irTimer::ocra<tsd.ocr>();
-        irTimer::mode(AVR::TimerMode::CTC);
-        irConstantRate::init();
-    }
-    
-    {
-        Scoped<EnableInterrupt<>> ei;
-        std::cout << Constant::title << std::endl;
-        
-        std::cout << "OSCCAL: "_pgm << oscillator::calibration() << std::endl;
-        std::cout << "f systemtimer: "_pgm << LocalConfig::tsd.f << std::endl;
-        
-        if constexpr(useText) {
-            Scoped st{
-                [](){powerSwitchPin::on();},
-                [](){powerSwitchPin::off();}
-            };
-            shifttext::set(Constant::title);
-            for(uint8_t i = 0; i < (Constant::title.size + 1) * shifttext::font().Width; ++i) {
-                shifttext::write();
-                shifttext::shift();
-                Util::delay(300_ms);
-            }
+    template<typename IrDec, typename Adc, typename BC, typename StatusLed, typename ShiftText, typename TerminalDevice, typename RCCalibration>
+    void main() {
+        powerSwitchPin::dir<AVR::Output>();    
+        powerSwitchPin::off();    
+        isrRegistrar::init();
+        if constexpr (!std::is_same<TerminalDevice, void>::value) {
+            TerminalDevice::template init<19200>();
+        }
+        if constexpr(!std::is_same<StatusLed, void>::value) {
+            StatusLed::init();
         }
         
-        alarmTimer::start(*preStartTimer);
+        display::init();
+        dcfDecoder::init();
+        radioClock::init();
+        //        leds2Pin::dir<AVR::Output>();
+        //        leds2Pin::on();
         
-        EventManager::run3<allEventHandler, radioClock::HandlerGroup>([](){
-            if constexpr(useLight) {
-                adc::periodic();
-                // todo: move to BrigthnessController
-//                brightness = std::scale(adc::value(0), adc::value_type(0), adc::value_type(Constant::analogBrightnessMaximum));
-//                brightness = std::max(brightness, 1_ppc);
+        systemTimer::template prescale<LocalConfig::tsd.prescaler>();
+        systemTimer::template ocra<LocalConfig::tsd.ocr - 1>();
+        systemTimer::mode(AVR::TimerMode::CTC);
+        systemTimer::start();
+        
+        if constexpr(!std::is_same<Adc, void>::value) {
+            Adc::init();
+        }
+        if constexpr(!std::is_same<IrDec, void>::value) {
+            iRPin::dir<AVR::Input>();
+            IrDec::init();
+            static_assert(LocalConfig::tsdir, "wrong parameter");
+            irTimer::prescale<LocalConfig::tsdir.prescaler>();
+            irTimer::ocra<LocalConfig::tsdir.ocr>();
+            irTimer::mode(AVR::TimerMode::CTC);
+            irConstantRate::init();
+            std::outl<terminal>("fir: "_pgm, LocalConfig::tsdir.f);
+            std::outl<terminal>("ps: "_pgm, LocalConfig::tsdir.prescaler);
+            std::outl<terminal>("oc: "_pgm, LocalConfig::tsdir.ocr);
+        }
+        
+        {
+            Scoped<EnableInterrupt<>> ei;
+            std::outl<terminal>(Constant::title);
+            
+            if constexpr(!std::is_same<RCCalibration, void>::value) {
+                std::outl<terminal>("OSCCAL: "_pgm, RCCalibration::calibration());
+                std::outl<terminal>("f systemtimer: "_pgm, LocalConfig::tsd.f);
             }
             
-            systemConstantRate::periodic();
-            if constexpr(useIR) {
-                irConstantRate::periodic();
-                Irmp::IRMP_DATA irmp_data;
-                if (irmp_get_data(&irmp_data)) {
-                    EventManager::enqueue({(irmp_data.flags & Irmp::Repetition) ? EventType::IREventRepeat : EventType::IREvent , 
-                                           std::byte(irmp_data.command)});
+            if constexpr(!std::is_same<ShiftText, void>::value) {
+                Scoped st{
+                    [](){powerSwitchPin::on();},
+                    [](){powerSwitchPin::off();}
+                };
+                ShiftText::set(Constant::title);
+                for(uint8_t i = 0; i < (Constant::title.size + 1) * ShiftText::font().Width; ++i) {
+                    ShiftText::write();
+                    ShiftText::shift();
+                    Util::delay(300_ms);
                 }
             }
+            {
+                std::outl<terminal>("Test..."_pgm);
+                Scoped st{
+                    [](){powerSwitchPin::on();},
+                    [](){powerSwitchPin::off();}
+                };
+                display::leds::off();
+                for(uint8_t i = 0 ; i < display::leds::size; ++i) {
+                    display::leds::set(i, Constant::cGreen);
+                    Util::delay(100_ms);
+                }
+                std::outl<terminal>("...End"_pgm);
+            }
             
-            if (EventManager::unprocessedEvent()) {
-                statusLed::enable();
-                statusLed::flash(Constant::cMagenta, 10);
-                std::cout << "unprocessed event"_pgm << std::endl;
-            }
-            if (EventManager::leakedEvent()) {
-                statusLed::enable();
-                statusLed::flash(Constant::cYellow, 10);
-                std::cout << "leaked event"_pgm << std::endl;
-            }
-        });
+            alarmTimer::start(*preStartTimer);
+            
+            EventManager::run3<allEventHandler, radioClock::HandlerGroup>([](){
+                if constexpr(!std::is_same<BC, void>::value && !std::is_same<Adc, void>::value) {
+                    Adc::periodic();
+                }
+                systemConstantRate::periodic();
+                if constexpr(!std::is_same<IrDec, void>::value) {
+                    irConstantRate::periodic();
+                    IrDec::check();
+                }
+                if (EventManager::unprocessedEvent()) {
+                    if constexpr(!std::is_same<StatusLed, void>::value) {
+                        StatusLed::enable();
+                        StatusLed::flash(Constant::cMagenta, 10);
+                    }                
+                    std::outl<terminal>("upe"_pgm);
+                }
+                if (EventManager::leakedEvent()) {
+                    if constexpr(!std::is_same<StatusLed, void>::value) {
+                        StatusLed::enable();
+                        StatusLed::flash(Constant::cYellow, 10);
+                    }
+                    std::outl<terminal>("le"_pgm);
+                }
+            });
+        }
     }
+} //!detail
+
+int main() {   
+    detail::main<irDecoder, adc, brightnessController, statusLed, shifttext, terminalDevice, oscillator>();
 }
 
 ISR(TIMER1_COMPA_vect) {
@@ -568,7 +667,7 @@ void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsign
 }
 #endif
 
-constexpr uint32_t finterrupts = fIr.value;
+constexpr uint32_t finterrupts = LocalConfig::tsdir.f.value;
 
 static_assert(finterrupts >= 10000, "IR Interrupts frequeny too low");
 static_assert(finterrupts <= 20000, "IR Interrupts frequeny too high");
@@ -579,6 +678,6 @@ static_assert(finterrupts <= 20000, "IR Interrupts frequeny too high");
 #define input(x) iRPin::read()
 
 namespace Irmp {
-// this must be the last statement!!!
+    // this must be the last statement!!!
 #include "irmp/irmp.c"
 }

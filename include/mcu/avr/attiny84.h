@@ -29,6 +29,8 @@ namespace AVR {
     
     struct ATTiny84 final {
         ATTiny84() = delete;
+        template<typename T>
+        static constexpr bool is_atomic() {return false;}
         struct Timer8Bit {
             static constexpr const uint8_t count = 1;
             enum class TCCRA : uint8_t {
@@ -196,6 +198,8 @@ namespace AVR {
             template<uint8_t N> struct Address; 
         };
     };
+    template<>
+    constexpr bool ATTiny84::is_atomic<uint8_t>() {return true;}
     
     template<>
     struct ATTiny84::PCInterrupts::Address<0> {

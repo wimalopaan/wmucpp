@@ -78,7 +78,7 @@ const auto secondsTimer = alarmTimer::create(1000_ms, AlarmFlags::Periodic);
 using terminalDevice = SWUsart<0>;
 using terminal = std::basic_ostream<terminalDevice>;
 
-using isrRegistrar = IsrRegistrar<terminalDevice::TransmitBitHandler, systemConstantRate>;
+using isrRegistrar = IsrRegistrar<terminalDevice::TxHandler, systemConstantRate>;
 
 struct TimerHandler : public EventHandler<EventType::Timer> {
     static bool process(std::byte b) {

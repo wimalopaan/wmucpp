@@ -45,7 +45,7 @@
 
 static constexpr bool useStatusLed = false;
 static constexpr bool useText = false;
-static constexpr bool useUsart = false;
+static constexpr bool useUsart = true;
 static constexpr bool useLight = false;
 static constexpr bool useIR = false;
 static constexpr bool useRCCalibration = false;
@@ -72,7 +72,7 @@ namespace Constant {
     
 } // !Constant
 
-using terminalDevice = SWUsart<0>;
+using terminalDevice = std::conditional<useUsart, SWUsart<0>, void>::type;
 using terminal = std::basic_ostream<terminalDevice>;
 
 using systemTimer = AVR::Timer8Bit<1>;
@@ -92,11 +92,12 @@ using oscillator = std::conditional<useRCCalibration, AVR::Clock<LocalConfig::ex
 
 using systemConstantRate = ConstantRateAdapter<1, void, AVR::ISR::Timer<1>::CompareA, alarmTimer, dcfDecoder, oscillator>;
 
-using isrRegistrar = IsrRegistrar<systemConstantRate, terminalDevice::TransmitBitHandler>;
+using TerminalTxHandler = AVR::Util::TxHandler<terminalDevice>::type;
+using isrRegistrar = IsrRegistrar<systemConstantRate, TerminalTxHandler>;
 
 const auto blinkTimer = alarmTimer::create(100_ms, AlarmFlags::Periodic);
 const auto secondsTimer = alarmTimer::create(1000_ms, AlarmFlags::Periodic);
-const auto preStartTimer = alarmTimer::create(240_s, AlarmFlags::OneShot | AlarmFlags::Disabled);
+const auto preStartTimer = alarmTimer::create(10_s, AlarmFlags::OneShot | AlarmFlags::Disabled);
 
 std::chrono::system_clock<> systemClock;
 
@@ -165,7 +166,13 @@ struct StateManager{
     }        
 };
 
-using radioClock = RadioClock::Clock<dcfDecoder, StateManager<void, BrightnessControl>, void, calibrator>;
+struct DCFOutput {
+    static void flash(bool bit) {
+        btStatus::toggle();
+    }
+};
+
+using radioClock = RadioClock::Clock<dcfDecoder, StateManager<void, BrightnessControl>, DCFOutput, calibrator>;
 
 template<typename ShiftText = void, typename StatusLed = void, typename BC = void>
 struct GlobalStateMachine {
@@ -221,57 +228,58 @@ struct GlobalStateMachine {
             else if (e == Event::SecondTick) {
             }
             else if (e == Event::FastTick) {
-                break;
-        case State::Temp:
-                    if (e == Event::StateSwitchFw) {
-                        newState = State::Text;
-                    }
-                    else if (e == Event::StateSwitchBw) {
-                        newState = State::Date;
-                    }
-                    else if (e == Event::Start) {
-                        newState = State::Start;
-                    }
-                    break;
-                case State::Text:
-                    if (e == Event::StateSwitchFw) {
-                        newState = State::Clock;
-                    }
-                    else if (e == Event::StateSwitchBw) {
-                        newState = State::Temp;
-                    }
-                    else if (e == Event::Start) {
-                        newState = State::Start;
-                    }
-                    else if (e == Event::FastTick) {
-                    }
-                    break;
             }
-            if (newState != mState) {
-                mState = newState;
-                switch(mState) {
-                case State::Init:
-                    std::outl<terminal>("G: Init"_pgm);
-                    break;
-                case State::Start:
-                    std::outl<terminal>("G: Start"_pgm);
-                    EventManager::enqueue(EventType::RadioClockStart);
-                    break;
-                case State::Clock:
-                    std::outl<terminal>("G: Clock"_pgm);
-                    break;
-                case State::Date:
-                    std::outl<terminal>("G: Date"_pgm);
-                    break;
-                case State::Temp:
-                    std::outl<terminal>("G: Temp"_pgm);
-                    break;
-                case State::Text:
-                    std::outl<terminal>("G: Text"_pgm);
-                    break;
-                }
+            break;
+        case State::Temp:
+            if (e == Event::StateSwitchFw) {
+                newState = State::Text;
+            }
+            else if (e == Event::StateSwitchBw) {
+                newState = State::Date;
+            }
+            else if (e == Event::Start) {
+                newState = State::Start;
+            }
+            break;
+        case State::Text:
+            if (e == Event::StateSwitchFw) {
+                newState = State::Clock;
+            }
+            else if (e == Event::StateSwitchBw) {
+                newState = State::Temp;
+            }
+            else if (e == Event::Start) {
+                newState = State::Start;
+            }
+            else if (e == Event::FastTick) {
+            }
+            break;
+        }
+        if (newState != mState) {
+            mState = newState;
+            switch(mState) {
+            case State::Init:
+                std::outl<terminal>("G: Init"_pgm);
+                break;
+            case State::Start:
+                std::outl<terminal>("G: Start"_pgm);
+                EventManager::enqueue(EventType::RadioClockStart);
+                break;
+            case State::Clock:
+                std::outl<terminal>("G: Clock"_pgm);
+                break;
+            case State::Date:
+                std::outl<terminal>("G: Date"_pgm);
+                break;
+            case State::Temp:
+                std::outl<terminal>("G: Temp"_pgm);
+                break;
+            case State::Text:
+                std::outl<terminal>("G: Text"_pgm);
+                break;
             }
         }
+        
     }
 private:
     inline static State mState = State::Init;
@@ -286,6 +294,7 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
             globalFSM::process(globalFSM::Event::FastTick);
         }
         else if (timer == *secondsTimer) {
+            std::outl<terminal>("tick: "_pgm, ++counter);
             if (systemClock) {
                 if ((systemClock.value() % Constant::secondsPerDay) == (13 * Constant::secondsPerHour)) {
                     systemClock = -1;
@@ -297,10 +306,12 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
             globalFSM::process(globalFSM::Event::SecondTick);
         }
         else if (timer == *preStartTimer) {
+            std::outl<terminal>("PS"_pgm);
             globalFSM::process(globalFSM::Event::Start);
         }
         return true;
     }
+    inline static uint8_t counter = 0;
 };
 
 struct SystemClockSet : public EventHandler<EventType::SystemClockSet> {
@@ -311,8 +322,7 @@ struct SystemClockSet : public EventHandler<EventType::SystemClockSet> {
     }  
 };
 
-using allEventHandler = EventHandlerGroup<TimerHandler, 
-SystemClockSet>;
+using allEventHandler = EventHandlerGroup<TimerHandler, SystemClockSet>;
 
 namespace detail {
     template<typename IrDec, typename Adc, typename BC, typename StatusLed, typename ShiftText, typename TerminalDevice, typename RCCalibration>
@@ -325,7 +335,7 @@ namespace detail {
             StatusLed::init();
         }
         
-//        display::init();
+        //        display::init();
         dcfDecoder::init();
         radioClock::init();
         
@@ -362,7 +372,14 @@ namespace detail {
 } //!detail
 
 int main() {   
+    btStatus::dir<AVR::Output>();
     detail::main<void, void, brightness, void, void, terminalDevice, oscillator>();
+}
+
+ISR(TIMER0_COMPA_vect) {
+    if constexpr(useUsart) {
+        isrRegistrar::isr<AVR::ISR::Timer<0>::CompareA>();
+    }
 }
 
 ISR(TIMER1_COMPA_vect) {

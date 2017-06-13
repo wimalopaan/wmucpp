@@ -73,7 +73,7 @@ public:
     Adc() = delete;
 
     static void init() {
-        if constexpr(std::is_same<typename Reso::type, uint8_t>::value) {
+        if constexpr(std::is_same<Reso, Resolution<8>>::value) {
             mcuAdc()->admux.template add<MCU::Adc::MUX::refs1 | MCU::Adc::MUX::refs0 | MCU::Adc::MUX::adlar>();
         }
         else {
@@ -92,7 +92,7 @@ public:
     }
     
     static typename Reso::type value() {
-        if constexpr(std::is_same<typename Reso::type, Resolution<8>::type>::value) {
+        if constexpr(std::is_same<Reso, Resolution<8>>::value) {
             return typename Reso::type{*mcuAdc()->adch};
         }
         else {

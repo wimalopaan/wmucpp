@@ -78,5 +78,12 @@ namespace MCU {
             I::isr_number;
         };
     }
+
+//    template<typename U>
+//    concept bool Usart() { 
+//        return std::is_same<I, void>::value || requires (U u) {
+//            I::isr();
+//        };
+//    }
     
 } // !MCU

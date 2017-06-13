@@ -171,8 +171,8 @@ class ConstantRateAdapter2 : public IsrBaseHandler<Int> {
     static inline constexpr typename Reg::type mask{1 << BitNumber};
 public:
     static void periodic() {
-        if (std::any(Reg::get() & mask)) {
-            Reg::get() &= ~mask;
+        if (std::any(Reg::get() & mask)) { // this race condition doesn't harm (AVR lacks a test-and-set-instruction or atomic swap
+            Reg::get() &= ~mask;           // race
             (detail::Mapper<Writers>::rateProcess(),...);
         }
     }

@@ -24,7 +24,6 @@
 #include "mcu/avr8.h"
 #include "mcu/avr/mcutimer.h"
 #include "mcu/avr/isr.h"
-#include "mcu/atomic.h"
 #include "util/bits.h"
 #include "util/disable.h"
 #include "container/fifo.h"

@@ -33,6 +33,7 @@ template<typename Leds,
 class TimerDisplay60 final {
     TimerDisplay60() = delete;
 public:
+    typedef Leds leds;
     typedef typename Leds::color_type color_type;
     
     static constexpr uint8_t size = 60;
@@ -45,6 +46,10 @@ public:
         Leds::init();
     }
     
+    static void clear() {
+        Leds::template set<false>(color_type{0});
+    }
+
     template<typename Clock>
     static void set(const Clock& clock, TimeDisplay::Mode = TimeDisplay::Mode::Time) {
         DateTime::TimeTm t = clock.dateTime();
