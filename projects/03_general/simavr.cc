@@ -39,7 +39,7 @@ using systemTimer = AlarmTimer<systemClock>;
 
 using terminal = SimAVRDebugConsole;
 
-using sampler = PeriodicGroup<AVR::ISR::Timer<0>::CompareA, systemTimer>;
+using sampler = PeriodicGroup<0, AVR::ISR::Timer<0>::CompareA, systemTimer>;
 
 namespace std {
     std::basic_ostream<terminal> cout;
@@ -102,7 +102,7 @@ void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsign
 int main(void) {
     std::cout << "simavr"_pgm << std::endl;
 
-    Scoped<EnableInterrupt> interruptEnabler;
+    Scoped<EnableInterrupt<>> interruptEnabler;
 
     constexpr auto t = AVR::Util::calculate<systemClock>(Config::Timer::frequency);
     static_assert(t, "falscher wert für p");

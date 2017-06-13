@@ -1,6 +1,6 @@
 /*
- * ++C - C++ introduction
- * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.meier@hs-kl.de>
+ * WMuCpp - Bare Metal C++ 
+ * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -71,7 +71,7 @@ struct LocalConfig {
 
 using alarmTimer  = AlarmTimer<systemTimer, LocalConfig::reso>;
 
-using systemConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<1>::CompareA, alarmTimer>;
+using systemConstantRate = ConstantRateAdapter<1, void, AVR::ISR::Timer<1>::CompareA, alarmTimer>;
 
 const auto secondsTimer = alarmTimer::create(1000_ms, AlarmFlags::Periodic);
 
@@ -109,7 +109,8 @@ int main() {
     systemTimer::start();
     
     {
-        Scoped<EnableInterrupt> ei;
+        Scoped<EnableInterrupt<>> ei;
+        btStatus::toggle();
         std::outl<terminal>(Constant::title);
         EventManager::run3<allEventHandler>([](){
             btStatus::toggle();

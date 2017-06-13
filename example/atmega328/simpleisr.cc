@@ -66,7 +66,7 @@ namespace std {
 }
 
 int main() {
-    Scoped<EnableInterrupt> interruptEnabler;
+    Scoped<EnableInterrupt<>> interruptEnabler;
     
     isrRegistrar::init();
     

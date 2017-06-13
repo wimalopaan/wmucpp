@@ -39,7 +39,7 @@ using terminal = std::basic_ostream<terminalDevive>;
 using systemClock = AVR::Timer8Bit<0>;
 using systemTimer = AlarmTimer<systemClock>;
 
-using sampler = PeriodicGroup<AVR::ISR::Timer<0>::CompareA, systemTimer>;
+using sampler = PeriodicGroup<0, AVR::ISR::Timer<0>::CompareA, systemTimer>;
 
 using isrReg = IsrRegistrar<sampler, spiInput, terminalDevive::ReceiveBitHandler, terminalDevive::TransmitBitHandler, terminalDevive::StartBitHandler>; 
 
@@ -77,7 +77,7 @@ int main()
     using handler = EventHandlerGroup<Spi0handler, Timerhandler>;
 
     {
-        Scoped<EnableInterrupt> interruptEnabler;
+        Scoped<EnableInterrupt<>> interruptEnabler;
         EventManager::run<sampler, handler>();
     }
 }

@@ -151,7 +151,7 @@ public:
             break;
         case State::ResetWait:
         {
-            Scoped<DisbaleInterrupt> di;
+            Scoped<DisbaleInterrupt<>> di;
             OWMaster::pinTriState();
             Util::delay(Parameter<mode_type>::waitForPresenceAfterReset);
             mDevicesPresent = !pin_type::read(); // actice low
@@ -262,7 +262,7 @@ public:
             Util::delay(Parameter<Mode>::recovery);
         }
         {
-            Scoped<DisbaleInterrupt> di;
+            Scoped<DisbaleInterrupt<>> di;
             pinLow();
             if (bit) {
                 Util::delay(Parameter<Mode>::start); 
@@ -286,7 +286,7 @@ public:
             Util::delay(Parameter<Mode>::recovery);
         }
         {
-            Scoped<DisbaleInterrupt> di;
+            Scoped<DisbaleInterrupt<>> di;
             pinLow();
             Util::delay(Parameter<Mode>::start); 
             pinTriState();
@@ -304,7 +304,7 @@ public:
         pinLow();
         Util::delay(Parameter<Mode>::reset);       
         {
-            Scoped<DisbaleInterrupt> di;
+            Scoped<DisbaleInterrupt<>> di;
             pinTriState();
             Util::delay(Parameter<Mode>::waitForPresenceAfterReset);
             presence = !Pin::read(); // actice low

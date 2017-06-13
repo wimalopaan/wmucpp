@@ -59,7 +59,7 @@ int main()
     rpm::init();
 
     {
-        Scoped<EnableInterrupt> ei;
+        Scoped<EnableInterrupt<>> ei;
         while(true) {
             auto pp = rpm::period();
             i2c::registers()[0] = pp;

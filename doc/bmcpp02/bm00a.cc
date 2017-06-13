@@ -19,7 +19,7 @@
 #include "mcu/ports.h"
 
 using PortB = AVR::Port<AVR::ATMega328P::PortRegister, AVR::B>;
-using Led1 = AVR::Pin<PortB, 0>;
+using Led1 = AVR::Pin<PortB, 1>;
 
 //[main
 int main()

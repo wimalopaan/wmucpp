@@ -86,7 +86,7 @@ using lcdStream = BufferedStream<lcd, 64, std::lineTerminator<std::LF>>;
 using systemClock = AVR::Timer8Bit<0>;
 using systemTimer = AlarmTimer<systemClock>;
 
-using systemConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<0>::CompareA, systemTimer, lcdPwm, 
+using systemConstantRate = ConstantRateAdapter<1, void, AVR::ISR::Timer<0>::CompareA, systemTimer, lcdPwm, 
                                                 buttonController, rotaryEncoder>;
 
 template<typename Led>
@@ -230,7 +230,7 @@ int main()
     
     std::fill(i2c::registers().begin(), i2c::registers().end(), std::byte{' '});
     {
-        Scoped<EnableInterrupt> interruptEnabler;
+        Scoped<EnableInterrupt<>> interruptEnabler;
         EventManager::run2<handler>([](){
             systemConstantRate::periodic();
             lcdPwm::freeRun();

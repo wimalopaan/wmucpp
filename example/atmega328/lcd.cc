@@ -54,7 +54,7 @@ int main() {
     std::basic_ostream<lcd> lout;
     
     {
-        Scoped<EnableInterrupt> ei;
+        Scoped<EnableInterrupt<>> ei;
         
         lout << "test" << std::endl;
         

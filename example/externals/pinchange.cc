@@ -61,7 +61,7 @@ int main() {
     rpmPinChange::init();
     
     {
-        Scoped<EnableInterrupt> ei;        
+        Scoped<EnableInterrupt<>> ei;        
         std::cout << "PinChange example"_pgm << std::endl;
         
         while(true) {

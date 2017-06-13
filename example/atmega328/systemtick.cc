@@ -26,7 +26,7 @@
 using systemClock= AVR::Timer8Bit<0>;
 using systemTimer = AlarmTimer<systemClock>;
 
-using sampler = PeriodicGroup<AVR::ISR::Timer<0>::CompareA, systemTimer>;
+using sampler = PeriodicGroup<0, AVR::ISR::Timer<0>::CompareA, systemTimer>;
 
 using isrReg = IsrRegistrar<sampler>;
 
@@ -45,7 +45,7 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
 
 int main()
 {
-    Scoped<EnableInterrupt> interruptEnabler;
+    Scoped<EnableInterrupt<>> interruptEnabler;
     systemTimer::init();
     auto tid1 = systemTimer::create(1000_ms, AlarmFlags::Periodic);
     using handler = EventHandlerGroup<TimerHandler>;

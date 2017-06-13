@@ -90,7 +90,7 @@ using dcfDecoder = DCF77<dcfPin, LocalConfig::exactFrequency, EventManager, true
 
 using oscillator = std::conditional<useRCCalibration, AVR::Clock<LocalConfig::exactFrequency>, void>::type;
 
-using systemConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<1>::CompareA, alarmTimer, dcfDecoder, oscillator>;
+using systemConstantRate = ConstantRateAdapter<1, void, AVR::ISR::Timer<1>::CompareA, alarmTimer, dcfDecoder, oscillator>;
 
 using isrRegistrar = IsrRegistrar<systemConstantRate, terminalDevice::TransmitBitHandler>;
 
@@ -338,7 +338,7 @@ namespace detail {
             Adc::init();
         }
         {
-            Scoped<EnableInterrupt> ei;
+            Scoped<EnableInterrupt<>> ei;
             std::outl<terminal>(Constant::title);
             
             if constexpr(!std::is_same<RCCalibration, void>::value) {

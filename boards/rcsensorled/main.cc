@@ -89,7 +89,7 @@ using terminal = std::basic_ostream<terminalDevice>;
 using systemClock = AVR::Timer8Bit<2>; // timer 2
 using alarmTimer = AlarmTimer<systemClock>;
 
-using systemConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<2>::CompareA, alarmTimer>;
+using systemConstantRate = ConstantRateAdapter<1, void, AVR::ISR::Timer<2>::CompareA, alarmTimer>;
 
 using hardPpm = AVR::PPM<1>; // timer1
 
@@ -110,7 +110,7 @@ using sensorData = Hott::SensorProtocollBuffer<0>;
 using menuData = Hott::SensorTextProtocollBuffer<0>;
 using crWriterSensorBinary = ConstanteRateWriter<sensorData, sensorUsart>;
 using crWriterSensorText = ConstanteRateWriter<menuData, sensorUsart>;
-using crAdapterHott = ConstantRateAdapter<sensorRateTimer, AVR::ISR::Timer<4>::CompareA, 
+using crAdapterHott = ConstantRateAdapter<2, sensorRateTimer, AVR::ISR::Timer<4>::CompareA, 
                                           crWriterSensorBinary, crWriterSensorText, oneWireMasterAsync>;
 
 
@@ -352,7 +352,7 @@ int main() {
     menuData::text()[0].insertAt(0, Constant::title);
     
     {
-        Scoped<EnableInterrupt> ei;
+        Scoped<EnableInterrupt<>> ei;
 
         hbridge::pwm(0_ppc);
         hbridge::direction() = hbridge::Direction{false};

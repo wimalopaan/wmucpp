@@ -40,8 +40,10 @@ namespace MCU {
     template<typename P>
     concept bool Port() { 
         return requires (P p) { 
-            p.template set<std::byte{0}>();
-            p.set(std::byte{0});
+            typename P::mcuport_type;
+            typename P::name_type;
+//            p.template set<std::byte{0}>();
+//            p.set(std::byte{0});
             p.get();
         };
     }

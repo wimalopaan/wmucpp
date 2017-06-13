@@ -59,7 +59,7 @@ public:
         assert(channel < numberOfChannels);
         uint16_t ocr = std::expand(width, parameter::ocMin, parameter::ocMax);
         {
-            Scoped<DisbaleInterrupt> di;
+            Scoped<DisbaleInterrupt<>> di;
             uint16_t start = 0;
             for(uint8_t i = 0; i < channel; ++i) {
                 start += ocrbValues[i];

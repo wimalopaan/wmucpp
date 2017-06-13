@@ -19,8 +19,8 @@
 //#define NDEBUG
 
 #include "main.h"
-#include "std/limits.h"
 #include "mcu/avr8.h"
+#include "std/limits.h"
 #include "mcu/avr/isr.h"
 #include "mcu/avr/mcutimer.h"
 #include "mcu/avr/usart.h"
@@ -187,15 +187,15 @@ using constantRateTimer = AVR::Timer16Bit<1>;
 using crWriterSensorBinary = ConstanteRateWriter<Hott::SensorProtocollBuffer<0>, sensorUsart>;
 using crWriterSensorText = ConstanteRateWriter<Hott::SensorTextProtocollBuffer<0>, sensorUsart>;
 //using crAdapter = ConstantRateAdapter<crTimer, AVR::ISR::Timer<1>::CompareA, crWriterSensorBinary, crWriterSensorText, TestBitShifter<crTestPin, 0x55>>;
-using crAdapterHott = ConstantRateAdapter<constantRateTimer, AVR::ISR::Timer<1>::CompareA, crWriterSensorBinary, crWriterSensorText>;
+using crAdapterHott = ConstantRateAdapter<1, constantRateTimer, AVR::ISR::Timer<1>::CompareA, crWriterSensorBinary, crWriterSensorText>;
 #else
-using crAdapterHott = ConstantRateAdapter<crTimer, AVR::ISR::Timer<1>::CompareA>;
+using crAdapterHott = ConstantRateAdapter<1, crTimer, AVR::ISR::Timer<1>::CompareA>;
 #endif
 #ifdef OW
 #ifndef HOTT
-using crAdapterOneWire = ConstantRateAdapter<crTimer, AVR::ISR::Timer<1>::CompareA, oneWireMasterAsync>;
+using crAdapterOneWire = ConstantRateAdapter<2, crTimer, AVR::ISR::Timer<1>::CompareA, oneWireMasterAsync>;
 #else
-using crAdapterOneWire = ConstantRateAdapter<void, AVR::ISR::Timer<1>::CompareA, oneWireMasterAsync>;
+using crAdapterOneWire = ConstantRateAdapter<2, void, AVR::ISR::Timer<1>::CompareA, oneWireMasterAsync>;
 #endif
 #endif
 using isrDistributor = IsrDistributor<AVR::ISR::Timer<1>::CompareA 
@@ -213,7 +213,7 @@ using softPwmPin2 = AVR::Pin<PortB, 6>;
 using softPwm = SoftPWM<softPwmPin1, softPwmPin2>;
 #endif
 
-using sampler = PeriodicGroup<AVR::ISR::Timer<0>::CompareA, buttonController, systemTimer
+using sampler = PeriodicGroup<0, AVR::ISR::Timer<0>::CompareA, buttonController, systemTimer
 #ifdef DCF
 , dcfDecoder
 #endif

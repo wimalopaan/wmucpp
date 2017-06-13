@@ -129,7 +129,7 @@ struct Mapper<void> {
 } // !detail
 
 template<MCU::Timer Timer, MCU::Interrupt Int, CRWriter... Writers >
-class ConstantRateAdapter : public IsrBaseHandler<Int> {
+class [[deprecated]] ConstantRateAdapterOld : public IsrBaseHandler<Int> {
     template<typename... II> friend class IsrRegistrar;
     
 public:
@@ -159,3 +159,42 @@ public:
 private:
     inline static volatile uint8_t tickCounter = 0;
 };
+
+template<typename Reg, uint8_t BitNumber, MCU::Timer Timer, MCU::Interrupt Int, CRWriter... Writers >
+class ConstantRateAdapter2 : public IsrBaseHandler<Int> {
+    template<typename... II> friend class IsrRegistrar;
+
+    inline static constexpr uint8_t bit_number = BitNumber;
+    typedef Reg register_type;
+
+    static_assert(BitNumber < 8, "wrong bit number");
+    static inline constexpr typename Reg::type mask{1 << BitNumber};
+public:
+    static void periodic() {
+        if (std::any(Reg::get() & mask)) {
+            Reg::get() &= ~mask;
+            (detail::Mapper<Writers>::rateProcess(),...);
+        }
+    }
+    
+    static constexpr void init() {
+        if constexpr(!std::is_same<Timer, void>::value) {
+            // todo: wgm2 allein ergibt irgendwie keine Sinn???
+            Timer::mcuTimer()->tccrb.template add<Timer::mcu_timer_type::TCCRB::wgm2>();
+            Timer::mcuInterrupts()->tifr.template add<Timer::flags_type::ocfa | Timer::flags_type::ocfb>();
+            Timer::mcuInterrupts()->timsk.template add<Timer::mask_type::ociea>();
+        }
+        (detail::Mapper<Writers>::init(),...);
+    }
+    static void start() {
+        (detail::Mapper<Writers>::start(),...);
+    }
+    static void rateTick() {
+        static_assert(Int::number >= 0, "wrong interrupt number");
+        Reg::get() |= mask;;
+    }
+    constexpr static auto isr = rateTick;
+};
+
+template<uint8_t N, MCU::Timer Timer, MCU::Interrupt Interrupt, typename... PP>
+using ConstantRateAdapter = ConstantRateAdapter2<AVR::RegisterFlags<DefaultMcuType::GPIOR, 0, std::byte>, N, Timer, Interrupt, PP...>;

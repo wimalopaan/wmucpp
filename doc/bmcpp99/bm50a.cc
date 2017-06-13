@@ -1,6 +1,6 @@
 /*
- * ++C - C++ introduction
- * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.meier@hs-kl.de>
+ * WMuCpp - Bare Metal C++ 
+ * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -89,7 +89,7 @@ typedef sort::Algorithm::QuickBentleyMcIlroy Algo;
 
 int main() {
     isrRegistrar::init();
-    Scoped<EnableInterrupt> interruptEnabler;
+    Scoped<EnableInterrupt<>> interruptEnabler;
     
     constexpr std::hertz constantRateFrequency = 1 / constantRatePeriod;
     constexpr auto tsd = AVR::Util::calculate<constantRateTimer>(constantRateFrequency);
@@ -147,42 +147,42 @@ int main() {
 //        times[algo].name.insertAt(0, "q32"_pgm);
 //        times[algo++].time = std::milliseconds{static_cast<uint16_t>(end - start)};
 //    }    
-//    {
-//        uint32_t start = CTHandler::mCounter;
-//        for(uint32_t n = 0; n < iterations; ++n) {
-//            for (size_t i = 0; i < v1.size; i++) {
-//                v1[i] = filler(i);
-//            }
-//            qsort(&v1[0], v1.size, sizeof(v1[0]), less<uint8_t>);
-//        }
-//        uint32_t end = CTHandler::mCounter;           
-//        times[algo].name.insertAt(0, "l8"_pgm);
-//        times[algo++].time = std::milliseconds{static_cast<uint16_t>(end - start)};
-//    }    
-//    {
-//        uint32_t start = CTHandler::mCounter;
-//        for(uint32_t n = 0; n < iterations; ++n) {
-//            for (size_t i = 0; i < v2.size; i++) {
-//                v2[i] = filler(i);
-//            }
-//            qsort(&v2[0], v2.size, sizeof(v2[0]), less<uint16_t>);
-//        }
-//        uint32_t end = CTHandler::mCounter;           
-//        times[algo].name.insertAt(0, "l16"_pgm);
-//        times[algo++].time = std::milliseconds{static_cast<uint16_t>(end - start)};
-//    }    
-//    {
-//        uint32_t start = CTHandler::mCounter;
-//        for(uint32_t n = 0; n < iterations; ++n) {
-//            for (size_t i = 0; i < v3.size; i++) {
-//                v3[i] =  filler(i);
-//            }
-//            qsort(&v3[0], v3.size, sizeof(v3[0]), less<uint32_t>);
-//        }
-//        uint32_t end = CTHandler::mCounter;           
-//        times[algo].name.insertAt(0, "l32"_pgm);
-//        times[algo++].time = std::milliseconds{static_cast<uint16_t>(end - start)};
-//    }    
+    {
+        uint32_t start = CTHandler::mCounter;
+        for(uint32_t n = 0; n < iterations; ++n) {
+            for (size_t i = 0; i < v1.size; i++) {
+                v1[i] = filler(i);
+            }
+            qsort(&v1[0], v1.size, sizeof(v1[0]), less<uint8_t>);
+        }
+        uint32_t end = CTHandler::mCounter;           
+        times[algo].name.insertAt(0, "l8"_pgm);
+        times[algo++].time = std::milliseconds{static_cast<uint16_t>(end - start)};
+    }    
+    {
+        uint32_t start = CTHandler::mCounter;
+        for(uint32_t n = 0; n < iterations; ++n) {
+            for (size_t i = 0; i < v2.size; i++) {
+                v2[i] = filler(i);
+            }
+            qsort(&v2[0], v2.size, sizeof(v2[0]), less<uint16_t>);
+        }
+        uint32_t end = CTHandler::mCounter;           
+        times[algo].name.insertAt(0, "l16"_pgm);
+        times[algo++].time = std::milliseconds{static_cast<uint16_t>(end - start)};
+    }    
+    {
+        uint32_t start = CTHandler::mCounter;
+        for(uint32_t n = 0; n < iterations; ++n) {
+            for (size_t i = 0; i < v3.size; i++) {
+                v3[i] =  filler(i);
+            }
+            qsort(&v3[0], v3.size, sizeof(v3[0]), less<uint32_t>);
+        }
+        uint32_t end = CTHandler::mCounter;           
+        times[algo].name.insertAt(0, "l32"_pgm);
+        times[algo++].time = std::milliseconds{static_cast<uint16_t>(end - start)};
+    }    
     {
         uint32_t start = CTHandler::mCounter;
         for(uint32_t n = 0; n < iterations; ++n) {

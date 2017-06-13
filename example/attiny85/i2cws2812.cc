@@ -88,7 +88,7 @@ int main()
     leds::off();
     
     while(true) {
-        Scoped<EnableInterrupt> ei;
+        Scoped<EnableInterrupt<>> ei;
         led::toggle();
         virtualLED::process();
     }    

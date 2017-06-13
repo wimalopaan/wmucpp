@@ -60,7 +60,7 @@ std::array<char, Util::numberOfDigits<uint64_t>() + 1> string;
 int main() {
     isrRegistrar::init();
     terminalDevice::init<19200>();
-    Scoped<EnableInterrupt> interruptEnabler;
+    Scoped<EnableInterrupt<>> interruptEnabler;
     
     constexpr std::hertz constantRateFrequency = 1 / constantRatePeriod;
     constexpr auto tsd = AVR::Util::calculate<constantRateTimer>(constantRateFrequency);

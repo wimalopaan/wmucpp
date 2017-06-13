@@ -65,7 +65,7 @@ int main() {
     hbridge::init<pwmFrequency>();
     
     {
-        Scoped<EnableInterrupt> ei;
+        Scoped<EnableInterrupt<>> ei;
         std::cout << "tle5205 example"_pgm << std::endl;
         
         constexpr auto prescaler = AVR::Util::prescalerForAbove<tleTimer>(pwmFrequency);

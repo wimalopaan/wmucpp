@@ -11,7 +11,7 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -27,110 +27,142 @@
 #include "util/static_container.h"
 
 namespace AVR {
-
-struct ReadWrite {};
-struct ReadOnly{};
-struct UnUsed{};
-
-template<typename Component, typename BitType, typename ValueType = uint8_t>
-struct ControlRegister final {
-    typedef Component component_type;
-    typedef ValueType value_type;    
-    typedef BitType bit_type;
     
-    ControlRegister() = delete;
-    ControlRegister(const ControlRegister&) = delete;
-    ControlRegister(ControlRegister&&) = delete;
-    ControlRegister& operator=(const ControlRegister&) = delete;
-    ControlRegister& operator=(ControlRegister&&) = delete;
+    struct ReadWrite {};
+    struct ReadOnly{};
+    struct UnUsed{};
     
-    void inline set(BitType v) {
-        hwRegister = static_cast<value_type>(v);
-    }
-    template<BitType F>
-    void inline set() {
-        hwRegister = static_cast<value_type>(F);
-    }
-    template<BitType F>
-    void inline setPartial(BitType v) {
-        hwRegister = (hwRegister & static_cast<value_type>(~F)) | static_cast<value_type>(v);
-    }
-    template<BitType F>
-    void inline add() {
-        hwRegister |= static_cast<value_type>(F);
-    }
-    template<BitType F>
-    void inline clear() {
-        hwRegister &= ~static_cast<value_type>(F);
-    }
-    template<BitType Mask>
-    inline BitType get() {
-        return static_cast<BitType>(hwRegister & static_cast<value_type>(Mask));
-    }
-    template<uint8_t Mask>
-    inline BitType get() {
-        return static_cast<BitType>(hwRegister & Mask);
-    }
-    template<BitType F>
-    bool inline isSet() {
-        return hwRegister & static_cast<value_type>(F);
-    }
-
-private:
-    volatile value_type hwRegister;
-};
-
-template<typename Component, typename Mode = ReadWrite, typename ValueType = uint8_t>
-struct DataRegister;
-
-template<typename Component, typename ValueType>
-struct DataRegister<Component, UnUsed, ValueType> final {
-    typedef Component component_type;
-    typedef ValueType value_type;    
-    DataRegister() = delete;
-    DataRegister(const DataRegister&) = delete;
-    DataRegister(DataRegister&&) = delete;
-    DataRegister& operator=(const DataRegister&) = delete;
-    DataRegister& operator=(DataRegister&&) = delete;
-private:    
-    volatile value_type hwRegister; // needed to occupy space
-};
-
-template<typename Component, typename ValueType>
-struct DataRegister<Component, ReadOnly, ValueType> final {
-    typedef Component component_type;
-    typedef ValueType value_type;    
-    DataRegister() = delete;
-    DataRegister(const DataRegister&) = delete;
-    DataRegister(DataRegister&&) = delete;
-    DataRegister& operator=(const DataRegister&) = delete;
-    DataRegister& operator=(DataRegister&&) = delete;
-
-    inline const volatile value_type& operator*() const {
-        return hwRegister;
-    }
-private:    
-    volatile value_type hwRegister;
-};
-
-template<typename Component, typename ValueType>
-struct DataRegister<Component, ReadWrite, ValueType> final {
-    typedef Component component_type;
-    typedef ValueType value_type;    
-    DataRegister() = delete;
-    DataRegister(const DataRegister&) = delete;
-    DataRegister(DataRegister&&) = delete;
-    DataRegister& operator=(const DataRegister&) = delete;
-    DataRegister& operator=(DataRegister&&) = delete;
-
-    inline volatile value_type& operator*() {
-        return hwRegister;
-    }
-    inline const volatile value_type& operator*() const {
-        return hwRegister;
-    }
-private:    
-    volatile value_type hwRegister;
-};
-
+    template<typename Component, typename BitType, typename ValueType = uint8_t>
+    struct ControlRegister final {
+        typedef Component component_type;
+        typedef ValueType value_type;    
+        typedef BitType bit_type;
+        
+        ControlRegister() = delete;
+        ControlRegister(const ControlRegister&) = delete;
+        ControlRegister(ControlRegister&&) = delete;
+        ControlRegister& operator=(const ControlRegister&) = delete;
+        ControlRegister& operator=(ControlRegister&&) = delete;
+        
+        void inline set(BitType v) {
+            hwRegister = static_cast<value_type>(v);
+        }
+        template<BitType F>
+        void inline set() {
+            hwRegister = static_cast<value_type>(F);
+        }
+        template<BitType F>
+        void inline setPartial(BitType v) {
+            hwRegister = (hwRegister & static_cast<value_type>(~F)) | static_cast<value_type>(v);
+        }
+        template<BitType F>
+        void inline add() {
+            hwRegister |= static_cast<value_type>(F);
+        }
+        template<BitType F>
+        void inline clear() {
+            hwRegister &= ~static_cast<value_type>(F);
+        }
+        template<BitType Mask>
+        inline BitType get() {
+            return static_cast<BitType>(hwRegister & static_cast<value_type>(Mask));
+        }
+        template<uint8_t Mask>
+        inline BitType get() {
+            return static_cast<BitType>(hwRegister & Mask);
+        }
+        template<BitType F>
+        bool inline isSet() {
+            return hwRegister & static_cast<value_type>(F);
+        }
+        value_type inline raw() {
+            return hwRegister;
+        }
+        BitType inline value() {
+            return static_cast<BitType>(hwRegister);
+        }
+        
+    private:
+        volatile value_type hwRegister;
+    };
+    
+    template<typename Component, typename Mode = ReadWrite, typename ValueType = uint8_t>
+    struct DataRegister;
+    
+    template<typename Component, typename ValueType>
+    struct DataRegister<Component, UnUsed, ValueType> final {
+        typedef Component component_type;
+        typedef ValueType value_type;    
+        DataRegister() = delete;
+        DataRegister(const DataRegister&) = delete;
+        DataRegister(DataRegister&&) = delete;
+        DataRegister& operator=(const DataRegister&) = delete;
+        DataRegister& operator=(DataRegister&&) = delete;
+    private:    
+        volatile value_type hwRegister; // needed to occupy space
+    };
+    
+    template<typename Component, typename ValueType>
+    struct DataRegister<Component, ReadOnly, ValueType> final {
+        typedef Component component_type;
+        typedef ValueType value_type;    
+        DataRegister() = delete;
+        DataRegister(const DataRegister&) = delete;
+        DataRegister(DataRegister&&) = delete;
+        DataRegister& operator=(const DataRegister&) = delete;
+        DataRegister& operator=(DataRegister&&) = delete;
+        
+        inline const volatile value_type& operator*() const {
+            return hwRegister;
+        }
+    private:    
+        volatile value_type hwRegister;
+    };
+    
+    template<typename Component, typename ValueType>
+    struct DataRegister<Component, ReadWrite, ValueType> final {
+        typedef Component component_type;
+        typedef ValueType value_type;    
+        DataRegister() = delete;
+        DataRegister(const DataRegister&) = delete;
+        DataRegister(DataRegister&&) = delete;
+        DataRegister& operator=(const DataRegister&) = delete;
+        DataRegister& operator=(DataRegister&&) = delete;
+        
+        inline volatile value_type& operator*() {
+            return hwRegister;
+        }
+        inline const volatile value_type& operator*() const {
+            return hwRegister;
+        }
+    private:    
+        volatile value_type hwRegister;
+    };
+    
+    template<typename Register, uint8_t N, typename FieldType>
+    class RegisterFlags {
+        inline static constexpr auto reg = AVR::getBaseAddr<Register, N>; // Funktionszeiger
+        static_assert(AVR::isSBICBICapable<Register, N>());
+        
+        typedef FieldType type;
+        
+        inline static volatile FieldType* bitField() {
+            return reinterpret_cast<volatile FieldType*>(reg());
+        }
+        
+        template<typename... PP>
+        struct Registrar {
+            static_assert(sizeof...(PP) < 8, "too much registrees");
+            static inline constexpr FieldType all = (PP::mask | ... );
+            static_assert(sizeof...(PP) == Util::numberOfOnes(all), "multiple use of flag");
+            static void init() {}
+        };
+    
+    public:    
+        inline static volatile FieldType& get() {
+            return *bitField();
+        }
+    };
+    
+    
 }

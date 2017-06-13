@@ -45,7 +45,7 @@ using isrRegistrar = IsrRegistrar<Handler1, Handler2>;
 
 int main()
 {
-    Scoped<EnableInterrupt> interruptEnabler;
+    Scoped<EnableInterrupt<>> interruptEnabler;
     
     isrRegistrar::init();
     

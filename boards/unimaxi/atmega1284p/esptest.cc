@@ -75,7 +75,7 @@ typedef statusLed::color_type StatusColor;
 
 using select1 = AVR::Pin<PortC, 5>;
 
-using systemConstantRateAdapter = ConstantRateAdapter<void, AVR::ISR::Timer<0>::CompareA, alarmTimer>;
+using systemConstantRateAdapter = ConstantRateAdapter<1, void, AVR::ISR::Timer<0>::CompareA, alarmTimer>;
 
 using isrRegistrar = IsrRegistrar<systemConstantRateAdapter, 
                                     espInterface::usart::RxHandler, espInterface::usart::TxHandler,
@@ -210,7 +210,7 @@ int main() {
     espTimeClient::init();
 
     {
-        Scoped<EnableInterrupt> interruptEnabler;
+        Scoped<EnableInterrupt<>> interruptEnabler;
         
         using allEventHandler = EventHandlerGroup<TimerHandler,
         UsartDorHandler, UsartFeHandler, UsartUpeHandler,

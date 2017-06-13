@@ -1,6 +1,7 @@
 #define NDEBUG
 
 #include <stdint.h>
+#include "mcu/avr8.h"
 #include "std/array.h"
 #include "util/disable.h"
 #include "console.h"

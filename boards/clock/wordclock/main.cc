@@ -85,7 +85,7 @@ using alarmTimer  = AlarmTimer<systemTimer, LocalConfig::reso>;
 
 using dcfDecoder = DCF77<dcfPin, LocalConfig::exactFrequency, EventManager, true>;
 
-using systemConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<0>::CompareA, alarmTimer, dcfDecoder>;
+using systemConstantRate = ConstantRateAdapter<1, void, AVR::ISR::Timer<0>::CompareA, alarmTimer, dcfDecoder>;
 
 struct IrDecoder {
     static void init() {
@@ -100,7 +100,7 @@ struct IrDecoder {
 using irDecoder = IrDecoder;
 
 using irTimer = AVR::Timer8Bit<2>; // timer 2
-using irConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<2>::CompareA, irDecoder>;
+using irConstantRate = ConstantRateAdapter<2, void, AVR::ISR::Timer<2>::CompareA, irDecoder>;
 
 using isrRegistrar = IsrRegistrar<systemConstantRate, terminalDevice::RxHandler, terminalDevice::TxHandler, irConstantRate>;
 
@@ -385,7 +385,7 @@ int main() {
     adc::init();
     
     {
-        Scoped<EnableInterrupt> ei;
+        Scoped<EnableInterrupt<>> ei;
         std::cout << Constant::title << std::endl;
         alarmTimer::start(*preStartTimer);
         EventManager::run2<allEventHandler>([](){

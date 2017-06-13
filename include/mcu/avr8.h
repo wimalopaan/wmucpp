@@ -84,12 +84,19 @@ namespace AVR {
     constexpr inline Component* getBaseAddr() {
         return reinterpret_cast<Component*>(Component::template Address<Number>::value);
     }
+
+    inline static constexpr uintptr_t ioOffset = __SFR_OFFSET;
+    
+    template<MCU::MultipleComponent Component, int Number>
+    constexpr inline bool isSBICBICapable() {
+        return Component::template Address<Number>::value < (0x20 + ioOffset);
+    }
     
     template<typename Component, MCU::Letter Letter>
     constexpr inline Component* getBaseAddr() {
         return reinterpret_cast<Component*>(Component::template Address<Letter>::value);
     }
-    
+
 } // !AVR
 
 #if defined(__AVR_ATmega1284P__)

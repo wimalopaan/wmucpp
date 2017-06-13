@@ -57,7 +57,7 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
     }
 };
 
-using pGroup = PeriodicGroup<AVR::ISR::Timer<0>::CompareA, systemTimer, adcController>;
+using pGroup = PeriodicGroup<0, AVR::ISR::Timer<0>::CompareA, systemTimer, adcController>;
 using eGroup = EventHandlerGroup<TimerHandler>;
 
 using isrReg = IsrRegistrar<pGroup>;
@@ -76,7 +76,7 @@ int main() {
     systemTimer::create(1000_ms, AlarmFlags::Periodic);
     
     {
-        Scoped<EnableInterrupt> ie;
+        Scoped<EnableInterrupt<>> ie;
         EventManager::run<pGroup, eGroup>();
     }
 

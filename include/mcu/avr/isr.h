@@ -21,6 +21,7 @@
 #include <stdint.h>
 #include "mcu/concepts.h"
 #include "util/bits.h"
+#include "std/array.h"
 
 #if __has_include(<avr/interrupt.h>)
 # include <avr/interrupt.h>
@@ -80,10 +81,22 @@ struct IsrRegistrar {
     typedef uint64_t mask_type;
     
     static_assert(sizeof...(HH) <= 64, "too much different interrupts");
-    static constexpr mask_type all = (ISR::detail::Mask<HH>::value | ... | 0);
-    static constexpr auto numberOfNonVoidHandler = ((ISR::detail::Mask<HH>::value > 0 ? 1 : 0) + ... + 0);
+    inline static constexpr mask_type all = (ISR::detail::Mask<HH>::value | ... | 0);
+    inline static constexpr auto numberOfNonVoidHandler = ((ISR::detail::Mask<HH>::value > 0 ? 1 : 0) + ... + 0);
     
     static_assert(Util::numberOfOnes(all) == numberOfNonVoidHandler, "Isr double defined");
+
+    inline static constexpr uint8_t isrNumbers[] = {HH::isr_number ...};
+
+    static constexpr uint8_t countInstances(uint8_t isrNumber) {
+        uint8_t n = 0;
+        for(uint8_t num: isrNumbers) {
+            if (num == isrNumber) {
+                ++n;
+            }
+        }        
+        return n;
+    }
     
     static void init() {}
 
@@ -104,12 +117,28 @@ struct IsrRegistrar {
                 Caller<In, N-1, Hp..., void>::call();
             }
         }
+        static constexpr void callNaked() {
+            if constexpr(!std::is_same<H, void>::value) {
+                if constexpr (In == H::isr_number) {
+                    H::isrNaked();
+                }
+            }
+            else if constexpr((N-1) > 0) {
+                Caller<In, N-1, Hp..., void>::callNaked();
+            }
+        }
     };
     
     template<MCU::Interrupt INT>
     static void isr() {
         static_assert(all & ((mask_type)1 << INT::number), "isr not set");
         Caller<INT::number, sizeof...(HH), HH...>::call();
+    }
+    template<MCU::Interrupt INT>
+    static void isrNaked() {
+        static_assert(all & ((mask_type)1 << INT::number), "isr not set");
+        static_assert(countInstances(INT::number) == 1, "naked isr must be single");
+        Caller<INT::number, sizeof...(HH), HH...>::callNaked();
     }
 };
 

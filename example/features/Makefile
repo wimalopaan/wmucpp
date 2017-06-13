@@ -33,6 +33,7 @@ targets += events.elf
 targets += interrupts.elf
 targets += pinchange.elf
 targets += softusart.elf
+targets += constantrate.elf constantrate.s 
 
 -include ../../Makefile.include
 

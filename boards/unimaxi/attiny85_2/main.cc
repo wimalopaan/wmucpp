@@ -66,7 +66,7 @@ using rpm = RpmFromInterruptSource<reflexPinChange, rpmTimer, MaximumRpm>;
 using systemTimer = AVR::Timer8Bit<1>;
 using alarmTimer = AlarmTimer<systemTimer>;
 
-using systemConstantRate = ConstantRateAdapter<systemTimer, AVR::ISR::Timer<1>::CompareA, alarmTimer>;
+using systemConstantRate = ConstantRateAdapter<1, systemTimer, AVR::ISR::Timer<1>::CompareA, alarmTimer>;
 
 static auto periodicTimer = alarmTimer::create(500_ms, AlarmFlags::Periodic);
 
@@ -107,7 +107,7 @@ int main()
 //    rpm::init();
     
     {
-        Scoped<EnableInterrupt> ei;
+        Scoped<EnableInterrupt<>> ei;
         
         using eventHandler = EventHandlerGroup<TimerHandler>;
         

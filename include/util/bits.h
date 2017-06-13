@@ -95,7 +95,7 @@ namespace Util {
     };  
     template<typename T>
     constexpr uint8_t numberOfOnes(T x) {
-        return x ? int(x & 0x01) + numberOfOnes(x>>1) : 0;
+        return (x != T{0}) ? int(x & T{0x01}) + numberOfOnes(x>>1) : 0;
     }
     
     template<typename T>

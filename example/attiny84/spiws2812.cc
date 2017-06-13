@@ -101,7 +101,7 @@ int main()
     std::outl<terminal>("attiny usi ws2812 test"_pgm);
     
     {
-        Scoped<EnableInterrupt> ei;
+        Scoped<EnableInterrupt<>> ei;
         while(true) {
             if (PCHandler::stopped > 0) {
                 PCHandler::stopped = 0;

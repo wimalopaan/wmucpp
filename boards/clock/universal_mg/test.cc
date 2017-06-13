@@ -116,7 +116,7 @@ using dcfDecoder = DCF77<dcfPin, LocalConfig::exactFrequency, EventManager, true
 
 using oscillator = AVR::Clock<LocalConfig::exactFrequency, d1_data_Pin>;
 
-using systemConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<1>::CompareA, alarmTimer, dcfDecoder, oscillator>;
+using systemConstantRate = ConstantRateAdapter<1, void, AVR::ISR::Timer<1>::CompareA, alarmTimer, dcfDecoder, oscillator>;
 
 #ifdef SIMAVR
 using isrRegistrar = IsrRegistrar<systemConstantRate>;
@@ -224,7 +224,7 @@ int main() {
     systemTimer::start();
     
     {
-        Scoped<EnableInterrupt> ei;
+        Scoped<EnableInterrupt<>> ei;
         std::cout << Constant::title << std::endl;
         
         std::cout << "f systemtimer: "_pgm << LocalConfig::tsd.f << std::endl;

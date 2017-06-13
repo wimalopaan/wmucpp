@@ -66,7 +66,7 @@ public:
     }
 
     static std::optional<uint7_t> create(std::milliseconds millis, AlarmFlags flags){
-        Scoped<DisbaleInterrupt> di;
+        Scoped<DisbaleInterrupt<>> di;
         if (auto index = mTimers.insert({millis / resolution, millis  / resolution, flags})) {
             assert(*index <= std::numeric_limits<uint7_t>::max());
             return uint7_t{*index};
@@ -78,7 +78,7 @@ public:
     }
 
     static void remove(uint7_t id) {
-        Scoped<DisbaleInterrupt> di;
+        Scoped<DisbaleInterrupt<>> di;
         mTimers.removeAt(id);
     }
     static void start() {}

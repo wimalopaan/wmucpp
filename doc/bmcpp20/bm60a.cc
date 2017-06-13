@@ -45,7 +45,7 @@ std::array<Measure, 20> times;
 
 int main() {
     isrRegistrar::init();
-    Scoped<EnableInterrupt> interruptEnabler;
+    Scoped<EnableInterrupt<>> interruptEnabler;
     
     constexpr std::hertz constantRateFrequency = 1 / constantRatePeriod;
     constexpr auto tsd = AVR::Util::calculate<constantRateTimer>(constantRateFrequency);

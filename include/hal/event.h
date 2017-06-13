@@ -11,7 +11,7 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -81,23 +81,23 @@ struct Event final {
 typedef Event<std::byte> EventByte_t;
 
 namespace AVR {
-template<uint8_t N, typename PA, typename MCU> class Usart;
-template<uint8_t N, typename MCU> class Spi;
-//template<uint8_t N, typename MCU = DefaultMcuType> class SWUsart;
+    template<uint8_t N, typename PA, typename MCU> class Usart;
+    template<uint8_t N, typename MCU> class Spi;
+    //template<uint8_t N, typename MCU = DefaultMcuType> class SWUsart;
 }
 
 namespace Hott {
-template<uint8_t N> class SensorProtocollAdapter;
+    template<uint8_t N> class SensorProtocollAdapter;
 }
 
 namespace Esp8266 {
-template<uint8_t N, uint8_t Size> class ATProtocollAdapter;
+    template<uint8_t N, uint8_t Size> class ATProtocollAdapter;
 }
 
 template<MCU::Interrupt Interrupt = void, typename... PP>
 class 
-//        [[deprecated]] 
-        PeriodicGroup : public IsrBaseHandler<Interrupt> {
+        [[deprecated]] 
+        PeriodicGroupOld : public IsrBaseHandler<Interrupt> {
 public:
     static void periodic() {
         if (tickCounter > 0) {
@@ -112,6 +112,34 @@ public:
 private:
     inline static volatile uint8_t tickCounter = 0;
 };
+
+template<typename Reg, uint8_t BitNumber, MCU::Interrupt Interrupt = void, typename... PP>
+class PeriodicGroup2 : public IsrBaseHandler<Interrupt> {
+public:
+    inline static constexpr uint8_t bit_number = BitNumber;
+    typedef Reg register_type;
+    
+    static_assert(BitNumber < 8, "wrong bit number");
+    static inline constexpr typename Reg::type mask{1 << BitNumber};
+    
+    static void periodic() {
+        if (std::any(Reg::get() & mask)) {
+            Reg::get() &= ~mask;
+            (PP::periodic(),...); 
+        }
+    }
+    static void isr() {
+        static_assert(Interrupt::number >= 0, "wrong interrupt number");
+        Reg::get() |= mask;;
+    }
+    static void isrNaked() {
+        isr();
+        reti();
+    }
+};
+
+template<uint8_t N, typename Interrupt, typename... PP>
+using PeriodicGroup = PeriodicGroup2<AVR::RegisterFlags<DefaultMcuType::GPIOR, 0, std::byte>, N, Interrupt, PP...>;
 
 template<typename... EE>
 //template<HAL::EventHandler... EE>
@@ -151,7 +179,7 @@ public:
         }
         return true;
     }();
- };
+};
 
 template<uint8_t QLength = Config::EventManager::EventQueueLength>
 class EventManagerT final {
@@ -169,9 +197,9 @@ public:
         }
         return true;
     }
-
+    
     template<typename... EE, HAL::CallableObject P>
-//    template<HAL::EventHandlerGroup<Event8u_t>... EE, HAL::CallableObject P>
+    //    template<HAL::EventHandlerGroup<Event8u_t>... EE, HAL::CallableObject P>
     static void run3(const P& periodic) {
         mLeaked = false;
         mUnprocessed = false;
@@ -200,7 +228,7 @@ public:
         }
     }
     template<HAL::StaticPeriodic PP, HAL::EventHandlerGroup<EventByte_t> EE, HAL::CallableObject P>
-//    [[deprecated]] 
+    //    [[deprecated]] 
     static void run(const P& periodic) {
         mLeaked = false;
         mUnprocessed = false;
@@ -255,6 +283,6 @@ using EventManager = EventManagerT<>;
 template<EventType Type>
 struct EventHandler {
     EventHandler() = delete;
-//    friend class EventManager;
+    //    friend class EventManager;
     static constexpr EventType eventType = Type;
 };

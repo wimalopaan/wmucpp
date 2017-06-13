@@ -35,7 +35,7 @@ public:
     SumDProtocollAdapter() = delete;
 
     static uint16_t value(uint8_t channel) {
-        Scoped<DisbaleInterrupt> di;
+        Scoped<DisbaleInterrupt<>> di;
         return std::combinedValue(mMsg.channelData[channel]);
     }
     static uint8_t value8Bit(uint8_t channel) {

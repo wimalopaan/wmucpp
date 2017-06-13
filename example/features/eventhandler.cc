@@ -25,7 +25,7 @@
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using led = AVR::Pin<PortB, 0>;
 
-using emptyPeriodicGroup = PeriodicGroup<void>;
+using emptyPeriodicGroup = PeriodicGroup<0, void>;
 using emptyEventHandlerGroup = EventHandlerGroup<>;
 
 void foo() {

@@ -69,7 +69,7 @@ int main()
     std::cout << "attiny i2c ram slave test"_pgm << std::endl;
 
     {
-        Scoped<EnableInterrupt> ei;
+        Scoped<EnableInterrupt<>> ei;
         while(true) {
             led::toggle();
             Color color = {Red{(uint8_t)(i2c::registers()[0] % 10)}, Green{0}, Blue{1}};

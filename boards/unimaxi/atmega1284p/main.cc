@@ -199,13 +199,13 @@ using lcd = I2CGeneric<TwiMasterAsync, lcdAddress>;
 #endif
 
 
-using devicesConstantRateAdapter = ConstantRateAdapter<constantRateTimer, AVR::ISR::Timer<constantRateTimer::number>::CompareA 
+using devicesConstantRateAdapter = ConstantRateAdapter<1, constantRateTimer, AVR::ISR::Timer<constantRateTimer::number>::CompareA 
 #ifdef OW
                                                         ,oneWireMasterAsync
 #endif
 >;
 
-using systemConstantRateAdapter = ConstantRateAdapter<void, AVR::ISR::Timer<0>::CompareA
+using systemConstantRateAdapter = ConstantRateAdapter<2, void, AVR::ISR::Timer<0>::CompareA
                                                     , alarmTimer
 #ifdef DCF
                                                     , dcfDecoder
@@ -444,7 +444,7 @@ int main() {
     interrupts()->eimsk.set<AVR::ATMega1284P::Interrupt::EIMask::int2>();
 #endif
     {
-        Scoped<EnableInterrupt> interruptEnabler;
+        Scoped<EnableInterrupt<>> interruptEnabler;
         
         using allEventHandler = EventHandlerGroup<
                                   TimerHandler

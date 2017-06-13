@@ -79,7 +79,7 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
     }
 };
 
-using periodicGroup = PeriodicGroup<AVR::ISR::Timer<0>::CompareA, systemTimer>;
+using periodicGroup = PeriodicGroup<0, AVR::ISR::Timer<0>::CompareA, systemTimer>;
 using eventHandlerGroup = EventHandlerGroup<TimerHandler, TWIHandlerError, ds1307, DS1307handler, DS1307handlerError>;
 using isrReg = IsrRegistrar<periodicGroup>;
 
@@ -95,7 +95,7 @@ int main()
     systemTimer::create(1000_ms, AlarmFlags::Periodic);
     
     {
-        Scoped<EnableInterrupt> ei;
+        Scoped<EnableInterrupt<>> ei;
         EventManager::run<periodicGroup, eventHandlerGroup>([](){
             TwiMasterAsync::periodic();
         });

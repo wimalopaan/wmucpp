@@ -43,7 +43,7 @@ int main() {
     systemTimer::ocra<timerParameter.ocr>();
     
     {
-        Scoped<EnableInterrupt> ie;
+        Scoped<EnableInterrupt<>> ie;
         while(true) {
             
         }

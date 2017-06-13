@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "mcu/avr8.h"
 #include "util/disable.h"
 
 volatile uint8_t global;

@@ -54,7 +54,7 @@ public:
     }
     
     static inline volatile ValueType counter() {
-        Scoped<DisbaleInterrupt> di;
+        Scoped<DisbaleInterrupt<RestoreState>> di;
         return (mCounter << Util::numberOfBits<typename MCUTimer::value_type>()) + MCUTimer::counter();
     }
     

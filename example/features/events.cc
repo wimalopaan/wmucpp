@@ -46,8 +46,8 @@ int main() {
     systemTimer::ocra<timerParameter.ocr>();
     
     {
-        Scoped<EnableInterrupt> ie;
-        using emptyPeriodicGroup = PeriodicGroup<>;
+        Scoped<EnableInterrupt<>> ie;
+        using emptyPeriodicGroup = PeriodicGroup<0, void>;
         using eventHandlerGroup = EventHandlerGroup<TestHandler>;
         EventManager::run<emptyPeriodicGroup, eventHandlerGroup>([](){});
     }

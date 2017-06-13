@@ -105,7 +105,7 @@ int scan_bus(rom_t rom_list, uint8_t cmd) {
 }
 
 int main() {
-    Scoped<DisbaleInterrupt> di;
+    Scoped<DisbaleInterrupt<>> di;
     terminal::init();
     while(true) {
         static uint8_t counter = 0;

@@ -30,7 +30,7 @@
 
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 
-using btStatus    = AVR::Pin<PortB, 0, true>;
+using btStatus    = AVR::Pin<PortB, 0>;
 using dcfPin      = AVR::Pin<PortB, 1>;
 using rxdPin      = AVR::Pin<PortB, 2>;
 using txdPin      = AVR::Pin<PortB, 3>;

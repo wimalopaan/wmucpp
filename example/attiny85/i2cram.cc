@@ -44,7 +44,7 @@ int main()
     i2c::init();
 
     while(true) {
-        Scoped<EnableInterrupt> ei;
+        Scoped<EnableInterrupt<>> ei;
         led::toggle();
     }    
 }

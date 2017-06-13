@@ -92,7 +92,7 @@ int main()
     i2c::init();
 
     {
-        Scoped<EnableInterrupt> ei;
+        Scoped<EnableInterrupt<>> ei;
         
 #ifdef USE_SWUART
         std::outl<terminal>("attiny84"_pgm);

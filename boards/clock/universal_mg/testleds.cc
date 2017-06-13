@@ -112,7 +112,7 @@ int main() {
     terminal::init<19200>();
     
     {
-        Scoped<EnableInterrupt> ei;
+        Scoped<EnableInterrupt<>> ei;
         std::cout << Constant::title << std::endl;
         
         while(true) {

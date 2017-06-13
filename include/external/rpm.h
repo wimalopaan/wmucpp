@@ -72,7 +72,7 @@ public:
             return mActualPeriod();
         }
         else {
-            Scoped<DisbaleInterrupt> di;
+            Scoped<DisbaleInterrupt<>> di;
             return mActualPeriod;
         }
     }

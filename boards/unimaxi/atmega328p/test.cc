@@ -68,7 +68,7 @@ typedef led::color_type Color;
 using systemClock = AVR::Timer8Bit<0>;
 using systemTimer = AlarmTimer<systemClock>;
 
-using sampler = PeriodicGroup<AVR::ISR::Timer<0>::CompareA, systemTimer>;
+using sampler = PeriodicGroup<0, AVR::ISR::Timer<0>::CompareA, systemTimer>;
 
 using isrReg = IsrRegistrar<
 sampler
@@ -181,7 +181,7 @@ int main()
         Timerhandler>;
     
     {
-        Scoped<EnableInterrupt> interruptEnabler;
+        Scoped<EnableInterrupt<>> interruptEnabler;
         EventManager::run<sampler, handler>([](){
 //            if (spiInput::leak()) {
 //                blinker::failure();

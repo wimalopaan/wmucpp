@@ -65,7 +65,7 @@ int main() {
     led::off();
     
     {
-        Scoped<EnableInterrupt> ei;        
+        Scoped<EnableInterrupt<>> ei;        
         std::cout << "RPM with PinChange example"_pgm << std::endl;
         std::cout << "timer f: "_pgm << rpmTimer::frequency() << std::endl;
         std::cout << "timer p: "_pgm << rpmTimer::prescaler() << std::endl;

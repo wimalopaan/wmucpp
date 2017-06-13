@@ -28,8 +28,17 @@
 # define cli()
 #endif
 
-struct EnableInterrupt {};
-struct DisbaleInterrupt {};
+struct RestoreState {};
+struct ForceOn {};
+
+template<typename T = RestoreState>
+struct EnableInterrupt {
+    typedef T type;    
+};
+template<typename T = RestoreState>
+struct DisbaleInterrupt {
+    typedef T type;    
+};
 
 struct Transaction {};
 
@@ -37,7 +46,7 @@ template<typename T = Transaction, bool Active = true, typename F1 = void, typen
 class Scoped;
 
 template<bool Active>
-class Scoped<EnableInterrupt, Active> final
+class Scoped<EnableInterrupt<ForceOn>, Active> final
 {
 public:
     inline Scoped() {
@@ -51,9 +60,29 @@ public:
         }
     }
 };
+template<bool Active>
+class Scoped<EnableInterrupt<RestoreState>, Active> final
+{
+    inline static constexpr auto status = AVR::getBaseAddr<DefaultMcuType::Status>;
+public:
+    inline Scoped() : v(status()->value.value()) {
+        if constexpr(Active) {
+            sei();
+        }
+    }
+    inline ~Scoped() {
+        if constexpr(Active) {
+            if (!std::toBool(DefaultMcuType::Status::Bits::globalIntEnable & v)) {
+                cli();
+            }
+        }
+    }
+private:
+    DefaultMcuType::Status::Bits v{0};
+};
 
 template<bool Active>
-class Scoped<DisbaleInterrupt, Active> final
+class Scoped<DisbaleInterrupt<ForceOn>, Active> final
 {
 public:
     inline Scoped() {
@@ -66,6 +95,26 @@ public:
             sei();
         }
     }
+};
+template<bool Active>
+class Scoped<DisbaleInterrupt<RestoreState>, Active> final
+{
+    inline static constexpr auto status = AVR::getBaseAddr<DefaultMcuType::Status>;
+public:
+    inline Scoped() : v(status()->value.value()) {
+        if constexpr(Active) {
+            cli();
+        }
+    }
+    inline ~Scoped() {
+        if constexpr(Active) {
+            if (std::toBool(DefaultMcuType::Status::Bits::globalIntEnable & v)) {
+                sei();
+            }
+        }
+    }
+private:
+    DefaultMcuType::Status::Bits v{0};
 };
 
 template<typename F1, typename F2>

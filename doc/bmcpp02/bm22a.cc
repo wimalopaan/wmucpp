@@ -18,6 +18,7 @@
 
 #include <stdint.h>
 #include "std/byte.h"
+#include "mcu/avr8.h"
 #include "mcu/register.h"
 
 template<typename Component, int Number>

@@ -95,7 +95,7 @@ using alarmTimer  = AlarmTimer<systemTimer>;
 
 using dcfDecoder = DCF77<dcfPin, Config::Timer::frequency, EventManager, true>;
 
-using systemConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<0>::CompareA, alarmTimer, dcfDecoder>;
+using systemConstantRate = ConstantRateAdapter<1, void, AVR::ISR::Timer<0>::CompareA, alarmTimer, dcfDecoder>;
 
 using isrRegistrar = IsrRegistrar<systemConstantRate, terminal::RxHandler, terminal::TxHandler>;
 
@@ -429,7 +429,7 @@ int main()
     adc::init();
     
     {
-        Scoped<EnableInterrupt> ei;
+        Scoped<EnableInterrupt<>> ei;
         std::cout << Constant::title << std::endl;
         alarmTimer::start(*preStartTimer);
         EventManager::run2<allEventHandler>([](){

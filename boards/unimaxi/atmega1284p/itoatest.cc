@@ -114,7 +114,7 @@ int main() {
     constantRateTimer::mode(AVR::TimerMode::CTC);
     
     {
-        Scoped<EnableInterrupt> interruptEnabler;
+        Scoped<EnableInterrupt<>> interruptEnabler;
         
         for(auto d : Util::detail::Convert<2,10>::lookupTable) {
             for(auto c : d) {

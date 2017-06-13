@@ -49,7 +49,7 @@ int main()
  
 //    hbridge::pwm(std::percent{25});
     
-    Scoped<EnableInterrupt> ei;
+    Scoped<EnableInterrupt<>> ei;
     while(true) {
         
     }

@@ -143,7 +143,7 @@ using dcfDecoder = DCF77<dcfPin, LocalConfig::exactFrequency, EventManager, true
 
 using oscillator = AVR::Clock<LocalConfig::exactFrequency>;
 
-using systemConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<1>::CompareA, alarmTimer, dcfDecoder, oscillator>;
+using systemConstantRate = ConstantRateAdapter<1, void, AVR::ISR::Timer<1>::CompareA, alarmTimer, dcfDecoder, oscillator>;
 
 struct IrDecoder {
     static inline void init() {
@@ -159,7 +159,7 @@ struct IrDecoder {
 using irDecoder = IrDecoder;
 
 using irTimer = AVR::Timer8Bit<2>; // timer 2
-using irConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<2>::CompareA, irDecoder>;
+using irConstantRate = ConstantRateAdapter<2, void, AVR::ISR::Timer<2>::CompareA, irDecoder>;
 
 using isrRegistrar = IsrRegistrar<systemConstantRate, terminalDevice::RxHandler, terminalDevice::TxHandler, irConstantRate>;
 
@@ -493,7 +493,7 @@ int main() {
     }
     
     {
-        Scoped<EnableInterrupt> ei;
+        Scoped<EnableInterrupt<>> ei;
         std::cout << Constant::title << std::endl;
         
         std::cout << "OSCCAL: "_pgm << oscillator::calibration() << std::endl;

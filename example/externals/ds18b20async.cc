@@ -91,7 +91,7 @@ struct ErrorHandler : public EventHandler<EventType::DS18B20Error> {
     }
 };
 
-using periodicGroup = PeriodicGroup<AVR::ISR::Timer<0>::CompareA, systemTimer, oneWireMasterAsync>;
+using periodicGroup = PeriodicGroup<0, AVR::ISR::Timer<0>::CompareA, systemTimer, oneWireMasterAsync>;
 using eventHandlerGroup = EventHandlerGroup<TimerHandler, MeasuremntHandler, ErrorHandler, ds18b20>;
 
 using isrReg = IsrRegistrar<periodicGroup>;
@@ -113,7 +113,7 @@ int main()
     systemTimer::stop(*mTimer);
     
     {
-        Scoped<EnableInterrupt> ie;
+        Scoped<EnableInterrupt<>> ie;
         EventManager::run<periodicGroup, eventHandlerGroup>([](){});
     }
 

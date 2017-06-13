@@ -68,7 +68,7 @@ public:
             return period[index];
         }
         else {
-            Scoped<DisbaleInterrupt> di;
+            Scoped<DisbaleInterrupt<>> di;
             return period[index];
         }
     }
@@ -78,7 +78,7 @@ public:
             return period[Index];
         }
         else {
-            Scoped<DisbaleInterrupt> di;
+            Scoped<DisbaleInterrupt<>> di;
             return period[Index];
         }
     }

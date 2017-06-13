@@ -126,7 +126,7 @@ using dcfDecoder = DCF77<dcfPin, LocalConfig::exactFrequency, EventManager, true
 
 using oscillator = std::conditional<useRCCalibration, AVR::Clock<LocalConfig::exactFrequency>, void>::type;
 
-using systemConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<1>::CompareA, alarmTimer, dcfDecoder, oscillator>;
+using systemConstantRate = ConstantRateAdapter<1, void, AVR::ISR::Timer<1>::CompareA, alarmTimer, dcfDecoder, oscillator>;
 
 struct IrDecoder {
     static inline void init() {
@@ -148,7 +148,7 @@ struct IrDecoder {
 
 using irDecoder = std::conditional<useIR, IrDecoder, void>::type;
 
-using irConstantRate = ConstantRateAdapter<void, AVR::ISR::Timer<2>::CompareA, irDecoder>;
+using irConstantRate = ConstantRateAdapter<2, void, AVR::ISR::Timer<2>::CompareA, irDecoder>;
 
 using TerminalRxHandler = AVR::Util::RxHandler<terminalDevice>::type;
 using TerminalTxHandler = AVR::Util::TxHandler<terminalDevice>::type;
@@ -595,7 +595,7 @@ namespace detail {
         }
         
         {
-            Scoped<EnableInterrupt> ei;
+            Scoped<EnableInterrupt<>> ei;
             std::outl<terminal>(Constant::title);
             
             if constexpr(!std::is_same<RCCalibration, void>::value) {
