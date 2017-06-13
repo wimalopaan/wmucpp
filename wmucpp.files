@@ -118,6 +118,7 @@ doc/bmcpp98/bm10b.c
 doc/bmcpp98/bm20b.c
 doc/bmcpp98/bm30a.cc
 doc/bmcpp98/bm30b.c
+doc/bmcpp98/bm50a.cc
 doc/bmcpp99/bm05a.cc
 doc/bmcpp99/bm10a.cc
 doc/bmcpp99/bm20a.cc
@@ -177,6 +178,7 @@ include/mcu/avr/ppmbase.h
 include/mcu/avr/watchdog.h
 include/mcu/concepts.h
 include/mcu/mcu.h
+include/mcu/ressource.h
 include/std/bitmask.h
 include/std/byte.h
 include/std/chrono.h
