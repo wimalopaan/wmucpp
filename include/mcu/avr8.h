@@ -73,6 +73,8 @@ namespace AVR {
     concept bool ATMega_X4() {
         return std::is_same<T, ATMega1284P>::value;
     }
+    
+    
     // todo: change to non constexpr here, since reinterpret_cast renders it non-constexpr at all
     
     template<MCU::SingleComponent Component>

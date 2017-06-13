@@ -65,8 +65,9 @@ class Scoped<EnableInterrupt<RestoreState>, Active> final
 {
     inline static constexpr auto status = AVR::getBaseAddr<DefaultMcuType::Status>;
 public:
-    inline Scoped() : v(status()->value.value()) {
+    inline Scoped() {
         if constexpr(Active) {
+            v = status()->value.value();
             sei();
         }
     }
@@ -101,8 +102,9 @@ class Scoped<DisbaleInterrupt<RestoreState>, Active> final
 {
     inline static constexpr auto status = AVR::getBaseAddr<DefaultMcuType::Status>;
 public:
-    inline Scoped() : v(status()->value.value()) {
+    inline Scoped()  {
         if constexpr(Active) {
+            v = status()->value.value();
             cli();
         }
     }

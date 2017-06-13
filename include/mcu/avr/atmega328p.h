@@ -29,6 +29,9 @@ namespace AVR {
     
     struct ATMega328P final
     {
+        template<typename T>
+        static constexpr bool is_atomic() {return false;}
+        
         ATMega328P() = delete;
         struct Usart {
             static constexpr const uint8_t count = 1;
@@ -324,6 +327,8 @@ namespace AVR {
             static constexpr uint8_t address = 0x5f;
         };
     };
+    template<>
+    constexpr bool ATMega328P::is_atomic<uint8_t>() {return true;}
 }
 
 namespace std {

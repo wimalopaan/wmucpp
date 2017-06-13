@@ -28,6 +28,10 @@
 namespace AVR {
     
     struct ATTiny85 final {
+        
+        template<typename T>
+        static constexpr bool is_atomic() {return false;}
+        
         ATTiny85() = delete;
         struct Timer8Bit {
             typedef uint8_t value_type;
@@ -171,28 +175,9 @@ namespace AVR {
             static constexpr const uint8_t count = 3;
             template<uint8_t N> struct Address; 
         };
-        
     };
-    
     template<>
-    struct ATTiny85::PCInterrupts::Address<0> {
-        static constexpr uint8_t value = 0x35;
-    };
-    
-    template<>
-    struct ATTiny85::USI::Address<0> {
-        static constexpr uint8_t value = 0x2d;
-    };
-    
-    template<>
-    struct ATTiny85::PortRegister::Address<B> {
-        static constexpr uint8_t value = 0x36;
-    };
-    
-    template<>
-    struct ATTiny85::Timer8Bit::Address<0> {
-        static constexpr uint8_t value = 0x48;
-    };
+    constexpr bool ATTiny85::is_atomic<uint8_t>() {return true;}
     
 }
 namespace std {
@@ -223,6 +208,26 @@ namespace std {
 }
 
 namespace AVR {
+    template<>
+    struct ATTiny85::PCInterrupts::Address<0> {
+        static constexpr uint8_t value = 0x35;
+    };
+    
+    template<>
+    struct ATTiny85::USI::Address<0> {
+        static constexpr uint8_t value = 0x2d;
+    };
+    
+    template<>
+    struct ATTiny85::PortRegister::Address<B> {
+        static constexpr uint8_t value = 0x36;
+    };
+    
+    template<>
+    struct ATTiny85::Timer8Bit::Address<0> {
+        static constexpr uint8_t value = 0x48;
+    };
+    
     template<>
     struct ATTiny85::GPIOR::Address<0> {
         inline static constexpr uintptr_t value = 0x31;

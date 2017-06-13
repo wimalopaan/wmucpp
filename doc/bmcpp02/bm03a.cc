@@ -22,6 +22,9 @@
 volatile uint8_t global;
 
 int main() {
-    Scoped<EnableInterrupt<>> ei;
-    while(true) {}
+    Scoped<DisbaleInterrupt<>, true> di;
+    {
+        Scoped<EnableInterrupt<>, false> ei;
+        while(true) {}
+    }
 }
