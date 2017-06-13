@@ -141,6 +141,9 @@ namespace AVR {
     
     template<typename Register, uint8_t N, typename FieldType>
     class RegisterFlags {
+        static inline constexpr uint8_t reg_number = N;
+        typedef Register reg_type;
+        
         inline static constexpr auto reg = AVR::getBaseAddr<Register, N>; // Funktionszeiger
         static_assert(AVR::isSBICBICapable<Register, N>());
         
@@ -150,14 +153,6 @@ namespace AVR {
             return reinterpret_cast<volatile FieldType*>(reg());
         }
         
-        template<typename... PP>
-        struct Registrar {
-            static_assert(sizeof...(PP) < 8, "too much registrees");
-            static inline constexpr FieldType all = (PP::mask | ... );
-            static_assert(sizeof...(PP) == Util::numberOfOnes(all), "multiple use of flag");
-            static void init() {}
-        };
-    
     public:    
         inline static volatile FieldType& get() {
             return *bitField();

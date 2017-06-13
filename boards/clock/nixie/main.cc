@@ -316,6 +316,7 @@ int main() {
     powerSwitchPin::dir<AVR::Output>();    
     powerSwitchPin::off();    
     isrRegistrar::init();
+    MCU::Ressource::Registrar<systemConstantRate>::init();
     
     systemTimer::template prescale<LocalConfig::tsd.prescaler>();
     systemTimer::template ocra<LocalConfig::tsd.ocr - 1>();

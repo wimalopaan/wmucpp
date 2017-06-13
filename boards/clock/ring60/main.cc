@@ -347,10 +347,12 @@ using allEventHandler = EventHandlerGroup<TimerHandler, UsartFeHandler, UsartUpe
                                         DCFReceive0Handler, DCFReceive1Handler, DCFDecodeHandler, DCFSyncHandler, DCFErrorHandler, DCFParityHandler>;
 
 int main() {   
+    MCU::Ressource::Registrar<systemConstantRate>::init();
+    isrRegistrar::init();
+    
     powerSwitchPin::dir<AVR::Output>();    
     powerSwitchPin::off();    
 
-    isrRegistrar::init();
     terminal::init<19200>();
     statusLed::init();
     

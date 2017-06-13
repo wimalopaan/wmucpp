@@ -19,6 +19,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "mcu/ressource.h"
 #include "mcu/avr/isr.h"
 #include "std/algorithm.h"
 #include "util/bits.h"
@@ -167,12 +168,14 @@ class ConstantRateAdapter2 : public IsrBaseHandler<Int> {
     inline static constexpr uint8_t bit_number = BitNumber;
     typedef Reg register_type;
 
+    typedef MCU::Ressource::Type<Reg, Reg::reg_number, BitNumber> ressource_type;
+
     static_assert(BitNumber < 8, "wrong bit number");
-    static inline constexpr typename Reg::type mask{1 << BitNumber};
+    static inline constexpr typename Reg::type bit_mask{1 << BitNumber};
 public:
     static void periodic() {
-        if (std::any(Reg::get() & mask)) { // this race condition doesn't harm (AVR lacks a test-and-set-instruction or atomic swap
-            Reg::get() &= ~mask;           // race
+        if (std::any(Reg::get() & bit_mask)) { // this race condition doesn't harm (AVR lacks a test-and-set-instruction or atomic swap
+            Reg::get() &= ~bit_mask;           // race
             (detail::Mapper<Writers>::rateProcess(),...);
         }
     }
@@ -191,7 +194,7 @@ public:
     }
     static void rateTick() {
         static_assert(Int::number >= 0, "wrong interrupt number");
-        Reg::get() |= mask;;
+        Reg::get() |= bit_mask;;
     }
     constexpr static auto isr = rateTick;
 };

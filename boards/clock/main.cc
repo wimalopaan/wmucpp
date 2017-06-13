@@ -406,10 +406,12 @@ using allEventHandler = EventHandlerGroup<TimerHandler, UsartFeHandler, UsartUpe
 
 int main()
 {   
+    MCU::Ressource::Registrar<systemConstantRate>::init();
+    isrRegistrar::init();
+    
     set_zone(ONE_HOUR); // europe central time
     set_dst(eu_dst);
     
-    isrRegistrar::init();
     alarmTimer::init();
     
     powerSwitchPin::dir<AVR::Output>();    

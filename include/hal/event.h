@@ -22,6 +22,7 @@
 
 #include "config.h"
 #include "mcu/avr8.h"
+#include "mcu/ressource.h"
 #include "mcu/avr/mcutimer.h"
 #include "mcu/avr/isr.h"
 #include "util/bits.h"
@@ -115,21 +116,23 @@ private:
 template<typename Reg, uint8_t BitNumber, MCU::Interrupt Interrupt = void, typename... PP>
 class PeriodicGroup2 : public IsrBaseHandler<Interrupt> {
 public:
-    inline static constexpr uint8_t bit_number = BitNumber;
+    inline static constexpr uint8_t register_bit_number = BitNumber;
     typedef Reg register_type;
     
+    typedef MCU::Ressource::Type<Reg, Reg::reg_number, BitNumber> ressource_type;
+    
     static_assert(BitNumber < 8, "wrong bit number");
-    static inline constexpr typename Reg::type mask{1 << BitNumber};
+    static inline constexpr typename Reg::type bit_mask{1 << BitNumber};
     
     static void periodic() {
-        if (std::any(Reg::get() & mask)) {
-            Reg::get() &= ~mask;
+        if (std::any(Reg::get() & bit_mask)) {
+            Reg::get() &= ~bit_mask;
             (PP::periodic(),...); 
         }
     }
     static void isr() {
         static_assert(Interrupt::number >= 0, "wrong interrupt number");
-        Reg::get() |= mask;;
+        Reg::get() |= bit_mask;;
     }
     static void isrNaked() {
         isr();

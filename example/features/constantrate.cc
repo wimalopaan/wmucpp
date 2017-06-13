@@ -78,10 +78,9 @@ namespace detail {
     }
 }
 
-using flagRegistrar = sampler::register_type::Registrar<sampler>;
 int main() {
     isrReg::init();
-    flagRegistrar::init();
+    MCU::Ressource::Registrar<sampler>::init();
     detail::main<terminal>();
 }
 

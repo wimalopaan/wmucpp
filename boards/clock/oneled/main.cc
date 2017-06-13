@@ -327,6 +327,7 @@ using allEventHandler = EventHandlerGroup<TimerHandler, SystemClockSet>;
 namespace detail {
     template<typename IrDec, typename Adc, typename BC, typename StatusLed, typename ShiftText, typename TerminalDevice, typename RCCalibration>
     void main() {
+        MCU::Ressource::Registrar<systemConstantRate>::init();
         isrRegistrar::init();
         if constexpr (!std::is_same<TerminalDevice, void>::value) {
             TerminalDevice::template init<19200>();

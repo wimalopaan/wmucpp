@@ -337,6 +337,7 @@ using allEventHandler = EventHandlerGroup<TimerHandler, UsartFeHandler, UsartUpe
 constexpr std::hertz fIr = 15000_Hz;
 
 int main() {   
+    MCU::Ressource::Registrar<systemConstantRate, irConstantRate>::init();
     isrRegistrar::init();
     
     debugPin::dir<AVR::Output>();
