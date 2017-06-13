@@ -65,6 +65,8 @@ doc/bmcpp02/bm04a.cc
 doc/bmcpp02/bm21a.cc
 doc/bmcpp02/bm22a.cc
 doc/bmcpp02/bm23a.cc
+doc/bmcpp02/bm30a.cc
+doc/bmcpp02/bm31a.cc
 doc/bmcpp03/bm07a.cc
 doc/bmcpp03/bm08a.cc
 doc/bmcpp04/bm10a.cc
@@ -114,6 +116,8 @@ doc/bmcpp98/bm05a.cc
 doc/bmcpp98/bm10a.cc
 doc/bmcpp98/bm10b.c
 doc/bmcpp98/bm20b.c
+doc/bmcpp98/bm30a.cc
+doc/bmcpp98/bm30b.c
 doc/bmcpp99/bm05a.cc
 doc/bmcpp99/bm10a.cc
 doc/bmcpp99/bm20a.cc
@@ -137,6 +141,7 @@ example/basics/register05.cc
 example/basics/register10.cc
 example/externals/ow.cc
 example/externals/ow.h
+example/features/constantrate.cc
 include/appl/blink.h
 include/appl/clockstatemachine.h
 include/appl/exponential.h
