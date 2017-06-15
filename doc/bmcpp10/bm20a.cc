@@ -11,34 +11,27 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include <stdint.h>
+#include "container/pgmstring.h"
 
-#ifndef __GLIBCXX__
+constexpr auto s  = "abcdef"_pgm;
+constexpr auto s1 = "Bla abcdef"_pgm;
 
-namespace std {
-    
-    template< class T > struct remove_reference      {
-        typedef T type;
-    };
-    template< class T > struct remove_reference<T&>  {
-        typedef T type;
-    };
-    template< class T > struct remove_reference<T&&> {
-        typedef T type;
-    };
-    
-    template<typename T>
-    using remove_reference_t = typename remove_reference<T>::type;
-    
-    template <typename T>
-    constexpr typename remove_reference<T>::type&& move(T&& arg) {
-        return static_cast<typename remove_reference<T>::type&&>(arg);
+volatile uint8_t x;
+
+volatile uint8_t y1;
+volatile uint8_t y2;
+
+int main() {
+    for(const auto& c : s) {
+        x += c + y1;    
     }
-    
+    for(const auto& c : s1) {
+        x += c + y2;    
+    }
 }
-#endif

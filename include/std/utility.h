@@ -46,15 +46,13 @@ namespace std {
     template<typename T, T... I>
     struct integer_sequence{
         using type = T;
-        static constexpr T size = sizeof...(I);
+        inline static constexpr T size = sizeof...(I);
         /// Generate an integer_sequence with an additional element.
         template<T N>
         using append = integer_sequence<T, I..., N>;
         
         using next = append<size>;
     };
-    template<typename T, T... I>
-    constexpr T integer_sequence<T, I...>::size;
     
     template<size_t... I>
     using index_sequence = integer_sequence<size_t, I...>;

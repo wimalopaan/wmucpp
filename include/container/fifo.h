@@ -26,10 +26,7 @@
 #include "util/disable.h"
 
 namespace std {
-    
     // safe to use with ISRs
-    // assume: 8-bit read/write is atomic
-    
     template<typename T, uint16_t Size = 32>
     class FiFo final {
     public:

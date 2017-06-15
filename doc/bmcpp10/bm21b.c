@@ -11,34 +11,35 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include<stdint.h>
 
-#ifndef __GLIBCXX__
+__flash const char  ok[] = "ok";
+__flash const char nok[] = "nok";
 
-namespace std {
-    
-    template< class T > struct remove_reference      {
-        typedef T type;
-    };
-    template< class T > struct remove_reference<T&>  {
-        typedef T type;
-    };
-    template< class T > struct remove_reference<T&&> {
-        typedef T type;
-    };
-    
-    template<typename T>
-    using remove_reference_t = typename remove_reference<T>::type;
-    
-    template <typename T>
-    constexpr typename remove_reference<T>::type&& move(T&& arg) {
-        return static_cast<typename remove_reference<T>::type&&>(arg);
+volatile uint8_t x;
+
+volatile uint8_t v1;
+volatile uint8_t v2;
+
+void f1(__flash const char* s) {
+    for(uint8_t i = 0; s[i] != '\0'; ++i) {
+        x += s[i] + v1;    
     }
-    
 }
-#endif
+void f2(__flash const char* s) {
+    for(uint8_t i = 0; s[i] != '\0'; ++i) {
+        x += s[i] + v2;    
+    }
+}
+
+int main() {
+    f1(ok);    
+    f2(nok);    
+    f1(nok);    
+    f2(ok);    
+}

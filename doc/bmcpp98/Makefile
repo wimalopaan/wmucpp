@@ -29,6 +29,7 @@ targets +=  bm20b.elf bm20b.s
 targets +=  bm30a.elf bm30a.s bm30a.s.axtract
 targets +=  bm30b.elf bm30b.s
 targets +=  bm50a.elf bm50a.s
+targets +=  bm51a.elf bm51a.s
 
 -include ../../Makefile.include
 

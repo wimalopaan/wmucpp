@@ -28,7 +28,7 @@
 extern void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept __attribute__ ((__noreturn__));
 
 #ifndef NDEBUG
-# define assert(expr) ((expr) ? (void) (0) : assertFunction(PgmStringView{PGMSTRING(#expr).data}, PgmStringView{PGMSTRING(__FILE__).data}, __LINE__))
+# define assert(expr) ((expr) ? (void) (0) : assertFunction(PGMSTRING(#expr), PGMSTRING(__FILE__), __LINE__))
 #else
 # define assert(x)
 #endif

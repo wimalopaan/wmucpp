@@ -11,7 +11,7 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -34,10 +34,8 @@
 #include "mcu/concepts.h"
 
 namespace Util {
-template<typename Device, bool ensure = false> void put(std::byte  c);
+    template<typename Device, bool ensure = false> void put(std::byte  c);
 }
-
-// this is a g++ / clang++ extension
 
 template<typename C, C... CC>
 struct PgmString;
@@ -45,28 +43,53 @@ struct PgmString;
 template<typename C, C... CC>
 constexpr PgmString<C, CC...> operator"" _pgm();
 
-struct  PgmStringView {
+struct PgmStringView {
+    template<typename C, C... CC> friend struct PgmString;
+    inline char operator[](uint8_t index) const {
+        return pgm_read_byte(ptrToPgmData + index);
+    }
+private:
+    constexpr PgmStringView(const char* pgm) : ptrToPgmData(pgm) {}
     const char* ptrToPgmData = nullptr;
 };
 
 template<typename C, C... CC>
 struct PgmString final {
     typedef char value_type;
-    friend struct PgmStringView;
-    friend PgmString<C, CC...> operator"" _pgm<>();
-    template<typename Stream, typename C1, C1... CC1> friend Stream& operator<<(Stream& out, const PgmString<C1, CC1...>& s);
-    template<uint8_t, typename, char> friend class StringBuffer;
-
-    static constexpr uint8_t size = sizeof...(CC);
-    static constexpr const char data[] PROGMEM = {CC..., '\0'};
+    inline static constexpr uint8_t size = sizeof...(CC);
     
-    char operator[](uint8_t index) const {
-            return pgm_read_byte(&data[index]);
+    constexpr PgmString() = default;
+    
+    class Iterator {
+    public:
+        constexpr Iterator(uint8_t index = 0) : mIndex(index) {}
+        inline char operator*() {
+            return pgm_read_byte(&data[mIndex]);
+        }
+        inline void operator++() {
+            ++mIndex;
+        }
+        inline bool operator!=(const Iterator& rhs) {
+            return mIndex != rhs.mIndex;
+        }
+    private:
+        uint8_t mIndex = 0;
+    };
+    constexpr Iterator begin() const {
+        return Iterator();
     }
+    constexpr Iterator end() const {
+        return Iterator(size);
+    }
+    char operator[](uint8_t index) const {
+        return pgm_read_byte(&data[index]);
+    }
+    constexpr operator PgmStringView() const {
+        return PgmStringView{data};
+    }
+private:
+    inline static constexpr const char data[] PROGMEM = {CC..., '\0'};
 };
-
-template<typename C, C... CC>
-constexpr const char PgmString<C, CC...>::data[] PROGMEM;
 
 template<typename C, C... CC>
 constexpr PgmString<C, CC...> operator"" _pgm(){
@@ -74,19 +97,25 @@ constexpr PgmString<C, CC...> operator"" _pgm(){
 }
 
 namespace std::detail {
-
-template<MCU::Stream Stream, typename C, C... CC>
-void out(const PgmString<C, CC...>& s) {
-    const char * ptr = s.data;
-    while (char c = pgm_read_byte(ptr++)) {
-        Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(std::byte{c});
-    };   
-}
-
+    template<MCU::Stream Stream, typename C, C... CC>
+    void out(const PgmString<C, CC...>& s) {
+        for(const auto& c : s) {
+            Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(std::byte{c});
+        }
+    }
 } // std::detail
 
 template<typename Stream, typename C, C... CC>
 Stream& operator<<(Stream& out, const PgmString<C, CC...>& s) {
     std::detail::template out<Stream>(s);
+    return out;
+}
+
+template<MCU::Stream Stream>
+Stream& operator<<(Stream& out, PgmStringView s) {
+    char c = '\0';
+    for(uint8_t i = 0; (c = s[i]) != '\0'; ++i) {
+        out << c;
+    };
     return out;
 }

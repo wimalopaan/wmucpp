@@ -65,6 +65,7 @@ targets +=  bm52a.s bm52a.elf
 targets +=  bm53a.s bm53a.elf 
 targets +=  bm60a.s bm60a.elf 
 targets +=  bm61a.s bm61a.elf 
+targets +=  bm70b.s bm70b.elf 
 
 -include ../../Makefile.include
 

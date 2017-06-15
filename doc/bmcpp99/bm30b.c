@@ -11,34 +11,22 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include <stdint.h>
 
-#ifndef __GLIBCXX__
+const uint8_t __flash a[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
-namespace std {
+volatile uint8_t x;
+
+int main() {
     
-    template< class T > struct remove_reference      {
-        typedef T type;
-    };
-    template< class T > struct remove_reference<T&>  {
-        typedef T type;
-    };
-    template< class T > struct remove_reference<T&&> {
-        typedef T type;
-    };
-    
-    template<typename T>
-    using remove_reference_t = typename remove_reference<T>::type;
-    
-    template <typename T>
-    constexpr typename remove_reference<T>::type&& move(T&& arg) {
-        return static_cast<typename remove_reference<T>::type&&>(arg);
+    for(uint8_t i = 0; i < sizeof(a) / sizeof(a[0]); ++i) {
+        x += a[i];
     }
     
+    while(1) {}
 }
-#endif

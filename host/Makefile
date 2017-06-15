@@ -17,12 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-targets = test01 test02 test03
+targets = test01 test02 test03 test04
 
 -include ../Makefile.include
 
-#CXX = g++
-CXX = clang++
+CXX = g++
+#CXX = clang++
 CC = g++
 LDFLAGS =
 CXXFLAGS = -g -std=c++1z

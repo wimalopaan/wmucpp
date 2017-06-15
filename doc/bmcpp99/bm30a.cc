@@ -16,12 +16,44 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdint.h>
+
 #include "container/pgmarray.h"
 
+struct A {
+    uint8_t m = 0;
+    operator int() const {
+        return m;
+    }
+    static A createFrom(std::array<uint8_t, 1> b) {
+        return A{b[0]};
+    }
+};
+
+constexpr A a1{1};
+constexpr A a2{2};
+constexpr A a3{1};
+constexpr A a4{2};
+constexpr A a5{1};
+constexpr A a6{2};
+constexpr A a7{1};
+constexpr A a8{2};
+constexpr A a9{1};
+constexpr A a10{2};
+
+constexpr auto x1 = PgmArray<const A&, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10>{};
+constexpr auto x2 = PgmArray<uint8_t, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10>{};
+
+volatile uint8_t r = 0;
 int main() {
-    constexpr PgmBytes<1, 2, 3, 4> a{};
-    
-    
-    
+    for(const auto& v : x1) {
+        r += v;
+    }
+//    for(const auto& v : x2) {
+//        r += v;
+//    }
+//    for(auto& v : y1) {
+//        r += v;
+//    }
     while(true) {}
 }

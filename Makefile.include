@@ -130,6 +130,9 @@ AVRDUDE = avrdude
 %.s: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(ASMFLAGS) -S -o $@ $(shell pwd)/$<
 
+%.s: %.s.save
+	cp $< $@
+	
 %.size: %.elf
 	avr-size $< > $@
 
@@ -229,6 +232,8 @@ clean:	subclean
 	$(RM) *.eep
 	$(RM) *.size
 	$(RM) *.html
+	$(RM) *.s
+	$(RM) *.S
 
 
 -include $(DEP)

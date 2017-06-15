@@ -59,9 +59,8 @@ public:
     void insertAt(uint8_t position, const PgmString<C, CC...>& ps) {
         static_assert(Length > ps.size, "wrong length");
         assert(position < Length);
-        const char* ptr = ps.data;
         for(uint8_t i = position, j = 0; (i < Length) && (j < ps.size); ++i, ++j) {
-            data[i] = pgm_read_byte(ptr++);
+            data[i] = ps[j];
         }
     }
     template<typename C, C... CC>

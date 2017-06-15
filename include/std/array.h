@@ -11,7 +11,7 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -23,81 +23,81 @@
 #include "std/utility.h"
 
 namespace std {
-
-template<typename T, uint16_t Size>
-struct array final
-{
-    typedef T value_type;
-    typedef typename std::conditional<(Size < 256), uint8_t, uint16_t>::type size_type;
-    typedef typename std::conditional<(Size < 128), int8_t, int16_t>::type signed_size_type;
     
-//    constexpr array() = default;
+    template<typename T, uint16_t Size>
+    struct array final
+    {
+        typedef T value_type;
+        typedef typename std::conditional<(Size < 256), uint8_t, uint16_t>::type size_type;
+        typedef typename std::conditional<(Size < 128), int8_t, int16_t>::type signed_size_type;
+        
+        //    constexpr array() = default;
+        
+        //    template<typename... TT>
+        //    constexpr array(TT&&... pp) : data{(T)pp...}{
+        //    }
+        
+        constexpr const T* begin() const {
+            return &data[0];
+        }
+        constexpr const T* end() const {
+            return &data[Size];
+        }
+        constexpr const volatile T* begin() const volatile {
+            return &data[0];
+        }
+        constexpr const volatile T* end() const volatile {
+            return &data[Size];
+        }
+        constexpr T* begin() {
+            return &data[0];
+        }
+        constexpr T* end() {
+            return &data[Size];
+        }
+        constexpr volatile T* begin() volatile {
+            return &data[0];
+        }
+        constexpr volatile T* end() volatile {
+            return &data[Size];
+        }
+        inline constexpr T& operator[](uint8_t index) {
+            assert(index < Size);
+            return data[index];
+        }
+        inline constexpr volatile T& operator[](uint8_t index) volatile {
+            assert(index < Size);
+            return data[index];
+        }
+        inline constexpr const T& operator[](uint8_t index) const {
+            assert(index < Size);
+            return data[index];
+        }
+        static constexpr size_type size = Size;
+        //private:
+        T data[Size] = {}; // rely on aggregate initialization
+    };
     
-//    template<typename... TT>
-//    constexpr array(TT&&... pp) : data{(T)pp...}{
-//    }
-
-    constexpr const T* begin() const {
-        return &data[0];
+    namespace detail {
+        
+        template <class T, uint8_t N, size_t... I>
+        constexpr std::array<std::remove_cv_t<T>, N>
+        to_array_impl(T(&a)[N], std::index_sequence<I...>)
+        {
+            return { {a[I]...} };
+        }
     }
-    constexpr const T* end() const {
-        return &data[Size];
+    
+    template <class T, uint8_t N>
+    constexpr std::array<std::remove_cv_t<T>, N> to_array(T (&a)[N])
+    {
+        return detail::to_array_impl(a, std::make_index_sequence<N>{});
     }
-    constexpr const volatile T* begin() const volatile {
-        return &data[0];
+    
+    template<typename E, typename... Tail>
+    constexpr auto make_array(E&& f, Tail&&... tail) {
+        return std::array<E, sizeof...(Tail) + 1>{f, tail...};
     }
-    constexpr const volatile T* end() const volatile {
-        return &data[Size];
-    }
-    constexpr T* begin() {
-        return &data[0];
-    }
-    constexpr T* end() {
-        return &data[Size];
-    }
-    constexpr volatile T* begin() volatile {
-        return &data[0];
-    }
-    constexpr volatile T* end() volatile {
-        return &data[Size];
-    }
-    inline constexpr T& operator[](uint8_t index) {
-        assert(index < Size);
-        return data[index];
-    }
-    inline constexpr volatile T& operator[](uint8_t index) volatile {
-        assert(index < Size);
-        return data[index];
-    }
-    inline constexpr const T& operator[](uint8_t index) const {
-        assert(index < Size);
-        return data[index];
-    }
-    static constexpr size_type size = Size;
-//private:
-    T data[Size] = {}; // rely on aggregate initialization
-};
-
-namespace detail {
-
-template <class T, uint8_t N, size_t... I>
-constexpr std::array<std::remove_cv_t<T>, N>
-    to_array_impl(T(&a)[N], std::index_sequence<I...>)
-{
-    return { {a[I]...} };
-}
-}
- 
-template <class T, uint8_t N>
-constexpr std::array<std::remove_cv_t<T>, N> to_array(T (&a)[N])
-{
-    return detail::to_array_impl(a, std::make_index_sequence<N>{});
-}
-
-template<typename E, typename... Tail>
-constexpr auto make_array(E&& f, Tail&&... tail) {
-    return std::array<E, sizeof...(Tail) + 1>{f, tail...};
-}
-
-
+    
+    
 }

@@ -18,12 +18,16 @@
 
 #include <avr/pgmspace.h>
 
-const uint32_t stamp PROGMEM = 42;
+//const uint32_t stamp PROGMEM = 42;
+
+const uint32_t stamp = 42;
 
 volatile uint32_t test;
 
 int main() {
-    test = pgm_read_dword(&stamp);
+    test = stamp;
+    
+//    test = pgm_read_dword(&stamp);
     
     while(1) {}
 }

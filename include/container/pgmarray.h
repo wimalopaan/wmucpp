@@ -20,6 +20,7 @@
 
 #include "std/array.h"
 #include "std/traits.h"
+#include "std/memory.h"
 
 #if __has_include(<avr/pgmspace.h>)
 # include <avr/pgmspace.h>
@@ -30,44 +31,53 @@
 # define PROGMEM
 #endif
 
-template<typename T, const T&... Ts>
+template<typename T, T... Ts>
 class PgmArray final {
     PgmArray() = delete;
-public:
-    static constexpr uint8_t Size = sizeof... (Ts);
+    using U = std::remove_const_t<std::remove_reference_t<T>>;
     
-    T operator[](uint8_t index) const {
+    static U value(uint8_t index) {
         if constexpr(std::is_same<uint8_t, T>::value) {
             return pgm_read_byte(&data[index]);
         }
         else {
             std::array<uint8_t, sizeof(T)> bytes;
             for(uint8_t i = 0; i < sizeof(T); ++i) {
-                bytes[i] = pgm_read_byte((uint8_t*)&data[index] + i);
+                bytes[i] = pgm_read_byte((uint8_t*)(&data[index]) + i);
             }
-            return T::createFrom(bytes);
+            return U::createFrom(bytes);
         }
     }
-private:
-    static constexpr T data[] PROGMEM = {Ts...}; 
-};
-template<typename T, const T&... Ts>
-constexpr const T PgmArray<T, Ts...>::data[] PROGMEM;
 
-template<uint8_t... Ts>
-class PgmBytes final {
-    PgmBytes() = delete;
 public:
-    static constexpr uint8_t Size = sizeof... (Ts);
+    static constexpr uint8_t size = sizeof... (Ts);
+    typedef U type;
     
-    uint8_t operator[](uint8_t index) const {
-            return pgm_read_byte(&data[index]);
+    class Iterator {
+    public:
+        constexpr Iterator(uint8_t index = 0) : mIndex(index) {}
+        inline U operator*() {
+            return value(mIndex);
+        }
+        inline void operator++() {
+            ++mIndex;
+        }
+        inline bool operator!=(const Iterator& rhs) {
+            return mIndex != rhs.mIndex;
+        }
+    private:
+        uint8_t mIndex = 0;
+    };
+    constexpr Iterator begin() const {
+        return Iterator();
+    }
+    constexpr Iterator end() const {
+        return Iterator(size);
+    }
+    U operator[](uint8_t index) const {
+        return value(index);
     }
 private:
-    static constexpr uint8_t data[] PROGMEM = {Ts...}; 
+    inline static constexpr const U data[] PROGMEM = {Ts...}; 
 };
-template<uint8_t... Ts>
-constexpr uint8_t PgmBytes<Ts...>::data[] PROGMEM;
-
-
 

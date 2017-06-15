@@ -53,5 +53,16 @@ concept bool Range() {
         r.end();
     };
 }
+template<typename T>
+concept bool Fundamental()
+{
+    return std::is_fundamental<T>::value;
+}
+
+template<typename T>
+concept bool NonFundamental()
+{
+    return !std::is_fundamental<T>::value;
+}
 
 }

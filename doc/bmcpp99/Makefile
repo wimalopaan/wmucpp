@@ -31,6 +31,7 @@ targets +=  bm10a.elf
 targets +=  bm20a.elf bm20a.s
 targets +=  bm21a.elf bm21a.s
 targets +=  bm30a.elf bm30a.s
+targets +=  bm30b.elf bm30b.s
 targets +=  bm05a.elf bm05a.s
 #targets +=  bm40a.elf bm40a.s
 targets +=  bm41a.elf bm41a.s

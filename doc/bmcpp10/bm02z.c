@@ -18,7 +18,7 @@
 
 #include <stdint.h>
 
-const __flash uint32_t stamp = 6658687;
+const __flash uint32_t stamp = 42;
 
 volatile uint32_t test;
 

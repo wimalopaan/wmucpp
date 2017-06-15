@@ -11,34 +11,43 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include <stdint.h>
+#include "util/algorithm.h"
 
-#ifndef __GLIBCXX__
+volatile uint8_t n;
 
-namespace std {
-    
-    template< class T > struct remove_reference      {
-        typedef T type;
-    };
-    template< class T > struct remove_reference<T&>  {
-        typedef T type;
-    };
-    template< class T > struct remove_reference<T&&> {
-        typedef T type;
-    };
-    
-    template<typename T>
-    using remove_reference_t = typename remove_reference<T>::type;
-    
-    template <typename T>
-    constexpr typename remove_reference<T>::type&& move(T&& arg) {
-        return static_cast<typename remove_reference<T>::type&&>(arg);
-    }
-    
+static uint8_t serial() {
+    static uint8_t s = 0;
+    return s++;
 }
-#endif
+
+template<typename T = void>
+struct A {
+    A() : N(serial()) {
+        n = N;
+    }
+    uint8_t N = 0;
+};
+
+template<typename T = void>
+struct B {
+    B() : N(serial()) {
+        n = N;
+    }
+    uint8_t N = 0;
+};
+
+struct P1{};
+struct P2{};
+
+int main() {
+    auto x1 = A<P1>();
+    auto x2 = B<P2>();
+    
+    while(true) {}
+}

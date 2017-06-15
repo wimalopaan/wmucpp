@@ -80,8 +80,12 @@ doc/bmcpp10/bm04a.cc
 doc/bmcpp10/bm10a.cc
 doc/bmcpp10/bm10b.c
 doc/bmcpp10/bm11a.cc
+doc/bmcpp10/bm20a.cc
+doc/bmcpp10/bm20b.c
+doc/bmcpp10/bm21a.cc
+doc/bmcpp10/bm21b.c
 doc/bmcpp20/Makefile
-doc/bmcpp20/ascale.s
+doc/bmcpp20/ascale.s.save
 doc/bmcpp20/bm01a.cc
 doc/bmcpp20/bm02a.cc
 doc/bmcpp20/bm03a.cc
@@ -108,6 +112,7 @@ doc/bmcpp20/bm52a.cc
 doc/bmcpp20/bm53a.cc
 doc/bmcpp20/bm60a.cc
 doc/bmcpp20/bm61a.cc
+doc/bmcpp20/bm70b.c
 doc/bmcpp20/simavrconsole.c
 doc/bmcpp98/Makefile
 doc/bmcpp98/bm01a.cc
@@ -119,11 +124,13 @@ doc/bmcpp98/bm20b.c
 doc/bmcpp98/bm30a.cc
 doc/bmcpp98/bm30b.c
 doc/bmcpp98/bm50a.cc
+doc/bmcpp98/bm51a.cc
 doc/bmcpp99/bm05a.cc
 doc/bmcpp99/bm10a.cc
 doc/bmcpp99/bm20a.cc
 doc/bmcpp99/bm21a.cc
 doc/bmcpp99/bm30a.cc
+doc/bmcpp99/bm30b.c
 doc/bmcpp99/bm40a.cc
 doc/bmcpp99/bm41a.cc
 doc/bmcpp99/bm42a.cc
@@ -143,6 +150,7 @@ example/basics/register10.cc
 example/externals/ow.cc
 example/externals/ow.h
 example/features/constantrate.cc
+host/test04.cc
 include/appl/blink.h
 include/appl/clockstatemachine.h
 include/appl/exponential.h

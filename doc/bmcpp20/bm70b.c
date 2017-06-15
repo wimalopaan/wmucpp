@@ -11,34 +11,38 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include <stdint.h>
+#include <stdbool.h>
 
-#ifndef __GLIBCXX__
+//const uint8_t SIZE = 64;
 
-namespace std {
-    
-    template< class T > struct remove_reference      {
-        typedef T type;
-    };
-    template< class T > struct remove_reference<T&>  {
-        typedef T type;
-    };
-    template< class T > struct remove_reference<T&&> {
-        typedef T type;
-    };
-    
-    template<typename T>
-    using remove_reference_t = typename remove_reference<T>::type;
-    
-    template <typename T>
-    constexpr typename remove_reference<T>::type&& move(T&& arg) {
-        return static_cast<typename remove_reference<T>::type&&>(arg);
-    }
-    
+#define SIZE 64
+
+struct Fifo {
+    uint8_t array[SIZE];
+    uint8_t in;
+    uint8_t out;
+};
+
+volatile struct Fifo fifo = {};
+
+bool empty(volatile struct Fifo* f) {
+    return !(f->in ^ f->out);
 }
-#endif
+
+bool empty1(volatile struct Fifo* f) {
+    return (f->in == f->out);
+}
+
+int main()
+{
+//    fifo.in = (fifo.in + 1) % SIZE;
+//    fifo.in = (fifo.in + 1) & (SIZE - 1);
+    
+    return empty1(&fifo);
+}

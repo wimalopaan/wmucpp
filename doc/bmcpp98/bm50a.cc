@@ -19,28 +19,21 @@
 #include <stdint.h>
 #include "util/algorithm.h"
 
-template<uint8_t N, typename T>
+volatile uint8_t n;
+
+template<uint8_t N, typename T = void>
 struct A {
+    typedef T  type;
     static inline constexpr uint8_t number = N;
+    static void init() {n = N;}
 };
 
-template<uint8_t N, typename T>
+template<uint8_t N, typename T = void>
 struct B {
+    typedef T  type;
     static inline constexpr uint8_t number = N;
+    static void init() {n = N;}
 };
-
-template<typename I, typename... Pp>
-struct T {
-    
-};
-
-
-template<template <uint8_t> typename...  Rr>
-struct ResCon {
-    using X = std::make_index_sequence<sizeof...(Rr)>;
-    
-//    using X2 = T<X, Rr>;
-}; 
 
 struct P1{};
 struct P2{};
@@ -51,8 +44,32 @@ using A1 = A<N, P1>;
 template<uint8_t N>
 using B1 = B<N, P2>;
 
-using rc = ResCon<A1, B1>;
+template <template <int> class... Z>
+struct SeqInst {
+    inline static constexpr uint8_t Size = sizeof...(Z);
+    using Indexes = std::make_index_sequence<sizeof...(Z)>;
+    static void init() {
+        init(Indexes{});
+    }
+private:
+    template<typename... T>
+    struct TypeList {
+        static void init() {
+            (T::init(), ...);
+        }
+    };
+
+    template <size_t... Is>
+    static void init(std::index_sequence<Is...> ) {
+        using tl = TypeList<Z<Is>...>;        
+        tl::init();
+    }
+};
+
+using test = SeqInst<A1, B1>;
 
 int main() {
+    test::init();
     
+    while(true) {}
 }

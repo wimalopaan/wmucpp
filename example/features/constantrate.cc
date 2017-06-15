@@ -49,10 +49,11 @@ struct LocalConfig {
 using terminalDevice = SimAVRDebugConsole;
 using terminal = std::conditional<useTerminal, std::basic_ostream<terminalDevice>, void>::type;
 
-
 using sampler = PeriodicGroup<0, AVR::ISR::Timer<0>::CompareA, Test>;
 
 using isrReg = IsrRegistrar<sampler>; 
+
+// IsrRegistrar<PG<Interrupt1, Callbacks>, CR<Timer, Interrupz2, Callbacks>, otherHandler, ...>
 
 using allEventHandler = EventHandlerGroup<>; 
 

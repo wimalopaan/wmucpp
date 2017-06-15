@@ -21,7 +21,6 @@
 #include "config.h"
 #include "mcu/concepts.h"
 #include "util/util.h"
-//#include "util/fixedpoint.h"
 #include "std/time.h"
 #include "std/concepts.h"
 #include "units/percent.h"
@@ -103,9 +102,9 @@ namespace std {
             };   
         }
         template<MCU::Stream Stream>
-        void out(const PgmStringView& s) {
-            const char * ptr = s.ptrToPgmData;
-            while (char c = pgm_read_byte(ptr++)) {
+        void out(PgmStringView s) {
+            char c = '\0';
+            for(uint8_t i = 0; (c = s[i]) != '\0'; ++i) {
                 Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(c);
             };   
         }
@@ -355,24 +354,6 @@ Stream& operator<<(Stream& o, const Config&) {
         o << "Button::buttonTicksForPressed: "_pgm << Config::Button::buttonTicksForPressed << "\r\n"_pgm;
     }
     return o;
-}
-
-//template<typename Stream, typename C, C... CC>
-//Stream& operator<<(Stream& out, const PgmString<C, CC...>& s) {
-//    const char * ptr = s.data;
-//    while (char c = pgm_read_byte(ptr++)) {
-//        out << c;
-//    };
-//    return out;
-//}
-
-template<MCU::Stream Stream>
-Stream& operator<<(Stream& out, const PgmStringView& s) {
-    const char * ptr = s.ptrToPgmData;
-    while (char c = pgm_read_byte(ptr++)) {
-        out << c;
-    };
-    return out;
 }
 
 template<MCU::Stream Stream>
