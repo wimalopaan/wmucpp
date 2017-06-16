@@ -146,7 +146,7 @@ using PeriodicGroup = PeriodicGroup2<AVR::RegisterFlags<DefaultMcuType::GPIOR, 0
 template<typename... EE>
 //template<HAL::EventHandler... EE>
 class EventHandlerGroup {
-    template<int N, typename T, typename... TT>
+    template<int N, HAL::EventHandler T, typename... TT>
     class Processor final {
     public:
         static bool process(const EventByte_t& e) {

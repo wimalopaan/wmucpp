@@ -46,7 +46,7 @@ template<typename EH>
 concept bool EventHandler() {
     return requires(EH eh) {
         EH::eventType;
-        EH::process(uint8_t(0));
+        EH::process(std::byte(0));
     };
 }
 
