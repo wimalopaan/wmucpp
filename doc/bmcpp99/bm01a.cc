@@ -59,12 +59,12 @@ int main()
     }
 }
 
-ISR(TIMER0_COMPA_vect) asm("isr1");
+//ISR(TIMER0_COMPA_vect) asm("isr1");
 ISR(TIMER0_COMPA_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<0>::CompareA>(); // hier findet sogar inlining statt
 }
 
-ISR(TIMER0_COMPB_vect) asm("isr2");
+//ISR(TIMER0_COMPB_vect) asm("isr2");
 ISR(TIMER0_COMPB_vect){
     isrRegistrar::isr<AVR::ISR::Timer<0>::CompareB>(); // auch hier inlining
 }

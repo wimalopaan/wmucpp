@@ -21,10 +21,10 @@ targets = test01 test02 test03 test04
 
 -include ../Makefile.include
 
-CXX = g++
+CXX = /usr/bin/g++
 #CXX = clang++
 CC = g++
 LDFLAGS =
 CXXFLAGS = -g -std=c++1z
-CXXFLAGS += -Wall -Wextra
+CXXFLAGS += -Wall -Wextra -fPIC
 MCUFLAGS =

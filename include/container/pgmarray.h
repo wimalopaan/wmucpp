@@ -31,7 +31,12 @@
 # define PROGMEM
 #endif
 
-template<typename T, T... Ts>
+namespace detail {
+    template<class T>
+    using maybe_cref = typename std::conditional<std::is_integral<T>::value, T, const T&>::type;
+}
+
+template<typename T, detail::maybe_cref<T>... Ts>
 class PgmArray final {
     PgmArray() = delete;
     using U = std::remove_const_t<std::remove_reference_t<T>>;

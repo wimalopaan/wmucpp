@@ -84,7 +84,7 @@ public:
             static constexpr WordLeds Minute4{0 + 10 * mColumns, 4}; // Minute4
             static constexpr WordLeds K{2 + 0 * mColumns, 1}; // K
             
-            static constexpr PgmArray<const WordLeds&, Es, Ist, Fuenf1, Zehn1, Zwanzig, Drei1, Viertel, Nach, Vor, Halb, Zwoelf, Zwei, Ein, Eins,
+            static constexpr PgmArray<WordLeds, Es, Ist, Fuenf1, Zehn1, Zwanzig, Drei1, Viertel, Nach, Vor, Halb, Zwoelf, Zwei, Ein, Eins,
             Sieben, Drei2, Fuenf2, Elf, Neun, Vier, Acht, Zehn2, Sechs, Uhr, Minute1, Minute2, Minute3, Minute4, K> words{};
         };
         struct Colors {
@@ -96,7 +96,7 @@ public:
             static constexpr Color Hour{Red{0},   Green{255}, Blue{255}};  // cHour
             static constexpr Color MinuteRemainder{64};  // cMinuteRemainder
             static constexpr Color Off{0};  // cNumberOfColors = cOff
-            static constexpr PgmArray<const Color&, Subst, Verb, Minute, Prep, Quarter, Hour, MinuteRemainder, Off> colors{};
+            static constexpr PgmArray<Color, Subst, Verb, Minute, Prep, Quarter, Hour, MinuteRemainder, Off> colors{};
         };
     };
     

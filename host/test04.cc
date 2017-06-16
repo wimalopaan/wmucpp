@@ -21,23 +21,16 @@
 #include <array>
 #include <iostream>
 
-template<typename T, const T&... Ts>
+namespace detail {
+    template<class T>
+    using maybe_cref = typename std::conditional<std::is_integral<T>::value, T, const T&>::type;
+}
+
+template<typename T, detail::maybe_cref<T>... Ts>
 struct PgmArray final {
     inline static constexpr uint8_t size = sizeof... (Ts);
     inline static constexpr T data[] {Ts...};
 };
-
-template<typename T, T... Ts>
-struct PgmArrayF final {
-    inline static constexpr uint8_t size = sizeof... (Ts);
-    inline static constexpr T data[] {Ts...};
-};
-
-template <typename T, T... Vs>
-constexpr auto make_pgm_array(std::integral_constant<T, Vs>...)
-{
-    return PgmArrayF<T, Vs...>{};
-}
 
 struct A{
     uint8_t m = 0;
@@ -50,21 +43,13 @@ constexpr A a1{1};
 constexpr A a2{2};
 
 constexpr auto x1 = PgmArray<A, a1, a2>{};
-constexpr auto x2 = PgmArrayF<int, 1, 2>{};
-
-//constexpr auto x3 = PgmArrayF<A, a1, a2>{};
-//constexpr auto x4 = PgmArray<int, 1, 2>{};
-
-constexpr auto y1 = make_pgm_array(std::integral_constant<int,1>{}, std::integral_constant<int,2>{});
+constexpr auto x2 = PgmArray<int, 1, 2>{};
 
 int main() {
     for(auto& v : x1.data) {
         std::cout << v << '\n';        
     }
     for(auto& v : x2.data) {
-        std::cout << v << '\n';        
-    }
-    for(auto& v : y1.data) {
         std::cout << v << '\n';        
     }
 }
