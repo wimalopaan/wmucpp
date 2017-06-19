@@ -31,7 +31,6 @@ using led = AVR::Pin<PortB, 0>;
 
 using systemTimer = AVR::Timer8Bit<0>;
 
-
 using isrReg = IsrRegistrar<>;
 
 int main() {

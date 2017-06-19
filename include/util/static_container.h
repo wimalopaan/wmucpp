@@ -21,9 +21,7 @@
 #include "algorithm.h"
 
 namespace Util {
-
-
-template<typename T, T... Values>
-struct static_container final {};
-
+    template<typename T, T... Values>
+    struct static_container final {};
+    
 }
