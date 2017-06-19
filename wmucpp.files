@@ -150,7 +150,10 @@ example/basics/register10.cc
 example/externals/ow.cc
 example/externals/ow.h
 example/features/constantrate.cc
+host/meta.h
 host/test04.cc
+host/test05.cc
+host/test06.cc
 include/appl/blink.h
 include/appl/clockstatemachine.h
 include/appl/exponential.h

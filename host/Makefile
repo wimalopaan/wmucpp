@@ -17,7 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-targets = test01 test02 test03 test04
+targets += test01 test02 test03 test04 # test05
+targets += test06
 
 -include ../Makefile.include
 
@@ -25,6 +26,6 @@ CXX = /usr/bin/g++
 #CXX = clang++
 CC = g++
 LDFLAGS =
-CXXFLAGS = -g -std=c++1z
+CXXFLAGS = -g -std=c++1z -fconcepts
 CXXFLAGS += -Wall -Wextra -fPIC
 MCUFLAGS =
