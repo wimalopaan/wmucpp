@@ -217,10 +217,11 @@ struct uint4_t {
 };
 
 struct uint7_t final {
-    constexpr explicit uint7_t(const uint8_t& v) : pad(0), value(v) {}
+    constexpr explicit uint7_t(const uint8_t& v) : value(v), pad(0) {}
 
-    constexpr explicit uint7_t(const uint7_t& v) : pad(0), value(v) {}
-    explicit uint7_t(volatile uint7_t& v) : pad(0), value(v) {}
+    constexpr explicit uint7_t(const uint7_t& v) : value(v), pad(0) {}
+    
+    explicit uint7_t(volatile uint7_t& v) : value(v), pad(0) {}
 
     constexpr uint7_t(uint7_t&&) = default;
     constexpr uint7_t& operator=(uint7_t&&) = default;
@@ -240,7 +241,7 @@ struct uint7_t final {
     operator uint8_t() const volatile {
         return value;
     }
-    uint8_t pad : 1, value : 7;
+    uint8_t value : 7, pad : 1;
 };
 
 namespace std {
