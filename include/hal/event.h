@@ -81,7 +81,7 @@ struct Event final {
 typedef Event<std::byte> EventByte_t;
 
 namespace AVR {
-    template<uint8_t N, typename PA, typename MCU> class Usart;
+    template<uint8_t N, typename PA, bool useISR, typename MCU> class Usart;
     template<uint8_t N, typename MCU> class Spi;
     //template<uint8_t N, typename MCU = DefaultMcuType> class SWUsart;
 }

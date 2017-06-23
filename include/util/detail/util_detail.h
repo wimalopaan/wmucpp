@@ -166,7 +166,7 @@ namespace Util {
         
         template<int Position, uint8_t Base, std::Integral T, uint16_t L>
         uint8_t itoa_single(T& value, std::array<char, L>& data) {
-            static_assert((Position < 0) || (Position < L), "wrong legth");
+            static_assert((Position < 0) || (Position < L), "wrong length");
             if constexpr(Position >= 0) {
                 uint8_t fraction = value % Base;
                 data[Position] = Convert<1, Base>::toChar(fraction);

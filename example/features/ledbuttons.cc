@@ -234,7 +234,7 @@ public:
     }
     template<typename Terminal>
     static void print() {
-        std::outl<Terminal>("TasterPin: "_pgm, Button::isHigh(), " LedPin: ", Led::get(), " Startzeit: ", mStartTime);
+        std::outl<Terminal>("TasterPin: "_pgm, Button::isHigh(), " LedPin: "_pgm, Led::get(), " Startzeit: "_pgm, mStartTime);
     }
 
 private:

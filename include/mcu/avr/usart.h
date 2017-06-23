@@ -121,7 +121,7 @@ namespace AVR {
         
     } //!Util
     
-    template<uint8_t N, typename PA = void, typename MCU = DefaultMcuType>
+    template<uint8_t N, typename PA = void, bool useISR = true, typename MCU = DefaultMcuType>
     class Usart final : public UsartBase<MCU, N>
     {
         Usart() = delete;
@@ -134,34 +134,45 @@ namespace AVR {
         
         static constexpr auto mcu_usart = getBaseAddr<typename MCU::Usart, N>;
         static_assert(N < MCU::Usart::count, "wrong number of usart");
-        
+    
         struct RxHandler : public IsrBaseHandler<typename AVR::ISR::Usart<N>::RX> {
             static void isr() {
-                const auto status = mcu_usart()->ucsra.template get<ucsra_type::fe | ucsra_type::upe | ucsra_type::dor>();
-                const auto c = *mcu_usart()->udr;
-                if (isset(status)) {
-                    if (isset(status | ucsra_type::fe)) {
-                        if constexpr (Config::Usart::useEvents) {
+                if constexpr (Config::Usart::useEvents) {
+                    const auto status = mcu_usart()->ucsra.template get<ucsra_type::fe | ucsra_type::upe | ucsra_type::dor>();
+                    const auto c = *mcu_usart()->udr;
+                    if (isset(status)) {
+                        if (isset(status | ucsra_type::fe)) {
                             EventManager::enqueueISR({UsartEventType<N>::eventFe, std::byte{N}});
                         }
-                    }
-                    if (isset(status | ucsra_type::upe)) {
-                        if constexpr (Config::Usart::useEvents) {
+                        if (isset(status | ucsra_type::upe)) {
                             EventManager::enqueueISR({UsartEventType<N>::eventUpe, std::byte{N}});
                         }
-                    }
-                    if (isset(status | ucsra_type::dor)) {
-                        if constexpr (Config::Usart::useEvents) {
+                        if (isset(status | ucsra_type::dor)) {
                             EventManager::enqueueISR({UsartEventType<N>::eventDor, std::byte{N}});
                         }
                     }
-                } else {
-                    if constexpr (Config::Usart::RecvQueueLength > 0) {
-                        if (mRecvQueue.push_back(c)) {
-                            if constexpr (Config::Usart::useEvents) {
+                    else {
+                        if constexpr (Config::Usart::RecvQueueLength > 0) {
+                            if (mRecvQueue.push_back(c)) {
                                 EventManager::enqueueISR({UsartEventType<N>::event, std::byte{c}});
                             }
                         }
+                        else {
+                            if constexpr(std::is_same<PA, void>::value) {
+                                EventManager::enqueueISR({UsartEventType<N>::event, std::byte{c}});
+                            }
+                            else {
+                                if (!PA::process(c)) {
+                                    EventManager::enqueueISR({UsartEventType<N>::event, std::byte{c}});
+                                }
+                            }
+                        }
+                    }
+                }
+                else {
+                    const auto c = *mcu_usart()->udr;
+                    if constexpr (Config::Usart::RecvQueueLength > 0) {
+                        mRecvQueue.push_back(c);
                     }
                     else {
                         if constexpr(std::is_same<PA, void>::value) {
@@ -182,16 +193,31 @@ namespace AVR {
                     *mcu_usart()->udr = *c;;
                 }
                 else {
-                    mcu_usart()->ucsrb.template clear<ucsrb_type::udrie>();
+                    if constexpr(useISR) {
+                        mcu_usart()->ucsrb.template clear<ucsrb_type::udrie>();
+                    }
                 }
             }
         };
+
+        static void periodic() {
+            if (isset(mcu_usart()->ucsra.template get<ucsra_type::rxc>())) {
+                RxHandler::isr();       
+            }
+            if (isset(mcu_usart()->ucsra.template get<ucsra_type::udre>())) {
+                TxHandler::isr();
+            }
+        }
+        
         template<uint32_t Baud>
         static void init() {
             static_assert(Baud >= 2400, "USART should use a valid baud rate >= 2400");
             *mcu_usart()->ubbr = Ubrr<Config::fMcu.value, Baud>::value;
             mcu_usart()->ucsrc.template add<ucsrc_type::ucsz1 | ucsrc_type::ucsz0>();
-            mcu_usart()->ucsrb.template add<ucsrb_type::txen | ucsrb_type::rxen | ucsrb_type::rxcie>();
+            mcu_usart()->ucsrb.template add<ucsrb_type::txen | ucsrb_type::rxen>();
+            if constexpr(useISR) {
+                mcu_usart()->ucsrb.template add<ucsrb_type::rxcie>();
+            }
         }
         static bool get(std::byte& item) {
             if constexpr (Config::Usart::RecvQueueLength > 0) {
@@ -211,7 +237,9 @@ namespace AVR {
         }
         static bool put(std::byte item) {
             if(mSendQueue.push_back(item)) {
-                mcu_usart()->ucsrb.template add<ucsrb_type::udrie>();
+                if constexpr(useISR) {
+                    mcu_usart()->ucsrb.template add<ucsrb_type::udrie>();
+                }
                 return true;
             }
             return false;

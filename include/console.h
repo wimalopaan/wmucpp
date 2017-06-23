@@ -50,6 +50,9 @@ namespace std {
     template<MCU::Stream Stream, typename... TT> void outl(const TT&... v);
     
     namespace detail {
+        // fixme: Ausgabe von char* ???
+        // fixme: per-value / per-ref
+        
         template<MCU::Stream Stream, Unsigned V> // concept
         void out(V v) {
             std::array<char, Util::numberOfDigits<V>() + 1> buffer;
@@ -115,7 +118,7 @@ namespace std {
         }
         
         template<MCU::Stream Stream>
-        void out(const std::percent& p) {
+        void out(std::percent p) {
             out<Stream>(p.value());
             out<Stream>('%');
         }

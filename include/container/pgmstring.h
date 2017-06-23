@@ -43,13 +43,14 @@ struct PgmString;
 template<typename C, C... CC>
 constexpr PgmString<C, CC...> operator"" _pgm();
 
-struct PgmStringView {
+class PgmStringView {
     template<typename C, C... CC> friend struct PgmString;
+public:
     inline char operator[](uint8_t index) const {
         return pgm_read_byte(ptrToPgmData + index);
     }
 private:
-    constexpr PgmStringView(const char* pgm) : ptrToPgmData(pgm) {}
+    explicit constexpr PgmStringView(const char* pgm) : ptrToPgmData(pgm) {}
     const char* ptrToPgmData = nullptr;
 };
 
