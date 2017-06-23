@@ -19,6 +19,8 @@
 #include "mcu/avr8.h"
 #include "mcu/avr/mcutimer.h"
 
+#include "util/meta.h"
+
 #include "hal/alarmtimer.h"
 #include "hal/event.h"
 
@@ -235,8 +237,6 @@ struct TestCRWriter {
     }
     inline static volatile uint8_t z = 0; 
 };
-
-struct TestX {};
 
 using systemTimer = AVR::Timer8Bit<0>;
 

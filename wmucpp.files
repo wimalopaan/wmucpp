@@ -204,6 +204,7 @@ include/std/chrono.h
 include/std/concepts.h
 include/util/concepts.h
 include/util/detail/util_detail.h
+include/util/meta.h
 include/util/outputparameter.h
 include/util/rational.h
 include/util/sort.h
