@@ -93,24 +93,13 @@ using terminal = std::basic_ostream<terminalDevice>;
 using systemConstantRate = PeriodicGroup<1, AVR::ISR::Timer<0>::CompareA, controller>;
 using isrRegistrar = IsrRegistrar<systemConstantRate, terminalDevice::RxHandler, terminalDevice::TxHandler>;
 
-template<typename Timer, const std::hertz& f>
-struct LocalConfig {
-    static constexpr AVR::Util::TimerSetupData tsd = AVR::Util::caculateForExactFrequencyAbove<Timer>(1000_Hz);
-    static_assert(tsd, "wrong timer parameter");
-    static void init() {
-        Timer::template prescale<tsd.prescaler>();
-        Timer::template ocra<tsd.ocr - 1>();
-        Timer::mode(AVR::TimerMode::CTC);
-    }
-};
-
 static constexpr auto f = 1000_Hz;
 
 int main() {
     controller::init();
     terminalDevice::init<9600>();
 
-    LocalConfig<systemTimer, f>::init();
+    systemTimer::setup<f>();
 
 //    std::outl<terminal>("ANano Led Buttons"_pgm);
     
