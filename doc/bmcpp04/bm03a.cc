@@ -58,6 +58,24 @@ struct ForEachCheckN {
 };
 
 template<typename... PP>
+struct ForEachCheckN2 {
+    template<int N, typename P, typename... PPP>
+    struct F {
+        static void init(int i) {
+            if (i == P::value) {
+                P::init();
+            }
+            if constexpr (N > 0) {
+                F<N - 1, PPP..., void>::init(i);
+            }
+        }
+    };
+    static void init(int i) {
+        F<sizeof...(PP) - 1, PP...>::init(i);
+    }
+};
+
+template<typename... PP>
 struct ForEachCheck {
     template<typename P, typename... PPP>
     struct F {
@@ -80,7 +98,7 @@ struct ForEachCheck {
 
 int main()
 {
-    ForEachCheck<A, B>::init(x);
+    ForEachCheckN2<A, B>::init(x);
 
     while(true);
 }

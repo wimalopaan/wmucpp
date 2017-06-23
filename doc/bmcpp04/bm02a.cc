@@ -83,7 +83,7 @@ struct ForEachCheck {
 
 int main()
 {
-    ForEachCheck<A, B>::init(x);
+    ForEachCheckN<A, B>::init(x);
 
     SimAVRDebugConsole::put(std::byte{'\r'});
     SimAVRDebugConsole::put(std::byte{'\n'});
