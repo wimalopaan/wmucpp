@@ -141,18 +141,26 @@ namespace AVR {
                 const auto c = *mcu_usart()->udr;
                 if (isset(status)) {
                     if (isset(status | ucsra_type::fe)) {
-                        EventManager::enqueueISR({UsartEventType<N>::eventFe, std::byte{N}});
+                        if constexpr (Config::Usart::useEvents) {
+                            EventManager::enqueueISR({UsartEventType<N>::eventFe, std::byte{N}});
+                        }
                     }
                     if (isset(status | ucsra_type::upe)) {
-                        EventManager::enqueueISR({UsartEventType<N>::eventUpe, std::byte{N}});
+                        if constexpr (Config::Usart::useEvents) {
+                            EventManager::enqueueISR({UsartEventType<N>::eventUpe, std::byte{N}});
+                        }
                     }
                     if (isset(status | ucsra_type::dor)) {
-                        EventManager::enqueueISR({UsartEventType<N>::eventDor, std::byte{N}});
+                        if constexpr (Config::Usart::useEvents) {
+                            EventManager::enqueueISR({UsartEventType<N>::eventDor, std::byte{N}});
+                        }
                     }
                 } else {
                     if constexpr (Config::Usart::RecvQueueLength > 0) {
                         if (mRecvQueue.push_back(c)) {
-                            EventManager::enqueueISR({UsartEventType<N>::event, std::byte{c}});
+                            if constexpr (Config::Usart::useEvents) {
+                                EventManager::enqueueISR({UsartEventType<N>::event, std::byte{c}});
+                            }
                         }
                     }
                     else {

@@ -46,6 +46,7 @@ struct Config final
     struct Usart {
         inline static constexpr uint8_t SendQueueLength = 64;
         inline static constexpr uint8_t RecvQueueLength = 0;
+        inline static constexpr bool  useEvents = true;
     };
     struct SoftSpiMaster {
         inline static constexpr std::microseconds pulseDelay = 1_us;

@@ -6,6 +6,8 @@
 3rdparty/itoa/itoa.h
 avrdude.conf
 boards/Makefile
+boards/anano/Makefile
+boards/anano/blink.cc
 boards/clock/4x4/Makefile
 boards/clock/4x4/main.cc
 boards/clock/Makefile
@@ -150,6 +152,8 @@ example/basics/register10.cc
 example/externals/ow.cc
 example/externals/ow.h
 example/features/constantrate.cc
+example/features/ledbuttons.cc
+example/features/ledbuttons.h
 host/meta.h
 host/test04.cc
 host/test05.cc

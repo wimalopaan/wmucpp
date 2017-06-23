@@ -64,3 +64,4 @@ include/util/detail
 boards/include
 boards/clock/oneled
 include/compiler
+boards/anano
