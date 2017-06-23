@@ -26,6 +26,21 @@ namespace Meta {
         struct ListBase {
             typedef ListBase base_type;
         };
+        
+        template<typename L>
+        struct size_impl;
+        template<template<typename...> typename L, typename... I>
+        struct size_impl<L<I...>> {
+            typedef std::integral_constant<size_t, sizeof...(I)> type;
+        };
+        
+        template<template<typename...> typename, typename> struct apply_impl;
+        template<template<typename...> typename F, template<typename...> typename L, typename... I>
+        struct apply_impl<F, L<I...>> {
+            typedef typename F<I...>::type type;
+        };
+        
+        
         template<typename L, typename T> struct push_front_impl; 
         template<template<typename...> typename L, typename... I, typename T> 
         struct push_front_impl<L<I...>, T> {
@@ -54,12 +69,19 @@ namespace Meta {
             typedef B type;
         };
         
-        template<template<typename> typename F, typename L> struct apply_impl;
+        template<template<typename> typename F, typename L> struct transform_impl;
         template<template<typename> typename F, template<typename...> typename L, typename... I>
-        struct apply_impl<F, L<I...>> {
+        struct transform_impl<F, L<I...>> {
             typedef L<F<I>...> type;                
         };
 
+        template<template<typename, typename> typename F, typename L1, typename L2> struct transform2_impl;
+        template<template<typename, typename> typename F, template<typename...> typename L1, typename... I1, template<typename...> typename L2, typename... I2>
+        struct transform2_impl<F, L1<I1...>, L2<I2...>> {
+            static_assert(sizeof...(I1) == sizeof...(I2));
+            typedef L1<F<I1, I2>...> type;
+        };
+        
         template<template<typename> typename P, typename L> struct filter_impl;
         template<template<typename> typename P, template<typename...> typename L> 
         struct filter_impl<P, L<>> {
@@ -106,8 +128,14 @@ namespace Meta {
         inline static constexpr size_t size = sizeof...(T);
     };
     
+    template<typename... T>
+    using length = std::integral_constant<size_t, sizeof...(T)>;
+    
     template<concepts::List List>
-    struct Size : public::std::integral_constant<size_t, List::size> {};
+    using size = typename detail::size_impl<List>::type;
+    
+    template<template<typename...> typename F, concepts::List List>
+    using apply = typename detail::apply_impl<F, List>::type;
     
     template<concepts::List List, typename T>
     using push_front = typename detail::push_front_impl<List, T>::type;
@@ -122,8 +150,11 @@ namespace Meta {
     using back = typename detail::back_impl<List>::type;
     
     template<template<typename> typename Func, concepts::List List>
-    using apply = typename detail::apply_impl<Func, List>::type;
+    using transform = typename detail::transform_impl<Func, List>::type;
 
+    template<template<typename, typename> typename Func, concepts::List List1, concepts::List List2>
+    using transform2 = typename detail::transform2_impl<Func, List1, List2>::type;
+    
     template<template<typename> typename Pred, concepts::List List>
     using filter = typename detail::filter_impl<Pred, List>::type;
     
@@ -144,7 +175,7 @@ namespace Meta {
         
         using l1 = Meta::List<A, B>;
         static_assert(l1::size == 2);
-        static_assert(Size<l1>::value == 2);
+        static_assert(size<l1>::value == 2);
         
         using l2 = Meta::push_front<l1, C>;
         static_assert(l2::size == 3);
@@ -153,7 +184,7 @@ namespace Meta {
         static_assert(std::is_same<x1, C>::value);
         
         template<typename T> using add_pointer = T*;
-        using l3 = Meta::apply<add_pointer, l2>;
+        using l3 = Meta::transform<add_pointer, l2>;
         using h3 = Meta::front<l3>;
         static_assert(std::is_same<h3, C*>::value);     
         
@@ -186,6 +217,17 @@ namespace Meta {
         using l10 = Meta::push_back<l1, D>;
         using b10 = Meta::back<l10>;
         static_assert(std::is_same<b10, D>::value);
+        
+        using l20 = Meta::List<A, B>;
+        using l21 = Meta::List<C, D>;
+        using l22 = Meta::transform2<std::pair, l20, l21>;
+        static_assert(size<l22>::value == 2);
+        using r20 = Meta::front<l22>;
+        static_assert(std::is_same<r20::first_type, A>::value);
+        static_assert(std::is_same<r20::second_type, C>::value);
+        using r21 = Meta::nth_element<1, l22>;
+        static_assert(std::is_same<r21::first_type, B>::value);
+        static_assert(std::is_same<r21::second_type, D>::value);
         
     } // !tests
 } // !Meta
