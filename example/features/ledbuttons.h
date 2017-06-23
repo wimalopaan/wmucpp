@@ -1,6 +1,6 @@
 /*
- * ++C - C++ introduction
- * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.meier@hs-kl.de>
+ * WMuCpp - Bare Metal C++ 
+ * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -11,11 +11,50 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- 
+
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef LEDBUTTONS_H
-#define LEDBUTTONS_H
 
-#endif // LEDBUTTONS_H
+#pragma once
+
+#include "std/literals.h"
+
+#define HAS_CONFIG
+
+using namespace std::literals::chrono;
+using namespace std::literals::physical;
+
+struct Config final
+{
+    Config() = delete; // one should use a similar copy in own project
+
+    inline static constexpr std::megahertz fMcuMhz {F_CPU / 1000000};
+    inline static constexpr std::hertz fMcu{F_CPU};
+
+    static_assert(fMcuMhz.value <= 20, "F_CPU too high");
+    static_assert(fMcuMhz.value >=  1, "F_CPU too low");
+
+    struct Timer {
+        inline static constexpr uint8_t NumberOfTimers = 8;
+        inline static constexpr std::hertz frequency = 100_Hz;
+        inline static constexpr std::milliseconds resolution = std::duration_cast<std::milliseconds>(1 / frequency);
+    };
+    struct EventManager {
+        inline static constexpr uint8_t EventQueueLength = 32;
+    };
+    struct Usart {
+        inline static constexpr uint8_t SendQueueLength = 64;
+        inline static constexpr uint8_t RecvQueueLength = 16;
+        inline static constexpr bool  useEvents = false;
+    };
+    struct SoftSpiMaster {
+        inline static constexpr std::microseconds pulseDelay = 1_us;
+    };
+    struct Button {
+        inline static constexpr uint8_t buttonTicksForPressed = 100_ms * Timer::frequency;
+    };
+    inline static constexpr std::microseconds zeroMicroSeconds{0};
+    inline static constexpr bool ensureTerminalOutput = true;
+    inline static constexpr bool disableCout = false;
+};

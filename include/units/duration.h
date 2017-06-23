@@ -37,6 +37,10 @@ struct duration<uint16_t, std::milli> final
         --value;
         return *this;
     }
+    duration<uint16_t, std::milli>& operator++() {
+        ++value;
+        return *this;
+    }
 };
 
 template<>

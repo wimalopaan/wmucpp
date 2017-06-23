@@ -212,6 +212,9 @@ namespace AVR {
         static inline void off() { // single bit instruction cbi
             Port::get() &= ~pinMask;
         }
+        static inline bool get() {
+            return std::any(Port::get() & ~pinMask);
+        }
         static constexpr auto& low = off;
         static inline void toggle() {
             Port::template toggle<PinNumber>();

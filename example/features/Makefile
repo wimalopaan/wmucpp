@@ -20,7 +20,7 @@
 MCU = atmega328p
 F_OSC = 20000000
 
-LOADLIBES = simavrconsole.o
+#LOADLIBES = simavrconsole.o
 
 targets += simavrconsole.o
 
@@ -34,6 +34,7 @@ targets += interrupts.elf
 targets += pinchange.elf
 targets += softusart.elf
 targets += constantrate.elf constantrate.s 
+targets += ledbuttons.elf ledbuttons.s 
 
 -include ../../Makefile.include
 
