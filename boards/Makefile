@@ -20,7 +20,7 @@
 MCU = atmega1284p
 F_OSC = 20000000
 
-subdirs = unimaxi rcsensorled clock
+subdirs = unimaxi rcsensorled clock anano
 
 #targets +=  main.elf main.size
 

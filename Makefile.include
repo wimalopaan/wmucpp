@@ -141,6 +141,9 @@ AVRDUDE = avrdude
 %.pgr: %.hex %.eep
 	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:w:$< $(AVRDUDE_WRITE_EEPROM)
 
+%.btl: %.hex
+	$(AVRDUDE) -p $(MCU) -P /dev/ttyUSB0 -c arduino -b 57600 -U flash:w:$< 
+
 # Create final output files (.hex, .eep) from ELF output file.
 %.hex: %.elf
 	$(OBJCOPY) -O ihex -R .eeprom $< $@

@@ -23,5 +23,7 @@ F_OSC = 16000000
 subdirs =
 
 targets +=  blink.elf blink.s
+targets +=  ledbuttons.elf ledbuttons.s
+targets +=  ledbuttons_noisr.elf ledbuttons_noisr.s
 
 -include ../../Makefile.include

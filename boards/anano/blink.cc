@@ -23,70 +23,34 @@
 
 #include <stdlib.h>
 
-#include "../../include/anano.h"
+#include "../include/anano.h"
 
-#include "mcu/avr/clock.h"
-#include "hal/event.h"
 #include "hal/constantrate.h"
+#include "hal/event.h"
 #include "hal/alarmtimer.h"
-#include "mcu/avr/swusart.h"
-#include "std/chrono.h"
-#include "appl/ledflash.h"
-#include "appl/clockstatemachine.h"
-#include "appl/blink.h"
-#include "appl/twostateblinker.h"
-#include "appl/radioclock.h"
+#include "mcu/avr/usart.h"
+
 #include "console.h"
 
-using led = WS2812<1, ledPin, ColorSequenceGRB>;
-using Color = led::color_type;
+using systemTimer = AVR::Timer8Bit<0>;
 
-namespace Constant {
-    static constexpr uint8_t brightness = 8;
-    static constexpr Color cOff{0};
-    static constexpr Color cRed{Red{brightness}};
-    static constexpr Color cBlue{Blue{std::min((int)std::numeric_limits<uint8_t>::max(), 2 * brightness)}};
-    static constexpr Color cGreen{Green{brightness / 2}};
-    static constexpr Color cYellow{Red{brightness}, Green{brightness}, Blue{0}};
-    static constexpr Color cMagenta{Red{brightness}, Green{0}, Blue{brightness}};
-    static constexpr Color cCyan{Red{0}, Green{brightness}, Blue{brightness}};
-    static constexpr Color cWhite{Red{brightness}, Green{brightness}, Blue{brightness}};
-    static constexpr Color cWhiteLow{Red{brightness / 10}, Green{brightness / 10}, Blue{brightness / 10}};
-    
-    static constexpr uint32_t secondsPerHour= (uint32_t)60 * 60;
-    static constexpr uint32_t secondsPerDay = secondsPerHour * 24;
-    
-    static constexpr auto title = "SW = test; HW = OneLed01"_pgm;
-} // !Constant
-
-using blinker = TwoStateBlinker<led>;
-
-using systemTimer = AVR::Timer8Bit<1>;
-
-struct LocalConfig {
-    static constexpr AVR::Util::TimerSetupData tsd = AVR::Util::caculateForExactFrequencyAbove<systemTimer>(Config::Timer::frequency);
-    static_assert(tsd, "wrong timer parameter");
-    static constexpr std::milliseconds reso = std::duration_cast<std::milliseconds>(1 / tsd.f);
-    static constexpr std::hertz exactFrequency = tsd.f;
-};
-
-using alarmTimer  = AlarmTimer<systemTimer, LocalConfig::reso>;
-
-using systemConstantRate = ConstantRateAdapter<1, void, AVR::ISR::Timer<1>::CompareA, alarmTimer>;
+using alarmTimer  = AlarmTimer<systemTimer>;
 
 const auto secondsTimer = alarmTimer::create(1000_ms, AlarmFlags::Periodic);
 
-using terminalDevice = SWUsart<0>;
+using terminalDevice = AVR::Usart<0>;
 using terminal = std::basic_ostream<terminalDevice>;
 
-using isrRegistrar = IsrRegistrar<terminalDevice::TxHandler, systemConstantRate>;
+using systemConstantRate = ConstantRateAdapter<1, void, AVR::ISR::Timer<0>::CompareA, alarmTimer>;
+
+using isrRegistrar = IsrRegistrar<systemConstantRate, terminalDevice::RxHandler, terminalDevice::TxHandler>;
 
 struct TimerHandler : public EventHandler<EventType::Timer> {
     static bool process(std::byte b) {
         auto timer = std::to_integer<uint7_t>(b);
         if (timer == *secondsTimer) {
-            blinker::tick();
-            std::outl<terminal>("tick"_pgm);
+            led::toggle();
+            std::outl<terminal>("Nano"_pgm);
         }
         return true;
     }
@@ -96,25 +60,14 @@ using allEventHandler = EventHandlerGroup<TimerHandler>;
 
 int main() {
     isrRegistrar::init();
-    blinker::init();
-    blinker::onColor(Constant::cGreen);
-    
-    terminalDevice::init<19200>();
-    btStatus::dir<AVR::Output>();
-    dcfPin::dir<AVR::Input>();
-    dcfPin::pullup();
+    terminalDevice::init<9600>();
+    alarmTimer::init();    
 
-    systemTimer::template prescale<LocalConfig::tsd.prescaler>();
-    systemTimer::template ocra<LocalConfig::tsd.ocr - 1>();
-    systemTimer::mode(AVR::TimerMode::CTC);
-    systemTimer::start();
-    
+    led::dir<AVR::Output>();
+    led::on();    
     {
         Scoped<EnableInterrupt<>> ei;
-        btStatus::toggle();
-        std::outl<terminal>(Constant::title);
         EventManager::run3<allEventHandler>([](){
-            btStatus::toggle();
             systemConstantRate::periodic();
         });
     }
@@ -124,6 +77,10 @@ ISR(TIMER0_COMPA_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<0>::CompareA>();
 }
 
-ISR(TIMER1_COMPA_vect) {
-    isrRegistrar::isr<AVR::ISR::Timer<1>::CompareA>();
+ISR(USART_UDRE_vect) {
+    isrRegistrar::isr<AVR::ISR::Usart<0>::UDREmpty>();
+}
+
+ISR(USART_RX_vect) {
+    isrRegistrar::isr<AVR::ISR::Usart<0>::RX>();
 }
