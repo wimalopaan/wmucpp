@@ -79,6 +79,7 @@ template<typename... HH>
 //template<MCU::ISR... HH> // todo: ICE triggered?
 struct IsrRegistrar {
     typedef uint64_t mask_type;
+    typedef IsrRegistrar type;
     
     static_assert(sizeof...(HH) <= 64, "too much different interrupts");
     inline static constexpr mask_type all = (ISR::detail::Mask<HH>::value | ... | 0);
@@ -147,6 +148,7 @@ struct IsrBaseHandler {
     typedef I isr_type;
     static constexpr const uint8_t isr_number = I::number;
     static constexpr const uint64_t isr_mask = ((uint64_t)1 << I::number);    
+    static_assert(I::number < (8 * sizeof(uint64_t)));
 };
 template<>
 struct IsrBaseHandler<void> {
@@ -165,7 +167,6 @@ struct IsrDistributor final : public IsrBaseHandler<I> {
 
 namespace AVR {
     namespace ISR {
-        
         template<uint8_t N>
         struct Int;
         

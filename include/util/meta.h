@@ -42,7 +42,6 @@ namespace Meta {
             typedef typename F<I...>::type type;
         };
         
-        
         template<typename L, typename T> struct push_front_impl; 
         template<template<typename...> typename L, typename... I, typename T> 
         struct push_front_impl<L<I...>, T> {
@@ -75,6 +74,13 @@ namespace Meta {
         template<template<typename> typename F, template<typename...> typename L, typename... I>
         struct transform_impl<F, L<I...>> {
             typedef L<F<I>...> type;                
+        };
+
+        template<template<typename, size_t> typename F, typename L, typename Seq> struct transformN_impl;
+        template<template<typename, size_t> typename F, template<typename...> typename L, typename... I, size_t... II>
+        struct transformN_impl<F, L<I...>, std::index_sequence<II...>> {
+            static_assert(sizeof...(I) == sizeof...(II));
+            typedef L<F<I, II>...> type;                
         };
 
         template<template<typename, typename> typename F, typename L1, typename L2> struct transform2_impl;
@@ -115,6 +121,12 @@ namespace Meta {
             inline static constexpr bool value = (count_impl<List, T>::value > 0);
         };
         
+        template<typename, typename> struct concat_impl;
+        template<template<typename...> typename L1, typename... I1, template<typename...> typename L2, typename... I2> 
+        struct concat_impl<L1<I1...>,  L2<I2...>> {
+            typedef L1<I1..., I2...> type;
+        };
+                
     } // !detail
     namespace concepts {
         template<typename T>
@@ -154,6 +166,9 @@ namespace Meta {
     template<template<typename> typename Func, concepts::List List>
     using transform = typename detail::transform_impl<Func, List>::type;
 
+    template<template<typename, size_t> typename Func, concepts::List List>
+    using transformN = typename detail::transformN_impl<Func, List, std::make_index_sequence<size<List>::value>>::type;
+    
     template<template<typename, typename> typename Func, concepts::List List1, concepts::List List2>
     using transform2 = typename detail::transform2_impl<Func, List1, List2>::type;
     
@@ -168,6 +183,9 @@ namespace Meta {
 
     template<concepts::List List, typename T>
     struct count: public std::integral_constant<size_t, detail::count_impl<List, T>::value> {};
+    
+    template<concepts::List L1, concepts::List L2>
+    using concat = typename detail::concat_impl<L1, L2>::type;
     
     namespace tests {
         struct A {};
@@ -230,6 +248,25 @@ namespace Meta {
         using r21 = Meta::nth_element<1, l22>;
         static_assert(std::is_same<r21::first_type, B>::value);
         static_assert(std::is_same<r21::second_type, D>::value);
+        
+        template<typename T>
+        concept bool ConceptisA() {
+            return std::is_same<T, A>::value;
+        }
+        template<typename T>
+        struct isA : public std::false_type {};
+        template<ConceptisA T>
+        struct isA<T> : public std::true_type {};
+        
+        using l100 = Meta::filter<isA, Meta::List<A, A, B, C>>;
+        static_assert(Meta::size<l100>::value == 2);
+        
+        template<typename T, size_t N>
+        struct f2 {};
+        using l200 = Meta::transformN<f2, Meta::List<A, A, B, C>>;
+        static_assert(std::is_same<Meta::front<l200>, f2<A, 0>>::value);        
+        static_assert(std::is_same<Meta::nth_element<1, l200>, f2<A, 1>>::value);        
+        static_assert(std::is_same<Meta::nth_element<2, l200>, f2<B, 2>>::value);        
         
     } // !tests
 } // !Meta

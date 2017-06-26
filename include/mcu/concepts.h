@@ -78,6 +78,13 @@ namespace MCU {
             I::isr_number;
         };
     }
+    template<typename I>
+    concept bool IServiceRNonVoid() { 
+        return requires (I i) {
+            I::isr();
+            I::isr_number;
+        };
+    }
 
 //    template<typename U>
 //    concept bool Usart() { 

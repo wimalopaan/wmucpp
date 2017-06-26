@@ -158,10 +158,8 @@ example/externals/ow.h
 example/features/constantrate.cc
 example/features/ledbuttons.cc
 example/features/ledbuttons.h
-host/meta.h
 host/test04.cc
 host/test05.cc
-host/test06.cc
 include/appl/blink.h
 include/appl/clockstatemachine.h
 include/appl/exponential.h

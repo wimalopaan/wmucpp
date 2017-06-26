@@ -18,14 +18,13 @@
 
 #include "mcu/avr8.h"
 #include "mcu/avr/mcutimer.h"
-
 #include "util/meta.h"
-
 #include "hal/alarmtimer.h"
 #include "hal/event.h"
-
 #include "simavr/simavrdebugconsole.h"
 #include "console.h"
+
+struct TestIsr;
 
 namespace ISR {
     namespace detail {
@@ -56,6 +55,12 @@ namespace ISR {
                 typename T::crad;                
             };
         }
+        template<typename T> struct isIsr : public std::false_type{};
+        template<MCU::IServiceRNonVoid T> struct isIsr<T> : public std::true_type{};
+        
+        template<typename T> struct isCallback : public std::false_type{};
+        template<typename T> requires (ConstantRateAdapter<T>() || PeriodicInterruptCallback<T>()) struct isCallback<T> : public std::true_type{};
+
     }
     template<MCU::Interrupt Interrupt, detail::PeriodicCallback... CBs>
     struct PeriodicInterruptCallback  {
@@ -87,122 +92,62 @@ namespace ISR {
         template<uint8_t N = 0>
         using flags = AVR::RegisterFlags<DefaultMcuType::GPIOR, N, std::byte>;
         
-        template<typename Flags, uint8_t N, typename PIC>
-        struct NumberedInterruptCallback : public IsrBaseHandler<typename PIC::interrupt_type> {
-            typedef NumberedInterruptCallback isr_type;
-            
-            inline static constexpr uint8_t interrupt_number = PIC::interrupt_type::number;
-            static_assert(interrupt_number >= 0, "wrong interrupt number");
-            
-            inline static constexpr uint8_t number = N;
-            inline static constexpr uint8_t BitNumber = N;
+        template<typename Flags, uint8_t BitNumber, typename Callback>
+        struct NumberedInterruptCallback : public IsrBaseHandler<typename Callback::interrupt_type> {
             static_assert(BitNumber < 8, "wrong bit number");
             static inline constexpr typename Flags::type bit_mask{1 << BitNumber};
             
             static void init() {
-                PIC::init();
+                Callback::init();
             }
             static void periodic() {
                 if (std::any(Flags::get() & bit_mask)) {
                     Flags::get() &= ~bit_mask;
-                    PIC::periodic();
+                    Callback::periodic();
                 }
             }
             static void isr() {
                 Flags::get() |= bit_mask;
             }
         };
-        
-        template<typename Flags, uint8_t N, typename  T>
-        struct TypeMapper;
 
-        template<typename Flags, uint8_t N, typename T>
-        requires detail::PeriodicInterruptCallback<T>() || detail::ConstantRateAdapter<T>()
-        struct TypeMapper<Flags, N, T> {
-            typedef detail::NumberedInterruptCallback<Flags, N, T> type;
-            typedef T isr_type;
-        };
-        template<typename Flags, uint8_t N, MCU::IServiceR ISR>
-        struct TypeMapper<Flags, N, ISR> {
-            template<typename I>
-            struct IsrOnly {
-                typedef ISR isr_type;
-                static void init() {}
-                static void periodic() {}
-            };
-            typedef IsrOnly<ISR> type;            
-        };
-        template<typename Flags, uint8_t N>
-        struct TypeMapper<Flags, N, void> {
-            struct Empty {
-                typedef void isr_type;
-                static void init() {}
-                static void periodic() {}
-            };
-            typedef Empty type;
-        };
-        template<typename Flags, uint8_t N, typename T>
-        using mapped_type = typename TypeMapper<Flags, N, T>::type;
-        
         template<typename Flags, typename... PICBs> 
         requires ((MCU::IServiceR<PICBs>() || detail::ConstantRateAdapter<PICBs>() || detail::PeriodicInterruptCallback<PICBs>()) && ...)
         struct Controller {
-            inline static constexpr uint8_t size = sizeof...(PICBs);
-            using Indexes = std::make_index_sequence<sizeof...(PICBs)>;
+            using simpleISRs = Meta::filter<detail::isIsr, Meta::List<PICBs...>>;
+            using callbacks = Meta::filter<detail::isCallback, Meta::List<PICBs...>>;
+
+            template<typename CB, size_t N>
+            using makeNumberedCallback = detail::NumberedInterruptCallback<Flags, N, CB>;
+
+            using numberedCallbacks = Meta::transformN<makeNumberedCallback, callbacks>;
+         
+            using isrReg = Meta::apply<IsrRegistrar, Meta::concat<simpleISRs, numberedCallbacks>>;
             
-            template<typename... T>
-            struct TypeList {
-                using isrReg = IsrRegistrar<typename T::isr_type...>;
-                static void check() {
-                    isrReg::init();
-                }
+            template<typename... T> struct Distributor {
+                typedef Distributor<T...> type;
                 static void init() {
                     (T::init(),...);
                 }
                 static void periodic() {
                     (T::periodic(),...);
                 }
-                template<MCU::Interrupt Int>
-                static void isr() {
-                    isrReg::template isr<Int>();
-                }
-            };
-        
-            template<typename>
-            struct XXX;
-            template<size_t... Is>
-            struct XXX<std::index_sequence<Is...>> {
-                using tl = TypeList<mapped_type<Flags, Is, Util::nth_element<Is, PICBs...>>...>;
-                
-            };
+            };     
             
-            using xxx = XXX<Indexes>;
+            using distributor = Meta::apply<Distributor, numberedCallbacks>;
             
             static void init() {
-                init(Indexes{});
-            }            
-            template<size_t... Is>
-            static void init(std::index_sequence<Is...>) {
-                using tl = TypeList<mapped_type<Flags, Is, Util::nth_element<Is, PICBs...>>...>;
-                tl::check();
-                tl::init();
+                isrReg::init();   
+                distributor::init();
             }
+            
             static void periodic() {
-                periodic(Indexes{});
+                distributor::periodic();
             }
-            template<size_t... Is>
-            static void periodic(std::index_sequence<Is...>) {
-                using tl = TypeList<mapped_type<Flags, Is, Util::nth_element<Is, PICBs...>>...>;
-                tl::periodic();
-            }
+            
             template<MCU::Interrupt INT>
             static void isr() {
-                isr<INT>(Indexes{});
-            }            
-            template<MCU::Interrupt INT, size_t... Is>
-            static void isr(std::index_sequence<Is...>) {
-                using tl = TypeList<mapped_type<Flags, Is, Util::nth_element<Is, PICBs...>>...>;
-                tl::template isr<INT>();
+                isrReg::template isr<INT>();
             }            
         };
     }
@@ -233,7 +178,7 @@ struct TestCRWriter {
     static void init() {}
     static void start() {}
     static void rateProcess() {
-        z++;
+        ++z;
     }
     inline static volatile uint8_t z = 0; 
 };
@@ -252,7 +197,11 @@ using terminal = std::conditional<useTerminal, std::basic_ostream<terminalDevice
 
 using t1 = ISR::PeriodicInterruptCallback<AVR::ISR::Timer<0>::CompareA, TestCallback>;
 using r1 = ISR::ConstantRateAdapter<AVR::Timer8Bit<2>, AVR::ISR::Timer<2>::CompareA, TestCRWriter>;
-using isrController = ISR::Controller<t1, r1, TestIsr, void>; 
+using isrController = ISR::Controller<t1, void, void, r1, TestIsr, void>; 
+
+static_assert(Meta::size<isrController::simpleISRs>::value == 1);
+static_assert(Meta::size<isrController::callbacks>::value  == 2);
+static_assert(Meta::size<isrController::numberedCallbacks>::value  == 2);
 
 using allEventHandler = EventHandlerGroup<>; 
 

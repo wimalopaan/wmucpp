@@ -40,12 +40,17 @@ public:
         Button::template dir<Input>();
         Button::pullup();
     }
-    static void update(std::milliseconds timeStamp) {
-        if (Button::isHigh() && ((timeStamp - mStartTime) > mDelay) ) {
-            Led::off();
+    static void update() {
+        if (Button::isHigh()) {
+            if (mStartTime == 0_ms) {
+                Led::off();
+            }
+            else {
+                --mStartTime;
+            }
         }
-        if (!Button::isHigh()) {
-            mStartTime = timeStamp;
+        else {
+            mStartTime = mDelay;
             Led::on();
         }
     }
@@ -59,6 +64,7 @@ private:
     inline static auto mStartTime = 0_ms;
 };
 
+// todo: parameter resolution vom timer
 template<typename... BTs>
 class ButtonLedsController {
 public:
@@ -66,15 +72,12 @@ public:
         (BTs::init(), ...);
     }
     static void periodic() {
-        ++mTimeStamp;
-        (BTs::update(mTimeStamp), ...);
+        (BTs::update(), ...);
     }
     template<typename Terminal>
     static void print() {
         (BTs::template print<Terminal>(), ...);
     }  
-private:
-    static inline auto mTimeStamp = 0_ms;
 };
 
 template<typename ...> struct makeController;
@@ -83,7 +86,7 @@ struct makeController<LedPort, ButtonPort, std::index_sequence<Is...>> {
     typedef ButtonLedsController<ButtonLed<Pin<LedPort, Is>, Pin<ButtonPort, Is> >... > type;
 };
 
-using controller = typename makeController<PortB, PortC, std::make_index_sequence<6>>::type;
+using controller = typename makeController<PortB, PortC, std::make_index_sequence<2>>::type;
 
 using systemTimer = AVR::Timer8Bit<0>;
 
@@ -99,7 +102,7 @@ int main() {
     controller::init();
     terminalDevice::init<9600>();
 
-    systemTimer::setup<f>();
+    systemTimer::setup<f>(TimerMode::CTC);
 
 //    std::outl<terminal>("ANano Led Buttons"_pgm);
     

@@ -82,15 +82,12 @@ struct makeController<LedPort, ButtonPort, std::index_sequence<Is...>> {
     typedef ButtonLedsController<ButtonLed<Pin<LedPort, Is>, Pin<ButtonPort, Is> >... > type;
 };
 
-using controller = typename makeController<PortB, PortC, std::make_index_sequence<6>>::type;
+using controller = typename makeController<PortB, PortC, std::make_index_sequence<2>>::type;
 
 using systemTimer = AVR::Timer8Bit<0>;
 
 using terminalDevice = Usart<0, void, false>;
 using terminal = std::basic_ostream<terminalDevice>;
-
-using systemConstantRate = PeriodicGroup<1, AVR::ISR::Timer<0>::CompareA, controller>;
-using isrRegistrar = IsrRegistrar<systemConstantRate>;
 
 static constexpr auto f = 1000_Hz;
 
@@ -98,7 +95,7 @@ int main() {
     controller::init();
     terminalDevice::init<9600>();
     
-    systemTimer::setup<f>();
+    systemTimer::setup<f>(TimerMode::CTCNoInt);
 
 //    std::outl<terminal>("ANano Led Buttons"_pgm);
     
@@ -106,18 +103,23 @@ int main() {
         Scoped<EnableInterrupt<>> ei;
         while(true) {
             terminalDevice::periodic();
-            systemConstantRate::periodic();
+            systemTimer::periodic<systemTimer::flags_type::ocfa>([](){
+                controller::periodic();
+            });
+            
             if (auto c = terminalDevice::get()) {
                 if (*c == std::byte{'p'}) {
-                    controller::print<terminal>();    
+//                    controller::print<terminal>();    
                 }
             }
         }
     }
 }
 
-ISR(TIMER0_COMPA_vect) {
-    isrRegistrar::isr<AVR::ISR::Timer<0>::CompareA>();
-}
+
+// 1020
+//ISR(TIMER0_COMPA_vect) {
+//    isrRegistrar::isr<AVR::ISR::Timer<0>::CompareA>();
+//}
 
 
