@@ -173,19 +173,19 @@ AVRDUDE = avrdude
 	$(CXX) -MM -MG $(CXXFLAGS) $< | sed 's/$*\.o/& $@ $*.elf $<.extract/g' > $@
 
 %.cc.extract: %.cc
-	$(EXTRACTOR) -lcpp -aA2 -o$@ -d$(EXTRACTDIR) $<
+	$(EXTRACTOR) -lcpp -aA2 -aN -o$@ -d$(EXTRACTDIR) $<
 
 %.h.extract: %.h
-	$(EXTRACTOR) -lcpp -aA2 -o$@ -d$(EXTRACTDIR) $<
+	$(EXTRACTOR) -lcpp -aA2 -aN -o$@ -d$(EXTRACTDIR) $<
 
 %.s.axtract: %.s
 	$(AXTRACTOR) -o$@ $<
 
 %.cc.extractnc: %.cc
-	$(EXTRACTOR) -lcpp -aA2 --sc -d$(EXTRACTDIRNC) -o$@ $<
+	$(EXTRACTOR) -lcpp -aA2 -aN --sc -d$(EXTRACTDIRNC) -o$@ $<
 
 %.h.extractnc: %.h
-	$(EXTRACTOR) -lcpp -aA2 --sc -d$(EXTRACTDIRNC) -o$@ $<
+	$(EXTRACTOR) -lcpp -aA2 -aN --sc -d$(EXTRACTDIRNC) -o$@ $<
 
 %.cc.html: %.cc
 	$(EXTRACTOR) -x --eb --io $< | $(SRCHI) -scpp > $@

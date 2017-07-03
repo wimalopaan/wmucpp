@@ -1,3 +1,37 @@
 Name: SteuerSensorModul01
 
+Achtung: Korrekturen auf dem Board notwendig (s.a. Target-Beschreibung)
+
 Beschreibung:
+
+* test01: 
+  - SPI Terminal
+  - Taktrate (500ms Output>
+
+* test02: 
+  - SPI Terminal
+  - systemClock ohne Interrupt
+  - sensorRateTimer ohne Interrupt
+  - Sensortest am Empfänger
+
+* test03:
+  - SPI Terminal
+  - systemClock mit Interrupt
+  - Sensortest am Empfänger
+
+* test04:
+  - SPI Terminal
+  - Drehzahlmessung
+  
+* test05:
+  - SPI Terminal
+  - Spannunsgmessung am LiPo-Eingang
+  
+* test06:
+  - SPI Terminal
+  - Spannunsgmessung am LiPo-Eingang + interne Temperaturmessung
+  - Sensor am Empfänger (LiPo / int. Temperatur)
+
+* test07:
+  - SPI Terminal
+  - Temperaturmessung DS18B20 (N Sensoren am OneWire)
