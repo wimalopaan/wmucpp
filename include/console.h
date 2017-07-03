@@ -50,9 +50,6 @@ namespace std {
     template<MCU::Stream Stream, typename... TT> void outl(const TT&... v);
     
     namespace detail {
-        // fixme: Ausgabe von char* ???
-        // fixme: per-value / per-ref
-        
         template<MCU::Stream Stream, Unsigned V> // concept
         void out(V v) {
             std::array<char, Util::numberOfDigits<V>() + 1> buffer;
@@ -74,8 +71,17 @@ namespace std {
             Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(&buffer[0]);
         }
         template<MCU::Stream Stream>
-        void out(char v) {
-            Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(v);
+        void out(Char v) {
+            Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(v.mValue);
+        }
+        template<MCU::Stream Stream>
+        void out(bool b) {
+            if (b) {
+                std::out<Stream>("true"_pgm);
+            }
+            else {
+                std::out<Stream>("false"_pgm);
+            }
         }
         template<MCU::Stream Stream>
         void out(std::lineTerminator<CRLF>) {
@@ -85,6 +91,10 @@ namespace std {
         template<MCU::Stream Stream>
         void out(std::lineTerminator<LF>) {
             Util::put<typename Stream::device_type, Config::ensureTerminalOutput>('\n');
+        }
+        template<MCU::Stream Stream>
+        void out(std::lineTerminator<CR>) {
+            Util::put<typename Stream::device_type, Config::ensureTerminalOutput>('\r');
         }
         template<MCU::Stream Stream, uint16_t L>
         void out(const std::array<char, L>& a) {

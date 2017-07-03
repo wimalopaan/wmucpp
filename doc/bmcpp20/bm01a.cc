@@ -140,7 +140,7 @@ int main() {
     }
     
     for(uint8_t i = 0; i < times.size; ++i) {
-        std::outl<terminal>(i, " : V : "_pgm, ',', times[i].type,  ',', times[i].value, ',', times[i].time);
+        std::outl<terminal>(i, " : V : "_pgm, Char{','}, times[i].type,  Char{','}, times[i].value, Char{','}, times[i].time);
     }        
 
     value = 1;
@@ -194,7 +194,7 @@ int main() {
     }
     
     for(uint8_t i = 0; i < times.size; ++i) {
-        std::outl<terminal>(i, " : V : "_pgm, times[i].type, ',', times[i].value, ',', times[i].time);
+//        std::outl<terminal>(i, " : V : "_pgm, times[i].type, Char{','}, times[i].value, Char{','}, times[i].time);
     }        
 
     value = 1;
@@ -248,7 +248,7 @@ int main() {
     }
     
     for(uint8_t i = 0; i < times.size; ++i) {
-        std::outl<terminal>(i, " : V : "_pgm, ',', times[i].type,  ',', times[i].value, ',', times[i].time);
+//        std::outl<terminal>(i, " : V : "_pgm, Char{','}, times[i].type,  Char{','}, times[i].value, Char{','}, times[i].time);
     }        
 
     value = 1;    
@@ -256,7 +256,7 @@ int main() {
         auto lv = value;    
         ltoa(lv, &data[0], 10);
         
-        std::outl<terminal>(p, ',', lv, ',', data);
+        std::outl<terminal>(p, Char{','}, lv, Char{','}, data);
         
         value *= 10;
     }

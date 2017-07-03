@@ -191,7 +191,7 @@ namespace AVR {
                 ocfa = (1 << OCF0A),
                 tov  = (1 << TOV0)
             };
-            ControlRegister<Timer8Interrupts, Flags> tifr;
+            ControlRegister<Timer8Interrupts, Flags> tifr; // fixme: FlagRegister (nur Löschen durch Schreiben einer 1 möglich)
             volatile uint8_t padding[0x6E - 0x35 - 1];
             enum class Mask : uint8_t {
                 ocieb = (1 << OCIE0B),

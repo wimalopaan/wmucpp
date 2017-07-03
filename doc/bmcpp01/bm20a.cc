@@ -18,7 +18,7 @@
 
 #include <stdint.h>
 
-volatile uint8_t x = 0;
+volatile uint8_t x;
 
 void set(bool v) {
     x = v;

@@ -37,7 +37,9 @@
 // sudo avrdude -p atmega328p -P usb -c avrisp2 -U lfuse:w:0xf7:m -U hfuse:w:0xd9:m -U efuse:w:0xff:m
 
 using spiInput = AVR::Spi<0>;
-using terminal = AVR::Usart<0>;
+
+using terminalDevice = AVR::Usart<0>;
+using terminal = std::basic_ostream<terminalDevice>;
 
 using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
 using ledPin = AVR::Pin<PortD, 2>;
@@ -50,7 +52,7 @@ using systemTimer = AlarmTimer<systemClock>;
 
 using sampler = PeriodicGroup<0, AVR::ISR::Timer<0>::CompareA, systemTimer>;
 
-using isrReg = IsrRegistrar<sampler, spiInput, terminal::RxHandler, terminal::TxHandler>; 
+using isrReg = IsrRegistrar<sampler, spiInput, terminalDevice::RxHandler, terminalDevice::TxHandler>; 
 
 template<typename Led>
 class Blinker {
@@ -92,29 +94,22 @@ public:
     }
 
 private:
-    static std::array<Color, (uint8_t)State::NumberOfStates> mStateColors;
-    static State mState;
+    inline static std::array<Color, (uint8_t)State::NumberOfStates> mStateColors = {
+                                                                            Color{Green{128}},
+                                                                            Color{Red{128}},
+                                                                            Color{Red{64}, Green{0}, Blue{64}},
+                                                                            Color{0},
+                                                                            };
+
+    inline static State mState = State::Off;
 };
-template<typename Led>
-typename Blinker<Led>::State Blinker<Led>::mState = Blinker<Led>::State::Off;
-template<typename Led>
-std::array<Color, (uint8_t)Blinker<Led>::State::NumberOfStates> Blinker<Led>::mStateColors = {
-                                                                                            Color{Green{128}},
-                                                                                            Color{Red{128}},
-                                                                                            Color{Red{64}, Green{0}, Blue{64}},
-                                                                                            Color{0},
-                                                                                            };
 
 using blinker = Blinker<led>;
 
-namespace std {
-std::basic_ostream<terminal> cout;
-std::lineTerminator<CRLF> endl;
-}
 
 struct Spi0handler: public EventHandler<EventType::Spi0> {
     static bool process(std::byte v) {
-        Util::put<terminal, true>(v);
+        Util::put<terminalDevice, true>(v);
         return true;
     }
 };
@@ -131,11 +126,10 @@ int main()
     isrReg::init();
     blinker::init();
     systemTimer::init();
-    terminal::init<19200>();
+    terminalDevice::init<19200>();
     
-    std::cout << "Spi Usart Bridge 0.9" << std::endl;
-    
-    std::cout << Config() << std::endl;
+    std::outl<terminal>("Spi Usart Bridge 0.9"_pgm);
+    std::outl<terminal>(Config());
     
     systemTimer::create(500_ms, AlarmFlags::Periodic);
     
@@ -155,23 +149,23 @@ int main()
 
 #ifndef NDEBUG
 void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
-    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
+    std::outl<terminal>("Assertion failed: "_pgm, expr, ',', file, ',', line);
     while(true) {}
 }
 #endif
 
-ISR(TIMER1_COMPA_vect) {
-    //    isrReg::isr<AVR::ISR::Timer<1>::CompareA>();
-    //    SWUsart<0>::isr_compa();
-}
-ISR(TIMER1_COMPB_vect) {
-    //    isrReg::isr<AVR::ISR::Timer<1>::CompareB>();
-    //    SWUsart<0>::isr_compb();
-}
-ISR(TIMER1_CAPT_vect) {
-    //    isrReg::isr<AVR::ISR::Timer<1>::Capture>();
-    //    SWUsart<0>::isr_icp();
-}
+//ISR(TIMER1_COMPA_vect) {
+//    //    isrReg::isr<AVR::ISR::Timer<1>::CompareA>();
+//    //    SWUsart<0>::isr_compa();
+//}
+//ISR(TIMER1_COMPB_vect) {
+//    //    isrReg::isr<AVR::ISR::Timer<1>::CompareB>();
+//    //    SWUsart<0>::isr_compb();
+//}
+//ISR(TIMER1_CAPT_vect) {
+//    //    isrReg::isr<AVR::ISR::Timer<1>::Capture>();
+//    //    SWUsart<0>::isr_icp();
+//}
 ISR(SPI_STC_vect) {
     isrReg::isr<AVR::ISR::Spi<0>::Stc>();
 }

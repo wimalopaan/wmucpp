@@ -60,10 +60,10 @@ private:
     inline static uint8_t value = V;
 };
 
-template<typename Buffer, typename Device, typename CounterType = uint16_t, bool disableRx = true>
+template<typename Buffer, typename Device, typename CounterType = typename Buffer::index_type, bool disableRx = true>
 class ConstanteRateWriter { 
 public:
-    static void rateProcess() {
+    inline static void rateProcess() {
         if (!mEnable) return;
         
         if (counter == 0) {
@@ -72,6 +72,10 @@ public:
             }
         }
         if (counter < Buffer::size()) {
+//            if (counter >= Buffer::cyclesBeforeAnswer) {
+//                Device::put(Buffer::getByte(counter - Buffer::cyclesBeforeAnswer));
+//            }
+//            ++counter;
             if (auto data = Buffer::get(counter++)) {
                 Device::put(*data);
             }
@@ -90,13 +94,16 @@ public:
     template<bool E>
     static void enable() {
         mEnable = E;
+        if constexpr(E) {
+            start();
+        }
     }
 
-    static void start() {
+    inline static void start() {
         Buffer::reset();
         counter = 0;
     }
-    static void init() {
+    inline static void init() {
         Buffer::init();
     }
 private:
@@ -143,7 +150,6 @@ public:
     
     static constexpr void init() {
         if constexpr(!std::is_same<Timer, void>::value) {
-            // todo: wgm2 allein ergibt irgendwie keine Sinn???
             Timer::mcuTimer()->tccrb.template add<Timer::mcu_timer_type::TCCRB::wgm2>();
             Timer::mcuInterrupts()->tifr.template add<Timer::flags_type::ocfa | Timer::flags_type::ocfb>();
             Timer::mcuInterrupts()->timsk.template add<Timer::mask_type::ociea>();

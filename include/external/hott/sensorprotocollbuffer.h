@@ -26,66 +26,72 @@
 #include "sensorprotocoll.h"
 
 namespace Hott {
-
-template<uint8_t N>
-class SensorProtocollBuffer {
-public:
-    static constexpr const uint8_t number = N;
-    static constexpr const uint8_t cyclesBeforeAnswer = Hott::hottDelayBeforeAnswer / Hott::hottDelayBetweenBytes;
     
-    SensorProtocollBuffer() = delete;
+    template<uint8_t N>
+    class SensorProtocollBuffer final {
+    public:
+        typedef uint8_t index_type;
+        static constexpr const uint8_t number = N;
+        static constexpr const uint8_t cyclesBeforeAnswer = Hott::hottDelayBeforeAnswer / Hott::hottDelayBetweenBytes;
+        
+        SensorProtocollBuffer() = delete;
 
-    static std::optional<std::byte> get(uint8_t index) {
-        if (index < cyclesBeforeAnswer) {
-            return {};
-        }
-        else {
-            index -= cyclesBeforeAnswer;
-            if (index < sizeof(hottBinaryResponse)) {
-                constexpr const std::byte* ptr = (const std::byte*) &hottBinaryResponse;  
-                const std::byte value = ptr[index];
-                hottBinaryResponse.parity += std::to_integer<uint8_t>(value);
-                return value;    
+        inline static std::optional<std::byte> get(uint8_t index) {
+            if (index < cyclesBeforeAnswer) {
+                return {};
             }
             else {
+                index -= cyclesBeforeAnswer;
+                if (index < sizeof(hottBinaryResponse)) {
+                    return getByte(index);
+                }
                 return {};
             }
         }
-    }
-    static constexpr uint8_t size() {
-        return sizeof(hottBinaryResponse) + cyclesBeforeAnswer;
-    }
-    static constexpr void reset() {
-        hottBinaryResponse.parity = 0;
-    }
-    static constexpr void init() {
-        hottBinaryResponse.start_byte = 0x7c;
-        hottBinaryResponse.gam_sensor_id = 0x8d;
-        hottBinaryResponse.sensor_id = 0xd0;
-        hottBinaryResponse.cell[0] = 111;
-        hottBinaryResponse.cell[1] = 222;
-        hottBinaryResponse.cell[2] = 10;
-        hottBinaryResponse.rpm = 111;
-        hottBinaryResponse.rpm2 = 222;
-        hottBinaryResponse.stop_byte = 0x7d;
-    }
-    
-    static void rpm1(const std::RPM& v) {
-        if (v) {
-            hottBinaryResponse.rpm = v.value() / 10;
+        static constexpr uint8_t size() {
+            return sizeof(hottBinaryResponse) + cyclesBeforeAnswer;
         }
-    }
-    static std::RPM rpm1() {
-        return std::RPM{hottBinaryResponse.rpm * 10};
-    }
-    static void temp1(FixedPoint<int, 4> v) {
-        hottBinaryResponse.temperature1 = v.integer() + 20;
-    }
-    static void temp2(FixedPoint<int, 4> v) {
-        hottBinaryResponse.temperature2 = v.integer() + 20;
-    }
-
-private:
-    inline static GamMsg hottBinaryResponse;
-};
+        static constexpr void reset() {
+            hottBinaryResponse.parity = 0;
+        }
+        static constexpr void init() {
+            hottBinaryResponse.start_byte = 0x7c;
+            hottBinaryResponse.gam_sensor_id = 0x8d;
+            hottBinaryResponse.sensor_id = 0xd0;
+            hottBinaryResponse.cell[0] = 111;
+            hottBinaryResponse.cell[1] = 222;
+            hottBinaryResponse.cell[2] = 10;
+            hottBinaryResponse.rpm = 111;
+            hottBinaryResponse.rpm2 = 222;
+            hottBinaryResponse.stop_byte = 0x7d;
+        }
+        
+        static void rpm1(const std::RPM& v) {
+            if (v) {
+                hottBinaryResponse.rpm = v.value() / 10;
+            }
+        }
+        static std::RPM rpm1() {
+            return std::RPM{hottBinaryResponse.rpm * 10};
+        }
+        static void temp1(FixedPoint<int, 4> v) {
+            hottBinaryResponse.temperature1 = v.integer() + 20;
+        }
+        static void temp2(FixedPoint<int, 4> v) {
+            hottBinaryResponse.temperature2 = v.integer() + 20;
+        }
+        
+    private:
+        inline static std::byte getByte(uint8_t index) {
+            assert(index < sizeof(hottBinaryResponse));
+            constexpr const std::byte* ptr = (const std::byte*) &hottBinaryResponse;  
+            const std::byte value = ptr[index];
+            hottBinaryResponse.parity += std::to_integer<uint8_t>(value);
+            return value;    
+        }
+        
+        inline static GamMsg hottBinaryResponse;
+        static_assert((cyclesBeforeAnswer + sizeof(hottBinaryResponse)) < std::numeric_limits<uint8_t>::max());
+        
+    };
 }

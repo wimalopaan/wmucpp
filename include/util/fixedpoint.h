@@ -22,6 +22,7 @@
 #include "config.h"
 #include "mcu/concepts.h"
 #include "std/traits.h"
+#include "std/types.h"
 #include "util/bits.h"
 #include "util/util.h"
 
@@ -38,7 +39,7 @@ struct Fraction final {
 template<typename Type, uint8_t fractionalBits>
 class FixedPoint final {
     template<typename Stream> friend Stream& operator<<(Stream& o, const FixedPoint<Type, fractionalBits>& f);
-
+    
 public:
     typedef Type value_type;
     typedef typename Util::UnsignedFor<Type>::type unsigned_type;
@@ -75,8 +76,8 @@ public:
     }
     Fraction<unsigned_type> fraction() const {
         return Fraction<unsigned_type>{fractionalAbs() << integer_bits};
-    }
-    Type raw() const {
+        }
+        Type raw() const {
         return mValue;
     }
 private:
@@ -95,32 +96,32 @@ FixedPoint<T, FB> operator*(FixedPoint<T, FB> lhs, FixedPoint<T, FB> rhs) {
 }
 
 namespace std {
-
-template<MCU::Stream Stream, typename... TT> void out(const TT&... v);
-template<MCU::Stream Stream, typename... TT> void outl(const TT&... v);
-
+    
+    template<MCU::Stream Stream, typename... TT> void out(const TT&... v);
+    template<MCU::Stream Stream, typename... TT> void outl(const TT&... v);
+    
 } // std
 
 namespace std::detail {
-
-template<MCU::Stream Stream, typename T>
-void out(const Fraction<T>& f) {
-    std::array<char, Util::numberOfDigits<Fraction<T>>()> buffer;
-    Util::ftoa(f, buffer);
-    Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(&buffer[0]);
-}
-
-
-template<MCU::Stream Stream>
-void out(const FixedPoint<int16_t, 4>& f) {
-    using std::out;
-    if (f.raw() < 0) {
-        out<Stream>('-');
+    
+    template<MCU::Stream Stream, typename T>
+    void out(const Fraction<T>& f) {
+        std::array<char, Util::numberOfDigits<Fraction<T>>()> buffer;
+        Util::ftoa(f, buffer);
+        Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(&buffer[0]);
     }
-    out<Stream>(f.integerAbs());
-    out<Stream>(f.fraction());
-}
-
+    
+    
+    template<MCU::Stream Stream>
+    void out(const FixedPoint<int16_t, 4>& f) {
+        using std::out;
+        if (f.raw() < 0) {
+            out<Stream>(Char{'-'});
+        }
+        out<Stream>(f.integerAbs());
+        out<Stream>(f.fraction());
+    }
+    
 } // detail
 
 template<typename Stream>

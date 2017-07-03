@@ -18,8 +18,7 @@
 
 #include <stdint.h>
 
-
-volatile uint8_t global = 3; //-
+volatile uint8_t global; //-
 volatile bool b = false;
 volatile bool c = false;
 
@@ -29,7 +28,7 @@ bool foo(uint8_t& x) {
     return b;
 }
 
-bool foo(uint8_t& x, uint8_t& y) {
+bool foo(uint8_t& x, const uint8_t& y) {
     global = x + y; //-
     x = global;
     return b;

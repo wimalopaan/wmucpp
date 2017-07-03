@@ -55,6 +55,13 @@ namespace MCU {
             typename S::line_terminator_type;
         };
     }
+//    template<typename S>
+//    concept bool StreamOrVoid() { 
+//        return std::is_same<S, void>::value || requires (S s) { 
+//            typename S::device_type;
+//            typename S::line_terminator_type;
+//        };
+//    }
     
     template<typename P>
     concept bool Pin() { 

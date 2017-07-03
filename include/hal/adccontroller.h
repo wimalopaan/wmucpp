@@ -24,7 +24,7 @@
 
 template<typename MCUAdc, uint8_t... Channels>
 class AdcController final {
-    enum class State {Start, Converting, ConversionComplete};
+    enum class State : uint8_t {Start, Converting, ConversionComplete};
     
 public:
     typedef MCUAdc mcu_adc_type;

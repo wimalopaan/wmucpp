@@ -228,6 +228,49 @@ namespace AVR {
             volatile uint8_t spdr;
             template<int N> struct Address;
         };
+        struct Adc {
+            static constexpr const uint8_t count = 1;
+            union {
+                struct {
+                    DataRegister<Adc, ReadOnly, uint8_t> adcl;
+                    DataRegister<Adc, ReadOnly, uint8_t> adch;
+                };
+                DataRegister<Adc, ReadOnly, uint16_t> adc;
+            };
+            enum class SRA : uint8_t {
+                aden = (1 << ADEN),
+                adsc = (1 << ADSC),
+                adate = (1 << ADATE),
+                adif = (1 << ADIF),
+                adie = (1 << ADIE),
+                adps2 = (1 << ADPS2),
+                adps1 = (1 << ADPS1),
+                adps0 = (1 << ADPS0)
+            };
+            ControlRegister<Adc, SRA> adcsra;
+            enum class SRB : uint8_t {
+                acme = (1 << ACME),
+                adts2 = (1 << ADTS2),
+                adts1 = (1 << ADTS1),
+                adts0 = (1 << ADTS0)
+            };
+            ControlRegister<Adc, SRB> adcsrb;
+            enum class MUX : uint8_t {
+                refs1 = (1 << REFS1),
+                refs0 = (1 << REFS0),
+                adlar = (1 << ADLAR),
+                mux3  = (1 << MUX3),            
+                mux2  = (1 << MUX2),            
+                mux1  = (1 << MUX1),            
+                mux0  = (1 << MUX0) 
+            };
+            ControlRegister<Adc, MUX> admux;
+            volatile uint8_t reserved;
+            DataRegister<Adc, UnUsed> didr0;
+            DataRegister<Adc, UnUsed> didr1;
+            template<int N> struct Address;
+            template<int N> struct Parameter;
+        };
         struct PortRegister {
             DataRegister<PortRegister, ReadWrite, std::byte> in;
             DataRegister<PortRegister, ReadWrite, std::byte> ddr;
@@ -326,6 +369,18 @@ namespace std {
     };
     template<>
     struct enable_bitmask_operators<AVR::ATMega328PB::TWI::TWC> {
+        static constexpr bool enable = true;
+    };
+    template<>
+    struct enable_bitmask_operators<AVR::ATMega328PB::Adc::SRA> {
+        static constexpr bool enable = true;
+    };
+    template<>
+    struct enable_bitmask_operators<AVR::ATMega328PB::Adc::SRB> {
+        static constexpr bool enable = true;
+    };
+    template<>
+    struct enable_bitmask_operators<AVR::ATMega328PB::Adc::MUX> {
         static constexpr bool enable = true;
     };
 }
@@ -465,6 +520,22 @@ namespace AVR {
     struct ATMega328PB::Timer16Bit::PrescalerBits<4> {
         static constexpr auto values = AVR::prescalerValues10Bit<ATMega328PB::Timer16Bit::TCCRB>;
     };
+    template<>
+    struct ATMega328PB::Adc::Address<0> {
+        static constexpr uint8_t value = 0x78;
+    };
+    template<>
+    struct ATMega328PB::Adc::Parameter<0> {
+        static constexpr auto channelMasks = std::make_array(MUX{0}, 
+                                                             MUX::mux0,
+                                                             MUX::mux1,
+                                                             MUX::mux1 | MUX::mux0,
+                                                             MUX::mux2,
+                                                             MUX::mux2 | MUX::mux0,
+                                                             MUX::mux2 | MUX::mux1 | MUX::mux0
+                                                             );
+    };
+    
     
 }
 #pragma pack(pop)

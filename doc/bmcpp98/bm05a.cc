@@ -55,7 +55,7 @@ int main() {
 }
 #ifndef NDEBUG
 void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
-    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
+//std::outl<terminal>("Assertion failed: "_pgm, expr, Char{','}, file, Char{','}, line);
     while(true) {}
 }
 #endif

@@ -35,6 +35,11 @@ struct Appl {
     }
 };
 
+template <typename=void> struct _ {};
+
+auto l = [_=_<>{}](){return _;}();
+
+
 int main() {
     Appl<a>::main();
 }

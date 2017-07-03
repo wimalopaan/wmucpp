@@ -18,7 +18,7 @@
 
 #include <stdint.h>
 
-volatile uint8_t global = 3; //-
+volatile uint8_t global; //-
 volatile bool b = false;
 volatile bool c = false;
 

@@ -129,7 +129,7 @@ namespace AVR {
                 tov1  = (1 << TOV1),
                 tov0  = (1 << TOV0)
             };
-            ControlRegister<TimerInterrupts, Flags> tifr;
+            ControlRegister<TimerInterrupts, Flags> tifr;// fixme: FlagRegister (nur Löschen durch Schreiben einer 1 möglich)
             enum class Mask : uint8_t {
                 ocie1a = (1 << OCIE1A),
                 ocie1b = (1 << OCIE1B),
@@ -146,7 +146,7 @@ namespace AVR {
                 intf = (1 << INTF0),
                 pcif = (1 << PCIF)
             };
-            ControlRegister<Interrupt, GIFlags> gifr;
+            ControlRegister<Interrupt, GIFlags> gifr;// fixme: FlagRegister (nur Löschen durch Schreiben einer 1 möglich)
             enum class GIMask : uint8_t {
                 ie   = (1 << INT0),
                 pcie = (1 << PCIE)

@@ -17,8 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-#MCU = atmega328p
-MCU = atmega1284p
+MCU = atmega328p
+#MCU = atmega1284p
 F_OSC = 20000000
 
 CPPFLAGS += -DNDEBUG
@@ -46,6 +46,9 @@ targets +=  bm09b.s bm09b.elf bm09b.size
 targets +=  bm10a.s bm10a.elf bm10a.size
 targets +=  bm10b.s bm10b.elf bm10b.size
 targets +=  bm11a.s bm11a.elf bm11a.size
+targets +=  bm12a.s bm12a.elf bm12a.size
+targets +=  bm13a.s bm13a.elf bm13a.size
+targets +=  bm14a.s bm14a.elf bm14a.size
 targets +=  bm11b.s bm11b.elf bm11b.size
 targets +=  bm20a.s bm20a.elf bm20a.size
 targets +=  bm21a.s bm21a.elf bm21a.size
@@ -56,6 +59,10 @@ targets +=  bm40b.s bm40b.elf
 targets +=  bm60a.s bm60a.elf
 targets +=  bm61a.s bm61a.elf bm61a.lss
 targets +=  bm70a.s bm70a.elf
+targets +=  bm80a.s bm80a.elf
+targets +=  bm90a.s bm90a.elf
+targets +=  bm95a.s bm95a.elf
 
 -include ../../Makefile.include
 
+bm95a.s bm95a.elf : CXXFLAGS := $(filter-out -fno-exceptions, $(CXXFLAGS)) -fexceptions

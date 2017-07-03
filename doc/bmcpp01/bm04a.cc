@@ -19,7 +19,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-volatile uint8_t global = 0; //-
+volatile uint8_t global; //-
 
 //[ref
 void foo(const uint8_t& x) {

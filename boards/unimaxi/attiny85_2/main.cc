@@ -61,7 +61,8 @@ using hwTimer = AVR::Timer8Bit<0>;
 using rpmTimer = SoftTimer<hwTimer, uint16_t>;
 
 constexpr std::RPM MaximumRpm{12000};
-using rpm = RpmFromInterruptSource<reflexPinChange, rpmTimer, MaximumRpm>;
+constexpr std::RPM MinimumRpm{100};
+using rpm = RpmFromInterruptSource<reflexPinChange, rpmTimer, MaximumRpm, MinimumRpm>;
 
 using systemTimer = AVR::Timer8Bit<1>;
 using alarmTimer = AlarmTimer<systemTimer>;

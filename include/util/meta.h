@@ -186,6 +186,16 @@ namespace Meta {
     
     template<concepts::List L1, concepts::List L2>
     using concat = typename detail::concat_impl<L1, L2>::type;
+
+    template<typename T>
+    struct nonVoid : public std::true_type {};    
+    template<>
+    struct nonVoid<void> : public std::false_type {};    
+
+    template<typename T>
+    struct isVoid : public std::false_type {};    
+    template<>
+    struct isVoid<void> : public std::true_type {};    
     
     namespace tests {
         struct A {};

@@ -11,7 +11,7 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -22,6 +22,10 @@
 #include "std/optional.h"
 #include "std/limits.h"
 #include "util/dassert.h"
+
+struct Char {
+    char mValue = 0;
+};
 
 template<std::Unsigned U, uint8_t FirstBits, uint8_t SecondBits>
 class Splitted_NaN {
@@ -88,13 +92,20 @@ public:
         return mValue == rhs;
     }
     constexpr uint_ranged& operator=(T rhs) {
+        assert(rhs >= LowerBound);
+        assert(rhs <= UpperBound);
         mValue = rhs;
         return *this;
     }
     constexpr void operator=(T rhs) volatile {
+        assert(rhs >= LowerBound);
+        assert(rhs <= UpperBound);
         mValue = rhs;
     }
     constexpr operator T() const {
+        return mValue;
+    }
+    constexpr operator T() volatile const {
         return mValue;
     }
     constexpr T toInt() const {
@@ -106,6 +117,11 @@ public:
 private:
     T mValue{0};
 };
+//namespace std::detail {
+//    template<typename T, T Lo, T Up>
+//    struct is_integral_base<uint_ranged<T, Lo, Up>> : public true_type {
+//    };
+//}
 
 template<std::Unsigned T>
 class uint_bounded final {
@@ -145,7 +161,7 @@ public:
     constexpr void operator=(T rhs) volatile {
         mValue = rhs;
     }
-
+    
 private:
     T mValue{0};
 };
@@ -217,24 +233,24 @@ struct uint4_t {
 };
 
 struct uint7_t final {
+    constexpr uint7_t() : value(0), pad(0) {}
     constexpr explicit uint7_t(const uint8_t& v) : value(v), pad(0) {}
-
     constexpr explicit uint7_t(const uint7_t& v) : value(v), pad(0) {}
     
     explicit uint7_t(volatile uint7_t& v) : value(v), pad(0) {}
-
+    
     constexpr uint7_t(uint7_t&&) = default;
     constexpr uint7_t& operator=(uint7_t&&) = default;
     void operator=(uint7_t&& rhs) volatile {
         value = rhs.value;
     }
-
-    uint7_t& operator=(const uint7_t&) = default;
-
+    
+    constexpr uint7_t& operator=(const uint7_t&) = default;
+    
     void operator=(volatile uint7_t& rhs) volatile {
         value = rhs.value;
     }
-
+    
     constexpr operator uint8_t() const {
         return value;
     }
@@ -245,37 +261,47 @@ struct uint7_t final {
 };
 
 namespace std {
-
-template<>
-struct is_integral<uint7_t> final {
-    static constexpr bool value = true;
-};
-
-
-
-template<>
-class optional<uint7_t> {
-public:
-    constexpr optional() = default;
-    constexpr optional(uint7_t value) : data{(uint8_t)(value.value | 0x80)} {}
-    constexpr explicit operator bool() const {
-        return data & 0x80;
-    }
-    constexpr explicit operator bool() {
-        return data & 0x80;
-    }
-    constexpr uint7_t operator*() const {
-        return uint7_t{data};
-    }
-private:
-    uint8_t data{0};
-};
-
-template<>
-struct numeric_limits<uint7_t> {
-    static constexpr uint8_t max() {return UINT8_MAX / 2 - 1;}
-    static constexpr uint8_t min() {return 0;}
-};
-
-
+    
+    template<>
+    struct is_integral<uint7_t> final {
+        static constexpr bool value = true;
+    };
+    
+    //template<>
+    //class optional<uint7_t> {
+    //public:
+    //    constexpr optional() : data{0}, valid{0} {}
+    //    constexpr optional(uint7_t value) : data{value.value}, valid{1} {}
+    //    constexpr explicit operator bool() const {
+    //        return valid;
+    //    }
+    //    constexpr uint7_t operator*() const {
+    //        return uint7_t{data};
+    //    }
+    //private:
+    //    uint8_t data : 7, valid : 1;
+    //};
+    
+    template<>
+    class optional<uint7_t> {
+    public:
+        constexpr optional() = default;
+        constexpr optional(uint7_t value) : data{(uint8_t)(value.value | 0x80)} {} // besser als die getrennte Initialsisierung in obiger Variante
+        constexpr explicit operator bool() const {
+            return data & 0x80;
+        }
+        constexpr uint7_t operator*() const {
+            return uint7_t{data};
+        }
+    private:
+        uint8_t data{0};
+    };
+    
+    template<>
+    struct numeric_limits<uint7_t> {
+        static constexpr uint8_t max() {return UINT8_MAX / 2 - 1;}
+        static constexpr uint8_t min() {return 0;}
+    };
+    
+    
 }

@@ -41,7 +41,8 @@ using mcuTimer = AVR::Timer8Bit<0>;
 using rpmTimer = SoftTimer<mcuTimer, uint16_t>;
 
 constexpr std::RPM MaxRpm{15000};
-using rpm = RpmFromInterruptSource<reflexPinChange, rpmTimer, MaxRpm>;
+constexpr std::RPM MinRpm{100};
+using rpm = RpmFromInterruptSource<reflexPinChange, rpmTimer, MaxRpm, MinRpm>;
 
 using isrRegistrar = IsrRegistrar<rpm, rpmTimer>;
 

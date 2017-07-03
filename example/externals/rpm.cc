@@ -40,7 +40,9 @@ using led = AVR::Pin<PortB, 4>;
 using rpmTimer = AVR::Timer16Bit<1>;
 
 constexpr std::RPM MaxRpm{12000};
-using rpm = RpmFromInterruptSource<reflexPinChange, rpmTimer, MaxRpm>;
+constexpr std::RPM MinRpm{100};
+
+using rpm = RpmFromInterruptSource<reflexPinChange, rpmTimer, MaxRpm, MinRpm>;
 
 using isrRegistrar = IsrRegistrar<rpm>;
 

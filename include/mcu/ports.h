@@ -204,26 +204,26 @@ namespace AVR {
         typedef Port port;
         static constexpr uint8_t number = PinNumber;
         static constexpr std::byte pinMask{(1 << PinNumber)};
-        static inline void on() {
+        static inline void on() __attribute__((always_inline)) {
             Port::get() |= pinMask; // single bit instruction sbi
         }
         static constexpr auto& high = on;
         static constexpr auto& pullup = on;
-        static inline void off() { // single bit instruction cbi
+        static inline void off() __attribute__((always_inline)) { // single bit instruction cbi
             Port::get() &= ~pinMask;
         }
-        static inline bool get() {
+        static inline bool get() __attribute__((always_inline)) {
             return std::any(Port::get() & ~pinMask);
         }
         static constexpr auto& low = off;
-        static inline void toggle() {
+        static inline void toggle() __attribute__((always_inline)){
             Port::template toggle<PinNumber>();
         }
         template<typename Dir>
-        static inline void dir() {
+        static inline void dir() {        
             Dir::template set<Port, pinMask>();
         }
-        static inline bool read() {
+        static inline bool read() __attribute__((always_inline)){
             return (Port::read() & pinMask) != std::byte{0};
         }
         static constexpr auto& isHigh = read;

@@ -19,8 +19,8 @@
 #include <stdint.h>
 #include "std/optional.h"
 
-volatile uint8_t global = 3;
-volatile uint8_t global2 = 0;
+volatile uint8_t global;
+volatile uint8_t global2;
 volatile bool b = false;
 
 //[opt

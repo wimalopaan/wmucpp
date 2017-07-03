@@ -25,57 +25,60 @@
 #include "sensorprotocoll.h"
 
 namespace Hott {
-
-template<uint8_t N>
-class SensorTextProtocollBuffer {
-    SensorTextProtocollBuffer() = delete;
-public:
-    static constexpr const uint8_t number = N;
-    static constexpr const uint8_t cyclesBeforeAnswer = Hott::hottDelayBeforeAnswer / Hott::hottDelayBetweenBytes;
-
-    static std::optional<std::byte> get(uint8_t index) {
-        if (index < cyclesBeforeAnswer) {
-            return {};
-        }
-        else {
-            index -= cyclesBeforeAnswer;
-            if (index < sizeof(hottTextResponse)) {
-                constexpr const std::byte* ptr = (const std::byte*) &hottTextResponse;  
-                const auto value = ptr[index];
-                hottTextResponse.parity += std::to_integer<uint8_t>(value);
-                return value;    
+    
+    template<uint8_t N>
+    class SensorTextProtocollBuffer final {
+        SensorTextProtocollBuffer() = delete;
+    public:
+        typedef uint8_t index_type;
+        static constexpr const uint8_t number = N;
+        static constexpr const uint8_t cyclesBeforeAnswer = Hott::hottDelayBeforeAnswer / Hott::hottDelayBetweenBytes;
+        
+        inline static std::optional<std::byte> get(uint8_t index) {
+            if (index < cyclesBeforeAnswer) {
+                return {};
             }
             else {
+                index -= cyclesBeforeAnswer;
+                if (index < sizeof(hottTextResponse)) {
+                    return getByte(index);
+                }
                 return {};
             }
         }
-    }
-    static constexpr uint8_t size() {
-        return sizeof(hottTextResponse) + cyclesBeforeAnswer;
-    }
-    static constexpr void reset() {
-        hottTextResponse.parity = 0;
-    }
-    static constexpr void init() {
-        hottTextResponse.start_byte = 0x7b;
-        hottTextResponse.stop_byte = 0x7d;
-        hottTextResponse.esc = 0;
-        
-        hottTextResponse.text[0].insertAtFill(0, " Test1"_pgm);
-        hottTextResponse.text[1].insertAtFill(0, " Test2"_pgm);
-        hottTextResponse.text[2].insertAtFill(0, " Test3"_pgm);
-        hottTextResponse.text[3].insertAtFill(0, " Test4"_pgm);
-        hottTextResponse.text[4].insertAtFill(0, " Test5"_pgm);
-        hottTextResponse.text[5].insertAtFill(0, " Test6"_pgm);
-        hottTextResponse.text[6].insertAtFill(0, " Test7"_pgm);
-        hottTextResponse.text[7].insertAtFill(0, " Test8"_pgm);
-    }
-    static auto& text() {
-        return hottTextResponse.text;
-    }
-
-private:
-    inline static TextMsg hottTextResponse;
-};
-
+        static constexpr uint8_t size() {
+            return sizeof(hottTextResponse) + cyclesBeforeAnswer;
+        }
+        static constexpr void reset() {
+            hottTextResponse.parity = 0;
+        }
+        static constexpr void init() {
+            hottTextResponse.start_byte = 0x7b;
+            hottTextResponse.stop_byte = 0x7d;
+            hottTextResponse.esc = 0;
+            
+            hottTextResponse.text[0].insertAtFill(0, " Test1"_pgm);
+            hottTextResponse.text[1].insertAtFill(0, " Test2"_pgm);
+            hottTextResponse.text[2].insertAtFill(0, " Test3"_pgm);
+            hottTextResponse.text[3].insertAtFill(0, " Test4"_pgm);
+            hottTextResponse.text[4].insertAtFill(0, " Test5"_pgm);
+            hottTextResponse.text[5].insertAtFill(0, " Test6"_pgm);
+            hottTextResponse.text[6].insertAtFill(0, " Test7"_pgm);
+            hottTextResponse.text[7].insertAtFill(0, " Test8"_pgm);
+        }
+        static auto& text() {
+            return hottTextResponse.text;
+        }
+    private:
+        inline static std::byte getByte(uint8_t index) {
+            assert(index < sizeof(hottTextResponse));
+            constexpr const std::byte* ptr = (const std::byte*) &hottTextResponse;  
+            const auto value = ptr[index];
+            hottTextResponse.parity += std::to_integer<uint8_t>(value);
+            return value;    
+        }
+        inline static TextMsg hottTextResponse;
+        static_assert((cyclesBeforeAnswer + sizeof(hottTextResponse)) < std::numeric_limits<uint8_t>::max());
+    };
+    
 }

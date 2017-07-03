@@ -25,22 +25,22 @@ namespace std {
 template<typename T>
 class optional final {
 public:
-    optional() :
+    constexpr optional() :
         mValid(false),
         mValue()
     {
     }
-    optional(const T& value) :
+    constexpr optional(const T& value) :
         mValid(true),
         mValue(value)
     {
     }
-    optional(const volatile T& value) :
+    constexpr optional(const volatile T& value) :
         mValid(true),
         mValue(value)
     {
     }
-    explicit operator bool() const // safe-bool
+    constexpr explicit operator bool() const // safe-bool
     {
         return mValid;
     }
@@ -48,28 +48,28 @@ public:
     {
         return mValid;
     }
-    bool operator!() const {
+    constexpr bool operator!() const {
         return !mValid;
     }
-    T& operator*()
+    constexpr T& operator*()
     {
         return mValue;
     }
-    const T& operator*() const
+    constexpr const T& operator*() const
     {
         return mValue;
     }
-    T* operator->()
+    constexpr T* operator->()
     {
         return &mValue;
     }
-    const T* operator->() const
+    constexpr const T* operator->() const
     {
         return &mValue;
     }
 private:
-    bool mValid = false;
-    T mValue {};
+    bool mValid{false};
+    T mValue{};
 };
 
 }

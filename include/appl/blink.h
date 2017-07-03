@@ -96,5 +96,5 @@ private:
             return v;
         }();
     inline static uint8_t actualColor = 0;
-    inline static uint8_t actualCount = 0;  // c++17
+    inline static uint8_t actualCount = 0; 
 };

@@ -55,13 +55,13 @@ public:
     typedef MCUTimer timer_type;
     static constexpr std::milliseconds resolution = Resolution;
     
-    static void init() {
+    static void init(AVR::TimerMode mode = AVR::TimerMode::CTC) {
         constexpr auto t = AVR::Util::calculate<MCUTimer>(Config::Timer::frequency);
         static_assert(t, "falscher wert für p");
 
         MCUTimer::template prescale<t.prescaler>();
         MCUTimer::template ocra<t.ocr>();
-        MCUTimer::mode(AVR::TimerMode::CTC);
+        MCUTimer::mode(mode);
         MCUTimer::start();
     }
 

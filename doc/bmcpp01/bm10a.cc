@@ -20,8 +20,8 @@
 #include "std/types.h"
 #include "std/optional.h"
 
-volatile uint7_t global{3};
-volatile uint7_t global2{0};
+volatile uint7_t global;
+volatile uint8_t global2;
 volatile bool b = false;
 
 ////[opt

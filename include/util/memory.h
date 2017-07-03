@@ -21,37 +21,37 @@
 #include <stdint.h>
 
 namespace Util::Memory {
-
-extern "C" {
-extern uint8_t __heap_start;
-}
-
-static constexpr uint8_t testMask = 0xaa;
-
-void __attribute__ ((naked, used, section(".init3"))) initializeMemory() {
-   __asm volatile (
-      "ldi r30, lo8 (__heap_start)"  "\n\t"
-      "ldi r31, hi8 (__heap_start)"  "\n\t"
-      "ldi r24, %0"                  "\n\t"
-      "ldi r25, hi8 (%1)"            "\n"
-      "0:"                           "\n\t"
-      "st  Z+,  r24"                 "\n\t"
-      "cpi r30, lo8 (%1)"            "\n\t"
-      "cpc r31, r25"                 "\n\t"
-      "brne 0b"
-         :
-         : "i" (testMask), "i" (RAMEND)
-   );
-}
-
-inline uint16_t getUnusedMemory() {
-   uint8_t *p = &__heap_start;
-   do {
-      if (*p++ != testMask) {
-          break;
-      }
-   } while (p <= (uint8_t*) RAMEND);
-   return p - &__heap_start - 1;
-}
-
+    
+    extern "C" {
+    extern uint8_t __heap_start;
+    }
+    
+    static constexpr uint8_t testMask = 0xaa;
+    
+    void __attribute__ ((naked, used, section(".init3"))) initializeMemory() {
+        __asm volatile (
+                    "ldi r30, lo8 (__heap_start)"  "\n\t"
+                    "ldi r31, hi8 (__heap_start)"  "\n\t"
+                    "ldi r24, %0"                  "\n\t"
+                    "ldi r25, hi8 (%1)"            "\n"
+                    "0:"                           "\n\t"
+                    "st  Z+,  r24"                 "\n\t"
+                    "cpi r30, lo8 (%1)"            "\n\t"
+                    "cpc r31, r25"                 "\n\t"
+                    "brne 0b"
+                    :
+                    : "i" (testMask), "i" (RAMEND)
+                    );
+    }
+    
+    inline uint16_t getUnusedMemory() {
+        uint8_t *p = &__heap_start;
+        do {
+            if (*p++ != testMask) {
+                break;
+            }
+        } while (p <= (uint8_t*) RAMEND);
+        return p - &__heap_start - 1;
+    }
+    
 }
