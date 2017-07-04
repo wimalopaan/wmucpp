@@ -45,6 +45,12 @@ boards/rcsensorled/test02.cc
 boards/rcsensorled/test03.cc
 boards/rcsensorled/test04.cc
 boards/rcsensorled/test05.cc
+boards/rcsensorled/test06.cc
+boards/rcsensorled/test07.cc
+boards/rcsensorled/test08.cc
+boards/rcsensorled/test09.cc
+boards/rcsensorled/test10.cc
+boards/rcsensorled/test11.cc
 boards/unimaxi/Makefile
 boards/unimaxi/atmega1284p/Makefile
 boards/unimaxi/atmega1284p/esptest.cc
@@ -194,10 +200,10 @@ include/external/ds24b33.h
 include/external/esp8266/esp8266.h
 include/external/esp8266/esptimeclient.h
 include/hal/concepts.h
+include/hal/eeprom.h
 include/hal/rotaryencoder.h
 include/mcu/avr/atmega88p.h
 include/mcu/avr/clock.h
-include/mcu/avr/eeprom.h
 include/mcu/avr/grmega_x4.h
 include/mcu/avr/grmega_x8.h
 include/mcu/avr/groups.h

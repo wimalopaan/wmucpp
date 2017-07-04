@@ -35,3 +35,61 @@ Beschreibung:
 * test07:
   - SPI Terminal
   - Temperaturmessung DS18B20 (N Sensoren am OneWire)
+  
+* test08:
+  - SPI Terminal
+  - Temperaturmessung DS18B20 (N Sensoren am OneWire)
+  - Sensor zum Empfänger (1 Sensor)
+
+* test10:
+  - SPI Terminal
+  - Toggle an Leds1-Pin zum Messen der Frequenz der Loop
+  - EEprom - Lesen
+
+* test11:
+  - SPI Terminal
+  - Toggle an Leds1-Pin zum Messen der Frequenz der Loop
+  - EEprom - Schreiben
+
+------
+
+* test09:
+  - SPI Terminal
+  - Toggle an Leds1-Pin zum Messen der Frequenz der Loop
+  - Temperatur extern DS18B20 
+  - Analog Messung: Spannung Lipo, Temperatur (intern), ACS Strom
+  - Menu: Umschalten der Temperaturmessung
+  - Drehzahlmessung
+
+
+* test11:
+  - SPI Terminal
+  - Toggle an Leds1-Pin zum Messen der Frequenz der Loop
+  - EEprom
+  - MenuSystem
+  - Sensor-Konfiguration (Hott-Ascii-Protokoll)
+
+
+-----------
+
+Uart: sendQueue-Length verkürzen bzw. auf 0, wenn PA vorhanden
+
+-----------
+
+* test10:
+  - SPI Terminal
+  - alle Sensoren: Lipo, Strom, Temperatur(int/ext), Drehzahl
+
+* test11:
+  - SPI Terminal
+  - Empfang des SUMD-Protokolls
+  
+* test12:
+  - SPI Terminal
+  - Empfang des SUMD-Protokolls
+  - Steuerung PWM
+  
+* test13:
+  - SPI Terminal
+  - Empfang des SUMD-Protokolls
+  - Steuerung Leds

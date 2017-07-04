@@ -29,5 +29,10 @@ targets += test02.s test02.elf
 targets += test03.s test03.elf
 targets += test04.s test04.elf
 targets += test05.s test05.elf
+targets += test06.s test06.elf
+targets += test07.s test07.elf
+targets += test09.s test09.elf
+targets += test10.s test10.elf
+targets += test11.s test11.elf
 
 -include ../../Makefile.include
