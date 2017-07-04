@@ -82,6 +82,7 @@ using oneWirePin = AVR::Pin<PortD, 7>;
 using oneWireMaster = OneWire::Master<oneWirePin, OneWire::Normal>;
 using oneWireMasterAsync = OneWire::MasterAsync<oneWireMaster, Hott::hottDelayBetweenBytes>;
 using ds18b20 = DS18B20<oneWireMasterAsync>;
+using ds18b20Sync = DS18B20<oneWireMaster>;
 
 using hardPpm = AVR::PPM<1>; // timer1
 
@@ -94,4 +95,4 @@ using alarmTimer = AlarmTimer<systemClock>;
 using sensorRateTimer = AVR::Timer16Bit<4>; // timer 4
 
 using adc = AVR::Adc<0, AVR::Resolution<8>>;
-using adcController = AdcController<adc, 0, 1, 2>;
+using adcController = AdcController<adc, 0, 1, 2, 8>;

@@ -34,10 +34,10 @@ namespace AVR {
     
     template<>
     struct AdcParameter<0, ATMega1284P> {
-        static constexpr EventType event = EventType::AdcConversion;
-        static constexpr uint8_t bits = 10;
-        static constexpr double VRef = 2.56;
-        static constexpr double VBit = VRef / (1 << bits);
+//        static constexpr EventType event = EventType::AdcConversion;
+//        static constexpr uint8_t bits = 10;
+//        static constexpr double VRef = 2.56;
+//        static constexpr double VBit = VRef / (1 << bits);
     };
     
     template<uint8_t T>
@@ -58,15 +58,18 @@ namespace AVR {
         
     public:
         static constexpr auto mcuAdc = getBaseAddr<typename MCU::Adc, N>;
-        static constexpr auto channelMask = MCU::Adc::MUX::mux2 | MCU::Adc::MUX::mux1 | MCU::Adc::MUX::mux0;
+        static constexpr auto channelMask = MCU::Adc::MUX::mux3 | MCU::Adc::MUX::mux2 | MCU::Adc::MUX::mux1 | MCU::Adc::MUX::mux0;
         
         typedef typename Reso::type value_type;
         typedef FixedPoint<uint16_t, 8> voltage_type;
         
+        static constexpr auto VRef = MCU::Adc::template Parameter<N>::VRef;
+        
 //        static constexpr value_type value_mask = (1 << AdcParameter<N, MCU>::bits) - 1;
-        static constexpr double VBit = AdcParameter<N, MCU>::VBit;
+//        static constexpr double VBit = AdcParameter<N, MCU>::VBit;
         
         typedef MCU mcu_type;
+        
         static constexpr const uint8_t number = N;
         typedef typename MCU::Adc::template Parameter<N> mcuadc_parameter_type;
         
