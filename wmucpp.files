@@ -179,6 +179,7 @@ example/features/ledbuttons.h
 host/test04.cc
 host/test05.cc
 host/test06.cc
+host/test07.cc
 include/appl/blink.h
 include/appl/clockstatemachine.h
 include/appl/exponential.h
@@ -199,6 +200,7 @@ include/external/ds2401.h
 include/external/ds24b33.h
 include/external/esp8266/esp8266.h
 include/external/esp8266/esptimeclient.h
+include/external/hott/menu.h
 include/hal/concepts.h
 include/hal/eeprom.h
 include/hal/rotaryencoder.h
