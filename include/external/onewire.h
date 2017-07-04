@@ -343,15 +343,17 @@ namespace OneWire {
         };
         
         template<uint16_t MaxDevices>
-        static uint8_t findDevices(std::array<ow_rom_t, MaxDevices>& devices) {
+        static uint8_t findDevices(std::array<ow_rom_t, MaxDevices>& devices, uint8_t family = 0) {
             Rom rom;
             searchRom2(nullptr);
             for(uint8_t i = 0; i < devices.size; ++i) {
                 auto result = searchRom2(&rom);
                 if ((result == Result::ok) || (result == Result::last_code)) {
-                    devices[i] = rom;
-                    if (result == Result::last_code) {
-                        return i + 1;
+                    if ((family == 0) || (family == rom[0])) {
+                        devices[i] = rom;
+                        if (result == Result::last_code) {
+                            return i + 1;
+                        }
                     }
                 }
             }
