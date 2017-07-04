@@ -17,7 +17,7 @@
  */
 
 // preserve eeprom
-// sudo avrdude -p atmega328pb -P usb -c avrisp2 -U lfuse:w:0xe0:m -U hfuse:w:0xd1:m -U efuse:w:0xff:m
+// sudo avrdude -p atmega328pb -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P usb -c avrisp2 -U lfuse:w:0xe0:m -U hfuse:w:0xd1:m -U efuse:w:0xff:m
 
 //#define MEM
 #define NDEBUG
@@ -50,11 +50,12 @@ struct Distributor {
     }
 };
 
-class EEPromData : EEPromBase<EEPromData>{
+class EEPromData : public EEPromBase<EEPromData>{
 public:
     StringBuffer<10>& text() {
         return mText;
     }
+    
 private:
     StringBuffer<10> mText;
 };
@@ -65,22 +66,21 @@ using distributor = Distributor<terminalDevice, eeprom>;
 
 int main() {
     distributor::init();
-    
     std::outl<terminal>("Test11"_pgm);
-    Util::delay(500_ms);
     
-    eeprom::data().text().insertAt(0, "Bla Bla"_pgm);
+    eeprom::data().text().insertAtFill(0, "Bla Bla"_pgm);
     eeprom::data().change();
-    eeprom::data().timeout();
+    eeprom::data().expire();
     
     std::outl<terminal>("Text: "_pgm, eeprom::data().text());   
-    
-    eeprom::saveIfNeeded();
+    std::outl<terminal>("save ..."_pgm);
 
-    std::outl<terminal>("... saved"_pgm);
-    
-    while(true) {
+    while(eeprom::saveIfNeeded()) {
+        std::outl<terminal>("."_pgm);
     }
+  
+    std::outl<terminal>("...saved "_pgm);
+    while(true) {}
 }
 
 #ifndef NDEBUG

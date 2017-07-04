@@ -26,19 +26,16 @@ class EEProm;
 
 template<typename T>
 class EEPromBase {
+    EEPromBase() = default;
+    EEPromBase(const EEPromBase&) = delete;
+    EEPromBase& operator=(const EEPromBase&) = delete;
+    
     struct Flags {
         uint8_t changed : 1, saving : 1, timeoutExpired : 1;
     } __attribute__((packed));
-    friend class EEProm<T>;
-    static void startTimeout() {
+//    friend class EEProm<T>;
+    static void resetTimeout() {
         mFlags.timeoutExpired = false;
-    }
-public:
-    inline static bool changed() {
-        return mFlags.changed || mFlags.saving;
-    }
-    inline static void change() {
-        mFlags.changed = true;
     }
     inline static bool timeout() {
         return mFlags.timeoutExpired;
@@ -50,39 +47,58 @@ public:
     inline static void saveEnd() {
         mFlags.saving = false;
     }
+    inline static bool changed() {
+        return mFlags.changed || mFlags.saving;
+    }
+public:
+    static void expire() {
+        mFlags.timeoutExpired = true;
+    }
+    inline static void change() {
+        mFlags.changed = true;
+    }
 private:
     inline static Flags mFlags = {false, false, false};
 };
 
 template<typename DataType, uint16_t Offset>
-class EEProm {
+class EEProm final {
+    EEProm() = delete;
 public:
     static void init() {
-        eeprom_read_block(&mData, static_cast<void*>(Offset), sizeof(DataType));
+        eeprom_read_block(reinterpret_cast<uint8_t*>(&mData), reinterpret_cast<void*>(Offset), sizeof(DataType));
     }
     static DataType& data() {
         return mData;
     }
-    static void saveIfNeeded() {
+    static bool saveIfNeeded() {
         if (mData.timeout() && mData.changed()) {
             mData.saveStart();
             if (eeprom_is_ready()) {
                 eeprom_update_byte(ePtr(mOffset), rawData(mOffset));
-                mOffset = (mOffset + 1) % sizeof(DataType) + Offset;
-                if (mOffset == Offset) {
+                mOffset = ((mOffset + 1) % (sizeof(DataType)));
+                if (mOffset == 0) {
                     mData.saveEnd();
-                    mData.startTimeout();
+                    mData.resetTimeout();
+                    return false;
+                }
+                else {
+                    return true;
                 }
             }
+            else {
+                return true;
+            }
         }
+        return false;
     }
 private:
     inline static uint8_t* ePtr(uintptr_t offset) {
-        return reinterpret_cast<uint8_t*>(offset);
+        return reinterpret_cast<uint8_t*>(offset + Offset);
     }
     inline static uint8_t rawData(uintptr_t offset) {
         return *(reinterpret_cast<uint8_t*>(&mData) + offset);
     }
-    inline static uintptr_t mOffset = Offset;
+    inline static uintptr_t mOffset = 0;
     inline static DataType mData;
 };  

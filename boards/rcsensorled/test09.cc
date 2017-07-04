@@ -23,6 +23,7 @@
 #include "console.h"
 #include "util/meta.h"
 #include "appl/blink.h"
+#include "external/hott/menu.h"
 
 namespace {
     constexpr bool useTerminal = true;
@@ -60,6 +61,8 @@ using sensorData = Hott::SensorProtocollBuffer<0>;
 using menuData = Hott::SensorTextProtocollBuffer<0>;
 using crWriterSensorBinary = ConstanteRateWriter<sensorData, sensorUsart>;
 using crWriterSensorText = ConstanteRateWriter<menuData, sensorUsart>;
+
+using menuSystem = Hott::MenuSystem<menuData>;
 
 using isrRegistrar = IsrRegistrar<sensorUsart::RxHandler, sensorUsart::TxHandler>;
 
@@ -200,7 +203,7 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
     inline static uint8_t mCounter = 0;
 };
 
-using distributor = Distributor<terminalDevice, isrRegistrar, statusLed, crWriterSensorBinary, crWriterSensorText, adcController, ds18b20>;
+using distributor = Distributor<terminalDevice, menuSystem, isrRegistrar, statusLed, crWriterSensorBinary, crWriterSensorText, adcController, ds18b20>;
 
 void updateMeasurements() {
     constexpr uint8_t hottScale = adcController::mcu_adc_type::VRef / 0.02;
@@ -273,6 +276,8 @@ int main() {
             });
             
             updateMeasurements();
+            
+            menuSystem::periodic();
             
             sensorRateTimer::periodic<sensorRateTimer::flags_type::ocfa>([]() {
                 crWriterSensorBinary::rateProcess();
