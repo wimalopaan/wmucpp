@@ -81,6 +81,29 @@ namespace Hott {
             hottBinaryResponse.temperature2 = v.integer() + 20;
         }
         
+        static void temperatureRaw(uint8_t i, uint8_t v) {
+            assert(i < 2);
+            if (i == 0) {
+                hottBinaryResponse.temperature1 = v;
+            }
+            else {
+                hottBinaryResponse.temperature2 = v;
+            }
+        }
+
+        static void cellVoltageRaw(uint8_t cell, uint8_t v) {
+            hottBinaryResponse.cell[cell] = v;
+        } 
+        static void batteryVoltageRaw(uint8_t battery, uint16_t v) {
+            assert(battery < 2);
+            if (battery == 0) {
+                hottBinaryResponse.Battery1 = v;
+            }
+            else {
+                hottBinaryResponse.Battery2 = v;
+            }
+        }
+
     private:
         inline static std::byte getByte(uint8_t index) {
             assert(index < sizeof(hottBinaryResponse));
