@@ -15,7 +15,81 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef MENU_H
-#define MENU_H
 
-#endif // MENU_H
+#pragma once
+
+#include "sensorprotocollbuffer.h"
+
+namespace Hott {
+    
+    template<typename Buffer>
+    class MenuSystem {
+        enum class State: uint8_t {Filled, Filling};
+        
+        struct Position {
+            uint8_t mRow = 0;
+            uint8_t mColumn = 0;
+        };
+
+        struct MenuStart {
+            static constexpr auto tt = "WM Sensor 0.1"_pgm;
+            static constexpr auto z1 = "Temperatur"_pgm;
+            static constexpr auto z2 = "Drehzahl"_pgm;
+        };
+        
+    public:
+        enum class Menu: uint8_t {Undefined, Start, Temperatur, Rotations, Voltage, Current, PWM, Leds1, Leds2};
+        
+        static void init() {
+            select(Menu::Start);
+        }
+
+        static void select(Menu m) {
+            if (m != mMenu) {
+                mMenu = m;
+                startFilling();
+            }
+        }
+
+        static void periodic() {
+            switch (mState) {
+            case State::Filled:
+                break;
+            case State::Filling:
+                loadMenuData();
+                break;
+            }
+        }
+
+    private:
+        static void startFilling() {
+            mNextLoadPosition = {0, 0};
+            mState = State::Filling;
+        }
+
+        static void loadMenuData() {
+            if (mMenu == Menu::Start) {
+                switch(mNextLoadPosition.mRow) {
+                case 0:
+                    Buffer::text()[mNextLoadPosition.mRow][mNextLoadPosition.mColumn] = MenuStart::tt[mNextLoadPosition.mColumn];
+                    break;
+                case 1:
+                    break;
+                case 2:
+                    break;
+                default:
+                    break;
+                }        
+                
+            }    
+        }
+        
+        
+        
+        inline static Position mNextLoadPosition;
+        inline static Menu mMenu = Menu::Undefined;
+        inline static State mState = State::Filled;
+        
+        
+    };    
+}

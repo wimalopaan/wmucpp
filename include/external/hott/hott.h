@@ -29,6 +29,7 @@
 #include "external/hott/sensortextprotocollbuffer.h"
 #include "external/hott/sumdprotocoll.h"
 #include "external/hott/sumdprotocolladapter.h"
+//#include "external/hott/menu.h"
 
 namespace Hott {
 
