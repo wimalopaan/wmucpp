@@ -20,6 +20,11 @@
 MCU = attiny85
 F_OSC = 8000000
 
+
+bm60a.elf bm60a.s: MCU = atmega328p
+bm61a.elf bm61a.s: MCU = atmega328p
+bm62a.elf bm62a.s: MCU = atmega328p
+
 targets +=  bm05a.elf bm05a.s
 targets +=  bm01a.elf bm01a.s
 targets +=  bm02a.elf bm02a.s
@@ -30,6 +35,9 @@ targets +=  bm30a.elf bm30a.s bm30a.s.axtract
 targets +=  bm30b.elf bm30b.s
 targets +=  bm50a.elf bm50a.s
 targets +=  bm51a.elf bm51a.s
+targets +=  bm60a.elf bm60a.s
+targets +=  bm61a.elf bm61a.s
+targets +=  bm62a.elf bm62a.s
 
 -include ../../Makefile.include
 

@@ -20,6 +20,10 @@
 targets += test01 test02 test03 test04 # test05
 targets += test06
 targets += test07
+targets += test10
+targets += test11
+targets += test12
+targets += test13
 
 -include ../Makefile.include
 
@@ -29,4 +33,6 @@ CC = g++
 LDFLAGS =
 CXXFLAGS = -g -std=c++1z -fconcepts
 CXXFLAGS += -Wall -Wextra -fPIC
+#CXXFLAGS += -I../include -I../../../include
+
 MCUFLAGS =

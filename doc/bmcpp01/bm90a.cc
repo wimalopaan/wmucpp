@@ -21,6 +21,21 @@
 #include "std/array.h"
 #include "std/initializer_list.h"
 
+void * operator new(size_t size) noexcept
+{
+    asm(";new");
+    return nullptr;
+}
+
+void operator delete(void * ptr)
+{
+    asm(";delete1");
+}
+void operator delete(void * ptr, unsigned int)
+{
+    asm(";delete2");
+}
+
 namespace std {
     template<typename T>
     class vector {
@@ -46,14 +61,26 @@ namespace std {
 volatile uint8_t x;
 
 // Aufbau vtable:
-// 1) Implementierungsinformation (RTTI) (geht auch nicht: -frtti -> undefined reference
-// 2) Zeiger auf dtor
+// 1) Implementierungsinformation (0) (RTTI) (geht auch nicht: -frtti -> undefined reference
+// 2) Implementierungsinformation (0)
+// -- 2a) (bei virtuellem dtor) dtor1 (ptr, size)
+// -- 2b) (bei virtuellem dtor) dtor2 (ptr, size)
 // 3) Zeiger auf f()
 // 4) Zeiger auf weitere Funktionen
 
-struct IX {
-    //    virtual ~IX() {}; // <> benötigt delete, man kann also nur Zeiger auf bestehende Objekte verwenden -> undefined reference
-    virtual void f() const = 0;
+struct IIX {
+    virtual ~IIX() {
+//        asm(";d1");
+    }
+//    virtual void f() const = 0; // benötigt __cx_pure_virtual
+    virtual void f() const {}
+};
+
+struct IX : public IIX {
+    virtual ~IX() {
+        asm(";d2");
+    } // <> benötigt delete, man kann also nur Zeiger auf bestehende Objekte verwenden -> undefined reference
+//    virtual void f() const = 0;
 };
 
 class A : public IX {
@@ -77,13 +104,13 @@ A a;
 B b;
 
 int main() {
-//    std::array<IX*, 2> objects{&a, &b};
+    std::array<IX*, 2> objects{&a, &b};
     
-//    for(const auto o: objects) {
-//        if(o) {
-//            o->f();
-//        }
-//    }
+    for(const auto o: objects) {
+        if(o) {
+            o->f();
+        }
+    }
     
 //    std::vector<IX*> v = {&a, &b, nullptr};
 //    for(const auto o: v) {
