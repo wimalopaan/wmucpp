@@ -17,7 +17,7 @@
  */
 
 #define MEM
-//#define NDEBUG
+#define NDEBUG
 
 #include "rcsensorled01.h"
 #include "console.h"

@@ -101,7 +101,7 @@ public:
         if (frequency().value > 0) {
             return std::RPM{frequency()};
         }
-        return std::RPM{};
+        return std::RPM{0};
     }
     
     inline static void isr() {
@@ -116,6 +116,96 @@ private:
     inline static volatile value_type mTimerStartValue = 0;
     inline static volatile value_type mActualPeriod = 0;
     inline static volatile uint8_t mIntCount = 0;
+    inline static volatile uint_bounded<uint8_t> mMeasurements{0};
+};
+
+template<typename MCUTimer, const std::RPM& MaxRpm, const std::RPM& MinRpm, uint8_t MinMeasurements = 2>
+class RpmWithIcp final {
+    RpmWithIcp() = delete;
+public:
+    typedef typename MCUTimer::mcu_type   mcu_type;
+    typedef          MCUTimer             mcu_timer_type;
+    typedef typename MCUTimer::value_type value_type;
+    
+    static_assert(sizeof (value_type) >= 2, "timer at least 16bit");
+    static constexpr uint32_t minPeriod = 50;
+    
+    static constexpr auto prescaler = calculateRpm<MCUTimer>(MaxRpm, MinRpm, minPeriod);
+    static_assert(prescaler > 0);
+    
+    static constexpr std::hertz fTimer = Config::fMcu / (uint32_t)prescaler;
+    
+    static void init() {
+        MCUTimer::template prescale<prescaler>();
+        MCUTimer::mode(AVR::TimerMode::IcpNoInt);
+    }
+    
+    inline static value_type period() {
+        if constexpr(mcu_type::template is_atomic<value_type>()) {
+            return mActualPeriod;
+        }
+        else {
+            Scoped<DisbaleInterrupt<>> di;
+            return mActualPeriod;
+        }
+    }
+
+    inline static value_type filteredPeriod() {
+        if (mMeasurements >= MinMeasurements) {
+            if (mActualPeriod >= minPeriod) {
+                return period();
+            }
+        }
+        return 0;
+    }
+    
+    inline static void reset() {
+        mMeasurements = 0;
+    }
+    
+    inline static void check() {
+        static uint8_t lastNumberOfMeasurements = 0;
+        if (mMeasurements.isTop()) {
+            mMeasurements = MinMeasurements;
+        }
+        else {
+            if (mMeasurements == lastNumberOfMeasurements) {
+                reset();
+            }
+        }
+        lastNumberOfMeasurements = mMeasurements;
+    }
+    
+    inline static std::hertz frequency() {
+        if (filteredPeriod() > 0) {
+            return fTimer / (uint32_t)filteredPeriod();
+        }
+        return {0};
+    }
+
+    inline static std::RPM rpm() {
+        if (frequency().value > 0) {
+            return std::RPM{frequency()};
+        }
+        return std::RPM{0};
+    }
+
+    inline static void periodic() {
+        MCUTimer::template periodic<MCUTimer::flags_type::icf>([](){
+            mActualPeriod =(MCUTimer::icr() - mTimerStartValue + std::numeric_limits<value_type>::module()) % std::numeric_limits<value_type>::module();
+            mTimerStartValue = MCUTimer::icr();
+            ++mMeasurements;
+        });
+    }
+    
+    inline static void isr() {
+            mActualPeriod = (MCUTimer::counter() - mTimerStartValue + std::numeric_limits<value_type>::module()) % std::numeric_limits<value_type>::module();
+            mTimerStartValue = MCUTimer::counter();
+            ++mMeasurements;
+    }
+private:
+    inline static volatile value_type mTimerStartValue = 0;
+    inline static volatile value_type mActualPeriod = 0;
     inline static volatile uint_bounded<uint8_t> mMeasurements{0};
 };
 

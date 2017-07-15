@@ -28,36 +28,41 @@
 #pragma pack(1)
 
 namespace Hott {
-
-using namespace std::literals::chrono;
-
-constexpr const uint8_t keyRight = 14;
-constexpr const uint8_t keyLeft  =  7;
-constexpr const uint8_t keyUp    = 11;
-constexpr const uint8_t keyDown  = 13;
-constexpr const uint8_t keySet   =  9;
-
-constexpr const auto hottDelayBeforeAnswer = 5000_us;
-constexpr const auto hottDelayBetweenBytes = 1600_us;
-
-struct TextMsg {
-    typedef uint8_t item_type;
-    static constexpr uint8_t rows = 8;
-    static constexpr uint8_t columns = 21;
-    uint8_t start_byte;		//#01 Starting constant value == 0x7b
-    uint8_t esc;				//#02 Escape (higher-ranking menu in text mode or Text mode leave)
-    uint8_t warning_beeps;	//#03 1=A 2=B ...
-    std::array<StringBuffer<columns>, rows> text;
-    uint8_t stop_byte;		//#172 constant value 0x7d
-    uint8_t parity;			//#173 Checksum / parity
-};
-
-struct GamMsg {
-    typedef uint8_t item_type;
-    uint8_t start_byte;          //#01 start byte constant value 0x7c
-    uint8_t gam_sensor_id;       //#02 EAM sensort id. constat value 0x8d=GENRAL AIR MODULE
-    uint8_t warning_beeps;       //#03 1=A 2=B ... 0x1a=Z  0 = no alarm
-    /* VOICE OR BIP WARNINGS
+    
+    using namespace std::literals::chrono;
+    
+    enum class key_t : uint8_t {right = 14, left = 7, up = 11, down = 13, set = 9};
+    
+//    constexpr const std::byte keyRight{14};
+//    constexpr const std::byte keyLeft{7};
+//    constexpr const std::byte keyUp{11};
+//    constexpr const std::byte keyDown{13};
+//    constexpr const std::byte keySet{9};
+    
+    constexpr const auto hottDelayBeforeAnswer = 5000_us;
+//    constexpr const auto hottDelayBeforeAnswer = 5_ms;
+//    constexpr const auto hottDelayBetweenBytes = 1600_us;
+    constexpr const auto hottDelayBetweenBytes = 2000_us;
+//    constexpr const auto hottDelayBetweenBytes = 2_ms;
+    
+    struct TextMsg {
+        typedef uint8_t item_type;
+        static constexpr uint8_t rows = 8;
+        static constexpr uint8_t columns = 21;
+        uint8_t start_byte;		//#01 Starting constant value == 0x7b
+        uint8_t esc;				//#02 Escape (higher-ranking menu in text mode or Text mode leave)
+        uint8_t warning_beeps;	//#03 1=A 2=B ...
+        std::array<StringBuffer<columns>, rows> text;
+        uint8_t stop_byte;		//#172 constant value 0x7d
+        uint8_t parity;			//#173 Checksum / parity
+    };
+    
+    struct GamMsg {
+        typedef uint8_t item_type;
+        uint8_t start_byte;          //#01 start byte constant value 0x7c
+        uint8_t gam_sensor_id;       //#02 EAM sensort id. constat value 0x8d=GENRAL AIR MODULE
+        uint8_t warning_beeps;       //#03 1=A 2=B ... 0x1a=Z  0 = no alarm
+        /* VOICE OR BIP WARNINGS
                             Alarme sonore A.. Z, octet correspondant 1 à 26
                             0x00  00  0  No alarm
                             0x01  01  A
@@ -87,72 +92,72 @@ struct GamMsg {
                             0x19  25  Y  Maximum RPM Y
                             0x1A  26  Z  Max. Altitude Z
                                 */
-    uint8_t sensor_id;             	        //#04 constant value 0xd0
-    uint8_t alarm_invers1; //#05 alarm bitmask. Value is displayed inverted
-    //Bit#  Alarm field
-    // 0    all cell voltage
-    // 1    Battery 1
-    // 2    Battery 2
-    // 3    Temperature 1
-    // 4    Temperature 2
-    // 5    Fuel
-    // 6    mAh
-    // 7    Altitude
-    uint8_t alarm_invers2;     //#06 alarm bitmask. Value is displayed inverted
-    //Bit#  Alarm Field
-    // 0    main power current
-    // 1    main power voltage
-    // 2    Altitude
-    // 3    m/s
-    // 4    m/3s
-    // 5    unknown
-    // 6    unknown
-    // 7    "ON" sign/text msg active
-
-    std::array<uint8_t, 6> cell;
-
-    //#7 Volt Cell 1 (in 2 mV increments, 210 == 4.20 V)
-    //#8 Volt Cell 2 (in 2 mV increments, 210 == 4.20 V)
-    //#9 Volt Cell 3 (in 2 mV increments, 210 == 4.20 V)
-    //#10 Volt Cell 4 (in 2 mV increments, 210 == 4.20 V)
-    //#11 Volt Cell 5 (in 2 mV increments, 210 == 4.20 V)
-    //#12 Volt Cell 6 (in 2 mV increments, 210 == 4.20 V)
-    uint16_t  Battery1;                   //#13 LSB battery 1 voltage LSB value. 0.1V steps. 50 = 5.5V only pos. voltages
-    //#14 MSB
-    uint16_t  Battery2;                   //#15 LSB battery 2 voltage LSB value. 0.1V steps. 50 = 5.5V only pos. voltages
-    //#16 MSB
-    uint8_t temperature1;                    //#17 Temperature 1. Offset of 20. a value of 20 = 0°C
-    uint8_t temperature2;                    //#18 Temperature 2. Offset of 20. a value of 20 = 0°C
-    uint8_t fuel_procent;                    //#19 Fuel capacity in %. Values 0--100
-    //graphical display ranges: 0-100% with new firmwares of the radios MX12/MX20/...
-    uint16_t fuel_ml;                     //#20 LSB Fuel in ml scale. Full = 65535!
-    //#21 MSB
-    uint16_t rpm;                         //#22 RPM in 10 RPM steps. 300 = 3000rpm
-    //#23 MSB
-    uint16_t altitude;                  //#24 altitude in meters. offset of 500, 500 = 0m
-    //#25 MSB
-    uint16_t climbrate_L;                 //#26 climb rate in 0.01m/s. Value of 30000 = 0.00 m/s
-    //#27 MSB
-    uint8_t climbrate3s;                     //#28 climb rate in m/3sec. Value of 120 = 0m/3sec
-    uint16_t current;                     //#29 current in 0.1A steps 100 == 10,0A
-    //#30 MSB current display only goes up to 99.9 A (continuous)
-    uint16_t main_voltage;            	//#31 LSB Main power voltage using 0.1V steps 100 == 10,0V
-    //#32 MSB (Appears in GAM display right as alternate display.)
-    uint16_t batt_cap;                    //#33 LSB used battery capacity in 10mAh steps
-    //#34 MSB
-    uint16_t speed;                       //#35 LSB (air?) speed in km/h(?) we are using ground speed here per default
-    //#36 MSB speed
-    uint8_t min_cell_volt;                   //#37 minimum cell voltage in 2mV steps. 124 = 2,48V
-    uint8_t min_cell_volt_num;               //#38 number of the cell with the lowest voltage
-    uint16_t rpm2;                        //#39 LSB 2nd RPM in 10 RPM steps. 100 == 1000rpm
-    //#40 MSB
-    uint8_t general_error_number;      	//#41 General Error Number (Voice Error == 12)
-    uint8_t pressure;                        //#42 High pressure up to 16bar. 0,1bar scale. 20 == 2.0bar
-    uint8_t version;                         //#43 version number (Bytes 35 .43 new but not yet in the record in the display!)
-    uint8_t stop_byte;                       //#44 stop byte 0x7D
-    uint8_t parity;                          //#45 CHECKSUM CRC/Parity (calculated dynamicaly)
-};
-
+        uint8_t sensor_id;             	        //#04 constant value 0xd0
+        uint8_t alarm_invers1; //#05 alarm bitmask. Value is displayed inverted
+        //Bit#  Alarm field
+        // 0    all cell voltage
+        // 1    Battery 1
+        // 2    Battery 2
+        // 3    Temperature 1
+        // 4    Temperature 2
+        // 5    Fuel
+        // 6    mAh
+        // 7    Altitude
+        uint8_t alarm_invers2;     //#06 alarm bitmask. Value is displayed inverted
+        //Bit#  Alarm Field
+        // 0    main power current
+        // 1    main power voltage
+        // 2    Altitude
+        // 3    m/s
+        // 4    m/3s
+        // 5    unknown
+        // 6    unknown
+        // 7    "ON" sign/text msg active
+        
+        std::array<uint8_t, 6> cell;
+        
+        //#7 Volt Cell 1 (in 2 mV increments, 210 == 4.20 V)
+        //#8 Volt Cell 2 (in 2 mV increments, 210 == 4.20 V)
+        //#9 Volt Cell 3 (in 2 mV increments, 210 == 4.20 V)
+        //#10 Volt Cell 4 (in 2 mV increments, 210 == 4.20 V)
+        //#11 Volt Cell 5 (in 2 mV increments, 210 == 4.20 V)
+        //#12 Volt Cell 6 (in 2 mV increments, 210 == 4.20 V)
+        uint16_t  Battery1;                   //#13 LSB battery 1 voltage LSB value. 0.1V steps. 50 = 5.5V only pos. voltages
+        //#14 MSB
+        uint16_t  Battery2;                   //#15 LSB battery 2 voltage LSB value. 0.1V steps. 50 = 5.5V only pos. voltages
+        //#16 MSB
+        uint8_t temperature1;                    //#17 Temperature 1. Offset of 20. a value of 20 = 0°C
+        uint8_t temperature2;                    //#18 Temperature 2. Offset of 20. a value of 20 = 0°C
+        uint8_t fuel_procent;                    //#19 Fuel capacity in %. Values 0--100
+        //graphical display ranges: 0-100% with new firmwares of the radios MX12/MX20/...
+        uint16_t fuel_ml;                     //#20 LSB Fuel in ml scale. Full = 65535!
+        //#21 MSB
+        uint16_t rpm;                         //#22 RPM in 10 RPM steps. 300 = 3000rpm
+        //#23 MSB
+        uint16_t altitude;                  //#24 altitude in meters. offset of 500, 500 = 0m
+        //#25 MSB
+        uint16_t climbrate_L;                 //#26 climb rate in 0.01m/s. Value of 30000 = 0.00 m/s
+        //#27 MSB
+        uint8_t climbrate3s;                     //#28 climb rate in m/3sec. Value of 120 = 0m/3sec
+        uint16_t current;                     //#29 current in 0.1A steps 100 == 10,0A
+        //#30 MSB current display only goes up to 99.9 A (continuous)
+        uint16_t main_voltage;            	//#31 LSB Main power voltage using 0.1V steps 100 == 10,0V
+        //#32 MSB (Appears in GAM display right as alternate display.)
+        uint16_t batt_cap;                    //#33 LSB used battery capacity in 10mAh steps
+        //#34 MSB
+        uint16_t speed;                       //#35 LSB (air?) speed in km/h(?) we are using ground speed here per default
+        //#36 MSB speed
+        uint8_t min_cell_volt;                   //#37 minimum cell voltage in 2mV steps. 124 = 2,48V
+        uint8_t min_cell_volt_num;               //#38 number of the cell with the lowest voltage
+        uint16_t rpm2;                        //#39 LSB 2nd RPM in 10 RPM steps. 100 == 1000rpm
+        //#40 MSB
+        uint8_t general_error_number;      	//#41 General Error Number (Voice Error == 12)
+        uint8_t pressure;                        //#42 High pressure up to 16bar. 0,1bar scale. 20 == 2.0bar
+        uint8_t version;                         //#43 version number (Bytes 35 .43 new but not yet in the record in the display!)
+        uint8_t stop_byte;                       //#44 stop byte 0x7D
+        uint8_t parity;                          //#45 CHECKSUM CRC/Parity (calculated dynamicaly)
+    };
+    
 }
 
 #pragma pack(pop)

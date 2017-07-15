@@ -23,5 +23,5 @@
 # include <avr/avr_mcu_section.h>
 #endif
 
-
 AVR_MCU_SIMAVR_CONSOLE(&GPIOR0);
+//const uint8_t _mmcu[2] _MMCU_ = { AVR_MMCU_TAG, 0 };

@@ -32,7 +32,7 @@ namespace Hott {
     public:
         typedef uint8_t index_type;
         static constexpr const uint8_t number = N;
-        static constexpr const uint8_t cyclesBeforeAnswer = Hott::hottDelayBeforeAnswer / Hott::hottDelayBetweenBytes;
+        static constexpr const uint8_t cyclesBeforeAnswer = 1 + Hott::hottDelayBeforeAnswer / Hott::hottDelayBetweenBytes;
         
         SensorProtocollBuffer() = delete;
 
@@ -58,11 +58,6 @@ namespace Hott {
             hottBinaryResponse.start_byte = 0x7c;
             hottBinaryResponse.gam_sensor_id = 0x8d;
             hottBinaryResponse.sensor_id = 0xd0;
-            hottBinaryResponse.cell[0] = 111;
-            hottBinaryResponse.cell[1] = 222;
-            hottBinaryResponse.cell[2] = 10;
-            hottBinaryResponse.rpm = 111;
-            hottBinaryResponse.rpm2 = 222;
             hottBinaryResponse.stop_byte = 0x7d;
         }
         
@@ -102,6 +97,9 @@ namespace Hott {
             else {
                 hottBinaryResponse.Battery2 = v;
             }
+        }
+        static void currentRaw(uint16_t v) {
+            hottBinaryResponse.current = v;
         }
 
     private:

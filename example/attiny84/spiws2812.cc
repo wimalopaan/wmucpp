@@ -32,10 +32,10 @@ using led = AVR::Pin<PortB, 0>;
 
 template<typename Leds>
 class Inserter final {
-    static constexpr uint8_t* data = reinterpret_cast<uint8_t*>(&Leds::elementAt(0));
+    static constexpr std::byte* data = reinterpret_cast<std::byte*>(&Leds::elementAt(0));
     Inserter() = delete;
 public:
-    static inline void insert(uint8_t b) {
+    static inline void insert(std::byte b) {
         data[insertPosition] = b;        
         insertPosition = (insertPosition + 1) % (Leds::size * sizeof(typename Leds::item_type));
     }

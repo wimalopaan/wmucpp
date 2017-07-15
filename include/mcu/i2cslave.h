@@ -43,12 +43,12 @@ class I2CSlave final {
 public:
     struct I2CSlaveHandlerOvfl  : public IsrBaseHandler<AVR::ISR::Usi<0>::Overflow> {
         static inline void isr() {
-            uint8_t data = 0;
+            std::byte data{0};
             switch (state) {
             //###### Address mode: check address and send ACK (and next USI_SLAVE_SEND_DATA) if OK, else reset USI
             case State::USI_SLAVE_CHECK_ADDRESS:
-                if (*mcu_usi()->usidr == 0 || (TWI::Address::fromBusValue(*mcu_usi()->usidr) == Address)) {     // If adress is either 0 or own address
-                    if (*mcu_usi()->usidr & 0x01) {
+                if ((*mcu_usi()->usidr == std::byte{0}) || (TWI::Address::fromBusValue(*mcu_usi()->usidr) == Address)) {     // If adress is either 0 or own address
+                    if (std::any(*mcu_usi()->usidr & std::byte{0x01})) {
                         state = State::USI_SLAVE_SEND_DATA;		// Master Write Data Mode - Slave transmit
                     }
                     else {
@@ -66,7 +66,7 @@ public:
                 // Check reply and goto USI_SLAVE_SEND_DATA if OK, 
                 // else reset USI
             case State::USI_SLAVE_CHECK_REPLY_FROM_SEND_DATA:
-                if (*mcu_usi()->usidr) {
+                if (std::any(*mcu_usi()->usidr)) {
                     USI::setTwiStartConditionMode();	// If NACK, the master does not want more data
                     return;
                 }
@@ -110,8 +110,8 @@ public:
             case State::USI_SLAVE_GET_DATA_AND_SEND_ACK:
                 data = *mcu_usi()->usidr; 					// Read data received
                 if (!index) { 		// First access, read buffer position
-                    if (data < Size) {		// Check if address within buffer size
-                        index = data; 		// Set position as received
+                    if (std::to_integer<uint8_t>(data) < Size) {		// Check if address within buffer size
+                        index = std::to_integer<uint8_t>(data); 		// Set position as received
                     }
                     else {
                         index = 0; 			// Set address to 0
@@ -162,7 +162,7 @@ public:
         state = State::USI_SLAVE_CHECK_ADDRESS;
     }
     static auto& registers() {
-        static volatile std::array<uint8_t, Size> rm;
+        static volatile std::array<std::byte, Size> rm;
         return rm;
     }
 private:

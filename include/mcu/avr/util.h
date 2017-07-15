@@ -90,7 +90,7 @@ template<typename MCUTimer>
 constexpr uint16_t prescalerForAbove(const std::hertz& ftimer) {
     using pBits = typename MCUTimer::mcu_timer_type::template PrescalerBits<MCUTimer::number>;
     auto p = prescalerValues(pBits::values);
-    for(const auto& p : ::Util::sort(p, std::greater<uint16_t>())) {
+    for(const auto& p : ::Util::sort(p, std::less<uint16_t>())) {
         if (p > 0) {
             auto f = Config::fMcu / p;
             if (f >= ftimer) {

@@ -32,7 +32,7 @@ using pwm2Pin = AVR::Pin<PortB, 4>;
 using pwmEPin = AVR::Pin<PortB, 1>;
 using hbridge = TLE5205Soft<pwm1Pin, pwm2Pin, pwmEPin, pwmTimer>;
 
-constexpr TWI::Address address{0x54};
+constexpr TWI::Address address{0x54_B};
 using Usi = AVR::Usi<0>;
 using i2c = I2C::I2CSlave<Usi, address, 2>;
 

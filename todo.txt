@@ -1,0 +1,8 @@
+Noch zu untersuchen:
+
+* gcc-8: Code-Vergrößerung gegenüber gcc-7.1.1
+** kann an der Verwendung von __umulhisi3 statt __udivmodhi4 liegen, wenn im C++-Code a = (a + 1) % N; auftaucht
+
+* MenuSystem: ersetzen der dyn. Polymorphie durch stat. Polymorphie, da die Vtables im RAM beim AVR liegen.
+
+

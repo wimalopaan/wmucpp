@@ -23,7 +23,6 @@
 #include "console.h"
 #include "util/meta.h"
 #include "appl/blink.h"
-#include "external/hott/menu.h"
 
 namespace {
     constexpr bool useTerminal = true;
@@ -62,8 +61,7 @@ using menuData = Hott::SensorTextProtocollBuffer<0>;
 using crWriterSensorBinary = ConstanteRateWriter<sensorData, sensorUsart>;
 using crWriterSensorText = ConstanteRateWriter<menuData, sensorUsart>;
 
-using menuSystem = Hott::MenuSystem<menuData>;
-
+//using isrRegistrar = IsrRegistrar<sensorUsart::RxHandler, sensorUsart::TxHandler, rpm>;
 using isrRegistrar = IsrRegistrar<sensorUsart::RxHandler, sensorUsart::TxHandler>;
 
 struct HottBinaryHandler : public EventHandler<EventType::HottBinaryRequest> {
@@ -187,9 +185,10 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
         if (timer == *periodicTimer) {
             ++mCounter;
             std::outl<terminal>("Test counter: "_pgm, mCounter, " Unused: "_pgm, Util::Memory::getUnusedMemory());
-//            uint8_t channel = mCounter % adcController::NumberOfChannels;
-//            std::outl<terminal>("Adc "_pgm, channel, " :"_pgm, adcController::value(channel).toInt());
+            uint8_t channel = mCounter % adcController::NumberOfChannels;
+            std::outl<terminal>("Adc "_pgm, channel, " :"_pgm, adcController::value(channel).toInt());
             statusLed::tick();
+            rpm::reset();
             return true;
         }
         else if (timer == *measureTimer) {
@@ -203,7 +202,7 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
     inline static uint8_t mCounter = 0;
 };
 
-using distributor = Distributor<terminalDevice, menuSystem, isrRegistrar, statusLed, crWriterSensorBinary, crWriterSensorText, adcController, ds18b20>;
+using distributor = Distributor<terminalDevice, isrRegistrar, statusLed, crWriterSensorBinary, crWriterSensorText, adcController, ds18b20, rpm>;
 
 void updateMeasurements() {
     constexpr uint8_t hottScale = adcController::mcu_adc_type::VRef / 0.02;
@@ -229,8 +228,17 @@ void updateMeasurements() {
     
     constexpr uint8_t tempScale = adcController::mcu_adc_type::VRef / 0.314;
     
-    uint8_t t1 = (adcController::value(3) * tempScale * 25) / rawMax + 20;
+    uint8_t t1 = (adcController::value(4) * tempScale * 25) / rawMax + 20;
     sensorData::temperatureRaw(0, t1);
+    
+    constexpr uint8_t currentScale = 10.0 * adcController::mcu_adc_type::VRef / 0.066; // (ACS 712 = 66mV/A, Hott: 0,1A Steps)
+    
+    uint16_t c1 = (adcController::value(3) * currentScale) / rawMax;
+    
+    sensorData::currentRaw(c1);
+    
+    const auto upm = rpm::rpm();
+    sensorData::rpm1(upm);
 }
 
 int main() {
@@ -275,9 +283,9 @@ int main() {
                 alarmTimer::periodic();
             });
             
-            updateMeasurements();
+            rpm::periodic();
             
-            menuSystem::periodic();
+            updateMeasurements();
             
             sensorRateTimer::periodic<sensorRateTimer::flags_type::ocfa>([]() {
                 crWriterSensorBinary::rateProcess();
@@ -319,3 +327,7 @@ ISR(USART0_RX_vect) {
 ISR(USART0_UDRE_vect){
     isrRegistrar::isr<AVR::ISR::Usart<0>::UDREmpty>();
 }
+// RPM
+//ISR(PCINT1_vect) {
+//    isrRegistrar::isr<AVR::ISR::PcInt<1>>();
+//}

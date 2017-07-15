@@ -192,10 +192,10 @@ struct MCP23008Parameter {
     static constexpr EventType eventValueAvailable = EventType::I2CRamValueAvailable;
     static constexpr EventType eventError = EventType::I2CRamError;
 };
-constexpr TWI::Address mcp23008Address{35};
+constexpr TWI::Address mcp23008Address{std::byte{35}};
 using mcp23008 = I2CGeneric<TwiMasterAsync, mcp23008Address, MCP23008Parameter>;
 
-constexpr TWI::Address lcdAddress{0x59};
+constexpr TWI::Address lcdAddress{std::byte{0x59}};
 using lcd = I2CGeneric<TwiMasterAsync, lcdAddress>;
 
 #endif
@@ -275,9 +275,9 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
                 statusLed::off();
 #ifdef I2C
                 ds1307::startReadTimeInfo();
-                mcp23008::startWrite(0x09, ~counter);
+                mcp23008::startWrite(0x09, std::byte(~counter));
                 
-                lcd::startWrite(0, 'a' + (counter % 10));
+                lcd::startWrite(0, std::byte('a' + (counter % 10)));
 #endif
 #ifdef OW
                 
@@ -497,7 +497,7 @@ int main() {
             std::outl<terminal>(d);
         }
         
-        mcp23008::startWrite(0x00, 0x00); // output
+        mcp23008::startWrite(0x00, std::byte{0x00}); // output
 #endif    
         EventManager::run2<allEventHandler>([](){
 #ifdef BTerm

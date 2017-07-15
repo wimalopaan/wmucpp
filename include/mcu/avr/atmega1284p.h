@@ -98,8 +98,8 @@ namespace AVR {
                 twMrSlaNack = TW_MR_SLA_NACK
             };
             ControlRegister<TWI, TWS> twsr;
-            DataRegister<TWI, ReadWrite> twar;
-            DataRegister<TWI, ReadWrite> twdr;
+            DataRegister<TWI, ReadWrite, std::byte> twar;
+            DataRegister<TWI, ReadWrite, std::byte> twdr;
             enum class TWC : uint8_t {
                 twint = (1 << TWINT),
                 twea = (1 << TWEA),

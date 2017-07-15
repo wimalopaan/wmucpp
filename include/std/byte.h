@@ -22,44 +22,44 @@
 #include "std/bitmask.h"
 
 namespace std {
-
-enum class byte : uint8_t {};
-
-template<>
-struct enable_bitmask_operators<byte> {
-    static constexpr bool enable = true;
-};
-
-template<std::Integral T>
-constexpr T to_integer(byte b) noexcept {
-    return T((uint8_t)b);
-}
-
-constexpr bool any(std::byte b) {
-    return b != std::byte{0};
-}
-constexpr bool none(std::byte b) {
-    return b == std::byte{0};
-}
-
-template<typename IType>
-constexpr byte& operator<<=(byte& b, IType shift) noexcept {
-    return b = byte(static_cast<uint8_t>(b) << shift);
-}
-template<typename IType>
-constexpr byte& operator>>=(byte& b, IType shift) noexcept {
-    return b = byte(static_cast<uint8_t>(b) >> shift);
-}
-
-template<typename IType>
-constexpr byte operator>>(byte b, IType shift) noexcept {
-    return byte(static_cast<uint8_t>(b) >> shift);
-}
-template<typename IType>
-constexpr byte operator<<(byte b, IType shift) noexcept {
-    return byte(static_cast<uint8_t>(b) << shift);
-}
-
+    
+    enum class byte : uint8_t {};
+    
+    template<>
+    struct enable_bitmask_operators<byte> {
+        static constexpr bool enable = true;
+    };
+    
+    template<std::Integral T>
+    constexpr T to_integer(byte b) noexcept {
+        return T((uint8_t)b);
+    }
+    
+    constexpr bool any(std::byte b) {
+        return b != std::byte{0};
+    }
+    constexpr bool none(std::byte b) {
+        return b == std::byte{0};
+    }
+    
+    template<typename IType>
+    constexpr byte& operator<<=(byte& b, IType shift) noexcept {
+        return b = byte(static_cast<uint8_t>(b) << shift);
+    }
+    template<typename IType>
+    constexpr byte& operator>>=(byte& b, IType shift) noexcept {
+        return b = byte(static_cast<uint8_t>(b) >> shift);
+    }
+    
+    template<typename IType>
+    constexpr byte operator>>(byte b, IType shift) noexcept {
+        return byte(static_cast<uint8_t>(b) >> shift);
+    }
+    template<typename IType>
+    constexpr byte operator<<(byte b, IType shift) noexcept {
+        return byte(static_cast<uint8_t>(b) << shift);
+    }
+    
 } // std
 
 constexpr std::byte operator"" _B(unsigned long long v) {

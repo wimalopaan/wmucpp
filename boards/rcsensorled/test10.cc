@@ -63,19 +63,13 @@ using eeprom = EEProm<EEPromData>;
 
 using distributor = Distributor<terminalDevice, eeprom>;
 
-StringBuffer<10> text;
-
 int main() {
     distributor::init();
     
     std::outl<terminal>("Test10"_pgm);
     
-    eeprom_read_block(&text, (void*)0, sizeof(text));
-    std::outl<terminal>("...read: "_pgm, text);
-    
     std::outl<terminal>("Text: "_pgm, eeprom::data().text());   
-    while(true) {
-    }
+    while(true) {}
 }
 
 #ifndef NDEBUG

@@ -27,9 +27,7 @@
 
 namespace AVR {
     
-    enum class TimerMode : uint8_t {Normal = 0, CTC, OverflowInterrupt, CTCNoInt, NumberOfModes};
-    
-    
+    enum class TimerMode : uint8_t {Normal = 0, CTC, OverflowInterrupt, CTCNoInt, Icp, IcpNoInt, NumberOfModes};
     
     template<typename MCU, uint8_t N>
     struct TimerBase {
@@ -346,6 +344,9 @@ struct Timer16Bit<N, MCU>: public TimerBase<MCU, N>
     static inline volatile const uint16_t& counter() {
         return *mcuTimer()->tcnt;
     }
+    static inline volatile const uint16_t& icr() {
+        return *mcuTimer()->icr;
+    }
     
     static void start(){
     }
@@ -365,6 +366,9 @@ struct Timer16Bit<N, MCU>: public TimerBase<MCU, N>
         }
         if (timerMode == TimerMode::CTCNoInt) {
             mcuTimer()->tccrb.template add<MCU::Timer16Bit::TCCRB::wgm2>();
+        }
+        if (timerMode == TimerMode::IcpNoInt) {
+            mcuTimer()->tccrb.template add<MCU::Timer16Bit::TCCRB::icnc | MCU::Timer16Bit::TCCRB::ices>();
         }
     }
 };

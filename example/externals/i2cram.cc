@@ -30,7 +30,7 @@ using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
 using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
 
 static constexpr std::hertz fI2C{100000};
-static constexpr TWI::Address i2cramAddress{0x54};
+static constexpr TWI::Address i2cramAddress{std::byte{0x54}};
 using TwiMaster = TWI::Master<0>;
 using i2cram = I2CGeneric<TwiMaster, i2cramAddress>;
 
@@ -63,7 +63,7 @@ int main()
     uint8_t c = 0;
     while (true) {
         Util::delay(750_ms);
-        i2cram::write(0, ++c);
+        i2cram::write(0, std::byte{++c});
         if (auto v = i2cram::read(8)) {
             std::cout << "Ram: "_pgm << *v << std::endl;
         }

@@ -31,7 +31,7 @@ using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using led = AVR::Pin<PortB, 3>;
 
 
-constexpr TWI::Address address{0x55};
+constexpr TWI::Address address{std::byte{0x55}};
 using Usi = AVR::Usi<0>;
 using i2c = I2C::I2CSlave<Usi, address, 4>;
 
@@ -63,12 +63,12 @@ int main()
         Scoped<EnableInterrupt<>> ei;
         while(true) {
             auto pp = rpm::period();
-            i2c::registers()[0] = pp;
-            i2c::registers()[1] = pp >> 8;
+            i2c::registers()[0] = std::byte(pp);
+            i2c::registers()[1] = std::byte(pp >> 8);
             
             auto rr = rpm::rpm();
-            i2c::registers()[2] = rr.value();
-            i2c::registers()[3] = rr.value() >> 8;
+            i2c::registers()[2] = std::byte(rr.value());
+            i2c::registers()[3] = std::byte(rr.value() >> 8);
         }    
     }
 }

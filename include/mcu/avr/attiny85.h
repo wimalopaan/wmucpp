@@ -108,8 +108,8 @@ namespace AVR {
                 cnt0 = (1 << USICNT0) 
             };
             ControlRegister<USI, USIS> usisr;
-            DataRegister<USI, ReadWrite> usidr;
-            DataRegister<USI, ReadWrite> usibr;
+            DataRegister<USI, ReadWrite, std::byte> usidr;
+            DataRegister<USI, ReadWrite, std::byte> usibr;
             template<int N> struct Address;
         };
         

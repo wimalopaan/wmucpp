@@ -25,7 +25,6 @@
 #include "util/rational.h"
 
 namespace std {
-    
     struct percent {
         constexpr explicit percent(uint8_t p) : mValue(p) {
             assert(mValue <= 100);
@@ -58,11 +57,9 @@ namespace std {
     
     namespace literals {
         namespace quantity {
-            
             constexpr std::percent operator"" _ppc(unsigned long long v) {
                 return std::percent{static_cast<uint8_t>(v)};
             }
-            
         }
     }
     

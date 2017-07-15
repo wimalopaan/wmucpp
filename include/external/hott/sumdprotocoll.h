@@ -26,26 +26,26 @@
 #pragma pack(1)
 
 namespace Hott {
-
-struct SumDMsg {
-    static constexpr uint16_t ExtendedLow = 0x1c20;
-    static constexpr uint16_t Low = 0x2260;
-    static constexpr uint16_t Mid = 0x2ee0;
-    static constexpr uint16_t High = 0x3b60;
-    static constexpr uint16_t ExtendedHigh = 0x41a0;
-
-    static constexpr uint8_t ExtendedLow8Bit = ExtendedLow >> 8;
-    static constexpr uint8_t Low8Bit = Low >> 8;
-    static constexpr uint8_t Mid8Bit = Mid >> 8;
-    static constexpr uint8_t High8Bit = High >> 8;
-    static constexpr uint8_t ExtendedHigh8Bit = ExtendedHigh >> 8;
-
-    static constexpr const uint8_t MaxChannels = 32;
-    volatile uint8_t  nChannels = 0;
-    volatile std::array<std::pair<uint8_t, uint8_t>, MaxChannels> channelData = {};
-    volatile uint16_t crc = 0;
-};
-
+    
+    struct SumDMsg {
+        static constexpr uint16_t ExtendedLow = 0x1c20;
+        static constexpr uint16_t Low = 0x2260; // 8800
+        static constexpr uint16_t Mid = 0x2ee0; // 12000
+        static constexpr uint16_t High = 0x3b60; // 15200
+        static constexpr uint16_t ExtendedHigh = 0x41a0; // 16800
+        
+        static constexpr uint8_t ExtendedLow8Bit = ExtendedLow >> 8;
+        static constexpr uint8_t Low8Bit = Low >> 8; // 34
+        static constexpr uint8_t Mid8Bit = Mid >> 8; // 46
+        static constexpr uint8_t High8Bit = High >> 8; // 59
+        static constexpr uint8_t ExtendedHigh8Bit = ExtendedHigh >> 8; // 65
+        
+        static constexpr const uint8_t MaxChannels = 32;
+        volatile uint8_t  nChannels = 0;
+        volatile std::array<std::pair<uint8_t, uint8_t>, MaxChannels> channelData = {};
+        volatile uint16_t crc = 0;
+    };
+    
 }
 
 #pragma pack(pop)

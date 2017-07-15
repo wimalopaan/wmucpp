@@ -1,6 +1,10 @@
 Name: SteuerSensorModul01
 
-Achtung: Korrekturen auf dem Board notwendig (s.a. Target-Beschreibung)
+1) Achtung: Korrekturen auf dem Board notwendig (s.a. Target-Beschreibung)
+	- Pin 2 / 10 getauscht wegen PWM
+2) Achtung: weitere Korrekturen
+	- Opto auf ICP3
+	- TxD1 / PB3 auf Debug-Uart-Tx
 
 Beschreibung:
 
@@ -21,7 +25,7 @@ Beschreibung:
 
 * test04:
   - SPI Terminal
-  - Drehzahlmessung
+  - Drehzahlmessung (geändert: ICP3, ohne Interrupt)
   
 * test05:
   - SPI Terminal
@@ -39,32 +43,107 @@ Beschreibung:
 * test08:
   - SPI Terminal
   - Temperaturmessung DS18B20 (N Sensoren am OneWire)
-  - Sensor zum Empfänger (1 Sensor)
-
-* test10:
-  - SPI Terminal
-  - Toggle an Leds1-Pin zum Messen der Frequenz der Loop
-  - EEprom - Lesen
-
-* test11:
-  - SPI Terminal
-  - Toggle an Leds1-Pin zum Messen der Frequenz der Loop
-  - EEprom - Schreiben
-
-------
+  - Sensor zum Empfänger (Lipo/ int. Temperatur / 1 Sensor)
 
 * test09:
   - SPI Terminal
   - Toggle an Leds1-Pin zum Messen der Frequenz der Loop
-  - Temperatur extern DS18B20 
+  - Temperatur extern DS18B20 (N Sensoren) 
   - Analog Messung: Spannung Lipo, Temperatur (intern), ACS Strom
-  - Menu: Umschalten der Temperaturmessung
-  - Drehzahlmessung
+  - Drehzahlmessung (geändert: ICP3, ohen Interrupt)
 
+* test10:
+  - SPI Terminal
+  - EEprom - Lesen
 
 * test11:
   - SPI Terminal
+  - EEprom - Schreiben
+
+* test12:
+  - SPI Terminal (geändert: Debug-Uart von rcUsart mit 115200 (wie SUMD))
+  - Empfang des SUMD-Protokolls
+
+* test13:
+  - SPI Terminal
+  - Empfang des SUMD-Protokolls
+  - PWM-Steller
+  
+* test14: (wie test09 mit Aktoren)
+  - SPI Terminal (geändert: s.u.)
   - Toggle an Leds1-Pin zum Messen der Frequenz der Loop
+  - Temperatur extern DS18B20 (N Sensoren) 
+  - Analog Messung: Spannung Lipo, Temperatur (intern), ACS Strom
+  - Drehzahlmessung (geändert: ICP3, ohne Interrupt)
+  - Empfang des SUMD-Protokolls
+  - Drehzahlstellung (Kanal 0)	
+
+* test15: (wie test14)
+  - SPI Terminal (geändert: s.u.)
+  - Toggle an Leds1-Pin zum Messen der Frequenz der Loop
+  - Temperatur extern DS18B20 (N Sensoren) 
+  - Analog Messung: Spannung Lipo, Temperatur (intern), ACS Strom
+  - Drehzahlmessung (geändert: ICP3, ohne Interrupt)
+  - Empfang des SUMD-Protokolls
+  - Drehzahlstellung (Kanal 0)	
+  - Timer 2 (SystemClock) und Timer 4 (Constantrate) zu einem (Timer 2) zusmmengefasst, damit Timer 4 frei (s.a. local02.h)
+
+* test16: (wie test12)
+  - SPI Terminal (geändert: Debug-Uart von rcUsart mit 115200 (wie SUMD))
+  - Empfang des SUMD-Protokolls
+  - Timer 2 (SystemClock) und Timer 4 (Constantrate) zu einem (Timer 2) zusmmengefasst, damit Timer 4 frei (s.a. local02.h)
+  - Ansteuerung Leds 1 und 2
+
+* test17: (wie test15)
+  - Uart-Terminal 115200
+  - Temperatur extern DS18B20 (N Sensoren) 
+  - Analog Messung: Spannung Lipo, Temperatur (intern), ACS Strom
+  - Drehzahlmessung (geändert: ICP3, ohne Interrupt)
+  - Empfang des SUMD-Protokolls
+  - Drehzahlstellung (Kanal 0)	
+  - Timer 2 (SystemClock) und Timer 4 (Constantrate) zu einem (Timer 2) zusmmengefasst, damit Timer 4 frei (s.a. local02.h)
+  - Led-Ansteuerung
+
+* test18: (wie test16)
+  - SPI Terminal (geändert: Debug-Uart von rcUsart mit 115200 (wie SUMD))
+  - Empfang des SUMD-Protokolls
+  - Timer 2 (SystemClock) und Timer 4 (Constantrate) zu einem (Timer 2) zusmmengefasst, damit Timer 4 frei (s.a. local02.h)
+  - Ansteuerung Ppm 1 und 2
+
+* test19: (wie test17)
+  - Uart-Terminal 115200
+  - Temperatur extern DS18B20 (N Sensoren) 
+  - Analog Messung: Spannung Lipo, Temperatur (intern), ACS Strom
+  - Drehzahlmessung (geändert: ICP3, ohne Interrupt)
+  - Empfang des SUMD-Protokolls
+  - Drehzahlstellung (Kanal 0)	
+  - Timer 2 (SystemClock) und Timer 4 (Constantrate) zu einem (Timer 2) zusmmengefasst, damit Timer 4 frei (s.a. local02.h)
+  - Led-Ansteuerung
+  - Ansteuerung Ppm 1 und 2
+
+* test20: (wie test18)
+  - SPI Terminal (geändert: Debug-Uart von rcUsart mit 115200 (wie SUMD))
+  - Empfang des SUMD-Protokolls
+  - Timer 2 (SystemClock) und Timer 4 (Constantrate) zu einem (Timer 2) zusmmengefasst, damit Timer 4 frei (s.a. local02.h)
+  - Ansteuerung I2C: MCP23008 (Adresse 39 = 32 + 7, alle Pins auf high)
+
+* test21: (wie test19)
+  - Uart-Terminal 115200
+  - Temperatur extern DS18B20 (N Sensoren) 
+  - Analog Messung: Spannung Lipo, Temperatur (intern), ACS Strom
+  - Drehzahlmessung (geändert: ICP3, ohne Interrupt)
+  - Empfang des SUMD-Protokolls
+  - Drehzahlstellung (Kanal 0)	
+  - Timer 2 (SystemClock) und Timer 4 (Constantrate) zu einem (Timer 2) zusmmengefasst, damit Timer 4 frei (s.a. local02.h)
+  - Led-Ansteuerung
+  - Ansteuerung Ppm 1 und 2
+  - Ansteuerung I2C: MCP23008 (Adresse 39 = 32 + 7, alle Pins auf high)
+
+----
+
+- 10-Bit Analogwerte
+
+
   - EEprom
   - MenuSystem
   - Sensor-Konfiguration (Hott-Ascii-Protokoll)
@@ -75,21 +154,4 @@ Beschreibung:
 Uart: sendQueue-Length verkürzen bzw. auf 0, wenn PA vorhanden
 
 -----------
-
-* test10:
-  - SPI Terminal
-  - alle Sensoren: Lipo, Strom, Temperatur(int/ext), Drehzahl
-
-* test11:
-  - SPI Terminal
-  - Empfang des SUMD-Protokolls
   
-* test12:
-  - SPI Terminal
-  - Empfang des SUMD-Protokolls
-  - Steuerung PWM
-  
-* test13:
-  - SPI Terminal
-  - Empfang des SUMD-Protokolls
-  - Steuerung Leds

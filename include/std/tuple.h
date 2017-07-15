@@ -26,8 +26,8 @@ namespace std {
     template<typename... V> struct tuple {};
     template<typename T, typename... V>
     struct tuple<T, V...> : tuple<V...> { 
-        tuple() : tuple<V...>{}, mData{} {}
-        tuple(T t, V... vs) : tuple<V...>{vs...}, mData{t} {}
+        constexpr tuple() : tuple<V...>{}, mData{} {}
+        constexpr tuple(T t, V... vs) : tuple<V...>{vs...}, mData{t} {}
         template<uint8_t N>
         const auto& get() const {
             if constexpr(N == 0) {
@@ -49,7 +49,7 @@ namespace std {
         T mData;
     };
     template<uint8_t N, typename T, typename... TT>
-    const auto& get(const std::tuple<T, TT...>& tuple) {
+    constexpr const auto& get(const std::tuple<T, TT...>& tuple) {
         if constexpr(N == 0) {
             return tuple.mData;
         }    
@@ -59,7 +59,7 @@ namespace std {
         }
     }
     template<uint8_t N, typename T, typename... TT>
-    auto& get(std::tuple<T, TT...>& tuple) {
+    constexpr auto& get(std::tuple<T, TT...>& tuple) {
         if constexpr(N == 0) {
             return tuple.mData;
         }    
@@ -68,19 +68,43 @@ namespace std {
             return get<N - 1>(base);
         }
     }
-}
+    
+    template<typename... T>
+    tuple(T...) -> tuple<T...>;
+    
+    template <typename>
+    struct tuple_size;     
+    template <typename... Types>
+    struct tuple_size<tuple<Types...>> : public std::integral_constant<size_t, sizeof...(Types)>{};
+    
+    template<typename T>
+    class tuple_size<const T> : public std::integral_constant<size_t, tuple_size<T>::value> {};
+       
+    namespace detail {
+        template <typename Tuple1, size_t... Indices1, typename Tuple2, size_t... Indices2>
+        constexpr auto tuple_cat(const Tuple1& tup1, const Tuple2& tup2,
+                                  index_sequence<Indices1...>, index_sequence<Indices2...>) {
+            return tuple(get<Indices1>(tup1)..., get<Indices2>(tup2)...);
+        }
+    }
+    
+    template <typename Tuple1, typename Tuple2>
+    constexpr auto tuple_cat(const Tuple1& tup1, const Tuple2& tup2) {
+        return detail::tuple_cat(tup1, tup2, make_index_sequence<tuple_size<Tuple1>::value>{}, make_index_sequence<tuple_size<Tuple2>::value>{});
+    }
+} // !std
 
 namespace Meta {
     namespace detail {
-        template<uint8_t  N>
+        template<uint8_t N>
         struct visit {
             template<typename T, typename F>
-            static void at(T& tuple, uint8_t index, const F& f) {
+            constexpr static uint8_t at(T& tuple, uint8_t index, const F& f) {
                 if (index == (N - 1)) {
-                    f(std::get<N - 1>(tuple));
+                    return f(std::get<N - 1>(tuple));
                 }
                 else {
-                    visit<N - 1>::at(tuple, index, f);
+                    return visit<N - 1>::at(tuple, index, f);
                 }
             }
             
@@ -88,8 +112,9 @@ namespace Meta {
         template<>
         struct visit<0> {
             template<typename T, typename F>
-            static void at(T&, uint8_t , const F&) {
+            constexpr static uint8_t at(T&, uint8_t , const F&) {
                 assert(false);
+                return 0;
             }
         };
         
@@ -97,15 +122,15 @@ namespace Meta {
         void all(const T& tuple, const F& f, std::index_sequence<I...>) {
             (f(std::get<I>(tuple)), ...);
         }
-
+        
     }
     template<typename... T, typename F>
-    void visitAt(const std::tuple<T...>& tuple, uint8_t index, const F& f) {
-        detail::visit<sizeof...(T)>::at(tuple, index, f);
+    constexpr uint8_t visitAt(const std::tuple<T...>& tuple, uint8_t index, const F& f) {
+        return detail::visit<sizeof...(T)>::at(tuple, index, f);
     }
     template<typename... T, typename F>
-    void visitAt(std::tuple<T...>& tuple, uint8_t index, const F& f) {
-        detail::visit<sizeof...(T)>::at(tuple, index, f);
+    constexpr uint8_t visitAt(std::tuple<T...>& tuple, uint8_t index, const F& f) {
+        return detail::visit<sizeof...(T)>::at(tuple, index, f);
     }
     template<typename... T, typename F>
     void visit(const std::tuple<T...>& tuple, const F& f) {

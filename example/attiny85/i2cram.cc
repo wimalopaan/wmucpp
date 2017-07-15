@@ -29,7 +29,7 @@ using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 
 using led = AVR::Pin<PortB, 3>;
 
-constexpr TWI::Address address{0x54};
+constexpr TWI::Address address{std::byte{0x54}};
 using Usi = AVR::Usi<0>;
 using i2c = I2C::I2CSlave<Usi, address, 16>;
 

@@ -123,11 +123,11 @@ public:
         return !SSPin::read();
     }
     
-    static void put(uint8_t value) {
+    static void put(std::byte value) {
         mcu_usi()->usidr = value;
     }
     
-    static uint8_t get() {
+    static std::byte get() {
         while(!(mcu_usi()->usisr.template isSet<us::oif>()));
         return *mcu_usi()->usibr;
     }
@@ -144,7 +144,7 @@ public:
         mcu_usi()->usisr.template set<us::oif | us::pf | us::dc>();
     }    
     static void inline setSendAck() {
-        *mcu_usi()->usidr = 0;
+        *mcu_usi()->usidr = std::byte{0};
         sda_pin::template dir<AVR::Output>();
         mcu_usi()->usisr.template set<us::oif | us::pf | us::dc | us::cnt3 | us::cnt2 | us::cnt1>();
     }
@@ -157,7 +157,7 @@ public:
         mcu_usi()->usisr.template set<us::oif | us::pf | us::dc>();
     }
     static void inline setReadAck() {
-        *mcu_usi()->usidr = 0;
+        *mcu_usi()->usidr = std::byte{0};
         sda_pin::template dir<AVR::Input>();
         mcu_usi()->usisr.template set<us::oif | us::pf | us::dc | us::cnt3 | us::cnt2 | us::cnt1>();
     }

@@ -55,7 +55,7 @@ using i2cInterruptPin = AVR::Pin<PortB, 0>;
 constexpr auto interruptPulseWidth = 10_us;
 using i2cInterrupt = AVR::SinglePulse<i2cInterruptPin, interruptPulseWidth>;
 
-constexpr TWI::Address address{0x53};
+constexpr TWI::Address address{0x53_B};
 using Usi = AVR::Usi<0>;
 using i2c = I2C::I2CSlave<Usi, address, 2>;
 

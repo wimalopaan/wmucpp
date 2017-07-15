@@ -104,7 +104,7 @@ namespace AVR {
                 twStLastData = TW_ST_LAST_DATA
             };
             ControlRegister<TWI, TWS> twsr;
-            DataRegister<TWI, ReadWrite> twar;
+            DataRegister<TWI, ReadWrite, std::byte> twar;
             DataRegister<TWI, ReadWrite, std::byte> twdr;
             enum class TWC : uint8_t {
                 twint = (1 << TWINT),
@@ -539,6 +539,10 @@ namespace AVR {
         static constexpr double VRef = 1.1;
     };
     
+    template<>
+    struct ATMega328PB::TWI::PrescalerRow<0> {
+        static constexpr auto values = twiPrescalerBit<ATMega328PB::TWI::TWS>;
+    };
     
 }
 #pragma pack(pop)

@@ -29,7 +29,7 @@
 template<typename TWIMaster>
 class DS1307 : public EventHandler<EventType::TWIRecvComplete> {
 public:
-    static constexpr TWI::Address Address{0x68};
+    static constexpr TWI::Address Address{std::byte{0x68}};
     static constexpr const std::hertz fSCL = 100000_Hz;
     
     static void init() {
@@ -38,9 +38,9 @@ public:
     template<bool On>
     static bool halt() {
 //        static_assert(!TWIMaster::isAsync, "use only with synchron TWI Master");
-        std::array<uint8_t, 2> data;
-        data[0] = 0x00;
-        data[1] = On ? 0x80 : 0x00;
+        std::array<std::byte, 2> data;
+        data[0] = std::byte{0x00};
+        data[1] = std::byte{On ? 0x80 : 0x00};
         if constexpr(TWIMaster::isAsync) {
             return TWIMaster::template startWrite<Address>(data);
         }
@@ -52,9 +52,9 @@ public:
 
     template<bool On>
     static bool squareWave() {
-        std::array<uint8_t, 2> data;
-        data[0] = 0x07;
-        data[1] = On ? 0x10 : 0x80;
+        std::array<std::byte, 2> data;
+        data[0] = std::byte{0x07};
+        data[1] = std::byte{On ? 0x10 : 0x80};
         if constexpr(TWIMaster::isAsync) {
             return TWIMaster::template startWrite<Address>(data);
         }
@@ -71,9 +71,9 @@ public:
         TWIMaster::template startReadWithPointer<Address, Pointer, Length>();
     }
     
-    static std::optional<uint8_t> readControlRegister() {
+    static std::optional<std::byte> readControlRegister() {
         static_assert(!TWIMaster::isAsync, "use only with synchron TWI Master");
-        std::array<uint8_t, 1> data;
+        std::array<std::byte, 1> data;
         if (!TWIMaster::template readWithPointer<Address, 0x07>(data)) {
             return {};
         }        
@@ -98,15 +98,15 @@ public:
     
     static bool writeToRam(uint8_t index, uint8_t value) {
         assert(index < 56);
-        std::array<uint8_t, 2> data;
-        data[0] = 0x08 + index;
-        data[1] = value;
+        std::array<std::byte, 2> data;
+        data[0] = std::byte(0x08 + index);
+        data[1] = std::byte{value};
         return TWIMaster::template write<Address>(data);        
     }
     
-    static std::optional<uint8_t> readFromRam(uint8_t index) {
+    static std::optional<std::byte> readFromRam(uint8_t index) {
         assert(index < 56);
-        std::array<uint8_t, 1> data;
+        std::array<std::byte, 1> data;
         if (!TWIMaster::template readWithPointer<Address>(data, 0x08 + index)) {
             return {};
         }        
@@ -131,12 +131,12 @@ public:
         return TWIMaster::template startReadWithPointer<Address, 0, mTimeInfo.size>();
     }
     
-    static const std::array<uint8_t, 7>& timeInfo() {
+    static const std::array<std::byte, 7>& timeInfo() {
         return mTimeInfo;
     }
 
     static bool process(std::byte b) {
-        auto address = std::to_integer<uint8_t>(b);
+        auto address = b;
         if (TWI::Address{address} == Address) {
             for(uint8_t i = 0; i < mTimeInfo.size; ++i) {
                 if (auto v = TWIMaster::get()) {
@@ -154,5 +154,5 @@ public:
     }
 
 private:
-    inline static std::array<uint8_t, 7> mTimeInfo;   
+    inline static std::array<std::byte, 7> mTimeInfo;   
 };

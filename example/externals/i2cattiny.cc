@@ -43,7 +43,7 @@ namespace std {
 }
 
 static constexpr auto fTWI = 100000_Hz;
-static constexpr TWI::Address attiny{53};
+static constexpr TWI::Address attiny{std::byte{53}};
 
 int main()
 {
@@ -64,10 +64,10 @@ int main()
     while (true) {
         Util::delay(750_ms);
         
-        std::array<uint8_t, 3> data;
-        data[0] = 0;
-        data[1] = c++;
-        data[2] = c++;
+        std::array<std::byte, 3> data;
+        data[0] = std::byte{0};
+        data[1] = std::byte{c++};
+        data[2] = std::byte{c++};
         
         TwiMaster::write(data, attiny);
         

@@ -471,6 +471,7 @@ namespace AVR {
                                                              MUX::mux2 | MUX::mux0,
                                                              MUX::mux2 | MUX::mux1 | MUX::mux0
                                                              );
+        static constexpr double VRef = 1.1;
     };
     
     //Timer0

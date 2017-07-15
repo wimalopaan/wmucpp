@@ -71,7 +71,7 @@ using systemConstantRate = ConstantRateAdapter<1, systemTimer, AVR::ISR::Timer<1
 
 static auto periodicTimer = alarmTimer::create(500_ms, AlarmFlags::Periodic);
 
-constexpr TWI::Address address{0x55};
+constexpr TWI::Address address{0x55_B};
 using Usi = AVR::Usi<0>;
 using i2c = I2C::I2CSlave<Usi, address, 2>;
 
@@ -116,8 +116,8 @@ int main()
             alarmTimer::periodic();
             auto r = rpm::rpm();
             if (r) {
-                i2c::registers()[0] = r.value();
-                i2c::registers()[1] = r.value() >> 8;
+                i2c::registers()[0] = std::byte(r.value());
+                i2c::registers()[1] = std::byte(r.value() >> 8);
             }
         });
     }

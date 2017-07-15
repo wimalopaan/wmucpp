@@ -29,16 +29,13 @@
 
 namespace AVR {
     
-    template<uint8_t N, typename MCU>
-    struct AdcParameter;
+//    template<uint8_t N, typename MCU>
+//    struct AdcParameter;
     
-    template<>
-    struct AdcParameter<0, ATMega1284P> {
-//        static constexpr EventType event = EventType::AdcConversion;
-//        static constexpr uint8_t bits = 10;
+//    template<>
+//    struct AdcParameter<0, ATMega1284P> {
 //        static constexpr double VRef = 2.56;
-//        static constexpr double VBit = VRef / (1 << bits);
-    };
+//    };
     
     template<uint8_t T>
     struct Resolution;
@@ -66,7 +63,7 @@ namespace AVR {
         static constexpr auto VRef = MCU::Adc::template Parameter<N>::VRef;
         
 //        static constexpr value_type value_mask = (1 << AdcParameter<N, MCU>::bits) - 1;
-//        static constexpr double VBit = AdcParameter<N, MCU>::VBit;
+        static constexpr double VBit = VRef / Reso::type::Upper;
         
         typedef MCU mcu_type;
         
@@ -104,7 +101,7 @@ namespace AVR {
         }
         
         static FixedPoint<uint16_t, 8> toVoltage(uint16_t v) {
-            return FixedPoint<uint16_t, 8>{v * AdcParameter<N, MCU>::VBit};
+            return FixedPoint<uint16_t, 8>{v * VBit};
         }
         
         static void channel(uint8_t ch) {

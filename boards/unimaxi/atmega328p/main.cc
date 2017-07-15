@@ -164,7 +164,7 @@ std::array<Color, (uint8_t)Blinker<Led>::State::NumberOfStates> Blinker<Led>::mS
 
 using blinker = Blinker<led>;
 
-constexpr TWI::Address address{0x59};
+constexpr TWI::Address address{0x59_B};
 using i2c = TWI::Slave<0, address, lcd::param_type::rows * lcd::param_type::cols>;
 
 using isrReg = IsrRegistrar<systemConstantRate, spiInput, terminalDevive::RxHandler, terminalDevive::TxHandler, i2c>; 

@@ -53,7 +53,7 @@ public:
 
     static void rateProcess() {
         static State mState;
-        static uint8_t lastAddress = 0;
+        static std::byte lastAddress{0};
         switch(mState) {
         case State::Inactive:
             if (!mSendQueue.empty()) {
@@ -85,7 +85,7 @@ public:
             // send device address
             if (auto address = mSendQueue.pop_front()) {
                 lastAddress = *address;
-                *mcuTwi()->twdr = *address;
+                *mcuTwi()->twdr = std::byte{*address};
                 mcuTwi()->twcr.template set<twc::twint | twc::twen>();
 //                mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN);
                 if (BusAddress<Write>::isWrite(*address)) {
@@ -112,7 +112,7 @@ public:
                 }
                 else {
                     if (auto data = mSendQueue.pop_front()) {
-                        mBytesToRead = *data;
+                        mBytesToRead = std::to_integer<uint8_t>(*data);
                         if (mBytesToRead > 1) {
                             mState = State::Reading;
                         }
@@ -140,7 +140,7 @@ public:
                 else {
                     mState = State::Writing;
                     if (auto data = mSendQueue.pop_front()) {
-                        mBytesToWrite = *data;
+                        mBytesToWrite = std::to_integer<uint8_t>(*data);
                     }
                     else {
                         mState = State::Error;
@@ -153,7 +153,7 @@ public:
             if (mBytesToWrite > 0) {
             // send data to the previously addressed device
                 if (auto data = mSendQueue.pop_front()) {
-                    *mcuTwi()->twdr = *data;
+                    *mcuTwi()->twdr = std::byte{*data};
                     mcuTwi()->twcr.template set<twc::twint | twc::twen>();
 //                    mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN);
                     mState = State::WritingWait;
@@ -195,7 +195,7 @@ public:
             break;
         case State::ReadingWait:
             if(TWIMaster::transmissionCompleted()) {
-                uint8_t v = *mcuTwi()->twdr;
+                std::byte v = *mcuTwi()->twdr;
                 --mBytesToRead;
                 if (mRecvQueue.push_back(v)) {
                     if (mBytesToRead > 1) {
@@ -246,11 +246,11 @@ public:
         bool ok = true;
         auto aw = BusAddress<Write>(address);
         ok &= mSendQueue.push_back(aw.value());
-        ok &= mSendQueue.push_back(1);
-        ok &= mSendQueue.push_back(range.pointer);
+        ok &= mSendQueue.push_back(std::byte{1});
+        ok &= mSendQueue.push_back(std::byte{range.pointer});
         auto ar = BusAddress<Read>(address);        
         ok &= mSendQueue.push_back(ar.value());
-        ok &= mSendQueue.push_back(range.number);
+        ok &= mSendQueue.push_back(std::byte{range.number});
         return ok;
     }
     template<const Address& address, uint8_t Pointer, uint8_t Number>
@@ -258,33 +258,33 @@ public:
         bool ok = true;
         auto aw = BusAddress<Write>(address);
         ok &= mSendQueue.push_back(aw.value());
-        ok &= mSendQueue.push_back(1);
-        ok &= mSendQueue.push_back(Pointer);
+        ok &= mSendQueue.push_back(std::byte{1});
+        ok &= mSendQueue.push_back(std::byte{Pointer});
         auto ar = BusAddress<Read>(address);        
         ok &= mSendQueue.push_back(ar.value());
-        ok &= mSendQueue.push_back(Number);
+        ok &= mSendQueue.push_back(std::byte{Number});
         return ok;
     }
     
     template<const Address& address, uint16_t L>
-    static bool startWrite(const std::array<uint8_t, L>& data) {
+    static bool startWrite(const std::array<std::byte, L>& data) {
         bool ok = true;
         auto a = BusAddress<Write>(address);
         ok &= mSendQueue.push_back(a.value());
-        ok &= mSendQueue.push_back(data.size);
+        ok &= mSendQueue.push_back(std::byte{data.size});
         for(uint8_t i = 0; i < data.size; ++i) {
             ok &= mSendQueue.push_back(data[i]);
         }
         return ok;
     }
 
-    static std::optional<uint8_t> get() {
+    static std::optional<std::byte> get() {
         return mRecvQueue.pop_front();
     }
 
 private:
-    inline static std::FiFo<uint8_t, BSize> mRecvQueue;
-    inline static std::FiFo<uint8_t, BSize> mSendQueue;
+    inline static std::FiFo<std::byte, BSize> mRecvQueue;
+    inline static std::FiFo<std::byte, BSize> mSendQueue;
     inline static uint_bounded<uint8_t> mBytesToRead;
     inline static uint_bounded<uint8_t> mBytesToWrite;
 };
@@ -420,7 +420,7 @@ public:
     }
     
     template<uint16_t L>
-    static bool write(const std::array<uint8_t, L>& data, Address address) {
+    static bool write(const std::array<std::byte, L>& data, Address address) {
         bool ok = start<Write>(address);
         for(uint8_t i = 0; i < data.size; ++i) {
             ok &= write(data[i]);
@@ -430,7 +430,7 @@ public:
     }
     
     template<const Address& address, uint16_t L>
-    static bool write(const std::array<uint8_t, L>& data) {
+    static bool write(const std::array<std::byte, L>& data) {
         bool ok = start<Write>(address);
         for(uint8_t i = 0; i < data.size; ++i) {
             ok &= write(data[i]);
@@ -440,7 +440,7 @@ public:
     }
 
     template<const Address& address, uint8_t Pointer, uint16_t L>
-    static bool readWithPointer(std::array<uint8_t, L>& data) {
+    static bool readWithPointer(std::array<std::byte, L>& data) {
         bool ok = start<Write>(address);
         ok &= write<Pointer>();
         ok &= start<Read>(address);
@@ -453,9 +453,9 @@ public:
     }
 
     template<const Address& address, uint16_t L>
-    static bool readWithPointer(std::array<uint8_t, L>& data, uint8_t pointer) {
+    static bool readWithPointer(std::array<std::byte, L>& data, uint8_t pointer) {
         bool ok = start<Write>(address);
-        ok &= write(pointer);
+        ok &= write(std::byte{pointer});
         ok &= start<Read>(address);
         for(uint8_t i = 0; i < data.size - 1; ++i) {
             data[i] = read();
@@ -464,7 +464,7 @@ public:
         return ok;
     }
     
-    static bool write(uint8_t data) {
+    static bool write(std::byte  data) {
 //        uint8_t   twst = 0;
         
         // send data to the previously addressed device
@@ -487,7 +487,7 @@ public:
 //        uint8_t   twst = 0;
         
         // send data to the previously addressed device
-        *mcuTwi()->twdr = Data;
+        *mcuTwi()->twdr = std::byte{Data};
         mcuTwi()->twcr.template set<twc::twint | twc::twen>();
 //        mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN);
     
@@ -502,14 +502,14 @@ public:
         return true;       
     }
     
-    static uint8_t read() {
+    static std::byte read() {
         mcuTwi()->twcr.template set<twc::twint | twc::twen | twc::twea>();
 //        mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN) | (1<<TWEA);
         while(!transmissionCompleted());    
         return *mcuTwi()->twdr;    
     }
     
-    static uint8_t readBeforeStop() {
+    static std::byte readBeforeStop() {
         mcuTwi()->twcr.template set<twc::twint | twc::twen>();
 //        mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN);
         while(!transmissionCompleted());

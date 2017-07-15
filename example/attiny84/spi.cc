@@ -58,7 +58,7 @@ int main()
     while(true) {
         led::toggle();
         if (Usi::select()) {
-            uint8_t counter = Usi::get(); // number
+            uint8_t counter = std::to_integer<uint8_t>(Usi::get()); // number
             for(uint8_t i = 0; i < counter; ++i) {
                 Usi::get();
             }

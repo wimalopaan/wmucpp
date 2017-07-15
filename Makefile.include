@@ -116,9 +116,9 @@ AVRDUDE_FLAGS += $(AVRDUDE_ERASE_COUNTER)
 AVRDUDE_FLAGS += -C+/home/lmeier/Projekte/wmucpp/avrdude.conf
 
 #CC = /usr/local/avr/bin/avr-gcc
+#CXX = /usr/local/avr/bin/avr-g++
 CC = /usr/bin/avr-gcc
 CXX = /usr/bin/avr-g++
-#CXX = /usr/local/avr/bin/avr-g++
 OBJCOPY = avr-objcopy
 OBJDUMP = avr-objdump
 SIZE = avr-size

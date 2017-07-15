@@ -24,94 +24,178 @@
 #include "sumdprotocoll.h"
 
 namespace Hott {
-
-template<uint8_t M>
-class SumDProtocollAdapter final {
-    enum sumdstate {Undefined = 0, Start1, StartNormal, StartFailSafe, ChannelDataL, ChannelDataH, CrcL, CrcH, NumberOfStates};
-    typedef enum sumdstate sumdstate_t;
-    template<int N, typename PA> friend class AVR::Usart;
-
-public:
-    SumDProtocollAdapter() = delete;
-
-    static uint16_t value(uint8_t channel) {
-        Scoped<DisbaleInterrupt<>> di;
-        return std::combinedValue(mMsg.channelData[channel]);
-    }
-    static uint8_t value8Bit(uint8_t channel) {
-        return mMsg.channelData[channel].first;
-    }
-    static uint8_t numberOfChannels() {
-        return mMsg.nChannels;
-    }
-private:
-    inline static bool process(std::byte  c) { // from isr only
-        static sumdstate state = sumdstate::Undefined;
-        static uint8_t channel = 0;
-
-        switch (state) {
-        case sumdstate::Undefined:
-            if (c == std::byte{0xa8}) {
-                state = sumdstate::Start1;
-            }
-            else {
-                state = sumdstate::Undefined;
-            }
-            break;
-        case sumdstate::Start1:
-            if (c == std::byte{0x01}) {
-                state = sumdstate::StartNormal;
-            }
-            else if (c == std::byte{0x81}) {
-                state = sumdstate::StartFailSafe;
-            }
-            else {
-                state = sumdstate::Undefined;
-            }
-            break;
-        case sumdstate::StartNormal:
-            mMsg.nChannels = std::to_integer<uint8_t>(c);
-            state = sumdstate::ChannelDataH;
-            break;
-        case sumdstate::StartFailSafe:
-            mMsg.nChannels = std::to_integer<uint8_t>(c);
-            state = sumdstate::ChannelDataH;
-            break;
-        case sumdstate::ChannelDataH:
-            mMsg.channelData[channel].first = std::to_integer<uint8_t>(c);
-            state = sumdstate::ChannelDataL;
-            break;
-        case sumdstate::ChannelDataL:
-            mMsg.channelData[channel].second = std::to_integer<uint8_t>(c);
-            state = sumdstate::ChannelDataH;
-            ++channel;
-            if (channel < mMsg.nChannels) {
-                state = sumdstate::ChannelDataH;
-            }
-            else {
-                state = sumdstate::CrcH;
-                channel = 0;
-            }
-            if (channel >= SumDMsg::MaxChannels) {
-                channel = 0;
-            }
-            break;
-        case sumdstate::CrcH:
-            mMsg.crc = std::to_integer<uint8_t>(c) << 8;
-            state = sumdstate::CrcL;
-            break;
-        case sumdstate::CrcL:
-            mMsg.crc |= std::to_integer<uint8_t>(c);
-            state = sumdstate::Undefined;
-            break;
-        default:
-            assert(false);
-            break;
-        }
-        return true;
-    }
     
-    inline static volatile SumDMsg mMsg;
-};
+    struct MultiChannel {
+        inline static constexpr uint8_t size = 8;
+        enum class State {Off = 0, Up, Down};
 
+        uint16_t mData{0};
+        
+        State state(uint8_t index) volatile {
+            assert(index < size);
+            uint16_t mask = 0b11 << (2 * index);
+            return (State)((mData & mask) >> (2 * index));
+        }
+        void set(uint8_t index, uint8_t fromValue) volatile {
+            uint16_t mask = 0b11 << (2 * index);
+            if (fromValue == SumDMsg::High8Bit) {
+                mData = (mData & ~mask) | ((uint16_t)State::Up << (2 * index));
+            }
+            else if (fromValue == SumDMsg::Mid8Bit) {
+                mData = (mData & ~mask) | ((uint16_t)State::Off << (2 * index));
+            }
+            else if (fromValue == SumDMsg::Low8Bit) {
+                mData = (mData & ~mask) | ((uint16_t)State::Down << (2 * index));
+            }
+        }
+    };
+    
+    template<uint8_t M>
+    class SumDProtocollAdapter final {
+        enum sumdstate {Undefined = 0, Start1, StartNormal, StartFailSafe, ChannelDataL, ChannelDataH, CrcL, CrcH, NumberOfStates};
+        typedef enum sumdstate sumdstate_t;
+        
+        enum class MultiState : uint8_t {Undefined = 0, Sync1, Sync2, Data};
+        inline static MultiState mMultiState = MultiState::Undefined;
+        inline static uint8_t mMultiChannel = 0;
+        
+        inline static uint8_t mChannelForMultiChannel = 7;
+        
+        template<int N, typename PA> friend class AVR::Usart;
+        
+    public:
+        SumDProtocollAdapter() = delete;
+        
+        static uint_ranged<uint16_t, Hott::SumDMsg::Low, Hott::SumDMsg::High> value(uint8_t channel) {
+            Scoped<DisbaleInterrupt<>> di;
+            return std::combinedValue(mMsg.channelData[channel]);
+        }
+        static uint8_t value8Bit(uint8_t channel) {
+            return mMsg.channelData[channel].first;
+        }
+        static uint8_t numberOfChannels() {
+            return mMsg.nChannels;
+        }
+        static bool hasMultiChannel() {
+            return mHasMultiChannel;
+        }
+        static MultiChannel::State mChannel(uint8_t channel) {
+            return mMultiData.state(channel);
+        }
+
+    private:
+        inline static bool process(std::byte  c) { // from isr only
+            static sumdstate state = sumdstate::Undefined;
+            static uint8_t channel = 0;
+            
+            
+            switch (state) {
+            case sumdstate::Undefined:
+                if (c == std::byte{0xa8}) {
+                    state = sumdstate::Start1;
+                }
+                else {
+                    state = sumdstate::Undefined;
+                }
+                break;
+            case sumdstate::Start1:
+                if (c == std::byte{0x01}) {
+                    state = sumdstate::StartNormal;
+                }
+                else if (c == std::byte{0x81}) {
+                    state = sumdstate::StartFailSafe;
+                }
+                else {
+                    state = sumdstate::Undefined;
+                }
+                break;
+            case sumdstate::StartNormal:
+                mMsg.nChannels = std::to_integer<uint8_t>(c);
+                state = sumdstate::ChannelDataH;
+                break;
+            case sumdstate::StartFailSafe:
+                mMsg.nChannels = std::to_integer<uint8_t>(c);
+                state = sumdstate::ChannelDataH;
+                break;
+            case sumdstate::ChannelDataH:
+                mMsg.channelData[channel].first = std::to_integer<uint8_t>(c);
+                state = sumdstate::ChannelDataL;
+                break;
+            case sumdstate::ChannelDataL:
+                mMsg.channelData[channel].second = std::to_integer<uint8_t>(c);
+                state = sumdstate::ChannelDataH;
+                ++channel;
+                if (channel < mMsg.nChannels) {
+                    state = sumdstate::ChannelDataH;
+                }
+                else {
+                    state = sumdstate::CrcH;
+                    channel = 0;
+                }
+                if (channel >= SumDMsg::MaxChannels) {
+                    channel = 0;
+                }
+                break;
+            case sumdstate::CrcH:
+                mMsg.crc = std::to_integer<uint8_t>(c) << 8;
+                state = sumdstate::CrcL;
+                break;
+            case sumdstate::CrcL:
+                mMsg.crc |= std::to_integer<uint8_t>(c);
+                state = sumdstate::Undefined;
+                
+                switch(mMultiState) {
+                case MultiState::Undefined:
+                    if (value8Bit(mChannelForMultiChannel) == Hott::SumDMsg::ExtendedHigh8Bit) {
+                        mMultiState = MultiState::Sync1;
+                    }
+                    break;
+                case MultiState::Sync1:
+                    if (value8Bit(mChannelForMultiChannel) == Hott::SumDMsg::ExtendedHigh8Bit ) {
+                        mMultiState = MultiState::Sync2;
+                    }
+                    else {
+                        mMultiState = MultiState::Undefined;
+                    }
+                    break;
+                case MultiState::Sync2:
+                    if (value8Bit(mChannelForMultiChannel) < Hott::SumDMsg::ExtendedHigh8Bit) {
+                        mHasMultiChannel = true;
+                        mMultiState = MultiState::Data;
+                        mMultiChannel = 0;
+                        mMultiData.set(mMultiChannel++, value8Bit(mChannelForMultiChannel));
+                    }
+                    break;
+                case MultiState::Data:
+                    if (value8Bit(mChannelForMultiChannel) == Hott::SumDMsg::ExtendedHigh8Bit) {
+                        mMultiState = MultiState::Sync1;
+                    }
+                    else {
+                        if (mMultiChannel < mMultiData.size) {
+                            mMultiData.set(mMultiChannel++, value8Bit(mChannelForMultiChannel));
+                        }
+                        else {
+                            mHasMultiChannel = false;
+                            mMultiState = MultiState::Undefined;
+                            mMultiChannel = 0;
+                        }
+                    }
+                    break;
+                default:
+                    assert(false);
+                }
+                
+                break;
+            default:
+                assert(false);
+                break;
+            }
+            return true;
+        }
+        
+        inline static volatile SumDMsg mMsg;
+        inline static volatile MultiChannel mMultiData;
+        inline static bool mHasMultiChannel = false;
+    };
+    
 }

@@ -130,7 +130,7 @@ namespace std {
         template<MCU::Stream Stream>
         void out(std::percent p) {
             out<Stream>(p.value());
-            out<Stream>('%');
+            out<Stream>(Char{'%'});
         }
         
         template<MCU::Stream Stream>
@@ -197,9 +197,9 @@ BufferDevice<Buffer>& operator<<(BufferDevice<Buffer>& o, const char* str) {
     return o;
 }
 template<MCU::Stream Stream>
-Stream& operator<<(Stream& o, char c) {
+Stream& operator<<(Stream& o, Char c) {
     if constexpr(!Config::disableCout) {
-        Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(c);
+        Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(c.mValue);
     }
     return o;
 }
@@ -258,6 +258,16 @@ template<MCU::Stream Stream>
 Stream& operator<<(Stream& o, int32_t v) {
     if constexpr(!Config::disableCout) {
         std::detail::out<Stream>(v);
+    }
+    return o;
+}
+template<MCU::Stream Stream>
+Stream& operator<<(Stream& o, std::byte b) {
+    if constexpr(!Config::disableCout) {
+        constexpr uint8_t Base = 16;
+        std::array<char, Util::numberOfDigits<uint8_t, Base>() + 1> buffer;
+        Util::itoa_r<Base>(std::to_integer<uint8_t>(b), buffer);
+        return o << "0x"_pgm << buffer;
     }
     return o;
 }
@@ -380,7 +390,7 @@ Stream& operator<<(Stream& o, const std::RPM& rpm) {
 template<MCU::Stream Stream>
 Stream& operator<<(Stream& o, const std::percent& p) {
     if constexpr(!Config::disableCout) {
-        return o << p.value() << '%';
+        return o << p.value() << Char{'%'};
     }
     return o;
 }

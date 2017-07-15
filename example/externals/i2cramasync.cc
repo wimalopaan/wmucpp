@@ -35,7 +35,7 @@ using systemClock = AVR::Timer8Bit<0>;
 using systemTimer = AlarmTimer<systemClock>;
 
 static constexpr std::hertz fI2C{100000};
-static constexpr TWI::Address i2cramAddress{0x54};
+static constexpr TWI::Address i2cramAddress{std::byte{0x54}};
 using TwiMaster = TWI::Master<0>;
 using TwiMasterAsync = TWI::MasterAsync<TwiMaster>;
 using i2cram = I2CGeneric<TwiMasterAsync, i2cramAddress>;
@@ -76,7 +76,7 @@ struct TWIHandlerError: public EventHandler<EventType::TWIError> {
 struct TimerHandler : public EventHandler<EventType::Timer> {
     static bool process(std::byte) {
         std::cout << "timer"_pgm << std::endl;
-        if (!i2cram::startWrite(0, 1)) {
+        if (!i2cram::startWrite(0, std::byte{1})) {
             std::cout << "send error"_pgm << std::endl;
         }
         if (!i2cram::startRead(0)) {

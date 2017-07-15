@@ -36,6 +36,7 @@
 #include "external/tle5205.h"
 #include "external/rpm.h"
 #include "external/hott/hott.h"
+#include "external/i2cram.h"
 #include "hal/alarmtimer.h"
 #include "hal/adccontroller.h"
 
@@ -63,20 +64,31 @@ typedef leds2::color_type Color2;
 using Tle5205Error = AVR::Pin<PortD, 2>;
 using hbridge = TLE5205Hard<0, Tle5205Error>; // timer 0
 
-using reflexPin = AVR::Pin<PortC, 3>;
-using reflexPinSet = AVR::PinSet<reflexPin>;
-using reflexPinChange = AVR::PinChange<reflexPinSet>;
+//using reflexPin = AVR::Pin<PortC, 3>; // nicht mehr genutzt, umgeändert auf Platine
+//using reflexPinSet = AVR::PinSet<reflexPin>;
+//using reflexPinChange = AVR::PinChange<reflexPinSet>;
 
 using rpmTimer = AVR::Timer16Bit<3>; // timer 3
 constexpr std::RPM MaximumRpm{12000};
 constexpr std::RPM MinimumRpm{100};
-using rpm = RpmFromInterruptSource<reflexPinChange, rpmTimer, MinimumRpm, MaximumRpm>;
+//using rpm = RpmFromInterruptSource<reflexPinChange, rpmTimer, MinimumRpm, MaximumRpm>;
+using rpm = RpmWithIcp<rpmTimer, MinimumRpm, MaximumRpm>;
 
 // Achtung: gemeinsam mit I2C
 using SoftSPIData = AVR::Pin<PortC, 4>;
 using SoftSPIClock = AVR::Pin<PortC, 5>;
 using SoftSPISS = AVR::Pin<PortD, 3>;
 using SSpi0 = SoftSpiMaster<SoftSPIData, SoftSPIClock, SoftSPISS>;
+
+using TwiMaster = TWI::Master<0>;
+using TwiMasterAsync = TWI::MasterAsync<TwiMaster>;
+
+struct MCP23008Parameter {
+    static constexpr EventType eventValueAvailable = EventType::I2CRamValueAvailable;
+    static constexpr EventType eventError = EventType::I2CRamError;
+};
+constexpr TWI::Address mcp23008Address{std::byte{39}};
+using mcp23008 = I2CGeneric<TwiMasterAsync, mcp23008Address, MCP23008Parameter>;
 
 using oneWirePin = AVR::Pin<PortD, 7>;
 using oneWireMaster = OneWire::Master<oneWirePin, OneWire::Normal>;
@@ -92,7 +104,8 @@ using rcUsart = AVR::Usart<1, Hott::SumDProtocollAdapter<0>>;
 using systemClock = AVR::Timer8Bit<2>; // timer 2
 using alarmTimer = AlarmTimer<systemClock>;
 
+// ab test15 ist dieser Timer wieder frei
 using sensorRateTimer = AVR::Timer16Bit<4>; // timer 4
 
 using adc = AVR::Adc<0, AVR::Resolution<8>>;
-using adcController = AdcController<adc, 0, 1, 2, 8>;
+using adcController = AdcController<adc, 0, 1, 2, 7, 8>; // 0, 1, 2 : Lipo / 7: ACS-Strom / 8: int. Temperatur

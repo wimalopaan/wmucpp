@@ -267,6 +267,12 @@ public:
         mLeaked = false;
         return v;
     }
+    static void clear() {
+        mFifo.clear();
+        mLeaked = false;
+        mUnprocessed = false;
+    }
+
 private:
     static bool enqueueISR(const EventByte_t& event) {
         if (!mFifo.push_back(event)) {

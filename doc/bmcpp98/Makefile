@@ -18,13 +18,23 @@
 #
 
 MCU = attiny85
+#MCU = atmega328p
 F_OSC = 8000000
 
 
 bm60a.elf bm60a.s: MCU = atmega328p
 bm61a.elf bm61a.s: MCU = atmega328p
-bm62a.elf bm62a.s: MCU = atmega328p
+bm62a.elf bm62a.s: MCU = atmega328p 
+bm62a.elf bm62a.s: LOADLIBES = simavrconsole.o
+bm70a.elf bm70a.s: MCU = atmega328p
+bm71a.elf bm71a.s: MCU = atmega328p 
+bm71a.elf bm71a.s: LOADLIBES = simavrconsole.o
+bm72a.elf bm72a.s: MCU = atmega328p 
+bm72a.elf bm72a.s: LOADLIBES = simavrconsole.o
 
+simavrconsole.o: MCU = atmega328p 
+
+targets += simavrconsole.o
 targets +=  bm05a.elf bm05a.s
 targets +=  bm01a.elf bm01a.s
 targets +=  bm02a.elf bm02a.s
@@ -38,9 +48,12 @@ targets +=  bm51a.elf bm51a.s
 targets +=  bm60a.elf bm60a.s
 targets +=  bm61a.elf bm61a.s
 targets +=  bm62a.elf bm62a.s
+targets +=  bm70a.elf bm70a.s
+targets +=  bm71a.elf bm71a.s
+targets +=  bm72a.elf bm72a.s
 
 -include ../../Makefile.include
 
-bm05a.elf: bm05a.o simavrconsole.o
-	$(CC) $(LDFLAGS) -o $@ bm05a.o simavrconsole.o
+#bm05a.elf: bm05a.o simavrconsole.o
+#	$(CC) $(LDFLAGS) -o $@ bm05a.o simavrconsole.o
 

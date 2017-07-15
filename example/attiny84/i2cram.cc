@@ -40,7 +40,7 @@ using SoftSPIClock = AVR::Pin<PortA, 1>;
 using SoftSPISS = AVR::Pin<PortA, 2>;
 using SSpi0 = SoftSpiMaster<SoftSPIData, SoftSPIClock, SoftSPISS>;
 
-constexpr TWI::Address address{0x53};
+constexpr TWI::Address address{std::byte{0x53}};
 using Usi = AVR::Usi<0>;
 using i2c = I2C::I2CSlave<Usi, address, 2>;
 
@@ -72,7 +72,7 @@ int main()
         Scoped<EnableInterrupt<>> ei;
         while(true) {
             led::toggle();
-            Color color = {Red{(uint8_t)(i2c::registers()[0] % 10)}, Green{0}, Blue{1}};
+            Color color = {Red{(uint8_t)((uint8_t)i2c::registers()[0] % 10)}, Green{0}, Blue{1}};
             leds::set(color);
             Util::delay(100_ms);
         }    

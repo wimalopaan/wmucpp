@@ -45,10 +45,12 @@ struct Distributor {
     }
 };
 
-using isrRegistrar = IsrRegistrar<rpm>;
+//using isrRegistrar = IsrRegistrar<rpm>;
+using isrRegistrar = IsrRegistrar<>;
 using distributor = Distributor<terminalDevice, isrRegistrar, rpm>;
 
 int main() {
+    uint32_t counter = 0;
     distributor::init();
     
     std::outl<terminal>("Test04"_pgm);
@@ -56,15 +58,30 @@ int main() {
     {
         Scoped<EnableInterrupt<>> ei;
         while(true) {
-            Util::delay(500_ms);
-            const auto upm = rpm::rpm();
-            rpm::reset();
-            if (upm) {
-                std::outl<terminal>("RPM: "_pgm, upm.value());   
-            }
-            else {
-                std::outl<terminal>("--- "_pgm);   
-            }
+            if (counter > 900000) {
+                counter = 0;
+                const auto upm = rpm::rpm();
+                rpm::reset();
+                if (upm) {
+                    std::outl<terminal>("RPM: "_pgm, upm.value());   
+                }
+                else {
+                    std::outl<terminal>("--- "_pgm);   
+                }
+            }  
+            rpm::periodic();
+            
+// alte Variante mit PinChangeInterrupt
+//            Util::delay(500_ms);
+//            const auto upm = rpm::rpm();
+//            rpm::reset();
+//            if (upm) {
+//                std::outl<terminal>("RPM: "_pgm, upm.value());   
+//            }
+//            else {
+//                std::outl<terminal>("--- "_pgm);   
+//            }
+            ++counter;
         }
     }
 }
@@ -77,6 +94,6 @@ void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsign
 #endif
 
 // RPM
-ISR(PCINT1_vect) {
-    isrRegistrar::isr<AVR::ISR::PcInt<1>>();
-}
+//ISR(PCINT1_vect) {
+//    isrRegistrar::isr<AVR::ISR::PcInt<1>>();
+//}

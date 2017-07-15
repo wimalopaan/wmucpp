@@ -127,17 +127,17 @@ using TwiMasterAsync = TWI::MasterAsync<TwiMaster>;
 using ds1307 = DS1307<TwiMasterAsync>;
 
 #ifdef SLAVE84
-static constexpr TWI::Address i2cramAddress{0x53};
+static constexpr TWI::Address i2cramAddress{std::byte{0x53}};
 using i2cram = I2CGeneric<TwiMasterAsync, i2cramAddress>;
 #endif
 
 #ifdef SLAVE85
-static constexpr TWI::Address i2cledAddress{0x54};
+static constexpr TWI::Address i2cledAddress{std::byte{0x54}};
 using i2cled = I2CGeneric<TwiMasterAsync, i2cledAddress, I2CLedParameter>;
 #endif
 
 #ifdef SLAVE25
-static constexpr TWI::Address i2crpmAddress{0x55};
+static constexpr TWI::Address i2crpmAddress{std::byte{0x55}};
 using i2crpm = I2CGeneric<TwiMasterAsync, i2crpmAddress, I2CRpmParameter>;
 #endif
 
@@ -419,13 +419,13 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
 #ifdef I2C
             if (count % 2) {
 #ifdef SLAVE84
-                i2cram::startWrite(0, count);
+                i2cram::startWrite(0, std::byte{count});
 #endif
 #ifdef SLAVE85
-                i2cled::startWrite(0, count * 64);
+                i2cled::startWrite(0, std::byte(count * 64));
 #endif
 #ifdef SLAVE25
-                i2crpm::startWrite(0, 0);
+                i2crpm::startWrite(0, std::byte{0});
 #endif
             }
             else {

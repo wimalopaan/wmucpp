@@ -30,6 +30,9 @@ namespace Hott {
     class SensorTextProtocollBuffer final {
         SensorTextProtocollBuffer() = delete;
     public:
+        inline static constexpr auto rows = TextMsg::rows; 
+        inline static constexpr auto columns = TextMsg::columns; 
+        
         typedef uint8_t index_type;
         static constexpr const uint8_t number = N;
         static constexpr const uint8_t cyclesBeforeAnswer = Hott::hottDelayBeforeAnswer / Hott::hottDelayBetweenBytes;

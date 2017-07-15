@@ -1,3 +1,14 @@
+boards/rcsensorled/local02.h
+boards/rcsensorled/test13.cc
+boards/rcsensorled/test14.cc
+boards/rcsensorled/test15.cc
+boards/rcsensorled/test16.cc
+boards/rcsensorled/test17.cc
+boards/rcsensorled/test18.cc
+boards/rcsensorled/test19.cc
+boards/rcsensorled/test20.cc
+boards/rcsensorled/test21.cc
+todo.txt
 3rdparty/irmp/irmp.c
 3rdparty/irmp/irmp.h
 3rdparty/irmp/irmpconfig.h
@@ -155,6 +166,10 @@ doc/bmcpp98/bm51a.cc
 doc/bmcpp98/bm60a.cc
 doc/bmcpp98/bm61a.cc
 doc/bmcpp98/bm62a.cc
+doc/bmcpp98/bm70a.cc
+doc/bmcpp98/bm71a.cc
+doc/bmcpp98/bm72a.cc
+doc/bmcpp98/simavrconsole.c
 doc/bmcpp99/bm05a.cc
 doc/bmcpp99/bm10a.cc
 doc/bmcpp99/bm20a.cc
@@ -191,6 +206,7 @@ host/test10.cc
 host/test11.cc
 host/test12.cc
 host/test13.cc
+host/test15.cc
 include/appl/blink.h
 include/appl/clockstatemachine.h
 include/appl/exponential.h
@@ -212,6 +228,7 @@ include/external/ds24b33.h
 include/external/esp8266/esp8266.h
 include/external/esp8266/esptimeclient.h
 include/external/hott/menu.h
+include/external/hott/menu2.h
 include/hal/concepts.h
 include/hal/eeprom.h
 include/hal/rotaryencoder.h

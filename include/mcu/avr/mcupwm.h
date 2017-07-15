@@ -32,6 +32,7 @@ class PWM {
     typedef MCU mcu_type;
     typedef typename AVR::TimerParameter<TimerN, MCU>::timer_type timer_type;
     using MCUTimer = typename timer_type::mcu_timer_type;
+    typedef typename MCUTimer::value_type value_type;
     static constexpr const auto mcuTimer = getBaseAddr<MCUTimer, TimerN>;
     using pwmA = typename AVR::TimerParameter<TimerN, MCU>::ocAPin;
     using pwmB = typename AVR::TimerParameter<TimerN, MCU>::ocBPin;
@@ -47,6 +48,9 @@ public:
         static void ocr(const typename timer_type::value_type& v) {
             *mcuTimer()->ocra = v;
         }
+        static value_type ocr() {
+            return *mcuTimer()->ocra;
+        }
     };
     struct B {
         static void off() {
@@ -58,6 +62,9 @@ public:
         }
         static void ocr(const typename timer_type::value_type& v) {
             *mcuTimer()->ocrb = v;
+        }
+        static value_type ocr() {
+            return *mcuTimer()->ocrb;
         }
     };
 
@@ -84,6 +91,13 @@ public:
         else {
             Channel::off();
         }
+    }
+    template<typename Channel>
+    static value_type ocr() {
+        return Channel::ocr();
+    }
+    static std::hertz frequency() {
+        return timer_type::frequency();
     }
 };
 

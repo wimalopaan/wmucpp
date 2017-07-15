@@ -37,6 +37,7 @@ template<uint8_t TimerN, typename ErrPin, typename MCU = DefaultMcuType>
 class TLE5205Hard : public TLE5205Base {
 public:
     using mcu_pwm = AVR::PWM<TimerN, MCU>;
+    typedef typename mcu_pwm::value_type value_type;
     
     typedef ErrPin err_pin;
 
@@ -58,6 +59,12 @@ public:
             mcu_pwm::template pwm<typename mcu_pwm::A>(p);
             mcu_pwm::template pwm<typename mcu_pwm::B>(p);
         }
+    }
+    static value_type timerValue() {
+        return mcu_pwm::template ocr<typename mcu_pwm::B>();
+    }
+    static std::hertz frequency() {
+        return mcu_pwm::frequency();
     }
     static Direction& direction() {
         static Direction dir;

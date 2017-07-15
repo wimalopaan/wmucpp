@@ -154,7 +154,6 @@ struct TempFSM {
 
 using tempFSM = TempFSM;
 
-
 struct DS18B20MeasurementHandler: public EventHandler<EventType::DS18B20Measurement> {
     static bool process(std::byte) {
         auto t = ds18b20::temperature();
@@ -171,9 +170,6 @@ struct DS18B20ErrorHandler: public EventHandler<EventType::DS18B20Error> {
         return true;
     }
 };
-
-
-
 
 const auto periodicTimer = alarmTimer::create(500_ms, AlarmFlags::Periodic);
 

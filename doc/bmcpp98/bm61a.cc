@@ -60,7 +60,7 @@ volatile uint8_t index = 2;
 int main() {
     const std::tuple<A, B, C> t;
     
-    Meta::visitAt(t, index, [](const auto& v){v.f();});
+//    Meta::visitAt(t, index, [](const auto& v){v.f();});
  
     while(true) {}
 }

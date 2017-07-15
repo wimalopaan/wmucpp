@@ -48,12 +48,12 @@ public:
         TWIMaster::template init<fSCL>();
     }
     
-    static bool write(uint8_t index, uint8_t value) {
-        std::array<uint8_t, 2> data = {index, value};
+    static bool write(uint8_t index, std::byte value) {
+        std::array<std::byte, 2> data = {std::byte{index}, value};
         return TWIMaster::template write<Address>(data);
     }
-    static std::optional<uint8_t> read(uint8_t index) {
-        std::array<uint8_t, 1> data;
+    static std::optional<std::byte> read(uint8_t index) {
+        std::array<std::byte, 1> data;
         if (TWIMaster::template readWithPointer<Address>(data, index)) {
             return data[0];
         }
@@ -64,15 +64,15 @@ public:
         return TWIMaster::template startReadWithPointer<Address>(TWI::Range{index, 1});
     }
 
-    static bool startWrite(uint8_t index, uint8_t value) {
-        std::array<uint8_t, 2> data;
-        data[0] = index;
+    static bool startWrite(uint8_t index, std::byte value) {
+        std::array<std::byte, 2> data;
+        data[0] = std::byte{index};
         data[1] = value;
         return TWIMaster::template startWrite<Address>(data);        
     }
     
     static bool process(std::byte b) {
-        auto address = std::to_integer<uint8_t>(b);
+        auto address = b;
         if (TWI::Address{address} == Address) {
             if (auto v = TWIMaster::get()) {
                 EventManager::enqueue({Parameter::eventValueAvailable, std::byte{*v}});
