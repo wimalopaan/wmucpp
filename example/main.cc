@@ -461,12 +461,12 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
     //        std::cout << "c5: "_pgm << Hott::SumDProtocollAdapter<0>::value8Bit(5) << std::endl;
     //        std::cout << "nn: "_pgm << Hott::SumDProtocollAdapter<0>::numberOfChannels() << std::endl;
     
-            std::percent pv = std::scale(Hott::SumDProtocollAdapter<0>::value8Bit(0),
-                                   Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit);
-            std::cout << "pv: " << pv.value() << std::endl;
+//            std::percent pv = std::scale(Hott::SumDProtocollAdapter<0>::value8Bit(0),
+//                                   Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit);
+//            std::cout << "pv: " << pv.value() << std::endl;
             
 #ifdef PPMOUT
-            softPpm::ppm(pv, 0);
+//            softPpm::ppm(pv, 0);
 #endif
 #ifdef SPWM
             softPwm::pwm(pv, 0);

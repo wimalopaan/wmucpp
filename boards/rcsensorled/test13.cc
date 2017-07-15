@@ -138,8 +138,7 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
             statusLed::tick();
             std::outl<terminal>("channel "_pgm, (mCounter % 8), " : "_pgm, Hott::SumDProtocollAdapter<0>::value8Bit(mCounter % 8));
 
-            std::percent pv1 = std::scale(Hott::SumDProtocollAdapter<0>::value8Bit(0),
-                                          Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit);
+            std::percent pv1 = std::scale(Hott::SumDProtocollAdapter<0>::value8Bit(0));
             
             std::outl<terminal>("ch0: "_pgm, pv1);
             hbridge::pwm(pv1);

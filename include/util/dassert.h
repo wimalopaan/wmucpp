@@ -25,7 +25,8 @@
 #define EVALUATOR(x,y)  PASTER(x,y)
 #define PGMSTRING(string) EVALUATOR(string, PGMSUFFIX)
 
-extern void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept __attribute__ ((__noreturn__));
+//extern void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept __attribute__ ((__noreturn__));
+extern void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept;
 
 #ifndef NDEBUG
 # define assert(expr) ((expr) ? (void) (0) : assertFunction(PGMSTRING(#expr), PGMSTRING(__FILE__), __LINE__))

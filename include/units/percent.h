@@ -78,11 +78,13 @@ namespace std {
     
     template<typename T, T L, T U>
     constexpr percent scale(const uint_ranged<T, L, U>& value) {
-        return percent{(uint8_t)Util::RationalDivider<typename std::remove_cv<T>::type, 100, U-L>::scale(value.toInt() - L)};
+        return std::percent{(uint8_t)((static_cast<typename Util::enclosingType<std::remove_volatile_t<T>>::type>(value.toInt() - L) * 100u) / (U - L))};
+//        return percent{(uint8_t)Util::RationalDivider<typename std::remove_cv<T>::type, 100, U-L>::scale(value.toInt() - L)};
     }
     template<MCU::RegisterType T, T L, T U>
     constexpr percent scale(uint_ranged<T, L, U> value) {
-        return percent{(uint8_t)Util::RationalDivider<typename std::remove_cv<T>::type, 100, U-L>::scale(value.toInt() - L)};
+        return std::percent{(uint8_t)((static_cast<typename Util::enclosingType<std::remove_volatile_t<T>>::type>(value.toInt() - L) * 100u) / (U - L))};
+//        return percent{(uint8_t)Util::RationalDivider<typename std::remove_cv<T>::type, 100, U-L>::scale(value.toInt() - L)};
     }
 //    template<uint8_t L, uint8_t U>
 //    constexpr percent scale(uint_ranged<uint8_t, L, U> value) {

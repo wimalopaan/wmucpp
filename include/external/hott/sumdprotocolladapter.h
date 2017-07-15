@@ -66,11 +66,36 @@ namespace Hott {
     public:
         SumDProtocollAdapter() = delete;
         
-        static uint_ranged<uint16_t, Hott::SumDMsg::Low, Hott::SumDMsg::High> value(uint8_t channel) {
+        static uint_ranged<uint16_t, Hott::SumDMsg::ExtendedLow, Hott::SumDMsg::ExtendedHigh> valueExtended(uint8_t channel) {
             Scoped<DisbaleInterrupt<>> di;
             return std::combinedValue(mMsg.channelData[channel]);
         }
-        static uint8_t value8Bit(uint8_t channel) {
+
+        static uint_ranged<uint16_t, Hott::SumDMsg::Low, Hott::SumDMsg::High> value(uint8_t channel) {
+            Scoped<DisbaleInterrupt<>> di;
+            auto v = std::combinedValue(mMsg.channelData[channel]);
+            if (v < Hott::SumDMsg::Low) {
+                return Hott::SumDMsg::Low;
+            }
+            else if (v > Hott::SumDMsg::High) {
+                return Hott::SumDMsg::High;
+            }
+            else {
+                return v;
+            }
+        }
+        static uint_ranged<uint8_t, Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit> value8Bit(uint8_t channel) {
+            if (mMsg.channelData[channel].first < Hott::SumDMsg::Low8Bit) {
+                return Hott::SumDMsg::Low8Bit;
+            }
+            else if (mMsg.channelData[channel].first > Hott::SumDMsg::High8Bit) {
+                return Hott::SumDMsg::High8Bit;
+            } 
+            else {
+                return mMsg.channelData[channel].first;
+            }
+        }
+        static uint_ranged<uint8_t, Hott::SumDMsg::ExtendedLow8Bit, Hott::SumDMsg::ExtendedHigh8Bit> value8BitExtended(uint8_t channel) {
             return mMsg.channelData[channel].first;
         }
         static uint8_t numberOfChannels() {
@@ -87,7 +112,6 @@ namespace Hott {
         inline static bool process(std::byte  c) { // from isr only
             static sumdstate state = sumdstate::Undefined;
             static uint8_t channel = 0;
-            
             
             switch (state) {
             case sumdstate::Undefined:
@@ -146,12 +170,12 @@ namespace Hott {
                 
                 switch(mMultiState) {
                 case MultiState::Undefined:
-                    if (value8Bit(mChannelForMultiChannel) == Hott::SumDMsg::ExtendedHigh8Bit) {
+                    if (value8BitExtended(mChannelForMultiChannel) == Hott::SumDMsg::ExtendedHigh8Bit) {
                         mMultiState = MultiState::Sync1;
                     }
                     break;
                 case MultiState::Sync1:
-                    if (value8Bit(mChannelForMultiChannel) == Hott::SumDMsg::ExtendedHigh8Bit ) {
+                    if (value8BitExtended(mChannelForMultiChannel) == Hott::SumDMsg::ExtendedHigh8Bit ) {
                         mMultiState = MultiState::Sync2;
                     }
                     else {
@@ -159,7 +183,7 @@ namespace Hott {
                     }
                     break;
                 case MultiState::Sync2:
-                    if (value8Bit(mChannelForMultiChannel) < Hott::SumDMsg::ExtendedHigh8Bit) {
+                    if (value8BitExtended(mChannelForMultiChannel) < Hott::SumDMsg::ExtendedHigh8Bit) {
                         mHasMultiChannel = true;
                         mMultiState = MultiState::Data;
                         mMultiChannel = 0;
@@ -167,7 +191,7 @@ namespace Hott {
                     }
                     break;
                 case MultiState::Data:
-                    if (value8Bit(mChannelForMultiChannel) == Hott::SumDMsg::ExtendedHigh8Bit) {
+                    if (value8BitExtended(mChannelForMultiChannel) == Hott::SumDMsg::ExtendedHigh8Bit) {
                         mMultiState = MultiState::Sync1;
                     }
                     else {

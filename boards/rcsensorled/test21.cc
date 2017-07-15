@@ -208,8 +208,9 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
             ++mCounter;
             statusLed::tick();
 
-            std::percent pv1 = std::scale(Hott::SumDProtocollAdapter<0>::value8Bit(0),
-                                          Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit);
+            std::outl<terminal>("pr: "_pgm, Hott::SumDProtocollAdapter<0>::value8Bit(0).toInt());
+            std::percent pv1 = std::scale(Hott::SumDProtocollAdapter<0>::value8Bit(0));
+            std::outl<terminal>("pv: "_pgm, pv1);
             hbridge::pwm(pv1);
             
             if (mCounter % 2) {
@@ -226,17 +227,20 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
             auto v2 = Hott::SumDProtocollAdapter<0>::value(3);
             hardPpm::ppm<hardPpm::B>(v2);
 
-            uint8_t v10 = Hott::SumDProtocollAdapter<0>::value8Bit(4);
-            mcp23008::startWrite(0x09, std::byte{v10});
-            
             rpm::check();
             
             if (Hott::SumDProtocollAdapter<0>::hasMultiChannel()) {
+                std::byte d{0};
                 std::out<terminal>("Multi:"_pgm);
-                for(uint8_t i = 0; i < 8; ++i) {
+                for(uint8_t i = 0; i < Hott::MultiChannel::size; ++i) {
+                    if (Hott::SumDProtocollAdapter<0>::mChannel(i) == Hott::MultiChannel::State::Up) {
+                        d |= std::byte(1 << i);
+                    }
                     std::out<terminal>(Char{' '}, (uint8_t)Hott::SumDProtocollAdapter<0>::mChannel(i));
                 }
                 std::outl<terminal>(Char{'-'});
+
+                mcp23008::startWrite(0x09, d);
             }
             
             return true;
@@ -304,6 +308,9 @@ int main() {
     hbridge::pwm(0_ppc);
     hbridge::direction() = hbridge::Direction{false};
     
+    hardPpm::ppm<hardPpm::A>(50_ppc);
+    hardPpm::ppm<hardPpm::A>(50_ppc);
+    
     leds1::set(Constants::cGreen);
     leds2::set(Constants::cRed);
     
@@ -364,7 +371,7 @@ int main() {
 #ifndef NDEBUG
 void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
     std::outl<terminal>("Assertion failed: "_pgm, expr, Char{','}, file, Char{','}, line);
-    while(true) {}
+//    while(true) {}
 }
 #endif
 

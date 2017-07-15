@@ -199,8 +199,7 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
             ++mCounter;
             statusLed::tick();
 
-            std::percent pv1 = std::scale(Hott::SumDProtocollAdapter<0>::value8Bit(0),
-                                          Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit);
+            std::percent pv1 = std::scale(Hott::SumDProtocollAdapter<0>::value8Bit(0));
             
             hbridge::pwm(pv1);
             rpm::check();
