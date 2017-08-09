@@ -112,6 +112,11 @@ int main() {
         }
     }
     
+//    IX* a1 = &a;
+    
+//    auto z = dynamic_cast<A*>(a1);
+    
+    
 //    std::vector<IX*> v = {&a, &b, nullptr};
 //    for(const auto o: v) {
 //        if(o) {

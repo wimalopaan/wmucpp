@@ -17,7 +17,7 @@
  */
 
 // sudo avrdude -p attiny85 -P usb -c avrisp2 -U lfuse:w:0xe2:m -U hfuse:w:0xdf:m -U efuse:w:0xff:m
-// avrdude -p m328p -c arduino -b 57600 -P /dev/ttyUSB0 -U flash:w:ledbuttons.hex 
+// avrdude -p m328p -c arduino -b 57600 -P /dev/ttyUSB0 -U flash:w:blink.elf
 
 #define NDEBUG
 

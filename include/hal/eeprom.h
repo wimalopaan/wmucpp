@@ -100,5 +100,5 @@ private:
         return *(reinterpret_cast<uint8_t*>(&mData) + offset);
     }
     inline static uintptr_t mOffset = 0;
-    inline static DataType mData;
+    inline static DataType mData{};
 };  

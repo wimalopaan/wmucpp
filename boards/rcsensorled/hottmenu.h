@@ -20,6 +20,18 @@
 #include "std/array.h"
 #include "container/stringbuffer.h"
 #include "container/pgmstring.h"
+#include "hal/eeprom.h"
+
+struct ApplData : public EEPromBase<ApplData> {
+   
+    enum class AVKey : uint8_t {TSensor1 = 0, TSensor2, RpmSensor1, RpmSensor2, Spannung1, Spannung2, Strom, PWM, Leds1, Leds2, _Number};
+    std::array<uint8_t, static_cast<uint8_t>(AVKey::_Number)> AValues;
+    
+    std::array<OneWire::ow_rom_t, 4> dsIds;
+};
+
+using eeprom = EEProm<ApplData>;
+auto& appData = eeprom::data();
 
 namespace Hott {
     static constexpr uint8_t MenuLength = 7;
@@ -42,52 +54,16 @@ namespace Hott {
 //        virtual ~MenuItem() {};
     };
 
-    template<uint8_t Length, typename C>
-    class span {
-    public:
-        explicit span(C* data) : mData{data} {}
-        C& operator[](uint8_t index) {
-            assert(index < Length);
-            return mData[index];   
-        }
-    private:
-        C* mData;
-    };
-    
-    template<uint8_t Offset, uint8_t Length, typename C>
-    span<Length, typename C::type> make_span(C& c) {
-        static_assert((Offset + Length) <= C::size);
-        return span<Length, typename C::type>(&c[Offset]);
-    }
-    
-    template<typename Key, uint8_t Max, typename Provider>
+    template<typename Key, uint8_t Max = 16>
     class TextWithValue : public MenuItem {
     public:
-        TextWithValue(const PgmStringView& text, Provider& provider, Key key) : mTitle(text), mProvider(provider), mKey(key) {}
-        
-        
-        virtual void valueToText(uint8_t value, span<3, char> buffer) const {
-            Util::itoa_r<10>(value, buffer.mData);
-        }
-//        virtual void valueToText(uint8_t value, char* buffer) const {
-//            Util::itoa_r<10>(value, buffer);
-//        }
+        TextWithValue(const PgmStringView& text, Key key) : mTitle(text), mKey(key) {}
         
         virtual void putTextInto(BufferString& buffer) const override {
             buffer[0] = ' ';
             buffer.insertAtFill(1, mTitle);
             
-            auto& value = mProvider[mKey];
-            if (value) {
-//                valueToText(*value, span(buffer));
-//                valueToText(*value, span<3, char>(&buffer[18]));
-                valueToText(*value, make_span<18, 3>(buffer));
-            }
-            else {
-                buffer[18] = '-';
-                buffer[19] = '-';
-                buffer[20] = '-';
-            }
+            Util::itoa_r<10>(appData.AValues[static_cast<uint8_t>(mKey)], &buffer[18]);
             
             if (mSelected) {
                 buffer[18] |= 0x80;
@@ -96,35 +72,19 @@ namespace Hott {
             }
         }
         virtual MenuItem* processKey(Hott::key_t key) override {
-            auto& v = mProvider[mKey];
+            uint8_t& v = appData.AValues[static_cast<uint8_t>(mKey)];
             switch (key) {
             case Hott::key_t::up:
                 if (mSelected) {
-                    if (v) {
-                        if (*v > 0) {
-                            --v;
-                        }
-                        else {
-                            v.setNaN();
-                        }
-                    }
-                    else {
-                        *v = 0;
+                    if (v > 0) {
+                        --v;
                     }
                 }
                 break;
             case Hott::key_t::down:
                 if (mSelected) {
-                    if (v) {
-                        if (*v < Max) {
-                            ++v;
-                        }
-                        else {
-                            v.setNaN();
-                        }
-                    }
-                    else {
-                        *v = 0;
+                    if (v < Max) {
+                        ++v;
                     }
                 }
                 break;
@@ -134,7 +94,7 @@ namespace Hott {
                 break;
             case Hott::key_t::set:
                 if (mSelected) {
-                    mProvider.change();
+                    appData.change();
                 }
                 mSelected = !mSelected;
                 break;
@@ -143,7 +103,6 @@ namespace Hott {
         }
     private:
         const PgmStringView mTitle;
-        Provider& mProvider;
         const Key mKey;
     };
     
@@ -254,4 +213,91 @@ namespace Hott {
     private:
         uint8_t mNumber;
     };
+
+    class TSensorId : public MenuItem {
+    public:
+        TSensorId(uint8_t number) : mNumber{number} {
+            assert(number < appData.dsIds.size);
+        }
+        virtual void putTextInto(BufferString& buffer) const override {
+            if (appData.dsIds[mNumber]) {
+                for(uint8_t i = 0; i < (appData.dsIds[mNumber].size - 2); ++i) {
+                    uint8_t d = appData.dsIds[mNumber][i + 1];
+                    Util::itoa_r<16>(d, &buffer[i * 3]);
+                }
+                for(uint8_t i = 0; i < (appData.dsIds[mNumber].size - 3); ++i) {
+                    buffer[i * 3 + 2] = ':';
+                }
+            }
+            else {
+                buffer.insertAtFill(0, "--:--:--:--:--:--"_pgm);
+            }
+        }
+    private:
+        uint8_t mNumber = 0;
+    };
+    
+    class TSensorMenu : public NumberedMenu {
+    public:
+        TSensorMenu(Menu* parent, uint8_t n) : NumberedMenu(parent, n, "Sensor"_pgm, &mID), mID{n} {}
+    private:
+        TSensorId mID{0};
+    };
+    
+    class TemperaturSensorenMenu : public Menu {
+    public:
+        TemperaturSensorenMenu(Menu* parent) : Menu(parent, "Temp. Sensoren"_pgm, &mTS1, &mTS2, &mTS3, &mTS4) {}
+    private:
+        TSensorMenu mTS1{this, 0};
+        TSensorMenu mTS2{this, 1};
+        TSensorMenu mTS3{this, 2};
+        TSensorMenu mTS4{this, 3};
+    };
+    
+    class TemperaturMenu : public Menu {
+    public:
+        TemperaturMenu(Menu* parent) : Menu(parent, "Temperatur"_pgm, &mSensor1, &mSensor2, &mSensoren) {}
+
+    private:
+        TextWithValue<ApplData::AVKey, appData.dsIds.size - 1> mSensor1{"Anzeige 1"_pgm, ApplData::AVKey::TSensor1};
+        TextWithValue<ApplData::AVKey, appData.dsIds.size - 1> mSensor2{"Anzeige 2"_pgm, ApplData::AVKey::TSensor2};
+        TemperaturSensorenMenu mSensoren{this};
+    };
+    
+    class SpannungMenu : public Menu {
+    public:
+        SpannungMenu(Menu* parent) : Menu(parent, "Spannung"_pgm, &mSensor1) {}
+    private:
+        TextWithValue<ApplData::AVKey> mSensor1{"Sensor 1"_pgm, ApplData::AVKey::Spannung1};
+    };
+    
+    class RCMenu : public Menu {
+    public:
+        RCMenu() : Menu(this, "WM SensorLed"_pgm, &mTemperatur, &mSpannung) {}
+    private:
+        TemperaturMenu mTemperatur{this};                        
+        SpannungMenu   mSpannung{this};                        
+    };
+    
+    template<typename PA, typename MenuType>
+    class HottMenu final {
+        HottMenu() = delete;
+    public:
+        static void periodic() {
+            mMenu->textTo(PA::text());
+        }
+        static void processKey(Hott::key_t key) {
+            assert(mMenu);
+            if (auto m = mMenu->processKey(key); m != mMenu) {
+                mMenu = m;
+                for(auto& line : PA::text()) {
+                    line.clear();
+                }
+            }
+        }
+    private:
+        inline static MenuType mTop;
+        inline static Menu* mMenu = &mTop;
+    };
+    
 }

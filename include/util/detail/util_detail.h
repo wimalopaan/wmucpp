@@ -175,6 +175,17 @@ namespace Util {
             }
             return 0;
         }
+
+        template<int Position, uint8_t Base, std::Integral T>
+        uint8_t itoa_single(T& value, char* data) {
+            if constexpr(Position >= 0) {
+                uint8_t fraction = value % Base;
+                data[Position] = Convert<1, Base>::toChar(fraction);
+                value /= Base;
+                return itoa_single<Position - 1, Base, T>(value, data);
+            }
+            return 0;
+        }
         
     } // detail
 } // Util

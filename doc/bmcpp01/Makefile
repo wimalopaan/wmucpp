@@ -66,3 +66,4 @@ targets +=  bm95a.s bm95a.elf
 -include ../../Makefile.include
 
 bm95a.s bm95a.elf : CXXFLAGS := $(filter-out -fno-exceptions, $(CXXFLAGS)) -fexceptions
+#bm90a.s bm90a.elf : CXXFLAGS := $(filter-out -fno-rtti, $(CXXFLAGS)) -frtti

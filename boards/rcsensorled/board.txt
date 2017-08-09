@@ -139,15 +139,54 @@ Beschreibung:
   - Ansteuerung Ppm 1 und 2
   - Ansteuerung I2C: MCP23008 (Adresse 39 = 32 + 7, alle Pins auf high)
 
+* test22: 
+  - Uart-Terminal 115200
+  - Empfang des SUMD-Protokolls
+  - Timer 2 (SystemClock) und Timer 4 (Constantrate) zu einem (Timer 2) zusmmengefasst, damit Timer 4 frei (s.a. local02.h)
+  - MenuSystem (Test)
+  - Leds1Pin im toggle zur Frequenzbestimmung
+
+* test23: 
+  - Uart-Terminal 115200 (mit großer SendQueue, s.a. local02_debug.h)
+  - Empfang des SUMD-Protokolls
+  - Timer 2 (SystemClock) und Timer 4 (Constantrate) zu einem (Timer 2) zusmmengefasst, damit Timer 4 frei (s.a. local02.h)
+  - MenuSystem (Test)
+  - EEprom-Test
+  - Leds1Pin im toggle zur Frequenzbestimmung
+
+* test24 : (wie test21)
+	- Uart-Terminal 115200
+	- Temperatur extern DS18B20 (N Sensoren) 
+	- Analog Messung: Spannung Lipo, Temperatur (intern), ACS Strom
+	- Drehzahlmessung (geändert: ICP3, ohne Interrupt)
+	- Empfang des SUMD-Protokolls
+	- Drehzahlstellung (Kanal 0)	
+	- Timer 2 (SystemClock) und Timer 4 (Constantrate) zu einem (Timer 2) zusmmengefasst, damit Timer 4 frei (s.a. local02.h)
+	- Led-Ansteuerung
+	- Ansteuerung Ppm 1 und 2 (ausgeschaltet, s.u.)
+	- Ansteuerung I2C: MCP23008 (Adresse 39 = 32 + 7, alle Pins auf high)
+	- MenuSystem (Test)
+    - EEprom-Test
+    - Leds1Pin / Leds2Pin im toggle zur Frequenzbestimmung
+
+* test25 : (wie test24)
+	- Uart-Terminal 115200
+	- Temperatur extern DS18B20 (N Sensoren) 
+	- Analog Messung: Spannung Lipo, Temperatur (intern), ACS Strom
+	- Drehzahlmessung (geändert: ICP3, ohne Interrupt)
+	- Empfang des SUMD-Protokolls
+	- Drehzahlstellung (Kanal 0)	
+	- Timer 2 (SystemClock) und Timer 4 (Constantrate) zu einem (Timer 2) zusmmengefasst, damit Timer 4 frei (s.a. local02.h)
+	- Led-Ansteuerung
+	- Ansteuerung Ppm 1 und 2
+	- Ansteuerung I2C: MCP23008 (Adresse 39 = 32 + 7, alle Pins auf high)
+	- MenuSystem (Test)
+    - EEprom-Test
+
 ----
 
-- 10-Bit Analogwerte
-
-
-  - EEprom
-  - MenuSystem
+  - 10-Bit Analogwerte
   - Sensor-Konfiguration (Hott-Ascii-Protokoll)
-
 
 -----------
 

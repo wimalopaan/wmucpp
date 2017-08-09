@@ -44,7 +44,12 @@ targets += test18.s test18.elf
 targets += test19.s test19.elf
 targets += test20.s test20.elf
 targets += test21.s test21.elf
+targets += test22.s test22.elf
+targets += test23.s test23.elf
+targets += test24.s test24.elf
+targets += test25.s test25.elf
 
 targets += test99.s test99.elf
+
 
 -include ../../Makefile.include

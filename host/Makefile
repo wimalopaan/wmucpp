@@ -25,6 +25,7 @@ targets += test11
 targets += test12
 targets += test13
 targets += test15
+targets += test20
 
 -include ../Makefile.include
 

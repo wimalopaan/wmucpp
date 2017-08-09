@@ -60,8 +60,7 @@ namespace Util {
             return 18;
         }
     }
-    
-    
+      
     template<uint8_t Base = 10, std::Integral T = uint8_t, uint16_t L>
     auto itoa_r(T value, std::array<char, L>& data) -> decltype(data)& {
         static_assert((Base >= 2) && (Base <= 16), "wrong base");
@@ -81,6 +80,25 @@ namespace Util {
             detail::itoa_single<Position, Base, T>(v, data);
         }
         return data;
+    }
+    
+    template<uint8_t Base = 10, std::Integral T = uint8_t>
+    void itoa_r(T value, char* data) {
+        static_assert((Base >= 2) && (Base <= 16), "wrong base");
+        constexpr uint8_t Position = Util::numberOfDigits<T, Base>() - 1;
+        T v = value;
+        if constexpr(std::is_signed<T>::value) {
+            if (value < 0) {
+                v = -value; 
+            }
+            uint8_t last = detail::itoa_single<Position, Base, T>(v, data);
+            if (value < 0) {
+                data[last] = '-';
+            }
+        }   
+        else {
+            detail::itoa_single<Position, Base, T>(v, data);
+        }
     }
     
     template<uint8_t Base = 10, std::Integral T = uint8_t, uint16_t L = 0>

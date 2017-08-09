@@ -123,6 +123,110 @@ private:
 //    };
 //}
 
+template<std::Unsigned T = uint8_t, T LowerBound = 0, T UpperBound = std::numeric_limits<T>::max() - 1>
+class uint_ranged_NaN final {
+public:
+    inline static constexpr T Lower = LowerBound;
+    inline static constexpr T Upper = UpperBound;
+    inline static constexpr T NaN   = std::numeric_limits<T>::max();
+    typedef T type;
+
+    constexpr uint_ranged_NaN() = default;
+    
+    constexpr uint_ranged_NaN(T v) : mValue(v) {
+        assert(v >= LowerBound);
+        assert(v <= UpperBound);
+    }
+    
+    constexpr explicit operator bool() const {
+        return mValue != NaN;
+    }
+    
+    constexpr bool operator>(T rhs) {
+        return mValue > rhs;
+    }
+    uint_ranged_NaN& operator--() {
+        if (mValue > LowerBound) {
+            --mValue;
+        }
+        return *this;
+    }
+    uint_ranged_NaN& operator++() {
+        if (mValue < UpperBound) {
+            ++mValue;
+        }
+        return *this;
+    }
+    constexpr bool operator==(T rhs) {
+        return mValue == rhs;
+    }
+    constexpr uint_ranged_NaN& operator=(T rhs) {
+        assert(rhs >= LowerBound);
+        assert(rhs <= UpperBound);
+        mValue = rhs;
+        return *this;
+    }
+    constexpr operator T() const {
+        return mValue;
+    }
+    constexpr T toInt() const {
+        return mValue;
+    }
+private:
+    T mValue{NaN};
+};
+
+template<std::Unsigned T = uint8_t, T LowerBound = 0, T UpperBound = std::numeric_limits<T>::max()>
+class uint_ranged_circular final {
+public:
+    inline static constexpr T Lower = LowerBound;
+    inline static constexpr T Upper = UpperBound;
+    typedef T type;
+
+    constexpr uint_ranged_circular() = default;
+    
+    constexpr explicit uint_ranged_circular(T v) : mValue(v) {
+        assert(v >= LowerBound);
+        assert(v <= UpperBound);
+    }
+    
+    constexpr bool operator>(T rhs) {
+        return mValue > rhs;
+    }
+    uint_ranged_circular& operator--() {
+        if (mValue > LowerBound) {
+            --mValue;
+        }
+        else {
+            mValue = UpperBound;
+        }
+        return *this;
+    }
+    uint_ranged_circular& operator++() {
+        if (mValue < UpperBound) {
+            ++mValue;
+        }
+        else {
+            mValue = LowerBound;
+        }
+        return *this;
+    }
+    constexpr uint_ranged_circular& operator=(T rhs) {
+        assert(rhs >= LowerBound);
+        assert(rhs <= UpperBound);
+        mValue = rhs;
+        return *this;
+    }
+    constexpr operator T() const {
+        return mValue;
+    }
+    constexpr T toInt() const {
+        return mValue;
+    }
+private:
+    T mValue{LowerBound};
+};
+
 template<std::Unsigned T>
 class uint_bounded final {
 public:
@@ -193,8 +297,8 @@ public:
     explicit constexpr uint_NaN(T v) : mValue(v) {
         assert(mValue != NaN);
     }
-    explicit constexpr uint_NaN() : mValue(NaN) {
-    }
+    constexpr uint_NaN() : mValue(NaN) {}
+    
     void setNaN() volatile {
         mValue = NaN;
     }
@@ -217,11 +321,15 @@ public:
         assert(mValue != NaN);
         return mValue;
     }
-    T operator*() volatile {
+    volatile T& operator*() volatile {
         assert(mValue != NaN);
         return mValue;
     }
-    T operator*() {
+    T& operator*() {
+        assert(mValue != NaN);
+        return mValue;
+    }
+    const T& operator*() const {
         assert(mValue != NaN);
         return mValue;
     }
@@ -230,6 +338,13 @@ public:
     }
     uint_NaN& operator++() {
         ++mValue;
+        return *this;
+    }
+    void operator--() volatile {
+        --mValue;
+    }
+    uint_NaN& operator--() {
+        --mValue;
         return *this;
     }
     constexpr bool operator==(uint_NaN& rhs) volatile {

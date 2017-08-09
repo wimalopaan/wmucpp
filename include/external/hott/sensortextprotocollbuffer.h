@@ -59,15 +59,9 @@ namespace Hott {
             hottTextResponse.start_byte = 0x7b;
             hottTextResponse.stop_byte = 0x7d;
             hottTextResponse.esc = 0;
-            
-            hottTextResponse.text[0].insertAtFill(0, " Test1"_pgm);
-            hottTextResponse.text[1].insertAtFill(0, " Test2"_pgm);
-            hottTextResponse.text[2].insertAtFill(0, " Test3"_pgm);
-            hottTextResponse.text[3].insertAtFill(0, " Test4"_pgm);
-            hottTextResponse.text[4].insertAtFill(0, " Test5"_pgm);
-            hottTextResponse.text[5].insertAtFill(0, " Test6"_pgm);
-            hottTextResponse.text[6].insertAtFill(0, " Test7"_pgm);
-            hottTextResponse.text[7].insertAtFill(0, " Test8"_pgm);
+            for(auto& l : hottTextResponse.text) {
+                l.clear();
+            }
         }
         static auto& text() {
             return hottTextResponse.text;

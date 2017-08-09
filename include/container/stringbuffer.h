@@ -80,6 +80,28 @@ public:
             data[i] = *s++;
         }
     }
+    void insertAt(uint8_t position, const PgmStringView& s) {
+        assert(position < Length);
+        for(uint8_t i = position, n = 0; (i < Length) && (s[n] != '\0'); ++i, ++n) {
+            data[i] = s[n];
+        }
+    }
+    void insertAtFill(uint8_t position, const PgmStringView& s) {
+        assert(position < Length);
+        uint8_t i = position;
+        for(uint8_t n = 0; (i < Length) && (s[n] != '\0'); ++i, ++n) {
+            data[i] = s[n];
+        }
+        for(; i < Length; ++i) {
+            data[i] = Fill;
+        }
+    }
+    void clear() {
+        for(uint8_t i = 0; i < Length; ++i) {
+            data[i] = Fill;
+        }
+    }
+
     constexpr const T& at(uint8_t index) const {
         assert(index < size);
         return data[index];
