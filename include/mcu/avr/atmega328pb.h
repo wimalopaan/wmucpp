@@ -434,6 +434,10 @@ namespace AVR {
         static constexpr uint8_t value = 0xb8;
     };
     template<>
+    struct ATMega328PB::TWI::Address<1> {
+        static constexpr uint8_t value = 0xd8;
+    };
+    template<>
     struct ATMega328PB::Spi::Address<0> {
         static constexpr uint8_t value = 0x4c;
     };
@@ -541,6 +545,10 @@ namespace AVR {
     
     template<>
     struct ATMega328PB::TWI::PrescalerRow<0> {
+        static constexpr auto values = twiPrescalerBit<ATMega328PB::TWI::TWS>;
+    };
+    template<>
+    struct ATMega328PB::TWI::PrescalerRow<1> {
         static constexpr auto values = twiPrescalerBit<ATMega328PB::TWI::TWS>;
     };
     

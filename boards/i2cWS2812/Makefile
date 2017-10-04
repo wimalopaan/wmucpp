@@ -17,12 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-MCU = atmega1284p
-F_OSC = 20000000
+MCU = attiny85
+F_OSC = 16000000
 
-subdirs = unimaxi rcsensorled clock anano i2cIR i2cWS2812 rcsensorled03
+subdirs =
 
-#targets +=  main.elf main.size
+targets += main.elf
 
--include ../Makefile.include
-
+-include ../../Makefile.include

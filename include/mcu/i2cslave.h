@@ -31,7 +31,7 @@ namespace I2C {
 enum class State { USI_SLAVE_CHECK_ADDRESS, USI_SLAVE_SEND_DATA, USI_SLAVE_REQUEST_REPLY_FROM_SEND_DATA,
                            USI_SLAVE_CHECK_REPLY_FROM_SEND_DATA, USI_SLAVE_REQUEST_DATA, USI_SLAVE_GET_DATA_AND_SEND_ACK};
 
-template<typename USI, const TWI::Address& Address, uint8_t Size = 8>
+template<typename USI, const TWI::Address& Address, uint8_t Size = 8, typename Client = void>
 class I2CSlave final {
     I2CSlave() = delete;
     
@@ -44,16 +44,16 @@ public:
     struct I2CSlaveHandlerOvfl  : public IsrBaseHandler<AVR::ISR::Usi<0>::Overflow> {
         static inline void isr() {
             std::byte data{0};
-            switch (state) {
+            switch (mState) {
             //###### Address mode: check address and send ACK (and next USI_SLAVE_SEND_DATA) if OK, else reset USI
             case State::USI_SLAVE_CHECK_ADDRESS:
                 if ((*mcu_usi()->usidr == std::byte{0}) || (TWI::Address::fromBusValue(*mcu_usi()->usidr) == Address)) {     // If adress is either 0 or own address
                     if (std::any(*mcu_usi()->usidr & std::byte{0x01})) {
-                        state = State::USI_SLAVE_SEND_DATA;		// Master Write Data Mode - Slave transmit
+                        mState = State::USI_SLAVE_SEND_DATA;		// Master Write Data Mode - Slave transmit
                     }
                     else {
-                        state = State::USI_SLAVE_REQUEST_DATA;		// Master Read Data Mode - Slave receive
-                        index.setNaN(); // Buffer position undefined
+                        mState = State::USI_SLAVE_REQUEST_DATA;		// Master Read Data Mode - Slave receive
+                        mIndex.setNaN(); // Buffer position undefined
                     }
                     USI::setSendAck();
                 }
@@ -73,27 +73,27 @@ public:
                 [[fallthrough]];
                 // From here we just drop straight into USI_SLAVE_SEND_DATA if the master sent an ACK
             case State::USI_SLAVE_SEND_DATA:
-                if (!index) { 		// No buffer position given, set buffer address to 0
-                    index = 0;
+                if (!mIndex) { 		// No buffer position given, set buffer address to 0
+                    mIndex = 0;
                 }	
                 else {
-                    assert(index);
-                    if (!(*index < Size)) {
-                        index = 0;
+                    assert(mIndex);
+                    if (!(*mIndex < Size)) {
+                        mIndex = 0;
                     }
                 }
-                assert(index);
-                *mcu_usi()->usidr = registers()[*index]; 	// Send data byte
+                assert(mIndex);
+                *mcu_usi()->usidr = mRegisters[*mIndex]; 	// Send data byte
                 
-                ++index; 					// Increment buffer address for next byte
-                state = State::USI_SLAVE_REQUEST_REPLY_FROM_SEND_DATA;
+                ++mIndex; 					// Increment buffer address for next byte
+                mState = State::USI_SLAVE_REQUEST_REPLY_FROM_SEND_DATA;
                 USI::setSendData();
                 break;
                 
                 // Set USI to sample reply from master
                 // Next USI_SLAVE_CHECK_REPLY_FROM_SEND_DATA
             case State::USI_SLAVE_REQUEST_REPLY_FROM_SEND_DATA:
-                state = State::USI_SLAVE_CHECK_REPLY_FROM_SEND_DATA;
+                mState = State::USI_SLAVE_CHECK_REPLY_FROM_SEND_DATA;
                 USI::setReadAck();
                 break;
                 
@@ -101,7 +101,7 @@ public:
                 // Set USI to sample data from master,
                 // Next USI_SLAVE_GET_DATA_AND_SEND_ACK
             case State::USI_SLAVE_REQUEST_DATA:
-                state = State::USI_SLAVE_GET_DATA_AND_SEND_ACK;
+                mState = State::USI_SLAVE_GET_DATA_AND_SEND_ACK;
                 USI::setReadData();
                 break;
                 
@@ -109,24 +109,27 @@ public:
                 // Next USI_SLAVE_REQUEST_DATA
             case State::USI_SLAVE_GET_DATA_AND_SEND_ACK:
                 data = *mcu_usi()->usidr; 					// Read data received
-                if (!index) { 		// First access, read buffer position
+                if (!mIndex) { 		// First access, read buffer position
                     if (std::to_integer<uint8_t>(data) < Size) {		// Check if address within buffer size
-                        index = std::to_integer<uint8_t>(data); 		// Set position as received
+                        mIndex = std::to_integer<uint8_t>(data); 		// Set position as received
                     }
                     else {
-                        index = 0; 			// Set address to 0
+                        mIndex = 0; 			// Set address to 0
                     }				
                 }
                 else {					// Ongoing access, receive data
-                    assert(index);
-                    if (!(*index < Size)) {
-                        index = 0;
+                    assert(mIndex);
+                    if (!(*mIndex < Size)) {
+                        mIndex = 0;
                     }
-                    assert(index);
-                    registers()[*index] = data; 				// Write data to buffer
-                    ++index; 							// Increment buffer address for next write access
+                    assert(mIndex);
+                    mRegisters[*mIndex] = data; 				// Write data to buffer
+                    ++mIndex; 							// Increment buffer address for next write access
+                    if constexpr(!std::is_same<Client, void>::value) {
+                        Client::notify();
+                    }
                 }
-                state = State::USI_SLAVE_REQUEST_DATA;	// Next USI_SLAVE_REQUEST_DATA
+                mState = State::USI_SLAVE_REQUEST_DATA;	// Next USI_SLAVE_REQUEST_DATA
                 USI::setSendAck();
                 break;
             default:
@@ -137,7 +140,7 @@ public:
     };
     struct I2CSlaveHandlerStart  : public IsrBaseHandler<AVR::ISR::Usi<0>::Start> {
         static inline void isr() {
-            state = State::USI_SLAVE_CHECK_ADDRESS;        
+            mState = State::USI_SLAVE_CHECK_ADDRESS;        
             USI::mosi_pin::template dir<AVR::Input>();
             
             // Wait for SCL to go low to ensure the Start Condition has completed (the
@@ -159,15 +162,15 @@ public:
     };
     static inline void init() {
         USI::template init<AVR::I2C<mcu_type>>();
-        state = State::USI_SLAVE_CHECK_ADDRESS;
+        mState = State::USI_SLAVE_CHECK_ADDRESS;
     }
     static auto& registers() {
-        static volatile std::array<std::byte, Size> rm;
-        return rm;
+        return mRegisters;
     }
 private:
-    inline static volatile uint_NaN<uint8_t> index;
-    inline static volatile State state = State::USI_SLAVE_CHECK_ADDRESS;
+    inline static volatile std::array<std::byte, Size> mRegisters;
+    inline static volatile uint_NaN<uint8_t> mIndex;
+    inline static volatile State mState = State::USI_SLAVE_CHECK_ADDRESS;
 };
 
 }

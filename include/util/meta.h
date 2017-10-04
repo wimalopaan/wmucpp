@@ -126,6 +126,24 @@ namespace Meta {
         struct concat_impl<L1<I1...>,  L2<I2...>> {
             typedef L1<I1..., I2...> type;
         };
+        
+        template<typename> struct is_set_impl;
+        template<template<typename, typename...> typename L, typename F, typename... I>
+        struct is_set_impl<L<F, I...>> {
+            using type = typename std::conditional<contains_impl<L<I...>, F>::value, 
+                                                  std::integral_constant<bool, false>, 
+                                                  typename is_set_impl<L<I...>>::type>::type;
+        };
+        template<template<typename> typename L, typename I>
+        struct is_set_impl<L<I>> {
+            using type = std::integral_constant<bool, true>;
+        };
+        
+        template<typename, typename> struct contains_all_impl {};
+        template<template<typename...> typename L1, typename... I1, template<typename...> typename L2, typename... I2>
+        struct contains_all_impl<L1<I1...>, L2<I2...>> {
+            using type = typename std::integral_constant<bool, true>;
+        };
                 
     } // !detail
     namespace concepts {
@@ -181,12 +199,18 @@ namespace Meta {
     template<concepts::List List, typename T>
     struct contains : public std::integral_constant<bool, detail::contains_impl<List, T>::value> {};
 
+    template<concepts::List List, typename... T>
+    struct containsAll : public std::integral_constant<bool, detail::contains_all_impl<List, Meta::List<T...>>::type::value> {};
+    
     template<concepts::List List, typename T>
     struct count: public std::integral_constant<size_t, detail::count_impl<List, T>::value> {};
     
     template<concepts::List L1, concepts::List L2>
     using concat = typename detail::concat_impl<L1, L2>::type;
 
+    template<concepts::List List>
+    struct is_set : public std::integral_constant<bool, detail::is_set_impl<List>::type::value> {};
+    
     template<typename T>
     struct nonVoid : public std::true_type {};    
     template<>
@@ -202,6 +226,7 @@ namespace Meta {
         struct B {};
         struct C {};
         struct D {};
+        struct E {};
         
         using l1 = Meta::List<A, B>;
         static_assert(l1::size == 2);
@@ -277,6 +302,22 @@ namespace Meta {
         static_assert(std::is_same<Meta::front<l200>, f2<A, 0>>::value);        
         static_assert(std::is_same<Meta::nth_element<1, l200>, f2<A, 1>>::value);        
         static_assert(std::is_same<Meta::nth_element<2, l200>, f2<B, 2>>::value);        
+
+        using l300 = Meta::List<A, B, C>;
+        static_assert(Meta::is_set<l300>::value);
+        using l301 = Meta::List<A>;
+        static_assert(Meta::is_set<l301>::value);
+        using l302 = Meta::List<A, A>;
+        static_assert(!Meta::is_set<l302>::value);
+        using l303 = Meta::List<A, B, C, A>;
+        static_assert(!Meta::is_set<l303>::value);
+        using l304 = Meta::List<E, A, B, C, A>;
+        static_assert(!Meta::is_set<l304>::value);
+        
+        static_assert(Meta::containsAll<l300, A, B>::value);
+        
+        
+//        static_assert(false);
         
     } // !tests
 } // !Meta

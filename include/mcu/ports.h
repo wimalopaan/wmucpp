@@ -33,6 +33,8 @@
 #include "util/algorithm.h"
 #include "util/disable.h"
 
+#include "util/meta.h"
+
 namespace AVR {
     
     struct Output final {
@@ -103,6 +105,8 @@ namespace AVR {
         typedef typename ::Util::nth_element<0, Pins...>::port port_type;
         static_assert((std::is_same<port_type, typename Pins::port>::value && ... && true), "must use same port");
         
+        static_assert(Meta::is_set<Meta::List<Pins...>>::value);
+        
         static constexpr auto calculatePatterns = [](){
             constexpr uint16_t numberOfPatterns = (1 << size);
             std::array<std::byte, numberOfPatterns> data;
@@ -142,6 +146,9 @@ namespace AVR {
             constexpr std::byte invertedMask = ~setMask;
             constexpr std::byte mask = (PP::pinMask | ... | std::byte{0});
             static_assert((std::none(mask & invertedMask)), "Pin not in PinSet");
+            
+//            static_assert(Meta::containsAll<Meta::List<Pins...>, Meta::List<PP...>>::value);
+            
             if constexpr(sizeof...(PP) == 1) {
                 port_type::get() |= mask; // single-bit set -> sbi-instruction
             }

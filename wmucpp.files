@@ -1,3 +1,8 @@
+boards/i2cIR/Makefile
+boards/i2cIR/main.cc
+boards/i2cWS2812/Makefile
+boards/i2cWS2812/main.cc
+boards/include/rcsensorled03.h
 boards/rcsensorled/hottmenu.h
 boards/rcsensorled/local02.h
 boards/rcsensorled/local02_debug.h
@@ -14,10 +19,18 @@ boards/rcsensorled/test22.cc
 boards/rcsensorled/test23.cc
 boards/rcsensorled/test24.cc
 boards/rcsensorled/test25.cc
+boards/rcsensorled03/Makefile
+boards/rcsensorled03/board.txt
+boards/rcsensorled03/local.h
+boards/rcsensorled03/test01.cc
+boards/rcsensorled03/test02.cc
+boards/rcsensorled03/test03.cc
+boards/rcsensorled03/test10.cc
 host/test20.cc
 include/external/hott/menu.h
 include/external/hott/old/menu.h
 include/external/hott/old/menu2.h
+include/external/vnh2sp30.h
 todo.txt
 3rdparty/irmp/irmp.c
 3rdparty/irmp/irmp.h

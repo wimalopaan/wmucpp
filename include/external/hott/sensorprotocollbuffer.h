@@ -69,6 +69,15 @@ namespace Hott {
         static std::RPM rpm1() {
             return std::RPM{hottBinaryResponse.rpm * 10};
         }
+        static void rpm2(const std::RPM& v) {
+            if (v) {
+                hottBinaryResponse.rpm2 = v.value() / 10;
+            }
+        }
+        static std::RPM rpm2() {
+            return std::RPM{hottBinaryResponse.rpm2 * 10};
+        }
+        
         static void temp1(FixedPoint<int, 4> v) {
             hottBinaryResponse.temperature1 = v.integer() + 20;
         }

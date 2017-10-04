@@ -1,0 +1,24 @@
+Name: SteuerSensorModul03
+
+Korrekturen auf dem Boad:
+
+Beschreibung:
+
+* test01: (wie test17 von rcsensorled)
+	- Uart-Terminal 115200
+	- Temperatur extern DS18B20 (N Sensoren) 
+	*- Analog Messung: Spannung Lipo, Temperatur (intern), ACS Strom
+	- Drehzahlmessung (geändert: ICP3, ohne Interrupt)
+	- Empfang des SUMD-Protokolls
+	*- Drehzahlstellung (Kanal 0)	
+	- Timer 2 (SystemClock) und Timer 4 (Constantrate) zu einem (Timer 2) zusmmengefasst, damit Timer 4 frei (s.a. local02.h)
+	- Led-Ansteuerung
+
+* test02:
+	- Uart-Terminal 115200
+	- rpm-test
+
+
+* test10:
+	- alles
+	

@@ -17,12 +17,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-MCU = atmega1284p
+# sudo avrdude -p atmega328pb -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P usb -c avrisp2 -U lfuse:w:0xe0:m -U hfuse:w:0xd9:m -U efuse:w:0xf7:m
+
+# EEProm Inhalt nicht löschen
+# sudo avrdude -p atmega328pb -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P usb -c avrisp2 -U lfuse:w:0xe0:m -U hfuse:w:0xd1:m -U efuse:w:0xf7:m
+
+MCU = atmega328pb
 F_OSC = 20000000
 
-subdirs = unimaxi rcsensorled clock anano i2cIR i2cWS2812 rcsensorled03
+subdirs =
 
-#targets +=  main.elf main.size
+targets += test01.s test01.elf
+targets += test02.s test02.elf
+targets += test03.s test03.elf
+targets += test10.s test10.elf
 
--include ../Makefile.include
-
+-include ../../Makefile.include
