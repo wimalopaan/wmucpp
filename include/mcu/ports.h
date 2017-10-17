@@ -35,6 +35,8 @@
 
 #include "util/meta.h"
 
+#include "std/types.h"
+
 namespace AVR {
     
     struct Output final {
@@ -100,12 +102,16 @@ namespace AVR {
         static constexpr uint8_t pinNumbers[] = {Pins::number...};
         static constexpr std::byte pinMasks[] = {Pins::pinMask...};
         static constexpr std::byte setMask = (Pins::pinMask | ... | std::byte{0});
-        static_assert(::Util::numberOfOnes(setMask) == size, "must use different pins in set");
         
-        typedef typename ::Util::nth_element<0, Pins...>::port port_type;
-        static_assert((std::is_same<port_type, typename Pins::port>::value && ... && true), "must use same port");
+//        static_assert(::Util::numberOfOnes(setMask) == size, "must use different pins in set");
+        using pinlist = Meta::List<Pins...>;
+        static_assert(Meta::is_set<pinlist>::value, "must use different pins in set"); // all Pins are different
         
-        static_assert(Meta::is_set<Meta::List<Pins...>>::value);
+        template<typename T> using port_from = typename T::port;
+        using portlist = Meta::transform<port_from, pinlist>;
+        typedef typename Meta::nth_element<0, portlist> port_type;
+        static_assert(Meta::all_same<Meta::nth_element<0, portlist>, portlist>::value, "must use same port");
+//        static_assert((std::is_same<port_type, typename Pins::port>::value && ... && true), "must use same port");
         
         static constexpr auto calculatePatterns = [](){
             constexpr uint16_t numberOfPatterns = (1 << size);
@@ -143,11 +149,10 @@ namespace AVR {
         }
         template<typename... PP>
         static inline void on() {
-            constexpr std::byte invertedMask = ~setMask;
+            static_assert(Meta::containsAll<pinlist, PP...>::value);
             constexpr std::byte mask = (PP::pinMask | ... | std::byte{0});
-            static_assert((std::none(mask & invertedMask)), "Pin not in PinSet");
-            
-//            static_assert(Meta::containsAll<Meta::List<Pins...>, Meta::List<PP...>>::value);
+//            constexpr std::byte invertedMask = ~setMask;
+//            static_assert((std::none(mask & invertedMask)), "Pin not in PinSet");
             
             if constexpr(sizeof...(PP) == 1) {
                 port_type::get() |= mask; // single-bit set -> sbi-instruction
@@ -159,17 +164,19 @@ namespace AVR {
         }    
         template<typename... PP>
         static inline void pullup() {
-            constexpr std::byte invertedMask = ~setMask;
+            static_assert(Meta::containsAll<pinlist, PP...>::value);
             constexpr std::byte mask = (PP::pinMask | ... | std::byte{0});
-            static_assert((std::none(mask & invertedMask)), "Pin not in PinSet");
+//            constexpr std::byte invertedMask = ~setMask;
+//            static_assert((std::none(mask & invertedMask)), "Pin not in PinSet");
             Scoped<DisbaleInterrupt<RestoreState>> di;
             port_type::get() |= mask;
         }
         template<typename... PP>
         static inline void off() {
-            constexpr std::byte invertedMask = ~setMask;
+            static_assert(Meta::containsAll<pinlist, PP...>::value);
             constexpr std::byte mask = (PP::pinMask | ... | std::byte{0});
-            static_assert((std::none(mask & invertedMask)), "Pin not in PinSet");
+//            constexpr std::byte invertedMask = ~setMask;
+//            static_assert((std::none(mask & invertedMask)), "Pin not in PinSet");
             if constexpr(sizeof...(PP) == 1) {
                 port_type::get() &= ~mask;
             }
@@ -189,9 +196,16 @@ namespace AVR {
         // 0b01 -> Pin1(0) Pin0(1)
         // 0b10 -> Pin1(1) Pin0(0)
         // 0b11 -> Pin1(1) Pin0(1)
+#if 0
         static inline void set(std::byte value) {
             assert(std::to_integer<uint8_t>(value) < valueBits.size);
             auto v = (port_type::get() & setMask) ^ valueBits[std::to_integer<uint8_t>(value)];
+            port_type::toggle(v);
+        }
+#endif
+        static inline void set(uintN_t<size> value) {
+            static_assert(std::numeric_limits<uintN_t<size>>::max() < valueBits.size);
+            auto v = (port_type::get() & setMask) ^ valueBits[value];
             port_type::toggle(v);
         }
         template<uint8_t V>

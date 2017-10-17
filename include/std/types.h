@@ -33,18 +33,18 @@ class Splitted_NaN {
     static constexpr U firstMask = (1 << FirstBits) - 1;
     static constexpr U secondMask = (1 << SecondBits) - 1;
 public:
-    Splitted_NaN() = default;
-    Splitted_NaN(U first, U second) : value(((first & firstMask) << SecondBits) | (second & SecondBits)) {
+    constexpr Splitted_NaN() = default;
+    constexpr Splitted_NaN(U first, U second) : value(((first & firstMask) << SecondBits) | (second & SecondBits)) {
         assert((first & ~firstMask) == 0);
         assert((second & ~secondMask) == 0);
     }
-    U first() const {
+    constexpr U first() const {
         return (value >> SecondBits);
     }
-    U second() const {
+    constexpr U second() const {
         return (value & secondMask);
     }
-    explicit operator bool() const {
+    explicit constexpr operator bool() const {
         return (value != std::numeric_limits<U>::max());
     }
 private:
@@ -130,7 +130,7 @@ public:
     inline static constexpr T Upper = UpperBound;
     inline static constexpr T NaN   = std::numeric_limits<T>::max();
     typedef T type;
-
+    
     constexpr uint_ranged_NaN() = default;
     
     constexpr uint_ranged_NaN(T v) : mValue(v) {
@@ -182,7 +182,7 @@ public:
     inline static constexpr T Lower = LowerBound;
     inline static constexpr T Upper = UpperBound;
     typedef T type;
-
+    
     constexpr uint_ranged_circular() = default;
     
     constexpr explicit uint_ranged_circular(T v) : mValue(v) {
@@ -395,6 +395,31 @@ struct uint7_t final {
     uint8_t value : 7, pad : 1;
 };
 
+namespace detail {
+    template<size_t Bits>
+    struct TypeForBits {
+        typedef typename std::conditional<Bits <= 8, uint8_t,
+                              typename std::conditional<Bits <= 16, uint16_t, uint32_t>::type>::type type;
+    };
+}
+template<size_t Bits>
+class uintN_t {
+public:
+    typedef typename detail::TypeForBits<Bits>::type value_type;
+    inline static constexpr value_type mask = ((1 << Bits) - 1);
+    explicit uintN_t(value_type v) : mValue(v & mask) {}
+    operator value_type() const {
+        return mValue;
+    }
+    uintN_t& operator++() {
+        ++mValue;
+        mValue &= mask;
+        return *this;
+    }
+private:
+    value_type mValue{};
+};
+
 namespace std {
     
     template<>
@@ -438,5 +463,10 @@ namespace std {
         static constexpr uint8_t min() {return 0;}
     };
     
+    template<size_t Bits>
+    struct numeric_limits<uintN_t<Bits>> {
+        static constexpr uint8_t max() {return uintN_t<Bits>::mask;}
+        static constexpr uint8_t min() {return 0;}
+    };
     
 }

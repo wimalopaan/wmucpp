@@ -48,7 +48,8 @@ namespace std {
     constexpr std::lineTerminator<CRLF> endl;
 }
 
-volatile std::byte x{5};
+//volatile uintN_t<LcdData::size> x{5};
+uintN_t<LcdData::size> x{5};
 
 int main()
 {
@@ -56,7 +57,7 @@ int main()
 
     LcdData::allOff();
 
-    LcdData::set(std::byte{13});
+    LcdData::set(uintN_t<LcdData::size>{13});
     
     LcdData::set<13>();
     LcdData::set<1>();

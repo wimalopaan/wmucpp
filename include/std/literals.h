@@ -11,7 +11,7 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -23,34 +23,34 @@
 #include "std/ratio.h"
 
 namespace std {
-namespace literals {
-namespace chrono {
-
-constexpr std::milliseconds operator"" _ms(unsigned long long v) {
-    return std::milliseconds{static_cast<uint16_t>(v)};
-}
-
-constexpr std::microseconds operator"" _us(unsigned long long v) {
-    return std::microseconds{static_cast<uint16_t>(v)};
-}
-
-constexpr std::seconds operator"" _s(unsigned long long v) {
-    return std::seconds{static_cast<uint16_t>(v)};
-}
-
-}
-
-namespace physical {
-
-constexpr std::hertz operator"" _Hz(unsigned long long v) {
-    return std::hertz{static_cast<uint32_t>(v)};
-}
-
-constexpr std::megahertz operator"" _MHz(unsigned long long v) {
-    return std::megahertz{static_cast<uint8_t>(v)};
-}
-
-}
-
-}
+    namespace literals {
+        namespace chrono {
+            
+            constexpr std::milliseconds operator"" _ms(unsigned long long v) {
+                return std::milliseconds{static_cast<uint16_t>(v)};
+            }
+            
+            constexpr std::microseconds operator"" _us(unsigned long long v) {
+                return std::microseconds{static_cast<uint16_t>(v)};
+            }
+            
+            constexpr std::seconds operator"" _s(unsigned long long v) {
+                return std::seconds{static_cast<uint16_t>(v)};
+            }
+            
+        }
+        
+        namespace physical {
+            
+            constexpr std::hertz operator"" _Hz(unsigned long long v) {
+                return std::hertz{static_cast<uint32_t>(v)};
+            }
+            
+            constexpr std::megahertz operator"" _MHz(unsigned long long v) {
+                return std::megahertz{static_cast<uint8_t>(v)};
+            }
+            
+        }
+        
+    }
 }

@@ -142,7 +142,13 @@ namespace Meta {
         template<typename, typename> struct contains_all_impl {};
         template<template<typename...> typename L1, typename... I1, template<typename...> typename L2, typename... I2>
         struct contains_all_impl<L1<I1...>, L2<I2...>> {
-            using type = typename std::integral_constant<bool, true>;
+            using type = std::integral_constant<bool, (contains_impl<L1<I1...>, I2>::value && ... && true)>;
+        };
+        
+        template<typename, typename> struct all_same_impl;
+        template<typename T, template<typename...> typename L, typename... I>
+        struct all_same_impl<T, L<I...>> {
+            static inline constexpr bool value = (std::is_same<T, I>::value && ... && true);
         };
                 
     } // !detail
@@ -210,6 +216,10 @@ namespace Meta {
 
     template<concepts::List List>
     struct is_set : public std::integral_constant<bool, detail::is_set_impl<List>::type::value> {};
+
+    template<typename T, concepts::List L>
+    struct all_same : public std::integral_constant<bool, detail::all_same_impl<T, L>::value> {};
+
     
     template<typename T>
     struct nonVoid : public std::true_type {};    
@@ -314,7 +324,10 @@ namespace Meta {
         using l304 = Meta::List<E, A, B, C, A>;
         static_assert(!Meta::is_set<l304>::value);
         
-        static_assert(Meta::containsAll<l300, A, B>::value);
+        static_assert(Meta::containsAll<l300, A, B, C>::value);
+        static_assert(!Meta::containsAll<l300, E>::value);
+        static_assert(!Meta::containsAll<l300, E, A>::value);
+        static_assert(!Meta::containsAll<l300, E, D>::value);
         
         
 //        static_assert(false);
