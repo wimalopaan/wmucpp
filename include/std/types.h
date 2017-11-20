@@ -399,7 +399,7 @@ namespace detail {
     template<size_t Bits>
     struct TypeForBits {
         typedef typename std::conditional<Bits <= 8, uint8_t,
-                              typename std::conditional<Bits <= 16, uint16_t, uint32_t>::type>::type type;
+        typename std::conditional<Bits <= 16, uint16_t, uint32_t>::type>::type type;
     };
 }
 template<size_t Bits>
@@ -419,6 +419,40 @@ public:
 private:
     value_type mValue{};
 };
+
+template<size_t Bits>
+class bitsN_t {
+public:
+    inline static constexpr auto size = Bits;
+    typedef typename detail::TypeForBits<Bits>::type value_type;
+    inline static constexpr value_type mask = ((1 << Bits) - 1);
+    
+    constexpr bitsN_t() = default;
+    constexpr explicit bitsN_t(value_type v) : mValue(v & mask) {}
+    constexpr explicit bitsN_t(std::byte v) : mValue(std::to_integer<value_type>(v) & mask) {}
+    constexpr explicit operator value_type() const {
+        return mValue;
+    }
+private:
+    value_type mValue{};
+};
+
+template<typename T, uint8_t LeftBit, uint8_t RightBit>
+struct BitRange {
+    typedef T source_type;
+    static_assert(LeftBit >= RightBit);
+    static_assert(LeftBit < (sizeof(T) * 8));
+    static inline constexpr auto leftBit = LeftBit;
+    static inline constexpr auto rightBit = RightBit;
+    
+    static constexpr bitsN_t<LeftBit - RightBit + 1> convert(source_type v) {
+        return bitsN_t<LeftBit - RightBit + 1>{v >> RightBit};
+    }
+};
+
+using UpperNibble = BitRange<std::byte, 7, 4> ;
+using LowerNibble = BitRange<std::byte, 3, 0> ;
+
 
 namespace std {
     

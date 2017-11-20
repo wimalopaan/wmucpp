@@ -39,80 +39,85 @@ struct IX {
 };
 
 struct AT : public IX {
-    virtual uint8_t size() const {return 0;}
-    virtual IX* child(uint8_t) const {return nullptr;}
+    virtual inline uint8_t size() const {return 0;}
+    virtual inline IX* child(uint8_t) const {return nullptr;}
 };
 
-struct A : public AT {
+struct A final : public AT {
     constexpr A(uint8_t v = 0) : v(v) {}
     const uint8_t v = 0;
-    void f(volatile uint8_t& x) const override {
+    void inline f(volatile uint8_t& x) const override {
         x += v;
     }
 };
 
-struct B : public AT {
+struct B final : public AT {
     constexpr B(uint8_t v = 0) : v(v) {}
     const uint8_t v = 1;
-    void f(volatile uint8_t& x) const override {
+    void inline f(volatile uint8_t& x) const override {
         x += v;
     }
 };
 
-struct C : public AT {
+struct C final : public AT {
     constexpr C(uint8_t v = 0) : v(v) {}
     const uint8_t v = 2;
-    void f(volatile uint8_t& x) const override {
+    void inline f(volatile uint8_t& x) const override {
         x += v;
     }
 };
-struct D : public AT {
+struct D final : public AT {
     constexpr D(uint8_t v = 0) : v(v) {}
     const uint8_t v = 3;
-    void f(volatile uint8_t& x) const override {
+    void inline f(volatile uint8_t& x) const override {
         x += v;
     }
 };
-struct E : public AT {
+struct E final : public AT {
     constexpr E(uint8_t v = 0) : v(v) {}
     const uint8_t v = 4;
-    void f(volatile uint8_t& x) const override {
+    void inline f(volatile uint8_t& x) const override {
         x += v;
     }
 };
-struct M : public IX {
-    template<typename...T>
-    constexpr M(T*... ps) : mChildren{ps...}, mSize(sizeof...(T)) {}
-    virtual uint8_t size() const {return mSize;}
-    virtual IX* child(uint8_t index) const {return mChildren[index];}
-    
-    void f(volatile uint8_t&) const override {}
 
-    const std::array<IX*, 8> mChildren{};
-    const uint8_t mSize = 0;
+template<uint8_t N>
+struct M final : public IX {
+    template<typename...T>
+    constexpr inline M(T*... ps) : mChildren{ps...} {
+        static_assert(N == sizeof...(T));
+    }
+    virtual inline uint8_t size() const {return N;}
+    virtual inline IX* child(uint8_t index) const {return mChildren[index];}
+    
+    void inline f(volatile uint8_t&) const override {}
+//private:
+    const std::array<IX*, N> mChildren{};
+    static inline constexpr uint8_t mSize = N;
 };
 
 volatile uint8_t index = 2;
 
-E e1(1);
-E e2(2);
-M m1(&e1, &e2);
+//E e1(1);
+//E e2(2);
+//M m1(&e1, &e2);
 
-A a1(3);
-B b1(4);
-M m2(&a1, &b1, &m1);
+//A a1(3);
+//B b1(4);
+//M m2(&a1, &b1, &m1);
 
-C c1(5);
-D d1(6);
-M m3(&c1, &d1);
+//C c1(5);
+//D d1(6);
+//M m3(&c1, &d1);
 
 A a2(7);
 E e3(8);
 
 A a3(9);
-A a4(10);
+//A a4(10);
     
-constexpr M m4(&a2, &m3, &e3, &m2, &a3, &a4);
+//constexpr M m4(&a2, &m3, &e3, &m2, &a3, &a4);
+constexpr M<3> m4(&a2, &a3, &e3);
 
 volatile uint8_t sum;
 

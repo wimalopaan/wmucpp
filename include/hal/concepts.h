@@ -20,34 +20,34 @@
 
 namespace HAL {
     
-template<typename P>
-concept bool StaticPeriodic() {
-    return requires(P p) {
-        P::periodic();
-    };
-}
-
-template<typename P>
-concept bool CallableObject() {
-    return requires(P p) {
-        p();
-    };
-}
-
-template<typename EH, typename EV>
-concept bool EventHandlerGroup() {
-    return requires(EH eh, EV ev) {
-        EH::process(ev);
-    };
-}
-
-// note: produces internal compiler error (s.a. EventHandler)
-template<typename EH>
-concept bool EventHandler() {
-    return requires(EH eh) {
-        EH::eventType;
-        EH::process(std::byte(0));
-    };
-}
-
+    template<typename P>
+    concept bool StaticPeriodic() {
+        return requires(P p) {
+            P::periodic();
+        };
+    }
+    
+    template<typename P>
+    concept bool CallableObject() {
+        return requires(P p) {
+            p();
+        };
+    }
+    
+    template<typename EH, typename EV>
+    concept bool EventHandlerGroup() {
+        return requires(EH eh, EV ev) {
+            EH::process(ev);
+        };
+    }
+    
+    // note: produces internal compiler error (s.a. EventHandler)
+    template<typename EH>
+    concept bool EventHandler() {
+        return requires(EH eh) {
+            EH::eventType;
+            EH::process(std::byte(0));
+        };
+    }
+    
 }

@@ -34,7 +34,7 @@ targets += interrupts.elf
 targets += pinchange.elf
 targets += softusart.elf
 targets += constantrate.elf constantrate.s 
-targets += ledbuttons.elf ledbuttons.s 
+#targets += ledbuttons.elf ledbuttons.s 
 
 -include ../../Makefile.include
 

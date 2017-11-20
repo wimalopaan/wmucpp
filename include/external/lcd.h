@@ -25,8 +25,9 @@
 #include "std/pair.h"
 #include "std/types.h"
 
+#include "appl/command.h"
+
 namespace LCD { 
-    
     struct Lcd1x8  {};
     struct Lcd1x16 {};
     struct Lcd1x20 {};
@@ -64,46 +65,44 @@ namespace LCD {
         static constexpr uint8_t rowStartAddress[rows] = {0x00, 0x40};
         typedef Splitted_NaN<uint8_t, 1, 5> position_t;
     };
-    
-    
-    enum class Instruction : uint8_t {
-        clear    = (1 << 0),
-        home     = (1 << 1),
-        
-        mode     = (1 << 2),
-        shift    = (1 << 0),
-        increment= (1 << 1),
-        decrement= (0 << 1),
-        
-        control  = (1 << 3),
-        blink    = (1 << 0),
-        cursorOn = (1 << 1),
-        displayOn= (1 << 2),
-        
-        cdshift  = (1 << 4),
-        dshift   = (1 << 3),
-        right    = (1 << 2),
-        
-        function = (1 << 5),
-        I8bit    = (1 << 4),
-        I4bit    = (0 << 4),
-        twoLines = (1 << 3),
-        oneLine  = (0 << 3),
-        bigFont  = (1 << 2),
-        
-        cgram    = (1 << 6),
-        ddram    = (1 << 7),
-        readBusy = (1 << 7)
-    };
-}
 
-template<>
-struct std::enable_bitmask_operators<LCD::Instruction> {
-    static constexpr const bool enable = true;    
-};
+//    enum class Instruction : uint8_t {
+//        clear    = (1 << 0),
+//        home     = (1 << 1),
+        
+//        mode     = (1 << 2),
+//        shift    = (1 << 0),
+//        increment= (1 << 1),
+//        decrement= (0 << 1),
+        
+//        control  = (1 << 3),
+//        blink    = (1 << 0),
+//        cursorOn = (1 << 1),
+//        displayOn= (1 << 2),
+        
+//        cdshift  = (1 << 4),
+//        dshift   = (1 << 3),
+//        right    = (1 << 2),
+        
+//        function = (1 << 5),
+//        I8bit    = (1 << 4),
+//        I4bit    = (0 << 4),
+//        twoLines = (1 << 3),
+//        oneLine  = (0 << 3),
+//        bigFont  = (1 << 2),
+        
+//        cgram    = (1 << 6),
+//        ddram    = (1 << 7),
+//        readBusy = (1 << 7)
+//    };
+//}
 
-namespace LCD {
-    
+//template<>
+//struct std::enable_bitmask_operators<LCD::Instruction> {
+//    static constexpr const bool enable = true;    
+//};
+
+//namespace LCD {
     struct Row {
         uint8_t value = 0;
     };
@@ -111,17 +110,51 @@ namespace LCD {
         uint8_t value = 0;
     };
     
+    namespace HD44780 {
+        namespace Instructions {
+            struct Clear : Command::Value<0x01_B> {};
+            struct Home : Command::Value<0x02_B>{};
+            struct Mode : Command::Value<0x04_B>{};
+            struct Control : Command::Value<0x08_B>{};
+            struct Shift : Command::Value<0x10_B>{};
+            struct Function : Command::Value<0x20_B>{};
+            struct CGRam : Command::Value<0x40_B>{};
+            struct DDRam : Command::Value<0x80_B>{};
+            
+            struct ShiftDisplay : Command::Option<Mode, 0x01_B> {};
+            struct CursorIncrement : Command::Option<Mode, 0x02_B> {};
+            struct CursorDecrement : Command::Option<Mode, 0x00_B> {};
+            
+            struct Blink : Command::Option<Control, 0x01_B> {};
+            struct CursorOn : Command::Option<Control, 0x02_B> {};
+            struct DisplayOn : Command::Option<Control, 0x04_B> {};
+            
+            struct DisplayShift : Command::Option<Shift, 0x08_B> {};
+            struct ShiftRight : Command::Option<Shift, 0x04_B> {};
+            
+            struct I8bit : Command::Option<Function, 0x10_B> {};
+            struct I4bit : Command::Option<Function, 0x00_B> {};
+            struct TwoLines : Command::Option<Function, 0x08_B> {};
+            struct BigFont : Command::Option<Function, 0x04_B> {};
+            
+            using commands = Command::CommandSet<Meta::List<Clear, Home, Mode, Control, Shift, Function, CGRam, DDRam>, 
+                                                 Meta::List<ShiftDisplay, CursorIncrement, CursorDecrement, 
+                                                            Blink, CursorOn, DisplayOn,
+                                                            DisplayShift, ShiftRight, 
+                                                            I8bit, TwoLines, BigFont>>;
+        }
+    }
+    
     template<typename Data, typename RS, typename RW, typename E, typename Type>
-    class HD44780 final {
-        HD44780() = delete;
-        
+    class HD44780Port final {
+        HD44780Port() = delete;
         static_assert(Data::size == 4, "wrong number of pins in PinSet");
-        
     public:
         static constexpr auto enableDelay = 20_us;
         
         typedef Parameter<Type> param_type;
         typedef typename Parameter<Type>::position_t position_t;
+
         
         static void init() {
             Data::template dir<AVR::Output>();
@@ -134,35 +167,47 @@ namespace LCD {
             E::off();
             Util::delay(16_ms);
             
+            using namespace LCD::HD44780::Instructions;
+            
 //            Data::template set<(uint8_t(Instruction::function | Instruction::I8bit) >> 4)>();
-            Data::set(std::byte(Instruction::function | Instruction::I8bit) >> 4);
+//            Data::set(std::byte(Instruction::function | Instruction::I8bit) >> 4);
+            Data::set(UpperNibble::convert(commands::template value<Function, I8bit>()));
             toggle<E>();
             Util::delay(5_ms);
             
-            Data::set(std::byte(Instruction::function | Instruction::I8bit) >> 4);
+//            Data::set(std::byte(Instruction::function | Instruction::I8bit) >> 4);
+            Data::set(UpperNibble::convert(commands::template value<Function, I8bit>()));
             toggle<E>();
             Util::delay(1_ms);
             
-            Data::set(std::byte(Instruction::function | Instruction::I8bit) >> 4);
+//            Data::set(std::byte(Instruction::function | Instruction::I8bit) >> 4);
+            Data::set(UpperNibble::convert(commands::template value<Function, I8bit>()));
             toggle<E>();
             Util::delay(1_ms);
             
-            Data::set(std::byte(Instruction::function | Instruction::I4bit) >> 4);
+//            Data::set(std::byte(Instruction::function | Instruction::I4bit) >> 4);
+            Data::set(UpperNibble::convert(commands::template value<Function, I4bit>()));
             toggle<E>();
             Util::delay(5_ms);
             
-            writeCommand(Instruction::control | Instruction::displayOn | Instruction::cursorOn | Instruction::blink);
-            writeCommand(Instruction::clear);
-            writeCommand(Instruction::home);
-            writeCommand(Instruction::mode | Instruction::increment);
+            writeCommand<Control, DisplayOn, CursorOn, Blink>();
+            writeCommand<Clear>();
+            writeCommand<Home>();
+            writeCommand<Mode, CursorIncrement>();
             
+//            writeCommand(Instruction::control | Instruction::displayOn | Instruction::cursorOn | Instruction::blink);
+//            writeCommand(Instruction::clear);
+//            writeCommand(Instruction::home);
+//            writeCommand(Instruction::mode | Instruction::increment);
+
             Data::template dir<AVR::Input>();
         }
         static void clear() {
-            writeCommand(Instruction::clear);
+            writeCommand<HD44780::Instructions::Clear>();
+//            writeCommand(Instruction::clear);
         }
         static void home() {
-            writeCommand(Instruction::home);
+            writeCommand<HD44780::Instructions::Home>();
             actualRow = 0;
         }
         static void writeData(std::byte data) {
@@ -170,15 +215,22 @@ namespace LCD {
             RS::high();
             write(data);
         }
-        static void writeCommand(Instruction instruction) {
+        template<typename C, typename... OO>
+        static void writeCommand() {
             waitBusy();
             RS::low();
-            write(std::byte(instruction));
+            write(HD44780::Instructions::commands::template value<C, OO...>());
         }
+//        static void writeCommand(Instruction instruction) {
+//            waitBusy();
+//            RS::low();
+//            write(std::byte(instruction));
+//        }
         static void writeAddress(uint8_t a) {
             waitBusy();
             RS::low();
-            write(std::byte(Instruction::ddram) | std::byte(a & 0x7f));
+//            write(std::byte(Instruction::ddram) | std::byte(a & 0x7f));
+            write(HD44780::Instructions::DDRam::value | std::byte(a & 0x7f));
         }
         static std::byte readData() {
             RS::high();
@@ -248,9 +300,11 @@ namespace LCD {
         static void write(std::byte data) {
             RW::low();        
             Data::template dir<AVR::Output>();
-            Data::set((data >> 4) & std::byte{0x0f});
+//            Data::set((data >> 4) & std::byte{0x0f});
+            Data::set(UpperNibble::convert(data));
             toggle<E>();
-            Data::set(data & std::byte(0x0f));
+//            Data::set(data & std::byte(0x0f));
+            Data::set(LowerNibble::convert(data));
             toggle<E>();
             Data::template dir<AVR::Input>();
         }
@@ -269,7 +323,8 @@ namespace LCD {
             return data;
         }
         static std::byte waitBusy() {
-            while (std::any(readCommand() & std::byte(Instruction::readBusy)));
+//            while (std::any(readCommand() & std::byte(Instruction::readBusy)));
+            while (std::any(readCommand() & 0x80_B));
             Util::delay(4_us);
             return readCommand(); // Address Counter
         }

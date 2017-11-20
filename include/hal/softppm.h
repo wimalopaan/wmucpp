@@ -11,7 +11,7 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -25,10 +25,11 @@
 #include "units/percent.h"
 #include "util/disable.h"
 
+// todo: PinSet einsetzen
 template<typename Timer, typename... Pins>
 class SoftPPM final {
     SoftPPM() = delete;
-
+    
 public:
     static_assert(std::is_same<typename Timer::value_type, uint16_t>::value, "must use 16bit timer");
     
@@ -36,7 +37,7 @@ public:
     static constexpr const uint8_t numberOfChannels = sizeof...(Pins);
     static constexpr auto mcuTimer = Timer::mcuTimer;
     static constexpr auto mcuInterrupts = Timer::mcuInterrupts;
-
+    
     using parameter = PPMParameter<Timer>;
     
     static void timerInit() {
@@ -54,35 +55,35 @@ public:
         constexpr auto medium = (parameter::ocMax + parameter::ocMin) / 2;
         std::iota(std::begin(ocrbValues), std::end(ocrbValues), medium, medium);
     }
-
+    
     static void ppm(const std::percent& width, uint8_t channel) {
         assert(channel < numberOfChannels);
         uint16_t ocr = std::expand(width, parameter::ocMin, parameter::ocMax);
+        uint16_t start = 0;
+        for(uint8_t i = 0; i < channel; ++i) {
+            start += ocrbValues[i];
+        }
+        uint16_t end = start + ocr;
+        int16_t diff = ocr - ocrbValues[channel];
         {
             Scoped<DisbaleInterrupt<>> di;
-            uint16_t start = 0;
-            for(uint8_t i = 0; i < channel; ++i) {
-                start += ocrbValues[i];
-            }
-            uint16_t end = start + ocr;
-            int16_t diff = ocr - ocrbValues[channel];
             ocrbValues[channel] = end;
             for(uint8_t i = channel + 1; i < numberOfChannels; ++i) {
                 ocrbValues[i] += diff;
             }
         }
     }
-
+    
     template<typename P, typename...PP>
     struct First {
-      static void high() {
+        static void high() {
             P::high();
         }
-      static void low() {
+        static void low() {
             P::low();
         }
     };
-
+    
     // todo: etwas eleganter !!! Auf die Klasse verzichten, weil keine partielle Spezialisierung mehr erforderlich wegen constexpr
     template<uint8_t N, typename P, typename... PP>
     struct OffN {
@@ -95,7 +96,7 @@ public:
             }
         }
     };
-
+    
     template<uint8_t N, typename P, typename... PP>
     struct OnN {
         static void check(uint8_t i) {
@@ -107,7 +108,7 @@ public:
             }
         }
     };
-
+    
     struct OCAHandler : public IsrBaseHandler<typename AVR::ISR::Timer<Timer::number>::CompareA> {
         static void isr() {
             actual = 0;

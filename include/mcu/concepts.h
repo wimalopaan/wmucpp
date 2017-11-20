@@ -70,6 +70,12 @@ namespace MCU {
             p.off();
         };
     }
+    template<typename PS>
+    concept bool isPinSet() { 
+        return requires (PS p) { 
+            typename PS::pinlist;
+        };
+    }
     
     template<typename I>
     concept bool Interrupt() { 

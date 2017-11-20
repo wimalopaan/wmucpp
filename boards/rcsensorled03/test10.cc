@@ -94,7 +94,7 @@ struct I2CInterrupt : public IsrBaseHandler<AVR::ISR::Int<1>> {
 using isrRegistrar = IsrRegistrar<sensorUsart::RxHandler, sensorUsart::TxHandler, rcUsart::RxHandler, rcUsart::TxHandler,
                                   softPpm::OCAHandler, softPpm::OCBHandler>;
 
-class TSensorId : public Hott::MenuItem {
+class TSensorId final : public Hott::MenuItem {
 public:
     TSensorId(uint8_t number) : mNumber{number} {
         assert(number < Storage::dsIds.size);
@@ -117,14 +117,14 @@ private:
     uint8_t mNumber = 0;
 };
 
-class TSensorMenu : public Hott::NumberedMenu {
+class TSensorMenu final : public Hott::NumberedMenu {
 public:
     TSensorMenu(Menu* parent, uint8_t n) : NumberedMenu(parent, n, "Sensor"_pgm, &mID), mID{n} {}
 private:
     TSensorId mID{0};
 };
 
-class TemperaturSensorenMenu : public Hott::Menu {
+class TemperaturSensorenMenu final : public Hott::Menu {
 public:
     TemperaturSensorenMenu(Menu* parent) : Menu(parent, "Temp. Sensoren"_pgm, &mTS1, &mTS2, &mTS3, &mTS4) {}
 private:
@@ -134,7 +134,7 @@ private:
     TSensorMenu mTS4{this, 3};
 };
 
-class TemperaturMenu : public Hott::Menu {
+class TemperaturMenu final : public Hott::Menu {
 public:
     TemperaturMenu(Hott::Menu* parent) : Hott::Menu(parent, "Temperatur"_pgm, &mSensor1, &mSensor2, &mSensoren) {}
 
@@ -144,7 +144,7 @@ private:
     TemperaturSensorenMenu mSensoren{this};
 };
 
-class SpannungMenu : public Hott::Menu {
+class SpannungMenu final : public Hott::Menu {
 public:
     SpannungMenu(Hott::Menu* parent) : Menu(parent, "Spannung"_pgm, &mSensor1, &mSensor2) {}
 private:
@@ -152,7 +152,7 @@ private:
     Hott::TextWithValue<Storage::AVKey, 1, Storage::ApplData> mSensor2{"Anzeige 2"_pgm, appData, Storage::AVKey::Spannung2};
 };
 
-class DrehzahlMenu : public Hott::Menu {
+class DrehzahlMenu final : public Hott::Menu {
 public:
     DrehzahlMenu(Hott::Menu* parent) : Menu(parent, "Drehzahl"_pgm, &mSensor1, &mSensor2) {}
 private:
@@ -160,7 +160,7 @@ private:
     Hott::TextWithValue<Storage::AVKey, 1, Storage::ApplData> mSensor2{"Anzeige 2"_pgm, appData, Storage::AVKey::RpmSensor2};
 };
 
-class StromMenu : public Hott::Menu {
+class StromMenu final : public Hott::Menu {
 public:
     StromMenu(Hott::Menu* parent) : Menu(parent, "Strom"_pgm, &mOffset) {}
 private:
@@ -192,7 +192,7 @@ public:
 private:
 };
 
-class PWMMenu : public Hott::Menu {
+class PWMMenu final : public Hott::Menu {
 public:
     PWMMenu(Hott::Menu* parent) : Menu(parent, "PWM"_pgm, &mOffset, &mType) {}
 private:
@@ -200,7 +200,7 @@ private:
     PWMType mType{"Modus"_pgm, appData, Storage::AVKey::PWMMOde};
 };
 
-class LedMenu : public Hott::Menu {
+class LedMenu final : public Hott::Menu {
 public:
     LedMenu(Hott::Menu* parent) : Menu(parent, "LEDs"_pgm, &mChannel1, &mSequence1, &mChannel2, &mSequence2) {}
 private:
@@ -210,7 +210,7 @@ private:
     Hott::TextWithValue<Storage::AVKey, 8, Storage::ApplData> mSequence2{"Folge 2"_pgm, appData, Storage::AVKey::Leds2Sequence};
 };
 
-class RCMenu : public Hott::Menu {
+class RCMenu final : public Hott::Menu {
 public:
     RCMenu() : Menu(this, "WM SensorLed"_pgm, &mTemperatur, &mSpannung, &mDrehzahl, &mStrom, &mPWM, &mLeds) {}
 private:

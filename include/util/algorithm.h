@@ -21,21 +21,22 @@
 #include <stdint.h>
 #include "std/algorithm.h"
 #include "std/array.h"
+#include "std/concepts.h"
 
 namespace Util {
     
-    template <uint8_t I, typename T, typename ...Ts>
-    struct nth_element_impl {
-        using type = typename nth_element_impl<I-1, Ts...>::type;
-    };
+//    template <uint8_t I, typename T, typename ...Ts>
+//    struct nth_element_impl {
+//        using type = typename nth_element_impl<I-1, Ts...>::type;
+//    };
     
-    template <typename T, typename ...Ts>
-    struct nth_element_impl<0, T, Ts...> {
-        using type = T;
-    };
+//    template <typename T, typename ...Ts>
+//    struct nth_element_impl<0, T, Ts...> {
+//        using type = T;
+//    };
     
-    template <uint8_t I, typename ...Ts>
-    using nth_element = typename nth_element_impl<I, Ts...>::type;
+//    template <uint8_t I, typename ...Ts>
+//    using nth_element = typename nth_element_impl<I, Ts...>::type;
     
     template <typename T, uint16_t N, typename Comp = std::greater<T>>
     constexpr std::array<T, N>& sort(std::array<T, N>& array, Comp compare = std::greater<T>()) {
@@ -102,6 +103,30 @@ namespace Util {
     template<typename C>
     constexpr reverse_container<C> reverse(const C& container) {
         return reverse_container<C>(container);
+    }
+    
+    
+    template<std::Range C>
+    bool crc8(const C& data) {
+        uint8_t crc = 0;
+        for(typename C::size_type loop_count = 0; loop_count < C::size; loop_count++) {
+            uint8_t b = data[loop_count];
+            uint8_t bit_counter = 8;
+            do {
+                uint8_t feedback_bit = (crc ^ b) & 0x01;
+                if ( feedback_bit == 0x01 ) {
+                    crc = crc ^ 0x18; //0X18 = X^8+X^5+X^4+X^0
+                }
+                crc = (crc >> 1) & 0x7F;
+                if ( feedback_bit == 0x01 ) {
+                    crc = crc | 0x80;
+                }
+                b = b >> 1;
+                bit_counter--;
+                
+            } while (bit_counter > 0);
+        }
+        return (crc == 0);
     }
     
 }

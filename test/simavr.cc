@@ -18,6 +18,7 @@
 
 #include "console.h"
 #include "util/fixedpoint.h"
+#include "util/algorithm.h"
 #include "simavr/simavrdebugconsole.h"
 
 using terminal = SimAVRDebugConsole;
@@ -57,7 +58,7 @@ int main(){
 
     std::array<uint8_t, 8> b;
     b[0] = 1;
-    std::cout << std::crc8(b) << std::endl;
+    std::cout << Util::crc8(b) << std::endl;
     
     
     while(true);

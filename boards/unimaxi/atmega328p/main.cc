@@ -58,11 +58,17 @@ typedef led::color_type Color;
 
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using fetPin = AVR::Pin<PortB, 1>;
-using lcdPwm = SoftPWM<fetPin>;
+using lcdPinSet = AVR::PinSet<fetPin>;
+using lcdPwm = HAL::SoftPWM<lcdPinSet>;
+//using lcdPwm = SoftPWM<fetPin>;
 
+#ifdef USE_BUTTON
 using buttonPin = AVR::Pin<PortB, 0>;
 using button0 = Button<0, buttonPin>;
 using buttonController = ButtonController<button0>;
+#else
+using debugPin = AVR::Pin<PortB, 0>; 
+#endif
 
 using rotaryPin1 = AVR::Pin<PortD, 2>;
 using rotaryPin2 = AVR::Pin<PortD, 3>;
@@ -80,14 +86,18 @@ using LcdE  = AVR::Pin<PortD, 7>;
 
 using LcdData = AVR::PinSet<LcdDB4, LcdDB5, LcdDB6, LcdDB7>;
 
-using lcd = LCD::HD44780<LcdData, LcdRS, LcdRW, LcdE, LCD::Lcd2x16>;
+using lcd = LCD::HD44780Port<LcdData, LcdRS, LcdRW, LcdE, LCD::Lcd2x16>;
 using lcdStream = BufferedStream<lcd, 64, std::lineTerminator<std::LF>>;
 
 using systemClock = AVR::Timer8Bit<0>;
 using systemTimer = AlarmTimer<systemClock>;
 
-using systemConstantRate = ConstantRateAdapter<1, void, AVR::ISR::Timer<0>::CompareA, systemTimer, lcdPwm, 
-                                                buttonController, rotaryEncoder>;
+using systemConstantRate = ConstantRateAdapter<1, void, AVR::ISR::Timer<0>::CompareA, systemTimer, 
+//lcdPwm,
+#ifdef USE_BUTTON
+                                                buttonController, 
+#endif
+rotaryEncoder>;
 
 template<typename Led>
 class Blinker {
@@ -167,15 +177,7 @@ using blinker = Blinker<led>;
 constexpr TWI::Address address{0x59_B};
 using i2c = TWI::Slave<0, address, lcd::param_type::rows * lcd::param_type::cols>;
 
-using isrReg = IsrRegistrar<systemConstantRate, spiInput, terminalDevive::RxHandler, terminalDevive::TxHandler, i2c>; 
-
-//namespace std {
-//terminal cout;
-//std::lineTerminator<CRLF> endl;
-//}
-
-//std::basic_ostream<lcdStream> lcdcout;
-//std::lineTerminator<std::LF> lcdendl;
+using isrReg = IsrRegistrar<spiInput, terminalDevive::RxHandler, terminalDevive::TxHandler, i2c>; 
 
 struct Spi0handler: public EventHandler<EventType::Spi0> {
     static bool process(std::byte v) {
@@ -204,27 +206,32 @@ struct Timerhandler: public EventHandler<EventType::Timer> {
     }
 };
 
-int main()
-{
+int main() {
     isrReg::init();
     blinker::init();
-    systemTimer::init();
+    systemTimer::init(AVR::TimerMode::CTCNoInt);
     terminalDevive::init<19200>();
     lcdPwm::init();    
     lcd::init();
     i2c::init();
+    spiInput::init<AVR::SpiSlave<>>();
+#ifdef USE_BUTTON
     buttonController::init();
+#else
+    debugPin::dir<AVR::Output>();
+    debugPin::off();
+#endif
     rotaryEncoder::init();
     
-    std::outl<terminal>("UniMaxi (HW 0.2) m328 (Spi Uart Lcd) 0.92"_pgm);
-    std::outl<lcdStream>("UniMaxi (HW 0.2) m328 (Spi Uart Lcd) 0.92"_pgm);
-//    std::outl<lcdStream>("UniMaxi"_pgm);
+    auto title = "UniMaxi (HW 0.2) m328 (Spi Uart Lcd) 0.93"_pgm;
     
+    std::outl<terminal>(title);
+    std::outl<lcdStream>(title);
+
     std::outl<terminal>(Config());
     
     systemTimer::create(500_ms, AlarmFlags::Periodic);
     
-    spiInput::init<AVR::SpiSlave<>>();
     
     using handler = EventHandlerGroup<Spi0handler, Timerhandler>;
     
@@ -232,6 +239,11 @@ int main()
     {
         Scoped<EnableInterrupt<>> interruptEnabler;
         EventManager::run2<handler>([](){
+            systemClock::periodic<systemClock::flags_type::ocfa>([](){
+                systemTimer::rateProcess();
+                systemConstantRate::rateTick();
+                debugPin::toggle();
+            });
             systemConstantRate::periodic();
             lcdPwm::freeRun();
             lcdStream::periodic();
@@ -257,23 +269,11 @@ void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsign
 }
 #endif
 
-ISR(TIMER1_COMPA_vect) {
-    //    isrReg::isr<AVR::ISR::Timer<1>::CompareA>();
-}
-ISR(TIMER1_COMPB_vect) {
-    //    isrReg::isr<AVR::ISR::Timer<1>::CompareB>();
-}
-ISR(TIMER1_CAPT_vect) {
-    //    isrReg::isr<AVR::ISR::Timer<1>::Capture>();
-}
 ISR(TWI_vect) {
     isrReg::isr<AVR::ISR::Twi<0>>();
 }
 ISR(SPI_STC_vect) {
     isrReg::isr<AVR::ISR::Spi<0>::Stc>();
-}
-ISR(TIMER0_COMPA_vect) {
-    isrReg::isr<AVR::ISR::Timer<0>::CompareA>();
 }
 ISR(USART_RX_vect) {
     isrReg::isr<AVR::ISR::Usart<0>::RX>();

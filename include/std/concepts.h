@@ -22,47 +22,47 @@
 #include "std/traits.h"
 
 namespace std {
-
-template<typename C>
-concept bool Clock() {
-    return requires(C clock) {
-        clock.dateTime();
-    };
-}
-
-template<typename T>
-concept bool Integral() {
-    return std::is_integral<T>::value;    
-}
-
-template<typename T>
-concept bool Unsigned() {
-    return std::is_unsigned<T>::value;    
-}
-
-template<typename T>
-concept bool Signed() {
-    return std::is_signed<T>::value;    
-}
-
-template<typename R>
-concept bool Range() { 
-    return requires (R r) { 
-        typename R::value_type;
-        r.begin();
-        r.end();
-    };
-}
-template<typename T>
-concept bool Fundamental()
-{
-    return std::is_fundamental<T>::value;
-}
-
-template<typename T>
-concept bool NonFundamental()
-{
-    return !std::is_fundamental<T>::value;
-}
-
+    
+    template<typename C>
+    concept bool Clock() {
+        return requires(C clock) {
+            clock.dateTime();
+        };
+    }
+    
+    template<typename T>
+    concept bool Integral() {
+        return std::is_integral<T>::value;    
+    }
+    
+    template<typename T>
+    concept bool Unsigned() {
+        return std::is_unsigned<T>::value;    
+    }
+    
+    template<typename T>
+    concept bool Signed() {
+        return std::is_signed<T>::value;    
+    }
+    
+    template<typename R>
+    concept bool Range() { 
+        return requires (R r) { 
+            typename R::value_type;
+            r.begin();
+            r.end();
+        };
+    }
+    template<typename T>
+    concept bool Fundamental()
+    {
+        return std::is_fundamental<T>::value;
+    }
+    
+    template<typename T>
+    concept bool NonFundamental()
+    {
+        return !std::is_fundamental<T>::value;
+    }
+    
 }

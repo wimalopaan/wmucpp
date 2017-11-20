@@ -203,6 +203,11 @@ namespace AVR {
             port_type::toggle(v);
         }
 #endif
+        typedef bitsN_t<size> bits_type;
+        static inline void set(bits_type value) {
+            auto v = (port_type::get() & setMask) ^ valueBits[static_cast<typename bits_type::value_type>(value)]; // <> race-free for non-overlapping PinSets
+            port_type::toggle(v);
+        }
         static inline void set(uintN_t<size> value) {
             static_assert(std::numeric_limits<uintN_t<size>>::max() < valueBits.size);
             auto v = (port_type::get() & setMask) ^ valueBits[value];
@@ -328,6 +333,44 @@ namespace AVR {
     };
     
 }
+
+//template<MCU::isPinSet PinSet, typename Commands>
+//requires requires {typename Commands::commands; typename Commands::options;}
+//struct CommandPort {
+//    template<typename C, typename... OO>
+//    requires 
+//    requires(C c) {c.value;} &&
+//    (requires(OO o) {typename OO::command_type; typename OO::value_type;} && ... && true) &&
+//    (std::is_same<C, typename OO::command_type>::value && ... && true) &&
+//    Meta::contains<typename Commands::commands, C>::value 
+//    inline static void put(OO... options) {
+//        auto ov = (options.value | ... | C::value);
+//        PinSet::set(ov);
+//    }
+
+//    template<typename Part, typename C, typename... OO>
+//    requires 
+//    requires(C c) {c.value;} &&
+//    requires(Part p) {typename Part::source_type;} &&
+//    (requires(OO o) {typename OO::command_type; typename OO::value_type;} && ... && true) &&
+//    (std::is_same<C, typename OO::command_type>::value && ... && true) &&
+//    Meta::contains<typename Commands::commands, C>::value 
+//    inline static void put(OO... options) {
+//        typename Part::source_type ov = (options.value | ... | C::value);
+//        PinSet::set(Part::convert(ov));
+//    }
+    
+//    template<typename C, typename... OO>
+//    requires 
+//    requires(C c) {c.value;} &&
+//    (std::is_same<C, typename OO::command_type>::value && ... && true) &&
+//    (requires(OO o) {typename OO::command_type;} && ... && true)
+//    static void get(OO... options) {
+//        PinSet::read();
+//    }
+//};
+
+
 
 template<typename Pin>
 struct Set {

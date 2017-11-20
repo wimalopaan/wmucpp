@@ -26,7 +26,10 @@ boards/rcsensorled03/test01.cc
 boards/rcsensorled03/test02.cc
 boards/rcsensorled03/test03.cc
 boards/rcsensorled03/test10.cc
+example/features/old/ledbuttons.cc
+example/features/old/ledbuttons.h
 host/test20.cc
+include/appl/command.h
 include/external/hott/menu.h
 include/external/hott/old/menu.h
 include/external/hott/old/menu2.h

@@ -68,3 +68,4 @@ boards/anano
 boards/i2cIR
 boards/i2cWS2812
 boards/rcsensorled03
+example/features/old

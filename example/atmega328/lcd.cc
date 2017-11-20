@@ -39,7 +39,7 @@ using LcdE  = AVR::Pin<PortB, 0>;
 
 using LcdData = AVR::PinSet<LcdDB4, LcdDB5, LcdDB6, LcdDB7>;
 
-using lcd = LCD::HD44780<LcdData, LcdRS, LcdRW, LcdE, LCD::Lcd2x20>;
+using lcd = LCD::HD44780Port<LcdData, LcdRS, LcdRW, LcdE, LCD::Lcd2x20>;
 
 using terminal = AVR::Usart<0>;
 

@@ -59,7 +59,7 @@ namespace OneWire {
         }
         
         inline explicit operator bool() const {
-            return !std::all_of(std::begin(data), std::end(data), [](uint8_t v){return v == 0;}) && std::crc8(data);
+            return !std::all_of(std::begin(data), std::end(data), [](uint8_t v){return v == 0;}) && Util::crc8(data);
         }
     private:
         std::array<uint8_t, size> data;

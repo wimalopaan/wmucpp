@@ -21,6 +21,7 @@ MCU = attiny85
 #MCU = atmega328p
 F_OSC = 8000000
 
+OPTFLAGS = -O3
 
 bm60a.elf bm60a.s: MCU = atmega328p
 bm61a.elf bm61a.s: MCU = atmega328p

@@ -163,7 +163,7 @@ public:
                 ok = false;
             }
         }
-        ok &= std::crc8(mScratchPad);
+        ok &= Util::crc8(mScratchPad);
         
         if (ok) {
             EventManager::enqueue({EventType::DS18B20Measurement});
