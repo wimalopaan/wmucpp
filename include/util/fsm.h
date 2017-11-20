@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "std/array.h"
+#include "std/array"
 
 namespace Util {
 

@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <type_traits>
+
 namespace std {
     template<typename E>
     struct enable_bitmask_operators final {

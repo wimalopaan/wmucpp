@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "std/array.h"
-#include "std/algorithm.h"
+#include "std/array"
+#include "std/algorithm"
 
 volatile uint8_t global = 0;
 

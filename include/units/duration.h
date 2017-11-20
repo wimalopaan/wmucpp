@@ -20,7 +20,7 @@
 
 #include <stdint.h>
 
-#include "std/ratio.h"
+#include "std/ratio"
 #include "std/concepts.h"
 
 namespace std {

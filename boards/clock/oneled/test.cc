@@ -29,7 +29,7 @@
 #include "hal/constantrate.h"
 #include "hal/alarmtimer.h"
 #include "mcu/avr/swusart.h"
-#include "std/chrono.h"
+#include "std/chrono"
 #include "appl/ledflash.h"
 #include "appl/clockstatemachine.h"
 #include "appl/blink.h"

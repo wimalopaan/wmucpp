@@ -16,8 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdint.h>
-#include <stdbool.h>
+#include <cstdint>
 
 volatile uint8_t global; //-
 

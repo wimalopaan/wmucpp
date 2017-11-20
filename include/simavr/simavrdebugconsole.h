@@ -25,7 +25,8 @@
 # include <avr/avr_mcu_section.h>
 #endif
 
-#include "std/byte.h"
+#include <cstdint>
+#include <cstddef>
 
 #ifndef GPIOR0
 # define GPIOR0 _SFR_IO8(0x5c)

@@ -1,6 +1,6 @@
 /*
- * WMuCpp - Bare Metal C++
- * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * ++C - C++ introduction
+ * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.meier@hs-kl.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -11,27 +11,12 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "std/array"
-#include "std/algorithm"
+#pragma once
 
-volatile uint8_t global = 0;
-
-void foo(const std::array<uint8_t, 10>& a) {
-    for(uint8_t i = 0; i < a.size; ++i) {
-        global += a[i];
-    }
-}
-
-int main()
-{
-    std::array<uint8_t, 10> a = {1, 2};
-
-    foo(a);
-
-    while(true);
-}
+#include <stddef.h>
+#include <detail/byte.h>

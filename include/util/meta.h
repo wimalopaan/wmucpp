@@ -18,10 +18,9 @@
 
 #pragma once
 
-#include <stddef.h>
-
-#include "std/traits.h"
-#include "std/pair.h"
+#include <cstddef>
+#include <utility>
+#include <type_traits>
 
 namespace Meta {
     namespace detail {

@@ -18,9 +18,10 @@
 
 #pragma once
 
+#include <ratio>
+
 #include "units/duration.h"
 #include "units/physical.h"
-#include "std/ratio.h"
 
 namespace std {
     namespace literals {

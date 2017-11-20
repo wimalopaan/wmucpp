@@ -18,9 +18,9 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
+#include <type_traits>
 #include "compiler/compiler.h"
-#include "std/traits.h"
 
 namespace AVR {
     struct ATMegaNone;

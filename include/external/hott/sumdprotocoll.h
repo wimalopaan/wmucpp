@@ -18,9 +18,9 @@
 
 #pragma once
 
-#include <stdint.h>
-#include "std/array.h"
-#include "std/pair.h"
+#include <cstdint>
+#include <array>
+#include <utility>
 
 #pragma pack(push)
 #pragma pack(1)

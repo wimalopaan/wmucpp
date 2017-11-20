@@ -18,9 +18,9 @@
 
 #pragma once
 
-#include "std/array.h"
-#include "std/traits.h"
-#include "std/memory.h"
+#include "std/array"
+#include "std/type_traits"
+#include "std/memory"
 
 #if __has_include(<avr/pgmspace.h>)
 # include <avr/pgmspace.h>

@@ -34,7 +34,7 @@
 #include "external/dcf77.h"
 #include "appl/blink.h"
 #include "appl/ledflash.h"
-#include "std/chrono.h"
+#include "std/chrono"
 
 #include "console.h"
 

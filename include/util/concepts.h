@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include <stdint.h>
-#include "std/byte.h"
+#include <cstdint>
+#include <cstddef>
 
 namespace Util {
 

@@ -17,7 +17,7 @@
  */
 
 #include <stdint.h>
-#include "std/traits.h"
+#include "std/type_traits"
 
 void f() {
     // throw 42; // undefined ref to cxa_...

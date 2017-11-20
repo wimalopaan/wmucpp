@@ -17,8 +17,8 @@
  */
 
 #include <stdint.h>
-#include "std/limits.h"
-#include "std/array.h"
+#include "std/limits"
+#include "std/array"
 #include "util/algorithm.h"
 
 #include "console.h"

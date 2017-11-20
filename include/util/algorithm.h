@@ -19,8 +19,8 @@
 #pragma once
 
 #include <stdint.h>
-#include "std/algorithm.h"
-#include "std/array.h"
+#include "std/algorithm"
+#include "std/array"
 #include "std/concepts.h"
 
 namespace Util {

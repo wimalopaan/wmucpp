@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 #include "mcu/avr8.h"
-#include "std/array.h"
+#include "std/array"
 #include "util/disable.h"
 #include "console.h"
 #include "simavr/simavrdebugconsole.h"

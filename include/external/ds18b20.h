@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include "std/array.h"
-#include "std/algorithm.h"
+#include "std/array"
+#include "std/algorithm"
 #include "util/fixedpoint.h"
 #include "external/onewire.h"
 

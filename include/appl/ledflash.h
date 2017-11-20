@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <std/types.h>
+#include <cstdint>
+#include "util/types.h"
 
 template<typename Led>
 class LedFlash {

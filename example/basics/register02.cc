@@ -20,7 +20,7 @@
 #include "mcu/register.h"
 #include "mcu/ports.h"
 #include "util/bits.h"
-#include "std/algorithm.h"
+#include "std/algorithm"
 
 
 int main() {

@@ -37,7 +37,7 @@
 #include "hal/softspimaster.h"
 #include "external/dcf77.h"
 #include "external/irmp.h"
-#include "std/chrono.h"
+#include "std/chrono"
 #include "units/percent.h"
 #include "appl/blink.h"
 #include "appl/ledflash.h"

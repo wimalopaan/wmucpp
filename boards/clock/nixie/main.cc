@@ -31,7 +31,7 @@
 #include "hal/softspimaster.h"
 #include "external/ws2812.h"
 #include "external/dcf77.h"
-#include "std/chrono.h"
+#include "std/chrono"
 #include "appl/ledflash.h"
 #include "appl/clockstatemachine.h"
 #include "appl/timebcdserial.h"

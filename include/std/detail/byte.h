@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "std/concepts.h"
+//#include "std/concepts.h"
 #include "std/bitmask.h"
 
 namespace std {
@@ -30,7 +30,7 @@ namespace std {
         static constexpr bool enable = true;
     };
     
-    template<std::Integral T>
+    template<typename T>
     constexpr T to_integer(byte b) noexcept {
         return T((uint8_t)b);
     }

@@ -19,7 +19,7 @@
 #pragma once 
 
 #include <stdint.h>
-#include "std/traits.h"
+#include "std/type_traits"
 #include "container/fifo.h"
 
 // todo: Mode: BitMode oder ByteMode

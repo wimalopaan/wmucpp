@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include "std/array.h"
-#include "std/types.h"
+#include <array>
+#include "util/types.h"
 #include "util/bits.h"
 
 template<uint8_t K, typename ValueType = uint16_t>

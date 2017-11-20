@@ -18,13 +18,13 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
+#include <array>
 
 #include "mcu/avr/isr.h"
 #include "mcu/avr/usi.h"
 #include "mcu/avr/twiaddress.h"
-#include "std/array.h"
-#include "std/types.h"
+#include "util/types.h"
 
 namespace I2C {
 

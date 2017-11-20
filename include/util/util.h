@@ -18,12 +18,12 @@
 
 #pragma once
 
-#include <stdint.h>
-
-#include "std/array.h"
+#include <cstdint>
+#include <cstddef>
+#include <array>
 #include "mcu/avr/delay.h"
-#include "std/limits.h"
-#include "std/traits.h"
+#include <limits>
+#include "std/type_traits"
 #include "std/concepts.h"
 #include "util/bits.h"
 #include "util/concepts.h"

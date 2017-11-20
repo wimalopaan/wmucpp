@@ -27,7 +27,7 @@
 # include <util/twi.h>
 #endif
 
-#include "std/array.h"
+#include "std/array"
 #include "mcu/register.h"
 
 namespace AVR {

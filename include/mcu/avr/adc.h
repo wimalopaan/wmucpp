@@ -18,11 +18,11 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include "mcu/avr8.h"
 #include "mcu/ports.h"
-#include "std/types.h"
 #include "hal/event.h"
+#include "util/types.h"
 #include "util/dassert.h"
 #include "util/fixedpoint.h"
 #include "util/rational.h"

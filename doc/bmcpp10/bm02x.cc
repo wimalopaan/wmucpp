@@ -18,11 +18,12 @@
 
 #define NDEBUG
 
-#include <stdint.h>
+#include <cstdint>
+#include <array>
+#include <algorithm>
+
 #include "std/time.h"
-#include "std/array.h"
-#include "std/types.h"
-#include "std/algorithm.h"
+#include "util/types.h"
 
 namespace DateTime {
 

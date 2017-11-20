@@ -18,9 +18,9 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include "util/dassert.h"
-#include "std/utility.h"
+#include "std/utility"
 
 namespace std {
     

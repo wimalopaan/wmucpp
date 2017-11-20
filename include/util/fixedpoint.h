@@ -18,11 +18,11 @@
 
 #pragma once
 
-#include <stdint.h>
 #include "config.h"
+#include <cstdint>
+#include <type_traits>
 #include "mcu/concepts.h"
-#include "std/traits.h"
-#include "std/types.h"
+#include "util/types.h"
 #include "util/bits.h"
 #include "util/util.h"
 

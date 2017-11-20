@@ -20,7 +20,7 @@
 
 #include <stdint.h>
 
-#include <std/chrono.h>
+#include <std/chrono>
 
 #include "timedisplays.h"
 

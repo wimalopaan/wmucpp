@@ -19,6 +19,8 @@
 #pragma once
 
 #include "config.h"
+#include <array>
+#include <algorithm>
 #include "mcu/ports.h"
 #include "mcu/avr/util.h"
 #include "mcu/avr/delay.h"
@@ -26,9 +28,7 @@
 #include "container/fifo.h"
 #include "util/disable.h"
 #include "util/dassert.h"
-#include "std/types.h"
-#include "std/array.h"
-#include "std/algorithm.h"
+#include "util/types.h"
 #include "container/pgmstring.h"
 
 namespace OneWire {

@@ -18,10 +18,11 @@
 
 #define NDEBUG
 
+#include <array>
+#include <initializer_list>
+#include <algorithm>
+
 #include "util/dassert.h"
-#include "std/array.h"
-#include "std/initializer_list.h"
-#include "std/algorithm.h"
 
 #include "console.h"
 #include "simavr/simavrdebugconsole.h"

@@ -85,8 +85,8 @@ CXXFLAGS += -fstrict-aliasing -Wstrict-aliasing=1
 CXXFLAGS += -Wall -Wextra
 CXXFLAGS += -DF_OSC=$(F_OSC) -DF_CPU=$(F_OSC)
 CXXFLAGS += -I/usr/local/avr/avr/include
-CXXFLAGS += -I. -I../../include
-CXXFLAGS += -I../include -I../../../include
+CXXFLAGS += -I. -I../../include -I../include -I../../../include
+CXXFLAGS += -I. -I../../include/std -I../include/std -I../../../include/std
 CXXFLAGS += -I/usr/include/simavr
 #CXXFLAGS += -I/usr/avr/include
 CXXFLAGS += $(MCUFLAGS)

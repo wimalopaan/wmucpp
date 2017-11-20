@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include "hal/event.h"
 #include "sensorprotocoll.h"
 

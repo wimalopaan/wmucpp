@@ -19,8 +19,8 @@
 #define NDEBUG
 
 #include "util/dassert.h"
-#include "std/tuple.h"
-#include "std/array.h"
+#include "std/tuple"
+#include "std/array"
 #include "util/meta.h"
 
 #include "console.h"

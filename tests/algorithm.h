@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "std/algorithm.h"
+#include "std/algorithm"
 
 #include "test/simpletest.h"
 

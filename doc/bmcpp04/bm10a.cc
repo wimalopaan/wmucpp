@@ -17,7 +17,7 @@
  */
 
 #include <stdint.h>
-#include "std/array.h"
+#include "std/array"
 
 volatile uint8_t x = 3;
 volatile uint8_t y = 0;

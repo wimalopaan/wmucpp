@@ -21,7 +21,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "std/memory.h"
+#include "std/memory"
 #include "std/concepts.h"
 
 namespace std {

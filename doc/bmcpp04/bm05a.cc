@@ -17,8 +17,8 @@
  */
 
 #include <stdint.h>
-#include "std/array.h"
-#include "std/utility.h"
+#include "std/array"
+#include "std/utility"
 
 
 constexpr uint8_t foo(size_t v) {

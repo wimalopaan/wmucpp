@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include <stdint.h>
-#include "std/traits.h"
+#include <cstdint>
+#include <type_traits>
 
 namespace std {
     

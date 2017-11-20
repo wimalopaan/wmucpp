@@ -40,7 +40,7 @@
 #include "appl/ledflash.h"
 #include "appl/timerdisplayring60.h"
 #include "appl/timerdisplay4x4.h"
-#include "std/chrono.h"
+#include "std/chrono"
 
 #include "console.h"
 

@@ -25,7 +25,7 @@
 #include "mcu/ports.h"
 #include "util/dassert.h"
 #include "util/disable.h"
-#include "std/array.h"
+#include "std/array"
 #include "units/percent.h"
 
 struct ColorSequenceRGB {};

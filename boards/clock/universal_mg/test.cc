@@ -38,7 +38,7 @@
 #include "hal/alarmtimer.h"
 #include "external/ws2812.h"
 #include "external/dcf77.h"
-#include "std/chrono.h"
+#include "std/chrono"
 #include "appl/twostateblinker.h"
 #ifdef SIMAVR
 # include "simavr/simavrdebugconsole.h"

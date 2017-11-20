@@ -18,11 +18,11 @@
 
 #pragma once
 
-#include <stdint.h>
-#include "std/traits.h"
+#include <cstdint>
+#include <cstddef>
+#include <limits>
+#include "std/type_traits"
 #include "std/bitmask.h"
-#include "std/byte.h"
-#include "std/limits.h"
 
 namespace Util {
     

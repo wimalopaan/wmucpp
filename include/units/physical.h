@@ -18,11 +18,11 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
+#include <type_traits>
+#include <ratio>
+#include <limits>
 
-#include "std/ratio.h"
-#include "std/traits.h"
-#include "std/limits.h"
 #include "std/concepts.h"
 #include "units/duration.h"
 

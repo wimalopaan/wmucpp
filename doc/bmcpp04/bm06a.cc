@@ -18,7 +18,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include "std/array.h"
+#include "std/array"
 
 
 constexpr int foo(size_t v) {

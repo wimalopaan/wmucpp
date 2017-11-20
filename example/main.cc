@@ -19,8 +19,9 @@
 //#define NDEBUG
 
 #include "main.h"
+#include <limits>
+#include <array>
 #include "mcu/avr8.h"
-#include "std/limits.h"
 #include "mcu/avr/isr.h"
 #include "mcu/avr/mcutimer.h"
 #include "mcu/avr/usart.h"
@@ -58,7 +59,6 @@
 #include "external/i2cram.h"
 #include "external/rpm.h"
 #include "mcu/avr/twimaster.h"
-#include "std/array.h"
 
 #define MEM
 #ifdef MEM

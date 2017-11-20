@@ -18,6 +18,9 @@
 
 #pragma once
 
+#include <cstdint>
+#include <cstddef>
+
 #include "std/literals.h"
 
 #ifndef HAS_CONFIG

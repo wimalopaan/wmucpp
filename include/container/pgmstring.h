@@ -27,9 +27,9 @@
 # define PROGMEM
 #endif
 
-#include <stdint.h>
+#include <cstdint>
+#include <cstddef>
 
-#include "std/byte.h"
 #include "config.h"
 #include "mcu/concepts.h"
 

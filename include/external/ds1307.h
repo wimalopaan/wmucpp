@@ -20,7 +20,7 @@
 
 #include <stdint.h>
 
-#include "std/array.h"
+#include "std/array"
 #include "util/dassert.h"
 #include "mcu/avr/twimaster.h"
 

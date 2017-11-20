@@ -18,7 +18,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include "std/array.h"
+#include "std/array"
 
 int main()
 {

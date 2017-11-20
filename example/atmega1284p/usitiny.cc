@@ -22,8 +22,8 @@
 #include "mcu/ports.h"
 #include "hal/softspimaster.h"
 #include "util/disable.h"
-#include "std/array.h"
-#include "std/algorithm.h"
+#include "std/array"
+#include "std/algorithm"
 #include "external/ws2812.h"
 
 using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;

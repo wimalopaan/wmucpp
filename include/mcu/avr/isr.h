@@ -18,10 +18,10 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
+#include <array>
 #include "mcu/concepts.h"
 #include "util/bits.h"
-#include "std/array.h"
 
 #if __has_include(<avr/interrupt.h>)
 # include <avr/interrupt.h>

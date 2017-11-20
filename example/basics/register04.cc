@@ -37,7 +37,7 @@
 #define NDEBUG
 
 #include <stdint.h>
-#include "std/traits.h"
+#include "std/type_traits"
 #include "util/util.h"
 
 template<typename Component, typename BitType, typename ValueType = uint8_t>

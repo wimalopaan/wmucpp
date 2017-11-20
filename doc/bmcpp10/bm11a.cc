@@ -21,9 +21,9 @@
 #include <stdint.h>
 
 //#include "std/limits.h"
-#include "std/traits.h"
+#include "std/type_traits"
 //#include "std/concepts.h"
-#include "std/array.h"
+#include "std/array"
 //#include "std/algorithm.h"
 #include "util/fixedpoint.h"
 #include "util/util.h"

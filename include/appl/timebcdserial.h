@@ -19,9 +19,9 @@
 #pragma once
 
 #include <stdint.h>
-#include "std/array.h"
-#include "std/chrono.h"
-#include "std/traits.h"
+#include "std/array"
+#include "std/chrono"
+#include "std/type_traits"
 #include "std/concepts.h"
 
 #include "timedisplays.h"

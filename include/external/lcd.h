@@ -18,13 +18,12 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
+#include <utility>
+
 #include "mcu/ports.h"
 #include "mcu/avr/delay.h"
-
-#include "std/pair.h"
-#include "std/types.h"
-
+#include "util/types.h"
 #include "appl/command.h"
 
 namespace LCD { 

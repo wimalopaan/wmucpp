@@ -23,7 +23,7 @@
 #include "mcu/register.h"
 #include "mcu/avr/groups.h"
 #include "units/percent.h"
-#include "std/limits.h"
+#include "std/limits"
 
 namespace AVR {
     

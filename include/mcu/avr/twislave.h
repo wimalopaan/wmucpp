@@ -18,12 +18,12 @@
 
 #pragma once
 
+#include <array>
 #include "compat/twi.h"
 #include "mcu/avr8.h"
 #include "mcu/avr/twiaddress.h"
 #include "mcu/avr/isr.h"
-#include "std/array.h"
-#include "std/types.h"
+#include "util/types.h"
 
 namespace TWI {
 

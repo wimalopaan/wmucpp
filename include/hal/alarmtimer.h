@@ -18,15 +18,16 @@
 
 #pragma once
 
+#include <optional>
+
 #include "config.h"
 #include "mcu/avr/isr.h"
 #include "mcu/avr/util.h"
 #include "util/bits.h"
-#include "container/fixedvector.h"
-#include "std/optional.h"
+#include "util/types.h"
 #include "util/disable.h"
+#include "container/fixedvector.h"
 #include "hal/event.h"
-#include "std/types.h"
 
 enum class AlarmFlags : uint8_t {
     NoTimer =    0,

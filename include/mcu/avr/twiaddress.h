@@ -18,7 +18,7 @@
 
 #include "config.h"
 #include "container/pgmstring.h"
-#include "std/types.h"
+#include "util/types.h"
 
 namespace TWI {
     class Address;

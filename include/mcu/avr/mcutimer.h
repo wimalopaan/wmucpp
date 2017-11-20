@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 #include "mcu/avr8.h"
 #include "mcu/avr/isr.h"

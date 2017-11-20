@@ -18,9 +18,9 @@
 
 #pragma once
 
+#include <cstddef>
 #include "mcu/mcu.h"
-#include "std/traits.h"
-#include "std/byte.h"
+#include "std/type_traits"
 
 namespace MCU {
     template<typename T>

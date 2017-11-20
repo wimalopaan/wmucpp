@@ -23,8 +23,8 @@
 #include "util/dassert.h"
 
 #include "container/pgmstring.h"
-#include "std/algorithm.h"
-#include "std/traits.h"
+#include "std/algorithm"
+#include "std/type_traits"
 #include "util/dassert.h"
 
 template<typename C, C... CC> struct PgmString;

@@ -22,7 +22,7 @@
 #include "mcu/avr8.h"
 #include "mcu/ports.h"
 #include "mcu/avr/isr.h"
-#include "std/traits.h"
+#include "std/type_traits"
 
 namespace AVR {
 

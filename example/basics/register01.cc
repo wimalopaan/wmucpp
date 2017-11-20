@@ -21,7 +21,7 @@
 #include "mcu/avr/mcutimer.h"
 #include "mcu/ports.h"
 #include "util/bits.h"
-#include "std/algorithm.h"
+#include "std/algorithm"
 
 int main() {
     using tt = DefaultMcuType::Timer8Bit;

@@ -22,7 +22,6 @@
 #include "mcu/ports.h"
 #include "mcu/avr/delay.h"
 #include "util/bits.h"
-#include "std/byte.h"
 
 // todo: BitMode (fuer Constant / Variable-Rate)
 

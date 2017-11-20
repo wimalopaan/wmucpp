@@ -18,15 +18,15 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
+#include <array>
 #include "compat/twi.h"
 #include "mcu/avr8.h"
 #include "mcu/avr/twiaddress.h"
 #include "mcu/avr/util.h"
 #include "container/fifo.h"
 #include "container/pgmstring.h"
-#include "std/array.h"
-#include "std/types.h"
+#include "util/types.h"
 #include "util/dassert.h"
 #include "hal/event.h"
 

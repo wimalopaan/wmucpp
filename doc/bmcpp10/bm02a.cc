@@ -18,11 +18,14 @@
 
 #define NDEBUG
 
-#include <stdint.h>
+#include <cstdint>
+#include <cstddef>
+#include <array>
+#include <algorithm>
+
 #include "std/time.h"
-#include "std/array.h"
-#include "std/types.h"
-#include "std/algorithm.h"
+
+#include "util/types.h"
 
 #include "console.h"
 #include "simavr/simavrdebugconsole.h"

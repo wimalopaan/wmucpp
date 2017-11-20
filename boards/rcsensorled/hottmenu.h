@@ -17,7 +17,7 @@
  */
 
 
-#include "std/array.h"
+#include "std/array"
 #include "container/stringbuffer.h"
 #include "container/pgmstring.h"
 #include "hal/eeprom.h"

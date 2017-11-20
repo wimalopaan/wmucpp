@@ -20,7 +20,7 @@
 
 #include <stdint.h>
 #include <ctype.h>
-#include "std/array.h"
+#include "std/array"
 #include "container/stringbuffer.h"
 #include "container/pgmstring.h"
 

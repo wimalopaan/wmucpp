@@ -18,7 +18,8 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
+#include <type_traits>
 
 #if __has_include(<avr/io.h>)
 # include <avr/io.h>
@@ -26,7 +27,6 @@
 
 #include "mcu/mcu.h"
 #include "mcu/concepts.h"
-#include "std/traits.h"
 
 namespace MCU {
     template<typename L>

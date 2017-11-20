@@ -18,11 +18,11 @@
 
 #pragma once
 
-#include <stdint.h>
-#include "std/limits.h"
-#include "std/types.h"
+#include <cstdint>
+#include <limits>
 #include "mcu/avr/isr.h"
 #include "mcu/avr/mcutimer.h"
+#include "util/types.h"
 #include "util/bits.h"
 #include "util/disable.h"
 #include "units/physical.h"

@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 #include "units/duration.h"
 #include "std/literals.h"

@@ -17,7 +17,7 @@
  */
 
 #include <stdint.h>
-#include "std/traits.h"
+#include "std/type_traits"
 #include "mcu/concepts.h"
 
 volatile uint8_t x = 0;

@@ -16,9 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdint.h>
-#include "std/types.h"
-#include "std/optional.h"
+#include <cstdint>
+#include <optional>
+#include "util/types.h"
 
 volatile std::optional<uint8_t> v1;
 volatile std::optional<uint8_t> v2;

@@ -21,7 +21,7 @@
 #include <stdint.h>
 #include "mcu/ressource.h"
 #include "mcu/avr/isr.h"
-#include "std/algorithm.h"
+#include "std/algorithm"
 #include "util/bits.h"
 #include "units/physical.h"
 

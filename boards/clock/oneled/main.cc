@@ -28,7 +28,7 @@
 #include "hal/constantrate.h"
 #include "hal/alarmtimer.h"
 #include "hal/softspimaster.h"
-#include "std/chrono.h"
+#include "std/chrono"
 #include "appl/ledflash.h"
 #include "appl/clockstatemachine.h"
 #include "appl/timerdisplay4x4.h"

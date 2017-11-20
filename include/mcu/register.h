@@ -18,11 +18,11 @@
 
 #pragma once
 
-#include <stdint.h>
-#include "std/traits.h"
-#include "std/algorithm.h"
-#include "std/utility.h"
-#include "std/byte.h"
+#include <cstdint>
+#include <cstddef>
+#include <algorithm>
+#include "std/type_traits"
+#include "std/utility"
 #include "util/util.h"
 #include "util/static_container.h"
 

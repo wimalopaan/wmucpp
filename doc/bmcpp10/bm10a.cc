@@ -20,11 +20,11 @@
 
 #include <stdint.h>
 
-#include "std/limits.h"
-#include "std/traits.h"
+#include "std/limits"
+#include "std/type_traits"
 #include "std/concepts.h"
-#include "std/array.h"
-#include "std/algorithm.h"
+#include "std/array"
+#include "std/algorithm"
 
 #include "util/util.h"
 

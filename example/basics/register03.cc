@@ -37,9 +37,9 @@
 //#define NDEBUG
 
 #include <stdint.h>
-#include "std/traits.h"
-#include "std/algorithm.h"
-#include "std/utility.h"
+#include "std/type_traits"
+#include "std/algorithm"
+#include "std/utility"
 #include "util/util.h"
 #include "util/static_container.h"
 

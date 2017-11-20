@@ -20,8 +20,8 @@
 
 #include <stdint.h>
 
-#include "std/optional.h"
-#include "std/traits.h"
+#include "std/optional"
+#include "std/type_traits"
 
 #include "util/disable.h"
 

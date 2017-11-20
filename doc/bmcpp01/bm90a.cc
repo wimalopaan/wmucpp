@@ -16,10 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdint.h>
+#include <cstdint>
+#include <cstddef>
+#include <array>
+#include <initializer_list>
 #include <stdlib.h>
-#include "std/array.h"
-#include "std/initializer_list.h"
 
 void * operator new(size_t size) noexcept
 {

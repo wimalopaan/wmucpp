@@ -5,7 +5,7 @@
 #include "mcu/avr/mcutimer.h"
 #include "mcu/ports.h"
 #include "hal/constantrate.h"
-#include "std/array.h"
+#include "std/array"
 #include "std/concepts.h"
 #include "util/disable.h"
 #include "util/bits.h"

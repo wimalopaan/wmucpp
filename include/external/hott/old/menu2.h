@@ -20,7 +20,7 @@
 
 #include "sensortextprotocollbuffer.h"
 #include "std/types.h"
-#include "std/tuple.h"
+#include "std/tuple"
 
 namespace Hott {
 

@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdint.h>
-#include "std/types.h"
+#include <cstdint>
+#include "util/types.h"
 
 volatile uint8_t v1;
 volatile uint8_t v2;
