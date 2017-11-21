@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 #include "std/time.h"
 #include "external/ws2812.h"
@@ -33,8 +33,9 @@ public:
     struct WordLeds final {
         const uint8_t startPosition = 0;
         const uint8_t length = 0;
-        static WordLeds createFrom(const std::array<uint8_t, 2>& bytes) {
-            return {bytes[0], bytes[1]};
+        static WordLeds createFrom(const std::array<std::byte, 2>& bytes) {
+            return {std::to_integer<uint8_t>(bytes[0]), 
+                        std::to_integer<uint8_t>(bytes[1])};
         }
     };
 

@@ -97,8 +97,10 @@ constexpr cRGB<ColorSequenceRGB> operator*(cRGB<ColorSequenceRGB> c, const std::
 
 template<>
 struct cRGB<ColorSequenceGRB> {
-    static constexpr cRGB createFrom(const std::array<uint8_t, 3> bytes) {
-        return {Red{bytes[0]}, Green{bytes[1]}, Blue{bytes[2]}};
+    static constexpr cRGB createFrom(const std::array<std::byte, 3> bytes) {
+        return {Red{std::to_integer<uint8_t>(bytes[0])}, 
+            Green{std::to_integer<uint8_t>(bytes[1])}, 
+            Blue{std::to_integer<uint8_t>(bytes[2])}};
     }
     constexpr cRGB() {}
     cRGB(const volatile cRGB& o) : g(o.g), r(o.r), b(o.b) {}

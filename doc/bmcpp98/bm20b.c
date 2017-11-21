@@ -18,10 +18,12 @@
 
 void f1(const char* p) {
     volatile char first = p[0];
+    (void) first;
 }
 
 void f2(const char (*p)[10]) {
     volatile char first = (*p)[0];
+    (void) first;
 }
 
 int main() {

@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 #include "container/boundedbuffer.h"
 #include "hal/event.h"

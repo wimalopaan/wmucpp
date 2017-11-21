@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 #include "std/time.h"
 #include "units/percent.h"
@@ -44,7 +44,7 @@ public:
     }
 
     template<typename Clock>
-    static void set(const Clock& clock, TimeDisplay::Mode Mode = TimeDisplay::Mode::Time) {
+    static void set(const Clock& clock, TimeDisplay::Mode = TimeDisplay::Mode::Time) {
         DateTime::TimeTm t = clock.dateTime();
         uint8_t min1   = t.minutes().value % 10;
         uint8_t min10  = t.minutes().value / 10;

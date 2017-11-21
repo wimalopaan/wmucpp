@@ -18,9 +18,10 @@
 
 #pragma once
 
-#include "std/array"
-#include "std/type_traits"
-#include "std/memory"
+#include <cstddef>
+#include <array>
+#include <type_traits>
+#include <memory>
 
 #if __has_include(<avr/pgmspace.h>)
 # include <avr/pgmspace.h>
@@ -46,9 +47,9 @@ class PgmArray final {
             return pgm_read_byte(&data[index]);
         }
         else {
-            std::array<uint8_t, sizeof(T)> bytes;
+            std::array<std::byte, sizeof(T)> bytes;
             for(uint8_t i = 0; i < sizeof(T); ++i) {
-                bytes[i] = pgm_read_byte((uint8_t*)(&data[index]) + i);
+                bytes[i] = std::byte{pgm_read_byte((uint8_t*)(&data[index]) + i)};
             }
             return U::createFrom(bytes);
         }

@@ -18,18 +18,15 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
+#include <algorithm>
+#include <type_traits>
 
 #include "util/dassert.h"
 
 #include "container/pgmstring.h"
-#include "std/algorithm"
-#include "std/type_traits"
-#include "util/dassert.h"
 
 template<typename C, C... CC> struct PgmString;
-
-//#include <avr/pgmspace.h>
 
 template<uint8_t Length, typename T = char, char Fill = ' '>
 class StringBuffer final {

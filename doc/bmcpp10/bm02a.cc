@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define NDEBUG
+//#define NDEBUG
 
 #include <cstdint>
 #include <cstddef>
@@ -138,7 +138,7 @@ constexpr DateTime::CompilationDate cdate;
 int main() {
     uint32_t d = cdate.value();
     
-    volatile uint32_t dd = 2 * d;
+//    volatile uint32_t dd = 2 * d;
     
     std::cout << d << std::endl;
     std::cout << cdate.date() << std::endl;

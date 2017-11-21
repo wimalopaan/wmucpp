@@ -22,6 +22,9 @@
 #include "mcu/avr/twimaster.h"
 #include "hal/softspimaster.h"
 #include "console.h"
+namespace {
+    constexpr bool useTerminal = true;
+}
 
 using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
@@ -35,10 +38,11 @@ using SoftSPIClock = AVR::Pin<PortA, 1>;
 using SoftSPISS = AVR::Pin<PortA, 2>;
 using SSpi0 = SoftSpiMaster<SoftSPIData, SoftSPIClock, SoftSPISS>;
 
-using terminal = SSpi0;
+using terminalDevice = std::conditional<useTerminal, SSpi0, void>::type;
+using terminal = std::basic_ostream<terminalDevice>;
 
 namespace std {
-    std::basic_ostream<terminal> cout;
+    std::basic_ostream<terminalDevice> cout;
     std::lineTerminator<CRLF> endl;
 }
 
@@ -47,7 +51,7 @@ static constexpr TWI::Address attiny{std::byte{53}};
 
 int main()
 {
-    terminal::init();
+    terminalDevice::init();
 
     std::cout << "ATTiny USI I2C Example"_pgm << std::endl;
     
@@ -81,7 +85,7 @@ int main()
 }
 
 #ifndef NDEBUG
-void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
+void assertFunction([[maybe_unused]] const PgmStringView& expr, [[maybe_unused]] const PgmStringView& file, [[maybe_unused]] unsigned int line) noexcept {
 //    std::outl<terminal>("Assertion failed: "_pgm, expr, ',', file, ',', line);
     while(true) {}
 }

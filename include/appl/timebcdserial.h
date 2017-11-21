@@ -18,10 +18,10 @@
 
 #pragma once
 
-#include <stdint.h>
-#include "std/array"
-#include "std/chrono"
-#include "std/type_traits"
+#include <cstdint>
+#include <array>
+#include <chrono>
+#include <type_traits>
 #include "std/concepts.h"
 
 #include "timedisplays.h"

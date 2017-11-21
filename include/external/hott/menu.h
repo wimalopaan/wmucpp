@@ -16,8 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <cstdint>
+#include <array>
 
-#include "std/array"
 #include "container/stringbuffer.h"
 #include "container/pgmstring.h"
 

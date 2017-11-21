@@ -167,7 +167,7 @@ struct StateManager{
 };
 
 struct DCFOutput {
-    static void flash(bool bit) {
+    static void flash(bool) {
         btStatus::toggle();
     }
 };

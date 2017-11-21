@@ -46,8 +46,8 @@ struct P1{};
 struct P2{};
 
 int main() {
-    auto x1 = A<P1>();
-    auto x2 = B<P2>();
+    [[maybe_unused]] auto x1 = A<P1>();
+    [[maybe_unused]] auto x2 = B<P2>();
     
     while(true) {}
 }

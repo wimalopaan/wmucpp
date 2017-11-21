@@ -39,7 +39,7 @@ template<AorB T>
 class X<T> {};
 
 int main() {
-    X<A> x1;
-    X<B> x2;
-    X<C> x3;
+    [[maybe_unused]] X<A> x1;
+    [[maybe_unused]] X<B> x2;
+    [[maybe_unused]] X<C> x3;
 }

@@ -18,9 +18,9 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
+#include <array>
 #include <ctype.h>
-#include "std/array"
 #include "container/stringbuffer.h"
 #include "container/pgmstring.h"
 

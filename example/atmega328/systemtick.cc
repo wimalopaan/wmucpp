@@ -48,6 +48,7 @@ int main()
     Scoped<EnableInterrupt<>> interruptEnabler;
     systemTimer::init();
     auto tid1 = systemTimer::create(1000_ms, AlarmFlags::Periodic);
+    (void) tid1;
     using handler = EventHandlerGroup<TimerHandler>;
     EventManager::run<sampler, handler>([](){});
 }

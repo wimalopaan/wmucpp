@@ -18,9 +18,9 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
+#include <optional>
 
-#include "std/optional"
 #include "units/duration.h"
 #include "units/physical.h"
 #include "sensorprotocoll.h"

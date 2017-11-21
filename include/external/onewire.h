@@ -176,7 +176,7 @@ namespace OneWire {
                     }
                 }
                 else {
-                    bool ok = mRecvQueue.push_back(data);
+                    [[maybe_unused]] bool ok = mRecvQueue.push_back(data);
                     assert(ok);
                     --mBytesToRead;
                     if (mBytesToRead == 0) {

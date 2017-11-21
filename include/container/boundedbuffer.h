@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 template<typename ValueType, uint8_t Capacity> 
 class BoundedBuffer final {

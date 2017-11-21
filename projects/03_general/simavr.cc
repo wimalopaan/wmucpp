@@ -34,15 +34,20 @@
 #include "console.h"
 #include "simavr/simavrdebugconsole.h"
 
+namespace {
+    constexpr bool useTerminal = true;
+}
+
 using systemClock = AVR::Timer8Bit<0>;
 using systemTimer = AlarmTimer<systemClock>;
 
-using terminal = SimAVRDebugConsole;
+using terminalDevice = std::conditional<useTerminal, SimAVRDebugConsole, void>::type;
+using terminal = std::basic_ostream<terminalDevice>;
 
 using sampler = PeriodicGroup<0, AVR::ISR::Timer<0>::CompareA, systemTimer>;
 
 namespace std {
-    std::basic_ostream<terminal> cout;
+    std::basic_ostream<terminalDevice> cout;
     std::lineTerminator<CRLF> endl;
 }
 #include "test/simpletest.h"
@@ -93,8 +98,8 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
 };
 
 #ifndef NDEBUG
-void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
-//    std::outl<terminal>("Assertion failed: "_pgm, expr, ',', file, ',', line);
+void assertFunction(const PgmStringView& expr __attribute__((unused)), const PgmStringView& file __attribute__((unused)), unsigned int line __attribute__((unused))) noexcept {
+    std::outl<terminal>("Assertion failed: "_pgm, expr, ',', file, ',', line);
     while(true) {}
 }
 #endif

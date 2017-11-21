@@ -18,10 +18,9 @@
 
 #pragma once
 
-#include <stdint.h>
-
-#include "std/optional"
-#include "std/type_traits"
+#include <cstdint>
+#include <optional>
+#include <type_traits>
 
 #include "util/disable.h"
 

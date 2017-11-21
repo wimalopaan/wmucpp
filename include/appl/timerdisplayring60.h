@@ -18,9 +18,8 @@
 
 #pragma once
 
-#include <stdint.h>
-
-#include <std/chrono>
+#include <cstdint>
+#include <chrono>
 
 #include "timedisplays.h"
 

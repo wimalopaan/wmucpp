@@ -49,7 +49,7 @@ struct Node {
 
 
 int main() {
-    constexpr auto tree = []() {
+    [[maybe_unused]] constexpr auto tree = []() {
         auto t = Node(A(), 
                        B(), 
                        Node(C(),

@@ -22,10 +22,14 @@
 #include "simavr/simavrdebugconsole.h"
 #include "console.h"
 
-using terminal = SimAVRDebugConsole;
+namespace {
+    constexpr bool useTerminal = true;
+}
+using terminalDevice = std::conditional<useTerminal, SimAVRDebugConsole, void>::type;
+using terminal = std::basic_ostream<terminalDevice>;
 
 namespace std {
-    std::basic_ostream<terminal> cout;
+    std::basic_ostream<terminalDevice> cout;
     std::lineTerminator<CRLF> endl;
 }
 
@@ -54,8 +58,8 @@ int main() {
     
 }
 #ifndef NDEBUG
-void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
-//std::outl<terminal>("Assertion failed: "_pgm, expr, Char{','}, file, Char{','}, line);
+void assertFunction([[maybe_unused]] const PgmStringView& expr, [[maybe_unused]] const PgmStringView& file, [[maybe_unused]] unsigned int line) noexcept {
+//    std::outl<terminal>("Assertion failed: "_pgm, expr, Char{','}, file, Char{','}, line);
     while(true) {}
 }
 #endif

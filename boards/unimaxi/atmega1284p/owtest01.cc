@@ -97,7 +97,7 @@ uint8_t buffer[9] = {0x10,  0x1D, 0x9E, 0x09, 0x02, 0x08, 0x00, 0x55, 0x00};  //
 rom_t roms;
 
 int scan_bus(rom_t rom_list, uint8_t cmd) {
-  uint8_t i, j, rc;
+  uint8_t i = 0, rc = ONEWIRE_NO_PRESENCE;
 
   onewire_search_init(buffer);
 

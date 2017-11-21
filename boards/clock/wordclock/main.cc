@@ -22,6 +22,8 @@
 #include <stdlib.h>
 #include <util/eu_dst.h>
 
+#include <chrono>
+
 #include "mcu/avr8.h"
 #include "mcu/ports.h"
 #include "mcu/avr/usart.h"
@@ -34,7 +36,6 @@
 #include "external/dcf77.h"
 #include "external/lm35.h"
 #include "external/irmp.h"
-#include "std/chrono"
 #include "appl/blink.h"
 #include "appl/ledflash.h"
 #include "appl/wordclock.h"

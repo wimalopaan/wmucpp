@@ -24,6 +24,8 @@
 #include "hal/softspimaster.h"
 #include "console.h"
 
+static constexpr bool useTerminal = true;
+
 using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
@@ -37,16 +39,17 @@ using SoftSPIClock = AVR::Pin<PortA, 1>;
 using SoftSPISS = AVR::Pin<PortA, 2>;
 using SSpi0 = SoftSpiMaster<SoftSPIData, SoftSPIClock, SoftSPISS>;
 
-using terminal = SSpi0;
+using terminalDevice = std::conditional<useTerminal, SSpi0, void>::type;
+using terminal = std::basic_ostream<terminalDevice>;
 
 namespace std {
-    std::basic_ostream<terminal> cout;
+    std::basic_ostream<terminalDevice> cout;
     std::lineTerminator<CRLF> endl;
 }
 
 int main()
 {
-    terminal::init();
+    terminalDevice::init();
 
     std::cout << "DS1307 example"_pgm << std::endl;
     
@@ -84,8 +87,8 @@ int main()
 }
 
 #ifndef NDEBUG
-void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
-//    std::outl<terminal>("Assertion failed: "_pgm, expr, ',', file, ',', line);
+void assertFunction(const PgmStringView& expr __attribute__((unused)), const PgmStringView& file, unsigned int line) noexcept {
+    std::outl<terminal>("Assertion failed: "_pgm, expr, ',', file, ',', line);
     while(true) {}
 }
 #endif
