@@ -275,6 +275,10 @@ ISR( USI_START_VECTOR )
 
 //################################################### ISR( USI_OVERFLOW_VECTOR )
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+
+
 ISR( USI_OVERFLOW_VECTOR )	// Handles all the communication. Only disabled when waiting for a new Start Condition.
 {
 	uint8_t data=0;
@@ -373,6 +377,8 @@ ISR( USI_OVERFLOW_VECTOR )	// Handles all the communication. Only disabled when 
 
 		}// End switch
 }// End ISR( USI_OVERFLOW_VECTOR )
+
+#pragma GCC diagnostic pop
 
 
 //####################################################################### Macros

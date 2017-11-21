@@ -25,7 +25,10 @@
 //#define SIMAVR
 
 #include <stdlib.h>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <util/eu_dst.h>
+#pragma GCC diagnostic pop
 
 #include "mcu/avr8.h"
 #include "mcu/ports.h"

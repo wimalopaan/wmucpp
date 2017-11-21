@@ -238,7 +238,7 @@ public:
             if (c == ',') {
                 mState = State::ResponseIF2;
                 mData.clear();
-                uint8_t connection = BCD::uconvert<uint8_t>(mData);
+                [[maybe_unused]] uint8_t connection = BCD::uconvert<uint8_t>(mData);
             }
             else if (c == ':') {
                 mPayLoadSize = BCD::uconvert<uint8_t>(mData);

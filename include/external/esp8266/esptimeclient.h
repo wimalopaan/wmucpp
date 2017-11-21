@@ -40,12 +40,12 @@ public:
         
     }
     struct EspOkHandler: public EventHandler<EventType::Esp_OK> {
-        static bool process(std::byte c) {
+        static bool process(std::byte) {
             return true;
         }
     };
     struct EspIDataHandler: public EventHandler<EventType::Esp_IData> {
-        static bool process(std::byte c) {
+        static bool process(std::byte) {
             if (ESP::data().size() == 4) {
                 time_t value = 0;
                 for(uint8_t i = 0; i < 4; ++i) {
@@ -60,7 +60,7 @@ public:
         }
     };
     struct EspErrorHandler: public EventHandler<EventType::Esp_Error> {
-        static bool process(std::byte c) {
+        static bool process(std::byte) {
             EventManager::enqueue(EventType::EspTimeError);
             return true;
         }

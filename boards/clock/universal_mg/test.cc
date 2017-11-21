@@ -25,7 +25,11 @@
 //#define SIMAVR
 
 #include <stdlib.h>
+#include <chrono>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <util/eu_dst.h>
+#pragma GCC diagnostic pop
 
 #include "config.h"
 #include "mcu/avr8.h"
@@ -38,7 +42,6 @@
 #include "hal/alarmtimer.h"
 #include "external/ws2812.h"
 #include "external/dcf77.h"
-#include "std/chrono"
 #include "appl/twostateblinker.h"
 #ifdef SIMAVR
 # include "simavr/simavrdebugconsole.h"

@@ -23,7 +23,11 @@
 // sudo avrdude -p atmega328p -P usb -c avrisp2 -U lfuse:w:0xe2:m -U hfuse:w:0xd9:m -U efuse:w:0xff:m
 
 #include <stdlib.h>
+#include <chrono>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <util/eu_dst.h>
+#pragma GCC diagnostic pop
 
 #include "mcu/avr8.h"
 #include "mcu/ports.h"
@@ -40,7 +44,6 @@
 #include "appl/ledflash.h"
 #include "appl/timerdisplayring60.h"
 #include "appl/timerdisplay4x4.h"
-#include "std/chrono"
 
 #include "console.h"
 

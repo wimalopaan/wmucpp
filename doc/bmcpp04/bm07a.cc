@@ -39,7 +39,7 @@ struct expand<L, N...> : expand<L-1, L, N...>
 
 int main()
 {
-    int x = expand<3>::values[0];
+    [[maybe_unused]] int x = expand<3>::values[0];
     
     
 }

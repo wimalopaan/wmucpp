@@ -30,6 +30,9 @@ int main() {
     const char s1[] = "abc";
     const char s2[10] = "abc";
     
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
+    
     f1(s1);
     f2(s1); // decay
 
@@ -44,4 +47,5 @@ int main() {
 
     f1(cs1); 
     f2(cs2); // decay
+#pragma GCC diagnostic pop
 }

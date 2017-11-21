@@ -23,7 +23,11 @@
 // sudo avrdude -p atmega328p -P usb -c avrisp2 -U lfuse:w:0xe2:m -U hfuse:w:0xd9:m -U efuse:w:0xff:m
 
 #include <stdlib.h>
+#include <chrono>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <util/eu_dst.h>
+#pragma GCC diagnostic pop
 
 #include "../../include/universal02mg.h"
 
@@ -37,7 +41,6 @@
 #include "hal/softspimaster.h"
 #include "external/dcf77.h"
 #include "external/irmp.h"
-#include "std/chrono"
 #include "units/percent.h"
 #include "appl/blink.h"
 #include "appl/ledflash.h"

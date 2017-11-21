@@ -32,7 +32,7 @@ constexpr auto createArray(F f, std::index_sequence<II...>) {
         
 int main()
 {
-    std::array<size_t, 10> c = {1, 2};
+    [[maybe_unused]] std::array<size_t, 10> c = {1, 2};
 
 }
 void assertFunction(bool, const char* , const char *, unsigned int) {

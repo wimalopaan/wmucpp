@@ -355,6 +355,9 @@ constexpr auto timer0 = AVR::getBaseAddr<AVR::ATTest::Timer8Bit, 0>;
 //constexpr auto timer0 = AVR::getBaseAddr<AVR::ATTest::Timer8Bit<0>>;
 constexpr auto timer2 = AVR::getBaseAddr<AVR::ATTest::Timer8Bit<2>>;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
+
 int main() {
     using ta = AVR::ATTest::Timer8Bit<0>::TCCRA;
     using tb = AVR::ATTest::Timer8Bit<0>::TCCRB;
@@ -383,9 +386,10 @@ int main() {
     
     while(true) {}
 }
+#pragma GCC diagnostic push
 
 #ifndef NDEBUG
-void assertFunction(const PgmStringView&, const PgmStringView&, unsigned int) noexcept {
+void assertFunction([[maybe_unused]] const PgmStringView&, [[maybe_unused]] const PgmStringView&, [[maybe_unused]] unsigned int) noexcept {
     while(true) {}
 }
 #endif

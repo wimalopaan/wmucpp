@@ -67,6 +67,6 @@ int main() {
     
     GpioOut<0x55, 0> p(false);
     
-    auto x = p.portReg();
+    [[maybe_unused]]  auto x = p.portReg();
     while(true) {}
 }

@@ -16,12 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
+
 #include "mcu/avr8.h"
 #include "mcu/avr/util.h"
 #include "mcu/avr/mcutimer.h"
 #include "mcu/ports.h"
 #include "util/bits.h"
-#include "std/algorithm"
 
 int main() {
     using tt = DefaultMcuType::Timer8Bit;
@@ -30,6 +31,7 @@ int main() {
     
     auto t0 = AVR::getBaseAddr<tt, 0>();
     t0->tccrb.set(tfb::cs0 | tfb::cs1);
+    t0->tccra.set(tfa::coma0);
             
     constexpr auto tsd = AVR::Util::calculate<AVR::Timer8Bit<0>>(1000_Hz);
     

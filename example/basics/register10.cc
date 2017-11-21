@@ -218,6 +218,9 @@ struct ATTest::Timer8Bit::PrescalerBits<2> {
 
 constexpr auto timer0 = AVR::getBaseAddr<AVR::ATTest::Timer8Bit, 0>;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
+
 int main() {
     using ta = AVR::ATTest::Timer8Bit::TCCRA;
     using tb = AVR::ATTest::Timer8Bit::TCCRB;
@@ -238,6 +241,7 @@ int main() {
     
     while(true) {}
 }
+#pragma GCC diagnostic pop
 
 #ifndef NDEBUG
 void assertFunction(const PgmStringView&, const PgmStringView&, unsigned int) noexcept {

@@ -66,7 +66,7 @@ namespace Meta {
         template<>
         struct visit<0> {
             template<typename... T, typename F>
-            static void at(const std::tuple<T...>& tuple, size_t index, F f) {
+            static void at(const std::tuple<T...>&, size_t, F) {
                 assert(false);
             }
         };

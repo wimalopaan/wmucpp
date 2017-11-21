@@ -20,9 +20,12 @@
 // sudo avrdude -p atmega1284P -P usb -c avrisp2 -U lfuse:w:0xf7:m -U hfuse:w:0xd1:m -U efuse:w:0xfc:m
 
 #include <stdlib.h>
-#include <util/eu_dst.h>
-
 #include <chrono>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#include <util/eu_dst.h>
+#pragma GCC diagnostic pop
+
 
 #include "mcu/avr8.h"
 #include "mcu/ports.h"

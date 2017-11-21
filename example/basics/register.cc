@@ -35,7 +35,7 @@ int main() {
     
     using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 
-//    PortB::set<0_B>();
+    PortB::set<0_B>();
 //    PortB::set(0_B);
 
     

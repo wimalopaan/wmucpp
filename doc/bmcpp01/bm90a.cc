@@ -22,17 +22,17 @@
 #include <initializer_list>
 #include <stdlib.h>
 
-void * operator new(size_t size) noexcept
+void * operator new([[maybe_unused]] size_t size) noexcept
 {
     asm(";new");
     return nullptr;
 }
 
-void operator delete(void * ptr)
+void operator delete([[maybe_unused]] void * ptr)
 {
     asm(";delete1");
 }
-void operator delete(void * ptr, unsigned int)
+void operator delete([[maybe_unused]] void * ptr,[[maybe_unused]]  unsigned int)
 {
     asm(";delete2");
 }

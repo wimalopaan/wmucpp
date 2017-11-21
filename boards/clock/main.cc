@@ -20,7 +20,12 @@
 // sudo avrdude -p atmega88p -P usb -c avrisp2 -U lfuse:w:0xd0:m -U hfuse:w:0xdf:m -U efuse:w:0xf9:m
 
 #include <stdlib.h>
+#include <chrono>
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <util/eu_dst.h>
+#pragma GCC diagnostic pop
 
 #include "mcu/avr8.h"
 #include "mcu/ports.h"
@@ -34,7 +39,6 @@
 #include "external/dcf77.h"
 #include "appl/blink.h"
 #include "appl/ledflash.h"
-#include "std/chrono"
 
 #include "console.h"
 

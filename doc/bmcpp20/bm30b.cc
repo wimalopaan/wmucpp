@@ -143,7 +143,7 @@ int main() {
 //    constantRateTimer::ocra<tsd.ocr>();
 //    constantRateTimer::mode(AVR::TimerMode::CTC);
     
-    uint8_t algo = 0;
+    [[maybe_unused]] uint8_t algo = 0;
 //    {
 //        y = 0;
 //        uint32_t start = CTHandler::mCounter;

@@ -33,7 +33,10 @@
 
 #include "console.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <util/eu_dst.h>
+#pragma GCC diagnostic pop
 
 auto date = PGMSTRING(__DATE__);
 

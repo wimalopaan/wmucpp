@@ -21,7 +21,7 @@
 const int x = 3;
 const int y = x;
 
-char* text = "abc";
+//char* text = "abc";
 
 const char c = "abc"[0];
 

@@ -21,6 +21,9 @@
 #include <array>
 #include <memory>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreorder"
+
 //struct A {
 //    static constexpr bool hasBar = false;
 //};
@@ -121,3 +124,4 @@ int main() {
     std::cout << c2.mSNR << ' ' << c2.mValue << ' ' << c2.mMagic.first << std::endl;
 }
 
+#pragma GCC diagnostic pop
