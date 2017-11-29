@@ -18,14 +18,14 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <stddef.h>
+#ifndef __GLIBCXX__
 
-#include "std/memory"
+#include <cstdint>
+#include <cstddef>
+#include <memory>
 #include "std/concepts.h"
 
 namespace std {
-#ifndef __GLIBCXX__
     template<typename T>
     struct less {
         constexpr bool operator()(const T &lhs, const T &rhs) const  {
@@ -203,6 +203,6 @@ namespace std {
         }
     }
     
-#endif
 }
+#endif
 

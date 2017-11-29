@@ -18,9 +18,8 @@
 
 #pragma once
 
-#include <stdint.h>
-
-#include "std/ratio"
+#include <cstdint>
+#include <ratio>
 #include "std/concepts.h"
 
 namespace std {

@@ -35,7 +35,7 @@ namespace std {
 
 static constexpr std::hertz f = 100_Hz;
 
-using timer = AVR::Timer8Bit<1>;
+using timer = AVR::Timer8Bit<0>;
 
 int main() {
 //    std::cout << "Test"_pgm << std::endl;

@@ -22,31 +22,39 @@
 #include <cstddef>
 
 namespace Util {
-
-template<typename A>
-concept bool Array() { 
-    return requires (A a) { 
-        typename A::value_type;
-        a[0];
-        a.size;
-    };
-}
-
-template<typename S>
-concept bool Subscriptable() { 
-    return requires (S s) { 
-        s[0];
-    };
-}
-
-template<typename T>
-concept bool Fractional = !std::is_integral<T>::value;
-
-template<typename D>
-concept bool Device() {
-    return requires(D d) {
-        D::put(std::byte{0});
-    };
-}
-
+    
+    template<typename A>
+    concept bool Array() { 
+        return requires (A a) { 
+            typename A::value_type;
+            a[0];
+            a.size;
+        };
+    }
+    
+    template<typename S>
+    concept bool Subscriptable() { 
+        return requires (S s) { 
+            s[0];
+        };
+    }
+    
+    template<typename T>
+    concept bool Fractional = !std::is_integral<T>::value;
+    
+    template<typename D>
+    concept bool Device() {
+        return requires(D d) {
+            D::put(std::byte{0});
+        };
+    }
+    
+    template<typename T>
+    concept bool Callable() {
+        return requires(T t) {
+            t();
+        };
+    }
+    
+    
 }

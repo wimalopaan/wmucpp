@@ -80,14 +80,14 @@ public:
                 if (mOffset == 0) {
                     mData.saveEnd();
                     mData.resetTimeout();
-                    return false;
+                    return false; // ready
                 }
                 else {
-                    return true;
+                    return true; // need to call once more
                 }
             }
             else {
-                return true;
+                return true; // need to call once more
             }
         }
         return false;

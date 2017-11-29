@@ -20,7 +20,7 @@
 
 #include "esp8266.h"
 #include "hal/event.h"
-#include "std/time.h"
+#include "util/time.h"
 
 namespace ESP8266 {
 

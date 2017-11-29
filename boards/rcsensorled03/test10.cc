@@ -94,7 +94,7 @@ struct I2CInterrupt : public IsrBaseHandler<AVR::ISR::Int<1>> {
 using isrRegistrar = IsrRegistrar<sensorUsart::RxHandler, sensorUsart::TxHandler, rcUsart::RxHandler, rcUsart::TxHandler,
                                   softPpm::OCAHandler, softPpm::OCBHandler>;
 
-class TSensorId final : public Hott::MenuItem {
+class TSensorId final : public UI::MenuItem<Hott::BufferString, Hott::key_t> {
 public:
     TSensorId(uint8_t number) : mNumber{number} {
         assert(number < Storage::dsIds.size);
@@ -172,7 +172,7 @@ public:
     PWMType(const PgmStringView& title, Storage::ApplData& data, Storage::AVKey k) :
         TextWithValue(title, data, k) {}
 //    virtual void valueToText(uint8_t value, char *buffer) const override {
-    virtual void valueToText(uint8_t value, Hott::span<3, char> buffer) const override {
+    virtual void valueToText(uint8_t value, UI::span<3, char> buffer) const override {
         if (value == 0) {
             buffer[0] = 'V';
             buffer[1] = ' ';

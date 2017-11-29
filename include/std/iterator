@@ -18,7 +18,11 @@
 
 #pragma once
 
+#ifndef __GLIBCXX__
+
 namespace std {
 
 
 }
+
+#endif

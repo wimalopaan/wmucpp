@@ -18,4 +18,8 @@
 
 #pragma once
 
+#ifndef __GLIBCXX__
+
 #include <stdint.h>
+
+#endif

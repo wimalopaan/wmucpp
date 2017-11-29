@@ -22,78 +22,122 @@
 #include <cassert>
 #include "container/tree.h"
 
-struct A {
-    constexpr A(int v = 0) : v(v) {}
+template<typename D>
+struct MenuItem {
     const int v = 0;
+};
+
+struct A : MenuItem<A> {
+    constexpr A(int v = 0) : MenuItem<A>{v} {}
 };
 std::ostream& operator<<(std::ostream& out, const A& x) {
     return out << "A[" << x.v << "]";
 }
-struct B {
-    constexpr B(int v = 0) : v(v) {}
-    const int v = 1;
+struct B : MenuItem<B> {
+    constexpr B(int v = 0) : MenuItem<B>{v} {}
 };
 std::ostream& operator<<(std::ostream& out, const B& x) {
     return out << "B[" << x.v << "]";
 }
-struct C {
-    constexpr C(int v = 0) : v(v) {}
-    const int v = 2;
+struct C : MenuItem<C> {
+    constexpr C(int v = 0) : MenuItem<C>{v} {}
 };
 std::ostream& operator<<(std::ostream& out, const C& x) {
     return out << "C[" << x.v << "]";
 }
-struct D {
-    constexpr D(int v = 0) : v(v) {}
-    const int v = 3;
+struct D : MenuItem<D> {
+    constexpr D(int v = 0) : MenuItem<D>{v} {}
 };
 std::ostream& operator<<(std::ostream& out, const D& x) {
     return out << "D[" << x.v << "]";
 }
-struct E {
-    constexpr E(int v = 0) : v(v) {}
-    const int v = 4;
+struct E : MenuItem<E> {
+    constexpr E(int v = 0) : MenuItem<E>{v} {}
 };
 std::ostream& operator<<(std::ostream& out, const E& x) {
     return out << "E[" << x.v << "]";
+}
+
+struct Menu {
+    constexpr Menu(int v) : mTitle(v) {}
+    const int mTitle;
+};
+
+std::ostream& operator<<(std::ostream& out, const Menu& m) {
+    return out << "Menu[" << m.mTitle << "]";
 }
 
 template<::detail::isNonTerminal T>
 std::ostream& operator<<(std::ostream& out, const T& n) {
     out << "IN[";
     for(const auto& v : n.mChildren) {
-        if (&v != &n.mChildren[0]) {
-            out << ',';
-        } 
-        out << (int)v;
+        out << (int)v << ',';
     }
+    out << n.mData;
     return out << "]";
 }
 
+constexpr auto tree = make_tuple_of_tree(Node(Menu(1),
+                                              A(7),
+                                              Node(Menu(2),
+                                                   C(6), 
+                                                   D(5)
+                                                   ), 
+                                              E(8), 
+                                              Node(Menu(3),
+                                                   A(3), 
+                                                   B(4), 
+                                                   Node(Menu(4),
+                                                        E(1), 
+                                                        E(2)
+                                                        )
+                                                   ),
+                                              A(9),
+                                              A(10)
+                                              )
+                                         );
 
-constexpr auto tree = []{
-    constexpr auto tree = Node(A(7), 
-                               Node(C(6), 
-                                    D(5)
-                                    ), 
-                               E(8), 
-                               Node(A(3), 
-                                    B(4), 
-                                    Node(E(1), 
-                                         E(2)
-                                         )
-                                    ),
-                               A(9),
-                               A(10)
-                               );
-    uint8_t p = 0;
-    return flat(tree, p);
-}();
+//constexpr auto tree = []{
+//    auto tree = Node(Menu(1),
+//                     A(7),
+//                     Node(Menu(2),
+//                          C(6), 
+//                          D(5)
+//                          ), 
+//                     E(8), 
+//                     Node(Menu(3),
+//                          A(3), 
+//                          B(4), 
+//                          Node(Menu(4),
+//                               E(1), 
+//                               E(2)
+//                               )
+//                          ),
+//                     A(9),
+//                     A(10)
+//                     );
+//    uint8_t p = 0;
+//    return flat(tree, p);
+//}();
+
+//constexpr auto tree = []{
+//    constexpr auto tree = Node(Menu(1),
+//                              A(7), B(3)
+//                               );
+//    uint8_t p = 0;
+//    return flat(tree, p);
+//}();
 
 template<typename ItemType>
 struct F {
     static int f(const ItemType& item) {
         return item.v;
+    }
+};
+template<>
+struct F<Menu> {
+    static int f(const Menu&) {
+        return 0;
     }
 };
 template<typename N, typename T>
@@ -117,8 +161,15 @@ namespace std {
     }
 }
 
+template<typename T>
+void ptest(const T&) {
+    T::_;
+}
+
 int main() {
     std::cout << tree << '\n';    
+    
+    //    ptest(tree);
     
     uint8_t sum = 0;
     

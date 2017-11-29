@@ -22,7 +22,7 @@
 #include <time.h>
 #include "mcu/avr8.h"
 #include "mcu/concepts.h"
-#include "std/time.h"
+#include "util/time.h"
 
 namespace AVR {
 

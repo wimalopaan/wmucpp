@@ -11,65 +11,69 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
+ 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #pragma once
 
-#include "std/memory"
+#include <memory>
+
+#ifndef __GLIBCXX__
 
 namespace std {
-
-template<typename T>
-class optional final {
-public:
-    constexpr optional() :
-        mValid(false),
-        mValue()
-    {
-    }
-    constexpr optional(const T& value) :
-        mValid(true),
-        mValue(value)
-    {
-    }
-    constexpr optional(const volatile T& value) :
-        mValid(true),
-        mValue(value)
-    {
-    }
-    constexpr explicit operator bool() const // safe-bool
-    {
-        return mValid;
-    }
-    explicit operator bool() // safe-bool
-    {
-        return mValid;
-    }
-    constexpr bool operator!() const {
-        return !mValid;
-    }
-    constexpr T& operator*()
-    {
-        return mValue;
-    }
-    constexpr const T& operator*() const
-    {
-        return mValue;
-    }
-    constexpr T* operator->()
-    {
-        return &mValue;
-    }
-    constexpr const T* operator->() const
-    {
-        return &mValue;
-    }
-private:
-    bool mValid{false};
-    T mValue{};
-};
-
+    
+    template<typename T>
+    class optional final {
+    public:
+        constexpr optional() :
+            mValid(false),
+            mValue()
+        {
+        }
+        constexpr optional(const T& value) :
+            mValid(true),
+            mValue(value)
+        {
+        }
+        constexpr optional(const volatile T& value) :
+            mValid(true),
+            mValue(value)
+        {
+        }
+        constexpr explicit operator bool() const // safe-bool
+        {
+            return mValid;
+        }
+        explicit operator bool() // safe-bool
+        {
+            return mValid;
+        }
+        constexpr bool operator!() const {
+            return !mValid;
+        }
+        constexpr T& operator*()
+        {
+            return mValue;
+        }
+        constexpr const T& operator*() const
+        {
+            return mValue;
+        }
+        constexpr T* operator->()
+        {
+            return &mValue;
+        }
+        constexpr const T* operator->() const
+        {
+            return &mValue;
+        }
+    private:
+        bool mValid{false};
+        T mValue{};
+    };
+    
 }
+
+#endif

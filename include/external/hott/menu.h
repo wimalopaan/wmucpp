@@ -22,6 +22,10 @@
 #include "container/stringbuffer.h"
 #include "container/pgmstring.h"
 
+#include "sensorprotocoll.h"
+
+#include "ui/menu.h"
+
 namespace Hott {
     static constexpr uint8_t MenuLength = 7;
     static constexpr uint8_t MenuStringLength = 20;
@@ -30,36 +34,7 @@ namespace Hott {
     using BufferString = StringBuffer<MenuStringLength + 1>;
     using Display = std::array<BufferString, MenuLength + 1>;
     
-    class MenuItem {
-    public:
-        bool isSelected() const {return mSelected;}
-        
-        virtual void putTextInto(BufferString& buffer) const = 0;
-        virtual MenuItem* processKey(Hott::key_t) {return this;}
-        virtual bool hasChildren() const {return false;}
-    protected:
-        bool mSelected = false;
-    private:
-//        virtual ~MenuItem() {};
-    };
-
-    template<uint8_t Length, typename C>
-    class span {
-    public:
-        explicit span(C* data) : mData{data} {}
-        C& operator[](uint8_t index) {
-            assert(index < Length);
-            return mData[index];   
-        }
-    private:
-        C* mData;
-    };
-    
-    template<uint8_t Offset, uint8_t Length, typename C>
-    span<Length, typename C::type> make_span(C& c) {
-        static_assert((Offset + Length) <= C::size);
-        return span<Length, typename C::type>(&c[Offset]);
-    }
+    using MenuItem = UI::MenuItem<BufferString, key_t>;
     
     template<typename Key, uint8_t Max, typename Provider>
     class TextWithValue : public MenuItem {
@@ -67,7 +42,7 @@ namespace Hott {
         TextWithValue(const PgmStringView& text, Provider& provider, Key key) : mTitle(text), mProvider(provider), mKey(key) {}
         
         
-        virtual void valueToText(uint8_t value, span<3, char> buffer) const {
+        virtual void valueToText(uint8_t value, UI::span<3, char> buffer) const {
             Util::itoa_r<10>(value, buffer.mData);
         }
 //        virtual void valueToText(uint8_t value, char* buffer) const {
@@ -82,7 +57,7 @@ namespace Hott {
             if (value) {
 //                valueToText(*value, span(buffer));
 //                valueToText(*value, span<3, char>(&buffer[18]));
-                valueToText(*value, make_span<18, 3>(buffer));
+                valueToText(*value, UI::make_span<18, 3>(buffer));
             }
             else {
                 buffer[18] = '-';
@@ -230,7 +205,7 @@ namespace Hott {
             }
             return this;
         }
-    private:
+    protected:
         Menu* mParent = nullptr;
         const PgmStringView mTitle;
         const std::array<MenuItem*, MenuLength> mItems;

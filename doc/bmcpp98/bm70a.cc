@@ -18,49 +18,46 @@
 
 #define NDEBUG
 
-#include "util/dassert.h"
-#include "std/tuple"
-#include "std/array"
-#include "util/meta.h"
+#include <tuple>
 
-template<uint8_t N>
-struct IndexNode {
-    std::array<uint8_t, N> mChildren;
+template<auto... II> struct IndexNode {};
+
+struct A {uint8_t v{};};
+struct B {uint8_t v{};};
+struct C {uint8_t v{};};
+struct D {uint8_t v{};};
+struct E {uint8_t v{};};
+
+template<typename... CC>
+struct Node {
+    constexpr Node(const CC&... n) : mChildren{n...} {}
+    std::tuple<CC...> mChildren;
 };
 
-template<typename... T>
-auto dSearch(const std::tuple<T...>& tuple) {
-    
+constexpr auto transform1(const auto& tree) {
+    constexpr auto first = std::get<0>(tree.mChildren); // nicht möglich
+    return IndexNode<first.v>{};    
+}
+constexpr auto transform2(const auto& callable) {
+    constexpr auto tree = callable();
+    constexpr auto first = std::get<0>(tree.mChildren);
+    return IndexNode<first.v>{};
 }
 
-struct A {};
-struct B {};
-struct C {};
-struct D {};
-struct E {};
-
-template<typename... T>
-struct Node {
-    constexpr Node(const T&... n) : mChildren{n...} {}
-    std::tuple<T...> mChildren;
-};
-
-
-
+constexpr auto foo(const auto& v) {return v;} 
 
 int main() {
-    [[maybe_unused]] constexpr auto tree = []() {
-        auto t = Node(A(), 
-                       B(), 
-                       Node(C(),
-                            Node(D())), 
-                       E());    
-        
-        // transform t into std::tuple<A, B, C, D, IndexNode<1>{3}, IndexNode<2>{2, 4}, E, IndexNode<4>{0, 1, 5, 6}>
-
-        // return ...;        
-        
-        return t;
+    constexpr auto tree = []{
+        auto t1 = Node(A{1}, 
+                       B{2}, 
+                       Node(C{3},
+                            Node(D{4})), 
+                       E{5});    
+        auto t2 = foo(t1); // hier ohne Belang, nur zur Demo der IIFE
+        return t2;
     }();
-    
+
+//    constexpr auto flat1 = transform1(tree); // nicht möglich
+
+    [[maybe_unused]] constexpr auto flat2 = transform2([&]{return tree;}); // constexpr lambda argument wrapper
 }

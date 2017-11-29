@@ -18,9 +18,10 @@
 
 #define NDEBUG
 
+#include <tuple>
+#include <array>
+#include "util/tuple.h"
 #include "util/dassert.h"
-#include "std/tuple"
-#include "std/array"
 #include "util/meta.h"
 
 #include "console.h"
@@ -40,43 +41,65 @@ concept bool isNonTerminal() {
 struct A {
     constexpr A(uint8_t v = 0) : v(v) {}
     const uint8_t v = 0;
-    void f(volatile uint8_t& x) const {
+//    void f(volatile uint8_t& x) const {
+//        x += v;
+//    }
+    void f(uint8_t& x) const {
         x += v;
     }
 };
 struct B {
     constexpr B(uint8_t v = 0) : v(v) {}
     const uint8_t v = 1;
-    void f(volatile uint8_t& x) const {
+//    void f(volatile uint8_t& x) const {
+//        x += v;
+//    }
+    void f(uint8_t& x) const {
         x += v;
     }
 };
 struct C {
     constexpr C(uint8_t v = 0) : v(v) {}
     const uint8_t v = 2;
-    void f(volatile uint8_t& x) const {
+//    void f(volatile uint8_t& x) const {
+//        x += v;
+//    }
+    void f(uint8_t& x) const {
         x += v;
     }
 };
 struct D {
     constexpr D(uint8_t v = 0) : v(v) {}
     const uint8_t v = 3;
-    void f(volatile uint8_t& x) const {
+//    void f(volatile uint8_t& x) const {
+//        x += v;
+//    }
+    void f(uint8_t& x) const {
         x += v;
     }
 };
 struct E {
     constexpr E(uint8_t v = 0) : v(v) {}
     const uint8_t v = 4;
-    void f(volatile uint8_t& x) const {
+//    void f(volatile uint8_t& x) const {
+//        x += v;
+//    }
+    void f(uint8_t& x) const {
         x += v;
     }
 };
+
 template<typename... C>
 struct Node {
     constexpr Node(const C&... c) : mChildren(c...) {}
+    inline static constexpr auto size = sizeof...(C);
     std::tuple<C...> mChildren;
 };
+
+//template<typename... C>
+//using Node = std::tuple<C...>;
+
+
 template<typename T>
 constexpr const T& first(const T& v) {
     return v; 
@@ -110,10 +133,12 @@ std::tuple<T...> rest(const Node<F, T...>& n) {
     return rest(n.mChildren);
 }
 
-template<size_t N>
+template<auto N>
 struct INode {
+    inline static constexpr auto size = N;
     std::array<uint8_t, N> mChildren {};
-    void f(volatile uint8_t&) const {}
+//    void f(volatile uint8_t&) const {}
+    void f(uint8_t&) const {}
 };
 
 template<typename T>
@@ -136,27 +161,26 @@ constexpr auto flat(const std::tuple<T...>& t, uint8_t* c, uint8_t& p) {
 }
 template<typename...T>
 constexpr auto flat(const Node<T...>& n, uint8_t& p = 0) {
-    INode<std::tuple_size<decltype(n.mChildren)>::value> in;
+    INode<n.size> in;
+//    INode<std::tuple_size<decltype(n.mChildren)>::value> in;
     auto t1 = flat(n.mChildren, &in.mChildren[0], p);
     auto t2 = std::tuple(in);
     return std::tuple_cat(t1, t2);
 }
 
-volatile uint8_t sum = 0;
-
-constexpr auto fl = [](){
+constexpr auto fl = []{
     constexpr auto tree = Node(A(7), 
                                Node(C(6), 
                                     D(5)
                                     ), 
-//                               E(8), 
-//                               Node(A(3), 
-//                                    B(4), 
-//                                    Node(E(1), 
-//                                         E(2)
-//                                         )
-//                                    ),
-//                               A(9),
+                               E(8), 
+                               Node(A(3), 
+                                    B(4), 
+                                    Node(E(1), 
+                                         E(2)
+                                         )
+                                    ),
+                               A(9),
                                A(10)
                                );
     uint8_t p = 0;
@@ -198,15 +222,18 @@ constexpr uint8_t child(const T& tuple, uint8_t node, uint8_t i) {
 }
 
 int main() {
+    uint8_t sum = 0;
+    
     constexpr auto top = std::tuple_size<decltype(fl)>::value - 1;
     for(uint8_t n = 0; n < children(fl, top); ++n) {
 //        std::outl<terminal>(n);
-        Meta::visitAt(fl, child(fl, top, n), [](const auto& item){
+        Meta::visitAt(fl, child(fl, top, n), [&sum](const auto& item){
             item.f(sum);
             return 0;
         });
     }
-//    std::outl<terminal>(sum);
     
-    while(true) {}    
+//    std::outl<terminal>(sum);
+    return sum;
+//    while(true) {}    
 }

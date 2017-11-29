@@ -1,6 +1,6 @@
 /*
- * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * ++C - C++ introduction
+ * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.meier@hs-kl.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,27 +16,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include <tuple>
 
-#ifndef __GLIBCXX__
+struct MenuItem {
+};
 
-#include <cstdint>
+template<typename... CC>
+struct Menu1 {
+    Menu1(CC... cc) : mChildren{cc...}{
+    }    
+    std::tuple<CC...> mChildren;    
+};
+struct Menu2 {
+};
+struct Menu3 {
+};
 
-namespace std {
-    
-    template<intmax_t nominator = 1, intmax_t denominator = 1>
-    struct ratio final {
-        static constexpr intmax_t nom = nominator;
-        static constexpr intmax_t denom = denominator;
-    };
-    
-    using centimicro = ratio<1, 10000000>;
-    using micro = ratio<1, 1000000>;
-    using milli = ratio<1, 1000>;
-    using centi = ratio<1, 100>;
-    using deci  = ratio<1, 10>;
-    using unity = ratio<1, 1>;
-    
+Menu2 m2;
+Menu3 m3;
+
+Menu1 m1(&m2, &m3);
+
+
+int main() {
 }
-
-#endif

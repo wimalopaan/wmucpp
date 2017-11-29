@@ -17,11 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-MCU = attiny85
-#MCU = atmega328p
-F_OSC = 8000000
+#MCU = attiny85
+MCU = atmega328p
+F_OSC = 16000000
 
-OPTFLAGS = -O3
+#OPTFLAGS = -O3
 
 bm60a.elf bm60a.s: MCU = atmega328p
 bm61a.elf bm61a.s: MCU = atmega328p
@@ -32,6 +32,12 @@ bm71a.elf bm71a.s: MCU = atmega328p
 bm71a.elf bm71a.s: LOADLIBES = simavrconsole.o
 bm72a.elf bm72a.s: MCU = atmega328p 
 bm72a.elf bm72a.s: LOADLIBES = simavrconsole.o
+bm74a.elf bm74a.s: MCU = atmega328p 
+bm74a.elf bm74a.s: LOADLIBES = simavrconsole.o
+bm73a.elf bm73a.s: MCU = atmega328p 
+bm73a.elf bm73a.s: LOADLIBES = simavrconsole.o
+bm80a.elf bm80a.s: MCU = atmega328p 
+bm80a.elf bm80a.s: LOADLIBES = simavrconsole.o
 
 simavrconsole.o: MCU = atmega328p 
 
@@ -50,8 +56,12 @@ targets +=  bm60a.elf bm60a.s
 targets +=  bm61a.elf bm61a.s
 targets +=  bm62a.elf bm62a.s
 targets +=  bm70a.elf bm70a.s
+targets +=  bm70b.elf bm70b.s
 targets +=  bm71a.elf bm71a.s
 targets +=  bm72a.elf bm72a.s
+targets +=  bm73a.elf bm73a.s
+targets +=  bm74a.elf bm74a.s
+targets +=  bm80a.elf bm80a.s
 
 -include ../../Makefile.include
 

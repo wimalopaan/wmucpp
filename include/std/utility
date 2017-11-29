@@ -18,6 +18,8 @@
 
 #pragma once
 
+#ifndef __GLIBCXX__
+
 #include <cstdint>
 #include <cstddef>
 
@@ -25,7 +27,6 @@
 
 namespace std { 
     
-#ifndef __GLIBCXX__
     
     template<typename T, T... I>
     struct integer_sequence{
@@ -79,6 +80,14 @@ namespace std {
     template<typename... Args>
     using index_sequence_for = make_index_sequence<sizeof...(Args)>;
     
-#endif
-    
+
+    template<typename T>
+    struct identity {
+        typedef T type;
+    };
+    template<typename T>
+    constexpr T&& forward(typename identity<T>::type& param) { 
+        return static_cast<T&&>(param); 
+    }    
 }
+#endif

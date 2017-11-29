@@ -23,6 +23,7 @@
 
 #include "units/duration.h"
 #include "units/physical.h"
+#include "util/fixedpoint.h"
 #include "sensorprotocoll.h"
 
 namespace Hott {

@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include <time.h>
 #include "mcu/concepts.h"
 

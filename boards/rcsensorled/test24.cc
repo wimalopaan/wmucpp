@@ -85,7 +85,7 @@ using crWriterSensorText = ConstanteRateWriter<menuData, sensorUsart>;
 
 using isrRegistrar = IsrRegistrar<sensorUsart::RxHandler, sensorUsart::TxHandler, rcUsart::RxHandler, rcUsart::TxHandler>;
 
-class TSensorId : public Hott::MenuItem {
+class TSensorId : public UI::MenuItem<Hott::BufferString, Hott::key_t> {
 public:
     TSensorId(uint8_t number) : mNumber{number} {
         assert(number < Storage::dsIds.size);

@@ -18,9 +18,11 @@
 
 #pragma once
 
+#ifndef __GLIBCXX__
+
 #include <cstdint>
+#include <utility>
 #include "util/dassert.h"
-#include "std/utility"
 
 namespace std {
     
@@ -99,5 +101,8 @@ namespace std {
         return std::array<E, sizeof...(Tail) + 1>{f, tail...};
     }
     
-    
+    template<typename T> struct tuple_size;
+    template<typename I, auto N>
+    class tuple_size<std::array<I, N>> : public std::integral_constant<size_t, N> {};
 }
+#endif

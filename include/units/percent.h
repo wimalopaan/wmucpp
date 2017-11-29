@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include "util/types.h"
 #include "util/dassert.h"
 #include "util/util.h"

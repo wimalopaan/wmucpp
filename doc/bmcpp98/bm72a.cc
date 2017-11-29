@@ -19,181 +19,90 @@
 #define NDEBUG
 
 #include "util/dassert.h"
-#include "std/tuple"
-#include "std/array"
-#include "util/meta.h"
-
+#include "container/tree.h"
 #include "console.h"
 #include "simavr/simavrdebugconsole.h"
-
 
 using terminalDevice = SimAVRDebugConsole;
 using terminal = std::basic_ostream<terminalDevice>;
 
-template<typename T>
-concept bool isNonTerminal() {
-    return requires(T v) {
-        v.mChildren;
-    };
-}
-
 struct A {
     constexpr A(uint8_t v = 0) : v(v) {}
     const uint8_t v = 0;
-    void f(volatile uint8_t& x) const {
-        x += v;
-    }
 };
 struct B {
     constexpr B(uint8_t v = 0) : v(v) {}
     const uint8_t v = 1;
-    void f(volatile uint8_t& x) const {
-        x += v;
-    }
 };
 struct C {
     constexpr C(uint8_t v = 0) : v(v) {}
     const uint8_t v = 2;
-    void f(volatile uint8_t& x) const {
-        x += v;
-    }
 };
 struct D {
     constexpr D(uint8_t v = 0) : v(v) {}
     const uint8_t v = 3;
-    void f(volatile uint8_t& x) const {
-        x += v;
-    }
 };
 struct E {
     constexpr E(uint8_t v = 0) : v(v) {}
     const uint8_t v = 4;
-    void f(volatile uint8_t& x) const {
-        x += v;
-    }
 };
-template<typename... C>
-struct Node {
-    constexpr Node(const C&... c) : mChildren(c...) {}
-    std::tuple<C...> mChildren;
-};
-template<typename T>
-constexpr const T& first(const T& v) {
-    return v; 
-}
-template<typename F, typename... T>
-constexpr F first(const std::tuple<F, T...>& t) {
-    return std::get<0>(t);
-}
-template<typename F, typename... T>
-constexpr F first(const Node<F, T...>& n) {
-    return first(n.mChildren);
-}
-
-namespace detail {
-    template<typename F, typename... T, size_t... II>
-    constexpr std::tuple<T...> rest(const std::tuple<F, T...>& t, std::index_sequence<II...>) {
-        return std::tuple<T...>{std::get<II + 1>(t)...};
-    }
-}
-template<typename T>
-constexpr const T& rest(const T& v) {
-    return v;
-}
-template<typename F, typename... T>
-constexpr std::tuple<T...> rest(const std::tuple<F, T...>& t) {
-    auto Indexes = std::make_index_sequence<sizeof...(T)>{};
-    return detail::rest(t, Indexes);
-}
-template<typename F, typename... T>
-std::tuple<T...> rest(const Node<F, T...>& n) {
-    return rest(n.mChildren);
-}
-
-template<size_t N>
-struct INode {
-    std::array<uint8_t, N> mChildren {};
-    void f(volatile uint8_t&) const {}
+struct Menu {
+    constexpr Menu(uint8_t v) 
+        : mTitle(v) 
+    {}
+    const uint8_t mTitle;
 };
 
-template<typename T>
-constexpr const std::tuple<T> flat(const T& v, uint8_t&) {
-    return std::tuple<T>(v);
-}
-template<typename...T>
-constexpr auto flat(const std::tuple<T...>& t, uint8_t* c, uint8_t& p) {
-    if constexpr(sizeof...(T) == 1) {
-        auto t1 = flat(std::get<0>(t), p);
-        *c = p++;
-        return t1;
+constexpr auto tree = []{
+    constexpr auto tree = Node(Menu(1), 
+                               A(7), 
+                               Node(Menu(2),
+                                    C(6), 
+                                    D(5)
+                                    ), 
+                               E(8), 
+                               Node(Menu(3),
+                                    A(3), 
+                                    B(4), 
+                                    Node(Menu(4),
+                                         E(1), 
+                                         E(2)
+                                         )
+                                    ),
+                               A(9),
+                               A(10)
+                               );
+    uint8_t p = 0;
+    return flat(tree, p);
+}();
+
+template<typename ItemType>
+struct F {
+    static int f(const ItemType& item) {
+        return item.v;
     }
-    else {
-        auto f = flat(first(t), p);
-        *c = p++;
-        auto r = flat(rest(t), (c + 1), p);
-        return std::tuple_cat(f, r);
+};
+template<typename N, typename T>
+struct F<INode<N, T>> {
+    static int f(const INode<N, T>&) {
+        return 0;
     }
-}
-template<typename...T>
-constexpr auto flat(const Node<T...>& n, uint8_t& p = 0) {
-    INode<std::tuple_size<decltype(n.mChildren)>::value> in;
-    auto t1 = flat(n.mChildren, &in.mChildren[0], p);
-    auto t2 = std::tuple(in);
-    return std::tuple_cat(t1, t2);
-}
+};
 
-volatile uint8_t sum = 0;
-
-constexpr auto tree = Node(A(7), 
-                           Node(C(6), 
-                                D(5)
-                                ), 
-                           E(8), 
-                           Node(A(3), 
-                                B(4), 
-                                Node(E(1), 
-                                     E(2)
-                                     )
-                                ),
-                           A(9),
-                           A(10)
-                           );
-
-namespace detail {
-    template<typename T>
-    struct Info {
-        static uint8_t children(const T&) {
-            return 0;
-        }
-        static uint8_t child(const T&, uint8_t) {
-            return 0;
-        }
-    };
-    template<isNonTerminal T>
-    struct Info<T> {
-        static uint8_t children(const T& v) {
-            return v.mChildren.size;
-        }
-        static uint8_t child(const T& v, uint8_t i) {
-            return v.mChildren[i];
-        }
-    };
-}
-
-template<typename T>
-constexpr uint8_t children(const T& tuple, uint8_t node) {
-    return Meta::visitAt(tuple, node, [](const auto& item){
-        return detail::Info<decltype(item)>::children(item);        
-    });
-}
-template<typename T>
-constexpr uint8_t child(const T& tuple, uint8_t node, uint8_t i) {
-    return Meta::visitAt(tuple, node, [&](const auto& item){
-        return detail::Info<decltype(item)>::child(item, i);
-    });
-}
 
 int main() {
+    uint8_t sum = 0;
     
-    while(true) {}    
+    constexpr auto top = std::tuple_size<decltype(tree)>::value - 1;
+    for(uint8_t n = 0; n < children(tree, top); ++n) {
+//        std::outl<terminal>(n);
+        Meta::visitAt(tree, child(tree, top, n), [&sum](const auto& item){
+            typedef typename std::remove_reference<decltype(item)>::type ItemType;
+            sum += F<std::remove_cv_t<ItemType>>::f(item);
+            return 0;
+        });
+    }
+    
+    std::outl<terminal>(sum);
+    return sum;
 }

@@ -58,6 +58,12 @@ namespace Meta {
         struct front_impl<L<F, I...>> {
             typedef F type;  
         };
+
+        template<typename L> struct rest_impl;
+        template<template<typename, typename...> typename L, typename F, typename... I>
+        struct rest_impl<L<F, I...>> {
+            typedef L<I...> type;  
+        };
    
         template<typename L> struct back_impl;
         template<template<typename, typename...> typename L, typename F, typename... I>
@@ -149,6 +155,8 @@ namespace Meta {
         struct all_same_impl<T, L<I...>> {
             static inline constexpr bool value = (std::is_same<T, I>::value && ... && true);
         };
+        
+        
                 
     } // !detail
     namespace concepts {
@@ -219,6 +227,8 @@ namespace Meta {
     template<typename T, concepts::List L>
     struct all_same : public std::integral_constant<bool, detail::all_same_impl<T, L>::value> {};
 
+    template<concepts::List List>
+    using rest = typename detail::rest_impl<List>::type;
     
     template<typename T>
     struct nonVoid : public std::true_type {};    

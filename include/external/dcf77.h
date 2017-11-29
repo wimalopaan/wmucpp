@@ -21,7 +21,7 @@
 #include <stdint.h>
 #include <util/parity.h>
 
-#include "std/time.h"
+#include "util/time.h"
 #include "mcu/ports.h"
 #include "units/duration.h"
 #include "units/physical.h"

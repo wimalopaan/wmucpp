@@ -26,6 +26,10 @@ targets += test12
 targets += test13
 targets += test15
 targets += test20
+targets += test21
+targets += test22
+targets += test23
+targets += test24
 
 -include ../Makefile.include
 
@@ -33,8 +37,8 @@ CXX = /usr/bin/g++
 #CXX = clang++
 CC = g++
 LDFLAGS =
-CXXFLAGS = -g -std=c++1z -fconcepts
+CXXFLAGS = -g -std=c++17 -fconcepts
 CXXFLAGS += -Wall -Wextra -fPIC
-#CXXFLAGS += -I../include -I../../../include
+CXXFLAGS += -I../include 
 
 MCUFLAGS =

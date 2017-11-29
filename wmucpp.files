@@ -1,3 +1,4 @@
+boards/anano/menu.cc
 boards/i2cIR/Makefile
 boards/i2cIR/main.cc
 boards/i2cWS2812/Makefile
@@ -26,10 +27,22 @@ boards/rcsensorled03/test01.cc
 boards/rcsensorled03/test02.cc
 boards/rcsensorled03/test03.cc
 boards/rcsensorled03/test10.cc
+doc/bmcpp98/bm70b.cc
+doc/bmcpp98/bm73a.cc
+doc/bmcpp98/bm74a.cc
+doc/bmcpp98/bm80a.cc
+example/features/menu.cc
+example/features/menu_s.cc
 example/features/old/ledbuttons.cc
 example/features/old/ledbuttons.h
+host/old/meta.h
 host/test20.cc
+host/test21.cc
+host/test22.cc
+host/test23.cc
+host/test24.cc
 include/appl/command.h
+include/container/tree.h
 include/external/hott/menu.h
 include/external/hott/old/menu.h
 include/external/hott/old/menu2.h
@@ -50,6 +63,11 @@ include/std/ratio
 include/std/tuple
 include/std/type_traits
 include/std/utility
+include/ui/menu.h
+include/ui/textmenu.h
+include/util/time.h
+include/util/tuple.h
+include/util/type_traits.h
 include/util/types.h
 todo.txt
 3rdparty/irmp/irmp.c
@@ -240,7 +258,6 @@ example/externals/ow.h
 example/features/constantrate.cc
 example/features/ledbuttons.cc
 example/features/ledbuttons.h
-host/meta.h
 host/test04.cc
 host/test05.cc
 host/test06.cc
@@ -401,7 +418,6 @@ include/mcu/avr8.h
 include/mcu/ports.h
 include/simavr/simavrdebugconsole.h
 include/std/literals.h
-include/std/time.h
 include/test/simpletest.h
 include/units/duration.h
 include/units/percent.h

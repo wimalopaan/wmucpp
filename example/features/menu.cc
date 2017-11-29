@@ -16,11 +16,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "ui/menu.h"
 
-#ifndef __GLIBCXX__
+static constexpr uint8_t MenuStringLength = 20;
+using BufferString = StringBuffer<MenuStringLength + 1>;
+using MenuItem = UI::MenuItem<BufferString, uint8_t>;
 
-#include <stddef.h>
-#include <detail/byte.h>
+template<uint8_t MenuLength>
+class Menu : public MenuItem {
+public:
+private:
+    Menu* mParent = nullptr;
+    const PgmStringView mTitle;
+    const std::array<MenuItem*, MenuLength> mItems;
+    uint_ranged_NaN<uint8_t, 0, MenuLength - 1> mSelectedLine;
+};
 
-#endif
+
+AMenu menu;
+
+volatile uint8_t key;
+
+int main() {
+    MenuItem* actual = &menu;
+    while (true) {
+        actual = actual->processKey(key);                
+    }    
+}

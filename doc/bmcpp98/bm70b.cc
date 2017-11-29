@@ -1,6 +1,6 @@
 /*
- * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * ++C - C++ introduction
+ * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.meier@hs-kl.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,27 +16,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include <type_traits>
 
-#ifndef __GLIBCXX__
-
-#include <cstdint>
-
-namespace std {
-    
-    template<intmax_t nominator = 1, intmax_t denominator = 1>
-    struct ratio final {
-        static constexpr intmax_t nom = nominator;
-        static constexpr intmax_t denom = denominator;
-    };
-    
-    using centimicro = ratio<1, 10000000>;
-    using micro = ratio<1, 1000000>;
-    using milli = ratio<1, 1000>;
-    using centi = ratio<1, 100>;
-    using deci  = ratio<1, 10>;
-    using unity = ratio<1, 1>;
-    
+constexpr auto transform1(auto v) {
+    return std::integral_constant<int, v>{};
 }
 
-#endif
+constexpr auto transform2(const auto& callable) {
+    constexpr auto v = callable();
+    return std::integral_constant<decltype(v), v>{};
+}
+
+int main() {
+    constexpr int value = 42;
+
+    //    constexpr auto result1 = transform1(value);  // not possible
+    
+    [[maybe_unused]] constexpr auto result2 = transform2([&]{return value;}); // constant lambda argument wrapper
+}

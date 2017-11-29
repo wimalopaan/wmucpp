@@ -19,19 +19,19 @@
 #include <iostream>
 #include <cassert>
 #include <tuple>
-#include "meta.h"
+#include "util/meta.h"
 
-template<size_t Index, typename Tuple>
-struct Entry {
-    Tuple tuple;
-    inline static constexpr size_t index = Index;
-};
+//template<size_t Index, typename Tuple>
+//struct Entry {
+//    Tuple tuple;
+//    inline static constexpr size_t index = Index;
+//};
 
-template<typename NewType, typename... T, typename... Children>
-constexpr auto add(const std::tuple<T...>& t = std::tuple<>{}, Children... c) {
-    auto nextTuple = std::tuple_cat(t, std::tuple(INode(NewType(), c...)));
-    return Entry<sizeof...(T), decltype(nextTuple)>{nextTuple};
-}
+//template<typename NewType, typename... T, typename... Children>
+//constexpr auto add(const std::tuple<T...>& t = std::tuple<>{}, Children... c) {
+//    auto nextTuple = std::tuple_cat(t, std::tuple(INode(NewType(), c...)));
+//    return Entry<sizeof...(T), decltype(nextTuple)>{nextTuple};
+//}
 
 
 struct A {
@@ -164,12 +164,40 @@ namespace Meta {
 
 // todo: Meta-Map-Funktion: Node bzw. X -> INode
 
+//template<typename T>
+//constexpr uint8_t children(const T& tuple, uint8_t node) {
+//    return Meta::visitAt(tuple, node, [](const auto& item){
+//        return detail::Info<decltype(item)>::children(item);        
+//    });
+//}
+//template<typename T>
+//constexpr uint8_t child(const T& tuple, uint8_t node, uint8_t i) {
+//    return Meta::visitAt(tuple, node, [&](const auto& item){
+//        return detail::Info<decltype(item)>::child(item, i);
+//    });
+//}
+
 int main() {
     constexpr auto fl2 = [](){
-        constexpr auto tree = Node(A(), Node(C(), D()), E(), Node(A(), B(), Node(E(), E())));
+        constexpr auto tree = Node(A(), 
+                                   Node(C(), D()), 
+                                   E(), 
+                                   Node(A(), 
+                                        B(), 
+                                        Node(E(), 
+                                             E())
+                                        )
+                                   );
         size_t p = 0;
         return flat(tree, p);
     }();
+    
+   
+    std::cout << "Size: " << std::tuple_size<decltype(fl2)>::value << '\n';
+            
+//    for(uint8_t n = 0; n < children(fl, top); ++n) {
+        
+//    }    
     
     for(uint8_t i = 0; i < std::tuple_size<decltype(fl2)>::value; ++i) {
         Meta::visitAt(fl2, i, [](const auto& v) {v.f();});

@@ -18,11 +18,12 @@
 
 #pragma once
 
+#ifndef __GLIBCXX__
+
 #include <cstdint>
 
 namespace std {
     
-#ifndef __GLIBCXX__
     typedef decltype(nullptr) nullptr_t;
     
     // The underlying type of an enum.
@@ -172,5 +173,6 @@ namespace std {
             std::is_same<void, typename std::remove_cv<T>::type>::value  ||
             std::is_same<std::nullptr_t, typename std::remove_cv<T>::type>::value
     > {};    
-#endif
 }
+
+#endif
