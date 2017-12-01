@@ -16,13 +16,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <cstddef>
 #include <type_traits>
 
-constexpr auto transform1(auto v) {
-    return std::integral_constant<int, v>{};
+constexpr auto transform1(const auto& v) {
+    return std::integral_constant<int, v>{}; // v ist not constexpr in this context
 }
 
-constexpr auto transform2(const auto& callable) {
+template<typename C, typename T>
+concept bool Callable() {
+    return requires(C l) {
+        {l()} -> T;
+    };
+}
+constexpr auto transform2(const Callable<size_t>& callable) {
     constexpr auto v = callable();
     return std::integral_constant<decltype(v), v>{};
 }
@@ -33,4 +40,7 @@ int main() {
     //    constexpr auto result1 = transform1(value);  // not possible
     
     [[maybe_unused]] constexpr auto result2 = transform2([&]{return value;}); // constant lambda argument wrapper
+    
+//    transform2(value); // constraint not satisfied
+//    transform2([&]{return std::byte{0};}); // constraint not satisfied
 }

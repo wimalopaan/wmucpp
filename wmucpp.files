@@ -31,6 +31,16 @@ doc/bmcpp98/bm70b.cc
 doc/bmcpp98/bm73a.cc
 doc/bmcpp98/bm74a.cc
 doc/bmcpp98/bm80a.cc
+doc/bmcpp98/bm90a.c
+doc/bmcpp98/bm90a2.c
+doc/bmcpp98/bm90a3.c
+doc/bmcpp98/bm90b.cc
+doc/bmcpp98/bm91a.cc
+doc/bmcpp98/bm92a.cc
+doc/bmcpp98/bm93a.cc
+doc/bmcpp98/bm94a.cc
+doc/bmcpp98/bm95a.cc
+doc/bmcpp98/bm96a.cc
 example/features/menu.cc
 example/features/menu_s.cc
 example/features/old/ledbuttons.cc
@@ -49,6 +59,7 @@ include/external/hott/old/menu2.h
 include/external/vnh2sp30.h
 include/std/algorithm
 include/std/array
+include/std/cassert
 include/std/chrono
 include/std/cstddef
 include/std/cstdint

@@ -39,6 +39,9 @@ bm73a.elf bm73a.s: LOADLIBES = simavrconsole.o
 bm80a.elf bm80a.s: MCU = atmega328p 
 bm80a.elf bm80a.s: LOADLIBES = simavrconsole.o
 
+bm91a.elf bm91a.s: LOADLIBES = simavrconsole.o
+bm96a.elf bm96a.s: LOADLIBES = simavrconsole.o
+
 simavrconsole.o: MCU = atmega328p 
 
 targets += simavrconsole.o
@@ -62,6 +65,16 @@ targets +=  bm72a.elf bm72a.s
 targets +=  bm73a.elf bm73a.s
 targets +=  bm74a.elf bm74a.s
 targets +=  bm80a.elf bm80a.s
+targets +=  bm90a.elf bm90a.s
+targets +=  bm90a2.elf bm90a2.s
+targets +=  bm90a3.elf bm90a3.s
+targets +=  bm90b.elf bm90b.s
+targets +=  bm91a.elf bm91a.s
+targets +=  bm92a.elf bm92a.s
+targets +=  bm93a.elf bm93a.s
+targets +=  bm94a.elf bm94a.s
+targets +=  bm95a.elf bm95a.s
+targets +=  bm96a.elf bm96a.s
 
 -include ../../Makefile.include
 
