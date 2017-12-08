@@ -44,7 +44,7 @@ public:
         Timer::template prescale<parameter::prescaler>();
         *mcuTimer()->ocra = parameter::ocFrame;
         mcuTimer()->tccrb.template add<Timer::tccrb_type::wgm2>();
-        mcuInterrupts()->tifr.template add<Timer::flags_type::ocfa | Timer::flags_type::ocfb>();
+        mcuInterrupts()->tifr.template reset<Timer::flags_type::ocfa | Timer::flags_type::ocfb>();
         mcuInterrupts()->timsk.template add<Timer::mask_type::ociea>();
     }
     

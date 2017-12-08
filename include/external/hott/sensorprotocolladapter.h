@@ -39,7 +39,7 @@ struct NullPA {
 template<uint8_t M>
 class SensorProtocollAdapter final {
     enum class hottstate {Undefined = 0, Request1, RequestA1, NumberOfStates};
-    template<int N, typename PA> friend class AVR::Usart;
+//    template<int N, typename PA> friend class AVR::Usart;
 public:
     SensorProtocollAdapter() = delete;
 private:

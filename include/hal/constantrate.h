@@ -190,7 +190,7 @@ public:
         if constexpr(!std::is_same<Timer, void>::value) {
             // todo: wgm2 allein ergibt irgendwie keine Sinn???
             Timer::mcuTimer()->tccrb.template add<Timer::mcu_timer_type::TCCRB::wgm2>();
-            Timer::mcuInterrupts()->tifr.template add<Timer::flags_type::ocfa | Timer::flags_type::ocfb>();
+            Timer::mcuInterrupts()->tifr.template reset<Timer::flags_type::ocfa | Timer::flags_type::ocfb>();
             Timer::mcuInterrupts()->timsk.template add<Timer::mask_type::ociea>();
         }
         (detail::Mapper<Writers>::init(),...);

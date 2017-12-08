@@ -120,7 +120,7 @@ struct LocalConfig {
     static constexpr AVR::Util::TimerSetupData tsdir = AVR::Util::calculate<irTimer>(10000_Hz);
 };
 
-using alarmTimer  = AlarmTimer<systemTimer, LocalConfig::reso>;
+using alarmTimer  = AlarmTimer<systemTimer, UseEvents<true>, LocalConfig::reso>;
 
 using dcfDecoder = DCF77<dcfPin, LocalConfig::exactFrequency, EventManager, true>;
 

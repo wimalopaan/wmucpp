@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 #include "config.h"
 #include "mcu/avr8.h"
@@ -27,6 +27,8 @@
 #include "mcu/avr/isr.h"
 #include "util/bits.h"
 #include "util/disable.h"
+#include "util/concepts.h"
+#include "util/types.h"
 #include "container/fifo.h"
 #include "hal/concepts.h"
 
@@ -77,12 +79,16 @@ struct Event final {
     T value{};
 };
 
-//typedef Event<uint8_t> Event8u_t;
 typedef Event<std::byte> EventByte_t;
 
+template<bool v>
+struct UseEvents : NamedFlag<v> {};
+
 namespace AVR {
-    template<uint8_t N, typename PA, bool useISR, typename MCU> class Usart;
-    template<uint8_t N, typename MCU> class Spi;
+    template<uint8_t N, typename PA, ::Util::NamedFlag useISR = MCU::UseInterrupts<true>, ::Util::NamedFlag useEvents = NamedFlag<Config::Usart::useEvents>, 
+             ::Util::NamedConstant RecvQLength = NamedConstant<Config::Usart::RecvQueueLength>, ::Util::NamedConstant SendQLength = NamedConstant<Config::Usart::SendQueueLength>, 
+             typename MCU = DefaultMcuType> class Usart;
+    template<uint8_t N, typename MCU = DefaultMcuType> class Spi;
     //template<uint8_t N, typename MCU = DefaultMcuType> class SWUsart;
 }
 
@@ -144,7 +150,7 @@ template<uint8_t N, typename Interrupt, typename... PP>
 using PeriodicGroup = PeriodicGroup2<AVR::RegisterFlags<DefaultMcuType::GPIOR, 0, std::byte>, N, Interrupt, PP...>;
 
 template<typename... EE>
-//template<HAL::EventHandler... EE>
+//template<HAL::EventHandler... EE> // fixme: triggers ICE
 class EventHandlerGroup {
     template<int N, HAL::EventHandler T, typename... TT>
     class Processor final {
@@ -187,7 +193,7 @@ template<uint8_t QLength = Config::EventManager::EventQueueLength>
 class EventManagerT final {
     template<uint8_t> friend class Hott::SensorProtocollAdapter;
     template<uint8_t> friend class Esp8266::ATProtocollAdapter;
-    template<uint8_t N, typename PA, typename MCU> friend class AVR::Usart;
+//    template<uint8_t N, typename PA, typename MCU> friend class AVR::Usart;
     template<uint8_t N, typename MCU> friend class AVR::Spi;
     template<uint8_t N, typename MCU> friend class SWUsart;
 public:

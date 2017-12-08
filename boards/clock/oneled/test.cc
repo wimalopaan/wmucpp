@@ -69,7 +69,7 @@ struct LocalConfig {
     static constexpr std::hertz exactFrequency = tsd.f;
 };
 
-using alarmTimer  = AlarmTimer<systemTimer, LocalConfig::reso>;
+using alarmTimer  = AlarmTimer<systemTimer, UseEvents<true>, LocalConfig::reso>;
 
 using systemConstantRate = ConstantRateAdapter<1, void, AVR::ISR::Timer<1>::CompareA, alarmTimer>;
 

@@ -86,7 +86,7 @@ using controller = typename makeController<PortB, PortC, std::make_index_sequenc
 
 using systemTimer = AVR::Timer8Bit<0>;
 
-using terminalDevice = Usart<0, void, false>;
+using terminalDevice = Usart<0, void, MCU::UseInterrupts<false>>;
 using terminal = std::basic_ostream<terminalDevice>;
 
 static constexpr auto f = 1000_Hz;

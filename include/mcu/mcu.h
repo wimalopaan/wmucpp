@@ -75,4 +75,13 @@ namespace MCU {
     
     template<typename T, typename Compiler>
     struct is_register_type : public is_register_type_base<typename std::remove_cv<T>::type, Compiler, DefaultMcuType> {};
+    
+    
+    template<bool use = true>
+    struct UseInterrupts;
+    template<>
+    struct UseInterrupts<true> : std::true_type {};
+    template<>
+    struct UseInterrupts<false> : std::false_type {};
+    
 }

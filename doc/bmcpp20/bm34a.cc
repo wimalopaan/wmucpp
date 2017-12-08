@@ -29,7 +29,7 @@ volatile uint8_t y = 42;
 volatile std::percent z = 0_ppc;
 
 int main() {
-    y = 42;
+//    y = 42;
     {
         z = std::fastScale<0, 255>(y);
     }

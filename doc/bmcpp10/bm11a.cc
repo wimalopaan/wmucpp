@@ -18,13 +18,9 @@
 
 #define NDEBUG
 
-#include <stdint.h>
-
-//#include "std/limits.h"
-#include "std/type_traits"
-//#include "std/concepts.h"
-#include "std/array"
-//#include "std/algorithm.h"
+#include <cstdint>
+#include <type_traits>
+#include <array>
 #include "util/fixedpoint.h"
 #include "util/util.h"
 

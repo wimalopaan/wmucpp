@@ -162,8 +162,6 @@ namespace Meta {
     }
 }
 
-// todo: Meta-Map-Funktion: Node bzw. X -> INode
-
 //template<typename T>
 //constexpr uint8_t children(const T& tuple, uint8_t node) {
 //    return Meta::visitAt(tuple, node, [](const auto& item){

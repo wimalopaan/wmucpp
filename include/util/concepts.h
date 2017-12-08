@@ -49,12 +49,25 @@ namespace Util {
         };
     }
     
-    template<typename T>
+    template<typename T, typename... ArgType>
     concept bool Callable() {
         return requires(T t) {
-            t();
+            t(ArgType{}...);
         };
     }
     
-    
+    template<typename T>
+    concept bool NamedFlag() {
+        return requires(T f) {
+            T::value;
+            {T::value} -> bool;
+        };
+    }
+    template<typename T>
+    concept bool NamedConstant() {
+        return requires(T c) {
+            T::value;
+            {T::value} -> typename T::value_type;
+        };
+    }
 }

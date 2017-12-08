@@ -18,13 +18,14 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
+#include <array>
+#include <cassert>
 
-#include "std/array"
-#include "util/dassert.h"
 #include "mcu/avr/twimaster.h"
 
 // todo: set time from DateTime::TimeTM
+// todo: ohne EventSystem
 
 template<typename TWIMaster>
 class DS1307 : public EventHandler<EventType::TWIRecvComplete> {
@@ -37,7 +38,6 @@ public:
     }
     template<bool On>
     static bool halt() {
-//        static_assert(!TWIMaster::isAsync, "use only with synchron TWI Master");
         std::array<std::byte, 2> data;
         data[0] = std::byte{0x00};
         data[1] = std::byte{On ? 0x80 : 0x00};
@@ -47,7 +47,6 @@ public:
         else {
             return TWIMaster::template write<Address>(data);
         }
-//        TWIMaster::template write<Address>(data);
     }
 
     template<bool On>

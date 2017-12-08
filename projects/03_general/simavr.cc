@@ -19,14 +19,16 @@
 #include <stdlib.h>
 
 #include "simavr.h"
+
+#include <cassert>
+
 #include "mcu/avr8.h"
-#include "util/dassert.h"
 #include "mcu/ports.h"
 #include "hal/alarmtimer.h"
 #include "util/disable.h"
 #include "hal/event.h"
 #include "mcu/avr/ppm.h"
-#include "mcu/avr//pinchange.h"
+#include "mcu/avr/pinchange.h"
 #include "hal/ppmswitch.h"
 #include "container/pgmstring.h"
 #include "container/stringbuffer.h"

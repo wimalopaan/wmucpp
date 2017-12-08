@@ -26,98 +26,131 @@
 #include "util/types.h"
 
 namespace TWI {
-
-template<uint8_t N, const TWI::Address& Address, uint16_t Size, typename MCU = DefaultMcuType>
-class Slave final : public IsrBaseHandler<AVR::ISR::Twi<0>> {
-    Slave() = delete;
-    
-public:
-    typedef MCU                         mcu_type;     
-    typedef typename mcu_type::TWI      mcu_twi_type;     
-    typedef typename mcu_type::TWI::TWS tws;     
-    typedef typename mcu_type::TWI::TWC twc;     
-    typedef typename MCU::TWI::template PrescalerRow<N> ps;
-    static constexpr uint8_t number = N;
-    
-    static constexpr const auto mcu_twi = AVR::getBaseAddr<typename MCU::TWI, N>;
-
-    static constexpr auto tw_status_mask = tws::tws7 | tws::tws6 | tws::tws5 | tws::tws4 | tws::tws3;
-    static constexpr auto twcr_ack       = twc::twen | twc::twie | twc::twint | twc::twea;
-    static constexpr auto twcr_nack      = twc::twen | twc::twie | twc::twint;
-    static constexpr auto twcr_reset     = twc::twen | twc::twie | twc::twint | twc::twea | twc::twsto;
-    
-    static void init() {
-        BusAddress<Write> busAddress{Address};
-        *mcu_twi()->twar = busAddress.value();
-        mcu_twi()->twcr.template clear<twc::twsta | twc::twsta>();
-        mcu_twi()->twcr.template set<twc::twea | twc::twen | twc::twie>();
-        index.setNaN();
-    }
-    static void isr() {
-        auto twst = mcu_twi()->twsr.template get<tw_status_mask>();
-        switch(twst) {
-        case tws::twSrSlaAck:
-            mcu_twi()->twcr.template set<twcr_ack>();
-            index.setNaN();
-            break;
-        case tws::twSrDataAck:
-        {
-            std::byte data = *mcu_twi()->twdr;
-            if (!index) {
-                if (std::to_integer<uint8_t>(data) < Size) {
-                    index = std::to_integer<uint8_t>(data);
+    // todo: struct UseInterrupt / NoInterrupt
+    template<uint8_t N, const TWI::Address& Address, uint16_t Size, typename useInt = MCU::UseInterrupts<true>, typename MCU = DefaultMcuType>
+    class Slave final : public IsrBaseHandler<AVR::ISR::Twi<0>> {
+        Slave() = delete;
+        
+    public:
+        typedef MCU                         mcu_type;     
+        typedef typename mcu_type::TWI      mcu_twi_type;     
+        typedef typename mcu_type::TWI::TWS tws;     
+        typedef typename mcu_type::TWI::TWC twc;     
+        typedef typename MCU::TWI::template PrescalerRow<N> ps;
+        static constexpr uint8_t number = N;
+        
+        static constexpr const auto mcu_twi = AVR::getBaseAddr<typename MCU::TWI, N>;
+        
+        static constexpr auto tw_status_mask = tws::tws7 | tws::tws6 | tws::tws5 | tws::tws4 | tws::tws3;
+        static constexpr auto twcr_ack = []{
+            if constexpr(useInt::value) {
+                return twc::twen | twc::twie | twc::twint | twc::twea;
+            }
+            else {
+                return twc::twen | twc::twint | twc::twea;
+            }
+        }();
+        static constexpr auto twcr_nack = []{
+            if constexpr(useInt::value) {
+                return twc::twen | twc::twie | twc::twint;
+            }
+            else {
+                return twc::twen | twc::twint;
+            }
+        }();
+        static constexpr auto twcr_reset = []{
+            if constexpr(useInt::value) {
+                return twc::twen | twc::twie | twc::twint | twc::twea | twc::twsto;
+            }
+            else {
+                return twc::twen | twc::twint | twc::twea | twc::twsto;
+            }
+        }();
+        static void init() {
+            BusAddress<Write> busAddress{Address};
+            *mcu_twi()->twar = busAddress.value();
+            mcu_twi()->twcr.template clear<twc::twsta | twc::twsta>();
+            if constexpr(useInt::value) {
+                mcu_twi()->twcr.template set<twc::twea | twc::twen | twc::twie>();
+            }
+            else {
+                mcu_twi()->twcr.template set<twc::twea | twc::twen>();
+            }
+            index.setNaN(); // todo: index = NaN;
+        }
+        static void isr() {
+            auto twst = mcu_twi()->twsr.template get<tw_status_mask>();
+            switch(twst) {
+            case tws::twSrSlaAck:
+                mcu_twi()->twcr.template set<twcr_ack>();
+                index.setNaN();
+                break;
+            case tws::twSrDataAck:
+            {
+                std::byte data = *mcu_twi()->twdr;
+                if (!index) {
+                    if (std::to_integer<uint8_t>(data) < Size) {
+                        index = std::to_integer<uint8_t>(data);
+                    }
+                    else {
+                        index = 0;
+                    }
+                    mcu_twi()->twcr.template set<twcr_ack>();
                 }
                 else {
+                    if (*index < Size) {
+                        mRegisters[*index] = data;
+                        mChanged = true;
+                        ++index;
+                    }
+                    mcu_twi()->twcr.template set<twcr_ack>();
+                }
+            }
+                break;
+            case tws::twStSlaAck:
+            case tws::twStDataAck:
+                if (!index) {
                     index = 0;
                 }
-                mcu_twi()->twcr.template set<twcr_ack>();
-            }
-            else {
                 if (*index < Size) {
-                    mRegisters[*index] = data;
-                    isChanged() = true;
+                    *mcu_twi()->twdr = mRegisters[*index];
                     ++index;
                 }
+                else {
+                    *mcu_twi()->twdr = std::byte{0};
+                }
                 mcu_twi()->twcr.template set<twcr_ack>();
+                break;
+            case tws::twSrStop:
+                mcu_twi()->twcr.template set<twcr_ack>();
+                break;
+            case tws::twStDataNack:
+            case tws::twSrDataNack:
+            case tws::twStLastData:
+            default:
+                mcu_twi()->twcr.template set<twcr_reset>();
+                break;
             }
         }
-            break;
-        case tws::twStSlaAck:
-        case tws::twStDataAck:
-            if (!index) {
-                index = 0;
+        
+        template<::Util::Callable Callable> 
+        static void whenReady(const Callable& f) {
+            if (mcu_twi()->twcr.template isSet<twc::twint>()) {
+                isr();
+                f();
             }
-            if (*index < Size) {
-                *mcu_twi()->twdr = mRegisters[*index];
-                ++index;
-            }
-            else {
-                *mcu_twi()->twdr = std::byte{0};
-            }
-            mcu_twi()->twcr.template set<twcr_ack>();
-            break;
-        case tws::twSrStop:
-            mcu_twi()->twcr.template set<twcr_ack>();
-            break;
-        case tws::twStDataNack:
-        case tws::twSrDataNack:
-        case tws::twStLastData:
-        default:
-            mcu_twi()->twcr.template set<twcr_reset>();
-            break;
         }
-    }
-    static auto& isChanged() {
-        static volatile bool changed = false;
-        return changed;
-    }
-    static auto& registers() {
-        return mRegisters;
-    }
-
-    inline static volatile std::array<std::byte, Size> mRegisters;
-private:
-    inline static volatile uint_NaN<uint8_t> index;
-};
-
+        static auto& isChanged() {
+            return mChanged;
+        }
+        static auto& registers() {
+            return mRegisters;
+        }
+        
+    private:
+        inline static volatile std::array<std::byte, Size> mRegisters;
+        inline static volatile bool mChanged = false;
+        inline static volatile uint_NaN<uint8_t> index;
+    };
+    
 }

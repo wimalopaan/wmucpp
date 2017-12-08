@@ -61,8 +61,6 @@ namespace Hott {
         
         inline static uint8_t mChannelForMultiChannel = 7;
         
-        template<int N, typename PA> friend class AVR::Usart;
-        
     public:
         SumDProtocollAdapter() = delete;
         

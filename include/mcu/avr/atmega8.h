@@ -61,7 +61,6 @@ namespace AVR {
             };
             
             ControlRegister<Timer8BitSimple2, TCCR> tccr;
-            // todo: together in one map struct
             template<int N> struct Address;
             template<int N> struct PrescalerBits;
         };

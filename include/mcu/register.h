@@ -21,8 +21,8 @@
 #include <cstdint>
 #include <cstddef>
 #include <algorithm>
-#include "std/type_traits"
-#include "std/utility"
+#include <type_traits>
+#include <std/utility>
 #include "util/util.h"
 #include "util/static_container.h"
 
@@ -31,6 +31,53 @@ namespace AVR {
     struct ReadWrite {};
     struct ReadOnly{};
     struct UnUsed{};
+
+    template<typename Component, typename BitType, typename Mode = ReadWrite, typename ValueType = std::byte>
+    struct FlagRegister;
+    
+    template<typename Component, typename BitType, typename ValueType>
+    struct FlagRegister<Component, BitType, ReadWrite, ValueType> final {
+        typedef Component component_type;
+        typedef ValueType value_type;    
+        typedef BitType bit_type;
+        
+        FlagRegister() = delete;
+        FlagRegister(const FlagRegister&) = delete;
+        FlagRegister(FlagRegister&&) = delete;
+        FlagRegister& operator=(const FlagRegister&) = delete;
+        FlagRegister& operator=(FlagRegister&&) = delete;
+        
+        template<BitType F>
+        bool inline isSet() {
+            return std::any(hwRegister & static_cast<value_type>(F));
+        }
+        template<BitType F>
+        void inline reset() {
+            hwRegister |= static_cast<value_type>(F);
+        }
+    private:
+        volatile value_type hwRegister;
+    };
+    template<typename Component, typename BitType, typename ValueType>
+    struct FlagRegister<Component, BitType, ReadOnly, ValueType> final {
+        typedef Component component_type;
+        typedef ValueType value_type;    
+        typedef BitType bit_type;
+        
+        FlagRegister() = delete;
+        FlagRegister(const FlagRegister&) = delete;
+        FlagRegister(FlagRegister&&) = delete;
+        FlagRegister& operator=(const FlagRegister&) = delete;
+        FlagRegister& operator=(FlagRegister&&) = delete;
+        
+        template<BitType F>
+        bool inline isSet() {
+            return std::any(hwRegister & static_cast<value_type>(F));
+        }
+    private:
+        volatile value_type hwRegister;
+    };
+    
     
     template<typename Component, typename BitType, typename ValueType = uint8_t>
     struct ControlRegister final {

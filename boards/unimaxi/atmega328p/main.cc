@@ -48,7 +48,7 @@
 // sudo avrdude -p atmega328p -P usb -c avrisp2 -U lfuse:w:0xe2:m -U hfuse:w:0xd9:m -U efuse:w:0xff:m
 
 using spiInput = AVR::Spi<0>;
-using terminalDevive = AVR::Usart<0>;
+using terminalDevive = AVR::Usart<0, void, MCU::UseInterrupts<true>, UseEvents<true>, AVR::ReceiveQueueLength<64>>;
 using terminal = std::basic_ostream<terminalDevive>;
 
 using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
@@ -236,6 +236,12 @@ int main() {
     using handler = EventHandlerGroup<Spi0handler, Timerhandler>;
     
     std::fill(i2c::registers().begin(), i2c::registers().end(), std::byte{' '});
+    
+    // todo: usart ohne Interrupt
+    // todo: spi ohne Interrupt
+    // todo: twi ohne Interrupt
+    
+    
     {
         Scoped<EnableInterrupt<>> interruptEnabler;
         EventManager::run2<handler>([](){

@@ -191,7 +191,7 @@ namespace AVR {
                 ocfa = (1 << OCF0A),
                 tov  = (1 << TOV0)
             };
-            ControlRegister<Timer8Interrupts, Flags> tifr;
+            FlagRegister<Timer8Interrupts, Flags> tifr;
             volatile uint8_t padding[0x6E - 0x35 - 1];
             enum class Mask : uint8_t {
                 ocieb = (1 << OCIE0B),
@@ -209,7 +209,7 @@ namespace AVR {
                 ocfa = (1 << OCF1A),
                 tov  = (1 << TOV1)
             };
-            ControlRegister<Timer16Interrupts, Flags> tifr;
+            FlagRegister<Timer16Interrupts, Flags> tifr;
             volatile uint8_t padding[0x6E - 0x35 - 1];
             enum class Mask : uint8_t {
                 icie  = (1 << ICIE1),
@@ -282,7 +282,7 @@ namespace AVR {
                 if1 = (1 << PCIF1),
                 if0 = (1 << PCIF0)
             };
-            ControlRegister<Interrupt, PCFlags> pcifr;
+            FlagRegister<Interrupt, PCFlags> pcifr;
             volatile uint8_t eifr;
             volatile uint8_t eimsk;
             volatile uint8_t padding[0x68 - 0x3b - 1 - 2];

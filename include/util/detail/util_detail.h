@@ -48,7 +48,7 @@ namespace Util {
             typedef uint16_t dimension_type;
             constexpr inline static dimension_type dimension = Base * Base;
             
-            static constexpr char toChar(uint8_t d) {
+            static constexpr char toChar(uint8_t d) { // todo: only [0,Base-1]
                 static_assert(Base <= 16, "wrong Base");
                 if constexpr(Base > 10) {
                     if (d < 10) {

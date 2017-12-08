@@ -95,15 +95,15 @@ namespace std {
     };
     
     template<typename T>
-    class FiFo<T, 0> final { // needed to prevent warning for zero-sized array
+    class FiFo<T, 0> final { // needed to prevent warn for zero-sized array
     public:
-        bool push_back(volatile const T& item) volatile {
+        bool push_back(volatile const T& ) volatile {
             return false;
         }
-        bool push_back(const T& item) volatile {
+        bool push_back(const T& ) volatile {
             return false;
         }
-        bool pop_front(T& item) volatile {
+        bool pop_front(T& ) volatile {
             return false;
         }
         std::optional<T> pop_front() volatile {

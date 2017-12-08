@@ -26,5 +26,6 @@ targets +=  blink.elf blink.s
 targets +=  ledbuttons.elf ledbuttons.s
 targets +=  ledbuttons_noisr.elf ledbuttons_noisr.s
 targets +=  menu.elf menu.s
+targets +=  empty.elf empty.s
 
 -include ../../Makefile.include

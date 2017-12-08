@@ -18,54 +18,48 @@
 
 #define NDEBUG
 
-#include "../include/anano.h"
-
 #include "mcu/avr8.h"
 #include "mcu/ports.h"
 #include "mcu/avr/usart.h"
-#include "hal/event.h"
 #include "hal/alarmtimer.h"
 #include "units/duration.h"
 #include "console.h"
 
-using namespace AVR;
+using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
+using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
+using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
+using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
 
+// Timer0
 using systemTimer = AVR::Timer8Bit<0>;
-using alarmTimer  = AlarmTimer<systemTimer>;
+using alarmTimer = AlarmTimer<systemTimer, UseEvents<false>>;
 
-const auto secondsTimer = alarmTimer::create(1000_ms, AlarmFlags::Periodic);
+using testPin = AVR::Pin<PortD, 7>;
 
-using terminalDevice = Usart<0, void, MCU::UseInterrupts<false>>;
+const auto periodicTimer = alarmTimer::create(1000_ms, AlarmFlags::Periodic);
+
+static constexpr auto systemFrequency = 100_Hz;
+
+using terminalDevice = AVR::Usart<0, NullProtocollAdapter, MCU::UseInterrupts<false>, UseEvents<false>, AVR::ReceiveQueueLength<64>>;
 using terminal = std::basic_ostream<terminalDevice>;
 
-struct TimerHandler : public EventHandler<EventType::Timer> {
-    static bool process(std::byte b) {
-        auto timer = std::to_integer<uint7_t>(b);
-        if (timer == *secondsTimer) {
-            led::toggle();
-            std::outl<terminal>("Nano"_pgm);
-        }
-        return true;
-    }
-};
-
-using allEventHandler = EventHandlerGroup<TimerHandler>;
 
 int main() {
     terminalDevice::init<9600>();
     alarmTimer::init(AVR::TimerMode::CTCNoInt); 
-
-    led::dir<AVR::Output>();
-    led::on();    
-
-    std::outl<terminal>("Menu"_pgm);
     
-    {
-        Scoped<EnableInterrupt<>> ei;
-        EventManager::run3<allEventHandler>([](){
-            terminalDevice::periodic();
-            systemTimer::periodic<systemTimer::flags_type::ocfa>([](){
-                alarmTimer::rateProcess();
+    testPin::dir<AVR::Output>();
+    testPin::off();
+    
+    std::outl<terminal>("Test05"_pgm);
+    while(true) {
+        terminalDevice::periodic();
+        systemTimer::periodic<systemTimer::flags_type::ocfa>([](){
+            alarmTimer::periodic([](uint7_t timer) {
+                if (timer == *periodicTimer) {
+                    testPin::toggle();
+                    std::outl<terminal>("tick"_pgm);
+                }
             });
         });
     }

@@ -85,7 +85,7 @@ struct LocalConfig {
     static constexpr std::hertz exactFrequency = tsd.f;
 };
 
-using alarmTimer  = AlarmTimer<systemTimer, LocalConfig::reso>;
+using alarmTimer  = AlarmTimer<systemTimer, UseEvents<true>, LocalConfig::reso>;
 
 using dcfDecoder = DCF77<dcfPin, LocalConfig::exactFrequency, EventManager, true>;
 

@@ -1,8 +1,8 @@
 #define NDEBUG
 
-#include <stdint.h>
+#include <cstdint>
+#include <array>
 #include "mcu/avr8.h"
-#include "std/array"
 #include "util/disable.h"
 #include "console.h"
 #include "simavr/simavrdebugconsole.h"

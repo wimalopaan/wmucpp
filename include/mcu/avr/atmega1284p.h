@@ -188,7 +188,7 @@ namespace AVR {
                 ocfa = (1 << OCF1A),
                 tov  = (1 << TOV1)
             };
-            ControlRegister<TimerInterrupts, Flags> tifr;
+            FlagRegister<TimerInterrupts, Flags> tifr;
             volatile uint8_t padding[0x6E - 0x35 - 1];
             enum class Mask : uint8_t {
                 icie  = (1 << ICIE1),
@@ -206,7 +206,7 @@ namespace AVR {
                 ocfa = (1 << OCF0A),
                 tov  = (1 << TOV0)
             };
-            ControlRegister<Timer8Interrupts, Flags> tifr;// fixme: FlagRegister (nur Löschen durch Schreiben einer 1 möglich)
+            FlagRegister<Timer8Interrupts, Flags> tifr;
             volatile uint8_t padding[0x6E - 0x35 - 1];
             enum class Mask : uint8_t {
                 ocieb = (1 << OCIE0B),
@@ -224,7 +224,7 @@ namespace AVR {
                 ocfa = (1 << OCF1A),
                 tov  = (1 << TOV1)
             };
-            ControlRegister<Timer16Interrupts, Flags> tifr;// fixme: FlagRegister (nur Löschen durch Schreiben einer 1 möglich)
+            FlagRegister<Timer16Interrupts, Flags> tifr;
             volatile uint8_t padding[0x6E - 0x35 - 1];
             enum class Mask : uint8_t {
                 icie  = (1 << ICIE1),
@@ -295,13 +295,13 @@ namespace AVR {
             template<typename P> struct Address;
         };
         struct Interrupt {
-            enum class PCFlags : uint8_t { // fixme: FlagRegister (nur Löschen durch Schreiben einer 1 möglich)
+            enum class PCFlags : uint8_t { 
                 if3 = (1 << PCIF3),
                 if2 = (1 << PCIF2),
                 if1 = (1 << PCIF1),
                 if0 = (1 << PCIF0)
             };
-            ControlRegister<Interrupt, PCFlags> pcifr;
+            FlagRegister<Interrupt, PCFlags> pcifr;
             enum class EIFlags : uint8_t {
                 int2 = (1 << INTF2),
                 int1 = (1 << INTF1),

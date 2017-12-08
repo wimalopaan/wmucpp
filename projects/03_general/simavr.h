@@ -47,6 +47,7 @@ struct Config final
         typedef uint8_t SizeType;
         static constexpr SizeType SendQueueLength = 64;
         static constexpr SizeType RecvQueueLength = 0;
+        inline static constexpr bool  useEvents = true;
     };
     struct SoftSpiMaster {
         static constexpr std::microseconds pulseDelay = 1_us;

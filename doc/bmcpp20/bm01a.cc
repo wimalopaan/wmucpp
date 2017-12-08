@@ -18,14 +18,14 @@
 
 #define NDEBUG
 
-#include <stdint.h>
+#include <cstdint>
+#include <array>
 #include "mcu/avr8.h"
 #include "mcu/avr/isr.h"
 #include "mcu/avr/mcutimer.h"
 #include "mcu/ports.h"
-#include "mcu/avr/usart.h"
+//#include "mcu/avr/usart.h"
 #include "hal/constantrate.h"
-#include "std/array"
 #include "std/concepts.h"
 #include "util/disable.h"
 #include "util/fixedpoint.h"

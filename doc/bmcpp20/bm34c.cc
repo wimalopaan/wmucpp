@@ -27,7 +27,7 @@ using namespace std::literals::quantity;
 
 volatile auto y = [](){
     std::array<uint8_t, 10> a;
-//    std::iota(std::begin(a), std::end(a), 1);
+    std::iota(std::begin(a), std::end(a), 1);
     return a;
 }();
 

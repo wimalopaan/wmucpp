@@ -21,9 +21,9 @@
 #include <cstdint>
 #include <cstddef>
 #include <array>
-#include "mcu/avr/delay.h"
 #include <limits>
-#include "std/type_traits"
+#include <type_traits>
+#include "mcu/avr/delay.h"
 #include "std/concepts.h"
 #include "util/bits.h"
 #include "util/concepts.h"
@@ -119,9 +119,10 @@ namespace Util {
     auto itoa(const T& value, C& data) -> decltype(data)& {
         static_assert((Base >= 2) && (Base <= 16), "wrong base");
         static_assert(C::size > Util::numberOfDigits<T, Base>(), "wrong char buffer length");
-        static_assert(std::is_same<typename C::value_type, char>::value, "not an char container");
+        static_assert(std::is_same<typename C::value_type, char>::value, "not a char container");
         return detail::itoa<Base>(value, data);
     }
+    
     namespace V2 {
         template<uint8_t Base = 10, uint8_t offset = 0, std::Unsigned T = uint8_t, uint16_t L = 0>
         void itoa(const T& value, std::array<char, L>& data) {

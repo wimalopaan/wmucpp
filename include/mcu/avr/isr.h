@@ -71,12 +71,13 @@ namespace ISR {
         struct Mask<void> {
             static constexpr auto value = 0;
         };
-        
     }
 }
 
-template<typename... HH>
-//template<MCU::ISR... HH> // todo: ICE triggered?
+// todo: namespace
+
+//template<typename... HH>
+template<MCU::IServiceR... HH> // todo: ICE triggered, nicht mehr mit gcc-8.0
 struct IsrRegistrar {
     typedef uint64_t mask_type;
     typedef IsrRegistrar type;

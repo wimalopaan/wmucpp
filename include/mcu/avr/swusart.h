@@ -147,7 +147,7 @@ public:
             uint16_t ocra = *timer()->ocra;
             *timer()->ocrb = (*timer()->icr + ocra / 2) % ocra;
     
-            mcuInterrupts()->tifr.template add<int_type::Flags::ocfb>();
+            mcuInterrupts()->tifr.template reset<int_type::Flags::ocfb>();
             mcuInterrupts()->timsk.template clear<int_type::Mask::icie>();
             mcuInterrupts()->timsk.template add<int_type::Mask::ocieb>();
             inframe = 0;
@@ -166,7 +166,7 @@ public:
                 EventManager::enqueueISR({SWUsartEventMapper<N>::event, std::byte{c}});
                 mcuInterrupts()->timsk.template clear<int_type::Mask::ocieb>();
                 mcuInterrupts()->timsk.template add<int_type::Mask::icie>();
-                mcuInterrupts()->tifr.template add<int_type::Flags::icf>();
+                mcuInterrupts()->tifr.template reset<int_type::Flags::icf>();
                 inframe = 0;
                 inbits = 0;
             }
@@ -189,7 +189,7 @@ public:
         timer()->tccrb.template clear<mcu_timer_type::TCCRB::ices>();
 
         mcuInterrupts()->timsk.template add<int_type::Mask::icie>();
-        mcuInterrupts()->tifr.template add<int_type::Flags::icf | int_type::Flags::ocfb | int_type::Flags::ocfa>();
+        mcuInterrupts()->tifr.template reset<int_type::Flags::icf | int_type::Flags::ocfb | int_type::Flags::ocfa>();
 
         SWUsartRxTx<N>::tx::template dir<AVR::Output>();
         SWUsartRxTx<N>::tx::on();
@@ -251,7 +251,7 @@ public:
         timer()->tccra.template add<mcu_timer_type::TCCRA::wgm1>();
 
         if constexpr(N == 0) {
-            mcuInterrupts()->tifr.template add<int_type::Flags::ocf0a>();
+            mcuInterrupts()->tifr.template reset<int_type::Flags::ocf0a>();
         }
         else {
             mcuInterrupts()->tifr.template add<int_type::Flags::ocf1a>();

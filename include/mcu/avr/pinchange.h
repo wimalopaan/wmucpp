@@ -114,7 +114,7 @@ public:
         PSet::template dir<Input>();
         PSet::allPullup();
         *pcInterrupt()->pcmsk = PSet::setMask;
-        interrupts()->pcifr.template add<pcGroupFlag>();
+        interrupts()->pcifr.template reset<pcGroupFlag>();
         interrupts()->pcicr.template add<pcGroupMask>();
 //        interrupts()->pcifr |= _BV(pcGroupNumber);
 //        interrupts()->pcicr |= _BV(pcGroupNumber);
@@ -194,7 +194,7 @@ public:
         PinSet::template dir<Input>();
         PinSet::allPullup();
         *pc()->pcmsk = PinSet::setMask;
-        interrupts()->gifr.template add<AVR::ATTiny85::Interrupt::GIFlags::pcif>();
+        interrupts()->gifr.template reset<AVR::ATTiny85::Interrupt::GIFlags::pcif>();
         interrupts()->gimsk.template add<AVR::ATTiny85::Interrupt::GIMask::pcie>();
     }
 };

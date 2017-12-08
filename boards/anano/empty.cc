@@ -1,6 +1,6 @@
 /*
- * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * ++C - C++ introduction
+ * Copyright (C) 2013, 2014, 2015, 2016, 2017 Wilhelm Meier <wilhelm.meier@hs-kl.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,31 +16,5 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define NDEBUG
-
-#include <stdint.h>
-
-#include <limits>
-#include <array>
-#include <type_traits>
-#include <algorithm>
-#include "std/concepts.h"
-#include "util/util.h"
-
 int main() {
-    uint8_t x = 42;
-    constexpr uint8_t base = 10;
-    std::array<char, Util::numberOfDigits<decltype(x), base>() + 1> data; // StringBuffer
-    
-    Util::itoa<base>(x, data);
-    
-    for(auto c: data) {
-        if (c == '\0') {
-            break;
-        }
-        GPIOR0 = c;
-    }
-    GPIOR0 = '\r';
-    while(true) {}
 }
-

@@ -100,11 +100,11 @@ namespace AVR {
         }
     }
     
-    template<flags_type Compare, typename Callable>
+    template<flags_type Compare, ::Util::Callable Callable>
     static void periodic(const Callable& f) {
         if (mcuInterrupts()->tifr.template isSet<Compare>()) {
             f();
-            mcuInterrupts()->tifr.template add<Compare>(); // reset
+            mcuInterrupts()->tifr.template reset<Compare>(); // reset
         } 
     }
     
@@ -166,6 +166,24 @@ public:
     
     static inline volatile const uint8_t& counter() {
         return *mcuTimer()->tcnt;
+    }
+
+    template<flags_type Compare, ::Util::Callable Callable>
+    static void periodic(const Callable& f) {
+        if (mcuInterrupts()->tifr.template isSet<Compare>()) {
+            f();
+            mcuInterrupts()->tifr.template reset<Compare>(); 
+        } 
+    }
+
+    template<const std::hertz& F>
+    static void setup(TimerMode timerMode) {
+        constexpr auto t = AVR::Util::calculate<Timer8Bit>(F);
+        static_assert(t, "falscher wert für p");
+        
+        prescale<t.prescaler>();
+        ocra<t.ocr - 1>();
+        mode(timerMode);
     }
     
     static void mode(TimerMode timerMode) {
@@ -351,11 +369,11 @@ struct Timer16Bit<N, MCU>: public TimerBase<MCU, N>
     static void start(){
     }
     
-    template<flags_type Compare, typename Callable>
+    template<flags_type Compare, ::Util::Callable Callable>
     static void periodic(const Callable& f) {
         if (mcuInterrupts()->tifr.template isSet<Compare>()) {
             f();
-            mcuInterrupts()->tifr.template add<Compare>(); // reset
+            mcuInterrupts()->tifr.template reset<Compare>();
         } 
     }
 

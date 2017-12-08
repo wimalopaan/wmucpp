@@ -19,8 +19,8 @@
 #pragma once
 
 #include <cstddef>
+#include <type_traits>
 #include "mcu/mcu.h"
-#include "std/type_traits"
 
 namespace MCU {
     template<typename T>
@@ -85,18 +85,15 @@ namespace MCU {
     }
     
     template<typename I>
-    concept bool IServiceR() { 
-        return std::is_same<I, void>::value || requires (I i) {
-            I::isr();
-            I::isr_number;
-        };
-    }
-    template<typename I>
     concept bool IServiceRNonVoid() { 
         return requires (I i) {
             I::isr();
             I::isr_number;
         };
+    }
+    template<typename I>
+    concept bool IServiceR() { 
+        return std::is_same<I, void>::value || IServiceRNonVoid<I>();
     }
 
 //    template<typename U>

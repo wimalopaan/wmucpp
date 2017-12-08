@@ -28,6 +28,11 @@ targets += main.elf
 targets += owtest01.elf
 targets += esptest.elf esptest.s
 targets += itoatest.elf itoatest.s
+targets += test01.elf test01.s
+targets += test02.elf test02.s
+targets += test03.elf test03.s
+targets += test04.elf test04.s
+targets += test05.elf test05.s
 
 owtest01.elf: owtest01.o ow.o
 	$(CC) $(LDFLAGS) -o $@ owtest01.o ow.o

@@ -18,9 +18,9 @@
 
 #pragma once
 
+#include <limits>
 #include "config.h"
 #include "avr8defs.h"
-#include "std/limits"
 #include "units/physical.h"
 #include "util/algorithm.h"
 

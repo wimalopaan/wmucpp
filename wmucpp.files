@@ -1,3 +1,4 @@
+boards/anano/empty.cc
 boards/anano/menu.cc
 boards/i2cIR/Makefile
 boards/i2cIR/main.cc
@@ -27,6 +28,19 @@ boards/rcsensorled03/test01.cc
 boards/rcsensorled03/test02.cc
 boards/rcsensorled03/test03.cc
 boards/rcsensorled03/test10.cc
+boards/unimaxi/atmega1284p/readme.txt
+boards/unimaxi/atmega1284p/test01.cc
+boards/unimaxi/atmega1284p/test02.cc
+boards/unimaxi/atmega1284p/test03.cc
+boards/unimaxi/atmega1284p/test04.cc
+boards/unimaxi/atmega1284p/test05.cc
+boards/unimaxi/atmega328p/readme.txt
+boards/unimaxi/atmega328p/test01.cc
+boards/unimaxi/atmega328p/test02.cc
+boards/unimaxi/atmega328p/test03.cc
+boards/unimaxi/atmega328p/test04.cc
+boards/unimaxi/atmega328p/test05.cc
+doc/bmcpp98/bm100a.c
 doc/bmcpp98/bm70b.cc
 doc/bmcpp98/bm73a.cc
 doc/bmcpp98/bm74a.cc
@@ -51,6 +65,7 @@ host/test21.cc
 host/test22.cc
 host/test23.cc
 host/test24.cc
+host/test90.cc
 include/appl/command.h
 include/container/tree.h
 include/external/hott/menu.h
@@ -147,7 +162,6 @@ boards/unimaxi/atmega1284p/owtest01.cc
 boards/unimaxi/atmega328p/Makefile
 boards/unimaxi/atmega328p/main.cc
 boards/unimaxi/atmega328p/main.h
-boards/unimaxi/atmega328p/test.cc
 boards/unimaxi/attiny84/Makefile
 boards/unimaxi/attiny84/main.cc
 boards/unimaxi/attiny85_1/Makefile

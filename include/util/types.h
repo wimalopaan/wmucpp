@@ -454,6 +454,11 @@ struct BitRange {
 using UpperNibble = BitRange<std::byte, 7, 4> ;
 using LowerNibble = BitRange<std::byte, 3, 0> ;
 
+template<bool V>
+struct NamedFlag : std::integral_constant<bool, V> {};
+
+template<auto c>
+struct NamedConstant : std::integral_constant<decltype(c), c> {};
 
 namespace std {
     

@@ -18,12 +18,13 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
+#include <cstddef>
 
-//class NullProtocollAdapter final {
-//public:
-//    NullProtocollAdapter() = delete;
-//    static constexpr bool process(uint8_t) {
-//        return false;
-//    }
-//};
+class NullProtocollAdapter final {
+public:
+    NullProtocollAdapter() = delete;
+    static constexpr bool process(std::byte) {
+        return false;
+    }
+};

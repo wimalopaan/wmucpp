@@ -15,7 +15,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 /*
  * WMuCpp - Bare Metal C++ 
  * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
@@ -34,62 +33,49 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// 16 MHZ intern PLL Oszi
-// sudo avrdude -p attiny85 -P usb -c avrisp2 -U lfuse:w:0xd1:m -U hfuse:w:0xdf:m -U efuse:w:0xff:m
-// avrdude -p m328p -c arduino -b 57600 -P /dev/ttyUSB0 -U flash:w:blink.elf
-
-//#define NDEBUG
-
-// todo: no interrupt mode for timer
+#define NDEBUG
 
 #include <stdlib.h>
 
+#include "main.h"
 #include "mcu/avr8.h"
+#include "mcu/avr/mcutimer.h"
 #include "mcu/ports.h"
-#include "hal/event.h"
-#include "hal/alarmtimer.h"
-#include "hal/constantrate.h"
 
-//#include "console.h"
+// 16 MHz full swing
+// sudo avrdude -p atmega328p -P usb -c avrisp2 -U lfuse:w:0xf7:m -U hfuse:w:0xd9:m -U efuse:w:0xff:m
 
-using systemTimer = AVR::Timer8Bit<0>;
-using alarmTimer  = AlarmTimer<systemTimer>;
+// 8Mhz int
+// sudo avrdude -p atmega328p -P usb -c avrisp2 -U lfuse:w:0xe2:m -U hfuse:w:0xd9:m -U efuse:w:0xff:m
 
-const auto secondsTimer = alarmTimer::create(1000_ms, AlarmFlags::Periodic);
+using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
+using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
 
-//using terminalDevice = AVR::Usart<0>;
-//using terminal = std::basic_ostream<terminalDevice>;
+using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
+using lcdPwmPin = AVR::Pin<PortB, 1>;
 
-using systemConstantRate = ConstantRateAdapter<1, void, AVR::ISR::Timer<0>::CompareA, alarmTimer>;
+using systemClock = AVR::Timer8Bit<0>;
 
-using isrRegistrar = IsrRegistrar<systemConstantRate>;
-
-struct TimerHandler : public EventHandler<EventType::Timer> {
-    static bool process(std::byte b) {
-        auto timer = std::to_integer<uint7_t>(b);
-        if (timer == *secondsTimer) {
-//            std::outl<terminal>("Nano"_pgm);
-        }
-        return true;
-    }
-};
-
-using allEventHandler = EventHandlerGroup<TimerHandler>;
+static constexpr auto systemFrequency = 100_Hz;
 
 int main() {
-    isrRegistrar::init();
-//    terminalDevice::init<9600>();
-    alarmTimer::init();    
-
+    systemClock::setup<systemFrequency>(AVR::TimerMode::CTCNoInt);
+    
+    lcdPwmPin::dir<AVR::Output>();
+    lcdPwmPin::off();
+    
     {
-        Scoped<EnableInterrupt<>> ei;
-        EventManager::run3<allEventHandler>([](){
-            systemConstantRate::periodic();
-        });
+        while(true) {
+            systemClock::periodic<systemClock::flags_type::ocfa>([](){
+                lcdPwmPin::toggle();
+            });
+        }
     }
 }
 
-ISR(TIMER0_COMPA_vect) {
-    isrRegistrar::isr<AVR::ISR::Timer<0>::CompareA>();
+#ifndef NDEBUG
+void assertFunction(const PgmStringView&, const PgmStringView& , unsigned int ) noexcept {
+//    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
+    while(true) {}
 }
-
+#endif

@@ -154,7 +154,7 @@ namespace std {
             return FastDownScaler<U, U(min), U(max)>::scale(value);    
         }
         else {
-            return std::percent{(uint8_t)((value - U(min)) * (100 / (max -min)))};   
+            return std::percent{(uint8_t)((value - U(min)) * (100 / (max - min)))};   
         }
     }
     // todo: don't use this one

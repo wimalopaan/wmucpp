@@ -89,7 +89,7 @@ std::percent lookupScale(T value) {
 }
 
 int main() {
-    y = 42;
+//    y = 42;
 
     {
         z = lookupScale(y, uint8_t(0), uint8_t(255));
