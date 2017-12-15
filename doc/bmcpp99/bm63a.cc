@@ -102,5 +102,4 @@ using b = controller::get<BF>::type;
 int main() {
     a::f();
     b::f();
-    
 }

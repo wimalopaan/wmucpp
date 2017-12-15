@@ -1,5 +1,5 @@
 /*
- * WMuCpp - Bare Metal C++ 
+ * WMuCpp - Bare Metal C++
  * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,90 +18,143 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include <avr/eeprom.h>
 
-template<typename DataType, uint16_t Offset = 0>
-class EEProm;
+namespace EEProm {
 
-template<typename T>
-class EEPromBase {
-    EEPromBase() = default;
-    EEPromBase(const EEPromBase&) = delete;
-    EEPromBase& operator=(const EEPromBase&) = delete;
-    
-    // fixme: Flags in GPIOR
-    
-    struct Flags {
-        uint8_t changed : 1, saving : 1, timeoutExpired : 1;
-    } __attribute__((packed));
-    
-//    friend class EEProm<T>;
-    static void resetTimeout() {
-        mFlags.timeoutExpired = false;
-    }
-    inline static bool timeout() {
-        return mFlags.timeoutExpired;
-    }
-    inline static void saveStart() {
-        mFlags.saving  = true;
-        mFlags.changed = false;
-    }
-    inline static void saveEnd() {
-        mFlags.saving = false;
-    }
-    inline static bool changed() {
-        return mFlags.changed || mFlags.saving;
-    }
-public:
-    static void expire() {
-        mFlags.timeoutExpired = true;
-    }
-    inline static void change() {
-        mFlags.changed = true;
-    }
-private:
-    inline static Flags mFlags = {false, false, false};
-};
+    template<typename DataType, uint16_t Offset = 0>
+    class Controller;
 
-template<typename DataType, uint16_t Offset>
-class EEProm final {
-    EEProm() = delete;
-public:
-    static void init() {
-        eeprom_read_block(reinterpret_cast<uint8_t*>(&mData), reinterpret_cast<void*>(Offset), sizeof(DataType));
-    }
-    static DataType& data() {
-        return mData;
-    }
-    static bool saveIfNeeded() {
-        if (mData.timeout() && mData.changed()) {
-            mData.saveStart();
-            if (eeprom_is_ready()) {
-                eeprom_update_byte(ePtr(mOffset), rawData(mOffset));
-                mOffset = ((mOffset + 1) % (sizeof(DataType)));
-                if (mOffset == 0) {
-                    mData.saveEnd();
-                    mData.resetTimeout();
-                    return false; // ready
+    template<typename T, bool Enable>
+    struct Base;
+    template<typename T>
+    struct Base<T, false> {
+        inline static constexpr uint8_t fChanged = 0;
+        inline static constexpr uint8_t fSaving  = 1;
+        inline static constexpr uint8_t fTimeoutExpired  = 2;
+    };
+    template<typename T>
+    struct Base<T, true> {
+        struct Flags {
+            uint8_t changed : 1, saving : 1, timeoutExpired : 1;
+        } __attribute__((packed));
+        inline static Flags mFlags = {false, false, false};
+    };
+
+    template<typename T, typename FlagRegister = void>
+    class DataBase : public Base<DataBase<T, FlagRegister>, std::is_same<FlagRegister, void>::value> {
+        DataBase() = default;
+        DataBase(const DataBase&) = delete;
+        DataBase& operator=(const DataBase&) = delete;
+
+        typedef Base<DataBase<T, FlagRegister>, std::is_same<FlagRegister, void>::value> base_type;
+
+        inline static constexpr bool useBase = std::is_same<FlagRegister, void>::value;
+
+        static void resetTimeout() {
+            if constexpr(useBase) {
+                base_type::mFlags.timeoutExpired = false;
+            }
+            else {
+                FlagRegister::template reset<base_type::fTimeoutExpired>();
+            }
+        }
+        inline static bool timeout() {
+            if constexpr(useBase) {
+                return base_type::mFlags.timeoutExpired;
+            }
+            else {
+                return FlagRegister::template isSet<base_type::fTimeoutExpired>();
+            }
+        }
+        inline static void saveStart() {
+            if constexpr(useBase) {
+                base_type::mFlags.saving  = true;
+                base_type::mFlags.changed = false;
+            }
+            else {
+                FlagRegister::template set<base_type::fSaving>();
+                FlagRegister::template reset<base_type::fChanged>();
+            }
+        }
+        inline static void saveEnd() {
+            if constexpr(useBase) {
+                base_type::mFlags.saving = false;
+            }
+            else {
+                FlagRegister::template reset<base_type::fSaving>();
+            }
+        }
+        inline static bool changed() {
+            if constexpr(useBase) {
+                return base_type::mFlags.changed || base_type::mFlags.saving;
+            }
+            else {
+                return FlagRegister::template isSet<base_type::fChanged>() || FlagRegister::template isSet<base_type::fSaving>();
+            }
+        }
+    public:
+        static void expire() {
+            if constexpr(useBase) {
+                base_type::mFlags.timeoutExpired = true;
+            }
+            else {
+                FlagRegister::template set<base_type::fTimeoutExpired>();
+            }
+        }
+        inline static void change() {
+            if constexpr(useBase) {
+                base_type::mFlags.changed = true;
+            }
+            else {
+                FlagRegister::template set<base_type::fChanged>();
+            }
+        }
+    private:
+//        inline static Flags mFlags = {false, false, false};
+    };
+
+    template<typename DataType, uint16_t Offset>
+    class Controller final {
+        Controller() = delete;
+    public:
+        static void init() {
+            eeprom_read_block(reinterpret_cast<uint8_t*>(&mData), reinterpret_cast<void*>(Offset), sizeof(DataType));
+        }
+        static DataType& data() {
+            return mData;
+        }
+        static bool saveIfNeeded() {
+            if (mData.timeout() && mData.changed()) {
+                mData.saveStart();
+                if (eeprom_is_ready()) {
+                    eeprom_update_byte(ePtr(mOffset), rawData(mOffset));
+                    mOffset = ((mOffset + 1) % (sizeof(DataType)));
+                    if (mOffset == 0) {
+                        mData.saveEnd();
+                        mData.resetTimeout();
+                        return false; // ready
+                    }
+                    else {
+                        return true; // need to call once more
+                    }
                 }
                 else {
                     return true; // need to call once more
                 }
             }
-            else {
-                return true; // need to call once more
-            }
+            return false;
         }
-        return false;
-    }
-private:
-    inline static uint8_t* ePtr(uintptr_t offset) {
-        return reinterpret_cast<uint8_t*>(offset + Offset);
-    }
-    inline static uint8_t rawData(uintptr_t offset) {
-        return *(reinterpret_cast<uint8_t*>(&mData) + offset);
-    }
-    inline static uintptr_t mOffset = 0;
-    inline static DataType mData{};
-};  
+    private:
+        inline static uint8_t* ePtr(uintptr_t offset) {
+            return reinterpret_cast<uint8_t*>(offset + Offset);
+        }
+        inline static uint8_t rawData(uintptr_t offset) {
+            return *(reinterpret_cast<uint8_t*>(&mData) + offset);
+        }
+        inline static uintptr_t mOffset = 0;
+        inline static DataType mData{};
+    };
+
+}

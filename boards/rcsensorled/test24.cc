@@ -30,7 +30,7 @@
 namespace Storage {
     enum class AVKey : uint8_t {TSensor1 = 0, TSensor2, RpmSensor1, RpmSensor2, Spannung1, Spannung2, Strom, PWM, Leds1, Leds2, _Number};
     
-    class ApplData : public EEPromBase<ApplData> {
+    class ApplData : public EEProm::DataBase<ApplData> {
     public:
         uint_NaN<uint8_t>& operator[](AVKey key) {
             return AValues[static_cast<uint8_t>(key)];
@@ -41,7 +41,7 @@ namespace Storage {
     std::array<OneWire::ow_rom_t, 4> dsIds;
 }
 
-using eeprom = EEProm<Storage::ApplData>;
+using eeprom = EEProm::Controller<Storage::ApplData>;
 auto& appData = eeprom::data();
 
 namespace {

@@ -73,6 +73,6 @@ public:
     }
 
 private:
-    // fixme: in GPIOR
+    // fixme: in GPIOR -> Jeder State ein Bit im FlagRegister
     inline static State state = State::Undefined;
 };

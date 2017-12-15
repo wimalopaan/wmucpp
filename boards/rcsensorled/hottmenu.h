@@ -22,7 +22,7 @@
 #include "container/pgmstring.h"
 #include "hal/eeprom.h"
 
-struct ApplData : public EEPromBase<ApplData> {
+struct ApplData : public EEProm::DataBase<ApplData> {
    
     enum class AVKey : uint8_t {TSensor1 = 0, TSensor2, RpmSensor1, RpmSensor2, Spannung1, Spannung2, Strom, PWM, Leds1, Leds2, _Number};
     std::array<uint8_t, static_cast<uint8_t>(AVKey::_Number)> AValues;
@@ -30,7 +30,7 @@ struct ApplData : public EEPromBase<ApplData> {
     std::array<OneWire::ow_rom_t, 4> dsIds;
 };
 
-using eeprom = EEProm<ApplData>;
+using eeprom = EEProm::Controller<ApplData>;
 auto& appData = eeprom::data();
 
 namespace Hott {

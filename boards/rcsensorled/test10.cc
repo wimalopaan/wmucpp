@@ -50,7 +50,7 @@ struct Distributor {
     }
 };
 
-class EEPromData : public EEPromBase<EEPromData>{
+class EEPromData : public EEProm::DataBase<EEPromData>{
 public:
     StringBuffer<10>& text() {
         return mText;
@@ -59,7 +59,7 @@ private:
     StringBuffer<10> mText;
 };
 
-using eeprom = EEProm<EEPromData>;
+using eeprom = EEProm::Controller<EEPromData>;
 
 using distributor = Distributor<terminalDevice, eeprom>;
 
