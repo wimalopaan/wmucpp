@@ -40,6 +40,7 @@ boards/unimaxi/atmega328p/test02.cc
 boards/unimaxi/atmega328p/test03.cc
 boards/unimaxi/atmega328p/test04.cc
 boards/unimaxi/atmega328p/test05.cc
+boards/unimaxi/atmega328p/test06.cc
 doc/bmcpp98/bm100a.c
 doc/bmcpp98/bm70b.cc
 doc/bmcpp98/bm73a.cc
@@ -55,6 +56,12 @@ doc/bmcpp98/bm93a.cc
 doc/bmcpp98/bm94a.cc
 doc/bmcpp98/bm95a.cc
 doc/bmcpp98/bm96a.cc
+doc/bmcpp99/bm60a.cc
+doc/bmcpp99/bm61a.cc
+doc/bmcpp99/bm62a.cc
+doc/bmcpp99/bm63a.cc
+example/features/isr01.cc
+example/features/isr02.cc
 example/features/menu.cc
 example/features/menu_s.cc
 example/features/old/ledbuttons.cc
@@ -72,6 +79,8 @@ include/external/hott/menu.h
 include/external/hott/old/menu.h
 include/external/hott/old/menu2.h
 include/external/vnh2sp30.h
+include/hal/flag.h
+include/hal/ressource.h
 include/std/algorithm
 include/std/array
 include/std/cassert

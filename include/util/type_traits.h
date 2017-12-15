@@ -16,12 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
 #include <type_traits>
 
 template<template<typename...> typename A, template<typename...> typename B>
 struct is_same_template : std::false_type {};
 template<template<typename...> typename T>
-struct is_same_template<T, T> : std::false_type {};
+struct is_same_template<T, T> : std::true_type {};
 
 
 

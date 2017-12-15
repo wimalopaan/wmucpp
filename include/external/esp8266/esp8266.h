@@ -110,8 +110,8 @@ private:
     template<typename String>
     static void putLine(const String& string) {
         Util::put<usart>(string);
-        Util::put<usart>('\r');
-        Util::put<usart>('\n');
+        Util::put<usart>(std::byte{'\r'});
+        Util::put<usart>(std::byte{'\n'});
     }
     static inline auto ATOk      = "AT"_pgm;
     static inline auto ATReset   = "AT+RST"_pgm;

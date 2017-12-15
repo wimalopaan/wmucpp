@@ -29,10 +29,10 @@
 template<typename PinChange, typename MCUTimer>
 class PpmDecoder final : public IsrBaseHandler<AVR::ISR::PcInt<PinChange::pcInterruptNumber>>{
     template<typename... II> friend class IsrRegistrar;
-    friend void ::PCINT0_vect();
-    friend void ::PCINT1_vect();
-    friend void ::PCINT2_vect();
-    friend void ::PCINT3_vect();
+//    friend void ::PCINT0_vect();
+//    friend void ::PCINT1_vect();
+//    friend void ::PCINT2_vect();
+//    friend void ::PCINT3_vect();
 public:
     PpmDecoder() = delete;
 

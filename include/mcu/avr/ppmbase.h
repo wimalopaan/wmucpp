@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 template<typename Timer>
 class PPMParameter {
     PPMParameter() = delete;

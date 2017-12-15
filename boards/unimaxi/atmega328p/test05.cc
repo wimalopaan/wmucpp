@@ -59,7 +59,7 @@ int main() {
         while(true) {
             if (i2c::isChanged()) {
                 lcdPwmPin::toggle();
-                i2c::isChanged() = false; 
+                i2c::changed(false); 
             }
         }
     }

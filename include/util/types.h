@@ -293,7 +293,7 @@ private:
 
 template<std::Unsigned T>
 class uint_NaN final {
-    static constexpr T NaN = std::numeric_limits<uint8_t>::max();
+    static constexpr T NaN = std::numeric_limits<T>::max();
 public:
     explicit constexpr uint_NaN(T v) : mValue(v) {
         assert(mValue != NaN);

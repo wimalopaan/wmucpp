@@ -16,14 +16,14 @@ test03:
 	- PD7 toggle (SWUsart-TX)
 
 test04:
-	- mit Interrupt
+	- ohne Interrupt
+	- mit Eventsystem
 	- Usart Test
 
 test05:
 	- ohne Interrupt
+	- ohne Eventsystem
 	- Usart Test
-
-
 
 
 

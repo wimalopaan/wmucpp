@@ -100,17 +100,13 @@ namespace AVR {
     class Spi final : public SpiBase<Spi<N, MCU>>, public IsrBaseHandler<typename AVR::ISR::Spi<N>::Stc> {
         static_assert(N < MCU::Spi::count, "wrong spi number");
         
-        friend void ::SPI_STC_vect();
-        
         using spiPort = SpiPort<N, MCU>;
         Spi() = delete;
         
     public:
         typedef MCU mcu_type;
-        
         typedef typename MCU::Spi::SR flags_type;
-        
-        
+
         static constexpr const uint8_t number = N;
         
         template<typename Mode>
@@ -126,7 +122,7 @@ namespace AVR {
             return getBaseAddr<typename MCU::Spi, N>()->spsr.template isSet<MCU::Spi::SR::spif>();
         }
         
-        template<flags_type Compare, ::Util::Callable<std::byte> Callable> 
+        template<::Util::Callable<std::byte> Callable> 
         static void whenReady(const Callable& f){
             if (isReady()) {
                 f(*getBaseAddr<typename MCU::Spi, N>()->spdr);
@@ -153,6 +149,7 @@ namespace AVR {
             overrun |= !EventManager::enqueueISR({SpiEvent<N>::event, c});
         }
     private:
+        // todo: in GPIOR
         inline static bool overrun = false;
     };
     

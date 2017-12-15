@@ -40,16 +40,16 @@ public:
     static constexpr uint8_t size = Leds::size;
     typedef Leds led_type;
     
-    static volatile uint8_t& cell(uint8_t index) {
-        needUpdate = true;
-        if (index == 0) {
-            return mColor.r;
-        }
-        else if (index == 1) {
-            return mColor.g;
-        }
-        return mColor.b;
-    }
+//    static volatile uint8_t& cell(uint8_t index) {
+//        needUpdate = true;
+//        if (index == 0) {
+//            return mColor.r;
+//        }
+//        else if (index == 1) {
+//            return mColor.g;
+//        }
+//        return mColor.b;
+//    }
     static void process() {
         if (needUpdate) {
             Color c = mColor;

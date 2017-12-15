@@ -201,7 +201,7 @@ namespace AVR {
             }
         }
         static bool get(std::byte& item) {
-            if constexpr (RecvQLength::value > 0) {
+            if constexpr(RecvQLength::value > 0) {
                 return mRecvQueue.pop_front(item);
             }
             else {
@@ -209,7 +209,7 @@ namespace AVR {
             }
         }
         static std::optional<std::byte> get() {
-            if constexpr (RecvQLength::value > 0) {
+            if constexpr(RecvQLength::value > 0) {
                 return mRecvQueue.pop_front();
             }
             else {
@@ -246,14 +246,11 @@ namespace AVR {
             }
         }
     private:        
-        inline static volatile std::FiFo<std::byte, Config::Usart::SendQueueLength> mSendQueue;
-        inline static volatile std::FiFo<std::byte, Config::Usart::RecvQueueLength> mRecvQueue;
+        inline static volatile std::FiFo<std::byte, SendQLength::value> mSendQueue;
+        inline static volatile std::FiFo<std::byte, RecvQLength::value> mRecvQueue;
 
         static constexpr uint16_t ubrrValue(uint32_t fcpu, uint32_t baud) {
             return (fcpu / (16 * baud)) - 1;
         }
-        
-        
     };
-    
 }

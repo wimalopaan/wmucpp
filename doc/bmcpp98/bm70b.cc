@@ -18,6 +18,7 @@
 
 #include <cstddef>
 #include <type_traits>
+#include <array>
 
 constexpr auto transform1(const auto& v) {
     return std::integral_constant<int, v>{}; // v ist not constexpr in this context
@@ -34,13 +35,41 @@ constexpr auto transform2(const Callable<size_t>& callable) {
     return std::integral_constant<decltype(v), v>{};
 }
 
+template<typename T>
+constexpr auto transform3(T v) {
+    return std::integral_constant<typename T::value_type, v[0] + v[v.size - 1]>{};
+}
+
+constexpr auto transform4(const auto& callable) {
+    constexpr auto v = callable();
+    typedef decltype(v) T;
+    return std::integral_constant<typename T::value_type, v[0] + v[v.size - 1]>{};
+}
+
+
+constexpr auto calculateSomeMagic(auto v) {
+    std::array<uint8_t, 10> array;
+    for(auto& e : array) {
+        e = v;
+    }
+    return array;
+}
+
+namespace  {
+    constexpr auto a = calculateSomeMagic(42);
+    
+//    auto b = transform3(a); // NOK
+    auto b = transform4([&]{return a;});
+}
+
+
 int main() {
     constexpr int value = 42;
 
-    //    constexpr auto result1 = transform1(value);  // not possible
+//        constexpr auto result1 = transform1(value);  // not possible
     
     [[maybe_unused]] constexpr auto result2 = transform2([&]{return value;}); // constant lambda argument wrapper
-    
+
 //    transform2(value); // constraint not satisfied
 //    transform2([&]{return std::byte{0};}); // constraint not satisfied
 }

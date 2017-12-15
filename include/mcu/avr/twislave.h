@@ -26,10 +26,25 @@
 #include "util/types.h"
 
 namespace TWI {
-    // todo: struct UseInterrupt / NoInterrupt
-    template<uint8_t N, const TWI::Address& Address, uint16_t Size, typename useInt = MCU::UseInterrupts<true>, typename MCU = DefaultMcuType>
-    class Slave final : public IsrBaseHandler<AVR::ISR::Twi<0>> {
+    template<typename T, bool Enable>
+    struct Base;
+    template<typename T>
+    struct Base<T, false> {};
+    template<typename T>
+    struct Base<T, true> {
+        inline static volatile bool mChanged = false;
+    };
+    
+    template<uint8_t N, const TWI::Address& Address, uint16_t Size, typename useInt = MCU::UseInterrupts<true>, 
+             typename FlagRegister = void,
+             typename MCU = DefaultMcuType>
+    class Slave final : public IsrBaseHandler<AVR::ISR::Twi<0>>, 
+            public Base<Slave<N, Address, Size, useInt, FlagRegister, MCU>, std::is_same<FlagRegister, void>::value> {
         Slave() = delete;
+        
+        inline static constexpr bool useBase = std::is_same<FlagRegister, void>::value;
+        
+        typedef Base<Slave<N, Address, Size, useInt, FlagRegister, MCU>, std::is_same<FlagRegister, void>::value> baseType;
         
     public:
         typedef MCU                         mcu_type;     
@@ -100,7 +115,12 @@ namespace TWI {
                 else {
                     if (*index < Size) {
                         mRegisters[*index] = data;
-                        mChanged = true;
+                        if constexpr(useBase) {
+                            baseType::mChanged = true;
+                        }
+                        else {
+                            FlagRegister::set();
+                        }
                         ++index;
                     }
                     mcu_twi()->twcr.template set<twcr_ack>();
@@ -140,16 +160,35 @@ namespace TWI {
                 f();
             }
         }
-        static auto& isChanged() {
-            return mChanged;
+        static bool isChanged() {
+            if constexpr(useBase) {
+                return baseType::mChanged;
+            }   
+            else {
+                return FlagRegister::isSet();
+            }
         }
+        static void changed(bool v) {
+            if constexpr(useBase) {
+                baseType::mChanged = v;
+            }   
+            else {
+                if (v) {
+                    FlagRegister::set();
+                }
+                else {
+                    FlagRegister::reset();
+                }
+            }
+        }
+        
         static auto& registers() {
             return mRegisters;
         }
         
     private:
         inline static volatile std::array<std::byte, Size> mRegisters;
-        inline static volatile bool mChanged = false;
+//        inline static volatile bool mChanged = false;
         inline static volatile uint_NaN<uint8_t> index;
     };
     

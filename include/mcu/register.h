@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <type_traits>
 #include <std/utility>
+#include "avr8.h"
 #include "util/util.h"
 #include "util/static_container.h"
 
@@ -190,21 +191,20 @@ namespace AVR {
     class RegisterFlags {
         static inline constexpr uint8_t reg_number = N;
         typedef Register reg_type;
+        typedef FieldType type;
         
         inline static constexpr auto reg = AVR::getBaseAddr<Register, N>; // Funktionszeiger
         static_assert(AVR::isSBICBICapable<Register, N>());
         
-        typedef FieldType type;
+        static_assert(sizeof(FieldType) == 1, "can only use byte-types");
         
         inline static volatile FieldType* bitField() {
             return reinterpret_cast<volatile FieldType*>(reg());
         }
-        
     public:    
         inline static volatile FieldType& get() {
             return *bitField();
         }
     };
-    
     
 }

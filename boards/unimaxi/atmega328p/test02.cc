@@ -68,7 +68,7 @@ int main() {
     lcdPwmPin::off();
     
     while(true) {
-        spi::whenReady<spi::flags_type::spif>([](std::byte){
+        spi::whenReady([](std::byte){
             lcdPwmPin::toggle();
         });
     }

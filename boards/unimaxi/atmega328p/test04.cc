@@ -27,6 +27,8 @@
 #include "mcu/avr/spi.h"
 #include "mcu/avr/twislave.h"
 
+#include "hal/ressource.h"
+
 // 16 MHz full swing
 // sudo avrdude -p atmega328p -P usb -c avrisp2 -U lfuse:w:0xf7:m -U hfuse:w:0xd9:m -U efuse:w:0xff:m
 
@@ -41,10 +43,19 @@ using lcdPwmPin = AVR::Pin<PortB, 1>;
 
 using systemClock = AVR::Timer8Bit<0>;
 
+using flagRegister = AVR::RegisterFlags<typename DefaultMcuType::GPIOR, 0, std::byte>;
+
 static constexpr auto systemFrequency = 100_Hz;
 
 constexpr TWI::Address address{0x59_B};
-using i2c = TWI::Slave<0, address, 2 * 16, MCU::UseInterrupts<false>>;
+
+template<typename R>
+using i2c_r = TWI::Slave<0, address, 2 * 16, MCU::UseInterrupts<false>, R>;
+
+using controller = Hal::Controller<flagRegister, i2c_r>;
+using i2c = controller::get<i2c_r>::type;
+
+//using i2c = TWI::Slave<0, address, 2 * 16, MCU::UseInterrupts<false>>;
 
 int main() {
     i2c::init();
@@ -54,6 +65,7 @@ int main() {
     while(true) {
         i2c::whenReady([]{
             lcdPwmPin::toggle();
+            i2c::changed(false);
         });
     }
 }

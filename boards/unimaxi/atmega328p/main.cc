@@ -257,7 +257,7 @@ int main() {
                 blinker::failure0();
             }
             if (i2c::isChanged()) {
-                i2c::isChanged() = false;
+                i2c::changed(false);
                 lcd::setPosition(LCD::Row{1}, LCD::Column{0});
                 lcd::put(i2c::registers()[0]);
             }

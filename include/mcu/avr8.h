@@ -93,6 +93,10 @@ namespace AVR {
     constexpr inline bool isSBICBICapable() {
         return Component::template Address<Number>::value < (0x20 + ioOffset);
     }
+    template<typename Component, MCU::Letter Name>
+    constexpr inline bool isSBICBICapable() {
+        return Component::template Address<Name>::value < (0x20 + ioOffset);
+    }
     
     template<typename Component, MCU::Letter Letter>
     constexpr inline Component* getBaseAddr() {

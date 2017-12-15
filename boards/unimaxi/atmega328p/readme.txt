@@ -22,12 +22,16 @@
 	- mit Interrupt
 	- I2C: toggle LCD-PWM-Pin wenn Empfang
 
-
-
-
 * test06:
 	- ohne Interrupt
 	- Usart
+
+* test07:
+	- SPI Test
+	- mit Interrupt, ohne Events
+	- toggle LCD-PWM-Pin wenn SPI-Ready
+
+-----
 
 * test07:
 	- mit Interrupt

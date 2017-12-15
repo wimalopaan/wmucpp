@@ -30,9 +30,12 @@ class EEPromBase {
     EEPromBase(const EEPromBase&) = delete;
     EEPromBase& operator=(const EEPromBase&) = delete;
     
+    // fixme: Flags in GPIOR
+    
     struct Flags {
         uint8_t changed : 1, saving : 1, timeoutExpired : 1;
     } __attribute__((packed));
+    
 //    friend class EEProm<T>;
     static void resetTimeout() {
         mFlags.timeoutExpired = false;

@@ -33,7 +33,7 @@ namespace Util {
             if (v != 0) {
                 data[Position] = '0' + (v >> ((sizeof(FT)) * 8));
                 v &= FT(-1);
-                if constexpr(Position < data.size - 2) {
+                if constexpr(Position < L - 2) {
                     return ftoa<Position + 1>(v, data);
                 }
             }

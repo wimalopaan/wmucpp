@@ -16,6 +16,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <cstdint>
+#include <cstddef>
+
+#include "util/types.h"
+
+struct A {
+    uint8_t flag : 1, value : 7;
+};
+
+volatile A a;
+
+struct X {
+    inline static A a{};
+};
+
 int main()
 {
     

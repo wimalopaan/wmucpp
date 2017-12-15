@@ -18,69 +18,61 @@
 
 #define NDEBUG
 
+#include <stdlib.h>
+
 #include "mcu/avr8.h"
 #include "mcu/ports.h"
+#include "mcu/avr/mcutimer.h"
 #include "mcu/avr/usart.h"
-#include "hal/event.h"
 #include "hal/alarmtimer.h"
-#include "units/duration.h"
 #include "console.h"
 
-using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
+// 16 MHz full swing
+// sudo avrdude -p atmega328p -P usb -c avrisp2 -U lfuse:w:0xf7:m -U hfuse:w:0xd9:m -U efuse:w:0xff:m
+
+// 8Mhz int
+// sudo avrdude -p atmega328p -P usb -c avrisp2 -U lfuse:w:0xe2:m -U hfuse:w:0xd9:m -U efuse:w:0xff:m
+
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
+
 using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
+using lcdPwmPin = AVR::Pin<PortB, 1>;
 
 // Timer0
 using systemTimer = AVR::Timer8Bit<0>;
-using alarmTimer = AlarmTimer<systemTimer>;
-
-using testPin = AVR::Pin<PortD, 7>;
+using alarmTimer = AlarmTimer<systemTimer, UseEvents<false>>;
 
 const auto periodicTimer = alarmTimer::create(1000_ms, AlarmFlags::Periodic);
 
 static constexpr auto systemFrequency = 100_Hz;
 
-using terminalDevice = AVR::Usart<0, void, MCU::UseInterrupts<false>>;
+using terminalDevice = AVR::Usart<0, NullProtocollAdapter, MCU::UseInterrupts<false>, UseEvents<false>, AVR::ReceiveQueueLength<64>>;
 using terminal = std::basic_ostream<terminalDevice>;
-
-struct TimerHandler : public EventHandler<EventType::Timer> {
-    static bool process(std::byte b) {
-        auto timer = std::to_integer<uint7_t>(b);
-        if (timer == *periodicTimer) {
-            testPin::toggle();
-            std::outl<terminal>("tick"_pgm);
-        }
-        return true;
-    }
-};
-
-using allEventHandler = EventHandlerGroup<TimerHandler>;
 
 int main() {
     terminalDevice::init<9600>();
     alarmTimer::init(AVR::TimerMode::CTCNoInt); 
-    testPin::dir<AVR::Output>();
-    testPin::off();
-
-    std::outl<terminal>("Test04"_pgm);
     
-    {
-        Scoped<EnableInterrupt<>> ei;
-        EventManager::run3<allEventHandler>([](){
-            terminalDevice::periodic();
-            systemTimer::periodic<systemTimer::flags_type::ocfa>([](){
-                alarmTimer::periodic();
+    lcdPwmPin::dir<AVR::Output>();
+    lcdPwmPin::off();
+    
+    std::outl<terminal>("Test06"_pgm);
+    while(true) {
+        terminalDevice::periodic();
+        systemTimer::periodic<systemTimer::flags_type::ocfa>([](){
+            alarmTimer::periodic([](uint7_t timer) {
+                if (timer == *periodicTimer) {
+                    lcdPwmPin::toggle();
+                    std::outl<terminal>("tick"_pgm);
+                }
             });
         });
     }
 }
-
 #ifndef NDEBUG
 void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
     std::outl<terminal>("Assertion failed: "_pgm, expr, ',', file, ',', line);
     while(true) {}
 }
 #endif
-
-

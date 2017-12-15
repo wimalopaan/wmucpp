@@ -22,89 +22,30 @@
 #include <array>
 #include "mcu/concepts.h"
 #include "util/bits.h"
+#include "util/meta.h"
 
 #if __has_include(<avr/interrupt.h>)
 # include <avr/interrupt.h>
-
-extern "C" {
-void TIMER0_OVF_vect(void);
-void TIMER0_COMPA_vect(void);
-
-void USART_RX_vect(void);
-void USART_UDRE_vect(void);
-
-void USART0_RX_vect(void);
-void USART0_UDRE_vect(void);
-void USART1_RX_vect(void);
-void USART1_UDRE_vect(void);
-
-void SPI_STC_vect(void);
-
-void TIMER1_COMPA_vect(void);
-void TIMER1_COMPB_vect(void);
-void TIMER1_CAPT_vect(void);
-
-void TIMER3_COMPA_vect(void);
-void TIMER3_COMPB_vect(void);
-void TIMER3_CAPT_vect(void);
-
-void PCINT0_vect(void);
-void PCINT1_vect(void);
-void PCINT2_vect(void);
-void PCINT3_vect(void);
-
-void USI_OVF_vect(void);
-void USI_START_vect(void);
-
-void ANALOG_COMP_vect(void);
-}
-
 #endif
-
-namespace ISR {
-    namespace detail {
-        template<typename ISR>
-        struct Mask {
-            static constexpr auto value = ISR::isr_mask;
-        };
-        template<>
-        struct Mask<void> {
-            static constexpr auto value = 0;
-        };
-    }
-}
 
 // todo: namespace
 
-//template<typename... HH>
-template<MCU::IServiceR... HH> // todo: ICE triggered, nicht mehr mit gcc-8.0
+template<MCU::IServiceR... HH> // ICE triggered, nicht mehr mit gcc-8.0
 struct IsrRegistrar {
     typedef uint64_t mask_type;
     typedef IsrRegistrar type;
     
-    static_assert(sizeof...(HH) <= 64, "too much different interrupts");
-    inline static constexpr mask_type all = (ISR::detail::Mask<HH>::value | ... | 0);
-    inline static constexpr auto numberOfNonVoidHandler = ((ISR::detail::Mask<HH>::value > 0 ? 1 : 0) + ... + 0);
-    
-    static_assert(Util::numberOfOnes(all) == numberOfNonVoidHandler, "Isr double defined");
-    
-    inline static constexpr uint8_t isrNumbers[] = {HH::isr_number ...};
-    
-    static constexpr uint8_t countInstances(uint8_t isrNumber) {
-        uint8_t n = 0;
-        for(uint8_t num: isrNumbers) {
-            if (num == isrNumber) {
-                ++n;
-            }
-        }        
-        return n;
-    }
+    typedef Meta::List<HH...> handlers;
+    typedef Meta::filter<Meta::nonVoid, handlers> nonVoidHandlers;
+
+    template<typename I> using getIsr = typename I::isr_type;
+    typedef Meta::transform<getIsr, nonVoidHandlers> interrupts;
     
     static void init() {}
     
     template<MCU::Interrupt I>
     static constexpr bool isSet() {
-        return all & ((uint64_t)1 << I::number);
+        return Meta::contains<interrupts, I>::value;
     }
     
     template<uint8_t In, uint8_t N, MCU::IServiceR H, MCU::IServiceR... Hp>
@@ -133,14 +74,8 @@ struct IsrRegistrar {
     
     template<MCU::Interrupt INT>
     static void isr() {
-        static_assert(all & ((mask_type)1 << INT::number), "isr not set");
+        static_assert(isSet<INT>(), "isr not set");
         Caller<INT::number, sizeof...(HH), HH...>::call();
-    }
-    template<MCU::Interrupt INT>
-    static void isrNaked() {
-        static_assert(all & ((mask_type)1 << INT::number), "isr not set");
-        static_assert(countInstances(INT::number) == 1, "naked isr must be single");
-        Caller<INT::number, sizeof...(HH), HH...>::callNaked();
     }
 };
 
@@ -148,22 +83,32 @@ template<MCU::Interrupt I>
 struct IsrBaseHandler {
     typedef I isr_type;
     static constexpr const uint8_t isr_number = I::number;
-    static constexpr const uint64_t isr_mask = ((uint64_t)1 << I::number);    
-    static_assert(I::number < (8 * sizeof(uint64_t)));
-};
-template<>
-struct IsrBaseHandler<void> {
-    typedef void isr_type;
-    static constexpr const uint8_t isr_number = 0;
-    static constexpr const uint64_t isr_mask = 0;    
 };
 
-template<typename I, MCU::IServiceR... Hs>
+template<MCU::Interrupt I, MCU::IServiceR... Hs>
 struct IsrDistributor final : public IsrBaseHandler<I> {
-    static_assert((sizeof...(Hs) == 0) || (Util::numberOfOnes((Hs::isr_mask | ... | 0)) == 1), "all sub-handler must use same isr");
+    typedef Meta::List<Hs...> handlers;
+    typedef Meta::filter<Meta::nonVoid, handlers> nonVoidHandlers;
+
+    template<typename T> using getIsr = typename T::isr_type;
+    typedef Meta::transform<getIsr, nonVoidHandlers> interrupts;
+    
+    template<typename T> using usesSameInterrupt = std::is_same<I, T>;
+    typedef Meta::filter<usesSameInterrupt, interrupts> listOfSameInterrupts;
+    
+    static_assert(Meta::size<listOfSameInterrupts>::value == Meta::size<interrupts>::value , "all sub-handler must use same isr");
+    
     inline static void isr() {
-        (Hs::isr(), ...);
+        Caller<nonVoidHandlers>::isr();
     }
+private:
+    template<typename L> struct Caller;
+    template<typename... NVHH>
+    struct Caller<Meta::List<NVHH...>> {
+        inline static void isr() {
+            (NVHH::isr(), ...);
+        }  
+    };
 };
 
 namespace AVR {

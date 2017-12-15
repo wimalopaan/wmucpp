@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 #include "hal/event.h"
 
@@ -28,7 +28,7 @@ class PpmSwitch final {
 
 public:
     PpmSwitch() = delete;
-    constexpr static uint8_t number = N;
+    inline constexpr static uint8_t number = N;
     typedef Decoder decoder_type;
 
     static void init() {
@@ -73,5 +73,6 @@ public:
     }
 
 private:
+    // fixme: in GPIOR
     inline static State state = State::Undefined;
 };

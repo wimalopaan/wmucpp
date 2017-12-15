@@ -21,12 +21,25 @@
 #include <cstddef>
 #include <utility>
 #include <type_traits>
+#include "util/type_traits.h"
 
 namespace Meta {
     namespace detail {
         struct ListBase {
             typedef ListBase base_type;
         };
+    }
+    template<typename... T>
+    struct List : public detail::ListBase {
+        inline static constexpr size_t size = sizeof...(T);
+    };
+    
+    template<template<typename> typename... TT>
+    struct TList {
+        inline static constexpr size_t size = sizeof...(TT);
+    };
+    
+    namespace detail {
         
         template<typename L>
         struct size_impl;
@@ -59,6 +72,14 @@ namespace Meta {
             typedef F type;  
         };
 
+        template<typename> struct tfront_impl;
+        template<template<typename> typename F,
+                 template<template<typename> typename...> typename TL,
+                 template<typename> typename... R>
+        struct tfront_impl<TL<F, R...>> {
+            template<typename T> using type = F<T>;
+        };
+        
         template<typename L> struct rest_impl;
         template<template<typename, typename...> typename L, typename F, typename... I>
         struct rest_impl<L<F, I...>> {
@@ -95,6 +116,16 @@ namespace Meta {
             typedef L1<F<I1, I2>...> type;
         };
         
+        template<template<template<typename> typename, size_t> typename F, typename TL, typename IL> struct transformN_T_impl;
+        template<template<template<typename> typename, size_t> typename F, 
+                 template<template<typename> typename...> typename TL,
+                 template<typename> typename... I, 
+                 size_t... IN>
+        struct transformN_T_impl<F, TL<I...>, std::index_sequence<IN...>> {
+            static_assert(sizeof...(I) == sizeof...(IN));
+            typedef Meta::List<typename F<I, IN>::type...> type;                
+        };
+        
         template<template<typename> typename P, typename L> struct filter_impl;
         template<template<typename> typename P, template<typename...> typename L> 
         struct filter_impl<P, L<>> {
@@ -116,16 +147,68 @@ namespace Meta {
         struct nth_element_impl<N, L<F, I...>> {
             typedef typename nth_element_impl<N-1, L<I...>>::type type;  
         };
+        
         template<typename List, typename T> struct count_impl {
             template<typename U>
             using p = std::is_same<U, T>;
             using filtered = typename filter_impl<p, List>::type;
             inline static constexpr size_t value = filtered::size;
         };
+
+        template<typename L, template<typename>typename T> struct count_T_impl;
+        template<template<template<typename>typename...> typename L, 
+                 template<typename>typename F, 
+                 template<typename>typename T, 
+                 template<typename>typename... R> 
+        struct count_T_impl<L<F, R...>, T> {
+            inline static constexpr size_t value = [] {
+                constexpr auto v = is_same_template<T, F>::value;
+                if constexpr(sizeof...(R) > 0) {
+                    return count_T_impl<L<R...>, T>::value + v;
+                }
+                else {
+                    return v;
+                }
+            }();
+        };
+        
+        template<typename L, typename T, size_t N> struct index_impl;
+        template<template<typename...> typename L, typename F, typename... R, typename T, size_t N>
+        struct index_impl<L<F, R...>, T, N> {
+            inline static constexpr size_t value = [] {
+                if constexpr(std::is_same<F, T>::value) {
+                    return N;
+                }
+                else {
+                    return index_impl<L<R...>, T, N+1>::value;
+                }
+            }(); 
+        };
+        
+        template<typename L, template<typename> typename T, size_t N> struct index_T_impl;
+        template<template<template<typename>typename...> typename L, 
+                 template<typename> typename F, 
+                 template<typename> typename... R, 
+                 template<typename> typename T, size_t N>
+        struct index_T_impl<L<F, R...>, T, N> {
+            inline static constexpr size_t value = [] {
+                if constexpr(is_same_template<F, T>::value) {
+                    return N;
+                }
+                else {
+                    return index_T_impl<L<R...>, T, N+1>::value;
+                }
+            }(); 
+        };
+        
         template<typename List, typename T> struct contains_impl {
             inline static constexpr bool value = (count_impl<List, T>::value > 0);
         };
         
+        template<typename List, template<typename>typename T> struct contains_T_impl {
+            inline static constexpr bool value = (count_T_impl<List, T>::value > 0);
+        };
+
         template<typename, typename> struct concat_impl;
         template<template<typename...> typename L1, typename... I1, template<typename...> typename L2, typename... I2> 
         struct concat_impl<L1<I1...>,  L2<I2...>> {
@@ -144,6 +227,18 @@ namespace Meta {
             using type = std::integral_constant<bool, true>;
         };
         
+        template<typename> struct is_set_T_impl;
+        template<template<template<typename>typename...> typename L, template<typename> typename F, template<typename> typename ... I>
+        struct is_set_T_impl<L<F, I...>> {
+            using type = typename std::conditional<contains_T_impl<L<I...>, F>::value, 
+                                                  std::integral_constant<bool, false>, 
+                                                  typename is_set_T_impl<L<I...>>::type>::type;
+        };
+        template<template<template<typename>typename...> typename L, template<typename>typename I>
+        struct is_set_T_impl<L<I>> {
+            using type = std::integral_constant<bool, true>;
+        };
+
         template<typename, typename> struct contains_all_impl {};
         template<template<typename...> typename L1, typename... I1, template<typename...> typename L2, typename... I2>
         struct contains_all_impl<L1<I1...>, L2<I2...>> {
@@ -156,9 +251,8 @@ namespace Meta {
             static inline constexpr bool value = (std::is_same<T, I>::value && ... && true);
         };
         
-        
-                
     } // !detail
+
     namespace concepts {
         template<typename T>
         concept bool List() {
@@ -167,11 +261,6 @@ namespace Meta {
             } && std::is_same<typename T::base_type, detail::ListBase>::value;
         }
     } // !concepts
-    
-    template<typename... T>
-    struct List : public detail::ListBase {
-        inline static constexpr size_t size = sizeof...(T);
-    };
     
     template<typename... T>
     using length = std::integral_constant<size_t, sizeof...(T)>;
@@ -191,17 +280,41 @@ namespace Meta {
     template<concepts::List List>
     using front = typename detail::front_impl<List>::type;
 
+    template<typename> struct tfront;
+    template<template<typename> typename F,
+             template<template<typename> typename...> typename TL,
+             template<typename> typename... R>
+    struct tfront<TL<F, R...>> {
+        template<typename T> using type = F<T>;
+    };
+    
     template<concepts::List List>
     using back = typename detail::back_impl<List>::type;
     
     template<template<typename> typename Func, concepts::List List>
     using transform = typename detail::transform_impl<Func, List>::type;
-
+    
     template<template<typename, size_t> typename Func, concepts::List List>
     using transformN = typename detail::transformN_impl<Func, List, std::make_index_sequence<size<List>::value>>::type;
-    
+
     template<template<typename, typename> typename Func, concepts::List List1, concepts::List List2>
     using transform2 = typename detail::transform2_impl<Func, List1, List2>::type;
+    
+    template<template<template<typename> typename> typename F, typename TL> struct transform_T;
+    template<template<template<typename> typename> typename F, 
+             template<template<typename> typename...> typename TL,
+             template<typename> typename... I>
+    struct transform_T<F, TL<I...>> {
+        typedef Meta::List<typename F<I>::type...> type;                
+    };
+    
+    template<template<template<typename> typename, size_t> typename F, typename TL> struct transformN_T;
+    template<template<template<typename> typename, size_t> typename F, 
+             template<template<typename> typename...> typename TL,
+             template<typename> typename... I>
+    struct transformN_T<F, TL<I...>> {
+        typedef typename detail::transformN_T_impl<F, TL<I...>, std::make_index_sequence<sizeof...(I)> >::type type;                
+    };
     
     template<template<typename> typename Pred, concepts::List List>
     using filter = typename detail::filter_impl<Pred, List>::type;
@@ -217,6 +330,13 @@ namespace Meta {
     
     template<concepts::List List, typename T>
     struct count: public std::integral_constant<size_t, detail::count_impl<List, T>::value> {};
+
+    template<concepts::List List, typename T>
+    struct index: public std::integral_constant<size_t, detail::index_impl<List, T, 0>::value> {};
+
+
+    template<typename List, template<typename> typename T>
+    struct index_T: public std::integral_constant<size_t, detail::index_T_impl<List, T, 0>::value> {};
     
     template<concepts::List L1, concepts::List L2>
     using concat = typename detail::concat_impl<L1, L2>::type;
@@ -224,6 +344,12 @@ namespace Meta {
     template<concepts::List List>
     struct is_set : public std::integral_constant<bool, detail::is_set_impl<List>::type::value> {};
 
+    template<typename TL>
+    struct is_set_T : public std::integral_constant<bool, detail::is_set_T_impl<TL>::type::value> {};
+
+//    template<typename TL>
+//    struct is_set_T : public std::integral_constant<bool, true> {};
+    
     template<typename T, concepts::List L>
     struct all_same : public std::integral_constant<bool, detail::all_same_impl<T, L>::value> {};
 
@@ -253,6 +379,8 @@ namespace Meta {
         
         using l2 = Meta::push_front<l1, C>;
         static_assert(l2::size == 3);
+
+        static_assert(index<l2, B>::value == 2);
         
         using x1 = Meta::front<l2>;
         static_assert(std::is_same<x1, C>::value);

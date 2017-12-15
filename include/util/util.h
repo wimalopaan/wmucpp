@@ -184,17 +184,17 @@ namespace Util {
         }
     }
     
-    template<typename Device, bool ensure = false>
-    void put(char c) {
-        if constexpr(ensure) {
-            while(!Device::put(std::byte{c})) {
-                Util::delay(1_us);
-            }
-        }
-        else {
-            Device::put(std::byte{c});
-        }
-    }
+//    template<typename Device, bool ensure = false>
+//    void put(char c) {
+//        if constexpr(ensure) {
+//            while(!Device::put(std::byte{c})) {
+//                Util::delay(1_us);
+//            }
+//        }
+//        else {
+//            Device::put(std::byte{c});
+//        }
+//    }
     
     template<typename Device, bool ensure = false>
     void put(std::byte b) {

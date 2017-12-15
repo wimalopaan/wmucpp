@@ -18,39 +18,39 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include "mcu/avr8.h"
 #include "mcu/ports.h"
 
 namespace AVR {
-
-template<uint8_t N, typename MCU = DefaultMcuType>
-struct AdCompParameter;
-
-template<>
-struct AdCompParameter<0, ATMega1284P> {
-    AdCompParameter() = delete;
-    using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
-    using ain0 = AVR::Pin<PortB, 2>;
-    using ain1 = AVR::Pin<PortB, 3>;
-};
-
-template<uint8_t N, typename MCU = DefaultMcuType>
-class AdComparator final {
-    static_assert(N < MCU::AdComparator::count, "wrong adcomparator number"); 
-    AdComparator() = delete;
-    using parameter = AdCompParameter<N, MCU>;
-public:
-    static constexpr auto mcuAdComparator = getBaseAddr<typename MCU::AdComparator, N>;
     
-    static void init() {
-//        mcuAdComparator()->acsr = _BV(ACBG) | _BV(ACI) | _BV(ACIS1) | _BV(ACIS0);
-//        mcuAdComparator()->acsr = _BV(ACBG) | _BV(ACIE) | _BV(ACI) | _BV(ACIS1) | _BV(ACIS0);
-        mcuAdComparator()->acsr =  _BV(ACIE) | _BV(ACI) | _BV(ACIS1) | _BV(ACIS0);
-//        parameter::ain1::template dir<AVR::Input>();
-    }
+    template<uint8_t N, typename MCU = DefaultMcuType>
+    struct AdCompParameter;
     
-private:
-};
-
+    template<>
+    struct AdCompParameter<0, ATMega1284P> {
+        AdCompParameter() = delete;
+        using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
+        using ain0 = AVR::Pin<PortB, 2>;
+        using ain1 = AVR::Pin<PortB, 3>;
+    };
+    
+    template<uint8_t N, typename MCU = DefaultMcuType>
+    class AdComparator final {
+        static_assert(N < MCU::AdComparator::count, "wrong adcomparator number"); 
+        AdComparator() = delete;
+        using parameter = AdCompParameter<N, MCU>;
+    public:
+        static constexpr auto mcuAdComparator = getBaseAddr<typename MCU::AdComparator, N>;
+        
+        static void init() {
+            //        mcuAdComparator()->acsr = _BV(ACBG) | _BV(ACI) | _BV(ACIS1) | _BV(ACIS0);
+            //        mcuAdComparator()->acsr = _BV(ACBG) | _BV(ACIE) | _BV(ACI) | _BV(ACIS1) | _BV(ACIS0);
+            mcuAdComparator()->acsr =  _BV(ACIE) | _BV(ACI) | _BV(ACIS1) | _BV(ACIS0);
+            //        parameter::ain1::template dir<AVR::Input>();
+        }
+        
+    private:
+    };
+    
 }

@@ -28,6 +28,7 @@ targets +=  test02.elf test02.s
 targets +=  test03.elf test03.s
 targets +=  test04.elf test04.s
 targets +=  test05.elf test05.s
+targets +=  test06.elf test06.s
 
 -include ../../../Makefile.include
 

@@ -64,7 +64,9 @@ int main() {
         });
     }
 }
-
-
-
-
+#ifndef NDEBUG
+void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
+    std::outl<terminal>("Assertion failed: "_pgm, expr, ',', file, ',', line);
+    while(true) {}
+}
+#endif

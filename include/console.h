@@ -72,7 +72,7 @@ namespace std {
         }
         template<MCU::Stream Stream>
         void out(Char v) {
-            Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(v.mValue);
+            Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(std::byte{v.mValue});
         }
         template<MCU::Stream Stream>
         void out(bool b) {
@@ -85,16 +85,16 @@ namespace std {
         }
         template<MCU::Stream Stream>
         void out(std::lineTerminator<CRLF>) {
-            Util::put<typename Stream::device_type, Config::ensureTerminalOutput>('\r');
-            Util::put<typename Stream::device_type, Config::ensureTerminalOutput>('\n');
+            Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(std::byte{'\r'});
+            Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(std::byte{'\n'});
         }
         template<MCU::Stream Stream>
         void out(std::lineTerminator<LF>) {
-            Util::put<typename Stream::device_type, Config::ensureTerminalOutput>('\n');
+            Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(std::byte{'\n'});
         }
         template<MCU::Stream Stream>
         void out(std::lineTerminator<CR>) {
-            Util::put<typename Stream::device_type, Config::ensureTerminalOutput>('\r');
+            Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(std::byte{'\r'});
         }
         template<MCU::Stream Stream, uint16_t L>
         void out(const std::array<char, L>& a) {
@@ -102,7 +102,7 @@ namespace std {
                 if (c == '\0') {
                     break;
                 }
-                Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(c);
+                Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(std::byte{c});
             };   
         }
         template<MCU::Stream Stream, uint8_t L>
@@ -111,14 +111,14 @@ namespace std {
                 if (c == '\0') {
                     break;
                 }
-                Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(c);
+                Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(std::byte{c});
             };   
         }
         template<MCU::Stream Stream>
         void out(PgmStringView s) {
             char c = '\0';
             for(uint8_t i = 0; (c = s[i]) != '\0'; ++i) {
-                Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(c);
+                Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(std::byte{c});
             };   
         }
         template<MCU::Stream Stream>
@@ -199,7 +199,7 @@ BufferDevice<Buffer>& operator<<(BufferDevice<Buffer>& o, const char* str) {
 template<MCU::Stream Stream>
 Stream& operator<<(Stream& o, Char c) {
     if constexpr(!Config::disableCout) {
-        Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(c.mValue);
+        Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(std::byte{c.mValue});
     }
     return o;
 }

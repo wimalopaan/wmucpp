@@ -207,7 +207,7 @@ loop:
     //[wrapper
     template <typename Algo = Algorithm::QuickBentleyMcIlroy, Util::Array A> 
     void quickSort(A& v){
-        if constexpr(v.size > 1) {
+        if constexpr(A::size > 1) {
             if constexpr(std::is_same<Algo, Algorithm::QuickBentleyMcIlroy>::value) {
                 detail::qsort::bentley::qsort(&v[0], v.size);
             }

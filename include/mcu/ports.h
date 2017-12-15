@@ -82,8 +82,9 @@ namespace AVR {
             return *getBaseAddr<MCUPort, Name>()->in;
         }
         template<uint8_t Bit>
-        static inline void toggle() { // AVR specific toggle mechanism: write "1" to PortInputRegister
-            *getBaseAddr<MCUPort, Name>()->in |= std::byte{(1 << Bit)};
+        static inline void toggle() { 
+            static_assert(AVR::isSBICBICapable<MCUPort, Name>(), "Port not sbi/sbi capable");
+            *getBaseAddr<MCUPort, Name>()->in |= std::byte{(1 << Bit)}; // AVR specific toggle mechanism: write "1" to PortInputRegister
         }
         static inline void toggle(std::byte v) {
             *getBaseAddr<MCUPort, Name>()->in = v;
@@ -102,7 +103,6 @@ namespace AVR {
         static constexpr std::byte pinMasks[] = {Pins::pinMask...};
         static constexpr std::byte setMask = (Pins::pinMask | ... | std::byte{0});
         
-//        static_assert(::Util::numberOfOnes(setMask) == size, "must use different pins in set");
         using pinlist = Meta::List<Pins...>;
         static_assert(Meta::is_set<pinlist>::value, "must use different pins in set"); // all Pins are different
         
@@ -110,7 +110,6 @@ namespace AVR {
         using portlist = Meta::transform<port_from, pinlist>;
         typedef typename Meta::nth_element<0, portlist> port_type;
         static_assert(Meta::all_same<Meta::nth_element<0, portlist>, portlist>::value, "must use same port");
-//        static_assert((std::is_same<port_type, typename Pins::port>::value && ... && true), "must use same port");
         
         static constexpr auto calculatePatterns = [](){
             constexpr uint16_t numberOfPatterns = (1 << size);
@@ -148,11 +147,8 @@ namespace AVR {
         }
         template<typename... PP>
         static inline void on() {
-            static_assert(Meta::containsAll<pinlist, PP...>::value);
+            static_assert(Meta::containsAll<pinlist, PP...>::value, "Pin not in PinSet");
             constexpr std::byte mask = (PP::pinMask | ... | std::byte{0});
-//            constexpr std::byte invertedMask = ~setMask;
-//            static_assert((std::none(mask & invertedMask)), "Pin not in PinSet");
-            
             if constexpr(sizeof...(PP) == 1) {
                 port_type::get() |= mask; // single-bit set -> sbi-instruction
             }
@@ -163,19 +159,15 @@ namespace AVR {
         }    
         template<typename... PP>
         static inline void pullup() {
-            static_assert(Meta::containsAll<pinlist, PP...>::value);
+            static_assert(Meta::containsAll<pinlist, PP...>::value, "Pin not in PinSet");
             constexpr std::byte mask = (PP::pinMask | ... | std::byte{0});
-//            constexpr std::byte invertedMask = ~setMask;
-//            static_assert((std::none(mask & invertedMask)), "Pin not in PinSet");
             Scoped<DisbaleInterrupt<RestoreState>> di;
             port_type::get() |= mask;
         }
         template<typename... PP>
         static inline void off() {
-            static_assert(Meta::containsAll<pinlist, PP...>::value);
+            static_assert(Meta::containsAll<pinlist, PP...>::value, "Pin not in PinSet");
             constexpr std::byte mask = (PP::pinMask | ... | std::byte{0});
-//            constexpr std::byte invertedMask = ~setMask;
-//            static_assert((std::none(mask & invertedMask)), "Pin not in PinSet");
             if constexpr(sizeof...(PP) == 1) {
                 port_type::get() &= ~mask;
             }
@@ -214,7 +206,7 @@ namespace AVR {
         }
         template<uint8_t V>
         static inline void set() {
-            static_assert(V < valueBits.size);
+            static_assert(V < valueBits.size, "pattern not possible");
             auto v = (port_type::get() & setMask) ^ valueBits[V];
             port_type::toggle(v);
         }
