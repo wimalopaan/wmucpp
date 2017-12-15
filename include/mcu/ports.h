@@ -18,8 +18,6 @@
 
 #pragma once
 
-#include <type_traits>
-
 #if __has_include(<avr/io.h>)
 # include <avr/io.h>
 #endif
@@ -28,10 +26,8 @@
 # include <avr/pgmspace.h>
 #endif
 
-#include "config.h"
 #include "mcu/avr8.h"
 #include "mcu/concepts.h"
-#include "util/algorithm.h"
 #include "util/disable.h"
 #include "util/meta.h"
 #include "util/types.h"
