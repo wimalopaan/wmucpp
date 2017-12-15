@@ -32,14 +32,14 @@ constexpr auto transform(const L& callable) {
     }
     else {
         constexpr auto first = std::get<0>(tuple);    
-        constexpr auto rest = [&]{return Util::tuple_rest(tuple);};
+//        constexpr auto rest = [&]{return Util::tuple_rest(tuple);}; // gcc-8.0 Problem 
         
         if constexpr(isInode(first)) {
             constexpr auto indexnode = inode_to_indexnode(std::make_index_sequence<first.mChildren.size>{}, [&]{return first;});
-            return std::tuple_cat(std::tuple(indexnode), transform(rest));        
+            return std::tuple_cat(std::tuple(indexnode), transform([&]{return Util::tuple_rest(tuple);}));        
         }
         else {
-            return std::tuple_cat(std::tuple(first), transform(rest));
+            return std::tuple_cat(std::tuple(first), transform([&]{return Util::tuple_rest(tuple);}));
         }
     }
 }
