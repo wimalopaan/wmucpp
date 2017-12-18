@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 #if __has_include(<avr/io.h>)
 # include <avr/io.h>
@@ -27,7 +27,7 @@
 # include <util/twi.h>
 #endif
 
-#include "std/array"
+#include <array>
 #include "mcu/register.h"
 
 namespace AVR {

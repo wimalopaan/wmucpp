@@ -75,6 +75,7 @@ host/test21.cc
 host/test22.cc
 host/test23.cc
 host/test24.cc
+host/test30.cc
 host/test90.cc
 include/appl/command.h
 include/container/tree.h

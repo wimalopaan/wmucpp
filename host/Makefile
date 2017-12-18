@@ -30,6 +30,7 @@ targets += test21
 targets += test22
 targets += test23
 targets += test24
+targets += test30
 targets += test90
 
 -include ../Makefile.include
