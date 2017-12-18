@@ -36,7 +36,7 @@
 // 16 MHz full swing
 // sudo avrdude -p atmega328p -P usb -c avrisp2 -U lfuse:w:0xf7:m -U hfuse:w:0xd9:m -U efuse:w:0xff:m
 
-using spiInput = AVR::Spi<0>;
+using spiInput = AVR::Spi<0, AVR::SpiSlave<>>;
 
 using terminalDevice = AVR::Usart<0>;
 using terminal = std::basic_ostream<terminalDevice>;
@@ -133,7 +133,7 @@ int main()
     
     systemTimer::create(500_ms, AlarmFlags::Periodic);
     
-    spiInput::init<AVR::SpiSlave<>>();
+    spiInput::init();
     
     using handler = EventHandlerGroup<Spi0handler, Timerhandler>;
     

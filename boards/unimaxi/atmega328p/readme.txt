@@ -29,16 +29,25 @@
 * test07:
 	- ohne Interrupt
 	- Usart
-        - EEProm (FlagsRegister)
+    - EEProm (FlagsRegister)
 
 * test08:
-        - ohne Interrupt
-        - Usart
-        - EEProm
-        - I2C Test (FlagRegister>
-        - ohne Interrupt
-        - I2C: toggle LCD-PWM-Pin wenn Empfang
+    - ohne Interrupt
+    - Usart
+    - EEProm
+    - I2C Test (FlagRegister>
+    - ohne Interrupt
+    - I2C: toggle LCD-PWM-Pin wenn Empfang
 
+* test09:
+	- SPI mit FlagRegister
+	- ohne Interrupt
+	- toggle LCD-PWM-Pin wenn SPI-Ready
+
+* test10:
+	- SPI mit FlagRegister
+	- mit Interrupt 
+	- toggle LCD-PWM-Pin wenn SPI-Ready
 
 -----
 * test07:

@@ -29,10 +29,17 @@
 
 namespace AVR {
     
-    template<typename MCU = DefaultMcuType>
-    struct SpiMaster final { // todo: struct UseInterrupt / NoInterrupt
+    template<typename useInt = MCU::UseInterrupts<true>, typename MCU = DefaultMcuType>
+    struct SpiMaster final {
         SpiMaster() = delete;
-        static constexpr auto spcr = MCU::Spi::CR::spie | MCU::Spi::CR::spe | MCU::Spi::CR::mstr | MCU::Spi::CR::spr1 | MCU::Spi::CR::spr0;
+        inline static constexpr bool useInterrupts = useInt::value;
+        static constexpr auto spcr = [] {
+            if constexpr(useInt::value) {
+                return MCU::Spi::CR::spie | MCU::Spi::CR::spe | MCU::Spi::CR::mstr | MCU::Spi::CR::spr1 | MCU::Spi::CR::spr0;
+            } else {
+                return MCU::Spi::CR::spe | MCU::Spi::CR::mstr | MCU::Spi::CR::spr1 | MCU::Spi::CR::spr0;
+            }
+        }();
         typedef AVR::Output mosi_dir;
         typedef AVR::Input  miso_dir;
         typedef AVR::Output sck_dir;
@@ -42,6 +49,7 @@ namespace AVR {
     template<typename useInt = MCU::UseInterrupts<true>, typename MCU = DefaultMcuType> 
     struct SpiSlave final {
         SpiSlave() = delete;
+        inline static constexpr bool useInterrupts = useInt::value;
         static constexpr auto spcr = []{
             if constexpr(useInt::value) {
                 return MCU::Spi::CR::spie | MCU::Spi::CR::spe;
@@ -91,25 +99,38 @@ namespace AVR {
         using ss  = AVR::Pin<PortB, 2>;
     };
     
+    template<typename Derived, bool Enable>
+    struct SpiBase;
     template<typename Derived>
-    struct SpiBase {
-        SpiBase() = delete;
+    struct SpiBase<Derived, true> {
+        inline static bool overrun = false;
+    };
+    template<typename Derived>
+    struct SpiBase<Derived, false> {
     };
     
-    template<uint8_t N, typename MCU>
-    class Spi final : public SpiBase<Spi<N, MCU>>, public IsrBaseHandler<typename AVR::ISR::Spi<N>::Stc> {
+    template<uint8_t N, typename Mode, typename Flags = void, typename MCU = DefaultMcuType>
+    // fixme: ad-hoc requirement geht nicht, warum?
+//    requires requires {
+//        typename Mode::mosi_dir;
+//    }
+    class Spi final : public SpiBase<Spi<N, MCU>, std::is_same<Flags, void>::value>, 
+            public std::conditional<Mode::useInterrupts, IsrBaseHandler<typename AVR::ISR::Spi<N>::Stc>, NoIsrBaseHandler>::type {
+        
         static_assert(N < MCU::Spi::count, "wrong spi number");
         
-        using spiPort = SpiPort<N, MCU>;
         Spi() = delete;
+        typedef SpiBase<Spi<N, MCU>, std::is_same<Flags, void>::value> base_type;
+        inline static constexpr bool useBase = std::is_same<Flags, void>::value;
         
     public:
+        typedef Mode mode;
+        typedef SpiPort<N, MCU> spiPort;
         typedef MCU mcu_type;
         typedef typename MCU::Spi::SR flags_type;
 
         static constexpr const uint8_t number = N;
         
-        template<typename Mode>
         static void init() {
             spiPort::mosi::template dir<typename Mode::mosi_dir>();
             spiPort::miso::template dir<typename Mode::miso_dir>();
@@ -139,18 +160,38 @@ namespace AVR {
             return true;
         }
         
-        static bool leak() {
-            bool oBefore = overrun;
-            overrun = false;
-            return oBefore;
+        template<bool Q = Mode::useInterrupts>
+        static 
+        typename std::enable_if<Q, bool>::type
+        leak() {
+            if constexpr(useBase) {
+                bool oBefore = base_type::overrun;
+                base_type::overrun = false;
+                return oBefore;
+            }
+            else {
+                bool oBefore = Flags::isSet();
+                Flags::reset();
+                return oBefore;
+            }
         }
-        static void isr() {
+        // SFINAE disable
+        template<bool Q = Mode::useInterrupts>
+        static 
+        typename std::enable_if<Q, void>::type
+        isr() {
             std::byte c = *getBaseAddr<typename MCU::Spi, N>()->spdr;
-            overrun |= !EventManager::enqueueISR({SpiEvent<N>::event, c});
+            if constexpr(useBase) {
+                base_type::overrun |= !EventManager::enqueueISR({SpiEvent<N>::event, c});
+            }
+            else {
+                bool ok = EventManager::enqueueISR({SpiEvent<N>::event, c});
+                if (!ok) {
+                    Flags::set();
+                }
+            }
         }
     private:
-        // todo: in GPIOR
-        inline static bool overrun = false;
     };
     
 }

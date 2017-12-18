@@ -32,7 +32,7 @@
 #include "mcu/avr/delay.h"
 #include "console.h"
 
-using spiInput = AVR::Spi<0>;
+using spiInput = AVR::Spi<0, AVR::SpiSlave<>>;
 using terminalDevive = SWUsart<0>;
 using terminal = std::basic_ostream<terminalDevive>;
 
@@ -72,7 +72,7 @@ int main()
 
     systemTimer::create(1_s, AlarmFlags::Periodic);
 
-    spiInput::init<AVR::SpiSlave<>>();
+    spiInput::init();
 
     using handler = EventHandlerGroup<Spi0handler, Timerhandler>;
 

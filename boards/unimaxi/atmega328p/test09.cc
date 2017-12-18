@@ -15,23 +15,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/*
- * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- 
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 
 #define NDEBUG
 
@@ -42,6 +25,7 @@
 #include "mcu/avr/mcutimer.h"
 #include "mcu/ports.h"
 #include "mcu/avr/spi.h"
+#include "hal/ressource.h"
 
 // 16 MHz full swing
 // sudo avrdude -p atmega328p -P usb -c avrisp2 -U lfuse:w:0xf7:m -U hfuse:w:0xd9:m -U efuse:w:0xff:m
@@ -57,32 +41,37 @@ using lcdPwmPin = AVR::Pin<PortB, 1>;
 
 using systemClock = AVR::Timer8Bit<0>;
 
-using spi = AVR::Spi<0, AVR::SpiSlave<MCU::UseInterrupts<true>>>;
+using flagRegister = AVR::RegisterFlags<typename DefaultMcuType::GPIOR, 0, std::byte>;
+
+template<typename Flags>
+using spi_f = AVR::Spi<0, AVR::SpiSlave<MCU::UseInterrupts<false>>, Flags>;
+template<> struct Hal::NumberOfFlags<spi_f> : std::integral_constant<size_t, 1> {};
+
+using controller = Hal::Controller<flagRegister, spi_f>;
+using spi = controller::get<spi_f>;
+
 
 static constexpr auto systemFrequency = 100_Hz;
 
-using isrReg = IsrRegistrar<spi>; 
-
 int main() {
-    spi::init(); 
+    spi::init();
     
     lcdPwmPin::dir<AVR::Output>();
     lcdPwmPin::off();
     
-    {
-        Scoped<EnableInterrupt<>> interruptEnabler;
-        while(true) {
-        }
+    while(true) {
+        spi::whenReady([](std::byte){
+            lcdPwmPin::toggle();
+        });
+//        if (spi::leak()) {
+            
+//        }
     }
-}
-
-ISR(SPI_STC_vect) {
-    lcdPwmPin::toggle();
 }
 
 #ifndef NDEBUG
 void assertFunction(const PgmStringView&, const PgmStringView& , unsigned int ) noexcept {
-//    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
+    //    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
     while(true) {}
 }
 #endif

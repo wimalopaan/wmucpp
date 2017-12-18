@@ -88,7 +88,7 @@ namespace AVR {
     template<uint8_t N, typename PA, ::Util::NamedFlag useISR = MCU::UseInterrupts<true>, ::Util::NamedFlag useEvents = NamedFlag<Config::Usart::useEvents>, 
              ::Util::NamedConstant RecvQLength = NamedConstant<Config::Usart::RecvQueueLength>, ::Util::NamedConstant SendQLength = NamedConstant<Config::Usart::SendQueueLength>, 
              typename MCU = DefaultMcuType> class Usart;
-    template<uint8_t N, typename MCU = DefaultMcuType> class Spi;
+//    template<uint8_t N, typename MCU = DefaultMcuType> class Spi;
     //template<uint8_t N, typename MCU = DefaultMcuType> class SWUsart;
 }
 
@@ -194,7 +194,7 @@ class EventManagerT final {
     template<uint8_t> friend class Hott::SensorProtocollAdapter;
     template<uint8_t> friend class Esp8266::ATProtocollAdapter;
 //    template<uint8_t N, typename PA, typename MCU> friend class AVR::Usart;
-    template<uint8_t N, typename MCU> friend class AVR::Spi;
+//    template<uint8_t N, typename MCU> friend class AVR::Spi;
     template<uint8_t N, typename MCU> friend class SWUsart;
 public:
     EventManagerT() = delete;
@@ -287,6 +287,7 @@ private:
         }
         return true;
     }
+    // fixeme: FlagRegister
     inline static bool mUnprocessed = false;
     inline static bool mLeaked = false;
     inline static volatile std::FiFo<EventByte_t, QLength> mFifo;

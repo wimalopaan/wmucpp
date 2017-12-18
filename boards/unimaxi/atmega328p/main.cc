@@ -47,7 +47,7 @@
 // 8Mhz int
 // sudo avrdude -p atmega328p -P usb -c avrisp2 -U lfuse:w:0xe2:m -U hfuse:w:0xd9:m -U efuse:w:0xff:m
 
-using spiInput = AVR::Spi<0>;
+using spiInput = AVR::Spi<0, AVR::SpiSlave<>>;
 using terminalDevive = AVR::Usart<0, void, MCU::UseInterrupts<true>, UseEvents<true>, AVR::ReceiveQueueLength<64>>;
 using terminal = std::basic_ostream<terminalDevive>;
 
@@ -214,7 +214,8 @@ int main() {
     lcdPwm::init();    
     lcd::init();
     i2c::init();
-    spiInput::init<AVR::SpiSlave<>>();
+//    spiInput::init<AVR::SpiSlave<>>();
+    spiInput::init();
 #ifdef USE_BUTTON
     buttonController::init();
 #else

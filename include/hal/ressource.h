@@ -66,33 +66,14 @@ namespace Hal {
         
         using numberedRessouceList = typename buildNumberedRessources<makeNumberedFlags, ressourceList, startBitList>::type;
     
-        template<template<typename> typename T>
-        struct get {
-            static constexpr auto index = Meta::index_T<ressourceList, T>::value;
-            typedef Meta::nth_element<index, numberedRessouceList> type;
+        struct detail {
+            template<template<typename> typename T>
+            struct get {
+                static constexpr auto index = Meta::index_T<ressourceList, T>::value;
+                typedef Meta::nth_element<index, numberedRessouceList> type;
+            };
         };
+        template<template<typename> typename T>
+        using get = typename detail::template get<T>::type;
     };
-
-//    template<typename FR, template<typename> typename X, size_t v>
-//    struct MakeNumberedFlag {
-//        typedef X<Hal::Flag<FR, v>> type;  
-//    };
-    
-//    template<typename FlagRegister, template<typename> typename ... X>
-//    struct Controller {
-//        static_assert(sizeof...(X) <= 8, "too much ressources");
-//        using ressourceList = Meta::TList<X...>;
-//        static_assert(Meta::is_set_T<ressourceList>::value, "all ressources must be different");
-        
-//        template<template<typename> typename T, size_t v>
-//        using makeFlags = MakeNumberedFlag<FlagRegister, T, v>;
-        
-//        using numberedRessouceList = typename Meta::transformN_T<makeFlags, ressourceList>::type;
-    
-//        template<template<typename> typename T>
-//        struct get {
-//            static constexpr auto index = Meta::index_T<ressourceList, T>::value;
-//            typedef Meta::nth_element<index, numberedRessouceList> type;
-//        };
-//    };
 }

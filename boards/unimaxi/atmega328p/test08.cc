@@ -69,9 +69,9 @@ struct EEPromData : EEProm::DataBase<EEPromData<F>, F> {
 template<> struct Hal::NumberOfFlags<EEPromData> : std::integral_constant<size_t, 3> {};
 
 using controller = Hal::Controller<flagRegister, EEPromData, i2c_r>;
-using eedata = controller::get<EEPromData>::type;
+using eedata = controller::get<EEPromData>;
 //using eedata = EEPromData<>;
-using i2c = controller::get<i2c_r>::type;
+using i2c = controller::get<i2c_r>;
 
 using eeprom = EEProm::Controller<eedata>;
 auto& appData = eeprom::data();

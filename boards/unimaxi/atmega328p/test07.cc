@@ -58,11 +58,10 @@ template<typename F = void>
 struct EEPromData : EEProm::DataBase<EEPromData<F>, F> {
     uint8_t value;
 };
-
 template<> struct Hal::NumberOfFlags<EEPromData> : std::integral_constant<size_t, 3> {};
 
 using controller = Hal::Controller<flagRegister, EEPromData>;
-using eedata = controller::get<EEPromData>::type;
+using eedata = controller::get<EEPromData>;
 //using eedata = EEPromData<>;
 
 using eeprom = EEProm::Controller<eedata>;
@@ -76,7 +75,7 @@ int main() {
     lcdPwmPin::dir<AVR::Output>();
     lcdPwmPin::off();
     
-    std::outl<terminal>("Test06"_pgm);
+    std::outl<terminal>("Test07"_pgm);
     while(true) {
         terminalDevice::periodic();
         systemTimer::periodic<systemTimer::flags_type::ocfa>([](){

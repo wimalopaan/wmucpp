@@ -84,6 +84,7 @@ struct IsrBaseHandler {
     typedef I isr_type;
     static constexpr const uint8_t isr_number = I::number;
 };
+struct NoIsrBaseHandler {};
 
 template<MCU::Interrupt I, MCU::IServiceR... Hs>
 struct IsrDistributor final : public IsrBaseHandler<I> {

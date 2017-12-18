@@ -57,12 +57,12 @@ using lcdPwmPin = AVR::Pin<PortB, 1>;
 
 using systemClock = AVR::Timer8Bit<0>;
 
-using spi = AVR::Spi<0>;
+using spi = AVR::Spi<0, AVR::SpiSlave<MCU::UseInterrupts<false>>>;
 
 static constexpr auto systemFrequency = 100_Hz;
 
 int main() {
-    spi::init<AVR::SpiSlave<MCU::UseInterrupts<false>>>();
+    spi::init();
     
     lcdPwmPin::dir<AVR::Output>();
     lcdPwmPin::off();
