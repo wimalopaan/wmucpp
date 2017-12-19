@@ -282,6 +282,7 @@ namespace TWI {
         }
         
     private:
+        // todo: beide Queues zusammenlegen, weil entweder read oder write stattfindet.
         inline static std::FiFo<std::byte, BSize> mRecvQueue;
         inline static std::FiFo<std::byte, BSize> mSendQueue;
         inline static uint_bounded<uint8_t> mBytesToRead;

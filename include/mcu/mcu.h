@@ -33,6 +33,9 @@ namespace AVR {
     struct ATTiny85;
     struct ATTiny25;
 }
+namespace ARM {
+    
+}
 
 #if defined(__AVR_ATmega1284P__)
 typedef AVR::ATMega1284P DefaultMcuType;
@@ -75,7 +78,6 @@ namespace MCU {
     
     template<typename T, typename Compiler>
     struct is_register_type : public is_register_type_base<typename std::remove_cv<T>::type, Compiler, DefaultMcuType> {};
-    
     
     template<bool use = true>
     struct UseInterrupts;

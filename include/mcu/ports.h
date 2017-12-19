@@ -287,35 +287,87 @@ namespace AVR {
         static void dir() {}
         static bool read() {return false;}
     };
+
+    template<MCU::Pin Pin, typename Dir>
+    struct ActiveLow;
     
-    struct ActiveLow {
-        template<MCU::Pin Pin>
+    template<MCU::Pin Pin>
+    struct ActiveLow<Pin, Output> {
+        static void init() {
+            Pin::template dir<Output>();
+        }
         static void activate() {
             Pin::low();
         }
-        template<MCU::Pin Pin>
         static void inactivate() {
             Pin::high();
         }
     };
-    struct ActiveHigh {
-        template<MCU::Pin Pin>
+    template<MCU::Pin Pin>
+    struct ActiveLow<Pin, Input> {
+        static void init() {
+            Pin::template dir<Input>();
+        }
+        static bool isActive() {
+            return !Pin::isHigh();
+        }
+    };
+
+    template<MCU::Pin Pin, typename Dir = AVR::Output>
+    struct ActiveHigh;
+
+    template<MCU::Pin Pin>
+    struct ActiveHigh<Pin, Output> {
+        static void init() {
+            Pin::template dir<Output>();
+        }
         static void activate() {
             Pin::high();
         }
-        template<MCU::Pin Pin>
         static void inactivate() {
             Pin::low();
         }    
     };
+    template<MCU::Pin Pin>
+    struct ActiveHigh<Pin, Input> {
+        static void init() {
+            Pin::template dir<Input>();
+        }
+        static bool isActive() {
+            return Pin::isHigh();
+        }
+    };
+
+
     
-    template<MCU::Pin Pin, typename Mode>
+//    struct ActiveLow {
+//        template<MCU::Pin Pin>
+//        static void activate() {
+//            Pin::low();
+//        }
+//        template<MCU::Pin Pin>
+//        static void inactivate() {
+//            Pin::high();
+//        }
+//    };
+//    struct ActiveHigh {
+//        template<MCU::Pin Pin>
+//        static void activate() {
+//            Pin::high();
+//        }
+//        template<MCU::Pin Pin>
+//        static void inactivate() {
+//            Pin::low();
+//        }    
+//    };
+    
+    template<typename Pin>
     struct ScopedPin {
         ScopedPin() {
-            Mode::template activate<Pin>();
+            Pin::activate();
         }
         ~ScopedPin() {
-            Mode::template inactivate<Pin>();
+            Pin::inactivate();
         }
     };
     

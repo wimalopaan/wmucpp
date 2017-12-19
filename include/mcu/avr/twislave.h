@@ -38,7 +38,7 @@ namespace TWI {
     template<uint8_t N, const TWI::Address& Address, uint16_t Size, typename useInt = MCU::UseInterrupts<true>, 
              typename FlagRegister = void,
              typename MCU = DefaultMcuType>
-    class Slave final : public IsrBaseHandler<AVR::ISR::Twi<0>>, // fixme: disable if not Ints
+    class Slave final : public IsrBaseHandler<AVR::ISR::Twi<0>>, // fixme: disable if no Interrupts
             public Base<Slave<N, Address, Size, useInt, FlagRegister, MCU>, std::is_same<FlagRegister, void>::value> {
         Slave() = delete;
         

@@ -35,7 +35,8 @@ using SoftSPIData = AVR::Pin<PortA, 0>;
 using SoftSPIClock = AVR::Pin<PortA, 1>;
 using SSpi0 = SoftSpiMaster<SoftSPIData, SoftSPIClock, void, true>;
 
-using UsiSelect = AVR::Pin<PortA, 2>;
+using UsiSelectPin = AVR::Pin<PortA, 2>;
+using UsiSelect = AVR::ActiveLow<UsiSelectPin, AVR::Output>;
 
 template<typename Device>
 class ByteWriter final {
@@ -61,16 +62,14 @@ using byteWriter = ByteWriter<SSpi0>;
 
 int main()
 {
-    UsiSelect::dir<AVR::Output>();
-    UsiSelect::high();
-    
+    UsiSelect::init();    
     SSpi0::init();
     
     uint8_t counter = 0;
     while(true) {
         Util::delay(1000_ms);
         {
-            AVR::ScopedPin<UsiSelect, AVR::ActiveLow> ss;
+            AVR::ScopedPin<UsiSelect> ss;
             Util::delay(Config::SoftSpiMaster::pulseDelay);
             uint8_t v = (counter++ % 2) * 10;
             std::fill(std::begin(leds), std::end(leds), Color{Red{v}, Green{v}, Blue{v}});
