@@ -293,6 +293,8 @@ namespace AVR {
     
     template<MCU::Pin Pin>
     struct ActiveLow<Pin, Output> {
+        typedef Pin pin_type;
+        typedef Output dir_type;
         static void init() {
             Pin::template dir<Output>();
         }
@@ -305,6 +307,8 @@ namespace AVR {
     };
     template<MCU::Pin Pin>
     struct ActiveLow<Pin, Input> {
+        typedef Pin pin_type;
+        typedef Input dir_type;
         static void init() {
             Pin::template dir<Input>();
         }
@@ -318,6 +322,8 @@ namespace AVR {
 
     template<MCU::Pin Pin>
     struct ActiveHigh<Pin, Output> {
+        typedef Pin pin_type;
+        typedef Output dir_type;
         static void init() {
             Pin::template dir<Output>();
         }
@@ -330,6 +336,8 @@ namespace AVR {
     };
     template<MCU::Pin Pin>
     struct ActiveHigh<Pin, Input> {
+        typedef Pin pin_type;
+        typedef Input dir_type;
         static void init() {
             Pin::template dir<Input>();
         }
@@ -338,30 +346,10 @@ namespace AVR {
         }
     };
 
-
-    
-//    struct ActiveLow {
-//        template<MCU::Pin Pin>
-//        static void activate() {
-//            Pin::low();
-//        }
-//        template<MCU::Pin Pin>
-//        static void inactivate() {
-//            Pin::high();
-//        }
-//    };
-//    struct ActiveHigh {
-//        template<MCU::Pin Pin>
-//        static void activate() {
-//            Pin::high();
-//        }
-//        template<MCU::Pin Pin>
-//        static void inactivate() {
-//            Pin::low();
-//        }    
-//    };
-    
     template<typename Pin>
+    requires requires() {
+        typename Pin::pin_type;
+    }
     struct ScopedPin {
         ScopedPin() {
             Pin::activate();
@@ -370,46 +358,7 @@ namespace AVR {
             Pin::inactivate();
         }
     };
-    
 }
-
-//template<MCU::isPinSet PinSet, typename Commands>
-//requires requires {typename Commands::commands; typename Commands::options;}
-//struct CommandPort {
-//    template<typename C, typename... OO>
-//    requires 
-//    requires(C c) {c.value;} &&
-//    (requires(OO o) {typename OO::command_type; typename OO::value_type;} && ... && true) &&
-//    (std::is_same<C, typename OO::command_type>::value && ... && true) &&
-//    Meta::contains<typename Commands::commands, C>::value 
-//    inline static void put(OO... options) {
-//        auto ov = (options.value | ... | C::value);
-//        PinSet::set(ov);
-//    }
-
-//    template<typename Part, typename C, typename... OO>
-//    requires 
-//    requires(C c) {c.value;} &&
-//    requires(Part p) {typename Part::source_type;} &&
-//    (requires(OO o) {typename OO::command_type; typename OO::value_type;} && ... && true) &&
-//    (std::is_same<C, typename OO::command_type>::value && ... && true) &&
-//    Meta::contains<typename Commands::commands, C>::value 
-//    inline static void put(OO... options) {
-//        typename Part::source_type ov = (options.value | ... | C::value);
-//        PinSet::set(Part::convert(ov));
-//    }
-    
-//    template<typename C, typename... OO>
-//    requires 
-//    requires(C c) {c.value;} &&
-//    (std::is_same<C, typename OO::command_type>::value && ... && true) &&
-//    (requires(OO o) {typename OO::command_type;} && ... && true)
-//    static void get(OO... options) {
-//        PinSet::read();
-//    }
-//};
-
-
 
 template<typename Pin>
 struct Set {
