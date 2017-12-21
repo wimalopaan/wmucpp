@@ -250,7 +250,17 @@ namespace Meta {
         struct all_same_impl<T, L<I...>> {
             static inline constexpr bool value = (std::is_same<T, I>::value && ... && true);
         };
-        
+
+        template<typename L, auto N> struct partial_sum_impl;
+        template<typename... C, template<typename...>typename L, typename F, auto N>
+        struct partial_sum_impl<L<F, C...>, N> {
+            static inline constexpr size_t V = F::value + N;
+            typedef typename concat_impl<Meta::List<std::integral_constant<size_t, V>>, typename partial_sum_impl<L<C...>, V>::type>::type  type;
+        };
+        template<template<typename>typename L, typename F, auto N>
+        struct partial_sum_impl<L<F>, N> {
+            typedef Meta::List<std::integral_constant<size_t, F::value + N>> type;
+        };
     } // !detail
 
     namespace concepts {
@@ -352,6 +362,9 @@ namespace Meta {
 
     template<concepts::List List>
     using rest = typename detail::rest_impl<List>::type;
+    
+    template<typename L>
+    using partial_sum = typename detail::partial_sum_impl<L, 0>::type;
     
     template<typename T>
     struct nonVoid : public std::true_type {};    
@@ -484,6 +497,12 @@ namespace Meta {
         using l401 = Meta::rest<l303>;
         static_assert(std::is_same<Meta::front<l401>, B>::value);
         static_assert(std::is_same<Meta::back<l401>, A>::value);
+        
+        using l500 = Meta::List<std::integral_constant<uint8_t, 1>, std::integral_constant<uint8_t, 2>, std::integral_constant<uint8_t, 5>>;
+        using l500ps = Meta::partial_sum<l500>;
+        static_assert(nth_element<0, l500ps>::value == 1);
+        static_assert(nth_element<1, l500ps>::value == 3);
+        static_assert(nth_element<2, l500ps>::value == 8);
         
 //        static_assert(false);
         
