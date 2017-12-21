@@ -274,12 +274,15 @@ namespace Meta {
     template<concepts::List List, typename T>
     using push_front = typename detail::push_front_impl<List, T>::type;
 
-    template<concepts::List List, typename T>
-    using push_back = typename detail::push_back_impl<List, T>::type;
-    
     template<concepts::List List>
     using front = typename detail::front_impl<List>::type;
+    
+    template<concepts::List List, typename T>
+    using push_back = typename detail::push_back_impl<List, T>::type;
 
+    template<concepts::List List>
+    using back = typename detail::back_impl<List>::type;
+    
     template<typename> struct tfront;
     template<template<typename> typename F,
              template<template<typename> typename...> typename TL,
@@ -288,8 +291,6 @@ namespace Meta {
         template<typename T> using type = F<T>;
     };
     
-    template<concepts::List List>
-    using back = typename detail::back_impl<List>::type;
     
     template<template<typename> typename Func, concepts::List List>
     using transform = typename detail::transform_impl<Func, List>::type;
@@ -334,7 +335,6 @@ namespace Meta {
     template<concepts::List List, typename T>
     struct index: public std::integral_constant<size_t, detail::index_impl<List, T, 0>::value> {};
 
-
     template<typename List, template<typename> typename T>
     struct index_T: public std::integral_constant<size_t, detail::index_T_impl<List, T, 0>::value> {};
     
@@ -347,9 +347,6 @@ namespace Meta {
     template<typename TL>
     struct is_set_T : public std::integral_constant<bool, detail::is_set_T_impl<TL>::type::value> {};
 
-//    template<typename TL>
-//    struct is_set_T : public std::integral_constant<bool, true> {};
-    
     template<typename T, concepts::List L>
     struct all_same : public std::integral_constant<bool, detail::all_same_impl<T, L>::value> {};
 
@@ -373,15 +370,21 @@ namespace Meta {
         struct D {};
         struct E {};
         
+        // list
         using l1 = Meta::List<A, B>;
         static_assert(l1::size == 2);
+        // size
         static_assert(size<l1>::value == 2);
-        
+        // length
+        static_assert(length<A, B>::value == 2);
+        // apply
+        template<typename... T> struct NewList{typedef NewList<T...> type;};
+        using nl1 = apply<NewList, l1>;
+        // push_front
         using l2 = Meta::push_front<l1, C>;
         static_assert(l2::size == 3);
-
         static_assert(index<l2, B>::value == 2);
-        
+        // front
         using x1 = Meta::front<l2>;
         static_assert(std::is_same<x1, C>::value);
         
@@ -405,7 +408,7 @@ namespace Meta {
         static_assert(std::is_same<e0, A>::value);
         using e1 = Meta::nth_element<1, l6>;
         static_assert(std::is_same<e1, A>::value);
-        
+                
         using b6 = Meta::back<l6>;
         static_assert(std::is_same<b6, A>::value);
         using b1 = Meta::back<l1>;
@@ -466,6 +469,21 @@ namespace Meta {
         static_assert(!Meta::containsAll<l300, E, A>::value);
         static_assert(!Meta::containsAll<l300, E, D>::value);
         
+        static_assert(Meta::count<l300, A>::value == 1);
+        static_assert(Meta::count<l304, A>::value == 2);
+        
+        static_assert(Meta::index<l300, A>::value == 0);
+        static_assert(Meta::index<l300, C>::value == 2);
+        
+        using l400 = Meta::concat<l300, l301>;
+        static_assert(Meta::size<l400>::value == 4);
+        
+        static_assert(Meta::all_same<A, l302>::value);
+        static_assert(!Meta::all_same<A, l300>::value);
+        
+        using l401 = Meta::rest<l303>;
+        static_assert(std::is_same<Meta::front<l401>, B>::value);
+        static_assert(std::is_same<Meta::back<l401>, A>::value);
         
 //        static_assert(false);
         
