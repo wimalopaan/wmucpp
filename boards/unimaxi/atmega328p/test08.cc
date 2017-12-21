@@ -85,7 +85,7 @@ int main() {
     lcdPwmPin::dir<AVR::Output>();
     lcdPwmPin::off();
 
-    std::outl<terminal>("Test06"_pgm);
+    std::outl<terminal>("Test08"_pgm);
     while(true) {
         terminalDevice::periodic();
         systemTimer::periodic<systemTimer::flags_type::ocfa>([](){
