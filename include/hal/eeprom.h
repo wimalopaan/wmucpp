@@ -26,13 +26,16 @@ namespace EEProm {
     template<typename DataType, uint16_t Offset = 0>
     class Controller;
 
-    template<typename T, bool Enable>
+    template<typename T, bool UseMemberFlags>
     struct Base;
     template<typename T>
     struct Base<T, false> {
-        inline static constexpr uint8_t fChanged = 0;
-        inline static constexpr uint8_t fSaving  = 1;
-        inline static constexpr uint8_t fTimeoutExpired  = 2;
+        enum class Flags : uint8_t {Changed, Saving, TimeoutExpired, Number};
+        inline static constexpr uint8_t number_of_flags = uint8_t(Flags::Number);
+//        inline static constexpr uint8_t fChanged = 0;
+//        inline static constexpr uint8_t fSaving  = 1;
+//        inline static constexpr uint8_t fTimeoutExpired  = 2;
+        
     };
     template<typename T>
     struct Base<T, true> {
@@ -57,7 +60,7 @@ namespace EEProm {
                 base_type::mFlags.timeoutExpired = false;
             }
             else {
-                FlagRegister::template reset<base_type::fTimeoutExpired>();
+                FlagRegister::template reset<uint8_t(base_type::Flags::TimeoutExpired)>();
             }
         }
         inline static bool timeout() {
@@ -65,7 +68,7 @@ namespace EEProm {
                 return base_type::mFlags.timeoutExpired;
             }
             else {
-                return FlagRegister::template isSet<base_type::fTimeoutExpired>();
+                return FlagRegister::template isSet<uint8_t(base_type::Flags::TimeoutExpired)>();
             }
         }
         inline static void saveStart() {
@@ -74,8 +77,8 @@ namespace EEProm {
                 base_type::mFlags.changed = false;
             }
             else {
-                FlagRegister::template set<base_type::fSaving>();
-                FlagRegister::template reset<base_type::fChanged>();
+                FlagRegister::template set<uint8_t(base_type::Flags::Saving)>();
+                FlagRegister::template reset<uint8_t(base_type::Flags::Changed)>();
             }
         }
         inline static void saveEnd() {
@@ -83,7 +86,7 @@ namespace EEProm {
                 base_type::mFlags.saving = false;
             }
             else {
-                FlagRegister::template reset<base_type::fSaving>();
+                FlagRegister::template reset<uint8_t(base_type::Flags::Saving)>();
             }
         }
         inline static bool changed() {
@@ -91,7 +94,8 @@ namespace EEProm {
                 return base_type::mFlags.changed || base_type::mFlags.saving;
             }
             else {
-                return FlagRegister::template isSet<base_type::fChanged>() || FlagRegister::template isSet<base_type::fSaving>();
+                return FlagRegister::template isSet<uint8_t(base_type::Flags::Changed)>() || 
+                        FlagRegister::template isSet<uint8_t(base_type::Flags::Saving)>();
             }
         }
     public:
@@ -100,7 +104,7 @@ namespace EEProm {
                 base_type::mFlags.timeoutExpired = true;
             }
             else {
-                FlagRegister::template set<base_type::fTimeoutExpired>();
+                FlagRegister::template set<uint8_t(base_type::Flags::TimeoutExpired)>();
             }
         }
         inline static void change() {

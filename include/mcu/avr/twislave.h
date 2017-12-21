@@ -29,7 +29,9 @@ namespace TWI {
     template<typename T, bool Enable>
     struct Base;
     template<typename T>
-    struct Base<T, false> {};
+    struct Base<T, false> {
+        inline static constexpr uint8_t number_of_flags = 1;
+    };
     template<typename T>
     struct Base<T, true> {
         inline static volatile bool mChanged = false;

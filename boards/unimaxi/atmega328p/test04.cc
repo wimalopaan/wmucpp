@@ -51,7 +51,7 @@ constexpr TWI::Address address{0x59_B};
 
 template<typename RessourceFlags>
 using i2c_r = TWI::Slave<0, address, 2 * 16, MCU::UseInterrupts<false>, RessourceFlags>;
-template<> struct Hal::NumberOfFlags<i2c_r> : std::integral_constant<size_t, 1> {};
+//template<> struct Hal::NumberOfFlags<i2c_r> : std::integral_constant<size_t, 1> {};
 
 using controller = Hal::Controller<flagRegister, i2c_r>;
 using i2c = controller::get<i2c_r>;

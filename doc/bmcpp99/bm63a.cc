@@ -11,11 +11,13 @@
 
 using flagRegister = AVR::RegisterFlags<typename DefaultMcuType::GPIOR, 0, std::byte>;
 
-template<template<typename> typename T>
-struct NumberOfFlags : std::integral_constant<size_t, 0> {};
+//template<template<typename> typename T>
+//struct NumberOfFlags : std::integral_constant<size_t, 0> {};
 
 template<typename T, typename Flag>
-struct A final {
+struct A final  {
+    enum class flags : uint8_t {one, two, Number};
+    static inline constexpr uint8_t number_of_flags = uint8_t(flags::Number);
     A() = delete;
     static void f(){
         Flag::set();
@@ -25,6 +27,8 @@ struct A final {
 
 template<typename Flag, typename T>
 struct B final {
+    enum class flags : uint8_t {one, Number};
+    static inline constexpr uint8_t number_of_flags = uint8_t(flags::Number);
     B() = delete;
     static void f() {
         if (Flag::isSet()) {
@@ -36,14 +40,15 @@ struct B final {
 
 template<typename Flag>
 using AF = A<uint8_t, Flag>;
-template<>
-struct NumberOfFlags<AF> : std::integral_constant<size_t, 2> {};
+//template<>
+//struct NumberOfFlags<AF> : std::integral_constant<size_t, 2> {};
 
 
 template<typename Flag>
 using BF = B<Flag , uint16_t>;
-template<>
-struct NumberOfFlags<BF> : std::integral_constant<size_t, 1> {};
+
+//template<>
+//struct NumberOfFlags<BF> : std::integral_constant<size_t, 1> {};
 
 
 template<typename FlagRegister, template<typename> typename ... X>
@@ -52,7 +57,8 @@ struct Controller {
     using ressourceList = Meta::TList<X...>;
     static_assert(Meta::is_set_T<ressourceList>::value, "all ressources must be different");
     
-    using bitList = Meta::List<std::integral_constant<uint8_t, NumberOfFlags<X>::value>...>;
+//    using bitList = Meta::List<std::integral_constant<uint8_t, NumberOfFlags<X>::value>...>;
+    using bitList = Meta::List<std::integral_constant<uint8_t, X<void>::number_of_flags>...>;
     
     template<typename L, auto N> struct sum;
     template<typename... C, template<typename...>typename L, typename F, auto N>

@@ -45,7 +45,7 @@ using flagRegister = AVR::RegisterFlags<typename DefaultMcuType::GPIOR, 0, std::
 
 template<typename Flags>
 using spi_f = AVR::Spi<0, AVR::SpiSlave<MCU::UseInterrupts<false>>, Flags>;
-template<> struct Hal::NumberOfFlags<spi_f> : std::integral_constant<size_t, 1> {};
+//template<> struct Hal::NumberOfFlags<spi_f> : std::integral_constant<size_t, 1> {};
 
 using controller = Hal::Controller<flagRegister, spi_f>;
 using spi = controller::get<spi_f>;

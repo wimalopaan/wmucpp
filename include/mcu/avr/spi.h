@@ -107,6 +107,7 @@ namespace AVR {
     };
     template<typename Derived>
     struct SpiBase<Derived, false> {
+        inline static constexpr uint8_t number_of_flags = 1;
     };
     
     template<uint8_t N, typename Mode, typename Flags = void, typename MCU = DefaultMcuType>

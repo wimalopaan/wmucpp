@@ -58,7 +58,7 @@ template<typename F = void>
 struct EEPromData : EEProm::DataBase<EEPromData<F>, F> {
     uint8_t value;
 };
-template<> struct Hal::NumberOfFlags<EEPromData> : std::integral_constant<size_t, 3> {};
+//template<> struct Hal::NumberOfFlags<EEPromData> : std::integral_constant<size_t, 3> {};
 
 using controller = Hal::Controller<flagRegister, EEPromData>;
 using eedata = controller::get<EEPromData>;
