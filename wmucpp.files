@@ -46,6 +46,8 @@ boards/unimaxi/atmega328p/test08.cc
 boards/unimaxi/atmega328p/test09.cc
 boards/unimaxi/atmega328p/test10.cc
 doc/bmcpp02/bm40a.cc
+doc/bmcpp02/bm50a.cc
+doc/bmcpp02/bm51a.cc
 doc/bmcpp98/bm100a.c
 doc/bmcpp98/bm70b.cc
 doc/bmcpp98/bm73a.cc
@@ -78,6 +80,7 @@ host/test22.cc
 host/test23.cc
 host/test24.cc
 host/test30.cc
+host/test50.cc
 host/test90.cc
 include/appl/command.h
 include/container/tree.h
