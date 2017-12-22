@@ -68,6 +68,7 @@ doc/bmcpp99/bm60a.cc
 doc/bmcpp99/bm61a.cc
 doc/bmcpp99/bm62a.cc
 doc/bmcpp99/bm63a.cc
+doc/bmcpp99/bm70a.cc
 example/features/isr01.cc
 example/features/isr02.cc
 example/features/menu.cc

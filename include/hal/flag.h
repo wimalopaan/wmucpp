@@ -23,9 +23,13 @@
 #include <array>
 
 namespace Hal {
-    
     template<typename FlagRegister, uint8_t StartBit, uint8_t LastBit = StartBit>
+    requires requires() {
+        FlagRegister::get();
+    }
     struct Flag final {
+        inline static constexpr uint8_t startBit = StartBit;
+        inline static constexpr uint8_t lastBit = LastBit;
         Flag() = delete;
         static_assert(StartBit <= LastBit, "wrong ordering");
         static_assert(StartBit < 8, "wrong start bit in flag register"); // todo: FlagRegister::size

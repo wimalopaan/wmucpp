@@ -43,6 +43,7 @@ targets +=  bm60a.elf bm60a.s
 targets +=  bm61a.elf bm61a.s
 targets +=  bm62a.elf bm62a.s
 targets +=  bm63a.elf bm63a.s
+targets +=  bm70a.elf bm70a.s
 targets +=  bm99a.elf bm99a.s
 targets += sort.h.extract
 

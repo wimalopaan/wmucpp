@@ -54,7 +54,6 @@ constexpr TWI::Address address{0x59_B};
 
 template<typename RessourceFlags>
 using i2c_r = TWI::Slave<0, address, 2 * 16, MCU::UseInterrupts<false>, RessourceFlags>;
-//template<> struct Hal::NumberOfFlags<i2c_r> : std::integral_constant<size_t, 1> {};
 
 using terminalDevice = AVR::Usart<0, NullProtocollAdapter, MCU::UseInterrupts<false>, UseEvents<false>, AVR::ReceiveQueueLength<64>>;
 using terminal = std::basic_ostream<terminalDevice>;
@@ -65,8 +64,6 @@ template<typename F = void>
 struct EEPromData : EEProm::DataBase<EEPromData<F>, F> {
     uint8_t value;
 };
-
-//template<> struct Hal::NumberOfFlags<EEPromData> : std::integral_constant<size_t, 3> {};
 
 using controller = Hal::Controller<flagRegister, EEPromData, i2c_r>;
 using eedata = controller::get<EEPromData>;

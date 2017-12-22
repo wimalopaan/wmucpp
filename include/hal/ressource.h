@@ -25,16 +25,16 @@
 #include "flag.h"
 
 namespace Hal {
-//    template<template<typename> typename T>
-//    struct NumberOfFlags;
-    
     template<typename FlagRegister, template<typename> typename ... X>
+    requires requires() {
+        FlagRegister::get();
+        (X<FlagRegister>::number_of_flags,...);
+    } 
     struct Controller {
         static_assert(sizeof...(X) <= 8, "too much ressources");
         using ressourceList = Meta::TList<X...>;
         static_assert(Meta::is_set_T<ressourceList>::value, "all ressources must be different");
         
-//        using numberOfBitsList = Meta::List<std::integral_constant<uint8_t, NumberOfFlags<X>::value>...>;
         using numberOfBitsList = Meta::List<std::integral_constant<uint8_t, X<FlagRegister>::number_of_flags>...>;
         
         template<typename L, auto N> struct partial_sum_pairs_impl;

@@ -59,19 +59,16 @@ using flagRegister = AVR::RegisterFlags<typename DefaultMcuType::GPIOR, 0, std::
 constexpr TWI::Address address{0x59_B};
 template<typename RessourceFlags>
 using i2c_r = TWI::Slave<0, address, 2 * 16, MCU::UseInterrupts<false>, RessourceFlags>;
-//template<> struct Hal::NumberOfFlags<i2c_r> : std::integral_constant<size_t, 1> {};
 
 template<typename Flags>
 struct EEPromData : EEProm::DataBase<EEPromData<Flags>, Flags> {
     uint8_t value;
 };
-//template<> struct Hal::NumberOfFlags<EEPromData> : std::integral_constant<size_t, 3> {};
 
 template<typename Flags>
 using spi_f = AVR::Spi<0, AVR::SpiSlave<MCU::UseInterrupts<false>>, Flags>;
-//template<> struct Hal::NumberOfFlags<spi_f> : std::integral_constant<size_t, 1> {};
 
-using controller = Hal::Controller<flagRegister, EEPromData, i2c_r, spi_f>;
+using controller = Hal::Controller<flagRegister, spi_f, EEPromData, i2c_r>;
 
 using eedata = controller::get<EEPromData>;
 using i2c = controller::get<i2c_r>;

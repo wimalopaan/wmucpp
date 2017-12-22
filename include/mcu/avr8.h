@@ -23,6 +23,8 @@
 
 #if __has_include(<avr/io.h>)
 # include <avr/io.h>
+# undef _MMIO_BYTE
+# define _MMIO_BYTE(adr) ((uintptr_t)(adr))
 #endif
 
 #include "mcu/mcu.h"
@@ -125,3 +127,5 @@ namespace AVR {
 typedef AVR::ATMegaNone DefaultMcuType;
 #endif
 
+#undef _MMIO_BYTE
+#define _MMIO_BYTE(addr) (*(volatile uint8_t *)(addr))
