@@ -23,7 +23,7 @@
 #include "util/dassert.h"
 
 namespace HAL {
-    template<typename PinSet, typename ValueType = uint16_t, ValueType Top = 0>
+    template<typename PinSet, typename ValueType = uint16_t, ValueType Top = std::numeric_limits<ValueType>::max()>
     class SoftPWM {
         template<typename PinList> 
         struct Checker;
@@ -33,7 +33,8 @@ namespace HAL {
                 ((freeCounter >= mThresh[NumberedPins::value] ? NumberedPins::type::off() : (void)0), ...);
             }
         };
-        template<typename T, size_t Number> struct Numberer{
+        template<typename T, size_t Number> 
+        struct Numberer{
             typedef T type;
             static inline constexpr size_t value = Number;
         };

@@ -123,8 +123,10 @@ namespace std {
         }
         template<MCU::Stream Stream>
         void out(const DateTime::TimeTm& t) {
-            std::out<Stream>("Time["_pgm, (uint8_t)t.mTime.tm_mday, '/', (uint8_t)(t.mTime.tm_mon + 1), '/', (uint16_t)(t.mTime.tm_year + 1900), ' '
-                             , (uint8_t)t.mTime.tm_hour, ':', (uint8_t)t.mTime.tm_min, ':', (uint8_t)t.mTime.tm_sec, ']');
+            std::out<Stream>("Time["_pgm, (uint8_t)t.mTime.tm_mday, Char{'/'}, (uint8_t)(t.mTime.tm_mon + 1), Char{'/'}, 
+                             (uint16_t)(t.mTime.tm_year + 1900), Char{' '}, 
+                             (uint8_t)t.mTime.tm_hour, Char{':'}, (uint8_t)t.mTime.tm_min, Char{':'}, 
+                             (uint8_t)t.mTime.tm_sec, Char{']'});
         }
         
         template<MCU::Stream Stream>
@@ -397,7 +399,8 @@ Stream& operator<<(Stream& o, const std::percent& p) {
 
 template<typename Stream>
 Stream& operator<<(Stream& out, const DateTime::TimeTm& t) {
-    return out << "Time["_pgm << (uint8_t)t.mTime.tm_mday << '/' << (uint8_t)(t.mTime.tm_mon + 1) << '/' << (uint16_t)(t.mTime.tm_year + 1900) << ' '
-               << (uint8_t)t.mTime.tm_hour << ':' << (uint8_t)t.mTime.tm_min << ':' << (uint8_t)t.mTime.tm_sec << ']';
+    return out << "Time["_pgm << (uint8_t)t.mTime.tm_mday << Char{'/'} << (uint8_t)(t.mTime.tm_mon + 1) << Char{'/'} << 
+                  (uint16_t)(t.mTime.tm_year + 1900) << Char{' '} << (uint8_t)t.mTime.tm_hour << Char{':'} << 
+                  (uint8_t)t.mTime.tm_min << Char{':'} << (uint8_t)t.mTime.tm_sec << Char{']'};
 }
 

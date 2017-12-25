@@ -59,7 +59,7 @@ typedef led::color_type Color;
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using fetPin = AVR::Pin<PortB, 1>;
 using lcdPinSet = AVR::PinSet<fetPin>;
-using lcdPwm = HAL::SoftPWM<lcdPinSet>;
+using lcdPwm = HAL::SoftPWM<lcdPinSet, uint8_t>;
 //using lcdPwm = SoftPWM<fetPin>;
 
 #ifdef USE_BUTTON
@@ -194,6 +194,7 @@ struct Timerhandler: public EventHandler<EventType::Timer> {
         ++counter;
         
         std::percent v = std::scale(counter % 10u, 0, 9);
+//        std::percent v = 80_ppc;
         
         lcdPwm::pwm(v, 0);
         blinker::tick();
@@ -241,7 +242,6 @@ int main() {
     // todo: usart ohne Interrupt
     // todo: spi ohne Interrupt
     // todo: twi ohne Interrupt
-    
     
     {
         Scoped<EnableInterrupt<>> interruptEnabler;
