@@ -49,11 +49,11 @@ namespace HAL {
             pin_set::allOff();    
         }
         static void freeRun() {
-            if constexpr(Top == 0) {
+            if constexpr(Top == std::numeric_limits<ValueType>::max()) {
                 ++freeCounter;
             }
             else {
-                freeCounter = (freeCounter + 1) % Top;
+                freeCounter = (freeCounter + 1) % (Top + 1);
             }
             if (freeCounter == 0) {
                 PinSet::allOn();

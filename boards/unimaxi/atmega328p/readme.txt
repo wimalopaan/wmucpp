@@ -50,38 +50,39 @@
 	- toggle LCD-PWM-Pin wenn SPI-Ready
 
 * test11:
+	- SPI mit FlagRegister
+	- ohne Interrupt
+	- UART
+	
+* test12:
 	- ohne Interrupt
 	- Usart
-	- EEProm
+	- EEProm (FlagRegister)
 	- I2C (FlagRegister)
 	- SPI (FlagRegister)
-	- I2C: toggle LCD-PWM-Pin wenn Empfang
 
+* test13:
+	- ohne Interrupt
+	- Usart
+	- EEProm (FlagRegister)
+	- I2C (FlagRegister)
+	- SPI (FlagRegister)
+	- LCD PWM
 
+* test14:
+	- ohne Interrupt
+	- Usart
+	- EEProm (FlagRegister)
+	- I2C (FlagRegister)
+	- SPI (FlagRegister)
+	- LCD PWM
+	- LCD Ausgabe
 
 -----
-* test07:
-	- SPI Test
-	- mit Interrupt, ohne Events
-	- toggle LCD-PWM-Pin wenn SPI-Ready
-
-
-* test07:
-	- mit Interrupt
-	- Usart
-
-* test08:
-	- LCD-Ausgabe
 	
 * test09:
 	- LCD-Ausgabe
 	- Drehencoder
-
-* test10:
-	- ohne Interrupt
-	- Usart 
-	- SPI
-
 
 * main: 
 	volle Funktion

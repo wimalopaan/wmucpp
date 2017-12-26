@@ -46,12 +46,15 @@ namespace TWI {
         typedef typename TWIMaster::twc twc;
         
         template<const std::hertz& fSCL>
-        static void init() {
-            TWIMaster::template init<fSCL>();    
+        static uint8_t init() {
+            reset();
+            return TWIMaster::template init<fSCL>();    
         }
-        
+        static void reset() {
+            mSendQueue.clear();
+            mState = State::Inactive;
+        }        
         static void rateProcess() {
-            static State mState;
             static std::byte lastAddress{0};
             switch(mState) {
             case State::Inactive:
@@ -280,8 +283,9 @@ namespace TWI {
         static std::optional<std::byte> get() {
             return mRecvQueue.pop_front();
         }
-        
     private:
+        static inline State mState = State::Inactive;
+        
         // todo: beide Queues zusammenlegen, weil entweder read oder write stattfindet.
         inline static std::FiFo<std::byte, BSize> mRecvQueue;
         inline static std::FiFo<std::byte, BSize> mSendQueue;
@@ -310,10 +314,33 @@ namespace TWI {
         }
         return {};
     }
+
+    template<uint8_t N, typename MCU>
+    struct TwiPorts;
+    template<>
+    struct TwiPorts<0, AVR::ATMega1284P> {
+        using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
+        typedef AVR::Pin<PortC, 0> scl;
+        typedef AVR::Pin<PortC, 1> sda;
+    };
+    template<>
+    struct TwiPorts<0, AVR::ATMega328PB> {
+        using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
+        typedef AVR::Pin<PortC, 5> scl;
+        typedef AVR::Pin<PortC, 4> sda;
+    };
+    template<>
+    struct TwiPorts<1, AVR::ATMega328PB> {
+        using PortE = AVR::Port<DefaultMcuType::PortRegister, AVR::E>;
+        typedef AVR::Pin<PortE, 1> scl;
+        typedef AVR::Pin<PortE, 0> sda;
+    };
     
     template<uint8_t N, typename MCU = DefaultMcuType>
     class Master final {
     public:
+        typedef TwiPorts<N, MCU> ports;
+        
         typedef MCU mcu_type;     
         typedef typename mcu_type::TWI      mcu_twi_type;     
         typedef typename mcu_type::TWI::TWS tws;     
@@ -329,13 +356,17 @@ namespace TWI {
         static constexpr auto tw_status_mask = tws::tws7 | tws::tws6 | tws::tws5 | tws::tws4 | tws::tws3;
         
         template<const std::hertz& fSCL>
-        static void init() {
+        static uint8_t init() {
+            if (uint8_t e = clear(); e != 0) {
+                return e;
+            }
             constexpr auto tsd = calculateNextPossibleBelow<mcu_twi_type, N>(fSCL);
             const auto bits = AVR::Util::bitsFrom<tsd.prescale>(ps::values);
             
             mcuTwi()->twsr.template set<bits>();          
             //        mcuTwi()->twsr = MCU::TWI::template Prescaler<N, tsd.prescale>::value;                         
             *mcuTwi()->twbr = tsd.twbr;  
+            return 0;
         }
         
         static bool transmissionCompleted() {
@@ -408,7 +439,49 @@ namespace TWI {
             }
             return true;
         }
-        
+
+        static uint8_t clear() {
+            mcuTwi()->twcr.template clear<twc::twen>();
+            ports::scl::template dir<AVR::Input>();
+            ports::sda::template dir<AVR::Input>();
+            ports::scl::off();
+            ports::sda::off();
+            
+            Util::delay(100_ms);
+            
+            if (!ports::scl::isHigh()) {
+                return 1;
+            }
+            
+            bool sda_low = !ports::sda::isHigh();
+            uint8_t clockCount = 20;
+            while(sda_low && (clockCount > 0)) {
+                --clockCount;
+                ports::scl::template dir<AVR::Output>();
+                Util::delay(10_us);
+                ports::scl::template dir<AVR::Input>();
+                Util::delay(10_us);
+                bool scl_low = !ports::scl::isHigh();
+                uint8_t count = 20;
+                while(scl_low && (count > 0)) {
+                    --count;
+                    Util::delay(10_ms);
+                    scl_low = !ports::scl::isHigh();
+                }
+                if (scl_low) {
+                    return 2;
+                } 
+                sda_low = !ports::sda::isHigh();
+            }
+            if (sda_low) {
+                return 3;
+            }
+            ports::sda::template dir<AVR::Output>();
+            Util::delay(10_us);
+            ports::sda::template dir<AVR::Input>();
+            
+            return 0;
+        }        
         static void stop() {
             /* send stop condition */
             mcuTwi()->twcr.template set<twc::twint | twc::twen | twc::twsto>();

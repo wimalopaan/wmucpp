@@ -39,6 +39,7 @@ targets += constantrate.elf constantrate.s
 #targets += menu.elf menu.s
 targets += menu_s.elf menu_s.s
 #targets += ledbuttons.elf ledbuttons.s 
+targets += pinset.elf pinset.s pinset.S
 
 -include ../../Makefile.include
 

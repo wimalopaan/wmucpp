@@ -13,13 +13,23 @@ using terminal = std::basic_ostream<terminalDevice>;
 constexpr uint8_t Base = 10;
 std::array<char, Util::numberOfDigits<uint64_t, Base>() + 1> string;
 
+volatile uint32_t x = 1234;
+
 int main() {
 //    Scoped<EnableInterrupt> interruptEnabler;
 //    uint64_t value = 1234;
-    uint32_t value = 1234;
+    
+    uint32_t value = x;
+    
     Util::V2::itoa<Base>(value, string);
     std::outl<terminal>(string);
 
+    for(auto c : Util::detail::Convert<2,10>::lookupTable) {
+        std::out<terminal>(Char{c});
+    }
+    
+    std::outl<terminal>(Char{'\n'});
+    
     while(true) {}
 }
 

@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define NDEBUG
+
 #include "mcu/ports.h"
 
 using PortB = AVR::Port<AVR::ATMega328P::PortRegister, AVR::B>;
@@ -24,19 +26,24 @@ using PortC = AVR::Port<AVR::ATMega328P::PortRegister, AVR::C>;
 using Led1 = AVR::Pin<PortB, 1>;
 using Led2 = AVR::Pin<PortB, 2>;
 
-using leds = AVR::PinSet<Led1, Led2>;
+struct A{};
+using leds = AVR::PinSet<AVR::UsePgmTable, Led1, Led2>;
+//using leds = AVR::PinSet<Led1, Led2>;
 
 using din1 = AVR::Pin<PortB, 4>;
 using din2 = AVR::Pin<PortB, 5>;
 
 using inputs = AVR::PinSet<din1, din2>;
 
+volatile bitsN_t<2> x;
+
+
 int main() {
     leds::dir<AVR::Output>();
     leds::allOff();
 
-    inputs::dir<AVR::Input>();
-    inputs::allPullup();
+//    inputs::dir<AVR::Input>();
+//    inputs::allPullup();
     
 //    leds::on<Led1>();
 //    leds::on<Led1, Led2>();
@@ -48,9 +55,9 @@ int main() {
 //    leds::set<2>();
 //    leds::set<3>();
 
-//    leds::set(std::byte{1});
+    leds::set(x);
 
-    PortC::set(std::byte{1});
+//    PortC::set(std::byte{1});
     
     
     while(true) {}

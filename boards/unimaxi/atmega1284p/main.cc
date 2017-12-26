@@ -21,13 +21,13 @@
 
 //#define NDEBUG
 
-#define MEM
+//#define MEM
 #define OW
-#define DCF
+//#define DCF
 #define I2C
 //#define HOTT
 //#define BTerm
-#define I2CInt
+//#define I2CInt
 #define LEDS1
 //#define SOFTPWM
 //#define HARDPWM
@@ -192,7 +192,8 @@ struct MCP23008Parameter {
     static constexpr EventType eventValueAvailable = EventType::I2CRamValueAvailable;
     static constexpr EventType eventError = EventType::I2CRamError;
 };
-constexpr TWI::Address mcp23008Address{std::byte{35}};
+//constexpr TWI::Address mcp23008Address{std::byte{35}};
+constexpr TWI::Address mcp23008Address{std::byte{0x23}};
 using mcp23008 = I2CGeneric<TwiMasterAsync, mcp23008Address, MCP23008Parameter>;
 
 constexpr TWI::Address lcdAddress{std::byte{0x59}};
@@ -252,7 +253,7 @@ namespace Constant {
 static constexpr std::hertz pwmFrequency = 100_Hz;
 }
 
-const auto periodicTimer = alarmTimer::create(1000_ms, AlarmFlags::Periodic);
+const auto periodicTimer = alarmTimer::create(300_ms, AlarmFlags::Periodic);
 #ifdef OW
 const auto temperaturTimer = alarmTimer::create(1000_ms, AlarmFlags::Periodic);
 const auto measurementTimer = alarmTimer::create(750_ms, AlarmFlags::OneShot | AlarmFlags::Disabled);
@@ -274,10 +275,15 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
             if (counter % 2) {
                 statusLed::off();
 #ifdef I2C
-                ds1307::startReadTimeInfo();
-                mcp23008::startWrite(0x09, std::byte(~counter));
-                
-                lcd::startWrite(0, std::byte('a' + (counter % 10)));
+                if (!ds1307::startReadTimeInfo()) {
+                    std::outl<terminal>("failure 01"_pgm);
+                }
+                if (!mcp23008::startWrite(0x09, std::byte(~counter))) {
+                    std::outl<terminal>("failure 02"_pgm);
+                }
+                if (!lcd::startWrite(0, std::byte('a' + (counter % 10)))) {
+                    std::outl<terminal>("failure 03"_pgm);
+                }
 #endif
 #ifdef OW
                 
@@ -329,8 +335,10 @@ struct DS1307handlerError: public EventHandler<EventType::DS1307Error> {
 };
 
 struct TWIHandlerError: public EventHandler<EventType::TWIError> {
-    static bool process(std::byte) {
-        std::outl<terminal>("twi error"_pgm);
+    static bool process(std::byte b) {
+        std::outl<terminal>("twi error: "_pgm, b);
+//        TwiMasterAsync::reset();
+        ds1307::init();
         return true;
     }  
 };
@@ -411,7 +419,9 @@ int main() {
 #endif
 #ifdef I2C
     TwiMaster::init<ds1307::fSCL>();
-    ds1307::init();
+    if (auto e = ds1307::init(); e != 0) {
+        std::outl<terminal>("I2C Init Error: "_pgm, e);
+    }
 #endif
 #ifdef DCF
     dcfDecoder::init();

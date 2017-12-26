@@ -162,7 +162,7 @@ namespace Meta {
                  template<typename>typename... R> 
         struct count_T_impl<L<F, R...>, T> {
             inline static constexpr size_t value = [] {
-                constexpr auto v = is_same_template<T, F>::value;
+                constexpr auto v = Util::is_same_template<T, F>::value;
                 if constexpr(sizeof...(R) > 0) {
                     return count_T_impl<L<R...>, T>::value + v;
                 }
@@ -192,7 +192,7 @@ namespace Meta {
                  template<typename> typename T, size_t N>
         struct index_T_impl<L<F, R...>, T, N> {
             inline static constexpr size_t value = [] {
-                if constexpr(is_same_template<F, T>::value) {
+                if constexpr(Util::is_same_template<F, T>::value) {
                     return N;
                 }
                 else {

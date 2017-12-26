@@ -427,7 +427,7 @@ public:
     inline static constexpr auto size = Bits;
     typedef typename detail::TypeForBits<Bits>::type value_type;
     inline static constexpr value_type mask = ((1 << Bits) - 1);
-    
+    constexpr bitsN_t(const volatile bitsN_t& o) : mValue{o.mValue} {}
     constexpr bitsN_t() = default;
     constexpr explicit bitsN_t(value_type v) : mValue(v & mask) {}
     constexpr explicit bitsN_t(std::byte v) : mValue(std::to_integer<value_type>(v) & mask) {}

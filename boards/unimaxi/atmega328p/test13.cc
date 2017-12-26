@@ -29,6 +29,7 @@
 #include "hal/alarmtimer.h"
 #include "hal/eeprom.h"
 #include "hal/ressource.h"
+#include "hal/softpwm.h"
 #include "mcu/avr/twislave.h"
 #include "mcu/avr/spi.h"
 #include "console.h"
@@ -43,6 +44,11 @@ using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
 using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
 
+using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
+using fetPin = AVR::Pin<PortB, 1>;
+using lcdPinSet = AVR::PinSet<fetPin>;
+using lcdPwm = HAL::SoftPWM<lcdPinSet, uint8_t>;
+
 // Timer0
 using systemTimer = AVR::Timer8Bit<0>;
 using alarmTimer = AlarmTimer<systemTimer, UseEvents<false>>;
@@ -54,33 +60,68 @@ using terminal = std::basic_ostream<terminalDevice>;
 
 using flagRegister = AVR::RegisterFlags<typename DefaultMcuType::GPIOR, 0, std::byte>;
 
+constexpr TWI::Address address{0x59_B};
+template<typename RessourceFlags>
+using i2c_r = TWI::Slave<0, address, 2 * 16, MCU::UseInterrupts<false>, RessourceFlags>;
+
+template<typename Flags>
+struct EEPromData : EEProm::DataBase<EEPromData<Flags>, Flags> {
+    uint8_t value1;
+    uint8_t value2;
+};
+
 template<typename Flags>
 using spi_f = AVR::Spi<0, AVR::SpiSlave<MCU::UseInterrupts<false>>, Flags>;
 
-using controller = Hal::Controller<flagRegister, spi_f>;
+using controller = Hal::Controller<flagRegister, spi_f, EEPromData, i2c_r>;
 
+using eedata = controller::get<EEPromData>;
+using i2c = controller::get<i2c_r>;
 using spi = controller::get<spi_f>;
 
+using eeprom = EEProm::Controller<eedata>;
+auto& appData = eeprom::data();
+
 int main() {
+    eeprom::init();
+    i2c::init();
     spi::init();
+    lcdPwm::init();    
+    
+    {
+        using namespace std::literals::quantity;
+        lcdPwm::pwm(20_ppc, 0);
+    }
     
     terminalDevice::init<19200>();
     alarmTimer::init(AVR::TimerMode::CTCNoInt);
 
-    std::outl<terminal>("Test11"_pgm);
+    std::outl<terminal>("Test13"_pgm);
+    
     while(true) {
+        lcdPwm::freeRun();
         terminalDevice::periodic();
+        if (auto c = terminalDevice::get()) {
+            appData.change();
+            std::outl<terminal>("*"_pgm);
+        }
         systemTimer::periodic<systemTimer::flags_type::ocfa>([](){
             alarmTimer::periodic([](uint7_t timer) {
                 if (timer == *periodicTimer) {
                     std::outl<terminal>("tick"_pgm);
+                    appData.expire();
                 }
             });
+        });
+        while(eeprom::saveIfNeeded()) {
+            std::outl<terminal>("."_pgm);
+        }
+        i2c::whenReady([]{
+            i2c::changed(false);
         });
         spi::whenReady([](std::byte b){
             terminalDevice::put(b);
         });
-        
     }
 }
 #ifndef NDEBUG

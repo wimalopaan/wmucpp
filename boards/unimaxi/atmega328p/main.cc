@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define NDEBUG
+
 #include <stdlib.h>
 
 #include "main.h"
@@ -47,8 +49,10 @@
 // 8Mhz int
 // sudo avrdude -p atmega328p -P usb -c avrisp2 -U lfuse:w:0xe2:m -U hfuse:w:0xd9:m -U efuse:w:0xff:m
 
-using spiInput = AVR::Spi<0, AVR::SpiSlave<>>;
-using terminalDevive = AVR::Usart<0, void, MCU::UseInterrupts<true>, UseEvents<true>, AVR::ReceiveQueueLength<64>>;
+using spiInput = AVR::Spi<0, AVR::SpiSlave<MCU::UseInterrupts<false>>>;
+//using spiInput = AVR::Spi<0, AVR::SpiSlave<MCU::UseInterrupts<true>>>;
+
+using terminalDevive = AVR::Usart<0, void, MCU::UseInterrupts<true>, UseEvents<true>, AVR::ReceiveQueueLength<0>>;
 using terminal = std::basic_ostream<terminalDevive>;
 
 using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
@@ -84,7 +88,7 @@ using LcdRS = AVR::Pin<PortD, 6>;
 using LcdRW = AVR::Pin<PortD, 5>;
 using LcdE  = AVR::Pin<PortD, 7>;
 
-using LcdData = AVR::PinSet<LcdDB4, LcdDB5, LcdDB6, LcdDB7>;
+using LcdData = AVR::PinSet<AVR::UsePgmTable, LcdDB4, LcdDB5, LcdDB6, LcdDB7>;
 
 using lcd = LCD::HD44780Port<LcdData, LcdRS, LcdRW, LcdE, LCD::Lcd2x16>;
 using lcdStream = BufferedStream<lcd, 64, std::lineTerminator<std::LF>>;
@@ -177,14 +181,15 @@ using blinker = Blinker<led>;
 constexpr TWI::Address address{0x59_B};
 using i2c = TWI::Slave<0, address, lcd::param_type::rows * lcd::param_type::cols>;
 
-using isrReg = IsrRegistrar<spiInput, terminalDevive::RxHandler, terminalDevive::TxHandler, i2c>; 
+//using isrReg = IsrRegistrar<spiInput, terminalDevive::RxHandler, terminalDevive::TxHandler, i2c>; 
+using isrReg = IsrRegistrar<terminalDevive::RxHandler, terminalDevive::TxHandler, i2c>; 
 
-struct Spi0handler: public EventHandler<EventType::Spi0> {
-    static bool process(std::byte v) {
-        Util::put<terminalDevive, true>(v);
-        return true;
-    }
-};
+//struct Spi0handler: public EventHandler<EventType::Spi0> {
+//    static bool process(std::byte v) {
+//        Util::put<terminalDevive, true>(v);
+//        return true;
+//    }
+//};
 
 struct Timerhandler: public EventHandler<EventType::Timer> {
     static bool process(std::byte){
@@ -234,8 +239,8 @@ int main() {
     
     systemTimer::create(500_ms, AlarmFlags::Periodic);
     
-    
-    using handler = EventHandlerGroup<Spi0handler, Timerhandler>;
+//    using handler = EventHandlerGroup<Spi0handler, Timerhandler>;
+    using handler = EventHandlerGroup<Timerhandler>;
     
     std::fill(i2c::registers().begin(), i2c::registers().end(), std::byte{' '});
     
@@ -254,9 +259,12 @@ int main() {
             systemConstantRate::periodic();
             lcdPwm::freeRun();
             lcdStream::periodic();
-            if (spiInput::leak()) {
-                blinker::failure0();
-            }
+            spiInput::whenReady([](std::byte b){
+                terminalDevive::put(b);
+            });
+//            if (spiInput::leak()) {
+//                blinker::failure0();
+//            }
             if (i2c::isChanged()) {
                 i2c::changed(false);
                 lcd::setPosition(LCD::Row{1}, LCD::Column{0});
@@ -279,9 +287,9 @@ void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsign
 ISR(TWI_vect) {
     isrReg::isr<AVR::ISR::Twi<0>>();
 }
-ISR(SPI_STC_vect) {
-    isrReg::isr<AVR::ISR::Spi<0>::Stc>();
-}
+//ISR(SPI_STC_vect) {
+//    isrReg::isr<AVR::ISR::Spi<0>::Stc>();
+//}
 ISR(USART_RX_vect) {
     isrReg::isr<AVR::ISR::Usart<0>::RX>();
 }

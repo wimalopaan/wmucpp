@@ -26,6 +26,8 @@ template<typename Pin1, typename Pin2, typename ValueType = uint8_t>
 class RotaryEncoder {
 public:
     typedef ValueType value_type;
+    typedef Pin1 pin1_type;
+    typedef Pin2 pin2_type;
     static void init() {
         Pin1::template dir<AVR::Input>();
         Pin2::template dir<AVR::Input>();
@@ -33,23 +35,47 @@ public:
         Pin2::pullup();
     }
     static void start() {}
-    static void rateProcess() {
+    static inline void rateProcess() {
         uint8_t newState = (Pin1::read() ? 2 : 0) + (Pin2::read() ? 1 : 0);    
-        uint8_t offset = transitionTable[mLastState][newState];
-        value() += offset;
+        switch (mLastState) {
+        case 0:
+            if (newState == 1) {
+                mValue += 1;
+            }
+            else if (newState == 2) {
+                mValue -= 1;
+            }
+            break;
+        case 1:
+            if (newState == 0) {
+                mValue -= 1;
+            }
+            break;
+        case 2:
+            if (newState == 0) {
+                mValue += 1;
+            }
+            break;
+        case 3:
+            break;
+        default:
+            assert(false);
+        }
+//        uint8_t offset = transitionTable[mLastState][newState];
+//        mValue += offset;
         mLastState = newState;
     }
-    static ValueType& value() {
-        static ValueType v = 0;        
-        return v;
+    static ValueType value() {
+        return mValue;
     }   
 private:
+    inline static ValueType mValue = 0;
     inline static uint8_t mLastState = 0;
-    static constexpr uint8_t numberOfStates = 4;
-    static constexpr int8_t transitionTable[numberOfStates][numberOfStates] = {
-        { 0, 1, -1, 0},
-        {-1, 0,  0, 0},
-        { 1, 0,  0, 0},
-        { 0, 0,  0, 0}
-    };
+//    static inline constexpr uint8_t numberOfStates = 4;
+//    static inline constexpr int8_t transitionTable[numberOfStates][numberOfStates] = {
+//        { 0, 1, -1, 0},
+//        {-1, 0,  0, 0},
+//        { 1, 0,  0, 0},
+//        { 0, 0,  0, 0}
+//    };
 };

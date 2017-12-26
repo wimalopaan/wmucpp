@@ -26,6 +26,8 @@
 #include "hal/alarmtimer.h"
 #include "console.h"
 
+static constexpr bool useTerminal = true;
+
 using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
@@ -38,42 +40,46 @@ using TwiMaster = TWI::Master<0>;
 using TwiMasterAsync = TWI::MasterAsync<TwiMaster>;
 using ds1307 = DS1307<TwiMasterAsync>;
 
-using SoftSPIData = AVR::Pin<PortA, 0>;
-using SoftSPIClock = AVR::Pin<PortA, 1>;
-using SoftSPISS = AVR::Pin<PortA, 2>;
+//using SoftSPIData = AVR::Pin<PortA, 0>;
+//using SoftSPIClock = AVR::Pin<PortA, 1>;
+//using SoftSPISS = AVR::Pin<PortA, 2>;
+using SoftSPIData = AVR::Pin<PortB, 1>;
+using SoftSPIClock = AVR::Pin<PortB, 0>;
+using SoftSPISS = AVR::Pin<PortC, 3>;
 using SSpi0 = SoftSpiMaster<SoftSPIData, SoftSPIClock, SoftSPISS>;
 
-using terminal = SSpi0;
+using terminalDevice = std::conditional<useTerminal, SSpi0, void>::type;
+using terminal = std::basic_ostream<terminalDevice>;
 
-namespace std {
-    std::basic_ostream<terminal> cout;
-    std::lineTerminator<CRLF> endl;
-}
+//namespace std {
+//    std::basic_ostream<terminal> cout;
+//    std::lineTerminator<CRLF> endl;
+//}
 
 struct DS1307handler: public EventHandler<EventType::DS1307TimeAvailable> {
     static bool process(std::byte) {
-        std::cout << "ds1307 time"_pgm << std::endl;
+        std::outl<terminal>("ds1307 time"_pgm);
         return true;
     }  
 };
 
 struct DS1307handlerError: public EventHandler<EventType::DS1307Error> {
     static bool process(std::byte) {
-        std::cout << "ds1307 error"_pgm << std::endl;
+        std::outl<terminal>("ds1307 error"_pgm);
         return true;
     }  
 };
 
 struct TWIHandlerError: public EventHandler<EventType::TWIError> {
     static bool process(std::byte) {
-        std::cout << "twi error"_pgm << std::endl;
+        std::outl<terminal>("twi error"_pgm);
         return true;
     }  
 };
 
 struct TimerHandler : public EventHandler<EventType::Timer> {
     static bool process(std::byte) {
-        std::cout << "timer"_pgm << std::endl;
+        std::outl<terminal>("timer"_pgm);
         ds1307::startReadTimeInfo();
         return true;
     }
@@ -85,12 +91,12 @@ using isrReg = IsrRegistrar<periodicGroup>;
 
 int main()
 {
-    terminal::init();
+    terminalDevice::init();
     systemTimer::init();
     ds1307::init();
     ds1307::squareWave<true>();
     
-    std::cout << "DS1307 async example"_pgm << std::endl;
+    std::outl<terminal>("DS1307 async example"_pgm);
 
     systemTimer::create(1000_ms, AlarmFlags::Periodic);
     
@@ -103,8 +109,8 @@ int main()
 }
 
 #ifndef NDEBUG
-void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
-    std::cout << "Assertion failed: "_pgm << expr << ',' << file << ',' << line << std::endl;
+void assertFunction(const PgmStringView& expr __attribute__((unused)), const PgmStringView& file, unsigned int line) noexcept {
+    std::outl<terminal>("Assertion failed: "_pgm, expr, ',', file, ',', line);
     while(true) {}
 }
 #endif

@@ -28,11 +28,14 @@
 
 #include "mcu/avr8.h"
 #include "mcu/concepts.h"
+#include "container/pgmarray.h"
 #include "util/disable.h"
 #include "util/meta.h"
 #include "util/types.h"
+#include "util/type_traits.h"
 
 namespace AVR {
+    struct UsePgmTable{};
     
     struct Output final {
         Output() = delete;
@@ -90,16 +93,79 @@ namespace AVR {
         }
     };
     
-    template<typename... Pins>
+    namespace detail::PinSet {
+        
+        template<typename... Pins>
+        struct Generator {
+            static inline constexpr uint8_t size = sizeof...(Pins);
+            static constexpr std::byte pinMasks[] = {Pins::pinMask...};
+            inline constexpr auto operator()() {
+                constexpr uint16_t numberOfPatterns = (1 << size);
+                std::array<std::byte, numberOfPatterns> data;
+                for(uint8_t value = 0; value < numberOfPatterns; ++value) {
+                    std::byte pattern{0};
+                    std::byte vv{value};
+                    for(uint8_t bit = 0; bit < size; ++bit) {
+                        if (std::any(vv & std::byte{0x01})) {
+                            pattern |= pinMasks[bit];
+                        }
+                        vv >>= 1;
+                    }
+                    data[value] = pattern;
+                }
+                return data;
+            }            
+        };
+        
+        template<bool usePgm, typename... Pins>
+        struct Table;
+        
+        template<typename... Pins>
+        struct Table<false, Pins...> {
+            static inline constexpr uint8_t size = sizeof...(Pins);
+            using generator_type = Generator<Pins...>;
+            static inline constexpr auto valueBits = Generator<Pins...>()();
+        };
+        template<typename... Pins>
+        struct Table<true, Pins...> {
+            static inline constexpr uint8_t size = sizeof...(Pins);
+            using generator_type = Generator<Pins...>;
+            using t = typename ::Util::Pgm::Converter<generator_type>::pgm_type;
+            static inline constexpr auto valueBits = t{};
+        };
+    }
+
+//    template<typename... Pins>
+    template<typename P1, typename... PPs>
     class PinSet final {
     public:
-        static_assert(sizeof... (Pins) <= 8, "too much pins in PinSet");
-        static constexpr uint8_t size = sizeof...(Pins);
-        static constexpr uint8_t pinNumbers[] = {Pins::number...};
-        static constexpr std::byte pinMasks[] = {Pins::pinMask...};
-        static constexpr std::byte setMask = (Pins::pinMask | ... | std::byte{0});
+        static constexpr bool p1IsPin = !std::is_same<P1, UsePgmTable>::value;
+        static constexpr bool usePgm = !p1IsPin;
         
-        using pinlist = Meta::List<Pins...>;
+        using pinlist = typename std::conditional<p1IsPin, Meta::List<P1, PPs...>, Meta::List<PPs...>>::type;
+        
+        using table_type = typename std::conditional<p1IsPin, detail::PinSet::Table<usePgm, P1, PPs...>, detail::PinSet::Table<usePgm, PPs...>>::type;
+        static inline constexpr table_type table{};
+        
+        using gen_type = typename table_type::generator_type;
+        
+//        static_assert(sizeof... (Pins) <= 8, "too much pins in PinSet");
+        static_assert(Meta::size<pinlist>::value <= 8, "too much pins in PinSet");
+//        static constexpr uint8_t size = sizeof...(Pins);
+        static constexpr uint8_t size = Meta::size<pinlist>::value;
+//        static constexpr uint8_t pinNumbers[] = {Pins::number...};
+//        static constexpr std::byte pinMasks[] = {Pins::pinMask...};
+        static constexpr auto pinMasks = gen_type::pinMasks;
+//        static constexpr std::byte setMask = (Pins::pinMask | ... | std::byte{0});
+        static constexpr std::byte setMask = []{
+            if constexpr(p1IsPin) {
+                return P1::pinMask | (PPs::pinMask | ... | std::byte{0});
+            }
+            else {
+                return (PPs::pinMask | ... | std::byte{0});
+            }
+        }();
+        
         static_assert(Meta::is_set<pinlist>::value, "must use different pins in set"); // all Pins are different
         
         template<typename T> using port_from = typename T::port;
@@ -107,24 +173,33 @@ namespace AVR {
         typedef typename Meta::nth_element<0, portlist> port_type;
         static_assert(Meta::all_same<Meta::nth_element<0, portlist>, portlist>::value, "must use same port");
         
-        static constexpr auto calculatePatterns = [](){
-            constexpr uint16_t numberOfPatterns = (1 << size);
-            std::array<std::byte, numberOfPatterns> data;
-            for(uint8_t value = 0; value < numberOfPatterns; ++value) {
-                std::byte pattern{0};
-                std::byte vv{value};
-                for(uint8_t bit = 0; bit < size; ++bit) {
-                    if (std::any(vv & std::byte{0x01})) {
-                        pattern |= pinMasks[bit];
-                    }
-                    vv >>= 1;
-                }
-                data[value] = pattern;
-            }
-            return data;
-        };
+//        static inline constexpr auto valueBits = []{
+//            constexpr auto pinMasks = []{
+//                if constexpr(p1IsPin) {
+//                    std::array<std::byte, size> m = {P1::pinMask, PPs::pinMask...};
+//                    return m;
+//                }
+//                else {
+//                    std::array<std::byte, size> m = {PPs::pinMask...};
+//                    return m;
+//                }
+//            }();
+//            constexpr uint16_t numberOfPatterns = (1 << size);
+//            std::array<std::byte, numberOfPatterns> data;
+//            for(uint8_t value = 0; value < numberOfPatterns; ++value) {
+//                std::byte pattern{0};
+//                std::byte vv{value};
+//                for(uint8_t bit = 0; bit < size; ++bit) {
+//                    if (std::any(vv & std::byte{0x01})) {
+//                        pattern |= pinMasks[bit];
+//                    }
+//                    vv >>= 1;
+//                }
+//                data[value] = pattern;
+//            }
+//            return data;
+//        }();
         
-        static constexpr auto valueBits = calculatePatterns();
         
         static inline void allOn() { // race-free 
             auto v = (port_type::get() & setMask) ^ setMask;
@@ -174,7 +249,13 @@ namespace AVR {
         }  
         template<typename Dir>
         static inline void dir() {
-            (Pins::template dir<Dir>(),...);
+            if constexpr(p1IsPin) {
+                P1::template dir<Dir>();
+                (PPs::template dir<Dir>(),...);
+            }
+            else {
+                (PPs::template dir<Dir>(),...);
+            }
         }
         // interprets value as bits corresponding to the (not adjacent) Pins
         // Pin1 = Pin<PortB,7>
@@ -192,18 +273,18 @@ namespace AVR {
 #endif
         typedef bitsN_t<size> bits_type;
         static inline void set(bits_type value) {
-            auto v = (port_type::get() & setMask) ^ valueBits[static_cast<typename bits_type::value_type>(value)]; // <> race-free for non-overlapping PinSets
+            auto v = (port_type::get() & setMask) ^ table.valueBits[static_cast<typename bits_type::value_type>(value)]; // <> race-free for non-overlapping PinSets
             port_type::toggle(v);
         }
         static inline void set(uintN_t<size> value) {
-            static_assert(std::numeric_limits<uintN_t<size>>::max() < valueBits.size);
-            auto v = (port_type::get() & setMask) ^ valueBits[value];
+            static_assert(std::numeric_limits<uintN_t<size>>::max() < table.valueBits.size);
+            auto v = (port_type::get() & setMask) ^ table.valueBits[value];
             port_type::toggle(v);
         }
         template<uint8_t V>
         static inline void set() {
-            static_assert(V < valueBits.size, "pattern not possible");
-            auto v = (port_type::get() & setMask) ^ valueBits[V];
+            static_assert(V < table.valueBits.size, "pattern not possible");
+            auto v = (port_type::get() & setMask) ^ table.valueBits[V];
             port_type::toggle(v);
         }
     private:

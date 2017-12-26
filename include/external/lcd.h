@@ -47,21 +47,21 @@ namespace LCD {
     struct Parameter<Lcd2x8> {
         static constexpr uint8_t rows = 2;
         static constexpr uint8_t cols = 8;
-        static constexpr uint8_t rowStartAddress[rows] = {0x00, 0x40};
+        static constexpr uint8_t rowStartAddress[rows] PROGMEM = {0x00, 0x40};
         typedef Splitted_NaN<uint8_t, 1, 3> position_t;
     };
     template<>
     struct Parameter<Lcd2x16> {
         static constexpr uint8_t rows = 2;
         static constexpr uint8_t cols = 16;
-        static constexpr uint8_t rowStartAddress[rows] = {0x00, 0x40};
+        static constexpr uint8_t rowStartAddress[rows] PROGMEM = {0x00, 0x40};
         typedef Splitted_NaN<uint8_t, 1, 4> position_t;
     };
     template<>
     struct Parameter<Lcd2x20> {
         static constexpr uint8_t rows = 2;
         static constexpr uint8_t cols = 20;
-        static constexpr uint8_t rowStartAddress[rows] = {0x00, 0x40};
+        static constexpr uint8_t rowStartAddress[rows] PROGMEM = {0x00, 0x40};
         typedef Splitted_NaN<uint8_t, 1, 5> position_t;
     };
 

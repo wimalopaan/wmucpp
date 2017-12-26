@@ -112,7 +112,7 @@ namespace EEProm {
                 base_type::mFlags.changed = true;
             }
             else {
-                FlagRegister::template set<base_type::fChanged>();
+                FlagRegister::template set<uint8_t(base_type::Flags::Changed)>();
             }
         }
     private:

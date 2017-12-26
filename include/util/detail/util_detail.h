@@ -19,6 +19,7 @@
 #pragma once
 
 #include "util/concepts.h"
+#include "container/pgmarray.h"
 
 namespace Util {
     
@@ -62,19 +63,26 @@ namespace Util {
                     return '0' + d;
                 }
             }
-            
-            constexpr static inline auto lookupTable = [](){
-                std::array<std::array<char, Digits>, dimension> data;
-                for(dimension_type i = 0; i < dimension; ++i) {
-                    auto value = i;
-                    for(int8_t d = Digits - 1; d >= 0; --d) {
-                        auto r = value % Base;
-                        data[i][d] = toChar(r);
-                        value /= Base;
+
+            struct Generator {
+                constexpr auto operator()() {
+                    std::array<char, Digits * dimension> data;
+                    for(dimension_type i = 0; i < dimension; ++i) {
+                        auto value = i;
+                        for(int8_t d = Digits - 1; d >= 0; --d) {
+                            auto r = value % Base;
+                            data[d + i * Digits] = toChar(r);
+                            value /= Base;
+                        }
                     }
-                }
-                return data;
-            }();
+                    return data;
+                }  
+            };
+            
+            using t = typename ::Util::Pgm::Converter<Generator>::pgm_type;
+            
+//            constexpr static inline auto lookupTable = Generator()();
+            constexpr static inline auto lookupTable = t{};
             
             template<typename T>
             constexpr static inline uint8_t maxPower = [](){
@@ -124,8 +132,10 @@ namespace Util {
             constexpr auto modul = detail::Convert<2, Base>::dimension;
             while(value >= modul) {
                 auto const d = value % modul;
-                data[next--] = detail::Convert<2, Base>::lookupTable[d][1];
-                data[next--] = detail::Convert<2, Base>::lookupTable[d][0];
+                data[next--] = detail::Convert<2, Base>::lookupTable[d * 2 + 1];
+                data[next--] = detail::Convert<2, Base>::lookupTable[d * 2 + 0];
+//                data[next--] = detail::Convert<2, Base>::lookupTable[d][1];
+//                data[next--] = detail::Convert<2, Base>::lookupTable[d][0];
                 value /= modul;
             }
             if (value < Base) {
@@ -133,8 +143,10 @@ namespace Util {
             }
             else {
                 auto const d = (uint8_t)value;
-                data[next--] = detail::Convert<2, Base>::lookupTable[d][1];
-                data[next] = detail::Convert<2, Base>::lookupTable[d][0];
+                data[next--] = detail::Convert<2, Base>::lookupTable[d * 2 + 1];
+                data[next] = detail::Convert<2, Base>::lookupTable[d * 2 + 0];
+//                data[next--] = detail::Convert<2, Base>::lookupTable[d][1];
+//                data[next] = detail::Convert<2, Base>::lookupTable[d][0];
             }
         }
         

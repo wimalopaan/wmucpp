@@ -25,8 +25,8 @@ struct A {
     operator int() const {
         return m;
     }
-    static A createFrom(std::array<uint8_t, 1> b) {
-        return A{b[0]};
+    static A createFrom(std::array<std::byte, 1> b) {
+        return A{uint8_t(b[0])};
     }
 };
 
@@ -41,10 +41,24 @@ constexpr A a8{2};
 constexpr A a9{1};
 constexpr A a10{2};
 
-//constexpr auto x1 = PgmArray<const A&, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10>{};
-//constexpr auto x2 = PgmArray<uint8_t, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10>{};
+constexpr auto x1 = Util::PgmArray<const A&, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10>{};
+constexpr auto x2 = Util::PgmArray<uint8_t, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10>{};
 
 volatile uint8_t r = 0;
+
+struct G {
+    constexpr auto operator()() {
+        std::array<uint8_t, 16> a;
+        for(uint8_t i = 0; i < a.size; ++i) {
+            a[i] = 2 * i + 1;
+        }
+        return a;
+    }
+};
+
+using t = Util::Pgm::Converter<G>::pgm_type;
+constexpr auto x3 = t{};
+
 int main() {
 //    for(const auto& v : x1) {
 //        r += v;
@@ -52,8 +66,8 @@ int main() {
 //    for(const auto& v : x2) {
 //        r += v;
 //    }
-//    for(auto& v : y1) {
-//        r += v;
-//    }
-    while(true) {}
+    for(const auto& v : x3) {
+        r += v;
+    }
+    return r;
 }

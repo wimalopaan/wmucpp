@@ -20,10 +20,13 @@
 
 #include <type_traits>
 
-template<template<typename...> typename A, template<typename...> typename B>
-struct is_same_template : std::false_type {};
-template<template<typename...> typename T>
-struct is_same_template<T, T> : std::true_type {};
-
+namespace Util {
+    
+    template<template<typename...> typename A, template<typename...> typename B>
+    struct is_same_template : std::false_type {};
+    template<template<typename...> typename T>
+    struct is_same_template<T, T> : std::true_type {};
+    
+}
 
 

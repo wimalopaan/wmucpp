@@ -33,8 +33,8 @@ public:
     static constexpr TWI::Address Address{std::byte{0x68}};
     static constexpr const std::hertz fSCL = 100000_Hz;
     
-    static void init() {
-        TWIMaster::template init<fSCL>();
+    static uint8_t init() {
+        return TWIMaster::template init<fSCL>();
     }
     template<bool On>
     static bool halt() {

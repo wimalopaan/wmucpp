@@ -38,7 +38,7 @@ using LcdRS = AVR::Pin<PortC, 4>;
 using LcdRW = AVR::Pin<PortC, 5>;
 using LcdE  = AVR::Pin<PortB, 0>;
 
-using LcdData = AVR::PinSet<LcdDB4, LcdDB5, LcdDB6, LcdDB7>;
+using LcdData = AVR::PinSet<AVR::UsePgmTable, LcdDB4, LcdDB5, LcdDB6, LcdDB7>;
 
 using terminalDevice = SimAVRDebugConsole;
 using terminal = std::basic_ostream<terminalDevice>;
@@ -50,6 +50,7 @@ namespace std {
 
 //volatile uintN_t<LcdData::size> x{5};
 uintN_t<LcdData::size> x{5};
+
 
 int main()
 {

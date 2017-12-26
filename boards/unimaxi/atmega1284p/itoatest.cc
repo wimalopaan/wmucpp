@@ -117,9 +117,7 @@ int main() {
         Scoped<EnableInterrupt<>> interruptEnabler;
         
         for(auto d : Util::detail::Convert<2,10>::lookupTable) {
-            for(auto c : d) {
-                std::out<terminal>(c);
-            }
+            std::out<terminal>(Char{d});
         }
         
         const uint16_t iterations = 900;
