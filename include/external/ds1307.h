@@ -26,6 +26,8 @@
 
 // todo: set time from DateTime::TimeTM
 // todo: ohne EventSystem
+// todo: eine Klasse für EventHandler
+// todo: SFINAE für SynchronMaster
 
 template<typename TWIMaster>
 class DS1307 : public EventHandler<EventType::TWIRecvComplete> {

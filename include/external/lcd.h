@@ -43,6 +43,7 @@ namespace LCD {
     template<typename Type>
     struct Parameter;
     
+    // todo: PgmArray
     template<>
     struct Parameter<Lcd2x8> {
         static constexpr uint8_t rows = 2;
@@ -65,43 +66,6 @@ namespace LCD {
         typedef Splitted_NaN<uint8_t, 1, 5> position_t;
     };
 
-//    enum class Instruction : uint8_t {
-//        clear    = (1 << 0),
-//        home     = (1 << 1),
-        
-//        mode     = (1 << 2),
-//        shift    = (1 << 0),
-//        increment= (1 << 1),
-//        decrement= (0 << 1),
-        
-//        control  = (1 << 3),
-//        blink    = (1 << 0),
-//        cursorOn = (1 << 1),
-//        displayOn= (1 << 2),
-        
-//        cdshift  = (1 << 4),
-//        dshift   = (1 << 3),
-//        right    = (1 << 2),
-        
-//        function = (1 << 5),
-//        I8bit    = (1 << 4),
-//        I4bit    = (0 << 4),
-//        twoLines = (1 << 3),
-//        oneLine  = (0 << 3),
-//        bigFont  = (1 << 2),
-        
-//        cgram    = (1 << 6),
-//        ddram    = (1 << 7),
-//        readBusy = (1 << 7)
-//    };
-//}
-
-//template<>
-//struct std::enable_bitmask_operators<LCD::Instruction> {
-//    static constexpr const bool enable = true;    
-//};
-
-//namespace LCD {
     struct Row {
         uint8_t value = 0;
     };
@@ -168,23 +132,18 @@ namespace LCD {
             
             using namespace LCD::HD44780::Instructions;
             
-//            Data::template set<(uint8_t(Instruction::function | Instruction::I8bit) >> 4)>();
-//            Data::set(std::byte(Instruction::function | Instruction::I8bit) >> 4);
             Data::set(UpperNibble::convert(commands::template value<Function, I8bit>()));
             toggle<E>();
             Util::delay(5_ms);
             
-//            Data::set(std::byte(Instruction::function | Instruction::I8bit) >> 4);
             Data::set(UpperNibble::convert(commands::template value<Function, I8bit>()));
             toggle<E>();
             Util::delay(1_ms);
             
-//            Data::set(std::byte(Instruction::function | Instruction::I8bit) >> 4);
             Data::set(UpperNibble::convert(commands::template value<Function, I8bit>()));
             toggle<E>();
             Util::delay(1_ms);
             
-//            Data::set(std::byte(Instruction::function | Instruction::I4bit) >> 4);
             Data::set(UpperNibble::convert(commands::template value<Function, I4bit>()));
             toggle<E>();
             Util::delay(5_ms);
@@ -194,16 +153,10 @@ namespace LCD {
             writeCommand<Home>();
             writeCommand<Mode, CursorIncrement>();
             
-//            writeCommand(Instruction::control | Instruction::displayOn | Instruction::cursorOn | Instruction::blink);
-//            writeCommand(Instruction::clear);
-//            writeCommand(Instruction::home);
-//            writeCommand(Instruction::mode | Instruction::increment);
-
             Data::template dir<AVR::Input>();
         }
         static void clear() {
             writeCommand<HD44780::Instructions::Clear>();
-//            writeCommand(Instruction::clear);
         }
         static void home() {
             writeCommand<HD44780::Instructions::Home>();
@@ -220,15 +173,9 @@ namespace LCD {
             RS::low();
             write(HD44780::Instructions::commands::template value<C, OO...>());
         }
-//        static void writeCommand(Instruction instruction) {
-//            waitBusy();
-//            RS::low();
-//            write(std::byte(instruction));
-//        }
         static void writeAddress(uint8_t a) {
             waitBusy();
             RS::low();
-//            write(std::byte(Instruction::ddram) | std::byte(a & 0x7f));
             write(HD44780::Instructions::DDRam::value | std::byte(a & 0x7f));
         }
         static std::byte readData() {
@@ -239,6 +186,7 @@ namespace LCD {
             RS::low();
             return read();
         }
+        //todo: actualRow -> einer Typ
         static bool put(std::byte c) {
             if (c == std::byte{'\n'}) {
                 actualRow = (actualRow + 1) % param_type::rows;
@@ -279,17 +227,6 @@ namespace LCD {
             }
             return position_t();
         }
-        //    static std::optional<std::pair<uint8_t, uint8_t>> position() {
-        //        uint8_t address = waitBusy();
-        //        for(uint8_t row = 0; row < Parameter<Type>::rows; ++row) {
-        //            if ((param_type::rowStartAddress[row] <= address) && 
-        //                    (address < (param_type::rowStartAddress[row] + param_type::cols))) {
-        //                actualRow = row;
-        //                return std::pair<uint8_t, uint8_t>{row, static_cast<uint8_t>(address - param_type::rowStartAddress[row])};
-        //            }
-        //        }
-        //        return{};
-        //    }
         static void setPosition(Row row, Column column) {
             actualRow = row.value;
             writeAddress(param_type::rowStartAddress[row.value] + column.value);
@@ -299,10 +236,8 @@ namespace LCD {
         static void write(std::byte data) {
             RW::low();        
             Data::template dir<AVR::Output>();
-//            Data::set((data >> 4) & std::byte{0x0f});
             Data::set(UpperNibble::convert(data));
             toggle<E>();
-//            Data::set(data & std::byte(0x0f));
             Data::set(LowerNibble::convert(data));
             toggle<E>();
             Data::template dir<AVR::Input>();
@@ -322,9 +257,8 @@ namespace LCD {
             return data;
         }
         static std::byte waitBusy() {
-//            while (std::any(readCommand() & std::byte(Instruction::readBusy)));
             while (std::any(readCommand() & 0x80_B));
-            Util::delay(4_us);
+            Util::delay(4_us); // todo: paramtrierbar
             return readCommand(); // Address Counter
         }
         template<typename Pin>

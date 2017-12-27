@@ -24,6 +24,8 @@
 #include "external/onewire.h"
 
 // todo: use Single
+// todo: SFINAE für AsyncMaster
+
 template<typename OneWireMaster, bool Single = true>
 class DS18B20 final : public EventHandler<EventType::OneWireRecvComplete> {
 public:
@@ -93,7 +95,6 @@ public:
             }   
         }
         if (!rom) {
-//        if (!std::crc8(rom)) {
             return false;
         }
         return true;
