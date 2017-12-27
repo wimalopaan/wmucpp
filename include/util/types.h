@@ -30,9 +30,11 @@ struct Char {
 
 template<std::Unsigned U, uint8_t FirstBits, uint8_t SecondBits>
 class Splitted_NaN {
+    static_assert(FirstBits > 0);
+    static_assert(SecondBits > 0);
     static_assert((FirstBits + SecondBits) <= sizeof(U) * 8, "too much bits for type U");
-    static constexpr U firstMask = (1 << FirstBits) - 1;
-    static constexpr U secondMask = (1 << SecondBits) - 1;
+    static constexpr U firstMask{(1 << FirstBits) - 1};
+    static constexpr U secondMask{(1 << SecondBits) - 1};
 public:
     constexpr Splitted_NaN() = default;
     constexpr Splitted_NaN(U first, U second) : value(((first & firstMask) << SecondBits) | (second & secondMask)) {

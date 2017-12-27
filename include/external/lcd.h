@@ -49,21 +49,21 @@ namespace LCD {
         static constexpr uint8_t rows = 2;
         static constexpr uint8_t cols = 8;
         static constexpr Util::PgmArray<uint8_t, 0x00, 0x40> rowStartAddress{};
-        typedef Splitted_NaN<uint8_t, 1, 3> position_t; // todo: calculate bits
+        typedef Splitted_NaN<uint8_t, Util::minimumBitsForValue(rows - 1), Util::minimumBitsForValue(cols - 1)> position_t; 
     };
     template<>
     struct Parameter<Lcd2x16> {
         static constexpr uint8_t rows = 2;
         static constexpr uint8_t cols = 16;
         static constexpr Util::PgmArray<uint8_t, 0x00, 0x40> rowStartAddress{};
-        typedef Splitted_NaN<uint8_t, 1, 4> position_t;
+        typedef Splitted_NaN<uint8_t, Util::minimumBitsForValue(rows - 1), Util::minimumBitsForValue(cols - 1)> position_t; 
     };
     template<>
     struct Parameter<Lcd2x20> {
         static constexpr uint8_t rows = 2;
         static constexpr uint8_t cols = 20;
         static constexpr Util::PgmArray<uint8_t, 0x00, 0x40> rowStartAddress{};
-        typedef Splitted_NaN<uint8_t, 1, 5> position_t;
+        typedef Splitted_NaN<uint8_t, Util::minimumBitsForValue(rows - 1), Util::minimumBitsForValue(cols - 1)> position_t; 
     };
 
     struct Row {
