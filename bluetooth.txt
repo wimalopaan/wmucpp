@@ -1,0 +1,16 @@
+* Koppelung des HC-05
+
+1) root
+2) bluetoothctl
+   - power on
+   - agent on
+   - scan on
+   - devices
+   - pair <mac> (falls noch nie gepaired)
+		- remove <mac>
+   - quit
+3) rfcomm bind 0 <mac>
+4) picocom -b 9600 /dev/rfcomm0
+
+
+* JDY-30 scheint nicht zu gehen

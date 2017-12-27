@@ -1,3 +1,4 @@
+bluetooth.txt
 boards/anano/empty.cc
 boards/anano/menu.cc
 boards/i2cIR/Makefile
