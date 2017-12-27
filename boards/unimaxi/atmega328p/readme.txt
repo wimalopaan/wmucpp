@@ -79,10 +79,6 @@
 	- LCD Ausgabe
 
 -----
-	
-* test09:
-	- LCD-Ausgabe
-	- Drehencoder
-
-* main: 
-	volle Funktion
+	- Led (WS2812)
+	- Drehencoder (über I2C abfragbar) + Taster
+	- Menusystem

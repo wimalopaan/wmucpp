@@ -25,6 +25,7 @@
 #include "mcu/avr/delay.h"
 #include "util/types.h"
 #include "appl/command.h"
+#include "container/pgmarray.h"
 
 namespace LCD { 
     struct Lcd1x8  {};
@@ -43,26 +44,25 @@ namespace LCD {
     template<typename Type>
     struct Parameter;
     
-    // todo: PgmArray
     template<>
     struct Parameter<Lcd2x8> {
         static constexpr uint8_t rows = 2;
         static constexpr uint8_t cols = 8;
-        static constexpr uint8_t rowStartAddress[rows] PROGMEM = {0x00, 0x40};
-        typedef Splitted_NaN<uint8_t, 1, 3> position_t;
+        static constexpr Util::PgmArray<uint8_t, 0x00, 0x40> rowStartAddress{};
+        typedef Splitted_NaN<uint8_t, 1, 3> position_t; // todo: calculate bits
     };
     template<>
     struct Parameter<Lcd2x16> {
         static constexpr uint8_t rows = 2;
         static constexpr uint8_t cols = 16;
-        static constexpr uint8_t rowStartAddress[rows] PROGMEM = {0x00, 0x40};
+        static constexpr Util::PgmArray<uint8_t, 0x00, 0x40> rowStartAddress{};
         typedef Splitted_NaN<uint8_t, 1, 4> position_t;
     };
     template<>
     struct Parameter<Lcd2x20> {
         static constexpr uint8_t rows = 2;
         static constexpr uint8_t cols = 20;
-        static constexpr uint8_t rowStartAddress[rows] PROGMEM = {0x00, 0x40};
+        static constexpr Util::PgmArray<uint8_t, 0x00, 0x40> rowStartAddress{};
         typedef Splitted_NaN<uint8_t, 1, 5> position_t;
     };
 
@@ -118,7 +118,6 @@ namespace LCD {
         typedef Parameter<Type> param_type;
         typedef typename Parameter<Type>::position_t position_t;
 
-        
         static void init() {
             Data::template dir<AVR::Output>();
             RS::template dir<AVR::Output>();
@@ -155,42 +154,42 @@ namespace LCD {
             
             Data::template dir<AVR::Input>();
         }
-        static void clear() {
+        static inline void clear() {
             writeCommand<HD44780::Instructions::Clear>();
         }
-        static void home() {
+        static inline void home() {
             writeCommand<HD44780::Instructions::Home>();
             actualRow = 0;
         }
-        static void writeData(std::byte data) {
+        static inline void writeData(std::byte data) {
             waitBusy();
             RS::high();
             write(data);
         }
         template<typename C, typename... OO>
-        static void writeCommand() {
+        static inline void writeCommand() {
             waitBusy();
             RS::low();
             write(HD44780::Instructions::commands::template value<C, OO...>());
         }
-        static void writeAddress(uint8_t a) {
+        static inline void writeAddress(uint8_t a) {
             waitBusy();
             RS::low();
             write(HD44780::Instructions::DDRam::value | std::byte(a & 0x7f));
         }
-        static std::byte readData() {
+        static inline std::byte readData() {
             RS::high();
             return read();
         }
-        static std::byte readCommand() {
+        static inline std::byte readCommand() {
             RS::low();
             return read();
         }
         //todo: actualRow -> einer Typ
-        static bool put(std::byte c) {
+        static inline bool put(std::byte c) {
             if (c == std::byte{'\n'}) {
-                actualRow = (actualRow + 1) % param_type::rows;
-                setPosition(Row{actualRow}, Column{0});
+                uint8_t r = (actualRow + 1) % param_type::rows;
+                setPosition(Row{r}, Column{0});
             }
             else {
                 auto xy = position();            
@@ -203,37 +202,41 @@ namespace LCD {
             }
             return true;
         }
-        template<uint16_t Size>
-        static void put(const volatile std::array<std::byte, Size>& data) {
-            setPosition(Row{0}, Column{0});
-            auto it = data.begin();
-            for(uint8_t row = 0; row < param_type::rows; ++row) {
-                for(uint8_t column = 0; column < param_type::cols; ++column) {
-                    put(*it++);
-                }
-                put(std::byte{'\n'});
-            }
-        }
+//        template<uint16_t Size>
+//        static void put(const volatile std::array<std::byte, Size>& data) {
+//            setPosition(Row{0}, Column{0});
+//            auto it = data.begin();
+//            for(uint8_t row = 0; row < param_type::rows; ++row) {
+//                for(uint8_t column = 0; column < param_type::cols; ++column) {
+//                    put(*it++);
+//                }
+//                put(std::byte{'\n'});
+//            }
+//        }
         
-        static position_t position() {
+        static inline position_t position() {
             uint8_t address = std::to_integer<uint8_t>(waitBusy());
             for(uint8_t row = 0; row < Parameter<Type>::rows; ++row) {
                 if ((param_type::rowStartAddress[row] <= address) && 
                         (address < (param_type::rowStartAddress[row] + param_type::cols))) {
                     actualRow = row;
                     uint8_t column = address - param_type::rowStartAddress[row];
-                    return position_t(row, column);
+                    return position_t{row, column};
                 }
             }
-            return position_t();
+            return position_t{};
         }
-        static void setPosition(Row row, Column column) {
+        static inline void setPosition(Row row, Column column) {
             actualRow = row.value;
-            writeAddress(param_type::rowStartAddress[row.value] + column.value);
+            uint8_t address = param_type::rowStartAddress[actualRow] + column.value;
+            assert(address <= 0x7f);
+            writeAddress(address);
         }
-        
+        static inline uint8_t address() {
+            return std::to_integer<uint8_t>(waitBusy());
+        }        
     private:
-        static void write(std::byte data) {
+        static inline void write(std::byte data) {
             RW::low();        
             Data::template dir<AVR::Output>();
             Data::set(UpperNibble::convert(data));
@@ -242,7 +245,7 @@ namespace LCD {
             toggle<E>();
             Data::template dir<AVR::Input>();
         }
-        static std::byte read() {
+        static inline std::byte read() {
             RW::high();
             Data::template dir<AVR::Input>();
             E::high();
@@ -256,18 +259,17 @@ namespace LCD {
             E::low();
             return data;
         }
-        static std::byte waitBusy() {
+        static inline std::byte waitBusy() {
             while (std::any(readCommand() & 0x80_B));
             Util::delay(4_us); // todo: paramtrierbar
             return readCommand(); // Address Counter
         }
         template<typename Pin>
-        static void toggle() {
+        static inline void toggle() {
             Pin::on();
             Util::delay(enableDelay);
             Pin::off();
         }
-        
         inline static uint8_t actualRow = 0;
     };
     

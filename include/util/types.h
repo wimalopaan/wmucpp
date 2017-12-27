@@ -35,7 +35,7 @@ class Splitted_NaN {
     static constexpr U secondMask = (1 << SecondBits) - 1;
 public:
     constexpr Splitted_NaN() = default;
-    constexpr Splitted_NaN(U first, U second) : value(((first & firstMask) << SecondBits) | (second & SecondBits)) {
+    constexpr Splitted_NaN(U first, U second) : value(((first & firstMask) << SecondBits) | (second & secondMask)) {
         assert((first & ~firstMask) == 0);
         assert((second & ~secondMask) == 0);
     }

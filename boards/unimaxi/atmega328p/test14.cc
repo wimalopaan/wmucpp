@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define NDEBUG
+//#define NDEBUG
 
 #include <stdlib.h>
 
@@ -100,6 +100,7 @@ int main() {
     i2c::init();
     spi::init();
     lcdPwm::init();    
+    lcd::init();
     
     {
         using namespace std::literals::quantity;
@@ -109,7 +110,8 @@ int main() {
     terminalDevice::init<9600>();
     alarmTimer::init(AVR::TimerMode::CTCNoInt);
 
-    std::outl<terminal>("Test13"_pgm);
+    std::outl<terminal>("Test14"_pgm);
+    Util::put<lcd>("Test14\nabc"_pgm);
     
     while(true) {
         lcdPwm::freeRun();

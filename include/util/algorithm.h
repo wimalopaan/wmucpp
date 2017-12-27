@@ -107,7 +107,7 @@ namespace Util {
     
     
     template<std::Range C>
-    bool crc8(const C& data) {
+    bool inline crc8(const C& data) {
         uint8_t crc = 0;
         for(typename C::size_type loop_count = 0; loop_count < C::size; loop_count++) {
             uint8_t b = data[loop_count];

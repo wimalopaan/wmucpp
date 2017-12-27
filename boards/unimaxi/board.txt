@@ -1,3 +1,7 @@
 Name: UniMaxi02
 
 Beschreibung:
+
+I2C-Geräte:
+	- 39 (x27) : MCP23008
+	- 
