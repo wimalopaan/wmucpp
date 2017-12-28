@@ -22,12 +22,7 @@
 #define NDEBUG
 
 #include "mcu/ports.h"
-#include "mcu/avr/isr.h"
-#include "hal/softspimaster.h"
-#include "hal/bufferedstream.h"
 #include "hal/alarmtimer.h"
-#include "hal/constantrate.h"
-#include "console.h"
 
 using PortA = AVR::Port<DefaultMcuType::PortRegister, AVR::A>;
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;

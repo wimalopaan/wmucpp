@@ -37,6 +37,7 @@ targets +=  test11.elf test11.s
 targets +=  test12.elf test12.s
 targets +=  test13.elf test13.s
 targets +=  test14.elf test14.s
+targets +=  test15.elf test15.s
 
 -include ../../../Makefile.include
 

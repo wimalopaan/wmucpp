@@ -39,8 +39,6 @@ using testPin = AVR::Pin<PortD, 7>;
 
 const auto periodicTimer = alarmTimer::create(1000_ms, AlarmFlags::Periodic);
 
-static constexpr auto systemFrequency = 100_Hz;
-
 using terminalDevice = AVR::Usart<0, void, MCU::UseInterrupts<false>>;
 using terminal = std::basic_ostream<terminalDevice>;
 

@@ -50,6 +50,7 @@ boards/unimaxi/atmega328p/test11.cc
 boards/unimaxi/atmega328p/test12.cc
 boards/unimaxi/atmega328p/test13.cc
 boards/unimaxi/atmega328p/test14.cc
+boards/unimaxi/atmega328p/test15.cc
 doc/bmcpp02/bm35a.cc
 doc/bmcpp02/bm40a.cc
 doc/bmcpp02/bm50a.cc
