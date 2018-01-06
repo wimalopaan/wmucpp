@@ -192,17 +192,18 @@ public:
 
     inline static void periodic() {
         MCUTimer::template periodic<MCUTimer::flags_type::icf>([](){
-            mActualPeriod =(MCUTimer::icr() - mTimerStartValue + std::numeric_limits<value_type>::module()) % std::numeric_limits<value_type>::module();
-            mTimerStartValue = MCUTimer::icr();
+            value_type actual = MCUTimer::icr();
+            if (actual >= mTimerStartValue) {
+                mActualPeriod = actual - mTimerStartValue;
+            }
+            else {
+                mActualPeriod = (std::numeric_limits<value_type>::module() - mTimerStartValue) + actual;
+            }
+            mTimerStartValue = actual;
             ++mMeasurements;
         });
     }
     
-//    inline static void isr() {
-//            mActualPeriod = (MCUTimer::counter() - mTimerStartValue + std::numeric_limits<value_type>::module()) % std::numeric_limits<value_type>::module();
-//            mTimerStartValue = MCUTimer::counter();
-//            ++mMeasurements;
-//    }
 private:
     inline static volatile value_type mTimerStartValue = 0;
     inline static volatile value_type mActualPeriod = 0;

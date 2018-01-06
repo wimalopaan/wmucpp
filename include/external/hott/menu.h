@@ -204,6 +204,8 @@ namespace Hott {
                     }
                 }
                 break;
+            case Hott::key_t::nokey:
+                break;
             }
             return this;
         }
