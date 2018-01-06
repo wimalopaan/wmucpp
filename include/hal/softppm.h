@@ -26,34 +26,8 @@
 #include "util/disable.h"
 #include "util/meta.h"
 
-//namespace detail {
-//    template<typename List> 
-//    struct visit {
-//        template<typename T> struct Wrapper{
-//            typedef T type;
-//        };
-//        using first = Meta::front<List>;
-//        template<typename I, typename C>
-//        inline static void at(I index, const C& callable) {
-//            if (index == 0) {
-//                callable(Wrapper<first>{});
-//            }
-//            else {
-//                visit<Meta::rest<List>>::at(index - 1, callable);
-//            }
-//        }
-//    };
-//    template<> 
-//    struct visit<Meta::List<>> {
-//        template<typename I, typename C>
-//        inline static void at(I, const C&) {}
-//    };
-//}
-
-//template<typename List, typename I, typename C>
-//inline void visitAt(I index, const C& callable) {
-//    detail::visit<List>::at(index, callable);
-//}
+using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
+using testPin1 = AVR::Pin<PortD, 3>; // I2C Interrupt
 
 template<typename Timer, typename... Pins>
 class SoftPPM final {
@@ -63,6 +37,7 @@ public:
     static_assert(std::is_same<typename Timer::value_type, uint16_t>::value, "must use 16bit timer");
     
     static constexpr const uint8_t numberOfChannels = sizeof...(Pins);
+    static constexpr const uint8_t fillChannel = numberOfChannels;
     static constexpr auto mcuTimer = Timer::mcuTimer;
     static constexpr auto mcuInterrupts = Timer::mcuInterrupts;
     
@@ -75,10 +50,10 @@ public:
     
     inline static void timerInit() {
         Timer::template prescale<parameter::prescaler>();
-        *mcuTimer()->ocra = parameter::ocFrame;
         mcuTimer()->tccrb.template add<Timer::tccrb_type::wgm2>();
+        mcuTimer()->tccrb.template add<Timer::tccrb_type::wgm3>();
         mcuInterrupts()->tifr.template reset<Timer::flags_type::ocfa | Timer::flags_type::ocfb>();
-        mcuInterrupts()->timsk.template add<Timer::mask_type::ociea>();
+        mcuInterrupts()->timsk.template add<Timer::mask_type::ociea | Timer::mask_type::ocieb>();
     }
     
     inline static void init() {
@@ -86,26 +61,31 @@ public:
         (Pins::template dir<AVR::Output>(), ...);
         timerInit();
         constexpr auto medium = (parameter::ocMax + parameter::ocMin) / 2;
-        std::iota(std::begin(ocrbValues), std::end(ocrbValues), medium, medium);
+        std::iota(std::begin(ocrbValues), std::end(ocrbValues) - 1, medium, medium);
+        ocrbValues[fillChannel] = parameter::ocFrame - 1; 
+        
+        *mcuTimer()->icr = parameter::ocFrame - 1;
+        *mcuTimer()->ocra = parameter::ocFrame + 10;
+        *mcuTimer()->ocrb = ocrbValues[0];
     }
     
-    inline static void ppm(const std::percent& width, uint8_t channel) {
-        assert(channel < numberOfChannels);
-        uint16_t ocr = std::expand(width, parameter::ocMin, parameter::ocMax);
-        uint16_t start = 0;
-        for(uint8_t i = 0; i < channel; ++i) {
-            start += ocrbValues[i];
-        }
-        uint16_t end = start + ocr;
-        int16_t diff = ocr - ocrbValues[channel];
-        {
-            Scoped<DisbaleInterrupt<RestoreState>> di;
-            ocrbValues[channel] = end;
-            for(uint8_t i = channel + 1; i < numberOfChannels; ++i) {
-                ocrbValues[i] += diff;
-            }
-        }
-    }
+//    inline static void ppm(const std::percent& width, uint8_t channel) {
+//        assert(channel < numberOfChannels);
+//        uint16_t ocr = std::expand(width, parameter::ocMin, parameter::ocMax);
+//        uint16_t start = 0;
+//        for(uint8_t i = 0; i < channel; ++i) {
+//            start += ocrbValues[i];
+//        }
+//        uint16_t end = start + ocr;
+//        int16_t diff = ocr - ocrbValues[channel];
+//        {
+//            Scoped<DisbaleInterrupt<RestoreState>> di;
+//            ocrbValues[channel] = end;
+//            for(uint8_t i = channel + 1; i < ocrbValues.size - 1; ++i) {
+//                ocrbValues[i] += diff;
+//            }
+//        }
+//    }
     template<typename T, T Min, T Max>
     inline static uint16_t ppm(const uint_ranged<T, Min, Max>& v, uint8_t channel) {
         assert(channel < numberOfChannels);
@@ -128,46 +108,39 @@ public:
         {
             Scoped<DisbaleInterrupt<RestoreState>> di;
             ocrbValues[channel] = end;
-            for(uint8_t i = channel + 1; i < numberOfChannels; ++i) {
+            for(uint8_t i = channel + 1; i < ocrbValues.size - 1; ++i) {
                 ocrbValues[i] += diff;
             }
         }
         return ocr;
     }
     
-    // todo: ermöglicht _vor_ ocrb-isr andere ISR (z.B.) uart abzuschalten
     struct OCAHandler : public IsrBaseHandler<typename AVR::ISR::Timer<Timer::number>::CompareA> {
         static void isr() {
-            actual = 0;
-            *mcuTimer()->ocrb = ocrbValues[0];
-            mcuInterrupts()->timsk.template add<Timer::mask_type::ocieb>();
-            first_pin::high();
         }
     };
     
-    // todo: für PINs nur ocrb, und einschalten der abgeschalteten ISRs (s.a. ocra)
     struct OCBHandler : public IsrBaseHandler<typename AVR::ISR::Timer<Timer::number>::CompareB> {
         static void isr() {
             Meta::visitAt<pin_list>(actual, [](auto wrapper){
                 decltype(wrapper)::type::off();
             });
-            actual = (actual + 1) % numberOfChannels;
-            if (actual != 0) {
+            if (++actual == ocrbValues.size) {
+                actual = 0;
+            }
+            *mcuTimer()->ocrb = ocrbValues[actual];
+            *mcuTimer()->ocra = ocrbValues[actual] - 20;
+            
+            if (actual < fillChannel) {
                 Meta::visitAt<pin_list>(actual, [](auto wrapper){
                     decltype(wrapper)::type::on();
                 });
-                *mcuTimer()->ocrb = ocrbValues[actual];
-            }
-            else {
-                if constexpr(numberOfChannels > 1) {
-                    mcuInterrupts()->timsk.template clear<Timer::mask_type::ocieb>();
-                }
-            }
+            }    
         }
     };
 private:
     inline static volatile uint8_t actual = 0;
-    inline static volatile uint16_t ocrbValues[numberOfChannels] = {};
+    inline static volatile std::array<uint16_t, numberOfChannels + 1> ocrbValues;
 };
 
 

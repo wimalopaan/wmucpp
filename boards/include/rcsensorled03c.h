@@ -58,8 +58,10 @@ typedef led::color_type Color;
 
 constexpr std::RPM MaximumRpm{12000};
 constexpr std::RPM MinimumRpm{100};
+#ifdef USE_RPM2
 using rpmTimer2 = AVR::Timer16Bit<1>; // timer 1
 using rpm2 = RpmWithIcp<rpmTimer2, MinimumRpm, MaximumRpm>;
+#endif
 using rpmTimer1 = AVR::Timer16Bit<3>; // timer 3
 using rpm1 = RpmWithIcp<rpmTimer1, MinimumRpm, MaximumRpm>;
 
@@ -79,7 +81,13 @@ using oneWireMasterAsync = OneWire::MasterAsync<oneWireMaster, Hott::hottDelayBe
 using ds18b20 = DS18B20<oneWireMasterAsync, true, UseEvents<false>>;
 using ds18b20Sync = DS18B20<oneWireMaster>;
 
+#ifdef USE_RPM2
 using softPpm = SoftPPM<AVR::Timer16Bit<4>, AVR::Pin<PortB, 1>, AVR::Pin<PortB, 2>>; // timer 4
+#endif
+
+#ifndef USE_RPM2
+using hardPpm = AVR::PPM<1>; // timer1 <-> exclusiv zu rpm2
+#endif
 
 using hardPwm = AVR::PWM<0>; // timer 0
 using dir1 = AVR::Pin<PortD, 2>;

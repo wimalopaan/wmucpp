@@ -25,6 +25,7 @@
 #include "mcu/avr/util.h"
 #include "units/percent.h"
 #include "util/disable.h"
+#include "util/rational.h"
 
 namespace AVR {
     
@@ -40,6 +41,9 @@ namespace AVR {
         static constexpr const auto mcuTimer = AVR::getBaseAddr<MCUTimer, TimerN>;
         
         using parameter = PPMParameter<typename AVR::TimerParameter<TimerN, MCU>::timer_type>;
+        
+        typedef uint_ranged<uint16_t, parameter::ocMin, parameter::ocMax> ranged_type;
+        
         
         static void init() {
             ocAPin::template dir<AVR::Output>();
@@ -87,10 +91,11 @@ namespace AVR {
         }
         template<typename Channel, typename T, T L, T U>
         static void ppm(uint_ranged<T, L, U> raw) {
-            typedef typename ::Util::enclosingType<T>::type etype;
-            constexpr etype delta = parameter::ocDelta;
-            uint16_t v = parameter::ocMin + ((raw.toInt() - L) * delta) / etype(U - L);
-            Channel::ocr(v);
+            T v1 = raw.toInt() - L;
+            constexpr uint64_t denom = U - L;
+            constexpr uint64_t nom = ranged_type::Upper - ranged_type::Lower;
+            uint16_t ocr = ::Util::RationalDivider<uint16_t, nom, denom>::scale(v1) + ranged_type::Lower;
+            Channel::ocr(ocr);
         }
     };
     

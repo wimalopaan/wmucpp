@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//#define USE_RPM2
+
 //#define MEM
 #define NDEBUG
 
@@ -75,8 +77,11 @@ using terminal = std::basic_ostream<terminalDevice>;
 using namespace std::literals::quantity;
 
 using isrRegistrar = IsrRegistrar<rcUsart::RxHandler, rcUsart::TxHandler, 
-sensorUsart::RxHandler, sensorUsart::TxHandler,
-softPpm::OCAHandler, softPpm::OCBHandler>;
+sensorUsart::RxHandler, sensorUsart::TxHandler
+#ifdef USE_RPM2
+, softPpm::OCAHandler, softPpm::OCBHandler
+#endif
+>;
 
 using sensorData = Hott::SensorProtocollBuffer<0>;
 using crWriterSensorBinary = ConstanteRateWriter<sensorData, sensorUsart>;
@@ -362,14 +367,17 @@ int main() {
     crWriterSensorBinary::init();
     crWriterSensorText::init();
     
-    softPpm::init();    
-    softPpm::ranged_type v1{2501};
-    softPpm::ranged_type v2{4999};
-    softPpm::ppm(v1, 0);
-    softPpm::ppm(v2, 1);
+    // hardPpm und rpm2 sind nicht gleichzeitig nutzbar
     
+#ifndef USE_RPM2
+    hardPpm::init();
+#else 
+    softPpm::init();    
+#endif
     rpm1::init();
-    rpm1::init();
+#ifdef USE_RPM2
+    rpm2::init();
+#endif
     
     hardPwm::init<Constants::pwmFrequency>();
   
@@ -396,12 +404,15 @@ int main() {
         }
         
         tempFSM::init();
+
         
         while(true){
 //            testPin1::toggle(); // 25 us -> 40 KHz
             menu::periodic();
             rpm1::periodic();
+#ifdef USE_RPM2
             rpm2::periodic();
+#endif
             systemClock::periodic<systemClock::flags_type::ocfa>([](){
                 crWriterSensorBinary::rateProcess();
                 crWriterSensorText::rateProcess();
@@ -409,16 +420,24 @@ int main() {
                 alarmTimer::periodic([](uint7_t timer){
                     if (timer == *periodicTimer) {
                         rpm1::check();
+#ifdef USE_RPM2
                         rpm2::check();
+#endif
                         auto v1 = Hott::SumDProtocollAdapter<0>::value(1);
+#ifdef USE_RPM2
                         softPpm::ppm(v1, 0);
-                        
+#endif         
+#ifndef USE_RPM2
+                        hardPpm::ppm<hardPpm::A>(v1);
+#endif                        
                         auto v0 = Hott::SumDProtocollAdapter<0>::value(0);
                         hardPwm1::pwm(v0);
                         hardPwm2::pwm(v0);
                         
                         std::outl<terminal>("rpm1: "_pgm, rpm1::rpm().value());
+#ifdef USE_RPM2
                         std::outl<terminal>("rpm2: "_pgm, rpm2::rpm().value());
+#endif
                     }
                     else {
                         tempFSM::tick(timer);
@@ -450,12 +469,14 @@ ISR(USART0_UDRE_vect){
 }
 // Timer 4
 // softPpm
+#ifdef USE_RPM2
 ISR(TIMER4_COMPA_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<4>::CompareA>();
 }
 ISR(TIMER4_COMPB_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<4>::CompareB>();
 }
+#endif
 
 #ifndef NDEBUG
 void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
