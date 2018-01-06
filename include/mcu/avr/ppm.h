@@ -41,21 +41,21 @@ public:
     typedef typename MCUTimer::mcu_type mcu_type;
     typedef typename PinChange::pinset_type pinset_type;
     
-    static constexpr auto mcuTimer = MCUTimer::mcuTimer;
-    static constexpr uint16_t prescaler = AVR::Util::calculatePpmInParameter<MCUTimer, value_type>();
-    static constexpr std::hertz timerFrequency = Config::fMcu / (uint32_t)prescaler;
-    static constexpr value_type ppmMin = 1_ms * timerFrequency;
-    static constexpr value_type ppmMax = 2_ms * timerFrequency;
+    inline static constexpr auto mcuTimer = MCUTimer::mcuTimer;
+    inline static constexpr uint16_t prescaler = AVR::Util::calculatePpmInParameter<MCUTimer, value_type>();
+    inline static constexpr std::hertz timerFrequency = Config::fMcu / (uint32_t)prescaler;
+    inline static constexpr value_type ppmMin = 1_ms * timerFrequency;
+    inline static constexpr value_type ppmMax = 2_ms * timerFrequency;
 
     static_assert(ppmMin >= 10, "wrong prescaler");
     static_assert(ppmMax <= 255, "wrong prescaler");
 
-    static constexpr value_type ppmMid = (ppmMax + ppmMin) / 2;
-    static constexpr value_type ppmDelta = (ppmMax - ppmMin) / 5;
-    static constexpr value_type ppmMidLow = ppmMid - ppmDelta;
-    static constexpr value_type ppmMidHigh = ppmMid + ppmDelta;
-    static constexpr value_type ppmMinHigh = ppmMin + ppmDelta;
-    static constexpr value_type ppmMaxLow = ppmMax - ppmDelta;
+    inline static constexpr value_type ppmMid = (ppmMax + ppmMin) / 2;
+    inline static constexpr value_type ppmDelta = (ppmMax - ppmMin) / 5;
+    inline static constexpr value_type ppmMidLow = ppmMid - ppmDelta;
+    inline static constexpr value_type ppmMidHigh = ppmMid + ppmDelta;
+    inline static constexpr value_type ppmMinHigh = ppmMin + ppmDelta;
+    inline static constexpr value_type ppmMaxLow = ppmMax - ppmDelta;
 
     static void init() {
         MCUTimer::template prescale<prescaler>();
@@ -68,7 +68,7 @@ public:
             return period[index];
         }
         else {
-            Scoped<DisbaleInterrupt<>> di;
+            Scoped<DisbaleInterrupt<RestoreState>> di;
             return period[index];
         }
     }
@@ -105,15 +105,6 @@ private:
         check<pinset_type::size - 1>(last_value, v);
         last_value = v;
     }
-    static volatile std::array<value_type, pinset_type::size> period;
-    static volatile std::array<value_type, pinset_type::size> timerStartValue;
+    inline static volatile std::array<value_type, pinset_type::size> period;
+    inline static volatile std::array<value_type, pinset_type::size> timerStartValue;
 };
-
-template<typename PinChange, typename MCUTimer>
-volatile std::array<typename PpmDecoder<PinChange, MCUTimer>::value_type, PpmDecoder<PinChange, MCUTimer>::pinset_type::size> PpmDecoder<PinChange, MCUTimer>::period;
-
-template<typename PinChange, typename MCUTimer>
-volatile std::array<typename PpmDecoder<PinChange, MCUTimer>::value_type, PpmDecoder<PinChange, MCUTimer>::pinset_type::size> PpmDecoder<PinChange, MCUTimer>::timerStartValue;
-
-template<typename PinChange, typename MCUTimer>
-constexpr std::hertz PpmDecoder<PinChange, MCUTimer>::timerFrequency;

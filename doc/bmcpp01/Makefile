@@ -62,8 +62,12 @@ targets +=  bm70a.s bm70a.elf
 targets +=  bm80a.s bm80a.elf
 targets +=  bm90a.s bm90a.elf
 targets +=  bm95a.s bm95a.elf
+targets +=  bm99b.s bm99b.elf
 
 -include ../../Makefile.include
 
 bm95a.s bm95a.elf : CXXFLAGS := $(filter-out -fno-exceptions, $(CXXFLAGS)) -fexceptions
 #bm90a.s bm90a.elf : CXXFLAGS := $(filter-out -fno-rtti, $(CXXFLAGS)) -frtti
+
+#bm99b.elf: bm99b.o bm99c.o
+#	$(LINK.c) $(LDFLAGS) -o $@ bm99b.o bm99c.o

@@ -87,13 +87,13 @@ struct UseEvents : NamedFlag<v> {};
 namespace AVR {
     template<uint8_t N, typename PA, ::Util::NamedFlag useISR = MCU::UseInterrupts<true>, ::Util::NamedFlag useEvents = NamedFlag<Config::Usart::useEvents>, 
              ::Util::NamedConstant RecvQLength = NamedConstant<Config::Usart::RecvQueueLength>, ::Util::NamedConstant SendQLength = NamedConstant<Config::Usart::SendQueueLength>, 
-             typename MCU = DefaultMcuType> class Usart;
-//    template<uint8_t N, typename MCU = DefaultMcuType> class Spi;
-    //template<uint8_t N, typename MCU = DefaultMcuType> class SWUsart;
+             typename MCU = DefaultMcuType> 
+    class Usart;
 }
 
 namespace Hott {
-    template<uint8_t N> class SensorProtocollAdapter;
+    template<uint8_t N, ::Util::NamedFlag = UseEvents<true>, typename AsciiHandler = void, typename BinaryHandler = void, typename BCastHandler = void> 
+    class SensorProtocollAdapter;
 }
 
 namespace Esp8266 {
@@ -150,7 +150,7 @@ template<uint8_t N, typename Interrupt, typename... PP>
 using PeriodicGroup = PeriodicGroup2<AVR::RegisterFlags<DefaultMcuType::GPIOR, 0, std::byte>, N, Interrupt, PP...>;
 
 template<typename... EE>
-//template<HAL::EventHandler... EE> // fixme: triggers ICE
+//template<HAL::EventHandler... EE> // note: triggers ICE
 class EventHandlerGroup {
     template<int N, HAL::EventHandler T, typename... TT>
     class Processor final {
@@ -191,10 +191,7 @@ public:
 
 template<uint8_t QLength = Config::EventManager::EventQueueLength>
 class EventManagerT final {
-    template<uint8_t> friend class Hott::SensorProtocollAdapter;
     template<uint8_t> friend class Esp8266::ATProtocollAdapter;
-//    template<uint8_t N, typename PA, typename MCU> friend class AVR::Usart;
-//    template<uint8_t N, typename MCU> friend class AVR::Spi;
     template<uint8_t N, typename MCU> friend class SWUsart;
 public:
     EventManagerT() = delete;
@@ -288,8 +285,8 @@ private:
         return true;
     }
     // fixeme: FlagRegister
-    inline static bool mUnprocessed = false;
-    inline static bool mLeaked = false;
+    inline static volatile bool mUnprocessed = false;
+    inline static volatile bool mLeaked = false; 
     inline static volatile std::FiFo<EventByte_t, QLength> mFifo;
 };
 

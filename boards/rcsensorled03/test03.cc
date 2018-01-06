@@ -16,11 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define MEM
-//#define NDEBUG
+//#define MEM
+#define NDEBUG
 
 #include "local.h"
-#include "rcsensorled03.h"
+#include "rcsensorled03b.h"
 #include "console.h"
 #include "util/meta.h"
 #include "appl/blink.h"
@@ -58,81 +58,29 @@ struct Distributor {
     }
 };
 
-using isrRegistrar = IsrRegistrar<rcUsart::RxHandler, rcUsart::TxHandler>;
-
-struct Usart0Handler : public EventHandler<EventType::UsartRecv0> {
-    inline static bool process(std::byte) {
-        std::outl<terminal>("*** U0"_pgm);
-        statusLed::blink(Blue{32}, 2);
-        return true;
-    }
-};
-struct Usart1Handler : public EventHandler<EventType::UsartRecv1> {
-    static bool process(std::byte) {
-        std::outl<terminal>("*** U1"_pgm);
-        statusLed::blink(Blue{32}, 3);
-        return true;
-    }
-};
-struct UsartFeHandler : public EventHandler<EventType::UsartFe> {
-    inline static bool process(std::byte) {
-        std::outl<terminal>("*** U Fe"_pgm);
-        statusLed::blink(Color{Red{32}, Green{0}, Blue{32}}, 3);
-        return true;
-    }
-};
-struct UsartUpeHandler : public EventHandler<EventType::UsartUpe> {
-    inline static bool process(std::byte) {
-        std::outl<terminal>("*** U UP"_pgm);
-        statusLed::blink(Color{Red{32}, Green{0}, Blue{32}}, 4);
-        return true;
-    }
-};
-struct UsartDorHandler : public EventHandler<EventType::UsartDor> {
-    inline static bool process(std::byte) {
-        std::outl<terminal>("*** U Do"_pgm);
-        statusLed::blink(Color{Red{32}, Green{0}, Blue{32}}, 5);
-        return true;
-    }
-};
-
 const auto periodicTimer = alarmTimer::create(500_ms, AlarmFlags::Periodic);
 
-struct TimerHandler : public EventHandler<EventType::Timer> {
-    inline static bool process(std::byte b) {
-        auto timer = std::to_integer<uint7_t>(b);
-        if (timer == *periodicTimer) {
-            ++mCounter;
-            statusLed::tick();
-            return true;
-        }
-        return false;
-    }
-    inline static uint8_t mCounter = 0;
-};
-
-using distributor = Distributor<isrRegistrar, statusLed, rpm1, rpm2>;
-
+using distributor = Distributor<statusLed, rpm1, rpm2>;
 
 int main() {
     using namespace std::literals::quantity;
     distributor::init();
     alarmTimer::init(AVR::TimerMode::CTCNoInt); 
 
+    Util::delay(10_ms);
+    
     led::init();
     led::set(Constants::cGreen);
     
     constexpr std::hertz fCr = 1 / Hott::hottDelayBetweenBytes;
     static_assert(fCr == Config::Timer::frequency);
     
+    sensorUsart::init<19200>();
     rcUsart::init<115200>();
-
-    using allEventHandler = EventHandlerGroup<
-    TimerHandler, UsartFeHandler, UsartUpeHandler, UsartDorHandler, Usart0Handler, Usart1Handler
-    >;
+    
 
     {
-        Scoped<EnableInterrupt<>> ei;
+//        Scoped<EnableInterrupt<>> ei;
         
         std::outl<terminal>(Constants::title);
         std::outl<terminal>("---"_pgm);
@@ -142,28 +90,23 @@ int main() {
 
         std::outl<terminal>("---"_pgm);
 
-//        std::outl<terminal>(hardPpm::parameter::prescaler);
-//        std::outl<terminal>(hardPpm::parameter::timerFrequency);
-
         std::outl<terminal>(softPpm::parameter::prescaler);
         std::outl<terminal>(softPpm::parameter::timerFrequency);
-        
-        EventManager::run2<allEventHandler>([](){
-            adcController::periodic();
+
+        while(true){
+//            adcController::periodic();
+//            rpm1::periodic();
+//            rpm2::periodic();
+//            rcUsart::periodic();
+//            sensorUsart::periodic();
             systemClock::periodic<systemClock::flags_type::ocfa>([](){
-                alarmTimer::rateProcess();
+                alarmTimer::periodic([](uint7_t timer){
+                    if (timer == *periodicTimer) {
+                        statusLed::tick();   
+                    }
+                });
             });
-            
-            if (EventManager::unprocessedEvent()) {
-                std::outl<terminal>("+++ Unprocessd"_pgm);
-                statusLed::blink(Constants::cRed, 10);
-            }
-            if (EventManager::leakedEvent()) {
-                std::outl<terminal>("+++ Leaked"_pgm);
-                statusLed::blink(Constants::cBlue, 10);
-            }
-            
-        });
+        }
     }    
 }
 
@@ -174,9 +117,3 @@ void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsign
 }
 #endif
 
-ISR(USART1_RX_vect) {
-    isrRegistrar::isr<AVR::ISR::Usart<1>::RX>();
-}
-ISR(USART1_UDRE_vect){
-    isrRegistrar::isr<AVR::ISR::Usart<1>::UDREmpty>();
-}

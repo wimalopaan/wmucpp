@@ -26,7 +26,7 @@
 
 namespace Hott {
     
-    template<uint8_t N>
+    template<uint8_t N, ::Util::NamedFlag useEvents = NamedFlag<true>>
     class SensorTextProtocollBuffer final {
         SensorTextProtocollBuffer() = delete;
     public:

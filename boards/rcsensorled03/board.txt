@@ -1,7 +1,7 @@
 Name: SteuerSensorModul03
 
 Korrekturen auf dem Boad:
-
+	- 100nF für Eingang Spannungsregler
 	- Inverter (G04) statt Treiber)
 
 Beschreibung:
@@ -17,12 +17,124 @@ Beschreibung:
 	- Timer 2 (SystemClock) und Timer 4 (Constantrate) zu einem (Timer 2) zusmmengefasst, damit Timer 4 frei (s.a. local02.h)
 	- Led-Ansteuerung
 
-* test02:
+* test02: ???
 	- Uart-Terminal 115200
 	- rpm-test
 
-* test03:
-	- Uart-Terminal 115200 (ohne Interrupts)
+* test03: ??? 
+	- Uart-Terminal 115200
+
+* test04: OK
+	- Interrupts für Uart
+	- ohne Events
+	- RCUart 115200 Baud: Ausgabe einzelner Werte
+	- Uart-Terminal 115200 Baud
+	
+* test05: ???
+	- Interrupts für Uart
+	- ohne Events
+	- RCUart 115200 Baud: Ausgabe einzelner Werte
+	- Uart-Terminal 115200 Baud
+	- Sensor-Uart 19200 Baud
+	- TestPin für Empfang
+
+* test06: OK
+	- Interrupts für Uart
+	- ohne Events
+	- RCUart 115200 Baud: Ausgabe einzelner Werte
+	- Uart-Terminal 115200 Baud
+	- Sensor-Uart 19200 Baud
+	- TestPin für Empfang
+	- ProtokollAdapter für SensorUart
+
+* test07: OK
+	- Interrupts für Uart
+	- mit Events
+	- RCUart 115200 Baud: Ausgabe einzelner Werte
+	- Uart-Terminal 115200 Baud
+	- Sensor-Uart 19200 Baud
+	- TestPin für Empfang
+	- ProtokollAdapter für SensorUart
+
+* test08: OK
+	- Interrupts für Uart
+	- ohne Events
+	- RCUart 115200 Baud: Ausgabe einzelner Werte
+	- Uart-Terminal 115200 Baud
+	- Sensor-Uart 19200 Baud
+	- ProtokollAdapter für SensorUart
+	- Menu
+
+* test09: OK
+	- Interrupts für Uart
+	- ohne Events
+	- RCUart 115200 Baud: Ausgabe einzelner Werte
+	- Uart-Terminal 115200 Baud
+	- Sensor-Uart 19200 Baud
+	- ProtokollAdapter für SensorUart
+	- Menu
+	- EEProm
+	- SoftPpm mit Interrupt	
+
+* test11: OK
+	- Interrupts für Uart
+	- ohne Events
+	- RCUart 115200 Baud: Ausgabe einzelner Werte
+	- Uart-Terminal 115200 Baud
+	- Sensor-Uart 19200 Baud
+	- ProtokollAdapter für SensorUart
+	- Menu
+	- EEProm
+	- SoftPpm mit Interrupt	
+	- Rpm mit ICP
+	- HardPwm
+
+* test12: OK
+	- Interrupts für Uart
+	- ohne Events
+	- RCUart 115200 Baud: Ausgabe einzelner Werte
+	- Uart-Terminal 115200 Baud
+	- Sensor-Uart 19200 Baud
+	- ProtokollAdapter für SensorUart
+	- Menu
+	- EEProm
+	- SoftPpm mit Interrupt	
+	- Rpm mit ICP
+	- HardPwm
+	- OneWire
+
+* test13: OK
+	- Interrupts für Uart
+	- ohne Events
+	- RCUart 115200 Baud: Ausgabe einzelner Werte
+	- Uart-Terminal 115200 Baud
+	- Sensor-Uart 19200 Baud
+	- ProtokollAdapter für SensorUart
+	- Menu
+	- EEProm
+	- SoftPpm mit Interrupt	
+	- Rpm mit ICP
+	- HardPwm
+	- FUSE für EEProm
+	- OneWire (mit FSM)
+
+* test14: 
+	- Interrupts für Uart
+	- ohne Events
+	- RCUart 115200 Baud: Ausgabe einzelner Werte
+	- Uart-Terminal 115200 Baud
+	- Sensor-Uart 19200 Baud
+	- ProtokollAdapter für SensorUart
+	- Menu
+	- EEProm
+	- SoftPpm mit Interrupt	
+	- Rpm mit ICP
+	- HardPwm
+	- FUSE für EEProm
+	- OneWire (mit FSM)
+	- ADC (mit FSM ?)
+
+-------------------------
 
 * test10:
 	- alles

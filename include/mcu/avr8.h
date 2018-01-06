@@ -76,7 +76,6 @@ namespace AVR {
         return std::is_same<T, ATMega1284P>::value;
     }
     
-    
     // todo: change to non constexpr here, since reinterpret_cast renders it non-constexpr at all
     
     template<MCU::SingleComponent Component>
@@ -107,6 +106,9 @@ namespace AVR {
 
 } // !AVR
 
+
+#include "register.h"
+
 #if defined(__AVR_ATmega1284P__)
 # include "mcu/avr/atmega1284p.h"
 #elif defined(__AVR_ATmega328P__)
@@ -126,6 +128,7 @@ namespace AVR {
 #else
 typedef AVR::ATMegaNone DefaultMcuType;
 #endif
+
 
 #undef _MMIO_BYTE
 #define _MMIO_BYTE(addr) (*(volatile uint8_t *)(addr))

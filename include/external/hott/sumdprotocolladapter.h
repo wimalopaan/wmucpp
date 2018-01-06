@@ -107,7 +107,7 @@ namespace Hott {
         }
 
     private:
-        inline static bool process(std::byte  c) { // from isr only
+        inline static bool process(std::byte  c) { // from isr only (ca 3µs)
             static sumdstate state = sumdstate::Undefined;
             static uint8_t channel = 0;
             
@@ -154,7 +154,7 @@ namespace Hott {
                     state = sumdstate::CrcH;
                     channel = 0;
                 }
-                if (channel >= SumDMsg::MaxChannels) {
+                if (channel >= SumDMsg::MaxChannels) { // fixme: 
                     channel = 0;
                 }
                 break;
@@ -163,7 +163,7 @@ namespace Hott {
                 state = sumdstate::CrcL;
                 break;
             case sumdstate::CrcL:
-                mMsg.crc |= std::to_integer<uint8_t>(c);
+                mMsg.crc |= std::to_integer<uint8_t>(c); // todo: Prüfung CRC
                 state = sumdstate::Undefined;
                 
                 switch(mMultiState) {
@@ -206,7 +206,6 @@ namespace Hott {
                 default:
                     assert(false);
                 }
-                
                 break;
             default:
                 assert(false);

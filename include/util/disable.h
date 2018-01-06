@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include "std/type_traits"
-#include "std/memory"
+#include <type_traits>
+#include <memory>
 
 #if __has_include(<avr/interrupt.h>)
 # include <avr/interrupt.h>
@@ -30,6 +30,7 @@
 
 struct RestoreState {};
 struct ForceOn {};
+struct NoDisableEnable {};
 
 template<typename T = RestoreState>
 struct EnableInterrupt {
@@ -42,7 +43,7 @@ struct DisbaleInterrupt {
 
 struct Transaction {};
 
-template<typename T = Transaction, bool Active = true, typename F1 = void, typename F2 = void>
+template<typename T = Transaction, bool Active = true, typename MCU = DefaultMcuType, typename F1 = void, typename F2 = void>
 class Scoped;
 
 template<bool Active>
@@ -60,10 +61,10 @@ public:
         }
     }
 };
-template<bool Active>
-class Scoped<EnableInterrupt<RestoreState>, Active> final
+template<bool Active, typename MCU>
+class Scoped<EnableInterrupt<RestoreState>, Active, MCU> final
 {
-    inline static constexpr auto status = AVR::getBaseAddr<DefaultMcuType::Status>;
+    inline static constexpr auto status = AVR::getBaseAddr<typename MCU::Status>;
 public:
     inline Scoped() {
         if constexpr(Active) {
@@ -73,13 +74,13 @@ public:
     }
     inline ~Scoped() {
         if constexpr(Active) {
-            if (!std::toBool(DefaultMcuType::Status::Bits::globalIntEnable & v)) {
+            if (!std::toBool(MCU::Status::Bits::globalIntEnable & v)) {
                 cli();
             }
         }
     }
 private:
-    DefaultMcuType::Status::Bits v{0};
+    typename MCU::Status::Bits v{0};
 };
 
 template<bool Active>
@@ -98,9 +99,13 @@ public:
     }
 };
 template<bool Active>
-class Scoped<DisbaleInterrupt<RestoreState>, Active> final
+class Scoped<DisbaleInterrupt<NoDisableEnable>, Active> final
+{};
+
+template<bool Active, typename MCU>
+class Scoped<DisbaleInterrupt<RestoreState>, Active, MCU> final
 {
-    inline static constexpr auto status = AVR::getBaseAddr<DefaultMcuType::Status>;
+    inline static constexpr auto status = AVR::getBaseAddr<typename MCU::Status>;
 public:
     inline Scoped()  {
         if constexpr(Active) {
@@ -110,13 +115,13 @@ public:
     }
     inline ~Scoped() {
         if constexpr(Active) {
-            if (std::toBool(DefaultMcuType::Status::Bits::globalIntEnable & v)) {
+            if (std::toBool(MCU::Status::Bits::globalIntEnable & v)) {
                 sei();
             }
         }
     }
 private:
-    DefaultMcuType::Status::Bits v{0};
+    typename MCU::Status::Bits v{0};
 };
 
 template<typename F1, typename F2>

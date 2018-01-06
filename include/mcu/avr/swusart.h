@@ -137,7 +137,7 @@ public:
                 }
                 else {
                     outframe = 0x0001;
-                    mcuInterrupts()->timsk.template clear<int_type::Mask::ociea>();
+                    mcuInterrupts()->timsk.template clear<int_type::Mask::ociea, DisbaleInterrupt<NoDisableEnable>>();
                 }
             }
         }
@@ -148,8 +148,8 @@ public:
             *timer()->ocrb = (*timer()->icr + ocra / 2) % ocra;
     
             mcuInterrupts()->tifr.template reset<int_type::Flags::ocfb>();
-            mcuInterrupts()->timsk.template clear<int_type::Mask::icie>();
-            mcuInterrupts()->timsk.template add<int_type::Mask::ocieb>();
+            mcuInterrupts()->timsk.template clear<int_type::Mask::icie, DisbaleInterrupt<NoDisableEnable>>();
+            mcuInterrupts()->timsk.template add<int_type::Mask::ocieb, DisbaleInterrupt<NoDisableEnable>>();
             inframe = 0;
             inbits = 0;
         }
@@ -164,8 +164,8 @@ public:
             if (inbits == 9) {
                 uint8_t c = 0xff & (inframe >> 1);
                 EventManager::enqueueISR({SWUsartEventMapper<N>::event, std::byte{c}});
-                mcuInterrupts()->timsk.template clear<int_type::Mask::ocieb>();
-                mcuInterrupts()->timsk.template add<int_type::Mask::icie>();
+                mcuInterrupts()->timsk.template clear<int_type::Mask::ocieb, DisbaleInterrupt<NoDisableEnable>>();
+                mcuInterrupts()->timsk.template add<int_type::Mask::icie, DisbaleInterrupt<NoDisableEnable>>();
                 mcuInterrupts()->tifr.template reset<int_type::Flags::icf>();
                 inframe = 0;
                 inbits = 0;
@@ -184,11 +184,11 @@ public:
         
         *timer()->ocra= tsd.ocr;
 
-        timer()->tccrb.template add<mcu_timer_type::TCCRB::wgm2>();
-        timer()->tccrb.template add<mcu_timer_type::TCCRB::icnc>();
-        timer()->tccrb.template clear<mcu_timer_type::TCCRB::ices>();
+        timer()->tccrb.template add<mcu_timer_type::TCCRB::wgm2, DisbaleInterrupt<NoDisableEnable>>();
+        timer()->tccrb.template add<mcu_timer_type::TCCRB::icnc, DisbaleInterrupt<NoDisableEnable>>();
+        timer()->tccrb.template clear<mcu_timer_type::TCCRB::ices, DisbaleInterrupt<NoDisableEnable>>();
 
-        mcuInterrupts()->timsk.template add<int_type::Mask::icie>();
+        mcuInterrupts()->timsk.template add<int_type::Mask::icie, DisbaleInterrupt<NoDisableEnable>>();
         mcuInterrupts()->tifr.template reset<int_type::Flags::icf | int_type::Flags::ocfb | int_type::Flags::ocfa>();
 
         SWUsartRxTx<N>::tx::template dir<AVR::Output>();
@@ -248,13 +248,13 @@ public:
         AVR::Timer8Bit<mcu_timer_number>::template prescale<tsd.prescaler>();
         *timer()->ocra = tsd.ocr;
 
-        timer()->tccra.template add<mcu_timer_type::TCCRA::wgm1>();
+        timer()->tccra.template add<mcu_timer_type::TCCRA::wgm1, DisbaleInterrupt<NoDisableEnable>>();
 
         if constexpr(N == 0) {
             mcuInterrupts()->tifr.template reset<int_type::Flags::ocf0a>();
         }
         else {
-            mcuInterrupts()->tifr.template add<int_type::Flags::ocf1a>();
+            mcuInterrupts()->tifr.template add<int_type::Flags::ocf1a, DisbaleInterrupt<NoDisableEnable>>();
         }
         SWUsartRxTx<N>::tx::template dir<AVR::Output>();
         SWUsartRxTx<N>::tx::on();

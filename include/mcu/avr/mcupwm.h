@@ -26,7 +26,6 @@
 #include "std/limits"
 
 namespace AVR {
-    
     template<uint8_t TimerN, typename MCU = DefaultMcuType>
     class PWM {
         typedef MCU mcu_type;
@@ -39,11 +38,11 @@ namespace AVR {
     public:
         struct A {
             static void off() {
-                mcuTimer()->tccra.template clear<AVR::TimerParameter<TimerN, MCU>::FastPwm1::cha>();
+                mcuTimer()->tccra.template clear<AVR::TimerParameter<TimerN, MCU>::FastPwm1::cha, DisbaleInterrupt<NoDisableEnable>>();
                 pwmA::high();
             }
             static void on() {
-                mcuTimer()->tccra.template add<AVR::TimerParameter<TimerN, MCU>::FastPwm1::cha>();
+                mcuTimer()->tccra.template add<AVR::TimerParameter<TimerN, MCU>::FastPwm1::cha, DisbaleInterrupt<NoDisableEnable>>();
             }
             static void ocr(const typename timer_type::value_type& v) {
                 *mcuTimer()->ocra = v;
@@ -54,11 +53,11 @@ namespace AVR {
         };
         struct B {
             static void off() {
-                mcuTimer()->tccra.template clear<AVR::TimerParameter<TimerN, MCU>::FastPwm1::chb>();
+                mcuTimer()->tccra.template clear<AVR::TimerParameter<TimerN, MCU>::FastPwm1::chb, DisbaleInterrupt<NoDisableEnable>>();
                 pwmB::high();
             }
             static void on() {
-                mcuTimer()->tccra.template add<AVR::TimerParameter<TimerN, MCU>::FastPwm1::chb>();
+                mcuTimer()->tccra.template add<AVR::TimerParameter<TimerN, MCU>::FastPwm1::chb, DisbaleInterrupt<NoDisableEnable>>();
             }
             static void ocr(const typename timer_type::value_type& v) {
                 *mcuTimer()->ocrb = v;
@@ -77,7 +76,7 @@ namespace AVR {
             static_assert(prescaler > 0, "wrong prescaler");
             timer_type::template prescale<prescaler>();
             mcuTimer()->tccra.template set<AVR::TimerParameter<TimerN, MCU>::FastPwm1::tccra>();
-            mcuTimer()->tccrb.template add<AVR::TimerParameter<TimerN, MCU>::FastPwm1::tccrb>();
+            mcuTimer()->tccrb.template add<AVR::TimerParameter<TimerN, MCU>::FastPwm1::tccrb, DisbaleInterrupt<NoDisableEnable>>();
             *mcuTimer()->ocra = 0;
             *mcuTimer()->ocrb = 0;
         }
@@ -85,6 +84,16 @@ namespace AVR {
         static void pwm(const std::percent& p) {
             if (p > std::percent{0}) {
                 typename timer_type::value_type v = std::expand(p, typename timer_type::value_type(0), AVR::TimerParameter<TimerN, MCU>::FastPwm1::top);
+                Channel::on();
+                Channel::ocr(v);
+            }
+            else {
+                Channel::off();
+            }
+        }
+        template<typename Channel>
+        static void pwm(typename timer_type::value_type& v) {
+            if (v > 0) {
                 Channel::on();
                 Channel::ocr(v);
             }

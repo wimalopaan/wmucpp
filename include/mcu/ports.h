@@ -30,6 +30,7 @@
 #include "mcu/concepts.h"
 #include "container/pgmarray.h"
 #include "util/disable.h"
+#include "util/util.h"
 #include "util/meta.h"
 #include "util/types.h"
 #include "util/type_traits.h"

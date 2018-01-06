@@ -24,8 +24,37 @@
 #include "mcu/avr/ppmbase.h"
 #include "units/percent.h"
 #include "util/disable.h"
+#include "util/meta.h"
 
-// todo: PinSet einsetzen
+//namespace detail {
+//    template<typename List> 
+//    struct visit {
+//        template<typename T> struct Wrapper{
+//            typedef T type;
+//        };
+//        using first = Meta::front<List>;
+//        template<typename I, typename C>
+//        inline static void at(I index, const C& callable) {
+//            if (index == 0) {
+//                callable(Wrapper<first>{});
+//            }
+//            else {
+//                visit<Meta::rest<List>>::at(index - 1, callable);
+//            }
+//        }
+//    };
+//    template<> 
+//    struct visit<Meta::List<>> {
+//        template<typename I, typename C>
+//        inline static void at(I, const C&) {}
+//    };
+//}
+
+//template<typename List, typename I, typename C>
+//inline void visitAt(I index, const C& callable) {
+//    detail::visit<List>::at(index, callable);
+//}
+
 template<typename Timer, typename... Pins>
 class SoftPPM final {
     SoftPPM() = delete;
@@ -33,14 +62,18 @@ class SoftPPM final {
 public:
     static_assert(std::is_same<typename Timer::value_type, uint16_t>::value, "must use 16bit timer");
     
-    // constexpr umrechnen der Pins... in ein constexpr array mit Masken und ... s.a PinSet
     static constexpr const uint8_t numberOfChannels = sizeof...(Pins);
     static constexpr auto mcuTimer = Timer::mcuTimer;
     static constexpr auto mcuInterrupts = Timer::mcuInterrupts;
     
     using parameter = PPMParameter<Timer>;
+
+    typedef uint_ranged<uint16_t, parameter::ocMin, parameter::ocMax> ranged_type;
     
-    static void timerInit() {
+    using pin_list = Meta::List<Pins...>;
+    using first_pin = Meta::front<pin_list>;
+    
+    inline static void timerInit() {
         Timer::template prescale<parameter::prescaler>();
         *mcuTimer()->ocra = parameter::ocFrame;
         mcuTimer()->tccrb.template add<Timer::tccrb_type::wgm2>();
@@ -48,7 +81,7 @@ public:
         mcuInterrupts()->timsk.template add<Timer::mask_type::ociea>();
     }
     
-    static void init() {
+    inline static void init() {
         (Pins::low(), ...);
         (Pins::template dir<AVR::Output>(), ...);
         timerInit();
@@ -56,7 +89,7 @@ public:
         std::iota(std::begin(ocrbValues), std::end(ocrbValues), medium, medium);
     }
     
-    static void ppm(const std::percent& width, uint8_t channel) {
+    inline static void ppm(const std::percent& width, uint8_t channel) {
         assert(channel < numberOfChannels);
         uint16_t ocr = std::expand(width, parameter::ocMin, parameter::ocMax);
         uint16_t start = 0;
@@ -66,63 +99,63 @@ public:
         uint16_t end = start + ocr;
         int16_t diff = ocr - ocrbValues[channel];
         {
-            Scoped<DisbaleInterrupt<>> di;
+            Scoped<DisbaleInterrupt<RestoreState>> di;
             ocrbValues[channel] = end;
             for(uint8_t i = channel + 1; i < numberOfChannels; ++i) {
                 ocrbValues[i] += diff;
             }
         }
     }
-    
-    template<typename P, typename...PP>
-    struct First {
-        static void high() {
-            P::high();
+    template<typename T, T Min, T Max>
+    inline static uint16_t ppm(const uint_ranged<T, Min, Max>& v, uint8_t channel) {
+        assert(channel < numberOfChannels);
+        uint16_t ocr;
+        if constexpr(std::is_same<ranged_type, uint_ranged<T, Min, Max>>::value) {
+            ocr = v.toInt();
         }
-        static void low() {
-            P::low();
+        else {
+            T v1 = v.toInt() - Min;
+            constexpr uint64_t denom = Max - Min;
+            constexpr uint64_t nom = ranged_type::Upper - ranged_type::Lower;
+            ocr = Util::RationalDivider<uint16_t, nom, denom>::scale(v1) + ranged_type::Lower;
         }
-    };
-    
-    // todo: etwas eleganter !!! Auf die Klasse verzichten, weil keine partielle Spezialisierung mehr erforderlich wegen constexpr
-    template<uint8_t N, typename P, typename... PP>
-    struct OffN {
-        static void check(uint8_t i) {
-            if ((numberOfChannels - 1 - i) == (N - 1))  {
-                P::low();
-            }
-            else if constexpr((N - 1) > 0) {
-                OffN<N - 1, PP..., void>::check(i);
-            }
+        uint16_t start = 0;
+        for(uint8_t i = 0; i < channel; ++i) {
+            start += ocrbValues[i];
         }
-    };
-    
-    template<uint8_t N, typename P, typename... PP>
-    struct OnN {
-        static void check(uint8_t i) {
-            if ((numberOfChannels - 1 - i) == (N - 1))  {
-                P::high();
-            }
-            else if constexpr((N - 1) > 0) {
-                OnN<N - 1, PP..., void>::check(i);
+        uint16_t end = start + ocr;
+        int16_t diff = ocr - ocrbValues[channel];
+        {
+            Scoped<DisbaleInterrupt<RestoreState>> di;
+            ocrbValues[channel] = end;
+            for(uint8_t i = channel + 1; i < numberOfChannels; ++i) {
+                ocrbValues[i] += diff;
             }
         }
-    };
+        return ocr;
+    }
     
+    // todo: ermöglicht _vor_ ocrb-isr andere ISR (z.B.) uart abzuschalten
     struct OCAHandler : public IsrBaseHandler<typename AVR::ISR::Timer<Timer::number>::CompareA> {
         static void isr() {
             actual = 0;
             *mcuTimer()->ocrb = ocrbValues[0];
             mcuInterrupts()->timsk.template add<Timer::mask_type::ocieb>();
-            First<Pins...>::high();
+            first_pin::high();
         }
     };
+    
+    // todo: für PINs nur ocrb, und einschalten der abgeschalteten ISRs (s.a. ocra)
     struct OCBHandler : public IsrBaseHandler<typename AVR::ISR::Timer<Timer::number>::CompareB> {
         static void isr() {
-            OffN<numberOfChannels, Pins...>::check(actual);
+            Meta::visitAt<pin_list>(actual, [](auto wrapper){
+                decltype(wrapper)::type::off();
+            });
             actual = (actual + 1) % numberOfChannels;
             if (actual != 0) {
-                OnN<numberOfChannels, Pins...>::check(actual);
+                Meta::visitAt<pin_list>(actual, [](auto wrapper){
+                    decltype(wrapper)::type::on();
+                });
                 *mcuTimer()->ocrb = ocrbValues[actual];
             }
             else {

@@ -372,13 +372,14 @@ struct uint4_t {
 
 struct uint7_t final {
     constexpr uint7_t() : value(0), pad(0) {}
-    constexpr explicit uint7_t(const uint8_t& v) : value(v), pad(0) {}
+    constexpr explicit uint7_t(uint8_t v) : value(v), pad(0) {}
     constexpr explicit uint7_t(const uint7_t& v) : value(v), pad(0) {}
     
-    explicit uint7_t(volatile uint7_t& v) : value(v), pad(0) {}
+    explicit uint7_t(volatile const uint7_t& v) : value(v), pad(0) {}
     
     constexpr uint7_t(uint7_t&&) = default;
     constexpr uint7_t& operator=(uint7_t&&) = default;
+    
     void operator=(uint7_t&& rhs) volatile {
         value = rhs.value;
     }

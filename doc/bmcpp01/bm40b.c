@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <avr/pgmspace.h>
+
 volatile char* x1;
 volatile char x2;
 
@@ -26,6 +28,9 @@ const int x = 3;
 //const int y = x;
 
 //const __flash char BUILD[] = {text[0]};
+const __flash char BUILD[] = __DATE__;
+
+//const char date[] PROGMEM = {__DATE__[0], __DATE__[1]};
 
 int main() {
 

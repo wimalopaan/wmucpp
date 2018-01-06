@@ -22,7 +22,7 @@
 
 namespace Util {
     template<typename T>
-    constexpr T gcd(T a, T b) {
+    inline constexpr T gcd(T a, T b) {
         return b == 0 ? a : gcd(b, a % b);
     }
     
@@ -67,7 +67,7 @@ namespace Util {
         static_assert(data.multiplierFull != 0);
         static_assert(data.multiplierTruncated != 0);
         
-        static constexpr T scale(T value) {
+        inline static constexpr T scale(T value) {
             if constexpr(std::is_same<T, uint8_t>::value) { // no explicit upcasting due to integral promotion
                 return ((value * data.multiplierTruncated) / (std::numeric_limits<T>::module())) / (T(1) << data.shifts);
             }

@@ -88,7 +88,18 @@
 	- LCD Ausgabe
 	- Led (WS2812)
 	
+* test16:
+	- ohne Interrupt
+	- Usart
+	- EEProm (FlagRegister)
+	- I2C (FlagRegister) (Ausgabe eines Wertes)
+	- SPI (FlagRegister)
+	- LCD PWM
+	- LCD Ausgabe
+	- Led (WS2812)
+	- Drehencoder (über I2C abfragbar) + Taster + I2C-Interrupt
+
+	
 -----
 
-	- Drehencoder (über I2C abfragbar) + Taster + I2C-Interrupt
 	- Menusystem

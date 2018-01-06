@@ -27,9 +27,18 @@ F_OSC = 20000000
 
 subdirs =
 
-targets += test01.s test01.elf
-targets += test02.s test02.elf
-targets += test03.s test03.elf
-targets += test10.s test10.elf
+#targets += test01.s test01.elf
+#targets += test02.s test02.elf
+#targets += test03.s test03.elf test03.S
+#targets += test04.s test04.elf test04.S
+#targets += test05.s test05.elf test05.S
+#targets += test06.s test06.elf test06.S
+#targets += test07.s test07.elf test07.S
+#targets += test08.s test08.elf test08.S
+#targets += test09.s test09.elf test09.S
+#targets += test10.s test10.elf
+#targets += test11.s test11.elf test11.S
+#targets += test12.s test12.elf test12.S
+targets += test13.s test13.elf test13.S
 
 -include ../../Makefile.include

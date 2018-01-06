@@ -17,7 +17,7 @@
  */
 
 #define MEM
-//#define NDEBUG
+#define NDEBUG
 
 #include "local.h"
 #include "rcsensorled03.h"
@@ -386,12 +386,13 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
             ++mCounter;
             statusLed::tick();
 
-            auto& pwmChannel = eeprom::data()[Storage::AVKey::PWM];
+            auto pwmChannel = eeprom::data()[Storage::AVKey::PWM];
+//            uint8_t pwmChannel = 0;
             if (pwmChannel) {
                 std::percent pv = std::scale(Hott::SumDProtocollAdapter<0>::value8Bit(pwmChannel));
                 hbridge1::pwm(pv);
                 hbridge2::pwm(pv);
-                std::outl<terminal>("pv: "_pgm, pv);
+                std::outl<terminal>("pv: "_pgm, pv, "pc: "_pgm, (uint8_t)pwmChannel);
             }
             else {
                 std::percent pv{0};
@@ -404,9 +405,9 @@ struct TimerHandler : public EventHandler<EventType::Timer> {
             const auto upm2 = rpm2::rpm();
             std::outl<terminal>("rpm2: "_pgm, upm2.value());
             
-            auto v1 = Hott::SumDProtocollAdapter<0>::value(2);
+//            auto v1 = Hott::SumDProtocollAdapter<0>::value(2);
 //            hardPpm::ppm<hardPpm::A>(v1);
-            auto v2 = Hott::SumDProtocollAdapter<0>::value(3);
+//            auto v2 = Hott::SumDProtocollAdapter<0>::value(3);
 //            hardPpm::ppm<hardPpm::B>(v2);
 
             rpm1::check();
@@ -530,12 +531,12 @@ int main() {
 
         EventManager::run2<allEventHandler>([](){
 //            leds1Pin::on();   
-            menu::periodic();
+//            menu::periodic();
 //            leds1Pin::off();   
             
-            TwiMasterAsync::periodic();
+//            TwiMasterAsync::periodic();
             
-            adcController::periodic();
+//            adcController::periodic();
             systemClock::periodic<systemClock::flags_type::ocfa>([](){
 //                leds2Pin::toggle();
                 alarmTimer::rateProcess();
@@ -544,10 +545,11 @@ int main() {
                 oneWireMasterAsync::rateProcess();
             });
             
-            updateMeasurements();
             
-            rpm1::periodic();
-            rpm2::periodic();
+//            updateMeasurements();
+            
+//            rpm1::periodic();
+//            rpm2::periodic();
             
             if (EventManager::unprocessedEvent()) {
                 std::outl<terminal>("+++ Unprocessd"_pgm);
@@ -558,9 +560,9 @@ int main() {
                 statusLed::blink(Constants::cBlue, 10);
             }
             
-            while(eeprom::saveIfNeeded()) {
-                std::outl<terminal>("."_pgm);
-            }
+//            while(eeprom::saveIfNeeded()) {
+//                std::outl<terminal>("."_pgm);
+//            }
             
         });
     }    

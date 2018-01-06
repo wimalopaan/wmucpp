@@ -29,7 +29,7 @@ namespace std {
     template<typename T, uint16_t Size>
     struct array final {
         typedef T value_type;
-        typedef typename std::conditional<(Size <= 256), uint8_t, uint16_t>::type size_type;
+        typedef typename std::conditional<(Size < 256), uint8_t, uint16_t>::type size_type;
         typedef typename std::conditional<(Size < 128), int8_t, int16_t>::type signed_size_type;
         static_assert(Size <= std::numeric_limits<uint16_t>::max());
         
@@ -108,7 +108,7 @@ namespace std {
         static_assert(std::is_same<a1::size_type, uint8_t>::value);
 
         using a2 = array<uint8_t, 256>;
-        static_assert(std::is_same<a2::size_type, uint8_t>::value);
+        static_assert(std::is_same<a2::size_type, uint16_t>::value);
     }
     
 }

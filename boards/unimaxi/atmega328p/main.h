@@ -42,7 +42,7 @@ struct Config
         static constexpr std::milliseconds resolution = std::duration_cast<std::milliseconds>(1 / frequency);
     };
     struct EventManager {
-        static constexpr uint8_t EventQueueLength = 128;
+        static constexpr uint8_t EventQueueLength = 64;
     };
     struct Usart {
         typedef uint16_t SizeType;

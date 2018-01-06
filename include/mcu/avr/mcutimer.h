@@ -24,6 +24,7 @@
 #include "mcu/avr/isr.h"
 #include "mcu/avr/util.h"
 #include "units/physical.h"
+#include "util/concepts.h"
 
 namespace AVR {
     
@@ -87,7 +88,7 @@ namespace AVR {
     
     static void mode(TimerMode mode) {
         if (mode == TimerMode::CTC) {
-            mcuInterrupts()->timsk.template add<MCU::Timer8Interrupts::Mask::ociea>();
+            mcuInterrupts()->timsk.template add<MCU::Timer8Interrupts::Mask::ociea, DisbaleInterrupt<NoDisableEnable>>();
             mcuTimer()->tccra.template set<MCU::Timer8Bit::TCCRA::wgm1>();
         }
         if (mode == TimerMode::CTCNoInt) {
@@ -96,7 +97,7 @@ namespace AVR {
         else if (mode == TimerMode::Normal) {
         }
         else if (mode == TimerMode::OverflowInterrupt) {
-            mcuInterrupts()->timsk.template add<MCU::Timer8Interrupts::Mask::toie>();
+            mcuInterrupts()->timsk.template add<MCU::Timer8Interrupts::Mask::toie, DisbaleInterrupt<NoDisableEnable>>();
         }
     }
     
@@ -188,7 +189,7 @@ public:
     
     static void mode(TimerMode timerMode) {
         if (timerMode == TimerMode::CTC) {
-            mcuInterrupts()->timsk.template add<MCU::TimerInterrupts::Mask::ocie0a>();
+            mcuInterrupts()->timsk.template add<MCU::TimerInterrupts::Mask::ocie0a, DisbaleInterrupt<NoDisableEnable>>();
             mcuTimer()->tccra.template set<MCU::Timer8Bit::TCCRA::wgm1>();
         }
         if (timerMode == TimerMode::CTCNoInt) {
@@ -197,7 +198,7 @@ public:
         else if (timerMode == TimerMode::Normal) {
         }
         else if (timerMode == TimerMode::OverflowInterrupt) {
-            mcuInterrupts()->timsk.template add<MCU::TimerInterrupts::Mask::toie0>();
+            mcuInterrupts()->timsk.template add<MCU::TimerInterrupts::Mask::toie0, DisbaleInterrupt<NoDisableEnable>>();
         }
     }
 };
@@ -248,12 +249,12 @@ public:
     
     static void mode(TimerMode timerMode) {
         if (timerMode == TimerMode::CTC) {
-            mcuInterrupts()->timsk.template add<MCU::TimerInterrupts::Mask::ocie1a>();
+            mcuInterrupts()->timsk.template add<MCU::TimerInterrupts::Mask::ocie1a, DisbaleInterrupt<NoDisableEnable>>();
         }
         else if (timerMode == TimerMode::Normal) {
         }
         else if (timerMode == TimerMode::OverflowInterrupt) {
-            mcuInterrupts()->timsk.template add<MCU::TimerInterrupts::Mask::toie1>();
+            mcuInterrupts()->timsk.template add<MCU::TimerInterrupts::Mask::toie1, DisbaleInterrupt<NoDisableEnable>>();
         }
     }
 };
@@ -306,7 +307,7 @@ struct Timer8Bit<2, MCU> : public TimerBase<MCU, 2> {
     
     static void mode(const TimerMode& mode) {
         if (mode == TimerMode::CTC) {
-            mcuInterrupts()->timsk.template add<MCU::TimerInterrupts::Mask::ocie2>();
+            mcuInterrupts()->timsk.template add<MCU::TimerInterrupts::Mask::ocie2, DisbaleInterrupt<NoDisableEnable>>();
             mcuTimer()->tccr.template set<MCU::Timer8BitSimple2::TCCR::wgm1>();
         }
         else if (mode == TimerMode::Normal) {
@@ -379,14 +380,14 @@ static void periodic(const Callable& f) {
 
 static void mode(TimerMode timerMode) {
     if (timerMode == TimerMode::CTC) {
-        mcuInterrupts()->timsk.template add<MCU::Timer16Interrupts::Mask::ociea>();
-        mcuTimer()->tccrb.template add<MCU::Timer16Bit::TCCRB::wgm2>();
+        mcuInterrupts()->timsk.template add<MCU::Timer16Interrupts::Mask::ociea, DisbaleInterrupt<NoDisableEnable>>();
+        mcuTimer()->tccrb.template add<MCU::Timer16Bit::TCCRB::wgm2, DisbaleInterrupt<NoDisableEnable>>();
     }
     if (timerMode == TimerMode::CTCNoInt) {
-        mcuTimer()->tccrb.template add<MCU::Timer16Bit::TCCRB::wgm2>();
+        mcuTimer()->tccrb.template add<MCU::Timer16Bit::TCCRB::wgm2, DisbaleInterrupt<NoDisableEnable>>();
     }
     if (timerMode == TimerMode::IcpNoInt) {
-        mcuTimer()->tccrb.template add<MCU::Timer16Bit::TCCRB::icnc | MCU::Timer16Bit::TCCRB::ices>();
+        mcuTimer()->tccrb.template add<MCU::Timer16Bit::TCCRB::icnc | MCU::Timer16Bit::TCCRB::ices, DisbaleInterrupt<NoDisableEnable>>();
     }
 }
 };
@@ -442,8 +443,8 @@ static void start(){
 
 static void mode(TimerMode timerMode) {
     if (timerMode == TimerMode::CTC) {
-        mcuInterrupts()->timsk.template add<MCU::TimerInterrupts::Mask::ocie1a>();
-        mcuTimer()->tccrb.template add<MCU::Timer16Bit::TCCRB::wgm2>();
+        mcuInterrupts()->timsk.template add<MCU::TimerInterrupts::Mask::ocie1a, DisbaleInterrupt<NoDisableEnable>>();
+        mcuTimer()->tccrb.template add<MCU::Timer16Bit::TCCRB::wgm2, DisbaleInterrupt<NoDisableEnable>>();
     }
 }
 };

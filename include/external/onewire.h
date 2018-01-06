@@ -119,10 +119,8 @@ namespace OneWire {
     enum class Command {ReadRom = 0x33, SkipRom = 0xcc, MatchRom = 0x55, SearchRom = 0xf0, 
                         Convert = 0x44, ReadScratchpad = 0xbe, WriteScratchpad = 0x4e};
     
-    
-    // fixme: asynchrone Schnittstelle wie bei I2C gestalten
-    
-    template<typename OWMaster, const std::microseconds& delay, uint16_t BSize = 16>
+    template<typename OWMaster, const std::microseconds& delay, uint16_t QueueSize = 16, 
+             ::Util::NamedFlag useEvents = UseEvents<true>>
     class MasterAsync final {
         enum class State : uint8_t {Inactive, ResetWait, Sending, Reading};
         
@@ -152,7 +150,7 @@ namespace OneWire {
                 break;
             case State::ResetWait:
             {
-                Scoped<DisbaleInterrupt<>> di;
+                Scoped<DisbaleInterrupt<RestoreState>> di;
                 OWMaster::pinTriState();
                 Util::delay(Parameter<mode_type>::waitForPresenceAfterReset);
                 mDevicesPresent = !pin_type::read(); // actice low
@@ -180,7 +178,9 @@ namespace OneWire {
                     assert(ok);
                     --mBytesToRead;
                     if (mBytesToRead == 0) {
-                        EventManager::enqueue({EventType::OneWireRecvComplete});
+                        if constexpr(useEvents::value) {
+                            EventManager::enqueue({EventType::OneWireRecvComplete});
+                        }
                         mState = State::Inactive;
                     }
                     else {
@@ -220,8 +220,8 @@ namespace OneWire {
             return mDevicesPresent;
         }
     private:
-        inline static std::FiFo<uint8_t, BSize> mRecvQueue;
-        inline static std::FiFo<uint8_t, BSize> mSendQueue;
+        inline static std::FiFo<uint8_t, QueueSize> mRecvQueue;
+        inline static std::FiFo<uint8_t, QueueSize> mSendQueue;
         inline static uint8_t mBitCount = 0;
         inline static State mState = State::Inactive;
         inline static bool mDevicesPresent = false;
@@ -263,7 +263,7 @@ namespace OneWire {
                 Util::delay(Parameter<Mode>::recovery);
             }
             {
-                Scoped<DisbaleInterrupt<>> di;
+                Scoped<DisbaleInterrupt<RestoreState>> di;
                 pinLow();
                 if (bit) {
                     Util::delay(Parameter<Mode>::start); 
@@ -287,7 +287,7 @@ namespace OneWire {
                 Util::delay(Parameter<Mode>::recovery);
             }
             {
-                Scoped<DisbaleInterrupt<>> di;
+                Scoped<DisbaleInterrupt<RestoreState>> di;
                 pinLow();
                 Util::delay(Parameter<Mode>::start); 
                 pinTriState();
@@ -305,7 +305,7 @@ namespace OneWire {
             pinLow();
             Util::delay(Parameter<Mode>::reset);       
             {
-                Scoped<DisbaleInterrupt<>> di;
+                Scoped<DisbaleInterrupt<RestoreState>> di;
                 pinTriState();
                 Util::delay(Parameter<Mode>::waitForPresenceAfterReset);
                 presence = !Pin::read(); // actice low

@@ -118,8 +118,8 @@ int main() {
     terminalDevice::init<9600>();
     alarmTimer::init(AVR::TimerMode::CTCNoInt);
 
-    std::outl<terminal>("Test14"_pgm);
-    Util::put<lcd>("Test14\nabc"_pgm);
+    std::outl<terminal>("Test15"_pgm);
+    Util::put<lcd>("Test15\nabc"_pgm);
     
     
     while(true) {

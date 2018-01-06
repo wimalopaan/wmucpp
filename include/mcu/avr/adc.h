@@ -74,17 +74,17 @@ namespace AVR {
         
         static void init() {
             if constexpr(std::is_same<Reso, Resolution<8>>::value) {
-                mcuAdc()->admux.template add<MCU::Adc::MUX::refs1 | MCU::Adc::MUX::refs0 | MCU::Adc::MUX::adlar>();
+                mcuAdc()->admux.template add<MCU::Adc::MUX::refs1 | MCU::Adc::MUX::refs0 | MCU::Adc::MUX::adlar, DisbaleInterrupt<NoDisableEnable>>();
             }
             else {
-                mcuAdc()->admux.template add<MCU::Adc::MUX::refs1 | MCU::Adc::MUX::refs0>();
+                mcuAdc()->admux.template add<MCU::Adc::MUX::refs1 | MCU::Adc::MUX::refs0, DisbaleInterrupt<NoDisableEnable>>();
             }
-            mcuAdc()->adcsra.template add<MCU::Adc::SRA::aden | MCU::Adc::SRA::adps2 | MCU::Adc::SRA::adps1 | MCU::Adc::SRA::adps0>();
+            mcuAdc()->adcsra.template add<MCU::Adc::SRA::aden | MCU::Adc::SRA::adps2 | MCU::Adc::SRA::adps1 | MCU::Adc::SRA::adps0, DisbaleInterrupt<NoDisableEnable>>();
         }
         
         static void startConversion() {
             assert(conversionReady());
-            mcuAdc()->adcsra.template add<MCU::Adc::SRA::adsc>();
+            mcuAdc()->adcsra.template add<MCU::Adc::SRA::adsc, DisbaleInterrupt<NoDisableEnable>>();
         }
         
         static bool conversionReady() {
@@ -106,7 +106,7 @@ namespace AVR {
         
         static void channel(uint8_t ch) {
             assert(ch < mcuadc_parameter_type::channelMasks.size);
-            mcuAdc()->admux.template setPartial<channelMask>(mcuadc_parameter_type::channelMasks[ch]);
+            mcuAdc()->admux.template setPartial<channelMask, DisbaleInterrupt<NoDisableEnable>>(mcuadc_parameter_type::channelMasks[ch]);
         }
     };
     

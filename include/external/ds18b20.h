@@ -24,10 +24,12 @@
 #include "external/onewire.h"
 
 // todo: use Single
-// todo: SFINAE für AsyncMaster
 
-template<typename OneWireMaster, bool Single = true>
-class DS18B20 final : public EventHandler<EventType::OneWireRecvComplete> {
+namespace detail {
+    struct Base {};
+}
+template<typename OneWireMaster, bool Single = true, ::Util::NamedFlag useEvents = UseEvents<true>>
+class DS18B20 final : public std::conditional<useEvents::value, EventHandler<EventType::OneWireRecvComplete>, detail::Base>::type {
 public:
     enum class Resolution {R9bit = 0x1f, R10bit = 0x3f, R11bit = 0x5f, R12bit = 0x7f};
     
@@ -44,27 +46,27 @@ public:
     
     DS18B20() = delete;
     
-    static void init() {
+    inline static void init() {
         OneWireMaster::init();
         OneWireMaster::reset();
     }
     
     template<uint8_t N = readScratchpadSize>
-    static void startGet() {
+    inline static void startGet() {
         static_assert(OneWireMaster::isAsync, "async interface shall use async OneWireMaster");
         OneWireMaster::template startGet<N>();
     }
     
-    static void reset() {
+    inline static void reset() {
         OneWireMaster::reset();
     }
 
-    static void command(OneWire::Command cmd) {
+    inline static void command(OneWire::Command cmd) {
         OneWireMaster::put(static_cast<uint8_t>(cmd));
     }
 
     template<uint8_t N = readScratchpadSize>
-    static void startGet(OneWire::ow_rom_t& rom) {
+    inline static void startGet(OneWire::ow_rom_t& rom) {
         reset();
         command(OneWire::Command::MatchRom);
         for(uint8_t i = 0; i < rom.size; ++i) {
@@ -74,16 +76,17 @@ public:
         startGet<N>();
     }
 
-    static bool convert() {
+    inline static bool convert() {
         if (!OneWireMaster::reset()) {
             return false;
         }
         command(OneWire::Command::SkipRom);
         command(OneWire::Command::Convert);
+        mToRead = readScratchpadSize;
         return true;
     }
     
-    static bool readRom(OneWire::ow_rom_t& rom) {
+    inline static bool readRom(OneWire::ow_rom_t& rom) {
         static_assert(!OneWireMaster::isAsync, "sync interface shall use sync OneWireMaster");
         if (!OneWireMaster::reset()) {
             return false;
@@ -100,7 +103,7 @@ public:
         return true;
     }
 
-    static bool readScratchpad(ds18b20_rsp_t& sp) {
+    inline static bool readScratchpad(ds18b20_rsp_t& sp) {
         static_assert(!OneWireMaster::isAsync, "sync interface shall use sync OneWireMaster");
         if (!OneWireMaster::reset()) {
             return false;
@@ -113,7 +116,7 @@ public:
         return true;
     }
 
-    static bool readScratchpad(const OneWire::ow_rom_t& rom, ds18b20_rsp_t& sp) {
+    inline static bool readScratchpad(const OneWire::ow_rom_t& rom, ds18b20_rsp_t& sp) {
         static_assert(!OneWireMaster::isAsync, "sync interface shall use sync OneWireMaster");
         if (!OneWireMaster::reset()) {
             return false;
@@ -129,7 +132,7 @@ public:
         return true;
     }
     
-    static bool writeScratchpad(ds18b20_wsp_t& sp) {
+    inline static bool writeScratchpad(ds18b20_wsp_t& sp) {
         static_assert(!OneWireMaster::isAsync, "sync interface shall use sync OneWireMaster");
         if (!OneWireMaster::reset()) {
             return false;
@@ -142,18 +145,21 @@ public:
         return true;
     }
 
-    static FixedPoint<int16_t, 4> temperature() {
+    inline static FixedPoint<int16_t, 4> temperature() {
         return temperature(mScratchPad);
     }
 
-    static FixedPoint<int16_t, 4> temperature(ds18b20_rsp_t& sp) {
+    inline static FixedPoint<int16_t, 4> temperature(ds18b20_rsp_t& sp) {
         uint16_t valueL = sp[0];
         uint16_t valueH = sp[1];
         
         return FixedPoint<int16_t, 4>::fromRaw(valueH << 8 | valueL);
     }
     
-    static bool process(std::byte) {
+    template<bool Q = useEvents::value>
+    inline static 
+    typename std::enable_if<Q, bool>::type
+    process(std::byte) {
         static_assert(OneWireMaster::isAsync, "async interface shall use async OneWireMaster");
         bool ok = true;
         for(uint8_t i = 0; i < mScratchPad.size; ++i) {
@@ -174,6 +180,25 @@ public:
         }
         return true;
     }
+    template<typename C, bool Q = useEvents::value>
+    inline static 
+    typename std::enable_if<!Q, bool>::type
+    periodic(const C& callable) {
+        if (mToRead > 0) {
+            if (auto v = OneWireMaster::get()) {
+                mScratchPad[readScratchpadSize - mToRead] = *v;
+                --mToRead;
+            }
+            if (mToRead == 0) {
+                callable();
+            }
+            else {
+                return false;
+            }
+        }
+        return true;
+    }
 private:
+    inline static uint8_t mToRead = 0;
     inline static ds18b20_rsp_t mScratchPad;
 };

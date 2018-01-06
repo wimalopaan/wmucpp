@@ -70,17 +70,35 @@ template<typename... Buttons>
 class ButtonController final {
 public:
     ButtonController() = delete;
+    
+    typedef Meta::List<Buttons...> button_list;
+    typedef Meta::front<button_list> first_button;
+    
+    inline static constexpr bool useEvents = first_button::useEvents;
+    
+    static_assert(((first_button::useEvents == Buttons::useEvents) && ... && true));
+    
     static void init() {
-        (Buttons::init(), ...); // fold expression
+        (Buttons::init(), ...); 
     }
-    static void periodic() {
+    
+    template<bool Q = useEvents>
+    static 
+    typename std::enable_if<!Q, void>::type
+    periodic(const Util::Callable<uint8_t>& f) {
+        (Buttons::sample(f), ...);
+    }
+    template<bool Q = useEvents>
+    static 
+    typename std::enable_if<Q, void>::type
+    periodic() {
         (Buttons::sample(), ...);
     }
     static void start() {}
-    static constexpr auto rateProcess = periodic;
+//    static constexpr auto rateProcess = periodic;
 };
 
-template<uint8_t N, typename Pin, bool UseEvent = true, int Thresh = Config::Button::buttonTicksForPressed> // call sample every 1ms -> 50ms Threshold
+template<uint8_t N, typename Pin, ::Util::NamedFlag UseEvent = UseEvents<true>, int Thresh = Config::Button::buttonTicksForPressed> // call sample every 1ms -> 50ms Threshold
 class Button final {
     static_assert(N < 8, "wrong number of buttons");
     template<typename... Buttons> friend class ButtonController;
@@ -93,17 +111,40 @@ public:
         Pin::template dir<AVR::Input>();
         Pin::pullup();
     }
-    inline static Data mData {0, 0};
+    inline static Data mData{0, 0};
+    typedef Pin pin_type;
+    static inline constexpr bool useEvents = UseEvent::value;
 private:
-    static void sample() {
+    template<bool Q = useEvents>
+    static 
+    typename std::enable_if<Q, void>::type
+    sample() {
         if (!Pin::isHigh()) { // pressed (active low)
             if (!mData.state) { // not pressed
                 if (++mData.count >= Thresh) {
                     mData.state = 1;
                     mData.count = 0;
-                    if (UseEvent) {
-                        EventManager::enqueue({ButtonEvent<N>::event, std::byte{N}});
-                    }
+                    EventManager::enqueue({ButtonEvent<N>::event, std::byte{N}});
+                }
+            }
+        }
+        else { // not pressed
+            if (mData.state) {
+                mData.state = 0;
+                mData.count = 0;
+            }
+        }
+    }
+    template<bool Q = useEvents>
+    static 
+    typename std::enable_if<!Q, void>::type
+    sample(const Util::Callable<uint8_t>& f) {
+        if (!Pin::isHigh()) { // pressed (active low)
+            if (!mData.state) { // not pressed
+                if (++mData.count >= Thresh) {
+                    mData.state = 1;
+                    mData.count = 0;
+                    f(N);
                 }
             }
         }

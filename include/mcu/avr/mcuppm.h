@@ -49,7 +49,7 @@ namespace AVR {
             
             *mcuTimer()->icr = parameter::ocFrame;
             mcuTimer()->tccra.template set<AVR::TimerParameter<TimerN, MCU>::FastPwm2::tccra>();
-            mcuTimer()->tccrb.template add<AVR::TimerParameter<TimerN, MCU>::FastPwm2::tccrb>();
+            mcuTimer()->tccrb.template add<AVR::TimerParameter<TimerN, MCU>::FastPwm2::tccrb, DisbaleInterrupt<NoDisableEnable>>();
             constexpr typename timer_type::value_type medium = (parameter::ocMin + parameter::ocMax) / 2;
             *mcuTimer()->ocra = medium;
             *mcuTimer()->ocrb = medium;
@@ -57,11 +57,11 @@ namespace AVR {
         
         struct A {
             static void off() {
-                mcuTimer()->tccra.template clear<AVR::TimerParameter<TimerN, MCU>::FastPwm2::cha>();
+                mcuTimer()->tccra.template clear<AVR::TimerParameter<TimerN, MCU>::FastPwm2::cha, DisbaleInterrupt<NoDisableEnable>>();
                 ocAPin::low();
             }
             static void on() {
-                mcuTimer()->tccra.template add<AVR::TimerParameter<TimerN, MCU>::FastPwm2::cha>();
+                mcuTimer()->tccra.template add<AVR::TimerParameter<TimerN, MCU>::FastPwm2::cha, DisbaleInterrupt<NoDisableEnable>>();
             }
             static void ocr(const typename timer_type::value_type& v) {
                 *mcuTimer()->ocra = v;
@@ -69,11 +69,11 @@ namespace AVR {
         };
         struct B {
             static void off() {
-                mcuTimer()->tccra.template clear<AVR::TimerParameter<TimerN, MCU>::FastPwm2::chb>();
+                mcuTimer()->tccra.template clear<AVR::TimerParameter<TimerN, MCU>::FastPwm2::chb, DisbaleInterrupt<NoDisableEnable>>();
                 ocBPin::low();
             }
             static void on() {
-                mcuTimer()->tccra.template add<AVR::TimerParameter<TimerN, MCU>::FastPwm2::chb>();
+                mcuTimer()->tccra.template add<AVR::TimerParameter<TimerN, MCU>::FastPwm2::chb, DisbaleInterrupt<NoDisableEnable>>();
             }
             static void ocr(const typename timer_type::value_type& v) {
                 *mcuTimer()->ocrb = v;

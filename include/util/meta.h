@@ -376,6 +376,35 @@ namespace Meta {
     template<>
     struct isVoid<void> : public std::true_type {};    
     
+    namespace detail {
+        template<concepts::List List> 
+        struct visit {
+            template<typename T> struct Wrapper{
+                typedef T type;
+            };
+            using first = Meta::front<List>;
+            template<typename I, typename C>
+            inline static void at(I index, const C& callable) {
+                if (index == 0) {
+                    callable(Wrapper<first>{});
+                }
+                else {
+                    visit<Meta::rest<List>>::at(index - 1, callable);
+                }
+            }
+        };
+        template<> 
+        struct visit<Meta::List<>> {
+            template<typename I, typename C>
+            inline static void at(I, const C&) {}
+        };
+    }
+    
+    template<concepts::List List, typename I, typename C>
+    inline void visitAt(I index, const C& callable) {
+        detail::visit<List>::at(index, callable);
+    }
+    
     namespace tests {
         struct A {};
         struct B {};

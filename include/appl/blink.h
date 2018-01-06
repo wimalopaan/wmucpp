@@ -23,7 +23,7 @@
 #include "external/ws2812.h"
 
 template<typename Led, const typename Led::color_type& SteadyColor, uint8_t MaximumColors = 2>
-class Blinker {
+class Blinker final {
     Blinker() = delete;
 public:
     typedef typename Led::color_type Color;

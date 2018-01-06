@@ -22,20 +22,19 @@
 #include <cstddef>
 #include <algorithm>
 #include <type_traits>
-#include <std/utility>
-#include "avr8.h"
-#include "util/util.h"
-#include "util/static_container.h"
+#include <utility>
+#include "util/disable.h"
 
 namespace AVR {
     
     struct ReadWrite {};
     struct ReadOnly{};
     struct UnUsed{};
-
+    
     template<typename Component, typename BitType, typename Mode = ReadWrite, typename ValueType = std::byte>
     struct FlagRegister;
     
+    // FlagRegister: writing one to a bit clears(!) the bit (s.a. reset())
     template<typename Component, typename BitType, typename ValueType>
     struct FlagRegister<Component, BitType, ReadWrite, ValueType> final {
         typedef Component component_type;
@@ -54,7 +53,8 @@ namespace AVR {
         }
         template<BitType F>
         void inline reset() {
-            hwRegister |= static_cast<value_type>(F);
+            hwRegister = static_cast<value_type>(F); // clears the bit by writing "1"
+//                        hwRegister |= static_cast<value_type>(F);
         }
     private:
         volatile value_type hwRegister;
@@ -79,7 +79,6 @@ namespace AVR {
         volatile value_type hwRegister;
     };
     
-    
     template<typename Component, typename BitType, typename ValueType = uint8_t>
     struct ControlRegister final {
         typedef Component component_type;
@@ -99,16 +98,19 @@ namespace AVR {
         void inline set() {
             hwRegister = static_cast<value_type>(F);
         }
-        template<BitType F>
+        template<BitType F, typename DI = DisbaleInterrupt<RestoreState>>
         void inline setPartial(BitType v) {
+            [[maybe_unused]] Scoped<DI> di;
             hwRegister = (hwRegister & static_cast<value_type>(~F)) | static_cast<value_type>(v);
         }
-        template<BitType F>
+        template<BitType F, typename DI = DisbaleInterrupt<RestoreState>>
         void inline add() {
+            [[maybe_unused]] Scoped<DI> di;
             hwRegister |= static_cast<value_type>(F);
         }
-        template<BitType F>
+        template<BitType F, typename DI = DisbaleInterrupt<RestoreState>>
         void inline clear() {
+            [[maybe_unused]] Scoped<DI> di;
             hwRegister &= ~static_cast<value_type>(F);
         }
         template<BitType Mask>

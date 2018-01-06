@@ -49,44 +49,44 @@ namespace Hott {
                 return {};
             }
         }
-        static constexpr uint8_t size() {
+        inline static constexpr uint8_t size() {
             return sizeof(hottBinaryResponse) + cyclesBeforeAnswer;
         }
-        static constexpr void reset() {
+        inline static constexpr void reset() {
             hottBinaryResponse.parity = 0;
         }
-        static constexpr void init() {
+        inline static constexpr void init() {
             hottBinaryResponse.start_byte = 0x7c;
             hottBinaryResponse.gam_sensor_id = 0x8d;
             hottBinaryResponse.sensor_id = 0xd0;
             hottBinaryResponse.stop_byte = 0x7d;
         }
         
-        static void rpm1(const std::RPM& v) {
+        inline static void rpm1(const std::RPM& v) {
             if (v) {
                 hottBinaryResponse.rpm = v.value() / 10;
             }
         }
-        static std::RPM rpm1() {
+        inline static std::RPM rpm1() {
             return std::RPM{hottBinaryResponse.rpm * 10};
         }
-        static void rpm2(const std::RPM& v) {
+        inline static void rpm2(const std::RPM& v) {
             if (v) {
                 hottBinaryResponse.rpm2 = v.value() / 10;
             }
         }
-        static std::RPM rpm2() {
+        inline static std::RPM rpm2() {
             return std::RPM{hottBinaryResponse.rpm2 * 10};
         }
         
-        static void temp1(FixedPoint<int, 4> v) {
+        inline static void temp1(FixedPoint<int, 4> v) {
             hottBinaryResponse.temperature1 = v.integer() + 20;
         }
-        static void temp2(FixedPoint<int, 4> v) {
+        inline static void temp2(FixedPoint<int, 4> v) {
             hottBinaryResponse.temperature2 = v.integer() + 20;
         }
         
-        static void temperatureRaw(uint8_t i, uint8_t v) {
+        inline static void temperatureRaw(uint8_t i, uint8_t v) {
             assert(i < 2);
             if (i == 0) {
                 hottBinaryResponse.temperature1 = v;
@@ -96,10 +96,10 @@ namespace Hott {
             }
         }
 
-        static void cellVoltageRaw(uint8_t cell, uint8_t v) {
+        inline static void cellVoltageRaw(uint8_t cell, uint8_t v) {
             hottBinaryResponse.cell[cell] = v;
         } 
-        static void batteryVoltageRaw(uint8_t battery, uint16_t v) {
+        inline static void batteryVoltageRaw(uint8_t battery, uint16_t v) {
             assert(battery < 2);
             if (battery == 0) {
                 hottBinaryResponse.Battery1 = v;
@@ -108,7 +108,7 @@ namespace Hott {
                 hottBinaryResponse.Battery2 = v;
             }
         }
-        static void currentRaw(uint16_t v) {
+        inline static void currentRaw(uint16_t v) {
             hottBinaryResponse.current = v;
         }
 
@@ -121,7 +121,7 @@ namespace Hott {
             return value;    
         }
         
-        inline static GamMsg hottBinaryResponse;
+        inline static GamMsg hottBinaryResponse; 
         static_assert((cyclesBeforeAnswer + sizeof(hottBinaryResponse)) < std::numeric_limits<uint8_t>::max());
         
     };

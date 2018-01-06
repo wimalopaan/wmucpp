@@ -31,7 +31,7 @@ namespace Hott {
     
     using namespace std::literals::chrono;
     
-    enum class key_t : uint8_t {right = 14, left = 7, up = 11, down = 13, set = 9};
+    enum class key_t : uint8_t {right = 14, left = 7, up = 11, down = 13, set = 9, nokey = 0};
     
 //    constexpr const std::byte keyRight{14};
 //    constexpr const std::byte keyLeft{7};

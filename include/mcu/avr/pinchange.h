@@ -115,7 +115,7 @@ namespace AVR {
             PSet::allPullup();
             *pcInterrupt()->pcmsk = PSet::setMask;
             interrupts()->pcifr.template reset<pcGroupFlag>();
-            interrupts()->pcicr.template add<pcGroupMask>();
+            interrupts()->pcicr.template add<pcGroupMask, DisbaleInterrupt<NoDisableEnable>>();
             //        interrupts()->pcifr |= _BV(pcGroupNumber);
             //        interrupts()->pcicr |= _BV(pcGroupNumber);
         }
@@ -145,8 +145,8 @@ namespace AVR {
             *pc()->pcmsk = PinSet::setMask;
             //        interrupts()->gifr |= _BV(pcGroupNumber + 4);
             //        interrupts()->gimsk |= _BV(pcGroupNumber + 4);
-            interrupts()->gifr.template add<pcGroupFlag>();
-            interrupts()->gimsk.template add<pcGroupEnable>();
+            interrupts()->gifr.template add<pcGroupFlag, DisbaleInterrupt<NoDisableEnable>>();
+            interrupts()->gimsk.template add<pcGroupEnable, DisbaleInterrupt<NoDisableEnable>>();
         }
     };
 #endif
@@ -170,8 +170,8 @@ namespace AVR {
             PinSet::template dir<Input>();
             PinSet::allPullup();
             *pc()->pcmsk = PinSet::setMask;
-            interrupts()->gifr.template add<AVR::ATTiny25::Interrupt::GIFlags::pcif>();
-            interrupts()->gimsk.template add<AVR::ATTiny25::Interrupt::GIMask::pcie>();
+            interrupts()->gifr.template add<AVR::ATTiny25::Interrupt::GIFlags::pcif, DisbaleInterrupt<NoDisableEnable>>();
+            interrupts()->gimsk.template add<AVR::ATTiny25::Interrupt::GIMask::pcie, DisbaleInterrupt<NoDisableEnable>>();
         }
     };
 #endif
@@ -195,7 +195,7 @@ namespace AVR {
             PinSet::allPullup();
             *pc()->pcmsk = PinSet::setMask;
             interrupts()->gifr.template reset<AVR::ATTiny85::Interrupt::GIFlags::pcif>();
-            interrupts()->gimsk.template add<AVR::ATTiny85::Interrupt::GIMask::pcie>();
+            interrupts()->gimsk.template add<AVR::ATTiny85::Interrupt::GIMask::pcie, DisbaleInterrupt<NoDisableEnable>>();
         }
     };
 #endif

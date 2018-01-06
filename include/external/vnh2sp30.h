@@ -29,15 +29,26 @@
 
 template<typename PWM, typename Channel>
 struct PwmAdapter {
-    static void pwm(const std::percent& value) {
+    typedef typename PWM::value_type value_type;
+    inline static void pwm(const std::percent& value) {
         PWM::template pwm<Channel>(value);
+    }
+    inline static void pwm(value_type value) {
+        PWM::template pwm<Channel>(value);
+    }
+    template<typename T, T Min, T Max>
+    inline static value_type pwm(const uint_ranged<T, Min, Max>& value) {
+        constexpr uint64_t denom = Max - Min;
+        constexpr uint64_t nom = 255;
+        value_type pw = Util::RationalDivider<T, nom, denom>::scale(value.toInt() - Min);
+        pwm(pw);
+        return pw;
     }
 };
 
 template<typename PWM, typename DirPin>
-class VNH {
-public:
-    
+struct VNH {
+    typedef typename PWM::value_type value_type;
     struct CW {};
     struct CCW {};
     
@@ -47,11 +58,14 @@ public:
         pwm(0_ppc);
     }
     
-    static void pwm(const std::percent& value) {
+    inline static void pwm(const std::percent& value) {
+        PWM::pwm(value);
+    }
+    inline static void pwm(value_type value) {
         PWM::pwm(value);
     }
     template<typename Dir>
-    static void direction() {
+    inline static void direction() {
         if constexpr(std::is_same<Dir, CW>::value) {
             DirPin::on();
         }
@@ -59,6 +73,4 @@ public:
             DirPin::off();
         }
     }
-
-private:
 };

@@ -114,6 +114,8 @@ namespace Hott {
                 }
                 mSelected = !mSelected;
                 break;
+            case Hott::key_t::nokey:
+                break;
             }
             return this;
         }

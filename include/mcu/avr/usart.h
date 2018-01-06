@@ -105,7 +105,7 @@ namespace AVR {
         static_assert(N < MCU::Usart::count, "wrong number of usart");
     
         struct RxHandler : public IsrBaseHandler<typename AVR::ISR::Usart<N>::RX> {
-            static void isr() {
+            inline static void isr() {
                 if constexpr(useEvents::value) {
                     const auto status = mcu_usart()->ucsra.template get<ucsra_type::fe | ucsra_type::upe | ucsra_type::dor>();
                     const auto c = *mcu_usart()->udr;
@@ -154,32 +154,27 @@ namespace AVR {
                         else {
                             static_assert(std::false_t<MCU>::value, "no events, no recvQueue, no PA -> wrong configuration");
                         }
-//                        if constexpr(std::is_same<PA, void>::value) {
-//                            EventManager::enqueueISR({UsartEventType<N>::event, std::byte{c}});
-//                        }
-//                        else {
-//                            if (!PA::process(c)) {
-//                                EventManager::enqueueISR({UsartEventType<N>::event, std::byte{c}});
-//                            }
-//                        }
                     }
                 }
             }
         };
         struct TxHandler : public IsrBaseHandler<typename AVR::ISR::Usart<N>::UDREmpty> {
-            static void isr() {
+            inline static void isr() {
                 if (auto c = mSendQueue.pop_front()) {
                     *mcu_usart()->udr = *c;;
                 }
                 else {
                     if constexpr(useISR::value) {
-                        mcu_usart()->ucsrb.template clear<ucsrb_type::udrie>();
+                        mcu_usart()->ucsrb.template clear<ucsrb_type::udrie, DisbaleInterrupt<NoDisableEnable>>();
                     }
                 }
             }
         };
 
-        static void periodic() {
+        template<bool Q = useISR::value>
+        inline static 
+        typename std::enable_if<!Q, void>::type
+        periodic() {
             if (isset(mcu_usart()->ucsra.template get<ucsra_type::rxc>())) {
                 RxHandler::isr();       
             }
@@ -189,18 +184,17 @@ namespace AVR {
         }
         
         template<uint32_t Baud>
-        static void init() {
+        inline static void init() {
             static_assert(Baud >= 2400, "USART should use a valid baud rate >= 2400");
-//            *mcu_usart()->ubbr = Ubrr<Config::fMcu.value, Baud>::value;
             constexpr auto ubrr = ubrrValue(Config::fMcu.value, Baud); 
             *mcu_usart()->ubbr = ubrr;
-            mcu_usart()->ucsrc.template add<ucsrc_type::ucsz1 | ucsrc_type::ucsz0>();
-            mcu_usart()->ucsrb.template add<ucsrb_type::txen | ucsrb_type::rxen>();
+            mcu_usart()->ucsrc.template add<ucsrc_type::ucsz1 | ucsrc_type::ucsz0, DisbaleInterrupt<NoDisableEnable>>();
+            mcu_usart()->ucsrb.template add<ucsrb_type::txen | ucsrb_type::rxen, DisbaleInterrupt<NoDisableEnable>>();
             if constexpr(useISR::value) {
-                mcu_usart()->ucsrb.template add<ucsrb_type::rxcie>();
+                mcu_usart()->ucsrb.template add<ucsrb_type::rxcie, DisbaleInterrupt<NoDisableEnable>>();
             }
         }
-        static bool get(std::byte& item) {
+        inline static bool get(std::byte& item) {
             if constexpr(RecvQLength::value > 0) {
                 return mRecvQueue.pop_front(item);
             }
@@ -208,7 +202,7 @@ namespace AVR {
                 return false;
             }
         }
-        static std::optional<std::byte> get() {
+        inline static std::optional<std::byte> get() {
             if constexpr(RecvQLength::value > 0) {
                 return mRecvQueue.pop_front();
             }
@@ -216,7 +210,7 @@ namespace AVR {
                 return {};
             }
         }
-        static bool put(std::byte item) {
+        inline static bool put(std::byte item) {
             if(mSendQueue.push_back(item)) {
                 if constexpr(useISR::value) {
                     mcu_usart()->ucsrb.template add<ucsrb_type::udrie>();
@@ -225,16 +219,16 @@ namespace AVR {
             }
             return false;
         }
-        static void waitSendComplete() {
+        inline static void waitSendComplete() {
             while(!mSendQueue.empty()) {
                 ::Util::delay(1_us);
             }
         }
-        static bool isEmpty() {
+        inline static bool isEmpty() {
             return mSendQueue.empty();
         }
         template<bool enable>
-        static void rxEnable() {
+        inline static void rxEnable() {
             if constexpr (enable) {
                 if(RecvQLength::value > 0) {
                     mRecvQueue.clear();
@@ -250,7 +244,7 @@ namespace AVR {
         inline static volatile std::FiFo<std::byte, RecvQLength::value> mRecvQueue;
 
         static constexpr uint16_t ubrrValue(uint32_t fcpu, uint32_t baud) {
-            return (fcpu / (16 * baud)) - 1;
+            return (((1.0 * fcpu) / (16 * baud)) + 0.5) - 1;
         }
     };
 }

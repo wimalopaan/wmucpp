@@ -24,6 +24,7 @@
 #include "mcu/avr/twiaddress.h"
 #include "mcu/avr/isr.h"
 #include "util/types.h"
+#include "util/concepts.h"
 
 namespace TWI {
     template<typename T, bool Enable>
@@ -86,7 +87,7 @@ namespace TWI {
         static void init() {
             BusAddress<Write> busAddress{Address};
             *mcu_twi()->twar = busAddress.value();
-            mcu_twi()->twcr.template clear<twc::twsta | twc::twsta>();
+            mcu_twi()->twcr.template clear<twc::twsta | twc::twsta, DisbaleInterrupt<NoDisableEnable>>();
             if constexpr(useInt::value) {
                 mcu_twi()->twcr.template set<twc::twea | twc::twen | twc::twie>();
             }

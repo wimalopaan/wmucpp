@@ -72,7 +72,7 @@ public:
             return mActualPeriod;
         }
         else {
-            Scoped<DisbaleInterrupt<>> di;
+            Scoped<DisbaleInterrupt<RestoreState>> di;
             return mActualPeriod;
         }
     }
@@ -145,7 +145,7 @@ public:
             return mActualPeriod;
         }
         else {
-            Scoped<DisbaleInterrupt<>> di;
+            Scoped<DisbaleInterrupt<RestoreState>> di;
             return mActualPeriod;
         }
     }
@@ -198,11 +198,11 @@ public:
         });
     }
     
-    inline static void isr() {
-            mActualPeriod = (MCUTimer::counter() - mTimerStartValue + std::numeric_limits<value_type>::module()) % std::numeric_limits<value_type>::module();
-            mTimerStartValue = MCUTimer::counter();
-            ++mMeasurements;
-    }
+//    inline static void isr() {
+//            mActualPeriod = (MCUTimer::counter() - mTimerStartValue + std::numeric_limits<value_type>::module()) % std::numeric_limits<value_type>::module();
+//            mTimerStartValue = MCUTimer::counter();
+//            ++mMeasurements;
+//    }
 private:
     inline static volatile value_type mTimerStartValue = 0;
     inline static volatile value_type mActualPeriod = 0;

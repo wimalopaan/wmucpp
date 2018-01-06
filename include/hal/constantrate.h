@@ -72,10 +72,6 @@ public:
             }
         }
         if (counter < Buffer::size()) {
-//            if (counter >= Buffer::cyclesBeforeAnswer) {
-//                Device::put(Buffer::getByte(counter - Buffer::cyclesBeforeAnswer));
-//            }
-//            ++counter;
             if (auto data = Buffer::get(counter++)) {
                 Device::put(*data);
             }
@@ -88,52 +84,53 @@ public:
                 if constexpr(disableRx) {
                     Device::template rxEnable<true>();
                 }
+                mEnable = false;
+                counter = 0;
+                Buffer::reset();
             }
         }
     }
     template<bool E>
-    static void enable() {
+    inline static void enable() { // from isr
         mEnable = E;
-        if constexpr(E) {
-            start();
+    }
+    
+    // todo: remove (nur für Concepts bzw. Event-Steuerung)
+        inline static void start() { // from isr
+            Buffer::reset();
+            counter = 0;
         }
-    }
-
-    inline static void start() {
-        Buffer::reset();
-        counter = 0;
-    }
     inline static void init() {
         Buffer::init();
     }
 private:
-    inline static bool mEnable = true;
-    inline static CounterType counter = 0;
+    inline static volatile bool mEnable = true; 
+    inline static CounterType counter = 0; 
 };
 
 namespace detail {
-template<typename T>
-struct Mapper {
-    static void rateProcess() {
-        T::rateProcess();
-    }
-    static void init() {
-        T::init();
-    }
-    static void start() {
-        T::start();
-    }
-};
-template<>
-struct Mapper<void> {
-    static void rateProcess() {
-    }
-    static void init() {
-    }
-    static void start() {
-    }
-};
-
+    template<typename T>
+    struct Mapper {
+        static void rateProcess() {
+            T::rateProcess();
+        }
+        static void init() {
+            T::init();
+        }
+        static void start() {
+            T::start();
+        }
+    };
+    template<>
+    struct Mapper<void> {
+        static void rateProcess() {
+        }
+        static void init() {
+        }
+        static void start() {
+        }
+    };
+    
 } // !detail
 
 template<MCU::Timer Timer, MCU::Interrupt Int, CRWriter... Writers >
@@ -170,12 +167,12 @@ private:
 template<typename Reg, uint8_t BitNumber, MCU::Timer Timer, MCU::Interrupt Int, CRWriter... Writers >
 class ConstantRateAdapter2 : public IsrBaseHandler<Int> {
     template<typename... II> friend class IsrRegistrar;
-
+    
     inline static constexpr uint8_t bit_number = BitNumber;
     typedef Reg register_type;
-
+    
     typedef MCU::Ressource::Type<Reg, Reg::reg_number, BitNumber> ressource_type;
-
+    
     static_assert(BitNumber < 8, "wrong bit number");
     static inline constexpr typename Reg::type bit_mask{1 << BitNumber};
 public:

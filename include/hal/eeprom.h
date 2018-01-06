@@ -32,10 +32,6 @@ namespace EEProm {
     struct Base<T, false> {
         enum class Flags : uint8_t {Changed, Saving, TimeoutExpired, Number};
         inline static constexpr uint8_t number_of_flags = uint8_t(Flags::Number);
-//        inline static constexpr uint8_t fChanged = 0;
-//        inline static constexpr uint8_t fSaving  = 1;
-//        inline static constexpr uint8_t fTimeoutExpired  = 2;
-        
     };
     template<typename T>
     struct Base<T, true> {
@@ -115,8 +111,6 @@ namespace EEProm {
                 FlagRegister::template set<uint8_t(base_type::Flags::Changed)>();
             }
         }
-    private:
-//        inline static Flags mFlags = {false, false, false};
     };
 
     template<typename DataType, uint16_t Offset>

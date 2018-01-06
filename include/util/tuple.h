@@ -16,7 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #pragma once
 
 #include <tuple>
@@ -24,7 +23,7 @@
 #include <type_traits>
 
 namespace Meta {
-    namespace detail {
+    namespace Tuple::detail {
         template<uint8_t N>
         struct visit {
             template<typename T, typename F>
@@ -55,15 +54,15 @@ namespace Meta {
     }
     template<typename... T, typename F>
     constexpr uint8_t visitAt(const std::tuple<T...>& tuple, uint8_t index, const F& f) {
-        return detail::visit<sizeof...(T)>::at(tuple, index, f);
+        return Tuple::detail::visit<sizeof...(T)>::at(tuple, index, f);
     }
     template<typename... T, typename F>
     constexpr uint8_t visitAt(std::tuple<T...>& tuple, uint8_t index, const F& f) {
-        return detail::visit<sizeof...(T)>::at(tuple, index, f);
+        return Tuple::detail::visit<sizeof...(T)>::at(tuple, index, f);
     }
     template<typename... T, typename F>
     void visit(const std::tuple<T...>& tuple, const F& f) {
-        detail::all(tuple, f, std::make_index_sequence<sizeof...(T)>{});
+        Tuple::detail::all(tuple, f, std::make_index_sequence<sizeof...(T)>{});
     }
 }
 

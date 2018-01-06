@@ -262,11 +262,11 @@ public:
         //        uint8_t sreg_prev = SREG;
         //        cli();
         
-        Scoped<DisbaleInterrupt<>, DisableInterruptsFull> di;
+        Scoped<DisbaleInterrupt<RestoreState>, DisableInterruptsFull> di;
         
         for(const uint8_t* data = reinterpret_cast<uint8_t*>(&leds[0]); data < reinterpret_cast<uint8_t*>(&leds[N - 1] + 1); ++data) {
             {
-                Scoped<DisbaleInterrupt<>, !DisableInterruptsFull> di;
+                Scoped<DisbaleInterrupt<RestoreState>, !DisableInterruptsFull> di;
                 asm volatile(
                             "       ldi   %0,8  \n\t"
                             "loop%=:            \n\t"
