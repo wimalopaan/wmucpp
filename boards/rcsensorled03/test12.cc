@@ -71,8 +71,11 @@ using terminal = std::basic_ostream<terminalDevice>;
 using namespace std::literals::quantity;
 
 using isrRegistrar = IsrRegistrar<rcUsart::RxHandler, rcUsart::TxHandler, 
-sensorUsart::RxHandler, sensorUsart::TxHandler,
-softPpm::OCAHandler, softPpm::OCBHandler>;
+sensorUsart::RxHandler, sensorUsart::TxHandler
+#ifdef USE_RPM2
+, softPpm::OCAHandler, softPpm::OCBHandler
+#endif
+>;
 
 using sensorData = Hott::SensorProtocollBuffer<0>;
 using crWriterSensorBinary = ConstanteRateWriter<sensorData, sensorUsart>;
@@ -294,12 +297,13 @@ int main() {
     crWriterSensorBinary::init();
     crWriterSensorText::init();
     
+#ifdef USE_RPM2
     softPpm::init();    
     softPpm::ranged_type v1{2501};
     softPpm::ranged_type v2{4999};
     softPpm::ppm(v1, 0);
     softPpm::ppm(v2, 1);
-    
+#endif    
     rpm1::init();
     rpm1::init();
     
@@ -324,7 +328,9 @@ int main() {
             testPin1::toggle(); // 25 us -> 40 KHz
             menu::periodic();
             rpm1::periodic();
+#ifdef USE_RPM2
             rpm2::periodic();
+#endif
             systemClock::periodic<systemClock::flags_type::ocfa>([](){
                 crWriterSensorBinary::rateProcess();
                 crWriterSensorText::rateProcess();
@@ -332,23 +338,21 @@ int main() {
                 alarmTimer::periodic([](uint7_t timer){
                     if (timer == *periodicTimer) {
                         rpm1::check();
+#ifdef USE_RPM2
                         rpm2::check();
-                        auto v = Hott::SumDProtocollAdapter<0>::value(0) - Hott::SumDMsg::Low;
-                        constexpr uint64_t denom = Hott::SumDMsg::High - Hott::SumDMsg::Low;
-                        constexpr uint64_t nom = softPpm::ranged_type::Upper - softPpm::ranged_type::Lower;
-                        auto vs = Util::RationalDivider<uint16_t, nom, denom>::scale(v) + softPpm::ranged_type::Lower;
-                        std::outl<terminal>("vs: "_pgm, vs);
-
+#endif
+                        auto v = Hott::SumDProtocollAdapter<0>::value(0);
+                        std::outl<terminal>("v: "_pgm, v.toInt());
+#ifdef USE_RPM2
                         softPpm::ppm(vs, 0);
-                        
-                        constexpr uint64_t denom1 = Hott::SumDMsg::High - Hott::SumDMsg::Low;
-                        constexpr uint64_t nom1 = 255;
-                        uint8_t pw = Util::RationalDivider<uint16_t, nom1, denom1>::scale(v);
-                        hardPwm1::pwm(255 - pw);
-                        hardPwm2::pwm(255 - pw);
+#endif
+                        hardPwm1::pwm(v);
+                        hardPwm2::pwm(v);
                         
                         std::outl<terminal>("rpm1: "_pgm, rpm1::rpm().value());
+#ifdef USE_RPM2
                         std::outl<terminal>("rpm2: "_pgm, rpm2::rpm().value());
+#endif
                     }
                     else if (timer == *tempTimer) {
                         std::outl<terminal>("start temp"_pgm);
@@ -391,6 +395,7 @@ ISR(USART0_RX_vect) {
 ISR(USART0_UDRE_vect){
     isrRegistrar::isr<AVR::ISR::Usart<0>::UDREmpty>();
 }
+#ifdef USE_RPM2
 // Timer 4
 // softPpm
 ISR(TIMER4_COMPA_vect) {
@@ -399,7 +404,7 @@ ISR(TIMER4_COMPA_vect) {
 ISR(TIMER4_COMPB_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<4>::CompareB>();
 }
-
+#endif
 #ifndef NDEBUG
 void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
     std::outl<terminal>("Assertion failed: "_pgm, expr, Char{','}, file, Char{','}, line);

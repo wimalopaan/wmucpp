@@ -36,6 +36,7 @@ namespace Hott {
     
     using MenuItem = UI::MenuItem<BufferString, key_t>;
     
+    // fixme: Max aus der Template-Parameter-Liste raus
     template<typename Key, uint8_t Max, typename Provider>
     class TextWithValue : public MenuItem {
     public:
@@ -122,7 +123,7 @@ namespace Hott {
     private:
         const PgmStringView mTitle;
         Provider& mProvider;
-        const Key mKey;
+        const Key mKey = Hott::key_t::nokey;
     };
     
     class Menu : public MenuItem {
@@ -212,8 +213,8 @@ namespace Hott {
     protected:
         Menu* mParent = nullptr;
         const PgmStringView mTitle;
-        const std::array<MenuItem*, MenuLength> mItems;
-        uint_ranged_NaN<uint8_t, 0, 7> mSelectedLine;
+        const std::array<MenuItem*, MenuLength> mItems{};
+        uint_ranged_NaN<uint8_t, 0, 7> mSelectedLine{};
     };
     
     class NumberedMenu : public Menu {
@@ -232,6 +233,6 @@ namespace Hott {
             buffer[19] =  '0' + mNumber;
         }
     private:
-        uint8_t mNumber;
+        uint8_t mNumber = 0;
     };
 }

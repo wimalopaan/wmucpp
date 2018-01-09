@@ -28,15 +28,7 @@
 #include "util/rational.h"
 
 namespace AVR {
-    
-//    template<uint8_t N, typename MCU>
-//    struct AdcParameter;
-    
-//    template<>
-//    struct AdcParameter<0, ATMega1284P> {
-//        static constexpr double VRef = 2.56;
-//    };
-    
+   
     template<uint8_t T>
     struct Resolution;
     

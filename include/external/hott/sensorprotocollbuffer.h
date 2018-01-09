@@ -1,4 +1,4 @@
-/*
+/*k
  * WMuCpp - Bare Metal C++ 
  * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
@@ -108,6 +108,11 @@ namespace Hott {
                 hottBinaryResponse.Battery2 = v;
             }
         }
+        
+        inline static void batteryMinimumRaw(uint8_t cell, uint16_t c) {
+            hottBinaryResponse.min_cell_volt_num = cell;
+            hottBinaryResponse.min_cell_volt = c;
+        }
         inline static void currentRaw(uint16_t v) {
             hottBinaryResponse.current = v;
         }
@@ -121,7 +126,7 @@ namespace Hott {
             return value;    
         }
         
-        inline static GamMsg hottBinaryResponse; 
+        inline static GamMsg hottBinaryResponse{}; 
         static_assert((cyclesBeforeAnswer + sizeof(hottBinaryResponse)) < std::numeric_limits<uint8_t>::max());
         
     };

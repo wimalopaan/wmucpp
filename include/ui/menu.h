@@ -46,7 +46,7 @@ namespace UI {
             return mData[index];   
         }
     private:
-        C* mData;
+        C* mData = nullptr;
     };
     
     template<uint8_t Offset, uint8_t Length, typename C>

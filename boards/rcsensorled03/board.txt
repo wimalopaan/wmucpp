@@ -118,7 +118,7 @@ Beschreibung:
 	- FUSE für EEProm
 	- OneWire (mit FSM)
 
-* test14: 
+* test14: OK
 	- Interrupts für Uart
 	- ohne Events
 	- RCUart 115200 Baud: Ausgabe einzelner Werte
@@ -132,7 +132,43 @@ Beschreibung:
 	- HardPwm
 	- FUSE für EEProm
 	- OneWire (mit FSM)
-	- ADC (mit FSM ?)
+	- ADC (mit FSM)
+
+* test15: 
+	- Interrupts für Uart
+	- ohne Events
+	- RCUart 115200 Baud: Ausgabe einzelner Werte
+	- Uart-Terminal 115200 Baud
+	- Sensor-Uart 19200 Baud
+	- ProtokollAdapter für SensorUart
+	- Menu
+	- EEProm
+	- SoftPpm mit Interrupt	
+	- Rpm mit ICP
+	- HardPwm
+	- FUSE für EEProm
+	- OneWire (mit FSM)
+	- ADC (mit FSM)
+	- I2C (MCP23008 mit MultiSwitch)
+	* I2C Interrupt
+	* Beleuchtungsprogramme
+	
+---
+Ideen:
+	- Passthrough/Map-Modus:
+		- Zwei JR-Stecker (1x Sensor, 1x SUMD)
+		- zwei Kanäle werden direkt auf die bein PPM Kanäle gemapped (z.B. Ruder/Motor)
+		- die restliche Steuerung findet sowieso über das Board (SumD) statt.
+
+Probleme:
+	- warum werden die guard-variablen generiert, obwohl mit no-threadsafe-statics compiliert wird.
+
+Verbesserungen:
+	- Menu mit TMP
+	- Flags in GPIOR
+	
+Test:
+	- Schreiben in reservierte Register bzw. ungenutzte Bits?
 
 -------------------------
 

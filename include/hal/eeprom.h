@@ -128,7 +128,11 @@ namespace EEProm {
                 mData.saveStart();
                 if (eeprom_is_ready()) {
                     eeprom_update_byte(ePtr(mOffset), rawData(mOffset));
-                    mOffset = ((mOffset + 1) % (sizeof(DataType)));
+                    asm("; replace udivmod");
+                    if (++mOffset == sizeof(DataType)) {
+                        mOffset = 0;
+                    }
+//                    mOffset = ((mOffset + 1) % (sizeof(DataType)));
                     if (mOffset == 0) {
                         mData.saveEnd();
                         mData.resetTimeout();

@@ -16,19 +16,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//#define USE_RPM2
+
 //#define MEM
 #define NDEBUG
 
 #include "local.h"
-#include "rcsensorled03b.h"
+#include "rcsensorled03c.h"
 #include "console.h"
 #include "util/meta.h"
 #include "hal/eeprom.h"
 #include "external/hott/menu.h"
 
-using testPin1 = AVR::Pin<PortD, 3>; // I2C Interrupt
+#include <vector>
 
-namespace Storage {
+using testPin1 = AVR::Pin<PortB, 5>;
+
+struct Storage {
     enum class AVKey : uint8_t {TSensor1 = 0, TSensor2, RpmSensor1, RpmSensor2, Spannung1, Spannung2, 
                                 StromOffset, PWM, PWMMOde, Leds1Channel, Leds1Sequence, Leds2Channel, Leds2Sequence, _Number};
     
@@ -40,8 +44,10 @@ namespace Storage {
     private:
         std::array<uint_NaN<uint8_t>, static_cast<uint8_t>(AVKey::_Number)> AValues;
     };
-    std::array<OneWire::ow_rom_t, 4> dsIds;
-}
+    
+    inline static std::vector<OneWire::ow_rom_t, 4> dsIds;
+    inline static std::vector<TWI::Address, 4> i2cDevices;
+};
 
 using eeprom = EEProm::Controller<Storage::ApplData>;
 auto& appData = eeprom::data();
@@ -51,7 +57,9 @@ namespace {
 }
 
 namespace Constants {
-    static constexpr std::hertz pwmFrequency = 100_Hz;
+    static constexpr std::hertz pwmFrequency = 8000_Hz * 256; 
+    static constexpr const std::hertz fSCL = 100000_Hz;
+//    static constexpr std::hertz pwmFrequency = 1000_Hz;
     static constexpr Color cRed{Red{32}};
     static constexpr Color cBlue{Blue{32}};
     static constexpr Color cGreen{Green{32}};
@@ -68,13 +76,23 @@ using rcUsart = AVR::Usart<1, Hott::SumDProtocollAdapter<0>, MCU::UseInterrupts<
 using terminalDevice = std::conditional<useTerminal, rcUsart, void>::type;
 using terminal = std::basic_ostream<terminalDevice>;
 
-const auto periodicTimer = alarmTimer::create(500_ms, AlarmFlags::Periodic);
-
 using namespace std::literals::quantity;
 
+// fixme: Int1???
+
+struct I2CInterrupt : public IsrBaseHandler<AVR::ISR::Int<1>> {
+    static void isr() {
+    }
+};
+using i2cInterruptHandler = I2CInterrupt;
+
 using isrRegistrar = IsrRegistrar<rcUsart::RxHandler, rcUsart::TxHandler, 
-sensorUsart::RxHandler, sensorUsart::TxHandler,
-softPpm::OCAHandler, softPpm::OCBHandler>;
+sensorUsart::RxHandler, sensorUsart::TxHandler
+#ifdef USE_RPM2
+, softPpm::OCAHandler, softPpm::OCBHandler
+#endif
+,i2cInterruptHandler
+>;
 
 using sensorData = Hott::SensorProtocollBuffer<0>;
 using crWriterSensorBinary = ConstanteRateWriter<sensorData, sensorUsart>;
@@ -85,7 +103,7 @@ using crWriterSensorText = ConstanteRateWriter<menuData, sensorUsart>;
 class TSensorId final : public UI::MenuItem<Hott::BufferString, Hott::key_t> {
 public:
     TSensorId(uint8_t number) : mNumber{number} {
-        assert(number < Storage::dsIds.size);
+        assert(number < Storage::dsIds.capacity);
     }
     virtual void putTextInto(Hott::BufferString& buffer) const override {
         if (Storage::dsIds[mNumber]) {
@@ -127,8 +145,8 @@ public:
     TemperaturMenu(Hott::Menu* parent) : Hott::Menu(parent, "Temperatur"_pgm, &mSensor1, &mSensor2, &mSensoren) {}
     
 private:
-    Hott::TextWithValue<Storage::AVKey, Storage::dsIds.size - 1, Storage::ApplData> mSensor1{"Anzeige 1"_pgm, appData, Storage::AVKey::TSensor1};
-    Hott::TextWithValue<Storage::AVKey, Storage::dsIds.size - 1, Storage::ApplData> mSensor2{"Anzeige 2"_pgm, appData, Storage::AVKey::TSensor2};
+    Hott::TextWithValue<Storage::AVKey, Storage::dsIds.capacity - 1, Storage::ApplData> mSensor1{"Anzeige 1"_pgm, appData, Storage::AVKey::TSensor1};
+    Hott::TextWithValue<Storage::AVKey, Storage::dsIds.capacity - 1, Storage::ApplData> mSensor2{"Anzeige 2"_pgm, appData, Storage::AVKey::TSensor2};
     TemperaturSensorenMenu mSensoren{this};
 };
 
@@ -198,9 +216,37 @@ private:
     Hott::TextWithValue<Storage::AVKey, 8, Storage::ApplData> mSequence2{"Folge 2"_pgm, appData, Storage::AVKey::Leds2Sequence};
 };
 
+class I2CId final : public UI::MenuItem<Hott::BufferString, Hott::key_t> {
+public:
+    I2CId(uint8_t number) : mNumber{number} {
+    }
+    virtual void putTextInto(Hott::BufferString& buffer) const override {
+        buffer.insertAtFill(0, "--:--:--:--:--:--"_pgm);
+    }
+private:
+    uint8_t mNumber = 0;
+};
+
+class I2CDev final : public Hott::NumberedMenu {
+public:
+    I2CDev(Menu* parent, uint8_t n) : NumberedMenu(parent, n, "Geraet"_pgm, &mDev) {}
+private:
+    I2CId mDev{0};
+};
+
+class I2CMenu final : public Hott::Menu {
+public:
+    I2CMenu(Hott::Menu* parent) : Menu(parent, "Geraete"_pgm, &mI2CDev1, &mI2CDev2, &mI2CDev3, &mI2CDev4) {}
+private:
+    I2CDev mI2CDev1{this, 0};
+    I2CDev mI2CDev2{this, 1};
+    I2CDev mI2CDev3{this, 2};
+    I2CDev mI2CDev4{this, 3};
+};
+
 class RCMenu final : public Hott::Menu {
 public:
-    RCMenu() : Menu(this, "WM SensorLed"_pgm, &mTemperatur, &mSpannung, &mDrehzahl, &mStrom, &mPWM, &mLeds) {}
+    RCMenu() : Menu(this, "WM SensorLed"_pgm, &mTemperatur, &mSpannung, &mDrehzahl, &mStrom, &mPWM, &mLeds, &mDevs) {}
 private:
     TemperaturMenu mTemperatur{this};                        
     SpannungMenu   mSpannung{this};                        
@@ -208,7 +254,10 @@ private:
     StromMenu   mStrom{this};                        
     PWMMenu   mPWM{this};                        
     LedMenu   mLeds{this};                        
+    I2CMenu   mDevs{this};                        
 };
+
+RCMenu topMenu; // note: global object instead of static in Hottmenu -> no guards are created (is this a g++ error)
 
 template<typename PA, typename MenuType>
 class HottMenu final {
@@ -240,12 +289,12 @@ public:
     }
 private:
     inline static volatile Hott::key_t mKey = Hott::key_t::nokey;
-    inline static MenuType mTop;
-    inline static Hott::Menu* mMenu = &mTop;
+//    inline static MenuType mTop;
+//    inline static Hott::Menu* mMenu = &mTop;
+    inline static Hott::Menu* mMenu = &topMenu;
 };
 
 using menu = HottMenu<menuData, RCMenu>;
-
 
 struct AsciiHandler {
     static void start() {
@@ -274,72 +323,316 @@ struct BCastHandler {
     }    
 };
 
+const auto periodicTimer = alarmTimer::create(500_ms, AlarmFlags::Periodic);
+
+template<typename Sensor, typename Store, typename Alarm>
+class TempFSM {
+public:
+    inline static void init() {
+        mMeasureTimer = Alarm::create(750_ms, AlarmFlags::Disabled | AlarmFlags::OneShot);
+        mTempTimer = Alarm::create(3000_ms, AlarmFlags::Periodic);
+    }
+    inline static void tick(uint8_t timer) {
+        if (timer == *mMeasureTimer) {
+            process(Event::WaitOver);
+        }
+        else if (timer == *mTempTimer) {
+            process(Event::Measure);
+        }
+    }
+    inline static void periodic() {
+        Sensor::periodic([]{
+            mState = State::Start;
+            if (mSensorNumber == 0) {
+                sensorData::temp1(Sensor::temperature());
+            }
+            if (mSensorNumber == 1) {
+                sensorData::temp2(Sensor::temperature());
+            }
+//            std::outl<terminal>("temp: "_pgm, mSensorNumber, " : "_pgm, Sensor::temperature());
+            mSensorNumber = (mSensorNumber + 1) % Store::dsIds.size();
+        });
+    }
+private:
+    enum class State : uint8_t {Start, Wait, WaitRead};
+    enum class Event : uint8_t {Measure, WaitOver};
+
+    inline static void process(Event e) {
+        switch (mState) {
+        case State::Start:
+            if (e == Event::Measure) {
+                Sensor::convert();
+                alarmTimer::start(*mMeasureTimer);
+                mState = State::Wait;
+            }
+            break;
+        case State::Wait:
+            if (e == Event::WaitOver) {
+                if (Store::dsIds[mSensorNumber]) {
+                    Sensor::startGet(Store::dsIds[mSensorNumber]);
+                    mState = State::WaitRead;
+                }
+                else {
+                    mSensorNumber = 0;
+                    mState = State::Start;
+                }
+            }            
+            break;
+        case State::WaitRead:
+            break;
+        }
+    }
+    inline static State mState = State::Start;
+    inline static uint8_t mSensorNumber = 0;
+    inline static std::optional<uint7_t> mMeasureTimer;
+    inline static std::optional<uint7_t> mTempTimer;
+};
+
+using tempFSM = TempFSM<ds18b20, Storage, alarmTimer>;
+
+uint16_t lastV = 0;
+
+inline void updateMeasurements() {
+    constexpr uint8_t hottScale = adcController::mcu_adc_type::VRef / 0.02;
+    constexpr auto rawMax = adcController::value_type::Upper;
+    constexpr uint8_t battScale = adcController::mcu_adc_type::VRef / 0.1;
+    
+    uint16_t zmin = std::numeric_limits<uint16_t>::max();
+    uint8_t  zminNum = 0;
+    {
+        uint16_t v1 = adcController::value(1) * 4;
+        uint16_t v2 = adcController::value(2) * 8;
+        uint16_t v3 = adcController::value(0) * 12;
+        
+        uint16_t z1 = (v1 * hottScale) / rawMax;
+        uint16_t z2 = ((v2 - v1) * hottScale) / rawMax;
+        uint16_t z3 = ((v3 - v2) * hottScale) / rawMax;
+
+        if ((z1 > 0) && (z1 < zmin)) {
+            zmin = z1;
+            zminNum = 0;
+        }
+        if ((z2 > 0) && (z2 < zmin)) {
+            zmin = z2;
+            zminNum = 1;
+        }
+        if ((z3 > 0) && (z3 < zmin)) {
+            zmin = z3;
+            zminNum = 2;
+        }
+        sensorData::cellVoltageRaw(0, z1);
+        sensorData::cellVoltageRaw(1, z2);
+        sensorData::cellVoltageRaw(2, z3);
+        uint16_t batt = (v3 * battScale) / rawMax;
+        sensorData::batteryVoltageRaw(0, batt);
+    }
+    {
+        uint16_t v1 = adcController::value(4) * 4;
+        uint16_t v2 = adcController::value(5) * 8;
+        uint16_t v3 = adcController::value(3) * 12;
+        
+        uint16_t z1 = (v1 * hottScale) / rawMax;
+        uint16_t z2 = ((v2 - v1) * hottScale) / rawMax;
+        uint16_t z3 = ((v3 - v2) * hottScale) / rawMax;
+        
+        if ((z1 > 0) && (z1 < zmin)) {
+            zmin = z1;
+            zminNum = 4;
+        }
+        if ((z2 > 0) && (z2 < zmin)) {
+            zmin = z2;
+            zminNum = 5;
+        }
+        if ((z3 > 0) && (z3 < zmin)) {
+            zmin = z3;
+            zminNum = 6;
+        }
+
+        sensorData::cellVoltageRaw(3, z1);
+        sensorData::cellVoltageRaw(4, z2);
+        sensorData::cellVoltageRaw(5, z3);
+        uint16_t batt = (v3 * battScale) / rawMax;
+        sensorData::batteryVoltageRaw(1, batt);
+    }
+    
+    sensorData::batteryMinimumRaw(zminNum, zmin);
+    
+    constexpr uint8_t tempScale = adcController::mcu_adc_type::VRef / 0.314;
+    
+    uint8_t t1 = (adcController::value(4) * tempScale * 25) / rawMax + 20;
+//    sensorData::temperatureRaw(0, t1);
+    
+    constexpr uint16_t currentScale = 10 * 4.7 * adcController::mcu_adc_type::VRef / 0.066; // (ACS 712 = 66mV/A, Hott: 0,1A Steps)
+    constexpr uint16_t currentOffset = currentScale * 105; // experimentelle O-A-Wert --> EEProm
+    
+    uint16_t c1 = (adcController::value(3) * currentScale - currentOffset) / rawMax;
+    
+    sensorData::currentRaw(c1);
+    
+    const auto upm1 = rpm1::rpm();
+    sensorData::rpm1(upm1);
+    
+//    const auto upm2 = rpm2::rpm();
+//    sensorData::rpm2(upm2);
+
+}
+
+inline void updateActors() {
+    auto v1 = Hott::SumDProtocollAdapter<0>::value(1);
+    auto v3 = Hott::SumDProtocollAdapter<0>::value(3);
+#ifdef USE_RPM2
+    softPpm::ppm(v1, 0);
+#else
+    hardPpm::ppm<hardPpm::A>(v1);
+    hardPpm::ppm<hardPpm::B>(v3);
+#endif                        
+    auto v0 = Hott::SumDProtocollAdapter<0>::value(0);
+    hbridge1::pwm(v0);
+    hbridge2::pwm(v0);
+}
+
+inline void updateMultiChannel() {
+    if (Hott::SumDProtocollAdapter<0>::hasMultiChannel()) {
+        std::byte d{0};
+//        std::out<terminal>("Multi:"_pgm);
+        for(uint8_t i = 0; i < Hott::MultiChannel::size; ++i) {
+            if (Hott::SumDProtocollAdapter<0>::mChannel(i) == Hott::MultiChannel::State::Up) {
+                d |= std::byte(1 << i);
+            }
+//            std::out<terminal>(Char{' '}, (uint8_t)Hott::SumDProtocollAdapter<0>::mChannel(i));
+        }
+//        std::outl<terminal>(Char{'-'});
+
+        mcp23008::startWrite(0x09, d);
+    }
+}
+
 
 int main() {
     constexpr std::hertz fCr = 1 / Hott::hottDelayBetweenBytes;
     static_assert(fCr == Config::Timer::frequency);
+    
+    eeprom::init();
+    adcController::init();
     
     isrRegistrar::init();
     
     alarmTimer::init(AVR::TimerMode::CTCNoInt); 
     
     led::init();
-    led::set(Constants::cGreen);
+    led::off();
+
+    Util::delay(1_ms);    
+    led::set(0, Constants::cGreen);
+    Util::delay(1_ms);    
+    led::set(1, Constants::cRed);
+    Util::delay(1_ms);    
+    led::set(2, Constants::cBlue);
 
     testPin1::dir<AVR::Output>();
     
     crWriterSensorBinary::init();
     crWriterSensorText::init();
     
-    softPpm::init();    
-    softPpm::ranged_type v1{2501};
-    softPpm::ranged_type v2{4999};
-    softPpm::ppm(v1, 0);
-    softPpm::ppm(v2, 1);
+    // hardPpm und rpm2 sind nicht gleichzeitig nutzbar
     
+#ifndef USE_RPM2
+    hardPpm::init();
+#else 
+    softPpm::init();    
+#endif
     rpm1::init();
-    rpm1::init();
+#ifdef USE_RPM2
+    rpm2::init();
+#endif
     
     hardPwm::init<Constants::pwmFrequency>();
   
+    ds18b20::init();
+
+    TwiMaster::init<Constants::fSCL>();
+    mcp23008::startWrite(0x00, std::byte{0x00}); // output
+    
     sensorUsart::init<19200>();
     rcUsart::init<115200>();
     
     {
         Scoped<EnableInterrupt<>> ei;
         
-        std::outl<terminal>("Test11"_pgm);
+        std::outl<terminal>("Test15"_pgm);
+
+        {
+            std::array<OneWire::ow_rom_t, Storage::dsIds.capacity> ids;
+            oneWireMaster::findDevices(ids, ds18b20::family);
+            for(const auto& id : ids) {
+                if (id) {
+                    Storage::dsIds.push_back(id);
+                    std::outl<terminal>(id);
+                    Util::delay(10_ms);
+                }
+            }
+        }
+        {
+            std::array<TWI::Address, Storage::i2cDevices.capacity> i2cAddresses;
+            TwiMaster::findDevices(i2cAddresses);
+            for(const auto& d : i2cAddresses) {
+                if (d) {
+                    Storage::i2cDevices.push_back(d);
+                    std::outl<terminal>(d);
+                    Util::delay(10_ms);
+                }
+            }
+        }
+        
+        tempFSM::init();
         
         while(true){
             testPin1::toggle(); // 25 us -> 40 KHz
+            TwiMasterAsync::periodic();
             menu::periodic();
             rpm1::periodic();
+#ifdef USE_RPM2
             rpm2::periodic();
+#endif
+            adcController::periodic();
             systemClock::periodic<systemClock::flags_type::ocfa>([](){
                 crWriterSensorBinary::rateProcess();
                 crWriterSensorText::rateProcess();
+                oneWireMasterAsync::rateProcess();
+                updateMeasurements();
+                updateActors();
+                updateMultiChannel();
+
                 alarmTimer::periodic([](uint7_t timer){
                     if (timer == *periodicTimer) {
+                        if (Hott::SumDProtocollAdapter<0>::hasMultiChannel()) {
+                            std::out<terminal>("Multi["_pgm, Hott::SumDProtocollAdapter<0>::mChannelForMultiChannel, "]: "_pgm);
+                            for(uint8_t i = 0; i < Hott::MultiChannel::size; ++i) {
+                                std::out<terminal>(Char{' '}, (uint8_t)Hott::SumDProtocollAdapter<0>::mChannel(i));
+                            }
+                            std::outl<terminal>();
+                        }                        
                         rpm1::check();
+#ifdef USE_RPM2
                         rpm2::check();
-                        auto v = Hott::SumDProtocollAdapter<0>::value(0);
-                        std::outl<terminal>("vs: "_pgm, v.toInt());
-                        softPpm::ppm(v, 0);
-                        
-                        hardPwm1::pwm(v);
-                        hardPwm2::pwm(v);
-                        
-                        std::outl<terminal>("rpm1: "_pgm, rpm1::rpm().value());
-                        std::outl<terminal>("rpm2: "_pgm, rpm2::rpm().value());
+#endif
+                    }
+                    else {
+                        tempFSM::tick(timer);
                     }
                 });
                 appData.expire();
             });
+            tempFSM::periodic();
+            
             while(eeprom::saveIfNeeded()) {
                 std::outl<terminal>("."_pgm);
             }
         }
     }    
+}
+ISR(INT1_vect) {
+    isrRegistrar::isr<AVR::ISR::Int<1>>();
 }
 // SumD
 ISR(USART1_RX_vect) {
@@ -357,12 +650,14 @@ ISR(USART0_UDRE_vect){
 }
 // Timer 4
 // softPpm
+#ifdef USE_RPM2
 ISR(TIMER4_COMPA_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<4>::CompareA>();
 }
 ISR(TIMER4_COMPB_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<4>::CompareB>();
 }
+#endif
 
 #ifndef NDEBUG
 void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {

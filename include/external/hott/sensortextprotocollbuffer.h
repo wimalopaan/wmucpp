@@ -74,7 +74,7 @@ namespace Hott {
             hottTextResponse.parity += std::to_integer<uint8_t>(value);
             return value;    
         }
-        inline static TextMsg hottTextResponse;
+        inline static TextMsg hottTextResponse{};
         static_assert((cyclesBeforeAnswer + sizeof(hottTextResponse)) < std::numeric_limits<uint8_t>::max());
     };
     

@@ -34,7 +34,10 @@ namespace std {
         inline static constexpr bool sizeIsAtomic = DefaultMcuType::template is_atomic<size_type>();
         
         bool push_back(volatile const T& item) volatile {
-            size_type next = (in + 1) % Size;
+            asm("; replace udivmod");
+            size_type next = in + 1;
+            if (next == Size) next = 0;
+//            size_type next = (in + 1) % Size;
             {
                 Scoped<DisbaleInterrupt<RestoreState>, !sizeIsAtomic> di;
                 if (out == next) {
@@ -46,7 +49,10 @@ namespace std {
             return true;
         }
         bool push_back(const T& item) volatile {
-            size_type next = (in + 1) % Size;
+            asm("; replace udivmod");
+            size_type next = in + 1;
+            if (next == Size) next = 0;
+//            size_type next = (in + 1) % Size;
             {
                 Scoped<DisbaleInterrupt<RestoreState>, !sizeIsAtomic> di;
                 if (out == next) {
@@ -65,7 +71,9 @@ namespace std {
                 }
             }
             item = data[out];
-            out = (out + 1) % Size;
+//            out = (out + 1) % Size;
+            asm("; replace udivmod");
+            if (++out == Size) out = 0;
             return true;
         }
         std::optional<T> pop_front() volatile {
@@ -76,7 +84,9 @@ namespace std {
                 }
             }
             T item = data[out];
-            out = (out + 1) % Size;
+//            out = (out + 1) % Size;
+            asm("; replace udivmod");
+            if (++out == Size) out = 0;
             return item;
         }
         void clear() volatile {

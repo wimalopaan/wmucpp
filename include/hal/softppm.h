@@ -26,9 +26,6 @@
 #include "util/disable.h"
 #include "util/meta.h"
 
-using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
-using testPin1 = AVR::Pin<PortD, 3>; // I2C Interrupt
-
 template<typename Timer, typename... Pins>
 class SoftPPM final {
     SoftPPM() = delete;
@@ -69,23 +66,24 @@ public:
         *mcuTimer()->ocrb = ocrbValues[0];
     }
     
-//    inline static void ppm(const std::percent& width, uint8_t channel) {
-//        assert(channel < numberOfChannels);
-//        uint16_t ocr = std::expand(width, parameter::ocMin, parameter::ocMax);
-//        uint16_t start = 0;
-//        for(uint8_t i = 0; i < channel; ++i) {
-//            start += ocrbValues[i];
-//        }
-//        uint16_t end = start + ocr;
-//        int16_t diff = ocr - ocrbValues[channel];
-//        {
-//            Scoped<DisbaleInterrupt<RestoreState>> di;
-//            ocrbValues[channel] = end;
-//            for(uint8_t i = channel + 1; i < ocrbValues.size - 1; ++i) {
-//                ocrbValues[i] += diff;
-//            }
-//        }
-//    }
+    inline static void ppm(const std::percent& width, uint8_t channel) {
+        assert(channel < numberOfChannels);
+        uint16_t ocr = std::expand(width, parameter::ocMin, parameter::ocMax);
+        uint16_t start = 0;
+        for(uint8_t i = 0; i < channel; ++i) {
+            start += ocrbValues[i];
+        }
+        uint16_t end = start + ocr;
+        int16_t diff = ocr - ocrbValues[channel];
+        {
+            Scoped<DisbaleInterrupt<RestoreState>> di;
+            ocrbValues[channel] = end;
+            for(uint8_t i = channel + 1; i < ocrbValues.size - 1; ++i) {
+                ocrbValues[i] += diff;
+            }
+        }
+    }
+    
     template<typename T, T Min, T Max>
     inline static uint16_t ppm(const uint_ranged<T, Min, Max>& v, uint8_t channel) {
         assert(channel < numberOfChannels);

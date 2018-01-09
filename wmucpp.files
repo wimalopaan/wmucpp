@@ -33,6 +33,8 @@ boards/rcsensorled03/test03.cc
 boards/rcsensorled03/test04.cc
 boards/rcsensorled03/test05.cc
 boards/rcsensorled03/test06.cc
+boards/rcsensorled03/test06a.cc
+boards/rcsensorled03/test06b.cc
 boards/rcsensorled03/test07.cc
 boards/rcsensorled03/test08.cc
 boards/rcsensorled03/test09.cc
@@ -40,6 +42,8 @@ boards/rcsensorled03/test10.cc
 boards/rcsensorled03/test11.cc
 boards/rcsensorled03/test12.cc
 boards/rcsensorled03/test13.cc
+boards/rcsensorled03/test14.cc
+boards/rcsensorled03/test15.cc
 boards/unimaxi/atmega1284p/readme.txt
 boards/unimaxi/atmega1284p/test01.cc
 boards/unimaxi/atmega1284p/test02.cc
@@ -70,6 +74,7 @@ doc/bmcpp02/bm35a.cc
 doc/bmcpp02/bm40a.cc
 doc/bmcpp02/bm50a.cc
 doc/bmcpp02/bm51a.cc
+doc/bmcpp04/bm20a.cc
 doc/bmcpp10/bm30a.cc
 doc/bmcpp20/bm54a.cc
 doc/bmcpp20/bm55a.cc
@@ -108,6 +113,7 @@ host/test23.cc
 host/test24.cc
 host/test30.cc
 host/test50.cc
+host/test60.cc
 host/test90.cc
 host/test98.cc
 host/test99.c

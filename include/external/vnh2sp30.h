@@ -61,9 +61,14 @@ struct VNH {
     inline static void pwm(const std::percent& value) {
         PWM::pwm(value);
     }
-    inline static void pwm(value_type value) {
+    inline static value_type pwm(value_type value) {
         PWM::pwm(value);
     }
+    template<typename T, T Min, T Max>
+    inline static value_type pwm(const uint_ranged<T, Min, Max>& value) {
+        return PWM::pwm(value);
+    }
+
     template<typename Dir>
     inline static void direction() {
         if constexpr(std::is_same<Dir, CW>::value) {

@@ -312,12 +312,9 @@ int main() {
                 crWriterSensorText::rateProcess();
                 alarmTimer::periodic([](uint7_t timer){
                     if (timer == *periodicTimer) {
-                        auto v = Hott::SumDProtocollAdapter<0>::value(0) - Hott::SumDMsg::Low;
-                        constexpr uint64_t denom = Hott::SumDMsg::High - Hott::SumDMsg::Low;
-                        constexpr uint64_t nom = softPpm::ranged_type::Upper - softPpm::ranged_type::Lower;
-                        auto vs = Util::RationalDivider<uint16_t, nom, denom>::scale(v) + softPpm::ranged_type::Lower;
-                        std::outl<terminal>("vs: "_pgm, vs);
-                        softPpm::ppm(vs, 0);
+                        auto v = Hott::SumDProtocollAdapter<0>::value(0);
+                        std::outl<terminal>("v: "_pgm, v.toInt());
+                        softPpm::ppm(v, 0);
                     }
                 });
                 appData.expire();

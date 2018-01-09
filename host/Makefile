@@ -32,6 +32,7 @@ targets += test23
 targets += test24
 targets += test30
 targets += test50
+targets += test60
 targets += test90
 targets += test98
 targets += test99
