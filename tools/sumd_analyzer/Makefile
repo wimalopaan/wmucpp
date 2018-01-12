@@ -17,37 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-all: doc example host test projects boards tools
 
-.PHONY: test example clean host doc projects boards
+targets += sumdan
 
-test:
-	make -C test all
+-include ../../Makefile.include
 
-host:
-	make -C host all
-
-example:
-	make -C example all
-
-doc:
-	make -C doc all
-
-projects:
-	make -C projects all
-
-boards:
-	make -C boards all
-
-tools:
-	make -C tools all
-
-clean:
-	make -C doc clean
-	make -C example clean
-	make -C test clean
-	make -C host clean
-	make -C projects clean
-	make -C boards clean
-	make -C tools clean
+CXX = /usr/bin/g++
+#CXX = clang++
+CC = /usr/bin/g++
+LDFLAGS = -lpthread
+CXXFLAGS = -g -std=c++17 
+CXXFLAGS += -Wall -Wextra -fPIC
 

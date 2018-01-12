@@ -1,4 +1,5 @@
 # -*- mode: makefile-gmake; -*-
+# $Id: Makefile.include 1209 2016-07-01 07:53:57Z wimalopaan $
 #
 # WMuCpp - Bare Metal C++ 
 # Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
@@ -17,37 +18,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-all: doc example host test projects boards tools
+subdirs = $(wildcard sumd*)
 
-.PHONY: test example clean host doc projects boards
-
-test:
-	make -C test all
-
-host:
-	make -C host all
-
-example:
-	make -C example all
-
-doc:
-	make -C doc all
-
-projects:
-	make -C projects all
-
-boards:
-	make -C boards all
-
-tools:
-	make -C tools all
-
-clean:
-	make -C doc clean
-	make -C example clean
-	make -C test clean
-	make -C host clean
-	make -C projects clean
-	make -C boards clean
-	make -C tools clean
-
+-include ../Makefile.include

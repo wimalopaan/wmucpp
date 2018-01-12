@@ -71,3 +71,7 @@ boards/rcsensorled03
 example/features/old
 include/std/detail
 include/ui
+host/old
+include/external/hott/old
+tools
+tools/sumd_analyzer
