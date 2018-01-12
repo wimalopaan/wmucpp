@@ -116,6 +116,9 @@ namespace Hott {
         inline static void currentRaw(uint16_t v) {
             hottBinaryResponse.current = v;
         }
+        inline static void mainVoltageRaw(uint16_t v) {
+            hottBinaryResponse.main_voltage = v;
+        }
 
     private:
         inline static std::byte getByte(uint8_t index) {

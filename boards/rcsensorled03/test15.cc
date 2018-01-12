@@ -425,6 +425,8 @@ inline void updateMeasurements() {
         sensorData::cellVoltageRaw(2, z3);
         uint16_t batt = (v3 * battScale) / rawMax;
         sensorData::batteryVoltageRaw(0, batt);
+        
+        sensorData::mainVoltageRaw(batt);
     }
     {
         uint16_t v1 = adcController::value(4) * 4;
@@ -462,10 +464,21 @@ inline void updateMeasurements() {
     uint8_t t1 = (adcController::value(4) * tempScale * 25) / rawMax + 20;
 //    sensorData::temperatureRaw(0, t1);
     
-    constexpr uint16_t currentScale = 10 * 4.7 * adcController::mcu_adc_type::VRef / 0.066; // (ACS 712 = 66mV/A, Hott: 0,1A Steps)
-    constexpr uint16_t currentOffset = currentScale * 105; // experimentelle O-A-Wert --> EEProm
+//    constexpr uint16_t currentScale = 10 * 4.7 * adcController::mcu_adc_type::VRef / 0.066; // (ACS 712 = 66mV/A, Hott: 0,1A Steps)
+//    constexpr uint16_t currentOffset = currentScale * 105; // experimentelle O-A-Wert --> EEProm
     
-    uint16_t c1 = (adcController::value(3) * currentScale - currentOffset) / rawMax;
+//    uint16_t c1 = (adcController::value(6) * currentScale - currentOffset) / rawMax;
+    
+    uint16_t a = adcController::value(6);
+    uint16_t a1 = 0;
+    if (a >= 128) {
+        a1 = a - 128;
+    }
+    else {
+        a1 = 128 - a;
+    }
+    
+    uint16_t c1 = (a1 * 298) / 100;
     
     sensorData::currentRaw(c1);
     
@@ -613,6 +626,9 @@ int main() {
                             std::outl<terminal>();
                         }                        
                         rpm1::check();
+                        uint16_t a = adcController::value(6);
+                        std::outl<terminal>(a);
+                                                
 #ifdef USE_RPM2
                         rpm2::check();
 #endif
