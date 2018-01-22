@@ -132,9 +132,10 @@ namespace std {
         return std::microseconds{(uint16_t)(ms.value * 1000)};
     }
     
+    // fixme: move to other namspace
     class RPM {
     public:
-        explicit constexpr RPM() : mValue(std::numeric_limits<uint16_t>::max()) {}
+        constexpr RPM() : mValue(std::numeric_limits<uint16_t>::max()) {}
         explicit constexpr RPM(uint16_t v) : mValue{v} {}
         explicit constexpr RPM(const std::hertz& f) : mValue(f.value * 60) {}
         

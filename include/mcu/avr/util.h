@@ -111,7 +111,7 @@ namespace AVR {
                     const std::hertz f = Config::fMcu / p;
                     const uint16_t ppmMin = 1_ms * f;
                     const uint16_t ppmMax = 2_ms * f;
-                    if ((ppmMax < std::numeric_limits<T>::max()) && (ppmMin > 10)) {
+                    if ((ppmMax < std::numeric_limits<T>::max()) && (ppmMin > 1)) {
                         return p;
                     }
                 }

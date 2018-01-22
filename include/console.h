@@ -344,7 +344,7 @@ Stream& operator<<(Stream& o, bool b) {
 
 template<MCU::Stream Stream, typename T>
 Stream& operator<<(Stream& o, const Fraction<T>& f) {
-    std::array<char, Util::numberOfDigits<Fraction<T>>()> buffer;
+    std::array<char, 1 + Util::numberOfDigits<Fraction<T>>()> buffer;
     Util::ftoa(f, buffer);
     Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(&buffer[0]);
     return o;    

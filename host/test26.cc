@@ -51,17 +51,6 @@ std::ostream& operator<<(std::ostream& out, const Menu& m) {
     return out << "Menu[" << m.mTitle << "]";
 }
 
-template<::detail::isNonTerminal T>
-std::ostream& operator<<(std::ostream& out, const T& n) {
-    out << "IN[";
-    for(const auto& v : n.mChildren) {
-        out << (int)v << ',';
-    }
-    out << n.mData;
-    return out << "]";
-}
-
-
 auto flat_tree = [&]{
     constexpr auto tree = Node(Menu(1), 
                                A(7), 
@@ -69,7 +58,7 @@ auto flat_tree = [&]{
                                     B(6), 
                                     C(5)
                                     ));
-
+    
     constexpr auto ftree = make_tuple_of_tree(tree);
     return ftree;
 };
@@ -77,7 +66,7 @@ auto flat_tree = [&]{
 template<auto... II, Util::Callable L>
 constexpr auto inode_to_indexnode(std::index_sequence<II...>, const L& callable) {
     constexpr auto inode = callable();
-    static_assert(isInode(inode), "us a collable retuning an INode<>");
+    static_assert(isInode(inode), "use a callable returning an INode<>");
     typedef typename decltype(inode)::type dataType;
     return IndexNode<dataType, Index<inode.mNumber>, ParentIndex<inode.mParent>, inode.mChildren[II]...>{inode.mData};
 }
@@ -95,17 +84,12 @@ constexpr auto transform(const L& callable) {
         constexpr auto first = std::get<0>(tuple);    
         constexpr auto rest = [&]{return Util::tuple_rest(tuple);};
         
-        if constexpr(isInode(first)) {
-            constexpr auto indexnode = inode_to_indexnode(std::make_index_sequence<first.mChildren.size()>{}, [&]{return first;});
-            return std::tuple_cat(std::tuple(indexnode), transform(rest));        
-        }
-        else {
-            return std::tuple_cat(std::tuple(first), transform(rest));
-        }
+        constexpr auto indexnode = inode_to_indexnode(std::make_index_sequence<first.mChildren.size()>{}, [&]{return first;});
+        return std::tuple_cat(std::tuple(indexnode), transform(rest));        
     }
 }
 
-constexpr auto t2 = transform(flat_tree); 
+auto t2 = transform(flat_tree); 
 
 template<typename T>
 void inspect(T) {
@@ -113,20 +97,14 @@ void inspect(T) {
 }
 
 int main() {
-    inspect(flat_tree());
     inspect(t2);
+    int activeNode = std::tuple_size<decltype(t2)>::value - 1;
     
-    uint8_t sum = 0;
-    
-    constexpr auto topIndex = std::tuple_size<decltype(t2)>::value - 1;
-    
-    for(int n : children(std::get<topIndex>(t2))) {
-        std::cout << n << '\n';
-    }
-    
-    for(uint8_t i = 0; i < std::tuple_size<decltype(t2)>::value; ++i) {
-        Meta::visitAt(t2, i, [](auto i) {
-            inspect(i);
+    while(true) {
+        std::cout << "Node: " << activeNode << std::endl;
+        Meta::visitAt(t2, activeNode, [&](auto& m) {
+            inspect(m);
+            std::cin >> activeNode;
             return 0;
         });
     }

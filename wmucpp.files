@@ -1,3 +1,12 @@
+boards/rcsensorled03/test16.cc
+boards/rcsensorled03/test17.cc
+boards/rcsensorled03/test18.cc
+boards/rcsensorled03/test50.cc
+boards/rcsensorled03/test51.cc
+host/test25.cc
+host/test26.cc
+include/hal/multichannelppm.h
+include/hal/sumo.h
 tools/sumd_analyzer/sumdan.cc
 tools/sumd_analyzer/Makefile
 tools/Makefile

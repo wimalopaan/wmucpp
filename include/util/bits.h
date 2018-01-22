@@ -21,7 +21,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <limits>
-#include "std/type_traits"
+#include <type_traits>
 #include "std/bitmask.h"
 
 namespace Util {
@@ -156,6 +156,14 @@ namespace Util {
         using type = typename std::conditional<(V > std::numeric_limits<uint32_t>::max()), uint64_t, 
                               typename std::conditional<(V > std::numeric_limits<uint16_t>::max()), uint32_t,
                                 typename std::conditional<(V > std::numeric_limits<uint8_t>::max()), uint16_t, uint8_t>::type>::type>::type;
+    };
+
+    template<uint64_t Bits>
+    struct TypeForBits {
+        using type = typename std::conditional<(Bits <= 8), uint8_t, 
+                         typename std::conditional<(Bits <= 16), uint16_t, 
+                             typename std::conditional<(Bits <= 32), uint32_t,
+                                  typename std::conditional<(Bits <= 64), uint64_t, void>::type>::type>::type>::type;
     };
     
     template<typename T>

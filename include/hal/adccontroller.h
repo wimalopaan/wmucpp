@@ -19,8 +19,8 @@
 #pragma once
 
 #include "mcu/avr/adc.h"
-#include "util/dassert.h"
 #include "util/rational.h"
+#include <cassert>
 
 template<typename MCUAdc, uint8_t... Channels>
 class AdcController final {
@@ -52,7 +52,8 @@ public:
             break;
         case State::ConversionComplete:
             values[mActualChannel] = MCUAdc::value();
-            mActualChannel = (mActualChannel + 1) % NumberOfChannels;
+            if (++mActualChannel == NumberOfChannels) {mActualChannel = 0;}
+//            mActualChannel = (mActualChannel + 1) % NumberOfChannels;
             MCUAdc::channel(channels[mActualChannel]);
             state = State::Start;
             break;

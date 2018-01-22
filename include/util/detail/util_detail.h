@@ -26,20 +26,33 @@ namespace Util {
     template<std::Integral T, uint8_t Base = 10> constexpr uint8_t numberOfDigits();
     
     namespace detail {
-        
-        template<uint8_t Position, typename T, uint16_t L>
-        auto ftoa(T& v, std::array<char, L>& data) -> decltype(data)& {
+        template<uint8_t Position, typename T, Util::Subscriptable C>
+        auto ftoa(T& v, C& data) -> decltype(data)& {
             typedef typename Util::fragmentType<T>::type FT;
             v *= 10;
             if (v != 0) {
                 data[Position] = '0' + (v >> ((sizeof(FT)) * 8));
                 v &= FT(-1);
-                if constexpr(Position < L - 2) {
+                if constexpr(Position < C::size - 2) {
                     return ftoa<Position + 1>(v, data);
                 }
             }
             return data;    
         }
+        
+//        template<uint8_t Position, typename T, uint16_t L>
+//        auto ftoa(T& v, std::array<char, L>& data) -> decltype(data)& {
+//            typedef typename Util::fragmentType<T>::type FT;
+//            v *= 10;
+//            if (v != 0) {
+//                data[Position] = '0' + (v >> ((sizeof(FT)) * 8));
+//                v &= FT(-1);
+//                if constexpr(Position < L - 2) {
+//                    return ftoa<Position + 1>(v, data);
+//                }
+//            }
+//            return data;    
+//        }
         
         template<uint8_t Digits = 2, uint8_t Base = 10> 
         struct Convert {
@@ -176,28 +189,36 @@ namespace Util {
             return data;
         }
         
-        template<int Position, uint8_t Base, std::Integral T, uint16_t L>
-        uint8_t itoa_single(T& value, std::array<char, L>& data) {
-            static_assert((Position < 0) || (Position < L), "wrong length");
-            if constexpr(Position >= 0) {
-                uint8_t fraction = value % Base;
-                data[Position] = Convert<1, Base>::toChar(fraction);
-                value /= Base;
-                return itoa_single<Position - 1, Base, T>(value, data);
-            }
-            return 0;
-        }
-
         template<int Position, uint8_t Base, std::Integral T>
         uint8_t itoa_single(T& value, char* data) {
             if constexpr(Position >= 0) {
                 uint8_t fraction = value % Base;
                 data[Position] = Convert<1, Base>::toChar(fraction);
                 value /= Base;
+                if (value == 0) {
+                    return Position;
+                }
                 return itoa_single<Position - 1, Base, T>(value, data);
             }
             return 0;
         }
+        
+        template<int Position, uint8_t Base, std::Integral T, uint16_t L>
+        uint8_t itoa_single(T& value, std::array<char, L>& data) {
+            static_assert((Position < 0) || (Position < L), "wrong length");
+            return itoa_single<Position, Base>(value, &data[0]);
+//            if constexpr(Position >= 0) {
+//                uint8_t fraction = value % Base;
+//                data[Position] = Convert<1, Base>::toChar(fraction);
+//                value /= Base;
+//                if (value == 0) {
+//                    return Position;
+//                }
+//                return itoa_single<Position - 1, Base, T>(value, data);
+//            }
+//            return 0;
+        }
+
         
     } // detail
 } // Util

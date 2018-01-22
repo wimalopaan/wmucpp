@@ -47,7 +47,11 @@ namespace Meta {
         };
         
         template<typename T, typename F, size_t... I>
-        void all(const T& tuple, const F& f, std::index_sequence<I...>) {
+        constexpr void all(const T& tuple, const F& f, std::index_sequence<I...>) {
+            (f(std::get<I>(tuple)), ...);
+        }
+        template<typename T, typename F, size_t... I>
+        constexpr void all(T& tuple, const F& f, std::index_sequence<I...>) {
             (f(std::get<I>(tuple)), ...);
         }
         
@@ -61,7 +65,11 @@ namespace Meta {
         return Tuple::detail::visit<sizeof...(T)>::at(tuple, index, f);
     }
     template<typename... T, typename F>
-    void visit(const std::tuple<T...>& tuple, const F& f) {
+    constexpr void visit(const std::tuple<T...>& tuple, const F& f) {
+        Tuple::detail::all(tuple, f, std::make_index_sequence<sizeof...(T)>{});
+    }
+    template<typename... T, typename F>
+    constexpr void visit(std::tuple<T...>& tuple, const F& f) {
         Tuple::detail::all(tuple, f, std::make_index_sequence<sizeof...(T)>{});
     }
 }

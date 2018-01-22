@@ -19,7 +19,7 @@ constexpr auto inode_to_indexnode(std::index_sequence<II...>, const L& callable)
     constexpr auto inode = callable();
     static_assert(isInode(inode), "use a collable retuning an INode<>");
     typedef typename decltype(inode)::type dataType;
-    return IndexNode<dataType, inode.mChildren[II]...>{inode.mData};
+    return IndexNode<dataType, Index<inode.mNumber>, ParentIndex<inode.mParent>, inode.mChildren[II]...>{inode.mData};
 }
 
 template<Util::Callable L>

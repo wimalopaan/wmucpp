@@ -31,6 +31,7 @@ namespace UI {
         virtual void putTextInto(Buffer&) const = 0;
         virtual MenuItem* processKey(Key) {return this;}
         virtual bool hasChildren() const {return false;}
+        virtual void parent(MenuItem*) {}
     protected:
         bool mSelected = false;
     private:
@@ -40,9 +41,12 @@ namespace UI {
     template<uint8_t Length, typename C>
     class span {
     public:
+        typedef C type;
+        inline static constexpr uint8_t size = Length;
         explicit span(C* data) : mData{data} {}
-        C& operator[](uint8_t index) {
+        inline C& operator[](uint8_t index) {
             assert(index < Length);
+            assert(mData);
             return mData[index];   
         }
     private:
@@ -50,7 +54,7 @@ namespace UI {
     };
     
     template<uint8_t Offset, uint8_t Length, typename C>
-    span<Length, typename C::type> make_span(C& c) {
+    inline span<Length, typename C::type> make_span(C& c) {
         static_assert((Offset + Length) <= C::size);
         return span<Length, typename C::type>(&c[Offset]);
     }

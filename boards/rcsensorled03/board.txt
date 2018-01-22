@@ -134,7 +134,7 @@ Beschreibung:
 	- OneWire (mit FSM)
 	- ADC (mit FSM)
 
-* test15: 
+* test15: OK
 	- Interrupts für Uart
 	- ohne Events
 	- RCUart 115200 Baud: Ausgabe einzelner Werte
@@ -150,11 +150,83 @@ Beschreibung:
 	- OneWire (mit FSM)
 	- ADC (mit FSM)
 	- I2C (MCP23008 mit MultiSwitch)
-	* I2C Interrupt
+
+* test16: OK
+	- Interrupts für Uart
+	- ohne Events
+	- RCUart 115200 Baud: Ausgabe einzelner Werte
+	- Uart-Terminal 115200 Baud
+	- Sensor-Uart 19200 Baud
+	- ProtokollAdapter für SensorUart
+	- Menu
+	- EEProm
+	- SoftPpm mit Interrupt	
+	- Rpm mit ICP
+	- HardPwm
+	- FUSE für EEProm
+	- OneWire (mit FSM)
+	- ADC (mit FSM)
+	- I2C (MCP23008 mit MultiSwitch)
+	- Aktivierung der Protokollhandler anders
+	- Ansicht im Text-Modus für alle Sensoren
+
+* test17: (OK, bringt nichts)
+	- Interrupts für Uart
+	- ohne Events
+	- RCUart 115200 Baud: Ausgabe einzelner Werte
+	- Uart-Terminal 115200 Baud
+	- Sensor-Uart 19200 Baud
+	- ProtokollAdapter für SensorUart
+	- Menu
+	- EEProm
+	- SoftPpm mit Interrupt	
+	- Rpm mit ICP
+	- HardPwm
+	- FUSE für EEProm
+	- OneWire (mit FSM)
+	- ADC (mit FSM)
+	- I2C (MCP23008 mit MultiSwitch)
+	- Aktivierung der Protokollhandler anders
+	- Ansicht im Text-Modus für alle Sensoren
+	- Umbau der Menu-Klassen ****: bringt nichts
+
+* test18: 
+	- Interrupts für Uart
+	- ohne Events
+	- RCUart 115200 Baud: Ausgabe einzelner Werte
+	- Uart-Terminal 115200 Baud
+	- Sensor-Uart 19200 Baud
+	- ProtokollAdapter für SensorUart
+	- Menu
+	- EEProm
+	- SoftPpm mit Interrupt	
+	- Rpm mit ICP
+	- HardPwm
+	- FUSE für EEProm
+	- OneWire (mit FSM)
+	- ADC (mit FSM)
+	- I2C (MCP23008 mit MultiSwitch)
+	- Aktivierung der Protokollhandler anders
+	- Ansicht im Text-Modus für alle Sensoren
+	- Aufspalten der periodischen Aktionen in eine Zustandsmachine
+	* eigenes Multikanal mit vor/rück-Schalter und ein/aus-Schalter mit Menu
+	* PPM-Input (nur bei GR-16 sinnvoll, da bei GR-12 SUMD/Mk funktioniert. Dann geht bei GR-16 aber auch kein SUMD mehr)
+		- SUMO bei Opto2 -> kein SUMD mehr
+		- SAME / Multikanal -> kein SUMD mehr
 	* Beleuchtungsprogramme
+	* Kommunikation mit I2CWS2812
+	* I2C Interrupt
 	
+* test50:
+	- wie test16
+	- constexpr Menu tuple, children/parent im typ
+	
+* test51:
+    - wie test50
+	- constexpr Menu tuple, children/parent im Node
 ---
 Ideen:
+	- PPMin (inkl. Multikanal) über PB5
 	- Passthrough/Map-Modus:
 		- Zwei JR-Stecker (1x Sensor, 1x SUMD)
 		- zwei Kanäle werden direkt auf die bein PPM Kanäle gemapped (z.B. Ruder/Motor)

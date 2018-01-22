@@ -23,28 +23,40 @@
 #include "mcu/avr/isr.h"
 #include "mcu/avr/util.h"
 #include "util/disable.h"
+#include "util/types.h"
 #include "units/physical.h"
 
+// fixme: flag-Regsiter
 
-template<typename PinChange, typename MCUTimer>
-class PpmDecoder final : public IsrBaseHandler<AVR::ISR::PcInt<PinChange::pcInterruptNumber>>{
+template<typename PinChange, typename MCUTimer, auto Channels = 8>
+class SumO final : public IsrBaseHandler<AVR::ISR::PcInt<PinChange::pcInterruptNumber>>{
     template<typename... II> friend class IsrRegistrar;
+    
 public:
-    PpmDecoder() = delete;
+    SumO() = delete;
 
     typedef MCUTimer mcu_timer_type;
     typedef typename MCUTimer::value_type  value_type;
     typedef typename MCUTimer::mcu_type mcu_type;
     typedef typename PinChange::pinset_type pinset_type;
+    static_assert(pinset_type::size == 1, "use only one pin in pinset");
+    
+    using pin = Meta::front<typename pinset_type::pinlist>;
     
     inline static constexpr auto mcuTimer = MCUTimer::mcuTimer;
-    inline static constexpr uint16_t prescaler = AVR::Util::calculatePpmInParameter<MCUTimer, value_type>();
+    inline static constexpr uint16_t prescaler = AVR::Util::calculatePpmOutParameter<MCUTimer, value_type>(); // !!!
     inline static constexpr std::hertz timerFrequency = Config::fMcu / (uint32_t)prescaler;
     inline static constexpr value_type ppmMin = 1_ms * timerFrequency;
     inline static constexpr value_type ppmMax = 2_ms * timerFrequency;
+    inline static constexpr value_type ppmCycle = 20_ms * timerFrequency;
+    inline static constexpr value_type ppmSync = ppmCycle - (Channels * ppmMax);
 
     static_assert(ppmMin >= 10, "wrong prescaler");
     static_assert(ppmMax <= std::numeric_limits<value_type>::max(), "wrong prescaler");
+    static_assert(ppmMax > ppmMin, "wrong prescaler");
+    static_assert(ppmCycle <= std::numeric_limits<value_type>::max(), "wrong prescaler");
+    static_assert(ppmCycle > ppmMax, "wrong prescaler");
+    static_assert(ppmSync > ppmMax, "wrong prescaler");
 
     inline static constexpr value_type ppmMid = (ppmMax + ppmMin) / 2;
     inline static constexpr value_type ppmDelta = (ppmMax - ppmMin) / 5;
@@ -62,46 +74,64 @@ public:
     
     static inline value_type value(uint8_t index) {
         if constexpr(mcu_type::template is_atomic<value_type>()) {
-            return period[index];
+            return channels[index];
         }
         else {
             Scoped<DisbaleInterrupt<RestoreState>> di;
-            return period[index];
+            return channels[index];
         }
     }
     template<uint8_t Index>
     static inline value_type value() {
         if constexpr(mcu_type::template is_atomic<value_type>()) {
-            return period[Index];
+            return channels[Index];
         }
         else {
             Scoped<DisbaleInterrupt<>> di;
-            return period[Index];
+            return channels[Index];
         }
     }
 
 private:
-    template<uint8_t N>
-    static inline void check(std::byte last, std::byte value) {
-        if (std::any((last ^ value) & pinset_type::pinMasks[N])) {
-            if (std::none(value & pinset_type::pinMasks[N])) { // high -> low
-                period[N] = (*mcuTimer()->tcnt + std::numeric_limits<value_type>::module() - timerStartValue[N]) % std::numeric_limits<value_type>::module();
-            }
-            else { // low ->high
-                timerStartValue[N] = *mcuTimer()->tcnt;
-            }
+    template<typename T>
+    static inline T cdiff(T actual, T start) {
+        if (actual >= start) {
+            return actual - start;
         }
-        if constexpr(N > 0) {
-            check<N - 1>(last, value);
+        else {
+            return (std::numeric_limits<T>::module() - start) + actual;
         }
     }
-
     static inline void isr() {
-        static std::byte last_value{0};
-        std::byte v = pinset_type::read();
-        check<pinset_type::size - 1>(last_value, v);
-        last_value = v;
+        if (!wasLow && !pin::isHigh()){ // falling
+            wasLow = true;
+            value_type actual = *mcuTimer()->tcnt;
+            value_type highPeriod = cdiff(actual, mTimerStartValueRising);
+            value_type low2lowPeriod = cdiff(actual, mTimerStartValueFalling);
+            mTimerStartValueFalling = actual;
+            if (highPeriod >= ppmSync) {
+                channel = 0;
+            }
+            else {
+                if (channel < Channels) {
+                    channels[channel] = low2lowPeriod;
+                    ++channel;
+                }
+                else {
+                    channel = 0;
+                }
+            }
+        }
+        else if (wasLow && pin::isHigh()) { // rising
+            wasLow = false;
+            mTimerStartValueRising = *mcuTimer()->tcnt;
+        } 
     }
-    inline static volatile std::array<value_type, pinset_type::size> period;
-    inline static volatile std::array<value_type, pinset_type::size> timerStartValue;
+    
+    inline static volatile std::array<value_type, Channels> channels;
+    inline static uint8_t channel = 0;
+    inline static value_type mTimerStartValueRising = 0;
+    inline static value_type mTimerStartValueFalling = 0;
+    
+    inline static bool wasLow = false;
 };

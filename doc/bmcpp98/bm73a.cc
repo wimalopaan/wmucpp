@@ -18,7 +18,7 @@
 
 #define NDEBUG
 
-#include "util/dassert.h"
+#include <cassert>
 #include "container/tree.h"
 #include "util/concepts.h"
 #include "console.h"
@@ -95,9 +95,9 @@ constexpr auto flat_tree = []{
 template<auto... II, Util::Callable L>
 constexpr auto inode_to_indexnode(std::index_sequence<II...>, const L& callable) {
     constexpr auto inode = callable();
-    static_assert(isInode(inode), "use a collable retuning an INode<>");
+    static_assert(isInode(inode), "use a callable returning an INode<>");
     typedef typename decltype(inode)::type dataType;
-    return IndexNode<dataType, inode.mChildren[II]...>{inode.mData};
+    return IndexNode<dataType, Index<inode.mNumber>, ParentIndex<inode.mParent>, inode.mChildren[II]...>{inode.mData};
 }
 
 
@@ -129,8 +129,8 @@ template<typename T>
 constexpr uint8_t f(const T& v) {
     return v.v();
 }
-template<typename N, auto... II>
-constexpr uint8_t f(const IndexNode<N, II...>&) {
+template<typename N, typename Index, typename Parent, auto... II>
+constexpr uint8_t f(const IndexNode<N, Index, Parent, II...>&) {
     return 0;
 }
 

@@ -28,7 +28,7 @@ int main() {
     Fraction<uint8_t> x{128};
     constexpr uint8_t base = 10;
     
-    std::array<char, Util::numberOfDigits<decltype(x), base>()> data; // StringBuffer
+    std::array<char, Util::numberOfDigits<decltype(x), base>() + 1> data; // StringBuffer
     
     Util::ftoa(x, data);
     

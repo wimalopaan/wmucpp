@@ -60,6 +60,8 @@ struct INode {
     constexpr INode(const Type& d) : mData{d} {}
     Type mData;
     std::array<uint8_t, SizeType::value> mChildren {};
+    uint8_t mParent{};
+    uint8_t mNumber{};
 };
 
 template<typename T> 
@@ -74,8 +76,8 @@ constexpr bool isInode(const T&) {
 }
 
 template<typename T>
-constexpr const std::tuple<T> flat(const T& v, uint8_t&) {
-    return std::tuple<T>(v);
+constexpr auto flat(const T& v, uint8_t&) {
+    return std::tuple(INode<std::integral_constant<size_t, 0>, T>{v});
 }
 template<typename...T>
 constexpr auto flat(const std::tuple<T...>& t, uint8_t* c, uint8_t& p) {
@@ -91,6 +93,7 @@ constexpr auto flat(const std::tuple<T...>& t, uint8_t* c, uint8_t& p) {
         return std::tuple_cat(f, r);
     }
 }
+
 template<typename N, typename... CC>
 constexpr auto flat(const Node<N, CC...>& n, uint8_t& p = 0) {
     INode<std::integral_constant<size_t, n.size>, N> in{n.mData};
@@ -102,7 +105,20 @@ constexpr auto flat(const Node<N, CC...>& n, uint8_t& p = 0) {
 template<typename T>
 constexpr auto make_tuple_of_tree(const T& tree) {
     uint8_t p = 0;
-    return flat(tree, p);
+    auto t = flat(tree, p);
+    uint8_t number = 0;
+    Meta::visit(t, [&](auto& item) {
+        item.mNumber = number;
+        for(auto i : item.mChildren) {
+            Meta::visitAt(t, i, [&](auto& child){
+                child.mParent = number;
+                return 0;
+            });                
+        }
+        ++number;
+        return 0;
+    });
+    return t;
 }
 
 namespace detail {
@@ -147,18 +163,25 @@ constexpr uint8_t child(const T& tuple, uint8_t node, uint8_t i) {
     });
 }
 
+template<size_t N>
+struct ParentIndex : std::integral_constant<size_t, N> {};
 
-template<typename T, auto... II>
+template<size_t N>
+struct Index : std::integral_constant<size_t, N> {};
+
+template<typename T, typename Index, typename Parent, auto... II>
 struct IndexNode {
-    typedef T type;
-    typedef IndexNode index_type;
+    typedef T value_type;
+    typedef IndexNode type;
+    typedef Parent parent_type;
+    typedef Index index_type;
     T mData;
 };
 
 template<typename T>
 struct is_indexnode : std::false_type {};
-template<typename T, auto... II>
-struct is_indexnode<IndexNode<T, II...>> : std::true_type {};
+template<typename T, typename I, typename P, auto... II>
+struct is_indexnode<IndexNode<T, I, P, II...>> : std::true_type {};
 
 template<typename T>
 constexpr bool isIndexNode(const T&) {
@@ -166,12 +189,12 @@ constexpr bool isIndexNode(const T&) {
     return is_indexnode<type>::value;
 }
 
-template<typename T, auto... II>
-constexpr uint8_t size(const IndexNode<T, II...>&) {
+template<typename T, typename I, typename P, auto... II>
+constexpr uint8_t size(const IndexNode<T, I, P, II...>&) {
     return sizeof...(II);
 }
 
-template<typename T, auto... II>
-constexpr auto children(const IndexNode<T, II...>&) {
+template<typename T, typename I, typename P, auto... II>
+constexpr auto children(const IndexNode<T, I, P, II...>&) {
     return std::array<uint8_t, sizeof...(II)>{II...};
 }

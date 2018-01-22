@@ -289,8 +289,8 @@ int main() {
     
     alarmTimer::init(AVR::TimerMode::CTCNoInt); 
     
-    led::init();
-    led::set(Constants::cGreen);
+    leds::init();
+    leds::set(Constants::cGreen);
 
     testPin1::dir<AVR::Output>();
     

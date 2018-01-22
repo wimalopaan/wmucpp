@@ -70,7 +70,7 @@ namespace std {
     }
 }
 
-auto tree = std::tuple(A(), B(), IndexNode<C, 0, 1>());
+auto tree = std::tuple(A(), B(), IndexNode<C, Index<2>, ParentIndex<0>, 0, 1>());
 
 int main() {
 //    std::outl<terminal>("Bla"_pgm);    

@@ -352,15 +352,15 @@ int main() {
     
     alarmTimer::init(AVR::TimerMode::CTCNoInt); 
     
-    led::init();
-    led::off();
+    leds::init();
+    leds::off();
 
     Util::delay(1_ms);    
-    led::set(0, Constants::cGreen);
+    leds::set(0, Constants::cGreen);
     Util::delay(1_ms);    
-    led::set(1, Constants::cRed);
+    leds::set(1, Constants::cRed);
     Util::delay(1_ms);    
-    led::set(2, Constants::cBlue);
+    leds::set(2, Constants::cBlue);
 
     testPin1::dir<AVR::Output>();
     

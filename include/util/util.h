@@ -31,7 +31,7 @@
 
 #include "detail/util_detail.h"
 
-template<typename T> struct Fraction;
+template<typename T, uint8_t Bits = (sizeof(T) * 8)> struct Fraction;
 
 namespace Util {
     template<std::Integral T, uint8_t Base = 10>
@@ -53,6 +53,9 @@ namespace Util {
     
     template<Util::Fractional T, uint8_t Base = 10>
     constexpr uint8_t numberOfDigits() {
+        if constexpr(std::is_same<Fraction<uint8_t, 4>, T>::value) {
+            return 4;
+        }
         if constexpr(std::is_same<Fraction<uint8_t>, T>::value) {
             return 10;
         }
@@ -98,6 +101,25 @@ namespace Util {
         }   
         else {
             detail::itoa_single<Position, Base, T>(v, data);
+        }
+    }
+    template<uint8_t Base = 10, std::Integral T = uint8_t, typename C>
+    void itoa_r(T value, C& data) {
+        static_assert(C::size > Util::numberOfDigits<T, Base>());
+        static_assert((Base >= 2) && (Base <= 16), "wrong base");
+        constexpr uint8_t Position = Util::numberOfDigits<T, Base>() - 1;
+        T v = value;
+        if constexpr(std::is_signed<T>::value) {
+            if (value < 0) {
+                v = -value; 
+            }
+            uint8_t last = detail::itoa_single<Position, Base, T>(v, &data[0]);
+            if (value < 0) {
+                data[last] = '-';
+            }
+        }   
+        else {
+            detail::itoa_single<Position, Base, T>(v, &data[0]);
         }
     }
     
@@ -163,7 +185,14 @@ namespace Util {
     
     template<Fractional T, uint16_t L>
     auto ftoa(const T& f, std::array<char, L>& data) -> decltype(data)& {
-        static_assert(L >= Util::numberOfDigits<T, 10>(), "wrong char buffer length");
+        static_assert(L >= (Util::numberOfDigits<T, 10>() + 1), "wrong char buffer length");
+        typename Util::enclosingType<typename T::value_type>::type v = f.value;
+        data[0] = '.';
+        return detail::ftoa<1>(v, data);    
+    }
+    template<Fractional T, typename C>
+    auto ftoa(const T& f, C& data) -> decltype(data)& {
+        static_assert(C::size >= Util::numberOfDigits<T, 10>() + 1, "wrong char buffer length");
         typename Util::enclosingType<typename T::value_type>::type v = f.value;
         data[0] = '.';
         return detail::ftoa<1>(v, data);    

@@ -27,11 +27,11 @@
 #include "util/util.h"
 
 
-template<typename T>
+template<typename T, uint8_t Bits>
 struct Fraction final {
     static_assert(std::is_unsigned<T>::value, "T must be unsigned type");
     typedef T value_type;
-    
+    inline static constexpr uint8_t valid_bits = Bits;
     constexpr explicit Fraction(T v) : value(v) {} 
     const T value = 0;
 };
@@ -43,6 +43,7 @@ class FixedPoint final {
 public:
     typedef Type value_type;
     typedef typename Util::UnsignedFor<Type>::type unsigned_type;
+    typedef typename Util::TypeForBits<fractionalBits>::type fractional_type;
     static constexpr unsigned_type fractional_mask = (1 << fractionalBits) - 1;
     static constexpr unsigned_type integral_mask = ~((1 << fractionalBits) - 1);
     static constexpr uint8_t fractional_bits = fractionalBits;
@@ -62,27 +63,28 @@ public:
         }
         return integer();
     }
-    unsigned_type fractionalAbs() const {
-        if (mValue < 0) {
-            return -(fractional() | integral_mask);
-        }
+    fractional_type fractionalAbs() const {
         return fractional();
     }
     Type integer() const {
         return mValue / one;
     }
-    unsigned_type fractional() const {
-        return (unsigned_type(mValue) & fractional_mask);
+    fractional_type fractional() const {
+        return (fractional_type(mValue) & fractional_mask);
     }
-    Fraction<unsigned_type> fraction() const {
-        return Fraction<unsigned_type>{fractionalAbs() << integer_bits};
-        }
-        Type raw() const {
+    Fraction<fractional_type, fractionalBits> fraction() const {
+        return Fraction<fractional_type, fractionalBits>(fractional() << ((sizeof(fractional_type) * 8) - fractional_bits));
+    }
+    Type raw() const {
         return mValue;
+    }
+    FixedPoint operator/=(Type d) {
+        mValue /= d;
+        return *this;
     }
 private:
     FixedPoint(unsigned_type v) : mValue(v){}
-    const Type mValue = 0;
+    Type mValue = 0;
 };
 
 constexpr FixedPoint<int16_t, 4> operator"" _fp(long double v) {
@@ -104,9 +106,9 @@ namespace std {
 
 namespace std::detail {
     
-    template<MCU::Stream Stream, typename T>
-    void out(const Fraction<T>& f) {
-        std::array<char, Util::numberOfDigits<Fraction<T>>()> buffer;
+    template<MCU::Stream Stream, typename T, uint8_t Bits>
+    void out(const Fraction<T, Bits>& f) {
+        std::array<char, 2 + Util::numberOfDigits<Fraction<T, Bits>>()> buffer; // dot + sentinel
         Util::ftoa(f, buffer);
         Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(&buffer[0]);
     }
@@ -123,6 +125,14 @@ namespace std::detail {
     }
     
 } // detail
+
+template<typename Stream, typename T, uint8_t Bits>
+Stream& operator<<(Stream& o, const Fraction<T, Bits>& f) {
+    std::array<char, 2 + Util::numberOfDigits<Fraction<T, Bits>>()> buffer; // dot + sentinel
+    Util::ftoa(f, buffer);
+    Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(&buffer[0]);
+    return o;
+}
 
 template<typename Stream>
 Stream& operator<<(Stream& o, const FixedPoint<uint16_t, 4>& f) {

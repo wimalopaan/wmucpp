@@ -136,7 +136,6 @@ namespace AVR {
         };
     }
 
-//    template<typename... Pins>
     template<typename P1, typename... PPs>
     class PinSet final {
     public:
@@ -150,14 +149,9 @@ namespace AVR {
         
         using gen_type = typename table_type::generator_type;
         
-//        static_assert(sizeof... (Pins) <= 8, "too much pins in PinSet");
         static_assert(Meta::size<pinlist>::value <= 8, "too much pins in PinSet");
-//        static constexpr uint8_t size = sizeof...(Pins);
         static constexpr uint8_t size = Meta::size<pinlist>::value;
-//        static constexpr uint8_t pinNumbers[] = {Pins::number...};
-//        static constexpr std::byte pinMasks[] = {Pins::pinMask...};
         static constexpr auto pinMasks = gen_type::pinMasks;
-//        static constexpr std::byte setMask = (Pins::pinMask | ... | std::byte{0});
         static constexpr std::byte setMask = []{
             if constexpr(p1IsPin) {
                 return P1::pinMask | (PPs::pinMask | ... | std::byte{0});
@@ -173,34 +167,6 @@ namespace AVR {
         using portlist = Meta::transform<port_from, pinlist>;
         typedef typename Meta::nth_element<0, portlist> port_type;
         static_assert(Meta::all_same<Meta::nth_element<0, portlist>, portlist>::value, "must use same port");
-        
-//        static inline constexpr auto valueBits = []{
-//            constexpr auto pinMasks = []{
-//                if constexpr(p1IsPin) {
-//                    std::array<std::byte, size> m = {P1::pinMask, PPs::pinMask...};
-//                    return m;
-//                }
-//                else {
-//                    std::array<std::byte, size> m = {PPs::pinMask...};
-//                    return m;
-//                }
-//            }();
-//            constexpr uint16_t numberOfPatterns = (1 << size);
-//            std::array<std::byte, numberOfPatterns> data;
-//            for(uint8_t value = 0; value < numberOfPatterns; ++value) {
-//                std::byte pattern{0};
-//                std::byte vv{value};
-//                for(uint8_t bit = 0; bit < size; ++bit) {
-//                    if (std::any(vv & std::byte{0x01})) {
-//                        pattern |= pinMasks[bit];
-//                    }
-//                    vv >>= 1;
-//                }
-//                data[value] = pattern;
-//            }
-//            return data;
-//        }();
-        
         
         static inline void allOn() { // race-free 
             auto v = (port_type::get() & setMask) ^ setMask;

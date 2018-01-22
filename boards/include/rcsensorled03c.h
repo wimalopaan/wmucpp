@@ -27,9 +27,12 @@
 #include "mcu/avr/mcuppm.h"
 #include "mcu/avr/mcupwm.h"
 #include "mcu/avr/adc.h"
+#include "mcu/avr/ppm.h"
 #include "hal/constantrate.h"
 #include "hal/softspimaster.h"
 #include "hal/softppm.h"
+#include "hal/sumo.h"
+#include "hal/multichannelppm.h"
 #include "external/onewire.h"
 #include "external/ds18b20.h"
 #include "external/ws2812.h"
@@ -53,12 +56,12 @@ using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
 using PortE = AVR::Port<DefaultMcuType::PortRegister, AVR::E>;
 
 using ledPin = AVR::Pin<PortD, 4>;
-using led = WS2812<9, ledPin, ColorSequenceGRB>;
-typedef led::color_type Color;
+using leds = WS2812<9, ledPin, ColorSequenceGRB>;
+typedef leds::color_type Color;
 
 constexpr std::RPM MaximumRpm{12000};
 constexpr std::RPM MinimumRpm{100};
-#ifdef USE_RPM2
+#ifdef USE_RPM2_ON_OPTO2
 using rpmTimer2 = AVR::Timer16Bit<1>; // timer 1
 using rpm2 = RpmWithIcp<rpmTimer2, MinimumRpm, MaximumRpm>;
 #endif
@@ -81,11 +84,11 @@ using oneWireMasterAsync = OneWire::MasterAsync<oneWireMaster, Hott::hottDelayBe
 using ds18b20 = DS18B20<oneWireMasterAsync, true, UseEvents<false>>;
 using ds18b20Sync = DS18B20<oneWireMaster>;
 
-#ifdef USE_RPM2
+#ifdef USE_RPM2_ON_OPTO2
 using softPpm = SoftPPM<AVR::Timer16Bit<4>, AVR::Pin<PortB, 1>, AVR::Pin<PortB, 2>>; // timer 4
 #endif
 
-#ifndef USE_RPM2
+#ifdef USE_TC1_AS_HARDPPM
 using hardPpm = AVR::PPM<1>; // timer1 <-> exclusiv zu rpm2
 #endif
 
@@ -105,3 +108,15 @@ using alarmTimer = AlarmTimer<systemClock, UseEvents<false>>;
 using adc = AVR::Adc<0, AVR::Resolution<8>>;
 using adcController = typename std::conditional<useACS, AdcController<adc, 0, 1, 2, 3, 4, 5, 7, 8>, // 0, 1, 2, 3, 4, 5 : Lipo / 7: ACS-Strom / 8: int. Temperatur
                                                         AdcController<adc, 0, 1, 2, 3, 4, 5, 8>>::type;
+
+#ifdef USE_PPM_ON_OPTO2
+# ifdef USE_ICP1
+using ppmDecoder = PpmMultiChannelIcp<AVR::Timer16Bit<1>>; // timer 1
+# else
+using ppmInputPin = AVR::Pin<PortB, 0>; // note: Modifikation des Boards V.03 -> Opto2
+using ppmPinSet = AVR::PinSet<ppmInputPin>;
+using pinChangeHandlerPpm = AVR::PinChange<ppmPinSet>;
+//using ppmDecoder = SumO<pinChangeHandlerPpm, AVR::Timer16Bit<4>>; // timer 4
+using ppmDecoder = PpmMultiChannel<pinChangeHandlerPpm, AVR::Timer16Bit<4>>; // timer 4
+# endif
+#endif
