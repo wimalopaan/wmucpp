@@ -40,6 +40,7 @@
 #include "external/hott/hott.h"
 #include "external/i2cram.h"
 #include "external/vnh2sp30.h"
+#include "external/ssd1306.h"
 #include "hal/alarmtimer.h"
 #include "hal/adccontroller.h"
 
@@ -69,7 +70,7 @@ using rpmTimer1 = AVR::Timer16Bit<3>; // timer 3
 using rpm1 = RpmWithIcp<rpmTimer1, MinimumRpm, MaximumRpm>;
 
 using TwiMaster = TWI::Master<1>;
-using TwiMasterAsync = TWI::MasterAsync<TwiMaster>;
+using TwiMasterAsync = TWI::MasterAsync<TwiMaster, 64>;
 
 struct MCP23008Parameter {
     static constexpr EventType eventValueAvailable = EventType::I2CRamValueAvailable;
@@ -77,6 +78,9 @@ struct MCP23008Parameter {
 };
 constexpr TWI::Address mcp23008Address{std::byte{39}};
 using mcp23008 = I2CGeneric<TwiMasterAsync, mcp23008Address, MCP23008Parameter>;
+
+constexpr TWI::Address oledAddress{std::byte{60}};
+using oled = SSD1306<TwiMasterAsync, oledAddress>;
 
 using oneWirePin = AVR::Pin<PortD, 7>;
 using oneWireMaster = OneWire::Master<oneWirePin, OneWire::Normal>;

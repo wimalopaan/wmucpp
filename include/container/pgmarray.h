@@ -44,9 +44,12 @@ namespace Util {
     template<typename T, detail::maybe_cref<T>... Ts>
     class PgmArray final {
         PgmArray() = delete;
+    public:
         using U = std::remove_const_t<std::remove_reference_t<T>>;
+
+        typedef typename std::conditional<(sizeof...(Ts) < 256), uint8_t, uint16_t>::type size_type;
         
-        static U value(uint8_t index) {
+        inline static U value(size_type index) {
             if constexpr(std::is_same<uint8_t, T>::value || std::is_same<std::byte, T>::value || std::is_same<char, T>::value) {
                 return U{pgm_read_byte((uint8_t*)&data[index])};
             }
@@ -59,13 +62,13 @@ namespace Util {
             }
         }
         
-    public:
-        static constexpr uint8_t size = sizeof... (Ts);
+        inline static constexpr size_type size = sizeof... (Ts);
         typedef U type;
+        typedef U value_type;
         
         class Iterator {
         public:
-            constexpr Iterator(uint8_t index = 0) : mIndex(index) {}
+            constexpr Iterator(size_type index = 0) : mIndex(index) {}
             inline U operator*() {
                 return value(mIndex);
             }
@@ -76,7 +79,7 @@ namespace Util {
                 return mIndex != rhs.mIndex;
             }
         private:
-            uint8_t mIndex = 0;
+            size_type mIndex = 0;
         };
         constexpr Iterator begin() const {
             return Iterator();
@@ -84,11 +87,11 @@ namespace Util {
         constexpr Iterator end() const {
             return Iterator(size);
         }
-        U operator[](uint8_t index) const {
+        U operator[](size_type index) const {
             return value(index);
         }
     private:
-        inline static constexpr const U data[] PROGMEM = {Ts...}; 
+        inline static constexpr const U data[] PROGMEM = {U{Ts}...}; 
     };
  
     namespace Pgm {

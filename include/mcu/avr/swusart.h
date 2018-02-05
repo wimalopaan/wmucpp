@@ -32,6 +32,8 @@ template<uint8_t N, typename MCU = DefaultMcuType>
 struct SWUsartRxTx;
 
 // todo: den tx-Pin frei wählbar machen
+// todo: ohne Events
+// todo: mit Protokolladapter
 
 template<>
 struct SWUsartRxTx<0, AVR::ATMega1284P> {

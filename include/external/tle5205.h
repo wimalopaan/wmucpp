@@ -54,6 +54,8 @@ public:
         if (direction().isClockWise) {
             mcu_pwm::template pwm<typename mcu_pwm::A>(p);
             mcu_pwm::template pwm<typename mcu_pwm::B>(std::percent{0});
+//            mcu_pwm::template pwm<typename mcu_pwm::A>(p);
+//            mcu_pwm::template pwm<typename mcu_pwm::B>(std::percent{0});
         }
         else {
             mcu_pwm::template pwm<typename mcu_pwm::A>(p);

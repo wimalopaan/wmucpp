@@ -33,7 +33,7 @@ namespace I2C {
     enum class State { USI_SLAVE_CHECK_ADDRESS, USI_SLAVE_SEND_DATA, USI_SLAVE_REQUEST_REPLY_FROM_SEND_DATA,
                        USI_SLAVE_CHECK_REPLY_FROM_SEND_DATA, USI_SLAVE_REQUEST_DATA, USI_SLAVE_GET_DATA_AND_SEND_ACK};
     
-    template<typename USI, const TWI::Address& Address, uint8_t Size = 8, typename Client = void>
+    template<typename USI, const TWI::Address& Address, uint8_t Size = 8>
     class I2CSlave final {
         I2CSlave() = delete;
         
@@ -127,9 +127,10 @@ namespace I2C {
                         assert(mIndex);
                         mRegisters[*mIndex] = data; 				// Write data to buffer
                         ++mIndex; 							// Increment buffer address for next write access
-                        if constexpr(!std::is_same<Client, void>::value) {
-                            Client::notify();
-                        }
+                        mChanged = true;
+//                        if constexpr(!std::is_same<Client, void>::value) {
+//                            Client::notify();
+//                        }
                     }
                     mState = State::USI_SLAVE_REQUEST_DATA;	// Next USI_SLAVE_REQUEST_DATA
                     USI::setSendAck();
@@ -169,11 +170,18 @@ namespace I2C {
         static auto& registers() {
             return mRegisters;
         }
+        static bool hasChanged() {
+            Scoped<DisbaleInterrupt<>> di;
+            bool changed = mChanged;
+            mChanged = false;
+            return changed;
+        }
     private:
         inline static volatile std::array<std::byte, Size> mRegisters;
         inline static volatile uint_NaN<uint8_t> mIndex;
         // fixme: State in ein GPIOR abbilden
         inline static volatile State mState = State::USI_SLAVE_CHECK_ADDRESS;
+        inline static volatile bool mChanged = false;
     };
     
 }

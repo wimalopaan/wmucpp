@@ -40,8 +40,17 @@ struct I2CRpmParameter {
     static constexpr EventType eventError = EventType::I2CRpmError;
 };
 
-template<typename TWIMaster, const TWI::Address& Address, typename Parameter = I2CRamParameter>
-class I2CGeneric : public EventHandler<EventType::TWIRecvComplete> {
+
+namespace I2C {
+    namespace detail {
+        struct Base {
+            static constexpr EventType eventType = EventType::NoEvent;
+        };
+    }
+}
+
+template<typename TWIMaster, const TWI::Address& Address, typename Parameter = I2CRamParameter, ::Util::NamedFlag useEvents = UseEvents<true>>
+class I2CGeneric : public std::conditional<useEvents::value, EventHandler<EventType::TWIRecvComplete>, I2C::detail::Base>::type {
 public:
     template<const std::hertz& fSCL>
     static void init() {
@@ -71,7 +80,10 @@ public:
         return TWIMaster::template startWrite<Address>(data);        
     }
     
-    static bool process(std::byte b) {
+    template<bool Q = useEvents::value>
+    inline static 
+    typename std::enable_if<Q, bool>::type
+    process(std::byte b) {
         auto address = b;
         if (TWI::Address{address} == Address) {
             if (auto v = TWIMaster::get()) {

@@ -1,24 +1,20 @@
-template<typename Updater>
-class EdgeDetector {
-public:
-    EdgeDetector(Updater f) : mF{f}{}
-    template<typename A = void>
-    void update(const A& arg) {
-        mF(arg);
-    }
-    void update() {
-        mF();
-    }
-private:    
-    Updater mF;
-};
+#include <array>
+#include <vector>
+#include <iterator>
+#include <iostream>
 
+template<typename T>
+void printRange( const T& begin, const T& end) {
+    std::cout << __PRETTY_FUNCTION__ << '\n';
+}
 
 int main() {
-    auto s1 = EdgeDetector{[]{}};
-    s1.update();
+    std::array<int, 10> a1;
+    int a2[10];
+    std::vector<int> a3;
     
-    auto s2 = EdgeDetector{[](int){}};
-    s2.update(1);
+    printRange(std::begin(a1), std::end(a1));
+    printRange(std::begin(a2), std::end(a2));
+    printRange(std::begin(a3), std::end(a3));
     
 }

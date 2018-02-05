@@ -63,15 +63,15 @@ namespace std {
         constexpr volatile T* end() volatile {
             return &data[Size];
         }
-        inline constexpr T& operator[](uint8_t index) {
+        inline constexpr T& operator[](size_type index) {
             assert(index < Size);
             return data[index];
         }
-        inline constexpr volatile T& operator[](uint8_t index) volatile {
+        inline constexpr volatile T& operator[](size_type index) volatile {
             assert(index < Size);
             return data[index];
         }
-        inline constexpr const T& operator[](uint8_t index) const {
+        inline constexpr const T& operator[](size_type index) const {
             assert(index < Size);
             return data[index];
         }
@@ -82,14 +82,14 @@ namespace std {
     
     namespace detail {
         
-        template <class T, uint8_t N, size_t... I>
+        template <class T, auto N, size_t... I>
         constexpr std::array<std::remove_cv_t<T>, N>
         to_array_impl(T(&a)[N], std::index_sequence<I...>) {
             return { {a[I]...} };
         }
     }
     
-    template <class T, uint8_t N>
+    template <class T, auto N>
     constexpr std::array<std::remove_cv_t<T>, N> to_array(T (&a)[N]) {
         return detail::to_array_impl(a, std::make_index_sequence<N>{});
     }

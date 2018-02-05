@@ -209,6 +209,27 @@ Beschreibung:
 	- Aktivierung der Protokollhandler anders
 	- Ansicht im Text-Modus für alle Sensoren
 	- Aufspalten der periodischen Aktionen in eine Zustandsmachine
+
+* test19: 
+	- Interrupts für Uart
+	- ohne Events
+	- RCUart 115200 Baud: Ausgabe einzelner Werte
+	- Uart-Terminal 115200 Baud
+	- Sensor-Uart 19200 Baud
+	- ProtokollAdapter für SensorUart
+	- Menu
+	- EEProm
+	- SoftPpm mit Interrupt	
+	- Rpm mit ICP
+	- HardPwm
+	- FUSE für EEProm
+	- OneWire (mit FSM)
+	- ADC (mit FSM)
+	- I2C (MCP23008 mit MultiSwitch)
+	- Aktivierung der Protokollhandler anders
+	- Ansicht im Text-Modus für alle Sensoren
+	- Aufspalten der periodischen Aktionen in eine Zustandsmachine
+	* SSD1306
 	* eigenes Multikanal mit vor/rück-Schalter und ein/aus-Schalter mit Menu
 	* PPM-Input (nur bei GR-16 sinnvoll, da bei GR-12 SUMD/Mk funktioniert. Dann geht bei GR-16 aber auch kein SUMD mehr)
 		- SUMO bei Opto2 -> kein SUMD mehr
@@ -216,7 +237,7 @@ Beschreibung:
 	* Beleuchtungsprogramme
 	* Kommunikation mit I2CWS2812
 	* I2C Interrupt
-	
+
 * test50:
 	- wie test16
 	- constexpr Menu tuple, children/parent im typ

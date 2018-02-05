@@ -46,15 +46,18 @@ namespace TWI {
         typedef typename TWIMaster::twc twc;
         
         template<const std::hertz& fSCL>
-        static uint8_t init() {
+        inline static uint8_t init() {
             reset();
             return TWIMaster::template init<fSCL>();    
         }
-        static void reset() {
+        inline static void reset() {
             mSendQueue.clear();
             mState = State::Inactive;
         }        
-        static void rateProcess() {
+        inline static bool transferComplete() {
+            return (mBytesToRead == 0) && (mBytesToWrite == 0);
+        }
+        inline static void rateProcess() {
             static std::byte lastAddress{0};
             switch(mState) {
             case State::Inactive:
@@ -253,6 +256,9 @@ namespace TWI {
             auto ar = BusAddress<Read>(address);        
             ok &= mSendQueue.push_back(ar.value());
             ok &= mSendQueue.push_back(std::byte{range.number});
+            if (!ok) {
+                mSendQueue.clear();
+            }
             return ok;
         }
         template<const Address& address, uint8_t Pointer, uint8_t Number>
@@ -265,6 +271,9 @@ namespace TWI {
             auto ar = BusAddress<Read>(address);        
             ok &= mSendQueue.push_back(ar.value());
             ok &= mSendQueue.push_back(std::byte{Number});
+            if (!ok) {
+                mSendQueue.clear();
+            }
             return ok;
         }
         
@@ -276,6 +285,28 @@ namespace TWI {
             ok &= mSendQueue.push_back(std::byte{data.size});
             for(uint8_t i = 0; i < data.size; ++i) {
                 ok &= mSendQueue.push_back(data[i]);
+            }
+            if (!ok) {
+                mSendQueue.clear();
+            }
+            return ok;
+        }
+
+        template<const Address& address, Util::Array C, typename... PType>
+        static bool startWrite(const C& data, const PType&... prefixes) {
+            static_assert((std::is_same<typename C::value_type, PType>::value && ... && true));
+            bool ok = true;
+            auto a = BusAddress<Write>(address);
+            ok &= mSendQueue.push_back(a.value());
+            ok &= mSendQueue.push_back(std::byte{data.size + sizeof...(prefixes)});
+            if constexpr(sizeof...(prefixes) > 0) {
+                (mSendQueue.push_back(prefixes), ...);
+            }
+            for(uint8_t i = 0; i < data.size; ++i) {
+                ok &= mSendQueue.push_back(data[i]);
+            }
+            if (!ok) {
+                mSendQueue.clear();
             }
             return ok;
         }
@@ -507,6 +538,29 @@ namespace TWI {
             bool ok = start<Write>(address);
             for(uint8_t i = 0; i < data.size; ++i) {
                 ok &= write(data[i]);
+            }
+            stop();
+            return ok;
+        }
+        
+//        template<const Address& address, auto L, typename... PType>
+//        static bool write(const char (&data)[L], const PType&... prefixes) {
+//            bool ok = start<Write>(address);
+//            for(uint8_t i = 0; i < L; ++i) {
+//                ok &= write(std::byte{data[i]});
+//            }
+//            stop();
+//            return ok;
+//        }
+
+        template<const Address& address, Util::Array C, typename... PType>
+        static bool write(const C& data, const PType&... prefixes) {
+            bool ok = start<Write>(address);
+            if constexpr(sizeof...(prefixes) > 0) {
+                ((ok &= write(prefixes)), ...);
+            }
+            for(typename C::size_type i = 0; i < data.size; ++i) {
+                ok &= write(std::byte{data[i]});
             }
             stop();
             return ok;

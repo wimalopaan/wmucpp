@@ -65,7 +65,17 @@ namespace AVR {
             typedef uint8_t value_type;
             static constexpr const uint8_t count = 1;
             DataRegister<Timer8Bit, ReadWrite> ocrb;
-            volatile uint8_t gtccr;
+            enum class GT : uint8_t {
+                tsm = (1 << TSM),
+                pwmb = (1 << PWM1B),
+                comb1 = (1 << COM1B1),
+                comb0 = (1 << COM1B0),
+                foc1b = (1 << FOC1B),
+                foc1a = (1 << FOC1A),
+                psr1 = (1 << PSR1),
+                psr0 = (1 << PSR0)
+            };
+            ControlRegister<Timer8BitHighSpeed, GT> gtccr;
             DataRegister<Timer8Bit, ReadWrite> ocrc;
             DataRegister<Timer8Bit, ReadWrite> ocra;
             DataRegister<Timer8Bit, ReadWrite> tcnt;
@@ -203,6 +213,10 @@ namespace std {
     };
     template<>
     struct enable_bitmask_operators<AVR::ATTiny85::Timer8BitHighSpeed::TCCR> {
+        static constexpr bool enable = true;
+    };
+    template<>
+    struct enable_bitmask_operators<AVR::ATTiny85::Timer8BitHighSpeed::GT> {
         static constexpr bool enable = true;
     };
 }

@@ -146,7 +146,7 @@ int main() {
             });
             alarmTimer::periodic([](uint7_t timer) {
                 if (timer == *periodicTimer) {
-                    std::outl<terminal>("tick"_pgm);
+                    std::outl<terminal>("tick328"_pgm);
                     appData.expire();
                 }
             });

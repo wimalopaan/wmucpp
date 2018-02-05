@@ -75,3 +75,7 @@ host/old
 include/external/hott/old
 tools
 tools/sumd_analyzer
+include/external/gps
+3rdparty/tinygps++
+3rdparty/tinygps
+images

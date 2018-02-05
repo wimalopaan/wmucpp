@@ -28,7 +28,8 @@ F_OSC = 8000000
 
 subdirs = 
 
-targets +=  main.elf main.size
+#targets +=  main.elf # modifizierte HW
+targets +=  main_mod_2.elf
 
 -include ../../../Makefile.include
 

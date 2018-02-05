@@ -23,7 +23,7 @@
 #include "mcu/avr/delay.h"
 #include "util/bits.h"
 
-// todo: BitMode (fuer Constant / Variable-Rate)
+// todo: Single-Bit-Mode (mit periodic())
 
 template<typename DataPin, typename ClockPin, typename CSPin = void, bool useDelay = false, typename T = std::byte>
 class SoftSpiMaster final {
