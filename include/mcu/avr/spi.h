@@ -194,5 +194,4 @@ namespace AVR {
         }
     private:
     };
-    
 }

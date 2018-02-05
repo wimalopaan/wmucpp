@@ -239,9 +239,27 @@ namespace AVR {
         
         struct Spi {
             static constexpr const uint8_t count = 1;
-            volatile uint8_t spcr;
-            volatile uint8_t spsr;
-            volatile uint8_t spdr;
+            enum class CR {
+                spie = (1 << SPIE),
+                spe  = (1 << SPE),
+                dord = (1 << DORD),
+                mstr = (1 << MSTR),
+                cpol = (1 << CPOL),
+                cpha = (1 << CPHA),
+                spr1 = (1 << SPR1),
+                spr0 = (1 << SPR0)
+            };
+            ControlRegister<Spi, CR> spcr;
+            enum class SR {
+                spif = (1 << SPIF),
+                wcol = (1 << WCOL),
+                spi2x = (1 << SPI2X)
+            };
+            FlagRegister<Spi, SR, ReadOnly> spsr;
+            DataRegister<Spi, ReadWrite, std::byte> spdr;
+//            volatile uint8_t spcr;
+//            volatile uint8_t spsr;
+//            volatile uint8_t spdr;
             template<int N> struct Address;
         };
         
@@ -440,6 +458,14 @@ namespace std {
     };
     template<>
     struct enable_bitmask_operators<AVR::ATMega1284P::TimerInterrupts::Mask> {
+        static constexpr bool enable = true;
+    };
+    template<>
+    struct enable_bitmask_operators<AVR::ATMega1284P::Spi::CR> {
+        static constexpr bool enable = true;
+    };
+    template<>
+    struct enable_bitmask_operators<AVR::ATMega1284P::Spi::SR> {
         static constexpr bool enable = true;
     };
     template<>
