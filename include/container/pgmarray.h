@@ -97,7 +97,7 @@ namespace Util {
     namespace Pgm {
         template<typename Generator>
         class Converter {
-            inline static constexpr auto mData = Generator()();    
+            inline static constexpr auto mData = Generator{}();    
             typedef typename decltype(mData)::size_type size_type;
             typedef typename decltype(mData)::value_type value_type;
             using index_list = std::make_integer_sequence<size_type, mData.size>;

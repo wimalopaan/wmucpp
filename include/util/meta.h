@@ -21,6 +21,7 @@
 #include <cstddef>
 #include <utility>
 #include <type_traits>
+#include <limits>
 #include "util/type_traits.h"
 
 namespace Meta {
@@ -278,6 +279,9 @@ namespace Meta {
     template<concepts::List List>
     using size = typename detail::size_impl<List>::type;
     
+    template<concepts::List List>
+    using size_type = typename std::conditional<size<List>::value < 256, uint8_t, uint16_t>::type;    
+    
     template<template<typename...> typename F, concepts::List List>
     using apply = typename detail::apply_impl<F, List>::type;
     
@@ -392,17 +396,47 @@ namespace Meta {
                     visit<Meta::rest<List>>::at(index - 1, callable);
                 }
             }
+            template<auto... II, typename C>
+            inline static void all(std::index_sequence<II...>, const C& callable) {
+                (at(II, callable),...);
+            }
+
+            template<typename C>
+            inline static size_type<List> find(const C& callable, const size_type<List>& index) {
+//                return visit<Meta::rest<List>>::find(callable, index + 1);
+                if (callable(Wrapper<first>{})) {
+                    return index;
+                }
+                else {
+                    return visit<Meta::rest<List>>::find(callable, index + 1);
+                }
+            }
+            
         };
         template<> 
         struct visit<Meta::List<>> {
             template<typename I, typename C>
             inline static void at(I, const C&) {}
+            template<typename C, typename N>
+            inline static N find(const C&, N) {
+                return std::numeric_limits<N>::max();
+            }
         };
     }
     
     template<concepts::List List, typename I, typename C>
     inline void visitAt(I index, const C& callable) {
         detail::visit<List>::at(index, callable);
+    }
+
+    template<concepts::List List, typename C>
+    inline void visit(const C& callable) {
+        detail::visit<List>::all(std::make_index_sequence<size<List>::value>{}, callable);
+    }
+
+    template<concepts::List List, typename C>
+    inline size_type<List> find(const C& callable) {
+        return detail::visit<List>::find(callable, size_type<List>{0});
     }
     
     namespace tests {

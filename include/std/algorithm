@@ -83,9 +83,16 @@ namespace std {
     }
     
     template <typename C>
+    requires requires(C c) {c.size();}
     constexpr auto size(const C& c) -> decltype(c.size())
     {
         return c.size();
+    }
+    template <typename C>
+    requires requires(C c) {c.size;}
+    constexpr auto size(const C& c) -> decltype(c.size)
+    {
+        return c.size;
     }
     
     template <typename T, size_t N>

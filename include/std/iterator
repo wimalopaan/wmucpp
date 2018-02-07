@@ -21,8 +21,6 @@
 #ifndef __GLIBCXX__
 
 namespace std {
-
-
 }
 
 #endif

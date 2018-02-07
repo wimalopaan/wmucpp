@@ -48,7 +48,7 @@ subdirs =
 #targets += test17.s test17.elf test17.S
 #targets += test18.s test18.elf test18.S
 targets += test19.s test19.elf test19.S
-targets += oledtest.elf 
+#targets += oledtest.elf 
 #targets += test50.s test50.elf test50.S
 #targets += test51.s test51.elf test51.S
 

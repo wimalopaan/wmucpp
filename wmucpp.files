@@ -11,6 +11,14 @@ boards/rcsensorled03/test51.cc
 boards/unimaxi/atmega1284p/gpstest.cc
 boards/unimaxi/atmega1284p/spissd1306.cc
 boards/unimaxi/attiny85_1/main_mod_2.cc
+doc/bmcpp02/bm60a.cc
+doc/bmcpp02/bm61a.cc
+doc/bmcpp02/bm63a.cc
+doc/bmcpp02/bm64a.cc
+doc/bmcpp02/bm65a.cc
+doc/bmcpp02/bm66a.cc
+doc/bmcpp02/bm67a.cc
+doc/bmcpp02/bm68a.cc
 host/test25.cc
 host/test26.cc
 host/test40.cc

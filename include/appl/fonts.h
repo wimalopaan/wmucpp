@@ -160,10 +160,32 @@ public:
     class Char {
         friend class Font<6,8>;
     public:
-        inline static uint8_t size = Width;
+        inline static constexpr uint8_t size = Width;
         typedef std::byte value_type;
         std::byte operator[](uint8_t column) const {
             return std::byte{pgm_read_byte(&data[mOffset + column])};
+        }
+        class Iterator {
+        public:
+            constexpr Iterator(const Char& cc, uint8_t index = 0) : mChar(cc), mIndex(index) {}
+            inline std::byte operator*() {
+                return mChar[mIndex];
+            }
+            inline void operator++() {
+                ++mIndex;
+            }
+            inline bool operator!=(const Iterator& rhs) {
+                return mIndex != rhs.mIndex;
+            }
+        private:
+            const Char& mChar;
+            uint8_t mIndex = 0;
+        };
+        constexpr Iterator begin() const {
+            return Iterator(*this);
+        }
+        constexpr Iterator end() const {
+            return Iterator(*this, size);
         }
     private:
         Char(uint16_t offset) : mOffset(offset){}

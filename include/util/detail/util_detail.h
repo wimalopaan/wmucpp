@@ -91,7 +91,6 @@ namespace Util {
                     return data;
                 }  
             };
-            
             using t = typename ::Util::Pgm::Converter<Generator>::pgm_type;
             
 //            constexpr static inline auto lookupTable = Generator()();

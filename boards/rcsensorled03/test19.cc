@@ -793,21 +793,8 @@ int main() {
         if (!oled::init()) {
             std::outl<terminal>("oled error"_pgm);
         }
-        while(!TwiMasterAsync::transferComplete()) {
-            TwiMasterAsync::periodic();
-        }
         
-        oled::image();
-//        oled::image(Images::A1::_blank);
-        
-//        while(!TwiMasterAsync::transferComplete()) {
-//            TwiMasterAsync::periodic();
-//        }
-//        oled::home();
-//        while(!TwiMasterAsync::transferComplete()) {
-//            TwiMasterAsync::periodic();
-//        }
-//        oled::put("Test19"_pgm);
+        oled::clear();
         
         tempFSM::init();
         
@@ -832,7 +819,7 @@ int main() {
                 
                 alarmTimer::periodic([&](uint7_t timer){
                     if (timer == *periodicTimer) {
-//                        oled::put('*');
+                        oled::put('*');
                         if (Hott::SumDProtocollAdapter<0>::hasMultiChannel()) {
                             std::out<terminal>("Multi["_pgm, Hott::SumDProtocollAdapter<0>::mChannelForMultiChannel, "]: "_pgm);
                             for(uint8_t i = 0; i < Hott::MultiChannel::size; ++i) {

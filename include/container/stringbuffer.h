@@ -33,8 +33,8 @@ class StringBuffer final {
 public:
     typedef T type;
     typedef typename std::conditional<Length <= 255, uint8_t, uint16_t>::type size_type;
-    static constexpr const size_type size = Length;
-    static constexpr const size_type length = Length;
+    inline static constexpr const size_type size = Length;
+    inline static constexpr const size_type length = Length;
 
     StringBuffer() = default;
     StringBuffer(const StringBuffer&) = delete;

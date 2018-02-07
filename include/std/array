@@ -33,12 +33,12 @@ namespace std {
         typedef typename std::conditional<(Size < 128), int8_t, int16_t>::type signed_size_type;
         static_assert(Size <= std::numeric_limits<uint16_t>::max());
         
-        //    constexpr array() = default;
+//            constexpr array() = default;
         
         //    template<typename... TT>
         //    constexpr array(TT&&... pp) : data{(T)pp...}{
         //    }
-        
+
         constexpr const T* begin() const {
             return &data[0];
         }
@@ -71,11 +71,15 @@ namespace std {
             assert(index < Size);
             return data[index];
         }
+        inline constexpr const volatile T& operator[](size_type index) const volatile {
+            assert(index < Size);
+            return data[index];
+        }
         inline constexpr const T& operator[](size_type index) const {
             assert(index < Size);
             return data[index];
         }
-        static constexpr size_type size = Size;
+        inline static constexpr size_type size = Size;
         //private:
         T data[Size] = {}; // rely on aggregate initialization
     };

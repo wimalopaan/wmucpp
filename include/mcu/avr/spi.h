@@ -130,9 +130,9 @@ namespace AVR {
         typedef MCU mcu_type;
         typedef typename MCU::Spi::SR flags_type;
 
-        static constexpr const uint8_t number = N;
+        inline static constexpr const uint8_t number = N;
         
-        static void init() {
+        inline static void init() {
             spiPort::mosi::template dir<typename Mode::mosi_dir>();
             spiPort::miso::template dir<typename Mode::miso_dir>();
             spiPort::sck::template dir<typename Mode::sck_dir>();
@@ -140,26 +140,33 @@ namespace AVR {
             spiPort::ss::on();
             getBaseAddr<typename MCU::Spi, N>()->spcr.template set<Mode::spcr>();
         }
-        static bool isReady() {
+        inline static bool isReady() {
             return getBaseAddr<typename MCU::Spi, N>()->spsr.template isSet<MCU::Spi::SR::spif>();
         }
-        
+        inline static std::byte get() {
+            return *getBaseAddr<typename MCU::Spi, N>()->spdr;
+        }
         template<::Util::Callable<std::byte> Callable> 
-        static void whenReady(const Callable& f){
+        inline static void whenReady(const Callable& f){
             if (isReady()) {
                 f(*getBaseAddr<typename MCU::Spi, N>()->spdr);
             }
         }
-        
-        static bool put(std::byte c) {
-            if (getBaseAddr<typename MCU::Spi, N>()->spsr.template is_set<MCU::Spi::SR::spif>()) {
-                return false;
-            }
-            // todo: nach dem Transfer wieder auf high() ?
+        template<bool sync = true>
+        inline static bool put(std::byte c) {
+//            if (!getBaseAddr<typename MCU::Spi, N>()->spsr.template isSet<MCU::Spi::SR::spif>()) {
+//                return false;
+//            }
             spiPort::ss::off();
             *getBaseAddr<typename MCU::Spi, N>()->spdr = c;
+            if constexpr(sync) {
+                while(!isReady());
+            }
             return true;
         }
+        inline static void off() {
+            spiPort::ss::on();
+        } 
         
         template<bool Q = Mode::useInterrupts>
         static 

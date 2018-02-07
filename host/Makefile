@@ -20,7 +20,7 @@
 targets += test01 test02 test03 test04 # test05
 targets += test06
 targets += test07
-targets += test10
+#targets += test10
 targets += test11
 targets += test12
 targets += test13

@@ -20,10 +20,11 @@
 
 #include "mcu/avr8.h"
 #include "mcu/ports.h"
-#include "mcu/avr/usart.h"
+//#include "mcu/avr/usart.h"
 #include "mcu/avr/spi.h"
 #include "hal/alarmtimer.h"
 #include "hal/softspimaster.h"
+#include "external/ssd1306.h"
 #include "units/duration.h"
 #include "console.h"
 
@@ -46,20 +47,28 @@ using terminal = std::basic_ostream<terminalDevice>;
 
 // SPI for SSD1306
 using ssd1306 = AVR::Spi<0, AVR::SpiMaster<MCU::UseInterrupts<false>>>;
+using ssd1306ResetPin = AVR::Pin<PortA, 0>; // HW_SPI_SS2 (Jumper An0_JP)
+using ssd1306DCPin = AVR::Pin<PortA, 1>; // HW_SPI_SS3
+using ssd1306Endpoint = detail::SSD1306::SpiEndpoint<ssd1306, ssd1306DCPin, ssd1306ResetPin>;
+using oled = SSD1306<ssd1306Endpoint>;
+
 
 int main() {
     terminalDevice::init();
     alarmTimer::init(AVR::TimerMode::CTCNoInt); 
-    ssd1306::init();
+    oled::init();
     
     std::outl<terminal>("sd1306 test"_pgm);
+    
+    oled::image();
     
     const auto periodicTimer = alarmTimer::create(1000_ms, AlarmFlags::Periodic);
     while(true) {
         systemTimer::periodic<systemTimer::flags_type::ocfa>([&](){
             alarmTimer::periodic([&](uint7_t timer) {
                 if (timer == *periodicTimer) {
-                    std::outl<terminal>("tick"_pgm);
+//                    oled::put("tick "_pgm);
+                    std::outl<terminal>("tick ssd"_pgm);
                 }
             });
         });

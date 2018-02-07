@@ -129,4 +129,41 @@ namespace Util {
         return (crc == 0);
     }
     
+    template<auto... II, typename A, typename B>
+    inline static bool compareElements(const A& a, const B& b) {
+        static_assert(((II < std::size(a)) && ...));
+        static_assert(((II < std::size(b)) && ...));
+        return ((a[II] == b[II]) && ...);
+    }
+    
+    namespace detail {
+        template<typename A, typename B, auto... II>
+        inline static bool compareFirstN(const A& a, const B& b, std::index_sequence<II...>) {
+            return compareElements<II...>(a, b);
+        }
+    }
+    template<size_t N, typename A, typename B>
+    inline static bool compareFirstN(const A& a, const B& b) {
+        return detail::compareFirstN(a, b, std::make_index_sequence<N>{});
+    }
+    
+    template<auto... II, typename A, typename B>
+    inline static void copyElements(A& dest, const B& src) {
+        static_assert(((II < std::size(dest)) && ...));
+        static_assert(((II < std::size(src)) && ...));
+        ((dest[II] = typename A::type(src[II])),...);
+    }
+
+    namespace detail {
+        template<typename A, typename B, auto... II>
+        inline static void copyElements(A& a, const B& b, std::index_sequence<II...>) {
+            ::Util::copyElements<II...>(a, b);
+        }
+    }
+    template<typename A, typename B>
+    void copy(A& dest, const B& src) {
+        static_assert(std::size(dest) >= std::size(src));
+        detail::copyElements(dest, src, std::make_index_sequence<dest.size>{});
+    }
+    
 }

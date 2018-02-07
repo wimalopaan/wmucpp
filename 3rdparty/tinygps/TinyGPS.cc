@@ -128,7 +128,7 @@ int32_t TinyGPSPlus::parseDecimal(const char *term)
 }
 
 // static
-// Parse degrees in that funny NMEA format DDMM.MMMM
+// Parse degrees in that funny NMEA format DDDMM.MMMM
 void TinyGPSPlus::parseDegrees(const char *term, RawDegrees &deg)
 {
   uint32_t leftOfDecimal = (uint32_t)atol(term);

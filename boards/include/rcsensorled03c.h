@@ -80,7 +80,8 @@ constexpr TWI::Address mcp23008Address{std::byte{39}};
 using mcp23008 = I2CGeneric<TwiMasterAsync, mcp23008Address, MCP23008Parameter>;
 
 constexpr TWI::Address oledAddress{std::byte{60}};
-using oled = SSD1306<TwiMasterAsync, oledAddress>;
+using oledEndpoint = detail::SSD1306::TwiEndpoint<TwiMasterAsync, oledAddress>;
+using oled = SSD1306<oledEndpoint>;
 
 using oneWirePin = AVR::Pin<PortD, 7>;
 using oneWireMaster = OneWire::Master<oneWirePin, OneWire::Normal>;
