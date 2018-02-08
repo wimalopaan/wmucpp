@@ -32,7 +32,7 @@
 
 namespace TWI {
     
-    template<typename TWIMaster, uint8_t BSize = 16, bool UseSendEvent = false>
+    template<typename TWIMaster, uint8_t BSize = 16, bool UseSendEvent = false, uint8_t RSize = BSize>
     class MasterAsync final {
         enum class State : uint8_t {Inactive, StartWrite, StartWriteWait, WriteAddress, WriteAddressWait, Writing, 
                                     WritingWait, Stop, StopWait, ReadAddressWait, Reading, ReadLast, ReadingWait, Error};
@@ -79,7 +79,9 @@ namespace TWI {
                     if ( (twst != tws::twStart) && (twst != tws::twRepStart)) {
                         //                if ( (twst != TW_START) && (twst != TW_REP_START)) {
                         mState = State::Error;
-                        EventManager::enqueue({EventType::TWIError, std::byte{1}});
+                        if constexpr(UseSendEvent) {
+                            EventManager::enqueue({EventType::TWIError, std::byte{1}});
+                        }
                     }
                     else {
                         mState = State::WriteAddress;
@@ -102,7 +104,9 @@ namespace TWI {
                 }
                 else {
                     mState = State::Error;
-                    EventManager::enqueue({EventType::TWIError, std::byte{2}});
+                    if constexpr(UseSendEvent) {
+                        EventManager::enqueue({EventType::TWIError, std::byte{2}});
+                    }
                 }
                 break;
             case State::ReadAddressWait:
@@ -113,7 +117,9 @@ namespace TWI {
                     if ( (twst != tws::twMtSlaAck) && (twst != tws::twMrSlaAck) ) {
                         //                    if ( (twst != TW_MT_SLA_ACK) && (twst != TW_MR_SLA_ACK) ) {
                         mState = State::Error;
-                        EventManager::enqueue({EventType::TWIError, std::byte{3}});
+                        if constexpr(UseSendEvent) {
+                            EventManager::enqueue({EventType::TWIError, std::byte{3}});
+                        }
                     }
                     else {
                         if (auto data = mSendQueue.pop_front()) {
@@ -127,7 +133,9 @@ namespace TWI {
                         }
                         else {
                             mState = State::Error;
-                            EventManager::enqueue({EventType::TWIError, std::byte{4}});
+                            if constexpr(UseSendEvent) {
+                                EventManager::enqueue({EventType::TWIError, std::byte{4}});
+                            }
                         }
                     }
                 }
@@ -140,7 +148,9 @@ namespace TWI {
                     if ( (twst != tws::twMtSlaAck) && (twst != tws::twMrSlaAck) ) {
                         //                if ( (twst != TW_MT_SLA_ACK) && (twst != TW_MR_SLA_ACK) ) {
                         mState = State::Error;
-                        EventManager::enqueue({EventType::TWIError, std::byte{5}});
+                        if constexpr(UseSendEvent) {
+                            EventManager::enqueue({EventType::TWIError, std::byte{5}});
+                        }
                     }
                     else {
                         mState = State::Writing;
@@ -149,7 +159,9 @@ namespace TWI {
                         }
                         else {
                             mState = State::Error;
-                            EventManager::enqueue({EventType::TWIError, std::byte{6}});
+                            if constexpr(UseSendEvent) {
+                                EventManager::enqueue({EventType::TWIError, std::byte{6}});
+                            }
                         }
                     }
                 }
@@ -180,7 +192,9 @@ namespace TWI {
                     if (twst != tws::twMtDataAck) {
                         //                if (twst != TW_MT_DATA_ACK) {
                         mState = State::Error;
-                        EventManager::enqueue({EventType::TWIError, std::byte{7}});
+                        if constexpr(UseSendEvent) {
+                            EventManager::enqueue({EventType::TWIError, std::byte{7}});
+                        }
                     }
                     else {
                         --mBytesToWrite;
@@ -211,13 +225,17 @@ namespace TWI {
                         }
                         else {
                             mState = State::Stop;
-                            EventManager::enqueue({EventType::TWIRecvComplete, 
+                            if constexpr(UseSendEvent) {
+                                EventManager::enqueue({EventType::TWIRecvComplete, 
                                                    std::byte{BusAddress<Write>::deviceAddressValue(lastAddress)}});
+                            }
                         }
                     }   
                     else {
                         mState = State::Error;
-                        EventManager::enqueue({EventType::TWIError, std::byte{8}});
+                        if constexpr(UseSendEvent) {
+                            EventManager::enqueue({EventType::TWIError, std::byte{8}});
+                        }
                     }
                 } 
                 break;
@@ -319,7 +337,7 @@ namespace TWI {
         
         // todo: beide Queues zusammenlegen, weil entweder read oder write stattfindet.
         inline static std::FiFo<std::byte, BSize> mRecvQueue;
-        inline static std::FiFo<std::byte, BSize> mSendQueue;
+        inline static std::FiFo<std::byte, RSize> mSendQueue;
         inline static uint_bounded<uint8_t> mBytesToRead;
         inline static uint_bounded<uint8_t> mBytesToWrite;
     };

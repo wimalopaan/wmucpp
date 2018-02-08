@@ -6,7 +6,7 @@ Korrekturen auf dem Boad:
 
 Beschreibung:
 
-* test01: (wie test17 von rcsensorled)
+* test01: (wie test17 von rcsensorled) (events??? eventQueueLength in local.h?)
 	- System-Timer ohne Interrupt
 	- Uart-Terminal 115200
 	- Temperatur extern DS18B20 (N Sensoren) 
@@ -190,7 +190,7 @@ Beschreibung:
 	- Ansicht im Text-Modus für alle Sensoren
 	- Umbau der Menu-Klassen ****: bringt nichts
 
-* test18: 
+* test18: (OK)
 	- Interrupts für Uart
 	- ohne Events
 	- RCUart 115200 Baud: Ausgabe einzelner Werte
@@ -210,7 +210,7 @@ Beschreibung:
 	- Ansicht im Text-Modus für alle Sensoren
 	- Aufspalten der periodischen Aktionen in eine Zustandsmachine
 
-* test19: 
+* test19: OK
 	- Interrupts für Uart
 	- ohne Events
 	- RCUart 115200 Baud: Ausgabe einzelner Werte
@@ -229,7 +229,36 @@ Beschreibung:
 	- Aktivierung der Protokollhandler anders
 	- Ansicht im Text-Modus für alle Sensoren
 	- Aufspalten der periodischen Aktionen in eine Zustandsmachine
-	* SSD1306
+	- SSD1306 (I2C, Nur Text)
+	* eigenes Multikanal mit vor/rück-Schalter und ein/aus-Schalter mit Menu
+	* PPM-Input (nur bei GR-16 sinnvoll, da bei GR-12 SUMD/Mk funktioniert. Dann geht bei GR-16 aber auch kein SUMD mehr)
+		- SUMO bei Opto2 -> kein SUMD mehr
+		- SAME / Multikanal -> kein SUMD mehr
+	* Beleuchtungsprogramme
+	* Kommunikation mit I2CWS2812
+	* I2C Interrupt
+
+* test20: OK
+	- Interrupts für Uart
+	- ohne Events
+	- RCUart 115200 Baud: Ausgabe einzelner Werte
+	- Uart-Terminal 115200 Baud
+	- Sensor-Uart 19200 Baud
+	- ProtokollAdapter für SensorUart
+	- Menu
+	- EEProm
+	- SoftPpm mit Interrupt	
+	- Rpm mit ICP
+	- HardPwm
+	- FUSE für EEProm
+	- OneWire (mit FSM)
+	- ADC (mit FSM)
+	- I2C (MCP23008 mit MultiSwitch)
+	- Aktivierung der Protokollhandler anders
+	- Ansicht im Text-Modus für alle Sensoren
+	- Aufspalten der periodischen Aktionen in eine Zustandsmachine
+	- SSD1306 (I2C, Nur Text)
+	- SW-Usart für GPS-Sensor (an Dir1)
 	* eigenes Multikanal mit vor/rück-Schalter und ein/aus-Schalter mit Menu
 	* PPM-Input (nur bei GR-16 sinnvoll, da bei GR-12 SUMD/Mk funktioniert. Dann geht bei GR-16 aber auch kein SUMD mehr)
 		- SUMO bei Opto2 -> kein SUMD mehr

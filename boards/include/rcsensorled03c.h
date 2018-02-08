@@ -28,6 +28,7 @@
 #include "mcu/avr/mcupwm.h"
 #include "mcu/avr/adc.h"
 #include "mcu/avr/ppm.h"
+#include "mcu/avr/swusart2.h"
 #include "hal/constantrate.h"
 #include "hal/softspimaster.h"
 #include "hal/softppm.h"
@@ -41,9 +42,9 @@
 #include "external/i2cram.h"
 #include "external/vnh2sp30.h"
 #include "external/ssd1306.h"
+#include "external/gps/gps.h"
 #include "hal/alarmtimer.h"
 #include "hal/adccontroller.h"
-
 #ifdef MEM
 # include "util/memory.h"
 #endif
@@ -70,7 +71,7 @@ using rpmTimer1 = AVR::Timer16Bit<3>; // timer 3
 using rpm1 = RpmWithIcp<rpmTimer1, MinimumRpm, MaximumRpm>;
 
 using TwiMaster = TWI::Master<1>;
-using TwiMasterAsync = TWI::MasterAsync<TwiMaster, 64>;
+using TwiMasterAsync = TWI::MasterAsync<TwiMaster, 64, false>;
 
 struct MCP23008Parameter {
     static constexpr EventType eventValueAvailable = EventType::I2CRamValueAvailable;
@@ -97,6 +98,7 @@ using softPpm = SoftPPM<AVR::Timer16Bit<4>, AVR::Pin<PortB, 1>, AVR::Pin<PortB, 
 using hardPpm = AVR::PPM<1>; // timer1 <-> exclusiv zu rpm2
 #endif
 
+#ifndef USE_TC0_AS_SWUSART
 using hardPwm = AVR::PWM<0>; // timer 0
 using dir1 = AVR::Pin<PortD, 2>;
 using dir2 = AVR::Pin<PortB, 7>;
@@ -106,6 +108,15 @@ using hardPwm2 = PwmAdapter<hardPwm, hardPwm::B>;
 
 using hbridge1 = VNH<hardPwm1, dir1>;
 using hbridge2 = VNH<hardPwm2, dir2>;
+#else
+using gpsPA = GPS::GpsProtocollAdapter<0, GPS::VTG, GPS::RMC>;
+//using gpsUart = AVR::Usart<0, gpsPA, MCU::UseInterrupts<true>, UseEvents<false>, AVR::ReceiveQueueLength<0>>;
+
+using gpsTx = AVR::Pin<PortD, 5>; // PWM1
+using gpsUartTimer = AVR::Timer8Bit<0>;
+using gpsUart = SwUsart::UsartInt<0, gpsTx, gpsPA, gpsUartTimer, 9600>; // Int0 -> PD2 -> Dir1
+#endif
+
 
 using systemClock = AVR::Timer8Bit<2>; // timer 2
 using alarmTimer = AlarmTimer<systemClock, UseEvents<false>>;

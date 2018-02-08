@@ -284,8 +284,16 @@ namespace AVR {
                 if0 = (1 << PCIF0)
             };
             FlagRegister<Interrupt, PCFlags> pcifr;
-            volatile uint8_t eifr;
-            volatile uint8_t eimsk;
+            enum class EIFlags : uint8_t {
+                int1 = (1 << INTF1),
+                int0 = (1 << INTF0)
+            };
+            FlagRegister<Interrupt, EIFlags> eifr;
+            enum class EIMask : uint8_t {
+                int1 = (1 << INT1),
+                int0 = (1 << INT0)
+            };
+            ControlRegister<Interrupt, EIMask> eimsk;
             volatile uint8_t padding[0x68 - 0x3b - 1 - 2];
             enum class PCMask : uint8_t {
                 ie2 = (1 << PCIE2),
@@ -293,7 +301,13 @@ namespace AVR {
                 ie0 = (1 << PCIE0)
             };
             ControlRegister<Interrupt, PCMask> pcicr;
-            volatile uint8_t eicra;
+            enum class EIControl : uint8_t {
+                isc11 = (1 << ISC11),
+                isc10 = (1 << ISC10),
+                isc01 = (1 << ISC01),
+                isc00 = (1 << ISC00)
+            };
+            ControlRegister<Interrupt, EIControl> eicra;
             static constexpr uint8_t address = 0x3b;
         };
         struct Status final {

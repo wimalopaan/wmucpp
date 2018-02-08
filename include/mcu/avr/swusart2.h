@@ -33,43 +33,43 @@ namespace SwUsart {
     template<uint8_t N, typename MCU = DefaultMcuType>
     struct IntParam;
     
-    template<>
-    struct IntParam<0, AVR::ATMega1284P> {
+    template<typename MCU>
+    struct IntParam<0, MCU> {
         IntParam() = delete;
-        using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
+        using PortD = AVR::Port<typename MCU::PortRegister, AVR::D>;
         using rx = AVR::Pin<PortD, 2>; // Int0
         typedef AVR::ISR::Int<0> int_type;
-        inline static constexpr auto edge = AVR::ATMega1284P::Interrupt::EIControl::isc01;
-        inline static constexpr auto mask = AVR::ATMega1284P::Interrupt::EIMask::int0;
-        inline static constexpr auto flag = AVR::ATMega1284P::Interrupt::EIFlags::int0;
+        inline static constexpr auto edge = MCU::Interrupt::EIControl::isc01;
+        inline static constexpr auto mask = MCU::Interrupt::EIMask::int0;
+        inline static constexpr auto flag = MCU::Interrupt::EIFlags::int0;
     };
-    template<>
-    struct IntParam<1, AVR::ATMega1284P> {
+    template<typename MCU>
+    struct IntParam<1, MCU> {
         IntParam() = delete;
-        using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
+        using PortD = AVR::Port<typename MCU::PortRegister, AVR::D>;
         using rx = AVR::Pin<PortD, 3>; // Int1      
         typedef AVR::ISR::Int<1> int_type;
-        inline static constexpr auto edge = AVR::ATMega1284P::Interrupt::EIControl::isc11;
-        inline static constexpr auto mask = AVR::ATMega1284P::Interrupt::EIMask::int1;
-        inline static constexpr auto flag = AVR::ATMega1284P::Interrupt::EIFlags::int1;
+        inline static constexpr auto edge = MCU::Interrupt::EIControl::isc11;
+        inline static constexpr auto mask = MCU::Interrupt::EIMask::int1;
+        inline static constexpr auto flag = MCU::Interrupt::EIFlags::int1;
     };
-    template<>
-    struct IntParam<2, AVR::ATMega1284P> {
+    template<typename MCU>
+    struct IntParam<2, MCU> {
         IntParam() = delete;
-        using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
+        using PortB = AVR::Port<typename MCU::PortRegister, AVR::B>;
         using rx = AVR::Pin<PortB, 2>; // Int2
         typedef AVR::ISR::Int<2> int_type;
-        inline static constexpr auto edge = AVR::ATMega1284P::Interrupt::EIControl::isc21;
-        inline static constexpr auto mask = AVR::ATMega1284P::Interrupt::EIMask::int2;
-        inline static constexpr auto flag = AVR::ATMega1284P::Interrupt::EIFlags::int2;
+        inline static constexpr auto edge = MCU::Interrupt::EIControl::isc21;
+        inline static constexpr auto mask = MCU::Interrupt::EIMask::int2;
+        inline static constexpr auto flag = MCU::Interrupt::EIFlags::int2;
     };
     
-    template<uint8_t N, typename TX, typename PA, typename Timer, uint16_t Baud, typename MCU = DefaultMcuType>
+    template<uint8_t N, typename TX, typename PA, typename Timer, uint16_t Baud, ::Util::NamedConstant SendQLength = NamedConstant<0>, typename MCU = DefaultMcuType>
     class UsartInt;
     
-    template<uint8_t N, typename TX, typename PA, typename Timer, uint16_t Baud, typename MCU>
+    template<uint8_t N, typename TX, typename PA, typename Timer, uint16_t Baud, ::Util::NamedConstant SendQLength, typename MCU>
     requires AVR::ATMega_X8<MCU>() || AVR::ATMega_X4<MCU>()
-    class UsartInt<N, TX, PA, Timer, Baud, MCU> final {
+    class UsartInt<N, TX, PA, Timer, Baud, SendQLength, MCU> final {
         static_assert(N <=2, "wrong swusart number");
         
         static constexpr auto timer = Timer::mcuTimer;
@@ -171,6 +171,7 @@ namespace SwUsart {
             param_type::rx::pullup();
         }
         static bool put(std::byte item) {
+            static_assert(SendQLength::value > 0);
             if (sendQueue.push_back(item)) {
                 mcuInterrupts()->timsk.template add<int_type::Mask::ociea>();
                 return true;
@@ -191,7 +192,7 @@ namespace SwUsart {
         }
         private:
         inline static constexpr auto tsd = AVR::Util::calculate<Timer>(std::hertz{Baud});
-        inline static std::FiFo<std::byte, Config::Usart::SendQueueLength> sendQueue;
+        inline static std::FiFo<std::byte, SendQLength::value> sendQueue;
         inline static volatile uint16_t outframe = 0x0001;
         inline static volatile uint16_t inframe = 0;
         inline static volatile uint8_t inbits = 0;

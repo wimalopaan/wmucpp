@@ -119,7 +119,9 @@ namespace Hott {
         inline static void mainVoltageRaw(uint16_t v) {
             hottBinaryResponse.main_voltage = v;
         }
-
+        inline static void speedRaw(uint16_t v) {
+            hottBinaryResponse.speed = v;
+        }
     private:
         inline static std::byte getByte(uint8_t index) {
             assert(index < sizeof(hottBinaryResponse));

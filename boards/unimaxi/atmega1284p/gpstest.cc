@@ -61,10 +61,10 @@ using isrRegistrar = IsrRegistrar<gpsUart::RxHandler, gpsUart::TxHandler, gpsUar
 
 int main() {
     testPin1::dir<AVR::Output>();
-    testPin1::off();
+    testPin1::on();
 
     testPin2::dir<AVR::Output>();
-    testPin2::off();
+    testPin2::on();
     
     testPin3::dir<AVR::Output>();
     testPin3::on();
