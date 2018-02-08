@@ -52,6 +52,7 @@ namespace AVR {
     typedef typename MCU::Timer8Bit::TCCRB tccrb_type;
     typedef typename MCU::Timer8Interrupts::Flags flags_type;
     typedef typename MCU::Timer8Interrupts::Mask mask_type;
+    typedef typename MCU::Timer8Interrupts int_type;
     static constexpr auto csBitMask = AVR::csMask10Bit<tccrb_type>;
     typedef uint8_t value_type;
     

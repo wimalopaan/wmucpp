@@ -28,6 +28,7 @@ include/external/gps/gps.h
 include/external/ssd1306.h
 include/hal/multichannelppm.h
 include/hal/sumo.h
+include/mcu/avr/swusart2.h
 tools/sumd_analyzer/sumdan.cc
 tools/sumd_analyzer/Makefile
 tools/Makefile

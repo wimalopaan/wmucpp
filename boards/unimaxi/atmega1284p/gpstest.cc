@@ -21,6 +21,7 @@
 #include "mcu/avr8.h"
 #include "mcu/ports.h"
 #include "mcu/avr/usart.h"
+#include "mcu/avr/swusart2.h"
 #include "hal/alarmtimer.h"
 #include "hal/softspimaster.h"
 #include "hal/bufferedstream.h"
@@ -33,7 +34,9 @@ using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
 using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
 
-using testPin = AVR::Pin<PortA, 7>;
+using testPin1 = AVR::Pin<PortA, 3>;
+using testPin2 = AVR::Pin<PortA, 2>;
+using testPin3 = AVR::Pin<PortA, 1>;
 
 // Timer0
 using systemTimer = AVR::Timer8Bit<0>;
@@ -47,22 +50,34 @@ using terminalDevice = SSpi0;
 using terminal = std::basic_ostream<terminalDevice>;
 
 using gpsPA = GPS::GpsProtocollAdapter<0, GPS::VTG, GPS::RMC>;
-//using gpsPA = GPS::GpsProtocollAdapter<0>;
-using gpsUart = AVR::Usart<0, gpsPA, MCU::UseInterrupts<true>, UseEvents<false>, AVR::ReceiveQueueLength<0>>;
+//using gpsUart = AVR::Usart<0, gpsPA, MCU::UseInterrupts<true>, UseEvents<false>, AVR::ReceiveQueueLength<0>>;
 
-using isrRegistrar = IsrRegistrar<gpsUart::RxHandler, gpsUart::TxHandler>;
+using gpsTx = AVR::Pin<PortA, 4>;
+using gpsUartTimer = AVR::Timer8Bit<2>;
+//using gpsUart = SwUsart::UsartInt<2, gpsTx, gpsPA, gpsUartTimer, 9600>; // Int2 -> PB2 -> I2CInt
+using gpsUart = SwUsart::UsartInt<0, gpsTx, gpsPA, gpsUartTimer, 9600>; // Int0 -> PD2 -> RX2
+
+using isrRegistrar = IsrRegistrar<gpsUart::RxHandler, gpsUart::TxHandler, gpsUart::StartBitHandler>;
 
 int main() {
-    testPin::dir<AVR::Output>();
-    testPin::off();
+    testPin1::dir<AVR::Output>();
+    testPin1::off();
+
+    testPin2::dir<AVR::Output>();
+    testPin2::off();
     
+    testPin3::dir<AVR::Output>();
+    testPin3::on();
+
     isrRegistrar::init();
     
-    gpsUart::init<9600>();
+    gpsUart::init();
+    
     terminalDevice::init();
     alarmTimer::init(AVR::TimerMode::CTCNoInt); 
     
     std::outl<terminal>("gpstest 01"_pgm);
+    std::outl<terminal>(gpsUart::tsd.ocr);
     
     const auto periodicTimer = alarmTimer::create(1000_ms, AlarmFlags::Periodic);
     
@@ -73,7 +88,6 @@ int main() {
     {
         Scoped<EnableInterrupt<>> ei;
         while(true) {
-    //        gpsUart::periodic();
             systemTimer::periodic<systemTimer::flags_type::ocfa>([&](){
                 alarmTimer::periodic([&](uint7_t timer) {
                     if (timer == *periodicTimer) {
@@ -90,14 +104,31 @@ int main() {
     }
 }
 
-ISR(USART0_RX_vect) {
-    testPin::on();
-    isrRegistrar::isr<AVR::ISR::Usart<0>::RX>();
-    testPin::off();
+ISR(TIMER2_COMPA_vect) {
+    testPin3::on();
+    isrRegistrar::isr<AVR::ISR::Timer<2>::CompareA>();
+    testPin3::off();
 }
-ISR(USART0_UDRE_vect){
-    isrRegistrar::isr<AVR::ISR::Usart<0>::UDREmpty>();
+ISR(TIMER2_COMPB_vect) {
+    testPin2::on();
+    isrRegistrar::isr<AVR::ISR::Timer<2>::CompareB>();
+    testPin2::off();
 }
+ISR(INT0_vect) {
+    testPin1::on();
+    isrRegistrar::isr<AVR::ISR::Int<0>>();
+    testPin1::off();
+}
+//ISR(INT2_vect) {
+//    isrRegistrar::isr<AVR::ISR::Int<2>>();
+//}
+
+//ISR(USART0_RX_vect) {
+//    isrRegistrar::isr<AVR::ISR::Usart<0>::RX>();
+//}
+//ISR(USART0_UDRE_vect){
+//    isrRegistrar::isr<AVR::ISR::Usart<0>::UDREmpty>();
+//}
 
 #ifndef NDEBUG
 void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {

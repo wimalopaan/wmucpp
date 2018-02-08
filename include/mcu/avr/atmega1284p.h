@@ -326,7 +326,7 @@ namespace AVR {
                 int1 = (1 << INTF1),
                 int0 = (1 << INTF0)
             };
-            ControlRegister<Interrupt, EIFlags> eifr;
+            FlagRegister<Interrupt, EIFlags> eifr;
             enum class EIMask : uint8_t {
                 int2 = (1 << INT2),
                 int1 = (1 << INT1),
