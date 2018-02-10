@@ -18,6 +18,12 @@
 
 //#define USE_RPM2
 
+#define USE_TC1_AS_HARDPPM
+
+#ifndef USE_TC1_AS_HARDPPM
+# define USE_RPM2_ON_OPTO2
+#endif
+
 //#define MEM
 #define NDEBUG
 
@@ -90,8 +96,6 @@ using terminalDevice = std::conditional<useTerminal, rcUsart, void>::type;
 using terminal = std::basic_ostream<terminalDevice>;
 
 using namespace std::literals::quantity;
-
-// fixme: Int1???
 
 struct I2CInterrupt : public IsrBaseHandler<AVR::ISR::Int<1>> {
     static void isr() {
@@ -260,7 +264,7 @@ public:
     }
 private:
     PgmStringView mTitle;
-    uint_ranged_NaN<uint8_t, 0, 7> mSelectedItem;
+    uint_ranged_NaN<uint8_t, 0, base::csize> mSelectedItem;
     bool mSelected{false};
 };
 
@@ -271,6 +275,26 @@ public:
 //    constexpr MenuItem() {}
     inline constexpr MenuItem(const PgmStringView& title) : mTitle{title} {}
     constexpr MenuItem(const MenuItem<void, void, void>& other) : mTitle{other.mTitle} {}
+    bool isSelected() const {return false;}
+
+    inline uint_NaN<uint8_t> processKey(Hott::key_t) {
+        return uint_NaN<uint8_t>{base::own_index};
+    }
+    inline void textTo(Hott::Display& ) const {}
+    inline void putTextInto(Hott::BufferString& buffer) const {
+        buffer[0] = ' ';
+        buffer.insertAtFill(1, "abc"_pgm);
+    }
+private:
+    PgmStringView mTitle;
+};
+template<typename OI = void, typename PI = void, typename CC = void>
+class MenuItemX : public StaticMenuNodeBase<OI, PI, CC> {
+    using base = StaticMenuNodeBase<OI, PI, CC>;
+public:
+//    constexpr MenuItem() {}
+    inline constexpr MenuItemX(const PgmStringView& title) : mTitle{title} {}
+    constexpr MenuItemX(const MenuItemX<void, void, void>& other) : mTitle{other.mTitle} {}
     bool isSelected() const {return false;}
 
     inline uint_NaN<uint8_t> processKey(Hott::key_t) {
@@ -324,7 +348,7 @@ auto flat_tree = [&]{
                                Node(Menu{"Uebersicht"_pgm}, 
                                     DualValue<FixedPoint<int, 4>, 5, 8>{"T1/2"_pgm, Storage::temps[0], Storage::temps[1]},
                                     MenuItem{"A1"_pgm},
-                                    MenuItem{"A2"_pgm},
+                                    MenuItemX{"A2"_pgm},
                                     MenuItem{"A3"_pgm},
                                     MenuItem{"A4"_pgm}
                                     ),
@@ -332,7 +356,7 @@ auto flat_tree = [&]{
                                     MenuItem{"A1"_pgm}
                                     ),
                                Node(Menu{"Spannung"_pgm}, 
-                                    MenuItem{"A1"_pgm}
+                                    MenuItemX{"A1"_pgm}
                                     ),
                                Node(Menu{"Drehzahl"_pgm}, 
                                     MenuItem{"A1"_pgm}
@@ -376,7 +400,7 @@ constexpr auto transform(const L& callable) {
     }
     else {
         constexpr auto first = std::get<0>(tuple);    
-        constexpr auto rest = [&]{return Util::tuple_rest(tuple);};
+        constexpr auto rest = [&]{return Util::tuple_tail(tuple);};
         
         constexpr auto indexnode = inode_to_indexnode(std::make_index_sequence<first.mChildren.size>{}, [&]{return first;});
         return std::tuple_cat(std::tuple(indexnode), transform(rest));        

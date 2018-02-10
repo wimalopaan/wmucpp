@@ -18,6 +18,12 @@
 
 //#define USE_RPM2
 
+#define USE_TC1_AS_HARDPPM
+
+#ifndef USE_TC1_AS_HARDPPM
+# define USE_RPM2_ON_OPTO2
+#endif
+
 //#define MEM
 #define NDEBUG
 
@@ -89,8 +95,6 @@ using terminal = std::basic_ostream<terminalDevice>;
 
 using namespace std::literals::quantity;
 
-// fixme: Int1???
-
 struct I2CInterrupt : public IsrBaseHandler<AVR::ISR::Int<1>> {
     static void isr() {
     }
@@ -113,7 +117,7 @@ using crWriterSensorText = ConstanteRateWriter<menuData, sensorUsart>;
 class TSensorId final : public UI::MenuItem<Hott::BufferString, Hott::key_t> {
 public:
     TSensorId(uint8_t number) : mNumber{number} {
-        assert(number < Storage::dsIds.capacity);
+        assert(number < Storage::dsIds.cmapacity);
     }
     virtual void putTextInto(Hott::BufferString& buffer) const override {
         if (Storage::dsIds[mNumber]) {
@@ -261,7 +265,7 @@ Hott::Menu2 mDrehzahl{"Drehzahl"_pgm, {&mRpmSensor1, &mRpmSensor2}};
 Hott::Menu2 mStrom{"Strom"_pgm, {&mStromOffset}};                        
 Hott::Menu2 mActors{"Aktoren"_pgm, {&mPWM, &mLeds, &mDevs}};
 
-Hott::Menu2 topMenu{"WM SensMod HW 3 SW 16"_pgm, {&mInfo, &mTemperatur, &mSpannung, &mDrehzahl, &mStrom, &mActors}}; 
+Hott::Menu2 topMenu{"WM SensMod HW 3 SW 17"_pgm, {&mInfo, &mTemperatur, &mSpannung, &mDrehzahl, &mStrom, &mActors}}; 
 
 template<typename PA>
 class HottMenu final {

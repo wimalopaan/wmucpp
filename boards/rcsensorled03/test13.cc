@@ -18,6 +18,12 @@
 
 //#define USE_RPM2
 
+#define USE_TC1_AS_HARDPPM
+
+#ifndef USE_TC1_AS_HARDPPM
+# define USE_RPM2_ON_OPTO2
+#endif
+
 //#define MEM
 #define NDEBUG
 

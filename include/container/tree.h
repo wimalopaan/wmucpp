@@ -40,18 +40,18 @@ constexpr F first(const std::tuple<F, T...>& t) {
 }
 namespace detail {
     template<typename F, typename... T, size_t... II>
-    constexpr std::tuple<T...> rest(const std::tuple<F, T...>& t, std::index_sequence<II...>) {
+    constexpr std::tuple<T...> tail(const std::tuple<F, T...>& t, std::index_sequence<II...>) {
         return std::tuple<T...>{std::get<II + 1>(t)...};
     }
 }
 template<typename T>
-constexpr const T& rest(const T& v) {
+constexpr const T& tail(const T& v) {
     return v;
 }
 template<typename F, typename... T>
-constexpr std::tuple<T...> rest(const std::tuple<F, T...>& t) {
+constexpr std::tuple<T...> tail(const std::tuple<F, T...>& t) {
     auto Indexes = std::make_index_sequence<sizeof...(T)>{};
-    return detail::rest(t, Indexes);
+    return detail::tail(t, Indexes);
 }
 template<typename SizeType, typename Type>
 struct INode {
@@ -89,7 +89,7 @@ constexpr auto flat(const std::tuple<T...>& t, uint8_t* c, uint8_t& p) {
     else {
         auto f = flat(first(t), p);
         *c = p++;
-        auto r = flat(rest(t), (c + 1), p);
+        auto r = flat(tail(t), (c + 1), p);
         return std::tuple_cat(f, r);
     }
 }

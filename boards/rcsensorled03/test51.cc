@@ -18,6 +18,13 @@
 
 //#define USE_RPM2
 
+
+#define USE_TC1_AS_HARDPPM
+
+#ifndef USE_TC1_AS_HARDPPM
+# define USE_RPM2_ON_OPTO2
+#endif
+
 //#define MEM
 #define NDEBUG
 
@@ -91,8 +98,6 @@ using terminal = std::basic_ostream<terminalDevice>;
 
 using namespace std::literals::quantity;
 
-// fixme: Int1???
-
 struct I2CInterrupt : public IsrBaseHandler<AVR::ISR::Int<1>> {
     static void isr() {
     }
@@ -136,6 +141,24 @@ public:
 private:
     PgmStringView mTitle;
 };
+template<typename IndexType = uint8_t>
+class MenuItemX {
+public:
+    inline constexpr bool hasChildren() const {return false;}
+    typedef IndexType index_type;
+    inline constexpr MenuItemX(const PgmStringView& title) : mTitle{title} {}
+    inline constexpr bool isSelected() const {return false;}
+    constexpr inline uint_NaN<index_type> processKey(Hott::key_t) {
+        return {};
+    }
+    constexpr inline void textTo(Hott::Display& ) const {}
+    constexpr inline void putTextInto(Hott::BufferString& buffer) const {
+        buffer[0] = ' ';
+        buffer.insertAtFill(1, "def"_pgm);
+    }
+private:
+    PgmStringView mTitle;
+};
 
 template<uint8_t Size = 7, typename IndexType = uint8_t>
 class Menu {
@@ -144,6 +167,10 @@ public:
     constexpr Menu(const PgmStringView& title, uint_NaN<IndexType> parent = uint_NaN<IndexType>{}, 
                    const std::array<uint_NaN<IndexType>, Size>& children = std::array<uint_NaN<IndexType>, 7>{}) : 
         mTitle{title}, mParent{parent}, mChildren{children} {}
+    
+//    template<uint8_t SS, typename ST>
+//    constexpr Menu(const Menu<SS, ST>& o) : mTitle{o.mTitle}, mParent{o.mParent} {
+//    }
     
     inline constexpr bool hasChildren() const {return true;}
     inline constexpr bool isSelected() const {return mSelected;}
@@ -245,49 +272,87 @@ public:
         return{};
     }
 private:
-    uint_ranged_NaN<uint8_t, 0, 7> mSelectedItem;
+    uint_ranged_NaN<uint8_t, 0, Size - 1> mSelectedItem;
     bool mSelected{false};
     const PgmStringView mTitle;
     const uint_NaN<index_type> mParent;
     const std::array<uint_NaN<index_type>, Size> mChildren;
 };
 
+template<typename T, uint8_t L1, uint8_t LField>
+class DualValue {
+public:
+    inline static constexpr uint8_t csize = 0;
+    constexpr DualValue(const PgmStringView& text, const T& v1, const T& v2) : mText(text), mData1{v1}, mData2{v2} {}
+    
+    void putTextInto(Hott::BufferString& buffer) const {
+        buffer.clear();
+        buffer.insertAt(0, mText);
+        putValue(mData1, UI::make_span<L1, LField>(buffer));
+        putValue(mData2, UI::make_span<L1 + LField, LField>(buffer));
+    }
+    bool isSelected() const {return false;}
+    inline void textTo(Hott::Display& ) const {}
+    inline uint8_t processKey(Hott::key_t) {
+        return {}; 
+    }
+    inline constexpr bool hasChildren() const {return false;}
+private:
+    template<typename I, uint8_t F>
+    inline void putValue(const FixedPoint<I, F>& value, UI::span<LField, char> b) const{
+        uint8_t i = value.integerAbs();
+        Util::itoa_r(i, b);
+        auto f = value.fraction();
+        auto b2 = UI::make_span<3, 5>(b);
+        Util::ftoa(f, b2);
+    }
+    inline void putValue(const std::RPM& rpm, UI::span<LField, char> b) const {
+        Util::itoa_r(rpm.value(), b);
+    }
+    const PgmStringView mText;
+    const T& mData1;
+    const T& mData2;
+};
+
 auto flat_tree = [&]{
-    constexpr auto tree = Node(Menu{"WM SensMod HW 3 SW 51"_pgm}, 
+    constexpr auto menuTree = Node(Menu{"WM SensMod HW 3 SW 51"_pgm}, 
                                Node(Menu{"Uebersicht"_pgm}, 
-                                    MenuItem{"A"_pgm}
+                                    DualValue<FixedPoint<int, 4>, 5, 8>{"T1/2"_pgm, Storage::temps[0], Storage::temps[1]},
+                                    MenuItem{"A1"_pgm},
+                                    MenuItemX{"A2"_pgm},
+                                    MenuItem{"A3"_pgm},
+                                    MenuItem{"A4"_pgm}
                                     ),
                                Node(Menu{"Temperatur"_pgm}, 
-                                    MenuItem{"B"_pgm}
+                                    MenuItem{"A1"_pgm}
                                     ),
                                Node(Menu{"Spannung"_pgm}, 
-                                    MenuItem{"C"_pgm}
+                                    MenuItemX{"A1"_pgm}
                                     ),
                                Node(Menu{"Drehzahl"_pgm}, 
-                                    MenuItem{"D"_pgm}
+                                    MenuItem{"A1"_pgm}
                                     ),
                                Node(Menu{"Strom"_pgm}, 
-                                    MenuItem{"E"_pgm}
+                                    MenuItem{"A1"_pgm}
                                     ),
                                Node(Menu{"Aktoren"_pgm}, 
-                                    MenuItem{"F"_pgm}
+                                    MenuItem{"A1"_pgm}
                                     )
                                );
     
-    constexpr auto ftree = make_tuple_of_tree(tree);
+    constexpr auto ftree = make_tuple_of_tree(menuTree);
     return ftree;
 };
 
+template<typename T>
+struct isMenu : std::false_type {};
+template<uint8_t S, typename T>
+struct isMenu<Menu<S, T>> : std::true_type {};
+
 template<auto... II, Util::Callable L>
-constexpr auto inode_to_indexnode(std::index_sequence<II...>, const L& callable) {
-    constexpr auto inode = callable();
-    static_assert(isInode(inode), "use a callable returning an INode<>");
-    typedef typename decltype(inode)::type dataType;
-    
-    if constexpr(std::is_same<dataType, Menu<>>::value) {
-        return Menu<>(inode.mData.mTitle, uint_NaN<uint8_t>(inode.mParent), {uint_NaN<uint8_t>(inode.mChildren[II])...});
-    }
-    return dataType{inode.mData};
+constexpr auto make_menu(std::index_sequence<II...>, const L& callable) {
+    constexpr auto menu = callable();
+    return Menu<sizeof...(II)>(menu.mTitle, uint_NaN<uint8_t>(menu.mParent), {uint_NaN<uint8_t>(menu.mChildren[II])...});
 }
 
 template<Util::Callable L>
@@ -300,10 +365,16 @@ constexpr auto transform(const L& callable) {
     }
     else {
         constexpr auto first = std::get<0>(tuple);    
-        constexpr auto rest = [&]{return Util::tuple_rest(tuple);};
+        constexpr auto rest = [&]{return Util::tuple_tail(tuple);};
+        typedef typename decltype(first)::type dataType;
+        if constexpr(isMenu<dataType>::value) {
+            auto tailoredMenu = make_menu(std::make_index_sequence<first.mChildren.size>{}, [&]{return first.mData;});
+            return std::tuple_cat(std::tuple(tailoredMenu), transform(rest));
+        }
+        else {
+            return std::tuple_cat(std::tuple(first.mData), transform(rest));
+        }
         
-        constexpr auto indexnode = inode_to_indexnode(std::make_index_sequence<first.mChildren.size>{}, [&]{return first;});
-        return std::tuple_cat(std::tuple(indexnode), transform(rest));        
     }
 }
 

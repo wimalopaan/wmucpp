@@ -36,10 +36,10 @@ constexpr auto transform(const L& callable) {
         
         if constexpr(isInode(first)) {
             constexpr auto indexnode = inode_to_indexnode(std::make_index_sequence<first.mChildren.size>{}, [&]{return first;});
-            return std::tuple_cat(std::tuple(indexnode), transform([&]{return Util::tuple_rest(tuple);}));        
+            return std::tuple_cat(std::tuple(indexnode), transform([&]{return Util::tuple_tail(tuple);}));        
         }
         else {
-            return std::tuple_cat(std::tuple(first), transform([&]{return Util::tuple_rest(tuple);}));
+            return std::tuple_cat(std::tuple(first), transform([&]{return Util::tuple_tail(tuple);}));
         }
     }
 }

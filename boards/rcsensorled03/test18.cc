@@ -104,8 +104,6 @@ using terminal = std::basic_ostream<terminalDevice>;
 
 using namespace std::literals::quantity;
 
-// fixme: Int1???
-
 struct I2CInterrupt : public IsrBaseHandler<AVR::ISR::Int<1>> {
     static void isr() {
     }

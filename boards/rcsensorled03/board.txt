@@ -230,13 +230,6 @@ Beschreibung:
 	- Ansicht im Text-Modus für alle Sensoren
 	- Aufspalten der periodischen Aktionen in eine Zustandsmachine
 	- SSD1306 (I2C, Nur Text)
-	* eigenes Multikanal mit vor/rück-Schalter und ein/aus-Schalter mit Menu
-	* PPM-Input (nur bei GR-16 sinnvoll, da bei GR-12 SUMD/Mk funktioniert. Dann geht bei GR-16 aber auch kein SUMD mehr)
-		- SUMO bei Opto2 -> kein SUMD mehr
-		- SAME / Multikanal -> kein SUMD mehr
-	* Beleuchtungsprogramme
-	* Kommunikation mit I2CWS2812
-	* I2C Interrupt
 
 * test20: OK
 	- Interrupts für Uart
@@ -266,6 +259,12 @@ Beschreibung:
 	* Beleuchtungsprogramme
 	* Kommunikation mit I2CWS2812
 	* I2C Interrupt
+
+* test21: wie test20, und test51
+
++ überprüfen mit TestPin, wo die lange Zeit (>200us) verbraucht wird
+
++ Kabel für GPS-Modul
 
 * test50:
 	- wie test16

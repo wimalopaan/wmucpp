@@ -100,14 +100,14 @@ namespace Util {
     
     namespace detail {
         template<auto... N, typename... II>
-        constexpr auto tuple_rest(std::index_sequence<N...>, const std::tuple<II...>& tuple) {
+        constexpr auto tuple_tail(std::index_sequence<N...>, const std::tuple<II...>& tuple) {
             return std::tuple{std::get<N+1>(tuple)...};
         }
     }
     
     template<typename F, typename... II>
-    constexpr auto tuple_rest(const std::tuple<F, II...>& tuple) {
-        return detail::tuple_rest(std::make_index_sequence<sizeof...(II)>{}, tuple);
+    constexpr auto tuple_tail(const std::tuple<F, II...>& tuple) {
+        return detail::tuple_tail(std::make_index_sequence<sizeof...(II)>{}, tuple);
     }
     
     

@@ -132,6 +132,7 @@ namespace GPS {
                 }
                 break;
             case State::FieldData:
+                // todo: neuer State: wenn decoder gültig FieldDataForDecoder
                 if (b == Sentence::FieldSep) {
                     ++field;
                     index = 0;

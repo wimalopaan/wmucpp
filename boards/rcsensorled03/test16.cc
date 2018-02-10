@@ -18,6 +18,12 @@
 
 //#define USE_RPM2
 
+#define USE_TC1_AS_HARDPPM
+
+#ifndef USE_TC1_AS_HARDPPM
+# define USE_RPM2_ON_OPTO2
+#endif
+
 //#define MEM
 #define NDEBUG
 
@@ -88,8 +94,6 @@ using terminalDevice = std::conditional<useTerminal, rcUsart, void>::type;
 using terminal = std::basic_ostream<terminalDevice>;
 
 using namespace std::literals::quantity;
-
-// fixme: Int1???
 
 struct I2CInterrupt : public IsrBaseHandler<AVR::ISR::Int<1>> {
     static void isr() {

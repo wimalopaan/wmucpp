@@ -38,6 +38,9 @@ namespace Constants {
     static constexpr auto title = "Test 03 Board 03"_pgm;
 }
 
+using sensorUsart = AVR::Usart<0, void, MCU::UseInterrupts<false>, UseEvents<false>> ;
+using rcUsart = AVR::Usart<1, void, MCU::UseInterrupts<false>, UseEvents<false>>;
+
 using terminalDevice = std::conditional<useTerminal, rcUsart, void>::type;
 using terminal = std::basic_ostream<terminalDevice>;
 

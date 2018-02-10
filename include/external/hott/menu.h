@@ -121,16 +121,12 @@ namespace Hott {
         Provider& mProvider;
         const Key mKey = Hott::key_t::nokey;
     };
-    
-    // fixme: kein variadischen ctor
     class Menu : public MenuItem {
     public:
         template<typename... T>
         Menu(Menu* parent, const PgmStringView& title, T*... items) : mParent(parent), mTitle(title), mItems{items...} {
             static_assert(sizeof...(T) <= MenuLength, "too much entries");
         }
-        
-        
         virtual bool hasChildren() const override {return true;}
         
         virtual void titleInto(BufferString& buffer) const {
@@ -214,7 +210,7 @@ namespace Hott {
         Menu* mParent = nullptr;
         const PgmStringView mTitle;
         const std::array<MenuItem*, MenuLength> mItems{};
-        uint_ranged_NaN<uint8_t, 0, 7> mSelectedLine{};
+        uint_ranged_NaN<uint8_t, 0, MenuLength> mSelectedLine{};
     };
 
     class Menu2 : public MenuItem {
@@ -317,7 +313,7 @@ namespace Hott {
         Menu2* mParent = nullptr;
         const PgmStringView mTitle;
         std::array<MenuItem*, MenuLength> mItems{};
-        uint_ranged_NaN<uint8_t, 0, 7> mSelectedLine{};
+        uint_ranged_NaN<uint8_t, 0, MenuLength> mSelectedLine{};
     };
     
     class NumberedMenu : public Menu {

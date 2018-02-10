@@ -155,8 +155,6 @@ using terminal = std::basic_ostream<terminalDevice>;
 
 using namespace std::literals::quantity;
 
-// fixme: Int1???
-
 struct I2CInterrupt : public IsrBaseHandler<AVR::ISR::Int<1>> {
     static void isr() {
     }
@@ -412,7 +410,7 @@ private:
 
 class RCMenu final : public Hott::Menu {
 public:
-    RCMenu() : Menu(this, "WM SensMod HW 3 SW 18"_pgm, &mActors, &mInfo, &mTemperatur, &mSpannung, &mDrehzahl, &mStrom) {}
+    RCMenu() : Menu(this, "WM SensMod HW 3 SW 20"_pgm, &mActors, &mInfo, &mTemperatur, &mSpannung, &mDrehzahl, &mStrom) {}
 private:
     InfoMenu mInfo{this};
     TemperaturMenu mTemperatur{this};                        
