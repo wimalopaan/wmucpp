@@ -28,6 +28,10 @@ namespace AVR {
     struct ATMega8 final
     {
         ATMega8() = delete;
+        struct Ram {
+            inline static constexpr uintptr_t begin = RAMSTART;  
+            inline static constexpr uintptr_t end   = RAMEND;  
+        };
         struct Usart {
             volatile uint8_t ubbrl;
             volatile uint8_t ucsrb;

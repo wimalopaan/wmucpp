@@ -169,7 +169,7 @@ namespace Util {
     template<typename T>
     constexpr uint8_t minimumBitsForValue(const T& v) {
         for(uint8_t n = 1; n <= std::numeric_limits<uint8_t>::max(); ++n) {
-            T max = T(1 << (n - 1));
+            T max = T((1 << n) - 1);
             if (v <= max) {
                 return n;
             }

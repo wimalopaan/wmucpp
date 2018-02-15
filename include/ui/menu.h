@@ -22,12 +22,13 @@
 #include "container/stringbuffer.h"
 #include "container/pgmstring.h"
 
+#include "util/static_interface.h"
+
 namespace UI {
     template<typename Buffer, typename Key = uint8_t>
     class MenuItem {
     public:
         bool isSelected() const {return mSelected;}
-        
         virtual void putTextInto(Buffer&) const = 0;
         virtual MenuItem* processKey(Key) {return this;}
         virtual bool hasChildren() const {return false;}
@@ -57,5 +58,56 @@ namespace UI {
     inline span<Length, typename C::type> make_span(C& c) {
         static_assert((Offset + Length) <= C::size);
         return span<Length, typename C::type>(&c[Offset]);
+    }
+    
+    namespace Static {
+        
+        template<typename... Impl>
+        struct MenuItem : ::Static::InterfaceBase<Impl...> {
+            using base = ::Static::InterfaceBase<Impl...>;
+            using implementors = typename base::implementors;
+            using ptype = typename base::ptype;
+        
+            static bool isSelected(const ptype& n) {
+                bool r = false;
+                Meta::visitAt<implementors>(n.id(), [&](auto i){
+                    r = n.get(i)->isSelected();
+                });
+                return r;
+            }
+            template<typename Buffer>
+            static void putTextInto(const ptype& n, Buffer& b) {
+                Meta::visitAt<implementors>(n.id(), [&](auto i){
+                    n.get(i)->putTextInto(b);
+                });
+            }
+            template<typename Buffer>
+            static void textTo(const ptype& n, Buffer& b) {
+                Meta::visitAt<implementors>(n.id(), [&](auto i){
+                    n.get(i)->textTo(b);
+                });
+            }
+            template<typename Key>
+            static ptype processKey(const ptype& n, Key k) {
+                ptype r;
+                Meta::visitAt<implementors>(n.id(), [&](auto i){
+                    r = n.get(i)->processKey(k);
+                });
+                return r;
+            }
+            static bool hasChildren(const ptype& n) {
+                bool r = false;
+                Meta::visitAt<implementors>(n.id(), [&](auto i){
+                    r = n.get(i)->hasChildren();
+                });
+                return r;
+            }
+            static void parent(const ptype& n, ptype p) {
+                Meta::visitAt<implementors>(n.id(), [&](auto i){
+                    n.get(i)->parent(p);
+                });
+            }
+        };
+        
     }
 }

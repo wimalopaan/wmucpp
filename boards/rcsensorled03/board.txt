@@ -260,11 +260,13 @@ Beschreibung:
 	* Kommunikation mit I2CWS2812
 	* I2C Interrupt
 
-* test21: wie test20, und test51
+* test21: OK
+ - wie test20, und test51 (statisches Menu)
+
+* test22: 
+ - wie test17 und Static::Interface
 
 + überprüfen mit TestPin, wo die lange Zeit (>200us) verbraucht wird
-
-+ Kabel für GPS-Modul
 
 * test50:
 	- wie test16

@@ -120,7 +120,7 @@ namespace EEProm {
         static void init() {
             eeprom_read_block(reinterpret_cast<uint8_t*>(&mData), reinterpret_cast<void*>(Offset), sizeof(DataType));
         }
-        static DataType& data() {
+        constexpr static DataType& data() {
             return mData;
         }
         static bool saveIfNeeded() {

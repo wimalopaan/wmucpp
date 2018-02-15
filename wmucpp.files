@@ -8,6 +8,7 @@ boards/rcsensorled03/test18.cc
 boards/rcsensorled03/test19.cc
 boards/rcsensorled03/test20.cc
 boards/rcsensorled03/test21.cc
+boards/rcsensorled03/test22.cc
 boards/rcsensorled03/test50.cc
 boards/rcsensorled03/test51.cc
 boards/unimaxi/atmega1284p/gpstest.cc
@@ -21,6 +22,9 @@ doc/bmcpp02/bm65a.cc
 doc/bmcpp02/bm66a.cc
 doc/bmcpp02/bm67a.cc
 doc/bmcpp02/bm68a.cc
+doc/bmcpp98/bm100a.cc
+doc/bmcpp98/bm101a.cc
+doc/bmcpp98/bm102a.cc
 host/test25.cc
 host/test26.cc
 host/test40.cc
@@ -31,6 +35,7 @@ include/external/ssd1306.h
 include/hal/multichannelppm.h
 include/hal/sumo.h
 include/mcu/avr/swusart2.h
+include/util/static_interface.h
 tools/sumd_analyzer/sumdan.cc
 tools/sumd_analyzer/Makefile
 tools/Makefile

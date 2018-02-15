@@ -36,6 +36,11 @@ namespace AVR {
         
         template<typename T>
         static constexpr bool is_atomic() {return false;}
+
+        struct Ram {
+            inline static constexpr uintptr_t begin = RAMSTART;  
+            inline static constexpr uintptr_t end   = RAMEND;  
+        };
         
         struct Usart {
             static constexpr const uint8_t count = 2;

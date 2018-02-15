@@ -29,6 +29,11 @@ namespace AVR {
     
     struct ATTiny84 final {
         ATTiny84() = delete;
+        struct Ram {
+            inline static constexpr uintptr_t begin = RAMSTART;  
+            inline static constexpr uintptr_t end   = RAMEND;  
+        };
+        
         template<typename T>
         static constexpr bool is_atomic() {return false;}
         struct Timer8Bit {

@@ -43,6 +43,8 @@
 #include "hal/eeprom.h"
 #include "external/hott/menu.h"
 
+#include "container/tree.h"
+
 #include <vector>
 
 template<typename F>
@@ -178,12 +180,241 @@ using menuData = Hott::SensorTextProtocollBuffer<0>;
 using crWriterSensorText = ConstanteRateWriter<menuData, sensorUsart>;
 
 
-class TSensorId final : public UI::MenuItem<Hott::BufferString, Hott::key_t> {
+
+void menuAction(uint8_t index, const auto& callable);
+
+template<auto... II>
+struct Indexes {};
+
+template<typename IndexType = uint8_t>
+class MenuItem {
+    typedef IndexType index_type;
 public:
-    TSensorId(uint8_t number) : mNumber{number} {
+    inline constexpr MenuItem() {}
+    inline constexpr bool hasChildren() const {return false;}
+    inline constexpr bool isSelected() const {return false;}
+    
+    constexpr inline uint_NaN<index_type> processKey(Hott::key_t) {return {};}
+    constexpr inline void textTo(Hott::Display& ) const {}
+    constexpr inline void putTextInto(Hott::BufferString& buffer) const {}
+private:
+    bool mSelected = false;
+};
+
+template<uint8_t Size = 7, typename IndexType = uint8_t>
+class Menu {
+public:
+    typedef IndexType index_type;
+    constexpr Menu(const PgmStringView& title, uint_NaN<IndexType> parent = uint_NaN<IndexType>{}, 
+                   const std::array<IndexType, Size>& children = std::array<IndexType, 7>{}) : 
+        mTitle{title}, mParent{parent}, mChildren{children} {}
+    
+    inline constexpr bool hasChildren() const {return true;}
+    inline constexpr bool isSelected() const {return mSelected;}
+
+    inline constexpr void titleInto(Hott::BufferString& buffer) const {
+        buffer.insertAtFill(0, mTitle);
+    }
+    
+    inline void putTextInto(Hott::BufferString& buffer) const {
+        buffer[0] = ' ';
+        buffer.insertAtFill(1, mTitle);
+    }
+    
+    inline void textTo(Hott::Display& display) const {
+        static uint_ranged_circular<uint8_t, 0, Hott::Display::size - 1> line;
+        if (line == 0) {
+            titleInto(display[0]);
+            ++line;
+        }
+        else {
+            if (line <= mChildren.size) { 
+                uint8_t cindex = mChildren[line - 1];
+                menuAction(cindex, [&](auto& child) {
+                    child.putTextInto(display[line]);
+                    return 0;
+                });
+                if (mSelectedItem && (mSelectedItem == (line - 1))) {
+                    display[line][0] = '>';
+                }
+                ++line;
+            }
+            else {
+                line = 0;
+            }
+        }
+    }
+    
+    inline uint_NaN<uint8_t> processKey(Hott::key_t key) {
+        uint_NaN<uint8_t> selectedChildIndex;
+        if (mSelectedItem) {
+            selectedChildIndex = mChildren[mSelectedItem];
+        }
+        
+        if (selectedChildIndex) {
+            menuAction(selectedChildIndex, [&](auto& item){
+                if (item.isSelected()) {
+                    item.processKey(key);
+                }
+                return 0;
+            });            
+        }
+        switch (key) {
+        case Hott::key_t::down:
+            if (mSelectedItem) {
+                if ((mSelectedItem + 1) < mChildren.size) {
+                    ++mSelectedItem;
+                }
+            }
+            else {
+                mSelectedItem = 0;
+            }
+            break;
+        case Hott::key_t::up:
+            if (mSelectedItem) {
+                --mSelectedItem;
+            }
+            else {
+                mSelectedItem = 0;
+            }
+            break;
+        case Hott::key_t::left:
+            if (mParent) {
+                return mParent;
+            }
+            return {};
+            break;
+        case Hott::key_t::right:
+            break;
+        case Hott::key_t::set:
+            if (mSelectedItem) {
+                bool hasChildren = false;
+                menuAction(selectedChildIndex, [&](auto& item){
+                    if (item.hasChildren()) {
+                        hasChildren = true;
+                    }
+                    return 0;
+                });
+                if (hasChildren) {
+                    return selectedChildIndex;
+                }
+                else {
+                    menuAction(selectedChildIndex, [&](auto& item){
+                        item.processKey(key);
+                        return 0;
+                    });
+                }
+            }
+            break;
+        case Hott::key_t::nokey:
+            break;
+        }
+        return{};
+    }
+private:
+    uint_ranged_NaN<uint8_t, 0, Size - 1> mSelectedItem;
+    bool mSelected{false};
+    const PgmStringView mTitle;
+    const uint_NaN<index_type> mParent;
+    const std::array<index_type, Size> mChildren;
+};
+
+template<typename Key, typename Provider>
+class TextWithValue : public MenuItem<> {
+public:
+    constexpr TextWithValue(const PgmStringView& text, Provider& provider, Key key, uint8_t max) : 
+        mTitle(text), mProvider(provider), mKey(key), mMax(max) {}
+    
+    inline void valueToText(uint8_t value, UI::span<3, char> buffer) const {
+        Util::itoa_r<10>(value, buffer.mData);
+    }
+    
+    inline void putTextInto(Hott::BufferString& buffer) const  {
+        buffer[0] = ' ';
+        buffer.insertAtFill(1, mTitle);
+        
+        auto& value = mProvider[mKey];
+        if (value) {
+            valueToText(*value, UI::make_span<18, 3>(buffer));
+        }
+        else {
+            buffer[18] = '-';
+            buffer[19] = '-';
+            buffer[20] = '-';
+        }
+        
+        if (mSelected) {
+            buffer[18] |= 0x80;
+            buffer[19] |= 0x80;
+            buffer[20] |= 0x80;
+        }
+    }
+    inline uint_NaN<uint8_t>  processKey(Hott::key_t key) {
+        auto& v = mProvider[mKey];
+        switch (key) {
+        case Hott::key_t::up:
+            if (mSelected) {
+                if (v) {
+                    if (*v > 0) {
+                        --v;
+                    }
+                    else {
+                        v.setNaN();
+                    }
+                }
+                else {
+                    *v = 0;
+                }
+            }
+            break;
+        case Hott::key_t::down:
+            if (mSelected) {
+                if (v) {
+                    if (*v < mMax) {
+                        ++v;
+                    }
+                    else {
+                        v.setNaN();
+                    }
+                }
+                else {
+                    *v = 0;
+                }
+            }
+            break;
+        case Hott::key_t::left:
+            if (mSelected) {
+                mSelected = false;
+            }
+            break;
+        case Hott::key_t::right:
+            break;
+        case Hott::key_t::set:
+            if (mSelected) {
+                mProvider.change();
+            }
+            mSelected = !mSelected;
+            break;
+        case Hott::key_t::nokey:
+            break;
+        }
+        return {};
+    }
+private:
+    const PgmStringView mTitle;
+    Provider& mProvider;
+    const Key mKey = Hott::key_t::nokey;
+    const uint8_t mMax = 0;
+};
+
+
+
+class TSensorId final : public MenuItem<> {
+public:
+    constexpr TSensorId(uint8_t number) : mNumber{number} {
         assert(number < Storage::dsIds.capacity);
     }
-    virtual void putTextInto(Hott::BufferString& buffer) const override {
+    void putTextInto(Hott::BufferString& buffer) const {
         if (Storage::dsIds[mNumber]) {
             for(uint8_t i = 0; i < (Storage::dsIds[mNumber].size - 2); ++i) {
                 uint8_t d = Storage::dsIds[mNumber][i + 1];
@@ -198,170 +429,16 @@ public:
         }
     }
 private:
-    uint8_t mNumber = 0;
-};
-
-class TSensorMenu final : public Hott::NumberedMenu {
-public:
-    TSensorMenu(Menu* parent, uint8_t n) : NumberedMenu(parent, n, "Sensor"_pgm, &mID), mID{n} {}
-private:
-    TSensorId mID{0};
-};
-
-class TemperaturSensorenMenu final : public Hott::Menu {
-public:
-    TemperaturSensorenMenu(Menu* parent) : Menu(parent, "Temp. Sensoren"_pgm, &mTS1, &mTS2, &mTS3, &mTS4) {}
-private:
-    TSensorMenu mTS1{this, 0};
-    TSensorMenu mTS2{this, 1};
-    TSensorMenu mTS3{this, 2};
-    TSensorMenu mTS4{this, 3};
-};
-
-class TemperaturMenu final : public Hott::Menu {
-public:
-    TemperaturMenu(Hott::Menu* parent) : Hott::Menu(parent, "Temperatur"_pgm, &mSensor1, &mSensor2, &mSensoren) {}
-    
-private:
-    Hott::TextWithValue<Storage::AVKey, Storage::dsIds.capacity - 1, Storage::ApplData> mSensor1{"Anzeige 1"_pgm, appData, Storage::AVKey::TSensor1};
-    Hott::TextWithValue<Storage::AVKey, Storage::dsIds.capacity - 1, Storage::ApplData> mSensor2{"Anzeige 2"_pgm, appData, Storage::AVKey::TSensor2};
-    TemperaturSensorenMenu mSensoren{this};
-};
-
-class SpannungMenu final : public Hott::Menu {
-public:
-    SpannungMenu(Hott::Menu* parent) : Menu(parent, "Spannung"_pgm, &mSensor1, &mSensor2) {}
-private:
-    Hott::TextWithValue<Storage::AVKey, 1, Storage::ApplData> mSensor1{"Anzeige 1"_pgm, appData, Storage::AVKey::Spannung1};
-    Hott::TextWithValue<Storage::AVKey, 1, Storage::ApplData> mSensor2{"Anzeige 2"_pgm, appData, Storage::AVKey::Spannung2};
-};
-
-class DrehzahlMenu final : public Hott::Menu {
-public:
-    DrehzahlMenu(Hott::Menu* parent) : Menu(parent, "Drehzahl"_pgm, &mSensor1, &mSensor2) {}
-private:
-    Hott::TextWithValue<Storage::AVKey, 1, Storage::ApplData> mSensor1{"Anzeige 1"_pgm, appData, Storage::AVKey::RpmSensor1};
-    Hott::TextWithValue<Storage::AVKey, 1, Storage::ApplData> mSensor2{"Anzeige 2"_pgm, appData, Storage::AVKey::RpmSensor2};
-};
-
-class StromMenu final : public Hott::Menu {
-public:
-    StromMenu(Hott::Menu* parent) : Menu(parent, "Strom"_pgm, &mOffset) {}
-private:
-    Hott::TextWithValue<Storage::AVKey, 1, Storage::ApplData> mOffset{"Offset"_pgm, appData, Storage::AVKey::StromOffset};
-};
-
-class PWMType : public Hott::TextWithValue<Storage::AVKey, 3, Storage::ApplData> {
-public:
-    PWMType(const PgmStringView& title, Storage::ApplData& data, Storage::AVKey k) :
-        TextWithValue(title, data, k) {}
-    virtual void valueToText(uint8_t value, UI::span<3, char> buffer) const override {
-        if (value == 0) {
-            buffer[0] = 'V';
-            buffer[1] = ' ';
-            buffer[2] = ' ';
-        }
-        else if (value == 1) {
-            buffer[0] = 'R';
-            buffer[1] = ' ';
-            buffer[2] = ' ';
-        }
-        else if (value == 2) {
-            buffer[0] = 'V';
-            buffer[1] = '/';
-            buffer[2] = 'R';
-        }
-    }
-private:
-};
-
-class PWMMenu final : public Hott::Menu {
-public:
-    PWMMenu(Hott::Menu* parent) : Menu(parent, "PWM"_pgm, &mOffset, &mType) {}
-private:
-    Hott::TextWithValue<Storage::AVKey, 8, Storage::ApplData> mOffset{"Kanal"_pgm, appData, Storage::AVKey::PWM};
-    PWMType mType{"Modus"_pgm, appData, Storage::AVKey::PWMMOde};
-};
-
-class LedMenu final : public Hott::Menu {
-public:
-    LedMenu(Hott::Menu* parent) : Menu(parent, "LEDs"_pgm, &mChannel1, &mSequence1, &mChannel2, &mSequence2) {}
-private:
-    Hott::TextWithValue<Storage::AVKey, 8, Storage::ApplData> mChannel1{"Kanal 1"_pgm, appData, Storage::AVKey::Leds1Channel};
-    Hott::TextWithValue<Storage::AVKey, 8, Storage::ApplData> mSequence1{"Folge 1"_pgm, appData, Storage::AVKey::Leds1Sequence};
-    Hott::TextWithValue<Storage::AVKey, 8, Storage::ApplData> mChannel2{"Kanal 2"_pgm, appData, Storage::AVKey::Leds2Channel};
-    Hott::TextWithValue<Storage::AVKey, 8, Storage::ApplData> mSequence2{"Folge 2"_pgm, appData, Storage::AVKey::Leds2Sequence};
-};
-
-class I2CId final : public UI::MenuItem<Hott::BufferString, Hott::key_t> {
-public:
-    I2CId(uint8_t number) : mNumber{number} {
-    }
-    virtual void putTextInto(Hott::BufferString& buffer) const override {
-        buffer.insertAtFill(0, "--:--:--:--:--:--"_pgm);
-    }
-private:
-    uint8_t mNumber = 0;
-};
-
-class I2CDev final : public Hott::NumberedMenu {
-public:
-    I2CDev(Menu* parent, uint8_t n) : NumberedMenu(parent, n, "Geraet"_pgm, &mDev), mDev{n} {}
-private:
-    I2CId mDev{0};
-};
-
-class I2CMenu final : public Hott::Menu {
-public:
-    I2CMenu(Hott::Menu* parent) : Menu(parent, "Geraete"_pgm, &mI2CDev1, &mI2CDev2, &mI2CDev3/*, &mI2CDev4*/) {}
-private:
-    I2CDev mI2CDev1{this, 0};
-    I2CDev mI2CDev2{this, 1};
-    I2CDev mI2CDev3{this, 2};
-    I2CDev mI2CDev4{this, 3};
-};
-
-class Switch final : public UI::MenuItem<Hott::BufferString, Hott::key_t> {
-public:
-    Switch(uint8_t number) : mNumber{number} {
-    }
-    virtual void putTextInto(Hott::BufferString& buffer) const override {
-        buffer.insertAt(0, "Switch "_pgm);
-        buffer[7] = '0' + (2 * mNumber);
-        buffer[8] = ':';
-        buffer[9] = '1' + (2 * mNumber);
-        
-        buffer.insertAt(11, "on "_pgm);
-        
-        if (mNumber == 1) {
-            buffer[11] |= 0x80;
-            buffer[12] |= 0x80;
-            buffer[13] |= 0x80;
-        }
-        
-        buffer.insertAt(15, "off "_pgm);
-    }
-private:
-    uint8_t mNumber = 0;
-};
-
-
-class SwitchMenu final : public Hott::Menu {
-public:
-    SwitchMenu(Hott::Menu* parent) : Menu(parent, "Multiswitch"_pgm, &mSW0, &mSW1, &mSW2, &mSW3) {}
-private:
-    Switch mSW0{0};
-    Switch mSW1{1};
-    Switch mSW2{2};
-    Switch mSW3{3};
+    const uint8_t mNumber = 0;
 };
 
 template<typename T, uint8_t L1, uint8_t LField>
-class DualValue : public Hott::MenuItem {
+class DualValue : public MenuItem<> {
 public:
-    DualValue(const PgmStringView& text, const T& v1, const T& v2) : mText(text), mData1{v1}, mData2{v2} {}
+    inline static constexpr uint8_t csize = 0;
+    constexpr DualValue(const PgmStringView& text, const T& v1, const T& v2) : mText(text), mData1{v1}, mData2{v2} {}
     
-    virtual void putTextInto(Hott::BufferString& buffer) const override {
+    void putTextInto(Hott::BufferString& buffer) const {
         buffer.clear();
         buffer.insertAt(0, mText);
         putValue(mData1, UI::make_span<L1, LField>(buffer));
@@ -384,43 +461,170 @@ private:
     const T& mData2;
 };
 
-class InfoMenu final : public Hott::Menu {
+class Switch final : public MenuItem<> {
 public:
-    InfoMenu(Hott::Menu* parent) : Menu(parent, "Uebersicht"_pgm, &mTempLine1, &mTempLine2, &mRpmLine, &mBattLine, &mMinCellLine, &mCurrentLine) {}
+    constexpr Switch(uint8_t number) : mNumber{number} {}
+    void putTextInto(Hott::BufferString& buffer) const {
+        buffer.insertAt(0, "Switch "_pgm);
+        buffer[7] = '0' + (2 * mNumber);
+        buffer[8] = ':';
+        buffer[9] = '1' + (2 * mNumber);
+        
+        buffer.insertAt(11, "on "_pgm);
+        
+        if (mNumber == 1) {
+            buffer[11] |= 0x80;
+            buffer[12] |= 0x80;
+            buffer[13] |= 0x80;
+        }
+        
+        buffer.insertAt(15, "off "_pgm);
+    }
 private:
-    DualValue<FixedPoint<int, 4>, 5, 8> mTempLine1{"T1/2"_pgm, Storage::temps[0], Storage::temps[1]};
-    DualValue<FixedPoint<int, 4>, 5, 8> mTempLine2{"T3/4"_pgm, Storage::temps[2], Storage::temps[3]};
-    DualValue<std::RPM, 5, 8>           mRpmLine{"R1/2"_pgm, Storage::rpms[0], Storage::rpms[1]};
-    DualValue<FixedPoint<int, 4>, 5, 8> mBattLine{"B1/2"_pgm, Storage::batts[0], Storage::batts[1]};
-    DualValue<FixedPoint<int, 4>, 5, 8> mMinCellLine{"M1/2"_pgm, Storage::minCells[0], Storage::minCells[1]};
-    DualValue<FixedPoint<int, 4>, 5, 8> mCurrentLine{"A1/2"_pgm, Storage::currents[0], Storage::currents[1]};
+    const uint8_t mNumber = 0;
 };
 
-class ActorMenu final : public Hott::Menu {
+class PWMType : public TextWithValue<Storage::AVKey, Storage::ApplData> {
 public:
-    ActorMenu(Hott::Menu* parent) : Menu(parent, "Aktoren"_pgm, &mDevs, &mSwitch, &mPWM, &mLeds) {}
+    constexpr PWMType(const PgmStringView& title, Storage::ApplData& data, Storage::AVKey k) :
+        TextWithValue(title, data, k, 3) {}
+    void valueToText(uint8_t value, UI::span<3, char> buffer) const {
+        if (value == 0) {
+            buffer[0] = 'V';
+            buffer[1] = ' ';
+            buffer[2] = ' ';
+        }
+        else if (value == 1) {
+            buffer[0] = 'R';
+            buffer[1] = ' ';
+            buffer[2] = ' ';
+        }
+        else if (value == 2) {
+            buffer[0] = 'V';
+            buffer[1] = '/';
+            buffer[2] = 'R';
+        }
+    }
 private:
-    SwitchMenu mSwitch{this};
-    PWMMenu   mPWM{this};                        
-    LedMenu   mLeds{this};                        
-    I2CMenu   mDevs{this};                        
 };
 
-class RCMenu final : public Hott::Menu {
+class I2CId final : public MenuItem<> {
 public:
-    RCMenu() : Menu(this, "WM SensMod HW 3 SW 21"_pgm, &mActors, &mInfo, &mTemperatur, &mSpannung, &mDrehzahl, &mStrom) {}
+    constexpr I2CId(uint8_t number) : mNumber{number} {
+    }
+    void putTextInto(Hott::BufferString& buffer) const {
+        buffer.insertAtFill(0, "--:--:--:--:--:--"_pgm);
+    }
 private:
-    InfoMenu mInfo{this};
-    TemperaturMenu mTemperatur{this};                        
-    SpannungMenu   mSpannung{this};                        
-    DrehzahlMenu   mDrehzahl{this};                        
-    StromMenu   mStrom{this};                        
-    ActorMenu mActors{this};
+    const uint8_t mNumber = 0;
 };
 
-RCMenu topMenu; // note: global object instead of static in Hottmenu -> no guards are created (is this a g++ error)
 
-template<typename PA, typename MenuType>
+auto flat_tree = [&]{
+    constexpr auto menuTree = Node(Menu{"WM SensMod HW 3 SW 21"_pgm}, 
+                                   Node(Menu{"Uebersicht"_pgm}, 
+                                        DualValue<FixedPoint<int, 4>, 5, 8>{"T1/2"_pgm, Storage::temps[0], Storage::temps[1]},
+                                        DualValue<FixedPoint<int, 4>, 5, 8>{"T3/4"_pgm, Storage::temps[2], Storage::temps[3]},
+                                        DualValue<std::RPM, 5, 8>{"R1/2"_pgm, Storage::rpms[0], Storage::rpms[1]},
+                                        DualValue<FixedPoint<int, 4>, 5, 8>{"B1/2"_pgm, Storage::batts[0], Storage::batts[1]},
+                                        DualValue<FixedPoint<int, 4>, 5, 8>{"M1/2"_pgm, Storage::minCells[0], Storage::minCells[1]},
+                                        DualValue<FixedPoint<int, 4>, 5, 8>{"A1/2"_pgm, Storage::currents[0], Storage::currents[1]}
+                                        ),
+                                   Node(Menu{"Temperatur"_pgm},
+                                        Node(Menu{"Sensoren"_pgm},
+                                             TSensorId(0),
+                                             TSensorId(1),
+                                             TSensorId(2),
+                                             TSensorId(3)
+                                             )
+                                       ),
+                                   Node(Menu{"Spannung"_pgm},
+                                        TextWithValue<Storage::AVKey, Storage::ApplData>{"Anzeige 1"_pgm, appData, Storage::AVKey::Spannung1, 1},
+                                        TextWithValue<Storage::AVKey, Storage::ApplData>{"Anzeige 2"_pgm, appData, Storage::AVKey::Spannung2, 1}
+                                        ),
+                                   Node(Menu{"Drehzahl"_pgm},
+                                        TextWithValue<Storage::AVKey, Storage::ApplData>{"Anzeige 1"_pgm, appData, Storage::AVKey::RpmSensor1, 1},
+                                        TextWithValue<Storage::AVKey, Storage::ApplData>{"Anzeige 2"_pgm, appData, Storage::AVKey::RpmSensor2, 1}
+                                        ),
+                                   Node(Menu{"Strom"_pgm},
+                                        TextWithValue<Storage::AVKey, Storage::ApplData>{"Offset"_pgm, appData, Storage::AVKey::StromOffset, 255}
+                                        ),
+                                   Node(Menu{"Aktoren"_pgm},
+                                        Node(Menu{"Multiswitch"_pgm},
+                                             Switch(0),
+                                             Switch(1),
+                                             Switch(2),
+                                             Switch(3)
+                                             ),
+                                        Node(Menu{"PWM"_pgm},
+                                             TextWithValue<Storage::AVKey, Storage::ApplData>{"Kanal"_pgm, appData, Storage::AVKey::PWM, 8},
+                                             PWMType{"Modus"_pgm, appData, Storage::AVKey::PWMMOde}
+                                             ),
+                                        Node(Menu{"Led"_pgm},
+                                             TextWithValue<Storage::AVKey, Storage::ApplData>{"Kanal 1"_pgm, appData, Storage::AVKey::Leds1Channel, 8},
+                                             TextWithValue<Storage::AVKey, Storage::ApplData>{"Folge 1"_pgm, appData, Storage::AVKey::Leds1Sequence, 4},
+                                             TextWithValue<Storage::AVKey, Storage::ApplData>{"Kanal 2"_pgm, appData, Storage::AVKey::Leds2Channel, 8},
+                                             TextWithValue<Storage::AVKey, Storage::ApplData>{"Folge 2"_pgm, appData, Storage::AVKey::Leds2Sequence, 4}
+                                             ),
+                                        Node(Menu{"Geraete"_pgm},
+                                             I2CId(0),
+                                             I2CId(1),
+                                             I2CId(2),
+                                             I2CId(3)
+                                             )
+                                        )
+                                   );
+    
+    constexpr auto ftree = make_tuple_of_tree(menuTree);
+    return ftree;
+};
+
+template<typename T>
+struct isMenu : std::false_type {};
+template<uint8_t S, typename T>
+struct isMenu<Menu<S, T>> : std::true_type {};
+
+template<auto... II, Util::Callable L>
+constexpr auto make_menu(std::index_sequence<II...>, const L& callable) {
+    constexpr auto inode = callable();
+    constexpr auto menu = inode.mData;
+    typedef std::remove_const_t<std::remove_reference_t<decltype(menu)>> tm;
+    static_assert(isMenu<tm>::value);
+    return Menu<sizeof...(II)>(menu.mTitle, uint_NaN<uint8_t>(inode.mParent), {inode.mChildren[II]...});
+}
+
+template<Util::Callable L>
+constexpr auto transform(const L& callable) {
+    constexpr auto tuple = callable();
+    static_assert(Util::isTuple(tuple), "use constexpr callabe returning a tuple");
+    
+    if constexpr(Util::size(tuple) == 0) {
+        return std::tuple<>();
+    }
+    else {
+        constexpr auto first = std::get<0>(tuple);    
+        constexpr auto rest = [&]{return Util::tuple_tail(tuple);};
+        typedef typename decltype(first)::type dataType;
+        if constexpr(isMenu<dataType>::value) {
+            auto tailoredMenu = make_menu(std::make_index_sequence<first.mChildren.size>{}, [&]{return first;});
+            return std::tuple_cat(std::tuple(tailoredMenu), transform(rest));
+        }
+        else {
+            return std::tuple_cat(std::tuple(first.mData), transform(rest));
+        }
+        
+    }
+}
+
+auto t2 = transform(flat_tree); 
+
+//decltype(t2)::_;
+
+inline void menuAction(uint8_t index, const auto& callable) {
+    Meta::visitAt(t2, index, callable);
+}
+
+template<typename PA>
 class HottMenu final {
     HottMenu() = delete;
 public:
@@ -434,26 +638,34 @@ public:
         if (k != Hott::key_t::nokey) {
             processKey(k);
         }
-        mMenu->textTo(PA::text());
+        menuAction(mMenu, [&](auto& i) {
+            i.textTo(PA::text());
+            return 0;
+        });
     }
     inline static void processKey(Hott::key_t key) {
-        assert(mMenu);
-        if (auto m = mMenu->processKey(key); m != mMenu) {
-            mMenu = m;
-            for(auto& line : PA::text()) {
-                line.clear();
+        menuAction(mMenu, [&](auto& i) {
+            if (auto m = i.processKey(key); m && (m != mMenu)) {
+                mMenu = m;
+                for(auto& line : PA::text()) {
+                    line.clear();
+                }
             }
-        }
+            return 0;
+        });
     }
     inline static void isrKey(std::byte b) {
         mKey = Hott::key_t{b};
     }
 private:
     inline static volatile Hott::key_t mKey = Hott::key_t::nokey;
-    inline static Hott::Menu* mMenu = &topMenu;
+    inline static uint8_t mMenu = std::tuple_size<decltype(t2)>::value - 1;
 };
 
-using menu = HottMenu<menuData, RCMenu>;
+using menu = HottMenu<menuData>;
+
+
+
 
 struct AsciiHandler {
     static void start() {
@@ -841,7 +1053,7 @@ int main() {
     {
         Scoped<EnableInterrupt<>> ei;
         
-        std::outl<terminal>("Test20"_pgm);
+        std::outl<terminal>("Test21"_pgm);
         
         {
             std::array<OneWire::ow_rom_t, Storage::dsIds.capacity> ids;

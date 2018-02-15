@@ -22,6 +22,7 @@
 #include <utility>
 #include <type_traits>
 #include <limits>
+#include <cassert>
 #include "util/type_traits.h"
 
 namespace Meta {
@@ -389,11 +390,11 @@ namespace Meta {
             using first = Meta::front<List>;
             template<typename I, typename C>
             inline static void at(I index, const C& callable) {
-                if (index == 0) {
+                if (index == I{0}) {
                     callable(Wrapper<first>{});
                 }
                 else {
-                    visit<Meta::rest<List>>::at(index - 1, callable);
+                    visit<Meta::rest<List>>::at(I(index - 1), callable);
                 }
             }
             template<auto... II, typename C>
@@ -403,7 +404,6 @@ namespace Meta {
 
             template<typename C>
             inline static size_type<List> find(const C& callable, const size_type<List>& index) {
-//                return visit<Meta::rest<List>>::find(callable, index + 1);
                 if (callable(Wrapper<first>{})) {
                     return index;
                 }
@@ -416,7 +416,9 @@ namespace Meta {
         template<> 
         struct visit<Meta::List<>> {
             template<typename I, typename C>
-            inline static void at(I, const C&) {}
+            inline static void at(I, const C&) {
+                assert(false);
+            }
             template<typename C, typename N>
             inline static N find(const C&, N) {
                 return std::numeric_limits<N>::max();
@@ -425,8 +427,8 @@ namespace Meta {
     }
     
     template<concepts::List List, typename I, typename C>
-    inline void visitAt(I index, const C& callable) {
-        detail::visit<List>::at(index, callable);
+    inline auto visitAt(I index, const C& callable) {
+        return detail::visit<List>::at(index, callable);
     }
 
     template<concepts::List List, typename C>

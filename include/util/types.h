@@ -297,66 +297,66 @@ template<std::Unsigned T>
 class uint_NaN final {
     static constexpr T NaN = std::numeric_limits<T>::max();
 public:
-    explicit constexpr uint_NaN(T v) : mValue(v) {
+    inline explicit constexpr uint_NaN(T v) : mValue(v) {
         assert(mValue != NaN);
     }
-    constexpr uint_NaN() : mValue(NaN) {}
+    inline constexpr uint_NaN() : mValue(NaN) {}
     
-    void setNaN() volatile {
+    inline void setNaN() volatile {
         mValue = NaN;
     }
-    void operator=(T v) volatile {
+    inline void operator=(T v) volatile {
         assert(v != NaN);
         mValue = v;
     }
-    uint_NaN& operator=(T v){
+    inline uint_NaN& operator=(T v){
         assert(v != NaN);
         mValue = v;
         return *this;
     }
-    explicit operator bool() volatile const {
+    inline explicit operator bool() volatile const {
         return mValue != NaN;
     }
-    constexpr explicit operator bool() const {
+    inline constexpr explicit operator bool() const {
         return mValue != NaN;
     }
-    constexpr operator T() const {
+    inline constexpr operator T() const {
         assert(mValue != NaN);
         return mValue;
     }
-    volatile T& operator*() volatile {
+    inline volatile T& operator*() volatile {
         assert(mValue != NaN);
         return mValue;
     }
-    T& operator*() {
+    inline T& operator*() {
         assert(mValue != NaN);
         return mValue;
     }
-    const T& operator*() const {
+    inline const T& operator*() const {
         assert(mValue != NaN);
         return mValue;
     }
-    void operator++() volatile {
+    inline void operator++() volatile {
         ++mValue;
     }
-    uint_NaN& operator++() {
+    inline uint_NaN& operator++() {
         ++mValue;
         return *this;
     }
-    void operator--() volatile {
+    inline void operator--() volatile {
         --mValue;
     }
-    uint_NaN& operator--() {
+    inline uint_NaN& operator--() {
         --mValue;
         return *this;
     }
-    constexpr bool operator==(uint_NaN& rhs) volatile {
+    inline constexpr bool operator==(uint_NaN& rhs) volatile {
         if (*this && rhs) {
             return mValue == rhs.mValue;
         }
         return false;
     }
-    constexpr bool operator<=(uint_NaN& rhs) volatile {
+    inline constexpr bool operator<=(uint_NaN& rhs) volatile {
         if (*this && rhs) {
             return mValue <= rhs.mValue;
         }

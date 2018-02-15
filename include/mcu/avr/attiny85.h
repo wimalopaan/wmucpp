@@ -33,6 +33,11 @@ namespace AVR {
         static constexpr bool is_atomic() {return false;}
         
         ATTiny85() = delete;
+        struct Ram {
+            inline static constexpr uintptr_t begin = RAMSTART;  
+            inline static constexpr uintptr_t end   = RAMEND;  
+        };
+        
         struct Timer8Bit {
             typedef uint8_t value_type;
             static constexpr const uint8_t count = 1;

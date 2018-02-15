@@ -33,6 +33,12 @@ namespace AVR {
         static constexpr bool is_atomic() {return false;}
         
         ATMega328P() = delete;
+        
+        struct Ram {
+            inline static constexpr uintptr_t begin = RAMSTART;  
+            inline static constexpr uintptr_t end   = RAMEND;  
+        };
+        
         struct Usart {
             static constexpr const uint8_t count = 1;
             enum class UCSRA : uint8_t {

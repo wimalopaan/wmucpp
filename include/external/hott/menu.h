@@ -23,6 +23,7 @@
 
 #include "container/stringbuffer.h"
 #include "container/pgmstring.h"
+#include "util/static_interface.h"
 
 #include "sensorprotocoll.h"
 
@@ -352,4 +353,6 @@ namespace Hott {
     private:
         uint8_t mNumber = 0;
     };
+    
+    
 }

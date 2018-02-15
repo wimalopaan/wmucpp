@@ -26,7 +26,7 @@
 #endif
 
 //#define MEM
-#define NDEBUG
+//#define NDEBUG
 
 #include "local.h"
 #include "rcsensorled03c.h"
@@ -165,8 +165,9 @@ class Menu {
 public:
     typedef IndexType index_type;
     constexpr Menu(const PgmStringView& title, uint_NaN<IndexType> parent = uint_NaN<IndexType>{}, 
-                   const std::array<uint_NaN<IndexType>, Size>& children = std::array<uint_NaN<IndexType>, 7>{}) : 
-        mTitle{title}, mParent{parent}, mChildren{children} {}
+                   const std::array<IndexType, Size>& children = std::array<IndexType, 7>{}) : 
+        mTitle{title}, mParent{parent}, mChildren{children} {
+    }
     
 //    template<uint8_t SS, typename ST>
 //    constexpr Menu(const Menu<SS, ST>& o) : mTitle{o.mTitle}, mParent{o.mParent} {
@@ -276,7 +277,7 @@ private:
     bool mSelected{false};
     const PgmStringView mTitle;
     const uint_NaN<index_type> mParent;
-    const std::array<uint_NaN<index_type>, Size> mChildren;
+    const std::array<index_type, Size> mChildren;
 };
 
 template<typename T, uint8_t L1, uint8_t LField>
@@ -345,19 +346,23 @@ auto flat_tree = [&]{
 };
 
 template<typename T>
-struct isMenu : std::false_type {};
-template<uint8_t S, typename T>
-struct isMenu<Menu<S, T>> : std::true_type {};
+struct isMenu : public std::false_type {};
+template<auto S, typename T>
+struct isMenu<Menu<S, T>> : public std::true_type {};
 
 template<auto... II, Util::Callable L>
 constexpr auto make_menu(std::index_sequence<II...>, const L& callable) {
-    constexpr auto menu = callable();
-    return Menu<sizeof...(II)>(menu.mTitle, uint_NaN<uint8_t>(menu.mParent), {uint_NaN<uint8_t>(menu.mChildren[II])...});
+    constexpr auto inode = callable();
+    constexpr auto menu = inode.mData;
+    typedef std::remove_const_t<std::remove_reference_t<decltype(menu)>> tm;
+    static_assert(isMenu<tm>::value);
+    return Menu<sizeof...(II)>(menu.mTitle, uint_NaN<uint8_t>(inode.mParent), {inode.mChildren[II]...});
 }
 
 template<Util::Callable L>
 constexpr auto transform(const L& callable) {
     constexpr auto tuple = callable();
+    
     static_assert(Util::isTuple(tuple), "use constexpr callabe returning a tuple");
     
     if constexpr(Util::size(tuple) == 0) {
@@ -368,7 +373,7 @@ constexpr auto transform(const L& callable) {
         constexpr auto rest = [&]{return Util::tuple_tail(tuple);};
         typedef typename decltype(first)::type dataType;
         if constexpr(isMenu<dataType>::value) {
-            auto tailoredMenu = make_menu(std::make_index_sequence<first.mChildren.size>{}, [&]{return first.mData;});
+            auto tailoredMenu = make_menu(std::make_index_sequence<first.mChildren.size>{}, [&]{return first;});
             return std::tuple_cat(std::tuple(tailoredMenu), transform(rest));
         }
         else {
@@ -712,7 +717,31 @@ int main() {
     {
         Scoped<EnableInterrupt<>> ei;
         
-        std::outl<terminal>("Test50"_pgm);
+        std::outl<terminal>("Test51"_pgm);
+        
+//        {
+//            constexpr auto x = flat_tree(); 
+//            Meta::visit(x, [](auto& v){
+//                std::outl<terminal>("p: "_pgm, v.mParent);
+//                for(auto c: v.mChildren) {
+//                    std::outl<terminal>("cc: "_pgm, c);
+//                    Util::delay(10_ms);
+//                }
+//            });
+//        }
+//        {
+//            Meta::visit(t2, [](auto& v){
+//                typedef decltype(v) tr;
+//                typedef std::remove_reference_t<tr> t;
+//                if constexpr(isMenu<t>::value) {
+//                    std::outl<terminal>("s: "_pgm, v.mChildren.size);
+//                    for(auto c : v.mChildren) {
+//                        std::outl<terminal>("c: "_pgm, c);
+//                    }
+//                }
+//            });
+//        }
+        
         
         {
             std::array<OneWire::ow_rom_t, Storage::dsIds.capacity> ids;

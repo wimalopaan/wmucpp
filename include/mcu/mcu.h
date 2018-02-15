@@ -33,8 +33,8 @@ namespace AVR {
     struct ATTiny85;
     struct ATTiny25;
 }
+
 namespace ARM {
-    
 }
 
 #if defined(__AVR_ATmega1284P__)
@@ -63,21 +63,21 @@ namespace MCU {
     struct Class16Bit {};
     struct Class32Bit {};
     
-    template<typename T, typename C, typename Mcu>
-    struct is_register_type_base {
-        typedef T type;
-        typedef C compiler_type;
-        inline static constexpr bool value = false;
-    };
-    template<typename Mcu>
-    struct is_register_type_base<uint8_t, Compiler::Gcc, Mcu> {
-        typedef uint8_t type;
-        typedef Compiler::Gcc compiler_type;
-        inline static constexpr bool value = true;
-    };
+    namespace detail {
+        template<typename T, typename C, typename Mcu>
+        struct is_register_type_base : std::false_type {
+            typedef T type;
+            typedef C compiler_type;
+        };
+        template<typename Mcu>
+        struct is_register_type_base<uint8_t, Compiler::Gcc, Mcu> : std::true_type{
+            typedef uint8_t type;
+            typedef Compiler::Gcc compiler_type;
+        };
+    }
     
     template<typename T, typename Compiler>
-    struct is_register_type : public is_register_type_base<typename std::remove_cv<T>::type, Compiler, DefaultMcuType> {};
+    struct is_register_type : public detail::is_register_type_base<typename std::remove_cv<T>::type, Compiler, DefaultMcuType> {};
     
     template<bool use = true>
     struct UseInterrupts;
@@ -85,5 +85,6 @@ namespace MCU {
     struct UseInterrupts<true> : std::true_type {};
     template<>
     struct UseInterrupts<false> : std::false_type {};
-    
+
+        
 }
