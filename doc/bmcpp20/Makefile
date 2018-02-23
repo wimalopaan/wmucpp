@@ -36,6 +36,7 @@ bm30b.elf : LOADLIBES = simavrconsole.o
 bm50a.elf : LOADLIBES = simavrconsole.o
 bm60a.elf : LOADLIBES = simavrconsole.o
 bm51a.elf : LOADLIBES = simavrconsole.o
+bm55a.elf : LOADLIBES = simavrconsole.o
 #bm37a.elf:  LOADLIBES = ascale.o
 
 targets += simavrconsole.o ascale.o

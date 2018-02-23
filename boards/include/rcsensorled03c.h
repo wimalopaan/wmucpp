@@ -43,6 +43,7 @@
 #include "external/vnh2sp30.h"
 #include "external/ssd1306.h"
 #include "external/gps/gps.h"
+#include "external/hx711.h"
 #include "hal/alarmtimer.h"
 #include "hal/adccontroller.h"
 #ifdef MEM
@@ -115,6 +116,12 @@ using gpsPA = GPS::GpsProtocollAdapter<0, GPS::VTG, GPS::RMC>;
 using gpsTx = AVR::Pin<PortD, 5>; // PWM1
 using gpsUartTimer = AVR::Timer8Bit<0>;
 using gpsUart = SwUsart::UsartInt<0, gpsTx, gpsPA, gpsUartTimer, 9600>; // Int0 -> PD2 -> Dir1
+
+#ifdef USE_HX711_ON_PWM2_DIR2
+using hx711_clk = AVR::Pin<PortB, 7>; // Dir2
+using hx711_data = AVR::Pin<PortD, 6>; // PWM2
+using hx711 = HX711::Sensor<hx711_clk, hx711_data, HX711::Mode::A_Gain128, uint16_t, HX711::UseDelay<false>>;
+#endif
 #endif
 
 
@@ -122,8 +129,8 @@ using systemClock = AVR::Timer8Bit<2>; // timer 2
 using alarmTimer = AlarmTimer<systemClock, UseEvents<false>>;
 
 using adc = AVR::Adc<0, AVR::Resolution<8>>;
-using adcController = typename std::conditional<useACS, AdcController<adc, 0, 1, 2, 3, 4, 5, 7, 8>, // 0, 1, 2, 3, 4, 5 : Lipo / 7: ACS-Strom / 8: int. Temperatur
-                                                        AdcController<adc, 0, 1, 2, 3, 4, 5, 8>>::type;
+using adcController = typename std::conditional<useACS, AdcController<adc, 1, 2, 0, 4, 5, 3, 7, 8>, // 0, 1, 2, 3, 4, 5 : Lipo / 7: ACS-Strom / 8: int. Temperatur
+                                                        AdcController<adc, 1, 2, 0, 4, 5, 3, 8>>::type;
 
 #ifdef USE_PPM_ON_OPTO2
 # ifdef USE_ICP1

@@ -51,8 +51,7 @@ namespace Static {
             inline auto get(Wrapper&) const -> typename Wrapper::type* {
                 typedef typename Wrapper::type T;
                 static_assert(Meta::contains<implementors, T>::value);
-                assert(ptr);
-                assert(id != std::numeric_limits<uint8_t>::max());
+                assert(uintptr_t(ptr) & pmask);
                 return reinterpret_cast<T*>(uintptr_t(ptr) & pmask);
             }
             inline explicit operator bool() const {

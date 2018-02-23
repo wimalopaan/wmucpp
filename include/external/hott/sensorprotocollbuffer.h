@@ -122,6 +122,10 @@ namespace Hott {
         inline static void speedRaw(uint16_t v) {
             hottBinaryResponse.speed = v;
         }
+        inline static void forceRaw(uint16_t v) {
+            hottBinaryResponse.climbrate_L = v;
+            hottBinaryResponse.fuel_ml = v;
+        }
     private:
         inline static std::byte getByte(uint8_t index) {
             assert(index < sizeof(hottBinaryResponse));

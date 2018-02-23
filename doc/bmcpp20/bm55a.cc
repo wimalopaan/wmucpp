@@ -42,7 +42,17 @@ using terminal = std::basic_ostream<terminalDevice>;
 volatile uint16_t y = 42;
 //constexpr uint16_t y = 42;
 
+//using D = Util::RationalDivider<uint16_t, 2500, 6400>;
+using D = Util::RationalDivider<uint16_t, 8, 10>;
+
+
 int main() {
-        return Util::RationalDivider<uint8_t, 2500, 6400>::scale(y);
+    std::outl<terminal>(D::N);
+    std::outl<terminal>(D::D);
+    std::outl<terminal>(D::GCD);
+    std::outl<terminal>(D::data.shifts);
+    std::outl<terminal>(D::data.multiplierFull);
+    std::outl<terminal>(D::data.multiplierTruncated);
+    std::outl<terminal>(D::scale(y));
 }
 

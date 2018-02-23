@@ -53,7 +53,6 @@ public:
         case State::ConversionComplete:
             values[mActualChannel] = MCUAdc::value();
             if (++mActualChannel == NumberOfChannels) {mActualChannel = 0;}
-//            mActualChannel = (mActualChannel + 1) % NumberOfChannels;
             MCUAdc::channel(channels[mActualChannel]);
             state = State::Start;
             break;

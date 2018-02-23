@@ -30,6 +30,7 @@ namespace Util {
     struct RationalDivider {
         static_assert(Nom > 0);
         static_assert(Denom > 0);
+        static_assert(Nom < Denom);
         inline static constexpr uint64_t GCD = gcd(Nom, Denom);
         inline static constexpr uint64_t N = Nom / GCD;
         inline static constexpr uint64_t D = Denom / GCD;
@@ -42,6 +43,7 @@ namespace Util {
         inline static constexpr DivisionData data = [](){
             DivisionData data;
             double factor = double(N) / D;
+            
             for(uint8_t i = 0; i < Util::numberOfBits<U>(); ++i) {
                 double d = 1.0 / (uint64_t(1) << (i + 1));
                 if (d < factor) {

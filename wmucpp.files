@@ -9,6 +9,8 @@ boards/rcsensorled03/test19.cc
 boards/rcsensorled03/test20.cc
 boards/rcsensorled03/test21.cc
 boards/rcsensorled03/test22.cc
+boards/rcsensorled03/test23.cc
+boards/rcsensorled03/test24.cc
 boards/rcsensorled03/test50.cc
 boards/rcsensorled03/test51.cc
 boards/unimaxi/atmega1284p/gpstest.cc
@@ -31,6 +33,7 @@ host/test40.cc
 images/a1.h
 images/a2.h
 include/external/gps/gps.h
+include/external/hx711.h
 include/external/ssd1306.h
 include/hal/multichannelppm.h
 include/hal/sumo.h
