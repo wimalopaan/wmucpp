@@ -42,33 +42,47 @@ public:
     typedef ErrPin err_pin;
 
     template<const std::hertz& MinFrequency>
-    static void init() {
+    inline static void init() {
         mcu_pwm::template init<MinFrequency>();        
-        
         if constexpr(!std::is_same<err_pin, void>::value) {
             err_pin::template dir<AVR::Input>();
             err_pin::pullup();
         }
     }
-    static void pwm(const std::percent& p) {
+    
+    template<typename T, T Min, T Max>
+    inline static value_type pwm(const uint_ranged<T, Min, Max>& value) {
+        constexpr uint64_t denom = Max - Min;
+        constexpr uint64_t nom = 255;
+        value_type pw = Util::RationalDivider<T, nom, denom>::scale(value.toInt() - Min);
+        if (direction().isClockWise) {
+            mcu_pwm::template pwm<typename mcu_pwm::A>(pw);
+            mcu_pwm::template pwm<typename mcu_pwm::B>(value_type{0});
+        }
+        else {
+            mcu_pwm::template pwm<typename mcu_pwm::A>(pw);
+            mcu_pwm::template pwm<typename mcu_pwm::B>(pw);
+        }
+        return pw;
+    }
+    
+    inline static void pwm(const std::percent& p) {
         if (direction().isClockWise) {
             mcu_pwm::template pwm<typename mcu_pwm::A>(p);
             mcu_pwm::template pwm<typename mcu_pwm::B>(std::percent{0});
-//            mcu_pwm::template pwm<typename mcu_pwm::A>(p);
-//            mcu_pwm::template pwm<typename mcu_pwm::B>(std::percent{0});
         }
         else {
             mcu_pwm::template pwm<typename mcu_pwm::A>(p);
             mcu_pwm::template pwm<typename mcu_pwm::B>(p);
         }
     }
-    static value_type timerValue() {
+    inline static value_type timerValue() {
         return mcu_pwm::template ocr<typename mcu_pwm::B>();
     }
-    static std::hertz frequency() {
+    inline static std::hertz frequency() {
         return mcu_pwm::frequency();
     }
-    static Direction& direction() {
+    inline static Direction& direction() {
         static Direction dir;
         return dir;
     }
@@ -90,7 +104,7 @@ public:
     using pinset = AVR::PinSet<InPin1, InPin2>;
     
     struct PwmOnHandler : public IsrBaseHandler<typename AVR::ISR::Timer<Timer::number>::Overflow> {
-        static void isr() {
+        inline static void isr() {
             if (direction().isClockWise) {
                 pinset::template off<InPin1, InPin2>();
             }
@@ -100,16 +114,17 @@ public:
         }
     };
     struct PwmOffHandler : public IsrBaseHandler<typename AVR::ISR::Timer<Timer::number>::CompareA> {
-        static void isr() {
+        inline static void isr() {
             pinset::template on<InPin1, InPin2>();
         }
     };
     
-    static Direction& direction() {
+    inline static Direction& direction() {
         static Direction dir;
         return dir;
     }
-    static void pwm(const std::percent& p) {
+
+    inline static void pwm(const std::percent& p) {
         using namespace std::literals::quantity;
         if (p > 0_ppc) {
             Timer::mcuInterrupts()->timsk.template add<mask_type::ociea | mask_type::toie>();
@@ -122,7 +137,7 @@ public:
     }
     
     template<const std::hertz& MinFrequency>
-    static void init() {
+    inline static void init() {
         constexpr auto prescaler = AVR::Util::prescalerForAbove<Timer>(MinFrequency);
         static_assert(prescaler > 0, "wrong prescaler");
         Timer::template prescale<prescaler>();
@@ -137,7 +152,7 @@ public:
         }
     }
     
-    static void periodic() {
+    inline static void periodic() {
         if (!err_pin::read()) {
             // todo: Status: direction , error in ein byte
 //            EventManager::enqueue({EventType::TLE5205Error, 0}); 

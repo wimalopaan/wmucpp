@@ -29,6 +29,7 @@ namespace AVR {
     struct ATMega1284P;
     struct ATMega328P;
     struct ATMega328PB;
+    struct ATMega324PB;
     struct ATTiny84;
     struct ATTiny85;
     struct ATTiny25;
@@ -47,6 +48,8 @@ typedef AVR::ATMega88P DefaultMcuType;
 typedef AVR::ATMega328PB DefaultMcuType;
 #elif defined(__AVR_ATmega8__)
 typedef AVR::ATMega8 DefaultMcuType;
+#elif defined(__AVR_ATmega324PB__)
+typedef AVR::ATMega324PB DefaultMcuType;
 #elif defined(__AVR_ATtiny85__)
 typedef AVR::ATTiny85 DefaultMcuType;
 #elif defined(__AVR_ATtiny25__)

@@ -73,7 +73,7 @@ namespace AVR {
     }
     template<typename T>
     concept bool ATMega_X4() {
-        return std::is_same<T, ATMega1284P>::value;
+        return std::is_same<T, ATMega1284P>::value || std::is_same<T, ATMega324PB>::value;
     }
     
     // todo: change to non constexpr here, since reinterpret_cast renders it non-constexpr at all
@@ -119,6 +119,8 @@ namespace AVR {
 #include "mcu/avr/atmega328pb.h"
 #elif defined(__AVR_ATmega8__)
 #include "mcu/avr/atmega8.h"
+#elif defined(__AVR_ATmega324PB__)
+#include "mcu/avr/atmega324pb.h"
 #elif defined(__AVR_ATtiny85__)
 #include "mcu/avr/attiny85.h"
 #elif defined(__AVR_ATtiny25__)

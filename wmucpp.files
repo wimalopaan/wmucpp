@@ -1,6 +1,8 @@
 3rdparty/tinygps++/TinyGPS.h
 3rdparty/tinygps/TinyGPS.cc
 3rdparty/tinygps/TinyGPS.h
+boards/include/rcsensorled01b.h
+boards/rcsensorled/test100.cc
 boards/rcsensorled03/oledtest.cc
 boards/rcsensorled03/test16.cc
 boards/rcsensorled03/test17.cc
@@ -13,6 +15,10 @@ boards/rcsensorled03/test23.cc
 boards/rcsensorled03/test24.cc
 boards/rcsensorled03/test50.cc
 boards/rcsensorled03/test51.cc
+boards/rcsensorled10/Makefile
+boards/rcsensorled10/local.h
+boards/rcsensorled10/test01.cc
+boards/rcsensorled10/test24.cc
 boards/unimaxi/atmega1284p/gpstest.cc
 boards/unimaxi/atmega1284p/spissd1306.cc
 boards/unimaxi/attiny85_1/main_mod_2.cc
@@ -27,6 +33,11 @@ doc/bmcpp02/bm68a.cc
 doc/bmcpp98/bm100a.cc
 doc/bmcpp98/bm101a.cc
 doc/bmcpp98/bm102a.cc
+host/hott/Makefile
+host/hott/test01.cc
+host/hott/test02.cc
+host/hott/test03.cc
+host/hott/uart01.cc
 host/test25.cc
 host/test26.cc
 host/test40.cc
@@ -37,6 +48,7 @@ include/external/hx711.h
 include/external/ssd1306.h
 include/hal/multichannelppm.h
 include/hal/sumo.h
+include/mcu/avr/atmega324pb.h
 include/mcu/avr/swusart2.h
 include/util/static_interface.h
 tools/sumd_analyzer/sumdan.cc

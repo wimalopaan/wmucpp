@@ -384,6 +384,18 @@ namespace TWI {
         typedef AVR::Pin<PortE, 1> scl;
         typedef AVR::Pin<PortE, 0> sda;
     };
+    template<>
+    struct TwiPorts<0, AVR::ATMega324PB> {
+        using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
+        typedef AVR::Pin<PortC, 0> scl;
+        typedef AVR::Pin<PortC, 1> sda;
+    };
+    template<>
+    struct TwiPorts<1, AVR::ATMega324PB> {
+        using PortE = AVR::Port<DefaultMcuType::PortRegister, AVR::E>;
+        typedef AVR::Pin<PortE, 6> scl;
+        typedef AVR::Pin<PortE, 5> sda;
+    };
     
     template<uint8_t N, typename MCU = DefaultMcuType>
     class Master final {

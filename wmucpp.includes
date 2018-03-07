@@ -79,3 +79,5 @@ include/external/gps
 3rdparty/tinygps++
 3rdparty/tinygps
 images
+host/hott
+boards/rcsensorled10

@@ -332,6 +332,7 @@ typedef typename MCU::Timer16Bit::TCCRA tccra_type;
 typedef typename MCU::Timer16Bit::TCCRB tccrb_type;
 typedef typename MCU::Timer16Interrupts::Flags flags_type;
 typedef typename MCU::Timer16Interrupts::Mask mask_type;
+typedef typename MCU::Timer16Interrupts int_type;
 static constexpr auto csBitMask = AVR::csMask10Bit<tccrb_type>;
 typedef uint16_t value_type;
 

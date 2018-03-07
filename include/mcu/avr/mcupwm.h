@@ -38,37 +38,6 @@ namespace AVR {
         using A = typename AVR::TimerParameter<TimerN, MCU>::FastPwm1::A;
         using B = typename AVR::TimerParameter<TimerN, MCU>::FastPwm1::B;
     public:
-//        struct A {
-//            static void off() {
-//                mcuTimer()->tccra.template clear<AVR::TimerParameter<TimerN, MCU>::FastPwm1::cha, DisbaleInterrupt<NoDisableEnable>>();
-//                pwmA::high();
-//            }
-//            static void on() {
-//                mcuTimer()->tccra.template add<AVR::TimerParameter<TimerN, MCU>::FastPwm1::cha, DisbaleInterrupt<NoDisableEnable>>();
-//            }
-//            static void ocr(const typename timer_type::value_type& v) {
-//                *mcuTimer()->ocra = v;
-//            }
-//            static value_type ocr() {
-//                return *mcuTimer()->ocra;
-//            }
-//        };
-//        struct B {
-//            static void off() {
-//                mcuTimer()->tccra.template clear<AVR::TimerParameter<TimerN, MCU>::FastPwm1::chb, DisbaleInterrupt<NoDisableEnable>>();
-//                pwmB::high();
-//            }
-//            static void on() {
-//                mcuTimer()->tccra.template add<AVR::TimerParameter<TimerN, MCU>::FastPwm1::chb, DisbaleInterrupt<NoDisableEnable>>();
-//            }
-//            static void ocr(const typename timer_type::value_type& v) {
-//                *mcuTimer()->ocrb = v;
-//            }
-//            static value_type ocr() {
-//                return *mcuTimer()->ocrb;
-//            }
-//        };
-        
         template<const std::hertz& MinFrequency>
         static void init() {
             pwmA::template dir<AVR::Output>();
@@ -95,7 +64,7 @@ namespace AVR {
             }
         }
         template<typename Channel>
-        static void pwm(typename timer_type::value_type& v) {
+        static void pwm(const typename timer_type::value_type& v) {
             if (v > 0) {
                 Channel::on();
                 Channel::ocr(v);

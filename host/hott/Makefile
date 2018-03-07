@@ -17,12 +17,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-MCU = atmega1284p
-F_OSC = 20000000
+targets += uart01
+targets += test01
+targets += test02
+targets += test03
 
-subdirs = unimaxi rcsensorled clock anano i2cIR i2cWS2812 rcsensorled03 rcsensorled10
+-include ../../Makefile.include
 
-#targets +=  main.elf main.size
-
--include ../Makefile.include
-
+CXX = /usr/bin/g++
+#CXX = clang++
+CC = g++
+LDFLAGS = -lpthread
+CXXFLAGS = -g -std=c++17 -fconcepts
+CXXFLAGS += -Wall -Wextra -fPIC
+CXXFLAGS += -I../include 
