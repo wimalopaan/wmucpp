@@ -16,26 +16,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//#define USE_RPM2
 
 #define USE_TC1_AS_HARDPPM
-
-#ifndef USE_TC1_AS_HARDPPM
-# define USE_RPM2_ON_OPTO2
-#endif
-
-#define USE_TC0_AS_SWUSART
-
-#ifdef USE_TC0_AS_SWUSART
-# define USE_HX711_ON_PWM2_DIR2
-#endif
+#define USE_TC3_AS_HARDPPM
 
 #define MEM
 #define NDEBUG
-//#define OUTPUT
+#define OUTPUT
 
 #include "local.h"
-#include "rcsensorled03c.h"
+#include "rcsensorled10.h"
 #include "console.h"
 #include "util/meta.h"
 #include "hal/eeprom.h"
@@ -45,9 +35,9 @@
 
 // todo: konfigurierbar machen
 
-using testPin0 = AVR::Pin<PortC, 1>; // LipoA1 = Chan0
-using testPin1 = AVR::Pin<PortC, 2>; // LipoA2 = Chan1
-using testPin2 = AVR::Pin<PortC, 0>; // LipoA3 = Chan1
+using testPin0 = AVR::Pin<PortA, 0>; // LipoA1 = Chan0
+using testPin1 = AVR::Pin<PortA, 1>; // LipoA2 = Chan1
+using testPin2 = AVR::Pin<PortA, 2>; // LipoA3 = Chan1
 
 template<typename F>
 struct StringConverter;
@@ -114,7 +104,7 @@ struct Storage {
     inline static std::vector<TWI::Address, NumberOfI2CDevs> i2cDevices;
     
     inline static std::array<FixedPoint<int, 4>, NumberOfOWireDevs> temps;
-    inline static std::array<std::RPM, 2> rpms;
+    inline static std::array<std::RPM, 3> rpms;
 
     inline static std::array<FixedPoint<int, 4>, 2> batts;
     inline static std::array<FixedPoint<int, 4>, 2> minCells;
@@ -506,7 +496,7 @@ using terminal = std::basic_ostream<terminalDevice>;
 
 using namespace std::literals::quantity;
 
-struct I2CInterrupt : public IsrBaseHandler<AVR::ISR::Int<1>> {
+struct I2CInterrupt : public IsrBaseHandler<AVR::ISR::Int<2>> {
     static void isr() {
     }
 };
@@ -514,15 +504,8 @@ using i2cInterruptHandler = I2CInterrupt;
 
 using isrRegistrar = IsrRegistrar<rcUsart::RxHandler, rcUsart::TxHandler, 
 sensorUsart::RxHandler, sensorUsart::TxHandler
-#ifdef USE_RPM2_ON_OPTO2
-, softPpm::OCAHandler, softPpm::OCBHandler
-#else
-//, ppmDecoder
-#endif
 ,i2cInterruptHandler
-#ifdef USE_TC0_AS_SWUSART
-, gpsUart::RxHandler, gpsUart::TxHandler, gpsUart::StartBitHandler
-#endif
+, gpsUsart::RxHandler, gpsUsart::TxHandler
 >;
 
 using sensorData = Hott::SensorProtocollBuffer<0>;
@@ -897,21 +880,18 @@ private:
         const auto upm1 = rpm1::rpm();
         sensorData::rpm1(upm1);
         Storage::rpms[0] = rpm1::rpm();
-        
-#ifdef USE_RPM2_ON_OPTO2
+
         const auto upm2 = rpm2::rpm();
         Storage::rpms[1] = upm2;
-#endif
+
+        const auto upm3 = rpm3::rpm();
+        Storage::rpms[2] = upm3;
     }
     static inline void update4() {
-#ifdef USE_TC0_AS_SWUSART
         GPS::VTG::speedRaw(decimalBuffer);
         auto s = StringConverter<FixedPoint<int16_t, 4>>::parse(decimalBuffer);
         sensorData::speedRaw(s.raw());
-#endif
-#ifdef USE_HX711_ON_PWM2_DIR2
         sensorData::forceRaw(hx711::value());
-#endif
     }
     inline static StringBuffer<GPS::Sentence::DecimalMaxWidth> decimalBuffer;
     inline static uint_ranged_circular<uint8_t, 0, 4> part;
@@ -925,37 +905,29 @@ inline void updateActors() {
     case 0: 
     {
         auto v1 = Hott::SumDProtocollAdapter<0>::value(1);
-#ifdef USE_RPM2_ON_OPTO2
-        softPpm::ppm(v1, 0);
-#else
-        hardPpm::ppm<hardPpm::A>(v1);
+#ifdef USE_TC1_AS_HARDPPM
+        hardPpm1::ppm<hardPpm1::A>(v1);
 #endif
     }
         break;
     case 1:
     {
         auto v3 = Hott::SumDProtocollAdapter<0>::value(3);
-#ifdef USE_RPM2_ON_OPTO2
-        softPpm::ppm(v3, 1);
-#else
-        hardPpm::ppm<hardPpm::B>(v3);
+#ifdef USE_TC1_AS_HARDPPM
+        hardPpm1::ppm<hardPpm1::B>(v3);
 #endif
     }
         break;
     case 2:
     {
-#ifndef USE_TC0_AS_SWUSART
         auto v0 = Hott::SumDProtocollAdapter<0>::value(0);
         hbridge1::pwm(v0);
-#endif
     }
         break;
     case 3:
     {
-#ifndef USE_TC0_AS_SWUSART
         auto v0 = Hott::SumDProtocollAdapter<0>::value(0);
         hbridge2::pwm(v0);
-#endif
     }
         break;
     default:
@@ -1005,9 +977,7 @@ int main() {
     
     alarmTimer::init(AVR::TimerMode::CTCNoInt); 
     
-#ifndef USE_RPM2_ON_OPTO2
     //    ppmDecoder::init();
-#endif
     
     leds::init();
     leds::off();
@@ -1015,31 +985,27 @@ int main() {
     Util::delay(1_ms);    
     leds::set(0, Constants::cGreen);
     
+    Util::delay(1_ms);    
     ledFSM::init();
     
     crWriterSensorBinary::init();
     crWriterSensorText::init();
     
 #ifdef USE_TC1_AS_HARDPPM
-    hardPpm::init();
-#else 
-    softPpm::init();    
+    hardPpm1::init();
+#endif
+#ifdef USE_TC3_AS_HARDPPM
+    hardPpm2::init();
 #endif
     rpm1::init();
-#ifdef USE_RPM2_ON_OPTO2
     rpm2::init();
-#endif
+    rpm3::init();
     
-#ifndef USE_TC0_AS_SWUSART
     hardPwm::init<Constants::pwmFrequency>();
-#else
-    gpsUart::init();
-#endif
+    gpsUsart::init<9600>();
     
-#ifdef USE_HX711_ON_PWM2_DIR2
     hx711::init();
-#endif
-    
+
     ds18b20::init();
     
     TwiMaster::init<Constants::fSCL>();
@@ -1049,7 +1015,8 @@ int main() {
     {
         Scoped<EnableInterrupt<>> ei;
         
-        std::outl<terminal>("Test23"_pgm);
+        std::outl<terminal>("Test24"_pgm);
+        Util::delay(100_ms);
         
         {
             std::array<OneWire::ow_rom_t, Storage::dsIds.capacity> ids;
@@ -1094,12 +1061,9 @@ int main() {
             TwiMasterAsync::periodic();
             menu::periodic();
             rpm1::periodic();
-#ifdef USE_RPM2_ON_OPTO2
             rpm2::periodic();
-#endif
-#ifdef USE_HX711_ON_PWM2_DIR2
+            rpm3::periodic();
             hx711::periodic();
-#endif
             testPin1::on();
             adcController::periodic();
             testPin1::off();
@@ -1126,19 +1090,17 @@ int main() {
                         std::outl<terminal>("W: "_pgm, hx711::value());
                         
                         rpm1::check();
+                        rpm2::check();
+                        rpm3::check();
                         uint16_t a = adcController::value(6);
 #ifdef OUTPUT
                         std::outl<terminal>("acs: "_pgm, a);
 #endif
-#ifdef USE_RPM2_ON_OPTO2
-                        rpm2::check();
-#endif
+
 #ifdef USE_PPM_ON_OPTO2
 #ifdef OUTPUT
                         std::outl<terminal>("ppm: "_pgm, ppmDecoder::value(0));
 #endif
-#endif
-#ifdef USE_TC0_AS_SWUSART
 #endif
 #ifdef MEM
 #ifdef OUTPUT
@@ -1166,8 +1128,15 @@ int main() {
         }
     }    
 }
-ISR(INT1_vect) {
-    isrRegistrar::isr<AVR::ISR::Int<1>>();
+ISR(INT2_vect) {
+    isrRegistrar::isr<AVR::ISR::Int<2>>();
+}
+// GPS
+ISR(USART2_RX_vect) {
+    isrRegistrar::isr<AVR::ISR::Usart<2>::RX>();
+}
+ISR(USART2_UDRE_vect){
+    isrRegistrar::isr<AVR::ISR::Usart<2>::UDREmpty>();
 }
 // SumD
 ISR(USART1_RX_vect) {
@@ -1183,39 +1152,7 @@ ISR(USART0_RX_vect) {
 ISR(USART0_UDRE_vect){
     isrRegistrar::isr<AVR::ISR::Usart<0>::UDREmpty>();
 }
-#ifdef USE_TC0_AS_SWUSART
-ISR(TIMER0_COMPA_vect) {
-    isrRegistrar::isr<AVR::ISR::Timer<0>::CompareA>();
-}
-ISR(TIMER0_COMPB_vect) {
-    isrRegistrar::isr<AVR::ISR::Timer<0>::CompareB>();
-}
-ISR(INT0_vect) {
-    isrRegistrar::isr<AVR::ISR::Int<0>>();
-}
-#endif
-// Timer 4
-// softPpm
-#ifdef USE_RPM2_ON_OPTO2
-ISR(TIMER4_COMPA_vect) {
-    isrRegistrar::isr<AVR::ISR::Timer<4>::CompareA>();
-}
-ISR(TIMER4_COMPB_vect) {
-    isrRegistrar::isr<AVR::ISR::Timer<4>::CompareB>();
-}
-#endif
 
-#ifdef USE_PPM_ON_OPTO2
-# ifdef USE_ICP1
-ISR(TIMER1_CAPT_vect) {
-    isrRegistrar::isr<AVR::ISR::Timer<1>::Capture>();
-}
-# else
-ISR(PCINT0_vect) {
-    isrRegistrar::isr<AVR::ISR::PcInt<0>>();
-}
-# endif
-#endif
 #ifndef NDEBUG
 void assertFunction(const PgmStringView& expr, const PgmStringView& file, unsigned int line) noexcept {
     std::outl<terminal>("Assertion failed: "_pgm, expr, Char{','}, file, Char{','}, line);

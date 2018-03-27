@@ -40,7 +40,7 @@ namespace AVR {
         };
         
         struct Usart {
-            static constexpr const uint8_t count = 2;
+            static constexpr const uint8_t count = 3;
             enum class UCSRA : uint8_t {
                 rxc = (1 << RXC0),
                 txc = (1 << TXC0),
@@ -264,6 +264,7 @@ namespace AVR {
                 refs1 = (1 << REFS1),
                 refs0 = (1 << REFS0),
                 adlar = (1 << ADLAR),
+                mux4  = (1 << MUX4),            
                 mux3  = (1 << MUX3),            
                 mux2  = (1 << MUX2),            
                 mux1  = (1 << MUX1),            
@@ -571,7 +572,7 @@ namespace AVR {
                                                              MUX::mux2 | MUX::mux1 | MUX::mux0,
                                                              MUX::mux3
                                                              );
-        static constexpr double VRef = 1.1;
+//        static constexpr double VRef = 1.1;
     };
     
     template<>

@@ -1,0 +1,36 @@
+Name: SteuerSensorModul10
+
+Korrekturen auf dem Boad:
+
+Beschreibung:
+
+* test01: Test der Anpassungen des Compilers für ATMega324pB
+	- leer
+
+* test02: Toogle TestPins
+
+* test03: Debug-Ausgaben (SUMD-Uart)
+
+* test04: GPS
+	- Debug-Ausgabe über SUMD
+
+* test05: 
+	- Hott-Sensor (ohne ConstantRateWriter)
+	- Hott-Sumd
+	- GPS
+	- Debug-Ausgabe über SUMD
+
+* test06:
+	- Systemtimer (auch für ConstantRateWriter)
+	- Hott-Sensor
+	- Hott-Sumd
+	- GPS
+	- Debug-Ausgabe über SUMD
+
+test07: 
+	- OneWire-Scan
+	- Debug-Ausgabe über SUMD
+
+test08: 
+	- I2C-Scan
+	- Debug-Ausgabe über SUMD

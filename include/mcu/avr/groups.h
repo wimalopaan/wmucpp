@@ -18,7 +18,24 @@
 
 #pragma once
 
-// fixme: mit constraints wieder vereinheitlichen ohne ifdef
+namespace AVR {
+    namespace AD {
+        struct V1_1;
+        struct V2_56;
+        
+        template<uint16_t Volts, uint16_t MilliVolts>
+        struct Vextern {
+            static constexpr float value = Volts + (0.001f * MilliVolts);
+        };
+        template<typename Voltage, typename MCU> struct VRef {
+            static constexpr auto refs = typename MCU::Adc::MUX{0};
+            static constexpr float value = Voltage::value;
+        };
+    }
+    template<uint8_t TimerN, typename MCU> struct TimerParameter;
+    template<uint8_t TimerN, typename MCU> struct Timer8Bit;
+    template<uint8_t TimerN, typename MCU> struct Timer16Bit;
+}
 
 #include "grmega_x4.h"
 #include "grmega_x8.h"

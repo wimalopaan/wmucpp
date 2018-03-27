@@ -2,6 +2,7 @@
 3rdparty/tinygps/TinyGPS.cc
 3rdparty/tinygps/TinyGPS.h
 boards/include/rcsensorled01b.h
+boards/include/rcsensorled10.h
 boards/rcsensorled/test100.cc
 boards/rcsensorled03/oledtest.cc
 boards/rcsensorled03/test16.cc
@@ -16,8 +17,16 @@ boards/rcsensorled03/test24.cc
 boards/rcsensorled03/test50.cc
 boards/rcsensorled03/test51.cc
 boards/rcsensorled10/Makefile
+boards/rcsensorled10/board.txt
 boards/rcsensorled10/local.h
 boards/rcsensorled10/test01.cc
+boards/rcsensorled10/test02.cc
+boards/rcsensorled10/test03.cc
+boards/rcsensorled10/test04.cc
+boards/rcsensorled10/test05.cc
+boards/rcsensorled10/test06.cc
+boards/rcsensorled10/test07.cc
+boards/rcsensorled10/test08.cc
 boards/rcsensorled10/test24.cc
 boards/unimaxi/atmega1284p/gpstest.cc
 boards/unimaxi/atmega1284p/spissd1306.cc
@@ -41,6 +50,8 @@ host/hott/uart01.cc
 host/test25.cc
 host/test26.cc
 host/test40.cc
+host/test91.cc
+host/test92.cc
 images/a1.h
 images/a2.h
 include/external/gps/gps.h

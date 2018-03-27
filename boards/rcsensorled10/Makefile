@@ -17,6 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+# crtatmega324pb.o / libatmega324pb.a / specs-atmega324pb aus den Atmel-Packs
+#
+# Signatur in lokale avrdude.conf eingetragen
+
 # sudo avrdude -p atmega324pb -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P usb -c avrisp2 -U lfuse:w:0xe0:m -U hfuse:w:0xd9:m -U efuse:w:0xf7:m
 
 # EEProm Inhalt nicht löschen
@@ -28,6 +32,14 @@ F_OSC = 20000000
 subdirs =
 
 targets += test01.s test01.elf
+targets += test02.s test02.elf
+targets += test03.s test03.elf
+targets += test04.s test04.elf
+targets += test05.s test05.elf
+targets += test06.s test06.elf
+targets += test07.s test07.elf
+targets += test08.s test08.elf
+
 targets += test24.s test24.elf
 
 -include ../../Makefile.include
