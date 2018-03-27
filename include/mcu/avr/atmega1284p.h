@@ -21,7 +21,6 @@
 #include <cstdint>
 
 #include "avr8defs.h"
-//#include "mcu/register.h"
 
 #pragma pack(push)
 #pragma pack(1)
@@ -293,6 +292,7 @@ namespace AVR {
                 refs1 = (1 << REFS1),
                 refs0 = (1 << REFS0),
                 adlar = (1 << ADLAR),
+                mux4  = (1 << MUX4),            
                 mux3  = (1 << MUX3),            
                 mux2  = (1 << MUX2),            
                 mux1  = (1 << MUX1),            

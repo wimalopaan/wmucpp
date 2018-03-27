@@ -559,7 +559,7 @@ namespace AVR {
                                                              MUX::mux2 | MUX::mux1 | MUX::mux0,
                                                              MUX::mux3
                                                              );
-        static constexpr double VRef = 1.1;
+//        static constexpr double VRef = 1.1;
     };
     
     template<>

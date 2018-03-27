@@ -20,11 +20,18 @@
 
 #include <cstdint>
 
-template<typename Timer>
+template<typename Timer, typename Prescaler = void>
 class PPMParameter {
     PPMParameter() = delete;
 public:
-    static constexpr uint32_t prescaler = AVR::Util::calculatePpmOutParameter<Timer, uint16_t>();
+    static constexpr uint32_t prescaler = [](){
+        if constexpr(std::is_same<void, Prescaler>::value) {
+            return AVR::Util::calculatePpmOutParameter<Timer, uint16_t>();
+        }
+        else {
+            return Prescaler::value;
+        }
+    }();
     static_assert(prescaler > 0, "wrong prescaler");
     static constexpr std::hertz timerFrequency = Config::fMcu / prescaler;
     static constexpr uint16_t ocMin = 1_ms * timerFrequency;
@@ -37,5 +44,5 @@ public:
     static_assert(ocFrame > 0, "wrong oc value");
 };
 
-template<typename Timer>
-constexpr std::hertz PPMParameter<Timer>::timerFrequency;
+//template<typename Timer>
+//constexpr std::hertz PPMParameter<Timer>::timerFrequency;

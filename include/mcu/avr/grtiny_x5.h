@@ -23,9 +23,6 @@
 
 namespace AVR {
     
-    template<uint8_t TimerN, typename MCU>
-    struct TimerParameter;
-    
     template<AVR::ATTiny_X5 MCU>
     struct TimerParameter<0, MCU> {
         using PortB = AVR::Port<typename MCU::PortRegister, AVR::B>;

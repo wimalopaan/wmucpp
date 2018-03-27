@@ -22,9 +22,13 @@
 #include "mcu/avr8.h"
 
 namespace AVR {
-    
-    template<uint8_t TimerN, typename MCU = DefaultMcuType>
-    struct TimerParameter;
+    namespace AD {
+        template<AVR::ATMega_X8 MCU>
+        struct VRef<V1_1, MCU> {
+            static constexpr auto refs = MCU::Adc::MUX::refs1 | MCU::Adc::MUX::refs0;
+            static constexpr float value = 1.1;
+        };
+    }
     
     template<AVR::ATMega_X8 MCU>
     struct TimerParameter<0, MCU> final {

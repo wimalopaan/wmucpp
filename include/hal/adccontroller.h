@@ -33,6 +33,8 @@ public:
     static constexpr uint8_t channels[] = {Channels...};
     static constexpr uint8_t NumberOfChannels = sizeof... (Channels);    
     
+    static_assert(NumberOfChannels <= 8);
+    
     static void init() {
         MCUAdc::init();
         MCUAdc::channel(channels[0]);

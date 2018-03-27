@@ -383,6 +383,19 @@ namespace AVR {
 #endif
             };
         };
+        template<>
+        struct Usart<2> {
+            struct RX {
+#ifdef USART2_RX_vect_num
+                static constexpr const uint32_t number = USART2_RX_vect_num;
+#endif
+            };
+            struct UDREmpty {
+#ifdef USART2_UDRE_vect_num
+                static constexpr const uint32_t number = USART2_UDRE_vect_num;
+#endif
+            };
+        };
         
         template<uint8_t> 
         struct AdComparator;

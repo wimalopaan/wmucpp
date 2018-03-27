@@ -29,7 +29,7 @@
 
 namespace AVR {
     
-    template<uint8_t TimerN, typename MCU = DefaultMcuType>
+    template<uint8_t TimerN, typename Prescaler = void, typename MCU = DefaultMcuType>
     class PPM final {
         PPM() = delete;
     public:
@@ -40,10 +40,9 @@ namespace AVR {
         using ocBPin = typename AVR::TimerParameter<TimerN, MCU>::ocBPin;
         static constexpr const auto mcuTimer = AVR::getBaseAddr<MCUTimer, TimerN>;
         
-        using parameter = PPMParameter<typename AVR::TimerParameter<TimerN, MCU>::timer_type>;
+        using parameter = PPMParameter<typename AVR::TimerParameter<TimerN, MCU>::timer_type, Prescaler>;
         
         typedef uint_ranged<uint16_t, parameter::ocMin, parameter::ocMax> ranged_type;
-        
         
         static void init() {
             ocAPin::template dir<AVR::Output>();
@@ -52,8 +51,15 @@ namespace AVR {
             timer_type::template prescale<parameter::prescaler>();
             
             *mcuTimer()->icr = parameter::ocFrame;
-            mcuTimer()->tccra.template set<AVR::TimerParameter<TimerN, MCU>::FastPwm2::tccra>();
-            mcuTimer()->tccrb.template add<AVR::TimerParameter<TimerN, MCU>::FastPwm2::tccrb, DisbaleInterrupt<NoDisableEnable>>();
+            
+            if constexpr(std::is_same<Prescaler, void>::value) {
+                mcuTimer()->tccra.template set<AVR::TimerParameter<TimerN, MCU>::FastPwm2::tccra>();
+                mcuTimer()->tccrb.template add<AVR::TimerParameter<TimerN, MCU>::FastPwm2::tccrb, DisbaleInterrupt<NoDisableEnable>>();
+            }
+            else {
+                mcuTimer()->tccra.template set<AVR::TimerParameter<TimerN, MCU>::FastPwm1::tccra>();
+                mcuTimer()->tccrb.template add<AVR::TimerParameter<TimerN, MCU>::FastPwm1::tccrb, DisbaleInterrupt<NoDisableEnable>>();
+            }
             constexpr typename timer_type::value_type medium = (parameter::ocMin + parameter::ocMax) / 2;
             *mcuTimer()->ocra = medium;
             *mcuTimer()->ocrb = medium;

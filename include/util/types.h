@@ -411,7 +411,7 @@ class uintN_t {
 public:
     typedef typename detail::TypeForBits<Bits>::type value_type;
     inline static constexpr value_type mask = ((1 << Bits) - 1);
-    explicit uintN_t(value_type v) : mValue(v & mask) {}
+    explicit uintN_t(value_type v = 0) : mValue(v & mask) {}
     operator value_type() const {
         return mValue;
     }

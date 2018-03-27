@@ -20,7 +20,8 @@
 
 #include <cstdint>
 #include "mcu/avr8.h"
-#include "mcu/ports.h"
+#include "mcu/avr/groups.h"
+//#include "mcu/ports.h"
 #include "hal/event.h"
 #include "util/types.h"
 #include "util/dassert.h"
@@ -41,7 +42,7 @@ namespace AVR {
         typedef uint_ranged<uint8_t, 0, 255> type;
     };
     
-    template<uint8_t N, typename Reso = Resolution<10>, typename MCU = DefaultMcuType>
+    template<uint8_t N, typename Reso = Resolution<10>, typename VREF = AD::VRef<AD::V1_1, DefaultMcuType>, typename MCU = DefaultMcuType>
     class Adc final {
         static_assert(N < MCU::Adc::count, "wrong adc number"); 
         
@@ -52,9 +53,10 @@ namespace AVR {
         typedef typename Reso::type value_type;
         typedef FixedPoint<uint16_t, 8> voltage_type;
         
-        static constexpr auto VRef = MCU::Adc::template Parameter<N>::VRef;
+//        static constexpr auto VRef = MCU::Adc::template Parameter<N>::VRef;
+        static constexpr auto VRef = VREF::value;
+        static constexpr auto refs = VREF::refs;
         
-//        static constexpr value_type value_mask = (1 << AdcParameter<N, MCU>::bits) - 1;
         static constexpr double VBit = VRef / Reso::type::Upper;
         
         typedef MCU mcu_type;
@@ -66,10 +68,10 @@ namespace AVR {
         
         static void init() {
             if constexpr(std::is_same<Reso, Resolution<8>>::value) {
-                mcuAdc()->admux.template add<MCU::Adc::MUX::refs1 | MCU::Adc::MUX::refs0 | MCU::Adc::MUX::adlar, DisbaleInterrupt<NoDisableEnable>>();
+                mcuAdc()->admux.template add<refs | MCU::Adc::MUX::adlar, DisbaleInterrupt<NoDisableEnable>>();
             }
             else {
-                mcuAdc()->admux.template add<MCU::Adc::MUX::refs1 | MCU::Adc::MUX::refs0, DisbaleInterrupt<NoDisableEnable>>();
+                mcuAdc()->admux.template add<refs, DisbaleInterrupt<NoDisableEnable>>();
             }
             mcuAdc()->adcsra.template add<MCU::Adc::SRA::aden | MCU::Adc::SRA::adps2 | MCU::Adc::SRA::adps1 | MCU::Adc::SRA::adps0, DisbaleInterrupt<NoDisableEnable>>();
         }
