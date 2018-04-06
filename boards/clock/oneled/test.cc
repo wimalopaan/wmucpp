@@ -19,6 +19,7 @@
 // sudo avrdude -p attiny85 -P usb -c avrisp2 -U lfuse:w:0xe2:m -U hfuse:w:0xdf:m -U efuse:w:0xff:m
 
 #define NDEBUG
+#define USE_DEPRECATED
 
 #include <stdlib.h>
 

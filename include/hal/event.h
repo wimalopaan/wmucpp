@@ -119,6 +119,9 @@ private:
     inline static volatile uint8_t tickCounter = 0;
 };
 
+
+#ifdef USE_DEPRECATED 
+
 template<typename Reg, uint8_t BitNumber, MCU::Interrupt Interrupt = void, typename... PP>
 class PeriodicGroup2 : public IsrBaseHandler<Interrupt> {
 public:
@@ -148,6 +151,7 @@ public:
 
 template<uint8_t N, typename Interrupt, typename... PP>
 using PeriodicGroup = PeriodicGroup2<AVR::RegisterFlags<DefaultMcuType::GPIOR, 0, std::byte>, N, Interrupt, PP...>;
+#endif
 
 template<typename... EE>
 //template<HAL::EventHandler... EE> // note: triggers ICE

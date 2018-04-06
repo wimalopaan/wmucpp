@@ -17,7 +17,7 @@ using terminal = std::basic_ostream<terminalDevice>;
 
 int main() {
     isrRegistrar::init();
-    rcUsart::init<19200>();
+    rcUsart::init<115200>();
     ds18b20::init();
     {
         Scoped<EnableInterrupt<>> ei;

@@ -94,7 +94,7 @@ private:
         auto day = dayFromDate(date);
         auto year = yearFromDate(date);
         if (month && day) {
-            return TimeTm{Day{day}, Month{month}, Year{year - 1900}, Hour{0}, Minute{0}, Second{0}, false};
+            return TimeTm{Day{day.toInt()}, Month{month.toInt()}, Year{year - 1900}, Hour{0}, Minute{0}, Second{0}, false};
         }
         return TimeTm{};
     }

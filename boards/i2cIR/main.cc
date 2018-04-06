@@ -39,6 +39,7 @@
 // avrdude -p m328p -c arduino -b 57600 -P /dev/ttyUSB0 -U flash:w:blink.elf
 
 //#define NDEBUG
+#define USE_DEPRECATED
 
 // todo: no interrupt mode for timer
 

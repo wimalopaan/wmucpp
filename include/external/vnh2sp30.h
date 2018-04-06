@@ -38,11 +38,27 @@ struct PwmAdapter {
     }
     template<typename T, T Min, T Max>
     inline static value_type pwm(const uint_ranged<T, Min, Max>& value) {
-        constexpr uint64_t denom = Max - Min;
-        constexpr uint64_t nom = 255;
-        value_type pw = Util::RationalDivider<T, nom, denom>::scale(value.toInt() - Min);
-        pwm(pw);
-        return pw;
+        if constexpr(std::is_same<T, uint8_t>::value) {
+            uint8_t pw = (255 * (value.toInt() - Min)) / (Max - Min);
+            pwm(pw);
+            return pw;
+        }
+        else {
+            constexpr uint64_t denom = Max - Min;
+            constexpr uint64_t nom = 255;
+            value_type pw = Util::RationalDivider<T, nom, denom>::scale(value.toInt() - Min);
+            pwm(pw);
+            return pw;
+        }
+    }
+    template<typename T, T Min, T Max>
+    inline static void pwm(const uint_ranged_NaN<T, Min, Max>& value) {
+        if (value) {
+            constexpr uint64_t denom = Max - Min;
+            constexpr uint64_t nom = 255;
+            value_type pw = Util::RationalDivider<T, nom, denom>::scale(value.toInt() - Min);
+            pwm(pw);
+        }
     }
 };
 
@@ -54,6 +70,7 @@ struct VNH {
     
     static void init() {
         using namespace std::literals::quantity;
+        DirPin::template dir<AVR::Output>();
         direction<CW>();
         pwm(0_ppc);
     }
@@ -61,12 +78,16 @@ struct VNH {
     inline static void pwm(const std::percent& value) {
         PWM::pwm(value);
     }
-    inline static value_type pwm(value_type value) {
-        PWM::pwm(value);
-    }
+//    inline static void pwm(value_type value) {
+//        PWM::pwm(value);
+//    }
     template<typename T, T Min, T Max>
     inline static value_type pwm(const uint_ranged<T, Min, Max>& value) {
         return PWM::pwm(value);
+    }
+    template<typename T, T Min, T Max>
+    inline static void pwm(const uint_ranged_NaN<T, Min, Max>& value) {
+        PWM::pwm(value);
     }
 
     template<typename Dir>

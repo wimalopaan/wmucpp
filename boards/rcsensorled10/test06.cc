@@ -93,8 +93,8 @@ int main() {
                         GPS::RMC::timeRaw(time);
                         auto v0 = Hott::SumDProtocollAdapter<0>::value(0);
 #ifdef OUTPUT
-                        std::outl<terminal>("time: ", time);
-                        std::outl<terminal>("channel 0: ", v0);
+                        std::outl<terminal>("time: "_pgm, time);
+                        std::outl<terminal>("channel 0: "_pgm, v0.toInt());
 # ifdef MEM
                         std::outl<terminal>("mem: "_pgm, Util::Memory::getUnusedMemory());
 # endif

@@ -49,8 +49,8 @@ namespace std {
     }
     void outl(const T& i) {
         std::out<S>("I["_pgm);
-        for(uint8_t n = 0; n < i.size(); ++n) {
-            std::out<S>(i.get(n));
+        for(uint8_t n = 0; n < size(i); ++n) {
+//            std::out<S>(i.get(n));
         }
         std::outl<S>("]"_pgm);
     }
@@ -80,7 +80,7 @@ int main() {
     constexpr auto size = std::tuple_size<decltype(tree)>::value;
     for(uint8_t n = 0; n < size; ++n) {
         Meta::visitAt(tree, n, [](const auto& item){
-//            std::outl<terminal>(item);
+            std::outl<terminal>(item);
             return 0;
         });
     }

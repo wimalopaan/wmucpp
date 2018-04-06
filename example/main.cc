@@ -16,7 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//#define NDEBUG
+#define NDEBUG
+#define USE_DEPRECATED
 
 #include "main.h"
 #include <limits>

@@ -308,8 +308,8 @@ namespace Static {
             }
             else {
                 if (lineToDisplay(display[line], line)) {
-                    if (mSelectedLine && (mSelectedLine == (line - 1))) {
-                        display[mSelectedLine + 1][0] = '>';
+                    if (mSelectedLine && (mSelectedLine.toInt() == (line - 1))) {
+                        display[mSelectedLine.toInt() + 1][0] = '>';
                     }
                     ++line;
                 }
@@ -323,15 +323,15 @@ namespace Static {
         }
         ptype processKey(Hott::key_t key) {
             if (mSelectedLine) {
-                if (MenuItem::isSelected(mItems[mSelectedLine])) {
-                    MenuItem::processKey(mItems[mSelectedLine], key);
+                if (MenuItem::isSelected(mItems[mSelectedLine.toInt()])) {
+                    MenuItem::processKey(mItems[mSelectedLine.toInt()], key);
                     return MenuItem::make_pointer(*this);
                 }
             }
             switch (key) {
             case Hott::key_t::down:
                 if (mSelectedLine) {
-                    if (mItems[mSelectedLine + 1]) {
+                    if (mItems[mSelectedLine.toInt() + 1]) {
                         ++mSelectedLine;
                     }
                 }
@@ -356,11 +356,11 @@ namespace Static {
                 break;
             case Hott::key_t::set:
                 if (mSelectedLine) {
-                    if (MenuItem::hasChildren(mItems[mSelectedLine])) {
-                        return mItems[mSelectedLine];
+                    if (MenuItem::hasChildren(mItems[mSelectedLine.toInt()])) {
+                        return mItems[mSelectedLine.toInt()];
                     }        
                     else {
-                        MenuItem::processKey(mItems[mSelectedLine], key);
+                        MenuItem::processKey(mItems[mSelectedLine.toInt()], key);
                     }
                 }
                 break;
@@ -852,46 +852,46 @@ private:
         
         if (zminNum) {
             Storage::minCells[0] = FixedPoint<int, 4>::fromRaw(Util::RationalDivider<uint16_t, 16, 50>::scale(zmin));
-            sensorData::batteryMinimumRaw(zminNum, zmin);
+            sensorData::batteryMinimumRaw(zminNum.toInt(), zmin);
         }
     }
     static inline void update1() {
-        uint16_t v1 = adcController::value(3) * 4;
-        uint16_t v2 = adcController::value(4) * 8;
-        uint16_t v3 = adcController::value(5) * 12;
+//        uint16_t v1 = adcController::value(3) * 4;
+//        uint16_t v2 = adcController::value(4) * 8;
+//        uint16_t v3 = adcController::value(5) * 12;
         
-        uint16_t z1 = Util::RationalDivider<uint16_t, hottScale, rawMax>::scale(v1);
-        uint16_t z2 = Util::RationalDivider<uint16_t, hottScale, rawMax>::scale(v2 - v1);
-        uint16_t z3 = Util::RationalDivider<uint16_t, hottScale, rawMax>::scale(v3 - v2);
+//        uint16_t z1 = Util::RationalDivider<uint16_t, hottScale, rawMax>::scale(v1);
+//        uint16_t z2 = Util::RationalDivider<uint16_t, hottScale, rawMax>::scale(v2 - v1);
+//        uint16_t z3 = Util::RationalDivider<uint16_t, hottScale, rawMax>::scale(v3 - v2);
 
-        if ((z1 > 0) && (z1 < zmin)) {
-            zmin = z1;
-            zminNum = 3;
-        }
-        if ((z2 > 0) && (z2 < zmin)) {
-            zmin = z2;
-            zminNum = 4;
-        }
-        if ((z3 > 0) && (z3 < zmin)) {
-            zmin = z3;
-            zminNum = 5;
-        }
+//        if ((z1 > 0) && (z1 < zmin)) {
+//            zmin = z1;
+//            zminNum = 3;
+//        }
+//        if ((z2 > 0) && (z2 < zmin)) {
+//            zmin = z2;
+//            zminNum = 4;
+//        }
+//        if ((z3 > 0) && (z3 < zmin)) {
+//            zmin = z3;
+//            zminNum = 5;
+//        }
         
-        sensorData::cellVoltageRaw(3, z1);
-        sensorData::cellVoltageRaw(4, z2);
-        sensorData::cellVoltageRaw(5, z3);
-        uint16_t batt = Util::RationalDivider<uint16_t, battScale, rawMax>::scale(v3);
-        sensorData::batteryVoltageRaw(1, batt);
+//        sensorData::cellVoltageRaw(3, z1);
+//        sensorData::cellVoltageRaw(4, z2);
+//        sensorData::cellVoltageRaw(5, z3);
+//        uint16_t batt = Util::RationalDivider<uint16_t, battScale, rawMax>::scale(v3);
+//        sensorData::batteryVoltageRaw(1, batt);
         
-        Storage::batts[1] = FixedPoint<int, 4>::fromRaw(Util::RationalDivider<uint16_t, 6, 10>::scale(batt) + batt);
-        if (zminNum) {
-            Storage::minCells[1] = FixedPoint<int, 4>::fromRaw(Util::RationalDivider<uint16_t, 16, 50>::scale(zmin));
-            sensorData::batteryMinimumRaw(zminNum, zmin);
-        }
+//        Storage::batts[1] = FixedPoint<int, 4>::fromRaw(Util::RationalDivider<uint16_t, 6, 10>::scale(batt) + batt);
+//        if (zminNum) {
+//            Storage::minCells[1] = FixedPoint<int, 4>::fromRaw(Util::RationalDivider<uint16_t, 16, 50>::scale(zmin));
+//            sensorData::batteryMinimumRaw(zminNum.toInt(), zmin);
+//        }
     }
     static inline void update2() {
         // todo: Skalierung berechnen    
-        uint16_t a = adcController::value(6);
+        uint16_t a = adcController::value(3);
         uint16_t a1 = 0;
         if (a >= 128) {
             a1 = a - 128;
@@ -1143,7 +1143,7 @@ int main() {
                         std::outl<terminal>("W: "_pgm, hx711::value());
                         
                         rpm1::check();
-                        uint16_t a = adcController::value(6);
+                        uint16_t a = adcController::value(3);
 #ifdef OUTPUT
                         std::outl<terminal>("acs: "_pgm, a);
 #endif

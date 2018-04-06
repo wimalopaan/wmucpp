@@ -38,6 +38,7 @@ targets += test30
 targets += test40
 targets += test50
 targets += test60
+targets += test70
 targets += test90
 targets += test91
 targets += test92
@@ -50,7 +51,7 @@ CXX = /usr/bin/g++
 #CXX = clang++
 CC = g++
 LDFLAGS = -lpthread
-CXXFLAGS = -g -std=c++17 -fconcepts
+CXXFLAGS = -g -std=c++17 -fconcepts -ftemplate-depth=2048
 CXXFLAGS += -Wall -Wextra -fPIC
 CXXFLAGS += -I../include 
 

@@ -19,7 +19,9 @@
 #pragma once
 
 #include <stdint.h>
+//#ifdef USE_DEPRECATED
 #include "mcu/ressource.h"
+//#endif
 #include "mcu/avr/isr.h"
 #include "std/algorithm"
 #include "util/bits.h"
@@ -74,9 +76,13 @@ public:
         if (counter < Buffer::size()) {
             if (auto data = Buffer::get(counter++)) {
                 Device::put(*data);
+//                if (!Device::put(*data)) {
+//                    assert(false);
+//                }
             }
         }
         else {
+            assert(counter >= Buffer::size());
             if (!Device::isEmpty()) {
                 return;
             }
@@ -164,6 +170,8 @@ private:
     inline static volatile uint8_t tickCounter = 0;
 };
 
+#ifdef USE_DEPRECATED
+
 template<typename Reg, uint8_t BitNumber, MCU::Timer Timer, MCU::Interrupt Int, CRWriter... Writers >
 class ConstantRateAdapter2 : public IsrBaseHandler<Int> {
     template<typename... II> friend class IsrRegistrar;
@@ -203,3 +211,4 @@ public:
 
 template<uint8_t N, MCU::Timer Timer, MCU::Interrupt Interrupt, typename... PP>
 using ConstantRateAdapter = ConstantRateAdapter2<AVR::RegisterFlags<DefaultMcuType::GPIOR, 0, std::byte>, N, Timer, Interrupt, PP...>;
+#endif

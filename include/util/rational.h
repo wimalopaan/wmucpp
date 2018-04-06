@@ -28,9 +28,9 @@ namespace Util {
     
     template<typename T, uint64_t Nom, uint64_t Denom>
     struct RationalDivider {
-        static_assert(Nom > 0);
-        static_assert(Denom > 0);
-        static_assert(Nom < Denom);
+        static_assert(Nom > 0, "Nominator must be greator 0");
+        static_assert(Denom > 0, "Denominator must be greator 0");
+        static_assert(Nom < Denom, "Nominator must be less than Denominator");
         inline static constexpr uint64_t GCD = gcd(Nom, Denom);
         inline static constexpr uint64_t N = Nom / GCD;
         inline static constexpr uint64_t D = Denom / GCD;

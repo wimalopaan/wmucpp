@@ -40,14 +40,14 @@ public:
     static void tick(const std::percent& brightness) {
         static uint8_t mFlash = 0;
         if (mFlashTickCount) {
-            if (mFlashTickCount > 0) {
+            if (mFlashTickCount.toInt() > 0) {
                 if ((++mFlash % 2) != 0) {
                     Led::set(mFlashColor * brightness);                
                 }
                 else {
                     Led::set(mSteadyColor * brightness);
                 }
-                if (mFlash >= mFlashTickCount) {
+                if (mFlash >= mFlashTickCount.toInt()) {
                     mFlash = 0;
                     mFlashTickCount = 0;
                 }

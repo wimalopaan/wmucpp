@@ -1,6 +1,9 @@
 Name: SteuerSensorModul10
 
 Korrekturen auf dem Boad:
+* Lastwiderstände für TLE5205 Ausgang
+* Spannungsreferenz wird nicht wirklich benötigt
+* TLE-Error sollte gejumpert werden bzw. auch die Lastwiderstände
 
 Beschreibung:
 
@@ -27,10 +30,43 @@ Beschreibung:
 	- GPS
 	- Debug-Ausgabe über SUMD
 
-test07: 
+* test07: 
 	- OneWire-Scan
 	- Debug-Ausgabe über SUMD
 
-test08: 
+* test08: 
 	- I2C-Scan
 	- Debug-Ausgabe über SUMD
+
+* test10:
+	- HardPWM mit TLE5205
+	
+* test11:
+	- HardPWM
+	- SUMD-Uart
+
+* test12:
+	- HardPWM
+	- SUMD-Uart
+	- System-Timer
+
+* test13:
+	- HardPWM
+	- SUMD-Uart
+	- System-Timer
+	- GPS-Time
+	
+* test14:
+	- HardPWM
+	- SUMD-Uart
+	- System-Timer
+	- GPS-Time
+	- GPS-Speed
+
+* test15:
+	- Sensor-Uart
+	- HardPWM
+	- SUMD-Uart
+	- System-Timer
+	- GPS-Time
+	- GPS-Speed

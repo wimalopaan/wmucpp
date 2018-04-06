@@ -146,8 +146,8 @@ namespace Hott {
             }
             else {
                 if (lineToDisplay(display[line], line)) {
-                    if (mSelectedLine && (mSelectedLine == (line - 1))) {
-                        display[mSelectedLine + 1][0] = '>';
+                    if (mSelectedLine && (mSelectedLine.toInt() == (line - 1))) {
+                        display[mSelectedLine.toInt() + 1][0] = '>';
                     }
                     ++line;
                 }
@@ -161,15 +161,15 @@ namespace Hott {
         }
         Menu* processKey(Hott::key_t key) override {
             if (mSelectedLine) {
-                if (mItems[mSelectedLine]->isSelected()) {
-                    mItems[mSelectedLine]->processKey(key);
+                if (mItems[mSelectedLine.toInt()]->isSelected()) {
+                    mItems[mSelectedLine.toInt()]->processKey(key);
                     return this;
                 }
             }
             switch (key) {
             case Hott::key_t::down:
                 if (mSelectedLine) {
-                    if (mItems[mSelectedLine + 1]) {
+                    if (mItems[mSelectedLine.toInt() + 1]) {
                         ++mSelectedLine;
                     }
                 }
@@ -194,11 +194,11 @@ namespace Hott {
                 break;
             case Hott::key_t::set:
                 if (mSelectedLine) {
-                    if (mItems[mSelectedLine]->hasChildren()) {
-                        return static_cast<Menu*>(mItems[mSelectedLine]);
+                    if (mItems[mSelectedLine.toInt()]->hasChildren()) {
+                        return static_cast<Menu*>(mItems[mSelectedLine.toInt()]);
                     }        
                     else {
-                        mItems[mSelectedLine]->processKey(key);
+                        mItems[mSelectedLine.toInt()]->processKey(key);
                     }
                 }
                 break;
@@ -249,8 +249,8 @@ namespace Hott {
             }
             else {
                 if (lineToDisplay(display[line], line)) {
-                    if (mSelectedLine && (mSelectedLine == (line - 1))) {
-                        display[mSelectedLine + 1][0] = '>';
+                    if (mSelectedLine && (mSelectedLine.toInt() == (line - 1))) {
+                        display[mSelectedLine.toInt() + 1][0] = '>';
                     }
                     ++line;
                 }
@@ -264,15 +264,15 @@ namespace Hott {
         }
         Menu2* processKey(Hott::key_t key) override {
             if (mSelectedLine) {
-                if (mItems[mSelectedLine]->isSelected()) {
-                    mItems[mSelectedLine]->processKey(key);
+                if (mItems[mSelectedLine.toInt()]->isSelected()) {
+                    mItems[mSelectedLine.toInt()]->processKey(key);
                     return this;
                 }
             }
             switch (key) {
             case Hott::key_t::down:
                 if (mSelectedLine) {
-                    if (mItems[mSelectedLine + 1]) {
+                    if (mItems[mSelectedLine.toInt() + 1]) {
                         ++mSelectedLine;
                     }
                 }
@@ -297,11 +297,11 @@ namespace Hott {
                 break;
             case Hott::key_t::set:
                 if (mSelectedLine) {
-                    if (mItems[mSelectedLine]->hasChildren()) {
-                        return static_cast<Menu2*>(mItems[mSelectedLine]);
+                    if (mItems[mSelectedLine.toInt()]->hasChildren()) {
+                        return static_cast<Menu2*>(mItems[mSelectedLine.toInt()]);
                     }        
                     else {
-                        mItems[mSelectedLine]->processKey(key);
+                        mItems[mSelectedLine.toInt()]->processKey(key);
                     }
                 }
                 break;

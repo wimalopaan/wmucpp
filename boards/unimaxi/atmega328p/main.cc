@@ -17,6 +17,7 @@
  */
 
 #define NDEBUG
+#define USE_DEPRECATED
 
 #include <stdlib.h>
 

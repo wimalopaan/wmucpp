@@ -27,6 +27,13 @@ boards/rcsensorled10/test05.cc
 boards/rcsensorled10/test06.cc
 boards/rcsensorled10/test07.cc
 boards/rcsensorled10/test08.cc
+boards/rcsensorled10/test10.cc
+boards/rcsensorled10/test11.cc
+boards/rcsensorled10/test12.cc
+boards/rcsensorled10/test13.cc
+boards/rcsensorled10/test14.cc
+boards/rcsensorled10/test15.cc
+boards/rcsensorled10/test16.cc
 boards/rcsensorled10/test24.cc
 boards/unimaxi/atmega1284p/gpstest.cc
 boards/unimaxi/atmega1284p/spissd1306.cc
@@ -39,9 +46,12 @@ doc/bmcpp02/bm65a.cc
 doc/bmcpp02/bm66a.cc
 doc/bmcpp02/bm67a.cc
 doc/bmcpp02/bm68a.cc
+doc/bmcpp02/bm70a.cc
+doc/bmcpp02/bm71a.cc
 doc/bmcpp98/bm100a.cc
 doc/bmcpp98/bm101a.cc
 doc/bmcpp98/bm102a.cc
+doc/bmcpp99/bm80a.cc
 host/hott/Makefile
 host/hott/test01.cc
 host/hott/test02.cc
@@ -50,6 +60,7 @@ host/hott/uart01.cc
 host/test25.cc
 host/test26.cc
 host/test40.cc
+host/test70.cc
 host/test91.cc
 host/test92.cc
 images/a1.h
@@ -61,6 +72,7 @@ include/hal/multichannelppm.h
 include/hal/sumo.h
 include/mcu/avr/atmega324pb.h
 include/mcu/avr/swusart2.h
+include/util/converter.h
 include/util/static_interface.h
 tools/sumd_analyzer/sumdan.cc
 tools/sumd_analyzer/Makefile

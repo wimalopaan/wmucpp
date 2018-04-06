@@ -20,10 +20,9 @@
 
 #include <type_traits>
 
-// todo: eliminate
-
 namespace MCU {
     namespace Ressource {
+#ifdef USE_DEPRECATED
         template<typename RessourceType, uint8_t RessourceNumber = 0, uint8_t RessourceElement = 0>
         struct [[deprecated("use Hal::Controller instead")]] Type {
             inline static constexpr uint8_t maximumNumberOfElementsInRessource = 16;
@@ -42,5 +41,6 @@ namespace MCU {
             static_assert(sizeof...(RR) == Util::numberOfOnes(all), "multiple use of ressource");
             static void init() {}
         };
+#endif
     }    
 }

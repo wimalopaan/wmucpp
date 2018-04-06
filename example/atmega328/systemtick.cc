@@ -16,6 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define NDEBUG
+#define USE_DEPRECATED
+
 #include "mcu/ports.h"
 #include "mcu/avr/isr.h"
 #include "hal/alarmtimer.h"

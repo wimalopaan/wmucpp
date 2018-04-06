@@ -297,8 +297,8 @@ namespace Static {
             }
             else {
                 if (lineToDisplay(display[line], line)) {
-                    if (mSelectedLine && (mSelectedLine == (line - 1))) {
-                        display[mSelectedLine + 1][0] = '>';
+                    if (mSelectedLine && (mSelectedLine.toInt() == (line - 1))) {
+                        display[mSelectedLine.toInt() + 1][0] = '>';
                     }
                     ++line;
                 }
@@ -312,15 +312,15 @@ namespace Static {
         }
         ptype processKey(Hott::key_t key) {
             if (mSelectedLine) {
-                if (MenuItem::isSelected(mItems[mSelectedLine])) {
-                    MenuItem::processKey(mItems[mSelectedLine], key);
+                if (MenuItem::isSelected(mItems[mSelectedLine.toInt()])) {
+                    MenuItem::processKey(mItems[mSelectedLine.toInt()], key);
                     return MenuItem::make_pointer(*this);
                 }
             }
             switch (key) {
             case Hott::key_t::down:
                 if (mSelectedLine) {
-                    if (mItems[mSelectedLine + 1]) {
+                    if (mItems[mSelectedLine.toInt() + 1]) {
                         ++mSelectedLine;
                     }
                 }
@@ -345,11 +345,11 @@ namespace Static {
                 break;
             case Hott::key_t::set:
                 if (mSelectedLine) {
-                    if (MenuItem::hasChildren(mItems[mSelectedLine])) {
-                        return mItems[mSelectedLine];
+                    if (MenuItem::hasChildren(mItems[mSelectedLine.toInt()])) {
+                        return mItems[mSelectedLine.toInt()];
                     }        
                     else {
-                        MenuItem::processKey(mItems[mSelectedLine], key);
+                        MenuItem::processKey(mItems[mSelectedLine.toInt()], key);
                     }
                 }
                 break;
@@ -841,7 +841,7 @@ private:
         
         if (zminNum) {
             Storage::minCells[0] = FixedPoint<int, 4>::fromRaw(Util::RationalDivider<uint16_t, 16, 50>::scale(zmin));
-            sensorData::batteryMinimumRaw(zminNum, zmin);
+            sensorData::batteryMinimumRaw(zminNum.toInt(), zmin);
         }
     }
     static inline void update1() {
@@ -875,7 +875,7 @@ private:
         Storage::batts[1] = FixedPoint<int, 4>::fromRaw(Util::RationalDivider<uint16_t, 6, 10>::scale(batt) + batt);
         if (zminNum) {
             Storage::minCells[1] = FixedPoint<int, 4>::fromRaw(Util::RationalDivider<uint16_t, 16, 50>::scale(zmin));
-            sensorData::batteryMinimumRaw(zminNum, zmin);
+            sensorData::batteryMinimumRaw(zminNum.toInt(), zmin);
         }
     }
     static inline void update2() {

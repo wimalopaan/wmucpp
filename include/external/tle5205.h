@@ -65,6 +65,22 @@ public:
         }
         return pw;
     }
+    template<typename T, T Min, T Max>
+    inline static void pwm(const uint_ranged_NaN<T, Min, Max>& value) {
+        if (value) {
+            constexpr uint64_t denom = Max - Min;
+            constexpr uint64_t nom = 255;
+            value_type pw = Util::RationalDivider<T, nom, denom>::scale(value.toInt() - Min);
+            if (direction().isClockWise) {
+                mcu_pwm::template pwm<typename mcu_pwm::A>(pw);
+                mcu_pwm::template pwm<typename mcu_pwm::B>(value_type{0});
+            }
+            else {
+                mcu_pwm::template pwm<typename mcu_pwm::A>(pw);
+                mcu_pwm::template pwm<typename mcu_pwm::B>(pw);
+            }
+        }
+    }
     
     inline static void pwm(const std::percent& p) {
         if (direction().isClockWise) {

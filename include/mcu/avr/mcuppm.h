@@ -103,6 +103,16 @@ namespace AVR {
             uint16_t ocr = ::Util::RationalDivider<uint16_t, nom, denom>::scale(v1) + ranged_type::Lower;
             Channel::ocr(ocr);
         }
+        template<typename Channel, typename T, T L, T U>
+        static void ppm(uint_ranged_NaN<T, L, U> raw) {
+            if (raw) {
+                T v1 = raw.toInt() - L;
+                constexpr uint64_t denom = U - L;
+                constexpr uint64_t nom = ranged_type::Upper - ranged_type::Lower;
+                uint16_t ocr = ::Util::RationalDivider<uint16_t, nom, denom>::scale(v1) + ranged_type::Lower;
+                Channel::ocr(ocr);
+            }
+        }
     };
     
 }

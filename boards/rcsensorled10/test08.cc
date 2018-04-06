@@ -22,7 +22,7 @@ namespace Constants {
 int main() {
     isrRegistrar::init();
     TwiMaster::init<Constants::fSCL>();
-    rcUsart::init<19200>();
+    rcUsart::init<115200>();
     {
         Scoped<EnableInterrupt<>> ei;
         {

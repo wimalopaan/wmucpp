@@ -68,9 +68,9 @@ int main() {
         while(true) {
             Util::delay(1000_ms);
             GPS::RMC::timeRaw(time);
-            std::outl<terminal>("time: ", time);
+            std::outl<terminal>("time: "_pgm, time);
             auto v0 = Hott::SumDProtocollAdapter<0>::value(0);
-            std::outl<terminal>("channel 0: ", v0);
+            std::outl<terminal>("channel 0: "_pgm, v0.toInt());
         }
     }
 }

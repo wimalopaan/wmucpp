@@ -23,6 +23,8 @@
 // sudo avrdude -p atmega328p -P usb -c avrisp2 -U lfuse:w:0xe2:m -U hfuse:w:0xd9:m -U efuse:w:0xff:m
 
 //#define SIMAVR
+#define NDEBUG
+#define USE_DEPRECATED
 
 #include <stdlib.h>
 #include <chrono>

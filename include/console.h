@@ -136,6 +136,11 @@ namespace std {
         }
         
         template<MCU::Stream Stream>
+        void out(const std::RPM& r) {
+            out<Stream>(r.value());
+            out<Stream>("Upm"_pgm);
+        }
+        template<MCU::Stream Stream>
         void out(const std::hertz& f) {
             out<Stream>(f.value);
             out<Stream>("Hz"_pgm);

@@ -132,6 +132,9 @@ public:
     inline static constexpr T Lower = LowerBound;
     inline static constexpr T Upper = UpperBound;
     inline static constexpr T NaN   = std::numeric_limits<T>::max();
+    
+    static_assert(Upper != NaN);
+    
     typedef T type;
     
     constexpr uint_ranged_NaN() = default;
@@ -169,9 +172,9 @@ public:
         mValue = rhs;
         return *this;
     }
-    constexpr operator T() const {
-        return mValue;
-    }
+//    constexpr operator T() const {
+//        return mValue;
+//    }
     constexpr T toInt() const {
         return mValue;
     }
@@ -320,10 +323,14 @@ public:
     inline constexpr explicit operator bool() const {
         return mValue != NaN;
     }
-    inline constexpr operator T() const {
+    inline constexpr T toInt() const {
         assert(mValue != NaN);
         return mValue;
     }
+    //    inline constexpr operator T() const {
+//        assert(mValue != NaN);
+//        return mValue;
+//    }
     inline volatile T& operator*() volatile {
         assert(mValue != NaN);
         return mValue;

@@ -46,6 +46,7 @@
 #include "external/hx711.h"
 #include "hal/alarmtimer.h"
 #include "hal/adccontroller.h"
+#include "util/converter.h"
 #ifdef MEM
 # include "util/memory.h"
 #endif
@@ -61,7 +62,7 @@ using leds = WS2812<9, ledPin, ColorSequenceGRB>;
 typedef leds::color_type Color;
 
 using ledPin2 = AVR::Pin<PortC, 1>;
-using leds2 = WS2812<9, ledPin, ColorSequenceGRB>;
+using leds2 = WS2812<8, ledPin2, ColorSequenceGRB>;
 
 namespace {
     constexpr std::RPM MaximumRpm{12000};

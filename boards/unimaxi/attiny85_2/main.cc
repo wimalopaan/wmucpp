@@ -34,6 +34,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define NDEBUG
+#define USE_DEPRECATED
+
 #include "mcu/avr8.h"
 #include "mcu/avr/mcutimer.h"
 #include "mcu/avr/pinchange.h"

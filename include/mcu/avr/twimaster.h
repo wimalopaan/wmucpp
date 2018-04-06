@@ -31,12 +31,21 @@
 #include "hal/event.h"
 
 namespace TWI {
+    template<bool UseSendEvent>
+    class MasterAsyncBase {
+    protected:
+        inline static std::byte lastAddress{0};
+    };
+    template<>
+    class MasterAsyncBase<false> {
+    };
     
     template<typename TWIMaster, uint8_t BSize = 16, bool UseSendEvent = false, uint8_t RSize = BSize>
-    class MasterAsync final {
+    class MasterAsync final : public MasterAsyncBase<UseSendEvent> {
         enum class State : uint8_t {Inactive, StartWrite, StartWriteWait, WriteAddress, WriteAddressWait, Writing, 
                                     WritingWait, Stop, StopWait, ReadAddressWait, Reading, ReadLast, ReadingWait, Error};
         static constexpr auto mcuTwi = TWIMaster::mcuTwi;
+        using base = MasterAsyncBase<UseSendEvent>;
     public:
         MasterAsync() = delete;
         static constexpr bool isAsync = true;
@@ -58,7 +67,6 @@ namespace TWI {
             return (mBytesToRead == 0) && (mBytesToWrite == 0);
         }
         inline static void rateProcess() {
-            static std::byte lastAddress{0};
             switch(mState) {
             case State::Inactive:
                 if (!mSendQueue.empty()) {
@@ -91,7 +99,9 @@ namespace TWI {
             case State::WriteAddress:
                 // send device address
                 if (auto address = mSendQueue.pop_front()) {
-                    lastAddress = *address;
+                    if constexpr(UseSendEvent) {
+                        base::lastAddress = *address;
+                    }
                     *mcuTwi()->twdr = std::byte{*address};
                     mcuTwi()->twcr.template set<twc::twint | twc::twen>();
                     //                mcuTwi()->twcr = (1<<TWINT) | (1<<TWEN);
@@ -179,8 +189,8 @@ namespace TWI {
                 else {
                     mState = State::Stop;
                     if constexpr(UseSendEvent) {
-                        EventManager::enqueue({EventType::TWISendComplete, std::byte{lastAddress >> 1}});
-                        lastAddress = 0;
+                        EventManager::enqueue({EventType::TWISendComplete, std::byte{base::lastAddress >> 1}});
+                        base::lastAddress = 0;
                     }
                 }
                 break;
@@ -227,7 +237,7 @@ namespace TWI {
                             mState = State::Stop;
                             if constexpr(UseSendEvent) {
                                 EventManager::enqueue({EventType::TWIRecvComplete, 
-                                                   std::byte{BusAddress<Write>::deviceAddressValue(lastAddress)}});
+                                                   std::byte{BusAddress<Write>::deviceAddressValue(base::lastAddress)}});
                             }
                         }
                     }   

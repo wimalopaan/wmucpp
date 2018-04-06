@@ -49,6 +49,8 @@ targets +=  bm65a.s bm65a.elf
 targets +=  bm66a.s bm66a.elf
 targets +=  bm67a.s bm67a.elf
 targets +=  bm68a.s bm68a.elf
+targets +=  bm70a.s bm70a.elf
+targets +=  bm71a.s bm71a.elf
 
 -include ../../Makefile.include
 
