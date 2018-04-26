@@ -48,7 +48,7 @@ public:
     static constexpr unsigned_type integral_mask = ~((1 << fractionalBits) - 1);
     static constexpr uint8_t fractional_bits = fractionalBits;
     static constexpr uint8_t integer_bits = sizeof(Type) * 8 - fractionalBits;
-    static constexpr value_type one = 1 << fractional_bits;
+    static constexpr value_type one = 1u << fractional_bits;
     
     constexpr explicit FixedPoint(double v) : mValue(v * one) {}
     constexpr FixedPoint() = default;

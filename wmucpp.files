@@ -48,10 +48,15 @@ doc/bmcpp02/bm67a.cc
 doc/bmcpp02/bm68a.cc
 doc/bmcpp02/bm70a.cc
 doc/bmcpp02/bm71a.cc
+doc/bmcpp04/bm30a.c
+doc/bmcpp04/bm30b.cc
+doc/bmcpp04/bm40a.cc
+doc/bmcpp04/bm40b.c
 doc/bmcpp98/bm100a.cc
 doc/bmcpp98/bm101a.cc
 doc/bmcpp98/bm102a.cc
 doc/bmcpp99/bm80a.cc
+example/externals/buttonmacro.c
 host/hott/Makefile
 host/hott/test01.cc
 host/hott/test02.cc

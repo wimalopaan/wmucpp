@@ -76,7 +76,7 @@ public:
     
     inline static constexpr bool useEvents = first_button::useEvents;
     
-    static_assert(((first_button::useEvents == Buttons::useEvents) && ... && true));
+    static_assert(((useEvents == Buttons::useEvents) && ... && true));
     
     static void init() {
         (Buttons::init(), ...); 
@@ -98,7 +98,7 @@ public:
 //    static constexpr auto rateProcess = periodic;
 };
 
-template<uint8_t N, typename Pin, ::Util::NamedFlag UseEvent = UseEvents<true>, int Thresh = Config::Button::buttonTicksForPressed> // call sample every 1ms -> 50ms Threshold
+template<uint8_t N, typename Pin, ::Util::NamedFlag UseEvent = UseEvents<true>, uint8_t Thresh = Config::Button::buttonTicksForPressed> // call sample every 1ms -> 50ms Threshold
 class Button final {
     static_assert(N < 8, "wrong number of buttons");
     template<typename... Buttons> friend class ButtonController;

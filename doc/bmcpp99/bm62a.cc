@@ -21,7 +21,7 @@ private:
 template<typename T>
 struct A {
     A(Registrar& r) : bit{r.nextBit()}{
-        flagRegister::get() |= (1 << bit);
+        flagRegister::get() |= ((uint8_t)1 << bit);
     }
     T mData;
     const uint8_t bit{};
@@ -30,8 +30,8 @@ struct A {
 template<typename T>
 struct B {
     B(Registrar& r) : bit{r.nextBit()} {
-        if (flagRegister::get() & (1 << bit)) {
-            flagRegister::get() &= ~(1 << bit);
+        if (flagRegister::get() & (uint8_t)((uint8_t)1 << bit)) {
+            flagRegister::get() &= ~((uint8_t)1 << bit);
         }
     }
     T mData;

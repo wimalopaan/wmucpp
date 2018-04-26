@@ -20,6 +20,12 @@
 MCU = atmega328p
 F_OSC = 20000000
 
+bm30a.s: OPTFLAGS = -O0
+bm30b.s: OPTFLAGS = -O0
+
+bm40a.elf: LOADLIBES=simavrconsole.o
+
+
 targets +=  bm01a.s bm01a.elf bm01a.size
 targets +=  bm01b.s bm01b.elf bm01b.size
 targets +=  bm02a.s bm02a.elf bm02a.size
@@ -36,6 +42,10 @@ targets +=  bm07a.s bm07a.elf bm07a.size
 targets +=  bm10a.s bm10a.elf
 targets +=  bm11a.s bm11a.elf
 targets +=  bm20a.s bm20a.elf
+targets +=  bm30b.s bm30b.elf
+targets +=  bm30a.s bm30a.elf
+targets +=  bm40a.s bm40a.elf
+targets +=  bm40b.s bm40b.elf
 
 CPPFLAGS += -DNDEBUG
 
@@ -46,4 +56,3 @@ bm02a.elf: bm02a.o simavrconsole.o
 
 bm02b.elf: bm02b.o simavrconsole.o
 	$(CC) $(LDFLAGS) -o $@ bm02b.o simavrconsole.o
-

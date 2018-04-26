@@ -112,19 +112,19 @@ struct cRGB<ColorSequenceGRB> {
     constexpr cRGB(Blue v) : b(v.value) {}
     constexpr cRGB& operator+=(const cRGB& c) {
         if (r > 0) {
-            r = (r + c.r) / 2;
+            r = (r + c.r) / 2u;
         }
         else {
             r = c.r;
         }
         if (g > 0) {
-            g = (g + c.g) / 2;
+            g = (g + c.g) / 2u;
         }
         else {
             g = c.g;
         }
         if (b > 0) {
-            b = (b + c.b) / 2;
+            b = (b + c.b) / 2u;
         }
         else {
             b = c.b;

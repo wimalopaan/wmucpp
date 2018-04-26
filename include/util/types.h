@@ -453,16 +453,23 @@ struct BitRange {
     typedef T source_type;
     static_assert(LeftBit >= RightBit);
     static_assert(LeftBit < (sizeof(T) * 8));
-    static inline constexpr auto leftBit = LeftBit;
-    static inline constexpr auto rightBit = RightBit;
+    static inline constexpr uint8_t leftBit = LeftBit;
+    static inline constexpr uint8_t rightBit = RightBit;
+    static inline constexpr uint8_t divider = (1 << RightBit);
     
     static constexpr bitsN_t<LeftBit - RightBit + 1> convert(source_type v) {
-        return bitsN_t<LeftBit - RightBit + 1>{v >> RightBit};
+        if constexpr(std::is_same<source_type, std::byte>::value) {
+            return bitsN_t<LeftBit - RightBit + 1>{(uint8_t)(std::to_integer<uint8_t>(v) / divider)};
+//            return bitsN_t<LeftBit - RightBit + 1>{(source_type)(v >> RightBit)}; // gives 16-bit arith.-shift: bug 82658
+        }
+        else {
+            return bitsN_t<LeftBit - RightBit + 1>{(source_type)(v / divider)};
+        }
     }
 };
 
-using UpperNibble = BitRange<std::byte, 7, 4> ;
-using LowerNibble = BitRange<std::byte, 3, 0> ;
+using UpperNibble = BitRange<std::byte, 7, 4>;
+using LowerNibble = BitRange<std::byte, 3, 0>;
 
 template<bool V>
 struct NamedFlag : std::integral_constant<bool, V> {};

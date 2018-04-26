@@ -61,9 +61,9 @@ public:
     
     template<uint8_t N>
     static void setNibble(uint8_t v) {
-        if constexpr((N % 2) == 0) {
-            for(uint8_t i = 0; i < 4; ++i) {
-                if (v & (1 << i)) {
+        if constexpr((N % 2u) == 0) {
+            for(uint8_t i = 0; i < 4u; ++i) {
+                if (v & (1u << i)) {
                     Leds::template set<false>(4 * N + i, Color1 * brightness());
                 }
                 else {
@@ -72,8 +72,8 @@ public:
             }
         }
         else {
-            for(uint8_t i = 0; i < 4; ++i) {
-                if (v & (1 << i)) {
+            for(uint8_t i = 0; i < 4u; ++i) {
+                if (v & (1u << i)) {
                     Leds::template set<false>(4 * (N + 1) - 1 - i, Color1 * brightness());
                 }
                 else {

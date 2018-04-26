@@ -30,7 +30,7 @@ constexpr uint8_t scale1(uint8_t value) {
 // multiply by 100/255
 constexpr uint8_t scale2(uint8_t value) {
     const uint8_t s = 201;
-    return (value * s) / 256 / 2;
+    return (value * s) / 256u / 2u;
 }
 
 using constantRateTimer = AVR::Timer16Bit<1>;

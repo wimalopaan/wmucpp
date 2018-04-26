@@ -38,8 +38,10 @@ using testPin1 = AVR::Pin<PortD, 5>; // ppmout4
 struct Storage {
     enum class AVKey : uint8_t {TSensor1 = 0, TSensor2, TSensor3, TSensor4, 
                                 RpmSensor1, RpmSensor2,
-                                Spannung1, // Spannung2, 
+                                Spannung1, ZellenZahl, 
                                 StromOffset1, StromOffset2, StromOffset3, 
+                                Strom1,
+                                KraftOffset, KraftSteigung,
                                 PWM1, PWM1MOde, 
                                 PWM2, PWM2MOde, 
                                 Leds1Channel, Leds1Sequence, Leds2Channel, Leds2Sequence, 
