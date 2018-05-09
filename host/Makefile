@@ -1,7 +1,7 @@
 # -*- mode: makefile-gmake; -*-
 #
 # WMuCpp - Bare Metal C++ 
-# Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+# Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,9 +31,9 @@ targets += test20
 targets += test21
 targets += test22
 targets += test23
-targets += test24
-targets += test25
-targets += test26
+#targets += test24
+#targets += test25
+#targets += test26
 targets += test30
 targets += test40
 targets += test50

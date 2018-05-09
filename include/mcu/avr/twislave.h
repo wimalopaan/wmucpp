@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,29 +27,31 @@
 #include "util/concepts.h"
 
 namespace TWI {
-    template<typename T, bool Enable>
+    template<typename T, bool Enable, bool usrIsr>
     struct Base;
-    template<typename T>
-    struct Base<T, false> {
+    template<typename T, bool useIsr>
+    struct Base<T, false, useIsr> {
         inline static constexpr uint8_t number_of_flags = 1;
     };
-    template<typename T>
-    struct Base<T, true> {
-        inline static volatile bool mChanged = false;
+    template<typename T, bool useIsr>
+    struct Base<T, true, useIsr> {
+        typedef typename std::conditional<useIsr, volatile bool, bool>::type maybe_volatile_bool;
+        inline static maybe_volatile_bool mChanged = false;
     };
     
     template<uint8_t N, const TWI::Address& Address, uint16_t Size, typename useInt = MCU::UseInterrupts<true>, 
              typename FlagRegister = void,
              typename MCU = DefaultMcuType>
     class Slave final : public IsrBaseHandler<AVR::ISR::Twi<0>>, // fixme: disable if no Interrupts
-            public Base<Slave<N, Address, Size, useInt, FlagRegister, MCU>, std::is_same<FlagRegister, void>::value> {
+            public Base<Slave<N, Address, Size, useInt, FlagRegister, MCU>, std::is_same<FlagRegister, void>::value, useInt::value> {
         Slave() = delete;
         
         inline static constexpr bool useBase = std::is_same<FlagRegister, void>::value;
-        
-        typedef Base<Slave<N, Address, Size, useInt, FlagRegister, MCU>, std::is_same<FlagRegister, void>::value> baseType;
+                
+        typedef Base<Slave<N, Address, Size, useInt, FlagRegister, MCU>, std::is_same<FlagRegister, void>::value, useInt::value> baseType;
         
     public:
+        inline static constexpr bool useIsr = useInt::value;
         typedef MCU                         mcu_type;     
         typedef typename mcu_type::TWI      mcu_twi_type;     
         typedef typename mcu_type::TWI::TWS tws;     
@@ -96,7 +98,14 @@ namespace TWI {
             }
             index.setNaN(); // todo: index = NaN;
         }
-        static void isr() {
+        template<bool Q = useInt::value>
+        inline static 
+        typename std::enable_if<Q, void>::type
+        isr() {
+            isr_impl();
+        }
+    private:
+        inline static void isr_impl() {
             auto twst = mcu_twi()->twsr.template get<tw_status_mask>();
             switch(twst) {
             case tws::twSrSlaAck:
@@ -155,11 +164,11 @@ namespace TWI {
                 break;
             }
         }
-        
+    public:        
         template<::Util::Callable Callable> 
         static void whenReady(const Callable& f) {
             if (mcu_twi()->twcr.template isSet<twc::twint>()) {
-                isr();
+                isr_impl();
                 f();
             }
         }
@@ -190,9 +199,14 @@ namespace TWI {
         }
         
     private:
-        inline static volatile std::array<std::byte, Size> mRegisters;
-//        inline static volatile bool mChanged = false;
-        inline static volatile uint_NaN<uint8_t> index;
+        typedef std::array<std::byte, Size> register_type;
+        typedef uint_NaN<uint8_t> index_type;
+        
+        typedef typename std::conditional<useIsr, typename std::add_volatile<register_type>::type, register_type>::type maybe_volatile_register_type;
+        typedef typename std::conditional<useIsr, typename std::add_volatile<index_type>::type, index_type>::type maybe_volatile_index_type;
+        
+        inline static maybe_volatile_register_type mRegisters;
+        inline static maybe_volatile_index_type   index;
     };
     
 }

@@ -30,21 +30,25 @@ struct BitField {
     };
     
     template<auto N>
-    Meta::nth_element<N, field_types> get() volatile {
+    inline Meta::nth_element<N, field_types> get() volatile {
         static_assert(N < member_number);
         return BitRange<value_type, highestBit<N>::value, lowestBit<N>::value>::convert(mData);
     }
     template<auto N>
-    void increment() volatile {
+    inline void increment() volatile {
         static_assert(N < member_number);
         value_type v = mData;
-        v += (1 << lowestBit<N>::value);
+        v += (value_type{1} << lowestBit<N>::value);
         mData = (mData & ~mask<N>::value) | (v & mask<N>::value);
     }
-    
+    template<auto N>
+    inline bool isNull() volatile {
+        static_assert(N < member_number);
+        value_type v = mData & mask<N>::value;
+        return v == value_type{0};
+    }
     value_type mData{};
 };
-
 
 volatile BitField<2, 2, 2> bf;
 
@@ -52,5 +56,12 @@ int main() {
     bf.increment<1>();
     bf.increment<1>();
     bf.increment<0>();
-//    bf.increment<1>();
+    
+    if (bf.isNull<0>()) {
+        bf.increment<1>();
+    }
+    
+#if 1
+    std::outl<terminal>("T: "_pgm, Config::Button::buttonTicksForPressed);
+#endif
 }

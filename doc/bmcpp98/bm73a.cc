@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -94,7 +94,7 @@ constexpr auto flat_tree = []{
 
 template<auto... II, Util::Callable L>
 constexpr auto inode_to_indexnode(std::index_sequence<II...>, const L& callable) {
-    constexpr auto inode = callable();
+    constexpr auto inode = callable(); // not constexpr in g++-8
     static_assert(isInode(inode), "use a callable returning an INode<>");
     typedef typename decltype(inode)::type dataType;
     return IndexNode<dataType, Index<inode.mNumber>, ParentIndex<inode.mParent>, inode.mChildren[II]...>{inode.mData};
@@ -103,7 +103,7 @@ constexpr auto inode_to_indexnode(std::index_sequence<II...>, const L& callable)
 
 template<Util::Callable L>
 constexpr auto transform(const L& callable) {
-    constexpr auto tuple = callable();
+    constexpr auto tuple = callable(); // not constexpr in g++-8
     static_assert(Util::isTuple(tuple), "use constexpr callabe returning a tuple");
     
     if constexpr(Util::size(tuple) == 0) {

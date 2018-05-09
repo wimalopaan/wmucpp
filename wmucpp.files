@@ -52,11 +52,16 @@ doc/bmcpp04/bm30a.c
 doc/bmcpp04/bm30b.cc
 doc/bmcpp04/bm40a.cc
 doc/bmcpp04/bm40b.c
+doc/bmcpp04/bm41a.cc
+doc/bmcpp04/bm42a.cc
 doc/bmcpp98/bm100a.cc
 doc/bmcpp98/bm101a.cc
 doc/bmcpp98/bm102a.cc
 doc/bmcpp99/bm80a.cc
 example/externals/buttonmacro.c
+example/externals/buttonvertical.cc
+example/externals/isr.c
+example/features/isr_test01.cc
 host/hott/Makefile
 host/hott/test01.cc
 host/hott/test02.cc
@@ -73,6 +78,7 @@ images/a2.h
 include/external/gps/gps.h
 include/external/hx711.h
 include/external/ssd1306.h
+include/hal/button_v.h
 include/hal/multichannelppm.h
 include/hal/sumo.h
 include/mcu/avr/atmega324pb.h

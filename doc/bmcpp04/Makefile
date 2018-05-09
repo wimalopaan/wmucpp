@@ -1,7 +1,7 @@
 # -*- mode: makefile-gmake; -*-
 #
 # WMuCpp - Bare Metal C++ 
-# Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+# Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,6 +46,8 @@ targets +=  bm30b.s bm30b.elf
 targets +=  bm30a.s bm30a.elf
 targets +=  bm40a.s bm40a.elf
 targets +=  bm40b.s bm40b.elf
+targets +=  bm41a.s bm41a.elf
+targets +=  bm42a.s bm42a.elf
 
 CPPFLAGS += -DNDEBUG
 

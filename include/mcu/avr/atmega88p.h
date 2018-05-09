@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -234,11 +234,12 @@ namespace AVR {
         };
         struct Adc {
             static constexpr const uint8_t count = 1;
+            struct AdcRegister {
+                DataRegister<Adc, ReadOnly, uint8_t> adcl;
+                DataRegister<Adc, ReadOnly, uint8_t> adch;
+            };
             union {
-                struct {
-                    DataRegister<Adc, ReadOnly, uint8_t> adcl;
-                    DataRegister<Adc, ReadOnly, uint8_t> adch;
-                };
+                AdcRegister reg;
                 DataRegister<Adc, ReadOnly, uint16_t> adc;
             };
             enum class SRA : uint8_t {

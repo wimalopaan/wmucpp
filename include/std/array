@@ -25,7 +25,6 @@
 #include "util/dassert.h"
 
 namespace std {
-    
     template<typename T, uint16_t Size>
     struct array final {
         typedef T value_type;
@@ -82,6 +81,55 @@ namespace std {
         inline static constexpr size_type size = Size;
         //private:
         T data[Size] = {}; // rely on aggregate initialization
+    };
+    template<typename T>
+    struct array<T, 0> final {
+        typedef T value_type;
+        typedef uint8_t size_type;
+        typedef int8_t  signed_size_type;
+        
+        constexpr const T* begin() const {
+            return nullptr;
+        }
+        constexpr const T* end() const {
+            return nullptr;
+        }
+        constexpr const volatile T* begin() const volatile {
+            return nullptr;
+        }
+        constexpr const volatile T* end() const volatile {
+            return nullptr;
+        }
+        constexpr T* begin() {
+            return nullptr;
+        }
+        constexpr T* end() {
+            return nullptr;
+        }
+        constexpr volatile T* begin() volatile {
+            return nullptr;
+        }
+        constexpr volatile T* end() volatile {
+            return nullptr;
+        }
+        inline constexpr T operator[](size_type ) {
+            assert(false);
+            return 0;
+        }
+        inline constexpr volatile T operator[](size_type ) volatile {
+            assert(false);
+            return 0;
+        }
+        inline constexpr const volatile T operator[](size_type ) const volatile {
+            assert(false);
+            return 0;
+        }
+        inline constexpr const T operator[](size_type ) const {
+            assert(false);
+            return 0;
+        }
+        inline static constexpr size_type size = 0;
+        
     };
     
     namespace detail {

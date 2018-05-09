@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -203,10 +203,10 @@ public:
             ++mMeasurements;
         });
     }
-    
 private:
-    inline static volatile value_type mTimerStartValue = 0;
-    inline static volatile value_type mActualPeriod = 0;
-    inline static volatile uint_bounded<uint8_t> mMeasurements{0};
+    // no ISR -> not volatile
+    inline static /*volatile*/ value_type mTimerStartValue = 0;
+    inline static /*volatile */value_type mActualPeriod = 0;
+    inline static /*volatile */uint_bounded<uint8_t> mMeasurements{0};
 };
 

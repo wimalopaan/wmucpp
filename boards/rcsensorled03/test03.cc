@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,8 +38,8 @@ namespace Constants {
     static constexpr auto title = "Test 03 Board 03"_pgm;
 }
 
-using sensorUsart = AVR::Usart<0, void, MCU::UseInterrupts<false>, UseEvents<false>> ;
-using rcUsart = AVR::Usart<1, void, MCU::UseInterrupts<false>, UseEvents<false>>;
+using sensorUsart = AVR::Usart<0, void, MCU::UseInterrupts<false>, UseEvents<false>, AVR::ReceiveQueueLength<32>> ;
+using rcUsart = AVR::Usart<1, void, MCU::UseInterrupts<false>, UseEvents<false>, AVR::ReceiveQueueLength<32>>;
 
 using terminalDevice = std::conditional<useTerminal, rcUsart, void>::type;
 using terminal = std::basic_ostream<terminalDevice>;
@@ -100,8 +100,8 @@ int main() {
 //            adcController::periodic();
 //            rpm1::periodic();
 //            rpm2::periodic();
-//            rcUsart::periodic();
-//            sensorUsart::periodic();
+            rcUsart::periodic();
+            sensorUsart::periodic();
             systemClock::periodic<systemClock::flags_type::ocfa>([](){
                 alarmTimer::periodic([](uint7_t timer){
                     if (timer == *periodicTimer) {

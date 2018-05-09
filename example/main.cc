@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -350,9 +350,9 @@ struct DS18B20ErrorHandler: public EventHandler<EventType::DS18B20Error> {
     }
 };
 
-struct  Button0Handler: public EventHandler<EventType::ButtonPress0> {
-    static bool process(std::byte) {
-        std::cout << "button 0 press"_pgm << std::endl;
+struct  Button0Handler: public EventHandler<EventType::ButtonPress> {
+    static bool process(std::byte b) {
+        std::cout << "button press: "_pgm << std::to_integer(b) << std::endl;
         return true;
     }
 };

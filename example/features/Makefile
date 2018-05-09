@@ -1,7 +1,7 @@
 # -*- mode: makefile-gmake; -*-
 #
 # WMuCpp - Bare Metal C++ 
-# Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+# Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-MCU = atmega328p
+MCU = atmega324pb
 F_OSC = 20000000
 
 LOADLIBES = simavrconsole.o
@@ -30,11 +30,12 @@ targets += delay.elf
 targets += ports.elf
 targets += isr01.elf isr01.s
 targets += isr02.elf isr02.s
+targets += isr_test01.elf isr_test01.s
 targets += eventhandler.elf
 targets += events.elf
 targets += interrupts.elf
 targets += pinchange.elf
-targets += softusart.elf
+#targets += softusart.elf
 targets += constantrate.elf constantrate.s 
 #targets += menu.elf menu.s
 targets += menu_s.elf menu_s.s

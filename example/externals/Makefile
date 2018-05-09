@@ -1,7 +1,7 @@
 # -*- mode: makefile-gmake; -*-
 #
 # WMuCpp - Bare Metal C++ 
-# Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+# Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,10 +20,12 @@
 MCU = atmega1284p
 F_OSC = 20000000
 
-#LOADLIBES = simavrconsole.o
+#buttonvertical.elf: LOADLIBES = simavrconsole.o
 
 #targets += simavrconsole.o
 
+targets += isr.s isr.elf
+targets += buttonvertical.s buttonvertical.elf
 targets += buttonmacro.s buttonmacro.elf
 targets += button.s button.elf
 targets += ds18b20.elf

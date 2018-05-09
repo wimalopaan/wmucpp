@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -101,11 +101,21 @@ namespace AVR {
         typedef typename usart_type::UCSRC ucsrc_type;
         typedef PA protocoll_adapter_type;
         
+        typedef typename std::conditional<useISR::value, volatile std::FiFo<std::byte, SendQLength::value>, std::FiFo<std::byte, SendQLength::value>>::type send_queue_type;
+        typedef typename std::conditional<useISR::value, volatile std::FiFo<std::byte, RecvQLength::value>, std::FiFo<std::byte, RecvQLength::value>>::type recv_queue_type;
+        
         static constexpr auto mcu_usart = getBaseAddr<typename MCU::Usart, N>;
         static_assert(N < MCU::Usart::count, "wrong number of usart");
     
         struct RxHandler : public IsrBaseHandler<typename AVR::ISR::Usart<N>::RX> {
-            inline static void isr() {
+            template<bool Q = useISR::value>
+            inline static 
+            typename std::enable_if<Q, void>::type
+            isr() {
+                isr_impl();
+            }
+        private:
+            inline static void isr_impl() {
                 if constexpr(useEvents::value) {
                     const auto status = mcu_usart()->ucsra.template get<ucsra_type::fe | ucsra_type::upe | ucsra_type::dor>();
                     const auto c = *mcu_usart()->udr;
@@ -159,7 +169,14 @@ namespace AVR {
             }
         };
         struct TxHandler : public IsrBaseHandler<typename AVR::ISR::Usart<N>::UDREmpty> {
-            inline static void isr() {
+            template<bool Q = useISR::value>
+            inline static 
+            typename std::enable_if<Q, void>::type
+            isr() {
+                isr_impl();
+            }
+        private:
+            static inline void isr_impl() {
                 if (auto c = mSendQueue.pop_front()) {
                     *mcu_usart()->udr = *c;;
                 }
@@ -176,10 +193,10 @@ namespace AVR {
         typename std::enable_if<!Q, void>::type
         periodic() {
             if (isset(mcu_usart()->ucsra.template get<ucsra_type::rxc>())) {
-                RxHandler::isr();       
+                RxHandler::isr_impl();       
             }
             if (isset(mcu_usart()->ucsra.template get<ucsra_type::udre>())) {
-                TxHandler::isr();
+                TxHandler::isr_impl();
             }
         }
         
@@ -240,8 +257,8 @@ namespace AVR {
             }
         }
     private:        
-        inline static volatile std::FiFo<std::byte, SendQLength::value> mSendQueue;
-        inline static volatile std::FiFo<std::byte, RecvQLength::value> mRecvQueue;
+        inline static send_queue_type mSendQueue;
+        inline static recv_queue_type mRecvQueue;
 
         static constexpr uint16_t ubrrValue(uint32_t fcpu, uint32_t baud) {
             return (((1.0 * fcpu) / (16 * baud)) + 0.5) - 1;

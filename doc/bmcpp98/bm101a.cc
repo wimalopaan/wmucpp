@@ -25,10 +25,20 @@ struct A : IF {
     }
     
     IF* const* begin() const {
-        return &mChildren[0];
+        if constexpr(N > 0) {
+            return &mChildren[0];
+        }
+        else {
+            return nullptr;
+        }
     }
     IF* const* end() const {
-        return &mChildren[N - 1] + 1;
+        if constexpr(N > 0) {
+            return &mChildren[N - 1] + 1;
+        }
+        else {
+            return nullptr;
+        }
     }
     const std::array<IF*, N> mChildren;
 };
@@ -43,10 +53,20 @@ struct B : IF {
     }
 
     IF* const* begin() const {
-        return &mChildren[0];
+        if constexpr(N > 0) {
+            return &mChildren[0];
+        }
+        else {
+            return nullptr;
+        }
     }
     IF* const * end() const {
-        return &mChildren[N - 1] + 1;
+        if constexpr(N > 0) {
+            return &mChildren[N - 1] + 1;
+        }
+        else {
+            return nullptr;
+        }
     }
     const std::array<IF*, N> mChildren;
 };

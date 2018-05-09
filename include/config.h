@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -55,7 +55,7 @@ struct Config final
         inline static constexpr std::microseconds pulseDelay = 1_us;
     };
     struct Button {
-        inline static constexpr uint8_t buttonTicksForPressed = 100_ms * Timer::frequency;
+        inline static constexpr uint8_t buttonTicksForPressed = 50_ms * Timer::frequency;
     };
     inline static constexpr std::microseconds zeroMicroSeconds{0};
     inline static constexpr bool ensureTerminalOutput = true;

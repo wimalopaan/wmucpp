@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -87,7 +87,7 @@ namespace AVR {
         
         static typename Reso::type value() {
             if constexpr(std::is_same<Reso, Resolution<8>>::value) {
-                return typename Reso::type{*mcuAdc()->adch};
+                return typename Reso::type{*mcuAdc()->reg.adch}; // adch
             }
             else {
                 return typename Reso::type{*mcuAdc()->adc};

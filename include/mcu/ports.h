@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,12 +44,20 @@ namespace AVR {
         static inline void set() {
             Port::dir() |= mask;
         }
+        template<typename Port>
+        static inline void set() {
+            Port::dir() = std::byte{0xff};
+        }
     };
     struct Input final {
         Input() = delete;
         template<typename Port, std::byte mask>
         static inline void set() {
             Port::dir() &= ~mask;
+        }
+        template<typename Port>
+        static inline void set() {
+            Port::dir() = std::byte{0};
         }
     };
     
@@ -98,14 +106,15 @@ namespace AVR {
         
         template<typename... Pins>
         struct Generator {
+            static_assert(sizeof...(Pins) <= 8);
             static inline constexpr uint8_t size = sizeof...(Pins);
             static constexpr std::byte pinMasks[] = {Pins::pinMask...};
             inline constexpr auto operator()() {
                 constexpr uint16_t numberOfPatterns = (1 << size);
                 std::array<std::byte, numberOfPatterns> data;
-                for(uint8_t value = 0; value < numberOfPatterns; ++value) {
+                for(uint16_t value = 0; value < numberOfPatterns; ++value) {
                     std::byte pattern{0};
-                    std::byte vv{value};
+                    std::byte vv{(uint8_t)value};
                     for(uint8_t bit = 0; bit < size; ++bit) {
                         if (std::any(vv & std::byte{0x01})) {
                             pattern |= pinMasks[bit];
@@ -113,6 +122,26 @@ namespace AVR {
                         vv >>= 1;
                     }
                     data[value] = pattern;
+                }
+                return data;
+            }            
+        };
+        template<typename... Pins>
+        struct GeneratorReverse {
+            static_assert(sizeof...(Pins) <= 8);
+            inline static constexpr std::byte mask = (Pins::mask | ...);
+            inline constexpr auto operator()() {
+                constexpr auto forward_patterns = Generator<Pins...>();
+                constexpr uint16_t numberOfPatterns = (1u << ::Util::numberOfBits<std::byte>());
+                std::array<std::byte, numberOfPatterns> data;
+                for(uint16_t value = 0; value < numberOfPatterns; ++value) {
+                    std::byte masked_value = std::byte(value) & mask;
+                    for(uint16_t rv = 0; rv < forward_patterns.size; ++rv) {
+                        if (forward_patterns[rv] == masked_value) {
+                            data[value] = rv;
+                            break;
+                        }
+                    }
                 }
                 return data;
             }            
@@ -172,8 +201,9 @@ namespace AVR {
             auto v = (port_type::get() & setMask) ^ setMask;
             port_type::toggle(v);
         }
+        template<typename I = RestoreState>
         static inline void allPullup() {
-            Scoped<DisbaleInterrupt<RestoreState>> di;
+            Scoped<DisbaleInterrupt<I>> di;
             port_type::get() |= setMask;
         }
         static inline void allOff() { // race-free

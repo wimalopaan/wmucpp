@@ -1,5 +1,6 @@
 #include <cstdint>
 #include <tuple>
+#include "container/tree.h"
 
 template<auto N>
 struct A {
@@ -16,7 +17,7 @@ constexpr auto t1 = std::tuple(a1, a2);
 auto l1 = [&]{
     constexpr auto a1 = A<2>{1, 2};
     constexpr auto a2 = A<3>{2, 3, 4};
-    constexpr auto t1 = std::tuple(a1, a2);
+    constexpr auto t1 = std::tuple(a1);
     return t1;
 };
 
@@ -34,7 +35,11 @@ constexpr auto transform_2(const T& l) {
     constexpr auto tuple = l();
     constexpr auto x1 = std::get<0>(tuple);
     constexpr auto b1 = B<x1.size, x1.d[0], x1.d[1]>{}; 
-    return std::tuple(b1);
+    constexpr auto c1 = Util::tuple_tail(tuple);
+    
+//    decltype(c1)::_;
+    
+    return std::tuple(x1);
 }
 
 //constexpr auto t2 = transform_1(t1); // not possible

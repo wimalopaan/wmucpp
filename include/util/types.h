@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -374,8 +374,23 @@ private:
 };
 
 struct uint4_t {
-    uint8_t upper : 4, lower : 4;
+    uint8_t lower: 4, upper: 4;
+    explicit operator bool() const {
+        return lower;
+    }
 };
+constexpr uint4_t operator<<(uint4_t v, uint8_t s) {
+    v.lower <<= s;
+    return v;
+}
+constexpr uint4_t operator|(uint4_t v1, uint4_t v2) {
+    v1.lower |= v2.lower;
+    return v1;
+}
+constexpr uint4_t operator&(uint4_t v1, uint4_t v2) {
+    v1.lower &= v2.lower;
+    return v1;
+}
 
 struct uint7_t final {
     constexpr uint7_t() : value(0), pad(0) {}

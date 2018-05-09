@@ -52,10 +52,20 @@ struct A : If {
     }
     
     const ptype* begin() const {
-        return &mChildren[0];
+        if constexpr(N > 0) {
+            return &mChildren[0];
+        }
+        else {
+            return nullptr;
+        }
     }
     const ptype* end() const {
-        return &mChildren[N - 1] + 1;
+        if constexpr(N > 0) {
+            return &mChildren[N - 1] + 1;
+        }
+        else {
+            return nullptr;
+        }
     }
     std::array<ptype, N> mChildren;
 };
@@ -70,10 +80,20 @@ struct B : If {
     }
 
     const ptype* begin() const {
-        return &mChildren[0];
+        if constexpr(N > 0) {
+            return &mChildren[0];
+        }
+        else {
+            return nullptr;
+        }
     }
     const ptype* end() const {
-        return &mChildren[N - 1] + 1;
+        if constexpr(N > 0) {
+            return &mChildren[N - 1] + 1;
+        }
+        else {
+            return nullptr;
+        }
     }
     std::array<ptype, N> mChildren;
 };

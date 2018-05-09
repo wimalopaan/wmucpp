@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -64,7 +64,7 @@ namespace TWI {
             mState = State::Inactive;
         }        
         inline static bool transferComplete() {
-            return (mBytesToRead == 0) && (mBytesToWrite == 0);
+            return (mBytesToRead == uint8_t{0}) && (mBytesToWrite == uint8_t{0});
         }
         inline static void rateProcess() {
             switch(mState) {
@@ -134,7 +134,7 @@ namespace TWI {
                     else {
                         if (auto data = mSendQueue.pop_front()) {
                             mBytesToRead = std::to_integer<uint8_t>(*data);
-                            if (mBytesToRead > 1) {
+                            if (mBytesToRead > uint8_t{1}) {
                                 mState = State::Reading;
                             }
                             else {
@@ -177,7 +177,7 @@ namespace TWI {
                 }
                 break;
             case State::Writing:
-                if (mBytesToWrite > 0) {
+                if (mBytesToWrite > uint8_t{0}) {
                     // send data to the previously addressed device
                     if (auto data = mSendQueue.pop_front()) {
                         *mcuTwi()->twdr = std::byte{*data};
@@ -227,10 +227,10 @@ namespace TWI {
                     std::byte v = *mcuTwi()->twdr;
                     --mBytesToRead;
                     if (mRecvQueue.push_back(v)) {
-                        if (mBytesToRead > 1) {
+                        if (mBytesToRead > uint8_t{1}) {
                             mState = State::Reading;
                         }
-                        else if (mBytesToRead == 1){
+                        else if (mBytesToRead == uint8_t{1}){
                             mState = State::ReadLast;
                         }
                         else {

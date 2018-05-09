@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ enum class EventType : uint8_t {
     HottBinaryRequest, HottAsciiRequest, HottSensorBroadcast, HottAsciiKey,
     Ppm1Up, Ppm1Down, Ppm2Up, Ppm2Down,
     ButtonPress,
-    ButtonPress0, ButtonPress1, ButtonPress2, ButtonPress3, ButtonPress4, ButtonPress5, ButtonPress6, ButtonPress7,
+//    ButtonPress0, ButtonPress1, ButtonPress2, ButtonPress3, ButtonPress4, ButtonPress5, ButtonPress6, ButtonPress7,
     OneWireRecvComplete,
     DS18B20Measurement, DS18B20Error,
     TWIRecvComplete, TWISendComplete, TWIError,

@@ -71,6 +71,10 @@ namespace std {
         static constexpr bool value = true;
     };
     
+    template< class T > struct add_cv { typedef const volatile T type; };
+    template< class T> struct add_const { typedef const T type; };
+    template< class T> struct add_volatile { typedef volatile T type; };
+    
     template< class T > struct remove_const          { typedef T type; };
     template< class T > struct remove_const<const T> { typedef T type; };
     

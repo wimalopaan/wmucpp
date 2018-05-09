@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -263,6 +263,17 @@ namespace Meta {
         struct partial_sum_impl<L<F>, N> {
             typedef Meta::List<std::integral_constant<size_t, F::value + N>> type;
         };
+        
+        template<typename L> struct reverse_impl;
+        template<template<typename...> typename L, typename F, typename... II>
+        struct reverse_impl<L<F, II...>> {
+            typedef typename concat_impl<typename reverse_impl<L<II...>>::type, L<F>>::type type;
+        };
+        template<template<typename...> typename L, typename F>
+        struct reverse_impl<L<F>> {
+            typedef L<F> type;
+        };
+        
     } // !detail
 
     namespace concepts {
@@ -337,6 +348,9 @@ namespace Meta {
     
     template<size_t N, concepts::List List>
     using nth_element = typename detail::nth_element_impl<N, List>::type;
+
+    template<concepts::List List>
+    using reverse = typename detail::reverse_impl<List>::type;
     
     template<concepts::List List, typename T>
     struct contains : public std::integral_constant<bool, detail::contains_impl<List, T>::value> {};
@@ -365,6 +379,9 @@ namespace Meta {
     template<typename T, concepts::List L>
     struct all_same : public std::integral_constant<bool, detail::all_same_impl<T, L>::value> {};
 
+    template<concepts::List L>
+    struct all_same_front : public std::integral_constant<bool, detail::all_same_impl<front<L>, L>::value> {};
+    
     template<concepts::List List>
     using rest = typename detail::rest_impl<List>::type;
     
@@ -568,6 +585,11 @@ namespace Meta {
         static_assert(nth_element<0, l500ps>::value == 1);
         static_assert(nth_element<1, l500ps>::value == 3);
         static_assert(nth_element<2, l500ps>::value == 8);
+        
+        using l600 = Meta::List<A, B, C>;
+        using l601 = Meta::reverse<l600>;
+        static_assert(std::is_same<Meta::front<l601>, C>::value);
+        static_assert(std::is_same<Meta::back<l601>, A>::value);
         
 //        static_assert(false);
         

@@ -1,7 +1,7 @@
 # -*- mode: makefile-gmake; -*-
 #
 # WMuCpp - Bare Metal C++ 
-# Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+# Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,14 +41,15 @@ subdirs =
 #targets += test08.s test08.elf
 #targets += test10.s test10.elf
 #targets += test11.s test11.elf
-#targets += test12.s test12.elf
-#targets += test13.s test13.elf
+targets += test12.s test12.elf
+targets += test13.s test13.elf
 #targets += test14.s test14.elf
 #targets += test15.s test15.elf
 #targets += test16.s test16.elf
-
 targets += test24.s test24.elf
 
 -include ../../Makefile.include
+
+CXXFLAGS+=-mno-gas-isr-prologues # prevent problem mit __gcc_isr
 
 #CXXFLAGS += -Wno-deprecated-declarations

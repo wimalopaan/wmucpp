@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ constexpr A a8{2};
 constexpr A a9{1};
 constexpr A a10{2};
 
-constexpr auto x1 = Util::PgmArray<const A&, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10>{}; // gcc-8.0 ICE
+//constexpr auto x1 = Util::PgmArray<const A&, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10>{}; // gcc-8.0 ICE
 constexpr auto x2 = Util::PgmArray<uint8_t, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10>{}; 
 
 volatile uint8_t r = 0;

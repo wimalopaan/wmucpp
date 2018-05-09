@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ using led = AVR::Pin<PortB, 0>;
 
 template<typename Leds>
 class Inserter final {
-    static constexpr std::byte* data = reinterpret_cast<std::byte*>(&Leds::elementAt(0));
+    inline static /*constexpr*/ std::byte* data = reinterpret_cast<std::byte*>(&Leds::elementAt(0));
     Inserter() = delete;
 public:
     static inline void insert(std::byte b) {

@@ -63,12 +63,13 @@ std::ostream& operator<<(std::ostream& out, const T& n) {
 
 
 auto flat_tree = [&]{
-    constexpr auto tree = Node(Menu(1), 
-                               A(7), 
-                               Node(Menu(2),
-                                    B(6), 
-                                    C(5)
-                                    ));
+    constexpr auto tree = Node(Menu(1)
+                               , A(7)
+//                               Node(Menu(2),
+//                                    B(6), 
+//                                    C(5)
+//                                    )
+                               );
 
     constexpr auto ftree = make_tuple_of_tree(tree);
     return ftree;
@@ -84,6 +85,7 @@ constexpr auto inode_to_indexnode(std::index_sequence<II...>, const L& callable)
 
 
 template<Util::Callable L>
+//template<typename  L>
 constexpr auto transform(const L& callable) {
     constexpr auto tuple = callable();
     static_assert(Util::isTuple(tuple), "use constexpr callabe returning a tuple");
@@ -93,10 +95,12 @@ constexpr auto transform(const L& callable) {
     }
     else {
         constexpr auto first = std::get<0>(tuple);    
-        constexpr auto rest = [&]{return Util::tuple_tail(tuple);};
+        constexpr auto rest = [&](){return Util::tuple_tail(tuple);};
+//        decltype(first)::_;
         
         if constexpr(isInode(first)) {
-            constexpr auto indexnode = inode_to_indexnode(std::make_index_sequence<first.mChildren.size()>{}, [&]{return first;});
+            constexpr auto indexnode = inode_to_indexnode(std::make_index_sequence<first.mChildren.size()>{}, [&](){return first;});
+//            decltype(rest())::_;
             return std::tuple_cat(std::tuple(indexnode), transform(rest));        
         }
         else {
