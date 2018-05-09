@@ -95,7 +95,7 @@ constexpr auto transform(const L& callable) {
     }
     else {
         constexpr auto first = std::get<0>(tuple);    
-        constexpr auto rest = [&](){return Util::tuple_tail(tuple);};
+        auto rest = []{return Util::tuple_tail(tuple);};
 //        decltype(first)::_;
         
         if constexpr(isInode(first)) {
@@ -110,6 +110,8 @@ constexpr auto transform(const L& callable) {
 }
 
 constexpr auto t2 = transform(flat_tree); 
+
+//decltype(t2)::_;
 
 template<typename T>
 void inspect(T) {

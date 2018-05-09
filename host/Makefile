@@ -19,6 +19,9 @@
 
 subdirs += hott
 
+#test23a: CXXFLAGS = -g -std=c++17 -Wall -Wextra -fPIC -I../include 
+#test23a: CXX = clang++
+
 targets += test01 test02 test03 test04 # test05
 targets += test06
 targets += test07
@@ -31,9 +34,10 @@ targets += test20
 targets += test21
 targets += test22
 targets += test23
-#targets += test24
-#targets += test25
-#targets += test26
+targets += test23a
+targets += test24
+targets += test25
+targets += test26
 targets += test30
 targets += test40
 targets += test50
@@ -47,7 +51,8 @@ targets += test99
 
 -include ../Makefile.include
 
-CXX = /usr/bin/g++
+#CXX = /usr/bin/g++
+CXX = g++
 #CXX = clang++
 CC = g++
 LDFLAGS = -lpthread

@@ -50,36 +50,36 @@ struct C {
 using l1 = Meta::List<A, B, C>;
 
 namespace Meta {
-    namespace detail {
-        template<typename L> struct visit_impl;
+//    namespace detail {
+//        template<typename L> struct visit_impl;
         
-        template<template<typename ...> typename L, typename... T, typename First> 
-        struct visit_impl<L<First, T...>> {
-            template<typename F>
-            static void at(size_t index, F f) {
-                if (index == sizeof...(T)) {
-                    f(First()); // Instanziierung
-                }  
-                else {
-                    visit_impl<L<T...>>::at(index, f);
-                }
-            }
-        };
-        template<template<typename ...> typename L, typename... T> 
-        struct visit_impl<L<T...>> {
-            template<typename F>
-            static void at(size_t, F) {
-                assert(false);
-            }
-        };
-    }
-    template<typename L>
-    struct visit {
-        template<typename F>
-        static void at(size_t index, F f) {
-            detail::visit_impl<L>::at(size<L>::value - index - 1, f);    
-        }
-    };
+//        template<template<typename ...> typename L, typename... T, typename First> 
+//        struct visit_impl<L<First, T...>> {
+//            template<typename F>
+//            static void at(size_t index, F f) {
+//                if (index == sizeof...(T)) {
+//                    f(First()); // Instanziierung
+//                }  
+//                else {
+//                    visit_impl<L<T...>>::at(index, f);
+//                }
+//            }
+//        };
+//        template<template<typename ...> typename L, typename... T> 
+//        struct visit_impl<L<T...>> {
+//            template<typename F>
+//            static void at(size_t, F) {
+//                assert(false);
+//            }
+//        };
+//    }
+//    template<typename L>
+//    struct visit {
+//        template<typename F>
+//        static void at(size_t index, F f) {
+//            detail::visit_impl<L>::at(size<L>::value - index - 1, f);    
+//        }
+//    };
 }
 
 int main() {

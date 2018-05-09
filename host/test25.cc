@@ -82,7 +82,7 @@ constexpr auto transform(const L& callable) {
     }
     else {
         constexpr auto first = std::get<0>(tuple);    
-        constexpr auto rest = [&]{return Util::tuple_tail(tuple);};
+        constexpr auto rest = []{return Util::tuple_tail(tuple);};
         
         constexpr auto indexnode = inode_to_indexnode(std::make_index_sequence<first.mChildren.size()>{}, [&]{return first;});
         return std::tuple_cat(std::tuple(indexnode), transform(rest));        

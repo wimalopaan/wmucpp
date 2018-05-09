@@ -67,6 +67,7 @@ host/hott/test01.cc
 host/hott/test02.cc
 host/hott/test03.cc
 host/hott/uart01.cc
+host/test23a.cc
 host/test25.cc
 host/test26.cc
 host/test40.cc
