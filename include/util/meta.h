@@ -441,6 +441,21 @@ namespace Meta {
                 return std::numeric_limits<N>::max();
             }
         };
+
+        template<typename L>
+        struct unique_impl;
+        template<template<typename...> typename L, typename F, typename... II>
+        struct unique_impl<L<F, II...>> {
+            typedef typename std::conditional<Meta::contains<L<II...>, F>::value, 
+                                              typename unique_impl<L<II...>>::type, 
+                                              Meta::concat<L<F>, 
+                                                           typename unique_impl<L<II...>>::type>
+                                             >::type type;
+        };
+        template<template<typename...> typename L, typename F>
+        struct unique_impl<L<F>> {
+            typedef L<F> type;
+        };
     }
     
     template<concepts::List List, typename I, typename C>
@@ -457,6 +472,10 @@ namespace Meta {
     inline size_type<List> find(const C& callable) {
         return detail::visit<List>::find(callable, size_type<List>{0});
     }
+    
+    template<concepts::List L>
+    using unique = typename detail::unique_impl<L>::type;
+    
     
     namespace tests {
         struct A {};
