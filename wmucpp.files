@@ -54,6 +54,14 @@ doc/bmcpp04/bm40a.cc
 doc/bmcpp04/bm40b.c
 doc/bmcpp04/bm41a.cc
 doc/bmcpp04/bm42a.cc
+doc/bmcpp10/bm40a.cc
+doc/bmcpp10/bm40b.c
+doc/bmcpp10/bm41a.cc
+doc/bmcpp10/bm41b.c
+doc/bmcpp20/bm80a.cc
+doc/bmcpp20/bm80b.c
+doc/bmcpp20/bm81a.cc
+doc/bmcpp20/bm81b.c
 doc/bmcpp98/bm100a.cc
 doc/bmcpp98/bm101a.cc
 doc/bmcpp98/bm102a.cc
@@ -72,6 +80,7 @@ host/test25.cc
 host/test26.cc
 host/test40.cc
 host/test70.cc
+host/test80.cc
 host/test91.cc
 host/test92.cc
 images/a1.h
