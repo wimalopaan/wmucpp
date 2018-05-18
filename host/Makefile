@@ -43,6 +43,7 @@ targets += test40
 targets += test50
 targets += test60
 targets += test70
+targets += test80
 targets += test90
 targets += test91
 targets += test92
