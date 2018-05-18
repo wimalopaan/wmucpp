@@ -43,6 +43,9 @@ namespace std {
         typedef T type;
     };
     
+    template<bool B>
+    using enable_if_t = typename enable_if<B>::type;
+    
     template<bool B, class T = void>
     struct enable_if_not {};
     

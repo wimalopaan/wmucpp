@@ -156,9 +156,8 @@ public:
         return FixedPoint<int16_t, 4>::fromRaw(valueH << 8 | valueL);
     }
     
-    template<bool Q = useEvents::value>
-    inline static 
-    typename std::enable_if<Q, bool>::type
+    template<bool visible = useEvents::value, typename = std::enable_if_t<visible>>
+    inline static bool
     process(std::byte) {
         static_assert(OneWireMaster::isAsync, "async interface shall use async OneWireMaster");
         bool ok = true;
@@ -180,9 +179,8 @@ public:
         }
         return true;
     }
-    template<typename C, bool Q = useEvents::value>
-    inline static 
-    typename std::enable_if<!Q, bool>::type
+    template<typename C, typename = std::enable_if_t<!useEvents::value>>
+    inline static bool
     periodic(const C& callable) {
         if (mToRead > 0) {
             if (auto v = OneWireMaster::get()) {
