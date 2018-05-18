@@ -74,8 +74,8 @@ ifndef OPTFLAGS
 OPTFLAGS = -Os
 endif
 
-CXXFLAGS += $(OPTFLAGS) -std=c++17 #-pedantic
-#CXXFLAGS += $(OPTFLAGS) -std=c++2a # -pedantic
+#CXXFLAGS += $(OPTFLAGS) -std=c++17 #-pedantic
+CXXFLAGS += $(OPTFLAGS) -std=c++2a # -pedantic
 #CXXFLAGS += -O3 -std=c++17 # -pedantic
 #CXXFLAGS += -nostdlib -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics
 CXXFLAGS += -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics #-Wgnu-string-literal-operator-template
