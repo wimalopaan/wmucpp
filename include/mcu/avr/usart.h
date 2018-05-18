@@ -108,9 +108,8 @@ namespace AVR {
         static_assert(N < MCU::Usart::count, "wrong number of usart");
     
         struct RxHandler : public IsrBaseHandler<typename AVR::ISR::Usart<N>::RX> {
-            template<bool Q = useISR::value>
-            inline static 
-            typename std::enable_if<Q, void>::type
+            template<bool visible = useISR::value, typename = std::enable_if_t<visible>>
+            inline static void
             isr() {
                 isr_impl();
             }
@@ -169,9 +168,8 @@ namespace AVR {
             }
         };
         struct TxHandler : public IsrBaseHandler<typename AVR::ISR::Usart<N>::UDREmpty> {
-            template<bool Q = useISR::value>
-            inline static 
-            typename std::enable_if<Q, void>::type
+            template<bool visible = useISR::value, typename = std::enable_if_t<visible>>
+            inline static void
             isr() {
                 isr_impl();
             }

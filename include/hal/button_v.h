@@ -46,17 +46,15 @@ namespace detail {
             inline static DataType state{0};
             inline static DataType_maybe_volatile pressed{0};
 
-            template<bool Q = !useIsr>
-            static inline 
-            typename std::enable_if<Q, void>::type
+            template<bool visible = !useIsr, typename = std::enable_if_t<visible>>
+            static inline void
             periodic(const Util::Callable<DataType>& f) {
                 Derived::update();
                 f(pressed);
                 pressed = DataType{0};
             }
-            template<bool Q = !useIsr, typename... L>
-            static inline 
-            typename std::enable_if<Q, void>::type
+            template<typename... L, bool visible = !useIsr, typename = std::enable_if_t<visible>>
+            static inline void
             periodic(const L&... f) {
                 static_assert(sizeof...(L) == Meta::size<button_list>::value);
                 Derived::update();
@@ -65,19 +63,16 @@ namespace detail {
                 }(ButtonIndices{});
                 pressed = DataType{0};
             }
-
-            template<typename Button, bool Q = useIsr>
-            static inline 
-            typename std::enable_if<Q, bool>::type
+            template<typename Button, bool visible = useIsr, typename = std::enable_if_t<visible>>
+            static inline bool
             isPressed() {
                 Scoped<DisbaleInterrupt<>> di;
                 DataType v = pressed & (DataType{1} << Derived::template index<Button>::value);
                 pressed ^= v;
                 return v;
             }
-            template<bool Q = useIsr>
-            static inline 
-            typename std::enable_if<Q, void>::type
+            template<bool visible = useIsr, typename = std::enable_if_t<visible>>
+            static inline void
             isr() {
                 Derived::update();
             }

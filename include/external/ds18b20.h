@@ -179,7 +179,7 @@ public:
         }
         return true;
     }
-    template<typename C, typename = std::enable_if_t<!useEvents::value>>
+    template<typename C, bool visible = !useEvents::value, typename = std::enable_if_t<visible>>
     inline static bool
     periodic(const C& callable) {
         if (mToRead > 0) {

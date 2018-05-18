@@ -35,15 +35,13 @@ public:
         (Buttons::init(), ...); 
     }
     
-    template<bool Q = !useEvents>
-    static inline 
-    typename std::enable_if<Q, void>::type
+    template<bool visible = !useEvents, typename = std::enable_if_t<visible>>
+    static inline void
     periodic(const Util::Callable<uint8_t>& f) {
         (Buttons::sample(f), ...);
     }
-    template<bool Q = useEvents>
-    static inline
-    typename std::enable_if<Q, void>::type
+    template<bool visible = useEvents, typename = std::enable_if_t<visible>>
+    static inline void
     periodic() {
         (Buttons::sample(), ...);
     }
@@ -79,9 +77,9 @@ public:
     typedef typename Pin::port port_type;
     static inline constexpr bool useEvents = UseEvent::value;
 private:
-    template<bool Q = useEvents>
-    static 
-    inline typename std::enable_if<Q, void>::type
+    
+    template<bool visible = useEvents, typename = std::enable_if_t<visible>>
+    inline static void
     sample() {
         if (!Pin::isHigh()) { // pressed (active low)
             if (!mData.state) { // not pressed
@@ -99,9 +97,8 @@ private:
             }
         }
     }
-    template<bool Q = useEvents>
-    static 
-    inline typename std::enable_if<!Q, void>::type
+    template<bool visible = !useEvents, typename = std::enable_if_t<visible>>
+    inline static void
     sample(const Util::Callable<uint8_t>& f) {
         if (!Pin::isHigh()) { // pressed (active low)
             if (!mData.state) { // not pressed

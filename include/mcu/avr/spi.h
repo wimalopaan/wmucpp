@@ -168,9 +168,8 @@ namespace AVR {
             spiPort::ss::on();
         } 
         
-        template<bool Q = Mode::useInterrupts>
-        static 
-        typename std::enable_if<Q, bool>::type
+        template<bool visible = Mode::useInterrupts, typename = std::enable_if_t<visible>>
+        inline static bool
         leak() {
             if constexpr(useBase) {
                 bool oBefore = base_type::overrun;
@@ -183,10 +182,8 @@ namespace AVR {
                 return oBefore;
             }
         }
-        // SFINAE disable
-        template<bool Q = Mode::useInterrupts>
-        static 
-        typename std::enable_if<Q, void>::type
+        template<bool visible = Mode::useInterrupts, typename = std::enable_if_t<visible>>
+        inline static void
         isr() {
             std::byte c = *getBaseAddr<typename MCU::Spi, N>()->spdr;
             if constexpr(useBase) {

@@ -98,9 +98,8 @@ namespace TWI {
             }
             index.setNaN(); // todo: index = NaN;
         }
-        template<bool Q = useInt::value>
-        inline static 
-        typename std::enable_if<Q, void>::type
+        template<bool visible = useInt::value, typename = std::enable_if_t<visible>>
+        inline static void
         isr() {
             isr_impl();
         }

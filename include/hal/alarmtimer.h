@@ -102,10 +102,8 @@ public:
         return !isset((mTimers[id].flags & AlarmFlags::Disabled));
     }
     
-    // SFINAE
-    template<typename Q = UseE>
-    static 
-    typename std::enable_if<Q::value, void>::type 
+    template<bool visible = UseE::value, typename = std::enable_if_t<visible>>
+    inline static void
     periodic() {
         using namespace std::literals::chrono;
         for(uint8_t i = 0; i < mTimers.capacity; ++i) {
@@ -126,10 +124,8 @@ public:
         }
     }
     
-    // SFINAE
-    template<typename Callable, typename Q = UseE>
-    static 
-    typename std::enable_if<!Q::value, void>::type 
+    template<typename Callable, bool visible = !UseE::value, typename = std::enable_if_t<visible>>
+    inline static void
     periodic(const Callable& f) {
         using namespace std::literals::chrono;
         for(uint8_t i = 0; i < mTimers.capacity; ++i) {

@@ -80,9 +80,8 @@ public:
         return TWIMaster::template startWrite<Address>(data);        
     }
     
-    template<bool Q = useEvents::value>
-    inline static 
-    typename std::enable_if<Q, bool>::type
+    template<bool visible = useEvents::value, typename = std::enable_if_t<visible>>
+    inline static bool
     process(std::byte b) {
         auto address = b;
         if (TWI::Address{address} == Address) {
