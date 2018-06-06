@@ -40,6 +40,11 @@ namespace Meta {
     struct TList {
         inline static constexpr size_t size = sizeof...(TT);
     };
+
+    template<auto... NN>
+    struct NList {
+        inline static constexpr size_t size = sizeof...(NN);
+    };
     
     namespace detail {
         
@@ -385,6 +390,12 @@ namespace Meta {
     template<concepts::List List>
     using rest = typename detail::rest_impl<List>::type;
     
+    template<concepts::List List>
+    using pop_front = rest<List>;
+    
+    template<concepts::List List>
+    using pop_back = reverse<rest<reverse<List>>>;
+    
     template<typename L>
     using partial_sum = typename detail::partial_sum_impl<L, 0>::type;
     
@@ -476,6 +487,11 @@ namespace Meta {
     template<concepts::List L>
     using unique = typename detail::unique_impl<L>::type;
     
+    template<typename... T>
+    struct always_false : std::false_type {};
+    
+    template<typename... T>
+    inline static constexpr bool always_false_v = always_false<T...>::value;
     
     namespace tests {
         struct A {};

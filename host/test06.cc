@@ -53,7 +53,7 @@ int main() {
             elem.reserve(10000);
             data.push_back(std::move(elem));
         }
-        catch (std::bad_alloc)
+        catch (const std::bad_alloc&)
         {
             std::cout << i << " sucessful push_backs\n";
             break;

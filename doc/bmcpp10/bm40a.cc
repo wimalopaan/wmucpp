@@ -10,6 +10,15 @@ struct AsciiChar {
     explicit inline AsciiChar(unsigned char v = 0) : value(v) {
         assert(value < 128);
     }
+    explicit operator unsigned char() const {
+        return value;
+    }
+    explicit operator int() const {
+        return value;
+    }
+    unsigned char toInt() const {
+        return value;
+    }
     unsigned char value {};
 };
 
@@ -99,6 +108,14 @@ struct Console {
     };
 };
 
+void bar(int) {
+}
+
+void foo(const AsciiChar& c) {
+    bar(static_cast<int>(c));
+    bar(static_cast<unsigned char>(c));
+}
+
 int main(){
 //    Console<std::byte>::Input input;
 //    Console<std::byte>::Output output;
@@ -106,6 +123,7 @@ int main(){
 //    return output.fail();
     
     while(const auto c = get<AsciiChar>()) {
+        foo(*c);
         if (!put(*c)) {
             return 1;
         }

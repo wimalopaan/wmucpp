@@ -148,7 +148,7 @@ namespace std {
     
     template<typename E, typename... Tail>
     constexpr auto make_array(E&& f, Tail&&... tail) {
-        return std::array<E, sizeof...(Tail) + 1>{f, tail...};
+        return std::array<E, sizeof...(Tail) + 1>{E(f), E(tail)...};
     }
     
     template<typename T> struct tuple_size;

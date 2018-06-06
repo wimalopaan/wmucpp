@@ -40,7 +40,7 @@ namespace Util {
     //    template <uint8_t I, typename ...Ts>
     //    using nth_element = typename nth_element_impl<I, Ts...>::type;
     
-    template <typename T, uint16_t N, typename Comp = std::greater<T>>
+    template <typename T, auto N, typename Comp = std::greater<T>>
     constexpr std::array<T, N>& sort(std::array<T, N>& array, Comp compare = std::greater<T>()) {
         for(uint8_t i = 0; i < (N - 1);) {
             if (compare(array[i], array[i + 1])) {

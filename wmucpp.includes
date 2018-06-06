@@ -1,3 +1,4 @@
+/home/lmeier/Software/asf/sam0/utils/cmsis/samd21/include
 example
 include
 include/container
@@ -81,3 +82,7 @@ include/external/gps
 images
 host/hott
 boards/rcsensorled10
+doc.arm
+doc.arm/bmcpp01
+include/mcu/stm32
+doc.arm/bmcpp02

@@ -34,10 +34,10 @@ namespace std {
         return T((uint8_t)b);
     }
     
-    constexpr bool any(std::byte b) {
+    constexpr bool any(std::byte b) noexcept {
         return b != std::byte{0};
     }
-    constexpr bool none(std::byte b) {
+    constexpr bool none(std::byte b) noexcept {
         return b == std::byte{0};
     }
     

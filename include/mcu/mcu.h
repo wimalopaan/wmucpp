@@ -36,6 +36,12 @@ namespace AVR {
 }
 
 namespace ARM {
+    namespace SAM {
+        struct SamC20;
+        struct SamC21;
+        struct SamD20;
+        struct SamD21;
+    }
 }
 
 #if defined(__AVR_ATmega1284P__)
@@ -56,6 +62,8 @@ typedef AVR::ATTiny85 DefaultMcuType;
 typedef AVR::ATTiny25 DefaultMcuType;
 #elif defined(__AVR_ATtiny84__)
 typedef AVR::ATTiny84 DefaultMcuType;
+#elif defined(__SAMD21G18A__)
+typedef ARM::SAM::SamD21 DefaultMcuType;
 #else
 typedef AVR::ATMegaNone DefaultMcuType;
 #endif

@@ -159,20 +159,21 @@ using fsm = FSM<Tr<StateA, StateB, E1>, Tr<StateB, StateC, E2>, Tr<StateC, State
 using mapper = EventMapper<fsm, RangeEvent<unsigned char, 'A', 'z', E1>, ValueEvent<unsigned char, ',', E2>>;
 
 int main(){
-//    fsm::process(E3{});
-//    std::cout << (int)fsm::mState << '\n';
-//    fsm::process(E2{});
-//    std::cout << (int)fsm::mState << '\n';
-//    fsm::process(E1{});
-//    std::cout << (int)fsm::mState << '\n';
-//    fsm::process(E2{});
-//    std::cout << (int)fsm::mState << '\n';
-//    fsm::process(E3{});
-//    std::cout << (int)fsm::mState << '\n';
-
-    
     unsigned char c = 'a';
     mapper::process(c);
     c = 'b';
     mapper::process(c);
+
+    //    fsm::process(E3{});
+    //    std::cout << (int)fsm::mState << '\n';
+    //    fsm::process(E2{});
+    //    std::cout << (int)fsm::mState << '\n';
+    //    fsm::process(E1{});
+    //    std::cout << (int)fsm::mState << '\n';
+    //    fsm::process(E2{});
+    //    std::cout << (int)fsm::mState << '\n';
+    //    fsm::process(E3{});
+    //    std::cout << (int)fsm::mState << '\n';
+    
+        
 }

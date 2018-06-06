@@ -201,7 +201,7 @@ namespace std {
     }
     
     template<typename It>
-    void reverse(It first, It last) {
+    constexpr void reverse(It first, It last) {
         while(first < last) {
             using std::swap;
             swap(*first, *last);

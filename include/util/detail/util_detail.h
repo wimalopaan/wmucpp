@@ -139,7 +139,7 @@ namespace Util {
         };
         
         template<uint8_t Base, std::Unsigned T>
-        void itoa(T value, uint8_t length, char* data) {
+        constexpr void itoa(T value, uint8_t length, char* data) {
             auto next = length - 1;
             constexpr auto modul = detail::Convert<2, Base>::dimension;
             while(value >= modul) {
@@ -164,7 +164,7 @@ namespace Util {
         
         
         template<uint8_t Base, std::Integral T, Util::Subscriptable C>
-        auto itoa(const T& value, C& data) -> decltype(data)& {
+        constexpr auto itoa(const T& value, C& data) -> decltype(data)& {
             T v = value;
             if constexpr(std::is_signed<T>::value) {
                 if (value < 0) {

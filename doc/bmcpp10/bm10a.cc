@@ -18,28 +18,44 @@
 
 #define NDEBUG
 
+#define LAMBDA
+
 #include <stdint.h>
 
 #include <limits>
 #include <array>
-#include <type_traits>
-#include <algorithm>
-#include "std/concepts.h"
 #include "util/util.h"
 
+template<typename C, typename L>
+void visit(const C& data, const L& f) {
+    [&]<auto... II>(std::index_sequence<II...> ){
+        (f(data[II]), ...);
+    }(std::make_index_sequence<data.size>{});
+}
+
 int main() {
-    uint8_t x = 42;
+    constexpr uint8_t x = 42;
     constexpr uint8_t base = 10;
-    std::array<char, Util::numberOfDigits<decltype(x), base>() + 1> data; // StringBuffer
-    
-    Util::itoa<base>(x, data);
-    
+    constexpr auto data = []<typename T>(T v){
+            std::array<char, Util::numberOfDigits<T, base>() + 1> data; // StringBuffer
+            Util::itoa<base>(v, data);
+            return data;
+    }(x);
+
+#ifdef LAMBDA    
+    visit(data, [](char v){
+        if (v != '\0') {
+            GPIOR0 = v;
+        }
+    });
+#else
     for(auto c: data) {
         if (c == '\0') {
             break;
         }
         GPIOR0 = c;
     }
+#endif
     GPIOR0 = '\r';
     while(true) {}
 }

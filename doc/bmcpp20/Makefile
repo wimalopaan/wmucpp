@@ -73,6 +73,14 @@ targets +=  bm80a.s bm80a.S bm80a.elf
 targets +=  bm80b.s bm80b.S bm80b.elf 
 targets +=  bm81a.s bm81a.S bm81a.elf 
 targets +=  bm81b.s bm81b.S bm81b.elf 
+targets +=  bm90a.s bm90a.elf 
+targets +=  bm90b.s bm90b.S bm90b.lss bm90b.elf 
+targets +=  bm91a.s bm91a.elf 
+targets +=  bm91b.s bm91b.elf 
+targets +=  bm92a.s bm92a.S bm92a.lss bm92a.elf 
+targets +=  bm92b.s bm92b.elf 
+targets +=  bm93a.s bm93a.S bm93a.lss bm93a.elf 
+targets +=  bm94b.s bm94b.S bm94b.lss bm94b.elf 
 
 -include ../../Makefile.include
 

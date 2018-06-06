@@ -124,7 +124,7 @@ namespace Util {
     }
     
     template<uint8_t Base = 10, std::Integral T = uint8_t, uint16_t L = 0>
-    auto itoa(const T& value, std::array<char, L>& data) -> decltype(data)& {
+    constexpr auto itoa(const T& value, std::array<char, L>& data) -> decltype(data)& {
         static_assert((Base >= 2) && (Base <= 16), "wrong base");
         static_assert(L > Util::numberOfDigits<T, Base>(), "wrong char buffer length");
         return detail::itoa<Base>(value, data);

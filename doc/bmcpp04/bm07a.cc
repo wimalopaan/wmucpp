@@ -16,30 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//#include "std/array.h"
-//#include <iostream>
-
-template<int... N>
-struct expand;
-
-template<int... N>
-struct expand<0, N...>
-{
-//    constexpr static std::array<int, sizeof...(N) + 1> values = {{ 0, N... }};
-    constexpr static int values[sizeof...(N) + 1] = { 0, N... };
-};
-
-template<int L, int... N> 
-struct expand<L, N...> : expand<L-1, L, N...> 
-{
-};
-
-//template<int... N>
-//constexpr std::array<int, sizeof...(N) + 1> expand<0, N...>::values;
-
 int main()
 {
-    [[maybe_unused]] int x = expand<3>::values[0];
-    
     
 }

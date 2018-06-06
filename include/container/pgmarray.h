@@ -93,23 +93,86 @@ namespace Util {
     private:
         inline static constexpr const U data[] PROGMEM = {U{Ts}...}; 
     };
- 
+    
+    template<typename T, auto N, const std::array<T, N>& values>
+    class PgmArray1 final {
+        using U = std::remove_const_t<std::remove_reference_t<T>>;
+        PgmArray1() = delete;
+        template<typename> struct Mapper;
+        template<auto... II>
+        struct Mapper<std::index_sequence<II...>> {
+            inline static constexpr const U data[N] PROGMEM = {values[II]...}; 
+        };
+        using mapper = Mapper<std::make_index_sequence<N>>;
+    public:
+    
+        typedef typename std::conditional<(N < 256), uint8_t, uint16_t>::type size_type;
+        
+        inline static U value(size_type index) {
+            if constexpr(std::is_same<uint8_t, T>::value || std::is_same<std::byte, T>::value || std::is_same<char, T>::value) {
+                return U{pgm_read_byte((uint8_t*)& mapper::data[index])};
+            }
+            else {
+                std::array<std::byte, sizeof(T)> bytes;
+                for(uint8_t i = 0; i < sizeof(T); ++i) {
+                    bytes[i] = std::byte{pgm_read_byte((uint8_t*)(&mapper::data[index]) + i)};
+                }
+                return U::createFrom(bytes);
+            }
+        }
+        
+        inline static constexpr size_type size = N;
+        typedef U type;
+        typedef U value_type;
+        
+        class Iterator {
+        public:
+            constexpr Iterator(size_type index = 0) : mIndex(index) {}
+            inline U operator*() {
+                return value(mIndex);
+            }
+            inline void operator++() {
+                ++mIndex;
+            }
+            inline bool operator!=(const Iterator& rhs) {
+                return mIndex != rhs.mIndex;
+            }
+        private:
+            size_type mIndex = 0;
+        };
+        constexpr Iterator begin() const {
+            return Iterator();
+        }
+        constexpr Iterator end() const {
+            return Iterator(size);
+        }
+        U operator[](size_type index) const {
+            return value(index);
+        }
+    };
+    
     namespace Pgm {
         template<typename Generator>
         class Converter {
             inline static constexpr auto mData = Generator{}();    
+            
             typedef typename decltype(mData)::size_type size_type;
             typedef typename decltype(mData)::value_type value_type;
             using index_list = std::make_integer_sequence<size_type, mData.size>;
 
-            template<typename> struct Pgm;
-            template<auto... I, typename ValueType> 
-            struct Pgm<std::integer_sequence<ValueType, I...>> {
-                typedef Util::PgmArray<value_type, mData[I] ...> type;
-            };
+            inline static constexpr bool isPrimitive =  std::is_same_v<uint8_t, value_type> || std::is_same_v<std::byte, value_type>|| std::is_same_v<char, value_type>;
             
+            template<bool, typename> struct Pgm;
+            template<auto... I, typename ValueType> 
+            struct Pgm<true, std::integer_sequence<ValueType, I...>> {
+                typedef Util::PgmArray<value_type, mData[I] ...> type; 
+            };
+            template<auto... I, typename ValueType> 
+            struct Pgm<false, std::integer_sequence<ValueType, I...>> {
+                typedef Util::PgmArray1<value_type, mData.size, mData> type;
+            };
         public:
-            using pgm_type = typename Pgm<index_list>::type;
+            using pgm_type = typename Pgm<isPrimitive, index_list>::type;
         };
     }
 }
