@@ -101,8 +101,8 @@ namespace detail {
 template<typename Kind, typename Intervals, typename T, T... Values>
 struct Lookup {
     using value_list = Meta::List<std::integral_constant<T, Values>...>;
-    using lower_list = Meta::reverse<Meta::rest<Meta::reverse<value_list>>>;
-    using upper_list = Meta::rest<value_list>;
+    using lower_list = Meta::pop_back<value_list>;
+    using upper_list = Meta::pop_front<value_list>;
     
     template<typename L, typename U>
     using buildInterval = StaticInterval<Kind, L, U>;
@@ -116,7 +116,6 @@ struct Lookup {
         converter::convert(value, f);
     }
 };
-
 
 template<typename T, typename Intervals, typename Function>
 constexpr void lookup(const T& value, const Intervals& intervals, const Function& f) {

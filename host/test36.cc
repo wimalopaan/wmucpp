@@ -3,7 +3,7 @@
 #include <experimental/array>
 #include <utility>
 #include <optional>
-#include <util/algorithm.h>
+//#include <util/algorithm.h>
 #include <iostream>
 
 struct RightOpen;
@@ -57,7 +57,7 @@ constexpr auto make_intervals(const Limits& limits) {
     }
     else {
         auto sorted = limits;
-        Util::sort(sorted);        
+//        Util::sort(sorted);        
         using item_type = typename Limits::value_type;
         std::array<Boundary<item_type, Type>, limits.size()> in;
         for(typename Limits::size_type n = 0; n < in.size(); ++n) {

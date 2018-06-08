@@ -49,8 +49,6 @@ std::optional<size_t> lookup(const T& value, const Intervals& intervals) {
     return {};
 }
 
-
-
 int main() {
     constexpr auto limits = make_array(0, 50, 100, 200, 400, 800);
     constexpr auto intervals = make_intervals<RightOpen, Adjacent>(limits);

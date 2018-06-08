@@ -31,6 +31,15 @@ namespace Meta {
             typedef ListBase base_type;
         };
     }
+    namespace concepts {
+        template<typename T>
+        concept bool List() {
+            return requires {
+                typename T::base_type;  
+            } && std::is_same<typename T::base_type, detail::ListBase>::value;
+        }
+    } // !concepts
+    
     template<typename... T>
     struct List : public detail::ListBase {
         inline static constexpr size_t size = sizeof...(T);
@@ -44,10 +53,42 @@ namespace Meta {
     template<auto... NN>
     struct NList {
         inline static constexpr size_t size = sizeof...(NN);
+        typedef List<std::integral_constant<decltype(NN), NN> ...> list_type;
     };
     
     namespace detail {
-        
+        template<typename> struct front_impl;
+        template<typename> struct size_impl;
+        template<typename> struct rest_impl;
+        template<typename, typename> struct contains_impl;
+        template<typename, typename> struct concat_impl;
+    }
+    
+    template<concepts::List List>
+    using front = typename detail::front_impl<List>::type;
+
+    template<concepts::List List>
+    using size = typename detail::size_impl<List>::type;
+
+    template<concepts::List List>
+    inline static constexpr auto size_v = Meta::size<List>::value;
+    
+    template<typename... T>
+    using length = std::integral_constant<size_t, sizeof...(T)>;
+
+    template<concepts::List List>
+    using size_type = typename std::conditional<size<List>::value < 256, uint8_t, uint16_t>::type;    
+    
+    template<concepts::List List>
+    using rest = typename detail::rest_impl<List>::type;
+
+    template<concepts::List List, typename T>
+    struct contains : public std::integral_constant<bool, detail::contains_impl<List, T>::value> {};
+    
+    template<concepts::List L1, concepts::List L2>
+    using concat = typename detail::concat_impl<L1, L2>::type;
+
+    namespace detail {
         template<typename L>
         struct size_impl;
         template<template<typename...> typename L, typename... I>
@@ -279,35 +320,82 @@ namespace Meta {
             typedef L<F> type;
         };
         
-    } // !detail
+        template<concepts::List List> 
+        struct visit {
+            template<typename T> struct Wrapper{
+                typedef T type;
+            };
+            using first = Meta::front<List>;
+            template<typename I, typename C>
+            inline static void at(I index, const C& callable) {
+                if (index == I{0}) {
+                    callable(Wrapper<first>{});
+                }
+                else {
+                    visit<Meta::rest<List>>::at(I(index - 1), callable);
+                }
+            }
+            template<auto... II, typename C>
+            inline static void all(std::index_sequence<II...>, const C& callable) {
+                (at(II, callable),...);
+            }
 
-    namespace concepts {
-        template<typename T>
-        concept bool List() {
-            return requires {
-                typename T::base_type;  
-            } && std::is_same<typename T::base_type, detail::ListBase>::value;
-        }
-    } // !concepts
+            template<typename C>
+            inline static size_type<List> find(const C& callable, const size_type<List>& index) {
+                if (callable(Wrapper<first>{})) {
+                    return index;
+                }
+                else {
+                    return visit<Meta::rest<List>>::find(callable, index + 1);
+                }
+            }
+            
+        };
+        template<> 
+        struct visit<Meta::List<>> {
+            template<typename I, typename C>
+            inline static void at(I, const C&) {
+                assert(false);
+            }
+            template<typename C, typename N>
+            inline static N find(const C&, N) {
+                return std::numeric_limits<N>::max();
+            }
+        };
+        template<typename L>
+        struct unique_impl;
+        template<template<typename...> typename L, typename F, typename... II>
+        struct unique_impl<L<F, II...>> {
+            typedef typename std::conditional<Meta::contains<L<II...>, F>::value, 
+                                              typename unique_impl<L<II...>>::type, 
+                                              Meta::concat<L<F>, 
+                                                           typename unique_impl<L<II...>>::type>
+                                             >::type type;
+        };
+        template<template<typename...> typename L, typename F>
+        struct unique_impl<L<F>> {
+            typedef L<F> type;
+        };
+        
+        template<auto N, typename T>
+        struct NumberedNode {
+            inline static constexpr size_t index = N;
+            typedef T type;
+        };
     
-    template<typename... T>
-    using length = std::integral_constant<size_t, sizeof...(T)>;
-    
-    template<concepts::List List>
-    using size = typename detail::size_impl<List>::type;
-    
-    template<concepts::List List>
-    using size_type = typename std::conditional<size<List>::value < 256, uint8_t, uint16_t>::type;    
-    
+        template<typename L, typename I> struct make_numbered;
+        template<template<typename...> typename L, typename... TT, auto... II>
+        struct make_numbered<L<TT...>, std::index_sequence<II...>> {
+            typedef L<NumberedNode<II, TT>...> type;
+        };
+    } // !detail
+        
     template<template<typename...> typename F, concepts::List List>
     using apply = typename detail::apply_impl<F, List>::type;
     
     template<concepts::List List, typename T>
     using push_front = typename detail::push_front_impl<List, T>::type;
-
-    template<concepts::List List>
-    using front = typename detail::front_impl<List>::type;
-    
+ 
     template<concepts::List List, typename T>
     using push_back = typename detail::push_back_impl<List, T>::type;
 
@@ -357,11 +445,11 @@ namespace Meta {
     template<concepts::List List>
     using reverse = typename detail::reverse_impl<List>::type;
     
-    template<concepts::List List, typename T>
-    struct contains : public std::integral_constant<bool, detail::contains_impl<List, T>::value> {};
-
     template<concepts::List List, typename... T>
     struct containsAll : public std::integral_constant<bool, detail::contains_all_impl<List, Meta::List<T...>>::type::value> {};
+
+    template<concepts::List List, typename... T>
+    inline static constexpr bool containsAll_v = containsAll<List, T...>::value;
     
     template<concepts::List List, typename T>
     struct count: public std::integral_constant<size_t, detail::count_impl<List, T>::value> {};
@@ -372,23 +460,23 @@ namespace Meta {
     template<typename List, template<typename> typename T>
     struct index_T: public std::integral_constant<size_t, detail::index_T_impl<List, T, 0>::value> {};
     
-    template<concepts::List L1, concepts::List L2>
-    using concat = typename detail::concat_impl<L1, L2>::type;
-
     template<concepts::List List>
     struct is_set : public std::integral_constant<bool, detail::is_set_impl<List>::type::value> {};
 
+    template<concepts::List List>
+    inline static constexpr bool ist_set_v = is_set<List>::value;
+    
     template<typename TL>
     struct is_set_T : public std::integral_constant<bool, detail::is_set_T_impl<TL>::type::value> {};
 
     template<typename T, concepts::List L>
     struct all_same : public std::integral_constant<bool, detail::all_same_impl<T, L>::value> {};
 
+    template<typename T, concepts::List L>
+    inline static constexpr bool all_same_v = Meta::all_same<T, L>::value;
+    
     template<concepts::List L>
     struct all_same_front : public std::integral_constant<bool, detail::all_same_impl<front<L>, L>::value> {};
-    
-    template<concepts::List List>
-    using rest = typename detail::rest_impl<List>::type;
     
     template<concepts::List List>
     using pop_front = rest<List>;
@@ -398,76 +486,6 @@ namespace Meta {
     
     template<typename L>
     using partial_sum = typename detail::partial_sum_impl<L, 0>::type;
-    
-    template<typename T>
-    struct nonVoid : public std::true_type {};    
-    template<>
-    struct nonVoid<void> : public std::false_type {};    
-
-    template<typename T>
-    struct isVoid : public std::false_type {};    
-    template<>
-    struct isVoid<void> : public std::true_type {};    
-    
-    namespace detail {
-        template<concepts::List List> 
-        struct visit {
-            template<typename T> struct Wrapper{
-                typedef T type;
-            };
-            using first = Meta::front<List>;
-            template<typename I, typename C>
-            inline static void at(I index, const C& callable) {
-                if (index == I{0}) {
-                    callable(Wrapper<first>{});
-                }
-                else {
-                    visit<Meta::rest<List>>::at(I(index - 1), callable);
-                }
-            }
-            template<auto... II, typename C>
-            inline static void all(std::index_sequence<II...>, const C& callable) {
-                (at(II, callable),...);
-            }
-
-            template<typename C>
-            inline static size_type<List> find(const C& callable, const size_type<List>& index) {
-                if (callable(Wrapper<first>{})) {
-                    return index;
-                }
-                else {
-                    return visit<Meta::rest<List>>::find(callable, index + 1);
-                }
-            }
-            
-        };
-        template<> 
-        struct visit<Meta::List<>> {
-            template<typename I, typename C>
-            inline static void at(I, const C&) {
-                assert(false);
-            }
-            template<typename C, typename N>
-            inline static N find(const C&, N) {
-                return std::numeric_limits<N>::max();
-            }
-        };
-
-        template<typename L>
-        struct unique_impl;
-        template<template<typename...> typename L, typename F, typename... II>
-        struct unique_impl<L<F, II...>> {
-            typedef typename std::conditional<Meta::contains<L<II...>, F>::value, 
-                                              typename unique_impl<L<II...>>::type, 
-                                              Meta::concat<L<F>, 
-                                                           typename unique_impl<L<II...>>::type>
-                                             >::type type;
-        };
-        template<template<typename...> typename L, typename F>
-        struct unique_impl<L<F>> {
-            typedef L<F> type;
-        };
-    }
     
     template<concepts::List List, typename I, typename C>
     inline auto visitAt(I index, const C& callable) {
@@ -492,6 +510,22 @@ namespace Meta {
     
     template<typename... T>
     inline static constexpr bool always_false_v = always_false<T...>::value;
+    
+    template<typename T>
+    using value_type_of = typename T::value_type;
+    
+    template<concepts::List List>
+    using make_numbered = typename detail::make_numbered<List, std::make_index_sequence<size_v<List>>>::type;    
+    
+    template<typename T>
+    struct nonVoid : public std::true_type {};    
+    template<>
+    struct nonVoid<void> : public std::false_type {};    
+
+    template<typename T>
+    struct isVoid : public std::false_type {};    
+    template<>
+    struct isVoid<void> : public std::true_type {};    
     
     namespace tests {
         struct A {};

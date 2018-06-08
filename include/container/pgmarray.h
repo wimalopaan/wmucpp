@@ -33,12 +33,13 @@
 # define PROGMEM
 #endif
 
+// fixme: make types distuguishable (especially if initialized from array>
+
 namespace Util {
     
     namespace detail {
         template<class T>
-        using maybe_cref = typename std::conditional<std::is_integral<T>::value || 
-        std::is_same<T, std::byte>::value || std::is_same<T, char>::value, T, const T&>::type;
+        using maybe_cref = typename std::conditional<std::is_integral<T>::value || std::is_same_v<T, std::byte> || std::is_same_v<T, char>, T, const T&>::type;
     }
     
     template<typename T, detail::maybe_cref<T>... Ts>
@@ -46,8 +47,10 @@ namespace Util {
         PgmArray() = delete;
     public:
         using U = std::remove_const_t<std::remove_reference_t<T>>;
-
         typedef typename std::conditional<(sizeof...(Ts) < 256), uint8_t, uint16_t>::type size_type;
+        inline static constexpr size_type size = sizeof... (Ts);
+        typedef U type;
+        typedef U value_type;
         
         inline static U value(size_type index) {
             if constexpr(std::is_same<uint8_t, T>::value || std::is_same<std::byte, T>::value || std::is_same<char, T>::value) {
@@ -61,10 +64,6 @@ namespace Util {
                 return U::createFrom(bytes);
             }
         }
-        
-        inline static constexpr size_type size = sizeof... (Ts);
-        typedef U type;
-        typedef U value_type;
         
         class Iterator {
         public:
@@ -99,14 +98,12 @@ namespace Util {
         using U = std::remove_const_t<std::remove_reference_t<T>>;
         PgmArray1() = delete;
         template<typename> struct Mapper;
-        template<auto... II>
-        struct Mapper<std::index_sequence<II...>> {
-            inline static constexpr const U data[N] PROGMEM = {values[II]...}; 
-        };
         using mapper = Mapper<std::make_index_sequence<N>>;
     public:
-    
         typedef typename std::conditional<(N < 256), uint8_t, uint16_t>::type size_type;
+        inline static constexpr size_type size = N;
+        typedef U type;
+        typedef U value_type;
         
         inline static U value(size_type index) {
             if constexpr(std::is_same<uint8_t, T>::value || std::is_same<std::byte, T>::value || std::is_same<char, T>::value) {
@@ -120,10 +117,6 @@ namespace Util {
                 return U::createFrom(bytes);
             }
         }
-        
-        inline static constexpr size_type size = N;
-        typedef U type;
-        typedef U value_type;
         
         class Iterator {
         public:
@@ -149,6 +142,11 @@ namespace Util {
         U operator[](size_type index) const {
             return value(index);
         }
+    private:
+        template<auto... II>
+        struct Mapper<std::index_sequence<II...>> {
+            inline static constexpr const U data[N] PROGMEM = {values[II]...}; 
+        };
     };
     
     namespace Pgm {

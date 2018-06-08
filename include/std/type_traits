@@ -64,6 +64,9 @@ namespace std {
         typedef F type; 
     };
     
+    template<bool B, typename T, typename F>
+    using conditional_t = typename conditional<B, T, F>::type;
+    
     template<class T, class U>
     struct is_same final {
         static constexpr bool value = false;

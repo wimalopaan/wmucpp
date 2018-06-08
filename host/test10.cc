@@ -83,7 +83,7 @@ namespace Meta {
 }
 
 int main() {
-    constexpr auto f1 = [](auto x) {
+    constexpr auto f1 = [](auto) {
         
 //        x.f();
     };

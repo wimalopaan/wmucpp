@@ -4,6 +4,7 @@
 #include <optional>
 #include <util/algorithm.h>
 #include <util/meta.h>
+#include <util/bits.h>
 
 struct RightOpen;
 struct LeftOpen;
@@ -45,20 +46,6 @@ struct StaticBoundary {
     }
 };
 
-namespace detail {
-    template<typename, typename> struct LUTConverter;
-    template<typename... II, auto... NN>
-    struct LUTConverter<Meta::List<II...>, std::index_sequence<NN...>> {
-        typedef Meta::List<typename II::value_type...> value_types;
-        typedef typename Meta::front<value_types> value_type;
-        static_assert(Meta::all_same<value_type, value_types>::value, "all intervals must use same value type");
-        template<typename F>
-        static constexpr void convert(value_type value, const F& f) {
-            ((II::includes(value) ? (f(value_type(NN)), false) : true) && ...);
-        }        
-    };
-}
-
 template<typename Kind, typename Arrangement, typename T, T... Values>
 struct Lookup {
     static_assert([]{
@@ -76,30 +63,35 @@ struct Lookup {
     using lower_list = Meta::pop_back<value_list>;
     using upper_list = Meta::pop_front<value_list>;
     
-    template<typename L, typename U>
-    using buildInterval = StaticInterval<Kind, L, U>;
+    template<typename Lower, typename Upper>
+    using buildInterval = StaticInterval<Kind, Lower, Upper>;
     
     using intervals = Meta::transform2<buildInterval, lower_list, upper_list>;
-    using converterI = detail::LUTConverter<intervals, std::make_index_sequence<Meta::size<intervals>::value>>;
     
-    template<typename U>
-    using buildBoundary = StaticBoundary<Kind, U>;
+    template<typename Boundary>
+    using buildBoundary = StaticBoundary<Kind, Boundary>;
     
     using boundaries = Meta::transform<buildBoundary, value_list>;
     
-    using converterB = detail::LUTConverter<boundaries, std::make_index_sequence<Meta::size<boundaries>::value>>;
+    using thr = std::conditional_t<std::is_same_v<Arrangement, Disjoint>, intervals, 
+                                   std::conditional_t<std::is_same_v<Arrangement, Adjacent>, boundaries, void>>;
     
-    template<typename F>
-    static constexpr void convert(T value, const F& f) {
-        if constexpr(std::is_same_v<Arrangement, Disjoint>) {
-            converterI::convert(value, f);
-        }
-        else if constexpr(std::is_same_v<Arrangement, Adjacent>) {
-            converterB::convert(value, f);
-        }
-        else {
-            static_assert(Meta::always_false<T>::value);
-        }
+    using numbered_intervals = Meta::make_numbered<thr>;
+
+    template<typename... Nodes>
+    struct Lutter {
+        typedef Lutter type;
+        template<typename Function>
+        static constexpr void convert(T value, const Function& f) {
+            ((Nodes::type::includes(value) ? (f(Nodes::index), false) : true) && ...);
+        }        
+    };
+    
+    using lut = Meta::apply<Lutter, numbered_intervals>;
+        
+    template<typename Function>
+    static constexpr void convert(T value, const Function& f) {
+        lut::convert(value, f);
     }
 };
 
@@ -119,6 +111,9 @@ volatile uint8_t result = -1;
 volatile uint8_t value = 159;
 
 int main() {
-    using lut = Lookup<RightOpen, Adjacent, uint8_t, 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110>;
+        using lut = Lookup<RightOpen, Adjacent, uint8_t, 0, 10, 20, 40, 80, 160>;
+//    using lut = Lookup<RightOpen, Adjacent, uint8_t, 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110>;
+//    using lut = Lookup<RightOpen, Disjoint, uint8_t, 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110>;
     lut::convert(value, [](auto index){result = index;});
 }
+
