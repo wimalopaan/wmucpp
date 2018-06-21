@@ -42,8 +42,7 @@ using isrRegistrar = IsrRegistrar<i2c::I2CSlaveHandlerOvfl, i2c::I2CSlaveHandler
 
 static constexpr std::hertz pwmFreq = 256 * 1000_Hz;
 
-int main() 
-{
+int main() {
     isrRegistrar::init();
     i2c::init();
     
@@ -58,10 +57,10 @@ int main()
         Util::delay(300_ms);
     }    
     
-    
-    Scoped<EnableInterrupt<>> ei;
-    while(true) {
-        Util::delay(10_ms);
+    {
+        Scoped<EnableInterrupt<>> ei;
+        while(true) {
+        }
     }
 }
 ISR(USI_OVF_vect) {

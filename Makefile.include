@@ -179,7 +179,7 @@ AVRDUDE = avrdude
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS)  $(shell pwd)/$< --output $@ $(LDFLAGS) $(LOADLIBES)
 
 %.elf: %.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(shell pwd)/$< --output $@ $(LDFLAGS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(shell pwd)/$< --output $@ $(LDFLAGS) $(LOADLIBES)
 
 %.hex: %.elf
 	$(OBJCOPY) -O ihex -R .eeprom $(shell pwd)/$< $@

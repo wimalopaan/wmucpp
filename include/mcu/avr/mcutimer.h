@@ -345,6 +345,12 @@ static void prescale() {
     mcuTimer()->tccrb.template set<bits>();
 }
 
+static void off() {
+    constexpr auto bits = AVR::Util::bitsFrom<0>(MCU::Timer16Bit::template PrescalerBits<N>::values);
+    mcuTimer()->tccrb.template set<bits>();
+    *mcuTimer()->tcnt = 0;
+}
+
 static std::hertz frequency() {
     return Config::fMcu / (uint32_t)prescaler();
 }
@@ -370,6 +376,10 @@ static inline volatile const uint16_t& icr() {
 }
 
 static void start(){
+}
+
+static void reset() {
+    *mcuTimer()->tcnt = 0;
 }
 
 template<flags_type Compare, ::Util::Callable Callable>

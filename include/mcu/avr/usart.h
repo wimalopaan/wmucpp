@@ -96,9 +96,9 @@ namespace AVR {
         Usart() = delete;
     public:
         typedef typename MCU::Usart usart_type;
-        typedef typename usart_type::UCSRA ucsra_type;
-        typedef typename usart_type::UCSRB ucsrb_type;
-        typedef typename usart_type::UCSRC ucsrc_type;
+        typedef typename usart_type::SRA ucsra_type;
+        typedef typename usart_type::SRB ucsrb_type;
+        typedef typename usart_type::SRC ucsrc_type;
         typedef PA protocoll_adapter_type;
         
         typedef typename std::conditional<useISR::value, volatile std::FiFo<std::byte, SendQLength::value>, std::FiFo<std::byte, SendQLength::value>>::type send_queue_type;

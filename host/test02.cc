@@ -1,81 +1,39 @@
-/*
- * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
-
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
+#include <cstddef>
 #include <array>
-#include <string>
-#include <iostream>
 #include <algorithm>
-#include <vector>
+#include <iostream>
+#include <util/meta.h>
 
-struct Digital {
-    static constexpr const char name[] = "Digital";
-    static constexpr const uint16_t baseAddress = 0x100;
-};
-struct Analog {
-    static constexpr const char name[] = "Aanalog";
-    static constexpr const uint16_t baseAddress = 0x200;
-};
-
-template<typename Type> class Actor;
-template<typename Type> std::ostream& operator<<(std::ostream& o, const Actor<Type>& a);
-
-template<typename Type>
-class Actor
-{
-    friend std::ostream& operator<< <>(std::ostream& o, const Actor<Type>& a);
+template<typename ItemType, std::size_t rows, std::size_t columns>
+class grid {
+    std::array<float, rows * columns> elements{};
 public:
-    Actor(int id) : name(std::string{Type::name} + std::to_string(id)), mId(id), address(Type::baseAddress + mId) {}
-private:
-    std::string name;
-    size_t mId;
-    uint16_t address;
+    template<typename... T>
+    constexpr grid(const T&... vv) : elements{float(vv)...} {
+        static_assert(sizeof...(T) == (rows * columns));
+    }
+
+    template<typename ...T>
+    constexpr auto operator()(T... rv) {
+        static_assert(sizeof...(T) == columns);
+        auto n = [&]<auto... II>(std::index_sequence<II...>){
+                grid<ItemType, rows + 1, columns> n{elements[II]..., rv...};
+                return n;
+        }(std::make_index_sequence<rows * columns>{});
+        return n;
+    }
 };
 
-template<typename Type>
-std::ostream& operator<<(std::ostream& o, const Actor<Type>& a) {
-    return o << a.name << " : " << a.address;
-}
+template<typename... RR>
+grid(RR... rr) -> grid<Meta::front<Meta::List<RR...>>, 1, sizeof...(RR)>;
 
-Actor<Digital> operator"" _da(unsigned long long v) {
-    return Actor<Digital>(v);
-}
-
-Actor<Analog> operator"" _aa(unsigned long long v) {
-    return Actor<Analog>(v);
-}
-
-int main()
-{
-    std::array<Actor<Digital>, 3> actors1 = {{1_da, 3_da, 2_da}};
-    std::array<Actor<Analog>, 3>  actors2 = {{1_aa, 3_aa, 2_aa}};
- 
-    std::vector<Actor<Digital>> v;
-    int startId = 0;
-    std::generate_n(std::back_inserter(v), 10, [&](){return Actor<Digital>(startId++);});
+int main() {
+    constexpr auto g = grid(1.0, 2.0)(3, 4)(5, 6);
     
-    for(const auto& a: v) {
-        std::cout << a << std::endl;
-    }
+    constexpr grid<double, 2, 3> g2{1, 2, 3, 4, 5, 6};
     
-    for(const auto& a: actors1) {
-        std::cout << a << std::endl;
-    }
-    for(const auto& a: actors2) {
-        std::cout << a << std::endl;
-    }
+    
+    std::array<std::array<int, 3>, 3> a{{{1, 2, 3}, {1, 7, 3}, {1, 2, 3}}};
+    
+    std::cout << a[1][1] << std::endl;
 }

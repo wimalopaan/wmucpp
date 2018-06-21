@@ -43,7 +43,7 @@ namespace AVR {
         
         struct Usart {
             static constexpr const uint8_t count = 2;
-            enum class UCSRA : uint8_t {
+            enum class SRA : uint8_t {
                 rxc = (1 << RXC0),
                 txc = (1 << TXC0),
                 udre = (1 << UDRE0),
@@ -53,8 +53,8 @@ namespace AVR {
                 u2x = (1 << U2X0),
                 mpcm = (1 << MPCM0)
             };
-            ControlRegister<Usart, UCSRA> ucsra;
-            enum class UCSRB : uint8_t {
+            ControlRegister<Usart, SRA> ucsra;
+            enum class SRB : uint8_t {
                 rxcie = (1 << RXCIE0),
                 txcie = (1 << TXCIE0),
                 udrie = (1 << UDRIE0),
@@ -64,8 +64,8 @@ namespace AVR {
                 rxb8 = (1 << RXB80),
                 txb8 = (1 << TXB80)
             };
-            ControlRegister<Usart, UCSRB> ucsrb;
-            enum class UCSRC : uint8_t {
+            ControlRegister<Usart, SRB> ucsrb;
+            enum class SRC : uint8_t {
                 umsel0 = (1 << UMSEL00),
                 umsel1 = (1 << UMSEL01),
                 upm1 = (1 << UPM01),
@@ -75,7 +75,7 @@ namespace AVR {
                 ucsz1 = (1 << UCSZ01),
                 ucpol = (1 << UCPOL0)
             };
-            ControlRegister<Usart, UCSRC> ucsrc;
+            ControlRegister<Usart, SRC> ucsrc;
             volatile uint8_t reserved1;
             DataRegister<Usart, ReadWrite, uint16_t> ubbr;
             DataRegister<Usart, ReadWrite, std::byte> udr;
@@ -261,9 +261,6 @@ namespace AVR {
             };
             FlagRegister<Spi, SR, ReadOnly> spsr;
             DataRegister<Spi, ReadWrite, std::byte> spdr;
-//            volatile uint8_t spcr;
-//            volatile uint8_t spsr;
-//            volatile uint8_t spdr;
             template<int N> struct Address;
         };
         
@@ -307,8 +304,18 @@ namespace AVR {
         };
         
         struct AdComparator {
+            enum class SR : uint8_t {
+                acd = (1 << ACD),
+                acbg = (1 << ACBG),
+                aco = (1 << ACO),
+                aci = (1 << ACI),
+                acie = (1 << ACIE),
+                acic = (1 << ACIC),
+                acis1 = (1 << ACIS1),
+                acis0 = (1 << ACIS0)
+            };
             static constexpr const uint8_t count = 1;
-            volatile uint8_t acsr;
+            ControlRegister<AdComparator, SR> acsr;
             template<int N> struct Address;
         };
         
@@ -430,15 +437,15 @@ namespace std {
         static constexpr bool enable = true;
     };
     template<>
-    struct enable_bitmask_operators<AVR::ATMega1284P::Usart::UCSRA> {
+    struct enable_bitmask_operators<AVR::ATMega1284P::Usart::SRA> {
         static constexpr bool enable = true;
     };
     template<>
-    struct enable_bitmask_operators<AVR::ATMega1284P::Usart::UCSRB> {
+    struct enable_bitmask_operators<AVR::ATMega1284P::Usart::SRB> {
         static constexpr bool enable = true;
     };
     template<>
-    struct enable_bitmask_operators<AVR::ATMega1284P::Usart::UCSRC> {
+    struct enable_bitmask_operators<AVR::ATMega1284P::Usart::SRC> {
         static constexpr bool enable = true;
     };
     template<>
@@ -483,6 +490,10 @@ namespace std {
     };
     template<>
     struct enable_bitmask_operators<AVR::ATMega1284P::Adc::MUX> {
+        static constexpr bool enable = true;
+    };
+    template<>
+    struct enable_bitmask_operators<AVR::ATMega1284P::AdComparator::SR> {
         static constexpr bool enable = true;
     };
 }

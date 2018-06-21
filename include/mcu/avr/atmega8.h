@@ -24,9 +24,10 @@
 #pragma pack(1)
 
 namespace AVR {
-    
-    struct ATMega8 final
-    {
+    struct ATMega8 final {
+        template<typename T>
+        static constexpr bool is_atomic() {return false;}
+        
         ATMega8() = delete;
         struct Ram {
             inline static constexpr uintptr_t begin = RAMSTART;  
@@ -148,6 +149,8 @@ namespace AVR {
         };
         
     };
+    template<>
+    constexpr bool ATMega8::is_atomic<uint8_t>() {return true;}
 }
 
 namespace std {

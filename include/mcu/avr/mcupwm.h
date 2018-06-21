@@ -35,9 +35,9 @@ namespace AVR {
         static constexpr const auto mcuTimer = getBaseAddr<MCUTimer, TimerN>;
         using pwmA = typename AVR::TimerParameter<TimerN, MCU>::ocAPin;
         using pwmB = typename AVR::TimerParameter<TimerN, MCU>::ocBPin;
+    public:
         using A = typename AVR::TimerParameter<TimerN, MCU>::FastPwm1::A;
         using B = typename AVR::TimerParameter<TimerN, MCU>::FastPwm1::B;
-    public:
         template<const std::hertz& MinFrequency>
         static void init() {
             pwmA::template dir<AVR::Output>();

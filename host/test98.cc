@@ -67,17 +67,33 @@ void test (C1& c1, const C2& c2, typename C1::size_type off1, typename C2::size_
 }
 
 int main () {
-    {
-        std::vector<int> c1(33);
-        std::array<int, 42> c2;
+    std::string s = "abc\0def";
     
-        test(c1, c2, 3, 7);
+    std::cout << s.size() << '\n';
+
+    if (s == "abc") {
+        std::cout << "A" << '\n';
     }
-    {
-        std::vector<int> c1(512);
-        Test<uint8_t, int, 250> c2;
     
-        test(c2, c1, 17, 7);
-    }
+//    std::array a2 = {'a' ,'b', 'c', '\0', 'd', 'e', 'f', '\0'};
+//    std::array<std::byte, 8> a = {std::byte{'a'}};
+    
+//    std::string s2{std::begin(a), std::end(a)};
+//    std::cout << s2.size() << '\n';
+    std::cout << s << '\n';
+    
+    
+//    {
+//        std::vector<int> c1(33);
+//        std::array<int, 42> c2;
+    
+//        test(c1, c2, 3, 7);
+//    }
+//    {
+//        std::vector<int> c1(512);
+//        Test<uint8_t, int, 250> c2;
+    
+//        test(c2, c1, 17, 7);
+//    }
 
 }

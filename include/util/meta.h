@@ -388,6 +388,18 @@ namespace Meta {
         struct make_numbered<L<TT...>, std::index_sequence<II...>> {
             typedef L<NumberedNode<II, TT>...> type;
         };
+        
+        template<typename Key, typename Map>
+        struct map_impl;
+        template<typename Key, template<typename...>typename L, typename... PP, typename K, typename V>
+        struct map_impl<Key, L<L<K,V>, PP...>> {
+            typedef std::conditional_t<std::is_same_v<K, Key>, V, typename map_impl<Key, L<PP...>>::type> type;
+        };
+        template<typename Key, template<typename...>typename L>
+        struct map_impl<Key, L<>> {
+            typedef void type;
+        };
+        
     } // !detail
         
     template<template<typename...> typename F, concepts::List List>
@@ -504,6 +516,9 @@ namespace Meta {
     
     template<concepts::List L>
     using unique = typename detail::unique_impl<L>::type;
+
+    template<typename Key, typename Map>
+    using map = typename detail::map_impl<Key, Map>::type;
     
     template<typename... T>
     struct always_false : std::false_type {};

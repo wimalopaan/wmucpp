@@ -74,6 +74,9 @@ volatile uint8_t value = 100;
 
 
 int main() {
-    using lut = Util::Pgm::Converter<Generator>::pgm_type;
-    lookup(value, lut{}, [](auto index){result = index;});
+    auto mysum = [](auto... vv){return (vv + ... + 0);};
+    result = mysum(1, 2, 5.0);
+    
+//    using lut = Util::Pgm::Converter<Generator>::pgm_type;
+//    lookup(value, lut{}, [](auto index){result = index;});
 }

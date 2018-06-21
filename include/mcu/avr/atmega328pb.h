@@ -41,7 +41,7 @@ namespace AVR {
         
         struct Usart {
             static constexpr const uint8_t count = 2;
-            enum class UCSRA : uint8_t {
+            enum class SRA : uint8_t {
                 rxc = (1 << RXC0),
                 txc = (1 << TXC0),
                 udre = (1 << UDRE0),
@@ -51,8 +51,8 @@ namespace AVR {
                 u2x = (1 << U2X0),
                 mpcm = (1 << MPCM0)
             };
-            ControlRegister<Usart, UCSRA> ucsra;
-            enum class UCSRB : uint8_t {
+            ControlRegister<Usart, SRA> ucsra;
+            enum class SRB : uint8_t {
                 rxcie = (1 << RXCIE0),
                 txcie = (1 << TXCIE0),
                 udrie = (1 << UDRIE0),
@@ -62,8 +62,8 @@ namespace AVR {
                 rxb8 = (1 << RXB80),
                 txb8 = (1 << TXB80)
             };
-            ControlRegister<Usart, UCSRB> ucsrb;
-            enum class UCSRC : uint8_t {
+            ControlRegister<Usart, SRB> ucsrb;
+            enum class SRC : uint8_t {
                 umsel0 = (1 << UMSEL00),
                 umsel1 = (1 << UMSEL01),
                 upm1 = (1 << UPM01),
@@ -73,7 +73,7 @@ namespace AVR {
                 ucsz1 = (1 << UCSZ01),
                 ucpol = (1 << UCPOL0)
             };
-            ControlRegister<Usart, UCSRC> ucsrc;
+            ControlRegister<Usart, SRC> ucsrc;
             volatile uint8_t reserved1;
             DataRegister<Usart, ReadWrite, uint16_t> ubbr;
             DataRegister<Usart, ReadWrite, std::byte> udr;
@@ -356,15 +356,15 @@ namespace std {
         static constexpr bool enable = true;
     };
     template<>
-    struct enable_bitmask_operators<AVR::ATMega328PB::Usart::UCSRA> {
+    struct enable_bitmask_operators<AVR::ATMega328PB::Usart::SRA> {
         static constexpr bool enable = true;
     };
     template<>
-    struct enable_bitmask_operators<AVR::ATMega328PB::Usart::UCSRB> {
+    struct enable_bitmask_operators<AVR::ATMega328PB::Usart::SRB> {
         static constexpr bool enable = true;
     };
     template<>
-    struct enable_bitmask_operators<AVR::ATMega328PB::Usart::UCSRC> {
+    struct enable_bitmask_operators<AVR::ATMega328PB::Usart::SRC> {
         static constexpr bool enable = true;
     };
     template<>

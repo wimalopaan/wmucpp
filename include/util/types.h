@@ -68,6 +68,14 @@ public:
     
     constexpr uint_ranged(const volatile uint_ranged& o) : mValue(o.mValue) {}
     
+    constexpr bool isTop() const {
+        return mValue == Upper;
+    }
+
+    constexpr bool isBottom() const {
+        return mValue == Lower;
+    }
+    
     constexpr bool operator>(T rhs) {
         return mValue > rhs;
     }

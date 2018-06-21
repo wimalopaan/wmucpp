@@ -1,99 +1,75 @@
-#include <iostream>
+#include <cstddef>
+#include <array>
+#include <algorithm>
+#include <initializer_list>
 
-struct A {
-    static constexpr const uint8_t value = 1;
-    static void foo() {
-        std::cout << __PRETTY_FUNCTION__ << std::endl;
-    }
-    static void foo(int) {
-        std::cout << __PRETTY_FUNCTION__ << std::endl;
-    }
-
+template<typename... T>
+struct R {
+    constexpr R(T... vv) {};
 };
 
-struct B {
-    static constexpr const uint8_t value = 2;
-    static void foo() {
-        std::cout << __PRETTY_FUNCTION__ << std::endl;
-    }
-    static void foo(int) {
-        std::cout << __PRETTY_FUNCTION__ << std::endl;
-    }
+template<std::size_t rows, std::size_t columns>
+class grid {
+    std::array<std::array<float, columns>, rows> elements{};
+public:
+//    template<typename... RR>
+//    constexpr grid(RR... r) {}
 
+        template<typename... T>
+    constexpr grid(const T&... vv) noexcept {}
+    
+//    constexpr grid(std::initializer_list<std::initializer_list<float>>) {}
 };
 
-struct C {
-    static constexpr const uint8_t value = 42;
-    static void foo() {
-        std::cout << __PRETTY_FUNCTION__ << std::endl;
+
+
+
+template<auto R, auto C>
+struct Row {
+    template<typename... T>
+    constexpr Row(T... rv) : elements{rv...}{}  
+        
+    template<typename ...T>
+    constexpr auto operator()(T... rv) {
+        auto n = [&]<auto... II>(std::index_sequence<II...>){
+                Row<R + 1, C> n{elements[II]..., rv...};
+                return n;
+        }(std::make_index_sequence<R * C>{});
+        return n;
     }
-    static void foo(int) {
-        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    constexpr auto operator()() {
+        auto g = [&]<auto... II>(std::index_sequence<II...>) {
+                grid<R, C> g{elements[II]...};
+                return g;
+        }(std::make_index_sequence<R * C>{});
+        return g;
     }
+    std::array<float, R * C> elements{};
 };
 
-template<typename... PP>
-struct ForEach {
-    static void foo() {
-//        std::cout << __PRETTY_FUNCTION__ << std::endl;
-        (PP::foo(),...);
-    }
-    static void foo(int i) {
-//        std::cout << __PRETTY_FUNCTION__ << std::endl;
-        (PP::foo(i),...);
-    }
-};
-
-template<typename... PP>
-struct ForEachCheckN {
-    template<int N, typename P, typename... PPP>
-    struct F {
-        static void foo(int i) {
-//            std::cout << __PRETTY_FUNCTION__ << std::endl;
-            P::foo(i);
-            F<N - 1, PPP..., void>::foo(i);
-        }
-    };
-    template<typename P, typename... PPP>
-    struct F<0, P, PPP...> {
-        static void foo(int) {
-//            std::cout << __PRETTY_FUNCTION__ << std::endl;
-        }
-    };
-
-    static void foo(int i) {
-//        std::cout << __PRETTY_FUNCTION__ << std::endl;
-        F<sizeof...(PP), PP...>::foo(i);
-    }
-};
-
-template<typename... PP>
-struct ForEachCheck {
-    template<typename P, typename... PPP>
-    struct F {
-        static void foo(int i) {
-            if (P::value == i) {
-                P::foo(i);
-            }
-            F<PPP..., void>::foo(i);
-        }
-    };
-    template<typename... PPP>
-    struct F<void, PPP...> {
-        static void foo(int) {}
-    };
-
-    static void foo(int i) {
-        F<PP...>::foo(i);
-    }
-};
-
-int main() {
-    ForEach<A, B, C>::foo();
-    ForEach<A, B, C>::foo(42);
-
-    ForEachCheck<A, B, C>::foo(42);
-    ForEachCheck<A>::foo(42);
-
+template<typename... T>
+constexpr auto make_grid(T... c) {
+    return Row<1, sizeof...(T)>(c...);  
 }
 
+template<typename... RR>
+grid(RR... rr) -> grid<sizeof...(RR), sizeof...(RR)>;
+
+//constexpr auto make_grid(std::initializer_list<std::initializer_list<float>> il) {
+//     return grid<2,2>{};
+//}
+
+
+int main() {
+    constexpr auto g = make_grid(1, 2)(3, 4)();
+    
+//    constexpr grid g{{1, 2}, {3, 4}};
+    
+//    auto l = []{
+//        float v[2][2] = {{1, 2}, {3, 4}};
+//    };
+    
+//    constexpr auto g = make_grid{{1, 2}, {3, 4}};
+
+//    constexpr auto g = grid{R{1, 2}, R{3, 4}};    
+}

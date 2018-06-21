@@ -1,55 +1,114 @@
-/*
- * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- 
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-#include <stdint.h>
-#include <type_traits>
+#include <cstddef>
 #include <array>
+#include <tuple>
 #include <iostream>
 
-namespace detail {
-    template<class T>
-    using maybe_cref = typename std::conditional<std::is_integral<T>::value, T, const T&>::type;
+template<typename C, C... CC>
+constexpr auto operator"" _bytes(){
+    return std::array<std::byte, sizeof...(CC)>{std::byte(CC)...};
 }
 
-template<typename T, detail::maybe_cref<T>... Ts>
-struct PgmArray final {
-    inline static constexpr uint8_t size = sizeof... (Ts);
-    inline static constexpr T data[] {Ts...};
-};
-
-struct A{
-    uint8_t m = 0;
-};
-std::ostream& operator<<(std::ostream& o, const A& a) {
-    return o << "A: " << (int)a.m;
+constexpr std::byte operator"" _B(char c) {
+    return std::byte(c);
+}
+constexpr std::byte operator"" _B(unsigned long long int c) {
+    return std::byte(c);
 }
 
-constexpr A a1{1};
-constexpr A a2{2};
+template<typename U, auto L>
+constexpr auto make_array(const char (&array)[L]) {
+    return [&]<auto... II>(std::index_sequence<II...>) {
+            std::array<std::byte, L-1> vv{U(array[II])...};
+            return vv;
+    }(std::make_index_sequence<L-1>{});
+}
 
-constexpr auto x1 = PgmArray<A, a1, a2>{};
-constexpr auto x2 = PgmArray<int, 1, 2>{};
+template<auto Length>
+void tft_wr(const std::array<std::byte, Length>&) {
+    std::cout << __PRETTY_FUNCTION__ << '\n';
+    std::cout << "len=" << Length << '\n';
+}
+
+template<auto Length>
+void tft_wr(const uint8_t(&array)[Length]) {
+    std::cout << __PRETTY_FUNCTION__ << '\n';
+    std::cout << "len=" << (Length - 1) << '\n';
+}
+
+template<char F, char S, auto Size>
+struct Command {
+    template<typename... VV>
+    constexpr Command(VV... vv) : data{vv...} {}
+    std::array<std::byte, Size> data;  
+};
+
+template<char F, char S, typename... VV>
+constexpr auto command(VV... vv) {
+    return Command<F, S, sizeof...(VV)>(vv...);
+}
+
+template<typename Commands>
+void tft_write(const Commands& commands) {
+    std::apply([](auto... cc){
+        (..., [](auto c){}(cc));
+        // Ausgabe auf Schnittstelle
+    }, commands);
+    
+    [&]<auto... II>(std::index_sequence<II...>) {
+        ([&](auto c){
+            
+        }(std::get<II>(commands)), ...);
+    }(std::make_index_sequence<std::tuple_size<Commands>::value>{});
+}
 
 int main() {
-    for(auto& v : x1.data) {
-        std::cout << v << '\n';        
-    }
-    for(auto& v : x2.data) {
-        std::cout << v << '\n';        
-    }
+    auto c1 = Command<'T', 'C', 2>{std::byte{8}, std::byte{1}};
+    auto c2 = Command<'G', 'CD', 1>{std::byte{1}};
+    
+    auto c3 = command<'T', 'C'>(std::byte{8}, std::byte{1});
+    
+    auto sequence = std::tuple(c1, c2);
+    
+    constexpr auto init_sequence3 = std::make_tuple(
+                command<'T', 'C'>(0_B, 1_B),
+                command<'D', 'O'>(2_B)
+                );
+    
+    tft_write(init_sequence3);
+    
+    constexpr auto init_sequence =
+            "\x1bTC\0"              // text cursor off
+            "\x1b""DO\2"            // rotate 180°
+            "\x1b""FD\x8\x1"        // display color
+            "\x1b""FZ\x8\x1"        // text color
+            "\x1b""DL"              // display clear
+            "\x1b""YZ\x0"           // no delay
+            "\x1b""YH\x64"_bytes    // light on
+            ;
+    
+    constexpr auto init_sequence2 = make_array<std::byte>(
+                "\x1bTC\0"              // text cursor off
+                "\x1b""DO\2"            // rotate 180°
+                "\x1b""FD\x8\x1"        // display color
+                "\x1b""FZ\x8\x1"        // text color
+                "\x1b""DL"              // display clear
+                "\x1b""YZ\x0"           // no delay
+                "\x1b""YH\x64"          // light on
+                );
+
+    tft_wr(init_sequence2);        
+    
+    constexpr uint8_t init_string[] =
+        "\x1bTC\0"              // text cursor off
+        "\x1b""DO\2"            // rotate 180°
+        "\x1b""FD\x8\x1"        // display color
+        "\x1b""FZ\x8\x1"        // text color
+        "\x1b""DL"              // display clear
+        "\x1b""YZ\x0"           // no delay
+        "\x1b""YH\x64"          // light on
+        ;
+
+    tft_wr(init_string);        
+    
 }
+

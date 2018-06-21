@@ -131,6 +131,5 @@ namespace AVR {
 typedef AVR::ATMegaNone DefaultMcuType;
 #endif
 
-
 #undef _MMIO_BYTE
-#define _MMIO_BYTE(addr) (*(volatile uint8_t *)(addr))
+#define _MMIO_BYTE(addr) (*(volatile uint8_t*)(addr))

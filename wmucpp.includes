@@ -86,3 +86,11 @@ doc.arm
 doc.arm/bmcpp01
 include/mcu/stm32
 doc.arm/bmcpp02
+boards/blmc
+boards/blmc/blmc_test00
+3rdparty/Esc_b35/Esc_b35
+boards/blmc/blmc_test01
+boards/blmc/blmc_avr444
+boards/blmc/blmc_mcopter
+boards/blmc/blmc_cversion_035
+boards/blmc/blmc_test01

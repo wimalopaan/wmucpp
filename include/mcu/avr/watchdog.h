@@ -17,3 +17,13 @@
  */
 
 #pragma once
+
+#include <cstdint>
+#include "mcu/avr8.h"
+#include "mcu/ports.h"
+#include "mcu/avr/isr.h"
+#include "std/type_traits"
+
+namespace AVR {
+    
+}
