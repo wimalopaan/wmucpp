@@ -1,0 +1,21 @@
+Platine:
+	- BLDC ESC01
+
+test01:
+	- Test-LED 100ms mit Warteschleife
+
+test02:
+	- Ausgabe auf Debug UART	
+
+test03:
+	- Achtung: Bug Workaround wegen OCM (Output Compare Modulator)
+	- PWM
+
+test04:
+	- PWM
+
+test05:
+	- sensorloser Betrieb
+	
+test06:
+	- I2C

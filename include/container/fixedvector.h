@@ -73,30 +73,31 @@ namespace std {
             data[index] = T();
             --mSize;
         }
-        constexpr const T* begin() const {
-            return &data[0];
-        }
-        constexpr const T* end() const {
-            return &data[Capacity];
-        }
-        constexpr const volatile T* begin() const volatile {
-            return &data[0];
-        }
-        constexpr const volatile T* end() const volatile {
-            return &data[Capacity];
-        }
-        constexpr T* begin() {
-            return &data[0];
-        }
-        constexpr T* end() {
-            return &data[Capacity];
-        }
-        constexpr volatile T* begin() volatile {
-            return &data[0];
-        }
-        constexpr volatile T* end() volatile {
-            return &data[Capacity];
-        }
+//        constexpr const T* begin() const {
+//            return &data[0];
+//        }
+//        // todo: Size???
+//        constexpr const T* end() const {
+//            return &data[Capacity];
+//        }
+//        constexpr const volatile T* begin() const volatile {
+//            return &data[0];
+//        }
+//        constexpr const volatile T* end() const volatile {
+//            return &data[Capacity];
+//        }
+//        constexpr T* begin() {
+//            return &data[0];
+//        }
+//        constexpr T* end() {
+//            return &data[Capacity];
+//        }
+//        constexpr volatile T* begin() volatile {
+//            return &data[0];
+//        }
+//        constexpr volatile T* end() volatile {
+//            return &data[Capacity];
+//        }
     private:
         T data[Capacity] = {};
         size_type mSize = 0;

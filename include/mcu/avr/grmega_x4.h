@@ -47,6 +47,8 @@ namespace AVR {
         
         using ta = typename MCU::Timer8Bit::TCCRA;
         using tb = typename MCU::Timer8Bit::TCCRB;
+        
+        template<typename Mode = Inverting>
         struct FastPwm1 { // FastPWM 8/10-Bit
             static void setup() {
                 mcuTimer()->tccra.template set<tccra>();
@@ -106,7 +108,7 @@ namespace AVR {
         
         using ta = typename MCU::Timer16Bit::TCCRA;
         using tb = typename MCU::Timer16Bit::TCCRB;
-        struct FastPwm1 {
+        struct FastPwm1 { // inverting PWM
             static constexpr ta cha = ta::coma0 | ta::coma1;
             static constexpr ta chb = ta::comb0 | ta::comb1; 
             static constexpr ta tccra = cha | chb | ta::wgm0 | ta::wgm1; 

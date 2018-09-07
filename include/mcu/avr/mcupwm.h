@@ -26,36 +26,37 @@
 #include <limits>
 
 namespace AVR {
-    template<uint8_t TimerN, typename MCU = DefaultMcuType>
+    template<uint8_t TimerN, typename Mode = Inverting, typename MCU = DefaultMcuType>
     class PWM {
         typedef MCU mcu_type;
         typedef typename AVR::TimerParameter<TimerN, MCU>::timer_type timer_type;
         using MCUTimer = typename timer_type::mcu_timer_type;
-        typedef typename MCUTimer::value_type value_type;
+//        typedef typename MCUTimer::value_type value_type;
+        typedef typename  AVR::TimerParameter<TimerN, MCU>::value_type value_type;
         static constexpr const auto mcuTimer = getBaseAddr<MCUTimer, TimerN>;
         using pwmA = typename AVR::TimerParameter<TimerN, MCU>::ocAPin;
         using pwmB = typename AVR::TimerParameter<TimerN, MCU>::ocBPin;
     public:
-        using A = typename AVR::TimerParameter<TimerN, MCU>::FastPwm1::A;
-        using B = typename AVR::TimerParameter<TimerN, MCU>::FastPwm1::B;
+        using A = typename AVR::TimerParameter<TimerN, MCU>::template FastPwm1<Mode>::A;
+        using B = typename AVR::TimerParameter<TimerN, MCU>::template FastPwm1<Mode>::B;
+        
         template<const std::hertz& MinFrequency>
         static void init() {
-            pwmA::template dir<AVR::Output>();
-            pwmB::template dir<AVR::Output>();
-            
+            if constexpr(!std::is_same_v<pwmA, void>) {
+                pwmA::template dir<AVR::Output>();
+            }
+            if constexpr(!std::is_same_v<pwmB, void>) {
+                pwmB::template dir<AVR::Output>();
+            }
             constexpr auto prescaler = AVR::Util::prescalerForAbove<timer_type>(MinFrequency);
             static_assert(prescaler > 0, "wrong prescaler");
             timer_type::template prescale<prescaler>();
-            AVR::TimerParameter<TimerN, MCU>::FastPwm1::setup();
-//            mcuTimer()->tccra.template set<AVR::TimerParameter<TimerN, MCU>::FastPwm1::tccra>();
-//            mcuTimer()->tccrb.template add<AVR::TimerParameter<TimerN, MCU>::FastPwm1::tccrb, DisbaleInterrupt<NoDisableEnable>>();
-//            *mcuTimer()->ocra = 0;
-//            *mcuTimer()->ocrb = 0;
+            AVR::TimerParameter<TimerN, MCU>::template FastPwm1<Mode>::setup();
         }
         template<typename Channel>
         static void pwm(const std::percent& p) {
             if (p > std::percent{0}) {
-                typename timer_type::value_type v = std::expand(p, typename timer_type::value_type(0), AVR::TimerParameter<TimerN, MCU>::FastPwm1::top);
+                typename timer_type::value_type v = std::expand(p, typename timer_type::value_type(0), AVR::TimerParameter<TimerN, MCU>::template FastPwm1<>::top);
                 Channel::on();
                 Channel::ocr(v);
             }
@@ -77,9 +78,17 @@ namespace AVR {
         static value_type ocr() {
             return Channel::ocr();
         }
+        static value_type value() {
+            return *mcuTimer()->tcnt;
+        }
+        static value_type tccra() {
+            return mcuTimer()->tccra.raw();
+        }
+        static value_type tccrb() {
+            return mcuTimer()->tccrb.raw();
+        }
         static std::hertz frequency() {
             return timer_type::frequency();
         }
     };
-    
 }

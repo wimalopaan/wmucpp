@@ -36,6 +36,7 @@ namespace AVR {
         using ta = typename MCU::Timer8Bit::TCCRA;
         using tb = typename MCU::Timer8Bit::TCCRB;
         
+        template<typename Mode = Inverting>
         struct FastPwm1 { // FastPWM 
             static void setup() {
                 mcuTimer()->tccra.template set<tccra>();
@@ -64,6 +65,7 @@ namespace AVR {
         using tt = typename MCU::Timer8BitHighSpeed::TCCR;
         using tg = typename MCU::Timer8BitHighSpeed::GT;
         
+        template<typename Mode = Inverting>
         struct FastPwm1 { // FastPWM 
             static void setup() {
                 mcuTimer()->tccr.template add<cha>();

@@ -89,6 +89,9 @@ struct MCP23008Parameter {
 constexpr TWI::Address mcp23008Address{std::byte{39}};
 using mcp23008 = I2CGeneric<TwiMasterAsync, mcp23008Address, MCP23008Parameter>;
 
+constexpr TWI::Address blmcAddress{std::byte{50}};
+using blmc = I2CGeneric<TwiMasterAsync, blmcAddress, void, UseEvents<false>>;
+
 constexpr TWI::Address oledAddress{std::byte{60}};
 using oledEndpoint = detail::SSD1306::TwiEndpoint<TwiMasterAsync, oledAddress>;
 using oled = SSD1306<oledEndpoint>;

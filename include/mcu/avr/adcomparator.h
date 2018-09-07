@@ -54,13 +54,31 @@ namespace AVR {
             mcuAdc()->adcsrb.template set<MCU::Adc::SRB::acme>();
 //            mcuAdComparator()->acsr =  _BV(ACIE) | _BV(ACI) | _BV(ACIS1) | _BV(ACIS0);
         }
+        static void enable() {
+            mcuAdc()->adcsrb.template add<MCU::Adc::SRB::acme>();
+        }
+        static void disable() {
+            mcuAdc()->adcsrb.template clear<MCU::Adc::SRB::acme>();
+        }
         // todo: ranged type (Anzahl dre Channels)
-        static void channel(uint8_t ch) {
+        inline static void channel(uint8_t ch) {
             assert(ch < mcuadc_parameter_type::channelMasks.size);
             mcuAdc()->admux.template setPartial<channelMask, DisbaleInterrupt<NoDisableEnable>>(mcuadc_parameter_type::channelMasks[ch]);
         }
+        inline static void reset() {
+            mcuAdComparator()->acsr.template add<MCU::AdComparator::SR::aci>();
+        }
         
-        static void set(Mode mode) {
+        inline static void enableCapture(bool on = true) {
+            if (on) {
+                mcuAdComparator()->acsr.template add<MCU::AdComparator::SR::acic>();
+            }
+            else {
+                mcuAdComparator()->acsr.template clear<MCU::AdComparator::SR::acic>();
+            }
+        }
+        
+        inline static void set(Mode mode) {
             constexpr auto modeMask = MCU::AdComparator::SR::acis1 | MCU::AdComparator::SR::acis0;
             if (mode == Mode::OnToggle) {
 //                mcuAdComparator()->acsr.template setPartial<modeMask, DisbaleInterrupt<NoDisableEnable>>(0);
@@ -72,12 +90,15 @@ namespace AVR {
                 mcuAdComparator()->acsr.template setPartial<modeMask, DisbaleInterrupt<NoDisableEnable>>(MCU::AdComparator::SR::acis1);
             }
         }
-        static bool get() {
+        inline static bool get() {
             bool v = mcuAdComparator()->acsr.template isSet<MCU::AdComparator::SR::aci>();
             mcuAdComparator()->acsr.template add<MCU::AdComparator::SR::aci>();
             return v;
         }
-        static bool getO() {
+        inline static bool get1() {
+            return mcuAdComparator()->acsr.template isSet<MCU::AdComparator::SR::aci>();
+        }
+        inline static bool getO() {
             return mcuAdComparator()->acsr.template isSet<MCU::AdComparator::SR::aco>();
         }
     private:

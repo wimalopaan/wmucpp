@@ -208,6 +208,7 @@ struct Controller {
     static inline constexpr uint16_t prescaler = 64;
     static inline constexpr auto fTimer = Config::fMcu / prescaler;
     
+    // todo: zusammen mit pwm werten als pair
     static inline constexpr auto rampValues = std::make_array(50_ms * fTimer, 40_ms * fTimer, 30_ms * fTimer, 
                                                               20_ms * fTimer, 15_ms * fTimer, 10_ms * fTimer,
                                                               8_ms * fTimer, 7_ms * fTimer, 6_ms * fTimer,

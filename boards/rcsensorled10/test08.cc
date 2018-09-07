@@ -23,23 +23,40 @@ int main() {
     isrRegistrar::init();
     TwiMaster::init<Constants::fSCL>();
     rcUsart::init<115200>();
-    {
+    { 
         Scoped<EnableInterrupt<>> ei;
+        uint8_t counter = 0;
         {
-            std::array<TWI::Address, 4> i2cAddresses;
-            TwiMaster::findDevices(i2cAddresses);
-            for(const auto& d : i2cAddresses) {
-                if (d) {
-                    std::outl<terminal>(d);
-                    Util::delay(100_ms);
-                }
+            mcp23008::startWrite(0x00, std::byte{0x00}); // output
+            mcp23008::startWrite(0x09, std::byte{0x00}); // output
+            while(true) {
+//                std::array<TWI::Address, 4> i2cAddresses;
+//                TwiMaster::findDevices(i2cAddresses);
+//                for(const auto& d : i2cAddresses) {
+//                    if (d) {
+//                        std::outl<terminal>(d);
+//                        Util::delay(100_ms);
+//                    }
+//                }
+//                Util::delay(1000_ms);
+                std::outl<terminal>("Test08: "_pgm, ++counter);
+//                for(auto& d : i2cAddresses) {
+//                    d = TWI::Address{};
+//                }
+
+                mcp23008::startWrite(0x09, std::byte{counter});
+                do {
+                    TwiMasterAsync::periodic();
+                } while(TwiMasterAsync::active());
+                blmc::startWrite(0, std::byte{counter});
+                do {
+                    TwiMasterAsync::periodic();
+                } while(TwiMasterAsync::active());
+                
+                Util::delay(1000_ms);
             }
         }
-        uint8_t counter = 0;
-        while(true) {
-            Util::delay(1000_ms);
-            std::outl<terminal>("Test08: "_pgm, ++counter);
-        }
+        
     }
 }
 

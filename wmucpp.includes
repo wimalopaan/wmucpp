@@ -94,3 +94,6 @@ boards/blmc/blmc_avr444
 boards/blmc/blmc_mcopter
 boards/blmc/blmc_cversion_035
 boards/blmc/blmc_test01
+boards/blmc/blmc_01
+3rdparty/i2c
+tools/i2c

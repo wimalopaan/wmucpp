@@ -25,7 +25,6 @@ bm30b.s: OPTFLAGS = -O0
 
 bm40a.elf: LOADLIBES=simavrconsole.o
 
-
 targets +=  bm01a.s bm01a.elf bm01a.size
 targets +=  bm01b.s bm01b.elf bm01b.size
 targets +=  bm02a.s bm02a.elf bm02a.size
@@ -48,6 +47,7 @@ targets +=  bm40a.s bm40a.elf
 targets +=  bm40b.s bm40b.elf
 targets +=  bm41a.s bm41a.elf
 targets +=  bm42a.s bm42a.elf
+targets +=  bm50a.s bm50a.elf
 
 CPPFLAGS += -DNDEBUG
 

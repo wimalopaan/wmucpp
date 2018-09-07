@@ -27,6 +27,9 @@
 //
 // ControlByte:
 // ledControl:  [2Bit Mode | 6Bit Color] : Mode = Off, On, Blink, InversBlink
+//
+// Unter Windows:
+// mcp2221cli -i2cw=00,01 -slave7=54
 
 //#define NDEBUG
 
@@ -44,7 +47,7 @@ using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using systemTimer = AVR::Timer8Bit<0>;
 using alarmTimer  = AlarmTimer<systemTimer, UseEvents<false>>;
 
-static constexpr uint8_t NLeds = 16;
+static constexpr uint8_t NLeds = 10;
 
 using ws2812_Pin = AVR::Pin<PortB, 3>;
 using leds = WS2812<NLeds, ws2812_Pin>;
@@ -68,49 +71,70 @@ public:
     typedef Leds led_type;
     
     static void process() {
-        Scoped<DisbaleInterrupt<>> di;
         if (Dev::hasChanged()) {
+            mNumber = (mNumber + 1) % size;
             
+            if ((mNumber / 2) == 0) {
+                mColor = Red{10};                
+            }
+            else {
+                mColor = Green{20};
+            }
+            Leds::set(mNumber, mColor);
         }
     }
 private:
-    inline volatile static Color mColor;
+    inline static uint8_t mNumber = 0;
+    inline static Color mColor = Blue{10};
 };
 
 using virtualLED = LedMachine<leds, i2c>;
 
 using isrRegistrar = IsrRegistrar<i2c::I2CSlaveHandlerOvfl, i2c::I2CSlaveHandlerStart>;
 
-const auto secondsTimer = alarmTimer::create(1000_ms, AlarmFlags::Periodic);
-
-static constexpr auto f = 100_Hz;
-
 int main() {
     isrRegistrar::init();
-    systemTimer::setup<f>(AVR::TimerMode::CTCNoInt);
+    systemTimer::setup<Config::Timer::frequency>(AVR::TimerMode::CTCNoInt);
     
     led::dir<AVR::Output>();
-    led::high();
+    led::off();
+    
+    const auto secondsTimer = alarmTimer::create(1000_ms, AlarmFlags::Periodic);
+    if (secondsTimer) {
+        led::on();
+    }
     
     i2c::init();
     
     leds::init();
     leds::off();
-    leds::set(Red{10});
+    leds::set<false>(Blue{10});
+    leds::set<false>(1, Green{50});
+    leds::set<false>(2, Red{50});
+    leds::set<false>(3, Blue{50});
+    leds::set<false>(4, Red{10});
+    leds::set<false>(5, Green{10});
+    leds::set<false>(6, Green{40});
+    leds::set<false>(7, Color{Red{20}, Green{20}, Blue{20}});
+    leds::set<false>(8, Color{Red{40}, Green{20}, Blue{20}});
+    leds::set<false>(9, Color{Red{60}, Green{0}, Blue{60}});
+    
+    leds::write();
     
     Scoped<EnableInterrupt<>> ei;
     while(true) {
         virtualLED::process();
         // todo: ocf0a hängt ab von Timer Nr -> schlecht
-        systemTimer::periodic<systemTimer::flags_type::ocf0a>([](){
-            alarmTimer::periodic([](uint7_t timer){
-                if (timer = *secondsTimer) {
+        systemTimer::periodic<systemTimer::flags_type::ocf0a>([&](){
+            alarmTimer::periodic([&](uint7_t timer){
+                if (timer == *secondsTimer) {
                     led::toggle();
                 }                
             });
         });
     }
 }
+
 ISR(USI_OVF_vect) {
     isrRegistrar::isr<AVR::ISR::Usi<0>::Overflow>();
 }

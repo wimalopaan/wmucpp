@@ -63,6 +63,9 @@ namespace TWI {
             mSendQueue.clear();
             mState = State::Inactive;
         }        
+        inline static bool active() {
+            return mState != State::Inactive;
+        }
         inline static bool transferComplete() {
             return (mBytesToRead == uint8_t{0}) && (mBytesToWrite == uint8_t{0});
         }

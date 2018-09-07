@@ -30,6 +30,9 @@
 
 namespace AVR {
    
+    struct HighSpeed;
+    struct LowSpeed;
+    
     template<uint8_t T>
     struct Resolution;
     
@@ -66,23 +69,50 @@ namespace AVR {
         
         Adc() = delete;
         
+        template<typename S = LowSpeed>
         static void init() {
-            if constexpr(std::is_same<Reso, Resolution<8>>::value) {
+            if constexpr(std::is_same_v<Reso, Resolution<8>>) {
                 mcuAdc()->admux.template add<refs | MCU::Adc::MUX::adlar, DisbaleInterrupt<NoDisableEnable>>();
             }
             else {
                 mcuAdc()->admux.template add<refs, DisbaleInterrupt<NoDisableEnable>>();
             }
-            mcuAdc()->adcsra.template add<MCU::Adc::SRA::aden | MCU::Adc::SRA::adps2 | MCU::Adc::SRA::adps1 | MCU::Adc::SRA::adps0, DisbaleInterrupt<NoDisableEnable>>();
+            if constexpr(std::is_same_v<S, HighSpeed>) {
+                mcuAdc()->adcsra.template add<MCU::Adc::SRA::aden | MCU::Adc::SRA::adps1 | MCU::Adc::SRA::adps0, DisbaleInterrupt<NoDisableEnable>>();
+            }
+            else {
+                mcuAdc()->adcsra.template add<MCU::Adc::SRA::aden | MCU::Adc::SRA::adps2 | MCU::Adc::SRA::adps1 | MCU::Adc::SRA::adps0, DisbaleInterrupt<NoDisableEnable>>();
+            }
+        }
+        
+        inline static void enable() {
+            mcuAdc()->adcsra.template add<MCU::Adc::SRA::aden>();
+        }
+        inline static void disable() {
+            mcuAdc()->adcsra.template clear<MCU::Adc::SRA::aden>();
         }
         
         static void startConversion() {
             assert(conversionReady());
+            mcuAdc()->adcsra.template clear<MCU::Adc::SRA::adif, DisbaleInterrupt<NoDisableEnable>>();
             mcuAdc()->adcsra.template add<MCU::Adc::SRA::adsc, DisbaleInterrupt<NoDisableEnable>>();
         }
         
         static bool conversionReady() {
             return !mcuAdc()->adcsra.template isSet<MCU::Adc::SRA::adsc>();
+        }
+
+        template<typename F>
+        static void whenConversionReady(const F& f) {
+            if (mcuAdc()->adcsra.template isSet<MCU::Adc::SRA::adif>()) {
+                f(value());
+            }
+        }
+
+        template<typename F>
+        static void waitUntilConversionReady(const F& f) {
+            while(!mcuAdc()->adcsra.template isSet<MCU::Adc::SRA::adif>());
+            f(value());
         }
         
         static typename Reso::type value() {

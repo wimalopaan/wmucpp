@@ -17,14 +17,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-MCU = atmega88p
+# EEProm Inhalt nicht löschen
+# sudo avrdude -p atmega328pb -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P usb -c avrisp2 -U lfuse:w:0xe0:m -U hfuse:w:0xd1:m -U efuse:w:0xf7:m
+
+# 8 Mhz intern
+# sudo avrdude -p atmega328pb -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P usb -c avrisp2 -U lfuse:w:0xe2:m -U hfuse:w:0xd9:m -U efuse:w:0xff:m
+
+MCU = atmega328pb
 F_OSC = 20000000
 
-subdirs += blmc_01
-subdirs += blmc_test00
-subdirs += blmc_test01
-#subdirs += blmc_avr444
-#subdirs += blmc_mcopter
+subdirs =
 
+targets +=  test01.elf
+targets +=  test02.elf
+targets +=  test03.elf
+targets +=  test04.elf
+targets +=  test05.elf
+targets +=  test06.elf
 
--include ../../Makefile.include
+-include ../../../Makefile.include

@@ -34,10 +34,34 @@ namespace AVR {
             inline static constexpr uintptr_t end   = RAMEND;  
         };
         struct Usart {
-            volatile uint8_t ubbrl;
-            volatile uint8_t ucsrb;
-            volatile uint8_t ucsra;
-            volatile uint8_t udr;
+            DataRegister<Usart, ReadWrite, uint16_t> ubbr;
+//            volatile uint8_t ubbrl;
+            enum class SRB : uint8_t {
+                rxcie = (1 << RXCIE),
+                txcie = (1 << TXCIE),
+                udrie = (1 << UDRIE),
+                rxen = (1 << RXEN),
+                txen = (1 << TXEN),
+                ucsz2 = (1 << UCSZ2),
+                rxb8 = (1 << RXB8),
+                txb8 = (1 << TXB8)
+            };
+            ControlRegister<Usart, SRB> ucsrb;
+//            volatile uint8_t ucsrb;
+            enum class SRA : uint8_t {
+                rxc = (1 << RXC),
+                txc = (1 << TXC),
+                udre = (1 << UDRE),
+                fe = (1 << FE),
+                dor = (1 << DOR),
+                upe = (1 << PE),
+                u2x = (1 << U2X),
+                mpcm = (1 << MPCM)
+            };
+            ControlRegister<Usart, SRA> ucsra;
+//            volatile uint8_t ucsra;
+            DataRegister<Usart, ReadWrite, std::byte> udr;
+//            volatile uint8_t udr;
             template<int N> struct Address;
         };
         struct Timer8BitSimple {

@@ -63,6 +63,14 @@ namespace AVR {
         mcuTimer()->tccrb.template set<bits>();
     }
     
+    static void off() {
+        constexpr auto bits = AVR::Util::bitsFrom<0>(MCU::Timer8Bit::template PrescalerBits<N>::values);
+        mcuTimer()->tccrb.template set<bits>();
+        *mcuTimer()->tcnt = 0;
+    }
+    static void reset() {
+        *mcuTimer()->tcnt = 0;
+    }
     static std::hertz frequency() {
         return Config::fMcu / (uint32_t)prescaler();
     }
@@ -360,7 +368,7 @@ static typename AVR::PrescalerPair<tccrb_type>::scale_type prescaler() {
     return AVR::Util::bitsToPrescale(bits, MCU::Timer16Bit::template PrescalerBits<N>::values);
 }
 
-static void ocra(uint16_t v) {
+inline static void ocra(uint16_t v) {
     *mcuTimer()->ocra = v;
 }
 template<uint16_t V>
@@ -375,15 +383,39 @@ static inline volatile const uint16_t& icr() {
     return *mcuTimer()->icr;
 }
 
+static inline void noiseCancel(bool on = true) {
+    if (on) {
+        mcuTimer()->tccrb.template add<tccrb_type::icnc>();
+    }    
+    else {
+        mcuTimer()->tccrb.template clear<tccrb_type::icnc>();
+    }
+}
+
+static inline void captureRising(bool on = true) {
+    if (on) {
+        mcuTimer()->tccrb.template clear<tccrb_type::ices>();
+    }    
+    else {
+        mcuTimer()->tccrb.template add<tccrb_type::ices>();
+    }
+}
+
 static void start(){
 }
 
-static void reset() {
+inline static void reset() {
     *mcuTimer()->tcnt = 0;
 }
 
+template<flags_type Flag>
+inline static void clearFlag() {
+    mcuInterrupts()->tifr.template reset<Flag>();
+}
+
+
 template<flags_type Compare, ::Util::Callable Callable>
-static void periodic(const Callable& f) {
+inline static void periodic(const Callable& f) {
     if (mcuInterrupts()->tifr.template isSet<Compare>()) {
         f();
         mcuInterrupts()->tifr.template reset<Compare>();

@@ -48,48 +48,70 @@ public:
     static constexpr unsigned_type integral_mask = ~((1 << fractionalBits) - 1);
     static constexpr uint8_t fractional_bits = fractionalBits;
     static constexpr uint8_t integer_bits = sizeof(Type) * 8 - fractionalBits;
+    typedef typename Util::TypeForBits<integer_bits>::type integral_type;
     static constexpr value_type one = 1u << fractional_bits;
     
-    constexpr explicit FixedPoint(double v) : mValue(v * one) {}
-    constexpr FixedPoint() = default;
+    inline constexpr explicit FixedPoint(double v) : mValue(v * one) {}
+
+    inline constexpr FixedPoint() = default;
     
-    static FixedPoint<Type, fractionalBits> fromRaw(unsigned_type raw) {
+    inline static FixedPoint<Type, fractionalBits> fromRaw(unsigned_type raw) {
         return FixedPoint<Type, fractionalBits>{raw};
     }
     
-    unsigned_type integerAbs() const {
+    inline unsigned_type integerAbs() const {
         if (mValue < 0) {
             return -integer();
         }
         return integer();
     }
-    fractional_type fractionalAbs() const {
+    inline fractional_type fractionalAbs() const {
         return fractional();
     }
-    Type integer() const {
+    inline integral_type integer() const {
         return mValue / one;
     }
-    fractional_type fractional() const {
+    inline fractional_type fractional() const {
         return (fractional_type(mValue) & fractional_mask);
     }
-    Fraction<fractional_type, fractionalBits> fraction() const {
+    inline Fraction<fractional_type, fractionalBits> fraction() const {
         return Fraction<fractional_type, fractionalBits>(fractional() << ((sizeof(fractional_type) * 8) - fractional_bits));
     }
-    Type raw() const {
+    inline const Type& raw() const {
         return mValue;
     }
-    FixedPoint operator/=(Type d) {
+    inline FixedPoint& operator/=(Type d) {
         mValue /= d;
         return *this;
     }
+    inline FixedPoint& operator-=(const FixedPoint& d) {
+        mValue -= d.mValue;
+        return *this;
+    }
+    inline FixedPoint& operator+=(const FixedPoint& d) {
+        mValue += d.mValue;
+        return *this;
+    }
 private:
-    FixedPoint(unsigned_type v) : mValue(v){}
+//    FixedPoint(unsigned_type v) : mValue(v){}
     Type mValue = 0;
 };
 
 constexpr FixedPoint<int16_t, 4> operator"" _fp(long double v) {
     return FixedPoint<int16_t, 4>{(double)v};
 }
+
+template<typename T, auto Bits>
+FixedPoint<T, Bits> operator-(FixedPoint<T, Bits> lhs, const FixedPoint<T, Bits>& rhs) {
+    return lhs -= rhs;
+}
+
+template<typename T, auto Bits, typename D>
+FixedPoint<T, Bits> operator/(FixedPoint<T, Bits> lhs, const D& rhs) {
+    return lhs /= rhs;
+}
+
+
 
 template<typename T, uint8_t FB>
 FixedPoint<T, FB> operator*(FixedPoint<T, FB> lhs, FixedPoint<T, FB> rhs) {
@@ -120,6 +142,13 @@ namespace std::detail {
         if (f.raw() < 0) {
             out<Stream>(Char{'-'});
         }
+        out<Stream>(f.integerAbs());
+        out<Stream>(f.fraction());
+    }
+
+    template<MCU::Stream Stream, auto Bits>
+    void out(const FixedPoint<uint16_t, Bits>& f) {
+        using std::out;
         out<Stream>(f.integerAbs());
         out<Stream>(f.fraction());
     }

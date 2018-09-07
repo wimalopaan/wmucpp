@@ -26,8 +26,8 @@ namespace std {
     
     template<intmax_t nominator = 1, intmax_t denominator = 1>
     struct ratio final {
-        static constexpr intmax_t nom = nominator;
-        static constexpr intmax_t denom = denominator;
+        static inline constexpr intmax_t nom = nominator;
+        static inline constexpr intmax_t denom = denominator;
     };
     
     using centimicro = ratio<1, 10000000>;

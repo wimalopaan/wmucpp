@@ -55,6 +55,9 @@ namespace MCU {
 }
 
 namespace AVR {
+    struct Inverting;
+    struct NonInverting;
+    
     template<typename T>
     concept bool ATTiny_X5() {
         return std::is_same<T, ATTiny25>::value || std::is_same<T, ATTiny85>::value;
@@ -69,7 +72,8 @@ namespace AVR {
     }
     template<typename T>
     concept bool ATMega_X8() {
-        return std::is_same<T, ATMega328P>::value || std::is_same<T, ATMega328PB>::value || std::is_same<T, ATMega88P>::value;
+        return std::is_same<T, ATMega328P>::value || std::is_same<T, ATMega328PB>::value || 
+                std::is_same<T, ATMega88P>::value || std::is_same<T, ATMega168P>::value;
     }
     template<typename T>
     concept bool ATMega_X4() {
@@ -115,6 +119,8 @@ namespace AVR {
 # include "mcu/avr/atmega328p.h"
 #elif defined(__AVR_ATmega88P__)
 # include "mcu/avr/atmega88p.h"
+#elif defined(__AVR_ATmega168P__)
+# include "mcu/avr/atmega168p.h"
 #elif defined(__AVR_ATmega328PB__)
 #include "mcu/avr/atmega328pb.h"
 #elif defined(__AVR_ATmega8__)

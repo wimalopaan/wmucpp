@@ -104,11 +104,11 @@ namespace std {
     
     template<typename Duration, typename Frequency>
     constexpr uint32_t operator*(const Duration& dt, const Frequency& f) {
-        return (dt.value * f.value * Frequency::divider_type::denom) / Duration::period_type::denom;
+        return ((uint64_t)dt.value * f.value * Frequency::divider_type::denom) / Duration::period_type::denom;
     }
     
     constexpr std::microseconds operator/(uint16_t v, const std::hertz& f) {
-        return std::microseconds{(uint16_t)(((uint32_t)v * std::microseconds::period_type::denom) / f.value)};
+        return std::microseconds{(uint16_t)(((uint64_t)v * std::microseconds::period_type::denom) / f.value)};
     }
     
     constexpr std::hertz operator/(uint16_t v, const std::microseconds& f) {

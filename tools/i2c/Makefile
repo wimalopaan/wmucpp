@@ -17,14 +17,23 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-MCU = atmega88p
-F_OSC = 20000000
 
-subdirs += blmc_01
-subdirs += blmc_test00
-subdirs += blmc_test01
-#subdirs += blmc_avr444
-#subdirs += blmc_mcopter
+targets += test test01
 
+test: test.o libmcp2221.o
+
+test01: test01.o libmcp2221.o
+
+libmcp2221.o: libmcp2221.c libmcp2221.h
 
 -include ../../Makefile.include
+
+CXX = /usr/bin/g++
+#CXX = clang++
+CC = /usr/bin/gcc
+LDFLAGS = -lpthread -lhidapi-hidraw
+CFLAGS = -g -std=c11
+CXXFLAGS = -g -std=c++17 
+CXXFLAGS += -Wall -Wextra -fPIC
+CXXFLAGS += -I.
+

@@ -345,6 +345,14 @@ namespace AVR {
         struct Twi<0> {
 #ifdef TWI_vect_num
             static constexpr const uint32_t number = TWI_vect_num;
+#elif defined(TWI0_vect_num)
+            static constexpr const uint32_t number = TWI0_vect_num;
+#endif
+        };
+        template<>
+        struct Twi<1> {
+#ifdef TWI1_vect_num
+            static constexpr const uint32_t number = TWI1_vect_num;
 #endif
         };
         

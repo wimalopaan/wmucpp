@@ -23,5 +23,4 @@
 # include <avr/avr_mcu_section.h>
 #endif
 
-
-AVR_MCU_SIMAVR_CONSOLE(&GPIOR0);
+//AVR_MCU_SIMAVR_CONSOLE(&GPIOR0);

@@ -12,17 +12,20 @@
 
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
+using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
 
-using pinLow0 = AVR::Pin<PortC, 0>;
-using pinHigh0 = AVR::Pin<PortC, 1>;
-using pinLow1 = AVR::Pin<PortC, 2>;
-using pinHigh1 = AVR::Pin<PortC, 3>;
-using pinLow2 = AVR::Pin<PortC, 4>;
-using pinHigh2 = AVR::Pin<PortC, 5>;
+using pinLow0 = AVR::Pin<PortD, 3>;
+using pinHigh0 = AVR::Pin<PortB, 4>; // mod
+using pinLow1 = AVR::Pin<PortD, 4>;
+using pinHigh1 = AVR::Pin<PortB, 2>;
+using pinLow2 = AVR::Pin<PortD, 5>;
+using pinHigh2 = AVR::Pin<PortD, 2>;
 
-using debugPin0 =  AVR::Pin<PortB, 0>;
-using debugPin1 =  AVR::Pin<PortB, 1>;
+using led =  AVR::Pin<PortD, 7>;
+using ppm =  AVR::Pin<PortB, 0>;
 
+//using debugPin0 =  AVR::Pin<PortC, 4>;
+//using debugPin1 =  AVR::Pin<PortC, 5>;
 
 struct CommandAdapter {
     enum class Command : uint8_t {Undefined, Off, Start, Test};
@@ -125,12 +128,12 @@ struct Communter {
         on();
         AC::channel(acNumber);
         --acNumber;
-//        if ((state % 2) == 0) {
-//            AC::set(AC::Mode::OnRising);
-//        }
-//        else {
-//            AC::set(AC::Mode::OnFalling);
-//        }
+        //        if ((state % 2) == 0) {
+        //            AC::set(AC::Mode::OnRising);
+        //        }
+        //        else {
+        //            AC::set(AC::Mode::OnFalling);
+        //        }
         ++state;
     }
     static bool zeroCrossed() {
@@ -206,28 +209,125 @@ template<typename Timer, typename Com>
 struct Controller {
     enum class State : uint8_t {Off, BeepReady, BeepFail, Check, AlignStart, AlignWait, RampUp, RunWaitCommutation, RunStart, RunA};
     
-    static inline constexpr uint16_t prescaler = 64;
+    static inline constexpr uint16_t prescaler = 8;
     static inline constexpr auto fTimer = Config::fMcu / prescaler;
     
-    static inline constexpr auto rampValues = std::make_array(50_ms * fTimer, 40_ms * fTimer, 30_ms * fTimer, 
-                                                              20_ms * fTimer, 15_ms * fTimer, 10_ms * fTimer,
-                                                              8_ms * fTimer, 7_ms * fTimer, 6_ms * fTimer,
-                                                              5_ms * fTimer, 5_ms * fTimer, 5_ms * fTimer,
-                                                              5_ms * fTimer, 5_ms * fTimer, 5_ms * fTimer,
-                                                              5_ms * fTimer, 5_ms * fTimer, 5_ms * fTimer,
-                                                              5_ms * fTimer, 5_ms * fTimer, 5_ms * fTimer,
-                                                              5_ms * fTimer, 5_ms * fTimer, 5_ms * fTimer,
-                                                              5_ms * fTimer, 5_ms * fTimer, 5_ms * fTimer,
-                                                              5_ms * fTimer, 5_ms * fTimer, 5_ms * fTimer,
-                                                              5_ms * fTimer, 5_ms * fTimer, 5_ms * fTimer,
-                                                              5_ms * fTimer, 5_ms * fTimer, 5_ms * fTimer,
-                                                              5_ms * fTimer, 5_ms * fTimer, 5_ms * fTimer
-                                                              );
-//    static inline constexpr auto rampValues = std::make_array(20_ms * fTimer, 15_ms * fTimer, 10_ms * fTimer, 
-//                                                              8_ms * fTimer, 6_ms * fTimer, 5_ms * fTimer);
-//    static inline constexpr auto rampValues = std::make_array(40_ms * fTimer, 30_ms * fTimer, 20_ms * fTimer, 
-//                                                              15_ms * fTimer, 10_ms * fTimer, 7_ms * fTimer, 
-//                                                              4_ms * fTimer, 3_ms * fTimer, 2_ms * fTimer);
+    // todo: zusammen mit pwm werten als pair
+    static inline constexpr auto rampValues = std::make_array(
+                50_ms * fTimer, 50_ms * fTimer, 50_ms * fTimer, 
+                50_ms * fTimer, 50_ms * fTimer, 50_ms * fTimer, 
+                50_ms * fTimer, 50_ms * fTimer, 50_ms * fTimer, 
+                50_ms * fTimer, 50_ms * fTimer, 50_ms * fTimer, 
+                40_ms * fTimer, 40_ms * fTimer, 40_ms * fTimer, 
+                40_ms * fTimer, 40_ms * fTimer, 40_ms * fTimer, 
+                40_ms * fTimer, 40_ms * fTimer, 40_ms * fTimer, 
+                30_ms * fTimer, 30_ms * fTimer, 30_ms * fTimer, 
+                30_ms * fTimer, 30_ms * fTimer, 30_ms * fTimer, 
+                30_ms * fTimer, 30_ms * fTimer, 30_ms * fTimer, 
+                20_ms * fTimer, 20_ms * fTimer, 20_ms * fTimer, 
+                20_ms * fTimer, 20_ms * fTimer, 20_ms * fTimer, 
+                20_ms * fTimer, 20_ms * fTimer, 20_ms * fTimer, 
+                20_ms * fTimer, 20_ms * fTimer, 20_ms * fTimer, 
+                10_ms * fTimer, 10_ms * fTimer, 10_ms * fTimer, 
+                10_ms * fTimer, 10_ms * fTimer, 10_ms * fTimer, 
+                10_ms * fTimer, 10_ms * fTimer, 10_ms * fTimer, 
+                10_ms * fTimer, 10_ms * fTimer, 10_ms * fTimer, 
+                8_ms * fTimer, 8_ms * fTimer, 8_ms * fTimer,
+                8_ms * fTimer, 8_ms * fTimer, 8_ms * fTimer,
+                8_ms * fTimer, 8_ms * fTimer, 8_ms * fTimer,
+                8_ms * fTimer, 8_ms * fTimer, 8_ms * fTimer,
+                8_ms * fTimer, 8_ms * fTimer, 8_ms * fTimer,
+                5_ms * fTimer, 5_ms * fTimer, 5_ms * fTimer,
+                5_ms * fTimer, 5_ms * fTimer, 5_ms * fTimer,
+                5_ms * fTimer, 5_ms * fTimer, 5_ms * fTimer,
+                5_ms * fTimer, 5_ms * fTimer, 5_ms * fTimer,
+                5_ms * fTimer, 5_ms * fTimer, 5_ms * fTimer,
+                5_ms * fTimer, 5_ms * fTimer, 5_ms * fTimer,
+                5_ms * fTimer, 5_ms * fTimer, 5_ms * fTimer,
+                5_ms * fTimer, 5_ms * fTimer, 5_ms * fTimer,
+                5_ms * fTimer, 5_ms * fTimer, 5_ms * fTimer,
+                5_ms * fTimer, 5_ms * fTimer, 5_ms * fTimer,
+                5_ms * fTimer, 5_ms * fTimer, 5_ms * fTimer,
+                5_ms * fTimer, 5_ms * fTimer, 5_ms * fTimer,
+                5_ms * fTimer, 5_ms * fTimer, 5_ms * fTimer,
+                5_ms * fTimer, 5_ms * fTimer, 5_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer,
+                3_ms * fTimer, 3_ms * fTimer, 3_ms * fTimer
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer,
+//                2_ms * fTimer, 2_ms * fTimer, 2_ms * fTimer
+                );
     static inline constexpr uint16_t alignValue = 50_ms * fTimer;
     
     static void init() {
@@ -259,13 +359,13 @@ private:
         static uint8_t zcCount = 0;
         switch(mState) {
         case State::RunWaitCommutation:
-//            debugPin0::toggle();
-                if (Com::acv()) {
-                    debugPin0::on();
-                }
-                else {
-                    debugPin0::off();
-                }
+            //            debugPin0::toggle();
+            if (Com::acv()) {
+                //                    debugPin0::on();
+            }
+            else {
+                //                    debugPin0::off();
+            }
             if (Com::zeroCrossed()) {
                 ++zcCount;
             }
@@ -307,14 +407,14 @@ private:
             mState = State::RunA;
             break;
         case State::RunA:
-            debugPin1::toggle();
+            //            debugPin1::toggle();
             Timer::reset();
             Timer::ocra(tv * 2);
             mState = State::RunWaitCommutation;
             break;
         case State::RunWaitCommutation:
-            debugPin0::off();
-            debugPin1::off();
+            //            debugPin0::off();
+            //            debugPin1::off();
             off();
             break;
         default: 
@@ -324,7 +424,8 @@ private:
     }
     inline static uint16_t tv = 0;
     inline static State mState = State::Off;
-    inline static uint_ranged<uint8_t, 0, rampValues.size - 1> rampStep;
+    static_assert(rampValues.size < 256);
+    inline static uint_ranged<uint16_t, 0, rampValues.size - 1> rampStep;
 };
 
 using commutationTimer = AVR::Timer16Bit<1>; // timer 1
@@ -340,14 +441,14 @@ using namespace std::literals::quantity;
 
 using isrRegistrar = IsrRegistrar<uart::RxHandler, uart::TxHandler>;
 
-using hardPwm = AVR::PWM<0>; // timer 0
+using hardPwm = AVR::PWM<2>; // timer 0
 //using systemClock = AVR::Timer8Bit<2>; // timer 2
 
 int main() {
-    debugPin0::dir<AVR::Output>();
-    debugPin1::dir<AVR::Output>();
+    //    debugPin0::dir<AVR::Output>();
+    //    debugPin1::dir<AVR::Output>();
     
-//    systemClock::template setup<Constants::fSystem>(AVR::TimerMode::CTCNoInt);
+    //    systemClock::template setup<Constants::fSystem>(AVR::TimerMode::CTCNoInt);
     
     isrRegistrar::init();
     
@@ -356,16 +457,16 @@ int main() {
     controller::init();  
     
     hardPwm::init<Constants::pwmFrequency>();
-    hardPwm::pwm<hardPwm::A>(80_ppc);
+    hardPwm::pwm<hardPwm::A>(95_ppc);
     
     // watchdog: alles aus
     {
         Scoped<EnableInterrupt<>> ei;
         
-        std::outl<terminal>("Test00 V01"_pgm);
-//        std::outl<terminal>("f pwm: "_pgm, hardPwm::frequency());
-//        std::outl<terminal>("rv b: "_pgm, controller::rampValues[0]);
-//        std::outl<terminal>("rv e: "_pgm, controller::rampValues[controller::rampValues.size - 1]);
+        std::outl<terminal>("BL-Ctrl (mod) V01"_pgm);
+        std::outl<terminal>("f pwm: "_pgm, hardPwm::frequency());
+        std::outl<terminal>("rv b: "_pgm, controller::rampValues[0]);
+        std::outl<terminal>("rv e: "_pgm, controller::rampValues[controller::rampValues.size - 1]);
         
         while(true) {
             controller::run();
@@ -398,9 +499,9 @@ int main() {
     }    
 }
 
-ISR(USART0_RX_vect) {
+ISR(USART_RX_vect) {
     isrRegistrar::isr<AVR::ISR::Usart<0>::RX>();
 }
-ISR(USART0_UDRE_vect){
+ISR(USART_UDRE_vect){
     isrRegistrar::isr<AVR::ISR::Usart<0>::UDREmpty>();
 }

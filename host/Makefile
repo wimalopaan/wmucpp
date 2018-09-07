@@ -57,6 +57,7 @@ targets += test91
 targets += test92
 targets += test98
 targets += test99
+targets += test100
 
 -include ../Makefile.include
 
