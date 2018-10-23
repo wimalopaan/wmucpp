@@ -246,10 +246,17 @@ public:
     
     static void ocra(uint8_t v) {
         *mcuTimer()->ocra = v;
-    }
+    }   
     template<uint8_t V>
     static void ocra() {
         *mcuTimer()->ocra = V;
+    }
+    template<uint8_t V>
+    static void ocrc() {
+        *mcuTimer()->ocrc = V;
+    }
+    static void ocrc(uint8_t v) {
+        *mcuTimer()->ocrc = v;
     }
     
     static inline volatile uint8_t& counter() {
@@ -259,6 +266,11 @@ public:
     static void mode(TimerMode timerMode) {
         if (timerMode == TimerMode::CTC) {
             mcuInterrupts()->timsk.template add<MCU::TimerInterrupts::Mask::ocie1a, DisbaleInterrupt<NoDisableEnable>>();
+        }
+        if (timerMode == TimerMode::CTCNoInt) {
+            mcuTimer()->tccr.template add<MCU::Timer8BitHighSpeed::TCCR::ctc>();
+            mcuTimer()->tccr.template add<MCU::Timer8BitHighSpeed::TCCR::pwma>();
+            mcuTimer()->tccr.template add<MCU::Timer8BitHighSpeed::TCCR::coma1>();
         }
         else if (timerMode == TimerMode::Normal) {
         }

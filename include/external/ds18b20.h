@@ -55,6 +55,7 @@ public:
     inline static void startGet() {
         static_assert(OneWireMaster::isAsync, "async interface shall use async OneWireMaster");
         OneWireMaster::template startGet<N>();
+        mToRead = N;
     }
     
     inline static void reset() {
@@ -152,7 +153,6 @@ public:
     inline static FixedPoint<int16_t, 4> temperature(ds18b20_rsp_t& sp) {
         uint16_t valueL = sp[0];
         uint16_t valueH = sp[1];
-        
         return FixedPoint<int16_t, 4>::fromRaw(valueH << 8 | valueL);
     }
     

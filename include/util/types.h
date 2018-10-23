@@ -231,6 +231,9 @@ public:
         mValue = rhs;
         return *this;
     }
+    constexpr uint_ranged<T, LowerBound, UpperBound> toRanged() const {
+        return {mValue};
+    }
     constexpr operator T() const {
         return mValue;
     }

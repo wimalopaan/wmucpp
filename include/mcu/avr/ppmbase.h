@@ -42,6 +42,9 @@ public:
     static_assert(ocDelta > 0, "wrong oc value");
     static constexpr uint16_t ocFrame = 20_ms * timerFrequency;
     static_assert(ocFrame > 0, "wrong oc value");
+
+    static constexpr uint16_t ccPulse = 500_us * timerFrequency;
+    static_assert(ccPulse > 0, "wrong oc value");
 };
 
 //template<typename Timer>

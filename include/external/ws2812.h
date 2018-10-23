@@ -41,8 +41,7 @@ struct Blue {
     uint8_t value = 0;  
 };
 
-template<typename C = ColorSequenceRGB>
-struct cRGB;
+template<typename C = ColorSequenceRGB> struct cRGB;
 
 template<>
 struct cRGB<ColorSequenceRGB> {

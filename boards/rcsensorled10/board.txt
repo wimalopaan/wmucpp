@@ -70,3 +70,26 @@ Beschreibung:
 	- System-Timer
 	- GPS-Time
 	- GPS-Speed
+
+* test16:
+	- Sensor-Uart
+	- HardPWM
+	- SUMD-Uart
+	- System-Timer
+	- GPS-Time
+	- GPS-Speed
+	- Temp-Sensoren DS1820
+	
+* test17:
+	- Sensor-Uart
+	- HardPWM
+	- SUMD-Uart
+	- System-Timer
+	- GPS-Time
+	- GPS-Speed
+	- Temp-Sensoren DS1820
+	- RPM3
+
+* test24:
+
+* test25:

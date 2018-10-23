@@ -30,33 +30,33 @@ namespace std {
         typedef typename std::conditional<Capacity <= 255, uint8_t, uint16_t>::type size_type;
         
         // no iterator because of removal
-        T& operator[](size_type index) {
+        inline T& operator[](size_type index) {
             assert(index < Capacity);
             return data[index];
         }
-        const T& operator[](size_type index) const {
+        inline const T& operator[](size_type index) const {
             assert(index < Capacity);
             return data[index];
         }
         
-        static constexpr const size_type capacity = Capacity;
+        inline static constexpr const size_type capacity = Capacity;
         typedef T value_type;
         
-        constexpr size_type size() const {
+        inline constexpr size_type size() const {
             return mSize;
         }
         
-        void clear() {
+        inline void clear() {
             mSize = 0;
         }
         
-        void push_back(const T& item) {
+        inline void push_back(const T& item) {
             assert(mSize < Capacity);
             data[mSize++] = item;
         }
         
         // requires bool() Operator of elements
-        std::optional<size_type> insert(const T& item) {
+        inline std::optional<size_type> insert(const T& item) {
             for(size_type i = 0; i < capacity; ++i) {
                 if (!data[i]) {
                     data[i] = item;
@@ -68,7 +68,7 @@ namespace std {
         }
         
         // preserve index
-        void removeAt(size_type index) {
+        inline void removeAt(size_type index) {
             assert(index < Capacity);
             data[index] = T();
             --mSize;
@@ -99,6 +99,7 @@ namespace std {
 //            return &data[Capacity];
 //        }
     private:
+//        std::array<T, Capacity> data;
         T data[Capacity] = {};
         size_type mSize = 0;
     };

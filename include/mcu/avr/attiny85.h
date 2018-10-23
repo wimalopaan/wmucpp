@@ -186,6 +186,20 @@ namespace AVR {
             ControlRegister<Status, Bits> value;
             static constexpr uint8_t address = 0x5f;
         };
+        struct MCUControl final {
+            enum class Bits : uint8_t {
+                bods = (1 << 7), 
+                pud = (1 << 6), 
+                sleepEnable = (1 << 5), 
+                sleepMode1 = (1 << 4), 
+                sleepMode0 = (1 << 3), 
+                bodSleepEnable = (1 << 2), 
+                isc01 = (1 << 1), 
+                isc00 = (1 << 0) 
+            };
+            ControlRegister<MCUControl, Bits> value;
+            static constexpr uint8_t address = 0x55;
+        };
         struct GPIOR final {
             static constexpr const uint8_t count = 3;
             template<uint8_t N> struct Address; 
@@ -222,6 +236,10 @@ namespace std {
     };
     template<>
     struct enable_bitmask_operators<AVR::ATTiny85::Timer8BitHighSpeed::GT> {
+        static constexpr bool enable = true;
+    };
+    template<>
+    struct enable_bitmask_operators<AVR::ATTiny85::MCUControl::Bits> {
         static constexpr bool enable = true;
     };
 }

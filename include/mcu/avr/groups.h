@@ -27,7 +27,8 @@ namespace AVR {
         struct Vextern {
             static constexpr float value = Volts + (0.001f * MilliVolts);
         };
-        template<typename Voltage, typename MCU> struct VRef {
+        template<typename Voltage, typename MCU> 
+        struct VRef {
             static constexpr auto refs = typename MCU::Adc::MUX{0};
             static constexpr float value = Voltage::value;
         };

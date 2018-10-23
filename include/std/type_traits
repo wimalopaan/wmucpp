@@ -124,6 +124,9 @@ namespace std {
     template<typename...>
     struct false_t : false_type {};
     
+    template<typename... TT>
+    inline constexpr bool false_v = false_t<TT...>::value;
+    
     template<typename T>
     struct logic_not : public integral_constant<bool, !T::value> {};
     

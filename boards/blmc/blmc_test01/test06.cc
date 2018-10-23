@@ -355,7 +355,7 @@ struct Controller {
     inline static RampValue convert(const RampPoint& p) {
         RampValue v;
         v.tv = p.time * fTimer;
-        v.pwm = FixedPoint<uint16_t, 8>{std::expand(p.pvm, uint8_t{0}, pwm_max)};
+        v.pwm = FixedPoint<uint16_t, 8>{(double)std::expand(p.pvm, uint8_t{0}, pwm_max)};
         return v;
     } 
     
@@ -478,11 +478,11 @@ private:
         ramp.end.tv -= 100;
     }
     inline static void pwmInc() {
-        actualRV.pwm += FixedPoint<uint16_t, 8>(1);
+        actualRV.pwm += FixedPoint<uint16_t, 8>(1.0);
         PWM::template pwm<typename PWM::A>(actualRV.pwm.integer());
     }
     inline static void pwmDec() {
-        actualRV.pwm -= FixedPoint<uint16_t, 8>(1);
+        actualRV.pwm -= FixedPoint<uint16_t, 8>(1.0);
         PWM::template pwm<typename PWM::A>(actualRV.pwm.integer());
     }
     inline static void reset() {

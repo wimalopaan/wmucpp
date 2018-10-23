@@ -1,0 +1,31 @@
+Platine:
+	- Varioprop 02
+
+test01:
+	- LED-Blink
+	
+test02:
+	- LED
+	- Debug-Usart
+	- Analog-Input
+
+test03:
+	- LED
+	- Debug-Usart
+	- Analog-Input
+
+test04:
+	- LED
+	- Debug-Usart
+	- Analog-Input
+	- CPPM-Out
+
+test05:
+	- LED
+	- Debug-Usart
+	- Analog-Input
+	- CPPM-Out
+	- RoboRemo-Interface (in/out)
+	- FrSky-Telemtrie
+
+test06:

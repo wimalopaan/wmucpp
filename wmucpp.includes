@@ -97,3 +97,11 @@ boards/blmc/blmc_test01
 boards/blmc/blmc_01
 3rdparty/i2c
 tools/i2c
+boards/tx
+boards/tx/varioprop
+include/external/roboremo
+include/external/frsky
+include/external/sbus
+boards/onoff
+boards/ppmmatrix
+boards/rcsensorled10/queen

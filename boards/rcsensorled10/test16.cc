@@ -25,6 +25,8 @@
 #include "rcsensorled10.h"
 #include "console.h"
 
+#include <vector>
+
 using testPin0 = AVR::Pin<PortA, 5>; // ACS1
 using testPin1 = AVR::Pin<PortA, 6>; // ACS2
 using testPin2 = AVR::Pin<PortA, 7>; // ACS3
@@ -92,7 +94,79 @@ struct BCastHandler {
 struct Storage {
     inline static StringBuffer<GPS::Sentence::TimeMaxWidth> time;
     inline static StringBuffer<GPS::Sentence::DecimalMaxWidth> decimalBuffer;
+
+    inline static constexpr uint8_t NumberOfOWireDevs = 4;
+    inline static std::vector<OneWire::ow_rom_t, NumberOfOWireDevs> dsIds;
+    inline static std::array<FixedPoint<int, 4>, NumberOfOWireDevs> temps;
 };
+
+template<typename Sensor, typename Store, typename Alarm>
+class TempFSM {
+public:
+    inline static void init() {
+        mMeasureTimer = Alarm::create(750_ms, AlarmFlags::Disabled | AlarmFlags::OneShot);
+        mTempTimer = Alarm::create(3000_ms, AlarmFlags::Periodic);
+    }
+    inline static void tick(uint8_t timer) {
+        if (timer == *mMeasureTimer) {
+            process(Event::WaitOver);
+        }
+        else if (timer == *mTempTimer) {
+            process(Event::Measure);
+        }
+    }
+    inline static void periodic() {
+        Sensor::periodic([]{
+            if (mState == State::WaitRead) {
+                mState = State::Start;
+                if (mSensorNumber == mSensorNumbers[0]) {
+                    sensorData::temp1(Sensor::temperature());
+                }
+                if (mSensorNumber == mSensorNumbers[1]) {
+                    sensorData::temp2(Sensor::temperature());
+                }
+                Store::temps[mSensorNumber] = Sensor::temperature();
+                mSensorNumber = (mSensorNumber + 1) % Store::dsIds.size();
+            }
+        });
+    }
+private:
+    enum class State : uint8_t {Start, Wait, WaitRead};
+    enum class Event : uint8_t {Measure, WaitOver};
+    
+    inline static void process(Event e) {
+        switch (mState) {
+        case State::Start:
+            if (e == Event::Measure) {
+                Sensor::convert();
+                alarmTimer::start(*mMeasureTimer);
+                mState = State::Wait;
+            }
+            break;
+        case State::Wait:
+            if (e == Event::WaitOver) {
+                if (Store::dsIds[mSensorNumber]) {
+                    Sensor::startGet(Store::dsIds[mSensorNumber]);
+                    mState = State::WaitRead;
+                }
+                else {
+                    mSensorNumber = 0;
+                    mState = State::Start;
+                }
+            }            
+            break;
+        case State::WaitRead:
+            break;
+        }
+    }
+    inline static State mState = State::Start;
+    inline static uint8_t mSensorNumber = 0; 
+    inline static std::optional<uint7_t> mMeasureTimer;
+    inline static std::optional<uint7_t> mTempTimer;
+    inline static std::array<uint8_t, 2> mSensorNumbers = {0, 1};
+};
+
+using tempFSM = TempFSM<ds18b20, Storage, alarmTimer>;
 
 int main() {
     constexpr std::hertz fCr = 1 / Hott::hottDelayBetweenBytes;
@@ -104,6 +178,8 @@ int main() {
     testPin1::off();
     testPin2::dir<AVR::Output>();
     testPin2::off();
+    
+    hbrigeError::dir<AVR::Input>();
     
     isrRegistrar::init();
 
@@ -124,10 +200,27 @@ int main() {
         Scoped<EnableInterrupt<>> ei;
         
         std::outl<terminal>("Test16"_pgm);
+        Util::delay(100_ms);
+        
+        {
+            std::outl<terminal>("1Wire:"_pgm);
+            std::array<OneWire::ow_rom_t, Storage::dsIds.capacity> ids;
+            oneWireMaster::findDevices(ids, ds18b20::family);
+            for(const auto& id : ids) {
+                if (id) {
+                    Storage::dsIds.push_back(id);
+                    std::outl<terminal>(id);
+                    Util::delay(100_ms);
+                }
+            }
+        }
         
         const auto periodicTimer = alarmTimer::create(500_ms, AlarmFlags::Periodic);
 
+        tempFSM::init();
+        
         while(true){
+            tempFSM::periodic();
             auto v = Hott::SumDProtocollAdapter<0>::value(0);
             hbridge1::pwm(v);
             hbridge2::pwm(v);
@@ -135,19 +228,25 @@ int main() {
                 testPin0::on();
                 crWriterSensorBinary::rateProcess();
                 crWriterSensorText::rateProcess();
+                oneWireMasterAsync::rateProcess();
                 testPin0::off();
                 alarmTimer::periodic([&](uint7_t timer){
                     if (timer == *periodicTimer) {
+//                        std::outl<terminal>("mem: "_pgm, Util::Memory::getUnusedMemory());
                         GPS::RMC::timeRaw(Storage::time);
                         GPS::VTG::speedRaw(Storage::decimalBuffer);
-//                        auto s = Util::StringConverter<FixedPoint<int16_t, 4>>::parse(Storage::decimalBuffer);
-//                        std::outl<terminal>("mem: "_pgm, Util::Memory::getUnusedMemory());
-                        std::outl<terminal>("time: "_pgm, Storage::time);
-//                        std::outl<terminal>("speed: "_pgm, s);
-//                        std::outl<terminal>("v: "_pgm, v.toInt());
+                        auto s = Util::StringConverter<FixedPoint<int16_t, 4>>::parse(Storage::decimalBuffer);
+//                        std::outl<terminal>("time: "_pgm, Storage::time);
+                        std::outl<terminal>("speed: "_pgm, s);
+                        std::outl<terminal>("v: "_pgm, v.toInt());
 //                        auto valid = Hott::SumDProtocollAdapter<0>::valid();
 //                        std::outl<terminal>("valid: "_pgm, valid);
+                        std::outl<terminal>("temps: "_pgm, Storage::temps[0], ", "_pgm, Storage::temps[1]);
+                        std::outl<terminal>("error: "_pgm, hbrigeError::read());
                         
+                    }
+                    else {
+                        tempFSM::tick(timer);
                     }
                 });
            });

@@ -88,10 +88,19 @@ namespace MCU {
             typedef uint8_t type;
             typedef Compiler::Gcc compiler_type;
         };
+        
+        template<typename Mcu>
+        struct is_avr {
+            inline static constexpr bool value = std::is_same_v<Mcu, AVR::ATMega328P> ||
+                                                 std::is_same_v<Mcu, AVR::ATTiny85>;
+        };
     }
     
     template<typename T, typename Compiler>
     struct is_register_type : public detail::is_register_type_base<typename std::remove_cv<T>::type, Compiler, DefaultMcuType> {};
+    
+    template<typename Mcu>
+    inline constexpr bool is_avr_v = detail::is_avr<Mcu>::value;
     
     template<bool use = true>
     struct UseInterrupts;

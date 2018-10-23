@@ -931,8 +931,12 @@ private:
         sensorData::currentRaw(c1);
     }
     static inline void update3() {
+#ifndef USE_TC1_AS_HARDPPM
         Storage::rpms[0] = rpm1::rpm();
+#endif
+#ifndef USE_TC3_AS_HARDPPM
         Storage::rpms[1] = rpm2::rpm();
+#endif
         Storage::rpms[2] = rpm3::rpm();
         
         if (const auto& s = appData[Storage::AVKey::RpmSensor1]) {
@@ -982,7 +986,7 @@ inline void updateActors() {
         break;
     case 3:
     {
-        auto v0 = Hott::SumDProtocollAdapter<0>::value(1);
+        auto v0 = Hott::SumDProtocollAdapter<0>::value(5);
         hbridge2::pwm(v0);
     }
         break;
@@ -1052,12 +1056,14 @@ int main() {
     
 #ifdef USE_TC1_AS_HARDPPM
     hardPpm1::init();
+#else
+    rpm1::init();
 #endif
 #ifdef USE_TC3_AS_HARDPPM
     hardPpm2::init();
-#endif
-    rpm1::init();
+#else
     rpm2::init();
+#endif
     rpm3::init();
     
     hardPwm::init<Constants::pwmFrequency>();
@@ -1128,8 +1134,12 @@ int main() {
             testPin0::toggle(); // max 135 uS ein Intervall
             TwiMasterAsync::periodic();
             menu::periodic();
+#ifndef USE_TC1_AS_HARDPPM
             rpm1::periodic();
+#endif
+#ifndef USE_TC3_AS_HARDPPM
             rpm2::periodic();
+#endif
             rpm3::periodic();
             hx711::periodic();
             adcController::periodic();
@@ -1148,8 +1158,12 @@ int main() {
                     if (timer == *periodicTimer) {
                         oled::put('.');
                         ++Storage::keepAliveCounter;
+#ifndef USE_TC1_AS_HARDPPM
                         rpm1::check();
+#endif
+#ifndef USE_TC3_AS_HARDPPM
                         rpm2::check();
+#endif
                         rpm3::check();
                         GPS::RMC::timeRaw(Storage::time);
                         GPS::VTG::speedRaw(Storage::speed);

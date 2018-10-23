@@ -69,14 +69,19 @@ namespace {
     constexpr std::RPM MinimumRpm{100};
 }
 
+#ifndef USE_TC1_AS_HARDPPM
 using rpmTimer1 = AVR::Timer16Bit<1>; // timer 1
 using rpm1 = RpmWithIcp<rpmTimer1, MinimumRpm, MaximumRpm>;
+#endif
+#ifndef USE_TC3_AS_HARDPPM
 using rpmTimer2 = AVR::Timer16Bit<3>; // timer 3
 using rpm2 = RpmWithIcp<rpmTimer2, MinimumRpm, MaximumRpm>;
+#endif
 using rpmTimer3 = AVR::Timer16Bit<4>; // timer 4
 using rpm3 = RpmWithIcp<rpmTimer3, MinimumRpm, MaximumRpm>;
 
-using rpmPrescaler = std::integral_constant<uint16_t, rpm1::prescaler>;
+using rpmPrescaler = std::integral_constant<uint16_t, rpm3::prescaler>;
+
 //rpmPrescaler::_;
 
 using TwiMaster = TWI::Master<1>;
@@ -107,9 +112,14 @@ using ds18b20Sync = DS18B20<oneWireMaster>;
 //#endif
 
 #ifdef USE_TC1_AS_HARDPPM
+using hardPpm1 = AVR::PPM<1>;
+#else 
 using hardPpm1 = AVR::PPM<1, std::integral_constant<uint32_t, rpm1::prescaler>>; // timer1 <-> exclusiv zu rpm1
 #endif
 #ifdef USE_TC3_AS_HARDPPM
+using hardPpm2 = AVR::PPM<3>;
+using otherOCMPin = AVR::Pin<PortB, 7>;
+#else
 using hardPpm2 = AVR::PPM<3, std::integral_constant<uint32_t, rpm2::prescaler>>; // timer3 <-> exclusiv zu rpm2
 #endif
 
@@ -123,6 +133,8 @@ using hardPwm2 = PwmAdapter<hardPwm, hardPwm::B>;
 using hbridge1 = VNH<hardPwm1, dir1>;
 using hbridge2 = VNH<hardPwm2, dir2>;
 
+using hbrigeError = AVR::Pin<PortB, 2>;
+
 using gpsPA = GPS::GpsProtocollAdapter<0, GPS::VTG, GPS::RMC>;
 using gpsUsart = AVR::Usart<2, gpsPA, MCU::UseInterrupts<true>, UseEvents<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<0>>;
 
@@ -131,11 +143,15 @@ using hx711_data = AVR::Pin<PortC, 2>;
 using hx711 = HX711::Sensor<hx711_clk, hx711_data, HX711::Mode::A_Gain128, uint16_t, HX711::UseDelay<false>>;
 
 // SPI?
+#ifdef USE_SPI_AS_TEST
+#endif
 
 using systemClock = AVR::Timer8Bit<2>; // timer 2
 using alarmTimer = AlarmTimer<systemClock, UseEvents<false>>;
 
 using adc = AVR::Adc<0, AVR::Resolution<8>>;
+
+
 using adcController = AdcController<adc, 0, 1, 2, 3, 4, 5, 6, 7>;
 
 #ifdef USE_PPM_ON_OPTO2

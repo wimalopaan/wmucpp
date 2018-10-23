@@ -1,3 +1,12 @@
+* Umstellung für neue atmega3208 und atmega4809 (avrxmega3) 
+
+* Typen
+** Char, 
+
+* Output
+** format-lib anschauen
+
+
 Noch zu untersuchen:
 
 * gcc-8: Code-Vergrößerung gegenüber gcc-7.1.1

@@ -158,6 +158,9 @@ namespace Util {
                                 typename std::conditional<(V > std::numeric_limits<uint8_t>::max()), uint16_t, uint8_t>::type>::type>::type;
     };
 
+    template<auto V>
+    using TypeForValue_t = typename TypeForValue<V>::type;
+    
     template<uint64_t Bits>
     struct TypeForBits {
         using type = typename std::conditional<(Bits <= 8), uint8_t, 

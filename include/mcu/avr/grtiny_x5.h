@@ -67,6 +67,7 @@ namespace AVR {
         
         template<typename Mode = Inverting>
         struct FastPwm1 { // FastPWM 
+            static constexpr uint8_t top = 0xff;
             static void setup() {
                 mcuTimer()->tccr.template add<cha>();
                 mcuTimer()->gtccr.template add<chb>();
@@ -103,10 +104,34 @@ namespace AVR {
                     return *mcuTimer()->ocrb;
                 }
             };
-            static constexpr tt cha = tt::coma0 | tt::coma1 | tt::pwma;
-            static constexpr tg chb = tg::comb0 | tg::comb1 | tg::pwmb; 
-            static constexpr uint8_t top = 0xff;
         };
+        template<typename Mode = Inverting>
+        struct FastPwmA { // FastPWM 
+            static void setup() {
+                mcuTimer()->tccr.template add<cha>();
+//                    mcuTimer()->gtccr.template add<chb>();
+                *mcuTimer()->ocra = 0;
+//                    *mcuTimer()->ocrb = 0;
+            }
+            struct A {
+                static void off() {
+                    mcuTimer()->tccr.template clear<cha, DisbaleInterrupt<NoDisableEnable>>();
+                    ocAPin::high();
+                }
+                static void on() {
+                    mcuTimer()->tccr.template add<cha, DisbaleInterrupt<NoDisableEnable>>();
+                }
+                static void ocr(const typename timer_type::value_type& v) {
+                    *mcuTimer()->ocra = v;
+                }
+                static value_type ocr() {
+                    return *mcuTimer()->ocra;
+                }
+            };
+        };
+        static constexpr tt cha = tt::coma0 | tt::coma1 | tt::pwma;
+        static constexpr tg chb = tg::comb0 | tg::comb1 | tg::pwmb; 
+        static constexpr uint8_t top = 0xff;
     };
     
 }

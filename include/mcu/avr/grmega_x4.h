@@ -128,22 +128,69 @@ namespace AVR {
         typedef AVR::Pin<PortD, 7> ocAPin;
         typedef AVR::Pin<PortD, 6> ocBPin;
         typedef AVR::Timer8Bit<2, MCU> timer_type;
+        using MCUTimer = typename timer_type::mcu_timer_type;
         typedef typename timer_type::value_type value_type;
+        static constexpr const auto mcuTimer = getBaseAddr<MCUTimer, 2>;
         
         using ta = typename MCU::Timer8Bit::TCCRA;
         using tb = typename MCU::Timer8Bit::TCCRB;
-        struct FastPwm1 {
+
+        template<typename Mode = Inverting>
+        struct FastPwm1 { // FastPWM 8/10-Bit
+            static void setup() {
+                mcuTimer()->tccra.template set<tccra>();
+                mcuTimer()->tccrb.template add<tccrb, DisbaleInterrupt<NoDisableEnable>>();
+                *mcuTimer()->ocra = 0;
+                *mcuTimer()->ocrb = 0;
+            }
+            struct A {
+                static void off() {
+                    mcuTimer()->tccra.template clear<cha, DisbaleInterrupt<NoDisableEnable>>();
+                    ocAPin::high();
+                }
+                static void on() {
+                    mcuTimer()->tccra.template add<cha, DisbaleInterrupt<NoDisableEnable>>();
+                }
+                static void ocr(const typename timer_type::value_type& v) {
+                    *mcuTimer()->ocra = v;
+                }
+                static value_type ocr() {
+                    return *mcuTimer()->ocra;
+                }
+            };
+            struct B {
+                static void off() {
+                    mcuTimer()->tccra.template clear<chb, DisbaleInterrupt<NoDisableEnable>>();
+                    ocBPin::high();
+                }
+                static void on() {
+                    mcuTimer()->tccra.template add<chb, DisbaleInterrupt<NoDisableEnable>>();
+                }
+                static void ocr(const typename timer_type::value_type& v) {
+                    *mcuTimer()->ocrb = v;
+                }
+                static value_type ocr() {
+                    return *mcuTimer()->ocrb;
+                }
+            };
             static constexpr ta cha = ta::coma0 | ta::coma1;
             static constexpr ta chb = ta::comb0 | ta::comb1; 
             static constexpr ta tccra = cha | chb | ta::wgm0 | ta::wgm1; 
-            static constexpr tb tccrb{}; 
+            static constexpr tb tccrb{0};
             static constexpr uint8_t top = 0xff;
         };
-        struct FastPwm2 { // FastPWM top=oxff
-            static constexpr ta tccra = ta::coma1 | ta::comb1 | ta::wgm1 | ta::wgm0;
-            static constexpr tb tccrb{}; 
-            static constexpr uint8_t top = 0xff;
-        };
+//        struct FastPwm1 {
+//            static constexpr ta cha = ta::coma0 | ta::coma1;
+//            static constexpr ta chb = ta::comb0 | ta::comb1; 
+//            static constexpr ta tccra = cha | chb | ta::wgm0 | ta::wgm1; 
+//            static constexpr tb tccrb{}; 
+//            static constexpr uint8_t top = 0xff;
+//        };
+//        struct FastPwm2 { // FastPWM top=oxff
+//            static constexpr ta tccra = ta::coma1 | ta::comb1 | ta::wgm1 | ta::wgm0;
+//            static constexpr tb tccrb{}; 
+//            static constexpr uint8_t top = 0xff;
+//        };
     };
     template<AVR::ATMega_X4 MCU>
     struct TimerParameter<3, MCU> {
@@ -164,8 +211,8 @@ namespace AVR {
             static constexpr value_type top = 0x3ff;
         };    
         struct FastPwm2 {  // FastPWM top=icr
-            static constexpr ta cha = ta::coma1;
-            static constexpr ta chb = ta::comb1; 
+            static constexpr ta cha = ta::coma1 ;//| ta::coma0; // inervted
+            static constexpr ta chb = ta::comb1 ;//| ta::comb0; 
             static constexpr ta tccra = cha | chb | ta::wgm1;
             static constexpr tb tccrb = tb::wgm2 | tb::wgm3; 
         };

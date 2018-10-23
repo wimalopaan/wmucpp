@@ -434,12 +434,12 @@ private:
     }
     inline static void pwmInc() {
         if (actualRV.pwm.integer() < 255) {
-            actualRV.pwm += FixedPoint<uint16_t, 8>(1);
+            actualRV.pwm += FixedPoint<uint16_t, 8>(1.0);
         }
     }
     inline static void pwmDec() {
         if (actualRV.pwm.integer() > 0) {
-            actualRV.pwm -= FixedPoint<uint16_t, 8>(1);
+            actualRV.pwm -= FixedPoint<uint16_t, 8>(1.0);
         }
     }
     inline static void reset() {

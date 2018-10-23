@@ -59,9 +59,9 @@ public:
     AlarmTimer() = delete;
     
     typedef MCUTimer timer_type;
-    static constexpr std::milliseconds resolution = Resolution;
+    inline static constexpr std::milliseconds resolution = Resolution;
     
-    static void init(AVR::TimerMode mode = AVR::TimerMode::CTC) {
+    inline static void init(AVR::TimerMode mode = AVR::TimerMode::CTC) {
         constexpr auto t = AVR::Util::calculate<MCUTimer>(Config::Timer::frequency);
         static_assert(t, "falscher wert für p");
         
@@ -71,7 +71,7 @@ public:
         MCUTimer::start();
     }
     
-    static std::optional<uint7_t> create(std::milliseconds millis, AlarmFlags flags){
+    inline static std::optional<uint7_t> create(std::milliseconds millis, AlarmFlags flags){
         Scoped<DisbaleInterrupt<RestoreState>> di;
         if (auto index = mTimers.insert({millis / resolution, millis  / resolution, flags})) {
             assert(*index <= std::numeric_limits<uint7_t>::max());
@@ -79,26 +79,26 @@ public:
         }
         return {};
     }
-    static std::optional<uint7_t> create(std::seconds secs, AlarmFlags flags){
+    inline static std::optional<uint7_t> create(std::seconds secs, AlarmFlags flags){
         return create(static_cast<std::milliseconds>(secs), flags);
     }
     
-    static void remove(uint7_t id) {
+    inline static void remove(uint7_t id) {
         Scoped<DisbaleInterrupt<RestoreState>> di;
         mTimers.removeAt(id);
     }
-    static void start() {}
+    inline static void start() {}
     
-    static void start(uint7_t id) {
+    inline static void start(uint7_t id) {
         mTimers[id].flags &= ~AlarmFlags::Disabled;
         mTimers[id].ticksLeft = mTimers[id].ticks;
     }
     
-    static void stop(uint7_t id) {
+    inline static void stop(uint7_t id) {
         mTimers[id].flags |= AlarmFlags::Disabled;
     }
     
-    static bool isActive(uint7_t id) {
+    inline static bool isActive(uint7_t id) {
         return !isset((mTimers[id].flags & AlarmFlags::Disabled));
     }
     
@@ -146,22 +146,25 @@ public:
         }
     }
     
-    static constexpr void rateProcess() {
+    inline static constexpr void rateProcess() {
         periodic();
     }
 //    static constexpr auto rateProcess = periodic;
     
-    static const auto& timers() {
+    inline static const auto& timers() {
         return mTimers;
     }
 private:
     struct TimerImpl final {
-        inline explicit operator bool() {
+        constexpr inline explicit operator bool() {
             return flags != AlarmFlags::NoTimer;
         }
         uint16_t ticks = 0;
         uint16_t ticksLeft = 0;
-        AlarmFlags flags = AlarmFlags::NoTimer;
+        // gcc bug 83730 : es werden guards generiert, obwohl option -fno-threadsafe-statics angegeben ist
+        AlarmFlags flags = static_cast<AlarmFlags>(0);
+//        AlarmFlags flags = AlarmFlags::NoTimer;
+        static_assert(static_cast<AlarmFlags>(0) == AlarmFlags::NoTimer);
     };
     
     inline static std::FixedVector<TimerImpl, Config::Timer::NumberOfTimers> mTimers;

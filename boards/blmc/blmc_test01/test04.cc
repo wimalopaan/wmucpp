@@ -474,10 +474,10 @@ private:
         ramp.end.tv -= 100;
     }
     inline static void pwmInc() {
-        actualRV.pwm += FixedPoint<uint16_t, 8>(1);
+        actualRV.pwm += FixedPoint<uint16_t, 8>(1.0);
     }
     inline static void pwmDec() {
-        actualRV.pwm -= FixedPoint<uint16_t, 8>(1);
+        actualRV.pwm -= FixedPoint<uint16_t, 8>(1.0);
     }
     inline static void reset() {
         tvFaction = 8;

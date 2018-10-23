@@ -39,7 +39,6 @@ struct Fraction final {
 template<typename Type, uint8_t fractionalBits>
 class FixedPoint final {
     template<typename Stream> friend Stream& operator<<(Stream& o, const FixedPoint<Type, fractionalBits>& f);
-    
 public:
     typedef Type value_type;
     typedef typename Util::UnsignedFor<Type>::type unsigned_type;
@@ -93,7 +92,7 @@ public:
         return *this;
     }
 private:
-//    FixedPoint(unsigned_type v) : mValue(v){}
+    FixedPoint(unsigned_type v) : mValue(v){}
     Type mValue = 0;
 };
 

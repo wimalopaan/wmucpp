@@ -72,7 +72,8 @@ namespace AVR {
         template<typename S = LowSpeed>
         static void init() {
             if constexpr(std::is_same_v<Reso, Resolution<8>>) {
-                mcuAdc()->admux.template add<refs | MCU::Adc::MUX::adlar, DisbaleInterrupt<NoDisableEnable>>();
+//                mcuAdc()->admux.template add<refs | MCU::Adc::MUX::adlar, DisbaleInterrupt<NoDisableEnable>>();
+                mcuAdc()->admux.template set<refs | MCU::Adc::MUX::adlar>();
             }
             else {
                 mcuAdc()->admux.template add<refs, DisbaleInterrupt<NoDisableEnable>>();
