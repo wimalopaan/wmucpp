@@ -1,0 +1,146 @@
+// -*- mode: adoc ; fill-column: 120 -*-
+// ---- Beginn Standardheader
+= Elektronischer Hauptschalter
+Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+:revnumber: 0.01
+:revdate: 01.01.1970
+:revremark: undefined
+:lang: de
+:toc:
+:toc-title: Inhalt
+:toclevels: 4
+:numbered:
+:src_numbered: 
+:icons: font
+:icontype: svg
+:figure-caption: Abbildung
+:description: Elektronischer Hauptschalter
+:title: Elektronischer Hauptschalter
+:sectanchors:
+:sectlinks:
+:experimental:
+:copyright: Wilhelm Meier
+:duration: 90
+:source-highlighter: coderay
+:coderay-css: style
+:source-highlighter: pygments
+:pygments-css: class
+:status:
+:menu:
+:navigation:
+:split:
+:goto:
+:blank:
+:deckjs_theme: swiss
+:showtitle:
+:deckjs_transition: horizontal-slide
+//:stylesdir: ./css
+//:stylesheet: deckjs.css
+:docinfo1:
+:stem:
+:customcss: css/deckjs.css
+// not working
+:revealjs_theme: black
+:revealjs_slidenumber: true
+// for attributes in link:[] macro like link:xxx[window="_blank"]
+:linkattrs:
+:nofooter:
+
+:imgdir: images
+
+include::license.adoc[]
+
+== Warnhinweise
+
+Der vorliegende Bausatz wird dem Anwender für eigene Experimente überlassen. Er stellt kein Produkt dar und wird nicht kommerziell vertrieben.
+
+[IMPORTANT]
+--
+*Für den vorliegenden Bausatz werden keine Funktionsgarantien gegeben. Für Schäden am Bausatz oder an damit verbundenen Geräten oder Modulen
+wird keine Haftung übernommen.*
+--
+
+Jegliche Vorschriften und Vorsichtsmaßnahmen im Umgang mit elektrischen Komponenten sind vom Anwender einzuhalten.
+
+
+[NOTE]
+Diese Doku ist noch unvollständig und _work-in-progess_.
+
+== Funktion
+
+Das Modul dient zum zentralen Einschalten der zentralen Stromversorgung von z.B. Schiffsmodellen. Das Einschalten und das Ausschalten 
+erfolgen über einen Tastkontakt. Das Modul gibt akustische Rückmeldung über seinen Zustand.
+
+=== Anschluß an den Akku
+
+Für einen ordnungsgemäßen Betrieb ist das Modul mit entsprechenden Kabel zu versehen, die einen ausreichenden Querschnitt aufweisen (s.u.).
+
+Die Anschlüsse `In(+)` / `Gnd` sind mit dem Akku zu verbinden.
+
+Die Anschlüsse `Out` / `Gnd` sind mit den zu versorgenden Geräten zu verbinden.
+
+Ein Verpolen der Anschlüsse kann zu einem Defekt führen.
+
+[TIP]
+Beim ersten Anschluß an den Akku ertönt eine aufsteigende Tonfolge. Danach ein tiefer Ton, um anzuzeigen, dass das Modul in den 
+Zustand `AUS` wechselt.
+
+=== Anschluß des Tastkontaktes
+
+An den mit `Taster` gekennzeichneten Pfostenverbinder ist ein Taster (kein Schalter) oder Reed-Kontakt anzuschließen. 
+
+[CAUTION]
+--
+Der Anschluß des Tasters sollte über ein verdrilltes Leitungspaar erfolgen. Es reicht ein sehr dünner Querschnitt aus, da hier keine 
+hohen Ströme fließen. Das Leitungspaar sollte nicht parallel zu Leitungen mit hohen Strömen und Impulsen (etwa Mototzuleitungen) 
+im Modell verlegt werden. Die Leitungslänge sollte 75cm nicht überschreiten.
+--
+
+Vor der Montage eines Reed-Kontaktes die _Vorzugsrichtung_ des Reed-Kontaktes ermitteln, damit ein sicheres Ansprechen 
+gewährleistet ist. Vorsicht beim biegen der Anschlußdrähte eines 
+Reed-Kontaktes, denn diese brechen leicht.
+
+Beachten Sie den maximalen Abstand des Magneten zum Reed-Kontakt bei der Montage. Mehr als 1,5mm kann zu Problemen führen.
+
+=== Einschalten
+
+[CAUTION]
+--
+Treffen Sie die üblichen Sicherheitsvorkehrungen beim Einschalten von Stromversorgungen in Modellen.
+
+Schalten Sie den Sender _vorher_ ein. Kontrollieren Sie die _Gasstellung_.
+--
+
+Betätigen Sie den Kontakt dauerhaft. Es ertönt _dreimal_ ein Ton mittlerer Höhe im Sekundentakt. Anschließend ertönt ein 
+hoher Ton. Dies zeigt die nun folgende Betriebsbereitschaft an. Beim nächsten hohen Ton wird eingeschaltet. Der Kontakt kann nun 
+losgelassen werden. Nun ist das Modul im Zustand `EIN`.
+
+Wird der Kontakt vorzeitig losgelassen, bleibt das Modul im Zustand `AUS`.
+
+=== Ausschalten
+
+Betätigen Sie den Kontakt dauerhaft. Es ertönt _dreimal_ ein Ton mittlerer Höhe im Sekundentakt. Anschließend ertönt ein 
+tiefer Ton. Dies zeigt die nun folgende Ausschaltbereitschaft an. Beim nächsten tiefenTon wird ausgeschaltet. Der Kontakt kann nun 
+losgelassen werden. Nun ist das Modul im Zustand `AUS`.
+
+Wird der Kontakt vorzeitig losgelassen, bleibt das Modul im Zustand `EIN`.
+
+=== Ruhe
+
+Ist das Modul im Zustand `AUS` geht es nach ca. 3 Sekunden in den Schlafzustand. Es verbraucht nun sehr wenig Strom (< 5 µA).
+
+== Variante 16V/45A
+
+Empfohlene Anschlußkabel: 12AWG
+
+[horizontal]
+Spannungfestigkeit:: maximal 16V
+Strombelastbarkeit:: maximal 45A
+
+== Variante 32V/90A
+
+Empfohlene Anschlußkabel: 10AWG
+
+[horizontal]
+Spannungfestigkeit:: maximal 32V
+Strombelastbarkeit:: maximal 90A
