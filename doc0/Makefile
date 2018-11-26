@@ -18,6 +18,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-subdirs = $(wildcard bmcpp*)
+subdirs = $(wildcard bm*)
 
--include ../Makefile.include
+-include ../Makefile.avr0.include

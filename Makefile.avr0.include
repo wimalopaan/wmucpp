@@ -87,13 +87,11 @@ CXXFLAGS += -fstrict-aliasing -Wstrict-aliasing=1
 CXXFLAGS += -Wall -Wextra
 CXXFLAGS += -DF_OSC=$(F_OSC) -DF_CPU=$(F_OSC)
 #CXXFLAGS += -I/usr/local/avr/avr/include
-CXXFLAGS += -I. -I../../include -I../include -I../../../include
-CXXFLAGS += -I. -I../../include/std -I../include/std -I../../../include/std
-CXXFLAGS += -I/usr/include/simavr
+CXXFLAGS += -I. -I../include0 -I../../include0 -I../../../include0
+CXXFLAGS += -I../../include0/std -I../include0/std -I../../../include0/std
+#CXXFLAGS += -I/usr/include/simavr
 #CXXFLAGS += -I/usr/avr/include
 CXXFLAGS += $(MCUFLAGS)
-#CXXFLAGS +=  -Wa,-mgcc-isr # only for target atmega324pb - was missing in specs-atmega24pb
-#CXXFLAGS += -fno-tree-switch-conversion
 
 CFLAGS += $(OPTFLAGS) -std=gnu11 # wegen __flash
 #CFLAGS += -Os -std=c11 -pedantic
@@ -101,10 +99,9 @@ CFLAGS += -funsigned-char -funsigned-bitfields -fshort-enums
 CFLAGS += -Wall -Wextra
 CFLAGS += -fstrict-aliasing -Wstrict-aliasing=1 
 CFLAGS += -DF_OSC=$(F_OSC) -DF_CPU=$(F_OSC)
-CFLAGS += -I/usr/local/avr/avr/include
-CFLAGS += -I. -I../../include
-CFLAGS += -I../include
-CFLAGS += -I/usr/include/simavr
+#CFLAGS += -I/usr/local/avr/avr/include
+CFLAGS += -I. -I../include0 -I../../include0
+#CFLAGS += -I/usr/include/simavr
 #CFLAGS += -I/usr/avr/include
 CFLAGS += $(MCUFLAGS)
 #CFLAGS +=  -Wa,-mgcc-isr # only for target atmega324pb - was missing in specs-atmega24pb

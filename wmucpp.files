@@ -21,6 +21,7 @@
 3rdparty/tinygps/TinyGPS.cc
 3rdparty/tinygps/TinyGPS.h
 Makefile.arm.include
+Makefile.avr0.include
 boards/blmc/Makefile
 boards/blmc/blmc_01/Makefile
 boards/blmc/blmc_01/board.txt
@@ -116,6 +117,8 @@ boards/include/rcsensorled10.h
 boards/include/varioprop.h
 boards/onoff/Makefile
 boards/onoff/main.cc
+boards/onoff/soft.cc
+boards/onoff/tone.cc
 boards/ppmmatrix/Makefile
 boards/rcsensorled/test100.cc
 boards/rcsensorled03/oledtest.cc
@@ -225,6 +228,10 @@ doc/bmcpp98/bm100a.cc
 doc/bmcpp98/bm101a.cc
 doc/bmcpp98/bm102a.cc
 doc/bmcpp99/bm80a.cc
+doc0/Makefile
+doc0/atmega4809.txt
+doc0/bm00/Makefile
+doc0/bm00/bm00.cc
 example/externals/buttonmacro.c
 example/externals/buttonvertical.cc
 example/externals/isr.c
@@ -249,6 +256,7 @@ host/test70.cc
 host/test80.cc
 host/test91.cc
 host/test92.cc
+host/test93.cc
 images/a1.h
 images/a2.h
 include/external/frsky/frsky.h
@@ -280,6 +288,10 @@ include/mcu/stm32/stm32f10x.h
 include/util/converter.h
 include/util/hana.h
 include/util/static_interface.h
+include0/config.h
+include0/mcu/avr0/mcu.h
+include0/std/cstddef
+include0/std/cstdint
 tools/i2c/Makefile
 tools/i2c/test.cc
 tools/i2c/test01.cc

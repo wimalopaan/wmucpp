@@ -26,7 +26,6 @@
 #include "util/bits.h"
 #include "util/util.h"
 
-
 template<typename T, uint8_t Bits>
 struct Fraction final {
     static_assert(std::is_unsigned<T>::value, "T must be unsigned type");
@@ -91,10 +90,14 @@ public:
         mValue += d.mValue;
         return *this;
     }
+    // todo: op++
+    // todo: op--
 private:
-    FixedPoint(unsigned_type v) : mValue(v){}
+    explicit FixedPoint(unsigned_type v) : mValue(v){}
     Type mValue = 0;
 };
+
+// todo: UDL-op for FP<uint16_t, 8>
 
 constexpr FixedPoint<int16_t, 4> operator"" _fp(long double v) {
     return FixedPoint<int16_t, 4>{(double)v};
@@ -109,8 +112,6 @@ template<typename T, auto Bits, typename D>
 FixedPoint<T, Bits> operator/(FixedPoint<T, Bits> lhs, const D& rhs) {
     return lhs /= rhs;
 }
-
-
 
 template<typename T, uint8_t FB>
 FixedPoint<T, FB> operator*(FixedPoint<T, FB> lhs, FixedPoint<T, FB> rhs) {

@@ -23,5 +23,7 @@ F_OSC = 1000000
 subdirs =
 
 targets += main.elf main.S
+targets += tone.elf tone.S
+targets += soft.elf soft.S
 
 -include ../../Makefile.include

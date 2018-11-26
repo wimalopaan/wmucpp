@@ -1,0 +1,10 @@
+* atmega4809 = avrxmega3-Core
+
+* aus dem Atmel-Pack die 
+** header
+** device-specs
+** crt-code
+   kopieren
+   
+* avr-libc (trunk) muss erzeugt werden
+** libc / libm in das avr-gcc lib Verzeichnis kopiert werden

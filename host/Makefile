@@ -55,6 +55,7 @@ targets += test80
 targets += test90
 targets += test91
 targets += test92
+targets += test93
 targets += test98
 targets += test99
 targets += test100

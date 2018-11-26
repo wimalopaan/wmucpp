@@ -411,6 +411,9 @@ namespace AVR {
         static void inactivate() {
             Pin::low();
         }    
+        static bool activated() {
+            return Pin::isHigh();
+        }
     };
     template<MCU::Pin Pin>
     struct ActiveHigh<Pin, Input> {

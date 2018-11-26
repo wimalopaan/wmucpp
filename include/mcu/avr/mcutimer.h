@@ -270,7 +270,8 @@ public:
         if (timerMode == TimerMode::CTCNoInt) {
             mcuTimer()->tccr.template add<MCU::Timer8BitHighSpeed::TCCR::ctc>();
             mcuTimer()->tccr.template add<MCU::Timer8BitHighSpeed::TCCR::pwma>();
-            mcuTimer()->tccr.template add<MCU::Timer8BitHighSpeed::TCCR::coma1>();
+//            mcuTimer()->tccr.template add<MCU::Timer8BitHighSpeed::TCCR::coma1>(); // Gegentakt
+            mcuTimer()->tccr.template add<MCU::Timer8BitHighSpeed::TCCR::coma0>();
         }
         else if (timerMode == TimerMode::Normal) {
         }

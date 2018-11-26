@@ -105,3 +105,9 @@ include/external/sbus
 boards/onoff
 boards/ppmmatrix
 boards/rcsensorled10/queen
+include0
+doc0/bm00
+doc0
+include0/mcu/avr0
+include0/std
+include0/std/detail
