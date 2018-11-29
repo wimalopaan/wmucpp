@@ -309,12 +309,18 @@ beide Einstellungen ändern, so sind _zwei_ getrennte Programmiervorgänge erfor
 [[Variants]]
 == Varianten
 
+[CAUTION]
+Unterhalb einer Eingangsspannung von 5,5V ist kein gesicherter Betrieb mehr möglich. Daher ist es sinnvoll,
+eine Telemetriefunktion zur Unterspannungserkennung einzusetzen. Bei stark abnehmender Spannung ist daher sofort eine 
+Rückkehr des Schiffsmodells zum Ufer angebracht. Anderfalls kann es zu einem totalen Stromausfall kommen.
+
+
 === Variante 16V/30A
 
 *Wichtig*: Erforderliche Anschlußkabel: mindestens 12AWG
 
 [horizontal]
-Spannungfestigkeit:: maximal 16V
+Spannungfestigkeit:: maximal 16V (LiPo: 2S - 3S)
 Strombelastbarkeit:: maximal 30A (nur im *Kurzzeitbetrieb*: 10% ED S3)
 Schaltstrom:: maximal 5A (s.a. <<funcoff>>)
 
@@ -323,7 +329,7 @@ Schaltstrom:: maximal 5A (s.a. <<funcoff>>)
 *Wichtig*: Erforderliche Anschlußkabel: mindestens 10AWG
 
 [horizontal]
-Spannungfestigkeit:: maximal 32V
+Spannungfestigkeit:: maximal 32V (LiPo: 2S - 7S)
 Strombelastbarkeit:: maximal 60A (nur im *Kurzzeitbetrieb*: 10% ED S3)
 Schaltstrom:: maximal 10A (s.a. <<funcoff>>)
 
@@ -356,6 +362,11 @@ Beim Betrieb ist die Erwärmung des Moduls zwingend zu überwachen! Eine Überhi
 zu einem Modellverlust führen. Gefahr von Personenschäden!
 
 [CAUTION]
+Die Spannunsgversorgung ist Moduls ist im Betrieb zu überwachen. Bei Unterspannung kann das Modul abschalten oder bei gleichzeitiger 
+hoher Stromaufnahme überhitzen und so zu einem Totalausfall 
+und damit zu einem Modellverlust sowie Personenschäden führen
+
+[CAUTION]
 Die erforderlichen Kabelquerschnitte für die Verbindung mit dem Akku und auch mit dem elektrischen Verbraucher sind unbedingt einzuhalten. 
 Hier besteht Brandgefahr. Gefahr von Personenschäden!
 
@@ -373,7 +384,7 @@ und damit zu einem Modellverlust sowie Personenschäden führen.
 
 [CAUTION]
 Die Kapazitäten (Elkos, Siebelkos) am Ausgang des Moduls, etwa in Fahrtreglern (Stellern) für Motoren, 
-dürfen 1000µF nicht überschreiten. Zu hohe Kapazitäten können zu einem Totalausfall 
+dürfen 10.000µF nicht überschreiten. Zu hohe Kapazitäten können zu einem Totalausfall 
 und damit zu einem Modellverlust sowie Personenschäden führen.
 
 == Aufbau 
