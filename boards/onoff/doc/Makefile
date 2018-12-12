@@ -18,7 +18,7 @@ ASCIIDOCTORFLAGSPDF += -a pdf-stylesdir=themes -a pdf-style=basic.yml --trace
 ASCIIDOCTORFLAGSPDF2 += -I $(EXTENSIONSDIR) -a allow-uri-read -r asciidoctor-diagram -r tree-block-macro
 ASCIIDOCTORFLAGSPDF2 += -a pdf-stylesdir=themes -a pdf-style=basic_land.yml --trace
 ASCIIDOCTORVARS += -a data-uri -a imagesdir=`pwd` -a stylesdir=css -a stylesheet=asciidoctor-wide.css
-ASCIIDOCTORVARS += -a revnumber=1.10 -a revdate="${shell date}" -a revremark="initial"
+ASCIIDOCTORVARS += -a revnumber=1.13 -a revdate="${shell date}" -a revremark="initial"
 # ASCIIDOCTORVARS += -a srcbase=undef # to identiy all included sources
 
 #SCREENSHOT = ~/asciidoctor/asciidoctor-screenshot/buildSrc/src/main/groovy/org/asciidoctor/extension
@@ -38,6 +38,8 @@ WKPORTRAIT += -O portrait
 NUP = pdfnup
 NUPFLAGSL += -q --nup 1x2 --no-landscape --keepinfo --frame true
 NUPFLAGSP += -q --nup 2x1 --keepinfo --frame true
+
+# convert -filter Cubic -resize 300 pcb24.jpg pcb24_s.jpg
 
 # all: images html pdf src # check
 all: html # pdf 

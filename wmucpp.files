@@ -112,6 +112,7 @@ boards/blmc/blmc_test01/test08.cc
 boards/blmc/blmc_test01/test09.cc
 boards/blmc/blmc_test01/util.c
 boards/blmc/blmc_test01/util.h
+boards/include/ppmmatrix.h
 boards/include/rcsensorled01b.h
 boards/include/rcsensorled10.h
 boards/include/varioprop.h
@@ -120,6 +121,7 @@ boards/onoff/main.cc
 boards/onoff/soft.cc
 boards/onoff/tone.cc
 boards/ppmmatrix/Makefile
+boards/ppmmatrix/test01.cc
 boards/rcsensorled/test100.cc
 boards/rcsensorled03/oledtest.cc
 boards/rcsensorled03/test16.cc

@@ -48,7 +48,25 @@ Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 
 :imgdir: images
 
-include::license.adoc[]
+//:short: // without images 
+
+//include::license.adoc[]
+
+== Symbolerklärung
+
+[TIP]
+Ein wichtiger allgemeiner Hinweis für den sicheren Aufbau und die sichere Bedienung. Dieser sollte durch den Anwender bachtet werden,
+um einen sicheren Betrieb zu gewährleisten.
+
+[NOTE]
+Ein genereller Hinweis, der durch den Anwender beachtet werden sollte.
+
+[IMPORTANT]
+Ein technischer oder sicherheitstechnischer Hinweis, der unbedingt durch den Anwender beachtet werden muss.
+
+[CAUTION]
+Ein technischer oder sicherheitstechnischer Gefahrenhinweis, der unbedingt durch den Anwender beachtet werden muss. Zur 
+Gefahrenabwendung muss der Anwender unbedingt die gegebenen Anweisungen befolgen und die beschriebenen Maßnahmen ergreifen.
 
 == Rechtliches
 
@@ -103,6 +121,8 @@ Jegliche Vorschriften und Vorsichtsmaßnahmen im Umgang mit elektrischen Kompone
 
 Beachten Sie ebenfalls die Richtlinien unter <<Betrieb>>.
 
+== Spezieller Sicherheitshinweis: Kleinteile
+
 [CAUTION]
 --
 ACHTUNG: Der Bausatz enthält verschluckbare Kleinteile. Von Kindern fernhalten.
@@ -111,8 +131,9 @@ ACHTUNG: Der Bausatz enthält verschluckbare Kleinteile. Von Kindern fernhalten.
 == Einbau 
 
 [NOTE]
-Diese Doku ist noch unvollständig und _work-in-progess_. Bei Unklarheiten in dieser Funktionsbeschreibung, kontaktieren Sie den 
-Bausatzersteller.
+Das Modul wie auch diese Doku ist noch unvollständig und _work-in-progess_. 
+Bei jeglichen Unklarheiten in dieser Funktionsbeschreibung und generellem Aufbau und Anschluß, 
+unterlassen Sie den Betrieb und kontaktieren Sie den Bausatzersteller.
 
 .Varianten
 ****
@@ -387,6 +408,14 @@ Die Kapazitäten (Elkos, Siebelkos) am Ausgang des Moduls, etwa in Fahrtreglern 
 dürfen 10.000µF nicht überschreiten. Zu hohe Kapazitäten können zu einem Totalausfall 
 und damit zu einem Modellverlust sowie Personenschäden führen.
 
+[CAUTION]
+Das Modul darf keinen Vibrationen ausgesetzt werden. Treffen Sie entsprechende Vorkehrungen zu einem vibrationsgeschützten Einbau. Zu starke 
+Vibrationen können zu einem Totalausfall und damit zu einem Modellverlust sowie Personenschäden führen.
+
+[CAUTION]
+Das Modul darf nur innerhalb eines Temperaturbereiches von -10°C bis +55°C betrieben werden. Ein Betrieb außerhalb dieses 
+Bereiches kann zu einem Totalausfall und damit zu einem Modellverlust sowie Personenschäden führen.
+
 == Aufbau 
 
 Der Bausatz enthält die Einzelteile zum Aufbau des Moduls. 
@@ -394,10 +423,12 @@ Der Bausatz enthält die Einzelteile zum Aufbau des Moduls.
 Der µC ist jedoch *nicht* programmiert. Zum Programmieren benötigen Sie ein entsprechendes Programmiergerät. Das Programmieren muss *vor* dem
 Einlöten des µC erfolgen.
 
-Die Software wird als HEX-Datei und als Source-Code zur Verfügung gestellt. Dies erfolgt nach Erhalt des Bausatzes per email.
+Die Software für die o.g. Funktionen kann als HEX-Datei und als Source-Code zur Verfügung gestellt werden. 
+Dies erfolgt nach Erhalt des Bausatzes per email auf Anfrage.
 
 [IMPORTANT]
-Das Modul ist frei programmierbar. Daher kann keine Funktionsgarantie gegeben werden. Der Anwender muss sich vor dem Einsatz in seinem
+Das Modul ist durch den Erbauer frei programmierbar. Daher kann keine Funktionsgarantie gegeben werden. 
+Der Anwender muss sich vor dem Einsatz in seinem
 Anwendungsfall (Schiffmodell) anhand des Sources-Codes davon überzeugen, dass das Modul seinen Anforderungen gerecht wird und keine 
 Fehlfunktionen enthält.
 
@@ -417,45 +448,64 @@ benachbarten Leiterbahn entsteht.
 [[Var1]]
 ==== Variante 16V/30A
 
+ifdef::short[]
+
+[TIP]
+In der Kurzversion der Anleitung sind keine Bilder enthalten.
+endif::[]
+
+ifndef::short[]
+
 .Leere Platine oben
-image::images/pcb10.jpg[width=300,align=center]
+image::images/pcb10_s.jpg[width=300,align=center]
 
 .Leere Platine unten
-image::images/pcb11.jpg[width=300,align=center]
+image::images/pcb11_s.jpg[width=300,align=center]
 
 .Platine bestückt ohne MOSFETs oben
-image::images/pcb12.jpg[width=300,align=center]
+image::images/pcb12_s.jpg[width=300,align=center]
 
 .Platine bestückt ohne MOSFETs unten
-image::images/pcb13.jpg[width=300,align=center]
+image::images/pcb13_s.jpg[width=300,align=center]
 
 .Platine bestückt mit MOSFETs oben
-image::images/pcb14.jpg[width=300,align=center]
+image::images/pcb14_s.jpg[width=300,align=center]
 
 .Platine bestückt mit MOSFETs unten
-image::images/pcb15.jpg[width=300,align=center]
+image::images/pcb15_s.jpg[width=300,align=center]
+
+endif::short[]
 
 [[Var2]]
 ==== Variante 32V/60A
 
+ifdef::short[]
+
+[TIP]
+In der Kurzversion der Anleitung sind keine Bilder enthalten.
+endif::[]
+
+ifndef::short[]
+
 .Leere Platine oben
-image::images/pcb20.jpg[width=300,align=center]
+image::images/pcb20_s.jpg[width=300,align=center]
 
 .Leere Platine unten
-image::images/pcb21.jpg[width=300,align=center]
+image::images/pcb21_s.jpg[width=300,align=center]
 
 .Platine bestückt ohne MOSFETs oben
-image::images/pcb22.jpg[width=300,align=center]
+image::images/pcb22_s.jpg[width=300,align=center]
 
 .Platine bestückt ohne MOSFETs unten
-image::images/pcb23.jpg[width=300,align=center]
+image::images/pcb23_s.jpg[width=300,align=center]
 
 .Platine bestückt mit MOSFETs oben
-image::images/pcb24.jpg[width=300,align=center]
+image::images/pcb24_s.jpg[width=300,align=center]
 
 .Platine bestückt mit MOSFETs unten
-image::images/pcb25.jpg[width=300,align=center]
+image::images/pcb25_s.jpg[width=300,align=center]
 
+endif::[]
 
 [[first]]
 === Erste Inberiebnahme

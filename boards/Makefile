@@ -20,9 +20,9 @@
 MCU = atmega1284p
 F_OSC = 20000000
 
-subdirs = unimaxi rcsensorled clock anano i2cIR i2cWS2812 rcsensorled03 rcsensorled10 blmc tx
+subdirs = unimaxi rcsensorled clock anano i2cIR i2cWS2812 rcsensorled03 rcsensorled10 blmc tx ppmmatrix
 
-#targets +=  main.elf main.size
+#targets +=  
 
 -include ../Makefile.include
 
