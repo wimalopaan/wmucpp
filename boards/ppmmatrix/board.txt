@@ -1,0 +1,21 @@
+Name: ServoMatrix01 (Target)
+
+Korrekturen auf dem Boad:
+* ISP-Stecker raus -> Bootloader über UART
+* DuKos im Bereich der HC-05 PINs müssen weg.
+* Select A0 auch an Port D -> Pinset
+
+
+Beschreibung:
+
+* test01:
+	- btUsart Ausgabe
+
+* test02:
+	- ppmInPin als testPin
+
+* test03:
+	- 
+
+
+Ansteuerung 74238

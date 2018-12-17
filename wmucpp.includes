@@ -111,3 +111,4 @@ doc0
 include0/mcu/avr0
 include0/std
 include0/std/detail
+include/mcu/avr/internals

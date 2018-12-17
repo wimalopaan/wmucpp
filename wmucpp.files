@@ -121,7 +121,10 @@ boards/onoff/main.cc
 boards/onoff/soft.cc
 boards/onoff/tone.cc
 boards/ppmmatrix/Makefile
+boards/ppmmatrix/board.txt
 boards/ppmmatrix/test01.cc
+boards/ppmmatrix/test02.cc
+boards/ppmmatrix/test03.cc
 boards/rcsensorled/test100.cc
 boards/rcsensorled03/oledtest.cc
 boards/rcsensorled03/test16.cc
@@ -274,6 +277,7 @@ include/hal/sumo.h
 include/mcu/avr/atmega168p.h
 include/mcu/avr/atmega324pb.h
 include/mcu/avr/cppm.h
+include/mcu/avr/internals/timer.h
 include/mcu/avr/sleep.h
 include/mcu/avr/swusart2.h
 include/mcu/sam.h

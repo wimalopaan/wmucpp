@@ -421,10 +421,12 @@ Bereiches kann zu einem Totalausfall und damit zu einem Modellverlust sowie Pers
 Der Bausatz enthält die Einzelteile zum Aufbau des Moduls. 
 
 Der µC ist jedoch *nicht* programmiert. Zum Programmieren benötigen Sie ein entsprechendes Programmiergerät. Das Programmieren muss *vor* dem
-Einlöten des µC erfolgen.
+Einlöten des µC erfolgen. Auf Anfrage und eigene Verantwortung kann der µC auf programmiert geliefert werden.
 
 Die Software für die o.g. Funktionen kann als HEX-Datei und als Source-Code zur Verfügung gestellt werden. 
-Dies erfolgt nach Erhalt des Bausatzes per email auf Anfrage.
+Dies erfolgt nach Erhalt des Bausatzes per email auf Anfrage. 
+
+Für die Korrektheit der Software ist der Anwender verantwortlich.
 
 [IMPORTANT]
 Das Modul ist durch den Erbauer frei programmierbar. Daher kann keine Funktionsgarantie gegeben werden. 
