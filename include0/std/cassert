@@ -1,0 +1,11 @@
+#pragma once
+
+template<typename String1, typename String2>
+[[noreturn]] void assertFunction(const String1&, const String2&, unsigned int);
+
+#ifndef NDEBUG
+# define assert(expr) ((expr) ? (void) (0) : assertFunction(ASSERTSTRING(#expr), ASSERTSTRING(__FILE__), __LINE__))
+#else
+# define assert(x)
+#endif
+

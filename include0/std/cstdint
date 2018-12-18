@@ -2,7 +2,6 @@
 
 #include <stdint.h>
 
-
 namespace std
 {
   using ::int8_t;

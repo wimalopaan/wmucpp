@@ -1,0 +1,169 @@
+/*
+ * WMuCpp - Bare Metal C++ 
+ * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#pragma once
+
+#include "cstdint"
+#include "utility"
+#include "limits"
+#include "cassert"
+
+namespace std {
+    template<typename T, auto Size>
+    struct array final {
+        typedef T value_type;
+        typedef typename std::conditional<(Size < 256), uint8_t, uint16_t>::type size_type;
+        typedef typename std::conditional<(Size < 128), int8_t, int16_t>::type signed_size_type;
+        
+        static_assert(Size <= std::numeric_limits<uint16_t>::max());
+        
+//            constexpr array() = default;
+        
+        //    template<typename... TT>
+        //    constexpr array(TT&&... pp) : data{(T)pp...}{
+        //    }
+
+        constexpr const T* begin() const {
+            return &data[0];
+        }
+        constexpr const T* end() const {
+            return &data[Size];
+        }
+        constexpr const volatile T* begin() const volatile {
+            return &data[0];
+        }
+        constexpr const volatile T* end() const volatile {
+            return &data[Size];
+        }
+        constexpr T* begin() {
+            return &data[0];
+        }
+        constexpr T* end() {
+            return &data[Size];
+        }
+        constexpr volatile T* begin() volatile {
+            return &data[0];
+        }
+        constexpr volatile T* end() volatile {
+            return &data[Size];
+        }
+        inline constexpr T& operator[](size_type index) {
+            assert(index < Size);
+            return data[index];
+        }
+        inline constexpr volatile T& operator[](size_type index) volatile {
+            assert(index < Size);
+            return data[index];
+        }
+        inline constexpr const volatile T& operator[](size_type index) const volatile {
+            assert(index < Size);
+            return data[index];
+        }
+        inline constexpr const T& operator[](size_type index) const {
+            assert(index < Size);
+            return data[index];
+        }
+        inline constexpr size_type size() const {
+            return Size;
+        }
+        //private:
+        T data[Size] = {}; // rely on aggregate initialization
+    };
+    template<typename T>
+    struct array<T, 0> final {
+        typedef T value_type;
+        typedef uint8_t size_type;
+        typedef int8_t  signed_size_type;
+        
+        constexpr const T* begin() const {
+            return nullptr;
+        }
+        constexpr const T* end() const {
+            return nullptr;
+        }
+        constexpr const volatile T* begin() const volatile {
+            return nullptr;
+        }
+        constexpr const volatile T* end() const volatile {
+            return nullptr;
+        }
+        constexpr T* begin() {
+            return nullptr;
+        }
+        constexpr T* end() {
+            return nullptr;
+        }
+        constexpr volatile T* begin() volatile {
+            return nullptr;
+        }
+        constexpr volatile T* end() volatile {
+            return nullptr;
+        }
+        inline constexpr T operator[](size_type ) {
+            assert(false);
+            return 0;
+        }
+        inline constexpr volatile T operator[](size_type ) volatile {
+            assert(false);
+            return 0;
+        }
+        inline constexpr const volatile T operator[](size_type ) const volatile {
+            assert(false);
+            return 0;
+        }
+        inline constexpr const T operator[](size_type ) const {
+            assert(false);
+            return 0;
+        }
+        inline constexpr size_type size() const {
+            return 0;
+        }
+    };
+    
+    namespace detail {
+        
+        template <class T, auto N, size_t... I>
+        constexpr std::array<std::remove_cv_t<T>, N>
+        to_array_impl(T(&a)[N], std::index_sequence<I...>) {
+            return { {a[I]...} };
+        }
+    }
+    
+    template <class T, auto N>
+    constexpr std::array<std::remove_cv_t<T>, N> to_array(T (&a)[N]) {
+        return detail::to_array_impl(a, std::make_index_sequence<N>{});
+    }
+    
+    template<typename E, typename... Tail>
+    constexpr auto make_array(E&& f, Tail&&... tail) {
+        return std::array<E, sizeof...(Tail) + 1>{E(f), E(tail)...};
+    }
+    
+    template<typename T> struct tuple_size;
+    template<typename I, auto N>
+    class tuple_size<std::array<I, N>> : public std::integral_constant<size_t, N> {};
+    
+    namespace detail::test {
+        using a1 = array<uint8_t, 10>;
+        static_assert(std::is_same<a1::size_type, uint8_t>::value);
+
+        using a2 = array<uint8_t, 256>;
+        static_assert(std::is_same<a2::size_type, uint16_t>::value);
+    }
+    
+}

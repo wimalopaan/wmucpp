@@ -2,8 +2,10 @@
 
 #include <stddef.h>
 
-namespace std
-{
+#include "bits/byte.h"
+
+/*
+namespace std {
 #define __cpp_lib_byte 201603
 
   /// std::byte
@@ -130,3 +132,4 @@ namespace std
     { return _IntegerType(__b); }
 
 } // namespace std
+*/

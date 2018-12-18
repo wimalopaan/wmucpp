@@ -112,3 +112,13 @@ include0/mcu/avr0
 include0/std
 include0/std/detail
 include/mcu/avr/internals
+include0/mcu
+include0/mcu/mega
+include0/mcu/megaavr0
+include0/etl
+include0/mcu/common
+include0/std/bits
+include0/mcu/pgm
+include0/mcu/internals
+include0/external/hal
+include0/external/units

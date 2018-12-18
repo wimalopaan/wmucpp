@@ -1,0 +1,38 @@
+/*
+ * WMuCpp - Bare Metal C++ 
+ * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#pragma once
+
+#include "cstdint"
+
+namespace std {
+    
+    template<intmax_t nominator = 1, intmax_t denominator = 1>
+    struct ratio final {
+        static inline constexpr intmax_t nom = nominator;
+        static inline constexpr intmax_t denom = denominator;
+    };
+    
+    using centimicro = ratio<1, 10000000>;
+    using micro = ratio<1, 1000000>;
+    using milli = ratio<1, 1000>;
+    using centi = ratio<1, 100>;
+    using deci  = ratio<1, 10>;
+    using unity = ratio<1, 1>;
+    
+}

@@ -28,8 +28,10 @@ F_OSC = 16000000
 
 subdirs =
 
-targets += test01.elf
-targets += test02.elf
-targets += test03.elf
+targets += test00.elf test00.S
+#targets += test01.elf
+#targets += test02.elf
+#targets += test03.elf
+#targets += test04.elf
 
--include ../../Makefile.include
+-include ../../Makefile.avr0.include

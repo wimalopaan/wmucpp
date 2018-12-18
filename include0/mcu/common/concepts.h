@@ -1,0 +1,46 @@
+#pragma once
+
+namespace AVR {
+    namespace Concepts {
+        template<typename L>
+        concept bool Letter = std::is_same_v<typename L::value_type, char>;
+        
+        template<typename C>
+        concept bool McuSingleComponent = requires(C) {
+                C::address;
+        };
+        
+        template<typename C>
+        concept bool McuMultipleComponent = requires(C) {
+                C::count;
+                C::template Address<0>::value; // not possible beacuse of timer numbering scheme 
+        };
+        
+        template<typename P>
+        concept bool Port = requires (P p) { 
+                typename P::mcuport_type;
+                typename P::name_type;
+                p.get();
+        };
+        
+        template<typename P>
+        concept bool Pin = std::is_same<P, void>::value || requires (P p) { 
+                p.on();
+                p.off();
+        };
+        
+        template<typename I>
+        concept bool IServiceRNonVoid = requires (I) {
+                I::isr();
+                I::isr_number;
+        };
+        template<typename I>
+        concept bool IServiceR = std::is_same<I, void>::value || IServiceRNonVoid<I>;
+        
+        template<typename I>
+        concept bool Interrupt = std::is_same<I, void>::value || requires (I i) {
+                I::number;
+            };
+        
+    }
+}
