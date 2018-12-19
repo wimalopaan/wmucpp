@@ -39,10 +39,10 @@ namespace etl {
         typedef typeForBits_t<Bits> value_type;
         inline static constexpr value_type mask = ((1 << Bits) - 1);
         explicit uintN_t(value_type v = 0) : mValue(v & mask) {}
-        operator value_type() const {
+        constexpr operator value_type() const {
             return mValue;
         }
-        uintN_t& operator++() {
+        constexpr uintN_t& operator++() {
             ++mValue;
             mValue &= mask;
             return *this;

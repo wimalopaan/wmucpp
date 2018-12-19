@@ -22,7 +22,7 @@
 #include <optional>
 #include <type_traits>
 
-//#include "util/disable.h"
+#include "type_traits.h"
 
 namespace etl {
     using namespace std;
@@ -31,11 +31,11 @@ namespace etl {
     template<typename T, uint16_t Size = 32>
     class FiFo final {
     public:
-        typedef typename conditional< Size <= 255, uint8_t, uint16_t>::type size_type;
+        using size_type = etl::typeForValue_t<Size>;
         
         inline static constexpr bool sizeIsAtomic = DefaultMcuType::template is_atomic<size_type>();
         
-        bool push_back(volatile const T& item) volatile {
+        inline bool push_back(volatile const T& item) volatile {
             asm("; replace udivmod");
             size_type next = in + 1;
             if (next == Size) next = 0;
@@ -49,7 +49,7 @@ namespace etl {
             in = next;
             return true;
         }
-        bool push_back(const T& item) volatile {
+        inline bool push_back(const T& item) volatile {
             asm("; replace udivmod");
             size_type next = in + 1;
             if (next == Size) next = 0;
@@ -63,7 +63,7 @@ namespace etl {
             in = next;
             return true;
         }
-        bool pop_front(T& item) volatile {
+        inline bool pop_front(T& item) volatile {
             {
                 Scoped<DisbaleInterrupt<RestoreState>, !sizeIsAtomic> di;
                 if (in == out) {
@@ -75,7 +75,7 @@ namespace etl {
             if (++out == Size) out = 0;
             return true;
         }
-        std::optional<T> pop_front() volatile {
+        inline std::optional<T> pop_front() volatile {
             {
                 Scoped<DisbaleInterrupt<RestoreState>, !sizeIsAtomic> di;
                 if (in == out) {
@@ -87,15 +87,15 @@ namespace etl {
             if (++out == Size) out = 0;
             return item;
         }
-        void clear() volatile {
+        inline void clear() volatile {
             Scoped<DisbaleInterrupt<RestoreState>, !sizeIsAtomic> di;
             in = out = 0;
         }
-        bool empty() volatile const {
+        inline bool empty() volatile const {
             Scoped<DisbaleInterrupt<RestoreState>, !sizeIsAtomic> di;
             return in == out;
         }
-        inline constexpr size_type size() const {
+        [[gnu::always_inline]] constexpr size_type size() const {
             return Size;
         }
     private:
@@ -107,21 +107,21 @@ namespace etl {
     template<typename T>
     class FiFo<T, 0> final { // needed to prevent warn for zero-sized array
     public:
-        bool push_back(volatile const T& ) volatile {
+        inline bool push_back(volatile const T& ) volatile {
             return false;
         }
-        bool push_back(const T& ) volatile {
+        inline bool push_back(const T& ) volatile {
             return false;
         }
-        bool pop_front(T& ) volatile {
+        inline bool pop_front(T& ) volatile {
             return false;
         }
-        std::optional<T> pop_front() volatile {
+        inline std::optional<T> pop_front() volatile {
             return {};
         }
-        void clear() volatile {
+        inline void clear() volatile {
         }
-        bool empty() volatile const {
+        inline bool empty() volatile const {
             return true;
         }
         inline constexpr uint8_t size() const {

@@ -32,34 +32,28 @@ namespace std {
         
         static_assert(Size <= std::numeric_limits<uint16_t>::max());
         
-//            constexpr array() = default;
-        
-        //    template<typename... TT>
-        //    constexpr array(TT&&... pp) : data{(T)pp...}{
-        //    }
-
-        constexpr const T* begin() const {
+        inline constexpr const T* begin() const {
             return &data[0];
         }
-        constexpr const T* end() const {
+        inline constexpr const T* end() const {
             return &data[Size];
         }
-        constexpr const volatile T* begin() const volatile {
+        inline constexpr const volatile T* begin() const volatile {
             return &data[0];
         }
-        constexpr const volatile T* end() const volatile {
+        inline constexpr const volatile T* end() const volatile {
             return &data[Size];
         }
-        constexpr T* begin() {
+        inline constexpr T* begin() {
             return &data[0];
         }
-        constexpr T* end() {
+        inline constexpr T* end() {
             return &data[Size];
         }
-        constexpr volatile T* begin() volatile {
+        inline constexpr volatile T* begin() volatile {
             return &data[0];
         }
-        constexpr volatile T* end() volatile {
+        inline constexpr volatile T* end() volatile {
             return &data[Size];
         }
         inline constexpr T& operator[](size_type index) {
@@ -81,9 +75,9 @@ namespace std {
         inline constexpr size_type size() const {
             return Size;
         }
-        //private:
         T data[Size] = {}; // rely on aggregate initialization
     };
+
     template<typename T>
     struct array<T, 0> final {
         typedef T value_type;
@@ -136,7 +130,6 @@ namespace std {
     };
     
     namespace detail {
-        
         template <class T, auto N, size_t... I>
         constexpr std::array<std::remove_cv_t<T>, N>
         to_array_impl(T(&a)[N], std::index_sequence<I...>) {
@@ -157,13 +150,5 @@ namespace std {
     template<typename T> struct tuple_size;
     template<typename I, auto N>
     class tuple_size<std::array<I, N>> : public std::integral_constant<size_t, N> {};
-    
-    namespace detail::test {
-        using a1 = array<uint8_t, 10>;
-        static_assert(std::is_same<a1::size_type, uint8_t>::value);
-
-        using a2 = array<uint8_t, 256>;
-        static_assert(std::is_same<a2::size_type, uint16_t>::value);
-    }
     
 }

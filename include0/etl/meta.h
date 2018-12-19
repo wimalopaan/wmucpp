@@ -89,6 +89,14 @@ namespace Meta {
     template<concepts::List L1, concepts::List L2>
     using concat = typename detail::concat_impl<L1, L2>::type;
 
+    template<template<typename...> typename A, template<typename...> typename B>
+    struct is_same_template : std::false_type {};
+    template<template<typename...> typename T>
+    struct is_same_template<T, T> : std::true_type {};
+
+    template<template<typename...> typename A, template<typename...> typename B>
+    static inline constexpr bool is_same_template_v = is_same_template<A, B>::value;
+    
     namespace detail {
         template<typename L>
         struct size_impl;
@@ -211,7 +219,7 @@ namespace Meta {
                  template<typename>typename... R> 
         struct count_T_impl<L<F, R...>, T> {
             inline static constexpr size_t value = [] {
-                constexpr auto v = etl::is_same_template<T, F>::value;
+                constexpr auto v = is_same_template_v<T, F>;
                 if constexpr(sizeof...(R) > 0) {
                     return count_T_impl<L<R...>, T>::value + v;
                 }
@@ -241,7 +249,7 @@ namespace Meta {
                  template<typename> typename T, size_t N>
         struct index_T_impl<L<F, R...>, T, N> {
             inline static constexpr size_t value = [] {
-                if constexpr(etl::is_same_template<F, T>::value) {
+                if constexpr(is_same_template_v<F, T>) {
                     return N;
                 }
                 else {
@@ -477,7 +485,7 @@ namespace Meta {
     struct is_set : public std::integral_constant<bool, detail::is_set_impl<List>::type::value> {};
 
     template<concepts::List List>
-    inline static constexpr bool ist_set_v = is_set<List>::value;
+    inline static constexpr bool is_set_v = is_set<List>::value;
     
     template<typename TL>
     struct is_set_T : public std::integral_constant<bool, detail::is_set_T_impl<TL>::type::value> {};

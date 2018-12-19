@@ -21,6 +21,10 @@
 
 #include <mcu/avr.h>
 
+#include <etl/fixedpoint.h>
+
+//#include <external/hott/hott.h>
+
 #ifdef MEM
 # include "util/memory.h"
 #endif
@@ -90,7 +94,9 @@ using rxSelect = AVR::Pin<PortD, 3>;
 
 //using cppm = AVR::CPPM<1, AVR::A, 8, ppmInPin>;
 
-using btUsart = AVR::Usart<0> ;
+//using btUsart = AVR::Usart<0, void, AVR::UseInterrupts<false>> ;
+using btUsart = AVR::Usart<0>;
+using rcUsart = AVR::Usart<1>;
 //using rcUsart = AVR::Usart<1, Hott::SumDProtocollAdapter<0>>;
 
 //using systemClock = AVR::Timer8Bit<0>; 

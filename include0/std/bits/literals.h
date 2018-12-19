@@ -1,5 +1,5 @@
 /*
- * WMuCpp - Bare Metal C++
+ * WMuCpp - Bare Metal C++ 
  * Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,14 +18,27 @@
 
 #pragma once
 
-#include "../cstdint"
+#include <ratio>
+#include <chrono>
 
 namespace std {
-    template<typename T, typename U>
-    struct pair {
-        typedef T first_type;
-        typedef U second_type;
-        T first;
-        U second;
-    };
+    namespace literals {
+        namespace chrono {
+            
+            using namespace std::chrono;
+            
+            constexpr milliseconds operator"" _ms(unsigned long long v) {
+                return milliseconds{static_cast<uint16_t>(v)};
+            }
+            
+            constexpr microseconds operator"" _us(unsigned long long v) {
+                return microseconds{static_cast<uint16_t>(v)};
+            }
+            
+            constexpr seconds operator"" _s(unsigned long long v) {
+                return seconds{static_cast<uint16_t>(v)};
+            }
+            
+        }
+    }
 }

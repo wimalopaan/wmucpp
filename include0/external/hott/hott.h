@@ -19,16 +19,31 @@
 #pragma once
 
 #include <cstdint>
-#include <cstddef>
 
-namespace External {
-    namespace Hal {
-        class NullProtocollAdapter final {
-        public:
-            NullProtocollAdapter() = delete;
-            static constexpr bool process(std::byte) {
-                return false;
-            }
-        };
-    }
+#include "sensorprotocoll.h"
+#include "sensorprotocolladapter.h"
+#include "sensorprotocollbuffer.h"
+#include "sensortextprotocollbuffer.h"
+#include "sumdprotocoll.h"
+#include "sumdprotocolladapter.h"
+
+namespace Hott {
+    
+    template<typename Usart>
+    class SensorProtocoll final {
+    public:
+        SensorProtocoll() = delete;
+    private:
+        static inline constexpr const uint8_t mNumberOfRows = 7;
+        static constexpr const uint8_t mNumberOfColumns = 2;
+        
+        static inline uint8_t mRow = 0;
+        static inline uint8_t mColumn = 0;
+        static inline uint8_t mKey = 0;
+        
+        static inline GamMsg hottBinaryResponse {};
+        static inline TextMsg hottTextResponse {};
+    };
+    
+    
 }

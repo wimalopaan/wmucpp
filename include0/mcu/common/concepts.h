@@ -40,7 +40,18 @@ namespace AVR {
         template<typename I>
         concept bool Interrupt = std::is_same<I, void>::value || requires (I i) {
                 I::number;
-            };
+        };
         
+        template<typename D>
+        concept bool Device = requires(D) {
+                D::put(std::byte{0});
+        };
+
+        template<typename S>
+        concept bool Stream = requires (S s) { 
+                typename S::device_type;
+                typename S::line_terminator_type;
+        };
+    
     }
 }

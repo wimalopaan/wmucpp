@@ -28,10 +28,6 @@
 
 #include <etl/types.h>
 
-namespace Util {
-    template<typename Device, bool ensure = false> void put(std::byte  c);
-}
-
 template<typename C, C... CC>
 struct PgmString;
 

@@ -1,6 +1,8 @@
 #pragma once
 
 namespace etl {
+    template<typename T, uint8_t Bits> struct Fraction;
+    
     namespace Concepts {
         template<typename T, typename... ArgType>
         concept bool Callable = requires(T t) {
@@ -27,7 +29,7 @@ namespace etl {
         
         template<typename T>
         concept bool Signed = std::is_signed<T>::value;    
-        
+
         template<typename R>
         concept bool Range = requires (R r) { 
                 typename R::value_type;
@@ -35,12 +37,29 @@ namespace etl {
                 r.end();
             };
 
+        template<typename C>
+        concept bool Container = requires(C c) {
+            typename C::value_type;
+            c.size();
+            c[0];
+        };
+        
+        
         template<typename T>
         concept bool Fundamental = std::is_fundamental<T>::value;
         
         template<typename T>
         concept bool NonFundamental = !std::is_fundamental<T>::value;
     
+        template<typename D>
+        concept bool Device = requires(D ) {
+                D::put(std::byte{0});
+        };
+
+        template<typename S>
+        concept bool Stream = requires(S) {
+                typename S::device_type;
+        };
     }
 }
 

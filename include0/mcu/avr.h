@@ -68,6 +68,9 @@ namespace AVR {
     struct ReadOnly{};
     struct UnUsed{};
     
+    template<bool F>
+    struct UseInterrupts : std::integral_constant<bool, F> {};
+    
     struct A : std::integral_constant<char, 'A'> {};
     struct B : std::integral_constant<char, 'B'> {};
     struct C : std::integral_constant<char, 'C'> {};

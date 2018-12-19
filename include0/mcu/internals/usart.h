@@ -26,16 +26,11 @@
 
 #include <external/hal/protocolladapter.h>
 
-//#include "config.h"
-//#include "mcu/avr8.h"
-//#include "container/fifo.h"
-//#include "util/util.h"
-//#include "hal/protocolladapter.h"
-//#include "hal/event.h"
-
 #include "../common/isr.h"
+#include "../common/delay.h"
 
 namespace AVR {
+    using namespace std::literals::chrono;
     
     template<auto v>
     struct ReceiveQueueLength : etl::NamedConstant<v> {};
@@ -68,24 +63,30 @@ namespace AVR {
         
     } //!Util
     
-    template<uint8_t N, typename PA, etl::Concepts::NamedFlag useISR,
-             etl::Concepts::NamedConstant RecvQLength, etl::Concepts::NamedConstant SendQLength, typename MCU>
+    template<uint8_t N, typename PA = void, etl::Concepts::NamedFlag useISR = etl::NamedFlag<true>,
+             etl::Concepts::NamedConstant RecvQLength = ReceiveQueueLength<64>, 
+             etl::Concepts::NamedConstant SendQLength = SendQueueLength<64>, typename MCU = DefaultMcuType>
     class Usart final : public UsartBase<MCU, N> {
         
         using Config = Project::Config;
         
         Usart() = delete;
     public:
-        typedef typename MCU::Usart usart_type;
+        typedef Usart<N, PA, useISR, RecvQLength, SendQLength> usart;
+        typedef typename MCU::Usart      usart_type;
         typedef typename usart_type::SRA ucsra_type;
         typedef typename usart_type::SRB ucsrb_type;
         typedef typename usart_type::SRC ucsrc_type;
-        typedef PA protocoll_adapter_type;
+        typedef PA                       protocoll_adapter_type;
         
+        typedef typename std::conditional<useISR::value, volatile etl::FiFo<std::byte, SendQLength::value>, etl::FiFo<std::byte, SendQLength::value>>::type send_queue_type;
+        typedef typename std::conditional<useISR::value, volatile etl::FiFo<std::byte, RecvQLength::value>, etl::FiFo<std::byte, RecvQLength::value>>::type recv_queue_type;
+
         static constexpr auto mcu_usart = getBaseAddr<typename MCU::Usart, N>;
         static_assert(N < MCU::Usart::count, "wrong number of usart");
         
         struct RxHandler : public IsrBaseHandler<typename AVR::ISR::Usart<N>::RX> {
+            friend usart;
             template<bool visible = useISR::value, typename = std::enable_if_t<visible>>
             inline static void
             isr() {
@@ -112,6 +113,7 @@ namespace AVR {
             }
         };
         struct TxHandler : public IsrBaseHandler<typename AVR::ISR::Usart<N>::UDREmpty> {
+            friend usart;
             template<bool visible = useISR::value, typename = std::enable_if_t<visible>>
             inline static void
             isr() {
@@ -119,7 +121,7 @@ namespace AVR {
             }
         private:
             static inline void isr_impl() {
-                if (auto c = mSendQueue.pop_front()) {
+                if (const auto c = mSendQueue.pop_front()) {
                     *mcu_usart()->udr = *c;;
                 }
                 else {
@@ -134,10 +136,10 @@ namespace AVR {
         inline static 
         typename std::enable_if<!Q, void>::type
         periodic() {
-            if (isset(mcu_usart()->ucsra.template get<ucsra_type::rxc>())) {
+            if (mcu_usart()->ucsra.template isSet<ucsra_type::rxc>()) {
                 RxHandler::isr_impl();       
             }
-            if (isset(mcu_usart()->ucsra.template get<ucsra_type::udre>())) {
+            if (mcu_usart()->ucsra.template isSet<ucsra_type::udre>()) {
                 TxHandler::isr_impl();
             }
         }
@@ -181,7 +183,7 @@ namespace AVR {
         }
         inline static void waitSendComplete() {
             while(!mSendQueue.empty()) {
-                ::Util::delay(1_us);
+                ::AVR::Util::delay(1_us);
             }
         }
         inline static bool isEmpty() {
@@ -200,8 +202,8 @@ namespace AVR {
             }
         }
     private:        
-        inline static etl::FiFo<std::byte, SendQLength::value> mSendQueue;
-        inline static etl::FiFo<std::byte, RecvQLength::value> mRecvQueue;
+        inline static send_queue_type mSendQueue;
+        inline static recv_queue_type mRecvQueue;
         
         static constexpr uint16_t ubrrValue(uint32_t fcpu, uint32_t baud) {
             return (((1.0 * fcpu) / (16 * baud)) + 0.5) - 1;

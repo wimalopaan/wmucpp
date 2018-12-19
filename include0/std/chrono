@@ -20,9 +20,6 @@
 
 #include "ratio"
 
-//#include <time.h>
-//#include "util/time.h"
-
 namespace std {
     namespace chrono {
 
@@ -30,8 +27,7 @@ namespace std {
         struct duration;
         
         template<>
-        struct duration<uint16_t, std::milli> final
-        {
+        struct duration<uint16_t, std::milli> final {
             typedef std::milli period_type;
             uint16_t value = 0;
             duration<uint16_t, std::milli>& operator--() {
@@ -45,8 +41,7 @@ namespace std {
         };
         
         template<>
-        struct duration<uint16_t, std::micro> final
-        {
+        struct duration<uint16_t, std::micro> final {
             typedef std::micro period_type;
             uint16_t value = 0;
             duration<uint16_t, std::micro>& operator--() {
@@ -56,17 +51,14 @@ namespace std {
         };
         
         template<>
-        struct duration<uint16_t, std::centimicro> final
-        {
+        struct duration<uint16_t, std::centimicro> final {
             typedef std::centimicro period_type;
             uint16_t value = 0;
         };
         
         template<>
-        struct duration<uint16_t> final
-        {
+        struct duration<uint16_t> final {
             typedef std::ratio<1,1> period_type;
-            
             uint16_t value = 0;
             
             duration<uint16_t>& operator--() {
@@ -79,18 +71,16 @@ namespace std {
         };
         
         template<>
-        struct duration<uint32_t> final
-        {
+        struct duration<uint32_t> final {
             typedef std::ratio<1,1> period_type;
-            
             uint32_t value = 0;
         };
         
         
-        template<typename T>
-        bool operator==(const T& lhs, const T& rhs) {
-            return lhs.value == rhs.value;
-        }
+//        template<typename R, typename P>
+//        bool operator==(const duration<R,P>& lhs, const duration<R,P>& rhs) {
+//            return lhs.value == rhs.value;
+//        }
         
         using centimicroseconds = duration<uint16_t, std::centimicro>;
         using microseconds = duration<uint16_t, std::micro>;
@@ -107,15 +97,13 @@ namespace std {
         }
         
         template<typename  F>
-//        template<Integral F>
-        //requires Integral<F>()
+        requires std::is_integral_v<F>
         constexpr microseconds operator/(const microseconds& lhs, F v) {
             return {(uint16_t)(lhs.value / v)};
         }
         
         template<typename F>
-//        template<Integral F>
-        //requires Integral<F>()
+        requires std::is_integral_v<F>
         constexpr wideSeconds operator*(const wideSeconds& lhs, F v) {
             return {lhs.value * v};
         }
@@ -194,3 +182,6 @@ namespace std {
         */
     }
 }
+
+#include "bits/literals.h"
+
