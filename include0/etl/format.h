@@ -27,8 +27,7 @@
 #include "concepts.h"
 #include "stringbuffer.h"
 #include "type_traits.h"
-
-//template<typename T, uint8_t Bits = (sizeof(T) * 8)> struct Fraction;
+#include "algorithm.h"
 
 namespace etl {
     using namespace etl::Concepts;
@@ -43,83 +42,27 @@ namespace etl {
             typedef uint16_t dimension_type;
             constexpr inline static dimension_type dimension = Base * Base;
             
-            static inline constexpr char toChar(uint8_t d) { // todo: only [0,Base-1]
+            static inline constexpr Char toChar(uint8_t d) { // todo: only [0,Base-1]
                 static_assert(Base <= 16, "wrong Base");
                 if constexpr(Base > 10) {
                     if (d < 10) {
-                        return '0' + d;
+                        return Char('0' + d);
                     }        
                     else {
-                        return 'a' + d - 10;
+                        return Char('a' + d - 10);
                     }
                 }
                 else { // Base <= 10
-                    return '0' + d;
+                    return Char(('0' + d));
                 }
             }
 
-            struct Generator {
-                constexpr auto operator()() {
-                    std::array<char, Digits * dimension> data;
-                    for(dimension_type i = 0; i < dimension; ++i) {
-                        auto value = i;
-                        for(int8_t d = Digits - 1; d >= 0; --d) {
-                            auto r = value % Base;
-                            data[d + i * Digits] = toChar(r);
-                            value /= Base;
-                        }
-                    }
-                    return data;
-                }  
-            };
-            using t = typename ::Util::Pgm::Converter<Generator>::pgm_type;
-            
-            constexpr static inline auto lookupTable = t{};
-            
-            template<typename T>
-            constexpr static inline uint8_t maxPower = [](){
-                uint64_t v = 1;
-                for(uint8_t i = 0; i < 64; ++i) {
-                    if (v >= std::numeric_limits<T>::max() / Base) {
-                        return i;
-                    }
-                    v *= Base;
-                }
-            }();
-            
-            template<typename T>
-            constexpr static inline auto powers = [](){
-                std::array<uint64_t, maxPower<T> + 1> data;
-                uint64_t v = 1;
-                for(auto& p : data) {
-                    p = v;
-                    v *= Base;
-                }
-                return data;
-            }();
-            
-            template<uint8_t B, uint8_t E, typename T>
-            constexpr static uint8_t digits_r(T v) {
-                constexpr uint8_t mid = (B + E) / 2;
-                if constexpr(mid == B) {
-                    return mid + 1;
-                }
-                
-                if (v < powers<T>[mid]) {
-                    return digits_r<B, mid>(v);
-                }
-                else {
-                    return digits_r<mid, E>(v);
-                }
-            }
-            template<typename T>
-            constexpr static uint8_t digits(T v) {
-                return digits_r<0, powers<T>.size - 1>(v);
-            }
         }; // class Convert
         
-        template<int Position, uint8_t Base, Integral T>
-        inline constexpr uint8_t itoa_single(T& value, char* data) {
+    
+        template<int Position, uint8_t Base, Integral T, auto  L>
+        inline constexpr uint8_t itoa_single_impl(T& value, std::array<Char, L>& data) {
+            static_assert((Position < 0) || (Position < L), "wrong length");
             if constexpr(Position >= 0) {
                 uint8_t fraction = value % Base;
                 data[Position] = Convert<1, Base>::toChar(fraction);
@@ -127,39 +70,13 @@ namespace etl {
                 if (value == 0) {
                     return Position;
                 }
-                return itoa_single<Position - 1, Base, T>(value, data);
+                return itoa_single_impl<Position - 1, Base, T>(value, data);
             }
             return 0;
         }
         
-        template<int Position, uint8_t Base, Integral T, uint16_t L>
-        inline constexpr uint8_t itoa_single(T& value, std::array<char, L>& data) {
-            static_assert((Position < 0) || (Position < L), "wrong length");
-            return itoa_single<Position, Base>(value, &data[0]);
-        }
-        
-        template<uint8_t Base, Unsigned T>
-        inline constexpr void itoa(T value, uint8_t length, char* data) {
-            auto next = length - 1;
-            constexpr auto modul = etl::detail::Convert<2, Base>::dimension;
-            while(value >= modul) {
-                auto const d = value % modul;
-                data[next--] = etl::detail::Convert<2, Base>::lookupTable[d * 2 + 1];
-                data[next--] = etl::detail::Convert<2, Base>::lookupTable[d * 2 + 0];
-                value /= modul;
-            }
-            if (value < Base) {
-                data[next] = etl::detail::Convert<2, Base>::toChar(value);
-            }
-            else {
-                auto const d = (uint8_t)value;
-                data[next--] = etl::detail::Convert<2, Base>::lookupTable[d * 2 + 1];
-                data[next] = etl::detail::Convert<2, Base>::lookupTable[d * 2 + 0];
-            }
-        }
-        
         template<uint8_t Base, Integral T, typename C>
-        constexpr auto itoa(const T& value, C& data) -> decltype(data)& {
+        constexpr auto& itoa_impl(const T& value, C& data) {
             T v = value;
             if constexpr(std::is_signed<T>::value) {
                 if (value < 0) {
@@ -175,126 +92,65 @@ namespace etl {
             
             if constexpr(std::is_signed<T>::value) {
                 if (value < 0) {
-                    data[++position] = '-';
+                    data[++position] = Char{'-'};
                 }
             }    
-            data[position + 1] = '\0';    
+//            data[position + 1] = Char{'\0'};    
             std::reverse(&data[0], &data[position]);
             return data;
         }
 
         template<uint8_t Position, typename T, typename C>
-        auto ftoa(T& v, C& data) -> decltype(data)& {
+        constexpr auto& ftoa_impl(T& v, C& data)  {
             typedef fragmentType_t<T> FT;
             v *= 10;
             if (v != 0) {
-                data[Position] = '0' + (v >> ((sizeof(FT)) * 8));
+                data[Position] = Char('0' + (v >> ((sizeof(FT)) * 8)));
                 v &= FT(-1);
-                if constexpr(Position < C::size() - 2) {
-                    return ftoa<Position + 1>(v, data);
+                if constexpr(Position < data.size() - 2) {
+                    return ftoa_impl<Position + 1>(v, data);
                 }
             }
             return data;    
         }
     } // detail
     
-    template<uint8_t Base = 10, Integral T = uint8_t, uint16_t L>
-    auto itoa_r(T value, std::array<char, L>& data) -> decltype(data)& {
+    template<uint8_t Base = 10, Integral T = uint8_t, typename C>
+    constexpr auto& itoa_r(T value, C& data)  {
         static_assert((Base >= 2) && (Base <= 16), "wrong base");
-        static_assert(L > numberOfDigits<T, Base>(), "wrong length");
+        static_assert(data.size() >= numberOfDigits<T, Base>(), "wrong length");
         constexpr uint8_t Position = numberOfDigits<T, Base>() - 1;
         T v = value;
         if constexpr(std::is_signed<T>::value) {
             if (value < 0) {
                 v = -value; 
             }
-            uint8_t last = etl::detail::itoa_single<Position, Base, T>(v, data);
+            uint8_t last = etl::detail::itoa_single_impl<Position, Base, T>(v, data);
             if (value < 0) {
-                data[last] = '-';
+                data[last] = Char{'-'};
             }
         }   
         else {
-            etl::detail::itoa_single<Position, Base, T>(v, data);
+            etl::detail::itoa_single_impl<Position, Base, T>(v, data);
         }
         return data;
     }
     
-    template<uint8_t Base = 10, Integral T = uint8_t>
-    void itoa_r(T value, char* data) {
-        static_assert((Base >= 2) && (Base <= 16), "wrong base");
-        constexpr uint8_t Position = numberOfDigits<T, Base>() - 1;
-        T v = value;
-        if constexpr(std::is_signed<T>::value) {
-            if (value < 0) {
-                v = -value; 
-            }
-            uint8_t last = etl::detail::itoa_single<Position, Base, T>(v, data);
-            if (value < 0) {
-                data[last] = '-';
-            }
-        }   
-        else {
-            etl::detail::itoa_single<Position, Base, T>(v, data);
-        }
-    }
     template<uint8_t Base = 10, Integral T = uint8_t, typename C>
-    void itoa_r(T value, C& data) {
-        static_assert(C::size > numberOfDigits<T, Base>());
+    constexpr auto& itoa(const T& value, C& data) {
         static_assert((Base >= 2) && (Base <= 16), "wrong base");
-        constexpr uint8_t Position = numberOfDigits<T, Base>() - 1;
-        T v = value;
-        if constexpr(std::is_signed<T>::value) {
-            if (value < 0) {
-                v = -value; 
-            }
-            uint8_t last = etl::detail::itoa_single<Position, Base, T>(v, &data[0]);
-            if (value < 0) {
-                data[last] = '-';
-            }
-        }   
-        else {
-            etl::detail::itoa_single<Position, Base, T>(v, &data[0]);
-        }
+        static_assert(data.size() >= numberOfDigits<T, Base>(), "wrong char buffer length");
+        static_assert(std::is_same<typename C::value_type, Char>::value, "not a char container");
+        return etl::detail::itoa_impl<Base>(value, data);
     }
-    
-    template<uint8_t Base = 10, Integral T = uint8_t, uint16_t L = 0>
-    constexpr auto itoa(const T& value, std::array<char, L>& data) -> decltype(data)& {
-        static_assert((Base >= 2) && (Base <= 16), "wrong base");
-        static_assert(L > numberOfDigits<T, Base>(), "wrong char buffer length");
-        return etl::detail::itoa<Base>(value, data);
-    }
-    
-    template<uint8_t Base = 10, Integral T = uint8_t, uint8_t L = 0>
-    auto itoa(const T& value, char (&data)[L]) -> decltype(data)& {
-        static_assert((Base >= 2) && (Base <= 16), "wrong base");
-        static_assert(L > numberOfDigits<T, Base>(), "wrong char buffer length");
-        return etl::detail::itoa<Base>(value, data);
-    }
-    
-    template<uint8_t Base = 10, Integral T = uint8_t, typename C>
-    auto itoa(const T& value, C& data) -> decltype(data)& {
-        static_assert((Base >= 2) && (Base <= 16), "wrong base");
-        static_assert(C::size > numberOfDigits<T, Base>(), "wrong char buffer length");
-        static_assert(std::is_same<typename C::value_type, char>::value, "not a char container");
-        return etl::detail::itoa<Base>(value, data);
-    }
-    
-//    template<typename T, uint16_t L>
-//    requires (T::valid_bits > 0)
-//    auto ftoa(const T& f, std::array<char, L>& data) -> decltype(data)& {
-//        static_assert(L >= (numberOfDigits<T, 10>() + 1), "wrong char buffer length");
-//        enclosingType_t<typename T::value_type> v = f.value;
-//        data[0] = '.';
-//        return etl::detail::ftoa<1>(v, data);    
-//    }
     
     template<typename T, Container C>
     requires (T::valid_bits > 0)
-    auto ftoa(const T& f, C& data) -> decltype(data)& {
+    constexpr auto& ftoa(const T& f, C& data)  {
         static_assert(data.size() >= numberOfDigits<T, 10>() + 1, "wrong char buffer length");
         enclosingType_t<typename T::value_type> v = f.value;
-        data[0] = '.';
-        return etl::detail::ftoa<1>(v, data);    
+        data[0] = Char{'.'};
+        return etl::detail::ftoa_impl<1>(v, data);    
     }
     
 } 

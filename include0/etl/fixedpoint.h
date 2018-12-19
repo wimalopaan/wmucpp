@@ -22,7 +22,7 @@
 #include <type_traits>
 #include <array>
 
-#include "format.h"
+#include "concepts.h"
 #include "output.h"
     
 namespace etl {
@@ -122,73 +122,30 @@ namespace etl {
         return FixedPoint<T, FB>::fromRaw(p >> FB);
     }
     
-    namespace etl {
-        template<AVR::Concepts::Stream Stream, typename... TT> void out(const TT&... v);
-        template<AVR::Concepts::Stream Stream, typename... TT> void outl(const TT&... v);
-    } 
-    
     namespace detail {
-        
         template<AVR::Concepts::Stream Stream, typename T, uint8_t Bits>
-        void out(const Fraction<T, Bits>& f) {
-            array<char, 2 + numberOfDigits<Fraction<T, Bits>>()> buffer; // dot + sentinel
+        void out_impl(const Fraction<T, Bits>& f) {
+            array<Char, 1 + numberOfDigits<Fraction<T, Bits>>()> buffer; // dot + sentinel
             ftoa(f, buffer);
-            put<typename Stream::device_type>(buffer);
+            out_impl<Stream>(buffer);
         }
         
-        
-        template<AVR::Concepts::Stream Stream>
-        void out(const FixedPoint<int16_t, 4>& f) {
+        template<AVR::Concepts::Stream Stream, Signed T, auto Bits>
+        void out_impl(const FixedPoint<T, Bits>& f) {
             if (f.raw() < 0) {
-                out<Stream>(Char{'-'});
+                out_impl<Stream>(Char{'-'});
             }
-            out<Stream>(f.integerAbs());
-            out<Stream>(f.fraction());
+            out_impl<Stream>(f.integerAbs());
+            out_impl<Stream>(f.fraction());
         }
     
-        template<AVR::Concepts::Stream Stream, auto Bits>
-        void out(const FixedPoint<uint16_t, Bits>& f) {
-            out<Stream>(f.integerAbs());
-            out<Stream>(f.fraction());
+        template<AVR::Concepts::Stream Stream, Unsigned T, uint8_t Bits>
+        void out_impl(const FixedPoint<T, Bits>& f) {
+            out_impl<Stream>(f.integerAbs());
+            out_impl<Stream>(f.fraction());
         }
         
     } // detail
 
-/*    
-    template<typename Stream, typename T, uint8_t Bits>
-    Stream& operator<<(Stream& o, const Fraction<T, Bits>& f) {
-        std::array<char, 2 + Util::numberOfDigits<Fraction<T, Bits>>()> buffer; // dot + sentinel
-        Util::ftoa(f, buffer);
-        Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(&buffer[0]);
-        return o;
-    }
-    
-    template<typename Stream>
-    Stream& operator<<(Stream& o, const FixedPoint<uint16_t, 4>& f) {
-        if constexpr(!Config::disableCout) {
-            o << f.integerAbs() << f.fraction();
-        }
-        return o;
-    }
-    
-    template<typename Stream>
-    Stream& operator<<(Stream& o, const FixedPoint<uint16_t, 8>& f) {
-        if constexpr(!Config::disableCout) {
-            o << f.integerAbs() << f.fraction();
-        }
-        return o;
-    }
-    
-    template<typename Stream>
-    Stream& operator<<(Stream& o, const FixedPoint<int16_t, 4>& f) {
-        if constexpr (!Config::disableCout) {
-            if (f.raw() < 0) {
-                o << '-';
-            }
-            o << f.integerAbs() << f.fraction();
-        }
-        return o;
-    }
-    */
 }
 

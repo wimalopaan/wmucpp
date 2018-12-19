@@ -364,7 +364,7 @@ namespace Meta {
         struct visit<Meta::List<>> {
             template<typename I, typename C>
             inline static void at(I, const C&) {
-                assert(false);
+//                assert(false);
             }
             template<typename C, typename N>
             inline static N find(const C&, N) {

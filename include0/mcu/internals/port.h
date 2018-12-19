@@ -159,7 +159,7 @@ namespace AVR {
         struct Table<true, Pins...> {
             static inline constexpr uint8_t size = sizeof...(Pins);
             using generator_type = Generator<Pins...>;
-            using t = typename ::Util::Pgm::Converter<generator_type>::pgm_type;
+            using t = typename AVR::Util::Pgm::Converter<generator_type>::pgm_type;
             static inline constexpr auto valueBits = t{};
         };
     }

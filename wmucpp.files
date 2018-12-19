@@ -298,6 +298,7 @@ include/util/converter.h
 include/util/hana.h
 include/util/static_interface.h
 include0/config.h
+include0/etl/algorithm.h
 include0/etl/concepts.h
 include0/etl/fifo.h
 include0/etl/fixedpoint.h

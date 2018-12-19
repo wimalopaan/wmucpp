@@ -20,8 +20,9 @@
 #pragma once
 
 #include <mcu/avr.h>
-
+#include <etl/output.h>
 #include <etl/fixedpoint.h>
+#include <etl/scoped.h>
 
 //#include <external/hott/hott.h>
 
