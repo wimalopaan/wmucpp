@@ -41,9 +41,10 @@ namespace Hott {
         static constexpr uint8_t ExtendedHigh8Bit = ExtendedHigh >> 8; // 65
         
         static constexpr const uint8_t MaxChannels = 32;
-        volatile uint8_t  nChannels = 0;
-        volatile std::array<std::pair<uint8_t, uint8_t>, MaxChannels> channelData = {};
-        volatile uint16_t crc = 0;
+        
+        uint8_t nChannels = 0;
+        std::array<std::pair<uint8_t, uint8_t>, MaxChannels> channelData = {};
+        uint16_t crc = 0;
     };
     
 }

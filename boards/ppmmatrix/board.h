@@ -20,11 +20,14 @@
 #pragma once
 
 #include <mcu/avr.h>
+#include <mcu/internals/systemclock.h>
 #include <etl/output.h>
 #include <etl/fixedpoint.h>
 #include <etl/scoped.h>
 
-//#include <external/hott/hott.h>
+#include <external/hal/alarmtimer.h>
+
+#include <external/hott/hott.h>
 
 #ifdef MEM
 # include "util/memory.h"
@@ -95,10 +98,22 @@ using rxSelect = AVR::Pin<PortD, 3>;
 
 //using cppm = AVR::CPPM<1, AVR::A, 8, ppmInPin>;
 
-//using btUsart = AVR::Usart<0, void, AVR::UseInterrupts<false>> ;
-using btUsart = AVR::Usart<0>;
-using rcUsart = AVR::Usart<1>;
-//using rcUsart = AVR::Usart<1, Hott::SumDProtocollAdapter<0>>;
+using btUsart = AVR::Usart<0, void, AVR::UseInterrupts<false>> ;
+//using btUsart = AVR::Usart<0>;
+
+//using rcUsart = AVR::Usart<1, void, AVR::UseInterrupts<false>>;
+//using rcUsart = AVR::Usart<1>;
+using sumd = Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>;
+//using rcUsart = AVR::Usart<1, sumd, AVR::UseInterrupts<true>, AVR::ReceiveQueueLength<0>>;
+using rcUsart = AVR::Usart<1, sumd, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
+
+namespace  {
+    using namespace std::literals::chrono;
+    constexpr auto interval = 10_ms;
+}
+
+using systemClock = AVR::SystemTimer<0, interval>;
+using alarmTimer = External::Hal::AlarmTimer<systemClock>;
 
 //using systemClock = AVR::Timer8Bit<0>; 
 //using alarmTimer = AlarmTimer<systemClock, UseEvents<false>>;

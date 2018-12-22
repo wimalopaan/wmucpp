@@ -24,37 +24,22 @@
 #include "meta.h"
 
 namespace etl {
-    
-    //    template <uint8_t I, typename T, typename ...Ts>
-    //    struct nth_element_impl {
-    //        using type = typename nth_element_impl<I-1, Ts...>::type;
-    //    };
-    
-    //    template <typename T, typename ...Ts>
-    //    struct nth_element_impl<0, T, Ts...> {
-    //        using type = T;
-    //    };
-    
-    //    template <uint8_t I, typename ...Ts>
-    //    using nth_element = typename nth_element_impl<I, Ts...>::type;
-    
-//    template <typename T, auto N, typename Comp = std::greater<T>>
-//    constexpr std::array<T, N>& sort(std::array<T, N>& array, Comp compare = std::greater<T>()) {
-//        for(uint8_t i = 0; i < (N - 1);) {
-//            if (compare(array[i], array[i + 1])) {
-//                using std::swap;
-//                swap(array[i], array[i + 1]);
-//                i = 0;
-//            }
-//            else {
-//                ++i;
-//            }
-//        }
-//        return array;
-//    }
-    
-    
-//    template<typename T>
+    template <typename T, auto N, typename Comp = std::greater<T>>
+    constexpr std::array<T, N>& sort(std::array<T, N>& array, Comp compare = std::greater<T>()) {
+        for(uint8_t i = 0; i < (N - 1);) {
+            if (compare(array[i], array[i + 1])) {
+                using std::swap;
+                swap(array[i], array[i + 1]);
+                i = 0;
+            }
+            else {
+                ++i;
+            }
+        }
+        return array;
+    }
+
+    //    template<typename T>
 //    class reverse_iterator {
 //    public:
 //        constexpr reverse_iterator(const T* p) : mActual(p) {}
@@ -106,10 +91,10 @@ namespace etl {
 //    }
     
     
-    template<etl::Concepts::Range C>
+    template<etl::Concepts::Container C>
     constexpr bool inline crc8(const C& data) {
         uint8_t crc = 0;
-        for(typename C::size_type loop_count = 0; loop_count < C::size; loop_count++) {
+        for(typename C::size_type loop_count = 0; loop_count < data.size(); loop_count++) {
             uint8_t b = data[loop_count];
             uint8_t bit_counter = 8;
             do {
@@ -184,15 +169,21 @@ namespace etl {
         inline constexpr void fill_impl(A& dest, B src, std::index_sequence<II...>) {
             ((dest[II] = src),...);
         }
-        
+
+        template<auto... II, typename A>
+        inline constexpr void reverse_impl(A& dest, std::index_sequence<II...>) {
+            ((dest[II] = dest[dest.size() - II - 1]),...);
+        }
     }
-    
     template<etl::Concepts::Container C>
     constexpr void fill(C& c, typename C::value_type v) {
         detail::fill_impl(c, v, std::make_index_sequence<c.size()>{});
     }
-    
-    
+
+    template<etl::Concepts::Container C>
+    constexpr void reverse(C& c) {
+        detail::reverse_impl(c, std::make_index_sequence<c.size() / 2>{});
+    }
     
     template<typename... T>
     constexpr auto maximum(const T&... vv) {

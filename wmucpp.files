@@ -112,6 +112,7 @@ boards/blmc/blmc_test01/test08.cc
 boards/blmc/blmc_test01/test09.cc
 boards/blmc/blmc_test01/util.c
 boards/blmc/blmc_test01/util.h
+boards/bootloader/optiboot.txt
 boards/include/ppmmatrix.h
 boards/include/rcsensorled01b.h
 boards/include/rcsensorled10.h
@@ -302,6 +303,7 @@ include0/etl/algorithm.h
 include0/etl/concepts.h
 include0/etl/fifo.h
 include0/etl/fixedpoint.h
+include0/etl/fixedvector.h
 include0/etl/format.h
 include0/etl/meta.h
 include0/etl/output.h
@@ -309,6 +311,7 @@ include0/etl/scoped.h
 include0/etl/stringbuffer.h
 include0/etl/type_traits.h
 include0/etl/types.h
+include0/external/hal/alarmtimer.h
 include0/external/hal/protocolladapter.h
 include0/external/hott/hott.h
 include0/external/hott/menu.h
@@ -332,6 +335,7 @@ include0/mcu/common/register.h
 include0/mcu/internals/port.h
 include0/mcu/internals/port0.h
 include0/mcu/internals/port1.h
+include0/mcu/internals/systemclock.h
 include0/mcu/internals/usart.h
 include0/mcu/mega/atmega.h
 include0/mcu/mega/atmega328pb.h

@@ -19,13 +19,10 @@
 #pragma once
 
 #include <cstdint>
-//#include "util/algorithm.h"
-//#include "units/duration.h"
 #include "sumdprotocoll.h"
 
 namespace Hott {
-    
-    struct MultiChannel {
+    struct MultiChannel final {
         inline static constexpr uint8_t size = 8;
         enum class State {Off = 0, Up, Down};
     private:
@@ -50,7 +47,7 @@ namespace Hott {
         }
     };
     
-    template<uint8_t M>
+    template<uint8_t M, etl::Concepts::NamedFlag UseInts = AVR::UseInterrupts<true>>
     class SumDProtocollAdapter final {
         enum sumdstate {Undefined = 0, Start1, StartNormal, StartFailSafe, ChannelDataL, ChannelDataH, CrcL, CrcH, NumberOfStates};
         typedef enum sumdstate sumdstate_t;
@@ -58,17 +55,27 @@ namespace Hott {
         enum class MultiState : uint8_t {Undefined = 0, Sync1, Sync2, Data};
         inline static MultiState mMultiState = MultiState::Undefined;
         inline static uint8_t mMultiChannel = 0;
+
+        using channelForMutliChannelType = std::conditional_t<UseInts::value, volatile uint8_t, uint8_t>;
+        inline static volatile channelForMutliChannelType mChannelForMultiChannel = 7;
+
+        using sumDMesgType = std::conditional_t<UseInts::value, volatile SumDMsg, SumDMsg>;
+        using multiCHType = std::conditional_t<UseInts::value, volatile MultiChannel, MultiChannel>;
+        using hasMultiChannelType = std::conditional_t<UseInts::value, volatile bool, bool>;
+        using validType = std::conditional_t<UseInts::value, volatile bool, bool>;
         
-        inline static volatile uint8_t mChannelForMultiChannel = 7;
     public:
+        
         SumDProtocollAdapter() = delete;
         
         inline static uint_ranged<uint16_t, Hott::SumDMsg::ExtendedLow, Hott::SumDMsg::ExtendedHigh> valueExtended(uint8_t channel) {
-            Scoped<DisbaleInterrupt<>> di;
+            if constexpr(UseInts::value) {
+                Scoped<DisbaleInterrupt<>> di;
+            }
             if (!mValid) {
                 return {};
             }
-            uint16_t v = std::combinedValue(mMsg.channelData[channel]);
+            uint16_t v = etl::combinedValue(mMsg.channelData[channel]);
             if (v < Hott::SumDMsg::ExtendedLow) {
                 return Hott::SumDMsg::ExtendedLow;
             }
@@ -81,11 +88,13 @@ namespace Hott {
         }
         
         inline static uint_ranged_NaN<uint16_t, Hott::SumDMsg::Low, Hott::SumDMsg::High> value(uint8_t channel) {
-            Scoped<DisbaleInterrupt<>> di;
+            if constexpr(UseInts::value) {
+                Scoped<DisbaleInterrupt<>> di;
+            }
             if (!mValid) {
                 return {};
             }
-            uint16_t v = std::combinedValue(mMsg.channelData[channel]);
+            uint16_t v = etl::combinedValue(mMsg.channelData[channel]);
             if (v < Hott::SumDMsg::Low) {
                 return Hott::SumDMsg::Low;
             }
@@ -97,14 +106,18 @@ namespace Hott {
             }
         }
         inline static uint_ranged<uint8_t, Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit> value8Bit(uint8_t channel) {
-            Scoped<DisbaleInterrupt<>> di;
+            if constexpr(UseInts::value) {
+                Scoped<DisbaleInterrupt<>> di;
+            }
             if (!mValid) {
                 return {};
             }
             return value8Bit_unsafe(channel);
         }
         inline static uint_ranged<uint8_t, Hott::SumDMsg::ExtendedLow8Bit, Hott::SumDMsg::ExtendedHigh8Bit> value8BitExtended(uint8_t channel) {
-            Scoped<DisbaleInterrupt<>> di;
+            if constexpr(UseInts::value) {
+                Scoped<DisbaleInterrupt<>> di;
+            }
             if (!mValid) {
                 return {};
             }
@@ -120,17 +133,16 @@ namespace Hott {
             return mMultiData.state(channel);
         }
         
-    private:
-        inline static bool process(std::byte  c) { // from isr only (ca 3µs)
+        inline static bool process(std::byte  c) { // (ca 3µs)
             static sumdstate state = sumdstate::Undefined;
             static uint8_t channel = 0;
             static uint16_t crc = 0;
-            
+        
             switch (state) {
             case sumdstate::Undefined:
                 if (c == std::byte{0xa8}) {
                     crc = 0;
-                    Util::crc16(crc, 0xa8);
+                    etl::crc16(crc, 0xa8);
                     state = sumdstate::Start1;
                 }
                 else {
@@ -139,7 +151,7 @@ namespace Hott {
                 break;
             case sumdstate::Start1:
                 if (c == std::byte{0x01}) {
-                    Util::crc16(crc, 0x01);
+                    etl::crc16(crc, 0x01);
                     state = sumdstate::StartNormal;
                 }
                 else if (c == std::byte{0x81}) {
@@ -152,7 +164,7 @@ namespace Hott {
             case sumdstate::StartNormal:
                 mMsg.nChannels = std::to_integer<uint8_t>(c);
                 mValid = false;
-                Util::crc16(crc, mMsg.nChannels);
+                etl::crc16(crc, mMsg.nChannels);
                 if (mMsg.nChannels < SumDMsg::MaxChannels) {
                     state = sumdstate::ChannelDataH;
                 }
@@ -163,7 +175,7 @@ namespace Hott {
             case sumdstate::StartFailSafe:
                 mMsg.nChannels = std::to_integer<uint8_t>(c);
                 mValid = false;
-                Util::crc16(crc, mMsg.nChannels);
+                etl::crc16(crc, mMsg.nChannels);
                 if (mMsg.nChannels < SumDMsg::MaxChannels) {
                     state = sumdstate::ChannelDataH;
                 }
@@ -173,12 +185,12 @@ namespace Hott {
                 break;
             case sumdstate::ChannelDataH:
                 mMsg.channelData[channel].first = std::to_integer<uint8_t>(c);
-                Util::crc16(crc, mMsg.channelData[channel].first);
+                etl::crc16(crc, mMsg.channelData[channel].first);
                 state = sumdstate::ChannelDataL;
                 break;
             case sumdstate::ChannelDataL:
                 mMsg.channelData[channel].second = std::to_integer<uint8_t>(c);
-                Util::crc16(crc, mMsg.channelData[channel].second);
+                etl::crc16(crc, mMsg.channelData[channel].second);
                 state = sumdstate::ChannelDataH;
                 ++channel;
                 if (channel < mMsg.nChannels) {
@@ -281,10 +293,9 @@ namespace Hott {
                 return mMsg.channelData[channel].first;
             }
         }
-        inline static volatile SumDMsg mMsg;
-        inline static volatile MultiChannel mMultiData;
-        inline static volatile bool mHasMultiChannel = false;
-        inline static volatile bool mValid = false;
+        inline static sumDMesgType mMsg;
+        inline static multiCHType mMultiData;
+        inline static hasMultiChannelType mHasMultiChannel = false;
+        inline static validType mValid = false;
     };
-    
 }

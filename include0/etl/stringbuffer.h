@@ -24,8 +24,6 @@
 
 #include <mcu/pgm/pgmstring.h>
 
-//template<typename C, C... CC> struct PgmString;
-
 namespace etl {
     template<uint8_t Length, typename T = Char, Char Fill = Char{' '}>
     class StringBuffer final {
@@ -38,24 +36,24 @@ namespace etl {
             return Length;
         }
     
-        StringBuffer() = default;
+        constexpr StringBuffer() = default;
         StringBuffer(const StringBuffer&) = delete;
         StringBuffer& operator=(const StringBuffer&) = delete;
         StringBuffer& operator=(StringBuffer&&) = delete;
     
-        StringBuffer(StringBuffer&& other) {
-            assert(other.size <= size);
+        inline constexpr StringBuffer(StringBuffer&& other) {
+            assert(other.size() <= size());
             std::copy(std::begin(other), std::end(other), data);
         }
     
         template<uint8_t M>
-        void insertAt(uint8_t position, const StringBuffer<M, T>& sb) {
+        inline constexpr void insertAt(uint8_t position, const StringBuffer<M, T>& sb) {
             assert(position < Length);
             insertAt(position, sb.data);
         }
     
         template<typename C, C... CC>
-        void insertAt(uint8_t position, const PgmString<C, CC...>& ps) {
+        inline constexpr void insertAt(uint8_t position, const PgmString<C, CC...>& ps) {
             static_assert(Length > ps.size, "wrong length");
             assert(position < Length);
             for(uint8_t i = position, j = 0; (i < Length) && (j < ps.size); ++i, ++j) {
@@ -63,7 +61,7 @@ namespace etl {
             }
         }
         template<typename C, C... CC>
-        void insertAtFill(uint8_t position, const PgmString<C, CC...>& ps) {
+        inline constexpr void insertAtFill(uint8_t position, const PgmString<C, CC...>& ps) {
             static_assert(Length > ps.size, "wrong length");
             uint8_t i = position;
             for(uint8_t j = 0; (i < Length) && (j < ps.size); ++i, ++j) {
@@ -73,19 +71,19 @@ namespace etl {
                 data[i] = Fill;
             }
         }
-        void insertAt(uint8_t position, const char* s) {
+        inline constexpr void insertAt(uint8_t position, const char* s) {
             assert(position < Length);
             for(uint8_t i = position; (i < Length) && (*s != '\0'); ++i) {
                 data[i] = *s++;
             }
         }
-        void insertAt(uint8_t position, const PgmStringView& s) {
+        inline constexpr void insertAt(uint8_t position, const PgmStringView& s) {
             assert(position < Length);
             for(uint8_t i = position, n = 0; (i < Length) && (s[n] != Char{'\0'}); ++i, ++n) {
                 data[i] = s[n];
             }
         }
-        void insertAtFill(uint8_t position, const PgmStringView& s) {
+        inline constexpr void insertAtFill(uint8_t position, const PgmStringView& s) {
             assert(position < Length);
             uint8_t i = position;
             for(uint8_t n = 0; (i < Length) && (s[n] != Char{'\0'}); ++i, ++n) {
@@ -95,34 +93,34 @@ namespace etl {
                 data[i] = Fill;
             }
         }
-        void clear() {
+        inline constexpr void clear() {
             for(uint8_t i = 0; i < Length; ++i) {
                 data[i] = Fill;
             }
         }
     
-        constexpr const T& at(uint8_t index) const {
+        inline constexpr const T& at(uint8_t index) const {
             assert(index < size);
             return data[index];
         }
-        constexpr const T& operator[](uint8_t index) const {
+        inline constexpr const T& operator[](uint8_t index) const {
             assert(index < size);
             return data[index];
         }
-        constexpr T& operator[](uint8_t index) {
+        inline constexpr T& operator[](uint8_t index) {
             assert(index < size);
             return data[index];
         }
-        constexpr const T* begin() const {
+        inline constexpr const T* begin() const {
             return &data[0];
         }
-        constexpr const T* end() const {
+        inline constexpr const T* end() const {
             return &data[Length];
         }
-        constexpr T* begin(){
+        inline constexpr T* begin(){
             return &data[0];
         }
-        constexpr T* end() {
+        inline constexpr T* end() {
             return &data[Length];
         }
     private:
@@ -201,24 +199,7 @@ namespace etl {
         Buffer& mBuffer;
         uint8_t counter = 0;
     };
-    
-    
-//    template<typename Stream, uint8_t Length, typename T, char fill>
-//    Stream& operator<<(Stream& out, const StringBuffer<Length, T, fill>& sb) {
-//        for(const auto& c : sb) {
-//            out << c;
-//        }
-//        return out;
-//    }
-    
-    template<typename Stream, uint8_t Begin, uint8_t Length, typename T>
-    Stream& operator<<(Stream& out, const StringBufferView<Begin, Length, T>& sbv) {
-        for(const auto& c : sbv) {
-            out << c;
-        }
-        return out;
-    }
-    
+      
     template<typename C, uint8_t L1, uint8_t L2>
     StringBuffer<L1 + L2, C> operator+(const StringBuffer<L1, C>& lhs, const StringBuffer<L2, C>& rhs) {
         StringBuffer<(uint8_t)(L1 + L2), C> sum;

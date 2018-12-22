@@ -1,0 +1,24 @@
+Unter ~/Projekte/Optiboot/MiniCore/<dev>/<takt>/...<uart>_<baud>...hex
+
+* mega328PB
+** Quarz 16 MHz
+*** Fuses
+	full swing crystal
+	boot reset vector
+	bootsize 512
+	preserve eeprom
+	spi
+	brown-out disabled
+	
+	# sudo avrdude -p atmega328pb -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P usb -c avrisp2 -U lfuse:w:0xf7:m -U hfuse:w:0xd4:m -U efuse:w:0xff:m
+
+** externer Oszillator 20 MHz
+*** Fuse
+	ext. clock
+	boot reset vector
+	bootsize 512
+	preserve eeprom
+	spi
+	brown-out disabled
+
+	# sudo avrdude -p atmega328pb -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P usb -c avrisp2 -U lfuse:w:0xe0:m -U hfuse:w:0xd4:m -U efuse:w:0xff:m

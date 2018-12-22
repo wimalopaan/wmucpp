@@ -38,6 +38,13 @@ namespace std {
     constexpr bool none(std::byte b) noexcept {
         return b == std::byte{0};
     }
+
+    
+    template<typename E>
+    constexpr bool isset(E flags) {
+        typedef typename std::underlying_type<E>::type underlying;
+        return static_cast<underlying>(flags) != 0;
+    }
     
 } // std
 

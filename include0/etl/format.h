@@ -31,41 +31,31 @@
 
 namespace etl {
     using namespace etl::Concepts;
-      
+    
     namespace detail {
         
-        template<uint8_t Digits = 2, uint8_t Base = 10> 
-        struct Convert {
+        template<auto Base = 10> 
+        static inline constexpr Char toChar(uint8_t d) { // todo: only [0,Base-1]
             static_assert(Base <= 16, "wrong Base");
-            static_assert(Digits <= 4, "wrong Digits");
-            
-            typedef uint16_t dimension_type;
-            constexpr inline static dimension_type dimension = Base * Base;
-            
-            static inline constexpr Char toChar(uint8_t d) { // todo: only [0,Base-1]
-                static_assert(Base <= 16, "wrong Base");
-                if constexpr(Base > 10) {
-                    if (d < 10) {
-                        return Char('0' + d);
-                    }        
-                    else {
-                        return Char('a' + d - 10);
-                    }
-                }
-                else { // Base <= 10
-                    return Char(('0' + d));
+            if constexpr(Base > 10) {
+                if (d < 10) {
+                    return Char('0' + d);
+                }        
+                else {
+                    return Char('a' + d - 10);
                 }
             }
-
-        }; // class Convert
+            else { // Base <= 10
+                return Char(('0' + d));
+            }
+        }
         
-    
         template<int Position, uint8_t Base, Integral T, auto  L>
         inline constexpr uint8_t itoa_single_impl(T& value, std::array<Char, L>& data) {
             static_assert((Position < 0) || (Position < L), "wrong length");
             if constexpr(Position >= 0) {
                 uint8_t fraction = value % Base;
-                data[Position] = Convert<1, Base>::toChar(fraction);
+                data[Position] = toChar<Base>(fraction);
                 value /= Base;
                 if (value == 0) {
                     return Position;
@@ -86,7 +76,7 @@ namespace etl {
             uint8_t position = std::numeric_limits<uint8_t>::max();
             do {
                 uint8_t fraction = v % Base;
-                data[++position] = Convert<1, Base>::toChar(fraction);
+                data[++position] = toChar<Base>(fraction);
                 v /= Base;
             } while(v > 0);
             
@@ -95,11 +85,12 @@ namespace etl {
                     data[++position] = Char{'-'};
                 }
             }    
-//            data[position + 1] = Char{'\0'};    
+            //            data[position + 1] = Char{'\0'};    
             std::reverse(&data[0], &data[position]);
+//            etl::reverse(data);
             return data;
         }
-
+        
         template<uint8_t Position, typename T, typename C>
         constexpr auto& ftoa_impl(T& v, C& data)  {
             typedef fragmentType_t<T> FT;

@@ -27,8 +27,8 @@ namespace std {
     template<typename T, auto Size>
     struct array final {
         typedef T value_type;
-        typedef typename std::conditional<(Size < 256), uint8_t, uint16_t>::type size_type;
-        typedef typename std::conditional<(Size < 128), int8_t, int16_t>::type signed_size_type;
+        typedef typename std::conditional_t<(Size < 256), uint8_t, uint16_t> size_type;
+        typedef typename std::conditional_t<(Size < 128), int8_t, int16_t> signed_size_type;
         
         static_assert(Size <= std::numeric_limits<uint16_t>::max());
         
@@ -56,15 +56,15 @@ namespace std {
         inline constexpr volatile T* end() volatile {
             return &data[Size];
         }
-        inline constexpr T& operator[](size_type index) {
-            assert(index < Size);
-            return data[index];
-        }
         inline constexpr volatile T& operator[](size_type index) volatile {
             assert(index < Size);
             return data[index];
         }
         inline constexpr const volatile T& operator[](size_type index) const volatile {
+            assert(index < Size);
+            return data[index];
+        }
+        inline constexpr T& operator[](size_type index) {
             assert(index < Size);
             return data[index];
         }

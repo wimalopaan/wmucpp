@@ -17,11 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+# 1. Fuses (16MHz, BootLoader)
+# sudo avrdude -p atmega328pb -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P usb -c avrisp2 -U lfuse:w:0xf7:m -U hfuse:w:0xd4:m -U efuse:w:0xff:m
+# 2. Bootloader flached -> booloader/optiboot.txt
+# 
+# sudo avrdude -p atmega328pb -c arduino -b 9600 -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P /dev/ttyUSB2 -U flash:w:test00.elf
 
-# sudo avrdude -p atmega328pb -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P usb -c avrisp2 -U lfuse:w:0xf7:m -U hfuse:w:0xd9:m -U efuse:w:0xf7:m
-
-# EEProm Inhalt nicht löschen
-# sudo avrdude -p atmega328pb -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P usb -c avrisp2 -U lfuse:w:0xf7:m -U hfuse:w:0xd1:m -U efuse:w:0xf7:m
 
 MCU = atmega328pb
 F_OSC = 16000000

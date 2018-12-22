@@ -26,9 +26,6 @@
 
 #include <etl/concepts.h>
 
-//#include "std/concepts.h"
-//#include "units/duration.h"
-
 namespace External {
     namespace Units {
         
@@ -123,6 +120,11 @@ namespace External {
             uint32_t x = v;
             uint32_t fl = f.value;
             return {(uint32_t)((x * microseconds::period_type::denom) / fl)};
+        }
+        constexpr hertz operator/(uint16_t v, const milliseconds& f) {
+            uint32_t x = v;
+            uint32_t fl = f.value;
+            return {(uint32_t)((x * milliseconds::period_type::denom) / fl)};
         }
         
         template<typename T>
