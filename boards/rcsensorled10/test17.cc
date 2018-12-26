@@ -63,7 +63,6 @@ using crWriterSensorBinary = ConstanteRateWriter<sensorData, sensorUsart>;
 using menuData = Hott::SensorTextProtocollBuffer<0>;
 using crWriterSensorText = ConstanteRateWriter<menuData, sensorUsart>;
 
-
 struct AsciiHandler {
     static void start() {
         crWriterSensorText::enable<true>();

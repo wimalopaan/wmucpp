@@ -66,7 +66,7 @@ namespace etl {
         }
         
         template<uint8_t Base, Integral T, typename C>
-        constexpr auto& itoa_impl(const T& value, C& data) {
+        inline constexpr auto& itoa_impl(const T& value, C& data) {
             T v = value;
             if constexpr(std::is_signed<T>::value) {
                 if (value < 0) {
@@ -92,7 +92,7 @@ namespace etl {
         }
         
         template<uint8_t Position, typename T, typename C>
-        constexpr auto& ftoa_impl(T& v, C& data)  {
+        inline constexpr auto& ftoa_impl(T& v, C& data)  {
             typedef fragmentType_t<T> FT;
             v *= 10;
             if (v != 0) {
@@ -107,7 +107,7 @@ namespace etl {
     } // detail
     
     template<uint8_t Base = 10, Integral T = uint8_t, typename C>
-    constexpr auto& itoa_r(T value, C& data)  {
+    inline constexpr auto& itoa_r(T value, C& data)  {
         static_assert((Base >= 2) && (Base <= 16), "wrong base");
         static_assert(data.size() >= numberOfDigits<T, Base>(), "wrong length");
         constexpr uint8_t Position = numberOfDigits<T, Base>() - 1;
@@ -128,7 +128,7 @@ namespace etl {
     }
     
     template<uint8_t Base = 10, Integral T = uint8_t, typename C>
-    constexpr auto& itoa(const T& value, C& data) {
+    inline constexpr auto& itoa(const T& value, C& data) {
         static_assert((Base >= 2) && (Base <= 16), "wrong base");
         static_assert(data.size() >= numberOfDigits<T, Base>(), "wrong char buffer length");
         static_assert(std::is_same<typename C::value_type, Char>::value, "not a char container");
@@ -137,7 +137,7 @@ namespace etl {
     
     template<typename T, Container C>
     requires (T::valid_bits > 0)
-    constexpr auto& ftoa(const T& f, C& data)  {
+    inline constexpr auto& ftoa(const T& f, C& data)  {
         static_assert(data.size() >= numberOfDigits<T, 10>() + 1, "wrong char buffer length");
         enclosingType_t<typename T::value_type> v = f.value;
         data[0] = Char{'.'};

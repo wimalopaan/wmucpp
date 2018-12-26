@@ -102,36 +102,36 @@ namespace etl {
     
     // todo: UDL-op for FP<uint16_t, 8>
     
-    constexpr FixedPoint<int16_t, 4> operator"" _fp(long double v) {
+    inline constexpr FixedPoint<int16_t, 4> operator"" _fp(long double v) {
         return FixedPoint<int16_t, 4>{(double)v};
     }
     
     template<typename T, auto Bits>
-    FixedPoint<T, Bits> operator-(FixedPoint<T, Bits> lhs, const FixedPoint<T, Bits>& rhs) {
+    inline FixedPoint<T, Bits> operator-(FixedPoint<T, Bits> lhs, const FixedPoint<T, Bits>& rhs) {
         return lhs -= rhs;
     }
     
     template<typename T, auto Bits, typename D>
-    FixedPoint<T, Bits> operator/(FixedPoint<T, Bits> lhs, const D& rhs) {
+    inline FixedPoint<T, Bits> operator/(FixedPoint<T, Bits> lhs, const D& rhs) {
         return lhs /= rhs;
     }
     
     template<typename T, uint8_t FB>
-    FixedPoint<T, FB> operator*(FixedPoint<T, FB> lhs, FixedPoint<T, FB> rhs) {
+    inline FixedPoint<T, FB> operator*(FixedPoint<T, FB> lhs, FixedPoint<T, FB> rhs) {
         enclosingType_t<T> p = lhs.raw() * rhs.raw();
         return FixedPoint<T, FB>::fromRaw(p >> FB);
     }
     
     namespace detail {
         template<AVR::Concepts::Stream Stream, typename T, uint8_t Bits>
-        void out_impl(const Fraction<T, Bits>& f) {
+        inline void out_impl(const Fraction<T, Bits>& f) {
             array<Char, 1 + numberOfDigits<Fraction<T, Bits>>()> buffer; // dot + sentinel
             ftoa(f, buffer);
             out_impl<Stream>(buffer);
         }
         
         template<AVR::Concepts::Stream Stream, Signed T, auto Bits>
-        void out_impl(const FixedPoint<T, Bits>& f) {
+        inline void out_impl(const FixedPoint<T, Bits>& f) {
             if (f.raw() < 0) {
                 out_impl<Stream>(Char{'-'});
             }
@@ -140,7 +140,7 @@ namespace etl {
         }
     
         template<AVR::Concepts::Stream Stream, Unsigned T, uint8_t Bits>
-        void out_impl(const FixedPoint<T, Bits>& f) {
+        inline void out_impl(const FixedPoint<T, Bits>& f) {
             out_impl<Stream>(f.integerAbs());
             out_impl<Stream>(f.fraction());
         }

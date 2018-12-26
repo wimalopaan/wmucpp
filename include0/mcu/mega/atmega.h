@@ -3,12 +3,12 @@
 #include "../common/register.h"
 
 #include <array>
-#include <external/units/physical.h>
-
+#include <type_traits>
 #include <etl/algorithm.h>
 
+#include <external/units/physical.h>
+
 namespace AVR {
-    
     template<typename BitsType>
     struct PrescalerPair {
         typedef BitsType  bits_type;
@@ -75,7 +75,7 @@ namespace AVR {
         using hertz     = External::Units::hertz;
         
         using namespace Project;
-        
+
         template<typename T>
         struct TimerSetupData final {
             const uint16_t prescaler = 0;
@@ -148,43 +148,43 @@ namespace AVR {
             return 0;
         }
         
-        template<typename MCUTimer, typename T>
-        constexpr uint16_t calculatePpmInParameter() {
-            using namespace std::literals::chrono;
-            using pBits = typename MCUTimer::mcu_timer_type::template PrescalerBits<MCUTimer::number>;
-            auto p = prescalerValues(pBits::values);
+//        template<typename MCUTimer, typename T>
+//        constexpr uint16_t calculatePpmInParameter() {
+//            using namespace std::literals::chrono;
+//            using pBits = typename MCUTimer::mcu_timer_type::template PrescalerBits<MCUTimer::number>;
+//            auto p = prescalerValues(pBits::values);
             
-            for(const auto& p : etl::sort(p)) {
-                if (p > 0) {
-                    const hertz f = Config::fMcu / p;
-                    const uint16_t ppmMin = 1_ms * f;
-                    const uint16_t ppmMax = 2_ms * f;
-                    if ((ppmMax < std::numeric_limits<T>::max()) && (ppmMin > 1)) {
-                        return p;
-                    }
-                }
-            }
-            return 0;
-        }
+//            for(const auto& p : etl::sort(p)) {
+//                if (p > 0) {
+//                    const hertz f = Config::fMcu / p;
+//                    const uint16_t ppmMin = 1_ms * f;
+//                    const uint16_t ppmMax = 2_ms * f;
+//                    if ((ppmMax < std::numeric_limits<T>::max()) && (ppmMin > 1)) {
+//                        return p;
+//                    }
+//                }
+//            }
+//            return 0;
+//        }
         
-        template<typename MCUTimer, typename T>
-        constexpr uint16_t calculatePpmOutParameter() {
-            using namespace std::literals::chrono;
-            using pBits = typename MCUTimer::mcu_timer_type::template PrescalerBits<MCUTimer::number>;
-            auto p = prescalerValues(pBits::values);
+//        template<typename MCUTimer, typename T>
+//        constexpr uint16_t calculatePpmOutParameter() {
+//            using namespace std::literals::chrono;
+//            using pBits = typename MCUTimer::mcu_timer_type::template PrescalerBits<MCUTimer::number>;
+//            auto p = prescalerValues(pBits::values);
             
-            for(const auto& p : etl::sort(p)) {
-                if (p > 0) {
-                    const hertz f = Config::fMcu / p;
-                    const uint32_t ppmMin = 1_ms * f;
-                    const uint32_t ppmMax = 20_ms * f;
-                    if ((ppmMax < std::numeric_limits<T>::max()) && (ppmMin > 1)) {
-                        return p;
-                    }
-                }
-            }
-            return 0;
-        }
+//            for(const auto& p : etl::sort(p)) {
+//                if (p > 0) {
+//                    const hertz f = Config::fMcu / p;
+//                    const uint32_t ppmMin = 1_ms * f;
+//                    const uint32_t ppmMax = 20_ms * f;
+//                    if ((ppmMax < std::numeric_limits<T>::max()) && (ppmMin > 1)) {
+//                        return p;
+//                    }
+//                }
+//            }
+//            return 0;
+//        }
         
         template<typename MCUTimer>
         constexpr TimerSetupData<typename MCUTimer::value_type> caculateForExactFrequencyAbove(const hertz& f) {

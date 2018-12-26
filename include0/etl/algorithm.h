@@ -25,7 +25,7 @@
 
 namespace etl {
     template <typename T, auto N, typename Comp = std::greater<T>>
-    constexpr std::array<T, N>& sort(std::array<T, N>& array, Comp compare = std::greater<T>()) {
+    inline constexpr std::array<T, N>& sort(std::array<T, N>& array, Comp compare = std::greater<T>()) {
         for(uint8_t i = 0; i < (N - 1);) {
             if (compare(array[i], array[i + 1])) {
                 using std::swap;

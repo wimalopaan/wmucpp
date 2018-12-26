@@ -63,6 +63,20 @@ namespace etl {
             in = next;
             return true;
         }
+        inline bool push_back(const T& item) {
+            asm("; replace udivmod");
+            size_type next = in + 1;
+            if (next == Size) next = 0;
+            {
+                Scoped<DisbaleInterrupt<RestoreState>, !sizeIsAtomic> di;
+                if (out == next) {
+                    return false;
+                }
+            }
+            data[in] = item;
+            in = next;
+            return true;
+        }
         inline bool pop_front(T& item) volatile {
             {
                 Scoped<DisbaleInterrupt<RestoreState>, !sizeIsAtomic> di;

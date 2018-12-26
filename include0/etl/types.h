@@ -18,16 +18,16 @@ namespace etl {
     struct NamedConstant : integral_constant<decltype(c), c> {};
     
     template<auto Bits>
-    class bitsN_t {
+    class bitsN_t final {
     public:
         inline static constexpr auto size = Bits;
         typedef typeForBits_t<Bits> value_type;
         inline static constexpr value_type mask = ((1 << Bits) - 1);
-        constexpr bitsN_t(const volatile bitsN_t& o) : mValue{o.mValue} {}
-        constexpr bitsN_t() = default;
-        constexpr explicit bitsN_t(value_type v) : mValue(v & mask) {}
-        constexpr explicit bitsN_t(std::byte v) : mValue(std::to_integer<value_type>(v) & mask) {}
-        constexpr explicit operator value_type() const {
+        inline constexpr bitsN_t(const volatile bitsN_t& o) : mValue{o.mValue} {}
+        inline constexpr bitsN_t() = default;
+        inline constexpr explicit bitsN_t(value_type v) : mValue(v & mask) {}
+        inline constexpr explicit bitsN_t(std::byte v) : mValue(std::to_integer<value_type>(v) & mask) {}
+        inline constexpr explicit operator value_type() const {
             return mValue;
         }
     private:
@@ -35,15 +35,15 @@ namespace etl {
     };
     
     template<auto Bits>
-    class uintN_t {
+    class uintN_t final {
     public:
         typedef typeForBits_t<Bits> value_type;
         inline static constexpr value_type mask = ((1 << Bits) - 1);
-        explicit uintN_t(value_type v = 0) : mValue(v & mask) {}
-        constexpr operator value_type() const {
+        inline explicit uintN_t(value_type v = 0) : mValue(v & mask) {}
+        inline constexpr operator value_type() const {
             return mValue;
         }
-        constexpr uintN_t& operator++() {
+        inline constexpr uintN_t& operator++() {
             ++mValue;
             mValue &= mask;
             return *this;
@@ -109,13 +109,13 @@ namespace etl {
             --mValue;
             return *this;
         }
-        inline constexpr bool operator==(uint_NaN rhs) volatile {
+        inline constexpr bool operator==(uint_NaN rhs) const volatile {
             if (*this && rhs) {
                 return mValue == rhs.mValue;
             }
             return false;
         }
-        inline constexpr bool operator<=(uint_NaN rhs) volatile {
+        inline constexpr bool operator<=(uint_NaN rhs) const volatile {
             if (*this && rhs) {
                 return mValue <= rhs.mValue;
             }
@@ -131,54 +131,54 @@ namespace etl {
         inline static constexpr T Upper = UpperBound;
         typedef T type;
         
-        constexpr uint_ranged(T v = 0) : mValue(v) {
+        inline constexpr uint_ranged(T v = 0) : mValue(v) {
             assert(v >= LowerBound);
             assert(v <= UpperBound);
         }
         
-        constexpr uint_ranged(const volatile uint_ranged& o) : mValue(o.mValue) {}
+        inline constexpr uint_ranged(const volatile uint_ranged& o) : mValue(o.mValue) {}
         
-        constexpr bool isTop() const {
+        inline constexpr bool isTop() const {
             return mValue == Upper;
         }
         
-        constexpr bool isBottom() const {
+        inline constexpr bool isBottom() const {
             return mValue == Lower;
         }
         
-        constexpr bool operator>(T rhs) {
+        inline constexpr bool operator>(T rhs) const {
             return mValue > rhs;
         }
-        constexpr bool operator>(T rhs) volatile {
+        inline constexpr bool operator>(T rhs) const volatile {
             return mValue > rhs;
         }
-        uint_ranged& operator--() {
+        inline uint_ranged& operator--() {
             if (mValue > LowerBound) {
                 --mValue;
             }
             return *this;
         }
-        void operator++() volatile {
+        inline void operator++() volatile {
             if (mValue < UpperBound) {
                 ++mValue;
             }
         }
-        uint_ranged& operator++() {
+        inline uint_ranged& operator++() {
             if (mValue < UpperBound) {
                 ++mValue;
             }
             return *this;
         }
-        constexpr bool operator==(T rhs) {
+        inline constexpr bool operator==(T rhs) const {
             return mValue == rhs;
         }
-        constexpr uint_ranged& operator=(T rhs) {
+        inline constexpr uint_ranged& operator=(T rhs) {
             assert(rhs >= LowerBound);
             assert(rhs <= UpperBound);
             mValue = rhs;
             return *this;
         }
-        constexpr void operator=(T rhs) volatile {
+        inline constexpr void operator=(T rhs) volatile {
             assert(rhs >= LowerBound);
             assert(rhs <= UpperBound);
             mValue = rhs;
@@ -189,15 +189,16 @@ namespace etl {
         constexpr operator T() volatile const {
             return mValue;
         }
-        constexpr T toInt() const {
+        inline constexpr T toInt() const {
             return mValue;
         }
-        constexpr T toInt() volatile const {
+        inline constexpr T toInt() volatile const {
             return mValue;
         }
     private:
         T mValue{0};
     };
+    
     template<Unsigned T = uint8_t, T LowerBound = 0, T UpperBound = std::numeric_limits<T>::max() - 1>
     class uint_ranged_NaN final {
     public:
@@ -209,51 +210,110 @@ namespace etl {
         
         typedef T type;
         
-        constexpr uint_ranged_NaN() = default;
+        inline constexpr uint_ranged_NaN() = default;
         
-        constexpr uint_ranged_NaN(T v) : mValue(v) {
+        inline constexpr uint_ranged_NaN(T v) : mValue(v) {
             assert(v >= LowerBound);
             assert(v <= UpperBound);
         }
         
-        constexpr explicit operator bool() const {
+        inline constexpr explicit operator bool() const {
             return mValue != NaN;
         }
         
-        constexpr bool operator>(T rhs) {
+        inline constexpr bool operator>(T rhs) const {
             return mValue > rhs;
         }
-        uint_ranged_NaN& operator--() {
+        inline uint_ranged_NaN& operator--() {
             if (mValue > LowerBound) {
                 --mValue;
             }
             return *this;
         }
-        uint_ranged_NaN& operator++() {
+        inline uint_ranged_NaN& operator++() {
             if (mValue < UpperBound) {
                 ++mValue;
             }
             return *this;
         }
-        constexpr bool operator==(T rhs) {
+        inline constexpr bool operator==(T rhs) const {
             return mValue == rhs;
         }
-        constexpr uint_ranged_NaN& operator=(T rhs) {
+        inline constexpr uint_ranged_NaN& operator=(T rhs) {
             assert(rhs >= LowerBound);
             assert(rhs <= UpperBound);
             mValue = rhs;
             return *this;
         }
-    //    constexpr operator T() const {
-    //        return mValue;
-    //    }
-        constexpr T toInt() const {
+        inline constexpr T toInt() const {
             return mValue;
         }
+        inline constexpr uint_ranged_NaN<T, LowerBound, UpperBound> invert() const {
+            if (*this) {
+                return uint_ranged_NaN<T, LowerBound, UpperBound>((UpperBound - mValue) + LowerBound);
+            }
+            return *this;
+        }
+        
     private:
         T mValue{NaN};
     };
 
+    template<Unsigned T = uint8_t, T LowerBound = 0, T UpperBound = std::numeric_limits<T>::max()>
+    class uint_ranged_circular final {
+        static_assert(LowerBound < UpperBound);
+    public:
+        inline static constexpr T Lower = LowerBound;
+        inline static constexpr T Upper = UpperBound;
+        typedef T type;
+        
+        inline constexpr uint_ranged_circular() = default;
+        
+        inline constexpr explicit uint_ranged_circular(T v) : mValue(v) {
+            assert(v >= LowerBound);
+            assert(v <= UpperBound);
+        }
+        
+        inline constexpr bool operator>(T rhs) const {
+            return mValue > rhs;
+        }
+        inline uint_ranged_circular& operator--() {
+            if (mValue > LowerBound) {
+                --mValue;
+            }
+            else {
+                mValue = UpperBound;
+            }
+            return *this;
+        }
+        inline uint_ranged_circular& operator++() {
+            if (mValue < UpperBound) {
+                ++mValue;
+            }
+            else {
+                mValue = LowerBound;
+            }
+            return *this;
+        }
+        inline constexpr uint_ranged_circular& operator=(T rhs) {
+            assert(rhs >= LowerBound);
+            assert(rhs <= UpperBound);
+            mValue = rhs;
+            return *this;
+        }
+        inline constexpr uint_ranged<T, LowerBound, UpperBound> toRanged() const {
+            return {mValue};
+        }
+        inline constexpr operator T() const {
+            return mValue;
+        }
+        inline constexpr T toInt() const {
+            return mValue;
+        }
+    private:
+        T mValue{LowerBound};
+    };
+    
     template<typename T>
     struct combinedType;
     
@@ -264,12 +324,12 @@ namespace etl {
     };
     
     template<typename T>
-    typename combinedType<T>::type combinedValue(volatile const pair<T, T>& p) {
+    inline typename combinedType<T>::type combinedValue(volatile const pair<T, T>& p) {
         return (p.first << combinedType<T>::shift) + p.second;
     }
     
     template<typename T>
-    typename combinedType<T>::type combinedValue(const pair<T, T>& p) {
+    inline typename combinedType<T>::type combinedValue(const pair<T, T>& p) {
         return (p.first << combinedType<T>::shift) + p.second;
     }
 }

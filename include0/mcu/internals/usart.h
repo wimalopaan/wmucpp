@@ -78,6 +78,8 @@ namespace AVR {
         typedef typename usart_type::SRB ucsrb_type;
         typedef typename usart_type::SRC ucsrc_type;
         typedef PA                       protocoll_adapter_type;
+
+        typedef useISR use_isr_type;
         
         typedef typename std::conditional<useISR::value, volatile etl::FiFo<std::byte, SendQLength::value>, etl::FiFo<std::byte, SendQLength::value>>::type send_queue_type;
         typedef typename std::conditional<useISR::value, volatile etl::FiFo<std::byte, RecvQLength::value>, etl::FiFo<std::byte, RecvQLength::value>>::type recv_queue_type;
@@ -85,6 +87,7 @@ namespace AVR {
         static constexpr auto mcu_usart = getBaseAddr<typename MCU::Usart, N>;
         static_assert(N < MCU::Usart::count, "wrong number of usart");
         
+      
         struct RxHandler : public IsrBaseHandler<typename AVR::ISR::Usart<N>::RX> {
             friend usart;
             template<bool visible = useISR::value, typename = std::enable_if_t<visible>>

@@ -25,15 +25,12 @@ namespace Hott {
     struct MultiChannel final {
         inline static constexpr uint8_t size = 8;
         enum class State {Off = 0, Up, Down};
-    private:
-        volatile uint16_t mData{0};
-    public:
-        inline State state(uint8_t index) volatile {
+        inline State state(uint8_t index) const {
             assert(index < size);
             uint16_t mask = 0b11 << (2 * index);
             return (State)((mData & mask) >> (2 * index));
         }
-        inline void set(uint8_t index, uint8_t fromValue) volatile {
+        inline void set(uint8_t index, uint8_t fromValue) {
             uint16_t mask = 0b11 << (2 * index);
             if (fromValue == SumDMsg::High8Bit) {
                 mData = (mData & ~mask) | ((uint16_t)State::Up << (2 * index));
@@ -45,6 +42,8 @@ namespace Hott {
                 mData = (mData & ~mask) | ((uint16_t)State::Down << (2 * index));
             }
         }
+    private:
+        uint16_t mData{0};
     };
     
     template<uint8_t M, etl::Concepts::NamedFlag UseInts = AVR::UseInterrupts<true>>
@@ -53,7 +52,9 @@ namespace Hott {
         typedef enum sumdstate sumdstate_t;
         
         enum class MultiState : uint8_t {Undefined = 0, Sync1, Sync2, Data};
-        inline static MultiState mMultiState = MultiState::Undefined;
+
+        using MultiStateType = std::conditional_t<UseInts::value, volatile MultiState, MultiState>;
+        inline static MultiStateType mMultiState = MultiState::Undefined;
         inline static uint8_t mMultiChannel = 0;
 
         using channelForMutliChannelType = std::conditional_t<UseInts::value, volatile uint8_t, uint8_t>;

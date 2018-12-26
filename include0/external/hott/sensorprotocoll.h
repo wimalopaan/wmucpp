@@ -40,18 +40,18 @@ namespace Hott {
         typedef uint8_t item_type;
         static constexpr uint8_t rows = 8;
         static constexpr uint8_t columns = 21;
-        uint8_t start_byte = 0;		//#01 Starting constant value == 0x7b
+        const uint8_t start_byte = 0x7b;		//#01 Starting constant value == 0x7b
         uint8_t esc = 0;				//#02 Escape (higher-ranking menu in text mode or Text mode leave)
         uint8_t warning_beeps = 0;	//#03 1=A 2=B ...
         std::array<etl::StringBuffer<columns>, rows> text{};
-        uint8_t stop_byte = 0;		//#172 constant value 0x7d
+        const uint8_t stop_byte = 0x7d;		//#172 constant value 0x7d
         uint8_t parity = 0;			//#173 Checksum / parity
     };
     
     struct GamMsg {
         typedef uint8_t item_type;
-        uint8_t start_byte = 0;          //#01 start byte constant value 0x7c
-        uint8_t gam_sensor_id = 0;       //#02 EAM sensort id. constat value 0x8d=GENRAL AIR MODULE
+        const uint8_t start_byte = 0x7c;          //#01 start byte constant value 0x7c
+        const uint8_t gam_sensor_id = 0x8d;       //#02 EAM sensort id. constat value 0x8d=GENRAL AIR MODULE
         uint8_t warning_beeps = 0;       //#03 1=A 2=B ... 0x1a=Z  0 = no alarm
         /* VOICE OR BIP WARNINGS
                             Alarme sonore A.. Z, octet correspondant 1 à 26
@@ -83,7 +83,7 @@ namespace Hott {
                             0x19  25  Y  Maximum RPM Y
                             0x1A  26  Z  Max. Altitude Z
                                 */
-        uint8_t sensor_id = 0;             	        //#04 constant value 0xd0
+        const uint8_t sensor_id = 0xd0;             	        //#04 constant value 0xd0
         uint8_t alarm_invers1 = 0; //#05 alarm bitmask. Value is displayed inverted
         //Bit#  Alarm field
         // 0    all cell voltage
@@ -145,7 +145,7 @@ namespace Hott {
         uint8_t general_error_number = 0;      	//#41 General Error Number (Voice Error == 12)
         uint8_t pressure = 0;                        //#42 High pressure up to 16bar. 0,1bar scale. 20 == 2.0bar
         uint8_t version = 0;                         //#43 version number (Bytes 35 .43 new but not yet in the record in the display!)
-        uint8_t stop_byte = 0;                       //#44 stop byte 0x7D
+        const uint8_t stop_byte = 0x7d;                       //#44 stop byte 0x7D
         uint8_t parity = 0;                          //#45 CHECKSUM CRC/Parity (calculated dynamicaly)
     };
     

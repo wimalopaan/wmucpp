@@ -20,25 +20,26 @@
 
 #include <cstdint>
 #include <optional>
-
-//#include "util/fixedpoint.h"
-#include "sensorprotocoll.h"
-
 #include <etl/fixedpoint.h>
 
+#include "sensorprotocoll.h"
+
 namespace Hott {
-    
     using namespace etl;
     using namespace External::Units;
     
     template<uint8_t N>
     class SensorProtocollBuffer final {
+        SensorProtocollBuffer() = delete;
+
+        inline static GamMsg hottBinaryResponse{}; 
     public:
         typedef uint8_t index_type;
+
         static constexpr const uint8_t number = N;
         static constexpr const uint8_t cyclesBeforeAnswer = 1 + Hott::hottDelayBeforeAnswer / Hott::hottDelayBetweenBytes;
-        
-        SensorProtocollBuffer() = delete;
+
+        static_assert((cyclesBeforeAnswer + sizeof(hottBinaryResponse)) < std::numeric_limits<index_type>::max());
 
         inline static std::optional<std::byte> get(uint8_t index) {
             if (index < cyclesBeforeAnswer) {
@@ -59,10 +60,10 @@ namespace Hott {
             hottBinaryResponse.parity = 0;
         }
         inline static constexpr void init() {
-            hottBinaryResponse.start_byte = 0x7c;
-            hottBinaryResponse.gam_sensor_id = 0x8d;
-            hottBinaryResponse.sensor_id = 0xd0;
-            hottBinaryResponse.stop_byte = 0x7d;
+//            hottBinaryResponse.start_byte = 0x7c;
+//            hottBinaryResponse.gam_sensor_id = 0x8d;
+//            hottBinaryResponse.sensor_id = 0xd0;
+//            hottBinaryResponse.stop_byte = 0x7d;
         }
         
         inline static void rpm1(const RPM& v) {
@@ -137,9 +138,6 @@ namespace Hott {
             hottBinaryResponse.parity += std::to_integer<uint8_t>(value);
             return value;    
         }
-        
-        inline static GamMsg hottBinaryResponse{}; 
-        static_assert((cyclesBeforeAnswer + sizeof(hottBinaryResponse)) < std::numeric_limits<uint8_t>::max());
         
     };
 }

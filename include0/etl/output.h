@@ -139,18 +139,18 @@ namespace etl {
 //        }
 
         template<AVR::Concepts::Stream Stream, typename T, uint8_t Bits>
-        void out_impl(const Fraction<T, Bits>& f);
+        inline void out_impl(const Fraction<T, Bits>& f);
         
         template<AVR::Concepts::Stream Stream, etl::Concepts::Signed T, uint8_t Bits>
-        void out_impl(const FixedPoint<T, Bits>& f);
+        inline void out_impl(const FixedPoint<T, Bits>& f);
 
         template<AVR::Concepts::Stream Stream, etl::Concepts::Unsigned T, uint8_t Bits>
-        void out_impl(const FixedPoint<T, Bits>& f);
+        inline void out_impl(const FixedPoint<T, Bits>& f);
         
     } // detail
     
     template<Stream Stream, typename... TT>
-    constexpr void out(const TT&... v __attribute__((unused))) {
+    inline constexpr void out(const TT&... v __attribute__((unused))) {
         using ::etl::detail::out_impl;
         if constexpr(!std::is_same_v<typename Stream::device_type, void>) {
             ((out_impl<Stream>(v)),...);
@@ -158,7 +158,7 @@ namespace etl {
     }
 
     template<Stream Stream, typename... TT>
-    constexpr void outl(const TT&... v __attribute__((unused))) {
+    inline constexpr void outl(const TT&... v __attribute__((unused))) {
         if constexpr(!std::is_same_v<typename Stream::device_type, void>) {
             using ::etl::detail::out_impl;
             ((out_impl<Stream>(v)),..., out_impl<Stream>(typename Stream::line_terminator_type()));

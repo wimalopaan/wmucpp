@@ -36,7 +36,7 @@ namespace etl {
             return Length;
         }
     
-        constexpr StringBuffer() = default;
+        inline constexpr StringBuffer() = default;
         StringBuffer(const StringBuffer&) = delete;
         StringBuffer& operator=(const StringBuffer&) = delete;
         StringBuffer& operator=(StringBuffer&&) = delete;
@@ -134,16 +134,16 @@ namespace etl {
         static constexpr uint8_t size = Length;
     
         template<typename C>
-        StringBufferView(const C& c) : data((const ItemType*)c.begin() + Begin) {
+        inline StringBufferView(const C& c) : data((const ItemType*)c.begin() + Begin) {
             static_assert((Begin + Length) <= C::length, "wrong begin or length");
         }
-        const ItemType* begin() const {
+        inline const ItemType* begin() const {
             return data;
         }
-        const ItemType* end() const {
+        inline const ItemType* end() const {
             return data + Length;
         }
-        constexpr const ItemType& operator[](uint8_t index) const {
+        inline constexpr const ItemType& operator[](uint8_t index) const {
             assert(index < size);
             return data[index];
         }
@@ -157,17 +157,17 @@ namespace etl {
         typedef ItemType value_type;
     
         template<typename C>
-        StringBufferPart(C& c) : data(c.begin() + Begin) {
+        inline StringBufferPart(C& c) : data(c.begin() + Begin) {
             static_assert((Begin + Length) <= C::length, "wrong begin or length");
         }
     
         static constexpr uint8_t size = Length;
         
-        constexpr const ItemType& operator[](uint8_t index) const {
+        inline constexpr const ItemType& operator[](uint8_t index) const {
             assert(index < size);
             return data[index];
         }
-        constexpr ItemType& operator[](uint8_t index) {
+        inline constexpr ItemType& operator[](uint8_t index) {
             assert(index < size);
             return data[index];
         }
@@ -181,17 +181,17 @@ namespace etl {
     public:
         BufferDevice(Buffer& b) : mBuffer(b) {}
         
-        bool put(typename Buffer::value_type c) {
+        inline bool put(typename Buffer::value_type c) {
             if (counter < Buffer::size) {
                 mBuffer[counter] = c;
                 ++counter;
             }
             return true;  
         }
-        Buffer& buffer() {
+        inline Buffer& buffer() {
             return mBuffer;
         }
-        void rewind() {
+        inline void rewind() {
             counter = 0;
         }
     
@@ -201,7 +201,7 @@ namespace etl {
     };
       
     template<typename C, uint8_t L1, uint8_t L2>
-    StringBuffer<L1 + L2, C> operator+(const StringBuffer<L1, C>& lhs, const StringBuffer<L2, C>& rhs) {
+    inline StringBuffer<L1 + L2, C> operator+(const StringBuffer<L1, C>& lhs, const StringBuffer<L2, C>& rhs) {
         StringBuffer<(uint8_t)(L1 + L2), C> sum;
         sum.insertAt(0, lhs);
         sum.insertAt(lhs.size - 1, rhs);

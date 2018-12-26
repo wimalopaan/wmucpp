@@ -25,24 +25,11 @@ namespace Hott {
     using namespace std;    
     using namespace etl;
     
-    //    template<uint16_t N, uint16_t Thresh, typename CT = uint16_t>
-    //    struct NullPA {
-    //        inline static bool process(std::byte) { // from isr only
-    //            static CT counter = 0;
-    //            if (++counter > Thresh) {
-    //                EventManager::enqueue({EventType::NullPAEvent, std::byte{N}});
-    //                counter = 0;
-    //            }
-    //            return true;
-    //        }    
-    //    };
-    
     template<uint8_t M, typename AsciiHandler, typename BinaryHandler, typename BCastHandler>
     class SensorProtocollAdapter final {
         enum class hottstate {Undefined = 0, Request1, RequestA1, NumberOfStates};
-    public:
         SensorProtocollAdapter() = delete;
-    private:
+    public:
         inline static bool process(std::byte c) { // from isr only (1,5µs)
             static hottstate state = hottstate::Undefined;
             switch (state) {

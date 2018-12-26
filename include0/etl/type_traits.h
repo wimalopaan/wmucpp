@@ -61,13 +61,12 @@ namespace etl {
     }
     
     template<typename E, typename = std::enable_if_t<std::enable_bitmask_operators_v<E>>>
-    inline constexpr bool
-    toBool(E v) {
+    inline constexpr bool toBool(E v) {
         return static_cast<bool>(v);        
     }
     
     template<typename T>
-    constexpr uint8_t numberOfBits() {
+    inline constexpr uint8_t numberOfBits() {
         return sizeof(T) * 8;
     }
 
@@ -87,7 +86,7 @@ namespace etl {
     using namespace etl::Concepts;
     
     template<Integral T, uint8_t Base = 10>
-    constexpr uint8_t numberOfDigits() {
+    inline constexpr uint8_t numberOfDigits() {
         T v = std::numeric_limits<T>::max();
         uint8_t number = 0;
         while(v > 0) {
@@ -105,7 +104,7 @@ namespace etl {
 
     template<typename T, uint8_t Base = 10>
     requires (T::valid_bits > 0)
-    constexpr uint8_t numberOfDigits() {
+    inline constexpr uint8_t numberOfDigits() {
         double v = 1.0;
         for(uint8_t b = 0; b < T::valid_bits; ++b) {
             v /= 2.0;
@@ -118,8 +117,39 @@ namespace etl {
         return number;
     }
     
-    constexpr bool isPowerof2(int v) {
+    template<Unsigned T>
+    inline constexpr bool isPowerof2(T v) {
         return v && ((v & (v - 1)) == 0);
     }
     
+    template<typename Bit, typename T>
+    inline constexpr bool isSet(T v) {
+        if constexpr(std::is_same<T, std::byte>::value) {
+            return std::to_integer<uint8_t>(Bit::template Value<T>::value) & std::to_integer<uint8_t>(v);
+        }
+        else {
+            return Bit::template Value<T>::value & v;
+        }
+    }
+    template<typename Bit, typename T>
+    inline constexpr bool set(T& v) {
+        return v |= Bit::template Value<T>::value;
+    }
+    
+    struct MSB {
+        template<typename T>
+        struct Value {
+            inline static constexpr const T value{T(1) << (numberOfBits<T>() - 1)};
+        };
+    };  
+    struct LSB {
+        template<typename T>
+        struct Value {
+            inline static constexpr const T value = 1;
+        };
+    };  
+    template<typename T>
+    inline constexpr uint8_t numberOfOnes(T x) {
+        return (x != T{0}) ? T(x & T{0x01}) + numberOfOnes(T(x>>1u)) : 0u;
+    }
 }

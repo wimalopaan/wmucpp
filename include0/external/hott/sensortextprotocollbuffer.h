@@ -55,10 +55,10 @@ namespace Hott {
             hottTextResponse.parity = 0;
         }
         static constexpr void init() {
-            hottTextResponse.start_byte = 0x7b;
-            hottTextResponse.stop_byte = 0x7d;
+//            hottTextResponse.start_byte = 0x7b;
+//            hottTextResponse.stop_byte = 0x7d;
             hottTextResponse.esc = 0;
-            for(auto& l : hottTextResponse.text) {
+            for(auto&& l : hottTextResponse.text) {
                 l.clear();
             }
         }
@@ -68,7 +68,7 @@ namespace Hott {
     private:
         inline static std::byte getByte(uint8_t index) {
             assert(index < sizeof(hottTextResponse));
-            /*constexpr */const std::byte* ptr = (const std::byte*) &hottTextResponse;  
+            const std::byte* const ptr = reinterpret_cast<const std::byte*>(&hottTextResponse);  
             const auto value = ptr[index];
             hottTextResponse.parity += std::to_integer<uint8_t>(value);
             return value;    
