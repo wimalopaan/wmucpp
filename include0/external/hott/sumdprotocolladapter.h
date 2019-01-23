@@ -66,16 +66,17 @@ namespace Hott {
         using validType = std::conditional_t<UseInts::value, volatile bool, bool>;
         
     public:
-        
+        using value_type = uint_ranged_NaN<uint16_t, Hott::SumDMsg::Low, Hott::SumDMsg::High>;
+
         SumDProtocollAdapter() = delete;
         
         inline static uint_ranged<uint16_t, Hott::SumDMsg::ExtendedLow, Hott::SumDMsg::ExtendedHigh> valueExtended(uint8_t channel) {
             if constexpr(UseInts::value) {
                 Scoped<DisbaleInterrupt<>> di;
             }
-            if (!mValid) {
-                return {};
-            }
+//            if (!mValid) {
+//                return {};
+//            }
             uint16_t v = etl::combinedValue(mMsg.channelData[channel]);
             if (v < Hott::SumDMsg::ExtendedLow) {
                 return Hott::SumDMsg::ExtendedLow;
@@ -92,9 +93,9 @@ namespace Hott {
             if constexpr(UseInts::value) {
                 Scoped<DisbaleInterrupt<>> di;
             }
-            if (!mValid) {
-                return {};
-            }
+//            if (!mValid) {
+//                return {};
+//            }
             uint16_t v = etl::combinedValue(mMsg.channelData[channel]);
             if (v < Hott::SumDMsg::Low) {
                 return Hott::SumDMsg::Low;
@@ -110,18 +111,18 @@ namespace Hott {
             if constexpr(UseInts::value) {
                 Scoped<DisbaleInterrupt<>> di;
             }
-            if (!mValid) {
-                return {};
-            }
+//            if (!mValid) {
+//                return {};
+//            }
             return value8Bit_unsafe(channel);
         }
         inline static uint_ranged<uint8_t, Hott::SumDMsg::ExtendedLow8Bit, Hott::SumDMsg::ExtendedHigh8Bit> value8BitExtended(uint8_t channel) {
             if constexpr(UseInts::value) {
                 Scoped<DisbaleInterrupt<>> di;
             }
-            if (!mValid) {
-                return {};
-            }
+//            if (!mValid) {
+//                return {};
+//            }
             return value8BitExtended_unsafe(channel);
         }
         inline static uint8_t numberOfChannels() {
@@ -138,7 +139,9 @@ namespace Hott {
             static sumdstate state = sumdstate::Undefined;
             static uint8_t channel = 0;
             static uint16_t crc = 0;
-        
+            static uint8_t actualHighValue = Hott::SumDMsg::Mid8Bit;        
+            static uint8_t actualLowValue  = 0;
+            
             switch (state) {
             case sumdstate::Undefined:
                 if (c == std::byte{0xa8}) {
@@ -185,13 +188,18 @@ namespace Hott {
                 }
                 break;
             case sumdstate::ChannelDataH:
-                mMsg.channelData[channel].first = std::to_integer<uint8_t>(c);
-                etl::crc16(crc, mMsg.channelData[channel].first);
+                actualHighValue = std::to_integer<uint8_t>(c);
+                etl::crc16(crc, actualHighValue);
+//                mMsg.channelData[channel].first = std::to_integer<uint8_t>(c);
+//                etl::crc16(crc, mMsg.channelData[channel].first);
                 state = sumdstate::ChannelDataL;
                 break;
             case sumdstate::ChannelDataL:
-                mMsg.channelData[channel].second = std::to_integer<uint8_t>(c);
-                etl::crc16(crc, mMsg.channelData[channel].second);
+                actualLowValue = std::to_integer<uint8_t>(c);
+                etl::crc16(crc, actualLowValue);
+//                mMsg.channelData[channel].second = std::to_integer<uint8_t>(c);
+//                etl::crc16(crc, mMsg.channelData[channel].second);
+                mMsg.channelData[channel] = {actualHighValue, actualLowValue};
                 state = sumdstate::ChannelDataH;
                 ++channel;
                 if (channel < mMsg.nChannels) {

@@ -82,7 +82,6 @@ namespace etl {
     template<typename T>
     using fragmentType_t = typename detail::fragmentType<T>::type;    
     
-    
     using namespace etl::Concepts;
     
     template<Integral T, uint8_t Base = 10>

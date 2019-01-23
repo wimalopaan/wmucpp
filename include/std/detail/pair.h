@@ -21,32 +21,11 @@
 #include <cstdint>
 
 namespace std {
-    
     template<typename T, typename U>
     struct pair {
-        typedef T first_type;
-        typedef U second_type;
+        using first_type = T;
+        using second_type = U;
         T first;
         U second;
     };
-    
-    template<typename T>
-    struct combinedType;
-    
-    template<>
-    struct combinedType<uint8_t> {
-        typedef uint16_t type;
-        static constexpr const uint8_t shift = 8;
-    };
-    
-    template<typename T>
-    typename combinedType<T>::type combinedValue(volatile const pair<T, T>& p) {
-        return (p.first << combinedType<T>::shift) + p.second;
-    }
-    
-    template<typename T>
-    typename combinedType<T>::type combinedValue(const pair<T, T>& p) {
-        return (p.first << combinedType<T>::shift) + p.second;
-    }
-    
 }

@@ -5,11 +5,15 @@
 namespace AVR {
     namespace Groups {
         template<typename MCU> struct isAtMega_X8;
+        template<typename MCU> struct isAtMega_X4;
     }
     namespace Concepts {
         
         template<typename MCU>
         concept bool AtMega_X8 = AVR::Groups::isAtMega_X8<MCU>::value;
+
+        template<typename MCU>
+        concept bool AtMega_X4 = AVR::Groups::isAtMega_X4<MCU>::value;
         
         template<typename L>
         concept bool Letter = std::is_same_v<typename L::value_type, char>;

@@ -35,7 +35,7 @@ int main() {
             systemClock::periodic<systemClock::flags_type::ocfa>([&](){
                 alarmTimer::periodic([&](uint7_t timer) {
                     if (timer == *periodicTimer)  {
-                         std::outl<terminal>("test03: "_pgm, counter++);
+                         std::outl<terminal>("test04: "_pgm, counter++);
                     }
                 });
             });

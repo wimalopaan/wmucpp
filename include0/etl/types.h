@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <type_traits>
+#include <algorithm>
 
 #include "type_traits.h"
 #include "concepts.h"
@@ -20,8 +21,8 @@ namespace etl {
     template<auto Bits>
     class bitsN_t final {
     public:
+        using value_type = typeForBits_t<Bits>;
         inline static constexpr auto size = Bits;
-        typedef typeForBits_t<Bits> value_type;
         inline static constexpr value_type mask = ((1 << Bits) - 1);
         inline constexpr bitsN_t(const volatile bitsN_t& o) : mValue{o.mValue} {}
         inline constexpr bitsN_t() = default;
@@ -37,7 +38,7 @@ namespace etl {
     template<auto Bits>
     class uintN_t final {
     public:
-        typedef typeForBits_t<Bits> value_type;
+        using value_type = typeForBits_t<Bits>;
         inline static constexpr value_type mask = ((1 << Bits) - 1);
         inline explicit uintN_t(value_type v = 0) : mValue(v & mask) {}
         inline constexpr operator value_type() const {
@@ -129,7 +130,7 @@ namespace etl {
     public:
         inline static constexpr T Lower = LowerBound;
         inline static constexpr T Upper = UpperBound;
-        typedef T type;
+        using type = T;
         
         inline constexpr uint_ranged(T v = 0) : mValue(v) {
             assert(v >= LowerBound);
@@ -208,7 +209,7 @@ namespace etl {
         
         static_assert(Upper != NaN);
         
-        typedef T type;
+        using type = T;
         
         inline constexpr uint_ranged_NaN() = default;
         
@@ -216,6 +217,10 @@ namespace etl {
             assert(v >= LowerBound);
             assert(v <= UpperBound);
         }
+
+        inline constexpr uint_ranged_NaN(etl::fragmentType_t<T> higherPart, etl::fragmentType_t<T> lowerPart) :
+            uint_ranged_NaN((static_cast<T>(higherPart) << etl::numberOfBits<etl::fragmentType_t<T>>()) + lowerPart)
+        {}
         
         inline constexpr explicit operator bool() const {
             return mValue != NaN;
@@ -242,7 +247,7 @@ namespace etl {
         inline constexpr uint_ranged_NaN& operator=(T rhs) {
             assert(rhs >= LowerBound);
             assert(rhs <= UpperBound);
-            mValue = rhs;
+            mValue = std::clamp(rhs, LowerBound, UpperBound);
             return *this;
         }
         inline constexpr T toInt() const {
@@ -254,7 +259,9 @@ namespace etl {
             }
             return *this;
         }
-        
+        inline constexpr void operator+=(T value) {
+            mValue = std::min(UpperBound, mValue + value);
+        }
     private:
         T mValue{NaN};
     };
@@ -315,12 +322,9 @@ namespace etl {
     };
     
     template<typename T>
-    struct combinedType;
-    
-    template<>
-    struct combinedType<uint8_t> {
-        typedef uint16_t type;
-        static constexpr const uint8_t shift = 8;
+    struct combinedType final {
+        using type = etl::enclosingType_t<T>;
+        inline static constexpr const uint8_t shift = numberOfBits<T>();
     };
     
     template<typename T>
@@ -334,13 +338,11 @@ namespace etl {
     }
 }
 
-
 namespace std {
     template<>
     struct numeric_limits<etl::uint_NaN<uint8_t>> {
-        typedef etl::uint_NaN<uint8_t> type;
-        static constexpr uint8_t max() {return UINT8_MAX - 1;}
-        static constexpr uint8_t min() {return 0;}
+        using type = etl::uint_NaN<uint8_t>;
+        inline static constexpr uint8_t max() {return UINT8_MAX - 1;}
+        inline static constexpr uint8_t min() {return 0;}
     };
-    
 }

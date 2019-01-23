@@ -22,6 +22,7 @@
 #include <mcu/avr.h>
 #include <mcu/internals/systemclock.h>
 #include <mcu/internals/cppm.h>
+#include <mcu/internals/pwm.h>
 #include <mcu/internals/constantrate.h>
 
 #include <etl/output.h>
@@ -38,58 +39,10 @@
 # include "util/memory.h"
 #endif
  
-namespace AVR {
-    template<typename PinList, typename MCU = DefaultMcuType> struct Multiplexer;
-    
-    template<typename... Pins, typename MCU>
-    struct Multiplexer<Meta::List<Pins...>, MCU> {
-        inline static constexpr auto size = sizeof...(Pins);
-        
-        using index_type = etl::uint_ranged<uint8_t, 0, (1 << size) - 1>;
-        
-        constexpr inline static void init() {
-            (Pins::template dir<AVR::Output>(), ...);
-            (Pins::off(), ...);
-        }
-        
-        template<auto... II>
-        constexpr inline static void select(index_type number, std::index_sequence<II...>) {
-            (((number.toInt() & (1 << II)) ? Pins::on() : Pins::off()), ...);    
-        }
-        
-        constexpr inline static void select(index_type number) {
-            select(number, std::make_index_sequence<sizeof...(Pins)>());
-        }
-    private:
-    };
-    
-    template<typename... CC>
-    struct Components {
-        inline static constexpr void periodic() {
-            (CC::periodic(), ...);    
-        }
-    };
-    
-}
-
-
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
 using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
 using PortE = AVR::Port<DefaultMcuType::PortRegister, AVR::E>;
-
-using ppmInPin  = AVR::Pin<PortE, 2>;
-
-using selectA0 = AVR::Pin<PortB, 0>;
-using selectA1 = AVR::Pin<PortD, 7>;
-using selectA2 = AVR::Pin<PortD, 6>;
-
-using multiplexer = AVR::Multiplexer<Meta::List<selectA0, selectA1, selectA2>>;
-
-using paired   = AVR::Pin<PortD, 5>;
-using rxSelect = AVR::Pin<PortD, 3>;
-
-using cppm = AVR::Cppm<1, AVR::A, 8, multiplexer, ppmInPin>;
 
 struct AsciiHandler;
 struct BinaryHandler;

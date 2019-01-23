@@ -167,6 +167,9 @@ boards/rcsensorled10/test16.cc
 boards/rcsensorled10/test17.cc
 boards/rcsensorled10/test24.cc
 boards/rcsensorled10/test25.cc
+boards/rcsensorled10_avr0/Makefile
+boards/rcsensorled10_avr0/board.h
+boards/rcsensorled10_avr0/test00.cc
 boards/tx/Makefile
 boards/tx/varioprop/Makefile
 boards/tx/varioprop/board.txt
@@ -314,6 +317,7 @@ include0/etl/type_traits.h
 include0/etl/types.h
 include0/external/bluetooth/roboremo.h
 include0/external/hal/alarmtimer.h
+include0/external/hal/devicemapper.h
 include0/external/hal/protocolladapter.h
 include0/external/hott/hott.h
 include0/external/hott/menu.h
@@ -334,6 +338,7 @@ include0/mcu/common/port.h
 include0/mcu/common/port0.h
 include0/mcu/common/port1.h
 include0/mcu/common/ppm.h
+include0/mcu/common/pwm.h
 include0/mcu/common/register.h
 include0/mcu/internals/constantrate.h
 include0/mcu/internals/cppm.h
@@ -341,9 +346,11 @@ include0/mcu/internals/groups.h
 include0/mcu/internals/port.h
 include0/mcu/internals/port0.h
 include0/mcu/internals/port1.h
+include0/mcu/internals/pwm.h
 include0/mcu/internals/systemclock.h
 include0/mcu/internals/usart.h
 include0/mcu/mega/atmega.h
+include0/mcu/mega/atmega324pb.h
 include0/mcu/mega/atmega328pb.h
 include0/mcu/megaavr0/atmega4809.h
 include0/mcu/pgm/pgmstring.h

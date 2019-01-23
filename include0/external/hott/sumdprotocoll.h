@@ -22,6 +22,8 @@
 #include <array>
 #include <utility>
 
+#include <etl/types.h>
+
 #pragma pack(push)
 #pragma pack(1)
 
@@ -42,8 +44,11 @@ namespace Hott {
         
         static constexpr const uint8_t MaxChannels = 32;
         
+        using hott_value_type = etl::uint_ranged_NaN<uint16_t, ExtendedLow, ExtendedHigh>;
+        
         uint8_t nChannels = 0;
         std::array<std::pair<uint8_t, uint8_t>, MaxChannels> channelData = {};
+//        std::array<hott_value_type, MaxChannels> channelData = {};
         uint16_t crc = 0;
     };
     

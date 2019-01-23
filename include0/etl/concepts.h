@@ -52,7 +52,7 @@ namespace etl {
         concept bool NonFundamental = !std::is_fundamental<T>::value;
     
         template<typename D>
-        concept bool Device = requires(D ) {
+        concept bool Device = requires(D) {
                 D::put(std::byte{0});
         };
 

@@ -68,17 +68,15 @@ namespace AVR {
                 constexpr uint64_t nom = ranged_type::Upper - ranged_type::Lower;
                 if constexpr(nom < denom) {
                     uint16_t ocr = etl::Rational::RationalDivider<uint16_t, nom, denom>::scale(v1) + ranged_type::Lower;
-                    values[ch] = ocr;
+                    values[ch] = clamp(ocr, parameter::ocMin, parameter::ocMax);
                 }
                 else {
                     static_assert( (((10 * nom) / denom) * 255) <= std::numeric_limits<uint16_t>::max());
                     uint16_t ocr = ((v1 * ((10 * nom) / denom)) / 10) + ranged_type::Lower;
-                    values[ch] = ocr;
+                    values[ch] = clamp(ocr, parameter::ocMin, parameter::ocMax);
                 }
-                
             }
         }
-        
     private:
         inline static auto values = [](){
                 std::array<value_type, Channels> a;

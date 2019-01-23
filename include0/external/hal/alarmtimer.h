@@ -22,7 +22,6 @@
 #include <optional>
 #include <chrono>
 
-//#include <etl/scoped.h>
 #include <etl/fixedvector.h>
 
 namespace External {

@@ -12,20 +12,92 @@ template<typename S1, typename S2>
 //using isrRegistrar = AVR::IsrRegistrar<btUsart::RxHandler, btUsart::TxHandler>;
 
 using terminal = etl::basic_ostream<rcUsart>;
-using robo = etl::basic_ostream<btAndSensorUsart>;
+//using robo = etl::basic_ostream<btUsart>;
 
 template<typename V, auto Size = 8, typename MCU = DefaultMcuType>
 struct Matrix final {
-    inline static constexpr V map(etl::uint_ranged<uint8_t, 0, Size - 1> channel) {
+    struct Linear {
+        etl::uint_NaN<uint8_t> in = 0;
+        etl::uint_NaN<uint8_t> out = 0;
+        inline void update() {
+            
+        }
+    };
+    struct Sum {
+        etl::uint_NaN<uint8_t> in = 0;
+        etl::uint_NaN<uint8_t> out = 0;
+        inline void update() {
+            
+        }
         
-    }
+    };
+    struct Mul {
+        etl::uint_NaN<uint8_t> in = 0;
+        etl::uint_NaN<uint8_t> out = 0;
+        inline void update() {
+            
+        }
+        
+    };
+    struct Step {
+        etl::uint_NaN<uint8_t> in = 0;
+        etl::uint_NaN<uint8_t> out = 0;
+        inline void update() {
+            
+        }
+        
+    };
+    struct SHold {
+        etl::uint_NaN<uint8_t> in = 0;
+        etl::uint_NaN<uint8_t> out = 0;
+        inline void update() {
+            
+        }
+        
+    };
+
 private:
     Matrix() = delete;
-    
-    std::array<uint8_t, Size> factors;
-    std::array<bool, Size>    inverter;
-    
+    inline static std::array<Linear, 8> linears;
+    inline static std::array<Sum, 8> summers;
+    inline static std::array<Mul, 8> muls;
+    inline static std::array<Step, 8> steps;
+    inline static std::array<SHold, 8> holds;
+    inline static std::array<typename sumd::value_type, 64> values;
 };
+
+template<typename MCU = DefaultMcuType>
+struct CommFSM {
+    inline static void periodic() {
+        if (paired::isHigh()) {
+            if (!btInitialized) {
+                rxSelect::off();
+                btUsart::init<9600>();
+                btInitialized = true;
+                sensorInitialized = false;
+            }
+            else {
+                btUsart::periodic();
+            }
+        }
+        else {
+            if (!sensorInitialized) {
+                rxSelect::on();
+                sensorUsart::init<19200>();
+                sensorInitialized = true;
+                btInitialized = false;
+            }
+            else {
+                sensorUsart::periodic();
+            }
+        }
+    }
+private:
+    inline static bool btInitialized = false;
+    inline static bool sensorInitialized = false;
+};
+
+using commFsm = CommFSM<>;
 
 template<typename MCU = DefaultMcuType>
 struct FSM final {
@@ -61,35 +133,59 @@ struct FSM final {
         }
         ++state;
     }
+//    inline static uint16_t test1;
+//    inline static uint16_t test2;
+//    inline static uint16_t test3;
+//    inline static uint16_t test4;
+    
 private:
     inline static constexpr void update_00() {
-        cppm::ppm(0, sumd::value(0));
+        auto v = sumd::value(1);
+        if (v) {
+            int16_t x = v.toInt();
+            x += 10 * (roboremoPA::propValues[0] - 128);
+            constexpr uint16_t m = (decltype(v)::Upper - decltype(v)::Lower) / 2 + decltype(v)::Lower;
+            
+            int32_t nv = ((int32_t)x - m) * roboremoPA::propValues[1];
+            nv /= 256;
+            nv += m;
+            v = nv;
+            cppm::ppm(0, v);
+        }
     }        
     inline static constexpr void update_01() {
-        cppm::ppm(1, sumd::value(1).invert());
+        auto v = sumd::value(1).invert();
+        if (v) {
+            int16_t x = v.toInt();
+            x += 10 * (roboremoPA::propValues[2] - 128);
+            constexpr uint16_t m = (decltype(v)::Upper - decltype(v)::Lower) / 2 + decltype(v)::Lower;
+            
+            int32_t nv = ((int32_t)x - m) * roboremoPA::propValues[3];
+            nv /= 256;
+            nv += m;
+            v = nv;
+            cppm::ppm(1, v);
+        }
     }        
     inline static constexpr void update_02() {
-        cppm::ppm(2, sumd::value(2));
+        cppm::ppm(2, sumd::value(1));
     }        
     inline static constexpr void update_03() {
-        cppm::ppm(3, sumd::value(3));
+        cppm::ppm(3, sumd::value(1).invert());
     }        
     inline static constexpr void update_04() {
-        cppm::ppm(4, sumd::value(4));
+        cppm::ppm(4, sumd::value(1));
     }        
     inline static constexpr void update_05() {
-        cppm::ppm(5, sumd::value(5));
+        cppm::ppm(5, sumd::value(1).invert());
     }        
     inline static constexpr void update_06() {
-        cppm::ppm(6, sumd::value(6));
+        cppm::ppm(6, sumd::value(1));
     }        
     inline static constexpr void update_07() {
-        cppm::ppm(7, sumd::value(7));
+        cppm::ppm(7, sumd::value(1).invert());
     }        
     inline static constexpr void update_08() {
-        if (paired::isHigh()) {
-            
-        }        
     }        
     inline static etl::uint_ranged_circular<uint8_t, 0, 8> state;
 
@@ -99,7 +195,7 @@ private:
 
 using fsm = FSM<>;
 
-using components = AVR::Components<btAndSensorUsart, rcUsart, cppm, fsm>;
+using components = AVR::Components<rcUsart, cppm, fsm, commFsm>;
 
 struct AsciiHandler {
     static void start() {
@@ -132,7 +228,6 @@ struct BCastHandler {
     }    
 };
 
-
 int main() {
     using namespace etl;
     using namespace std;
@@ -149,26 +244,26 @@ int main() {
     crWriterSensorBinary::init();
     crWriterSensorText::init();
 
-    btAndSensorUsart::init<9600>();
     rcUsart::init<115200>();
     
-    uint8_t counter = 0;
     const auto t = alarmTimer::create(1000_ms, External::Hal::AlarmFlags::Periodic);
 
     {
         Scoped<EnableInterrupt<>> ei;
         
         while(true) {
-            ppmInPin::toggle();
+//            ppmInPin::toggle();
             components::periodic();
             systemClock::periodic([&](){
                 crWriterSensorBinary::rateProcess();
                 crWriterSensorText::rateProcess();
                 alarmTimer::periodic([&](alarmTimer::index_type timer){
                     if (timer == t) {
-                        outl<terminal>("c0: "_pgm, sumd::value(0).toInt());    
-                        outl<robo>("l0: "_pgm, counter);    
-                        counter++;
+                        outl<terminal>("c1: "_pgm, sumd::value(1).toInt());    
+                        outl<terminal>("p00: "_pgm, roboremoPA::propValues[0]);    
+                        outl<terminal>("p01: "_pgm, roboremoPA::propValues[1]);    
+                        outl<terminal>("p02: "_pgm, roboremoPA::propValues[2]);    
+                        outl<terminal>("p03: "_pgm, roboremoPA::propValues[3]);    
                     }
                 });
             });

@@ -126,6 +126,7 @@ namespace External {
             inline static uint8_t number;
             inline static index_type index;
             inline static State state = State::Undefined;
+        public:
             inline static std::array<uint8_t, NumberOfChannels> propValues;
         };
     }
