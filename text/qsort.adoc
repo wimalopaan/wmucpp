@@ -1,0 +1,180 @@
+// -*- mode: adoc ; fill-column: 120 -*-
+
+= QuickSort Survey
+Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+:revnumber: 0.01
+:revdate: 01.01.1970
+:revremark: undefined
+:lang: de
+:toc:
+:toc-title: Inhalt
+:toclevels: 4
+:numbered:
+:src_numbered: 
+:icons: font
+:icontype: svg
+:figure-caption: Abbildung
+:description: QuickSort 
+:title: QuickSort Übersicht
+:sectanchors:
+:sectlinks:
+:experimental:
+:copyright: Wilhelm Meier
+:duration: 90
+:source-highlighter: coderay
+:coderay-css: style
+:source-highlighter: pygments
+:pygments-css: class
+:status:
+:menu:
+:navigation:
+:split:
+:goto:
+:blank:
+:deckjs_theme: swiss
+:showtitle:
+:deckjs_transition: horizontal-slide
+//:stylesdir: ./css
+//:stylesheet: deckjs.css
+:docinfo1:
+:stem:
+:customcss: css/deckjs.css
+// not working
+:revealjs_theme: black
+:revealjs_slidenumber: true
+// for attributes in link:[] macro like link:xxx[window="_blank"]
+:linkattrs:
+
+include::bmcppdefs.adoc[]
+
+.Lizenz
+****
+image::https://i.creativecommons.org/l/by-nc-nd/4.0/88x31.png[Lizenz]
+//image:http://mirrors.creativecommons.org/presskit/buttons/88x31/svg/by-nc-nd.svg[Lizenz] 
+Dieses Werk ist lizenziert unter einer http://creativecommons.org/licenses/by-nc-nd/4.0[Creative Commons Namensnennung - Nicht kommerziell - Keine Bearbeitungen 4.0 International Lizenz]
+****
+
+:srcdir: ../doc/bmcpp99
+
+== Zweck
+
+* Gegenüberstellung verschiedener Sortieralgorithmen in {cpp}
+- Konkrete und generische Realisierungen vergleichen in
+. Laufzeit
+. Maschinencodegröße
+
+== Algorithmen
+
+===  QuickSort
+
+Beschreibung von https://de.wikipedia.org/wiki/Quicksort[Quicksort]
+
+Für die Auswahl des konkreten Algorithmus stehen die folgenden _Tags_ zur Verfügung:
+
+include::{srcbase}/{srcdir}/{extractordir}/sort.h.traits[lines=2..-1]
+
+sowie ein Wrapper:
+
+include::{srcbase}/{srcdir}/{extractordir}/sort.h.wrapper[lines=2..-1]
+
+==== Naive Implementierung 
+
+Die naive Implementierung folgt direkt (s.a. Wikipedia):
+
+include::{srcbase}/{srcdir}/{extractordir}/sort.h.naiv[lines=2..-1]
+
+==== Nach Sedgewick
+
+Aus dem Lehrbuch "Algorithmen in ...":
+
+include::{srcbase}/{srcdir}/{extractordir}/sort.h.sedgewick[lines=2..-1]
+
+==== Nach Bentley-McIlroy
+
+Nach dem Paper von Bentley (wie auch die Version in der AVR-Libc):
+
+include::{srcbase}/{srcdir}/{extractordir}/sort.h.bentley[lines=2..-1]
+
+==== Analog STL
+
+t.b.d.
+
+=== BubbleSort
+
+include::{srcbase}/{srcdir}/{extractordir}/sort.h.bubblesort[lines=2..-1]
+
+== Ergebnisse
+
+Ergebnisse wurden ermittelt für:
+
+. AVR Mega @ 20MHz mit `simavr`
+. ...
+
+Deswegen sind nur die _relativen_ Zeiten miteinander zu vergleichen.
+
+=== Laufzeiten
+
+Arraygröße: `191`
+Iterationen: `100`
+
+.Laufzeiten mit `-Os` in `ms` und Set1
+|====
+| Algorithmus 		| Elementtyp `uint8_t`	| Elementyp `uint16_t`	| Elementtyp `uint32_t` 
+| BubbleSort		| 12561			|			|
+| AVR-Libc		| 503			| 580			| 673 
+| Quicksort Naiv	| 206			| 328			| 501 
+| Quicksort Sedgewick	| 217			| 375			| 591 
+| Quicksort Bentley	| 166			| 240			| 407 
+|====
+
+.Laufzeiten mit `-Os` in `ms` und Set2
+|====
+| Algorithmus 		| Elementtyp `uint8_t`	| Elementyp `uint16_t`	| Elementtyp `uint32_t` 
+| BubbleSort		| 18067			|			|
+| AVR-Libc		| 322			| 381			| 464
+| Quicksort Naiv	| 225			| 369			| 561
+| Quicksort Sedgewick	| 179			| 325			| 512
+| Quicksort Bentley	| 115			| 169			| 287
+|====
+
+.Laufzeiten mit `-O3` in `ms` und Set1
+|====
+| Algorithmus 		| Elementtyp `uint8_t`	| Elementyp `uint16_t`	| Elementtyp `uint32_t` 
+| BubbleSort		| 12158			|			|
+| AVR-Libc		| 503			| 580			| 673 
+| Quicksort Naiv	| `stack overfl`			| 			|  
+| Quicksort Sedgewick	| 258			| 372			| 599 
+| Quicksort Bentley	| 165			| 256			| 311
+|====
+
+.Laufzeiten mit `-O3` in `ms` und Set2
+|====
+| Algorithmus 		| Elementtyp `uint8_t`	| Elementyp `uint16_t`	| Elementtyp `uint32_t` 
+| BubbleSort		| 17629			|			|
+| AVR-Libc		| 322			| 537			| 621
+| Quicksort Naiv	| 193			| 465			| 659 
+| Quicksort Sedgewick	| 213			| 458			| 577 
+| Quicksort Bentley	| 118			| 338			| 443
+|====
+
+=== Codegrößen
+
+.Size mit `-Os` in Bytes
+|====
+| Algorithmus 		| Elementtyp `uint8_t`	| Elementyp `uint16_t`	| Elementtyp `uint32_t` 
+| BubbleSort		| 44 (aber inlined)	|			|
+| AVR-Libc		| 930			| 934			| 950 
+| Quicksort Naiv	| 170			| 234			| 338  
+| Quicksort Sedgewick	| 316			| 550			| 732 
+| Quicksort Bentley	| 600			| 788			| 1158 
+|====
+
+.Size mit `-O3` in Bytes
+|====
+| Algorithmus 		| Elementtyp `uint8_t`	| Elementyp `uint16_t`	| Elementtyp `uint32_t` 
+| BubbleSort		| 80 (aber inlined)	|			|
+| AVR-Libc		| 930			| 934			| 950
+| Quicksort Naiv	| 502			| 662			| 1040  
+| Quicksort Sedgewick	| 440			| 594			| 794 
+| Quicksort Bentley	| 830			| 1206			| 2378 
+|====

@@ -125,6 +125,8 @@ AVRDUDE_FLAGS += -C+/home/lmeier/Projekte/wmucpp/avrdude.conf
 
 #CC = /usr/local/avr/bin/avr-gcc
 #CXX = /usr/local/avr/bin/avr-g++
+#CC = /usr/local/bin/avr-gcc
+#CXX = /usr/local/bin/avr-g++
 CC = /usr/bin/avr-gcc
 CXX = /usr/bin/avr-g++
 OBJCOPY = avr-objcopy

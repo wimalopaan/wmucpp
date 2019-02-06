@@ -16,6 +16,10 @@
 # include <avr/pgmspace.h>
 #endif
 
+#ifndef __AVR_ARCH__ 
+# warning "__AVR_ARCH__ not defined"
+#endif
+
 #include "common/assert.h"
 #include "../config.h"
 
@@ -104,7 +108,12 @@ namespace AVR {
     }
 }
 
-#if (__AVR_ARCH__ >= 2) && (__AVR_ARCH__ <= 6)
+namespace AVR::detail::test {
+    using arch = std::integral_constant<int, __AVR_ARCH__>;
+//    arch::_;
+}
+
+#if (__AVR_ARCH__ >= 2) && (__AVR_ARCH__ <= 51)
 # include "mega/atmega.h"
 # include "tiny/attiny.h"
 # include "internals/port.h"

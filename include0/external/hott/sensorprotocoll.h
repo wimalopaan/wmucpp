@@ -33,11 +33,11 @@ namespace Hott {
     
     enum class key_t : uint8_t {right = 14, left = 7, up = 11, down = 13, set = 9, nokey = 0};
     
-    constexpr const auto hottDelayBeforeAnswer = 5000_us;
-    constexpr const auto hottDelayBetweenBytes = 2000_us;
+    static inline constexpr auto hottDelayBeforeAnswer = 5000_us;
+    static inline constexpr auto hottDelayBetweenBytes = 2000_us;
     
     struct TextMsg {
-        typedef uint8_t item_type;
+        using value_type = uint8_t;
         static constexpr uint8_t rows = 8;
         static constexpr uint8_t columns = 21;
         const uint8_t start_byte = 0x7b;		//#01 Starting constant value == 0x7b
@@ -49,7 +49,7 @@ namespace Hott {
     };
     
     struct GamMsg {
-        typedef uint8_t item_type;
+        using value_type = uint8_t;
         const uint8_t start_byte = 0x7c;          //#01 start byte constant value 0x7c
         const uint8_t gam_sensor_id = 0x8d;       //#02 EAM sensort id. constat value 0x8d=GENRAL AIR MODULE
         uint8_t warning_beeps = 0;       //#03 1=A 2=B ... 0x1a=Z  0 = no alarm

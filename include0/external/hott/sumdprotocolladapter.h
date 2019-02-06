@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2019 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ namespace Hott {
         inline static uint8_t mMultiChannel = 0;
 
         using channelForMutliChannelType = std::conditional_t<UseInts::value, volatile uint8_t, uint8_t>;
-        inline static volatile channelForMutliChannelType mChannelForMultiChannel = 7;
+        inline static channelForMutliChannelType mChannelForMultiChannel = 7;
 
         using sumDMesgType = std::conditional_t<UseInts::value, volatile SumDMsg, SumDMsg>;
         using multiCHType = std::conditional_t<UseInts::value, volatile MultiChannel, MultiChannel>;

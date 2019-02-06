@@ -126,3 +126,4 @@ include0/external/hott
 boards/bootloader
 include0/external/bluetooth
 boards/rcsensorled10_avr0
+boards/breakout

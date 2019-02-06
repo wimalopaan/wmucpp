@@ -32,9 +32,9 @@ namespace Hott {
         inline static constexpr auto rows = TextMsg::rows; 
         inline static constexpr auto columns = TextMsg::columns; 
         
-        typedef uint8_t index_type;
-        static constexpr const uint8_t number = N;
-        static constexpr const uint8_t cyclesBeforeAnswer = Hott::hottDelayBeforeAnswer / Hott::hottDelayBetweenBytes;
+        using index_type = uint8_t;
+        inline static constexpr uint8_t number = N;
+        inline static constexpr uint8_t cyclesBeforeAnswer = Hott::hottDelayBeforeAnswer / Hott::hottDelayBetweenBytes;
         
         inline static std::optional<std::byte> get(uint8_t index) {
             if (index < cyclesBeforeAnswer) {
@@ -48,21 +48,19 @@ namespace Hott {
                 return {};
             }
         }
-        static constexpr uint8_t size() {
+        inline static constexpr uint8_t size() {
             return sizeof(hottTextResponse) + cyclesBeforeAnswer;
         }
-        static constexpr void reset() {
+        inline static constexpr void reset() {
             hottTextResponse.parity = 0;
         }
-        static constexpr void init() {
-//            hottTextResponse.start_byte = 0x7b;
-//            hottTextResponse.stop_byte = 0x7d;
+        inline static constexpr void init() {
             hottTextResponse.esc = 0;
-            for(auto&& l : hottTextResponse.text) {
+            for(auto& l : hottTextResponse.text) {
                 l.clear();
             }
         }
-        static auto& text() {
+        inline static auto& text() {
             return hottTextResponse.text;
         }
     private:

@@ -3,8 +3,6 @@
 #include <cstdint>
 #include <cstddef>
 
-//#include "std/literals.h"
-
 #include "external/units/physical.h"
 
 namespace Project {

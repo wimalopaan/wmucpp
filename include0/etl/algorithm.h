@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2019 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 #include <cstdint>
 #include <algorithm>
 #include <array>
+
 #include "meta.h"
 
 namespace etl {
@@ -89,7 +90,6 @@ namespace etl {
 //    constexpr reverse_container<C> reverse(const C& container) {
 //        return reverse_container<C>(container);
 //    }
-    
     
     template<etl::Concepts::Container C>
     constexpr bool inline crc8(const C& data) {

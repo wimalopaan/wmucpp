@@ -28,109 +28,127 @@
 namespace etl {
     using namespace std;
     
-    template<typename T, uint8_t Bits>
+    template<Unsigned T, uint8_t Bits>
     struct Fraction final {
         static_assert(std::is_unsigned<T>::value, "T must be unsigned type");
-        static_assert(numberOfBits<T>() >= Bits, "type too small");
-        typedef T value_type;
+        static_assert(etl::numberOfBits<T>() >= Bits, "type too small");
+        using value_type = T;
         inline static constexpr uint8_t valid_bits = Bits;
         constexpr explicit Fraction(T v) : value(v) {} 
-        const T value = 0;
+        const value_type value = 0;
     };
 
     template<typename Type, uint8_t fractionalBits>
-    class FixedPoint final {
-        template<typename Stream> friend Stream& operator<<(Stream& o, const FixedPoint<Type, fractionalBits>& f);
-    public:
-        typedef Type value_type;
-        typedef make_unsigned_t<Type> unsigned_type;
-        typedef typeForBits_t<fractionalBits> fractional_type;
-        static constexpr unsigned_type fractional_mask = (1 << fractionalBits) - 1;
-        static constexpr unsigned_type integral_mask = ~((1 << fractionalBits) - 1);
-        static constexpr uint8_t fractional_bits = fractionalBits;
-        static constexpr uint8_t integer_bits = sizeof(Type) * 8 - fractionalBits;
-        static constexpr value_type one = 1u << fractional_bits;
-        typedef typeForBits_t<integer_bits> integral_type;
+    struct FixedPoint final {
+        using value_type = Type;
+        using unsigned_type = make_unsigned_t<Type>;
+        using fractional_type = typeForBits_t<fractionalBits>;
+        inline static constexpr unsigned_type fractional_mask = (1 << fractionalBits) - 1;
+        inline static constexpr unsigned_type integral_mask = ~((1 << fractionalBits) - 1);
+        inline static constexpr uint8_t fractional_bits = fractionalBits;
+        inline static constexpr uint8_t integer_bits = sizeof(Type) * 8 - fractionalBits;
+        inline static constexpr value_type one = 1u << fractional_bits;
+        
+        inline constexpr FixedPoint(const FixedPoint& o) : mValue{o.mValue} {}
+
+        inline constexpr FixedPoint(volatile const FixedPoint& o) : mValue{o.mValue} {}
         
         inline constexpr explicit FixedPoint(double v) : mValue(v * one) {}
     
         inline constexpr FixedPoint() = default;
         
-        inline static FixedPoint<Type, fractionalBits> fromRaw(unsigned_type raw) {
-            return FixedPoint<Type, fractionalBits>{raw};
+        inline constexpr void operator=(FixedPoint rhs) volatile {
+            mValue = rhs.mValue;
         }
         
-        inline unsigned_type integerAbs() const {
+        inline static constexpr FixedPoint<Type, fractionalBits> fromRaw(value_type raw) {
+            return FixedPoint<value_type, fractionalBits>{raw};
+        }
+        
+        inline constexpr unsigned_type integerAbs() const {
             if (mValue < 0) {
                 return -integer();
             }
             return integer();
         }
-        inline fractional_type fractionalAbs() const {
+        inline constexpr fractional_type fractionalAbs() const {
             return fractional();
         }
-        inline integral_type integer() const {
+        inline constexpr value_type integer() const {
             return mValue / one;
         }
-        inline fractional_type fractional() const {
+        inline value_type integer() const volatile {
+            return mValue / one;
+        }
+        inline constexpr fractional_type fractional() const {
             return (fractional_type(mValue) & fractional_mask);
         }
-        inline Fraction<fractional_type, fractionalBits> fraction() const {
+        inline fractional_type fractional() const volatile {
+            return (fractional_type(mValue) & fractional_mask);
+        }
+        inline constexpr Fraction<fractional_type, fractionalBits> fraction() const {
             return Fraction<fractional_type, fractionalBits>(fractional() << ((sizeof(fractional_type) * 8) - fractional_bits));
         }
-        inline const Type& raw() const {
+        inline constexpr const value_type& raw() const {
             return mValue;
         }
-        inline FixedPoint& operator/=(Type d) {
+        inline constexpr FixedPoint& operator/=(Type d) {
             mValue /= d;
             return *this;
         }
-        inline FixedPoint& operator-=(const FixedPoint& d) {
+        inline constexpr FixedPoint& operator-=(const FixedPoint& d) {
             mValue -= d.mValue;
             return *this;
         }
-        inline FixedPoint& operator+=(const FixedPoint& d) {
+        inline constexpr FixedPoint& operator+=(const FixedPoint& d) {
             mValue += d.mValue;
             return *this;
         }
         // todo: op++
         // todo: op--
     private:
-        explicit FixedPoint(unsigned_type v) : mValue(v){}
-        Type mValue = 0;
+        explicit constexpr FixedPoint(value_type v) : mValue(v){}
+        value_type mValue{0};
     };
-    
-    // todo: UDL-op for FP<uint16_t, 8>
-    
+
     inline constexpr FixedPoint<int16_t, 4> operator"" _fp(long double v) {
         return FixedPoint<int16_t, 4>{(double)v};
     }
+    inline constexpr FixedPoint<int16_t, 4> operator"" _Qs11_4(long double v) {
+        return FixedPoint<int16_t, 4>{(double)v};
+    }
+    inline constexpr FixedPoint<uint16_t, 8> operator"" _Qu8_8(long double v) {
+        return FixedPoint<uint16_t, 8>{(double)v};
+    }
+    inline constexpr FixedPoint<int16_t, 12> operator"" _Qs3_12(long double v) {
+        return FixedPoint<int16_t, 12>{(double)v};
+    }
     
     template<typename T, auto Bits>
-    inline FixedPoint<T, Bits> operator-(FixedPoint<T, Bits> lhs, const FixedPoint<T, Bits>& rhs) {
+    inline constexpr FixedPoint<T, Bits> operator-(FixedPoint<T, Bits> lhs, FixedPoint<T, Bits> rhs) {
         return lhs -= rhs;
     }
     
     template<typename T, auto Bits, typename D>
-    inline FixedPoint<T, Bits> operator/(FixedPoint<T, Bits> lhs, const D& rhs) {
+    inline constexpr FixedPoint<T, Bits> operator/(FixedPoint<T, Bits> lhs, const D& rhs) {
         return lhs /= rhs;
     }
     
-    template<typename T, uint8_t FB>
-    inline FixedPoint<T, FB> operator*(FixedPoint<T, FB> lhs, FixedPoint<T, FB> rhs) {
-        enclosingType_t<T> p = lhs.raw() * rhs.raw();
-        return FixedPoint<T, FB>::fromRaw(p >> FB);
+    template<typename T, uint8_t FB1, uint8_t FB2>
+    inline constexpr FixedPoint<T, FB1> operator*(FixedPoint<T, FB1> lhs, FixedPoint<T, FB2> rhs) {
+        enclosingType_t<T> p = static_cast<enclosingType_t<T>>(lhs.raw()) * rhs.raw();
+        return FixedPoint<T, FB1>::fromRaw(p >> FB2);
     }
     
     namespace detail {
-        template<AVR::Concepts::Stream Stream, typename T, uint8_t Bits>
+        template<etl::Concepts::Stream Stream, typename T, uint8_t Bits>
         inline void out_impl(const Fraction<T, Bits>& f) {
             array<Char, 1 + numberOfDigits<Fraction<T, Bits>>()> buffer; // dot + sentinel
             ftoa(f, buffer);
             out_impl<Stream>(buffer);
         }
         
-        template<AVR::Concepts::Stream Stream, Signed T, auto Bits>
+        template<etl::Concepts::Stream Stream, Signed T, auto Bits>
         inline void out_impl(const FixedPoint<T, Bits>& f) {
             if (f.raw() < 0) {
                 out_impl<Stream>(Char{'-'});
@@ -139,7 +157,7 @@ namespace etl {
             out_impl<Stream>(f.fraction());
         }
     
-        template<AVR::Concepts::Stream Stream, Unsigned T, uint8_t Bits>
+        template<etl::Concepts::Stream Stream, Unsigned T, uint8_t Bits>
         inline void out_impl(const FixedPoint<T, Bits>& f) {
             out_impl<Stream>(f.integerAbs());
             out_impl<Stream>(f.fraction());

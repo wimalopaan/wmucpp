@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2019 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,27 +17,21 @@
  */
 
 #include <cstdint>
-#include <cstddef> 
-#include <cassert> 
-#include <std/utility>
-#include <avr/pgmspace.h>
 
-template<auto Size>
-struct PgmArray {
-    template<typename> struct Generator;
-    using mapper = Generator<std::make_index_sequence<Size>>;
-    inline static char value(size_t index) {
-        assert(index < Size);
-        return pgm_read_byte(&mapper::data[index]);
-    }
-    template<auto... Index>
-    struct Generator<std::index_sequence<Index...>> {
-        inline static constexpr char data[Size] PROGMEM = {[](auto v){return v * 2;}(Index)... }; 
-    };
-};
-
-using a1 = PgmArray<10> ;
+volatile int16_t x = 1 << 14;
+volatile int16_t y = 1 << 14;
+volatile int16_t o;
 
 int main() {
-    return a1::value(2);
+
+    volatile int32_t z = x * y;
+    
+    asm(";xx");
+    
+    o = (z >> 14);
+    
+    asm(";yy");
+    
+    o = (z >> 16) << 2;
+    
 }

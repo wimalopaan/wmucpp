@@ -28,8 +28,7 @@ namespace etl {
     template<uint8_t Length, typename T = Char, Char Fill = Char{' '}>
     class StringBuffer final {
     public:
-        typedef T type;
-
+        using value_type = T;
         using size_type = typeForValue_t<Length>;
         
         inline constexpr size_type size() const {

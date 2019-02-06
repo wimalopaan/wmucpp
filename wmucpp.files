@@ -113,6 +113,8 @@ boards/blmc/blmc_test01/test09.cc
 boards/blmc/blmc_test01/util.c
 boards/blmc/blmc_test01/util.h
 boards/bootloader/optiboot.txt
+boards/breakout/Makefile
+boards/breakout/test00.cc
 boards/include/ppmmatrix.h
 boards/include/rcsensorled01b.h
 boards/include/rcsensorled10.h
@@ -244,6 +246,9 @@ doc0/Makefile
 doc0/atmega4809.txt
 doc0/bm00/Makefile
 doc0/bm00/bm00.cc
+doc0/bm00/bm01.cc
+doc0/bm00/bm02.cc
+doc0/bm00/bm03.cc
 example/externals/buttonmacro.c
 example/externals/buttonvertical.cc
 example/externals/isr.c
@@ -264,6 +269,7 @@ host/test36.cc
 host/test37.cc
 host/test38.cc
 host/test40.cc
+host/test51.cc
 host/test70.cc
 host/test80.cc
 host/test91.cc
@@ -340,8 +346,12 @@ include0/mcu/common/port1.h
 include0/mcu/common/ppm.h
 include0/mcu/common/pwm.h
 include0/mcu/common/register.h
+include0/mcu/common/staticstorage.h
 include0/mcu/internals/constantrate.h
 include0/mcu/internals/cppm.h
+include0/mcu/internals/cppm_in.h
+include0/mcu/internals/cppm_out_int.h
+include0/mcu/internals/gpiorflags.h
 include0/mcu/internals/groups.h
 include0/mcu/internals/port.h
 include0/mcu/internals/port0.h
@@ -350,9 +360,11 @@ include0/mcu/internals/pwm.h
 include0/mcu/internals/systemclock.h
 include0/mcu/internals/usart.h
 include0/mcu/mega/atmega.h
+include0/mcu/mega/atmega1284p.h
 include0/mcu/mega/atmega324pb.h
 include0/mcu/mega/atmega328pb.h
 include0/mcu/megaavr0/atmega4809.h
+include0/mcu/pgm/pgmarray.h
 include0/mcu/pgm/pgmstring.h
 include0/std/algorithm
 include0/std/array
@@ -370,6 +382,7 @@ include0/std/optional
 include0/std/ratio
 include0/std/type_traits
 include0/std/utility
+license.txt
 tools/i2c/Makefile
 tools/i2c/test.cc
 tools/i2c/test01.cc

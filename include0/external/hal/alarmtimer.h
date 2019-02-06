@@ -69,7 +69,6 @@ namespace External {
             static constexpr auto intervall = SystemClock::intervall;
             
             inline static index_type create(milliseconds millis, AlarmFlags flags){
-//                Scoped<DisbaleInterrupt<RestoreState>> di;
                 if (auto index = mTimers.insert({millis / intervall, millis  / intervall, flags})) {
                     assert(*index <= std::numeric_limits<index_type>::max());
                     return index_type{*index};
@@ -80,7 +79,6 @@ namespace External {
                 return create(static_cast<milliseconds>(secs), flags);
             }
             inline static void remove(index_type id) {
-//                Scoped<DisbaleInterrupt<RestoreState>> di;
                 if (id) {
                     mTimers.removeAt(*id);
                 }
@@ -127,10 +125,6 @@ namespace External {
                     }
                 }
             }
-            
-//            inline static const auto& timers() {
-//                return mTimers;
-//            }
         };
     }
 }

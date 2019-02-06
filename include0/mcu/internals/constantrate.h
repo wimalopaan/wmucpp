@@ -1,5 +1,7 @@
 #pragma once
 
+// todo: GPIOR Flag
+
 template<typename Buffer, typename Device, typename CounterType = typename Buffer::index_type, bool disableRx = true>
 class ConstanteRateWriter { 
     using enableFlagType = std::conditional_t<Device::use_isr_type::value, volatile bool, bool>;

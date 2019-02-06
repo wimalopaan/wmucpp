@@ -9,6 +9,21 @@
 #include <external/units/physical.h>
 
 namespace AVR {
+    
+    template<uint8_t N>
+    using ComponentNumber = etl::NamedConstant<N>;
+
+    template<uint8_t N>
+    using Size = etl::NamedConstant<N>;
+
+    template<uint8_t N>
+    using First = etl::NamedConstant<N>;
+
+    template<uint8_t N>
+    using Last = etl::NamedConstant<N>;
+    
+    using register_type = std::byte;
+    
     template<typename BitsType>
     struct PrescalerPair {
         typedef BitsType  bits_type;
@@ -224,6 +239,7 @@ namespace AVR {
 #elif defined(__AVR_ATmega168P__)
 # include "atmega168p.h"
 #elif defined(__AVR_ATmega328PB__)
+# warning
 # include "atmega328pb.h"
 #elif defined(__AVR_ATmega8__)
 # include "tmega8.h"
@@ -236,5 +252,6 @@ namespace AVR {
 #elif defined(__AVR_ATtiny84__)
 # include "attiny84.h"
 #else
+# warning
 typedef AVR::ATMegaNone DefaultMcuType;
 #endif

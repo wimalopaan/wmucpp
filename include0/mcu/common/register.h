@@ -25,6 +25,7 @@
 #include <utility>
 
 #include "etl/scoped.h"
+#include "etl/concepts.h"
 
 namespace AVR {
     
@@ -186,23 +187,20 @@ namespace AVR {
         volatile value_type hwRegister;
     };
     
-    template<typename Register, uint8_t N, typename FieldType>
-    class RegisterFlags {
-        static inline constexpr uint8_t reg_number = N;
-        typedef Register reg_type;
-        typedef FieldType type;
-        
-        inline static constexpr auto reg = AVR::getBaseAddr<Register, N>; // Funktionszeiger
-        static_assert(AVR::isSBICBICapable<Register, N>());
-        
-        static_assert(sizeof(FieldType) == 1, "can only use byte-types");
-        
-        inline static volatile FieldType* bitField() {
-            return reinterpret_cast<volatile FieldType*>(reg());
-        }
-    public:    
-        inline static volatile FieldType& get() {
-            return *bitField();
+    template<typename Register, etl::Concepts::NamedConstant N, typename ValueType = std::byte>
+    struct SbiCbiRegister final {
+        static inline constexpr uint8_t reg_number = N::value;
+    private:
+        SbiCbiRegister() = delete;
+        inline static constexpr auto reg = AVR::getBaseAddr<Register, reg_number>; // Funktionszeiger
+        static_assert(AVR::isSBICBICapable<Register, reg_number>(), "not sbi-cbi capable");
+        static_assert(sizeof(ValueType) == 1, "can only use byte-types");
+    public:        
+        using register_type = Register;
+        using value_type = ValueType ;
+
+        inline static ValueType& raw() {
+            return *(reinterpret_cast<ValueType*>(reg()));
         }
     };
     

@@ -34,8 +34,8 @@ namespace Hott {
     public:
         SensorProtocoll() = delete;
     private:
-        static inline constexpr const uint8_t mNumberOfRows = 7;
-        static constexpr const uint8_t mNumberOfColumns = 2;
+        static inline constexpr uint8_t mNumberOfRows = 7;
+        static inline constexpr uint8_t mNumberOfColumns = 2;
         
         static inline uint8_t mRow = 0;
         static inline uint8_t mColumn = 0;

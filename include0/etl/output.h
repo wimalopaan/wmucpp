@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 
 #include "concepts.h"
 #include "format.h"
@@ -11,7 +12,7 @@ namespace etl {
     constexpr void put(std::byte b) {
         if constexpr(ensure) {
             while(!Device::put(b)) {
-                AVR::Util::delay(1_us);
+//                AVR::Util::delay(1_us);
             }
         }
         else {
@@ -37,7 +38,7 @@ namespace etl {
         typedef LT line_terminator_type;
     };
     
-    template<typename T, uint8_t Bits>
+    template<Unsigned T, uint8_t Bits>
     struct Fraction;
     template<typename T, uint8_t Bits>
     struct FixedPoint;
@@ -138,13 +139,13 @@ namespace etl {
 //            out<Stream>("us"_pgm);
 //        }
 
-        template<AVR::Concepts::Stream Stream, typename T, uint8_t Bits>
+        template<etl::Concepts::Stream Stream, typename T, uint8_t Bits>
         inline void out_impl(const Fraction<T, Bits>& f);
         
-        template<AVR::Concepts::Stream Stream, etl::Concepts::Signed T, uint8_t Bits>
+        template<etl::Concepts::Stream Stream, etl::Concepts::Signed T, uint8_t Bits>
         inline void out_impl(const FixedPoint<T, Bits>& f);
 
-        template<AVR::Concepts::Stream Stream, etl::Concepts::Unsigned T, uint8_t Bits>
+        template<etl::Concepts::Stream Stream, etl::Concepts::Unsigned T, uint8_t Bits>
         inline void out_impl(const FixedPoint<T, Bits>& f);
         
     } // detail

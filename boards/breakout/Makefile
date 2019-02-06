@@ -17,18 +17,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-MCU = atmega328pb
-#MCU = atmega4809
-F_OSC = 20000000
+# 1. Fuses (16MHz, BootLoader)
+# sudo avrdude -p atmega328pb -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P usb -c avrisp2 -U lfuse:w:0xf7:m -U hfuse:w:0xd4:m -U efuse:w:0xff:m
+# 2. Bootloader flached -> booloader/optiboot.txt
+# 
+# sudo avrdude -p atmega328pb -c arduino -b 9600 -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P /dev/ttyUSB2 -U flash:w:test00.elf
 
-CPPFLAGS += -DNDEBUG
 
-targets += shtml
+MCU = atmega1284p
+F_OSC = 16000000
 
-targets += bm00.S bm00.elf
-targets += bm01.S bm01.elf
-targets += bm02.S bm02.elf
-targets += bm03.S bm03.elf
+subdirs =
+
+targets += test00.elf test00.S
+#targets += test01.elf
+#targets += test02.elf
+#targets += test03.elf
+#targets += test04.elf
 
 -include ../../Makefile.avr0.include
-
