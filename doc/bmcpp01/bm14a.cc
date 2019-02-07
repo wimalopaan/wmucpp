@@ -22,7 +22,15 @@
 #include <std/utility>
 #include <avr/pgmspace.h>
 
-template<auto Size>
+struct Functor {
+    constexpr char operator()(auto v) const {
+        return 2 * v;
+    }
+};
+
+auto l1 = [](auto v){return 2 * v;};
+
+template<auto Size, typename F>
 struct PgmArray {
     template<typename> struct Generator;
     using mapper = Generator<std::make_index_sequence<Size>>;
@@ -32,11 +40,14 @@ struct PgmArray {
     }
     template<auto... Index>
     struct Generator<std::index_sequence<Index...>> {
-        inline static constexpr char data[Size] PROGMEM = {[](auto v){return v * 2;}(Index)... }; 
+        inline static constexpr char data[Size] PROGMEM = {
+            F()(Index)... 
+        }; 
     };
 };
 
-using a1 = PgmArray<10> ;
+using a1 = PgmArray<10, Functor>;
+//using a1 = PgmArray<10, decltype(l1)>;
 
 int main() {
     return a1::value(2);

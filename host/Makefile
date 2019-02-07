@@ -70,6 +70,6 @@ CC = g++
 LDFLAGS = -lpthread
 CXXFLAGS = -g -std=c++2a -fconcepts -ftemplate-depth=2048
 CXXFLAGS += -Wall -Wextra -fPIC
-CXXFLAGS += -I../include0
+CXXFLAGS += -I../include
 
 MCUFLAGS =

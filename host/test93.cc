@@ -1,9 +1,13 @@
 #include <cstdint>
 #include <cstddef>
 #include <array>
+#include <iostream>
+
+//auto l1 = [](auto v){return 2 * v;};
+//decltype(l1) xx;
 
 constexpr int fkt(size_t value) {
-    return value;
+    return 2 * value;
 }
 constexpr size_t Size = 16;
 constexpr auto test = []{
@@ -15,4 +19,7 @@ constexpr auto test = []{
 }();
 
 int main() {
+    for(const auto& v : test) {
+        std::cout << v << '\n';
+    }
 }
