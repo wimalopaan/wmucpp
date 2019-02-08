@@ -19,8 +19,14 @@
 #include <cstdint>
 #include <cstddef> 
 #include <cassert> 
-#include <std/utility>
+#include <utility>
 #include <avr/pgmspace.h>
+
+using cppversion = std::integral_constant<long, __cplusplus>;
+using gccversion = std::integral_constant<long, __GNUC__>;
+
+//cppversion::_;
+//gccversion::_;
 
 struct Functor {
     constexpr char operator()(auto v) const {
@@ -47,8 +53,14 @@ struct PgmArray {
 };
 
 using a1 = PgmArray<10, Functor>;
-//using a1 = PgmArray<10, decltype(l1)>;
+using a2 = PgmArray<5, decltype(l1)>;
+//using a2 = PgmArray<5, decltype([](auto v){return 2 * v;})>;
 
 int main() {
-    return a1::value(2);
+    if constexpr((cppversion::value > 201703) && (gccversion::value > 8)) {
+        return a1::value(2) + a2::value(1);
+    }
+    else {
+        return a1::value(2);
+    }
 }

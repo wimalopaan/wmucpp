@@ -69,7 +69,7 @@ namespace Hott {
             if (!mValid) {
                 return {};
             }
-            uint16_t v = std::combinedValue(mMsg.channelData[channel]);
+            uint16_t v = Util::combinedValue(mMsg.channelData[channel]);
             if (v < Hott::SumDMsg::ExtendedLow) {
                 return Hott::SumDMsg::ExtendedLow;
             }
@@ -86,7 +86,7 @@ namespace Hott {
             if (!mValid) {
                 return {};
             }
-            uint16_t v = std::combinedValue(mMsg.channelData[channel]);
+            uint16_t v = Util::combinedValue(mMsg.channelData[channel]);
             if (v < Hott::SumDMsg::Low) {
                 return Hott::SumDMsg::Low;
             }

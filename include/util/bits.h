@@ -21,6 +21,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <limits>
+#include <utility>
 #include <type_traits>
 #include "std/bitmask.h"
 
@@ -180,6 +181,22 @@ namespace Util {
         return 0;
     }
     
+    template<typename T>
+    struct combinedType final {
+        using type = typename enclosingType<T>::type;
+        inline static constexpr const uint8_t shift = numberOfBits<T>();
+    };
+
+    template<typename T>
+    inline typename combinedType<T>::type combinedValue(volatile const std::pair<T, T>& p) {
+        return (p.first << combinedType<T>::shift) + p.second;
+    }
+
+    template<typename T>
+    inline typename combinedType<T>::type combinedValue(const std::pair<T, T>& p) {
+        return (p.first << combinedType<T>::shift) + p.second;
+    }
+
 } // Util
 
 
