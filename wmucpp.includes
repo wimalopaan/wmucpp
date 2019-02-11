@@ -128,3 +128,6 @@ include0/external/bluetooth
 boards/rcsensorled10_avr0
 boards/breakout
 include0/mcu/tiny
+boards/onoff/doc
+boards/ppmmatrix/doc
+boards/power_or/doc
