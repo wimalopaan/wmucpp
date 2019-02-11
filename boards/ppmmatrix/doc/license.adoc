@@ -1,0 +1,18 @@
+
+.Lizenz
+****
+image::https://i.creativecommons.org/l/by-nc-nd/4.0/88x31.png[Lizenz]
+//image:http://mirrors.creativecommons.org/presskit/buttons/88x31/svg/by-nc-nd.svg[Lizenz] 
+Dieses Werk ist lizenziert unter einer http://creativecommons.org/licenses/by-nc-nd/4.0[Creative Commons Namensnennung - Nicht kommerziell - Keine Bearbeitungen 4.0 International Lizenz]
+****
+
+////
+[frame=none,grid=none,cols="a,a"]
+|====
+
+| image::http://mirrors.creativecommons.org/presskit/buttons/88x31/svg/by-nc-nd.svg[]
+// | image::https://i.creativecommons.org/l/by-nc-nd/4.0/88x31.png[Lizenz] 
+| Dieses Werk ist lizenziert unter einer http://creativecommons.org/licenses/by-nc-nd/4.0[Creative Commons Namensnennung - Nicht kommerziell - Keine Bearbeitungen 4.0 International Lizenz]
+|====
+
+////
