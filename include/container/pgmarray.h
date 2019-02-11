@@ -44,7 +44,7 @@ namespace Util {
     
     template<typename T, detail::maybe_cref<T>... Ts>
     class PgmArray final {
-        PgmArray() = delete;
+//        PgmArray() = delete;
     public:
         using U = std::remove_const_t<std::remove_reference_t<T>>;
         typedef typename std::conditional<(sizeof...(Ts) < 256), uint8_t, uint16_t>::type size_type;

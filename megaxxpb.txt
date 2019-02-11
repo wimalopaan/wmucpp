@@ -1,0 +1,10 @@
+* Nicht in avr-gcc enthalten:
+** atmega328pb
+** atmega324pb
+--> atmel pack
+--> header file
+--> crt...
+--> lib...
+--> device specs: Achtung: hier die gcc-isr Option hinzufügen (bei den Atmel specs nicht enthalten)
+
+

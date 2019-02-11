@@ -366,6 +366,7 @@ include0/mcu/mega/atmega328pb.h
 include0/mcu/megaavr0/atmega4809.h
 include0/mcu/pgm/pgmarray.h
 include0/mcu/pgm/pgmstring.h
+include0/mcu/tiny/attiny.h
 include0/std/algorithm
 include0/std/array
 include0/std/bits/bitmask.h
@@ -383,6 +384,7 @@ include0/std/ratio
 include0/std/type_traits
 include0/std/utility
 license.txt
+megaxxpb.txt
 tools/i2c/Makefile
 tools/i2c/test.cc
 tools/i2c/test01.cc

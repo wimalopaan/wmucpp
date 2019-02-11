@@ -239,7 +239,6 @@ namespace AVR {
 #elif defined(__AVR_ATmega168P__)
 # include "atmega168p.h"
 #elif defined(__AVR_ATmega328PB__)
-# warning
 # include "atmega328pb.h"
 #elif defined(__AVR_ATmega8__)
 # include "tmega8.h"
