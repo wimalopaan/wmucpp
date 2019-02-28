@@ -40,7 +40,6 @@
 #include <external/solutions/ifx007.h>
 #include <external/solutions/rpm.h>
 
-
 using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
 using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
 using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;

@@ -7,6 +7,7 @@ namespace AVR {
         struct isAtMega_X4 : std::false_type {};
 
         template<> struct isAtMega_X4<ATMega324PB> : std::true_type {};
+        template<> struct isAtMega_X4<ATMega1284P> : std::true_type {};
 
         template<typename MCU>
         struct isAtMega_X8 : std::false_type {};
@@ -39,6 +40,27 @@ namespace AVR {
             using tb = typename mcu_timer_type::TCCRB;
             static constexpr const auto mcuTimer = getBaseAddr<mcu_timer_type, number>;
         };
+
+        template<AVR::Concepts::AtMega_X4 MCU>
+        struct TimerParameter<1, MCU> final {
+            static inline constexpr uint8_t number = 1;
+            using PortD = AVR::Port<typename MCU::PortRegister, AVR::D>;
+            typedef AVR::Pin<PortD, 5> ocAPin;
+            typedef AVR::Pin<PortD, 4> ocBPin;
+
+            using mcu_timer_type = typename MCU::Timer16Bit;
+            using mcu_timer_interrupts_type = typename MCU::Timer16Interrupts;
+
+            using mcu_timer_interrupts_flags_type = typename MCU::Timer16Interrupts::Flags;
+
+            using value_type = uint16_t;
+            
+            using ta = typename mcu_timer_type::TCCRA;
+            using tb = typename mcu_timer_type::TCCRB;
+
+            static constexpr const auto mcu_timer = getBaseAddr<mcu_timer_type, number>;
+            static constexpr auto mcu_timer_interrupts = AVR::getBaseAddr<mcu_timer_interrupts_type, number>;
+        };
         
         template<AVR::Concepts::AtMega_X8 MCU>
         struct TimerParameter<0, MCU> final {
@@ -47,12 +69,12 @@ namespace AVR {
             using value_type = uint8_t;
             using ta = typename mcu_timer_type::TCCRA;
             using tb = typename mcu_timer_type::TCCRB;
-            static constexpr const auto mcuTimer = getBaseAddr<mcu_timer_type, number>;
+            static constexpr const auto mcu_timer = getBaseAddr<mcu_timer_type, number>;
         };
         
         template<AVR::Concepts::AtMega_X8 MCU>
         struct TimerParameter<1, MCU> final {
-            static inline constexpr int number = 1;
+            static inline constexpr uint8_t number = 1;
             using PortB = AVR::Port<typename MCU::PortRegister, AVR::B>;
             typedef AVR::Pin<PortB, 1> ocAPin;
             typedef AVR::Pin<PortB, 2> ocBPin;

@@ -62,6 +62,9 @@ namespace Hott {
         
         inline static volatile uint8_t mChannelForMultiChannel = 7;
     public:
+        
+        using value_type = uint_ranged_NaN<uint16_t, Hott::SumDMsg::Low, Hott::SumDMsg::High>;
+        
         SumDProtocollAdapter() = delete;
         
         inline static uint_ranged<uint16_t, Hott::SumDMsg::ExtendedLow, Hott::SumDMsg::ExtendedHigh> valueExtended(uint8_t channel) {

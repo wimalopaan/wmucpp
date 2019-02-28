@@ -25,5 +25,6 @@ subdirs =
 targets += main.elf main.S
 targets += tone.elf tone.S
 targets += soft.elf soft.S
+targets += test.elf test.S
 
 -include ../../Makefile.include

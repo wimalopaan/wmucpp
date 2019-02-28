@@ -131,3 +131,6 @@ include0/mcu/tiny
 boards/onoff/doc
 boards/ppmmatrix/doc
 boards/power_or/doc
+include0/external/solutions
+include0/external/ui
+boards/bmc

@@ -1,5 +1,10 @@
 Unter ~/Projekte/Optiboot/MiniCore/<dev>/<takt>/...<uart>_<baud>...hex
 
+* makeall
+* als LED ist dort Pin-B5 eingetragen -> sollte in der Schaltung dann frei sein
+** wenn das nicht geht, muss LED_START_FLASHES=0 gesetzt werden
+* auf dem TFQP-Board ist Pin-B0 und Pin-B0 verbunden 
+
 * mega328PB
 ** Quarz 16 MHz
 *** Fuses
@@ -22,3 +27,10 @@ Unter ~/Projekte/Optiboot/MiniCore/<dev>/<takt>/...<uart>_<baud>...hex
 	brown-out disabled
 
 	# sudo avrdude -p atmega328pb -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P usb -c avrisp2 -U lfuse:w:0xe0:m -U hfuse:w:0xd4:m -U efuse:w:0xff:m
+
+* Programmieren des Bootloaders
+	* 16 MHz Uart 0 
+	# sudo avrdude -p atmega328pb -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P usb -c avrisp2 -U optiboot_flash_atmega328pb_UART0_9600_16000000L.hex
+	
+* Programmieren der Firmware
+	# sudo avrdude -p atmega328pb -c arduino -b 9600 -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P /dev/ttyUSB0 -U flash:w:test00.elf

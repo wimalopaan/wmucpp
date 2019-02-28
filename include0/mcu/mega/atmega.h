@@ -120,6 +120,15 @@ namespace AVR {
             }
             return static_cast<typename AVR::PrescalerPair<T>::bits_type>(0);
         }
+        template<typename T, int N>
+        constexpr typename AVR::PrescalerPair<T>::bits_type bitsFrom(uint16_t Prescale, const std::array<AVR::PrescalerPair<T>, N>& a) {
+            for(const auto pair: a) {
+                if (pair.scale == Prescale) {
+                    return pair.bits;
+                }
+            }
+            return static_cast<typename AVR::PrescalerPair<T>::bits_type>(0);
+        }
         
         template<typename T, uint16_t N>
         constexpr uint16_t bitsToPrescale(T bits, const std::array<AVR::PrescalerPair<T>, N>& a) {

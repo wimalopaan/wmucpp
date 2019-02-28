@@ -23,8 +23,28 @@
 #include <array>
 
 #include "meta.h"
+#include "types.h"
 
 namespace etl {
+    template<typename T>
+    struct Intervall {
+        const T low;
+        const T high;
+    };
+    
+    template<typename T>
+    T scale(const T& v, const Intervall<T>& irange, const Intervall<T>& orange) {
+        if (v < irange.low) {
+            return orange.low;
+        }
+        else if (v > irange.high) {
+            return orange.high;
+        }
+        else {
+            return orange.low + (etl::enclosing_t<T>(v - irange.low) * (orange.high - orange.low)) / (irange.high - irange.low);
+        }
+    }
+    
     template <typename T, auto N, typename Comp = std::greater<T>>
     inline constexpr std::array<T, N>& sort(std::array<T, N>& array, Comp compare = std::greater<T>()) {
         for(uint8_t i = 0; i < (N - 1);) {
@@ -145,29 +165,40 @@ namespace etl {
         return detail::compareFirstN(a, b, std::make_index_sequence<N>{});
     }
     
-    template<auto... II, typename A, typename B>
+    template<auto... II, typename A, etl::Concepts::Container B>
     inline static constexpr void copyElements(A& dest, const B& src) {
         static_assert(((II < std::size(dest)) && ...));
         static_assert(((II < std::size(src)) && ...));
-        ((dest[II] = typename A::type(src[II])),...);
+        ((dest[II] = typename A::value_type(src[II])),...);
     }
     
     namespace detail {
-        template<typename A, typename B, auto... II>
+        template<typename A, etl::Concepts::Container B, auto... II>
         inline static constexpr void copyElements(A& a, const B& b, std::index_sequence<II...>) {
             copyElements<II...>(a, b);
         }
+        template<typename A, typename... BB, auto... II>
+        inline static constexpr void copyElements(A& a, std::index_sequence<II...>, BB... bb) {
+            ((a[II] = bb),...);
+        }
     }
-    template<typename A, typename B>
+
+    template<typename A, etl::Concepts::Container B>
     constexpr void copy(A& dest, const B& src) {
         static_assert(std::size(dest) >= std::size(src));
-        detail::copyElements(dest, src, std::make_index_sequence<dest.size>{});
+        detail::copyElements(dest, src, std::make_index_sequence<std::size(src)>{});
+    }
+
+    template<typename A, typename... BB>
+    constexpr void copy(A& dest, const BB&... bb) {
+        static_assert(std::size(dest) >= sizeof...(bb));
+        detail::copyElements(dest, std::make_index_sequence<sizeof...(bb)>{}, bb...);
     }
     
     namespace detail {
-        template<auto... II, typename A, typename B>
+        template<auto offset, auto... II, typename A, typename B>
         inline constexpr void fill_impl(A& dest, B src, std::index_sequence<II...>) {
-            ((dest[II] = src),...);
+            ((dest[II + offset] = src),...);
         }
 
         template<auto... II, typename A>
@@ -175,11 +206,38 @@ namespace etl {
             ((dest[II] = dest[dest.size() - II - 1]),...);
         }
     }
+    
     template<etl::Concepts::Container C>
     constexpr void fill(C& c, typename C::value_type v) {
-        detail::fill_impl(c, v, std::make_index_sequence<c.size()>{});
+        detail::fill_impl<0>(c, v, std::make_index_sequence<std::size(c)>{});
+    }
+    template<etl::Concepts::Container C>
+    constexpr void fill(C&& c, typename C::value_type v) {
+        detail::fill_impl<0>(c, v, std::make_index_sequence<std::size(c)>{});
+    }
+    
+    template<auto offset, etl::Concepts::Container C>
+    constexpr void fillOffset(C& c, typename C::value_type v) {
+        if constexpr(offset < std::size(c)) {
+            detail::fill_impl<offset>(c, v, std::make_index_sequence<std::size(c) - offset>{});
+        }
+        else {
+            (void)v;
+        }
     }
 
+    namespace detail {
+        template<etl::Concepts::Container C, typename Callable, auto... II>
+        constexpr void apply_impl(C& c, Callable f, std::index_sequence<II...>) {
+            ((f(c[II])), ...);
+        }
+    }
+    template<etl::Concepts::Container C, typename Callable>
+    constexpr void apply(C&& c, Callable f) {
+        detail::apply_impl(c, f, std::make_index_sequence<std::size(c)>{});
+    }
+    
+    
     template<etl::Concepts::Container C>
     constexpr void reverse(C& c) {
         detail::reverse_impl(c, std::make_index_sequence<c.size() / 2>{});

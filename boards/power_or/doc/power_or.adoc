@@ -128,6 +128,183 @@ Beachten Sie ebenfalls die Richtlinien unter <<Betrieb>>.
 ACHTUNG: Der Bausatz enthält verschluckbare Kleinteile. Von Kindern fernhalten.
 --
 
+== Übersicht
+
+Das vorliegende Modul ist eine zweifach Akkuweiche. Es werden damit zwei Akkus ohne nennenswerte Verluste zu einem Akku _parallel_ geschaltet.
+Es ist nur sinnvoll, zwei Akkus _gleicher_ Art (Blei, NiMh, LiPo, LiFePo4, ...) und _gleicher_ Zellenzahl zusammen zu führen. Dabei ergibt 
+sich eine nutzbare Kapazität der Summe der Einzelkapazitäten. Das Alter oder der Ladestand der Akkus spielt dabei keine Rolle. 
+
+Das Bild <<schematic>> gibt einen prinzipiellen Überblick über den Anschluß im Modell. Anstatt des Verbrauchers kann auch zunächst ein 
+elektronischer Hauptschalter eingesetzt werden. Gegenüber dem Verbraucher stellt sich die AkkuWeiche als _ein_ Akku dar.
+
+Man kann auch meherer Akkuweiche zusammenfügen, um eine 4-fach, 6-fach, ... Akkuweiche zu erreichen.
+
+[[schematic]]
+.Prinzipskizze der Akkuweiche zusammen mit zwei Akkus und einem Verbraucher
+image::images/Diagramm1.svg[width=500]
+
+
+.Sicherer Betrieb
+[TIP]
+--
+Die Akkuweiche besitzt _keine_ Unterspannungsschutz oder Unterspannungsabschaltautomatik. Setzen ggf. hierzu einen weiteren Akkuwächter oder 
+entsprechende Telemetrie Ihrer RC-Anlage ein.
+--
+
+.Tiefentladung
+[CAUTION]
+--
+Die Akkuweiche schütz nicht vor _Tiefentladung_ der einzelnen Akkus.
+--
+
+== Generelles über das Parallelschalten von (mehrzelligen Akkus)
+
+Das Parallelschalten von Akkus ist mit einigen Problemen verbunden, die im praktischen Betrieb zu einigen Unsicherheiten führen können.
+Die ist je nach Akku-Art (Blei, LiPo, LiFePo4, NiMh) unterschiedlich.
+
+=== Welche Akkus kann man theoretisch parallel schalten?
+
+Rein theoretisch könnte man Akkus gleicher Technologie (Blei, LiPo, LiFePo4, NiMh) und Zellenzahl einfach parallel schalten. Denn der 
+Grundsätzliche Aufbau eines jeden Akkus ist identisch: man hat im Akku in jeder Zelle zwei Elektroden mit einer bestimmten Fläche, die durch 
+ein Elektrolyt voneinander getrennt sind. Je größer die Elektrodenfläche, desto größer die Kapazität. Die Elektrodenmaterialien und das Elektrolyt 
+bestimmen die Spannung der Zelle. Die Spannung ist zudem vom Ladezustand der Zelle abhängig. 
+
+Schaltet man nun zwei Zellen parallen, so vergrößert man _theoretisch_ nur die Fläche der Elektroden, und es _müsste_ sich eine 
+Gesamtzelle mit einer Kapazität aus der Summe der Einzelkapazitäten ergeben. 
+
+[CAUTION]
+Dies ist in der Praxis aber nicht so!
+
+=== Ausgleichsströme
+
+Hat man zwei getrennt Akkus, so weisen diese durch ihren Produktionsprozeß Unterschiede auf. Zudem haben selbst _voll_ geladene Akkus 
+nicht exakt denselben Ladezustand und damit unterschiedliche Spannungslagen der einzelnen Zellen und damit des gesamten Akkus.
+
+Ein direktes Parallelschalten solcher zwei Akkus führt also zwangsläufig dazu, dass zwischen den Akkus Ausgleichsströme fließen: der 
+vollere Akku läd den leereren Akku auf, bis beide die gleich Spannungslage haben. Dieses _Umladen_ ist mit einigen Verlusten verbunden, d.h. 
+hier geht schon durch Wärmeentwicklung Energie verloren. Diese steht dann dem Betrieb des Modells nicht mehr zur Verfügung. Der Verlust 
+kommt durch die unvermeidlichen _Innenwiderstände_ der Akkus zustande, an denen der Ausgleichsstrom in Wärme umgewandelt wird.
+
+Dies kann man natürlich umgehen, indem man die Akkus _einmal_ zusammen schaltet und dann _nie wieder_ voneinander trennt. Nun, dann 
+hätte man sich besser gleich ein größeren Akku besorgen sollen, denn selbst damit sind die Probleme nicht behoben.
+
+Etwas verbessern lässt sich die Situation, indem man je zwei Zellen direkt parallel schaltet. Dies minimiert die Spannungsdifferenzen und 
+damit ggf. die Ausgleichsströme. Leider haben die meisten fertigen Blei und NiMH-Akkus keine herausgeführten Zellenabgriffe. Nun, und es gilt 
+auch hier natürlich: da man diese Verschaltung nicht mehr lösen sollte, hätte man besser gleich einen größeren Akku erworben.
+
+.Fazit
+[TIP]
+--
+Man dem Energieverlust durch Ausgleisströme nur umgehen, indem man auf Zellenbasis parallel schaltet und diese Verschaltung _dauerhaft_ 
+beibehält! Dann hätte man sich besser einen größeren Akku gekauft.
+--
+
+=== Nickel-Metallhydrid (NiMh) Akku
+
+Durch Fertigungstoleranzen haben nominell gleiche und neue Akkus _nie_ wirklich den gleichen Innenwiderstand. Durch vermehrte Ladezyklen
+nimmt der Innenwiderstand durch irreversible chemische Prozesse im Akku auch weiter zu. Schaltet man nun solche zwei Akkus parallel, so 
+hat einer den niedrigeren Innenwiderstand. Der entnommene Strom verteilt sich also ungleich: der Akku mit dem niedrigeren Innenwiderstand 
+liefert mehr Strom. Dadurch wird er wärmer als sein Partner. Leider ist der Innenwiderstand bei NiMh-Akkus zur Temperatur _umgekehrt_ 
+proportional: bei steigender Temperatur _sinkt_ der Innenwiderstand. Der Akku mit dem stärkeren Stromfluss bekommt also einen noch niedrigeren 
+Innenwiderstand, wodurch die Temperatur weiter steigt. Man hat also einen _Mitkoppelungseffekt_ und damit ein instabiles System. 
+Das führt dazu, dass im wesentlichen nur _einer_ der Akkus tatsächlich entladen wird!
+
+Diesen Effekt kann man verringern, indem die Akkus direkt miteinander körperlich verbunden werden (Schrumpfschlauch, Wärmeisolierung). 
+
+.Fazit
+[TIP]
+--
+Die thermische Instalilität der Parallelschaltung kann man nur nur ein mechanisches direktes Verbinden der Akkus verringern. Damit 
+bleiben die Akkus praktisch untrennbar. Dann hätte man sich besser einen größeren Akku gekauft.
+--
+
+=== Lithium-Polymer (LiPo) Akkus
+
+==== Innenwiderstand
+
+Der Verlauf des Innenwiderstands eines LiPo-Akkus über der Temperatur ist bis ca 40°C mit steigender Temperatur abfallend und 
+anschließend wieder leicht steigend, bis der Akkus dann ab 70°C zerstört werden kann.
+
+Damit haben wir beim Parallelschalten der Akkus zunächst dasselbe Problem wie bei den NiMh-Akkus. Allerdings stabilisiert sich die 
+Zusammenschaltung oberhalb von ca. 40°C wieder. Es bleibt also nicht dauerhaft instabil. Sind die Ströme allerdings gering, so dass 
+sich die Akkus nicht sehr stark aufheizen, hat man schon eine Verstärkung der Ungleichentladung.
+
+Diesen Effekt kann man verringern, indem die Akkus direkt miteinander körperlich verbinden werden (Schrumpfschlauch, Wäremisolierung). 
+Und man sollte die Akkus thermisch konditionieren, also vorheizen (das machen ja auch manche Leute, um den Innenwiderstand 
+zu reduzieren).
+
+.Fazit
+[TIP]
+--
+Die thermische Instalilität der Parallelschaltung kann man nur nur ein mechanisches direktes Verbinden der Akkus verringern. Damit 
+bleiben die Akkus praktisch untrennbar. Dann hätte man sich besser einen größeren Akku gekauft.
+--
+
+==== Ausgleichsströme
+
+Beim Laden von LiPo-Zellen ist streng darauf zu achten, dass die einzelnen Zellen jeweils nicht überladen werden. Deswegen benutzt man ja 
+auch Balancer beim Ladevorgang. Dieses Prinzip muss auch beim Umladen durch Parallelschaltung berücksichtigt werden. 
+Möchte man also zwei LiPo-Akkus parallel schalten, so muss der Akku mit dem niedrigeren Ladestand, der ja vom volleren geladen wird, 
+einen Balanver bekommmen. Da man das üblicherweise nicht weiß, bräuchten beide Akkus für die Dauer dem Umladung beim Parallelschalten
+einen Balancer. 
+
+Dies lässt sich nur wirksam umgehen, indem kam jeweils auf Zellenebene parallel schaltet.
+
+.Fazit
+[TIP]
+--
+Beim Parallelschalten muss die Umladung durch einen Balancer gesteuert werden. Alternativ verbindet man die Akkus auf Zellenebene. Da
+im Entladebetrieb die Ströme wesentlich höher sind als im Ladebetrieb, reichen ggf. die Querschnitte der Balancerkabel nicht aus. Man 
+muss also die Kabel ersetzen.
+Dann hätte man sich besser einen größeren Akku gekauft.
+--
+
+=== Lithium-Eisenphosphat (LeFePo4) Akkus und Blei-Akkus
+
+Diese Akkus sind wesentlich robuster in Bezug auf die Überladeeigenschaften. Bei offenen Bleiakkus ist die Überladung zum Teil sogar 
+erwünscht, um Sulfatierungen durch Gasblasen wieder aufzulösen. Insofern ist das unkontrollierte Laden durch den Umladenvorgang kein 
+Probleme für die Akkus. Natürlich geht hierbei Energie verloren (s.o.).
+
+Bzgl. des Innenwiederstandes gilt im wesentlichen das Gleiche, wie bei den LiPo-Akkus.
+
+.Fazit
+[TIP]
+--
+Die Parallelschaltung sollte auch hier auf Zellenebene erfolgen.
+Dann hätte man sich besser einen größeren Akku gekauft.
+--
+
+=== Zusammenfassung
+
+Aus dem oben gesagten folgt für _alle_ Akkutypen, dass man sie nur dann _sinnvoll_ parallelschalten kann, wenn man die 
+_thermisch koppelt_ und auf _Zellenebene_ parallel schaltet. Dies führt zwangsläufig zu einer _mechanischen Einheit_. Die Akkus
+lassen sich eigentlich nicht mehr wirklich für andere Zwecke voneinander trennen. 
+
+Dann hätte man sich besser einen größeren Akku gekauft!
+
+Die hier vorgestellt Akkuweiche soll diese Beschränkung aufheben: mit ihr kann man temporär Akkus zusammen schalten. Dies ist 
+im praktischen Betrieb äußerst flexibel. 
+
+* Die Akkus können in unterschiedlichen Modellen oder Zwecken genutzt werden. 
+* Sie können räumlich getrennt im Modell untergebracht werden. Damit kann eine bessere Gewichtsverteilung erreicht werden.
+* Tmepartureinflüsse oder Ladezustaände bzw. Alterungen spielen keine Rolle mehr. 
+* Jeder Akku kann voll entladen werden. 
+* Umladeverluste entfallen vollständig. 
+* Zudem verursacht die Akkuweiche kaum weiteren Verluste im Betrieb.
+
+.Fazit
+[TIP]
+--
+Mit der Akkuweiche braucht der Modellbauer weniger Akkus. Das schon die Umwelt!
+--
+
+== Leistungsdaten
+
+* Maximale Eigangsspannung je Akku: 40V
+* Maximaler Strom je Akkuzweig: 50A
+* Ruhestrom je Akkuzweig: < 2µA
+* Spannunsabfall: < 25mV
+
 == Einbau 
 
 [NOTE]
@@ -135,27 +312,47 @@ Das Modul wie auch diese Doku ist noch unvollständig und _work-in-progess_.
 Bei jeglichen Unklarheiten in dieser Funktionsbeschreibung und generellem Aufbau und Anschluß, 
 unterlassen Sie den Betrieb und kontaktieren Sie den Bausatzersteller.
 
+=== Anschluß der Akkus
 
-=== Anschluß an den Akku
+Für einen ordnungsgemäßen Betrieb ist das Modul mit entsprechenden Kabeln zu versehen, die einen ausreichenden Querschnitt aufweisen. Die 
+vorhandenen Lötaugen sind auf Kabel 12AWG abgestimmt.
 
-Für einen ordnungsgemäßen Betrieb ist das Modul mit entsprechenden Kabeln zu versehen, die einen ausreichenden Querschnitt aufweisen (s.u.).
+Die Anschlüsse `Akku 1 (+)` / `Gnd` sind mit dem Akku 1 zu verbinden.
 
-Die Anschlüsse `In(+)` / `Gnd` sind mit dem Akku zu verbinden.
+Die Anschlüsse `Akku 2 (+)` / `Gnd` sind mit dem Akku 2 zu verbinden.
 
-Die Anschlüsse `Out` / `Gnd` sind mit den zu versorgenden Geräten zu verbinden.
+Die Anschlüsse `Out (+)`  / `Gnd`  stellen den Ausgang dar. Vor hier aus erfolgt die weitere Verbindung zu den Verbrauchern im Modell oder zum
+Hauptschalter.
 
-Ein Verpolen der Anschlüsse kann zu einem Defekt führen.
+[WARNING]
+--
+Ein Verpolen der Anschlüsse führt sofort zu einem Defekt!
+--
+
+image::images/AkkuWeiche01.jpg[width=500]
 
 === Schutz 
 
-Um das Modul gegen Feuchtigkeit zu schützen und glichzeitig die Schallausnbreitung nicht zu beeinträchtigen, empfielt es sich, das Modul 
-mit Polyurethan-Lack-Schutzlack (z.B. Kontakt 70) zu überziehen. Bitte kleben Sie jedoch voher den Pfostenverbinder für den Kontackt, den 
-Piezosummer und (falls noch nicht angelötet) die Lötringe für die Anschlußkabel ab.
-
+Um das Modul gegen Feuchtigkeit zu schützen, empfielt es sich, das Modul 
+mit Polyurethan-Lack-Schutzlack (z.B. Kontakt 70) zu überziehen. Bitte kleben Sie jedoch voher (falls noch nicht angelötet) die Lötringe für die Anschlußkabel ab.
 
 == Funktion
 
+Das Bild <<plot1>> verdeutlicht die Arbeitsweise der Akkuweiche anhand eines Spannungsverlaufes zweier Akkus (Akku1: Kurve _blau_, Akku2: Kurve _rot_, Ausgang der 
+Akkuweiche: Kurve _grün_).
 
+[[plot1]]
+.Spannungsmessung im Betrieb: Ungleich geladenen Akkus
+image::images/log01.png[width=500]
+
+Im Bild <<plot1>> sind die ausgangseitigen Belastungen durch entsprechende Markierungen angezeigt. Zu Beginn der Messung ist der _Akku1_ voll geladen, während _Akku2_
+schon deutlich entladen ist. Hat Akku1 dann das Spannungsniveau von _Akku2_ erreicht, so werden anschließend beide Akkus gleichförmig entladen.
+
+In <<plot2>> ist eine weitere Messung zu sehen, hierbei wird auch teilweise der _Akku1_ von der Akkuweiche _entfernt_ und später wieder _hinzugefügt_. 
+
+[[plot2]]
+.Spannungsmessung im Betrieb: verschiedene Lasten und An- und Abschalten von Akku1
+image::images/log02.png[width=500]
 
 [[Betrieb]]
 == Betrieb
@@ -164,13 +361,13 @@ Piezosummer und (falls noch nicht angelötet) die Lötringe für die Anschlußka
 Beachten Sie unbedingt die Anweisungen unter <<first>>.
 
 [NOTE]
-Die üblichen Sicherheitsvorkehrungen im Betrieb mit ferngesteuerten Modellen, insbesonder Schiffsmodellen sind einzuhalten.
+Die üblichen Sicherheitsvorkehrungen im Betrieb mit ferngesteuerten Modellen, insbesondere Schiffsmodellen sind einzuhalten.
 
 [IMPORTANT]
 Beachten Sie *alle* folgenden Hinweise zum Betrieb.
 
 [CAUTION]
-Eine Verwendung des Moduls in Rennbooten ist nicht zulässig.
+Eine Verwendung des Moduls in Rennbooten oder Flugmodellen ist nicht zulässig.
 
 [CAUTION]
 Das Modul darf nicht in Kontakt mit Wasser, Wasserdampf oder anderen Flässigkeiten kommen. Wasser oder Wasserdampf bzw. andere 
@@ -186,25 +383,16 @@ Beim Betrieb ist die Erwärmung des Moduls zwingend zu überwachen! Eine Überhi
 zu einem Modellverlust führen. Gefahr von Personenschäden!
 
 [CAUTION]
-Die Spannunsgversorgung ist Moduls ist im Betrieb zu überwachen. Bei Unterspannung kann das Modul abschalten oder bei gleichzeitiger 
-hoher Stromaufnahme überhitzen und so zu einem Totalausfall 
-und damit zu einem Modellverlust sowie Personenschäden führen
-
-[CAUTION]
 Die erforderlichen Kabelquerschnitte für die Verbindung mit dem Akku und auch mit dem elektrischen Verbraucher sind unbedingt einzuhalten. 
 Hier besteht Brandgefahr. Gefahr von Personenschäden!
-
-[CAUTION]
-Beim Betrieb ist der maximale Stromdurchfluß zu begrenzen und zu überwachen. Ein zu langer und zu hoher Stromfluß kann zu einem Totalausfall 
-und damit zu einem Modellverlust sowie Personenschäden führen.
 
 [CAUTION]
 Das Modul ist nicht kurzschlußfest. Ein Kurzschluß führt zu einem Totalausfall 
 und damit zu einem Modellverlust sowie Personenschäden.
 
 [CAUTION]
-Der maximale Schaltstrom ist ist unbedingt einzuhalten und darf nicht überschritten werden. Ein zu hoher Schaltstrom kann zu einem Totalausfall 
-und damit zu einem Modellverlust sowie Personenschäden führen.
+Das Modul ist nicht verpolungsfest. Eine Verpolung führt zu einem Totalausfall 
+und damit zu einem Modellverlust sowie Personenschäden.
 
 [CAUTION]
 Die Kapazitäten (Elkos, Siebelkos) am Ausgang des Moduls, etwa in Fahrtreglern (Stellern) für Motoren, 
@@ -223,10 +411,18 @@ Bereiches kann zu einem Totalausfall und damit zu einem Modellverlust sowie Pers
 
 Der Bausatz enthält die Einzelteile zum Aufbau des Moduls. 
 
+.Ansicht der Platine oben und unten
+image::images/AkkuWeicheTopBottom.jpg[width=500]
+
+.Ansicht einer 4-fach Akkuweiche mit zwei _gestapelten_ zweifach Akkuweichen.
+image::images/AkkuWeicheStack.jpg[width=500]
+
+.Einbausituation
+image::images/Einbau.jpg[width=500]
 
 === Schrittweise Anleitung
 
-Löten Sie alle Bauteile wie angegeben auf. Löten Sie auch den programmierten µC auf.
+Löten Sie alle Bauteile wie angegeben auf. 
 
 Beim Auflöten der MOSFETs ist darauf zu achten, dass die Verlötung auf der Platine mit der Rückseite der MOSFETs vollflächig erfolgt. Hierzu 
 muss ein ausreichend starker Lötkolben verwendet werden. Achten Sie auch auf eine hohe Löttemperatur (400 °C) und eine kurze Lötdauer. 
@@ -239,7 +435,6 @@ benachbarten Leiterbahn entsteht.
 
 
 ifdef::short[]
-
 [TIP]
 In der Kurzversion der Anleitung sind keine Bilder enthalten.
 endif::[]
@@ -259,15 +454,13 @@ Die erste Inbetriebnahme _muss_ unbedingt
 
 erfolgen. Am Ausgang des Moduls schließen Sie ein Multimeter oder eine LED mit passendem Vorwiderstand an.
 
-Stellen Sie ein:
+Stellen Sie am Netzteil ein:
 
 * Spannung: 8V
 * Strombegrenzung: 50mA
 
 Schließen Sie _erst jetzt_ das Modul eingangsseitig an das Labornetzteil an. Die Strombegrenzung des Labornetzteils _darf nicht_ 
-ansprechen. Der Stromverbrauch sollte in der Anzeige zunächst nicht mehr als 2mA sein und nach drei Sekunden auf 2µA sinken.
-
-Führen Sie erst nun die Einschalt- und Ausschaltsequenz aus und beobachten Sie die Ausgangsspannung bzw. LED. 
+ansprechen. Der Stromverbrauch sollte in der Anzeige nicht mehr als 2µA sein.
 
 [CAUTION]
 Bauen Sie erst dann das Modul in ein Modell ein, wenn Sie sich von der einwandfreien Funktion überzeugt haben.

@@ -144,7 +144,7 @@ zu Ihrem Anwendungsfall (max. Spannung, max. Stromstärke) vorliegen haben (s.a.
 Das Modul dient zum zentralen Einschalten der zentralen Stromversorgung von Schiffsmodellen. Das Einschalten und das Ausschalten 
 erfolgen über einen Tastkontakt. Das Modul gibt akustische Rückmeldung über seinen Zustand.
 
-Das folgende Bild zeugt den Einbau schematisch:
+Das folgende Bild zeigt den Einbau schematisch:
 
 [[schema1]]
 .Schematischer Anschluß des Moduls an Akku, Verbraucher und Kontakt
@@ -162,8 +162,8 @@ Die Anschlüsse `Out` / `Gnd` sind mit den zu versorgenden Geräten zu verbinden
 Ein Verpolen der Anschlüsse kann zu einem Defekt führen.
 
 [TIP]
-Beim ersten Anschluß an den Akku ertönt eine aufsteigende Tonfolge. Danach ein tiefer Ton, um anzuzeigen, dass das Modul in den 
-Zustand `AUS` wechselt.
+Beim ersten Anschluß an den Akku ertönt eine aufsteigende Tonfolge. Danach ein tiefer Ton, um anzuzeigen, dass das Modul 
+in den Zustand `AUS` wechselt.
 
 === Anschluß des Tastkontaktes
 
@@ -181,7 +181,7 @@ gewährleistet ist. Vorsicht beim Biegen der Anschlußdrähte eines
 Reed-Kontaktes, denn diese brechen leicht.
 
 Beachten Sie den maximalen Abstand des Magneten zum Reed-Kontakt bei der Montage. Mehr als 1,5mm kann zu Problemen beim 
-Ein- oder Ausschalten führen.
+Ein- oder Ausschalten führen. Dies hängt wesentlich von der Stärke des Magneten ab.
 
 === Position
 
@@ -189,9 +189,12 @@ Bauen Sie das Modul so ein, das ein gute Schallübertragung möglich ist. Die se
 
 === Schutz 
 
-Um das Modul gegen Feuchtigkeit zu schützen und glichzeitig die Schallausnbreitung nicht zu beeinträchtigen, empfielt es sich, das Modul 
+Um das Modul gegen Feuchtigkeit zu schützen und glichzeitig die Schallausbreitung nicht zu beeinträchtigen, empfielt es sich, das Modul 
 mit Polyurethan-Lack-Schutzlack (z.B. Kontakt 70) zu überziehen. Bitte kleben Sie jedoch voher den Pfostenverbinder für den Kontackt, den 
 Piezosummer und (falls noch nicht angelötet) die Lötringe für die Anschlußkabel ab.
+
+Ein Einschrumpfen mit Schrumpfschlauch ist möglich, aber auch hier muss streng darauf geachtet werden, dass eine gute Schallausbreitung
+ermöglicht bleibt.
 
 === Master / Slave
 
@@ -267,7 +270,7 @@ Um das Modul wieder einzuchalten, muss der Kontakt kurz getrennt werden.
 
 === Ruhe
 
-Ist das Modul im Zustand `AUS` geht es nach ca. 3 Sekunden in den Schlafzustand. Es verbraucht nun sehr wenig Strom (<= 2 µA) 
+Ist das Modul im Zustand `AUS`, geht es nach ca. 3 Sekunden in den Schlafzustand. Es verbraucht nun sehr wenig Strom (<= 2 µA) 
 (Achtung: s.a. <<Betrieb>>) 
 
 [[Prog]]
@@ -276,7 +279,9 @@ Ist das Modul im Zustand `AUS` geht es nach ca. 3 Sekunden in den Schlafzustand.
 === Einschaltverzögerung
 
 Die Verzögerung vom Zeitpunkt der Betriebsbereitschaft bis zum Einschalten kann programmiert werden. Im Normalfall ist diese 
-Verzögerung 1s. Wenden Sie folgendes Vorgehen an:
+Verzögerung 1s. 
+
+Wenden Sie folgendes Vorgehen an:
 
 . Trennen Sie das Modul vom Akku.
 . Trennen Sie alle Verbraucher.

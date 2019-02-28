@@ -29,7 +29,7 @@ namespace etl {
     using namespace std;
     
     enum class Char : uint8_t {};
-    
+       
     template<bool V>
     struct NamedFlag : integral_constant<bool, V> {};
     
@@ -236,9 +236,9 @@ namespace etl {
             assert(v <= UpperBound);
         }
 
-        inline constexpr uint_ranged_NaN(etl::fragmentType_t<T> higherPart, etl::fragmentType_t<T> lowerPart) :
-            uint_ranged_NaN((static_cast<T>(higherPart) << etl::numberOfBits<etl::fragmentType_t<T>>()) + lowerPart)
-        {}
+//        inline constexpr uint_ranged_NaN(etl::fragmentType_t<T> higherPart, etl::fragmentType_t<T> lowerPart) :
+//            uint_ranged_NaN((static_cast<T>(higherPart) << etl::numberOfBits<etl::fragmentType_t<T>>()) + lowerPart)
+//        {}
         
         inline constexpr explicit operator bool() const {
             return mValue != NaN;
@@ -363,4 +363,7 @@ namespace std {
         inline static constexpr uint8_t max() {return UINT8_MAX - 1;}
         inline static constexpr uint8_t min() {return 0;}
     };
+    
+    template<>
+    struct enable_bitmask_operators<etl::Char> : std::true_type {};
 }

@@ -34,11 +34,23 @@ struct PgmString;
 template<typename C, C... CC>
 constexpr PgmString<C, CC...> operator"" _pgm();
 
+class PgmStringView {
+    template<typename C, C... CC> friend struct PgmString;
+public:
+    inline etl::Char operator[](uint8_t index) const {
+        assert(ptrToPgmData != nullptr);
+        return etl::Char{pgm_read_byte(ptrToPgmData + index)};
+    }
+    template<typename C, C... CC> 
+    explicit constexpr PgmStringView(const PgmString<C, CC...>& ps) : ptrToPgmData(ps.data) {}
+private:
+    explicit constexpr PgmStringView(const char* pgm) : ptrToPgmData(pgm) {}
+    const char* const ptrToPgmData = nullptr;
+};
+
 template<typename C, C... CC>
 struct PgmString final {
-    typedef etl::Char value_type;
-//    typedef char value_type;
-//    inline static constexpr uint8_t size = sizeof...(CC);
+    using value_type = etl::Char;
     
     constexpr PgmString() = default;
     
@@ -46,7 +58,7 @@ struct PgmString final {
     public:
         explicit constexpr Iterator(uint8_t index = 0) : mIndex(index) {}
 
-        inline etl::Char operator*() {
+        inline etl::Char operator*() const {
             return etl::Char{pgm_read_byte(&data[mIndex])};
         }
         inline void operator++() {
@@ -71,54 +83,14 @@ struct PgmString final {
     inline constexpr uint8_t size() const {
         return sizeof...(CC);
     }
-//    constexpr operator PgmStringView() const {
-//        return PgmStringView{data};
-//    }
+    inline constexpr operator PgmStringView() const {
+        return PgmStringView{data};
+    }
 private:
-//    inline static constexpr const char data[] PROGMEM = {CC..., '\0'};
-    inline static constexpr const char data[] PROGMEM = {CC...};
+    inline static constexpr const char data[] PROGMEM = {CC..., '\0'};
 };
 
 template<typename C, C... CC>
 constexpr PgmString<C, CC...> operator"" _pgm(){
     return PgmString<C, CC...>();
 }
-
-class PgmStringView {
-    template<typename C, C... CC> friend struct PgmString;
-public:
-    inline etl::Char operator[](uint8_t index) const {
-        assert(ptrToPgmData != nullptr);
-        return etl::Char{pgm_read_byte(ptrToPgmData + index)};
-    }
-    template<typename C, C... CC> 
-    explicit constexpr PgmStringView(const PgmString<C, CC...>& ps) : ptrToPgmData(ps.data) {}
-private:
-    explicit constexpr PgmStringView(const char* pgm) : ptrToPgmData(pgm) {}
-    const char* ptrToPgmData = nullptr;
-};
-
-
-namespace std::detail {
-//    template<MCU::Stream Stream, typename C, C... CC>
-//    void out(const PgmString<C, CC...>& s) {
-//        for(const auto& c : s) {
-//            Util::put<typename Stream::device_type, Config::ensureTerminalOutput>(std::byte{c});
-//        }
-//    }
-} // std::detail
-
-//template<typename Stream, typename C, C... CC>
-//Stream& operator<<(Stream& out, const PgmString<C, CC...>& s) {
-//    std::detail::template out<Stream>(s);
-//    return out;
-//}
-
-//template<MCU::Stream Stream>
-//Stream& operator<<(Stream& out, PgmStringView s) {
-//    char c = '\0';
-//    for(uint8_t i = 0; (c = s[i]) != '\0'; ++i) {
-//        out << c;
-//    };
-//    return out;
-//}

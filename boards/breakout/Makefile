@@ -23,14 +23,21 @@
 # 
 # sudo avrdude -p atmega328pb -c arduino -b 9600 -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P /dev/ttyUSB2 -U flash:w:test00.elf
 
+# Optiboot 19200 Uart0
+# sudo avrdude -p atmega1284p -P usb -c avrisp2 -V -U flash:w:optiboot_flash_atmega1284p_UART0_19200_20000000L.hex
+
+# sudo avrdude -p atmega1284p -P usb -c avrisp2 -U lfuse:w:0xf7:m -U hfuse:w:0xd6:m -U efuse:w:0xff:m
+
 
 MCU = atmega1284p
-F_OSC = 16000000
+F_OSC = 20000000
+
+#OPTFLAGS = -O3
 
 subdirs =
 
 targets += test00.elf test00.S
-#targets += test01.elf
+targets += test01.elf
 #targets += test02.elf
 #targets += test03.elf
 #targets += test04.elf

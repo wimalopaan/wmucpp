@@ -5,20 +5,20 @@ ASCIIDOC = asciidoc
 ASCIIDOCTOR = asciidoctor
 
 #ASCIIDOCTORPDF = ~/asciidoctor/asciidoctor-pdf/bin/asciidoctor-pdf
-ASCIIDOCTORPDF = ~/.gem/ruby/2.5.0/gems/asciidoctor-pdf-1.5.0.alpha.16/bin/asciidoctor-pdf
+ASCIIDOCTORPDF = ~/.gem/ruby/2.6.0/gems/asciidoctor-pdf-1.5.0.alpha.16/bin/asciidoctor-pdf
 
 # rendered admonitions als image
 #ASCIIDOCTORPDF = ~/asciidoctor/jessedoyle-asciidoctor-pdf/bin/asciidoctor-pdf
 
 EXTENSIONSDIR = ~/asciidoctor/extensions/lib 
 
-ASCIIDOCTORFLAGS += -I $(EXTENSIONSDIR) -r view-result-postprocessor -r man-inline-macro -r asciidoctor-diagram -r tree-block-macro # -r mathematical-treeprocessor -r mathoid-treeprocessor
+ASCIIDOCTORFLAGS += -I $(EXTENSIONSDIR) -r view-result-docinfoprocessor -r man-inline-macro -r asciidoctor-diagram -r tree-block-macro # -r mathematical-treeprocessor -r mathoid-treeprocessor
 ASCIIDOCTORFLAGSPDF += -I $(EXTENSIONSDIR) -a allow-uri-read -r asciidoctor-diagram -r tree-block-macro #-r mathoid-treeprocessor
 ASCIIDOCTORFLAGSPDF += -a pdf-stylesdir=themes -a pdf-style=basic.yml --trace
 ASCIIDOCTORFLAGSPDF2 += -I $(EXTENSIONSDIR) -a allow-uri-read -r asciidoctor-diagram -r tree-block-macro
 ASCIIDOCTORFLAGSPDF2 += -a pdf-stylesdir=themes -a pdf-style=basic_land.yml --trace
 ASCIIDOCTORVARS += -a data-uri -a imagesdir=`pwd` -a stylesdir=css -a stylesheet=asciidoctor-wide.css
-ASCIIDOCTORVARS += -a revnumber=1.14 -a revdate="${shell date}" -a revremark="initial"
+ASCIIDOCTORVARS += -a revnumber=1.15 -a revdate="${shell date}" -a revremark="initial"
 # ASCIIDOCTORVARS += -a srcbase=undef # to identiy all included sources
 
 #SCREENSHOT = ~/asciidoctor/asciidoctor-screenshot/buildSrc/src/main/groovy/org/asciidoctor/extension

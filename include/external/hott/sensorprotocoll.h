@@ -46,14 +46,16 @@ namespace Hott {
 //    constexpr const auto hottDelayBetweenBytes = 2_ms;
     
     struct TextMsg {
-        typedef uint8_t item_type;
-        static constexpr uint8_t rows = 8;
-        static constexpr uint8_t columns = 21;
-        uint8_t start_byte = 0;		//#01 Starting constant value == 0x7b
+        using item_type = uint8_t;
+        inline static constexpr uint8_t rows = 8;
+        inline static constexpr uint8_t columns = 21;
+        using buffer_type = std::array<StringBuffer<columns>, rows>;
+        
+        const uint8_t start_byte = 0;		//#01 Starting constant value == 0x7b
         uint8_t esc = 0;				//#02 Escape (higher-ranking menu in text mode or Text mode leave)
         uint8_t warning_beeps = 0;	//#03 1=A 2=B ...
-        std::array<StringBuffer<columns>, rows> text{};
-        uint8_t stop_byte = 0;		//#172 constant value 0x7d
+        buffer_type text{};
+        const uint8_t stop_byte = 0;		//#172 constant value 0x7d
         uint8_t parity = 0;			//#173 Checksum / parity
     };
     

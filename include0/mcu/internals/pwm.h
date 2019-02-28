@@ -1,7 +1,6 @@
 #pragma once
 
 #include <std/chrono>
-
 #include <etl/rational.h>
 
 #include "groups.h"
@@ -26,55 +25,72 @@ namespace AVR {
         using ocAPin = typename TimerParameter<TimerNumber, MCU>::ocAPin;
         using ocBPin = typename TimerParameter<TimerNumber, MCU>::ocBPin;
         
-        using parameter = PPMParameter<TimerNumber>;
-        
         static constexpr auto mcu_timer = TimerParameter<TimerNumber, MCU>::mcu_timer;
         static constexpr auto mcu_timer_interrupts = TimerParameter<TimerNumber, MCU>::mcu_timer_interrupts;
         
+        inline static constexpr void period(value_type v) {
+            *mcu_timer()->ocra = v;
+        }
+        
+        inline static constexpr void on(value_type v) {
+            *mcu_timer()->ocrb = v;
+        }
+        
+        inline static constexpr void reverse(bool r) {
+            if (r) {
+                mcu_timer()->tccra.template add<ta::comb0>();
+                ocAPin::on();
+            }
+            else {
+                mcu_timer()->tccra.template clear<ta::comb0>();
+                ocAPin::off();
+            }
+        }
+        
+        inline static constexpr void duty(value_type v, value_type p) {
+            *mcu_timer()->ocra = p;
+            *mcu_timer()->ocrb = v;
+        }
+        
+        template<const hertz& Frequency>
         inline static constexpr void init() {
             ocAPin::template dir<AVR::Output>();
             ocBPin::template dir<AVR::Output>();
+            ocAPin::off();
+            ocBPin::off();
             
-            constexpr auto bits = bitsFrom<parameter::prescaler>(mcu_timer_type::template PrescalerBits<TimerNumber>::values);
+            constexpr auto tsd = AVR::PWM::Util::calculate<TimerNumber>(Frequency);
+            static_assert(tsd, "wrong prescaler");
+            
+            constexpr auto bits = bitsFrom<tsd.prescaler>(mcu_timer_type::template PrescalerBits<TimerNumber>::values);            
             static_assert(isset(bits), "wrong prescaler");
             mcu_timer()->tccrb.template set<bits>();
-            
-            // mode 14
-            mcu_timer()->tccra.template set<ta::wgm1 | ta::coma1 | ta::comb1>();
+
+            // mode 15
+            mcu_timer()->tccra.template set<ta::wgm0 | ta::wgm1 | ta::comb1>();
             mcu_timer()->tccrb.template add<tb::wgm2 | tb::wgm3, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
             
-            *mcu_timer()->icr = parameter::ccPulseFrame;
-            *mcu_timer()->ocra = parameter::ocMedium;
-            *mcu_timer()->ocrb = parameter::ocMedium;
+            *mcu_timer()->ocrb = 0;
+            *mcu_timer()->ocra = 0;
         }
         
-        inline static constexpr void periodic() {
-//            // wenn ocfa (ocfb) gesetzt, dann neuen Wert in ocra (wird bei Bottom updedatet)
-//            if (mcu_timer_interrupts()->tifr.template isSet<flags_type::ocfa>()) {
-//                mcu_timer_interrupts()->tifr.template reset<flags_type::ocfa>();
-//                ++index;
-//                Multiplexer::select(index.toRanged());
-//                *mcu_timer()->ocra = values[index.toInt()];
-//            }
-        }
         
-        template<typename T, auto L, auto U>
-        static void pwm(etl::uint_ranged_NaN<T, L, U> raw) {
-//            if (raw) {
-//                T v1 = raw.toInt() - L;
-//                constexpr uint64_t denom = U - L;
-//                constexpr uint64_t nom = ranged_type::Upper - ranged_type::Lower;
-//                if constexpr(nom < denom) {
-//                    uint16_t ocr = etl::Rational::RationalDivider<uint16_t, nom, denom>::scale(v1) + ranged_type::Lower;
-//                    values[ch] = clamp(ocr, parameter::ocMin, parameter::ocMax);
-//                }
-//                else {
-//                    static_assert( (((10 * nom) / denom) * 255) <= std::numeric_limits<uint16_t>::max());
-//                    uint16_t ocr = ((v1 * ((10 * nom) / denom)) / 10) + ranged_type::Lower;
-//                    values[ch] = clamp(ocr, parameter::ocMin, parameter::ocMax);
-//                }
+//        inline static constexpr bool frequency(const hertz& f) {
+//            auto tsd = AVR::PWM::Util::calculate<TimerNumber>(f);
+//            if (!tsd) {
+//                return false;
 //            }
-        }
+//            auto bits = bitsFrom(tsd.prescaler, mcu_timer_type::template PrescalerBits<TimerNumber>::values);
+            
+//            if (!isset(bits)) {
+//                return false;
+//            }
+//            mcu_timer()->tccrb.template setPartial<tb::cs0 | tb::cs1 | tb::cs2>(bits);
+//            *mcu_timer()->icr = tsd.ocr;
+//            return true;
+//        }
+        
+        
     private:
     };
 }

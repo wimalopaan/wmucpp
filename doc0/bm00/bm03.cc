@@ -16,22 +16,39 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <mcu/avr.h>
 #include <cstdint>
+#include <etl/stringbuffer.h>
+#include <etl/span.h>
 
-volatile int16_t x = 1 << 14;
-volatile int16_t y = 1 << 14;
-volatile int16_t o;
+//template<typename T>
+//struct S {
+//    using type = T;
+//};
+
+//volatile S<int> s;
+
+//template<typename T>
+//void f(T&) {
+//    using n = typename T::type;
+    
+////    S<n>::_;
+//}
+
+//int main() {
+//     f(s);
+//}
+
+
+volatile etl::StringBuffer<10> b;
 
 int main() {
-
-    volatile int32_t z = x * y;
+//    b[0] = etl::Char{' '};
+//    etl::make_span<0, 1>(b).insertLeftFill(" "_pgm);
+//    etl::make_span<0, 3>(b).insertLeft(etl::Char{' '}, etl::Char{' '});
     
-    asm(";xx");
     
-    o = (z >> 14);
-    
-    asm(";yy");
-    
-    o = (z >> 16) << 2;
-    
+//    etl::fill(etl::make_span<0, 3>(b), etl::Char{'a'});
+    etl::apply(etl::make_span<0, 3>(b), [](auto& c){c |= etl::Char{0x80};});
 }
+

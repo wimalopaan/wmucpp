@@ -97,9 +97,43 @@ namespace etl {
     
     template<typename T>
     using enclosingType_t = typename detail::enclosingType<T>::type;
+
+    template<typename T>
+    using enclosing_t = typename detail::enclosingType<T>::type;
     
     template<typename T>
     using fragmentType_t = typename detail::fragmentType<T>::type;    
+
+    template<typename T>
+    using fragment_t = typename detail::fragmentType<T>::type;    
+    
+    namespace detail {
+        template<class Trait, typename = void>
+        struct propogate_cv_to_type {};
+        
+        template<class Trait>
+        struct propogate_cv_to_type<Trait, std::void_t<typename Trait::value_type>> { 
+            using type = typename Trait::value_type; 
+        }; 
+        
+        template<class Trait>
+        struct propogate_cv_to_type<const Trait, std::void_t<typename Trait::value_type>> { 
+            using type = const typename Trait::value_type; 
+        }; 
+        
+        template<class Trait>
+        struct propogate_cv_to_type<Trait volatile, std::void_t<typename Trait::value_type>> { 
+            using type = volatile typename Trait::value_type; 
+        }; 
+        
+        template<class Trait>
+        struct propogate_cv_to_type<Trait const volatile, std::void_t<typename Trait::value_type>> { 
+            using type = const volatile typename Trait::value_type; 
+        }; 
+    }
+    
+    template<typename T>
+    using propagate_cv_value_type_t = typename detail::propogate_cv_to_type<T>::type;
     
     using namespace etl::Concepts;
     

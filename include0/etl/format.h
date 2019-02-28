@@ -50,9 +50,9 @@ namespace etl {
             }
         }
         
-        template<int Position, uint8_t Base, Integral T, auto  L>
-        inline constexpr uint8_t itoa_single_impl(T& value, std::array<Char, L>& data) {
-            static_assert((Position < 0) || (Position < L), "wrong length");
+        template<int Position, uint8_t Base, Integral T, typename C>
+        inline constexpr uint8_t itoa_single_impl(T& value, C& data) {
+            static_assert((Position < 0) || (Position < data.size()), "wrong length");
             if constexpr(Position >= 0) {
                 uint8_t fraction = value % Base;
                 data[Position] = toChar<Base>(fraction);

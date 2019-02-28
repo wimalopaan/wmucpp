@@ -31,7 +31,7 @@ namespace etl {
         using value_type = T;
         using size_type = typeForValue_t<Length>;
         
-        inline constexpr size_type size() const {
+        static inline constexpr size_type size() {
             return Length;
         }
     
@@ -97,7 +97,6 @@ namespace etl {
                 data[i] = Fill;
             }
         }
-    
         inline constexpr const T& at(uint8_t index) const {
             assert(index < size);
             return data[index];
@@ -107,6 +106,14 @@ namespace etl {
             return data[index];
         }
         inline constexpr T& operator[](uint8_t index) {
+            assert(index < size);
+            return data[index];
+        }
+        inline constexpr const volatile T& operator[](uint8_t index) const volatile {
+            assert(index < size);
+            return data[index];
+        }
+        inline constexpr volatile T& operator[](uint8_t index) volatile {
             assert(index < size);
             return data[index];
         }

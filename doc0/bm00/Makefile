@@ -17,11 +17,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-MCU = atmega328pb
+#MCU = atmega328pb
+MCU = atmega1284p
 #MCU = atmega4809
 F_OSC = 20000000
 
 CPPFLAGS += -DNDEBUG
+
+#OPTFLAGS = -O3
 
 targets += shtml
 

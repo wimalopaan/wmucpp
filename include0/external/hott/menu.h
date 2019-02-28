@@ -18,55 +18,55 @@
 
 #include <cstdint>
 #include <array>
-#include <vector>
-#include <initializer_list>
 
-#include "container/stringbuffer.h"
-#include "container/pgmstring.h"
-#include "util/static_interface.h"
+#include "etl/stringbuffer.h"
+#include "etl/format.h"
+#include "etl/span.h"
+
+#include "mcu/pgm/pgmstring.h"
 
 #include "sensorprotocoll.h"
 
-#include "ui/menu.h"
+#include "external/ui/menu.h"
 
 namespace Hott {
     static constexpr uint8_t MenuLength = 7;
-    static constexpr uint8_t MenuStringLength = 20;
-    using MenuString = StringBuffer<MenuStringLength>;
     
-    using BufferString = StringBuffer<MenuStringLength + 1>;
-    using Display = std::array<BufferString, MenuLength + 1>;
+    using BufferString = Hott::TextMsg::line_type;
+    using Display = Hott::TextMsg::buffer_type;
     
     using MenuItem = UI::MenuItem<BufferString, key_t>;
     
-    // fixme: Max aus der Template-Parameter-Liste raus
-    template<typename Key, uint8_t Max, typename Provider>
+    // fixme: keine mag. Konstanten 18 3 Aufteilung
+    
+    template<typename Key, typename Provider, uint8_t ValueWidth = 3>
     class TextWithValue : public MenuItem {
     public:
-        TextWithValue(const PgmStringView& text, Provider& provider, Key key) : mTitle(text), mProvider(provider), mKey(key) {}
+        static inline constexpr uint8_t valueBeginColumn = BufferString::size() - ValueWidth;
+        static inline constexpr uint8_t valueWidth = ValueWidth;
         
-        virtual void valueToText(uint8_t value, UI::span<3, char> buffer) const {
-            Util::itoa_r<10>(value, buffer.mData);
+        using value_span_type = etl::span<valueWidth, etl::Char>;
+        
+        TextWithValue(const PgmStringView& text, Provider& provider, Key key, uint8_t maxValue) : mTitle(text), mProvider(provider), mKey(key), mMax(maxValue) {}
+        
+        virtual void valueToText(uint8_t value, value_span_type buffer) const {
+            etl::itoa_r<10>(value, buffer);
         }
         
         virtual void putTextInto(BufferString& buffer) const override {
-            buffer[0] = ' ';
+            buffer[0] = Char{' '};
             buffer.insertAtFill(1, mTitle);
             
             auto& value = mProvider[mKey];
             if (value) {
-                valueToText(*value, UI::make_span<18, 3>(buffer));
+                valueToText(*value, etl::make_span<valueBeginColumn, valueWidth>(buffer));
             }
             else {
-                buffer[18] = '-';
-                buffer[19] = '-';
-                buffer[20] = '-';
+                etl::fill(etl::make_span<valueBeginColumn, valueWidth>(buffer), Char{'-'});
             }
             
             if (mSelected) {
-                buffer[18] |= 0x80;
-                buffer[19] |= 0x80;
-                buffer[20] |= 0x80;
+                etl::apply(etl::make_span<valueBeginColumn, valueWidth>(buffer), [](auto& c) {c |= Char{0x80};});
             }
         }
         virtual MenuItem* processKey(Hott::key_t key) override {
@@ -83,14 +83,14 @@ namespace Hott {
                         }
                     }
                     else {
-                        *v = 0;
+                        *v = mMax;
                     }
                 }
                 break;
             case Hott::key_t::down:
                 if (mSelected) {
                     if (v) {
-                        if (*v < Max) {
+                        if (*v < mMax) {
                             ++v;
                         }
                         else {
@@ -121,7 +121,9 @@ namespace Hott {
         const PgmStringView mTitle;
         Provider& mProvider;
         const Key mKey = Hott::key_t::nokey;
+        const uint8_t mMax;
     };
+    
     class Menu : public MenuItem {
     public:
         template<typename... T>
@@ -135,11 +137,11 @@ namespace Hott {
         }
         
         virtual void putTextInto(BufferString& buffer) const override {
-            buffer[0] = ' ';
+            buffer[0] = Char{' '};
             buffer.insertAtFill(1, mTitle);
         }
         void textTo(Display& display) const {
-            static uint_ranged_circular<uint8_t, 0, Display::size - 1> line;
+            static uint_ranged_circular<uint8_t, 0, display.size() - 1> line;
             if (line == 0) {
                 titleInto(display[0]);
                 ++line;
@@ -147,7 +149,7 @@ namespace Hott {
             else {
                 if (lineToDisplay(display[line], line)) {
                     if (mSelectedLine && (mSelectedLine.toInt() == (line - 1))) {
-                        display[mSelectedLine.toInt() + 1][0] = '>';
+                        display[mSelectedLine.toInt() + 1][0] = Char{'>'};
                     }
                     ++line;
                 }
@@ -214,6 +216,7 @@ namespace Hott {
         uint_ranged_NaN<uint8_t, 0, MenuLength> mSelectedLine{};
     };
 
+    /*
     class Menu2 : public MenuItem {
     public:
         Menu2(const PgmStringView& title, std::initializer_list<MenuItem*> items) : mTitle(title) {
@@ -316,7 +319,7 @@ namespace Hott {
         std::array<MenuItem*, MenuLength> mItems{};
         uint_ranged_NaN<uint8_t, 0, MenuLength> mSelectedLine{};
     };
-    
+    */
     class NumberedMenu : public Menu {
     public:
         template<typename...T>
@@ -324,17 +327,18 @@ namespace Hott {
             mNumber(number) {}
         virtual void titleInto(BufferString& buffer) const override{
             buffer.insertAtFill(0, mTitle);
-            buffer[19] =  '0' + mNumber;
+            buffer[19] =  Char('0' + mNumber);
         }
         
         virtual void putTextInto(BufferString& buffer) const override {
-            buffer[0] = ' ';
+            buffer[0] = Char{' '};
             buffer.insertAtFill(1, mTitle);
-            buffer[19] =  '0' + mNumber;
+            buffer[19] = Char('0' + mNumber);
         }
     private:
         uint8_t mNumber = 0;
     };
+/*
     class NumberedMenu2 : public Menu2 {
     public:
         NumberedMenu2(uint8_t number, const PgmStringView& title, std::initializer_list<MenuItem*> items) : 
@@ -353,6 +357,6 @@ namespace Hott {
     private:
         uint8_t mNumber = 0;
     };
-    
+  */  
     
 }
