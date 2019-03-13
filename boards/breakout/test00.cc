@@ -41,10 +41,10 @@
 #include <external/solutions/rpm.h>
 
 
-using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
-using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
-using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
-using PortE = AVR::Port<DefaultMcuType::PortRegister, AVR::E>;
+using PortB = AVR::Port<AVR::B>;
+using PortC = AVR::Port<AVR::C>;
+using PortD = AVR::Port<AVR::D>;
+using PortE = AVR::Port<AVR::E>;
 
 using pc0 = AVR::Pin<PortC, 0>;
 using pc1 = AVR::Pin<PortC, 1>;
@@ -56,7 +56,7 @@ struct AsciiHandler;
 struct BinaryHandler;
 struct BCastHandler;
 
-using sensorPA = Hott::SensorProtocollAdapter<0, AsciiHandler, BinaryHandler, BCastHandler>;
+using sensorPA = Hott::SensorProtocollAdapter<0, Hott::gam_id, AsciiHandler, BinaryHandler, BCastHandler>;
 
 using sensorUsart = AVR::Usart<0, sensorPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>> ;
 using rcUsart = AVR::Usart<1, sumd, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
@@ -324,11 +324,15 @@ int main() {
                     if (timer == t) {
                         rpm::check();
 //                        etl::outl<terminal>("p: "_pgm, hbridge::x1);
-                        etl::outl<terminal>("t: "_pgm, hbridge::x2);
+//                        etl::outl<terminal>("t: "_pgm, hbridge::x2);
+  
+                        etl::outl<terminal>("v: "_pgm, v.toInt());
                         appData.expire();
                     }
                 });
             });
+
+            
             if(eeprom::saveIfNeeded()) {
                 etl::out<terminal>("."_pgm);
             }    

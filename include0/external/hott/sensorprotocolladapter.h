@@ -25,7 +25,7 @@ namespace Hott {
     using namespace std;    
     using namespace etl;
     
-    template<uint8_t M, typename AsciiHandler, typename BinaryHandler, typename BCastHandler>
+    template<uint8_t M, auto id,  typename AsciiHandler, typename BinaryHandler, typename BCastHandler>
     class SensorProtocollAdapter final {
         enum class hottstate {Undefined = 0, Request1, RequestA1, NumberOfStates};
         SensorProtocollAdapter() = delete;
@@ -34,7 +34,7 @@ namespace Hott {
             static hottstate state = hottstate::Undefined;
             switch (state) {
             case hottstate::Undefined:
-                if (c == std::byte{0x80}) {
+                if (c == Hott::msg_start) {
                     state = hottstate::Request1;
                 }
                 if (c == std::byte{0x7f}) {
@@ -54,13 +54,13 @@ namespace Hott {
                 }
                 break;
             case hottstate::Request1:
-                if (c == std::byte{0x8d}) {
+                if (c == id) {
                     AsciiHandler::stop();
                     BinaryHandler::start();
                     BCastHandler::stop();
                     state = hottstate::Undefined;
                 }
-                else if (c == std::byte{0x80}) {
+                else if (c == Hott::msg_start) {
                     AsciiHandler::stop();
                     BinaryHandler::stop();
                     BCastHandler::start();

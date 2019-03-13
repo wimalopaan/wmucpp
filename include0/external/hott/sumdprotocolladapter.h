@@ -74,9 +74,9 @@ namespace Hott {
             if constexpr(UseInts::value) {
                 Scoped<DisbaleInterrupt<>> di;
             }
-//            if (!mValid) {
-//                return {};
-//            }
+            if (!mValid) {
+                return {};
+            }
             uint16_t v = etl::combinedValue(mMsg.channelData[channel]);
             if (v < Hott::SumDMsg::ExtendedLow) {
                 return Hott::SumDMsg::ExtendedLow;
@@ -93,9 +93,9 @@ namespace Hott {
             if constexpr(UseInts::value) {
                 Scoped<DisbaleInterrupt<>> di;
             }
-//            if (!mValid) {
-//                return {};
-//            }
+            if (!mValid) {
+                return {};
+            }
             uint16_t v = etl::combinedValue(mMsg.channelData[channel]);
             if (v < Hott::SumDMsg::Low) {
                 return Hott::SumDMsg::Low;
@@ -111,18 +111,18 @@ namespace Hott {
             if constexpr(UseInts::value) {
                 Scoped<DisbaleInterrupt<>> di;
             }
-//            if (!mValid) {
-//                return {};
-//            }
+            if (!mValid) {
+                return {};
+            }
             return value8Bit_unsafe(channel);
         }
         inline static uint_ranged<uint8_t, Hott::SumDMsg::ExtendedLow8Bit, Hott::SumDMsg::ExtendedHigh8Bit> value8BitExtended(uint8_t channel) {
             if constexpr(UseInts::value) {
                 Scoped<DisbaleInterrupt<>> di;
             }
-//            if (!mValid) {
-//                return {};
-//            }
+            if (!mValid) {
+                return {};
+            }
             return value8BitExtended_unsafe(channel);
         }
         inline static uint8_t numberOfChannels() {
@@ -199,6 +199,7 @@ namespace Hott {
                 etl::crc16(crc, actualLowValue);
 //                mMsg.channelData[channel].second = std::to_integer<uint8_t>(c);
 //                etl::crc16(crc, mMsg.channelData[channel].second);
+
                 mMsg.channelData[channel] = {actualHighValue, actualLowValue};
                 state = sumdstate::ChannelDataH;
                 ++channel;

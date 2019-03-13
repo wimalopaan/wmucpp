@@ -128,7 +128,7 @@ public:
     }
     inline static void clear() {
         for(uint8_t page = 0; page < 8; ++page) {
-            send_command(std::byte{0xb0 + page});
+            send_command(std::byte(0xb0 + page));
             for(uint8_t column = 0; column < 128; ++column) {
                 send_data(0x00_B);
             }

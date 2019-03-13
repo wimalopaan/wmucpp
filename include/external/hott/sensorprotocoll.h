@@ -51,11 +51,11 @@ namespace Hott {
         inline static constexpr uint8_t columns = 21;
         using buffer_type = std::array<StringBuffer<columns>, rows>;
         
-        const uint8_t start_byte = 0;		//#01 Starting constant value == 0x7b
+        const uint8_t start_byte = 0x7b;		//#01 Starting constant value == 0x7b
         uint8_t esc = 0;				//#02 Escape (higher-ranking menu in text mode or Text mode leave)
         uint8_t warning_beeps = 0;	//#03 1=A 2=B ...
         buffer_type text{};
-        const uint8_t stop_byte = 0;		//#172 constant value 0x7d
+        const uint8_t stop_byte = 0x7d;		//#172 constant value 0x7d
         uint8_t parity = 0;			//#173 Checksum / parity
     };
     

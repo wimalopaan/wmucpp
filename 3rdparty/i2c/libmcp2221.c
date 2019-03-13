@@ -462,6 +462,7 @@ static int checkThing(wchar_t* val1, wchar_t* val2)
 
 int LIB_EXPORT mcp2221_find(int vid, int pid, wchar_t* manufacturer, wchar_t* product, wchar_t* serial)
 {
+	printf("find...\n");
 	int count = 0;
 
 	clearUsbDevList();

@@ -31,7 +31,6 @@ namespace Hott {
     template<uint8_t N>
     class SensorProtocollBuffer final {
         SensorProtocollBuffer() = delete;
-
         inline static GamMsg hottBinaryResponse{}; 
     public:
         typedef uint8_t index_type;
@@ -60,10 +59,6 @@ namespace Hott {
             hottBinaryResponse.parity = 0;
         }
         inline static constexpr void init() {
-//            hottBinaryResponse.start_byte = 0x7c;
-//            hottBinaryResponse.gam_sensor_id = 0x8d;
-//            hottBinaryResponse.sensor_id = 0xd0;
-//            hottBinaryResponse.stop_byte = 0x7d;
         }
         
         inline static void rpm1(const RPM& v) {
@@ -136,6 +131,76 @@ namespace Hott {
             /*constexpr */const std::byte* ptr = (const std::byte*) &hottBinaryResponse;  
             const std::byte value = ptr[index];
             hottBinaryResponse.parity += std::to_integer<uint8_t>(value);
+            return value;    
+        }
+        
+    };
+
+    template<uint8_t N>
+    class EscProtocollBuffer final {
+        EscProtocollBuffer() = delete;
+        inline static EscMsg EscResponse{}; 
+    public:
+        typedef uint8_t index_type;
+
+        static constexpr const uint8_t number = N;
+        static constexpr const uint8_t cyclesBeforeAnswer = 1 + Hott::hottDelayBeforeAnswer / Hott::hottDelayBetweenBytes;
+
+        static_assert((cyclesBeforeAnswer + sizeof(EscResponse)) < std::numeric_limits<index_type>::max());
+
+        inline static std::optional<std::byte> get(uint8_t index) {
+            if (index < cyclesBeforeAnswer) {
+                return {};
+            }
+            else {
+                index -= cyclesBeforeAnswer;
+                if (index < sizeof(EscResponse)) {
+                    return getByte(index);
+                }
+                return {};
+            }
+        }
+        inline static constexpr uint8_t size() {
+            return sizeof(EscResponse) + cyclesBeforeAnswer;
+        }
+        inline static constexpr void reset() {
+            EscResponse.parity = 0;
+        }
+        inline static constexpr void init() {
+        }
+        inline static void rpmRaw(uint16_t v) {
+            EscResponse.rpm= v;
+        }
+        inline static void rpmMaxRaw(uint16_t v) {
+            EscResponse.rpm_max = v;
+        }
+        inline static void voltageRaw(uint16_t v) {
+            EscResponse.voltage = v;
+        }
+        inline static void voltageMinRaw(uint16_t v) {
+            EscResponse.voltage_min = v;
+        }
+        inline static void currentRaw(uint16_t v) {
+            EscResponse.current = v;
+        }
+        inline static void currentMaxRaw(uint16_t v) {
+            EscResponse.current_max = v;
+        }
+        inline static void tempRaw(uint16_t v) {
+            EscResponse.temp = v;
+        }
+        inline static void tempMaxRaw(uint16_t v) {
+            EscResponse.temp_max = v;
+        }
+        
+        inline static void forceRaw(uint16_t v) {
+        }
+    private:
+        inline static std::byte getByte(uint8_t index) {
+            assert(index < sizeof(hottBinaryResponse));
+            /*constexpr */const std::byte* ptr = (const std::byte*) &EscResponse;  
+            const std::byte value = ptr[index];
+            EscResponse.parity += std::to_integer<uint8_t>(value);
             return value;    
         }
         

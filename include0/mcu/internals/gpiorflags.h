@@ -21,6 +21,8 @@
 #include <cstdint>
 #include <cstddef>
 
+#include <etl/concepts.h>
+
 namespace AVR {
     template<typename StaticByteStorage, etl::Concepts::NamedConstant StartBit, etl::Concepts::NamedConstant = StartBit>
     struct GPIORFlags;

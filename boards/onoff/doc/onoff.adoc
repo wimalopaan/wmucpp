@@ -150,10 +150,10 @@ Das folgende Bild zeigt den Einbau schematisch:
 .Schematischer Anschluß des Moduls an Akku, Verbraucher und Kontakt
 image::images/schema1.svg[]
 
-
 === Anschluß an den Akku
 
-Für einen ordnungsgemäßen Betrieb ist das Modul mit entsprechenden Kabeln zu versehen, die einen ausreichenden Querschnitt aufweisen (s.u.).
+Für einen ordnungsgemäßen Betrieb ist das Modul mit entsprechenden Kabeln zu versehen, die einen ausreichenden Querschnitt 
+aufweisen (s.a. <<Variants>>).
 
 Die Anschlüsse `In(+)` / `Gnd` sind mit dem Akku zu verbinden.
 
@@ -164,6 +164,10 @@ Ein Verpolen der Anschlüsse kann zu einem Defekt führen.
 [TIP]
 Beim ersten Anschluß an den Akku ertönt eine aufsteigende Tonfolge. Danach ein tiefer Ton, um anzuzeigen, dass das Modul 
 in den Zustand `AUS` wechselt.
+
+[CAUTION]
+Achten Sie neben ausreichenden Querschnitten (s.a. <<Variants>>) der Kabel auch immer auf kurze Verbindungen, vor allem vom Akku zu Hauptschalter bzw. 
+bei allen, hohen Strom führenden Leitungen.
 
 === Anschluß des Tastkontaktes
 

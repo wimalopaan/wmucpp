@@ -40,13 +40,22 @@
 #include <external/solutions/ifx007.h>
 #include <external/solutions/rpm.h>
 
-using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
-using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
-using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
-using PortE = AVR::Port<DefaultMcuType::PortRegister, AVR::E>;
+#include <external/hal/adccontroller.h>
 
-using pc0 = AVR::Pin<PortC, 0>;
-using pc1 = AVR::Pin<PortC, 1>;
+using PortB = AVR::Port<AVR::B>;
+using PortC = AVR::Port<AVR::C>;
+using PortD = AVR::Port<AVR::D>;
+using PortE = AVR::Port<AVR::E>;
+
+using pc1 = AVR::Pin<PortC, 3>;
+using pc0 = AVR::Pin<PortC, 4>;
+
+using txd0Enable = AVR::Pin<PortD, 3>;
+
+using inh1 = AVR::Pin<PortD, 5>;
+using inh2 = AVR::Pin<PortB, 0>;
+
+using ppm = AVR::Pin<PortE, 0>;
 
 using qtPA = External::QtRobo::ProtocollAdapter<0, 16>;
 
@@ -55,22 +64,29 @@ struct AsciiHandler;
 struct BinaryHandler;
 struct BCastHandler;
 
-using sensorPA = Hott::SensorProtocollAdapter<0, AsciiHandler, BinaryHandler, BCastHandler>;
+using sensorPA = Hott::SensorProtocollAdapter<0, Hott::esc_id, AsciiHandler, BinaryHandler, BCastHandler>;
 
 using sensorUsart = AVR::Usart<0, sensorPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>> ;
+
 using rcUsart = AVR::Usart<1, sumd, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
+//using rcUsart = AVR::Usart<1, sumd, AVR::UseInterrupts<true>, AVR::ReceiveQueueLength<0>>;
+
 using terminalDevice = rcUsart;
 using terminal = etl::basic_ostream<terminalDevice>;
 using log = External::QtRobo::Logging<terminal, 0>;
 
-using sensorData = Hott::SensorProtocollBuffer<0>;
-using crWriterSensorBinary = ConstanteRateWriter<sensorData, sensorUsart>;
+//using sensorData = Hott::SensorProtocollBuffer<0>;
+using escData = Hott::EscProtocollBuffer<0>;
+using crWriterSensorBinary = ConstanteRateWriter<escData, sensorUsart>;
+
 using menuData = Hott::SensorTextProtocollBuffer<0>;
 using crWriterSensorText = ConstanteRateWriter<menuData, sensorUsart>;
 
 using pwm = AVR::Pwm<1>;
 using hbridge = External::IFX007::HBridge<pwm, sumd::value_type>;
 
+using adc = AVR::Adc<0>;
+using adcController = External::Hal::AdcController<adc>;
 
 namespace  {
     using namespace std::literals::chrono;
@@ -84,7 +100,7 @@ namespace  {
     constexpr RPM MinimumRpm{100};
 }
 
-using rpm= External::RpmWithIcp<1, MinimumRpm, MaximumRpm>;
+using rpm= External::RpmWithIcp<3, MinimumRpm, MaximumRpm>;
 
 using systemClock = AVR::SystemTimer<0, interval>;
 using alarmTimer = External::Hal::AlarmTimer<systemClock>;
@@ -278,6 +294,7 @@ struct BCastHandler {
     }    
 };
 
+//using isrRegistrar = AVR::IsrRegistrar<rcUsart::RxHandler, rcUsart::TxHandler>;
 
 int main() {
     using namespace etl;
@@ -287,6 +304,18 @@ int main() {
     pc0::dir<Output>();
     pc1::dir<Output>();
 
+    txd0Enable::dir<Output>();
+    txd0Enable::off();
+
+    inh1::dir<Output>();
+    inh1::on();
+
+    inh2::dir<Output>();
+    inh2::on();
+
+    ppm::dir<Input>();
+    ppm::pullup();
+    
     systemClock::init();
     
     eeprom::init();
@@ -301,9 +330,21 @@ int main() {
     const auto t = alarmTimer::create(1000_ms, External::Hal::AlarmFlags::Periodic);
 
     rpm::init();
+
     
     {
         Scoped<EnableInterrupt<>> ei;
+
+        hbridge::duty(Hott::SumDMsg::Mid);
+        
+        escData::rpmRaw(121);
+        escData::rpmMaxRaw(632);
+        escData::voltageRaw(134);
+        escData::voltageMinRaw(114);
+        escData::currentRaw(3);
+        escData::currentMaxRaw(27);
+        escData::tempRaw(600);
+        escData::tempMaxRaw(400);
         
         while(true) {
             pc1::toggle();
@@ -323,7 +364,9 @@ int main() {
                     if (timer == t) {
                         rpm::check();
 //                        etl::outl<terminal>("p: "_pgm, hbridge::x1);
-                        etl::outl<terminal>("t: "_pgm, hbridge::x2);
+//                        etl::outl<terminal>("t: "_pgm, hbridge::x2);
+                        
+                        etl::outl<terminal>("v: "_pgm, v.toInt());
                         appData.expire();
                     }
                 });
@@ -334,3 +377,12 @@ int main() {
         }
     }
 }
+
+
+//// SumD
+//ISR(USART1_RX_vect) {
+//    isrRegistrar::isr<AVR::ISR::Usart<1>::RX>();
+//}
+//ISR(USART1_UDRE_vect){
+//    isrRegistrar::isr<AVR::ISR::Usart<1>::UDREmpty>();
+//}

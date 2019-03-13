@@ -151,8 +151,20 @@ namespace AVR {
         inline static void init() {
             using namespace etl;
             static_assert(Baud >= 2400, "USART should use a valid baud rate >= 2400");
-            constexpr auto ubrr = ubrrValue(Config::fMcu.value, Baud); 
-            *mcu_usart()->ubbr = ubrr;
+            
+            if constexpr (Baud > 100000) {
+                constexpr auto ubrr = ubrrValue2(Config::fMcu.value, Baud); 
+//                using u = std::integral_constant<uint16_t, ubrr>;
+//                u::_;
+                mcu_usart()->ucsra.template add<ucsra_type::u2x>();
+                *mcu_usart()->ubbr = ubrr;
+            }
+            else {
+                constexpr auto ubrr = ubrrValue(Config::fMcu.value, Baud); 
+//                using u = std::integral_constant<uint16_t, ubrr>;
+//                u::_;
+                *mcu_usart()->ubbr = ubrr;
+            }            
             mcu_usart()->ucsrc.template add<ucsrc_type::ucsz1 | ucsrc_type::ucsz0, DisbaleInterrupt<NoDisableEnable>>();
             mcu_usart()->ucsrb.template add<ucsrb_type::txen | ucsrb_type::rxen, DisbaleInterrupt<NoDisableEnable>>();
             if constexpr(useISR::value) {
@@ -208,8 +220,11 @@ namespace AVR {
         inline static send_queue_type mSendQueue;
         inline static recv_queue_type mRecvQueue;
         
-        static constexpr uint16_t ubrrValue(uint32_t fcpu, uint32_t baud) {
+        inline static constexpr uint16_t ubrrValue(uint32_t fcpu, uint32_t baud) {
             return (((1.0 * fcpu) / (16 * baud)) + 0.5) - 1;
+        }
+        inline static constexpr uint16_t ubrrValue2(uint32_t fcpu, uint32_t baud) {
+            return (((1.0 * fcpu) / (8 * baud)) + 0.5) - 1;
         }
     };
 }

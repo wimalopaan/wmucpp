@@ -67,7 +67,6 @@ namespace External {
     class RpmWithIcp final {
         RpmWithIcp() = delete;
     public:
-        
         using mcu_timer_type = typename TimerParameter<TimerNumber, MCU>::mcu_timer_type;
         using value_type  = typename TimerParameter<TimerNumber, MCU>::value_type;        
         using ta = typename TimerParameter<TimerNumber, MCU>::ta;        

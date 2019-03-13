@@ -18,8 +18,8 @@
 #
 
 #MCU = atmega328pb
-MCU = atmega1284p
-#MCU = atmega4809
+#MCU = atmega1284p
+MCU = atmega4809
 F_OSC = 20000000
 
 CPPFLAGS += -DNDEBUG
@@ -32,6 +32,9 @@ targets += bm00.S bm00.elf
 targets += bm01.S bm01.elf
 targets += bm02.S bm02.elf
 targets += bm03.S bm03.elf
+targets += bm10.s bm10.elf
+targets += bm11.s bm11.elf
+targets += bm12.s bm12.elf
 
 -include ../../Makefile.avr0.include
 

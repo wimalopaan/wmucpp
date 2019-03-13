@@ -36,6 +36,20 @@ namespace Hott {
     static inline constexpr auto hottDelayBeforeAnswer = 5000_us;
     static inline constexpr auto hottDelayBetweenBytes = 2000_us;
     
+    static inline constexpr std::byte msg_start = 0x80_B;
+    static inline constexpr std::byte start_code = 0x7c_B;
+    static inline constexpr std::byte end_code = 0x7d_B;
+    static inline constexpr std::byte esc_id = 0x8c_B;
+    static inline constexpr std::byte gam_id = 0x8d_B;
+    
+    // 0x0f : receiver request
+    // 0xcf : esc request
+    // 0xaf : GPS
+    // 0x9f : vario
+    // 0xdf : GAM
+    // 0xef : Electric Air
+    
+    
     struct TextMsg {
         inline static constexpr uint8_t rows = 8;
         inline static constexpr uint8_t columns = 21;
@@ -46,14 +60,61 @@ namespace Hott {
         uint8_t esc = 0;				//#02 Escape (higher-ranking menu in text mode or Text mode leave)
         uint8_t warning_beeps = 0;	//#03 1=A 2=B ...
         buffer_type text{};
-        const uint8_t stop_byte = 0x7d;		//#172 constant value 0x7d
+        const std::byte stop_byte = end_code;		//#172 constant value 0x7d
         uint8_t parity = 0;			//#173 Checksum / parity
     };
+    namespace detail {
+        using txt_size = std::integral_constant<uint8_t, sizeof(TextMsg)>;
+//        txt_size::_;
+    }
+    
+    struct EscMsg {
+        using value_type = uint8_t;
+        const std::byte start_byte = start_code;        
+        const std::byte esc_sensor_id = esc_id;
+        uint8_t warning_beeps = 0;
+        const std::byte sensor_id = (esc_sensor_id << 4) & 0xf0_B;
+        uint8_t inverse = 0x00;
+        uint8_t inverse_status = 0x80;
+        uint16_t voltage = 0;
+        uint16_t voltage_min = 0;
+        uint16_t capacity = 0;
+        uint8_t temp = 0;
+        uint8_t temp_max = 0;
+        uint16_t current = 0;
+        uint16_t current_max = 0;
+        uint16_t rpm = 0;
+        uint16_t rpm_max = 0;
+        uint8_t throttle = 0;
+        uint16_t speed = 0;
+        uint16_t speed_max = 0;
+        uint8_t bec = 0;
+        uint8_t bec_min = 0;
+        uint8_t bec_current = 0;
+        uint16_t bec_current_max = 0;
+        uint8_t pwm = 0;
+        uint8_t bec_temp = 0;
+        uint8_t bec_temp_max = 0;
+        uint8_t motor_temp = 0;
+        uint8_t motor_temp_max = 0;
+        uint16_t rpm2 = 0;
+        uint8_t timing = 0;
+        uint8_t adv_timing = 0;
+        uint8_t hcurr = 0;
+        uint8_t version = 0;
+        const std::byte end_byte = end_code;
+        uint8_t parity = 0;
+    };
+    
+    namespace detail {
+        using esc_size = std::integral_constant<uint8_t, sizeof(EscMsg)>;
+//        esc_size::_;
+    }
     
     struct GamMsg {
         using value_type = uint8_t;
-        const uint8_t start_byte = 0x7c;          //#01 start byte constant value 0x7c
-        const uint8_t gam_sensor_id = 0x8d;       //#02 EAM sensort id. constat value 0x8d=GENRAL AIR MODULE
+        const std::byte start_byte = start_code;          //#01 start byte constant value 0x7c
+        const std::byte gam_sensor_id = gam_id;       //#02 EAM sensort id. constat value 0x8d=GENRAL AIR MODULE
         uint8_t warning_beeps = 0;       //#03 1=A 2=B ... 0x1a=Z  0 = no alarm
         /* VOICE OR BIP WARNINGS
                             Alarme sonore A.. Z, octet correspondant 1 à 26
@@ -85,7 +146,7 @@ namespace Hott {
                             0x19  25  Y  Maximum RPM Y
                             0x1A  26  Z  Max. Altitude Z
                                 */
-        const uint8_t sensor_id = 0xd0;             	        //#04 constant value 0xd0
+        const std::byte sensor_id = (gam_sensor_id << 4) & 0xf0_B;             	        //#04 constant value 0xd0
         uint8_t alarm_invers1 = 0; //#05 alarm bitmask. Value is displayed inverted
         //Bit#  Alarm field
         // 0    all cell voltage
@@ -147,9 +208,13 @@ namespace Hott {
         uint8_t general_error_number = 0;      	//#41 General Error Number (Voice Error == 12)
         uint8_t pressure = 0;                        //#42 High pressure up to 16bar. 0,1bar scale. 20 == 2.0bar
         uint8_t version = 0;                         //#43 version number (Bytes 35 .43 new but not yet in the record in the display!)
-        const uint8_t stop_byte = 0x7d;                       //#44 stop byte 0x7D
+        const std::byte stop_byte = end_code;                       //#44 stop byte 0x7D
         uint8_t parity = 0;                          //#45 CHECKSUM CRC/Parity (calculated dynamicaly)
     };
+    namespace detail {
+        using gam_size = std::integral_constant<uint8_t, sizeof(GamMsg)>;
+//        gam_size::_;
+    }
     
 }
 

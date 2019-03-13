@@ -113,6 +113,8 @@ boards/blmc/blmc_test01/test09.cc
 boards/blmc/blmc_test01/util.c
 boards/blmc/blmc_test01/util.h
 boards/bmc/Makefile
+boards/bmc/blink.cc
+boards/bmc/blink01.cc
 boards/bmc/test00.cc
 boards/bootloader/Makefile
 boards/bootloader/blink.cc
@@ -158,6 +160,7 @@ boards/rcsensorled03/test50.cc
 boards/rcsensorled03/test51.cc
 boards/rcsensorled10/Makefile
 boards/rcsensorled10/board.txt
+boards/rcsensorled10/leds01.cc
 boards/rcsensorled10/local.h
 boards/rcsensorled10/queen/Makefile
 boards/rcsensorled10/queen/board.txt
@@ -261,6 +264,9 @@ doc0/bm00/bm00.cc
 doc0/bm00/bm01.cc
 doc0/bm00/bm02.cc
 doc0/bm00/bm03.cc
+doc0/bm00/bm10.cc
+doc0/bm00/bm11.cc
+doc0/bm00/bm12.cc
 example/externals/buttonmacro.c
 example/externals/buttonvertical.cc
 example/externals/isr.c
@@ -336,6 +342,7 @@ include0/etl/type_traits.h
 include0/etl/types.h
 include0/external/bluetooth/qtrobo.h
 include0/external/bluetooth/roboremo.h
+include0/external/hal/adccontroller.h
 include0/external/hal/alarmtimer.h
 include0/external/hal/devicemapper.h
 include0/external/hal/protocolladapter.h
@@ -365,6 +372,7 @@ include0/mcu/common/pwm.h
 include0/mcu/common/register.h
 include0/mcu/common/staticstorage.h
 include0/mcu/common/timer.h
+include0/mcu/internals/adc.h
 include0/mcu/internals/constantrate.h
 include0/mcu/internals/cppm.h
 include0/mcu/internals/cppm_in.h

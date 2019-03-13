@@ -123,3 +123,11 @@ operator>>=(E& lhs, uint8_t rhs){
                 );
 }
 
+template<typename E, typename = std::enable_if_t<std::enable_bitmask_operators_v<E>>>
+inline constexpr E
+operator<<(E lhs, uint8_t rhs){
+    typedef typename std::underlying_type<E>::type underlying;
+    return lhs = static_cast<E>(
+                static_cast<underlying>(lhs) << rhs
+                );
+}

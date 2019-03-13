@@ -60,44 +60,48 @@ namespace AVR {
         }
     };
     
-    template<typename MCUPort, AVR::Concepts::Letter Name>
+//    template<typename MCUPort, AVR::Concepts::Letter Name, typename MCU = DefaultMcuType>
+    template<AVR::Concepts::Letter Name, typename MCU = DefaultMcuType>
     struct Port final {
-        typedef MCUPort mcuport_type;
-        typedef Name name_type;
+//        using mcuport_type = MCUPort;
+        using mcuport_type = typename MCU::PortRegister;
+        using name_type = Name;
+//        typedef MCUPort mcuport_type;
+//        typedef Name name_type;
         Port() = delete;
         static inline void set(std::byte v) {
-            *getBaseAddr<MCUPort, Name>()->out = v;
+            *getBaseAddr<mcuport_type , Name>()->out = v;
         }
         template<std::byte V>
         static inline void set() {
-            *getBaseAddr<MCUPort, Name>()->out = V;
+            *getBaseAddr<mcuport_type , Name>()->out = V;
         }
         static inline volatile std::byte& get() {
-            return *getBaseAddr<MCUPort, Name>()->out;
+            return *getBaseAddr<mcuport_type , Name>()->out;
         }
         static inline void dir(std::byte v) {
-            *getBaseAddr<MCUPort, Name>()->ddr = v;
+            *getBaseAddr<mcuport_type , Name>()->ddr = v;
         }
         template<uint8_t V>
         static inline void dir() {
-            *getBaseAddr<MCUPort, Name>()->ddr = V;
+            *getBaseAddr<mcuport_type , Name>()->ddr = V;
         }
         static inline volatile std::byte& dir() {
-            return *getBaseAddr<MCUPort, Name>()->ddr;
+            return *getBaseAddr<mcuport_type , Name>()->ddr;
         }
         static inline std::byte read() {
-            return *getBaseAddr<MCUPort, Name>()->in;
+            return *getBaseAddr<mcuport_type , Name>()->in;
         }
         template<uint8_t Bit>
         static inline void toggle() { 
-            static_assert(AVR::isSBICBICapable<MCUPort, Name>(), "Port not sbi/sbi capable");
-            *getBaseAddr<MCUPort, Name>()->in |= std::byte{(1 << Bit)}; // AVR specific toggle mechanism: write "1" to PortInputRegister
+            static_assert(AVR::isSBICBICapable<mcuport_type , Name>(), "Port not sbi/sbi capable");
+            *getBaseAddr<mcuport_type , Name>()->in |= std::byte{(1 << Bit)}; // AVR specific toggle mechanism: write "1" to PortInputRegister
         }
         static inline void toggle(std::byte v) {
-            *getBaseAddr<MCUPort, Name>()->in = v;
+            *getBaseAddr<mcuport_type , Name>()->in = v;
         }
         static inline constexpr uintptr_t address() {
-            return reinterpret_cast<uintptr_t>(&getBaseAddr<MCUPort, Name>()->out);
+            return reinterpret_cast<uintptr_t>(&getBaseAddr<mcuport_type , Name>()->out);
         }
     };
     

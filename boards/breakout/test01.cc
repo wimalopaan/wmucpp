@@ -34,10 +34,10 @@
 #include <external/bluetooth/roboremo.h>
 #include <external/hal/devicemapper.h>
 
-using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
-using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
-using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
-using PortE = AVR::Port<DefaultMcuType::PortRegister, AVR::E>;
+using PortB = AVR::Port<AVR::B>;
+using PortC = AVR::Port<AVR::C>;
+using PortD = AVR::Port<AVR::D>;
+using PortE = AVR::Port<AVR::E>;
 
 using pc0 = AVR::Pin<PortC, 0>;
 using pc1 = AVR::Pin<PortC, 1>;

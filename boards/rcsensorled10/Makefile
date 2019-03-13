@@ -50,6 +50,8 @@ targets += test17.s test17.elf
 targets += test24.s test24.elf
 targets += test25.s test25.elf
 
+targets += leds01.s leds01.S leds01.elf
+
 -include ../../Makefile.include
 
 CXXFLAGS+=-mno-gas-isr-prologues # prevent problem mit __gcc_isr
