@@ -134,3 +134,4 @@ boards/power_or/doc
 include0/external/solutions
 include0/external/ui
 boards/bmc
+boards/bootloader/fastboot

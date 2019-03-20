@@ -1,0 +1,6 @@
+# auslesen 
+
+# sudo avrdude -p atmega8 -P usb -c avrisp2 -V  -U flash:r:extract.hex:i
+
+# programmiern
+# sudo avrdude -p atmega8 -P usb -c avrisp2 -V -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -U flash:w:bs_nfet.hex

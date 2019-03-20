@@ -18,15 +18,6 @@
 
 #pragma once
 
-//#include "mcu/avr8.h"
-//#include "mcu/concepts.h"
-//#include "container/pgmarray.h"
-//#include "util/disable.h"
-//#include "util/util.h"
-//#include "util/meta.h"
-//#include "util/types.h"
-//#include "util/type_traits.h"
-
 #include <cstddef>
 #include <chrono>
 
@@ -34,8 +25,10 @@
 
 #include "../pgm/pgmarray.h"
 
+// todo: überarbeiten
+
 namespace AVR {
-    struct UsePgmTable{};
+    struct UsePgmTable{}; // todo: named flag
     
     struct Output final {
         Output() = delete;
@@ -290,6 +283,16 @@ namespace AVR {
     private:
         PinSet() = delete;
     };
+    
+    template<AVR::Concepts::Pin... Pin>
+    inline void on() {
+        (Pin::on(), ...);
+    }
+
+    template<AVR::Concepts::Pin... Pin>
+    inline void off() {
+        (Pin::off(), ...);
+    }
     
     template<AVR::Concepts::Port Port, uint8_t PinNumber>
     struct Pin final {

@@ -1,0 +1,12 @@
+* Unter ~/Projekte/fastboot
+
+* Makefile-m8
+
+* get_avr_arch.sh geändert
+
+* one-wire-modus
+* Pins für SW-Uart
+
+* arch-linux: packet avr-fboot-git
+
+* $ avr-fboot-linux

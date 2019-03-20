@@ -296,6 +296,19 @@ struct BCastHandler {
 
 //using isrRegistrar = AVR::IsrRegistrar<rcUsart::RxHandler, rcUsart::TxHandler>;
 
+template<typename... CC>
+struct StaticInitializer {
+    StaticInitializer() {
+        (CC::init(), ...);
+    }
+};
+
+using Initializer = StaticInitializer<systemClock, eeprom, hbridge, menu>;
+
+namespace {
+    Initializer initializer;
+}
+
 int main() {
     using namespace etl;
     using namespace std;
@@ -316,17 +329,19 @@ int main() {
     ppm::dir<Input>();
     ppm::pullup();
     
-    systemClock::init();
+//    systemClock::init();
     
-    eeprom::init();
+//    eeprom::init();
     
     sensorUsart::init<19200>();
     rcUsart::init<115200>();
     
     pwm::init<fpwm>();
-    hbridge::init();
+    
+//    hbridge::init();
 
-    menu::init();    
+//    menu::init();    
+
     const auto t = alarmTimer::create(1000_ms, External::Hal::AlarmFlags::Periodic);
 
     rpm::init();

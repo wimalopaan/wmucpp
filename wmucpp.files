@@ -23,6 +23,7 @@
 Makefile.arm.include
 Makefile.avr0.include
 boards/blmc/Makefile
+boards/blmc/blheli.txt
 boards/blmc/blmc_01/Makefile
 boards/blmc/blmc_01/board.txt
 boards/blmc/blmc_01/test01.cc
@@ -112,12 +113,15 @@ boards/blmc/blmc_test01/test08.cc
 boards/blmc/blmc_test01/test09.cc
 boards/blmc/blmc_test01/util.c
 boards/blmc/blmc_test01/util.h
+boards/blmc/simonk.txt
 boards/bmc/Makefile
 boards/bmc/blink.cc
 boards/bmc/blink01.cc
 boards/bmc/test00.cc
 boards/bootloader/Makefile
 boards/bootloader/blink.cc
+boards/bootloader/fastboot.txt
+boards/bootloader/fastboot/get_avr_arch.sh
 boards/bootloader/optiboot.txt
 boards/breakout/Makefile
 boards/breakout/test00.cc
