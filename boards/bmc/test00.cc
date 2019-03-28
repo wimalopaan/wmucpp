@@ -69,6 +69,7 @@ using sensorPA = Hott::SensorProtocollAdapter<0, Hott::esc_id, AsciiHandler, Bin
 using sensorUsart = AVR::Usart<0, sensorPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>> ;
 
 using rcUsart = AVR::Usart<1, sumd, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
+//using rcUsart = AVR::Usart<1, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
 //using rcUsart = AVR::Usart<1, sumd, AVR::UseInterrupts<true>, AVR::ReceiveQueueLength<0>>;
 
 using terminalDevice = rcUsart;

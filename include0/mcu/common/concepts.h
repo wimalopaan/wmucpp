@@ -64,6 +64,11 @@ namespace AVR {
                 typename S::device_type;
                 typename S::line_terminator_type;
         };
-    
+
+        template<typename PA>
+        concept bool ProtocolAdapter = requires(PA) {
+                PA::process(std::byte{0});
+        };
+        
     }
 }

@@ -63,7 +63,7 @@ namespace AVR {
         
     } //!Util
     
-    template<uint8_t N, typename PA = void, etl::Concepts::NamedFlag useISR = etl::NamedFlag<true>,
+    template<uint8_t N, AVR::Concepts::ProtocolAdapter PA = External::Hal::NullProtocollAdapter, etl::Concepts::NamedFlag useISR = etl::NamedFlag<true>,
              etl::Concepts::NamedConstant RecvQLength = ReceiveQueueLength<64>, 
              etl::Concepts::NamedConstant SendQLength = SendQueueLength<64>, typename MCU = DefaultMcuType>
     class Usart final : public UsartBase<MCU, N> {
@@ -99,18 +99,18 @@ namespace AVR {
             inline static void isr_impl() {
                 const auto c = *mcu_usart()->udr;
                 if constexpr (RecvQLength::value > 0) {
-                    static_assert(std::is_same<PA, void>::value || std::is_same<PA, External::Hal::NullProtocollAdapter>::value, "recvQueue is used, no need for PA");
+                    static_assert(std::is_same_v<PA, External::Hal::NullProtocollAdapter>, "recvQueue is used, no need for PA");
                     mRecvQueue.push_back(c);
                 }
                 else {
                     static_assert(RecvQLength::value == 0);
-                    if constexpr(!std::is_same<PA, void>::value) {
+                    if constexpr(!std::is_same_v<PA, External::Hal::NullProtocollAdapter>) {
                         if (!PA::process(c)) {
                             assert("input not handled by protocoll adapter");
                         }
                     }
                     else {
-                        static_assert(std::false_t<MCU>::value, "no events, no recvQueue, no PA -> wrong configuration");
+                        static_assert(std::false_t<MCU>::value, "no recvQueue, no PA -> wrong configuration");
                     }
                 }
             }
@@ -135,9 +135,8 @@ namespace AVR {
             }
         };
         
-        template<bool Q = useISR::value>
-        inline static 
-        typename std::enable_if<!Q, void>::type
+        template<bool visible = useISR::value, typename = std::enable_if_t<!visible>>
+        inline static void
         periodic() {
             if (mcu_usart()->ucsra.template isSet<ucsra_type::rxc>()) {
                 RxHandler::isr_impl();       
