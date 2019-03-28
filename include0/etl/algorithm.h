@@ -181,8 +181,23 @@ namespace etl {
         inline static constexpr void copyElements(A& a, std::index_sequence<II...>, BB... bb) {
             ((a[II] = bb),...);
         }
+
+        template<typename A, typename B, auto... II>
+        inline static constexpr bool contains(const B& c, const A& a, std::index_sequence<II...>) {
+            return ((c[II] == a) || ...);
+        }
     }
 
+    template<auto... II, typename A>
+    constexpr bool isInList(const A& item) {
+        return ((A{II} == item) || ...);
+    }
+
+    template<typename A, etl::Concepts::Container B>
+    constexpr bool contains(const B& c, const A& item) {
+         return detail::contains(c, item, std::make_index_sequence<c.size()>{});   
+    }
+    
     template<typename A, etl::Concepts::Container B>
     constexpr void copy(A& dest, const B& src) {
         static_assert(std::size(dest) >= std::size(src));

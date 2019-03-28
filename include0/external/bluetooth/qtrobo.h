@@ -24,8 +24,13 @@ namespace External {
         using namespace etl;
         using namespace std;
         
-    constexpr auto seperator = Char{':'};
-    
+        constexpr auto seperator = std::byte{':'};
+        constexpr auto startSymbol = std::byte{'$'};
+        constexpr auto propSymbol = std::byte{'p'};
+        constexpr auto switchSymbol = std::byte{'s'};
+
+        constexpr std::array<std::byte, 3> lineEnds = {'\n'_B, '\r'_B, '\0'_B};
+        
         template<typename Device, auto N>
         struct Logging {
             template<typename... PP>
@@ -46,54 +51,51 @@ namespace External {
             }
         };
         
-        inline bool isdigit(std::byte b) {
+        constexpr inline bool isDigit(std::byte b) {
             return ((static_cast<uint8_t>(b) >= '0') && (static_cast<uint8_t>(b) <= '9'));
         }
+
+        constexpr inline uint8_t asDigit(std::byte b) {
+            return (static_cast<uint8_t>(b) - '0');
+        }
+
         template<uint8_t N, uint8_t NChannels = 16>
         class ProtocollAdapter final {
             inline static constexpr uint8_t NumberOfChannels = NChannels;
             typedef uint_ranged<uint8_t, 0, NumberOfChannels - 1> index_type;
-            enum class State : uint8_t {Undefined, Start, Prop, PropNumber, Space, Value};
+            enum class State : uint8_t {Undefined, Start, Number, Seperator, Value};
+            enum class Target: uint8_t {Undefined, Prop, Switch};
         public:
             inline static bool process(std::byte b) { 
                 switch (state) {
                 case State::Undefined:
-                    if (b == '$'_B) {
+                    if (b == startSymbol) {
                         state = State::Start;
                     }
                     break;
                 case State::Start:
-                    if (b == 'p'_B) {
-                        state = State::Prop;
+                    number = 0;
+                    if (b == propSymbol) {
+                        state = State::Number;
+                        target = Target::Prop;
+                    }
+                    else if (b == switchSymbol) {
+                        state = State::Number;
+                        target = Target::Switch;
                     }
                     else {
                         state = State::Undefined;
+                        target = Target::Undefined;
                     }
                     break;
-                case State::Prop:
-                    if (isdigit(b)) {
-                        number = 10 * (static_cast<uint8_t>(b) - '0');
-                        state = State::PropNumber;
+                case State::Number:
+                    if (isDigit(b)) {
+                        number *= 10;
+                        number += asDigit(b);
                     }
-                    else {
-                        state = State::Undefined;
-                    }
-                    break;
-                case State::PropNumber:
-                    if (isdigit(b)) {
-                        number += (static_cast<uint8_t>(b) - '0');
-                        if (number < NumberOfChannels) {
-                            index = number;
-                            state = State::Space;
-                        }
-                    }
-                    else {
-                        state = State::Undefined;
-                    }
-                    break;
-                case State::Space:
-                    if (b == std::byte{seperator}) {
+                    else if (b == seperator) {
                         state = State::Value;
+                        index = number;
                         number = 0;
                     }
                     else {
@@ -101,13 +103,22 @@ namespace External {
                     }
                     break;
                 case State::Value:
-                    if (isdigit(b)) {
+                    if (isDigit(b)) {
                         number *= 10;
-                        number += (static_cast<uint8_t>(b) - '0');
+                        number += asDigit(b);
                     }
-                    else if ((b == '\n'_B) || (b == '\r'_B) || (b == '\0'_B)) {
+                    else if (etl::contains(lineEnds, b)) {
                         if (number <= std::numeric_limits<uint8_t>::max()) {
-                            propValues[index] = number;
+                            if (target == Target::Prop) {
+                                if (index < std::size(propValues)) {
+                                    propValues[index] = number;
+                                }
+                            }
+                            else if (target == Target::Switch) {
+                                if (index < std::size(switchValues)) {
+                                    switchValues[index] = number;
+                                }
+                            }
                         }
                         state = State::Undefined;
                     }
@@ -124,8 +135,10 @@ namespace External {
             inline static uint8_t number;
             inline static index_type index;
             inline static State state = State::Undefined;
+            inline static Target target = Target::Undefined;
         public:
             inline static std::array<uint8_t, NumberOfChannels> propValues;
+            inline static std::array<bool, NumberOfChannels> switchValues;
         };
     }
 }
