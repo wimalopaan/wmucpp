@@ -80,7 +80,7 @@ struct PgmString final {
         assert(index < size());
         return etl::Char{pgm_read_byte(&data[index])};
     }
-    inline constexpr uint8_t size() const {
+    inline static constexpr uint8_t size() {
         return sizeof...(CC);
     }
     inline constexpr operator PgmStringView() const {

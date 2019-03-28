@@ -72,10 +72,10 @@ namespace AVR {
 }
 
 
-using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
-using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
-using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
-using PortE = AVR::Port<DefaultMcuType::PortRegister, AVR::E>;
+using PortB = AVR::Port<AVR::B>;
+using PortC = AVR::Port<AVR::C>;
+using PortD = AVR::Port<AVR::D>;
+using PortE = AVR::Port<AVR::E>;
 
 using ppmInPin  = AVR::Pin<PortE, 2>;
 
@@ -94,7 +94,7 @@ struct AsciiHandler;
 struct BinaryHandler;
 struct BCastHandler;
 
-using sensorPA = Hott::SensorProtocollAdapter<0, AsciiHandler, BinaryHandler, BCastHandler>;
+using sensorPA = Hott::SensorProtocollAdapter<0, Hott::gam_id, AsciiHandler, BinaryHandler, BCastHandler>;
 using roboremoPA = External::RoboRemo::ProtocollAdapter<0, 16>;
 
 using sensorUsart = AVR::Usart<0, sensorPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>> ;

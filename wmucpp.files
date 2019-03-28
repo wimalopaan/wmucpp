@@ -275,6 +275,8 @@ example/externals/buttonmacro.c
 example/externals/buttonvertical.cc
 example/externals/isr.c
 example/features/isr_test01.cc
+gcc/base/lib/gcc/avr/9.0.1/device-specs/specs-atmega324pb
+gcc/base/lib/gcc/avr/9.0.1/device-specs/specs-atmega328pb
 host/hott/Makefile
 host/hott/test01.cc
 host/hott/test02.cc

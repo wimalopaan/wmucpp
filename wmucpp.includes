@@ -135,3 +135,4 @@ include0/external/solutions
 include0/external/ui
 boards/bmc
 boards/bootloader/fastboot
+gcc/base/lib/gcc/avr/9.0.1/device-specs
