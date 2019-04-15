@@ -25,11 +25,11 @@
 #include "type_traits.h"
 #include "concepts.h"
 
+#include "char.h"
+
 namespace etl {
     using namespace std;
     
-    enum class Char : uint8_t {};
-       
     template<bool V>
     struct NamedFlag : integral_constant<bool, V> {};
     
@@ -143,6 +143,8 @@ namespace etl {
     private:
         T mValue = 0;
     };
+    
+ 
     template<Unsigned T = uint8_t, T LowerBound = 0, T UpperBound = std::numeric_limits<T>::max()>
     class uint_ranged final {
     public:
@@ -154,7 +156,7 @@ namespace etl {
             assert(v >= LowerBound);
             assert(v <= UpperBound);
         }
-        
+
         inline constexpr uint_ranged(const volatile uint_ranged& o) : mValue(o.mValue) {}
         
         inline constexpr bool isTop() const {

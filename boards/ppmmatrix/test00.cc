@@ -1,5 +1,7 @@
 #define NDEBUG
 
+#define MATRIX
+
 template<typename S1, typename S2>
 [[noreturn]] void assertFunction([[maybe_unused]] const S1& expr, [[maybe_unused]] const S2& file, [[maybe_unused]] unsigned int line) {
     while(true) {
@@ -11,7 +13,8 @@ template<typename S1, typename S2>
 //using isrRegistrar = AVR::IsrRegistrar<rcUsart::RxHandler, rcUsart::TxHandler, btUsart::RxHandler, btUsart::TxHandler>;
 //using isrRegistrar = AVR::IsrRegistrar<btUsart::RxHandler, btUsart::TxHandler>;
 
-using terminal = etl::basic_ostream<rcUsart>;
+//using terminal = etl::basic_ostream<rcUsart>;
+using terminal = etl::basic_ostream<btUsart>;
 //using robo = etl::basic_ostream<btUsart>;
 
 template<typename V, auto Size = 8, typename MCU = DefaultMcuType>

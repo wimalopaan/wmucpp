@@ -26,7 +26,7 @@
 #include <cstddef>
 #include <cassert>
 
-#include <etl/types.h>
+#include <etl/char.h>
 
 template<typename C, C... CC>
 struct PgmString;
@@ -38,7 +38,7 @@ class PgmStringView {
     template<typename C, C... CC> friend struct PgmString;
 public:
     inline etl::Char operator[](uint8_t index) const {
-        assert(ptrToPgmData != nullptr);
+//        assert(ptrToPgmData != nullptr);
         return etl::Char{pgm_read_byte(ptrToPgmData + index)};
     }
     template<typename C, C... CC> 

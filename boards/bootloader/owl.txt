@@ -1,0 +1,21 @@
+* One-Way-Loader
+** http://jtxp.org/tech/onewayloader_en.htm
+** benötigt FreeBasic Compiler
+** owl.bas compilieren: fbc owl.bas
+
+* ATMega32
+** Erzeugen des Bootloaders
+** Setzen der Fuses
+** Flashen der Bootloaders
+** Flashen des Applikation
+
+* ATTiny85
+** Erzeugen des Bootloaders
+./owl --device=tn85 --rxport=b3 --txport=b4 --clock=8000 --targetname=testowl_tn85
+** Setzen der Fuses: Selft-Prog, 8MHZ
+sudo avrdude -p attiny85 -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P usb -c avrisp2 -U lfuse:w:0xe2:m -U hfuse:w:0xdf:m -U efuse:w:0xfe:m
+** Flashen des Bootloaders
+sudo avrdude -p attiny85 -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P usb -c avrisp2 -U targets/testowl_tn85.hex
+** Flashen der App
+./owl --targetname=targets/testowl_tn85.hex --flashfile=../../../Projekte/wmucpp/boards/bootloader/blink.hex --serialport=/dev/ttyUSB0
+

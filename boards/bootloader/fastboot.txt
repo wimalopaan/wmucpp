@@ -10,3 +10,37 @@
 * arch-linux: packet avr-fboot-git
 
 * $ avr-fboot-linux
+
+* im Makefile-tiny85 direkt die Angaben geändert
+** arch = avr25
+** F-CPU
+
+** Einstellen der Fuses 1MHz / Preserve EEprom
+sudo avrdude -p attiny85 -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P usb -c avrisp2  -U lfuse:w:0xe2:m -U hfuse:w:0xd7:m -U efuse:w:0xfe:m 
+
+** Flash Fastboot
+sudo avrdude -p attiny85 -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P usb -c avrisp2 -U bootload.elf
+
+
+
+* Programmiersockel TQFP-32
+** Atmega88
+** Fuses 16MHz / BootSZ / BootRST
+sudo avrdude -p atmega88p -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P usb -c avrisp2  -U lfuse:w:0xf7:m -U hfuse:w:0xdf:m -U efuse:w:0xfc:m 
+
+** Flash Fastboot
+sudo avrdude -p atmega88p -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P usb -c avrisp2 -U bootload.elf
+
+** Flash Application
+avr-fboot -d /dev/ttyUSB0 -b 9600 -P Peda -p blink_32tqfp_prog_sockel.hex
+
+* Breakout 40Pin
+** atmega1284p
+** Fuses 16MHz / BootSZ / BootRST
+sudo avrdude -p atmega1284p -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P usb -c avrisp2  -U lfuse:w:0xf7:m -U hfuse:w:0xde:m -U efuse:w:0xff:m 
+
+** Flash fastboot
+sudo avrdude -p atmega1284p -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P usb -c avrisp2 -U bootload.elf
+
+** flash application
+avr-fboot -d /dev/ttyUSB0 -b 9600 -P Peda -p blink_32tqfp_prog_sockel.hex

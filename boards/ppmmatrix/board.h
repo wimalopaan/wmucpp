@@ -31,6 +31,7 @@
 #include <external/hal/alarmtimer.h>
 #include <external/hott/hott.h>
 #include <external/bluetooth/roboremo.h>
+#include <external/bluetooth/qtrobo.h>
 #include <external/hal/devicemapper.h>
 
 #ifdef MEM
@@ -90,28 +91,38 @@ using rxSelect = AVR::Pin<PortD, 3>;
 
 using cppm = AVR::Cppm<1, AVR::A, 8, multiplexer, ppmInPin>;
 
+#ifdef MATRIX
 struct AsciiHandler;
 struct BinaryHandler;
 struct BCastHandler;
-
 using sensorPA = Hott::SensorProtocollAdapter<0, Hott::gam_id, AsciiHandler, BinaryHandler, BCastHandler>;
-using roboremoPA = External::RoboRemo::ProtocollAdapter<0, 16>;
-
 using sensorUsart = AVR::Usart<0, sensorPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>> ;
+using roboremoPA = External::RoboRemo::ProtocollAdapter<0, 16>;
 using btUsart = AVR::Usart<0, roboremoPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>> ;
+#endif
+
+
+#ifdef SERVOTESTER
+using qtroboPA = External::QtRobo::ProtocollAdapter<0>;
+using qtroboUsart = AVR::Usart<0, qtroboPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<512>> ;
+#endif
+
 
 using sensorData = Hott::SensorProtocollBuffer<0>;
-using crWriterSensorBinary = ConstanteRateWriter<sensorData, sensorUsart>;
 using menuData = Hott::SensorTextProtocollBuffer<0>;
+
+#ifdef MATRIX
+using crWriterSensorBinary = ConstanteRateWriter<sensorData, sensorUsart>;
 using crWriterSensorText = ConstanteRateWriter<menuData, sensorUsart>;
+#endif
 
 using sumd = Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>;
 using rcUsart = AVR::Usart<1, sumd, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
 
 namespace  {
     using namespace std::literals::chrono;
-//    constexpr auto interval = 10_ms;
-    constexpr auto interval = External::Units::duration_cast<std::chrono::milliseconds>(Hott::hottDelayBetweenBytes);
+    constexpr auto interval = 10_ms;
+//    constexpr auto interval = External::Units::duration_cast<std::chrono::milliseconds>(Hott::hottDelayBetweenBytes);
 }
 
 using systemClock = AVR::SystemTimer<0, interval>;

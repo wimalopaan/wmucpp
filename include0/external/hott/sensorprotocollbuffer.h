@@ -197,7 +197,7 @@ namespace Hott {
         }
     private:
         inline static std::byte getByte(uint8_t index) {
-            assert(index < sizeof(hottBinaryResponse));
+            assert(index < sizeof(EscResponse));
             /*constexpr */const std::byte* ptr = (const std::byte*) &EscResponse;  
             const std::byte value = ptr[index];
             EscResponse.parity += std::to_integer<uint8_t>(value);

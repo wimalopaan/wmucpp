@@ -24,19 +24,20 @@
 #pragma pack(1)
 
 namespace AVR {
-    struct ATMega328PB final {
+    
+    struct ATMega88P final
+    {
         template<typename T>
-        inline static constexpr bool is_atomic() {return false;}
+        static constexpr bool is_atomic() {return false;}
         
-        ATMega328PB() = delete;
-        
+        ATMega88P() = delete;
         struct Ram {
             inline static constexpr uintptr_t begin = RAMSTART;  
             inline static constexpr uintptr_t end   = RAMEND;  
         };
         
         struct Usart {
-            static constexpr const uint8_t count = 2;
+            static constexpr const uint8_t count = 1;
             enum class SRA : uint8_t {
                 rxc = (1 << RXC0),
                 txc = (1 << TXC0),
@@ -105,7 +106,7 @@ namespace AVR {
                 twStLastData = TW_ST_LAST_DATA
             };
             ControlRegister<TWI, TWS> twsr;
-            DataRegister<TWI, ReadWrite, std::byte> twar;
+            DataRegister<TWI, ReadWrite> twar;
             DataRegister<TWI, ReadWrite, std::byte> twdr;
             enum class TWC : uint8_t {
                 twint = (1 << TWINT),
@@ -151,7 +152,7 @@ namespace AVR {
         };
         
         struct Timer16Bit {
-            static constexpr const uint8_t count = 3;
+            static constexpr const uint8_t count = 1;
             typedef uint16_t value_type;
             enum class TCCRA : uint8_t {
                 coma0 = (1 << COM1A0),
@@ -204,7 +205,7 @@ namespace AVR {
             template<uint8_t N> struct Address;
         };
         struct Timer16Interrupts {
-            static constexpr const uint8_t count = 3;
+            static constexpr const uint8_t count = 1;
             enum class Flags : uint8_t {
                 icf  = (1 << ICF1),
                 ocfb = (1 << OCF1B),
@@ -268,25 +269,10 @@ namespace AVR {
             };
             ControlRegister<Adc, MUX> admux;
             volatile uint8_t reserved;
-            DataRegister<Adc, UnUsed> didr0;
-            DataRegister<Adc, UnUsed> didr1;
+            volatile uint8_t didr0;
+            volatile uint8_t didr1;
             template<int N> struct Address;
             template<int N> struct Parameter;
-        };
-        struct AdComparator {
-            enum class SR : uint8_t {
-                acd = (1 << ACD),
-                acbg = (1 << ACBG),
-                aco = (1 << ACO),
-                aci = (1 << ACI),
-                acie = (1 << ACIE),
-                acic = (1 << ACIC),
-                acis1 = (1 << ACIS1),
-                acis0 = (1 << ACIS0)
-            };
-            static constexpr const uint8_t count = 1;
-            ControlRegister<AdComparator, SR> acsr;
-            template<int N> struct Address;
         };
         struct PortRegister {
             DataRegister<PortRegister, ReadWrite, std::byte> in;
@@ -301,16 +287,8 @@ namespace AVR {
                 if0 = (1 << PCIF0)
             };
             FlagRegister<Interrupt, PCFlags> pcifr;
-            enum class EIFlags : uint8_t {
-                int1 = (1 << INTF1),
-                int0 = (1 << INTF0)
-            };
-            FlagRegister<Interrupt, EIFlags> eifr;
-            enum class EIMask : uint8_t {
-                int1 = (1 << INT1),
-                int0 = (1 << INT0)
-            };
-            ControlRegister<Interrupt, EIMask> eimsk;
+            volatile uint8_t eifr;
+            volatile uint8_t eimsk;
             volatile uint8_t padding[0x68 - 0x3b - 1 - 2];
             enum class PCMask : uint8_t {
                 ie2 = (1 << PCIE2),
@@ -318,14 +296,16 @@ namespace AVR {
                 ie0 = (1 << PCIE0)
             };
             ControlRegister<Interrupt, PCMask> pcicr;
-            enum class EIControl : uint8_t {
-                isc11 = (1 << ISC11),
-                isc10 = (1 << ISC10),
-                isc01 = (1 << ISC01),
-                isc00 = (1 << ISC00)
-            };
-            ControlRegister<Interrupt, EIControl> eicra;
+            volatile uint8_t eicra;
             static constexpr uint8_t address = 0x3b;
+        };
+        struct Clock {
+            DataRegister<Clock, ReadWrite, uint8_t> osccal;
+            static constexpr uint8_t address = 0x66;
+        };
+        struct GPIOR final {
+            static constexpr const uint8_t count = 3;
+            template<uint8_t N> struct Address; 
         };
         struct Status final {
             enum class Bits : uint8_t {
@@ -335,219 +315,165 @@ namespace AVR {
             ControlRegister<Status, Bits> value;
             static constexpr uint8_t address = 0x5f;
         };
-        struct GPIOR final {
-            static constexpr const uint8_t count = 3;
-            template<uint8_t N> struct Address; 
-        };
-        
     };
     template<>
-    constexpr bool ATMega328PB::is_atomic<uint8_t>() {return true;}
+    constexpr bool ATMega88P::is_atomic<uint8_t>() {return true;}
+    
 }
 
 namespace std {
     template<>
-    struct enable_bitmask_operators<AVR::ATMega328PB::Status::Bits> : std::true_type {};
+    struct enable_bitmask_operators<AVR::ATMega88P::Status::Bits> : std::true_type {};
     template<>
-    struct enable_bitmask_operators<AVR::ATMega328PB::Timer8Interrupts::Flags>  : std::true_type {};
+    struct enable_bitmask_operators<AVR::ATMega88P::Timer8Interrupts::Flags> : std::true_type {};
     template<>
-    struct enable_bitmask_operators<AVR::ATMega328PB::Timer8Interrupts::Mask> : std::true_type {};
+    struct enable_bitmask_operators<AVR::ATMega88P::Timer8Interrupts::Mask> : std::true_type {};
     template<>
-    struct enable_bitmask_operators<AVR::ATMega328PB::Timer16Interrupts::Flags> : std::true_type {};
+    struct enable_bitmask_operators<AVR::ATMega88P::Timer16Interrupts::Flags> : std::true_type {};
     template<>
-    struct enable_bitmask_operators<AVR::ATMega328PB::Timer16Interrupts::Mask> : std::true_type {};
+    struct enable_bitmask_operators<AVR::ATMega88P::Timer16Interrupts::Mask> : std::true_type {};
     template<>
-    struct enable_bitmask_operators<AVR::ATMega328PB::Usart::SRA> : std::true_type {};
+    struct enable_bitmask_operators<AVR::ATMega88P::Usart::SRA> : std::true_type {};
     template<>
-    struct enable_bitmask_operators<AVR::ATMega328PB::Usart::SRB> : std::true_type {};
+    struct enable_bitmask_operators<AVR::ATMega88P::Usart::SRB> : std::true_type {};
     template<>
-    struct enable_bitmask_operators<AVR::ATMega328PB::Usart::SRC> : std::true_type {};
+    struct enable_bitmask_operators<AVR::ATMega88P::Usart::SRC> : std::true_type {};
     template<>
-    struct enable_bitmask_operators<AVR::ATMega328PB::Timer8Bit::TCCRA> : std::true_type {};
+    struct enable_bitmask_operators<AVR::ATMega88P::Timer8Bit::TCCRA>  : std::true_type {};
     template<>
-    struct enable_bitmask_operators<AVR::ATMega328PB::Timer8Bit::TCCRB> : std::true_type {};
+    struct enable_bitmask_operators<AVR::ATMega88P::Timer8Bit::TCCRB> : std::true_type {};
     template<>
-    struct enable_bitmask_operators<AVR::ATMega328PB::Timer16Bit::TCCRA> : std::true_type {};
+    struct enable_bitmask_operators<AVR::ATMega88P::Timer16Bit::TCCRA> : std::true_type {};
     template<>
-    struct enable_bitmask_operators<AVR::ATMega328PB::Timer16Bit::TCCRB> : std::true_type {};
+    struct enable_bitmask_operators<AVR::ATMega88P::Timer16Bit::TCCRB> : std::true_type {};
     template<>
-    struct enable_bitmask_operators<AVR::ATMega328PB::TWI::TWS> : std::true_type {};
+    struct enable_bitmask_operators<AVR::ATMega88P::TWI::TWS> : std::true_type {};
     template<>
-    struct enable_bitmask_operators<AVR::ATMega328PB::TWI::TWC> : std::true_type {};
+    struct enable_bitmask_operators<AVR::ATMega88P::TWI::TWC> : std::true_type {};
     template<>
-    struct enable_bitmask_operators<AVR::ATMega328PB::Adc::SRA> : std::true_type {};
+    struct enable_bitmask_operators<AVR::ATMega88P::Adc::SRA> : std::true_type {};
     template<>
-    struct enable_bitmask_operators<AVR::ATMega328PB::Adc::SRB> : std::true_type {};
+    struct enable_bitmask_operators<AVR::ATMega88P::Adc::SRB> : std::true_type {};
     template<>
-    struct enable_bitmask_operators<AVR::ATMega328PB::Adc::MUX> : std::true_type {};
+    struct enable_bitmask_operators<AVR::ATMega88P::Adc::MUX> : std::true_type {};
 }
 
 namespace AVR {
     template<>
-    struct ATMega328PB::GPIOR::Address<0> : std::integral_constant<uintptr_t, 0x3e> {};
-
+    struct ATMega88P::GPIOR::Address<0> {
+        inline static constexpr uintptr_t value = 0x3e;
+    };
     template<>
-    struct ATMega328PB::GPIOR::Address<1> {
+    struct ATMega88P::GPIOR::Address<1> {
         inline static constexpr uintptr_t value = 0x4a;
     };
     template<>
-    struct ATMega328PB::GPIOR::Address<2> {
+    struct ATMega88P::GPIOR::Address<2> {
         inline static constexpr uintptr_t value = 0x4b;
     };
     
     template<>
-    struct ATMega328PB::PortRegister::Address<B> {
-        inline static constexpr uintptr_t value = 0x23;
+    struct ATMega88P::PortRegister::Address<B> {
+        static constexpr uint8_t value = 0x23;
     };
     template<>
-    struct ATMega328PB::PortRegister::Address<C> {
-        inline static constexpr uintptr_t value = 0x26;
+    struct ATMega88P::PortRegister::Address<C> {
+        static constexpr uint8_t value = 0x26;
     };
     template<>
-    struct ATMega328PB::PortRegister::Address<D> {
-        inline static constexpr uintptr_t value = 0x29;
-    };
-    template<>
-    struct ATMega328PB::PortRegister::Address<E> {
-        inline static constexpr uintptr_t value = 0x2c;
+    struct ATMega88P::PortRegister::Address<D> {
+        static constexpr uint8_t value = 0x29;
     };
     
     template<>
-    struct ATMega328PB::PCInterrupts::Address<0> {
-        inline static constexpr uintptr_t value = 0x6b;
+    struct ATMega88P::PCInterrupts::Address<0> {
+        static constexpr uint8_t value = 0x6b;
     };
     template<>
-    struct ATMega328PB::PCInterrupts::Address<1> {
-        inline static constexpr uintptr_t value = 0x6c;
+    struct ATMega88P::PCInterrupts::Address<1> {
+        static constexpr uint8_t value = 0x6c;
     };
     template<>
-    struct ATMega328PB::PCInterrupts::Address<2> {
-        inline static constexpr uintptr_t value = 0x6d;
+    struct ATMega88P::PCInterrupts::Address<2> {
+        static constexpr uint8_t value = 0x6d;
+    };
+    
+    template<>
+    struct ATMega88P::TWI::Address<0> {
+        static constexpr uint8_t value = 0xb8;
     };
     template<>
-    struct ATMega328PB::TWI::Address<0> {
-        inline static constexpr uintptr_t value = 0xb8;
+    struct ATMega88P::Spi::Address<0> {
+        static constexpr uint8_t value = 0x4c;
     };
     template<>
-    struct ATMega328PB::TWI::Address<1> {
-        inline static constexpr uintptr_t value = 0xd8;
+    struct ATMega88P::Usart::Address<0> {
+        static constexpr uint8_t value = 0xc0;
+    };
+    
+    template<>
+    struct ATMega88P::Timer8Interrupts::Address<0> {
+        static constexpr uint8_t value = 0x35;
     };
     template<>
-    struct ATMega328PB::Spi::Address<0> {
-        inline static constexpr uintptr_t value = 0x4c;
+    struct ATMega88P::Timer16Interrupts::Address<1> {
+        static constexpr uint8_t value = 0x36;
     };
     template<>
-    struct ATMega328PB::Usart::Address<0> {
-        inline static constexpr uintptr_t value = 0xc0;
-    };
-    template<>
-    struct ATMega328PB::Usart::Address<1> {
-        inline static constexpr uintptr_t value = 0xc8;
-    };
-    template<>
-    struct ATMega328PB::Timer8Interrupts::Address<0> {
-        inline static constexpr uintptr_t value = 0x35;
-    };
-    template<>
-    struct ATMega328PB::Timer16Interrupts::Address<1> {
-        inline static constexpr uintptr_t value = 0x36;
-    };
-    template<>
-    struct ATMega328PB::Timer8Interrupts::Address<2> {
+    struct ATMega88P::Timer8Interrupts::Address<2> {
         static constexpr uint8_t value = 0x37;
     };
     template<>
-    struct ATMega328PB::Timer16Interrupts::Address<3> {
+    struct ATMega88P::Timer16Interrupts::Address<3> {
         static constexpr uint8_t value = 0x38;
     };
     template<>
-    struct ATMega328PB::Timer16Interrupts::Address<4> {
-        static constexpr uint8_t value = 0x39;
-    };
-    
-    //Timer0
-    template<>
-    struct ATMega328PB::Timer8Bit::Address<0> {
-        static constexpr uint8_t value = 0x44;
-    };
-    
-    template<>
-    struct ATMega328PB::Timer8Bit::PrescalerBits<0> {
-        static constexpr auto values = AVR::prescalerValues10Bit<ATMega328PB::Timer8Bit::TCCRB>;
-    };
-    
-    // Timer2
-    template<>
-    struct ATMega328PB::Timer8Bit::Address<2> {
-        static constexpr uint8_t value = 0xb0;
-    };
-    template<>
-    struct ATMega328PB::Timer8Bit::PrescalerBits<2> {
-        static constexpr auto values = AVR::prescalerValues10BitExtended<ATMega328PB::Timer8Bit::TCCRB>;
-    };
-    
-    // Timer 1
-    template<>
-    struct ATMega328PB::Timer16Bit::Address<1> {
-        static constexpr uint8_t value = 0x80;
-    };
-    
-    template<>
-    struct ATMega328PB::Timer16Bit::PrescalerBits<1> {
-        static constexpr auto values = AVR::prescalerValues10Bit<ATMega328PB::Timer16Bit::TCCRB>;
-    };
-    
-    // Timer 3
-    template<>
-    struct ATMega328PB::Timer16Bit::Address<3> {
-        static constexpr uint8_t value = 0x90;
-    };
-    
-    template<>
-    struct ATMega328PB::Timer16Bit::PrescalerBits<3> {
-        static constexpr auto values = AVR::prescalerValues10Bit<ATMega328PB::Timer16Bit::TCCRB>;
-    };
-    
-    // Timer 4
-    template<>
-    struct ATMega328PB::Timer16Bit::Address<4> {
-        static constexpr uint8_t value = 0xA0;
-    };
-    
-    template<>
-    struct ATMega328PB::Timer16Bit::PrescalerBits<4> {
-        static constexpr auto values = AVR::prescalerValues10Bit<ATMega328PB::Timer16Bit::TCCRB>;
-    };
-    template<>
-    struct ATMega328PB::Adc::Address<0> {
+    struct ATMega88P::Adc::Address<0> {
         static constexpr uint8_t value = 0x78;
     };
     template<>
-    struct ATMega328PB::AdComparator::Address<0> {
-        static constexpr uint8_t value = 0x50;
-    };
-    template<>
-    struct ATMega328PB::Adc::Parameter<0> {
+    struct ATMega88P::Adc::Parameter<0> {
         static constexpr auto channelMasks = std::make_array(MUX{0}, 
                                                              MUX::mux0,
                                                              MUX::mux1,
                                                              MUX::mux1 | MUX::mux0,
                                                              MUX::mux2,
                                                              MUX::mux2 | MUX::mux0,
-                                                             MUX::mux2 | MUX::mux1,
-                                                             MUX::mux2 | MUX::mux1 | MUX::mux0,
-                                                             MUX::mux3
+                                                             MUX::mux2 | MUX::mux1 | MUX::mux0
                                                              );
 //        static constexpr double VRef = 1.1;
     };
     
+    //Timer0
     template<>
-    struct ATMega328PB::TWI::PrescalerRow<0> {
-        static constexpr auto values = twiPrescalerBit<ATMega328PB::TWI::TWS>;
+    struct ATMega88P::Timer8Bit::Address<0> {
+        static constexpr uint8_t value = 0x44;
+    };
+    
+    template<>
+    struct ATMega88P::Timer8Bit::PrescalerBits<0> {
+        static constexpr auto values = AVR::prescalerValues10Bit<ATMega88P::Timer8Bit::TCCRB>;
+    };
+    
+    // Timer2
+    template<>
+    struct ATMega88P::Timer8Bit::Address<2> {
+        static constexpr uint8_t value = 0xb0;
     };
     template<>
-    struct ATMega328PB::TWI::PrescalerRow<1> {
-        static constexpr auto values = twiPrescalerBit<ATMega328PB::TWI::TWS>;
+    struct ATMega88P::Timer8Bit::PrescalerBits<2> {
+        static constexpr auto values = AVR::prescalerValues10BitExtended<ATMega88P::Timer8Bit::TCCRB>;
+    };
+    
+    // timer 1
+    template<>
+    struct ATMega88P::Timer16Bit::Address<1> {
+        static constexpr uint8_t value = 0x80;
+    };
+    
+    template<>
+    struct ATMega88P::Timer16Bit::PrescalerBits<1> {
+        static constexpr auto values = AVR::prescalerValues10Bit<ATMega88P::Timer16Bit::TCCRB>;
     };
     
 }

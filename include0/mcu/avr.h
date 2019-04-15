@@ -26,6 +26,7 @@
 #include <type_traits>
 
 namespace AVR {
+    //AVR Series
     struct ATMegaNone;
     struct ATMega8;
     struct ATMega88P;
@@ -37,6 +38,8 @@ namespace AVR {
     struct ATTiny84;
     struct ATTiny85;
     struct ATTiny25;
+    //AVR0-Series
+    struct ATMega4809;
 }
 
 #if defined(__AVR_ATmega1284P__)
@@ -61,6 +64,8 @@ typedef AVR::ATTiny25 DefaultMcuType;
 typedef AVR::ATTiny84 DefaultMcuType;
 #elif defined(__SAMD21G18A__)
 typedef ARM::SAM::SamD21 DefaultMcuType;
+#elif defined(__AVR_ATmega4809__)
+typedef AVR::ATMega4809 DefaultMcuType;
 #else
 typedef AVR::ATMegaNone DefaultMcuType;
 #endif
@@ -116,6 +121,12 @@ namespace AVR::detail::test {
 #if (__AVR_ARCH__ >= 2) && (__AVR_ARCH__ <= 51)
 # include "mega/atmega.h"
 # include "tiny/attiny.h"
+# include "internals/port.h"
+# include "internals/usart.h"
+#endif
+
+#if (__AVR_ARCH__ == 103)
+# include "megaavr0/atxmega.h"
 # include "internals/port.h"
 # include "internals/usart.h"
 #endif

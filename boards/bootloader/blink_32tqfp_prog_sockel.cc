@@ -39,8 +39,8 @@ using PortC = AVR::Port<AVR::C>;
 using PortD = AVR::Port<AVR::D>;
 using PortE = AVR::Port<AVR::E>;
 
-using led0 = AVR::Pin<PortB, 3>;
-using led1 = AVR::Pin<PortB, 4>;
+using led0 = AVR::Pin<PortB, 0>;
+using led1 = AVR::Pin<PortB, 1>;
 
 namespace  {
     using namespace std::literals::chrono;
@@ -83,3 +83,4 @@ int main() {
     }
     
 }
+

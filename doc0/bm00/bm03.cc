@@ -40,7 +40,7 @@
 //}
 
 
-volatile etl::StringBuffer<10> b;
+/*volatile */ etl::StringBuffer<10> b;
 
 int main() {
 //    b[0] = etl::Char{' '};
@@ -50,5 +50,10 @@ int main() {
     
 //    etl::fill(etl::make_span<0, 3>(b), etl::Char{'a'});
     etl::apply(etl::make_span<0, 3>(b), [](auto& c){c |= etl::Char{0x80};});
+    
+    auto x = etl::make_span<0, 3>(b);
+    
+//    decltype(x)::_;
+    
 }
 

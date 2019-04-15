@@ -102,10 +102,12 @@ namespace AVR {
         struct Int;
 
         // integral_constant        
+#ifdef INT1_vect_num
         template<>
         struct Int<0> {
             static constexpr const uint32_t number = INT0_vect_num;
         };
+#endif
 #ifdef INT1_vect_num
         template<>
         struct Int<1> {
@@ -346,8 +348,14 @@ namespace AVR {
         template<> struct Usart<0> {
 #ifdef USART_RX_vect_num
 //            struct RX : std::integral_constant<uint8_t, USART_RX_vect_num> {};
-        {
+            struct RX {
                 static constexpr const uint32_t number = USART_RX_vect_num;
+            };
+#endif
+#ifdef USART_RXC_vect_num
+//            struct RX : std::integral_constant<uint8_t, USART_RXC_vect_num> {};
+            struct RX {
+                static constexpr const uint32_t number = USART_RXC_vect_num;
             };
 #endif
 #ifdef USART0_RX_vect_num

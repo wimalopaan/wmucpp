@@ -4,10 +4,14 @@
 
 namespace AVR {
     namespace Groups {
+        template<typename MCU> struct isAtMega_8;
         template<typename MCU> struct isAtMega_X8;
         template<typename MCU> struct isAtMega_X4;
     }
     namespace Concepts {
+        template<typename MCU>
+        concept bool AtMega_8 = AVR::Groups::isAtMega_8<MCU>::value;
+
         template<typename MCU>
         concept bool AtMega_X8 = AVR::Groups::isAtMega_X8<MCU>::value;
 

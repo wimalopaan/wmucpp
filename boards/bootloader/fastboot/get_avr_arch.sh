@@ -36,7 +36,7 @@ case "$#" in
     *) echo >&2 "$pname: Too many arguments: $*"; exit 1;;
 esac
 
-arch=$(avr-gcc -mmcu=atmega8 -### bootload.o -o /dev/null 2>&1 | tr " " "\n" | grep mmcu | head -1 | tr -d "'" | tr "=" "\t" |  avr-gcc -mmcu=atmega8 -### bootload.o -o /dev/null 2>&1 | tr " " "\n" | grep mmcu | head -1 | tr -d "'" | tr "=" "\t" | cut -f2)
+arch=$(avr-gcc -mmcu=atmega8 -### bootload.o -o /dev/null 2>&1 | tr " " "\n" | grep mmcu | head -1 | tr -d "'" | tr "=" "\t" | cut -f2)
 
 echo $arch
 exit 0

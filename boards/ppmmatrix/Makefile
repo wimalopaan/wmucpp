@@ -35,4 +35,6 @@ targets += test00.elf test00.S
 #targets += test03.elf
 #targets += test04.elf
 
+targets += servotester.elf 
+
 -include ../../Makefile.avr0.include
