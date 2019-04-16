@@ -4,6 +4,7 @@
 #include <etl/rational.h>
 
 #include "groups.h"
+#include "../common/isr.h"
 
 #include "../common/pwm.h"
 
@@ -73,8 +74,7 @@ namespace AVR {
             *mcu_timer()->ocrb = 0;
             *mcu_timer()->ocra = 0;
         }
-        
-        
+
 //        inline static constexpr bool frequency(const hertz& f) {
 //            auto tsd = AVR::PWM::Util::calculate<TimerNumber>(f);
 //            if (!tsd) {
@@ -93,4 +93,65 @@ namespace AVR {
         
     private:
     };
+
+
+    template<auto TimerNumber, typename MCU = DefaultMcuType>
+    struct ISRPwm final {
+        ISRPwm() = delete;
+        using mcu_timer_type = typename TimerParameter<TimerNumber, MCU>::mcu_timer_type;
+        using value_type  = typename TimerParameter<TimerNumber, MCU>::value_type;        
+        using ta = typename TimerParameter<TimerNumber, MCU>::ta;        
+        using tb = typename TimerParameter<TimerNumber, MCU>::tb;        
+        
+        using flags_type = typename TimerParameter<TimerNumber, MCU>::mcu_timer_interrupts_flags_type;
+        using mask_type = typename TimerParameter<TimerNumber, MCU>::mcu_timer_mask_type;
+        
+        static constexpr auto mcu_timer = TimerParameter<TimerNumber, MCU>::mcu_timer;
+        static constexpr auto mcu_timer_interrupts = TimerParameter<TimerNumber, MCU>::mcu_timer_interrupts;
+        
+        inline static constexpr void period(value_type v) {
+        }
+        
+        inline static constexpr void on(value_type v) {
+        }
+        
+        inline static constexpr void a(const value_type& v) {
+            *mcu_timer()->ocra = v;
+        }
+        inline static constexpr void b(const value_type& v) {
+            *mcu_timer()->ocrb = v;
+        }
+        
+        template<const hertz& Frequency>
+        inline static constexpr value_type max() {
+            constexpr auto tsd = AVR::PWM::Util::calculate<TimerNumber>(Frequency);
+            static_assert(tsd, "wrong prescaler");
+            return tsd.ocr;
+        }
+        
+        
+        template<const hertz& Frequency>
+        inline static constexpr void init() {
+            constexpr auto tsd = AVR::PWM::Util::calculate<TimerNumber>(Frequency);
+            static_assert(tsd, "wrong prescaler");
+            
+            using x1 = std::integral_constant<uint16_t, tsd.prescaler>;
+            using x2 = std::integral_constant<uint16_t, tsd.ocr>;
+//            x2::_;
+                    
+            constexpr auto bits = bitsFrom<tsd.prescaler>(mcu_timer_type::template PrescalerBits<TimerNumber>::values);            
+            static_assert(isset(bits), "wrong prescaler");
+            mcu_timer()->tccrb.template set<bits>();
+            
+            *mcu_timer()->icr = tsd.ocr - 1;
+
+            // mode 14
+            mcu_timer()->tccra.template set<ta::wgm1>();
+            mcu_timer()->tccrb.template add<tb::wgm2 | tb::wgm3, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
+            
+            mcu_timer_interrupts()->timsk.template add<mask_type::toie1 | mask_type::ocie1a | mask_type::ocie1b>();
+        }
+    };
+
+
 }

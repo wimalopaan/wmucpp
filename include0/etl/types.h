@@ -193,6 +193,9 @@ namespace etl {
         inline constexpr bool operator==(T rhs) const {
             return mValue == rhs;
         }
+        
+        inline constexpr uint_ranged& operator=(const uint_ranged&) = default;
+
         inline constexpr uint_ranged& operator=(T rhs) {
             assert(rhs >= LowerBound);
             assert(rhs <= UpperBound);

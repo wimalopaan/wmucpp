@@ -42,55 +42,154 @@
 
 #include <external/hal/adccontroller.h>
 
+namespace  {
+    using namespace std::literals::chrono;
+    using namespace External::Units;
+    using namespace External::Units::literals;
+    constexpr auto interval = 10_ms;
+    constexpr auto fPWM = 4000_Hz;
+}
+
+
+template<typename... PA>
+struct MetaPA {
+    using index_type = etl::uint_ranged<uint8_t, 0, sizeof...(PA) - 1>;
+    using adapters = Meta::List<PA...>;
+    using s = Meta::front<adapters>;
+
+    inline static void activatePA(index_type index) {
+        state = index;
+    }
+    inline static bool process(std::byte b) {
+        Meta::visitAt<adapters>(state, [&]<typename P>(Meta::Wrapper<P>){
+              P::process(b);
+        });
+        return true;
+    }
+private:
+    inline static index_type state{0};
+};
+
+template<typename HighSide, typename LowSide>
+struct HalfBridge {
+    inline static constexpr void init() {
+        HighSide::init();
+        LowSide::init();
+    }
+    inline static constexpr void high() {
+        LowSide::inactivate();
+        HighSide::activate();
+    }
+    inline static constexpr void off() {
+        LowSide::inactivate();
+        HighSide::inactivate();
+    }
+    inline static constexpr void low() {
+        HighSide::inactivate();
+        LowSide::activate();
+    }
+};
+
 using PortB = AVR::Port<AVR::B>;
 using PortC = AVR::Port<AVR::C>;
 using PortD = AVR::Port<AVR::D>;
 
-using pc1 = AVR::Pin<PortC, 3>;
-using pc0 = AVR::Pin<PortC, 4>;
+using pinAp = AVR::ActiveLow<AVR::Pin<PortC, 3>, AVR::Output>;
+using pinAn = AVR::ActiveHigh<AVR::Pin<PortB, 0>, AVR::Output>;
+using pinBp = AVR::ActiveLow<AVR::Pin<PortC, 5>, AVR::Output>;
+using pinBn = AVR::ActiveHigh<AVR::Pin<PortC, 4>, AVR::Output>;
+using pinCp = AVR::ActiveLow<AVR::Pin<PortD, 4>, AVR::Output>;
+using pinCn = AVR::ActiveHigh<AVR::Pin<PortD, 5>, AVR::Output>;
 
-using txd0Enable = AVR::Pin<PortD, 3>;
+using dbg1 = AVR::Pin<PortB, 3>; // MOSI
+using dbg2 = AVR::Pin<PortB, 4>; // MISO
+using dbg3 = AVR::Pin<PortB, 5>; // SCK
 
-using inh1 = AVR::Pin<PortD, 5>;
-using inh2 = AVR::Pin<PortB, 0>;
+using hba = HalfBridge<pinAp, pinAn>;
+using hbb = HalfBridge<pinBp, pinBn>;
+using hbc = HalfBridge<pinCp, pinCn>;
 
-using qtPA = External::QtRobo::ProtocollAdapter<0, 16>;
+using pwm = AVR::ISRPwm<1>;
 
-using sumd = Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>;
+template<typename HBA, typename HBB, typename HBC, typename PWM, typename InputType>
+struct Bridge {
+    using pwm = PWM;
+    using value_type = typename PWM::value_type;
+    using input_type = InputType;
+    
+    inline static constexpr value_type medium = (input_type::Upper + input_type::Lower) / 2;
+    inline static constexpr value_type span = (input_type::Upper - input_type::Lower) / 2;
+    
+    inline static void init() {
+        HBA::init();
+        HBB::init();
+        HBC::init();
+    }
+    
+    struct OCAHandler : public AVR::IsrBaseHandler<typename AVR::ISR::Timer<1>::CompareA> {
+        inline static void isr() {
+            HBA::low();
+        }
+    };
+    struct OCBHandler : public AVR::IsrBaseHandler<typename AVR::ISR::Timer<1>::CompareB>  {
+        inline static void isr() {
+            HBB::low();
+        }
+    };
+    struct OVFHandler : public AVR::IsrBaseHandler<typename AVR::ISR::Timer<1>::Overflow>  {
+        inline static void isr() {
+            HBA::high();
+            HBB::high();
+        }
+    };
+    static inline void a(const input_type& d) {
+        if (!d) return;
+        
+        value_type v = (d.toInt() >= medium) ? (d.toInt() - medium) : (medium - d.toInt());
+        value_type t = (etl::enclosing_t<value_type>(v) * pwm::template max<fPWM>()) / span;
+        
+        if (d.toInt() >= medium) {
+            HBC::low();
+        }
+        else {
+            HBC::high();
+        }
+        pwm::a(t);
+    }
+    static inline void b(const input_type& d) {
+        if (!d) return;
+        
+        value_type v = (d.toInt() >= medium) ? (d.toInt() - medium) : (medium - d.toInt());
+        value_type t = (etl::enclosing_t<value_type>(v) * pwm::template max<fPWM>()) / span;
+        
+        pwm::b(t);
+    }
+};
 
-using rcUsart = AVR::Usart<0, sumd, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
+
+using sumdPA = Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>;
+using qtroboPA = External::QtRobo::ProtocollAdapter<0>;
+using metaPA = MetaPA<sumdPA, qtroboPA>;
+
+using bridge = Bridge<hba, hbb, hbc, pwm, sumdPA::value_type>;
+
+using rcUsart = AVR::Usart<0, metaPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
 
 using terminalDevice = rcUsart;
 using terminal = etl::basic_ostream<terminalDevice>;
-using log = External::QtRobo::Logging<terminal, 0>;
 
-
-using pwm = AVR::Pwm<1>;
-using hbridge = External::IFX007::HBridge<pwm, sumd::value_type>;
+using pong = External::QtRobo::Pong<terminal>;
 
 using adc = AVR::Adc<0>;
-using adcController = External::Hal::AdcController<adc>;
+using adcController = External::Hal::AdcController<adc, 0, 1, 2, 7, 6>;
 
-namespace  {
-    using namespace std::literals::chrono;
-    using namespace External::Units;
-//    constexpr auto interval = 10_ms;
-    constexpr auto interval = External::Units::duration_cast<std::chrono::milliseconds>(Hott::hottDelayBetweenBytes);
-//    constexpr auto fpwm = hertz{1000};
-    constexpr auto fpwm = Project::Config::fMcu;
-    
-    constexpr RPM MaximumRpm{12000};
-    constexpr RPM MinimumRpm{100};
-}
-
-using systemClock = AVR::SystemTimer<0, interval>;
+using systemClock = AVR::SystemTimer<2, interval>;
 using alarmTimer = External::Hal::AlarmTimer<systemClock>;
 
 struct Storage {
-    enum class AVKey : uint8_t {Input = 0, Channel, PWMF1, PWMF2, PWMMode, PWMThr1, PWMThr2, SplitMode, _Number};
+    enum class AVKey : uint8_t {Input = 0, Channel, _Number};
     
-    class ApplData : public EEProm::DataBase<ApplData> {
-    public:
+    struct ApplData : public EEProm::DataBase<ApplData> {
         etl::uint_NaN<uint8_t>& operator[](AVKey key) {
             return AValues[static_cast<uint8_t>(key)];
         }
@@ -102,147 +201,100 @@ struct Storage {
 using eeprom = EEProm::Controller<Storage::ApplData>;
 auto& appData = eeprom::data();
 
-class Dashboard final : public Hott::Menu {
-public:
-    Dashboard() : Menu(this, "Dashboard"_pgm
-                    ) {}
-private:
-//    Hott::TextWithValue<Storage::AVKey, 3, Storage::ApplData> mMode{"Mode"_pgm, appData, Storage::AVKey::SplitMode};
+struct PPMInput : public AVR::IsrBaseHandler<AVR::ISR::Int<0>> {
+    inline static void isr() {}
 };
 
-// todo: Zusammenfassen: DropDown(...)
 
-struct YesNo : public Hott::TextWithValue<Storage::AVKey, Storage::ApplData> {
-    YesNo(const PgmStringView& title, Storage::ApplData& data, Storage::AVKey k) :
-        TextWithValue(title, data, k, 1) {}
+struct FSM {
+    enum class State : uint8_t {Undefined, Error, Sumd, Robo, _Number};
 
-    virtual void valueToText(uint8_t value, etl::span<3, etl::Char> buffer) const override{
-        if (value == 0) {
-            buffer.insertLeftFill("No"_pgm);
+    enum class Event : uint8_t {SumdConnected, RoboConnected, LostConnection, _Number};
+    
+    inline static void process(Event e) {
+        auto state = mState;
+        switch(mState) {
+        case State::Undefined:
+        case State::Error:
+        case State::Sumd:
+        case State::Robo:
+            if (e == Event::SumdConnected) {
+                state = State::Sumd;
+            }
+            else if (e == Event::RoboConnected) {
+                state = State::Robo;
+            }
+            break;
+        default:
+            break;
         }
-        else {
-            buffer.insertLeftFill("Yes"_pgm);
+        if (state != mState) {
+            mState = state;
+            if (mState == State::Sumd) {
+                metaPA::activatePA(0);                            
+            }
+            else if (mState == State::Robo) {
+                metaPA::activatePA(1);                                        
+            }
         }
     }
-};
-
-struct Connection : public Hott::TextWithValue<Storage::AVKey, Storage::ApplData, 4> {
-    Connection(const PgmStringView& title, Storage::ApplData& data, Storage::AVKey k) :
-        TextWithValue(title, data, k, 2) {}
-
-    virtual void valueToText(uint8_t value, etl::span<4, etl::Char> buffer) const override{
-        if (value == 0) {
-            buffer.insertLeftFill("SUMD"_pgm);
-        }
-        else if (value == 1) {
-            buffer.insertLeftFill("CPPM"_pgm);
-        }
-        else if (value == 2) {
-            buffer.insertLeftFill("PPM"_pgm);
-        }
-        else {
-            buffer.insertLeftFill("err"_pgm);
-        }
-    }
-};
-
-struct PWMMode : public Hott::TextWithValue<Storage::AVKey, Storage::ApplData, 5> {
-    PWMMode(const PgmStringView& title, Storage::ApplData& data, Storage::AVKey k) :
-        TextWithValue(title, data, k, 1) {}
-
-    virtual void valueToText(uint8_t value, etl::span<5, etl::Char> buffer) const override{
-        if (value == 0) {
-            buffer.insertLeftFill("Dual"_pgm);
-        }
-        else if (value == 1) {
-            buffer.insertLeftFill("Split"_pgm);
-        }
-        else {
-            buffer.insertLeftFill("err"_pgm);
-        }
-    }
-};
-
-class SplitModeMenu final : public Hott::Menu {
-public:
-    SplitModeMenu() : Menu(this, "SplitMode"_pgm,
-                    &mMode
-                    ) {}
-private:
-    Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mMode{"Mode"_pgm, appData, Storage::AVKey::SplitMode, 2};
-};
-
-class PWMMenu final : public Hott::Menu {
-public:
-    PWMMenu() : Menu(this, "PWM"_pgm,
-                    &mPWMF1, &mPWMF2, &mPWMThr1, &mPWMThr2, &mPWMMode
-                    ) {}
-private:
-    Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mPWMF1{"PWM Freq 1"_pgm, appData, Storage::AVKey::PWMF1, 20};
-    Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mPWMF2{"PWM Freq 2"_pgm, appData, Storage::AVKey::PWMF2, 20};
-    Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mPWMThr1{"PWM Thr 1"_pgm, appData, Storage::AVKey::PWMThr1, 100};
-    Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mPWMThr2{"PWM Thr 2"_pgm, appData, Storage::AVKey::PWMThr2, 100};
-    PWMMode mPWMMode{"PWM Mode"_pgm, appData, Storage::AVKey::PWMMode};
-};
-
-
-class RCMenu final : public Hott::Menu {
-public:
-    RCMenu() : Menu(this, "WM BDC ESC 0.2"_pgm,
-                    &mSource, &mChannel, &mPwm, &mSplitMode, &mDashboard
-                    ) {}
-private:
-    Connection mSource{"Input Conn."_pgm, appData, Storage::AVKey::Input};
-    Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mChannel{"Channel"_pgm, appData, Storage::AVKey::Channel, 8};
-    PWMMenu mPwm;
-    SplitModeMenu mSplitMode;
-    Dashboard mDashboard;
-};
-
-RCMenu topMenu; // note: global object instead of static in Hottmenu -> no guards are created (is this a g++ error)
-
-template<typename PA>
-class HottMenu final {
-    HottMenu() = delete;
-public:
-    inline static void init() {
-        clear();
-    }
+    
     inline static void periodic() {
-        Hott::key_t k = Hott::key_t::nokey;
-        {
-            etl::Scoped<etl::DisbaleInterrupt<>> di;
-            k = mKey;
-            mKey = Hott::key_t::nokey;
+        static etl::uint_ranged_circular<uint8_t, 0, 1> updateCount;
+        switch(mState) {
+        case State::Sumd:
+            update_sumd(updateCount);
+            break;
+        case State::Robo:
+            update_robo(updateCount);
+            break;
+        default:
+            break;
         }
-        if (k != Hott::key_t::nokey) {
-            processKey(k);
-        }
-        mMenu->textTo(PA::text());
+        ++updateCount;
     }
-    inline static void processKey(Hott::key_t key) {
-        assert(mMenu);
-        if (auto m = mMenu->processKey(key); m != mMenu) {
-            mMenu = m;
-            clear();
-        }
-    }
-    inline static void isrKey(std::byte b) {
-        mKey = Hott::key_t{b};
-    }
-private:
-    inline static void clear() {
-        for(auto& line : PA::text()) {
-            line.clear();
+    template<typename T>
+    inline static void update_sumd(T c) {
+        switch(c.toInt()) {
+        case 0:
+            bridge::a(sumdPA::value(0));
+            break;
+        case 1:
+            bridge::b(sumdPA::value(1));
+            break;
         }
     }
-    inline static /*volatile*/ Hott::key_t mKey = Hott::key_t::nokey;
-    inline static Hott::Menu* mMenu = &topMenu;
+    template<typename T>
+    inline static void update_robo(T c) {
+        switch(c.toInt()) {
+        case 0:
+            bridge::a(qtroboPA::propValues[0]);
+            break;
+        case 1:
+            bridge::b(qtroboPA::propValues[0]);
+            break;
+        }
+    }
+    
+    inline static void periodic_slow() {
+        if (sumdPA::packageCount() > 10) {
+            sumdPA::resetCount();
+            process(Event::SumdConnected);
+        }
+        else {
+            qtroboPA::whenPinged([]{
+                pong::put();
+                process(Event::RoboConnected);
+            });
+        }
+    }
+    
+    inline static State mState = State::Undefined;
 };
 
+using fsm = FSM;
 
-
-//using isrRegistrar = AVR::IsrRegistrar<rcUsart::RxHandler, rcUsart::TxHandler>;
+using isrRegistrar = AVR::IsrRegistrar<PPMInput, bridge::OCAHandler, bridge::OCBHandler, bridge::OVFHandler>;
 
 template<typename... CC>
 struct StaticInitializer {
@@ -251,7 +303,7 @@ struct StaticInitializer {
     }
 };
 
-using Initializer = StaticInitializer<systemClock, eeprom, hbridge>;
+using Initializer = StaticInitializer<systemClock, eeprom, bridge, adcController>;
 
 namespace {
     Initializer initializer;
@@ -261,55 +313,32 @@ int main() {
     using namespace etl;
     using namespace std;
     using namespace AVR;
-    
-    pc0::dir<Output>();
-    pc1::dir<Output>();
 
-    txd0Enable::dir<Output>();
-    txd0Enable::off();
+    dbg1::dir<AVR::Output>();
+    dbg2::dir<AVR::Output>();
+    dbg3::dir<AVR::Output>();
 
-    inh1::dir<Output>();
-    inh1::on();
-
-    inh2::dir<Output>();
-    inh2::on();
-
-    
-    systemClock::init();
-    
-//    eeprom::init();
-    
     rcUsart::init<115200>();
+    metaPA::activatePA(0);
     
-    pwm::init<fpwm>();
+    pwm::init<fPWM>();
     
-//    hbridge::init();
-
-//    menu::init();    
-
     const auto t = alarmTimer::create(1000_ms, External::Hal::AlarmFlags::Periodic);
 
     {
         Scoped<EnableInterrupt<>> ei;
 
-        hbridge::duty(Hott::SumDMsg::Mid);
-        
         while(true) {
-            pc1::toggle();
             rcUsart::periodic();
-            hbridge::periodic();
             
             systemClock::periodic([&](){
-                pc0::toggle();
-                auto v = sumd::value(0);
-                hbridge::duty(v);
+                fsm::periodic();
                 alarmTimer::periodic([&](alarmTimer::index_type timer){
                     if (timer == t) {
-//                        rpm::check();
-//                        etl::outl<terminal>("p: "_pgm, hbridge::x1);
-//                        etl::outl<terminal>("t: "_pgm, hbridge::x2);
-                        
-                        etl::outl<terminal>("v: "_pgm, v.toInt());
+                        fsm::periodic_slow();
+//                        etl::outl<terminal>("v1: "_pgm, v1.toInt());
+//                        etl::outl<terminal>("v2: "_pgm, v2.toInt());
+//                        etl::outl<terminal>("c: "_pgm, sumdPA::packageCount());
                         appData.expire();
                     }
                 });
@@ -321,6 +350,21 @@ int main() {
     }
 }
 
+ISR(INT0_vect) {
+    isrRegistrar::isr<AVR::ISR::Int<0>>();
+}
+
+ISR(TIMER1_COMPA_vect) {
+    isrRegistrar::isr<AVR::ISR::Timer<1>::CompareA>();
+}
+
+ISR(TIMER1_COMPB_vect) {
+    isrRegistrar::isr<AVR::ISR::Timer<1>::CompareB>();
+}
+
+ISR(TIMER1_OVF_vect) {
+    isrRegistrar::isr<AVR::ISR::Timer<1>::Overflow>();
+}
 
 //// SumD
 //ISR(USART1_RX_vect) {

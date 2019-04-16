@@ -93,7 +93,7 @@ namespace AVR {
         struct Timer8BitSimple2 {
             static constexpr const uint8_t count = 1;
             typedef uint8_t value_type;
-            volatile uint8_t ocr;
+            DataRegister<Timer8BitSimple2, ReadWrite> ocr;
             DataRegister<Timer8BitSimple2, ReadWrite> tcnt;
             enum class TCCR : uint8_t {
                 foc = (1 << FOC2),
@@ -103,7 +103,6 @@ namespace AVR {
                 cs1 = (1 << CS21),
                 cs0 = (1 << CS20),
             };
-            
             ControlRegister<Timer8BitSimple2, TCCR> tccr;
             template<int N> struct Address;
             template<int N> struct PrescalerBits;
@@ -141,6 +140,40 @@ namespace AVR {
             template<int N> struct PrescalerBits;
             template<uint8_t N> struct Flags; 
         };
+        struct Adc {
+            static constexpr const uint8_t count = 1;
+            struct AdcRegister {
+                DataRegister<Adc, ReadOnly, uint8_t> adcl;
+                DataRegister<Adc, ReadOnly, uint8_t> adch;
+            };
+            union {
+                AdcRegister reg;
+                DataRegister<Adc, ReadOnly, uint16_t> adc;
+            };
+            enum class SRA : uint8_t {
+                aden = (1 << ADEN),
+                adsc = (1 << ADSC),
+                adate = (1 << ADFR),
+                adif = (1 << ADIF),
+                adie = (1 << ADIE),
+                adps2 = (1 << ADPS2),
+                adps1 = (1 << ADPS1),
+                adps0 = (1 << ADPS0)
+            };
+            ControlRegister<Adc, SRA> adcsra;
+            enum class MUX : uint8_t {
+                refs1 = (1 << REFS1),
+                refs0 = (1 << REFS0),
+                adlar = (1 << ADLAR),
+                mux3  = (1 << MUX3),            
+                mux2  = (1 << MUX2),            
+                mux1  = (1 << MUX1),            
+                mux0  = (1 << MUX0) 
+            };
+            ControlRegister<Adc, MUX> admux;
+            template<int N> struct Address;
+            template<int N> struct Parameter;
+        };
         struct PortRegister {
             DataRegister<PortRegister, ReadWrite, std::byte> in;
             DataRegister<PortRegister, ReadWrite, std::byte> ddr;
@@ -165,7 +198,7 @@ namespace AVR {
                 tov1  = (1 << TOV1),
                 tov0  = (1 << TOV0)
             };
-            ControlRegister<TimerInterrupts, Flags> tifr;
+            FlagRegister<TimerInterrupts, Flags> tifr;
             enum class Mask : uint8_t {
                 ocie2  = (1 << OCIE2),
                 toie2  = (1 << TOIE2),
@@ -209,6 +242,12 @@ namespace std {
     struct enable_bitmask_operators<AVR::ATMega8::Timer16Bit::TCCRA>  : std::true_type {};
     template<>
     struct enable_bitmask_operators<AVR::ATMega8::Timer16Bit::TCCRB>  : std::true_type {};
+    template<>
+    struct enable_bitmask_operators<AVR::ATMega8::Adc::MUX>  : std::true_type {};
+    template<>
+    struct enable_bitmask_operators<AVR::ATMega8::Adc::SRA>  : std::true_type {};
+    template<>
+    struct enable_bitmask_operators<AVR::ATMega8::TimerInterrupts::Mask>  : std::true_type {};
 }
 
 namespace AVR {
@@ -225,7 +264,6 @@ namespace AVR {
         inline static constexpr uintptr_t value = 0x30;
     };
     template<>
-    template<>
     struct ATMega8::Timer8BitSimple::Address<0> {
         inline static constexpr uintptr_t value = 0x52;
     };
@@ -239,11 +277,11 @@ namespace AVR {
     };
     template<>
     struct ATMega8::Timer8BitSimple2::Address<2> {
-        inline static constexpr uintptr_t value = 0x45;
+        inline static constexpr uintptr_t value = 0x43;
     };
     template<>
     struct ATMega8::Timer8BitSimple2::PrescalerBits<2> {
-        static constexpr auto values = prescalerValues10BitExtended<ATMega8::Timer8BitSimple2::TCCR>;
+        static constexpr auto values = AVR::prescalerValues10BitExtended<ATMega8::Timer8BitSimple2::TCCR>;
     };
     template<>
     struct ATMega8::Timer16Bit::Address<1> {
@@ -252,6 +290,22 @@ namespace AVR {
     template<>
     struct ATMega8::Timer16Bit::PrescalerBits<1> {
         static constexpr auto values = prescalerValues10Bit<ATMega8::Timer16Bit::TCCRB>;
+    };
+    template<>
+    struct ATMega8::Adc::Address<0> {
+        static constexpr uint8_t value = 0x24;
+    };
+    template<>
+    struct ATMega8::Adc::Parameter<0> {
+        static constexpr auto channelMasks = std::make_array(MUX{0}, 
+                                                             MUX::mux0,
+                                                             MUX::mux1,
+                                                             MUX::mux1 | MUX::mux0,
+                                                             MUX::mux2,
+                                                             MUX::mux2 | MUX::mux0,
+                                                             MUX::mux2 | MUX::mux1 | MUX::mux0
+                                                             );
+//        static constexpr double VRef = 1.1;
     };
     
 }

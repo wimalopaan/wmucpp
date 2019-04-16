@@ -57,6 +57,10 @@ namespace Meta {
         typedef List<std::integral_constant<decltype(NN), NN> ...> list_type;
     };
     
+    template<typename T> struct Wrapper{
+        typedef T type;
+    };
+    
     namespace detail {
         template<typename> struct front_impl;
         template<typename> struct size_impl;
@@ -331,9 +335,9 @@ namespace Meta {
         
         template<concepts::List List> 
         struct visit {
-            template<typename T> struct Wrapper{
-                typedef T type;
-            };
+//            template<typename T> struct Wrapper{
+//                typedef T type;
+//            };
             using first = Meta::front<List>;
             template<typename I, typename C>
             inline static void at(I index, const C& callable) {

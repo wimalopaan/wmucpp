@@ -157,7 +157,7 @@ namespace AVR {
 //                u::_;
                 mcu_usart()->ucsra.template add<ucsra_type::u2x>();
                 if constexpr(AVR::Groups::isAtMega_8<MCU>::value) {
-                    *mcu_usart()->ubbrh = ubrr >> 8;
+                    *mcu_usart()->ubbrh = 0x7f & (ubrr >> 8);
                     *mcu_usart()->ubbrl = ubrr;
                 }
                 else {
@@ -170,7 +170,12 @@ namespace AVR {
 //                u::_;
                 *mcu_usart()->ubbr = ubrr;
             }            
-            mcu_usart()->ucsrc.template add<ucsrc_type::ucsz1 | ucsrc_type::ucsz0, DisbaleInterrupt<NoDisableEnable>>();
+            if constexpr(AVR::Groups::isAtMega_8<MCU>::value) {
+                mcu_usart()->ucsrc.template add<ucsrc_type::ursel | ucsrc_type::ucsz1 | ucsrc_type::ucsz0, DisbaleInterrupt<NoDisableEnable>>();
+            }
+            else{
+                mcu_usart()->ucsrc.template add<ucsrc_type::ucsz1 | ucsrc_type::ucsz0, DisbaleInterrupt<NoDisableEnable>>();
+            }
             mcu_usart()->ucsrb.template add<ucsrb_type::txen | ucsrb_type::rxen, DisbaleInterrupt<NoDisableEnable>>();
             if constexpr(useISR::value) {
                 mcu_usart()->ucsrb.template add<ucsrb_type::rxcie, DisbaleInterrupt<NoDisableEnable>>();

@@ -64,6 +64,7 @@ namespace Hott {
         using multiCHType = std::conditional_t<UseInts::value, volatile MultiChannel, MultiChannel>;
         using hasMultiChannelType = std::conditional_t<UseInts::value, volatile bool, bool>;
         using validType = std::conditional_t<UseInts::value, volatile bool, bool>;
+        using counterType = std::conditional_t<UseInts::value, volatile uint16_t, uint16_t>;
         
     public:
         using value_type = uint_ranged_NaN<uint16_t, Hott::SumDMsg::Low, Hott::SumDMsg::High>;
@@ -216,6 +217,7 @@ namespace Hott {
                 state = sumdstate::CrcL;
                 break;
             case sumdstate::CrcL:
+                ++mCounter;
                 mMsg.crc |= std::to_integer<uint8_t>(c);
                 
                 state = sumdstate::Undefined;
@@ -281,6 +283,13 @@ namespace Hott {
         inline static bool valid() {
             return mValid;
         }
+        inline static uint16_t packageCount() {
+            return mCounter;
+        }
+        inline static void resetCount() {
+            mCounter = 0;
+        }
+    private:
         inline static uint_ranged<uint8_t, Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit> value8Bit_unsafe(uint8_t channel) {
             if (mMsg.channelData[channel].first < Hott::SumDMsg::Low8Bit) {
                 return Hott::SumDMsg::Low8Bit;
@@ -307,5 +316,6 @@ namespace Hott {
         inline static multiCHType mMultiData;
         inline static hasMultiChannelType mHasMultiChannel = false;
         inline static validType mValid = false;
+        inline static counterType mCounter = 0;
     };
 }

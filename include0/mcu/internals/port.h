@@ -53,14 +53,11 @@ namespace AVR {
         }
     };
     
-//    template<typename MCUPort, AVR::Concepts::Letter Name, typename MCU = DefaultMcuType>
     template<AVR::Concepts::Letter Name, typename MCU = DefaultMcuType>
     struct Port final {
-//        using mcuport_type = MCUPort;
+        using mcu = MCU;
         using mcuport_type = typename MCU::PortRegister;
         using name_type = Name;
-//        typedef MCUPort mcuport_type;
-//        typedef Name name_type;
         Port() = delete;
         static inline void set(std::byte v) {
             *getBaseAddr<mcuport_type , Name>()->out = v;
@@ -85,7 +82,7 @@ namespace AVR {
         static inline std::byte read() {
             return *getBaseAddr<mcuport_type , Name>()->in;
         }
-        template<uint8_t Bit>
+        template<uint8_t Bit, bool visible = !AVR::Groups::isAtMega_8<MCU>::value, typename = std::enable_if_t<visible>>
         static inline void toggle() { 
             static_assert(AVR::isSBICBICapable<mcuport_type , Name>(), "Port not sbi/sbi capable");
             *getBaseAddr<mcuport_type , Name>()->in |= std::byte{(1 << Bit)}; // AVR specific toggle mechanism: write "1" to PortInputRegister
@@ -298,6 +295,7 @@ namespace AVR {
     struct Pin final {
         static_assert(PinNumber < 8, "wrong pin number");
         Pin() = delete;
+        using mcu = typename Port::mcu;
         typedef Port port;
         static constexpr uint8_t number = PinNumber;
         static constexpr std::byte pinMask{(1 << PinNumber)};
@@ -310,12 +308,25 @@ namespace AVR {
             Port::get() &= ~pinMask;
         }
         static inline bool get() __attribute__((always_inline)) {
-            return std::any(Port::get() & ~pinMask);
+            return std::any(Port::get() & pinMask);
         }
         static constexpr auto& low = off;
-        static inline void toggle() __attribute__((always_inline)){
+
+        template<bool visible = !AVR::Groups::isAtMega_8<mcu>::value, typename = std::enable_if_t<visible>>
+        static inline void toggle() {
             Port::template toggle<PinNumber>();
         }
+        
+        template<bool visible = AVR::Groups::isAtMega_8<mcu>::value, typename = std::enable_if_t<visible>>
+        static inline void toggleWithOnOff() {
+            if (get()) {
+                off();
+            }
+            else {
+                on();
+            }
+        }
+
         template<typename Dir>
         static inline void dir() {        
             Dir::template set<Port, pinMask>();
@@ -381,13 +392,14 @@ namespace AVR {
     struct ActiveLow<Pin, Output> {
         typedef Pin pin_type;
         typedef Output dir_type;
-        static void init() {
+        inline static void init() {
+            inactivate();
             Pin::template dir<Output>();
         }
-        static void activate() {
+        inline static void activate() {
             Pin::low();
         }
-        static void inactivate() {
+        inline static void inactivate() {
             Pin::high();
         }
     };
@@ -395,10 +407,10 @@ namespace AVR {
     struct ActiveLow<Pin, Input> {
         typedef Pin pin_type;
         typedef Input dir_type;
-        static void init() {
+        inline static void init() {
             Pin::template dir<Input>();
         }
-        static bool isActive() {
+        inline static bool isActive() {
             return !Pin::isHigh();
         }
     };
@@ -410,16 +422,17 @@ namespace AVR {
     struct ActiveHigh<Pin, Output> {
         typedef Pin pin_type;
         typedef Output dir_type;
-        static void init() {
+        inline static void init() {
+            inactivate();
             Pin::template dir<Output>();
         }
-        static void activate() {
+        inline static void activate() {
             Pin::high();
         }
-        static void inactivate() {
+        inline static void inactivate() {
             Pin::low();
         }    
-        static bool activated() {
+        inline static bool activated() {
             return Pin::isHigh();
         }
     };
@@ -427,10 +440,10 @@ namespace AVR {
     struct ActiveHigh<Pin, Input> {
         typedef Pin pin_type;
         typedef Input dir_type;
-        static void init() {
+        inline static void init() {
             Pin::template dir<Input>();
         }
-        static bool isActive() {
+        inline static bool isActive() {
             return Pin::isHigh();
         }
     };
@@ -440,10 +453,10 @@ namespace AVR {
         typename Pin::pin_type;
     }
     struct ScopedPin {
-        ScopedPin() {
+        inline ScopedPin() {
             Pin::activate();
         }
-        ~ScopedPin() {
+        inline ~ScopedPin() {
             Pin::inactivate();
         }
     };
@@ -451,10 +464,10 @@ namespace AVR {
 
 template<typename Pin>
 struct Set {
-    static void input() {
+    inline static void input() {
         Pin::template dir<AVR::Input>();
     }
-    static void output() {
+    inline static void output() {
         Pin::template dir<AVR::Output>();
     }
 };
