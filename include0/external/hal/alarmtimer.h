@@ -66,7 +66,7 @@ namespace External {
             
             AlarmTimer() = delete;
             
-            static constexpr auto intervall = SystemClock::intervall;
+            static constexpr auto intervall = SystemClock::exact_intervall;
             
             inline static index_type create(milliseconds millis, AlarmFlags flags){
                 if (auto index = mTimers.insert({millis / intervall, millis  / intervall, flags})) {

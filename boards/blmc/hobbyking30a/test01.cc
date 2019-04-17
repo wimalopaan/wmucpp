@@ -46,7 +46,7 @@ namespace  {
     using namespace std::literals::chrono;
     using namespace External::Units;
     using namespace External::Units::literals;
-    constexpr auto interval = 10_ms;
+    constexpr auto interval = 16_ms;
     constexpr auto fPWM = 4000_Hz;
 }
 
@@ -124,8 +124,7 @@ struct Bridge {
         HBA::init();
         HBB::init();
         HBC::init();
-    }
-    
+    }    
     struct OCAHandler : public AVR::IsrBaseHandler<typename AVR::ISR::Timer<1>::CompareA> {
         inline static void isr() {
             HBA::low();
@@ -183,7 +182,7 @@ using pong = External::QtRobo::Pong<terminal>;
 using adc = AVR::Adc<0>;
 using adcController = External::Hal::AdcController<adc, 0, 1, 2, 7, 6>;
 
-using systemClock = AVR::SystemTimer<2, interval>;
+using systemClock = AVR::SystemTimer<0, interval>;
 using alarmTimer = External::Hal::AlarmTimer<systemClock>;
 
 struct Storage {

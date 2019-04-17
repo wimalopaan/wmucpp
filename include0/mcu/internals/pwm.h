@@ -135,8 +135,8 @@ namespace AVR {
             constexpr auto tsd = AVR::PWM::Util::calculate<TimerNumber>(Frequency);
             static_assert(tsd, "wrong prescaler");
             
-            using x1 = std::integral_constant<uint16_t, tsd.prescaler>;
-            using x2 = std::integral_constant<uint16_t, tsd.ocr>;
+//            using x1 = std::integral_constant<uint16_t, tsd.prescaler>;
+//            using x2 = std::integral_constant<uint16_t, tsd.ocr>;
 //            x2::_;
                     
             constexpr auto bits = bitsFrom<tsd.prescaler>(mcu_timer_type::template PrescalerBits<TimerNumber>::values);            
