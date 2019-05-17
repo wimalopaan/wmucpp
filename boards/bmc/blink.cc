@@ -19,8 +19,8 @@
 #define NDEBUG
 
 #include <mcu/avr.h>
-#include <mcu/internals/systemclock.h>
 
+#include <mcu/internals/systemclock.h>
 #include <mcu/internals/cppm.h>
 #include <mcu/internals/constantrate.h>
 
@@ -45,7 +45,8 @@ using led1 = AVR::Pin<PortB, 1>;
 namespace  {
     using namespace std::literals::chrono;
 //    constexpr auto interval = 10_ms;
-    constexpr auto interval = External::Units::duration_cast<std::chrono::milliseconds>(Hott::hottDelayBetweenBytes);
+//    constexpr auto interval = External::Units::duration_cast<std::chrono::milliseconds>(Hott::hottDelayBetweenBytes);
+    constexpr auto interval = Hott::hottDelayBetweenBytes;
 }
 
 using systemClock = AVR::SystemTimer<0, interval>;

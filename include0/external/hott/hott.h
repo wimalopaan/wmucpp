@@ -29,21 +29,21 @@
 
 namespace Hott {
     
-    template<typename Usart>
-    class SensorProtocoll final {
-    public:
-        SensorProtocoll() = delete;
-    private:
-        static inline constexpr uint8_t mNumberOfRows = 7;
-        static inline constexpr uint8_t mNumberOfColumns = 2;
+//    template<typename Usart>
+//    class SensorProtocoll final {
+//    public:
+//        SensorProtocoll() = delete;
+//    private:
+//        static inline constexpr uint8_t mNumberOfRows = 7;
+//        static inline constexpr uint8_t mNumberOfColumns = 2;
         
-        static inline uint8_t mRow = 0;
-        static inline uint8_t mColumn = 0;
-        static inline uint8_t mKey = 0;
+//        static inline uint8_t mRow = 0;
+//        static inline uint8_t mColumn = 0;
+//        static inline uint8_t mKey = 0;
         
-        static inline GamMsg hottBinaryResponse {};
-        static inline TextMsg hottTextResponse {};
-    };
+//        static inline GamMsg hottBinaryResponse {};
+//        static inline TextMsg hottTextResponse {};
+//    };
     
     
 }

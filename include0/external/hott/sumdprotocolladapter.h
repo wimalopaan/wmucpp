@@ -75,10 +75,10 @@ namespace Hott {
             if constexpr(UseInts::value) {
                 Scoped<DisbaleInterrupt<>> di;
             }
-            if (!mValid) {
+            if (!mMsgInactive->valid) {
                 return {};
             }
-            uint16_t v = etl::combinedValue(mMsg.channelData[channel]);
+            uint16_t v = etl::combinedValue(mMsgInactive->channelData[channel]);
             if (v < Hott::SumDMsg::ExtendedLow) {
                 return Hott::SumDMsg::ExtendedLow;
             }
@@ -94,10 +94,10 @@ namespace Hott {
             if constexpr(UseInts::value) {
                 Scoped<DisbaleInterrupt<>> di;
             }
-            if (!mValid) {
+            if (!mMsgInactive->valid) {
                 return {};
             }
-            uint16_t v = etl::combinedValue(mMsg.channelData[channel]);
+            uint16_t v = etl::combinedValue(mMsgInactive->channelData[channel]);
             if (v < Hott::SumDMsg::Low) {
                 return Hott::SumDMsg::Low;
             }
@@ -112,7 +112,7 @@ namespace Hott {
             if constexpr(UseInts::value) {
                 Scoped<DisbaleInterrupt<>> di;
             }
-            if (!mValid) {
+            if (!mMsgInactive->valid) {
                 return {};
             }
             return value8Bit_unsafe(channel);
@@ -121,13 +121,13 @@ namespace Hott {
             if constexpr(UseInts::value) {
                 Scoped<DisbaleInterrupt<>> di;
             }
-            if (!mValid) {
+            if (!mMsgInactive->valid) {
                 return {};
             }
             return value8BitExtended_unsafe(channel);
         }
         inline static uint8_t numberOfChannels() {
-            return mMsg.nChannels;
+            return mMsgInactive->nChannels;
         }
         inline static bool hasMultiChannel() {
             return mHasMultiChannel;
@@ -145,9 +145,9 @@ namespace Hott {
             
             switch (state) {
             case sumdstate::Undefined:
-                if (c == std::byte{0xa8}) {
+                if (c == SumDMsg::start_code) {
                     crc = 0;
-                    etl::crc16(crc, 0xa8);
+                    etl::crc16(crc, std::to_integer(c));
                     state = sumdstate::Start1;
                 }
                 else {
@@ -155,8 +155,8 @@ namespace Hott {
                 }
                 break;
             case sumdstate::Start1:
-                if (c == std::byte{0x01}) {
-                    etl::crc16(crc, 0x01);
+                if (c == SumDMsg::version_code) {
+                    etl::crc16(crc, std::to_integer(c));
                     state = sumdstate::StartNormal;
                 }
                 else if (c == std::byte{0x81}) {
@@ -167,10 +167,10 @@ namespace Hott {
                 }
                 break;
             case sumdstate::StartNormal:
-                mMsg.nChannels = std::to_integer<uint8_t>(c);
-                mValid = false;
-                etl::crc16(crc, mMsg.nChannels);
-                if (mMsg.nChannels < SumDMsg::MaxChannels) {
+                mMsgActive->nChannels = std::to_integer(c);
+                mMsgActive->valid = false;
+                etl::crc16(crc, mMsgActive->nChannels);
+                if (mMsgActive->nChannels < SumDMsg::MaxChannels) {
                     state = sumdstate::ChannelDataH;
                 }
                 else {
@@ -178,10 +178,10 @@ namespace Hott {
                 }
                 break;
             case sumdstate::StartFailSafe:
-                mMsg.nChannels = std::to_integer<uint8_t>(c);
-                mValid = false;
-                etl::crc16(crc, mMsg.nChannels);
-                if (mMsg.nChannels < SumDMsg::MaxChannels) {
+                mMsgActive->nChannels = std::to_integer(c);
+                mMsgActive->valid = false;
+                etl::crc16(crc, mMsgActive->nChannels);
+                if (mMsgActive->nChannels < SumDMsg::MaxChannels) {
                     state = sumdstate::ChannelDataH;
                 }
                 else {
@@ -201,10 +201,10 @@ namespace Hott {
 //                mMsg.channelData[channel].second = std::to_integer<uint8_t>(c);
 //                etl::crc16(crc, mMsg.channelData[channel].second);
 
-                mMsg.channelData[channel] = {actualHighValue, actualLowValue};
+                mMsgActive->channelData[channel] = {actualHighValue, actualLowValue};
                 state = sumdstate::ChannelDataH;
                 ++channel;
-                if (channel < mMsg.nChannels) {
+                if (channel < mMsgActive->nChannels) {
                     state = sumdstate::ChannelDataH;
                 }
                 else {
@@ -213,17 +213,18 @@ namespace Hott {
                 }
                 break;
             case sumdstate::CrcH:
-                mMsg.crc = std::to_integer<uint8_t>(c) << 8;
+                mMsgActive->crc = std::to_integer(c) << 8;
                 state = sumdstate::CrcL;
                 break;
             case sumdstate::CrcL:
-                ++mCounter;
-                mMsg.crc |= std::to_integer<uint8_t>(c);
+                ++mPackageCounter;
+                mMsgActive->crc |= std::to_integer(c);
                 
                 state = sumdstate::Undefined;
                 
-                if (crc == mMsg.crc) {
-                    mValid = true;
+                if (crc == mMsgActive->crc) {
+                    mMsgActive->valid = true;
+                    std::swap(mMsgActive, mMsgInactive);
                     
                     if (auto vm = value8BitExtended_unsafe(mChannelForMultiChannel)) {
                         
@@ -281,41 +282,44 @@ namespace Hott {
             return true;
         }
         inline static bool valid() {
-            return mValid;
+            return mMsgInactive->valid;
         }
         inline static uint16_t packageCount() {
-            return mCounter;
+            return mPackageCounter;
         }
         inline static void resetCount() {
-            mCounter = 0;
+            mPackageCounter = 0;
         }
     private:
         inline static uint_ranged<uint8_t, Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit> value8Bit_unsafe(uint8_t channel) {
-            if (mMsg.channelData[channel].first < Hott::SumDMsg::Low8Bit) {
+            if (mMsgInactive->channelData[channel].first < Hott::SumDMsg::Low8Bit) {
                 return Hott::SumDMsg::Low8Bit;
             }
-            else if (mMsg.channelData[channel].first > Hott::SumDMsg::High8Bit) {
+            else if (mMsgInactive->channelData[channel].first > Hott::SumDMsg::High8Bit) {
                 return Hott::SumDMsg::High8Bit;
             } 
             else {
-                return mMsg.channelData[channel].first;
+                return mMsgInactive->channelData[channel].first;
             }
         }
         inline static uint_ranged<uint8_t, Hott::SumDMsg::ExtendedLow8Bit, Hott::SumDMsg::ExtendedHigh8Bit> value8BitExtended_unsafe(uint8_t channel) {
-            if (mMsg.channelData[channel].first < Hott::SumDMsg::ExtendedLow8Bit) {
+            if (mMsgInactive->channelData[channel].first < Hott::SumDMsg::ExtendedLow8Bit) {
                 return Hott::SumDMsg::ExtendedLow8Bit;
             }
-            else if (mMsg.channelData[channel].first > Hott::SumDMsg::ExtendedHigh8Bit) {
+            else if (mMsgInactive->channelData[channel].first > Hott::SumDMsg::ExtendedHigh8Bit) {
                 return Hott::SumDMsg::ExtendedHigh8Bit;
             } 
             else {
-                return mMsg.channelData[channel].first;
+                return mMsgInactive->channelData[channel].first;
             }
         }
-        inline static sumDMesgType mMsg;
+        inline static sumDMesgType mMsg1;
+        inline static sumDMesgType mMsg2;
+        inline static sumDMesgType* mMsgActive   = &mMsg1;
+        inline static sumDMesgType* mMsgInactive = &mMsg2;
+        
         inline static multiCHType mMultiData;
         inline static hasMultiChannelType mHasMultiChannel = false;
-        inline static validType mValid = false;
-        inline static counterType mCounter = 0;
+        inline static counterType mPackageCounter = 0;
     };
 }

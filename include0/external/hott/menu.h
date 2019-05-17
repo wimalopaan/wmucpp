@@ -30,16 +30,25 @@
 #include "external/ui/menu.h"
 
 namespace Hott {
+    
     static constexpr uint8_t MenuLength = 7;
     
     using BufferString = Hott::TextMsg::line_type;
     using Display = Hott::TextMsg::buffer_type;
     
     using MenuItem = UI::MenuItem<BufferString, key_t>;
+
+
+    namespace Concepts {
+    }
     
     // fixme: keine mag. Konstanten 18 3 Aufteilung
     
     template<typename Key, typename Provider, uint8_t ValueWidth = 3>
+    requires requires (Provider p, Key k) {
+        p[k];
+        p.change();
+    }
     class TextWithValue : public MenuItem {
     public:
         static inline constexpr uint8_t valueBeginColumn = BufferString::size() - ValueWidth;
@@ -216,110 +225,6 @@ namespace Hott {
         uint_ranged_NaN<uint8_t, 0, MenuLength> mSelectedLine{};
     };
 
-    /*
-    class Menu2 : public MenuItem {
-    public:
-        Menu2(const PgmStringView& title, std::initializer_list<MenuItem*> items) : mTitle(title) {
-            auto it = std::begin(items);
-            for(uint8_t i = 0; i < items.size(); ++i) {
-                if (it == std::end(items)) {
-                    break;
-                }
-                mItems[i] = *it++;
-                mItems[i]->parent(this);
-            }
-        }
-        
-        virtual void parent(MenuItem* p) override {
-            mParent = static_cast<Menu2*>(p);
-        }
-        
-        virtual bool hasChildren() const override {return true;}
-        
-        virtual void titleInto(BufferString& buffer) const {
-            buffer.insertAtFill(0, mTitle);
-        }
-        
-        virtual void putTextInto(BufferString& buffer) const override {
-            buffer[0] = ' ';
-            buffer.insertAtFill(1, mTitle);
-        }
-        void textTo(Display& display) const {
-            static uint_ranged_circular<uint8_t, 0, Display::size - 1> line;
-            if (line == 0) {
-                titleInto(display[0]);
-                ++line;
-            }
-            else {
-                if (lineToDisplay(display[line], line)) {
-                    if (mSelectedLine && (mSelectedLine.toInt() == (line - 1))) {
-                        display[mSelectedLine.toInt() + 1][0] = '>';
-                    }
-                    ++line;
-                }
-            }
-        }
-        bool lineToDisplay(BufferString& buffer, uint8_t row) const {
-            if (mItems[row - 1]) {
-                mItems[row - 1]->putTextInto(buffer);
-            }
-            return true;
-        }
-        Menu2* processKey(Hott::key_t key) override {
-            if (mSelectedLine) {
-                if (mItems[mSelectedLine.toInt()]->isSelected()) {
-                    mItems[mSelectedLine.toInt()]->processKey(key);
-                    return this;
-                }
-            }
-            switch (key) {
-            case Hott::key_t::down:
-                if (mSelectedLine) {
-                    if (mItems[mSelectedLine.toInt() + 1]) {
-                        ++mSelectedLine;
-                    }
-                }
-                else {
-                    mSelectedLine = 0;
-                }
-                break;
-            case Hott::key_t::up:
-                if (mSelectedLine) {
-                    --mSelectedLine;
-                }
-                else {
-                    mSelectedLine = 0;
-                }
-                break;
-            case Hott::key_t::left:
-                if (mParent) {
-                    return mParent;
-                }
-                break;
-            case Hott::key_t::right:
-                break;
-            case Hott::key_t::set:
-                if (mSelectedLine) {
-                    if (mItems[mSelectedLine.toInt()]->hasChildren()) {
-                        return static_cast<Menu2*>(mItems[mSelectedLine.toInt()]);
-                    }        
-                    else {
-                        mItems[mSelectedLine.toInt()]->processKey(key);
-                    }
-                }
-                break;
-            case Hott::key_t::nokey:
-                break;
-            }
-            return this;
-        }
-    protected:
-        Menu2* mParent = nullptr;
-        const PgmStringView mTitle;
-        std::array<MenuItem*, MenuLength> mItems{};
-        uint_ranged_NaN<uint8_t, 0, MenuLength> mSelectedLine{};
-    };
-    */
     class NumberedMenu : public Menu {
     public:
         template<typename...T>
@@ -338,25 +243,20 @@ namespace Hott {
     private:
         uint8_t mNumber = 0;
     };
-/*
-    class NumberedMenu2 : public Menu2 {
+
+    template<uint8_t L>
+    class TextItem final : public Hott::MenuItem {
     public:
-        NumberedMenu2(uint8_t number, const PgmStringView& title, std::initializer_list<MenuItem*> items) : 
-            Menu2(title, items), 
-            mNumber(number) {}
-        virtual void titleInto(BufferString& buffer) const override{
-            buffer.insertAtFill(0, mTitle);
-            buffer[19] =  '0' + mNumber;
-        }
+        TextItem(const PgmStringView& title, const StringBuffer<L>& text) : mTitle{title}, mText{text} {}
         
-        virtual void putTextInto(BufferString& buffer) const override {
-            buffer[0] = ' ';
-            buffer.insertAtFill(1, mTitle);
-            buffer[19] =  '0' + mNumber;
+        void putTextInto(Hott::BufferString& buffer) const {
+            buffer.insertAt(0, mTitle);
+            buffer.insertAt(10, mText);
         }
     private:
-        uint8_t mNumber = 0;
+        const PgmStringView mTitle;
+        const StringBuffer<L>& mText;
     };
-  */  
+    
     
 }

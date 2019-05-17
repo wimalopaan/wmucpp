@@ -150,36 +150,6 @@ namespace std {
         }
 
 
-        /*
-        template<typename Rep = time_t>
-        class system_clock {
-        public:
-            constexpr system_clock(const Rep& time = -1) : counterSinceEpoch{time} {}
-            inline void tick() {
-                if (*this) {
-                    ++counterSinceEpoch;
-                }
-            }
-//            static system_clock<Rep> from(const DateTime::TimeTm& tm) {
-//                struct tm t = tm.tm();
-//                return system_clock<Rep>{mktime(&t)};
-//            }
-            
-//            DateTime::TimeTm dateTime() const {
-//                return *localtime(&counterSinceEpoch);
-//            }
-            
-            const Rep& value() const {
-                return counterSinceEpoch;
-            }
-            
-            explicit operator bool() const {
-                return counterSinceEpoch != static_cast<Rep>(-1);
-            }
-        private:
-            Rep counterSinceEpoch = -1;
-        };
-        */
     }
 }
 

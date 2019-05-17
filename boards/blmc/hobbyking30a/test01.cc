@@ -20,11 +20,11 @@
 
 #include <mcu/avr.h>
 #include <mcu/internals/systemclock.h>
-
 #include <mcu/internals/cppm.h>
 #include <mcu/internals/constantrate.h>
 #include <mcu/internals/pwm.h>
 #include <mcu/internals/eeprom.h>
+#include <mcu/internals/timer.h>
 
 #include <etl/output.h>
 #include <etl/fixedpoint.h>
@@ -46,7 +46,8 @@ namespace  {
     using namespace std::literals::chrono;
     using namespace External::Units;
     using namespace External::Units::literals;
-    constexpr auto interval = 16_ms;
+//    constexpr auto interval = 16_ms;
+    constexpr auto interval = 16000_us;
     constexpr auto fPWM = 4000_Hz;
 }
 
@@ -109,7 +110,7 @@ using hba = HalfBridge<pinAp, pinAn>;
 using hbb = HalfBridge<pinBp, pinBn>;
 using hbc = HalfBridge<pinCp, pinCn>;
 
-using pwm = AVR::ISRPwm<1>;
+using pwm = AVR::PWM::ISRPwm<AVR::TimerNumber<1>>;
 
 template<typename HBA, typename HBB, typename HBC, typename PWM, typename InputType>
 struct Bridge {
@@ -200,10 +201,69 @@ struct Storage {
 using eeprom = EEProm::Controller<Storage::ApplData>;
 auto& appData = eeprom::data();
 
-struct PPMInput : public AVR::IsrBaseHandler<AVR::ISR::Int<0>> {
-    inline static void isr() {}
+template<typename Timer, auto Channels = 8, typename MCU = DefaultMcuType>
+struct CPPMInput {
+    using value_type = uint16_t;
+    using index_type = etl::uint_ranged<uint8_t, 0, Channels - 1>;
+    static inline constexpr uint16_t prescaler = AVR::Ppm::Util::calculateCPpmInParameter<Timer::number, DefaultMcuType, value_type>(2048);
+//    static inline constexpr uint16_t prescaler = AVR::Ppm::Util::calculateCPpmInParameter<Timer::number>();
+    static inline constexpr hertz f = Project::Config::fMcu / prescaler;
+    static inline constexpr value_type ppm_pause = 19_ms * f;
+    static inline constexpr value_type cppm_sync = 3_ms * f;
+    static inline constexpr value_type ppm_min  = 1_ms * f;
+    static inline constexpr value_type ppm_max  = 2_ms * f;
+    static inline constexpr value_type ppm_width = ppm_max - ppm_min;
+    
+//    std::integral_constant<uint16_t, intervall>::_;
+//    std::integral_constant<uint16_t, sync>::_;
+//    std::integral_constant<uint16_t, prescaler>::_;
+    
+    enum class State : uint8_t {Undefined, SinglePPM, CombinedPPM, _Number};
+    
+    static constexpr const auto interrupts = AVR::getBaseAddr<typename MCU::Interrupt>;
+    static constexpr const auto mcu = AVR::getBaseAddr<typename MCU::Mcu>;
+
+    struct EdgeHandler : public AVR::IsrBaseHandler<AVR::ISR::Int<0>> {
+        inline static void isr() {
+            static value_type lastValue = 0;
+            diff = (Timer::value() >= lastValue) ? (Timer::value() - lastValue) : (std::numeric_limits<value_type>::max() - lastValue + Timer::value());
+            lastValue = Timer::value();
+        }
+    };
+    
+    static inline void periodic() {
+        if (diff > 0) {
+            if (diff > cppm_sync) {
+                if (diff > ppm_pause){
+                    
+                }
+            }
+        }    
+    }
+
+    static inline void init() {
+        Timer::init();
+        Timer::template prescale<prescaler>();
+        
+        // enable int0
+        interrupts()->gicr.template add<MCU::Interrupt::MASK::int0>();
+        mcu()->cr.template add<MCU::Mcu::CR::isc00 | MCU::Mcu::CR::isc00>();
+    }
+    static inline value_type value(index_type i) {
+        etl::Scoped<etl::DisbaleInterrupt<>> di;
+        return values[i];
+    }
+private:
+    inline static volatile uint8_t diff = 0;
+    
+    inline static State state = State::Undefined;
+    
+    inline static uint8_t syncCounter = 0;
+    inline static std::array<value_type, Channels> values;
 };
 
+using cppmTimer = AVR::ExtendedTimer<2>;
+using cppm = CPPMInput<cppmTimer>;
 
 struct FSM {
     enum class State : uint8_t {Undefined, Error, Sumd, Robo, _Number};
@@ -293,7 +353,7 @@ struct FSM {
 
 using fsm = FSM;
 
-using isrRegistrar = AVR::IsrRegistrar<PPMInput, bridge::OCAHandler, bridge::OCBHandler, bridge::OVFHandler>;
+using isrRegistrar = AVR::IsrRegistrar<cppm::EdgeHandler, bridge::OCAHandler, bridge::OCBHandler, bridge::OVFHandler, cppmTimer::OVFHandler>;
 
 template<typename... CC>
 struct StaticInitializer {
@@ -302,7 +362,7 @@ struct StaticInitializer {
     }
 };
 
-using Initializer = StaticInitializer<systemClock, eeprom, bridge, adcController>;
+using Initializer = StaticInitializer<systemClock, eeprom, bridge, adcController, cppm>;
 
 namespace {
     Initializer initializer;
@@ -317,7 +377,7 @@ int main() {
     dbg2::dir<AVR::Output>();
     dbg3::dir<AVR::Output>();
 
-    rcUsart::init<115200>();
+    rcUsart::init<BaudRate<115200>>();
     metaPA::activatePA(0);
     
     pwm::init<fPWM>();
@@ -329,14 +389,16 @@ int main() {
 
         while(true) {
             rcUsart::periodic();
+            cppm::periodic();
             
             systemClock::periodic([&](){
                 fsm::periodic();
                 alarmTimer::periodic([&](alarmTimer::index_type timer){
                     if (timer == t) {
                         fsm::periodic_slow();
-//                        etl::outl<terminal>("v1: "_pgm, v1.toInt());
-//                        etl::outl<terminal>("v2: "_pgm, v2.toInt());
+                        etl::outl<terminal>("v0: "_pgm, sumdPA::value(0).toInt());
+                        etl::outl<terminal>("v1: "_pgm, sumdPA::value(1).toInt());
+                        etl::outl<terminal>("cp: "_pgm, cppm::value(0));
 //                        etl::outl<terminal>("c: "_pgm, sumdPA::packageCount());
                         appData.expire();
                     }
@@ -365,10 +427,6 @@ ISR(TIMER1_OVF_vect) {
     isrRegistrar::isr<AVR::ISR::Timer<1>::Overflow>();
 }
 
-//// SumD
-//ISR(USART1_RX_vect) {
-//    isrRegistrar::isr<AVR::ISR::Usart<1>::RX>();
-//}
-//ISR(USART1_UDRE_vect){
-//    isrRegistrar::isr<AVR::ISR::Usart<1>::UDREmpty>();
-//}
+ISR(TIMER2_OVF_vect) {
+    isrRegistrar::isr<AVR::ISR::Timer<2>::Overflow>();
+}

@@ -60,6 +60,8 @@ namespace External {
 
             inline static container_type mTimers;
         public:
+            using flags_type = External::Hal::AlarmFlags;
+            
             using index_type = etl::uint_NaN<uint8_t>;
             
             static_assert(MaxTimers < std::numeric_limits<index_type>::max());
@@ -83,7 +85,6 @@ namespace External {
                     mTimers.removeAt(*id);
                 }
             }
-            inline static void start() {}
             
             inline static void start(index_type id) {
                 if (id) {

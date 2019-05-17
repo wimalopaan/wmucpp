@@ -25,9 +25,13 @@
 
 namespace Hott {
     
-    template<uint8_t N, etl::Concepts::NamedFlag useEvents = etl::NamedFlag<true>>
+    template<auto code, uint8_t N, etl::Concepts::NamedFlag useEvents = etl::NamedFlag<true>>
     class SensorTextProtocollBuffer final {
         SensorTextProtocollBuffer() = delete;
+        inline static constexpr std::byte id = ascii_id(code); 
+        
+        static_assert(valid_code(code));
+        
     public:
         inline static constexpr auto rows = TextMsg::rows; 
         inline static constexpr auto columns = TextMsg::columns; 
@@ -55,7 +59,7 @@ namespace Hott {
             hottTextResponse.parity = 0;
         }
         inline static constexpr void init() {
-            hottTextResponse.esc = 0;
+            hottTextResponse.esc = (0xf0_B & id);
             for(auto& l : hottTextResponse.text) {
                 l.clear();
             }

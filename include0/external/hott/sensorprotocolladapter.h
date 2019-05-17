@@ -25,10 +25,13 @@ namespace Hott {
     using namespace std;    
     using namespace etl;
     
-    template<uint8_t M, auto id,  typename AsciiHandler, typename BinaryHandler, typename BCastHandler>
+    template<uint8_t M, auto code,  typename AsciiHandler, typename BinaryHandler, typename BCastHandler>
     class SensorProtocollAdapter final {
         enum class hottstate {Undefined = 0, Request1, RequestA1, NumberOfStates};
         SensorProtocollAdapter() = delete;
+        
+        static inline constexpr std::byte id = binary_id(code);
+        
     public:
         inline static bool process(std::byte c) { // from isr only (1,5µs)
             static hottstate state = hottstate::Undefined;
@@ -37,19 +40,19 @@ namespace Hott {
                 if (c == Hott::msg_start) {
                     state = hottstate::Request1;
                 }
-                if (c == std::byte{0x7f}) {
+                else if (c == Hott::ascii_msg_start) {
                     state = hottstate::RequestA1;
                 }
                 break;
             case hottstate::RequestA1:
-                if (c == std::byte{0x0f}) {
+                if ((0xf0_B & c) == (0xf0_B & ascii_id(id))) {
                     AsciiHandler::start();
                     BinaryHandler::stop();
                     BCastHandler::stop();
+                    AsciiHandler::process(0x0f_B & c);
                     state = hottstate::Undefined;
                 }
                 else {
-                    AsciiHandler::process(c);
                     state = hottstate::Undefined;
                 }
                 break;

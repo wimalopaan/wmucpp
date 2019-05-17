@@ -19,8 +19,8 @@
 #define NDEBUG
 
 #include <mcu/avr.h>
-#include <mcu/internals/systemclock.h>
 
+#include <mcu/internals/systemclock.h>
 #include <mcu/internals/cppm.h>
 #include <mcu/internals/constantrate.h>
 #include <mcu/internals/pwm.h>
@@ -64,7 +64,7 @@ struct AsciiHandler;
 struct BinaryHandler;
 struct BCastHandler;
 
-using sensorPA = Hott::SensorProtocollAdapter<0, Hott::esc_id, AsciiHandler, BinaryHandler, BCastHandler>;
+using sensorPA = Hott::SensorProtocollAdapter<0, Hott::esc_code, AsciiHandler, BinaryHandler, BCastHandler>;
 
 using sensorUsart = AVR::Usart<0, sensorPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>> ;
 
@@ -80,10 +80,10 @@ using log = External::QtRobo::Logging<terminal, 0>;
 using escData = Hott::EscProtocollBuffer<0>;
 using crWriterSensorBinary = ConstanteRateWriter<escData, sensorUsart>;
 
-using menuData = Hott::SensorTextProtocollBuffer<0>;
+using menuData = Hott::SensorTextProtocollBuffer<Hott::gam_code, 0>;
 using crWriterSensorText = ConstanteRateWriter<menuData, sensorUsart>;
 
-using pwm = AVR::Pwm<1>;
+using pwm = AVR::PWM::DynamicPwm<AVR::TimerNumber<1>>;
 using hbridge = External::IFX007::HBridge<pwm, sumd::value_type>;
 
 using adc = AVR::Adc<0>;
@@ -93,7 +93,8 @@ namespace  {
     using namespace std::literals::chrono;
     using namespace External::Units;
 //    constexpr auto interval = 10_ms;
-    constexpr auto interval = External::Units::duration_cast<std::chrono::milliseconds>(Hott::hottDelayBetweenBytes);
+//    constexpr auto interval = External::Units::duration_cast<std::chrono::milliseconds>(Hott::hottDelayBetweenBytes);
+    constexpr auto interval = Hott::hottDelayBetweenBytes;
 //    constexpr auto fpwm = hertz{1000};
     constexpr auto fpwm = Project::Config::fMcu;
     
@@ -334,8 +335,8 @@ int main() {
     
 //    eeprom::init();
     
-    sensorUsart::init<19200>();
-    rcUsart::init<115200>();
+    sensorUsart::init<BaudRate<19200>>();
+    rcUsart::init<BaudRate<115200>>();
     
     pwm::init<fpwm>();
     
@@ -376,16 +377,16 @@ int main() {
                 pc0::toggle();
                 auto v = sumd::value(0);
                 hbridge::duty(v);
-                alarmTimer::periodic([&](alarmTimer::index_type timer){
-                    if (timer == t) {
-                        rpm::check();
-//                        etl::outl<terminal>("p: "_pgm, hbridge::x1);
-//                        etl::outl<terminal>("t: "_pgm, hbridge::x2);
+//                alarmTimer::periodic([&](alarmTimer::index_type timer){
+//                    if (timer == t) {
+//                        rpm::check();
+////                        etl::outl<terminal>("p: "_pgm, hbridge::x1);
+////                        etl::outl<terminal>("t: "_pgm, hbridge::x2);
                         
-                        etl::outl<terminal>("v: "_pgm, v.toInt());
-                        appData.expire();
-                    }
-                });
+//                        etl::outl<terminal>("v: "_pgm, v.toInt());
+//                        appData.expire();
+//                    }
+//                });
             });
             if(eeprom::saveIfNeeded()) {
                 etl::out<terminal>("."_pgm);

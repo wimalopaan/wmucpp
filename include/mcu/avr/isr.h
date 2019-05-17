@@ -117,10 +117,12 @@ namespace AVR {
         template<uint8_t N>
         struct Int;
         
+#ifdef INT0_vect_num
         template<>
         struct Int<0> {
             static constexpr const uint32_t number = INT0_vect_num;
         };
+#endif
 #ifdef INT1_vect_num
         template<>
         struct Int<1> {

@@ -44,7 +44,7 @@ namespace etl {
     struct FixedPoint;
     
     namespace detail {
-
+        
         template<Stream Stream, Container C>
         requires (sizeof(typename C::value_type) == 1)
         constexpr inline void out_impl(const C& a) {
@@ -147,12 +147,11 @@ namespace etl {
 
         template<etl::Concepts::Stream Stream, etl::Concepts::Unsigned T, uint8_t Bits>
         inline void out_impl(const FixedPoint<T, Bits>& f);
-        
     } // detail
     
     template<Stream Stream, typename... TT>
     inline constexpr void out(const TT&... v __attribute__((unused))) {
-        using ::etl::detail::out_impl;
+        using namespace detail;
         if constexpr(!std::is_same_v<typename Stream::device_type, void>) {
             ((out_impl<Stream>(v)),...);
         }
@@ -161,7 +160,7 @@ namespace etl {
     template<Stream Stream, typename... TT>
     inline constexpr void outl(const TT&... v __attribute__((unused))) {
         if constexpr(!std::is_same_v<typename Stream::device_type, void>) {
-            using ::etl::detail::out_impl;
+            using namespace detail;
             ((out_impl<Stream>(v)),..., out_impl<Stream>(typename Stream::line_terminator_type()));
         }
     }

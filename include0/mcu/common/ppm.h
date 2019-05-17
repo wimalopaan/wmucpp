@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <external/units/physical.h>
 
+#include "groups.h"
+
 namespace AVR {
     using namespace Project;
     
@@ -12,34 +14,89 @@ namespace AVR {
         using namespace std::literals::chrono;
         using namespace External::Units::literals;
         
-//        template<typename MCUTimer, typename T>
-//        constexpr uint16_t calculatePpmInParameter() {
-//            using pBits = typename MCUTimer::mcu_timer_type::template PrescalerBits<MCUTimer::number>;
-//            auto p = prescalerValues(pBits::values);
+        template<auto TimerNumber, typename MCU = DefaultMcuType, typename VT = typename TimerParameter<TimerNumber, MCU>::value_type>
+        constexpr uint16_t calculatePpmInParameter() {
+            using value_type  = VT;        
+            using pBits = prescaler_bits_t<TimerNumber>;
+
+            auto p = prescalerValues(pBits::values);
             
-//            for(const auto& p : etl::sort(p)) {
-//                if (p > 0) {
-//                    const hertz f = Config::fMcu / p;
-//                    const uint16_t ppmMin = 1_ms * f;
-//                    const uint16_t ppmMax = 2_ms * f;
-//                    if ((ppmMax < std::numeric_limits<T>::max()) && (ppmMin > 1)) {
-//                        return p;
-//                    }
-//                }
-//            }
-//            return 0;
-//        }
+            for(const auto& p : etl::sort(p)) { // aufsteigend
+                if (p > 0) {
+                    const hertz f = Config::fMcu / p;
+                    const uint16_t ppmMin = 1_ms * f;
+                    const uint16_t ppmMax = 2_ms * f;
+                    if ((ppmMax < std::numeric_limits<value_type>::max()) && (ppmMin > 1)) {
+                        return p;
+                    }
+                }
+            }
+            return 0;
+        }
+
+        template<auto TimerNumber, typename MCU = DefaultMcuType, typename VT = typename TimerParameter<TimerNumber, MCU>::value_type>
+        constexpr uint16_t calculateCPpmInParameter() {
+            using value_type  = VT;        
+            using pBits = prescaler_bits_t<TimerNumber>;
+            auto p = prescalerValues(pBits::values);
+            
+            for(const auto& p : etl::sort(p)) { // aufsteigend
+                if (p > 0) {
+                    const hertz f = Config::fMcu / p;
+                    const etl::enclosing_t<value_type> ppmMin = 1_ms * f;
+                    const etl::enclosing_t<value_type> ppmMax = 4_ms * f;
+                    if ((ppmMax < std::numeric_limits<value_type>::max()) && (ppmMin > 1)) {
+                        return p;
+                    }
+                }
+            }
+            return 0;
+        }
+        
+        template<auto TimerNumber, typename MCU = DefaultMcuType, typename VT = typename TimerParameter<TimerNumber, MCU>::value_type>
+        constexpr uint16_t calculateCPpmInParameter(const VT& max) {
+            using value_type  = VT;        
+            using pBits = prescaler_bits_t<TimerNumber>;
+            auto p = prescalerValues(pBits::values);
+            
+            for(const auto& p : etl::sort(p)) { // aufsteigend
+                if (p > 0) {
+                    const hertz f = Config::fMcu / p;
+                    const etl::enclosing_t<value_type> ppmMin = 1_ms * f;
+                    const etl::enclosing_t<value_type> ppmMax = 4_ms * f;
+                    if ((ppmMax <= max) && (ppmMax < std::numeric_limits<value_type>::max()) && (ppmMin > 1)) {
+                        return p;
+                    }
+                }
+            }
+            return 0;
+        }
+        template<auto TimerNumber, typename MCU = DefaultMcuType, typename VT = typename TimerParameter<TimerNumber, MCU>::value_type>
+        constexpr uint16_t calculateSPpmInParameter(const VT& max) {
+            using value_type  = VT;        
+            using pBits = prescaler_bits_t<TimerNumber>;
+            auto p = prescalerValues(pBits::values);
+            
+            for(const auto& p : etl::sort(p)) { // aufsteigend
+                if (p > 0) {
+                    const hertz f = Config::fMcu / p;
+                    const etl::enclosing_t<value_type> ppmMin = 1_ms * f;
+                    const etl::enclosing_t<value_type> ppmMax = 20_ms * f;
+                    if ((ppmMax <= max) && (ppmMax < std::numeric_limits<value_type>::max()) && (ppmMin > 1)) {
+                        return p;
+                    }
+                }
+            }
+            return 0;
+        }
         
         template<auto TimerNumber, typename MCU = DefaultMcuType>
         constexpr uint16_t calculatePpmOutParameter() {
-            using mcu_timer_type = typename TimerParameter<TimerNumber, MCU>::mcu_timer_type;
             using value_type  = typename TimerParameter<TimerNumber, MCU>::value_type;        
-
-            using namespace std::literals::chrono;
-            using pBits = typename mcu_timer_type::template PrescalerBits<TimerNumber>;
+            using pBits = prescaler_bits_t<TimerNumber>;
             auto p = prescalerValues(pBits::values);
             
-            for(const auto& p : etl::sort(p)) {
+            for(const auto& p : etl::sort(p)) { // aufsteigend
                 if (p > 0) {
                     const hertz f = Config::fMcu / p;
                     const uint32_t ppmMin = 1_ms * f;

@@ -25,13 +25,24 @@
 #include <limits>
 
 #include <etl/concepts.h>
+#include <etl/outfwd.h>
 
 namespace External {
     namespace Units {
         
         using namespace std;
         using namespace std::chrono;
-        using namespace etl::Concepts;
+        
+        template<typename Representation, typename Scale = ratio<1,1>>
+        struct voltage {
+            using value_type = Representation;
+            using divider_type = Scale;
+            const Representation value = 0;
+        };
+        
+        using decivolt = voltage<uint16_t, ratio<1,10>>;
+        using centivolt = voltage<uint16_t, ratio<1,100>>;
+        using millivolt = voltage<uint16_t, ratio<1,1000>>;
         
         template<typename Representation, typename Divider = ratio<1,1>>
         struct frequency;
@@ -59,11 +70,11 @@ namespace External {
             }
         };
         
-        template<typename Rep, typename Div, Integral I>
+        template<typename Rep, typename Div, etl::Concepts::Integral I>
         constexpr frequency<Rep, Div> operator*(I i, const frequency<Rep, Div>& f) {
             return {f.value * i};
         }
-        template<typename Rep, typename Div, Integral I>
+        template<typename Rep, typename Div, etl::Concepts::Integral I>
         constexpr frequency<Rep, Div> operator*(const frequency<Rep, Div>& f, I i) {
             return {f.value * i};
         }
@@ -92,7 +103,7 @@ namespace External {
             return fl.value <= fr.value;
         }
         
-        template<typename Rep, typename Div, Integral I>
+        template<typename Rep, typename Div, etl::Concepts::Integral I>
         constexpr frequency<Rep, Div> operator/(const frequency<Rep, Div>& fl, I d) {
             return {(Rep)(fl.value / d)};
         }
@@ -163,6 +174,13 @@ namespace External {
         private:
             uint16_t mValue = 0;
         };
+        
+        template<etl::Concepts::Stream Stream>
+        inline void out_impl(const RPM& r) {
+            etl::out<Stream>(r.value());
+            etl::out<Stream>("Upm"_pgm);
+        }
+        
         
         namespace literals {
             using hertz = External::Units::hertz;

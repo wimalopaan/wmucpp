@@ -30,9 +30,55 @@ namespace AVR {
         
         ATMega4809() = delete;
         
-        struct Ram {
+        struct Ram final {
             inline static constexpr uintptr_t begin = RAMSTART;  
             inline static constexpr uintptr_t end   = RAMEND;  
+        };
+        
+        struct PortRegister final {
+            DataRegister<PortRegister, ReadWrite, std::byte> dir;
+            DataRegister<PortRegister, ReadWrite, std::byte> dirset;
+            DataRegister<PortRegister, ReadWrite, std::byte> dirclr;
+            DataRegister<PortRegister, ReadWrite, std::byte> dirtgl;
+            DataRegister<PortRegister, ReadWrite, std::byte> out;
+            DataRegister<PortRegister, ReadWrite, std::byte> outset;
+            DataRegister<PortRegister, ReadWrite, std::byte> outclr;
+            DataRegister<PortRegister, ReadWrite, std::byte> outtgl;
+            DataRegister<PortRegister, ReadWrite, std::byte> in;
+            DataRegister<PortRegister, ReadWrite, std::byte> inflags;
+            DataRegister<PortRegister, ReadWrite, std::byte> portctrl;
+
+            volatile uint8_t padding[0x0f - 0x0b + 1];
+            
+            DataRegister<PortRegister, ReadWrite, std::byte> pin0ctrl;
+            DataRegister<PortRegister, ReadWrite, std::byte> pin1ctrl;
+            DataRegister<PortRegister, ReadWrite, std::byte> pin2ctrl;
+            DataRegister<PortRegister, ReadWrite, std::byte> pin3ctrl;
+            DataRegister<PortRegister, ReadWrite, std::byte> pin4ctrl;
+            DataRegister<PortRegister, ReadWrite, std::byte> pin5ctrl;
+            DataRegister<PortRegister, ReadWrite, std::byte> pin6ctrl;
+            DataRegister<PortRegister, ReadWrite, std::byte> pin7ctrl;
+
+            template<typename P> struct Address;
+        };
+//        std::integral_constant<uint8_t, sizeof(PortRegister)>::_;
+        static_assert(sizeof(PortRegister) == 0x18);
+        
+        struct Usart {
+            static constexpr const uint8_t count = 4;
+            DataRegister<Usart, ReadOnly, std::byte> rxd;
+            enum class RXDATAH : uint8_t {
+                rxcif = USART_RXCIF_bm,
+                bufovl = USART_BUFOVF_bm,
+                ferr = USART_FERR_bm,
+                perr = USART_PERR_bm,
+                data8 = USART_DATA8_bm,
+            };
+            ControlRegister<Usart, RXDATAH> rxdh;
+            DataRegister<Usart, ReadWrite, std::byte> txd;
+
+            volatile uint8_t reserved2;
+            template<int N> struct Address;
         };
         
     };
@@ -46,8 +92,18 @@ namespace std {
 }
 
 namespace AVR {
-//    template<>
-//    struct ATMega328PB::GPIOR::Address<0> : std::integral_constant<uintptr_t, 0x3e> {};
+    template<> struct ATMega4809::PortRegister::Address<A> {
+        inline static constexpr uintptr_t value = 0x0400;
+    };
+    template<> struct ATMega4809::PortRegister::Address<B> {
+        inline static constexpr uintptr_t value = 0x0420;
+    };
+    template<> struct ATMega4809::PortRegister::Address<C> {
+        inline static constexpr uintptr_t value = 0x0440;
+    };
+    template<> struct ATMega4809::PortRegister::Address<D> {
+        inline static constexpr uintptr_t value = 0x0460;
+    };
 
 }
 #pragma pack(pop)

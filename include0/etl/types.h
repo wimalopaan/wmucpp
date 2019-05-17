@@ -75,6 +75,8 @@ namespace etl {
     class uint_NaN final {
         inline static constexpr T NaN = std::numeric_limits<T>::max();
     public:
+        using value_type = T;
+        
         inline explicit constexpr uint_NaN(T v) : mValue(v) {
             assert(mValue != NaN);
         }
@@ -150,7 +152,7 @@ namespace etl {
     public:
         inline static constexpr T Lower = LowerBound;
         inline static constexpr T Upper = UpperBound;
-        using type = T;
+        using value_type = T;
         
         inline constexpr uint_ranged(T v = 0) : mValue(v) {
             assert(v >= LowerBound);
@@ -222,6 +224,16 @@ namespace etl {
     private:
         T mValue{0};
     };
+
+//    template<Unsigned T = uint8_t, T LowerBound = 0, T UpperBound = std::numeric_limits<T>::max() - 1>
+//    class uint_centered_NaN final {
+//    public:
+//        inline static constexpr T Lower = LowerBound;
+//        inline static constexpr T Upper = UpperBound;
+////        inline static constexpr T NaN   = std::numeric_limits<T>::max();
+//        using value_type = T;
+        
+//    };
     
     template<Unsigned T = uint8_t, T LowerBound = 0, T UpperBound = std::numeric_limits<T>::max() - 1>
     class uint_ranged_NaN final {
@@ -229,10 +241,11 @@ namespace etl {
         inline static constexpr T Lower = LowerBound;
         inline static constexpr T Upper = UpperBound;
         inline static constexpr T NaN   = std::numeric_limits<T>::max();
+        using value_type = T;
         
         static_assert(Upper != NaN);
         
-        using type = T;
+//        using type = T;
         
         inline constexpr uint_ranged_NaN() = default;
         
@@ -248,6 +261,18 @@ namespace etl {
         inline constexpr explicit operator bool() const {
             return mValue != NaN;
         }
+
+        template<typename R>
+        inline constexpr uint_ranged_NaN operator+(R rhs) const {
+            if ((mValue + rhs) > Upper) {
+                return uint_ranged_NaN{Upper};
+            }
+            else if ((mValue + rhs) < Lower) {
+                return uint_ranged_NaN{Lower};
+            }
+            return uint_ranged_NaN{mValue + rhs};
+        }
+
         
         inline constexpr bool operator>(T rhs) const {
             return mValue > rhs;
@@ -273,9 +298,16 @@ namespace etl {
             mValue = std::clamp(rhs, LowerBound, UpperBound);
             return *this;
         }
+        
         inline constexpr T toInt() const {
             return mValue;
         }
+        
+        template<typename TO>
+        inline constexpr TO mapTo() const {
+            return (etl::enclosing_t<T>(mValue - Lower) * std::numeric_limits<TO>::max()) / (Upper - Lower);
+        }
+        
         inline constexpr uint_ranged_NaN<T, LowerBound, UpperBound> invert() const {
             if (*this) {
                 return uint_ranged_NaN<T, LowerBound, UpperBound>((UpperBound - mValue) + LowerBound);
@@ -289,13 +321,98 @@ namespace etl {
         T mValue{NaN};
     };
 
+    template<Signed T = int8_t, T LowerBound = std::numeric_limits<T>::min(), T UpperBound = std::numeric_limits<T>::max() - 1>
+    class int_ranged_NaN final {
+    public:
+        inline static constexpr T Lower = LowerBound;
+        inline static constexpr T Upper = UpperBound;
+        inline static constexpr T NaN   = std::numeric_limits<T>::max();
+        using value_type = T;
+        
+        static_assert(Upper != NaN);
+        
+//        using type = T;
+        
+        inline constexpr int_ranged_NaN() = default;
+        
+        inline constexpr int_ranged_NaN(T v) : mValue(v) {
+            assert(v >= LowerBound);
+            assert(v <= UpperBound);
+        }
+
+//        inline constexpr uint_ranged_NaN(etl::fragmentType_t<T> higherPart, etl::fragmentType_t<T> lowerPart) :
+//            uint_ranged_NaN((static_cast<T>(higherPart) << etl::numberOfBits<etl::fragmentType_t<T>>()) + lowerPart)
+//        {}
+        
+        inline constexpr explicit operator bool() const {
+            return mValue != NaN;
+        }
+        
+        inline constexpr bool operator>(T rhs) const {
+            return mValue > rhs;
+        }
+        inline constexpr bool operator>=(T rhs) const {
+            return mValue >= rhs;
+        }
+        inline constexpr bool operator<(T rhs) const {
+            return mValue < rhs;
+        }
+        inline constexpr bool operator<=(T rhs) const {
+            return mValue <= rhs;
+        }
+
+        inline int_ranged_NaN& operator--() {
+            if (mValue > LowerBound) {
+                --mValue;
+            }
+            return *this;
+        }
+        inline int_ranged_NaN& operator++() {
+            if (mValue < UpperBound) {
+                ++mValue;
+            }
+            return *this;
+        }
+        inline constexpr bool operator==(T rhs) const {
+            return mValue == rhs;
+        }
+        inline constexpr int_ranged_NaN& operator=(T rhs) {
+            assert(rhs >= LowerBound);
+            assert(rhs <= UpperBound);
+            mValue = std::clamp(rhs, LowerBound, UpperBound);
+            return *this;
+        }
+        
+        inline constexpr T toInt() const {
+            return mValue;
+        }
+        
+//        template<typename TO>
+//        inline constexpr TO mapTo() const {
+//            return (etl::enclosing_t<T>(mValue - Lower) * std::numeric_limits<TO>::max()) / (Upper - Lower);
+//        }
+        
+//        inline constexpr uint_ranged_NaN<T, LowerBound, UpperBound> invert() const {
+//            if (*this) {
+//                return uint_ranged_NaN<T, LowerBound, UpperBound>((UpperBound - mValue) + LowerBound);
+//            }
+//            return *this;
+//        }
+        inline constexpr void operator+=(T value) {
+            mValue = std::min(UpperBound, mValue + value);
+        }
+    private:
+        T mValue{NaN};
+    };
+    
     template<Unsigned T = uint8_t, T LowerBound = 0, T UpperBound = std::numeric_limits<T>::max()>
     class uint_ranged_circular final {
         static_assert(LowerBound < UpperBound);
     public:
         inline static constexpr T Lower = LowerBound;
         inline static constexpr T Upper = UpperBound;
-        typedef T type;
+        using value_type = T;
+//        typedef T type;
         
         inline constexpr uint_ranged_circular() = default;
         
@@ -325,6 +442,14 @@ namespace etl {
             }
             return *this;
         }
+        inline void operator++() volatile {
+            if (mValue < UpperBound) {
+                ++mValue;
+            }
+            else {
+                mValue = LowerBound;
+            }
+        }
         inline constexpr uint_ranged_circular& operator=(T rhs) {
             assert(rhs >= LowerBound);
             assert(rhs <= UpperBound);
@@ -338,6 +463,12 @@ namespace etl {
             return mValue;
         }
         inline constexpr T toInt() const {
+            return mValue;
+        }
+        inline constexpr operator T() const volatile {
+            return mValue;
+        }
+        inline constexpr T toInt() const volatile {
             return mValue;
         }
     private:

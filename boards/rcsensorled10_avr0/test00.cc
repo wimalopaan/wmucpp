@@ -2,38 +2,22 @@
 
 #include "board.h"
 
-using terminal = etl::basic_ostream<rcUsart>;
+inline static constexpr uint8_t hottScale = adcController::mcu_adc_type::VRef / 0.02;
+inline static constexpr auto rawMax = adcController::value_type::Upper;
 
 int main() {
     using namespace etl;
     using namespace std;
     using namespace AVR;
-    
-    systemClock::init();
-    
-    crWriterSensorBinary::init();
-    crWriterSensorText::init();
 
-    rcUsart::init<115200>();
+    auto x = adcController::value(0);
     
-    const auto t = alarmTimer::create(1000_ms, External::Hal::AlarmFlags::Periodic);
+    using conv = Hott::Units::Converter<adc, Hott::Units::battery_voltage_t>;
+    
+    return conv::convert(x).value;
 
-    {
-        Scoped<EnableInterrupt<>> ei;
-        
-        while(true) {
-//            ppmInPin::toggle();
-            rcUsart::periodic();
-            btUsart::periodic();
-            systemClock::periodic([&](){
-                crWriterSensorBinary::rateProcess();
-                crWriterSensorText::rateProcess();
-                alarmTimer::periodic([&](alarmTimer::index_type timer){
-                    if (timer == t) {
-                        outl<terminal>("test"_pgm);    
-                    }
-                });
-            });
-        }    
-    }
+
+
+//    return etl::Rational::RationalDivider<uint16_t, hottScale, rawMax>::scale(x.toInt());
+    
 }

@@ -77,6 +77,8 @@ namespace AVR {
     struct ReadOnly{};
     struct UnUsed{};
     
+    struct Inverting{};
+    
     template<bool F>
     struct UseInterrupts : std::integral_constant<bool, F> {};
     
@@ -128,7 +130,7 @@ namespace AVR::detail::test {
 #if (__AVR_ARCH__ == 103)
 # include "megaavr0/atxmega.h"
 # include "internals/port.h"
-# include "internals/usart.h"
+//# include "internals/usart.h"
 #endif
 
 #ifdef _MMIO_BYTE_CHANGED

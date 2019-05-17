@@ -43,20 +43,30 @@ namespace etl {
             };
 
         template<typename T>
-        concept bool Integral = std::is_integral<T>::value;    
+        concept bool Integral = std::is_integral_v<T>;    
         
         template<typename T>
-        concept bool Unsigned = std::is_unsigned<T>::value;    
+        concept bool Unsigned = std::is_unsigned_v<T>;    
         
         template<typename T>
-        concept bool Signed = std::is_signed<T>::value;    
+        concept bool Signed = std::is_signed_v<T>;    
 
+        template<typename T>
+        concept bool Arithmetic = std::is_arithmetic_v<T>;    
+        
         template<typename R>
         concept bool Range = requires (R r) { 
                 typename R::value_type;
                 r.begin();
                 r.end();
             };
+        
+        template<typename R>
+        concept bool Ranged = requires(R r) {
+            typename R::value_type;
+            R::Lower;
+            R::Upper;
+        };
 
         template<typename C>
         concept bool Container = requires(C c) {

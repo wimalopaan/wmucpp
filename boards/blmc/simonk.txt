@@ -3,4 +3,9 @@
 # sudo avrdude -p atmega8 -P usb -c avrisp2 -V  -U flash:r:extract.hex:i
 
 # programmiern
+
+# Hobbyking 30A F-30A
 # sudo avrdude -p atmega8 -P usb -c avrisp2 -V -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -U flash:w:bs_nfet.hex
+
+# Hobbyking 80A F-80A
+# sudo avrdude -p atmega8 -P usb -c avrisp2 -V -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -U flash:w:bs.hex

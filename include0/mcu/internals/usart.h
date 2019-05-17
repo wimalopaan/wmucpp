@@ -31,9 +31,13 @@
 
 namespace AVR {
     using namespace std::literals::chrono;
+
+    template<auto v>
+    struct BaudRate: etl::NamedConstant<v> {};
     
     template<auto v>
     struct ReceiveQueueLength : etl::NamedConstant<v> {};
+    
     template<auto v>
     struct SendQueueLength : etl::NamedConstant<v> {};
     
@@ -146,13 +150,13 @@ namespace AVR {
             }
         }
         
-        template<uint32_t Baud>
+        template<etl::Concepts::NamedConstant Baud>
         inline static void init() {
             using namespace etl;
-            static_assert(Baud >= 2400, "USART should use a valid baud rate >= 2400");
+            static_assert(Baud::value >= 2400, "USART should use a valid baud rate >= 2400");
             
-            if constexpr (Baud > 100000) {
-                constexpr auto ubrr = ubrrValue2(Config::fMcu.value, Baud); 
+            if constexpr (Baud::value > 100000) {
+                constexpr auto ubrr = ubrrValue2(Config::fMcu.value, Baud::value); 
 //                using u = std::integral_constant<uint16_t, ubrr>;
 //                u::_;
                 mcu_usart()->ucsra.template add<ucsra_type::u2x>();
@@ -165,7 +169,7 @@ namespace AVR {
                 }
             }
             else {
-                constexpr auto ubrr = ubrrValue(Config::fMcu.value, Baud); 
+                constexpr auto ubrr = ubrrValue(Config::fMcu.value, Baud::value); 
 //                using u = std::integral_constant<uint16_t, ubrr>;
 //                u::_;
                 *mcu_usart()->ubbr = ubrr;

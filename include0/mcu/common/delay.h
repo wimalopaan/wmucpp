@@ -18,8 +18,6 @@
 
 #pragma once
 
-//#include "units/duration.h"
-//#include "std/literals.h"
 
 #include <external/units/physical.h>
 

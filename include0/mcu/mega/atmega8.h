@@ -181,11 +181,19 @@ namespace AVR {
             template<typename P> struct Address;
         };
         struct Interrupt {
-            volatile uint8_t tifr;
-            volatile uint8_t timsk;
-            volatile uint8_t gifr;
-            volatile uint8_t gicr;
-            static constexpr uint8_t address = 0x58;
+            enum class FLAGS : uint8_t {
+                intf1 = (1 << INTF1),
+                intf0 = (1 << INTF0)
+            };
+            FlagRegister<Interrupt, FLAGS> gifr;
+            enum class MASK : uint8_t {
+                int1 = (1 << INT1),
+                int0 = (1 << INT0),
+                ivsel = (1 << IVSEL),
+                ivce = (1 << IVCE)
+            };
+            ControlRegister<Interrupt, MASK> gicr;
+            static constexpr uint8_t address = 0x5a;
         };
         class TimerInterrupts {
         public:
@@ -219,7 +227,27 @@ namespace AVR {
             ControlRegister<Status, Bits> value;
             static constexpr uint8_t address = 0x5f;
         };
-        
+        struct Mcu final {
+            enum class CSR : uint8_t {
+                wdrf  = (1 << WDRF),
+                borf  = (1 << BORF),
+                extrf = (1 << EXTRF),
+                porf  = (1 << PORF)
+            };
+            ControlRegister<Mcu, CSR> csr;
+            enum class CR : uint8_t {
+                se  = (1 << SE),
+                sm2 = (1 << SM2),
+                sm1 = (1 << SM1),
+                sm0 = (1 << SM0),
+                isc11 = (1 << ISC11),
+                isc10 = (1 << ISC10),
+                isc01 = (1 << ISC01),
+                isc00 = (1 << ISC00)
+            };
+            ControlRegister<Mcu, CR> cr;
+            static constexpr uint8_t address = 0x54;
+        };
     };
     template<>
     constexpr bool ATMega8::is_atomic<uint8_t>() {return true;}
@@ -248,6 +276,8 @@ namespace std {
     struct enable_bitmask_operators<AVR::ATMega8::Adc::SRA>  : std::true_type {};
     template<>
     struct enable_bitmask_operators<AVR::ATMega8::TimerInterrupts::Mask>  : std::true_type {};
+    template<>
+    struct enable_bitmask_operators<AVR::ATMega8::Mcu::CR>  : std::true_type {};
 }
 
 namespace AVR {
@@ -273,7 +303,7 @@ namespace AVR {
     };
     template<>
     struct ATMega8::Timer8BitSimple::PrescalerBits<0> {
-        inline static constexpr auto values = prescalerValues10Bit<ATMega8::Timer8BitSimple::TCCR>;
+        inline static constexpr auto values = AVR::Util::Timer::prescalerValues10Bit<ATMega8::Timer8BitSimple::TCCR>;
     };
     template<>
     struct ATMega8::Timer8BitSimple2::Address<2> {
@@ -281,7 +311,7 @@ namespace AVR {
     };
     template<>
     struct ATMega8::Timer8BitSimple2::PrescalerBits<2> {
-        static constexpr auto values = AVR::prescalerValues10BitExtended<ATMega8::Timer8BitSimple2::TCCR>;
+        static constexpr auto values = AVR::Util::Timer::prescalerValues10BitExtended<ATMega8::Timer8BitSimple2::TCCR>;
     };
     template<>
     struct ATMega8::Timer16Bit::Address<1> {
@@ -289,7 +319,7 @@ namespace AVR {
     };
     template<>
     struct ATMega8::Timer16Bit::PrescalerBits<1> {
-        static constexpr auto values = prescalerValues10Bit<ATMega8::Timer16Bit::TCCRB>;
+        static constexpr auto values = AVR::Util::Timer::prescalerValues10Bit<ATMega8::Timer16Bit::TCCRB>;
     };
     template<>
     struct ATMega8::Adc::Address<0> {

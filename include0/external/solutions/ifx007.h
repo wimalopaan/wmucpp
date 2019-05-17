@@ -8,7 +8,7 @@
 #include <etl/concepts.h>
 #include <etl/algorithm.h>
 
-#include "mcu/internals/groups.h"
+//#include "mcu/internals/groups.h"
 
 namespace External {
     namespace IFX007 {
@@ -16,7 +16,7 @@ namespace External {
         using namespace std;
         using namespace External::Units;
           
-        template<typename PWM, typename InputType>
+        template<typename PWM, etl::Concepts::Ranged InputType>
         struct HBridge {
             using pwm = PWM;
             using value_type = typename PWM::value_type;
@@ -40,7 +40,7 @@ namespace External {
             static inline void duty(const input_type& d) {
                 if (!d) return;
                 
-                value_type v = (d.toInt() >= medium) ? (d.toInt() - medium) : (medium - d.toInt());
+                value_type v = distance(d.toInt(), medium);
                 
                 value_type sp = etl::scale(v, etl::Intervall<value_type>{startRamp, endRamp}, etl::Intervall<value_type>{bottomCount, topCount});
                 value_type t = (etl::enclosing_t<value_type>(v) * sp) / span;
@@ -64,8 +64,8 @@ namespace External {
             inline static value_type x2;
             
         private:
-            inline static value_type startRamp = 2000;
-            inline static value_type endRamp = span;
+            inline static constexpr value_type startRamp = 2000;
+            inline static constexpr value_type endRamp = span;
 
         };
     }

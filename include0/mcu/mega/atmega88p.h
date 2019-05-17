@@ -452,7 +452,7 @@ namespace AVR {
     
     template<>
     struct ATMega88P::Timer8Bit::PrescalerBits<0> {
-        static constexpr auto values = AVR::prescalerValues10Bit<ATMega88P::Timer8Bit::TCCRB>;
+        static constexpr auto values = AVR::Util::Timer::prescalerValues10Bit<ATMega88P::Timer8Bit::TCCRB>;
     };
     
     // Timer2
@@ -462,7 +462,7 @@ namespace AVR {
     };
     template<>
     struct ATMega88P::Timer8Bit::PrescalerBits<2> {
-        static constexpr auto values = AVR::prescalerValues10BitExtended<ATMega88P::Timer8Bit::TCCRB>;
+        static constexpr auto values = AVR::Util::Timer::prescalerValues10BitExtended<ATMega88P::Timer8Bit::TCCRB>;
     };
     
     // timer 1
@@ -473,7 +473,7 @@ namespace AVR {
     
     template<>
     struct ATMega88P::Timer16Bit::PrescalerBits<1> {
-        static constexpr auto values = AVR::prescalerValues10Bit<ATMega88P::Timer16Bit::TCCRB>;
+        static constexpr auto values = AVR::Util::Timer::prescalerValues10Bit<ATMega88P::Timer16Bit::TCCRB>;
     };
     
 }

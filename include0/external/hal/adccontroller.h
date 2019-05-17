@@ -63,18 +63,18 @@ namespace External {
             }
             
             // ranged
-            inline static typename MCUAdc::value_type value(uint8_t index) {
-                assert(index < NumberOfChannels);
-                return values[index];
-            }
+//            inline static typename MCUAdc::value_type value(uint8_t index) {
+//                assert(index < NumberOfChannels);
+//                return values[index];
+//            }
             inline static typename MCUAdc::value_type value(index_type index) {
                 return values[index.toInt()];
             }
             
             // ranged
-            inline static typename MCUAdc::voltage_type voltage(uint8_t index) {
-                return MCUAdc::toVoltage(value(index));
-            }
+//            inline static typename MCUAdc::voltage_type voltage(uint8_t index) {
+//                return MCUAdc::toVoltage(value(index));
+//            }
             
         private:
             inline static typename MCUAdc::value_type values[NumberOfChannels] = {};

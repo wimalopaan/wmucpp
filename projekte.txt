@@ -1,0 +1,42 @@
+* Vorgehen
+
+1) Umbau rcsensorled10 zu:
+1.1) Sensorboard
+	 - Bootloader
+	 - Hott-Sensor -> UART
+	 - BT -> UART
+     - Spannungen 4S (mit Abschaltung wegene Stromverbrauch)
+	 - Ströme 3x (extra Board: mit ACS oder Schalterboad mit VN7003)
+	 - Drehzahl 3x -> ICP
+	 - Geschwindigkeit -> UART
+	 - Temperaturen One-Wire
+
+1.2) Aktorboard
+     - Bootloader
+     - SUMD -> UART
+	 - Hott-Sensor -> UART
+	 - BT -> UART
+	 - TLE5205
+	 - LED WS2812 (mehrere Stränge)
+
+1.3) Schaltboard (Hauptschalter)
+     - Bootloader
+     - Hott-Sensor -> UART
+	 - 4x VN7003
+
+1.4) LED-Steuerung (altes attiny85 board)
+
+2) Hott-Telemetrie Multiplexer (4809)
+	 - 1x In -> UART
+	 - 3x Out -> UART
+	 - Power-Or
+	 
+3) Seriell-Servo (wie dynamix ax-12 servo)
+	 - SUMD-zu-PPM
+	 - attiny 412
+
+4) attiny85 durch attiny412 ersetzen (nicht pinkompatibel)
+
+5) Servo Digitalisieren für SUMD-Bus
+
+

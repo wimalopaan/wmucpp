@@ -25,6 +25,9 @@
 
 namespace AVR {
     
+    template<uint8_t N>
+    using ExternalInterruptNumber = etl::NamedConstant<N>;
+    
     template<AVR::Concepts::IServiceR... HH>
     struct IsrRegistrar {
         typedef IsrRegistrar type;
@@ -49,7 +52,7 @@ namespace AVR {
             using hasNumberInt = hasNumber<I, INT::number>;
 
             using isr_type_list = Meta::filter<hasNumberInt, nonVoidHandlers>;
-            static_assert(Meta::size<isr_type_list>::value == 1);
+            static_assert(Meta::size<isr_type_list>::value == 1, "double defined ist for the same interrupt");
 
             using isr_type = Meta::front<isr_type_list>;
             
@@ -98,6 +101,9 @@ namespace AVR {
     };
     
     namespace ISR {
+        
+        struct NoInterrupt {};
+        
         template<uint8_t N>
         struct Int;
 

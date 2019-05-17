@@ -11,7 +11,7 @@
 MCU = atmega328pb
 F_OSC = 16000000
 
-subdirs =
+subdirs = robbenavy540
 
 targets += test00.elf
 targets += blink.elf

@@ -301,6 +301,9 @@ namespace AVR {
                 if0 = (1 << PCIF0)
             };
             FlagRegister<Interrupt, PCFlags> pcifr;
+
+            static constexpr const uint8_t ext_int_count = 2;
+
             enum class EIFlags : uint8_t {
                 int1 = (1 << INTF1),
                 int0 = (1 << INTF0)
@@ -473,7 +476,7 @@ namespace AVR {
     
     template<>
     struct ATMega328PB::Timer8Bit::PrescalerBits<0> {
-        static constexpr auto values = AVR::prescalerValues10Bit<ATMega328PB::Timer8Bit::TCCRB>;
+        static constexpr auto values = AVR::Util::Timer::prescalerValues10Bit<ATMega328PB::Timer8Bit::TCCRB>;
     };
     
     // Timer2
@@ -483,7 +486,7 @@ namespace AVR {
     };
     template<>
     struct ATMega328PB::Timer8Bit::PrescalerBits<2> {
-        static constexpr auto values = AVR::prescalerValues10BitExtended<ATMega328PB::Timer8Bit::TCCRB>;
+        static constexpr auto values = AVR::Util::Timer::prescalerValues10BitExtended<ATMega328PB::Timer8Bit::TCCRB>;
     };
     
     // Timer 1
@@ -494,7 +497,7 @@ namespace AVR {
     
     template<>
     struct ATMega328PB::Timer16Bit::PrescalerBits<1> {
-        static constexpr auto values = AVR::prescalerValues10Bit<ATMega328PB::Timer16Bit::TCCRB>;
+        static constexpr auto values = AVR::Util::Timer::prescalerValues10Bit<ATMega328PB::Timer16Bit::TCCRB>;
     };
     
     // Timer 3
@@ -505,7 +508,7 @@ namespace AVR {
     
     template<>
     struct ATMega328PB::Timer16Bit::PrescalerBits<3> {
-        static constexpr auto values = AVR::prescalerValues10Bit<ATMega328PB::Timer16Bit::TCCRB>;
+        static constexpr auto values = AVR::Util::Timer::prescalerValues10Bit<ATMega328PB::Timer16Bit::TCCRB>;
     };
     
     // Timer 4
@@ -516,7 +519,7 @@ namespace AVR {
     
     template<>
     struct ATMega328PB::Timer16Bit::PrescalerBits<4> {
-        static constexpr auto values = AVR::prescalerValues10Bit<ATMega328PB::Timer16Bit::TCCRB>;
+        static constexpr auto values = AVR::Util::Timer::prescalerValues10Bit<ATMega328PB::Timer16Bit::TCCRB>;
     };
     template<>
     struct ATMega328PB::Adc::Address<0> {
@@ -543,11 +546,11 @@ namespace AVR {
     
     template<>
     struct ATMega328PB::TWI::PrescalerRow<0> {
-        static constexpr auto values = twiPrescalerBit<ATMega328PB::TWI::TWS>;
+        static constexpr auto values = AVR::Util::Twi::prescalerValues<ATMega328PB::TWI::TWS>;
     };
     template<>
     struct ATMega328PB::TWI::PrescalerRow<1> {
-        static constexpr auto values = twiPrescalerBit<ATMega328PB::TWI::TWS>;
+        static constexpr auto values = AVR::Util::Twi::prescalerValues<ATMega328PB::TWI::TWS>;
     };
     
 }

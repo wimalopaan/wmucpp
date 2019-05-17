@@ -28,6 +28,44 @@
 #pragma pack(1)
 
 namespace Hott {
+    namespace Units {
+        using battery_voltage_t = External::Units::voltage<uint16_t, std::ratio<1,10>>;
+        using cell_voltage_t = External::Units::voltage<uint8_t, std::ratio<1,500>>;
+        
+        template<typename ADConv, typename Voltage>
+        struct Converter {
+            using adc_type = ADConv;
+            using raw_type = ADConv::value_type;
+            using voltage_type = Voltage;
+            using representation_type = typename Voltage::value_type;
+            using scale_type = typename Voltage::divider_type;
+            
+            static inline constexpr uint8_t rep_bits = (etl::numberOfBits<representation_type>() == 8) ? 16 : etl::numberOfBits<representation_type>();
+//            using std::integral_constant<uint8_t, rep_bits>::_;
+            
+            static inline constexpr uint8_t reso_bits = ADConv::reso_type::bits;
+            static inline constexpr uint8_t nominator_bits = rep_bits - reso_bits;
+            static_assert(nominator_bits <= 8);
+//            using std::integral_constant<uint8_t, nominator_bits>::_;
+            
+            static inline constexpr uint16_t nominator_value = (1 << nominator_bits) - 1;
+//            using std::integral_constant<uint8_t, nominator_value>::_;
+            
+            static inline constexpr uint16_t denominator_value = (((float)nominator_value * scale_type::nom) / scale_type::denom) / adc_type::VBit;
+//            using std::integral_constant<uint16_t, denominator_value>::_;
+            
+            static inline constexpr voltage_type convert(auto raw) {
+                auto v = (raw * nominator_value) / denominator_value;
+                return {(representation_type)v};
+            }
+            static inline constexpr voltage_type convert(const raw_type& raw) {
+                auto v = (raw.toInt() * nominator_value) / denominator_value;
+                return {(representation_type)v};
+            }
+            
+        };
+        
+    }
     
     using namespace std::literals::chrono;
     
@@ -36,19 +74,30 @@ namespace Hott {
     static inline constexpr auto hottDelayBeforeAnswer = 5000_us;
     static inline constexpr auto hottDelayBetweenBytes = 2000_us;
     
-    static inline constexpr std::byte msg_start = 0x80_B;
+    static inline constexpr std::byte ascii_start_code = 0x7b_B;
     static inline constexpr std::byte start_code = 0x7c_B;
     static inline constexpr std::byte end_code = 0x7d_B;
-    static inline constexpr std::byte esc_id = 0x8c_B;
-    static inline constexpr std::byte gam_id = 0x8d_B;
+    static inline constexpr std::byte ascii_msg_start = 0x7f_B;
+    static inline constexpr std::byte msg_start = 0x80_B;
+    static inline constexpr std::byte broadcast_code = 0x80_B;
     
-    // 0x0f : receiver request
-    // 0xcf : esc request
-    // 0xaf : GPS
-    // 0x9f : vario
-    // 0xdf : GAM
-    // 0xef : Electric Air
+    static inline constexpr std::byte rec_code = 0x00_B;
+    static inline constexpr std::byte var_code = 0x09_B;
+    static inline constexpr std::byte gps_code = 0x0a_B;
+    static inline constexpr std::byte esc_code = 0x0c_B;
+    static inline constexpr std::byte gam_code = 0x0d_B;
+    static inline constexpr std::byte air_code = 0x0e_B;
+
+    static inline constexpr bool valid_code(std::byte code) {
+        return (code >= var_code) && (code <= air_code);
+    }
     
+    static inline constexpr std::byte binary_id(std::byte code) {
+        return 0x80_B | (code & 0x0f_B);
+    }
+    static inline constexpr std::byte ascii_id(std::byte code) {
+        return 0x0f_B | ((code & 0x0f_B) << 4);
+    }    
     
     struct TextMsg {
         inline static constexpr uint8_t rows = 8;
@@ -56,8 +105,8 @@ namespace Hott {
         using value_type = uint8_t;
         using line_type = etl::StringBuffer<columns>;
         using buffer_type = std::array<line_type, rows>; 
-        const uint8_t start_byte = 0x7b;		//#01 Starting constant value == 0x7b
-        uint8_t esc = 0;				//#02 Escape (higher-ranking menu in text mode or Text mode leave)
+        const std::byte start_byte = ascii_start_code;		//#01 Starting constant value == 0x7b
+        std::byte esc{0};				//#02 Escape (higher-ranking menu in text mode or Text mode leave)
         uint8_t warning_beeps = 0;	//#03 1=A 2=B ...
         buffer_type text{};
         const std::byte stop_byte = end_code;		//#172 constant value 0x7d
@@ -71,7 +120,7 @@ namespace Hott {
     struct EscMsg {
         using value_type = uint8_t;
         const std::byte start_byte = start_code;        
-        const std::byte esc_sensor_id = esc_id;
+        const std::byte esc_sensor_id = binary_id(esc_code);
         uint8_t warning_beeps = 0;
         const std::byte sensor_id = (esc_sensor_id << 4) & 0xf0_B;
         uint8_t inverse = 0x00;
@@ -114,7 +163,7 @@ namespace Hott {
     struct GamMsg {
         using value_type = uint8_t;
         const std::byte start_byte = start_code;          //#01 start byte constant value 0x7c
-        const std::byte gam_sensor_id = gam_id;       //#02 EAM sensort id. constat value 0x8d=GENRAL AIR MODULE
+        const std::byte gam_sensor_id = binary_id(gam_code);       //#02 EAM sensort id. constat value 0x8d=GENRAL AIR MODULE
         uint8_t warning_beeps = 0;       //#03 1=A 2=B ... 0x1a=Z  0 = no alarm
         /* VOICE OR BIP WARNINGS
                             Alarme sonore A.. Z, octet correspondant 1 à 26
@@ -167,8 +216,8 @@ namespace Hott {
         // 5    unknown
         // 6    unknown
         // 7    "ON" sign/text msg active
-        
-        std::array<uint8_t, 6> cell{};
+        inline static constexpr uint8_t numberOfCells = 6;
+        std::array<uint8_t, numberOfCells> cell{};
         
         //#7 Volt Cell 1 (in 2 mV increments, 210 == 4.20 V)
         //#8 Volt Cell 2 (in 2 mV increments, 210 == 4.20 V)
@@ -215,6 +264,12 @@ namespace Hott {
         using gam_size = std::integral_constant<uint8_t, sizeof(GamMsg)>;
 //        gam_size::_;
     }
+
+    template<typename Msg>
+    struct code_from_type;
+    
+    template<>
+    struct code_from_type<GamMsg> : std::integral_constant<std::byte, gam_code> {};
     
 }
 

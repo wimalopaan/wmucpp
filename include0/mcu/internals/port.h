@@ -52,9 +52,29 @@ namespace AVR {
             Port::dir() = std::byte{0};
         }
     };
-    
+
     template<AVR::Concepts::Letter Name, typename MCU = DefaultMcuType>
-    struct Port final {
+    struct Port;
+
+    template<AVR::Concepts::Letter Name, AVR::Concepts::AtMega0 MCU>
+    struct Port<Name, MCU> final {
+        using mcu = MCU;
+        using mcuport_type = typename MCU::PortRegister;
+        using name_type = Name;
+        Port() = delete;
+        static inline volatile std::byte& dir() {
+            return *getBaseAddr<mcuport_type , Name>()->dir;
+        }
+        static inline volatile std::byte& dirset() {
+            return *getBaseAddr<mcuport_type , Name>()->dirset;
+        }
+        static inline volatile std::byte& get() {
+            return *getBaseAddr<mcuport_type , Name>()->out;
+        }
+    };
+    
+    template<AVR::Concepts::Letter Name, AVR::Concepts::AtMega MCU>
+    struct Port<Name, MCU> final {
         using mcu = MCU;
         using mcuport_type = typename MCU::PortRegister;
         using name_type = Name;
@@ -83,8 +103,9 @@ namespace AVR {
             return *getBaseAddr<mcuport_type , Name>()->in;
         }
         template<uint8_t Bit, bool visible = !AVR::Groups::isAtMega_8<MCU>::value, typename = std::enable_if_t<visible>>
+//        template<uint8_t Bit>
         static inline void toggle() { 
-            static_assert(AVR::isSBICBICapable<mcuport_type , Name>(), "Port not sbi/sbi capable");
+            static_assert(AVR::isSBICBICapable<mcuport_type , Name>(), "Port not sbi/cbi capable");
             *getBaseAddr<mcuport_type , Name>()->in |= std::byte{(1 << Bit)}; // AVR specific toggle mechanism: write "1" to PortInputRegister
         }
         static inline void toggle(std::byte v) {
@@ -291,8 +312,59 @@ namespace AVR {
         (Pin::off(), ...);
     }
     
-    template<AVR::Concepts::Port Port, uint8_t PinNumber>
-    struct Pin final {
+    template<AVR::Concepts::Port Port, uint8_t PinNumber, typename MCU = DefaultMcuType>
+    struct Pin;
+    
+    template<AVR::Concepts::Port Port, uint8_t PinNumber, AVR::Concepts::AtMega0 MCU>
+    struct Pin<Port, PinNumber, MCU> final {
+        static_assert(PinNumber < 8, "wrong pin number");
+        Pin() = delete;
+        using mcu = typename Port::mcu;
+        typedef Port port;
+        static constexpr uint8_t number = PinNumber;
+        static constexpr std::byte pinMask{(1 << PinNumber)};
+//        static inline void on() __attribute__((always_inline)) {
+//            Port::get() |= pinMask; // single bit instruction sbi
+//        }
+//        static constexpr auto& high = on;
+//        static constexpr auto& pullup = on;
+//        static inline void off() __attribute__((always_inline)) { // single bit instruction cbi
+//            Port::get() &= ~pinMask;
+//        }
+//        static inline bool get() __attribute__((always_inline)) {
+//            return std::any(Port::get() & pinMask);
+//        }
+//        static constexpr auto& low = off;
+
+//        template<bool visible = !AVR::Groups::isAtMega_8<mcu>::value, typename = std::enable_if_t<visible>>
+//        static inline void toggle() {
+//            Port::template toggle<PinNumber>();
+//        }
+        
+//        template<bool visible = AVR::Groups::isAtMega_8<mcu>::value, typename = std::enable_if_t<visible>>
+//        static inline void toggleWithOnOff() {
+//            if (get()) {
+//                off();
+//            }
+//            else {
+//                on();
+//            }
+//        }
+
+        template<typename Dir>
+        static inline void dir() {        
+            if constexpr(std::is_same_v<Dir, AVR::Output>) {
+                port::dirset() = pinMask;
+            }
+        }
+//        static inline bool read() __attribute__((always_inline)){
+//            return (Port::read() & pinMask) != std::byte{0};
+//        }
+//        static constexpr auto& isHigh = read;
+    };
+
+    template<AVR::Concepts::Port Port, uint8_t PinNumber, AVR::Concepts::AtMega MCU>
+    struct Pin<Port, PinNumber, MCU> final {
         static_assert(PinNumber < 8, "wrong pin number");
         Pin() = delete;
         using mcu = typename Port::mcu;
@@ -409,6 +481,7 @@ namespace AVR {
         typedef Input dir_type;
         inline static void init() {
             Pin::template dir<Input>();
+            Pin::pullup();
         }
         inline static bool isActive() {
             return !Pin::isHigh();

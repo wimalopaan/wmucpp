@@ -52,5 +52,14 @@ namespace etl {
         
         return span<Length, value_type>(&c[Offset]);
     }
+
+    template<uint8_t Length, typename C>
+    inline auto make_span(uint8_t offset, C& c) {
+        assert((offset + Length) <= C::size());
+        
+        using value_type = etl::propagate_cv_value_type_t<C>;
+        
+        return span<Length, value_type>(&c[offset]);
+    }
     
 }

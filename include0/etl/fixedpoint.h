@@ -148,7 +148,7 @@ namespace etl {
             out_impl<Stream>(buffer);
         }
         
-        template<etl::Concepts::Stream Stream, Signed T, auto Bits>
+        template<etl::Concepts::Stream Stream, etl::Concepts::Signed T, uint8_t Bits>
         inline void out_impl(const FixedPoint<T, Bits>& f) {
             if (f.raw() < 0) {
                 out_impl<Stream>(Char{'-'});
@@ -157,13 +157,11 @@ namespace etl {
             out_impl<Stream>(f.fraction());
         }
     
-        template<etl::Concepts::Stream Stream, Unsigned T, uint8_t Bits>
+        template<etl::Concepts::Stream Stream, etl::Concepts::Unsigned T, uint8_t Bits>
         inline void out_impl(const FixedPoint<T, Bits>& f) {
             out_impl<Stream>(f.integerAbs());
             out_impl<Stream>(f.fraction());
         }
-        
     } // detail
-
 }
 

@@ -4,11 +4,40 @@
 
 namespace AVR {
     namespace Groups {
-        template<typename MCU> struct isAtMega_8;
-        template<typename MCU> struct isAtMega_X8;
-        template<typename MCU> struct isAtMega_X4;
+        template<typename MCU> struct isAtMega_8 : std::false_type {};
+        template<typename MCU> struct isAtMega_X8 : std::false_type {};
+        template<typename MCU> struct isAtMega_X4 : std::false_type {};
+        template<typename MCU> struct isAtMega0 : std::false_type {};
+
+        template<typename MCU> struct isAtTiny1 : std::false_type {};
+        template<typename MCU> struct isAtTiny_X4 : std::false_type {};
+        template<typename MCU> struct isAtTiny_X5 : std::false_type {};
+        
+        template<> struct isAtMega_8<ATMega8> : std::true_type {};
+
+        template<> struct isAtMega_X4<ATMega324PB> : std::true_type {};
+        template<> struct isAtMega_X4<ATMega1284P> : std::true_type {};
+
+        template<> struct isAtMega_X8<ATMega88P> : std::true_type {};
+        template<> struct isAtMega_X8<ATMega168P> : std::true_type {};
+        template<> struct isAtMega_X8<ATMega328P> : std::true_type {};
+        template<> struct isAtMega_X8<ATMega328PB> : std::true_type {};
+
+        template<> struct isAtMega0<ATMega4809> : std::true_type {};
+        
     }
+    
     namespace Concepts {
+        namespace detail {
+            
+        }
+        
+        template<typename MCU>
+        concept bool AtMega0 = AVR::Groups::isAtMega0<MCU>::value;
+
+        template<typename MCU>
+        concept bool AtMega  = !AVR::Groups::isAtMega0<MCU>::value;
+        
         template<typename MCU>
         concept bool AtMega_8 = AVR::Groups::isAtMega_8<MCU>::value;
 
@@ -17,6 +46,12 @@ namespace AVR {
 
         template<typename MCU>
         concept bool AtMega_X4 = AVR::Groups::isAtMega_X4<MCU>::value;
+
+        template<typename MCU>
+        concept bool AtTiny_X4 = AVR::Groups::isAtTiny_X4<MCU>::value;
+
+        template<typename MCU>
+        concept bool AtTiny_X5 = AVR::Groups::isAtTiny_X5<MCU>::value;
         
         template<typename L>
         concept bool Letter = std::is_same_v<typename L::value_type, char>;
@@ -33,6 +68,9 @@ namespace AVR {
         };
         
         template<typename P>
+        concept bool McuPart = std::is_same_v<typename P::value_type, char> && ((P::value >= 'A') && (P::value <= 'H'));
+                
+        template<typename P>
         concept bool Port = requires (P p) { 
                 typename P::mcuport_type;
                 typename P::name_type;
@@ -40,7 +78,7 @@ namespace AVR {
         };
         
         template<typename P>
-        concept bool Pin = std::is_same<P, void>::value || requires (P p) { 
+        concept bool Pin = std::is_same_v<P, void> || requires (P p) { 
                 p.on();
                 p.off();
         };
@@ -51,10 +89,10 @@ namespace AVR {
                 I::isr_number;
         };
         template<typename I>
-        concept bool IServiceR = std::is_same<I, void>::value || IServiceRNonVoid<I>;
+        concept bool IServiceR = std::is_same_v<I, void> || IServiceRNonVoid<I>;
         
         template<typename I>
-        concept bool Interrupt = std::is_same<I, void>::value || requires (I i) {
+        concept bool Interrupt = std::is_same_v<I, void>|| requires (I i) {
                 I::number;
         };
         
@@ -64,7 +102,7 @@ namespace AVR {
         };
 
         template<typename S>
-        concept bool Stream = requires (S s) { 
+        concept bool Stream = requires(S s) { 
                 typename S::device_type;
                 typename S::line_terminator_type;
         };
@@ -72,6 +110,12 @@ namespace AVR {
         template<typename PA>
         concept bool ProtocolAdapter = requires(PA) {
                 PA::process(std::byte{0});
+        };
+
+        template<typename AC>
+        concept bool Actor = requires(AC) {
+                typename AC::value_type;     
+                AC::set(typename AC::value_type{});
         };
         
     }

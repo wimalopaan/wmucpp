@@ -29,8 +29,8 @@ namespace Hott {
     using namespace External::Units;
     
     template<uint8_t N>
-    class SensorProtocollBuffer final {
-        SensorProtocollBuffer() = delete;
+    class GamProtocollBuffer final {
+        GamProtocollBuffer() = delete;
         inline static GamMsg hottBinaryResponse{}; 
     public:
         typedef uint8_t index_type;

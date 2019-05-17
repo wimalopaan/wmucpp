@@ -22,19 +22,24 @@
 #include <etl/rational.h>
 #include <etl/fixedpoint.h>
 
-#include "groups.h"
+#include "../common/groups.h"
 
 namespace AVR {
     namespace AD {
         
-        struct V1_1;
-        struct V2_56;
+        struct V1_1 {
+            static constexpr float value = 1.1;
+        };
+        struct V2_56 {
+            static constexpr float value = 2.56;
+        };
         
         template<uint16_t Volts, uint16_t MilliVolts>
         struct Vextern {
             static constexpr float value = Volts + (0.001f * MilliVolts);
         };
-        template<typename Voltage, typename MCU> 
+        
+        template<typename Voltage, typename MCU = DefaultMcuType> 
         struct VRef {
             static constexpr auto refs = typename MCU::Adc::MUX{0};
             static constexpr float value = Voltage::value;
@@ -50,10 +55,12 @@ namespace AVR {
     template<>
     struct Resolution<10> {
         typedef etl::uint_ranged<uint16_t, 0, 1023> type;
+        inline static constexpr uint8_t bits = 10;
     };
     template<>
     struct Resolution<8> {
         typedef etl::uint_ranged<uint8_t, 0, 255> type;
+        inline static constexpr uint8_t bits = 8;
     };
     
     template<uint8_t N, typename Reso = Resolution<10>, typename VREF = AD::VRef<AD::V1_1, DefaultMcuType>, typename MCU = DefaultMcuType>
@@ -64,6 +71,7 @@ namespace AVR {
         static constexpr auto mcuAdc = getBaseAddr<typename MCU::Adc, N>;
         static constexpr auto channelMask = MCU::Adc::MUX::mux3 | MCU::Adc::MUX::mux2 | MCU::Adc::MUX::mux1 | MCU::Adc::MUX::mux0;
         
+        using reso_type = Reso;
         typedef typename Reso::type value_type;
         typedef etl::FixedPoint<uint16_t, 8> voltage_type;
         
@@ -141,7 +149,7 @@ namespace AVR {
         }
         
         static void channel(uint8_t ch) {
-            assert(ch < mcuadc_parameter_type::channelMasks.size);
+            assert(ch < mcuadc_parameter_type::channelMasks.size());
             mcuAdc()->admux.template setPartial<channelMask, etl::DisbaleInterrupt<etl::NoDisableEnable>>(mcuadc_parameter_type::channelMasks[ch]);
         }
     };

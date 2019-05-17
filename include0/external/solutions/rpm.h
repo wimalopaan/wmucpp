@@ -26,8 +26,6 @@
 #include <etl/concepts.h>
 #include <etl/algorithm.h>
 
-#include "mcu/internals/groups.h"
-
 #include "mcu/common/timer.h"
 
 #include "external/units/physical.h"
@@ -41,13 +39,14 @@ namespace External {
         
         template<auto TimerNumber, typename MCU = DefaultMcuType>
         constexpr uint16_t calculateRpm(const RPM& rpmMin, const RPM& rpmMax, uint32_t tvMin = 50) {
-            using mcu_timer_type = typename TimerParameter<TimerNumber, MCU>::mcu_timer_type;
             using value_type  = typename TimerParameter<TimerNumber, MCU>::value_type;  
+            using pBits = prescaler_bits_t<TimerNumber>;
             
-            using pBits = typename mcu_timer_type::template PrescalerBits<TimerNumber>;
-            auto p = prescalerValues(pBits::values);
-            
-            auto sortedPRow = etl::sort(p, std::greater<uint16_t>()); // absteigend
+            constexpr auto sortedPRow = []{
+                auto p = prescalerValues(pBits::values);
+                etl::sort(p, std::greater<uint16_t>()); // absteigend
+                return p;
+            }();
             
             for(const auto& p : sortedPRow) {
                 if (p > 0) {
@@ -67,20 +66,19 @@ namespace External {
     class RpmWithIcp final {
         RpmWithIcp() = delete;
     public:
-        using mcu_timer_type = typename TimerParameter<TimerNumber, MCU>::mcu_timer_type;
+        using mcu_timer_type = mcu_timer_t<TimerNumber>;
+        
         using value_type  = typename TimerParameter<TimerNumber, MCU>::value_type;        
         using ta = typename TimerParameter<TimerNumber, MCU>::ta;        
         using tb = typename TimerParameter<TimerNumber, MCU>::tb;        
-        
         using flags_type = typename TimerParameter<TimerNumber, MCU>::mcu_timer_interrupts_flags_type;
-        
         using ocAPin = typename TimerParameter<TimerNumber, MCU>::ocAPin;
         using ocBPin = typename TimerParameter<TimerNumber, MCU>::ocBPin;
         
         static constexpr auto mcu_timer = TimerParameter<TimerNumber, MCU>::mcu_timer;
         static constexpr auto mcu_timer_interrupts = TimerParameter<TimerNumber, MCU>::mcu_timer_interrupts;
                 
-        static_assert(sizeof (value_type) >= 2, "timer at least 16bit");
+        static_assert(std::is_same_v<value_type, uint16_t>, "timer must be 16bit with icp");
         static constexpr uint32_t minPeriod = 50;
         
         static constexpr auto prescaler = Rpm::Util::calculateRpm<TimerNumber>(MaxRpm, MinRpm, minPeriod);
@@ -111,7 +109,7 @@ namespace External {
             mMeasurements = 0;
         }
         
-        inline static void check() {
+        inline static bool check() {
             static uint8_t lastNumberOfMeasurements = 0;
             if (mMeasurements.isTop()) {
                 mMeasurements = MinMeasurements;
@@ -119,29 +117,31 @@ namespace External {
             else {
                 if (mMeasurements == lastNumberOfMeasurements) {
                     reset();
+                    return false;
                 }
             }
             lastNumberOfMeasurements = mMeasurements;
+            return true;
         }
         
         inline static constexpr hertz frequency() {
             if (filteredPeriod() > 0) {
                 return fTimer / (uint32_t)filteredPeriod();
             }
-            return {0};
+            return {};
         }
         
         inline static constexpr RPM rpm() {
             if (frequency().value > 0) {
                 return RPM{frequency()};
             }
-            return RPM{0};
+            return RPM{};
         }
         
         inline static constexpr void periodic() {
             if (mcu_timer_interrupts()->tifr.template isSet<flags_type::icf>()) {
                 mcu_timer_interrupts()->tifr.template reset<flags_type::icf>();
-                value_type actual = mcu_timer()->icr();
+                value_type actual = *mcu_timer()->icr;
                 if (actual >= mTimerStartValue) {
                     mActualPeriod = actual - mTimerStartValue;
                 }
@@ -152,7 +152,7 @@ namespace External {
                 ++mMeasurements;
             }
         }
-    private:
+//    private:
         inline static value_type mTimerStartValue = 0;
         inline static value_type mActualPeriod = 0;
         inline static etl::uint_ranged<uint8_t> mMeasurements{0};

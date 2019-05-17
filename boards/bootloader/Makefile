@@ -8,11 +8,11 @@
 #MCU = atmega88p
 #F_OSC = 16000000
 
-MCU = atmega8
-F_OSC = 16000000
-
-#MCU = atmega1284p
+#MCU = atmega8
 #F_OSC = 16000000
+
+MCU = atmega1284p
+F_OSC = 16000000
 
 #MCU = atmega32
 #F_OSC = 16000000

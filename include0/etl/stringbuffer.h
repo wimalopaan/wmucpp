@@ -61,9 +61,9 @@ namespace etl {
         }
         template<typename C, C... CC>
         inline constexpr void insertAtFill(uint8_t position, const PgmString<C, CC...>& ps) {
-            static_assert(Length > ps.size, "wrong length");
+            static_assert(Length > ps.size(), "wrong length");
             uint8_t i = position;
-            for(uint8_t j = 0; (i < Length) && (j < ps.size); ++i, ++j) {
+            for(uint8_t j = 0; (i < Length) && (j < ps.size()); ++i, ++j) {
                 data[i] = ps[j];
             }
             for(; i < Length; ++i) {
@@ -98,15 +98,15 @@ namespace etl {
             }
         }
         inline constexpr const T& at(uint8_t index) const {
-            assert(index < size);
+            assert(index < size());
             return data[index];
         }
         inline constexpr const T& operator[](uint8_t index) const {
-            assert(index < size);
+            assert(index < size());
             return data[index];
         }
         inline constexpr T& operator[](uint8_t index) {
-            assert(index < size);
+            assert(index < size());
             return data[index];
         }
         inline constexpr const volatile T& operator[](uint8_t index) const volatile {
