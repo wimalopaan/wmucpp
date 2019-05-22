@@ -45,14 +45,33 @@
 #include <external/solutions/rpm.h>
 #include <external/solutions/ppm.h>
 #include <external/solutions/button.h>
-
+#include <external/solutions/blinker.h>
 
 namespace  {
     using namespace std::literals::chrono;
     using namespace External::Units;
     using namespace External::Units::literals;
-    constexpr auto fPWM = 1000_Hz;
+    constexpr auto fPWM = 4000_Hz;
+    constexpr auto fPWM2 = 500_Hz;
+    
+    constexpr auto ledPulse = 300_ms;
+    constexpr auto ledPeriod = 1500_ms;
 }
+
+struct Storage final {
+    enum class AVKey : uint8_t {MaxPpm = 0, MinPpm, Init1, Init2, _Number};
+    
+    struct ApplData : public EEProm::DataBase<ApplData> {
+        uint16_t& operator[](AVKey key) {
+            return AValues[static_cast<uint8_t>(key)];
+        }
+    private:
+        std::array<uint16_t, static_cast<uint8_t>(AVKey::_Number)> AValues{};
+    };
+};
+
+using eeprom = EEProm::Controller<Storage::ApplData>;
+auto& appData = eeprom::data();
 
 using PortB = AVR::Port<AVR::B>;
 using PortC = AVR::Port<AVR::C>;
@@ -63,7 +82,7 @@ using pinBn = AVR::ActiveHigh<AVR::Pin<PortD, 0>, AVR::Output>;
 using pinAp = AVR::ActiveLow<AVR::Pin<PortD, 1>, AVR::Output>;
 using pinBp = AVR::ActiveLow<AVR::Pin<PortC, 5>, AVR::Output>;
 
-using led = AVR::ActiveLow<AVR::Pin<PortD, 7>, AVR::Output>;
+using ledPin = AVR::ActiveLow<AVR::Pin<PortD, 7>, AVR::Output>;
 
 using buttonPin = AVR::ActiveLow<AVR::Pin<PortD, 6>, AVR::Input>;
 using button = External::Button<buttonPin>;
@@ -89,10 +108,23 @@ struct Bridge final {
         pinBn::init();
         pinBp::init();
     }    
+    
+    inline static void lowSideOff() {
+        pinAn::inactivate();
+        pinBn::inactivate();
+    }
+    inline static void highSideOff() {
+        pinAp::inactivate();
+        pinBp::inactivate();
+    }
+    
+    inline static void allOff() {
+        lowSideOff();
+        highSideOff();
+    }
     struct OCAHandler : public AVR::IsrBaseHandler<typename AVR::ISR::Timer<PWM::number>::CompareA> {
         inline static void isr() {
-            pinAn::inactivate();
-            pinBn::inactivate();
+            lowSideOff();
         }
     };
     struct OCBHandler : public AVR::IsrBaseHandler<typename AVR::ISR::Timer<PWM::number>::CompareB> {
@@ -132,25 +164,32 @@ struct Bridge final {
     };
     
     static inline void beep(bool on) {
-        etl::Scoped<etl::DisbaleInterrupt<>> di;
+        etl::Scoped<etl::DisbaleInterrupt<etl::ForceOn>> di;
         if (on) {
-            pwm::enable(AVR::PWM::ChannelA<false>());
-            backward = false;
+            pwm::off();
+            allOff();
+            pwm::template f<fPWM2>();
+            pwm::b(20);
+            pwm::enable(AVR::PWM::Overflow<true>());
             pwm::enable(AVR::PWM::ChannelB<true>());
-            pwm::b(10);
+            backward = false;
+            beepPhase = 0;
         }
         else {
             pwm::off();
+            allOff();
+            pwm::template f<fPWM>();
+            backward = false;
         }
     }
     
     static inline void off() {
-        etl::Scoped<etl::DisbaleInterrupt<>> di;
+        etl::Scoped<etl::DisbaleInterrupt<etl::ForceOn>> di;
         pwm::off();
-        OCAHandler::isr();
+        allOff();
     }
     static inline void on() {
-        etl::Scoped<etl::DisbaleInterrupt<>> di;
+        etl::Scoped<etl::DisbaleInterrupt<etl::ForceOn>> di;
         pwm::enable(AVR::PWM::ChannelA<true>());
         pwm::enable(AVR::PWM::Overflow<true>());
     }
@@ -166,7 +205,7 @@ struct Bridge final {
         
         value_type t = (etl::enclosing_t<value_type>(d.toInt()) * std::numeric_limits<pwm_type>::max()) / span;
         
-        value_type lastt;
+        value_type lastt = 0;
         
         if (t == lastt) return;
         
@@ -179,7 +218,7 @@ struct Bridge final {
             on();
         }
         if (t < (std::numeric_limits<pwm_type>::max() - 20)){
-            etl::Scoped<etl::DisbaleInterrupt<>> di;
+            etl::Scoped<etl::DisbaleInterrupt<etl::ForceOn>> di;
             backward = back;        
             pwm::a(t);
             
@@ -197,7 +236,7 @@ struct Bridge final {
         }
         else {
             mFull = true;
-            etl::Scoped<etl::DisbaleInterrupt<>> di;
+            etl::Scoped<etl::DisbaleInterrupt<etl::ForceOn>> di;
             backward = back;        
             off();
             if (backward) {
@@ -214,16 +253,15 @@ struct Bridge final {
             }
         }
     }
-    
-    static inline volatile bool mFull = false;
 private:
+    static inline volatile bool mFull = false;
     static inline volatile bool backward = false;
     static inline volatile etl::uint_ranged_circular<uint8_t, 0, 3> beepPhase;
 };
 
 using bridge = Bridge<pinAn, pinAp, pinBn, pinBp, pwm>;
 
-template<typename BR, auto PulseCount = 100u>
+template<typename BR, auto PulseCount = 10u>
 struct MotorBeeper {
     using dev = BR;
     static inline void periodic() {
@@ -232,7 +270,7 @@ struct MotorBeeper {
             if (mCount == mPulseCount) {
                 dev::beep(false);
             }
-            if (mCount == (2 * mPulseCount)) {
+            if (mCount >= (2 * mPulseCount)) {
                 dev::beep(true);
                 mCount = 0;
             }
@@ -241,7 +279,7 @@ struct MotorBeeper {
     static inline void beep(bool on) {
         mOn = on;
         mCount = 0;
-        dev::beep(true);
+        dev::beep(on);
     }
     static inline void pulse(uint16_t c) {
         mPulseCount = c;
@@ -255,6 +293,10 @@ private:
 using beeper = MotorBeeper<bridge>;
 
 using ppm = External::Ppm::IcpPpm<AVR::TimerNumber<1>, External::Ppm::RisingEdge<false>>; 
+
+using led = External::Blinker<ledPin, ppm::exact_intervall, ledPulse, ledPeriod>;
+
+
 
 template<typename Actuator, uint8_t MaxIncrement = 10> 
 struct Controller {
@@ -340,7 +382,7 @@ using fsm = EscStateFsm<controller>;
 
 template<typename TUnit>
 struct GlobalFSM {
-    enum class State : uint8_t {Undefined = 0, Startup, ThrottleWarn, ThrottleSet, Run, _Number};
+    enum class State : uint8_t {Undefined = 0, Startup, ThrottleWarn, ThrottleSetMax, ThrottleSetMin, ThrottleSetNeutral, Run, _Number};
     enum class Beep  : uint8_t {Off, Low, High, _Number};
     
     static inline constexpr auto intervall = TUnit::exact_intervall;
@@ -348,6 +390,14 @@ struct GlobalFSM {
     using ppm_type = decltype(ppm::pulse());
     
     static inline void init() {
+        mMaxPpm = appData[Storage::AVKey::MaxPpm];
+        mMinPpm = appData[Storage::AVKey::MinPpm];
+    }
+
+    static inline void saveToEEprom() {
+        appData[Storage::AVKey::MaxPpm] = mMaxPpm;
+        appData[Storage::AVKey::MinPpm] = mMinPpm;
+        appData.change();
     }
     
     template<typename T>
@@ -365,7 +415,7 @@ struct GlobalFSM {
         switch (mState) {
         case State::Undefined:
             if (mButtonPressed) {
-                mState = State::ThrottleSet;
+                mState = State::ThrottleSetMax;
                 mButtonPressed = false;
             }
             if (++mStateCounter > 50u) {
@@ -387,22 +437,34 @@ struct GlobalFSM {
                 mState = State::Run;
             }
             break;
-        case State::ThrottleSet:
-            if (p > mMaxPpm) {
-                mMaxPpm = p.toInt();
-            }
-            if (p < mMinPpm) {
-                mMinPpm = p.toInt();
-            }
+        case State::ThrottleSetMax:
+            mMaxPpm = p.toInt();
             if (mButtonPressed) {
                 mButtonPressed = false;
-                mState = State::Run;
+                saveToEEprom();
+                mState = State::ThrottleSetNeutral;
+            }
+            break;
+        case State::ThrottleSetNeutral:
+            if (mButtonPressed) {
+                mButtonPressed = false;
+                saveToEEprom();
+                mState = State::ThrottleSetMin;
+            }
+            break;
+        case State::ThrottleSetMin:
+            mMinPpm = p.toInt();
+            if (mButtonPressed) {
+                mButtonPressed = false;
+                saveToEEprom();
+                mState = State::Startup;
             }
             break;
         case State::Run:
             if (mButtonPressed) {
                 mButtonPressed = false;
-                mState = State::ThrottleSet;
+                saveToEEprom();
+                mState = State::ThrottleSetMax;
             }
             mScaled = scale(p);
             fsm::update(mScaled);
@@ -414,15 +476,15 @@ struct GlobalFSM {
             mStateCounter = 0;
             switch (mState) {
             case State::Undefined:
-                led::inactivate();
+                led::off();
                 break;
             case State::Startup:
-                led::activate();
+                led::steady();
                 break;
             case State::ThrottleWarn:
                 beeper::beep(true);
                 break;
-            case State::ThrottleSet:
+            case State::ThrottleSetMax:
                 mMaxPpm = 300;
                 mMinPpm = -300;
                 break;
@@ -439,7 +501,6 @@ struct GlobalFSM {
         mButtonPressed = true;
     }
     
-    
     static inline State mState = State::Undefined;
     static inline ppm_type mScaled;;
     static inline ppm_type::value_type mMaxPpm = ppm_type::Upper;
@@ -451,25 +512,10 @@ private:
 
 using gfsm = GlobalFSM<ppm>;
 
-using adc = AVR::Adc<0>;
-using adcController = External::Hal::AdcController<adc, 0, 1, 2, 7, 6>;
+using adc = AVR::Adc<0, AVR::Resolution<10>, AVR::AD::VRef<AVR::AD::Vextern<2,523>>>;
+using adcController = External::Hal::AdcController<adc, 6, 7, 8>;
 
 using alarmTimer = External::Hal::AlarmTimer<ppm>;
-
-struct Storage {
-    enum class AVKey : uint8_t {MaxPpm= 0, MinPpm, _Number};
-    
-    struct ApplData : public EEProm::DataBase<ApplData> {
-        etl::uint_NaN<uint16_t>& operator[](AVKey key) {
-            return AValues[static_cast<uint8_t>(key)];
-        }
-    private:
-        std::array<etl::uint_NaN<uint16_t>, static_cast<uint8_t>(AVKey::_Number)> AValues{};
-    };
-};
-
-using eeprom = EEProm::Controller<Storage::ApplData>;
-auto& appData = eeprom::data();
 
 using isrRegistrar = AVR::IsrRegistrar<bridge::OCAHandler, bridge::OCBHandler, bridge::OVFHandler>;
 
@@ -478,6 +524,15 @@ int main() {
     using namespace std;
     using namespace AVR;
     
+    eeprom::init();
+    if ((appData[Storage::AVKey::Init1] != 42) || (appData[Storage::AVKey::Init2] != 43)) {
+        appData[Storage::AVKey::Init1] = 42;
+        appData[Storage::AVKey::Init2] = 43;
+        appData[Storage::AVKey::MaxPpm] = 500;
+        appData[Storage::AVKey::MinPpm] = -500;
+        appData.change();
+    }
+    
     button::init();
     gfsm::init();
     
@@ -485,7 +540,6 @@ int main() {
     
     fsm:: init();
     
-    eeprom::init();
     adcController::init();
     ppm::init();
     uart::init();
@@ -500,21 +554,24 @@ int main() {
         etl::outl<terminal>("test04"_pgm);
         
         const auto t = alarmTimer::create(1000_ms, External::Hal::AlarmFlags::Periodic);
-        
+
         while(true) {
+            adcController::periodic();
             uart::periodic();
             ppm::periodic();
-            ppm::overflow([&]{
+            ppm::overflow([&]{ // called every ppm::exact_interval ms;
                 button::periodic([]{
-                    //                    led::toggle();
                     gfsm::buttonPressed();
                 });            
                 beeper::periodic();
                 gfsm::periodic();
+                led::periodic();
                 alarmTimer::periodic([&](auto timer){
                     if (t == timer) {
-                        etl::outl<terminal>("c: "_pgm, ++c, "gs "_pgm, (uint8_t)gfsm::mState, " ma "_pgm, gfsm::mMaxPpm, " mi "_pgm, gfsm::mMinPpm, " sc "_pgm, gfsm::mScaled.toInt(), " bf "_pgm, bridge::mFull);                        
+                        etl::outl<terminal>("c: "_pgm, ++c, " gs "_pgm, (uint8_t)gfsm::mState, " ma "_pgm, gfsm::mMaxPpm, " mi "_pgm, gfsm::mMinPpm);                        
+                        etl::outl<terminal>("c: "_pgm, ++c, " a6 "_pgm, adcController::value(0).toInt(), " a7 "_pgm, adcController::value(1).toInt(), " te "_pgm, adcController::value(2).toInt());                        
                     }
+                    appData.expire();
                 });
             });
             if(eeprom::saveIfNeeded()) {

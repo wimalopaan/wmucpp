@@ -99,7 +99,7 @@ namespace AVR {
         template<BitType F, typename DI = etl::DisbaleInterrupt<etl::RestoreState>>
         void inline setPartial(BitType v) {
             [[maybe_unused]] etl::Scoped<DI> di;
-            hwRegister = (hwRegister & static_cast<value_type>(~F)) | static_cast<value_type>(v);
+            hwRegister = (hwRegister & static_cast<value_type>(~F)) | (static_cast<value_type>(F) & static_cast<value_type>(v));
         }
         template<BitType F, typename DI = etl::DisbaleInterrupt<etl::RestoreState>>
         void inline add() {

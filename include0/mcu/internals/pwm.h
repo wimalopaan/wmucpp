@@ -203,6 +203,22 @@ namespace AVR {
                 static_assert(tsd, "wrong prescaler");
                 return tsd.ocr;
             }
+
+            template<const hertz& Frequency>
+            inline static constexpr void f() {
+                constexpr auto tsd = AVR::PWM::Util::calculate<TimerNumber::value>(Frequency);
+                static_assert(tsd, "wrong prescaler");
+                
+//                using x1 = std::integral_constant<uint16_t, tsd.prescaler>::_;;
+//                using x2 = std::integral_constant<uint16_t, tsd.ocr>::_;
+                
+                constexpr auto bits = bitsFrom<tsd.prescaler>(prescaler_bits_v<TimerNumber::value>);   
+                
+//                std::integral_constant<uint8_t, (uint8_t)bits>::_;
+                
+                static_assert(isset(bits), "wrong prescaler");
+                mcu_timer()->tccrb.template set<bits>();
+            }
             
             template<const hertz& Frequency>
             inline static constexpr void init() {
@@ -214,17 +230,13 @@ namespace AVR {
                 
                 constexpr auto bits = bitsFrom<tsd.prescaler>(prescaler_bits_v<TimerNumber::value>);   
                 
-//                constexpr auto bits = tb::cs1;
-                
-                std::integral_constant<uint8_t, (uint8_t)bits>::_;
+//                std::integral_constant<uint8_t, (uint8_t)bits>::_;
                 
                 static_assert(isset(bits), "wrong prescaler");
                 mcu_timer()->tccrb.template set<bits>();
                 
                 // mode 3
                 mcu_timer()->tccra.template set<ta::wgm1 | ta::wgm0>();
-
-                on();                
             }
             
             template<bool B, bool visible = UseA::value>

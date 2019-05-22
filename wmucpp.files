@@ -158,6 +158,7 @@ boards/ppmmatrix/board.h
 boards/ppmmatrix/board.txt
 boards/ppmmatrix/doc/Makefile
 boards/ppmmatrix/doc/matrix.adoc
+boards/ppmmatrix/schaltmodul.cc
 boards/ppmmatrix/servotester.cc
 boards/ppmmatrix/test00.cc
 boards/ppmmatrix/test01.cc
@@ -393,6 +394,7 @@ include0/external/hott/sensortextprotocollbuffer.h
 include0/external/hott/sumdprotocoll.h
 include0/external/hott/sumdprotocolladapter.h
 include0/external/onewire/onewire.h
+include0/external/solutions/blinker.h
 include0/external/solutions/button.h
 include0/external/solutions/ds18b20.h
 include0/external/solutions/gps.h

@@ -13,3 +13,5 @@ include0/mcu/internals
 include0/mcu
 boards/bmc/robbenavy540
 include0/mcu/mega
+boards/blmc
+boards/ppmmatrix

@@ -36,5 +36,6 @@ targets += test00.elf test00.S
 #targets += test04.elf
 
 targets += servotester.elf 
+targets += schaltmodul.elf 
 
 -include ../../Makefile.avr0.include

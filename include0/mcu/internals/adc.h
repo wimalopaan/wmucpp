@@ -150,6 +150,7 @@ namespace AVR {
         
         static void channel(uint8_t ch) {
             assert(ch < mcuadc_parameter_type::channelMasks.size());
+            
             mcuAdc()->admux.template setPartial<channelMask, etl::DisbaleInterrupt<etl::NoDisableEnable>>(mcuadc_parameter_type::channelMasks[ch]);
         }
     };

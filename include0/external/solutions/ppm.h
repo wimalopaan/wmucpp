@@ -61,7 +61,6 @@ namespace External {
             static inline constexpr auto exact_intervall = duration_cast<milliseconds>(std::numeric_limits<value_type>::max() / f);
             static_assert(exact_intervall.value > 0);
             
-            
             static inline constexpr value_type ppm_pause = 19_ms * f;
             static inline constexpr value_type ppm_min  = 1_ms * f;
             static inline constexpr value_type ppm_max  = 2_ms * f;

@@ -456,6 +456,11 @@ namespace etl {
             mValue = rhs;
             return *this;
         }
+        inline constexpr void operator=(T rhs) volatile {
+            assert(rhs >= LowerBound);
+            assert(rhs <= UpperBound);
+            mValue = rhs;
+        }
         inline constexpr uint_ranged<T, LowerBound, UpperBound> toRanged() const {
             return {mValue};
         }

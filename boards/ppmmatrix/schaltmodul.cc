@@ -1,6 +1,6 @@
 //#define NDEBUG
 
-#define SERVOTESTER
+#define SCHALTMODUL
 
 template<typename S1, typename S2>
 [[noreturn]] void assertFunction([[maybe_unused]] const S1& expr, [[maybe_unused]] const S2& file, [[maybe_unused]] unsigned int line) {
@@ -170,7 +170,7 @@ int main() {
     {
         Scoped<EnableInterrupt<>> ei;
 
-        log0::outl("ServoTester 01"_pgm);    
+        log0::outl("Schaltmodul 01"_pgm);    
         
         while(true) {
             ppmInPin::toggle();

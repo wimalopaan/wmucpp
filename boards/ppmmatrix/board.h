@@ -95,21 +95,20 @@ using cppm = AVR::Cppm<1, AVR::A, 8, multiplexer, ppmInPin>;
 struct AsciiHandler;
 struct BinaryHandler;
 struct BCastHandler;
-using sensorPA = Hott::SensorProtocollAdapter<0, Hott::gam_id, AsciiHandler, BinaryHandler, BCastHandler>;
+using sensorPA = Hott::SensorProtocollAdapter<0, Hott::gam_code, AsciiHandler, BinaryHandler, BCastHandler>;
 using sensorUsart = AVR::Usart<0, sensorPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>> ;
 using roboremoPA = External::RoboRemo::ProtocollAdapter<0, 16>;
 using btUsart = AVR::Usart<0, roboremoPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>> ;
 #endif
 
 
-#ifdef SERVOTESTER
+#if defined(SERVOTESTER) || defined(SCHALTMODUL)
 using qtroboPA = External::QtRobo::ProtocollAdapter<0>;
 using qtroboUsart = AVR::Usart<0, qtroboPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<512>> ;
 #endif
 
-
-using sensorData = Hott::SensorProtocollBuffer<0>;
-using menuData = Hott::SensorTextProtocollBuffer<0>;
+using sensorData = Hott::GamProtocollBuffer<0>;
+using menuData = Hott::SensorTextProtocollBuffer<Hott::gam_code, 0>;
 
 #ifdef MATRIX
 using crWriterSensorBinary = ConstanteRateWriter<sensorData, sensorUsart>;

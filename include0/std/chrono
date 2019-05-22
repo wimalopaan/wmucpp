@@ -149,6 +149,10 @@ namespace std {
             return (lhs.value > rhs.value) || (lhs.value == rhs.value);
         }
 
+        template<typename R, typename P>
+        constexpr bool operator<=(const duration<R, P>& lhs, const duration<R, P>& rhs) {
+            return (lhs.value < rhs.value) || (lhs.value == rhs.value);
+        }
 
     }
 }

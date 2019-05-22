@@ -75,7 +75,7 @@ struct CommFSM {
         if (paired::isHigh()) {
             if (!btInitialized) {
                 rxSelect::off();
-                btUsart::init<9600>();
+                btUsart::init<AVR::BaudRate<9600>>();
                 btInitialized = true;
                 sensorInitialized = false;
             }
@@ -86,7 +86,7 @@ struct CommFSM {
         else {
             if (!sensorInitialized) {
                 rxSelect::on();
-                sensorUsart::init<19200>();
+                sensorUsart::init<AVR::BaudRate<19200>>();
                 sensorInitialized = true;
                 btInitialized = false;
             }
@@ -247,7 +247,7 @@ int main() {
     crWriterSensorBinary::init();
     crWriterSensorText::init();
 
-    rcUsart::init<115200>();
+    rcUsart::init<AVR::BaudRate<115200>>();
     
     const auto t = alarmTimer::create(1000_ms, External::Hal::AlarmFlags::Periodic);
 

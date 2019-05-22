@@ -1,10 +1,22 @@
 # auslesen 
 
-# sudo avrdude -p atmega8 -P usb -c avrisp2 -V  -U flash:r:extract.hex:i
+# Auslesen der Lock-Bits
+
+# sudo avrdude -p atmega8 -P usb -c avrisp2 -V  -U lock:r:-:b
+
+bei 0b11111111 sind alle lockbits gesetzt
+
+# DPower 25A
+# liest nur Testmuster aus (liegt wohl an den lock-bits)
+
+# sudo avrdude -p atmega8 -P usb -c avrisp2 -V  -U flash:r:extract.hex:r
 
 # programmiern
 
 # Hobbyking 30A F-30A
+# sudo avrdude -p atmega8 -P usb -c avrisp2 -V -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -U flash:w:bs_nfet.hex
+
+# DPower 25 A
 # sudo avrdude -p atmega8 -P usb -c avrisp2 -V -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -U flash:w:bs_nfet.hex
 
 # Hobbyking 80A F-80A
