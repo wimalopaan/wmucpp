@@ -11,7 +11,7 @@
 
 #include <external/hott/experimental/sensor.h>
 
-using sensor = Hott::Experimental::Sensor<0, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, systemClock>;
+using sensor = Hott::Experimental::Sensor<AVR::Component::Usart<0>, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, systemClock>;
 
 int main() {
     using namespace etl;

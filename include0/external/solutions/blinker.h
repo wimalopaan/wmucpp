@@ -38,7 +38,7 @@ namespace External {
         static_assert(Pulse <= Period, "wrong parameter");
         
         static inline constexpr auto pulseWidthCount = Pulse / Intervall;
-        static inline constexpr auto periodWidthCount = Pulse / Intervall;
+        static inline constexpr auto periodWidthCount = Period / Intervall;
         
         using value_type = etl::typeForValue_t<periodWidthCount>;
 //        value_type::_;
@@ -57,6 +57,7 @@ namespace External {
         static inline void blink(etl::uint_ranged<uint8_t, 0, maxDisplayablePulses> count) {
             mState = State::Blink;
             mBlinkCount = count;
+            mStateCounter = 0;
         }
         static inline void periodic() {
             switch(mState) {
@@ -83,6 +84,7 @@ namespace External {
                 else {
                     Pin::inactivate();
                 }
+                ++mStateCounter;
                 break;
             default:
                 break;

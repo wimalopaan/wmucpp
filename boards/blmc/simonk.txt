@@ -4,12 +4,12 @@
 
 # sudo avrdude -p atmega8 -P usb -c avrisp2 -V  -U lock:r:-:b
 
-bei 0b11111111 sind alle lockbits gesetzt
+# bei 0b11111111 sind alle lockbits gesetzt
 
 # DPower 25A
 # liest nur Testmuster aus (liegt wohl an den lock-bits)
 
-# sudo avrdude -p atmega8 -P usb -c avrisp2 -V  -U flash:r:extract.hex:r
+# sudo avrdude -p atmega8 -P usb -c avrisp2 -V  -U flash:r:extract.hex:i
 
 # programmiern
 
@@ -20,4 +20,13 @@ bei 0b11111111 sind alle lockbits gesetzt
 # sudo avrdude -p atmega8 -P usb -c avrisp2 -V -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -U flash:w:bs_nfet.hex
 
 # Hobbyking 80A F-80A
+
+# lockbits = 0b11111100
+
 # sudo avrdude -p atmega8 -P usb -c avrisp2 -V -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -U flash:w:bs.hex
+
+# RedBrick 70A
+
+# lockbits: 0b11100000
+
+# sudo avrdude -p atmega8 -P usb -c avrisp2 -V -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -U flash:w:birdie70a.hex

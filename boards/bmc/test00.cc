@@ -50,7 +50,7 @@ using PortE = AVR::Port<AVR::E>;
 using pc1 = AVR::Pin<PortC, 3>;
 using pc0 = AVR::Pin<PortC, 4>;
 
-using txd0Enable = AVR::Pin<PortD, 3>;
+using sensorTxEnable = AVR::Pin<PortD, 3>;
 
 using inh1 = AVR::Pin<PortD, 5>;
 using inh2 = AVR::Pin<PortB, 0>;
@@ -66,9 +66,9 @@ struct BCastHandler;
 
 using sensorPA = Hott::SensorProtocollAdapter<0, Hott::esc_code, AsciiHandler, BinaryHandler, BCastHandler>;
 
-using sensorUsart = AVR::Usart<0, sensorPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>> ;
+using sensorUsart = AVR::Usart<AVR::Component::Uart<0>, sensorPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>> ;
 
-using rcUsart = AVR::Usart<1, qtPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
+using rcUsart = AVR::Usart<AVR::Component::Uart<1>, qtPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
 //using rcUsart = AVR::Usart<1, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
 //using rcUsart = AVR::Usart<1, sumd, AVR::UseInterrupts<true>, AVR::ReceiveQueueLength<0>>;
 
@@ -83,10 +83,10 @@ using crWriterSensorBinary = ConstanteRateWriter<escData, sensorUsart>;
 using menuData = Hott::SensorTextProtocollBuffer<Hott::gam_code, 0>;
 using crWriterSensorText = ConstanteRateWriter<menuData, sensorUsart>;
 
-using pwm = AVR::PWM::DynamicPwm<AVR::TimerNumber<1>>;
+using pwm = AVR::PWM::DynamicPwm<AVR::Component::Timer<1>>;
 using hbridge = External::IFX007::HBridge<pwm, sumd::value_type>;
 
-using adc = AVR::Adc<0>;
+using adc = AVR::Adc<AVR::Component::Adc<0>>;
 using adcController = External::Hal::AdcController<adc>;
 
 namespace  {
@@ -102,9 +102,9 @@ namespace  {
     constexpr RPM MinimumRpm{100};
 }
 
-using rpm= External::RpmWithIcp<3, MinimumRpm, MaximumRpm>;
+using rpm= External::RpmWithIcp<AVR::Component::Timer<3>, MinimumRpm, MaximumRpm>;
 
-using systemClock = AVR::SystemTimer<0, interval>;
+using systemClock = AVR::SystemTimer<AVR::Component::Timer<0>, interval>;
 using alarmTimer = External::Hal::AlarmTimer<systemClock>;
 
 struct Storage {
@@ -319,8 +319,8 @@ int main() {
     pc0::dir<Output>();
     pc1::dir<Output>();
 
-    txd0Enable::dir<Output>();
-    txd0Enable::off();
+    sensorTxEnable::dir<Output>();
+    sensorTxEnable::off();
 
     inh1::dir<Output>();
     inh1::on();

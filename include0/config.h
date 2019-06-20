@@ -18,7 +18,13 @@ namespace Project {
     
         static_assert(fMcuMhz.value <= 20, "F_CPU too high");
         static_assert(fMcuMhz.value >=  1, "F_CPU too low");
-    
+
+        inline static constexpr hertz fRtc{32768};
+        
+        static_assert(fRtc.value <= 32768, "F_RTC too high");
+        static_assert(fRtc.value >=  1024, "F_RTC too low");
+        
+        
     //    struct Timer {
     //        inline static constexpr uint8_t NumberOfTimers = 8;
     //        inline static constexpr std::hertz frequency = 100_Hz;

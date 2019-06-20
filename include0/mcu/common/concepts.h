@@ -7,11 +7,13 @@ namespace AVR {
         template<typename MCU> struct isAtMega_8 : std::false_type {};
         template<typename MCU> struct isAtMega_X8 : std::false_type {};
         template<typename MCU> struct isAtMega_X4 : std::false_type {};
+        
         template<typename MCU> struct isAtMega0 : std::false_type {};
 
-        template<typename MCU> struct isAtTiny1 : std::false_type {};
         template<typename MCU> struct isAtTiny_X4 : std::false_type {};
         template<typename MCU> struct isAtTiny_X5 : std::false_type {};
+        
+        template<typename MCU> struct isAtTiny1 : std::false_type {};
         
         template<> struct isAtMega_8<ATMega8> : std::true_type {};
 
@@ -25,18 +27,24 @@ namespace AVR {
 
         template<> struct isAtMega0<ATMega4809> : std::true_type {};
         
+        template<> struct isAtTiny1<ATTiny412> : std::true_type {};
     }
     
     namespace Concepts {
         namespace detail {
-            
         }
         
         template<typename MCU>
         concept bool AtMega0 = AVR::Groups::isAtMega0<MCU>::value;
 
         template<typename MCU>
-        concept bool AtMega  = !AVR::Groups::isAtMega0<MCU>::value;
+        concept bool AtTiny1 = AVR::Groups::isAtTiny1<MCU>::value;
+
+        template<typename MCU>
+        concept bool At01Series = (AVR::Groups::isAtTiny1<MCU>::value || AVR::Groups::isAtMega0<MCU>::value);
+
+        template<typename MCU>
+        concept bool AtMega  = !(AVR::Groups::isAtTiny1<MCU>::value || AVR::Groups::isAtMega0<MCU>::value);
         
         template<typename MCU>
         concept bool AtMega_8 = AVR::Groups::isAtMega_8<MCU>::value;
@@ -69,7 +77,20 @@ namespace AVR {
         
         template<typename P>
         concept bool McuPart = std::is_same_v<typename P::value_type, char> && ((P::value >= 'A') && (P::value <= 'H'));
-                
+
+        template<typename C>
+        concept bool ComponentNumber = requires(C) {
+            typename C::value_type;
+            C::value;
+        };        
+
+        template<typename C>
+        concept bool ComponentSpecifier = requires(C) {
+            typename C::component_type;
+//            typename C::value_type;
+//            C::value_type::value;
+        };        
+        
         template<typename P>
         concept bool Port = requires (P p) { 
                 typename P::mcuport_type;

@@ -49,7 +49,7 @@ namespace  {
     constexpr auto interval = Hott::hottDelayBetweenBytes;
 }
 
-using systemClock = AVR::SystemTimer<0, interval>;
+using systemClock = AVR::SystemTimer<AVR::Component::Timer<0>, interval>;
 using alarmTimer = External::Hal::AlarmTimer<systemClock>;
 
 int main() {

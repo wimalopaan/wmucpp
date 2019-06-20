@@ -66,5 +66,36 @@ namespace Hott {
         private:
             Hott::GamMsg& mData;
         };
+        
+        template<>
+        struct Adapter<Hott::EscMsg> {
+            Adapter(Hott::EscMsg& data) : mData(data) {}
+            inline void rpmRaw(uint16_t v) {
+                mData.rpm= v;
+            }
+            inline void rpmMaxRaw(uint16_t v) {
+                mData.rpm_max = v;
+            }
+            inline void voltageRaw(uint16_t v) {
+                mData.voltage = v;
+            }
+            inline void voltageMinRaw(uint16_t v) {
+                mData.voltage_min = v;
+            }
+            inline void currentRaw(uint16_t v) {
+                mData.current = v;
+            }
+            inline void currentMaxRaw(uint16_t v) {
+                mData.current_max = v;
+            }
+            inline void tempRaw(uint16_t v) {
+                mData.temp = v;
+            }
+            inline void tempMaxRaw(uint16_t v) {
+                mData.temp_max = v;
+            }
+        private:
+            Hott::EscMsg& mData;
+        };        
     }
 }

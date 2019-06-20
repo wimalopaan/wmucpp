@@ -83,7 +83,7 @@ namespace  {
 #ifndef HOTT_NEW
 using sensorPA = Hott::SensorProtocollAdapter<0, sensorCode, AsciiHandler, BinaryHandler, BCastHandler>;
 //using roboremoPA = External::RoboRemo::ProtocollAdapter<0, 16>;
-using sensorUsart = AVR::Usart<0, sensorPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>> ;
+using sensorUsart = AVR::Usart<AVR::Component::Usart<0>, sensorPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>> ;
 using sensorData = Hott::GamProtocollBuffer<0>;
 using crWriterSensorBinary = ConstanteRateWriter<sensorData, sensorUsart>;
 using menuData = Hott::SensorTextProtocollBuffer<sensorCode, 0>;
@@ -92,17 +92,16 @@ using crWriterSensorText = ConstanteRateWriter<menuData, sensorUsart>;
 
 //using btUsart = AVR::Usart<0, roboremoPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>> ;
 
-
 using sumd = Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>;
-using rcUsart = AVR::Usart<1, sumd, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
+using rcUsart = AVR::Usart<AVR::Component::Usart<1>, sumd, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
 
 using gpsPA = External::GPS::GpsProtocollAdapter<0, External::GPS::VTG, External::GPS::RMC>;
-using gpsUsart = AVR::Usart<2, gpsPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
+using gpsUsart = AVR::Usart<AVR::Component::Usart<2>, gpsPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
 
 using terminalDevice = rcUsart;;
 using terminal = etl::basic_ostream<terminalDevice>;
 
-using systemClock = AVR::SystemTimer<2, interval>;
+using systemClock = AVR::SystemTimer<AVR::Component::Timer<2>, interval>;
 using alarmTimer = External::Hal::AlarmTimer<systemClock>;
 
 using oneWirePin = AVR::Pin<PortE, 0>;
@@ -119,13 +118,13 @@ typedef leds::color_type Color;
 using ledPin2 = AVR::Pin<PortC, 1>;
 using leds2 = External::WS2812<8, ledPin2, External::ColorSequenceGRB>;
 
-using adc = AVR::Adc<0, AVR::Resolution<10>, AVR::AD::VRef<AVR::AD::V2_56>>;
+using adc = AVR::Adc<AVR::Component::Adc<0>, AVR::Resolution<10>, AVR::AD::VRef<AVR::AD::V2_56>>;
 using adcController = External::Hal::AdcController<adc, 0, 1, 2, 3, 4, 5, 6, 7>;
 using cellVoltageConverter = Hott::Units::Converter<adc, Hott::Units::cell_voltage_t>;
 using battVoltageConverter = Hott::Units::Converter<adc, Hott::Units::battery_voltage_t>;
 
 
-using hardPwm = AVR::PWM::StaticPwm<AVR::TimerNumber<0>>; // timer 0
+using hardPwm = AVR::PWM::StaticPwm<AVR::Component::Timer<0>>; // timer 0
 using dir1 = AVR::Pin<PortB, 0>;
 using dir2 = AVR::Pin<PortB, 1>;
 
@@ -134,9 +133,9 @@ using hbridge2 = External::TLE5205<hardPwm::Channel<AVR::B>, dir2, sumd::value_t
 
 using hbrigeError = AVR::Pin<PortB, 2>;
 
-using rpm1 = External::RpmWithIcp<1, MinimumRpm, MaximumRpm>;
-using rpm2 = External::RpmWithIcp<3, MinimumRpm, MaximumRpm>;
-using rpm3 = External::RpmWithIcp<4, MinimumRpm, MaximumRpm>;
+using rpm1 = External::RpmWithIcp<AVR::Component::Timer<1>, MinimumRpm, MaximumRpm>;
+using rpm2 = External::RpmWithIcp<AVR::Component::Timer<3>, MinimumRpm, MaximumRpm>;
+using rpm3 = External::RpmWithIcp<AVR::Component::Timer<4>, MinimumRpm, MaximumRpm>;
 
 using rpmPrescaler = std::integral_constant<uint16_t, rpm1::prescaler>;
 //rpmPrescaler::_;

@@ -22,6 +22,8 @@
 #include <algorithm>
 #include <type_traits>
 
+#include "types.h"
+
 #include <mcu/pgm/pgmstring.h>
 
 namespace etl {

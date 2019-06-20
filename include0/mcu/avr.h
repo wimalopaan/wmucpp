@@ -24,6 +24,7 @@
 #include "../config.h"
 
 #include <type_traits>
+#include <etl/types.h>
 
 namespace AVR {
     //AVR Series
@@ -40,6 +41,7 @@ namespace AVR {
     struct ATTiny25;
     //AVR0-Series
     struct ATMega4809;
+    struct ATTiny412;
 }
 
 #if defined(__AVR_ATmega1284P__)
@@ -66,14 +68,18 @@ typedef AVR::ATTiny84 DefaultMcuType;
 typedef ARM::SAM::SamD21 DefaultMcuType;
 #elif defined(__AVR_ATmega4809__)
 typedef AVR::ATMega4809 DefaultMcuType;
+#elif defined(__AVR_ATtiny412__)
+typedef AVR::ATTiny412 DefaultMcuType;
 #else
 typedef AVR::ATMegaNone DefaultMcuType;
+# warning "No CPU found"
 #endif
 
 #include "common/concepts.h"
 
 namespace AVR {
     struct ReadWrite {};
+    struct WriteOnly {};
     struct ReadOnly{};
     struct UnUsed{};
     
@@ -87,6 +93,45 @@ namespace AVR {
     struct C : std::integral_constant<char, 'C'> {};
     struct D : std::integral_constant<char, 'D'> {};
     struct E : std::integral_constant<char, 'E'> {};
+    struct F : std::integral_constant<char, 'F'> {};
+    
+    namespace Component {
+        template<uint8_t N, typename TC = void>
+        struct Timer : etl::NamedConstant<N> {
+            using component_type = TC;
+        };
+
+        template<uint8_t N>
+        using Usart = etl::NamedConstant<N>;
+        
+        template<uint8_t N>
+        using Adc = etl::NamedConstant<N>;
+
+        template<uint8_t N>
+        using Rtc = etl::NamedConstant<N>;
+    }   
+
+    template<uint8_t N>
+    using Size = etl::NamedConstant<N>;
+
+    using register_type = std::byte;
+
+    namespace Util {
+        template<typename BitsType>
+        struct PrescalerPair {
+            typedef BitsType  bits_type;
+            typedef uint16_t scale_type;
+            const BitsType  bits;
+            const uint16_t scale;
+        };
+             
+    }    
+    
+    namespace Util::Timer {
+        using megahertz = External::Units::megahertz;
+        using hertz     = External::Units::hertz;
+        
+    }
     
     template<AVR::Concepts::McuSingleComponent Component>
     constexpr inline Component* getBaseAddr() {
@@ -129,6 +174,7 @@ namespace AVR::detail::test {
 
 #if (__AVR_ARCH__ == 103)
 # include "megaavr0/atxmega.h"
+# include "tinyavr1/attiny1.h"
 # include "internals/port.h"
 //# include "internals/usart.h"
 #endif

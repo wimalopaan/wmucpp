@@ -19,12 +19,16 @@
 #pragma once
 
 #include <cstdint>
+#include <std/utility>
+
+#include "components0.h"
 
 #pragma pack(push)
 #pragma pack(1)
 
 namespace AVR {
     struct ATMega4809 final {
+        
         template<typename T>
         inline static constexpr bool is_atomic() {return false;}
         
@@ -35,63 +39,65 @@ namespace AVR {
             inline static constexpr uintptr_t end   = RAMEND;  
         };
         
-        struct PortRegister final {
-            DataRegister<PortRegister, ReadWrite, std::byte> dir;
-            DataRegister<PortRegister, ReadWrite, std::byte> dirset;
-            DataRegister<PortRegister, ReadWrite, std::byte> dirclr;
-            DataRegister<PortRegister, ReadWrite, std::byte> dirtgl;
-            DataRegister<PortRegister, ReadWrite, std::byte> out;
-            DataRegister<PortRegister, ReadWrite, std::byte> outset;
-            DataRegister<PortRegister, ReadWrite, std::byte> outclr;
-            DataRegister<PortRegister, ReadWrite, std::byte> outtgl;
-            DataRegister<PortRegister, ReadWrite, std::byte> in;
-            DataRegister<PortRegister, ReadWrite, std::byte> inflags;
-            DataRegister<PortRegister, ReadWrite, std::byte> portctrl;
-
-            volatile uint8_t padding[0x0f - 0x0b + 1];
-            
-            DataRegister<PortRegister, ReadWrite, std::byte> pin0ctrl;
-            DataRegister<PortRegister, ReadWrite, std::byte> pin1ctrl;
-            DataRegister<PortRegister, ReadWrite, std::byte> pin2ctrl;
-            DataRegister<PortRegister, ReadWrite, std::byte> pin3ctrl;
-            DataRegister<PortRegister, ReadWrite, std::byte> pin4ctrl;
-            DataRegister<PortRegister, ReadWrite, std::byte> pin5ctrl;
-            DataRegister<PortRegister, ReadWrite, std::byte> pin6ctrl;
-            DataRegister<PortRegister, ReadWrite, std::byte> pin7ctrl;
-
-            template<typename P> struct Address;
-        };
-//        std::integral_constant<uint8_t, sizeof(PortRegister)>::_;
-        static_assert(sizeof(PortRegister) == 0x18);
+        using Cpu = AVR::Series0::Cpu;
         
-        struct Usart {
-            static constexpr const uint8_t count = 4;
-            DataRegister<Usart, ReadOnly, std::byte> rxd;
-            enum class RXDATAH : uint8_t {
-                rxcif = USART_RXCIF_bm,
-                bufovl = USART_BUFOVF_bm,
-                ferr = USART_FERR_bm,
-                perr = USART_PERR_bm,
-                data8 = USART_DATA8_bm,
-            };
-            ControlRegister<Usart, RXDATAH> rxdh;
-            DataRegister<Usart, ReadWrite, std::byte> txd;
+        using Clock = AVR::Series0::Clock;
 
-            volatile uint8_t reserved2;
+        using Rtc = AVR::Series0::Rtc;
+
+        using Usart = AVR::Series0::Usart;
+        
+        using PortRegister = AVR::Series0::PortRegister;
+        
+        using TCA = AVR::Series0::TCA;
+
+        
+        struct TCB {
             template<int N> struct Address;
         };
-        
     };
     template<>
     constexpr bool ATMega4809::is_atomic<uint8_t>() {return true;}
 }
 
 namespace std {
-//    template<>
-//    struct enable_bitmask_operators<AVR::ATMega328PB::Status::Bits> : std::true_type {};
+    template<> struct enable_bitmask_operators<AVR::ATMega4809::Usart::CtrlA_t> : std::true_type {};
+    template<> struct enable_bitmask_operators<AVR::ATMega4809::Usart::CtrlB_t> : std::true_type {};
+    template<> struct enable_bitmask_operators<AVR::ATMega4809::Usart::CtrlC_t> : std::true_type {};
+    template<> struct enable_bitmask_operators<AVR::ATMega4809::TCA::CtrlA_t> : std::true_type {};
+    template<> struct enable_bitmask_operators<AVR::ATMega4809::Rtc::CtrlA_t> : std::true_type {};
+    template<> struct enable_bitmask_operators<AVR::ATMega4809::Rtc::PitCtrlA_t> : std::true_type {};
+    template<> struct enable_bitmask_operators<AVR::ATMega4809::Cpu::SReg_t> : std::true_type {};
 }
 
 namespace AVR {
+    template<> struct ATMega4809::Usart::Address<0> {
+        inline static constexpr uintptr_t value = 0x0800;
+    };
+    template<> struct ATMega4809::Usart::Address<1> {
+        inline static constexpr uintptr_t value = 0x0820;
+    };
+    template<> struct ATMega4809::Usart::Address<2> {
+        inline static constexpr uintptr_t value = 0x0840;
+    };
+    template<> struct ATMega4809::Usart::Address<3> {
+        inline static constexpr uintptr_t value = 0x0860;
+    };
+    template<> struct ATMega4809::TCA::Address<0> {
+        inline static constexpr uintptr_t value = 0x0A00;
+    };
+    template<> struct ATMega4809::TCB::Address<0> {
+        inline static constexpr uintptr_t value = 0x0A80;
+    };
+    template<> struct ATMega4809::TCB::Address<1> {
+        inline static constexpr uintptr_t value = 0x0A90;
+    };
+    template<> struct ATMega4809::TCB::Address<2> {
+        inline static constexpr uintptr_t value = 0x0Aa0;
+    };
+    template<> struct ATMega4809::TCB::Address<3> {
+        inline static constexpr uintptr_t value = 0x0Ab0;
+    };
     template<> struct ATMega4809::PortRegister::Address<A> {
         inline static constexpr uintptr_t value = 0x0400;
     };
@@ -103,6 +109,12 @@ namespace AVR {
     };
     template<> struct ATMega4809::PortRegister::Address<D> {
         inline static constexpr uintptr_t value = 0x0460;
+    };
+    template<> struct ATMega4809::PortRegister::Address<E> {
+        inline static constexpr uintptr_t value = 0x0480;
+    };
+    template<> struct ATMega4809::PortRegister::Address<F> {
+        inline static constexpr uintptr_t value = 0x04A0;
     };
 
 }

@@ -5,14 +5,15 @@
 namespace Hott {
     namespace Experimental {
 
-        template<int UartNumber, 
-                 template<int N, typename PA, typename ISR, typename RXL> typename Uart, 
+        template<AVR::Concepts::ComponentNumber CNumber, 
+                 template<typename CN, typename PA, typename ISR, typename RXL> typename Uart, 
                  etl::Concepts::NamedConstant Baud, 
                  typename BinaryMesgType,
                  typename Clock,
                  typename MCU = DefaultMcuType>
         
         struct Sensor final {
+            static inline constexpr auto UartNumber = CNumber::value;
             enum class hott_state_t {Undefined = 0, BinaryStartRequest, AsciiStartRequest, BinaryWaitIdle, AsciiWaitIdle, BinaryReply, AsciiReply, NumberOfStates};
             
             static inline constexpr std::byte msg_code = code_from_type<BinaryMesgType>::value;
@@ -77,7 +78,7 @@ namespace Hott {
                 }
             };
             
-            using uart = Uart<UartNumber, ProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
+            using uart = Uart<AVR::Component::Usart<UartNumber>, ProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
           
             inline static constexpr void init() {
                 uart::template init<Baud>();

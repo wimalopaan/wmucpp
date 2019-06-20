@@ -10,6 +10,8 @@ template<typename S1, typename S2>
 
 #include "board.h"
 
+using terminal = etl::basic_ostream<rcUsart>;
+
 using qtrobo = etl::basic_ostream<qtroboUsart, etl::lineTerminator<etl::LF>>;
 
 using log0 = External::QtRobo::Logging<qtrobo, 0>;
@@ -20,127 +22,74 @@ using pong = External::QtRobo::Pong<qtrobo>;
 
 template<typename MCU = DefaultMcuType>
 struct FSM final {
-    enum class State : uint8_t {Direct, AutoSweep, Receiver};
+    enum class State : uint8_t {Idle, Busy};
     
     inline constexpr static void periodic_slow() {
         qtroboPA::whenChanged([]{
-            gauge0::put(qtroboPA::propValues[0]);    
-            toggle0::put(qtroboPA::toggleValues[0]);
         });
         qtroboPA::whenPinged([]{
-            pong::put();
         });
     }
-
     inline constexpr static void periodic() {
-        switch(updateCycle.toInt()) {
-        case 0:
-            update_00();
+        switch (mState) {
+        case State::Idle:
+            if (qtroboPA::toggleValues[0]) {
+                mState = State::Busy;
+                mEdgeCount = 2;
+            }
+            if (qtroboPA::toggleValues[1]) {
+                mState = State::Busy;
+                mEdgeCount = 2;
+            }
+            if (qtroboPA::toggleValues[2]) {
+                mState = State::Busy;
+                mEdgeCount = 3;
+            }
+            if (qtroboPA::toggleValues[3]) {
+                mState = State::Busy;
+                mEdgeCount = 4;
+            }
             break;
-        case 1:
-            update_01();
-            break;
-        case 2:
-            update_02();
-            break;
-        case 3:
-            update_03();
-            break;
-        case 4:
-            update_04();
-            break;
-        case 5:
-            update_05();
-            break;
-        case 6:
-            update_06();
-            break;
-        case 7:
-            update_07();
-            break;
-        case 8:
-            update_08();
-            break;
-        }
-        ++updateCycle;
-    }
-private:
-    inline static constexpr void update_00() {
-        auto v = qtroboPA::propValues[0];
-        etl::uint_ranged_NaN<uint8_t, 0, 100> vv{v};
-        
-        switch (state) {
-        case State::Direct:
-            cppm::ppm(outputChannel, vv);
-            break;
-        case State::Receiver:
-        {
-            auto v = sumd::value(inputChannel);
-            cppm::ppm(outputChannel, v);
-        }
-            break;
-        case State::AutoSweep:
+        case State::Busy:
             break;
         default:
             break;
         }
-    }        
-    inline static constexpr void update_01() {
-        auto v = qtroboPA::propValues[1];
-        etl::uint_ranged_NaN<uint8_t, 0, 100> vv{v};
-        cppm::ppm(1, vv);
-    }        
-    inline static constexpr void update_02() {
-        auto v = qtroboPA::propValues[2];
-        etl::uint_ranged_NaN<uint8_t, 0, 100> vv{v};
-        cppm::ppm(2, vv);
-    }        
-    inline static constexpr void update_03() {
-        auto v = qtroboPA::propValues[3];
-        etl::uint_ranged_NaN<uint8_t, 0, 100> vv{v};
-        cppm::ppm(3, vv);
-    }        
-    inline static constexpr void update_04() {
-        auto v = qtroboPA::propValues[4];
-        etl::uint_ranged_NaN<uint8_t, 0, 100> vv{v};
-        cppm::ppm(4, vv);
-    }        
-    inline static constexpr void update_05() {
-        auto v = qtroboPA::propValues[5];
-        etl::uint_ranged_NaN<uint8_t, 0, 100> vv{v};
-        cppm::ppm(5, vv);
-    }        
-    inline static constexpr void update_06() {
-        auto v = qtroboPA::propValues[6];
-        etl::uint_ranged_NaN<uint8_t, 0, 100> vv{v};
-        cppm::ppm(6, vv);
-    }        
-    inline static constexpr void update_07() {
-        auto v = qtroboPA::propValues[7];
-        etl::uint_ranged_NaN<uint8_t, 0, 100> vv{v};
-        cppm::ppm(7, vv);
-    }        
-    inline static constexpr void update_08() {
-        if (qtroboPA::toggleValues[1]) {
-            state = State::Receiver;
-        }
-        else {
-            if (qtroboPA::toggleValues[0]) {
-                state = State::AutoSweep;
+    }
+    inline static void edge() {
+        static bool rising = false;
+        if (mState == State::Busy) {
+            if (rising = !rising; rising) {
+                risingEdge();
             }
             else {
-                state = State::Direct;
+                fallingEdge();
             }
         }
-    }        
+    }
+    inline static void risingEdge() {
+        ppmInPin::on();
+        etl::uint_ranged_NaN<uint8_t, 0, 100> vv{99};
+        cppm::ppm(0, vv);
+        toggle0::put(true);
+    }
+    inline static void fallingEdge() {
+        ppmInPin::off();
+        etl::uint_ranged_NaN<uint8_t, 0, 100> vv{50};
+        cppm::ppm(0, vv);
+        toggle0::put(false);
+        if (--mEdgeCount == 0) {
+            mState = State::Idle;
+            qtroboPA::toggleValues[0] = false;
+        }
+    }
     
-    inline static constexpr etl::uint_ranged<uint8_t, 0, 7> inputChannel{0};
-
-    inline static etl::uint_ranged<uint8_t, 0, 7> outputChannel;
-
-    inline static State state = State::Direct;
-    inline static etl::uint_ranged_circular<uint8_t, 0, 8> updateCycle;
+private:
     FSM() = delete;
+    
+    static inline State mState = State::Idle;
+    static inline uint8_t mEdgeCount = 0;
+    
 };
 
 
@@ -158,18 +107,20 @@ int main() {
     
     rxSelect::dir<Output>();
     rxSelect::off();
-
+    
     paired::dir<Input>();
     ppmInPin::dir<Output>(); // debug
     
     rcUsart::init<AVR::BaudRate<115200>>();
     qtroboUsart::init<AVR::BaudRate<9600>>();
     
+    const auto st = alarmTimer::create(3000_ms, External::Hal::AlarmFlags::Periodic);
     const auto t = alarmTimer::create(1000_ms, External::Hal::AlarmFlags::Periodic);
-
+    const auto edgeTimer = alarmTimer::create(75_ms, External::Hal::AlarmFlags::Periodic);
+    
     {
         Scoped<EnableInterrupt<>> ei;
-
+        
         log0::outl("Schaltmodul 01"_pgm);    
         
         while(true) {
@@ -178,9 +129,16 @@ int main() {
             fsm::periodic();
             systemClock::periodic([&](){
                 fsm::periodic_slow();
-                alarmTimer::periodic([&](alarmTimer::index_type timer){
+                alarmTimer::periodic([&](const alarmTimer::index_type timer){
                     if (timer == t) {
                         log0::outl("v "_pgm, qtroboPA::propValues[0], Char{','}, qtroboPA::toggleValues[0], Char{','});    
+                        etl::outl<terminal>("v "_pgm, qtroboPA::propValues[0], Char{','}, qtroboPA::toggleValues[0], Char{','});    
+                    }
+                    if (timer == edgeTimer) {
+                        fsm::edge();                        
+                    }
+                    if (timer == st) {
+                        qtroboPA::toggleValues[0] = !qtroboPA::toggleValues[0];
                     }
                 });
             });

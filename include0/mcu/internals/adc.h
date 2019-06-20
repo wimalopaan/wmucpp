@@ -63,10 +63,11 @@ namespace AVR {
         inline static constexpr uint8_t bits = 8;
     };
     
-    template<uint8_t N, typename Reso = Resolution<10>, typename VREF = AD::VRef<AD::V1_1, DefaultMcuType>, typename MCU = DefaultMcuType>
+    template<AVR::Concepts::ComponentNumber CN, typename Reso = Resolution<10>, typename VRefType = AD::VRef<AD::V1_1, DefaultMcuType>, typename MCU = DefaultMcuType>
     class Adc final {
-        static_assert(N < MCU::Adc::count, "wrong adc number"); 
+        static_assert(CN::value < MCU::Adc::count, "wrong adc number"); 
         
+        static inline constexpr auto N = CN::value;
     public:
         static constexpr auto mcuAdc = getBaseAddr<typename MCU::Adc, N>;
         static constexpr auto channelMask = MCU::Adc::MUX::mux3 | MCU::Adc::MUX::mux2 | MCU::Adc::MUX::mux1 | MCU::Adc::MUX::mux0;
@@ -76,8 +77,8 @@ namespace AVR {
         typedef etl::FixedPoint<uint16_t, 8> voltage_type;
         
 //        static constexpr auto VRef = MCU::Adc::template Parameter<N>::VRef;
-        static constexpr auto VRef = VREF::value;
-        static constexpr auto refs = VREF::refs;
+        static constexpr auto VRef = VRefType::value;
+        static constexpr auto refs = VRefType::refs;
         
         static constexpr double VBit = VRef / Reso::type::Upper;
         
@@ -153,6 +154,10 @@ namespace AVR {
             
             mcuAdc()->admux.template setPartial<channelMask, etl::DisbaleInterrupt<etl::NoDisableEnable>>(mcuadc_parameter_type::channelMasks[ch]);
         }
+        
+//        std::integral_constant<uint8_t, (uint8_t)mcuadc_parameter_type::channelMasks[6]>::_;;
+//        std::integral_constant<uint8_t, (uint8_t)mcuadc_parameter_type::channelMasks[7]>::_;;
+        
     };
     
 }

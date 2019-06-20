@@ -401,6 +401,9 @@ namespace etl {
         inline constexpr void operator+=(T value) {
             mValue = std::min(UpperBound, mValue + value);
         }
+        inline constexpr void operator/=(T value) {
+            mValue /= value;
+        }
     private:
         T mValue{NaN};
     };

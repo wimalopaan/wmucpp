@@ -1,3 +1,39 @@
+* Projekte
+
+1) Hauptschalter
+1.1) Small
+- attiny412
+- rt9058 (36V)
+- 1xVN7003
+- Buzzer laut mit Induktivität oder Lautsprecher
+- LED?
+- Taster an Spannungsmessung nach Gnd, nicht an Strommessung
+- Telemetrie / QtRobo
+-- Spannung / Strommessung
+
+1.2) Medium
+- attiny817
+- sonst wie small
+- 2 + VN7003
+- mit Drehzahlsensoranschluß
+
+1.3) Large
+- atmega4808
+- 4x VN7003
+- BEC (einstellbar)
+- Telemetrie / QtRobo
+- Strommessung
+- Spannungsmessung / Zellen
+
+2) BlueTooth-Modul
+
+3) BDC
+
+4) Schaltmodul
+
+5) AkkuWeiche (je ein Akku)
+- mit Telemetrie
+
 * Vorgehen
 
 1) Umbau rcsensorled10 zu:
@@ -39,4 +75,10 @@
 
 5) Servo Digitalisieren für SUMD-Bus
 
+6) Löt und Messstation
+
+7) BDC Software
+7.1) HobbyKing für BDC
+
+7.2) eigener BDC
 

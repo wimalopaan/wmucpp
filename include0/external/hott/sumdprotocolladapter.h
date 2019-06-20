@@ -67,13 +67,13 @@ namespace Hott {
         using counterType = std::conditional_t<UseInts::value, volatile uint16_t, uint16_t>;
         
     public:
-        using value_type = uint_ranged_NaN<uint16_t, Hott::SumDMsg::Low, Hott::SumDMsg::High>;
+        using value_type = etl::uint_ranged_NaN<uint16_t, Hott::SumDMsg::Low, Hott::SumDMsg::High>;
 
         SumDProtocollAdapter() = delete;
         
-        inline static uint_ranged<uint16_t, Hott::SumDMsg::ExtendedLow, Hott::SumDMsg::ExtendedHigh> valueExtended(uint8_t channel) {
+        inline static etl::uint_ranged<uint16_t, Hott::SumDMsg::ExtendedLow, Hott::SumDMsg::ExtendedHigh> valueExtended(uint8_t channel) {
             if constexpr(UseInts::value) {
-                Scoped<DisbaleInterrupt<>> di;
+                etl::Scoped<etl::DisbaleInterrupt<>> di;
             }
             if (!mMsgInactive->valid) {
                 return {};
@@ -90,9 +90,9 @@ namespace Hott {
             }
         }
         
-        inline static uint_ranged_NaN<uint16_t, Hott::SumDMsg::Low, Hott::SumDMsg::High> value(uint8_t channel) {
+        inline static etl::uint_ranged_NaN<uint16_t, Hott::SumDMsg::Low, Hott::SumDMsg::High> value(uint8_t channel) {
             if constexpr(UseInts::value) {
-                Scoped<DisbaleInterrupt<>> di;
+                etl::Scoped<etl::DisbaleInterrupt<>> di;
             }
             if (!mMsgInactive->valid) {
                 return {};
@@ -108,18 +108,18 @@ namespace Hott {
                 return v;
             }
         }
-        inline static uint_ranged<uint8_t, Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit> value8Bit(uint8_t channel) {
+        inline static etl::uint_ranged<uint8_t, Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit> value8Bit(uint8_t channel) {
             if constexpr(UseInts::value) {
-                Scoped<DisbaleInterrupt<>> di;
+                etl::Scoped<etl::DisbaleInterrupt<>> di;
             }
             if (!mMsgInactive->valid) {
                 return {};
             }
             return value8Bit_unsafe(channel);
         }
-        inline static uint_ranged<uint8_t, Hott::SumDMsg::ExtendedLow8Bit, Hott::SumDMsg::ExtendedHigh8Bit> value8BitExtended(uint8_t channel) {
+        inline static etl::uint_ranged<uint8_t, Hott::SumDMsg::ExtendedLow8Bit, Hott::SumDMsg::ExtendedHigh8Bit> value8BitExtended(uint8_t channel) {
             if constexpr(UseInts::value) {
-                Scoped<DisbaleInterrupt<>> di;
+                etl::Scoped<etl::DisbaleInterrupt<>> di;
             }
             if (!mMsgInactive->valid) {
                 return {};
@@ -291,7 +291,7 @@ namespace Hott {
             mPackageCounter = 0;
         }
     private:
-        inline static uint_ranged<uint8_t, Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit> value8Bit_unsafe(uint8_t channel) {
+        inline static etl::uint_ranged<uint8_t, Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit> value8Bit_unsafe(uint8_t channel) {
             if (mMsgInactive->channelData[channel].first < Hott::SumDMsg::Low8Bit) {
                 return Hott::SumDMsg::Low8Bit;
             }
@@ -302,7 +302,7 @@ namespace Hott {
                 return mMsgInactive->channelData[channel].first;
             }
         }
-        inline static uint_ranged<uint8_t, Hott::SumDMsg::ExtendedLow8Bit, Hott::SumDMsg::ExtendedHigh8Bit> value8BitExtended_unsafe(uint8_t channel) {
+        inline static etl::uint_ranged<uint8_t, Hott::SumDMsg::ExtendedLow8Bit, Hott::SumDMsg::ExtendedHigh8Bit> value8BitExtended_unsafe(uint8_t channel) {
             if (mMsgInactive->channelData[channel].first < Hott::SumDMsg::ExtendedLow8Bit) {
                 return Hott::SumDMsg::ExtendedLow8Bit;
             }

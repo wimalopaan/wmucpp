@@ -30,6 +30,7 @@ subdirs =
 #targets += test01.elf
 #targets += test02.elf
 #targets += test03.elf
-targets += test04.elf
+#targets += test04.elf
+targets += test05.elf
 
 -include ../../../Makefile.avr0.include

@@ -378,6 +378,22 @@ namespace AVR {
                 static constexpr const uint32_t number = USART0_UDRE_vect_num;
 #endif
             };
+#ifdef USART0_DRE_vect_num
+            struct DRE {
+                static constexpr const uint32_t number = USART0_DRE_vect_num;
+            };
+#endif
+#ifdef USART0_TXC_vect_num
+            struct TXC {
+                static constexpr const uint32_t number = USART0_TXC_vect_num;
+            };
+#endif
+#ifdef USART0_RXC_vect_num
+            struct RXC {
+                static constexpr const uint32_t number = USART0_RXC_vect_num;
+            };
+#endif
+
         };
         template<>
         struct Usart<1> {
@@ -391,6 +407,21 @@ namespace AVR {
                 static constexpr const uint32_t number = USART1_UDRE_vect_num;
 #endif
             };
+#ifdef USART1_DRE_vect_num
+            struct DRE {
+                static constexpr const uint32_t number = USART1_DRE_vect_num;
+            };
+#endif
+#ifdef USART1_TXC_vect_num
+            struct TXC {
+                static constexpr const uint32_t number = USART1_TXC_vect_num;
+            };
+#endif
+#ifdef USART1_RXC_vect_num
+            struct RXC {
+                static constexpr const uint32_t number = USART1_RXC_vect_num;
+            };
+#endif
         };
         template<>
         struct Usart<2> {

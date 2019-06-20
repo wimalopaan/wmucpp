@@ -28,4 +28,9 @@ namespace std {
         T first;
         U second;
     };
+    
+    template<typename T, typename U>
+    constexpr auto make_pair(const T& t, const U& u) {
+        return std::pair<T, U>{t, u};
+    }
 }

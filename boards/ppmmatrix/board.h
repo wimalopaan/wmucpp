@@ -96,15 +96,15 @@ struct AsciiHandler;
 struct BinaryHandler;
 struct BCastHandler;
 using sensorPA = Hott::SensorProtocollAdapter<0, Hott::gam_code, AsciiHandler, BinaryHandler, BCastHandler>;
-using sensorUsart = AVR::Usart<0, sensorPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>> ;
+using sensorUsart = AVR::Usart<AVR::Component::Uart<0>, sensorPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>> ;
 using roboremoPA = External::RoboRemo::ProtocollAdapter<0, 16>;
-using btUsart = AVR::Usart<0, roboremoPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>> ;
+using btUsart = AVR::Usart<AVR::Component::Uart<0>, roboremoPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>> ;
 #endif
 
 
 #if defined(SERVOTESTER) || defined(SCHALTMODUL)
 using qtroboPA = External::QtRobo::ProtocollAdapter<0>;
-using qtroboUsart = AVR::Usart<0, qtroboPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<512>> ;
+using qtroboUsart = AVR::Usart<AVR::Component::Uart<0>, qtroboPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<512>> ;
 #endif
 
 using sensorData = Hott::GamProtocollBuffer<0>;
@@ -116,7 +116,7 @@ using crWriterSensorText = ConstanteRateWriter<menuData, sensorUsart>;
 #endif
 
 using sumd = Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>;
-using rcUsart = AVR::Usart<1, sumd, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
+using rcUsart = AVR::Usart<AVR::Component::Timer<1>, sumd, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
 
 namespace  {
     using namespace std::literals::chrono;
@@ -124,7 +124,7 @@ namespace  {
 //    constexpr auto interval = External::Units::duration_cast<std::chrono::milliseconds>(Hott::hottDelayBetweenBytes);
 }
 
-using systemClock = AVR::SystemTimer<0, interval>;
+using systemClock = AVR::SystemTimer<AVR::Component::Timer<0>, interval>;
 using alarmTimer = External::Hal::AlarmTimer<systemClock>;
 
 

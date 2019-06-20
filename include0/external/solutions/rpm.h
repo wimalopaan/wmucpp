@@ -27,6 +27,7 @@
 #include <etl/algorithm.h>
 
 #include "mcu/common/timer.h"
+#include "mcu/common/concepts.h"
 
 #include "external/units/physical.h"
 
@@ -62,10 +63,11 @@ namespace External {
     }
     
     
-    template<auto TimerNumber, const RPM& MaxRpm, const RPM& MinRpm, uint8_t MinMeasurements = 2, typename MCU = DefaultMcuType>
+    template<AVR::Concepts::ComponentNumber TN, const RPM& MaxRpm, const RPM& MinRpm, uint8_t MinMeasurements = 2, typename MCU = DefaultMcuType>
     class RpmWithIcp final {
         RpmWithIcp() = delete;
     public:
+        static inline constexpr auto TimerNumber = TN::value;
         using mcu_timer_type = mcu_timer_t<TimerNumber>;
         
         using value_type  = typename TimerParameter<TimerNumber, MCU>::value_type;        

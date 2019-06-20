@@ -9,32 +9,33 @@
 #include <external/units/physical.h>
 
 namespace AVR {
-    
-    template<uint8_t N>
-    using ComponentNumber = etl::NamedConstant<N>;
+//    namespace Component {
+//        template<uint8_t N>
+//        using Timer = etl::NamedConstant<N>;
 
-    template<uint8_t N>
-    using TimerNumber = etl::NamedConstant<N>;
+//        template<uint8_t N>
+//        using Uart = etl::NamedConstant<N>;
+        
+//        template<uint8_t N>
+//        using Adc = etl::NamedConstant<N>;
+
+//        template<uint8_t N>
+//        using Rtc = etl::NamedConstant<N>;
+//    }
     
     template<uint8_t N>
     using Size = etl::NamedConstant<N>;
-
-    template<uint8_t N>
-    using First = etl::NamedConstant<N>;
-
-    template<uint8_t N>
-    using Last = etl::NamedConstant<N>;
     
     using register_type = std::byte;
     
     namespace Util {
-        template<typename BitsType>
-        struct PrescalerPair {
-            using bits_type = BitsType;
-            using scale_type = uint16_t;
-            const BitsType  bits;
-            const uint16_t scale;
-        };
+//        template<typename BitsType>
+//        struct PrescalerPair {
+//            using bits_type = BitsType;
+//            using scale_type = uint16_t;
+//            const BitsType  bits;
+//            const uint16_t scale;
+//        };
         namespace Twi {
             template<typename CS>
             constexpr std::array<PrescalerPair<CS>, 4> prescalerValues = {

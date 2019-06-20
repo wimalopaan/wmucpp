@@ -96,7 +96,10 @@ namespace AVR {
         using namespace Project;
 
         template<uint8_t N, typename MCU>
-        struct TimerBase8Bit {
+        struct TimerBase8Bit;
+        
+        template<uint8_t N, AVR::Concepts::AtMega MCU>
+        struct TimerBase8Bit<N, MCU> {
             using value_type = uint8_t;
             static inline constexpr uint8_t number = N;
             using mcu_timer_type = typename MCU::Timer8Bit;

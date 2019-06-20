@@ -19,3 +19,15 @@ sudo avrdude -p attiny85 -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P usb -c 
 ** Flashen der App
 ./owl --targetname=targets/testowl_tn85.hex --flashfile=../../../Projekte/wmucpp/boards/bootloader/blink.hex --serialport=/dev/ttyUSB0
 
+* AtMega328p (Beispiel RobbeNavy540)
+** Erzeugen des Bootloaders
+./owl --device=m328P --rxport=c1 --txport=d5 --clock=8000 --targetname=owl_m328p
+
+** Setzen der Fuses: Selft-Prog, 8MHZ
+sudo avrdude -p atmega328p -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P usb -c avrisp2 -U lfuse:w:0xe2:m -U hfuse:w:0xde:m -U efuse:w:0xff:m
+
+** Flashen des Bootloaders
+sudo avrdude -p atmega328p -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P usb -c avrisp2 -U targets/owl_m328p.hex
+
+** Flashen der App
+./owl --targetname=targets/owl_m328p.hex --flashfile=../../../Projekte/wmucpp/boards/bootloader/blink.hex --serialport=/dev/ttyUSB0

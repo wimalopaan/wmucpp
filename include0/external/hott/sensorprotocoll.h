@@ -24,6 +24,8 @@
 
 #include <etl/stringbuffer.h>
 
+#include <external/units/physical.h>
+
 #pragma pack(push)
 #pragma pack(1)
 
@@ -270,6 +272,8 @@ namespace Hott {
     
     template<>
     struct code_from_type<GamMsg> : std::integral_constant<std::byte, gam_code> {};
+    template<>
+    struct code_from_type<EscMsg> : std::integral_constant<std::byte, esc_code> {};
     
 }
 

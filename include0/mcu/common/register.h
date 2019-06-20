@@ -29,12 +29,12 @@
 
 namespace AVR {
     
-    template<typename Component, typename BitType, typename Mode = ReadWrite, typename ValueType = std::byte>
+    template<typename Component, typename BitType, typename Mode = ReadWrite, typename ValueType = std::byte, typename MCU = DefaultMcuType>
     struct FlagRegister;
     
     // FlagRegister: writing one to a bit clears(!) the bit (s.a. reset())
-    template<typename Component, typename BitType, typename ValueType>
-    struct FlagRegister<Component, BitType, ReadWrite, ValueType> final {
+    template<typename Component, typename BitType, typename ValueType, typename MCU>
+    struct FlagRegister<Component, BitType, ReadWrite, ValueType, MCU> final {
         typedef Component component_type;
         typedef ValueType value_type;    
         typedef BitType bit_type;
@@ -44,6 +44,14 @@ namespace AVR {
         FlagRegister(FlagRegister&&) = delete;
         FlagRegister& operator=(const FlagRegister&) = delete;
         FlagRegister& operator=(FlagRegister&&) = delete;
+
+        template<BitType F>
+        void inline testAndReset(const auto& c) {
+            if (isSet<F>()) {
+                reset<F>();
+                c();
+            }
+        }
         
         template<BitType F>
         bool inline isSet() {
@@ -52,13 +60,34 @@ namespace AVR {
         template<BitType F>
         void inline reset() {
             hwRegister = static_cast<value_type>(F); // clears the bit by writing "1"
-//                        hwRegister |= static_cast<value_type>(F);
         }
     private:
         volatile value_type hwRegister;
     };
-    template<typename Component, typename BitType, typename ValueType>
-    struct FlagRegister<Component, BitType, ReadOnly, ValueType> final {
+
+    template<typename Component, typename BitType, typename ValueType, AVR::Concepts::At01Series MCU>
+    struct FlagRegister<Component, BitType, WriteOnly, ValueType, MCU> final {
+        typedef Component component_type;
+        typedef ValueType value_type;    
+        typedef BitType bit_type;
+        
+        FlagRegister() = delete;
+        FlagRegister(const FlagRegister&) = delete;
+        FlagRegister(FlagRegister&&) = delete;
+        FlagRegister& operator=(const FlagRegister&) = delete;
+        FlagRegister& operator=(FlagRegister&&) = delete;
+        
+        template<BitType F>
+        void inline reset() {
+            hwRegister = static_cast<value_type>(F); // clears the bit by writing "1"
+        }
+    private:
+        volatile value_type hwRegister;
+    };
+    
+    
+    template<typename Component, typename BitType, typename ValueType, typename MCU>
+    struct FlagRegister<Component, BitType, ReadOnly, ValueType, MCU> final {
         typedef Component component_type;
         typedef ValueType value_type;    
         typedef BitType bit_type;
@@ -77,8 +106,11 @@ namespace AVR {
         volatile value_type hwRegister;
     };
     
-    template<typename Component, typename BitType, typename ValueType = uint8_t>
-    struct ControlRegister final {
+    template<typename Component, typename BitType, typename ValueType = uint8_t, typename MCU = DefaultMcuType>
+    struct ControlRegister;
+
+    template<typename Component, typename BitType, typename ValueType, AVR::Concepts::AtMega MCU>
+    struct ControlRegister<Component, BitType, ValueType, MCU> final {
         typedef Component component_type;
         typedef ValueType value_type;    
         typedef BitType bit_type;
@@ -133,12 +165,63 @@ namespace AVR {
     private:
         volatile value_type hwRegister;
     };
+
+    template<typename Component, typename BitType, typename ValueType, AVR::Concepts::At01Series MCU>
+    struct ControlRegister<Component, BitType, ValueType, MCU> final {
+        typedef Component component_type;
+        typedef ValueType value_type;    
+        typedef BitType bit_type;
+        
+        ControlRegister() = delete;
+        ControlRegister(const ControlRegister&) = delete;
+        ControlRegister(ControlRegister&&) = delete;
+        ControlRegister& operator=(const ControlRegister&) = delete;
+        ControlRegister& operator=(ControlRegister&&) = delete;
+        
+        void inline set(BitType v) {
+            hwRegister = static_cast<value_type>(v);
+        }
+        template<BitType F>
+        void inline set() {
+            hwRegister = static_cast<value_type>(F);
+        }
+        template<BitType F, typename DI = etl::DisbaleInterrupt<etl::RestoreState>>
+        void inline add() {
+            [[maybe_unused]] etl::Scoped<DI> di;
+            hwRegister |= static_cast<value_type>(F);
+        }
+        template<BitType F, typename DI = etl::DisbaleInterrupt<etl::RestoreState>>
+        void inline clear() {
+            [[maybe_unused]] etl::Scoped<DI> di;
+            hwRegister &= ~static_cast<value_type>(F);
+        }
+        template<BitType Mask>
+        inline BitType get() {
+            return static_cast<BitType>(hwRegister & static_cast<value_type>(Mask));
+        }
+        template<uint8_t Mask>
+        inline BitType get() {
+            return static_cast<BitType>(hwRegister & Mask);
+        }
+        template<BitType F>
+        bool inline isSet() {
+            return hwRegister & static_cast<value_type>(F);
+        }
+        value_type inline raw() {
+            return hwRegister;
+        }
+        BitType inline value() {
+            return static_cast<BitType>(hwRegister);
+        }
+    private:
+        volatile value_type hwRegister;
+    };
     
-    template<typename Component, typename Mode = ReadWrite, typename ValueType = uint8_t>
+    template<typename Component, typename Mode = ReadWrite, typename ValueType = uint8_t, typename MCU = DefaultMcuType>
     struct DataRegister;
     
-    template<typename Component, typename ValueType>
-    struct DataRegister<Component, UnUsed, ValueType> final {
+    template<typename Component, typename ValueType, typename MCU>
+    struct DataRegister<Component, UnUsed, ValueType, MCU> final {
         typedef Component component_type;
         typedef ValueType value_type;    
         DataRegister() = delete;
@@ -150,8 +233,8 @@ namespace AVR {
         volatile value_type hwRegister; // needed to occupy space
     };
     
-    template<typename Component, typename ValueType>
-    struct DataRegister<Component, ReadOnly, ValueType> final {
+    template<typename Component, typename ValueType, typename MCU>
+    struct DataRegister<Component, ReadOnly, ValueType, MCU> final {
         typedef Component component_type;
         typedef ValueType value_type;    
         DataRegister() = delete;
@@ -167,8 +250,8 @@ namespace AVR {
         volatile value_type hwRegister;
     };
     
-    template<typename Component, typename ValueType>
-    struct DataRegister<Component, ReadWrite, ValueType> final {
+    template<typename Component, typename ValueType, typename MCU>
+    struct DataRegister<Component, ReadWrite, ValueType, MCU> final {
         typedef Component component_type;
         typedef ValueType value_type;    
         DataRegister() = delete;

@@ -99,7 +99,7 @@ namespace etl {
     class Scoped<DisbaleInterrupt<NoDisableEnable>, Active> final
     {};
     
-    template<bool Active, typename MCU>
+    template<bool Active, AVR::Concepts::AtMega MCU>
     class Scoped<DisbaleInterrupt<RestoreState>, Active, MCU> final
     {
         inline static constexpr auto status = AVR::getBaseAddr<typename MCU::Status>;
@@ -120,6 +120,29 @@ namespace etl {
     private:
         typename MCU::Status::Bits v{0};
     };
+
+    template<bool Active, AVR::Concepts::At01Series MCU>
+    class Scoped<DisbaleInterrupt<RestoreState>, Active, MCU> final
+    {
+        inline static constexpr auto cpu = AVR::getBaseAddr<typename MCU::Cpu>;
+    public:
+        inline Scoped()  {
+            if constexpr(Active) {
+                v = cpu()->sreg.value();
+                cli();
+            }
+        }
+        inline ~Scoped() {
+            if constexpr(Active) {
+                if (etl::toBool(MCU::Cpu::SReg_t::globalIntEnable & v)) {
+                    sei();
+                }
+            }
+        }
+    private:
+        typename MCU::Cpu::SReg_t v{0};
+    };
+
     
     template<typename F1, typename F2>
     class Scoped<Transaction, true, F1, F2> final

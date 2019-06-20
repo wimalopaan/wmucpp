@@ -12,13 +12,14 @@ using namespace AVR;
 using namespace etl;
 using namespace std;
 
+
 // spi-pins als debug
 using testPin1 = AVR::Pin<PortC, 4>; 
 using testPin2 = AVR::Pin<PortC, 5>; 
 using testPin3 = AVR::Pin<PortC, 6>; 
 using testPin4 = AVR::Pin<PortC, 7>; 
 
-using sensor = Hott::Experimental::Sensor<0, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, systemClock>;
+using sensor = Hott::Experimental::Sensor<AVR::Component::Usart<0>, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, systemClock>;
 
 struct Storage final {
     Storage() = delete;

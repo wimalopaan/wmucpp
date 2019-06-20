@@ -89,7 +89,7 @@ CXXFLAGS += -DF_OSC=$(F_OSC) -DF_CPU=$(F_OSC)
 #CXXFLAGS += -I/usr/local/avr/avr/include
 CXXFLAGS += -I. -I../include0 -I../../include0 -I../../../include0
 CXXFLAGS += -I../../include0/std -I../include0/std -I../../../include0/std
-#CXXFLAGS += -I/usr/include/simavr
+CXXFLAGS += -I../../3rdparty/boost
 #CXXFLAGS += -I/usr/avr/include
 CXXFLAGS += $(MCUFLAGS)
 

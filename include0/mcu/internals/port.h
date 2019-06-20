@@ -56,7 +56,7 @@ namespace AVR {
     template<AVR::Concepts::Letter Name, typename MCU = DefaultMcuType>
     struct Port;
 
-    template<AVR::Concepts::Letter Name, AVR::Concepts::AtMega0 MCU>
+    template<AVR::Concepts::Letter Name, AVR::Concepts::At01Series MCU>
     struct Port<Name, MCU> final {
         using mcu = MCU;
         using mcuport_type = typename MCU::PortRegister;
@@ -70,6 +70,15 @@ namespace AVR {
         }
         static inline volatile std::byte& get() {
             return *getBaseAddr<mcuport_type , Name>()->out;
+        }
+        static inline volatile std::byte& outset() {
+            return *getBaseAddr<mcuport_type , Name>()->outset;
+        }
+        static inline volatile std::byte& outclear() {
+            return *getBaseAddr<mcuport_type , Name>()->outclr;
+        }
+        static inline volatile std::byte& outtoggle() {
+            return *getBaseAddr<mcuport_type , Name>()->outtgl;
         }
     };
     
@@ -321,46 +330,23 @@ namespace AVR {
         Pin() = delete;
         using mcu = typename Port::mcu;
         typedef Port port;
-        static constexpr uint8_t number = PinNumber;
-        static constexpr std::byte pinMask{(1 << PinNumber)};
-//        static inline void on() __attribute__((always_inline)) {
-//            Port::get() |= pinMask; // single bit instruction sbi
-//        }
-//        static constexpr auto& high = on;
-//        static constexpr auto& pullup = on;
-//        static inline void off() __attribute__((always_inline)) { // single bit instruction cbi
-//            Port::get() &= ~pinMask;
-//        }
-//        static inline bool get() __attribute__((always_inline)) {
-//            return std::any(Port::get() & pinMask);
-//        }
-//        static constexpr auto& low = off;
-
-//        template<bool visible = !AVR::Groups::isAtMega_8<mcu>::value, typename = std::enable_if_t<visible>>
-//        static inline void toggle() {
-//            Port::template toggle<PinNumber>();
-//        }
-        
-//        template<bool visible = AVR::Groups::isAtMega_8<mcu>::value, typename = std::enable_if_t<visible>>
-//        static inline void toggleWithOnOff() {
-//            if (get()) {
-//                off();
-//            }
-//            else {
-//                on();
-//            }
-//        }
-
+        static inline constexpr uint8_t number = PinNumber;
+        static inline constexpr std::byte pinMask{(1 << PinNumber)};
+        static inline void on() {
+            Port::outset() = pinMask; 
+        }
+        static inline void off() {
+            Port::outclear() = pinMask; 
+        }
+        static inline void toggle() {
+            Port::outtoggle() = pinMask; 
+        }
         template<typename Dir>
         static inline void dir() {        
             if constexpr(std::is_same_v<Dir, AVR::Output>) {
                 port::dirset() = pinMask;
             }
         }
-//        static inline bool read() __attribute__((always_inline)){
-//            return (Port::read() & pinMask) != std::byte{0};
-//        }
-//        static constexpr auto& isHigh = read;
     };
 
     template<AVR::Concepts::Port Port, uint8_t PinNumber, AVR::Concepts::AtMega MCU>

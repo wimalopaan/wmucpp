@@ -15,3 +15,12 @@ boards/bmc/robbenavy540
 include0/mcu/mega
 boards/blmc
 boards/ppmmatrix
+boards/bmc
+include0/mcu/megaavr0
+gcc/base/lib/gcc/avr/10.0.0/device-specs
+3rdparty/boost
+doc/bmcpp30
+boards/onoff_avr0
+boards/onoff_avr0/small
+include0/mcu/tinyavr1
+gcc/base/avr/include/avr

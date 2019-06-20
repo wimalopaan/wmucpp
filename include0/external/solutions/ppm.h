@@ -82,6 +82,7 @@ namespace External {
                     if (mcu_timer()->tccrb.template isSet<tb::ices>()) {
                         if constexpr(RisingEdge::value) {
                             mPause = diff;
+                            ++mSyncCounter;
                         }
                         else {
                             mPulse = diff;
@@ -94,6 +95,7 @@ namespace External {
                         }
                         else {
                             mPause = diff;
+                            ++mSyncCounter;
                         }
                         mcu_timer()->tccrb.template add<tb::ices>();
                     }
@@ -106,6 +108,9 @@ namespace External {
             }
             static inline auto pause() {
                 return mPause;
+            }
+            static inline auto syncCount() {
+                return mSyncCounter;
             }
             static inline etl::int_ranged_NaN<int16_t, -span, span> pulse() {
                 if ((mPulse < ppm_min) || (mPulse > ppm_max)) {

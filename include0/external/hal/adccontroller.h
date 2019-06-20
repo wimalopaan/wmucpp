@@ -32,9 +32,12 @@ namespace External {
             typedef typename MCUAdc::value_type value_type;
             static constexpr uint8_t channels[] = {Channels...};
             static constexpr uint8_t NumberOfChannels = sizeof... (Channels);    
+            static constexpr auto VRef = MCUAdc::VRef;
+            
             typedef etl::uint_ranged<uint8_t, 0, NumberOfChannels - 1> index_type;     
             
             static_assert(NumberOfChannels <= 8);
+            static_assert(NumberOfChannels >  0);
             
             inline static void init() {
                 MCUAdc::init();

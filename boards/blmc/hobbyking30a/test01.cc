@@ -102,7 +102,7 @@ using pinBn = AVR::ActiveHigh<AVR::Pin<PortC, 4>, AVR::Output>;
 using pinCp = AVR::ActiveLow<AVR::Pin<PortD, 4>, AVR::Output>;
 using pinCn = AVR::ActiveHigh<AVR::Pin<PortD, 5>, AVR::Output>;
 
-using dbg1 = AVR::Pin<PortB, 3>; // MOSI
+using led = AVR::Pin<PortB, 3>; // MOSI
 using dbg2 = AVR::Pin<PortB, 4>; // MISO
 using dbg3 = AVR::Pin<PortB, 5>; // SCK
 
@@ -110,7 +110,7 @@ using hba = HalfBridge<pinAp, pinAn>;
 using hbb = HalfBridge<pinBp, pinBn>;
 using hbc = HalfBridge<pinCp, pinCn>;
 
-using pwm = AVR::PWM::ISRPwm<AVR::TimerNumber<1>>;
+using pwm = AVR::PWM::ISRPwm<AVR::Component::Timer<1>>;
 
 template<typename HBA, typename HBB, typename HBC, typename PWM, typename InputType>
 struct Bridge {
@@ -173,17 +173,17 @@ using metaPA = MetaPA<sumdPA, qtroboPA>;
 
 using bridge = Bridge<hba, hbb, hbc, pwm, sumdPA::value_type>;
 
-using rcUsart = AVR::Usart<0, metaPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
+using rcUsart = AVR::Usart<AVR::Component::Uart<0>, metaPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
 
 using terminalDevice = rcUsart;
 using terminal = etl::basic_ostream<terminalDevice>;
 
 using pong = External::QtRobo::Pong<terminal>;
 
-using adc = AVR::Adc<0>;
+using adc = AVR::Adc<AVR::Component::Adc<0>>;
 using adcController = External::Hal::AdcController<adc, 0, 1, 2, 7, 6>;
 
-using systemClock = AVR::SystemTimer<0, interval>;
+using systemClock = AVR::SystemTimer<AVR::Component::Timer<0>, interval>;
 using alarmTimer = External::Hal::AlarmTimer<systemClock>;
 
 struct Storage {
@@ -373,7 +373,7 @@ int main() {
     using namespace std;
     using namespace AVR;
 
-    dbg1::dir<AVR::Output>();
+    led::dir<AVR::Output>();
     dbg2::dir<AVR::Output>();
     dbg3::dir<AVR::Output>();
 

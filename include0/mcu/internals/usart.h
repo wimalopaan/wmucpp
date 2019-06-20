@@ -66,17 +66,22 @@ namespace AVR {
         };
         
     } //!Util
-    
-    template<uint8_t N, AVR::Concepts::ProtocolAdapter PA = External::Hal::NullProtocollAdapter, etl::Concepts::NamedFlag useISR = etl::NamedFlag<true>,
+
+    template<AVR::Concepts::ComponentNumber CN, AVR::Concepts::ProtocolAdapter PA = External::Hal::NullProtocollAdapter, etl::Concepts::NamedFlag useISR = etl::NamedFlag<true>,
              etl::Concepts::NamedConstant RecvQLength = ReceiveQueueLength<64>, 
-             etl::Concepts::NamedConstant SendQLength = SendQueueLength<64>, typename MCU = DefaultMcuType>
-    class Usart final : public UsartBase<MCU, N> {
+             etl::Concepts::NamedConstant SendQLength = SendQueueLength<64>, typename MCU = DefaultMcuType> class Usart;
+    
+    template<AVR::Concepts::ComponentNumber CN, AVR::Concepts::ProtocolAdapter PA, etl::Concepts::NamedFlag useISR,
+             etl::Concepts::NamedConstant RecvQLength, etl::Concepts::NamedConstant SendQLength , AVR::Concepts::AtMega MCU >
+    class Usart<CN, PA, useISR, RecvQLength, SendQLength, MCU> final : public UsartBase<MCU, CN::value> {
         
         using Config = Project::Config;
         
         Usart() = delete;
     public:
-        typedef Usart<N, PA, useISR, RecvQLength, SendQLength> usart;
+        static inline constexpr auto N = CN::value;
+        
+        typedef Usart<CN, PA, useISR, RecvQLength, SendQLength> usart;
         typedef typename MCU::Usart      usart_type;
         typedef typename usart_type::SRA ucsra_type;
         typedef typename usart_type::SRB ucsrb_type;
@@ -241,4 +246,172 @@ namespace AVR {
             return (((1.0 * fcpu) / (8 * baud)) + 0.5) - 1;
         }
     };
+
+    template<AVR::Concepts::ComponentNumber CN, AVR::Concepts::ProtocolAdapter PA, etl::Concepts::NamedFlag useISR,
+             etl::Concepts::NamedConstant RecvQLength, etl::Concepts::NamedConstant SendQLength , AVR::Concepts::At01Series MCU >
+    class Usart<CN, PA, useISR, RecvQLength, SendQLength, MCU> final : public UsartBase<MCU, CN::value> {
+        
+        static inline constexpr auto N = CN::value;
+
+        typedef typename std::conditional<useISR::value, volatile etl::FiFo<std::byte, SendQLength::value>, etl::FiFo<std::byte, SendQLength::value>>::type send_queue_type;
+        typedef typename std::conditional<useISR::value, volatile etl::FiFo<std::byte, RecvQLength::value>, etl::FiFo<std::byte, RecvQLength::value>>::type recv_queue_type;
+
+        static constexpr auto mcu_usart = getBaseAddr<typename MCU::Usart, N>;
+        static_assert(N < MCU::Usart::count, "wrong number of usart");
+        
+        
+        using ctrla_t = MCU::Usart::CtrlA_t;
+        using ctrlb_t = MCU::Usart::CtrlB_t;
+        using ctrlc_t = MCU::Usart::CtrlC_t;
+        using status_t = MCU::Usart::Status_t;
+
+        using usart = Usart<CN, PA, useISR, RecvQLength, SendQLength>;
+        
+        using Config = Project::Config;
+        
+        struct RxHandler : public IsrBaseHandler<typename AVR::ISR::Usart<N>::RXC> {
+            friend usart;
+            template<bool visible = useISR::value, typename = std::enable_if_t<visible>>
+            inline static void
+            isr() {
+                isr_impl();
+            }
+        private:
+            inline static void isr_impl() {
+                const auto c = *mcu_usart()->rxd;
+                if constexpr (RecvQLength::value > 0) {
+                    static_assert(std::is_same_v<PA, External::Hal::NullProtocollAdapter>, "recvQueue is used, no need for PA");
+                    mRecvQueue.push_back(c);
+                }
+                else {
+                    static_assert(RecvQLength::value == 0);
+                    if constexpr(!std::is_same_v<PA, External::Hal::NullProtocollAdapter>) {
+                        if (!PA::process(c)) {
+                            assert("input not handled by protocoll adapter");
+                        }
+                    }
+                    else {
+                        static_assert(std::false_t<MCU>::value, "no recvQueue, no PA -> wrong configuration");
+                    }
+                }
+            }
+        };
+        struct TxHandler : public IsrBaseHandler<typename AVR::ISR::Usart<N>::DRE> {
+            friend usart;
+            template<bool visible = useISR::value, typename = std::enable_if_t<visible>>
+            inline static void
+            isr() {
+                isr_impl();
+            }
+        private:
+            static inline void isr_impl() {
+                if (const auto c = mSendQueue.pop_front()) {
+                    *mcu_usart()->txd = *c;;
+                }
+                else {
+                    if constexpr(useISR::value) {
+                        mcu_usart()->status.template clear<status_t::dreif, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
+                    }
+                }
+            }
+        };
+    public:
+        
+        template<etl::Concepts::NamedConstant Baud>
+        inline static void init() {
+            using namespace etl;
+            static_assert(Baud::value >= 2400, "USART should use a valid baud rate >= 2400");
+            
+            mcu_usart()->ctrlb.template set<ctrlb_t::txen | ctrlb_t::rxen>();
+
+            if constexpr (Baud::value > 100000) {
+                constexpr auto ubrr = ubrrValue2(Config::fMcu.value, Baud::value); 
+//                using u = std::integral_constant<uint16_t, ubrr>;
+//                u::_;
+                mcu_usart()->ctrlb.template add<ctrlb_t::rxm0>();
+                *mcu_usart()->baud = ubrr;
+            }
+            else {
+                constexpr auto ubrr = ubrrValue(Config::fMcu.value, Baud::value); 
+//                using u = std::integral_constant<uint16_t, ubrr>;
+//                u::_;
+                *mcu_usart()->baud = ubrr;
+            }            
+
+            mcu_usart()->ctrlc.template set<ctrlc_t::pmode1 | ctrlc_t::chsize1 | ctrlc_t::chsize0>();
+            
+            if constexpr(useISR::value) {
+            }
+        }
+        
+        template<bool visible = useISR::value, typename = std::enable_if_t<!visible>>
+        inline static void
+        periodic() {
+            if (mcu_usart()->status.template isSet<status_t::rxc>()) {
+                RxHandler::isr_impl();       
+            }
+            if (mcu_usart()->status.template isSet<status_t::dre>()) {
+                TxHandler::isr_impl();
+            }
+        }
+        
+        inline static bool get(std::byte& item) {
+            if constexpr(RecvQLength::value > 0) {
+                return mRecvQueue.pop_front(item);
+            }
+            else {
+                return false;
+            }
+        }
+        inline static std::optional<std::byte> get() {
+            if constexpr(RecvQLength::value > 0) {
+                return mRecvQueue.pop_front();
+            }
+            else {
+                return {};
+            }
+        }
+        inline static bool put(std::byte item) {
+            if(mSendQueue.push_back(item)) {
+                if constexpr(useISR::value) {
+//                    mcu_usart()->ucsrb.template add<ucsrb_type::udrie>();
+                }
+                return true;
+            }
+            return false;
+        }
+        inline static void waitSendComplete() {
+            while(!mSendQueue.empty()) {
+                ::AVR::Util::delay(1_us);
+            }
+        }
+        inline static bool isEmpty() {
+            return mSendQueue.empty();
+        }
+        template<bool enable>
+        inline static void rxEnable() {
+            if constexpr (enable) {
+                if(RecvQLength::value > 0) {
+                    mRecvQueue.clear();
+                }
+                mcu_usart()->ctrlb.template add<ctrlb_t::rxen>();
+            }
+            else {
+                mcu_usart()->ctrlb.template clear<ctrlb_t::rxen>();
+            }
+        }
+
+    private:
+        inline static send_queue_type mSendQueue;
+        inline static recv_queue_type mRecvQueue;
+
+        inline static constexpr uint16_t ubrrValue(uint32_t fcpu, uint32_t baud) {
+            return (((64.0 * fcpu) / (16 * baud)) + 0.5) - 1;
+        }
+        inline static constexpr uint16_t ubrrValue2(uint32_t fcpu, uint32_t baud) {
+            return (((64.0 * fcpu) / (8 * baud)) + 0.5) - 1;
+        }
+        
+    };
+
 }
