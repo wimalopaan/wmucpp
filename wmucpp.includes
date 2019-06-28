@@ -24,3 +24,5 @@ boards/onoff_avr0
 boards/onoff_avr0/small
 include0/mcu/tinyavr1
 gcc/base/avr/include/avr
+boards/curiosity
+include0/mcu/common/components

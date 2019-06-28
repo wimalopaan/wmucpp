@@ -28,9 +28,7 @@
 
 namespace AVR {
     struct ATMega4809 final {
-        
-        template<typename T>
-        inline static constexpr bool is_atomic() {return false;}
+        template<typename T> inline static constexpr bool is_atomic() {return false;}
         
         ATMega4809() = delete;
         
@@ -40,37 +38,30 @@ namespace AVR {
         };
         
         using Cpu = AVR::Series0::Cpu;
-        
         using Clock = AVR::Series0::Clock;
-
         using Rtc = AVR::Series0::Rtc;
-
         using Usart = AVR::Series0::Usart;
-        
         using PortRegister = AVR::Series0::PortRegister;
-        
+        using Portmux= AVR::Series0::Portmux;
         using TCA = AVR::Series0::TCA;
-
+        using TCB = AVR::Series0::TCB;
+        using Ccl = AVR::Series0::Ccl;
+        using Events = AVR::Series0::Events;
         
-        struct TCB {
-            template<int N> struct Address;
-        };
     };
     template<>
     constexpr bool ATMega4809::is_atomic<uint8_t>() {return true;}
 }
 
-namespace std {
-    template<> struct enable_bitmask_operators<AVR::ATMega4809::Usart::CtrlA_t> : std::true_type {};
-    template<> struct enable_bitmask_operators<AVR::ATMega4809::Usart::CtrlB_t> : std::true_type {};
-    template<> struct enable_bitmask_operators<AVR::ATMega4809::Usart::CtrlC_t> : std::true_type {};
-    template<> struct enable_bitmask_operators<AVR::ATMega4809::TCA::CtrlA_t> : std::true_type {};
-    template<> struct enable_bitmask_operators<AVR::ATMega4809::Rtc::CtrlA_t> : std::true_type {};
-    template<> struct enable_bitmask_operators<AVR::ATMega4809::Rtc::PitCtrlA_t> : std::true_type {};
-    template<> struct enable_bitmask_operators<AVR::ATMega4809::Cpu::SReg_t> : std::true_type {};
-}
-
 namespace AVR {
+    template<> struct AVR::Component::Count<ATMega4809::Usart> : std::integral_constant<uint8_t, 4> {};
+    template<> struct AVR::Component::Count<ATMega4809::TCA> : std::integral_constant<uint8_t, 1> {};
+    template<> struct AVR::Component::Count<ATMega4809::TCB> : std::integral_constant<uint8_t, 4> {};
+    template<> struct AVR::Component::Count<ATMega4809::Rtc> : std::integral_constant<uint8_t, 1> {};
+    template<> struct AVR::Component::Count<ATMega4809::PortRegister> : std::integral_constant<uint8_t, 6> {};
+    template<> struct AVR::Component::Count<ATMega4809::Portmux> : std::integral_constant<uint8_t, 1> {};
+    template<> struct AVR::Component::Count<ATMega4809::Ccl> : std::integral_constant<uint8_t, 1> {};
+    
     template<> struct ATMega4809::Usart::Address<0> {
         inline static constexpr uintptr_t value = 0x0800;
     };
@@ -116,6 +107,5 @@ namespace AVR {
     template<> struct ATMega4809::PortRegister::Address<F> {
         inline static constexpr uintptr_t value = 0x04A0;
     };
-
 }
 #pragma pack(pop)

@@ -56,21 +56,21 @@ struct AsciiHandler;
 struct BinaryHandler;
 struct BCastHandler;
 
-using sensorPA = Hott::SensorProtocollAdapter<0, Hott::gam_id, AsciiHandler, BinaryHandler, BCastHandler>;
+using sensorPA = Hott::SensorProtocollAdapter<0, Hott::gam_code, AsciiHandler, BinaryHandler, BCastHandler>;
 
-using sensorUsart = AVR::Usart<0, sensorPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>> ;
-using rcUsart = AVR::Usart<1, sumd, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
+using sensorUsart = AVR::Usart<AVR::Component::Usart<0>, sensorPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>> ;
+using rcUsart = AVR::Usart<AVR::Component::Usart<1>, sumd, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
 using terminalDevice = rcUsart;
 using terminal = etl::basic_ostream<terminalDevice>;
 using log = External::QtRobo::Logging<terminal, 0>;
 
-using sensorData = Hott::SensorProtocollBuffer<0>;
+using sensorData = Hott::GamProtocollBuffer<0>;
 using crWriterSensorBinary = ConstanteRateWriter<sensorData, sensorUsart>;
-using menuData = Hott::SensorTextProtocollBuffer<0>;
+using menuData = Hott::SensorTextProtocollBuffer<Hott::gam_code, 0>;
 using crWriterSensorText = ConstanteRateWriter<menuData, sensorUsart>;
 
-using pwm = AVR::Pwm<1>;
-using hbridge = External::IFX007::HBridge<pwm, sumd::value_type>;
+//using pwm = AVR::Pwm<1>;
+//using hbridge = External::IFX007::HBridge<pwm, sumd::value_type>;
 
 
 namespace  {
@@ -85,9 +85,9 @@ namespace  {
     constexpr RPM MinimumRpm{100};
 }
 
-using rpm= External::RpmWithIcp<1, MinimumRpm, MaximumRpm>;
+//using rpm= External::RpmWithIcp<1, MinimumRpm, MaximumRpm>;
 
-using systemClock = AVR::SystemTimer<0, interval>;
+using systemClock = AVR::SystemTimer<AVR::Component::Timer<0>, interval>;
 using alarmTimer = External::Hal::AlarmTimer<systemClock>;
 
 struct Storage {
@@ -292,16 +292,16 @@ int main() {
     
     eeprom::init();
     
-    sensorUsart::init<19200>();
-    rcUsart::init<115200>();
+    sensorUsart::init<BaudRate<19200>>();
+    rcUsart::init<BaudRate<115200>>();
     
-    pwm::init<fpwm>();
-    hbridge::init();
+//    pwm::init<fpwm>();
+//    hbridge::init();
 
     menu::init();    
     const auto t = alarmTimer::create(1000_ms, External::Hal::AlarmFlags::Periodic);
 
-    rpm::init();
+//    rpm::init();
     
     {
         Scoped<EnableInterrupt<>> ei;
@@ -310,19 +310,19 @@ int main() {
             pc1::toggle();
             sensorUsart::periodic();
             rcUsart::periodic();
-            hbridge::periodic();
+//            hbridge::periodic();
             menu::periodic();
-            rpm::period();
+//            rpm::period();
             
             systemClock::periodic([&](){
                 crWriterSensorBinary::rateProcess();
                 crWriterSensorText::rateProcess();
                 pc0::toggle();
                 auto v = sumd::value(0);
-                hbridge::duty(v);
+//                hbridge::duty(v);
                 alarmTimer::periodic([&](alarmTimer::index_type timer){
                     if (timer == t) {
-                        rpm::check();
+//                        rpm::check();
 //                        etl::outl<terminal>("p: "_pgm, hbridge::x1);
 //                        etl::outl<terminal>("t: "_pgm, hbridge::x2);
   

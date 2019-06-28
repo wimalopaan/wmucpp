@@ -75,6 +75,10 @@ typedef AVR::ATMegaNone DefaultMcuType;
 # warning "No CPU found"
 #endif
 
+namespace AVR::Component {
+    template<typename Component> struct Count;
+}
+
 #include "common/concepts.h"
 
 namespace AVR {
@@ -96,19 +100,30 @@ namespace AVR {
     struct F : std::integral_constant<char, 'F'> {};
     
     namespace Component {
+        template<typename Component> struct Count;
+        
         template<uint8_t N, typename TC = void>
         struct Timer : etl::NamedConstant<N> {
             using component_type = TC;
         };
 
         template<uint8_t N>
-        using Usart = etl::NamedConstant<N>;
+        struct Usart : etl::NamedConstant<N>{};
         
         template<uint8_t N>
-        using Adc = etl::NamedConstant<N>;
+        struct Adc : etl::NamedConstant<N>{};
 
         template<uint8_t N>
-        using Rtc = etl::NamedConstant<N>;
+        struct Rtc : etl::NamedConstant<N>{};
+
+        template<uint8_t N>
+        struct Ccl : etl::NamedConstant<N>{};
+
+        template<uint8_t N>
+        struct Tca : etl::NamedConstant<N>{};
+
+        template<uint8_t N>
+        struct Tcb : etl::NamedConstant<N>{};
     }   
 
     template<uint8_t N>

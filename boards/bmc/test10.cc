@@ -81,8 +81,8 @@ using inh2 = AVR::Pin<PortB, 0>;
 using qtPA = External::QtRobo::ProtocollAdapter<0, 16>;
 using sumd = Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>;
 
-using sensor = Hott::Experimental::Sensor<AVR::Component::Uart<0>, AVR::Usart, AVR::BaudRate<19200>, Hott::EscMsg, systemClock>;
-using rcUsart = AVR::Usart<AVR::Component::Uart<1>, qtPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
+using sensor = Hott::Experimental::Sensor<AVR::Component::Usart<0>, AVR::Usart, AVR::BaudRate<19200>, Hott::EscMsg, systemClock>;
+using rcUsart = AVR::Usart<AVR::Component::Usart<1>, qtPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
 
 using terminalDevice = rcUsart;
 using terminal = etl::basic_ostream<terminalDevice>;

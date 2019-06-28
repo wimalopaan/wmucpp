@@ -10,7 +10,6 @@ namespace AVR {
     using namespace External::Units;
     using namespace AVR::Util::Timer;
     
-    
     namespace Util::Timer {
         // calculates prescaler and ocr value for frequency with lowest possible prescaler
         template<uint8_t TimerNumber, typename MCU = DefaultMcuType>

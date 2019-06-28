@@ -17,22 +17,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# 1. Fuses (16MHz, BootLoader)
-# sudo avrdude -p atmega328pb -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P usb -c avrisp2 -U lfuse:w:0xf7:m -U hfuse:w:0xd4:m -U efuse:w:0xff:m
-# 2. Bootloader flached -> booloader/optiboot.txt
-# 
-# sudo avrdude -p atmega328pb -c arduino -b 9600 -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P /dev/ttyUSB2 -U flash:w:test00.elf
-
+# ~/Projekte/updi/pyupdi/pyupdi.py -d mega4809 -c /dev/ttyUSB3  -f test00.hex
 
 MCU = atmega4809
 F_OSC = 20000000
 
 subdirs =
 
-targets += test00.elf test00.S test00.hex
-#targets += test01.elf
-#targets += test02.elf
-#targets += test03.elf
-#targets += test04.elf
+#targets += test00.elf test00.S test00.hex
+#targets += test01.elf test01.S test01.hex
+#targets += test02.elf test02.S test02.hex
+#targets += test03.elf test03.S test03.hex
+#targets += test04.elf test04.S test04.hex
+#targets += test05.elf test05.S test05.hex
+targets += test06.elf test06.S test06.hex
+targets += test07.elf test07.S test07.hex
 
 -include ../../Makefile.avr0.include

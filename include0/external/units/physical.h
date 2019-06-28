@@ -25,6 +25,7 @@
 #include <limits>
 
 #include <etl/concepts.h>
+#include <etl/type_traits.h>
 #include <etl/outfwd.h>
 
 namespace External {
@@ -143,7 +144,7 @@ namespace External {
         
         template<>
         constexpr milliseconds duration_cast<milliseconds>(const microseconds& us) {
-            return milliseconds{(uint16_t)(us.value / 1000)};
+            return milliseconds{(uint16_t)((us.value + 500) / 1000)};
         }
         
         template<typename T>

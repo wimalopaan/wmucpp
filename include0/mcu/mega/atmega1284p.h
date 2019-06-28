@@ -551,7 +551,7 @@ namespace AVR {
     
     template<>
     struct ATMega1284P::TWI::PrescalerRow<0> {
-        static constexpr auto values = twiPrescalerBit<ATMega1284P::TWI::TWS>;
+        static constexpr auto values = AVR::Util::Twi::prescalerValues<ATMega1284P::TWI::TWS>;
     };
     
     template<>
@@ -591,7 +591,7 @@ namespace AVR {
     };
     template<>
     struct ATMega1284P::Timer8Bit::PrescalerBits<0> {
-        static constexpr auto values = prescalerValues10Bit<ATMega1284P::Timer8Bit::TCCRB>;
+        static constexpr auto values = AVR::Util::Timer::prescalerValues10Bit<ATMega1284P::Timer8Bit::TCCRB>;
     };
     
     // Timer2
@@ -601,7 +601,7 @@ namespace AVR {
     };
     template<>
     struct ATMega1284P::Timer8Bit::PrescalerBits<2> {
-        static constexpr auto values = prescalerValues10BitExtended<ATMega1284P::Timer8Bit::TCCRB>;
+        static constexpr auto values = AVR::Util::Timer::prescalerValues10BitExtended<ATMega1284P::Timer8Bit::TCCRB>;
     };
     
     // Timer 1 (16bit)
@@ -611,7 +611,7 @@ namespace AVR {
     };
     template<>
     struct ATMega1284P::Timer16Bit::PrescalerBits<1> {
-        static constexpr auto values = prescalerValues10Bit<ATMega1284P::Timer16Bit::TCCRB>;
+        static constexpr auto values = AVR::Util::Timer::prescalerValues10Bit<ATMega1284P::Timer16Bit::TCCRB>;
     };
     
     // Timer 3 (16bit)
@@ -621,7 +621,7 @@ namespace AVR {
     };
     template<>
     struct ATMega1284P::Timer16Bit::PrescalerBits<3> {
-        static constexpr auto values = prescalerValues10Bit<ATMega1284P::Timer16Bit::TCCRB>;
+        static constexpr auto values = AVR::Util::Timer::prescalerValues10Bit<ATMega1284P::Timer16Bit::TCCRB>;
     };
     
 }

@@ -26,20 +26,26 @@
 
 #include <external/hal/protocolladapter.h>
 
+#include "../common/concepts.h"
 #include "../common/isr.h"
 #include "../common/delay.h"
+
+#include "portmux.h"
 
 namespace AVR {
     using namespace std::literals::chrono;
 
-    template<auto v>
-    struct BaudRate: etl::NamedConstant<v> {};
+    struct FullDuplex final {};
+    struct HalfDuplex final {};
     
     template<auto v>
-    struct ReceiveQueueLength : etl::NamedConstant<v> {};
+    struct BaudRate final : etl::NamedConstant<v> {};
     
     template<auto v>
-    struct SendQueueLength : etl::NamedConstant<v> {};
+    struct ReceiveQueueLength final : etl::NamedConstant<v> {};
+    
+    template<auto v>
+    struct SendQueueLength final : etl::NamedConstant<v> {};
     
     template<typename MCU, uint8_t N>
     struct UsartBase {
@@ -67,7 +73,7 @@ namespace AVR {
         
     } //!Util
 
-    template<AVR::Concepts::ComponentNumber CN, AVR::Concepts::ProtocolAdapter PA = External::Hal::NullProtocollAdapter, etl::Concepts::NamedFlag useISR = etl::NamedFlag<true>,
+    template<typename CN, AVR::Concepts::ProtocolAdapter PA = External::Hal::NullProtocollAdapter, etl::Concepts::NamedFlag useISR = etl::NamedFlag<true>,
              etl::Concepts::NamedConstant RecvQLength = ReceiveQueueLength<64>, 
              etl::Concepts::NamedConstant SendQLength = SendQueueLength<64>, typename MCU = DefaultMcuType> class Usart;
     
@@ -247,25 +253,27 @@ namespace AVR {
         }
     };
 
-    template<AVR::Concepts::ComponentNumber CN, AVR::Concepts::ProtocolAdapter PA, etl::Concepts::NamedFlag useISR,
+    template<AVR::Concepts::ComponentPosition CP, AVR::Concepts::ProtocolAdapter PA, etl::Concepts::NamedFlag useISR,
              etl::Concepts::NamedConstant RecvQLength, etl::Concepts::NamedConstant SendQLength , AVR::Concepts::At01Series MCU >
-    class Usart<CN, PA, useISR, RecvQLength, SendQLength, MCU> final : public UsartBase<MCU, CN::value> {
+    class Usart<CP, PA, useISR, RecvQLength, SendQLength, MCU> final : public UsartBase<MCU, CP::component_type::value> {
         
-        static inline constexpr auto N = CN::value;
+        static inline constexpr auto N = CP::component_type::value;
 
         typedef typename std::conditional<useISR::value, volatile etl::FiFo<std::byte, SendQLength::value>, etl::FiFo<std::byte, SendQLength::value>>::type send_queue_type;
         typedef typename std::conditional<useISR::value, volatile etl::FiFo<std::byte, RecvQLength::value>, etl::FiFo<std::byte, RecvQLength::value>>::type recv_queue_type;
 
         static constexpr auto mcu_usart = getBaseAddr<typename MCU::Usart, N>;
-        static_assert(N < MCU::Usart::count, "wrong number of usart");
-        
+        static_assert(N < AVR::Component::Count<typename MCU::Usart>::value, "wrong number of usart");
+
+        using txpin = AVR::Portmux::Map<CP, MCU>::txpin;
+        using rxpin = AVR::Portmux::Map<CP, MCU>::rxpin;
         
         using ctrla_t = MCU::Usart::CtrlA_t;
         using ctrlb_t = MCU::Usart::CtrlB_t;
         using ctrlc_t = MCU::Usart::CtrlC_t;
         using status_t = MCU::Usart::Status_t;
 
-        using usart = Usart<CN, PA, useISR, RecvQLength, SendQLength>;
+        using usart = Usart<CP, PA, useISR, RecvQLength, SendQLength>;
         
         using Config = Project::Config;
         
@@ -317,28 +325,39 @@ namespace AVR {
         };
     public:
         
-        template<etl::Concepts::NamedConstant Baud>
+        template<etl::Concepts::NamedConstant Baud, typename Mode = FullDuplex>
         inline static void init() {
             using namespace etl;
             static_assert(Baud::value >= 2400, "USART should use a valid baud rate >= 2400");
             
-            mcu_usart()->ctrlb.template set<ctrlb_t::txen | ctrlb_t::rxen>();
+            if constexpr(std::is_same_v<Mode, FullDuplex>) {
+                txpin::template dir<Output>();
+                rxpin::template pullup<true>(); 
+            }
+            else if constexpr(std::is_same_v<Mode, HalfDuplex>) { 
+                txpin::template pullup<true>(); 
+                txpin::on();
+                mcu_usart()->ctrla.template add<ctrla_t::lbme, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
+                mcu_usart()->ctrlb.template add<ctrlb_t::odme, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
+            }
+            else {
+                static_assert(std::false_v<Mode>);
+            }
 
             if constexpr (Baud::value > 100000) {
                 constexpr auto ubrr = ubrrValue2(Config::fMcu.value, Baud::value); 
-//                using u = std::integral_constant<uint16_t, ubrr>;
-//                u::_;
-                mcu_usart()->ctrlb.template add<ctrlb_t::rxm0>();
+//                std::integral_constant<uint16_t, ubrr>::_;
+                mcu_usart()->ctrlb.template add<ctrlb_t::rxm0, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
                 *mcu_usart()->baud = ubrr;
             }
             else {
                 constexpr auto ubrr = ubrrValue(Config::fMcu.value, Baud::value); 
-//                using u = std::integral_constant<uint16_t, ubrr>;
-//                u::_;
+//                std::integral_constant<uint16_t, ubrr>::_;
                 *mcu_usart()->baud = ubrr;
             }            
 
-            mcu_usart()->ctrlc.template set<ctrlc_t::pmode1 | ctrlc_t::chsize1 | ctrlc_t::chsize0>();
+            mcu_usart()->ctrlc.template add<ctrlc_t::xfer8bit | ctrlc_t::noparity | ctrlc_t::xfer1stopbit, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
+            mcu_usart()->ctrlb.template add<ctrlb_t::txen | ctrlb_t::rxen, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
             
             if constexpr(useISR::value) {
             }

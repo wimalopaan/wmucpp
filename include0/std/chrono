@@ -101,6 +101,12 @@ namespace std {
         constexpr microseconds operator/(const microseconds& lhs, F v) {
             return {(uint16_t)(lhs.value / v)};
         }
+
+        template<typename  F>
+        requires std::is_integral_v<F>
+        constexpr microseconds operator*(const microseconds& lhs, F v) {
+            return {(uint16_t)(lhs.value * v)};
+        }
         
         template<typename F>
         requires std::is_integral_v<F>
@@ -132,6 +138,11 @@ namespace std {
         template<typename R, typename P>
         constexpr bool operator==(const duration<R, P>& lhs, const duration<R, P>& rhs) {
             return lhs.value == rhs.value;
+        }
+
+        template<typename R, typename P1, typename P2>
+        constexpr bool operator==(const duration<R, P1>& lhs, const duration<R, P2>& rhs) {
+            return lhs.value == (rhs.value * P1::denom / P2::nom) / (P2::denom / P1::nom);
         }
         
         template<typename R, typename P>

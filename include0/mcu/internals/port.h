@@ -80,6 +80,10 @@ namespace AVR {
         static inline volatile std::byte& outtoggle() {
             return *getBaseAddr<mcuport_type , Name>()->outtgl;
         }
+        template<auto Pin, bool on>
+        static inline void pullup() {
+            getBaseAddr<mcuport_type , Name>()->pinctrl[Pin].template add<mcuport_type::PinCtrl_t::pullup>();
+        }
     };
     
     template<AVR::Concepts::Letter Name, AVR::Concepts::AtMega MCU>
@@ -320,6 +324,30 @@ namespace AVR {
     inline void off() {
         (Pin::off(), ...);
     }
+
+    template<typename PinList, typename MCU = DefaultMcuType>
+    struct PinGroup;
+    
+    template<typename PinList, AVR::Concepts::At01Series MCU>
+    requires Meta::all_same_front_v<PinList>
+    struct PinGroup<PinList, MCU> {
+        inline static constexpr std::byte group_value = []<typename... P>(Meta::List<P...>) {
+              return (P::pinMask | ...);                                          
+        }(PinList{});
+        inline static void on() {
+            using port = Meta::front<PinList>::port;   
+            port::outset() = group_value;
+        }
+        inline static void off() {
+            using port = Meta::front<PinList>::port;   
+            port::outclear() = group_value;
+        }
+        template<typename Dir>
+        inline static void dir() {
+            using port = Meta::front<PinList>::port;   
+            port::dirset() = group_value;
+        }
+    };
     
     template<AVR::Concepts::Port Port, uint8_t PinNumber, typename MCU = DefaultMcuType>
     struct Pin;
@@ -340,6 +368,10 @@ namespace AVR {
         }
         static inline void toggle() {
             Port::outtoggle() = pinMask; 
+        }
+        template<bool On>
+        static inline void pullup() {
+            Port::template pullup<PinNumber, true>();
         }
         template<typename Dir>
         static inline void dir() {        

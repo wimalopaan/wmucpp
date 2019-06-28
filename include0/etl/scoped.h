@@ -44,8 +44,7 @@ namespace etl {
     class Scoped;
     
     template<bool Active>
-    class Scoped<EnableInterrupt<ForceOn>, Active> final
-    {
+    class Scoped<EnableInterrupt<ForceOn>, Active> final {
     public:
         inline Scoped() {
             if constexpr(Active) {

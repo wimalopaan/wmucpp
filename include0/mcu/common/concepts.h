@@ -28,6 +28,10 @@ namespace AVR {
         template<> struct isAtMega0<ATMega4809> : std::true_type {};
         
         template<> struct isAtTiny1<ATTiny412> : std::true_type {};
+        
+        template<typename... PP> struct isAtMega : std::disjunction<isAtMega_8<PP>..., isAtMega_X4<PP>..., isAtMega_X8<PP>...> {};
+
+        template<typename... PP> struct isAtTiny : std::disjunction<isAtTiny_X4<PP>..., isAtTiny_X5<PP>...> {};
     }
     
     namespace Concepts {
@@ -44,7 +48,7 @@ namespace AVR {
         concept bool At01Series = (AVR::Groups::isAtTiny1<MCU>::value || AVR::Groups::isAtMega0<MCU>::value);
 
         template<typename MCU>
-        concept bool AtMega  = !(AVR::Groups::isAtTiny1<MCU>::value || AVR::Groups::isAtMega0<MCU>::value);
+        concept bool AtMega  = AVR::Groups::isAtMega<MCU>::value;
         
         template<typename MCU>
         concept bool AtMega_8 = AVR::Groups::isAtMega_8<MCU>::value;
@@ -73,6 +77,8 @@ namespace AVR {
         concept bool McuMultipleComponent = requires(C) {
                 C::count;
 //                C::template Address<0>::value; // not possible beacuse of timer numbering scheme 
+        } || requires(C) {
+                AVR::Component::Count<C>::value;
         };
         
         template<typename P>
@@ -87,6 +93,14 @@ namespace AVR {
         template<typename C>
         concept bool ComponentSpecifier = requires(C) {
             typename C::component_type;
+//            typename C::value_type;
+//            C::value_type::value;
+        };        
+
+        template<typename CP>
+        concept bool ComponentPosition = requires(CP) {
+            typename CP::component_type;
+            typename CP::place_type;
 //            typename C::value_type;
 //            C::value_type::value;
         };        

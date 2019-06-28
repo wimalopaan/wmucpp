@@ -92,12 +92,12 @@ namespace AVR {
             
         };
         
-        template<etl::Concepts::NamedConstant TimerNumber, typename MCU = DefaultMcuType>
+        template<typename TimerNumber, typename MCU = DefaultMcuType>
         struct DynamicPwm;
         
         // WGM Mode 15
         // dynamic changeable frequnecy
-        template<etl::Concepts::NamedConstant TimerNumber, typename MCU>
+        template<etl::Concepts::NamedConstant TimerNumber, AVR::Concepts::AtMega MCU>
         requires ((TimerNumber::value == 1) || (TimerNumber::value == 3) || (TimerNumber::value == 4))
         struct DynamicPwm<TimerNumber, MCU> final {
             DynamicPwm() = delete;
@@ -159,6 +159,112 @@ namespace AVR {
                 *mcu_timer()->ocrb = 0;
                 *mcu_timer()->ocra = 0;
             }
+        };
+
+
+        template<auto N>
+        struct WO final : etl::NamedConstant<N> {};
+        
+        template<typename P, AVR::Concepts::At01Series MCU>
+        struct DynamicPwm<Portmux::Position<Component::Tca<0>, P>, MCU> final {
+            
+            template<typename Position, auto N>
+            struct WOMapper;
+            
+            template<typename Position>
+            struct WOMapper<Position, 0> {
+                using pin = typename AVR::Portmux::Map<Position>::wo0pin;
+                inline static constexpr auto value = MCU::TCA::CtrlB_t::cmp0en;
+                using type = std::integral_constant<decltype(value), value>;
+            };
+            template<typename Position>
+            struct WOMapper<Position, 1> {
+                using pin = typename AVR::Portmux::Map<Position>::wo1pin;
+                inline static constexpr auto value = MCU::TCA::CtrlB_t::cmp1en;
+                using type = std::integral_constant<decltype(value), value>;
+            };
+            template<typename Position>
+            struct WOMapper<Position, 2> {
+                using pin = typename AVR::Portmux::Map<Position>::wo2pin;
+                inline static constexpr auto value = MCU::TCA::CtrlB_t::cmp2en;
+                using type = std::integral_constant<decltype(value), value>;
+            };
+            
+            DynamicPwm() = delete;
+            
+            using mcu_timer_t = typename MCU::TCA; 
+            static constexpr auto mcu_tca = getBaseAddr<mcu_timer_t, 0>;
+            using position = Portmux::Position<Component::Tca<0>, P>;
+
+            static inline constexpr auto cmpMask = mcu_timer_t::CtrlB_t::cmp2en | mcu_timer_t::CtrlB_t::cmp1en | mcu_timer_t::CtrlB_t::cmp0en;
+            
+            template<typename WO>
+            using womapper = WOMapper<position, WO::value>;
+            
+            template<typename WO>
+            struct pinmapper {
+                using type = typename WOMapper<position, WO::value>::pin;
+            };
+            
+            using pins = Meta::List<typename pinmapper<WO<0>>::type, typename pinmapper<WO<0>>::type, typename pinmapper<WO<0>>::type>;
+            
+            inline static constexpr void init() {
+                mcu_tca()->ctrla.template set<mcu_timer_t::CtrlA_t::enable>();
+//                mcu_tca()->ctrlb.template set<MCU::TCA::CtrlB_t::cmp2en | MCU::TCA::CtrlB_t::pwm>();
+                mcu_tca()->ctrlb.template set<mcu_timer_t::CtrlB_t::pwm>();
+            
+                AVR::PinGroup<pins>::template dir<Output>();
+            }
+            template<typename Out>
+            inline static constexpr void noOutput() {
+                
+            }
+
+            template<typename... Outs>
+            inline static constexpr void on() {
+                using out_list = Meta::transform_type<womapper, Meta::List<Outs...>>;
+                constexpr auto value = Meta::value_or_v<out_list>;
+//                std::integral_constant<decltype(value), value>::_;
+                mcu_tca()->ctrlb.template add<value>();
+            }
+            template<typename... Outs>
+            inline static constexpr void off() {
+                using out_list = Meta::transform_type<womapper, Meta::List<Outs...>>;
+                constexpr auto value = Meta::value_or_v<out_list>;
+//                std::integral_constant<decltype(value), value>::_;
+                mcu_tca()->ctrlb.template clear<value>();
+            }
+                    
+            template<typename... Outs>
+            inline static constexpr void set() {
+                using pin_list = Meta::transform_type<pinmapper, Meta::List<Outs...>>;
+//                pin_list::_;
+                off<Outs...>();
+                AVR::PinGroup<pin_list>::on();
+            }
+            template<typename... Outs>
+            inline static constexpr void reset() {
+                using pin_list = Meta::transform_type<pinmapper, Meta::List<Outs...>>;
+//                pin_list::_;
+                AVR::PinGroup<pin_list>::off();
+            }
+            
+            inline static constexpr void frequency(const External::Units::hertz& f) {
+                *mcu_tca()->perbuf = 10000;
+            }
+            template<typename Out>
+            inline static constexpr void duty(uint16_t d) {
+                if constexpr(std::is_same_v<Out, WO<0>>) {
+                    *mcu_tca()->cmp0buf = d;
+                }
+                if constexpr(std::is_same_v<Out, WO<1>>) {
+                    *mcu_tca()->cmp1buf = d;
+                }
+                if constexpr(std::is_same_v<Out, WO<2>>) {
+                    *mcu_tca()->cmp2buf = d;
+                }
+            }
+        private:
         };
         
         template<etl::Concepts::NamedConstant TimerNumber, 

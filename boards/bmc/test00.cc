@@ -66,9 +66,9 @@ struct BCastHandler;
 
 using sensorPA = Hott::SensorProtocollAdapter<0, Hott::esc_code, AsciiHandler, BinaryHandler, BCastHandler>;
 
-using sensorUsart = AVR::Usart<AVR::Component::Uart<0>, sensorPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>> ;
+using sensorUsart = AVR::Usart<AVR::Component::Usart<0>, sensorPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>> ;
 
-using rcUsart = AVR::Usart<AVR::Component::Uart<1>, qtPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
+using rcUsart = AVR::Usart<AVR::Component::Usart<1>, qtPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
 //using rcUsart = AVR::Usart<1, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
 //using rcUsart = AVR::Usart<1, sumd, AVR::UseInterrupts<true>, AVR::ReceiveQueueLength<0>>;
 

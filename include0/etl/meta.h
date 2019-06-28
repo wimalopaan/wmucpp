@@ -82,7 +82,7 @@ namespace Meta {
     using length = std::integral_constant<size_t, sizeof...(T)>;
 
     template<concepts::List List>
-    using size_type = typename std::conditional<size<List>::value < 256, uint8_t, uint16_t>::type;    
+    using size_type = std::conditional_t<size<List>::value < 256, uint8_t, uint16_t>;    
     
     template<concepts::List List>
     using rest = typename detail::rest_impl<List>::type;
@@ -106,7 +106,8 @@ namespace Meta {
         struct size_impl;
         template<template<typename...> typename L, typename... I>
         struct size_impl<L<I...>> {
-            typedef std::integral_constant<size_t, sizeof...(I)> type;
+            using value_type = std::conditional_t<sizeof...(I) < 256, uint8_t, uint16_t>;
+            using type = std::integral_constant<value_type, sizeof...(I)>;
         };
         
         template<template<typename...> typename, typename> struct apply_impl;
@@ -163,6 +164,12 @@ namespace Meta {
             typedef L<F<I>...> type;                
         };
 
+        template<template<typename> typename F, typename L> struct transform_type_impl;
+        template<template<typename> typename F, template<typename...> typename L, typename... I>
+        struct transform_type_impl<F, L<I...>> {
+            typedef Meta::List<typename F<I>::type...> type;                
+        };
+        
         template<template<typename, size_t> typename F, typename L, typename Seq> struct transformN_impl;
         template<template<typename, size_t> typename F, template<typename...> typename L, typename... I, size_t... II>
         struct transformN_impl<F, L<I...>, std::index_sequence<II...>> {
@@ -413,6 +420,13 @@ namespace Meta {
             typedef void type;
         };
         
+        template<typename L>
+        struct value_or_impl;
+        template<typename... T>
+        struct value_or_impl<List<T...>> {
+            inline static constexpr auto value = (T::value | ...);  
+        };
+        
     } // !detail
         
     template<template<typename...> typename F, concepts::List List>
@@ -438,6 +452,10 @@ namespace Meta {
     
     template<template<typename> typename Func, concepts::List List>
     using transform = typename detail::transform_impl<Func, List>::type;
+
+    template<template<typename> typename Func, concepts::List List>
+    using transform_type = typename detail::transform_type_impl<Func, List>::type;
+
     
     template<template<typename, size_t> typename Func, concepts::List List>
     using transformN = typename detail::transformN_impl<Func, List, std::make_index_sequence<size<List>::value>>::type;
@@ -503,6 +521,9 @@ namespace Meta {
     template<concepts::List L>
     struct all_same_front : public std::integral_constant<bool, detail::all_same_impl<front<L>, L>::value> {};
     
+    template<concepts::List L>
+    inline static constexpr bool all_same_front_v = Meta::all_same_front<L>::value;
+    
     template<concepts::List List>
     using pop_front = rest<List>;
     
@@ -511,6 +532,12 @@ namespace Meta {
     
     template<typename L>
     using partial_sum = typename detail::partial_sum_impl<L, 0>::type;
+    
+    template<concepts::List List>
+    using value_or = typename detail::value_or_impl<List>;
+    
+    template<concepts::List List>
+    inline static constexpr auto value_or_v = detail::value_or_impl<List>::value;
     
     template<concepts::List List, typename I, typename C>
     inline auto visitAt(I index, const C& callable) {

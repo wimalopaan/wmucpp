@@ -3,6 +3,126 @@
 #include "concepts.h"
 
 namespace AVR {
+    
+    namespace Portmux {
+        struct Default {};
+        struct Alt1 {};
+        struct Alt2 {};
+        struct AltA {};
+        struct AltB {};
+        struct AltC {};
+        struct AltD {};
+        struct AltE {};
+        struct AltF {};
+        struct None {};
+        
+        
+        template<typename Component, typename Place>
+        struct Position {
+            using component_type = Component;
+            using place_type = Place;
+        };
+        
+        template<typename CompPos, typename MCU = DefaultMcuType>
+        struct Map;
+        
+        template<AVR::Concepts::At01Series MCU>
+        struct Map<Position<AVR::Component::Usart<0>, Default>, MCU> {
+            using txpin = AVR::Pin<AVR::Port<AVR::A>, 0>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::A>, 1>; 
+        };
+        template<AVR::Concepts::At01Series MCU>
+        struct Map<Position<AVR::Component::Usart<0>, Alt1>, MCU> {
+            using txpin = AVR::Pin<AVR::Port<AVR::A>, 4>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::A>, 5>; 
+        };
+        template<AVR::Concepts::At01Series MCU>
+        struct Map<Position<AVR::Component::Usart<1>, Default>, MCU> {
+            using txpin = AVR::Pin<AVR::Port<AVR::C>, 0>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::C>, 1>; 
+        };
+        template<AVR::Concepts::At01Series MCU>
+        struct Map<Position<AVR::Component::Usart<1>, Alt1>, MCU> {
+            using txpin = AVR::Pin<AVR::Port<AVR::C>, 4>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::C>, 5>; 
+        };
+        template<AVR::Concepts::At01Series MCU>
+        struct Map<Position<AVR::Component::Usart<2>, Default>, MCU> {
+            using txpin = AVR::Pin<AVR::Port<AVR::F>, 0>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::F>, 1>; 
+        };
+        template<AVR::Concepts::At01Series MCU>
+        struct Map<Position<AVR::Component::Usart<2>, Alt1>, MCU> {
+            using txpin = AVR::Pin<AVR::Port<AVR::F>, 4>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::F>, 5>; 
+        };
+        template<AVR::Concepts::At01Series MCU>
+        struct Map<Position<AVR::Component::Usart<3>, Default>, MCU> {
+            using txpin = AVR::Pin<AVR::Port<AVR::B>, 0>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::B>, 1>; 
+        };
+        template<AVR::Concepts::At01Series MCU>
+        struct Map<Position<AVR::Component::Usart<3>, Alt1>, MCU> {
+            using txpin = AVR::Pin<AVR::Port<AVR::B>, 4>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::B>, 5>; 
+        };
+
+        template<AVR::Concepts::At01Series MCU>
+        struct Map<Position<AVR::Component::Tca<0>, AltA>, MCU> {
+            using wo0pin = AVR::Pin<AVR::Port<AVR::A>, 0>; 
+            using wo1pin = AVR::Pin<AVR::Port<AVR::A>, 1>; 
+            using wo2pin = AVR::Pin<AVR::Port<AVR::A>, 2>; 
+            using wo3pin = AVR::Pin<AVR::Port<AVR::A>, 3>; 
+            using wo4pin = AVR::Pin<AVR::Port<AVR::A>, 4>; 
+            using wo5pin = AVR::Pin<AVR::Port<AVR::A>, 5>; 
+        };
+        template<AVR::Concepts::At01Series MCU>
+        struct Map<Position<AVR::Component::Tca<0>, AltB>, MCU> {
+            using wo0pin = AVR::Pin<AVR::Port<AVR::B>, 0>; 
+            using wo1pin = AVR::Pin<AVR::Port<AVR::B>, 1>; 
+            using wo2pin = AVR::Pin<AVR::Port<AVR::B>, 2>; 
+            using wo3pin = AVR::Pin<AVR::Port<AVR::B>, 3>; 
+            using wo4pin = AVR::Pin<AVR::Port<AVR::B>, 4>; 
+            using wo5pin = AVR::Pin<AVR::Port<AVR::B>, 5>; 
+        };
+        template<AVR::Concepts::At01Series MCU>
+        struct Map<Position<AVR::Component::Tca<0>, AltC>, MCU> {
+            using wo0pin = AVR::Pin<AVR::Port<AVR::C>, 0>; 
+            using wo1pin = AVR::Pin<AVR::Port<AVR::C>, 1>; 
+            using wo2pin = AVR::Pin<AVR::Port<AVR::C>, 2>; 
+            using wo3pin = AVR::Pin<AVR::Port<AVR::C>, 3>; 
+            using wo4pin = AVR::Pin<AVR::Port<AVR::C>, 4>; 
+            using wo5pin = AVR::Pin<AVR::Port<AVR::C>, 5>; 
+        };
+        template<AVR::Concepts::At01Series MCU>
+        struct Map<Position<AVR::Component::Tca<0>, AltD>, MCU> {
+            using wo0pin = AVR::Pin<AVR::Port<AVR::D>, 0>; 
+            using wo1pin = AVR::Pin<AVR::Port<AVR::D>, 1>; 
+            using wo2pin = AVR::Pin<AVR::Port<AVR::D>, 2>; 
+            using wo3pin = AVR::Pin<AVR::Port<AVR::D>, 3>; 
+            using wo4pin = AVR::Pin<AVR::Port<AVR::D>, 4>; 
+            using wo5pin = AVR::Pin<AVR::Port<AVR::D>, 5>; 
+        };
+        template<AVR::Concepts::At01Series MCU>
+        struct Map<Position<AVR::Component::Tca<0>, AltE>, MCU> {
+            using wo0pin = AVR::Pin<AVR::Port<AVR::E>, 0>; 
+            using wo1pin = AVR::Pin<AVR::Port<AVR::E>, 1>; 
+            using wo2pin = AVR::Pin<AVR::Port<AVR::E>, 2>; 
+            using wo3pin = AVR::Pin<AVR::Port<AVR::E>, 3>; 
+            using wo4pin = AVR::Pin<AVR::Port<AVR::E>, 4>; 
+            using wo5pin = AVR::Pin<AVR::Port<AVR::E>, 5>; 
+        };
+        template<AVR::Concepts::At01Series MCU>
+        struct Map<Position<AVR::Component::Tca<0>, AltF>, MCU> {
+            using wo0pin = AVR::Pin<AVR::Port<AVR::F>, 0>; 
+            using wo1pin = AVR::Pin<AVR::Port<AVR::F>, 1>; 
+            using wo2pin = AVR::Pin<AVR::Port<AVR::F>, 2>; 
+            using wo3pin = AVR::Pin<AVR::Port<AVR::F>, 3>; 
+            using wo4pin = AVR::Pin<AVR::Port<AVR::F>, 4>; 
+            using wo5pin = AVR::Pin<AVR::Port<AVR::F>, 5>; 
+        };
+    }
+    
     namespace Util::SoftUart {
         
         template<uint8_t N, typename MCU = DefaultMcuType>
@@ -51,7 +171,7 @@ namespace AVR {
         
         template<uint8_t N, typename MCU = DefaultMcuType>
         struct ExternalInterrupt;
-
+        
         template<typename MCU>
         struct ExternalInterrupt<0, MCU> {
             ExternalInterrupt() = delete;
@@ -94,7 +214,7 @@ namespace AVR {
         using hertz     = External::Units::hertz;
         
         using namespace Project;
-
+        
         template<uint8_t N, typename MCU>
         struct TimerBase8Bit;
         
@@ -136,7 +256,7 @@ namespace AVR {
             static constexpr const auto mcu_timer = getBaseAddr<mcu_timer_type, number>;
             static constexpr const auto mcu_timer_nterrupts = getBaseAddr<mcu_timer_interrupts_type>;
         };
-
+        
         template<uint8_t N, typename MCU>
         struct TimerBase16Bit {
             using value_type = uint16_t;
@@ -165,7 +285,7 @@ namespace AVR {
         };
         
         template<uint8_t N, typename MCU = DefaultMcuType> struct TimerParameter;
-
+        
         template<AVR::Concepts::AtMega_8 MCU>
         struct TimerParameter<0, MCU> final : public TimerBase8Bit<0, MCU> {
         };
@@ -173,7 +293,7 @@ namespace AVR {
         template<AVR::Concepts::AtMega_8 MCU>
         struct TimerParameter<2, MCU> final : public TimerBase8Bit<2, MCU> {
         };
-
+        
         template<AVR::Concepts::AtMega_8 MCU>
         struct TimerParameter<1, MCU> final : public TimerBase16Bit<1, MCU> {
             using PortB = AVR::Port<AVR::B, MCU>;
@@ -239,24 +359,25 @@ namespace AVR {
         
         template<uint8_t N>
         using mcu_timer_t = typename TimerParameter<N>::mcu_timer_type;
-
+        
         template<uint8_t N>
         using mcu_timer_interrupts_t = typename TimerParameter<N>::mcu_timer_interrupts_type;
-
+        
         template<uint8_t N>
         using mcu_timer_interrupts_flags_t = typename TimerParameter<N>::mcu_timer_interrupts_flags_type;
-
+        
         template<uint8_t N>
         using mcu_timer_interrupts_mask_t = typename TimerParameter<N>::mcu_timer_interrupts_mask_type;
-
+        
         template<uint8_t N>
         using mcu_timer_value_t = typename TimerParameter<N>::value_type;
         
         template<uint8_t N>
         using prescaler_bits_t = mcu_timer_t<N>::template PrescalerBits<N>;
-
+        
         template<uint8_t N>
         constexpr auto prescaler_bits_v = prescaler_bits_t<N>::values;
         
     }
+    
 }

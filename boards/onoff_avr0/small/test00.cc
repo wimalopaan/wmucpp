@@ -30,12 +30,12 @@ using clock = Clock<>;
 //using rcUsart = AVR::Usart<AVR::Component::Usart<0>, sumd, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
 
 namespace  {
-    constexpr auto dt = 10_ms;
+    constexpr auto dt = 2000_us;
     constexpr auto fRtc = 128_Hz;
 }
 
-using systemTimer = SystemTimer<Component::Rtc<0>, fRtc>;
-//using systemTimer = SystemTimer<Component::Timer<0, A>, dt>;
+//using systemTimer = SystemTimer<Component::Rtc<0>, fRtc>;
+using systemTimer = SystemTimer<Component::Timer<0, A>, dt>;
 using alarmTimer = External::Hal::AlarmTimer<systemTimer>;
 
 using sensor = Hott::Experimental::Sensor<AVR::Component::Usart<0>, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, systemTimer>;
