@@ -95,7 +95,7 @@ namespace AVR {
                     detail::CclTransaction cclt1;
                     mcu_ccl()->luts.raw[N].ctrla.template clear<MCU::Ccl::Lut0CtrlA_t::enable | MCU::Ccl::Lut0CtrlA_t::outenable, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
                     f();
-                    mcu_ccl()->luts.raw[N].ctrla.template add<MCU::Ccl::Lut0CtrlA_t::enable | MCU::Ccl::Lut0CtrlA_t::outenable, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
+                    mcu_ccl()->luts.raw[N].ctrla.template add<MCU::Ccl::Lut0CtrlA_t::filter_synch | MCU::Ccl::Lut0CtrlA_t::enable | MCU::Ccl::Lut0CtrlA_t::outenable, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
                 }
             };
         }
@@ -110,7 +110,7 @@ namespace AVR {
                 constexpr auto insel01 = insel0 | insel1;
                 constexpr auto insel2 = Input::detail::map_input<In2, 2>::value;            
               
-                detail::LutTransaction<0> lut0t1([&]{
+                detail::LutTransaction<N> lut0t1([&]{
                     mcu_ccl()->luts.raw[N].ctrlb = insel01;
                     mcu_ccl()->luts.raw[N].ctrlc = insel2;
                     mcu_ccl()->luts.raw[N].truth = truthTable;

@@ -61,8 +61,7 @@ namespace External {
             return 0;
         }
     }
-    
-    
+        
     template<AVR::Concepts::ComponentNumber TN, const RPM& MaxRpm, const RPM& MinRpm, uint8_t MinMeasurements = 2, typename MCU = DefaultMcuType>
     class RpmWithIcp final {
         RpmWithIcp() = delete;

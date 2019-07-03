@@ -221,6 +221,69 @@ namespace AVR {
     private:
         volatile value_type hwRegister;
     };
+
+
+    template<typename Component, typename... BitTypes, typename ValueType, AVR::Concepts::At01Series MCU>
+    struct ControlRegister<Component, Meta::List<BitTypes...>, ValueType, MCU> final {
+        typedef Component component_type;
+        typedef ValueType value_type;    
+        
+        using type_list = Meta::List<BitTypes...>;        
+        
+        ControlRegister() = delete;
+        ControlRegister(const ControlRegister&) = delete;
+        ControlRegister(ControlRegister&&) = delete;
+        ControlRegister& operator=(const ControlRegister&) = delete;
+        ControlRegister& operator=(ControlRegister&&) = delete;
+        
+        template<typename F>
+        requires (Meta::contains<type_list, F>::value)
+        void inline set(F f) {
+            hwRegister = static_cast<value_type>(f);
+        }
+        
+        template<auto F>
+        requires (Meta::contains<type_list, decltype(F)>::value)
+        void inline set() {
+            hwRegister = static_cast<value_type>(F);
+        }
+//        template<BitType F, typename DI = etl::DisbaleInterrupt<etl::RestoreState>>
+//        void inline setPartial(BitType v) {
+//            [[maybe_unused]] etl::Scoped<DI> di;
+//            hwRegister = (hwRegister & static_cast<value_type>(~F)) | (static_cast<value_type>(F) & static_cast<value_type>(v));
+//        }
+//        template<BitType F, typename DI = etl::DisbaleInterrupt<etl::RestoreState>>
+//        void inline add() {
+//            [[maybe_unused]] etl::Scoped<DI> di;
+//            hwRegister |= static_cast<value_type>(F);
+//        }
+//        template<BitType F, typename DI = etl::DisbaleInterrupt<etl::RestoreState>>
+//        void inline clear() {
+//            [[maybe_unused]] etl::Scoped<DI> di;
+//            hwRegister &= ~static_cast<value_type>(F);
+//        }
+//        template<BitType Mask>
+//        inline BitType get() {
+//            return static_cast<BitType>(hwRegister & static_cast<value_type>(Mask));
+//        }
+//        template<uint8_t Mask>
+//        inline BitType get() {
+//            return static_cast<BitType>(hwRegister & Mask);
+//        }
+//        template<BitType F>
+//        bool inline isSet() {
+//            return hwRegister & static_cast<value_type>(F);
+//        }
+//        value_type inline raw() {
+//            return hwRegister;
+//        }
+//        BitType inline value() {
+//            return static_cast<BitType>(hwRegister);
+//        }
+    private:
+        volatile value_type hwRegister;
+    };
+
     
     template<typename Component, typename Mode = ReadWrite, typename ValueType = uint8_t, typename MCU = DefaultMcuType>
     struct DataRegister;

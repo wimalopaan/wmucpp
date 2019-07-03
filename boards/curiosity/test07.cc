@@ -78,7 +78,21 @@ using alarmTimer = External::Hal::AlarmTimer<systemTimer>;
 using sensor = Hott::Experimental::Sensor<usart3Position, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, systemTimer>;
 
 int main() {
-//    evrouter::init();
+    evrouter::init();
+
     lut0::init(std::byte{0x55});
+    
+    using rtc_t = DefaultMcuType::Rtc;
+    static constexpr auto mcu_rtc = getBaseAddr<rtc_t>;
+    
+    while(mcu_rtc()->pitstatus.isSet<rtc_t::PitStatus_t::ctrlbusy>());
+    
+//    mcu_rtc()->pitctrla.template set<rtc_t::pitPrescalerValues[8].bits>();
+
+    while(mcu_rtc()->pitstatus.isSet<rtc_t::PitStatus_t::ctrlbusy>());
+
+    mcu_rtc()->pitctrla.template add<rtc_t::PitCtrlA_t::enable>();
+    
+    
 }
 

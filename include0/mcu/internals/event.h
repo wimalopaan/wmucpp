@@ -43,7 +43,8 @@ namespace AVR {
            template<uint8_t N> struct Lut;
            template<typename K> struct Ac0;
            template<typename K> struct Adc0;
-           template<AVR::Concepts::Letter L, uint8_t N> struct Pin;
+//           template<AVR::Concepts::Letter L, uint8_t N> struct Pin;
+           template<AVR::Concepts::Pin P> struct Pin;
            template<uint8_t N, typename K> struct Usart;
            template<typename K> struct Spi0;
            template<typename K> struct Tca0;
@@ -173,9 +174,25 @@ namespace AVR {
                 inline static constexpr auto value = AVR::Series0::Events::Generator_t::adc0_rdy;
             };
             
-            template<AVR::Concepts::Letter L, uint8_t PNum, uint8_t N> requires(PNum < 8) struct map_generator<Generators::Pin<L, PNum>, std::integral_constant<uint8_t, N>> {
-                inline static constexpr auto value = AVR::Series0::Events::Generator_t::adc0_rdy;
+            template<uint8_t N, uint8_t C>  requires((C == 0) || (C == 1)) struct map_generator<Generators::Pin<AVR::Pin<AVR::Port<AVR::A>, N>>, std::integral_constant<uint8_t, C>> {
+                inline static constexpr auto value = AVR::Series0::Events::Generator_t{uint8_t(AVR::Series0::Events::Generator_t::port0_pin0) + N};
             };
+            template<uint8_t N, uint8_t C>  requires((C == 2) || (C == 3)) struct map_generator<Generators::Pin<AVR::Pin<AVR::Port<AVR::C>, N>>, std::integral_constant<uint8_t, C>> {
+                inline static constexpr auto value = AVR::Series0::Events::Generator_t{uint8_t(AVR::Series0::Events::Generator_t::port0_pin0) + N};
+            };
+            template<uint8_t N, uint8_t C>  requires((C == 4) || (C == 5)) struct map_generator<Generators::Pin<AVR::Pin<AVR::Port<AVR::E>, N>>, std::integral_constant<uint8_t, C>> {
+                inline static constexpr auto value = AVR::Series0::Events::Generator_t{uint8_t(AVR::Series0::Events::Generator_t::port0_pin0) + N};
+            };
+            template<uint8_t N, uint8_t C>  requires((C == 0) || (C == 1)) struct map_generator<Generators::Pin<AVR::Pin<AVR::Port<AVR::B>, N>>, std::integral_constant<uint8_t, C>> {
+                inline static constexpr auto value = AVR::Series0::Events::Generator_t{uint8_t(AVR::Series0::Events::Generator_t::port1_pin0) + N};
+            };
+            template<uint8_t N, uint8_t C>  requires((C == 2) || (C == 3)) struct map_generator<Generators::Pin<AVR::Pin<AVR::Port<AVR::D>, N>>, std::integral_constant<uint8_t, C>> {
+                inline static constexpr auto value = AVR::Series0::Events::Generator_t{uint8_t(AVR::Series0::Events::Generator_t::port1_pin0) + N};
+            };
+            template<uint8_t N, uint8_t C>  requires((C == 4) || (C == 5)) struct map_generator<Generators::Pin<AVR::Pin<AVR::Port<AVR::F>, N>>, std::integral_constant<uint8_t, C>> {
+                inline static constexpr auto value = AVR::Series0::Events::Generator_t{uint8_t(AVR::Series0::Events::Generator_t::port1_pin0) + N};
+            };
+
         }
         
         namespace Users {
@@ -251,7 +268,7 @@ namespace AVR {
             static_assert(userNumber < std::tuple_size<decltype(MCU::Events::users)>::value, "wrong user index");
 
             inline static void setup() {
-                mcu_evsys()->users[userNumber].template set<typename MCU::Events::Channel_t{channel_number_type::value}>();
+                mcu_evsys()->users[userNumber].template set<typename MCU::Events::Channel_t{channel_number_type::value + 1}>();
             }
         };
         

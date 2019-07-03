@@ -126,10 +126,48 @@ namespace AVR {
             static constexpr const uint32_t number = INT2_vect_num;
         };
 #endif
+
+        template<AVR::Concepts::Letter L>
+        struct Port;
+#ifdef PORTA_PORT_vect_num
+        template<>
+        struct Port<A> {
+            inline static constexpr uint32_t number = PORTA_PORT_vect_num;
+        };
+#endif
+#ifdef PORTB_PORT_vect_num
+        template<>
+        struct Port<B> {
+            inline static constexpr uint32_t number = PORTB_PORT_vect_num;
+        };
+#endif
+#ifdef PORTC_PORT_vect_num
+        template<>
+        struct Port<C> {
+            inline static constexpr uint32_t number = PORTC_PORT_vect_num;
+        };
+#endif
+#ifdef PORTD_PORT_vect_num
+        template<>
+        struct Port<D> {
+            inline static constexpr uint32_t number = PORTD_PORT_vect_num;
+        };
+#endif
+#ifdef PORTE_PORT_vect_num
+        template<>
+        struct Port<E> {
+            inline static constexpr uint32_t number = PORTE_PORT_vect_num;
+        };
+#endif
+#ifdef PORTAFPORT_vect_num
+        template<>
+        struct Port<F> {
+            inline static constexpr uint32_t number = PORTF_PORT_vect_num;
+        };
+#endif
         
         template<uint8_t N>
         struct PcInt;
-        
 #ifdef PCINT0_vect_num
         template<>
         struct PcInt<0>{

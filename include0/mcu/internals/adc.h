@@ -26,7 +26,6 @@
 
 namespace AVR {
     namespace AD {
-        
         struct V1_1 {
             static constexpr float value = 1.1;
         };
@@ -45,6 +44,30 @@ namespace AVR {
             static constexpr float value = Voltage::value;
         };
     }
+    namespace Vref {
+        struct V0_55 {
+            inline static constexpr float value = 0.55;
+        };
+        struct V1_1 {
+            inline static constexpr float value = 1.1;
+        };
+        struct V1_5 {
+            inline static constexpr float value = 1.5;
+        };
+        struct V2_5 {
+            inline static constexpr float value = 2.5;
+        };
+        struct V4_3 {
+            inline static constexpr float value = 4.3;
+        };
+        namespace detail {
+            template<typename V> struct isVref : std::false_type {};
+            template<> struct isVref<V0_55> : std::true_type {};
+            template<> struct isVref<V1_5> : std::true_type {};
+            template<> struct isVref<V2_5> : std::true_type {};
+            template<> struct isVref<V4_3> : std::true_type {};
+        }
+    }
     
     struct HighSpeed;
     struct LowSpeed;
@@ -62,9 +85,85 @@ namespace AVR {
         typedef etl::uint_ranged<uint8_t, 0, 255> type;
         inline static constexpr uint8_t bits = 8;
     };
-    
+
     template<AVR::Concepts::ComponentNumber CN, typename Reso = Resolution<10>, typename VRefType = AD::VRef<AD::V1_1, DefaultMcuType>, typename MCU = DefaultMcuType>
-    class Adc final {
+    class Adc;
+
+    template<AVR::Concepts::ComponentNumber CN, typename Reso, typename VRefType, AVR::Concepts::At01Series MCU>
+    requires ((CN::value == 0) && (Vref::detail::isVref<VRefType>::value))
+    class Adc<CN, Reso, VRefType, MCU> final {
+        static constexpr auto mcu_adc  = getBaseAddr<typename MCU::Adc>;
+        static constexpr auto mcu_vref = getBaseAddr<typename MCU::Vref>;
+        
+        using ca_t = typename MCU::Adc::CtrlA_t;
+        using cb_t = typename MCU::Adc::CtrlB_t;
+        using cc_t = typename MCU::Adc::CtrlC_t;
+        using co_t = typename MCU::Adc::Command_t;
+        
+        using va1_t = typename MCU::Vref::CtrlA1_t;
+        using va2_t = typename MCU::Vref::CtrlA2_t;
+        using vb_t = typename MCU::Vref::CtrlB_t;
+    public:
+        using value_type = typename Reso::type;
+
+        inline static void init() {
+            if constexpr(std::is_same_v<VRefType, Vref::V1_1>) {
+                mcu_vref()->ctrla.template set<va1_t::adc_V1_1>();           
+            }
+            else if constexpr(std::is_same_v<VRefType, Vref::V1_5>) {
+                mcu_vref()->ctrla.template set<va1_t::adc_V1_5>();           
+            }
+            else if constexpr(std::is_same_v<VRefType, Vref::V2_5>) {
+                mcu_vref()->ctrla.template set<va1_t::adc_V2_5>();           
+            }
+            else if constexpr(std::is_same_v<VRefType, Vref::V4_3>) {
+                mcu_vref()->ctrla.template set<va1_t::adc_V4_3>();           
+            } 
+            else {
+                static_assert(std::false_v<VRefType>, "wrong VRef selection");
+            }
+            mcu_vref()->ctrlb.template set<vb_t::adc_refen>();           
+            
+            mcu_adc()->ctrlc.template set<cc_t::samcap>();           
+            
+            if constexpr(std::is_same_v<Reso, Resolution<8>>) {
+                mcu_adc()->ctrla.template set<ca_t::ressel | ca_t::enable>();           
+            }
+            else if constexpr(std::is_same_v<Reso, Resolution<10>>) {
+                mcu_adc()->ctrla.template set<ca_t::enable>();           
+            }
+            else {
+                static_assert(std::false_v<Reso>, "wrong resolution");
+            }
+        }
+
+        inline static void startConversion() {
+            mcu_adc()->command.template set<co_t::stconv>();           
+        }
+        
+        inline static bool conversionReady() {
+            return !mcu_adc()->command.template isSet<co_t::stconv>();           
+        }
+
+        template<typename F>
+        inline static void whenConversionReady(const F& f) {
+            if (conversionReady()) {
+                f(value());
+            }
+        }
+
+        inline static auto value() {
+            return value_type{*mcu_adc()->res};
+        }
+        
+        static void channel(uint8_t ch) {
+            mcu_adc()->muxpos.template set(typename MCU::Adc::MuxPos_t{ch});
+        }
+    };
+    
+    
+    template<AVR::Concepts::ComponentNumber CN, typename Reso, typename VRefType, AVR::Concepts::AtMega MCU>
+    class Adc<CN, Reso, VRefType, MCU> final {
         static_assert(CN::value < MCU::Adc::count, "wrong adc number"); 
         
         static inline constexpr auto N = CN::value;

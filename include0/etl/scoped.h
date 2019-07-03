@@ -78,6 +78,30 @@ namespace etl {
     private:
         typename MCU::Status::Bits v{0};
     };
+
+    template<bool Active, AVR::Concepts::At01Series MCU>
+    class Scoped<EnableInterrupt<RestoreState>, Active, MCU> final
+    {
+        inline static constexpr auto cpu = AVR::getBaseAddr<typename MCU::Cpu>;
+    public:
+        inline Scoped()  {
+            if constexpr(Active) {
+                v = cpu()->sreg.value();
+                sei();
+            }
+        }
+        inline ~Scoped() {
+            if constexpr(Active) {
+                if (!etl::toBool(MCU::Cpu::SReg_t::globalIntEnable & v)) {
+                    cli();
+                }
+            }
+        }
+    private:
+        typename MCU::Cpu::SReg_t v{0};
+    };
+
+
     
     template<bool Active>
     class Scoped<DisbaleInterrupt<ForceOn>, Active> final

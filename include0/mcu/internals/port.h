@@ -84,6 +84,10 @@ namespace AVR {
         static inline void pullup() {
             getBaseAddr<mcuport_type , Name>()->pinctrl[Pin].template add<mcuport_type::PinCtrl_t::pullup>();
         }
+        template<auto Pin, auto value>
+        static inline  void pinctrl() {
+            getBaseAddr<mcuport_type , Name>()->pinctrl[Pin].template set<value>();
+        }
     };
     
     template<AVR::Concepts::Letter Name, AVR::Concepts::AtMega MCU>
@@ -349,6 +353,15 @@ namespace AVR {
         }
     };
     
+    namespace Attributes {
+        template<typename MCU = DefaultMcuType>
+        struct Inverting : std::integral_constant<typename MCU::PortRegister::PinCtrl_t, MCU::PortRegister::PinCtrl_t::inven> {}; 
+        struct OnRising;
+        struct OnFalling;
+        template<typename Kind, typename MCU = DefaultMcuType>
+        struct Interrupt : std::integral_constant<typename MCU::PortRegister::PinCtrl_t, MCU::PortRegister::PinCtrl_t::inven> {}; 
+    }
+    
     template<AVR::Concepts::Port Port, uint8_t PinNumber, typename MCU = DefaultMcuType>
     struct Pin;
     
@@ -378,6 +391,11 @@ namespace AVR {
             if constexpr(std::is_same_v<Dir, AVR::Output>) {
                 port::dirset() = pinMask;
             }
+        }
+        template<typename... AA>
+        static inline void attributes() {
+            constexpr auto v = (AA::value || ...);
+            port::template pinctrl<PinNumber, v>();
         }
     };
 

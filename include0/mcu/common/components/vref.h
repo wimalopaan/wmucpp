@@ -21,22 +21,32 @@
 #include <cstdint>
 #include <std/utility>
 
-#include "components/cpu.h"
-#include "components/clock.h"
-#include "components/rtc.h"
-#include "components/ccl.h"
-#include "components/port.h"
-#include "components/portmux.h"
-#include "components/tca.h"
-#include "components/tcb.h"
-#include "components/usart.h"
-#include "components/event.h"
-#include "components/adc.h"
-#include "components/vref.h"
-
-#include "components/bitmask_operators.h"
-
 namespace AVR {
     namespace Series0 {
+        struct Vref{
+            enum class CtrlA1_t : uint8_t { 
+                adc_V1_1  = (0x01 << 4),
+                adc_V2_5  = (0x02 << 4),
+                adc_V4_3  = (0x03 << 4),
+                adc_V1_5  = (0x04 << 4),
+            };
+            enum class CtrlA2_t : uint8_t { 
+                ac_V0_55 = (0x00 << 0),
+                ac_V1_1  = (0x01 << 0),
+                ac_V2_5  = (0x02 << 0),
+                ac_V4_3  = (0x03 << 0),
+                ac_V1_5  = (0x04 << 0),
+            };
+            ControlRegister<Vref, Meta::List<CtrlA1_t, CtrlA2_t>> ctrla;
+
+            enum class CtrlB_t : uint8_t {
+                adc_refen = (1 << 1),
+                ac_refen  = (1 << 0),
+            };
+            ControlRegister<Vref, CtrlB_t> ctrlb;
+            
+            static inline constexpr uintptr_t address = 0x00a0;
+            
+        };
     }
 }

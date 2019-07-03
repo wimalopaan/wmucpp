@@ -151,6 +151,9 @@ boards/curiosity/test04.cc
 boards/curiosity/test05.cc
 boards/curiosity/test06.cc
 boards/curiosity/test07.cc
+boards/curiosity/test08.cc
+boards/curiosity/test09.cc
+boards/curiosity/test10.cc
 boards/include/ppmmatrix.h
 boards/include/rcsensorled01b.h
 boards/include/rcsensorled10.h
@@ -406,7 +409,6 @@ include0/external/hal/adccontroller.h
 include0/external/hal/alarmtimer.h
 include0/external/hal/devicemapper.h
 include0/external/hal/protocolladapter.h
-include0/external/hal/pwm.h
 include0/external/hott/experimental/adapter.h
 include0/external/hott/experimental/sensor.h
 include0/external/hott/hott.h
@@ -425,6 +427,8 @@ include0/external/solutions/gps.h
 include0/external/solutions/ifx007.h
 include0/external/solutions/ppm.h
 include0/external/solutions/rpm.h
+include0/external/solutions/series01/rpm.h
+include0/external/solutions/series01/sppm_in.h
 include0/external/solutions/tle5205.h
 include0/external/solutions/ws2812.h
 include0/external/ui/menu.h
@@ -434,6 +438,7 @@ include0/mcu/avr.h
 include0/mcu/avr0/mcu.h
 include0/mcu/common/assert.h
 include0/mcu/common/components.h
+include0/mcu/common/components/adc.h
 include0/mcu/common/components/bitmask_operators.h
 include0/mcu/common/components/ccl.h
 include0/mcu/common/components/clock.h
@@ -445,6 +450,7 @@ include0/mcu/common/components/rtc.h
 include0/mcu/common/components/tca.h
 include0/mcu/common/components/tcb.h
 include0/mcu/common/components/usart.h
+include0/mcu/common/components/vref.h
 include0/mcu/common/concepts.h
 include0/mcu/common/delay.h
 include0/mcu/common/groups.h
@@ -464,16 +470,14 @@ include0/mcu/internals/ccp.h
 include0/mcu/internals/clock.h
 include0/mcu/internals/constantrate.h
 include0/mcu/internals/cppm.h
-include0/mcu/internals/cppm_in.h
-include0/mcu/internals/cppm_out_int.h
 include0/mcu/internals/eeprom.h
 include0/mcu/internals/event.h
 include0/mcu/internals/gpiorflags.h
+include0/mcu/internals/pit.h
 include0/mcu/internals/port.h
 include0/mcu/internals/portmux.h
 include0/mcu/internals/pwm.h
 include0/mcu/internals/softuart.h
-include0/mcu/internals/sppm_in.h
 include0/mcu/internals/systemclock.h
 include0/mcu/internals/timer.h
 include0/mcu/internals/usart.h

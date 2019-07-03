@@ -41,7 +41,7 @@ namespace External {
         template<bool B>
         struct RisingEdge : etl::NamedFlag<B> {};
         
-        template<etl::Concepts::NamedConstant TimerNumber, etl::Concepts::NamedFlag RisingEdge = RisingEdge<true>, typename MCU = DefaultMcuType>
+        template<etl::Concepts::NamedConstant TimerNumber, etl::Concepts::NamedFlag RisingEdge = RisingEdge<true>, typename AVR::AtMega = DefaultMcuType>
         struct IcpPpm {
             using value_type = uint16_t;
             

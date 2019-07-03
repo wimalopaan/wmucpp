@@ -330,9 +330,18 @@ namespace AVR {
         template<etl::Concepts::Callable Callable>
         inline static void periodic(const Callable& f) {
             mcu_rtc()->intflags.template testAndReset<intflags_t::ovf>([&]{
+                ++mOverflows;
                 f();
             });
         }
+        inline static const uint16_t& overflows() {
+            return mOverflows;
+        }  
+        inline static uint16_t actual() {
+            return (mOverflows * tsd.ocr) + *mcu_rtc()->cnt;
+        }  
+        private:
+        static inline uint16_t mOverflows{0};
     };
 
 //    template<const auto& Frequency, AVR::Concepts::At01Series MCU>

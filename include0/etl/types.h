@@ -410,7 +410,7 @@ namespace etl {
     
     template<Unsigned T = uint8_t, T LowerBound = 0, T UpperBound = std::numeric_limits<T>::max()>
     class uint_ranged_circular final {
-        static_assert(LowerBound < UpperBound);
+        static_assert(LowerBound <= UpperBound);
     public:
         inline static constexpr T Lower = LowerBound;
         inline static constexpr T Upper = UpperBound;

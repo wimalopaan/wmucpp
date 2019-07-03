@@ -30,9 +30,9 @@ namespace External {
         public:
             typedef MCUAdc mcu_adc_type;
             typedef typename MCUAdc::value_type value_type;
-            static constexpr uint8_t channels[] = {Channels...};
-            static constexpr uint8_t NumberOfChannels = sizeof... (Channels);    
-            static constexpr auto VRef = MCUAdc::VRef;
+            inline static constexpr uint8_t channels[] = {Channels...};
+            inline static constexpr uint8_t NumberOfChannels = sizeof... (Channels);    
+            inline static constexpr auto VRef = MCUAdc::VRef;
             
             typedef etl::uint_ranged<uint8_t, 0, NumberOfChannels - 1> index_type;     
             
@@ -58,8 +58,7 @@ namespace External {
                     break;
                 case State::ConversionComplete:
                     values[mActualChannel] = MCUAdc::value();
-                    if (++mActualChannel == NumberOfChannels) {mActualChannel = 0;}
-                    MCUAdc::channel(channels[mActualChannel]);
+                    MCUAdc::channel(channels[++mActualChannel]);
                     state = State::Start;
                     break;
                 }
@@ -81,7 +80,7 @@ namespace External {
             
         private:
             inline static typename MCUAdc::value_type values[NumberOfChannels] = {};
-            inline static uint8_t mActualChannel = 0;
+            inline static etl::uint_ranged_circular<uint8_t, 0, NumberOfChannels - 1> mActualChannel;
         };
     }
 }
