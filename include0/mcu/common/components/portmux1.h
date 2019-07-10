@@ -22,24 +22,26 @@
 #include <std/utility>
 
 namespace AVR {
-    namespace Series0 {
-        struct Cpu final {
-            volatile uint8_t padding[4];
-            DataRegister<Cpu, ReadWrite, std::byte> ccp;
-            
-            volatile std::byte reserved[0x0c - 0x05 + 1];
-            
-            volatile uint16_t sp;
-            
-            enum class SReg_t: uint8_t {
-                globalIntEnable = (1 << 7), 
-                bitCopy = (1 << 6) 
+    namespace Series1 {
+        struct Portmux {
+            enum class CtrlA_t : uint8_t {
+                evout0_alt1 = (1 << 0)
             };
-            ControlRegister<Cpu, SReg_t> sreg;
-            
-            static inline constexpr uintptr_t address = 0x0030;
-        };
-       static_assert(sizeof(Cpu) == 16);
+            ControlRegister<Portmux, CtrlA_t> ctrla;
 
+            enum class CtrlB_t : uint8_t {
+                usart0_alt1 = (1 << 0),
+                spi00_alt1 = (1 << 2)
+            };
+            ControlRegister<Portmux, CtrlB_t> ctrlb;
+
+            enum class CtrlC_t : uint8_t {
+                tca0_alt1 = (1 << 0),
+            };
+            ControlRegister<Portmux, CtrlC_t> ctrlc;
+            
+            static inline constexpr uintptr_t address = 0x0200;
+        };
+        static_assert(sizeof(Portmux) == 3);
     }
 }

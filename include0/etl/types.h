@@ -240,6 +240,8 @@ namespace etl {
     public:
         inline static constexpr T Lower = LowerBound;
         inline static constexpr T Upper = UpperBound;
+        inline static constexpr T Mid = (UpperBound + LowerBound) / 2;
+        
         inline static constexpr T NaN   = std::numeric_limits<T>::max();
         using value_type = T;
         

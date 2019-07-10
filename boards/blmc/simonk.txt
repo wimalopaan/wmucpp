@@ -25,8 +25,12 @@
 
 # sudo avrdude -p atmega8 -P usb -c avrisp2 -V -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -U flash:w:bs.hex
 
-# RedBrick 70A
+# RedBrick 70A / 125A
 
 # lockbits: 0b11100000
 
 # sudo avrdude -p atmega8 -P usb -c avrisp2 -V -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -U flash:w:birdie70a.hex
+
+# HobbyKing RedBrick 30/50A ohne ESC 
+# (rb50a.hex) stottert -> rb50a2.inc (H/L-Side vertauscht und Phase A und C (mux) vertauscht)
+

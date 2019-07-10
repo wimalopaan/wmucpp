@@ -21,25 +21,23 @@
 #include <cstdint>
 #include <std/utility>
 
+#include "components/cpu.h"
+#include "components/clock.h"
+#include "components/rtc.h"
+#include "components/ccl2.h"
+#include "components/port1.h"
+#include "components/portmux1.h"
+#include "components/tca.h"
+#include "components/tcb.h"
+#include "components/usart.h"
+#include "components/event.h"
+#include "components/adc.h"
+#include "components/vref.h"
+#include "components/sleep.h"
+
+#include "components/bitmask_operators1.h"
+
 namespace AVR {
     namespace Series0 {
-        struct Cpu final {
-            volatile uint8_t padding[4];
-            DataRegister<Cpu, ReadWrite, std::byte> ccp;
-            
-            volatile std::byte reserved[0x0c - 0x05 + 1];
-            
-            volatile uint16_t sp;
-            
-            enum class SReg_t: uint8_t {
-                globalIntEnable = (1 << 7), 
-                bitCopy = (1 << 6) 
-            };
-            ControlRegister<Cpu, SReg_t> sreg;
-            
-            static inline constexpr uintptr_t address = 0x0030;
-        };
-       static_assert(sizeof(Cpu) == 16);
-
     }
 }

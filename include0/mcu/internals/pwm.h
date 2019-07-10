@@ -168,6 +168,8 @@ namespace AVR {
         template<typename P, AVR::Concepts::At01Series MCU>
         struct DynamicPwm<Portmux::Position<Component::Tca<0>, P>, MCU> final {
             
+            using value_type = uint16_t;
+            
             template<typename Position, auto N>
             struct WOMapper;
             
@@ -206,13 +208,17 @@ namespace AVR {
                 using type = typename WOMapper<position, WO::value>::pin;
             };
             
-            using pins = Meta::List<typename pinmapper<WO<0>>::type, typename pinmapper<WO<0>>::type, typename pinmapper<WO<0>>::type>;
+//            pinmapper<WO<2>>::type::_;
+            
+            using pins = Meta::List<typename pinmapper<WO<0>>::type, typename pinmapper<WO<1>>::type, typename pinmapper<WO<2>>::type>;
+            
+            using f = Meta::front<pins>;
             
             inline static constexpr void init() {
                 mcu_tca()->ctrla.template set<mcu_timer_t::CtrlA_t::enable>();
 //                mcu_tca()->ctrlb.template set<MCU::TCA::CtrlB_t::cmp2en | MCU::TCA::CtrlB_t::pwm>();
                 mcu_tca()->ctrlb.template set<mcu_timer_t::CtrlB_t::pwm>();
-            
+
                 AVR::PinGroup<pins>::template dir<Output>();
             }
             template<typename Out>
@@ -250,7 +256,10 @@ namespace AVR {
             }
             
             inline static constexpr void frequency(const External::Units::hertz& f) {
-                *mcu_tca()->perbuf = 10000;
+                *mcu_tca()->perbuf = Config::fMcu / f;;
+            }
+            inline static constexpr void frequency(const uint16_t& f) {
+                *mcu_tca()->perbuf = f;
             }
             template<typename Out>
             inline static constexpr void duty(uint16_t d) {
@@ -264,6 +273,11 @@ namespace AVR {
                     *mcu_tca()->cmp2buf = d;
                 }
             }
+//            inline static constexpr void duty(uint16_t d, uint16_t p) {
+//            }
+//            inline static constexpr void reverse(bool r) {
+//            }
+
         private:
         };
         

@@ -67,14 +67,13 @@ namespace Hott {
         using counterType = std::conditional_t<UseInts::value, volatile uint16_t, uint16_t>;
         
     public:
-        using value_type = etl::uint_ranged_NaN<uint16_t, Hott::SumDMsg::Low, Hott::SumDMsg::High>;
+//        using value_type = etl::uint_ranged_NaN<uint16_t, Hott::SumDMsg::Low, Hott::SumDMsg::High>;
+        using value_type = Hott::hott_t;
 
         SumDProtocollAdapter() = delete;
         
         inline static etl::uint_ranged<uint16_t, Hott::SumDMsg::ExtendedLow, Hott::SumDMsg::ExtendedHigh> valueExtended(uint8_t channel) {
-            if constexpr(UseInts::value) {
-                etl::Scoped<etl::DisbaleInterrupt<>> di;
-            }
+            etl::Scoped<etl::DisbaleInterrupt<>, UseInts::value> di;
             if (!mMsgInactive->valid) {
                 return {};
             }
@@ -91,9 +90,8 @@ namespace Hott {
         }
         
         inline static etl::uint_ranged_NaN<uint16_t, Hott::SumDMsg::Low, Hott::SumDMsg::High> value(uint8_t channel) {
-            if constexpr(UseInts::value) {
-                etl::Scoped<etl::DisbaleInterrupt<>> di;
-            }
+            etl::Scoped<etl::DisbaleInterrupt<>, UseInts::value> di;
+
             if (!mMsgInactive->valid) {
                 return {};
             }
@@ -109,18 +107,16 @@ namespace Hott {
             }
         }
         inline static etl::uint_ranged<uint8_t, Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit> value8Bit(uint8_t channel) {
-            if constexpr(UseInts::value) {
-                etl::Scoped<etl::DisbaleInterrupt<>> di;
-            }
+            etl::Scoped<etl::DisbaleInterrupt<>, UseInts::value> di;
+
             if (!mMsgInactive->valid) {
                 return {};
             }
             return value8Bit_unsafe(channel);
         }
         inline static etl::uint_ranged<uint8_t, Hott::SumDMsg::ExtendedLow8Bit, Hott::SumDMsg::ExtendedHigh8Bit> value8BitExtended(uint8_t channel) {
-            if constexpr(UseInts::value) {
-                etl::Scoped<etl::DisbaleInterrupt<>> di;
-            }
+            etl::Scoped<etl::DisbaleInterrupt<>, UseInts::value> di;
+
             if (!mMsgInactive->valid) {
                 return {};
             }

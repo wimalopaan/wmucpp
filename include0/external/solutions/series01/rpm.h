@@ -16,11 +16,13 @@ namespace External {
 
             inline static void init() {
                 Pin::template dir<AVR::Input>();
-                Pin::template attributes<typename AVR::Attributes::Interrupt<AVR::Attributes::OnRising>>();
+                Pin::template attributes<AVR::Attributes::Interrupt<AVR::Attributes::OnRising>>();
+                Pin::template pullup<true>();
             }
             
             struct ImpulsIsr : public AVR::IsrBaseHandler<isr> {
                 inline static void isr() {
+                    Pin::resetInt();
                     auto value = Timer::actual();
                     mDiff = value - mLastValue;
                     mLastValue = value;

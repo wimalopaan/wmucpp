@@ -17,8 +17,10 @@
 #include <external/hal/alarmtimer.h>
 #include <external/hal/adccontroller.h>
 #include <external/hott/sumdprotocolladapter.h>
+
 #include <external/solutions/series01/rpm.h>
 #include <external/solutions/series01/sppm_in.h>
+#include <external/solutions/ifx007.h>
 
 #include <external/hott/experimental/sensor.h>
 #include <external/hott/experimental/adapter.h>
@@ -55,6 +57,8 @@ using terminalDevice = Usart<usart0Position, External::Hal::NullProtocollAdapter
 using terminal = etl::basic_ostream<terminalDevice>;
 
 using sumd = Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>;
+using hott_t = Hott::hott_t;
+
 using rcUsart = AVR::Usart<usart1Position, sumd, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
 
 using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::AltD>;
@@ -96,11 +100,13 @@ using sensor = Hott::Experimental::Sensor<usart3Position, AVR::Usart, AVR::BaudR
 
 using rpm = External::Rpm::RpmGpio<rpmPin, systemTimer>;
 
-using isrRegistrar = IsrRegistrar<rpm::ImpulsIsr>;
-
 using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V4_3>;
-
 using adcController = External::Hal::AdcController<adc, Meta::NList<0>>;
+
+using hbridge = External::IFX007::HBridge<pwm, sumd::value_type>;
+
+
+using isrRegistrar = IsrRegistrar<rpm::ImpulsIsr>;
 
 int main() {
     uint8_t counter = 0;
@@ -133,26 +139,22 @@ int main() {
     pe3::template dir<Input>();     
 
     pa2::on();
-    pb1::on();
     
-    pwm::init();
-    pwm::frequency(fPwm);
-    pwm::on<PWM::WO<0>, PWM::WO<1>, PWM::WO<2>>();
-//    pwm::off<PWM::WO<2>>();
+//    pwm::init();
+//    pwm::frequency(fPwm);
+//    pwm::on<PWM::WO<0>, PWM::WO<1>, PWM::WO<2>>();
+////    pwm::off<PWM::WO<2>>();
+//    pwm::duty<PWM::WO<0>>(1000);
 
-    pwm::duty<PWM::WO<0>>(1000);
-
+    hbridge::init();
+    hbridge::duty(hott_t{hott_t::Mid});
+    
     ppm::init();
-    
     rpm::init();
-
     adcController::init();
     
     {
-        
         etl::Scoped<etl::EnableInterrupt<>> ei;
-        
-        sei();
         
         const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
     
@@ -163,6 +165,7 @@ int main() {
             
             adcController::periodic();
             
+            pb1::toggle();
             
             systemTimer::periodic([&]{
                 pf2::toggle(); // 5,8us - 17us
@@ -186,6 +189,5 @@ int main() {
 }
 
 ISR(PORTE_PORT_vect) {
-    pb1::toggle();
     isrRegistrar::isr<AVR::ISR::Port<E>>();
 }

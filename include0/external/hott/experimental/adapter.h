@@ -16,7 +16,6 @@ namespace Hott {
                 mData.cell[cell] = v;
             } 
             
-            
             inline void battery1Raw(uint16_t v) {
                 mData.Battery1 = v;
             }

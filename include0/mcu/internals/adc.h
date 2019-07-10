@@ -99,6 +99,7 @@ namespace AVR {
         using cb_t = typename MCU::Adc::CtrlB_t;
         using cc_t = typename MCU::Adc::CtrlC_t;
         using co_t = typename MCU::Adc::Command_t;
+        using int_t = typename MCU::Adc::IntCtrl_t;
         
         using va1_t = typename MCU::Vref::CtrlA1_t;
         using va2_t = typename MCU::Vref::CtrlA2_t;
@@ -124,7 +125,7 @@ namespace AVR {
             }
             mcu_vref()->ctrlb.template set<vb_t::adc_refen>();           
             
-            mcu_adc()->ctrlc.template set<cc_t::samcap>();           
+            mcu_adc()->ctrlc.template set<cc_t::div16 | cc_t::ref_internal>();           
             
             if constexpr(std::is_same_v<Reso, Resolution<8>>) {
                 mcu_adc()->ctrla.template set<ca_t::ressel | ca_t::enable>();           
@@ -142,13 +143,15 @@ namespace AVR {
         }
         
         inline static bool conversionReady() {
-            return !mcu_adc()->command.template isSet<co_t::stconv>();           
+            return mcu_adc()->intflags.template isSet<int_t::resrdy>();        
+//            return !mcu_adc()->command.template isSet<co_t::stconv>();           
         }
 
         template<typename F>
         inline static void whenConversionReady(const F& f) {
             if (conversionReady()) {
                 f(value());
+                mcu_adc()->intflags.template reset<int_t::resrdy>();
             }
         }
 

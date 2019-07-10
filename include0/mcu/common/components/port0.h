@@ -33,7 +33,7 @@ namespace AVR {
             DataRegister<PortRegister, ReadWrite, std::byte> outclr;
             DataRegister<PortRegister, ReadWrite, std::byte> outtgl;
             DataRegister<PortRegister, ReadWrite, std::byte> in;
-            DataRegister<PortRegister, ReadWrite, std::byte> inflags;
+            DataRegister<PortRegister, ReadWrite, std::byte> intflags; // Flagregister
             
             enum class PortCtrl_t : uint8_t {
                 srl = 0x01

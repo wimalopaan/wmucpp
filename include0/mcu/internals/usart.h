@@ -314,7 +314,7 @@ namespace AVR {
         private:
             static inline void isr_impl() {
                 if (const auto c = mSendQueue.pop_front()) {
-                    *mcu_usart()->txd = *c;;
+                    *mcu_usart()->txd = *c;
                 }
                 else {
                     if constexpr(useISR::value) {

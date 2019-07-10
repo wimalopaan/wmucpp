@@ -22,9 +22,12 @@
 
 namespace External {
     namespace Hal {
+
+        template<typename MCUAdc, typename ListOfChannels, typename MCU = DefaultMcuType>
+        class AdcController;
         
-        template<typename MCUAdc, uint8_t... Channels>
-        class AdcController final {
+        template<typename MCUAdc, uint8_t... Channels, AVR::Concepts::AtMega MCU>
+        class AdcController<MCUAdc, Meta::List<std::integral_constant<uint8_t, Channels>...>, MCU> final {
             enum class State : uint8_t {Start, Converting, ConversionComplete};
             
         public:
@@ -82,5 +85,114 @@ namespace External {
             inline static typename MCUAdc::value_type values[NumberOfChannels] = {};
             inline static etl::uint_ranged_circular<uint8_t, 0, NumberOfChannels - 1> mActualChannel;
         };
+
+    
+        template<typename MCUAdc, auto... Channels, AVR::Concepts::At01Series MCU>
+        class AdcController<MCUAdc, Meta::NList<Channels...>, MCU> final {
+            enum class State : uint8_t {Start, Converting, ConversionComplete};
+
+            template<typename NumberType, typename MMCU = MCU>
+            struct ChannelPinMapper;
+            
+            template<auto V, typename MMCU>
+            requires(V < 8)
+            struct ChannelPinMapper<std::integral_constant<decltype(V), V>, MMCU> {
+                using pin_type = AVR::Pin<AVR::Port<AVR::D>, V>;  
+            };
+
+            template<typename MMCU>
+            struct ChannelPinMapper<std::integral_constant<decltype(8), 8>, MMCU> {
+                using pin_type = AVR::Pin<AVR::Port<AVR::E>, 0>;  
+            };
+            template<typename MMCU>
+            struct ChannelPinMapper<std::integral_constant<decltype(9), 9>, MMCU> {
+                using pin_type = AVR::Pin<AVR::Port<AVR::E>, 1>;  
+            };
+            template<typename MMCU>
+            struct ChannelPinMapper<std::integral_constant<decltype(10), 10>, MMCU> {
+                using pin_type = AVR::Pin<AVR::Port<AVR::E>, 2>;  
+            };
+            template<typename MMCU>
+            struct ChannelPinMapper<std::integral_constant<decltype(11), 11>, MMCU> {
+                using pin_type = AVR::Pin<AVR::Port<AVR::E>, 3>;  
+            };
+            template<typename MMCU>
+            struct ChannelPinMapper<std::integral_constant<decltype(12), 12>, MMCU> {
+                using pin_type = AVR::Pin<AVR::Port<AVR::F>, 2>;  
+            };
+            template<typename MMCU>
+            struct ChannelPinMapper<std::integral_constant<decltype(13), 13>, MMCU> {
+                using pin_type = AVR::Pin<AVR::Port<AVR::F>, 3>;  
+            };
+            
+            template<typename T>
+            using map_channel_to_pin = typename ChannelPinMapper<T, MCU>::pin_type;
+            
+            using ch_list = typename Meta::NList<Channels...>::list_type;
+            using pin_list = Meta::transform<map_channel_to_pin, ch_list>;
+            
+//            pin_list::_;
+            
+        public:
+            typedef MCUAdc mcu_adc_type;
+            typedef typename MCUAdc::value_type value_type;
+            inline static constexpr uint8_t channels[] = {Channels...};
+            inline static constexpr uint8_t NumberOfChannels = sizeof... (Channels);    
+            inline static constexpr auto VRef = MCUAdc::VRef;
+            
+            typedef etl::uint_ranged<uint8_t, 0, NumberOfChannels - 1> index_type;     
+            
+            static_assert(NumberOfChannels <= 14, "too much channels");
+            static_assert(NumberOfChannels >  0, "use at least one channel");
+            static_assert(Meta::is_set_v<typename Meta::NList<Channels...>::list_type>, "the channels must be different");
+            
+            inline static void init() {
+                []<typename... Pin>(Meta::List<Pin...>) {
+                    (Pin::template attributes<AVR::Attributes::DigitalDisable<>>(), ...);
+                    (Pin::template pullup<false>(), ...);
+                }(pin_list{});
+                MCUAdc::init();
+                MCUAdc::channel(channels[0]);
+            }
+            
+            inline static void periodic() {
+                static State state = State::Start;
+                switch(state) {
+                case State::Start:
+                    MCUAdc::startConversion();
+                    state = State::Converting;
+                    break;
+                case State::Converting:
+                    if (MCUAdc::conversionReady()) {
+                        state = State::ConversionComplete;
+                    }
+                    break;
+                case State::ConversionComplete:
+                    values[mActualChannel] = MCUAdc::value();
+                    MCUAdc::channel(channels[++mActualChannel]);
+                    state = State::Start;
+                    break;
+                }
+            }
+            
+            // ranged
+//            inline static typename MCUAdc::value_type value(uint8_t index) {
+//                assert(index < NumberOfChannels);
+//                return values[index];
+//            }
+            inline static typename MCUAdc::value_type value(index_type index) {
+                return values[index.toInt()];
+            }
+            
+            // ranged
+//            inline static typename MCUAdc::voltage_type voltage(uint8_t index) {
+//                return MCUAdc::toVoltage(value(index));
+//            }
+            
+        private:
+            inline static typename MCUAdc::value_type values[NumberOfChannels] = {};
+            inline static etl::uint_ranged_circular<uint8_t, 0, NumberOfChannels - 1> mActualChannel;
+        };
+    
     }
 }

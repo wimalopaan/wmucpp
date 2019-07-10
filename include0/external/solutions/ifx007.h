@@ -35,6 +35,7 @@ namespace External {
             static_assert(bottomCount <= topCount);
             
             static inline void init() {
+                pwm::init();
             }
 
             static inline void duty(const input_type& d) {

@@ -159,7 +159,7 @@ namespace AVR {
             inline static constexpr uint32_t number = PORTE_PORT_vect_num;
         };
 #endif
-#ifdef PORTAFPORT_vect_num
+#ifdef PORTF_PORT_vect_num
         template<>
         struct Port<F> {
             inline static constexpr uint32_t number = PORTF_PORT_vect_num;

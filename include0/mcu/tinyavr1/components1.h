@@ -21,4 +21,4 @@
 #include <cstdint>
 #include <std/utility>
 
-#include "../common/components.h"
+#include "../common/components_tiny1.h"

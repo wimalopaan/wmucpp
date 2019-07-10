@@ -21,7 +21,7 @@
 #include <cstdint>
 #include <std/utility>
 
-#include "../common/components.h"
+#include "../common/components_mega0.h"
 
 //namespace AVR {
 //    namespace Series0 {

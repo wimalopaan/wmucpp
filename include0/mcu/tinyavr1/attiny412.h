@@ -40,80 +40,41 @@ namespace AVR {
         };
         
         using Cpu = AVR::Series0::Cpu;
-        
         using Clock = AVR::Series0::Clock;
-
         using Rtc = AVR::Series0::Rtc;
-
         using Usart = AVR::Series0::Usart;
-        
-        using PortRegister = AVR::Series0::PortRegister;
-        
         using TCA = AVR::Series0::TCA;
+        using TCB = AVR::Series0::TCB;
+        using Sleep = AVR::Series0::Sleep;
         
-        struct TCB {
-            template<int N> struct Address;
-        };
+        using PortRegister = AVR::Series1::PortRegister;
+        using Portmux = AVR::Series1::Portmux;
+        using Ccl = AVR::Series1::Ccl;
     };
     template<>
     constexpr bool ATTiny412::is_atomic<uint8_t>() {return true;}
 }
 
-namespace std {
-    template<> struct enable_bitmask_operators<AVR::ATTiny412::Usart::CtrlA_t> : std::true_type {};
-    template<> struct enable_bitmask_operators<AVR::ATTiny412::Usart::CtrlB_t> : std::true_type {};
-    template<> struct enable_bitmask_operators<AVR::ATTiny412::Usart::CtrlC_t> : std::true_type {};
-    template<> struct enable_bitmask_operators<AVR::ATTiny412::TCA::CtrlA_t> : std::true_type {};
-    template<> struct enable_bitmask_operators<AVR::ATTiny412::Rtc::CtrlA_t> : std::true_type {};
-    template<> struct enable_bitmask_operators<AVR::ATTiny412::Rtc::PitCtrlA_t> : std::true_type {};
-    template<> struct enable_bitmask_operators<AVR::ATTiny412::Cpu::SReg_t> : std::true_type {};
-}
-
 namespace AVR {
+    template<> struct AVR::Component::Count<ATTiny412::Usart> : std::integral_constant<uint8_t, 1> {};
+    template<> struct AVR::Component::Count<ATTiny412::TCA> : std::integral_constant<uint8_t, 1> {};
+    template<> struct AVR::Component::Count<ATTiny412::TCB> : std::integral_constant<uint8_t, 1> {};
+    template<> struct AVR::Component::Count<ATTiny412::Rtc> : std::integral_constant<uint8_t, 1> {};
+    template<> struct AVR::Component::Count<ATTiny412::PortRegister> : std::integral_constant<uint8_t, 6> {};
+    template<> struct AVR::Component::Count<ATTiny412::Portmux> : std::integral_constant<uint8_t, 1> {};
+    template<> struct AVR::Component::Count<ATTiny412::Ccl> : std::integral_constant<uint8_t, 1> {};
+
     template<> struct ATTiny412::Usart::Address<0> {
         inline static constexpr uintptr_t value = 0x0800;
-    };
-    template<> struct ATTiny412::Usart::Address<1> {
-        inline static constexpr uintptr_t value = 0x0820;
-    };
-    template<> struct ATTiny412::Usart::Address<2> {
-        inline static constexpr uintptr_t value = 0x0840;
-    };
-    template<> struct ATTiny412::Usart::Address<3> {
-        inline static constexpr uintptr_t value = 0x0860;
     };
     template<> struct ATTiny412::TCA::Address<0> {
         inline static constexpr uintptr_t value = 0x0A00;
     };
     template<> struct ATTiny412::TCB::Address<0> {
-        inline static constexpr uintptr_t value = 0x0A80;
-    };
-    template<> struct ATTiny412::TCB::Address<1> {
-        inline static constexpr uintptr_t value = 0x0A90;
-    };
-    template<> struct ATTiny412::TCB::Address<2> {
-        inline static constexpr uintptr_t value = 0x0Aa0;
-    };
-    template<> struct ATTiny412::TCB::Address<3> {
-        inline static constexpr uintptr_t value = 0x0Ab0;
+        inline static constexpr uintptr_t value = 0x0A40;
     };
     template<> struct ATTiny412::PortRegister::Address<A> {
         inline static constexpr uintptr_t value = 0x0400;
-    };
-    template<> struct ATTiny412::PortRegister::Address<B> {
-        inline static constexpr uintptr_t value = 0x0420;
-    };
-    template<> struct ATTiny412::PortRegister::Address<C> {
-        inline static constexpr uintptr_t value = 0x0440;
-    };
-    template<> struct ATTiny412::PortRegister::Address<D> {
-        inline static constexpr uintptr_t value = 0x0460;
-    };
-    template<> struct ATTiny412::PortRegister::Address<E> {
-        inline static constexpr uintptr_t value = 0x0480;
-    };
-    template<> struct ATTiny412::PortRegister::Address<F> {
-        inline static constexpr uintptr_t value = 0x04A0;
     };
 
 }

@@ -32,7 +32,6 @@ namespace Hott {
         inline static constexpr const std::byte start_code = 0xa8_B;
         inline static constexpr const std::byte version_code = 0x01_B;
         
-        
         inline static constexpr uint16_t ExtendedLow = 0x1c20; // 7200
         inline static constexpr uint16_t Low = 0x2260; // 8800
         inline static constexpr uint16_t Mid = 0x2ee0; // 12000
@@ -82,6 +81,9 @@ namespace Hott {
         uint16_t crc = 0;
         bool valid = false;
     };
+    
+    using hott_t = etl::uint_ranged_NaN<uint16_t, Hott::SumDMsg::Low, Hott::SumDMsg::High>;
+    
 }
 
 #pragma pack(pop)

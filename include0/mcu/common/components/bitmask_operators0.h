@@ -27,6 +27,7 @@ namespace AVR {
 }
 
 namespace std {
+    template<> struct enable_bitmask_operators<AVR::Series0::Adc::CtrlC_t> : std::true_type {};
     template<> struct enable_bitmask_operators<AVR::Series0::Usart::CtrlA_t> : std::true_type {};
     template<> struct enable_bitmask_operators<AVR::Series0::Usart::CtrlB_t> : std::true_type {};
     template<> struct enable_bitmask_operators<AVR::Series0::Usart::CtrlC_t> : std::true_type {};

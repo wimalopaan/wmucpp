@@ -100,8 +100,6 @@ namespace etl {
     private:
         typename MCU::Cpu::SReg_t v{0};
     };
-
-
     
     template<bool Active>
     class Scoped<DisbaleInterrupt<ForceOn>, Active> final

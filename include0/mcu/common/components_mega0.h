@@ -24,17 +24,18 @@
 #include "components/cpu.h"
 #include "components/clock.h"
 #include "components/rtc.h"
-#include "components/ccl.h"
-#include "components/port.h"
-#include "components/portmux.h"
+#include "components/ccl4.h"
+#include "components/port0.h"
+#include "components/portmux0.h"
 #include "components/tca.h"
 #include "components/tcb.h"
 #include "components/usart.h"
 #include "components/event.h"
 #include "components/adc.h"
 #include "components/vref.h"
+#include "components/sleep.h"
 
-#include "components/bitmask_operators.h"
+#include "components/bitmask_operators0.h"
 
 namespace AVR {
     namespace Series0 {

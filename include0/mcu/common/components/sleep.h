@@ -23,23 +23,18 @@
 
 namespace AVR {
     namespace Series0 {
-        struct Cpu final {
-            volatile uint8_t padding[4];
-            DataRegister<Cpu, ReadWrite, std::byte> ccp;
-            
-            volatile std::byte reserved[0x0c - 0x05 + 1];
-            
-            volatile uint16_t sp;
-            
-            enum class SReg_t: uint8_t {
-                globalIntEnable = (1 << 7), 
-                bitCopy = (1 << 6) 
+        struct Sleep final {
+            enum class CtrlA_t: uint8_t {
+                enable     = 0x01,
+                idle       = (0x00 << 1),
+                standby    = (0x01 << 1),
+                power_down = (0x02 << 1),
             };
-            ControlRegister<Cpu, SReg_t> sreg;
+            ControlRegister<Cpu, CtrlA_t> ctrla;
             
-            static inline constexpr uintptr_t address = 0x0030;
+            static inline constexpr uintptr_t address = 0x0050;
         };
-       static_assert(sizeof(Cpu) == 16);
+       static_assert(sizeof(Sleep) == 1);
 
     }
 }

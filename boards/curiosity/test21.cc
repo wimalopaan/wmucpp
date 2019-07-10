@@ -17,8 +17,10 @@
 #include <external/hal/alarmtimer.h>
 #include <external/hal/adccontroller.h>
 #include <external/hott/sumdprotocolladapter.h>
+
 #include <external/solutions/series01/rpm.h>
 #include <external/solutions/series01/sppm_in.h>
+#include <external/solutions/ifx007.h>
 
 #include <external/hott/experimental/sensor.h>
 #include <external/hott/experimental/adapter.h>
@@ -55,6 +57,8 @@ using terminalDevice = Usart<usart0Position, External::Hal::NullProtocollAdapter
 using terminal = etl::basic_ostream<terminalDevice>;
 
 using sumd = Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>;
+using hott_t = Hott::hott_t;
+
 using rcUsart = AVR::Usart<usart1Position, sumd, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
 
 using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::AltD>;
@@ -79,13 +83,13 @@ using lut1 = Ccl::SimpleLut<1, Ccl::Input::Tca0<0>, Ccl::Input::Event<A>, Ccl::I
 
 using pit = Rtc::Pit<>;
 
-using ppm = External::Ppm::SinglePpmIn<Component::Tcb<0>>; // in andere header Datei verschieben
+//using ppm = External::Ppm::SinglePpmIn<Component::Tcb<0>>; // in andere header Datei verschieben
 
 namespace  {
 //    constexpr auto dt = 2_ms;
     constexpr auto dt = 2000_us;
     constexpr auto fRtc = 500_Hz;
-    constexpr auto fPwm = 1000_Hz;
+    constexpr auto fPwm = 2400_Hz;
 }
 
 using systemTimer = SystemTimer<Component::Rtc<0>, fRtc>;
@@ -94,13 +98,12 @@ using alarmTimer = External::Hal::AlarmTimer<systemTimer>;
 
 using sensor = Hott::Experimental::Sensor<usart3Position, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, systemTimer>;
 
-using rpm = External::Rpm::RpmGpio<rpmPin, systemTimer>;
+//using rpm = External::Rpm::RpmGpio<rpmPin, systemTimer>;
 
-using isrRegistrar = IsrRegistrar<rpm::ImpulsIsr>;
+//using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V4_3>;
+//using adcController = External::Hal::AdcController<adc, Meta::NList<0>>;
 
-using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V4_3>;
-
-using adcController = External::Hal::AdcController<adc, Meta::NList<0>>;
+//using isrRegistrar = IsrRegistrar<rpm::ImpulsIsr>;
 
 int main() {
     uint8_t counter = 0;
@@ -133,26 +136,19 @@ int main() {
     pe3::template dir<Input>();     
 
     pa2::on();
-    pb1::on();
     
     pwm::init();
     pwm::frequency(fPwm);
     pwm::on<PWM::WO<0>, PWM::WO<1>, PWM::WO<2>>();
-//    pwm::off<PWM::WO<2>>();
+//    pwm::off<PWM::WO<0>>();
+    pwm::duty<PWM::WO<0>>(8320);
 
-    pwm::duty<PWM::WO<0>>(1000);
-
-    ppm::init();
-    
-    rpm::init();
-
-    adcController::init();
+//    ppm::init();
+//    rpm::init();
+//    adcController::init();
     
     {
-        
         etl::Scoped<etl::EnableInterrupt<>> ei;
-        
-        sei();
         
         const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
     
@@ -161,8 +157,9 @@ int main() {
             rcUsart::periodic();
             sensor::periodic();
             
-            adcController::periodic();
+//            adcController::periodic();
             
+            pb1::toggle();
             
             systemTimer::periodic([&]{
                 pf2::toggle(); // 5,8us - 17us
@@ -171,10 +168,7 @@ int main() {
                 alarmTimer::periodic([&](const auto& t){
                     if (periodicTimer == t) {
                         led::toggle();
-                        etl::outl<terminal>("test10: "_pgm, ++counter, " ch0: "_pgm, sumd::value(0).toInt());
-    //                    etl::outl<terminal>("co: "_pgm, sensor::collisions(), " ar: "_pgm, sensor::asciiPackages(), " br: "_pgm, sensor::binaryPackages());
-                        etl::outl<terminal>("ppm: "_pgm, ppm::value());
-                        etl::outl<terminal>("rpm: "_pgm, rpm::diff());
+                        etl::outl<terminal>("test21: "_pgm, ++counter, " ch0: "_pgm, sumd::value(0).toInt());
                         if (auto c = terminalDevice::get()) {
                             etl::outl<terminal>("c: "_pgm, *c);
                         }
@@ -186,6 +180,5 @@ int main() {
 }
 
 ISR(PORTE_PORT_vect) {
-    pb1::toggle();
-    isrRegistrar::isr<AVR::ISR::Port<E>>();
+//    isrRegistrar::isr<AVR::ISR::Port<E>>();
 }

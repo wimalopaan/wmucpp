@@ -88,6 +88,9 @@ namespace AVR {
         static inline  void pinctrl() {
             getBaseAddr<mcuport_type , Name>()->pinctrl[Pin].template set<value>();
         }
+        static inline volatile std::byte& intflags() {
+            return *getBaseAddr<mcuport_type , Name>()->intflags;
+        }
     };
     
     template<AVR::Concepts::Letter Name, AVR::Concepts::AtMega MCU>
@@ -332,8 +335,15 @@ namespace AVR {
     template<typename PinList, typename MCU = DefaultMcuType>
     struct PinGroup;
     
+    namespace detail {
+        template<typename Pin>
+        struct getPort {
+            using type = typename Pin::port;
+        };
+    }
+    
     template<typename PinList, AVR::Concepts::At01Series MCU>
-    requires Meta::all_same_front_v<PinList>
+    requires Meta::all_same_front_v<Meta::transform_type<detail::getPort, PinList>>
     struct PinGroup<PinList, MCU> {
         inline static constexpr std::byte group_value = []<typename... P>(Meta::List<P...>) {
               return (P::pinMask | ...);                                          
@@ -359,18 +369,27 @@ namespace AVR {
         struct OnRising;
         struct OnFalling;
         template<typename Kind, typename MCU = DefaultMcuType>
-        struct Interrupt : std::integral_constant<typename MCU::PortRegister::PinCtrl_t, MCU::PortRegister::PinCtrl_t::inven> {}; 
+        struct Interrupt;
+        template<typename MCU>
+        struct Interrupt<OnRising, MCU> : std::integral_constant<typename MCU::PortRegister::PinCtrl_t, MCU::PortRegister::PinCtrl_t::rising> {}; 
+        template<typename MCU>
+        struct Interrupt<OnFalling, MCU> : std::integral_constant<typename MCU::PortRegister::PinCtrl_t, MCU::PortRegister::PinCtrl_t::falling> {}; 
+        template<typename MCU = DefaultMcuType>
+        struct DigitalDisable : std::integral_constant<typename MCU::PortRegister::PinCtrl_t, MCU::PortRegister::PinCtrl_t::disable> {}; 
     }
     
     template<AVR::Concepts::Port Port, uint8_t PinNumber, typename MCU = DefaultMcuType>
     struct Pin;
     
-    template<AVR::Concepts::Port Port, uint8_t PinNumber, AVR::Concepts::AtMega0 MCU>
+    template<AVR::Concepts::Port Port, uint8_t PinNumber, AVR::Concepts::At01Series MCU>
     struct Pin<Port, PinNumber, MCU> final {
         static_assert(PinNumber < 8, "wrong pin number");
         Pin() = delete;
         using mcu = typename Port::mcu;
         typedef Port port;
+        
+        
+        
         static inline constexpr uint8_t number = PinNumber;
         static inline constexpr std::byte pinMask{(1 << PinNumber)};
         static inline void on() {
@@ -397,6 +416,10 @@ namespace AVR {
             constexpr auto v = (AA::value || ...);
             port::template pinctrl<PinNumber, v>();
         }
+        static inline void resetInt() {
+            Port::intflags() = pinMask; 
+        }
+        
     };
 
     template<AVR::Concepts::Port Port, uint8_t PinNumber, AVR::Concepts::AtMega MCU>

@@ -34,13 +34,14 @@ using namespace External::Units::literals;
 
 using PortA = Port<A>;
 using PortB = Port<B>;
+using PortD = Port<D>;
 using PortF = Port<F>;
 using PortE = Port<E>;
 
 using led = Pin<PortF, 5>; 
 using pf2 = Pin<PortF, 2>; 
 using pb1 = Pin<PortB, 1>; 
-using pa2 = Pin<PortA, 2>; 
+//using pa2 = Pin<PortA, 2>; 
 using pe3 = Pin<PortE, 3>; // ppm (s.u.)
 using rpmPin = Pin<PortE, 0>; 
 
@@ -66,6 +67,8 @@ using ccl0Position = Portmux::Position<Component::Ccl<0>, Portmux::Default>;
 using ccl1Position = Portmux::Position<Component::Ccl<1>, Portmux::Default>;
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, usart1Position, usart3Position, tcaPosition, tcbPosition, ccl0Position, ccl1Position>>;
+//using portmux = Portmux::StaticMapper<Meta::List<usart0Position, usart1Position, usart3Position>>;
+//using portmux = Portmux::StaticMapper<Meta::List<usart0Position, usart1Position>>;
 
 using evch0 = Event::Channel<0, Event::Generators::PitDiv<1024>>;
 using evch1 = Event::Channel<4, Event::Generators::Pin<pe3>>; 
@@ -99,8 +102,8 @@ using rpm = External::Rpm::RpmGpio<rpmPin, systemTimer>;
 using isrRegistrar = IsrRegistrar<rpm::ImpulsIsr>;
 
 using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V4_3>;
-
-using adcController = External::Hal::AdcController<adc, Meta::NList<0>>;
+using adcController = External::Hal::AdcController<adc, Meta::NList<0, 1>>;
+using pd4 = Pin<PortD, 0>; 
 
 int main() {
     uint8_t counter = 0;
@@ -120,25 +123,24 @@ int main() {
     
     terminalDevice::init<BaudRate<9600>>();
     rcUsart::init<BaudRate<115200>>();
-   
     sensor::init();
     
     systemTimer::init();
     
     led::template dir<Output>();     
-    pf2::template dir<Output>();     
+//    pf2::template dir<Output>();     
     pb1::template dir<Output>();     
-    pa2::template dir<Output>();     
+//    pa2::template dir<Output>();     
     
-    pe3::template dir<Input>();     
+//    pe3::template dir<Input>();     
 
-    pa2::on();
+//    pa2::on();
     pb1::on();
     
     pwm::init();
     pwm::frequency(fPwm);
-    pwm::on<PWM::WO<0>, PWM::WO<1>, PWM::WO<2>>();
-//    pwm::off<PWM::WO<2>>();
+//    pwm::on<PWM::WO<0>, PWM::WO<1>, PWM::WO<2>>();
+////    pwm::off<PWM::WO<2>>();
 
     pwm::duty<PWM::WO<0>>(1000);
 
@@ -149,10 +151,7 @@ int main() {
     adcController::init();
     
     {
-        
         etl::Scoped<etl::EnableInterrupt<>> ei;
-        
-        sei();
         
         const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
     
@@ -160,20 +159,18 @@ int main() {
             terminalDevice::periodic();
             rcUsart::periodic();
             sensor::periodic();
-            
             adcController::periodic();
-            
-            
             systemTimer::periodic([&]{
                 pf2::toggle(); // 5,8us - 17us
                 sensor::ratePeriodic();
-                
+
                 alarmTimer::periodic([&](const auto& t){
                     if (periodicTimer == t) {
                         led::toggle();
-                        etl::outl<terminal>("test10: "_pgm, ++counter, " ch0: "_pgm, sumd::value(0).toInt());
-    //                    etl::outl<terminal>("co: "_pgm, sensor::collisions(), " ar: "_pgm, sensor::asciiPackages(), " br: "_pgm, sensor::binaryPackages());
+                        etl::outl<terminal>("test11: "_pgm, ++counter, " ch0: "_pgm, sumd::value(0).toInt());
+//                        etl::outl<terminal>("co: "_pgm, sensor::collisions(), " ar: "_pgm, sensor::asciiPackages(), " br: "_pgm, sensor::binaryPackages());
                         etl::outl<terminal>("ppm: "_pgm, ppm::value());
+                        etl::outl<terminal>("adc0: "_pgm, adcController::value(0).toInt());
                         etl::outl<terminal>("rpm: "_pgm, rpm::diff());
                         if (auto c = terminalDevice::get()) {
                             etl::outl<terminal>("c: "_pgm, *c);
@@ -186,6 +183,5 @@ int main() {
 }
 
 ISR(PORTE_PORT_vect) {
-    pb1::toggle();
     isrRegistrar::isr<AVR::ISR::Port<E>>();
 }

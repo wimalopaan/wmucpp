@@ -20,51 +20,50 @@ using namespace AVR;
 using namespace std::literals::chrono;
 using namespace External::Units::literals;
 
+using PortA = Port<A>;
+using dbg1 = Pin<PortA, 5>; 
+
 using ccp = Cpu::Ccp<>;
 using clock = Clock<>;
 
-//using terminalDevice = Usart<Component::Usart<0>, External::Hal::NullProtocollAdapter, UseInterrupts<false>>;
-//using terminal = etl::basic_ostream<terminalDevice>;
+using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Alt1>;
 
-//using sumd = Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>;
-//using rcUsart = AVR::Usart<AVR::Component::Usart<0>, sumd, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
+using terminalDevice = Usart<usart0Position, External::Hal::NullProtocollAdapter, UseInterrupts<false>>;
+using terminal = etl::basic_ostream<terminalDevice>;
 
 namespace  {
     constexpr auto dt = 2000_us;
-    constexpr auto fRtc = 128_Hz;
+    constexpr auto fRtc = 500_Hz;
 }
 
-//using systemTimer = SystemTimer<Component::Rtc<0>, fRtc>;
-using systemTimer = SystemTimer<Component::Timer<0, A>, dt>;
+using systemTimer = SystemTimer<Component::Rtc<0>, fRtc>;
 using alarmTimer = External::Hal::AlarmTimer<systemTimer>;
 
-using sensor = Hott::Experimental::Sensor<AVR::Component::Usart<0>, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, systemTimer>;
+using sensor = Hott::Experimental::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, systemTimer>;
+
+using portmux = Portmux::StaticMapper<Meta::List<usart0Position>>;
 
 int main() {
+    dbg1::template dir<Output>();
+    portmux::init();
+
     ccp::unlock([]{
         clock::prescale<1>();
     });
-    
-//    terminalDevice::init<BaudRate<9600>>();
-    sensor::init();
-//    rcUsart::init<BaudRate<115200>>();
-    
     systemTimer::init();
+
+    sensor::init();
     
     const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
 
     while(true) {
-//        terminalDevice::periodic();
-//        rcUsart::periodic();
-        
         sensor::periodic();
         
         systemTimer::periodic([&]{
-//            dbg1::toggle();
+            dbg1::toggle();
             alarmTimer::periodic([&](const auto& t){
                 if (periodicTimer == t) {
-//                    led::toggle();
-//                    etl::outl<terminal>("test00"_pgm);
+                    etl::outl<terminal>("test00"_pgm);
                 }
                 
             });
