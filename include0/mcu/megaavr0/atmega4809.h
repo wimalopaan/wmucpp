@@ -49,6 +49,7 @@ namespace AVR {
         using Events = AVR::Series0::Events;
         using Adc = AVR::Series0::Adc;
         using Vref = AVR::Series0::Vref;
+        using Sleep = AVR::Series0::Sleep;
         
     };
     template<>

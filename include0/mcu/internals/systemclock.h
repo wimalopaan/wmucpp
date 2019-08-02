@@ -41,7 +41,7 @@ namespace AVR {
     template<typename CNumber, const auto& Interval, typename MCU = DefaultMcuType>
     struct SystemTimer;
     
-    template<AVR::Concepts::ComponentNumber CNumber, const auto& Interval, AVR::Concepts::AtMega MCU>
+    template<AVR::Concepts::ComponentNumber CNumber, const auto& Interval, AVR::Concepts::AtMega_X MCU>
     requires AVR::Util::is_duration_v<decltype(Interval)>
     struct SystemTimer<CNumber, Interval, MCU> {
         static inline constexpr auto Number = CNumber::value;

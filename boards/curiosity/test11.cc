@@ -95,7 +95,7 @@ using systemTimer = SystemTimer<Component::Rtc<0>, fRtc>;
 //using systemTimer = SystemTimer<Component::Timer<0, A>, dt>;
 using alarmTimer = External::Hal::AlarmTimer<systemTimer>;
 
-using sensor = Hott::Experimental::Sensor<usart3Position, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, systemTimer>;
+using sensor = Hott::Experimental::Sensor<usart3Position, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, Hott::TextMsg, systemTimer>;
 
 using rpm = External::Rpm::RpmGpio<rpmPin, systemTimer>;
 
@@ -103,7 +103,7 @@ using isrRegistrar = IsrRegistrar<rpm::ImpulsIsr>;
 
 using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V4_3>;
 using adcController = External::Hal::AdcController<adc, Meta::NList<0, 1>>;
-using pd4 = Pin<PortD, 0>; 
+//using pd4 = Pin<PortD, 0>; 
 
 int main() {
     uint8_t counter = 0;
@@ -168,10 +168,10 @@ int main() {
                     if (periodicTimer == t) {
                         led::toggle();
                         etl::outl<terminal>("test11: "_pgm, ++counter, " ch0: "_pgm, sumd::value(0).toInt());
-//                        etl::outl<terminal>("co: "_pgm, sensor::collisions(), " ar: "_pgm, sensor::asciiPackages(), " br: "_pgm, sensor::binaryPackages());
-                        etl::outl<terminal>("ppm: "_pgm, ppm::value());
-                        etl::outl<terminal>("adc0: "_pgm, adcController::value(0).toInt());
-                        etl::outl<terminal>("rpm: "_pgm, rpm::diff());
+                        etl::outl<terminal>("co: "_pgm, sensor::collisions(), " ar: "_pgm, sensor::asciiPackages(), " br: "_pgm, sensor::binaryPackages());
+//                        etl::outl<terminal>("ppm: "_pgm, ppm::value());
+//                        etl::outl<terminal>("adc0: "_pgm, adcController::value(0).toInt());
+//                        etl::outl<terminal>("rpm: "_pgm, rpm::diff());
                         if (auto c = terminalDevice::get()) {
                             etl::outl<terminal>("c: "_pgm, *c);
                         }

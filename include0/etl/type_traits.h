@@ -21,11 +21,17 @@
 #include <cstdint>
 #include <limits>
 #include <type_traits>
+#include <algorithm>
 
 #include "concepts.h"
 #include "meta.h"
 
 namespace etl {
+    template<typename T>
+    inline constexpr uint8_t numberOfBits() {
+        return sizeof(T) * 8;
+    }
+
     namespace detail {
         template<auto Bits>
         struct typeForBits {
@@ -33,6 +39,13 @@ namespace etl {
                              typename std::conditional<(Bits <= 16), uint16_t, 
                                  typename std::conditional<(Bits <= 32), uint32_t,
                                       typename std::conditional<(Bits <= 64), uint64_t, void>::type>::type>::type>::type;
+        };
+        template<auto Bits>
+        struct signedTypeForBits {
+            using type = typename std::conditional<(Bits <= 8), int8_t, 
+                             typename std::conditional<(Bits <= 16), int16_t, 
+                                 typename std::conditional<(Bits <= 32), int32_t,
+                                      typename std::conditional<(Bits <= 64), int64_t, void>::type>::type>::type>::type;
         };
         template<auto V>
         struct typeForValue {
@@ -77,6 +90,22 @@ namespace etl {
             typedef uint32_t type;
             static constexpr const uint8_t shift = 32;
         };
+
+        template<typename T, typename U>
+        struct containing_type;
+        
+        template<typename T, typename U>
+        requires (std::is_signed_v<T> && std::is_signed_v<U>)
+        struct containing_type<T, U> {
+            constexpr static inline uint8_t bits = std::max(etl::numberOfBits<T>(), etl::numberOfBits<U>());
+            using type = typename signedTypeForBits<bits>::type;        
+        };
+        template<typename T, typename U>
+        requires (std::is_unsigned_v<T> && std::is_unsigned_v<U>)
+        struct containing_type<T, U> {
+            constexpr static inline uint8_t bits = std::max(etl::numberOfBits<T>(), etl::numberOfBits<U>());
+            using type = typename typeForBits<bits>::type;        
+        };
     }
     
     template<typename E, typename = std::enable_if_t<std::enable_bitmask_operators_v<E>>>
@@ -84,13 +113,11 @@ namespace etl {
         return static_cast<bool>(v);        
     }
     
-    template<typename T>
-    inline constexpr uint8_t numberOfBits() {
-        return sizeof(T) * 8;
-    }
-
     template<uint64_t Bits>
     using typeForBits_t = typename detail::typeForBits<Bits>::type;  
+
+    template<uint64_t Bits>
+    using signedTypeForBits_t = typename detail::signedTypeForBits<Bits>::type;  
     
     template<auto V>
     using typeForValue_t = typename detail::typeForValue<V>::type;
@@ -106,6 +133,10 @@ namespace etl {
 
     template<typename T>
     using fragment_t = typename detail::fragmentType<T>::type;    
+
+    template<typename T, typename U>
+    using containing_type_t = typename detail::containing_type<T, U>::type;
+
     
     namespace detail {
         template<class Trait, typename = void>

@@ -311,6 +311,17 @@ namespace etl {
         }
     }
     
+    template<uint8_t Number, typename T>
+    constexpr inline std::byte nth_byte(const T& v);
+
+    template<>
+    constexpr inline std::byte nth_byte<0>(const uint16_t& v) {
+        return std::byte(v);
+    }
+    template<>
+    constexpr inline std::byte nth_byte<1>(const uint16_t& v) {
+        return std::byte(v >> 8);
+    }
     
 }
 

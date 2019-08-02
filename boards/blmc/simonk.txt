@@ -20,6 +20,7 @@
 # sudo avrdude -p atmega8 -P usb -c avrisp2 -V -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -U flash:w:bs_nfet.hex
 
 # Hobbyking 80A F-80A
+# Hobbyking 60A F-60A
 
 # lockbits = 0b11111100
 

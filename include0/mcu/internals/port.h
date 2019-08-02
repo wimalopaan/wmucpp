@@ -62,6 +62,9 @@ namespace AVR {
         using mcuport_type = typename MCU::PortRegister;
         using name_type = Name;
         Port() = delete;
+        static inline std::byte read() {
+            return *getBaseAddr<mcuport_type , Name>()->in;
+        }
         static inline volatile std::byte& dir() {
             return *getBaseAddr<mcuport_type , Name>()->dir;
         }
@@ -368,8 +371,11 @@ namespace AVR {
         struct Inverting : std::integral_constant<typename MCU::PortRegister::PinCtrl_t, MCU::PortRegister::PinCtrl_t::inven> {}; 
         struct OnRising;
         struct OnFalling;
+        struct BothEdges;
         template<typename Kind, typename MCU = DefaultMcuType>
         struct Interrupt;
+        template<typename MCU>
+        struct Interrupt<BothEdges, MCU> : std::integral_constant<typename MCU::PortRegister::PinCtrl_t, MCU::PortRegister::PinCtrl_t::bothedges> {}; 
         template<typename MCU>
         struct Interrupt<OnRising, MCU> : std::integral_constant<typename MCU::PortRegister::PinCtrl_t, MCU::PortRegister::PinCtrl_t::rising> {}; 
         template<typename MCU>
@@ -388,16 +394,16 @@ namespace AVR {
         using mcu = typename Port::mcu;
         typedef Port port;
         
-        
-        
         static inline constexpr uint8_t number = PinNumber;
         static inline constexpr std::byte pinMask{(1 << PinNumber)};
         static inline void on() {
             Port::outset() = pinMask; 
         }
+        static inline constexpr auto& high = on;
         static inline void off() {
             Port::outclear() = pinMask; 
         }
+        static inline constexpr auto& low = off;
         static inline void toggle() {
             Port::outtoggle() = pinMask; 
         }
@@ -405,6 +411,11 @@ namespace AVR {
         static inline void pullup() {
             Port::template pullup<PinNumber, true>();
         }
+        static inline bool read() {
+            return (Port::read() & pinMask) != std::byte{0};
+        }
+        static constexpr auto& isHigh = read;
+        
         template<typename Dir>
         static inline void dir() {        
             if constexpr(std::is_same_v<Dir, AVR::Output>) {
@@ -566,6 +577,9 @@ namespace AVR {
         }    
         inline static bool activated() {
             return Pin::isHigh();
+        }
+        inline static void toggle() {
+            Pin::toggle();
         }
     };
     template<AVR::Concepts::Pin Pin>

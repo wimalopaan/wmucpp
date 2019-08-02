@@ -85,25 +85,28 @@ using pit = Rtc::Pit<>;
 
 using ppm = External::Ppm::SinglePpmIn<Component::Tcb<0>>; // in andere header Datei verschieben
 
-namespace  {
-//    constexpr auto dt = 2_ms;
-    constexpr auto dt = 2000_us;
-    constexpr auto fRtc = 500_Hz;
-    constexpr auto fPwm = 1000_Hz;
-}
+struct Parameter {
+    inline static constexpr uint8_t menuLines = 4;
+    inline static constexpr auto fRtc = 500_Hz;
+    inline static constexpr auto fPwm = 310_Hz;
+    inline static constexpr auto dt = 2000_us;
+    inline static constexpr auto intervall = 100_ms;
+    inline static constexpr uint8_t ticksPerSecond = 1000_ms / intervall;
+};
 
-using systemTimer = SystemTimer<Component::Rtc<0>, fRtc>;
+using systemTimer = SystemTimer<Component::Rtc<0>, Parameter::fRtc>;
 //using systemTimer = SystemTimer<Component::Timer<0, A>, dt>;
 using alarmTimer = External::Hal::AlarmTimer<systemTimer>;
 
-using sensor = Hott::Experimental::Sensor<usart3Position, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, systemTimer>;
+using sensor = Hott::Experimental::Sensor<usart3Position, AVR::Usart, AVR::BaudRate<19200>, Hott::EscMsg_1, Hott::VarTextMsg<Parameter::menuLines>, systemTimer>;
+//using sensor = Hott::Experimental::Sensor<usart3Position, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, systemTimer>;
 
 using rpm = External::Rpm::RpmGpio<rpmPin, systemTimer>;
 
 using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V4_3>;
 using adcController = External::Hal::AdcController<adc, Meta::NList<0>>;
 
-using hbridge = External::IFX007::HBridge<pwm, sumd::value_type>;
+//using hbridge = External::IFX007::HBridge<pwm, sumd::value_type>;
 
 
 using isrRegistrar = IsrRegistrar<rpm::ImpulsIsr>;
@@ -140,14 +143,14 @@ int main() {
 
     pa2::on();
     
-//    pwm::init();
-//    pwm::frequency(fPwm);
-//    pwm::on<PWM::WO<0>, PWM::WO<1>, PWM::WO<2>>();
-////    pwm::off<PWM::WO<2>>();
-//    pwm::duty<PWM::WO<0>>(1000);
+    pwm::init();
+    pwm::frequency(Parameter::fPwm);
+    pwm::on<PWM::WO<0>, PWM::WO<1>, PWM::WO<2>>();
+//    pwm::off<PWM::WO<2>>();
+    pwm::duty<PWM::WO<0>>(10000);
 
-    hbridge::init();
-    hbridge::duty(hott_t{hott_t::Mid});
+//    hbridge::init();
+//    hbridge::duty(hott_t{hott_t::Mid});
     
     ppm::init();
     rpm::init();

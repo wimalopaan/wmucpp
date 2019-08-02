@@ -107,6 +107,7 @@ namespace Hott {
         using value_type = uint8_t;
         using line_type = etl::StringBuffer<columns>;
         using buffer_type = std::array<line_type, rows>; 
+        
         const std::byte start_byte = ascii_start_code;		//#01 Starting constant value == 0x7b
         std::byte esc{0};				//#02 Escape (higher-ranking menu in text mode or Text mode leave)
         uint8_t warning_beeps = 0;	//#03 1=A 2=B ...
@@ -114,10 +115,73 @@ namespace Hott {
         const std::byte stop_byte = end_code;		//#172 constant value 0x7d
         uint8_t parity = 0;			//#173 Checksum / parity
     };
+    
+    template<uint8_t Rows>
+    requires((Rows > 0) && (Rows <= 8))
+    struct VarTextMsg {
+        inline static constexpr uint8_t rows = Rows;
+        inline static constexpr uint8_t columns = 21;
+        using value_type = uint8_t;
+        using line_type = etl::StringBuffer<columns>;
+        using buffer_type = std::array<line_type, rows>; 
+
+        static inline constexpr std::byte start_byte = ascii_start_code;		//#01 Starting constant value == 0x7b
+        static inline constexpr std::byte warning_beeps{0};	//#03 1=A 2=B ...
+        
+        std::byte esc{0};				//#02 Escape (higher-ranking menu in text mode or Text mode leave)
+        buffer_type text{};
+        etl::Parity<uint8_t> parity;			//#173 Checksum / parity
+        
+        static inline constexpr std::byte stop_byte = end_code;		//#172 constant value 0x7d
+        
+        static inline constexpr uint8_t text_offset = 3;  
+        static inline constexpr uint8_t stop_offset = 171;  
+        static inline constexpr uint8_t parity_offset = 172;  
+        
+        static_assert(parity_offset == (sizeof(TextMsg) - 1));
+        
+        inline std::byte operator[](etl::uint_ranged<uint8_t, 0, sizeof(TextMsg) - 1> index)  {
+            if (index == 0) {
+                parity.clear();
+                parity += start_byte;
+                return start_byte;
+            }
+            else if (index == 1) {
+                parity += esc;
+                return esc;
+            }
+            else if (index == 2) {
+                parity += warning_beeps;
+                return warning_beeps;    
+            }
+            else if (index < (sizeof(text) + text_offset)) {
+                /*constexpr */const std::byte* ptr = (const std::byte*) &text;  
+                const auto value = ptr[index - text_offset];
+                parity += value;
+                return value;
+            }
+            else if (index == stop_offset) {
+                parity += stop_byte;
+                return stop_byte;
+            }
+            else if (index == parity_offset) {
+                return parity;
+            }
+            else {
+                parity += std::byte{' '};
+                return std::byte{' '};
+            }
+        }
+        
+    };
+    
     namespace detail {
-        using txt_size = std::integral_constant<uint8_t, sizeof(TextMsg)>;
-//        txt_size::_;
+        using std_txt_msg_size = std::integral_constant<uint8_t, sizeof(TextMsg)>;
+//        std_txt_msg_size::_;
+        using var_txt_msg_size = std::integral_constant<uint8_t, sizeof(VarTextMsg<4>)>;
+//        var_txt_msg_size::_;
     }
+
     
     struct EscMsg {
         using value_type = uint8_t;
@@ -127,12 +191,12 @@ namespace Hott {
         const std::byte sensor_id = (esc_sensor_id << 4) & 0xf0_B;
         uint8_t inverse = 0x00;
         uint8_t inverse_status = 0x80;
-        uint16_t voltage = 0;
-        uint16_t voltage_min = 0;
+        uint16_t voltage = 0; // #6
+        uint16_t voltage_min = 0; // #8
         uint16_t capacity = 0;
         uint8_t temp = 0;
         uint8_t temp_max = 0;
-        uint16_t current = 0;
+        uint16_t current = 0; // #14
         uint16_t current_max = 0;
         uint16_t rpm = 0;
         uint16_t rpm_max = 0;
@@ -156,6 +220,73 @@ namespace Hott {
         const std::byte end_byte = end_code;
         uint8_t parity = 0;
     };
+
+    struct EscMsg_1 {
+        using value_type = uint8_t;
+        inline static constexpr std::byte start_byte = start_code;        
+        inline static constexpr std::byte esc_sensor_id = binary_id(esc_code);
+        inline static constexpr std::byte end_byte = end_code;
+        inline static constexpr std::byte sensor_id = (esc_sensor_id << 4) & 0xf0_B;
+        inline static constexpr std::byte inverse_status = 0x80_B;
+
+        uint16_t voltage = 0;
+        uint16_t voltage_min = 0;
+
+        uint16_t current = 0;
+        uint16_t current_max = 0;
+
+        static inline constexpr uint8_t parity_offset = sizeof(EscMsg) - 1;  
+        etl::Parity<uint8_t> parity;
+
+        
+        inline std::byte operator[](etl::uint_ranged<uint8_t, 0, sizeof(EscMsg) - 1> index)  {
+            if (index == 0) {
+                parity.clear();
+                return parity <<= start_byte;
+            }
+            else if (index == 1) {
+                return parity <<= esc_sensor_id;
+            }
+            else if (index == 3) {
+                return parity <<= sensor_id;
+            }
+            else if (index == 5) {
+                return parity <<= inverse_status;
+            }
+            else if (index == 6) {
+                return parity <<= etl::nth_byte<0>(voltage);
+            }
+            else if (index == 7) {
+                return parity <<= etl::nth_byte<1>(voltage);
+            }
+            else if (index == 8) {
+                return parity <<= etl::nth_byte<0>(voltage_min);
+            }
+            else if (index == 9) {
+                return parity <<= etl::nth_byte<1>(voltage_min);
+            }
+            else if (index == 14) {
+                return parity <<= etl::nth_byte<0>(current);
+            }
+            else if (index == 15) {
+                return parity <<= etl::nth_byte<1>(current);
+            }
+            else if (index == 16) {
+                return parity <<= etl::nth_byte<0>(current_max);
+            }
+            else if (index == 17) {
+                return parity <<= etl::nth_byte<1>(current_max);
+            }
+            else if (index == parity_offset) {
+                return parity;
+            }
+            else {
+                return parity <<= 0x00_B;
+            }
+        }
+    };
+
+
     
     namespace detail {
         using esc_size = std::integral_constant<uint8_t, sizeof(EscMsg)>;
@@ -274,6 +405,21 @@ namespace Hott {
     struct code_from_type<GamMsg> : std::integral_constant<std::byte, gam_code> {};
     template<>
     struct code_from_type<EscMsg> : std::integral_constant<std::byte, esc_code> {};
+    template<>
+    struct code_from_type<EscMsg_1> : std::integral_constant<std::byte, esc_code> {};
+
+    template<typename M>
+    struct size;
+    template<>
+    struct size<GamMsg> : std::integral_constant<uint8_t, sizeof(GamMsg)> {};
+    template<>
+    struct size<EscMsg> : std::integral_constant<uint8_t, sizeof(EscMsg)> {};
+    template<>
+    struct size<EscMsg_1> : std::integral_constant<uint8_t, sizeof(EscMsg)> {};
+    template<>
+    struct size<TextMsg> : std::integral_constant<uint8_t, sizeof(TextMsg)> {};
+    template<uint8_t L>
+    struct size<VarTextMsg<L>> : std::integral_constant<uint8_t, sizeof(TextMsg)> {};
     
 }
 

@@ -33,6 +33,9 @@ namespace AVR {
         using MCUTimer = typename timer_type::mcu_timer_type;
 //        typedef typename MCUTimer::value_type value_type;
         typedef typename  AVR::TimerParameter<TimerN, MCU>::value_type value_type;
+        
+//        value_type::_;
+        
         static constexpr const auto mcuTimer = getBaseAddr<MCUTimer, TimerN>;
         using pwmA = typename AVR::TimerParameter<TimerN, MCU>::ocAPin;
         using pwmB = typename AVR::TimerParameter<TimerN, MCU>::ocBPin;

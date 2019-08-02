@@ -1,23 +1,31 @@
 #define NDEBUG
 
-#include <stdlib.h>
-#include "mcu/avr8.h"
-#include "mcu/ports.h"
-#include "mcu/avr/usart.h"
-#include "mcu/avr/mcupwm.h"
-#include "mcu/avr/adcomparator.h"
-#include "mcu/avr/watchdog.h"
-#include "mcu/avr/twislave.h"
-#include "mcu/avr/adcomparator.h"
-#include "mcu/avr/adc.h"
-#include "external/hott/hott.h"
+#include <mcu/avr.h>
+#include <mcu/internals/systemclock.h>
+#include <mcu/internals/usart.h>
+#include <mcu/internals/port.h>
+#include <mcu/internals/adc.h>
+#include <mcu/internals/adcomparator.h>
+#include <mcu/internals/capture.h>
+#include <mcu/internals/pwm.h>
 
-#include "console.h"
+#include <external/units/physical.h>
+#include <external/units/percent.h>
+#include <etl/fixedpoint.h>
+#include <etl/output.h>
+
+#include <std/chrono>
+
+using namespace AVR;
+using namespace External::Units;
+using namespace External::Units::literals;
+using namespace std::literals::chrono;
 
 namespace Constants {
-    static constexpr std::hertz pwmFrequency = 8000_Hz * 256; 
-    static constexpr std::hertz fSystem = 100_Hz;
+    static constexpr hertz pwmFrequency = 2000_Hz * 256; 
+    static constexpr hertz fSystem = 100_Hz;
 }
+
 
 struct CommandAdapter {
     enum class Command : uint8_t {Undefined, Off, Start, Info, Reset, 
@@ -62,7 +70,7 @@ struct CommandAdapter {
     static inline Command get() {
         Command c = Command::Undefined;
         {
-            Scoped<DisbaleInterrupt<>> di;
+            etl::Scoped<etl::DisbaleInterrupt<>> di;
             c = mCommand;
             mCommand = Command::Undefined;
         }
@@ -73,7 +81,7 @@ private:
     inline static volatile Command mCommand = Command::Undefined;
 };
 
-template<typename AC, typename Timer, typename... PP>
+template<typename AC, typename Capture, typename... PP>
 struct Communter {
     using pin_list = Meta::List<PP...>;
     using h0 = Meta::nth_element<0, pin_list>;
@@ -132,37 +140,37 @@ struct Communter {
             floating<l1>();
             on<l2>();
             AC::channel(1);
-            Timer::captureRising(true);
+            Capture::captureRising(true);
             break;
         case 1: // pwm(1) -> 2, ac = 0
             off<h0>();
             pwm<h1>();
             AC::channel(0);
-            Timer::captureRising(false);
+            Capture::captureRising(false);
             break;
         case 2: // pwm(1) -> 0, ac = 2
             floating<l2>();
             on<l0>();
             AC::channel(2);
-            Timer::captureRising(true);
+            Capture::captureRising(true);
             break;
         case 3: // pwm(2) -> 0, ac = 1
             off<h1>();
             pwm<h2>();
             AC::channel(1);
-            Timer::captureRising(false);
+            Capture::captureRising(false);
             break;
         case 4: // pwm(2) -> 1, ac = 0
             floating<l0>();
             on<l1>();
             AC::channel(0);
-            Timer::captureRising(true);
+            Capture::captureRising(true);
             break;
         case 5: // pwm(0) -> 1, ac = 2
             off<h2>();
             pwm<h0>();
             AC::channel(2);
-            Timer::captureRising(false);
+            Capture::captureRising(false);
             break;
         default:
             break;
@@ -175,10 +183,9 @@ struct Communter {
     }
     
 private:
-    inline static uint_ranged_circular<uint8_t, 0, 5> state{0};
+    inline static etl::uint_ranged_circular<uint8_t, 0, 5> state{0};
 };
 
-using namespace std::literals::quantity;
 
 template<typename... T>
 struct Offloader {
@@ -196,19 +203,18 @@ struct Offloader {
     }
 };
 
-template<typename Timer, typename PWM, typename Com, typename xAdc, typename OL>
+template<typename Capture, typename PWM, typename Com, typename xAdc, typename OL>
 struct Controller {
-    typedef typename Timer::value_type timer_value_t;
+    typedef typename Capture::value_type timer_value_t;
     typedef typename PWM::value_type pwm_value_t;
-    typedef typename PWM::B pwmCH_t;
     
     static inline constexpr uint8_t pwm_max = std::numeric_limits<pwm_value_t>::max();
     
     struct RampValue {
         timer_value_t tv;
-        FixedPoint<uint16_t, 8> pwm;
+        etl::FixedPoint<uint16_t, 8> pwm;
         
-        inline constexpr RampValue& operator+=(const RampValue& rhs) {
+        inline RampValue& operator+=(const RampValue& rhs) {
             tv -= rhs.tv;
             pwm += rhs.pwm;
             return *this;
@@ -223,20 +229,20 @@ struct Controller {
     };
     
     struct RampPoint {
-        std::microseconds time;
-        std::percent pvm;
+        std::chrono::microseconds time;
+        External::Units::percent pvm;
     };
     
     enum class State : uint8_t {Off, Align, Align2, RampUp, ClosedLoop, ClosedLoopComDelay, ClosedLoopCommute, ClosedLoopError};
     
     static inline constexpr uint16_t prescaler = 8;
-    static inline constexpr auto fTimer = Config::fMcu / prescaler;
+    static inline constexpr auto fTimer = Project::Config::fMcu / prescaler;
 
     // 190KV / 64mm    
     static inline RampPoint ramp_start = {20000_us, 5_ppc};
-    static inline RampPoint ramp_end   = {2000_us, 9_ppc};
+    static inline RampPoint ramp_end   = {2000_us, 11_ppc};
     static inline uint8_t ramp_steps = 50;
-    static inline auto constexpr pwmStart = FixedPoint<uint16_t, 8>{(double)std::expand(5_ppc, uint8_t{0}, pwm_max)};
+    static inline constexpr auto pwmStart = etl::FixedPoint<uint16_t, 8>{(double)expand(5_ppc, uint8_t{0}, pwm_max)};
 
     static inline constexpr uint32_t alignValue2 = 200_ms * fTimer;
     static inline constexpr timer_value_t alignValueCount = alignValue2 / std::numeric_limits<timer_value_t>::module();
@@ -251,11 +257,11 @@ struct Controller {
     inline static RampValue convert(const RampPoint& p) {
         RampValue v;
         v.tv = p.time * fTimer;
-        v.pwm = FixedPoint<uint16_t, 8>{(double)std::expand(p.pvm, uint8_t{0}, pwm_max)};
+        v.pwm = etl::FixedPoint<uint16_t, 8>{(double)expand(p.pvm, uint8_t{0}, pwm_max)};
         return v;
     } 
     
-    inline static constexpr Ramp make_ramp(const RampPoint& start, const RampPoint& end, uint8_t steps) {
+    inline static Ramp make_ramp(const RampPoint& start, const RampPoint& end, uint8_t steps) {
         Ramp ramp;
         ramp.start = convert(start);
         ramp.end = convert(end);
@@ -272,39 +278,39 @@ struct Controller {
     inline static void init() {
         OL::init();
         PWM::template init<Constants::pwmFrequency>();
-        PWM::template pwm<pwmCH_t>(1);
+//        PWM::template pwm<pwmCH_t>(1);
         Com::init();
-        Timer::off();
-        Timer::noiseCancel();
-        Timer::mode(AVR::TimerMode::IcpNoInt); 
+        Capture::init();
+        Capture::off();
+        Capture::noiseCancel();
     }
     inline static void run() {
         spin();
         if ((mState != State::Off)) {
-            Timer::template periodic<Timer::flags_type::ocfa>([&](){
+            Capture::template periodic<Capture::flags_type::ocfa>([&](){
                 periodic();    
             });            
         }
     }
-private:  
+//private:  
     
     inline static void off() {
         Com::off();
-        Timer::off();
+        Capture::off();
         mState = State::Off;
     }
     inline static void start() {
         actualRV = ramp.start;
-        Timer::reset();
+        Capture::reset();
         if (mAlignCounter < alignValueCount) {
-            Timer::ocra(std::numeric_limits<timer_value_t>::max());
+            Capture::ocra(std::numeric_limits<timer_value_t>::max());
             ++mAlignCounter;
         }
         else {
-            Timer::ocra(alignValueLast);
+            Capture::ocra(alignValueLast);
         }
 //        Timer::ocra(alignValue);
-        Timer::template prescale<prescaler>();
+        Capture::template prescale<prescaler>();
         mDelayFactor = 4;
         mState = State::Align;
         mAlignCounter = 0;
@@ -326,9 +332,9 @@ private:
     inline static void spin() {
         switch(mState) {
         case State::ClosedLoop:
-            Timer::template periodic<Timer::flags_type::icf>([&](){ // zero crossing
+            Capture::template periodic<Capture::flags_type::icf>([&](){ // zero crossing
 //                db1::on();
-                auto icr = Timer::icr();
+                auto icr = Capture::icr();
                 if (icr >= period / 4) {
                     enableOffloader();                
                     period = icr;
@@ -337,14 +343,14 @@ private:
                         mState = State::ClosedLoopCommute;
                     }
                     else {
-                        Timer::ocra(delay);
-                        Timer::template clearFlag<Timer::flags_type::ocfa>();
+                        Capture::ocra(delay);
+                        Capture::template clearFlag<Capture::flags_type::ocfa>();
                         mState = State::ClosedLoopComDelay;
                     }
-                    Timer::reset();
+                    Capture::reset();
                 } 
                 else {
-                    Timer::template clearFlag<Timer::flags_type::icf>();
+                    Capture::template clearFlag<Capture::flags_type::icf>();
                 }
 //                db1::off();
             });
@@ -353,7 +359,7 @@ private:
 //            db2::on();
             Com::next();
             
-            Timer::template clearFlag<Timer::flags_type::icf>();
+            Capture::template clearFlag<Capture::flags_type::icf>();
             mState = State::ClosedLoop;
             
 //            db2::off();
@@ -374,41 +380,41 @@ private:
         switch(mState) {
         case State::Align:
             Com::startPosition();
-            Timer::reset();
+            Capture::reset();
             if (mAlignCounter < alignValueCount) {
-                Timer::ocra(std::numeric_limits<timer_value_t>::max());
+                Capture::ocra(std::numeric_limits<timer_value_t>::max());
                 ++mAlignCounter;
             }
             else {
-                Timer::ocra(alignValueLast);
+                Capture::ocra(alignValueLast);
                 mState = State::RampUp;
             }
 //            Timer::ocra(alignValue);
-            PWM::template pwm<pwmCH_t>(actualRV.pwm.integer());
+            PWM::b(actualRV.pwm.integer());
             Com::on();
             break;
         case State::RampUp:
             Com::next();
-            Timer::reset();
-            PWM::template pwm<pwmCH_t>(actualRV.pwm.integer());
+            Capture::reset();
+            PWM::b(actualRV.pwm.integer());
             if (mStep < ramp_steps) {
-                Timer::ocra(actualRV.tv);
+                Capture::ocra(actualRV.tv);
                 ++mStep;
                 actualRV += ramp.delta;
             }
             else {
-                Timer::ocra(4 * actualRV.tv); // timeout
+                Capture::ocra(4 * actualRV.tv); // timeout
                 mState = State::ClosedLoop;
                 actualRV.pwm = pwmStart;
                 period = actualRV.tv;
-                Timer::template clearFlag<Timer::flags_type::icf>();
+                Capture::template clearFlag<Capture::flags_type::icf>();
             }
             break;
         case State::ClosedLoop:
 //            mState = State::ClosedLoopError;
             break;
         case State::ClosedLoopComDelay:
-            PWM::template pwm<pwmCH_t>(actualRV.pwm.integer());
+            PWM::b(actualRV.pwm.integer());
             mState = State::ClosedLoopCommute;
             break;
         case State::ClosedLoopError:
@@ -433,12 +439,12 @@ private:
     }
     inline static void pwmInc() {
         if (actualRV.pwm.integer() < 255) {
-            actualRV.pwm += FixedPoint<uint16_t, 8>{1.0};
+            actualRV.pwm += etl::FixedPoint<uint16_t, 8>{1.0};
         }
     }
     inline static void pwmDec() {
         if (actualRV.pwm.integer() > 0) {
-            actualRV.pwm -= FixedPoint<uint16_t, 8>{1.0};
+            actualRV.pwm -= etl::FixedPoint<uint16_t, 8>(1.0);
         }
     }
     inline static void reset() {
@@ -448,20 +454,6 @@ private:
     inline static  uint8_t mStep = 0;
     inline static uint8_t mDelayFactor = 4;
     inline static uint8_t mAlignCounter = 0;
-};
-
-template<typename I2c>
-struct I2C_OL {
-    inline static void init() {
-        I2c::init();
-    }
-    inline static void enable() {
-    }
-    inline static void disable() {
-    }
-    inline static void run() {
-        I2c::whenReady([]{});
-    }
 };
 
 template<typename Adc>
@@ -505,10 +497,10 @@ struct ADC_OL {
     inline static uint8_t mTemp = 0;
 };
 
-using PortB = AVR::Port<DefaultMcuType::PortRegister, AVR::B>;
-using PortC = AVR::Port<DefaultMcuType::PortRegister, AVR::C>;
-using PortD = AVR::Port<DefaultMcuType::PortRegister, AVR::D>;
-using PortE = AVR::Port<DefaultMcuType::PortRegister, AVR::E>;
+using PortB = AVR::Port<AVR::B>;
+using PortC = AVR::Port<AVR::C>;
+using PortD = AVR::Port<AVR::D>;
+using PortE = AVR::Port<AVR::E>;
 
 using pinLow0 = AVR::Pin<PortB, 7>;
 using pinHigh0 = AVR::Pin<PortD, 3>;
@@ -530,36 +522,31 @@ using oc3b =  AVR::Pin<PortD, 2>;
 
 //using sensorUsart = AVR::Usart<0, Hott::SensorProtocollAdapter<0, UseEvents<false>, AsciiHandler, BinaryHandler, BCastHandler>, MCU::UseInterrupts<true>, UseEvents<false>> ;
 
-//using rcUsart = AVR::Usart<1, Hott::SumDProtocollAdapter<0>, MCU::UseInterrupts<true>, UseEvents<false>>;
-using rcUsart = AVR::Usart<1, CommandAdapter, MCU::UseInterrupts<true>, UseEvents<false>>;
+using rcUsart = AVR::Usart<AVR::Component::Usart<1>, CommandAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
+//using rcUsart = AVR::Usart<AVR::Component::Usart<1>, CommandAdapter, AVR::UseInterrupts<true>, AVR::ReceiveQueueLength<0>>;
 
 using terminalDevice = rcUsart;
-using terminal = std::basic_ostream<terminalDevice>;
+using terminal = etl::basic_ostream<terminalDevice>;
 
-constexpr TWI::Address address{50_B};
-using i2c = TWI::Slave<0, address, 2, MCU::UseInterrupts<false>>; 
+//using isrRegistrar = AVR::IsrRegistrar<rcUsart::RxHandler, rcUsart::TxHandler>;
 
-using isrRegistrar = IsrRegistrar<rcUsart::RxHandler, rcUsart::TxHandler>;
+using adc = AVR::Adc<AVR::Component::Adc<0>, AVR::Resolution<8>>;
 
-using adc = AVR::Adc<0, AVR::Resolution<8>>;
-
-using commutationTimer = AVR::Timer16Bit<1>; // timer 1
+using capture = AVR::Capture<AVR::Component::Timer<1>>; // timer 1
 
 using adcomp = AVR::AdComparator<0>;
-using commuter = Communter<adcomp, commutationTimer, pinHigh0, pinHigh1, pinHigh2, pinLow0, pinLow1, pinLow2>;
+using commuter = Communter<adcomp, capture, pinHigh0, pinHigh1, pinHigh2, pinLow0, pinLow1, pinLow2>;
 
-using i2c_ol = I2C_OL<i2c>;
 using adc_ol = ADC_OL<adc>;
 
-using offloader = Offloader<i2c_ol, adc_ol>;
+using offloader = Offloader<adc_ol>;
 
-using hardPwm = AVR::PWM<3, AVR::NonInverting>; // timer 3 Achtung: Umstellen auf OC3B
+using hardPwm = AVR::PWM::StaticPwm<AVR::Component::Timer<3>, Meta::List<AVR::B>>; // timer 3 Achtung: Umstellen auf OC3B
 
-using controller = Controller<commutationTimer, hardPwm, commuter, adc, offloader>;
+using controller = Controller<capture, hardPwm, commuter, adc, offloader>;
 
 int main() {
-    isrRegistrar::init();
-    rcUsart::init<9600>();
+    rcUsart::init<AVR::BaudRate<9600>>();
     
     led::dir<AVR::Output>();
     
@@ -568,58 +555,50 @@ int main() {
     
     controller::init();  
     
-    i2c::init();
-    
     {
-        Scoped<EnableInterrupt<>> ei;
-        std::outl<terminal>("Test06"_pgm);
-        std::outl<terminal>(hardPwm::frequency());
+        etl::Scoped<etl::EnableInterrupt<>> ei;
+        etl::outl<terminal>("Test05"_pgm);
+        etl::outl<terminal>(hardPwm::frequency());
         
         while(true) {
-            i2c::whenReady([]{
-                i2c::changed(false);
-            });
-            
+            rcUsart::periodic();
             controller::run();
             
             if (auto c = CommandAdapter::get(); c != CommandAdapter::Command::Undefined) {
                 switch(c) {
                 case CommandAdapter::Command::Off:
-                    std::outl<terminal>("Off"_pgm);
+                    etl::outl<terminal>("Off"_pgm);
                     controller::off();
                     break;
                 case CommandAdapter::Command::Commute:
-                    std::outl<terminal>("Com"_pgm);
-                    hardPwm::pwm<hardPwm::B>(3);
+                    etl::outl<terminal>("Com"_pgm);
+                    hardPwm::b(5);
                     commuter::next();
                     break;
                 case CommandAdapter::Command::Start:
-                    std::outl<terminal>("Start"_pgm);
+                    etl::outl<terminal>("Start"_pgm);
                     controller::start();
                     break;
                 case CommandAdapter::Command::IncPwm:
-                    std::outl<terminal>("P"_pgm);
+                    etl::outl<terminal>("P"_pgm);
                     controller::pwmInc();
                     break;
                 case CommandAdapter::Command::DecPwm:
-                    std::outl<terminal>("p"_pgm);
+                    etl::outl<terminal>("p"_pgm);
                     controller::pwmDec();
                     break;
                 case CommandAdapter::Command::IncDelay:
-                    std::outl<terminal>("D"_pgm);
+                    etl::outl<terminal>("D"_pgm);
                     controller::delayInc();
                     break;
                 case CommandAdapter::Command::DecDelay:
-                    std::outl<terminal>("d"_pgm);
+                    etl::outl<terminal>("d"_pgm);
                     controller::delayDec();
                     break;
                 case CommandAdapter::Command::Reset:
-                    std::outl<terminal>("Reset"_pgm);
-                    controller::reset();
+                    etl::outl<terminal>("Reset"_pgm);
                     break;
                 case CommandAdapter::Command::Info:
-                    std::outl<terminal>("I2C 0: "_pgm, i2c::registers()[0]);
-                    std::outl<terminal>("I2C 1: "_pgm, i2c::registers()[1]);
                     break;
                 default:
                     break;
@@ -631,9 +610,9 @@ int main() {
     }
 }
 
-ISR(USART1_RX_vect) {
-    isrRegistrar::isr<AVR::ISR::Usart<1>::RX>();
-}
-ISR(USART1_UDRE_vect){
-    isrRegistrar::isr<AVR::ISR::Usart<1>::UDREmpty>();
-}
+//ISR(USART1_RX_vect) {
+//    isrRegistrar::isr<AVR::ISR::Usart<1>::RXC>();
+//}
+//ISR(USART1_UDRE_vect){
+//    isrRegistrar::isr<AVR::ISR::Usart<1>::UDREmpty>();
+//}

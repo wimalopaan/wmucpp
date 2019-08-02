@@ -30,6 +30,7 @@ namespace AVR {
         template<> struct isAtTiny1<ATTiny412> : std::true_type {};
         
         template<typename... PP> struct isAtMega : std::disjunction<isAtMega_8<PP>..., isAtMega_X4<PP>..., isAtMega_X8<PP>...> {};
+        template<typename... PP> struct isAtMega_X : std::disjunction<isAtMega_X4<PP>..., isAtMega_X8<PP>...> {};
 
         template<typename... PP> struct isAtTiny : std::disjunction<isAtTiny_X4<PP>..., isAtTiny_X5<PP>...> {};
     }
@@ -53,6 +54,9 @@ namespace AVR {
         template<typename MCU>
         concept bool AtMega_8 = AVR::Groups::isAtMega_8<MCU>::value;
 
+        template<typename MCU>
+        concept bool AtMega_X = AVR::Groups::isAtMega_X<MCU>::value;
+ 
         template<typename MCU>
         concept bool AtMega_X8 = AVR::Groups::isAtMega_X8<MCU>::value;
 

@@ -33,6 +33,14 @@ boards/blmc/blmc_01/test03.cc
 boards/blmc/blmc_01/test04.cc
 boards/blmc/blmc_01/test05.cc
 boards/blmc/blmc_01/test06.cc
+boards/blmc/blmc_02/Makefile
+boards/blmc/blmc_02/commuter.h
+boards/blmc/blmc_02/sensored.h
+boards/blmc/blmc_02/sensorless.h
+boards/blmc/blmc_02/test05.cc
+boards/blmc/blmc_02/test10.cc
+boards/blmc/blmc_02/test20.cc
+boards/blmc/blmc_02/test21.cc
 boards/blmc/blmc_avr444/BLDC.h
 boards/blmc/blmc_avr444/Makefile
 boards/blmc/blmc_avr444/main.c
@@ -158,6 +166,7 @@ boards/curiosity/test11.cc
 boards/curiosity/test12.cc
 boards/curiosity/test20.cc
 boards/curiosity/test21.cc
+boards/curiosity/test90.cc
 boards/include/ppmmatrix.h
 boards/include/rcsensorled01b.h
 boards/include/rcsensorled10.h
@@ -316,6 +325,8 @@ doc0/bm00/bm03.cc
 doc0/bm00/bm10.cc
 doc0/bm00/bm11.cc
 doc0/bm00/bm12.cc
+doc0/bm00/bm13.c
+doc0/bm00/bm20.cc
 example/externals/buttonmacro.c
 example/externals/buttonvertical.cc
 example/externals/isr.c
@@ -475,6 +486,8 @@ include0/mcu/common/staticstorage.h
 include0/mcu/common/timer.h
 include0/mcu/common/util.h
 include0/mcu/internals/adc.h
+include0/mcu/internals/adcomparator.h
+include0/mcu/internals/capture.h
 include0/mcu/internals/ccl.h
 include0/mcu/internals/ccp.h
 include0/mcu/internals/clock.h
@@ -487,6 +500,7 @@ include0/mcu/internals/pit.h
 include0/mcu/internals/port.h
 include0/mcu/internals/portmux.h
 include0/mcu/internals/pwm.h
+include0/mcu/internals/sleep.h
 include0/mcu/internals/softuart.h
 include0/mcu/internals/systemclock.h
 include0/mcu/internals/timer.h

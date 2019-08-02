@@ -27,3 +27,5 @@ gcc/base/avr/include/avr
 boards/curiosity
 include0/mcu/common/components
 include0/external/solutions/series01
+doc0/bm00
+boards/blmc/blmc_02

@@ -173,7 +173,7 @@ using metaPA = MetaPA<sumdPA, qtroboPA>;
 
 using bridge = Bridge<hba, hbb, hbc, pwm, sumdPA::value_type>;
 
-using rcUsart = AVR::Usart<AVR::Component::Uart<0>, metaPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
+using rcUsart = AVR::Usart<AVR::Component::Usart<0>, metaPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
 
 using terminalDevice = rcUsart;
 using terminal = etl::basic_ostream<terminalDevice>;
@@ -181,7 +181,7 @@ using terminal = etl::basic_ostream<terminalDevice>;
 using pong = External::QtRobo::Pong<terminal>;
 
 using adc = AVR::Adc<AVR::Component::Adc<0>>;
-using adcController = External::Hal::AdcController<adc, 0, 1, 2, 7, 6>;
+using adcController = External::Hal::AdcController<adc, Meta::NList<0, 1, 2, 7, 6>>;
 
 using systemClock = AVR::SystemTimer<AVR::Component::Timer<0>, interval>;
 using alarmTimer = External::Hal::AlarmTimer<systemClock>;

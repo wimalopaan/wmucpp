@@ -139,7 +139,6 @@ namespace AVR {
             const BitsType  bits;
             const uint16_t scale;
         };
-             
     }    
     
     namespace Util::Timer {

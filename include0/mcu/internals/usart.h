@@ -103,7 +103,7 @@ namespace AVR {
         static_assert(N < MCU::Usart::count, "wrong number of usart");
         
       
-        struct RxHandler : public IsrBaseHandler<typename AVR::ISR::Usart<N>::RX> {
+        struct RxHandler : public IsrBaseHandler<typename AVR::ISR::Usart<N>::RXC> {
             friend usart;
             template<bool visible = useISR::value, typename = std::enable_if_t<visible>>
             inline static void

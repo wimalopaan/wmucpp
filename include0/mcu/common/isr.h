@@ -391,20 +391,18 @@ namespace AVR {
         
         template<> struct Usart<0> {
 #ifdef USART_RX_vect_num
-//            struct RX : std::integral_constant<uint8_t, USART_RX_vect_num> {};
-            struct RX {
+            struct RXC {
                 static constexpr const uint32_t number = USART_RX_vect_num;
             };
 #endif
 #ifdef USART_RXC_vect_num
-//            struct RX : std::integral_constant<uint8_t, USART_RXC_vect_num> {};
-            struct RX {
+#undef RXC
+            struct RXC {
                 static constexpr const uint32_t number = USART_RXC_vect_num;
             };
 #endif
 #ifdef USART0_RX_vect_num
-//            struct RX : std::integral_constant<uint8_t, USART0_RX_vect_num> {};
-            struct RX {
+            struct RXC {
                 static constexpr const uint32_t number = USART0_RX_vect_num;
             };
 #endif
@@ -431,20 +429,19 @@ namespace AVR {
                 static constexpr const uint32_t number = USART0_RXC_vect_num;
             };
 #endif
-
         };
         template<>
         struct Usart<1> {
-            struct RX {
 #ifdef USART1_RX_vect_num
+            struct RXC {
                 static constexpr const uint32_t number = USART1_RX_vect_num;
-#endif
             };
-            struct UDREmpty {
+#endif
 #ifdef USART1_UDRE_vect_num
+            struct UDREmpty {
                 static constexpr const uint32_t number = USART1_UDRE_vect_num;
-#endif
             };
+#endif
 #ifdef USART1_DRE_vect_num
             struct DRE {
                 static constexpr const uint32_t number = USART1_DRE_vect_num;

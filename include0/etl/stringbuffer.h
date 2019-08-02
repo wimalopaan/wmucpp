@@ -44,7 +44,8 @@ namespace etl {
     
         inline constexpr StringBuffer(StringBuffer&& other) {
             assert(other.size() <= size());
-            std::copy(std::begin(other), std::end(other), data);
+//            std::copy(std::begin(other), std::end(other), data);
+            etl::copy(data, other);
         }
     
         template<uint8_t M>
@@ -94,10 +95,22 @@ namespace etl {
                 data[i] = Fill;
             }
         }
+//        template<uint8_t Position>
+//        inline constexpr void insertAtFill(const PgmStringView& s) {
+//            assert(position < Length);
+//            uint8_t i = Position;
+//            for(uint8_t n = 0; (i < Length) && (s[n] != Char{'\0'}); ++i, ++n) {
+//                data[i] = s[n];
+//            }
+//            for(; i < Length; ++i) {
+//                data[i] = Fill;
+//            }
+//        }
         inline constexpr void clear() {
-            for(uint8_t i = 0; i < Length; ++i) {
-                data[i] = Fill;
-            }
+            etl::fill(data, Fill);
+//            for(uint8_t i = 0; i < Length; ++i) {
+//                data[i] = Fill;
+//            }
         }
         inline constexpr const T& at(uint8_t index) const {
             assert(index < size());
@@ -132,7 +145,8 @@ namespace etl {
             return &data[Length];
         }
     private:
-        T data[Length] = {};
+//        T data[Length] = {};
+        std::array<T, Length> data;
     };
     
     template<uint8_t Begin, uint8_t Length, typename ItemType = char>

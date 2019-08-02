@@ -55,7 +55,7 @@ namespace  {
 using systemTimer = SystemTimer<Component::Timer<0, A>, dt>;
 using alarmTimer = External::Hal::AlarmTimer<systemTimer>;
 
-using sensor = Hott::Experimental::Sensor<usart3Position, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, systemTimer>;
+using sensor = Hott::Experimental::Sensor<usart3Position, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, Hott::TextMsg, systemTimer>;
 
 int main() {
     uint8_t counter = 0;

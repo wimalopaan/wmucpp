@@ -9,33 +9,12 @@
 #include <external/units/physical.h>
 
 namespace AVR {
-//    namespace Component {
-//        template<uint8_t N>
-//        using Timer = etl::NamedConstant<N>;
-
-//        template<uint8_t N>
-//        using Uart = etl::NamedConstant<N>;
-        
-//        template<uint8_t N>
-//        using Adc = etl::NamedConstant<N>;
-
-//        template<uint8_t N>
-//        using Rtc = etl::NamedConstant<N>;
-//    }
-    
     template<uint8_t N>
     using Size = etl::NamedConstant<N>;
     
     using register_type = std::byte;
     
     namespace Util {
-//        template<typename BitsType>
-//        struct PrescalerPair {
-//            using bits_type = BitsType;
-//            using scale_type = uint16_t;
-//            const BitsType  bits;
-//            const uint16_t scale;
-//        };
         namespace Twi {
             template<typename CS>
             constexpr std::array<PrescalerPair<CS>, 4> prescalerValues = {
@@ -57,7 +36,7 @@ namespace AVR {
                 PrescalerPair<CS>{static_cast<CS>(0)        , 0},
             };
             
-            template<typename CS>
+            template<typename CS, typename MCU = DefaultMcuType>
             constexpr CS csMask10Bit = {CS::cs2 | CS::cs1 | CS::cs0};
             
             template<typename CS>
@@ -71,6 +50,7 @@ namespace AVR {
                 PrescalerPair<CS>{                    CS::cs0, 1},
                 PrescalerPair<CS>{static_cast<CS>(0)         , 0}
             };
+
             template<typename CS>
             constexpr std::array<PrescalerPair<CS>, 16> prescalerValues14Bit = {
                 PrescalerPair<CS>{CS::cs3 | CS::cs2 | CS::cs1 | CS::cs0, 16384},

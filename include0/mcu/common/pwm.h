@@ -33,6 +33,15 @@ namespace AVR {
                 return 0;
             }
             
+            template<typename T, typename C>
+            constexpr uint16_t bitsToPrescale(T bits, const C& a) {
+                for(const auto& pair : a) {
+                    if (bits == pair.bits) {
+                        return pair.scale;
+                    }
+                }
+                return 0;
+            }
         }
     }
 }

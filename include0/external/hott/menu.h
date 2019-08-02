@@ -31,7 +31,7 @@
 
 namespace Hott {
     
-    static constexpr uint8_t MenuLength = 7;
+//    static constexpr uint8_t MenuLength = 7;
     
     using BufferString = Hott::TextMsg::line_type;
     using Display = Hott::TextMsg::buffer_type;
@@ -133,11 +133,13 @@ namespace Hott {
         const uint8_t mMax;
     };
     
+    template<uint8_t MenuLength = 8>
+    requires(MenuLength <= 8)
     class Menu : public MenuItem {
     public:
         template<typename... T>
         Menu(Menu* parent, const PgmStringView& title, T*... items) : mParent(parent), mTitle(title), mItems{items...} {
-            static_assert(sizeof...(T) <= MenuLength, "too much entries");
+            static_assert(sizeof...(T) <= (MenuLength - 1), "too much entries");
         }
         virtual bool hasChildren() const override {return true;}
         
@@ -149,7 +151,8 @@ namespace Hott {
             buffer[0] = Char{' '};
             buffer.insertAtFill(1, mTitle);
         }
-        void textTo(Display& display) const {
+        void textTo(auto& display) const {
+//            void textTo(Display& display) const {
             static uint_ranged_circular<uint8_t, 0, display.size() - 1> line;
             if (line == 0) {
                 titleInto(display[0]);
@@ -157,8 +160,8 @@ namespace Hott {
             }
             else {
                 if (lineToDisplay(display[line], line)) {
-                    if (mSelectedLine && (mSelectedLine.toInt() == (line - 1))) {
-                        display[mSelectedLine.toInt() + 1][0] = Char{'>'};
+                    if (mSelectedLine && (mSelectedLine == (line - 1))) {
+                        display[mSelectedLine + 1][0] = Char{'>'};
                     }
                     ++line;
                 }
@@ -222,22 +225,24 @@ namespace Hott {
         Menu* mParent = nullptr;
         const PgmStringView mTitle;
         const std::array<MenuItem*, MenuLength> mItems{};
-        uint_ranged_NaN<uint8_t, 0, MenuLength> mSelectedLine{};
+        etl::uint_ranged_NaN<uint8_t, 0, MenuLength> mSelectedLine{};
     };
 
-    class NumberedMenu : public Menu {
+    template<uint8_t MenuLength>
+    class NumberedMenu : public Menu<MenuLength> {
+        using base = Menu<MenuLength>;
     public:
         template<typename...T>
-        NumberedMenu(Menu* parent, uint8_t number, const PgmStringView& title, T*... items) : Menu(parent, title, items...), 
+        NumberedMenu(Menu<MenuLength>* parent, uint8_t number, const PgmStringView& title, T*... items) : Menu<MenuLength>(parent, title, items...), 
             mNumber(number) {}
         virtual void titleInto(BufferString& buffer) const override{
-            buffer.insertAtFill(0, mTitle);
+            buffer.insertAtFill(0, base::mTitle);
             buffer[19] =  Char('0' + mNumber);
         }
         
         virtual void putTextInto(BufferString& buffer) const override {
             buffer[0] = Char{' '};
-            buffer.insertAtFill(1, mTitle);
+            buffer.insertAtFill(1, base::mTitle);
             buffer[19] = Char('0' + mNumber);
         }
     private:

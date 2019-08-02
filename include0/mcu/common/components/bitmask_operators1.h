@@ -37,6 +37,8 @@ namespace std {
     template<> struct enable_bitmask_operators<AVR::Series0::Rtc::CtrlA_t> : std::true_type {};
     template<> struct enable_bitmask_operators<AVR::Series0::Rtc::PitCtrlA_t> : std::true_type {};
     template<> struct enable_bitmask_operators<AVR::Series0::Cpu::SReg_t> : std::true_type {};
+    template<> struct enable_bitmask_operators<AVR::Series0::Sleep::CtrlA_t> : std::true_type {};
+
     template<> struct enable_bitmask_operators<AVR::Series1::Portmux::CtrlA_t> : std::true_type {};
     template<> struct enable_bitmask_operators<AVR::Series1::Ccl::CtrlA_t> : std::true_type {};
     template<> struct enable_bitmask_operators<AVR::Series1::Ccl::Lut0CtrlA_t> : std::true_type {};

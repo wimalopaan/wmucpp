@@ -70,6 +70,18 @@ namespace External {
                 return {static_cast<uint32_t>(value * megahertz::divider_type::denom)};
             }
         };
+
+        template<etl::Concepts::Stream Stream>
+        inline void out_impl(const hertz& f) {
+            etl::out<Stream>(f.value);
+            etl::out<Stream>("Hz"_pgm);
+        }
+        template<etl::Concepts::Stream Stream>
+        inline void out_impl(const megahertz& f) {
+            etl::out<Stream>(f.value);
+            etl::out<Stream>("MHz"_pgm);
+        }
+
         
         template<typename Rep, typename Div, etl::Concepts::Integral I>
         constexpr frequency<Rep, Div> operator*(I i, const frequency<Rep, Div>& f) {

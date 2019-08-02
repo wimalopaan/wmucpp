@@ -162,9 +162,21 @@ namespace External::Units {
     //    constexpr T expand1(percent p, const T& min, const T& max) {
     //        return Util::RationalDivider<T, 1, 100>::scale(min + ((max - min) * p.value()));
     //    }
-    //    template<typename T>
-    //    constexpr T expand(percent p, const T& min, const T& max) {
-    //        return min + ((max - min) * p.value()) / 100u;
-    //    }
     
+    
+    
+        template<typename T>
+        constexpr T expand(percent p, const T& min, const T& max) {
+            using enc_t = etl::enclosing_t<T>;
+//            enc_t::_;
+            return (min + (enc_t(max - min) * p.value()) / T{100});
+        }
+
+        template<typename T, T L, T U>
+        constexpr etl::uint_ranged<T, L, U> expand(percent p, const etl::uint_ranged<T, L, U>& min, const etl::uint_ranged<T, L, U>& max) {
+            using enc_t = etl::enclosing_t<T>;
+//            enc_t::_;
+            return (min + (enc_t(max - min) * p.value()) / T{100});
+        }
+        
 }

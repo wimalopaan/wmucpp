@@ -203,6 +203,8 @@ struct Controller {
     typedef typename PWM::value_type pwm_value_t;
     typedef typename PWM::B pwmCH_t;
     
+//    pwm_value_t::_;
+    
     static inline constexpr uint8_t pwm_max = std::numeric_limits<pwm_value_t>::max();
     
     struct RampValue {

@@ -13,6 +13,13 @@ namespace AVR {
     using namespace AVR::Util::Timer;
     
     namespace PWM {
+        template<uint8_t N> struct Resolution;
+        template<> struct Resolution<8> {};
+        template<> struct Resolution<9> {};
+        template<> struct Resolution<10> {};
+        template<> struct Resolution<16> {};
+        
+        
         template<bool B>
         struct ChannelA : etl::NamedFlag<B>{};
         template<bool B>
@@ -20,25 +27,109 @@ namespace AVR {
         template<bool B>
         struct Overflow : etl::NamedFlag<B>{};
         
-        template<etl::Concepts::NamedConstant TimerNumber, typename MCU = DefaultMcuType>
+        template<etl::Concepts::NamedConstant TimerNumber, typename ListOfChannels = Meta::List<AVR::A, AVR::B>, typename Reso = Resolution<8>, typename MCU = DefaultMcuType>
         struct StaticPwm;
         
-        // WGM Mode 3
-        // static pwm frequency (changing frequency gives glitches)
-        // no ISR
-        template<etl::Concepts::NamedConstant TimerNumber, typename MCU>
-        requires ((TimerNumber::value == 0) || (TimerNumber::value == 2))
-        struct StaticPwm<TimerNumber, MCU> final {
+        // mode14
+        template<etl::Concepts::NamedConstant TimerNumber, typename... Channels, AVR::Concepts::AtMega_X MCU>
+        requires ((TimerNumber::value == 1) || (TimerNumber::value == 3) || (TimerNumber::value == 4))
+        struct StaticPwm<TimerNumber, Meta::List<Channels...>, Resolution<16>, MCU> final {
             using mcu_timer_type = mcu_timer_t<TimerNumber::value>;
-            using value_type  = mcu_timer_value_t<TimerNumber::value>;        
+            
             using ta = typename TimerParameter<TimerNumber::value, MCU>::ta;        
             using tb = typename TimerParameter<TimerNumber::value, MCU>::tb;        
+            
+            static inline constexpr auto csBitMask = AVR::Util::Timer::csMask10Bit<tb>;
             
             using pwmA = typename TimerParameter<TimerNumber::value, MCU>::ocAPin;
             using pwmB = typename TimerParameter<TimerNumber::value, MCU>::ocBPin;
             
+            using channel_list = Meta::List<Channels...>;
+            static_assert(Meta::is_set<channel_list>::value);
+            static_assert(Meta::size_v<channel_list> > 0);
+            static_assert(Meta::size_v<channel_list> <= 2);
+            
             using flags_type = mcu_timer_interrupts_flags_t<TimerNumber::value>;
-//            using mask_type = typename TimerParameter<TimerNumber, MCU>::mcu_timer_mask_type;
+            
+            static constexpr auto mcu_timer = TimerParameter<TimerNumber::value, MCU>::mcu_timer;
+            static constexpr auto mcu_timer_interrupts = TimerParameter<TimerNumber::value, MCU>::mcu_timer_interrupts;
+
+            template<const hertz& Frequency>
+            struct Fixed {
+                static inline constexpr auto tsd = AVR::PWM::Util::calculate<TimerNumber::value>(Frequency);
+                
+                using base_type  = mcu_timer_value_t<TimerNumber::value>;        
+                
+                using value_type = etl::uint_ranged<base_type, 0, tsd.ocr>;
+                
+                static inline constexpr value_type max() {
+                    return tsd.ocr;
+                }
+                
+                template<bool visible = Meta::contains<channel_list, AVR::A>::value>
+                inline static constexpr 
+                        std::enable_if_t<visible>
+                        a(const value_type& v) {
+                    *mcu_timer()->ocra = v;
+                }
+                template<bool visible = Meta::contains<channel_list, AVR::B>::value>
+                inline static constexpr 
+                        std::enable_if_t<visible>
+                        b(const value_type& v) {
+                    *mcu_timer()->ocrb = v;
+                }
+                
+                inline static hertz frequency() {
+                    return Frequency;
+                }
+                
+                inline static constexpr void init() {
+//                    std::integral_constant<uint16_t, tsd.prescaler>::_;
+//                    std::integral_constant<uint16_t, tsd.ocr>::_;
+                    
+                    constexpr auto bits = bitsFrom<tsd.prescaler>(prescaler_bits_v<TimerNumber::value>);            
+                    static_assert(isset(bits), "wrong prescaler");
+                    mcu_timer()->tccrb.template set<bits>();
+                    *mcu_timer()->icr = tsd.ocr;
+                    
+                    // mode 14
+                    mcu_timer()->tccra.template set<ta::wgm1 | ta::coma1 | ta::comb1>();
+                    mcu_timer()->tccrb.template add<tb::wgm2 | tb::wgm3>();
+                    
+                    if constexpr(Meta::contains<channel_list, AVR::A>::value) {
+                        pwmA::template dir<AVR::Output>();
+                    }
+                    if constexpr(Meta::contains<channel_list, AVR::B>::value) {
+                        pwmB::template dir<AVR::Output>();
+                    }
+                }
+            };
+            
+       };
+        
+        // WGM Mode 3/5 (bei 8-Bit)
+        // static pwm frequency (changing frequency gives glitches)
+        // no ISR
+        template<etl::Concepts::NamedConstant TimerNumber, typename... Channels, AVR::Concepts::AtMega_X MCU>
+        struct StaticPwm<TimerNumber, Meta::List<Channels...>, Resolution<8>, MCU> final {
+            using mcu_timer_type = mcu_timer_t<TimerNumber::value>;
+            //            using value_type  = mcu_timer_value_t<TimerNumber::value>;        
+            using value_type  = uint8_t;        
+            using ta = typename TimerParameter<TimerNumber::value, MCU>::ta;        
+            using tb = typename TimerParameter<TimerNumber::value, MCU>::tb;        
+            
+            static inline constexpr auto csBitMask = AVR::Util::Timer::csMask10Bit<tb>;
+            
+            using pwmA = typename TimerParameter<TimerNumber::value, MCU>::ocAPin;
+            using pwmB = typename TimerParameter<TimerNumber::value, MCU>::ocBPin;
+            
+            using channel_list = Meta::List<Channels...>;
+            static_assert(Meta::is_set<channel_list>::value);
+            static_assert(Meta::size_v<channel_list> > 0);
+            static_assert(Meta::size_v<channel_list> <= 2);
+            
+            using flags_type = mcu_timer_interrupts_flags_t<TimerNumber::value>;
+            //            using mask_type = typename TimerParameter<TimerNumber, MCU>::mcu_timer_mask_type;
             
             static constexpr auto mcu_timer = TimerParameter<TimerNumber::value, MCU>::mcu_timer;
             static constexpr auto mcu_timer_interrupts = TimerParameter<TimerNumber::value, MCU>::mcu_timer_interrupts;
@@ -61,33 +152,56 @@ namespace AVR {
                 }
             };
             
-            inline static constexpr void a(const value_type& v) {
+            template<bool visible = Meta::contains<channel_list, AVR::A>::value>
+            inline static constexpr 
+            std::enable_if_t<visible>
+            a(const value_type& v) {
                 *mcu_timer()->ocra = v;
             }
-            inline static constexpr void b(const value_type& v) {
+            template<bool visible = Meta::contains<channel_list, AVR::B>::value>
+            inline static constexpr 
+            std::enable_if_t<visible>
+            b(const value_type& v) {
                 *mcu_timer()->ocrb = v;
             }
-   
+            
+            inline static hertz frequency() {
+                return Project::Config::fMcu / (uint32_t)prescaler();
+            }
+            
+            inline static auto prescaler() {
+                const auto bits = mcu_timer()->tccrb.template get<csBitMask>();
+                return AVR::PWM::Util::bitsToPrescale(bits, AVR::Util::Timer::prescaler_bits_v<TimerNumber::value>);
+            }
+            
             template<const hertz& Frequency>
             inline static constexpr void init() {
-//                constexpr auto tsd = AVR::PWM::Util::calculate<TimerNumber>(Frequency);
+                //                constexpr auto tsd = AVR::PWM::Util::calculate<TimerNumber>(Frequency);
                 constexpr uint16_t p = AVR::PWM::Util::prescalerForAbove<TimerNumber::value>(Frequency);
                 
-//                using x1 = std::integral_constant<uint16_t, p>;
-//                x1::_;
+                //                                using x1 = std::integral_constant<uint16_t, p>;
+                //                                x1::_;
                 
                 constexpr auto bits = bitsFrom<p>(prescaler_bits_v<TimerNumber::value>);            
                 static_assert(isset(bits), "wrong prescaler");
                 mcu_timer()->tccrb.template set<bits>();
                 
-                // mode 3
-                mcu_timer()->tccra.template set<ta::wgm0 | ta::wgm1 | ta::coma1 | ta::coma0 | ta::comb1 | ta::comb0>();
-//                mcu_timer()->tccrb.template add<tb::wgm2, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
+                if constexpr(TimerNumber::value == 3) {
+                    // mode 5
+                    mcu_timer()->tccra.template set<ta::wgm0 | ta::coma1 | ta::comb1>();
+                    mcu_timer()->tccrb.template add<tb::wgm2 >();
+                }
+                else {
+                    // mode 3
+                    mcu_timer()->tccra.template set<ta::wgm0 | ta::wgm1 | ta::coma1 | ta::coma0 | ta::comb1 | ta::comb0>();
+                }
                 
-//                mcu_timer_interrupts()->timsk.template add<mask_type::toie1 | mask_type::ocie1a | mask_type::ocie1b>();
-                
-                pwmA::template dir<AVR::Output>();
-                pwmB::template dir<AVR::Output>();
+                if constexpr(Meta::contains<channel_list, AVR::A>::value) {
+                    pwmA::template dir<AVR::Output>();
+                }
+                if constexpr(Meta::contains<channel_list, AVR::B>::value) {
+                    pwmB::template dir<AVR::Output>();
+                }
             }
             
         };
@@ -140,9 +254,9 @@ namespace AVR {
             
             template<const hertz& Frequency>
             inline static constexpr void init() {
-                ocAPin::template dir<AVR::Output>();
+                //                ocAPin::template dir<AVR::Output>();
                 ocBPin::template dir<AVR::Output>();
-                ocAPin::off();
+                //                ocAPin::off();
                 ocBPin::off();
                 
                 constexpr auto tsd = AVR::Util::Timer::calculate<TimerNumber::value>(Frequency);
@@ -157,11 +271,11 @@ namespace AVR {
                 mcu_timer()->tccrb.template add<tb::wgm2 | tb::wgm3, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
                 
                 *mcu_timer()->ocrb = 0;
-                *mcu_timer()->ocra = 0;
+                *mcu_timer()->ocra = tsd.ocr;
             }
         };
-
-
+        
+        
         template<auto N>
         struct WO final : etl::NamedConstant<N> {};
         
@@ -197,7 +311,7 @@ namespace AVR {
             using mcu_timer_t = typename MCU::TCA; 
             static constexpr auto mcu_tca = getBaseAddr<mcu_timer_t, 0>;
             using position = Portmux::Position<Component::Tca<0>, P>;
-
+            
             static inline constexpr auto cmpMask = mcu_timer_t::CtrlB_t::cmp2en | mcu_timer_t::CtrlB_t::cmp1en | mcu_timer_t::CtrlB_t::cmp0en;
             
             template<typename WO>
@@ -208,7 +322,7 @@ namespace AVR {
                 using type = typename WOMapper<position, WO::value>::pin;
             };
             
-//            pinmapper<WO<2>>::type::_;
+            //            pinmapper<WO<2>>::type::_;
             
             using pins = Meta::List<typename pinmapper<WO<0>>::type, typename pinmapper<WO<1>>::type, typename pinmapper<WO<2>>::type>;
             
@@ -216,42 +330,42 @@ namespace AVR {
             
             inline static constexpr void init() {
                 mcu_tca()->ctrla.template set<mcu_timer_t::CtrlA_t::enable>();
-//                mcu_tca()->ctrlb.template set<MCU::TCA::CtrlB_t::cmp2en | MCU::TCA::CtrlB_t::pwm>();
+                //                mcu_tca()->ctrlb.template set<MCU::TCA::CtrlB_t::cmp2en | MCU::TCA::CtrlB_t::pwm>();
                 mcu_tca()->ctrlb.template set<mcu_timer_t::CtrlB_t::pwm>();
-
+                
                 AVR::PinGroup<pins>::template dir<Output>();
             }
             template<typename Out>
             inline static constexpr void noOutput() {
                 
             }
-
+            
             template<typename... Outs>
             inline static constexpr void on() {
                 using out_list = Meta::transform_type<womapper, Meta::List<Outs...>>;
                 constexpr auto value = Meta::value_or_v<out_list>;
-//                std::integral_constant<decltype(value), value>::_;
+                //                std::integral_constant<decltype(value), value>::_;
                 mcu_tca()->ctrlb.template add<value>();
             }
             template<typename... Outs>
             inline static constexpr void off() {
                 using out_list = Meta::transform_type<womapper, Meta::List<Outs...>>;
                 constexpr auto value = Meta::value_or_v<out_list>;
-//                std::integral_constant<decltype(value), value>::_;
+                //                std::integral_constant<decltype(value), value>::_;
                 mcu_tca()->ctrlb.template clear<value>();
             }
-                    
+            
             template<typename... Outs>
             inline static constexpr void set() {
                 using pin_list = Meta::transform_type<pinmapper, Meta::List<Outs...>>;
-//                pin_list::_;
+                //                pin_list::_;
                 off<Outs...>();
                 AVR::PinGroup<pin_list>::on();
             }
             template<typename... Outs>
             inline static constexpr void reset() {
                 using pin_list = Meta::transform_type<pinmapper, Meta::List<Outs...>>;
-//                pin_list::_;
+                //                pin_list::_;
                 AVR::PinGroup<pin_list>::off();
             }
             
@@ -273,11 +387,11 @@ namespace AVR {
                     *mcu_tca()->cmp2buf = d;
                 }
             }
-//            inline static constexpr void duty(uint16_t d, uint16_t p) {
-//            }
-//            inline static constexpr void reverse(bool r) {
-//            }
-
+            //            inline static constexpr void duty(uint16_t d, uint16_t p) {
+            //            }
+            //            inline static constexpr void reverse(bool r) {
+            //            }
+            
         private:
         };
         
@@ -308,12 +422,12 @@ namespace AVR {
             
             template<bool visible = UseA::value>
             inline static constexpr 
-            std::enable_if_t<visible> a(const value_type& v) {
+                    std::enable_if_t<visible> a(const value_type& v) {
                 *mcu_timer()->ocra = v;
             }
             template<bool visible = UseB::value>
             inline static constexpr
-            std::enable_if_t<visible> b(const value_type& v) {
+                    std::enable_if_t<visible> b(const value_type& v) {
                 *mcu_timer()->ocrb = v;
             }
             
@@ -323,18 +437,18 @@ namespace AVR {
                 static_assert(tsd, "wrong prescaler");
                 return tsd.ocr;
             }
-
+            
             template<const hertz& Frequency>
             inline static constexpr void f() {
                 constexpr auto tsd = AVR::PWM::Util::calculate<TimerNumber::value>(Frequency);
                 static_assert(tsd, "wrong prescaler");
                 
-//                using x1 = std::integral_constant<uint16_t, tsd.prescaler>::_;;
-//                using x2 = std::integral_constant<uint16_t, tsd.ocr>::_;
+                //                using x1 = std::integral_constant<uint16_t, tsd.prescaler>::_;;
+                //                using x2 = std::integral_constant<uint16_t, tsd.ocr>::_;
                 
                 constexpr auto bits = bitsFrom<tsd.prescaler>(prescaler_bits_v<TimerNumber::value>);   
                 
-//                std::integral_constant<uint8_t, (uint8_t)bits>::_;
+                //                std::integral_constant<uint8_t, (uint8_t)bits>::_;
                 
                 static_assert(isset(bits), "wrong prescaler");
                 mcu_timer()->tccrb.template set<bits>();
@@ -345,12 +459,12 @@ namespace AVR {
                 constexpr auto tsd = AVR::PWM::Util::calculate<TimerNumber::value>(Frequency);
                 static_assert(tsd, "wrong prescaler");
                 
-//                using x1 = std::integral_constant<uint16_t, tsd.prescaler>::_;;
-//                using x2 = std::integral_constant<uint16_t, tsd.ocr>::_;
+                //                using x1 = std::integral_constant<uint16_t, tsd.prescaler>::_;;
+                //                using x2 = std::integral_constant<uint16_t, tsd.ocr>::_;
                 
                 constexpr auto bits = bitsFrom<tsd.prescaler>(prescaler_bits_v<TimerNumber::value>);   
                 
-//                std::integral_constant<uint8_t, (uint8_t)bits>::_;
+                //                std::integral_constant<uint8_t, (uint8_t)bits>::_;
                 
                 static_assert(isset(bits), "wrong prescaler");
                 mcu_timer()->tccrb.template set<bits>();
@@ -407,7 +521,7 @@ namespace AVR {
                 }
             } 
         };
-
+        
         template<etl::Concepts::NamedConstant TimerNumber, etl::Concepts::NamedFlag UseA, etl::Concepts::NamedFlag UseB, typename MCU>
         requires ((TimerNumber::value == 1) || (TimerNumber::value == 3))
         struct ISRPwm<TimerNumber, UseA, UseB, MCU> final {
@@ -460,7 +574,7 @@ namespace AVR {
                 mcu_timer_interrupts()->timsk.template add<mask_type::toie | mask_type::ociea | mask_type::ocieb>();
             }
         };
-
+        
         template<etl::Concepts::NamedConstant TimerNumber, etl::Concepts::NamedFlag UseA, etl::Concepts::NamedFlag UseB, AVR::Concepts::AtMega_8 MCU>
         requires (TimerNumber::value == 1)
         struct ISRPwm<TimerNumber, UseA, UseB, MCU> final {
