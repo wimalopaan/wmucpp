@@ -36,8 +36,8 @@ namespace AVR {
                 PrescalerPair<CS>{static_cast<CS>(0)        , 0},
             };
             
-            template<typename CS, typename MCU = DefaultMcuType>
-            constexpr CS csMask10Bit = {CS::cs2 | CS::cs1 | CS::cs0};
+//            template<typename CS, typename MCU = DefaultMcuType>
+//            constexpr CS csMask10Bit = {CS::cs2 | CS::cs1 | CS::cs0};
             
             template<typename CS>
             constexpr std::array<PrescalerPair<CS>, 8> prescalerValues10BitExtended = {

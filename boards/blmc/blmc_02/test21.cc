@@ -156,7 +156,7 @@ using led =  AVR::Pin<PortB, 5>;
 using hall0 =  AVR::Pin<PortB, 0>;
 using hall1 =  AVR::Pin<PortB, 1>;
 using hall2 =  AVR::Pin<PortB, 2>;
-using hall = AVR::PinSet<hall0, hall1, hall2>;
+using hall = AVR::PinSet<Meta::List<hall0, hall1, hall2>, void>;
 
 using ppmIn =  AVR::Pin<PortE, 0>;
 
@@ -172,7 +172,7 @@ using adc = AVR::Adc<AVR::Component::Adc<0>, AVR::Resolution<8>>;
 
 using capture = AVR::Capture<AVR::Component::Timer<1>>; // timer 1
 
-using adcomp = AVR::AdComparator<0>;
+using adcomp = AVR::AdComparator<AVR::Component::Ac<0>>;
 using commuter = BLDC::Communter<adcomp, capture, pinHigh0, pinHigh1, pinHigh2, pinLow0, pinLow1, pinLow2>;
 
 using adc_ol = ADC_OL<adc>;

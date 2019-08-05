@@ -27,6 +27,43 @@ namespace AVR {
     
     template<typename, typename MCU = DefaultMcuType>
     struct Capture;
+
+    template<AVR::Concepts::ComponentNumber CNumber, AVR::Concepts::At01Series MCU>
+    struct Capture<CNumber, MCU> final {
+        inline static constexpr uint8_t number = CNumber::value;
+        using value_type = uint16_t;
+        
+        static inline constexpr auto mcu_tcb = AVR::getBaseAddr<typename MCU::TCB, number>;
+        
+        using ctrla_t = MCU::TCB::CtrlA_t;
+        using ctrlb_t = MCU::TCB::CtrlB_t;
+        using intflags_t = MCU::TCB::IntFlags_t;
+        
+        inline static constexpr auto on_flags  = ctrla_t::clkdiv1 | ctrla_t::enable;
+        inline static constexpr auto off_flags = ctrla_t::clkdiv1;
+        
+        inline static void init() {
+            mcu_tcb()->ctrlb.template set<ctrlb_t::mode_capt>();
+            mcu_tcb()->ctrla.template set<on_flags>();
+            mcu_tcb()->intflags.template reset<intflags_t::capt>();
+        }
+        
+        inline static void off() {
+            mcu_tcb()->ctrla.template set<off_flags>();
+        }
+
+        inline static void on() {
+            mcu_tcb()->intflags.template reset<intflags_t::capt>();
+            *mcu_tcb()->cnt = 0;
+            mcu_tcb()->ctrla.template set<on_flags>();
+        }
+        
+        inline static value_type value() {
+            return *mcu_tcb()->ccmp;
+        }
+
+    };
+
     
     template<AVR::Concepts::ComponentNumber CNumber, AVR::Concepts::AtMega_X MCU>
     struct Capture<CNumber, MCU> : TimerBase16Bit<CNumber::value, MCU>{

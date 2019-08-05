@@ -28,6 +28,19 @@
 #include "etl/concepts.h"
 
 namespace AVR {
+    namespace detail {
+        template<typename SubBits> struct register_bit_mask;
+        template<typename SubBits> struct register_bit_position;
+    }
+    template<typename SubBits>
+    using register_bit_mask_t = detail::register_bit_mask<SubBits>;
+    template<typename SubBits>
+    inline static constexpr auto register_bit_mask_v = detail::register_bit_mask<SubBits>::value;
+
+    template<typename SubBits>
+    using register_bit_position_t = detail::register_bit_position<SubBits>;
+    template<typename SubBits>
+    inline static constexpr auto register_bit_position_v = detail::register_bit_position<SubBits>::value;
     
     template<typename Component, typename BitType, typename Mode = ReadWrite, typename ValueType = std::byte, typename MCU = DefaultMcuType>
     struct FlagRegister;
@@ -225,8 +238,8 @@ namespace AVR {
 
     template<typename Component, typename... BitTypes, typename ValueType, AVR::Concepts::At01Series MCU>
     struct ControlRegister<Component, Meta::List<BitTypes...>, ValueType, MCU> final {
-        typedef Component component_type;
-        typedef ValueType value_type;    
+        using component_type = Component;
+        using value_type = ValueType;    
         
         using type_list = Meta::List<BitTypes...>;        
         
@@ -247,21 +260,32 @@ namespace AVR {
         void inline set() {
             hwRegister = static_cast<value_type>(F);
         }
-//        template<BitType F, typename DI = etl::DisbaleInterrupt<etl::RestoreState>>
-//        void inline setPartial(BitType v) {
-//            [[maybe_unused]] etl::Scoped<DI> di;
-//            hwRegister = (hwRegister & static_cast<value_type>(~F)) | (static_cast<value_type>(F) & static_cast<value_type>(v));
-//        }
-//        template<BitType F, typename DI = etl::DisbaleInterrupt<etl::RestoreState>>
-//        void inline add() {
-//            [[maybe_unused]] etl::Scoped<DI> di;
-//            hwRegister |= static_cast<value_type>(F);
-//        }
-//        template<BitType F, typename DI = etl::DisbaleInterrupt<etl::RestoreState>>
-//        void inline clear() {
-//            [[maybe_unused]] etl::Scoped<DI> di;
-//            hwRegister &= ~static_cast<value_type>(F);
-//        }
+        
+        template<typename F, typename DI = etl::DisbaleInterrupt<etl::RestoreState>>
+        requires (Meta::contains<type_list, F>::value)
+        void inline setPartial(F v) {
+            [[maybe_unused]] etl::Scoped<DI> di;
+            constexpr auto mask = AVR::register_bit_mask_v<F>;
+            hwRegister = (hwRegister & static_cast<value_type>(~mask)) | (static_cast<value_type>(mask) & static_cast<value_type>(v));
+        }
+        template<typename F, typename DI = etl::DisbaleInterrupt<etl::RestoreState>>
+        requires (Meta::contains<type_list, F>::value)
+        void inline add(F v) {
+            [[maybe_unused]] etl::Scoped<DI> di;
+            hwRegister |= static_cast<value_type>(v);
+        }
+        template<auto F, typename DI = etl::DisbaleInterrupt<etl::RestoreState>>
+        requires (Meta::contains<type_list, decltype(F)>::value)
+        void inline add() {
+            [[maybe_unused]] etl::Scoped<DI> di;
+            hwRegister |= static_cast<value_type>(F);
+        }
+        template<typename F, typename DI = etl::DisbaleInterrupt<etl::RestoreState>>
+        requires (Meta::contains<type_list, F>::value)
+        void inline clear(F v) {
+            [[maybe_unused]] etl::Scoped<DI> di;
+            hwRegister &= ~static_cast<value_type>(v);
+        }
 //        template<BitType Mask>
 //        inline BitType get() {
 //            return static_cast<BitType>(hwRegister & static_cast<value_type>(Mask));

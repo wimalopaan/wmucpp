@@ -34,6 +34,7 @@
 #include "components/adc.h"
 #include "components/vref.h"
 #include "components/sleep.h"
+#include "components/adcomparator.h"
 
 #include "components/bitmask_operators0.h"
 

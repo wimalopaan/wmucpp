@@ -63,8 +63,53 @@ namespace AVR {
         static inline volatile uint8_t ovlCounter = 0;
     };
     
-    template<auto Number, typename MCU = DefaultMcuType>
-    struct SimpleTimer {
+    template<typename ComponentNumber, typename MCU = DefaultMcuType>
+    struct SimpleTimer;
+    
+    template<uint8_t N, AVR::Concepts::At01Series MCU>
+    struct SimpleTimer<AVR::Component::Tcb<N>, MCU> {
+        using value_type = uint16_t;
         
+        static inline constexpr auto mcu_tcb = AVR::getBaseAddr<typename MCU::TCB, N>;
+        
+        using ctrla_t = MCU::TCB::CtrlA_t;
+        using ctrlb_t = MCU::TCB::CtrlB_t;
+        using intflags_t = MCU::TCB::IntFlags_t;
+        
+        inline static constexpr auto on_flags  = ctrla_t::clkdiv1 | ctrla_t::enable;
+        inline static constexpr auto off_flags = ctrla_t::clkdiv1;
+        
+        inline static void init() {
+            mcu_tcb()->ctrlb.template set<ctrlb_t::mode_int>();
+            mcu_tcb()->ctrla.template set<on_flags>();
+            mcu_tcb()->intflags.template reset<intflags_t::capt>();
+        }
+        
+        inline static void periodic(auto f) {
+            if (mcu_tcb()->intflags.template isSet<intflags_t::capt>()) {
+                f();
+                mcu_tcb()->intflags.template reset<intflags_t::capt>();
+            }
+        }
+        
+        inline static void off() {
+            mcu_tcb()->ctrla.template set<off_flags>();
+        }
+
+        inline static void on() {
+            mcu_tcb()->intflags.template reset<intflags_t::capt>();
+            *mcu_tcb()->cnt = 0;
+            mcu_tcb()->ctrla.template set<on_flags>();
+        }
+        
+        inline static void period(value_type p) {
+            off();
+            *mcu_tcb()->ccmp = p;
+            on();
+        }
+        
+        inline static value_type counter() {
+            return *mcu_tcb()->cnt;
+        }
     };
 }

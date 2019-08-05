@@ -81,8 +81,8 @@ namespace AVR {
             
             DataRegister<TCB, ReadOnly, std::byte> temp;
         
-            DataRegister<TCB, ReadOnly, uint16_t> cnt;
-            DataRegister<TCB, ReadOnly, uint16_t> ccmp;
+            DataRegister<TCB, ReadWrite, uint16_t> cnt;
+            DataRegister<TCB, ReadWrite, uint16_t> ccmp;
 
             template<int N> struct Address;
         };

@@ -41,6 +41,11 @@ boards/blmc/blmc_02/test05.cc
 boards/blmc/blmc_02/test10.cc
 boards/blmc/blmc_02/test20.cc
 boards/blmc/blmc_02/test21.cc
+boards/blmc/blmc_10/Makefile
+boards/blmc/blmc_10/commuter.h
+boards/blmc/blmc_10/sensored.h
+boards/blmc/blmc_10/sensorless.h
+boards/blmc/blmc_10/test20.cc
 boards/blmc/blmc_avr444/BLDC.h
 boards/blmc/blmc_avr444/Makefile
 boards/blmc/blmc_avr444/main.c
@@ -453,6 +458,7 @@ include0/mcu/avr.h
 include0/mcu/avr0/mcu.h
 include0/mcu/common/assert.h
 include0/mcu/common/components/adc.h
+include0/mcu/common/components/adcomparator.h
 include0/mcu/common/components/bitmask_operators0.h
 include0/mcu/common/components/bitmask_operators1.h
 include0/mcu/common/components/ccl2.h

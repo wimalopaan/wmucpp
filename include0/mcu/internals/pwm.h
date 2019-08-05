@@ -39,8 +39,8 @@ namespace AVR {
             using ta = typename TimerParameter<TimerNumber::value, MCU>::ta;        
             using tb = typename TimerParameter<TimerNumber::value, MCU>::tb;        
             
-            static inline constexpr auto csBitMask = AVR::Util::Timer::csMask10Bit<tb>;
-            
+            inline static constexpr tb csBitMask = {tb::cs2 | tb::cs1 | tb::cs0};
+
             using pwmA = typename TimerParameter<TimerNumber::value, MCU>::ocAPin;
             using pwmB = typename TimerParameter<TimerNumber::value, MCU>::ocBPin;
             
@@ -118,7 +118,7 @@ namespace AVR {
             using ta = typename TimerParameter<TimerNumber::value, MCU>::ta;        
             using tb = typename TimerParameter<TimerNumber::value, MCU>::tb;        
             
-            static inline constexpr auto csBitMask = AVR::Util::Timer::csMask10Bit<tb>;
+            inline static constexpr tb csBitMask = {tb::cs2 | tb::cs1 | tb::cs0};
             
             using pwmA = typename TimerParameter<TimerNumber::value, MCU>::ocAPin;
             using pwmB = typename TimerParameter<TimerNumber::value, MCU>::ocBPin;
@@ -284,7 +284,7 @@ namespace AVR {
             
             using value_type = uint16_t;
             
-            template<typename Position, auto N>
+            template<typename Position, uint8_t N>
             struct WOMapper;
             
             template<typename Position>
@@ -335,23 +335,24 @@ namespace AVR {
                 
                 AVR::PinGroup<pins>::template dir<Output>();
             }
-            template<typename Out>
-            inline static constexpr void noOutput() {
+            
+//            template<typename Out>
+//            inline static constexpr void noOutput() {
                 
-            }
+//            }
             
             template<typename... Outs>
             inline static constexpr void on() {
                 using out_list = Meta::transform_type<womapper, Meta::List<Outs...>>;
                 constexpr auto value = Meta::value_or_v<out_list>;
-                //                std::integral_constant<decltype(value), value>::_;
+//                                std::integral_constant<decltype(value), value>::_;
                 mcu_tca()->ctrlb.template add<value>();
             }
             template<typename... Outs>
             inline static constexpr void off() {
                 using out_list = Meta::transform_type<womapper, Meta::List<Outs...>>;
                 constexpr auto value = Meta::value_or_v<out_list>;
-                //                std::integral_constant<decltype(value), value>::_;
+//                                std::integral_constant<decltype(value), value>::_;
                 mcu_tca()->ctrlb.template clear<value>();
             }
             
@@ -370,29 +371,30 @@ namespace AVR {
             }
             
             inline static constexpr void frequency(const External::Units::hertz& f) {
-                *mcu_tca()->perbuf = Config::fMcu / f;;
+                *mcu_tca()->perbuf = Config::fMcu / f;
+                mMax = Config::fMcu / f;
             }
             inline static constexpr void frequency(const uint16_t& f) {
                 *mcu_tca()->perbuf = f;
             }
-            template<typename Out>
+            inline static constexpr value_type max() {
+                return mMax;
+            }
+            template<typename... Outs>
             inline static constexpr void duty(uint16_t d) {
-                if constexpr(std::is_same_v<Out, WO<0>>) {
+                using out_list = Meta::List<Outs...>;
+                if constexpr(Meta::contains<out_list, WO<0>>::value) {
                     *mcu_tca()->cmp0buf = d;
                 }
-                if constexpr(std::is_same_v<Out, WO<1>>) {
+                if constexpr(Meta::contains<out_list, WO<1>>::value) {
                     *mcu_tca()->cmp1buf = d;
                 }
-                if constexpr(std::is_same_v<Out, WO<2>>) {
+                if constexpr(Meta::contains<out_list, WO<2>>::value) {
                     *mcu_tca()->cmp2buf = d;
                 }
             }
-            //            inline static constexpr void duty(uint16_t d, uint16_t p) {
-            //            }
-            //            inline static constexpr void reverse(bool r) {
-            //            }
-            
         private:
+            inline static value_type mMax = 0;
         };
         
         template<etl::Concepts::NamedConstant TimerNumber, 

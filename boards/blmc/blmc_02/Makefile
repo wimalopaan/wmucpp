@@ -28,8 +28,8 @@ F_OSC = 20000000
 
 subdirs =
 
-#targets +=  test05.elf
-#targets +=  test10.elf
+targets +=  test05.elf
+targets +=  test10.elf
 targets +=  test20.elf
 targets +=  test21.elf
 

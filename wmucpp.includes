@@ -29,3 +29,4 @@ include0/mcu/common/components
 include0/external/solutions/series01
 doc0/bm00
 boards/blmc/blmc_02
+boards/blmc/blmc_10

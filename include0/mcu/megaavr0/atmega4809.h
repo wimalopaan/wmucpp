@@ -48,6 +48,7 @@ namespace AVR {
         using Ccl = AVR::Series0::Ccl;
         using Events = AVR::Series0::Events;
         using Adc = AVR::Series0::Adc;
+        using AdComparator = AVR::Series0::AdComparator;
         using Vref = AVR::Series0::Vref;
         using Sleep = AVR::Series0::Sleep;
         
@@ -64,7 +65,11 @@ namespace AVR {
     template<> struct AVR::Component::Count<ATMega4809::PortRegister> : std::integral_constant<uint8_t, 6> {};
     template<> struct AVR::Component::Count<ATMega4809::Portmux> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<ATMega4809::Ccl> : std::integral_constant<uint8_t, 1> {};
+    template<> struct AVR::Component::Count<ATMega4809::AdComparator> : std::integral_constant<uint8_t, 1> {};
     
+    template<> struct ATMega4809::AdComparator::Address<0> {
+        inline static constexpr uintptr_t value = 0x0680;
+    };
     template<> struct ATMega4809::Usart::Address<0> {
         inline static constexpr uintptr_t value = 0x0800;
     };

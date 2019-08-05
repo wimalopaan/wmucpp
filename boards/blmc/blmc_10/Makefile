@@ -17,17 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-MCU = atmega88p
+MCU = atmega4809
 F_OSC = 20000000
 
-subdirs += blmc_01
-subdirs += blmc_02
-subdirs += blmc_10
-subdirs += blmc_test00
-subdirs += blmc_test01
-subdirs += hobbyking30a
-#subdirs += blmc_avr444
-#subdirs += blmc_mcopter
+subdirs =
 
+targets +=  test20.elf test20.hex
 
--include ../../Makefile.include
+-include ../../../Makefile.avr0.include

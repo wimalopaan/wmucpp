@@ -33,9 +33,48 @@ namespace AVR {
         using ain1 = AVR::Pin<PortB, 3>;
     };
     
+    template<typename ComponentNumber, typename MCU = DefaultMcuType> struct AdComparator;
+    
+    template<AVR::Concepts::ComponentNumber CN, AVR::Concepts::At01Series MCU>
+    struct AdComparator<CN, MCU> final {
+        inline static constexpr uint8_t number = CN::value;
+        
+        inline static constexpr auto mcu_comp  = AVR::getBaseAddr<typename MCU::AdComparator, number>;
+        
+        using ctrla_t = typename MCU::AdComparator::CtrlA1_t;
+        using channel_t = typename MCU::AdComparator::CtrlA2_t;
+        using hyst_t = typename MCU::AdComparator::CtrlA3_t;
+
+        using mux_p_t = typename MCU::AdComparator::MuxCtrl2_t;
+        using mux_n_t = typename MCU::AdComparator::MuxCtrl3_t;
+        
+        using index_type = etl::uint_ranged<uint8_t, 0, 3>;
+        
+        inline static void init() {
+            mcu_comp()->ctrla.template set<hyst_t::hyst_small>();
+            mcu_comp()->ctrla.template add<ctrla_t::enable>();
+        }
+        
+        struct Positiv : std::integral_constant<channel_t, channel_t::positive_edge> {};
+        struct Negativ : std::integral_constant<channel_t, channel_t::negative_edge> {};
+        
+        template<typename T>
+        inline static void edge() {
+            mcu_comp()->ctrla.template setPartial(T::value);
+        }
+        
+        inline static void positiv_channel(index_type n) {
+            mcu_comp()->muxctrl.template setPartial(mux_p_t(n.toInt() << register_bit_position_v<mux_p_t>));
+        }
+        inline static void negativ_channel(index_type n) {
+            mcu_comp()->muxctrl.template setPartial(mux_n_t(n.toInt() << register_bit_position_v<mux_n_t>));
+        }
+    };
+    
     // todo: Liste der Pins/Channels
-    template<uint8_t N, typename MCU = DefaultMcuType>
-    class AdComparator final {
+    template<typename CN, AVR::Concepts::AtMega MCU>
+    class AdComparator<CN, MCU> final {
+        inline static constexpr uint8_t N = CN::value;
         static_assert(N < MCU::AdComparator::count, "wrong adcomparator number"); 
         AdComparator() = delete;
         using parameter = AdCompParameter<N, MCU>;

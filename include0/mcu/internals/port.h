@@ -202,15 +202,17 @@ namespace AVR {
         };
     }
 
-    template<typename P1, typename... PPs>
-    class PinSet final {
+    template<typename PinList, typename F, typename MCU = DefaultMcuType>
+    class PinSet;
+    
+    template<typename... PPs, typename PgmFlag, AVR::Concepts::AtMega MCU>
+    class PinSet<Meta::List<PPs...>, PgmFlag, MCU> final {
     public:
-        static constexpr bool p1IsPin = !std::is_same<P1, UsePgmTable>::value;
-        static constexpr bool usePgm = !p1IsPin;
+        static constexpr bool usePgm = std::is_same_v<PgmFlag, UsePgmTable>;
         
-        using pinlist = typename std::conditional<p1IsPin, Meta::List<P1, PPs...>, Meta::List<PPs...>>::type;
+        using pinlist = Meta::List<PPs...>;
         
-        using table_type = typename std::conditional<p1IsPin, detail::PinSet::Table<usePgm, P1, PPs...>, detail::PinSet::Table<usePgm, PPs...>>::type;
+        using table_type = detail::PinSet::Table<usePgm, PPs...>;
         static inline constexpr table_type table{};
         
         using gen_type = typename table_type::generator_type;
@@ -219,12 +221,7 @@ namespace AVR {
         static constexpr uint8_t size = Meta::size<pinlist>::value;
         static constexpr auto pinMasks = gen_type::pinMasks;
         static constexpr std::byte setMask = []{
-            if constexpr(p1IsPin) {
-                return P1::pinMask | (PPs::pinMask | ... | std::byte{0});
-            }
-            else {
                 return (PPs::pinMask | ... | std::byte{0});
-            }
         }();
         
         static_assert(Meta::is_set<pinlist>::value, "must use different pins in set"); // all Pins are different
@@ -283,13 +280,7 @@ namespace AVR {
         }  
         template<typename Dir>
         static inline void dir() {
-            if constexpr(p1IsPin) {
-                P1::template dir<Dir>();
-                (PPs::template dir<Dir>(),...);
-            }
-            else {
-                (PPs::template dir<Dir>(),...);
-            }
+            (PPs::template dir<Dir>(),...);
         }
         // interprets value as bits corresponding to the (not adjacent) Pins
         // Pin1 = Pin<PortB,7>
@@ -345,23 +336,29 @@ namespace AVR {
         };
     }
     
-    template<typename PinList, AVR::Concepts::At01Series MCU>
-    requires Meta::all_same_front_v<Meta::transform_type<detail::getPort, PinList>>
-    struct PinGroup<PinList, MCU> {
-        inline static constexpr std::byte group_value = []<typename... P>(Meta::List<P...>) {
-              return (P::pinMask | ...);                                          
-        }(PinList{});
+    template<typename... Pins, AVR::Concepts::At01Series MCU>
+    requires Meta::all_same_front_v<Meta::transform_type<detail::getPort, Meta::List<Pins...>>>
+    struct PinGroup<Meta::List<Pins...>, MCU> {
+        using pin_list = Meta::List<Pins...>;
+        
+        inline static constexpr std::byte group_value = (Pins::pinMask | ...);
+        
+        using port = Meta::front<pin_list>::port;   
+
+        inline static std::byte read() {
+            return port::read() & group_value;
+        }
         inline static void on() {
-            using port = Meta::front<PinList>::port;   
             port::outset() = group_value;
         }
         inline static void off() {
-            using port = Meta::front<PinList>::port;   
             port::outclear() = group_value;
+        }
+        inline static void pullup() {
+            (Pins::template pullup<true>(), ...);
         }
         template<typename Dir>
         inline static void dir() {
-            using port = Meta::front<PinList>::port;   
             port::dirset() = group_value;
         }
     };

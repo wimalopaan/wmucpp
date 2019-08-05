@@ -37,6 +37,7 @@ namespace AVR {
                 ac_V4_3  = (0x03 << 0),
                 ac_V1_5  = (0x04 << 0),
             };
+            
             ControlRegister<Vref, Meta::List<CtrlA1_t, CtrlA2_t>> ctrla;
 
             enum class CtrlB_t : uint8_t {
@@ -48,5 +49,11 @@ namespace AVR {
             static inline constexpr uintptr_t address = 0x00a0;
             
         };
+    }
+    namespace detail {
+        template<> struct register_bit_position<Series0::Vref::CtrlA1_t> : std::integral_constant<uint8_t, 4> {};
+        template<> struct register_bit_position<Series0::Vref::CtrlA2_t> : std::integral_constant<uint8_t, 0> {};
+        template<> struct register_bit_mask<Series0::Vref::CtrlA1_t> : std::integral_constant<std::byte, 0xf0_B> {};
+        template<> struct register_bit_mask<Series0::Vref::CtrlA2_t> : std::integral_constant<std::byte, 0x0f_B> {};
     }
 }

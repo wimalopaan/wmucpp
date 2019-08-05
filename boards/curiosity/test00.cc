@@ -26,23 +26,24 @@ using PortA = Port<A>;
 using PortF = Port<F>;
 
 using led = Pin<PortF, 5>; 
-using pa0 = Pin<PortF, 2>; 
+using pf2 = Pin<PortF, 2>; 
+using pa0 = Pin<PortA, 0>; 
 
 using ccp = Cpu::Ccp<>;
 using clock = Clock<>;
 
-using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Alt1>;
-using usart1Position = Portmux::Position<Component::Usart<1>, Portmux::Alt1>;
+//using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Alt1>;
+//using usart1Position = Portmux::Position<Component::Usart<1>, Portmux::Alt1>;
 
-using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::AltB>;
+//using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::AltB>;
 
-using portmux = Portmux::StaticMapper<Meta::List<usart0Position, usart1Position, tcaPosition>>;
+//using portmux = Portmux::StaticMapper<Meta::List<usart0Position, usart1Position, tcaPosition>>;
 
-using terminalDevice = Usart<usart0Position, External::Hal::NullProtocollAdapter, UseInterrupts<false>>;
-using terminal = etl::basic_ostream<terminalDevice>;
+//using terminalDevice = Usart<usart0Position, External::Hal::NullProtocollAdapter, UseInterrupts<false>>;
+//using terminal = etl::basic_ostream<terminalDevice>;
 
-using sumd = Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>;
-using rcUsart = AVR::Usart<usart1Position, sumd, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
+//using sumd = Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>;
+//using rcUsart = AVR::Usart<usart1Position, sumd, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
 
 namespace  {
     constexpr auto dt = 2_ms;
@@ -54,37 +55,39 @@ using systemTimer = SystemTimer<Component::Rtc<0>, fRtc>;
 using alarmTimer = External::Hal::AlarmTimer<systemTimer>;
 
 int main() {
-    portmux::init();
+//    portmux::init();
     
-//    ccp::unlock([]{
-//        clock::prescale<1>();
-//    });
+    ccp::unlock([]{
+        clock::prescale<1>();
+    });
    
 //    terminalDevice::init<BaudRate<9600>>();
 ////    rcUsart::init<BaudRate<115200>>();
     
     
-//    systemTimer::init();
+    systemTimer::init();
     
-//    led::template dir<Output>();     
-//    pa0::template dir<Output>();     
+    led::template dir<Output>();     
+    pf2::template dir<Output>();     
+    pa0::template dir<Output>();     
 
-//    const auto periodicTimer = alarmTimer::create(100_ms, External::Hal::AlarmFlags::Periodic);
+    const auto periodicTimer = alarmTimer::create(10_ms, External::Hal::AlarmFlags::Periodic);
 
-//    while(true) {
+    while(true) {
+        pf2::toggle();
 //        terminalDevice::periodic();
-////        rcUsart::periodic();
+//        rcUsart::periodic();
         
-//        systemTimer::periodic([&]{
-//            pa0::toggle();
-//            alarmTimer::periodic([&](const auto& t){
-//                if (periodicTimer == t) {
-//                    led::toggle();
+        systemTimer::periodic([&]{
+            alarmTimer::periodic([&](const auto& t){
+                if (periodicTimer == t) {
+                    led::toggle();
+                    pa0::toggle();
 //                    etl::outl<terminal>("test00"_pgm);
-//                }
+                }
                 
-//            });
-//        });
-//    }
+            });
+        });
+    }
 }
 

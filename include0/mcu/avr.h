@@ -124,6 +124,9 @@ namespace AVR {
 
         template<uint8_t N>
         struct Tcb : etl::NamedConstant<N>{};
+
+        template<uint8_t N>
+        struct Ac : etl::NamedConstant<N>{};
     }   
 
     template<uint8_t N>
