@@ -70,14 +70,23 @@ namespace AVR {
     struct SimpleTimer<AVR::Component::Tcb<N>, MCU> {
         using value_type = uint16_t;
         
+        using interrupt_type = AVR::ISR::Tcb<N>::Capture;
+        
         static inline constexpr auto mcu_tcb = AVR::getBaseAddr<typename MCU::TCB, N>;
         
         using ctrla_t = MCU::TCB::CtrlA_t;
         using ctrlb_t = MCU::TCB::CtrlB_t;
         using intflags_t = MCU::TCB::IntFlags_t;
+        using intctrl_t = MCU::TCB::IntCtrl_t;
         
         inline static constexpr auto on_flags  = ctrla_t::clkdiv1 | ctrla_t::enable;
         inline static constexpr auto off_flags = ctrla_t::clkdiv1;
+
+        inline static constexpr uint16_t prescaler = 1;
+        
+        inline static constexpr auto frequency() {
+            return Project::Config::fMcu / prescaler;
+        }
         
         inline static void init() {
             mcu_tcb()->ctrlb.template set<ctrlb_t::mode_int>();
@@ -85,11 +94,25 @@ namespace AVR {
             mcu_tcb()->intflags.template reset<intflags_t::capt>();
         }
         
-        inline static void periodic(auto f) {
-            if (mcu_tcb()->intflags.template isSet<intflags_t::capt>()) {
-                f();
-                mcu_tcb()->intflags.template reset<intflags_t::capt>();
+        template<bool B>
+        inline static void enableInterrupts() {
+            if constexpr(B) {
+                mcu_tcb()->intctrl.template set<intctrl_t::capt>();
             }
+            else {
+                mcu_tcb()->intctrl.template clear<intctrl_t::capt>();
+            }
+        }
+
+        inline static void onInterrupt(auto f) {
+            f();
+            mcu_tcb()->intflags.template reset<intflags_t::capt>();
+        }
+        
+        inline static void periodic(auto f) {
+            mcu_tcb()->intflags.template testAndReset<intflags_t::capt>([&](){
+                f();
+            });
         }
         
         inline static void off() {
@@ -103,13 +126,84 @@ namespace AVR {
         }
         
         inline static void period(value_type p) {
-            off();
             *mcu_tcb()->ccmp = p;
-            on();
+            *mcu_tcb()->cnt = 0;
+            mcu_tcb()->intflags.template reset<intflags_t::capt>();
+        }
+        inline static void reset() {
+            *mcu_tcb()->cnt = 0;
         }
         
         inline static value_type counter() {
             return *mcu_tcb()->cnt;
         }
     };
+
+    template<AVR::Concepts::At01Series MCU>
+    struct SimpleTimer<AVR::Component::Rtc<0>, MCU> {
+        using value_type = uint16_t;
+        
+        static inline constexpr auto mcu_rtc = AVR::getBaseAddr<typename MCU::Rtc>;
+        
+        using ctrla_t = MCU::Rtc::CtrlA_t;
+        using Status_t = MCU::Rtc::Status_t;
+        using intflags_t = MCU::Rtc::IntFlags_t;
+        
+        inline static void init() {
+            on();
+        }
+        
+        inline static constexpr uint16_t prescaler = 1;
+        
+        inline static constexpr auto frequency() {
+            return Project::Config::fRtc / prescaler;
+        }
+        
+        template<auto F>
+        inline static void periodic(auto f) {
+            mcu_rtc()->intflags.template testAndReset<F>([&](){
+                f();
+            });
+        }
+
+        inline static void onPeriodic(auto f) {
+            mcu_rtc()->intflags.template testAndReset<intflags_t::ovf>([&](){
+                f();
+            });
+        }
+        
+        inline static void off() {
+            while(mcu_rtc()->status.template isSet<Status_t::ctrlabusy>()) {}
+            mcu_rtc()->ctrla.template clear<ctrla_t::enable>();
+        }
+
+        inline static void on() {
+            while(mcu_rtc()->status.template isSet<Status_t::ctrlabusy>()) {}
+            mcu_rtc()->ctrla.template set<ctrla_t::enable>();
+        }
+        
+        inline static void period(value_type p) {
+            while(mcu_rtc()->status.template isSet<Status_t::perbusy>()) {}
+            *mcu_rtc()->per = p;          
+            mcu_rtc()->intflags.template reset<intflags_t::ovf>();
+        }
+
+        inline static void duty(value_type p) {
+            while(mcu_rtc()->status.template isSet<Status_t::cmpbusy>()) {}
+            *mcu_rtc()->cmp = p;          
+            mcu_rtc()->intflags.template reset<intflags_t::cmp>();
+        }
+        
+        inline static void reset() {
+            while(mcu_rtc()->status.template isSet<Status_t::cntbusy>()) {}
+            *mcu_rtc()->cnt = 0;
+            mcu_rtc()->intflags.template reset<intflags_t::ovf>();
+        }
+        
+        inline static value_type counter() {
+            return *mcu_rtc()->cnt;
+        }
+    };
+
+
 }

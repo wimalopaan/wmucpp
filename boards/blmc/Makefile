@@ -20,12 +20,12 @@
 MCU = atmega88p
 F_OSC = 20000000
 
-subdirs += blmc_01
-subdirs += blmc_02
+#subdirs += blmc_01
+#subdirs += blmc_02
 subdirs += blmc_10
-subdirs += blmc_test00
-subdirs += blmc_test01
-subdirs += hobbyking30a
+#subdirs += blmc_test00
+#subdirs += blmc_test01
+#subdirs += hobbyking30a
 #subdirs += blmc_avr444
 #subdirs += blmc_mcopter
 

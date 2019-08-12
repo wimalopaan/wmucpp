@@ -344,69 +344,68 @@ namespace AVR {
         static inline uint16_t mOverflows{0};
     };
 
-//    template<const auto& Frequency, AVR::Concepts::At01Series MCU>
-//    requires AVR::Util::is_frequency_v<decltype(Frequency)>
-//    struct SystemTimer<AVR::Component::Rtc<0>, Frequency, MCU> final {
-//        using value_type  = uint16_t;  
+    template<const auto& Frequency, AVR::Concepts::At01Series MCU>
+    requires AVR::Util::is_frequency_v<decltype(Frequency)>
+    struct SystemTimer<AVR::Component::Pit<0>, Frequency, MCU> final {
+        using value_type  = uint16_t;  
         
-//        using rtcStatus_t = MCU::Rtc::Status_t;
-//        using Status_t = MCU::Rtc::PitStatus_t;
+        using Status_t = MCU::Rtc::PitStatus_t;
         
-//        using ctrla_t = typename MCU::Rtc::PitCtrlA_t;
-//        using intflags_t = typename MCU::Rtc::PitIntFlags_t;
+        using ctrla_t = typename MCU::Rtc::PitCtrlA_t;
+        using intflags_t = typename MCU::Rtc::PitIntFlags_t;
         
-//        static constexpr auto mcu_rtc = AVR::getBaseAddr<typename MCU::Rtc>;
-//        static constexpr auto prescaler_values = MCU::Rtc::pitPrescalerValues;
+        static constexpr auto mcu_rtc = AVR::getBaseAddr<typename MCU::Rtc>;
+        static constexpr auto prescaler_values = MCU::Rtc::pitPrescalerValues;
 
-//        static constexpr auto intervall = uint16_t{1} / Frequency;
-//        static constexpr auto frequency = Frequency;
+        static constexpr auto intervall = uint16_t{1} / Frequency;
+        static constexpr auto frequency = Frequency;
 
-//        using tsd_type = TimerSetupData<value_type>;
+        using tsd_type = TimerSetupData<value_type>;
         
-//        static inline constexpr auto calculate(const hertz& ftimer) {
-//            auto prescalers = prescalerValues(prescaler_values);
+        static inline constexpr auto calculate(const hertz& ftimer) {
+            auto prescalers = prescalerValues(prescaler_values);
             
-//            for(const auto& p : etl::sort(prescalers)) { // aufsteigend
-//                if (p > 0) {
-//                    const auto f = Project::Config::fRtc / p;
-//                    if (f == ftimer) {
-//                        return tsd_type{p, 1, f, true};
-//                    }
-//                }
-//            }
-//            return tsd_type{};
-//        }
+            for(const auto& p : etl::sort(prescalers)) { // aufsteigend
+                if (p > 0) {
+                    const auto f = Project::Config::fRtc / p;
+                    if (f == ftimer) {
+                        return tsd_type{p, 1, f, true};
+                    }
+                }
+            }
+            return tsd_type{};
+        }
         
-//        static constexpr auto tsd = calculate(frequency);
-//        static_assert(tsd, "falscher wert für p, die Frequenz ist mit der RTC nicht darstellbar!");
-//        static_assert(tsd.f < External::Units::hertz{1000}, "Frequenz zu hoch");
-//        static constexpr auto exact_intervall = duration_cast<milliseconds>(uint16_t{1} / tsd.f);
+        static constexpr auto tsd = calculate(frequency);
+        static_assert(tsd, "falscher wert für p, die Frequenz ist mit der RTC nicht darstellbar!");
+        static_assert(tsd.f < External::Units::hertz{32768}, "Frequenz zu hoch");
+        static constexpr auto exact_intervall = duration_cast<milliseconds>(uint16_t{1} / tsd.f);
         
-//        static_assert(exact_intervall.value > 0, "no valid intervall");
+        static_assert(exact_intervall.value > 0, "no valid intervall");
         
-////        std::integral_constant<uint16_t, exact_intervall.value>::_;        
-////        std::integral_constant<uint16_t, tsd.ocr>::_;        
-////        std::integral_constant<uint16_t, tsd.prescaler>::_;        
-////        std::integral_constant<uint16_t, tsd.f.value>::_;        
+//        std::integral_constant<uint16_t, exact_intervall.value>::_;        
+//        std::integral_constant<uint16_t, tsd.ocr>::_;        
+//        std::integral_constant<uint16_t, tsd.prescaler>::_;        
+//        std::integral_constant<uint16_t, tsd.f.value>::_;        
         
-//        template<uint16_t PreScale>
-//        inline static void prescale() {
-//            constexpr auto p = AVR::Util::Timer::bitsFrom<PreScale>(prescaler_values);
-////            std::integral_constant<uint16_t, (uint16_t)p>::_;        
-//            while(mcu_rtc()->pitstatus.template isSet<Status_t::ctrlbusy>()) {}
-//            mcu_rtc()->pitctrla.template set<p | ctrla_t::enable>();
-//        }
+        template<uint16_t PreScale>
+        inline static void prescale() {
+            constexpr auto p = AVR::Util::Timer::bitsFrom<PreScale>(prescaler_values);
+//            std::integral_constant<uint16_t, (uint16_t)p>::_;        
+            while(mcu_rtc()->pitstatus.template isSet<Status_t::ctrlbusy>()) {}
+            mcu_rtc()->pitctrla.template set<p | ctrla_t::enable>();
+        }
         
-//        inline static void init() {
-//            prescale<tsd.prescaler>();
-//        }
+        inline static void init() {
+            prescale<tsd.prescaler>();
+        }
         
-//        template<etl::Concepts::Callable Callable>
-//        inline static void periodic(const Callable& f) {
-//            mcu_rtc()->pitintflags.template testAndReset<intflags_t::pi>([&]{
-//                f();
-//            });
-//        }
-//    };
+        template<etl::Concepts::Callable Callable>
+        inline static void periodic(const Callable& f) {
+            mcu_rtc()->pitintflags.template testAndReset<intflags_t::pi>([&]{
+                f();
+            });
+        }
+    };
     
 }

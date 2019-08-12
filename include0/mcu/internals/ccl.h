@@ -100,6 +100,8 @@ namespace AVR {
             };
         }
         
+        
+        // component number type
         template<uint8_t N, typename In0, typename In1, typename In2, typename MCU = DefaultMcuType> 
         struct SimpleLut {
             static constexpr auto mcu_ccl = getBaseAddr<typename MCU::Ccl>;
@@ -118,5 +120,25 @@ namespace AVR {
                 
             }              
         };
+        
+        template<typename Lut>
+        struct LutOutPin {
+            
+            inline static void on() {
+                
+            }
+
+            inline static void off() {
+                
+            }
+
+            inline static void lutOn() {
+                
+            }
+            
+        };
+        
+        
+        
     }   
 }

@@ -71,7 +71,6 @@ namespace Hott {
         inline static constexpr const uint8_t nWords = 18;
 
         inline static constexpr const uint8_t nChannles = 16;
-
         
         std::array<std::pair<uint8_t, uint8_t>, nChannles> channelData = {};
         std::byte func_code = 0_B;
@@ -83,7 +82,6 @@ namespace Hott {
     };
     
     using hott_t = etl::uint_ranged_NaN<uint16_t, Hott::SumDMsg::Low, Hott::SumDMsg::High>;
-    
 }
 
 #pragma pack(pop)

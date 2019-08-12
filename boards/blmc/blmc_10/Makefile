@@ -17,11 +17,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-MCU = atmega4809
+# fuses: SUT auf 64ms
+# ~/Projekte/updi/pyupdi/pyupdi.py -d mega4808 -fs 6:0x07 -c /dev/ttyUSB1
+
+# flashing
+# ~/Projekte/updi/pyupdi/pyupdi.py -d mega4808 -c /dev/ttyUSB1  -f test20.hex
+
+MCU = atmega4809 # geht auch 4808
 F_OSC = 20000000
 
 subdirs =
 
-targets +=  test20.elf test20.hex
+targets += test20.elf test20.hex
+targets += test21.elf test21.hex
+targets += test22.elf test22.hex
+targets += test30.elf test30.hex
+targets += test40.elf test40.hex
+targets += test50.elf test50.hex
 
 -include ../../../Makefile.avr0.include

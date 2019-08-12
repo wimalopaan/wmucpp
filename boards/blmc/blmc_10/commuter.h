@@ -12,11 +12,11 @@
 
 namespace BLDC {
 
-    template<typename AC, typename Capture, typename PWM, typename LowPins, typename MCU = DefaultMcuType>
+    template<typename AC, typename PWM, typename LowPins, typename Debug = void, typename MCU = DefaultMcuType>
     struct Communter;
     
-    template<typename AC, typename Capture, typename PWM, typename... PP, AVR::Concepts::At01Series MCU>
-    struct Communter<AC, Capture, PWM, Meta::List<PP...>, MCU> {
+    template<typename AC, typename PWM, typename... PP, typename Debug, AVR::Concepts::At01Series MCU>
+    struct Communter<AC, PWM, Meta::List<PP...>, Debug, MCU> {
         using pin_list = Meta::List<PP...>;
         using l0 = Meta::nth_element<0, pin_list>;
         using l1 = Meta::nth_element<1, pin_list>;
@@ -68,75 +68,70 @@ namespace BLDC {
         }
         
         inline static void init() {
+            if constexpr(!std::is_same_v<Debug, void>) {
+                Debug::template dir<AVR::Output>();
+            }
             ((PP::off(), ...));
             ((PP::template dir<AVR::Output>(), ...));
             AC::init();
-            AC::positiv_channel(0);
-            Capture::init();
-//            AC::enableCapture();
-        }
-        inline static void enable() {
-            AC::init();
-        }
-        inline static void disable() {
-            AC::disable();
+            AC::positiv_channel(1);
         }
         inline static void off() {
-            ((PP::template dir<AVR::Output>(), ...));
-            (PP::off(), ...);
+            floating<0>();
+            floating<1>();
+            floating<2>();
         }
         inline static void startPosition() {
-            state = 0;
+            if (mReverse) {
+                state = 5;
+            }
+            else {
+                state = 0;
+            }
         }
         inline static void on_full_state() {
             switch(state) {
             case 0: // pwm(0) -> 2, ac = 1, rising
                 floating<1>();
-                pwm<0>();                
                 low<2>();                
                 AC::negativ_channel(1);
                 AC::template edge<typename AC::Positiv>();
-//                Capture::captureRising(true);
+                pwm<0>();                
                 break;
             case 1: // pwm(1) -> 2, ac = 0
                 floating<0>();
                 low<2>();                
-                pwm<1>();                
                 AC::negativ_channel(0);
                 AC::template edge<typename AC::Negativ>();
-//                Capture::captureRising(false);
+                pwm<1>();                
                 break;
             case 2: // pwm(1) -> 0, ac = 2
                 floating<2>();                
                 low<0>();
-                pwm<1>();                
                 AC::negativ_channel(2);
                 AC::template edge<typename AC::Positiv>();
-//                Capture::captureRising(true);
+                pwm<1>();                
                 break;
             case 3: // pwm(2) -> 0, ac = 1
                 floating<1>();                
                 low<0>();
-                pwm<2>();                
                 AC::negativ_channel(1);
                 AC::template edge<typename AC::Negativ>();
-//                Capture::captureRising(false);
+                pwm<2>();                
                 break;
             case 4: // pwm(2) -> 1, ac = 0
                 floating<0>();
                 low<1>();                
-                pwm<2>();                
                 AC::negativ_channel(0);
                 AC::template edge<typename AC::Positiv>();
-//                Capture::captureRising(true);
+                pwm<2>();                
                 break;
             case 5: // pwm(0) -> 1, ac = 2
                 floating<2>();                
-                low<1>();                
-                pwm<0>();
                 AC::negativ_channel(2);
                 AC::template edge<typename AC::Negativ>();
-//                Capture::captureRising(false);
+                low<1>();                
+                pwm<0>();
                 break;
             default:
                 break;
@@ -147,45 +142,82 @@ namespace BLDC {
             switch(state) {
             case 0: // pwm(0) -> 2, ac = 1, rising
                 floating<l1>();
-                on<l2>();
                 AC::negativ_channel(1);
-                AC::template edge<typename AC::Positiv>();
-//                Capture::captureRising(true);
+                AC::template edge<typename AC::Negativ>();
+                on<l2>();
                 break;
             case 1: // pwm(1) -> 2, ac = 0
                 off<h0>();
-                pwm<h1>();
                 AC::negativ_channel(0);
-                AC::template edge<typename AC::Negativ>();
-//              Capture::captureRising(false);
+                AC::template edge<typename AC::Positiv>();
+                pwm<h1>();
                 break;
             case 2: // pwm(1) -> 0, ac = 2
                 floating<l2>();
-                on<l0>();
                 AC::negativ_channel(2);
-                AC::template edge<typename AC::Positiv>();
-//                Capture::captureRising(true);
+                AC::template edge<typename AC::Negativ>();
+                on<l0>();
                 break;
             case 3: // pwm(2) -> 0, ac = 1
                 off<h1>();
-                pwm<h2>();
                 AC::negativ_channel(1);
-                AC::template edge<typename AC::Negativ>();
-//                Capture::captureRising(false);
+                AC::template edge<typename AC::Positiv>();
+                pwm<h2>();
                 break;
             case 4: // pwm(2) -> 1, ac = 0
                 floating<l0>();
-                on<l1>();
                 AC::negativ_channel(0);
-                AC::template edge<typename AC::Positiv>();
-//                Capture::captureRising(true);
+                AC::template edge<typename AC::Negativ>();
+                on<l1>();
                 break;
             case 5: // pwm(0) -> 1, ac = 2
                 off<h2>();
+                AC::negativ_channel(2);
+                AC::template edge<typename AC::Positiv>();
                 pwm<h0>();
+                break;
+            default:
+                break;
+            }
+        }
+
+        inline static void on_reverse() {
+            switch(state) {
+            case 0: // pwm(0) -> 2, ac = 1, rising
+                floating<l2>();
                 AC::negativ_channel(2);
                 AC::template edge<typename AC::Negativ>();
-//                Capture::captureRising(false);
+                on<l1>();
+                break;
+            case 1: // pwm(1) -> 2, ac = 0
+                off<h0>();
+                AC::negativ_channel(0);
+                AC::template edge<typename AC::Positiv>();
+                pwm<h2>();
+                break;
+            case 2: // pwm(1) -> 0, ac = 2
+                floating<l1>();
+                AC::negativ_channel(1);
+                AC::template edge<typename AC::Negativ>();
+                on<l0>();
+                break;
+            case 3: // pwm(2) -> 0, ac = 1
+                off<h2>();
+                AC::negativ_channel(2);
+                AC::template edge<typename AC::Positiv>();
+                pwm<h1>();
+                break;
+            case 4: // pwm(2) -> 1, ac = 0
+                floating<l0>();
+                AC::negativ_channel(0);
+                AC::template edge<typename AC::Negativ>();
+                on<l2>();
+                break;
+            case 5: // pwm(0) -> 1, ac = 2
+                off<h1>();
+                AC::negativ_channel(1);
+                AC::template edge<typename AC::Positiv>();
+                pwm<h0>();
                 break;
             default:
                 break;
@@ -193,15 +225,31 @@ namespace BLDC {
         }
         
         inline static void next() {
+            if constexpr(!std::is_same_v<Debug, void>) {
+                Debug::toggle();
+            }
             ++state;
-            on();
+            if (mReverse) {
+                on_reverse();
+            } else {
+                on();
+            }
         }
         inline static void set(index_type p) {
-            state = p;
+            if (mReverse) {
+                state = p.Upper - p;                
+            }
+            else {
+                state = p;
+            }
+            if constexpr(!std::is_same_v<Debug, void>) {
+                Debug::toggle();
+            }
             on_full_state();
         }
-    private:
+//    private:
         inline static index_type state{0};
+        inline static bool mReverse = false;
     };
     
 }

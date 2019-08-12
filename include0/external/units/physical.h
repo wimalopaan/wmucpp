@@ -166,7 +166,6 @@ namespace External {
             return microseconds{(uint16_t)(ms.value * 1000)};
         }
         
-        // fixme: move to other namspace
         class RPM {
         public:
             constexpr RPM() : mValue(numeric_limits<uint16_t>::max()) {}
@@ -187,6 +186,11 @@ namespace External {
         private:
             uint16_t mValue = 0;
         };
+        
+        template<auto f>
+        inline static constexpr RPM timerValueToRPM(auto v) {
+            return RPM((60 * f.value) / v);
+        }
         
         template<etl::Concepts::Stream Stream>
         inline void out_impl(const RPM& r) {

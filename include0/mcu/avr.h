@@ -117,6 +117,9 @@ namespace AVR {
         struct Rtc : etl::NamedConstant<N>{};
 
         template<uint8_t N>
+        struct Pit : etl::NamedConstant<N>{};
+        
+        template<uint8_t N>
         struct Ccl : etl::NamedConstant<N>{};
 
         template<uint8_t N>

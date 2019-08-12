@@ -46,7 +46,7 @@ namespace Constants {
 struct CommandAdapter {
     enum class Command : uint8_t {Undefined, Off, Start, Info, Reset, 
                                   IncPwm, IncFast, DecPwm, IncDelay, DecDelay,
-                                  Commute, CommuteSet, Test};
+                                  Commute, CommuteSet, Reverse, Test};
     
     static inline bool process(std::byte v) {
         switch (v) {
@@ -59,8 +59,11 @@ struct CommandAdapter {
         case std::byte{'i'}:
             mCommand = Command::Info;
             break;
-        case std::byte{'r'}:
+        case std::byte{'R'}:
             mCommand = Command::Reset;
+            break;
+        case std::byte{'r'}:
+            mCommand = Command::Reverse;
             break;
         case std::byte{'p'}:
             mCommand = Command::DecPwm;
@@ -108,23 +111,24 @@ using PortC = AVR::Port<AVR::C>;
 using PortD = AVR::Port<AVR::D>;
 using PortF = AVR::Port<AVR::F>;
 
-//using pinLow0 = AVR::Pin<PortC, 1>;
-//using pinLow1 = AVR::Pin<PortC, 2>;
-//using pinLow2 = AVR::Pin<PortC, 3>;
 using pinLow0 = AVR::Pin<PortA, 3>;
 using pinLow1 = AVR::Pin<PortF, 3>;
 using pinLow2 = AVR::Pin<PortC, 3>;
 
 using led =  AVR::Pin<PortF, 5>;
 
+using dbg =  AVR::Pin<PortD, 6>;
+using p1 =  AVR::Pin<PortD, 4>;
+using n0 =  AVR::Pin<PortD, 3>;
+using n1 =  AVR::Pin<PortD, 5>;
+using n2 =  AVR::Pin<PortD, 7>;
+
 using hall0 =  AVR::Pin<PortD, 0>;
 using hall1 =  AVR::Pin<PortD, 1>;
 using hall2 =  AVR::Pin<PortD, 2>;
 using hall = AVR::PinGroup<Meta::List<hall0, hall1, hall2>>;
 
-using dbg =  AVR::Pin<PortD, 6>;
-
-using ppmIn =  AVR::Pin<PortA, 5>;
+using ppmIn =  AVR::Pin<PortA, 6>;
 
 using ccp = Cpu::Ccp<>;
 using clock = Clock<>;
@@ -137,7 +141,6 @@ using sumd = Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>;
 using hott_t = Hott::hott_t;
 using rcUsart = AVR::Usart<usart0Position, sumd, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
 
-
 using terminalDevice = AVR::Usart<usart2Position, CommandAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
 using terminal = etl::basic_ostream<terminalDevice>;
 
@@ -146,12 +149,6 @@ using pwm = PWM::DynamicPwm<tcaPosition>;
 
 using ppmTimerPosition = Portmux::Position<Component::Tcb<0>, Portmux::Default>;
 using ppm = External::Ppm::SinglePpmIn<Component::Tcb<0>>; 
-
-using commuteTimerPosition = Portmux::Position<Component::Tcb<1>, Portmux::Default>;
-using commuteTimer = SimpleTimer<Component::Tcb<1>>; 
-
-//using rotationTimerPosition = Portmux::Position<Component::Tcb<2>, Portmux::Default>;
-//using rotationTimer = SimpleTimer<Component::Tcb<2>>; 
 
 using rotationTimer = SimpleTimer<Component::Rtc<0>>;
 
@@ -164,20 +161,23 @@ using rtc_channel = Event::Channel<0, Event::Generators::PitDiv<1024>>;
 using ppm_channel = Event::Channel<1, Event::Generators::Pin<ppmIn>>; 
 using ac_channel = Event::Channel<2, Event::Generators::Ac0<Event::Generators::Kind::Out>>; 
 using ppm_user = Event::Route<ppm_channel, Event::Users::Tcb<0>>;
-using ac_user = Event::Route<ac_channel, Event::Users::Tcb<2>>;
-using evrouter = Event::Router<Event::Channels<rtc_channel, ppm_channel, ac_channel>, Event::Routes<ppm_user, ac_user>>;
+//using ac_user = Event::Route<ac_channel, Event::Users::Tcb<2>>;
+//using evrouter = Event::Router<Event::Channels<rtc_channel, ppm_channel, ac_channel>, Event::Routes<ppm_user, ac_user>>;
+using evrouter = Event::Router<Event::Channels<rtc_channel, ppm_channel>, Event::Routes<ppm_user>>;
 
 using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V4_3>;
-using adcController = External::Hal::AdcController<adc, Meta::NList<0>>;
+//using adcController = External::Hal::AdcController<adc, Meta::NList<0>>;
+using adcController = External::Hal::AdcController<adc, Meta::NList<14, 15>>;
 
 using adcomp = AVR::AdComparator<Component::Ac<0>>; 
 
 using commuter = BLDC::Communter<adcomp, pwm, Meta::List<pinLow0, pinLow1, pinLow2>, dbg>;
 
-using controller = BLDC::Sensored::Controller<hall, rotationTimer, pwm, commuter>;
-//using hallController = BLDC::Sensored::Controller<hall, rotationTimer, commuteTimer, pwm, commuter>;
+using controller = BLDC::Sensorless::Experimental2::Controller<rotationTimer, pwm, commuter, adcomp>;
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, usart1Position, usart2Position, tcaPosition, ppmTimerPosition>>;
+
+using isrRegistrar = IsrRegistrar<controller::AcHandler>;
 
 int main() {
     portmux::init();
@@ -187,8 +187,10 @@ int main() {
     });
     
     evrouter::init();
-    
+
     systemTimer::init();
+    
+    adcController::init();
     
     terminalDevice::init<AVR::BaudRate<9600>>();
 
@@ -202,9 +204,13 @@ int main() {
     
     commuter::index_type xs;;
     
+    hall::dir<Input>();
+    hall::pullup();
+    
     {
-//        etl::Scoped<etl::EnableInterrupt<>> ei;
-        etl::outl<terminal>("Test20"_pgm);
+        etl::Scoped<etl::EnableInterrupt<>> ei;
+    
+        etl::outl<terminal>("Test40"_pgm);
         etl::outl<terminal>("h: "_pgm, hall::read());            
         
         const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
@@ -222,14 +228,18 @@ int main() {
             controller::periodic();
             rcUsart::periodic();
             sensor::periodic();
+            adcController::periodic();
             
             systemTimer::periodic([&]{
                 sensor::ratePeriodic();
+                controller::check();
                 alarmTimer::periodic([&](const auto& t){
                     if (t == periodicTimer) {
-                        etl::outl<terminal>("S: "_pgm, uint8_t(controller::mState));
                         etl::outl<terminal>("ppm: "_pgm, ppm::value().toInt());
+                        etl::outl<terminal>("hott: "_pgm, ppm::hott().toInt());
                         etl::outl<terminal>("ch0: "_pgm, sumd::value(0).toInt());
+                        etl::outl<terminal>("adc0: "_pgm, adcController::value(0).toInt());
+                        etl::outl<terminal>("adc1: "_pgm, adcController::value(1).toInt());
                     }
                 });
             });
@@ -263,15 +273,15 @@ int main() {
                     break;
                 case CommandAdapter::Command::IncPwm:
                     controller::pwmInc();
-                    etl::outl<terminal>("pwm: "_pgm, controller::mActualPwm);
+                    etl::outl<terminal>("pwm: "_pgm, controller::actualRV.pwm);
                     break;
                 case CommandAdapter::Command::IncFast:
                     controller::pwmfast();
-                    etl::outl<terminal>("pwm: "_pgm, controller::mActualPwm);
+                    etl::outl<terminal>("pwm: "_pgm, controller::actualRV.pwm);
                     break;
                 case CommandAdapter::Command::DecPwm:
                     controller::pwmDec();
-                    etl::outl<terminal>("pwm: "_pgm, controller::mActualPwm);
+                    etl::outl<terminal>("pwm: "_pgm, controller::actualRV.pwm);
                     break;
                 case CommandAdapter::Command::IncDelay:
                     controller::mDelay += 1;
@@ -284,11 +294,14 @@ int main() {
                 case CommandAdapter::Command::Reset:
                     etl::outl<terminal>("Reset"_pgm);
                     break;
+                case CommandAdapter::Command::Reverse:
+                    commuter::mReverse = !commuter::mReverse;
+                    etl::outl<terminal>("Reverse: "_pgm, commuter::mReverse);
+                    break;
                 case CommandAdapter::Command::Info:
                     etl::outl<terminal>("Info"_pgm);
-//                    etl::outl<terminal>("hall: "_pgm, hall::read());            
-                    etl::outl<terminal>("e: "_pgm, controller::mLoopEstimate);            
-                    etl::outl<terminal>("l: "_pgm, controller::mLoopLast);            
+                    etl::outl<terminal>("diff: "_pgm, controller::mCommutationDiff, " ec: "_pgm, controller::mErrorCount, " com: "_pgm, controller::mCommutes);            
+//                    etl::outl<terminal>("rpm: "_pgm, External::Units::timerValueToRPM<rotationTimer::frequency()>(controller::mLoopEstimate * 3 * 14));            
                     break;
                 default:
                     break;
@@ -298,4 +311,8 @@ int main() {
             led::toggle();
         }
     }
+}
+
+ISR(AC0_AC_vect) {
+    isrRegistrar::isr<AVR::ISR::AdComparator<0>::Edge>();
 }

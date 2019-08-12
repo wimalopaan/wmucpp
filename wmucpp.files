@@ -43,9 +43,16 @@ boards/blmc/blmc_02/test20.cc
 boards/blmc/blmc_02/test21.cc
 boards/blmc/blmc_10/Makefile
 boards/blmc/blmc_10/commuter.h
+boards/blmc/blmc_10/readme.txt
 boards/blmc/blmc_10/sensored.h
 boards/blmc/blmc_10/sensorless.h
+boards/blmc/blmc_10/sine.h
 boards/blmc/blmc_10/test20.cc
+boards/blmc/blmc_10/test21.cc
+boards/blmc/blmc_10/test22.cc
+boards/blmc/blmc_10/test30.cc
+boards/blmc/blmc_10/test40.cc
+boards/blmc/blmc_10/test50.cc
 boards/blmc/blmc_avr444/BLDC.h
 boards/blmc/blmc_avr444/Makefile
 boards/blmc/blmc_avr444/main.c

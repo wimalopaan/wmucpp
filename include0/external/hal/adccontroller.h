@@ -124,6 +124,14 @@ namespace External {
             struct ChannelPinMapper<std::integral_constant<decltype(13), 13>, MMCU> {
                 using pin_type = AVR::Pin<AVR::Port<AVR::F>, 3>;  
             };
+            template<AVR::Concepts::AtMega0 MMCU>
+            struct ChannelPinMapper<std::integral_constant<decltype(14), 14>, MMCU> {
+                using pin_type = AVR::Pin<AVR::Port<AVR::F>, 4>;  
+            };
+            template<AVR::Concepts::AtMega0 MMCU>
+            struct ChannelPinMapper<std::integral_constant<decltype(15), 15>, MMCU> {
+                using pin_type = AVR::Pin<AVR::Port<AVR::F>, 5>;  
+            };
 
             template<AVR::Concepts::AtTiny1 MMCU>
             struct ChannelPinMapper<std::integral_constant<decltype(0), 0>, MMCU> {
@@ -174,7 +182,7 @@ namespace External {
             
             inline static void init() {
                 []<typename... Pin>(Meta::List<Pin...>) {
-                    (Pin::template attributes<AVR::Attributes::DigitalDisable<>>(), ...);
+                    (Pin::template attributes<Meta::List<AVR::Attributes::DigitalDisable<>>>(), ...);
                     (Pin::template pullup<false>(), ...);
                 }(pin_list{});
                 MCUAdc::init();

@@ -52,7 +52,7 @@ namespace AVR {
             using hasNumberInt = hasNumber<I, INT::number>;
 
             using isr_type_list = Meta::filter<hasNumberInt, nonVoidHandlers>;
-            static_assert(Meta::size<isr_type_list>::value == 1, "double defined ist for the same interrupt");
+            static_assert(Meta::size<isr_type_list>::value == 1, "double defined isr for the same interrupt");
 
             using isr_type = Meta::front<isr_type_list>;
             
@@ -197,6 +197,37 @@ namespace AVR {
             static constexpr const uint32_t number = WDT_vect_num;
         };
 #endif
+
+        template<uint8_t N>
+        struct Tcb;
+        
+        template<>
+        struct Tcb<0> {
+#ifdef TCB0_INT_vect_num
+            struct Capture
+            {
+                static constexpr const uint32_t number = TCB0_INT_vect_num;
+            };
+#endif
+        };
+        template<>
+        struct Tcb<1> {
+#ifdef TCB1_INT_vect_num
+            struct Capture
+            {
+                static constexpr const uint32_t number = TCB1_INT_vect_num;
+            };
+#endif
+        };
+        template<>
+        struct Tcb<2> {
+#ifdef TCB2_INT_vect_num
+            struct Capture
+            {
+                static constexpr const uint32_t number = TCB2_INT_vect_num;
+            };
+#endif
+        };
         
         template<uint8_t N>
         struct Timer;
@@ -520,11 +551,16 @@ namespace AVR {
         
         template<> 
         struct AdComparator<0> {
-            struct Edge {
 #ifdef ANALOG_COMP_vect_num
+            struct Edge {
                 static constexpr const uint32_t number = ANALOG_COMP_vect_num;
-#endif
             };
+#endif
+#ifdef AC0_AC_vect_num
+            struct Edge {
+                static constexpr const uint32_t number = AC0_AC_vect_num;
+            };
+#endif
         };
         
     }

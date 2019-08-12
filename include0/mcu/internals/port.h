@@ -85,7 +85,12 @@ namespace AVR {
         }
         template<auto Pin, bool on>
         static inline void pullup() {
-            getBaseAddr<mcuport_type , Name>()->pinctrl[Pin].template add<mcuport_type::PinCtrl_t::pullup>();
+            if constexpr(on) {
+                getBaseAddr<mcuport_type , Name>()->pinctrl[Pin].template add<mcuport_type::PinCtrl_t::pullup>();
+            }
+            else {
+                getBaseAddr<mcuport_type , Name>()->pinctrl[Pin].template clear<mcuport_type::PinCtrl_t::pullup>();
+            }
         }
         template<auto Pin, auto value>
         static inline  void pinctrl() {
@@ -101,6 +106,7 @@ namespace AVR {
         using mcu = MCU;
         using mcuport_type = typename MCU::PortRegister;
         using name_type = Name;
+
         Port() = delete;
         static inline void set(std::byte v) {
             *getBaseAddr<mcuport_type , Name>()->out = v;
@@ -357,9 +363,19 @@ namespace AVR {
         inline static void pullup() {
             (Pins::template pullup<true>(), ...);
         }
+        template<typename AList>
+        static inline void attributes() {
+            (Pins::template attributes<AList>(),...);
+        }
+        static inline void onInterrupt(auto f) {
+            f();
+            port::intflags() = group_value;
+        }
         template<typename Dir>
         inline static void dir() {
-            port::dirset() = group_value;
+            if constexpr(std::is_same_v<Dir, AVR::Output>) {
+                port::dirset() = group_value;
+            }
         }
     };
     
@@ -406,7 +422,7 @@ namespace AVR {
         }
         template<bool On>
         static inline void pullup() {
-            Port::template pullup<PinNumber, true>();
+            Port::template pullup<PinNumber, On>();
         }
         static inline bool read() {
             return (Port::read() & pinMask) != std::byte{0};
@@ -419,14 +435,18 @@ namespace AVR {
                 port::dirset() = pinMask;
             }
         }
-        template<typename... AA>
+        
+        template<typename AList>
         static inline void attributes() {
-            constexpr auto v = (AA::value || ...);
-            port::template pinctrl<PinNumber, v>();
+            []<typename... AA>(Meta::List<AA...>) {
+                constexpr auto v = (AA::value || ...);
+                port::template pinctrl<PinNumber, v>();
+            }(AList{});
         }
         static inline void resetInt() {
             Port::intflags() = pinMask; 
         }
+        
         
     };
 

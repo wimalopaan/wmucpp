@@ -177,6 +177,7 @@ namespace etl {
     
  
     template<Unsigned T = uint8_t, T LowerBound = 0, T UpperBound = std::numeric_limits<T>::max()>
+    requires(LowerBound <= UpperBound)
     class uint_ranged final {
     public:
         inline static constexpr T Lower = LowerBound;
@@ -186,6 +187,12 @@ namespace etl {
         inline constexpr uint_ranged(T v = 0) : mValue(v) {
             assert(v >= LowerBound);
             assert(v <= UpperBound);
+            if (v < LowerBound) {
+                mValue = LowerBound;
+            }
+            else if (v > UpperBound) {
+                mValue = UpperBound;
+            }
         }
 
 //        inline constexpr uint_ranged(const volatile uint_ranged& o) : mValue(o.mValue) {}

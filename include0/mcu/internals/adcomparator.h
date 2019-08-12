@@ -44,6 +44,8 @@ namespace AVR {
         using ctrla_t = typename MCU::AdComparator::CtrlA1_t;
         using channel_t = typename MCU::AdComparator::CtrlA2_t;
         using hyst_t = typename MCU::AdComparator::CtrlA3_t;
+        using status_t = typename MCU::AdComparator::Status_t;
+        using intctrl_t = typename MCU::AdComparator::IntCtrl_t;
 
         using mux_p_t = typename MCU::AdComparator::MuxCtrl2_t;
         using mux_n_t = typename MCU::AdComparator::MuxCtrl3_t;
@@ -51,12 +53,38 @@ namespace AVR {
         using index_type = etl::uint_ranged<uint8_t, 0, 3>;
         
         inline static void init() {
-            mcu_comp()->ctrla.template set<hyst_t::hyst_small>();
+            mcu_comp()->ctrla.template set<hyst_t::hyst_large>();
+            mcu_comp()->ctrla.template add<ctrla_t::outen>();
             mcu_comp()->ctrla.template add<ctrla_t::enable>();
+        }
+        
+        template<bool B>
+        inline static void enableInterrupts() {
+            if constexpr(B) {
+                mcu_comp()->intctrl.template set<intctrl_t::cmp>();
+            }
+            else {
+                mcu_comp()->intctrl.template clear<intctrl_t::cmp>();
+            }
+        }
+
+        inline static bool get() {
+            return mcu_comp()->status.template isSet<status_t::state>();    
+        }
+        
+        inline static void onInterrupt(auto f) {
+            f();
+            mcu_comp()->status.template reset<status_t::cmp>();
         }
         
         struct Positiv : std::integral_constant<channel_t, channel_t::positive_edge> {};
         struct Negativ : std::integral_constant<channel_t, channel_t::negative_edge> {};
+        
+        inline static void onEdge(auto f) {
+            mcu_comp()->status.template testAndReset<status_t::cmp>([&](){
+                f();
+            });
+        }
         
         template<typename T>
         inline static void edge() {

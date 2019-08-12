@@ -75,11 +75,11 @@ namespace AVR {
             };
             ControlRegister<AdComparator, IntCtrl_t> intctrl;
             
-            enum class Flag_t : uint8_t {
+            enum class Status_t : uint8_t {
                 state = (1 << 4),
                 cmp = (1 << 0)
             };
-            FlagRegister<AdComparator, Flag_t> status;
+            FlagRegister<AdComparator, Status_t> status;
 
             template<int N> struct Address;
         };

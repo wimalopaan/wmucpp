@@ -322,8 +322,6 @@ namespace AVR {
                 using type = typename WOMapper<position, WO::value>::pin;
             };
             
-            //            pinmapper<WO<2>>::type::_;
-            
             using pins = Meta::List<typename pinmapper<WO<0>>::type, typename pinmapper<WO<1>>::type, typename pinmapper<WO<2>>::type>;
             
             using f = Meta::front<pins>;
@@ -335,11 +333,6 @@ namespace AVR {
                 
                 AVR::PinGroup<pins>::template dir<Output>();
             }
-            
-//            template<typename Out>
-//            inline static constexpr void noOutput() {
-                
-//            }
             
             template<typename... Outs>
             inline static constexpr void on() {
