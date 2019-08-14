@@ -15,3 +15,6 @@ namespace AVR {
 #if defined(__AVR_ATtiny412__)
 # include "attiny412.h"
 #endif
+#if defined(__AVR_ATtiny1614__)
+# include "attiny1614.h"
+#endif

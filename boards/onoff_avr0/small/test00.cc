@@ -1,5 +1,7 @@
 #define NDEBUG
 
+//#define USE_HOTT
+
 #include <mcu/avr.h>
 #include <mcu/internals/adc.h>
 #include <mcu/internals/ccp.h>
@@ -8,6 +10,7 @@
 #include <mcu/internals/usart.h>
 #include <mcu/internals/adc.h>
 #include <mcu/internals/eeprom.h>
+#include <mcu/internals/pwm.h>
 
 #include <external/hal/alarmtimer.h>
 #include <external/hal/adccontroller.h>
@@ -41,32 +44,54 @@ struct Storage final {
 using eeprom = EEProm::Controller<Storage::ApplData>;
 auto& appData = eeprom::data();
 
+// PA1: Voltage = AIN1
+// PA2: Debug Pin
+// PA3: Led
+// PA4:
+// PA5: current sense = AIN5
+// PA6:
+// PA7: Taster
+// PB3:
+// PB2: TXRX (Sensor)
+// PB1: VN7003 = fet
+// PB0: Buzzer = tca:wo0
+
 using PortA = Port<A>;
-using dbg1 = Pin<PortA, 5>; 
+using PortB = Port<B>;
+
+using dbg1 = Pin<PortA, 2>; 
+using led = Pin<PortA, 3>;
+using button = Pin<PortA, 7>;
+using fet = Pin<PortB, 1>;
+using buzzer = Pin<PortB, 0>;
 
 using ccp = Cpu::Ccp<>;
 using clock = Clock<>;
 
-using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Alt1>;
-
-//using terminalDevice = Usart<usart0Position, External::Hal::NullProtocollAdapter, UseInterrupts<false>>;
-//using terminal = etl::basic_ostream<terminalDevice>;
+using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Default>;
+using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::Default>;
 
 namespace Parameter {
-    constexpr uint8_t menuLines = 7;
-    constexpr auto dt = 2000_us;
+    constexpr uint8_t menuLines = 8;
     constexpr auto fRtc = 500_Hz;
 }
 
 using systemTimer = SystemTimer<Component::Rtc<0>, Parameter::fRtc>;
 using alarmTimer = External::Hal::AlarmTimer<systemTimer, 2>;
 
-using sensor = Hott::Experimental::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<19200>, Hott::EscMsg_1, Hott::VarTextMsg<Parameter::menuLines>, systemTimer>;
+#ifdef USE_HOTT
+using sensor = Hott::Experimental::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<19200>, Hott::EscMsg, Hott::TextMsg, systemTimer>;
+#else
+using terminalDevice = AVR::Usart<usart0Position, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>>;
+using terminal = etl::basic_ostream<terminalDevice>;
+#endif
 
 using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V4_3>;
-using adcController = External::Hal::AdcController<adc, Meta::NList<0>>;
+using adcController = External::Hal::AdcController<adc, Meta::NList<1, 5>>;
 
-using portmux = Portmux::StaticMapper<Meta::List<usart0Position>>;
+using buzzerPwm = PWM::DynamicPwm<tcaPosition>;
+
+using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition>>;
 
 //class SensorChoice final : public Hott::Menu {
 //public:
@@ -115,45 +140,64 @@ private:
     inline static Hott::Menu<PA::menuLines>* mMenu = &mTopMenu;
 };
 
+#ifdef USE_HOTT
 using menu = HottMenu<sensor, RCMenu>;
-
+#endif
 
 int main() {
-    eeprom::init();
-    
-    dbg1::template dir<Output>();
-    portmux::init();
-
     ccp::unlock([]{
         clock::prescale<1>();
     });
-    systemTimer::init();
+    
+    dbg1::template dir<Output>();
+    led::template dir<Output>();
+    button::template dir<Input>();
+    fet::template dir<Output>();
 
-    sensor::init();
-    
+    portmux::init();
+    eeprom::init();
+    systemTimer::init();
     adcController::init();
-    
+#ifdef USE_HOTT
+    sensor::init();
     menu::init();
+#else
+    terminalDevice::init<AVR::BaudRate<9600>>();
+#endif
+    
+    buzzerPwm::init();
+    buzzerPwm::frequency(1000_Hz);
+    buzzerPwm::template duty<PWM::WO<0>>(1000);
     
     const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
 
-    bool eepSave = false;
+    uint8_t counter = 0;
     
+    bool eepSave = false;
     while(true) {
-        sensor::periodic();
-
         eepSave |= eeprom::saveIfNeeded();
-        
+#ifdef USE_HOTT
+        sensor::periodic();
         menu::periodic();
-        
+#else
+        terminalDevice::periodic();
+#endif
         systemTimer::periodic([&]{
+#ifdef USE_HOTT
             sensor::ratePeriodic();
+#endif
             dbg1::toggle();
             alarmTimer::periodic([&](const auto& t){
                 if (periodicTimer == t) {
-//                    etl::outl<terminal>("test00"_pgm);
+                    ++counter;
+                    led::toggle();
+                    if ((counter % 2) == 0) {
+                        buzzerPwm::template on<PWM::WO<0>>();
+                    }
+                    else {
+                        buzzerPwm::template off<PWM::WO<0>>();
+                    }
                 }
-                
             });
             appData.expire();
         });

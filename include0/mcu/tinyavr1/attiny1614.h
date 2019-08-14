@@ -27,17 +27,17 @@
 #pragma pack(1)
 
 namespace AVR {
-    struct ATTiny412 final {
+    struct ATTiny1614 final {
         
         template<typename T>
         inline static constexpr bool is_atomic() {return false;}
         
-        ATTiny412() = delete;
+        ATTiny1614() = delete;
         
-        struct Ram final {
-            inline static constexpr uintptr_t begin = RAMSTART;  
-            inline static constexpr uintptr_t end   = RAMEND;  
-        };
+//        struct Ram final {
+//            inline static constexpr uintptr_t begin = RAMSTART;  
+//            inline static constexpr uintptr_t end   = RAMEND;  
+//        };
         
         using Cpu = AVR::Series0::Cpu;
         using Clock = AVR::Series0::Clock;
@@ -54,33 +54,42 @@ namespace AVR {
         using Ccl = AVR::Series1::Ccl;
     };
     template<>
-    constexpr bool ATTiny412::is_atomic<uint8_t>() {return true;}
+    constexpr bool ATTiny1614::is_atomic<uint8_t>() {return true;}
 }
 
 namespace AVR {
-    template<> struct AVR::Component::Count<ATTiny412::Usart> : std::integral_constant<uint8_t, 1> {};
-    template<> struct AVR::Component::Count<ATTiny412::TCA> : std::integral_constant<uint8_t, 1> {};
-    template<> struct AVR::Component::Count<ATTiny412::TCB> : std::integral_constant<uint8_t, 1> {};
-    template<> struct AVR::Component::Count<ATTiny412::Rtc> : std::integral_constant<uint8_t, 1> {};
-    template<> struct AVR::Component::Count<ATTiny412::PortRegister> : std::integral_constant<uint8_t, 6> {};
-    template<> struct AVR::Component::Count<ATTiny412::Portmux> : std::integral_constant<uint8_t, 1> {};
-    template<> struct AVR::Component::Count<ATTiny412::Ccl> : std::integral_constant<uint8_t, 1> {};
-    template<> struct AVR::Component::Count<ATTiny412::Adc> : std::integral_constant<uint8_t, 1> {};
+    template<> struct AVR::Component::Count<ATTiny1614::Usart> : std::integral_constant<uint8_t, 1> {};
+    template<> struct AVR::Component::Count<ATTiny1614::TCA> : std::integral_constant<uint8_t, 1> {};
+    template<> struct AVR::Component::Count<ATTiny1614::TCB> : std::integral_constant<uint8_t, 1> {};
+    template<> struct AVR::Component::Count<ATTiny1614::Rtc> : std::integral_constant<uint8_t, 1> {};
+    template<> struct AVR::Component::Count<ATTiny1614::PortRegister> : std::integral_constant<uint8_t, 6> {};
+    template<> struct AVR::Component::Count<ATTiny1614::Portmux> : std::integral_constant<uint8_t, 1> {};
+    template<> struct AVR::Component::Count<ATTiny1614::Ccl> : std::integral_constant<uint8_t, 1> {};
+    template<> struct AVR::Component::Count<ATTiny1614::Adc> : std::integral_constant<uint8_t, 2> {};
 
-    template<> struct ATTiny412::Adc::Address<0> {
+    template<> struct ATTiny1614::Adc::Address<0> {
         inline static constexpr uintptr_t value = 0x0600;
     };
-    template<> struct ATTiny412::Usart::Address<0> {
+    template<> struct ATTiny1614::Adc::Address<1> {
+        inline static constexpr uintptr_t value = 0x0640;
+    };
+    template<> struct ATTiny1614::Usart::Address<0> {
         inline static constexpr uintptr_t value = 0x0800;
     };
-    template<> struct ATTiny412::TCA::Address<0> {
+    template<> struct ATTiny1614::TCA::Address<0> {
         inline static constexpr uintptr_t value = 0x0A00;
     };
-    template<> struct ATTiny412::TCB::Address<0> {
+    template<> struct ATTiny1614::TCB::Address<0> {
         inline static constexpr uintptr_t value = 0x0A40;
     };
-    template<> struct ATTiny412::PortRegister::Address<A> {
+    template<> struct ATTiny1614::TCB::Address<1> {
+        inline static constexpr uintptr_t value = 0x0A50;
+    };
+    template<> struct ATTiny1614::PortRegister::Address<A> {
         inline static constexpr uintptr_t value = 0x0400;
+    };
+    template<> struct ATTiny1614::PortRegister::Address<B> {
+        inline static constexpr uintptr_t value = 0x0420;
     };
 
 }

@@ -28,6 +28,7 @@ namespace AVR {
         template<> struct isAtMega0<ATMega4809> : std::true_type {};
         
         template<> struct isAtTiny1<ATTiny412> : std::true_type {};
+        template<> struct isAtTiny1<ATTiny1614> : std::true_type {};
         
         template<typename... PP> struct isAtMega : std::disjunction<isAtMega_8<PP>..., isAtMega_X4<PP>..., isAtMega_X8<PP>...> {};
         template<typename... PP> struct isAtMega_X : std::disjunction<isAtMega_X4<PP>..., isAtMega_X8<PP>...> {};

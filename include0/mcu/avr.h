@@ -42,6 +42,7 @@ namespace AVR {
     //AVR0-Series
     struct ATMega4809;
     struct ATTiny412;
+    struct ATTiny1614;
 }
 
 #if defined(__AVR_ATmega1284P__)
@@ -70,6 +71,8 @@ typedef ARM::SAM::SamD21 DefaultMcuType;
 typedef AVR::ATMega4809 DefaultMcuType;
 #elif defined(__AVR_ATtiny412__)
 typedef AVR::ATTiny412 DefaultMcuType;
+#elif defined(__AVR_ATtiny1614__)
+typedef AVR::ATTiny1614 DefaultMcuType;
 #else
 typedef AVR::ATMegaNone DefaultMcuType;
 # warning "No CPU found"

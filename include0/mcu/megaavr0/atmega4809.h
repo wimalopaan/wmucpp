@@ -66,7 +66,11 @@ namespace AVR {
     template<> struct AVR::Component::Count<ATMega4809::Portmux> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<ATMega4809::Ccl> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<ATMega4809::AdComparator> : std::integral_constant<uint8_t, 1> {};
+    template<> struct AVR::Component::Count<ATMega4809::Adc> : std::integral_constant<uint8_t, 1> {};
     
+    template<> struct ATMega4809::Adc::Address<0> {
+        inline static constexpr uintptr_t value = 0x0600;
+    };
     template<> struct ATMega4809::AdComparator::Address<0> {
         inline static constexpr uintptr_t value = 0x0680;
     };

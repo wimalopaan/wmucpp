@@ -347,11 +347,13 @@ gcc/base/avr/include/avr/iom324pb.h
 gcc/base/avr/include/avr/iom328pb.h
 gcc/base/avr/include/avr/iom4808.h
 gcc/base/avr/include/avr/iom4809.h
+gcc/base/avr/include/avr/iotn1614.h
 gcc/base/avr/include/avr/iotn412.h
 gcc/base/lib/gcc/avr/10.0.0/device-specs/specs-atmega324pb
 gcc/base/lib/gcc/avr/10.0.0/device-specs/specs-atmega328pb
 gcc/base/lib/gcc/avr/10.0.0/device-specs/specs-atmega4808
 gcc/base/lib/gcc/avr/10.0.0/device-specs/specs-atmega4809
+gcc/base/lib/gcc/avr/10.0.0/device-specs/specs-attiny1614
 gcc/base/lib/gcc/avr/10.0.0/device-specs/specs-attiny412
 gcc/base/lib/gcc/avr/9.0.1/device-specs/specs-atmega324pb
 gcc/base/lib/gcc/avr/9.0.1/device-specs/specs-atmega328pb
@@ -533,6 +535,7 @@ include0/mcu/pgm/pgmstring.h
 include0/mcu/tiny/attiny.h
 include0/mcu/tiny/attiny85.h
 include0/mcu/tinyavr1/attiny1.h
+include0/mcu/tinyavr1/attiny1614.h
 include0/mcu/tinyavr1/attiny412.h
 include0/mcu/tinyavr1/components1.h
 include0/std/algorithm

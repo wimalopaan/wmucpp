@@ -92,8 +92,9 @@ namespace AVR {
     template<AVR::Concepts::ComponentNumber CN, typename Reso, typename VRefType, AVR::Concepts::At01Series MCU>
     requires ((CN::value == 0) && (Vref::detail::isVref<VRefType>::value))
     class Adc<CN, Reso, VRefType, MCU> final {
-        static constexpr auto mcu_adc  = getBaseAddr<typename MCU::Adc>;
-        static constexpr auto mcu_vref = getBaseAddr<typename MCU::Vref>;
+        inline static constexpr uint8_t number = CN::value;
+        static inline constexpr auto mcu_adc  = AVR::getBaseAddr<typename MCU::Adc, number>;
+        static inline constexpr auto mcu_vref = AVR::getBaseAddr<typename MCU::Vref>;
         
         using ca_t = typename MCU::Adc::CtrlA_t;
         using cb_t = typename MCU::Adc::CtrlB_t;

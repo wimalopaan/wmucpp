@@ -26,17 +26,27 @@ namespace AVR {
         template<typename CompPos, typename MCU = DefaultMcuType>
         struct Map;
 
-        template<AVR::Concepts::AtTiny1 MCU>
-        struct Map<Position<AVR::Component::Usart<0>, Default>, MCU> {
-            using txpin = AVR::Pin<AVR::Port<AVR::A>, 1>; 
-            using rxpin = AVR::Pin<AVR::Port<AVR::A>, 2>; 
-        };
-        template<AVR::Concepts::AtTiny1 MCU>
-        struct Map<Position<AVR::Component::Usart<0>, Alt1>, MCU> {
+        template<>
+        struct Map<Position<AVR::Component::Usart<0>, Default>, AVR::ATTiny412> {
             using txpin = AVR::Pin<AVR::Port<AVR::A>, 6>; 
             using rxpin = AVR::Pin<AVR::Port<AVR::A>, 7>; 
         };
+        template<>
+        struct Map<Position<AVR::Component::Usart<0>, Alt1>, AVR::ATTiny412> {
+            using txpin = AVR::Pin<AVR::Port<AVR::A>, 1>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::A>, 2>; 
+        };
 
+        template<>
+        struct Map<Position<AVR::Component::Usart<0>, Default>, AVR::ATTiny1614> {
+            using txpin = AVR::Pin<AVR::Port<AVR::B>, 2>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::B>, 3>; 
+        };
+        template<>
+        struct Map<Position<AVR::Component::Usart<0>, Alt1>, AVR::ATTiny1614> {
+            using txpin = AVR::Pin<AVR::Port<AVR::A>, 1>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::A>, 2>; 
+        };
         
         template<AVR::Concepts::AtMega0 MCU>
         struct Map<Position<AVR::Component::Usart<0>, Default>, MCU> {
@@ -77,6 +87,25 @@ namespace AVR {
         struct Map<Position<AVR::Component::Usart<3>, Alt1>, MCU> {
             using txpin = AVR::Pin<AVR::Port<AVR::B>, 4>; 
             using rxpin = AVR::Pin<AVR::Port<AVR::B>, 5>; 
+        };
+
+        template<>
+        struct Map<Position<AVR::Component::Tca<0>, Default>, AVR::ATTiny1614> {
+            using wo0pin = AVR::Pin<AVR::Port<AVR::B>, 0>; 
+            using wo1pin = AVR::Pin<AVR::Port<AVR::B>, 1>; 
+            using wo2pin = AVR::Pin<AVR::Port<AVR::B>, 2>; 
+            using wo3pin = AVR::Pin<AVR::Port<AVR::A>, 3>; 
+            using wo4pin = AVR::Pin<AVR::Port<AVR::A>, 4>; 
+            using wo5pin = AVR::Pin<AVR::Port<AVR::A>, 5>; 
+        };
+        template<>
+        struct Map<Position<AVR::Component::Tca<0>, Alt1>, AVR::ATTiny1614> {
+            using wo0pin = AVR::Pin<AVR::Port<AVR::B>, 3>; 
+            using wo1pin = AVR::Pin<AVR::Port<AVR::B>, 1>; 
+            using wo2pin = AVR::Pin<AVR::Port<AVR::B>, 2>; 
+            using wo3pin = AVR::Pin<AVR::Port<AVR::A>, 3>; 
+            using wo4pin = AVR::Pin<AVR::Port<AVR::A>, 4>; 
+            using wo5pin = AVR::Pin<AVR::Port<AVR::A>, 5>; 
         };
 
         template<AVR::Concepts::AtMega0 MCU>

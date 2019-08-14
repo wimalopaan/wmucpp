@@ -146,7 +146,8 @@ namespace AVR {
             };
             ControlRegister<Adc, Calib_t> calib;
 
-            static inline constexpr uintptr_t address = 0x0600;
+            template<int N> struct Address;
+//            static inline constexpr uintptr_t address = 0x0600;
         };
         static_assert(sizeof(Adc) == 0x17);
         
