@@ -1,15 +1,13 @@
-#include <avr/io.h>
-
 #include <stdint.h>
 
-
-enum Index {a, b, c, d};
-
-const int lut[] = {
-    [0] = 1,
-    [1] = 1,
-};
-
+int foo(int x) {
+  const int shift = 6 - 13;
+  if (shift < 0) {
+    return x >> -shift;
+  } else {
+    return x << shift;
+  }
+}
 
 int main() {
 }

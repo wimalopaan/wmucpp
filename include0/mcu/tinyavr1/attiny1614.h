@@ -50,6 +50,7 @@ namespace AVR {
         using Vref = AVR::Series0::Vref;
         
         using PortRegister = AVR::Series1::PortRegister;
+        using VPort = AVR::Series1::VPort;
         using Portmux = AVR::Series1::Portmux;
         using Ccl = AVR::Series1::Ccl;
     };
@@ -67,6 +68,26 @@ namespace AVR {
     template<> struct AVR::Component::Count<ATTiny1614::Ccl> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<ATTiny1614::Adc> : std::integral_constant<uint8_t, 2> {};
 
+    
+    template<> struct ATTiny1614::VPort::Address<A> {
+        inline static constexpr uintptr_t value = 0x0000;
+    };
+    template<> struct ATTiny1614::VPort::Address<B> {
+        inline static constexpr uintptr_t value = 0x0004;
+    };
+    template<> struct ATTiny1614::VPort::Address<C> {
+        inline static constexpr uintptr_t value = 0x0008;
+    };
+    template<> struct ATTiny1614::VPort::Address<D> {
+        inline static constexpr uintptr_t value = 0x000c;
+    };
+    template<> struct ATTiny1614::VPort::Address<E> {
+        inline static constexpr uintptr_t value = 0x0010;
+    };
+    template<> struct ATTiny1614::VPort::Address<F> {
+        inline static constexpr uintptr_t value = 0x0014;
+    };
+    
     template<> struct ATTiny1614::Adc::Address<0> {
         inline static constexpr uintptr_t value = 0x0600;
     };

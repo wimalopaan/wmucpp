@@ -55,7 +55,7 @@ namespace etl {
         }
     
         template<typename C, C... CC>
-        inline constexpr void insertAt(uint8_t position, const PgmString<C, CC...>& ps) {
+        inline constexpr void insertAt(uint8_t position, const AVR::Pgm::String<C, CC...>& ps) {
             static_assert(Length > ps.size, "wrong length");
             assert(position < Length);
             for(uint8_t i = position, j = 0; (i < Length) && (j < ps.size); ++i, ++j) {
@@ -63,7 +63,7 @@ namespace etl {
             }
         }
         template<typename C, C... CC>
-        inline constexpr void insertAtFill(uint8_t position, const PgmString<C, CC...>& ps) {
+        inline constexpr void insertAtFill(uint8_t position, const AVR::Pgm::String<C, CC...>& ps) {
             static_assert(Length > ps.size(), "wrong length");
             uint8_t i = position;
             for(uint8_t j = 0; (i < Length) && (j < ps.size()); ++i, ++j) {
@@ -79,13 +79,13 @@ namespace etl {
                 data[i] = *s++;
             }
         }
-        inline constexpr void insertAt(uint8_t position, const PgmStringView& s) {
+        inline constexpr void insertAt(uint8_t position, const AVR::Pgm::StringView& s) {
             assert(position < Length);
             for(uint8_t i = position, n = 0; (i < Length) && (s[n] != Char{'\0'}); ++i, ++n) {
                 data[i] = s[n];
             }
         }
-        inline constexpr void insertAtFill(uint8_t position, const PgmStringView& s) {
+        inline constexpr void insertAtFill(uint8_t position, const AVR::Pgm::StringView& s) {
             assert(position < Length);
             uint8_t i = position;
             for(uint8_t n = 0; (i < Length) && (s[n] != Char{'\0'}); ++i, ++n) {

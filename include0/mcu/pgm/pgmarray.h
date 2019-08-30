@@ -22,51 +22,39 @@
 #include <array>
 #include <type_traits>
 #include <memory>
-
 #include <etl/meta.h>
 
 #if __has_include(<avr/pgmspace.h>)
 # include <avr/pgmspace.h>
 #endif
 
-// fixme: make types distuguishable (especially if initialized from array>
+#include "pgm.h"
 
 namespace AVR {
-	
-	namespace Util {
-		
+	namespace Pgm {
 		namespace detail {
-			template<class T>
+			template<typename T>
 			using maybe_cref = typename std::conditional<std::is_integral<T>::value || std::is_same_v<T, std::byte> || std::is_same_v<T, char>, T, const T&>::type;
 		}
 		
 		template<typename T, detail::maybe_cref<T>... Ts>
-		class PgmArray final {
-			PgmArray() = delete;
-		public:
-			using U = std::remove_const_t<std::remove_reference_t<T>>;
-			typedef typename std::conditional<(sizeof...(Ts) < 256), uint8_t, uint16_t>::type size_type;
-			inline static constexpr size_type size = sizeof... (Ts);
-			typedef U type;
-			typedef U value_type;
+		struct Array final {
+            constexpr Array() = default;
 			
-			inline static U value(size_type index) {
-				if constexpr(std::is_same<uint8_t, T>::value || std::is_same<std::byte, T>::value || std::is_same<char, T>::value) {
-					return U{pgm_read_byte((uint8_t*)&data[index])};
-				}
-				else {
-					std::array<std::byte, sizeof(T)> bytes;
-					for(uint8_t i = 0; i < sizeof(T); ++i) {
-						bytes[i] = std::byte{pgm_read_byte((uint8_t*)(&data[index]) + i)};
-					}
-					return U::createFrom(bytes);
-				}
+            using value_type = std::remove_const_t<std::remove_reference_t<T>>;
+			using size_type = typename std::conditional<(sizeof...(Ts) < 256), uint8_t, uint16_t>::type;
+            
+            inline static constexpr size_type size() {
+                return sizeof... (Ts);
+			}
+            
+			inline static value_type value(size_type index) {
+                return {Ptr{&data[index]}};
 			}
 			
-			class Iterator {
-			public:
-				constexpr Iterator(size_type index = 0) : mIndex(index) {}
-				inline U operator*() {
+			struct Iterator {
+                friend class Array;
+				inline value_type operator*() {
 					return value(mIndex);
 				}
 				inline void operator++() {
@@ -76,25 +64,26 @@ namespace AVR {
 					return mIndex != rhs.mIndex;
 				}
 			private:
-				size_type mIndex = 0;
+                explicit constexpr Iterator(size_type index = 0) : mIndex(index) {}
+                size_type mIndex{0};
 			};
 			constexpr Iterator begin() const {
 				return Iterator();
 			}
 			constexpr Iterator end() const {
-				return Iterator(size);
+				return Iterator(size());
 			}
-			U operator[](size_type index) const {
+			inline value_type operator[](size_type index) const {
 				return value(index);
 			}
 		private:
-			inline static constexpr const U data[] PROGMEM = {U{Ts}...}; 
+			inline static constexpr value_type data[] PROGMEM = {value_type{Ts}...}; 
 		};
 		
 		template<typename T, auto N, const std::array<T, N>& values>
-		class PgmArray1 final {
+		class Array1 final {
 			using U = std::remove_const_t<std::remove_reference_t<T>>;
-			PgmArray1() = delete;
+			Array1() = delete;
 			template<typename> struct Mapper;
 			using mapper = Mapper<std::make_index_sequence<N>>;
 		public:
@@ -147,7 +136,7 @@ namespace AVR {
 			};
 		};
 		
-		namespace Pgm {
+		namespace Util {
 			template<typename Generator>
 			class Converter {
 				inline static constexpr auto mData = Generator{}();    
@@ -161,11 +150,11 @@ namespace AVR {
 				template<bool, typename> struct Pgm;
 				template<auto... I, typename ValueType> 
 				struct Pgm<true, std::integer_sequence<ValueType, I...>> {
-					typedef Util::PgmArray<value_type, mData[I] ...> type; 
+					typedef Array<value_type, mData[I] ...> type; 
 				};
 				template<auto... I, typename ValueType> 
 				struct Pgm<false, std::integer_sequence<ValueType, I...>> {
-					typedef Util::PgmArray1<value_type, mData.size, mData> type;
+					typedef Array1<value_type, mData.size, mData> type;
 				};
 			public:
 				using pgm_type = typename Pgm<isPrimitive, index_list>::type;

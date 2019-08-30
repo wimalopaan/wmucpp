@@ -56,7 +56,7 @@ namespace Hott {
         
         using value_span_type = etl::span<valueWidth, etl::Char>;
         
-        TextWithValue(const PgmStringView& text, Provider& provider, Key key, uint8_t maxValue) : mTitle(text), mProvider(provider), mKey(key), mMax(maxValue) {}
+        TextWithValue(const AVR::Pgm::StringView& text, Provider& provider, Key key, uint8_t maxValue) : mTitle(text), mProvider(provider), mKey(key), mMax(maxValue) {}
         
         virtual void valueToText(uint8_t value, value_span_type buffer) const {
             etl::itoa_r<10>(value, buffer);
@@ -127,7 +127,7 @@ namespace Hott {
             return this;
         }
     private:
-        const PgmStringView mTitle;
+        const AVR::Pgm::StringView mTitle;
         Provider& mProvider;
         const Key mKey = Hott::key_t::nokey;
         const uint8_t mMax;
@@ -138,7 +138,7 @@ namespace Hott {
     class Menu : public MenuItem {
     public:
         template<typename... T>
-        Menu(Menu* parent, const PgmStringView& title, T*... items) : mParent(parent), mTitle(title), mItems{items...} {
+        Menu(Menu* parent, const AVR::Pgm::StringView& title, T*... items) : mParent(parent), mTitle(title), mItems{items...} {
             static_assert(sizeof...(T) <= (MenuLength - 1), "too much entries");
         }
         virtual bool hasChildren() const override {return true;}
@@ -223,7 +223,7 @@ namespace Hott {
         }
     protected:
         Menu* mParent = nullptr;
-        const PgmStringView mTitle;
+        const AVR::Pgm::StringView mTitle;
         const std::array<MenuItem*, MenuLength> mItems{};
         etl::uint_ranged_NaN<uint8_t, 0, MenuLength> mSelectedLine{};
     };
@@ -233,7 +233,7 @@ namespace Hott {
         using base = Menu<MenuLength>;
     public:
         template<typename...T>
-        NumberedMenu(Menu<MenuLength>* parent, uint8_t number, const PgmStringView& title, T*... items) : Menu<MenuLength>(parent, title, items...), 
+        NumberedMenu(Menu<MenuLength>* parent, uint8_t number, const AVR::Pgm::StringView& title, T*... items) : Menu<MenuLength>(parent, title, items...), 
             mNumber(number) {}
         virtual void titleInto(BufferString& buffer) const override{
             buffer.insertAtFill(0, base::mTitle);
@@ -252,14 +252,14 @@ namespace Hott {
     template<uint8_t L>
     class TextItem final : public Hott::MenuItem {
     public:
-        TextItem(const PgmStringView& title, const StringBuffer<L>& text) : mTitle{title}, mText{text} {}
+        TextItem(const AVR::Pgm::StringView& title, const StringBuffer<L>& text) : mTitle{title}, mText{text} {}
         
         void putTextInto(Hott::BufferString& buffer) const {
             buffer.insertAt(0, mTitle);
             buffer.insertAt(10, mText);
         }
     private:
-        const PgmStringView mTitle;
+        const AVR::Pgm::StringView mTitle;
         const StringBuffer<L>& mText;
     };
     

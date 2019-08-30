@@ -11,6 +11,7 @@
 #include <mcu/internals/adc.h>
 #include <mcu/internals/eeprom.h>
 #include <mcu/internals/pwm.h>
+#include <mcu/internals/sleep.h>
 
 #include <external/hal/alarmtimer.h>
 #include <external/hal/adccontroller.h>
@@ -58,11 +59,10 @@ auto& appData = eeprom::data();
 using PortA = Port<A>;
 using PortB = Port<B>;
 
-using dbg1 = Pin<PortA, 2>; 
-using led = Pin<PortA, 3>;
-using button = Pin<PortA, 7>;
-using fet = Pin<PortB, 1>;
-using buzzer = Pin<PortB, 0>;
+using dbg1   = Pin<PortA, 2>; 
+using led    = ActiveHigh<Pin<PortA, 3>, Output>;
+using button = ActiveLow<Pin<PortA, 7>, Input>;
+using fet    = ActiveHigh<Pin<PortB, 1>, Output>;
 
 using ccp = Cpu::Ccp<>;
 using clock = Clock<>;
@@ -70,13 +70,15 @@ using clock = Clock<>;
 using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Default>;
 using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::Default>;
 
+using sleep = Sleep<>;
+
 namespace Parameter {
     constexpr uint8_t menuLines = 8;
     constexpr auto fRtc = 500_Hz;
 }
 
 using systemTimer = SystemTimer<Component::Rtc<0>, Parameter::fRtc>;
-using alarmTimer = External::Hal::AlarmTimer<systemTimer, 2>;
+using alarmTimer = External::Hal::AlarmTimer<systemTimer, 8>;
 
 #ifdef USE_HOTT
 using sensor = Hott::Experimental::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<19200>, Hott::EscMsg, Hott::TextMsg, systemTimer>;
@@ -88,25 +90,17 @@ using terminal = etl::basic_ostream<terminalDevice>;
 using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V4_3>;
 using adcController = External::Hal::AdcController<adc, Meta::NList<1, 5>>;
 
-using buzzerPwm = PWM::DynamicPwm<tcaPosition>;
+//using buzzerPwm = PWM::DynamicPwm<tcaPosition>;
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition>>;
 
-//class SensorChoice final : public Hott::Menu {
-//public:
-//    SensorChoice() : Menu(this, "Sensorauswahl"_pgm, &mRpm1, &mRpm2) {}
-//private:
-//    Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mRpm1{"Rpm1"_pgm, appData, Storage::AVKey::SoftStart, 2};
-//    Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mRpm2{"Rpm2"_pgm, appData, Storage::AVKey::TimeOut, 2};
-//};
-
 class RCMenu final : public Hott::Menu<Parameter::menuLines> {
 public:
-    RCMenu() : Menu(this, "OnOff 1.0"_pgm, &mRpm1, &mRpm2) {}
+    RCMenu() : Menu(this, "OnOff 1.0"_pgm, &mSoft, &mTimeout, &mType) {}
 private:
-    Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mRpm1{"Rpm1"_pgm, appData, Storage::AVKey::SoftStart, 2};
-    Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mRpm2{"Rpm2"_pgm, appData, Storage::AVKey::TimeOut, 2};
-//    SensorChoice mSensorChoice;
+    Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mSoft{"Start"_pgm, appData, Storage::AVKey::SoftStart, 2};
+    Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mTimeout{"TimeOut"_pgm, appData, Storage::AVKey::TimeOut, 2};
+    Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mType{"Type"_pgm, appData, Storage::AVKey::SensorType, 2};
 };
 
 template<typename PA, typename TopMenu>
@@ -120,20 +114,9 @@ public:
         PA::processKey([&](Hott::key_t k){
             mMenu = mMenu->processKey(k);
             clear();
-//            processKey(k);
         });
-//        if (auto k = PA::key(); k != Hott::key_t::nokey) {
-//            processKey(k);
-//        }
         mMenu->textTo(PA::text());
     }
-//    inline static void processKey(Hott::key_t key) {
-//        assert(mMenu);
-//        if (auto m = mMenu->processKey(key); m != mMenu) {
-//            mMenu = m;
-//            clear();
-//        }
-//    }
 private:
     inline static void clear() {
         for(auto& line : PA::text()) {
@@ -148,15 +131,54 @@ private:
 using menu = HottMenu<sensor, RCMenu>;
 #endif
 
+namespace Music {
+    namespace Notes {
+        struct C {};
+        struct D {};
+        struct E {};
+        struct F {};
+        struct G {};
+        struct A {};
+        struct B {};
+        
+        struct Sharp {};
+        struct Flat {};
+        
+        struct Quarter{};
+    }
+    
+    template<typename Letter, typename Accidental, auto Octave>
+    struct Pitch {
+    };
+
+    template<typename Pitch, typename Duration>
+    struct Note {
+    };
+    
+    template<typename PWM>
+    struct Tone {
+        inline static void init() {
+            PWM::init();
+        }
+        template<typename T>
+        inline static void play(const T n) {
+            
+        }
+    };
+    
+}
+
+using tone = Music::Tone<PWM::DynamicPwm<tcaPosition>>;
+
 int main() {
     ccp::unlock([]{
         clock::prescale<1>();
     });
+    fet::init();
+    button::init();
+    led::init();
     
     dbg1::template dir<Output>();
-    led::template dir<Output>();
-    button::template dir<Input>();
-    fet::template dir<Output>();
 
     portmux::init();
     eeprom::init();
@@ -168,10 +190,13 @@ int main() {
 #else
     terminalDevice::init<AVR::BaudRate<9600>>();
 #endif
-    
-    buzzerPwm::init();
-    buzzerPwm::frequency(4000_Hz);
-    buzzerPwm::template duty<PWM::WO<0>>(1000);
+
+    sleep::template init<sleep::PowerDown>();
+
+    tone::init();    
+//    buzzerPwm::init();
+//    buzzerPwm::frequency(4000_Hz);
+//    buzzerPwm::template duty<PWM::WO<0>>(1000);
     
     const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
 
@@ -197,12 +222,16 @@ int main() {
                     led::toggle();
                     if ((counter % 2) == 0) {
 #ifndef USE_HOTT
-                        etl::outl<terminal>("test00"_pgm);
+                        etl::outl<terminal>("test01"_pgm);
 #endif
-                        buzzerPwm::template on<PWM::WO<0>>();
+                        using namespace Music;;
+                        
+                        tone::play(Note<Pitch<Notes::A, Notes::Flat, 1>, Notes::Quarter>{});
+//                        buzzerPwm::template on<PWM::WO<0>>();
                     }
                     else {
-                        buzzerPwm::template off<PWM::WO<0>>();
+//                        tone::off();
+//                        buzzerPwm::template off<PWM::WO<0>>();
                     }
                 }
             });

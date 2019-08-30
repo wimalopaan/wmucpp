@@ -42,6 +42,7 @@ namespace AVR {
         using Rtc = AVR::Series0::Rtc;
         using Usart = AVR::Series0::Usart;
         using PortRegister = AVR::Series0::PortRegister;
+        using VPort = AVR::Series0::VPort;
         using Portmux= AVR::Series0::Portmux;
         using TCA = AVR::Series0::TCA;
         using TCB = AVR::Series0::TCB;
@@ -63,10 +64,31 @@ namespace AVR {
     template<> struct AVR::Component::Count<ATMega4809::TCB> : std::integral_constant<uint8_t, 4> {};
     template<> struct AVR::Component::Count<ATMega4809::Rtc> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<ATMega4809::PortRegister> : std::integral_constant<uint8_t, 6> {};
+    template<> struct AVR::Component::Count<ATMega4809::VPort> : std::integral_constant<uint8_t, 6> {};
     template<> struct AVR::Component::Count<ATMega4809::Portmux> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<ATMega4809::Ccl> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<ATMega4809::AdComparator> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<ATMega4809::Adc> : std::integral_constant<uint8_t, 1> {};
+
+    template<> struct ATMega4809::VPort::Address<A> {
+        inline static constexpr uintptr_t value = 0x0000;
+    };
+    template<> struct ATMega4809::VPort::Address<B> {
+        inline static constexpr uintptr_t value = 0x0004;
+    };
+    template<> struct ATMega4809::VPort::Address<C> {
+        inline static constexpr uintptr_t value = 0x0008;
+    };
+    template<> struct ATMega4809::VPort::Address<D> {
+        inline static constexpr uintptr_t value = 0x000c;
+    };
+    template<> struct ATMega4809::VPort::Address<E> {
+        inline static constexpr uintptr_t value = 0x0010;
+    };
+    template<> struct ATMega4809::VPort::Address<F> {
+        inline static constexpr uintptr_t value = 0x0014;
+    };
+
     
     template<> struct ATMega4809::Adc::Address<0> {
         inline static constexpr uintptr_t value = 0x0600;

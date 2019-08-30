@@ -1,28 +1,9 @@
-/*
- * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2016, 2017 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- 
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 #pragma once
 
-#include <cstdint>
-#include <utility>
-#include <cassert>
-
-#ifndef __GLIBCXX__
+#include "cstdint"
+#include "cstddef"
+#include "type_traits"
+#include "utility"
 
 namespace std {
     
@@ -84,7 +65,7 @@ namespace std {
     class tuple_size<const T> : public std::integral_constant<size_t, tuple_size<T>::value> {};
        
     template<typename T>
-    inline constexpr std::size_t tuple_size_v = tuple_size<T>::value;
+    inline constexpr size_t tuple_size_v = tuple_size<T>::value;
     
     namespace detail {
         template <typename Tuple1, size_t... Indices1, typename Tuple2, size_t... Indices2>
@@ -99,6 +80,3 @@ namespace std {
         return detail::tuple_cat(tup1, tup2, make_index_sequence<tuple_size<Tuple1>::value>{}, make_index_sequence<tuple_size<Tuple2>::value>{});
     }
 } // !std
-
-#endif
-

@@ -23,6 +23,14 @@
 
 namespace AVR {
     namespace Series1 {
+        struct VPort final {
+            DataRegister<VPort, ReadWrite, std::byte> dir;
+            DataRegister<VPort, ReadWrite, std::byte> out;
+            DataRegister<VPort, ReadWrite, std::byte> in;
+            DataRegister<VPort, ReadWrite, std::byte> intflags;
+            
+            template<typename P> struct Address;
+        };
         struct PortRegister final {
             DataRegister<PortRegister, ReadWrite, std::byte> dir;
             DataRegister<PortRegister, ReadWrite, std::byte> dirset;

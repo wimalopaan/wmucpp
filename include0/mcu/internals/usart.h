@@ -183,7 +183,13 @@ namespace AVR {
                 constexpr auto ubrr = ubrrValue(Config::fMcu.value, Baud::value); 
 //                using u = std::integral_constant<uint16_t, ubrr>;
 //                u::_;
-                *mcu_usart()->ubbr = ubrr;
+                if constexpr(AVR::Groups::isAtMega_8<MCU>::value) {
+                    *mcu_usart()->ubbrh = 0x7f & (ubrr >> 8);
+                    *mcu_usart()->ubbrl = ubrr;
+                }
+                else {
+                    *mcu_usart()->ubbr = ubrr;
+                }
             }            
             if constexpr(AVR::Groups::isAtMega_8<MCU>::value) {
                 mcu_usart()->ucsrc.template add<ucsrc_type::ursel | ucsrc_type::ucsz1 | ucsrc_type::ucsz0, DisbaleInterrupt<NoDisableEnable>>();
@@ -353,6 +359,8 @@ namespace AVR {
             else {
                 constexpr auto ubrr = ubrrValue(Config::fMcu.value, Baud::value); 
 //                std::integral_constant<uint16_t, ubrr>::_;
+//                std::integral_constant<uint32_t, Config::fMcu.value>::_;
+//                std::integral_constant<uint16_t, Baud::value>::_;
                 *mcu_usart()->baud = ubrr;
             }            
 

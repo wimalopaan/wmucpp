@@ -137,6 +137,8 @@ boards/blmc/blmc_test01/util.h
 boards/blmc/hobbyking30a/Makefile
 boards/blmc/hobbyking30a/test01.cc
 boards/blmc/simonk.txt
+boards/blmc/simonk_pintest/Makefile
+boards/blmc/simonk_pintest/test01.cc
 boards/bmc/Makefile
 boards/bmc/blink.cc
 boards/bmc/blink01.cc
@@ -193,8 +195,8 @@ boards/onoff/tone.cc
 boards/onoff_avr0/Makefile
 boards/onoff_avr0/small/Makefile
 boards/onoff_avr0/small/board.h
-boards/onoff_avr0/small/test.cc
 boards/onoff_avr0/small/test00.cc
+boards/onoff_avr0/small/test01.cc
 boards/power_or/doc/Makefile
 boards/power_or/doc/power_or.adoc
 boards/ppmmatrix/Makefile
@@ -339,6 +341,11 @@ doc0/bm00/bm11.cc
 doc0/bm00/bm12.cc
 doc0/bm00/bm13.c
 doc0/bm00/bm20.cc
+doc0/bm00/bm30.cc
+doc0/bm00/bm31.cc
+doc0/bm00/bm40.cc
+doc0/bm00/bm41.c
+doc0/bm00/bm42.cc
 example/externals/buttonmacro.c
 example/externals/buttonvertical.cc
 example/externals/isr.c
@@ -430,6 +437,7 @@ include0/etl/rational.h
 include0/etl/scoped.h
 include0/etl/span.h
 include0/etl/stringbuffer.h
+include0/etl/tuple.h
 include0/etl/type_traits.h
 include0/etl/types.h
 include0/external/bluetooth/qtrobo.h
@@ -530,6 +538,7 @@ include0/mcu/mega/atmega88p.h
 include0/mcu/megaavr0/atmega4809.h
 include0/mcu/megaavr0/atxmega.h
 include0/mcu/megaavr0/components0.h
+include0/mcu/pgm/pgm.h
 include0/mcu/pgm/pgmarray.h
 include0/mcu/pgm/pgmstring.h
 include0/mcu/tiny/attiny.h
@@ -553,6 +562,7 @@ include0/std/limits
 include0/std/memory
 include0/std/optional
 include0/std/ratio
+include0/std/tuple
 include0/std/type_traits
 include0/std/utility
 license.txt

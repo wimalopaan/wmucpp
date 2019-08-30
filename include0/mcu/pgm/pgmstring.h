@@ -18,79 +18,85 @@
 
 #pragma once
 
-#if __has_include(<avr/pgmspace.h>)
-# include <avr/pgmspace.h>
-#endif
-
 #include <cstdint>
 #include <cstddef>
 #include <cassert>
 
 #include <etl/char.h>
 
-template<typename C, C... CC>
-struct PgmString;
+#if __has_include(<avr/pgmspace.h>)
+# include <avr/pgmspace.h>
+#endif
+
+#include "pgm.h"
+
+namespace AVR::Pgm {
+    template<typename C, C... CC> struct String;
+}
 
 template<typename C, C... CC>
-constexpr PgmString<C, CC...> operator"" _pgm();
+constexpr AVR::Pgm::String<C, CC...> operator"" _pgm();
 
-class PgmStringView {
-    template<typename C, C... CC> friend struct PgmString;
-public:
-    inline etl::Char operator[](uint8_t index) const {
-//        assert(ptrToPgmData != nullptr);
-        return etl::Char{pgm_read_byte(ptrToPgmData + index)};
-    }
-    template<typename C, C... CC> 
-    explicit constexpr PgmStringView(const PgmString<C, CC...>& ps) : ptrToPgmData(ps.data) {}
-private:
-    explicit constexpr PgmStringView(const char* pgm) : ptrToPgmData(pgm) {}
-    const char* const ptrToPgmData = nullptr;
-};
-
-template<typename C, C... CC>
-struct PgmString final {
-    using value_type = etl::Char;
+namespace AVR::Pgm {
     
-    constexpr PgmString() = default;
-    
-    class Iterator {
+    class StringView {
+        template<typename C, C... CC> friend struct String;
     public:
-        explicit constexpr Iterator(uint8_t index = 0) : mIndex(index) {}
-
-        inline etl::Char operator*() const {
-            return etl::Char{pgm_read_byte(&data[mIndex])};
+        inline etl::Char operator[](uint8_t index) const {
+            //        assert(ptrToPgmData != nullptr);
+            return etl::Char{pgm_read_byte(ptrToPgmData + index)};
         }
-        inline void operator++() {
-            ++mIndex;
+        template<typename C, C... CC> 
+        explicit constexpr StringView(const String<C, CC...>& ps) : ptrToPgmData(ps.data) {}
+    private:
+        explicit constexpr StringView(const char* pgm) : ptrToPgmData(pgm) {}
+        const char* const ptrToPgmData = nullptr;
+    };
+    
+    template<typename C, C... CC>
+    struct String final {
+        using value_type = etl::Char;
+        
+        constexpr String() = default;
+        
+        class Iterator {
+        public:
+            explicit constexpr Iterator(uint8_t index = 0) : mIndex(index) {}
+            
+            inline etl::Char operator*() const {
+                return etl::Char{pgm_read_byte(&data[mIndex])};
+            }
+            inline void operator++() {
+                ++mIndex;
+            }
+            inline bool operator!=(const Iterator& rhs) const {
+                return mIndex != rhs.mIndex;
+            }
+        private:
+            uint8_t mIndex = 0;
+        };
+        constexpr Iterator begin() const {
+            return Iterator();
         }
-        inline bool operator!=(const Iterator& rhs) const {
-            return mIndex != rhs.mIndex;
+        constexpr Iterator end() const {
+            return Iterator(size());
+        }
+        etl::Char operator[](uint8_t index) const {
+            assert(index < size());
+            return etl::Char{pgm_read_byte(&data[index])};
+        }
+        inline static constexpr uint8_t size() {
+            return sizeof...(CC);
+        }
+        inline constexpr operator StringView() const {
+            return StringView{data};
         }
     private:
-        uint8_t mIndex = 0;
+        inline static constexpr const char data[] PROGMEM = {CC..., '\0'};
     };
-    constexpr Iterator begin() const {
-        return Iterator();
-    }
-    constexpr Iterator end() const {
-        return Iterator(size());
-    }
-    etl::Char operator[](uint8_t index) const {
-        assert(index < size());
-        return etl::Char{pgm_read_byte(&data[index])};
-    }
-    inline static constexpr uint8_t size() {
-        return sizeof...(CC);
-    }
-    inline constexpr operator PgmStringView() const {
-        return PgmStringView{data};
-    }
-private:
-    inline static constexpr const char data[] PROGMEM = {CC..., '\0'};
-};
+}
 
 template<typename C, C... CC>
-constexpr PgmString<C, CC...> operator"" _pgm(){
-    return PgmString<C, CC...>();
+constexpr AVR::Pgm::String<C, CC...> operator"" _pgm(){
+    return AVR::Pgm::String<C, CC...>();
 }

@@ -177,6 +177,12 @@ namespace Hott {
                 std::swap(mLastKey, k);
                 return k;
             }
+
+            inline static constexpr void processKey(const auto& f) {
+                if (mLastKey != Hott::key_t::nokey) {
+                    f(key());
+                }
+            }
             
             inline static constexpr auto& text() {
                 return mTextMsg.text;

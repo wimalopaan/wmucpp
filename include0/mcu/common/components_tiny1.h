@@ -38,6 +38,6 @@
 #include "components/bitmask_operators1.h"
 
 namespace AVR {
-    namespace Series0 {
+    namespace Series1 {
     }
 }

@@ -60,19 +60,23 @@ namespace AVR {
     struct Port<Name, MCU> final {
         using mcu = MCU;
         using mcuport_type = typename MCU::PortRegister;
+        using vport_type = typename MCU::VPort;
+
+        static_assert(AVR::isSBICBICapable<vport_type , Name>(), "VPort not sbi/cbi capable");
+        
         using name_type = Name;
         Port() = delete;
         static inline std::byte read() {
-            return *getBaseAddr<mcuport_type , Name>()->in;
+            return *getBaseAddr<vport_type , Name>()->in;
         }
         static inline volatile std::byte& dir() {
-            return *getBaseAddr<mcuport_type , Name>()->dir;
+            return *getBaseAddr<vport_type , Name>()->dir;
         }
         static inline volatile std::byte& dirset() {
             return *getBaseAddr<mcuport_type , Name>()->dirset;
         }
         static inline volatile std::byte& get() {
-            return *getBaseAddr<mcuport_type , Name>()->out;
+            return *getBaseAddr<vport_type , Name>()->out;
         }
         static inline volatile std::byte& outset() {
             return *getBaseAddr<mcuport_type , Name>()->outset;
@@ -97,7 +101,7 @@ namespace AVR {
             getBaseAddr<mcuport_type , Name>()->pinctrl[Pin].template set<value>();
         }
         static inline volatile std::byte& intflags() {
-            return *getBaseAddr<mcuport_type , Name>()->intflags;
+            return *getBaseAddr<vport_type , Name>()->intflags;
         }
     };
     
@@ -203,7 +207,7 @@ namespace AVR {
         struct Table<true, Pins...> {
             static inline constexpr uint8_t size = sizeof...(Pins);
             using generator_type = Generator<Pins...>;
-            using t = typename AVR::Util::Pgm::Converter<generator_type>::pgm_type;
+            using t = typename AVR::Pgm::Util::Converter<generator_type>::pgm_type;
             static inline constexpr auto valueBits = t{};
         };
     }
@@ -405,16 +409,23 @@ namespace AVR {
         static_assert(PinNumber < 8, "wrong pin number");
         Pin() = delete;
         using mcu = typename Port::mcu;
-        typedef Port port;
+        using port = Port;
+        using vport_type = typename Port::vport_type;
+        using name_type = typename Port::name_type;
+
+        static_assert(AVR::isSBICBICapable<vport_type , name_type>(), "VPort not sbi/cbi capable");
         
         static inline constexpr uint8_t number = PinNumber;
         static inline constexpr std::byte pinMask{(1 << PinNumber)};
+        
         static inline void on() {
-            Port::outset() = pinMask; 
+            Port::get() |= pinMask; 
+//            Port::outset() = pinMask; 
         }
         static inline constexpr auto& high = on;
         static inline void off() {
-            Port::outclear() = pinMask; 
+            Port::get() &= ~pinMask; 
+//            Port::outclear() = pinMask; 
         }
         static inline constexpr auto& low = off;
         static inline void toggle() {
@@ -432,7 +443,8 @@ namespace AVR {
         template<typename Dir>
         static inline void dir() {        
             if constexpr(std::is_same_v<Dir, AVR::Output>) {
-                port::dirset() = pinMask;
+                port::dir() |= pinMask; // VPort
+//                port::dirset() = pinMask;
             }
         }
         
@@ -444,7 +456,8 @@ namespace AVR {
             }(AList{});
         }
         static inline void resetInt() {
-            Port::intflags() = pinMask; 
+            Port::intflags() |= pinMask; // VPort 
+//            Port::intflags() = pinMask; 
         }
         
         
@@ -471,7 +484,7 @@ namespace AVR {
         }
         static constexpr auto& low = off;
 
-        template<bool visible = !AVR::Groups::isAtMega_8<mcu>::value, typename = std::enable_if_t<visible>>
+        template<bool visible = !AVR::Groups::isAtMega_8<MCU>::value, typename = std::enable_if_t<visible>>
         static inline void toggle() {
             Port::template toggle<PinNumber>();
         }
@@ -568,7 +581,7 @@ namespace AVR {
         typedef Input dir_type;
         inline static void init() {
             Pin::template dir<Input>();
-            Pin::pullup();
+            Pin::template pullup<true>();
         }
         inline static bool isActive() {
             return !Pin::isHigh();

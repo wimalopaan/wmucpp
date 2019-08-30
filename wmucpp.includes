@@ -30,3 +30,5 @@ include0/external/solutions/series01
 doc0/bm00
 boards/blmc/blmc_02
 boards/blmc/blmc_10
+boards/blmc/simonk_pintest
+include0/mcu/pgm

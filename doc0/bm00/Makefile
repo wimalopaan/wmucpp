@@ -37,6 +37,11 @@ targets += bm11.s bm11.elf
 targets += bm12.s bm12.elf
 targets += bm13.s bm13.elf
 targets += bm20.S bm20.elf
+targets += bm30.S bm30.elf
+targets += bm31.S bm31.elf
+targets += bm40.S bm40.elf
+targets += bm41.S bm41.elf
+targets += bm42.S bm42.elf
 
 -include ../../Makefile.avr0.include
 
