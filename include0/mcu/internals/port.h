@@ -90,10 +90,10 @@ namespace AVR {
         template<auto Pin, bool on>
         static inline void pullup() {
             if constexpr(on) {
-                getBaseAddr<mcuport_type , Name>()->pinctrl[Pin].template add<mcuport_type::PinCtrl_t::pullup>();
+                getBaseAddr<mcuport_type , Name>()->pinctrl[Pin].template add<mcuport_type::PinCtrl_t::pullup, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
             }
             else {
-                getBaseAddr<mcuport_type , Name>()->pinctrl[Pin].template clear<mcuport_type::PinCtrl_t::pullup>();
+                getBaseAddr<mcuport_type , Name>()->pinctrl[Pin].template clear<mcuport_type::PinCtrl_t::pullup, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
             }
         }
         template<auto Pin, auto value>

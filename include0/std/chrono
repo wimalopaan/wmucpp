@@ -95,6 +95,10 @@ namespace std {
         constexpr uint16_t operator/(const microseconds& lhs, const microseconds& rhs) {
             return lhs.value / rhs.value;
         }
+
+        constexpr uint16_t operator/(const milliseconds& lhs, const microseconds& rhs) {
+            return (uint32_t{1000} * lhs.value) / rhs.value;
+        }
         
         template<typename  F>
         requires std::is_integral_v<F>

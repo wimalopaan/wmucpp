@@ -37,7 +37,61 @@ namespace AVR {
 			using maybe_cref = typename std::conditional<std::is_integral<T>::value || std::is_same_v<T, std::byte> || std::is_same_v<T, char>, T, const T&>::type;
 		}
 		
-		template<typename T, detail::maybe_cref<T>... Ts>
+        template<typename T, detail::maybe_cref<T>... Ts> struct Array;
+        
+        template<typename T, typename S = uint8_t>
+        struct ArrayView {
+            template<typename U, detail::maybe_cref<U>... Ts> friend struct Array;
+            using value_type = T;
+            using size_type = S;
+            
+            inline T operator[](uint8_t index) const {
+                return value_type{Ptr{&ptrToPgmData[index]}};
+            }
+            constexpr ArrayView() = default;
+
+            struct Iterator {
+                friend class ArrayView;
+				inline value_type operator*() {
+                    return view[mIndex];
+				}
+				inline void operator++() {
+					++mIndex;
+				}
+				inline bool operator!=(const Iterator& rhs) {
+					return mIndex != rhs.mIndex;
+				}
+			private:
+                explicit constexpr Iterator(const ArrayView& v, size_type index = 0) : mIndex(index), view{v} {}
+                size_type mIndex{0};
+                const ArrayView& view;
+			};
+
+            constexpr Iterator begin() const {
+				return Iterator(*this);
+			}
+			constexpr Iterator end() const {
+				return Iterator(*this, size());
+			}
+
+            explicit operator bool() const {
+                return (mSize > 0);
+            }
+            
+            constexpr S size() const {
+                return mSize;
+            }
+            
+            template<typename U, detail::maybe_cref<U>... Ts> 
+            explicit constexpr ArrayView(const Array<U, Ts...>& a) : ptrToPgmData(a.data) {}
+        private:
+            explicit constexpr ArrayView(const Ptr<T>& pgm, const S& size) : ptrToPgmData(pgm.value), mSize{size} {}
+            const T* ptrToPgmData{nullptr};
+            S mSize{0};            
+        };
+        
+
+        template<typename T, detail::maybe_cref<T>... Ts>
 		struct Array final {
             constexpr Array() = default;
 			
@@ -49,7 +103,7 @@ namespace AVR {
 			}
             
 			inline static value_type value(size_type index) {
-                return {Ptr{&data[index]}};
+                return value_type{Ptr{&data[index]}};
 			}
 			
 			struct Iterator {
@@ -76,9 +130,14 @@ namespace AVR {
 			inline value_type operator[](size_type index) const {
 				return value(index);
 			}
+            inline constexpr operator ArrayView<T, size_type>() const {
+                return ArrayView{Ptr<T>{data}, size()};
+            }
 		private:
 			inline static constexpr value_type data[] PROGMEM = {value_type{Ts}...}; 
 		};
+        
+        
 		
 		template<typename T, auto N, const std::array<T, N>& values>
 		class Array1 final {

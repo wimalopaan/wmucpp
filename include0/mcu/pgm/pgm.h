@@ -8,12 +8,11 @@ namespace AVR {
         template<typename P = std::byte>
         struct Ptr {
             inline constexpr explicit Ptr(const P* ptr) : value{ptr} {}
-            
             inline constexpr const P* operator->() const {
                 return value;
             }
-        private:
-            const P* const value;
+//        private:
+            const P* const value = nullptr;
         };
     }
 }

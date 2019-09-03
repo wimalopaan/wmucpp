@@ -30,6 +30,8 @@ namespace Hott {
             
             static inline constexpr uint8_t menuLines = TextMesgType::rows;
             
+            using binaryMessage_type = BinaryMesgType;
+            
             struct ProtocollAdapter final {
                 ProtocollAdapter() = delete;
                 

@@ -197,6 +197,10 @@ boards/onoff_avr0/small/Makefile
 boards/onoff_avr0/small/board.h
 boards/onoff_avr0/small/test00.cc
 boards/onoff_avr0/small/test01.cc
+boards/onoff_avr0/small/test02.cc
+boards/onoff_avr0/small/test03.cc
+boards/onoff_avr0/small/test04.cc
+boards/onoff_avr0/small/test99.cc
 boards/power_or/doc/Makefile
 boards/power_or/doc/power_or.adoc
 boards/ppmmatrix/Makefile
@@ -346,6 +350,8 @@ doc0/bm00/bm31.cc
 doc0/bm00/bm40.cc
 doc0/bm00/bm41.c
 doc0/bm00/bm42.cc
+doc0/bm00/bm43.cc
+doc0/bm00/bm44.cc
 example/externals/buttonmacro.c
 example/externals/buttonvertical.cc
 example/externals/isr.c
@@ -466,9 +472,11 @@ include0/external/solutions/ppm.h
 include0/external/solutions/rpm.h
 include0/external/solutions/series01/rpm.h
 include0/external/solutions/series01/sppm_in.h
+include0/external/solutions/tick.h
 include0/external/solutions/tle5205.h
 include0/external/solutions/ws2812.h
 include0/external/ui/menu.h
+include0/external/units/music.h
 include0/external/units/percent.h
 include0/external/units/physical.h
 include0/mcu/avr.h
@@ -555,6 +563,7 @@ include0/std/bits/literals.h
 include0/std/bits/pair.h
 include0/std/cassert
 include0/std/chrono
+include0/std/cmath
 include0/std/cstddef
 include0/std/cstdint
 include0/std/initializer_list

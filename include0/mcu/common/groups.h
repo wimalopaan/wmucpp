@@ -4,6 +4,117 @@
 
 namespace AVR {
     
+    namespace ADC {
+        template<typename NumberType, typename MMCU = DefaultMcuType>
+        struct ChannelPinMapper;
+
+        template<auto V, AVR::Concepts::AtMega0 MMCU>
+        requires(V < 8)
+        struct ChannelPinMapper<std::integral_constant<decltype(V), V>, MMCU> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::D>, V>;  
+        };
+
+        template<AVR::Concepts::AtMega0 MMCU>
+        struct ChannelPinMapper<std::integral_constant<decltype(8), 8>, MMCU> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::E>, 0>;  
+        };
+        template<AVR::Concepts::AtMega0 MMCU>
+        struct ChannelPinMapper<std::integral_constant<decltype(9), 9>, MMCU> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::E>, 1>;  
+        };
+        template<AVR::Concepts::AtMega0 MMCU>
+        struct ChannelPinMapper<std::integral_constant<decltype(10), 10>, MMCU> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::E>, 2>;  
+        };
+        template<AVR::Concepts::AtMega0 MMCU>
+        struct ChannelPinMapper<std::integral_constant<decltype(11), 11>, MMCU> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::E>, 3>;  
+        };
+        template<AVR::Concepts::AtMega0 MMCU>
+        struct ChannelPinMapper<std::integral_constant<decltype(12), 12>, MMCU> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::F>, 2>;  
+        };
+        template<AVR::Concepts::AtMega0 MMCU>
+        struct ChannelPinMapper<std::integral_constant<decltype(13), 13>, MMCU> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::F>, 3>;  
+        };
+        template<AVR::Concepts::AtMega0 MMCU>
+        struct ChannelPinMapper<std::integral_constant<decltype(14), 14>, MMCU> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::F>, 4>;  
+        };
+        template<AVR::Concepts::AtMega0 MMCU>
+        struct ChannelPinMapper<std::integral_constant<decltype(15), 15>, MMCU> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::F>, 5>;  
+        };
+
+        template<>
+        struct ChannelPinMapper<std::integral_constant<decltype(0), 0>, AVR::ATTiny1614> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::A>, 0>;  
+        };
+        template<>
+        struct ChannelPinMapper<std::integral_constant<decltype(1), 1>, AVR::ATTiny1614> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::A>, 1>;  
+        };
+        template<>
+        struct ChannelPinMapper<std::integral_constant<decltype(2), 2>, AVR::ATTiny1614> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::A>, 2>;  
+        };
+        template<>
+        struct ChannelPinMapper<std::integral_constant<decltype(3), 3>, AVR::ATTiny1614> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::A>, 3>;  
+        };
+        template<>
+        struct ChannelPinMapper<std::integral_constant<decltype(4), 4>, AVR::ATTiny1614> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::A>, 4>;  
+        };
+        template<>
+        struct ChannelPinMapper<std::integral_constant<decltype(5), 5>, AVR::ATTiny1614> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::A>, 5>;  
+        };
+        template<>
+        struct ChannelPinMapper<std::integral_constant<decltype(6), 6>, AVR::ATTiny1614> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::A>, 6>;  
+        };
+        template<>
+        struct ChannelPinMapper<std::integral_constant<decltype(7), 7>, AVR::ATTiny1614> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::A>, 7>;  
+        };
+        template<>
+        struct ChannelPinMapper<std::integral_constant<decltype(10), 10>, AVR::ATTiny1614> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::B>, 1>;  
+        };
+        template<>
+        struct ChannelPinMapper<std::integral_constant<decltype(11), 11>, AVR::ATTiny1614> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::B>, 0>;  
+        };
+        
+        template<>
+        struct ChannelPinMapper<std::integral_constant<decltype(0), 0>, AVR::ATTiny412> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::A>, 0>;  
+        };
+        template<>
+        struct ChannelPinMapper<std::integral_constant<decltype(1), 1>, AVR::ATTiny412> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::A>, 1>;  
+        };
+        template<>
+        struct ChannelPinMapper<std::integral_constant<decltype(2), 2>, AVR::ATTiny412> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::A>, 2>;  
+        };
+        template<>
+        struct ChannelPinMapper<std::integral_constant<decltype(3), 3>, AVR::ATTiny412> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::A>, 3>;  
+        };
+        template<>
+        struct ChannelPinMapper<std::integral_constant<decltype(6), 6>, AVR::ATTiny412> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::A>, 6>;  
+        };
+        template<>
+        struct ChannelPinMapper<std::integral_constant<decltype(7), 7>, AVR::ATTiny412> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::A>, 7>;  
+        };
+        
+    }
+    
     namespace Portmux {
         struct Default {};
         struct Alt1 {};

@@ -28,24 +28,61 @@
 
 #include "mcu/common/concepts.h"
 
+#include "tick.h"
+
 namespace External {
-    template<typename Pin, uint8_t PressCounts = 10>
+
+    template<typename Pin, typename Timer, auto ShortPressTicks, auto LongPressTicks>
     struct Button {
+        enum class Press : uint8_t {Short, Long, Release, None};
+        enum class State : uint8_t {Pressed, Released};
+        
+        static_assert(ShortPressTicks < LongPressTicks);
+        
         static inline void init() {
             Pin::init();
         }
-        template<etl::Concepts::Callable F>
+        template<etl::Concepts::Callable<Press> F>
         static inline void periodic(const F& f) {
             if (Pin::isActive()) {
-                if (++mCounter == PressCounts) {
-                    f();
+                if (mCounter > ShortPressTicks) {
+                    mState = State::Pressed;
+                    if (mCounter > LongPressTicks) {
+                        f(Press::Long);
+                        return;
+                    }
+                    else {
+                        f(Press::Short);
+                    }
                 }
+                ++mCounter;
             }
             else {
-                mCounter = 0;
+                mCounter.reset();
+                if (mState == State::Pressed) {
+                    f(Press::Release);
+                }
+                mState = State::Released;
             }
         }
+        static inline void periodic() {
+            periodic([&](auto v){
+                if (v != Press::None) {
+                    mEvent = v;
+                }
+            });
+        }
+        static inline Press event() {
+            auto e = Press::None;
+            std::swap(e, mEvent);
+            return e;
+        }
+        static inline State state() {
+            return mState;
+        }
     private:
-        static inline etl::uint_ranged<uint8_t, PressCounts + 1> mCounter = 0;
+        static inline Press mEvent{Press::None};
+        static inline State mState{State::Released};
+        static inline Tick<Timer> mCounter;
     };
 }

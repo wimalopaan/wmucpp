@@ -223,8 +223,6 @@ int main() {
     
     bool eepSave = false;
     
-    etl::uint_ranged_circular<uint8_t, 0, melody.size() - 1> note_counter;
-    
     while(true) {
         eepSave |= eeprom::saveIfNeeded();
 #ifdef USE_HOTT
@@ -249,8 +247,7 @@ int main() {
                         etl::outl<terminal>("test01"_pgm);
 #endif
                         if (!toneGenerator::busy()) {
-                            toneGenerator::play(melody[note_counter]);
-                            ++note_counter;
+                            toneGenerator::play(melody);
                         }
                     }
                 }

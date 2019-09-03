@@ -44,12 +44,12 @@ namespace AVR::Pgm {
     public:
         inline etl::Char operator[](uint8_t index) const {
             //        assert(ptrToPgmData != nullptr);
-            return etl::Char{pgm_read_byte(ptrToPgmData + index)};
+            return etl::Char{pgm_read_byte(ptrToPgmData+ index)};
         }
         template<typename C, C... CC> 
         explicit constexpr StringView(const String<C, CC...>& ps) : ptrToPgmData(ps.data) {}
     private:
-        explicit constexpr StringView(const char* pgm) : ptrToPgmData(pgm) {}
+        explicit constexpr StringView(const Ptr<char>& pgm) : ptrToPgmData(pgm.value) {}
         const char* const ptrToPgmData = nullptr;
     };
     
@@ -89,7 +89,7 @@ namespace AVR::Pgm {
             return sizeof...(CC);
         }
         inline constexpr operator StringView() const {
-            return StringView{data};
+            return StringView{Ptr<char>{data}};
         }
     private:
         inline static constexpr const char data[] PROGMEM = {CC..., '\0'};

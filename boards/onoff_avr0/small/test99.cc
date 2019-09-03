@@ -21,6 +21,8 @@
 #include <external/hott/hott.h>
 #include <external/hott/menu.h>
 #include <external/units/music.h>
+#include <external/solutions/tick.h>
+#include <external/solutions/button.h>
 
 #include <std/chrono>
 #include <etl/output.h>
@@ -28,6 +30,11 @@
 using namespace AVR;
 using namespace std::literals::chrono;
 using namespace External::Units::literals;
+
+namespace Parameter {
+    constexpr uint8_t menuLines = 8;
+    constexpr auto fRtc = 500_Hz;
+}
 
 struct Storage final {
     Storage() = delete;
@@ -46,6 +53,9 @@ struct Storage final {
 using eeprom = EEProm::Controller<Storage::ApplData>;
 auto& appData = eeprom::data();
 
+using systemTimer = SystemTimer<Component::Rtc<0>, Parameter::fRtc>;
+using alarmTimer = External::Hal::AlarmTimer<systemTimer, 8>;
+
 // PA1: Voltage = AIN1
 // PA2: Debug Pin
 // PA3: Led
@@ -61,10 +71,10 @@ auto& appData = eeprom::data();
 using PortA = Port<A>;
 using PortB = Port<B>;
 
-using dbg1   = Pin<PortA, 2>; 
-using led    = ActiveHigh<Pin<PortA, 3>, Output>;
-using button = ActiveLow<Pin<PortA, 7>, Input>;
-using fet    = ActiveHigh<Pin<PortB, 1>, Output>;
+using dbg1      = Pin<PortA, 2>; 
+using led       = ActiveHigh<Pin<PortA, 3>, Output>;
+using button    = External::Button<ActiveLow<Pin<PortA, 7>, Input>, systemTimer, Tick<systemTimer>{10_ms}, Tick<systemTimer>{3000_ms}>;
+using fet       = ActiveHigh<Pin<PortB, 1>, Output>;
 
 using ccp = Cpu::Ccp<>;
 using clock = Clock<>;
@@ -73,14 +83,6 @@ using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Default>;
 using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::Default>;
 
 using sleep = Sleep<>;
-
-namespace Parameter {
-    constexpr uint8_t menuLines = 8;
-    constexpr auto fRtc = 500_Hz;
-}
-
-using systemTimer = SystemTimer<Component::Rtc<0>, Parameter::fRtc>;
-using alarmTimer = External::Hal::AlarmTimer<systemTimer, 8>;
 
 #ifdef USE_HOTT
 using sensor = Hott::Experimental::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<19200>, Hott::EscMsg, Hott::TextMsg, systemTimer>;
@@ -160,7 +162,19 @@ using toneGenerator = External::Music::Generator<toneWrapper>;
 namespace {
     using namespace External::Music;
     
-    using note = Note<toneWrapper>;
+    using note = Note<toneWrapper, std::integral_constant<uint16_t, 40>>;
+
+    constexpr note c_ii_1 {Pitch{Letter::c}, Length{Base::whole}};
+    constexpr note c_s_ii_1 {Pitch{Letter::c, Octave::ii, Accidential::sharp}, Length{Base::whole}};
+    constexpr note d_ii_1 {Pitch{Letter::d}, Length{Base::whole}};
+    constexpr note d_s_ii_1 {Pitch{Letter::d, Octave::ii, Accidential::sharp}, Length{Base::whole}};
+    constexpr note e_ii_1 {Pitch{Letter::e}, Length{Base::whole}};
+    constexpr note f_ii_1 {Pitch{Letter::f}, Length{Base::whole}};
+    constexpr note f_s_ii_1 {Pitch{Letter::f, Octave::ii, Accidential::sharp}, Length{Base::whole}};
+    constexpr note g_ii_1 {Pitch{Letter::g}, Length{Base::whole}};
+    constexpr note g_s_ii_1 {Pitch{Letter::g, Octave::ii, Accidential::sharp}, Length{Base::whole}};
+    constexpr note a_ii_1 {Pitch{Letter::a}, Length{Base::whole}};
+    constexpr note h_ii_1 {Pitch{Letter::h}, Length{Base::whole}};
 
     constexpr note c_ii_4 {Pitch{Letter::c}, Length{Base::quarter}};
     constexpr note c_s_ii_4 {Pitch{Letter::c, Octave::ii, Accidential::sharp}, Length{Base::quarter}};
@@ -174,10 +188,12 @@ namespace {
     constexpr note a_ii_4 {Pitch{Letter::a}, Length{Base::quarter}};
     constexpr note h_ii_4 {Pitch{Letter::h}, Length{Base::quarter}};
 
-    constexpr note c_iii_4 {Pitch{Letter::c}, Length{Base::quarter}};
-    constexpr note c_s_iii_4 {Pitch{Letter::c, Octave::ii, Accidential::sharp}, Length{Base::quarter}};
+    constexpr note c_iii_1 {Pitch{Letter::c, Octave::iii}, Length{Base::whole}};
+    
+    constexpr note c_iii_4 {Pitch{Letter::c, Octave::iii}, Length{Base::quarter}};
+    constexpr note c_s_iii_4 {Pitch{Letter::c, Octave::iii, Accidential::sharp}, Length{Base::quarter}};
     constexpr note d_iii_4 {Pitch{Letter::d}, Length{Base::quarter}};
-    constexpr note d_s_iii_4 {Pitch{Letter::d, Octave::ii, Accidential::sharp}, Length{Base::quarter}};
+    constexpr note d_s_iii_4 {Pitch{Letter::d, Octave::iii, Accidential::sharp}, Length{Base::quarter}};
     constexpr note e_iii_4 {Pitch{Letter::e}, Length{Base::quarter}};
     constexpr note f_iii_4 {Pitch{Letter::f}, Length{Base::quarter}};
     constexpr note f_s_iii_4 {Pitch{Letter::f, Octave::ii, Accidential::sharp}, Length{Base::quarter}};
@@ -189,74 +205,154 @@ namespace {
 //    std::integral_constant<uint32_t, note::convert(Pitch{Letter::c, Octave::i, Accidential::flat}).value>::_;
 //    std::integral_constant<uint16_t, note::convert(Length{Base::quarter})>::_;
     
-    constexpr auto melody = AVR::Pgm::Array<note, c_ii_4, c_s_ii_4, d_ii_4, d_s_ii_4>{};
+//    constexpr auto melody = AVR::Pgm::Array<note, c_ii_4, c_s_ii_4, d_ii_4, d_s_ii_4>{};
+
+    constexpr auto startMelody = AVR::Pgm::Array<note, c_ii_1, d_ii_1, e_ii_1, f_ii_1, g_ii_1, a_ii_1, h_ii_1, c_iii_1>{};
+
+    constexpr auto sleepMelody = AVR::Pgm::Array<note, c_iii_1, g_ii_1, e_ii_1, c_ii_1>{};
+
 }
 
-int main() {
-    ccp::unlock([]{
-        clock::prescale<1>();
-    });
+template<typename Timer>
+struct FSM {
+    enum class State : uint8_t {Startup, Idle, WaitSleep, Sleep, WaitOn, On, WaitOff};
     
-    fet::init();
-    button::init();
-    led::init();
-    portmux::init();
-    eeprom::init();
-    systemTimer::init();
-    adcController::init();
-    toneGenerator::init();    
+    static constexpr auto intervall = Timer::intervall;
     
-    dbg1::template dir<Output>();
+    static constexpr Tick<Timer> idleTimeBeforeSleepTicks{3000_ms};
     
-#ifdef USE_HOTT
-    sensor::init();
-    menu::init();
-#else
-    terminalDevice::init<AVR::BaudRate<9600>>();
-#endif
+//    std::integral_constant<uint16_t, idleTimeBeforeSleepTicks.value>::_;
+    
+    inline static void init() {
+    }    
 
-    sleep::template init<sleep::PowerDown>();
-    
-    const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
-
-    uint8_t counter = 0;
-    
-    bool eepSave = false;
-    
-    etl::uint_ranged_circular<uint8_t, 0, melody.size() - 1> note_counter;
-    
-    while(true) {
-        eepSave |= eeprom::saveIfNeeded();
-#ifdef USE_HOTT
-        sensor::periodic();
-        menu::periodic();
-#else
-        terminalDevice::periodic();
-#endif
-        systemTimer::periodic([&]{
-#ifdef USE_HOTT
-            sensor::ratePeriodic();
-#endif
-            toneGenerator::periodic();
-            
-            dbg1::toggle();
-            alarmTimer::periodic([&](const auto& t){
-                if (periodicTimer == t) {
-                    ++counter;
-                    led::toggle();
-                    if ((counter % 2) == 0) {
-#ifndef USE_HOTT
-                        etl::outl<terminal>("test01"_pgm);
-#endif
-                        if (!toneGenerator::busy()) {
-                            toneGenerator::play(melody[note_counter]);
-                            ++note_counter;
-                        }
-                    }
+    inline static void periodic() {
+        const State lastState = mState;
+        ++stateTicks;
+        switch (mState) {
+        case State::Startup:
+            if (!toneGenerator::busy()) {
+                mState = State::Idle;
+            }
+            break;
+        case State::Idle:
+            if (stateTicks > idleTimeBeforeSleepTicks) {
+                mState = State::WaitSleep;
+            }
+            else {
+                if (button::event() == button::Press::Short) {
+                    mState = State::WaitOn;
                 }
-            });
-            appData.expire();
-        });
+            }
+            break;
+        case State::WaitSleep:
+            if (!toneGenerator::busy()) {
+                mState = State::Sleep;
+            }
+            break;
+        case State::Sleep:
+            break;
+        case State::WaitOn:
+            if (button::event() == button::Press::Long) {
+                mState = State::On;
+            }
+            if (button::event() == button::Press::None) {
+                mState = State::Idle;
+            }
+            break;
+        case State::On:
+            if (button::event() == button::Press::Short) {
+                mState = State::WaitOff;
+            }
+            break;
+        case State::WaitOff:
+            if (button::event() == button::Press::Long) {
+                mState = State::Idle;
+            }
+            if (button::event() == button::Press::None) {
+                mState = State::On;
+            }
+            break;
+//        default:
+//            break;
+        }
+        if (lastState != mState) {
+            stateTicks.reset();
+            switch(mState) {
+            case State::Startup:
+                fet::inactivate();
+                break;
+            case State::WaitSleep:
+                led::inactivate();
+                toneGenerator::play(sleepMelody);
+                break;
+            case State::Sleep:
+                led::inactivate();
+//                sleep::down();
+                break;
+            case State::WaitOn:
+                // melody
+                break;
+            case State::On:
+                led::activate();
+                fet::activate();
+                break;
+            case State::WaitOff:
+                // melody
+                break;
+            case State::Idle:
+                led::activate();
+                fet::inactivate();
+                break;
+            }
+        }
     }
+private:
+    inline static Tick<Timer> stateTicks;
+    inline static State mState{State::Startup};    
+};
+
+using fsm = FSM<systemTimer>;
+
+int main() {
+//    ccp::unlock([]{
+//        clock::prescale<1>();
+//    });
+    
+//    fet::init();
+//    button::init();
+//    led::init();
+//    portmux::init();
+//    eeprom::init();
+//    systemTimer::init();
+//    adcController::init();
+//    toneGenerator::init();    
+//    fsm::init();
+    
+//    dbg1::template dir<Output>();
+    
+//#ifdef USE_HOTT
+//    sensor::init();
+//    menu::init();
+//#else
+//    terminalDevice::init<AVR::BaudRate<9600>>();
+//#endif
+
+//    sleep::template init<sleep::PowerDown>();
+    
+//    const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
+
+//    uint8_t counter = 0;
+    
+//    bool eepSave = false;
+    
+//    toneGenerator::play(startMelody);
+
+    button::init();
+    
+//    PORTA.PIN7CTRL = 0x08;
+    
+    while(true);   
+
 }
 

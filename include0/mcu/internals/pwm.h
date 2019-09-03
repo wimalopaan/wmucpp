@@ -1,11 +1,15 @@
 #pragma once
 
 #include <std/chrono>
+#include <etl/types.h>
 #include <etl/rational.h>
+#include <etl/type_traits.h>
 
 #include "../common/isr.h"
 #include "../common/pwm.h"
 #include "../common/concepts.h"
+
+#include "timer.h"
 
 namespace AVR {
     using namespace std::literals::chrono;
@@ -283,6 +287,8 @@ namespace AVR {
         struct DynamicPwm<Portmux::Position<Component::Tca<0>, P>, MCU> final {
             
             using value_type = uint16_t;
+            
+            inline static constexpr auto f_timer = Project::Config::fMcu;
             
             template<typename Position, uint8_t N>
             struct WOMapper;

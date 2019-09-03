@@ -28,6 +28,7 @@
 #include <etl/type_traits.h>
 #include <etl/outfwd.h>
 
+
 namespace External {
     namespace Units {
         
@@ -70,6 +71,7 @@ namespace External {
                 return {static_cast<uint32_t>(value * megahertz::divider_type::denom)};
             }
         };
+        
 
         template<etl::Concepts::Stream Stream>
         inline void out_impl(const hertz& f) {

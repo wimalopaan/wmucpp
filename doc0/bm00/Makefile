@@ -20,6 +20,7 @@
 #MCU = atmega328pb
 #MCU = atmega1284p
 MCU = atmega4809
+#MCU = attiny1614
 F_OSC = 20000000
 
 CPPFLAGS += -DNDEBUG
@@ -42,6 +43,8 @@ targets += bm31.S bm31.elf
 targets += bm40.S bm40.elf
 targets += bm41.S bm41.elf
 targets += bm42.S bm42.elf
+targets += bm43.S bm43.elf
+targets += bm44.S bm44.elf
 
 -include ../../Makefile.avr0.include
 

@@ -91,73 +91,8 @@ namespace External {
         class AdcController<MCUAdc, Meta::NList<Channels...>, MCU> final {
             enum class State : uint8_t {Start, Converting, ConversionComplete};
 
-            template<typename NumberType, typename MMCU = MCU>
-            struct ChannelPinMapper;
-
-            template<auto V, AVR::Concepts::AtMega0 MMCU>
-            requires(V < 8)
-            struct ChannelPinMapper<std::integral_constant<decltype(V), V>, MMCU> {
-                using pin_type = AVR::Pin<AVR::Port<AVR::D>, V>;  
-            };
-
-            template<AVR::Concepts::AtMega0 MMCU>
-            struct ChannelPinMapper<std::integral_constant<decltype(8), 8>, MMCU> {
-                using pin_type = AVR::Pin<AVR::Port<AVR::E>, 0>;  
-            };
-            template<AVR::Concepts::AtMega0 MMCU>
-            struct ChannelPinMapper<std::integral_constant<decltype(9), 9>, MMCU> {
-                using pin_type = AVR::Pin<AVR::Port<AVR::E>, 1>;  
-            };
-            template<AVR::Concepts::AtMega0 MMCU>
-            struct ChannelPinMapper<std::integral_constant<decltype(10), 10>, MMCU> {
-                using pin_type = AVR::Pin<AVR::Port<AVR::E>, 2>;  
-            };
-            template<AVR::Concepts::AtMega0 MMCU>
-            struct ChannelPinMapper<std::integral_constant<decltype(11), 11>, MMCU> {
-                using pin_type = AVR::Pin<AVR::Port<AVR::E>, 3>;  
-            };
-            template<AVR::Concepts::AtMega0 MMCU>
-            struct ChannelPinMapper<std::integral_constant<decltype(12), 12>, MMCU> {
-                using pin_type = AVR::Pin<AVR::Port<AVR::F>, 2>;  
-            };
-            template<AVR::Concepts::AtMega0 MMCU>
-            struct ChannelPinMapper<std::integral_constant<decltype(13), 13>, MMCU> {
-                using pin_type = AVR::Pin<AVR::Port<AVR::F>, 3>;  
-            };
-            template<AVR::Concepts::AtMega0 MMCU>
-            struct ChannelPinMapper<std::integral_constant<decltype(14), 14>, MMCU> {
-                using pin_type = AVR::Pin<AVR::Port<AVR::F>, 4>;  
-            };
-            template<AVR::Concepts::AtMega0 MMCU>
-            struct ChannelPinMapper<std::integral_constant<decltype(15), 15>, MMCU> {
-                using pin_type = AVR::Pin<AVR::Port<AVR::F>, 5>;  
-            };
-
-            template<AVR::Concepts::AtTiny1 MMCU>
-            struct ChannelPinMapper<std::integral_constant<decltype(0), 0>, MMCU> {
-                using pin_type = AVR::Pin<AVR::Port<AVR::A>, 0>;  
-            };
-            template<AVR::Concepts::AtTiny1 MMCU>
-            struct ChannelPinMapper<std::integral_constant<decltype(1), 1>, MMCU> {
-                using pin_type = AVR::Pin<AVR::Port<AVR::A>, 1>;  
-            };
-            template<AVR::Concepts::AtTiny1 MMCU>
-            struct ChannelPinMapper<std::integral_constant<decltype(2), 2>, MMCU> {
-                using pin_type = AVR::Pin<AVR::Port<AVR::A>, 2>;  
-            };
-            template<AVR::Concepts::AtTiny1 MMCU>
-            struct ChannelPinMapper<std::integral_constant<decltype(3), 3>, MMCU> {
-                using pin_type = AVR::Pin<AVR::Port<AVR::A>, 3>;  
-            };
-            template<AVR::Concepts::AtTiny1 MMCU>
-            struct ChannelPinMapper<std::integral_constant<decltype(4), 4>, MMCU> {
-                using pin_type = AVR::Pin<AVR::Port<AVR::A>, 6>;  
-            };
-            template<AVR::Concepts::AtTiny1 MMCU>
-            struct ChannelPinMapper<std::integral_constant<decltype(5), 5>, MMCU> {
-                using pin_type = AVR::Pin<AVR::Port<AVR::A>, 7>;  
-            };
-            
+            template<typename T, typename MMCU>
+            using ChannelPinMapper = AVR::ADC::ChannelPinMapper<T, MMCU>;
             
             template<typename T>
             using map_channel_to_pin = typename ChannelPinMapper<T, MCU>::pin_type;

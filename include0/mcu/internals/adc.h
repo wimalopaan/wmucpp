@@ -106,8 +106,14 @@ namespace AVR {
         using va2_t = typename MCU::Vref::CtrlA2_t;
         using vb_t = typename MCU::Vref::CtrlB_t;
     public:
+        using reso_type = Reso;
         using value_type = typename Reso::type;
 
+        static constexpr auto VRef = VRefType::value;
+        static constexpr auto refs = VRefType::refs;
+        
+        static constexpr double VBit = VRef / Reso::type::Upper;
+        
         inline static void init() {
             if constexpr(std::is_same_v<VRefType, Vref::V1_1>) {
                 mcu_vref()->ctrla.template set<va1_t::adc_V1_1>();           
