@@ -103,13 +103,14 @@ namespace External {
 //            pin_list::_;
             
         public:
-            typedef MCUAdc mcu_adc_type;
-            typedef typename MCUAdc::value_type value_type;
+            using mcu_adc_type = MCUAdc ;
+            using value_type = typename MCUAdc::value_type;
+            
             inline static constexpr uint8_t channels[] = {Channels...};
             inline static constexpr uint8_t NumberOfChannels = sizeof... (Channels);    
             inline static constexpr auto VRef = MCUAdc::VRef;
             
-            typedef etl::uint_ranged<uint8_t, 0, NumberOfChannels - 1> index_type;     
+            using index_type = etl::uint_ranged_circular<uint8_t, 0, NumberOfChannels - 1>;     
             
             static_assert(NumberOfChannels <= 14, "too much channels");
             static_assert(NumberOfChannels >  0, "use at least one channel");
@@ -132,9 +133,9 @@ namespace External {
                     state = State::Converting;
                     break;
                 case State::Converting:
-                    if (MCUAdc::conversionReady()) {
+                    MCUAdc::whenConversionReady([&]{
                         state = State::ConversionComplete;
-                    }
+                    });
                     break;
                 case State::ConversionComplete:
                     values[mActualChannel] = MCUAdc::value();
@@ -144,23 +145,13 @@ namespace External {
                 }
             }
             
-            // ranged
-//            inline static typename MCUAdc::value_type value(uint8_t index) {
-//                assert(index < NumberOfChannels);
-//                return values[index];
-//            }
             inline static typename MCUAdc::value_type value(index_type index) {
                 return values[index.toInt()];
             }
             
-            // ranged
-//            inline static typename MCUAdc::voltage_type voltage(uint8_t index) {
-//                return MCUAdc::toVoltage(value(index));
-//            }
-            
         private:
-            inline static typename MCUAdc::value_type values[NumberOfChannels] = {};
-            inline static etl::uint_ranged_circular<uint8_t, 0, NumberOfChannels - 1> mActualChannel;
+            inline static value_type values[NumberOfChannels] = {};
+            inline static index_type mActualChannel;
         };
     
     }

@@ -78,11 +78,17 @@ namespace Hott {
             inline void voltageRaw(uint16_t v) {
                 mData.voltage = v;
             }
+            inline void voltage(const Hott::Units::battery_voltage_t& bv) {
+                mData.voltage = bv.value;
+            }
             inline void voltageMinRaw(uint16_t v) {
                 mData.voltage_min = v;
             }
             inline void currentRaw(uint16_t v) {
                 mData.current = v;
+            }
+            inline void current(const Hott::Units::current_t& c) {
+                mData.current = c.value;
             }
             inline void currentMaxRaw(uint16_t v) {
                 mData.current_max = v;

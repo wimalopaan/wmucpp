@@ -33,8 +33,9 @@ namespace Hott {
     namespace Units {
         using battery_voltage_t = External::Units::voltage<uint16_t, std::ratio<1,10>>;
         using cell_voltage_t = External::Units::voltage<uint8_t, std::ratio<1,500>>;
-        
-        template<typename ADConv, typename Voltage>
+        using current_t = External::Units::ampere<uint16_t, std::ratio<1,10>>;
+
+        template<typename ADConv, typename Voltage, typename Scale = std::ratio<1,1>>
         struct Converter {
             using adc_type = ADConv;
             using raw_type = ADConv::value_type;
@@ -53,7 +54,7 @@ namespace Hott {
             static inline constexpr uint16_t nominator_value = (1 << nominator_bits) - 1;
 //            using std::integral_constant<uint8_t, nominator_value>::_;
             
-            static inline constexpr uint16_t denominator_value = (((float)nominator_value * scale_type::nom) / scale_type::denom) / adc_type::VBit;
+            static inline constexpr uint16_t denominator_value = (((float)nominator_value * scale_type::nom) / scale_type::denom) / ((adc_type::VBit * Scale::nom) / Scale::denom);
 //            using std::integral_constant<uint16_t, denominator_value>::_;
             
             static inline constexpr voltage_type convert(auto raw) {
@@ -64,9 +65,7 @@ namespace Hott {
                 auto v = (raw.toInt() * nominator_value) / denominator_value;
                 return {(representation_type)v};
             }
-            
         };
-        
     }
     
     using namespace std::literals::chrono;

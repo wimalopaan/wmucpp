@@ -132,7 +132,7 @@ namespace AVR {
             }
             mcu_vref()->ctrlb.template set<vb_t::adc_refen>();           
             
-            mcu_adc()->ctrlc.template set<cc_t::div16 | cc_t::ref_internal>();           
+            mcu_adc()->ctrlc.template set<cc_t::div32 | cc_t::ref_internal>();           
             
             if constexpr(std::is_same_v<Reso, Resolution<8>>) {
                 mcu_adc()->ctrla.template set<ca_t::ressel | ca_t::enable>();           
@@ -149,17 +149,11 @@ namespace AVR {
             mcu_adc()->command.template set<co_t::stconv>();           
         }
         
-        inline static bool conversionReady() {
-            return mcu_adc()->intflags.template isSet<int_t::resrdy>();        
-//            return !mcu_adc()->command.template isSet<co_t::stconv>();           
-        }
-
         template<typename F>
         inline static void whenConversionReady(const F& f) {
-            if (conversionReady()) {
-                f(value());
-                mcu_adc()->intflags.template reset<int_t::resrdy>();
-            }
+            mcu_adc()->intflags.template testAndReset<int_t::resrdy>([&]{
+                f();
+            });
         }
 
         inline static auto value() {
@@ -168,6 +162,12 @@ namespace AVR {
         
         static void channel(uint8_t ch) {
             mcu_adc()->muxpos.template set(typename MCU::Adc::MuxPos_t{ch});
+        }
+        
+        private:
+
+        inline static bool conversionReady() {
+            return mcu_adc()->intflags.template isSet<int_t::resrdy>();        
         }
     };
     

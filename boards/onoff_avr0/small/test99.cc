@@ -16,9 +16,9 @@
 
 #include <external/hal/alarmtimer.h>
 #include <external/hal/adccontroller.h>
-#include <external/hott/sumdprotocolladapter.h>
-#include <external/hott/experimental/sensor.h>
 #include <external/hott/hott.h>
+#include <external/hott/experimental/sensor.h>
+#include <external/hott/experimental/adapter.h>
 #include <external/hott/menu.h>
 #include <external/units/music.h>
 #include <external/solutions/tick.h>
@@ -73,7 +73,7 @@ using PortB = Port<B>;
 
 using dbg1      = Pin<PortA, 2>; 
 using led       = ActiveHigh<Pin<PortA, 3>, Output>;
-using button    = External::Button<ActiveLow<Pin<PortA, 7>, Input>, systemTimer, Tick<systemTimer>{10_ms}, Tick<systemTimer>{3000_ms}>;
+using button    = External::Button<ActiveLow<Pin<PortA, 7>, Input>, systemTimer, Tick<systemTimer>{100_ms}, Tick<systemTimer>{3000_ms}>;
 using fet       = ActiveHigh<Pin<PortB, 1>, Output>;
 
 using ccp = Cpu::Ccp<>;
@@ -93,8 +93,10 @@ using terminal = etl::basic_ostream<terminalDevice>;
 
 using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V4_3>;
 using adcController = External::Hal::AdcController<adc, Meta::NList<1, 5>>;
+//using adcController = External::Hal::AdcController<adc, Meta::NList<1>>;
 
-//using buzzerPwm = PWM::DynamicPwm<tcaPosition>;
+using battVoltageConverter = Hott::Units::Converter<adc, Hott::Units::battery_voltage_t, std::ratio<1,1>>; // todo: richtiger scale faktor
+using currentConverter = Hott::Units::Converter<adc, Hott::Units::current_t, std::ratio<1,1>>; // todo: richtiger scale faktor
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition>>;
 
@@ -106,6 +108,7 @@ private:
     Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mTimeout{"TimeOut"_pgm, appData, Storage::AVKey::TimeOut, 2};
     Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mType{"Type"_pgm, appData, Storage::AVKey::SensorType, 2};
 };
+
 
 template<typename PA, typename TopMenu>
 class HottMenu final {
@@ -163,7 +166,7 @@ namespace {
     using namespace External::Music;
     
     using note = Note<toneWrapper, std::integral_constant<uint16_t, 40>>;
-
+    
     constexpr note c_ii_1 {Pitch{Letter::c}, Length{Base::whole}};
     constexpr note c_s_ii_1 {Pitch{Letter::c, Octave::ii, Accidential::sharp}, Length{Base::whole}};
     constexpr note d_ii_1 {Pitch{Letter::d}, Length{Base::whole}};
@@ -175,7 +178,7 @@ namespace {
     constexpr note g_s_ii_1 {Pitch{Letter::g, Octave::ii, Accidential::sharp}, Length{Base::whole}};
     constexpr note a_ii_1 {Pitch{Letter::a}, Length{Base::whole}};
     constexpr note h_ii_1 {Pitch{Letter::h}, Length{Base::whole}};
-
+    
     constexpr note c_ii_4 {Pitch{Letter::c}, Length{Base::quarter}};
     constexpr note c_s_ii_4 {Pitch{Letter::c, Octave::ii, Accidential::sharp}, Length{Base::quarter}};
     constexpr note d_ii_4 {Pitch{Letter::d}, Length{Base::quarter}};
@@ -187,7 +190,7 @@ namespace {
     constexpr note g_s_ii_4 {Pitch{Letter::g, Octave::ii, Accidential::sharp}, Length{Base::quarter}};
     constexpr note a_ii_4 {Pitch{Letter::a}, Length{Base::quarter}};
     constexpr note h_ii_4 {Pitch{Letter::h}, Length{Base::quarter}};
-
+    
     constexpr note c_iii_1 {Pitch{Letter::c, Octave::iii}, Length{Base::whole}};
     
     constexpr note c_iii_4 {Pitch{Letter::c, Octave::iii}, Length{Base::quarter}};
@@ -202,15 +205,11 @@ namespace {
     constexpr note a_iii_4 {Pitch{Letter::a}, Length{Base::quarter}};
     constexpr note h_iii_4 {Pitch{Letter::h}, Length{Base::quarter}};
     
-//    std::integral_constant<uint32_t, note::convert(Pitch{Letter::c, Octave::i, Accidential::flat}).value>::_;
-//    std::integral_constant<uint16_t, note::convert(Length{Base::quarter})>::_;
+    constexpr auto startMelody = AVR::Pgm::Array<note, c_ii_1, d_ii_1, e_ii_1, f_ii_1, g_ii_1, a_ii_1, h_ii_1, c_iii_1>{}; // C-Dur up
+    constexpr auto sleepMelody = AVR::Pgm::Array<note, c_iii_1, g_ii_1, e_ii_1, c_ii_1>{}; // C-Dur 3-tone down
     
-//    constexpr auto melody = AVR::Pgm::Array<note, c_ii_4, c_s_ii_4, d_ii_4, d_s_ii_4>{};
-
-    constexpr auto startMelody = AVR::Pgm::Array<note, c_ii_1, d_ii_1, e_ii_1, f_ii_1, g_ii_1, a_ii_1, h_ii_1, c_iii_1>{};
-
-    constexpr auto sleepMelody = AVR::Pgm::Array<note, c_iii_1, g_ii_1, e_ii_1, c_ii_1>{};
-
+    constexpr auto waitOnMelody = AVR::Pgm::Array<note, c_ii_1, f_s_ii_1>{}; // Tritonus
+    constexpr auto waitOffMelody = AVR::Pgm::Array<note, c_iii_1, h_ii_1, c_iii_1, a_ii_1, c_iii_1, g_ii_1, c_iii_1, f_ii_1, c_iii_1, e_ii_1, c_iii_1, d_ii_1, c_iii_1, c_ii_1>{};
 }
 
 template<typename Timer>
@@ -219,13 +218,12 @@ struct FSM {
     
     static constexpr auto intervall = Timer::intervall;
     
-    static constexpr Tick<Timer> idleTimeBeforeSleepTicks{3000_ms};
+    static constexpr Tick<Timer> idleTimeBeforeSleepTicks{10000_ms};
     
-//    std::integral_constant<uint16_t, idleTimeBeforeSleepTicks.value>::_;
+    //    std::integral_constant<uint16_t, idleTimeBeforeSleepTicks.value>::_;
     
-    inline static void init() {
-    }    
-
+    inline static void init() {}    
+    
     inline static void periodic() {
         const State lastState = mState;
         ++stateTicks;
@@ -251,12 +249,15 @@ struct FSM {
             }
             break;
         case State::Sleep:
+            if (button::event() == button::Press::Short) {
+                mState = State::WaitOn;
+            }
             break;
         case State::WaitOn:
-            if (button::event() == button::Press::Long) {
+            if (auto event = button::event(); event == button::Press::Long) {
                 mState = State::On;
             }
-            if (button::event() == button::Press::None) {
+            else if (event == button::Press::Release) {
                 mState = State::Idle;
             }
             break;
@@ -266,15 +267,15 @@ struct FSM {
             }
             break;
         case State::WaitOff:
-            if (button::event() == button::Press::Long) {
+            if (auto event = button::event(); event == button::Press::Long) {
                 mState = State::Idle;
             }
-            if (button::event() == button::Press::None) {
+            else if (event == button::Press::Release) {
                 mState = State::On;
             }
             break;
-//        default:
-//            break;
+            //        default:
+            //            break;
         }
         if (lastState != mState) {
             stateTicks.reset();
@@ -288,19 +289,23 @@ struct FSM {
                 break;
             case State::Sleep:
                 led::inactivate();
-//                sleep::down();
+                //                sleep::down();
                 break;
             case State::WaitOn:
-                // melody
+                led::inactivate();
+                toneGenerator::play(waitOnMelody, true);
                 break;
             case State::On:
+                toneGenerator::off();
                 led::activate();
                 fet::activate();
                 break;
             case State::WaitOff:
-                // melody
+                led::inactivate();
+                toneGenerator::play(waitOffMelody, true);
                 break;
             case State::Idle:
+                toneGenerator::off();
                 led::activate();
                 fet::inactivate();
                 break;
@@ -315,44 +320,98 @@ private:
 using fsm = FSM<systemTimer>;
 
 int main() {
-//    ccp::unlock([]{
-//        clock::prescale<1>();
-//    });
+    ccp::unlock([]{
+        clock::prescale<1>();
+    });
     
-//    fet::init();
+    fet::init();
+    fet::activate();
 //    button::init();
 //    led::init();
 //    portmux::init();
 //    eeprom::init();
-//    systemTimer::init();
-//    adcController::init();
+    systemTimer::init();
 //    toneGenerator::init();    
 //    fsm::init();
+
+    adcController::init();
     
 //    dbg1::template dir<Output>();
     
-//#ifdef USE_HOTT
-//    sensor::init();
-//    menu::init();
-//#else
-//    terminalDevice::init<AVR::BaudRate<9600>>();
-//#endif
-
+#ifdef USE_HOTT
+    sensor::init();
+    menu::init();
+    auto sensorData = Hott::Experimental::Adapter<sensor::binaryMessage_type>(sensor::data());
+#else
+    terminalDevice::init<AVR::BaudRate<9600>>();
+#endif
+    
 //    sleep::template init<sleep::PowerDown>();
     
-//    const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
-
-//    uint8_t counter = 0;
+    const auto periodicTimer = alarmTimer::create(1000_ms, External::Hal::AlarmFlags::Periodic);
     
 //    bool eepSave = false;
     
 //    toneGenerator::play(startMelody);
-
-    button::init();
     
-//    PORTA.PIN7CTRL = 0x08;
+//    VREF.CTRLA = (0x03) << 4;
+//    VREF.CTRLB = 0x02;
     
-    while(true);   
+//    ADC0.CTRLC |= 0x07;
+//    ADC0.MUXPOS = 0x01;
+//    ADC0.CTRLA |= ADC_ENABLE_bm;
+    
+//    uint16_t av = 0;
+    
+    while(true) {
+#ifdef USE_HOTT
+        sensor::periodic();
+        menu::periodic();
+#else
+        terminalDevice::periodic();
+#endif
+//        eepSave |= eeprom::saveIfNeeded();
 
+        adcController::periodic();
+        
+//        if(ADC0.INTFLAGS & 0x01) {
+//            av = ADC0.RES;
+//        }
+//        else {
+//            ADC0.COMMAND = 0x01;
+//        }
+        
+        
+        systemTimer::periodic([&]{
+#ifdef USE_HOTT
+            sensor::ratePeriodic();
+#endif
+//            toneGenerator::periodic();
+//            fsm::periodic();
+            
+//            button::periodic();
+            
+//            dbg1::toggle();
+            alarmTimer::periodic([&](const auto& t){
+                if (periodicTimer == t) {
+#ifdef USE_HOTT
+                    auto v = battVoltageConverter::convert(adcController::value(0));
+                    sensorData.voltage(v);
+                    auto c = currentConverter::convert(adcController::value(1));
+                    sensorData.current(c);
+#else
+//                    etl::outl<terminal>("test99 v: "_pgm, av);
+                    etl::outl<terminal>("test99 v: "_pgm, adcController::value(adcController::index_type{0}).toInt());
+//                    etl::outl<terminal>("test99 v: "_pgm, adcController::value(0).toInt(), " c: "_pgm, adcController::value(1).toInt());
+//                    decltype(adcController::value(0))::_;
+//                    auto v = battVoltageConverter::convert(adcController::value(0));
+////                    decltype(v)::_;
+//                    etl::outl<terminal>("v * 10: "_pgm, v.value);
+#endif
+                }
+            });
+//            appData.expire();
+        });
+    }
 }
 

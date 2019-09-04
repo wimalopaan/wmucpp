@@ -45,6 +45,15 @@ namespace External {
         using decivolt = voltage<uint16_t, ratio<1,10>>;
         using centivolt = voltage<uint16_t, ratio<1,100>>;
         using millivolt = voltage<uint16_t, ratio<1,1000>>;
+
+        template<typename Representation, typename Scale = ratio<1,1>>
+        struct ampere {
+            using value_type = Representation;
+            using divider_type = Scale;
+            const Representation value = 0;
+        };
+
+        using milliampere = ampere<uint16_t, ratio<1,1000>>;
         
         template<typename Representation, typename Divider = ratio<1,1>>
         struct frequency;

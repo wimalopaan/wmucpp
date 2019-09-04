@@ -137,7 +137,8 @@ namespace AVR {
             volatile std::byte reserved1;
             volatile std::byte reserved2;
             
-            DataRegister<Adc, ReadWrite, uint16_t> res;
+            DataRegister<Adc, ReadOnly, uint16_t> res;
+            
             DataRegister<Adc, ReadWrite, uint16_t> winlt;
             DataRegister<Adc, ReadWrite, uint16_t> winht;
             

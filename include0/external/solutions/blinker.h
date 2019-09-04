@@ -31,7 +31,7 @@
 
 namespace External {
 
-    template<typename Pin, const std::chrono::milliseconds& Intervall, const std::chrono::milliseconds& Pulse, const std::chrono::milliseconds& Period>
+    template<typename Pin, auto Intervall, std::chrono::milliseconds Pulse, std::chrono::milliseconds Period>
     struct Blinker {
         enum class State : uint8_t {Undefined, Off, Steady, Blink, _Number};
         
