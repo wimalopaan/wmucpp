@@ -39,8 +39,17 @@ namespace External {
         struct voltage {
             using value_type = Representation;
             using divider_type = Scale;
-            const Representation value = 0;
+            Representation value = 0;
         };
+        
+        template<typename R, typename S>
+        inline bool operator>(const voltage<R,S>& lhs, const voltage<R,S>& rhs) {
+            return lhs.value > rhs.value;
+        }
+        template<typename R, typename S>
+        inline bool operator<(const voltage<R,S>& lhs, const voltage<R,S>& rhs) {
+            return lhs.value < rhs.value;
+        }
         
         using decivolt = voltage<uint16_t, ratio<1,10>>;
         using centivolt = voltage<uint16_t, ratio<1,100>>;
@@ -50,10 +59,35 @@ namespace External {
         struct ampere {
             using value_type = Representation;
             using divider_type = Scale;
-            const Representation value = 0;
+            Representation value = 0;
         };
 
+        template<typename R, typename S>
+        inline bool operator>(const ampere<R,S>& lhs, const ampere<R,S>& rhs) {
+            return lhs.value > rhs.value;
+        }
+        template<typename R, typename S>
+        inline bool operator<(const ampere<R,S>& lhs, const ampere<R,S>& rhs) {
+            return lhs.value < rhs.value;
+        }
+        
         using milliampere = ampere<uint16_t, ratio<1,1000>>;
+
+        template<typename Representation, typename Scale = ratio<1,1>>
+        struct celsius {
+            using value_type = Representation;
+            using divider_type = Scale;
+            Representation value = 0;
+        };
+        template<typename R, typename S>
+        inline bool operator>(const celsius<R,S>& lhs, const celsius<R,S>& rhs) {
+            return lhs.value > rhs.value;
+        }
+        template<typename R, typename S>
+        inline bool operator<(const celsius<R,S>& lhs, const celsius<R,S>& rhs) {
+            return lhs.value < rhs.value;
+        }
+        
         
         template<typename Representation, typename Divider = ratio<1,1>>
         struct frequency;
@@ -147,6 +181,11 @@ namespace External {
             return ((uint64_t)dt.value * f.value * Frequency::divider_type::denom) / Duration::period_type::denom;
         }
         
+        template<typename Rep, typename Div, etl::Concepts::Integral I>
+        constexpr duration<Rep, Div> operator*(const duration<Rep, Div>& fl, I m) {
+            return {fl.value * m};
+        }
+
         constexpr microseconds operator/(uint16_t v, const hertz& f) {
             return microseconds{(uint16_t)(((uint64_t)v * microseconds::period_type::denom) / f.value)};
         }

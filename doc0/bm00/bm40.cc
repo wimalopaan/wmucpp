@@ -28,7 +28,7 @@ int main() {
     etl::uint_ranged_circular<uint8_t, 0, array.size() - 1> index;
     
     while(true) {
-        const auto n = array[index];
+        const auto n = array[index.toInt()];
         r1 = n.pitch;
         r2 = n.length;
         ++index;

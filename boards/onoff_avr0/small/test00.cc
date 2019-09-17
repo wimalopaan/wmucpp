@@ -1,6 +1,6 @@
 #define NDEBUG
 
-//#define USE_HOTT
+#define USE_HOTT
 
 #include <mcu/avr.h>
 #include <mcu/internals/adc.h>

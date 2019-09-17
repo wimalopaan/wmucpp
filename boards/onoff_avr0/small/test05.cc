@@ -2,7 +2,6 @@
 
 // ibus protokoll
 // calibrierung über eeprom (offset / steigung) für spannung / strom
-// einschaltverzögerung (nach on) (eeprom)
 // hot-t-sensor-type (eeprom)
 
 //#define NDEBUG
@@ -45,19 +44,18 @@ namespace Parameter {
     constexpr auto fRtc = 500_Hz;
 }
 
-struct Storage final {
-    Storage() = delete;
-    enum class AVKey : uint8_t {TimeOut = 0, SoftStart, SensorType,
-                                _Number};
+namespace Storage {
+    enum class AVKey : uint8_t {TimeOut = 0, SoftStart, SensorType, Magic0, Magic1, _Number};
     
     struct ApplData final : public EEProm::DataBase<ApplData> {
-        etl::uint_NaN<uint8_t>& operator[](AVKey key) {
+        using value_type = etl::uint_NaN<uint8_t>;
+        value_type& operator[](AVKey key) {
             return AValues[static_cast<uint8_t>(key)];
         }
     private:
-        std::array<etl::uint_NaN<uint8_t>, static_cast<uint8_t>(AVKey::_Number)> AValues;
+        std::array<value_type, static_cast<uint8_t>(AVKey::_Number)> AValues;
     };
-};
+}
 
 using eeprom = EEProm::Controller<Storage::ApplData>;
 auto& appData = eeprom::data();
@@ -116,7 +114,7 @@ public:
     RCMenu() : Menu(this, "OnOff 1.0"_pgm, &mSoft, &mTimeout, &mType) {}
 private:
     Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mSoft{"Start"_pgm, appData, Storage::AVKey::SoftStart, 2};
-    Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mTimeout{"TimeOut"_pgm, appData, Storage::AVKey::TimeOut, 2};
+    Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mTimeout{"TimeOut"_pgm, appData, Storage::AVKey::TimeOut, 10};
     Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mType{"Type"_pgm, appData, Storage::AVKey::SensorType, 2};
 };
 
@@ -178,6 +176,8 @@ namespace {
     
     using note = Note<toneWrapper, std::integral_constant<uint16_t, 40>>;
     
+    constexpr note c_ii_0 {Pitch{Letter::c}, Length{Base::doublenote}};
+    
     constexpr note c_ii_1 {Pitch{Letter::c}, Length{Base::whole}};
     constexpr note c_s_ii_1 {Pitch{Letter::c, Octave::ii, Accidential::sharp}, Length{Base::whole}};
     constexpr note d_ii_1 {Pitch{Letter::d}, Length{Base::whole}};
@@ -210,17 +210,19 @@ namespace {
     
     constexpr note c_iii_4 {Pitch{Letter::c, Octave::iii}, Length{Base::quarter}};
     constexpr note c_s_iii_4 {Pitch{Letter::c, Octave::iii, Accidential::sharp}, Length{Base::quarter}};
-    constexpr note d_iii_4 {Pitch{Letter::d}, Length{Base::quarter}};
+    constexpr note d_iii_4 {Pitch{Letter::d, Octave::iii}, Length{Base::quarter}};
     constexpr note d_s_iii_4 {Pitch{Letter::d, Octave::iii, Accidential::sharp}, Length{Base::quarter}};
-    constexpr note e_iii_4 {Pitch{Letter::e}, Length{Base::quarter}};
-    constexpr note f_iii_4 {Pitch{Letter::f}, Length{Base::quarter}};
-    constexpr note f_s_iii_4 {Pitch{Letter::f, Octave::ii, Accidential::sharp}, Length{Base::quarter}};
-    constexpr note g_iii_4 {Pitch{Letter::g}, Length{Base::quarter}};
-    constexpr note g_s_iii_4 {Pitch{Letter::g, Octave::ii, Accidential::sharp}, Length{Base::quarter}};
-    constexpr note a_iii_4 {Pitch{Letter::a}, Length{Base::quarter}};
-    constexpr note h_iii_4 {Pitch{Letter::h}, Length{Base::quarter}};
+    constexpr note e_iii_4 {Pitch{Letter::e, Octave::iii}, Length{Base::quarter}};
+    constexpr note f_iii_4 {Pitch{Letter::f, Octave::iii}, Length{Base::quarter}};
+    constexpr note f_s_iii_4 {Pitch{Letter::f, Octave::iii, Accidential::sharp}, Length{Base::quarter}};
+    constexpr note g_iii_4 {Pitch{Letter::g, Octave::iii}, Length{Base::quarter}};
+    constexpr note g_s_iii_4 {Pitch{Letter::g, Octave::iii, Accidential::sharp}, Length{Base::quarter}};
+    constexpr note a_iii_4 {Pitch{Letter::a, Octave::iii}, Length{Base::quarter}};
+    constexpr note a_iii_1 {Pitch{Letter::a, Octave::iii}, Length{Base::whole}};
+    constexpr note h_iii_4 {Pitch{Letter::h, Octave::iii}, Length{Base::quarter}};
     
     constexpr note pause_4 {Pitch{Letter::pause}, Length{Base::quarter}};
+    constexpr note pause_1 {Pitch{Letter::pause}, Length{Base::whole}};
     
     constexpr auto startMelody = AVR::Pgm::Array<note, c_ii_1, d_ii_1, e_ii_1, f_ii_1, g_ii_1, a_ii_1, h_ii_1, c_iii_1>{}; // C-Dur up
     constexpr auto sleepMelody = AVR::Pgm::Array<note, c_iii_1, g_ii_1, e_ii_1, c_ii_1>{}; // C-Dur 3-tone down
@@ -228,20 +230,33 @@ namespace {
     constexpr auto waitOnMelody = AVR::Pgm::Array<note, c_ii_1, f_s_ii_1>{}; // Tritonus
     constexpr auto waitOffMelody = AVR::Pgm::Array<note, c_iii_1, h_ii_1, c_iii_1, a_ii_1, c_iii_1, g_ii_1, c_iii_1, f_ii_1, c_iii_1, e_ii_1, c_iii_1, d_ii_1, c_iii_1, c_ii_1>{};
     
-    constexpr auto onMelody = AVR::Pgm::Array<note, c_ii_4, pause_4, c_ii_4, pause_4, c_ii_2, e_ii_2, g_ii_2, c_iii_1>{};
+    constexpr auto onMelody = AVR::Pgm::Array<note, pause_4, c_ii_4, pause_4, c_ii_4, pause_4, c_ii_2, e_ii_2, g_ii_2, c_iii_1>{};
+    constexpr auto offMelody = AVR::Pgm::Array<note, c_ii_0, pause_1, c_ii_0, pause_1, c_ii_0>{};
     
 }
 
 template<typename Timer>
 struct FSM {
-    enum class State : uint8_t {Init, Startup, Idle, WaitSleep, Sleep, WaitOn, On, FetOn, WaitOff};
+    enum class State : uint8_t {Init, Startup, Idle, WaitSleep, Sleep, WaitOn, WaitOnInterrupted, On, FetOn, WaitOff, WaitOffInterrupted};
     
     static constexpr auto intervall = Timer::intervall;
     
     static constexpr Tick<Timer> idleTimeBeforeSleepTicks{10000_ms};
     //    std::integral_constant<uint16_t, idleTimeBeforeSleepTicks.value>::_;
+
+    static constexpr Tick<Timer> softStartTicks{100_ms};
     
-    inline static void init() {}    
+    inline static Tick<Timer> onDelay;
+    
+    inline static void init() {
+        load();
+    }    
+
+    inline static void load() {
+        if (appData[Storage::AVKey::TimeOut]) {
+            onDelay = 1000_ms * appData[Storage::AVKey::TimeOut].toInt();
+        }
+    }    
     
     inline static void periodic() {
         const State lastState = mState;
@@ -282,23 +297,35 @@ struct FSM {
                 mState = State::On;
             }
             else if (event == button::Press::Release) {
-                mState = State::Idle;
+                mState = State::WaitOnInterrupted;
             }
             break;
+        case State::WaitOnInterrupted:
+            mState = State::Idle;
+            break;
         case State::On:
+            if (stateTicks > onDelay) {
+                mState = State::FetOn;
+            }
             if (button::event() == button::Press::Short) {
                 mState = State::WaitOff;
             }
             break;
         case State::FetOn:
+            if (button::event() == button::Press::Short) {
+                mState = State::WaitOff;
+            }
             break;
         case State::WaitOff:
             if (auto event = button::event(); event == button::Press::Long) {
                 mState = State::Idle;
             }
             else if (event == button::Press::Release) {
-                mState = State::On;
+                mState = State::WaitOffInterrupted;
             }
+            break;
+        case State::WaitOffInterrupted:
+            mState = State::On;
             break;
             //        default:
             //            break;
@@ -322,23 +349,36 @@ struct FSM {
                 mState = State::Idle;
                 break;
             case State::WaitOn:
-                led::blink(2);
                 toneGenerator::play(waitOnMelody, true);
+                led::blink(2);
                 break;
+            case State::WaitOnInterrupted:
+                toneGenerator::play(h_iii_4);
+                break;                
+            case State::WaitOffInterrupted:
+                toneGenerator::play(h_iii_4);
+                break;                
             case State::On:
-                toneGenerator::off();
-                led::blink(5);
-                toneGenerator::play(onMelody, true);
-                fet::activate();
+                if (lastState != State::WaitOffInterrupted) {
+                    toneGenerator::play(onMelody);
+                }
+                led::blink(4);
                 break;
             case State::FetOn:
+                if (!toneGenerator::busy()) {
+                    toneGenerator::play(a_iii_1);
+                }
+                led::blink(5);
+                fet::activate();
                 break;
             case State::WaitOff:
                 led::blink(3);
                 toneGenerator::play(waitOffMelody, true);
                 break;
             case State::Idle:
-                toneGenerator::off();
+                if (lastState != State::WaitOnInterrupted) {
+                    toneGenerator::play(offMelody);
+                }
                 led::blink(1);
                 fet::inactivate();
                 break;
@@ -356,22 +396,33 @@ struct Measurements {
     static inline void periodic() {
         etl::circular_call(part0, part1, part2, part3);
     }
+    static inline void tick() {
+        c += ((uint32_t)last_current.value * 2); // 200ms
+    }
 private:
     inline static auto sensorData = Hott::Experimental::Adapter<sensor::binaryMessage_type>(sensor::data());
 
-    inline static Hott::Units::battery_voltage_t voltage_min;
+    inline static Hott::Units::battery_voltage_t voltage_min{std::numeric_limits<Hott::Units::battery_voltage_t::value_type>::max()};
+    inline static Hott::Units::battery_voltage_t last_voltage;
     inline static Hott::Units::current_t current_max;
+    inline static Hott::Units::current_t last_current;
     inline static External::Units::celsius<uint16_t, std::ratio<1, 1>> temp_max;
 
+    inline static uint32_t c = 0;
+    
     static inline void part0() {
         auto v = battVoltageConverter::convert(adcController::value(adcController::index_type{0}));
+        last_voltage = v;
         sensorData.voltage(v);
-        voltage_min = std::min(voltage_min, v);
-        sensorData.voltageMin(voltage_min);
+        if (v > Hott::Units::battery_voltage_t{20}) {
+            voltage_min = std::min(voltage_min, v);
+            sensorData.voltageMin(voltage_min);
+        }
         
     }
     static inline void part1() {
         auto c = currentConverter::convert(adcController::value(adcController::index_type{1}));
+        last_current = c;
         sensorData.current(c);
         current_max = std::max(current_max, c);
         sensorData.currentMax(current_max);
@@ -384,7 +435,7 @@ private:
         sensorData.tempMax(temp_max);
     }
     static inline void part3() {
-        
+        sensorData.capRaw(c / 3600);
     }
 };
 
@@ -396,13 +447,26 @@ int main() {
     });
     
     fet::init();
+    eeprom::init();
+    
+    [[maybe_unused]] bool changed = false;
+    
+    {
+        constexpr auto m0 = Storage::ApplData::value_type{43};
+        constexpr auto m1 = Storage::ApplData::value_type{44};
+        if (!((appData[Storage::AVKey::Magic0] == m0) && (appData[Storage::AVKey::Magic1] == m1))) {
+            appData[Storage::AVKey::Magic0] = m0;
+            appData[Storage::AVKey::Magic1] = m1;
+            appData.change();
+            changed  = true;
+        }
+    }
     
     buttonPin::attributes<Meta::List<Attributes::Interrupt<Attributes::BothEdges>>>();
     button::init();
     
     led::init();
     portmux::init();
-    eeprom::init();
     systemTimer::init();
     adcController::init();
     
@@ -423,13 +487,14 @@ int main() {
     sleep::template init<sleep::PowerDown>();
     
     const auto periodicTimer = alarmTimer::create(1000_ms, External::Hal::AlarmFlags::Periodic);
-    
-    bool eepSave = false;
+    const auto capTimer = alarmTimer::create(200_ms, External::Hal::AlarmFlags::Periodic);
     
     {
         buttonPin::resetInt();
         etl::Scoped<etl::EnableInterrupt<>> ei;
-        
+#ifndef USE_HOTT
+        etl::outl<terminal>("*"_pgm);
+#endif
         while(true) {
     #ifdef USE_HOTT
             sensor::periodic();
@@ -437,7 +502,10 @@ int main() {
     #else
             terminalDevice::periodic();
     #endif
-            eepSave |= eeprom::saveIfNeeded();
+            eeprom::saveIfNeeded([&]{
+                fsm::load();                
+            });
+            
             adcController::periodic();
             
             systemTimer::periodic([&]{
@@ -456,17 +524,22 @@ int main() {
                 alarmTimer::periodic([&](const auto& t){
                     if (periodicTimer == t) {
 #ifndef USE_HOTT
-                        
-                        etl::outl<terminal>("test04 v: "_pgm, adcController::value(adcController::index_type{0}).toInt(), 
+                        if (eepSave) {
+                            etl::outl<terminal>("es"_pgm);
+                            eepSave = false;
+                        }
+                        if (changed) {
+                            etl::outl<terminal>("ni"_pgm);
+                        }
+                        etl::outl<terminal>("test05 v: "_pgm, adcController::value(adcController::index_type{0}).toInt(), 
                                             " c: "_pgm, adcController::value(adcController::index_type{1}).toInt(),
                                             " t: "_pgm, adcController::value(adcController::index_type{2}).toInt(),
                                             " k: "_pgm, sigrow::adcValueToTemperature(adcController::value(adcController::index_type{2})).value
                                             );
-                        auto v = battVoltageConverter::convert(adcController::value(adcController::index_type{0}));
-                        auto c = currentConverter::convert(adcController::value(adcController::index_type{1}));
-    //                    decltype(v)::_;
-                        etl::outl<terminal>("v * 10: "_pgm, v.value, " c: "_pgm, c.value);
 #endif
+                    }
+                    if (capTimer == t) {
+                        measurements::tick();
                     }
                 });
                 appData.expire();
@@ -480,9 +553,10 @@ ISR(PORTA_PORT_vect) {
 }
 
 #ifndef NDEBUG
-
 [[noreturn]] inline void assertOutput(const AVR::Pgm::StringView& expr [[maybe_unused]], const AVR::Pgm::StringView& file[[maybe_unused]], unsigned int line [[maybe_unused]]) noexcept {
-//    etl::outl<terminal>("Assertion failed: "_pgm, expr, etl::Char{','}, file, etl::Char{','}, line);
+#ifndef USE_HOTT
+    etl::outl<terminal>("Assertion failed: "_pgm, expr, etl::Char{','}, file, etl::Char{','}, line);
+#endif
     while(true) {
         dbg1::toggle();
     }
@@ -492,5 +566,4 @@ template<typename String1, typename String2>
 [[noreturn]] inline void assertFunction(const String1& s1, const String2& s2, unsigned int l) {
     assertOutput(s1, s2, l);
 }
-
 #endif

@@ -47,12 +47,14 @@ namespace AVR {
         using TCB = AVR::Series0::TCB;
         using Sleep = AVR::Series0::Sleep;
         using Adc = AVR::Series0::Adc;
-        using Vref = AVR::Series0::Vref;
+        using Vref = AVR::Series1::Vref;
         
         using PortRegister = AVR::Series1::PortRegister;
         using VPort = AVR::Series1::VPort;
         using Portmux = AVR::Series1::Portmux;
         using Ccl = AVR::Series1::Ccl;
+
+        using SigRow = AVR::Series0::SigRow;
     };
     template<>
     constexpr bool ATTiny1614::is_atomic<uint8_t>() {return true;}

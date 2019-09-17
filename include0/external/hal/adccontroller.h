@@ -98,7 +98,7 @@ namespace External {
             using map_channel_to_pin = typename ChannelPinMapper<T, MCU>::pin_type;
             
             using ch_list = typename Meta::NList<Channels...>::list_type;
-            using pin_list = Meta::transform<map_channel_to_pin, ch_list>;
+            using pin_list = Meta::filter<Meta::nonVoid, Meta::transform<map_channel_to_pin, ch_list>>;
             
 //            pin_list::_;
             
@@ -138,8 +138,8 @@ namespace External {
                     });
                     break;
                 case State::ConversionComplete:
-                    values[mActualChannel] = MCUAdc::value();
-                    MCUAdc::channel(channels[++mActualChannel]);
+                    values[mActualChannel.toInt()] = MCUAdc::value();
+                    MCUAdc::channel(channels[(++mActualChannel).toInt()]);
                     state = State::Start;
                     break;
                 }

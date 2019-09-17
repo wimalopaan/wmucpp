@@ -5,6 +5,11 @@
 # undef _MMIO_BYTE
 # define _MMIO_BYTE(adr) ((uintptr_t)(adr))
 # define _MMIO_BYTE_CHANGED
+
+# ifdef ADC
+#  undef ADC
+# endif
+
 #endif
 #if __has_include(<util/twi.h>)
 # include <util/twi.h>

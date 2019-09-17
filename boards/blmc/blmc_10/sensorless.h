@@ -62,8 +62,8 @@ namespace BLDC {
                 static inline constexpr auto fRotTimer = RotTimer::frequency();
                 
                 // 190KV / 64mm    
-                static inline constexpr RampPoint ramp_start = {20000_us, 10_ppc};
-                static inline constexpr RampPoint ramp_end   = {5000_us, 15_ppc};
+                static inline constexpr RampPoint ramp_start = {20000_us,10_ppc};
+                static inline constexpr RampPoint ramp_end   = {2000_us, 12_ppc};
                 static inline constexpr uint8_t ramp_steps = 50;
                 
                 
@@ -165,7 +165,7 @@ namespace BLDC {
                             }
                         });
 //                        if ((mStep >= ramp_steps)) {
-                        if ((mStep >= ramp_steps) || (mCommutes > mGoodCommutes)) {
+                        if ((mStep >= ramp_steps) || ((mCommutes > mGoodCommutes) && (mStep >= (ramp_steps / 2)))) {
                             actualRV.pwm = ramp.end.pwm;
                             PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(actualRV.pwm);
                             mState = State::ClosedLoop;
@@ -234,6 +234,7 @@ namespace BLDC {
 //                            if (mState == State::ClosedLoop) {
 //                                Com::next();
 //                            }
+//                            return;
 
                             uint16_t actual = RotTimer::counter();
                             if (actual >= last) {

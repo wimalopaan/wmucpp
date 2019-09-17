@@ -38,7 +38,7 @@ int main() {
     etl::uint_ranged_circular<uint8_t, 0, melody.size() - 1> index;
     
     while(true) {
-        const auto n = melody[index];
+        const auto n = melody[index.toInt()];
         r1 = n.pitch;
         r2 = n.length;
         ++index;

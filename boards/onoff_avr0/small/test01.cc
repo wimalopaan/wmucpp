@@ -1,6 +1,6 @@
 #define NDEBUG
 
-//#define USE_HOTT
+#define USE_HOTT
 
 #include <mcu/avr.h>
 #include <mcu/internals/adc.h>
@@ -249,7 +249,7 @@ int main() {
                         etl::outl<terminal>("test01"_pgm);
 #endif
                         if (!toneGenerator::busy()) {
-                            toneGenerator::play(melody[note_counter]);
+                            toneGenerator::play(melody[note_counter.toInt()]);
                             ++note_counter;
                         }
                     }

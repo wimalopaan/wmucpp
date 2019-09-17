@@ -115,7 +115,8 @@ namespace BLDC {
                 }
                 
                 inline static void start() {
-                    mActualPwm = expand(10_ppc, pwm_value_t{0}, PWM::max());
+                    mActualPwm = expand(2_ppc, pwm_value_t{0}, PWM::max()); // schwarz
+//                    mActualPwm = expand(5_ppc, pwm_value_t{0}, PWM::max());
                     mState = State::Start;
                     RotTimer::period(d1);
                 }
@@ -124,6 +125,7 @@ namespace BLDC {
                     auto lastState = mState;
                     static std::byte lastHalls{0};
                     std::byte halls = HallPinSet::read();
+
                     switch(mState) {
                     case State::Start:
                         lastHalls = halls;
@@ -182,7 +184,6 @@ namespace BLDC {
                         Commuter::off();
                         break;
                     default: 
-                        assert(false);
                         break;
                     }
                 }

@@ -108,14 +108,11 @@ using PortC = AVR::Port<AVR::C>;
 using PortD = AVR::Port<AVR::D>;
 using PortF = AVR::Port<AVR::F>;
 
-//using pinLow0 = AVR::Pin<PortC, 1>;
-//using pinLow1 = AVR::Pin<PortC, 2>;
-//using pinLow2 = AVR::Pin<PortC, 3>;
 using pinLow0 = AVR::Pin<PortA, 3>;
 using pinLow1 = AVR::Pin<PortF, 3>;
 using pinLow2 = AVR::Pin<PortC, 3>;
 
-using led =  AVR::Pin<PortF, 5>;
+using led =  AVR::Pin<PortF, 2>;
 
 using hall0 =  AVR::Pin<PortD, 0>;
 using hall1 =  AVR::Pin<PortD, 1>;

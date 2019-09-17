@@ -30,6 +30,7 @@ targets += test01.elf test01.hex test01.S
 targets += test02.elf test02.hex test02.S
 targets += test03.elf test03.hex test03.S
 targets += test04.elf test04.hex test04.S
+targets += test05.elf test05.hex test05.S
 targets += test99.elf test99.hex test99.S
 
 -include ../../../Makefile.avr0.include

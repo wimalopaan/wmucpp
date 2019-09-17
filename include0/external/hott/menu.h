@@ -159,8 +159,8 @@ namespace Hott {
                 ++line;
             }
             else {
-                if (lineToDisplay(display[line], line)) {
-                    if (mSelectedLine && (mSelectedLine == (line - 1))) {
+                if (lineToDisplay(display[line.toInt()], line.toInt())) {
+                    if (mSelectedLine && (mSelectedLine == (line.toInt() - 1))) {
                         display[mSelectedLine + 1][0] = Char{'>'};
                     }
                     ++line;

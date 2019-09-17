@@ -47,7 +47,7 @@ namespace AVR {
         using TCB = AVR::Series0::TCB;
         using Sleep = AVR::Series0::Sleep;
         using Adc = AVR::Series0::Adc;
-        using Vref = AVR::Series0::Vref;
+        using Vref = AVR::Series1::Vref;
         
         using PortRegister = AVR::Series1::PortRegister;
         using Portmux = AVR::Series1::Portmux;

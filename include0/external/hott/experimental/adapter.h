@@ -79,10 +79,14 @@ namespace Hott {
                 mData.voltage = v;
             }
             inline void voltage(const Hott::Units::battery_voltage_t& bv) {
+                mData.bec = 51;
                 mData.voltage = bv.value;
             }
             inline void voltageMinRaw(uint16_t v) {
                 mData.voltage_min = v;
+            }
+            inline void voltageMin(const Hott::Units::battery_voltage_t& bv) {
+                mData.voltage_min = bv.value;
             }
             inline void currentRaw(uint16_t v) {
                 mData.current = v;
@@ -93,11 +97,23 @@ namespace Hott {
             inline void currentMaxRaw(uint16_t v) {
                 mData.current_max = v;
             }
-            inline void tempRaw(uint16_t v) {
+            inline void currentMax(const Hott::Units::current_t& c) {
+                mData.current_max = c.value;
+            }
+            inline void tempRaw(uint8_t v) {
                 mData.temp = v;
             }
-            inline void tempMaxRaw(uint16_t v) {
+            inline void tempMaxRaw(uint8_t v) {
                 mData.temp_max = v;
+            }
+            inline void temp(const External::Units::celsius<uint16_t, std::ratio<1,1>>& v) {
+                mData.temp = v.value + 20;
+            }
+            inline void tempMax(const External::Units::celsius<uint16_t, std::ratio<1,1>>& v) {
+                mData.temp_max = v.value + 20;
+            }
+            inline void capRaw(uint16_t v) {
+                mData.capacity = v;
             }
         private:
             Hott::EscMsg& mData;

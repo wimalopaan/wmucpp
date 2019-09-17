@@ -274,6 +274,9 @@ namespace AVR {
         using txpin = AVR::Portmux::Map<CP, MCU>::txpin;
         using rxpin = AVR::Portmux::Map<CP, MCU>::rxpin;
         
+//        txpin::_;
+//        rxpin::_;
+        
         using ctrla_t = MCU::Usart::CtrlA_t;
         using ctrlb_t = MCU::Usart::CtrlB_t;
         using ctrlc_t = MCU::Usart::CtrlC_t;
@@ -343,8 +346,9 @@ namespace AVR {
             else if constexpr(std::is_same_v<Mode, HalfDuplex>) { 
                 txpin::template pullup<true>(); 
                 txpin::on();
-                mcu_usart()->ctrla.template add<ctrla_t::lbme, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
+//                txpin::template dir<Output>();
                 mcu_usart()->ctrlb.template add<ctrlb_t::odme, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
+                mcu_usart()->ctrla.template add<ctrla_t::lbme, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
             }
             else {
                 static_assert(std::false_v<Mode>);
@@ -366,8 +370,10 @@ namespace AVR {
 
             mcu_usart()->ctrlc.template add<ctrlc_t::xfer8bit | ctrlc_t::noparity | ctrlc_t::xfer1stopbit, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
             mcu_usart()->ctrlb.template add<ctrlb_t::txen | ctrlb_t::rxen, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
-            
-            if constexpr(useISR::value) {
+  
+            if constexpr(std::is_same_v<Mode, HalfDuplex>) { 
+                mcu_usart()->ctrlb.template clear<ctrlb_t::txen, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
+                mcu_usart()->ctrlb.template add<ctrlb_t::txen | ctrlb_t::rxen, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
             }
         }
         

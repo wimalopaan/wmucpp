@@ -20,6 +20,7 @@
 # DPower 25 A
 # sudo avrdude -p atmega8 -P usb -c avrisp2 -V -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -U flash:w:bs_nfet.hex
 
+# Reely BL-12A-Air
 # Hobbyking 80A F-80A
 # Hobbyking 60A F-60A
 # Hobbyking 40A F-40A (nicht bs40a) (blaues Board, pads in Reihe, fast quadratisch)

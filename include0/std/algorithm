@@ -74,7 +74,9 @@ namespace std {
     template<typename IIt, typename OIt>
     constexpr OIt copy(IIt first, IIt last, OIt out) {
         while (first != last) {
-            *out++ = *first++;
+            *out = *first;
+            ++out;
+            ++first;
         }
         return out;
     }

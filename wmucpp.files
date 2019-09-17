@@ -50,9 +50,15 @@ boards/blmc/blmc_10/sine.h
 boards/blmc/blmc_10/test20.cc
 boards/blmc/blmc_10/test21.cc
 boards/blmc/blmc_10/test22.cc
+boards/blmc/blmc_10/test23.cc
 boards/blmc/blmc_10/test30.cc
 boards/blmc/blmc_10/test40.cc
+boards/blmc/blmc_10/test41.cc
 boards/blmc/blmc_10/test50.cc
+boards/blmc/blmc_10/test51.cc
+boards/blmc/blmc_10/test52.cc
+boards/blmc/blmc_10/test53.cc
+boards/blmc/blmc_10/test99.cc
 boards/blmc/blmc_avr444/BLDC.h
 boards/blmc/blmc_avr444/Makefile
 boards/blmc/blmc_avr444/main.c
@@ -200,6 +206,7 @@ boards/onoff_avr0/small/test01.cc
 boards/onoff_avr0/small/test02.cc
 boards/onoff_avr0/small/test03.cc
 boards/onoff_avr0/small/test04.cc
+boards/onoff_avr0/small/test05.cc
 boards/onoff_avr0/small/test99.cc
 boards/power_or/doc/Makefile
 boards/power_or/doc/power_or.adoc
@@ -352,6 +359,7 @@ doc0/bm00/bm41.c
 doc0/bm00/bm42.cc
 doc0/bm00/bm43.cc
 doc0/bm00/bm44.cc
+doc0/bm00/bm50.cc
 example/externals/buttonmacro.c
 example/externals/buttonvertical.cc
 example/externals/isr.c
@@ -496,11 +504,13 @@ include0/mcu/common/components/port1.h
 include0/mcu/common/components/portmux0.h
 include0/mcu/common/components/portmux1.h
 include0/mcu/common/components/rtc.h
+include0/mcu/common/components/sigrow.h
 include0/mcu/common/components/sleep.h
 include0/mcu/common/components/tca.h
 include0/mcu/common/components/tcb.h
 include0/mcu/common/components/usart.h
 include0/mcu/common/components/vref.h
+include0/mcu/common/components/vref1.h
 include0/mcu/common/components_mega0.h
 include0/mcu/common/components_tiny1.h
 include0/mcu/common/concepts.h
@@ -531,6 +541,7 @@ include0/mcu/internals/pit.h
 include0/mcu/internals/port.h
 include0/mcu/internals/portmux.h
 include0/mcu/internals/pwm.h
+include0/mcu/internals/sigrow.h
 include0/mcu/internals/sleep.h
 include0/mcu/internals/softuart.h
 include0/mcu/internals/systemclock.h

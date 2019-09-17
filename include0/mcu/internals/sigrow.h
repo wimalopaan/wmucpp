@@ -19,26 +19,30 @@
 #pragma once
 
 #include <cstdint>
-#include <std/utility>
+#include <etl/types.h>
 
-#include "components/cpu.h"
-#include "components/clock.h"
-#include "components/rtc.h"
-#include "components/ccl2.h"
-#include "components/port1.h"
-#include "components/portmux1.h"
-#include "components/tca.h"
-#include "components/tcb.h"
-#include "components/usart.h"
-#include "components/event.h"
-#include "components/adc.h"
-#include "components/vref1.h"
-#include "components/sleep.h"
-#include "components/sigrow.h"
-
-#include "components/bitmask_operators1.h"
+#include "../external/units/physical.h"
+#include "../common/concepts.h"
 
 namespace AVR {
-    namespace Series1 {
-    }
+    template<typename MCU = DefaultMcuType>
+    struct SigRow;
+    
+    template<AVR::Concepts::At01Series MCU>
+    struct SigRow<MCU> {
+        static inline constexpr auto mcu_sigrow = getBaseAddr<typename MCU::SigRow>;
+        
+        static inline constexpr External::Units::celsius<uint16_t, std::ratio<1,1>> adcValueToTemperature(const etl::uint_ranged<uint16_t, 0, 1023>& v) {
+            int8_t offset = (int8_t)*mcu_sigrow()->tempSense1;
+            uint8_t gain = (uint8_t)*mcu_sigrow()->tempSense0;
+            
+            uint32_t t = v - offset;
+            t *= gain;
+            t += 0x80;
+            t >>= 8;
+            t -= 273;
+            return {uint16_t(t)};
+        }
+        
+    };
 }

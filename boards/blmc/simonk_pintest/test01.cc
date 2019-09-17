@@ -32,15 +32,15 @@
 #include <etl/meta.h>
 
 #include <external/hal/alarmtimer.h>
-#include <external/hott/hott.h>
-#include <external/hott/menu.h>
+//#include <external/hott/hott.h>
+//#include <external/hott/menu.h>
 
-#include <external/bluetooth/roboremo.h>
-#include <external/bluetooth/qtrobo.h>
-#include <external/solutions/ifx007.h>
-#include <external/solutions/rpm.h>
+//#include <external/bluetooth/roboremo.h>
+//#include <external/bluetooth/qtrobo.h>
+//#include <external/solutions/ifx007.h>
+//#include <external/solutions/rpm.h>
 
-#include <external/hal/adccontroller.h>
+//#include <external/hal/adccontroller.h>
 
 namespace  {
     using namespace std::literals::chrono;
@@ -71,8 +71,8 @@ using rcUsart = AVR::Usart<AVR::Component::Usart<0>, External::Hal::NullProtocol
 using terminalDevice = rcUsart;
 using terminal = etl::basic_ostream<terminalDevice>;
 
-using adc = AVR::Adc<AVR::Component::Adc<0>>;
-using adcController = External::Hal::AdcController<adc, Meta::NList<0, 1, 2, 7, 6>>;
+//using adc = AVR::Adc<AVR::Component::Adc<0>>;
+//using adcController = External::Hal::AdcController<adc, Meta::NList<0, 1, 2, 7, 6>>;
 
 using systemClock = AVR::SystemTimer<AVR::Component::Timer<0>, interval>;
 using alarmTimer = External::Hal::AlarmTimer<systemClock>;
@@ -85,7 +85,8 @@ struct StaticInitializer {
     }
 };
 
-using Initializer = StaticInitializer<systemClock, adcController>;
+//using Initializer = StaticInitializer<systemClock, adcController>;
+using Initializer = StaticInitializer<systemClock>;
 
 namespace {
     Initializer initializer;

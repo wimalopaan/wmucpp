@@ -26,8 +26,8 @@ namespace EEProm {
     template<typename DataType, uint16_t Offset = 0>
     class Controller;
 
-    template<typename T, bool UseMemberFlags>
-    struct Base;
+    template<typename T, bool UseMemberFlags> struct Base;
+    
     template<typename T>
     struct Base<T, false> {
         enum class Flags : uint8_t {Changed, Saving, TimeoutExpired, Number};
@@ -42,15 +42,15 @@ namespace EEProm {
     };
 
     template<typename T, typename FlagRegister = void>
-    class DataBase : public Base<DataBase<T, FlagRegister>, std::is_same<FlagRegister, void>::value> {
+    class DataBase : public Base<DataBase<T, FlagRegister>, std::is_same_v<FlagRegister, void>> {
     public:
         DataBase() = default;
         DataBase(const DataBase&) = delete;
         DataBase& operator=(const DataBase&) = delete;
 
-        typedef Base<DataBase<T, FlagRegister>, std::is_same<FlagRegister, void>::value> base_type;
+        using base_type = Base<DataBase<T, FlagRegister>, std::is_same_v<FlagRegister, void>>;
 
-        inline static constexpr bool useBase = std::is_same<FlagRegister, void>::value;
+        inline static constexpr bool useBase = std::is_same_v<FlagRegister, void>;
 
         static void resetTimeout() {
             if constexpr(useBase) {
@@ -118,22 +118,20 @@ namespace EEProm {
     class Controller final {
         Controller() = delete;
     public:
-        static void init() {
+        inline static void init() {
             eeprom_read_block(reinterpret_cast<uint8_t*>(&mData), reinterpret_cast<void*>(Offset), sizeof(DataType));
         }
-        constexpr static DataType& data() {
+        inline constexpr static DataType& data() {
             return mData;
         }
-        static bool saveIfNeeded() {
+        inline static bool saveIfNeeded() {
             if (mData.timeout() && mData.changed()) {
                 mData.saveStart();
                 if (eeprom_is_ready()) {
                     eeprom_update_byte(ePtr(mOffset), rawData(mOffset));
-//                    asm("; replace udivmod");
                     if (++mOffset == sizeof(DataType)) {
                         mOffset = 0;
                     }
-//                    mOffset = ((mOffset + 1) % (sizeof(DataType)));
                     if (mOffset == 0) {
                         mData.saveEnd();
                         mData.resetTimeout();
@@ -148,6 +146,12 @@ namespace EEProm {
                 }
             }
             return false;
+        }
+        template<typename F>
+        inline static void saveIfNeeded(const F& func_when_finished){
+            if (!saveIfNeeded()) {
+                func_when_finished();
+            }
         }
     private:
         inline static uint8_t* ePtr(uintptr_t offset) {

@@ -1,66 +1,90 @@
 * Projekte
 
 1) Hauptschalter
-1.1) Small
-- attiny412
-- rt9058 (36V)
-- 1xVN7003
-- Buzzer laut mit Induktivität oder Lautsprecher
-- LED?
-- Taster an Spannungsmessung nach Gnd, nicht an Strommessung
+1.1) Small (Änderung)
+- attiny1614
+- LP2931 auch mit BEC
+- 2xVN7003
+- Buzzer laut mit  Lautsprecher
+- LED
 - Telemetrie / QtRobo
--- Spannung / Strommessung
+- Spannung / Strommessung
 
 1.2) Medium
-- attiny817
+- attiny1614
+- 2xLP2931 (auch als BEC)
 - sonst wie small
-- 2 + VN7003
-- mit Drehzahlsensoranschluß
+- Gegentakt für Lautsprecher mit mcp1415 oder bipolar-push-pull oder 74lvc1g17
+- 4 + VN7003
 
 1.3) Large
 - atmega4808
-- 4x VN7003
+- LP2931 (1x für intern>
+- 8x VN7003
 - BEC (einstellbar)
 - Telemetrie / QtRobo
 - Strommessung
-- Spannungsmessung / Zellen
+- Spannungsmessung / Zellen (2x?)
 
-2) BlueTooth-Modul
+2) Sensorboard
 
 3) BDC
+3.1) BDC klein
+- attiny412
+- rt9058
+- TLE5205 (2pins + err-flag = 3pins)
+- mit ADC für Poti: Maxiservo (1pin)
+- PPM-In (1pin)
+- oder statt err-flag uart
 
-4) Schaltmodul
+3.2) BDC mico
+- attiny412
+- dmhc3025 h-brücke (gates über kreuz) - 2-pins (Test auf Adapterplatiner)
+- adc für poti
+- ppm-in
 
-5) AkkuWeiche (je ein Akku)
+4) BLDC
+
+BDC/BLCD mit zwei Platinen über 10-pol Buchsen/Stiftleiste SMD (Vorpolsicher in der Anordnung )
+
+eine µC und eine Leistungsplatine
+
+5) Aktorboard
+
+6) AkkuWeiche (je ein Akku)
 - mit Telemetrie
+
+
 
 * Vorgehen
 
 1) Umbau rcsensorled10 zu:
 1.1) Sensorboard
-	 - Bootloader
+	 - atmega4808
 	 - Hott-Sensor -> UART
 	 - BT -> UART
-     - Spannungen 4S (mit Abschaltung wegene Stromverbrauch)
+     - Spannungen 2 x 4S (mit Abschaltung wegene Stromverbrauch)
 	 - Ströme 3x (extra Board: mit ACS oder Schalterboad mit VN7003)
 	 - Drehzahl 3x -> ICP
 	 - Geschwindigkeit -> UART
 	 - Temperaturen One-Wire
 
 1.2) Aktorboard
-     - Bootloader
+	 - atmega4808
      - SUMD -> UART
 	 - Hott-Sensor -> UART
 	 - BT -> UART
 	 - TLE5205
 	 - LED WS2812 (mehrere Stränge)
+	 - Schaltausgänge
 
 1.3) Schaltboard (Hauptschalter)
-     - Bootloader
+     - attiny1614
      - Hott-Sensor -> UART
 	 - 4x VN7003
 
 1.4) LED-Steuerung (altes attiny85 board)
+	- mit attiny412
 
 2) Hott-Telemetrie Multiplexer (4809)
 	 - 1x In -> UART

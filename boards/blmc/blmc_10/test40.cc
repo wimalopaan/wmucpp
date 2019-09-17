@@ -115,9 +115,10 @@ using pinLow0 = AVR::Pin<PortA, 3>;
 using pinLow1 = AVR::Pin<PortF, 3>;
 using pinLow2 = AVR::Pin<PortC, 3>;
 
-using led =  AVR::Pin<PortF, 5>;
+//using led =  AVR::Pin<PortF, 5>;
 
-using dbg =  AVR::Pin<PortD, 6>;
+//using dbg =  AVR::Pin<PortD, 6>;
+using dbg = void;
 using p1 =  AVR::Pin<PortD, 4>;
 using n0 =  AVR::Pin<PortD, 3>;
 using n1 =  AVR::Pin<PortD, 5>;
@@ -167,7 +168,7 @@ using evrouter = Event::Router<Event::Channels<rtc_channel, ppm_channel>, Event:
 
 using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V4_3>;
 //using adcController = External::Hal::AdcController<adc, Meta::NList<0>>;
-using adcController = External::Hal::AdcController<adc, Meta::NList<14, 15>>;
+//using adcController = External::Hal::AdcController<adc, Meta::NList<14, 15>>;
 
 using adcomp = AVR::AdComparator<Component::Ac<0>>; 
 
@@ -190,14 +191,14 @@ int main() {
 
     systemTimer::init();
     
-    adcController::init();
+//    adcController::init();
     
     terminalDevice::init<AVR::BaudRate<9600>>();
 
     sensor::init();
     rcUsart::init<BaudRate<115200>>();
     
-    led::dir<AVR::Output>();
+//    led::dir<AVR::Output>();
     
     ppmIn::dir<Input>();
     ppm::init();
@@ -228,18 +229,19 @@ int main() {
             controller::periodic();
             rcUsart::periodic();
             sensor::periodic();
-            adcController::periodic();
+//            adcController::periodic();
             
             systemTimer::periodic([&]{
                 sensor::ratePeriodic();
                 controller::check();
                 alarmTimer::periodic([&](const auto& t){
                     if (t == periodicTimer) {
-                        etl::outl<terminal>("ppm: "_pgm, ppm::value().toInt());
-                        etl::outl<terminal>("hott: "_pgm, ppm::hott().toInt());
-                        etl::outl<terminal>("ch0: "_pgm, sumd::value(0).toInt());
-                        etl::outl<terminal>("adc0: "_pgm, adcController::value(0).toInt());
-                        etl::outl<terminal>("adc1: "_pgm, adcController::value(1).toInt());
+                                                etl::outl<terminal>("ppm: "_pgm, ppm::value().toInt());
+//                        etl::outl<terminal>("ppm: "_pgm, ppm::value().toInt());
+//                        etl::outl<terminal>("hott: "_pgm, ppm::hott().toInt());
+//                        etl::outl<terminal>("ch0: "_pgm, sumd::value(0).toInt());
+//                        etl::outl<terminal>("adc0: "_pgm, adcController::value(adcController::index_type{0}).toInt());
+//                        etl::outl<terminal>("adc1: "_pgm, adcController::value(adcController::index_type{1}).toInt());
                     }
                 });
             });
@@ -308,7 +310,7 @@ int main() {
                 }
                 
             }
-            led::toggle();
+//            led::toggle();
         }
     }
 }

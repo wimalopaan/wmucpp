@@ -310,6 +310,50 @@ namespace etl {
             }
         }
     }
+
+    template<typename S, typename T1, typename... TT>
+    auto select_f(const S& s, T1 v0, TT... vv) -> decltype(v0()) {
+        static_assert(Meta::all_same<decltype(v0()), Meta::List<decltype(vv())...>>::value);
+        
+        assert(s < (sizeof...(TT) + 1));
+        
+        if (s == 0) {
+            if constexpr(std::is_same_v<decltype(v0()), void>) {
+                v0();
+            }
+            else {
+                return v0();
+            }
+        }
+        else {
+            if constexpr(sizeof...(TT) > 0) {
+                if constexpr(std::is_same_v<decltype(v0()), void>) {
+                    select_f(S(s - 1), vv...);
+                }
+                else {
+                    return select_f(s - 1, vv...);
+                }    
+            }
+            else {
+                assert(false);
+                if constexpr(std::is_same_v<decltype(v0()), void>) {
+                    
+                }
+                else {
+                    return v0();
+                }
+            }
+        }
+    }
+    
+    template<typename F, typename... FF>
+    auto circular_call(F f, FF... ff) -> decltype(f()) {
+        constexpr uint8_t l = sizeof...(FF) + 1;
+        static etl::uint_ranged_circular<uint8_t, 0, l - 1> mPart;
+        select_f(mPart.toInt(), f, ff...);
+        ++mPart;
+    }
+    
     
     template<uint8_t Number, typename T>
     constexpr inline std::byte nth_byte(const T& v);

@@ -21,7 +21,7 @@ volatile uint16_t r2;
 int main() {
     etl::uint_ranged_circular<uint8_t, 0, std::tuple_size_v<notes> - 1> index;
     while(true) {
-        etl::visitAt(notes{}, index, []<typename P, typename L>(Note<P, L>){
+        etl::visitAt(notes{}, index.toInt(), []<typename P, typename L>(Note<P, L>){
                           r1 = P::value;
                           r2 = L::value;
                           return true;

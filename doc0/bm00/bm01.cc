@@ -1,28 +1,20 @@
-#include <etl/type_traits.h>
-#include <etl/fixedpoint.h>
-
 #include <mcu/avr.h>
+#include <mcu/pgm/pgmstring.h>
+#include <algorithm>
 
-using FP = etl::FixedPoint<int16_t, 12>;
+const char s1[] PROGMEM = "abcdefghi";
+const char s2[] PROGMEM = "abcdefghi";
 
-volatile FP x{1.0};
-volatile FP z;
+char x[100];
+etl::Char y[100];
 
-volatile int16_t a;
-volatile int16_t b;
+const auto p1 = "abcdefghi"_pgm;
+const auto p2 = "abcdefghi"_pgm;
 
 int main() {
-    using namespace etl;
-    constexpr etl::FixedPoint<int16_t, 12> c{FP::one/3200.0};
+    strcpy_P(x, s1);
+    strcpy_P(x, s2);
     
-    z = FP::fromRaw(3200);
-    z = z * c;
-
-//    int32_t d = (int32_t)a * 0x5e3a;
-    
-//    b = d >> 12;
-    
-//    auto y = x * c;
-
-//    y += FP{0.5};
+//    std::copy(std::begin(p1), std::end(p1), y);
+//    std::copy(std::begin(p2), std::end(p2), y);
 }

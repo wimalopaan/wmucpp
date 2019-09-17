@@ -9,7 +9,7 @@ namespace External {
     namespace Music {
         using namespace External::Units::literals;
         
-        enum class Letter : uint8_t {c = 0, d = 2, e = 4, f = 5, g = 7, a = 9, h = 11};
+        enum class Letter : uint8_t {c = 0, d = 2, e = 4, f = 5, g = 7, a = 9, h = 11, pause};
         enum class Accidential : uint8_t {sharp, flat, natural};
         enum class Octave : uint8_t {i = 1, ii = 2, iii = 4, iiii = 8};
         
@@ -37,6 +37,9 @@ namespace External {
             
             inline static constexpr External::Units::hertz convert(Pitch p) {
                 constexpr auto a_tone = 440_Hz;
+                if (p.letter == Letter::pause) {
+                    return {std::numeric_limits<External::Units::hertz::value_type>::max()};
+                }
                 const double diff = int8_t(p.letter) - int8_t(Letter::a);
                 const double rel = pow(r12, diff);
                 double acci = 1.0;
@@ -146,9 +149,14 @@ namespace External {
             }
         private:
             inline static void set(const Note<PWM>& note) {
-                PWM::frequency(note.pitch);
-                PWM::duty(note.pitch / 2);
-                PWM::on();
+               if (note.pitch > 0) {
+                   PWM::frequency(note.pitch);
+                   PWM::duty(note.pitch / 2);
+                   PWM::on();
+               }
+               else {
+                   PWM::off();
+               }
                 ticksLeft = note.length;
             }
             inline static AVR::Pgm::ArrayView<Note<PWM>, SizeType> melody;

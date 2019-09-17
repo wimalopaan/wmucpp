@@ -31,10 +31,30 @@ namespace BLDC {
         using index_type = etl::uint_ranged_circular<uint8_t, 0, 5>;
         
         template<typename Pin>
-        requires Meta::contains<lowSides, Pin>::value
+        requires (Meta::contains<lowSides, Pin>::value)
         inline static void floating() {
             Pin::off();
         }
+
+        template<typename Pin>
+        requires (Meta::contains<lowSides, Pin>::value && requires {Pin::lutOn();})
+        inline static void lutOn() {
+            Pin::lutOn();
+        }
+        template<typename Pin>
+        requires (Meta::contains<lowSides, Pin>::value && !requires {Pin::lutOn();})
+        inline static void lutOn() {
+        }
+        template<typename Pin>
+        requires (Meta::contains<lowSides, Pin>::value && requires {Pin::lutOn();})
+        inline static void lutOff() {
+            Pin::off();
+        }
+        template<typename Pin>
+        requires (Meta::contains<lowSides, Pin>::value && !requires {Pin::lutOn();})
+        inline static void lutOff() {
+        }
+        
         template<typename Pin>
         requires Meta::contains<lowSides, Pin>::value
         inline static void on() {
@@ -53,18 +73,22 @@ namespace BLDC {
         
         template<uint8_t N>
         inline static void pwm() {
-            floating<Meta::nth_element<N, lowSides>>();
+            using ls = Meta::nth_element<N, lowSides>;
+//            floating<ls>();
+            lutOn<ls>();
             PWM::template on<AVR::PWM::WO<N>>();
         }
         template<uint8_t N>
         inline static void floating() {
-            floating<Meta::nth_element<N, lowSides>>();
+            using ls = Meta::nth_element<N, lowSides>;
+            floating<ls>();
             PWM::template off<AVR::PWM::WO<N>>();
         }
         template<uint8_t N>
         inline static void low() {
+            using ls = Meta::nth_element<N, lowSides>;
             PWM::template off<AVR::PWM::WO<N>>();
-            on<Meta::nth_element<N, lowSides>>();
+            on<ls>();
         }
         
         inline static void init() {
@@ -90,7 +114,7 @@ namespace BLDC {
             }
         }
         inline static void on_full_state() {
-            switch(state) {
+            switch(state.toInt()) {
             case 0: // pwm(0) -> 2, ac = 1, rising
                 floating<1>();
                 low<2>();                
@@ -139,7 +163,7 @@ namespace BLDC {
         }
         
         inline static void on() {
-            switch(state) {
+            switch(state.toInt()) {
             case 0: // pwm(0) -> 2, ac = 1, rising
                 floating<l1>();
                 AC::negativ_channel(1);
@@ -182,7 +206,7 @@ namespace BLDC {
         }
 
         inline static void on_reverse() {
-            switch(state) {
+            switch(state.toInt()) {
             case 0: // pwm(0) -> 2, ac = 1, rising
                 floating<l2>();
                 AC::negativ_channel(2);
@@ -237,7 +261,7 @@ namespace BLDC {
         }
         inline static void set(index_type p) {
             if (mReverse) {
-                state = p.Upper - p;                
+                state = p.Upper - p.toInt();                
             }
             else {
                 state = p;

@@ -1,6 +1,7 @@
-#define NDEBUG
+//#define NDEBUG
 
 #include <mcu/avr.h>
+#include <mcu/common/isr.h>
 #include <mcu/internals/ccp.h>
 #include <mcu/internals/clock.h>
 #include <mcu/internals/event.h>
@@ -12,6 +13,7 @@
 #include <mcu/internals/adcomparator.h>
 #include <mcu/internals/capture.h>
 #include <mcu/internals/pwm.h>
+#include <mcu/internals/ccl.h>
 
 #include <external/hal/alarmtimer.h>
 #include <external/hal/adccontroller.h>
@@ -46,7 +48,7 @@ namespace Constants {
 struct CommandAdapter {
     enum class Command : uint8_t {Undefined, Off, Start, Info, Reset, 
                                   IncPwm, IncFast, DecPwm, IncDelay, DecDelay,
-                                  Commute, CommuteSet, Test};
+                                  Commute, CommuteSet, Test, Reverse};
     
     static inline bool process(std::byte v) {
         switch (v) {
@@ -60,6 +62,9 @@ struct CommandAdapter {
             mCommand = Command::Info;
             break;
         case std::byte{'r'}:
+            mCommand = Command::Reverse;
+            break;
+        case std::byte{'R'}:
             mCommand = Command::Reset;
             break;
         case std::byte{'p'}:
@@ -108,9 +113,18 @@ using PortC = AVR::Port<AVR::C>;
 using PortD = AVR::Port<AVR::D>;
 using PortF = AVR::Port<AVR::F>;
 
-using pinLow0 = AVR::Pin<PortA, 3>;
-using pinLow1 = AVR::Pin<PortF, 3>;
-using pinLow2 = AVR::Pin<PortC, 3>;
+using lut0 = Ccl::SimpleLut<0, Ccl::Input::Tca0<0>, Ccl::Input::Mask, Ccl::Input::Mask>;
+using lut1 = Ccl::SimpleLut<3, Ccl::Input::Mask, Ccl::Input::Tca0<1>, Ccl::Input::Mask>;
+using lut2 = Ccl::SimpleLut<1, Ccl::Input::Mask, Ccl::Input::Mask, Ccl::Input::Tca0<2>>;
+
+//using pinLow0 = AVR::Pin<PortA, 3>;
+//using pinLow1 = AVR::Pin<PortF, 3>;
+//using pinLow2 = AVR::Pin<PortC, 3>;
+
+using pinLow0 = AVR::Ccl::LutOutPin<lut0>;
+using pinLow1 = AVR::Ccl::LutOutPin<lut1>;
+using pinLow2 = AVR::Ccl::LutOutPin<lut2>;
+
 
 using led =  AVR::Pin<PortF, 2>;
 
@@ -120,6 +134,7 @@ using hall2 =  AVR::Pin<PortD, 2>;
 using hall = AVR::PinGroup<Meta::List<hall0, hall1, hall2>>;
 
 using dbg =  AVR::Pin<PortD, 6>;
+//using dbg = void;
 
 using ppmIn =  AVR::Pin<PortA, 5>;
 
@@ -132,7 +147,7 @@ using usart2Position = Portmux::Position<Component::Usart<2>, Portmux::Default>;
 
 using sumd = Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>;
 using hott_t = Hott::hott_t;
-using rcUsart = AVR::Usart<usart0Position, sumd, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
+//using rcUsart = AVR::Usart<usart0Position, sumd, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
 
 using terminalDevice = AVR::Usart<usart2Position, CommandAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
 using terminal = etl::basic_ostream<terminalDevice>;
@@ -154,7 +169,7 @@ using rotationTimer = SimpleTimer<Component::Rtc<0>>;
 using systemTimer = SystemTimer<Component::Pit<0>, Constants::fRtc>;
 using alarmTimer = External::Hal::AlarmTimer<systemTimer>;
 
-using sensor = Hott::Experimental::Sensor<usart1Position, AVR::Usart, AVR::BaudRate<19200>, Hott::EscMsg, Hott::TextMsg, systemTimer>;
+//using sensor = Hott::Experimental::Sensor<usart1Position, AVR::Usart, AVR::BaudRate<19200>, Hott::EscMsg, Hott::TextMsg, systemTimer>;
 
 using rtc_channel = Event::Channel<0, Event::Generators::PitDiv<1024>>;
 using ppm_channel = Event::Channel<1, Event::Generators::Pin<ppmIn>>; 
@@ -168,12 +183,13 @@ using adcController = External::Hal::AdcController<adc, Meta::NList<0>>;
 
 using adcomp = AVR::AdComparator<Component::Ac<0>>; 
 
-using commuter = BLDC::Communter<adcomp, pwm, Meta::List<pinLow0, pinLow1, pinLow2>, dbg>;
+using commuter = BLDC::Communter<adcomp, pwm, Meta::List<pinLow0, pinLow1, pinLow2>>;
 
-//using hallController = BLDC::Sensored::Controller<hall, rotationTimer, pwm, commuter>;
-using controller = BLDC::Sensored::Experimental::Controller<hall, rotationTimer, commuteTimer, pwm, commuter>;
+using controller = BLDC::Sensored::Experimental2::Controller<hall, rotationTimer, commuteTimer, pwm, commuter, dbg>;
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, usart1Position, usart2Position, tcaPosition, ppmTimerPosition>>;
+
+using isrRegistrar = IsrRegistrar<controller::HallHandler>;
 
 int main() {
     portmux::init();
@@ -181,6 +197,10 @@ int main() {
     ccp::unlock([]{
         clock::prescale<1>();
     });
+
+    lut0::init(std::byte{0x01});
+    lut1::init(std::byte{0x01});
+    lut2::init(std::byte{0x01});
     
     evrouter::init();
     
@@ -188,20 +208,20 @@ int main() {
     
     terminalDevice::init<AVR::BaudRate<9600>>();
 
-    sensor::init();
-    rcUsart::init<BaudRate<115200>>();
+//    sensor::init();
+//    rcUsart::init<BaudRate<115200>>();
     
     led::dir<AVR::Output>();
+    dbg::dir<AVR::Output>();
     
     ppmIn::dir<Input>();
     ppm::init();
-
     
     commuter::index_type xs;;
     
     {
         etl::Scoped<etl::EnableInterrupt<>> ei;
-        etl::outl<terminal>("Test21"_pgm);
+        etl::outl<terminal>("Test23"_pgm);
         etl::outl<terminal>("h: "_pgm, hall::read());            
         
         const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
@@ -217,21 +237,21 @@ int main() {
         while(true) {
             terminalDevice::periodic();
             controller::periodic();
-            rcUsart::periodic();
-            sensor::periodic();
+//            rcUsart::periodic();
+//            sensor::periodic();
             
             systemTimer::periodic([&]{
-                sensor::ratePeriodic();
+//                sensor::ratePeriodic();
                 alarmTimer::periodic([&](const auto& t){
                     if (t == periodicTimer) {
-                        etl::outl<terminal>("S: "_pgm, uint8_t(controller::mState));
-                        etl::outl<terminal>("ppm: "_pgm, ppm::value().toInt());
-                        etl::outl<terminal>("ch0: "_pgm, sumd::value(0).toInt());
+                        etl::outl<terminal>("h: "_pgm, hall::read());            
+//                        etl::outl<terminal>("S: "_pgm, uint8_t(controller::mState));
+//                        etl::outl<terminal>("ppm: "_pgm, ppm::value().toInt());
+//                        etl::outl<terminal>("ch0: "_pgm, sumd::value(0).toInt());
                     }
                     
                 });
             });
-            
             
             if (auto c = CommandAdapter::get(); c != CommandAdapter::Command::Undefined) {
                 switch(c) {
@@ -246,14 +266,18 @@ int main() {
                     break;
                 case CommandAdapter::Command::Commute:
                     etl::outl<terminal>("Com"_pgm);
-                    pwm::duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(100);
+                    pwm::duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(75);
                     commuter::next();
                     break;
                 case CommandAdapter::Command::CommuteSet:
                     etl::outl<terminal>("CX: "_pgm, xs.toInt());
-                    pwm::duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(100);
-                    commuter::set(xs);
-                    ++xs;
+                    pwm::duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(75);
+                {
+                    std::byte halls = hall::read();
+                    commuter::set(controller::hallToStep(halls));
+                }                    
+//                    commuter::set(xs);
+//                    ++xs;
                     break;
                 case CommandAdapter::Command::Start:
                     etl::outl<terminal>("Start"_pgm);
@@ -274,6 +298,10 @@ int main() {
                 case CommandAdapter::Command::Reset:
                     etl::outl<terminal>("Reset"_pgm);
                     break;
+                case CommandAdapter::Command::Reverse:
+                    etl::outl<terminal>("Reverse"_pgm);
+                    commuter::mReverse = !commuter::mReverse;
+                    break;
                 case CommandAdapter::Command::Info:
                     etl::outl<terminal>("Info"_pgm);
 //                    etl::outl<terminal>("hall: "_pgm, hall::read());            
@@ -284,9 +312,28 @@ int main() {
                 default:
                     break;
                 }
-                
             }
             led::toggle();
         }
     }
 }
+
+ISR(PORTD_PORT_vect) {
+    isrRegistrar::isr<AVR::ISR::Port<AVR::D>>();
+}
+
+#ifndef NDEBUG
+[[noreturn]] inline void assertOutput(const AVR::Pgm::StringView& expr [[maybe_unused]], const AVR::Pgm::StringView& file[[maybe_unused]], unsigned int line [[maybe_unused]]) noexcept {
+#ifndef USE_HOTT
+    etl::outl<terminal>("Assertion failed: "_pgm, expr, etl::Char{','}, file, etl::Char{','}, line);
+#endif
+    while(true) {
+        dbg::toggle();
+    }
+}
+
+template<typename String1, typename String2>
+[[noreturn]] inline void assertFunction(const String1& s1, const String2& s2, unsigned int l) {
+    assertOutput(s1, s2, l);
+}
+#endif

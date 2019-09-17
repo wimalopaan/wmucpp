@@ -10,8 +10,11 @@ struct Tick {
     
     template<typename U>
     constexpr explicit Tick(const U& v) : value{v / intervall} {}
-    
-//    constexpr explicit Tick(const T& v) : value{v}{}
+
+    template<typename U>
+    void operator=(const U& v) {
+        value = (v / intervall);
+    }        
     
     constexpr void operator++() {
         ++value;

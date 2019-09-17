@@ -1,4 +1,4 @@
-#define NDEBUG
+//#define NDEBUG
 
 #include <mcu/avr.h>
 #include <mcu/common/isr.h>
@@ -112,14 +112,11 @@ using PortC = AVR::Port<AVR::C>;
 using PortD = AVR::Port<AVR::D>;
 using PortF = AVR::Port<AVR::F>;
 
-//using pinLow0 = AVR::Pin<PortC, 1>;
-//using pinLow1 = AVR::Pin<PortC, 2>;
-//using pinLow2 = AVR::Pin<PortC, 3>;
 using pinLow0 = AVR::Pin<PortA, 3>;
 using pinLow1 = AVR::Pin<PortF, 3>;
 using pinLow2 = AVR::Pin<PortC, 3>;
 
-using led =  AVR::Pin<PortF, 5>;
+using led =  AVR::Pin<PortF, 2>;
 
 using hall0 =  AVR::Pin<PortD, 0>;
 using hall1 =  AVR::Pin<PortD, 1>;
@@ -127,6 +124,7 @@ using hall2 =  AVR::Pin<PortD, 2>;
 using hall = AVR::PinGroup<Meta::List<hall0, hall1, hall2>>;
 
 using dbg =  AVR::Pin<PortD, 6>;
+//using dbg = void;
 
 using ppmIn =  AVR::Pin<PortA, 5>;
 
@@ -139,7 +137,7 @@ using usart2Position = Portmux::Position<Component::Usart<2>, Portmux::Default>;
 
 using sumd = Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>;
 using hott_t = Hott::hott_t;
-using rcUsart = AVR::Usart<usart0Position, sumd, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
+//using rcUsart = AVR::Usart<usart0Position, sumd, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
 
 using terminalDevice = AVR::Usart<usart2Position, CommandAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
 using terminal = etl::basic_ostream<terminalDevice>;
@@ -161,7 +159,7 @@ using rotationTimer = SimpleTimer<Component::Rtc<0>>;
 using systemTimer = SystemTimer<Component::Pit<0>, Constants::fRtc>;
 using alarmTimer = External::Hal::AlarmTimer<systemTimer>;
 
-using sensor = Hott::Experimental::Sensor<usart1Position, AVR::Usart, AVR::BaudRate<19200>, Hott::EscMsg, Hott::TextMsg, systemTimer>;
+//using sensor = Hott::Experimental::Sensor<usart1Position, AVR::Usart, AVR::BaudRate<19200>, Hott::EscMsg, Hott::TextMsg, systemTimer>;
 
 using rtc_channel = Event::Channel<0, Event::Generators::PitDiv<1024>>;
 using ppm_channel = Event::Channel<1, Event::Generators::Pin<ppmIn>>; 
@@ -196,16 +194,15 @@ int main() {
     
     terminalDevice::init<AVR::BaudRate<9600>>();
 
-    sensor::init();
-    rcUsart::init<BaudRate<115200>>();
+//    sensor::init();
+//    rcUsart::init<BaudRate<115200>>();
     
-    led::dir<AVR::Output>();
+//    led::dir<AVR::Output>();
     
-    dbg::dir<AVR::Output>();
+//    dbg::dir<AVR::Output>();
     
     ppmIn::dir<Input>();
     ppm::init();
-
     
     commuter::index_type xs;;
     
@@ -227,13 +224,14 @@ int main() {
         while(true) {
             terminalDevice::periodic();
             controller::periodic();
-            rcUsart::periodic();
-            sensor::periodic();
+//            rcUsart::periodic();
+//            sensor::periodic();
             
             systemTimer::periodic([&]{
-                sensor::ratePeriodic();
+//                sensor::ratePeriodic();
                 alarmTimer::periodic([&](const auto& t){
                     if (t == periodicTimer) {
+                        etl::outl<terminal>("h: "_pgm, hall::read());            
 //                        etl::outl<terminal>("S: "_pgm, uint8_t(controller::mState));
 //                        etl::outl<terminal>("ppm: "_pgm, ppm::value().toInt());
 //                        etl::outl<terminal>("ch0: "_pgm, sumd::value(0).toInt());
@@ -299,7 +297,7 @@ int main() {
                     break;
                 }
             }
-            led::toggle();
+//            led::toggle();
         }
     }
 }
@@ -307,3 +305,19 @@ int main() {
 ISR(PORTD_PORT_vect) {
     isrRegistrar::isr<AVR::ISR::Port<AVR::D>>();
 }
+
+#ifndef NDEBUG
+[[noreturn]] inline void assertOutput(const AVR::Pgm::StringView& expr [[maybe_unused]], const AVR::Pgm::StringView& file[[maybe_unused]], unsigned int line [[maybe_unused]]) noexcept {
+#ifndef USE_HOTT
+    etl::outl<terminal>("Assertion failed: "_pgm, expr, etl::Char{','}, file, etl::Char{','}, line);
+#endif
+    while(true) {
+//        dbg::toggle();
+    }
+}
+
+template<typename String1, typename String2>
+[[noreturn]] inline void assertFunction(const String1& s1, const String2& s2, unsigned int l) {
+    assertOutput(s1, s2, l);
+}
+#endif
