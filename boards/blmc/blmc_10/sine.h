@@ -32,7 +32,7 @@ namespace BLDC {
 
             static inline constexpr uint16_t PwmMax = 100;
             using value_type = etl::typeForValue_t<PwmMax>;
-            using scale_type = etl::ScaledInteger<etl::uint_ranged<value_type, 50, 250>, std::ratio<1,100>>;
+            using scale_type = etl::ScaledInteger<etl::uint_ranged<value_type, 1, 100>, std::ratio<1,100>>;
             
             static inline constexpr auto gen = []<uint16_t Size, uint16_t Max = 1000>(std::integral_constant<uint16_t, Size>, 
                                                                                       std::integral_constant<uint16_t, Max> = std::integral_constant<uint16_t, Max>{}){
@@ -40,30 +40,25 @@ namespace BLDC {
                                                                                 std::array<value_type, Size> t;
                                                                                 for(uint16_t i = 0; i < t.size(); ++i) {
                                                                                     t[i] = (Max / 2) * (cos((i * 2 * M_PI) / t.size()) + 1.0);
-                                                                                }
-//                                                                                decltype(t)::_;
+            }
                                                                                 return t;
                                                                         };
         
-        enum class State : uint8_t {Off, Align, Align2, RampUp, ClosedLoop, ClosedLoopError};
+        enum class State : uint8_t {Off, Sine, Align, Align2, RampUp, ClosedLoop, ClosedLoopError};
 
         struct AcHandler : AVR::IsrBaseHandler<AVR::ISR::AdComparator<0>::Edge>{
             static inline void isr() {
                 AC::onInterrupt([&](){
-                    static uint16_t last = 0;
-//                            if (mState == State::ClosedLoop) {
-//                                Com::next();
-//                            }
-//                            return;
+//                    static uint16_t last = 0;
 
-                    uint16_t actual = RotTimer::counter();
-                    if (actual >= last) {
-                        mCommutationDiff = actual - last;
-                    }
-                    else {
-                        mCommutationDiff = actual + (std::numeric_limits<uint16_t>::max() - last); 
-                    }
-                    last = actual;
+//                    uint16_t actual = RotTimer::counter();
+//                    if (actual >= last) {
+//                        mCommutationDiff = actual - last;
+//                    }
+//                    else {
+//                        mCommutationDiff = actual + (std::numeric_limits<uint16_t>::max() - last); 
+//                    }
+//                    last = actual;
                     
                     uint8_t c = 0;
                     for(uint8_t i = 0; i < mMaxDelay; ++i) {
@@ -76,7 +71,7 @@ namespace BLDC {
                             c = 0;
                         }
                     }
-                    ++mCommutes;
+//                    ++mCommutes;
                     if (mState == State::ClosedLoop) {
                         Commuter::next();
                     }
@@ -84,20 +79,27 @@ namespace BLDC {
             };
         };
         
-        inline static State mState = State::Off;
+        inline static volatile State mState = State::Off;
+
         inline static  uint8_t mStep = 0;
         inline static uint8_t mDelayFactor = 4;
-        
-        inline static uint16_t mErrorCount = 0;
-       
-        inline static uint8_t mGoodCommutes = 10;
-        
-        inline static volatile uint16_t mCommutationDiff = 0;
-        inline static volatile uint16_t mCommutes = 0;
-        
+//        inline static uint16_t mErrorCount = 0;
+//        inline static uint8_t mGoodCommutes = 10;
+//        inline static volatile uint16_t mCommutationDiff = 0;
+//        inline static volatile uint16_t mCommutes = 0;
         inline static volatile uint16_t mDelay = 4;
         inline static volatile uint16_t mMaxDelay = 10;
 
+        inline static void closedLoop(bool on) {
+            if (on) {
+                mState = State::ClosedLoop;
+            }
+            else {
+                mState = State::Sine;
+            }
+        }
+        
+                
         struct ComTimerHandler : AVR::IsrBaseHandler<typename ComTimer::interrupt_type>{
             static inline void isr() {
                 ComTimer::onInterrupt([&]{
@@ -113,7 +115,7 @@ namespace BLDC {
             RotTimer::init();
             ComTimer::init();
             ComTimer::period(mActualPeriod);
-            ComTimer::template enableInterrupts<true>();
+            ComTimer::template enableInterrupts<false>();
         }
         
         template<uint16_t Size>
@@ -124,22 +126,36 @@ namespace BLDC {
             constexpr size_type shift = sine_table.size() / 3;
             
             static etl::uint_ranged_circular<size_type, 0, Size - 1> index{}; 
-            static etl::uint_ranged_circular<size_type, 0, sine_table.size() / 6> offset{}; 
-
-            if (++offset == 0) {
-                ++mIndex;
-            }
             
             std::array<value_type, 3> v;
             v[0] = sine_table[index.toInt()];
-            v[1] = sine_table[(index + shift).toInt()];
-            v[2] = sine_table[(index + 2 * shift).toInt()];
+            v[1] = sine_table[(index - shift).toInt()];
+            v[2] = sine_table[(index - 2 * shift).toInt()];
+            
             if (++index == 0) {
-                mOldActualSineTable = mActualSineTable;
+                if (mState == State::ClosedLoop) {
+//                    Commuter::template floating<0>();
+//                    Commuter::template floating<1>();
+//                    Commuter::template floating<2>();
+                    
+                    ComTimer::template enableInterrupts<false>();
+                    AC::template enableInterrupts<true>();
+                    
+                    Commuter::set(typename Commuter::index_type{1});
+                    
+//                    PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(70);
+                    PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(PwmMax * mScale);
+
+                    leave = true;
+                }
+                else {
+                    mOldActualSineTable = mActualSineTable;
+                }
             }
             return v;
-            //                std::integral_constant<uint16_t, sine_table[256]>::_;
         }
+        
+        inline static volatile bool leave = false;
         
         inline static void isrPeriodic() {
             using value_type = etl::typeForValue_t<PwmMax>;
@@ -148,82 +164,50 @@ namespace BLDC {
             
             switch (mOldActualSineTable) {
             case 0:
-                v = setSine<512>();
+                v = setSine<6 * 100>();
                 break;
             case 1:
-                v = setSine<256>();
+                v = setSine<6 * 50>();
                 break;
             case 2:
-                v = setSine<128>();
+                v = setSine<6 * 25>();
                 break;
             case 3:
-                v = setSine<64>();
+                v = setSine<6 * 12>();
                 break;
             case 4:
-                v = setSine<32>();
+                v = setSine<6 * 6>();
                 break;
             case 5:
-                v = setSine<16>();
+                v = setSine<6 * 3>();
                 break;
             default:
                 break;
             }
-            
-//            using enc_type = etl::enclosing_t<value_type>;
+                       
+            if (leave) {
+                leave = false;
+                return;
+            }
             
             PWM::template duty<AVR::PWM::WO<0>>(v[0] * mScale);
             PWM::template duty<AVR::PWM::WO<1>>(v[1] * mScale);
             PWM::template duty<AVR::PWM::WO<2>>(v[2] * mScale);
-            
-            if (mDoFloat) {
-                constexpr value_type delta = PwmMax / 5;
-                constexpr value_type vmin = (PwmMax / 2) - delta;
-                constexpr value_type vmax = (PwmMax / 2) + delta;
-                
-                if ((v[0] > vmin) && (v[0] < vmax)) {
-                    Commuter::template floating<0>();
-                }
-                else {
-                    Commuter::template pwm<0>();
-                }
-                if ((v[1] > vmin) && (v[1] < vmax)) {
-                    Commuter::template floating<1>();
-                }
-                else {
-                    Commuter::template pwm<1>();
-                }
-                if ((v[2] > vmin) && (v[2] < vmax)) {
-                    Commuter::template floating<2>();
-                }
-                else {
-                    Commuter::template pwm<2>();
-                }
-            } 
         }
-        
         
         inline static void periodic() {
         }
         
-        inline static void doFloat( bool f) {
-            if (f) {
-                mDoFloat = true;
-            }
-            else {
-                mDoFloat = false;
-                Commuter::template pwm<0>();
-                Commuter::template pwm<1>();
-                Commuter::template pwm<2>();
-            }
-        }
         
         inline static void speed(etl::uint_ranged<uint16_t, 0, 160> s) {
             constexpr uint16_t sMin = 10;
             constexpr uint32_t periodBase = 20000;
             uint8_t t = 0;
+//            leave = false;
             
             if (s < sMin) {
                 off();
+                mState = State::Off;
                 return;
             }
             else if ((s >= sMin) && (s < (2 * sMin))) {
@@ -243,6 +227,10 @@ namespace BLDC {
                 t = 3;
             }
             
+            mState = State::Sine;
+            AC::template enableInterrupts<false>();
+            ComTimer::template enableInterrupts<true>();
+            
             ComTimer::period(mActualPeriod);
             mActualSineTable = t;
             Commuter::template pwm<0>();
@@ -254,20 +242,26 @@ namespace BLDC {
         inline static void off() {
             mDoFloat = false;
             Commuter::off();
+            AC::template enableInterrupts<false>();
         }
+        
         inline static void start() {
-            mScale = scale_type{200};
+            AC::template enableInterrupts<false>();
+            ComTimer::template enableInterrupts<true>();
+            mScale = scale_type{10};
             mActualSineTable = 0;
             mOldActualSineTable = 0;
             mActualPeriod = 20000;
             ComTimer::period(mActualPeriod);
-            doFloat(false);
         }
+        
         inline static void pwmInc() {
-            --mScale;
+            ++mScale;
+            PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(PwmMax * mScale);
         }
         inline static void pwmDec() {
-            ++mScale;
+            --mScale;
+            PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(PwmMax * mScale);
         }
         inline static void incPeriod() {
             mActualPeriod += 1000U;
@@ -284,8 +278,7 @@ namespace BLDC {
             --mActualSineTable;
         }
         
-        static inline volatile  scale_type mScale{10};
-//        static inline scale_type mScale{10};
+        static inline volatile scale_type mScale{100};
         
         //            inline static uint16_t mActualPwm = 0;
         inline static volatile etl::uint_ranged<uint16_t, 1000, 40000> mActualPeriod{20000};
@@ -294,7 +287,7 @@ namespace BLDC {
         
         inline static bool mDoFloat = false;
         
-        inline static Commuter::index_type mIndex;
+//        inline static volatile Commuter::index_type mIndex;
     };
 }
 
@@ -476,23 +469,23 @@ namespace Sine3 {
     }
     inline static void pwmInc() {
         if (mScale > 50) {
-            --mScale;
+            mScale = mScale - 1;
         }
     }
     inline static void pwmDec() {
         if (mScale < 300) {
-            ++mScale;
+            mScale = mScale + 1;
         }
     }
     inline static void incPeriod() {
         if (mActualPeriod < 64000) {
-            mActualPeriod += 1000;
+            mActualPeriod = mActualPeriod + 1000;
         } 
         ComTimer::period(mActualPeriod);
     }
     inline static void decPeriod() {
         if ( mActualPeriod > 1000) {
-            mActualPeriod -= 1000;
+            mActualPeriod = mActualPeriod - 1000;
         }
         ComTimer::period(mActualPeriod);
     }
@@ -611,12 +604,12 @@ namespace Sine2 {
     }
     inline static void pwmInc() {
         if (mScale > 5) {
-            --mScale;
+            mScale = mScale - 1;
         }
     }
     inline static void pwmDec() {
         if (mScale < 30) {
-            ++mScale;
+            mScale = mScale + 1;
         }
     }
     inline static void incPeriod() {

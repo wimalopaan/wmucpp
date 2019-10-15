@@ -60,14 +60,14 @@ namespace Util {
     concept bool NamedFlag() {
         return requires(T f) {
             T::value;
-            {T::value} -> bool;
+//            {T::value} -> bool;
         };
     }
     template<typename T>
     concept bool NamedConstant() {
         return requires(T c) {
             T::value;
-            {T::value} -> typename T::value_type;
+//            {T::value} -> typename T::value_type;
         };
     }
 }

@@ -199,10 +199,10 @@ int main() {
 #ifndef USE_HOTT
                         etl::outl<terminal>("test00"_pgm);
 #endif
-                        buzzerPwm::template on<PWM::WO<0>>();
+                        buzzerPwm::template on<Meta::List<PWM::WO<0>>>();
                     }
                     else {
-                        buzzerPwm::template off<PWM::WO<0>>();
+                        buzzerPwm::template off<Meta::List<PWM::WO<0>>>();
                     }
                 }
             });

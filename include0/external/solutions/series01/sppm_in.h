@@ -24,13 +24,13 @@ namespace External {
             
             inline static constexpr uint8_t prescaler = 2;
             
-            inline static constexpr auto ppmMaxExtended = 2250_us * (Project::Config::fMcu / prescaler);
-            inline static constexpr auto ppmMax = 2_ms * (Project::Config::fMcu / prescaler);
-            inline static constexpr auto ppmMin = 1_ms * (Project::Config::fMcu / prescaler);
-            inline static constexpr auto ppmMinExtended = 750_us * (Project::Config::fMcu / prescaler);
+            inline static constexpr uint16_t ppmMaxExtended = 2250_us * (Project::Config::fMcu / prescaler);
+            inline static constexpr uint16_t ppmMax = 2_ms * (Project::Config::fMcu / prescaler);
+            inline static constexpr uint16_t ppmMin = 1_ms * (Project::Config::fMcu / prescaler);
+            inline static constexpr uint16_t ppmMinExtended = 750_us * (Project::Config::fMcu / prescaler);
             
-            using value_type = etl::uint_ranged<uint16_t, ppmMin, ppmMax>;
-            using extended_value_type = etl::uint_ranged<uint16_t, ppmMinExtended, ppmMaxExtended>;
+            using value_type = etl::uint_ranged_NaN<uint16_t, ppmMin, ppmMax>;
+            using extended_value_type = etl::uint_ranged_NaN<uint16_t, ppmMinExtended, ppmMaxExtended>;
             
 //            std::integral_constant<decltype(ppmMax), ppmMax>::_;
 //            std::integral_constant<decltype(ppmMin), ppmMin>::_;
@@ -48,17 +48,25 @@ namespace External {
             }
 
             inline static value_type value() {
-                return value_type{*mcu_tcb()->ccmp};
+                auto v = *mcu_tcb()->ccmp;
+                if ((v >= ppmMinExtended) && (v <ppmMaxExtended)) {
+                    v = std::clamp(v, ppmMin, ppmMax);
+                    return {v};
+                }
+                return value_type{};
             }
 
             inline static extended_value_type extended() {
-                return extended_value_type{*mcu_tcb()->ccmp};
+                auto v = *mcu_tcb()->ccmp;
+                if ((v >= ppmMinExtended) && (v <ppmMaxExtended)) {
+                    return {v};
+                }
+                return extended_value_type{};
             }
 
-            inline static Hott::hott_t hott() {
-                return Hott::hott_t((uint32_t(*mcu_tcb()->ccmp - ppmMin) * (Hott::hott_t::Upper - Hott::hott_t::Lower)) / (ppmMax - ppmMin) + Hott::hott_t::Lower);
-            }
-            
+//            inline static Hott::hott_t hott() {
+//                return Hott::hott_t((uint32_t(*mcu_tcb()->ccmp - ppmMin) * (Hott::hott_t::Upper - Hott::hott_t::Lower)) / (ppmMax - ppmMin) + Hott::hott_t::Lower);
+//            }
         };
     }
 }

@@ -56,6 +56,13 @@ namespace etl {
         inline constexpr explicit FixedPoint(double v) : mValue(v * one) {}
     
         inline constexpr FixedPoint() = default;
+
+        static inline constexpr FixedPoint max() {
+            return FixedPoint::fromRaw(std::numeric_limits<value_type>::max());
+        }
+        static inline constexpr FixedPoint min() {
+            return FixedPoint::fromRaw(std::numeric_limits<value_type>::min());
+        }
         
         inline constexpr void operator=(FixedPoint rhs) volatile {
             mValue = rhs.mValue;
@@ -66,6 +73,12 @@ namespace etl {
         }
         
         inline constexpr unsigned_type integerAbs() const {
+            if (mValue < 0) {
+                return -integer();
+            }
+            return integer();
+        }
+        inline constexpr unsigned_type integerAbs() const volatile {
             if (mValue < 0) {
                 return -integer();
             }
@@ -89,12 +102,22 @@ namespace etl {
         inline constexpr Fraction<fractional_type, fractionalBits> fraction() const {
             return Fraction<fractional_type, fractionalBits>(fractional() << ((sizeof(fractional_type) * 8) - fractional_bits));
         }
+        inline constexpr Fraction<fractional_type, fractionalBits> fraction() const volatile {
+            return Fraction<fractional_type, fractionalBits>(fractional() << ((sizeof(fractional_type) * 8) - fractional_bits));
+        }
         inline constexpr const value_type& raw() const {
             return mValue;
         }
         inline constexpr FixedPoint& operator/=(Type d) {
             mValue /= d;
             return *this;
+        }
+        inline constexpr FixedPoint& operator*=(Type d) {
+            mValue *= d;
+            return *this;
+        }
+        inline constexpr void operator*=(Type d) volatile {
+            mValue = mValue * d;
         }
         inline constexpr FixedPoint& operator-=(const FixedPoint& d) {
             mValue -= d.mValue;
@@ -104,8 +127,12 @@ namespace etl {
             mValue += d.mValue;
             return *this;
         }
-        // todo: op++
-        // todo: op--
+        inline constexpr void operator-=(const FixedPoint& d) volatile {
+            mValue = mValue - d.mValue;
+        }
+        inline constexpr void operator+=(const FixedPoint& d) volatile {
+            mValue = mValue + d.mValue;
+        }
     private:
         explicit constexpr FixedPoint(value_type v) : mValue(v){}
         value_type mValue{0};
@@ -123,22 +150,48 @@ namespace etl {
     inline constexpr FixedPoint<int16_t, 12> operator"" _Qs3_12(long double v) {
         return FixedPoint<int16_t, 12>{(double)v};
     }
+    inline constexpr FixedPoint<uint8_t, 7> operator"" _Qu1_7(long double v) {
+        return FixedPoint<uint8_t, 7>{(double)v};
+    }
+
+    template<typename T, auto Bits>
+    inline constexpr bool operator>(FixedPoint<T, Bits> lhs, FixedPoint<T, Bits> rhs) {
+        return lhs.raw() > rhs.raw();
+    }
+    template<typename T, auto Bits>
+    inline constexpr bool operator<(FixedPoint<T, Bits> lhs, FixedPoint<T, Bits> rhs) {
+        return lhs.raw() < rhs.raw();
+    }
     
     template<typename T, auto Bits>
     inline constexpr FixedPoint<T, Bits> operator-(FixedPoint<T, Bits> lhs, FixedPoint<T, Bits> rhs) {
         return lhs -= rhs;
+    }
+    template<typename T, auto Bits>
+    inline constexpr FixedPoint<T, Bits> operator+(FixedPoint<T, Bits> lhs, FixedPoint<T, Bits> rhs) {
+        return lhs += rhs;
     }
     
     template<typename T, auto Bits, typename D>
     inline constexpr FixedPoint<T, Bits> operator/(FixedPoint<T, Bits> lhs, const D& rhs) {
         return lhs /= rhs;
     }
-    
-    template<typename T, uint8_t FB1, uint8_t FB2>
-    inline constexpr FixedPoint<T, FB1> operator*(FixedPoint<T, FB1> lhs, FixedPoint<T, FB2> rhs) {
-        enclosingType_t<T> p = static_cast<enclosingType_t<T>>(lhs.raw()) * rhs.raw();
-        return FixedPoint<T, FB1>::fromRaw(p >> FB2);
+
+    template<typename T, auto Bits, typename D>
+    inline constexpr FixedPoint<T, Bits> operator*(FixedPoint<T, Bits> lhs, const D& rhs) {
+        return lhs *= rhs;
     }
+
+    template<typename T, auto Bits, typename D>
+    inline constexpr D operator*(const D& lhs, FixedPoint<T, Bits> rhs) {
+        return (etl::enclosing_t<D>{lhs} * rhs.raw()) >> Bits;
+    }
+    
+//    template<typename T, uint8_t FB1, uint8_t FB2>
+//    inline constexpr FixedPoint<T, FB1> operator*(FixedPoint<T, FB1> lhs, FixedPoint<T, FB2> rhs) {
+//        enclosingType_t<T> p = static_cast<enclosingType_t<T>>(lhs.raw()) * rhs.raw();
+//        return FixedPoint<T, FB1>::fromRaw(p >> FB2);
+//    }
     
     namespace detail {
         template<etl::Concepts::Stream Stream, typename T, uint8_t Bits>
@@ -159,6 +212,12 @@ namespace etl {
     
         template<etl::Concepts::Stream Stream, etl::Concepts::Unsigned T, uint8_t Bits>
         inline void out_impl(const FixedPoint<T, Bits>& f) {
+            out_impl<Stream>(f.integerAbs());
+            out_impl<Stream>(f.fraction());
+        }
+
+        template<etl::Concepts::Stream Stream, etl::Concepts::Unsigned T, uint8_t Bits>
+        inline void out_impl(const volatile FixedPoint<T, Bits>& f) {
             out_impl<Stream>(f.integerAbs());
             out_impl<Stream>(f.fraction());
         }

@@ -27,7 +27,7 @@
 #include "mcu/avr/mcutimer.h"
 #include "mcu/ports.h"
 #include "hal/constantrate.h"
-#include "std/concepts.h"
+#include "std/concepts"
 #include "util/types.h"
 #include "util/disable.h"
 #include "util/bits.h"

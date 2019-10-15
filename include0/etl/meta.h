@@ -34,11 +34,9 @@ namespace Meta {
     }
     namespace concepts {
         template<typename T>
-        concept bool List() {
-            return requires {
+        concept /*bool */ List = requires(T) {
                 typename T::base_type;  
             } && std::is_same<typename T::base_type, detail::ListBase>::value;
-        }
     } // !concepts
     
     template<typename... T>
@@ -654,9 +652,8 @@ namespace Meta {
         static_assert(std::is_same<r21::second_type, D>::value);
         
         template<typename T>
-        concept bool ConceptisA() {
-            return std::is_same<T, A>::value;
-        }
+        concept /*bool*/ ConceptisA = std::is_same<T, A>::value;
+
         template<typename T>
         struct isA : public std::false_type {};
         template<ConceptisA T>

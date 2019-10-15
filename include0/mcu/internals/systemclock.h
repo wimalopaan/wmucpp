@@ -27,10 +27,10 @@ namespace AVR::Util {
     inline constexpr bool is_frequency_v = detail::isFrequency<std::remove_cv_t<std::remove_reference_t<T>>>::value;
     
     template<typename T>
-    concept bool Duration = is_duration_v<T>;
+    concept /*bool */Duration = is_duration_v<T>;
 
     template<typename T>
-    concept bool Frequency = is_frequency_v<T>;
+    concept /*bool */Frequency = is_frequency_v<T>;
 }
 
 namespace AVR {

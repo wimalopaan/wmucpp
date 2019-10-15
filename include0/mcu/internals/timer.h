@@ -32,9 +32,13 @@ namespace AVR {
             return tsd_type{};
         }
     }    
+
+    template<typename CNumber, typename MCU = DefaultMcuType>
+    struct ExtendedTimer;
     
-    template<auto Number, typename MCU = DefaultMcuType>
-    struct ExtendedTimer {
+    template<typename CNumber, AVR::Concepts::AtMega MCU>
+    struct ExtendedTimer<CNumber, MCU> {
+        inline static auto Number = CNumber::value;
         using mcu_timer_type = mcu_timer_t<Number>;
         using tccra_type = typename TimerParameter<Number, MCU>::ta;        
         
@@ -43,7 +47,7 @@ namespace AVR {
         
         struct OVFHandler : public AVR::IsrBaseHandler<typename AVR::ISR::Timer<Number>::Overflow> {
             inline static void isr() {
-                ++ovlCounter;
+                ovlCounter = ovlCounter + 1;
             }
         }; 
         inline static void init() {
@@ -62,12 +66,10 @@ namespace AVR {
     private:
         static inline volatile uint8_t ovlCounter = 0;
     };
-    
-    template<typename ComponentNumber, typename MCU = DefaultMcuType>
-    struct SimpleTimer;
-    
-    template<uint8_t N, AVR::Concepts::At01Series MCU>
-    struct SimpleTimer<AVR::Component::Tcb<N>, MCU> {
+
+
+    template<uint8_t N, AVR::Concepts::AtMega0 MCU>
+    struct ExtendedTimer<AVR::Component::Tcb<N>, MCU> {
         using value_type = uint16_t;
         
         using interrupt_type = AVR::ISR::Tcb<N>::Capture;
@@ -79,8 +81,81 @@ namespace AVR {
         using intflags_t = MCU::TCB::IntFlags_t;
         using intctrl_t = MCU::TCB::IntCtrl_t;
         
-        inline static constexpr auto on_flags  = ctrla_t::clkdiv1 | ctrla_t::enable;
-        inline static constexpr auto off_flags = ctrla_t::clkdiv1;
+        inline static constexpr auto on_flags  = ctrla_t::clkdiv1 | ctrla_t::enable ;
+        inline static constexpr auto off_flags = ctrla_t::clkdiv1 ;
+
+        inline static constexpr uint8_t prescaler = 1;
+        
+        inline static constexpr auto frequency() {
+            return Project::Config::fMcu / prescaler;
+        }
+        
+        inline static void init() {
+            mcu_tcb()->ctrlb.template set<ctrlb_t::mode_int>();
+            mcu_tcb()->ctrla.template set<on_flags>();
+            mcu_tcb()->intflags.template reset<intflags_t::capt>();
+            mcu_tcb()->intctrl.template set<intctrl_t::capt>();
+            *mcu_tcb()->ccmp = std::numeric_limits<uint16_t>::max();
+        }
+        
+        inline static void off() {
+            mcu_tcb()->ctrla.template set<off_flags>();
+        }
+
+        inline static void on() {
+            mcu_tcb()->intflags.template reset<intflags_t::capt>();
+            *mcu_tcb()->cnt = 0;
+            mcu_tcb()->ctrla.template set<on_flags>();
+        }
+        
+        inline static void reset() {
+            *mcu_tcb()->cnt = 0;
+            mOverflows = 0;
+        }
+
+        inline static value_type restart() {
+            uint16_t last = counter();
+            reset();
+            return last;
+        }
+        
+        inline static value_type counter() {
+            etl::Scoped<etl::DisbaleInterrupt<>> di;
+            mcu_tcb()->ctrla.template set<off_flags>();
+            value_type v = (value_type{mOverflows} << 8) + (*mcu_tcb()->cnt >> 8);
+            mcu_tcb()->ctrla.template set<on_flags>();
+            return v;
+        }
+
+        struct OverflowHandler : AVR::IsrBaseHandler<interrupt_type> {
+            inline static void isr() {
+                    mOverflows = mOverflows + 1;
+                    mcu_tcb()->intflags.template reset<intflags_t::capt>();
+            }
+        };
+    private:
+        inline static volatile uint8_t mOverflows{0};
+    };
+
+    
+    template<typename ComponentNumber, typename Clock = std::integral_constant<uint8_t, 1>, typename MCU = DefaultMcuType>
+    struct SimpleTimer;
+    
+    template<uint8_t N, auto Div, AVR::Concepts::At01Series MCU>
+    struct SimpleTimer<AVR::Component::Tcb<N>, std::integral_constant<uint8_t, Div>, MCU> {
+        using value_type = uint16_t;
+        
+        using interrupt_type = AVR::ISR::Tcb<N>::Capture;
+        
+        static inline constexpr auto mcu_tcb = AVR::getBaseAddr<typename MCU::TCB, N>;
+        
+        using ctrla_t = MCU::TCB::CtrlA_t;
+        using ctrlb_t = MCU::TCB::CtrlB_t;
+        using intflags_t = MCU::TCB::IntFlags_t;
+        using intctrl_t = MCU::TCB::IntCtrl_t;
+        
+        inline static constexpr auto on_flags  = (Div == 1) ? ctrla_t::clkdiv1 | ctrla_t::enable : ctrla_t::clkdiv2 | ctrla_t::enable ;
+        inline static constexpr auto off_flags = (Div == 1) ? ctrla_t::clkdiv1 : ctrla_t::clkdiv2;
 
         inline static constexpr uint16_t prescaler = 1;
         
@@ -101,6 +176,7 @@ namespace AVR {
             }
             else {
                 mcu_tcb()->intctrl.template clear<intctrl_t::capt>();
+                mcu_tcb()->intflags.template reset<intflags_t::capt>();
             }
         }
 
@@ -125,6 +201,10 @@ namespace AVR {
             mcu_tcb()->ctrla.template set<on_flags>();
         }
         
+        inline static void period2(value_type p) {
+            *mcu_tcb()->ccmp = p;
+            mcu_tcb()->intflags.template reset<intflags_t::capt>();
+        }
         inline static void period(value_type p) {
             *mcu_tcb()->ccmp = p;
             *mcu_tcb()->cnt = 0;
@@ -139,8 +219,8 @@ namespace AVR {
         }
     };
 
-    template<AVR::Concepts::At01Series MCU>
-    struct SimpleTimer<AVR::Component::Rtc<0>, MCU> {
+    template<auto Div, AVR::Concepts::At01Series MCU>
+    struct SimpleTimer<AVR::Component::Rtc<0>, std::integral_constant<uint8_t, Div>, MCU> {
         using value_type = uint16_t;
         
         static inline constexpr auto mcu_rtc = AVR::getBaseAddr<typename MCU::Rtc>;
@@ -202,6 +282,12 @@ namespace AVR {
         
         inline static value_type counter() {
             return *mcu_rtc()->cnt;
+        }
+
+        inline static value_type restart() {
+            auto v = *mcu_rtc()->cnt;
+            *mcu_rtc()->cnt = 0;
+            return v;
         }
     };
 

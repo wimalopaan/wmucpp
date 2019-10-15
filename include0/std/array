@@ -112,11 +112,11 @@ namespace std {
             assert(false);
             return 0;
         }
-        inline constexpr volatile T operator[](size_type ) volatile {
+        inline constexpr T operator[](size_type ) volatile {
             assert(false);
             return 0;
         }
-        inline constexpr const volatile T operator[](size_type ) const volatile {
+        inline constexpr const T operator[](size_type ) const volatile {
             assert(false);
             return 0;
         }

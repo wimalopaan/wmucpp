@@ -21,6 +21,7 @@
 #include <cstdint>
 #include <type_traits>
 #include <algorithm>
+#include <ratio>
 
 #include "type_traits.h"
 #include "concepts.h"
@@ -189,7 +190,7 @@ namespace etl {
         inline static constexpr T Upper = UpperBound;
         using value_type = T;
         
-        inline constexpr uint_ranged(T v = 0) : mValue(v) {
+        inline constexpr uint_ranged(T v = LowerBound) : mValue(v) {
             assert(v >= LowerBound);
             assert(v <= UpperBound);
             if (v < LowerBound) {
@@ -201,6 +202,10 @@ namespace etl {
         }
 
 //        inline constexpr uint_ranged(const volatile uint_ranged& o) : mValue(o.mValue) {}
+
+        inline constexpr explicit operator bool() const {
+            return (mValue >= LowerBound) && (mValue <= UpperBound);
+        }
         
         inline constexpr bool isTop() const {
             return mValue == Upper;
@@ -233,7 +238,7 @@ namespace etl {
         }
         inline void operator++() volatile {
             if (mValue < UpperBound) {
-                ++mValue;
+                mValue = mValue + 1;
             }
         }
         inline uint_ranged& operator++() {
@@ -244,7 +249,7 @@ namespace etl {
         }
         inline void operator--() volatile {
             if (mValue > LowerBound) {
-                --mValue;
+                mValue = mValue - 1;
             }
         }
         
@@ -256,7 +261,7 @@ namespace etl {
         }
         inline void operator+=(T rhs) volatile {
             if ((mValue + rhs) <= UpperBound) {
-                mValue += rhs;
+                mValue = mValue + rhs;
             }
         }
         inline uint_ranged& operator-=(T rhs) {
@@ -267,7 +272,7 @@ namespace etl {
         }
         inline void operator-=(T rhs) volatile {
             if (mValue >= (LowerBound + rhs)) {
-                mValue -= rhs;
+                mValue = mValue - rhs;
             }
         }
         
@@ -297,44 +302,33 @@ namespace etl {
             return mValue;
         }
     private:
-        T mValue{0};
+        T mValue{LowerBound};
     };
 
-//    template<Unsigned T = uint8_t, T LowerBound = 0, T UpperBound = std::numeric_limits<T>::max() - 1>
-//    class uint_centered_NaN final {
-//    public:
-//        inline static constexpr T Lower = LowerBound;
-//        inline static constexpr T Upper = UpperBound;
-////        inline static constexpr T NaN   = std::numeric_limits<T>::max();
-//        using value_type = T;
-        
-//    };
-    
     template<Unsigned T = uint8_t, T LowerBound = 0, T UpperBound = std::numeric_limits<T>::max() - 1>
     class uint_ranged_NaN final {
     public:
         inline static constexpr T Lower = LowerBound;
         inline static constexpr T Upper = UpperBound;
         inline static constexpr T Mid = (UpperBound + LowerBound) / 2;
-        
         inline static constexpr T NaN   = std::numeric_limits<T>::max();
-        using value_type = T;
-        
         static_assert(Upper != NaN);
-        
-//        using type = T;
+
+        using value_type = T;
         
         inline constexpr uint_ranged_NaN() = default;
         
         inline constexpr uint_ranged_NaN(T v) : mValue(v) {
             assert(v >= LowerBound);
             assert(v <= UpperBound);
+            if (v < LowerBound) {
+                mValue = LowerBound;
+            }
+            else if (v > UpperBound) {
+                mValue = UpperBound;
+            }
         }
 
-//        inline constexpr uint_ranged_NaN(etl::fragmentType_t<T> higherPart, etl::fragmentType_t<T> lowerPart) :
-//            uint_ranged_NaN((static_cast<T>(higherPart) << etl::numberOfBits<etl::fragmentType_t<T>>()) + lowerPart)
-//        {}
-        
         inline constexpr explicit operator bool() const {
             return mValue != NaN;
         }
@@ -494,13 +488,18 @@ namespace etl {
         inline static constexpr T Lower = LowerBound;
         inline static constexpr T Upper = UpperBound;
         using value_type = T;
-//        typedef T type;
         
         inline constexpr uint_ranged_circular() = default;
         
         inline constexpr explicit uint_ranged_circular(T v) : mValue(v) {
-//            assert(v >= LowerBound);
-//            assert(v <= UpperBound);
+            assert(v >= LowerBound);
+            assert(v <= UpperBound);
+        }
+
+        inline constexpr uint_ranged_circular(const uint_ranged_circular& rhs) = default;
+        
+        inline constexpr void operator=(const uint_ranged_circular& rhs) volatile {
+              mValue = rhs.mValue;
         }
         
         inline constexpr bool operator>(T rhs) const {
@@ -524,12 +523,54 @@ namespace etl {
             }
             return *this;
         }
+
+        template<T Shift>
+        inline uint_ranged_circular leftShift() volatile {
+            static_assert(Shift >= 0);
+            static_assert(Shift <= Upper);
+            if (Shift <= mValue) {
+                return uint_ranged_circular(mValue - Shift);
+            }
+            else {
+                return uint_ranged_circular(mValue + (Upper + 1 - T{Shift}));
+            }
+        }
+        
+        inline void increment() {
+            if (mValue == Upper) {
+                mValue = Lower;
+            }
+            else {
+                mValue = mValue + 1;
+            }
+        }
+        inline void increment() volatile {
+            if (mValue == Upper) {
+                mValue = 0;
+            }
+            else {
+                mValue = mValue + 1;
+            }
+        }
         
         inline uint_ranged_circular operator+(value_type rhs) {
             return uint_ranged_circular((mValue + rhs) % (UpperBound + 1));
         }
+        inline uint_ranged_circular operator+(value_type rhs) volatile {
+            return uint_ranged_circular((mValue + rhs) % (UpperBound + 1));
+        }
+        inline uint_ranged_circular operator-(value_type rhs) {
+            return uint_ranged_circular((mValue + (UpperBound + 1 - rhs)) % (UpperBound + 1));
+        }
+        inline uint_ranged_circular operator-(value_type rhs) volatile {
+            return uint_ranged_circular((mValue + (UpperBound + 1 - rhs)) % (UpperBound + 1));
+        }
         
         inline bool operator==(value_type rhs) {
+            return mValue == rhs;
+        }
+
+        inline bool operator==(value_type rhs) volatile {
             return mValue == rhs;
         }
         
@@ -537,12 +578,6 @@ namespace etl {
             return mValue != rhs;
         }
 
-        //        inline uint_ranged_circular operator++(int) {
-//            auto temp = *this;
-//            ++*this;
-//            return temp;
-//        }
-        
         inline void operator++() volatile {
             if (mValue < UpperBound) {
                 ++mValue;
@@ -560,34 +595,30 @@ namespace etl {
             }
         }
         inline constexpr uint_ranged_circular& operator=(T rhs) {
-//            assert(rhs >= LowerBound);
-//            assert(rhs <= UpperBound);
+            assert(rhs >= LowerBound);
+            assert(rhs <= UpperBound);
             mValue = rhs;
             return *this;
         }
         inline constexpr void operator=(T rhs) volatile {
-//            assert(rhs >= LowerBound);
-//            assert(rhs <= UpperBound);
+            assert(rhs >= LowerBound);
+            assert(rhs <= UpperBound);
             mValue = rhs;
         }
         inline constexpr uint_ranged<T, LowerBound, UpperBound> toRanged() const {
             return {mValue};
         }
-//        inline constexpr operator T() const {
-//            return mValue;
-//        }
         inline constexpr T toInt() const {
             return mValue;
         }
-//        inline constexpr operator T() const volatile {
-//            return mValue;
-//        }
         inline constexpr T toInt() const volatile {
             return mValue;
         }
     private:
         T mValue{LowerBound};
     };
+    
+    
     
     template<typename T>
     struct combinedType final {
@@ -605,7 +636,7 @@ namespace etl {
         return (p.first << combinedType<T>::shift) + p.second;
     }
     
-    template<typename Representation, typename Scale = ratio<1,1>>
+    template<typename Representation, typename Scale = std::ratio<1,1>>
     struct ScaledInteger;
     
     template<typename ValueType, typename Scale, auto Min, auto Max>
@@ -646,17 +677,19 @@ namespace etl {
         inline value_type toInt() const volatile {
             return (enc_type{value} * scale_type::nom) / scale_type::denom;
         }
-    private:
+//    private:
         rep_type value{0};
     };
     
     template<typename R, typename S, typename I, auto Min, auto Max>
     auto operator*(const I& f, const ScaledInteger<uint_ranged<R, Min, Max>, S>& s) -> R {
-        return s.toInt() * f;
+        using enc_type = ScaledInteger<uint_ranged<R, Min, Max>, S>::enc_type;
+        return (enc_type{s.value} * f * S::nom) / S::denom;
     }
     template<typename R, typename S, typename I, auto Min, auto Max>
     auto operator*(const I& f, const volatile ScaledInteger<uint_ranged<R, Min, Max>, S>& s) -> R {
-        return s.toInt() * f;
+        using enc_type = ScaledInteger<uint_ranged<R, Min, Max>, S>::enc_type;
+        return (enc_type{s.value} * f * S::nom) / S::denom;
     }
     
 }

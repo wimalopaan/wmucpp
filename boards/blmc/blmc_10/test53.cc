@@ -49,7 +49,7 @@ struct CommandAdapter {
     enum class Command : uint8_t {Undefined, Off, Start, Info, Reset, 
                                   IncPwm, IncFast, DecPwm, IncDelay, DecDelay,
                                   Commute, CommuteSet, Test,
-                                 NextTable, PrevTable, incPeriod, decPeriod, doFloat, incSpeed, decSpeed};
+                                 NextTable, PrevTable, incPeriod, decPeriod, doFloat, incSpeed, decSpeed, closedLoopOn, closedLoopOff};
     
     static inline bool process(std::byte v) {
         switch (v) {
@@ -109,6 +109,9 @@ struct CommandAdapter {
             break;
         case std::byte{'s'}:
             mCommand = Command::decSpeed;
+            break;
+        case std::byte{'L'}:
+            mCommand = Command::closedLoopOn;
             break;
         default:
             break;
@@ -243,7 +246,7 @@ int main() {
     
     {
         etl::Scoped<etl::EnableInterrupt<>> ei;
-        etl::outl<terminal>("Test52"_pgm);
+        etl::outl<terminal>("Test53"_pgm);
         
         const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
         
@@ -254,6 +257,10 @@ int main() {
         pwm::on<PWM::WO<0>, PWM::WO<1>, PWM::WO<2>>();
         
         etl::outl<terminal>("m: "_pgm, pwm::max());            
+
+        uint16_t x = 42;
+        controller::scale_type xs{50};
+        etl::outl<terminal>("x * xs: "_pgm, x * xs);            
         
         while(true) {
             terminalDevice::periodic();
@@ -266,13 +273,16 @@ int main() {
             systemTimer::periodic([&]{
                 constexpr adcController::index_type currIndex{0};
                 const auto current = adcController::value(currIndex).toInt();
-                if (speed >= 10) {
-                    if (current < 126) {
-                        --controller::mScale; 
+                if (controller::mState == controller::State::Sine) {
+                    if (speed >= 10) {
+                        if (current < 126) {
+                            ++controller::mScale; 
+                        }
+                        if (current > 130) {
+                            --controller::mScale; 
+                        }
                     }
-                    if (current > 130) {
-                        ++controller::mScale; 
-                    }
+                    
                 }
 //                sensor::ratePeriodic();
                 alarmTimer::periodic([&](const auto& t){
@@ -287,6 +297,10 @@ int main() {
             
             if (auto c = CommandAdapter::get(); c != CommandAdapter::Command::Undefined) {
                 switch(c) {
+                case CommandAdapter::Command::closedLoopOn:
+                    controller::closedLoop(true);
+                    etl::outl<terminal>("closedLoop: "_pgm);
+                    break;
                 case CommandAdapter::Command::incSpeed:
                     ++speed;
                     controller::speed(speed);
@@ -296,10 +310,6 @@ int main() {
                     --speed;
                     controller::speed(speed);
                     etl::outl<terminal>("speed: "_pgm, speed.toInt());
-                    break;
-                case CommandAdapter::Command::doFloat:
-                    controller::doFloat(!controller::mDoFloat);
-                    etl::outl<terminal>("toggle float"_pgm);
                     break;
                 case CommandAdapter::Command::NextTable:
                     controller::nextTable();
@@ -331,6 +341,7 @@ int main() {
                 case CommandAdapter::Command::Commute:
                     etl::outl<terminal>("Com"_pgm);
                     pwm::duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(100);
+                    commuter::next();
                     break;
                 case CommandAdapter::Command::CommuteSet:
                     pwm::duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(100);

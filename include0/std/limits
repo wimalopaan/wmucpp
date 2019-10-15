@@ -41,6 +41,7 @@ namespace std {
         typedef uint8_t type;
         static constexpr uint8_t max() {return UINT8_MAX;}
         static constexpr uint8_t min() {return 0;}
+        static constexpr uint8_t lowest() {return 0;}
         static constexpr uint16_t module() {return UINT8_MAX + 1;}
     };
     template<>
@@ -48,6 +49,7 @@ namespace std {
         typedef uint8_t type;
         static constexpr uint8_t max() {return UINT8_MAX;}
         static constexpr uint8_t min() {return 0;}
+        static constexpr uint8_t lowest() {return 0;}
         static constexpr uint16_t module() {return UINT8_MAX + 1;}
     };
     
@@ -56,6 +58,7 @@ namespace std {
         typedef uint16_t type;
         static constexpr uint16_t max() {return UINT16_MAX;}
         static constexpr uint16_t min() {return 0;}
+        static constexpr uint16_t lowest() {return 0;}
         static constexpr uint32_t module() {return (uint32_t)UINT16_MAX + 1;}
     };
     template<>
@@ -63,6 +66,7 @@ namespace std {
         typedef uint32_t type;
         static constexpr uint32_t max() {return UINT32_MAX;}
         static constexpr uint32_t min() {return 0;}
+        static constexpr uint32_t lowest() {return 0;}
         static constexpr uint64_t module() {return (uint64_t)UINT32_MAX + 1;}
     };
     template<>

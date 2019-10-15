@@ -70,7 +70,7 @@ namespace Hott {
     
     using namespace std::literals::chrono;
     
-    enum class key_t : uint8_t {right = 14, left = 7, up = 11, down = 13, set = 9, nokey = 0};
+    enum class key_t : uint8_t {right = 14, left = 7, up = 11, down = 13, set = 9, nokey = 0x0f};
     
     static inline constexpr auto hottDelayBeforeAnswer = 5000_us;
     static inline constexpr auto hottDelayBetweenBytes = 2000_us;

@@ -1,28 +1,27 @@
-#include <etl/type_traits.h>
-
 #include <mcu/avr.h>
-#include <mcu/common/register.h>
-#include <mcu/common/staticstorage.h>
-#include <mcu/internals/gpiorflags.h>
 
-//using gp0 = AVR::SbiCbiRegister<DefaultMcuType::GPIOR, AVR::ComponentNumber<0>>;
-//using fb0 = AVR::StaticByte<AVR::ComponentNumber<0>>;
-//using ab0 = AVR::StaticBoolArray<AVR::ComponentNumber<0>, AVR::Size<8>>;
+#include <etl/type_traits.h>
+#include <etl/fixedpoint.h>
+#include <etl/control.h>
 
-//using fr0 = AVR::GPIORFlags<gp0, AVR::First<1>, AVR::Last<2>>;
-//using fr0 = AVR::GPIORFlags<fb0, AVR::First<1>, AVR::Last<2>>;
-//using fr0 = AVR::GPIORFlags<ab0, AVR::First<1>, AVR::Last<2>>;
+using fpq10 = etl::FixedPoint<int16_t, 10>;
 
-volatile bool x;
-volatile bool y;
+volatile int16_t m = 0;
+volatile int16_t d = 0;
+volatile int16_t y = 0;
+volatile uint16_t u = 0;
+volatile uint16_t c = 0;
 
-int main() {
-    while(true) {
-//        if (x) {
-//            fr0::set<0>();
-//        }
-//        if (fr0::isSet<1>()) {
-//            y = false;
-//        }
-    }
+volatile fpq10 r;
+
+int main() {    
+//    Control::PID pid{fpq10{0.1}, fpq10{0.1}, fpq10{0.1}, 100, 30};
+//    auto m2 = m;
+//    auto y2 = y;
+//    d = pid.correctionValue(m2, y2);
+
+//     c = (int32_t(m) * s) / u;
+    uint16_t s = 31;
+     c = (int32_t(m) * s) >> 7;
+    
 }

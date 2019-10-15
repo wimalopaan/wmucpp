@@ -54,6 +54,10 @@ namespace AVR {
         namespace detail {
             template<typename Gen, typename CHNumber> struct map_generator;
 
+            template<uint8_t N> struct map_generator<void, std::integral_constant<uint8_t, N>> {
+                inline static constexpr auto value = AVR::Series0::Events::Generator_t{0};
+            };
+
             template<uint8_t N> struct map_generator<Generators::Updi, std::integral_constant<uint8_t, N>> {
                 inline static constexpr auto value = AVR::Series0::Events::Generator_t::updi;
             };
@@ -234,11 +238,15 @@ namespace AVR {
                             
             }
         }   
+
+
+        template<typename Channels, typename Routes, AVR::Concepts::At01Series > struct Router;
+
         
         template<uint8_t Number, typename Generator, AVR::Concepts::At01Series MCU = DefaultMcuType>
         requires(Number < 8)
         struct Channel {
-            template<typename Channels, typename Routes> friend struct Router;
+            template<typename Channels, typename Routes, AVR::Concepts::At01Series > friend struct Router;
             
             using number_type = std::integral_constant<uint8_t, Number>;
             using generator_type = Generator;
@@ -256,12 +264,11 @@ namespace AVR {
         template<typename C, typename User, AVR::Concepts::At01Series MCU = DefaultMcuType>
         requires requires(C){typename C::generator_type;}
         struct Route {
-            template<typename Channels, typename Routes> friend struct Router;
+            template<typename Channels, typename Routes, AVR::Concepts::At01Series > friend struct Router;
             using channel_number_type = typename C::number_type;
             static_assert(channel_number_type::value < 8, "wrong channel");
             
             inline static constexpr uint8_t userNumber = Users::detail::user_to_index<User>::value;
-            
             
         private:
             static constexpr auto mcu_evsys = getBaseAddr<typename MCU::Events>;
@@ -275,7 +282,7 @@ namespace AVR {
         template<typename... CC> struct Channels : Meta::List<CC...>{};
         template<typename... RR> struct Routes : Meta::List<RR...>{};
         
-        template<typename Channels, typename Routes>
+        template<typename Channels, typename Routes, AVR::Concepts::At01Series MCU = DefaultMcuType>
         struct Router {
             static_assert(Meta::size_v<Channels> < 8, "too much channels");
             static_assert(Meta::size_v<Routes> < 24, "too much users");
@@ -298,7 +305,15 @@ namespace AVR {
                     (R::setup(), ...);
                 }(Routes{});
             }
+            
+            static constexpr auto mcu_evsys = getBaseAddr<typename MCU::Events>;
+
+            template<uint8_t N>
+            inline static void strobe() {
+                static_assert(N < 8, "wrong channel, must be 0 to 7");
+                constexpr auto code = typename MCU::Events::Strobe_t{1 << N};
+                mcu_evsys()->strobe.template set<code>();
+            }
         };
-        
     }
 }

@@ -14,7 +14,7 @@ constexpr auto a1 = A<2>{1, 2};
 constexpr auto a2 = A<3>{2, 3, 4};
 constexpr auto t1 = std::tuple(a1, a2);
 
-auto l1 = [&]{
+auto l1 = []{
     constexpr auto a1 = A<2>{1, 2};
     constexpr auto a2 = A<3>{2, 3, 4};
     constexpr auto t1 = std::tuple(a1);

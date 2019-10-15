@@ -147,13 +147,13 @@ namespace etl {
     {
         inline static constexpr auto cpu = AVR::getBaseAddr<typename MCU::Cpu>;
     public:
-        inline Scoped()  {
+        inline __attribute__((always_inline)) Scoped()  {
             if constexpr(Active) {
                 v = cpu()->sreg.value();
                 cli();
             }
         }
-        inline ~Scoped() {
+        inline __attribute__((always_inline)) ~Scoped() {
             if constexpr(Active) {
                 if (etl::toBool(MCU::Cpu::SReg_t::globalIntEnable & v)) {
                     sei();

@@ -43,10 +43,18 @@ boards/blmc/blmc_02/test20.cc
 boards/blmc/blmc_02/test21.cc
 boards/blmc/blmc_10/Makefile
 boards/blmc/blmc_10/commuter.h
+boards/blmc/blmc_10/commuter2.h
 boards/blmc/blmc_10/readme.txt
 boards/blmc/blmc_10/sensored.h
 boards/blmc/blmc_10/sensorless.h
 boards/blmc/blmc_10/sine.h
+boards/blmc/blmc_10/sine10.h
+boards/blmc/blmc_10/sine2.h
+boards/blmc/blmc_10/sine3.h
+boards/blmc/blmc_10/sine4.h
+boards/blmc/blmc_10/sine5.h
+boards/blmc/blmc_10/sine6.h
+boards/blmc/blmc_10/sine7.h
 boards/blmc/blmc_10/test20.cc
 boards/blmc/blmc_10/test21.cc
 boards/blmc/blmc_10/test22.cc
@@ -58,6 +66,14 @@ boards/blmc/blmc_10/test50.cc
 boards/blmc/blmc_10/test51.cc
 boards/blmc/blmc_10/test52.cc
 boards/blmc/blmc_10/test53.cc
+boards/blmc/blmc_10/test54.cc
+boards/blmc/blmc_10/test55.cc
+boards/blmc/blmc_10/test56.cc
+boards/blmc/blmc_10/test57.cc
+boards/blmc/blmc_10/test58.cc
+boards/blmc/blmc_10/test59.cc
+boards/blmc/blmc_10/test60.cc
+boards/blmc/blmc_10/test61.cc
 boards/blmc/blmc_10/test99.cc
 boards/blmc/blmc_avr444/BLDC.h
 boards/blmc/blmc_avr444/Makefile
@@ -388,6 +404,7 @@ host/hott/uart01.cc
 host/test02a.cc
 host/test04b.c
 host/test100.cc
+host/test100.cc
 host/test23a.cc
 host/test25.cc
 host/test26.cc
@@ -438,6 +455,7 @@ include0/config.h
 include0/etl/algorithm.h
 include0/etl/char.h
 include0/etl/concepts.h
+include0/etl/control.h
 include0/etl/converter.h
 include0/etl/fifo.h
 include0/etl/fixedpoint.h
@@ -451,6 +469,7 @@ include0/etl/rational.h
 include0/etl/scoped.h
 include0/etl/span.h
 include0/etl/stringbuffer.h
+include0/etl/trace.h
 include0/etl/tuple.h
 include0/etl/type_traits.h
 include0/etl/types.h
@@ -575,6 +594,7 @@ include0/std/bits/pair.h
 include0/std/cassert
 include0/std/chrono
 include0/std/cmath
+include0/std/concepts
 include0/std/cstddef
 include0/std/cstdint
 include0/std/initializer_list

@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "std/concepts.h"
+#include "std/concepts"
 
 namespace TimeDisplay {
     enum class Mode {Time, Date};

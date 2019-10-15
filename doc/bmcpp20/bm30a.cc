@@ -6,7 +6,7 @@
 #include "mcu/ports.h"
 #include "hal/constantrate.h"
 #include "std/array"
-#include "std/concepts.h"
+#include "std/concepts"
 #include "util/disable.h"
 #include "util/bits.h"
 #include "units/percent.h"

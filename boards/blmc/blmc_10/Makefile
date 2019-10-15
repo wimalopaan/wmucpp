@@ -20,6 +20,9 @@
 # fuses: SUT auf 64ms
 # ~/Projekte/updi/pyupdi/pyupdi.py -d mega4808 -fs 6:0x07 -c /dev/ttyUSB1
 
+# fuses: 20MHz
+# ~/Projekte/updi/pyupdi/pyupdi.py -d mega4808 -fs 2:0x02 -c /dev/ttyUSB1
+
 # flashing
 # ~/Projekte/updi/pyupdi/pyupdi.py -d mega4808 -c /dev/ttyUSB1  -f test20.hex
 
@@ -38,7 +41,16 @@ subdirs =
 #targets += test50.elf test50.hex
 #targets += test51.elf test51.hex
 #targets += test52.elf test52.hex
-targets += test53.elf test53.hex
+#targets += test53.elf test53.hex
+#targets += test54.elf test54.hex
+#targets += test55.elf test55.hex
+#targets += test56.elf test56.hex
+#targets += test57.elf test57.hex 
+#targets += test58.elf test58.hex test58.S
+#targets += test59.elf test59.hex test59.S
+#targets += test60.elf test60.hex test60.S
+targets += test61.elf test61.hex test61.S
+
 targets += test99.elf test99.hex
 
 -include ../../../Makefile.avr0.include

@@ -147,6 +147,9 @@ namespace etl {
 
         template<etl::Concepts::Stream Stream, etl::Concepts::Unsigned T, uint8_t Bits>
         inline void out_impl(const FixedPoint<T, Bits>& f);
+
+        template<etl::Concepts::Stream Stream, etl::Concepts::Unsigned T, uint8_t Bits>
+        inline void out_impl(const volatile FixedPoint<T, Bits>& f);
     } // detail
     
     template<Stream Stream, typename... TT>

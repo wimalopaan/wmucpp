@@ -98,7 +98,9 @@ namespace etl {
             }
             T item = data[out];
             asm("; replace udivmod");
-            if (++out == Size) out = 0;
+//            if (++out == Size) out = 0;
+            out = out + 1;
+            if (out == Size) out = 0;
             return item;
         }
         inline void clear() volatile {

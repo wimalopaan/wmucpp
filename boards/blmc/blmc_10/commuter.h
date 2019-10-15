@@ -68,7 +68,7 @@ namespace BLDC {
 
         template<typename W>
         inline static void pwm() {
-            PWM::template on<W>();
+            PWM::template on<Meta::List<W>, etl::NoDisableEnable>();
         }
         
         template<uint8_t N>
@@ -76,7 +76,7 @@ namespace BLDC {
             using ls = Meta::nth_element<N, lowSides>;
 //            floating<ls>();
             lutOn<ls>();
-            PWM::template on<AVR::PWM::WO<N>>();
+            PWM::template on<Meta::List<AVR::PWM::WO<N>>, etl::NoDisableEnable>();
         }
         template<uint8_t N>
         inline static void floating() {
@@ -271,7 +271,30 @@ namespace BLDC {
             }
             on_full_state();
         }
-//    private:
+
+        template<uint8_t S, typename F>
+        inline static void onState(F f) {
+            static_assert(S < 6);
+            if (state.toInt() == S) {
+                f();
+            }
+        }
+        
+//        inline static void set(volatile index_type p) {
+//            if (mReverse) {
+//                state = p.Upper - p.toInt();                
+//            }
+//            else {
+//                state = p;
+//            }
+//            if constexpr(!std::is_same_v<Debug, void>) {
+//                Debug::toggle();
+//            }
+//            on_full_state();
+//        }
+        
+        
+        //    private:
         inline static index_type state{0};
         inline static bool mReverse = false;
     };

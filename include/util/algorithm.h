@@ -21,7 +21,7 @@
 #include <stdint.h>
 #include "std/algorithm"
 #include "std/array"
-#include "std/concepts.h"
+#include "std/concepts"
 
 #include "util/meta.h"
 

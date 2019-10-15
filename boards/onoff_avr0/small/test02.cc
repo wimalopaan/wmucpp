@@ -140,10 +140,10 @@ struct PwmWrapper {
         PWM::init();
     }
     inline static void off() {
-        PWM::template off<Output>();
+        PWM::template off<Meta::List<Output>>();
     }
     inline static void on() {
-        PWM::template on<Output>();
+        PWM::template on<Meta::List<Output>>();
     }
     inline static void frequency(uint16_t f) {
         PWM::frequency(f);

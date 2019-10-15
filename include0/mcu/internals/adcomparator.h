@@ -42,7 +42,7 @@ namespace AVR {
         inline static constexpr auto mcu_comp  = AVR::getBaseAddr<typename MCU::AdComparator, number>;
         
         using ctrla_t = typename MCU::AdComparator::CtrlA1_t;
-        using channel_t = typename MCU::AdComparator::CtrlA2_t;
+        using edge_t = typename MCU::AdComparator::CtrlA2_t;
         using hyst_t = typename MCU::AdComparator::CtrlA3_t;
         using status_t = typename MCU::AdComparator::Status_t;
         using intctrl_t = typename MCU::AdComparator::IntCtrl_t;
@@ -58,9 +58,14 @@ namespace AVR {
             mcu_comp()->ctrla.template add<ctrla_t::enable>();
         }
         
+        inline static void hysterese(hyst_t v) {
+            mcu_comp()->ctrla.setPartial(v);
+        }
+        
         template<bool B>
         inline static void enableInterrupts() {
             if constexpr(B) {
+                mcu_comp()->status.template reset<status_t::cmp>();
                 mcu_comp()->intctrl.template set<intctrl_t::cmp>();
             }
             else {
@@ -77,8 +82,8 @@ namespace AVR {
             mcu_comp()->status.template reset<status_t::cmp>();
         }
         
-        struct Positiv : std::integral_constant<channel_t, channel_t::positive_edge> {};
-        struct Negativ : std::integral_constant<channel_t, channel_t::negative_edge> {};
+        struct Positiv : std::integral_constant<edge_t, edge_t::positive_edge> {};
+        struct Negativ : std::integral_constant<edge_t, edge_t::negative_edge> {};
         
         inline static void onEdge(auto f) {
             mcu_comp()->status.template testAndReset<status_t::cmp>([&](){
@@ -86,16 +91,18 @@ namespace AVR {
             });
         }
         
-        template<typename T>
+        template<typename T, typename IMode = etl::RestoreState>
         inline static void edge() {
-            mcu_comp()->ctrla.template setPartial(T::value);
+            mcu_comp()->ctrla.template setPartial<edge_t, etl::DisbaleInterrupt<IMode>>(T::value);
         }
         
+        template<typename IMode = etl::RestoreState>
         inline static void positiv_channel(index_type n) {
-            mcu_comp()->muxctrl.template setPartial(mux_p_t(n.toInt() << register_bit_position_v<mux_p_t>));
+            mcu_comp()->muxctrl.template setPartial<mux_p_t, etl::DisbaleInterrupt<IMode>>(mux_p_t(n.toInt() << register_bit_position_v<mux_p_t>));
         }
+        template<typename IMode = etl::RestoreState>
         inline static void negativ_channel(index_type n) {
-            mcu_comp()->muxctrl.template setPartial(mux_n_t(n.toInt() << register_bit_position_v<mux_n_t>));
+            mcu_comp()->muxctrl.template setPartial<mux_n_t, etl::DisbaleInterrupt<IMode>>(mux_n_t(n.toInt() << register_bit_position_v<mux_n_t>));
         }
     };
     

@@ -23,7 +23,7 @@
 #include <ratio>
 #include <limits>
 
-#include "std/concepts.h"
+#include "std/concepts"
 #include "units/duration.h"
 
 namespace std {

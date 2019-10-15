@@ -291,6 +291,31 @@ namespace etl {
         return m;
     }
     
+    namespace detail {
+        template<template<auto S> typename F, typename I, auto FI, auto... II>
+        constexpr auto selecter(const I& index, std::index_sequence<FI, II...>) {
+            
+//            std::index_sequence<FI, II...>::_;
+            
+            if (index == 0) {
+                return F<FI>{}();
+            }
+            else {
+                if constexpr(sizeof...(II) > 0) {
+                    return selecter<F>(index - 1, std::index_sequence<II...>{});
+                }
+                else {
+                    return F<0>{}();               
+                }
+            }
+        }
+    }
+    
+    template<template<auto S> typename F, typename T, auto Max>
+    constexpr auto select_t(etl::uint_ranged<T, 0, Max> i) {
+        return detail::selecter<F>(i.toInt(), std::make_index_sequence<Max + 1>{});
+    } 
+    
     template<typename S, typename T1, typename... TT>
     constexpr const T1& select(const S& s, const T1& v0, const TT&... vv) {
         static_assert(Meta::all_same<T1, Meta::List<TT...>>::value);

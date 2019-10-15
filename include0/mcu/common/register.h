@@ -149,7 +149,8 @@ namespace AVR {
         template<BitType F, typename DI = etl::DisbaleInterrupt<etl::RestoreState>>
         void inline add() {
             [[maybe_unused]] etl::Scoped<DI> di;
-            hwRegister |= static_cast<value_type>(F);
+//            hwRegister |= static_cast<value_type>(F);
+            hwRegister = hwRegister | static_cast<value_type>(F);
         }
         template<BitType F, typename DI = etl::DisbaleInterrupt<etl::RestoreState>>
         void inline clear() {
@@ -206,12 +207,14 @@ namespace AVR {
         template<BitType F, typename DI = etl::DisbaleInterrupt<etl::RestoreState>>
         void inline add() {
             [[maybe_unused]] etl::Scoped<DI> di;
-            hwRegister |= static_cast<value_type>(F);
+//            hwRegister |= static_cast<value_type>(F);
+            hwRegister = hwRegister | static_cast<value_type>(F);
         }
         template<BitType F, typename DI = etl::DisbaleInterrupt<etl::RestoreState>>
         void inline clear() {
             [[maybe_unused]] etl::Scoped<DI> di;
-            hwRegister &= ~static_cast<value_type>(F);
+//            hwRegister &= ~static_cast<value_type>(F);
+            hwRegister = hwRegister & ~static_cast<value_type>(F);
         }
         template<BitType Mask>
         inline BitType get() {
@@ -278,7 +281,8 @@ namespace AVR {
         requires (Meta::contains<type_list, decltype(F)>::value)
         void inline add() {
             [[maybe_unused]] etl::Scoped<DI> di;
-            hwRegister |= static_cast<value_type>(F);
+//            hwRegister |= static_cast<value_type>(F);
+            hwRegister = hwRegister | static_cast<value_type>(F);
         }
         template<typename F, typename DI = etl::DisbaleInterrupt<etl::RestoreState>>
         requires (Meta::contains<type_list, F>::value)

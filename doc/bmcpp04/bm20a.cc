@@ -1,21 +1,24 @@
+// Test für guard variable 
 
-// Test für guard variable ... wird aber nicht erzeugt
+#include <cstdint>
 
 struct A {
-    volatile int m = 0;
+    inline constexpr A(uint8_t v) : m{v} {} // without constexpr it should not compile, but does anymay
+    auto m1() const {
+        return m;
+    }
+private:
+     uint8_t m{0};
 };
-
 
 template<typename T>
 struct X {
-    static int foo() {
-        return m.m;
+    static auto foo() {
+        return m.m1();
     }
-    inline static T m;  
+    constinit inline static T m{2}; // requires constexpr ctor
 };
-
-X<A> x;
-
 int main() {
-    return x.foo();    
+    return X<A>::foo();    
 }
+

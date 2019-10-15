@@ -20,74 +20,75 @@
 
 #include <cstdint>
 #include <cstddef>
+#include <concepts>
 
 namespace etl {
-//    template<Unsigned T, uint8_t Bits> struct Fraction;
-    
     namespace Concepts {
         template<typename T, typename... ArgType>
-        concept bool Callable = requires(T t) {
+        concept /*bool*/ Callable = requires(T t) {
                 t(ArgType{}...);
             };
         
         template<typename T>
-        concept bool NamedFlag = requires(T) {
+        concept /*bool*/ NamedFlag = requires(T) {
                 T::value;
-                {T::value} -> bool;
+                {T::value} -> std::same_as<bool>;
+                typename T::value_type;
             };
 
         template<typename T>
-        concept bool NamedConstant = requires(T) {
+        concept /*bool*/ NamedConstant = requires(T) {
                 T::value;
-                {T::value} -> typename T::value_type;
+                typename T::value_type;
             };
 
         template<typename T>
-        concept bool Integral = std::is_integral_v<T>;    
+        concept /*bool*/ Integral = std::is_integral_v<T>;    
         
         template<typename T>
-        concept bool Unsigned = std::is_unsigned_v<T>;    
+        concept /*bool */Unsigned = std::is_unsigned_v<T>;    
         
         template<typename T>
-        concept bool Signed = std::is_signed_v<T>;    
+        concept /*bool */Signed = std::is_signed_v<T>;    
 
         template<typename T>
-        concept bool Arithmetic = std::is_arithmetic_v<T>;    
+        concept /*bool */Arithmetic = std::is_arithmetic_v<T>;    
         
         template<typename R>
-        concept bool Range = requires (R r) { 
+        concept /*bool */ Range = requires (R r) { 
                 typename R::value_type;
                 r.begin();
                 r.end();
             };
         
         template<typename R>
-        concept bool Ranged = requires(R r) {
+        concept /*bool */Ranged = requires(R r) {
             typename R::value_type;
             R::Lower;
             R::Upper;
         };
 
         template<typename C>
-        concept bool Container = requires(C c) {
+        concept /*bool */Container = requires(C c) {
             typename C::value_type;
             c.size();
             c[0];
         };
         
         template<typename T>
-        concept bool Fundamental = std::is_fundamental<T>::value;
+        concept /*bool */Fundamental = std::is_fundamental<T>::value;
         
         template<typename T>
-        concept bool NonFundamental = !std::is_fundamental<T>::value;
+        concept /*bool */NonFundamental = !std::is_fundamental<T>::value;
     
         template<typename D>
-        concept bool Device = requires(D) {
+        concept /*bool */Device = requires(D) {
                 D::put(std::byte{0});
+                D::get();
         };
 
         template<typename S>
-        concept bool Stream = requires(S) {
+        concept /*bool */Stream = requires(S) {
                 typename S::device_type;
         };
     }

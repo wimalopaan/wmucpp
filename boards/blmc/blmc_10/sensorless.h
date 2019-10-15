@@ -256,7 +256,7 @@ namespace BLDC {
                                     c = 0;
                                 }
                             }
-                            ++mCommutes;
+                            mCommutes = mCommutes + 1;
                             if (mState == State::ClosedLoop) {
                                 Com::next();
                             }

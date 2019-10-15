@@ -340,19 +340,34 @@ namespace AVR {
                 AVR::PinGroup<pins>::template dir<Output>();
             }
             
-            template<typename... Outs>
+//            template<typename... Outs>
+//            inline static constexpr void on() {
+//                using out_list = Meta::transform_type<womapper, Meta::List<Outs...>>;
+//                constexpr auto value = Meta::value_or_v<out_list>;
+////                                std::integral_constant<decltype(value), value>::_;
+//                mcu_tca()->ctrlb.template add<value>();
+//            }
+            template<Meta::concepts::List OutList, typename IMode = etl::RestoreState>
             inline static constexpr void on() {
-                using out_list = Meta::transform_type<womapper, Meta::List<Outs...>>;
+                using out_list = Meta::transform_type<womapper, OutList>;
                 constexpr auto value = Meta::value_or_v<out_list>;
 //                                std::integral_constant<decltype(value), value>::_;
-                mcu_tca()->ctrlb.template add<value>();
+                mcu_tca()->ctrlb.template add<value, etl::DisbaleInterrupt<IMode>>();
             }
-            template<typename... Outs>
+
+//            template<typename... Outs>
+//            inline static constexpr void off() {
+//                using out_list = Meta::transform_type<womapper, Meta::List<Outs...>>;
+//                constexpr auto value = Meta::value_or_v<out_list>;
+////                                std::integral_constant<decltype(value), value>::_;
+//                mcu_tca()->ctrlb.template clear<value>();
+//            }
+            template<Meta::concepts::List OutList, typename IMode = etl::RestoreState>
             inline static constexpr void off() {
-                using out_list = Meta::transform_type<womapper, Meta::List<Outs...>>;
+                using out_list = Meta::transform_type<womapper, OutList>;
                 constexpr auto value = Meta::value_or_v<out_list>;
 //                                std::integral_constant<decltype(value), value>::_;
-                mcu_tca()->ctrlb.template clear<value>();
+                mcu_tca()->ctrlb.template clear<value, etl::DisbaleInterrupt<IMode>>();
             }
             
             template<typename... Outs>

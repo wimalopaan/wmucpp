@@ -126,7 +126,7 @@ namespace etl {
     using enclosingType_t = typename detail::enclosingType<T>::type;
 
     template<typename T>
-    using enclosing_t = typename detail::enclosingType<T>::type;
+    using enclosing_t = typename detail::enclosingType<std::remove_cv_t<T>>::type;
     
     template<typename T>
     using fragmentType_t = typename detail::fragmentType<T>::type;    

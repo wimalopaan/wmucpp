@@ -147,7 +147,6 @@ namespace AVR {
 
             inline static void enable() {
                 mcu_ccl()->luts.raw[N].ctrla.template add<MCU::Ccl::Lut0CtrlA_t::enable | MCU::Ccl::Lut0CtrlA_t::outenable, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
-                
             }
             inline static void disable() {
                 mcu_ccl()->luts.raw[N].ctrla.template clear<MCU::Ccl::Lut0CtrlA_t::enable, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
