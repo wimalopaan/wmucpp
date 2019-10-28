@@ -37,10 +37,22 @@ struct B {
 };
 
 struct A {
-    constexpr static inline B b2{}; 
-    constinit static inline B b1{}; 
+    constexpr A(int x) 
+        : ptr(new int(x))
+    {
+    }
+    constexpr ~A() {
+        delete ptr;
+    }
+    int* ptr = nullptr;
+//    constexpr static inline B b2{}; 
+//    constinit static inline B b1{}; 
 };
 
+struct X {
+    constinit inline static A a{1};
+};
+
+
 int main() {
-    A a;
 }

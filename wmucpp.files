@@ -164,6 +164,7 @@ boards/blmc/simonk_pintest/test01.cc
 boards/bmc/Makefile
 boards/bmc/blink.cc
 boards/bmc/blink01.cc
+boards/bmc/medium01/Makefile
 boards/bmc/robbenavy540/Makefile
 boards/bmc/robbenavy540/blink.cc
 boards/bmc/robbenavy540/bridge.h
@@ -173,6 +174,7 @@ boards/bmc/robbenavy540/test02.cc
 boards/bmc/robbenavy540/test03.cc
 boards/bmc/robbenavy540/test04.cc
 boards/bmc/robbenavy540/test05.cc
+boards/bmc/small01/Makefile
 boards/bmc/test00.cc
 boards/bmc/test10.cc
 boards/bootloader/Makefile

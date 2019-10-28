@@ -27,6 +27,7 @@
 #include <etl/algorithm.h>
 
 #include "mcu/common/timer.h"
+#include "mcu/common/concepts.h"
 
 #include "external/units/physical.h"
 
@@ -41,7 +42,7 @@ namespace External {
         template<bool B>
         struct RisingEdge : etl::NamedFlag<B> {};
         
-        template<etl::Concepts::NamedConstant TimerNumber, etl::Concepts::NamedFlag RisingEdge = RisingEdge<true>, typename AVR::AtMega = DefaultMcuType>
+        template<etl::Concepts::NamedConstant TimerNumber, etl::Concepts::NamedFlag RisingEdge = RisingEdge<true>, AVR::Concepts::AtMega MCU = DefaultMcuType>
         struct IcpPpm {
             using value_type = uint16_t;
             

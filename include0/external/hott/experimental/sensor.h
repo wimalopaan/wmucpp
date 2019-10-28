@@ -291,9 +291,10 @@ namespace Hott {
                  template<typename CN, typename PA, typename ISR, typename RXL, typename TXL> typename Uart, 
                  etl::Concepts::NamedConstant Baud, 
                  typename BinaryMesgType,
+                 typename TextMesgType,
                  typename Clock,
                  typename MCU>
-        struct Sensor<CNumber, Uart, Baud, BinaryMesgType, Clock, MCU> final {
+        struct Sensor<CNumber, Uart, Baud, BinaryMesgType, TextMesgType, Clock, MCU> final {
             static inline constexpr auto UartNumber = CNumber::value;
             enum class hott_state_t {Undefined = 0, BinaryStartRequest, AsciiStartRequest, BinaryWaitIdle, AsciiWaitIdle, BinaryReply, AsciiReply, NumberOfStates};
             

@@ -33,3 +33,5 @@ boards/blmc/blmc_10
 boards/blmc/simonk_pintest
 include0/mcu/pgm
 host
+boards/bmc/small01
+boards/bmc/medium01

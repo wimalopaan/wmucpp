@@ -81,7 +81,7 @@ using inh2 = AVR::Pin<PortB, 0>;
 using qtPA = External::QtRobo::ProtocollAdapter<0, 16>;
 using sumd = Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>;
 
-using sensor = Hott::Experimental::Sensor<AVR::Component::Usart<0>, AVR::Usart, AVR::BaudRate<19200>, Hott::EscMsg, systemClock>;
+using sensor = Hott::Experimental::Sensor<AVR::Component::Usart<0>, AVR::Usart, AVR::BaudRate<19200>, Hott::EscMsg, Hott::TextMsg, systemClock>;
 using rcUsart = AVR::Usart<AVR::Component::Usart<1>, qtPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
 
 using terminalDevice = rcUsart;
@@ -92,7 +92,7 @@ using pwm = AVR::PWM::DynamicPwm<AVR::Component::Timer<1>>;
 using hbridge = External::IFX007::HBridge<pwm, sumd::value_type>;
 
 using adc = AVR::Adc<AVR::Component::Adc<0>>;
-using adcController = External::Hal::AdcController<adc>;
+using adcController = External::Hal::AdcController<adc, Meta::NList<0>>;
 
 using rpm = External::RpmWithIcp<AVR::Component::Timer<3>, MinimumRpm, MaximumRpm>;
 
@@ -115,7 +115,7 @@ struct Storage {
 using eeprom = EEProm::Controller<Storage::ApplData>;
 auto& appData = eeprom::data();
 
-class Dashboard final : public Hott::Menu {
+class Dashboard final : public Hott::Menu<> {
 public:
     Dashboard() : Menu(this, "Dashboard"_pgm
                     ) {}
@@ -126,7 +126,7 @@ private:
 // todo: Zusammenfassen: DropDown(...)
 
 struct YesNo : public Hott::TextWithValue<Storage::AVKey, Storage::ApplData> {
-    YesNo(const PgmStringView& title, Storage::ApplData& data, Storage::AVKey k) :
+    YesNo(const AVR::Pgm::StringView& title, Storage::ApplData& data, Storage::AVKey k) :
         TextWithValue(title, data, k, 1) {}
 
     virtual void valueToText(uint8_t value, etl::span<3, etl::Char> buffer) const override{
@@ -140,7 +140,7 @@ struct YesNo : public Hott::TextWithValue<Storage::AVKey, Storage::ApplData> {
 };
 
 struct Connection : public Hott::TextWithValue<Storage::AVKey, Storage::ApplData, 4> {
-    Connection(const PgmStringView& title, Storage::ApplData& data, Storage::AVKey k) :
+    Connection(const AVR::Pgm::StringView& title, Storage::ApplData& data, Storage::AVKey k) :
         TextWithValue(title, data, k, 2) {}
 
     virtual void valueToText(uint8_t value, etl::span<4, etl::Char> buffer) const override{
@@ -160,7 +160,7 @@ struct Connection : public Hott::TextWithValue<Storage::AVKey, Storage::ApplData
 };
 
 struct PWMMode : public Hott::TextWithValue<Storage::AVKey, Storage::ApplData, 5> {
-    PWMMode(const PgmStringView& title, Storage::ApplData& data, Storage::AVKey k) :
+    PWMMode(const AVR::Pgm::StringView& title, Storage::ApplData& data, Storage::AVKey k) :
         TextWithValue(title, data, k, 1) {}
 
     virtual void valueToText(uint8_t value, etl::span<5, etl::Char> buffer) const override{
@@ -176,7 +176,7 @@ struct PWMMode : public Hott::TextWithValue<Storage::AVKey, Storage::ApplData, 5
     }
 };
 
-class SplitModeMenu final : public Hott::Menu {
+class SplitModeMenu final : public Hott::Menu<> {
 public:
     SplitModeMenu() : Menu(this, "SplitMode"_pgm,
                     &mMode
@@ -185,7 +185,7 @@ private:
     Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mMode{"Mode"_pgm, appData, Storage::AVKey::SplitMode, 2};
 };
 
-class PWMMenu final : public Hott::Menu {
+class PWMMenu final : public Hott::Menu<> {
 public:
     PWMMenu() : Menu(this, "PWM"_pgm,
                     &mPWMF1, &mPWMF2, &mPWMThr1, &mPWMThr2, &mPWMMode
@@ -199,7 +199,7 @@ private:
 };
 
 
-class RCMenu final : public Hott::Menu {
+class RCMenu final : public Hott::Menu<> {
 public:
     RCMenu() : Menu(this, "WM BDC ESC 1.0"_pgm,
                     &mSource, &mChannel, &mPwm, &mSplitMode, &mDashboard
@@ -239,7 +239,7 @@ private:
         }
     }
     inline static TopMenu mTopMenu;
-    inline static Hott::Menu* mMenu = &mTopMenu;
+    inline static Hott::Menu<>* mMenu = &mTopMenu;
 };
 
 using menu = HottMenu<sensor, RCMenu>;

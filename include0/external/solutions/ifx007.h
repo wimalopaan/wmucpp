@@ -35,7 +35,7 @@ namespace External {
             static_assert(bottomCount <= topCount);
             
             static inline void init() {
-                pwm::init();
+                pwm::template init<fPwmMax>();
             }
 
             static inline void duty(const input_type& d) {
