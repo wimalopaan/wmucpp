@@ -49,7 +49,9 @@ namespace AVR {
         using Adc = AVR::Series0::Adc;
         using Vref = AVR::Series1::Vref;
         
+        using TCD = AVR::Series1::TCD;
         using PortRegister = AVR::Series1::PortRegister;
+        using VPort = AVR::Series1::VPort;
         using Portmux = AVR::Series1::Portmux;
         using Ccl = AVR::Series1::Ccl;
     };
@@ -61,12 +63,31 @@ namespace AVR {
     template<> struct AVR::Component::Count<ATTiny412::Usart> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<ATTiny412::TCA> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<ATTiny412::TCB> : std::integral_constant<uint8_t, 1> {};
+    template<> struct AVR::Component::Count<ATTiny412::TCD> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<ATTiny412::Rtc> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<ATTiny412::PortRegister> : std::integral_constant<uint8_t, 6> {};
     template<> struct AVR::Component::Count<ATTiny412::Portmux> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<ATTiny412::Ccl> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<ATTiny412::Adc> : std::integral_constant<uint8_t, 1> {};
 
+    template<> struct ATTiny412::VPort::Address<A> {
+        inline static constexpr uintptr_t value = 0x0000;
+    };
+//    template<> struct ATTiny412::VPort::Address<B> {
+//        inline static constexpr uintptr_t value = 0x0004;
+//    };
+//    template<> struct ATTiny412::VPort::Address<C> {
+//        inline static constexpr uintptr_t value = 0x0008;
+//    };
+//    template<> struct ATTiny412::VPort::Address<D> {
+//        inline static constexpr uintptr_t value = 0x000c;
+//    };
+//    template<> struct ATTiny412::VPort::Address<E> {
+//        inline static constexpr uintptr_t value = 0x0010;
+//    };
+//    template<> struct ATTiny412::VPort::Address<F> {
+//        inline static constexpr uintptr_t value = 0x0014;
+//    };
     template<> struct ATTiny412::Adc::Address<0> {
         inline static constexpr uintptr_t value = 0x0600;
     };
@@ -78,6 +99,9 @@ namespace AVR {
     };
     template<> struct ATTiny412::TCB::Address<0> {
         inline static constexpr uintptr_t value = 0x0A40;
+    };
+    template<> struct ATTiny412::TCD::Address<0> {
+        inline static constexpr uintptr_t value = 0x0A80;
     };
     template<> struct ATTiny412::PortRegister::Address<A> {
         inline static constexpr uintptr_t value = 0x0400;

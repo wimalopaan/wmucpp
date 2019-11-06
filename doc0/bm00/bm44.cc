@@ -30,7 +30,6 @@ namespace {
     constexpr auto melody = AVR::Pgm::Array<note, c_ii_4, c_s_ii_4, d_ii_4, d_s_ii_4, d_s_ii_4, c_ii_4, c_s_ii_4, d_ii_4, d_s_ii_4, d_s_ii_4>{};
 }
 
-
 volatile uint16_t r1;
 volatile uint16_t r2;
 

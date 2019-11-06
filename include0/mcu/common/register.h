@@ -155,7 +155,8 @@ namespace AVR {
         template<BitType F, typename DI = etl::DisbaleInterrupt<etl::RestoreState>>
         void inline clear() {
             [[maybe_unused]] etl::Scoped<DI> di;
-            hwRegister &= ~static_cast<value_type>(F);
+//            hwRegister &= ~static_cast<value_type>(F);
+            hwRegister = hwRegister & ~static_cast<value_type>(F);
         }
         template<BitType Mask>
         inline BitType get() {

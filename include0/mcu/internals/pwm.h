@@ -9,6 +9,7 @@
 #include "../common/pwm.h"
 #include "../common/concepts.h"
 
+#include "ccp.h"
 #include "timer.h"
 
 namespace AVR {
@@ -282,6 +283,63 @@ namespace AVR {
         
         template<auto N>
         struct WO final : etl::NamedConstant<N> {};
+
+        template<typename P, AVR::Concepts::AtTiny1 MCU>
+        struct DynamicPwm<Portmux::Position<Component::Tcd<0>, P>, MCU> final {
+            DynamicPwm() = delete;
+
+            using value_type = etl::uint_ranged<uint16_t, 0, 4095>;
+            
+            inline static constexpr auto f_timer = Project::Config::fMcu;
+
+            using mcu_timer_t = typename MCU::TCD; 
+            static constexpr auto mcu_tcd = getBaseAddr<mcu_timer_t, 0>;
+            using position = Portmux::Position<Component::Tcd<0>, P>;
+            
+            using pins = Meta::List<typename AVR::Portmux::Map<position>::wo0pin, typename AVR::Portmux::Map<position>::wo1pin>;
+            
+//            pins::_;
+            
+            using ccp = AVR::Cpu::Ccp<MCU>;
+
+            inline static constexpr void init() {
+                mcu_tcd()->ctrlb.template set<mcu_timer_t::CtrlB_t::oneRamp>();
+                ccp::unlock([]{
+                    mcu_tcd()->faultctrl.template set<mcu_timer_t::FaultCtrl_t::cmpaen | mcu_timer_t::FaultCtrl_t::cmpben>();
+                });
+                while(!mcu_tcd()->status.template isSet<mcu_timer_t::Status_t::enready>());
+                mcu_tcd()->ctrla.template set<mcu_timer_t::CtrlA4_t::enable>();
+                AVR::PinGroup<pins>::template dir<Output>();
+            }
+            inline static constexpr void frequency(const External::Units::hertz& f) {
+                while(!mcu_tcd()->status.template isSet<mcu_timer_t::Status_t::cmdready>());
+                *mcu_tcd()->cmpaset = 0;
+                *mcu_tcd()->cmpbclr = Config::fMcu / f;
+                mcu_tcd()->ctrle.template set<mcu_timer_t::CtrlE_t::synceoc>();
+                mMax = Config::fMcu / f;
+            }
+//            inline static constexpr void frequency(const uint16_t& f) {
+//                *mcu_tcd()->cmpseta = 0;
+//                *mcu_tcd()->cmpclra = f;
+//            }
+            template<typename... Outs>
+            inline static constexpr void duty(value_type d) {
+                while(!mcu_tcd()->status.template isSet<mcu_timer_t::Status_t::cmdready>());
+                *mcu_tcd()->cmpaclr = d;
+                *mcu_tcd()->cmpbset = mMax - d;
+                mcu_tcd()->ctrle.template set<mcu_timer_t::CtrlE_t::synceoc>();
+            }
+            template<Meta::concepts::List OutList, typename IMode = etl::RestoreState>
+            inline static constexpr void on() {
+//                using out_list = Meta::transform_type<womapper, OutList>;
+//                constexpr auto value = Meta::value_or_v<out_list>;
+            }
+            inline static constexpr value_type max() {
+                return mMax;
+            }
+        private:
+            inline static value_type mMax = 0;
+        };
         
         template<typename P, AVR::Concepts::At01Series MCU>
         struct DynamicPwm<Portmux::Position<Component::Tca<0>, P>, MCU> final {

@@ -35,3 +35,7 @@ include0/mcu/pgm
 host
 boards/bmc/small01
 boards/bmc/medium01
+include0/boost
+boards/bmc/test/gcc
+boards/bmc/test/src
+boards/bmc/test

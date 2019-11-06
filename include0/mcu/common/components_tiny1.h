@@ -29,6 +29,7 @@
 #include "components/portmux1.h"
 #include "components/tca.h"
 #include "components/tcb.h"
+#include "components/tcd.h"
 #include "components/usart.h"
 #include "components/event.h"
 #include "components/adc.h"

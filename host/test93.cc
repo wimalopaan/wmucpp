@@ -1,25 +1,34 @@
 #include <cstdint>
 #include <cstddef>
-#include <array>
-#include <iostream>
+#include <cstdio>
 
-//auto l1 = [](auto v){return 2 * v;};
-//decltype(l1) xx;
-
-constexpr int fkt(size_t value) {
-    return 2 * value;
-}
-constexpr size_t Size = 16;
-constexpr auto test = []{
-    std::array<int, Size> a{};
-    for(size_t i = 0; i < Size; ++i) {
-        a[i] = fkt(i);
+namespace Debug {
+    namespace Parameter {
+        constexpr bool on = false;    
     }
-    return a;
-}();
+
+    template<bool On> struct Printer;
+    template<> struct Printer<true> {
+        template<typename... VV>
+        void operator()(VV... vv){
+            std::printf(vv...);
+        }
+    };
+    template<> struct Printer<false> {
+        template<typename... VV>
+        void operator()(VV...){}
+    };
+    template<typename... VV> void printf1(VV... vv) {
+        Printer<Parameter::on>{}(vv...);
+    }
+    
+    template<typename... VV> void printf(VV... vv) {
+        if constexpr(Parameter::on) {
+            std::printf(vv...);    
+        }
+    }
+}
 
 int main() {
-    for(const auto& v : test) {
-        std::cout << v << '\n';
-    }
+    Debug::printf1("Bla: %d \n", 42);
 }

@@ -17,13 +17,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+F_OSC = 20000000
+
 #MCU = atmega328pb
 #MCU = atmega1284p
 MCU = atmega4809
 #MCU = attiny1614
-F_OSC = 20000000
+
+bm30.s bm30.elf : MCU = atmega4809
+bm43.s bm43.elf : MCU = atmega4809
+bm44.s bm44.elf : MCU = atmega4809
 
 CPPFLAGS += -DNDEBUG
+#CXXFLAGS += -fno-jump-tables
 
 #OPTFLAGS = -O3
 
@@ -45,7 +51,12 @@ targets += shtml
 #targets += bm42.S bm42.elf
 #targets += bm43.S bm43.elf
 #targets += bm44.S bm44.elf
-targets += bm50.S bm50.elf
+#targets += bm50.S bm50.elf
+targets += bm60.S bm60.elf
+targets += bm61.S bm61.elf
+targets += bm62.S bm62.elf
+targets += bm63.S bm63.elf
+targets += bm64.S bm64.elf
 
 -include ../../Makefile.avr0.include
 

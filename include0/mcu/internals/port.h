@@ -62,7 +62,7 @@ namespace AVR {
         using mcuport_type = typename MCU::PortRegister;
         using vport_type = typename MCU::VPort;
 
-        static_assert(AVR::isSBICBICapable<vport_type , Name>(), "VPort not sbi/cbi capable");
+//        static_assert(AVR::isSBICBICapable<vport_type , Name>(), "VPort not sbi/cbi capable");
         
         using name_type = Name;
         Port() = delete;

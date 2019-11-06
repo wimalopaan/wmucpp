@@ -9,7 +9,6 @@
 #include <external/units/physical.h>
 
 namespace AVR {
-    
 }
 
 #if defined(__AVR_ATtiny412__)

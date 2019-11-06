@@ -48,7 +48,7 @@ subdirs =
 #targets += test57.elf test57.hex 
 #targets += test58.elf test58.hex test58.S
 #targets += test59.elf test59.hex test59.S
-#targets += test60.elf test60.hex test60.S
+targets += test60.elf test60.hex test60.S
 targets += test61.elf test61.hex test61.S
 
 targets += test99.elf test99.hex

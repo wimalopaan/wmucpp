@@ -34,46 +34,85 @@ namespace AVR {
             struct Spi0;
             template<uint8_t N> struct Tca0;
             template<uint8_t N> struct Tcb;
+            template<uint8_t N> struct Tcd;
             
             namespace detail {
-                template<typename In, uint8_t Position> struct map_input;
+                template<typename In, uint8_t Position, typename MCU = DefaultMcuType> struct map_input;
                 
-                template<> struct map_input<Mask, 0> : std::integral_constant<std::byte, 0x00_B> {};
-                template<> struct map_input<Feedback, 0> : std::integral_constant<std::byte, 0x01_B> {};
-                template<> struct map_input<Link, 0> : std::integral_constant<std::byte, 0x02_B> {};
-                template<> struct map_input<Event<A>, 0> : std::integral_constant<std::byte, 0x03_B> {};
-                template<> struct map_input<Event<B>, 0> : std::integral_constant<std::byte, 0x04_B> {};
-                template<> struct map_input<IOPin, 0> : std::integral_constant<std::byte, 0x05_B> {};
-                template<> struct map_input<Ac0, 0> : std::integral_constant<std::byte, 0x06_B> {};
-                template<> struct map_input<Usart<0>, 0> : std::integral_constant<std::byte, 0x08_B> {};
-                template<> struct map_input<Spi0, 0> : std::integral_constant<std::byte, 0x09_B> {};
-                template<> struct map_input<Tca0<0>, 0> : std::integral_constant<std::byte, 0x0a_B> {};
-                template<> struct map_input<Tcb<0>, 0> : std::integral_constant<std::byte, 0x0c_B> {};
-                                
-                template<> struct map_input<Mask, 1> : std::integral_constant<std::byte, 0x00_B> {};
-                template<> struct map_input<Feedback, 1> : std::integral_constant<std::byte, 0x01_B> {};
-                template<> struct map_input<Link, 1> : std::integral_constant<std::byte, 0x02_B> {};
-                template<> struct map_input<Event<A>, 1> : std::integral_constant<std::byte, 0x03_B> {};
-                template<> struct map_input<Event<B>, 1> : std::integral_constant<std::byte, 0x04_B> {};
-                template<> struct map_input<IOPin, 1> : std::integral_constant<std::byte, 0x05_B> {};
-                template<> struct map_input<Ac0, 1> : std::integral_constant<std::byte, 0x06_B> {};
-                template<> struct map_input<Usart<1>, 1> : std::integral_constant<std::byte, 0x08_B> {};
-                template<> struct map_input<Spi0, 1> : std::integral_constant<std::byte, 0x09_B> {};
-                template<> struct map_input<Tca0<1>, 1> : std::integral_constant<std::byte, 0x0a_B> {};
-                template<> struct map_input<Tcb<1>, 1> : std::integral_constant<std::byte, 0x0c_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Mask, 0, MCU> : std::integral_constant<std::byte, 0x00_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Feedback, 0, MCU> : std::integral_constant<std::byte, 0x01_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Link, 0, MCU> : std::integral_constant<std::byte, 0x02_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Event<A>, 0, MCU> : std::integral_constant<std::byte, 0x03_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Event<B>, 0, MCU> : std::integral_constant<std::byte, 0x04_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<IOPin, 0, MCU> : std::integral_constant<std::byte, 0x05_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Ac0, 0, MCU> : std::integral_constant<std::byte, 0x06_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Usart<0>, 0, MCU> : std::integral_constant<std::byte, 0x08_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Spi0, 0, MCU> : std::integral_constant<std::byte, 0x09_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Tca0<0>, 0, MCU> : std::integral_constant<std::byte, 0x0a_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Tcb<0>, 0, MCU> : std::integral_constant<std::byte, 0x0c_B> {};
 
-                template<> struct map_input<Mask, 2> : std::integral_constant<std::byte, 0x00_B> {};
-                template<> struct map_input<Feedback, 2> : std::integral_constant<std::byte, 0x01_B> {};
-                template<> struct map_input<Link, 2> : std::integral_constant<std::byte, 0x02_B> {};
-                template<> struct map_input<Event<A>, 2> : std::integral_constant<std::byte, 0x03_B> {};
-                template<> struct map_input<Event<B>, 2> : std::integral_constant<std::byte, 0x04_B> {};
-                template<> struct map_input<IOPin, 2> : std::integral_constant<std::byte, 0x05_B> {};
-                template<> struct map_input<Ac0, 2> : std::integral_constant<std::byte, 0x06_B> {};
-                template<> struct map_input<Usart<2>, 2> : std::integral_constant<std::byte, 0x08_B> {};
-                template<> struct map_input<Spi0, 2> : std::integral_constant<std::byte, 0x09_B> {};
-                template<> struct map_input<Tca0<2>, 2> : std::integral_constant<std::byte, 0x0a_B> {};
-                template<> struct map_input<Tcb<2>, 2> : std::integral_constant<std::byte, 0x0c_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Mask, 0, MCU> : std::integral_constant<std::byte, 0x00_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Feedback, 0, MCU> : std::integral_constant<std::byte, 0x01_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Link, 0, MCU> : std::integral_constant<std::byte, 0x02_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Event<A>, 0, MCU> : std::integral_constant<std::byte, 0x03_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Event<B>, 0, MCU> : std::integral_constant<std::byte, 0x04_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<IOPin, 0, MCU> : std::integral_constant<std::byte, 0x05_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Ac0, 0, MCU> : std::integral_constant<std::byte, 0x06_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Tcb<0>, 0, MCU> : std::integral_constant<std::byte, 0x07_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Tca0<0>, 0, MCU> : std::integral_constant<std::byte, 0x08_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Tcd<0>, 0, MCU> : std::integral_constant<std::byte, 0x09_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Usart<0>, 0, MCU> : std::integral_constant<std::byte, 0x0a_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Spi0, 0, MCU> : std::integral_constant<std::byte, 0x0b_B> {};
                 
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Mask, 1, MCU> : std::integral_constant<std::byte, 0x00_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Feedback, 1, MCU> : std::integral_constant<std::byte, 0x01_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Link, 1, MCU> : std::integral_constant<std::byte, 0x02_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Event<A>, 1, MCU> : std::integral_constant<std::byte, 0x03_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Event<B>, 1, MCU> : std::integral_constant<std::byte, 0x04_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<IOPin, 1, MCU> : std::integral_constant<std::byte, 0x05_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Ac0, 1, MCU> : std::integral_constant<std::byte, 0x06_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Usart<1>, 1, MCU> : std::integral_constant<std::byte, 0x08_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Spi0, 1, MCU> : std::integral_constant<std::byte, 0x09_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Tca0<1>, 1, MCU> : std::integral_constant<std::byte, 0x0a_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Tcb<1>, 1, MCU> : std::integral_constant<std::byte, 0x0c_B> {};
+
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Mask, 1, MCU> : std::integral_constant<std::byte, 0x00_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Feedback, 1, MCU> : std::integral_constant<std::byte, 0x01_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Link, 1, MCU> : std::integral_constant<std::byte, 0x02_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Event<A>, 1, MCU> : std::integral_constant<std::byte, 0x03_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Event<B>, 1, MCU> : std::integral_constant<std::byte, 0x04_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<IOPin, 1, MCU> : std::integral_constant<std::byte, 0x05_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Ac0, 1, MCU> : std::integral_constant<std::byte, 0x06_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Tcb<0>, 1, MCU> : std::integral_constant<std::byte, 0x07_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Tca0<0>, 1, MCU> : std::integral_constant<std::byte, 0x08_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Tcd<0>, 1, MCU> : std::integral_constant<std::byte, 0x09_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Usart<0>, 1, MCU> : std::integral_constant<std::byte, 0x08_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Spi0, 1, MCU> : std::integral_constant<std::byte, 0x09_B> {};
+                
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Mask, 2, MCU> : std::integral_constant<std::byte, 0x00_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Feedback, 2, MCU> : std::integral_constant<std::byte, 0x01_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Link, 2, MCU> : std::integral_constant<std::byte, 0x02_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Event<A>, 2, MCU> : std::integral_constant<std::byte, 0x03_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Event<B>, 2, MCU> : std::integral_constant<std::byte, 0x04_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<IOPin, 2, MCU> : std::integral_constant<std::byte, 0x05_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Ac0, 2, MCU> : std::integral_constant<std::byte, 0x06_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Usart<2>, 2, MCU> : std::integral_constant<std::byte, 0x08_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Spi0, 2, MCU> : std::integral_constant<std::byte, 0x09_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Tca0<2>, 2, MCU> : std::integral_constant<std::byte, 0x0a_B> {};
+                template<AVR::Concepts::AtMega0 MCU> struct map_input<Tcb<2>, 2, MCU> : std::integral_constant<std::byte, 0x0c_B> {};
+                
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Mask, 2, MCU> : std::integral_constant<std::byte, 0x00_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Feedback, 2, MCU> : std::integral_constant<std::byte, 0x01_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Link, 2, MCU> : std::integral_constant<std::byte, 0x02_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Event<A>, 2, MCU> : std::integral_constant<std::byte, 0x03_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Event<B>, 2, MCU> : std::integral_constant<std::byte, 0x04_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<IOPin, 2, MCU> : std::integral_constant<std::byte, 0x05_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Ac0, 2, MCU> : std::integral_constant<std::byte, 0x06_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Tcb<0>, 2, MCU> : std::integral_constant<std::byte, 0x07_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Tca0<0>, 2, MCU> : std::integral_constant<std::byte, 0x08_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Usart<2>, 2, MCU> : std::integral_constant<std::byte, 0x08_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Tcd<0>, 2, MCU> : std::integral_constant<std::byte, 0x09_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Spi0, 2, MCU> : std::integral_constant<std::byte, 0x0b_B> {};
             }
         }
         namespace Output {
@@ -133,10 +172,10 @@ namespace AVR {
             static constexpr auto mcu_ccl = getBaseAddr<typename MCU::Ccl>;
             
             inline static void init(std::byte truthTable) {
-                constexpr auto insel0 = Input::detail::map_input<In0, 0>::value;                
-                constexpr auto insel1 = (Input::detail::map_input<In1, 1>::value << 4);                
+                constexpr auto insel0 = Input::detail::map_input<In0, 0, MCU>::value;                
+                constexpr auto insel1 = (Input::detail::map_input<In1, 1, MCU>::value << 4);                
                 constexpr auto insel01 = insel0 | insel1;
-                constexpr auto insel2 = Input::detail::map_input<In2, 2>::value;            
+                constexpr auto insel2 = Input::detail::map_input<In2, 2, MCU>::value;            
               
                 detail::LutTransaction<N> lut0t1([&]{
                     mcu_ccl()->luts.raw[N].ctrlb = insel01;

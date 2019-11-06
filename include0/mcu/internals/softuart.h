@@ -276,11 +276,14 @@ namespace AVR {
             struct ReceiveBitHandler : public IsrBaseHandler<typename AVR::ISR::Timer<IcpTimerNumber::value>::CompareB> {
                 template<bool visible = UseRX::value>
                 static inline std::enable_if_t<visible> isr() {
-                    inframe >>= 1;
+//                    inframe >>= 1;
+                    inframe = inframe >> 1;
                     if (Util::SoftUart::Icp<IcpTimerNumber::value>::rx::read()) {
-                        inframe |= (1 << 8);
+//                        inframe |= (1 << 8);
+                        inframe = inframe | (1 << 8);
                     }
-                    ++inbits;
+//                    ++inbits;
+                    inbits = inbits + 1;
                     if (inbits == 9) {
                         uint8_t c = 0xff & (inframe >> 1);
                         mcu_timer_interrupts()->timsk.template clear<int_type::Mask::ocieb, noop>();

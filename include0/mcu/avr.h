@@ -46,6 +46,7 @@ namespace AVR {
     struct ATTiny25;
     //AVR0-Series
     struct ATMega4809;
+    //AVR1-Series
     struct ATTiny412;
     struct ATTiny1614;
 }
@@ -136,6 +137,9 @@ namespace AVR {
         template<uint8_t N>
         struct Tcb : etl::NamedConstant<N>{};
 
+        template<uint8_t N>
+        struct Tcd : etl::NamedConstant<N>{};
+        
         template<uint8_t N>
         struct Ac : etl::NamedConstant<N>{};
     }   

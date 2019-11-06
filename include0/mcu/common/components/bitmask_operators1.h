@@ -42,5 +42,7 @@ namespace std {
     template<> struct enable_bitmask_operators<AVR::Series1::Portmux::CtrlA_t> : std::true_type {};
     template<> struct enable_bitmask_operators<AVR::Series1::Ccl::CtrlA_t> : std::true_type {};
     template<> struct enable_bitmask_operators<AVR::Series1::Ccl::Lut0CtrlA_t> : std::true_type {};
+    
+    template<> struct enable_bitmask_operators<AVR::Series1::TCD::FaultCtrl_t> : std::true_type {};
 }
 
