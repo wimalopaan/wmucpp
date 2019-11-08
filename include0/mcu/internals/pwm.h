@@ -294,7 +294,14 @@ namespace AVR {
 
             using mcu_timer_t = typename MCU::TCD; 
             static constexpr auto mcu_tcd = getBaseAddr<mcu_timer_t, 0>;
+            
             using position = Portmux::Position<Component::Tcd<0>, P>;
+            
+            using CtrlA4_t = mcu_timer_t::CtrlA4_t;
+            using CtrlB_t = mcu_timer_t::CtrlB_t;
+            using CtrlE_t = mcu_timer_t::CtrlE_t;
+            using Status_t = mcu_timer_t::Status_t;
+            using FaultCtrl_t = mcu_timer_t::FaultCtrl_t;
             
             using pins = Meta::List<typename AVR::Portmux::Map<position>::wo0pin, typename AVR::Portmux::Map<position>::wo1pin>;
             
@@ -302,20 +309,26 @@ namespace AVR {
             
             using ccp = AVR::Cpu::Ccp<MCU>;
 
+            static inline auto status_r = []()->auto&{return mcu_tcd()->status;};
+            static inline auto ctrla_r = []()->auto&{return mcu_tcd()->ctrla;};
+            static inline auto ctrlb_r = []()->auto&{return mcu_tcd()->ctrlb;};
+            static inline auto ctrle_r = []()->auto&{return mcu_tcd()->ctrle;};
+            static inline auto faultctrl_r = []()->auto&{return mcu_tcd()->faultctrl;};
+            
             inline static constexpr void init() {
-                mcu_tcd()->ctrlb.template set<mcu_timer_t::CtrlB_t::oneRamp>();
+                set<CtrlB_t::oneRamp>(ctrlb_r());
                 ccp::unlock([]{
-                    mcu_tcd()->faultctrl.template set<mcu_timer_t::FaultCtrl_t::cmpaen | mcu_timer_t::FaultCtrl_t::cmpben>();
+                    set<FaultCtrl_t::cmpaen | FaultCtrl_t::cmpben>(faultctrl_r());
                 });
-                while(!mcu_tcd()->status.template isSet<mcu_timer_t::Status_t::enready>());
-                mcu_tcd()->ctrla.template set<mcu_timer_t::CtrlA4_t::enable>();
+                waitFor<Status_t::enready>(status_r());
+                set<CtrlA4_t::enable>(ctrla_r());
                 AVR::PinGroup<pins>::template dir<Output>();
             }
             inline static constexpr void frequency(const External::Units::hertz& f) {
-                while(!mcu_tcd()->status.template isSet<mcu_timer_t::Status_t::cmdready>());
+                waitFor<Status_t::cmdready>(status_r());
                 *mcu_tcd()->cmpaset = 0;
                 *mcu_tcd()->cmpbclr = Config::fMcu / f;
-                mcu_tcd()->ctrle.template set<mcu_timer_t::CtrlE_t::synceoc>();
+                set<CtrlE_t::synceoc>(ctrle_r());
                 mMax = Config::fMcu / f;
             }
 //            inline static constexpr void frequency(const uint16_t& f) {
@@ -324,10 +337,10 @@ namespace AVR {
 //            }
             template<typename... Outs>
             inline static constexpr void duty(value_type d) {
-                while(!mcu_tcd()->status.template isSet<mcu_timer_t::Status_t::cmdready>());
+                waitFor<Status_t::cmdready>(status_r());
                 *mcu_tcd()->cmpaclr = d;
                 *mcu_tcd()->cmpbset = mMax - d;
-                mcu_tcd()->ctrle.template set<mcu_timer_t::CtrlE_t::synceoc>();
+                set<CtrlE_t::synceoc>(ctrle_r());
             }
             template<Meta::concepts::List OutList, typename IMode = etl::RestoreState>
             inline static constexpr void on() {

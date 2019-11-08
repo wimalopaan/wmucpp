@@ -67,7 +67,7 @@ namespace AVR {
         }
         
         template<BitType F>
-        bool inline isSet() {
+        bool inline isSet() const {
             return std::any(hwRegister & static_cast<value_type>(F));
         }
         template<BitType F>
@@ -98,7 +98,6 @@ namespace AVR {
         volatile value_type hwRegister;
     };
     
-    
     template<typename Component, typename BitType, typename ValueType, typename MCU>
     struct FlagRegister<Component, BitType, ReadOnly, ValueType, MCU> final {
         typedef Component component_type;
@@ -112,12 +111,29 @@ namespace AVR {
         FlagRegister& operator=(FlagRegister&&) = delete;
         
         template<BitType F>
-        bool inline isSet() {
+        bool inline isSet() const {
             return std::any(hwRegister & static_cast<value_type>(F));
+        }
+        template<BitType F>
+        void inline waitFor() const {
+            while(std::none(hwRegister & static_cast<value_type>(F)));
         }
     private:
         volatile value_type hwRegister;
     };
+    
+    template<auto Bit, typename R>
+    inline void waitFor(const R& r) {
+        r.template waitFor<Bit>();
+    }
+    template<auto Bit, typename R>
+    inline void set(R& r) {
+        r.template set<Bit>();
+    }
+    template<auto Bit, typename R>
+    inline void clear(R& r) {
+        r.template clear<Bit>();
+    }
     
     template<typename Component, typename BitType, typename ValueType = uint8_t, typename MCU = DefaultMcuType>
     struct ControlRegister;
@@ -159,21 +175,21 @@ namespace AVR {
             hwRegister = hwRegister & ~static_cast<value_type>(F);
         }
         template<BitType Mask>
-        inline BitType get() {
+        inline BitType get() const {
             return static_cast<BitType>(hwRegister & static_cast<value_type>(Mask));
         }
         template<uint8_t Mask>
-        inline BitType get() {
+        inline BitType get() const {
             return static_cast<BitType>(hwRegister & Mask);
         }
         template<BitType F>
-        bool inline isSet() {
+        bool inline isSet() const {
             return hwRegister & static_cast<value_type>(F);
         }
         value_type inline raw() {
             return hwRegister;
         }
-        BitType inline value() {
+        BitType inline value() const {
             return static_cast<BitType>(hwRegister);
         }
         
@@ -218,21 +234,21 @@ namespace AVR {
             hwRegister = hwRegister & ~static_cast<value_type>(F);
         }
         template<BitType Mask>
-        inline BitType get() {
+        inline BitType get() const {
             return static_cast<BitType>(hwRegister & static_cast<value_type>(Mask));
         }
         template<uint8_t Mask>
-        inline BitType get() {
+        inline BitType get() const {
             return static_cast<BitType>(hwRegister & Mask);
         }
         template<BitType F>
-        bool inline isSet() {
+        bool inline isSet() const {
             return hwRegister & static_cast<value_type>(F);
         }
-        value_type inline raw() {
+        value_type inline raw() const {
             return hwRegister;
         }
-        BitType inline value() {
+        BitType inline value() const {
             return static_cast<BitType>(hwRegister);
         }
     private:
@@ -379,9 +395,8 @@ namespace AVR {
         using register_type = Register;
         using value_type = ValueType ;
 
-        inline static ValueType& raw() {
+        inline ValueType& raw() const {
             return *(reinterpret_cast<ValueType*>(reg()));
         }
     };
-    
 }

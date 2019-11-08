@@ -214,6 +214,7 @@ namespace etl {
             return Bit::template Value<T>::value & v;
         }
     }
+
     template<typename Bit, typename T>
     inline constexpr bool set(T& v) {
         return v |= Bit::template Value<T>::value;

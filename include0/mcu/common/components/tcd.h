@@ -124,7 +124,7 @@ namespace AVR {
                 cmdready = (1 << 1),
                 enready = (1 << 0),
             };
-            FlagRegister<TCD, Status_t> status;
+            FlagRegister<TCD, Status_t, ReadOnly> status;
             
             volatile const std::byte reservedf;
 

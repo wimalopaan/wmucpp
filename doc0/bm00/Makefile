@@ -24,6 +24,7 @@ F_OSC = 20000000
 MCU = atmega4809
 #MCU = attiny1614
 
+bm01.s bm01.elf : MCU = attiny412
 bm30.s bm30.elf : MCU = atmega4809
 bm43.s bm43.elf : MCU = atmega4809
 bm44.s bm44.elf : MCU = atmega4809
