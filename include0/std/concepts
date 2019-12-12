@@ -4,12 +4,27 @@
 
 namespace std {
     namespace detail {
-        
-        template< class T, class U >
+        template<typename T, typename U>
         concept SameHelper = std::is_same_v<std::remove_cvref_t<T>, std::remove_cvref_t<U>>;
     }
      
-    template< class T, class U >
+    template<typename T, typename U>
     concept same_as = detail::SameHelper<T, U> && detail::SameHelper<U, T>;
     
+    template<typename T>
+    concept integral = std::is_integral_v<T>;
+
+    template <typename T>
+    concept signed_integral = std::integral<T> && std::is_signed_v<T>;
+
+    template <typename T>
+    concept unsigned_integral = std::integral<T> && !std::signed_integral<T>;
+    
+    template <typename T>
+    concept floating_point = std::is_floating_point_v<T>;
+
+    template<typename T>
+    concept swappable = requires(T& a, T& b) {
+        swap(a, b);
+    };
 }

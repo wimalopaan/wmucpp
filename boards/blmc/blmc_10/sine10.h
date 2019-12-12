@@ -176,7 +176,7 @@ namespace BLDC {
             constinit inline static SpeedValue speed_value;
             
             inline static constexpr auto sineTableLengths = []{
-                std::array<uint16_t, sinePhaseLength.size()> l;
+                std::array<uint16_t, sinePhaseLength.size()> l{};
                 for(uint8_t i = 0; i < l.size(); ++i) {
                     l[i] = sinePhaseLength[i] * 6;
                 }
@@ -191,7 +191,7 @@ namespace BLDC {
                                                                                                                          std::integral_constant<uint16_t, Max> = std::integral_constant<uint16_t, Max>{},
                                                                                                                          std::integral_constant<uint16_t, Shift> = std::integral_constant<uint16_t, Shift>{}){
                                                                                                                       using value_type = etl::typeForValue_t<Max>;        
-                                                                                                                      std::array<value_type, Size> t;
+                                                                                                                      std::array<value_type, Size> t{};
                                                                                                                       for(uint16_t i = 0; i < t.size(); ++i) {
                 auto k = (i + Shift) % t.size();
                 t[k] = (Max / 2) * (cos((i * 2 * M_PI) / t.size()) + 1.0);

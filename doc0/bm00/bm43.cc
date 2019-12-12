@@ -27,7 +27,7 @@ namespace {
     //    std::integral_constant<uint32_t, note::convert(Pitch{Letter::c, Octave::i, Accidential::flat}).value>::_;
     //    std::integral_constant<uint16_t, note::convert(Length{Base::quarter})>::_;
     
-    constexpr auto melody = AVR::Pgm::Array<note, c_ii_4, c_s_ii_4, d_ii_4, d_s_ii_4, d_s_ii_4, c_ii_4, c_s_ii_4, d_ii_4, d_s_ii_4, d_s_ii_4>{};
+    constexpr auto melody = AVR::Pgm::Array<note, c_ii_4, c_s_ii_4, d_ii_4, d_s_ii_4, d_s_ii_4, c_ii_4, c_s_ii_4, d_ii_4, d_s_ii_4, d_s_ii_4, c_ii_4, c_s_ii_4, d_ii_4, d_s_ii_4, d_s_ii_4, c_ii_4, c_s_ii_4, d_ii_4, d_s_ii_4, d_s_ii_4>{};
 }
 
 

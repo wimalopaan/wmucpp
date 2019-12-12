@@ -14,6 +14,11 @@ volatile uint16_t c = 0;
 
 volatile fpq10 r;
 
+[[noreturn]] void foo() {
+    while(true);
+    
+}
+
 int main() {    
 //    Control::PID pid{fpq10{0.1}, fpq10{0.1}, fpq10{0.1}, 100, 30};
 //    auto m2 = m;
@@ -21,7 +26,8 @@ int main() {
 //    d = pid.correctionValue(m2, y2);
 
 //     c = (int32_t(m) * s) / u;
-    uint16_t s = 31;
-     c = (int32_t(m) * s) >> 7;
+//    uint16_t s = 31;
+//     c = (int32_t(m) * s) >> 7;
     
+     foo();
 }

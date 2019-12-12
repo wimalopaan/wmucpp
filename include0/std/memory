@@ -3,11 +3,13 @@
 #include <type_traits>
 
 namespace std {
-    
-    
     template <typename T>
     constexpr typename remove_reference<T>::type&& move(T&& arg) {
         return static_cast<typename remove_reference<T>::type&&>(arg);
     }
-    
 }
+
+inline constexpr void* operator new(size_t, void* p) {
+    return p;
+}
+

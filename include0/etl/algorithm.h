@@ -196,6 +196,9 @@ namespace etl {
     namespace detail {
         template<typename A, etl::Concepts::Container B, auto... II>
         inline static constexpr void copyElements(A& a, const B& b, std::index_sequence<II...>) {
+//            static_assert(((II < std::size(a)) && ...));
+//            static_assert(((II < std::size(b)) && ...));
+//            ((a[II] = typename A::value_type(b[II])),...);
             copyElements<II...>(a, b);
         }
         template<typename A, typename... BB, auto... II>
@@ -384,11 +387,19 @@ namespace etl {
     constexpr inline std::byte nth_byte(const T& v);
 
     template<>
-    constexpr inline std::byte nth_byte<0>(const uint16_t& v) {
+    constexpr inline std::byte nth_byte<0, uint8_t>(const uint8_t& v) {
         return std::byte(v);
     }
     template<>
-    constexpr inline std::byte nth_byte<1>(const uint16_t& v) {
+    constexpr inline std::byte nth_byte<0, std::byte>(const std::byte& v) {
+        return v;
+    }
+    template<>
+    constexpr inline std::byte nth_byte<0, uint16_t>(const uint16_t& v) {
+        return std::byte(v);
+    }
+    template<>
+    constexpr inline std::byte nth_byte<1, uint16_t>(const uint16_t& v) {
         return std::byte(v >> 8);
     }
     

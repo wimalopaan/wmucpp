@@ -16,7 +16,7 @@ namespace  {
     constexpr Note a4{400, 500};
     constexpr Note a5{500, 600};
     
-    constexpr auto array = AVR::Pgm::Array<Note, a1, a2, a3, a4, a5, a5, a4, a3, a2, a1>{};
+    constexpr auto array = AVR::Pgm::Array<Note, a1, a2, a3, a4, a5, a5, a4, a3, a2, a1, a1, a2, a3, a4, a5, a5, a4, a3, a2, a1>{};
     //constexpr auto array2 = AVR::Util::PgmArray<Note, a5, a4, a3, a2, a1>{};
     
 }

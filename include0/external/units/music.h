@@ -165,6 +165,5 @@ namespace External {
             inline static State state{State::Off};
             inline static uint16_t ticksLeft{0};
         };
-        
     }
 }

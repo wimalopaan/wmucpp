@@ -53,6 +53,7 @@ namespace AVR {
         using Vref = AVR::Series0::Vref;
         using Sleep = AVR::Series0::Sleep;
         using SigRow = AVR::Series0::SigRow;
+        using Spi = AVR::Series0::Spi;
         
     };
     template<>
@@ -70,6 +71,7 @@ namespace AVR {
     template<> struct AVR::Component::Count<ATMega4809::Ccl> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<ATMega4809::AdComparator> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<ATMega4809::Adc> : std::integral_constant<uint8_t, 1> {};
+    template<> struct AVR::Component::Count<ATMega4809::Spi> : std::integral_constant<uint8_t, 1> {};
 
     template<> struct ATMega4809::VPort::Address<A> {
         inline static constexpr uintptr_t value = 0x0000;
@@ -91,6 +93,9 @@ namespace AVR {
     };
 
     
+    template<> struct ATMega4809::Spi::Address<0> {
+        inline static constexpr uintptr_t value = 0x08C0;
+    };
     template<> struct ATMega4809::Adc::Address<0> {
         inline static constexpr uintptr_t value = 0x0600;
     };

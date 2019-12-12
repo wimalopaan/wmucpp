@@ -44,7 +44,6 @@ namespace etl {
     struct FixedPoint;
     
     namespace detail {
-        
         template<Stream Stream, Container C>
         requires (sizeof(typename C::value_type) == 1)
         constexpr inline void out_impl(const C& a) {

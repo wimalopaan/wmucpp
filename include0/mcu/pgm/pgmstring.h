@@ -45,31 +45,19 @@ namespace AVR::Pgm {
     public:
         inline etl::Char operator[](uint8_t index) const {
             //        assert(ptrToPgmData != nullptr);
-            return etl::Char{pgm_read_byte(ptrToPgmData+ index)};
+            return etl::Char{pgm_read_byte(ptrToPgmData + index)};
         }
         template<typename C, C... CC> 
         constexpr StringView(const String<C, CC...>& ps) : ptrToPgmData(ps.data) {}
     private:
         explicit constexpr StringView(const Ptr<char>& pgm) : ptrToPgmData(pgm.value) {}
-        const char* const ptrToPgmData = nullptr;
+        const char* const ptrToPgmData{nullptr};
     };
-    
-    template<etl::Concepts::Stream Stream>
-    constexpr inline void out_impl(const StringView& a) {
-        for(uint8_t i = 0;;++i) {
-            if (auto c = a[i]; c != etl::Char{'\0'}) {
-                Stream::device_type::put(std::byte{c});
-            }
-            else {
-                break;
-            }
-        };   
-    }
-    
-    
     
     template<typename C, C... CC>
     struct String final {
+        friend class StringView;
+        
         using value_type = etl::Char;
         
         constexpr String() = default;

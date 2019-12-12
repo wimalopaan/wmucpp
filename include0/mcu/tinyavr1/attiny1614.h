@@ -48,6 +48,7 @@ namespace AVR {
         using Sleep = AVR::Series0::Sleep;
         using Adc = AVR::Series0::Adc;
         using Vref = AVR::Series1::Vref;
+        using Spi = AVR::Series0::Spi;
         
         using PortRegister = AVR::Series1::PortRegister;
         using VPort = AVR::Series1::VPort;
@@ -69,6 +70,7 @@ namespace AVR {
     template<> struct AVR::Component::Count<ATTiny1614::Portmux> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<ATTiny1614::Ccl> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<ATTiny1614::Adc> : std::integral_constant<uint8_t, 2> {};
+    template<> struct AVR::Component::Count<ATTiny1614::Spi> : std::integral_constant<uint8_t, 1> {};
 
     
     template<> struct ATTiny1614::VPort::Address<A> {
@@ -90,6 +92,9 @@ namespace AVR {
         inline static constexpr uintptr_t value = 0x0014;
     };
     
+    template<> struct ATTiny1614::Spi::Address<0> {
+        inline static constexpr uintptr_t value = 0x0820;
+    };
     template<> struct ATTiny1614::Adc::Address<0> {
         inline static constexpr uintptr_t value = 0x0600;
     };

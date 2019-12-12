@@ -36,10 +36,23 @@ namespace etl {
         static inline constexpr size_type size() {
             return Length;
         }
-    
+
+//        inline constexpr StringBuffer(const AVR::Pgm::StringView& ps) {
+//            insertAt(0, ps);
+//        }
+
+        template<typename C, C... CC>
+        inline constexpr StringBuffer(const AVR::Pgm::String<C, CC...>& ps) {
+            insertAt(0, ps); 
+        }
+        
         inline constexpr StringBuffer() = default;
         StringBuffer(const StringBuffer&) = delete;
-        StringBuffer& operator=(const StringBuffer&) = delete;
+        inline constexpr StringBuffer& operator=(const StringBuffer& rhs) {
+            insertAt(0, rhs);
+            return *this;
+        }
+        
         StringBuffer& operator=(StringBuffer&&) = delete;
     
         inline constexpr StringBuffer(StringBuffer&& other) {
@@ -51,14 +64,14 @@ namespace etl {
         template<uint8_t M>
         inline constexpr void insertAt(uint8_t position, const StringBuffer<M, T>& sb) {
             assert(position < Length);
-            insertAt(position, sb.data);
+            insertAt(position, &sb.data[0]);
         }
     
         template<typename C, C... CC>
         inline constexpr void insertAt(uint8_t position, const AVR::Pgm::String<C, CC...>& ps) {
-            static_assert(Length > ps.size, "wrong length");
+            static_assert(Length > ps.size(), "wrong length");
             assert(position < Length);
-            for(uint8_t i = position, j = 0; (i < Length) && (j < ps.size); ++i, ++j) {
+            for(uint8_t i = position, j = 0; (i < Length) && (j < ps.size()); ++i, ++j) {
                 data[i] = ps[j];
             }
         }
@@ -73,9 +86,9 @@ namespace etl {
                 data[i] = Fill;
             }
         }
-        inline constexpr void insertAt(uint8_t position, const char* s) {
+        inline constexpr void insertAt(uint8_t position, const Char* s) {
             assert(position < Length);
-            for(uint8_t i = position; (i < Length) && (*s != '\0'); ++i) {
+            for(uint8_t i = position; (i < Length) && (*s != Char{'\0'}); ++i) {
                 data[i] = *s++;
             }
         }

@@ -76,7 +76,7 @@ template<auto B1, auto B2>
 using BitsToSwap = StaticPair<B1, B2>;
 
 namespace  {
-    constinit auto lut = gen<16, BitsToSwap<1, 2>>();
+    /*constinit */auto lut = gen<16, BitsToSwap<1, 2>>();
 }
 
 volatile std::byte firstByte;

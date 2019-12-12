@@ -29,6 +29,10 @@ namespace External {
             inline static constexpr uint16_t ppmMin = 1_ms * (Project::Config::fMcu / prescaler);
             inline static constexpr uint16_t ppmMinExtended = 750_us * (Project::Config::fMcu / prescaler);
             
+            static inline constexpr uint16_t ppmWidth = ppmMax - ppmMin;
+            static inline constexpr uint16_t span = ppmWidth / 2;
+            static inline constexpr uint16_t medium = (ppmMax + ppmMin) / 2;
+            
             using value_type = etl::uint_ranged_NaN<uint16_t, ppmMin, ppmMax>;
             using extended_value_type = etl::uint_ranged_NaN<uint16_t, ppmMinExtended, ppmMaxExtended>;
             

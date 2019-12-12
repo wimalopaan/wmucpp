@@ -230,6 +230,9 @@ namespace etl {
 //        inline constexpr bool operator>(T rhs) const volatile {
 //            return mValue > rhs;
 //        }
+        
+//        inline auto operator<=>(const uint_ranged&) const = default;
+        
         inline uint_ranged& operator--() {
             if (mValue > LowerBound) {
                 --mValue;
@@ -389,6 +392,9 @@ namespace etl {
         }
         inline constexpr void operator+=(T value) {
             mValue = std::min(UpperBound, mValue + value);
+        }
+        inline constexpr void operator/=(T d) {
+            mValue = std::clamp(mValue / d, LowerBound, UpperBound);
         }
     private:
         T mValue{NaN};

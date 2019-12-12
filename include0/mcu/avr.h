@@ -49,6 +49,11 @@ namespace AVR {
     //AVR1-Series
     struct ATTiny412;
     struct ATTiny1614;
+    
+    namespace Series0 {
+    }
+    namespace Series1 {
+    }
 }
 
 #if defined(__AVR_ATmega1284P__)
@@ -139,6 +144,9 @@ namespace AVR {
 
         template<uint8_t N>
         struct Tcd : etl::NamedConstant<N>{};
+
+        template<uint8_t N>
+        struct Spi : etl::NamedConstant<N>{};
         
         template<uint8_t N>
         struct Ac : etl::NamedConstant<N>{};

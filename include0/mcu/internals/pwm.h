@@ -297,6 +297,7 @@ namespace AVR {
             
             using position = Portmux::Position<Component::Tcd<0>, P>;
             
+            using CtrlA2_t = mcu_timer_t::CtrlA2_t;
             using CtrlA4_t = mcu_timer_t::CtrlA4_t;
             using CtrlB_t = mcu_timer_t::CtrlB_t;
             using CtrlE_t = mcu_timer_t::CtrlE_t;
@@ -316,20 +317,21 @@ namespace AVR {
             static inline auto faultctrl_r = []()->auto&{return mcu_tcd()->faultctrl;};
             
             inline static constexpr void init() {
-                set<CtrlB_t::oneRamp>(ctrlb_r());
+                AVR::set<CtrlA2_t::div32>(ctrla_r());
+                AVR::set<CtrlB_t::oneRamp>(ctrlb_r());
                 ccp::unlock([]{
-                    set<FaultCtrl_t::cmpaen | FaultCtrl_t::cmpben>(faultctrl_r());
+                    AVR::set<FaultCtrl_t::cmpaen | FaultCtrl_t::cmpben>(faultctrl_r());
                 });
                 waitFor<Status_t::enready>(status_r());
-                set<CtrlA4_t::enable>(ctrla_r());
+                AVR::add<CtrlA4_t::enable>(ctrla_r());
                 AVR::PinGroup<pins>::template dir<Output>();
             }
             inline static constexpr void frequency(const External::Units::hertz& f) {
                 waitFor<Status_t::cmdready>(status_r());
                 *mcu_tcd()->cmpaset = 0;
-                *mcu_tcd()->cmpbclr = Config::fMcu / f;
-                set<CtrlE_t::synceoc>(ctrle_r());
-                mMax = Config::fMcu / f;
+                *mcu_tcd()->cmpbclr = Config::fMcu / (f * 32);
+                AVR::set<CtrlE_t::synceoc>(ctrle_r());
+                mMax = Config::fMcu / (32 * f);
             }
 //            inline static constexpr void frequency(const uint16_t& f) {
 //                *mcu_tcd()->cmpseta = 0;
@@ -340,12 +342,58 @@ namespace AVR {
                 waitFor<Status_t::cmdready>(status_r());
                 *mcu_tcd()->cmpaclr = d;
                 *mcu_tcd()->cmpbset = mMax - d;
-                set<CtrlE_t::synceoc>(ctrle_r());
+                AVR::set<CtrlE_t::synceoc>(ctrle_r());
+            }
+            template<etl::Concepts::NamedConstant Out>
+            inline static constexpr void set(value_type v) {
+                waitFor<Status_t::cmdready>(status_r());
+                if constexpr(Out::value == 0) {
+                    *mcu_tcd()->cmpaset = v;
+                }                
+                else if constexpr(Out::value == 1) {
+                    *mcu_tcd()->cmpbset = v;
+                }                
+                else {
+                    static_assert(std::false_v<MCU>);
+                }
+                AVR::set<CtrlE_t::synceoc>(ctrle_r());
+            }
+            template<etl::Concepts::NamedConstant Out>
+            inline static constexpr void clear(value_type v) {
+                waitFor<Status_t::cmdready>(status_r());
+                if constexpr(Out::value == 0) {
+                    *mcu_tcd()->cmpaclr = v;
+                }                
+                else {
+                    static_assert(std::false_v<MCU>);
+                }
+                AVR::set<CtrlE_t::synceoc>(ctrle_r());
             }
             template<Meta::concepts::List OutList, typename IMode = etl::RestoreState>
             inline static constexpr void on() {
-//                using out_list = Meta::transform_type<womapper, OutList>;
-//                constexpr auto value = Meta::value_or_v<out_list>;
+                if constexpr(Meta::contains_v<OutList, WO<0>>) {
+                    ccp::unlock([]{
+                        AVR::set<FaultCtrl_t::cmpaen>(faultctrl_r());
+                    });                    
+                }
+                if constexpr(Meta::contains_v<OutList, WO<1>>) {
+                    ccp::unlock([]{
+                        AVR::set<FaultCtrl_t::cmpben>(faultctrl_r());
+                    });                                        
+                }
+            }
+            template<Meta::concepts::List OutList, typename IMode = etl::RestoreState>
+            inline static constexpr void off() {
+                if constexpr(Meta::contains_v<OutList, WO<0>>) {
+                    ccp::unlock([]{
+                        clear<FaultCtrl_t::cmpaen>(faultctrl_r());
+                    });                    
+                }
+                if constexpr(Meta::contains_v<OutList, WO<1>>) {
+                    ccp::unlock([]{
+                        AVR::clear<FaultCtrl_t::cmpben>(faultctrl_r());
+                    });                                        
+                }
             }
             inline static constexpr value_type max() {
                 return mMax;

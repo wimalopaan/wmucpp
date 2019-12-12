@@ -65,6 +65,15 @@ namespace std {
     constexpr auto end(C& c) -> decltype(c.end()) {
         return c.end();
     }
+    
+    template< class C >
+    constexpr auto cbegin( const C& c ) noexcept
+        -> decltype(std::begin(c));
+    
+    template< class C >
+    constexpr auto cend( const C& c ) noexcept
+        -> decltype(std::end(c));
+    
     template<typename ForwardIt, typename T>
     constexpr void fill(ForwardIt first, ForwardIt last, const T& value){
         for (; first != last; ++first) {
@@ -72,13 +81,21 @@ namespace std {
         }
     }
     template<typename IIt, typename OIt>
-    constexpr OIt copy(IIt first, IIt last, OIt out) {
+    inline constexpr OIt copy(IIt first, IIt last, OIt out) {
         while (first != last) {
             *out = *first;
             ++out;
             ++first;
         }
         return out;
+    }
+    template<typename It, typename Ot, typename F>
+    void transform(It first, const It& last, Ot out, F f) {
+        while(first != last) {
+            *out= f(*first);
+            ++out;
+            ++first;
+        }
     }
     
     template <typename C>

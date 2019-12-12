@@ -3,7 +3,6 @@
 #include <etl/types.h>
 #include <etl/tuple.h>
 
-
 template<typename P, typename L>
 struct Note {};
 

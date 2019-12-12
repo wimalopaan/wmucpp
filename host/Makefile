@@ -52,14 +52,14 @@ subdirs += hott
 #targets += test51
 #targets += test60
 #targets += test70
-#targets += test80
+targets += test80
 #targets += test90
 #targets += test91
-#targets += test92
+targets += test92
 targets += test93
-#targets += test98
+targets += test98
 #targets += test99
-targets += test100
+#targets += test100
 
 -include ../Makefile.include
 
@@ -70,6 +70,6 @@ CC = g++
 LDFLAGS = -lpthread
 CXXFLAGS = -g -std=c++2a -fconcepts -ftemplate-depth=2048 -fno-threadsafe-statics
 CXXFLAGS += -Wall -Wextra -fPIC
-CXXFLAGS += -I../include
+CXXFLAGS += -I../include0
 
 MCUFLAGS =

@@ -21,6 +21,7 @@
 #include "cstdint"
 #include "utility"
 #include "limits"
+#include "algorithm"
 #include "cassert"
 
 namespace std {
@@ -75,7 +76,7 @@ namespace std {
         inline constexpr size_type size() const {
             return Size;
         }
-        T data[Size] = {}; // rely on aggregate initialization
+        T data[Size]; // rely on aggregate initialization
     };
 
     template<typename T>
@@ -140,6 +141,13 @@ namespace std {
     template <class T, auto N>
     constexpr std::array<std::remove_cv_t<T>, N> to_array(T (&a)[N]) {
         return detail::to_array_impl(a, std::make_index_sequence<N>{});
+    }
+    
+    template<typename C>
+    constexpr auto to_array(const C& c) {
+        std::array<typename C::value_type, c.size()> data;
+        std::copy(std::begin(c), std::end(c), std::begin(data));
+        return data;
     }
     
     template<typename E, typename... Tail>

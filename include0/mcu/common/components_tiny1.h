@@ -31,11 +31,13 @@
 #include "components/tcb.h"
 #include "components/tcd.h"
 #include "components/usart.h"
-#include "components/event.h"
+#include "components/event0.h"
+#include "components/event1.h"
 #include "components/adc.h"
 #include "components/vref1.h"
 #include "components/sleep.h"
 #include "components/sigrow.h"
+#include "components/spi.h"
 
 #include "components/bitmask_operators1.h"
 

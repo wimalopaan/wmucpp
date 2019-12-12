@@ -29,7 +29,7 @@ namespace AVR {
             // returns possible prescaler values
             template<typename CSBits, auto N>
             constexpr auto prescalerValues(const std::array<PrescalerPair<CSBits>, N>& a) {
-                std::array<typename PrescalerPair<CSBits>::scale_type, N> values;
+                std::array<typename PrescalerPair<CSBits>::scale_type, N> values{};
                 for(uint8_t i = 0; i < N; ++i) {
                     values[i] = a[i].scale;
                 }

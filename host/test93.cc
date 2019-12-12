@@ -1,34 +1,25 @@
 #include <cstdint>
 #include <cstddef>
-#include <cstdio>
+#include <compare> 
+#include <vector>
+#include <array>
+#include <iostream>
 
-namespace Debug {
-    namespace Parameter {
-        constexpr bool on = false;    
-    }
+//struct uint {
+//    uint8_t value;
+//};
 
-    template<bool On> struct Printer;
-    template<> struct Printer<true> {
-        template<typename... VV>
-        void operator()(VV... vv){
-            std::printf(vv...);
-        }
-    };
-    template<> struct Printer<false> {
-        template<typename... VV>
-        void operator()(VV...){}
-    };
-    template<typename... VV> void printf1(VV... vv) {
-        Printer<Parameter::on>{}(vv...);
-    }
-    
-    template<typename... VV> void printf(VV... vv) {
-        if constexpr(Parameter::on) {
-            std::printf(vv...);    
-        }
-    }
-}
+template<auto V>
+struct A {};
+
+struct B {
+    constexpr B(int a) : value{a} {}
+//    inline constexpr auto operator<=>(const B& rhs) const = default;
+//private:
+    uint8_t value;
+};
 
 int main() {
-    Debug::printf1("Bla: %d \n", 42);
+    A<B{3}> t;        
 }
+

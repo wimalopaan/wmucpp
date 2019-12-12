@@ -176,6 +176,7 @@ boards/bmc/robbenavy540/test04.cc
 boards/bmc/robbenavy540/test05.cc
 boards/bmc/small01/Makefile
 boards/bmc/small01/test00.cc
+boards/bmc/small01/test01.cc
 boards/bmc/small01/test99.cc
 boards/bmc/test/atmel_start.c
 boards/bmc/test/gcc/Makefile
@@ -225,6 +226,8 @@ boards/include/ppmmatrix.h
 boards/include/rcsensorled01b.h
 boards/include/rcsensorled10.h
 boards/include/varioprop.h
+boards/ledstripe/Makefile
+boards/ledstripe/test00.cc
 boards/onoff/Makefile
 boards/onoff/doc/Makefile
 boards/onoff/doc/onoff.adoc
@@ -379,6 +382,7 @@ doc0/atmega4809.txt
 doc0/bm00/Makefile
 doc0/bm00/bm00.cc
 doc0/bm00/bm01.cc
+doc0/bm00/bm01a.c
 doc0/bm00/bm02.cc
 doc0/bm00/bm03.cc
 doc0/bm00/bm10.cc
@@ -387,18 +391,23 @@ doc0/bm00/bm12.cc
 doc0/bm00/bm13.c
 doc0/bm00/bm20.cc
 doc0/bm00/bm30.cc
+doc0/bm00/bm30.h
+doc0/bm00/bm30a.cc
 doc0/bm00/bm31.cc
 doc0/bm00/bm40.cc
 doc0/bm00/bm41.c
 doc0/bm00/bm42.cc
 doc0/bm00/bm43.cc
 doc0/bm00/bm44.cc
+doc0/bm00/bm45.cc
 doc0/bm00/bm50.cc
 doc0/bm00/bm60.cc
 doc0/bm00/bm61.cc
 doc0/bm00/bm62.cc
 doc0/bm00/bm63.cc
 doc0/bm00/bm64.cc
+doc0/bm00/bm70.cc
+doc0/bm00/bm71.cc
 example/externals/buttonmacro.c
 example/externals/buttonvertical.cc
 example/externals/isr.c
@@ -476,6 +485,7 @@ include/util/hana.h
 include/util/static_interface.h
 include0/config.h
 include0/etl/algorithm.h
+include0/etl/bitfield.h
 include0/etl/char.h
 include0/etl/concepts.h
 include0/etl/control.h
@@ -496,6 +506,7 @@ include0/etl/trace.h
 include0/etl/tuple.h
 include0/etl/type_traits.h
 include0/etl/types.h
+include0/etl/vector.h
 include0/external/bluetooth/qtrobo.h
 include0/external/bluetooth/roboremo.h
 include0/external/hal/adccontroller.h
@@ -540,7 +551,8 @@ include0/mcu/common/components/ccl2.h
 include0/mcu/common/components/ccl4.h
 include0/mcu/common/components/clock.h
 include0/mcu/common/components/cpu.h
-include0/mcu/common/components/event.h
+include0/mcu/common/components/event0.h
+include0/mcu/common/components/event1.h
 include0/mcu/common/components/port0.h
 include0/mcu/common/components/port1.h
 include0/mcu/common/components/portmux0.h
@@ -548,6 +560,7 @@ include0/mcu/common/components/portmux1.h
 include0/mcu/common/components/rtc.h
 include0/mcu/common/components/sigrow.h
 include0/mcu/common/components/sleep.h
+include0/mcu/common/components/spi.h
 include0/mcu/common/components/tca.h
 include0/mcu/common/components/tcb.h
 include0/mcu/common/components/tcd.h
@@ -587,6 +600,7 @@ include0/mcu/internals/pwm.h
 include0/mcu/internals/sigrow.h
 include0/mcu/internals/sleep.h
 include0/mcu/internals/softuart.h
+include0/mcu/internals/spi.h
 include0/mcu/internals/systemclock.h
 include0/mcu/internals/timer.h
 include0/mcu/internals/usart.h
@@ -618,6 +632,7 @@ include0/std/bits/pair.h
 include0/std/cassert
 include0/std/chrono
 include0/std/cmath
+include0/std/compare
 include0/std/concepts
 include0/std/cstddef
 include0/std/cstdint
@@ -626,6 +641,7 @@ include0/std/limits
 include0/std/memory
 include0/std/optional
 include0/std/ratio
+include0/std/span
 include0/std/tuple
 include0/std/type_traits
 include0/std/utility

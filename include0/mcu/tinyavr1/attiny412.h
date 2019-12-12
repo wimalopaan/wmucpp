@@ -48,12 +48,14 @@ namespace AVR {
         using Sleep = AVR::Series0::Sleep;
         using Adc = AVR::Series0::Adc;
         using Vref = AVR::Series1::Vref;
+        using Spi = AVR::Series0::Spi;
         
         using TCD = AVR::Series1::TCD;
         using PortRegister = AVR::Series1::PortRegister;
         using VPort = AVR::Series1::VPort;
         using Portmux = AVR::Series1::Portmux;
         using Ccl = AVR::Series1::Ccl;
+        using Events = AVR::Series1::Events;
     };
     template<>
     constexpr bool ATTiny412::is_atomic<uint8_t>() {return true;}
@@ -69,7 +71,11 @@ namespace AVR {
     template<> struct AVR::Component::Count<ATTiny412::Portmux> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<ATTiny412::Ccl> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<ATTiny412::Adc> : std::integral_constant<uint8_t, 1> {};
+    template<> struct AVR::Component::Count<ATTiny412::Spi> : std::integral_constant<uint8_t, 1> {};
 
+    template<> struct ATTiny412::Spi::Address<0> {
+        inline static constexpr uintptr_t value = 0x0820;
+    };
     template<> struct ATTiny412::VPort::Address<A> {
         inline static constexpr uintptr_t value = 0x0000;
     };

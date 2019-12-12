@@ -50,7 +50,7 @@ namespace Meta {
     };
 
     template<auto... NN>
-    struct NList {
+    struct NList : public detail::ListBase {
         inline static constexpr size_t size = sizeof...(NN);
         typedef List<std::integral_constant<decltype(NN), NN> ...> list_type;
     };
@@ -87,6 +87,9 @@ namespace Meta {
 
     template<concepts::List List, typename T>
     struct contains : public std::integral_constant<bool, detail::contains_impl<List, T>::value> {};
+
+    template<concepts::List List, typename T>
+    static inline constexpr bool contains_v = contains<List, T>::value;
     
     template<concepts::List L1, concepts::List L2>
     using concat = typename detail::concat_impl<L1, L2>::type;

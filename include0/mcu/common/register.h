@@ -131,6 +131,10 @@ namespace AVR {
         r.template set<Bit>();
     }
     template<auto Bit, typename R>
+    inline void add(R& r) {
+        r.template add<Bit>();
+    }
+    template<auto Bit, typename R>
     inline void clear(R& r) {
         r.template clear<Bit>();
     }

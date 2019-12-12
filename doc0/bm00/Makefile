@@ -24,10 +24,14 @@ F_OSC = 20000000
 MCU = atmega4809
 #MCU = attiny1614
 
-bm01.s bm01.elf : MCU = attiny412
+bm01.s bm01.elf : MCU = atmega88p
+bm02.s bm02.elf : MCU = atmega88p
+bm01a.s bm01a.elf : MCU = atmega88p
 bm30.s bm30.elf : MCU = atmega4809
 bm43.s bm43.elf : MCU = atmega4809
 bm44.s bm44.elf : MCU = atmega4809
+
+bm03.s bm03.elf : CPPFLAGS = -xc
 
 CPPFLAGS += -DNDEBUG
 #CXXFLAGS += -fno-jump-tables
@@ -36,28 +40,34 @@ CPPFLAGS += -DNDEBUG
 
 targets += shtml
 
-#targets += bm00.S bm00.elf
-#targets += bm01.S bm01.elf
-#targets += bm02.S bm02.elf
-#targets += bm03.S bm03.elf
-#targets += bm10.s bm10.elf
-#targets += bm11.s bm11.elf
-#targets += bm12.s bm12.elf
+bm30: bm30.o bm30a.o
+
+targets += bm00.S bm00.elf
+targets += bm01.S bm01.elf
+targets += bm01a.S bm01a.elf
+targets += bm02.S bm02.elf
+targets += bm03.S bm03.elf
+targets += bm10.S bm10.elf
+targets += bm11.S bm11.elf
+targets += bm12.s bm12.elf
 #targets += bm13.s bm13.elf
 #targets += bm20.S bm20.elf
-#targets += bm30.S bm30.elf
+targets += bm30.S bm30.elf
 #targets += bm31.S bm31.elf
-#targets += bm40.S bm40.elf
-#targets += bm41.S bm41.elf
-#targets += bm42.S bm42.elf
-#targets += bm43.S bm43.elf
-#targets += bm44.S bm44.elf
+targets += bm40.S bm40.elf
+targets += bm41.S bm41.elf
+targets += bm42.S bm42.elf
+targets += bm43.S bm43.elf
+targets += bm44.S bm44.elf
+targets += bm45.S bm45.elf
 #targets += bm50.S bm50.elf
 targets += bm60.S bm60.elf
 targets += bm61.S bm61.elf
 targets += bm62.S bm62.elf
 targets += bm63.S bm63.elf
 targets += bm64.S bm64.elf
+targets += bm70.S bm70.elf
+targets += bm71.S bm71.elf
 
 -include ../../Makefile.avr0.include
 

@@ -4,6 +4,7 @@
 #include <mcu/internals/adc.h>
 #include <mcu/internals/ccp.h>
 #include <mcu/internals/clock.h>
+#include <mcu/internals/event.h>
 #include <mcu/internals/systemclock.h>
 #include <mcu/internals/usart.h>
 #include <mcu/internals/eeprom.h>
@@ -16,6 +17,8 @@
 //#include <external/hott/experimental/sensor.h>
 //#include <external/hott/hott.h>
 //#include <external/hott/menu.h>
+
+#include <external/solutions/series01/sppm_in.h>
 
 #include <std/chrono>
 #include <etl/output.h>
@@ -44,12 +47,14 @@ auto& appData = eeprom::data();
 using PortA = Port<A>;
 using eflag = Pin<PortA, 2>; 
 
-using in1 = Pin<PortA, 6>; 
-using in2 = Pin<PortA, 7>; 
+using ppmIn =  AVR::Pin<PortA, 3>;
+
+using ppmTimerPosition = Portmux::Position<Component::Tcb<0>, Portmux::Default>;
+using ppm = External::Ppm::SinglePpmIn<Component::Tcb<0>>; 
 
 using ccp = Cpu::Ccp<>;
 using clock = Clock<>;
-
+ 
 using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Alt1>;
 using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::Default>;
 
@@ -58,10 +63,10 @@ using pwm = PWM::DynamicPwm<tcdPosition>;
 
 namespace Parameter {
     constexpr uint8_t menuLines = 8;
-    constexpr auto fRtc = 500_Hz;
+    constexpr auto fRtc = 512_Hz;
 }
 
-using systemTimer = SystemTimer<Component::Rtc<0>, Parameter::fRtc>;
+using systemTimer = SystemTimer<Component::Pit<0>, Parameter::fRtc>;
 using alarmTimer = External::Hal::AlarmTimer<systemTimer, 2>;
 
 #ifdef USE_HOTT
@@ -73,80 +78,46 @@ using terminal = etl::basic_ostream<terminalDevice>;
 using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V4_3>;
 using adcController = External::Hal::AdcController<adc, Meta::NList<0>>;
 
-using lut0 = Ccl::SimpleLut<0, Ccl::Input::Tcd<0>, Ccl::Input::Mask, Ccl::Input::Mask>;
+//using rtc_channel = Event::Channel<0, Event::Generators::PitDiv<1024>>;
+using ppm_channel = Event::Channel<0, Event::Generators::Pin<ppmIn>>; 
+//using ac_channel = Event::Channel<2, Event::Generators::Ac0<Event::Generators::Kind::Out>>; 
+//using userstrobe_channel = Event::Channel<3, void>; 
+using ppm_user = Event::Route<ppm_channel, Event::Users::Tcb<0>>;
+//using ac_user = Event::Route<ac_channel, Event::Users::Tcb<2>>;
+//using userstrobe_user = Event::Route<userstrobe_channel, Event::Users::Tcb<2>>;
+using evrouter = Event::Router<Event::Channels<ppm_channel>, Event::Routes<ppm_user>>;
 
-using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition, tcdPosition>>;
-
-void TCD0_init(void) {    
-//    TCD0.CMPASET = 0;    
-//    TCD0.CMPACLR = 100;    
-//    TCD0.CMPBSET = 300;                                        
-//    TCD0.CMPBCLR = 900;    
-    
-    CPU_CCP = CCP_IOREG_gc;    
-    TCD0.FAULTCTRL = TCD_CMPAEN_bm            /* enable channel A */
-                   | TCD_CMPBEN_bm;            /* enable channel B */
-    
-    /* ensure ENRDY bit is set */
-    while(!(TCD0.STATUS & TCD_ENRDY_bm));
-    
-    TCD0.CTRLA = 1 << TCD_ENABLE_bp;
-
-
-    while(!(TCD0.STATUS & TCD_CMDRDY_bm));
-    
-    TCD0.CMPASET = 0;    
-    TCD0.CMPACLR = 100;    
-    TCD0.CMPBSET = 300;                                        
-    TCD0.CMPBCLR = 900;    
-    
-    TCD0.CTRLE = 0x01;
-}
-
-
-void PORT_init(void)
-{
-    PORTA.DIRSET = PIN6_bm            /* set pin 4 as output */
-                    | PIN7_bm        /* set pin 5 as output */
-                    | PIN3_bm;
-}
-
+using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition, tcdPosition, ppmTimerPosition>>;
 
 int main() {
-//    ccp::unlock([]{
-//        clock::prescale<1>();
-//    });
+    ccp::unlock([]{
+        clock::prescale<1>();
+    });
     
-//    eflag::template dir<Input>();
-//    eflag::template pullup<true>();
+    eflag::template dir<Input>();
+    eflag::template pullup<true>();
     
-//    in1::template dir<Output>();
-//    in2::template dir<Output>();
-
-//    portmux::init();
-//    eeprom::init();
-//    systemTimer::init();
-//    terminalDevice::init<AVR::BaudRate<9600>>();
-
-    PORT_init();
-
-//    TCD0_init();
-
-//    while(true) {
-//        PORTA.OUTTGL = PIN3_bm;
-//    }
+    evrouter::init();
+    portmux::init();
+    eeprom::init();
+    systemTimer::init();
+    
+    ppm::init();
+    
+    terminalDevice::init<AVR::BaudRate<9600>>();
     
     pwm::init();
     pwm::frequency(5000_Hz);
     pwm::template duty<PWM::WO<0>>(pwm::max() / 10);
     pwm::template on<Meta::List<PWM::WO<0>>>();
 
-//    lut0::init(std::byte{0x01});
-//    lut0::enable();
-    
     const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
 
     uint8_t counter = 0;
+
+#ifndef USE_HOTT
+    etl::outl<terminal>("test00"_pgm);
+#endif
     
     bool eepSave = false;
     while(true) {
@@ -161,7 +132,7 @@ int main() {
                     ++counter;
                     if ((counter % 2) == 0) {
 #ifndef USE_HOTT
-                        etl::outl<terminal>("test00"_pgm);
+                        etl::outl<terminal>("ppm: "_pgm, ppm::value().toInt());
 #endif
                     }
                     else {
