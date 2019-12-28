@@ -45,6 +45,8 @@ namespace External {
         
         static inline constexpr auto maxDisplayablePulses = periodWidthCount / (2 * pulseWidthCount);
         
+        using count_type = etl::uint_ranged<uint8_t, 0, maxDisplayablePulses>;
+        
         static inline void init() {
             Pin::init();
         }
@@ -54,10 +56,10 @@ namespace External {
         static inline void steady() {
             mState = State::Steady;
         }
-        static inline void blink(etl::uint_ranged<uint8_t, 0, maxDisplayablePulses> count) {
+        static inline void blink(count_type count) {
             mState = State::Blink;
             mBlinkCount = count;
-            mStateCounter = 0;
+            mStateCounter.setToBottom();
         }
         static inline void periodic() {
             switch(mState) {
@@ -95,7 +97,7 @@ namespace External {
             return mStateCounter.toInt() < (2 * pulseWidthCount * mBlinkCount.toInt());
         }
         static inline State mState = State::Off;
-        static inline etl::uint_ranged_circular<value_type, 0, periodWidthCount + 1> mStateCounter;
-        static inline etl::uint_ranged<uint8_t, 0, maxDisplayablePulses> mBlinkCount;
+        static inline etl::uint_ranged_circular<value_type, 0, periodWidthCount + 1> mStateCounter{};
+        static inline etl::uint_ranged<uint8_t, 0, maxDisplayablePulses> mBlinkCount{};
     };
 }

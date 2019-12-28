@@ -98,13 +98,13 @@ namespace BLDC {
                 return mS_UpperNormDiff;
             }
         private:
-            speed_t mS_Dead = 2;
-            speed_t mS_Static = 10;
-            speed_t mS_Sine = 20;
-            speed_t mS_Reg  = 40;
-            speed_t mS_Norm = 50;
-            speed_t mS_RegStaticDiff = mS_Reg - mS_Static;
-            speed_t mS_UpperNormDiff = speed_t::Upper - mS_Norm;
+            speed_t mS_Dead{2};
+            speed_t mS_Static{10};
+            speed_t mS_Sine{20};
+            speed_t mS_Reg{40};
+            speed_t mS_Norm{50};
+            speed_t mS_RegStaticDiff{mS_Reg - mS_Static};
+            speed_t mS_UpperNormDiff{speed_t::Upper - mS_Norm};
         };
         
         struct Config {
@@ -135,8 +135,8 @@ namespace BLDC {
         inline static constexpr auto speedToSine(speed_t s) {
             for(uint8_t i = 1; i < sineSpeeds.size(); ++i) {
                 if ((s >= sineSpeeds[i - 1]) && (s < sineSpeeds[i])) {
-                    auto p = mP_Dead - (uint32_t{mP_Dead} * (s - sineSpeeds[i - 1])) / (2 * (sineSpeeds[i] - sineSpeeds[i - 1]));
-                    return std::pair<period_t, sine_table_number_t>{p, i - 1};
+                    period_t p{mP_Dead - (uint32_t{mP_Dead} * (s - sineSpeeds[i - 1])) / (2 * (sineSpeeds[i] - sineSpeeds[i - 1]))};
+                    return std::pair<period_t, sine_table_number_t>{p, sine_table_number_t{i - 1}};
                 }
             }
             return std::pair<period_t, sine_table_number_t>{};
@@ -144,6 +144,8 @@ namespace BLDC {
         
         template<typename RotTimer, typename ComTimer, typename PWM, typename Commuter, typename AC, typename CSensor, typename Dbg = void>
         struct Controller {
+            
+            using all_channels = typename PWM::all_channels;
             
             enum class State : uint8_t {Off, 
                                         SineStatic = 10, SineCurrentRegulated, SineRegulatedWait,
@@ -195,7 +197,7 @@ namespace BLDC {
         };
         
         struct ComTimerHandler : AVR::IsrBaseHandler<typename ComTimer::interrupt_type>{
-            inline static etl::uint_ranged<uint8_t, 0, sinePhaseLength.size() - 1> mActiveSineTable = 0;
+            inline static etl::uint_ranged<uint8_t, 0, sinePhaseLength.size() - 1> mActiveSineTable{};
             
             template<uint8_t Table>
             struct SetSine {
@@ -220,7 +222,7 @@ namespace BLDC {
                 static inline /*volatile */ index_type index{}; 
                 
                 inline static void resetLeft() {
-                    index = index + shift / 6;
+                    index = index_type{index + shift / 6}; // circular?
                 }
                 
                 inline static void setSine() {
@@ -228,16 +230,15 @@ namespace BLDC {
                     size_type i = index.toInt();
                     std::array<value_type, 3> v{sine_table1[i], sine_table2[i], sine_table3[i]};
                     
-                    index.increment();
-                    if (index == 0) {
+                    if (++index == 0) {
                         if (mState == State::PeriodRegulatedStart) {
                             mState = State::PeriodRegulated;
                             
                             ComTimer::template enableInterrupts<false>();
                             AC::template enableInterrupts<true>();
                             
-                            Commuter::set(typename Commuter::index_type{0});
-                            PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(mActualPwm);
+                            Commuter::set(typename Commuter::state_type{0});
+                            PWM::template duty<all_channels >(mActualPwm);
                             
                             return;
                         }
@@ -245,9 +246,9 @@ namespace BLDC {
                             mActiveSineTable = speed_value.sineTable();
                         }
                     }
-                    PWM::template duty<AVR::PWM::WO<0>>(v[0] * mScale);
-                    PWM::template duty<AVR::PWM::WO<1>>(v[1] * mScale);
-                    PWM::template duty<AVR::PWM::WO<2>>(v[2] * mScale);
+                    PWM::template duty<Meta::List<AVR::PWM::WO<0>>>(v[0] * mScale);
+                    PWM::template duty<Meta::List<AVR::PWM::WO<1>>>(v[1] * mScale);
+                    PWM::template duty<Meta::List<AVR::PWM::WO<2>>>(v[2] * mScale);
                 }
                 inline constexpr auto operator()() {
                     return setSine();
@@ -446,7 +447,7 @@ namespace BLDC {
                     
                     npwm = mActualPwm + cvp * scale_type{1.0};                
                     
-                    PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(npwm);
+                    PWM::template duty<all_channels >(npwm);
                 }
                 break;
             case State::ClosedLoopLow:
@@ -457,13 +458,13 @@ namespace BLDC {
                 }
                 else {
                     npwm = mActualPwm + (int32_t(PWM::max() - mActualPwm) * (int16_t(speed_value.speed()) - int16_t(config.sine.norm()))) / config.sine.upperNormDiff();
-                    PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(npwm);
+                    PWM::template duty<all_channels>(npwm);
                     AC::hysterese(AC::hyst_t::hyst_large);
                 }
                 break;
             case State::ClosedLoopMedium:
                 npwm = mActualPwm + (int32_t(PWM::max() - mActualPwm) * (int16_t(speed_value.speed()) - int16_t(config.sine.norm()))) / config.sine.upperNormDiff();
-                PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(npwm);
+                PWM::template duty<all_channels>(npwm);
                 AC::hysterese(AC::hyst_t::hyst_medium);                    
                 if (mActualPeriodEstimate < mPeriodHystSmall) {
                     mState = State::ClosedLoopHigh;
@@ -474,7 +475,7 @@ namespace BLDC {
                 break;
             case State::ClosedLoopHigh:
                 npwm = mActualPwm + (int32_t(PWM::max() - mActualPwm) * (int16_t(speed_value.speed()) - int16_t(config.sine.norm()))) / config.sine.upperNormDiff();
-                PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(npwm);
+                PWM::template duty<all_channels>(npwm);
                 AC::hysterese(AC::hyst_t::hyst_small);                    
                 if (mActualPeriodEstimate > mPeriodHystMedium) {
                     mState = State::ClosedLoopHigh;
@@ -504,11 +505,11 @@ namespace BLDC {
         
         inline static void pwmInc() {
             mActualPwm = mActualPwm + 1;
-            PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(mActualPwm);
+            PWM::template duty<all_channels>(mActualPwm);
         }
         inline static void pwmDec() {
             mActualPwm = mActualPwm - 1;
-            PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(mActualPwm);
+            PWM::template duty<all_channels>(mActualPwm);
         }
         
         

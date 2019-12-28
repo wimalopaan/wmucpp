@@ -1,20 +1,24 @@
-#include<cstdint>
-#include <array>
+#include <cstdint>
+#include <cassert>
 
-namespace {
-    constexpr auto global_init = []{
-        std::array<int, 100> data{};
-        for(uint8_t i{0}; auto& e : data) {
-            e = ++i;
-        }
-        return data;
-    }();
+constexpr int divEven(int v) {
+    bool c = (v % 2) == 0;
+//    assert(c);
+    return c / 2;
 }
 
-constinit auto global{global_init};
-
-//uint8_t global2[100] {};
+template<auto V>
+bool divEvenC() {
+    constexpr bool c = (V % 2) == 0;
+    static_assert(c);
+    return c / 2;
+    
+}
 
 int main() {
-    return global_init[10];
+    constexpr auto e1 = divEven(43); // compile-time-error ich called with 43
+    auto e2 = divEven(43); // run-time-error
+    
+//    constexpr auto e3 = divEvenC<43>();
+    auto e4 = divEvenC<42>();
 }

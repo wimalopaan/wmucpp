@@ -151,7 +151,8 @@ struct EscStateFsm {
             break;
         case State::Off:
             Actuator::off();
-            if (++mOffStateCounter > 5) {
+            ++mOffStateCounter;
+            if (mOffStateCounter > 5) {
                 if (v.toInt() > 0) {
                     mState = State::Forward;
                 }
@@ -393,9 +394,12 @@ int main() {
 //    pwm::template duty<PWM::WO<0>>(pwm::max() / 5);
 //    pwm::template on<Meta::List<PWM::WO<0>>>();
 //    pwm::template off<Meta::List<PWM::WO<1>>>();
-    pwm::template clear<PWM::WO<0>>(0);
-    pwm::template set<PWM::WO<0>>(pwm::max() / 10);
-    pwm::template set<PWM::WO<1>>(pwm::max() / 10);
+    
+    using pwm_t = pwm::value_type;
+    
+    pwm::template clear<PWM::WO<0>>(pwm_t{0});
+    pwm::template set<PWM::WO<0>>(pwm::max() / 10U);
+    pwm::template set<PWM::WO<1>>(pwm::max() / 10U);
     
 
     const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);

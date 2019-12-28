@@ -501,6 +501,9 @@ namespace Meta {
     template<concepts::List List, typename T>
     struct index: public std::integral_constant<size_t, detail::index_impl<List, T, 0>::value> {};
 
+    template<concepts::List List, typename T>
+    inline static constexpr auto index_v = index<List, T>::value;
+    
     template<typename List, template<typename> typename T>
     struct index_T: public std::integral_constant<size_t, detail::index_T_impl<List, T, 0>::value> {};
     

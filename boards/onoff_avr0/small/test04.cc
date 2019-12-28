@@ -32,6 +32,7 @@
 #include <external/solutions/tick.h>
 #include <external/solutions/button.h>
 #include <external/solutions/blinker.h>
+#include <external/solutions/tick.h>
 
 #include <std/chrono>
 #include <etl/output.h>
@@ -86,7 +87,7 @@ using dbg1      = Pin<PortA, 2>;
 using ledPin    = ActiveHigh<Pin<PortA, 3>, Output>;
 using led       = External::Blinker<ledPin, systemTimer::intervall, 30_ms, 1000_ms>;
 using buttonPin = Pin<PortA, 7>;
-using button    = External::Button<ActiveLow<buttonPin, Input>, systemTimer, Tick<systemTimer>{100_ms}, Tick<systemTimer>{3000_ms}>;
+using button    = External::Button<ActiveLow<buttonPin, Input>, systemTimer, External::Tick<systemTimer>{100_ms}, External::Tick<systemTimer>{3000_ms}>;
 using fet       = ActiveHigh<Pin<PortB, 1>, Output>;
 
 using ccp = Cpu::Ccp<>;
@@ -165,7 +166,7 @@ struct PwmWrapper {
         PWM::frequency(f);
     }
     inline static void duty(uint16_t d) {
-        PWM::template duty<Output>(d);
+        PWM::template duty<Meta::List<Output>>(d);
     }
 };
 
@@ -238,7 +239,7 @@ struct FSM {
     
     static constexpr auto intervall = Timer::intervall;
     
-    static constexpr Tick<Timer> idleTimeBeforeSleepTicks{10000_ms};
+    static constexpr External::Tick<Timer> idleTimeBeforeSleepTicks{10000_ms};
     //    std::integral_constant<uint16_t, idleTimeBeforeSleepTicks.value>::_;
     
     inline static void init() {}    
@@ -322,31 +323,31 @@ struct FSM {
                 mState = State::Idle;
                 break;
             case State::WaitOn:
-                led::blink(2);
+                led::blink(led::count_type{2});
                 toneGenerator::play(waitOnMelody, true);
                 break;
             case State::On:
                 toneGenerator::off();
-                led::blink(5);
+                led::blink(led::count_type{5});
                 toneGenerator::play(onMelody, true);
                 fet::activate();
                 break;
             case State::FetOn:
                 break;
             case State::WaitOff:
-                led::blink(3);
+                led::blink(led::count_type{3});
                 toneGenerator::play(waitOffMelody, true);
                 break;
             case State::Idle:
                 toneGenerator::off();
-                led::blink(1);
+                led::blink(led::count_type{1});
                 fet::inactivate();
                 break;
             }
         }
     }
 private:
-    inline static Tick<Timer> stateTicks;
+    inline static External::Tick<Timer> stateTicks;
     inline static State mState{State::Init};    
 };
 

@@ -145,7 +145,7 @@ int main() {
     
     pwm::init();
     pwm::frequency(Parameter::fPwm);
-    pwm::on<PWM::WO<0>, PWM::WO<1>, PWM::WO<2>>();
+    pwm::on<Meta::List<PWM::WO<0>, PWM::WO<1>, PWM::WO<2>>>();
 //    pwm::off<PWM::WO<2>>();
     pwm::duty<PWM::WO<0>>(10000);
 
@@ -179,7 +179,7 @@ int main() {
                         led::toggle();
                         etl::outl<terminal>("test10: "_pgm, ++counter, " ch0: "_pgm, sumd::value(0).toInt());
     //                    etl::outl<terminal>("co: "_pgm, sensor::collisions(), " ar: "_pgm, sensor::asciiPackages(), " br: "_pgm, sensor::binaryPackages());
-                        etl::outl<terminal>("ppm: "_pgm, ppm::value());
+//                        etl::outl<terminal>("ppm: "_pgm, ppm::value());
                         etl::outl<terminal>("rpm: "_pgm, rpm::diff());
                         if (auto c = terminalDevice::get()) {
                             etl::outl<terminal>("c: "_pgm, *c);

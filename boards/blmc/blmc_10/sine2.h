@@ -29,6 +29,7 @@ namespace BLDC {
         
         template<typename RotTimer, typename ComTimer, typename PWM, typename Commuter, typename AC>
         struct Controller {
+            using all_channels = PWM::all_channels;
             
             static inline constexpr uint16_t PwmMax = 200;
             using value_type = etl::typeForValue_t<PwmMax>;
@@ -132,11 +133,12 @@ namespace BLDC {
             static etl::uint_ranged_circular<size_type, 0, Size - 1> index{}; 
             
             std::array<value_type, 3> v;
-            v[0] = sine_table[index.toInt()];
-            v[1] = sine_table[(index - shift).toInt()];
-            v[2] = sine_table[(index - 2 * shift).toInt()];
+            v[0] = sine_table[index];
+            v[1] = sine_table[index.template leftShift<shift>()];
+            v[2] = sine_table[index.template leftShift<2 * shift>()];
             
-            if (++index == 0) {
+            ++index;
+            if (index == 0) {
                 if (mState == State::ClosedLoopStart) {
                     
                     ComTimer::template enableInterrupts<false>();
@@ -145,10 +147,10 @@ namespace BLDC {
                     
                     AC::template enableInterrupts<true>();
                     
-                    Commuter::set(typename Commuter::index_type{1});
+                    Commuter::set(typename Commuter::state_type{1});
                     
                     //                    PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(70);
-                    PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(mActualPwm);
+                    PWM::template duty<all_channels>(mActualPwm);
                     
 //                    leave = true;
                     mState = State::ClosedLoopStart2;
@@ -203,9 +205,9 @@ namespace BLDC {
 //                return;
 //            }
             
-            PWM::template duty<AVR::PWM::WO<0>>(v[0] * mScale);
-            PWM::template duty<AVR::PWM::WO<1>>(v[1] * mScale);
-            PWM::template duty<AVR::PWM::WO<2>>(v[2] * mScale);
+            PWM::template duty<Meta::List<AVR::PWM::WO<0>>>(v[0] * mScale);
+            PWM::template duty<Meta::List<AVR::PWM::WO<1>>>(v[1] * mScale);
+            PWM::template duty<Meta::List<AVR::PWM::WO<2>>>(v[2] * mScale);
         }
         
         inline static void periodic() {
@@ -278,16 +280,16 @@ namespace BLDC {
         
         inline static void pwmSet(int16_t d) {
             mActualPwm += d;
-            PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(mActualPwm);
+            PWM::template duty<all_channels>(mActualPwm);
         }
         
         inline static void pwmInc() {
             ++mActualPwm;
-            PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(mActualPwm);
+            PWM::template duty<all_channels>(mActualPwm);
         }
         inline static void pwmDec() {
             --mActualPwm;
-            PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(mActualPwm);
+            PWM::template duty<all_channels>(mActualPwm);
         }
         inline static void incPeriod() {
             mActualPeriod += 1000U;
@@ -310,8 +312,8 @@ namespace BLDC {
         inline static volatile etl::uint_ranged<uint16_t, 1000, 40000> mActualPeriod{20000};
         inline static volatile uint16_t mActualPeriodLoop{0};
         inline static volatile uint16_t mDesiredPeriod = 0;
-        inline static volatile etl::uint_ranged<uint8_t, 0, 5> mActualSineTable = 0;
-        inline static etl::uint_ranged<uint8_t, 0, 5> mOldActualSineTable = 0;
+        inline static volatile etl::uint_ranged<uint8_t, 0, 5> mActualSineTable{};
+        inline static etl::uint_ranged<uint8_t, 0, 5> mOldActualSineTable{};
         
         inline static bool mDoFloat = false;
         

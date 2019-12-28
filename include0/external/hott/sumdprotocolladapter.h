@@ -79,13 +79,13 @@ namespace Hott {
             }
             uint16_t v = etl::combinedValue(mMsgInactive->channelData[channel]);
             if (v < Hott::SumDMsg::ExtendedLow) {
-                return Hott::SumDMsg::ExtendedLow;
+                return {Hott::SumDMsg::ExtendedLow};
             }
             else if (v > Hott::SumDMsg::ExtendedHigh) {
-                return Hott::SumDMsg::ExtendedHigh;
+                return {Hott::SumDMsg::ExtendedHigh};
             }
             else {
-                return v;
+                return {v};
             }
         }
         
@@ -289,24 +289,24 @@ namespace Hott {
     private:
         inline static etl::uint_ranged<uint8_t, Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit> value8Bit_unsafe(uint8_t channel) {
             if (mMsgInactive->channelData[channel].first < Hott::SumDMsg::Low8Bit) {
-                return Hott::SumDMsg::Low8Bit;
+                return etl::uint_ranged<uint8_t, Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit>{Hott::SumDMsg::Low8Bit};
             }
             else if (mMsgInactive->channelData[channel].first > Hott::SumDMsg::High8Bit) {
-                return Hott::SumDMsg::High8Bit;
+                return etl::uint_ranged<uint8_t, Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit>{Hott::SumDMsg::High8Bit};
             } 
             else {
-                return mMsgInactive->channelData[channel].first;
+                return etl::uint_ranged<uint8_t, Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit>{mMsgInactive->channelData[channel].first};
             }
         }
         inline static etl::uint_ranged<uint8_t, Hott::SumDMsg::ExtendedLow8Bit, Hott::SumDMsg::ExtendedHigh8Bit> value8BitExtended_unsafe(uint8_t channel) {
             if (mMsgInactive->channelData[channel].first < Hott::SumDMsg::ExtendedLow8Bit) {
-                return Hott::SumDMsg::ExtendedLow8Bit;
+                return etl::uint_ranged<uint8_t, Hott::SumDMsg::ExtendedLow8Bit, Hott::SumDMsg::ExtendedHigh8Bit>{Hott::SumDMsg::ExtendedLow8Bit};
             }
             else if (mMsgInactive->channelData[channel].first > Hott::SumDMsg::ExtendedHigh8Bit) {
-                return Hott::SumDMsg::ExtendedHigh8Bit;
+                return etl::uint_ranged<uint8_t, Hott::SumDMsg::ExtendedLow8Bit, Hott::SumDMsg::ExtendedHigh8Bit>{Hott::SumDMsg::ExtendedHigh8Bit};
             } 
             else {
-                return mMsgInactive->channelData[channel].first;
+                return etl::uint_ranged<uint8_t, Hott::SumDMsg::ExtendedLow8Bit, Hott::SumDMsg::ExtendedHigh8Bit>{mMsgInactive->channelData[channel].first};
             }
         }
         inline static sumDMesgType mMsg1;

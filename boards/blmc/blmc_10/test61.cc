@@ -511,8 +511,8 @@ int main() {
                     break;
                 case CommandAdapter::Command::Test:
                     etl::outl<terminal>("test"_pgm);
-                    pwm::duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(100);
-                    pwm::on<Meta::List<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>>();
+                    pwm::duty<pwm::all_channels>(100);
+                    pwm::on<pwm::all_channels>();
                     break;
                 case CommandAdapter::Command::Reset:
                     etl::outl<terminal>("Reset"_pgm);

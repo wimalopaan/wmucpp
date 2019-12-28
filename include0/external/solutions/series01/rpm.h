@@ -16,7 +16,7 @@ namespace External {
 
             inline static void init() {
                 Pin::template dir<AVR::Input>();
-                Pin::template attributes<AVR::Attributes::Interrupt<AVR::Attributes::OnRising>>();
+                Pin::template attributes<Meta::List<AVR::Attributes::Interrupt<AVR::Attributes::OnRising>>>();
                 Pin::template pullup<true>();
             }
             

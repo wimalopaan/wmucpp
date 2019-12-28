@@ -108,7 +108,9 @@ int main() {
     
     pwm::init();
     pwm::frequency(5000_Hz);
-    pwm::template duty<PWM::WO<0>>(pwm::max() / 10);
+    auto d1 = pwm::max();
+    d1 /= 10U;
+    pwm::template duty<PWM::WO<0>>(d1);
     pwm::template on<Meta::List<PWM::WO<0>>>();
 
     const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);

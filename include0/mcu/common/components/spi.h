@@ -71,7 +71,7 @@ namespace AVR {
             };
             FlagRegister<Spi, IntFlags_t> intflags;
             
-            DataRegister<std::byte> data;
+            DataRegister<Spi, ReadWrite, std::byte> data;
             
             template<int N> struct Address;
         };

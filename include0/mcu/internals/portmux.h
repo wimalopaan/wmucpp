@@ -35,6 +35,12 @@ namespace AVR {
                 };
 
                 template<AVR::Concepts::AtTiny1 MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Spi<0>, AVR::Portmux::Alt1>, MCU> {
+                    using route_t = typename MCU::Portmux::CtrlB_t;
+                    using type = std::integral_constant<route_t, route_t::spi0_alt1>;
+                };
+
+                template<AVR::Concepts::AtTiny1 MCU>
                 struct Mapper<AVR::Portmux::Position<AVR::Component::Usart<0>, AVR::Portmux::Alt1>, MCU> {
                     using route_t = typename MCU::Portmux::CtrlB_t;
                     using type = std::integral_constant<route_t, route_t::usart0_alt1>;

@@ -28,7 +28,8 @@ namespace BLDC {
         
         using lowSides  = Meta::List<l0, l1, l2>;
         
-        using index_type = etl::uint_ranged_circular<uint8_t, 0, 5>;
+        using state_type = etl::uint_ranged_circular<uint8_t, 0, 5>;
+        using ac_index_t = typename AC::index_type;
         
         template<typename Pin>
         requires (Meta::contains<lowSides, Pin>::value)
@@ -63,7 +64,7 @@ namespace BLDC {
         
         template<typename W>
         inline static void off() {
-            PWM::template off<W>();
+            PWM::template off<Meta::List<W>>();
         }
 
         template<typename W>
@@ -82,12 +83,12 @@ namespace BLDC {
         inline static void floating() {
             using ls = Meta::nth_element<N, lowSides>;
             floating<ls>();
-            PWM::template off<AVR::PWM::WO<N>>();
+            PWM::template off<Meta::List<AVR::PWM::WO<N>>>();
         }
         template<uint8_t N>
         inline static void low() {
             using ls = Meta::nth_element<N, lowSides>;
-            PWM::template off<AVR::PWM::WO<N>>();
+            PWM::template off<Meta::List<AVR::PWM::WO<N>>>();
             on<ls>();
         }
         
@@ -98,7 +99,7 @@ namespace BLDC {
             ((PP::off(), ...));
             ((PP::template dir<AVR::Output>(), ...));
             AC::init();
-            AC::positiv_channel(1);
+            AC::positiv_channel(ac_index_t{1});
         }
         inline static void off() {
             floating<0>();
@@ -107,10 +108,10 @@ namespace BLDC {
         }
         inline static void startPosition() {
             if (mReverse) {
-                state = 5;
+                state = state_type{5};
             }
             else {
-                state = 0;
+                state = state_type{0};
             }
         }
         inline static void on_full_state() {
@@ -118,41 +119,41 @@ namespace BLDC {
             case 0: // pwm(0) -> 2, ac = 1, rising
                 floating<1>();
                 low<2>();                
-                AC::negativ_channel(1);
+                AC::negativ_channel(ac_index_t{1});
                 AC::template edge<typename AC::Positiv>();
                 pwm<0>();                
                 break;
             case 1: // pwm(1) -> 2, ac = 0
                 floating<0>();
                 low<2>();                
-                AC::negativ_channel(0);
+                AC::negativ_channel(ac_index_t{0});
                 AC::template edge<typename AC::Negativ>();
                 pwm<1>();                
                 break;
             case 2: // pwm(1) -> 0, ac = 2
                 floating<2>();                
                 low<0>();
-                AC::negativ_channel(2);
+                AC::negativ_channel(ac_index_t{2});
                 AC::template edge<typename AC::Positiv>();
                 pwm<1>();                
                 break;
             case 3: // pwm(2) -> 0, ac = 1
                 floating<1>();                
                 low<0>();
-                AC::negativ_channel(1);
+                AC::negativ_channel(ac_index_t{1});
                 AC::template edge<typename AC::Negativ>();
                 pwm<2>();                
                 break;
             case 4: // pwm(2) -> 1, ac = 0
                 floating<0>();
                 low<1>();                
-                AC::negativ_channel(0);
+                AC::negativ_channel(ac_index_t{0});
                 AC::template edge<typename AC::Positiv>();
                 pwm<2>();                
                 break;
             case 5: // pwm(0) -> 1, ac = 2
                 floating<2>();                
-                AC::negativ_channel(2);
+                AC::negativ_channel(ac_index_t{2});
                 AC::template edge<typename AC::Negativ>();
                 low<1>();                
                 pwm<0>();
@@ -166,37 +167,37 @@ namespace BLDC {
             switch(state.toInt()) {
             case 0: // pwm(0) -> 2, ac = 1, rising
                 floating<l1>();
-                AC::negativ_channel(1);
+                AC::negativ_channel(ac_index_t{1});
                 AC::template edge<typename AC::Negativ>();
                 on<l2>();
                 break;
             case 1: // pwm(1) -> 2, ac = 0
                 off<h0>();
-                AC::negativ_channel(0);
+                AC::negativ_channel(ac_index_t{0});
                 AC::template edge<typename AC::Positiv>();
                 pwm<h1>();
                 break;
             case 2: // pwm(1) -> 0, ac = 2
                 floating<l2>();
-                AC::negativ_channel(2);
+                AC::negativ_channel(ac_index_t{2});
                 AC::template edge<typename AC::Negativ>();
                 on<l0>();
                 break;
             case 3: // pwm(2) -> 0, ac = 1
                 off<h1>();
-                AC::negativ_channel(1);
+                AC::negativ_channel(ac_index_t{1});
                 AC::template edge<typename AC::Positiv>();
                 pwm<h2>();
                 break;
             case 4: // pwm(2) -> 1, ac = 0
                 floating<l0>();
-                AC::negativ_channel(0);
+                AC::negativ_channel(ac_index_t{0});
                 AC::template edge<typename AC::Negativ>();
                 on<l1>();
                 break;
             case 5: // pwm(0) -> 1, ac = 2
                 off<h2>();
-                AC::negativ_channel(2);
+                AC::negativ_channel(ac_index_t{2});
                 AC::template edge<typename AC::Positiv>();
                 pwm<h0>();
                 break;
@@ -209,37 +210,37 @@ namespace BLDC {
             switch(state.toInt()) {
             case 0: // pwm(0) -> 2, ac = 1, rising
                 floating<l2>();
-                AC::negativ_channel(2);
+                AC::negativ_channel(ac_index_t{2});
                 AC::template edge<typename AC::Negativ>();
                 on<l1>();
                 break;
             case 1: // pwm(1) -> 2, ac = 0
                 off<h0>();
-                AC::negativ_channel(0);
+                AC::negativ_channel(ac_index_t{0});
                 AC::template edge<typename AC::Positiv>();
                 pwm<h2>();
                 break;
             case 2: // pwm(1) -> 0, ac = 2
                 floating<l1>();
-                AC::negativ_channel(1);
+                AC::negativ_channel(ac_index_t{1});
                 AC::template edge<typename AC::Negativ>();
                 on<l0>();
                 break;
             case 3: // pwm(2) -> 0, ac = 1
                 off<h2>();
-                AC::negativ_channel(2);
+                AC::negativ_channel(ac_index_t{2});
                 AC::template edge<typename AC::Positiv>();
                 pwm<h1>();
                 break;
             case 4: // pwm(2) -> 1, ac = 0
                 floating<l0>();
-                AC::negativ_channel(0);
+                AC::negativ_channel(ac_index_t{0});
                 AC::template edge<typename AC::Negativ>();
                 on<l2>();
                 break;
             case 5: // pwm(0) -> 1, ac = 2
                 off<h1>();
-                AC::negativ_channel(1);
+                AC::negativ_channel(ac_index_t{1});
                 AC::template edge<typename AC::Positiv>();
                 pwm<h0>();
                 break;
@@ -259,9 +260,9 @@ namespace BLDC {
                 on();
             }
         }
-        inline static void set(index_type p) {
+        inline static void set(state_type p) {
             if (mReverse) {
-                state = p.Upper - p.toInt();                
+                state = p.flip();                
             }
             else {
                 state = p;
@@ -295,7 +296,7 @@ namespace BLDC {
         
         
         //    private:
-        inline static index_type state{0};
+        inline static state_type state{0};
         inline static bool mReverse = false;
     };
     

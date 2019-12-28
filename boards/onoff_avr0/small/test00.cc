@@ -1,6 +1,6 @@
 #define NDEBUG
 
-#define USE_HOTT
+//#define USE_HOTT
 
 #include <mcu/avr.h>
 #include <mcu/internals/adc.h>
@@ -171,7 +171,7 @@ int main() {
     
     buzzerPwm::init();
     buzzerPwm::frequency(4000_Hz);
-    buzzerPwm::template duty<PWM::WO<0>>(1000);
+    buzzerPwm::template duty<Meta::List<PWM::WO<0>>>(1000);
     
     const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
 

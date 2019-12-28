@@ -89,6 +89,8 @@ namespace BLDC {
         template<typename RotTimer, typename ComTimer, typename PWM, typename Commuter, typename AC, typename CSensor>
         struct Controller {
             
+            using all_channels = typename PWM::all_channels;
+            
             enum class State : uint8_t {Off, SineStatic, SineRegulated, RegulatedStart, Regulated, ClosedLoopStart, PreClosedLoop, 
                                         ClosedLoopLow, ClosedLoopMedium, ClosedLoopHigh, ClosedLoopError};
             
@@ -172,9 +174,9 @@ namespace BLDC {
             
             static etl::uint_ranged_circular<size_type, 0, Size - 1> index{}; 
             
-            std::array<value_type, 3> v{sine_table[index.toInt()], 
-                        sine_table[(index - shift).toInt()], 
-                        sine_table[(index - 2 * shift).toInt()]};
+            std::array<value_type, 3> v{sine_table[index], 
+                        sine_table[index.template leftShift<shift>()], 
+                        sine_table[index.template leftShift<2*shift>()]};
             
             if (++index == 0) {
                 if (mState == State::RegulatedStart) {
@@ -183,9 +185,9 @@ namespace BLDC {
              
                     AC::template enableInterrupts<true>();
                     
-                    Commuter::set(typename Commuter::index_type{1});
+                    Commuter::set(typename Commuter::state_type{1});
                     
-                    PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(mActualPwm);
+                    PWM::template duty<all_channels>(mActualPwm);
                     
                     mState = State::Regulated;
                     return;
@@ -195,9 +197,9 @@ namespace BLDC {
                 }
             }
             
-            PWM::template duty<AVR::PWM::WO<0>>(v[0] * mScale);
-            PWM::template duty<AVR::PWM::WO<1>>(v[1] * mScale);
-            PWM::template duty<AVR::PWM::WO<2>>(v[2] * mScale);
+            PWM::template duty<Meta::List<AVR::PWM::WO<0>>>(v[0] * mScale);
+            PWM::template duty<Meta::List<AVR::PWM::WO<1>>>(v[1] * mScale);
+            PWM::template duty<Meta::List<AVR::PWM::WO<2>>>(v[2] * mScale);
             
 //            return v;
         }
@@ -271,7 +273,7 @@ namespace BLDC {
                 cvp = periodPid.correctionValue(mActualPeriodEstimate, mDesiredPeriod);
                 cvp = 0;
                 npwm = mActualPwm + cvp * scale_type{0.4};                
-                PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(npwm);
+                PWM::template duty<all_channels>(npwm);
             }
                 break;
             case State::ClosedLoopLow:
@@ -356,11 +358,11 @@ namespace BLDC {
         
         inline static void pwmInc() {
             ++mActualPwm;
-            PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(mActualPwm);
+            PWM::template duty<all_channels>(mActualPwm);
         }
         inline static void pwmDec() {
             --mActualPwm;
-            PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(mActualPwm);
+            PWM::template duty<all_channels>(mActualPwm);
         }
         
         
@@ -372,8 +374,8 @@ namespace BLDC {
         
         inline static volatile uint16_t mDesiredPeriod = 0;
         
-        inline static volatile etl::uint_ranged<uint8_t, 0, sinePhaseLength.size() - 1> mActualSineTable = 0;
-        inline static volatile etl::uint_ranged<uint8_t, 0, sinePhaseLength.size() - 1> mActiveSineTable = 0;
+        inline static volatile etl::uint_ranged<uint8_t, 0, sinePhaseLength.size() - 1> mActualSineTable{};
+        inline static volatile etl::uint_ranged<uint8_t, 0, sinePhaseLength.size() - 1> mActiveSineTable{};
         
 //        static inline volatile scale_type mScale{0.25};
 //        inline static uint16_t mCurrentMax = 119;
@@ -400,11 +402,11 @@ namespace BLDC {
 
         inline static speed_t mActualSpeed;
         
-        inline static speed_t mS_Dead = 2;
-        inline static speed_t mS_Static = 10;
-        inline static speed_t mS_Sine =  50;
-        inline static speed_t mS_Reg  =  60;
-        inline static speed_t mS_Norm =  70;
+        inline static speed_t mS_Dead{2};
+        inline static speed_t mS_Static{10};
+        inline static speed_t mS_Sine{50};
+        inline static speed_t mS_Reg{60};
+        inline static speed_t mS_Norm{70};
 
         inline static uint16_t mP_Dead = 10000;
         inline static uint16_t mP_Reg  = mP_Dead / 30;

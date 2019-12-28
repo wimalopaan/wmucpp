@@ -29,6 +29,7 @@ namespace BLDC {
 
             template<typename HallPinSet, typename RotTimer, typename ComTimer, typename PWM, typename Commuter, typename DBG = void>
             struct Controller {
+                using all_channels = typename PWM::all_channels;
                 typedef typename RotTimer::value_type timer_value_t;
                 typedef typename PWM::value_type pwm_value_t;
                 
@@ -83,9 +84,11 @@ namespace BLDC {
                 };        
                 
                 static inline constexpr auto hallValuesStepLut = []{
-                    std::array<etl::uint_ranged_circular<uint8_t, 0, 5>, 8> values {};
-                    for(uint8_t s = 0; const auto& hv: hallValues) {
-                        values[std::to_integer(hv)] = s++;
+                    using step_t = etl::uint_ranged_circular<uint8_t, 0, 5>; 
+                    std::array<step_t, 8> values {};
+                    for(step_t s{0}; const auto& hv: hallValues) {
+                        values[std::to_integer(hv)] = s;
+                        ++s;
                     }    
                     return values;
                 }();
@@ -111,7 +114,7 @@ namespace BLDC {
                     Commuter::off();
                     mState = State::Off;
                     mActualPwm = 0;
-                    PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(0);
+                    PWM::template duty<all_channels>(0);
                 }
                 
                 inline static void start() {
@@ -129,7 +132,7 @@ namespace BLDC {
                     switch(mState) {
                     case State::Start:
                         lastHalls = halls;
-                        PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(mActualPwm);
+                        PWM::template duty<all_channels>(mActualPwm);
                         Commuter::set(hallToStep(halls));
                         RotTimer::reset();
                         mState = State::ClosedLoop;
@@ -189,7 +192,7 @@ namespace BLDC {
                 }
                 inline static void pwmInc() {
                     ++mActualPwm;
-                    PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(mActualPwm);
+                    PWM::template duty<all_channels>(mActualPwm);
                 }
                 inline static void pwmfast() {
                     ++mActualPwm;
@@ -203,11 +206,11 @@ namespace BLDC {
                     ++mActualPwm;
                     ++mActualPwm;
                     ++mActualPwm;
-                    PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(mActualPwm);
+                    PWM::template duty<all_channels>(mActualPwm);
                 }
                 inline static void pwmDec() {
                     --mActualPwm;
-                    PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(mActualPwm);
+                    PWM::template duty<all_channels>(mActualPwm);
                 }
                 
                 inline static pwm_value_t mActualPwm = 0;
@@ -225,6 +228,8 @@ namespace BLDC {
 
             template<typename HallPinSet, typename RotTimer, typename ComTimer, typename PWM, typename Commuter>
             struct Controller {
+                using all_channels = typename PWM::all_channels;
+
                 typedef typename RotTimer::value_type timer_value_t;
                 typedef typename PWM::value_type pwm_value_t;
                 
@@ -265,9 +270,11 @@ namespace BLDC {
                 };        
                 
                 static inline constexpr auto hallValuesStepLut = []{
-                    std::array<etl::uint_ranged_circular<uint8_t, 0, 5>, 8> values {};
-                    for(uint8_t s = 0; const auto& hv: hallValues) {
-                        values[std::to_integer(hv)] = s++;
+                    using step_t = etl::uint_ranged_circular<uint8_t, 0, 5>; 
+                    std::array<step_t, 8> values {};
+                    for(step_t s{0}; const auto& hv: hallValues) {
+                        values[std::to_integer(hv)] = s;
+                        ++s;
                     }    
                     return values;
                 }();
@@ -292,7 +299,7 @@ namespace BLDC {
                     Commuter::off();
                     mState = State::Off;
                     mActualPwm = 0;
-                    PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(0);
+                    PWM::template duty<all_channels>(0);
                 }
                 
                 inline static void start() {
@@ -308,7 +315,7 @@ namespace BLDC {
                     switch(mState) {
                     case State::Start:
                         lastHalls = halls;
-                        PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(mActualPwm);
+                        PWM::template duty<all_channels>(mActualPwm);
                         Commuter::set(hallToStep(halls));
                         RotTimer::reset();
                         mState = State::StartWait;
@@ -372,7 +379,7 @@ namespace BLDC {
                 }
                 inline static void pwmInc() {
                     ++mActualPwm;
-                    PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(mActualPwm);
+                    PWM::template duty<all_channels>(mActualPwm);
                 }
                 inline static void pwmfast() {
                     ++mActualPwm;
@@ -386,11 +393,11 @@ namespace BLDC {
                     ++mActualPwm;
                     ++mActualPwm;
                     ++mActualPwm;
-                    PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(mActualPwm);
+                    PWM::template duty<all_channels>(mActualPwm);
                 }
                 inline static void pwmDec() {
                     --mActualPwm;
-                    PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(mActualPwm);
+                    PWM::template duty<all_channels>(mActualPwm);
                 }
                 
                 inline static pwm_value_t mActualPwm = 0;
@@ -411,6 +418,7 @@ namespace BLDC {
             typedef typename RotTimer::value_type timer_value_t;
             typedef typename PWM::value_type pwm_value_t;
             
+           
             enum class State : uint8_t {Off, Start, StartWait, StartError, ClosedLoop, Commute, CommuteWait, ClosedLoopError};
             
             static inline constexpr auto fTimer = Project::Config::fRtc;
@@ -429,10 +437,14 @@ namespace BLDC {
                 0b00000011_B,
             };        
             
+            using all_channels = typename PWM::all_channels;
+            
             static inline constexpr auto hallValuesStepLut = []{
-                std::array<etl::uint_ranged_circular<uint8_t, 0, 5>, 8> values {};
-                for(uint8_t s = 0; const auto& hv: hallValues) {
-                    values[std::to_integer(hv)] = s++;
+                using step_t = etl::uint_ranged_circular<uint8_t, 0, 5>; 
+                std::array<step_t, 8> values {};
+                for(step_t s{0}; const auto& hv: hallValues) {
+                    values[std::to_integer(hv)] = s;
+                    ++s;
                 }    
                 return values;
             }();
@@ -456,7 +468,7 @@ namespace BLDC {
                 Commuter::off();
                 mState = State::Off;
                 mActualPwm = 0;
-                PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(0);
+                PWM::template duty<all_channels>(0);
             }
             
             inline static void start() {
@@ -472,7 +484,7 @@ namespace BLDC {
                 switch(mState) {
                 case State::Start:
                     lastHalls = halls;
-                    PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(mActualPwm);
+                    PWM::template duty<all_channels>(mActualPwm);
                     Commuter::set(hallToStep(halls));
                     RotTimer::reset();
                     mState = State::StartWait;
@@ -532,7 +544,7 @@ namespace BLDC {
             }
             inline static void pwmInc() {
                 ++mActualPwm;
-                PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(mActualPwm);
+                PWM::template duty<all_channels>(mActualPwm);
             }
             inline static void pwmfast() {
                 ++mActualPwm;
@@ -546,11 +558,11 @@ namespace BLDC {
                 ++mActualPwm;
                 ++mActualPwm;
                 ++mActualPwm;
-                PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(mActualPwm);
+                PWM::template duty<all_channels>(mActualPwm);
             }
             inline static void pwmDec() {
                 --mActualPwm;
-                PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(mActualPwm);
+                PWM::template duty<all_channels>(mActualPwm);
             }
             
             inline static pwm_value_t mActualPwm = 0;

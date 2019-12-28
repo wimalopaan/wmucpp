@@ -21,8 +21,8 @@ F_OSC = 20000000
 
 #MCU = atmega328pb
 #MCU = atmega1284p
-MCU = atmega4809
-#MCU = attiny1614
+#MCU = atmega4809
+MCU = attiny1614
 
 bm01.s bm01.elf : MCU = atmega88p
 bm02.s bm02.elf : MCU = atmega88p
@@ -31,7 +31,7 @@ bm30.s bm30.elf : MCU = atmega4809
 bm43.s bm43.elf : MCU = atmega4809
 bm44.s bm44.elf : MCU = atmega4809
 
-bm03.s bm03.elf : CPPFLAGS = -xc
+#bm03.s bm03.elf : CPPFLAGS = -xc
 
 CPPFLAGS += -DNDEBUG
 #CXXFLAGS += -fno-jump-tables
@@ -50,7 +50,7 @@ targets += bm03.S bm03.elf
 targets += bm10.S bm10.elf
 targets += bm11.S bm11.elf
 targets += bm12.s bm12.elf
-#targets += bm13.s bm13.elf
+targets += bm13.s bm13.elf
 #targets += bm20.S bm20.elf
 targets += bm30.S bm30.elf
 #targets += bm31.S bm31.elf
@@ -68,6 +68,9 @@ targets += bm63.S bm63.elf
 targets += bm64.S bm64.elf
 targets += bm70.S bm70.elf
 targets += bm71.S bm71.elf
+targets += bm80.S bm80.elf
+targets += bm90.S bm90.elf
+targets += bm91.S bm91.elf
 
 -include ../../Makefile.avr0.include
 

@@ -1,13 +1,4 @@
-#include <cstdint>
-#include <cstddef>
-#include <compare> 
-#include <vector>
-#include <array>
-#include <iostream>
-
-//struct uint {
-//    uint8_t value;
-//};
+//#include <compare> 
 
 template<auto V>
 struct A {};
@@ -15,11 +6,13 @@ struct A {};
 struct B {
     constexpr B(int a) : value{a} {}
 //    inline constexpr auto operator<=>(const B& rhs) const = default;
-//private:
-    uint8_t value;
+private:
+    int value{0};
 };
 
 int main() {
-    A<B{3}> t;        
+//    A<B{}> t1;
+//    constexpr B b{0};
+//    A<b> t2;        
 }
 

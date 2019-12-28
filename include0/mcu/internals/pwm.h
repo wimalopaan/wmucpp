@@ -399,11 +399,13 @@ namespace AVR {
                 return mMax;
             }
         private:
-            inline static value_type mMax = 0;
+            inline static value_type mMax{};
         };
         
         template<typename P, AVR::Concepts::At01Series MCU>
         struct DynamicPwm<Portmux::Position<Component::Tca<0>, P>, MCU> final {
+            
+            using all_channels = Meta::List<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>;
             
             using value_type = uint16_t;
             
@@ -513,9 +515,9 @@ namespace AVR {
             inline static constexpr value_type max() {
                 return mMax;
             }
-            template<typename... Outs>
+            template<Meta::concepts::List OutList>
             inline static constexpr void duty(uint16_t d) {
-                using out_list = Meta::List<Outs...>;
+                using out_list = OutList;
                 if constexpr(Meta::contains<out_list, WO<0>>::value) {
                     *mcu_tca()->cmp0buf = d;
                 }

@@ -31,7 +31,7 @@ namespace AVR {
 
             enum class CtrlB_t : uint8_t {
                 usart0_alt1 = (1 << 0),
-                spi00_alt1 = (1 << 2)
+                spi0_alt1 = (1 << 2)
             };
             ControlRegister<Portmux, CtrlB_t> ctrlb;
 

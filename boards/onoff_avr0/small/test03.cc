@@ -73,10 +73,10 @@ using PortB = Port<B>;
 
 using dbg1      = Pin<PortA, 2>; 
 using led       = ActiveHigh<Pin<PortA, 3>, Output>;
-using button    = External::Button<ActiveLow<Pin<PortA, 7>, Input>, systemTimer, External::Tick<systemTimer>{100_ms}, External::Tick<systemTimer>{3000_ms}>;
-//constexpr auto spt = External::Tick<systemTimer>{100_ms};
-//constexpr auto lpt = External::Tick<systemTimer>{3000_ms};
-//using button    = External::Button<ActiveLow<Pin<PortA, 7>, Input>, systemTimer, spt, lpt>;
+//using button    = External::Button<ActiveLow<Pin<PortA, 7>, Input>, systemTimer, External::Tick<systemTimer>{100_ms}, External::Tick<systemTimer>{3000_ms}>;
+constexpr auto spt = External::Tick<systemTimer>{100_ms};
+constexpr auto lpt = External::Tick<systemTimer>{3000_ms};
+using button    = External::Button<ActiveLow<Pin<PortA, 7>, Input>, systemTimer, spt, lpt>;
 using fet       = ActiveHigh<Pin<PortB, 1>, Output>;
 
 using ccp = Cpu::Ccp<>;

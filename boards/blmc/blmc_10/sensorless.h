@@ -28,6 +28,8 @@ namespace BLDC {
         namespace Experimental2 {
             template<typename RotTimer, typename PWM, typename Com, typename AC>
             struct Controller {
+                using all_channels = typename PWM::all_channels;
+                
                 typedef typename RotTimer::value_type timer_value_t;
                 typedef typename PWM::value_type pwm_value_t;
                 
@@ -139,7 +141,7 @@ namespace BLDC {
                     case State::Align:
                         Com::startPosition();
                         Com::on_full_state();
-                        PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(actualRV.pwm);
+                        PWM::template duty<all_channels >(actualRV.pwm);
                         RotTimer::period(alignValue);
                         RotTimer::reset();
                         mState = State::Align2;
@@ -159,7 +161,7 @@ namespace BLDC {
                                 Com::next();
                                 ++mStep;
                                 actualRV += ramp.delta;
-                                PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(actualRV.pwm);
+                                PWM::template duty<all_channels >(actualRV.pwm);
                                 RotTimer::period(actualRV.tv);
                                 RotTimer::reset();
                             }
@@ -167,7 +169,7 @@ namespace BLDC {
 //                        if ((mStep >= ramp_steps)) {
                         if ((mStep >= ramp_steps) || ((mCommutes > mGoodCommutes) && (mStep >= (ramp_steps / 2)))) {
                             actualRV.pwm = ramp.end.pwm;
-                            PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(actualRV.pwm);
+                            PWM::template duty<all_channels>(actualRV.pwm);
                             mState = State::ClosedLoop;
                             RotTimer::period(std::numeric_limits<uint16_t>::max());
                             RotTimer::reset();
@@ -278,15 +280,15 @@ namespace BLDC {
                 }
                 inline static void pwmInc() {
                     actualRV.pwm += 1;
-                    PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(actualRV.pwm);
+                    PWM::template duty<all_channels>(actualRV.pwm);
                 }
                 inline static void pwmfast() {
                     actualRV.pwm += 100;
-                    PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(actualRV.pwm);
+                    PWM::template duty<all_channels>(actualRV.pwm);
                 }
                 inline static void pwmDec() {
                     actualRV.pwm -= 1;
-                    PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(actualRV.pwm);
+                    PWM::template duty<all_channels>(actualRV.pwm);
                 }
                 inline static void reset() {
                     ramp = make_ramp(ramp_start, ramp_end, ramp_steps);
@@ -312,6 +314,8 @@ namespace BLDC {
         namespace Experimental {
             template<typename RotTimer, typename ComTimer, typename PWM, typename Com, typename AC>
             struct Controller {
+                using all_channels = typename PWM::all_channels;
+                
                 typedef typename RotTimer::value_type timer_value_t;
                 typedef typename PWM::value_type pwm_value_t;
                 
@@ -422,7 +426,7 @@ namespace BLDC {
                         break;
                     case State::Align:
                         Com::startPosition();
-                        PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(actualRV.pwm);
+                        PWM::template duty<all_channels >(actualRV.pwm);
                         RotTimer::period(alignValue2);
                         RotTimer::reset();
                         mState = State::Align2;
@@ -440,7 +444,7 @@ namespace BLDC {
                                 Com::next();
                                 ++mStep;
                                 actualRV += ramp.delta;
-                                PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(actualRV.pwm);
+                                PWM::template duty<all_channels >(actualRV.pwm);
                                 RotTimer::period(actualRV.tv);
                                 RotTimer::reset();
                             }
@@ -490,11 +494,11 @@ namespace BLDC {
                 }
                 inline static void pwmInc() {
                     actualRV.pwm += 1;
-                    PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(actualRV.pwm);
+                    PWM::template duty<all_channels >(actualRV.pwm);
                 }
                 inline static void pwmDec() {
                     actualRV.pwm -= 1;
-                    PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(actualRV.pwm);
+                    PWM::template duty<all_channels >(actualRV.pwm);
                 }
                 inline static void reset() {
                     ramp = make_ramp(ramp_start, ramp_end, ramp_steps);

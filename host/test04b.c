@@ -1,30 +1,17 @@
-#include <stdint.h>
 #include <stdio.h>
+#include <stdbool.h>
+#include <assert.h>
 
-#define TFT_FKT(x)      tft_wr( sizeof(x) - 1, x, 1 )
+static_assert(true);
 
-uint8_t tft_wr( uint8_t len, const uint8_t *dat, bool flash ) {
-    printf("len=%d\n", len);
-    return len;
-} 
-uint8_t INIT[] =
-                "\x1bTC\0"              // text cursor off
-                "\x1b""DO\2"            // rotate 180°
-                "\x1b""FD\x8\x1"        // display color
-                "\x1b""FZ\x8\x1"        // text color
-                "\x1b""DL"              // display clear
-                "\x1b""YZ\x0"           // no delay
-                "\x1b""YH\x64"          // light on
-                "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
-                "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
-                "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
-                ;
-
-void init(const uint8_t* s) {
-    TFT_FKT(s);
-}
+//typedef char static_assertion_bufer_size_wrong[(sizeof(int)==8)?1:-1];
 
 int main() {
-    TFT_FKT(INIT);
-    init(INIT);
+    static_assert(true);
+    printf("S: %ld\n", sizeof(int));
+    printf("A\n");
+    if (1 / ((sizeof(int) == 0) ? 1 : -1)) {}
+    printf("A\n");
+
+//    typedef char static_assertion_bufer_size_wrong[(sizeof(int)==8)?1:-1];
 }

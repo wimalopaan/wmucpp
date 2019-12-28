@@ -57,7 +57,6 @@ namespace etl {
     
         inline constexpr StringBuffer(StringBuffer&& other) {
             assert(other.size() <= size());
-//            std::copy(std::begin(other), std::end(other), data);
             etl::copy(data, other);
         }
     
@@ -121,9 +120,6 @@ namespace etl {
 //        }
         inline constexpr void clear() {
             etl::fill(data, Fill);
-//            for(uint8_t i = 0; i < Length; ++i) {
-//                data[i] = Fill;
-//            }
         }
         inline constexpr const T& at(uint8_t index) const {
             assert(index < size());
@@ -158,7 +154,6 @@ namespace etl {
             return &data[Length];
         }
     private:
-//        T data[Length] = {};
         std::array<T, Length> data;
     };
     

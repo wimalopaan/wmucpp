@@ -73,12 +73,12 @@ namespace std {
             assert(index < Size);
             return data[index];
         }
-        inline constexpr size_type size() const {
+        inline static constexpr size_type size() {
             return Size;
         }
         T data[Size]; // rely on aggregate initialization
     };
-
+    
     template<typename T>
     struct array<T, 0> final {
         typedef T value_type;
@@ -159,4 +159,25 @@ namespace std {
     template<typename I, auto N>
     class tuple_size<std::array<I, N>> : public std::integral_constant<size_t, N> {};
     
+    template<auto I, class T, size_t N >
+    inline constexpr T get( const array<T,N>& a ) noexcept {
+        return a[I];
+    }
+
+    template<auto I, class T, size_t N >
+    inline constexpr T& get(array<T,N>& a ) noexcept {
+        return a[I];
+    }
+    
+    template<auto I, class T>
+    struct tuple_element;
+    
+    template<auto I, class T, auto N>
+    struct tuple_element<I, std::array<T, N> > {
+        using type = T;
+    };
+    template<auto I, class T, auto N>
+    struct tuple_element<I, const std::array<T, N> > {
+        using type = T;
+    };
 }

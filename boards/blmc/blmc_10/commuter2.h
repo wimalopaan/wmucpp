@@ -28,7 +28,8 @@ namespace BLDC2 {
         
         using lowSides  = Meta::List<l0, l1, l2>;
         
-        using index_type = etl::uint_ranged_circular<uint8_t, 0, 5>;
+        using state_type = etl::uint_ranged_circular<uint8_t, 0, 5>;
+        using ac_index_t = typename AC::index_type;
         
         template<typename Pin>
         requires (Meta::contains<lowSides, Pin>::value)
@@ -98,7 +99,7 @@ namespace BLDC2 {
             ((PP::off(), ...));
             ((PP::template dir<AVR::Output>(), ...));
             AC::init();
-            AC::positiv_channel(1);
+            AC::positiv_channel(ac_index_t{1});
         }
         inline static void off() {
             floating<0>();
@@ -118,41 +119,41 @@ namespace BLDC2 {
             case 0: // pwm(0) -> 2, ac = 1, rising
                 floating<1>();
                 low<2>();                
-                AC::template negativ_channel<etl::NoDisableEnable>(1);
+                AC::template negativ_channel<etl::NoDisableEnable>(ac_index_t{1});
                 AC::template edge<typename AC::Positiv, etl::NoDisableEnable>();
                 pwm<0>();                
                 break;
             case 1: // pwm(1) -> 2, ac = 0
                 floating<0>();
                 low<2>();                
-                AC::template negativ_channel<etl::NoDisableEnable>(0);
+                AC::template negativ_channel<etl::NoDisableEnable>(ac_index_t{0});
                 AC::template edge<typename AC::Negativ, etl::NoDisableEnable>();
                 pwm<1>();                
                 break;
             case 2: // pwm(1) -> 0, ac = 2
                 floating<2>();                
                 low<0>();
-                AC::template negativ_channel<etl::NoDisableEnable>(2);
+                AC::template negativ_channel<etl::NoDisableEnable>(ac_index_t{2});
                 AC::template edge<typename AC::Positiv, etl::NoDisableEnable>();
                 pwm<1>();                
                 break;
             case 3: // pwm(2) -> 0, ac = 1
                 floating<1>();                
                 low<0>();
-                AC::template negativ_channel<etl::NoDisableEnable>(1);
+                AC::template negativ_channel<etl::NoDisableEnable>(ac_index_t{1});
                 AC::template edge<typename AC::Negativ, etl::NoDisableEnable>();
                 pwm<2>();                
                 break;
             case 4: // pwm(2) -> 1, ac = 0
                 floating<0>();
                 low<1>();                
-                AC::template negativ_channel<etl::NoDisableEnable>(0);
+                AC::template negativ_channel<etl::NoDisableEnable>(ac_index_t{0});
                 AC::template edge<typename AC::Positiv, etl::NoDisableEnable>();
                 pwm<2>();                
                 break;
             case 5: // pwm(0) -> 1, ac = 2
                 floating<2>();                
-                AC::template negativ_channel<etl::NoDisableEnable>(2);
+                AC::template negativ_channel<etl::NoDisableEnable>(ac_index_t{2});
                 AC::template edge<typename AC::Negativ, etl::NoDisableEnable>();
                 low<1>();                
                 pwm<0>();
@@ -166,37 +167,37 @@ namespace BLDC2 {
             switch(state.toInt()) {
             case 0: // pwm(0) -> 2, ac = 1, rising
                 floating<l1>();
-                AC::template negativ_channel<etl::NoDisableEnable>(1);
+                AC::template negativ_channel<etl::NoDisableEnable>(ac_index_t{1});
                 AC::template edge<typename AC::Negativ, etl::NoDisableEnable>();
                 on<l2>();
                 break;
             case 1: // pwm(1) -> 2, ac = 0
                 off<h0>();
-                AC::template negativ_channel<etl::NoDisableEnable>(0);
+                AC::template negativ_channel<etl::NoDisableEnable>(ac_index_t{0});
                 AC::template edge<typename AC::Positiv, etl::NoDisableEnable>();
                 pwm<h1>();
                 break;
             case 2: // pwm(1) -> 0, ac = 2
                 floating<l2>();
-                AC::template negativ_channel<etl::NoDisableEnable>(2);
+                AC::template negativ_channel<etl::NoDisableEnable>(ac_index_t{2});
                 AC::template edge<typename AC::Negativ, etl::NoDisableEnable>();
                 on<l0>();
                 break;
             case 3: // pwm(2) -> 0, ac = 1
                 off<h1>();
-                AC::template negativ_channel<etl::NoDisableEnable>(1);
+                AC::template negativ_channel<etl::NoDisableEnable>(ac_index_t{1});
                 AC::template edge<typename AC::Positiv, etl::NoDisableEnable>();
                 pwm<h2>();
                 break;
             case 4: // pwm(2) -> 1, ac = 0
                 floating<l0>();
-                AC::template negativ_channel<etl::NoDisableEnable>(0);
+                AC::template negativ_channel<etl::NoDisableEnable>(ac_index_t{0});
                 AC::template edge<typename AC::Negativ, etl::NoDisableEnable>();
                 on<l1>();
                 break;
             case 5: // pwm(0) -> 1, ac = 2
                 off<h2>();
-                AC::template negativ_channel<etl::NoDisableEnable>(2);
+                AC::template negativ_channel<etl::NoDisableEnable>(ac_index_t{2});
                 AC::template edge<typename AC::Positiv, etl::NoDisableEnable>();
                 pwm<h0>();
                 break;
@@ -209,37 +210,37 @@ namespace BLDC2 {
             switch(state.toInt()) {
             case 0: // pwm(0) -> 2, ac = 1, rising
                 floating<l2>();
-                AC::template negativ_channel<etl::NoDisableEnable>(2);
+                AC::template negativ_channel<etl::NoDisableEnable>(ac_index_t{2});
                 AC::template edge<typename AC::Negativ, etl::NoDisableEnable>();
                 on<l1>();
                 break;
             case 1: // pwm(1) -> 2, ac = 0
                 off<h0>();
-                AC::template negativ_channel<etl::NoDisableEnable>(0);
+                AC::template negativ_channel<etl::NoDisableEnable>(ac_index_t{0});
                 AC::template edge<typename AC::Positiv, etl::NoDisableEnable>();
                 pwm<h2>();
                 break;
             case 2: // pwm(1) -> 0, ac = 2
                 floating<l1>();
-                AC::template negativ_channel<etl::NoDisableEnable>(1);
+                AC::template negativ_channel<etl::NoDisableEnable>(ac_index_t{1});
                 AC::template edge<typename AC::Negativ, etl::NoDisableEnable>();
                 on<l0>();
                 break;
             case 3: // pwm(2) -> 0, ac = 1
                 off<h2>();
-                AC::template negativ_channel<etl::NoDisableEnable>(2);
+                AC::template negativ_channel<etl::NoDisableEnable>(ac_index_t{2});
                 AC::template edge<typename AC::Positiv, etl::NoDisableEnable>();
                 pwm<h1>();
                 break;
             case 4: // pwm(2) -> 1, ac = 0
                 floating<l0>();
-                AC::template negativ_channel<etl::NoDisableEnable>(0);
+                AC::template negativ_channel<etl::NoDisableEnable>(ac_index_t{0});
                 AC::template edge<typename AC::Negativ, etl::NoDisableEnable>();
                 on<l2>();
                 break;
             case 5: // pwm(0) -> 1, ac = 2
                 off<h1>();
-                AC::template negativ_channel<etl::NoDisableEnable>(1);
+                AC::template negativ_channel<etl::NoDisableEnable>(ac_index_t{1});
                 AC::template edge<typename AC::Positiv, etl::NoDisableEnable>();
                 pwm<h0>();
                 break;
@@ -269,9 +270,9 @@ namespace BLDC2 {
                 on();
             }
         }
-        inline static void set(index_type p) {
+        inline static void set(state_type p) {
             if (mReverse) {
-                state = p.Upper - p.toInt();                
+                state = p.flip();                
             }
             else {
                 state = p;
@@ -305,8 +306,8 @@ namespace BLDC2 {
         
         
         //    private:
-        inline static index_type state{0};
-        inline static bool mReverse = false;
+        inline static state_type state{};
+        inline static bool mReverse{false};
     };
     
 }

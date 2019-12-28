@@ -29,7 +29,7 @@ namespace BLDC {
         
         template<typename RotTimer, typename ComTimer, typename PWM, typename Commuter, typename AC>
         struct Controller {
-
+            using all_channels = typename PWM::all_channels;
             static inline constexpr uint16_t PwmMax = 100;
             using value_type = etl::typeForValue_t<PwmMax>;
             using scale_type = etl::ScaledInteger<etl::uint_ranged<value_type, 1, 100>, std::ratio<1,100>>;
@@ -128,11 +128,12 @@ namespace BLDC {
             static etl::uint_ranged_circular<size_type, 0, Size - 1> index{}; 
             
             std::array<value_type, 3> v;
-            v[0] = sine_table[index.toInt()];
-            v[1] = sine_table[(index - shift).toInt()];
-            v[2] = sine_table[(index - 2 * shift).toInt()];
+            v[0] = sine_table[index];
+            v[1] = sine_table[index.template leftShift<shift>()];
+            v[2] = sine_table[index.template leftShift<2 * shift>()];
             
-            if (++index == 0) {
+            ++index;
+            if (index == 0) {
                 if (mState == State::ClosedLoop) {
 //                    Commuter::template floating<0>();
 //                    Commuter::template floating<1>();
@@ -141,10 +142,10 @@ namespace BLDC {
                     ComTimer::template enableInterrupts<false>();
                     AC::template enableInterrupts<true>();
                     
-                    Commuter::set(typename Commuter::index_type{1});
+                    Commuter::set(typename Commuter::state_type{1});
                     
 //                    PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(70);
-                    PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(PwmMax * mScale);
+                    PWM::template duty<all_channels>(PwmMax * mScale);
 
                     leave = true;
                 }
@@ -190,9 +191,9 @@ namespace BLDC {
                 return;
             }
             
-            PWM::template duty<AVR::PWM::WO<0>>(v[0] * mScale);
-            PWM::template duty<AVR::PWM::WO<1>>(v[1] * mScale);
-            PWM::template duty<AVR::PWM::WO<2>>(v[2] * mScale);
+            PWM::template duty<Meta::List<AVR::PWM::WO<0>>>(v[0] * mScale);
+            PWM::template duty<Meta::List<AVR::PWM::WO<1>>>(v[1] * mScale);
+            PWM::template duty<Meta::List<AVR::PWM::WO<2>>>(v[2] * mScale);
         }
         
         inline static void periodic() {
@@ -257,11 +258,11 @@ namespace BLDC {
         
         inline static void pwmInc() {
             ++mScale;
-            PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(PwmMax * mScale);
+            PWM::template duty<all_channels>(PwmMax * mScale);
         }
         inline static void pwmDec() {
             --mScale;
-            PWM::template duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(PwmMax * mScale);
+            PWM::template duty<all_channels>(PwmMax * mScale);
         }
         inline static void incPeriod() {
             mActualPeriod += 1000U;
@@ -282,8 +283,8 @@ namespace BLDC {
         
         //            inline static uint16_t mActualPwm = 0;
         inline static volatile etl::uint_ranged<uint16_t, 1000, 40000> mActualPeriod{20000};
-        inline static volatile etl::uint_ranged<uint8_t, 0, 5> mActualSineTable = 0;
-        inline static etl::uint_ranged<uint8_t, 0, 5> mOldActualSineTable = 0;
+        inline static volatile etl::uint_ranged<uint8_t, 0, 5> mActualSineTable{};
+        inline static etl::uint_ranged<uint8_t, 0, 5> mOldActualSineTable{};
         
         inline static bool mDoFloat = false;
         
@@ -328,15 +329,17 @@ namespace Sine3 {
         
         static etl::uint_ranged_circular<size_type, 0, Size - 1> index{}; 
         static etl::uint_ranged_circular<size_type, 0, shift / 2> offset{}; 
-        if (++offset == 0) {
+        ++offset;
+        if (offset == 0) {
             ++mIndex;
         }
         
         std::array<uint16_t, 3> v;
-        v[0] = sine_table[index.toInt()];
-        v[1] = sine_table[(index + shift).toInt()];
-        v[2] = sine_table[(index + 2 * shift).toInt()];
-        if (++index == 0) {
+        v[0] = sine_table[index];
+        v[1] = sine_table[index.template leftShift<shift>()];
+        v[2] = sine_table[index.template leftShift<2 * shift>()];
+        ++index;
+        if (index == 0) {
             mOldActualSineTable = mActualSineTable;
         }
         return v;
@@ -369,9 +372,9 @@ namespace Sine3 {
             break;
         }
         
-        PWM::template duty<AVR::PWM::WO<0>>((10 * v[0]) / mScale);
-        PWM::template duty<AVR::PWM::WO<1>>((10 * v[1]) / mScale);
-        PWM::template duty<AVR::PWM::WO<2>>((10 * v[2]) / mScale);
+        PWM::template duty<Meta::List<AVR::PWM::WO<0>>>((10 * v[0]) / mScale);
+        PWM::template duty<Meta::List<AVR::PWM::WO<1>>>((10 * v[1]) / mScale);
+        PWM::template duty<Meta::List<AVR::PWM::WO<2>>>((10 * v[2]) / mScale);
         
         if (mDoFloat) {
             constexpr uint16_t max = 1000;
@@ -498,12 +501,12 @@ namespace Sine3 {
     
     //            inline static uint16_t mActualPwm = 0;
     inline static volatile uint16_t mActualPeriod = 20000;
-    inline static volatile etl::uint_ranged<uint8_t, 0, 5> mActualSineTable = 0;
-    inline static etl::uint_ranged<uint8_t, 0, 5> mOldActualSineTable = 0;
+    inline static volatile etl::uint_ranged<uint8_t, 0, 5> mActualSineTable{};
+    inline static etl::uint_ranged<uint8_t, 0, 5> mOldActualSineTable{};
     
     inline static bool mDoFloat = false;
     
-    inline static Commuter::index_type mIndex;
+    inline static Commuter::state_type mIndex;
 };
 }
 
@@ -512,6 +515,8 @@ namespace Sine2 {
     
     template<typename RotTimer, typename ComTimer, typename PWM>
     struct Controller {
+        
+        using all_channels = typename PWM::all_channels;
         
         static inline constexpr auto gen = []<uint16_t Size, uint16_t Max = 1000>(std::integral_constant<uint16_t, Size>, std::integral_constant<uint16_t, Max> = std::integral_constant<uint16_t, Max>{}){
                                                                             std::array<uint16_t, Size> t;
@@ -538,15 +543,17 @@ namespace Sine2 {
     
     template<uint16_t Size>
     inline static auto setSine() {
-        static etl::uint_ranged_circular<uint16_t,0, Size - 1> index; 
+        using index_t = etl::uint_ranged_circular<uint16_t,0,Size - 1>; 
+        static index_t index; 
         static constexpr auto sine_table = gen(std::integral_constant<uint16_t, Size>{});
         constexpr uint16_t shift = sine_table.size() / 3;
         std::array<uint16_t, 3> v;
-        v[0] = sine_table[index.toInt()];
-        v[1] = sine_table[(index + shift).toInt()];
-        v[2] = sine_table[(index + 2 * shift).toInt()];
-        if (++index == sine_table.size()) {
-            index = 0;
+        v[0] = sine_table[index];
+        v[1] = sine_table[index.template leftShift<shift>()];
+        v[2] = sine_table[index.template leftShift<2 * shift>()];
+        ++index;
+        if (index == sine_table.size()) {
+            index = index_t{0};
             mOldActualSineTable = mActualSineTable;
         }
         return v;
@@ -580,9 +587,9 @@ namespace Sine2 {
             break;
         }
         
-        PWM::template duty<AVR::PWM::WO<0>>(v[0] / mScale);
-        PWM::template duty<AVR::PWM::WO<1>>(v[1] / mScale);
-        PWM::template duty<AVR::PWM::WO<2>>(v[2] / mScale);
+        PWM::template duty<Meta::List<AVR::PWM::WO<0>>>(v[0] / mScale);
+        PWM::template duty<Meta::List<AVR::PWM::WO<1>>>(v[1] / mScale);
+        PWM::template duty<Meta::List<AVR::PWM::WO<2>>>(v[2] / mScale);
         
     }
     
@@ -592,7 +599,7 @@ namespace Sine2 {
     }
     
     inline static void off() {
-        PWM::template off<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>();
+        PWM::template off<all_channels>();
     }
     inline static void start() {
         mScale = 20;
@@ -600,7 +607,7 @@ namespace Sine2 {
         mOldActualSineTable = 0;
         mActualPeriod = 20000;
         ComTimer::period(mActualPeriod);
-        PWM::template on<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>();
+        PWM::template on<all_channels>();
     }
     inline static void pwmInc() {
         if (mScale > 5) {
@@ -632,9 +639,9 @@ namespace Sine2 {
     }
     
     //            inline static uint16_t mActualPwm = 0;
-    inline static uint16_t mActualPeriod = 20000;
-    inline static etl::uint_ranged<uint8_t, 0, 5> mActualSineTable = 0;
-    inline static etl::uint_ranged<uint8_t, 0, 5> mOldActualSineTable = 0;
+    inline static uint16_t mActualPeriod{20000};
+    inline static etl::uint_ranged<uint8_t, 0, 5> mActualSineTable{};
+    inline static etl::uint_ranged<uint8_t, 0, 5> mOldActualSineTable{};
 };
 }
 
@@ -667,9 +674,11 @@ namespace Sine {
             
             //                decltype(index + shift)::_;
             
-            uint16_t v0 = sine_table[index.toInt()];
-            uint16_t v1 = sine_table[(index + shift).toInt()];
-            uint16_t v2 = sine_table[(index + 2 * shift).toInt()];
+            uint16_t v0 = sine_table[index];
+            uint16_t v1 = sine_table[index.template leftShift<shift>()];
+            uint16_t v2 = sine_table[index.template leftShift<2 * shift>()];
+//            uint16_t v1 = sine_table[(index + shift).toInt()];
+//            uint16_t v2 = sine_table[(index + 2 * shift).toInt()];
             //                uint16_t v0 = sine_table[index];
             //                uint16_t v1 = sine_table[(index + shift) % sine_table.size()];
             //                uint16_t v2 = sine_table[(index + 2 * shift) % sine_table.size()];
@@ -680,9 +689,9 @@ namespace Sine {
             v1 /= scale;
             v2 /= scale;
             
-            PWM::template duty<AVR::PWM::WO<0>>(v0);
-            PWM::template duty<AVR::PWM::WO<1>>(v1);
-            PWM::template duty<AVR::PWM::WO<2>>(v2);
+            PWM::template duty<Meta::List<AVR::PWM::WO<0>>>(v0);
+            PWM::template duty<Meta::List<AVR::PWM::WO<1>>>(v1);
+            PWM::template duty<Meta::List<AVR::PWM::WO<2>>>(v2);
             
             //                index = (index + 1) % sine_table.size();
             ++index;

@@ -408,6 +408,9 @@ doc0/bm00/bm63.cc
 doc0/bm00/bm64.cc
 doc0/bm00/bm70.cc
 doc0/bm00/bm71.cc
+doc0/bm00/bm80.cc
+doc0/bm00/bm90.cc
+doc0/bm00/bm91.cc
 example/externals/buttonmacro.c
 example/externals/buttonvertical.cc
 example/externals/isr.c
@@ -498,10 +501,12 @@ include0/etl/meta.h
 include0/etl/outfwd.h
 include0/etl/output.h
 include0/etl/print.h
+include0/etl/ranged.h
 include0/etl/rational.h
 include0/etl/scoped.h
 include0/etl/span.h
 include0/etl/stringbuffer.h
+include0/etl/sweep.h
 include0/etl/trace.h
 include0/etl/tuple.h
 include0/etl/type_traits.h
@@ -524,8 +529,10 @@ include0/external/hott/sensortextprotocollbuffer.h
 include0/external/hott/sumdprotocoll.h
 include0/external/hott/sumdprotocolladapter.h
 include0/external/onewire/onewire.h
+include0/external/solutions/apa102.h
 include0/external/solutions/blinker.h
 include0/external/solutions/button.h
+include0/external/solutions/color.h
 include0/external/solutions/ds18b20.h
 include0/external/solutions/gps.h
 include0/external/solutions/ifx007.h
@@ -645,6 +652,7 @@ include0/std/span
 include0/std/tuple
 include0/std/type_traits
 include0/std/utility
+include0/std/variant
 license.txt
 megaxxpb.txt
 projekte.txt

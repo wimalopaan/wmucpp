@@ -58,7 +58,7 @@ namespace etl {
         template<Stream Stream, typename V> 
         requires Signed<V> || Unsigned<V>
         constexpr inline void out_impl(V v) {
-            std::array<Char, numberOfDigits<V>()> buffer;
+            std::array<Char, numberOfDigits<V>()> buffer{};
             itoa(v, buffer);
             out_impl<Stream>(buffer);
         }

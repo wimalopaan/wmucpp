@@ -10,24 +10,28 @@ namespace External {
     template<typename Timer, typename T = uint16_t>
     struct Tick {
         inline static constexpr auto intervall = Timer::intervall;
-        constexpr Tick() = default;
+        
+        inline constexpr Tick() = default;
         
         template<typename U>
-        constexpr explicit Tick(const U& v) : value{v / intervall} {}
+        inline constexpr explicit Tick(const U& v) : value{v / intervall} {
+        }
         
         template<typename U>
-        void operator=(const U& v) {
+        inline constexpr void operator=(const U& v) {
             value = (v / intervall);
         }        
         
-        constexpr void operator++() {
+        inline constexpr void operator++() {
             ++value;
         }
-        inline constexpr bool operator<(const Tick& rhs) const {
-            return (value < rhs.value);
-        }
-        inline constexpr bool operator>(const Tick& rhs) const {
-            return (value > rhs.value);
+        
+        template<typename F>
+        inline constexpr void on(const Tick& t, F f) {
+            if (value == t.value) {
+                f();
+                reset();
+            }
         }
         
         inline constexpr auto operator<=>(const Tick& rhs) const = default;

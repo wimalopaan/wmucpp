@@ -10,4 +10,5 @@ int foo(int x) {
 }
 
 int main() {
+    int a={0};
 }

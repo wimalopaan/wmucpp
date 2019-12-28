@@ -271,13 +271,13 @@ namespace Hott {
             
             static inline hott_state_t mState = hott_state_t::Undefined;
             
-            inline static uint_ranged<uint8_t, 0, ticks_to_wait> mWaitTicks = 0;
+            inline static uint_ranged<uint8_t, 0, ticks_to_wait> mWaitTicks{0};
             
             inline static BinaryMesgType mMsg;
             inline static TextMesgType mTextMsg;
             
-            inline static etl::uint_ranged<uint8_t, 0, Hott::size<BinaryMesgType>::value - 1> mByteIndexBinary = 0;
-            inline static etl::uint_ranged<uint8_t, 0, Hott::size<TextMesgType>::value - 1> mByteIndexText = 0;
+            inline static etl::uint_ranged<uint8_t, 0, Hott::size<BinaryMesgType>::value - 1> mByteIndexBinary{0};
+            inline static etl::uint_ranged<uint8_t, 0, Hott::size<TextMesgType>::value - 1> mByteIndexText{0};
             
             inline static Hott::key_t mLastKey = Hott::key_t::nokey;
             
@@ -516,12 +516,12 @@ namespace Hott {
         
         static inline hott_state_t mState = hott_state_t::Undefined;
         
-        inline static uint_ranged<uint8_t, 0, ticks_to_wait> mWaitTicks = 0;
+        inline static uint_ranged<uint8_t, 0, ticks_to_wait> mWaitTicks{0};
         
         inline static BinaryMesgType mMsg;
         inline static Hott::TextMsg mTextMsg;
         
-        inline static uint_ranged<uint8_t, 0, std::max(sizeof(mMsg), sizeof(mTextMsg))> mByteIndex = 0;
+        inline static uint_ranged<uint8_t, 0, std::max(sizeof(mMsg), sizeof(mTextMsg))> mByteIndex{0};
         
         inline static Hott::key_t mLastKey = Hott::key_t::nokey;
         

@@ -13,6 +13,9 @@ struct Bits {
     uint8_t bit7:1;
 };
 
+extern int a;
+extern int a;
+
 int main() {
 //    setBit(1);
 //    PORTA.INTFLAGS = 0x01; // korrekt

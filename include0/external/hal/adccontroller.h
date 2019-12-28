@@ -106,7 +106,7 @@ namespace External {
             using mcu_adc_type = MCUAdc ;
             using value_type = typename MCUAdc::value_type;
             
-            inline static constexpr uint8_t channels[] = {Channels...};
+            inline static constexpr uint8_t channels[] {Channels...};
             inline static constexpr uint8_t NumberOfChannels = sizeof... (Channels);    
             inline static constexpr auto VRef = MCUAdc::VRef;
             
@@ -138,20 +138,21 @@ namespace External {
                     });
                     break;
                 case State::ConversionComplete:
-                    values[mActualChannel.toInt()] = MCUAdc::value();
-                    MCUAdc::channel(channels[(++mActualChannel).toInt()]);
+                    values[mActualChannel] = MCUAdc::value();
+                    ++mActualChannel;
+                    MCUAdc::channel(channels[mActualChannel]);
                     state = State::Start;
                     break;
                 }
             }
             
             inline static typename MCUAdc::value_type value(index_type index) {
-                return values[index.toInt()];
+                return values[index];
             }
             
         private:
-            inline static value_type values[NumberOfChannels] = {};
-            inline static index_type mActualChannel;
+            inline static value_type values[NumberOfChannels]{};
+            inline static index_type mActualChannel{};
         };
     
     }

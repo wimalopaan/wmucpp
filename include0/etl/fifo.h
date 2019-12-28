@@ -23,6 +23,7 @@
 #include <type_traits>
 
 #include "type_traits.h"
+#include "types.h"
 
 namespace etl {
     using namespace std;
@@ -32,11 +33,14 @@ namespace etl {
     class FiFo final {
     public:
         using size_type = etl::typeForValue_t<Size>;
+
+        using index_type = etl::uint_ranged_circular<size_type, 0, Size - 1>;
+//        using index_type = size_type;
         
         inline static constexpr bool sizeIsAtomic = DefaultMcuType::template is_atomic<size_type>();
         
         inline bool push_back(volatile const T& item) volatile {
-            asm("; replace udivmod");
+            asm("; replace udivmod1");
             size_type next = in + 1;
             if (next == Size) next = 0;
             {
@@ -50,7 +54,7 @@ namespace etl {
             return true;
         }
         inline bool push_back(const T& item) volatile {
-            asm("; replace udivmod");
+            asm("; replace udivmod2");
             size_type next = in + 1;
             if (next == Size) next = 0;
             {
@@ -64,9 +68,12 @@ namespace etl {
             return true;
         }
         inline bool push_back(const T& item) {
-            asm("; replace udivmod");
-            size_type next = in + 1;
-            if (next == Size) next = 0;
+            asm("; replace udivmod3");
+            index_type next{in};
+            ++next;            
+//            index_type next = in + 1;
+//            if (next == Size) next = 0;
+            
             {
                 Scoped<DisbaleInterrupt<RestoreState>, !sizeIsAtomic> di;
                 if (out == next) {
@@ -74,7 +81,22 @@ namespace etl {
                 }
             }
             data[in] = item;
+//            data[in] = item;
             in = next;
+            return true;
+        }
+        inline bool pop_front(T& item) {
+            {
+                Scoped<DisbaleInterrupt<RestoreState>, !sizeIsAtomic> di;
+                if (in == out) {
+                    return false;
+                }
+            }
+            item = data[out];
+//            item = data[out];
+            asm("; replace udivmod4");
+            ++out;
+//            if (++out == Size) out = 0;
             return true;
         }
         inline bool pop_front(T& item) volatile {
@@ -84,9 +106,11 @@ namespace etl {
                     return false;
                 }
             }
+//            item = data[out];
             item = data[out];
-            asm("; replace udivmod");
-            if (++out == Size) out = 0;
+            asm("; replace udivmod5");
+            ++out;
+//            if (++out == Size) out = 0;
             return true;
         }
         inline std::optional<T> pop_front() volatile {
@@ -96,28 +120,46 @@ namespace etl {
                     return {};
                 }
             }
+//            T item = data[out];
             T item = data[out];
-            asm("; replace udivmod");
+            asm("; replace udivmod6");
 //            if (++out == Size) out = 0;
-            out = out + 1;
-            if (out == Size) out = 0;
+            ++out;
+            return item;
+        }
+        inline std::optional<T> pop_front() {
+            {
+                Scoped<DisbaleInterrupt<RestoreState>, !sizeIsAtomic> di;
+                if (in == out) {
+                    return {};
+                }
+            }
+//            T item = data[out];
+            T item = data[out];
+            asm("; replace udivmod7");
+            ++out;
+//            if (++out == Size) out = 0;
             return item;
         }
         inline void clear() volatile {
             Scoped<DisbaleInterrupt<RestoreState>, !sizeIsAtomic> di;
             in = out = 0;
         }
+        inline bool empty() const {
+            Scoped<DisbaleInterrupt<RestoreState>, !sizeIsAtomic> di;
+            return in == out;
+        }
         inline bool empty() volatile const {
             Scoped<DisbaleInterrupt<RestoreState>, !sizeIsAtomic> di;
             return in == out;
         }
-        [[gnu::always_inline]] constexpr size_type size() const {
+        inline constexpr size_type size() const {
             return Size;
         }
     private:
-        size_type in = 0;
-        size_type out = 0;
-        T data[Size] = {};
+        index_type in{0};
+        index_type out{0};
+        T data[Size] {};
     };
     
     template<typename T>

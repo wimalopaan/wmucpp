@@ -139,7 +139,7 @@ int main() {
     
     pwm::init();
     pwm::frequency(fPwm);
-    pwm::on<PWM::WO<0>, PWM::WO<1>, PWM::WO<2>>();
+    pwm::on<Meta::List<PWM::WO<0>, PWM::WO<1>, PWM::WO<2>>>();
 //    pwm::off<PWM::WO<0>>();
     pwm::duty<PWM::WO<0>>(8320);
 

@@ -24,10 +24,13 @@ subdirs += hott
 #test02a: CXXFLAGS = -g -std=c++17 -Wall -Wextra -fPIC -I../include 
 #test02a: CXX = clang++
 #test04: CXXFLAGS = -g -std=c++17 -Wall -Wextra -fPIC -I../include 
-#test04: CXX = clang++
+
+test04b: CXXFLAGS = -x c
+
+
 
 #targets += test01 test02 test02a test03 test04 test04b # test05
-#targets += test06
+targets += test04b
 #targets += test07
 ##targets += test10
 #targets += test11

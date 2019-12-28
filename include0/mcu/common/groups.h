@@ -146,6 +146,29 @@ namespace AVR {
         struct Map;
 
         template<>
+        struct Map<Position<AVR::Component::Spi<0>, Default>, AVR::ATTiny1614> {
+            using sspin = AVR::Pin<AVR::Port<AVR::A>, 4>; 
+            using mosipin = AVR::Pin<AVR::Port<AVR::A>, 1>; 
+            using misopin = AVR::Pin<AVR::Port<AVR::A>, 2>; 
+            using sckpin = AVR::Pin<AVR::Port<AVR::A>, 3>; 
+        };
+
+        template<>
+        struct Map<Position<AVR::Component::Spi<0>, Default>, AVR::ATTiny412> {
+            using sspin = AVR::Pin<AVR::Port<AVR::A>, 0>; 
+            using mosipin = AVR::Pin<AVR::Port<AVR::A>, 1>; 
+            using misopin = AVR::Pin<AVR::Port<AVR::A>, 2>; 
+            using sckpin = AVR::Pin<AVR::Port<AVR::A>, 3>; 
+        };
+        template<>
+        struct Map<Position<AVR::Component::Spi<0>, Alt1>, AVR::ATTiny412> {
+            using sspin = AVR::Pin<AVR::Port<AVR::A>, 0>; 
+            using mosipin = AVR::Pin<AVR::Port<AVR::A>, 6>; 
+            using misopin = AVR::Pin<AVR::Port<AVR::A>, 7>; 
+            using sckpin = AVR::Pin<AVR::Port<AVR::A>, 3>; 
+        };
+        
+        template<>
         struct Map<Position<AVR::Component::Usart<0>, Default>, AVR::ATTiny412> {
             using txpin = AVR::Pin<AVR::Port<AVR::A>, 6>; 
             using rxpin = AVR::Pin<AVR::Port<AVR::A>, 7>; 

@@ -73,9 +73,8 @@ namespace etl {
             --mSize;
         }
     private:
-//        std::array<T, Capacity> data; // Wird größer, Warum???
-        T data[Capacity] = {};
-        size_type mSize = 0;
+        T data[Capacity]{};
+        size_type mSize{0};
     };
     
 }

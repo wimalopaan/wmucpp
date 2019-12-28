@@ -1,0 +1,98 @@
+#pragma once
+
+#include <utility>
+#include <etl/meta.h>
+
+namespace std {
+    namespace detail {
+        template<typename I, typename... T> struct recursive_union;
+        
+        template<typename I, typename F, typename... T>
+        struct recursive_union<I, F, T...> {
+            using rest = recursive_union<std::integral_constant<size_t, I::value + 1>, T...>;
+            
+            using index_type = std::conditional_t<((sizeof...(T) + 1) < 256), uint8_t, uint16_t>;
+
+            template<typename... U>
+            inline constexpr explicit recursive_union(const U&... v) : r{v...} {}
+            inline constexpr explicit recursive_union(const F& v) : value{v} {}
+            template<typename FU>
+            inline constexpr void visit(const index_type& i, FU f) {
+                if constexpr(sizeof...(T) > 0) {
+                    if (i == I::value) {
+                        f(value);
+                    }
+                    else {
+                        r.visit(i + index_type{1}, f);
+                    }
+                }
+                else {
+                    f(value);
+                }
+            }
+            template<typename FU>
+            inline constexpr void visit(const index_type& i, FU f) const {
+                if constexpr(sizeof...(T) > 0) {
+                    if (i == I::value) {
+                        f(value);
+                    }
+                    else {
+                        r.visit(i + index_type{1}, f);
+                    }
+                }
+                else {
+                    f(value);
+                }
+            }
+        private:
+            union {
+                F value;
+                rest r;
+            };
+        };
+        template<typename I>
+        struct recursive_union<I> {};
+    }
+
+    template<typename... Tt>
+    struct recursive_union : detail::recursive_union<std::integral_constant<size_t, 0>, Tt...> {
+        template<typename U>
+        inline constexpr explicit recursive_union(U v) : detail::recursive_union<std::integral_constant<size_t, 0>, Tt...>{v} {}
+    };
+
+    template<typename... Tt>
+    struct variant {
+        static_assert(Meta::is_set_v<Meta::List<Tt...>>, "types must be all different");
+        
+        using union_type = std::recursive_union<Tt...>;
+        using index_type = union_type::index_type;
+        
+        template<typename U>
+        requires (Meta::contains_v<Meta::List<Tt...>, U>)
+        inline constexpr /*explicit */ variant(U&& v) : mUnion{v}, mIndex{Meta::index_v<Meta::List<Tt...>, U>} {}
+        
+        template<typename F>
+        inline constexpr void visit(F&& f)  {
+            return mUnion.visit(mIndex, f);
+        }
+        template<typename F>
+        inline constexpr void visit(F&& f) const   {
+            return mUnion.visit(mIndex, f);
+        }
+        
+        template<typename U>
+        requires (Meta::contains_v<Meta::List<Tt...>, U>)
+        inline constexpr void operator=(const U& v) {
+            constexpr index_type i =  Meta::index<Meta::List<Tt...>, U>::value;
+            mUnion.visit(mIndex, []<typename T>(T& v){
+                v.~T();
+            });
+            mUnion.visit(i, [&](auto&& t){
+                new (&t) U{v};
+            });
+        }
+    private:
+        std::recursive_union<Tt...> mUnion;
+        index_type mIndex;
+    };     
+}

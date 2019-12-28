@@ -156,7 +156,7 @@ namespace Hott {
         constinit inline static uint_ranged_circular<uint8_t, 0, MenuLength - 1> line;
 
         inline void reset() {
-            line = 0;
+            line.setToBottom();
         }
         
         inline void textTo(Display& display) const {

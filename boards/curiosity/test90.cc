@@ -182,21 +182,22 @@ struct Beeper {
     inline static void init() {
         PwmDev::init();
         PwmDev::frequency(Parameter::fPwm);
-        PwmDev::template on<PWM::WO<0>>();
+        PwmDev::template on<Meta::List<PWM::WO<0>>>();
         PwmDev::template duty<PWM::WO<0>>(1000);
         normal();
     }
     
     inline static void tick() {
-        uint8_t phase = ++mTicks / beepTicks;
+        ++mTicks;
+        uint8_t phase = mTicks.toInt() / beepTicks;
         if (mMode != Mode::Off) {
             if (mTone == Tone::Tone) {
                 if (phase == 0) {
-                    PwmDev::template on<AVR::PWM::WO<0>>();
+                    PwmDev::template on<Meta::List<AVR::PWM::WO<0>>>();
 //                    buzzerPins::dir<AVR::Output>();
                 }
                 else {
-                    PwmDev::template off<AVR::PWM::WO<0>>();
+                    PwmDev::template off<Meta::List<AVR::PWM::WO<0>>>();
 //                    buzzerPins::dir<AVR::Input>();
                     if (mMode == Mode::OneShot) {
                         mMode = Mode::Off;
@@ -206,7 +207,7 @@ struct Beeper {
             else if (mTone == Tone::ScaleUp) {
                 if (phase == 0) {
                     low();
-                    PwmDev::template on<AVR::PWM::WO<0>>();
+                    PwmDev::template on<Meta::List<AVR::PWM::WO<0>>>();
 //                    buzzerPins::dir<AVR::Output>();
                 }
                 else if (phase == 1) {
@@ -216,14 +217,14 @@ struct Beeper {
                     high();
                 }
                 else {
-                    PwmDev::template off<AVR::PWM::WO<0>>();
+                    PwmDev::template off<Meta::List<AVR::PWM::WO<0>>>();
 //                    buzzerPins::dir<AVR::Input>();
                 }
             }
             else if (mTone == Tone::ScaleDown) {
                 if (phase == 0) {
                     high();
-                    PwmDev::template on<AVR::PWM::WO<0>>();
+//                    PwmDev::template on<AVR::PWM::WO<0>>();
 //                    buzzerPins::dir<AVR::Output>();
                 }
                 else if (phase == 1) {
@@ -233,24 +234,24 @@ struct Beeper {
                     low();
                 }
                 else {
-                    PwmDev::template off<AVR::PWM::WO<0>>();
+//                    PwmDev::template off<AVR::PWM::WO<0>>();
 //                    buzzerPins::dir<AVR::Input>();
                 }
             }
             else if (mTone == Tone::Stakkato) {
-                uint8_t sphase = mTicks / stakkatoTicks;
+                uint8_t sphase = mTicks.toInt() / stakkatoTicks;
                 if ((sphase < (2 * mStakkatos)) && ((sphase % 2) == 0)) {
-                    PwmDev::template on<AVR::PWM::WO<0>>();
+//                    PwmDev::template on<AVR::PWM::WO<0>>();
 //                    buzzerPins::dir<AVR::Output>();
                 }
                 else {
-                    PwmDev::template off<AVR::PWM::WO<0>>();
+//                    PwmDev::template off<AVR::PWM::WO<0>>();
 //                    buzzerPins::dir<AVR::Input>();
                 }
             }
         }
         else {
-            PwmDev::template off<AVR::PWM::WO<0>>();
+//            PwmDev::template off<AVR::PWM::WO<0>>();
 //            buzzerPins::dir<AVR::Input>();
         }
     }
@@ -582,7 +583,7 @@ int main() {
     fet::off();
     
     button::template dir<Input>();
-    button::template attributes<Attributes::Interrupt<Attributes::BothEdges>>(); // sonst keine Aufwecken.
+    button::template attributes<Meta::List<Attributes::Interrupt<Attributes::BothEdges>>>(); // sonst keine Aufwecken.
     
     pf2::template dir<Output>();
     
@@ -645,7 +646,7 @@ int main() {
                 }
                 if (dbgTimer == t) {
 #ifdef USE_TERMINAL
-                    etl::outl<terminal>("test90: "_pgm, ++counter, " ain1: "_pgm, adcController::value(0).toInt(), " ain2: "_pgm, adcController::value(1).toInt());
+//                    etl::outl<terminal>("test90: "_pgm, ++counter, " ain1: "_pgm, adcController::value(0).toInt(), " ain2: "_pgm, adcController::value(1).toInt());
 #endif 
                     if (counter > 100) {
                         led::on();

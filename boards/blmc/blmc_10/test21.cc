@@ -197,7 +197,7 @@ int main() {
     ppm::init();
 
     
-    commuter::index_type xs;;
+    commuter::state_type xs;;
     
     {
         etl::Scoped<etl::EnableInterrupt<>> ei;
@@ -210,7 +210,7 @@ int main() {
         
         pwm::init();
         pwm::frequency(Constants::pwmFrequency);
-        pwm::on<PWM::WO<0>, PWM::WO<1>, PWM::WO<2>>();
+        pwm::on<pwm::all_channels>();
         
         etl::outl<terminal>("m: "_pgm, pwm::max());            
         
@@ -241,17 +241,17 @@ int main() {
                     break;
                 case CommandAdapter::Command::Test:
                     etl::outl<terminal>("test"_pgm);
-                    pwm::duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(100);
-                    pwm::on<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>();
+                    pwm::duty<pwm::all_channels>(100);
+                    pwm::on<pwm::all_channels>();
                     break;
                 case CommandAdapter::Command::Commute:
                     etl::outl<terminal>("Com"_pgm);
-                    pwm::duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(100);
+                    pwm::duty<pwm::all_channels>(100);
                     commuter::next();
                     break;
                 case CommandAdapter::Command::CommuteSet:
                     etl::outl<terminal>("CX: "_pgm, xs.toInt());
-                    pwm::duty<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>(100);
+                    pwm::duty<pwm::all_channels>(100);
                     commuter::set(xs);
                     ++xs;
                     break;

@@ -236,4 +236,14 @@ namespace etl {
     inline constexpr uint8_t numberOfOnes(T x) {
         return (x != T{0}) ? T(x & T{0x01}) + numberOfOnes(T(x>>1u)) : 0u;
     }
+    template<typename T>
+    constexpr uint8_t minimumBitsForValue(const T& v) {
+        for(uint8_t n = 1; n <= std::numeric_limits<uint8_t>::max(); ++n) {
+            T max = T((1 << n) - 1);
+            if (v <= max) {
+                return n;
+            }
+        }
+        return 0;
+    }
 }

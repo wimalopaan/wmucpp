@@ -149,7 +149,7 @@ struct PwmWrapper {
         PWM::frequency(f);
     }
     inline static void duty(uint16_t d) {
-        PWM::template duty<Output>(d);
+        PWM::template duty<Meta::List<Output>>(d);
     }
 };
 
