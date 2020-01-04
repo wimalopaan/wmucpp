@@ -20,6 +20,7 @@
 
 #include <cstdint>
 #include <algorithm>
+#include <functional>
 #include <array>
 
 #include "meta.h"

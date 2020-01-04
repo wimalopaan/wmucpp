@@ -129,7 +129,7 @@ namespace External {
                     }
                     else if (b == seperator) {
                         state = State::Value;
-                        index = number;
+                        index.set(number);
                         number = 0;
                     }
                     else {

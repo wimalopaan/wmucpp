@@ -338,16 +338,15 @@ namespace Sine3 {
         v[0] = sine_table[index];
         v[1] = sine_table[index.template leftShift<shift>()];
         v[2] = sine_table[index.template leftShift<2 * shift>()];
-        ++index;
-        if (index == 0) {
+        if (++index == 0) {
             mOldActualSineTable = mActualSineTable;
-        }
+        } 
         return v;
         //                std::integral_constant<uint16_t, sine_table[256]>::_;
     }
     
     inline static void isrPeriodic() {
-        std::array<uint16_t, 3> v;
+        std::array<uint16_t, 3> v{};
         
         switch (mOldActualSineTable) {
         case 0:
@@ -451,7 +450,7 @@ namespace Sine3 {
         //                mScale = sc;
         
         ComTimer::period(mActualPeriod);
-        mActualSineTable = t;
+        mActualSineTable.set(t);
         Commuter::template pwm<0>();
         Commuter::template pwm<1>();
         Commuter::template pwm<2>();
@@ -464,8 +463,8 @@ namespace Sine3 {
     }
     inline static void start() {
         mScale = 200;
-        mActualSineTable = 0;
-        mOldActualSineTable = 0;
+        mActualSineTable.setToBottom();
+        mOldActualSineTable.setToBottom();
         mActualPeriod = 20000;
         ComTimer::period(mActualPeriod);
         doFloat(false);
@@ -603,8 +602,8 @@ namespace Sine2 {
     }
     inline static void start() {
         mScale = 20;
-        mActualSineTable = 0;
-        mOldActualSineTable = 0;
+        mActualSineTable.setToBottom();
+        mOldActualSineTable.setToBottom();
         mActualPeriod = 20000;
         ComTimer::period(mActualPeriod);
         PWM::template on<all_channels>();

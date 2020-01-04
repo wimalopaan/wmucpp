@@ -47,7 +47,9 @@ namespace etl {
         }
         
         inline constexpr StringBuffer() = default;
+        
         StringBuffer(const StringBuffer&) = delete;
+        
         inline constexpr StringBuffer& operator=(const StringBuffer& rhs) {
             insertAt(0, rhs);
             return *this;

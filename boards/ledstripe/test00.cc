@@ -45,9 +45,7 @@ using PortB = Port<B>;
 
 using buttonPin = ActiveLow<Pin<PortA, 7>, Input>;
 
-constexpr External::Tick<systemTimer> sp{100_ms};
-constexpr External::Tick<systemTimer> lp{3000_ms};
-using button = External::Button<buttonPin, systemTimer, sp, lp>;
+using button = External::Button<buttonPin, systemTimer, External::Tick<systemTimer>{100_ms}, External::Tick<systemTimer>{3000_ms}>;
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition, spiPosition>>;
 
@@ -121,8 +119,7 @@ struct PatternGenerator {
     }
 
     inline static bool changeMode() {
-        ++mode;
-        mMode = modes[mode];
+        mMode = modes[++mode];
         return mode.isBottom();
     }
 

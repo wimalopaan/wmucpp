@@ -348,7 +348,7 @@ namespace Meta {
 //            };
             using first = Meta::front<List>;
             template<typename I, typename C>
-            inline static void at(I index, const C& callable) {
+            inline static constexpr void at(I index, const C& callable) {
                 if (index == I{0}) {
                     callable(Wrapper<first>{});
                 }
@@ -357,7 +357,7 @@ namespace Meta {
                 }
             }
             template<auto... II, typename C>
-            inline static void all(std::index_sequence<II...>, const C& callable) {
+            inline static void constexpr all(std::index_sequence<II...>, const C& callable) {
                 (at(II, callable),...);
             }
 
@@ -549,7 +549,7 @@ namespace Meta {
     }
 
     template<concepts::List List, typename C>
-    inline void visit(const C& callable) {
+    inline void constexpr visit(const C& callable) {
         detail::visit<List>::all(std::make_index_sequence<size<List>::value>{}, callable);
     }
 

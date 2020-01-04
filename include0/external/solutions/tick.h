@@ -13,13 +13,12 @@ namespace External {
         
         inline constexpr Tick() = default;
         
-        template<typename U>
-        inline constexpr explicit Tick(const U& v) : value{v / intervall} {
-        }
+        template<typename R, typename P>
+        inline constexpr explicit Tick(const std::chrono::duration<R, P>& v) : value{v / intervall} {}
         
-        template<typename U>
-        inline constexpr void operator=(const U& v) {
-            value = (v / intervall);
+        template<typename R, typename P>
+        inline constexpr void operator=(const std::chrono::duration<R, P>& v) {
+            value.set(v / intervall);
         }        
         
         inline constexpr void operator++() {
@@ -37,9 +36,9 @@ namespace External {
         inline constexpr auto operator<=>(const Tick& rhs) const = default;
         
         inline constexpr void reset() {
-            value = 0;
+            value.setToBottom();
         }
-//    private:
+//    private: // structural type
         etl::uint_ranged<T> value;
     };
 }

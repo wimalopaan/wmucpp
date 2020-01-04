@@ -2,6 +2,7 @@
 #include <array>
 #include <cmath>
 #include <memory>
+#include <functional>
 #include <etl/stringbuffer.h>
 #include <etl/algorithm.h>
 #include <mcu/pgm/pgmarray.h>

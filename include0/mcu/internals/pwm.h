@@ -331,7 +331,7 @@ namespace AVR {
                 *mcu_tcd()->cmpaset = 0;
                 *mcu_tcd()->cmpbclr = Config::fMcu / (f * 32);
                 AVR::set<CtrlE_t::synceoc>(ctrle_r());
-                mMax = Config::fMcu / (32 * f);
+                mMax.set(Config::fMcu / (32 * f));
             }
 //            inline static constexpr void frequency(const uint16_t& f) {
 //                *mcu_tcd()->cmpseta = 0;

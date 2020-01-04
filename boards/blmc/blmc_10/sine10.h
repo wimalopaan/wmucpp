@@ -135,7 +135,7 @@ namespace BLDC {
                 for(uint8_t i = 1; i < sineSpeeds.size(); ++i) {
                     if ((s >= sineSpeeds[i - 1]) && (s < sineSpeeds[i])) {
                         auto p = mP_Dead - (uint32_t{mP_Dead} * (s - sineSpeeds[i - 1])) / (2 * (sineSpeeds[i] - sineSpeeds[i - 1]));
-                        return std::pair<period_t, sine_table_number_t>{p, sine_table_number_t{i - 1}};
+                        return std::pair<period_t, sine_table_number_t>{p, sine_table_number_t(i - 1)};
                     }
                 }
                 return std::pair<period_t, sine_table_number_t>{};
@@ -227,7 +227,7 @@ namespace BLDC {
                 static inline /*volatile */ index_type index{}; 
                 
                 inline static void resetLeft() {
-                    index = index_type{index + shift / 6}; // circular shift?
+                    index = index_type(index + shift / 6); // circular shift?
                 }
                 
                 inline static void setSine() {

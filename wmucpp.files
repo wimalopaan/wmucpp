@@ -55,6 +55,7 @@ boards/blmc/blmc_10/sine4.h
 boards/blmc/blmc_10/sine5.h
 boards/blmc/blmc_10/sine6.h
 boards/blmc/blmc_10/sine7.h
+boards/blmc/blmc_10/test00.cc
 boards/blmc/blmc_10/test20.cc
 boards/blmc/blmc_10/test21.cc
 boards/blmc/blmc_10/test22.cc
@@ -222,6 +223,8 @@ boards/curiosity/test12.cc
 boards/curiosity/test20.cc
 boards/curiosity/test21.cc
 boards/curiosity/test90.cc
+boards/doorbell/Makefile
+boards/doorbell/test00.cc
 boards/include/ppmmatrix.h
 boards/include/rcsensorled01b.h
 boards/include/rcsensorled10.h
@@ -400,7 +403,11 @@ doc0/bm00/bm42.cc
 doc0/bm00/bm43.cc
 doc0/bm00/bm44.cc
 doc0/bm00/bm45.cc
+doc0/bm00/bm46.cc
+doc0/bm00/bm47.cc
+doc0/bm00/bm48.cc
 doc0/bm00/bm50.cc
+doc0/bm00/bm51.cc
 doc0/bm00/bm60.cc
 doc0/bm00/bm61.cc
 doc0/bm00/bm62.cc
@@ -409,6 +416,9 @@ doc0/bm00/bm64.cc
 doc0/bm00/bm70.cc
 doc0/bm00/bm71.cc
 doc0/bm00/bm80.cc
+doc0/bm00/bm85.cc
+doc0/bm00/bm86.c
+doc0/bm00/bm87.cc
 doc0/bm00/bm90.cc
 doc0/bm00/bm91.cc
 example/externals/buttonmacro.c
@@ -450,6 +460,7 @@ host/test38.cc
 host/test40.cc
 host/test51.cc
 host/test70.cc
+host/test71.cc
 host/test80.cc
 host/test91.cc
 host/test92.cc
@@ -532,6 +543,7 @@ include0/external/onewire/onewire.h
 include0/external/solutions/apa102.h
 include0/external/solutions/blinker.h
 include0/external/solutions/button.h
+include0/external/solutions/button_v.h
 include0/external/solutions/color.h
 include0/external/solutions/ds18b20.h
 include0/external/solutions/gps.h
@@ -542,6 +554,7 @@ include0/external/solutions/series01/rpm.h
 include0/external/solutions/series01/sppm_in.h
 include0/external/solutions/tick.h
 include0/external/solutions/tle5205.h
+include0/external/solutions/verticalcounter.h
 include0/external/solutions/ws2812.h
 include0/external/ui/menu.h
 include0/external/units/music.h
@@ -643,6 +656,7 @@ include0/std/compare
 include0/std/concepts
 include0/std/cstddef
 include0/std/cstdint
+include0/std/functional
 include0/std/initializer_list
 include0/std/limits
 include0/std/memory

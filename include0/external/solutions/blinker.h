@@ -40,6 +40,8 @@ namespace External {
         static inline constexpr auto pulseWidthCount = Pulse / Intervall;
         static inline constexpr auto periodWidthCount = Period / Intervall;
         
+//        decltype(pulseWidthCount)::_;
+        
         using value_type = etl::typeForValue_t<periodWidthCount>;
 //        value_type::_;
         
@@ -75,7 +77,7 @@ namespace External {
                 break;
             case State::Blink:
                 if (shouldBlink()) {
-                    auto phase = mStateCounter.toInt() % (2 * pulseWidthCount);
+                    const auto phase = mStateCounter % (2 * pulseWidthCount);
                     if (phase < pulseWidthCount) {
                         Pin::activate();
                     }
@@ -94,7 +96,7 @@ namespace External {
         }
     private:
         static inline bool shouldBlink() {
-            return mStateCounter.toInt() < (2 * pulseWidthCount * mBlinkCount.toInt());
+            return mStateCounter < (2 * pulseWidthCount * mBlinkCount);
         }
         static inline State mState = State::Off;
         static inline etl::uint_ranged_circular<value_type, 0, periodWidthCount + 1> mStateCounter{};

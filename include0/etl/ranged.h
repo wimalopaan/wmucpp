@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <algorithm>
 #include <array>
+#include "etl/concepts.h"
 
 namespace etl {
     template<Unsigned T = uint8_t, T LowerBound = 0, T UpperBound = std::numeric_limits<T>::max()>
@@ -39,7 +40,9 @@ namespace etl {
             return uint_ranged{Lower};
         }
         
-        inline constexpr explicit uint_ranged(T v = LowerBound){
+        inline constexpr uint_ranged() = default; // LowerBound
+        
+        inline constexpr explicit uint_ranged(T v){
             assert(v >= LowerBound);
             assert(v <= UpperBound);
             mValue = std::clamp({v}, LowerBound, UpperBound);
@@ -47,7 +50,7 @@ namespace etl {
         
         template<T L, T U>
         requires((L >= LowerBound) && (U <= UpperBound))
-        inline constexpr uint_ranged(uint_ranged<T, L, U> v) {
+        inline constexpr uint_ranged(const uint_ranged<T, L, U>& v) {
             mValue = std::clamp(T{v}, LowerBound, UpperBound);
         }
         
@@ -64,6 +67,13 @@ namespace etl {
             return mValue == Lower;
         }
         
+        inline constexpr void setToBottom() volatile {
+            mValue = LowerBound;
+        }
+        inline constexpr void setToTop() {
+            mValue = UpperBound;
+        }
+
         inline void operator--() {
             if (mValue > LowerBound) {
                 --mValue;
@@ -129,23 +139,42 @@ namespace etl {
             }
         }
         
-        inline constexpr uint_ranged& operator=(const uint_ranged&) = default;
+        inline constexpr uint_ranged& operator=(const uint_ranged& rhs) {
+            mValue = rhs.mValue;
+            return *this;
+        };
+
+        inline constexpr void operator=(const uint_ranged& rhs) volatile {
+            mValue = rhs.mValue;
+        }
         
-        inline constexpr uint_ranged& operator=(T rhs){
+        template<etl::Concepts::NamedFlag Check = std::integral_constant<bool, true>>
+        inline constexpr void set(T rhs) volatile {
+            assert(rhs >= LowerBound);
+            assert(rhs <= UpperBound);
+            if constexpr(Check::value) {
+                mValue = std::clamp(rhs, LowerBound, UpperBound);
+            }
+            else {
+                mValue = rhs;
+            }
+        }
+
+        [[deprecated("use set...()")]] inline constexpr uint_ranged& operator=(T rhs){
             assert(rhs >= LowerBound);
             assert(rhs <= UpperBound);
             mValue = std::clamp(rhs, LowerBound, UpperBound);
             return *this;
         }
-        inline constexpr void operator=(T rhs) volatile {
+        [[deprecated("use set...()")]] inline constexpr void operator=(T rhs) volatile {
             assert(rhs >= LowerBound);
             assert(rhs <= UpperBound);
             mValue = std::clamp(rhs, LowerBound, UpperBound);
         }
-        constexpr operator T() const {
+        inline constexpr operator T() const {
             return mValue;
         }
-        constexpr operator T() volatile const {
+        inline constexpr operator T() volatile const {
             return mValue;
         }
         inline constexpr T toInt() const {

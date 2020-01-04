@@ -39,7 +39,6 @@ namespace Dry {
             return Op::template apply<N>(std::forward<U>(rhs), std::not_equal_to{}, *this);
         }
     };
-    
     namespace detail {
         struct Or {
             template<auto N, typename U, typename F, typename T>
@@ -75,36 +74,49 @@ uint8_t z{3};
 volatile uint8_t v1{2};
 
 //#define PLAIN
+#define COPY
+#define SINGLE
 
 int main() {
     using namespace Dry;
     uint8_t r{};
 #ifdef PLAIN
+#ifdef COPY
+    if (auto vv = v1; (vv < x) || (vv < y) || (vv < z)) {
+        r += 1;
+    }
+#else
     if ((v1 < x) || (v1 < y) || (v1 < z)) {
         r += 1;
     }
+#endif
+#ifndef SINGLE
     if ((x == v1) || (y == v1) || (z == v1)) {
         r += 2;
     }
     if ((v1 != x) || (v1 != y) || (v1 != z)) {
         r += 3;
     }
-    if ((v1 != x)  && (v1 != z)) {
-        r += 10;
+    if ((x != v1) && (z != v1)) {
+        r += 4;
     }
+#endif
 #else
     if (v1 < any_of{x, y, z}) {
         r += 1;
     }
+#ifndef SINGLE
     if (any_of{x, y, z} == v1) {
         r += 2;
     }
     if (v1 != any_of{x, y, z}) {
         r += 3;
     }
-    if (v1 != each_of{x, z}) {
-        r += 10;
+    if (each_of{x, z} != v1) {
+        r += 4;
     }
+#endif
 #endif
     return r;
 }
+

@@ -23,18 +23,18 @@
 #include "memory"
 
 namespace std {
-    template<typename T>
-    struct less {
-        constexpr bool operator()(const T &lhs, const T &rhs) const  {
-            return lhs < rhs;
-        }
-    };
-    template<typename T>
-    struct greater {
-        constexpr bool operator()(const T &lhs, const T &rhs) const  {
-            return lhs > rhs;
-        }
-    };
+//    template<typename T>
+//    struct less {
+//        constexpr bool operator()(const T &lhs, const T &rhs) const  {
+//            return lhs < rhs;
+//        }
+//    };
+//    template<typename T>
+//    struct greater {
+//        constexpr bool operator()(const T &lhs, const T &rhs) const  {
+//            return lhs > rhs;
+//        }
+//    };
     template<typename T>
     constexpr void swap(T& a, T& b) {
         T tmp = std::move(a);

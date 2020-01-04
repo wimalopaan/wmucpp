@@ -107,13 +107,13 @@ namespace External {
         }
         
         inline static constexpr void reset() {
-            mMeasurements = 0;
+            mMeasurements.setToBottom();
         }
         
         inline static bool check() {
             static uint8_t lastNumberOfMeasurements = 0;
             if (mMeasurements.isTop()) {
-                mMeasurements = MinMeasurements;
+                mMeasurements.set(MinMeasurements);
             }
             else {
                 if (mMeasurements == lastNumberOfMeasurements) {
@@ -156,6 +156,6 @@ namespace External {
 //    private:
         inline static value_type mTimerStartValue = 0;
         inline static value_type mActualPeriod = 0;
-        inline static etl::uint_ranged<uint8_t> mMeasurements{0};
+        inline static etl::uint_ranged<uint8_t> mMeasurements{};
     };
 }

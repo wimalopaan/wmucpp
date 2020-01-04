@@ -40,3 +40,4 @@ boards/bmc/test/gcc
 boards/bmc/test/src
 boards/bmc/test
 boards/ledstripe
+boards/doorbell

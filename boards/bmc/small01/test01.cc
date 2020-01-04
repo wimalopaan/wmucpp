@@ -321,7 +321,7 @@ struct GlobalFSM {
             break;
         }
         if (oldState != mState) {
-            mStateCounter = 0;
+            mStateCounter.setToBottom();
             switch (mState) {
             case State::Undefined:
                 break;

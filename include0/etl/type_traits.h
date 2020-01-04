@@ -169,7 +169,7 @@ namespace etl {
     using namespace etl::Concepts;
     
     template<Integral T, uint8_t Base = 10>
-    inline constexpr uint8_t numberOfDigits() {
+    inline consteval /*constexpr*/ uint8_t numberOfDigits() {
         T v = std::numeric_limits<T>::max();
         uint8_t number = 0;
         while(v > 0) {
@@ -187,7 +187,7 @@ namespace etl {
 
     template<typename T, uint8_t Base = 10>
     requires (T::valid_bits > 0)
-    inline constexpr uint8_t numberOfDigits() {
+    inline consteval /*constexpr */ uint8_t numberOfDigits() {
         double v = 1.0;
         for(uint8_t b = 0; b < T::valid_bits; ++b) {
             v /= 2.0;
@@ -233,11 +233,11 @@ namespace etl {
         };
     };  
     template<typename T>
-    inline constexpr uint8_t numberOfOnes(T x) {
+    consteval /*constexpr*/ uint8_t numberOfOnes(T x) {
         return (x != T{0}) ? T(x & T{0x01}) + numberOfOnes(T(x>>1u)) : 0u;
     }
     template<typename T>
-    constexpr uint8_t minimumBitsForValue(const T& v) {
+    consteval /*constexpr*/ uint8_t minimumBitsForValue(const T& v) {
         for(uint8_t n = 1; n <= std::numeric_limits<uint8_t>::max(); ++n) {
             T max = T((1 << n) - 1);
             if (v <= max) {

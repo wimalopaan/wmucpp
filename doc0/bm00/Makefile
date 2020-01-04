@@ -36,7 +36,7 @@ bm44.s bm44.elf : MCU = atmega4809
 CPPFLAGS += -DNDEBUG
 #CXXFLAGS += -fno-jump-tables
 
-#OPTFLAGS = -O3
+OPTFLAGS = -O3
 
 targets += shtml
 
@@ -60,7 +60,11 @@ targets += bm42.S bm42.elf
 targets += bm43.S bm43.elf
 targets += bm44.S bm44.elf
 targets += bm45.S bm45.elf
+targets += bm46.S bm46.elf
+targets += bm47.S bm47.elf
+targets += bm48.S bm48.elf
 #targets += bm50.S bm50.elf
+targets += bm51.S bm51.elf
 targets += bm60.S bm60.elf
 targets += bm61.S bm61.elf
 targets += bm62.S bm62.elf
@@ -69,6 +73,9 @@ targets += bm64.S bm64.elf
 targets += bm70.S bm70.elf
 targets += bm71.S bm71.elf
 targets += bm80.S bm80.elf
+targets += bm85.S bm85.elf
+targets += bm86.S bm86.elf
+targets += bm87.S bm87.elf
 targets += bm90.S bm90.elf
 targets += bm91.S bm91.elf
 

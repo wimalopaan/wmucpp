@@ -36,15 +36,15 @@ namespace AVR::Pgm {
 }
 
 template<typename C, C... CC>
-constexpr AVR::Pgm::String<C, CC...> operator"" _pgm();
+consteval /*constexpr */AVR::Pgm::String<C, CC...> operator"" _pgm();
 
 namespace AVR::Pgm {
     
-    class StringView {
+    class StringView final {
         template<typename C, C... CC> friend struct String;
     public:
         inline etl::Char operator[](uint8_t index) const {
-            //        assert(ptrToPgmData != nullptr);
+//            assert(ptrToPgmData); // not possible: recursive
             return etl::Char{pgm_read_byte(ptrToPgmData + index)};
         }
         template<typename C, C... CC> 
@@ -62,7 +62,7 @@ namespace AVR::Pgm {
         
         constexpr String() = default;
         
-        class Iterator {
+        class Iterator final {
         public:
             explicit constexpr Iterator(uint8_t index = 0) : mIndex(index) {}
             
@@ -85,7 +85,7 @@ namespace AVR::Pgm {
             return Iterator(size());
         }
         etl::Char operator[](uint8_t index) const {
-            assert(index < size());
+//            assert(index < size()); // not possible here
             return etl::Char{pgm_read_byte(&data[index])};
         }
         inline static constexpr uint8_t size() {
@@ -95,13 +95,13 @@ namespace AVR::Pgm {
             return StringView{Ptr<char>{data}};
         }
     private:
-        inline static constexpr const char data[] PROGMEM = {CC..., '\0'};
+        inline static constexpr const char data[] PROGMEM {CC..., '\0'};
     };
 }
 
 template<typename C, C... CC>
-constexpr AVR::Pgm::String<C, CC...> operator"" _pgm(){
-    return AVR::Pgm::String<C, CC...>();
+consteval /*constexpr */AVR::Pgm::String<C, CC...> operator"" _pgm(){
+    return AVR::Pgm::String<C, CC...>{};
 }
 
 namespace etl::detail {

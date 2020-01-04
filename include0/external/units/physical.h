@@ -176,9 +176,9 @@ namespace External {
             return !(lhs == rhs);
         }
         
-        template<typename Duration, typename Frequency>
-        constexpr uint32_t operator*(const Duration& dt, const Frequency& f) {
-            return ((uint64_t)dt.value * f.value * Frequency::divider_type::denom) / Duration::period_type::denom;
+        template<typename Rep, typename Per, typename FRep, typename FDiv>
+        constexpr uint32_t operator*(const duration<Rep, Per>& dt, const frequency<FRep, FDiv>& f) {
+            return ((uint64_t)dt.value * f.value * FDiv::denom) / Per::denom;
         }
         
         template<typename Rep, typename Div, etl::Concepts::Integral I>

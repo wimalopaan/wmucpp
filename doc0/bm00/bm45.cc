@@ -9,8 +9,25 @@
 #include <std/chrono>
 #include <etl/output.h>
 #include <etl/vector.h>
-//#include <etl/bitfield.h>
+#include <etl/bitfield.h>
+#include <string.h>
 
+// https://www.cubeatsystems.com/tinymml/index.html
+// https://en.wikipedia.org/wiki/Music_Macro_Language#Modern_MML
+
+// <note>|r|p|<|>|o|l[+-][<length>][.|..]
+// note: cdefgab 
+// r,p : pause
+// o : Oktave
+// l : default length
+// length: 1, 2, 4, 8, 16, 32
+// < : octave up
+// > : octave down
+// loop: [ ... ]2
+
+// volume setting: @v0 = {15 8 7 6 5}
+// Idee: DAC vom tiny1614 benutzen
+// ???: wie auf eine Notenlänge verteilen?
 
 using namespace AVR;
 
@@ -92,7 +109,7 @@ namespace External::Music2 {
             inline static constexpr uint8_t noteToLength(const Note& note) {
                 return uint8_t(note.length.base) + uint8_t(note.length.augment);
             }
-        private:
+//        private:
             constexpr Tone(uint8_t s, uint8_t l) : scaleTone{s}, length{l}{}
             uint8_t discriminator : discriminator_bits = 0;
             uint8_t scaleTone : scaletone_bits = 0;
@@ -108,6 +125,8 @@ namespace External::Music2 {
             struct Legato;
             struct Discriminator;
             
+            inline constexpr Control() = default;
+            
             inline constexpr Control(Octave o, bool s) :
                 octave{uint8_t(o)}, mSharp{uint8_t(s)}    
             {} 
@@ -117,16 +136,22 @@ namespace External::Music2 {
             inline void constexpr sharp(bool s) {
                 mSharp = s;
             }
-        private:
+//        private:
             uint8_t discriminator : discriminator_bits = 1;
             uint8_t octave : octave_bits = 0;
             uint8_t mSharp: sharp_bits = 0;
             uint8_t legato : legato_bits = 0;
         };
 
-        union Storage {
+//        union Storage { // not possible as NTTP, not std::bit_cast for unions!!!
+//            constexpr Storage() : b{0}{}
+//            Tone t;
+//            Control c;
+//            std::byte b;
+//        };
+        struct Storage { 
             constexpr Storage() : b{0}{}
-            Tone t;
+            Tone t{0, 0};
             Control c;
             std::byte b;
         };
@@ -148,9 +173,14 @@ namespace External::Music2 {
     struct Converter {
         template<auto N>
         inline static constexpr auto compress(const auto& notes) {
+//            std::array<std::byte, N> a;
             std::array<Representation::Storage, N> a;
             for(auto it = std::begin(a); const auto& b : notes) {
+//                __builtin_memcpy(it++, &b, 1); // bitcast
+//                *it++ = b.b; // not active member
                 *it++ = b;
+//                *it++ = std::byte{b.c};
+                
             }
             return a;
         }
@@ -212,6 +242,15 @@ namespace {
     constexpr auto melodyRep = Converter<Key::C>::makeRepresentation(melody);
     constexpr auto melodyRepCompress  = Converter<Key::C>::compress<melodyRep.size()>(melodyRep);
     
+    struct G1 {
+        constexpr auto operator()() {
+            return melodyRepCompress;
+        }
+    };
+    
+    using m1 = AVR::Pgm::Util::Converter<G1>::pgm_type;
+    
+    
 }
 
 volatile uint16_t r1;
@@ -225,6 +264,96 @@ inline static void foo(const auto& m) {
     }
 }
 
+// ---- tests
+
+inline static constexpr uint16_t bar(const char* s) {
+    uint16_t x = 0;
+    while(*s != '\0') {
+        x += *s;
+        ++s;
+    }
+    return x;
+}
+
+template<auto& S> 
+struct FX {
+    static inline constexpr uint16_t z = bar(S);
+    
+};
+
+namespace  {
+    constexpr const char* s = "K(3b):-a1/8,+g16,c1/2.,c2/4..";
+}
+
+using m1 = FX<s>;
+
+//int main() {
+////    foo(melodyRepCompress);
+    
+////    constexpr uint16_t z = bar("K(3b):-a1/8,+g16,c1/2.,c2/4..");
+    
+//    return m1::z;
+//}
+
+template<unsigned N>
+struct FixedString {
+    char buf[N + 1]{};
+    constexpr FixedString(char const* s) {
+        for (unsigned i = 0; i != N; ++i) buf[i] = s[i];
+    }
+    constexpr operator char const*() const { return buf; }
+};
+template<unsigned N> FixedString(char const (&)[N]) -> FixedString<N - 1>;
+
+template<FixedString T>
+class Foo {
+//    decltype(T)::_;
+    static constexpr char const* Name = T;
+    static constexpr auto x = bar(Name);
+public:
+    static uint16_t hello() {
+        return x;
+    }
+};
+
+template <char... chars>
+struct mml{
+//    std::integral_constant<size_t, sizeof...(chars)>::_;
+};
+
+template <typename T, T... chars>
+constexpr mml<chars...> operator""_mml() { return { }; }
+
+template <typename>
+struct X;
+
+template <char... elements>
+struct X<mml<elements...>> {
+    inline static constexpr char data[]{elements...};
+    consteval static uint16_t sum() {
+        uint16_t sum{};
+        for(auto& e : data) {
+            sum += e;
+        }
+        return sum;
+//        return (static_cast<uint16_t>(elements) + ...);
+    }
+};
+
+template<typename FS>
+consteval uint16_t b(FS) {
+    return X<FS>::sum();
+}
+
+
 int main() {
-    foo(melodyRepCompress);
+    
+    auto bach13 = []{
+        return "T90L16REA>C<BEB>DC8E8<G+8>E8<AEA>C<BEB>DC8<A8R4R>ECE<A>C<EGF8A8>D8F8.D<B>D<GBDFE8G8>C8E8.C<A>C<F8>D8.<BGBE8>C8.<AFAD8B8>C4R4<RG>CED<G>DFE8G8<B8>G8C<G>CED<G>DFE8C8G8E8>C<AEACE<A>CD8F+8A8>C8<BGDG<B>D<GB>C8E8G8B8AF+D+F+<B>D<F+AG8>G8.ECE<A8>F+8.D<B>D<G8>E8.C<A>C<F+>GF+ED+F+<B>D+E4R4<<E2L16O2A8>A4G+8AEA>C<BEB>DC8<A8G+8E8AEA>C<BEB>DC8<A8>C8<A8>D<AFADF<A>C<B8>D8G8B8.GEGCE<GBA8>C8DF<B>D<G8B8>CE<A>C<F8D8G>GFGCG>CED<G>DFE8C8<B8G8>C<G>GED<G>DFE8C8R4RGEGCE<GBA8>C8E8G8F+ADF+<A>D<F+AG8B8>D8F+8EGCE<G>C<EGF+8A8B8>D+8RECE<A>CEGF+D<B>D<GB>DF+EC<A>C<F+A>C8.<B>C<AB8<B8>E>E<BGE<BGBE2"_mml;
+    };
+
+//    decltype(bach13())::_;
+    
+    return b(bach13());
+    
 }

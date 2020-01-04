@@ -321,7 +321,7 @@ int main() {
                     break;
                 case CommandAdapter::Command::Off:
                     etl::outl<terminal>("Off"_pgm);
-                    speed = 0;
+                    speed.setToBottom();
                     controller::speed(speed);
                     controller::off();
                     break;

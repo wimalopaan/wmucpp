@@ -30,7 +30,7 @@ test04b: CXXFLAGS = -x c
 
 
 #targets += test01 test02 test02a test03 test04 test04b # test05
-targets += test04b
+#targets += test04b
 #targets += test07
 ##targets += test10
 #targets += test11
@@ -54,13 +54,14 @@ targets += test04b
 #targets += test50
 #targets += test51
 #targets += test60
-#targets += test70
-targets += test80
+targets += test70
+targets += test71
+#targets += test80
 #targets += test90
 #targets += test91
-targets += test92
-targets += test93
-targets += test98
+#targets += test92
+#targets += test93
+#targets += test98
 #targets += test99
 #targets += test100
 
@@ -73,6 +74,6 @@ CC = g++
 LDFLAGS = -lpthread
 CXXFLAGS = -g -std=c++2a -fconcepts -ftemplate-depth=2048 -fno-threadsafe-statics
 CXXFLAGS += -Wall -Wextra -fPIC
-CXXFLAGS += -I../include0
+#CXXFLAGS += -I../include0
 
 MCUFLAGS =

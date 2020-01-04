@@ -21,13 +21,13 @@ namespace etl {
         inline constexpr explicit Sweep(Mode m) : mMode{m} {
             if ((mMode == Mode::LeftToRight) || (mMode == Mode::LeftToRightCirclar)) {
                 mState = State::UpR;
-                mLeft = L;
-                mRight = L;
+                mLeft.setToBottom();
+                mRight.setToBottom();
             }
             else if ((mMode == Mode::RightToLeft) || (mMode == Mode::RightToLeftCircular)) {
                 mState = State::DownL;
-                mLeft = R;
-                mRight = R;
+                mLeft.setToTop();
+                mRight.setToTop();
             }
         }
         
@@ -54,7 +54,8 @@ namespace etl {
                 if (mLeft.isTop()) {
                     if (mMode == Mode::LeftToRight) {
                         mState = State::UpR;
-                        mLeft = mRight = L;
+                        mLeft.setToBottom();
+                        mRight.setToBottom();
                     }
                     else {
                         mState = State::DownL;
@@ -85,7 +86,8 @@ namespace etl {
                 if (mRight.isBottom()) {
                     if (mMode == Mode::RightToLeft) {
                         mState = State::DownL;
-                        mLeft = mRight = R;
+                        mLeft.setToTop();
+                        mRight.setToTop();
                     }
                     else {
                         mState = State::UpR;

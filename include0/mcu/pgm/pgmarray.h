@@ -32,47 +32,47 @@
 
 namespace AVR {
 	namespace Pgm {
-		namespace detail {
-			template<typename T>
-			using maybe_cref = typename std::conditional<std::is_integral<T>::value || std::is_same_v<T, std::byte> || std::is_same_v<T, char>, T, const T&>::type;
-		}
+//		namespace detail {
+//			template<typename T>
+//			using maybe_cref = typename std::conditional<std::is_integral<T>::value || std::is_same_v<T, std::byte> || std::is_same_v<T, char>, T, const T&>::type;
+//		}
 		
 //        template<typename T, detail::maybe_cref<T>... Ts> struct Array;
         template<typename T, T... Ts> struct Array;
         
         template<typename T, typename S = uint8_t>
-        struct ArrayView {
+        struct ArrayView final {
 //            template<typename U, detail::maybe_cref<U>... Ts> friend struct Array;
             template<typename U, U... Ts> friend struct Array;
             using value_type = T;
             using size_type = S;
             
-            inline T operator[](uint8_t index) const {
+            inline constexpr T operator[](size_type index) const {
                 return value_type{Ptr{&ptrToPgmData[index]}};
             }
-            constexpr ArrayView() = default;
+            inline constexpr ArrayView() = default;
 
-            struct Iterator {
+            struct Iterator final {
                 friend class ArrayView;
-				inline value_type operator*() {
+				inline constexpr value_type operator*() {
                     return view[mIndex];
 				}
-				inline void operator++() {
+				inline constexpr void operator++() {
 					++mIndex;
 				}
-				inline bool operator!=(const Iterator& rhs) {
+				inline constexpr bool operator!=(const Iterator& rhs) {
 					return mIndex != rhs.mIndex;
 				}
 			private:
                 explicit constexpr Iterator(const ArrayView& v, size_type index = 0) : mIndex(index), view{v} {}
-                size_type mIndex{0};
+                size_type mIndex{};
                 const ArrayView& view;
 			};
 
-            constexpr Iterator begin() const {
+            inline constexpr Iterator begin() const {
 				return Iterator(*this);
 			}
-			constexpr Iterator end() const {
+			inline constexpr Iterator end() const {
 				return Iterator(*this, size());
 			}
 
@@ -80,23 +80,23 @@ namespace AVR {
                 return (mSize > 0);
             }
             
-            constexpr S size() const {
+            inline constexpr S size() const {
                 return mSize;
             }
             
-            template<typename U, detail::maybe_cref<U>... Ts> 
-            explicit constexpr ArrayView(const Array<U, Ts...>& a) : ptrToPgmData(a.data) {}
+            template<typename U, U... Ts> 
+            inline explicit constexpr ArrayView(const Array<U, Ts...>& a) : ptrToPgmData(a.data) {}
         private:
-            explicit constexpr ArrayView(const Ptr<T>& pgm, const S& size) : ptrToPgmData(pgm.value), mSize{size} {}
+            inline explicit constexpr ArrayView(const Ptr<T>& pgm, const S& size) : ptrToPgmData(pgm.value), mSize{size} {}
             const T* ptrToPgmData{nullptr};
-            S mSize{0};            
+            S mSize{};            
         };
         
 
         template<typename T, T... Ts>
 //        template<typename T, detail::maybe_cref<T>... Ts>
 		struct Array final {
-            constexpr Array() = default;
+            inline constexpr Array() = default;
 			
             using value_type = std::remove_const_t<std::remove_reference_t<T>>;
 			using size_type = typename std::conditional<(sizeof...(Ts) < 256), uint8_t, uint16_t>::type;
@@ -105,17 +105,20 @@ namespace AVR {
                 return sizeof... (Ts);
 			}
             
-            inline static Ptr<value_type> ptr(size_type index) {
+            inline static constexpr Ptr<value_type> ptr(size_type index) {
                 return Ptr{&data[index]};
             }
             
-            inline static value_type value(size_type index) {
+            inline static constexpr value_type value(size_type index) {
                 if constexpr(std::is_fundamental_v<T>) {
                     if constexpr(sizeof(T) == 1) {
                         return {pgm_read_byte((uint8_t*)&data[index])};
                     }
                     else if constexpr(sizeof(T) == 2) {
                         return {pgm_read_word((uint8_t*)&data[index])};
+                    }
+                    else if constexpr(sizeof(T) == 4) {
+                        return {pgm_read_dword((uint8_t*)&data[index])};
                     }
                     else {
                         return value_type{Ptr{&data[index]}};
@@ -126,95 +129,95 @@ namespace AVR {
                 }
 			}
 			
-			struct Iterator {
+			struct Iterator final {
                 friend class Array;
-				inline value_type operator*() {
+				inline constexpr value_type operator*() {
 					return value(mIndex);
 				}
-				inline void operator++() {
+				inline constexpr void operator++() {
 					++mIndex;
 				}
-				inline bool operator!=(const Iterator& rhs) {
+				inline constexpr bool operator!=(const Iterator& rhs) {
 					return mIndex != rhs.mIndex;
 				}
 			private:
                 explicit constexpr Iterator(size_type index = 0) : mIndex(index) {}
                 size_type mIndex{0};
 			};
-			constexpr Iterator begin() const {
+			inline constexpr Iterator begin() const {
 				return Iterator();
 			}
-			constexpr Iterator end() const {
+			inline constexpr Iterator end() const {
 				return Iterator(size());
 			}
-			inline value_type operator[](size_type index) const {
+			inline constexpr value_type operator[](size_type index) const {
 				return value(index);
 			}
             inline constexpr operator ArrayView<T, size_type>() const {
                 return ArrayView{Ptr<T>{data}, size()};
             }
 		private:
-			inline static constexpr value_type data[] PROGMEM = {value_type{Ts}...}; 
+			inline static constexpr const value_type data[] PROGMEM = {value_type{Ts}...}; 
 		};
 		
-		template<typename T, auto N, const std::array<T, N>& values>
-		class Array1 final {
-			using U = std::remove_const_t<std::remove_reference_t<T>>;
-			template<typename> struct Mapper;
-			using mapper = Mapper<std::make_index_sequence<N>>;
-		public:
-            constexpr Array1() = default;
-			typedef typename std::conditional<(N < 256), uint8_t, uint16_t>::type size_type;
-			inline static constexpr size_type size = N;
-			typedef U type;
-			typedef U value_type;
+//		template<typename T, auto N, const std::array<T, N>& values>
+//		class Array1 final {
+//			using U = std::remove_const_t<std::remove_reference_t<T>>;
+//			template<typename> struct Mapper;
+//			using mapper = Mapper<std::make_index_sequence<N>>;
+//		public:
+//            constexpr Array1() = default;
+//			typedef typename std::conditional<(N < 256), uint8_t, uint16_t>::type size_type;
+//			inline static constexpr size_type size = N;
+//			typedef U type;
+//			typedef U value_type;
 			
-			inline static U value(size_type index) {
-				if constexpr(std::is_same<uint8_t, T>::value || std::is_same<std::byte, T>::value || std::is_same<char, T>::value) {
-					return U{pgm_read_byte((uint8_t*)& mapper::data[index])};
-				}
-                else if constexpr(std::is_same<int, T>::value || std::is_same<unsigned int, T>::value || std::is_same<int16_t, T>::value || std::is_same<uint16_t, T>::value) {
-                    return U{pgm_read_word((uint8_t*)& mapper::data[index])};
-				}
-				else {
-					std::array<std::byte, sizeof(T)> bytes;
-					for(uint8_t i = 0; i < sizeof(T); ++i) {
-						bytes[i] = std::byte{pgm_read_byte((uint8_t*)(&mapper::data[index]) + i)};
-					}
-					return U::createFrom(bytes);
-				}
-			}
+//			inline static U value(size_type index) {
+//				if constexpr(std::is_same<uint8_t, T>::value || std::is_same<std::byte, T>::value || std::is_same<char, T>::value) {
+//					return U{pgm_read_byte((uint8_t*)& mapper::data[index])};
+//				}
+//                else if constexpr(std::is_same<int, T>::value || std::is_same<unsigned int, T>::value || std::is_same<int16_t, T>::value || std::is_same<uint16_t, T>::value) {
+//                    return U{pgm_read_word((uint8_t*)& mapper::data[index])};
+//				}
+//				else {
+//					std::array<std::byte, sizeof(T)> bytes;
+//					for(uint8_t i = 0; i < sizeof(T); ++i) {
+//						bytes[i] = std::byte{pgm_read_byte((uint8_t*)(&mapper::data[index]) + i)};
+//					}
+//					return U::createFrom(bytes);
+//				}
+//			}
 			
-			class Iterator {
-			public:
-				constexpr Iterator(size_type index = 0) : mIndex(index) {}
-				inline U operator*() {
-					return value(mIndex);
-				}
-				inline void operator++() {
-					++mIndex;
-				}
-				inline bool operator!=(const Iterator& rhs) {
-					return mIndex != rhs.mIndex;
-				}
-			private:
-				size_type mIndex = 0;
-			};
-			constexpr Iterator begin() const {
-				return Iterator();
-			}
-			constexpr Iterator end() const {
-				return Iterator(size);
-			}
-			U operator[](size_type index) const {
-				return value(index);
-			}
-		private:
-			template<auto... II>
-			struct Mapper<std::index_sequence<II...>> {
-				inline static constexpr const U data[N] PROGMEM = {values[II]...}; 
-			};
-		};
+//			class Iterator final {
+//			public:
+//				constexpr Iterator(size_type index = 0) : mIndex(index) {}
+//				inline U operator*() {
+//					return value(mIndex);
+//				}
+//				inline void operator++() {
+//					++mIndex;
+//				}
+//				inline bool operator!=(const Iterator& rhs) {
+//					return mIndex != rhs.mIndex;
+//				}
+//			private:
+//				size_type mIndex = 0;
+//			};
+//			constexpr Iterator begin() const {
+//				return Iterator();
+//			}
+//			constexpr Iterator end() const {
+//				return Iterator(size);
+//			}
+//			U operator[](size_type index) const {
+//				return value(index);
+//			}
+//		private:
+//			template<auto... II>
+//			struct Mapper<std::index_sequence<II...>> {
+//				inline static constexpr const U data[N] PROGMEM = {values[II]...}; 
+//			};
+//		};
         
 //        template<const auto& A> class Array2;
         

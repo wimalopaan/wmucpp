@@ -80,7 +80,7 @@ namespace Hott {
                         switch (mState) {
                         case hott_state_t::AsciiWaitIdle:
                         case hott_state_t::BinaryWaitIdle:
-                            mWaitTicks = 0;
+                            mWaitTicks.setToBottom();
                             mBytesReceivedInIdlePeriod = 0;
                             break;
                         default:
@@ -159,11 +159,11 @@ namespace Hott {
                     switch(mState) {
                     case hott_state_t::BinaryReply:
                         uart::template rxEnable<false>();
-                        mByteIndexBinary = 0;
+                        mByteIndexBinary.setToBottom();
                         break;
                     case hott_state_t::AsciiReply:
                         uart::template rxEnable<false>();
-                        mByteIndexText = 0;
+                        mByteIndexText.setToBottom();
                         break;
                     case hott_state_t::Undefined:
                         uart::template rxEnable<true>();
@@ -349,7 +349,7 @@ namespace Hott {
                         switch (mState) {
                         case hott_state_t::AsciiWaitIdle:
                         case hott_state_t::BinaryWaitIdle:
-                            mWaitTicks = 0;
+                            mWaitTicks.setToBottom();
                             mBytesReceivedInIdlePeriod = 0;
                             break;
                         default:
@@ -426,7 +426,7 @@ namespace Hott {
                     case hott_state_t::BinaryReply:
                     case hott_state_t::AsciiReply:
                         uart::template rxEnable<false>();
-                        mByteIndex = 0;
+                        mByteIndex.setToBottom();
                         break;
                     case hott_state_t::Undefined:
                         uart::template rxEnable<true>();
