@@ -375,11 +375,14 @@ namespace Meta {
         template<> 
         struct visit<Meta::List<>> {
             template<typename I, typename C>
-            inline static void at(I, const C&) {
+            constexpr inline static void at(I, const C&) {
 //                assert(false);
             }
+            template<typename C>
+            inline static void constexpr all(std::index_sequence<>, const C&) {}
+            
             template<typename C, typename N>
-            inline static N find(const C&, N) {
+            constexpr inline static N find(const C&, N) {
                 return std::numeric_limits<N>::max();
             }
         };

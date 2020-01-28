@@ -6,7 +6,7 @@
 #include "meta.h"
 
 namespace etl {
-    template<etl::Concepts::Unsigned T>
+    template<etl::Concepts::Unsigned T = size_t>
     struct Straddle {
         constexpr Straddle(const T& b, const T& l) : beginPosition{b}, length{l} {}
         constexpr bool overlap(const Straddle& o) const {
@@ -44,11 +44,9 @@ namespace etl {
         static_assert(totalNumberOfBits <= (sizeof(Underlying) * 8));
         
         inline static constexpr bool overlap = []{
-            using straddle_type = etl::typeForBits_t<totalNumberOfBits>;
-            std::array<Straddle<straddle_type>, sizeof...(BB)> straddles{Straddle<straddle_type>{BB::position, BB::number}...};
-            
-            for(decltype(straddles.size()) i{0}; i < straddles.size(); ++i) {
-                for(decltype(straddles.size()) n{i + 1}; n < straddles.size(); ++n) {
+            std::array<Straddle<>, sizeof...(BB)> straddles{Straddle<>{BB::position, BB::number}...};
+            for(size_t i{}; i < straddles.size(); ++i) {
+                for(size_t n{i + 1}; n < straddles.size(); ++n) {
                     if (straddles[i].overlap(straddles[n])) {
                         return true;
                     }       
@@ -56,7 +54,7 @@ namespace etl {
             }
             return false;
         }();
-        static_assert(!overlap);
+        static_assert(!overlap, "Bits must not overlap");
 
         template<auto N>        
         inline constexpr std::byte byte() const {
@@ -65,5 +63,4 @@ namespace etl {
     private:
         Underlying data;
     };
-    
 }

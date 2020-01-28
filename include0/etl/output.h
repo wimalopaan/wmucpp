@@ -40,7 +40,7 @@ namespace etl {
     
     template<Unsigned T, uint8_t Bits>
     struct Fraction;
-    template<typename T, uint8_t Bits>
+    template<typename T, uint8_t Bits, typename OvflPol = void>
     struct FixedPoint;
     
     namespace detail {

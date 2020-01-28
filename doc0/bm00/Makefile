@@ -23,6 +23,7 @@ F_OSC = 20000000
 #MCU = atmega1284p
 #MCU = atmega4809
 MCU = attiny1614
+#MCU = atxmega32e5
 
 bm01.s bm01.elf : MCU = atmega88p
 bm02.s bm02.elf : MCU = atmega88p
@@ -30,6 +31,7 @@ bm01a.s bm01a.elf : MCU = atmega88p
 bm30.s bm30.elf : MCU = atmega4809
 bm43.s bm43.elf : MCU = atmega4809
 bm44.s bm44.elf : MCU = atmega4809
+bm97.d bm97.s bm97.elf : CXXINLUDES4 := -I../../../from-scratch/include
 
 #bm03.s bm03.elf : CPPFLAGS = -xc
 
@@ -49,9 +51,13 @@ targets += bm02.S bm02.elf
 targets += bm03.S bm03.elf
 targets += bm10.S bm10.elf
 targets += bm11.S bm11.elf
-targets += bm12.s bm12.elf
-targets += bm13.s bm13.elf
+targets += bm12.S bm12.elf
+targets += bm13.S bm13.elf
+targets += bm15.S bm15.elf
+targets += bm16.S bm16.elf
+targets += bm17.S bm17.elf
 #targets += bm20.S bm20.elf
+targets += bm25.S bm25.elf
 targets += bm30.S bm30.elf
 #targets += bm31.S bm31.elf
 targets += bm40.S bm40.elf
@@ -78,6 +84,13 @@ targets += bm86.S bm86.elf
 targets += bm87.S bm87.elf
 targets += bm90.S bm90.elf
 targets += bm91.S bm91.elf
+targets += bm92.S bm92.elf
+targets += bm93.S bm93.elf
+targets += bm94.S bm94.elf
+targets += bm95.S bm95.elf
+targets += bm96.S bm96.elf
+targets += bm97.S bm97.elf
+targets += bm99.S bm99.elf
 
 -include ../../Makefile.avr0.include
 

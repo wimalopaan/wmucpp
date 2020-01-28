@@ -41,3 +41,5 @@ boards/bmc/test/src
 boards/bmc/test
 boards/ledstripe
 boards/doorbell
+doc0/bm10
+doc0/bm11

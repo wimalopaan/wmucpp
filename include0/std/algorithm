@@ -21,6 +21,7 @@
 #include "cstdint"
 #include "cstddef"
 #include "memory"
+#include "utility"
 
 namespace std {
 //    template<typename T>
@@ -165,7 +166,7 @@ namespace std {
     }
     
     template<class InputIt, class UnaryPredicate>
-    InputIt find_if(InputIt first, InputIt last, UnaryPredicate p)
+    constexpr InputIt find_if(InputIt first, InputIt last, UnaryPredicate p)
     {
         for (; first != last; ++first) {
             if (p(*first)) {

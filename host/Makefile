@@ -25,12 +25,10 @@ subdirs += hott
 #test02a: CXX = clang++
 #test04: CXXFLAGS = -g -std=c++17 -Wall -Wextra -fPIC -I../include 
 
-test04b: CXXFLAGS = -x c
-
-
-
-#targets += test01 test02 test02a test03 test04 test04b # test05
-#targets += test04b
+targets += test01 
+targets += test02 
+targets += test04
+targets += test04b
 #targets += test07
 ##targets += test10
 #targets += test11
@@ -53,26 +51,35 @@ test04b: CXXFLAGS = -x c
 #targets += test40
 #targets += test50
 #targets += test51
-#targets += test60
-targets += test70
-targets += test71
-#targets += test80
-#targets += test90
-#targets += test91
+targets += test60
+#targets += test70
+#targets += test71
+#targets += test72
+#targets += test73
+targets += test74
+targets += test80
+targets += test85
+targets += test86
+targets += test87
+targets += test90
+targets += test91
 #targets += test92
-#targets += test93
+targets += test93
 #targets += test98
-#targets += test99
+targets += test99
 #targets += test100
+targets += test200
+targets += test201
 
 -include ../Makefile.include
 
 #CXX = /usr/bin/g++
 CXX = /usr/local/bin/g++
 #CXX = clang++
-CC = g++
-LDFLAGS = -lpthread
-CXXFLAGS = -g -std=c++2a -fconcepts -ftemplate-depth=2048 -fno-threadsafe-statics
+CC = /usr/local/bin/gcc
+#LDFLAGS = -lasan -lubsan -lpthread -lstdc++ 
+LDFLAGS = -lpthread -lstdc++ 
+CXXFLAGS = -g -std=c++2a -fconcepts -ftemplate-depth=2048 -fno-threadsafe-statics # -fsanitize=address -fsanitize=undefined 
 CXXFLAGS += -Wall -Wextra -fPIC
 #CXXFLAGS += -I../include0
 

@@ -1,16 +1,20 @@
-#include <limits>
-#include <array>
+#include <tuple>
+#include <etl/tuple.h> // etl::visit()
+#include <mcu/pgm/pgmstring.h>
 
-std::array<uint8_t, 10> a {1, 2, 3};
-
-volatile uint8_t r;
+namespace {
+    std::tuple strings{"abc"_pgm, "def"_pgm, "abc"_pgm};
+}
 
 int main() {
-    for(decltype(a)::size_type i{0}; i < a.size(); ++i) {
-        r;
-    }
-    
-    for(uint16_t i{0}; i < a.size(); ++i) {
-        r;
-    }
+    uint8_t sum{};
+
+    etl::visit(strings, [&](auto&& s){
+        for(auto&& c : s) {
+            sum += uint8_t(c);
+        }
+    });
+    return sum;
 }
+
+

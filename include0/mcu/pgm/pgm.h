@@ -14,7 +14,7 @@ namespace AVR {
             inline constexpr const std::byte* raw() const {
                 return (const std::byte*)value;
             }
-//        private:
+//        private: // structural
             const P* const value{nullptr};
         };
         

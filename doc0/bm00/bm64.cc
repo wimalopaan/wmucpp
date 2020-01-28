@@ -19,7 +19,7 @@ namespace {
                 }
                 break;
             case State::Start:
-                if (value == 3) {
+                if (value == 2) {
                     mState = State::Running;
                 }
                 break;

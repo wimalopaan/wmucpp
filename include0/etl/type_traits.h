@@ -28,6 +28,14 @@
 
 namespace etl {
     template<typename T>
+    consteval bool has_arithmetic_right_shift() {
+        T v1{std::numeric_limits<T>::min()};
+        return (v1 >>= 2) == (std::numeric_limits<T>::min() / 4);
+    }
+    template<typename T>
+    constexpr bool has_arithmetic_right_shift_v = has_arithmetic_right_shift<T>();
+    
+    template<typename T>
     inline constexpr uint8_t numberOfBits() {
         return sizeof(T) * 8;
     }
@@ -237,7 +245,7 @@ namespace etl {
         return (x != T{0}) ? T(x & T{0x01}) + numberOfOnes(T(x>>1u)) : 0u;
     }
     template<typename T>
-    consteval /*constexpr*/ uint8_t minimumBitsForValue(const T& v) {
+    /*consteval */constexpr uint8_t minimumBitsForValue(const T& v) {
         for(uint8_t n = 1; n <= std::numeric_limits<uint8_t>::max(); ++n) {
             T max = T((1 << n) - 1);
             if (v <= max) {

@@ -70,6 +70,9 @@ typedef union {
 } Strings;
 
 int main() {
+    int foo();
+    
+    
     DevBoard_t db = {"abc", "def", "ghi"};
     Strings s = {db};
 

@@ -13,7 +13,7 @@ namespace std {
         constexpr tuple() : tuple<V...>{}, mData{} {}
         constexpr tuple(T t, V... vs) : tuple<V...>{vs...}, mData{t} {}
         template<uint8_t N>
-        const auto& get() const {
+        constexpr const auto& get() const {
             if constexpr(N == 0) {
                 return mData;
             }
@@ -22,12 +22,30 @@ namespace std {
             }
         }
         template<uint8_t N>
-        auto& get() {
+        constexpr auto& get() {
             if constexpr(N == 0) {
                 return mData;
             }
             else {
                 return tuple<V...>::template get<N-1>();
+            }
+        }
+        template<typename U>
+        constexpr auto& get() {
+            if constexpr(std::is_same_v<T, U>) {
+                return mData;
+            }
+            else {
+                return tuple<V...>::template get<U>();
+            }
+        }
+        template<typename U>
+        constexpr const auto& get() const {
+            if constexpr(std::is_same_v<T, U>) {
+                return mData;
+            }
+            else {
+                return tuple<V...>::template get<U>();
             }
         }
         T mData;
@@ -52,6 +70,16 @@ namespace std {
             return get<N - 1>(base);
         }
     }
+
+    template<typename U, typename... TT>
+    constexpr auto& get(std::tuple<TT...>& tuple) {
+        return tuple.template get<U>();
+    }
+    template<typename U, typename... TT>
+    constexpr auto& get(const std::tuple<TT...>& tuple) {
+        return tuple.template get<U>();
+    }
+
     
     template<typename... T>
     tuple(T...) -> tuple<T...>;

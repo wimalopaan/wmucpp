@@ -1,0 +1,8 @@
+#pragma once
+
+#include <type_traits>
+
+inline constexpr void* operator new(size_t, void* p) {
+    return p;
+}
+

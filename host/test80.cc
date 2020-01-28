@@ -1,179 +1,92 @@
 #include <cstddef>
 #include <cstdint>
-#include "etl/meta.h"
-
+#include <cassert>
 #include <iostream>
+#include <string>
 
-template<typename In, In Low, In High, typename Event>
-struct RangeEvent {
-    typedef In input_type;
-    typedef Event event_type;
-    template<typename FSM>
-    inline static void process(const input_type& data) {
-        if ((data >= Low) && (data <= High)) {
-            FSM::process(event_type{data});
+namespace Bounded {
+    template<typename T, T Lower, T Upper>
+    struct int_ranged {
+        explicit constexpr int_ranged(T v) : value{v} {
+            assert(v >= Lower); assert(v <= Upper);
         }
-    }
-};
-
-template<typename In, In Value, typename Event>
-struct ValueEvent {
-    typedef In input_type;
-    typedef Event event_type;
-    template<typename FSM>
-    inline static void process(const input_type& data) {
-        if (data == Value) {
-            FSM::process(event_type{});
+        constexpr void operator+=(T rhs) {
+            value = std::clamp(T(value + rhs), Lower, Upper);
         }
-    }
-};
-
-template<typename FSM, typename... Ms>
-struct EventMapper {
-    typedef Meta::List<Ms...> mappings;
-    template<typename T>
-    using get_input_type = typename T::input_type;
-    static_assert(Meta::all_same_front<Meta::transform<get_input_type, mappings>>::value);
-    typedef Meta::front<Meta::transform<get_input_type, mappings>> input_type;
-    
-    inline static void process(const input_type& value) {
-        (Ms::template process<FSM>(value), ...);        
-    }
-};
-
-
-template<typename From, typename To, typename E>
-struct Tr {
-    typedef From from_state;  
-    typedef To   to_state;  
-    typedef E    event_type;
-    static_assert(!std::is_same<from_state, to_state>::value, "use different states");
-};
-          
-
-template<typename... TRs>
-struct FSM {
-    template<typename TR>
-    using get_from_state = typename TR::from_state;
-    template<typename TR>
-    using get_to_state = typename TR::to_state;
-    template<typename TR>
-    using get_event = typename TR::event_type;
-    
-    
-    using transitions = Meta::List<TRs...>;
-    using from_states = Meta::unique<Meta::transform<get_from_state, transitions>>;
-    using to_states = Meta::unique<Meta::transform<get_to_state, transitions>>;
-    using events = Meta::unique<Meta::transform<get_event, transitions>>;
-
-    using states = Meta::unique<Meta::concat<from_states, to_states>>;
-    
-    static_assert(Meta::size<states>::value < 256);
-
-    template<typename F, typename E, typename Tx>
-    struct to_state_from_impl {
-        template<typename Trans, typename From, typename Event>
-        struct Predicate {
-            inline static constexpr bool value = []{
-                if constexpr(std::is_same<typename Trans::from_state, From>::value && std::is_same<typename Trans::event_type, Event>::value) {
-                    return true;
-                }
-                return false;
-            }();
-        };
-        
-        template<typename X>
-        using Pred = Predicate<X, F, E>;
-        
-        typedef Meta::filter<Pred, Tx> selected_transitions;
-        
-        typedef selected_transitions type;
+        constexpr void operator+=(int_ranged rhs) {
+            value = std::clamp(T(value + rhs.value), Lower, Upper);
+        }
+        constexpr operator T() const {
+            return value;
+        }
+    private:
+        T value{}; 
     };
-
-    template<typename F, typename E>
-    using to_state_from = typename to_state_from_impl<F, E, transitions>::type;
-
-    template<typename Ev>
-    static void process(const Ev& ev) {
-        Meta::visitAt<states>(mState, [&]<typename T>(T){
-                                  using state = typename T::type;
-                                  using txs = to_state_from<state, Ev>;
-                                  if constexpr(Meta::size<txs>::value > 0) {
-                                      using to = typename Meta::front<txs>::to_state;
-//                                      leave(state{});
-                                      enter(to{});
-                                      mState = Meta::index<states, to>::value;
-                                  }
-                                  else {
-                                      stay(state{}, ev);
-                                  }
-                                  
-        });        
-    }
-//    inline static void process(uint8_t e) {
-//        Meta::visitAt<events>(e, []<typename W>(W){
-//                                  typedef typename W::type event;
-//                                  process(event{});
-//                            });
-//    }
-    inline static uint8_t mState = 2;
-};
-
-struct StateA {};
-struct StateB {};
-struct StateC {};
-
-struct E1 {
-    unsigned char data;
-};
-struct E2 {};
-struct E3 {};
-
-volatile uint8_t x;
-
-void enter(StateA) {
-    std::cout << __PRETTY_FUNCTION__ << '\n';
-    x = 0;
-}
-void enter(StateB) {
-    std::cout << __PRETTY_FUNCTION__ << '\n';
-    x = 1;
-}
-void enter(StateC) {
-    std::cout << __PRETTY_FUNCTION__ << '\n';
-    x = 2;
 }
 
+namespace Geom2D {
+    template<typename T = intmax_t>
+    struct X {
+        template<typename U>
+        explicit constexpr X(U v) : value(v) {}
+        T value{};
+    };
+    template<typename T = intmax_t>
+    struct Y {
+        template<typename U>
+        explicit constexpr Y(U v) : value{v} {}
+        constexpr void operator+=(Y rhs) {
+            value += rhs.value;
+        }
+        T value{};
+    };
+    template<typename XT = X<intmax_t>, typename YT = Y<intmax_t>>
+    struct Point {
+        explicit constexpr Point(XT x, YT y) : mX{x}, mY{y} {}
+        
+        constexpr void operator+=(YT dy) {
+            mY += dy;
+        }
+    private:
+        XT mX{};
+        YT mY{};
+    };
+}
 
-void stay(StateA, auto) {
-    std::cout << __PRETTY_FUNCTION__ << '\n';
-}
-void stay(StateB, auto) {
-    std::cout << __PRETTY_FUNCTION__ << '\n';
-}
-void stay(StateC, auto) {
-    std::cout << __PRETTY_FUNCTION__ << '\n';
+namespace UI {
+    template<size_t Width, size_t Height>
+    struct Display {
+        using x_t = Geom2D::X<Bounded::int_ranged<uint8_t, 0, Width>>;
+        using y_t = Geom2D::Y<Bounded::int_ranged<uint8_t, 0, Height>>;
+        using point_t = Geom2D::Point<x_t, y_t>;
+        
+//        inline static void drawText(const std::string &text, const x_t x, const y_t y) {}
+//        inline static void drawText(const x_t x, const y_t y, const std::string &text) {}
+        inline static void drawText(const point_t &p, const std::string &text) {}
+        inline static void drawText(const std::string& text, const point_t &p) {}
+    };
 }
 
-using fsm = FSM<Tr<StateA, StateB, E1>, Tr<StateB, StateC, E2>, Tr<StateC, StateA, E3>>;
-using mapper = EventMapper<fsm, RangeEvent<unsigned char, 'A', 'z', E1>, ValueEvent<unsigned char, ',', E2>>;
+using display = UI::Display<100, 100>;
+using x_t = display::x_t;
+using y_t = display::y_t;
+using point_t = display::point_t;
 
 int main(){
-    unsigned char c = 'a';
-    mapper::process(c);
-    c = 'b';
-    mapper::process(c);
-
-    //    fsm::process(E3{});
-    //    std::cout << (int)fsm::mState << '\n';
-    //    fsm::process(E2{});
-    //    std::cout << (int)fsm::mState << '\n';
-    //    fsm::process(E1{});
-    //    std::cout << (int)fsm::mState << '\n';
-    //    fsm::process(E2{});
-    //    std::cout << (int)fsm::mState << '\n';
-    //    fsm::process(E3{});
-    //    std::cout << (int)fsm::mState << '\n';
+    using namespace std::literals;
     
-        
+//    display::drawText(x_t{1}, y_t{2}, "Bla"s);
+    
+    auto x1 = x_t{1};
+    auto y1 = y_t{2};
+    
+//    display::drawText(x1, y1, "Bla"s);
+    
+    auto p1 = point_t{x1, y1};
+    display::drawText(p1, "Bla"s);
+    
+    p1 += y_t{10};
+    display::drawText(p1, "Bla"s);
+    
+//    auto what = x1 + y1;
 }

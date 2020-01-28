@@ -13,11 +13,12 @@
 # programmiern
 
 # Hobbyking 30A F-30A UBEC
+# Hobbyking 20A F-20A UBEC
 # Hobbyking BlueSeries 12A
 # sudo avrdude -p atmega8 -P usb -c avrisp2 -V -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -U flash:w:bs_nfet.hex
 
 # FMS 35A (FMS-DT35)
-# DPower 25 A
+# DPower 25 A (sowohl alt (linear Regler) wie neu (Schaltregler)
 # sudo avrdude -p atmega8 -P usb -c avrisp2 -V -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -U flash:w:bs_nfet.hex
 
 # Reely BL-12A-Air

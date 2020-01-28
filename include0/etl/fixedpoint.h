@@ -35,11 +35,17 @@ namespace etl {
         using value_type = T;
         inline static constexpr uint8_t valid_bits = Bits;
         constexpr explicit Fraction(T v) : value(v) {} 
-        const value_type value = 0;
+        const value_type value{};
     };
 
-    template<typename Type, uint8_t fractionalBits>
+    namespace detail {
+        struct Overflow;
+        struct Saturate;
+    }
+    
+    template<typename Type, uint8_t fractionalBits, typename OvflPol>
     struct FixedPoint final {
+        struct Internal{};
         using value_type = Type;
         using unsigned_type = make_unsigned_t<Type>;
         using fractional_type = typeForBits_t<fractionalBits>;
@@ -47,13 +53,19 @@ namespace etl {
         inline static constexpr unsigned_type integral_mask = ~((1 << fractionalBits) - 1);
         inline static constexpr uint8_t fractional_bits = fractionalBits;
         inline static constexpr uint8_t integer_bits = sizeof(Type) * 8 - fractionalBits;
-        inline static constexpr value_type one = 1u << fractional_bits;
-        
+        inline static constexpr value_type one = unsigned_type{1} << fractional_bits;
+
+        using integer_type = std::conditional_t<std::is_signed_v<value_type>, 
+                                                std::make_signed_t<etl::typeForBits_t<integer_bits>>, 
+                                                etl::typeForBits_t<integer_bits>>;
+
+        inline constexpr explicit FixedPoint(const integer_type v) : mValue{value_type{v} << fractionalBits} {}
+                
         inline constexpr FixedPoint(const FixedPoint& o) : mValue{o.mValue} {}
 
         inline constexpr FixedPoint(volatile const FixedPoint& o) : mValue{o.mValue} {}
         
-        inline constexpr explicit FixedPoint(double v) : mValue(v * one) {}
+        inline /*constexpr */ consteval explicit FixedPoint(double v) : mValue(v * one) {}
     
         inline constexpr FixedPoint() = default;
 
@@ -64,14 +76,21 @@ namespace etl {
             return FixedPoint::fromRaw(std::numeric_limits<value_type>::min());
         }
         
-        inline constexpr void operator=(FixedPoint rhs) volatile {
+        inline constexpr void operator=(const FixedPoint rhs) volatile {
             mValue = rhs.mValue;
         }
-        
-        inline static constexpr FixedPoint<Type, fractionalBits> fromRaw(value_type raw) {
-            return FixedPoint<value_type, fractionalBits>{raw};
+
+        inline constexpr bool operator==(const FixedPoint rhs) const {
+            return mValue == rhs.mValue;
+        }
+        inline constexpr bool operator!=(const FixedPoint rhs) const {
+            return !(*this == rhs);
         }
         
+        inline static constexpr FixedPoint fromRaw(const value_type raw) {
+            return FixedPoint{raw};
+        }
+
         inline constexpr unsigned_type integerAbs() const {
             if (mValue < 0) {
                 return -integer();
@@ -88,10 +107,20 @@ namespace etl {
             return fractional();
         }
         inline constexpr value_type integer() const {
-            return mValue / one;
+            if constexpr(etl::has_arithmetic_right_shift_v<enclosingType_t<Type>>) {
+                return mValue >> fractionalBits;                
+            }
+            else {
+                return mValue / one;
+            }
         }
         inline value_type integer() const volatile {
-            return mValue / one;
+            if constexpr(etl::has_arithmetic_right_shift_v<enclosingType_t<Type>>) {
+                return mValue >> fractionalBits;                
+            }
+            else {
+                return mValue / one;
+            }
         }
         inline constexpr fractional_type fractional() const {
             return (fractional_type(mValue) & fractional_mask);
@@ -105,94 +134,110 @@ namespace etl {
         inline constexpr Fraction<fractional_type, fractionalBits> fraction() const volatile {
             return Fraction<fractional_type, fractionalBits>(fractional() << ((sizeof(fractional_type) * 8) - fractional_bits));
         }
-        inline constexpr const value_type& raw() const {
+        inline constexpr const value_type raw() const {
             return mValue;
         }
-        inline constexpr FixedPoint& operator/=(Type d) {
+        inline constexpr FixedPoint& operator/=(const Type d) {
             mValue /= d;
             return *this;
         }
-        inline constexpr FixedPoint& operator*=(Type d) {
+        inline constexpr FixedPoint& operator*=(const Type d) {
             mValue *= d;
             return *this;
         }
-        inline constexpr void operator*=(Type d) volatile {
+
+        inline constexpr FixedPoint operator/(const FixedPoint rhs) const {
+            const enclosingType_t<Type> p = enclosingType_t<value_type>{mValue} << fractionalBits;
+            value_type p1 = p / rhs.mValue;
+            return FixedPoint{p1, Internal{}};
+        }   
+        
+        inline constexpr FixedPoint operator*(const FixedPoint rhs) const {
+            const enclosingType_t<value_type> p = enclosingType_t<value_type>{mValue} * rhs.mValue;
+            value_type p1;
+            if constexpr(etl::has_arithmetic_right_shift_v<enclosingType_t<value_type>>) {
+                p1 = p >> fractionalBits; 
+            }
+            else {
+                p1 = p / (make_unsigned_t<value_type>{1} << fractionalBits);
+            }
+            if (p & (fractional_type{1} << (fractionalBits - 1))) {
+                     p1 += value_type{1};
+            }
+            return FixedPoint{p1, Internal{}};
+        }        
+        
+        inline constexpr void operator*=(const Type d) volatile {
             mValue = mValue * d;
         }
-        inline constexpr FixedPoint& operator-=(const FixedPoint& d) {
+        inline constexpr FixedPoint& operator-=(const FixedPoint d) {
             mValue -= d.mValue;
             return *this;
         }
-        inline constexpr FixedPoint& operator+=(const FixedPoint& d) {
+        inline constexpr FixedPoint& operator+=(const FixedPoint d) {
             mValue += d.mValue;
             return *this;
         }
-        inline constexpr void operator-=(const FixedPoint& d) volatile {
+        inline constexpr void operator-=(const FixedPoint d) volatile {
             mValue = mValue - d.mValue;
         }
-        inline constexpr void operator+=(const FixedPoint& d) volatile {
+        inline constexpr void operator+=(const FixedPoint d) volatile {
             mValue = mValue + d.mValue;
         }
     private:
-        explicit constexpr FixedPoint(value_type v) : mValue(v){}
-        value_type mValue{0};
+        explicit constexpr FixedPoint(value_type v, Internal) : mValue{v}{}
+        value_type mValue{};
     };
 
-    inline constexpr FixedPoint<int16_t, 4> operator"" _fp(long double v) {
+    inline /*constexpr*/ consteval FixedPoint<int16_t, 4> operator"" _fp(const long double v) {
         return FixedPoint<int16_t, 4>{(double)v};
     }
-    inline constexpr FixedPoint<int16_t, 4> operator"" _Qs11_4(long double v) {
+    inline /*constexpr*/ consteval FixedPoint<int16_t, 4> operator"" _Qs11_4(const long double v) {
         return FixedPoint<int16_t, 4>{(double)v};
     }
-    inline constexpr FixedPoint<uint16_t, 8> operator"" _Qu8_8(long double v) {
+    inline /*constexpr*/ consteval FixedPoint<uint16_t, 8> operator"" _Qu8_8(const long double v) {
         return FixedPoint<uint16_t, 8>{(double)v};
     }
-    inline constexpr FixedPoint<int16_t, 12> operator"" _Qs3_12(long double v) {
+    inline /*constexpr*/ consteval FixedPoint<int16_t, 12> operator"" _Qs3_12(const long double v) {
         return FixedPoint<int16_t, 12>{(double)v};
     }
-    inline constexpr FixedPoint<uint8_t, 7> operator"" _Qu1_7(long double v) {
+    inline /*constexpr*/ consteval FixedPoint<uint8_t, 7> operator"" _Qu1_7(const long double v) {
         return FixedPoint<uint8_t, 7>{(double)v};
     }
 
     template<typename T, auto Bits>
-    inline constexpr bool operator>(FixedPoint<T, Bits> lhs, FixedPoint<T, Bits> rhs) {
+    inline constexpr bool operator>(const FixedPoint<T, Bits> lhs, const FixedPoint<T, Bits> rhs) {
         return lhs.raw() > rhs.raw();
     }
     template<typename T, auto Bits>
-    inline constexpr bool operator<(FixedPoint<T, Bits> lhs, FixedPoint<T, Bits> rhs) {
+    inline constexpr bool operator<(const FixedPoint<T, Bits> lhs, const FixedPoint<T, Bits> rhs) {
         return lhs.raw() < rhs.raw();
     }
     
     template<typename T, auto Bits>
-    inline constexpr FixedPoint<T, Bits> operator-(FixedPoint<T, Bits> lhs, FixedPoint<T, Bits> rhs) {
+    inline constexpr FixedPoint<T, Bits> operator-(FixedPoint<T, Bits> lhs, const FixedPoint<T, Bits> rhs) {
         return lhs -= rhs;
     }
     template<typename T, auto Bits>
-    inline constexpr FixedPoint<T, Bits> operator+(FixedPoint<T, Bits> lhs, FixedPoint<T, Bits> rhs) {
+    inline constexpr FixedPoint<T, Bits> operator+(FixedPoint<T, Bits> lhs, const FixedPoint<T, Bits> rhs) {
         return lhs += rhs;
     }
     
     template<typename T, auto Bits, typename D>
-    inline constexpr FixedPoint<T, Bits> operator/(FixedPoint<T, Bits> lhs, const D& rhs) {
+    inline constexpr FixedPoint<T, Bits> operator/(FixedPoint<T, Bits> lhs, const D rhs) {
         return lhs /= rhs;
     }
 
     template<typename T, auto Bits, typename D>
-    inline constexpr FixedPoint<T, Bits> operator*(FixedPoint<T, Bits> lhs, const D& rhs) {
+    inline constexpr FixedPoint<T, Bits> operator*(FixedPoint<T, Bits> lhs, const D rhs) {
         return lhs *= rhs;
     }
 
     template<typename T, auto Bits, typename D>
-    inline constexpr D operator*(const D& lhs, FixedPoint<T, Bits> rhs) {
+    inline constexpr D operator*(const D lhs, const FixedPoint<T, Bits> rhs) {
         return (etl::enclosing_t<D>{lhs} * rhs.raw()) >> Bits;
     }
-    
-//    template<typename T, uint8_t FB1, uint8_t FB2>
-//    inline constexpr FixedPoint<T, FB1> operator*(FixedPoint<T, FB1> lhs, FixedPoint<T, FB2> rhs) {
-//        enclosingType_t<T> p = static_cast<enclosingType_t<T>>(lhs.raw()) * rhs.raw();
-//        return FixedPoint<T, FB1>::fromRaw(p >> FB2);
-//    }
-    
+
     namespace detail {
         template<etl::Concepts::Stream Stream, typename T, uint8_t Bits>
         inline void out_impl(const Fraction<T, Bits>& f) {
@@ -220,6 +265,107 @@ namespace etl {
         inline void out_impl(const volatile FixedPoint<T, Bits>& f) {
             out_impl<Stream>(f.integerAbs());
             out_impl<Stream>(f.fraction());
+        }
+
+        namespace tests {
+            consteval bool tests_qs78() {
+                using fp_t = etl::FixedPoint<int16_t, 8>; 
+                using fp_int_t = fp_t::integer_type;
+                
+                if((fp_t{101.0} * fp_t{1.25}) != fp_t{101.0 * 1.25}) return false;
+                if((fp_t{101.0} * fp_t{1.125}) != fp_t{101.0 * 1.125}) return false;
+                if((fp_t{101.0} * fp_t{1.0625}) != fp_t{101.0 * 1.0625}) return false;
+                if((fp_t{101.0} * fp_t{1.03125}) != fp_t{101.0 * 1.03125}) return false;
+                if((fp_t{101.0} * fp_t{1.015625}) != fp_t{101.0 * 1.015625}) return false;
+                if((fp_t{101.0} * fp_t{1.0078125}) != fp_t{101.0 * 1.0078125}) return false;
+                if((fp_t{101.0} * fp_t{1.00390625}) != fp_t{101.0 * 1.00390625}) return false;
+                if((fp_t{101.0} * fp_t{1.0 - 0.00390625}) != fp_t{101.0 * (1.0 - 0.00390625)}) return false;
+                
+                if((fp_t{-101.0} * fp_t{1.25}) != fp_t{-101.0 * 1.25}) return false;
+                if((fp_t{101.0} * fp_t{-1.25}) != fp_t{-101.0 * 1.25}) return false;
+                
+                if (fp_t{1.0} != fp_t{fp_int_t{1}}) return false;
+                if (fp_t{1.0}.integer() != 1) return false;
+                
+                if((fp_t{1.0} + fp_t{1.0}) != fp_t{1.0 + 1.0}) return false;
+                if((fp_t{0.125} + fp_t{0.125}) != fp_t{0.125 + 0.125}) return false;
+                
+                if((fp_t{0.125} + fp_t{0.75}) != fp_t{0.125 + 0.75}) return false;
+
+                if((fp_t{2.5} / fp_t{2.0}) != fp_t{2.5 / 2.0}) return false;
+                if((fp_t{2.125} / fp_t{2.0}) != fp_t{2.125 / 2.0}) return false;
+                
+                return true;
+            }
+            static_assert(tests_qs78());
+
+            consteval bool tests_qu88() {
+                using fp_t = etl::FixedPoint<uint16_t, 8>; 
+                using fp_int_t = fp_t::integer_type;
+                
+                if((fp_t{101.0} * fp_t{1.25}) != fp_t{101.0 * 1.25}) return false;
+                if((fp_t{101.0} * fp_t{1.125}) != fp_t{101.0 * 1.125}) return false;
+                if((fp_t{101.0} * fp_t{1.0625}) != fp_t{101.0 * 1.0625}) return false;
+                if((fp_t{101.0} * fp_t{1.03125}) != fp_t{101.0 * 1.03125}) return false;
+                if((fp_t{101.0} * fp_t{1.015625}) != fp_t{101.0 * 1.015625}) return false;
+                if((fp_t{101.0} * fp_t{1.0078125}) != fp_t{101.0 * 1.0078125}) return false;
+                if((fp_t{101.0} * fp_t{1.00390625}) != fp_t{101.0 * 1.00390625}) return false;
+                if((fp_t{101.0} * fp_t{1.0 - 0.00390625}) != fp_t{101.0 * (1.0 - 0.00390625)}) return false;
+                
+                if (fp_t{1.0} != fp_t{fp_int_t{1}}) return false;
+                if (fp_t{1.0}.integer() != 1) return false;
+                
+                if((fp_t{1.0} + fp_t{1.0}) != fp_t{1.0 + 1.0}) return false;
+                if((fp_t{0.125} + fp_t{0.125}) != fp_t{0.125 + 0.125}) return false;
+                
+                if((fp_t{0.125} + fp_t{0.75}) != fp_t{0.125 + 0.75}) return false;
+
+                if((fp_t{2.5} / fp_t{2.0}) != fp_t{2.5 / 2.0}) return false;
+                if((fp_t{2.125} / fp_t{2.0}) != fp_t{2.125 / 2.0}) return false;
+                
+                return true;
+            }
+            static_assert(tests_qu88());
+
+            consteval bool tests_qu79() {
+                using fp_t = etl::FixedPoint<uint16_t, 9>; 
+                using fp_int_t = fp_t::integer_type;
+                
+                if((fp_t{101.0} * fp_t{1.001953125}) != fp_t{101.0 * 1.001953125}) return false;
+                if((fp_t{101.0} * fp_t{1.0 - 0.00390625}) != fp_t{101.0 * (1.0 - 0.00390625)}) return false;
+                
+                if (fp_t{1.0} != fp_t{fp_int_t{1}}) return false;
+                if (fp_t{1.0}.integer() != 1) return false;
+                
+                return true;
+            }
+            static_assert(tests_qu79());
+        
+            consteval bool tests_qu97() {
+                using fp_t = etl::FixedPoint<uint16_t, 7>; 
+                using fp_int_t = fp_t::integer_type;
+                
+                if((fp_t{101.0} * fp_t{1.25}) != fp_t{101.0 * 1.25}) return false;
+                if((fp_t{101.0} * fp_t{1.125}) != fp_t{101.0 * 1.125}) return false;
+                if((fp_t{101.0} * fp_t{1.0625}) != fp_t{101.0 * 1.0625}) return false;
+                if((fp_t{101.0} * fp_t{1.03125}) != fp_t{101.0 * 1.03125}) return false;
+                if((fp_t{101.0} * fp_t{1.015625}) != fp_t{101.0 * 1.015625}) return false;
+
+                if (fp_t{1.0} != fp_t{fp_int_t{1}}) return false;
+                if (fp_t{1.0}.integer() != 1) return false;
+                
+                return true;
+            }
+            static_assert(tests_qu97());
+            
+            consteval bool tests_udl() {
+                const auto f1 = 1.25_Qu8_8;
+                const auto f2 = 256.25_fp;
+                if (f1.integer() != 1) return false;
+                if (f2.integer() != 256) return false;
+                return true;
+            }
+            static_assert(tests_udl());
         }
     } // detail
 }

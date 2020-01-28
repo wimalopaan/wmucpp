@@ -7,23 +7,33 @@ namespace std {
     namespace detail {
         template<typename I, typename... T> struct recursive_union;
         
-        template<typename I, typename F, typename... T>
-        struct recursive_union<I, F, T...> {
-            using rest = recursive_union<std::integral_constant<size_t, I::value + 1>, T...>;
+        template<auto Index, typename F, typename... T>
+        struct recursive_union<std::integral_constant<size_t, Index>, F, T...> {
+            using rest = recursive_union<std::integral_constant<size_t, Index + 1>, T...>;
             
             using index_type = std::conditional_t<((sizeof...(T) + 1) < 256), uint8_t, uint16_t>;
 
+            inline constexpr recursive_union() : value{} {
+//                asm(";rc0");
+            }
+            
             template<typename... U>
-            inline constexpr explicit recursive_union(const U&... v) : r{v...} {}
-            inline constexpr explicit recursive_union(const F& v) : value{v} {}
+            inline constexpr explicit recursive_union(U&&... v) : r{std::forward<U>(v)...} {
+//                asm(";rc1");
+            }
+            template<typename V>
+            requires (std::is_same_v<std::remove_cvref_t<V>,F>)
+            inline constexpr explicit recursive_union(V&& v) : value{std::forward<V>(v)} {
+//                asm(";rc2");
+            }
             template<typename FU>
             inline constexpr void visit(const index_type& i, FU f) {
                 if constexpr(sizeof...(T) > 0) {
-                    if (i == I::value) {
+                    if (i == Index) {
                         f(value);
                     }
                     else {
-                        r.visit(i + index_type{1}, f);
+                        r.visit(i, f);
                     }
                 }
                 else {
@@ -33,17 +43,18 @@ namespace std {
             template<typename FU>
             inline constexpr void visit(const index_type& i, FU f) const {
                 if constexpr(sizeof...(T) > 0) {
-                    if (i == I::value) {
+                    if (i == Index) {
                         f(value);
                     }
                     else {
-                        r.visit(i + index_type{1}, f);
+                        r.visit(i, f);
                     }
                 }
                 else {
                     f(value);
                 }
             }
+            constexpr ~recursive_union() {}
         private:
             union {
                 F value;
@@ -56,8 +67,10 @@ namespace std {
 
     template<typename... Tt>
     struct recursive_union : detail::recursive_union<std::integral_constant<size_t, 0>, Tt...> {
+        using base = detail::recursive_union<std::integral_constant<size_t, 0>, Tt...>;
         template<typename U>
-        inline constexpr explicit recursive_union(U v) : detail::recursive_union<std::integral_constant<size_t, 0>, Tt...>{v} {}
+        inline constexpr explicit recursive_union(U&& v) : base{std::forward<U>(v)} {}
+        inline constexpr explicit recursive_union() : base{} {}
     };
 
     template<typename... Tt>
@@ -67,32 +80,50 @@ namespace std {
         using union_type = std::recursive_union<Tt...>;
         using index_type = union_type::index_type;
         
+        using f1 = Meta::front<Meta::List<std::remove_cvref_t<Tt>...>>;
+        
+        constexpr variant() : mUnion{}, mIndex{0} {
+//            asm(";vc");
+        }
+
         template<typename U>
-        requires (Meta::contains_v<Meta::List<Tt...>, U>)
-        inline constexpr /*explicit */ variant(U&& v) : mUnion{v}, mIndex{Meta::index_v<Meta::List<Tt...>, U>} {}
+        requires (Meta::contains_v<Meta::List<Tt...>, std::remove_cvref_t<U>>)
+        inline constexpr /*explicit */ variant(U&& v) : mUnion{std::forward<U>(v)}, 
+            mIndex{Meta::index_v<Meta::List<Tt...>, std::remove_cvref_t<U>>} {
+//                                                                           asm(";vc2");
+        }
         
         template<typename F>
         inline constexpr void visit(F&& f)  {
-            return mUnion.visit(mIndex, f);
+            return mUnion.visit(mIndex, std::forward<F>(f));
         }
         template<typename F>
         inline constexpr void visit(F&& f) const   {
-            return mUnion.visit(mIndex, f);
+            return mUnion.visit(mIndex, std::forward<F>(f));
         }
-        
+                                                                           
         template<typename U>
-        requires (Meta::contains_v<Meta::List<Tt...>, U>)
-        inline constexpr void operator=(const U& v) {
-            constexpr index_type i =  Meta::index<Meta::List<Tt...>, U>::value;
-            mUnion.visit(mIndex, []<typename T>(T& v){
-                v.~T();
+        requires (Meta::contains_v<Meta::List<std::remove_cvref_t<Tt>...>, std::remove_cvref_t<U>>)
+        inline constexpr void operator=(U&& v) {
+//                                       asm(";v op=");
+            constexpr index_type i =  Meta::index_v<Meta::List<std::remove_cvref_t<Tt>...>, std::remove_cvref_t<U>>;
+            reset();
+            mUnion.visit(i, [&](auto& t){
+                new (&t) std::remove_cvref_t<U>{std::forward<U>(v)}; // create new object
             });
-            mUnion.visit(i, [&](auto&& t){
-                new (&t) U{v};
-            });
+            mIndex = i;
+        }
+        inline constexpr ~variant() {
+            reset();
         }
     private:
+        inline constexpr void reset() {
+            mUnion.visit(mIndex, []<typename T>(T& o){
+                 o.~T(); // make old object vanish
+            });
+            mIndex = std::numeric_limits<index_type>::max();
+        }                                
         std::recursive_union<Tt...> mUnion;
-        index_type mIndex;
+        index_type mIndex{0};
     };     
 }

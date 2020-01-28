@@ -20,8 +20,10 @@
 
 #include <cstdint>
 #include <optional>
+#include <limits>
 #include <type_traits>
 #include <cassert>
+#include <initializer_list>
 
 namespace etl {    
     template<typename T, auto Capacity>
@@ -34,6 +36,14 @@ namespace etl {
         
         static_assert(Capacity <= std::numeric_limits<uint16_t>::max());
         
+        inline constexpr Vector(const std::initializer_list<T>& list) {
+                for(const auto& i : list) {
+                    push_back(i);
+                }
+        }
+        
+        constexpr Vector() = default;
+        
         inline constexpr const T* begin() const {
             return &data[0];
         }
@@ -44,6 +54,12 @@ namespace etl {
             return &data[0];
         }
         inline constexpr const volatile T* end() const volatile {
+            return &data[mSize];
+        }
+        inline constexpr const T* cbegin() {
+            return &data[0];
+        }
+        inline constexpr const T* cend() {
             return &data[mSize];
         }
         inline constexpr T* begin() {
@@ -72,15 +88,31 @@ namespace etl {
         }
         
         inline constexpr void clear() {
-            mSize = 0;
+            mSize = size_type{0};
         }
         
         inline constexpr void push_back(const T& item) {
             assert(mSize < Capacity);
             data[mSize++] = item;
         }
+        inline constexpr void push_back(T&& item) {
+            assert(mSize < Capacity);
+            data[mSize++] = std::move(item);
+        }
+        inline constexpr T& back() {
+            assert(mSize > 0);
+            return data[mSize - 1];
+        }
+        inline constexpr const T& back() const {
+            assert(mSize > 0);
+            return data[mSize - 1];
+        }
+        inline constexpr void pop_back() {
+            assert(mSize > 0);
+            --mSize;
+        }
     private:
-        T data[Capacity] {};
-        size_type mSize {0};
+        T data[Capacity];
+        size_type mSize{0};
     };
 }

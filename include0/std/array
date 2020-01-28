@@ -27,9 +27,9 @@
 namespace std {
     template<typename T, auto Size>
     struct array final {
-        typedef T value_type;
-        typedef typename std::conditional_t<(Size < 256), uint8_t, uint16_t> size_type;
-        typedef typename std::conditional_t<(Size < 128), int8_t, int16_t> signed_size_type;
+        using value_type = T;
+        using size_type = std::conditional_t<(Size < 256), uint8_t, uint16_t>;
+        using signed_size_type = std::conditional_t<(Size < 128), int8_t, int16_t>;
         
         static_assert(Size <= std::numeric_limits<uint16_t>::max());
         
@@ -129,6 +129,9 @@ namespace std {
             return 0;
         }
     };
+    
+    template <class T, class... U>
+    array(T, U...) -> array<T, 1 + sizeof...(U)>;
     
     namespace detail {
         template <class T, auto N, size_t... I>

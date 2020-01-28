@@ -39,19 +39,42 @@ template<typename C, C... CC>
 consteval /*constexpr */AVR::Pgm::String<C, CC...> operator"" _pgm();
 
 namespace AVR::Pgm {
-    
     class StringView final {
         template<typename C, C... CC> friend struct String;
     public:
+        struct Iterator {
+            constexpr Iterator() = default;
+            explicit constexpr Iterator(const Ptr<char>& p) : pgmPtr(p.value) {}
+            inline /*constexpr */etl::Char operator*() const {
+                return etl::Char{pgm_read_byte(pgmPtr)};
+            }
+            inline constexpr void operator++() {
+                ++pgmPtr;
+            }
+            inline constexpr bool operator!=(const Iterator& rhs) const {
+                if (rhs.pgmPtr) {
+                    return pgmPtr != rhs.pgmPtr;
+                }
+                else {
+                    return **this != etl::Char{'\0'};
+                }
+            }
+            const char* pgmPtr{};
+        };
+        constexpr Iterator begin() const {
+            return Iterator{ptrToPgmData};            
+        }
+        constexpr Iterator end() const {
+            return Iterator{};            
+        }
         inline etl::Char operator[](uint8_t index) const {
-//            assert(ptrToPgmData); // not possible: recursive
-            return etl::Char{pgm_read_byte(ptrToPgmData + index)};
+            return etl::Char{pgm_read_byte(ptrToPgmData.value + index)};
         }
         template<typename C, C... CC> 
         constexpr StringView(const String<C, CC...>& ps) : ptrToPgmData(ps.data) {}
-    private:
+//    private: // structural
         explicit constexpr StringView(const Ptr<char>& pgm) : ptrToPgmData(pgm.value) {}
-        const char* const ptrToPgmData{nullptr};
+        Ptr<char> const ptrToPgmData{nullptr};
     };
     
     template<typename C, C... CC>
@@ -60,19 +83,19 @@ namespace AVR::Pgm {
         
         using value_type = etl::Char;
         
-        constexpr String() = default;
+        consteval String() = default;
         
         class Iterator final {
         public:
             explicit constexpr Iterator(uint8_t index = 0) : mIndex(index) {}
             
-            inline etl::Char operator*() const {
+            inline /*constexpr*/ etl::Char operator*() const {
                 return etl::Char{pgm_read_byte(&data[mIndex])};
             }
-            inline void operator++() {
+            inline constexpr void operator++() {
                 ++mIndex;
             }
-            inline bool operator!=(const Iterator& rhs) const {
+            inline constexpr bool operator!=(const Iterator& rhs) const {
                 return mIndex != rhs.mIndex;
             }
         private:
@@ -85,7 +108,6 @@ namespace AVR::Pgm {
             return Iterator(size());
         }
         etl::Char operator[](uint8_t index) const {
-//            assert(index < size()); // not possible here
             return etl::Char{pgm_read_byte(&data[index])};
         }
         inline static constexpr uint8_t size() {
@@ -97,6 +119,14 @@ namespace AVR::Pgm {
     private:
         inline static constexpr const char data[] PROGMEM {CC..., '\0'};
     };
+
+    template<typename> struct isString : std::false_type {};
+    
+    template<typename C, C... CC>
+    struct isString<String<C, CC...>> : std::true_type {}; 
+    
+    template<typename C, C... CC>
+    static constexpr bool isString_v = isString<C, CC...>::value;
 }
 
 template<typename C, C... CC>
