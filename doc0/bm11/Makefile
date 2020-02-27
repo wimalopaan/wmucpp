@@ -36,7 +36,9 @@ targets += shtml
 
 targets += bm00.S bm00.elf bm00.hex
 targets += bm01.S bm01.elf bm01.hex
+targets += bm02.S bm02.elf bm02.hex
 targets += bm10.S bm10.elf bm10.hex
+targets += bm20.S bm20.elf bm20.hex
 #targets += bm02.S bm02.elf
 
 -include ../../Makefile.avr0.include

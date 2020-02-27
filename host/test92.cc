@@ -1,24 +1,45 @@
+#include <iostream>
 #include <cstdint>
 #include <cassert>
 
-constexpr int divEven(int v) {
-    bool c = (v % 2) == 0;
-//    assert(c);
-    return c / 2;
-}
+class Float {
+public:
+    ~Float() {
+        std::cout << __PRETTY_FUNCTION__ << '\n';
+    };
+    Float() {
+        std::cout << __PRETTY_FUNCTION__ << '\n';        
+    };
+    Float (long) {
+        std::cout << __PRETTY_FUNCTION__ << '\n';       
+    };
+    explicit Float(double) {
+        std::cout << __PRETTY_FUNCTION__ << '\n';        
+    };
 
-template<auto V>
-bool divEvenC() {
-    constexpr bool c = (V % 2) == 0;
-    static_assert(c);
-    return c / 2;
-    
+    Float (const Float&) {
+        std::cout << __PRETTY_FUNCTION__ << '\n';        
+    };
+    Float& operator=(const Float&) {
+        std::cout << __PRETTY_FUNCTION__ << '\n';
+        return *this;    
+    }
+    Float (Float&&) {
+        std::cout << __PRETTY_FUNCTION__ << '\n';        
+    };
+    Float& operator= (Float&&) {
+        std::cout << __PRETTY_FUNCTION__ << '\n';
+        return *this;        
+    }
+};
+
+auto foo(){
+    Float f;
+    double x = 3.1e10;
+    f = x;
+    return f;
 }
 
 int main() {
-    constexpr auto e1 = divEven(43); // compile-time-error ich called with 43
-    auto e2 = divEven(43); // run-time-error
-    
-//    constexpr auto e3 = divEvenC<43>();
-    auto e4 = divEvenC<42>();
+    foo();
 }

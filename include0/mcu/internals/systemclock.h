@@ -297,7 +297,9 @@ namespace AVR {
         
         static constexpr auto tsd = calculate(frequency);
         static_assert(tsd, "falscher wert für p, die Frequenz ist mit der RTC nicht darstellbar!");
-        static constexpr auto exact_intervall = duration_cast<milliseconds>(uint16_t(1) / tsd.f);
+        static_assert(tsd.f < External::Units::hertz{32768}, "Frequenz zu hoch");
+//        static constexpr auto exact_intervall = duration_cast<milliseconds>(uint16_t(1) / tsd.f);
+        static constexpr auto exact_intervall = uint16_t(1) / tsd.f;
         
         static_assert(exact_intervall.value > 0, "no valid intervall");
         
@@ -377,9 +379,10 @@ namespace AVR {
         }
         
         static constexpr auto tsd = calculate(frequency);
-        static_assert(tsd, "falscher wert für p, die Frequenz ist mit der RTC nicht darstellbar!");
+        static_assert(tsd, "falscher wert für p, die Frequenz ist mit der PIT nicht darstellbar!");
         static_assert(tsd.f < External::Units::hertz{32768}, "Frequenz zu hoch");
-        static constexpr auto exact_intervall = duration_cast<milliseconds>(uint16_t{1} / tsd.f);
+//        static constexpr auto exact_intervall = duration_cast<milliseconds>(uint16_t{1} / tsd.f);
+        static constexpr auto exact_intervall = uint16_t(1) / tsd.f;
         
         static_assert(exact_intervall.value > 0, "no valid intervall");
         

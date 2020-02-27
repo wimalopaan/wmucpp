@@ -222,6 +222,7 @@ boards/curiosity/test11.cc
 boards/curiosity/test12.cc
 boards/curiosity/test20.cc
 boards/curiosity/test21.cc
+boards/curiosity/test30.cc
 boards/curiosity/test90.cc
 boards/doorbell/Makefile
 boards/doorbell/test00.cc
@@ -262,6 +263,10 @@ boards/ppmmatrix/test01.cc
 boards/ppmmatrix/test02.cc
 boards/ppmmatrix/test03.cc
 boards/ppmmatrix/test04.cc
+boards/rcactor/Makefile
+boards/rcactor/test00.cc
+boards/rcsensor/Makefile
+boards/rcsensor/test00.cc
 boards/rcsensorled/test100.cc
 boards/rcsensorled03/oledtest.cc
 boards/rcsensorled03/test16.cc
@@ -388,6 +393,7 @@ doc0/bm00/bm01.cc
 doc0/bm00/bm01a.c
 doc0/bm00/bm02.cc
 doc0/bm00/bm03.cc
+doc0/bm00/bm09.c
 doc0/bm00/bm10.cc
 doc0/bm00/bm11.cc
 doc0/bm00/bm12.cc
@@ -441,7 +447,10 @@ doc0/bm10/bm02.cc
 doc0/bm11/Makefile
 doc0/bm11/bm00.c
 doc0/bm11/bm01.cc
+doc0/bm11/bm01.cc
+doc0/bm11/bm02.c
 doc0/bm11/bm10.cc
+doc0/bm11/bm20.cc
 example/externals/buttonmacro.c
 example/externals/buttonvertical.cc
 example/externals/isr.c
@@ -467,8 +476,14 @@ host/hott/test01.cc
 host/hott/test02.cc
 host/hott/test03.cc
 host/hott/uart01.cc
+host/local.h
+host/local_concepts.h
+host/local_types.h
+host/music/Makefile
+host/music/test01.cc
 host/test02a.cc
 host/test04b.c
+host/test08.cc
 host/test100.cc
 host/test100.cc
 host/test200.c
@@ -533,6 +548,7 @@ include0/etl/algorithm.h
 include0/etl/bitfield.h
 include0/etl/char.h
 include0/etl/concepts.h
+include0/etl/constant.h
 include0/etl/control.h
 include0/etl/converter.h
 include0/etl/fifo.h
@@ -542,11 +558,13 @@ include0/etl/format.h
 include0/etl/meta.h
 include0/etl/outfwd.h
 include0/etl/output.h
+include0/etl/pointer.h
 include0/etl/print.h
 include0/etl/ranged.h
 include0/etl/rational.h
 include0/etl/scoped.h
 include0/etl/span.h
+include0/etl/stack.h
 include0/etl/stringbuffer.h
 include0/etl/sweep.h
 include0/etl/trace.h
@@ -570,12 +588,14 @@ include0/external/hott/sensorprotocollbuffer.h
 include0/external/hott/sensortextprotocollbuffer.h
 include0/external/hott/sumdprotocoll.h
 include0/external/hott/sumdprotocolladapter.h
+include0/external/ibus/ibus.h
 include0/external/onewire/onewire.h
 include0/external/solutions/apa102.h
 include0/external/solutions/blinker.h
 include0/external/solutions/button.h
 include0/external/solutions/button_v.h
 include0/external/solutions/color.h
+include0/external/solutions/debug/logic_analyzer.h
 include0/external/solutions/ds18b20.h
 include0/external/solutions/gps.h
 include0/external/solutions/ifx007.h
@@ -602,6 +622,7 @@ include0/mcu/common/components/ccl2.h
 include0/mcu/common/components/ccl4.h
 include0/mcu/common/components/clock.h
 include0/mcu/common/components/cpu.h
+include0/mcu/common/components/dac.h
 include0/mcu/common/components/event0.h
 include0/mcu/common/components/event1.h
 include0/mcu/common/components/port0.h
@@ -701,6 +722,7 @@ include0/std/tuple
 include0/std/type_traits
 include0/std/utility
 include0/std/variant
+include0/std/vol_access
 license.txt
 megaxxpb.txt
 projekte.txt

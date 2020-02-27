@@ -1,9 +1,11 @@
 #pragma once
 
 #include <type_traits>
+#include <array>
 
 #include "concepts.h"
 #include "meta.h"
+#include "algorithm.h"
 
 namespace etl {
     template<etl::Concepts::Unsigned T = size_t>
@@ -56,10 +58,17 @@ namespace etl {
         }();
         static_assert(!overlap, "Bits must not overlap");
 
-        template<auto N>        
+        template<auto N = 0>        
         inline constexpr std::byte byte() const {
             return etl::nth_byte<N>(data);
         }
+        
+        template<typename B>
+        inline constexpr void set(std::byte b) {
+            static_assert(Meta::contains_v<Meta::List<BB...>, B>);
+            data = (data & ~(B::mask << B::position)) | ((b & B::mask) << B::position);
+        }
+        
     private:
         Underlying data;
     };

@@ -61,9 +61,7 @@ namespace AVR {
         inline static value_type value() {
             return *mcu_tcb()->ccmp;
         }
-
     };
-
     
     template<AVR::Concepts::ComponentNumber CNumber, AVR::Concepts::AtMega_X MCU>
     struct Capture<CNumber, MCU> : TimerBase16Bit<CNumber::value, MCU>{

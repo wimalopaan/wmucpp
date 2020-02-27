@@ -163,4 +163,20 @@ uint8_t testQ() {
     return x1.test1(x2); // immer Aliasing
 }
 
+struct X1 {
+//    operator int() const {return k;}
+//    private:
+    int k;
+};
+
+int fn(const X1& x, int& p) {
+    int i = x.k;
+    p = 2;
+    return i + x.k;
+}
+
+int g() {
+    X1 x{};
+    return fn(x, x.k);
+}
 int main() {}

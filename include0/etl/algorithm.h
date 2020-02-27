@@ -26,6 +26,8 @@
 #include "meta.h"
 #include "types.h"
 
+// todo: std::size() not constexpr
+
 namespace etl {
     template<typename T>
     struct Intervall {
@@ -171,8 +173,10 @@ namespace etl {
     
     template<auto... II, typename A, typename B>
     inline static constexpr bool compareElements(const A& a, const B& b) {
-        static_assert(((II < std::size(a)) && ...));
-        static_assert(((II < std::size(b)) && ...));
+//        static_assert(((II < std::size(a)) && ...));
+//        static_assert(((II < std::size(b)) && ...));
+        static_assert(((II < a.size()) && ...));
+        static_assert(((II < b.size()) && ...));
         return ((a[II] == b[II]) && ...);
     }
     
@@ -187,20 +191,22 @@ namespace etl {
         return detail::compareFirstN(a, b, std::make_index_sequence<N>{});
     }
     
-    template<auto... II, typename A, etl::Concepts::Container B>
-    inline static constexpr void copyElements(A& dest, const B& src) {
-        static_assert(((II < std::size(dest)) && ...));
-        static_assert(((II < std::size(src)) && ...));
-        ((dest[II] = typename A::value_type(src[II])),...);
-    }
+//    template<auto... II, typename A, etl::Concepts::Container B>
+//    inline static constexpr void copyElements(A& dest, const B& src) {
+////        static_assert(((II < std::size(dest)) && ...));
+////        static_assert(((II < std::size(src)) && ...));
+//        static_assert(((II < dest.size()) && ...));
+//        static_assert(((II < src.size()) && ...));
+//        ((dest[II] = typename A::value_type(src[II])),...);
+//    }
     
     namespace detail {
         template<typename A, etl::Concepts::Container B, auto... II>
         inline static constexpr void copyElements(A& a, const B& b, std::index_sequence<II...>) {
-//            static_assert(((II < std::size(a)) && ...));
+//           static_assert(((II < std::size(a)) && ...));
 //            static_assert(((II < std::size(b)) && ...));
-//            ((a[II] = typename A::value_type(b[II])),...);
-            copyElements<II...>(a, b);
+            ((a[II] = typename A::value_type(b[II])),...);
+//            copyElements<II...>(a, b);
         }
         template<typename A, typename... BB, auto... II>
         inline static constexpr void copyElements(A& a, std::index_sequence<II...>, BB... bb) {
@@ -223,10 +229,12 @@ namespace etl {
         return detail::contains(c, item, std::make_index_sequence<c.size()>{});   
     }
     
-    template<typename A, etl::Concepts::Container B>
+    template<etl::Concepts::Container A, etl::Concepts::Container B>
     constexpr void copy(A& dest, const B& src) {
-        static_assert(std::size(dest) >= std::size(src));
-        detail::copyElements(dest, src, std::make_index_sequence<std::size(src)>{});
+        static_assert(dest.size() >= src.size());
+//                static_assert(std::size(dest) >= std::size(src));
+        detail::copyElements(dest, src, std::make_index_sequence<src.size()>{});
+//        detail::copyElements(dest, src, std::make_index_sequence<std::size(src)>{});
     }
     
     template<typename A, typename... BB>
@@ -249,11 +257,13 @@ namespace etl {
     
     template<etl::Concepts::Container C>
     constexpr void fill(C& c, typename C::value_type v) {
-        detail::fill_impl<0>(c, v, std::make_index_sequence<std::size(c)>{});
+        detail::fill_impl<0>(c, v, std::make_index_sequence<c.size()>{});
+//        detail::fill_impl<0>(c, v, std::make_index_sequence<std::size(c)>{});
     }
     template<etl::Concepts::Container C>
     constexpr void fill(C&& c, typename C::value_type v) {
-        detail::fill_impl<0>(c, v, std::make_index_sequence<std::size(c)>{});
+        detail::fill_impl<0>(c, v, std::make_index_sequence<c.size()>{});
+//        detail::fill_impl<0>(c, v, std::make_index_sequence<std::size(c)>{});
     }
     
     template<auto offset, etl::Concepts::Container C>
@@ -274,7 +284,8 @@ namespace etl {
     }
     template<etl::Concepts::Container C, typename Callable>
     constexpr void apply(C&& c, Callable f) {
-        detail::apply_impl(c, f, std::make_index_sequence<std::size(c)>{});
+        detail::apply_impl(c, f, std::make_index_sequence<c.size()>{});
+//        detail::apply_impl(c, f, std::make_index_sequence<std::size(c)>{});
     }
     
     
@@ -417,6 +428,6 @@ namespace std {
     
     template<>
     inline constexpr bool compare<Nibble::Upper>(std::byte a, std::byte b) {
-        return (a & 0xf0_B) == (b & 0xf0_B);
+        return (a & std::byte{0xf0}) == (b & std::byte{0xf0});
     }
 }

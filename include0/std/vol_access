@@ -1,0 +1,16 @@
+#pragma once
+namespace std {
+    namespace experimental {
+
+        template<typename T>
+        T volatile_load(const volatile T* p) {
+            return *p;
+        }
+        
+        template<typename T>
+        void volatile_store(volatile T* p, T v) {
+            *p = v;
+        }
+        
+    } // namespace experimental
+} // namespace std

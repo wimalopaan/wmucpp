@@ -54,6 +54,7 @@ namespace AVR {
         using VPort = AVR::Series1::VPort;
         using Portmux = AVR::Series1::Portmux;
         using Ccl = AVR::Series1::Ccl;
+        using Dac = AVR::Series1::Dac;
 
         using SigRow = AVR::Series0::SigRow;
     };
@@ -71,7 +72,7 @@ namespace AVR {
     template<> struct AVR::Component::Count<ATTiny1614::Ccl> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<ATTiny1614::Adc> : std::integral_constant<uint8_t, 2> {};
     template<> struct AVR::Component::Count<ATTiny1614::Spi> : std::integral_constant<uint8_t, 1> {};
-
+    template<> struct AVR::Component::Count<ATTiny1614::Dac> : std::integral_constant<uint8_t, 3> {};
     
     template<> struct ATTiny1614::VPort::Address<A> {
         inline static constexpr uintptr_t value = 0x0000;
@@ -92,6 +93,16 @@ namespace AVR {
         inline static constexpr uintptr_t value = 0x0014;
     };
     
+    template<> struct ATTiny1614::Dac::Address<0> {
+        inline static constexpr uintptr_t value = 0x06a0;
+    };
+    template<> struct ATTiny1614::Dac::Address<1> {
+        inline static constexpr uintptr_t value = 0x06a8;
+    };
+    template<> struct ATTiny1614::Dac::Address<2> {
+        inline static constexpr uintptr_t value = 0x06b0;
+    };
+
     template<> struct ATTiny1614::Spi::Address<0> {
         inline static constexpr uintptr_t value = 0x0820;
     };

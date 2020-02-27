@@ -88,7 +88,7 @@ namespace etl {
         }
         
         inline static constexpr FixedPoint fromRaw(const value_type raw) {
-            return FixedPoint{raw};
+            return FixedPoint{raw, Internal{}};
         }
 
         inline constexpr unsigned_type integerAbs() const {

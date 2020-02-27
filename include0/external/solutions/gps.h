@@ -46,7 +46,7 @@ namespace External::GPS {
     };
     
     struct VTG {
-        inline static constexpr const char prefix[] = "VTG";
+        inline static constexpr auto prefix = "VTG"_pgm;
         inline static void process(std::byte b, uint8_t index, uint8_t field) {
             if (field == SpeedFieldNumber) {
                 if (index < std::size(speed)) {
@@ -62,7 +62,7 @@ namespace External::GPS {
         inline static std::array<std::byte, Sentence::DecimalMaxWidth> speed;
     };
     struct RMC {
-        inline static constexpr const char prefix[] = "RMC";
+        inline static constexpr auto prefix = "RMC"_pgm;
         inline static void process(std::byte b, uint8_t index, uint8_t field) {
             if (field == TimeFieldNumber) {
                 if (index < std::size(time)) {
@@ -130,7 +130,7 @@ namespace External::GPS {
                 }
                 else {
                     if (index < std::size(sentenceType)) {
-                        sentenceType[index++] = (char)b;
+                        sentenceType[index++] = etl::Char{b};
                     }
                 }
                 break;
@@ -170,6 +170,6 @@ namespace External::GPS {
         inline static uint8_t index = 0;
         inline static uint8_t field = 0;
         inline static uint8_t decoder = std::numeric_limits<uint8_t>::max();
-        inline static std::array<char, Sentence::SentenceTypeMaxWidth> sentenceType;
+        inline static std::array<etl::Char, Sentence::SentenceTypeMaxWidth> sentenceType;
     };
 }

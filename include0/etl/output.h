@@ -4,6 +4,7 @@
 
 #include "concepts.h"
 #include "format.h"
+#include "pointer.h"
 
 namespace etl {
     using namespace std::literals::chrono;

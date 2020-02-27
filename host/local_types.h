@@ -1,9 +1,11 @@
 #pragma once
 
+#pragma once
+
 #include <cstdint>
 #include <algorithm>
 #include <array>
-#include "etl/concepts.h"
+//#include "local_concepts.h"
 
 namespace etl {
     template<Unsigned T = uint8_t, T LowerBound = 0, T UpperBound = std::numeric_limits<T>::max()>
@@ -24,9 +26,6 @@ namespace etl {
     
     template<typename A>
     using index_type_t = detail::index_type<A>::type;
-    
-    template<bool B>
-    using RangeCheck = std::integral_constant<bool, B>;
     
     template<Unsigned T, T LowerBound, T UpperBound>
     class uint_ranged final {

@@ -43,3 +43,8 @@ boards/ledstripe
 boards/doorbell
 doc0/bm10
 doc0/bm11
+host/music
+boards/rcsensor
+boards/rcactor
+include0/external/ibus
+include0/external/solutions/debug

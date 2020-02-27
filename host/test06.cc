@@ -1,62 +1,65 @@
-/*
- * WMuCpp - Bare Metal C++ 
- * Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- 
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+#include <cstdlib>
+#include <utility>
 
-#include <iostream>
-#include <vector>
-#include <list>
-#include <memory>
-
-struct elem_t {
-    char a[10000]; // stellvertretend für einen etwas größere Datensatz,
-    // hier vereinfscht als Array dargestellt
-};
-
-template<size_t Size = 10000>
-class A {
-public:
-    A() = default;
-    A(const A&) = delete;
-    A(A&&) = default;
-    void swap(A& o) {
-        using std::swap;
-        swap(mData, o.mData);
+namespace  {
+    using namespace std;
+    
+    int g(int v);
+    int h(int v);
+    bool check();
+    
+    int foo() {
+        int v1; // non-const
+        int v2;
+        
+        if (check()) {
+            v1 = g(1);
+            v2 = g(2);
+        }
+        else {
+            v1 = h(1);
+            v2 = h(2);
+        }
+        
+        v1 = 42; // ups
+        
+        return v1 + v2;
     }
-private:
-    std::unique_ptr<uint8_t[]> mData = std::make_unique<uint8_t[]>(Size);
-};
+    int bar() {
+        const auto [v1, v2] {[]{
+            return check() ? pair{g(1), g(2)} : pair{h(1), h(2)};
+        }()};
+        
+//        v1 = 42;
+        
+        return v1 + v2;            
+    }
+    int bar2() {
+        const auto v1v2_initializer = []{return check() ? pair{g(1), g(2)} : pair{h(1), h(2)};};
 
-#ifdef USE_LIST
-std::list<A<>> data;
-#else
-std::vector<std::string> data;
-#endif
+        const auto [v1, v2] {v1v2_initializer()};
+        
+//        v1 = 42;
+        
+        return v1 + v2;            
+    }
+}
 
 int main() {
-    for(int i=0;; i++) {
-        try {
-            std::string elem;
-            elem.reserve(10000);
-            data.push_back(std::move(elem));
-        }
-        catch (const std::bad_alloc&)
-        {
-            std::cout << i << " sucessful push_backs\n";
-            break;
-        }
+    foo();
+    bar();
+}
+
+namespace  {
+    using namespace std;
+    
+    int g(const int v) {
+        return {rand() + 2 * v};
+    }
+    int h(const int v) {
+        return {rand() + v};
+    }
+    bool check() {
+        return {(rand() % 2) == 0};
     }
 }

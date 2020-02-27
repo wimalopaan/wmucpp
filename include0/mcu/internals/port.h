@@ -103,6 +103,13 @@ namespace AVR {
         static inline volatile std::byte& intflags() {
             return *getBaseAddr<vport_type , Name>()->intflags;
         }
+        static inline void toggle(const std::byte b) {
+            *getBaseAddr<mcuport_type , Name>()->outtgl = b;
+        }
+        template<std::byte b>
+        static inline void toggle() {
+            *getBaseAddr<mcuport_type , Name>()->outtgl = b;
+        }
     };
     
     template<AVR::Concepts::Letter Name, AVR::Concepts::AtMega MCU>
@@ -112,7 +119,7 @@ namespace AVR {
         using name_type = Name;
 
         Port() = delete;
-        static inline void set(std::byte v) {
+        static inline void set(const std::byte v) {
             *getBaseAddr<mcuport_type , Name>()->out = v;
         }
         template<std::byte V>
@@ -122,7 +129,7 @@ namespace AVR {
         static inline volatile std::byte& get() {
             return *getBaseAddr<mcuport_type , Name>()->out;
         }
-        static inline void dir(std::byte v) {
+        static inline void dir(const std::byte v) {
             *getBaseAddr<mcuport_type , Name>()->ddr = v;
         }
         template<uint8_t V>
@@ -141,7 +148,7 @@ namespace AVR {
             static_assert(AVR::isSBICBICapable<mcuport_type , Name>(), "Port not sbi/cbi capable");
             *getBaseAddr<mcuport_type , Name>()->in |= std::byte{(1 << Bit)}; // AVR specific toggle mechanism: write "1" to PortInputRegister
         }
-        static inline void toggle(std::byte v) {
+        static inline void toggle(const std::byte v) {
             *getBaseAddr<mcuport_type , Name>()->in = v;
         }
         static inline constexpr uintptr_t address() {
@@ -230,9 +237,7 @@ namespace AVR {
         static_assert(Meta::size<pinlist>::value <= 8, "too much pins in PinSet");
         static constexpr uint8_t size = Meta::size<pinlist>::value;
         static constexpr auto pinMasks = gen_type::pinMasks;
-        static constexpr std::byte setMask = []{
-                return (PPs::pinMask | ... | std::byte{0});
-        }();
+        static constexpr std::byte setMask = (PPs::pinMask | ... | std::byte{0});
         
         static_assert(Meta::is_set<pinlist>::value, "must use different pins in set"); // all Pins are different
         
@@ -307,18 +312,18 @@ namespace AVR {
         }
 #endif
         typedef etl::bitsN_t<size> bits_type;
-        static inline void set(bits_type value) {
+        static inline void set(const bits_type value) {
             auto v = (port_type::get() & setMask) ^ table.valueBits[static_cast<typename bits_type::value_type>(value)]; // <> race-free for non-overlapping PinSets
             port_type::toggle(v);
         }
-        static inline void set(etl::uintN_t<size> value) {
-            static_assert(std::numeric_limits<etl::uintN_t<size>>::max() < table.valueBits.size);
+        static inline void set(const etl::uintN_t<size> value) {
+            static_assert(std::numeric_limits<etl::uintN_t<size>>::max() < table.valueBits.size());
             auto v = (port_type::get() & setMask) ^ table.valueBits[value];
             port_type::toggle(v);
         }
         template<uint8_t V>
         static inline void set() {
-            static_assert(V < table.valueBits.size, "pattern not possible");
+            static_assert(V < table.valueBits.size(), "pattern not possible");
             auto v = (port_type::get() & setMask) ^ table.valueBits[V];
             port_type::toggle(v);
         }
@@ -346,10 +351,17 @@ namespace AVR {
         };
     }
     
-    template<typename... Pins, AVR::Concepts::At01Series MCU>
+    template<AVR::Concepts::Pin... Pins, AVR::Concepts::At01Series MCU>
     requires Meta::all_same_front_v<Meta::transform_type<detail::getPort, Meta::List<Pins...>>>
     struct PinGroup<Meta::List<Pins...>, MCU> {
         using pin_list = Meta::List<Pins...>;
+
+        static_assert(Meta::size<pin_list>::value <= 8, "too much pins in PinSet");
+        static_assert(Meta::is_set<pin_list>::value, "must use different pins in set"); // all Pins are different
+        
+        
+        using table_type = detail::PinSet::Table<false, Pins...>;
+        static inline constexpr table_type table{};
         
         inline static constexpr std::byte group_value = (Pins::pinMask | ...);
         
@@ -371,7 +383,7 @@ namespace AVR {
         static inline void attributes() {
             (Pins::template attributes<AList>(),...);
         }
-        static inline void onInterrupt(auto f) {
+        static inline void onInterrupt(const auto f) {
             f();
             port::intflags() = group_value;
         }
@@ -380,6 +392,12 @@ namespace AVR {
             if constexpr(std::is_same_v<Dir, AVR::Output>) {
                 port::dirset() = group_value;
             }
+        }
+        template<auto V>
+        static inline void set() {
+            static_assert(V < table.valueBits.size(), "pattern not possible");
+            auto v = (port::get() & group_value) ^ table.valueBits[V];
+            port::toggle(v);
         }
     };
     

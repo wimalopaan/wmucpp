@@ -112,7 +112,7 @@ namespace External {
             
             using index_type = etl::uint_ranged_circular<uint8_t, 0, NumberOfChannels - 1>;     
             
-            static_assert(NumberOfChannels <= 14, "too much channels");
+            static_assert(NumberOfChannels <= 16, "too much channels");
             static_assert(NumberOfChannels >  0, "use at least one channel");
             static_assert(Meta::is_set_v<typename Meta::NList<Channels...>::list_type>, "the channels must be different");
             

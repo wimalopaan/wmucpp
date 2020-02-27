@@ -38,6 +38,7 @@
 #include "components/sleep.h"
 #include "components/sigrow.h"
 #include "components/spi.h"
+#include "components/dac.h"
 
 #include "components/bitmask_operators1.h"
 

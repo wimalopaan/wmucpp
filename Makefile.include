@@ -175,6 +175,9 @@ AVRDUDE = avrdude
 %.sym: %.elf
 	$(NM) -n $< > $@
 
+%: %.cc
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS)  $(shell pwd)/$< --output $@ $(LDFLAGS) $(LOADLIBES)
+
 %.elf: %.cc
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS)  $(shell pwd)/$< --output $@ $(LDFLAGS) $(LOADLIBES)
 

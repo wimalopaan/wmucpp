@@ -31,7 +31,11 @@ namespace etl {
     public:
         typedef typename std::conditional_t<(Capacity < 256), uint8_t, uint16_t> size_type;
         typedef typename std::conditional_t<(Capacity < 128), int8_t, int16_t> signed_size_type;
-        typedef T value_type;
+        
+        using value_type = T;
+        using reference = T&;
+        using const_reference = const T&;
+        
         inline static constexpr const size_type capacity = Capacity;
         
         static_assert(Capacity <= std::numeric_limits<uint16_t>::max());

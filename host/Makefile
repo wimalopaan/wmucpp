@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-subdirs += hott
+subdirs += hott music
 
 #test23a: CXXFLAGS = -g -std=c++17 -Wall -Wextra -fPIC -I../include 
 #test23a: CXX = clang++
@@ -29,7 +29,9 @@ targets += test01
 targets += test02 
 targets += test04
 targets += test04b
-#targets += test07
+targets += test06
+targets += test07
+targets += test08
 ##targets += test10
 #targets += test11
 #targets += test12
@@ -63,13 +65,14 @@ targets += test86
 targets += test87
 targets += test90
 targets += test91
-#targets += test92
+targets += test92
 targets += test93
 #targets += test98
 targets += test99
-#targets += test100
+targets += test100
 targets += test200
 targets += test201
+targets += test210
 
 -include ../Makefile.include
 
@@ -80,7 +83,7 @@ CC = /usr/local/bin/gcc
 #LDFLAGS = -lasan -lubsan -lpthread -lstdc++ 
 LDFLAGS = -lpthread -lstdc++ 
 CXXFLAGS = -g -std=c++2a -fconcepts -ftemplate-depth=2048 -fno-threadsafe-statics # -fsanitize=address -fsanitize=undefined 
-CXXFLAGS += -Wall -Wextra -fPIC
-#CXXFLAGS += -I../include0
-
+CXXFLAGS += -O3
+CXXFLAGS += -Wall -Wextra
+CXXFLAGS += -I../include0/etl
 MCUFLAGS =

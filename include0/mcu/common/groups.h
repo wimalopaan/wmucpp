@@ -13,7 +13,6 @@ namespace AVR {
         struct ChannelPinMapper<std::integral_constant<decltype(V), V>, MMCU> {
             using pin_type = AVR::Pin<AVR::Port<AVR::D>, V>;  
         };
-
         template<AVR::Concepts::AtMega0 MMCU>
         struct ChannelPinMapper<std::integral_constant<decltype(8), 8>, MMCU> {
             using pin_type = AVR::Pin<AVR::Port<AVR::E>, 0>;  

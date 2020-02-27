@@ -37,5 +37,3 @@ int main() {
         r2 = sum.integer();
     }    
 }
-
-

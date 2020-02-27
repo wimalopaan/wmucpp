@@ -6,7 +6,8 @@
 
 //#define NDEBUG
 
-#define USE_HOTT
+//#define USE_HOTT
+#define USE_IBUS
 
 #include <mcu/avr.h>
 #include <mcu/internals/adc.h>
@@ -27,6 +28,7 @@
 #include <external/hott/experimental/sensor.h>
 #include <external/hott/experimental/adapter.h>
 #include <external/hott/menu.h>
+#include <external/ibus/ibus.h>
 #include <external/units/music.h>
 #include <external/solutions/tick.h>
 #include <external/solutions/button.h>
@@ -41,7 +43,7 @@ using namespace External::Units::literals;
 
 namespace Parameter {
     constexpr uint8_t menuLines = 8;
-    constexpr auto fRtc = 500_Hz;
+    constexpr auto fRtc = 2000_Hz;
 }
 
 namespace Storage {
@@ -96,8 +98,21 @@ using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::Default>;
 
 using sleep = Sleep<>;
 
+#ifdef USE_IBUS
+struct VoltageProvider {
+    
+};
+struct CurrentProvider {
+    
+};
+using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, Meta::List<VoltageProvider, CurrentProvider>, systemTimer>;
+#endif
+
+#ifdef USE_HOTT
 using sensor = Hott::Experimental::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<19200>, Hott::EscMsg, Hott::TextMsg, systemTimer>;
-#ifndef USE_HOTT
+#endif
+
+#if !(defined(USE_IBUS) || defined(USE_HOTT))
 using terminalDevice = AVR::Usart<usart0Position, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>>;
 using terminal = etl::basic_ostream<terminalDevice>;
 #endif
@@ -109,6 +124,7 @@ using currentConverter = Hott::Units::Converter<adc, Hott::Units::current_t, std
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition>>;
 
+#ifdef USE_HOTT
 class RCMenu final : public Hott::Menu<Parameter::menuLines> {
 public:
     RCMenu() : Menu(this, "OnOff 1.0"_pgm, &mSoft, &mTimeout, &mType) {}
@@ -143,7 +159,6 @@ private:
     inline static Hott::Menu<PA::menuLines>* mMenu = &mTopMenu;
 };
 
-#ifdef USE_HOTT
 using menu = HottMenu<sensor, RCMenu>;
 #endif
 
@@ -401,8 +416,9 @@ struct Measurements {
         c += ((uint32_t)last_current.value * 2); // 200ms
     }
 private:
+#ifdef USE_HOTT
     inline static auto sensorData = Hott::Experimental::Adapter<sensor::binaryMessage_type>(sensor::data());
-
+#endif
     inline static Hott::Units::battery_voltage_t voltage_min{std::numeric_limits<Hott::Units::battery_voltage_t::value_type>::max()};
     inline static Hott::Units::battery_voltage_t last_voltage;
     inline static Hott::Units::current_t current_max;
@@ -414,29 +430,35 @@ private:
     static inline void part0() {
         auto v = battVoltageConverter::convert(adcController::value(adcController::index_type{0}));
         last_voltage = v;
+#ifdef USE_HOTT
         sensorData.voltage(v);
         if (v > Hott::Units::battery_voltage_t{20}) {
             voltage_min = std::min(voltage_min, v);
             sensorData.voltageMin(voltage_min);
         }
-        
+#endif
     }
     static inline void part1() {
         auto c = currentConverter::convert(adcController::value(adcController::index_type{1}));
         last_current = c;
+#ifdef USE_HOTT
         sensorData.current(c);
         current_max = std::max(current_max, c);
         sensorData.currentMax(current_max);
-        
+#endif        
     }
     static inline void part2() {
         auto t = sigrow::adcValueToTemperature(adcController::value(adcController::index_type{2}));
+#ifdef USE_HOTT
         sensorData.temp(t);
         temp_max = std::max(temp_max, t);
         sensorData.tempMax(temp_max);
+#endif
     }
     static inline void part3() {
+#ifdef USE_HOTT
         sensorData.capRaw(c / 3600);
+#endif
     }
 };
 
@@ -481,6 +503,8 @@ int main() {
 #ifdef USE_HOTT
     sensor::init();
     menu::init();
+#elif defined(USE_IBUS)
+    ibus::periodic();
 #else
     terminalDevice::init<AVR::BaudRate<9600>>();
 #endif
@@ -493,18 +517,24 @@ int main() {
     {
         buttonPin::resetInt();
         etl::Scoped<etl::EnableInterrupt<>> ei;
-#ifndef USE_HOTT
+#if !(defined(USE_IBUS) || defined(USE_HOTT))
         etl::outl<terminal>("*"_pgm);
 #endif
         while(true) {
-    #ifdef USE_HOTT
+#ifdef USE_HOTT
             sensor::periodic();
             menu::periodic();
-    #else
+#endif
+#ifdef USE_IBUS
+            ibus::periodic();
+#endif
+#if !(defined(USE_IBUS) || defined(USE_HOTT))
             terminalDevice::periodic();
-    #endif
+#endif
+            bool eepSave{};
             eeprom::saveIfNeeded([&]{
                 fsm::load();                
+                eepSave = true;
             });
             
             adcController::periodic();
@@ -524,7 +554,7 @@ int main() {
 #endif
                 alarmTimer::periodic([&](const auto& t){
                     if (periodicTimer == t) {
-#ifndef USE_HOTT
+#if !(defined(USE_IBUS) || defined(USE_HOTT))
                         if (eepSave) {
                             etl::outl<terminal>("es"_pgm);
                             eepSave = false;
@@ -555,7 +585,7 @@ ISR(PORTA_PORT_vect) {
 
 #ifndef NDEBUG
 [[noreturn]] inline void assertOutput(const AVR::Pgm::StringView& expr [[maybe_unused]], const AVR::Pgm::StringView& file[[maybe_unused]], unsigned int line [[maybe_unused]]) noexcept {
-#ifndef USE_HOTT
+#if !(defined(USE_IBUS) || defined(USE_HOTT))
     etl::outl<terminal>("Assertion failed: "_pgm, expr, etl::Char{','}, file, etl::Char{','}, line);
 #endif
     while(true) {
