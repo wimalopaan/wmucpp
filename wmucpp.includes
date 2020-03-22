@@ -48,3 +48,7 @@ boards/rcsensor
 boards/rcactor
 include0/external/ibus
 include0/external/solutions/debug
+clang
+clang/bm00
+.
+gcc/base/lib/gcc/avr/10.0.1/device-specs

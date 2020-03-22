@@ -547,8 +547,8 @@ namespace Meta {
     inline static constexpr auto value_or_v = detail::value_or_impl<List>::value;
     
     template<concepts::List List, typename I, typename C>
-    inline auto visitAt(I index, const C& callable) {
-        return detail::visit<List>::at(index, callable);
+    inline void constexpr visitAt(I index, const C& callable) {
+        detail::visit<List>::at(index, callable);
     }
 
     template<concepts::List List, typename C>

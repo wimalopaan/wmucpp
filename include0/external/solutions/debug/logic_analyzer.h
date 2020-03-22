@@ -15,9 +15,14 @@ namespace External::Debug {
         }        
         template<auto V>
         inline static constexpr void set() {
-            Trigger::off();
-            PG::template set<V>();
             Trigger::on();
+            PG::template set<V>();
+            Trigger::off();
+        }
+        inline static constexpr void set(auto v) {
+            Trigger::on();
+            PG::set(std::byte(v));
+            Trigger::off();
         }
     };
 }

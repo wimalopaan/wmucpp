@@ -34,6 +34,8 @@
 #include <external/bluetooth/qtrobo.h>
 #include <external/hal/devicemapper.h>
 
+#include <external/ibus/ibus.h>
+
 #ifdef MEM
 # include "util/memory.h"
 #endif
@@ -96,15 +98,15 @@ struct AsciiHandler;
 struct BinaryHandler;
 struct BCastHandler;
 using sensorPA = Hott::SensorProtocollAdapter<0, Hott::gam_code, AsciiHandler, BinaryHandler, BCastHandler>;
-using sensorUsart = AVR::Usart<AVR::Component::Uart<0>, sensorPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>> ;
+using sensorUsart = AVR::Usart<AVR::Component::Usart<0>, sensorPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>> ;
 using roboremoPA = External::RoboRemo::ProtocollAdapter<0, 16>;
-using btUsart = AVR::Usart<AVR::Component::Uart<0>, roboremoPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>> ;
+using btUsart = AVR::Usart<AVR::Component::Usart<1>, roboremoPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>> ;
 #endif
 
 
 #if defined(SERVOTESTER) || defined(SCHALTMODUL)
 using qtroboPA = External::QtRobo::ProtocollAdapter<0>;
-using qtroboUsart = AVR::Usart<AVR::Component::Uart<0>, qtroboPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<512>> ;
+using qtroboUsart = AVR::Usart<AVR::Component::Usart<0>, qtroboPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<512>> ;
 #endif
 
 using sensorData = Hott::GamProtocollBuffer<0>;
@@ -115,8 +117,17 @@ using crWriterSensorBinary = ConstanteRateWriter<sensorData, sensorUsart>;
 using crWriterSensorText = ConstanteRateWriter<menuData, sensorUsart>;
 #endif
 
+#ifdef SCHALTMODUL_IBUS
+using terminalDevice = AVR::Usart<AVR::Component::Usart<0>, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<16>, AVR::SendQueueLength<128>>;
+
+using servo_pa = IBus::Servo::ProtocollAdapter<0>;
+using rcUsart = AVR::Usart<AVR::Component::Usart<1>, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
+#endif
+
+#ifdef HOTT
 using sumd = Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>;
-using rcUsart = AVR::Usart<AVR::Component::Timer<1>, sumd, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
+using rcUsart = AVR::Usart<AVR::Component::Usart<1>, sumd, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
+#endif
 
 namespace  {
     using namespace std::literals::chrono;

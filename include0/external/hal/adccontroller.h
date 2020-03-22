@@ -117,6 +117,8 @@ namespace External {
             static_assert(Meta::is_set_v<typename Meta::NList<Channels...>::list_type>, "the channels must be different");
             
             inline static void init() {
+//                ch_list::_;
+//                pin_list::_;
                 []<typename... Pin>(Meta::List<Pin...>) {
                     (Pin::template attributes<Meta::List<AVR::Attributes::DigitalDisable<>>>(), ...);
                     (Pin::template pullup<false>(), ...);

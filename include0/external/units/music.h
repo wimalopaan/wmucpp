@@ -73,18 +73,18 @@ namespace External {
             inline constexpr Note(uint16_t p, uint16_t l) : pitch(p), length(l) {}
         };
         
-        template<typename PWM, typename SizeType = uint8_t>
+        template<typename PWM, typename BT = std::integral_constant<uint16_t, 40>, typename SizeType = uint8_t>
         struct Generator {
             enum class State : uint8_t {Off, SingleNote, Melody, MelodyRepeat};
             
             inline static void init() {
                 PWM::init();
             }
-            inline static void play(const Note<PWM>& note) {
+            inline static void play(const Note<PWM, BT>& note) {
                 set(note);
                 state = State::SingleNote;
             }
-            inline static void play(const AVR::Pgm::ArrayView<Note<PWM>, SizeType>& m, bool repeat = false) {
+            inline static void play(const AVR::Pgm::ArrayView<Note<PWM, BT>, SizeType>& m, bool repeat = false) {
                 melody = m;
                 noteIndex = 0;
                 if (melody) {
@@ -148,7 +148,7 @@ namespace External {
                 }
             }
         private:
-            inline static void set(const Note<PWM>& note) {
+            inline static void set(const Note<PWM, BT>& note) {
                if (note.pitch > 0) {
                    PWM::frequency(note.pitch);
                    PWM::duty(note.pitch / 2);
@@ -159,7 +159,7 @@ namespace External {
                }
                 ticksLeft = note.length;
             }
-            inline static AVR::Pgm::ArrayView<Note<PWM>, SizeType> melody;
+            inline static AVR::Pgm::ArrayView<Note<PWM, BT>, SizeType> melody;
             inline static SizeType noteIndex{0};
             
             inline static State state{State::Off};

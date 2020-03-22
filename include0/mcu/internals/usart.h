@@ -323,6 +323,7 @@ namespace AVR {
         private:
             static inline void isr_impl() {
                 if (const auto c = mSendQueue.pop_front()) {
+                    mcu_usart()->status.template reset<status_t::txc>();
                     *mcu_usart()->txd = *c;
                 }
                 else {
@@ -420,6 +421,9 @@ namespace AVR {
         }
         inline static bool isEmpty() {
             return mSendQueue.empty();
+        }
+        inline static bool isIdle() {
+            return mcu_usart()->status.template isSet<status_t::txc>();
         }
         template<bool enable>
         inline static void rxEnable() {

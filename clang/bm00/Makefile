@@ -17,26 +17,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# 1. Fuses (16MHz, BootLoader)
-# sudo avrdude -p atmega328pb -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P usb -c avrisp2 -U lfuse:w:0xf7:m -U hfuse:w:0xd4:m -U efuse:w:0xff:m
-# 2. Bootloader flached -> booloader/optiboot.txt
-# 
-# sudo avrdude -p atmega328pb -c arduino -b 9600 -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P /dev/ttyUSB2 -U flash:w:test00.elf
+F_OSC = 20000000
 
+MCU = atmega328p
+#MCU = atmega1284p
+#MCU = atmega4809
+#MCU = attiny1614
+#MCU = atxmega32e5
 
-MCU = atmega328pb
-F_OSC = 16000000
+CXXFLAGS += -D__AVR_ATtiny1614__ -D__AVR_DEVICE_NAME__=attiny1614 -D__AVR_DEV_LIB_NAME__=tn1614
 
-subdirs =
+targets += shtml
 
-#targets += test00.elf test00.S
-#targets += test01.elf
-#targets += test02.elf
-#targets += test03.elf
-#targets += test04.elf
+targets += bm00.S bm00.elf
 
-#targets += servotester.elf 
-#targets += schaltmodul.elf 
-targets += schaltmodule_ibus.elf 
+-include ../../Makefile.clang.include
 
--include ../../Makefile.avr0.include

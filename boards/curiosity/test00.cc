@@ -28,6 +28,7 @@ using PortF = Port<F>;
 using led = Pin<PortF, 5>; 
 using pf2 = Pin<PortF, 2>; 
 using pa0 = Pin<PortA, 0>; 
+using pd0 = Pin<Port<D>, 0>; 
 
 using ccp = Cpu::Ccp<>;
 using clock = Clock<>;
@@ -68,13 +69,17 @@ int main() {
     systemTimer::init();
     
     led::template dir<Output>();     
-    pf2::template dir<Output>();     
-    pa0::template dir<Output>();     
+    pd0::template dir<Output>();     
+//    pf2::template dir<Output>();     
+//    pa0::template dir<Output>();     
 
-    const auto periodicTimer = alarmTimer::create(10_ms, External::Hal::AlarmFlags::Periodic);
+    led::high();
+    pd0::high();
+    
+    const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
 
     while(true) {
-        pf2::toggle();
+//        pf2::toggle();
 //        terminalDevice::periodic();
 //        rcUsart::periodic();
         

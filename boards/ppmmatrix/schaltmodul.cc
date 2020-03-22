@@ -70,13 +70,13 @@ struct FSM final {
     inline static void risingEdge() {
         ppmInPin::on();
         etl::uint_ranged_NaN<uint8_t, 0, 100> vv{99};
-        cppm::ppm(0, vv);
+//        cppm::ppm(0, vv);
         toggle0::put(true);
     }
     inline static void fallingEdge() {
         ppmInPin::off();
         etl::uint_ranged_NaN<uint8_t, 0, 100> vv{50};
-        cppm::ppm(0, vv);
+//        cppm::ppm(0, vv);
         toggle0::put(false);
         if (--mEdgeCount == 0) {
             mState = State::Idle;

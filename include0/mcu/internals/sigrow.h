@@ -36,13 +36,27 @@ namespace AVR {
             int8_t offset = (int8_t)*mcu_sigrow()->tempSense1;
             uint8_t gain = (uint8_t)*mcu_sigrow()->tempSense0;
             
-            uint32_t t = v - offset;
+            uint32_t t = v.toInt() - offset;
             t *= gain;
             t += 0x80;
             t >>= 8;
             t -= 273;
             return {uint16_t(t)};
         }
-        
+        template<typename R, uint8_t Offset>
+        static inline constexpr External::Units::celsius<uint16_t, R> adcValueToTemperature(const etl::uint_ranged<uint16_t, 0, 1023>& v) {
+            constexpr uint16_t divider = 256 / R::denom;
+//            std::integral_constant<uint16_t, divider>::_;
+            constexpr uint16_t offset1  = (273 - Offset) * R::denom;
+            int8_t offset = (int8_t)*mcu_sigrow()->tempSense1;
+            uint8_t gain = (uint8_t)*mcu_sigrow()->tempSense0;
+            
+            uint32_t t = v.toInt() - offset;
+            t *= gain;
+            t += 0x80;
+            t /= divider;
+            t -= offset1;
+            return {uint16_t(t)};
+        }
     };
 }

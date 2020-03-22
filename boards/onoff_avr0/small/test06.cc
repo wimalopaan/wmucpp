@@ -1,8 +1,9 @@
 // todo:
-
-// ibus protokoll
+// temperatur-Kalibrierung / Kennlinie
+// ibus protokoll: verbrauchte Kapazität
+// Abbruchtöne länger
 // calibrierung über eeprom (offset / steigung) für spannung / strom
-// hot-t-sensor-type (eeprom)
+// hott-sensor-type (eeprom)
 
 #define NDEBUG
 
@@ -44,6 +45,12 @@ using namespace External::Units::literals;
 namespace Parameter {
     constexpr uint8_t menuLines = 8;
     constexpr auto fRtc = 2000_Hz;
+    
+    constexpr uint16_t R1vd = 10'000;
+    constexpr uint16_t R2vd = 1'000;
+
+    constexpr uint16_t Rc = 1'000;
+    constexpr uint16_t Kc = 16'450;
 }
 
 namespace Storage {
@@ -111,7 +118,8 @@ struct VoltageProvider {
     inline static constexpr auto ibus_type = IBus::Type::type::EXTERNAL_VOLTAGE;
     inline static constexpr void init() {}
     
-    using battVoltageConverter = Hott::Units::Converter<adc, IBus::battery_voltage_t, std::ratio<121,21>>; 
+//    using battVoltageConverter = Hott::Units::Converter<adc, IBus::battery_voltage_t, std::ratio<11000,1000>>; // Voltage divider 10k/1k 
+    using battVoltageConverter = Hott::Units::Converter<adc, IBus::battery_voltage_t, std::ratio<121,21>>; // Voltage divider 10k/1k 
     
     inline static constexpr uint16_t value() {
         return battVoltageConverter::convert(ADC::value(channel)).value;
@@ -126,7 +134,8 @@ struct CurrentProvider {
     static_assert(Channel <= index_t::Upper);
     inline static constexpr auto channel = index_t{Channel};
     inline static constexpr auto ibus_type = IBus::Type::type::BAT_CURR;
-    using currentConverter = Hott::Units::Converter<adc, IBus::current_t, std::ratio<11117,1000>>; // todo: richtiger scale faktor
+//    using currentConverter = Hott::Units::Converter<adc, IBus::current_t, std::ratio<16450,1000>>; // todo: richtiger scale faktor
+    using currentConverter = Hott::Units::Converter<adc, IBus::current_t, std::ratio<10717,1000>>; // todo: richtiger scale faktor
     inline static constexpr void init() {}
     inline static constexpr uint16_t value() {
         return currentConverter::convert(ADC::value(channel)).value;
@@ -144,7 +153,7 @@ struct TempProvider {
     inline static constexpr void init() {
     }
     inline static constexpr uint16_t value() {
-        return sigrow::adcValueToTemperature<std::ratio<1,10>, 40>(ADC::value(channel)).value;
+        return sigrow::adcValueToTemperature<std::ratio<1,10>, 40 - 15>(ADC::value(channel)).value;
     }
 };
 using tempP = TempProvider<adcController, 2>;
@@ -154,6 +163,8 @@ using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, Met
 
 #ifdef USE_HOTT
 using sensor = Hott::Experimental::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<19200>, Hott::EscMsg, Hott::TextMsg, systemTimer>;
+using battVoltageConverter = Hott::Units::Converter<adc, Hott::Units::battery_voltage_t, std::ratio<121,21>>; // todo: richtiger scale faktor
+using currentConverter = Hott::Units::Converter<adc, Hott::Units::current_t, std::ratio<11117,1000>>; // todo: richtiger scale faktor
 #endif
 
 #if !(defined(USE_IBUS) || defined(USE_HOTT))
@@ -161,8 +172,6 @@ using terminalDevice = AVR::Usart<usart0Position, External::Hal::NullProtocollAd
 using terminal = etl::basic_ostream<terminalDevice>;
 #endif
 
-using battVoltageConverter = Hott::Units::Converter<adc, Hott::Units::battery_voltage_t, std::ratio<121,21>>; // todo: richtiger scale faktor
-using currentConverter = Hott::Units::Converter<adc, Hott::Units::current_t, std::ratio<11117,1000>>; // todo: richtiger scale faktor
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition>>;
 
@@ -224,14 +233,16 @@ struct PwmWrapper {
     }
 };
 
+using music_speed = std::integral_constant<uint16_t, 100>;
+
 using tonePwm = PWM::DynamicPwm<tcaPosition>;
 using toneWrapper = PwmWrapper<tonePwm, AVR::PWM::WO<0>>;
-using toneGenerator = External::Music::Generator<toneWrapper>;
+using toneGenerator = External::Music::Generator<toneWrapper, music_speed>;
 
 namespace {
     using namespace External::Music;
     
-    using note = Note<toneWrapper, std::integral_constant<uint16_t, 40>>;
+    using note = Note<toneWrapper, music_speed>;
     
     constexpr note c_ii_0 {Pitch{Letter::c}, Length{Base::doublenote}};
     
@@ -423,6 +434,7 @@ struct FSM {
                 led::blink(led::count_type{4});
                 break;
             case State::FetOn:
+                ibus::init();
                 if (!toneGenerator::busy()) {
                     toneGenerator::play(a_iii_1);
                 }
@@ -450,6 +462,7 @@ private:
 
 using fsm = FSM<systemTimer>;
 
+#ifdef USE_HOTT
 struct Measurements {
     static inline void periodic() {
         etl::circular_call(part0, part1, part2, part3);
@@ -458,9 +471,7 @@ struct Measurements {
         c += ((uint32_t)last_current.value * 2); // 200ms
     }
 private:
-#ifdef USE_HOTT
     inline static auto sensorData = Hott::Experimental::Adapter<sensor::binaryMessage_type>(sensor::data());
-#endif
     inline static Hott::Units::battery_voltage_t voltage_min{std::numeric_limits<Hott::Units::battery_voltage_t::value_type>::max()};
     inline static Hott::Units::battery_voltage_t last_voltage;
     inline static Hott::Units::current_t current_max;
@@ -472,39 +483,32 @@ private:
     static inline void part0() {
         auto v = battVoltageConverter::convert(adcController::value(adcController::index_type{0}));
         last_voltage = v;
-#ifdef USE_HOTT
         sensorData.voltage(v);
         if (v > Hott::Units::battery_voltage_t{20}) {
             voltage_min = std::min(voltage_min, v);
             sensorData.voltageMin(voltage_min);
         }
-#endif
     }
     static inline void part1() {
         auto c = currentConverter::convert(adcController::value(adcController::index_type{1}));
         last_current = c;
-#ifdef USE_HOTT
         sensorData.current(c);
         current_max = std::max(current_max, c);
         sensorData.currentMax(current_max);
-#endif        
     }
     static inline void part2() {
         auto t = sigrow::adcValueToTemperature(adcController::value(adcController::index_type{2}));
-#ifdef USE_HOTT
         sensorData.temp(t);
         temp_max = std::max(temp_max, t);
         sensorData.tempMax(temp_max);
-#endif
     }
     static inline void part3() {
-#ifdef USE_HOTT
         sensorData.capRaw(c / 3600);
-#endif
     }
 };
 
 using measurements = Measurements;
+#endif
 
 int main() {
     ccp::unlock([]{
@@ -545,9 +549,11 @@ int main() {
 #ifdef USE_HOTT
     sensor::init();
     menu::init();
-#elif defined(USE_IBUS)
-    ibus::periodic();
-#else
+#endif
+#ifdef USE_IBUS
+    ibus::init();
+#endif
+#if !(defined(USE_HOTT) || defined(USE_IBUS))
     terminalDevice::init<AVR::BaudRate<9600>>();
 #endif
     
@@ -582,10 +588,13 @@ int main() {
             adcController::periodic();
             
             systemTimer::periodic([&]{
-    #ifdef USE_HOTT
+#ifdef USE_HOTT
                 sensor::ratePeriodic();
                 measurements::periodic();
-    #endif
+#endif
+#ifdef USE_IBUS
+                ibus::ratePeriodic();
+#endif
                 toneGenerator::periodic();
                 fsm::periodic();
                 button::periodic();
@@ -612,7 +621,9 @@ int main() {
 #endif
                     }
                     if (capTimer == t) {
+#ifdef USE_HOTT
                         measurements::tick();
+#endif
                     }
                 });
                 appData.expire();

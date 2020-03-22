@@ -142,6 +142,9 @@ struct FSM final {
 //    inline static uint16_t test4;
     
 private:
+    using ind_t = cppm::index_type;
+    
+    
     inline static constexpr void update_00() {
         auto v = sumd::value(1);
         if (v) {
@@ -153,7 +156,7 @@ private:
             nv /= 256;
             nv += m;
             v = nv;
-            cppm::ppm(0, v);
+            cppm::ppm(ind_t{0}, v);
         }
     }        
     inline static constexpr void update_01() {
@@ -167,26 +170,26 @@ private:
             nv /= 256;
             nv += m;
             v = nv;
-            cppm::ppm(1, v);
+            cppm::ppm(ind_t{1}, v);
         }
     }        
     inline static constexpr void update_02() {
-        cppm::ppm(2, sumd::value(1));
+        cppm::ppm(ind_t{2}, sumd::value(1));
     }        
     inline static constexpr void update_03() {
-        cppm::ppm(3, sumd::value(1).invert());
+        cppm::ppm(ind_t{3}, sumd::value(1).invert());
     }        
     inline static constexpr void update_04() {
-        cppm::ppm(4, sumd::value(1));
+        cppm::ppm(ind_t{4}, sumd::value(1));
     }        
     inline static constexpr void update_05() {
-        cppm::ppm(5, sumd::value(1).invert());
+        cppm::ppm(ind_t{5}, sumd::value(1).invert());
     }        
     inline static constexpr void update_06() {
-        cppm::ppm(6, sumd::value(1));
+        cppm::ppm(ind_t{6}, sumd::value(1));
     }        
     inline static constexpr void update_07() {
-        cppm::ppm(7, sumd::value(1).invert());
+        cppm::ppm(ind_t{7}, sumd::value(1).invert());
     }        
     inline static constexpr void update_08() {
     }        
@@ -248,13 +251,14 @@ int main() {
     crWriterSensorText::init();
 
     rcUsart::init<AVR::BaudRate<115200>>();
-    
+    btUsart::init<AVR::BaudRate<9600>>();
     const auto t = alarmTimer::create(1000_ms, External::Hal::AlarmFlags::Periodic);
 
     {
         Scoped<EnableInterrupt<>> ei;
         
         while(true) {
+            btUsart::periodic();
 //            ppmInPin::toggle();
             components::periodic();
             systemClock::periodic([&](){

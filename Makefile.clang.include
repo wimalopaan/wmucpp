@@ -54,8 +54,6 @@ DEP += $(CDEP)
 
 MCUFLAGS = -mmcu=$(MCU)
 
-SIMAVR = ~/Projekte/simavr/simavr/run_avr
-
 AXTRACTOR = $(HOME)/Projekte/wmgit/extract/axtractor
 EXTRACTOR = $(HOME)/Projekte/wmgit/extract/extractor
 EXTRACTDIR = .extractor
@@ -74,23 +72,20 @@ ifndef OPTFLAGS
 OPTFLAGS = -Os
 endif
 
-#CXXFLAGS += $(OPTFLAGS) -std=c++17 #-pedantic
 CXXFLAGS += $(OPTFLAGS) -std=c++2a # -pedantic
-#CXXFLAGS += -O3 -std=c++17 # -pedantic
-#CXXFLAGS += -nostdlib -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics
 CXXFLAGS += -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics #-Wgnu-string-literal-operator-template
-CXXFLAGS += -funsigned-char -funsigned-bitfields -fshort-enums 
-#CXXFLAGS += -ffunction-sections  -fdata-sections # seperate sections -> see --gc-sections 
-CXXFLAGS += -fconcepts
+CXXFLAGS += -funsigned-char -fshort-enums 
+#CXXFLAGS += -fconcepts
 CXXFLAGS += -ftemplate-depth=2048
 CXXFLAGS += -fstrict-aliasing -Wstrict-aliasing=1 
 CXXFLAGS += -Wall -Wextra -Wswitch -Wswitch-enum
 CXXFLAGS += -DF_OSC=$(F_OSC) -DF_CPU=$(F_OSC)
+CXXFLAGS += --target=avr
 #CXXINLUDES0 += -I/usr/local/avr/avr/include
 CXXINLUDES1 += -I. -I../include0 -I../../include0 -I../../../include0
 CXXINLUDES2 += -I../../include0/std -I../include0/std -I../../../include0/std
 CXXINLUDES3 += -I../../3rdparty/boost
-#CXXINLUDES4 += -I/usr/avr/include
+CXXINLUDES4 += -I/usr/avr/include
 CXXFLAGS += $(CXXINLUDES0)
 CXXFLAGS += $(CXXINLUDES1)
 CXXFLAGS += $(CXXINLUDES2)
@@ -98,8 +93,7 @@ CXXFLAGS += $(CXXINLUDES3)
 CXXFLAGS += $(CXXINLUDES4)
 CXXFLAGS += $(MCUFLAGS)
 
-CFLAGS += $(OPTFLAGS) -std=gnu11 # wegen __flash
-#CFLAGS += -Os -std=c11 -pedantic
+CFLAGS += $(OPTFLAGS) -std=c11 # wegen __flash
 CFLAGS += -funsigned-char -funsigned-bitfields -fshort-enums
 CFLAGS += -Wall -Wextra
 CFLAGS += -fstrict-aliasing -Wstrict-aliasing=1 
@@ -109,7 +103,6 @@ CFLAGS += -I. -I../include0 -I../../include0
 #CFLAGS += -I/usr/include/simavr
 #CFLAGS += -I/usr/avr/include
 CFLAGS += $(MCUFLAGS)
-#CFLAGS +=  -Wa,-mgcc-isr # only for target atmega324pb - was missing in specs-atmega24pb
 
 ASMFLAGS += -fverbose-asm
 ASMFLAGS +=  -Wa,-adhln
@@ -128,12 +121,8 @@ AVRDUDE_FLAGS += $(AVRDUDE_VERBOSE)
 AVRDUDE_FLAGS += $(AVRDUDE_ERASE_COUNTER)
 AVRDUDE_FLAGS += -C+/home/lmeier/Projekte/wmucpp/avrdude.conf
 
-#CC = clang
-#CXX = clang++
-CC = /usr/local/bin/avr-gcc
-CXX = /usr/local/bin/avr-g++
-#CC = /usr/bin/avr-gcc
-#CXX = /usr/bin/avr-g++
+CC = clang
+CXX = clang++
 OBJCOPY = avr-objcopy
 OBJDUMP = avr-objdump
 SIZE = avr-size

@@ -16,15 +16,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <cstddef>
+//#include <cstddef>
+#include <cstdint>
 
-volatile std::byte x{0};
+//volatile std::byte x{0};
+
+volatile float y;
 
 int main() {
-    x = std::byte{32};
-    x |= std::byte{10};
+//    x = std::byte{32};
+//    x |= std::byte{10};
     
 //    x * 10; // nicht möglich
     
-    while (true) {}
+    y = y * 8;
+
+    return y;    
+//    while (true) {}
 }

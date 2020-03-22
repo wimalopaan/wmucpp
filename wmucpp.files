@@ -23,6 +23,7 @@
 3rdparty/tinygps/TinyGPS.h
 Makefile.arm.include
 Makefile.avr0.include
+Makefile.clang.include
 boards/blmc/Makefile
 boards/blmc/blheli.txt
 boards/blmc/blmc_01/Makefile
@@ -223,7 +224,9 @@ boards/curiosity/test12.cc
 boards/curiosity/test20.cc
 boards/curiosity/test21.cc
 boards/curiosity/test30.cc
+boards/curiosity/test40.cc
 boards/curiosity/test90.cc
+boards/curiosity/test99.c
 boards/doorbell/Makefile
 boards/doorbell/test00.cc
 boards/include/ppmmatrix.h
@@ -248,6 +251,7 @@ boards/onoff_avr0/small/test02.cc
 boards/onoff_avr0/small/test03.cc
 boards/onoff_avr0/small/test04.cc
 boards/onoff_avr0/small/test05.cc
+boards/onoff_avr0/small/test06.cc
 boards/onoff_avr0/small/test99.cc
 boards/power_or/doc/Makefile
 boards/power_or/doc/power_or.adoc
@@ -257,6 +261,7 @@ boards/ppmmatrix/board.txt
 boards/ppmmatrix/doc/Makefile
 boards/ppmmatrix/doc/matrix.adoc
 boards/ppmmatrix/schaltmodul.cc
+boards/ppmmatrix/schaltmodule_ibus.cc
 boards/ppmmatrix/servotester.cc
 boards/ppmmatrix/test00.cc
 boards/ppmmatrix/test01.cc
@@ -325,6 +330,9 @@ boards/tx/varioprop/test05.cc
 boards/unimaxi/atmega1284p/gpstest.cc
 boards/unimaxi/atmega1284p/spissd1306.cc
 boards/unimaxi/attiny85_1/main_mod_2.cc
+clang/Makefile
+clang/bm00/Makefile
+clang/bm00/bm00.cc
 doc.arm/Makefile
 doc.arm/bmcpp01/Makefile
 doc.arm/bmcpp01/bm01a.cc
@@ -467,6 +475,12 @@ gcc/base/lib/gcc/avr/10.0.0/device-specs/specs-atmega4808
 gcc/base/lib/gcc/avr/10.0.0/device-specs/specs-atmega4809
 gcc/base/lib/gcc/avr/10.0.0/device-specs/specs-attiny1614
 gcc/base/lib/gcc/avr/10.0.0/device-specs/specs-attiny412
+gcc/base/lib/gcc/avr/10.0.1/device-specs/specs-atmega324pb
+gcc/base/lib/gcc/avr/10.0.1/device-specs/specs-atmega328pb
+gcc/base/lib/gcc/avr/10.0.1/device-specs/specs-atmega4808
+gcc/base/lib/gcc/avr/10.0.1/device-specs/specs-atmega4809
+gcc/base/lib/gcc/avr/10.0.1/device-specs/specs-attiny1614
+gcc/base/lib/gcc/avr/10.0.1/device-specs/specs-attiny412
 gcc/base/lib/gcc/avr/9.0.1/device-specs/specs-atmega324pb
 gcc/base/lib/gcc/avr/9.0.1/device-specs/specs-atmega328pb
 gcc/base/lib/gcc/avr/9.0.1/device-specs/specs-atmega4808

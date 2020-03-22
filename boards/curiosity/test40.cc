@@ -47,12 +47,19 @@ using alarmTimer = External::Hal::AlarmTimer<systemTimer, 8>;
 using ledPin    = ActiveHigh<Pin<Port<F>, 5>, Output>;
 using assertPin = ActiveHigh<Pin<Port<F>, 6>, Output>;
 
+using led0    = ActiveHigh<Pin<Port<D>, 0>, Output>;
+using led1    = ActiveHigh<Pin<Port<D>, 1>, Output>;
+using led2    = ActiveHigh<Pin<Port<D>, 2>, Output>;
+using led3    = ActiveHigh<Pin<Port<D>, 3>, Output>;
+using led4    = ActiveHigh<Pin<Port<D>, 4>, Output>;
+
+
 using ccp = Cpu::Ccp<>;
 using clock = Clock<>;
 using sigrow = SigRow<>;
 
-using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Default>; // IBUS-Sensor
-using usart1Position = Portmux::Position<Component::Usart<1>, Portmux::Default>; 
+using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Default>; // I-Bus Sensor
+using usart1Position = Portmux::Position<Component::Usart<1>, Portmux::Default>; // I-Bus Servo
 using usart2Position = Portmux::Position<Component::Usart<2>, Portmux::Alt1>; // Terminal
 
 using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::Default>;
@@ -119,12 +126,21 @@ using ibt = IBusThrough;
 using dbg = PinGroup<Meta::List<Pin<Port<A>, 3>, Pin<Port<A>, 4>, Pin<Port<A>, 5>, Pin<Port<A>, 6>, Pin<Port<A>, 7>> >;
 using tParallelDebug = External::Debug::TriggeredParallel<Pin<Port<A>, 2>, dbg>;
 
-using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, 
-                          Meta::List<voltageP, currentP, tempP>, systemTimer,
-                          ibt, tParallelDebug>;
+using servo_pa = IBus::Servo::ProtocollAdapter<0>;
+
+//using switch_provider = IBus::Switch::Provider<servo_pa>;
+//using switch_provider2 = IBus::Switch::ProviderState<servo_pa>;
+
+//using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, 
+//                          Meta::List<voltageP, currentP, tempP>, systemTimer,
+//                          ibt, tParallelDebug>;
 
 using terminalDevice = AVR::Usart<usart2Position, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>>;
 using terminal = etl::basic_ostream<terminalDevice>;
+
+using servo = AVR::Usart<usart1Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
+
+using ibus_switch = IBus::Switch::Switch<servo_pa>;
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, usart1Position, usart2Position, tcaPosition>>;
 
@@ -135,38 +151,95 @@ int main() {
         clock::prescale<1>();
     });
     
+    led0::init();
+    led1::init();
+    led2::init();
+    led3::init();
+    led4::init();
+    
     ledPin::init();
     portmux::init();
     systemTimer::init();
     adcController::init();
     
-    ibus::init();
-    terminalDevice::init<AVR::BaudRate<9600>>();
+//    ibus::init();
     
-    sleep::template init<sleep::PowerDown>();
+    terminalDevice::init<AVR::BaudRate<9600>>();
+ 
+    servo::init<AVR::BaudRate<115200>>();
+    
+//    sleep::template init<sleep::PowerDown>();
     
     const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
     
     {
         etl::Scoped<etl::EnableInterrupt<>> ei;
-        etl::outl<terminal>("test30"_pgm);
+        etl::outl<terminal>("test40"_pgm);
         
         while(true) {
-            ibus::periodic();
+            servo::periodic();
+//            ibus::periodic();
+            ibus_switch::periodic();
+            
             terminalDevice::periodic();
             adcController::periodic();
             
             systemTimer::periodic([&]{
-                ibus::ratePeriodic();
+//                ibus::ratePeriodic();
+
+                if (ibus_switch::states2w[0]) {                
+                    led0::activate();            
+                }
+                else {
+                    led0::inactivate();            
+                }
+                if (ibus_switch::states2w[1]) {                
+                    led1::activate();            
+                }
+                else {
+                    led1::inactivate();            
+                }
+                if (ibus_switch::states2w[2]) {                
+                    led4::activate();            
+                }
+                else {
+                    led4::inactivate();            
+                }
+                
+                if (ibus_switch::states3w[0] == 1) {                
+                    led2::activate();            
+                }
+                else {
+                    led2::inactivate();            
+                }
+                if (ibus_switch::states3w[0] == 2) {                
+                    led3::activate();            
+                }
+                else {
+                    led3::inactivate();            
+                }
+                
                 alarmTimer::periodic([&](const auto& t){
                     if (periodicTimer == t) {
                         ledPin::toggle();
+                        servo_pa::channel_t i0{0};
+                        servo_pa::channel_t i4{4};
+                        servo_pa::channel_t i5{5};
+                        servo_pa::channel_t i6{6};
+                        
                         etl::outl<terminal>(
-                                    " V: "_pgm, voltageP::value(),
-                                    " C: "_pgm, currentP::value(),
-                                    " T: "_pgm, tempP::value(),
-                                    " t: "_pgm, sigrow::adcValueToTemperature<std::ratio<1,10>, 40>(adcController::value(adcController::index_type(2))).value                
-
+//                                    " ch0: "_pgm, servo_pa::value(i0).toInt(),
+//                                    " ch4: "_pgm, servo_pa::value(i4).toInt(),
+                                    " ch5: "_pgm, servo_pa::value(i5).toInt()
+//                                    " ch6: "_pgm, servo_pa::value(i6).toInt()
+////                                    " s1: "_pgm, sv1,
+////                                    " s2: "_pgm, sv2,
+////                                    " s3: "_pgm, sv3,
+////                                    " s4: "_pgm, sv4
+////                                    " V: "_pgm, voltageP::value(),
+////                                    " C: "_pgm, currentP::value(),
+////                                    " T: "_pgm, tempP::value(),
+////                                    " t: "_pgm, sigrow::adcValueToTemperature<std::ratio<1,10>, 40>(adcController::value(adcController::index_type(2))).value                
                                             ); 
                     }
                 });

@@ -221,8 +221,8 @@ namespace etl {
         inline constexpr uint_ranged_NaN() = default;
         
         inline constexpr uint_ranged_NaN(T v) : mValue(v) {
-            assert(v >= LowerBound);
-            assert(v <= UpperBound);
+//            assert(v >= LowerBound);
+//            assert(v <= UpperBound);
             if (v < LowerBound) {
                 mValue = LowerBound;
             }
@@ -263,8 +263,8 @@ namespace etl {
         //            return mValue == rhs;
         //        }
         inline constexpr uint_ranged_NaN& operator=(T rhs) {
-            assert(rhs >= LowerBound);
-            assert(rhs <= UpperBound);
+//            assert(rhs >= LowerBound);
+//            assert(rhs <= UpperBound);
             mValue = std::clamp(rhs, LowerBound, UpperBound);
             return *this;
         }
@@ -538,7 +538,7 @@ namespace etl {
             return uint_ranged_circular(UpperBound - mValue);
         }
         inline constexpr uint_ranged<T, LowerBound, UpperBound> toRanged() const {
-            return {mValue};
+            return uint_ranged<T, LowerBound, UpperBound>{mValue};
         }
         inline constexpr operator T() const {
             return mValue;

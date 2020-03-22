@@ -390,15 +390,28 @@ namespace AVR {
         template<typename Dir>
         inline static void dir() {
             if constexpr(std::is_same_v<Dir, AVR::Output>) {
+//                std::integral_constant<std::byte, group_value>::_;
                 port::dirset() = group_value;
             }
         }
         template<auto V>
         static inline void set() {
             static_assert(V < table.valueBits.size(), "pattern not possible");
-            auto v = (port::get() & group_value) ^ table.valueBits[V];
-            port::toggle(v);
+//            auto v = (port::get() & group_value) ^ table.valueBits[V];
+//            port::toggle(v);
+            port::get() = table.valueBits[V];
+//            std::integral_constant<std::byte, table.valueBits[V]>::_;
         }
+        static inline void set(const std::byte v) {
+//            auto v = (port::get() & group_value) ^ table.valueBits[V];
+//            port::toggle(v);
+            port::get() = table.valueBits[static_cast<uint8_t>(v)];
+        }
+//        std::integral_constant<std::byte, table.valueBits[0]>::_;
+//        std::integral_constant<std::byte, table.valueBits[1]>::_;
+//        std::integral_constant<std::byte, table.valueBits[2]>::_;
+//        std::integral_constant<std::byte, table.valueBits[3]>::_;
+        
     };
     
     namespace Attributes {
@@ -461,8 +474,8 @@ namespace AVR {
         template<typename Dir>
         static inline void dir() {        
             if constexpr(std::is_same_v<Dir, AVR::Output>) {
-                port::dir() |= pinMask; // VPort
-//                port::dirset() = pinMask;
+//                port::dir() |= pinMask; // VPort
+                port::dirset() = pinMask;
             }
         }
         

@@ -16,19 +16,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <avr/pgmspace.h>
+//#include <avr/pgmspace.h>
 
-const int x = 3;
+const int x __attribute__((address_space(1))) = 3;
 const int y = x;
 
 //char* text = "abc";
 
 const char c = "abc"[0];
 
-const char date[] PROGMEM = {__DATE__[0], __DATE__[1]};
+//const char date[] PROGMEM = {__DATE__[0], __DATE__[1]};
+const char date[] __attribute__((address_space(1))) = {__DATE__[0], __DATE__[1]};
+const char bla[] __attribute__((address_space(1))) = "0123456789abcdefghijklmnopqrstuvwABCDEFGHIJKLMNOPQRSTUVW";
 
 volatile char cc;
 
 int main() {
-    cc = date[0];
+//    cc = date[0];
+    
+    while(bla[cc]) {
+        cc = bla[cc];
+    }
+    
+    return cc;
 }
