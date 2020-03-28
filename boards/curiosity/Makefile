@@ -39,8 +39,9 @@ targets += test00.elf test00.S test00.hex
 #targets += test12.elf test12.S test12.hex
 #targets += test20.elf test20.S test20.hex
 #targets += test21.elf test21.S test21.hex
-#targets += test30.elf test30.S test30.hex
+targets += test30.elf test30.S test30.hex
 targets += test40.elf test40.S test40.hex
+targets += test50.elf test50.S test50.hex
 #targets += test90.elf test90.S test90.hex
 targets += test99.elf test99.S test99.hex
 

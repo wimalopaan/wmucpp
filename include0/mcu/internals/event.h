@@ -58,6 +58,13 @@ namespace AVR {
                 inline static constexpr auto value = AVR::Series0::Events::Generator_t{0};
             };
 
+            template<uint8_t N, AVR::Concepts::AtMega0 MCU> struct map_generator<Generators::Tca0<Generators::Kind::Cmp0>, std::integral_constant<uint8_t, N>, MCU> {
+                inline static constexpr auto value = AVR::Series0::Events::Generator_t::tca0_cmp0;
+            };
+            template<uint8_t N, AVR::Concepts::AtMega0 MCU> struct map_generator<Generators::Tca0<Generators::Kind::Ovf>, std::integral_constant<uint8_t, N>, MCU> {
+                inline static constexpr auto value = AVR::Series0::Events::Generator_t::tca0_ovf;
+            };
+
             template<uint8_t N, AVR::Concepts::AtMega0 MCU> struct map_generator<Generators::Updi, std::integral_constant<uint8_t, N>, MCU> {
                 inline static constexpr auto value = AVR::Series0::Events::Generator_t::updi;
             };

@@ -225,6 +225,7 @@ boards/curiosity/test20.cc
 boards/curiosity/test21.cc
 boards/curiosity/test30.cc
 boards/curiosity/test40.cc
+boards/curiosity/test50.cc
 boards/curiosity/test90.cc
 boards/curiosity/test99.c
 boards/doorbell/Makefile
@@ -252,6 +253,7 @@ boards/onoff_avr0/small/test03.cc
 boards/onoff_avr0/small/test04.cc
 boards/onoff_avr0/small/test05.cc
 boards/onoff_avr0/small/test06.cc
+boards/onoff_avr0/small/test07.cc
 boards/onoff_avr0/small/test99.cc
 boards/power_or/doc/Makefile
 boards/power_or/doc/power_or.adoc
@@ -260,6 +262,7 @@ boards/ppmmatrix/board.h
 boards/ppmmatrix/board.txt
 boards/ppmmatrix/doc/Makefile
 boards/ppmmatrix/doc/matrix.adoc
+boards/ppmmatrix/ibus_to_ppm.cc
 boards/ppmmatrix/schaltmodul.cc
 boards/ppmmatrix/schaltmodule_ibus.cc
 boards/ppmmatrix/servotester.cc
@@ -270,6 +273,10 @@ boards/ppmmatrix/test03.cc
 boards/ppmmatrix/test04.cc
 boards/rcactor/Makefile
 boards/rcactor/test00.cc
+boards/rcmultiswitch/Makefile
+boards/rcmultiswitch/test00.cc
+boards/rcmultiswitch/test01.cc
+boards/rcmultiswitch/test10.cc
 boards/rcsensor/Makefile
 boards/rcsensor/test00.cc
 boards/rcsensorled/test100.cc
@@ -617,6 +624,7 @@ include0/external/solutions/ppm.h
 include0/external/solutions/rpm.h
 include0/external/solutions/series01/rpm.h
 include0/external/solutions/series01/sppm_in.h
+include0/external/solutions/series01/sppm_out.h
 include0/external/solutions/tick.h
 include0/external/solutions/tle5205.h
 include0/external/solutions/verticalcounter.h

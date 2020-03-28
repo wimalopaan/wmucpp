@@ -37,7 +37,6 @@ using namespace std::literals::chrono;
 using namespace External::Units::literals;
 
 namespace Parameter {
-    constexpr uint8_t menuLines = 8;
     constexpr auto fRtc = 2048_Hz;
 }
 
@@ -110,9 +109,18 @@ struct TempProvider {
 
 using tempP = TempProvider<adcController, 2>;
 
+using daisyPin    = ActiveHigh<Pin<Port<D>, 3>, Output>;
+
 struct IBusThrough {
-    inline static constexpr void on() {}
-    inline static constexpr void off() {}
+    inline static void init() {
+        daisyPin::init();
+    }
+    inline static void on() {
+        daisyPin::activate();
+    }
+    inline static void off() {
+        daisyPin::inactivate();
+    }
 };
 using ibt = IBusThrough;
 

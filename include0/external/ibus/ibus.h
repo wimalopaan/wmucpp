@@ -50,6 +50,8 @@ namespace IBus {
     namespace Type {
         // https://github.com/betaflight/betaflight/tree/master/src/main/telemetry
         
+        // FlySky i6A: TEMPERATURE, RPM_FLYSKY, EXTERNAL_VOLTAGE
+        
         enum class type : uint8_t {
             NONE             = 0x00,
             TEMPERATURE      = 0x01, // 0.1°C per step, -40°C offset (400 = 0°C)
@@ -97,7 +99,54 @@ namespace IBus {
 
     namespace Switch {
         template<typename PA>
-        struct Switch {
+        struct Switch2 {
+            using channel_t = PA::channel_t;
+            using value_t = PA::value_type;
+            
+            static inline constexpr uint8_t nBinary{2};
+            static inline constexpr uint8_t nTernary{5};
+            
+            static_assert([]{
+                uint16_t v{1};
+                for(uint8_t i = 0; i < nTernary; ++i) {
+                    v *= 3;
+                }
+                for(uint8_t i = 0; i < nBinary; ++i) {
+                    v *= 2;
+                }
+                return v <= (value_t::Upper - value_t::Lower);
+            }(), "too much switches");
+            
+            static inline void init(channel_t c) {
+                mChannel = c;
+            }
+            static inline bool periodic() {
+                auto chValue = PA::value(mChannel).toInt();
+                chValue -= value_t::Lower;
+                
+                constexpr uint16_t binaryMask = (1 << nBinary) - 1; 
+                
+                uint8_t bi = chValue & binaryMask;
+                
+                [&]<auto... N>(std::index_sequence<N...>) {
+                    ((states2w[N] = (bi & (0x01 << N))), ...);                    
+                }(std::make_index_sequence<nBinary>{});
+
+                uint16_t tr = chValue >> nBinary;
+
+                [&]<auto... N>(std::index_sequence<N...>) {
+                    (((states3w[N] = (tr % 3)), tr /= 3), ...);
+                }(std::make_index_sequence<nTernary>{});
+                
+                return true;                
+            }
+        private:                            
+            static inline channel_t mChannel{15};
+            static inline std::array<bool, nBinary>  states2w{};
+            static inline std::array<uint8_t, nTernary> states3w{};
+        };
+        template<typename PA>
+        struct Switch1 {
             static inline bool periodic() {
                 using ch_t = PA::channel_t;
                 uint16_t s = PA::value(ch_t{5}).toInt();
@@ -191,7 +240,8 @@ namespace IBus {
     namespace Servo {
         template<auto N = 0>
         struct ProtocollAdapter {
-            
+            // AFHDS2A: 14 channels
+            // there should be an update to 16 / 18 channels
             enum class State : uint8_t {Undefined, GotStart20, Data, CheckL, CheckH};
             
             using value_type = etl::uint_ranged_NaN<uint16_t, 988, 2011>;
@@ -291,6 +341,7 @@ namespace IBus {
              AVR::Concepts::At01Series MCU>
     struct Sensor<CNumber, Uart, Baud, Meta::List<Providers...>, Clock, DaisyChainEnable, Debug, MCU> final {
         struct NoDebug {
+            static inline void init() {}
             template<auto T>
             static inline constexpr void set() {}
             static inline constexpr void set(std::byte) {}
@@ -310,7 +361,6 @@ namespace IBus {
         
         using sensor_number_t = etl::uint_ranged_NaN<uint8_t, 1, 15>;
         
-        
         struct ProtocollAdapter final {
             inline static constexpr uint8_t   Length    = 4;
             
@@ -321,13 +371,23 @@ namespace IBus {
             
             ProtocollAdapter() = delete;
             
-            inline static void reset() {
+            inline static void reset1() {
                 mState = ibus_state_t::Undefined;
+                uart::template rxEnable<true>();
+            }
+            inline static void reset2() {
+                mState = ibus_state_t::Undefined;
+                mFirstSensorNumber= sensor_number_t{};
+                mLastSensorNumber = sensor_number_t{};
+                mReceivedNumber   = sensor_number_t{};
+                if constexpr(!std::is_same_v<DaisyChainEnable, void>) {
+                    DaisyChainEnable::off();
+                }
                 uart::template rxEnable<true>();
             }
             
             inline static bool process(const std::byte c) {
-                ++nBytes;
+//                ++nBytes;
                 switch (mState) {
                 case ibus_state_t::Undefined:
                     csum.reset();
@@ -338,10 +398,11 @@ namespace IBus {
                     }
                     break;
                 case ibus_state_t::Reset:
+                    reset2();
                     mState = ibus_state_t::CheckSumSkip;
                     break;
                 case ibus_state_t::Length:
-                    ++nPackets;
+//                    ++nPackets;
                     csum += c;  
                     mReceivedNumber = sensor_number_t{};
                     if (command(c) == Cdiscover) {
@@ -359,6 +420,9 @@ namespace IBus {
                                 const uint8_t index = n - mFirstSensorNumber;
                                 if (index == (numberOfProviders - 1)) {
                                     mLastSensorNumber = n;
+//                                    if constexpr(!std::is_same_v<DaisyChainEnable, void>) {
+//                                        DaisyChainEnable::on();
+//                                    }
                                 }
                                 mReceivedNumber = n;
                                 mState = ibus_state_t::Discover;
@@ -448,11 +512,14 @@ namespace IBus {
             inline static constexpr bool permitReply() {
                 return mState == ibus_state_t::Reply;
             }
-            //        private:
+        private:
             static inline constexpr std::byte command(const std::byte b) {
-                return b & 0xf0_B;
+                return (b & 0xf0_B) ;
             }
             static inline constexpr uint8_t length(const std::byte b) {
+                if (std::any(b & 0xf0_B)) {
+                    return {};
+                }
                 return uint8_t(b & 0x0f_B);
             }
             static inline constexpr sensor_number_t address(const std::byte b) {
@@ -471,22 +538,25 @@ namespace IBus {
         
         using pa = ProtocollAdapter;
         using uart = Uart<CNumber, pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<8>>;
-        
+
         inline static constexpr void init() {
+            (Providers::init(), ...);
+            uart::template init<Baud, AVR::HalfDuplex>();
+            clear();
+            pa::reset1();
+            responder::start();
+        }            
+        
+        inline static constexpr void clear() {
             mFirstSensorNumber = sensor_number_t{};
             mLastSensorNumber = sensor_number_t{};
             mReceivedNumber   = sensor_number_t{};
-            (Providers::init(), ...);
-            uart::template init<Baud, AVR::HalfDuplex>();
-            pa::reset();
-            responder::start();
             if constexpr(!std::is_same_v<DaisyChainEnable, void>) {
+                DaisyChainEnable::init();
                 DaisyChainEnable::off();
             }
-            if constexpr(!std::is_same_v<Debug, void>) {
-                Debug::init();
-                Debug::template set<0x00>();
-            }
+            debug::init();
+            debug::template set<0x00>();
         }
         
         struct Responder final {
@@ -593,8 +663,13 @@ namespace IBus {
                     }
                     break;
                 case reply_state_t::WaitOver:
-                    pa::reset();
+                    pa::reset1();
                     mReply = reply_state_t::Undefined;
+                    if constexpr(!std::is_same_v<DaisyChainEnable, void>) {
+                        if (mLastSensorNumber) {
+                            DaisyChainEnable::on();
+                        }
+                    }
                     debug::set(std::byte(uint8_t(mReply) + 16));
                     break;
                 case reply_state_t::Undefined:
@@ -606,7 +681,7 @@ namespace IBus {
                     break;
                 }
             }
-            //        private:
+        private:
             static inline reply_state_t mReply = reply_state_t::Undefined;
             inline static wait_t mTicks;
         };
@@ -620,9 +695,9 @@ namespace IBus {
             responder::periodic();
         }
         
-        //private:
-        static inline uint16_t nPackets{};
-        static inline uint16_t nBytes{};
+        private:
+//        static inline uint16_t nPackets{};
+//        static inline uint16_t nBytes{};
         
         static inline constexpr bool inRange(const sensor_number_t n) {
             if (!n) return false;
@@ -631,7 +706,6 @@ namespace IBus {
         }
         
         static inline sensor_number_t mReceivedNumber;
-        
         static inline sensor_number_t mFirstSensorNumber;
         static inline sensor_number_t mLastSensorNumber;
     };

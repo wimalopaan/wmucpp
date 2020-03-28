@@ -140,7 +140,7 @@ using terminal = etl::basic_ostream<terminalDevice>;
 
 using servo = AVR::Usart<usart1Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
 
-using ibus_switch = IBus::Switch::Switch<servo_pa>;
+using ibus_switch = IBus::Switch::Switch1<servo_pa>;
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, usart1Position, usart2Position, tcaPosition>>;
 

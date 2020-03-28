@@ -437,6 +437,18 @@ namespace AVR {
                 mcu_usart()->ctrlb.template clear<ctrlb_t::rxen>();
             }
         }
+        template<bool enable>
+        inline static void txEnable() {
+            if constexpr (enable) {
+                if(SendQLength::value > 0) {
+                    mSendQueue.clear();
+                }
+                mcu_usart()->ctrlb.template add<ctrlb_t::txen>();
+            }
+            else {
+                mcu_usart()->ctrlb.template clear<ctrlb_t::txen>();
+            }
+        }
 
     private:
         inline static send_queue_type mSendQueue;

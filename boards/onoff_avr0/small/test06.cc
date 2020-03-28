@@ -9,6 +9,7 @@
 
 //#define USE_HOTT
 #define USE_IBUS
+//#define FS_I6S
 
 #include <mcu/avr.h>
 #include <mcu/internals/adc.h>
@@ -44,7 +45,12 @@ using namespace External::Units::literals;
 
 namespace Parameter {
     constexpr uint8_t menuLines = 8;
+#ifdef USE_IBUS
     constexpr auto fRtc = 2000_Hz;
+#endif
+#ifdef USE_HOTT
+    constexpr auto fRtc = 500_Hz;
+#endif
     
     constexpr uint16_t R1vd = 10'000;
     constexpr uint16_t R2vd = 1'000;
@@ -87,9 +93,7 @@ using alarmTimer = External::Hal::AlarmTimer<systemTimer, 8>;
 using PortA = Port<A>;
 using PortB = Port<B>;
 
-#ifndef NDEBUG
-using dbg1      = Pin<PortA, 2>; 
-#endif
+using daisyChain= Pin<PortA, 2>; 
 using ledPin    = ActiveHigh<Pin<PortA, 3>, Output>;
 using led       = External::Blinker<ledPin, systemTimer::intervall, 30_ms, 1000_ms>;
 using buttonPin = Pin<PortA, 7>;
@@ -118,8 +122,8 @@ struct VoltageProvider {
     inline static constexpr auto ibus_type = IBus::Type::type::EXTERNAL_VOLTAGE;
     inline static constexpr void init() {}
     
-//    using battVoltageConverter = Hott::Units::Converter<adc, IBus::battery_voltage_t, std::ratio<11000,1000>>; // Voltage divider 10k/1k 
-    using battVoltageConverter = Hott::Units::Converter<adc, IBus::battery_voltage_t, std::ratio<121,21>>; // Voltage divider 10k/1k 
+    using battVoltageConverter = Hott::Units::Converter<adc, IBus::battery_voltage_t, std::ratio<11000,1000>>; // Voltage divider 10k/1k 
+//    using battVoltageConverter = Hott::Units::Converter<adc, IBus::battery_voltage_t, std::ratio<121,21>>; // Voltage divider 10k/1k 
     
     inline static constexpr uint16_t value() {
         return battVoltageConverter::convert(ADC::value(channel)).value;
@@ -133,12 +137,20 @@ struct CurrentProvider {
     using index_t = ADC::index_type;
     static_assert(Channel <= index_t::Upper);
     inline static constexpr auto channel = index_t{Channel};
+#ifdef FS_I6S
+    inline static constexpr auto ibus_type = IBus::Type::type::TEMPERATURE; // FS-I6S zeigt keinen Strom an
+#else
     inline static constexpr auto ibus_type = IBus::Type::type::BAT_CURR;
+#endif
 //    using currentConverter = Hott::Units::Converter<adc, IBus::current_t, std::ratio<16450,1000>>; // todo: richtiger scale faktor
     using currentConverter = Hott::Units::Converter<adc, IBus::current_t, std::ratio<10717,1000>>; // todo: richtiger scale faktor
     inline static constexpr void init() {}
     inline static constexpr uint16_t value() {
+#ifdef FS_I6S
+        return currentConverter::convert(ADC::value(channel)).value / 10 + 400;
+#else
         return currentConverter::convert(ADC::value(channel)).value;
+#endif
     }
 };
 
@@ -158,7 +170,21 @@ struct TempProvider {
 };
 using tempP = TempProvider<adcController, 2>;
 
-using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, Meta::List<voltageP, currentP, tempP>, systemTimer>;
+
+struct IBusThrough {
+    inline static void init() {
+        daisyChain::template dir<Output>();
+    }
+    inline static void on() {
+        daisyChain::on();
+    }
+    inline static void off() {
+        daisyChain::off();
+    }
+};
+using ibt = IBusThrough;
+
+using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, Meta::List<voltageP, currentP, tempP>, systemTimer, ibt>;
 #endif
 
 #ifdef USE_HOTT
@@ -434,7 +460,9 @@ struct FSM {
                 led::blink(led::count_type{4});
                 break;
             case State::FetOn:
-                ibus::init();
+#ifdef USE_IBUS
+//                ibus::init();
+#endif
                 if (!toneGenerator::busy()) {
                     toneGenerator::play(a_iii_1);
                 }

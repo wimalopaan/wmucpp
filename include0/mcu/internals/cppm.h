@@ -12,7 +12,27 @@ namespace AVR {
     using namespace AVR::Util::Timer;
 
     template<auto TimerNumber, typename Out, auto Channels, typename Multiplexer = void, typename DB = void, typename MCU = DefaultMcuType>
-    struct Cppm final {
+    struct Cppm;
+
+    template<auto TimerNumber, typename Out, auto Channels, typename Multiplexer, typename DB, AVR::Concepts::At01Series MCU>
+    struct Cppm<TimerNumber, Out, Channels, Multiplexer, DB, MCU> final {
+        Cppm() = delete;
+        using value_type  = uint16_t;        
+        using index_type  = etl::uint_ranged<uint8_t, 0, Channels - 1>;        
+        inline static constexpr void init() {
+            Multiplexer::init();
+        }                
+        inline static constexpr void periodic() {
+        }
+
+        template<typename T, auto L, auto U>
+        static void ppm(index_type ch, etl::uint_ranged_NaN<T, L, U> raw) {
+        }
+    };
+
+    
+    template<auto TimerNumber, typename Out, auto Channels, typename Multiplexer, typename DB, AVR::Concepts::AtMega_X MCU>
+    struct Cppm<TimerNumber, Out, Channels, Multiplexer, DB, MCU> final {
         Cppm() = delete;
         using mcu_timer_type = typename TimerParameter<TimerNumber, MCU>::mcu_timer_type;
         using value_type  = typename TimerParameter<TimerNumber, MCU>::value_type;        

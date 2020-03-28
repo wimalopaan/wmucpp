@@ -326,6 +326,38 @@ namespace AVR {
             using wo4pin = AVR::Pin<AVR::Port<AVR::F>, 4>; 
             using wo5pin = AVR::Pin<AVR::Port<AVR::F>, 5>; 
         };
+        template<AVR::Concepts::AtMega0 MCU>
+        struct Map<Position<AVR::Component::Tcb<0>, Default>, MCU> {
+            using wopin = AVR::Pin<AVR::Port<AVR::A>, 2>; 
+        };
+        template<AVR::Concepts::AtMega0 MCU>
+        struct Map<Position<AVR::Component::Tcb<0>, Alt1>, MCU> {
+            using wopin = AVR::Pin<AVR::Port<AVR::F>, 4>; 
+        };
+        template<AVR::Concepts::AtMega0 MCU>
+        struct Map<Position<AVR::Component::Tcb<1>, Default>, MCU> {
+            using wopin = AVR::Pin<AVR::Port<AVR::A>, 3>; 
+        };
+        template<AVR::Concepts::AtMega0 MCU>
+        struct Map<Position<AVR::Component::Tcb<1>, Alt1>, MCU> {
+            using wopin = AVR::Pin<AVR::Port<AVR::F>, 5>; 
+        };
+        template<AVR::Concepts::AtMega0 MCU>
+        struct Map<Position<AVR::Component::Tcb<2>, Default>, MCU> {
+            using wopin = AVR::Pin<AVR::Port<AVR::C>, 0>; 
+        };
+        template<AVR::Concepts::AtMega0 MCU>
+        struct Map<Position<AVR::Component::Tcb<2>, Alt1>, MCU> {
+            using wopin = AVR::Pin<AVR::Port<AVR::B>, 4>; 
+        };
+        template<AVR::Concepts::AtMega0 MCU>
+        struct Map<Position<AVR::Component::Tcb<3>, Default>, MCU> {
+            using wopin = AVR::Pin<AVR::Port<AVR::B>, 5>; 
+        };
+        template<AVR::Concepts::AtMega0 MCU>
+        struct Map<Position<AVR::Component::Tcb<3>, Alt1>, MCU> {
+            using wopin = AVR::Pin<AVR::Port<AVR::C>, 1>; 
+        };
     }
     
     namespace Util::SoftUart {

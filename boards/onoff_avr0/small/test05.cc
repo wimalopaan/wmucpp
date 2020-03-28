@@ -6,8 +6,8 @@
 
 #define NDEBUG
 
-//#define USE_HOTT
-#define USE_IBUS
+#define USE_HOTT
+//#define USE_IBUS
 
 #include <mcu/avr.h>
 #include <mcu/internals/adc.h>
@@ -43,7 +43,12 @@ using namespace External::Units::literals;
 
 namespace Parameter {
     constexpr uint8_t menuLines = 8;
+#ifdef USE_IBUS
     constexpr auto fRtc = 2000_Hz;
+#endif
+#ifdef USE_HOTT
+    constexpr auto fRtc = 500_Hz;
+#endif
 }
 
 namespace Storage {

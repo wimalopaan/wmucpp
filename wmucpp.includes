@@ -52,3 +52,4 @@ clang
 clang/bm00
 .
 gcc/base/lib/gcc/avr/10.0.1/device-specs
+boards/rcmultiswitch

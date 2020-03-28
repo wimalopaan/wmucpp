@@ -23,9 +23,13 @@
 # 
 # sudo avrdude -p atmega328pb -c arduino -b 9600 -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P /dev/ttyUSB2 -U flash:w:test00.elf
 
-
 MCU = atmega328pb
 F_OSC = 16000000
+
+ibus_to_ppm.elf: MCU = attiny412
+ibus_to_ppm.S: MCU = attiny412
+ibus_to_ppm.elf: F_OSC = 20000000
+ibus_to_ppm.S: F_OSC = 20000000
 
 subdirs =
 
@@ -38,5 +42,6 @@ subdirs =
 #targets += servotester.elf 
 #targets += schaltmodul.elf 
 targets += schaltmodule_ibus.elf 
+targets += ibus_to_ppm.elf ibus_to_ppm.S
 
 -include ../../Makefile.avr0.include

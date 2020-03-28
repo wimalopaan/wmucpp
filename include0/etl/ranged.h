@@ -231,6 +231,10 @@ namespace etl {
             }
         }
         
+        inline constexpr void setNaN() {
+            mValue = NaN;
+        }
+        
         inline constexpr explicit operator bool() const {
             return mValue != NaN;
         }
