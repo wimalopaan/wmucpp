@@ -21,30 +21,27 @@
 #include <cstdint>
 #include <std/utility>
 
-#include "components/cpu.h"
-#include "components/clock.h"
-#include "components/rtc.h"
-#include "components/ccl2.h"
-#include "components/port1.h"
-#include "components/portmux1.h"
-#include "components/tca.h"
-#include "components/tcb.h"
-#include "components/tcd.h"
-#include "components/usart.h"
-#include "components/event0.h"
-#include "components/event1.h"
-#include "components/adc.h"
-#include "components/vref1.h"
-#include "components/sleep.h"
-#include "components/reset.h"
-#include "components/watchdog.h"
-#include "components/sigrow.h"
-#include "components/spi.h"
-#include "components/dac.h"
-
-#include "components/bitmask_operators1.h"
-
 namespace AVR {
-    namespace Series1 {
+    namespace Series0 {
+        struct Reset final {
+            enum class Flags_t: uint8_t {
+                updi = (0x01 << 5),
+                SW   = (0x01 << 4),
+                wd   = (0x01 << 3),
+                ext  = (0x01 << 2),
+                bo   = (0x01 << 1),
+                po   = (0x01 << 0),
+            };
+            FlagRegister<Reset, Flags_t> flags;
+            
+            enum class Sw_t: uint8_t {
+                sw = (0x01 << 0),
+            };
+            ControlRegister<Reset, Sw_t, WriteOnly> sw;
+
+            static inline constexpr uintptr_t address = 0x0040;
+        };
+       static_assert(sizeof(Reset) == 2);
+
     }
 }

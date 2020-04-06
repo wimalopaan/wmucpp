@@ -49,6 +49,8 @@ namespace AVR {
         using Adc = AVR::Series0::Adc;
         using Vref = AVR::Series1::Vref;
         using Spi = AVR::Series0::Spi;
+        using Reset  = AVR::Series0::Reset;
+        using WatchDog = AVR::Series0::WatchDog;
         
         using PortRegister = AVR::Series1::PortRegister;
         using VPort = AVR::Series1::VPort;

@@ -10,6 +10,7 @@
 //#define USE_HOTT
 #define USE_IBUS
 //#define FS_I6S
+#define USE_DAISY
 
 #include <mcu/avr.h>
 #include <mcu/internals/adc.h>
@@ -83,7 +84,7 @@ using alarmTimer = External::Hal::AlarmTimer<systemTimer, 8>;
 // PA3: Led
 // PA4:
 // PA5: current sense = AIN5
-// PA6:
+// PA6: (daisy)
 // PA7: Taster
 // PB3:
 // PB2: TXRX (Sensor)
@@ -93,7 +94,10 @@ using alarmTimer = External::Hal::AlarmTimer<systemTimer, 8>;
 using PortA = Port<A>;
 using PortB = Port<B>;
 
-using daisyChain= Pin<PortA, 2>; 
+#ifdef USE_DAISY
+using daisyChain= Pin<PortA, 6>; 
+#endif
+using dbg       = Pin<PortA, 2>; 
 using ledPin    = ActiveHigh<Pin<PortA, 3>, Output>;
 using led       = External::Blinker<ledPin, systemTimer::intervall, 30_ms, 1000_ms>;
 using buttonPin = Pin<PortA, 7>;
@@ -142,8 +146,9 @@ struct CurrentProvider {
 #else
     inline static constexpr auto ibus_type = IBus::Type::type::BAT_CURR;
 #endif
-//    using currentConverter = Hott::Units::Converter<adc, IBus::current_t, std::ratio<16450,1000>>; // todo: richtiger scale faktor
-    using currentConverter = Hott::Units::Converter<adc, IBus::current_t, std::ratio<10717,1000>>; // todo: richtiger scale faktor
+//    using currentConverter = Hott::Units::Converter<adc, IBus::current_t, std::ratio<16450,1000>>; // todo: richtiger scale faktor (1k)
+//    using currentConverter = Hott::Units::Converter<adc, IBus::current_t, std::ratio<10717,1000>>; // todo: richtiger scale faktor (1k5)
+    using currentConverter = Hott::Units::Converter<adc, IBus::current_t, std::ratio<9189,1000>>; // todo: richtiger scale faktor (1k8)
     inline static constexpr void init() {}
     inline static constexpr uint16_t value() {
 #ifdef FS_I6S
@@ -170,7 +175,7 @@ struct TempProvider {
 };
 using tempP = TempProvider<adcController, 2>;
 
-
+#ifdef USE_DAISY
 struct IBusThrough {
     inline static void init() {
         daisyChain::template dir<Output>();
@@ -183,6 +188,9 @@ struct IBusThrough {
     }
 };
 using ibt = IBusThrough;
+#else
+using ibt = void;
+#endif
 
 using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, Meta::List<voltageP, currentP, tempP>, systemTimer, ibt>;
 #endif

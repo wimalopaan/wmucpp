@@ -19,32 +19,24 @@
 #pragma once
 
 #include <cstdint>
-#include <std/utility>
 
-#include "components/cpu.h"
-#include "components/clock.h"
-#include "components/rtc.h"
-#include "components/ccl2.h"
-#include "components/port1.h"
-#include "components/portmux1.h"
-#include "components/tca.h"
-#include "components/tcb.h"
-#include "components/tcd.h"
-#include "components/usart.h"
-#include "components/event0.h"
-#include "components/event1.h"
-#include "components/adc.h"
-#include "components/vref1.h"
-#include "components/sleep.h"
-#include "components/reset.h"
-#include "components/watchdog.h"
-#include "components/sigrow.h"
-#include "components/spi.h"
-#include "components/dac.h"
-
-#include "components/bitmask_operators1.h"
+#include "../common/concepts.h"
 
 namespace AVR {
-    namespace Series1 {
-    }
+    template<typename MCU = DefaultMcuType>
+    struct Reset;
+    template<AVR::Concepts::At01Series MCU>
+    struct Reset<MCU> {
+        using flags_t = MCU::Reset::Flags_t;
+        inline static constexpr auto mcu_reset = AVR::getBaseAddr<typename MCU::Reset>;
+        
+        inline static void onWatchDog(const auto f) {
+            mcu_reset()->flags.template testAndReset<flags_t::wd>(f);
+        }
+        inline static void noWatchDog(const auto f) {
+            if (!mcu_reset()->flags.template isSet<flags_t::wd>()) {
+                f();
+            }
+        }
+    };
 }

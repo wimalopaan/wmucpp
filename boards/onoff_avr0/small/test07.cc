@@ -1,10 +1,3 @@
-// todo:
-// temperatur-Kalibrierung / Kennlinie
-// ibus protokoll: verbrauchte Kapazität
-// Abbruchtöne länger
-// calibrierung über eeprom (offset / steigung) für spannung / strom
-// hott-sensor-type (eeprom)
-
 #define NDEBUG
 
 #include <mcu/avr.h>
@@ -18,6 +11,9 @@
 #include <mcu/internals/pwm.h>
 #include <mcu/internals/sleep.h>
 #include <mcu/internals/sigrow.h>
+#include <mcu/internals/reset.h>
+#include <mcu/internals/watchdog.h>
+#include <mcu/common/uninitialized.h>
 #include <mcu/pgm/pgmarray.h>
 
 #include <external/hal/alarmtimer.h>
@@ -50,8 +46,13 @@ namespace Parameter {
     constexpr uint16_t Kc = 16'450;
 }
 
+using reset = Reset<>;
+
 using systemTimer = SystemTimer<Component::Rtc<0>, Parameter::fRtc>;
 using alarmTimer = External::Hal::AlarmTimer<systemTimer, 8>;
+
+using wdt   = WatchDog<systemTimer::intervall>;
+using uninitialzed = Uninitialized<>;
 
 // PA1: Voltage = AIN1
 // PA2: Debug Pin
@@ -87,8 +88,12 @@ using terminal = etl::basic_ostream<terminalDevice>;
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition>>;
 
 int main() {
+    wdt::init<ccp>();
     ccp::unlock([]{
         clock::prescale<1>();
+    });
+    reset::noWatchDog([]{
+        uninitialzed::value = 0x00_B;
     });
     
     fet::init();
@@ -101,22 +106,28 @@ int main() {
     terminalDevice::init<AVR::BaudRate<9600>>();
     
     const auto periodicTimer = alarmTimer::create(1000_ms, External::Hal::AlarmFlags::Periodic);
-    const auto capTimer = alarmTimer::create(200_ms, External::Hal::AlarmFlags::Periodic);
     
-    fet::activate();
-
+    uint8_t counter = 0;
+    
     {
-        etl::outl<terminal>("*"_pgm);
+        if (std::any(uninitialzed::value)) {
+            etl::outl<terminal>("**** WD Reset *****"_pgm);
+        }
+        else {
+            etl::outl<terminal>("WD Test"_pgm);
+        }
         while(true) {
             terminalDevice::periodic();
             adcController::periodic();
             
             systemTimer::periodic([&]{
+                if (counter < 10) {
+                    wdt::reset();
+                }
                 alarmTimer::periodic([&](const auto& t){
                     if (periodicTimer == t) {
-//                        fet::toggle();
-                    }
-                    if (capTimer == t) {
+                        ++counter;
+                        etl::outl<terminal>("C: "_pgm, counter);
                     }
                 });
             });

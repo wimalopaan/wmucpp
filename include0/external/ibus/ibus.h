@@ -490,7 +490,7 @@ namespace IBus {
                     break;
                 case ibus_state_t::CheckSum:
                     csum.highByte(c);
-                    if (csum) {
+                    if (csum) { // mReceivedNumber valid
                         mState = ibus_state_t::Reply;                        
                         uart::template rxEnable<false>();
                     }

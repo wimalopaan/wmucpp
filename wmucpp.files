@@ -651,6 +651,7 @@ include0/mcu/common/components/port0.h
 include0/mcu/common/components/port1.h
 include0/mcu/common/components/portmux0.h
 include0/mcu/common/components/portmux1.h
+include0/mcu/common/components/reset.h
 include0/mcu/common/components/rtc.h
 include0/mcu/common/components/sigrow.h
 include0/mcu/common/components/sleep.h
@@ -661,6 +662,7 @@ include0/mcu/common/components/tcd.h
 include0/mcu/common/components/usart.h
 include0/mcu/common/components/vref.h
 include0/mcu/common/components/vref1.h
+include0/mcu/common/components/watchdog.h
 include0/mcu/common/components_mega0.h
 include0/mcu/common/components_tiny1.h
 include0/mcu/common/concepts.h
@@ -675,6 +677,7 @@ include0/mcu/common/pwm.h
 include0/mcu/common/register.h
 include0/mcu/common/staticstorage.h
 include0/mcu/common/timer.h
+include0/mcu/common/uninitialized.h
 include0/mcu/common/util.h
 include0/mcu/internals/adc.h
 include0/mcu/internals/adcomparator.h
@@ -691,6 +694,7 @@ include0/mcu/internals/pit.h
 include0/mcu/internals/port.h
 include0/mcu/internals/portmux.h
 include0/mcu/internals/pwm.h
+include0/mcu/internals/reset.h
 include0/mcu/internals/sigrow.h
 include0/mcu/internals/sleep.h
 include0/mcu/internals/softuart.h
@@ -698,6 +702,7 @@ include0/mcu/internals/spi.h
 include0/mcu/internals/systemclock.h
 include0/mcu/internals/timer.h
 include0/mcu/internals/usart.h
+include0/mcu/internals/watchdog.h
 include0/mcu/mega/atmega.h
 include0/mcu/mega/atmega1284p.h
 include0/mcu/mega/atmega324pb.h

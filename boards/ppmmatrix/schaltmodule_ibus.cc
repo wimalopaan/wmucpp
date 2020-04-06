@@ -49,6 +49,7 @@ int main() {
                 alarmTimer::periodic([&](const alarmTimer::index_type timer){
                     if (timer == t) {
                         auto v = servo_pa::value(channel_t{14});
+                        
                         etl::outl<terminal>("v15: "_pgm, v.toInt());    
                     }
                 });

@@ -25,11 +25,12 @@ MCU = atmega328p
 #MCU = attiny1614
 #MCU = atxmega32e5
 
-CXXFLAGS += -D__AVR_ATtiny1614__ -D__AVR_DEVICE_NAME__=attiny1614 -D__AVR_DEV_LIB_NAME__=tn1614
+#CXXFLAGS += -D__AVR_ATtiny1614__ -D__AVR_DEVICE_NAME__=attiny1614 -D__AVR_DEV_LIB_NAME__=tn1614
 
 targets += shtml
 
 targets += bm00.S bm00.elf
 
 -include ../../Makefile.clang.include
+#-include ../../Makefile.avr0.include
 
