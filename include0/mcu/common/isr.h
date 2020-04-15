@@ -199,6 +199,32 @@ namespace AVR {
 #endif
 
         template<uint8_t N>
+        struct Tca;
+        
+        template<>
+        struct Tca<0> {
+#ifdef TCA0_LUNF_vect_num
+            struct Lunf
+            {
+                static constexpr const uint32_t number = TCA0_LUNF_vect_num;
+            };
+#endif
+#ifdef TCA0_OVF_vect_num
+            struct Ovf
+            {
+                static constexpr const uint32_t number = TCA0_OVF_vect_num;
+            };
+#endif
+#ifdef TCA0_CMP0_vect_num
+            template<uint8_t CC>
+            struct Cmp
+            {
+                static constexpr const uint32_t number = TCA0_CMP0_vect_num + CC;
+            };
+#endif
+        };
+        
+        template<uint8_t N>
         struct Tcb;
         
         template<>

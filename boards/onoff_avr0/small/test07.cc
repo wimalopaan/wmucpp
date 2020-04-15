@@ -88,7 +88,7 @@ using terminal = etl::basic_ostream<terminalDevice>;
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition>>;
 
 int main() {
-    wdt::init<ccp>();
+//    wdt::init<ccp>();
     ccp::unlock([]{
         clock::prescale<1>();
     });

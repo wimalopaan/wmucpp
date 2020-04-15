@@ -37,7 +37,7 @@ namespace AVR {
         
         inline static constexpr auto pv = []{
             for(auto pv : MCU::WatchDog::periodValues) {
-                if (pv.timeout > resetInterval) {
+                if (pv.timeout > (resetInterval * 2)) {
                     return pv.bits;
                 }
             }
@@ -48,9 +48,16 @@ namespace AVR {
         
         template<typename ConfProt>
         inline static void init() {
-            mcu_wd()->status.template waitFor<MCU::WatchDog::Status_t::busy>();
+            mcu_wd()->status.template waitForCleared<MCU::WatchDog::Status_t::busy>();
             ConfProt::unlock([]{
                 mcu_wd()->ctrla.template set<pv>();
+            });
+        }
+        template<typename ConfProt>
+        inline static void off() {
+            mcu_wd()->status.template waitForCleared<MCU::WatchDog::Status_t::busy>();
+            ConfProt::unlock([]{
+                mcu_wd()->ctrla.template set<MCU::WatchDog::CtrlA2_t::off>();
             });
         }
 

@@ -358,6 +358,16 @@ namespace AVR {
         struct Map<Position<AVR::Component::Tcb<3>, Alt1>, MCU> {
             using wopin = AVR::Pin<AVR::Port<AVR::C>, 1>; 
         };
+
+        template<>
+        struct Map<Position<AVR::Component::Tcb<0>, Default>, AVR::ATTiny1614> {
+            using wopin = AVR::Pin<AVR::Port<AVR::A>, 5>; 
+        };
+        template<>
+        struct Map<Position<AVR::Component::Tcb<1>, Default>, AVR::ATTiny1614> {
+            using wopin = AVR::Pin<AVR::Port<AVR::A>, 3>; 
+        };
+    
     }
     
     namespace Util::SoftUart {

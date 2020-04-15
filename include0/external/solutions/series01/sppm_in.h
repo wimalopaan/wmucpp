@@ -20,6 +20,7 @@ namespace External {
             
             using ctrla_t = MCU::TCB::CtrlA_t;
             using ctrlb_t = MCU::TCB::CtrlB_t;
+            using intflags_t = MCU::TCB::IntFlags_t;
             using ev_t = MCU::TCB::EvCtrl_t;
             
             inline static constexpr uint8_t prescaler = 2;
@@ -51,6 +52,10 @@ namespace External {
                 return *mcu_tcb()->ccmp;
             }
 
+            inline static void onCapture(auto f) {
+                mcu_tcb()->intflags.template testAndReset<intflags_t::capt>(f);
+            }
+            
             inline static value_type value() {
                 auto v = *mcu_tcb()->ccmp;
                 if ((v >= ppmMinExtended) && (v <ppmMaxExtended)) {

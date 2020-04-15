@@ -53,3 +53,6 @@ clang/bm00
 .
 gcc/base/lib/gcc/avr/10.0.1/device-specs
 boards/rcmultiswitch
+boards/onoff_avr0/big
+boards/ibusppmconverter
+include0/external/sbus

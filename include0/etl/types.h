@@ -100,9 +100,9 @@ namespace etl {
     };
     
     template<Unsigned T>
-    class uint_NaN final {
+    struct uint_NaN final {
         inline static constexpr T NaN = std::numeric_limits<T>::max();
-    public:
+
         using value_type = T;
         
         inline explicit constexpr uint_NaN(T v) : mValue(v) {
@@ -110,19 +110,19 @@ namespace etl {
         }
         inline constexpr uint_NaN() : mValue(NaN) {}
         
-        inline void setNaN() volatile {
+        inline constexpr void setNaN() volatile {
             mValue = NaN;
         }
         inline void operator=(T v) volatile {
 //            assert(v != NaN);
             mValue = v;
         }
-        inline uint_NaN& operator=(T v){
+        inline constexpr uint_NaN& operator=(T v){
 //            assert(v != NaN);
             mValue = v;
             return *this;
         }
-        inline explicit operator bool() volatile const {
+        inline explicit constexpr operator bool() volatile const {
             return mValue != NaN;
         }
         inline constexpr explicit operator bool() const {
@@ -173,7 +173,7 @@ namespace etl {
             }
             return false;
         }
-//    private: // strcutural
+//    private: // structural
         T mValue{0};
     };
     

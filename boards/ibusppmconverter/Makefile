@@ -17,11 +17,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# sudo avrdude -p attiny85 -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -P usb -c avrisp2 -U lfuse:w:0x62:m -U hfuse:w:0xd7:m -U efuse:w:0xff:m
+# ~/Projekte/updi/pyupdi/pyupdi.py -d tiny1614 -c /dev/ttyUSB1  -f test00.hex
 
-MCU = attiny412
-F_OSC = 2000000
+MCU = attiny1614
+F_OSC = 20000000
 
-subdirs = small big
+subdirs =
 
--include ../../Makefile.include
+targets += test00.elf test00.hex test00.S
+targets += a4t.hex
+targets += a3t2r.hex
+targets += a2t2c.hex
+targets += a2c2r.hex
+targets += b10c5.hex
+
+-include ../../Makefile.avr0.include

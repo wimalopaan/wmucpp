@@ -72,7 +72,7 @@ namespace AVR {
             enum class Status_t : uint8_t {
                 run = (1 << 0),
             };
-            ControlRegister<TCB, Status_t, ReadOnly> status;
+            FlagRegister<TCB, Status_t, ReadOnly> status;
 
             enum class DbgCtrl_t : uint8_t {
                 dbgrun = (1 << 0),

@@ -10,7 +10,6 @@ namespace Project {
     using hertz     = External::Units::hertz;
     
     struct Config final {
-        
         Config() = delete; // one should use a similar copy in own project
     
         inline static constexpr megahertz fMcuMhz {F_CPU / 1000000};
@@ -23,30 +22,12 @@ namespace Project {
         
         static_assert(fRtc.value <= 32768, "F_RTC too high");
         static_assert(fRtc.value >=  1024, "F_RTC too low");
-        
-        
-    //    struct Timer {
-    //        inline static constexpr uint8_t NumberOfTimers = 8;
-    //        inline static constexpr std::hertz frequency = 100_Hz;
-    //        inline static constexpr std::milliseconds resolution = std::duration_cast<std::milliseconds>(1 / frequency);
-    //    };
-    //    struct EventManager {
-    //        inline static constexpr uint8_t EventQueueLength = 32;
-    //    };
-    //    struct Usart {
-    //        inline static constexpr uint8_t SendQueueLength = 64;
-    //        inline static constexpr uint8_t RecvQueueLength = 0;
-    //        inline static constexpr bool  useEvents = true;
-    //    };
-    //    struct SoftSpiMaster {
-    //        inline static constexpr std::microseconds pulseDelay = 1_us;
-    //    };
-    //    struct Button {
-    //        inline static constexpr uint8_t buttonTicksForPressed = 50_ms * Timer::frequency;
-    //    };
-    //    inline static constexpr std::microseconds zeroMicroSeconds{0};
-    //    inline static constexpr bool ensureTerminalOutput = true;
-    //    inline static constexpr bool disableCout = false;
     };
+
+    enum class variants_t : uint8_t {A, B, C, D, E, F, H, S};
     
+    template<variants_t V, typename SubVariant = void>
+    struct Variant : std::integral_constant<variants_t, V> {
+        using sub_type = SubVariant;
+    };
 }

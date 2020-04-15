@@ -21,8 +21,24 @@
 #include <std/array>
 
 namespace AVR {
+    namespace detail {
+        namespace Uninit {
+            static inline volatile std::byte g_value __attribute__ ((section (".noinit")));
+            static inline volatile uint16_t g_counter __attribute__ ((section (".noinit")));
+        }
+    }
+    
     template<typename ValueType = std::byte, typename MCU = DefaultMcuType>
     struct Uninitialized {
-        static inline ValueType value __attribute__ ((section (".noinit")));
+        static inline void reset() {
+            value = 0x00_B;
+            counter = 0;
+        }
+        static inline auto& value   = detail::Uninit::g_value;
+        static inline auto& counter = detail::Uninit::g_counter;
+        
+        // geht nicht
+        
+//        static inline volatile ValueType value __attribute__ ((section (".noinit")));
     }; 
 }

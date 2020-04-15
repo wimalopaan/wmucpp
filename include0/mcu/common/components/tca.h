@@ -87,6 +87,7 @@ namespace AVR {
             ControlRegister<TCA, Evctrl_t> evctrl;
             
             enum class Intctrl_t : uint8_t {
+                ovf = 0x01
             };
             ControlRegister<TCA, Intctrl_t> intctrl;
             

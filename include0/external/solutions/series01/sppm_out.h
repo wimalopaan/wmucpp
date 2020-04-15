@@ -163,15 +163,17 @@ namespace External {
             using ranged_type = etl::uint_ranged<uint16_t, ocMin, ocMax> ;
             
             static inline void init() {
+                *mcu_tcb()->cnt = 0xffff;
                 mcu_tcb()->ctrla.template set<mcu_timer_t::CtrlA_t::clktca | mcu_timer_t::CtrlA_t::enable>();
                 mcu_tcb()->ctrlb.template set<mcu_timer_t::CtrlB_t::mode_single>(); // todo: OR Flags
                 mcu_tcb()->ctrlb.template add<mcu_timer_t::CtrlB_t::ccmpen>();
                 mcu_tcb()->evctrl.template set<mcu_timer_t::EvCtrl_t::captei>();
                 pin::template dir<AVR::Output>();
+                duty(ocMedium);
             }
 
             template<typename T, auto L, auto U>
-            static void ppm(etl::uint_ranged_NaN<T, L, U> raw) {
+            static bool ppm(etl::uint_ranged_NaN<T, L, U> raw) {
                 if (raw) {
                     T v1 = raw.toInt() - L;
                     constexpr uint64_t denom = U - L;
@@ -179,21 +181,52 @@ namespace External {
                     if constexpr(nom < denom) {
                         uint16_t ocr = etl::Rational::RationalDivider<uint16_t, nom, denom>::scale(v1) + ranged_type::Lower;
                         uint16_t v = clamp(ocr, ocMin, ocMax);
-                        duty(v);
+                        return duty(v);
                     }
                     else {
                         static_assert( (((10 * nom) / denom) * 255) <= std::numeric_limits<uint16_t>::max());
                         uint16_t ocr = ((v1 * ((10 * nom) / denom)) / 10) + ranged_type::Lower;
                         uint16_t v = clamp(ocr, ocMin, ocMax);
-                        duty(v);
+                        return duty(v);
+                    }
+                }
+                return false;
+            }
+            
+            static inline uint16_t da{};
+            
+            template<typename T, auto L, auto U>
+            static void ppm_async(etl::uint_ranged_NaN<T, L, U> raw) {
+                if (raw) {
+                    T v1 = raw.toInt() - L;
+                    constexpr uint64_t denom = U - L;
+                    constexpr uint64_t nom = ranged_type::Upper - ranged_type::Lower;
+                    if constexpr(nom < denom) {
+                        uint16_t ocr = etl::Rational::RationalDivider<uint16_t, nom, denom>::scale(v1) + ranged_type::Lower;
+                        da = clamp(ocr, ocMin, ocMax);
+                    }
+                    else {
+                        static_assert( (((10 * nom) / denom) * 255) <= std::numeric_limits<uint16_t>::max());
+                        uint16_t ocr = ((v1 * ((10 * nom) / denom)) / 10) + ranged_type::Lower;
+                        da = clamp(ocr, ocMin, ocMax);
                     }
                 }
             }
-        private:
-            inline static constexpr void duty(const uint16_t d) {
-                *mcu_tcb()->ccmp = d;
+            inline static void onReload(auto f) {
+                if (!mcu_tcb()->status.template isSet<mcu_timer_t::Status_t::run>()) {
+                    *mcu_tcb()->ccmp = da;
+                    *mcu_tcb()->cnt = 0xffff;
+                    f();
+                }
             }
-            
+        private:
+            inline static constexpr bool duty(const uint16_t d) {
+                if (!mcu_tcb()->status.template isSet<mcu_timer_t::Status_t::run>()) {
+                    *mcu_tcb()->ccmp = d;
+                    return true;
+                }
+                return false;
+            }   
         };
     }
 }

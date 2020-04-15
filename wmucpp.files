@@ -230,6 +230,18 @@ boards/curiosity/test90.cc
 boards/curiosity/test99.c
 boards/doorbell/Makefile
 boards/doorbell/test00.cc
+boards/ibusppmconverter/Makefile
+boards/ibusppmconverter/a2c2r.cc
+boards/ibusppmconverter/a2t2c.cc
+boards/ibusppmconverter/a3t2r.cc
+boards/ibusppmconverter/a4t.cc
+boards/ibusppmconverter/b10c5.cc
+boards/ibusppmconverter/board.h
+boards/ibusppmconverter/curr.h
+boards/ibusppmconverter/rpm.h
+boards/ibusppmconverter/temp.h
+boards/ibusppmconverter/test00.cc
+boards/ibusppmconverter/volt.h
 boards/include/ppmmatrix.h
 boards/include/rcsensorled01b.h
 boards/include/rcsensorled10.h
@@ -244,6 +256,8 @@ boards/onoff/soft.cc
 boards/onoff/test.cc
 boards/onoff/tone.cc
 boards/onoff_avr0/Makefile
+boards/onoff_avr0/big/Makefile
+boards/onoff_avr0/big/test06.cc
 boards/onoff_avr0/small/Makefile
 boards/onoff_avr0/small/board.h
 boards/onoff_avr0/small/test00.cc
@@ -274,6 +288,10 @@ boards/ppmmatrix/test04.cc
 boards/rcactor/Makefile
 boards/rcactor/test00.cc
 boards/rcmultiswitch/Makefile
+boards/rcmultiswitch/board.h
+boards/rcmultiswitch/multi8d.cc
+boards/rcmultiswitch/multi8man.cc
+boards/rcmultiswitch/multi8mk4.cc
 boards/rcmultiswitch/test00.cc
 boards/rcmultiswitch/test01.cc
 boards/rcmultiswitch/test10.cc
@@ -611,6 +629,7 @@ include0/external/hott/sumdprotocoll.h
 include0/external/hott/sumdprotocolladapter.h
 include0/external/ibus/ibus.h
 include0/external/onewire/onewire.h
+include0/external/sbus/sbus.h
 include0/external/solutions/apa102.h
 include0/external/solutions/blinker.h
 include0/external/solutions/button.h
@@ -625,6 +644,7 @@ include0/external/solutions/rpm.h
 include0/external/solutions/series01/rpm.h
 include0/external/solutions/series01/sppm_in.h
 include0/external/solutions/series01/sppm_out.h
+include0/external/solutions/series01/swuart.h
 include0/external/solutions/tick.h
 include0/external/solutions/tle5205.h
 include0/external/solutions/verticalcounter.h
@@ -647,6 +667,7 @@ include0/mcu/common/components/cpu.h
 include0/mcu/common/components/dac.h
 include0/mcu/common/components/event0.h
 include0/mcu/common/components/event1.h
+include0/mcu/common/components/gpior.h
 include0/mcu/common/components/port0.h
 include0/mcu/common/components/port1.h
 include0/mcu/common/components/portmux0.h

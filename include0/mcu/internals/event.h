@@ -204,8 +204,19 @@ namespace AVR {
                 inline static constexpr auto value = AVR::Series0::Events::Generator_t{uint8_t(AVR::Series0::Events::Generator_t::port1_pin0) + N};
             };
 
+            template<uint8_t N, AVR::Concepts::AtTiny1 MCU> struct map_generator<void, std::integral_constant<uint8_t, N>, MCU> {
+                inline static constexpr auto value = AVR::Series1::Events::AsyncGenerator_t{0};
+            };
+
             template<uint8_t N, uint8_t C, AVR::Concepts::AtTiny1 MCU>  requires((C == 0)) struct map_generator<Generators::Pin<AVR::Pin<AVR::Port<AVR::A>, N>>, std::integral_constant<uint8_t, C>, MCU> {
                 inline static constexpr auto value = AVR::Series1::Events::AsyncGenerator_t{uint8_t(AVR::Series1::Events::AsyncGenerator_t::port_pin0) + N};
+            };
+            template<uint8_t N, uint8_t C, AVR::Concepts::AtTiny1 MCU>  requires((C == 1)) struct map_generator<Generators::Pin<AVR::Pin<AVR::Port<AVR::B>, N>>, std::integral_constant<uint8_t, C>, MCU> {
+                inline static constexpr auto value = AVR::Series1::Events::AsyncGenerator_t{uint8_t(AVR::Series1::Events::AsyncGenerator_t::port_pin0) + N};
+            };
+
+            template<uint8_t N, AVR::Concepts::AtTiny1 MCU> struct map_generator<Generators::Tca0<Generators::Kind::Ovf>, std::integral_constant<uint8_t, N>, MCU> {
+                inline static constexpr auto value = AVR::Series1::Events::SyncGenerator_t::tca0_ovf_lunf;
             };
         }
         
@@ -246,6 +257,7 @@ namespace AVR {
                 template<AVR::Concepts::AtMega0 MCU> struct user_to_index<Tcb<3>, MCU> : std::integral_constant<uint8_t, 23>{};
 
                 template<AVR::Concepts::AtTiny1 MCU> struct user_to_index<Tcb<0>, MCU> : std::integral_constant<uint8_t, 0>{};
+                template<AVR::Concepts::AtTiny1 MCU> struct user_to_index<Tcb<1>, MCU> : std::integral_constant<uint8_t, 11>{};
             
             
             }
@@ -342,6 +354,11 @@ namespace AVR {
 //                    std::integral_constant<uint8_t, channel_number + 3>::_;
                     mcu_evsys()->async_users[userNumber].template set<typename MCU::Events::AsyncChannel_t{channel_number + 3}>();
                 }
+                else {
+//                    std::integral_constant<uint8_t, channel_number>::_;
+//                    std::integral_constant<uint8_t, userNumber>::_;
+                    mcu_evsys()->async_users[userNumber].template set<typename MCU::Events::AsyncChannel_t{channel_number - 3}>();
+                }
             }
         };
         
@@ -412,7 +429,7 @@ namespace AVR {
             inline static void strobe() {
                 static_assert(N < 8, "wrong channel, must be 0 to 7");
                 constexpr auto code = typename MCU::Events::Strobe_t{1 << N};
-                mcu_evsys()->strobe.template set<code>();
+                mcu_evsys()->asyncStrobe.template set<code>();
             }
         };
     }

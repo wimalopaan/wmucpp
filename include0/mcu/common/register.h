@@ -118,6 +118,10 @@ namespace AVR {
         void inline waitFor() const {
             while(std::none(hwRegister & static_cast<value_type>(F)));
         }
+        template<BitType F>
+        void inline waitForCleared() const {
+            while(std::any(hwRegister & static_cast<value_type>(F)));
+        }
     private:
         volatile value_type hwRegister;
     };

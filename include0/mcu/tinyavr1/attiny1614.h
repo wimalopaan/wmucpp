@@ -39,6 +39,7 @@ namespace AVR {
 //            inline static constexpr uintptr_t end   = RAMEND;  
 //        };
         
+        using Gpior = AVR::Series0::GPIOR;
         using Cpu = AVR::Series0::Cpu;
         using Clock = AVR::Series0::Clock;
         using Rtc = AVR::Series0::Rtc;
@@ -57,6 +58,7 @@ namespace AVR {
         using Portmux = AVR::Series1::Portmux;
         using Ccl = AVR::Series1::Ccl;
         using Dac = AVR::Series1::Dac;
+        using Events = AVR::Series1::Events;
 
         using SigRow = AVR::Series0::SigRow;
     };
@@ -65,6 +67,7 @@ namespace AVR {
 }
 
 namespace AVR {
+    template<> struct AVR::Component::Count<ATTiny1614::Gpior> : std::integral_constant<uint8_t, 4> {};
     template<> struct AVR::Component::Count<ATTiny1614::Usart> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<ATTiny1614::TCA> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<ATTiny1614::TCB> : std::integral_constant<uint8_t, 1> {};
@@ -75,6 +78,11 @@ namespace AVR {
     template<> struct AVR::Component::Count<ATTiny1614::Adc> : std::integral_constant<uint8_t, 2> {};
     template<> struct AVR::Component::Count<ATTiny1614::Spi> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<ATTiny1614::Dac> : std::integral_constant<uint8_t, 3> {};
+
+    template<uint8_t N>
+    struct ATTiny1614::Gpior::Address {
+        inline static constexpr uintptr_t value = 0x001c + N;
+    };
     
     template<> struct ATTiny1614::VPort::Address<A> {
         inline static constexpr uintptr_t value = 0x0000;

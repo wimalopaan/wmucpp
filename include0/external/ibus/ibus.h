@@ -145,6 +145,7 @@ namespace IBus {
             static inline std::array<bool, nBinary>  states2w{};
             static inline std::array<uint8_t, nTernary> states3w{};
         };
+    
         template<typename PA>
         struct Switch1 {
             static inline bool periodic() {
@@ -238,7 +239,7 @@ namespace IBus {
     }
     
     namespace Servo {
-        template<auto N = 0>
+        template<auto N = 0, typename Dbg = void>
         struct ProtocollAdapter {
             // AFHDS2A: 14 channels
             // there should be an update to 16 / 18 channels
@@ -266,7 +267,7 @@ namespace IBus {
             static inline bool process(const std::byte b) {
                 switch(mState) {
                 case State::Undefined:
-                    csum = CheckSum{};
+                    csum.reset();
                     if (b == 0x20_B) {
                         csum += b;
                         mState = State::GotStart20;
@@ -277,6 +278,9 @@ namespace IBus {
                         csum += b;
                         mState = State::Data;
                         mIndex.setToBottom();
+                    }
+                    else {
+                        mState = State::Undefined;
                     }
                     break;
                 case State::Data:
@@ -297,6 +301,9 @@ namespace IBus {
                     csum.highByte(b);
                     mState = State::Undefined;
                     if (csum) {
+                        if constexpr (!std::is_same_v<Dbg, void>) {
+                            Dbg::toggle();
+                        }
                         using std::swap;
                         swap(active, inactive);
                     }
@@ -320,6 +327,8 @@ namespace IBus {
     
     using battery_voltage_t = External::Units::voltage<uint16_t, std::ratio<1,100>>;
     using current_t = External::Units::ampere<uint16_t, std::ratio<1,100>>;
+    using temp_t = External::Units::celsius<uint16_t, std::ratio<1,10>>;
+    using rpm_t = External::Units::RPM;
     
     template<typename CNumber, 
              template<typename CN, typename PA, typename ISR, typename RXL, typename TXL> typename Uart, 
@@ -347,11 +356,30 @@ namespace IBus {
             static inline constexpr void set(std::byte) {}
         };
         
+        struct LossProvider {
+            inline static constexpr auto ibus_type = IBus::Type::type::FLIGHT_MODE;
+            inline static constexpr void init() {}
+            inline static constexpr uint16_t value() {
+                return counter;
+            }
+            inline static void increment() {
+                ++counter;
+            }
+            static inline uint16_t counter{};
+        };
+        
         using debug = std::conditional_t<std::is_same_v<Debug, void>, NoDebug, Debug>;
         
         static inline constexpr auto UartNumber = CNumber::component_type::value;
         
-        using provider_list = Meta::List<Providers...>;
+        static inline constexpr bool useLossProvider = false;    
+        
+        using provider_list_extern = Meta::List<Providers...>;
+        using provider_list = std::conditional_t<useLossProvider, 
+                                                 Meta::push_back<provider_list_extern, LossProvider>,
+                                                 provider_list_extern>;
+        
+        
         inline static constexpr auto numberOfProviders = Meta::size_v<provider_list>;
         
         inline static constexpr std::byte Cdiscover = 0x80_B;
@@ -420,13 +448,16 @@ namespace IBus {
                                 const uint8_t index = n - mFirstSensorNumber;
                                 if (index == (numberOfProviders - 1)) {
                                     mLastSensorNumber = n;
-//                                    if constexpr(!std::is_same_v<DaisyChainEnable, void>) {
-//                                        DaisyChainEnable::on();
-//                                    }
                                 }
                                 mReceivedNumber = n;
                                 mState = ibus_state_t::Discover;
                                 responder::start(responder::reply_state_t::DiscoverWait);
+                            }
+                            else if (mFirstSensorNumber && mLastSensorNumber && inRange(n)) { // maybe a loss of connection
+                                mReceivedNumber = n;
+                                mState = ibus_state_t::Discover;
+                                responder::start(responder::reply_state_t::DiscoverWait);
+                                LossProvider::increment();
                             }
                             else {
                                 mState = ibus_state_t::Skip;

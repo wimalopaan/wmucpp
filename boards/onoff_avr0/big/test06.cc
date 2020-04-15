@@ -107,14 +107,14 @@ using PortA = Port<A>;
 using PortB = Port<B>;
 
 #ifdef USE_DAISY
-using daisyChain= Pin<PortA, 6>; 
+using daisyChain= Pin<PortA, 7>; 
 #endif
 using dbg       = Pin<PortA, 2>; 
-using ledPin    = ActiveHigh<Pin<PortA, 3>, Output>;
+using ledPin    = ActiveHigh<Pin<PortB, 1>, Output>;
 using led       = External::Blinker<ledPin, systemTimer::intervall, 30_ms, 1000_ms>;
-using buttonPin = Pin<PortA, 7>;
+using buttonPin = Pin<PortA, 5>;
 using button    = External::Button<ActiveLow<buttonPin, Input>, systemTimer, External::Tick<systemTimer>{100_ms}, External::Tick<systemTimer>{3000_ms}>;
-using fet       = ActiveHigh<Pin<PortB, 1>, Output>;
+using fet       = ActiveHigh<Pin<PortA, 3>, Output>;
 
 using ccp = Cpu::Ccp<>;
 using clock = Clock<>;
@@ -126,7 +126,7 @@ using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::Default>;
 using sleep = Sleep<>;
 
 using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V4_3>;
-using adcController = External::Hal::AdcController<adc, Meta::NList<1, 5, 0x1e>>; // 1e = temp
+using adcController = External::Hal::AdcController<adc, Meta::NList<1, 4, 0x1e>>; // 1e = temp
 
 #ifdef USE_IBUS
 template<typename ADC, uint8_t Channel>
