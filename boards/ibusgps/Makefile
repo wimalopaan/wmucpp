@@ -17,20 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# ~/Projekte/updi/pyupdi/pyupdi.py -d tiny1614 -c /dev/ttyUSB1  -f test00.hex
+# ~/Projekte/updi/pyupdi/pyupdi.py -d tiny412 -c /dev/ttyUSB1  -f test00.hex
 
-MCU = attiny1614
+MCU = attiny412
 F_OSC = 20000000
 
 subdirs =
 
 targets += test00.elf test00.hex test00.S
-targets += a4t.hex
-targets += a3t2r.hex
-targets += a2t2c.hex
-targets += a2c2r.hex
-targets += a2c2r1g.hex
-targets += b10c5.hex
-targets += b11c4.hex
 
 -include ../../Makefile.avr0.include

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "mcu/internals/eeprom.h"
+
 template<typename ADC, uint8_t Channel>
 struct ACS723U40Provider {
     using index_t = ADC::index_type;
@@ -10,7 +12,21 @@ struct ACS723U40Provider {
 #else
     inline static constexpr auto ibus_type = IBus::Type::type::BAT_CURR;
 #endif
-    inline static constexpr void init() {}
+    inline static constexpr void init() {
+    }
+
+    inline static constexpr void accumulateCalibration() {
+        if (!mCCount.isTop()) {
+            ++mCCount;
+            mCalib += ADC::value(channel).toInt();
+        }
+    }
+    inline static constexpr void setCalibration() {
+        mOffset = mCalib / mCCount;
+        mOffset *= 34;
+        mOffset >>= 3;
+    }
+    
     inline static constexpr uint16_t value() {
 #ifdef FS_I6S
         return currentConverter::convert(ADC::value(channel)).value / 10 + 400;
@@ -18,11 +34,16 @@ struct ACS723U40Provider {
         auto raw = ADC::value(channel).toInt();
         raw *= 34;
         raw >>= 3;
-        if (raw > 500) {
-            return raw - 500;
+        if (raw > mOffset) {
+            return raw - mOffset;
         }
         return 0;
 #endif
     }
+private:
+    static inline etl::uint_ranged<uint8_t, 0, 63> mCCount;
+    static inline uint16_t mCalib{};
+    
+    static inline uint16_t mOffset{500};
 };
 

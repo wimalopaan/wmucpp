@@ -51,6 +51,7 @@ namespace External::GPS {
             if (field == SpeedFieldNumber) {
                 if (index < std::size(speed)) {
                     speed[index] = b;
+                    ++receivedBytes;
                 }
             }
         }  
@@ -58,6 +59,7 @@ namespace External::GPS {
             Scoped<DisbaleInterrupt<RestoreState>> di;
             etl::copy(result, speed);
         }
+        inline static uint16_t receivedBytes{};
         inline static constexpr uint8_t SpeedFieldNumber = 6;
         inline static std::array<std::byte, Sentence::DecimalMaxWidth> speed;
     };
@@ -67,6 +69,7 @@ namespace External::GPS {
             if (field == TimeFieldNumber) {
                 if (index < std::size(time)) {
                     time[index] = b;
+                    ++receivedBytes;
                 }
             }
             else if (field == DateFieldNumber) {
@@ -83,6 +86,7 @@ namespace External::GPS {
             Scoped<DisbaleInterrupt<RestoreState>> di;
             copy(result, date);
         }
+        inline static uint16_t receivedBytes{};
         inline static constexpr uint8_t TimeFieldNumber = 0;
         inline static constexpr uint8_t DateFieldNumber = 8;
         inline static std::array<std::byte, Sentence::TimeMaxWidth> time;
@@ -123,8 +127,7 @@ namespace External::GPS {
                     state = State::FieldData;                    
                     field = 0;
                     index = 0;
-                    decoder = Meta::find<decoders>([](auto x){
-                        using type = typename decltype(x)::type;
+                    decoder = Meta::find<decoders>([]<typename type>(Meta::Wrapper<type>){
                         return compareFirstN<3>(type::prefix, sentenceType);
                     });
                 }
@@ -145,8 +148,7 @@ namespace External::GPS {
                 }
                 else {
                     if (decoder < Meta::size<decoders>::value) {
-                        Meta::visitAt<decoders>(decoder, [&](auto d){
-                            using type = typename decltype(d)::type;
+                        Meta::visitAt<decoders>(decoder, [&]<typename type>(Meta::Wrapper<type>){
                             type::process(b, index++, field);
                         });
                     }

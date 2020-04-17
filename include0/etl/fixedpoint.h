@@ -241,7 +241,7 @@ namespace etl {
     namespace detail {
         template<etl::Concepts::Stream Stream, typename T, uint8_t Bits>
         inline void out_impl(const Fraction<T, Bits>& f) {
-            array<Char, 1 + numberOfDigits<Fraction<T, Bits>>()> buffer; // dot + sentinel
+            array<Char, 1 + numberOfDigits<Fraction<T, Bits>>()> buffer{}; // dot + sentinel
             ftoa(f, buffer);
             out_impl<Stream>(buffer);
         }

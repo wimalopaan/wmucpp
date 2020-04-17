@@ -3,16 +3,21 @@
 #include "temp.h"
 
 #include <external/solutions/series01/swuart.h>
+#include <external/solutions/gps.h>
 
-using adcController = External::Hal::AdcController<adc, Meta::NList<10, 11, 5, 3, 0x1e>>; // 1e = temp
-using mcp0P = Mcp9700aProvider<adcController, 0>;
-using mcp1P = Mcp9700aProvider<adcController, 1>;
+//using adcController = External::Hal::AdcController<adc, Meta::NList<10, 11, 5, 3, 0x1e>>; // 1e = temp
+//using mcp0P = Mcp9700aProvider<adcController, 0>;
+//using mcp1P = Mcp9700aProvider<adcController, 1>;
 
-using iTempP = InternalTempProvider<adcController, 4>;
+//using iTempP = InternalTempProvider<adcController, 4>;
 
-using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, 
-                          Meta::List<mcp0P, mcp1P, iTempP>, 
-                          systemTimer, ibt>;
+//using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, 
+//                          Meta::List<mcp0P, mcp1P, iTempP>, 
+//                          systemTimer, ibt>;
+
+using terminalDevice = AVR::Usart<usart0Position, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>>;
+using terminal = etl::basic_ostream<terminalDevice>;
+
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition>>;
 
@@ -21,11 +26,13 @@ using evrouter = Event::Router<Event::Channels<evch0, evch1>, Event::Routes<evus
 using rxPin = q0Pin;
 using txPin = void;
 using swuart = External::SoftSerial::Usart<Meta::List<rxPin, void>, Component::Tca<0>,
-                                            External::Hal::NullProtocollAdapter, AVR::BaudRate<9600>>;
+                                            External::GPS::GpsProtocollAdapter<0, External::GPS::VTG>,
+//                                            External::Hal::NullProtocollAdapter, 
+                                            AVR::BaudRate<9600>>;
 using isrRegistrar = IsrRegistrar<typename swuart::StartBitHandler, typename swuart::RxBitHandler>;
 
 int main() {
-#if 0
+#if 1
     wdt::init<ccp>();
 
     ccp::unlock([]{
@@ -39,32 +46,39 @@ int main() {
     reset::onWatchDog([]{
         uninitialzed::counter = uninitialzed::counter + 1;        
     });
+
+    terminalDevice::init<AVR::BaudRate<9600>>();
     
     swuart::init();
     
     evrouter::init();
     portmux::init();
     systemTimer::init();
-    adcController::init();
+//    adcController::init();
     
 //    rpm0::init();   
 //    rpm1::init();   
     
-    ibus::init();
+//    ibus::init();
     
     const auto periodicTimer = alarmTimer::create(1000_ms, External::Hal::AlarmFlags::Periodic);
+    
+    etl::StringBuffer<External::GPS::Sentence::DecimalMaxWidth> buffer;
     
     {
         etl::Scoped<etl::EnableInterrupt<>> ei;
         while(true) {
-            ibus::periodic();
-            adcController::periodic();
+            terminalDevice::periodic();
+//            ibus::periodic();
+//            adcController::periodic();
             
             systemTimer::periodic([&]{
                 wdt::reset();
-                ibus::ratePeriodic();
+//                ibus::ratePeriodic();
                 alarmTimer::periodic([&](const auto& t){
                     if (periodicTimer == t) {
+                        External::GPS::VTG::speedRaw(buffer);
+                        etl::outl<terminal>("* : "_pgm, buffer);
 //                        rpm0::reset();
 //                        rpm1::reset();
                     }

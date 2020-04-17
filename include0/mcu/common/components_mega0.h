@@ -38,6 +38,7 @@
 #include "components/adcomparator.h"
 #include "components/sigrow.h"
 #include "components/spi.h"
+#include "components/gpior.h"
 
 #include "components/bitmask_operators0.h"
 

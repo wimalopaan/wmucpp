@@ -53,8 +53,8 @@ int main() {
     using channel_t = servo_pa::channel_t;
 //    using value_t = servo_pa::value_type;
 
-    constexpr uint8_t offset{9};
-    etl::uint_ranged_circular<uint8_t, 0, 4> index;
+    constexpr uint8_t offset{10};
+    etl::uint_ranged_circular<uint8_t, 0, 3> index;
 
     while(true) {
         servo::periodic();
@@ -72,9 +72,6 @@ int main() {
         }
         else if (index == 3) { // SO4
             ppmC::ppm_async(cv);
-        }
-        else if (index == 4) { // Q0
-            ppmA::ppm(index_t{2}, cv);
         }
         ++index;
         systemTimer::periodic([&]{

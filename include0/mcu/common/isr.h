@@ -254,6 +254,19 @@ namespace AVR {
             };
 #endif
         };
+
+        template<uint8_t N>
+        struct Tcd;
+        
+        template<>
+        struct Tcd<0> {
+#ifdef TCD0_OVF_vect_num
+            struct Ovf
+            {
+                static constexpr const uint32_t number = TCD0_OVF_vect_num;
+            };
+#endif
+        };
         
         template<uint8_t N>
         struct Timer;

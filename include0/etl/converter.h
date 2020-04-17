@@ -12,6 +12,42 @@ namespace etl {
     struct StringConverter;
     
     template<uint8_t N>
+    struct StringConverter<FixedPoint<uint16_t, N>> {
+        template<uint8_t D, uint8_t L>
+        inline static FixedPoint<uint16_t, N> parse(const StringBuffer<L>& str) {
+            uint16_t value = 0;
+            int8_t decimals = -1;
+            
+            uint8_t index = 0;
+            
+            for(; index < L; ++index) {
+                if (str[index] == etl::Char{'.'}) {
+                    decimals = 0;
+                }
+                else if (isDigit(str[index])) {
+                    value *= 10;
+                    value += asDigit(str[index]);
+                    if (decimals >= 0) {
+                        ++decimals;
+                        if (decimals >= D) {
+                            break;
+                        }
+                    }
+                }
+                else if (str[index] == etl::Char{'\0'}) {
+                    break;
+                }
+            }
+            value <<= N;
+            while(decimals > 0) {
+                value /= 10;
+                --decimals;
+            }
+            return FixedPoint<uint16_t, N>::fromRaw(value);
+        }
+    };
+
+    template<uint8_t N>
     struct StringConverter<FixedPoint<int16_t, N>> {
         template<uint8_t L>
         inline static FixedPoint<int16_t, N> parse(const StringBuffer<L>& str) {

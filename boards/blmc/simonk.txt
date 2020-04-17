@@ -36,6 +36,7 @@
 # lockbits = 0b11111100
 # sudo avrdude -p atmega8 -P usb -c avrisp2 -V -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -U flash:w:bs.hex
 
+# Hobbyking 50A (Orange)
 # RedBrick 70A / 125A
 # lockbits: 0b11100000
 # sudo avrdude -p atmega8 -P usb -c avrisp2 -V -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -U flash:w:birdie70a.hex
@@ -48,6 +49,7 @@
 # andere Pinbelegung bzw. wie Black Mantis Schaltbild
 # sudo avrdude -p atmega8 -P usb -c avrisp2 -V -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -U flash:w:bs_nfet_12a.hex
 
+# Hobbyking 25A Orange
 # Robby Roxxy Bl-Control 730
 # sudo avrdude -p atmega8 -P usb -c avrisp2 -V -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -U flash:w:tp.hex
 

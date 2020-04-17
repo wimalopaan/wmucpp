@@ -56,3 +56,4 @@ boards/rcmultiswitch
 boards/onoff_avr0/big
 boards/ibusppmconverter
 include0/external/sbus
+boards/ibusgps

@@ -123,6 +123,10 @@ namespace AVR {
         struct ChannelPinMapper<std::integral_constant<decltype(7), 7>, AVR::ATTiny412> {
             using pin_type = AVR::Pin<AVR::Port<AVR::A>, 7>;  
         };
+        template<>
+        struct ChannelPinMapper<std::integral_constant<decltype(0x1e), 0x1e>, AVR::ATTiny412> {
+            using pin_type = void;
+        };
         
     }
     

@@ -315,6 +315,12 @@ namespace AVR {
             [[maybe_unused]] etl::Scoped<DI> di;
             hwRegister &= ~static_cast<value_type>(v);
         }
+        template<auto F, typename DI = etl::DisbaleInterrupt<etl::RestoreState>>
+        void inline clear() {
+            [[maybe_unused]] etl::Scoped<DI> di;
+//            hwRegister &= ~static_cast<value_type>(F);
+            hwRegister = hwRegister & ~static_cast<value_type>(F);
+        }
 //        template<BitType Mask>
 //        inline BitType get() {
 //            return static_cast<BitType>(hwRegister & static_cast<value_type>(Mask));

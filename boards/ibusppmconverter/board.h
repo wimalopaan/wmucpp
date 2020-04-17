@@ -76,7 +76,8 @@ using PortA = Port<A>;
 using PortB = Port<B>;
 
 using so4Pin = Pin<PortA, 3>;
-using q0Pin = Pin<PortB, 2>;
+using so3Pin = Pin<PortA, 5>; // watch out for gps 
+using q0Pin = Pin<PortB, 2>; 
 
 using daisyChain= Pin<PortA, 2>; 
 

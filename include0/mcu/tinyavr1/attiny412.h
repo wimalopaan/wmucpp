@@ -47,9 +47,11 @@ namespace AVR {
         using TCB = AVR::Series0::TCB;
         using Sleep = AVR::Series0::Sleep;
         using Adc = AVR::Series0::Adc;
-        using Vref = AVR::Series1::Vref;
         using Spi = AVR::Series0::Spi;
+        using Gpior = AVR::Series0::GPIOR;
+        using SigRow = AVR::Series0::SigRow;
         
+        using Vref = AVR::Series1::Vref;
         using TCD = AVR::Series1::TCD;
         using PortRegister = AVR::Series1::PortRegister;
         using VPort = AVR::Series1::VPort;
@@ -63,6 +65,7 @@ namespace AVR {
 }
 
 namespace AVR {
+    template<> struct AVR::Component::Count<ATTiny412::Gpior> : std::integral_constant<uint8_t, 4> {};
     template<> struct AVR::Component::Count<ATTiny412::Usart> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<ATTiny412::TCA> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<ATTiny412::TCB> : std::integral_constant<uint8_t, 1> {};
@@ -74,6 +77,11 @@ namespace AVR {
     template<> struct AVR::Component::Count<ATTiny412::Adc> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<ATTiny412::Spi> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<ATTiny412::Dac> : std::integral_constant<uint8_t, 1> {};
+
+    template<uint8_t N>
+    struct ATTiny412::Gpior::Address {
+        inline static constexpr uintptr_t value = 0x001c + N;
+    };
 
     template<> struct ATTiny412::Spi::Address<0> {
         inline static constexpr uintptr_t value = 0x0820;
