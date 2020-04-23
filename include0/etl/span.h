@@ -17,12 +17,15 @@ namespace etl {
         }
         template<typename C>
         inline constexpr void insertLeftFill(const C& data, value_type fill = value_type{' '}) {
-            static_assert(std::size(data) <= Length);
+//            static_assert(std::size(data) <= Length);
+            static_assert(data.size() <= Length);
             etl::copy(*this, data);
-            constexpr auto offset = std::size(data);
+//            constexpr auto offset = std::size(data);
+            constexpr auto offset = data.size();
             (void)offset;
 //            etl::fillOffset<offset>(*this, fill);
-            etl::fillOffset<std::size(data)>(*this, fill); // bug in gcc 9.0.1
+//            etl::fillOffset<std::size(data)>(*this, fill); // bug in gcc 9.0.1
+            etl::fillOffset<data.size()>(*this, fill); // bug in gcc 9.0.1
         }
         template<typename... VV>
         inline constexpr void insertLeft(VV... vv) {

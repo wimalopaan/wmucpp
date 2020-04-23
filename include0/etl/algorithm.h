@@ -268,8 +268,10 @@ namespace etl {
     
     template<auto offset, etl::Concepts::Container C>
     constexpr void fillOffset(C& c, typename C::value_type v) {
-        if constexpr(offset < std::size(c)) {
-            detail::fill_impl<offset>(c, v, std::make_index_sequence<std::size(c) - offset>{});
+//        if constexpr(offset < std::size(c)) {
+        if constexpr(offset < c.size()) {
+//            detail::fill_impl<offset>(c, v, std::make_index_sequence<std::size(c) - offset>{});
+            detail::fill_impl<offset>(c, v, std::make_index_sequence<c.size() - offset>{});
         }
         else {
             (void)v;

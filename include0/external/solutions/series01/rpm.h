@@ -26,7 +26,11 @@ namespace External {
             
             inline static constexpr uint16_t prescaler = 1024;
             inline static constexpr auto fTimer = Project::Config::fMcu / prescaler;
+            inline static constexpr auto rpm = fTimer.value * 60;
+            inline static constexpr auto cmin = rpm / std::numeric_limits<uint16_t>::max();
 
+//            std::integral_constant<decltype(cmin), cmin>::_;
+//            std::integral_constant<decltype(rpm), rpm>::_;
 //            decltype(fTimer)::_;
             
             inline static constexpr auto pva = []{
@@ -56,7 +60,8 @@ namespace External {
             inline static External::Units::RPM value() {
                 if (mcu_tcb()->intflags.template isSet<Int_t::capt>()) {
                     auto c = *mcu_tcb()->ccmp;
-                    last = External::Units::RPM{fTimer / c};
+//                    last = External::Units::RPM{fTimer / c};
+                    last = External::Units::RPM(rpm / c);
                 }
                 return External::Units::RPM{last};    
             }

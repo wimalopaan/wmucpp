@@ -18,6 +18,10 @@ volatile uint8_t v2;
 //    const uint8_t m{};
 //};
 
+
+uint16_t shl8(uint16_t x) {
+  return x << 8;
+}
 int main() {
     sei();
 

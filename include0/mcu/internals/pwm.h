@@ -386,7 +386,7 @@ namespace AVR {
             inline static constexpr void off() {
                 if constexpr(Meta::contains_v<OutList, WO<0>>) {
                     ccp::unlock([]{
-                        clear<FaultCtrl_t::cmpaen>(faultctrl_r());
+                        AVR::clear<FaultCtrl_t::cmpaen>(faultctrl_r());
                     });                    
                 }
                 if constexpr(Meta::contains_v<OutList, WO<1>>) {
