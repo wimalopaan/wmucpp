@@ -67,7 +67,8 @@ using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::Default>;
 
 using rxPin = Pin<Port<B>, 1>;
 //using txPin = void;
-using txPin = Pin<Port<B>, 0>;
+using txPin = rxPin;
+//using txPin = Pin<Port<B>, 0>;
 using dbg1 = Pin<Port<A>, 1>;
 
 template<typename PA>
@@ -97,8 +98,6 @@ namespace External {
             
             struct ProtocollAdapter {
                 static inline bool process(const std::byte b) {
-                    last = b;
-                    mBytes = mBytes + 1;
                     switch(mState) {
                     case State::Init: 
                         if (b == 0x7e_B) {
@@ -120,9 +119,10 @@ namespace External {
                     }
                     return true;
                 }
-//            private:
-                static inline volatile std::byte last;
-                static inline volatile uint8_t mBytes{};
+                inline static uint8_t requests() {
+                    return mRequests;
+                }
+            private:
                 static inline volatile uint8_t mRequests{};
             };
             using uart = Uart<ProtocollAdapter>;   
@@ -134,7 +134,6 @@ namespace External {
             }
 
             static inline void periodic() {
-//                uart::periodic();
             }
             static inline void ratePeriodic() {
                 const auto lastState = mState;
@@ -164,20 +163,51 @@ namespace External {
                 }
             }
         private:
+            struct CheckSum {
+                void operator+=(const std::byte b) {
+                    mValue += uint8_t(b);
+                    mValue += mValue >> 8;
+                    mValue &= 0x00ff;
+                }
+                std::byte value() const {
+                    return etl::nth_byte<0>(0xff - mValue);
+                }
+            private:
+                    uint16_t mValue{};
+            };
             inline static void reply() {
-                stuffResponse(0x55_B);
+                CheckSum cs;
+                stuffResponse(0x10_B, cs);
+                stuff(uint16_t{0x0200}, cs);
+                stuff(uint32_t{42}, cs);
+                stuff(cs);
             }
-
-            inline static void stuffResponse(const std::byte b) {
+            inline static void stuff(const CheckSum& cs) {
+                uart::put(cs.value());
+            }
+            inline static void stuff(const uint32_t b, CheckSum& cs) {
+                stuffResponse(etl::nth_byte<0>(b), cs);
+                stuffResponse(etl::nth_byte<1>(b), cs);
+                stuffResponse(etl::nth_byte<2>(b), cs);
+                stuffResponse(etl::nth_byte<3>(b), cs);
+            }
+            inline static void stuff(const uint16_t b, CheckSum& cs) {
+                stuffResponse(etl::nth_byte<0>(b), cs);
+                stuffResponse(etl::nth_byte<1>(b), cs);
+            }
+            inline static void stuffResponse(const std::byte b, CheckSum& cs) {
                 if (b == 0x7e_B) {
+                    cs += 0x7d_B;
                     uart::put(0x7d_B);
-                    uart::put(0x5d_B);
+                    cs += 0x5d_B;
+                    uart::put(0x5e_B);
                 }
                 else {
+                    cs += b;
                     uart::put(b);
                 }
             }
-            
+        private:            
             inline static External::Tick<Timer> mStateTicks;
             inline static State mState{State::Init};
         };
@@ -188,7 +218,7 @@ namespace External {
 using systemTimer = SystemTimer<Component::Rtc<0>, Parameter::fRtc>;
 using alarmTimer = External::Hal::AlarmTimer<systemTimer, 8>;
 
-using sensor = External::SPort::Sensor<0xA1_B, sensorUsart, systemTimer>;
+using sensor = External::SPort::Sensor<0x22_B, sensorUsart, systemTimer>;
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition>>;
 
@@ -217,9 +247,7 @@ int main() {
             alarmTimer::periodic([&](const auto& t){
                 if (t == periodicTimer) {
                     etl::outl<terminal>("c: "_pgm, ++counter, 
-                                        " l: "_pgm, sensor::ProtocollAdapter::last,
-                                        " r: "_pgm, sensor::ProtocollAdapter::mRequests,
-                                        " b: "_pgm, sensor::ProtocollAdapter::mBytes
+                                        " r: "_pgm, sensor::ProtocollAdapter::requests()
                                         );
                 }
             });

@@ -499,8 +499,8 @@ namespace etl {
         
         inline constexpr void operator++() volatile {
             if constexpr(use_mask_modulo) {
-                ++mValue;
-                mValue &= module_mask;
+                mValue = mValue + 1;
+                mValue = mValue & module_mask;
             }
             else {
                 if (mValue < UpperBound) {

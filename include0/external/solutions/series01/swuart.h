@@ -178,6 +178,7 @@ namespace External {
                                 TxPin::high();
                                 if (auto d = mSendQueue.pop_front()) {
                                     data = *d;
+                                    bitCount = 10;
                                 }
                                 else {
                                     clearSending();
@@ -240,10 +241,16 @@ namespace External {
                     if constexpr(B) {
                         RxPin::resetInt();
                         RxPin::template attributes<rxPinAttrInt>();
+                        if constexpr(std::is_same_v<RxPin, TxPin>) {
+                            RxPin::template dir<AVR::Input>();
+                        }
                         setRxEn();
                     }
                     else {
                         RxPin::template attributes<rxPinAttrNoInt>();
+                        if constexpr(std::is_same_v<RxPin, TxPin>) {
+                            TxPin::template dir<AVR::Output>();
+                        }
                         clearRxEn();
                     }
                 }
