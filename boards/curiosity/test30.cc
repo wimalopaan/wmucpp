@@ -129,7 +129,7 @@ using tParallelDebug = External::Debug::TriggeredParallel<Pin<Port<A>, 2>, dbg>;
 
 using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, 
                           Meta::List<voltageP, currentP, tempP>, systemTimer,
-                          ibt, tParallelDebug>;
+                          ibt, etl::NamedFlag<false>, etl::NamedFlag<false>, tParallelDebug>;
 
 using terminalDevice = AVR::Usart<usart2Position, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>>;
 using terminal = etl::basic_ostream<terminalDevice>;

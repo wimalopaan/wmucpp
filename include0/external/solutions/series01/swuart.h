@@ -78,7 +78,7 @@ namespace External {
                     mcu_tca()->ctrla.template set<mcu_timer_t::CtrlA4_t::enable>();
                 }
             };
-            struct RxBitHandler : public AVR::IsrBaseHandler<typename AVR::ISR::Tcd<N>::Ovf> {
+            struct BitHandler : public AVR::IsrBaseHandler<typename AVR::ISR::Tcd<N>::Ovf> {
                 static inline void isr() {
                     mcu_tca()->intflags.template reset<mcu_timer_t::IntFlags_t::ovf>();
                     if (isStartBit()) {

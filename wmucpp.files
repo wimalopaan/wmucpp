@@ -264,6 +264,7 @@ boards/onoff/test.cc
 boards/onoff/tone.cc
 boards/onoff_avr0/Makefile
 boards/onoff_avr0/big/Makefile
+boards/onoff_avr0/big/sport01.cc
 boards/onoff_avr0/big/test06.cc
 boards/onoff_avr0/small/Makefile
 boards/onoff_avr0/small/board.h

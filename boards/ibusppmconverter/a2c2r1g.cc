@@ -68,7 +68,7 @@ using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>,
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position>>;
 
 using evrouter = Event::Router<Event::Channels<evch0, evch1>, Event::Routes<evuser0, evuser1>>;
-using isrRegistrar = IsrRegistrar<typename gpsUsart::StartBitHandler, typename gpsUsart::RxBitHandler>;
+using isrRegistrar = IsrRegistrar<typename gpsUsart::StartBitHandler, typename gpsUsart::BitHandler>;
 
 int main() {
     wdt::init<ccp>();

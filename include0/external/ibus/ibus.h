@@ -5,6 +5,7 @@
 #include <limits>
 #include <chrono>
 
+#include <etl/concepts.h>
 #include <etl/ranged.h>
 #include <etl/algorithm.h>
 
@@ -336,6 +337,8 @@ namespace IBus {
              typename ProviderList,
              typename Clock,
              typename DaisyChainEnable = void,
+             etl::Concepts::NamedFlag useLoss = etl::NamedFlag<false>,
+             etl::Concepts::NamedFlag useStats = etl::NamedFlag<false>,
              typename Debug = void, 
              typename MCU = DefaultMcuType>
     struct  Sensor;
@@ -346,9 +349,11 @@ namespace IBus {
              typename... Providers,
              typename Clock,
              typename DaisyChainEnable,
+             etl::Concepts::NamedFlag useLoss,
+             etl::Concepts::NamedFlag useStats,
              typename Debug, 
              AVR::Concepts::At01Series MCU>
-    struct Sensor<CNumber, Uart, Baud, Meta::List<Providers...>, Clock, DaisyChainEnable, Debug, MCU> final {
+    struct Sensor<CNumber, Uart, Baud, Meta::List<Providers...>, Clock, DaisyChainEnable, useLoss, useStats, Debug, MCU> final {
         struct NoDebug {
             static inline void init() {}
             template<auto T>
@@ -367,17 +372,38 @@ namespace IBus {
             }
             static inline uint16_t counter{};
         };
+        struct StatisticProvider {
+            inline static constexpr auto ibus_type = IBus::Type::type::FLIGHT_MODE;
+            inline static constexpr void init() {}
+            inline static constexpr uint16_t value() {
+                return 10000 + (mPackets * 100) + mBytes;
+            }
+            inline static constexpr void incBytes() {
+                if (++mBytes == 100) {
+                    mBytes = 0;
+                }
+            }
+            inline static constexpr void incPackets() {
+                if (++mPackets == 100) {
+                    mPackets = 0;
+                }
+            }
+            static inline uint8_t mBytes{};
+            static inline uint8_t mPackets{};
+        };
         
         using debug = std::conditional_t<std::is_same_v<Debug, void>, NoDebug, Debug>;
         
         static inline constexpr auto UartNumber = CNumber::component_type::value;
         
-        static inline constexpr bool useLossProvider = false;    
-        
         using provider_list_extern = Meta::List<Providers...>;
-        using provider_list = std::conditional_t<useLossProvider, 
+
+        using provider_list1 = std::conditional_t<useLoss::value, 
                                                  Meta::push_back<provider_list_extern, LossProvider>,
                                                  provider_list_extern>;
+        using provider_list = std::conditional_t<useStats::value, 
+                                                 Meta::push_back<provider_list1, StatisticProvider>,
+                                                 provider_list1>;
         
         
         inline static constexpr auto numberOfProviders = Meta::size_v<provider_list>;
@@ -399,23 +425,24 @@ namespace IBus {
             
             ProtocollAdapter() = delete;
             
-            inline static void reset1() {
+            inline static void start() {
                 mState = ibus_state_t::Undefined;
                 uart::template rxEnable<true>();
             }
-            inline static void reset2() {
-                mState = ibus_state_t::Undefined;
+            inline static void reset() {
+//                mState = ibus_state_t::Undefined;
                 mFirstSensorNumber= sensor_number_t{};
                 mLastSensorNumber = sensor_number_t{};
                 mReceivedNumber   = sensor_number_t{};
                 if constexpr(!std::is_same_v<DaisyChainEnable, void>) {
                     DaisyChainEnable::off();
                 }
-                uart::template rxEnable<true>();
+                start();
+//                uart::template rxEnable<true>();
             }
             
             inline static bool process(const std::byte c) {
-//                ++nBytes;
+                StatisticProvider::incBytes();
                 switch (mState) {
                 case ibus_state_t::Undefined:
                     csum.reset();
@@ -426,11 +453,11 @@ namespace IBus {
                     }
                     break;
                 case ibus_state_t::Reset:
-                    reset2();
+                    reset();
                     mState = ibus_state_t::CheckSumSkip;
                     break;
                 case ibus_state_t::Length:
-//                    ++nPackets;
+                    StatisticProvider::incPackets();
                     csum += c;  
                     mReceivedNumber = sensor_number_t{};
                     if (command(c) == Cdiscover) {
@@ -497,7 +524,8 @@ namespace IBus {
                             mState = ibus_state_t::Undefined;
                         }
                     }
-                    else if (command(c) == Creset) {
+//                    else if (command(c) == Creset) {
+                    else if (c == Creset) {
                         mState = ibus_state_t::Reset;                        
                     }
                     else {
@@ -545,6 +573,9 @@ namespace IBus {
             }
         private:
             static inline constexpr std::byte command(const std::byte b) {
+                if (std::none(b & 0x0f_B)) {
+                    return 0x00_B;
+                }
                 return (b & 0xf0_B) ;
             }
             static inline constexpr uint8_t length(const std::byte b) {
@@ -573,19 +604,23 @@ namespace IBus {
         inline static constexpr void init() {
             (Providers::init(), ...);
             uart::template init<Baud, AVR::HalfDuplex>();
+            if constexpr(!std::is_same_v<DaisyChainEnable, void>) {
+                DaisyChainEnable::init();
+            }
             clear();
-            pa::reset1();
-            responder::start();
+//            pa::start();
+//            responder::start();
         }            
         
         inline static constexpr void clear() {
-            mFirstSensorNumber = sensor_number_t{};
-            mLastSensorNumber = sensor_number_t{};
-            mReceivedNumber   = sensor_number_t{};
             if constexpr(!std::is_same_v<DaisyChainEnable, void>) {
-                DaisyChainEnable::init();
                 DaisyChainEnable::off();
             }
+            pa::reset();
+            responder::start();
+//            mFirstSensorNumber = sensor_number_t{};
+//            mLastSensorNumber = sensor_number_t{};
+//            mReceivedNumber   = sensor_number_t{};
             debug::init();
             debug::template set<0x00>();
         }
@@ -694,7 +729,7 @@ namespace IBus {
                     }
                     break;
                 case reply_state_t::WaitOver:
-                    pa::reset1();
+                    pa::start();
                     mReply = reply_state_t::Undefined;
                     if constexpr(!std::is_same_v<DaisyChainEnable, void>) {
                         if (mLastSensorNumber) {

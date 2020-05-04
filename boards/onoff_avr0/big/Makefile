@@ -24,6 +24,7 @@ F_OSC = 20000000
 
 subdirs =
 
-targets += test06.elf test06.hex test06.S
+targets += test06.hex 
+targets += sport01.hex 
 
 -include ../../../Makefile.avr0.include

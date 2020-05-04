@@ -7,6 +7,8 @@
 
 #define NDEBUG
 
+#define USE_SPORT
+
 //#define USE_HOTT
 #define USE_IBUS
 //#define FS_I6S
