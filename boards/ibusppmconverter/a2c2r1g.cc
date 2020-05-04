@@ -58,8 +58,6 @@ struct StateProvider {
 
 using stateP = StateProvider<fsm>;
 
-
-
 using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, 
                           Meta::List<curr0P, curr1P, rpm0P, rpm1P, speedP, 
                           bytesRP, bytesVP, stateP>, 

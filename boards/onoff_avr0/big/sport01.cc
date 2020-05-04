@@ -66,24 +66,39 @@ using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Default>;
 using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::Default>;
 
 using rxPin = Pin<Port<B>, 1>;
+//using txPin = void;
 using txPin = Pin<Port<B>, 0>;
+using dbg1 = Pin<Port<A>, 1>;
 
 template<typename PA>
 using sensorUsart = External::SoftSerial::Usart<Meta::List<rxPin, txPin>, Component::Tcd<0>, 
                                             PA, AVR::BaudRate<57600>,
-                                            AVR::ReceiveQueueLength<0>
+                                            AVR::ReceiveQueueLength<0>,
+                                            AVR::SendQueueLength<64>,
+                                            etl::NamedFlag<true>,
+                                            dbg1
 >;
+
+using terminalDevice = AVR::Usart<usart0Position, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>>;
+using terminal = etl::basic_ostream<terminalDevice>;
 
 namespace External {
     namespace SPort {
-        template<std::byte ID, template<typename> typename Uart, typename Timer>
-        struct Sensor {
-            inline static constexpr External::Tick<Timer> mResonseDelay{2_ms};
+        template<std::byte ID, template<typename> typename Uart, typename Timer, typename ProviderList = Meta::List<>>
+        struct Sensor;
+        
+        template<std::byte ID, template<typename> typename Uart, typename Timer, typename... Providers>
+        struct Sensor<ID, Uart, Timer, Meta::List<Providers...>> {
+            inline static constexpr External::Tick<Timer> mResponseDelay{2_ms};
+            
+//            std::integral_constant<uint16_t, mResponseDelay.value>::_;
 
             enum class State : uint8_t {Init, Request, ReplyWait, Reply, WaitReplyComplete};
             
             struct ProtocollAdapter {
                 static inline bool process(const std::byte b) {
+                    last = b;
+                    mBytes = mBytes + 1;
                     switch(mState) {
                     case State::Init: 
                         if (b == 0x7e_B) {
@@ -92,7 +107,12 @@ namespace External {
                         break;
                     case State::Request: 
                         if (b == ID) {
+                            mRequests = mRequests + 1;
+                            mStateTicks.reset();
                             mState = State::ReplyWait;
+                        }
+                        else {
+                            mState = State::Init;
                         }
                         break;
                     default:
@@ -100,7 +120,10 @@ namespace External {
                     }
                     return true;
                 }
-                
+//            private:
+                static inline volatile std::byte last;
+                static inline volatile uint8_t mBytes{};
+                static inline volatile uint8_t mRequests{};
             };
             using uart = Uart<ProtocollAdapter>;   
             
@@ -118,16 +141,18 @@ namespace External {
                 ++mStateTicks;
                 switch(mState) {
                 case State::ReplyWait:
-                    mStateTicks.on(mResonseDelay, []{
+                    mStateTicks.on(mResponseDelay, []{
                         mState = State::Reply;    
+                        uart::template rxEnable<false>();
                     });
                     break;
                 case State::Reply:
-                    stuffResponse();
+                    reply();
                     mState = State::WaitReplyComplete;
                     break;
                 case State::WaitReplyComplete:
                     if (uart::isIdle()) {
+                        uart::template rxEnable<true>();
                         mState = State::Init;
                     }
                     break;
@@ -139,8 +164,18 @@ namespace External {
                 }
             }
         private:
-            inline static void stuffResponse() {
-                uart::put(0x55_B);
+            inline static void reply() {
+                stuffResponse(0x55_B);
+            }
+
+            inline static void stuffResponse(const std::byte b) {
+                if (b == 0x7e_B) {
+                    uart::put(0x7d_B);
+                    uart::put(0x5d_B);
+                }
+                else {
+                    uart::put(b);
+                }
             }
             
             inline static External::Tick<Timer> mStateTicks;
@@ -167,22 +202,32 @@ int main() {
     portmux::init();
     systemTimer::init();
     sensor::init();
+    terminalDevice::init<AVR::BaudRate<9600>>();
     
-//    const auto periodicTimer = alarmTimer::create(100_ms, External::Hal::AlarmFlags::Periodic);
-//    const auto resetTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
+    const auto periodicTimer = alarmTimer::create(1000_ms, External::Hal::AlarmFlags::Periodic);
+    
+    uint16_t counter{};
     
     while(true) {
         etl::Scoped<etl::EnableInterrupt<>> ei;
+        terminalDevice::periodic();
         sensor::periodic();        
         systemTimer::periodic([&]{
             sensor::ratePeriodic();
             alarmTimer::periodic([&](const auto& t){
+                if (t == periodicTimer) {
+                    etl::outl<terminal>("c: "_pgm, ++counter, 
+                                        " l: "_pgm, sensor::ProtocollAdapter::last,
+                                        " r: "_pgm, sensor::ProtocollAdapter::mRequests,
+                                        " b: "_pgm, sensor::ProtocollAdapter::mBytes
+                                        );
+                }
             });
         });
     }
 }
 
-ISR(PORTA_PORT_vect) {
+ISR(PORTB_PORT_vect) {
     isrRegistrar::isr<AVR::ISR::Port<rxPin::name_type>>();
 }
 

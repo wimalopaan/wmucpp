@@ -425,8 +425,11 @@ namespace AVR {
         struct OnRising;
         struct OnFalling;
         struct BothEdges;
+        struct Disable;
         template<typename Kind, typename MCU = DefaultMcuType>
         struct Interrupt;
+        template<typename MCU>
+        struct Interrupt<Disable, MCU> : std::integral_constant<typename MCU::PortRegister::PinCtrl_t, MCU::PortRegister::PinCtrl_t::disable> {}; 
         template<typename MCU>
         struct Interrupt<BothEdges, MCU> : std::integral_constant<typename MCU::PortRegister::PinCtrl_t, MCU::PortRegister::PinCtrl_t::bothedges> {}; 
         template<typename MCU>

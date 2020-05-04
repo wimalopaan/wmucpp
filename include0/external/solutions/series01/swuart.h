@@ -44,13 +44,14 @@ namespace External {
             
             using gpior_t = typename MCU::Gpior; 
             static inline volatile std::byte data;
+//            static inline volatile uint8_t data;
             static inline volatile uint8_t bitCount;
             
             using rxPinAttrInt = std::conditional_t<Inverted::value, 
-                                                 Meta::List<AVR::Attributes::Interrupt<AVR::Attributes::OnRising>>,
+                                                 Meta::List<AVR::Attributes::Inverting<>, AVR::Attributes::Interrupt<AVR::Attributes::OnFalling>>,
                                                  Meta::List<AVR::Attributes::Pullup<MCU>, AVR::Attributes::Interrupt<AVR::Attributes::OnFalling>>>;
             using rxPinAttrNoInt = std::conditional_t<Inverted::value, 
-                                                 Meta::List<>,
+                                                 Meta::List<AVR::Attributes::Inverting<>>,
                                                  Meta::List<AVR::Attributes::Pullup<MCU>>>;
             
             static inline constexpr auto sendQLength = SendQLength::value;
@@ -103,37 +104,34 @@ namespace External {
             }
             
             static inline constexpr uint16_t period = Project::Config::fMcu.value / Baud::value - 1;
-            static inline constexpr uint16_t startPeriod = ((3 * period) / 2) - 20;
+            static inline constexpr uint16_t startPeriod = ((3 * period) / 2) - 50;
 //            static inline constexpr uint16_t startPeriod = period / 2;
 //                std::integral_constant<uint16_t, period>::_;
             
             struct StartBitHandler : public AVR::IsrBaseHandler<typename AVR::ISR::Port<typename RxPin::name_type>> {
                 static inline void isr() {
-                    Dbg::toggle();
+//                    Dbg::high();
                     RxPin::resetInt();
                     if (isRxEn()) {
                         RxPin::template attributes<rxPinAttrNoInt>();
                         data = 0x00_B;
                         setStartBit();
                         setReceiving();
-                        waitFor<Status_t::cmdready>(status_r());
                         *mcu_tcd()->cmpbclr = startPeriod;
-                        mcu_tcd()->ctrle.template set<CtrlE_t::synceoc>();
                         waitFor<Status_t::enready>(status_r());
                         mcu_tcd()->ctrla.template set<CtrlA4_t::enable>();
+                        waitFor<Status_t::cmdready>(status_r());
                         *mcu_tcd()->cmpbclr = period;
+                        mcu_tcd()->ctrle.template set<CtrlE_t::synceoc>();
                     }
                 }
             };
             struct BitHandler : public AVR::IsrBaseHandler<typename AVR::ISR::Tcd<N>::Ovf> {
                 static inline void isr() {
-                    Dbg::toggle();
+//                    Dbg::toggle();
                     mcu_tcd()->intflags.template reset<mcu_timer_t::IntFlags_t::ovf>();
                     if (isReceiving()) {
                         if (isStartBit()) {
-    //                        mcu_tcd()->ctrla.template clear<mcu_timer_t::CtrlA4_t::enable, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
-    //                        *mcu_tcd()->cmpbclr = period;
-    //                        mcu_tcd()->ctrla.template set<mcu_timer_t::CtrlA4_t::enable>();
                             if (RxPin::isHigh()) {
                                 data = 0x80_B;
                             }
@@ -146,9 +144,8 @@ namespace External {
                                 data = data | 0x80_B;
                             }
                             bitCount = bitCount - 1;
-                            if (!bitCount) {
+                            if (bitCount == 0) {
                                 mcu_tcd()->ctrla.template clear<CtrlA4_t::enable, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
-                                RxPin::template attributes<rxPinAttrInt>();
                                 if constexpr (RecvQLength::value > 0) {
                                     static_assert(std::is_same_v<PA, External::Hal::NullProtocollAdapter>, "recvQueue is used, no need for PA");
                                     mRecvQueue.push_back(data);
@@ -156,7 +153,7 @@ namespace External {
                                 else {
                                     static_assert(RecvQLength::value == 0);
                                     if constexpr(!std::is_same_v<PA, External::Hal::NullProtocollAdapter>) {
-                                        if (!PA::process(data)) {
+                                        if (!PA::process(std::byte{data})) {
                                             assert("input not handled by protocoll adapter");
                                         }
                                     }
@@ -165,13 +162,16 @@ namespace External {
                                     }
                                 }
                                 clearReceiving();
+//                                Dbg::low();
+                                RxPin::template attributes<rxPinAttrInt>();
                             }
                         }
                     }
                     if constexpr(!std::is_same_v<TxPin, void>) {
                         if (isSending()) {
+//                            Dbg::toggle();
                             bitCount = bitCount - 1;
-                            if (bitCount == 10) {
+                            if (bitCount == 9) {
                                 TxPin::low(); 
                             }   
                             else if (bitCount == 0) {
@@ -184,11 +184,12 @@ namespace External {
                                 }
                             }
                             else {
+//                                if (data & 0x01) {
                                 if (std::any(data & 0x01_B)) {
-                                    TxPin::low(); 
+                                    TxPin::high(); 
                                 }
                                 else {
-                                    TxPin::high(); 
+                                    TxPin::low(); 
                                 }
                                 data = data >> 1;
                             }
@@ -197,24 +198,29 @@ namespace External {
                 }
             };
             
-            // todo: Inverted!
             template<typename Mode>
             inline static void init() {
                 static_assert(std::is_same_v<Mode, AVR::HalfDuplex>, "Only half-duplex possible");
                 
                 Dbg::template dir<AVR::Output>();
+                
                 if constexpr(!std::is_same_v<RxPin, void>) {
                     RxPin::template dir<AVR::Input>();
                 }                
                 if constexpr(!std::is_same_v<TxPin, void>) {
                     if constexpr(!std::is_same_v<TxPin, RxPin>) {
                         TxPin::template dir<AVR::Output>();
+                        if constexpr(Inverted::value) {
+                            TxPin::template attributes<Meta::List<AVR::Attributes::Inverting<>>>();
+                        }
                     }
                 }   
                 mcu_tcd()->intflags.template reset<mcu_timer_t::IntFlags_t::ovf>();
-                mcu_tcd()->ctrla.template clear<mcu_timer_t::CtrlA4_t::enable>();
-                mcu_tcd()->ctrlc.template clear<CtrlC_t::aUpdate>();
                 mcu_tcd()->intctrl.template set<mcu_timer_t::IntCtrl_t::ovf>();
+                waitFor<Status_t::cmdready>(status_r());
+                mcu_tcd()->ctrlc.template set<CtrlC_t::aUpdate>();
+                
+                mcu_tcd()->ctrla.template clear<mcu_timer_t::CtrlA4_t::enable>();
                 clearBits();
                 rxEnable<true>();
             }
@@ -249,6 +255,7 @@ namespace External {
             }
         private:
             inline static void startSending() {
+                Dbg::high();
                 if (!isReceiving()) {
                     if (auto d = mSendQueue.pop_front()) {
                         waitFor<Status_t::cmdready>(status_r());
@@ -261,6 +268,7 @@ namespace External {
                         setSending();
                     }
                 }
+                Dbg::low();
             }
             
             inline static volatile etl::FiFo<std::byte, RecvQLength::value> mRecvQueue;
