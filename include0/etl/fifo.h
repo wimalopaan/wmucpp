@@ -55,16 +55,16 @@ namespace etl {
         }
         inline bool push_back(const T& item) volatile {
             asm("; replace udivmod2");
-            size_type next = in + 1;
+            size_type next = in.toInt() + 1;
             if (next == Size) next = 0;
             {
                 Scoped<DisbaleInterrupt<RestoreState>, !sizeIsAtomic> di;
-                if (out == next) {
+                if (out.toInt() == next) {
                     return false;
                 }
             }
-            data[in] = item;
-            in = next;
+            data[in.toInt()] = item;
+            in = index_type{next};
             return true;
         }
         inline bool push_back(const T& item) {
@@ -116,12 +116,12 @@ namespace etl {
         inline std::optional<T> pop_front() volatile {
             {
                 Scoped<DisbaleInterrupt<RestoreState>, !sizeIsAtomic> di;
-                if (in == out) {
+                if (in.toInt() == out.toInt()) {
                     return {};
                 }
             }
 //            T item = data[out];
-            T item = data[out];
+            T item = data[out.toInt()];
             asm("; replace udivmod6");
 //            if (++out == Size) out = 0;
             ++out;
@@ -151,7 +151,7 @@ namespace etl {
         }
         inline bool empty() volatile const {
             Scoped<DisbaleInterrupt<RestoreState>, !sizeIsAtomic> di;
-            return in == out;
+            return in.toInt() == out.toInt();
         }
         inline constexpr size_type size() const {
             return Size;

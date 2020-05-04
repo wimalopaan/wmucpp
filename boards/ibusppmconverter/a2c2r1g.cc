@@ -91,7 +91,7 @@ int main() {
     adcController::init();
     
     ibus::init();
-    gpsUsart::init();
+    gpsUsart::init<AVR::HalfDuplex>();
     
     rpm0::init();   
     rpm1::init();   

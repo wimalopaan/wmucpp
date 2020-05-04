@@ -89,14 +89,14 @@ namespace Hott {
     static inline constexpr std::byte gam_code = 0x0d_B;
     static inline constexpr std::byte air_code = 0x0e_B;
 
-    static inline constexpr bool valid_code(std::byte code) {
+    static inline constexpr bool valid_code(const std::byte code) {
         return (code >= var_code) && (code <= air_code);
     }
     
-    static inline constexpr std::byte binary_id(std::byte code) {
+    static inline constexpr std::byte binary_id(const std::byte code) {
         return 0x80_B | (code & 0x0f_B);
     }
-    static inline constexpr std::byte ascii_id(std::byte code) {
+    static inline constexpr std::byte ascii_id(const std::byte code) {
         return 0x0f_B | ((code & 0x0f_B) << 4);
     }    
     

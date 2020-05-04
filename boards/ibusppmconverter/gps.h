@@ -14,7 +14,7 @@ using rmc = External::GPS::RMC;
 using gpsPA = External::GPS::GpsProtocollAdapter<0, vtg, rmc>;
 
 using gpsUsart = External::SoftSerial::Usart<Meta::List<rxPin, void>, Component::Tcd<0>, gpsPA,
-                                            AVR::BaudRate<9600>>;
+                                            AVR::BaudRate<9600>, AVR::ReceiveQueueLength<0>>;
 
 template<typename VTG>
 struct SpeedProvider {

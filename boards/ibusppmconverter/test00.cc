@@ -29,7 +29,7 @@ using swuart = External::SoftSerial::Usart<Meta::List<rxPin, void>, Component::T
                                             External::GPS::GpsProtocollAdapter<0, External::GPS::VTG>,
 //                                            External::Hal::NullProtocollAdapter, 
                                             AVR::BaudRate<9600>>;
-using isrRegistrar = IsrRegistrar<typename swuart::StartBitHandler, typename swuart::RxBitHandler>;
+using isrRegistrar = IsrRegistrar<typename swuart::StartBitHandler, typename swuart::BitHandler>;
 
 int main() {
 #if 1

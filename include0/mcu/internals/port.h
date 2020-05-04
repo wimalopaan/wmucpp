@@ -75,6 +75,9 @@ namespace AVR {
         static inline volatile std::byte& dirset() {
             return *getBaseAddr<mcuport_type , Name>()->dirset;
         }
+        static inline volatile std::byte& dirclr() {
+            return *getBaseAddr<mcuport_type , Name>()->dirclr;
+        }
         static inline volatile std::byte& get() {
             return *getBaseAddr<vport_type , Name>()->out;
         }
@@ -478,6 +481,12 @@ namespace AVR {
             if constexpr(std::is_same_v<Dir, AVR::Output>) {
 //                port::dir() |= pinMask; // VPort
                 port::dirset() = pinMask;
+            }
+            else if constexpr(std::is_same_v<Dir, AVR::Input>) {
+                port::dirclr() = pinMask;
+            }
+            else {
+                static_assert(std::false_v<Dir>);
             }
         }
         

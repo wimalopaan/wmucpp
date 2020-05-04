@@ -108,7 +108,7 @@ using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V4_3>;
 using adcController = External::Hal::AdcController<adc, Meta::NList<0x1e>>; // 1e = temp
 using iTempP = InternalTempProvider<adcController, 0>;
 
-using isrRegistrar = IsrRegistrar<typename gpsUsart::StartBitHandler, typename gpsUsart::RxBitHandler>;
+using isrRegistrar = IsrRegistrar<typename gpsUsart::StartBitHandler, typename gpsUsart::BitHandler>;
 
 namespace  {
     constexpr auto dt = 2_ms;

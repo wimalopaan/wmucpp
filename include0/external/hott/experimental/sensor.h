@@ -35,7 +35,7 @@ namespace Hott {
             struct ProtocollAdapter final {
                 ProtocollAdapter() = delete;
                 
-                static bool process(std::byte c) {
+                static bool process(const std::byte c) {
                     hott_state_t oldstate = mState;
                     switch (mState) {
                     case hott_state_t::Undefined:
@@ -204,12 +204,12 @@ namespace Hott {
                 return mMsg;
             }
         private:
-            static inline void sendText(std::byte b) {
+            static inline void sendText(const std::byte b) {
                 mTextMsg.parity += std::to_integer<uint8_t>(b);
                 uart::put(b);
                 ++mByteIndexText;
             }
-            static inline void sendBinary(std::byte b) {
+            static inline void sendBinary(const std::byte b) {
                 mMsg.parity += std::to_integer<uint8_t>(b);
                 uart::put(b);
                 ++mByteIndexBinary;
@@ -304,7 +304,7 @@ namespace Hott {
             struct ProtocollAdapter final {
                 ProtocollAdapter() = delete;
                 
-                static bool process(std::byte c) {
+                static bool process(const std::byte c) {
                     hott_state_t oldstate = mState;
                     switch (mState) {
                     case hott_state_t::Undefined:
