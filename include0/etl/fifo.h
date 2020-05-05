@@ -157,8 +157,8 @@ namespace etl {
             return Size;
         }
     private:
-        index_type in{0};
-        index_type out{0};
+        index_type in{};
+        index_type out{};
         T data[Size] {};
     };
     
