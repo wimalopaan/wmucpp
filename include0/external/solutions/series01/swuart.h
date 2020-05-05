@@ -25,6 +25,8 @@ namespace External {
                  AVR::Concepts::At01Series MCU>
         struct Usart<Meta::List<RxPin, TxPin>, AVR::Component::Tcd<N>, PA, Baud, 
                 RecvQLength, SendQLength, Inverted, Dbg, MCU> final {
+
+            static inline constexpr bool useInterrupts = true;
             
             using mcu_timer_t = typename MCU::TCD; 
             static constexpr auto mcu_tcd = AVR::getBaseAddr<mcu_timer_t, N>;
@@ -44,7 +46,6 @@ namespace External {
             
             using gpior_t = typename MCU::Gpior; 
             static inline volatile std::byte data;
-//            static inline volatile uint8_t data;
             static inline volatile uint8_t bitCount;
             
             using rxPinAttrInt = std::conditional_t<Inverted::value, 

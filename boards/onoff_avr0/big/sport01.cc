@@ -76,8 +76,8 @@ using sensorUsart = External::SoftSerial::Usart<Meta::List<rxPin, txPin>, Compon
                                             PA, AVR::BaudRate<57600>,
                                             AVR::ReceiveQueueLength<0>,
                                             AVR::SendQueueLength<64>,
-                                            etl::NamedFlag<true>,
-                                            dbg1
+                                            etl::NamedFlag<true>
+//                                            ,dbg1
 >;
 
 using terminalDevice = AVR::Usart<usart0Position, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>>;
@@ -91,7 +91,6 @@ namespace External {
         template<std::byte ID, template<typename> typename Uart, typename Timer, typename... Providers>
         struct Sensor<ID, Uart, Timer, Meta::List<Providers...>> {
             inline static constexpr External::Tick<Timer> mResponseDelay{2_ms};
-            
 //            std::integral_constant<uint16_t, mResponseDelay.value>::_;
 
             enum class State : uint8_t {Init, Request, ReplyWait, Reply, WaitReplyComplete};
@@ -125,14 +124,17 @@ namespace External {
             private:
                 static inline volatile uint8_t mRequests{};
             };
-            using uart = Uart<ProtocollAdapter>;   
             
+            using uart = Uart<ProtocollAdapter>;   
             static_assert(uart::sendQLength >= 16);
+            
+            inline static constexpr bool useInterrupts = uart::useInterrupts;
+            using tick_type = std::conditional_t<useInterrupts, volatile External::Tick<Timer>, External::Tick<Timer>>;
+            using state_type = std::conditional_t<useInterrupts, volatile State, State>;
             
             static inline void init() {
                 uart::template init<AVR::HalfDuplex>();
             }
-
             static inline void periodic() {
             }
             static inline void ratePeriodic() {
@@ -178,8 +180,9 @@ namespace External {
             inline static void reply() {
                 CheckSum cs;
                 stuffResponse(0x10_B, cs);
-                stuff(uint16_t{0x0200}, cs);
-                stuff(uint32_t{42}, cs);
+//                stuff(uint16_t{0x0200}, cs); // current 0,1A
+                stuff(uint16_t{0x0900}, cs); // voltage 0,01V
+                stuff(uint32_t{2}, cs);
                 stuff(cs);
             }
             inline static void stuff(const CheckSum& cs) {
@@ -208,17 +211,21 @@ namespace External {
                 }
             }
         private:            
-            inline static External::Tick<Timer> mStateTicks;
-            inline static State mState{State::Init};
+            inline static tick_type mStateTicks;
+            inline static state_type mState{State::Init};
         };
     }
 }
 
+struct VoltageProvider {
+    
+};
+using vProv = VoltageProvider;
 
 using systemTimer = SystemTimer<Component::Rtc<0>, Parameter::fRtc>;
 using alarmTimer = External::Hal::AlarmTimer<systemTimer, 8>;
 
-using sensor = External::SPort::Sensor<0x22_B, sensorUsart, systemTimer>;
+using sensor = External::SPort::Sensor<0x22_B, sensorUsart, systemTimer, Meta::List<vProv>>;
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition>>;
 

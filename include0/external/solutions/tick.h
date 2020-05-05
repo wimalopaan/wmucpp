@@ -24,9 +24,21 @@ namespace External {
         inline constexpr void operator++() {
             ++value;
         }
+
+        inline constexpr void operator++() volatile {
+            ++value;
+        }
         
         template<typename F>
         inline constexpr void on(const Tick& t, F f) {
+            if (value == t.value) {
+                f();
+                reset();
+            }
+        }
+
+        template<typename F>
+        inline constexpr void on(const Tick& t, F f) volatile {
             if (value == t.value) {
                 f();
                 reset();
@@ -38,7 +50,12 @@ namespace External {
         inline constexpr void reset() {
             value.setToBottom();
         }
-//    private: // structural type
+
+        inline constexpr void reset() volatile {
+            value.setToBottom();
+        }
+
+        //    private: // structural type
         etl::uint_ranged<T> value;
     };
 }

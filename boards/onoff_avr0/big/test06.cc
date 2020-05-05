@@ -7,13 +7,13 @@
 
 #define NDEBUG
 
-#define USE_SPORT
+//#define USE_SPORT
 
-//#define USE_HOTT
-#define USE_IBUS
+#define USE_HOTT
+//#define USE_IBUS
 //#define FS_I6S
-#define USE_DAISY
-//#define USE_EEPROM
+//#define USE_DAISY
+#define USE_EEPROM
 
 #include <mcu/avr.h>
 #include <mcu/internals/adc.h>

@@ -265,6 +265,8 @@ namespace AVR {
         
         static inline constexpr auto N = CP::component_type::value;
 
+        static inline constexpr bool useInterrupts = useISR::value;
+        
         typedef typename std::conditional<useISR::value, volatile etl::FiFo<std::byte, SendQLength::value>, etl::FiFo<std::byte, SendQLength::value>>::type send_queue_type;
         typedef typename std::conditional<useISR::value, volatile etl::FiFo<std::byte, RecvQLength::value>, etl::FiFo<std::byte, RecvQLength::value>>::type recv_queue_type;
 
