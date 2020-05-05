@@ -10,11 +10,13 @@
 
 #include <mcu/internals/usart.h>
 
-namespace SBus {
-    namespace Servo {
-        template<auto N = 0>
-        struct ProtocollAdapter {
-            
-        };
+namespace External {
+    namespace SBus {
+        namespace Servo {
+            template<auto N = 0>
+            struct ProtocollAdapter {
+                
+            };
+        }
     }
 }

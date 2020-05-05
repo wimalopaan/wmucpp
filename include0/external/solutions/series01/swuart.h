@@ -106,7 +106,6 @@ namespace External {
             
             static inline constexpr uint16_t period = Project::Config::fMcu.value / Baud::value - 1;
             static inline constexpr uint16_t startPeriod = ((3 * period) / 2) - 50;
-//            static inline constexpr uint16_t startPeriod = period / 2;
 //                std::integral_constant<uint16_t, period>::_;
             
             struct StartBitHandler : public AVR::IsrBaseHandler<typename AVR::ISR::Port<typename RxPin::name_type>> {
@@ -263,7 +262,6 @@ namespace External {
             }
         private:
             inline static void startSending() {
-                Dbg::high();
                 if (!isReceiving()) {
                     if (auto d = mSendQueue.pop_front()) {
                         waitFor<Status_t::cmdready>(status_r());
@@ -276,15 +274,10 @@ namespace External {
                         setSending();
                     }
                 }
-                Dbg::low();
             }
-            
             inline static volatile etl::FiFo<std::byte, RecvQLength::value> mRecvQueue;
             inline static volatile etl::FiFo<std::byte, SendQLength::value> mSendQueue;
         };
-        
-        
-        
         
         template<AVR::Concepts::Pin RxPin, AVR::Concepts::Pin TxPin, auto N, AVR::Concepts::ProtocolAdapter PA, 
                  etl::Concepts::NamedConstant Baud,
