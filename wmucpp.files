@@ -264,6 +264,7 @@ boards/onoff/test.cc
 boards/onoff/tone.cc
 boards/onoff_avr0/Makefile
 boards/onoff_avr0/big/Makefile
+boards/onoff_avr0/big/multi01.cc
 boards/onoff_avr0/big/sport01.cc
 boards/onoff_avr0/big/test06.cc
 boards/onoff_avr0/small/Makefile
@@ -2031,3 +2032,4 @@ doc/bmcpp04/bm05aa.cc
 example/basics/Makefile
 example/basics/register.cc
 include0/external/sbus/sport.h
+include0/external/solutions/analogsensor.h

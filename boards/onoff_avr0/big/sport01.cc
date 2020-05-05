@@ -38,6 +38,7 @@
 #include <external/solutions/button.h>
 #include <external/solutions/blinker.h>
 #include <external/solutions/series01/swuart.h>
+#include <external/solutions/analogsensor.h>
 
 #include <std/chrono>
 #include <etl/output.h>
@@ -84,23 +85,27 @@ etl::NamedFlag<true>
 using terminalDevice = AVR::Usart<usart0Position, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>>;
 using terminal = etl::basic_ostream<terminalDevice>;
 
-template<auto N>
+using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V4_3>;
+using adcController = External::Hal::AdcController<adc, Meta::NList<1, 4, 0x1e>>; // 1e = temp
+
+using mcp = External::AnalogSensor<adcController, 0, std::ratio<1,2>, std::ratio<40,1000>, std::ratio<100,1>>;
+
+
+template<typename Sensor>
 struct VoltageProvider {
     inline static constexpr auto valueId = External::SPort::ValueId::Voltage;
-    
     inline static uint32_t value() {
-        return N;
+        return Sensor::value();
     }
 };
 
-using vProv1 = VoltageProvider<42>;
-using vProv2 = VoltageProvider<43>;
+using vProv1 = VoltageProvider<mcp>;
 
 using systemTimer = SystemTimer<Component::Rtc<0>, Parameter::fRtc>;
 using alarmTimer = External::Hal::AlarmTimer<systemTimer, 8>;
 
 using sensor = External::SPort::Sensor<External::SPort::SensorId::ID3, sensorUsart, systemTimer, 
-                                       Meta::List<vProv1, vProv2>>;
+                                       Meta::List<vProv1>>;
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition>>;
 

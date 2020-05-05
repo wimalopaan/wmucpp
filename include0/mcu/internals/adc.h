@@ -27,38 +27,38 @@
 namespace AVR {
     namespace AD {
         struct V1_1 {
-            static constexpr float value = 1.1;
+            static constexpr double value = 1.1;
         };
         struct V2_56 {
-            static constexpr float value = 2.56;
+            static constexpr double value = 2.56;
         };
         
         template<uint16_t Volts, uint16_t MilliVolts>
         struct Vextern {
-            static constexpr float value = Volts + (0.001f * MilliVolts);
+            static constexpr double value = Volts + (0.001 * MilliVolts);
         };
         
         template<typename Voltage, typename MCU = DefaultMcuType> 
         struct VRef {
             static constexpr auto refs = typename MCU::Adc::MUX{0};
-            static constexpr float value = Voltage::value;
+            static constexpr double value = Voltage::value;
         };
     }
     namespace Vref {
         struct V0_55 {
-            inline static constexpr float value = 0.55;
+            inline static constexpr double value = 0.55;
         };
         struct V1_1 {
-            inline static constexpr float value = 1.1;
+            inline static constexpr double value = 1.1;
         };
         struct V1_5 {
-            inline static constexpr float value = 1.5;
+            inline static constexpr double value = 1.5;
         };
         struct V2_5 {
-            inline static constexpr float value = 2.5;
+            inline static constexpr double value = 2.5;
         };
         struct V4_3 {
-            inline static constexpr float value = 4.3;
+            inline static constexpr double value = 4.3;
         };
         namespace detail {
             template<typename V> struct isVref : std::false_type {};

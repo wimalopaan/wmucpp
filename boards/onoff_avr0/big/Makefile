@@ -26,5 +26,6 @@ subdirs =
 
 targets += test06.hex 
 targets += sport01.hex 
+targets += multi01.hex 
 
 -include ../../../Makefile.avr0.include
