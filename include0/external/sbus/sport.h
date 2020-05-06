@@ -30,8 +30,10 @@ namespace External {
         
         template<SensorId ID, template<typename> typename Uart, typename Timer, typename... Providers>
         struct Sensor<ID, Uart, Timer, Meta::List<Providers...>> {
-            inline static constexpr External::Tick<Timer> mResponseDelay{2_ms};
-            //            std::integral_constant<uint16_t, mResponseDelay.value>::_;
+            inline static constexpr External::Tick<Timer> mResponseDelay{1_ms};
+//            inline static constexpr External::Tick<Timer> mResponseDelay{2_ms};
+//                        std::integral_constant<uint16_t, mResponseDelay.value>::_;
+            static_assert(mResponseDelay.value > 0);
             
             using providerList = Meta::List<Providers...>;
             inline static constexpr auto numberOfProviders = sizeof...(Providers);
