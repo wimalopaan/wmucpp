@@ -88,8 +88,16 @@ using terminal = etl::basic_ostream<terminalDevice>;
 using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V4_3>;
 using adcController = External::Hal::AdcController<adc, Meta::NList<1, 4, 0x1e>>; // 1e = temp
 
-using mcp = External::AnalogSensor<adcController, 0, std::ratio<1,2>, std::ratio<40,1000>, std::ratio<100,1>>;
+using acs770 = External::AnalogSensor<adcController, 1, std::ratio<1,2>, std::ratio<40,1000>, std::ratio<10,1>>;
+using vdiv = External::AnalogSensor<adcController, 0, std::ratio<0,1>, std::ratio<1,10>, std::ratio<100,1>>;
 
+template<typename Sensor>
+struct CurrentProvider {
+    inline static constexpr auto valueId = External::SPort::ValueId::Current;
+    inline static uint32_t value() {
+        return Sensor::value();
+    }
+};
 
 template<typename Sensor>
 struct VoltageProvider {
@@ -99,13 +107,14 @@ struct VoltageProvider {
     }
 };
 
-using vProv1 = VoltageProvider<mcp>;
+using vProv1 = CurrentProvider<acs770>;
+using vProv2 = VoltageProvider<vdiv>;
 
 using systemTimer = SystemTimer<Component::Rtc<0>, Parameter::fRtc>;
 using alarmTimer = External::Hal::AlarmTimer<systemTimer, 8>;
 
 using sensor = External::SPort::Sensor<External::SPort::SensorId::ID3, sensorUsart, systemTimer, 
-                                       Meta::List<vProv1>>;
+                                       Meta::List<vProv1, vProv2>>;
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition>>;
 
@@ -130,7 +139,7 @@ int main() {
         terminalDevice::periodic();
         sensor::periodic();        
         systemTimer::periodic([&]{
-            sensor::ratePeriodic();
+//            sensor::ratePeriodic();
             alarmTimer::periodic([&](const auto& t){
                 if (t == periodicTimer) {
                     etl::outl<terminal>("c: "_pgm, ++counter, 

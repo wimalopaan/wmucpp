@@ -30,10 +30,10 @@ namespace External {
         
         template<SensorId ID, template<typename> typename Uart, typename Timer, typename... Providers>
         struct Sensor<ID, Uart, Timer, Meta::List<Providers...>> {
-            inline static constexpr External::Tick<Timer> mResponseDelay{1_ms};
+//            inline static constexpr External::Tick<Timer> mResponseDelay{10};
 //            inline static constexpr External::Tick<Timer> mResponseDelay{2_ms};
 //                        std::integral_constant<uint16_t, mResponseDelay.value>::_;
-            static_assert(mResponseDelay.value > 0);
+//            static_assert(mResponseDelay.value > 0);
             
             using providerList = Meta::List<Providers...>;
             inline static constexpr auto numberOfProviders = sizeof...(Providers);
@@ -54,7 +54,7 @@ namespace External {
                     case State::Request: 
                         if (b == std::byte{ID}) {
                             mRequests = mRequests + 1;
-                            mStateTicks.reset();
+//                            mStateTicks.reset();
                             mState = State::ReplyWait;
                         }
                         else {
@@ -84,16 +84,10 @@ namespace External {
                 uart::template init<AVR::HalfDuplex>();
             }
             static inline void periodic() {
-            }
-            static inline void ratePeriodic() {
-                const auto lastState = mState;
-                ++mStateTicks;
                 switch(mState) {
                 case State::ReplyWait:
-                    mStateTicks.on(mResponseDelay, []{
-                        mState = State::Reply;    
-                        uart::template rxEnable<false>();
-                    });
+                    mState = State::Reply;    
+                    uart::template rxEnable<false>();
                     break;
                 case State::Reply:
                     reply();
@@ -107,9 +101,6 @@ namespace External {
                     break;
                 default:
                     break;
-                }
-                if (lastState != mState) {
-                    mStateTicks.reset();
                 }
             }
         private:
@@ -128,14 +119,12 @@ namespace External {
             inline static void reply() {
                 CheckSum cs;
                 stuffResponse(0x10_B, cs);
-                
                 Meta::visitAt<providerList>(mActualProvider, [&]<typename P>(Meta::Wrapper<P>){
                                                 auto id = ValueId(uint16_t(P::valueId) + mActualProvider);
                                                 stuff(id, cs);
                                                 stuff(P::value(), cs);
                               });
                 stuff(cs);
-                
                 ++mActualProvider;
             }
             inline static void stuff(const CheckSum& cs) {
@@ -166,7 +155,6 @@ namespace External {
             }
         private:            
             inline static index_type mActualProvider;
-            inline static tick_type mStateTicks;
             inline static state_type mState{State::Init};
         };
     }

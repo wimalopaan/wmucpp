@@ -694,6 +694,9 @@ int main() {
 #ifdef USE_IBUS
     ibus::init();
 #endif
+#ifdef USE_SPORT
+    sensor::init();
+#endif
 #if !(defined(USE_HOTT) || defined(USE_IBUS) || defined(USE_SPORT))
     terminalDevice::init<AVR::BaudRate<9600>>();
 #endif
@@ -741,7 +744,7 @@ int main() {
                 ibus::ratePeriodic();
 #endif
 #ifdef USE_SPORT
-            sensor::ratePeriodic();
+//            sensor::ratePeriodic();
 #endif
                 toneGenerator::periodic();
                 fsm::periodic();
