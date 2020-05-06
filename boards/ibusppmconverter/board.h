@@ -27,7 +27,11 @@
 #include <external/hott/experimental/adapter.h>
 #include <external/hott/menu.h>
 #include <external/ibus/ibus.h>
+#include <external/sbus/sbus.h>
+#include <external/sbus/sport.h>
 #include <external/units/music.h>
+#include <external/solutions/series01/swuart.h>
+#include <external/solutions/analogsensor.h>
 #include <external/solutions/tick.h>
 #include <external/solutions/button.h>
 #include <external/solutions/blinker.h>
