@@ -1,3 +1,5 @@
+#define USE_IBUS
+
 #include "board.h"
 #include "rpm.h"
 #include "temp.h"

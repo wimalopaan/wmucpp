@@ -1,3 +1,5 @@
+#define USE_IBUS
+
 #include "board.h"
 #include "temp.h"
 #include "curr.h"

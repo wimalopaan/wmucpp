@@ -29,6 +29,7 @@
 namespace etl {
     template<uint8_t Length, typename T = Char, Char Fill = Char{' '}>
     class StringBuffer final {
+        template<uint8_t LLL, typename TTT, Char FFF> friend class StringBuffer;
     public:
         using value_type = T;
         using size_type = typeForValue_t<Length>;

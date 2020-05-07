@@ -1,6 +1,6 @@
 //#define USE_IBUS
-#define USE_SPORT
-//#define USE_HOTT
+//#define USE_SPORT
+#define USE_HOTT
 
 #include "board.h"
 #include "temp.h"
@@ -59,6 +59,65 @@ using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>,
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position>>;
 #endif
 
+#ifdef USE_HOTT
+using sensor = Hott::Experimental::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, Hott::TextMsg, systemTimer>;
+using battVoltageConverter = Hott::Units::Converter<adc, Hott::Units::battery_voltage_t, std::ratio<121,21>>; // todo: richtiger scale faktor
+using currentConverter = Hott::Units::Converter<adc, Hott::Units::current_t, std::ratio<11117,1000>>; // todo: richtiger scale faktor
+using portmux = Portmux::StaticMapper<Meta::List<usart0Position>>;
+
+auto sensorData = Hott::Experimental::Adapter<Hott::GamMsg>(sensor::data());
+
+struct RCMenu final : public Hott::Menu<Parameter::menuLines> {
+    RCMenu() : Menu(this, "TSensor 1.0"_pgm, &mTemp1, &mTemp2, &mTemp3, &mTemp4) {
+        etl::itoa(42, t1);
+        etl::itoa(43, t2);
+        etl::itoa(44, t3);
+        etl::itoa(45, t4);
+        
+        sensorData.temp1(etl::FixedPoint<int, 4>::fromRaw(42));
+    }
+    inline static constexpr uint8_t valueTextLength{6};
+private:
+    etl::StringBuffer<valueTextLength> t1;
+    etl::StringBuffer<valueTextLength> t2;
+    etl::StringBuffer<valueTextLength> t3;
+    etl::StringBuffer<valueTextLength> t4;
+    
+    Hott::TextItem<valueTextLength> mTemp1{"T1"_pgm, t1};
+    Hott::TextItem<valueTextLength> mTemp2{"T2"_pgm, t2};
+    Hott::TextItem<valueTextLength> mTemp3{"T3"_pgm, t3};
+    Hott::TextItem<valueTextLength> mTemp4{"T4"_pgm, t4};
+};
+
+template<typename PA, typename TopMenu>
+class HottMenu final {
+    HottMenu() = delete;
+public:
+    inline static void init() {
+        clear();
+    }
+    inline static void periodic() {
+        PA::processKey([&](Hott::key_t k){
+            mMenu = mMenu->processKey(k);
+            clear();
+        });
+        mMenu->textTo(PA::text());
+    }
+private:
+    inline static void clear() {
+        for(auto& line : PA::text()) {
+            line.clear();
+        }
+    }
+    inline static TopMenu mTopMenu;
+    inline static Hott::Menu<PA::menuLines>* mMenu = &mTopMenu;
+};
+
+using menu = HottMenu<sensor, RCMenu>;
+
+#endif
+
+
 int main() {
     wdt::init<ccp>();
     
@@ -81,10 +140,13 @@ int main() {
 #ifdef USE_IBUS
     ibus::init();
 #endif
-    
 #ifdef USE_SPORT
     sport::init();
 #endif
+#ifdef USE_HOTT
+    sensor::init();
+#endif
+    
     const auto periodicTimer = alarmTimer::create(1000_ms, External::Hal::AlarmFlags::Periodic);
     
     {
@@ -92,19 +154,25 @@ int main() {
         etl::Scoped<etl::EnableInterrupt<>> ei;        
 #endif
         while(true) {
-    #ifdef USE_IBUS
+#ifdef USE_IBUS
             ibus::periodic();
-    #endif
-    #ifdef USE_SPORT
+#endif
+#ifdef USE_SPORT
             sport::periodic();
-    #endif
+#endif
+#ifdef USE_HOTT
+            sensor::periodic();
+#endif
             adcController::periodic();
             
             systemTimer::periodic([&]{
                 wdt::reset();
-    #ifdef USE_IBUS
+#ifdef USE_IBUS
                 ibus::ratePeriodic();
-    #endif
+#endif
+#ifdef USE_HOTT
+                sensor::ratePeriodic();
+#endif
                 alarmTimer::periodic([&](const auto& t){
                     if (periodicTimer == t) {
                     }

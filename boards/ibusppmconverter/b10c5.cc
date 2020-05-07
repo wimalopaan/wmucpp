@@ -1,3 +1,5 @@
+#define USE_IBUS
+
 #include "board.h"
 
 using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::Default>;

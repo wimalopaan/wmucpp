@@ -258,7 +258,7 @@ namespace Hott {
     template<uint8_t L>
     class TextItem final : public Hott::MenuItem {
     public:
-        constexpr TextItem(const AVR::Pgm::StringView& title, const StringBuffer<L>& text) : mTitle{title}, mText{text} {}
+        constexpr TextItem(const AVR::Pgm::StringView& title, const etl::StringBuffer<L>& text) : mTitle{title}, mText{text} {}
         
         void putTextInto(Hott::BufferString& buffer) const {
             buffer.insertAt(0, mTitle);
@@ -266,6 +266,6 @@ namespace Hott {
         }
     private:
         const AVR::Pgm::StringView mTitle;
-        const StringBuffer<L>& mText;
+        const etl::StringBuffer<L>& mText;   
     };
 }

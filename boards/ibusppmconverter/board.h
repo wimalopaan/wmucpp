@@ -87,8 +87,12 @@ using daisyChain= Pin<PortA, 2>;
 
 namespace Parameter {
     constexpr uint8_t menuLines = 8;
+#ifdef USE_IBUS
     constexpr auto fRtc = 2000_Hz;
-    
+#endif
+#ifdef USE_HOTT
+    constexpr auto fRtc = 500_Hz;
+#endif
     constexpr uint16_t R1vd = 10'000;
     constexpr uint16_t R2vd = 1'000;
 
