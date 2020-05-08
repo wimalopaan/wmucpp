@@ -162,6 +162,7 @@ int main() {
 #endif
 #ifdef USE_HOTT
             sensor::periodic();
+            menu::periodic();
 #endif
             adcController::periodic();
             

@@ -52,6 +52,12 @@ namespace Hott {
                             mLastKey = Hott::key_t{c & 0x0f_B};
                             mState = hott_state_t::AsciiWaitIdle;
                         }
+                        // der Code 0x0f kommt, wenn bei Telemetrie noch kein Sensor ausgewählt ist (linke Tasten)
+//                        else if (c == 0x0f_B) {
+//                            mAsciiReceived++;
+//                            mLastKey = Hott::key_t{c & 0x0f_B};
+//                            mState = hott_state_t::AsciiWaitIdle;
+//                        }
                         else {
                             mState = hott_state_t::Undefined;
                         }
