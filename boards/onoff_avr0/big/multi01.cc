@@ -1,18 +1,21 @@
-// todo:
-// temperatur-Kalibrierung / Kennlinie
-// ibus protokoll: verbrauchte Kapazität
 // Abbruchtöne länger
 // calibrierung über eeprom (offset / steigung) für spannung / strom
 // hott-sensor-type (eeprom)
 
 #define NDEBUG
 
+#define USE_16V
+
 #define USE_SPORT
 //#define USE_HOTT
 //#define USE_IBUS
 //#define FS_I6S
-//#define USE_DAISY
-//#define USE_EEPROM
+
+#ifdef USE_IBUS
+# define USE_DAISY
+#endif
+
+#define USE_EEPROM
 
 #include <mcu/avr.h>
 #include <mcu/internals/adc.h>
@@ -67,14 +70,16 @@ namespace Parameter {
 #endif
     
     constexpr uint16_t R1vd = 10'000;
+    
+#ifdef USE_16V
+    constexpr uint16_t R2vd = 3'100;
+#else
     constexpr uint16_t R2vd = 1'000;
-
-    constexpr uint16_t Rc = 1'000;
-    constexpr uint16_t Kc = 16'450;
+#endif
 }
 
 namespace Storage {
-    enum class AVKey : uint8_t {TimeOut = 0, SoftStart, SensorType, Magic0, Magic1, _Number};
+    enum class AVKey : uint8_t {Magic0, Magic1, OnDelay, CurrentOffset, VoltageOffset, _Number};
     
     struct ApplData final : public EEProm::DataBase<ApplData> {
         using value_type = etl::uint_NaN<uint8_t>;
@@ -140,7 +145,8 @@ etl::NamedFlag<true>
 >;
 
 using acs770 = External::AnalogSensor<adcController, 1, std::ratio<1,2>, std::ratio<40,1000>, std::ratio<10,1>>;
-using vdiv = External::AnalogSensor<adcController, 0, std::ratio<0,1>, std::ratio<1,10>, std::ratio<100,1>>;
+using vdiv = External::AnalogSensor<adcController, 0, std::ratio<0,1>, 
+                                    std::ratio<Parameter::R2vd, Parameter::R2vd + Parameter::R1vd>, std::ratio<100,1>>;
 
 template<typename Sensor>
 struct CurrentProvider {
@@ -180,49 +186,47 @@ using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::Default>;
 using sleep = Sleep<>;
 
 #ifdef USE_IBUS
-template<typename ADC, uint8_t Channel>
+
+#ifdef FS_I6S
+using acs770 = External::AnalogSensor<adcController, 1, std::ratio<1,2>, std::ratio<40,1000>, std::ratio<10,1>>;
+#else
+using acs770 = External::AnalogSensor<adcController, 1, std::ratio<1,2>, std::ratio<40,1000>, std::ratio<100,1>>;
+#endif
+using vdiv = External::AnalogSensor<adcController, 0, std::ratio<0,1>, 
+                                    std::ratio<Parameter::R2vd, Parameter::R2vd + Parameter::R1vd>, 
+                                    std::ratio<100,1>>;
+
+template<typename Sensor>
 struct VoltageProvider {
-    using index_t = ADC::index_type;
-    static_assert(Channel <= index_t::Upper);
-    inline static constexpr auto channel = index_t{Channel};
-//    index_t::_;
     inline static constexpr auto ibus_type = IBus::Type::type::EXTERNAL_VOLTAGE;
     inline static constexpr void init() {}
     
-    using battVoltageConverter = Hott::Units::Converter<adc, IBus::battery_voltage_t, std::ratio<11000,1000>>; // Voltage divider 10k/1k 
-//    using battVoltageConverter = Hott::Units::Converter<adc, IBus::battery_voltage_t, std::ratio<121,21>>; // Voltage divider 10k/1k 
-    
     inline static constexpr uint16_t value() {
-        return battVoltageConverter::convert(ADC::value(channel)).value;
+        return Sensor::value();
     }
 };
 
-using voltageP = VoltageProvider<adcController, 0>;
+using voltageP = VoltageProvider<vdiv>;
 
-template<typename ADC, uint8_t Channel>
+template<typename Sensor>
 struct CurrentProvider {
-    using index_t = ADC::index_type;
-    static_assert(Channel <= index_t::Upper);
-    inline static constexpr auto channel = index_t{Channel};
 #ifdef FS_I6S
     inline static constexpr auto ibus_type = IBus::Type::type::TEMPERATURE; // FS-I6S zeigt keinen Strom an
 #else
     inline static constexpr auto ibus_type = IBus::Type::type::BAT_CURR;
 #endif
-//    using currentConverter = Hott::Units::Converter<adc, IBus::current_t, std::ratio<16450,1000>>; // todo: richtiger scale faktor (1k)
-//    using currentConverter = Hott::Units::Converter<adc, IBus::current_t, std::ratio<10717,1000>>; // todo: richtiger scale faktor (1k5)
-    using currentConverter = Hott::Units::Converter<adc, IBus::current_t, std::ratio<9189,1000>>; // todo: richtiger scale faktor (1k8)
     inline static constexpr void init() {}
     inline static constexpr uint16_t value() {
 #ifdef FS_I6S
-        return currentConverter::convert(ADC::value(channel)).value / 10 + 400;
+        return Sensor::value() + 400;
 #else
-        return currentConverter::convert(ADC::value(channel)).value;
+        return Sensor::value();
 #endif
     }
 };
 
-using currentP = CurrentProvider<adcController, 1>;
+using currentP = CurrentProvider<acs770>;
+
 
 template<typename ADC, uint8_t Channel, typename UnInit>
 struct TempProvider {
@@ -258,13 +262,30 @@ using ibt = IBusThrough;
 using ibt = void;
 #endif
 
-using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, Meta::List<voltageP, currentP, tempP>, systemTimer, ibt>;
+using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, 
+                          Meta::List<voltageP, currentP, tempP>, systemTimer, ibt
+                          , etl::NamedFlag<true>
+//                           , etl::NamedFlag<true>
+                          >;
 #endif
 
 #ifdef USE_HOTT
 using sensor = Hott::Experimental::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<19200>, Hott::EscMsg, Hott::TextMsg, systemTimer>;
-using battVoltageConverter = Hott::Units::Converter<adc, Hott::Units::battery_voltage_t, std::ratio<121,21>>; // todo: richtiger scale faktor
-using currentConverter = Hott::Units::Converter<adc, Hott::Units::current_t, std::ratio<11117,1000>>; // todo: richtiger scale faktor
+using battVoltageConverter = Hott::Units::Converter<adc, Hott::Units::battery_voltage_t, 
+                                                    std::ratio<Parameter::R1vd + Parameter::R2vd, Parameter::R2vd>>; // todo: richtiger scale faktor
+//using currentConverter = Hott::Units::Converter<adc, Hott::Units::current_t, std::ratio<400,1000>>; // todo: richtiger scale faktor
+using currentSensor = External::AnalogSensor<adcController, 1, std::ratio<1,2>, std::ratio<40,1000>, std::ratio<10,1>>;
+
+template<typename ValueType, typename Sensor>
+struct CurrentConverter {
+    inline static constexpr void init() {}
+    inline static constexpr ValueType value() {
+        return ValueType{Sensor::value()};
+    }
+};
+
+using currentConverter = CurrentConverter<Hott::Units::current_t, currentSensor>;
+
 #endif
 
 #if !(defined(USE_IBUS) || defined(USE_HOTT) || defined(USE_SPORT))
@@ -280,12 +301,25 @@ using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition>>;
 
 #ifdef USE_HOTT
 class RCMenu final : public Hott::Menu<Parameter::menuLines> {
+    inline static constexpr uint8_t valueTextLength{6};
+    
+    // Anzeige der Werte
+   
+    // OnDelay: up/down
+    // Strom: offset up/down
+    // Spannung: offset up/down
 public:
-    RCMenu() : Menu(this, "OnOff 1.0"_pgm, &mSoft, &mTimeout, &mType) {}
+    RCMenu() : Menu(this, "OnOff Big 1.1"_pgm, &mType, &mC, &mV, &mT) {}
 private:
-    Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mSoft{"Start"_pgm, appData, Storage::AVKey::SoftStart, 2};
-    Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mTimeout{"TimeOut"_pgm, appData, Storage::AVKey::TimeOut, 10};
     Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mType{"Type"_pgm, appData, Storage::AVKey::SensorType, 2};
+
+    etl::StringBuffer<valueTextLength> tCurr;
+    etl::StringBuffer<valueTextLength> tVolt;
+    etl::StringBuffer<valueTextLength> tTemp;
+    
+    Hott::TextItem<valueTextLength> mC{"Strom"_pgm, tCurr};
+    Hott::TextItem<valueTextLength> mV{"Spannung"_pgm, tVolt};
+    Hott::TextItem<valueTextLength> mT{"Temperatur"_pgm, tTemp};
 };
 
 
@@ -336,8 +370,11 @@ struct PwmWrapper {
     }
 };
 
+#ifdef USE_HOTT
+using music_speed = std::integral_constant<uint16_t, 25>;
+#else
 using music_speed = std::integral_constant<uint16_t, 100>;
-
+#endif
 using tonePwm = PWM::DynamicPwm<tcaPosition>;
 using toneWrapper = PwmWrapper<tonePwm, AVR::PWM::WO<0>>;
 using toneGenerator = External::Music::Generator<toneWrapper, music_speed>;
@@ -403,12 +440,11 @@ namespace {
     
     constexpr auto onMelody = AVR::Pgm::Array<note, pause_4, c_ii_4, pause_4, c_ii_4, pause_4, c_ii_2, e_ii_2, g_ii_2, c_iii_1>{};
     constexpr auto offMelody = AVR::Pgm::Array<note, c_ii_0, pause_1, c_ii_0, pause_1, c_ii_0>{};
-    
 }
 
 template<typename Timer, typename Wdt, typename UnInit>
 struct FSM {
-    enum class State : uint8_t {Init, Startup, Idle, WaitSleep, Sleep, WaitOn, WaitOnInterrupted, On, FetOn, WaitOff, WaitOffInterrupted, WdtOn};
+    enum class State : uint8_t {Init, Startup, Idle, WaitSleep, Sleep, WaitOn, WaitOnInterrupted, On, FetOn, WaitOff, WaitOffInterrupted, WdtOn, CurrCalibrateStart, CurrentCalibrateEnd};
     
     static constexpr auto intervall = Timer::intervall;
     
@@ -416,7 +452,7 @@ struct FSM {
     
     //    std::integral_constant<uint16_t, idleTimeBeforeSleepTicks.value>::_;
 
-    static constexpr External::Tick<Timer> softStartTicks{100_ms};
+    static constexpr External::Tick<Timer> calibTicks{750_ms};
     
     inline static External::Tick<Timer> onDelay;
     
@@ -429,22 +465,16 @@ struct FSM {
     
     inline static void load() {
 #ifdef USE_EEPROM
-        if (appData[Storage::AVKey::TimeOut]) {
-            onDelay = 1000_ms * appData[Storage::AVKey::TimeOut].toInt();
+        if (appData[Storage::AVKey::OnDelay]) {
+            onDelay = 1000_ms * appData[Storage::AVKey::OnDelay].toInt();
         }
 #else
         onDelay = 1000_ms;
 #endif
     }    
     
-//    inline static uint16_t testCount = 0;
-    
     inline static void periodic() {
         Wdt::reset();
-//        if (testCount < 40000) {
-//            Wdt::reset();
-//            ++testCount;
-//        }
         const State lastState = mState;
         ++stateTicks;
         switch (mState) {
@@ -618,7 +648,8 @@ private:
         }
     }
     static inline void part1() {
-        auto c = currentConverter::convert(adcController::value(adcController::index_type{1}));
+//        auto c = currentConverter::convert(adcController::value(adcController::index_type{1}));
+        auto c = currentConverter::value();
         last_current = c;
         sensorData.current(c);
         current_max = std::max(current_max, c);
@@ -665,6 +696,8 @@ int main() {
         if (!((appData[Storage::AVKey::Magic0] == m0) && (appData[Storage::AVKey::Magic1] == m1))) {
             appData[Storage::AVKey::Magic0] = m0;
             appData[Storage::AVKey::Magic1] = m1;
+            appData[Storage::AVKey::OnDelay] = 1;
+            appData[Storage::AVKey::CurrentOffset] = 0;
             appData.change();
             changed  = true;
         }

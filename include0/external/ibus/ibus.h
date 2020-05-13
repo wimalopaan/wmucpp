@@ -762,9 +762,6 @@ namespace IBus {
         }
         
         private:
-//        static inline uint16_t nPackets{};
-//        static inline uint16_t nBytes{};
-        
         static inline constexpr bool inRange(const sensor_number_t n) {
             if (!n) return false;
             const auto in = n.toInt();

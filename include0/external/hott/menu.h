@@ -261,7 +261,7 @@ namespace Hott {
         constexpr TextItem(const AVR::Pgm::StringView& title, const etl::StringBuffer<L>& text) : mTitle{title}, mText{text} {}
         
         void putTextInto(Hott::BufferString& buffer) const {
-            buffer.insertAt(0, mTitle);
+            buffer.insertAt(1, mTitle);
             buffer.insertAt(10, mText);
         }
     private:

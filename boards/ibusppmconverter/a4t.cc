@@ -1,6 +1,6 @@
-//#define USE_IBUS
+#define USE_IBUS
 //#define USE_SPORT
-#define USE_HOTT
+//#define USE_HOTT
 
 #include "board.h"
 #include "temp.h"

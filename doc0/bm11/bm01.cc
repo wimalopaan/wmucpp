@@ -17,10 +17,15 @@ static_assert(etl::has_arithmetic_right_shift_v<int16_t>);
 using fp_t = etl::FixedPoint<int16_t, 8>; 
 using fp_int_t = fp_t::integer_type;
 
-volatile int8_t r1;
-volatile int8_t r2;
+volatile uint8_t r1;
+volatile uint8_t r2;
 
 int main() {
+    uint8_t b = (r1 += 1);
+    
+    return b;
+    
+#if 0
     ccp::unlock([]{
         clock::prescale<1>();
     });
@@ -36,4 +41,5 @@ int main() {
 //        r2 = (d / 2).integer();
         r2 = sum.integer();
     }    
+#endif
 }
