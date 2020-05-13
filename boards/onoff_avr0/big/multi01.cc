@@ -6,8 +6,8 @@
 
 #define USE_16V
 
-#define USE_SPORT
-//#define USE_HOTT
+//#define USE_SPORT
+#define USE_HOTT
 //#define USE_IBUS
 //#define FS_I6S
 
@@ -104,11 +104,16 @@ using alarmTimer = External::Hal::AlarmTimer<systemTimer, 8>;
 using wdt   = WatchDog<systemTimer::intervall>;
 using uninitialzed = Uninitialized<>;
 
+using ccp = Cpu::Ccp<>;
+using clock = Clock<>;
+using sigrow = SigRow<>;
+
+
 // PA1: Voltage = AIN1
 // PA2: Debug Pin
 // PA3: Led
-// PA4:
-// PA5: current sense = AIN5
+// PA4: current sense = AIN4
+// PA5: 
 // PA6: (daisy)
 // PA7: Taster
 // PB3:
@@ -152,8 +157,24 @@ template<typename Sensor>
 struct CurrentProvider {
     inline static constexpr auto valueId = External::SPort::ValueId::Current;
     inline static uint32_t value() {
-        return Sensor::value();
+        auto sv = Sensor::value();
+        if (sv >= mOffset) {
+            return Sensor::value() - mOffset;
+        }
+        else {
+            return {0};
+        }
     }
+    inline static void resetOffset() {
+        mOffset = 0;
+    }
+    inline static void setOffset() {
+        mOffset = Sensor::value();
+    }
+    inline static void setOffset(uint32_t v) {
+        mOffset = v;
+    }
+    inline static volatile uint32_t mOffset{0};
 };
 
 template<typename Sensor>
@@ -163,20 +184,37 @@ struct VoltageProvider {
         return Sensor::value();
     }
 };
+template<typename ADC, uint8_t Channel>
+struct TempProvider {
+    using index_t = ADC::index_type;
+    static_assert(Channel <= index_t::Upper);
+    inline static constexpr auto channel = index_t{Channel};
+    inline static constexpr auto valueId = External::SPort::ValueId::Temp1;
+    inline static uint32_t value() {
+        return sigrow::adcValueToTemperature<std::ratio<1,1>, 0>(ADC::value(channel)).value;
+    }
+};
 
-using vProv1 = CurrentProvider<acs770>;
-using vProv2 = VoltageProvider<vdiv>;
+using currentProvider = CurrentProvider<acs770>;
+using voltageProvider = VoltageProvider<vdiv>;
+using tempProvider = TempProvider<adcController, 2>;
+
+template<typename P>
+struct OffsetProvider {
+    inline static constexpr auto valueId = External::SPort::ValueId::Current;
+    inline static uint32_t value() {
+        return P::mOffset;
+    }
+};
+
+using offsetP = OffsetProvider<currentProvider>;
 
 using sensor = External::SPort::Sensor<External::SPort::SensorId::ID3, sensorUsart, systemTimer, 
-                                       Meta::List<vProv1, vProv2>>;
+                                       Meta::List<currentProvider, offsetP, voltageProvider, tempProvider>>;
 
 using isrRegistrar = IsrRegistrar<sensor::uart::StartBitHandler, sensor::uart::BitHandler>;
 
 #endif
-
-using ccp = Cpu::Ccp<>;
-using clock = Clock<>;
-using sigrow = SigRow<>;
 
 #ifndef USE_SPORT
 using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Default>;
@@ -217,16 +255,47 @@ struct CurrentProvider {
 #endif
     inline static constexpr void init() {}
     inline static constexpr uint16_t value() {
+        auto v = Sensor::value();
+        if (v >= mOffset) {
+            
 #ifdef FS_I6S
-        return Sensor::value() + 400;
+        return v - mOffset + 400;
 #else
-        return Sensor::value();
+        return v - mOffset;
 #endif
+        }
+        else {
+#ifdef FS_I6S
+            return 0 + 400;
+#else
+            return 0;
+#endif
+        }
+    }
+    inline static void resetOffset() {
+        mOffset = 0;
+    }
+    inline static void setOffset() {
+        mOffset = Sensor::value();
+    }
+    inline static void setOffset(uint32_t v) {
+        mOffset = v;
+    }
+    inline static uint32_t mOffset{0};
+};
+
+using currentProvider = CurrentProvider<acs770>;
+
+template<typename P>
+struct OffsetProvider {
+    inline static constexpr auto ibus_type = IBus::Type::type::BAT_CURR;
+    inline static constexpr void init() {}
+    inline static uint32_t value() {
+        return P::mOffset;
     }
 };
 
-using currentP = CurrentProvider<acs770>;
-
+using offsetP = OffsetProvider<currentProvider>;
 
 template<typename ADC, uint8_t Channel, typename UnInit>
 struct TempProvider {
@@ -263,8 +332,8 @@ using ibt = void;
 #endif
 
 using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, 
-                          Meta::List<voltageP, currentP, tempP>, systemTimer, ibt
-                          , etl::NamedFlag<true>
+                          Meta::List<voltageP, currentProvider, offsetP, tempP>, systemTimer, ibt
+//                          , etl::NamedFlag<true>
 //                           , etl::NamedFlag<true>
                           >;
 #endif
@@ -280,11 +349,27 @@ template<typename ValueType, typename Sensor>
 struct CurrentConverter {
     inline static constexpr void init() {}
     inline static constexpr ValueType value() {
-        return ValueType{Sensor::value()};
+        auto v = Sensor::value();
+        if (v >= mOffset) {
+            return ValueType{v - mOffset};
+        }
+        else {
+            return ValueType{0};
+        }
     }
+    inline static void resetOffset() {
+        mOffset = 0;
+    }
+    inline static void setOffset() {
+        mOffset = Sensor::value();
+    }
+    inline static void setOffset(uint16_t v) {
+        mOffset = v;
+    }
+    inline static uint16_t mOffset{0};
 };
 
-using currentConverter = CurrentConverter<Hott::Units::current_t, currentSensor>;
+using currentProvider = CurrentConverter<Hott::Units::current_t, currentSensor>;
 
 #endif
 
@@ -305,21 +390,12 @@ class RCMenu final : public Hott::Menu<Parameter::menuLines> {
     
     // Anzeige der Werte
    
-    // OnDelay: up/down
-    // Strom: offset up/down
-    // Spannung: offset up/down
 public:
-    RCMenu() : Menu(this, "OnOff Big 1.1"_pgm, &mType, &mC, &mV, &mT) {}
+    RCMenu() : Menu(this, "OnOff Big 1.1"_pgm, &mO, &mC, &mV) {}
 private:
-    Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mType{"Type"_pgm, appData, Storage::AVKey::SensorType, 2};
-
-    etl::StringBuffer<valueTextLength> tCurr;
-    etl::StringBuffer<valueTextLength> tVolt;
-    etl::StringBuffer<valueTextLength> tTemp;
-    
-    Hott::TextItem<valueTextLength> mC{"Strom"_pgm, tCurr};
-    Hott::TextItem<valueTextLength> mV{"Spannung"_pgm, tVolt};
-    Hott::TextItem<valueTextLength> mT{"Temperatur"_pgm, tTemp};
+    Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mO{"OnDelay"_pgm, appData, Storage::AVKey::OnDelay, 3};
+    Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mC{"C-Offset"_pgm, appData, Storage::AVKey::CurrentOffset, 99};
+    Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mV{"V-Offset"_pgm, appData, Storage::AVKey::VoltageOffset, 99};
 };
 
 
@@ -440,6 +516,8 @@ namespace {
     
     constexpr auto onMelody = AVR::Pgm::Array<note, pause_4, c_ii_4, pause_4, c_ii_4, pause_4, c_ii_2, e_ii_2, g_ii_2, c_iii_1>{};
     constexpr auto offMelody = AVR::Pgm::Array<note, c_ii_0, pause_1, c_ii_0, pause_1, c_ii_0>{};
+
+    constexpr auto calibMelody = AVR::Pgm::Array<note, c_iii_4, pause_4, c_ii_4, pause_4, c_iii_4, pause_4, c_ii_4, pause_4, c_iii_4, pause_4, c_ii_4>{};
 }
 
 template<typename Timer, typename Wdt, typename UnInit>
@@ -449,10 +527,13 @@ struct FSM {
     static constexpr auto intervall = Timer::intervall;
     
     static constexpr External::Tick<Timer> idleTimeBeforeSleepTicks{10000_ms};
+    static constexpr External::Tick<Timer> resetWaitOffCounter{5000_ms};
+    static constexpr External::Tick<Timer> calibTicks{500_ms};
     
     //    std::integral_constant<uint16_t, idleTimeBeforeSleepTicks.value>::_;
 
-    static constexpr External::Tick<Timer> calibTicks{750_ms};
+    static constexpr uint8_t calibInterrupts{3};
+    inline static etl::uint_ranged<uint8_t, 0, calibInterrupts> waitOffInterrupts;
     
     inline static External::Tick<Timer> onDelay;
     
@@ -467,6 +548,9 @@ struct FSM {
 #ifdef USE_EEPROM
         if (appData[Storage::AVKey::OnDelay]) {
             onDelay = 1000_ms * appData[Storage::AVKey::OnDelay].toInt();
+        }
+        if (appData[Storage::AVKey::CurrentOffset]) {
+            currentProvider::setOffset(appData[Storage::AVKey::CurrentOffset].toInt());
         }
 #else
         onDelay = 1000_ms;
@@ -531,6 +615,9 @@ struct FSM {
             }
             break;
         case State::FetOn:
+            if (stateTicks > resetWaitOffCounter) {
+                waitOffInterrupts.setToBottom();
+            }
             if (button::event() == button::Press::Short) {
                 mState = State::WaitOff;
             }
@@ -541,13 +628,28 @@ struct FSM {
             }
             else if (event == button::Press::Release) {
                 mState = State::WaitOffInterrupted;
+                ++waitOffInterrupts;
             }
             break;
         case State::WaitOffInterrupted:
-            mState = State::On;
+            if (waitOffInterrupts.isTop()) {
+                mState = State::CurrCalibrateStart;
+            }
+            else {
+                mState = State::FetOn;
+            }
             break;
-            //        default:
-            //            break;
+        case State::CurrCalibrateStart:
+            if (stateTicks > calibTicks) {
+                currentProvider::setOffset();
+                appData[Storage::AVKey::CurrentOffset] = currentProvider::mOffset;
+                appData.change();                
+                mState = State::CurrentCalibrateEnd;
+            }
+            break;
+        case State::CurrentCalibrateEnd:
+            mState = State::FetOn;
+            break;
         }
         if (lastState != mState) {
             stateTicks.reset();
@@ -602,6 +704,13 @@ struct FSM {
                 led::blink(led::count_type{3});
                 toneGenerator::play(waitOffMelody, true);
                 break;
+            case State::CurrCalibrateStart:
+                break;
+            case State::CurrentCalibrateEnd:
+                if (!toneGenerator::busy()) {
+                    toneGenerator::play(calibMelody);
+                }
+                break;
             case State::Idle:
                 if (lastState != State::WaitOnInterrupted) {
                     toneGenerator::play(offMelody);
@@ -648,8 +757,7 @@ private:
         }
     }
     static inline void part1() {
-//        auto c = currentConverter::convert(adcController::value(adcController::index_type{1}));
-        auto c = currentConverter::value();
+        auto c = currentProvider::value();
         last_current = c;
         sensorData.current(c);
         current_max = std::max(current_max, c);
