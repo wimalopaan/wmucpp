@@ -44,7 +44,7 @@ namespace Hott {
     
     // fixme: keine mag. Konstanten 18 3 Aufteilung
     
-    template<typename Key, typename Provider, uint8_t ValueWidth = 3>
+    template<typename Key, typename Provider, uint8_t ValueWidth = 3, typename F = void>
     requires requires (Provider p, Key k) {
         p[k];
         p.change();
@@ -59,7 +59,12 @@ namespace Hott {
         constexpr TextWithValue(const AVR::Pgm::StringView& text, Provider& provider, Key key, uint8_t maxValue) : mTitle(text), mProvider(provider), mKey(key), mMax(maxValue) {}
         
         virtual void valueToText(uint8_t value, value_span_type buffer) const {
-            etl::itoa_r<10>(value, buffer);
+            if constexpr(std::is_same_v<F, void>) {
+                etl::itoa_r<10>(value, buffer);
+            }
+            else {
+                F::format(value, buffer);
+            }
         }
         
         virtual void putTextInto(BufferString& buffer) const override {

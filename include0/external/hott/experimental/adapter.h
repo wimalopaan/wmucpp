@@ -12,10 +12,18 @@ namespace Hott {
         struct Adapter<Hott::GamMsg> {
             Adapter(Hott::GamMsg& data) : mData(data) {}
 
+            inline void state(uint8_t v) {
+                mData.fuel_ml = v;
+            }
+            
             inline void cellVoltageRaw(uint_ranged<uint8_t, 0, Hott::GamMsg::numberOfCells> cell, uint8_t v) {
                 mData.cell[cell] = v;
             } 
             
+            inline void voltage(const Hott::Units::battery_voltage_t& bv) {
+                mData.Battery1 = bv.value;
+                mData.main_voltage = bv.value;
+            }
             inline void battery1Raw(uint16_t v) {
                 mData.Battery1 = v;
             }
@@ -33,9 +41,18 @@ namespace Hott {
 //                    mData.Battery2 = v;
 //                }
 //            }
+            // hijacked
+            inline void voltageMin(const Hott::Units::battery_voltage_t& bv) {
+                mData.Battery2 = bv.value;
+            }
             inline void batteryMinimumRaw(uint8_t cell, uint16_t c) {
                 mData.min_cell_volt_num = cell;
                 mData.min_cell_volt = c;
+            }
+            inline void current(const Hott::Units::current_t& c) {
+                mData.current = c.value;
+            }
+            inline void currentMax(const Hott::Units::current_t& c) {
             }
             inline void currentRaw(uint16_t v) {
                 mData.current = v;
@@ -56,11 +73,20 @@ namespace Hott {
                     mData.rpm2 = v.value() / 10;
                 }
             }
+            inline void temp(const External::Units::celsius<uint16_t, std::ratio<1,1>>& v) {
+                mData.temperature1 = v.value + 20;
+            }
+            inline void tempMax(const External::Units::celsius<uint16_t, std::ratio<1,1>>& v) {
+                mData.temperature2 = v.value + 20;
+            }
             inline void temp1(FixedPoint<int, 4> v) {
                 mData.temperature1 = v.integer() + 20;
             }
             inline void temp2(FixedPoint<int, 4> v) {
                 mData.temperature2 = v.integer() + 20;
+            }
+            inline void capRaw(uint16_t v) {
+                mData.batt_cap = v;
             }
         private:
             Hott::GamMsg& mData;

@@ -79,7 +79,7 @@ namespace Parameter {
 }
 
 namespace Storage {
-    enum class AVKey : uint8_t {Magic0, Magic1, OnDelay, CurrentOffset, VoltageOffset, _Number};
+    enum class AVKey : uint8_t {Magic0, Magic1, OnDelay, CurrentOffset, VoltageOffset, AutoOffset, _Number};
     
     struct ApplData final : public EEProm::DataBase<ApplData> {
         using value_type = etl::uint_NaN<uint8_t>;
@@ -339,10 +339,9 @@ using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>,
 #endif
 
 #ifdef USE_HOTT
-using sensor = Hott::Experimental::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<19200>, Hott::EscMsg, Hott::TextMsg, systemTimer>;
+using sensor = Hott::Experimental::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, Hott::TextMsg, systemTimer>;
 using battVoltageConverter = Hott::Units::Converter<adc, Hott::Units::battery_voltage_t, 
                                                     std::ratio<Parameter::R1vd + Parameter::R2vd, Parameter::R2vd>>; // todo: richtiger scale faktor
-//using currentConverter = Hott::Units::Converter<adc, Hott::Units::current_t, std::ratio<400,1000>>; // todo: richtiger scale faktor
 using currentSensor = External::AnalogSensor<adcController, 1, std::ratio<1,2>, std::ratio<40,1000>, std::ratio<10,1>>;
 
 template<typename ValueType, typename Sensor>
@@ -388,16 +387,25 @@ using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition>>;
 class RCMenu final : public Hott::Menu<Parameter::menuLines> {
     inline static constexpr uint8_t valueTextLength{6};
     
-    // Anzeige der Werte
-   
+    struct YesNo{
+        inline static void format(const uint8_t v, etl::span<3, etl::Char>& b) {
+            if (v == 0) {
+                b.insertLeftFill("no"_pgm);
+            }
+            else {
+                b.insertLeftFill("yes"_pgm);
+            }
+        }
+    };
+    
 public:
-    RCMenu() : Menu(this, "OnOff Big 1.1"_pgm, &mO, &mC, &mV) {}
+    RCMenu() : Menu(this, "OnOff 80A 1.1"_pgm, &mO, &mC, &mV, &mA) {}
 private:
     Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mO{"OnDelay"_pgm, appData, Storage::AVKey::OnDelay, 3};
     Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mC{"C-Offset"_pgm, appData, Storage::AVKey::CurrentOffset, 99};
     Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mV{"V-Offset"_pgm, appData, Storage::AVKey::VoltageOffset, 99};
+    Hott::TextWithValue<Storage::AVKey, Storage::ApplData, 3, YesNo> mA{"AutoOffset"_pgm, appData, Storage::AVKey::AutoOffset, 1};
 };
-
 
 template<typename PA, typename TopMenu>
 class HottMenu final {
@@ -536,6 +544,9 @@ struct FSM {
     inline static etl::uint_ranged<uint8_t, 0, calibInterrupts> waitOffInterrupts;
     
     inline static External::Tick<Timer> onDelay;
+
+    inline static bool autoCalib{false};
+    inline static uint8_t autoCalibCounter{0};
     
     inline static void init() {
         load();
@@ -551,6 +562,14 @@ struct FSM {
         }
         if (appData[Storage::AVKey::CurrentOffset]) {
             currentProvider::setOffset(appData[Storage::AVKey::CurrentOffset].toInt());
+        }
+        if (appData[Storage::AVKey::AutoOffset]) {
+            if (appData[Storage::AVKey::AutoOffset].toInt() == 0) {
+                autoCalib = false;
+            }
+            else {
+                autoCalib = true;
+            }
         }
 #else
         onDelay = 1000_ms;
@@ -615,9 +634,14 @@ struct FSM {
             }
             break;
         case State::FetOn:
-            if (stateTicks > resetWaitOffCounter) {
+            stateTicks.on(resetWaitOffCounter, []{
                 waitOffInterrupts.setToBottom();
-            }
+                if (autoCalib) {
+                    autoCalib = false;
+                    currentProvider::setOffset();
+                    ++autoCalibCounter;
+                }                
+            });
             if (button::event() == button::Press::Short) {
                 mState = State::WaitOff;
             }
@@ -687,6 +711,12 @@ struct FSM {
             case State::On:
                 if (lastState != State::WaitOffInterrupted) {
                     toneGenerator::play(onMelody);
+                }
+                if (lastState == State::WaitOn) {
+#ifdef USE_IBUS
+                    ibus::clear();
+#endif
+                    load();
                 }
                 led::blink(led::count_type{4});
                 break;
@@ -771,6 +801,8 @@ private:
     }
     static inline void part3() {
         sensorData.capRaw(c / 3600);
+//        sensorData.state(es);
+        sensorData.state(fsm::autoCalibCounter);
     }
 };
 
@@ -806,6 +838,8 @@ int main() {
             appData[Storage::AVKey::Magic1] = m1;
             appData[Storage::AVKey::OnDelay] = 1;
             appData[Storage::AVKey::CurrentOffset] = 0;
+            appData[Storage::AVKey::VoltageOffset] = 0;
+            appData[Storage::AVKey::AutoOffset] = 0;
             appData.change();
             changed  = true;
         }

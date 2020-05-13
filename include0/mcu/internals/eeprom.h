@@ -145,7 +145,7 @@ namespace EEProm {
                     return true; // need to call once more
                 }
             }
-            return false;
+            return true;
         }
         template<typename F>
         inline static void saveIfNeeded(const F& func_when_finished){
