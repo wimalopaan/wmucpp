@@ -636,7 +636,8 @@ namespace IBus {
             
             enum class reply_state_t {Undefined = 0, 
                                       DiscoverWait, TypeWait, ValueWait, 
-                                      Discover, Type, Value, 
+                                      Discover, Type, Value,
+                                      DaisyWait, DaisySet,
                                       Wait, WaitOver};
             
             Responder() = delete;
@@ -664,6 +665,7 @@ namespace IBus {
                         case reply_state_t::Value:
                         case reply_state_t::Wait:
                         case reply_state_t::WaitOver:
+                        case reply_state_t::DaisyWait:
                             break;
                         default:
                             break;
@@ -700,7 +702,7 @@ namespace IBus {
                         uart::put(cs += 0x02_B); // fix
                         uart::put(cs.lowByte());
                         uart::put(cs.highByte());
-                        mReply = reply_state_t::Wait;
+                        mReply = reply_state_t::DaisyWait;
                         debug::set(std::byte(uint8_t(mReply) + 16));
                     }
                     break;
@@ -728,7 +730,18 @@ namespace IBus {
                         debug::set(std::byte(uint8_t(mReply) + 16));
                     }
                     break;
+                case reply_state_t::DaisyWait:
+                    if (uart::isIdle()) {
+                        mReply = reply_state_t::DaisySet;
+                        debug::set(std::byte(uint8_t(mReply) + 16));
+                    }
+                    break;
                 case reply_state_t::WaitOver:
+                    pa::start();
+                    mReply = reply_state_t::Undefined;
+                    debug::set(std::byte(uint8_t(mReply) + 16));
+                    break;
+                case reply_state_t::DaisySet:
                     pa::start();
                     mReply = reply_state_t::Undefined;
                     if constexpr(!std::is_same_v<DaisyChainEnable, void>) {
