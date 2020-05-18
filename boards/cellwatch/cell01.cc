@@ -9,12 +9,14 @@
 #include <mcu/internals/portmux.h>
 #include <mcu/internals/adc.h>
 #include <mcu/internals/sigrow.h>
+#include <mcu/internals/sleep.h>
 
 #include <external/ibus/ibus.h>
 
 #include <external/hal/alarmtimer.h>
 #include <external/hal/adccontroller.h>
 #include <external/solutions/analogsensor.h>
+#include <external/solutions/tick.h>
 
 #include <std/chrono>
 
@@ -36,6 +38,7 @@ namespace  {
 using ccp = Cpu::Ccp<>;
 using clock = Clock<>;
 using sigrow = SigRow<>;
+using sleep = Sleep<>;
 
 using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Alt1>;
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position>>;
@@ -50,9 +53,12 @@ using alarmTimer = External::Hal::AlarmTimer<systemTimer, 8>;
 template<auto N, typename CallBack, typename MCU = DefaultMcuType>
 struct CellPA {
     inline static constexpr std::byte startByte{0xa5};
+
+//    inline static uint16_t c{1};
     
     enum class State : uint8_t {Init, AwaitLength, AwaitDataL, AwaitDataH, AwaitCSLow, AwaitCSHigh};
     inline static bool process(const std::byte b) {
+//        ++c;
         static uint16_t v{};
         static IBus::CheckSum cs;
         switch(mState) {
@@ -128,26 +134,28 @@ struct Sender {
     inline static constexpr std::byte startByte{0xa5};
     inline static constexpr uint8_t offset{1};
     
+    inline static uint16_t c{43};
+    
     template<auto N>
     static inline void copy(const etl::FixedVector<uint16_t, N>& data) {
+        ++c;
         if (mValues.size() < (data.size() + offset)) {
             mValues.reserve(data.size() + offset);
         }
         for(uint8_t i = 0; i < data.size(); ++i) {
-            mValues[i + offset] = 42;
-//            mValues[i + offset] = data[i];
+//            mValues[i + offset] = 42;
+            mValues[i + offset] = data[i];
         }
     }    
     static inline void set(const uint16_t v) {
-//        if (mValues.size() == 0) {
-//            mValues.reserve(1);
-//        }
-//        mValues[0] = v;
+        if (mValues.size() == 0) {
+            mValues.reserve(1);
+        }
+        mValues[0] = v;
         
-        mValues.reserve(2);
-        mValues[0] = 42;
-        mValues[0] = 43;
-        
+//        mValues.reserve(2);
+//        mValues[0] = 42;
+//        mValues[1] = cell::c;
     }
     template<typename Dev>
     static inline void send() {
@@ -178,41 +186,93 @@ private:
 
 using upDown = AVR::Usart<usart0Position, cell, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<16>>;
 
+template<typename Timer>
 struct FSM {
     enum class State : uint8_t {Init, Run, Sleep};
+
+    static constexpr auto intervall = Timer::intervall;
+    static constexpr External::Tick<Timer> idleTimeBeforeSleepTicks{10000_ms};
+    
+    inline static void ratePeriodic() {
+        auto lastState = mState;
+        ++stateTicks;
+        switch(mState) {
+        case State::Init:
+            mState = State::Run;
+            break;
+        case State::Run:
+            if (stateTicks > idleTimeBeforeSleepTicks) {
+                mState = State::Sleep;
+            }
+            break; 
+        case State::Sleep:
+            break;        
+        }
+        if (lastState != mState) {
+            stateTicks.reset();
+            switch(mState) {
+            case State::Init:
+                break;
+            case State::Run:
+                break; 
+            case State::Sleep:
+//                sleep::down();
+                mState = State::Run;
+                break;        
+            }
+        }
+    }
+    
+    inline static State mState = State::Init;
+    inline static External::Tick<Timer> stateTicks;
 };
 
+using fsm = FSM<systemTimer>;
+
 using vdiv = External::AnalogSensor<adcController, 0, std::ratio<0,1>, 
-                                    std::ratio<100, 320>, 
+                                    std::ratio<100, 320>, // 100k + 220K
                                     std::ratio<100,1>>;
 
 int main() {
     portmux::init();
     
     ccp::unlock([]{
-        clock::prescale<1>(); // 2MHz
+        clock::prescale<1>(); 
     });
+    
+    sleep::template init<sleep::PowerDown>();
    
     systemTimer::init();
     adcController::init();
 
-    upDown::init<AVR::BaudRate<9600>>();
+    upDown::init<AVR::BaudRate<9600>, AVR::FullDuplex, false>();
     
     activate::template dir<Input>();
+    activate::attributes<Meta::List<Attributes::Interrupt<Attributes::BothEdges>>>();
     
     const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
 
-    while(true) {
-        upDown::periodic();
-        adcController::periodic();
-        systemTimer::periodic([&]{
-            alarmTimer::periodic([&](const auto& t){
-                if (periodicTimer == t) {
-                    auto v = vdiv::value();
-                    sendDown::set(v);
-                    sendDown::send<upDown>();
-                }
+    {
+        activate::resetInt();
+        etl::Scoped<etl::EnableInterrupt<>> ei;
+        
+        while(true) {
+            upDown::periodic();
+            adcController::periodic();
+            systemTimer::periodic([&]{
+                fsm::ratePeriodic();
+                alarmTimer::periodic([&](const auto& t){
+                    if (periodicTimer == t) {
+                        auto v = vdiv::value();
+                        sendDown::set(v);
+                        sendDown::send<upDown>();
+                    }
+                });
             });
-        });
+        }
     }
+}
+
+ISR(PORTA_PORT_vect) {
+    activate::resetInt();
 }

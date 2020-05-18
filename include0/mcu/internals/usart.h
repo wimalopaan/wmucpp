@@ -337,17 +337,21 @@ namespace AVR {
         };
     public:
         
-        template<etl::Concepts::NamedConstant Baud, typename Mode = FullDuplex>
+        template<etl::Concepts::NamedConstant Baud, typename Mode = FullDuplex, bool pullUp = true>
         inline static void init() {
             using namespace etl;
             static_assert(Baud::value >= 2400, "USART should use a valid baud rate >= 2400");
             
             if constexpr(std::is_same_v<Mode, FullDuplex>) {
                 txpin::template dir<Output>();
-                rxpin::template pullup<true>(); 
+                if constexpr(pullUp) {
+                    rxpin::template pullup<true>(); 
+                }
             }
             else if constexpr(std::is_same_v<Mode, HalfDuplex>) { 
-                txpin::template pullup<true>(); 
+                if constexpr(pullUp) {
+                    txpin::template pullup<true>(); 
+                }
                 txpin::on();
 //                txpin::template dir<Output>();
                 mcu_usart()->ctrlb.template add<ctrlb_t::odme, etl::DisbaleInterrupt<etl::NoDisableEnable>>();

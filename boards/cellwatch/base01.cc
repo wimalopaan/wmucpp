@@ -1,5 +1,9 @@
 #define NDEBUG
 
+#define USE_IBUS
+//#define USE_SPORT
+//#define USE_HOTT
+
 #include <mcu/avr.h>
 
 #include <mcu/internals/ccp.h>
@@ -57,13 +61,13 @@ struct CellsCollector {
     inline static constexpr std::byte startByte{0xa5};
     inline static constexpr uint8_t offset{1};
 
-    inline static volatile uint8_t c = 0;
+//    inline static volatile uint8_t c = 0;
     
     template<auto N>
     static inline void copy(const etl::FixedVector<uint16_t, N>& data) {
-        ++c;
-        if (mValues.size() < (data.size() + 1)) {
-            mValues.reserve(data.size() + 1);
+//        ++c;
+        if (mValues.size() < (data.size() + offset)) {
+            mValues.reserve(data.size() + offset);
         }
         for(uint8_t i = 0; i < data.size(); ++i) {
             mValues[i + offset] = data[i];
@@ -71,7 +75,7 @@ struct CellsCollector {
     }    
     static inline void set(const uint16_t v) {
         if (mValues.size() == 0) {
-            mValues.reserve(1);
+            mValues.reserve(offset);
         }
         mValues[0] = v;
     }
@@ -172,20 +176,19 @@ private:
 
 using cellPA = CellPA<0, cellsColl>;
 
-struct TestProvider {
-    inline static constexpr auto ibus_type = IBus::Type::type::FLIGHT_MODE;
-    inline static constexpr void init() {
-    }
+//struct TestProvider {
+//    inline static constexpr auto ibus_type = IBus::Type::type::FLIGHT_MODE;
+//    inline static constexpr void init() {
+//    }
     
-    inline static volatile uint8_t i = 0;
+//    inline static volatile uint8_t i = 0;
     
-    inline static uint16_t value() {
-//        return i;
-        return cellsColl::c;
-//        return cellPA::c;
-    }
-};
-
+//    inline static uint16_t value() {
+////        return i;
+////        return cellsColl::c;
+////        return cellPA::c;
+//    }
+//};
 
 template<typename ADC, uint8_t Channel>
 struct TempProvider {
@@ -215,7 +218,7 @@ struct IBusThrough {
 using ibt = IBusThrough;
 
 using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, 
-                          Meta::List<cell0P, cell1P, cell2P, cell3P, TestProvider>, systemTimer, ibt
+                          Meta::List<cell0P, cell1P, cell2P, cell3P>, systemTimer, ibt
 //                          ,etl::NamedFlag<true>
 //                          ,etl::NamedFlag<true>
                           >;
@@ -239,7 +242,7 @@ int main() {
     portmux::init();
     
     ccp::unlock([]{
-        clock::prescale<1>(); // 2MHz
+        clock::prescale<1>(); 
     });
    
     systemTimer::init();
@@ -250,7 +253,8 @@ int main() {
     ibus::init();
     upperCell::init<AVR::HalfDuplex>();
     
-    const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
+    const auto activateTimer = alarmTimer::create(1000_ms, External::Hal::AlarmFlags::Periodic);
+    const auto measureTimer = alarmTimer::create(100_ms, External::Hal::AlarmFlags::Periodic);
 
     while(true) {
         etl::Scoped<etl::EnableInterrupt<>> ei;
@@ -259,11 +263,12 @@ int main() {
         systemTimer::periodic([&]{
             ibus::ratePeriodic();
             alarmTimer::periodic([&](const auto& t){
-                                auto v = vdiv::value();
-//                auto v = adcController::value(channel_t{0});
-                cellsColl::set(v);
-                if (periodicTimer == t) {
-//                    activate::toggle();
+                if (activateTimer == t) {
+                    activate::toggle();
+                }
+                if (measureTimer == t) {
+                    auto v = vdiv::value();
+                    cellsColl::set(v);
                 }
             });
         });
@@ -275,6 +280,5 @@ ISR(PORTA_PORT_vect) {
 }
 
 ISR(TCD0_OVF_vect) {
-//    TestProvider::i++;
     isrRegistrar::isr<AVR::ISR::Tcd<0>::Ovf>();
 }
