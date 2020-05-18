@@ -430,7 +430,6 @@ namespace IBus {
                 uart::template rxEnable<true>();
             }
             inline static void reset() {
-//                mState = ibus_state_t::Undefined;
                 mFirstSensorNumber= sensor_number_t{};
                 mLastSensorNumber = sensor_number_t{};
                 mReceivedNumber   = sensor_number_t{};
@@ -438,10 +437,10 @@ namespace IBus {
                     DaisyChainEnable::off();
                 }
                 start();
-//                uart::template rxEnable<true>();
             }
             
             inline static bool process(const std::byte c) {
+//                debug::template set<1>();
                 StatisticProvider::incBytes();
                 switch (mState) {
                 case ibus_state_t::Undefined:
@@ -457,10 +456,11 @@ namespace IBus {
                     mState = ibus_state_t::CheckSumSkip;
                     break;
                 case ibus_state_t::Length:
-                    StatisticProvider::incPackets();
+                    StatisticProvider::incPackets(); 
                     csum += c;  
                     mReceivedNumber = sensor_number_t{};
                     if (command(c) == Cdiscover) {
+                        debug::template set<1>();
                         if (const sensor_number_t n{address(c)}; n) {
                             if (!mFirstSensorNumber) {
                                 mFirstSensorNumber = n;
@@ -565,6 +565,7 @@ namespace IBus {
                 default:
                     break;
                 }
+//                debug::template set<0>();
                 debug::set(std::byte(mState));
                 return true;
             }
@@ -608,8 +609,6 @@ namespace IBus {
                 DaisyChainEnable::init();
             }
             clear();
-//            pa::start();
-//            responder::start();
         }            
         
         inline static constexpr void clear() {
@@ -618,11 +617,8 @@ namespace IBus {
             }
             pa::reset();
             responder::start();
-//            mFirstSensorNumber = sensor_number_t{};
-//            mLastSensorNumber = sensor_number_t{};
-//            mReceivedNumber   = sensor_number_t{};
             debug::init();
-            debug::template set<0x00>();
+//            debug::template set<0x00>();
         }
         
         struct Responder final {
@@ -666,6 +662,7 @@ namespace IBus {
                         case reply_state_t::Wait:
                         case reply_state_t::WaitOver:
                         case reply_state_t::DaisyWait:
+                        case reply_state_t::DaisySet:
                             break;
                         default:
                             break;

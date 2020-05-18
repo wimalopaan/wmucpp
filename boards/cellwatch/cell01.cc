@@ -14,6 +14,7 @@
 
 #include <external/hal/alarmtimer.h>
 #include <external/hal/adccontroller.h>
+#include <external/solutions/analogsensor.h>
 
 #include <std/chrono>
 
@@ -24,11 +25,7 @@ using namespace AVR;
 using namespace std::literals::chrono;
 using namespace External::Units::literals;
 
-//using rxPin = Pin<Port<A>, 6>; // default
-//using txPin = rxPin;
-using activate = Pin<Port<A>, 3>;
-//using conn12 = Pin<Port<A>, 7>;
-using daisy = Pin<Port<A>, 2>;
+using activate = Pin<Port<A>, 7>;
 
 // AIN3 = Voltage
 
@@ -40,14 +37,15 @@ using ccp = Cpu::Ccp<>;
 using clock = Clock<>;
 using sigrow = SigRow<>;
 
-using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Default>;
+using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Alt1>;
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position>>;
 
 using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V1_5>;
 using adcController = External::Hal::AdcController<adc, Meta::NList<3, 0x1e>>; // 1e = temp
+using channel_t = adcController::index_type;
 
 using systemTimer = SystemTimer<Component::Rtc<0>, fRtc>;
-
+using alarmTimer = External::Hal::AlarmTimer<systemTimer, 8>;
 
 template<auto N, typename CallBack, typename MCU = DefaultMcuType>
 struct CellPA {
@@ -69,9 +67,11 @@ struct CellPA {
         case State::AwaitLength:
             cs += b;
             mLength.set(static_cast<uint8_t>(b));
-            if ((mLength != 0) && (mLength <= mValues.size())) {
+            if ((mLength != 0) && (mLength <= mValues.capacity)) {
                 mState = State::AwaitDataL;
                 mValues.clear();
+                mValues.reserve(mLength);
+                mIndex.setToBottom();
             }
             else {
                 mState = State::Init;
@@ -86,10 +86,10 @@ struct CellPA {
         case State::AwaitDataH:
             cs += b;
             v |= (static_cast<uint16_t>(b) << 8);
-            mValues.push_back(v);
+            mValues[mIndex] = v;
+            ++mIndex;
             if (mLength.isBottom()) {
                 mState = State::AwaitCSLow;
-                cs.reset();
             }
             else {
                 mState = State::AwaitDataL;
@@ -102,7 +102,9 @@ struct CellPA {
         case State::AwaitCSHigh:
             cs.highByte(b);
             if (cs) {
-                CallBack::copy(mValues);                
+                if constexpr(!std::is_same_v<CallBack, void>) {
+                    CallBack::copy(mValues);                
+                }
             }
             mState = State::Init;
             break;
@@ -113,77 +115,34 @@ private:
     inline static constexpr uint8_t mSize = 16;
     inline static etl::FixedVector<uint16_t, mSize> mValues{};
     inline static etl::uint_ranged<uint8_t, 0, mSize - 1> mLength{};
+    inline static etl::uint_ranged<uint8_t, 0, mSize - 1> mIndex{};
     inline static State mState{State::Init};
 };
 
 struct Sender;
-using sendUp = Sender;
+using sendDown = Sender;
 
-using cell = CellPA<0, sendUp>;
-
-template<typename ADC, uint8_t Channel>
-struct TempProvider {
-    using index_t = ADC::index_type;
-    static_assert(Channel <= index_t::Upper);
-    inline static constexpr auto channel = index_t{Channel};
-    inline static constexpr auto ibus_type = IBus::Type::type::TEMPERATURE;
-    inline static constexpr void init() {
-    }
-    inline static constexpr uint16_t value() {
-        return sigrow::adcValueToTemperature<std::ratio<1,10>, 40 - 15>(ADC::value(channel)).value;
-    }
-};
-using tempP = TempProvider<adcController, 1>;
-
-struct IBusThrough {
-    inline static void init() {
-        daisy::template dir<Output>();
-    }
-    inline static void on() {
-        daisy::on();
-    }
-    inline static void off() {
-        daisy::off();
-    }
-};
-using ibt = IBusThrough;
-
-struct Debug {
-    inline static void init() {
-    }
-    template<auto n>
-    inline static void set() {
-//        activate::toggle();
-//        if constexpr(n == 0) {
-//            activate::low();
-//        }
-//        if constexpr(n == 1) {
-//            activate::high();
-//        }
-    }
-    inline static void set(const std::byte) {
-        
-    }
-};
-
-using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, 
-                          Meta::List<tempP>, systemTimer, ibt
-                          ,etl::NamedFlag<true>
-                        ,etl::NamedFlag<true>
-//                       ,Debug
-                          >;
-
+using cell = CellPA<0, sendDown>;
 
 struct Sender {
     inline static constexpr std::byte startByte{0xa5};
     inline static constexpr uint8_t offset{1};
+    
     template<auto N>
     static inline void copy(const etl::FixedVector<uint16_t, N>& data) {
+        if (mValues.size() < (data.size() + 1)) {
+            mValues.reserve(data.size() + 1);
+        }
+//        mValues.reserve(2);        
         for(uint8_t i = 0; i < data.size(); ++i) {
-            mValues[i + offset] = data[i];
+            mValues[i + offset] = 42;
+//            mValues[i + offset] = data[i];
         }
     }    
     static inline void set(const uint16_t v) {
+        if (mValues.size() == 0) {
+            mValues.reserve(1);
+        }
         mValues[0] = v;
     }
     template<typename Dev>
@@ -191,10 +150,18 @@ struct Sender {
         IBus::CheckSum cs;
         cs += startByte;
         Dev::put(startByte);
+        
+        auto s = mValues.size();
+        cs += std::byte{s};
+        Dev::put(std::byte{s});
+        
         for(uint8_t i = 0; i < mValues.size(); ++i) {
             const auto l = etl::nth_byte<0>(mValues[i]);
+            cs += l;
             Dev::put(l);
+            
             const auto h = etl::nth_byte<1>(mValues[i]);
+            cs += h;
             Dev::put(h);
         }
         Dev::put(cs.lowByte());
@@ -205,9 +172,15 @@ private:
     inline static etl::FixedVector<uint16_t, mSize> mValues{};
 };
 
+using upDown = AVR::Usart<usart0Position, cell, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<16>>;
+
 struct FSM {
     enum class State : uint8_t {Init, Run, Sleep};
 };
+
+using vdiv = External::AnalogSensor<adcController, 0, std::ratio<0,1>, 
+                                    std::ratio<100, 320>, 
+                                    std::ratio<100,1>>;
 
 int main() {
     portmux::init();
@@ -218,23 +191,25 @@ int main() {
    
     systemTimer::init();
     adcController::init();
+
+    upDown::init<AVR::BaudRate<9600>>();
     
-    activate::template dir<Output>();
+    activate::template dir<Input>();
     
-    ibus::init();
-    
-//    const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
+    const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
 
     while(true) {
-        ibus::periodic();
+        upDown::periodic();
         adcController::periodic();
         systemTimer::periodic([&]{
-            ibus::ratePeriodic();
-//            alarmTimer::periodic([&](const auto& t){
-//                if (periodicTimer == t) {
-////                    activate::toggle();
-//                }
-//            });
+            alarmTimer::periodic([&](const auto& t){
+                if (periodicTimer == t) {
+                    auto v = vdiv::value();
+//                    auto v = adcController::value(channel_t{0});
+                    sendDown::set(v);
+                    sendDown::send<upDown>();
+                }
+            });
         });
     }
 }

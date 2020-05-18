@@ -36,14 +36,35 @@ namespace etl {
             assert(index < Capacity);
             return data[index];
         }
+        inline constexpr volatile T& operator[](size_type index) volatile {
+            assert(index < Capacity);
+            return data[index];
+        }
         inline constexpr const T& operator[](size_type index) const {
             assert(index < Capacity);
             return data[index];
         }
+        inline constexpr const T& operator[](size_type index) volatile const {
+            assert(index < Capacity);
+            return data[index];
+        }
         
+        inline constexpr void reserve(size_type s) {
+            assert(s <= Capacity);
+            mSize = s;
+        }
+        inline constexpr void reserve(size_type s) volatile {
+            assert(s <= Capacity);
+            mSize = s;
+        }
+
         inline constexpr size_type size() const {
             return mSize;
         }
+        inline constexpr size_type size() volatile const {
+            return mSize;
+        }
+
         
         inline constexpr void clear() {
             mSize = 0;

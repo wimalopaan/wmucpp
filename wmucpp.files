@@ -208,6 +208,8 @@ boards/breakout/Makefile
 boards/breakout/test00.cc
 boards/breakout/test01.cc
 boards/cellwatch/Makefile
+boards/cellwatch/base01.cc
+boards/cellwatch/cell01.cc
 boards/cellwatch/test00.cc
 boards/curiosity/Makefile
 boards/curiosity/test00.cc

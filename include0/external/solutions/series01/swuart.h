@@ -13,6 +13,7 @@ namespace External {
                  etl::Concepts::NamedConstant RecvQLength = AVR::ReceiveQueueLength<64>, 
                  etl::Concepts::NamedConstant SendQLength = AVR::SendQueueLength<64>, 
                  etl::Concepts::NamedFlag Inverted = etl::NamedFlag<false>,
+                 etl::Concepts::NamedFlag Pullup = etl::NamedFlag<true>,
                  AVR::Concepts::Pin dbg = AVR::NoPin,
                  typename MCU = DefaultMcuType> 
         struct Usart;
@@ -21,10 +22,11 @@ namespace External {
                  etl::Concepts::NamedConstant Baud,
                  etl::Concepts::NamedConstant RecvQLength, etl::Concepts::NamedConstant SendQLength, 
                  etl::Concepts::NamedFlag Inverted,
+                 etl::Concepts::NamedFlag Pullup,
                  typename Dbg,
                  AVR::Concepts::At01Series MCU>
         struct Usart<Meta::List<RxPin, TxPin>, AVR::Component::Tcd<N>, PA, Baud, 
-                RecvQLength, SendQLength, Inverted, Dbg, MCU> final {
+                RecvQLength, SendQLength, Inverted, Pullup, Dbg, MCU> final {
 
             static inline constexpr bool useInterrupts = true;
             
@@ -48,12 +50,14 @@ namespace External {
             static inline volatile std::byte data;
             static inline volatile uint8_t bitCount;
             
+            
             using rxPinAttrInt = std::conditional_t<Inverted::value, 
                                                  Meta::List<AVR::Attributes::Inverting<>, AVR::Attributes::Interrupt<AVR::Attributes::OnFalling>>,
-                                                 Meta::List<AVR::Attributes::Pullup<MCU>, AVR::Attributes::Interrupt<AVR::Attributes::OnFalling>>>;
+                                                 std::conditional_t<Pullup::value, Meta::List<AVR::Attributes::Pullup<MCU>, AVR::Attributes::Interrupt<AVR::Attributes::OnFalling>>, Meta::List<AVR::Attributes::Interrupt<AVR::Attributes::OnFalling>>>>;
             using rxPinAttrNoInt = std::conditional_t<Inverted::value, 
                                                  Meta::List<AVR::Attributes::Inverting<>>,
-                                                 Meta::List<AVR::Attributes::Pullup<MCU>>>;
+                                                 std::conditional_t<Pullup::value, Meta::List<AVR::Attributes::Pullup<MCU>>, Meta::List<AVR::Attributes::Reset<>>>
+                                                 >;
             
             static inline constexpr auto sendQLength = SendQLength::value;
             

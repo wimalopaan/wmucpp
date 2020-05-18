@@ -419,6 +419,9 @@ namespace AVR {
     
     namespace Attributes {
         template<typename MCU = DefaultMcuType>
+        struct Reset : std::integral_constant<typename MCU::PortRegister::PinCtrl_t, typename MCU::PortRegister::PinCtrl_t{0}> {};
+        
+        template<typename MCU = DefaultMcuType>
         struct Inverting : std::integral_constant<typename MCU::PortRegister::PinCtrl_t, MCU::PortRegister::PinCtrl_t::inven> {}; 
         template<typename MCU = DefaultMcuType>
         struct Pullup: std::integral_constant<typename MCU::PortRegister::PinCtrl_t, MCU::PortRegister::PinCtrl_t::pullup> {}; 
@@ -496,8 +499,8 @@ namespace AVR {
         template<typename AList>
         static inline void attributes() {
             []<typename... AA>(Meta::List<AA...>) {
-                constexpr auto v = (AA::value | ...);
-                port::template pinctrl<PinNumber, v>();
+                    constexpr auto v = (AA::value | ...);
+                    port::template pinctrl<PinNumber, v>();
             }(AList{});
         }
         static inline void resetInt() {
