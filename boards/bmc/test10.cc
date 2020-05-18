@@ -285,8 +285,8 @@ int main() {
         escData.voltageMinRaw(114);
         escData.currentRaw(3);
         escData.currentMaxRaw(27);
-        escData.tempRaw(600);
-        escData.tempMaxRaw(400);
+//        escData.tempRaw(600);
+//        escData.tempMaxRaw(400);
         
         while(true) {
             pc1::toggle();

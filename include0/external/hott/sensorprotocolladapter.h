@@ -27,7 +27,7 @@ namespace Hott {
     
     template<uint8_t M, auto code,  typename AsciiHandler, typename BinaryHandler, typename BCastHandler>
     class SensorProtocollAdapter final {
-        enum class hottstate {Undefined = 0, Request1, RequestA1, NumberOfStates};
+        enum class hottstate {Undefined = 0, Request1, RequestA1/*, NumberOfStates*/};
         SensorProtocollAdapter() = delete;
         
         static inline constexpr std::byte id = binary_id(code);

@@ -302,7 +302,7 @@ namespace Hott {
                  typename MCU>
         struct Sensor<CNumber, Uart, Baud, BinaryMesgType, TextMesgType, Clock, MCU> final {
             static inline constexpr auto UartNumber = CNumber::value;
-            enum class hott_state_t {Undefined = 0, BinaryStartRequest, AsciiStartRequest, BinaryWaitIdle, AsciiWaitIdle, BinaryReply, AsciiReply, NumberOfStates};
+            enum class hott_state_t {Undefined = 0, BinaryStartRequest, AsciiStartRequest, BinaryWaitIdle, AsciiWaitIdle, BinaryReply, AsciiReply/*, NumberOfStates*/};
             
             static inline constexpr std::byte msg_code = code_from_type<BinaryMesgType>::value;
             //                std::integral_constant<std::byte, msg_code>::_;
@@ -347,6 +347,9 @@ namespace Hott {
                     case hott_state_t::AsciiWaitIdle:
                         ++mBytesReceivedInIdlePeriod;
                         break;
+                    case hott_state_t::BinaryReply:
+                    case hott_state_t::AsciiReply:
+                        break;
                     default:
                         assert(false);
                         break;
@@ -357,6 +360,12 @@ namespace Hott {
                         case hott_state_t::BinaryWaitIdle:
                             mWaitTicks.setToBottom();
                             mBytesReceivedInIdlePeriod = 0;
+                            break;
+                        case hott_state_t::Undefined:
+                        case hott_state_t::BinaryStartRequest:
+                        case hott_state_t::AsciiStartRequest:
+                        case hott_state_t::BinaryReply:
+                        case hott_state_t::AsciiReply:
                             break;
                         default:
                             break;
@@ -424,6 +433,10 @@ namespace Hott {
                         mState = hott_state_t::Undefined;
                     }
                     break;
+                case hott_state_t::Undefined:
+                case hott_state_t::BinaryStartRequest:
+                case hott_state_t::AsciiStartRequest:
+                    break;
                 default:
                     break;
                 }
@@ -436,6 +449,11 @@ namespace Hott {
                         break;
                     case hott_state_t::Undefined:
                         uart::template rxEnable<true>();
+                        break;
+                    case hott_state_t::AsciiStartRequest:
+                    case hott_state_t::BinaryStartRequest:
+                    case hott_state_t::AsciiWaitIdle:
+                    case hott_state_t::BinaryWaitIdle:
                         break;
                     default:
                         break;

@@ -13,10 +13,10 @@
 
 #include <external/hal/alarmtimer.h>
 #include <external/hal/adccontroller.h>
-//#include <external/hott/sumdprotocolladapter.h>
-//#include <external/hott/experimental/sensor.h>
-//#include <external/hott/hott.h>
-//#include <external/hott/menu.h>
+#include <external/hott/sumdprotocolladapter.h>
+#include <external/hott/experimental/sensor.h>
+#include <external/hott/hott.h>
+#include <external/hott/menu.h>
 
 #include <external/solutions/series01/sppm_in.h>
 
@@ -93,7 +93,16 @@ using evrouter = Event::Router<Event::Channels<ppm_channel>, Event::Routes<ppm_u
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition, tcdPosition, ppmTimerPosition>>;
 
 struct TLE {
-    
+    inline static void init() {
+        
+    }
+    inline static void off() {
+        
+    }
+    template<typename T>
+    inline static void set(const T& , bool) {
+        
+    }
 };
 
 using bridge = TLE;
@@ -125,14 +134,17 @@ using controller = Controller<bridge>;
 
 template<typename Actuator>
 struct EscStateFsm {
-    enum class State : uint8_t {Undefined = 0, Backward, Off, Forward, _Number};
+    enum class State : uint8_t {Undefined = 0, Backward, Off, Forward/*, _Number*/};
     
     static inline void init() {
         Actuator::init();
     }    
     template<typename InputType>
     static inline void update(const InputType& v) {
+        using input_t = InputType;
+//        input_t::_;
         using output_t = etl::uint_ranged_NaN<std::make_unsigned_t<typename InputType::value_type>, 0, InputType::Upper>;
+//        output_t::_;
         
         if (!v) return;
         
@@ -141,33 +153,33 @@ struct EscStateFsm {
             mState = State::Off;
             break;
         case State::Backward:
-            if (v.toInt() >= 0) {
+            if (v >= 0) {
                 mState = State::Off;
                 mOffStateCounter = 0;
             }
             else {
-                Actuator::set(output_t(-v.toInt()), true);
+                Actuator::set(output_t::absolute(v.toInt()), true);
             }
             break;
         case State::Off:
             Actuator::off();
             ++mOffStateCounter;
             if (mOffStateCounter > 5) {
-                if (v.toInt() > 0) {
+                if (v >= 0) {
                     mState = State::Forward;
                 }
-                if (v.toInt() < 0) {
+                else {
                     mState = State::Backward;
                 }
             }
             break;
         case State::Forward:
-            if (v.toInt() <= 0) {
+            if (v <= 0) {
                 mState = State::Off;
                 mOffStateCounter = 0;
             }
             else {
-                Actuator::set(output_t(v.toInt()), false);
+                Actuator::set(output_t::absolute(v.toInt()), false);
             }
             break;
         default:
@@ -184,8 +196,8 @@ using fsm = EscStateFsm<controller>;
 template<typename TUnit, typename AD>
 struct GlobalFSM {
     enum class State : uint8_t {Undefined = 0, Startup, CellEstimate, CellBeep, ThrottleWarn, ThrottleSetMax, ThrottleSetMin, ThrottleSetNeutral, ThrottleSetCheck, 
-                                Error, Armed, Run, RunReduced, _Number};
-    enum class Beep  : uint8_t {Off, Low, High, _Number};
+                                Error, Armed, Run, RunReduced/*, _Number*/};
+    enum class Beep  : uint8_t {Off, Low, High/*, _Number*/};
     
     static inline constexpr auto intervall = TUnit::exact_intervall;
 //    std::integral_constant<uint16_t, intervall.value>::_;
@@ -195,14 +207,32 @@ struct GlobalFSM {
     static inline constexpr state_counter_type minStateCounter = minStateTime / intervall;
     static inline constexpr state_counter_type maxStateCounter = maxStateTime / intervall;
     
-    using ppm_type = decltype(ppm::value());
+    using ppm_type = decltype(ppm::svalue());
+//    ppm_type::_;
+    using ppm_value_t = typename ppm_type::value_type;
     
-    static inline constexpr auto ppmHysterese = 2 * (ppm_type::Upper - ppm_type::Lower) / 100;
+    static inline constexpr auto ppmMid = (ppm_type::Upper + ppm_type::Lower) / 2;
+    static inline constexpr auto ppmSpan = (ppm_type::Upper - ppm_type::Lower);
+    static inline constexpr auto ppmHysterese = 2 * ppmSpan / 100;
+    static inline constexpr auto ppmNearMax = ppm_type::Upper - ppmSpan / 10;
+    static inline constexpr auto ppmNearMin = ppm_type::Lower + ppmSpan / 10;
     
-    static inline constexpr typename AD::value_type cell_normal_raw = (Parameter::cell_normal * Parameter::voltage_divider * 1024) / AD::VRef;
+//    std::integral_constant<decltype(ppmMid), ppmMid>::_;
+//    std::integral_constant<decltype(ppmSpan), ppmSpan>::_;
+//    std::integral_constant<decltype(ppmHysterese), ppmHysterese>::_;
+//    std::integral_constant<decltype(ppmNearMax), ppmNearMax>::_;
+//    std::integral_constant<decltype(ppmNearMin), ppmNearMin>::_;
+    
+    using value_t = typename AD::value_type;
+
+    static inline constexpr auto cell_normal_raw = value_t((Parameter::cell_normal * Parameter::voltage_divider * 1024) / AD::VRef);
 //    std::integral_constant<uint16_t, cell_normal_raw.toInt()>::_;
-    static inline constexpr typename AD::value_type cell_min_raw = (Parameter::cell_min * Parameter::voltage_divider * 1024) / AD::VRef;
+    static inline constexpr auto cell_min_raw = value_t((Parameter::cell_min * Parameter::voltage_divider * 1024) / AD::VRef);
 //    std::integral_constant<uint16_t, cell_min_raw.toInt()>::_;
+    
+    using channel_t = typename AD::index_type;
+    
+    inline static constexpr auto vChannel = channel_t{0};
     
     static inline void init() {
         mMaxPpm = appData[Storage::AVKey::MaxPpm];
@@ -217,19 +247,28 @@ struct GlobalFSM {
     
     template<typename V>
     static inline bool isNearNeutral(const V& v) {
-        return ((v >= -ppmHysterese) && (v <= ppmHysterese));
+        return ((v >= (ppmMid + ppmHysterese)) && (v <= (ppmMid - ppmHysterese)));
+    }
+
+    template<typename V>
+    static inline bool isNearMax(const V& v) {
+        return ((v >= ppmNearMax) && (v <= ppmNearMin));
     }
     
-    template<typename T>
-    static inline ppm_type scale(const T& v) {
-        using tt = etl::enclosing_t<ppm_type::value_type>;
-        tt scaled = ((tt)v.toInt() * ppm_type::Upper) / mMaxPpm;
-        scaled = std::clamp(scaled, (tt)ppm_type::Lower, (tt)ppm_type::Upper);
-        return scaled;
+    static inline ppm_type scale(const ppm_type& v) {
+        using tt = etl::enclosing_t<ppm_value_t>;
+        if (v >= ppmMid) {
+            const tt scaled = ((tt{v.toInt()} - ppmMid) * ppmSpan / 2) / mMaxPpm + ppmMid;
+            return std::clamp(scaled, tt{ppmMid}, tt{ppm_type::Upper});
+        }
+        else {
+            const tt scaled = ((ppmMid - tt{v.toInt()}) * ppmSpan / 2) / mMinPpm + ppmMid;
+            return std::clamp(scaled, tt{ppm_type::Lower}, tt{ppmMid});
+        }
     }
     
     static inline void periodic() { // called every 'intervall' ms
-        auto p = ppm::value();
+        auto p = ppm::svalue();
 //        decltype(p)::_;
         State oldState = mState;
         switch (mState) {
@@ -250,10 +289,10 @@ struct GlobalFSM {
             break;
         case State::CellEstimate:
         {
-//            auto v = AD::value(1);
-//            mCellCount = v.toInt() / cell_normal_raw;
-//            mVThresh = mCellCount * cell_min_raw.toInt();
-//            mState = State::CellBeep;
+            auto v = AD::value(vChannel);
+            mCellCount = v.toInt() / cell_normal_raw;
+            mVThresh.set(mCellCount * cell_min_raw.toInt());
+            mState = State::CellBeep;
         }
             break;
         case State::CellBeep:
@@ -279,15 +318,15 @@ struct GlobalFSM {
             }
             break;
         case State::ThrottleSetCheck:
-//            if ((mMaxPpm > 300) && (mMinPpm < -300)) {
-//                saveToEEprom();
-//                if (++mStateCounter > minStateCounter) {
-//                    mState = State::Startup;
-//                }
-//            }
-//            else {
-//                mState = State::Error;
-//            }
+            if (p && isNearMax(p)) {
+                saveToEEprom();
+                if (++mStateCounter > minStateCounter) {
+                    mState = State::Startup;
+                }
+            }
+            else {
+                mState = State::Error;
+            }
             break;
         case State::Error:
             break;
@@ -298,14 +337,14 @@ struct GlobalFSM {
             break;
         case State::Run:
         {
-//            auto v = AD::value(1);
-//            if (v < mVThresh) {
-//                mState = State::RunReduced;
-//            }               
-//            if (p) {
-//                mScaled = scale(p);
-////                fsm::update(mScaled);
-//            }
+            auto v = AD::value(vChannel);
+            if (v < mVThresh) {
+                mState = State::RunReduced;
+            }               
+            if (p) {
+                mScaled = scale(p);
+                fsm::update(mScaled);
+            }
         }
             break;
         case State::RunReduced:
@@ -313,7 +352,7 @@ struct GlobalFSM {
             if (p) {
                 mScaled = scale(p);
                 mScaled /= 2;
-//                fsm::update(mScaled);
+                fsm::update(mScaled);
             }
         }
             break;
@@ -361,7 +400,7 @@ struct GlobalFSM {
     static inline ppm_type mScaled;
     static inline ppm_type::value_type mMaxPpm = ppm_type::Upper;
     static inline ppm_type::value_type mMinPpm = ppm_type::Lower;
-    static inline AD::value_type mVThresh = 0;
+    static inline value_t mVThresh;
     static inline uint8_t mCellCount = 0;
 private:
     static inline etl::uint_ranged<state_counter_type, 0, maxStateCounter + 1> mStateCounter;
@@ -386,6 +425,7 @@ int main() {
     
     terminalDevice::init<AVR::BaudRate<9600>>();
     
+    fsm::init();
     gfsm::init();
 
     

@@ -52,7 +52,7 @@ namespace Hott {
             inline void current(const Hott::Units::current_t& c) {
                 mData.current = c.value;
             }
-            inline void currentMax(const Hott::Units::current_t& c) {
+            inline void currentMax(const Hott::Units::current_t&) {
             }
             inline void currentRaw(uint16_t v) {
                 mData.current = v;

@@ -36,6 +36,17 @@ namespace External {
             
             using value_type = etl::uint_ranged_NaN<uint16_t, ppmMin, ppmMax>;
             using extended_value_type = etl::uint_ranged_NaN<uint16_t, ppmMinExtended, ppmMaxExtended>;
+
+            inline static constexpr int16_t sppmMax = ppmMax;
+            inline static constexpr int16_t sppmMin = ppmMin;
+            inline static constexpr int16_t smedium = medium;
+            inline static constexpr int16_t sspan   = span;
+            inline static constexpr int16_t sppmWidth = ppmWidth;
+            inline static constexpr int16_t sppmMinExtended = ppmMinExtended;
+            inline static constexpr int16_t sppmMaxExtended = ppmMaxExtended;
+            
+            using svalue_type = etl::int_ranged_NaN<int16_t, sppmMin - smedium, sppmMax - smedium>;
+            using extended_svalue_type = etl::int_ranged_NaN<int16_t, sppmMinExtended - smedium, sppmMaxExtended - smedium>;
             
 //            std::integral_constant<decltype(ppmMax), ppmMax>::_;
 //            std::integral_constant<decltype(ppmMin), ppmMin>::_;
@@ -64,6 +75,9 @@ namespace External {
                 }
                 return value_type{};
             }
+            inline static svalue_type svalue() {
+                return svalue_type(value() - smedium);
+            }
 
             inline static extended_value_type extended() {
                 auto v = *mcu_tcb()->ccmp;
@@ -73,9 +87,6 @@ namespace External {
                 return extended_value_type{};
             }
 
-//            inline static Hott::hott_t hott() {
-//                return Hott::hott_t((uint32_t(*mcu_tcb()->ccmp - ppmMin) * (Hott::hott_t::Upper - Hott::hott_t::Lower)) / (ppmMax - ppmMin) + Hott::hott_t::Lower);
-//            }
         };
     }
 }

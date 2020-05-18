@@ -220,7 +220,7 @@ namespace etl {
         
         inline constexpr uint_ranged_NaN() = default;
         
-        inline constexpr uint_ranged_NaN(T v) : mValue(v) {
+        inline constexpr uint_ranged_NaN(const T v) : mValue(v) {
 //            assert(v >= LowerBound);
 //            assert(v <= UpperBound);
             if (v < LowerBound) {
@@ -228,6 +228,16 @@ namespace etl {
             }
             else if (v > UpperBound) {
                 mValue = UpperBound;
+            }
+        }
+
+        template<typename U>
+        inline static constexpr uint_ranged_NaN absolute(const U& s) {
+            if (s >= 0) {
+                return uint_ranged_NaN(s);
+            }
+            else {
+                return uint_ranged_NaN(-s);
             }
         }
         
@@ -291,10 +301,10 @@ namespace etl {
             }
             return *this;
         }
-        inline constexpr void operator+=(T value) {
+        inline constexpr void operator+=(const T value) {
             mValue = std::min(UpperBound, mValue + value);
         }
-        inline constexpr void operator/=(T d) {
+        inline constexpr void operator/=(const T d) {
             mValue = std::clamp(mValue / d, LowerBound, UpperBound);
         }
     private:
@@ -316,7 +326,7 @@ namespace etl {
         
         inline constexpr int_ranged_NaN() = default;
         
-        inline constexpr int_ranged_NaN(T v) : mValue(v) {
+        inline constexpr int_ranged_NaN(const T v) : mValue(v) {
             assert(v >= LowerBound);
             assert(v <= UpperBound);
             if (v < LowerBound) {
@@ -338,15 +348,15 @@ namespace etl {
         //        inline constexpr bool operator>(T rhs) const {
         //            return mValue > rhs;
         //        }
-        //        inline constexpr bool operator>=(T rhs) const {
-        //            return mValue >= rhs;
-        //        }
+                inline constexpr bool operator>=(const T rhs) const {
+                    return mValue >= rhs;
+                }
         //        inline constexpr bool operator<(T rhs) const {
         //            return mValue < rhs;
         //        }
-        //        inline constexpr bool operator<=(T rhs) const {
-        //            return mValue <= rhs;
-        //        }
+                inline constexpr bool operator<=(T rhs) const {
+                    return mValue <= rhs;
+                }
         
         inline void operator--() {
             if (mValue > LowerBound) {
@@ -358,10 +368,10 @@ namespace etl {
                 ++mValue;
             }
         }
-        inline constexpr bool operator==(T rhs) const {
+        inline constexpr bool operator==(const T rhs) const {
             return mValue == rhs;
         }
-        inline constexpr void  operator=(T rhs) {
+        inline constexpr void  operator=(const T rhs) {
             assert(rhs >= LowerBound);
             assert(rhs <= UpperBound);
             mValue = std::clamp(rhs, LowerBound, UpperBound);

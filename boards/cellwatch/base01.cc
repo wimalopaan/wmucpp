@@ -99,7 +99,7 @@ template<auto N, typename CallBack = void, typename MCU = DefaultMcuType>
 struct CellPA {
     inline static constexpr std::byte startByte{0xa5};
 
-    inline static volatile uint8_t c = 0;
+//    inline static volatile uint8_t c = 0;
     
     enum class State : uint8_t {Init, AwaitLength, AwaitDataL, AwaitDataH, AwaitCSLow, AwaitCSHigh};
     inline static bool process(const std::byte b) {
@@ -152,7 +152,7 @@ struct CellPA {
         case State::AwaitCSHigh:
             cs.highByte(b);
             if (cs) {
-                c++;
+//                c++;
                 if constexpr(!std::is_same_v<CallBack, void>) {
                     CallBack::copy(mValues);                
                 }

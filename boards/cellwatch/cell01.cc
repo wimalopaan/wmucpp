@@ -130,20 +130,24 @@ struct Sender {
     
     template<auto N>
     static inline void copy(const etl::FixedVector<uint16_t, N>& data) {
-        if (mValues.size() < (data.size() + 1)) {
-            mValues.reserve(data.size() + 1);
+        if (mValues.size() < (data.size() + offset)) {
+            mValues.reserve(data.size() + offset);
         }
-//        mValues.reserve(2);        
         for(uint8_t i = 0; i < data.size(); ++i) {
             mValues[i + offset] = 42;
 //            mValues[i + offset] = data[i];
         }
     }    
     static inline void set(const uint16_t v) {
-        if (mValues.size() == 0) {
-            mValues.reserve(1);
-        }
-        mValues[0] = v;
+//        if (mValues.size() == 0) {
+//            mValues.reserve(1);
+//        }
+//        mValues[0] = v;
+        
+        mValues.reserve(2);
+        mValues[0] = 42;
+        mValues[0] = 43;
+        
     }
     template<typename Dev>
     static inline void send() {
@@ -205,7 +209,6 @@ int main() {
             alarmTimer::periodic([&](const auto& t){
                 if (periodicTimer == t) {
                     auto v = vdiv::value();
-//                    auto v = adcController::value(channel_t{0});
                     sendDown::set(v);
                     sendDown::send<upDown>();
                 }

@@ -174,6 +174,8 @@ namespace External {
                         pingReceived = true;
                     }
                     break;
+                case State::Seperator:
+                    break;
                 default:
                     break;
                 }
