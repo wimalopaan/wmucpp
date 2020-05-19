@@ -10,6 +10,7 @@
 #include <mcu/internals/portmux.h>
 #include <mcu/internals/event.h>
 #include <mcu/internals/adc.h>
+#include <mcu/internals/pwm.h>
 
 #include <external/hal/alarmtimer.h>
 #include <external/hal/adccontroller.h>
@@ -29,12 +30,12 @@ using namespace External::Units::literals;
 
 using led7 = Pin<Port<B>, 3>; 
 using led6 = Pin<Port<A>, 7>; 
-using led5 = Pin<Port<A>, 5>; 
-using led4 = Pin<Port<A>, 4>; 
-using led3 = Pin<Port<A>, 3>; 
-using led2 = Pin<Port<B>, 2>; 
-using led1 = Pin<Port<B>, 1>; 
-using led0 = Pin<Port<B>, 0>; 
+using led5 = Pin<Port<A>, 5>; // tca0 wo5
+using led4 = Pin<Port<A>, 4>; // tca0 wo4
+using led3 = Pin<Port<A>, 3>; // tca0 wo3
+using led2 = Pin<Port<B>, 2>; // tca0 wo2
+using led1 = Pin<Port<B>, 1>; // tca0 wo1
+using led0 = Pin<Port<B>, 0>; // tca0 wo0
 
 using ppmIn = Pin<Port<A>, 2>; 
 
@@ -46,6 +47,8 @@ using clock = Clock<>;
 using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Alt1>;
 using tcaPosition    = Portmux::Position<Component::Tca<0>, Portmux::Default>;
 using tcb0Position    = Portmux::Position<Component::Tcb<0>, Portmux::Default>;
+
+using pwm = PWM::DynamicPwm<tcaPosition>;
 
 using ppm = External::Ppm::SinglePpmIn<Component::Tcb<0>>; 
 

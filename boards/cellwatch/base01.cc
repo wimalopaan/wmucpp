@@ -1,3 +1,7 @@
+// cell-min/cell-max: modus
+// cell-min/akku-max: modus
+// opentx 16bit / 14-bit: obere 2 bits nummer der Zelle
+
 #define NDEBUG
 
 #define USE_IBUS
