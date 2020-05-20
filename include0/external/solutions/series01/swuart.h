@@ -287,10 +287,11 @@ namespace External {
                  etl::Concepts::NamedConstant Baud,
                  etl::Concepts::NamedConstant RecvQLength, etl::Concepts::NamedConstant SendQLength, 
                  etl::Concepts::NamedFlag Inverted,
+                 etl::Concepts::NamedFlag PullUp,
                  typename Dbg,                 
                  AVR::Concepts::At01Series MCU>
         struct Usart<Meta::List<RxPin, TxPin>, AVR::Component::Tca<N>, PA, Baud, 
-                RecvQLength, SendQLength, Inverted, Dbg, MCU> final {
+                RecvQLength, SendQLength, Inverted, PullUp, Dbg, MCU> final {
             
             using mcu_timer_t = typename MCU::TCA; 
             static constexpr auto mcu_tca = AVR::getBaseAddr<mcu_timer_t, N>;
