@@ -358,6 +358,7 @@ namespace AVR {
     requires Meta::all_same_front_v<Meta::transform_type<detail::getPort, Meta::List<Pins...>>>
     struct PinGroup<Meta::List<Pins...>, MCU> {
         using pin_list = Meta::List<Pins...>;
+        using port = Meta::front<pin_list>::port;   
 
         static_assert(Meta::size<pin_list>::value <= 8, "too much pins in PinSet");
         static_assert(Meta::is_set<pin_list>::value, "must use different pins in set"); // all Pins are different
@@ -368,7 +369,6 @@ namespace AVR {
         
         inline static constexpr std::byte group_value = (Pins::pinMask | ...);
         
-        using port = Meta::front<pin_list>::port;   
 
         inline static std::byte read() {
             return port::read() & group_value;

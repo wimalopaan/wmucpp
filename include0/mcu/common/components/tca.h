@@ -55,30 +55,45 @@ namespace AVR {
                 wgm2   = TCA_SINGLE_WGMODE2_bm,
                 wgm1   = TCA_SINGLE_WGMODE1_bm,
                 wgm0   = TCA_SINGLE_WGMODE0_bm,
-                pwm    = wgm0 | wgm1
+                pwm    = wgm0 | wgm1,
+                
+                scmp0en  = 0x01,
+                scmp1en  = 0x02,
+                scmp2en  = 0x04,
+                scmp3en  = 0x10,
+                scmp4en  = 0x20,
+                scmp5en  = 0x40,
             };
             ControlRegister<TCA, CtrlB_t> ctrlb;
             
-            enum class Ctrlc_t : uint8_t {
+            enum class CtrlC_t : uint8_t {
                 cov2 = TCA_SINGLE_CMP2OV_bm,
                 cov1 = TCA_SINGLE_CMP1OV_bm,
                 cov0 = TCA_SINGLE_CMP0OV_bm,
+                
+                s0ov = 0x01,
+                s1ov = 0x02,
+                s2ov = 0x04,
+                s3ov = 0x10,
+                s4ov = 0x20,
+                s5ov = 0x40,
             };
-            ControlRegister<TCA, Ctrlc_t> ctrlc;
+            ControlRegister<TCA, CtrlC_t> ctrlc;
             
-            enum class Ctrld_t : uint8_t {
+            enum class CtrlD_t : uint8_t {
+                splitm = 0x01
             };
-            ControlRegister<TCA, Ctrld_t> ctrld;
+            ControlRegister<TCA, CtrlD_t> ctrld;
             
-            enum class Ctrle_t : uint8_t {
+            enum class CtrlE_t : uint8_t {
             };
-            FlagRegister<TCA, Ctrle_t, WriteOnly> ctrleclr;
-            FlagRegister<TCA, Ctrle_t, WriteOnly> ctrleset;
+            FlagRegister<TCA, CtrlE_t, WriteOnly> ctrleclr;
+            FlagRegister<TCA, CtrlE_t, WriteOnly> ctrleset;
 
-            enum class Ctrlf_t : uint8_t {
+            enum class CtrlF_t : uint8_t {
             };
-            FlagRegister<TCA, Ctrlf_t, WriteOnly> ctrlfclr;
-            FlagRegister<TCA, Ctrlf_t, WriteOnly> ctrlfset;
+            FlagRegister<TCA, CtrlF_t, WriteOnly> ctrlfclr;
+            FlagRegister<TCA, CtrlF_t, WriteOnly> ctrlfset;
             
             volatile uint8_t padding1;
             

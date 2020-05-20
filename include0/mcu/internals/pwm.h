@@ -213,6 +213,8 @@ namespace AVR {
         
         template<typename TimerNumber, typename MCU = DefaultMcuType>
         struct DynamicPwm;
+        template<typename TimerNumber, typename MCU = DefaultMcuType>
+        struct DynamicPwm8Bit;
         
         // WGM Mode 15
         // dynamic changeable frequnecy
@@ -401,6 +403,262 @@ namespace AVR {
         private:
             inline static value_type mMax{};
         };
+
+        namespace helper {
+            struct Normal;
+            struct Split;
+            template<typename Position, uint8_t N, typename Mode = Normal, typename MCU = DefaultMcuType> struct WOMapper;
+            template<typename Position, typename MCU>
+            struct WOMapper<Position, 0, Normal, MCU> {
+                using pin = typename AVR::Portmux::Map<Position>::wo0pin;
+                inline static constexpr auto value = MCU::TCA::CtrlB_t::cmp0en;
+                using type = std::integral_constant<decltype(value), value>;
+            };
+            template<typename Position, typename MCU>
+            struct WOMapper<Position, 1, Normal, MCU> {
+                using pin = typename AVR::Portmux::Map<Position>::wo1pin;
+                inline static constexpr auto value = MCU::TCA::CtrlB_t::cmp1en;
+                using type = std::integral_constant<decltype(value), value>;
+            };
+            template<typename Position, typename MCU>
+            struct WOMapper<Position, 2, Normal, MCU> {
+                using pin = typename AVR::Portmux::Map<Position>::wo2pin;
+                inline static constexpr auto value = MCU::TCA::CtrlB_t::cmp2en;
+                using type = std::integral_constant<decltype(value), value>;
+            };
+
+            template<typename Position, typename MCU>
+            struct WOMapper<Position, 0, Split, MCU> {
+                using pin = typename AVR::Portmux::Map<Position>::wo0pin;
+                inline static constexpr auto value = MCU::TCA::CtrlB_t::scmp0en;
+                using type = std::integral_constant<decltype(value), value>;
+            };
+            template<typename Position, typename MCU>
+            struct WOMapper<Position, 1, Split, MCU> {
+                using pin = typename AVR::Portmux::Map<Position>::wo1pin;
+                inline static constexpr auto value = MCU::TCA::CtrlB_t::scmp1en;
+                using type = std::integral_constant<decltype(value), value>;
+            };
+            template<typename Position, typename MCU>
+            struct WOMapper<Position, 2, Split, MCU> {
+                using pin = typename AVR::Portmux::Map<Position>::wo2pin;
+                inline static constexpr auto value = MCU::TCA::CtrlB_t::scmp2en;
+                using type = std::integral_constant<decltype(value), value>;
+            };
+            template<typename Position, typename MCU>
+            struct WOMapper<Position, 3, Split, MCU> {
+                using pin = typename AVR::Portmux::Map<Position>::wo3pin;
+                inline static constexpr auto value = MCU::TCA::CtrlB_t::scmp3en;
+                using type = std::integral_constant<decltype(value), value>;
+            };
+            template<typename Position, typename MCU>
+            struct WOMapper<Position, 4, Split, MCU> {
+                using pin = typename AVR::Portmux::Map<Position>::wo4pin;
+                inline static constexpr auto value = MCU::TCA::CtrlB_t::scmp4en;
+                using type = std::integral_constant<decltype(value), value>;
+            };
+            template<typename Position, typename MCU>
+            struct WOMapper<Position, 5, Split, MCU> {
+                using pin = typename AVR::Portmux::Map<Position>::wo5pin;
+                inline static constexpr auto value = MCU::TCA::CtrlB_t::scmp5en;
+                using type = std::integral_constant<decltype(value), value>;
+            };
+            
+            template<typename WOM>
+            struct pinToType {
+                using type = typename WOM::pin;
+            };
+            
+        }
+        
+        template<typename P, AVR::Concepts::At01Series MCU>
+        struct DynamicPwm8Bit<Portmux::Position<Component::Tca<0>, P>, MCU> final {
+            DynamicPwm8Bit() = delete;
+            
+            using position = Portmux::Position<Component::Tca<0>, P>;
+            
+            using b_channels = Meta::List<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>;
+            using a_channels = Meta::List<AVR::PWM::WO<3>, AVR::PWM::WO<4>, AVR::PWM::WO<5>>;
+            using all_channels = Meta::concat<a_channels, b_channels>;
+            
+            inline static constexpr auto all_mask = []<typename... W>(Meta::List<W...>){
+                return (helper::WOMapper<position, W::value, helper::Split>::value | ...);
+            }(all_channels{});
+            
+//            std::integral_constant<decltype(all_mask), all_mask>::_;
+            
+            using value_type = uint8_t;
+            
+            using mcu_timer_t = typename MCU::TCA; 
+            static constexpr auto mcu_tca = getBaseAddr<mcu_timer_t, 0>;
+
+            template<typename WO>
+            using getPin = helper::pinToType<helper::WOMapper<position, WO::value, helper::Split>>;
+            
+            using a_pins = Meta::transform_type<getPin, a_channels>;
+            using b_pins = Meta::transform_type<getPin, b_channels>;
+            
+//            pins::_;
+            
+            inline static constexpr auto pv = []{
+                return MCU::TCA::prescalerValues[3].bits;
+            }();
+            
+            using index_type = etl::uint_ranged<uint8_t, 0, 5>;
+            
+            inline static void on(const index_type c) {
+                if (c == 0) {
+                    on<0>();
+                }
+                else if (c == 1) {
+                    on<1>();
+                }
+                else if (c == 2) {
+                    on<2>();
+                }
+                else if (c == 3) {
+                    on<3>();
+                }
+                else if (c == 4) {
+                    on<4>();
+                }
+                else if (c == 5) {
+                    on<5>();
+                }
+            }
+            inline static void off(const index_type c) {
+                if (c == 0) {
+                    off<0>();
+                }
+                else if (c == 1) {
+                    off<1>();
+                }
+                else if (c == 2) {
+                    off<2>();
+                }
+                else if (c == 3) {
+                    off<3>();
+                }
+                else if (c == 4) {
+                    off<4>();
+                }
+                else if (c == 5) {
+                    off<5>();
+                }
+            }
+            
+            template<auto N>
+            inline static void on() {
+                if constexpr(N == 0) {
+                    mcu_tca()->ctrlb.template add<MCU::TCA::CtrlB_t::scmp0en>();
+                }                
+                if constexpr(N == 1) {
+                    mcu_tca()->ctrlb.template add<MCU::TCA::CtrlB_t::scmp1en>();
+                }                
+                if constexpr(N == 2) {
+                    mcu_tca()->ctrlb.template add<MCU::TCA::CtrlB_t::scmp2en>();
+                }                
+                if constexpr(N == 3) {
+                    mcu_tca()->ctrlb.template add<MCU::TCA::CtrlB_t::scmp3en>();
+                }                
+                if constexpr(N == 4) {
+                    mcu_tca()->ctrlb.template add<MCU::TCA::CtrlB_t::scmp4en>();
+                }                
+                if constexpr(N == 5) {
+                    mcu_tca()->ctrlb.template add<MCU::TCA::CtrlB_t::scmp5en>();
+                }                
+            }
+            template<auto N>
+            inline static void off() {
+                if constexpr(N == 0) {
+                    mcu_tca()->ctrlb.template clear<MCU::TCA::CtrlB_t::scmp0en>();
+                }                
+                if constexpr(N == 1) {
+                    mcu_tca()->ctrlb.template clear<MCU::TCA::CtrlB_t::scmp1en>();
+                }                
+                if constexpr(N == 2) {
+                    mcu_tca()->ctrlb.template clear<MCU::TCA::CtrlB_t::scmp2en>();
+                }                
+                if constexpr(N == 3) {
+                    mcu_tca()->ctrlb.template clear<MCU::TCA::CtrlB_t::scmp3en>();
+                }                
+                if constexpr(N == 4) {
+                    mcu_tca()->ctrlb.template add<MCU::TCA::CtrlB_t::scmp4en>();
+                }                
+                if constexpr(N == 5) {
+                    mcu_tca()->ctrlb.template add<MCU::TCA::CtrlB_t::scmp5en>();
+                }                
+            }
+            
+            inline static value_type pwmMax = 99;
+            
+            inline static void pwm(const index_type c, const uint8_t v) {
+                if (c == 0) {
+                    pwm<0>(v);
+                }
+                else if (c == 1) {
+                    pwm<1>(v);
+                }
+                else if (c == 2) {
+                    pwm<2>(v);
+                }
+                else if (c == 3) {
+                    pwm<3>(v);
+                }
+                else if (c == 4) {
+                    pwm<4>(v);
+                }
+                else if (c == 5) {
+                    pwm<5>(v);
+                }
+            }
+            
+            template<auto N>
+            inline static void pwm(const uint8_t vv) {
+                auto v = std::clamp(vv, value_type{0}, pwmMax);
+                if constexpr(N == 0) {
+                    lset(*mcu_tca()->cmp0, v);
+                }
+                else if constexpr(N == 1) {
+                    lset(*mcu_tca()->cmp1, v);
+                }
+                else if constexpr(N == 2) {
+                    lset(*mcu_tca()->cmp2, v);
+                }
+                else if constexpr(N == 3) {
+                    hset(*mcu_tca()->cmp0, v);
+                }
+                else if constexpr(N == 4) {
+                    hset(*mcu_tca()->cmp1, v);
+                }
+                else if constexpr(N == 5) {
+                    hset(*mcu_tca()->cmp2, v);
+                }
+            }
+            
+            inline static constexpr void init() {
+                AVR::PinGroup<a_pins>::template dir<Output>();
+                AVR::PinGroup<b_pins>::template dir<Output>();
+                
+                mcu_tca()->ctrld.template set<mcu_timer_t::CtrlD_t::splitm>();
+                lhset(*mcu_tca()->per, pwmMax, pwmMax);
+//                mcu_tca()->ctrlb.template set<all_mask>();
+                mcu_tca()->ctrla.template set<mcu_timer_t::CtrlA_t::enable | pv>();
+            }
+        private:
+            template<typename T>
+            inline static void lhset(T& r, const uint8_t low, const uint8_t high) {
+                r = (high << 8) | low;
+            }
+            template<typename T>
+            inline static void lset(T& r, const uint8_t low) {
+                r = (r & 0xff00) | low;
+            }
+            template<typename T>
+            inline static void hset(T& r, const uint8_t high) {
+                r = (high << 8) | (r & 0x00ff);
+            }
+        };
         
         template<typename P, AVR::Concepts::At01Series MCU>
         struct DynamicPwm<Portmux::Position<Component::Tca<0>, P>, MCU> final {
@@ -461,13 +719,6 @@ namespace AVR {
                 AVR::PinGroup<pins>::template dir<Output>();
             }
             
-//            template<typename... Outs>
-//            inline static constexpr void on() {
-//                using out_list = Meta::transform_type<womapper, Meta::List<Outs...>>;
-//                constexpr auto value = Meta::value_or_v<out_list>;
-////                                std::integral_constant<decltype(value), value>::_;
-//                mcu_tca()->ctrlb.template add<value>();
-//            }
             template<Meta::concepts::List OutList, typename IMode = etl::RestoreState>
             inline static constexpr void on() {
                 using out_list = Meta::transform_type<womapper, OutList>;
@@ -476,13 +727,6 @@ namespace AVR {
                 mcu_tca()->ctrlb.template add<value, etl::DisbaleInterrupt<IMode>>();
             }
 
-//            template<typename... Outs>
-//            inline static constexpr void off() {
-//                using out_list = Meta::transform_type<womapper, Meta::List<Outs...>>;
-//                constexpr auto value = Meta::value_or_v<out_list>;
-////                                std::integral_constant<decltype(value), value>::_;
-//                mcu_tca()->ctrlb.template clear<value>();
-//            }
             template<Meta::concepts::List OutList, typename IMode = etl::RestoreState>
             inline static constexpr void off() {
                 using out_list = Meta::transform_type<womapper, OutList>;

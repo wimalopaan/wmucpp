@@ -11,11 +11,14 @@
 #include <mcu/internals/event.h>
 #include <mcu/internals/adc.h>
 #include <mcu/internals/pwm.h>
+#include <mcu/internals/eeprom.h>
 
 #include <external/hal/alarmtimer.h>
 #include <external/hal/adccontroller.h>
 
 #include <external/solutions/series01/sppm_in.h>
+#include <external/solutions/tick.h>
+
 #include <external/hott/sumdprotocolladapter.h>
 #include <external/ibus/ibus.h>
 
@@ -48,7 +51,7 @@ using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Alt1>;
 using tcaPosition    = Portmux::Position<Component::Tca<0>, Portmux::Default>;
 using tcb0Position    = Portmux::Position<Component::Tcb<0>, Portmux::Default>;
 
-using pwm = PWM::DynamicPwm<tcaPosition>;
+using pwm = PWM::DynamicPwm8Bit<tcaPosition>;
 
 using ppm = External::Ppm::SinglePpmIn<Component::Tcb<0>>; 
 
@@ -132,3 +135,21 @@ namespace  {
         return std::numeric_limits<uint8_t>::max();
     }
 }
+
+namespace Storage {
+    enum class AVKey : uint8_t {Magic0, Magic1, Pwm0, Pwm1, Pwm2, Pwm3, Pwm4, Pwm5, Undefined, _Number};
+    
+    struct ApplData final : public EEProm::DataBase<ApplData> {
+        using value_type = etl::uint_NaN<uint8_t>;
+        value_type& operator[](const AVKey key) {
+            if (key == AVKey::Undefined) {
+                AValues[static_cast<uint8_t>(AVKey::Undefined)].setNaN();
+            }
+            return {AValues[static_cast<uint8_t>(key)]};
+        }
+    private:
+        std::array<value_type, static_cast<uint8_t>(AVKey::_Number)> AValues;
+    };
+}
+
+using eeprom = EEProm::Controller<Storage::ApplData>;
