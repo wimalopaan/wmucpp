@@ -590,7 +590,7 @@ namespace AVR {
                 }                
             }
             
-            inline static value_type pwmMax = 99;
+            inline static constexpr value_type pwmMax = 99;
             
             inline static void pwm(const index_type c, const uint8_t v) {
                 if (c == 0) {

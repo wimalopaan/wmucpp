@@ -1,3 +1,15 @@
+// PWM
+// 1) einen einschalten
+// 2) Jumper 1
+// 3) mit SW7/SW8 hoch und runter
+
+// Blinken
+// 1) einen einschalten
+// 2) Jumper 2
+// 3) mit SW7/SW8 Frequenz -> 50% Tastverh.
+// 4) Jumper 3
+// 5) mit SW7/SW8 Tastverhältnis ändern
+
 #define NDEBUG
 
 #include "board.h"

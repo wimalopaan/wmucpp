@@ -137,13 +137,37 @@ namespace  {
 }
 
 namespace Storage {
-    enum class AVKey : uint8_t {Magic0, Magic1, Pwm0, Pwm1, Pwm2, Pwm3, Pwm4, Pwm5, Undefined, _Number};
+    struct Blink {
+        std::chrono::milliseconds on{};
+        std::chrono::milliseconds intervall{};
+    };
+
+    struct SwitchConfig {
+        using pwm_type = etl::uint_ranged_NaN<uint8_t, 0, pwm::pwmMax>;
+        const auto& pwmValue() const {
+            return mPwm;
+        }
+        void pwmValue(const pwm_type v){
+            mPwm = v;
+        }
+        auto& blinks() {
+            return mBlinks;
+        }
+    private:
+        pwm_type mPwm{};
+        std::array<Blink, 4> mBlinks;
+    };
+    
+    enum class AVKey : uint8_t {Magic, 
+                                Ch0, Ch1, Ch2, Ch3, Ch4, Ch5, Ch6, Ch7,
+                                Undefined, 
+                                _Number};
     
     struct ApplData final : public EEProm::DataBase<ApplData> {
-        using value_type = etl::uint_NaN<uint8_t>;
+        using value_type = SwitchConfig;
         value_type& operator[](const AVKey key) {
             if (key == AVKey::Undefined) {
-                AValues[static_cast<uint8_t>(AVKey::Undefined)].setNaN();
+                AValues[static_cast<uint8_t>(AVKey::Undefined)] = SwitchConfig{};
             }
             return {AValues[static_cast<uint8_t>(key)]};
         }

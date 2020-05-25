@@ -1,5 +1,14 @@
 #define NDEBUG
 
+// Blinkmodus -> Jumper 2
+// dann Blinkfrequenz einstellen (on/off getrennt)
+// 1) einen einschalten
+// 2) Jumper 2
+// 3) Blinkfrequenz einstellen
+// 4) Jumper 3
+// 5) Tastverh. einstellen
+
+
 // keine Freilaufdiode notwendig
 // PWM-Modus über die Jumper einstellbar (zunächst für Kanäle 1-3)
 //    PWM-Lernen:
@@ -19,8 +28,12 @@ auto& appData = eeprom::data();
 
 namespace External {
     namespace Ppm {
-        template<typename Ppm, uint8_t N>
+        template<typename Ppm, uint8_t N, typename MCU = DefaultMcuType>
         struct MultiSwitch {
+            using gpior_t = typename MCU::Gpior; 
+            static inline constexpr auto flags = AVR::getBaseAddr<gpior_t, 1>;
+            static inline constexpr uint8_t enableMask = 0x01;
+
             enum class State : uint8_t {UnDefined, CountUp, CountUpPause, ToggleUp, CountDown, CountDownPause, ToggleDown};
             enum class SwState : uint8_t {Off, On};
             
@@ -31,122 +44,132 @@ namespace External {
             }
             inline static void init() {
                 Ppm::init();
+                enable(true);
             }
             inline static void reset() {
                 for(auto& s : swStates) {
                     s = SwState::Off;
                 }
             }
-            
+            inline static void enable(const bool en = true) {
+                if (en) {
+                    flags()->data = flags()->data | enableMask;
+                }
+                else {
+                    flags()->data = flags()->data & ~enableMask;
+                }
+            }            
             inline static void periodic() {
-                Ppm::onCapture([]{
-                    const auto v = Ppm::value(); 
-                    if (!v) return;
-                    switch(mState) {
-                    case State::UnDefined:
-                        if (isUp(v)) {
-                            mState = State::CountUp;
-                            count.setToBottom();
-                            index.setToBottom();
-                        }
-                        if (isDown(v)) {
-                            mState = State::CountDown;
-                            count.setToBottom();
-                            index.setToBottom();
-                        }
-                        break;
-                    case State::CountUp:
-                        if (isUp(v)) {
-                            ++count;
-                            if (count > setCycles) {
-                                toggle1(index);
-                                mState = State::ToggleUp;
-                            }
-                        }
-                        else {
-                            if (isNeutral(v)) {
-                                if (count > stepCycles) {
-                                    mState = State::CountUpPause;
-                                    count.setToBottom();
-                                }
-                                else {
-                                    mState = State::UnDefined;
-                                }
-                            }
-                        }
-                        break;
-                    case State::ToggleUp:
-                        if (isNeutral(v)) {
-                            mState = State::UnDefined;
-                        }
-                        break;
-                    case State::CountUpPause:
-                        if (isNeutral(v)) {
-                            ++count;
-                            if (count > resetCycles) {
-                                mState = State::UnDefined;
-                            }
-                        }
-                        else {
+                if (flags()->data & enableMask) {
+                    Ppm::onCapture([]{
+                        const auto v = Ppm::value(); 
+                        if (!v) return;
+                        switch(mState) {
+                        case State::UnDefined:
                             if (isUp(v)) {
-                                if (count > stepCycles) {
-                                    mState = State::CountUp;
-                                    count.setToBottom();
-                                    ++index;
-                                }
-                                else {
-                                    mState = State::UnDefined;
+                                mState = State::CountUp;
+                                count.setToBottom();
+                                index.setToBottom();
+                            }
+                            if (isDown(v)) {
+                                mState = State::CountDown;
+                                count.setToBottom();
+                                index.setToBottom();
+                            }
+                            break;
+                        case State::CountUp:
+                            if (isUp(v)) {
+                                ++count;
+                                if (count > setCycles) {
+                                    toggle1(index);
+                                    mState = State::ToggleUp;
                                 }
                             }
-                        }
-                        break;
-                    case State::CountDown:
-                        if (isDown(v)) {
-                            ++count;
-                            if (count > setCycles) {
-                                toggle2(index);
-                                mState = State::ToggleDown;
+                            else {
+                                if (isNeutral(v)) {
+                                    if (count > stepCycles) {
+                                        mState = State::CountUpPause;
+                                        count.setToBottom();
+                                    }
+                                    else {
+                                        mState = State::UnDefined;
+                                    }
+                                }
                             }
-                        }
-                        else {
+                            break;
+                        case State::ToggleUp:
                             if (isNeutral(v)) {
-                                if (count > stepCycles) {
-                                    mState = State::CountDownPause;
-                                    count.setToBottom();
-                                }
-                                else {
-                                    mState = State::UnDefined;
-                                }
-                            }
-                        }
-                        break;
-                    case State::ToggleDown:
-                        if (isNeutral(v)) {
-                            mState = State::UnDefined;
-                        }
-                        break;
-                    case State::CountDownPause:
-                        if (isNeutral(v)) {
-                            ++count;
-                            if (count > resetCycles) {
                                 mState = State::UnDefined;
                             }
-                        }
-                        else {
-                            if (isDown(v)) {
-                                if (count > stepCycles) {
-                                    mState = State::CountDown;
-                                    count.setToBottom();
-                                    ++index;
-                                }
-                                else {
+                            break;
+                        case State::CountUpPause:
+                            if (isNeutral(v)) {
+                                ++count;
+                                if (count > resetCycles) {
                                     mState = State::UnDefined;
                                 }
                             }
+                            else {
+                                if (isUp(v)) {
+                                    if (count > stepCycles) {
+                                        mState = State::CountUp;
+                                        count.setToBottom();
+                                        ++index;
+                                    }
+                                    else {
+                                        mState = State::UnDefined;
+                                    }
+                                }
+                            }
+                            break;
+                        case State::CountDown:
+                            if (isDown(v)) {
+                                ++count;
+                                if (count > setCycles) {
+                                    toggle2(index);
+                                    mState = State::ToggleDown;
+                                }
+                            }
+                            else {
+                                if (isNeutral(v)) {
+                                    if (count > stepCycles) {
+                                        mState = State::CountDownPause;
+                                        count.setToBottom();
+                                    }
+                                    else {
+                                        mState = State::UnDefined;
+                                    }
+                                }
+                            }
+                            break;
+                        case State::ToggleDown:
+                            if (isNeutral(v)) {
+                                mState = State::UnDefined;
+                            }
+                            break;
+                        case State::CountDownPause:
+                            if (isNeutral(v)) {
+                                ++count;
+                                if (count > resetCycles) {
+                                    mState = State::UnDefined;
+                                }
+                            }
+                            else {
+                                if (isDown(v)) {
+                                    if (count > stepCycles) {
+                                        mState = State::CountDown;
+                                        count.setToBottom();
+                                        ++index;
+                                    }
+                                    else {
+                                        mState = State::UnDefined;
+                                    }
+                                }
+                            }
+                            break;
                         }
-                        break;
-                    }
-                });
+                    });
+                }
             }
             static inline const auto& switches() {
                 return swStates;
@@ -205,8 +228,16 @@ struct FSM {
     inline static constexpr External::Tick<Timer> initTime{1000_ms};
     
     inline static constexpr auto ppmDead = ppm::medium + ppm::span / 20;    
+    inline static constexpr auto ppmDead2 = ppm::medium - ppm::span / 20;    
+//    std::integral_constant<uint16_t, ppm::ppmMax>::_;
+//    std::integral_constant<uint16_t, ppm::medium>::_;
+//    std::integral_constant<uint16_t, ppmDead>::_;
     
-    enum class State : uint8_t {Init, Run, LearnStart, LearnPWM, LearnEnd};
+    enum class State : uint8_t {Init, Run, 
+                                LearnPWMStart, LearnPWM, LearnPWMEnd,
+                                LearnBlinkIntStart, LearnBlinkInt, LearnBlinkIntEnd,
+                                LearnBlinkDurStart, LearnBlinkDur, LearnBlinkDurEnd,
+                               };
     
     inline static void init() {
         PWM::init();
@@ -217,7 +248,7 @@ struct FSM {
     
     static inline index_t index;
     inline static void setSwitches() {
-        if (auto v = appData[mapToKey(index)]) {
+        if (auto v = appData[mapToKey(index)].pwmValue()) {
             auto li = pwm::index_type(index);
             
             if (multi::switches()[index] == multi::SwState::Off) {
@@ -249,17 +280,21 @@ struct FSM {
     static inline Storage::AVKey mapToKey(const T i) {
         switch(i) {
         case 0:
-            return Storage::AVKey::Pwm0;
+            return Storage::AVKey::Ch0;
         case 1:
-            return Storage::AVKey::Pwm1;
+            return Storage::AVKey::Ch1;
         case 2:
-            return Storage::AVKey::Pwm2;
+            return Storage::AVKey::Ch2;
         case 3:
-            return Storage::AVKey::Pwm3;
+            return Storage::AVKey::Ch3;
         case 4:
-            return Storage::AVKey::Pwm4;
+            return Storage::AVKey::Ch4;
         case 5:
-            return Storage::AVKey::Pwm5;
+            return Storage::AVKey::Ch5;
+        case 6:
+            return Storage::AVKey::Ch6;
+        case 7:
+            return Storage::AVKey::Ch7;
         }
         return Storage::AVKey::Undefined;
     }
@@ -274,7 +309,7 @@ struct FSM {
             });
             break;
         case State::Run:
-            if (getConfigValue() > 0) {
+            if (getConfigValue() == 2) {
                 if (numberOfOnSwitches() > 1) {
                     resetAll();                    
                 }
@@ -282,7 +317,20 @@ struct FSM {
                     if (auto c = getFirstSelected()) {
                         if (c <= pwm::index_type::Upper) {
                             mLearn.set(c);
-                            mState = State::LearnStart;
+                            mState = State::LearnPWMStart;
+                        }
+                    }
+                }
+            }
+            else if (getConfigValue() == 4) {
+                if (numberOfOnSwitches() > 1) {
+                    resetAll();                    
+                }
+                else {
+                    if (auto c = getFirstSelected()) {
+                        if (c <= pwm::index_type::Upper) {
+                            mLearn.set(c);
+                            mState = State::LearnBlinkIntStart;
                         }
                     }
                 }
@@ -291,8 +339,8 @@ struct FSM {
                 setSwitches();
             }
             break;
-        case State::LearnStart:
-            if (getConfigValue() > 0) {
+        case State::LearnPWMStart:
+            if (getConfigValue() == 2) {
                 if (ppm::value() > ppmDead) {
                     mState = State::LearnPWM;
                     pwm::pwm(mLearn, 0);
@@ -304,21 +352,79 @@ struct FSM {
                 mState = State::Run;
             }
             break;
-        case State::LearnPWM:
-            if (getConfigValue() > 0) {
-                if (auto x = ppm::value(); x > ppm::medium) {
-                    uint8_t p = (((uint32_t)ppm::value() - ppm::medium) * pwm::pwmMax) / (ppm::span / 2);
-                    pwm::pwm(mLearn, p);
-                    appData[mapToKey(mLearn)] = p;
+        case State::LearnBlinkIntStart:
+            if (getConfigValue() == 4) {
+                if (ppm::value() > ppmDead) {
+                    mState = State::LearnBlinkInt;
                 }
             }
             else {
-                mState = State::LearnEnd;
+                resetAll();
+                mState = State::Run;
             }
             break;
-        case State::LearnEnd:
+        case State::LearnBlinkDurStart:
+            if (getConfigValue() == 4) {
+                if (ppm::value() > ppmDead) {
+                    mState = State::LearnBlinkDur;
+                }
+            }
+            else {
+                resetAll();
+                mState = State::Run;
+            }
+            break;
+        case State::LearnPWM:
+            if (getConfigValue() == 2) {
+                if (uint32_t x = ppm::value(); x > ppm::medium) {
+                    uint8_t p = (((uint32_t)x - ppm::medium) * pwm::pwmMax) / (ppm::span / 2);
+                    pwm::pwm(mLearn, p);
+                    appData[mapToKey(mLearn)].pwmValue(p);
+                }
+            }
+            else {
+                mState = State::LearnPWMEnd;
+            }
+            break;
+        case State::LearnBlinkInt:
+            if (getConfigValue() == 4) {
+                if (auto x = ppm::value(); x > ppm::medium) {
+//                    appData[mapToKey(mLearn)].pwmValue(p);
+                }
+                else {
+                    if (x < ppmDead2) {
+                        mState = State::LearnBlinkIntEnd;
+                    }
+                }
+            }
+            else {
+                mState = State::Run;
+            }
+            break;
+        case State::LearnBlinkDur:
+            if (getConfigValue() == 4) {
+                if (auto x = ppm::value(); x > ppm::medium) {
+//                    appData[mapToKey(mLearn)].pwmValue(p);
+                }
+            }
+            else {
+                mState = State::LearnBlinkDurEnd;
+            }
+            break;
+        case State::LearnPWMEnd:
             appData.change();
             pwm::off(mLearn);
+            resetAll();
+            Meta::visitAt<ledList>(mLearn, []<typename L>(Meta::Wrapper<L>){
+                                           L::off();
+                                       });
+            mState = State::Run;
+            break;
+        case State::LearnBlinkIntEnd:
+            mState = State::LearnBlinkDurStart;
+            break;
+        case State::LearnBlinkDurEnd:
+            appData.change();
             resetAll();
             Meta::visitAt<ledList>(mLearn, []<typename L>(Meta::Wrapper<L>){
                                            L::off();
@@ -342,7 +448,7 @@ struct FSM {
     
     inline static uint8_t numberOfOnSwitches() {
         uint8_t c{};
-        for(const auto sw: multi::switches()) {
+        for(const auto& sw: multi::switches()) {
             if (sw == multi::SwState::On) {
                 ++c;
             }
@@ -352,10 +458,11 @@ struct FSM {
     inline static void resetAll() {
         multi::reset();
     }
-    
+
     inline static pwm::index_type mLearn;
     inline static State mState{State::Init};
     inline static External::Tick<Timer> stateTicks;
+    inline static std::array<External::Tick<Timer>, 8> blinkTicks;
 };
 
 using fsm = FSM<systemTimer, pwm>;
@@ -380,17 +487,16 @@ int main() {
     [[maybe_unused]] bool changed = false;
     
     {
-        constexpr auto m0 = Storage::ApplData::value_type{43};
-        constexpr auto m1 = Storage::ApplData::value_type{44};
-        if (!((appData[Storage::AVKey::Magic0] == m0) && (appData[Storage::AVKey::Magic1] == m1))) {
-            appData[Storage::AVKey::Magic0] = m0;
-            appData[Storage::AVKey::Magic1] = m1;
-            appData[Storage::AVKey::Pwm0] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Pwm1] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Pwm2] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Pwm3] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Pwm4] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Pwm5] = Storage::ApplData::value_type{};
+        if (!((appData[Storage::AVKey::Magic].pwmValue() == 43))) {
+            appData[Storage::AVKey::Magic].pwmValue(43);
+            appData[Storage::AVKey::Ch0] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch1] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch2] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch3] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch4] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch5] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch6] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch7] = Storage::ApplData::value_type{};
             appData.change();
             changed  = true;
         }
