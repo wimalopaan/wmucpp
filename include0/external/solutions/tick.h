@@ -14,13 +14,18 @@ namespace External {
         inline constexpr Tick() = default;
         
         template<typename R, typename P>
-        inline constexpr explicit Tick(const std::chrono::duration<R, P>& v) : value{v / intervall} {}
+        inline constexpr explicit Tick(const std::chrono::duration<R, P>& v) : value{v / intervall} {
+//            static_assert(v / intervall <= std::numeric_limits<T>::max());
+        }
         
         template<typename R, typename P>
         inline constexpr void operator=(const std::chrono::duration<R, P>& v) {
             value.set(v / intervall);
         }        
         
+        inline explicit constexpr operator bool() const {
+            return value != 0;
+        }
         inline constexpr void operator++() {
             ++value;
         }
@@ -31,17 +36,22 @@ namespace External {
         
         template<typename F>
         inline constexpr void on(const Tick& t, F f) {
-            if (value == t.value) {
+            if (value >= t.value) {
                 f();
                 reset();
             }
         }
-
         template<typename F>
         inline constexpr void on(const Tick& t, F f) volatile {
-            if (value == t.value) {
+            if (value >= t.value) {
                 f();
                 reset();
+            }
+        }
+        template<typename F>
+        inline constexpr void match(const Tick& t, F f) {
+            if (value == t.value) {
+                f();
             }
         }
         
@@ -55,7 +65,14 @@ namespace External {
             value.setToBottom();
         }
 
+        inline static constexpr Tick fromRaw(const T v) {
+            return Tick(v);
+        }
+        
         //    private: // structural type
         etl::uint_ranged<T> value;
+        
+    private:
+        inline constexpr Tick(const T v) : value{v} {}
     };
 }

@@ -136,10 +136,16 @@ namespace  {
     }
 }
 
+struct SoftTimer {
+    static constexpr auto intervall = 50_ms;
+};
+
+
 namespace Storage {
+    using tick_type = External::Tick<SoftTimer, uint8_t>;
     struct Blink {
-        std::chrono::milliseconds on{};
-        std::chrono::milliseconds intervall{};
+        tick_type duration{};
+        tick_type intervall{};
     };
 
     struct SwitchConfig {

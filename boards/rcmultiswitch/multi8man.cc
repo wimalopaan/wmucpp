@@ -225,7 +225,8 @@ using multi = External::Ppm::MultiSwitch<ppm, 8>;
 template<typename Timer, typename PWM>
 struct FSM {
     inline static constexpr auto intervall = Timer::intervall;
-    inline static constexpr External::Tick<Timer> initTime{1000_ms};
+    inline static constexpr Storage::tick_type initTime{1000_ms};
+//        std::integral_constant<uint16_t, initTime.value>::_;
     
     inline static constexpr auto ppmDead = ppm::medium + ppm::span / 20;    
     inline static constexpr auto ppmDead2 = ppm::medium - ppm::span / 20;    
@@ -241,39 +242,85 @@ struct FSM {
     
     inline static void init() {
         PWM::init();
+        Meta::visit<ledList>([]<typename L>(Meta::Wrapper<L>){
+                                 L::off();
+                                 L::template dir<Output>();
+                             });
+        for (uint8_t l = 0; l < multi::size(); ++l) {
+            if (l <= pwm::index_type::Upper) {
+                auto li = pwm::index_type(l);
+                if (auto v = appData[mapToKey(l)].pwmValue()) {
+                        pwm::pwm(li, 0);
+                        pwm::on(li);
+                }
+            }
+        }
     }
     
-    using index_t = etl::uint_ranged_circular<uint8_t, 0, multi::size() - 1>;
-    using led_index_t = etl::uint_ranged<uint8_t, 0, 7>;
+    using index_t = etl::uint_ranged<uint8_t, 0, multi::size() - 1>;
     
-    static inline index_t index;
-    inline static void setSwitches() {
-        if (auto v = appData[mapToKey(index)].pwmValue()) {
+    inline static void setSwitchOff(const index_t index) {
+        if (index <= pwm::index_type::Upper) {
             auto li = pwm::index_type(index);
-            
-            if (multi::switches()[index] == multi::SwState::Off) {
-                pwm::pwm(li, 0);
-            }            
-            else if (multi::switches()[index] == multi::SwState::On) {
-                pwm::on(li);
-                pwm::pwm(li, v.toInt());
-            }            
-        }
-        else {
-            auto li = led_index_t(index);
-            
-            if (multi::switches()[index] == multi::SwState::Off) {
-                Meta::visitAt<ledList>(li, []<typename L>(Meta::Wrapper<L>){
+            if (auto v = appData[mapToKey(index)].pwmValue()) {
+                    pwm::pwm(li, 0);
+            }
+            else {
+                Meta::visitAt<ledList>(index, []<typename L>(Meta::Wrapper<L>){
                                            L::off();
                                        });
-            }            
-            else if (multi::switches()[index] == multi::SwState::On) {
-                Meta::visitAt<ledList>(li, []<typename L>(Meta::Wrapper<L>){
+            }
+        }
+        else {
+            Meta::visitAt<ledList>(index, []<typename L>(Meta::Wrapper<L>){
+                                       L::off();
+                                   });
+        }
+    }
+    inline static void setSwitchOn(const index_t index) {
+        if (index <= pwm::index_type::Upper) {
+            auto li = pwm::index_type(index);
+            if (auto v = appData[mapToKey(index)].pwmValue()) {
+                pwm::on(li);
+                pwm::pwm(li, v.toInt());
+            }
+            else {
+                Meta::visitAt<ledList>(index, []<typename L>(Meta::Wrapper<L>){
                                            L::on();
                                        });
-            }            
+            }
         }
-        ++index;
+        else {
+            Meta::visitAt<ledList>(index, []<typename L>(Meta::Wrapper<L>){
+                                       L::on();
+                                   });
+        }    
+    }
+    
+    inline static void setSwitch(const index_t index) {
+        if (multi::switches()[index] == multi::SwState::Off) {
+            setSwitchOff(index);
+            blinkTicks[index] = appData[mapToKey(index)].blinks()[0].intervall;
+        }
+        else if (multi::switches()[index] == multi::SwState::On) {
+            if (appData[mapToKey(index)].blinks()[0].duration) {
+                blinkTicks[index].match(appData[mapToKey(index)].blinks()[0].duration, [&]{
+                    setSwitchOff(index);
+                });
+                blinkTicks[index].on(appData[mapToKey(index)].blinks()[0].intervall, [&]{
+                    setSwitchOn(index);
+                });
+                ++blinkTicks[index];
+            }
+            else {
+                setSwitchOn(index);
+            }
+        }
+    }
+    inline static void setSwitches() {
+        for(uint8_t s = 0; s <= index_t::Upper; ++s) {
+            setSwitch(index_t{s});
+        }        
     }
     
     template<typename T>
@@ -317,6 +364,7 @@ struct FSM {
                     if (auto c = getFirstSelected()) {
                         if (c <= pwm::index_type::Upper) {
                             mLearn.set(c);
+                            multi::enable(false);
                             mState = State::LearnPWMStart;
                         }
                     }
@@ -328,10 +376,9 @@ struct FSM {
                 }
                 else {
                     if (auto c = getFirstSelected()) {
-                        if (c <= pwm::index_type::Upper) {
-                            mLearn.set(c);
-                            mState = State::LearnBlinkIntStart;
-                        }
+                        mLearn.set(c);
+                        multi::enable(false);
+                        mState = State::LearnBlinkIntStart;
                     }
                 }
             }
@@ -343,8 +390,11 @@ struct FSM {
             if (getConfigValue() == 2) {
                 if (ppm::value() > ppmDead) {
                     mState = State::LearnPWM;
-                    pwm::pwm(mLearn, 0);
+                }
+                else {
                     pwm::on(mLearn);
+                    appData[mapToKey(mLearn)].pwmValue(2);
+                    setSwitch(mLearn);
                 }
             }
             else {
@@ -369,17 +419,13 @@ struct FSM {
                     mState = State::LearnBlinkDur;
                 }
             }
-            else {
-                resetAll();
-                mState = State::Run;
-            }
             break;
         case State::LearnPWM:
             if (getConfigValue() == 2) {
                 if (uint32_t x = ppm::value(); x > ppm::medium) {
                     uint8_t p = (((uint32_t)x - ppm::medium) * pwm::pwmMax) / (ppm::span / 2);
-                    pwm::pwm(mLearn, p);
                     appData[mapToKey(mLearn)].pwmValue(p);
+                    setSwitch(mLearn);
                 }
             }
             else {
@@ -389,22 +435,22 @@ struct FSM {
         case State::LearnBlinkInt:
             if (getConfigValue() == 4) {
                 if (auto x = ppm::value(); x > ppm::medium) {
-//                    appData[mapToKey(mLearn)].pwmValue(p);
-                }
-                else {
-                    if (x < ppmDead2) {
-                        mState = State::LearnBlinkIntEnd;
-                    }
+                    uint8_t p = (((uint32_t)x - ppm::medium) * 99) / (ppm::span / 2);
+                    appData[mapToKey(mLearn)].blinks()[0].duration = Storage::tick_type::fromRaw(p / 2);
+                    appData[mapToKey(mLearn)].blinks()[0].intervall = Storage::tick_type::fromRaw(p);
+                    setSwitch(mLearn);
                 }
             }
             else {
-                mState = State::Run;
+                mState = State::LearnBlinkDurStart;
             }
             break;
         case State::LearnBlinkDur:
             if (getConfigValue() == 4) {
                 if (auto x = ppm::value(); x > ppm::medium) {
-//                    appData[mapToKey(mLearn)].pwmValue(p);
+                    uint8_t p = (((uint32_t)x - ppm::medium) * (appData[mapToKey(mLearn)].blinks()[0].intervall.value.toInt() - 1)) / (ppm::span / 2);
+                    appData[mapToKey(mLearn)].blinks()[0].duration = Storage::tick_type::fromRaw(p);
+                    setSwitch(mLearn);
                 }
             }
             else {
@@ -412,24 +458,24 @@ struct FSM {
             }
             break;
         case State::LearnPWMEnd:
-            appData.change();
-            pwm::off(mLearn);
-            resetAll();
-            Meta::visitAt<ledList>(mLearn, []<typename L>(Meta::Wrapper<L>){
-                                           L::off();
-                                       });
-            mState = State::Run;
+            if (auto x = ppm::value(); x < ppmDead2) {
+                appData.change();
+                pwm::off(mLearn);
+                resetAll();
+                multi::enable(true);
+                mState = State::Run;
+            }
             break;
         case State::LearnBlinkIntEnd:
             mState = State::LearnBlinkDurStart;
             break;
         case State::LearnBlinkDurEnd:
-            appData.change();
-            resetAll();
-            Meta::visitAt<ledList>(mLearn, []<typename L>(Meta::Wrapper<L>){
-                                           L::off();
-                                       });
-            mState = State::Run;
+            if (auto x = ppm::value(); x < ppmDead2) {
+                appData.change();
+                resetAll();
+                multi::enable(true);
+                mState = State::Run;
+            }
             break;
         }
         if (lastState != mState) {
@@ -461,11 +507,11 @@ struct FSM {
 
     inline static pwm::index_type mLearn;
     inline static State mState{State::Init};
-    inline static External::Tick<Timer> stateTicks;
-    inline static std::array<External::Tick<Timer>, 8> blinkTicks;
+    inline static Storage::tick_type stateTicks;
+    inline static std::array<Storage::tick_type, 8> blinkTicks;
 };
 
-using fsm = FSM<systemTimer, pwm>;
+using fsm = FSM<SoftTimer, pwm>;
 
 int main() {
     portmux::init();
@@ -511,6 +557,8 @@ int main() {
     fsm::init();
     
     const auto periodicTimer = alarmTimer::create(1000_ms, External::Hal::AlarmFlags::Periodic);
+
+    const auto tickTimer = alarmTimer::create(SoftTimer::intervall, External::Hal::AlarmFlags::Periodic);
     
     etl::outl<terminal>("multi8man"_pgm);
     
@@ -524,14 +572,18 @@ int main() {
         multi::periodic();        
         
         systemTimer::periodic([&]{
-            fsm::ratePeriodic();
             alarmTimer::periodic([&](const auto& t){
-                if (periodicTimer == t) {
+                if (tickTimer == t) {
+                    fsm::ratePeriodic();
+                }
+                else if (periodicTimer == t) {
                     etl::out<terminal>("sw: [ "_pgm);
                     for(const auto l : multi::switches()) {
                         etl::out<terminal>(uint8_t(l), " "_pgm);
                     }
-                    etl::outl<terminal>(" ] a: "_pgm, getConfigValue(), " s: "_pgm, (uint8_t)fsm::mState);
+                    auto ii = appData[Storage::AVKey::Ch0].blinks()[0].intervall.value.toInt();
+                    auto dd = appData[Storage::AVKey::Ch0].blinks()[0].duration.value.toInt();
+                    etl::outl<terminal>(" ] a: "_pgm, getConfigValue(), " s: "_pgm, (uint8_t)fsm::mState, " bt0: "_pgm, fsm::blinkTicks[0].value.toInt(), " i: "_pgm, ii, " d: "_pgm, dd);
 
                     appData.expire();
                 }
