@@ -68,6 +68,10 @@ namespace External {
         inline static constexpr Tick fromRaw(const T v) {
             return Tick(v);
         }
+
+        inline static constexpr T max() {
+            return std::numeric_limits<T>::max();
+        }
         
         //    private: // structural type
         etl::uint_ranged<T> value;

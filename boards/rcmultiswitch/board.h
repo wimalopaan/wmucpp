@@ -18,6 +18,7 @@
 
 #include <external/solutions/series01/sppm_in.h>
 #include <external/solutions/tick.h>
+#include <external/solutions/rc/tiptip.h>
 
 #include <external/hott/sumdprotocolladapter.h>
 #include <external/ibus/ibus.h>
@@ -150,6 +151,8 @@ namespace Storage {
 
     struct SwitchConfig {
         using pwm_type = etl::uint_ranged_NaN<uint8_t, 0, pwm::pwmMax>;
+        using tick_t = tick_type;
+        
         const auto& pwmValue() const {
             return mPwm;
         }
@@ -177,7 +180,33 @@ namespace Storage {
             }
             return {AValues[static_cast<uint8_t>(key)]};
         }
+        template<typename T>
+        value_type& operator[](const T i) {
+            return operator[](mapToKey(i));
+        }
     private:
+        template<typename T>
+        inline Storage::AVKey mapToKey(const T i) {
+            switch(i) {
+            case 0:
+                return Storage::AVKey::Ch0;
+            case 1:
+                return Storage::AVKey::Ch1;
+            case 2:
+                return Storage::AVKey::Ch2;
+            case 3:
+                return Storage::AVKey::Ch3;
+            case 4:
+                return Storage::AVKey::Ch4;
+            case 5:
+                return Storage::AVKey::Ch5;
+            case 6:
+                return Storage::AVKey::Ch6;
+            case 7:
+                return Storage::AVKey::Ch7;
+            }
+            return Storage::AVKey::Undefined;
+        }
         std::array<value_type, static_cast<uint8_t>(AVKey::_Number)> AValues;
     };
 }

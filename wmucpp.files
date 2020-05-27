@@ -1884,6 +1884,7 @@ include/util/util.h
 include/config.h
 include/console.h
 include/pin-defs.h
+include0/external/solutions/rc/tiptip.h
 test/simavr.cc
 tests/algorithm.h
 Makefile

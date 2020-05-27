@@ -58,3 +58,4 @@ boards/ibusppmconverter
 include0/external/sbus
 boards/ibusgps
 boards/cellwatch
+include0/external/solutions/rc
