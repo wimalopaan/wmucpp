@@ -303,6 +303,7 @@ boards/rcmultiswitch/board.h
 boards/rcmultiswitch/multi8d.cc
 boards/rcmultiswitch/multi8man.cc
 boards/rcmultiswitch/multi8mk4.cc
+boards/rcmultiswitch/swout.h
 boards/rcmultiswitch/test00.cc
 boards/rcmultiswitch/test01.cc
 boards/rcmultiswitch/test10.cc

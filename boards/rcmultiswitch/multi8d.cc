@@ -1,6 +1,7 @@
 #define NDEBUG
 
 #include "board.h"
+#include "swout.h"
 
 using servo_pa = IBus::Servo::ProtocollAdapter<0>;
 using ibus_switch = IBus::Switch::Switch2<servo_pa>;

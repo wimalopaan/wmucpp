@@ -18,117 +18,8 @@
 //    4) Jumper 1 weg -> alles aus
 //    5) dann einschalten bewirkt die PWM
 
-
 #include "board.h"
-
-namespace External {
-    template<typename OutList, typename PWM, typename StateProvider, typename NVM>
-    struct Output {
-        inline static constexpr uint8_t size() {
-            return Meta::size_v<OutList>;
-        }
-        static_assert(size() == StateProvider::size());
-        
-        using pwm_index_t = typename PWM::index_type;
-        using index_t = etl::uint_ranged<uint8_t, 0, size() - 1>;
-        
-        inline static constexpr auto pwmMax = PWM::pwmMax;
- 
-        using nvm_t = std::remove_cvref_t<decltype(NVM::data())>;
-        using nvm_data_t = nvm_t::value_type;
-        using tick_t = nvm_data_t::tick_t;
-        
-        inline static constexpr auto blinkMax = tick_t::max();
-        
-        static inline void init() {
-            PWM::init();
-            StateProvider::init();
-            Meta::visit<OutList>([]<typename L>(Meta::Wrapper<L>){
-                                     L::off();
-                                     L::template dir<AVR::Output>();
-                                 });
-            for (uint8_t out = 0; out < StateProvider::size(); ++out) {
-                if (out <= pwm_index_t::Upper) {
-                    const auto p = pwm_index_t(out);
-                    if (auto v = NVM::data()[out].pwmValue()) {
-                        PWM::pwm(p, 0);
-                        PWM::on(p);
-                    }
-                }
-            }
-            
-        }        
-        
-        inline static void setSwitchOff(const index_t index) {
-            if (index <= pwm_index_t::Upper) {
-                const auto li = pwm_index_t(index);
-                if (const auto v = NVM::data()[index].pwmValue()) {
-                    PWM::pwm(li, 0);
-                }
-                else {
-                    off(index);
-                }
-            }
-            else {
-                off(index);
-            }
-        }
-        inline static void setSwitchOn(const index_t index) {
-            if (index <= pwm_index_t::Upper) {
-                const auto li = pwm_index_t(index);
-                if (const auto v = NVM::data()[index].pwmValue()) {
-                    PWM::on(li);
-                    PWM::pwm(li, v.toInt());
-                }
-                else {
-                    on(index);
-                }
-            }
-            else {
-                on(index);
-            }    
-        }
-        
-        inline static void setSwitch(const index_t index) {
-            if (StateProvider::switches()[index] == StateProvider::SwState::Off) {
-                setSwitchOff(index);
-                blinkTicks[index] = NVM::data()[index].blinks()[0].intervall;
-            }
-            else if (StateProvider::switches()[index] == StateProvider::SwState::On) {
-                if (NVM::data()[index].blinks()[0].duration) {
-                    blinkTicks[index].match(NVM::data()[index].blinks()[0].duration, [&]{
-                        setSwitchOff(index);
-                    });
-                    blinkTicks[index].on(NVM::data()[index].blinks()[0].intervall, [&]{
-                        setSwitchOn(index);
-                    });
-                    ++blinkTicks[index];
-                }
-                else {
-                    setSwitchOn(index);
-                }
-            }
-        }
-        inline static void setSwitches() {
-            for(uint8_t s = 0; s <= index_t::Upper; ++s) {
-                setSwitch(index_t{s});
-            }        
-        }
-//    private:
-        inline static void on(const index_t index) {
-            Meta::visitAt<OutList>(index, []<typename L>(Meta::Wrapper<L>){
-                                       L::on();
-                                   });
-        }
-        inline static void off(const index_t index) {
-            Meta::visitAt<OutList>(index, []<typename L>(Meta::Wrapper<L>){
-                                       L::off();
-                                   });
-        }
-        
-        inline static std::array<Storage::tick_type, size()> blinkTicks;
-    };
-}
+#include "swout.h"
 
 template<typename Timer, typename Out, typename NVM, typename Input = void>
 struct FSM {
@@ -142,16 +33,21 @@ struct FSM {
     
     
     using ppm_type = decltype(Input::ppm());
-//    ppm_type::_;
+    //    ppm_type::_;
     
     inline static constexpr auto ppmMedium = (ppm_type::Upper + ppm_type::Lower) / 2;
     inline static constexpr auto ppmSpan   = (ppm_type::Upper - ppm_type::Lower) / 2;
     
-    inline static constexpr auto ppmDead = ppmMedium + ppmSpan / 20;    
+    inline static constexpr auto ppmDead  = ppmMedium + ppmSpan / 20;    
     inline static constexpr auto ppmDead2 = ppmMedium - ppmSpan / 20;    
+    inline static constexpr auto ppmFull  = ppm_type::Upper - ppmSpan / 10;    
     //    std::integral_constant<uint16_t, ppm::ppmMax>::_;
     //    std::integral_constant<uint16_t, ppm::medium>::_;
     //    std::integral_constant<uint16_t, ppmDead>::_;
+
+    using nvm_t = std::remove_cvref_t<decltype(NVM::data())>;
+    using nvm_data_t = nvm_t::value_type;
+    using pwm_type = nvm_data_t::pwm_type;
     
     enum class State : uint8_t {Init, Run, 
                                 LearnPWMStart, LearnPWM, LearnPWMEnd,
@@ -178,10 +74,16 @@ struct FSM {
                     resetAll();                    
                 }
                 else {
-                    if (auto c = getFirstSelected()) {
-                        mLearn.set(c);
-                        Input::enable(false);
-                        mState = State::LearnPWMStart;
+                    if (const auto c = getFirstSelected()) {
+                        if (c <= Out::pwm_index_t::Upper) {
+                            mLearn.set(c);
+                            Input::enable(false);
+                            mState = State::LearnPWMStart;
+                        }
+                        else {
+                            resetAll();
+                            mState = State::Run;
+                        }
                     }
                 }
             }
@@ -190,9 +92,10 @@ struct FSM {
                     resetAll();                    
                 }
                 else {
-                    if (auto c = getFirstSelected()) {
+                    if (const auto c = getFirstSelected()) {
                         mLearn.set(c);
                         Input::enable(false);
+                        Out::setSwitchOff(mLearn);
                         mState = State::LearnBlinkIntStart;
                     }
                 }
@@ -202,73 +105,74 @@ struct FSM {
             }
             break;
         case State::LearnPWMStart:
-            if (getConfigValue() == 2) {
-                if (Input::ppm() > ppmDead) {
-                    mState = State::LearnPWM;
-                }
-                else {
-                    NVM::data()[mLearn].pwmValue(1);
-                    Out::setSwitch(mLearn);
-                }
+            if (Input::ppm() > ppmDead) {
+                mState = State::LearnPWM;
             }
-            else {
+            else if (Input::ppm() < ppmDead2) {
                 resetAll();
                 mState = State::Run;
             }
+            else {
+                NVM::data()[mLearn].pwmValue(1);
+                Out::setSwitch(mLearn);
+            }
             break;
         case State::LearnBlinkIntStart:
-            if (getConfigValue() == 4) {
-                if (Input::ppm() > ppmDead) {
-                    mState = State::LearnBlinkInt;
-                }
+            if (Input::ppm() > ppmDead) {
+                Out::setSwitchOn(mLearn);
+                mState = State::LearnBlinkInt;
             }
-            else {
+            else if (Input::ppm() < ppmDead2) {
                 resetAll();
                 mState = State::Run;
             }
             break;
         case State::LearnBlinkDurStart:
-            if (getConfigValue() == 4) {
-                if (Input::ppm() > ppmDead) {
-                    mState = State::LearnBlinkDur;
-                }
+            if (Input::ppm() > ppmDead) {
+                mState = State::LearnBlinkDur;
             }
             break;
         case State::LearnPWM:
             if (getConfigValue() == 2) {
-                if (const auto x = Input::ppm(); x > ppmMedium) {
-                    uint8_t p = (((uint32_t)x - ppmMedium) * Out::pwmMax) / ppmSpan;
-                    NVM::data()[mLearn].pwmValue(p);
-                    Out::setSwitch(mLearn);
-                }
+                mState = State::LearnPWMEnd;
             }
             else {
-                mState = State::LearnPWMEnd;
+                if (const auto x = Input::ppm(); x > ppmMedium) {
+                    if (x > ppmFull) {
+                        NVM::data()[mLearn].pwmValue(pwm_type{});    
+                    }
+                    else {
+                        uint8_t p = (((uint32_t)x - ppmMedium) * Out::pwmMax) / ppmSpan;
+                        NVM::data()[mLearn].pwmValue(p);
+                    }
+                    Out::setSwitch(mLearn);
+                }
             }
             break;
         case State::LearnBlinkInt:
             if (getConfigValue() == 4) {
-                if (const auto x = Input::ppm(); x > ppmMedium) {
-                    uint8_t p = (((uint32_t)x - ppmMedium) * Out::blinkMax) / ppm::span;
-                    NVM::data()[mLearn].blinks()[0].duration = Storage::tick_type::fromRaw(p / 2);
-                    NVM::data()[mLearn].blinks()[0].intervall = Storage::tick_type::fromRaw(p);
-                    Out::setSwitch(mLearn);
-                }
+                mState = State::LearnBlinkIntEnd;
             }
             else {
-                mState = State::LearnBlinkDurStart;
+                if (const auto x = Input::ppm(); x > ppmMedium) {
+                    uint8_t p = (((uint32_t)x - ppmMedium) * Out::blinkMax) / ppm::span;
+                    Out::duration(mLearn, Storage::tick_type::fromRaw(p / 2));
+                    Out::intervall(mLearn, Storage::tick_type::fromRaw(p));
+                    Out::setSwitch(mLearn);
+                }
             }
             break;
         case State::LearnBlinkDur:
             if (getConfigValue() == 4) {
-                if (const auto x = Input::ppm(); x > ppmMedium) {
-                    uint8_t p = (((uint32_t)x - ppmMedium) * (NVM::data()[mLearn].blinks()[0].intervall.value.toInt() - 1)) / ppm::span;
-                    NVM::data()[mLearn].blinks()[0].duration = Storage::tick_type::fromRaw(p);
-                    Out::setSwitch(mLearn);
-                }
+                mState = State::LearnBlinkDurEnd;
             }
             else {
-                mState = State::LearnBlinkDurEnd;
+                if (const auto x = Input::ppm(); x > ppmMedium) {
+                    uint8_t p = (((uint32_t)x - ppmMedium) * (Out::intervall(mLearn).value.toInt() - 1)) / ppm::span;
+                    Out::duration(mLearn, Storage::tick_type::fromRaw(p));
+//                    NVM::data()[mLearn].blinks()[0].duration = Storage::tick_type::fromRaw(p);
+                    Out::setSwitch(mLearn);
+                }
             }
             break;
         case State::LearnPWMEnd:
@@ -281,7 +185,9 @@ struct FSM {
             }
             break;
         case State::LearnBlinkIntEnd:
-            mState = State::LearnBlinkDurStart;
+            if (Input::ppm() < ppmDead2) {
+                mState = State::LearnBlinkDurStart;
+            }
             break;
         case State::LearnBlinkDurEnd:
             if (const auto x = Input::ppm(); x < ppmDead2) {
@@ -296,7 +202,7 @@ struct FSM {
             stateTicks.reset();
         }
     }
-    //private:
+//    private:
     inline static etl::uint_ranged_NaN<uint8_t, 0, 7> getFirstSelected() {
         for(uint8_t i = 0; i < Input::switches().size(); ++i) {
             if (Input::switches()[i] == Input::SwState::On) {
@@ -305,7 +211,6 @@ struct FSM {
         }
         return {};
     }
-    
     inline static uint8_t numberOfOnSwitches() {
         uint8_t c{};
         for(const auto& sw: Input::switches()) {
@@ -318,8 +223,7 @@ struct FSM {
     inline static void resetAll() {
         Input::reset();
     }
-    
-    inline static pwm::index_type mLearn;
+    inline static Out::index_t mLearn;
     inline static State mState{State::Init};
     inline static Storage::tick_type stateTicks;
 };
@@ -370,11 +274,11 @@ int main() {
         }
     }
     
-//    Meta::visit<ledList>([]<typename L>(Meta::Wrapper<L>){
-//                             L::template dir<Output>();
-//                         });
+    //    Meta::visit<ledList>([]<typename L>(Meta::Wrapper<L>){
+    //                             L::template dir<Output>();
+    //                         });
     
-//    multi::init();
+    //    multi::init();
     
     fsm::init();
     
@@ -403,7 +307,9 @@ int main() {
                     }
                     auto ii = appData[Storage::AVKey::Ch0].blinks()[0].intervall.value.toInt();
                     auto dd = appData[Storage::AVKey::Ch0].blinks()[0].duration.value.toInt();
-                    etl::outl<terminal>(" ] a: "_pgm, getConfigValue(), " s: "_pgm, (uint8_t)fsm::mState, " bt0: "_pgm, out::blinkTicks[0].value.toInt(), " i: "_pgm, ii, " d: "_pgm, dd);
+                    etl::outl<terminal>(" ] a: "_pgm, getConfigValue(), " s: "_pgm, (uint8_t)fsm::mState, 
+//                                        " bt0: "_pgm, out::blinkTicks[0].value.toInt(), 
+                            " i: "_pgm, ii, " d: "_pgm, dd);
                     
                     appData.expire();
                 }

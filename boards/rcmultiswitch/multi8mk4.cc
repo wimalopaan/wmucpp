@@ -13,6 +13,7 @@
 #define NDEBUG
 
 #include "board.h"
+#include "swout.h"
 
 using terminalDevice = AVR::Usart<usart0Position, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>>;
 using terminal = etl::basic_ostream<terminalDevice>;
