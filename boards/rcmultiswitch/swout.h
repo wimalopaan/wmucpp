@@ -105,6 +105,17 @@ namespace External {
         inline static void mode(const blink_index_t m) {
             blinkIndex = m;
         }
+
+        inline static void pwm(const index_t index, const uint8_t p) {
+            NVM::data()[index].pwmValue(p);
+
+            if (index <= pwm_index_t::Upper) {
+                const auto li = pwm_index_t(index);
+                if (const auto v = NVM::data()[index].pwmValue()) {
+                    PWM::pwm(li, v.toInt());
+                }
+            }
+        }
         
         inline static void duration(const index_t index, const tick_t d) {
             NVM::data()[index].blinks()[blinkIndex].duration = d;

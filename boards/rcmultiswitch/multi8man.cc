@@ -56,6 +56,7 @@ struct FSM {
                                };
     
     inline static void init() {
+        Input::init();
         Out::init();
     }
     
@@ -273,12 +274,6 @@ int main() {
             changed  = true;
         }
     }
-    
-    //    Meta::visit<ledList>([]<typename L>(Meta::Wrapper<L>){
-    //                             L::template dir<Output>();
-    //                         });
-    
-    //    multi::init();
     
     fsm::init();
     

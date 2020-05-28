@@ -1,90 +1,247 @@
-// PWM
-// 1) einen einschalten
-// 2) Jumper 1
-// 3) mit SW7/SW8 hoch und runter
-
-// Blinken
-// 1) einen einschalten
-// 2) Jumper 2
-// 3) mit SW7/SW8 Frequenz -> 50% Tastverh.
-// 4) Jumper 3
-// 5) mit SW7/SW8 Tastverhältnis ändern
-
 #define NDEBUG
 
 #include "board.h"
 #include "swout.h"
 
+template<typename Timer, typename Out, typename NVM, typename Input = void>
+struct FSM {
+    inline static constexpr auto size = Out::size();
+    
+    static_assert(Out::size() == Input::size());
+    
+    inline static constexpr auto intervall = Timer::intervall;
+    inline static constexpr Storage::tick_type initTime{1000_ms};
+    //        std::integral_constant<uint16_t, initTime.value>::_;
+    
+    
+//    using ppm_type = decltype(Input::ppm());
+    using ppm_type = Input::value_type;
+    //    ppm_type::_;
+    
+    inline static constexpr auto ppmMedium = (ppm_type::Upper + ppm_type::Lower) / 2;
+    inline static constexpr auto ppmSpan   = (ppm_type::Upper - ppm_type::Lower) / 2;
+    
+    inline static constexpr auto ppmDead  = ppmMedium + ppmSpan / 20;    
+    inline static constexpr auto ppmDead2 = ppmMedium - ppmSpan / 20;    
+    inline static constexpr auto ppmFull  = ppm_type::Upper - ppmSpan / 10;    
+    //    std::integral_constant<uint16_t, ppm::ppmMax>::_;
+    //    std::integral_constant<uint16_t, ppm::medium>::_;
+    //    std::integral_constant<uint16_t, ppmDead>::_;
+
+    using nvm_t = std::remove_cvref_t<decltype(NVM::data())>;
+    using nvm_data_t = nvm_t::value_type;
+    using pwm_type = nvm_data_t::pwm_type;
+    
+    enum class State : uint8_t {Init, Run, 
+                                LearnPWMWait, LearnPWMStart, LearnPWM, LearnPWMEnd,
+                                LearnBlinkIntWait, LearnBlinkIntStart, LearnBlinkInt, LearnBlinkIntEnd,
+                                LearnBlinkDurStart, LearnBlinkDur, LearnBlinkDurEnd,
+                               };
+    
+    inline static void init() {
+        Input::init();
+        Out::init();
+    }
+    
+    inline static void ratePeriodic() {
+        auto lastState = mState;
+        ++stateTicks;
+        switch(mState) {
+        case State::Init:
+            stateTicks.on(initTime, []{
+                mState = State::Run;
+            });
+            break;
+        case State::Run:
+            if (getConfigValue() == 2) {
+                if (numberOfOnSwitches() > 1) {
+                    resetAll();                    
+                }
+                else {
+                    if (const auto c = getFirstSelected()) {
+                        if (c <= Out::pwm_index_t::Upper) {
+                            mLearn.set(c);
+                            Input::enable(false);
+                            mState = State::LearnPWMWait;
+                        }
+                        else {
+                            resetAll();
+                            mState = State::Run;
+                        }
+                    }
+                }
+            }
+            else if (getConfigValue() == 4) {
+                if (numberOfOnSwitches() > 1) {
+                    resetAll();                    
+                }
+                else {
+                    if (const auto c = getFirstSelected()) {
+                        mLearn.set(c);
+                        Input::enable(false);
+                        Out::setSwitchOff(mLearn);
+                        mState = State::LearnBlinkIntWait;
+                    }
+                }
+            }
+            else {
+                Out::setSwitches();
+            }
+            break;
+        case State::LearnPWMWait:
+            if (Input::ppm() < ppmDead2) {
+                mState = State::LearnPWMStart;
+            }
+            break;
+        case State::LearnPWMStart:
+            if (Input::ppm() > ppmDead) {
+                mState = State::LearnPWM;
+            }
+            else {
+                NVM::data()[mLearn].pwmValue(1);
+                Out::setSwitch(mLearn);
+            }
+            break;
+        case State::LearnBlinkIntWait:
+            if (Input::ppm() < ppmDead2) {
+                mState = State::LearnBlinkIntStart;
+            }
+            break;
+        case State::LearnBlinkIntStart:
+            if (Input::ppm() > ppmDead) {
+                Out::setSwitchOn(mLearn);
+                mState = State::LearnBlinkInt;
+            }
+            break;
+        case State::LearnBlinkDurStart:
+            if (Input::ppm() > ppmDead) {
+                mState = State::LearnBlinkDur;
+            }
+            break;
+        case State::LearnPWM:
+            if (getConfigValue() == 2) {
+                mState = State::LearnPWMEnd;
+            }
+            else {
+                if (const auto x = Input::ppm(); x > ppmMedium) {
+                    if (x > ppmFull) {
+                        NVM::data()[mLearn].pwmValue(pwm_type{});    
+                    }
+                    else {
+                        uint8_t p = (((uint32_t)x - ppmMedium) * Out::pwmMax) / ppmSpan;
+                        Out::pwm(mLearn, p);
+                    }
+                    Out::setSwitch(mLearn);
+                }
+            }
+            break;
+        case State::LearnBlinkInt:
+            if (getConfigValue() == 4) {
+                mState = State::LearnBlinkIntEnd;
+            }
+            else {
+                if (const auto x = Input::ppm(); x > ppmMedium) {
+                    uint8_t p = (((uint32_t)x - ppmMedium) * Out::blinkMax) / ppm::span;
+                    Out::duration(mLearn, Storage::tick_type::fromRaw(p / 2));
+                    Out::intervall(mLearn, Storage::tick_type::fromRaw(p));
+                    Out::setSwitch(mLearn);
+                }
+            }
+            break;
+        case State::LearnBlinkDur:
+            if (getConfigValue() == 4) {
+                mState = State::LearnBlinkDurEnd;
+            }
+            else {
+                if (const auto x = Input::ppm(); x > ppmMedium) {
+                    uint8_t p = (((uint32_t)x - ppmMedium) * (Out::intervall(mLearn).value.toInt() - 1)) / ppm::span;
+                    Out::duration(mLearn, Storage::tick_type::fromRaw(p));
+                    Out::setSwitch(mLearn);
+                }
+            }
+            break;
+        case State::LearnPWMEnd:
+            if (const auto x = Input::ppm(); x < ppmDead2) {
+                NVM::data().change();
+                Out::setSwitchOff(mLearn);
+                resetAll();
+                mState = State::Run;
+            }
+            break;
+        case State::LearnBlinkIntEnd:
+            if (Input::ppm() < ppmDead2) {
+                mState = State::LearnBlinkDurStart;
+            }
+            break;
+        case State::LearnBlinkDurEnd:
+            if (const auto x = Input::ppm(); x < ppmDead2) {
+                NVM::data().change();
+                resetAll();
+                Input::enable(true);
+                mState = State::Run;
+            }
+            break;
+        }
+        if (lastState != mState) {
+            stateTicks.reset();
+        }
+    }
+//    private:
+    inline static etl::uint_ranged_NaN<uint8_t, 0, 7> getFirstSelected() {
+        for(uint8_t i = 0; i < Input::switches().size(); ++i) {
+            if (Input::switches()[i] == Input::SwState::On) {
+                return {i};
+            }
+        }
+        return {};
+    }
+    inline static uint8_t numberOfOnSwitches() {
+        uint8_t c{};
+        for(const auto& sw: Input::switches()) {
+            if (sw == Input::SwState::On) {
+                ++c;
+            }
+        }
+        return c;
+    }
+    inline static void resetAll() {
+        Input::reset();
+        Input::enable(true);
+    }
+    inline static Out::index_t mLearn;
+    inline static State mState{State::Init};
+    inline static Storage::tick_type stateTicks;
+};
+
+
+//template<typename Timer, typename Out, typename NVM, typename Input = void>
+//struct FSM {
+//    inline static constexpr auto size = Out::size();
+    
+//    static_assert(Out::size() == Input::size());
+    
+    
+//    inline static void init() {
+//        Out::init();
+//    }
+    
+//    inline static void ratePeriodic() {
+        
+//    }
+    
+    
+//};
+
 using terminalDevice = AVR::Usart<usart0Position, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>>;
 using terminal = etl::basic_ostream<terminalDevice>;
 
-namespace External {
-    namespace Graupner {
-        template<typename Ppm, uint8_t N>
-        struct MultiSwitch {
-            enum class State : uint8_t {UnDefined, GotSync1, GotSync2};
-            enum class SwState : uint8_t {Off, Up, Down};
-            inline static constexpr uint8_t size() {
-                return N;
-            }
-            inline static void init() {
-                Ppm::init();
-            }
-            inline static void periodic() {
-                Ppm::onCapture([]{
-                    const auto v = Ppm::value(); 
-                    if (!v) return;
-                    switch(mState) {
-                    case State::UnDefined:
-                        if (v >= Ppm::ppmMax) {
-                            mState = State::GotSync1;
-                        }
-                        break;
-                    case State::GotSync1:
-                        if (v >= Ppm::ppmMax) {
-                            mState = State::GotSync2;
-                            index.setToBottom();
-                        }
-                        else {
-                            mState = State::UnDefined;
-                        }
-                        break;
-                    case State::GotSync2:
-                        if (v < Ppm::ppmMax) {
-                            if (v >= thresh_up) {
-                                swStates[index] = SwState::Up;
-                            }
-                            else if (v <= thresh_down) {
-                                swStates[index] = SwState::Down;
-                            }
-                            else {
-                                swStates[index] = SwState::Off;
-                            }
-                        }
-                        else {
-                            mState = State::GotSync1;
-                        }
-                        if (index.isTop()) {
-                            mState = State::UnDefined;
-                        }
-                        else {
-                            ++index;
-                        }
-                        break;
-                    }
-                });
-            }
-//        private:
-            static inline std::array<SwState, N> swStates{};
-            static inline constexpr uint16_t thresh_up = Ppm::medium + (Ppm::span / 4);
-            static inline constexpr uint16_t thresh_down = Ppm::medium - (Ppm::span / 4);
-            static inline etl::uint_ranged<uint8_t, 0, (N - 1)> index;
-            static inline State mState{State::UnDefined};
-        };
-    }
-}
+using mk4 = External::Graupner::MultiSwitch2N<ppm, 4>;
 
-using mk4 = External::Graupner::MultiSwitch<ppm, 4>;
+using out = External::Output<ledList, pwm, mk4, eeprom>;
+
+using fsm = FSM<SoftTimer, out, eeprom, mk4>;
+
+auto& appData = eeprom::data();
 
 int main() {
     portmux::init();
@@ -98,63 +255,66 @@ int main() {
     terminalDevice::init<BaudRate<9600>>();
     terminalDevice::rxEnable<false>();
     
+    adcController::init();
+    
     systemTimer::init();
 
-    Meta::visit<ledList>([]<typename L>(Meta::Wrapper<L>){
-                             L::template dir<Output>();
-                         });
+    eeprom::init();
+    [[maybe_unused]] bool changed = false;
     
-    mk4::init();
+    {
+        if (!((appData[Storage::AVKey::Magic].pwmValue() == 44))) {
+            appData[Storage::AVKey::Magic].pwmValue(44);
+            appData[Storage::AVKey::Ch0] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch1] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch2] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch3] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch4] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch5] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch6] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch7] = Storage::ApplData::value_type{};
+            appData.change();
+            changed  = true;
+        }
+    }
     
-    const auto periodicTimer = alarmTimer::create(100_ms, External::Hal::AlarmFlags::Periodic);
+    fsm::init();
+    
+    const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
 
+    const auto tickTimer = alarmTimer::create(SoftTimer::intervall, External::Hal::AlarmFlags::Periodic);
+    
     etl::outl<terminal>("multi8mk4"_pgm);
 
-    using index_t = etl::uint_ranged_circular<uint8_t, 0, mk4::size() - 1>;
-    using led_index_t = etl::uint_ranged<uint8_t, 0, 7>;
-    
-    index_t index;
-    
     while(true) {
+        eeprom::saveIfNeeded([&]{
+            //            fsm::load();                
+        });
         terminalDevice::periodic();
+        adcController::periodic();
         mk4::periodic();        
 
-        auto li_1 = led_index_t(2 * index);
-        auto li_2 = led_index_t(2 * index + 1);
-        
-        if (mk4::swStates[index] == mk4::SwState::Off) {
-            Meta::visitAt<ledList>(li_1, []<typename L>(Meta::Wrapper<L>){
-                                     L::off();
-                                 });
-            Meta::visitAt<ledList>(li_2, []<typename L>(Meta::Wrapper<L>){
-                                     L::off();
-                                 });
-        }            
-        else if (mk4::swStates[index] == mk4::SwState::Up) {
-            Meta::visitAt<ledList>(li_1, []<typename L>(Meta::Wrapper<L>){
-                                     L::on();
-                                 });
-            Meta::visitAt<ledList>(li_2, []<typename L>(Meta::Wrapper<L>){
-                                     L::off();
-                                 });
-        }            
-        else if (mk4::swStates[index] == mk4::SwState::Down) {
-            Meta::visitAt<ledList>(li_2, []<typename L>(Meta::Wrapper<L>){
-                                     L::on();
-                                 });
-            Meta::visitAt<ledList>(li_1, []<typename L>(Meta::Wrapper<L>){
-                                     L::off();
-                                 });
-        }            
-        ++index;
         systemTimer::periodic([&]{
             alarmTimer::periodic([&](const auto& t){
-                if (periodicTimer == t) {
-                    etl::out<terminal>("sw: [ "_pgm);
-                    for(auto l : mk4::swStates) {
-                        etl::out<terminal>(uint8_t(l), " "_pgm);
-                    }
-                    etl::outl<terminal>(" ]"_pgm);
+                if (tickTimer == t) {
+                    fsm::ratePeriodic();
+                }
+                else if (periodicTimer == t) {
+//                    etl::out<terminal>("sw: [ "_pgm);
+//                    for(const auto l : mk4::swStates) {
+//                        etl::out<terminal>(uint8_t(l), " "_pgm);
+//                    }
+//                    etl::outl<terminal>(" ]"_pgm);
+//                    etl::out<terminal>("v: [ "_pgm);
+//                    for(const auto l : mk4::pValues) {
+//                        etl::out<terminal>(uint16_t(l), " "_pgm);
+//                    }
+//                    etl::outl<terminal>(" ]"_pgm);
+
+                    etl::outl<terminal>(" ] a: "_pgm, getConfigValue(), " s: "_pgm, (uint8_t)fsm::mState);
+                    
+                    
+                    appData.expire();
                 }
             });
         });

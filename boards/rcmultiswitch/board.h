@@ -19,6 +19,7 @@
 #include <external/solutions/series01/sppm_in.h>
 #include <external/solutions/tick.h>
 #include <external/solutions/rc/tiptip.h>
+#include <external/solutions/rc/grmulti.h>
 
 #include <external/hott/sumdprotocolladapter.h>
 #include <external/ibus/ibus.h>
