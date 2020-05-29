@@ -56,9 +56,9 @@ namespace Hott {
         
         using value_span_type = etl::span<valueWidth, etl::Char>;
         
-        constexpr TextWithValue(const AVR::Pgm::StringView& text, Provider& provider, Key key, uint8_t maxValue) : mTitle(text), mProvider(provider), mKey(key), mMax(maxValue) {}
+        constexpr TextWithValue(const AVR::Pgm::StringView& text, Provider& provider, const Key key, const uint8_t maxValue) : mTitle{text}, mProvider{provider}, mKey{key}, mMax{maxValue} {}
         
-        virtual void valueToText(uint8_t value, value_span_type buffer) const {
+        virtual void valueToText(const uint8_t value, value_span_type buffer) const {
             if constexpr(std::is_same_v<F, void>) {
                 etl::itoa_r<10>(value, buffer);
             }
@@ -71,7 +71,7 @@ namespace Hott {
             buffer[0] = Char{' '};
             buffer.insertAtFill(1, mTitle);
             
-            auto& value = mProvider[mKey];
+            const auto& value = mProvider[mKey];
             if (value) {
                 valueToText(*value, etl::make_span<valueBeginColumn, valueWidth>(buffer));
             }
@@ -83,7 +83,7 @@ namespace Hott {
                 etl::apply(etl::make_span<valueBeginColumn, valueWidth>(buffer), [](auto& c) {c |= Char{0x80};});
             }
         }
-        virtual MenuItem* processKey(Hott::key_t key) override {
+        virtual MenuItem* processKey(const Hott::key_t key) override {
             auto& v = mProvider[mKey];
             switch (key) {
             case Hott::key_t::up:
@@ -137,19 +137,38 @@ namespace Hott {
         const Key mKey = Hott::key_t::nokey;
         const uint8_t mMax;
     };
+
     
     template<uint8_t MenuLength = 8>
+    class IMenu : public MenuItem {
+    public:
+        using Display = std::array<BufferString, MenuLength>;
+        virtual inline void textTo(Display& display)  = 0;
+        virtual IMenu<MenuLength>* processKey(const Hott::key_t key) override = 0;
+    };
+    
+    
+    template<uint8_t MenuLength = 8, bool useTitle = true, uint8_t SL = MenuLength>
     requires(MenuLength <= 8)
-    class Menu : public MenuItem {
+    class Menu : public IMenu<MenuLength> {
     public:
         template<typename... T>
-        constexpr Menu(Menu* parent, const AVR::Pgm::StringView& title, T*... items) : mParent(parent), mTitle(title), mItems{items...} {
-            static_assert(sizeof...(T) <= (MenuLength - 1), "too much entries");
+        constexpr Menu(IMenu<MenuLength>* const parent, const AVR::Pgm::StringView& title, T*... items) : mParent{parent}, mTitle{title}, mItems{items...} {
+                            constexpr uint8_t linesToBeShown = []{
+                                if constexpr(useTitle) {
+                                    return sizeof...(T) + 1;
+                                }
+                                else {
+                                    return sizeof...(T);
+                                }
+                            }();
+            static_assert(linesToBeShown <= MenuLength, "too much entries for display");
+            static_assert(SL == linesToBeShown, "shown lines must match (if title incl. title)");
         }
         virtual bool hasChildren() const override {return true;}
         
         virtual void titleInto(BufferString& buffer) const {
-            buffer.insertAtFill(0, mTitle);
+               buffer.insertAtFill(0, mTitle);
         }
         
         virtual void putTextInto(BufferString& buffer) const override {
@@ -158,73 +177,72 @@ namespace Hott {
         }
         using Display = std::array<BufferString, MenuLength>;
 
-        constinit inline static uint_ranged_circular<uint8_t, 0, MenuLength - 1> line;
+inline static constexpr uint8_t selectableLinesMax = []{
+    if constexpr(useTitle) {
+        return SL - 2;
+    }
+    else {
+        return SL - 1;
+    }
+}();
 
-        inline void reset() {
-            line.setToBottom();
-        }
+//    std::integral_constant<uint8_t, selectableLinesMax>::_;
+
+        using line_type = uint_ranged_circular<uint8_t, 0, SL - 1>;
+
+//        inline void reset() {
+//            line.setToBottom();
+//        }
         
-        inline void textTo(Display& display) const {
-            if (line == 0) {
-                titleInto(display[0]);
-                ++line;
+        inline void textTo(Display& display)  override {
+            static line_type line{0};
+            if (useTitle) {
+                if (line == 0) {
+                    titleInto(display[0]);
+                }
+                else {
+                    lineToDisplay(display[line], line - 1);
+                    if (mSelectedLine == (line - 1)) {
+                        display[line][0] = Char{'>'};
+                    }
+                }
             }
             else {
-                if (lineToDisplay(display[line.toInt()], line.toInt())) {
-                    if (mSelectedLine && (mSelectedLine == (line.toInt() - 1))) {
-                        display[mSelectedLine + 1][0] = Char{'>'};
-                    }
-                    ++line;
+                lineToDisplay(display[line], line);
+                if (mSelectedLine == line) {
+                    display[line][0] = Char{'>'};
                 }
             }
+            ++line;
         }
-        bool lineToDisplay(BufferString& buffer, uint8_t row) const {
-            if (mItems[row - 1]) {
-                mItems[row - 1]->putTextInto(buffer);
+        void lineToDisplay(BufferString& buffer, const uint8_t row) const {
+            if ((row < mItems.size()) && mItems[row]) {
+                mItems[row]->putTextInto(buffer);
             }
-            return true;
         }
-        Menu* processKey(Hott::key_t key) override {
-            if (mSelectedLine) {
-                if (mItems[mSelectedLine.toInt()]->isSelected()) {
-                    mItems[mSelectedLine.toInt()]->processKey(key);
-                    return this;
-                }
+        IMenu<MenuLength>* processKey(const Hott::key_t key) override {
+            if (mItems[mSelectedLine.toInt()]->isSelected()) {
+                mItems[mSelectedLine.toInt()]->processKey(key);
+                return this;
             }
             switch (key) {
             case Hott::key_t::down:
-                if (mSelectedLine) {
-                    if (mItems[mSelectedLine.toInt() + 1]) {
-                        ++mSelectedLine;
-                    }
-                }
-                else {
-                    mSelectedLine = 0;
-                }
+                ++mSelectedLine;
                 break;
             case Hott::key_t::up:
-                if (mSelectedLine) {
-                    --mSelectedLine;
-                }
-                else {
-                    mSelectedLine = 0;
-                }
+                --mSelectedLine;
                 break;
             case Hott::key_t::left:
-                if (mParent) {
-                    return mParent;
-                }
+                return mParent;
                 break;
             case Hott::key_t::right:
                 break;
             case Hott::key_t::set:
-                if (mSelectedLine) {
-                    if (mItems[mSelectedLine.toInt()]->hasChildren()) {
-                        return static_cast<Menu*>(mItems[mSelectedLine.toInt()]);
-                    }        
-                    else {
-                        mItems[mSelectedLine.toInt()]->processKey(key);
-                    }
+                if (mItems[mSelectedLine.toInt()]->hasChildren()) {
+                    return static_cast<IMenu<MenuLength>*>(mItems[mSelectedLine.toInt()]);
+                }        
+                else {
+                    mItems[mSelectedLine.toInt()]->processKey(key);
                 }
                 break;
             case Hott::key_t::nokey:
@@ -233,10 +251,10 @@ namespace Hott {
             return this;
         }
     protected:
-        Menu* mParent = nullptr;
+        IMenu<MenuLength>* mParent{nullptr};
         const AVR::Pgm::StringView mTitle;
-        const std::array<MenuItem*, MenuLength> mItems{};
-        etl::uint_ranged_NaN<uint8_t, 0, MenuLength> mSelectedLine{};
+        etl::uint_ranged<uint8_t, 0, selectableLinesMax> mSelectedLine{0};
+        const std::array<MenuItem*, selectableLinesMax + 1> mItems{};
     };
 
     template<uint8_t MenuLength>

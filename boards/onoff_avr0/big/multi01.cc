@@ -7,8 +7,8 @@
 #define USE_16V // (3k1 im Spannungsteiler)
 
 //#define USE_SPORT
-//#define USE_HOTT
-#define USE_IBUS
+#define USE_HOTT
+//#define USE_IBUS
 //#define FS_I6S
 
 #ifdef USE_IBUS

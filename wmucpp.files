@@ -300,7 +300,9 @@ boards/rcactor/Makefile
 boards/rcactor/test00.cc
 boards/rcmultiswitch/Makefile
 boards/rcmultiswitch/board.h
+boards/rcmultiswitch/fsm.h
 boards/rcmultiswitch/multi8d.cc
+boards/rcmultiswitch/multi8hott.cc
 boards/rcmultiswitch/multi8man.cc
 boards/rcmultiswitch/multi8mk4.cc
 boards/rcmultiswitch/swout.h

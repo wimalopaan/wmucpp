@@ -22,6 +22,10 @@
 #include <external/solutions/rc/grmulti.h>
 
 #include <external/hott/sumdprotocolladapter.h>
+#include <external/hott/experimental/sensor.h>
+#include <external/hott/experimental/adapter.h>
+#include <external/hott/menu.h>
+
 #include <external/ibus/ibus.h>
 
 #include <std/chrono>
@@ -61,7 +65,11 @@ using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition, tc
 
 namespace  {
     constexpr auto dt = 2_ms;
+#ifdef USE_HOTT
+    constexpr auto fRtc = 500_Hz;
+#else
     constexpr auto fRtc = 128_Hz;
+#endif
     
     constexpr double Ro = 4'700;
     constexpr auto RPs = []{

@@ -222,7 +222,7 @@ namespace Hott {
                     mMsgActive->valid = true;
                     std::swap(mMsgActive, mMsgInactive);
                     
-                    if (auto vm = value8BitExtended_unsafe(mChannelForMultiChannel)) {
+                    if (const auto vm = value8BitExtended_unsafe(mChannelForMultiChannel)) {
                         
                         switch(mMultiState) {
                         case MultiState::Undefined:

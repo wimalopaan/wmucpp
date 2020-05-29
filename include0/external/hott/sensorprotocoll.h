@@ -97,7 +97,8 @@ namespace Hott {
         return 0x80_B | (code & 0x0f_B);
     }
     static inline constexpr std::byte ascii_id(const std::byte code) {
-        return 0x0f_B | ((code & 0x0f_B) << 4);
+        return ((code & 0x0f_B) << 4);
+//        return 0x0f_B | ((code & 0x0f_B) << 4);
     }    
     
     struct TextMsg {

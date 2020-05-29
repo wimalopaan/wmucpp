@@ -51,6 +51,7 @@ namespace Hott {
                             mAsciiReceived++;
                             mLastKey = Hott::key_t{c & 0x0f_B};
                             mState = hott_state_t::AsciiWaitIdle;
+                            mTextMsg.esc = ascii_id(msg_code);
                         }
                         // der Code 0x0f kommt, wenn bei Telemetrie noch kein Sensor ausgewählt ist (linke Tasten)
 //                        else if (c == 0x0f_B) {
@@ -97,16 +98,19 @@ namespace Hott {
                 }
             };
             
-            using uart = Uart<CNumber, ProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<2>>;
+            using uart = Uart<CNumber, ProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<sizeof(TextMesgType)>>;
             
             inline static constexpr void init() {
                 uart::template init<Baud, AVR::HalfDuplex>();
                 //                uart::_;
-                
                 mTextMsg.esc = ascii_id(msg_code);
                 for(auto& l : text()) {
                     l.clear();
                 }
+            }
+            
+            inline static constexpr void esc() {
+                mTextMsg.esc = 0x01_B;
             }
             
             inline static constexpr void periodic() {
@@ -186,6 +190,12 @@ namespace Hott {
                 return k;
             }
 
+            inline static constexpr void notSending(const auto& f) {
+                if (mState != hott_state_t::AsciiReply) {
+                    f();
+                }
+            }
+            
             inline static constexpr void processKey(const auto& f) {
                 if (mLastKey != Hott::key_t::nokey) {
                     f(key());
