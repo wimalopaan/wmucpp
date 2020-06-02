@@ -248,6 +248,12 @@ namespace etl {
         inline constexpr explicit operator bool() const {
             return mValue != NaN;
         }
+        inline T& operator*() {
+            return mValue;
+        }
+        inline const T& operator*() const {
+            return mValue;
+        }
         
         template<typename R>
         inline constexpr uint_ranged_NaN operator+(R rhs) const {

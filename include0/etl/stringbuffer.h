@@ -94,21 +94,25 @@ namespace etl {
                 data[i] = *s++;
             }
         }
-        inline constexpr void insertAt(uint8_t position, const AVR::Pgm::StringView& s) {
-            assert(position < Length);
-            for(uint8_t i = position, n = 0; (i < Length) && (s[n] != Char{'\0'}); ++i, ++n) {
-                data[i] = s[n];
-            }
-        }
-        inline constexpr void insertAtFill(uint8_t position, const AVR::Pgm::StringView& s) {
+        inline constexpr auto insertAt(uint8_t position, const AVR::Pgm::StringView& s) {
             assert(position < Length);
             uint8_t i = position;
             for(uint8_t n = 0; (i < Length) && (s[n] != Char{'\0'}); ++i, ++n) {
                 data[i] = s[n];
             }
+            return i;
+        }
+        inline constexpr auto insertAtFill(uint8_t position, const AVR::Pgm::StringView& s) {
+            assert(position < Length);
+            uint8_t i = position;
+            for(uint8_t n = 0; (i < Length) && (s[n] != Char{'\0'}); ++i, ++n) {
+                data[i] = s[n];
+            }
+            auto p = i;
             for(; i < Length; ++i) {
                 data[i] = Fill;
             }
+            return p;
         }
 //        template<uint8_t Position>
 //        inline constexpr void insertAtFill(const PgmStringView& s) {
