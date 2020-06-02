@@ -136,12 +136,11 @@ namespace Hott {
     class IMenu : public MenuItem {
     public:
         using Display = std::array<BufferString, MenuLength>;
-        virtual inline void textTo(Display& display)  = 0;
+        virtual inline void textTo(Display& display) = 0;
         virtual IMenu<MenuLength>* processKey(const Hott::key_t key) override = 0;
     };
     
-    
-    template<uint8_t MenuLength = 8, bool useTitle = true, uint8_t SL = MenuLength>
+template<uint8_t MenuLength = 8, bool useTitle = true, uint8_t SL = MenuLength>
     requires(MenuLength <= 8)
     class Menu : public IMenu<MenuLength> {
     public:
@@ -166,7 +165,8 @@ namespace Hott {
         
         virtual void putTextInto(BufferString& buffer) const override {
             buffer[0] = Char{' '};
-            buffer.insertAtFill(1, mTitle);
+            auto p = buffer.insertAtFill(1, mTitle);
+            buffer[p] = etl::Char{'>'};
         }
         using Display = std::array<BufferString, MenuLength>;
 
