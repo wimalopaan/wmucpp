@@ -30,18 +30,11 @@
 #include "external/ui/menu.h"
 
 namespace Hott {
-    
-//    static constexpr uint8_t MenuLength = 7;
-    
     using BufferString = Hott::TextMsg::line_type;
 //    using Display = Hott::TextMsg::buffer_type;
     
     using MenuItem = UI::MenuItem<BufferString, key_t>;
 
-
-    namespace Concepts {
-    }
-    
     // fixme: keine mag. Konstanten 18 3 Aufteilung
     
     template<typename Key, typename Provider, uint8_t ValueWidth = 3, typename F = void>
@@ -190,10 +183,6 @@ inline static constexpr uint8_t selectableLinesMax = []{
 
         using line_type = uint_ranged_circular<uint8_t, 0, SL - 1>;
 
-//        inline void reset() {
-//            line.setToBottom();
-//        }
-        
         inline void textTo(Display& display)  override {
             static line_type line{0};
             if (useTitle) {
@@ -257,6 +246,7 @@ inline static constexpr uint8_t selectableLinesMax = []{
         const std::array<MenuItem*, selectableLinesMax + 1> mItems{};
     };
 
+        
     template<uint8_t MenuLength>
     class NumberedMenu : public Menu<MenuLength> {
         using base = Menu<MenuLength>;
@@ -291,4 +281,38 @@ inline static constexpr uint8_t selectableLinesMax = []{
         const AVR::Pgm::StringView mTitle;
         const etl::StringBuffer<L>& mText;   
     };
+    
+    
+    template<typename PA, typename TopMenu>
+    class BasePage final {
+        BasePage() = delete;
+    public:
+        inline static void init() {
+            clear();
+        }
+        inline static void periodic() {
+            PA::processKey([&](Hott::key_t k){
+                if (const auto n = mMenu->processKey(k); n != mMenu) {
+                    clear();
+                    if (n) {
+                        mMenu = n;
+                    }
+                    else {
+                        PA::esc();
+                    }
+                }
+            });
+            PA::notSending([&]{
+                mMenu->textTo(PA::text());
+            });
+        }
+    private:
+        inline static void clear() {
+            for(auto& line : PA::text()) {
+                line.clear();
+            }
+        }
+        inline static TopMenu mTopMenu;
+        inline static Hott::IMenu<PA::menuLines>* mMenu = &mTopMenu;
+    };    
 }

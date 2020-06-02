@@ -23,7 +23,7 @@ namespace Hott {
                  AVR::Concepts::At01Series MCU>
         struct Sensor<CNumber, Uart, Baud, BinaryMesgType, TextMesgType, Clock, MCU> final {
             static inline constexpr auto UartNumber = CNumber::component_type::value;
-            enum class hott_state_t {Undefined = 0, BinaryStartRequest, AsciiStartRequest, BinaryWaitIdle, AsciiWaitIdle, BinaryReply, AsciiReply, NumberOfStates};
+            enum class hott_state_t {Undefined = 0, BinaryStartRequest, AsciiStartRequest, BinaryWaitIdle, AsciiWaitIdle, BinaryReply, AsciiReply};
             
             static inline constexpr std::byte msg_code = code_from_type<BinaryMesgType>::value;
             //                std::integral_constant<std::byte, msg_code>::_;
@@ -79,6 +79,8 @@ namespace Hott {
                     case hott_state_t::AsciiWaitIdle:
                         ++mBytesReceivedInIdlePeriod;
                         break;
+                    case hott_state_t::BinaryReply:
+                    case hott_state_t::AsciiReply:
                     default:
                         assert(false);
                         break;
@@ -90,6 +92,11 @@ namespace Hott {
                             mWaitTicks.setToBottom();
                             mBytesReceivedInIdlePeriod = 0;
                             break;
+                        case hott_state_t::Undefined:
+                        case hott_state_t::BinaryStartRequest:
+                        case hott_state_t::AsciiStartRequest:
+                        case hott_state_t::BinaryReply:
+                        case hott_state_t::AsciiReply:
                         default:
                             break;
                         }
@@ -98,7 +105,7 @@ namespace Hott {
                 }
             };
             
-            using uart = Uart<CNumber, ProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<sizeof(TextMesgType)>>;
+            using uart = Uart<CNumber, ProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<2>>;
             
             inline static constexpr void init() {
                 uart::template init<Baud, AVR::HalfDuplex>();
@@ -162,6 +169,9 @@ namespace Hott {
                         mState = hott_state_t::Undefined;
                     }
                     break;
+                case hott_state_t::Undefined:
+                case hott_state_t::BinaryStartRequest:
+                case hott_state_t::AsciiStartRequest:
                 default:
                     break;
                 }
@@ -178,6 +188,10 @@ namespace Hott {
                     case hott_state_t::Undefined:
                         uart::template rxEnable<true>();
                         break;
+                    case hott_state_t::BinaryWaitIdle:
+                    case hott_state_t::AsciiWaitIdle:
+                    case hott_state_t::BinaryStartRequest:
+                    case hott_state_t::AsciiStartRequest:
                     default:
                         break;
                     }

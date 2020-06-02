@@ -115,7 +115,7 @@ namespace AVR {
         using value_type = typename Reso::type;
 
         static constexpr auto VRef = VRefType::value;
-        static constexpr auto refs = VRefType::refs;
+//        static constexpr auto refs = VRefType::refs;
         
         static constexpr double VBit = VRef / Reso::type::Upper;
 

@@ -172,7 +172,7 @@ using currentConverter = Hott::Units::Converter<adc, Hott::Units::current_t, std
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition>>;
 
 #ifdef USE_HOTT
-class RCMenu final : public Hott::Menu<Parameter::menuLines> {
+class RCMenu final : public Hott::Menu<Parameter::menuLines, true, 4> {
 public:
     RCMenu() : Menu(this, "OnOff 1.0"_pgm, &mSoft, &mTimeout, &mType) {}
 private:
@@ -203,7 +203,7 @@ private:
         }
     }
     inline static TopMenu mTopMenu;
-    inline static Hott::Menu<PA::menuLines>* mMenu = &mTopMenu;
+    inline static Hott::IMenu<PA::menuLines>* mMenu = &mTopMenu;
 };
 
 using menu = HottMenu<sensor, RCMenu>;

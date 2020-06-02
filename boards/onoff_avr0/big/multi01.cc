@@ -384,7 +384,7 @@ using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition>>;
 #endif
 
 #ifdef USE_HOTT
-class RCMenu final : public Hott::Menu<Parameter::menuLines> {
+class RCMenu final : public Hott::Menu<Parameter::menuLines, true, 5> {
     inline static constexpr uint8_t valueTextLength{6};
     
     struct YesNo{
@@ -407,31 +407,7 @@ private:
     Hott::TextWithValue<Storage::AVKey, Storage::ApplData, 3, YesNo> mA{"AutoOffset"_pgm, appData, Storage::AVKey::AutoOffset, 1};
 };
 
-template<typename PA, typename TopMenu>
-class HottMenu final {
-    HottMenu() = delete;
-public:
-    inline static void init() {
-        clear();
-    }
-    inline static void periodic() {
-        PA::processKey([&](Hott::key_t k){
-            mMenu = mMenu->processKey(k);
-            clear();
-        });
-        mMenu->textTo(PA::text());
-    }
-private:
-    inline static void clear() {
-        for(auto& line : PA::text()) {
-            line.clear();
-        }
-    }
-    inline static TopMenu mTopMenu;
-    inline static Hott::Menu<PA::menuLines>* mMenu = &mTopMenu;
-};
-
-using menu = HottMenu<sensor, RCMenu>;
+using menu = Hott::BasePage<sensor, RCMenu>;
 #endif
 
 template<typename PWM, typename Output>

@@ -14,7 +14,7 @@ namespace External {
         inline constexpr Tick() = default;
         
         template<typename R, typename P>
-        inline constexpr explicit Tick(const std::chrono::duration<R, P>& v) : value{v / intervall} {
+        inline constexpr explicit Tick(const std::chrono::duration<R, P>& v) : value(v / intervall) {
 //            static_assert(v / intervall <= std::numeric_limits<T>::max());
         }
         

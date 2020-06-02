@@ -100,7 +100,7 @@ using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition>>;
 //    Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mRpm2{"Rpm2"_pgm, appData, Storage::AVKey::TimeOut, 2};
 //};
 
-class RCMenu final : public Hott::Menu<Parameter::menuLines> {
+class RCMenu final : public Hott::Menu<Parameter::menuLines, true, 3> {
 public:
     RCMenu() : Menu(this, "OnOff 1.0"_pgm, &mRpm1, &mRpm2) {}
 private:

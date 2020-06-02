@@ -96,7 +96,7 @@ using adcController = External::Hal::AdcController<adc, Meta::NList<1, 5>>;
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition>>;
 
-class RCMenu final : public Hott::Menu<Parameter::menuLines> {
+class RCMenu final : public Hott::Menu<Parameter::menuLines, true, 4> {
 public:
     RCMenu() : Menu(this, "OnOff 1.0"_pgm, &mSoft, &mTimeout, &mType) {}
 private:
@@ -126,7 +126,7 @@ private:
         }
     }
     inline static TopMenu mTopMenu;
-    inline static Hott::Menu<PA::menuLines>* mMenu = &mTopMenu;
+    inline static Hott::IMenu<PA::menuLines>* mMenu = &mTopMenu;
 };
 
 #ifdef USE_HOTT

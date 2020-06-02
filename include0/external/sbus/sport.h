@@ -61,6 +61,9 @@ namespace External {
                             mState = State::Init;
                         }
                         break;
+                    case State::ReplyWait:
+                    case State::Reply:
+                    case State::WaitReplyComplete:
                     default:
                         break;
                     }
@@ -99,6 +102,8 @@ namespace External {
                         mState = State::Init;
                     }
                     break;
+                case State::Init:
+                case State::Request:
                 default:
                     break;
                 }
