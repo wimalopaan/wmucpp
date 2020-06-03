@@ -5,12 +5,43 @@
 #include "board.h"
 #include "swout.h"
 
-using sensor = Hott::Experimental::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, Hott::TextMsg, systemTimer>;
-
 #ifdef USE_HOTT
 
-template<auto Columns = 4, auto ValueWidth = 3>
+using sensor = Hott::Experimental::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, Hott::TextMsg, systemTimer>;
+
+template<auto N = 8>
+struct SwitchStates {
+    enum class SwState : uint8_t {Off, On};
+    
+    static constexpr void init() {
+    }
+    static constexpr uint8_t size() {
+        return N;
+    }
+    static inline auto& switches() {
+        return swStates;
+    }
+private:
+    static inline std::array<SwState, N> swStates{};
+    
+};
+
+using sw = SwitchStates<>;
+
+using out = External::Output<ledList, pwm, sw, eeprom>;
+
+template<typename Provider, auto ValueWidth = 3>
 class Switch final : public UI::MenuItem<Hott::BufferString, Hott::key_t> {
+    struct OnOff{
+        inline static void format(const Provider::SwState v, etl::span<3, etl::Char>& b) {
+            if (v == Provider::SwState::On) {
+                b.insertLeftFill("On"_pgm);
+            }
+            else {
+                b.insertLeftFill("Off"_pgm);
+            }
+        }
+    };
 public:
     static inline constexpr uint8_t valueBeginColumn = Hott::BufferString::size() - ValueWidth;
     static inline constexpr uint8_t valueWidth = ValueWidth;
@@ -19,118 +50,175 @@ public:
 
     Switch(const AVR::Pgm::StringView& text, uint8_t number) : mTitle{text}, mNumber{number} {}
     
+    void valueToText(const auto v, value_span_type buffer) const {
+        OnOff::format(v, buffer);
+    }
+    
     virtual void putTextInto(Hott::BufferString& buffer) const override {
         buffer[0] = etl::Char{' '};
         buffer.insertAtFill(1, mTitle);
         
-//        if (value) {
-//            valueToText(*value, etl::make_span<valueBeginColumn, valueWidth>(buffer));
-//        }
-//        else {
-//            etl::fill(etl::make_span<valueBeginColumn, valueWidth>(buffer), Char{'-'});
-//        }
+        valueToText(Provider::switches()[mNumber], etl::make_span<valueBeginColumn, valueWidth>(buffer));
         
-//        if (mSelected) {
-//            etl::apply(etl::make_span<valueBeginColumn, valueWidth>(buffer), [](auto& c) {c |= etl::Char{0x80};});
-//        }
     }
-//    virtual MenuItem* processKey(Hott::key_t key) override {
-////        auto& v = mProvider[mKey];
-//        switch (key) {
-//        case Hott::key_t::up:
-//            if (mSelected) {
-////                if (v) {
-////                    if (*v > 0) {
-////                        --v;
-////                    }
-////                    else {
-////                        v.setNaN();
-////                    }
-////                }
-////                else {
-////                    *v = mMax;
-////                }
-//            }
-//            break;
-//        case Hott::key_t::down:
-//            if (mSelected) {
-////                if (v) {
-////                    if (*v < mMax) {
-////                        ++v;
-////                    }
-////                    else {
-////                        v.setNaN();
-////                    }
-////                }
-////                else {
-////                    *v = 0;
-////                }
-//            }
-//            break;
-//        case Hott::key_t::left:
-//            --mColumn;
-//            break;
-//        case Hott::key_t::right:
-//            ++mColumn;
-//            break;
-//        case Hott::key_t::set:
-//            if (mSelected) {
-////                mProvider.change();
-//            }
-//            mSelected = !mSelected;
-//            break;
-//        case Hott::key_t::nokey:
-//            break;
-//        }
-//        return this;
-//    }
+    virtual MenuItem* processKey(const Hott::key_t key) override {
+        switch (key) {
+        case Hott::key_t::up:
+        case Hott::key_t::down:
+        case Hott::key_t::left:
+        case Hott::key_t::right:
+        case Hott::key_t::nokey:
+            break;
+        case Hott::key_t::set:
+            if (Provider::switches()[mNumber] == Provider::SwState::On) {
+                Provider::switches()[mNumber] = Provider::SwState::Off;
+            }
+            else {
+                Provider::switches()[mNumber] = Provider::SwState::On;
+            }
+            break;
+        }
+        return this;
+    }
 private:
+    uint8_t value = 0;
     const AVR::Pgm::StringView mTitle;
     const Hott::key_t mKey = Hott::key_t::nokey;
-    uint8_t mNumber = 0;
-    etl::uint_ranged_circular<uint8_t, 0, Columns - 1> mColumn;
+    const uint8_t mNumber = 0;
 };
 
-struct SwitchesMenu final : public Hott::Menu<8, false, 4> {
-    SwitchesMenu(auto* const parent) : Hott::Menu<8, false, 4>{parent, "Switches"_pgm, &mSW0, &mSW1, &mSW2, &mSW3} {
-//        title(false);
-    }    
-    Switch<> mSW0{"A"_pgm, 0};
-    Switch<> mSW1{"B"_pgm, 1};
-    Switch<> mSW2{"C"_pgm, 2};
-    Switch<> mSW3{"D"_pgm, 3};
-//    Switch mSW4{3};
-//    Switch mSW5{3};
-//    Switch mSW6{3};
-//    Switch mSW7{3};
+struct SwitchesMenu final : public Hott::Menu<8, false, 8> {
+    SwitchesMenu(auto* const parent) : Hott::Menu<8, false, 8>{parent, "Switches"_pgm, 
+                                                               &mSW0, &mSW1, &mSW2, &mSW3, &mSW4, &mSW5, &mSW6, &mSW7} {}    
+    Switch<sw> mSW0{"A :"_pgm, 0};
+    Switch<sw> mSW1{"B :"_pgm, 1};
+    Switch<sw> mSW2{"C :"_pgm, 2};
+    Switch<sw> mSW3{"D :"_pgm, 3};
+    Switch<sw> mSW4{"E :"_pgm, 4};
+    Switch<sw> mSW5{"F :"_pgm, 5};
+    Switch<sw> mSW6{"G :"_pgm, 6};
+    Switch<sw> mSW7{"H :"_pgm, 7};
 };
 
-struct PwmMenu final : public Hott::Menu<8, true, 2> {
-    PwmMenu(auto* const parent) : Menu<8, true, 2>{parent, "Pwm"_pgm, &mSW0} {}    
-    Switch<> mSW0{"A"_pgm, 0};
+auto& appData = eeprom::data();
+
+struct PwmMenu final : public Hott::Menu<8, false, 8> {
+    struct Adapter {
+        Storage::SwitchConfig::pwm_type& operator[](const Storage::AVKey k) {
+            return appData[k].pwmValue();
+        }
+        void change() {
+            appData.change();
+        }
+    };
+    
+    PwmMenu(auto* const parent) : Menu{parent, "Pwm"_pgm, &mPwm0, &mPwm1, &mPwm2, &mPwm3, &mPwm4, &mPwm5, &mPwm6, &mPwm7} {}    
+    Hott::TextWithValue<Storage::AVKey, Adapter> mPwm0{"PWM A :"_pgm, a0, Storage::AVKey::Ch0, Storage::SwitchConfig::pwm_type::Upper};
+    Hott::TextWithValue<Storage::AVKey, Adapter> mPwm1{"PWM B :"_pgm, a1, Storage::AVKey::Ch1, Storage::SwitchConfig::pwm_type::Upper};
+    Hott::TextWithValue<Storage::AVKey, Adapter> mPwm2{"PWM C :"_pgm, a2, Storage::AVKey::Ch2, Storage::SwitchConfig::pwm_type::Upper};
+    Hott::TextWithValue<Storage::AVKey, Adapter> mPwm3{"PWM D :"_pgm, a3, Storage::AVKey::Ch3, Storage::SwitchConfig::pwm_type::Upper};
+    Hott::TextWithValue<Storage::AVKey, Adapter> mPwm4{"PWM E :"_pgm, a4, Storage::AVKey::Ch4, Storage::SwitchConfig::pwm_type::Upper};
+    Hott::TextWithValue<Storage::AVKey, Adapter> mPwm5{"PWM F :"_pgm, a5, Storage::AVKey::Ch5, Storage::SwitchConfig::pwm_type::Upper};
+    Hott::TextWithValue<Storage::AVKey, Adapter> mPwm6{"PWM G :"_pgm, a6, Storage::AVKey::Ch6, Storage::SwitchConfig::pwm_type::Upper};
+    Hott::TextWithValue<Storage::AVKey, Adapter> mPwm7{"PWM H :"_pgm, a7, Storage::AVKey::Ch7, Storage::SwitchConfig::pwm_type::Upper};
+    
+    Adapter a0;
+    Adapter a1;
+    Adapter a2;
+    Adapter a3;
+    Adapter a4;
+    Adapter a5;
+    Adapter a6;
+    Adapter a7;
 };
 
-struct BlinkMenu final : public Hott::Menu<8, true, 2> {
-    BlinkMenu(auto* const parent) : Menu<8, true, 2>{parent, "Blink"_pgm, &mSW0} {}    
-    Switch<> mSW0{"A"_pgm, 0};
+
+template<auto ValueWidth = 3>
+class Tick final : public UI::MenuItem<Hott::BufferString, Hott::key_t> {
+public:
+    static inline constexpr uint8_t valueWidth = ValueWidth;
+    static inline constexpr uint8_t valueBeginColumn1 = Hott::BufferString::size() - ValueWidth;
+    static inline constexpr uint8_t valueBeginColumn2 = Hott::BufferString::size() - 2*ValueWidth - 1;
+    
+    using value_span_type = etl::span<valueWidth, etl::Char>;
+
+    Tick(const AVR::Pgm::StringView& text, Storage::AVKey number) : mTitle{text}, mNumber{number} {}
+    
+    void valueToText(const Storage::tick_type v, value_span_type buffer) const {
+        if (v) {
+            etl::itoa_r<10>(v.value.toInt(), buffer);
+        }
+        else {
+            etl::fill(buffer, etl::Char{'-'});
+        }
+    }
+    
+    virtual void putTextInto(Hott::BufferString& buffer) const override {
+        buffer[0] = etl::Char{' '};
+        buffer.insertAtFill(1, mTitle);
+
+        valueToText(appData[mNumber].blinks()[0].intervall, etl::make_span<valueBeginColumn1, valueWidth>(buffer));
+        valueToText(appData[mNumber].blinks()[0].duration, etl::make_span<valueBeginColumn2, valueWidth>(buffer));
+
+        if (mSelected) {
+            etl::apply(etl::make_span<valueBeginColumn1, valueWidth>(buffer), [](auto& c) {c |= etl::Char{0x80};});
+            etl::apply(etl::make_span<valueBeginColumn2, valueWidth>(buffer), [](auto& c) {c |= etl::Char{0x80};});
+        }
+    }
+    virtual MenuItem* processKey(const Hott::key_t key) override {
+        switch (key) {
+        case Hott::key_t::up:
+            ++appData[mNumber].blinks()[0].intervall;
+            out::setSwitches();
+            break;
+        case Hott::key_t::down:
+            --appData[mNumber].blinks()[0].intervall;
+            out::setSwitches();
+            break;
+        case Hott::key_t::left:
+            if (appData[mNumber].blinks()[0].duration < appData[mNumber].blinks()[0].intervall) {
+                ++appData[mNumber].blinks()[0].duration;
+            }
+            out::setSwitches();
+            break;
+        case Hott::key_t::right:
+            --appData[mNumber].blinks()[0].duration;
+            out::setSwitches();
+            break;
+        case Hott::key_t::nokey:
+            break;
+        case Hott::key_t::set:
+            if (mSelected) {
+                appData.change();
+            }
+            mSelected = !mSelected;
+            break;
+        }
+        return this;
+    }
+private:
+    const AVR::Pgm::StringView mTitle;
+    const Storage::AVKey mNumber;
+};
+
+struct BlinkMenu final : public Hott::Menu<8, false, 8> {
+    BlinkMenu(auto* const parent) : Menu{parent, "Blink"_pgm, &mB0, &mB1, &mB2, &mB3, &mB4, &mB5, &mB6, &mB7} {}    
+
+    Tick<> mB0{"Blink A D/I:"_pgm, Storage::AVKey::Ch0};
+    Tick<> mB1{"Blink B D/I:"_pgm, Storage::AVKey::Ch1};
+    Tick<> mB2{"Blink C D/I:"_pgm, Storage::AVKey::Ch2};
+    Tick<> mB3{"Blink D D/I:"_pgm, Storage::AVKey::Ch3};
+    Tick<> mB4{"Blink E D/I:"_pgm, Storage::AVKey::Ch4};
+    Tick<> mB5{"Blink F D/I:"_pgm, Storage::AVKey::Ch5};
+    Tick<> mB6{"Blink G D/I:"_pgm, Storage::AVKey::Ch6};
+    Tick<> mB7{"Blink H D/I:"_pgm, Storage::AVKey::Ch7};
 };
 
 
 struct RCMenu final : public Hott::Menu<8, true, 4> {
     inline static constexpr uint8_t valueTextLength{6};
     
-    struct YesNo{
-        inline static void format(const uint8_t v, etl::span<3, etl::Char>& b) {
-            if (v == 0) {
-                b.insertLeftFill("no"_pgm);
-            }
-            else {
-                b.insertLeftFill("yes"_pgm);
-            }
-        }
-    };
-    
-    RCMenu() : Hott::Menu<8, true, 4>{nullptr, "WM Switch 0.2"_pgm, &mSW, &mPwm, &mBlink} {}
+    RCMenu() : Hott::Menu<8, true, 4>{nullptr, "WM Switch 0.3"_pgm, &mSW, &mPwm, &mBlink} {}
 
 private:
     SwitchesMenu mSW{this};
@@ -138,40 +226,8 @@ private:
     BlinkMenu mBlink{this};
 };
 
-template<typename PA, typename TopMenu>
-class HottMenu final {
-    HottMenu() = delete;
-public:
-    inline static void init() {
-        clear();
-    }
-    inline static void periodic() {
-        PA::processKey([&](Hott::key_t k){
-            if (const auto n = mMenu->processKey(k); n != mMenu) {
-                clear();
-                if (n) {
-                    mMenu = n;
-                }
-                else {
-                    PA::esc();
-                }
-            }
-        });
-        PA::notSending([&]{
-            mMenu->textTo(PA::text());
-        });
-    }
-private:
-    inline static void clear() {
-        for(auto& line : PA::text()) {
-            line.clear();
-        }
-    }
-    inline static TopMenu mTopMenu;
-    inline static Hott::IMenu<PA::menuLines>* mMenu = &mTopMenu;
-};
+using menu = Hott::BasePage<sensor, RCMenu>;
 
-using menu = HottMenu<sensor, RCMenu>;
 #endif
 
 int main() {
@@ -183,25 +239,44 @@ int main() {
    
     systemTimer::init();
     sensor::init();
-
     menu::init();
     
-    const auto periodicTimer = alarmTimer::create(1000_ms, External::Hal::AlarmFlags::Periodic);
+    eeprom::init();
+    
+    {
+        if (!((appData[Storage::AVKey::Magic].pwmValue() == 44))) {
+            appData[Storage::AVKey::Magic].pwmValue(44);
+            appData[Storage::AVKey::Ch0] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch1] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch2] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch3] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch4] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch5] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch6] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch7] = Storage::ApplData::value_type{};
+            appData.change();
+        }
+    }
+    
+    const auto tickTimer = alarmTimer::create(SoftTimer::intervall, External::Hal::AlarmFlags::Periodic);
+    const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
 
-//    etl::outl<terminal>("multi8mk4hott"_pgm);
-
-//    uint16_t counter{};
+    out::init();
     
     while(true) {
+        eeprom::saveIfNeeded([&]{
+        });
         sensor::periodic();
         menu::periodic();
         
         systemTimer::periodic([&]{
             sensor::ratePeriodic();
             alarmTimer::periodic([&](const auto& t){
-                if (periodicTimer == t) {
-//                    etl::outl<terminal>("c: "_pgm, counter++, " mc: "_pgm, sumd::hasMultiChannel(), " nc: "_pgm, sumd::numberOfChannels());
-//                    etl::outl<terminal>("mc0: "_pgm, (uint8_t)sumd::mChannel(0));
+                if (tickTimer == t) {
+                    out::setSwitches();
+                }
+                else if (periodicTimer == t) {
+                    appData.expire();
                 }
             });
         });

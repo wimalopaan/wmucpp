@@ -29,6 +29,9 @@ namespace External {
         inline constexpr void operator++() {
             ++value;
         }
+        inline constexpr void operator--() {
+            --value;
+        }
 
         inline constexpr void operator++() volatile {
             ++value;

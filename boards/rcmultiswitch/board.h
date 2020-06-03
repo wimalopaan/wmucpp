@@ -165,6 +165,9 @@ namespace Storage {
         const auto& pwmValue() const {
             return mPwm;
         }
+        auto& pwmValue() {
+            return mPwm;
+        }
         void pwmValue(const pwm_type v){
             mPwm = v;
         }
