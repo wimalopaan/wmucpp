@@ -48,7 +48,7 @@ public:
     
     using value_span_type = etl::span<valueWidth, etl::Char>;
 
-    Switch(const AVR::Pgm::StringView& text, uint8_t number) : mTitle{text}, mNumber{number} {}
+    Switch(const AVR::Pgm::StringView& text, const uint8_t number) : mTitle{text}, mNumber{number} {}
     
     void valueToText(const auto v, value_span_type buffer) const {
         OnOff::format(v, buffer);
@@ -81,10 +81,8 @@ public:
         return this;
     }
 private:
-    uint8_t value = 0;
     const AVR::Pgm::StringView mTitle;
-    const Hott::key_t mKey = Hott::key_t::nokey;
-    const uint8_t mNumber = 0;
+    const etl::uint_ranged<uint8_t, 0, Provider::size() - 1> mNumber;
 };
 
 struct SwitchesMenu final : public Hott::Menu<8, false, 8> {
@@ -131,7 +129,6 @@ struct PwmMenu final : public Hott::Menu<8, false, 8> {
     Adapter a6;
     Adapter a7;
 };
-
 
 template<auto ValueWidth = 3>
 class Tick final : public UI::MenuItem<Hott::BufferString, Hott::key_t> {
@@ -215,15 +212,78 @@ struct BlinkMenu final : public Hott::Menu<8, false, 8> {
 };
 
 
-struct RCMenu final : public Hott::Menu<8, true, 4> {
+template<typename CB, auto ValueWidth = 5>
+class Button final : public UI::MenuItem<Hott::BufferString, Hott::key_t> {
+public:
+    static inline constexpr uint8_t valueBeginColumn = Hott::BufferString::size() - ValueWidth;
+    static inline constexpr uint8_t valueWidth = ValueWidth;
+    
+    using value_span_type = etl::span<valueWidth, etl::Char>;
+
+    Button(const AVR::Pgm::StringView& text) : mTitle{text} {}
+    
+    void valueToText(value_span_type buffer) const {
+        buffer.insertLeft("press"_pgm);
+    }
+    
+    virtual void putTextInto(Hott::BufferString& buffer) const override {
+        buffer[0] = etl::Char{' '};
+        buffer.insertAtFill(1, mTitle);
+        valueToText(etl::make_span<valueBeginColumn, valueWidth>(buffer));
+        if (mSelected) {
+            etl::apply(etl::make_span<valueBeginColumn, valueWidth>(buffer), [](auto& c) {c |= etl::Char{0x80};});
+        }
+    }
+    virtual MenuItem* processKey(const Hott::key_t key) override {
+        switch (key) {
+        case Hott::key_t::up:
+        case Hott::key_t::down:
+        case Hott::key_t::left:
+        case Hott::key_t::right:
+        case Hott::key_t::nokey:
+            break;
+        case Hott::key_t::set:
+            if (mSelected) {
+                CB::process();
+            }
+            mSelected = !mSelected;
+            break;
+        }
+        return this;
+    }
+private:
+    const AVR::Pgm::StringView mTitle;
+};
+
+struct SystemMenu final : public Hott::Menu<8, true, 2> {
+    SystemMenu(auto* const parent) : Menu{parent, "Einstellungen"_pgm, &mReset} {}    
+
+    struct R {
+        static inline void process() {
+            appData[Storage::AVKey::Ch0] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch1] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch2] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch3] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch4] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch5] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch6] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch7] = Storage::ApplData::value_type{};
+            appData.change();
+        }
+    };
+    Button<R> mReset{"Reset"_pgm};
+};
+
+struct RCMenu final : public Hott::Menu<8, true, 5> {
     inline static constexpr uint8_t valueTextLength{6};
     
-    RCMenu() : Hott::Menu<8, true, 4>{nullptr, "WM Switch 0.3"_pgm, &mSW, &mPwm, &mBlink} {}
+    RCMenu() : Hott::Menu<8, true, 5>{nullptr, "WM Switch 1.3"_pgm, &mSW, &mPwm, &mBlink, &mSystem} {}
 
 private:
     SwitchesMenu mSW{this};
     PwmMenu mPwm{this};
     BlinkMenu mBlink{this};
+    SystemMenu mSystem{this};
 };
 
 using menu = Hott::BasePage<sensor, RCMenu>;

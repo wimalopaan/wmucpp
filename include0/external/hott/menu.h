@@ -277,6 +277,9 @@ inline static constexpr uint8_t selectableLinesMax = []{
             buffer.insertAt(1, mTitle);
             buffer.insertAt(10, mText);
         }
+        auto& text() {
+            return mText;
+        }
     private:
         const AVR::Pgm::StringView mTitle;
         const etl::StringBuffer<L>& mText;   
