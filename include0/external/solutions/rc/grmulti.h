@@ -9,7 +9,7 @@ namespace External {
         struct MultiSwitch2N {
             enum class State : uint8_t {UnDefined, GotSync1, GotSync2};
 
-            enum class SwState : uint8_t {Off, On};
+            enum class SwState : uint8_t {Off, On, Blink1 = On, Steady, Blink2};
 
             using gpior_t = typename MCU::Gpior; 
             static inline constexpr auto flags = AVR::getBaseAddr<gpior_t, 1>;

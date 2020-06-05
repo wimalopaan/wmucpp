@@ -99,7 +99,7 @@ namespace IBus {
     }
 
     namespace Switch {
-        template<typename PA, typename Actor, typename NVM>
+        template<typename PA, typename Actor, typename Out>
         struct Switch3 {
             using channel_t = PA::channel_t;
             using value_t = PA::value_type;
@@ -110,15 +110,13 @@ namespace IBus {
             using param_t  = etl::uint_ranged<uint8_t, 0, 15>;
             using pvalue_t  = etl::uint_ranged<uint8_t, 0, 31>;
             
-            using nvm_t = std::remove_cvref_t<decltype(NVM::data())>;
-            using nvm_data_t = nvm_t::value_type;
+            using blink_index_t = Out::blink_index_t;
             
-            using blinks_type = std::remove_cvref_t<decltype(nvm_data_t{}.blinks())>;
-            using blink_index_t = etl::uint_ranged<uint8_t, 0, blinks_type::size()>;
-            
-            using tick_t = nvm_data_t::tick_t;
+            using tick_t = Out::tick_t;
             inline static constexpr auto blinkMax = tick_t::max();
 
+            inline static constexpr auto pwmMax = Out::pwmMax;
+            
             static inline void init(const channel_t c) {
                 mChannel = c;
             }
@@ -143,20 +141,37 @@ namespace IBus {
                         lp2 = param;
                         lp = value;
                         if (param == 0) {
-                            NVM::data()[lastOnIndex].pwmValue(value.toInt() * 2); // scale to max
+                            Actor::switches()[lastOnIndex] = Actor::SwState::Steady;
+                            const uint8_t pwm = ((uint16_t)value * pwmMax) / pvalue_t::Upper;
+                            Out::pwm(lastOnIndex, pwm);
                         }
                         else if (param == 1) {
-                            NVM::data()[lastOnIndex].blinks()[0].intervall = tick_t::fromRaw(value); // scale 
-                            NVM::data()[lastOnIndex].blinks()[0].duration = tick_t::fromRaw(value / 2);
+                            Actor::switches()[lastOnIndex] = Actor::SwState::Blink1;
+                            const uint8_t intervall = ((uint16_t)value * tick_t::max()) / pvalue_t::Upper;
+                            Out::mode(blink_index_t{0});
+                            Out::intervall2(lastOnIndex, tick_t::fromRaw(intervall));
+                            Out::duration(lastOnIndex, tick_t::fromRaw(intervall / 2));
                         }
                         else if (param == 2) {
-                            NVM::data()[lastOnIndex].blinks()[0].duration = tick_t::fromRaw(value); // scale
+                            Actor::switches()[lastOnIndex] = Actor::SwState::Blink1;
+                            Out::mode(blink_index_t{0});
+                            const uint16_t intervall = Out::intervall(lastOnIndex).value;
+                            const uint8_t duration = (value * intervall) / pvalue_t::Upper; 
+                            Out::duration(lastOnIndex, tick_t::fromRaw(duration));
                         }
                         else if (param == 3) {
-                            
+                            Actor::switches()[lastOnIndex] = Actor::SwState::Blink2;
+                            const uint8_t intervall = ((uint16_t)value * tick_t::max()) / pvalue_t::Upper;
+                            Out::mode(blink_index_t{1});
+                            Out::intervall2(lastOnIndex, tick_t::fromRaw(intervall));
+                            Out::duration(lastOnIndex, tick_t::fromRaw(intervall / 2));
                         }
                         else if (param == 4) {
-                            
+                            Actor::switches()[lastOnIndex] = Actor::SwState::Blink2;
+                            Out::mode(blink_index_t{1});
+                            const uint16_t intervall = Out::intervall(lastOnIndex).value;
+                            const uint8_t duration = (value * intervall) / pvalue_t::Upper; 
+                            Out::duration(lastOnIndex, tick_t::fromRaw(duration));
                         }
                     }
                 }
@@ -166,7 +181,17 @@ namespace IBus {
                     }
                     if (mode >= 2) {
                         lastOnIndex = index;
-                        Actor::switches()[index] = Actor::SwState::On;
+                        if (mode == 2) {
+                            Actor::switches()[index] = Actor::SwState::Steady;
+                        }
+                        if (mode == 3) {
+                            Out::mode(blink_index_t{0});
+                            Actor::switches()[index] = Actor::SwState::Blink1;
+                        }
+                        if (mode == 4) {
+                            Out::mode(blink_index_t{1});
+                            Actor::switches()[index] = Actor::SwState::Blink2;
+                        }
                     }
                     else {
                         Actor::switches()[index] = Actor::SwState::Off;

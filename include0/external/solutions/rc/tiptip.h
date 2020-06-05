@@ -12,7 +12,7 @@ namespace External {
             static inline constexpr uint8_t enableMask = 0x01;
 
             enum class State : uint8_t {UnDefined, CountUp, CountUpPause, ToggleUp, CountDown, CountDownPause, ToggleDown};
-            enum class SwState : uint8_t {Off, On};
+            enum class SwState : uint8_t {Off, On, Blink1 = On, Steady, Blink2};
             
             using index_t = etl::uint_ranged<uint8_t, 0, ((N / 2) - 1)>;
             

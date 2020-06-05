@@ -11,7 +11,7 @@ using sensor = Hott::Experimental::Sensor<usart0Position, AVR::Usart, AVR::BaudR
 
 template<auto N = 8>
 struct SwitchStates {
-    enum class SwState : uint8_t {Off, On};
+    enum class SwState : uint8_t {Off, On, Blink1 = On, Steady, Blink2};
     
     static constexpr void init() {
     }

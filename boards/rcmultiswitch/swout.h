@@ -81,7 +81,7 @@ namespace External {
                 setSwitchOff(index);
                 blinkTicks[index] = NVM::data()[index].blinks()[blinkIndex].intervall;
             }
-            else if (StateProvider::switches()[index] == StateProvider::SwState::On) {
+            else if ((StateProvider::switches()[index] == StateProvider::SwState::On) || (StateProvider::switches()[index] == StateProvider::SwState::Blink2)) {
                 if (NVM::data()[index].blinks()[blinkIndex].duration) {
                     blinkTicks[index].match(NVM::data()[index].blinks()[blinkIndex].duration, [&]{
                         setSwitchOff(index);
@@ -94,6 +94,9 @@ namespace External {
                 else {
                     setSwitchOn(index);
                 }
+            }
+            else if (StateProvider::switches()[index] == StateProvider::SwState::Steady) {
+                setSwitchOn(index);                
             }
         }
         inline static void setSwitches() {
@@ -123,6 +126,10 @@ namespace External {
         inline static void intervall(const index_t index, const tick_t i) {
             NVM::data()[index].blinks()[blinkIndex].intervall = i;
             blinkTicks[index] = std::min(blinkTicks[index], i);
+        }
+        inline static void intervall2(const index_t index, const tick_t i) {
+            NVM::data()[index].blinks()[blinkIndex].intervall = i;
+//            blinkTicks[index] = std::min(blinkTicks[index], i);
         }
         inline static auto intervall(const index_t index) {
             return NVM::data()[index].blinks()[blinkIndex].intervall;

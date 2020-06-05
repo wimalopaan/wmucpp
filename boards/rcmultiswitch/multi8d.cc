@@ -11,7 +11,7 @@ using terminal = etl::basic_ostream<servo>;
 
 template<auto N = 8>
 struct SwitchStates {
-    enum class SwState : uint8_t {Off, On};
+    enum class SwState : uint8_t {Off, On, Blink1 = On, Steady, Blink2};
     
     static constexpr void init() {
     }
@@ -29,7 +29,7 @@ using sw = SwitchStates<>;
 
 using out = External::Output<ledList, pwm, sw, eeprom>;
 
-using ibus_switch = IBus::Switch::Switch3<servo_pa, sw, eeprom>;
+using ibus_switch = IBus::Switch::Switch3<servo_pa, sw, out>;
 
 int main() {
     portmux::init();
