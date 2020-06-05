@@ -4,11 +4,32 @@
 #include "swout.h"
 
 using servo_pa = IBus::Servo::ProtocollAdapter<0>;
-using ibus_switch = IBus::Switch::Switch2<servo_pa>;
 
 using servo = AVR::Usart<usart0Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
 using terminalDevice = servo;
 using terminal = etl::basic_ostream<servo>;
+
+template<auto N = 8>
+struct SwitchStates {
+    enum class SwState : uint8_t {Off, On};
+    
+    static constexpr void init() {
+    }
+    static constexpr uint8_t size() {
+        return N;
+    }
+    static inline auto& switches() {
+        return swStates;
+    }
+private:
+    static inline std::array<SwState, N> swStates{};
+};
+
+using sw = SwitchStates<>;
+
+using out = External::Output<ledList, pwm, sw, eeprom>;
+
+using ibus_switch = IBus::Switch::Switch3<servo_pa, sw, eeprom>;
 
 int main() {
     portmux::init();
@@ -21,24 +42,29 @@ int main() {
     
     systemTimer::init();
 
-    Meta::visit<ledList>([]<typename L>(Meta::Wrapper<L>){
-                             L::template dir<Output>();
-                         });
-
-    const auto periodicTimer = alarmTimer::create(100_ms, External::Hal::AlarmFlags::Periodic);
+    out::init();
+    
+    const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
 
     etl::outl<terminal>("multi8d"_pgm);
 
     uint16_t counter{};
+    
+    using ch_t = servo_pa::channel_t;
     
     while(true) {
         servo::periodic();
         
         systemTimer::periodic([&]{
             ibus_switch::periodic();
+            out::setSwitches();
             alarmTimer::periodic([&](const auto& t){
                 if (periodicTimer == t) {
-                    etl::outl<terminal>("c: "_pgm, counter++);
+                    etl::outl<terminal>("c: "_pgm, counter++, " ch: "_pgm, ibus_switch::lv, 
+//                                        " gc: "_pgm, ibus_switch::gc, " gc2: "_pgm, ibus_switch::gc2
+                                        " lp: "_pgm, ibus_switch::lp,
+                                        " lp2: "_pgm, ibus_switch::lp2
+                                        );
                 }
             });
         });

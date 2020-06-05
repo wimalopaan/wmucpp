@@ -99,7 +99,94 @@ namespace IBus {
     }
 
     namespace Switch {
-        template<typename PA>
+        template<typename PA, typename Actor, typename NVM>
+        struct Switch3 {
+            using channel_t = PA::channel_t;
+            using value_t = PA::value_type;
+            
+            using addr_t  = etl::uint_ranged<uint8_t, 0, 3>;
+            using index_t = etl::uint_ranged<uint8_t, 0, 7>;
+            using mode_t  = etl::uint_ranged<uint8_t, 0, 15>;
+            using param_t  = etl::uint_ranged<uint8_t, 0, 15>;
+            using pvalue_t  = etl::uint_ranged<uint8_t, 0, 31>;
+            
+            using nvm_t = std::remove_cvref_t<decltype(NVM::data())>;
+            using nvm_data_t = nvm_t::value_type;
+            
+            using blinks_type = std::remove_cvref_t<decltype(nvm_data_t{}.blinks())>;
+            using blink_index_t = etl::uint_ranged<uint8_t, 0, blinks_type::size()>;
+            
+            using tick_t = nvm_data_t::tick_t;
+            inline static constexpr auto blinkMax = tick_t::max();
+
+            static inline void init(const channel_t c) {
+                mChannel = c;
+            }
+            static inline bool periodic() {
+                const uint16_t c = PA::value(mChannel).toInt() - value_t::Lower;
+                lv = c;
+                
+                const addr_t addr((c & (0x03 << 7)) >> 7);
+                const index_t index((c & (0x07 << 4)) >> 4);
+                const mode_t mode((c & 0x0f));
+                                
+                if (c & (0x01 << 9)) { // control
+                    const param_t param((c & (0x0f << 5)) >> 5);
+                    const pvalue_t value(c & 0x1f);
+                    
+                    if (param.isTop()) {
+                        for(auto& s : Actor::switches()) {
+                            s = Actor::SwState::Off;
+                        }                        
+                    }
+                    else {
+                        lp2 = param;
+                        lp = value;
+                        if (param == 0) {
+                            NVM::data()[lastOnIndex].pwmValue(value.toInt() * 2); // scale to max
+                        }
+                        else if (param == 1) {
+                            NVM::data()[lastOnIndex].blinks()[0].intervall = tick_t::fromRaw(value); // scale 
+                            NVM::data()[lastOnIndex].blinks()[0].duration = tick_t::fromRaw(value / 2);
+                        }
+                        else if (param == 2) {
+                            NVM::data()[lastOnIndex].blinks()[0].duration = tick_t::fromRaw(value); // scale
+                        }
+                        else if (param == 3) {
+                            
+                        }
+                        else if (param == 4) {
+                            
+                        }
+                    }
+                }
+                else { // command
+                    if (addr != mAddr) {
+                        return false;
+                    }
+                    if (mode >= 2) {
+                        lastOnIndex = index;
+                        Actor::switches()[index] = Actor::SwState::On;
+                    }
+                    else {
+                        Actor::switches()[index] = Actor::SwState::Off;
+                    }
+                }
+                return true;                
+            }
+            
+            static inline uint16_t lv;
+            static inline uint8_t lp;
+            static inline uint8_t lp2;
+            static inline bool gc{};
+            static inline bool gc2{};
+        private: 
+            static inline index_t lastOnIndex;
+            static inline channel_t mChannel{9};
+            static inline addr_t    mAddr{0};
+        };
+
+    template<typename PA>
         struct Switch2 {
             using channel_t = PA::channel_t;
             using value_t = PA::value_type;
