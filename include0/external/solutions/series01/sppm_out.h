@@ -78,7 +78,8 @@ namespace External {
             static constexpr uint16_t ccPulseFrame = ocMax + ccPulse;
             static_assert(ccPulse > 0, "wrong oc value");
             
-            using ranged_type = etl::uint_ranged<uint16_t, ocMin, ocMax> ;
+            using ranged_type   = etl::uint_ranged_NaN<uint16_t, ocMin, ocMax> ;
+//            using extended_type = etl::uint_ranged_NaN<uint16_t, ocMin, ocMax> ;
             
             static inline constexpr auto pv = []{
                 for(auto p : mcu_timer_t::prescalerValues) {
@@ -97,9 +98,27 @@ namespace External {
                 AVR::PinGroup<pin_list>::template dir<AVR::Output>();
                 *mcu_tca()->perbuf = period;
             }
-
+            
+            template<typename WO>
+            static inline void onCompareMatch(auto f) {
+                static_assert(WO::value <= 2);
+                if constexpr(WO::value == 0) {
+                    mcu_tca()->intflags.template testAndReset<mcu_timer_t::Intflags_t::cmp0>(f);
+                }
+                else if constexpr(WO::value == 1) {
+                    mcu_tca()->intflags.template testAndReset<mcu_timer_t::Intflags_t::cmp1>(f);
+                }
+                else if constexpr(WO::value == 2) {
+                    mcu_tca()->intflags.template testAndReset<mcu_timer_t::Intflags_t::cmp2>(f);
+                }
+            }
+            
+            static inline void ppmRaw(index_type ch, uint16_t v) {
+                duty(ch, v);
+            }
+            
             template<typename T, auto L, auto U>
-            static void ppm(index_type ch, etl::uint_ranged_NaN<T, L, U> raw) {
+            static inline void ppm(index_type ch, etl::uint_ranged_NaN<T, L, U> raw) {
                 if (raw) {
                     T v1 = raw.toInt() - L;
                     constexpr uint64_t denom = U - L;

@@ -247,7 +247,9 @@ boards/ibusppmconverter/b11c4.cc
 boards/ibusppmconverter/board.h
 boards/ibusppmconverter/curr.h
 boards/ibusppmconverter/gps.h
+boards/ibusppmconverter/ibus2multi.cc
 boards/ibusppmconverter/rpm.h
+boards/ibusppmconverter/sbusencoder.cc
 boards/ibusppmconverter/temp.h
 boards/ibusppmconverter/test00.cc
 boards/ibusppmconverter/volt.h

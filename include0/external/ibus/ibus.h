@@ -99,6 +99,54 @@ namespace IBus {
     }
 
     namespace Switch {
+        template<typename PA, typename Actor>
+        struct Switch4 {
+            using channel_t = PA::channel_t;
+            using value_t = PA::value_type;
+            
+            using addr_t  = etl::uint_ranged<uint8_t, 0, 3>;
+            using index_t = etl::uint_ranged<uint8_t, 0, 7>;
+            using mode_t  = etl::uint_ranged<uint8_t, 0, 15>;
+            using param_t  = etl::uint_ranged<uint8_t, 0, 15>;
+            using pvalue_t  = etl::uint_ranged<uint8_t, 0, 31>;
+
+            inline static void init() {
+            }
+            inline static bool periodic() {
+                const uint16_t c = PA::value(mChannel).toInt() - value_t::Lower;
+                
+                const addr_t addr((c & (0x03 << 7)) >> 7);
+                const index_t index((c & (0x07 << 4)) >> 4);
+                const mode_t mode((c & 0x0f));
+                                
+                if (c & (0x01 << 9)) { // control
+                }
+                else { // command
+                    if (addr != mAddr) {
+                        return false;
+                    }
+                    if (mode >= 2) {
+                        if (mode == 2) {
+                            Actor::switches()[index] = Actor::SwState::Steady;
+                        }
+                        if (mode == 3) {
+                            Actor::switches()[index] = Actor::SwState::Blink1;
+                        }
+                        if (mode == 4) {
+                            Actor::switches()[index] = Actor::SwState::Blink2;
+                        }
+                    }
+                    else {
+                        Actor::switches()[index] = Actor::SwState::Off;
+                    }
+                }
+                return true;                
+            }
+        private:
+            static inline channel_t mChannel{9};
+            static inline addr_t    mAddr{0};
+        };
+
         template<typename PA, typename Actor, typename Out>
         struct Switch3 {
             using channel_t = PA::channel_t;
@@ -111,7 +159,6 @@ namespace IBus {
             using pvalue_t  = etl::uint_ranged<uint8_t, 0, 31>;
             
             using blink_index_t = Out::blink_index_t;
-            
             using tick_t = Out::tick_t;
             inline static constexpr auto blinkMax = tick_t::max();
 

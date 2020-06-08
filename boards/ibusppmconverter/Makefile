@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# ~/Projekte/updi/pyupdi/pyupdi.py -d tiny1614 -c /dev/ttyUSB1  -f test00.hex
+# ~/Projekte/updi/pyupdi/pyu^pdi.py -d tiny1614 -c /dev/ttyUSB1  -f test00.hex
 
 MCU = attiny1614
 F_OSC = 20000000
@@ -32,5 +32,7 @@ targets += a2c2r.hex
 targets += a2c2r1g.hex
 targets += b10c5.hex
 targets += b11c4.hex
+#targets += sbusencoder.hex
+targets += ibus2multi.hex
 
 -include ../../Makefile.avr0.include
