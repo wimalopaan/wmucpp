@@ -178,6 +178,8 @@ namespace External {
             static_assert(ccPulse > 0, "wrong oc value");
             static constexpr uint16_t ccPulseFrame = ocMax + ccPulse;
             static_assert(ccPulse > 0, "wrong oc value");
+
+            using index_type = void;
             
             using ranged_type = etl::uint_ranged<uint16_t, ocMin, ocMax> ;
             
@@ -231,6 +233,10 @@ namespace External {
                     }
                 }
             }
+            static void ppmRaw(const uint16_t v) {
+                da = v;
+            }
+            
             inline static void onReload(auto f) {
                 if (!mcu_tcb()->status.template isSet<mcu_timer_t::Status_t::run>()) {
                     *mcu_tcb()->ccmp = da;

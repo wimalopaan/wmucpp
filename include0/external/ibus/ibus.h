@@ -99,8 +99,11 @@ namespace IBus {
     }
 
     namespace Switch {
-        template<typename PA, typename Actor>
-        struct Switch4 {
+        template<typename PA, typename ActorList>
+        struct Switch4;
+        
+        template<typename PA, typename... Actors>
+        struct Switch4<PA, Meta::List<Actors...>> {
             using channel_t = PA::channel_t;
             using value_t = PA::value_type;
             
@@ -122,9 +125,23 @@ namespace IBus {
                 if (c & (0x01 << 9)) { // control
                 }
                 else { // command
-                    if (addr != mAddr) {
-                        return false;
-                    }
+                    update(Meta::List<Actors...>{}, mode, index, addr);                    
+                }
+                return true;                
+            }
+        private:
+            template<typename F, typename... AA>
+            inline static void update(Meta::List<F, AA...>, const mode_t mode, const index_t index, const addr_t address) {
+                update<F>(mode, index, address);
+                if constexpr(sizeof...(AA) > 0) {
+                    update(Meta::List<AA...>{}, mode, index, address);
+                }
+            }
+            
+            template<typename Actor>
+            static inline void update(const mode_t mode, const index_t index, const addr_t address) {
+//                Actor::_;
+                if (Actor::address == address) {
                     if (mode >= 2) {
                         if (mode == 2) {
                             Actor::switches()[index] = Actor::SwState::Steady;
@@ -140,11 +157,11 @@ namespace IBus {
                         Actor::switches()[index] = Actor::SwState::Off;
                     }
                 }
-                return true;                
             }
-        private:
+            
+            
             static inline channel_t mChannel{9};
-            static inline addr_t    mAddr{0};
+            static inline constexpr addr_t mAddr{0};
         };
 
         template<typename PA, typename Actor, typename Out>
