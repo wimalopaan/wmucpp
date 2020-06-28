@@ -4,7 +4,6 @@
 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 :revnumber: 0.01
 :revdate: 01.01.1970
-:revremark: undefined
 :lang: de
 :toc:
 :toc-title: Inhalt
@@ -16,6 +15,7 @@ Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 :figure-caption: Abbildung
 :description: Elektronischer Hauptschalter
 :title: Elektronischer Hauptschalter
+:title-page:
 :sectanchors:
 :sectlinks:
 :experimental:
@@ -38,19 +38,11 @@ Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 
 //:imgdir: ./images
 
-
 //:short: // without images 
 
 //include::license.adoc[]
 
 == Symbolerklärung
-
-.Oberseite
-image::onoff_simple_parts01-1.png[width=500,align=center]
-
-.Oberseite
-image::onoff_simple_parts02-1.png[width=500,align=center]
-
 
 [TIP]
 Ein wichtiger allgemeiner Hinweis für den sicheren Aufbau und die sichere Bedienung. Dieser sollte durch den Anwender bachtet werden,
@@ -74,9 +66,6 @@ oder elektronisches Gerät im Sinne des ElektroG dar und wird als Gerät nicht k
 [IMPORTANT]
 --
 Die Überlassung gegen Unkostenerstattung erfolgt unter Ausschluss jeglicher Sach­mangelhaftung.
-
-// Die Haftung wegen Arglist und Vorsatz sowie auf Schaden­ersatz wegen Körperverletzungen 
-// sowie bei grober Fahr­lässig­keit oder Vorsatz bleibt unbe­rührt.
 
 Für den vorliegenden Bausatz werden keine Funktionsgarantien gegeben. Für Schäden am Bausatz oder an damit verbundenen Geräten oder Modulen
 wird keine Haftung übernommen. Gewährleistungen, Garantien und Widerrufsrechte gibt es nicht.
@@ -134,27 +123,27 @@ Bei jeglichen Unklarheiten in dieser Funktionsbeschreibung und generellem Aufbau
 unterlassen Sie den Betrieb und kontaktieren Sie den Bausatzersteller.
 
 Das Modul dient zum zentralen Einschalten der zentralen Stromversorgung von Schiffsmodellen. Das Einschalten und das Ausschalten 
-erfolgen über einen Tastkontakt. Das Modul gibt akustische Rückmeldung über seinen Zustand.
+erfolgen über einen Tastkontakt (Reed-Kontakt). Das Modul gibt optische Rückmeldung (LED) über seinen Zustand.
 
-Das folgende Bild zeigt den Einbau schematisch:
-
-[[schema1]]
-.Schematischer Anschluß des Moduls an Akku, Verbraucher und Kontakt
-image::images/schema1.svg[]
+// Das folgende Bild zeigt den Einbau schematisch:
+// 
+// [[schema1]]
+// .Schematischer Anschluß des Moduls an Akku, Verbraucher und Kontakt
+// image::images/schema1.svg[]
 
 === Anschluß an den Akku
 
 Für einen ordnungsgemäßen Betrieb ist das Modul mit entsprechenden Kabeln zu versehen, die einen ausreichenden Querschnitt 
-aufweisen (s.a. <<Variants>>).
+aufweisen.
 
-Die Anschlüsse `In(+)` / `Gnd` sind mit dem Akku zu verbinden.
+Die Anschlüsse `Vin` (Plus) / `Gnd` sind mit dem Akku zu verbinden.
 
-Die Anschlüsse `Out` / `Gnd` sind mit den zu versorgenden Geräten zu verbinden.
+Die Anschlüsse `Vout` (Plus) / `Gnd` sind mit den zu versorgenden Geräten zu verbinden.
 
 Ein Verpolen der Anschlüsse kann zu einem Defekt führen.
 
 [CAUTION]
-Achten Sie neben ausreichenden Querschnitten (s.a. <<Variants>>) der Kabel auch immer auf kurze Verbindungen, vor allem vom Akku zu Hauptschalter bzw. 
+Achten Sie neben ausreichenden Querschnitten der Kabel auch immer auf kurze Verbindungen, vor allem vom Akku zu Hauptschalter bzw. 
 bei allen, hohen Strom führenden Leitungen.
 
 === Anschluß des Tastkontaktes
@@ -169,33 +158,20 @@ im Modell verlegt werden. Die Leitungslänge sollte 75cm nicht überschreiten.
 --
 
 Vor der Montage eines Reed-Kontaktes die _Vorzugsrichtung_ des Reed-Kontaktes ermitteln, damit ein sicheres Ansprechen 
-gewährleistet ist. Vorsicht beim Biegen der Anschlußdrähte eines 
-Reed-Kontaktes, denn diese brechen leicht.
+gewährleistet ist. Vorsicht beim Biegen der Anschlußdrähte eines Reed-Kontaktes, denn diese brechen leicht.
 
 Beachten Sie den maximalen Abstand des Magneten zum Reed-Kontakt bei der Montage. Mehr als 1,5mm kann zu Problemen beim 
 Ein- oder Ausschalten führen. Dies hängt wesentlich von der Stärke des Magneten ab.
 
-=== Position
-
-Bauen Sie das Modul so ein, das ein gute Schallübertragung möglich ist. Die seitliche Öffnung des Piezo-Summers darf nicht verdeckt werden.
-
 === Schutz 
 
-Um das Modul gegen Feuchtigkeit zu schützen und glichzeitig die Schallausbreitung nicht zu beeinträchtigen, empfielt es sich, das Modul 
+Um das Modul gegen Feuchtigkeit zu schützen, empfielt es sich, das Modul 
 mit Polyurethan-Lack-Schutzlack (z.B. Kontakt 70) zu überziehen. Bitte kleben Sie jedoch voher den Pfostenverbinder für den Kontackt, den 
-Piezosummer und (falls noch nicht angelötet) die Lötringe für die Anschlußkabel ab.
+die Löt-Pads für die Anschlußkabel ab.
 
-Ein Einschrumpfen mit Schrumpfschlauch ist möglich, aber auch hier muss streng darauf geachtet werden, dass eine gute Schallausbreitung
-ermöglicht bleibt.
-
+Ein Einschrumpfen mit Schrumpfschlauch ist möglich.
 
 == Funktion
-
-[IMPORTANT]
---
-Durch den Anwender aufgebrachte, veränderte Software kann einen anderen Betrieb ermöglichen und gleichzeitig erhöhte bzw. veränderte 
-Gefahren mit sich bringen.
---
 
 [[funcon]]
 === Einschalten
@@ -208,14 +184,8 @@ Treffen Sie die üblichen Sicherheitsvorkehrungen beim Einschalten von Stromvers
 Schalten Sie den Sender _vorher_ ein. Kontrollieren Sie die _Gasstellung_.
 --
 
-Betätigen Sie den Kontakt dauerhaft. Es ertönt _dreimal_ ein Ton mittlerer Höhe im Sekundentakt. Anschließend ertönt ein 
-hoher Ton. Dies zeigt die nun folgende Betriebsbereitschaft an. Beim _nächsten hohen_ Ton wird eingeschaltet (s.a. <<Prog>>). 
-Der Kontakt kann nun 
-losgelassen werden. Nun ist das Modul im Zustand `EIN`.
-
-Wird der Kontakt vorzeitig losgelassen, bleibt das Modul im Zustand `AUS`. Zur Kontrolle ertönt ein tiefer Ton.
-
-Um das Modul wieder auszuchalten, muss der Kontakt kurz getrennt werden.
+Betätigen Sie den Kontakt kurz bzw. nähern sie den Magneten kurz an den Reed-Kontakt. Nun ist das Modul im Zustand `EIN`.
+Die LED leuchtet.
 
 [[funcoff]]
 === Ausschalten
@@ -224,49 +194,59 @@ Um das Modul wieder auszuchalten, muss der Kontakt kurz getrennt werden.
 [CAUTION]
 --
 Schalten Sie keine direkt angeschlossenen, induktiven Lasten (große Motoren, Transformatoren) im laufenden Betrieb aus. 
-Dadurch kann das Modul zerstört werden, wenn der maximale Schaltstrom überschritten wird (s.a. <<Variants>>). 
+Dadurch kann das Modul zerstört werden, wenn der maximale Schaltstrom überschritten wird. 
 --
 
-Betätigen Sie den Kontakt dauerhaft. Es ertönt _dreimal_ ein Ton mittlerer Höhe im Sekundentakt. Anschließend ertönt ein 
-tiefer Ton. Dies zeigt die nun folgende Ausschaltbereitschaft an. Beim _nächsten tiefen_ Ton wird ausgeschaltet. Der Kontakt kann nun 
-losgelassen werden. Nun ist das Modul im Zustand `AUS`.
-
-Wird der Kontakt vorzeitig losgelassen, bleibt das Modul im Zustand `EIN`. Zur Kontrolle ertönt ein hoher Ton.
-
-Um das Modul wieder einzuchalten, muss der Kontakt kurz getrennt werden.
+Betätigen Sie den Kontakt kurz bzw. nähern sie den Magneten kurz an den Reed-Kontakt. Nun ist das Modul im Zustand `AUS`.
+Die LED ist dunkel.
 
 === Ruhe
 
-Ist das Modul im Zustand `AUS`, geht es nach ca. 3 Sekunden in den Schlafzustand. Es verbraucht nun sehr wenig Strom (<= 2 µA) 
-(Achtung: s.a. <<Betrieb>>) 
-
+Im ausgeschalteten Zustand verbraucht das Modul keinen nennenswerten Strom und kann dauerhaft am Akku verbleiben.
 
 [[Variants]]
 == Varianten
 
 [CAUTION]
-Unterhalb einer Eingangsspannung von 5,5V ist kein gesicherter Betrieb mehr möglich. Daher ist es sinnvoll,
+Unterhalb einer Eingangsspannung von 4V ist kein gesicherter Betrieb mehr möglich. Daher ist es sinnvoll,
 eine Telemetriefunktion zur Unterspannungserkennung einzusetzen. Bei stark abnehmender Spannung ist daher sofort eine 
 Rückkehr des Schiffsmodells zum Ufer angebracht. Anderfalls kann es zu einem totalen Stromausfall kommen.
 
+[TIP]
+Die Varianten unterscheiden sich in der max. Strombelastbarkeit. Dies wird durch eine unterschiedliche Anzahl von Leistungstransistoren erreicht.
+Diese können auch jederzeit nachbestückt werden.
 
-=== Variante 16V/30A
-
-*Wichtig*: Erforderliche Anschlußkabel: mindestens 12AWG
+=== Variante 30V/20A
 
 [horizontal]
-Spannungfestigkeit:: maximal 16V (LiPo: 2S - 3S)
+Spannungfestigkeit:: maximal 30V (LiPo: 6S)
+Strombelastbarkeit:: maximal 20A (nur im *Kurzzeitbetrieb*: 10% ED S3)
+Schaltstrom:: maximal 5A (direktes Schalten von Verbrauchern)
+Anzahl Leistungstransistoren:: 2
+
+=== Variante 30V/30A
+
+[horizontal]
+Spannungfestigkeit:: maximal 30V (LiPo: 6S)
 Strombelastbarkeit:: maximal 30A (nur im *Kurzzeitbetrieb*: 10% ED S3)
-Schaltstrom:: maximal 5A (s.a. <<funcoff>>)
+Schaltstrom:: maximal 10A (direktes Schalten von Verbrauchern)
+Anzahl Leistungstransistoren:: 3
 
-=== Variante 32V/60A
-
-*Wichtig*: Erforderliche Anschlußkabel: mindestens 10AWG
+=== Variante 30V/40A
 
 [horizontal]
-Spannungfestigkeit:: maximal 32V (LiPo: 2S - 7S)
-Strombelastbarkeit:: maximal 60A (nur im *Kurzzeitbetrieb*: 10% ED S3)
-Schaltstrom:: maximal 10A (s.a. <<funcoff>>)
+Spannungfestigkeit:: maximal 30V (LiPo: 6S)
+Strombelastbarkeit:: maximal 40A (nur im *Kurzzeitbetrieb*: 10% ED S3)
+Schaltstrom:: maximal 15A (direktes Schalten von Verbrauchern)
+Anzahl Leistungstransistoren:: 4
+
+=== Variante 30V/50A
+
+[horizontal]
+Spannungfestigkeit:: maximal 30V (LiPo: 6S)
+Strombelastbarkeit:: maximal 50A (nur im *Kurzzeitbetrieb*: 10% ED S3)
+Schaltstrom:: maximal 20A (direktes Schalten von Verbrauchern)
+Anzahl Leistungstransistoren:: 5
 
 [[Betrieb]]
 == Betrieb
@@ -281,7 +261,7 @@ Die üblichen Sicherheitsvorkehrungen im Betrieb mit ferngesteuerten Modellen, i
 Beachten Sie *alle* folgenden Hinweise zum Betrieb.
 
 [CAUTION]
-Eine Verwendung des Moduls in Rennbooten ist nicht zulässig.
+Eine Verwendung des Moduls in Rennbooten oder Flogmodellen ist nicht zulässig.
 
 [CAUTION]
 Das Modul darf nicht in Kontakt mit Wasser, Wasserdampf oder anderen Flässigkeiten kommen. Wasser oder Wasserdampf bzw. andere 
@@ -289,7 +269,7 @@ Flüssigkeiten können zu einem Totalausfall
 und damit zu einem Modellverlust sowie Personenschäden führen.
 
 [CAUTION]
-Das Modul verbraucht im Ruhezustand nur sehr wenig Strom. Trotzdem darf ein dauerhafter Anschluß an einen unüberwachten Akku nicht erfolgen.
+Das Modul verbraucht im Ruhezustand nur sehr wenig Strom. Trotzdem darf ein dauerhafter Anschluß an einen *unüberwachten* Akku nicht erfolgen.
 Hier besteht Brandgefahr! Gefahr von Personenschäden!
 
 [CAUTION]
@@ -350,76 +330,175 @@ Fehlfunktionen enthält.
 
 === Schrittweise Anleitung
 
-Löten Sie alle Bauteile wie angegeben auf. Löten Sie auch den programmierten µC auf.
+Für den Zusammenbau sind keine Spezialkentnisse oder Spezialwerkzeug erforderlich. Es sollte jedem Modellbauer gelingen.
 
-Beim Auflöten der MOSFETs ist darauf zu achten, dass die Verlötung auf der Platine mit der Rückseite der MOSFETs vollflächig erfolgt. Hierzu 
-muss ein ausreichend starker Lötkolben verwendet werden. Achten Sie auch auf eine hohe Löttemperatur (400 °C) und eine kurze Lötdauer. 
+.Werkzeuge und Hilfsmittel
+[TIP]
+Benutzen Sie einen feinen und *geregelten* Lötkolben von mindestens 25W Leistung (bei Lötstationen bbis 80W). Benutzen Sie nur 
+*Elektroniklot* mit eine *Flussmittelseele* von 0,5mm bis 1mm Stärke. Verwenden Sie zum Abschneiden der überstehenden Bauteildrähte einen 
+*Elektronikseitenschneider*. Schneiden Sie die Drähte auf der Unterseite der Platine knapp über des Lötpunktes ab.
+
+Löten Sie alle Bauteile wie angegeben auf. Hierzu muss ein ausreichend starker Lötkolben verwendet werden. Achten Sie auch auf eine hohe Löttemperatur (400 °C) und eine kurze Lötdauer. 
 
 [IMPORTANT]
-Bei zu langer Lötdauer kann der MOSFET zerstört werden.
-
-Pin 3 (_Source_) der MOSFETs muss mit _sehr viel_ Lötzinn aufgelötet werden. Trotzdem darauf achten, dass kein Kurzschluß zu einer 
-benachbarten Leiterbahn entsteht.
+Bei zu langer Lötdauer können die Bauteile zerstört werden.
 
 ==== Bestückung
 
+Die Bestückung erfolgt aus praktischen Gründen von kleinen und niedrigen Bauteilen zu größeren höheren Bauteilen. *Alle* Bauteile werden von der Oberseite
+der Platine bestückt. Hier ist auch ein Bestückungsaufdruck zu sehen.
+
+.Oberseite (ohne Leiterbahnen)
+image::onoff_simple_parts01-1.png[width=500,align=center]
+
+.Oberseite (mit Leiterbahnen)
+image::onoff_simple_parts02-1.png[width=500,align=center]
+
 ===== Dioden
 
-Kathode ist beim Strich
+Die beiden Dioden _D1_ und _D2_ dürfen nicht verwechselt werden. Identifizieren Sie die Dioden anhand der Bilder. 
+
+Die Dioden *müssen* auch in einer bestimmten Richtung eingebaut werden. Kathode ist jeweils beim Strich auf dem Gehäuse bzw. dem zusätzlichen Strick im Bestückungsaufdruck.
 
 D1:: (1N4148 oder SD103)
 
+.Diode D1 bestückt
+image::simple/simple_d1.jpg[width=500,align=center]
+
 D2:: Z-Diode 18V 
+
+.Diode D2 bestückt
+image::simple/simple_d2.jpg[width=500,align=center]
 
 ===== Widerstände
 
+Die Widerstände lassen sich eindeutig an ihrer Farbcodierung für den Widerstandswert erkennen. 
+Das Schema bezeichnet man als https://www.elektronik-kompendium.de/sites/bau/1109051.htm[Farbcode]
+
 R1:: 33K orange-orange-orange
+
+.Widerstand R1 bestückt
+image::simple/simple_r1.jpg[width=500,align=center]
 
 R2:: 1M braun-schwarz-grün
 
+.Widerstand R2 bestückt
+image::simple/simple_r2.jpg[width=500,align=center]
+
 R3:: 27K rot-lila-orange
+
+.Widerstand R3 bestückt
+image::simple/simple_r3.jpg[width=500,align=center]
 
 R4:: 330K (Beschriftung R5) orange-orange-gelb
 
+.Widerstand R4 bestückt
+image::simple/simple_r4.jpg[width=500,align=center]
+
 R5:: 1M (Beschriftung R4) braun-schwarz-grün
+
+.Widerstand R5 bestückt
+image::simple/simple_r5.jpg[width=500,align=center]
 
 R6:: 680 blau-grau-braun
 
+.Widerstand R6 bestückt
+image::simple/simple_r6.jpg[width=500,align=center]
+
 R7:: 1K braun-schwarz-rot
+
+.Widerstand R7 bestückt
+image::simple/simple_r7.jpg[width=500,align=center]
 
 ===== Kondensatoren
 
+Der Kondensator _C1_ ist ein _Elektrolykondensator und *muss* in einer bestimmten Richtung eingebaut werden. Auf dem Gehäuse ist ein andersfarblicher Strich mit einem
+kleiner `-` Zeichen auf der Seite, wo das entsprechende Beinchen ist. Dies muss in die Bohrung, die ebenfalls gekennzeichnet ist.
+
 C1:: 47µF 
+
+.Kondensator C1 bestückt
+image::simple/simple_c1.jpg[width=500,align=center]
 
 C2:: 100nF
 
+.Kondensator C2 bestückt
+image::simple/simple_c2.jpg[width=500,align=center]
+
 ===== Transistoren
+
+Die Transistoren _T9_, _T2_ und _T1_ sind leicht verwechselbar.
 
 T9:: VP2106
 
+.Transistor T9 bestückt
+image::simple/simple_t1.jpg[width=500,align=center]
+
 T2:: 2N7000G
+
+.Transistor T2 bestückt
+image::simple/simple_t3.jpg[width=500,align=center]
 
 T1:: J111
 
+.Transistor T1 bestückt
+image::simple/simple_t2.jpg[width=500,align=center]
+
 T3:: entfällt
 
-zunächst externe Anschlüsse: Taster, dann LED, dann die folgenden
+An dieser Stelle *empfiehlt* es sich, *zunächst* den Reed-Kontakt (Taster) und die LED anzuschließen (s.a. <<ext>>). Wenn das erfolgt ist, kann
+auch ein erster Funktionstest gemacht werden, bevor die folgenden Transitoren eingebaut werden.
+
+Achten Sie auf die korrekte Einbaurichtung der Leistungstransistoren (s.a. Bild). Die Metallfläche der Leistungstransistoren muss zum _Vin_-Anschluss 
+zeigen.
 
 T4 - T8:: AOI21357
 
+Bauen Sie diese Leistungstransistoren _schrittweise_ ein: nach einem _ersten_ Zwischentest (s.u.) _ohne_ diese Transistoren, löten Sie 
+zunächst nur _einen_ ein und testen Sie wieder. Erst danach fahren Sie mit den weiteren Leistungstransistoren fort.
+
+.Einer der Transistoren T4 - T8 bestückt
+image::simple/simple_fet.jpg[width=500,align=center]
+
+[[ext]]
 ==== Externe Anschlüsse
+
+Die Platine hat Anschlusspärchen für den Reed-Kontakt und für die LED. Auf den folgenden Fotos ist die LED auf der Platine verlötet und der Kontakt mit einem
+Pfostenverbinder angeschlossen. Dies ist nur für diese Anleitung so geschehen und hängt stark von der konkreten Einbausituation ab. Beides kann auch mit einem zweiadrigen
+Kabel verlängert werden, um die Bauteile an gut zugänglichen bzw. sichtbaren Stellen im Modell einzubauen.
 
 ===== Reed-Kontakt oder Taster
 
+[CAUTON]
+Der _Reed_-Kontakt hat einen *Glaskörper*. Dieser ist recht empfindlich und zerbricht bei starker mechanischer Beanspruchung leicht. Daher die Anschlussdrähte 
+nur sehr vorsichtig abwinkeln.
+
+Löten Sie an den Reed-Kontakt ein dünnes zweiadriges Kabel und verbinden Sie dies mit der Platine. Die Polung ist dabei egal. 
+
+Bei einer größeren Kabellänge (> 10cm) sollte ein verdrilltes Kabel verwendet werden.
+
+.Anschluss _Reed_-Kontakt
+image::simple/simple_reed.jpg[width=500,align=center]
+
+.Anschluss _Reed_-Kontakt
+image::simple/simple_reed2.jpg[width=500,align=center]
+
 ===== Kontroll-LED
 
-Auf Polung achten: abgeflachte Seite oder kurzes Beinchen zu den Leistungstransistoren
+Auf Polung achten: abgeflachte Seite oder kurzes Beinchen zu den Leistungstransistoren gerichtet. Eine falsch herum gepolte LED geht nicht kaputt, sondern leuchtet
+dann einfach nur nicht.
+
+.Anschluss LED
+image::simple/simple_led1.jpg[width=500,align=center]
+
+.Anschluss LED
+image::simple/simple_led2.jpg[width=500,align=center]
+
+Die Zuleitung zur LED kann auch mit einem dünnen kabel verlängert werden.
 
 ===== Zuleitungen
 
-
-
-
+Der Anschluß der Zuleitungen erfolt auf den Pads auf der *Unterseite* der Platine. Achten Sie auch den erforderlichen Querschnitt.
 
 [[first]]
 === Erste Inberiebnahme
@@ -429,7 +508,7 @@ Die erste Inbetriebnahme _muss_ unbedingt
 * ohne Verbraucher
 * mit einem Labornetzteil mit einstellbarer Spannung und Strombegrenzung 
 
-erfolgen. Am Ausgang des Moduls schließen Sie ein Multimeter oder eine LED mit passendem Vorwiderstand an.
+erfolgen. Am Ausgang des Moduls schließen Sie ein Multimeter als Spannungsmesser an. 
 
 Stellen Sie ein:
 
@@ -437,9 +516,18 @@ Stellen Sie ein:
 * Strombegrenzung: 50mA
 
 Schließen Sie _erst jetzt_ das Modul eingangsseitig an das Labornetzteil an. Die Strombegrenzung des Labornetzteils _darf nicht_ 
-ansprechen. Der Stromverbrauch sollte in der Anzeige zunächst nicht mehr als 2mA sein und nach drei Sekunden auf 2µA sinken.
+ansprechen. Der Stromverbrauch sollte in der Anzeige nicht messbar sein.
 
 Führen Sie erst nun die Einschalt- und Ausschaltsequenz aus und beobachten Sie die Ausgangsspannung bzw. LED. 
+
+.Zwischentest während des Bauens
+[TIP]
+--
+Wird ein _Zwischentest_ während des Bauens ohne die Leistungstransistoren durchgeführt, so kann amn Ausgang zwar keine Spannung festgestellt werden, jedoch
+muss die Funktion anhand der LED beobachtet werden können.
+
+Dieser *Zwischentest* schützt vor einem Zerstören der teuren Leistungstransistoren und erleichtet ggf. die Fehlersuche.
+--
 
 [CAUTION]
 Bauen Sie erst dann das Modul in ein Modell ein, wenn Sie sich von der einwandfreien Funktion überzeugt haben.
@@ -448,8 +536,3 @@ Bauen Sie erst dann das Modul in ein Modell ein, wenn Sie sich von der einwandfr
 
 Anfragen: wilhelm.wm.meier@googlemail.com
 
-== Stückliste
-
-* Platine
-* Reed-Kontakt
-* LED

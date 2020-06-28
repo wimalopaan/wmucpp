@@ -160,6 +160,7 @@ namespace Storage {
 
     struct SwitchConfig {
         using pwm_type = etl::uint_ranged_NaN<uint8_t, 0, pwm::pwmMax>;
+        using channel_type = etl::uint_ranged_NaN<uint8_t, 0, 15>;
         using tick_t = tick_type;
         
         const auto& pwmValue() const {
@@ -174,7 +175,11 @@ namespace Storage {
         auto& blinks() {
             return mBlinks;
         }
+        auto& passThru() {
+            return mPassThruChannel;
+        }
     private:
+        channel_type mPassThruChannel{};
         pwm_type mPwm{};
         std::array<Blink, 4> mBlinks;
     };

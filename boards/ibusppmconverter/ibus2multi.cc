@@ -50,7 +50,7 @@ template<typename PPM, uint8_t Address = 0, uint8_t Size = 8>
 struct FSM {
     inline static constexpr uint8_t address = Address;
     
-    enum class SwState : uint8_t {Off, Steady, Blink1, Blink2};
+    enum class SwState : uint8_t {Off, Steady, Blink1, Blink2, PassThru};
 
     using ppm_value_t = PPM::ranged_type;
 

@@ -146,11 +146,14 @@ namespace IBus {
                         if (mode == 2) {
                             Actor::switches()[index] = Actor::SwState::Steady;
                         }
-                        if (mode == 3) {
+                        else if (mode == 3) {
                             Actor::switches()[index] = Actor::SwState::Blink1;
                         }
-                        if (mode == 4) {
+                        else if (mode == 4) {
                             Actor::switches()[index] = Actor::SwState::Blink2;
+                        }
+                        else if (mode == 5) {
+                            Actor::switches()[index] = Actor::SwState::PassThru;
                         }
                     }
                     else {
@@ -248,13 +251,16 @@ namespace IBus {
                         if (mode == 2) {
                             Actor::switches()[index] = Actor::SwState::Steady;
                         }
-                        if (mode == 3) {
+                        else if (mode == 3) {
                             Out::mode(blink_index_t{0});
                             Actor::switches()[index] = Actor::SwState::Blink1;
                         }
-                        if (mode == 4) {
+                        else if (mode == 4) {
                             Out::mode(blink_index_t{1});
                             Actor::switches()[index] = Actor::SwState::Blink2;
+                        }
+                        else if (mode == 5) {
+                            Actor::switches()[index] = Actor::SwState::PassThru;
                         }
                     }
                     else {

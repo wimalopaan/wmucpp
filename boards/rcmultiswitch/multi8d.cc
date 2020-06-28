@@ -11,7 +11,7 @@ using terminal = etl::basic_ostream<servo>;
 
 template<auto N = 8>
 struct SwitchStates {
-    enum class SwState : uint8_t {Off, On, Blink1 = On, Steady, Blink2};
+    enum class SwState : uint8_t {Off, On, Blink1 = On, Steady, Blink2, PassThru};
     
     static constexpr void init() {
     }

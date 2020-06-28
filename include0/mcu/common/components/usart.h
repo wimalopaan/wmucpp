@@ -81,11 +81,13 @@ namespace AVR {
                 pmode0 = USART_PMODE0_bm,
                 sbmode = USART_SBMODE_bm,
                 xfer1stopbit = 0x00,
+                xfer2stopbit = 0x01 << 3,
                 chsize2 = USART_CHSIZE2_bm,
                 chsize1 = USART_CHSIZE1_bm,
                 chsize0 = USART_CHSIZE0_bm,
                 xfer8bit = USART_CHSIZE1_bm | USART_CHSIZE0_bm,
                 noparity = 0x00,
+                evenparity = (0x02) << 4,
             };
             ControlRegister<Usart, CtrlC_t> ctrlc;
 

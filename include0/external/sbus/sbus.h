@@ -50,7 +50,7 @@ void sbusPreparePacket(uint8_t packet[], int channels[], bool isSignalLoss, bool
     packet[0] = SBUS_FRAME_HEADER; //Header
 
     packet[1] = (uint8_t) (output[0] & 0x07FF);
-    packet[2] = (uint8_t) ((output[0] & 0x07FF)>>8 | (output[1] & 0x07FF)<<3);
+    usart::put((uint8_t) ((output[0] & 0x07FF)>>8 | (output[1] & 0x07FF)<<3);
     packet[3] = (uint8_t) ((output[1] & 0x07FF)>>5 | (output[2] & 0x07FF)<<6);
     packet[4] = (uint8_t) ((output[2] & 0x07FF)>>2);
     packet[5] = (uint8_t) ((output[2] & 0x07FF)>>10 | (output[3] & 0x07FF)<<1);
@@ -81,12 +81,67 @@ int rcChannels[SBUS_CHANNEL_NUMBER];
 uint32_t sbusTime = 0;
 
 #endif   
-        
         namespace Servo {
             template<auto N = 0>
             struct ProtocollAdapter {
-                
             };
+        }
+        namespace Output {
+            template<typename CN>
+            struct Generator {
+                
+                using usart = AVR::Usart<CN, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<2>, AVR::SendQueueLength<26>>;
+                
+                inline static constexpr uint16_t sbus_min = 172;
+                inline static constexpr uint16_t sbus_max = 1811;
+                
+                
+                inline static void init() {
+                    usart::template init<AVR::BaudRate<100000>, AVR::FullDuplex, true, 1>();
+                    for(auto& o : output) {
+//                        o = (sbus_max + sbus_min) / 2;
+                        o = sbus_max;
+                    }
+                }
+
+                static inline constexpr std::byte sbus_start = 0x0f_B;
+
+                inline static void periodic() {
+                    usart::periodic();
+                }
+                
+                inline static void ratePeriodic() { // 14ms
+                    usart::put(sbus_start);
+                
+                    usart::put((std::byte) (output[0] & 0x07FF));
+                    usart::put((std::byte) ((output[0] & 0x07FF)>>8 | (output[1] & 0x07FF)<<3));
+                    usart::put((std::byte) ((output[1] & 0x07FF)>>5 | (output[2] & 0x07FF)<<6));
+                    usart::put((std::byte) ((output[2] & 0x07FF)>>2));
+                    usart::put((std::byte) ((output[2] & 0x07FF)>>10 | (output[3] & 0x07FF)<<1));
+                    usart::put((std::byte) ((output[3] & 0x07FF)>>7 | (output[4] & 0x07FF)<<4));
+                    usart::put((std::byte) ((output[4] & 0x07FF)>>4 | (output[5] & 0x07FF)<<7));
+                    usart::put((std::byte) ((output[5] & 0x07FF)>>1));
+                    usart::put((std::byte) ((output[5] & 0x07FF)>>9 | (output[6] & 0x07FF)<<2));
+                    usart::put((std::byte) ((output[6] & 0x07FF)>>6 | (output[7] & 0x07FF)<<5));
+                    usart::put((std::byte) ((output[7] & 0x07FF)>>3));
+                    usart::put((std::byte) ((output[8] & 0x07FF)));
+                    usart::put((std::byte) ((output[8] & 0x07FF)>>8 | (output[9] & 0x07FF)<<3));
+                    usart::put((std::byte) ((output[9] & 0x07FF)>>5 | (output[10] & 0x07FF)<<6));  
+                    usart::put((std::byte) ((output[10] & 0x07FF)>>2));
+                    usart::put((std::byte) ((output[10] & 0x07FF)>>10 | (output[11] & 0x07FF)<<1));
+                    usart::put((std::byte) ((output[11] & 0x07FF)>>7 | (output[12] & 0x07FF)<<4));
+                    usart::put((std::byte) ((output[12] & 0x07FF)>>4 | (output[13] & 0x07FF)<<7));
+                    usart::put((std::byte) ((output[13] & 0x07FF)>>1));
+                    usart::put((std::byte) ((output[13] & 0x07FF)>>9 | (output[14] & 0x07FF)<<2));
+                    usart::put((std::byte) ((output[14] & 0x07FF)>>6 | (output[15] & 0x07FF)<<5));
+                    usart::put((std::byte) ((output[15] & 0x07FF)>>3));
+                
+                    usart::put(0x00_B); //Flags byte
+                    usart::put(0x00_B); //Footer
+                }
+//            private:
+                static inline std::array<uint16_t, 16> output;                 
+            };  
         }
     }
 }

@@ -337,7 +337,7 @@ namespace AVR {
         };
     public:
         
-        template<etl::Concepts::NamedConstant Baud, typename Mode = FullDuplex, bool pullUp = true>
+        template<etl::Concepts::NamedConstant Baud, typename Mode = FullDuplex, bool pullUp = true, auto flags = 0>
         inline static void init() {
             using namespace etl;
             static_assert(Baud::value >= 2400, "USART should use a valid baud rate >= 2400");
@@ -375,7 +375,12 @@ namespace AVR {
                 *mcu_usart()->baud = ubrr;
             }            
 
-            mcu_usart()->ctrlc.template add<ctrlc_t::xfer8bit | ctrlc_t::noparity | ctrlc_t::xfer1stopbit, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
+            if constexpr(flags == 1) {
+                mcu_usart()->ctrlc.template add<ctrlc_t::xfer8bit | ctrlc_t::evenparity | ctrlc_t::xfer2stopbit, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
+            }
+            else {
+                mcu_usart()->ctrlc.template add<ctrlc_t::xfer8bit | ctrlc_t::noparity | ctrlc_t::xfer1stopbit, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
+            }
             mcu_usart()->ctrlb.template add<ctrlb_t::txen | ctrlb_t::rxen, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
   
             if constexpr(std::is_same_v<Mode, HalfDuplex>) { 

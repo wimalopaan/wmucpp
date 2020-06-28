@@ -5,35 +5,29 @@ ASCIIDOC = asciidoc
 ASCIIDOCTOR = asciidoctor
 
 #ASCIIDOCTORPDF = ~/asciidoctor/asciidoctor-pdf/bin/asciidoctor-pdf
-ASCIIDOCTORPDF = ~/.gem/ruby/2.6.0/gems/asciidoctor-pdf-1.5.0.alpha.16/bin/asciidoctor-pdf
+#ASCIIDOCTORPDF = ~/.gem/ruby/2.6.0/gems/asciidoctor-pdf-1.5.0.alpha.16/bin/asciidoctor-pdf
+ASCIIDOCTORPDF = ~/.gem/ruby/2.7.0/gems/asciidoctor-pdf-1.5.3/bin/asciidoctor-pdf
 
 # rendered admonitions als image
 #ASCIIDOCTORPDF = ~/asciidoctor/jessedoyle-asciidoctor-pdf/bin/asciidoctor-pdf
 
+
 EXTENSIONSDIR = ~/asciidoctor/extensions/lib 
+EXTENSIONSDIR2 = ~/asciidoctor/local
 
-ASCIIDOCTORFLAGS += -I $(EXTENSIONSDIR) -r view-result-docinfoprocessor -r man-inline-macro -r asciidoctor-diagram -r tree-block-macro # -r mathematical-treeprocessor -r mathoid-treeprocessor
-ASCIIDOCTORFLAGSPDF += -I $(EXTENSIONSDIR) -a allow-uri-read -r asciidoctor-diagram -r tree-block-macro #-r mathoid-treeprocessor
-ASCIIDOCTORFLAGSPDF += -a pdf-stylesdir=themes -a pdf-style=basic.yml --trace
-ASCIIDOCTORFLAGSPDF2 += -I $(EXTENSIONSDIR) -a allow-uri-read -r asciidoctor-diagram -r tree-block-macro
-ASCIIDOCTORFLAGSPDF2 += -a pdf-stylesdir=themes -a pdf-style=basic_land.yml --trace
-ASCIIDOCTORVARS += -a data-uri -a imagesdir=`pwd` -a stylesdir=css -a stylesheet=asciidoctor-wide.css
-ASCIIDOCTORVARS += -a revnumber=1.16 -a revdate="${shell date}" -a revremark="initial"
-# ASCIIDOCTORVARS += -a srcbase=undef # to identiy all included sources
+ASCIIDOCTORFLAGS += -I $(EXTENSIONSDIR) -I $(EXTENSIONSDIR2) -r view-result-docinfoprocessor -r man-inline-macro-local -r asciidoctor-diagram -r tree-block-macro -r asciidoctor-mathematical # -r mathematical-treeprocessor -r mathoid-treeprocessor
 
-#SCREENSHOT = ~/asciidoctor/asciidoctor-screenshot/buildSrc/src/main/groovy/org/asciidoctor/extension
-#ASCIIDOCTORFLAGS += -I $(SCREENSHOT) -r ScreenshotExtensionRegistry.groovy
+ASCIIDOCTORFLAGSINC += -I $(EXTENSIONSDIR) -I $(EXTENSIONSDIR2) -r include-file-extractor -r view-result-docinfoprocessor -r man-inline-macro-local -r asciidoctor-diagram -r tree-block-macro -r asciidoctor-mathematical # -r mathematical-treeprocessor -r mathoid-treeprocessor
 
-WK = ~/Software/wkhtmltopdf/wkhtmltopdf/static-build/posix-local/wkhtmltox-0.12.3/bin/wkhtmltopdf
-#WK = ~/Software/wkhtmltopdf/wkhtmltox-0.12.2.1/static-build/wkhtmltox-0.12.2.1/bin/wkhtmltopdf
-WKFLAGS += --footer-line --footer-left "Prof. Dr.-Ing. W. Meier" --footer-right "[page] - [topage]"  --footer-center "[date]"
-WKFLAGS += --header-line --header-left "[section]" --header-center "[subsection]" --header-right "[subsubsection]" 
-WKFLAGS += --header-spacing 5 --footer-spacing 5 
-WKFLAGS += --header-font-size 9 --footer-font-size 9 
-WKFLAGS += -T 15 -B 15 
-WKFLAGS +=  --enable-toc-back-links
-WKLANDSCAPE += -O landscape 
-WKPORTRAIT += -O portrait
+ASCIIDOCTORFLAGSPDF += -I $(EXTENSIONSDIR) -I $(EXTENSIONSDIR2) -a allow-uri-read -r asciidoctor-diagram -r tree-block-macro -r asciidoctor-mathematical
+ASCIIDOCTORFLAGSPDF += -a pdf-stylesdir=themes -a pdf-style=basic.yml -a mathematical-format=svg --trace
+
+ASCIIDOCTORFLAGSPDF2 += -I $(EXTENSIONSDIR) -I $(EXTENSIONSDIR2) -a allow-uri-read -r asciidoctor-diagram -r asciidoctor-mathematical -r tree-block-macro 
+ASCIIDOCTORFLAGSPDF2 += -a pdf-stylesdir=themes -a pdf-style=basic_land.yml -a mathematical-format=svg --trace
+
+ASCIIDOCTORVARS += -a data-uri -a imagesdir=`pwd`/images -a stylesdir=css # -a stylesheet=asciidoctor-wide.css
+ASCIIDOCTORVARS += -a revnumber=1.0 -a revdate="${shell date +'%x'}"
+
 
 NUP = pdfnup
 NUPFLAGSL += -q --nup 1x2 --no-landscape --keepinfo --frame true
@@ -47,7 +41,7 @@ all: html # pdf
 images:
 	make -C images images
 
-sources += onoff.adoc 
+sources += onoff.adoc onoff_simple.adoc
 
 .PHONY: html src pdf images clean
 

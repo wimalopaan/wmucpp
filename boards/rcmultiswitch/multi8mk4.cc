@@ -213,25 +213,6 @@ struct FSM {
     inline static Storage::tick_type stateTicks;
 };
 
-
-//template<typename Timer, typename Out, typename NVM, typename Input = void>
-//struct FSM {
-//    inline static constexpr auto size = Out::size();
-    
-//    static_assert(Out::size() == Input::size());
-    
-    
-//    inline static void init() {
-//        Out::init();
-//    }
-    
-//    inline static void ratePeriodic() {
-        
-//    }
-    
-    
-//};
-
 using terminalDevice = AVR::Usart<usart0Position, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>>;
 using terminal = etl::basic_ostream<terminalDevice>;
 

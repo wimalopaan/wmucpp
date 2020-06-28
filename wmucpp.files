@@ -230,6 +230,7 @@ boards/curiosity/test21.cc
 boards/curiosity/test30.cc
 boards/curiosity/test40.cc
 boards/curiosity/test50.cc
+boards/curiosity/test80.cc
 boards/curiosity/test90.cc
 boards/curiosity/test99.c
 boards/doorbell/Makefile
