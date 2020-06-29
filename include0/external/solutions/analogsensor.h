@@ -44,7 +44,14 @@ namespace External {
         
         inline static constexpr auto channel_n = index_type{Channel};
         static inline value_type value() {
-            return (a * ADCont::value(channel_n) - b) >> shift;            
+            uint16_t sv = a * ADCont::value(channel_n) ;
+            if (sv >= b) {
+                return (sv - b) >> shift;
+            }
+            else {
+                return 0;
+            }
+//            return (a * ADCont::value(channel_n) - b) >> shift;            
         }
     };
 }

@@ -7,9 +7,10 @@
 #define USE_16V // (3k1 im Spannungsteiler)
 
 //#define USE_SPORT
-#define USE_HOTT
-//#define USE_IBUS
+//#define USE_HOTT
+#define USE_IBUS
 //#define FS_I6S
+#define USE_OFFSET
 
 #ifdef USE_IBUS
 # define USE_DAISY
@@ -82,7 +83,7 @@ namespace Storage {
     enum class AVKey : uint8_t {Magic0, Magic1, OnDelay, CurrentOffset, VoltageOffset, AutoOffset, _Number};
     
     struct ApplData final : public EEProm::DataBase<ApplData> {
-        using value_type = etl::uint_NaN<uint8_t>;
+        using value_type = etl::uint_NaN<uint16_t>;
         value_type& operator[](AVKey key) {
             return AValues[static_cast<uint8_t>(key)];
         }
@@ -228,7 +229,7 @@ using sleep = Sleep<>;
 #ifdef FS_I6S
 using acs770 = External::AnalogSensor<adcController, 1, std::ratio<1,2>, std::ratio<40,1000>, std::ratio<10,1>>;
 #else
-using acs770 = External::AnalogSensor<adcController, 1, std::ratio<1,2>, std::ratio<40,1000>, std::ratio<100,1>>;
+using acs770 = External::AnalogSensor<adcController, 1, std::ratio<490,1000>, std::ratio<40,1000>, std::ratio<100,1>>;
 #endif
 using vdiv = External::AnalogSensor<adcController, 0, std::ratio<0,1>, 
                                     std::ratio<Parameter::R2vd, Parameter::R2vd + Parameter::R1vd>, 
@@ -255,9 +256,8 @@ struct CurrentProvider {
 #endif
     inline static constexpr void init() {}
     inline static constexpr uint16_t value() {
-        auto v = Sensor::value();
+        uint16_t v = Sensor::value();
         if (v >= mOffset) {
-            
 #ifdef FS_I6S
         return v - mOffset + 400;
 #else
@@ -278,10 +278,11 @@ struct CurrentProvider {
     inline static void setOffset() {
         mOffset = Sensor::value();
     }
-    inline static void setOffset(uint32_t v) {
+
+    inline static void setOffset(uint16_t v) {
         mOffset = v;
     }
-    inline static uint32_t mOffset{0};
+    inline static uint16_t mOffset{};
 };
 
 using currentProvider = CurrentProvider<acs770>;
@@ -332,7 +333,9 @@ using ibt = void;
 #endif
 
 using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, 
-                          Meta::List<voltageP, currentProvider, offsetP, tempP>, systemTimer, ibt
+                          Meta::List<voltageP, currentProvider
+                                    , offsetP
+                                        , tempP>, systemTimer, ibt
 //                          , etl::NamedFlag<true>
 //                           , etl::NamedFlag<true>
                           >;
@@ -506,7 +509,11 @@ namespace {
 
 template<typename Timer, typename Wdt, typename UnInit>
 struct FSM {
-    enum class State : uint8_t {Init, Startup, Idle, WaitSleep, Sleep, WaitOn, WaitOnInterrupted, On, FetOn, WaitOff, WaitOffInterrupted, WdtOn, CurrCalibrateStart, CurrentCalibrateEnd};
+    enum class State : uint8_t {Init, Startup, Idle, WaitSleep, Sleep, WaitOn, WaitOnInterrupted, On, FetOn, WaitOff, WaitOffInterrupted, WdtOn
+                        #ifdef USE_OFFSET
+                                ,CurrCalibrateStart, CurrentCalibrateEnd
+                        #endif
+                               };
     
     static constexpr auto intervall = Timer::intervall;
     
@@ -516,9 +523,10 @@ struct FSM {
     
     //    std::integral_constant<uint16_t, idleTimeBeforeSleepTicks.value>::_;
 
+#ifdef USE_OFFSET
     static constexpr uint8_t calibInterrupts{3};
     inline static etl::uint_ranged<uint8_t, 0, calibInterrupts> waitOffInterrupts;
-    
+#endif
     inline static External::Tick<Timer> onDelay;
 
     inline static bool autoCalib{false};
@@ -536,6 +544,7 @@ struct FSM {
         if (appData[Storage::AVKey::OnDelay]) {
             onDelay = 1000_ms * appData[Storage::AVKey::OnDelay].toInt();
         }
+# ifdef USE_OFFSET
         if (appData[Storage::AVKey::CurrentOffset]) {
             currentProvider::setOffset(appData[Storage::AVKey::CurrentOffset].toInt());
         }
@@ -547,6 +556,7 @@ struct FSM {
                 autoCalib = true;
             }
         }
+# endif
 #else
         onDelay = 1000_ms;
 #endif

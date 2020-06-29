@@ -14,7 +14,7 @@ Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 :icontype: svg
 :figure-caption: Abbildung
 :description: Elektronischer Hauptschalter
-:title: Elektronischer Hauptschalter
+:title: Elektronischer Hauptschalter Bausatz
 :title-page:
 :sectanchors:
 :sectlinks:
@@ -41,6 +41,17 @@ Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 //:short: // without images 
 
 //include::license.adoc[]
+
+<<<
+
+== Vorwort
+
+[NOTE]
+Das Modul wie auch diese Doku ist noch unvollständig und _work-in-progess_. 
+Bei jeglichen Unklarheiten in dieser Funktionsbeschreibung und generellem Aufbau und Anschluß, 
+unterlassen Sie den Betrieb und kontaktieren Sie den Bausatzersteller.
+
+<<<
 
 == Symbolerklärung
 
@@ -115,21 +126,21 @@ Beachten Sie ebenfalls die Richtlinien unter <<Betrieb>>.
 ACHTUNG: Der Bausatz enthält verschluckbare Kleinteile. Von Kindern fernhalten.
 --
 
+<<< 
+
 == Einbau 
 
-[NOTE]
-Das Modul wie auch diese Doku ist noch unvollständig und _work-in-progess_. 
-Bei jeglichen Unklarheiten in dieser Funktionsbeschreibung und generellem Aufbau und Anschluß, 
-unterlassen Sie den Betrieb und kontaktieren Sie den Bausatzersteller.
+.Der Hauptschalter
+image::simple/simple_3d.png[]
 
 Das Modul dient zum zentralen Einschalten der zentralen Stromversorgung von Schiffsmodellen. Das Einschalten und das Ausschalten 
 erfolgen über einen Tastkontakt (Reed-Kontakt). Das Modul gibt optische Rückmeldung (LED) über seinen Zustand.
 
-// Das folgende Bild zeigt den Einbau schematisch:
-// 
-// [[schema1]]
-// .Schematischer Anschluß des Moduls an Akku, Verbraucher und Kontakt
-// image::images/schema1.svg[]
+Das folgende Bild zeigt den Einbau schematisch:
+
+[[schema1]]
+.Schematischer Anschluß des Hauptschalters an Akku, Verbraucher (Steller), LED und Kontakt
+image::images/schema_simple.jpg[]
 
 === Anschluß an den Akku
 
@@ -215,6 +226,14 @@ Rückkehr des Schiffsmodells zum Ufer angebracht. Anderfalls kann es zu einem to
 [TIP]
 Die Varianten unterscheiden sich in der max. Strombelastbarkeit. Dies wird durch eine unterschiedliche Anzahl von Leistungstransistoren erreicht.
 Diese können auch jederzeit nachbestückt werden.
+
+=== Variante 30V/10A
+
+[horizontal]
+Spannungfestigkeit:: maximal 30V (LiPo: 6S)
+Strombelastbarkeit:: maximal 10A (nur im *Kurzzeitbetrieb*: 10% ED S3)
+Schaltstrom:: maximal 3A (direktes Schalten von Verbrauchern)
+Anzahl Leistungstransistoren:: 1
 
 === Variante 30V/20A
 
@@ -536,3 +555,26 @@ Bauen Sie erst dann das Modul in ein Modell ein, wenn Sie sich von der einwandfr
 
 Anfragen: wilhelm.wm.meier@googlemail.com
 
+<<<
+
+== Stückliste
+
+[horizontal]
+D1:: (1N4148 oder SD103)
+D2:: Z-Diode 18V 
+R1:: 33K orange-orange-orange
+R2:: 1M braun-schwarz-grün
+R3:: 27K rot-lila-orange
+R4:: 330K (Beschriftung R5) orange-orange-gelb
+R5:: 1M (Beschriftung R4) braun-schwarz-grün
+R6:: 680 blau-grau-braun
+R7:: 1K braun-schwarz-rot
+C1:: 47µF 
+C2:: 100nF
+T9:: VP2106
+T2:: 2N7000G
+T1:: J111
+T4 - T8:: AOI21357
+Reed:: Kontakt
+LED:: Led
+Platine:: Platine

@@ -231,6 +231,7 @@ boards/curiosity/test30.cc
 boards/curiosity/test40.cc
 boards/curiosity/test50.cc
 boards/curiosity/test80.cc
+boards/curiosity/test81.cc
 boards/curiosity/test90.cc
 boards/curiosity/test99.c
 boards/doorbell/Makefile
@@ -249,6 +250,7 @@ boards/ibusppmconverter/board.h
 boards/ibusppmconverter/curr.h
 boards/ibusppmconverter/gps.h
 boards/ibusppmconverter/ibus2multi.cc
+boards/ibusppmconverter/lua_encoder.cc
 boards/ibusppmconverter/rpm.h
 boards/ibusppmconverter/sbusencoder.cc
 boards/ibusppmconverter/temp.h
