@@ -18,6 +18,8 @@
 //    4) Jumper 1 weg -> alles aus
 //    5) dann einschalten bewirkt die PWM
 
+#define USE_PPM
+
 #include "board.h"
 #include "swout.h"
 

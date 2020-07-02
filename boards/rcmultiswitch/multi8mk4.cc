@@ -1,5 +1,7 @@
 #define NDEBUG
 
+#define USE_HOTT
+
 #include "board.h"
 #include "swout.h"
 

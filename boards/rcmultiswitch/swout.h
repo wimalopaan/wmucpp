@@ -13,6 +13,8 @@ namespace External {
         using pwm_index_t = typename PWM::index_type;
         using index_t = etl::uint_ranged<uint8_t, 0, size() - 1>;
              
+//        pwm_index_t::_;
+        
         inline static constexpr auto pwmMax = PWM::pwmMax;
         
         using nvm_t = std::remove_cvref_t<decltype(NVM::data())>;

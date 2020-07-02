@@ -41,7 +41,7 @@ all: html # pdf
 images:
 	make -C images images
 
-sources += onoff.adoc onoff_simple.adoc
+sources += onoff.adoc onoff_simple.adoc onoff_telemetrie.adoc
 
 .PHONY: html src pdf images clean
 

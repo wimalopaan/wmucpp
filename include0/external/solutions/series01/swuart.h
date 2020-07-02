@@ -134,40 +134,42 @@ namespace External {
                 static inline void isr() {
 //                    Dbg::toggle();
                     mcu_tcd()->intflags.template reset<mcu_timer_t::IntFlags_t::ovf>();
-                    if (isReceiving()) {
-                        if (isStartBit()) {
-                            if (RxPin::isHigh()) {
-                                data = 0x80_B;
-                            }
-                            bitCount = 7;
-                            clearStartBit();
-                        }
-                        else {
-                            data = data >> 1;
-                            if (RxPin::isHigh()) {
-                                data = data | 0x80_B;
-                            }
-                            bitCount = bitCount - 1;
-                            if (bitCount == 0) {
-                                mcu_tcd()->ctrla.template clear<CtrlA4_t::enable, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
-                                if constexpr (RecvQLength::value > 0) {
-                                    static_assert(std::is_same_v<PA, External::Hal::NullProtocollAdapter>, "recvQueue is used, no need for PA");
-                                    mRecvQueue.push_back(data);
+                    if constexpr(!std::is_same_v<RxPin, void>) {
+                        if (isReceiving()) {
+                            if (isStartBit()) {
+                                if (RxPin::isHigh()) {
+                                    data = 0x80_B;
                                 }
-                                else {
-                                    static_assert(RecvQLength::value == 0);
-                                    if constexpr(!std::is_same_v<PA, External::Hal::NullProtocollAdapter>) {
-                                        if (!PA::process(std::byte{data})) {
-                                            assert("input not handled by protocoll adapter");
-                                        }
+                                bitCount = 7;
+                                clearStartBit();
+                            }
+                            else {
+                                data = data >> 1;
+                                if (RxPin::isHigh()) {
+                                    data = data | 0x80_B;
+                                }
+                                bitCount = bitCount - 1;
+                                if (bitCount == 0) {
+                                    mcu_tcd()->ctrla.template clear<CtrlA4_t::enable, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
+                                    if constexpr (RecvQLength::value > 0) {
+                                        static_assert(std::is_same_v<PA, External::Hal::NullProtocollAdapter>, "recvQueue is used, no need for PA");
+                                        mRecvQueue.push_back(data);
                                     }
                                     else {
-                                        static_assert(std::false_t<MCU>::value, "no recvQueue, no PA -> wrong configuration");
+                                        static_assert(RecvQLength::value == 0);
+                                        if constexpr(!std::is_same_v<PA, External::Hal::NullProtocollAdapter>) {
+                                            if (!PA::process(std::byte{data})) {
+                                                assert("input not handled by protocoll adapter");
+                                            }
+                                        }
+                                        else {
+                                            static_assert(std::false_t<MCU>::value, "no recvQueue, no PA -> wrong configuration");
+                                        }
                                     }
+                                    clearReceiving();
+                                    //                                Dbg::low();
+                                    RxPin::template attributes<rxPinAttrInt>();
                                 }
-                                clearReceiving();
-//                                Dbg::low();
-                                RxPin::template attributes<rxPinAttrInt>();
                             }
                         }
                     }

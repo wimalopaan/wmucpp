@@ -27,6 +27,9 @@
 #include <external/hott/menu.h>
 
 #include <external/ibus/ibus.h>
+#include <external/sbus/sbus.h>
+
+#include <external/solutions/series01/swuart.h>
 
 #include <std/chrono>
 
@@ -48,6 +51,8 @@ using led0 = Pin<Port<B>, 0>; // tca0 wo0
 
 using ppmIn = Pin<Port<A>, 2>; 
 
+using lvPin = Pin<Port<A>, 6>; 
+
 using ledList = Meta::List<led0, led1, led2, led3, led4, led5, led6, led7>;
 
 using ccp = Cpu::Ccp<>;
@@ -67,7 +72,14 @@ namespace  {
     constexpr auto dt = 2_ms;
 #ifdef USE_HOTT
     constexpr auto fRtc = 500_Hz;
-#else
+#endif
+#ifdef USE_SBUS
+    constexpr auto fRtc = 1000_Hz;
+#endif
+#ifdef USE_IBUS
+    constexpr auto fRtc = 128_Hz;
+#endif
+#ifdef USE_PPM
     constexpr auto fRtc = 128_Hz;
 #endif
     

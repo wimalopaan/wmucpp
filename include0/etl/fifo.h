@@ -41,16 +41,18 @@ namespace etl {
         
         inline bool push_back(volatile const T& item) volatile {
             asm("; replace udivmod1");
-            size_type next = in + 1;
+            size_type next = in.toInt() + 1;
+//            size_type next = in + 1;
             if (next == Size) next = 0;
             {
                 Scoped<DisbaleInterrupt<RestoreState>, !sizeIsAtomic> di;
-                if (out == next) {
+                if (out.toInt() == next) {
                     return false;
                 }
             }
-            data[in] = item;
-            in = next;
+            data[in.toInt()] = item;
+            in = index_type{next};
+//            in = next;
             return true;
         }
         inline bool push_back(const T& item) volatile {

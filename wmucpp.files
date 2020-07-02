@@ -230,6 +230,8 @@ boards/curiosity/test21.cc
 boards/curiosity/test30.cc
 boards/curiosity/test40.cc
 boards/curiosity/test50.cc
+boards/curiosity/test70.cc
+boards/curiosity/test71.cc
 boards/curiosity/test80.cc
 boards/curiosity/test81.cc
 boards/curiosity/test90.cc
@@ -252,7 +254,7 @@ boards/ibusppmconverter/gps.h
 boards/ibusppmconverter/ibus2multi.cc
 boards/ibusppmconverter/lua_encoder.cc
 boards/ibusppmconverter/rpm.h
-boards/ibusppmconverter/sbusencoder.cc
+boards/ibusppmconverter/sbus2multi.cc
 boards/ibusppmconverter/temp.h
 boards/ibusppmconverter/test00.cc
 boards/ibusppmconverter/volt.h
@@ -307,6 +309,7 @@ boards/rcmultiswitch/Makefile
 boards/rcmultiswitch/board.h
 boards/rcmultiswitch/fsm.h
 boards/rcmultiswitch/multi8d.cc
+boards/rcmultiswitch/multi8dsbus.cc
 boards/rcmultiswitch/multi8hott.cc
 boards/rcmultiswitch/multi8man.cc
 boards/rcmultiswitch/multi8mk4.cc

@@ -32,7 +32,7 @@ targets += a2c2r.hex
 targets += a2c2r1g.hex
 targets += b10c5.hex
 targets += b11c4.hex
-#targets += sbusencoder.hex
 targets += ibus2multi.hex
+targets += sbus2multi.hex
 
 -include ../../Makefile.avr0.include

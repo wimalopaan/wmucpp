@@ -583,10 +583,10 @@ namespace AVR {
                     mcu_tca()->ctrlb.template clear<MCU::TCA::CtrlB_t::scmp3en>();
                 }                
                 if constexpr(N == 4) {
-                    mcu_tca()->ctrlb.template add<MCU::TCA::CtrlB_t::scmp4en>();
+                    mcu_tca()->ctrlb.template clear<MCU::TCA::CtrlB_t::scmp4en>();
                 }                
                 if constexpr(N == 5) {
-                    mcu_tca()->ctrlb.template add<MCU::TCA::CtrlB_t::scmp5en>();
+                    mcu_tca()->ctrlb.template clear<MCU::TCA::CtrlB_t::scmp5en>();
                 }                
             }
             

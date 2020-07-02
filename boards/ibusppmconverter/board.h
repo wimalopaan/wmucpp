@@ -93,6 +93,11 @@ namespace Parameter {
 #ifdef USE_HOTT
     constexpr auto fRtc = 500_Hz;
 #endif
+#ifdef USE_SBUS
+    // SBUS-Frame: 3ms
+    // SBUS Rate: 7ms
+    constexpr auto fRtc = 200_Hz; // 5ms
+#endif
     constexpr uint16_t R1vd = 10'000;
     constexpr uint16_t R2vd = 1'000;
 

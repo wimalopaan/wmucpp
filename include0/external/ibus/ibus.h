@@ -162,12 +162,11 @@ namespace IBus {
                 }
             }
             
-            
             static inline channel_t mChannel{9};
-            static inline constexpr addr_t mAddr{0};
+//            static inline constexpr addr_t mAddr{0};
         };
 
-        template<typename PA, typename Actor, typename Out>
+        template<typename PA, typename Actor, typename Out = void>
         struct Switch3 {
             using channel_t = PA::channel_t;
             using value_t = PA::value_type;
@@ -179,6 +178,7 @@ namespace IBus {
             using pvalue_t  = etl::uint_ranged<uint8_t, 0, 31>;
             
             using blink_index_t = Out::blink_index_t;
+            
             using tick_t = Out::tick_t;
             inline static constexpr auto blinkMax = tick_t::max();
 
@@ -273,9 +273,7 @@ namespace IBus {
             static inline uint16_t lv;
             static inline uint8_t lp;
             static inline uint8_t lp2;
-            static inline bool gc{};
-            static inline bool gc2{};
-        private: 
+//        private: 
             static inline index_t lastOnIndex;
             static inline channel_t mChannel{9};
             static inline addr_t    mAddr{0};

@@ -23,6 +23,7 @@ targets += test00.elf test00.hex test00.S
 targets += test01.elf test01.hex
 targets += test10.elf test10.hex
 targets += multi8d.hex
+targets += multi8dsbus.hex
 targets += multi8mk4.hex
 targets += multi8hott.hex
 targets += multi8man.hex
