@@ -19,7 +19,7 @@ using ppmC = External::Ppm::PpmOut<tcb1Position>;
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition, tcb0Position, tcb1Position>>;
 
-using servo_pa = External::SBus::Servo::ProtocollAdapter<0>;
+using servo_pa = External::SBus::Servo::ProtocollAdapter<0, systemTimer>;
 using servo = AVR::Usart<usart0Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
 
 template<typename PPM, uint8_t Channel = 0>
@@ -86,7 +86,7 @@ struct FSM {
 #endif
         else {
 #ifdef ROBBE_8370
-            const uint8_t i = cycle - 1;
+            const uint8_t i = Size - 1 - (cycle - 1);
 #else
             const uint8_t i = cycle - 2;
 #endif
@@ -117,6 +117,7 @@ struct FSM {
         }
         ++cycle;
     }
+private:
     static inline cycle_t cycle;
     static inline std::array<SwState, Size> swStates;
 #ifdef HAS_MEMORY_FUNCTION

@@ -60,7 +60,7 @@
 // ----
 // B 10c5      5-Kanäle ab Kanal 10
 
-// PA1: IBUS
+// PA1: IBUS / SBUS 
 // PA2: DaisyEnable
 // PA3: SO4 (AIN3) (rpm0) (tcb1 wo)
 // PA4:
@@ -96,7 +96,7 @@ namespace Parameter {
 #ifdef USE_SBUS
     // SBUS-Frame: 3ms
     // SBUS Rate: 7ms
-    constexpr auto fRtc = 200_Hz; // 5ms
+    constexpr auto fRtc = 1000_Hz; // 1ms
 #endif
     constexpr uint16_t R1vd = 10'000;
     constexpr uint16_t R2vd = 1'000;
