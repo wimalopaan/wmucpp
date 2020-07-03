@@ -1,0 +1,348 @@
+// -*- mode: adoc ; fill-column: 120 -*-
+// ---- Beginn Standardheader
+= RC MultiSwitch
+Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+:revnumber: 0.01
+:revdate: 01.01.1970
+:lang: de
+:toc:
+:toc-title: Inhalt
+:toclevels: 4
+:numbered:
+:src_numbered: 
+:icons: font
+:icontype: svg
+:figure-caption: Abbildung
+:description: RC MultiSwitch
+:title: RC MultiSwitch
+:title-page:
+:sectanchors:
+:sectlinks:
+:experimental:
+:copyright: Wilhelm Meier
+:duration: 90
+:source-highlighter: pygments
+:pygments-css: class
+:status:
+:menu:
+:navigation:
+:split:
+:goto:
+:blank:
+:showtitle:
+:docinfo1:
+:stem:
+// for attributes in link:[] macro like link:xxx[window="_blank"]
+:linkattrs:
+:nofooter:
+
+//:imgdir: ./images
+
+//:short: // without images 
+
+//include::license.adoc[]
+
+<<<
+
+== Vorwort
+
+[NOTE]
+Das Modul wie auch diese Doku ist noch unvollständig und _work-in-progess_. 
+Bei jeglichen Unklarheiten in dieser Funktionsbeschreibung und generellem Aufbau und Anschluß, 
+unterlassen Sie den Betrieb und kontaktieren Sie den Bausatzersteller.
+
+<<<
+
+== Symbolerklärung
+
+[TIP]
+Ein wichtiger allgemeiner Hinweis für den sicheren Aufbau und die sichere Bedienung. Dieser sollte durch den Anwender bachtet werden,
+um einen sicheren Betrieb zu gewährleisten.
+
+[NOTE]
+Ein genereller Hinweis, der durch den Anwender beachtet werden sollte.
+
+[IMPORTANT]
+Ein technischer oder sicherheitstechnischer Hinweis, der unbedingt durch den Anwender beachtet werden muss.
+
+[CAUTION]
+Ein technischer oder sicherheitstechnischer Gefahrenhinweis, der unbedingt durch den Anwender beachtet werden muss. Zur 
+Gefahrenabwendung muss der Anwender unbedingt die gegebenen Anweisungen befolgen und die beschriebenen Maßnahmen ergreifen.
+
+== Rechtliches
+
+Der vorliegende Bausatz wird dem Anwender für eigene Experimente überlassen. Er stellt kein Produkt im Sinne des ProdHaftG 
+oder elektronisches Gerät im Sinne des ElektroG dar und wird als Gerät nicht kommerziell vertrieben. 
+
+[IMPORTANT]
+--
+Die Überlassung gegen Unkostenerstattung erfolgt unter Ausschluss jeglicher Sach­mangelhaftung.
+
+Für den vorliegenden Bausatz werden keine Funktionsgarantien gegeben. Für Schäden am Bausatz oder an damit verbundenen Geräten oder Modulen
+wird keine Haftung übernommen. Gewährleistungen, Garantien und Widerrufsrechte gibt es nicht.
+--
+
+== Sicherheitshinweise
+
+Beim Umgang mit Produkten, die mit elektrischer Spannung in Berührung kommen, müssen die gültigen VDE-Vorschriften beachtet werden, insbesondere 
+VDE 0100, VDE 0550/0551, VDE 0700, VDE 0711 und VDE 0860.
+
+Werkzeuge dürfen an Geräten, Bauteilen oder Baugruppen nur benutzt werden, wenn sichergestellt ist, dass die Geräte von der Versorgungsspannung 
+getrennt sind und elektrische Ladungen, die in den im Gerät befindlichen Bauteilen gespeichert sind, vorher entladen wurden.
+
+Spannungsführende Kabel oder Leitungen, mit denen das Gerät, das Bauteil oder die Baugruppe verbunden ist, müssen stets auf Isolationsfehler 
+oder Bruchstellen untersucht werden. Bei Feststellen eines Fehlers in der Zuleitung muss das Gerät unverzüglich aus dem Betrieb genommen werden, 
+bis die defekte Leitung ausgewechselt worden ist. Bei Einsatz von Bauelementen oder Baugruppen muss stets auf die strikte Einhaltung der in der 
+zugehörigen Beschreibung genannten Kenndaten für elektrische Größen hingewiesen werden. Wenn aus einer vorliegenden Beschreibung für den nicht 
+gewerblichen Endverbraucher nicht eindeutig hervorgeht, welche elektrischen Kennwerte für ein Bauteil oder eine Baugruppe gelten, wie eine 
+externe Beschaltung durchzuführen ist oder welche externen Bauteile oder Zusatzgeräte angeschlossen werden dürfen und welche Anschlusswerte 
+diese externen Komponenten haben dürfen, so muss stets ein Fachmann um Auskunft ersucht werden. Es ist vor der Inbetriebnahme eines Gerätes 
+generell zu prüfen, ob dieses Gerät oder Baugruppe grundsätzlich für den Anwendungsfall, für den es verwendet werden soll, geeignet ist!
+
+Im Zweifelsfalle sind unbedingt Rückfragen bei Fachleuten, Sachverständigen oder den Herstellern der verwendeten Baugruppen notwendig!
+
+Bitte beachten Sie, dass Bedien- und Anschlussfehler außerhalb unseres Einflussbereiches liegen. Verständlicherweise können wir für Schäden, die 
+daraus entstehen, keinerlei Haftung übernehmen. Bei Installationen und beim Umgang mit Netzspannung sind unbedingt die VDE-Vorschriften zu 
+beachten. Geräte, die an einer Spannung über 35 V betrieben werden, dürfen nur vom Fachmann angeschlossen werden. In jedem Fall ist zu prüfen, 
+ob der Bausatz oder die Platine für den jeweiligen Anwendungsfall und Einsatzort geeignet ist bzw. eingesetzt werden kann.
+
+Derjenige, der eine Schaltung oder einen Bausatz aufbaut und fertigstellt oder eine Baugruppe durch Erweiterung bzw. Gehäuseeinbau 
+betriebsbereit macht, gilt nach DIN VDE 0869 als Hersteller und ist verpflichtet, bei der Weitergabe des Gerätes alle Begleitpapiere 
+mitzuliefern und auch seinen Namen und Anschrift anzugeben. Geräte, die aus Bausätzen selbst zusammengestellt werden, sind sicherheitstechnisch 
+wie ein industrielles Produkt zu betrachten.
+
+Für alle Personen- und Sachschäden, die aus nicht bestimmungsgemäßer Verwendung entstehen, ist nicht der Hersteller sondern der Betreiber 
+verantwortlich. Bitte beachten Sie, das Bedien- und/und Anschlussfehler außerhalb unseres Einfußbereiches liegen. Verständlicherweise können wir 
+für Schäden, die daraus entstehen, keinerlei Haftung übernehmen.
+
+Jegliche Vorschriften und Vorsichtsmaßnahmen im Umgang mit elektrischen Komponenten sind vom Anwender einzuhalten.
+
+Beachten Sie ebenfalls die Richtlinien unter <<Betrieb>>.
+
+== Spezieller Sicherheitshinweis: Kleinteile
+
+[CAUTION]
+--
+ACHTUNG: Der Bausatz enthält verschluckbare Kleinteile. Von Kindern fernhalten.
+--
+
+<<< 
+
+== Software für OpenTX
+
+Für den Betrieb und zur Konfiguration des RC-MultiSwitch sind einige Scripte notwendig.
+Diese findet man in der aktuellesten Version jeweils auf https://github.com/wimalopaan/opentx[GitHub].
+
+Für den RC-MultiSwitch sind die folgenden relevant:
+
+* Widgets
+** `Widgets/WMSW/main.lua`
+** `Widgets/WMSWC/main.lua`
+
+* Scripte
+** `MIXES/encib.lua`
+** `MIXES/encsb.lua`
+
+=== Installation der Software auf dem Sender
+
+Kopieren Sie die o.g. Dateien in korrespondierende Verzeichnisse auf der SD-Karte des Senders. 
+
+=== Konfiguration des Modells
+
+==== Widget für die Bedienung
+
+Richten Sie eine Telemetrie-Seite (volle Größe) ein mit dem Widget `Widgets/WMSW/main.lua`. Dieses stellt sich als `Wm MultiSwitch x.y` dar.
+
+==== Widget für die Konfiguration
+
+Richten Sie eine Telemetrie-Seite (volle Größe) ein mit dem Widget `Widgets/WMSWC/main.lua`. Dieses stellt sich als `Wm MultiKanal Config x.y` dar.
+
+==== Mixer-Script
+
+Richten Sie ein `LUA`-Script ein. Hier wählen Sie _nur eines_ der Auswahl aus:
+
+* `encib` für `IBus`-Empfänger
+* `encsb` für `SBus`-Empfänger
+
+==== Definition eines Übertragungskanals für das Schaltmodul am Empfänger
+
+Das Schaltmodul wird über eine serielle Schnittstelle an den Empfänger angeschlossen. Dies ist je nach Empfänger `Ibus` oder `Sbus`.
+
+Das Schaltmodul ist standardmäßig auf Kanal `10` eingestellt.
+
+Im Sender muss daher für diesen Kanal als Quelle das entspechende Mixer-Script eingetragen werden.
+
+image::m1.png[]
+
+image::m2.png[]
+
+image::m3.png[]
+
+
+==== Definition der Geber (Inputs)
+
+.Bedienelemente für die Widgets
+[TIP]
+--
+Die Widgets müssen mit Bedienelementen des Senders bedient werden können (Scroll, Select). 
+
+In `OpenTX`-Version < `2.4.0` kann dies nur durch _normale_ Bedienelemente (Geber) erfolgen. Dazu sind einige Definitionen nötig.
+--
+
+Definieren Sie die folgenden, in den Widgets voreingestellten _Inputs_ nach dem Muster aus <<inputs>>:
+
+* I8
+* I9
+* I10
+
+Möchten Sie andere Geber-Nummern verwenden, so ist dies auch möglich. Die Gebernummern müssen dann in der entsprechenden _Widget_-Konfiguration 
+definiert werden. Dies ist dann für beide Widgets gleichmaßen notwendig.
+
+[[inputs]]
+.Benötigte Geber zur Bedienung der Widgets
+image::inputs.png[]
+
+.SpeedDial mit den Gebern `LS` und `RS`
+[TIP]
+--
+Bei Sendern mit den beiden Schiebern `LS` und `RS` sind diese für die direkte Anwahl von Menu-Punkten im Normalfall eingerichtet.
+--
+
+==== Flugphasen
+
+Damit die (oft unbenutzten) zusätzlichen Trimm-Taster für die Bedienung der Widgets benutzt werden können, müssen Sie als Trimm-Funktion deaktiviert werden. 
+Die geschieht in der entsprechenden _Flugphase_, in der die Bedienung der Widgets möglich sein soll. Also am besten in allen Flugphasen bzw. in der 
+Flugphase `0`.
+
+[[flugph]]
+.Deaktivierung der Trimmer `T5` und `T6` in der Flugphase `0`
+image::fp.png[]
+
+
+=== Konfigutaionsdateien
+
+==== Das Widget `WMSW/main.lua`
+
+In der Datenstruktur `menu` können an folgenden Elementen Veränderungen vorgenommen werden:
+
+* Namen der Funktionen (`menu.pages.items.name`)
+* Namen der Zustände (`menu.pages.items.states`)
+* Namen der phys. Schalter (`menu.pages.items.data.switch`)
+
+.Das Element `switch`
+
+Wird ein phys. Schalter einer Schaltfunktion zugeordnet, dann _überschreibt_ diese Zuordnung die Bedienung über das Menu, d.h. mit dem Menu allein 
+können die Funktionen nicht mehr aktiviert werden.
+
+
+==== Das Widget `WMSWC/main.lua`
+
+In der Datenstruktur `menu` können an folgenden Elementen Veränderungen vorgenommen werden:
+
+* Namen der Funktionen (`menu.pages.items.name`)
+* Namen der Zustände (`menu.pages.items.states`)
+* Namen der phys. Schalter (`menu.pages.items.data.switch`)
+
+== Einbau 
+
+=== Anschluß an den Akku
+
+=== Schutz 
+
+Um das Modul gegen Feuchtigkeit zu schützen, empfielt es sich, das Modul 
+mit Polyurethan-Lack-Schutzlack (z.B. Kontakt 70) zu überziehen. Bitte kleben Sie jedoch voher den Pfostenverbinder für den Kontackt, den 
+die Löt-Pads für die Anschlußkabel ab.
+
+Ein Einschrumpfen mit Schrumpfschlauch ist möglich.
+
+== Funktion
+
+=== Bedienung der Schaltunktionen
+
+Mit dem Widget `WM MultiSwitch` können Schaltfunktionen ausgewählt werden. 
+
+Dies geschieht im Normalfall über `T5 - Up` und `T5 - Down` zur Navigation durch die Zeilen und Spalten des Menus. Mit `T6 - Up` kann eine Funktion ausgewählt
+werden. 
+
+[CAUTION]
+Wenn eine Funktion einen phys. Schalter zugewiesen hat, kann die Funktion nicht mehr über das Menu selektiert werden.
+
+Sind die beiden Schieber `LS` und `RS` vorhanden und erkannt worden, so kann mit `LS` in den Zeilen gescrollt werden und mit 
+`RS` in den Spalten des Menus.
+
+Sind im Menu _mehr_ als eine Seite (also _mehr_ als 8 Schaltfunktionen bzw. mehr als ein Schaltmodul) enthalten. so kommt man auf die nächste Seite, indem man auf
+den Eintrag _ganz unten rechts_ navigiert und dann noch einmal nach unten navigiert (`T5 - Down`). Entsprechend auf die vorige Seite.
+
+=== Konfiguration
+
+
+[[Betrieb]]
+== Betrieb
+
+[TIP]
+Beachten Sie unbedingt die Anweisungen unter <<first>>.
+
+[NOTE]
+Die üblichen Sicherheitsvorkehrungen im Betrieb mit ferngesteuerten Modellen, insbesonder Schiffsmodellen sind einzuhalten.
+
+[IMPORTANT]
+Beachten Sie *alle* folgenden Hinweise zum Betrieb.
+
+[CAUTION]
+Eine Verwendung des Moduls in Rennbooten oder Flogmodellen ist nicht zulässig.
+
+[CAUTION]
+Das Modul darf nicht in Kontakt mit Wasser, Wasserdampf oder anderen Flässigkeiten kommen. Wasser oder Wasserdampf bzw. andere 
+Flüssigkeiten können zu einem Totalausfall 
+und damit zu einem Modellverlust sowie Personenschäden führen.
+
+[CAUTION]
+Das Modul verbraucht im Ruhezustand nur sehr wenig Strom. Trotzdem darf ein dauerhafter Anschluß an einen *unüberwachten* Akku nicht erfolgen.
+Hier besteht Brandgefahr! Gefahr von Personenschäden!
+
+[CAUTION]
+Beim Betrieb ist die Erwärmung des Moduls zwingend zu überwachen! Eine Überhitzung kann zu einem Totalausfall und damit 
+zu einem Modellverlust führen. Gefahr von Personenschäden!
+
+[CAUTION]
+Die Spannunsgversorgung ist Moduls ist im Betrieb zu überwachen. Bei Unterspannung kann das Modul abschalten oder bei gleichzeitiger 
+hoher Stromaufnahme überhitzen und so zu einem Totalausfall 
+und damit zu einem Modellverlust sowie Personenschäden führen
+
+[CAUTION]
+Die erforderlichen Kabelquerschnitte für die Verbindung mit dem Akku und auch mit dem elektrischen Verbraucher sind unbedingt einzuhalten. 
+Hier besteht Brandgefahr. Gefahr von Personenschäden!
+
+[CAUTION]
+Beim Betrieb ist der maximale Stromdurchfluß zu begrenzen und zu überwachen. Ein zu langer und zu hoher Stromfluß kann zu einem Totalausfall 
+und damit zu einem Modellverlust sowie Personenschäden führen.
+
+[CAUTION]
+Das Modul ist nicht kurzschlußfest. Ein Kurzschluß führt zu einem Totalausfall 
+und damit zu einem Modellverlust sowie Personenschäden.
+
+[CAUTION]
+Der maximale Schaltstrom ist ist unbedingt einzuhalten und darf nicht überschritten werden. Ein zu hoher Schaltstrom kann zu einem Totalausfall 
+und damit zu einem Modellverlust sowie Personenschäden führen.
+
+[CAUTION]
+Die Kapazitäten (Elkos, Siebelkos) am Ausgang des Moduls, etwa in Fahrtreglern (Stellern) für Motoren, 
+dürfen 10.000µF nicht überschreiten. Zu hohe Kapazitäten können zu einem Totalausfall 
+und damit zu einem Modellverlust sowie Personenschäden führen.
+
+[CAUTION]
+Das Modul darf keinen Vibrationen ausgesetzt werden. Treffen Sie entsprechende Vorkehrungen zu einem vibrationsgeschützten Einbau. Zu starke 
+Vibrationen können zu einem Totalausfall und damit zu einem Modellverlust sowie Personenschäden führen.
+
+[CAUTION]
+Das Modul darf nur innerhalb eines Temperaturbereiches von -10°C bis +55°C betrieben werden. Ein Betrieb außerhalb dieses 
+Bereiches kann zu einem Totalausfall und damit zu einem Modellverlust sowie Personenschäden führen.
+
+== Aufbau 
+
+
+
+== Kontakt
+
+Anfragen: wilhelm.wm.meier@googlemail.com
+

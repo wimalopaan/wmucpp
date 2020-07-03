@@ -397,10 +397,14 @@ image::simple/simple_r3.jpg[width=500,align=center]
 
 R4:: 330K (Beschriftung R5) orange-orange-gelb
 
+Bitte beachtenm Sie die falsch positionierte Beschriftung von `R4` (fälschlicherweise mit `R5` vertauscht) und identifizieren Sie die korrekte Position auch anhand des Fotos.
+
 .Widerstand R4 bestückt
 image::simple/simple_r4.jpg[width=500,align=center]
 
 R5:: 1M (Beschriftung R4) braun-schwarz-grün
+
+Bitte beachtenm Sie die falsch positionierte Beschriftung von `R5` (fälschlicherweise mit `R4` vertauscht) und identifizieren Sie die korrekte Position auch anhand des Fotos.
 
 .Widerstand R5 bestückt
 image::simple/simple_r5.jpg[width=500,align=center]
@@ -432,7 +436,10 @@ image::simple/simple_c2.jpg[width=500,align=center]
 
 ===== Transistoren
 
-Die Transistoren _T9_, _T2_ und _T1_ sind leicht verwechselbar.
+Die Transistoren _T9_, _T2_ und _T1_ sind leicht verwechselbar. Auf der flachen Seite des Gehäuses steht die Bezeichnung. Benutzen sie ggf. eine 
+Lichtlupe, um die Schrift eindeutig zu erkennen.
+
+Beachten Sie auch die korrekte Einbauposition anhand des Bestückungsaufdrucks. Wichtig: abgeflachte Seite des Gehäuses.
 
 T9:: VP2106
 
