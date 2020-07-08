@@ -99,37 +99,113 @@ namespace IBus {
     }
 
     namespace Switch {
-        template<typename PA, typename ActorList>
-        struct Switch4;
+        struct Protocol1 {
+            using addr_t  = etl::uint_ranged<uint8_t, 0, 3>; // 2 Bits
+            using index_t = etl::uint_ranged<uint8_t, 0, 7>; // 3 Bits
+            using mode_t  = etl::uint_ranged<uint8_t, 0, 15>; // 4 Bits
+            
+            using param_t  = etl::uint_ranged<uint8_t, 0, 15>; // 4 Bits
+            using pvalue_t  = etl::uint_ranged<uint8_t, 0, 31>; // 5 Bits
+            
+            inline static constexpr mode_t off{1};
+            inline static constexpr mode_t on{2};
+            inline static constexpr mode_t blink1{3};
+            inline static constexpr mode_t blink2{4};
+            inline static constexpr mode_t config{15};
+            
+            inline static constexpr param_t reset{0};
+            inline static constexpr param_t pwm{1};
+            inline static constexpr param_t blink1Intervall{2};
+            inline static constexpr param_t blink1Duration{3};
+            inline static constexpr param_t blink2Intervall{4};
+            inline static constexpr param_t blink2Duration{5};
+            inline static constexpr param_t passThruChannel{6};
+            inline static constexpr param_t broadCast{15};
+            
+            inline static constexpr pvalue_t bCastReset{11};
+            inline static constexpr pvalue_t bCastOff{31};
+            
+            template<typename ValueType>
+            inline static constexpr addr_t toAddress(const ValueType& v) {
+                const uint16_t c = v.toInt() - ValueType::Lower;
+                return addr_t((c & (0x03 << 7)) >> 7);
+            }   
+            template<typename ValueType>
+            inline static constexpr index_t toIndex(const ValueType& v) {
+                const uint16_t c = v.toInt() - ValueType::Lower;
+                return index_t((c & (0x07 << 4)) >> 4);
+            }   
+            template<typename ValueType>
+            inline static constexpr mode_t toMode(const ValueType& v) {
+                const uint16_t c = v.toInt() - ValueType::Lower;
+                return mode_t((c & 0x0f));
+            }   
+            template<typename ValueType>
+            inline static constexpr bool isControlMessage(const ValueType& v) {
+                const uint16_t c = v.toInt() - ValueType::Lower;
+                return (c & (0x01 << 9));
+            }
+            template<typename ValueType>
+            inline static constexpr param_t toParameter(const ValueType& v) {
+                const uint16_t c = v.toInt() - ValueType::Lower;
+                return param_t((c & (0x0f << 5)) >> 5);
+            }   
+            template<typename ValueType>
+            inline static constexpr pvalue_t toParameterValue(const ValueType& v) {
+                const uint16_t c = v.toInt() - ValueType::Lower;
+                return pvalue_t(c & 0x1f);
+            }   
+            
+        };
         
-        template<typename PA, typename... Actors>
-        struct Switch4<PA, Meta::List<Actors...>> {
+        template<typename PA, typename ActorList, typename NVM = void>
+        struct MultiAdapter;
+        
+        template<typename PA, typename... Actors, typename NVM>
+        struct MultiAdapter<PA, Meta::List<Actors...>, NVM> {
             using channel_t = PA::channel_t;
             using value_t = PA::value_type;
-            
-            using addr_t  = etl::uint_ranged<uint8_t, 0, 3>;
-            using index_t = etl::uint_ranged<uint8_t, 0, 7>;
-            using mode_t  = etl::uint_ranged<uint8_t, 0, 15>;
-            using param_t  = etl::uint_ranged<uint8_t, 0, 15>;
-            using pvalue_t  = etl::uint_ranged<uint8_t, 0, 31>;
 
+            using addr_t = Protocol1::addr_t;
+            using index_t = Protocol1::index_t;
+            using mode_t = Protocol1::mode_t;
+            
+            using param_t = Protocol1::param_t;
+            using pvalue_t = Protocol1::pvalue_t;
+            
             inline static void init() {
             }
             inline static bool periodic() {
-                const uint16_t c = PA::value(mChannel).toInt() - value_t::Lower;
-                
-                const addr_t addr((c & (0x03 << 7)) >> 7);
-                const index_t index((c & (0x07 << 4)) >> 4);
-                const mode_t mode((c & 0x0f));
+                const auto cv = PA::value(mChannel);
+                const addr_t addr = Protocol1::toAddress(cv);
+                const index_t index = Protocol1::toIndex(cv);
+                const mode_t mode = Protocol1::toMode(cv);
                                 
-                if (c & (0x01 << 9)) { // control
+                if (Protocol1::isControlMessage(cv)) { // control (parameters)
+                    const param_t param = Protocol1::toParameter(cv);
+                    const pvalue_t value = Protocol1::toParameterValue(cv);
+
+                    if (param == Protocol1::broadCast) {
+                        if (value == Protocol1::bCastOff) {
+                            off(Meta::List<Actors...>{});                    
+                        }
+                    }
+                    else if (param == Protocol1::passThruChannel) {
+                        NVM::data()[lastOnIndex].passThru() = value;
+                    }
                 }
-                else { // command
+                else { // command (execute)
                     update(Meta::List<Actors...>{}, mode, index, addr);                    
                 }
                 return true;                
             }
         private:
+            template<typename F, typename... AA>
+            inline static void off(Meta::List<F, AA...>) {
+                for(auto& sw : F::switches()) {
+                    sw = F::SwState::Off;
+                }
+            }
             template<typename F, typename... AA>
             inline static void update(Meta::List<F, AA...>, const mode_t mode, const index_t index, const addr_t address) {
                 update<F>(mode, index, address);
@@ -142,40 +218,40 @@ namespace IBus {
             static inline void update(const mode_t mode, const index_t index, const addr_t address) {
 //                Actor::_;
                 if (Actor::address == address) {
-                    if (mode >= 2) {
-                        if (mode == 2) {
+                    if (mode != Protocol1::off) {
+                        lastOnIndex = index;
+                        if (mode == Protocol1::on) {
                             Actor::switches()[index] = Actor::SwState::Steady;
                         }
-                        else if (mode == 3) {
+                        else if (mode == Protocol1::blink1) {
                             Actor::switches()[index] = Actor::SwState::Blink1;
                         }
-                        else if (mode == 4) {
+                        else if (mode == Protocol1::blink2) {
                             Actor::switches()[index] = Actor::SwState::Blink2;
-                        }
-                        else if (mode == 5) {
-                            Actor::switches()[index] = Actor::SwState::PassThru;
                         }
                     }
                     else {
+                        lastOnIndex = index_t{};
                         Actor::switches()[index] = Actor::SwState::Off;
                     }
                 }
             }
-            
+        private:
+            static inline index_t lastOnIndex;            
             static inline channel_t mChannel{9};
 //            static inline constexpr addr_t mAddr{0};
         };
 
         template<typename PA, typename Actor, typename Out = void>
-        struct Switch3 {
+        struct Digital {
             using channel_t = PA::channel_t;
             using value_t = PA::value_type;
             
-            using addr_t  = etl::uint_ranged<uint8_t, 0, 3>;
-            using index_t = etl::uint_ranged<uint8_t, 0, 7>;
-            using mode_t  = etl::uint_ranged<uint8_t, 0, 15>;
-            using param_t  = etl::uint_ranged<uint8_t, 0, 15>;
-            using pvalue_t  = etl::uint_ranged<uint8_t, 0, 31>;
+            using addr_t = Protocol1::addr_t;
+            using index_t = Protocol1::index_t;
+            using mode_t = Protocol1::mode_t;
+            using param_t = Protocol1::param_t;
+            using pvalue_t = Protocol1::pvalue_t;
             
             using blink_index_t = Out::blink_index_t;
             
@@ -188,16 +264,16 @@ namespace IBus {
                 mChannel = c;
             }
             static inline bool periodic() {
-                const uint16_t c = PA::value(mChannel).toInt() - value_t::Lower;
-                lv = c;
+                const auto cv = PA::value(mChannel);
+                lv = cv;
                 
-                const addr_t addr((c & (0x03 << 7)) >> 7);
-                const index_t index((c & (0x07 << 4)) >> 4);
-                const mode_t mode((c & 0x0f));
+                const addr_t addr = Protocol1::toAddress(cv);
+                const index_t index = Protocol1::toIndex(cv);
+                const mode_t mode = Protocol1::toMode(cv);
                                 
-                if (c & (0x01 << 9)) { // control
-                    const param_t param((c & (0x0f << 5)) >> 5);
-                    const pvalue_t value(c & 0x1f);
+                if (Protocol1::isControlMessage(cv)) { // control
+                    const param_t param = Protocol1::toParameter(cv);
+                    const pvalue_t value = Protocol1::toParameterValue(cv);
                     
                     if (param.isTop()) {
                         for(auto& s : Actor::switches()) {

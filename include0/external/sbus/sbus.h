@@ -190,7 +190,7 @@ uint32_t sbusTime = 0;
             template<typename CN>
             struct Generator {
                 
-                using usart = AVR::Usart<CN, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<2>, AVR::SendQueueLength<26>>;
+                using usart = AVR::Usart<CN, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<2>, AVR::SendQueueLength<128>>;
                 
                 inline static constexpr uint16_t sbus_min = 172;
                 inline static constexpr uint16_t sbus_max = 1811;
@@ -199,8 +199,7 @@ uint32_t sbusTime = 0;
                 inline static void init() {
                     usart::template init<AVR::BaudRate<100000>, AVR::FullDuplex, true, 1>();
                     for(auto& o : output) {
-//                        o = (sbus_max + sbus_min) / 2;
-                        o = sbus_max;
+                        o = (sbus_max + sbus_min) / 2;
                     }
                 }
 

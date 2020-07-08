@@ -24,14 +24,14 @@ F_OSC = 20000000
 
 subdirs =
 
-targets += test00.elf test00.hex
-targets += a4t.hex
-targets += a3t2r.hex
-targets += a2t2c.hex
-targets += a2c2r.hex
-targets += a2c2r1g.hex
-targets += b10c5.hex
-targets += b11c4.hex
+#targets += test00.elf test00.hex
+#targets += a4t.hex
+#targets += a3t2r.hex
+#targets += a2t2c.hex
+#targets += a2c2r.hex
+#targets += a2c2r1g.hex
+#targets += b10c5.hex
+#targets += b11c4.hex
 targets += ibus2multi.hex
 targets += sbus2multi.hex
 

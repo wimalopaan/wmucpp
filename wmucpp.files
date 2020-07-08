@@ -234,6 +234,7 @@ boards/curiosity/test70.cc
 boards/curiosity/test71.cc
 boards/curiosity/test80.cc
 boards/curiosity/test81.cc
+boards/curiosity/test82.cc
 boards/curiosity/test90.cc
 boards/curiosity/test99.c
 boards/doorbell/Makefile

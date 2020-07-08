@@ -43,14 +43,18 @@ struct Adapter {
     inline static void ppmRaw(const auto v) {
         PPM::ppmRaw(ppm_index_t{Channel}, v);
     }
+
+    inline static void ppm(const auto v) {
+        PPM::ppm(ppm_index_t{Channel}, v);
+    }
 };
 
 
-template<typename PPM, uint8_t Address = 0, uint8_t Size = 8>
+template<typename PPM, typename PA, typename NVM, uint8_t Address = 0, uint8_t Size = 8>
 struct FSM {
     inline static constexpr uint8_t address = Address;
     
-    enum class SwState : uint8_t {Off, Steady, Blink1, Blink2, PassThru};
+    enum class SwState : uint8_t {Off, Steady, Blink1, Blink2};
 
     using ppm_value_t = PPM::ranged_type;
 
@@ -86,11 +90,17 @@ struct FSM {
 #endif
         else {
 #ifdef ROBBE_8370
-            const uint8_t i = cycle - 1;
+            const uint8_t i = Size - 1 - (cycle - 1); // Robbe counts channels in reverse order
 #else
             const uint8_t i = cycle - 2;
 #endif
-            if (swStates[i] == SwState::Off) {
+            if (const auto pch = NVM::data()[i].passThru()) {
+                using ch_t = PA::channel_t;
+                auto v = PA::value(ch_t{pch});
+//                decltype(v)::_;
+                PPM::ppm(v);
+            }
+            else if (swStates[i] == SwState::Off) {
                 PPM::ppmRaw(PPM::ocMedium);
             }
 #ifdef HAS_MEMORY_FUNCTION
@@ -127,13 +137,13 @@ struct FSM {
 using ppmCh1 = Adapter<ppmA, 0>;
 using ppmCh2 = Adapter<ppmA, 1>;
 using ppmCh3 = Adapter<ppmA, 2>;
-using fsm1 = FSM<ppmCh1, 0>;
-using fsm2 = FSM<ppmCh2, 1>;
-using fsm3 = FSM<ppmCh3, 2>;
-using fsm4 = FSM<ppmB, 3>;
-using fsm5 = FSM<ppmC, 4>;
+using fsm1 = FSM<ppmCh1, servo_pa, eeprom, 0>;
+using fsm2 = FSM<ppmCh2, servo_pa, eeprom, 1>;
+using fsm3 = FSM<ppmCh3, servo_pa, eeprom, 2>;
+using fsm4 = FSM<ppmB, servo_pa, eeprom, 3>;
+using fsm5 = FSM<ppmC, servo_pa, eeprom, 4>;
 
-using ibus_switch = IBus::Switch::Switch4<servo_pa, Meta::List<fsm1, fsm2, fsm3, fsm4, fsm5>>;
+using ibus_switch = IBus::Switch::MultiAdapter<servo_pa, Meta::List<fsm1, fsm2, fsm3, fsm4, fsm5>, eeprom>;
 
 using evch0 = Event::Channel<0, void>;
 using evch1 = Event::Channel<1, void>;

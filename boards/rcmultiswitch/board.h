@@ -159,7 +159,8 @@ namespace  {
 }
 
 struct SoftTimer {
-    static constexpr auto intervall = 50_ms;
+//    static constexpr auto intervall = 50_ms;
+    static constexpr auto intervall = 1 / fRtc;
 };
 
 

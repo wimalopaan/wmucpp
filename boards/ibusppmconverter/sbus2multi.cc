@@ -86,7 +86,7 @@ struct FSM {
 #endif
         else {
 #ifdef ROBBE_8370
-            const uint8_t i = Size - 1 - (cycle - 1);
+            const uint8_t i = Size - 1 - (cycle - 1); // Robbe counts channels in reverse order
 #else
             const uint8_t i = cycle - 2;
 #endif
@@ -134,7 +134,7 @@ using fsm3 = FSM<ppmCh3, 2>;
 using fsm4 = FSM<ppmB, 3>;
 using fsm5 = FSM<ppmC, 4>;
 
-using ibus_switch = IBus::Switch::Switch4<servo_pa, Meta::List<fsm1, fsm2, fsm3, fsm4, fsm5>>;
+using ibus_switch = IBus::Switch::MultiAdapter<servo_pa, Meta::List<fsm1, fsm2, fsm3, fsm4, fsm5>, eeprom>;
 
 using evch0 = Event::Channel<0, void>;
 using evch1 = Event::Channel<1, void>;

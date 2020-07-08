@@ -85,7 +85,7 @@ namespace External {
                     if (isdigit(b)) {
                         number += (static_cast<uint8_t>(b) - '0');
                         if (number < NumberOfChannels) {
-                            index = number;
+                            index.set(number);
                             state = State::Space;
                         }
                     }

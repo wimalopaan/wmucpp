@@ -31,7 +31,7 @@ using sw = SwitchStates<>;
 
 using out = External::Output<ledList, pwm, sw, eeprom>;
 
-using ibus_switch = IBus::Switch::Switch3<servo_pa, sw, out>;
+using ibus_switch = IBus::Switch::Digital<servo_pa, sw, out>;
 
 int main() {
     portmux::init();

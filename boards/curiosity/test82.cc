@@ -12,8 +12,8 @@
 
 #include <external/hal/alarmtimer.h>
 #include <external/hal/adccontroller.h>
-
 #include <external/sbus/sbus.h>
+#include <external/bluetooth/roboremo.h>
 
 #include <std/chrono>
 
@@ -33,18 +33,22 @@ using pa0 = Pin<PortF, 2>;
 using ccp = Cpu::Ccp<>;
 using clock = Clock<>;
 
-using usart2Position = Portmux::Position<Component::Usart<2>, Portmux::Alt1>;
+using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Default>;
 using usart1Position = Portmux::Position<Component::Usart<1>, Portmux::Default>;
+using usart2Position = Portmux::Position<Component::Usart<2>, Portmux::Alt1>;
 
-using portmux = Portmux::StaticMapper<Meta::List<usart2Position, usart1Position>>;
+using portmux = Portmux::StaticMapper<Meta::List<usart0Position, usart2Position, usart1Position>>;
 
 using terminalDevice = Usart<usart2Position, External::Hal::NullProtocollAdapter, UseInterrupts<false>>;
 using terminal = etl::basic_ostream<terminalDevice>;
 
 using sbus = External::SBus::Output::Generator<usart1Position>;
 
+using robo_pa = External::RoboRemo::ProtocollAdapter<0>;
+using robo = Usart<usart0Position, robo_pa, UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
+
 namespace  {
-    constexpr auto fRtc = 71_Hz; // 7ms
+    constexpr auto fRtc = 71_Hz; // 14ms
 }
 
 using systemTimer = SystemTimer<Component::Rtc<0>, fRtc>;
@@ -63,7 +67,10 @@ int main() {
         clock::prescale<1>();
     });
    
+    
     terminalDevice::init<BaudRate<9600>>();
+    robo::init<BaudRate<9600>>();
+    
     sbus::init(); // even parity, 2 stop bits
    
     systemTimer::init();
@@ -80,7 +87,7 @@ int main() {
     while(true) {
         adcController::periodic();
         terminalDevice::periodic();
-        
+        robo::periodic();
         sbus::periodic();
         
         systemTimer::periodic([&]{
@@ -89,13 +96,15 @@ int main() {
             sbus::ratePeriodic(); // 14ms
             
             const uint16_t v0 = adcController::value(adi_t{0}).toInt();
-          
             sbus::output[0] = (v0 - 512) + 992;
+            
+            const uint16_t v1 = robo_pa::propValues[0];
+            sbus::output[1] = v1 + 992;
             
             alarmTimer::periodic([&](const auto& t){
                 if (periodicTimer == t) {
                     led::toggle();
-                    etl::outl<terminal>("cnt: "_pgm, counter++, " v0: "_pgm, v0);
+                    etl::outl<terminal>("cnt: "_pgm, counter++, " v0: "_pgm, v0, " v1: "_pgm, v1);
                 }
             });
         });

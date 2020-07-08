@@ -147,3 +147,81 @@ struct IBusThrough {
 
 using ibt = IBusThrough;
 
+namespace Storage {
+//    using tick_type = External::Tick<SoftTimer, uint8_t>;
+//    struct Blink {
+//        tick_type duration{};
+//        tick_type intervall{};
+//    };
+
+    struct SwitchConfig {
+//        using pwm_type = etl::uint_ranged_NaN<uint8_t, 0, pwm::pwmMax>;
+        using channel_type = etl::uint_ranged_NaN<uint8_t, 0, 15>;
+//        using tick_t = tick_type;
+        
+//        const auto& pwmValue() const {
+//            return mPwm;
+//        }
+//        auto& pwmValue() {
+//            return mPwm;
+//        }
+//        void pwmValue(const pwm_type v){
+//            mPwm = v;
+//        }
+//        auto& blinks() {
+//            return mBlinks;
+//        }
+        auto& passThru() {
+            return mPassThruChannel;
+        }
+    private:
+        channel_type mPassThruChannel{};
+//        pwm_type mPwm{};
+//        std::array<Blink, 4> mBlinks;
+    };
+    
+    enum class AVKey : uint8_t {Magic, 
+                                Ch0, Ch1, Ch2, Ch3, Ch4, Ch5, Ch6, Ch7,
+                                Undefined, 
+                                _Number};
+    
+    struct ApplData final : public EEProm::DataBase<ApplData> {
+        using value_type = SwitchConfig;
+        value_type& operator[](const AVKey key) {
+            if (key == AVKey::Undefined) {
+                AValues[static_cast<uint8_t>(AVKey::Undefined)] = SwitchConfig{};
+            }
+            return {AValues[static_cast<uint8_t>(key)]};
+        }
+        template<typename T>
+        value_type& operator[](const T i) {
+            return operator[](mapToKey(i));
+        }
+    private:
+        template<typename T>
+        inline Storage::AVKey mapToKey(const T i) {
+            switch(i) {
+            case 0:
+                return Storage::AVKey::Ch0;
+            case 1:
+                return Storage::AVKey::Ch1;
+            case 2:
+                return Storage::AVKey::Ch2;
+            case 3:
+                return Storage::AVKey::Ch3;
+            case 4:
+                return Storage::AVKey::Ch4;
+            case 5:
+                return Storage::AVKey::Ch5;
+            case 6:
+                return Storage::AVKey::Ch6;
+            case 7:
+                return Storage::AVKey::Ch7;
+            }
+            return Storage::AVKey::Undefined;
+        }
+        std::array<value_type, static_cast<uint8_t>(AVKey::_Number)> AValues;
+    };
+}
+
+using eeprom = EEProm::Controller<Storage::ApplData>;

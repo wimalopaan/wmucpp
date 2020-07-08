@@ -83,7 +83,7 @@ int main() {
             alarmTimer::periodic([&](const auto& t){
                 if (periodicTimer == t) {
                     led::toggle();
-                    etl::outl<terminal>("cnt: "_pgm, servo_pa::c, " ch0: "_pgm, servo_pa::value(ch_t{9}).toInt());
+                    etl::outl<terminal>("cnt: "_pgm, servo_pa::c, " ch0: "_pgm, servo_pa::value(ch_t{15}).toInt());
                 }
             });
         });
