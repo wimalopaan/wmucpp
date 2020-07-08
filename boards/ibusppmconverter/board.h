@@ -197,7 +197,11 @@ namespace Storage {
         value_type& operator[](const T i) {
             return operator[](mapToKey(i));
         }
+        uint8_t& magic() {
+            return mMagic;
+        }
     private:
+        uint8_t mMagic;
         template<typename T>
         inline Storage::AVKey mapToKey(const T i) {
             switch(i) {

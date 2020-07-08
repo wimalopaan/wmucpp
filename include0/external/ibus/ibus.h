@@ -155,7 +155,6 @@ namespace IBus {
                 const uint16_t c = v.toInt() - ValueType::Lower;
                 return pvalue_t(c & 0x1f);
             }   
-            
         };
         
         template<typename PA, typename ActorList, typename NVM = void>
@@ -192,6 +191,12 @@ namespace IBus {
                     }
                     else if (param == Protocol1::passThruChannel) {
                         NVM::data()[lastOnIndex].passThru() = value;
+                        NVM::data().change();
+                    }
+                    else if (param == Protocol1::reset) {
+                        using sw_t = std::remove_cvref_t<decltype(NVM::data()[0])>;
+                        NVM::data()[lastOnIndex] = sw_t{};
+                        NVM::data().change();
                     }
                 }
                 else { // command (execute)
@@ -228,6 +233,9 @@ namespace IBus {
                         }
                         else if (mode == Protocol1::blink2) {
                             Actor::switches()[index] = Actor::SwState::Blink2;
+                        }
+                        else if (mode == Protocol1::config) {
+                            Actor::switches()[index] = Actor::SwState::Off;
                         }
                     }
                     else {

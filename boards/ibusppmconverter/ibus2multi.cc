@@ -151,6 +151,8 @@ using evuser0 = Event::Route<evch0, Event::Users::Tcb<0>>;
 using evuser1 = Event::Route<evch1, Event::Users::Tcb<1>>;
 using evrouter = Event::Router<Event::Channels<evch0, evch1>, Event::Routes<evuser0, evuser1>>;
 
+auto& appData = eeprom::data();
+
 int main() {
     wdt::init<ccp>();
     
@@ -180,9 +182,30 @@ int main() {
     fsm5::init();
     ibus_switch::init();
     
+    eeprom::init();
+    
+    {
+        if (!((appData.magic() == 42))) {
+            appData.magic() = 42;
+            appData[Storage::AVKey::Ch0] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch1] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch2] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch3] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch4] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch5] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch6] = Storage::ApplData::value_type{};
+            appData[Storage::AVKey::Ch7] = Storage::ApplData::value_type{};
+            appData.change();
+        }
+    }
+    
     const auto periodicTimer = alarmTimer::create(20_ms, External::Hal::AlarmFlags::Periodic);
+    const auto eepromTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
 
     while(true) {
+        eeprom::saveIfNeeded([&]{
+            //            fsm::load();                
+        });
         servo::periodic();
         ibus_switch::periodic();
         fsm1::periodic();
@@ -201,6 +224,9 @@ int main() {
                         fsm5::update();
                         evrouter::strobe<1>();
                     });
+                }
+                else if (eepromTimer == t) {
+                    appData.expire();
                 }
             });
         });
