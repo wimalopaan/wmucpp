@@ -118,6 +118,7 @@ namespace EEProm {
     class Controller final {
         Controller() = delete;
     public:
+        using data_t = DataType;
         inline static void init() {
             eeprom_read_block(reinterpret_cast<uint8_t*>(&mData), reinterpret_cast<void*>(Offset), sizeof(DataType));
         }

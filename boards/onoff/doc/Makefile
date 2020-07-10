@@ -15,7 +15,8 @@ ASCIIDOCTORPDF = ~/.gem/ruby/2.7.0/gems/asciidoctor-pdf-1.5.3/bin/asciidoctor-pd
 EXTENSIONSDIR = ~/asciidoctor/extensions/lib 
 EXTENSIONSDIR2 = ~/asciidoctor/local
 
-ASCIIDOCTORFLAGS += -I $(EXTENSIONSDIR) -I $(EXTENSIONSDIR2) -r view-result-docinfoprocessor -r man-inline-macro-local -r asciidoctor-diagram -r tree-block-macro -r asciidoctor-mathematical # -r mathematical-treeprocessor -r mathoid-treeprocessor
+ASCIIDOCTORFLAGS += -I $(EXTENSIONSDIR) -I $(EXTENSIONSDIR2) -r view-result-docinfoprocessor -r man-inline-macro-local -r asciidoctor-diagram -r tree-block-macro 
+#-r asciidoctor-mathematical # -r mathematical-treeprocessor -r mathoid-treeprocessor
 
 ASCIIDOCTORFLAGSINC += -I $(EXTENSIONSDIR) -I $(EXTENSIONSDIR2) -r include-file-extractor -r view-result-docinfoprocessor -r man-inline-macro-local -r asciidoctor-diagram -r tree-block-macro -r asciidoctor-mathematical # -r mathematical-treeprocessor -r mathoid-treeprocessor
 

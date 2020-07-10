@@ -188,13 +188,14 @@ namespace External {
                 }
             }
             static inline bool isNeutral(const auto v) {
-                return (v >= thresh_neutral_low) && (v <= thresh_neutral_high);
+                const auto vi = v.toInt();
+                return (vi >= thresh_neutral_low) && (vi <= thresh_neutral_high);
             }
             static inline bool isUp(const auto v) {
-                return (v >= thresh_up);
+                return (v.toInt() >= thresh_up);
             }
             static inline bool isDown(const auto v) {
-                return (v <= thresh_down);
+                return (v.toInt() <= thresh_down);
             }
         };
     }

@@ -113,7 +113,7 @@ namespace External {
 
         inline static void pwm(const index_t index, const uint8_t p) {
             NVM::data()[index].pwmValue(p);
-
+            NVM::data().change();
             if (index <= pwm_index_t::Upper) {
                 const auto li = pwm_index_t(index);
                 if (const auto v = NVM::data()[index].pwmValue()) {
@@ -124,13 +124,16 @@ namespace External {
         
         inline static void duration(const index_t index, const tick_t d) {
             NVM::data()[index].blinks()[blinkIndex].duration = d;
+            NVM::data().change();
         }
         inline static void intervall(const index_t index, const tick_t i) {
             NVM::data()[index].blinks()[blinkIndex].intervall = i;
+            NVM::data().change();
             blinkTicks[index] = std::min(blinkTicks[index], i);
         }
         inline static void intervall2(const index_t index, const tick_t i) {
             NVM::data()[index].blinks()[blinkIndex].intervall = i;
+            NVM::data().change();
 //            blinkTicks[index] = std::min(blinkTicks[index], i);
         }
         inline static auto intervall(const index_t index) {

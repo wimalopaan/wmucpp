@@ -1,6 +1,7 @@
 #define USE_IBUS
 
 #define ROBBE_8370
+//#define CP_ONEPULSE
 
 #ifdef ROBBE_8370
 //# define HAS_MEMORY_FUNCTION
@@ -21,6 +22,8 @@ using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition, tc
 
 using servo_pa = IBus::Servo::ProtocollAdapter<0>;
 using servo = AVR::Usart<usart0Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
+
+using eeprom = EEProm::Controller<Storage::ApplData<servo_pa::channel_t>>;
 
 template<typename PPM, uint8_t Channel = 0>
 struct Adapter {
@@ -58,7 +61,7 @@ struct FSM {
 
     using ppm_value_t = PPM::ranged_type;
 
-#ifdef ROBBE_8370
+#if defined(ROBBE_8370) || defined(CP_ONEPULSE)
     using cycle_t = etl::uint_ranged_circular<uint8_t, 0, 8>;
 #else 
     using cycle_t = etl::uint_ranged_circular<uint8_t, 0, 9>;
@@ -83,6 +86,10 @@ struct FSM {
         if (cycle < 1) {
             PPM::ppmRaw(PPM::ocMin - 100);
         }
+#elif defined(CP_ONEPULSE)
+        if (cycle < 1) {
+            PPM::ppmRaw(PPM::ocMax + 100);
+        }
 #else
         if (cycle < 2) {
             PPM::ppmRaw(PPM::ocMax + 100);
@@ -91,12 +98,14 @@ struct FSM {
         else {
 #ifdef ROBBE_8370
             const uint8_t i = Size - 1 - (cycle - 1); // Robbe counts channels in reverse order
+#elif defined(CP_ONEPULSE)
+            const uint8_t i = cycle - 1;
 #else
             const uint8_t i = cycle - 2;
 #endif
             if (const auto pch = NVM::data()[i].passThru()) {
                 using ch_t = PA::channel_t;
-                auto v = PA::value(ch_t{pch});
+                auto v = PA::value(ch_t{pch.toInt()});
 //                decltype(v)::_;
                 PPM::ppm(v);
             }
@@ -183,37 +192,59 @@ int main() {
     ibus_switch::init();
     
     eeprom::init();
-    
     {
         if (!((appData.magic() == 42))) {
             appData.magic() = 42;
-            appData[Storage::AVKey::Ch0] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch1] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch2] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch3] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch4] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch5] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch6] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch7] = Storage::ApplData::value_type{};
+            appData.clear();
             appData.change();
         }
     }
     
     const auto periodicTimer = alarmTimer::create(20_ms, External::Hal::AlarmFlags::Periodic);
+    const auto learnTimer = alarmTimer::create(5000_ms, External::Hal::AlarmFlags::Periodic);
     const auto eepromTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
 
+    using ch_t = servo_pa::channel_t;
+    
+    bool learn{true};
+    ch_t learnChannel{0};
+    
     while(true) {
         eeprom::saveIfNeeded([&]{
             //            fsm::load();                
         });
         servo::periodic();
-        ibus_switch::periodic();
+        
+        if (!learn) {
+            ibus_switch::periodic();
+        }
         fsm1::periodic();
         fsm2::periodic();
         fsm3::periodic();
         
         systemTimer::periodic([&]{
             wdt::reset();
+            if (learn) {
+                if (const auto lc = servo_pa::value(learnChannel); ibus_switch::isLearnCode(lc)) {
+                    const auto addr = ibus_switch::protocol_t::toParameter(lc).toInt() - 1;
+                    if ((addr <= ibus_switch::protocol_t::addr_t::Upper)) {
+                        ibus_switch::channel(learnChannel);
+                        ibus_switch::address(ibus_switch::protocol_t::addr_t(addr));
+                        appData.channel() = learnChannel;
+                        appData.address() = addr;
+                        appData.change();
+                        learn = false;
+                    }
+                }   
+                else {
+                    if (learnChannel.isTop()) {
+                        learnChannel.setToBottom();
+                    }
+                    else {
+                        ++learnChannel;
+                    }
+                }
+            }
             alarmTimer::periodic([&](const auto& t){
                 if (periodicTimer == t) {
                     ppmB::onReload([]{
@@ -224,6 +255,9 @@ int main() {
                         fsm5::update();
                         evrouter::strobe<1>();
                     });
+                }
+                else if (learnTimer == t) {
+                    learn = false;
                 }
                 else if (eepromTimer == t) {
                     appData.expire();

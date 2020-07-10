@@ -154,9 +154,11 @@ namespace Storage {
 //        tick_type intervall{};
 //    };
 
+    template<typename Channel>
     struct SwitchConfig {
 //        using pwm_type = etl::uint_ranged_NaN<uint8_t, 0, pwm::pwmMax>;
-        using channel_type = etl::uint_ranged_NaN<uint8_t, 0, 15>;
+//        using channel_type = etl::uint_ranged_NaN<uint8_t, 0, 15>;
+        using channel_type = Channel;
 //        using tick_t = tick_type;
         
 //        const auto& pwmValue() const {
@@ -185,11 +187,12 @@ namespace Storage {
                                 Undefined, 
                                 _Number};
     
-    struct ApplData final : public EEProm::DataBase<ApplData> {
-        using value_type = SwitchConfig;
+    template<typename Channel>
+    struct ApplData final : public EEProm::DataBase<ApplData<Channel>> {
+        using value_type = SwitchConfig<Channel>;
         value_type& operator[](const AVKey key) {
             if (key == AVKey::Undefined) {
-                AValues[static_cast<uint8_t>(AVKey::Undefined)] = SwitchConfig{};
+                AValues[static_cast<uint8_t>(AVKey::Undefined)] = value_type{};
             }
             return {AValues[static_cast<uint8_t>(key)]};
         }
@@ -200,8 +203,21 @@ namespace Storage {
         uint8_t& magic() {
             return mMagic;
         }
+        void clear() {
+            for(auto& v : AValues) {
+                v = value_type{};
+            }
+        }
+        value_type::channel_type& channel() {
+            return mChannel;
+        }
+        uint8_t& address() {
+            return mAddress;
+        }
     private:
         uint8_t mMagic;
+        value_type::channel_type mChannel;
+        uint8_t mAddress;
         template<typename T>
         inline Storage::AVKey mapToKey(const T i) {
             switch(i) {
@@ -228,4 +244,4 @@ namespace Storage {
     };
 }
 
-using eeprom = EEProm::Controller<Storage::ApplData>;
+//using eeprom = EEProm::Controller<Storage::ApplData>;

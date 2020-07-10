@@ -46,50 +46,51 @@ namespace External {
             inline static void periodic() {
                 Ppm::onCapture([]{
                     const auto v = Ppm::value(); 
-                    if (!v) return;
-                    switch(mState) {
-                    case State::UnDefined:
-                        if (v >= Ppm::ppmMax) {
-                            mState = State::GotSync1;
+                    if (const auto vi = v.toInt(); v) {
+                        switch(mState) {
+                        case State::UnDefined:
+                            if (vi >= Ppm::ppmMax) {
+                                mState = State::GotSync1;
+                            }
+                            break;
+                        case State::GotSync1:
+                            if (vi >= Ppm::ppmMax) {
+                                mState = State::GotSync2;
+                                index.setToBottom();
+                            }
+                            else {
+                                mState = State::UnDefined;
+                            }
+                            break;
+                        case State::GotSync2:
+                            if (vi < Ppm::ppmMax) {
+                                pValues[index] = vi;
+                                if (flags()->data & enableMask) {
+                                    if (vi >= thresh_up) {
+                                        swStates[toSwitchIndex(index, true)] = SwState::On;
+                                        swStates[toSwitchIndex(index, false)] = SwState::Off;
+                                    }
+                                    else if (vi <= thresh_down) {
+                                        swStates[toSwitchIndex(index, false)] = SwState::On;
+                                        swStates[toSwitchIndex(index, true)] = SwState::Off;
+                                    }
+                                    else {
+                                        swStates[toSwitchIndex(index, true)] = SwState::Off;
+                                        swStates[toSwitchIndex(index, false)] = SwState::Off;
+                                    }
+                                }                            
+                            }
+                            else {
+                                mState = State::GotSync1;
+                            }
+                            if (index.isTop()) {
+                                mState = State::UnDefined;
+                            }
+                            else {
+                                ++index;
+                            }
+                            break;
                         }
-                        break;
-                    case State::GotSync1:
-                        if (v >= Ppm::ppmMax) {
-                            mState = State::GotSync2;
-                            index.setToBottom();
-                        }
-                        else {
-                            mState = State::UnDefined;
-                        }
-                        break;
-                    case State::GotSync2:
-                        if (v < Ppm::ppmMax) {
-                            pValues[index] = v;
-                            if (flags()->data & enableMask) {
-                                if (v >= thresh_up) {
-                                    swStates[toSwitchIndex(index, true)] = SwState::On;
-                                    swStates[toSwitchIndex(index, false)] = SwState::Off;
-                                }
-                                else if (v <= thresh_down) {
-                                    swStates[toSwitchIndex(index, false)] = SwState::On;
-                                    swStates[toSwitchIndex(index, true)] = SwState::Off;
-                                }
-                                else {
-                                    swStates[toSwitchIndex(index, true)] = SwState::Off;
-                                    swStates[toSwitchIndex(index, false)] = SwState::Off;
-                                }
-                            }                            
-                        }
-                        else {
-                            mState = State::GotSync1;
-                        }
-                        if (index.isTop()) {
-                            mState = State::UnDefined;
-                        }
-                        else {
-                            ++index;
-                        }
-                        break;
                     }
                 });
             }

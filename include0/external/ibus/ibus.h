@@ -126,6 +126,17 @@ namespace IBus {
             inline static constexpr pvalue_t bCastOff{31};
             
             template<typename ValueType>
+            inline static constexpr bool isLearnCode(const ValueType& v) {
+                if (isControlMessage(v)) {
+                    const auto p = toParameter(v);
+                    if (p != Protocol1::reset) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            
+            template<typename ValueType>
             inline static constexpr addr_t toAddress(const ValueType& v) {
                 const uint16_t c = v.toInt() - ValueType::Lower;
                 return addr_t((c & (0x03 << 7)) >> 7);
@@ -165,6 +176,8 @@ namespace IBus {
             using channel_t = PA::channel_t;
             using value_t = PA::value_type;
 
+            using protocol_t = Protocol1;
+            
             using addr_t = Protocol1::addr_t;
             using index_t = Protocol1::index_t;
             using mode_t = Protocol1::mode_t;
@@ -172,7 +185,20 @@ namespace IBus {
             using param_t = Protocol1::param_t;
             using pvalue_t = Protocol1::pvalue_t;
             
+            template<typename T>
+            inline static constexpr bool isLearnCode(const T& v) {
+                return Protocol1::isLearnCode(v);
+            }
             inline static void init() {
+            }
+            static inline void channel(const channel_t c) {
+                if (c) {
+                    mChannel = c;
+                }
+            }
+
+            static inline void address(const addr_t a) {
+                mAddr = a;
             }
             inline static bool periodic() {
                 const auto cv = PA::value(mChannel);
@@ -222,7 +248,7 @@ namespace IBus {
             template<typename Actor>
             static inline void update(const mode_t mode, const index_t index, const addr_t address) {
 //                Actor::_;
-                if (Actor::address == address) {
+                if ((Actor::address + mAddr) == address) {
                     if (mode != Protocol1::off) {
                         lastOnIndex = index;
                         if (mode == Protocol1::on) {
@@ -247,13 +273,15 @@ namespace IBus {
         private:
             static inline index_t lastOnIndex;            
             static inline channel_t mChannel{9};
-//            static inline constexpr addr_t mAddr{0};
+            static inline addr_t mAddr{0};
         };
 
         template<typename PA, typename Actor, typename Out = void>
         struct Digital {
             using channel_t = PA::channel_t;
             using value_t = PA::value_type;
+            
+            using protocol_t = Protocol1;
             
             using addr_t = Protocol1::addr_t;
             using index_t = Protocol1::index_t;
@@ -271,9 +299,24 @@ namespace IBus {
             static inline void init(const channel_t c) {
                 mChannel = c;
             }
+
+            static inline void channel(const channel_t c) {
+                if (c) {
+                    mChannel = c;
+                }
+            }
+
+            static inline void address(const addr_t a) {
+                mAddr = a;
+            }
+            
+            template<typename T>
+            inline static constexpr bool isLearnCode(const T& v) {
+                return Protocol1::isLearnCode(v);
+            }
             static inline bool periodic() {
                 const auto cv = PA::value(mChannel);
-                lv = cv;
+                lv = cv.toInt();
                 
                 const addr_t addr = Protocol1::toAddress(cv);
                 const index_t index = Protocol1::toIndex(cv);
@@ -283,41 +326,47 @@ namespace IBus {
                     const param_t param = Protocol1::toParameter(cv);
                     const pvalue_t value = Protocol1::toParameterValue(cv);
                     
-                    if (param.isTop()) {
-                        for(auto& s : Actor::switches()) {
-                            s = Actor::SwState::Off;
-                        }                        
+                    if (param == Protocol1::broadCast) {
+                        if (value == Protocol1::bCastOff) {
+                            lastOnIndex = index_t{};
+                            for(auto& s : Actor::switches()) {
+                                s = Actor::SwState::Off;
+                            }                        
+                        }
                     }
                     else {
                         lp2 = param;
                         lp = value;
-                        if (param == 0) {
+                        if (param == Protocol1::reset) {
+//                            Out::reset(lastOnIndex);
+                        }
+                        else if (param == Protocol1::pwm) {
                             Actor::switches()[lastOnIndex] = Actor::SwState::Steady;
                             const uint8_t pwm = ((uint16_t)value * pwmMax) / pvalue_t::Upper;
                             Out::pwm(lastOnIndex, pwm);
                         }
-                        else if (param == 1) {
+                        else if (param == Protocol1::blink1Intervall) {
                             Actor::switches()[lastOnIndex] = Actor::SwState::Blink1;
                             const uint8_t intervall = ((uint16_t)value * tick_t::max()) / pvalue_t::Upper;
                             Out::mode(blink_index_t{0});
                             Out::intervall2(lastOnIndex, tick_t::fromRaw(intervall));
                             Out::duration(lastOnIndex, tick_t::fromRaw(intervall / 2));
                         }
-                        else if (param == 2) {
+                        else if (param == Protocol1::blink1Duration) {
                             Actor::switches()[lastOnIndex] = Actor::SwState::Blink1;
                             Out::mode(blink_index_t{0});
                             const uint16_t intervall = Out::intervall(lastOnIndex).value;
                             const uint8_t duration = (value * intervall) / pvalue_t::Upper; 
                             Out::duration(lastOnIndex, tick_t::fromRaw(duration));
                         }
-                        else if (param == 3) {
+                        else if (param == Protocol1::blink2Intervall) {
                             Actor::switches()[lastOnIndex] = Actor::SwState::Blink2;
                             const uint8_t intervall = ((uint16_t)value * tick_t::max()) / pvalue_t::Upper;
                             Out::mode(blink_index_t{1});
                             Out::intervall2(lastOnIndex, tick_t::fromRaw(intervall));
                             Out::duration(lastOnIndex, tick_t::fromRaw(intervall / 2));
                         }
-                        else if (param == 4) {
+                        else if (param == Protocol1::blink2Duration) {
                             Actor::switches()[lastOnIndex] = Actor::SwState::Blink2;
                             Out::mode(blink_index_t{1});
                             const uint16_t intervall = Out::intervall(lastOnIndex).value;
@@ -330,24 +379,22 @@ namespace IBus {
                     if (addr != mAddr) {
                         return false;
                     }
-                    if (mode >= 2) {
+                    if (mode != Protocol1::off) {
                         lastOnIndex = index;
-                        if (mode == 2) {
+                        if (mode == Protocol1::on) {
                             Actor::switches()[index] = Actor::SwState::Steady;
                         }
-                        else if (mode == 3) {
+                        else if (mode == Protocol1::blink1) {
                             Out::mode(blink_index_t{0});
                             Actor::switches()[index] = Actor::SwState::Blink1;
                         }
-                        else if (mode == 4) {
+                        else if (mode == Protocol1::blink2) {
                             Out::mode(blink_index_t{1});
                             Actor::switches()[index] = Actor::SwState::Blink2;
                         }
-                        else if (mode == 5) {
-                            Actor::switches()[index] = Actor::SwState::PassThru;
-                        }
                     }
                     else {
+                        lastOnIndex = index_t{};
                         Actor::switches()[index] = Actor::SwState::Off;
                     }
                 }
@@ -358,6 +405,7 @@ namespace IBus {
             static inline uint8_t lp;
             static inline uint8_t lp2;
 //        private: 
+//            using ch_t = etl::uint_ranged<uint8_t, PA::channel_t::Lower, PA::channel_t::Upper>;
             static inline index_t lastOnIndex;
             static inline channel_t mChannel{9};
             static inline addr_t    mAddr{0};
@@ -512,20 +560,22 @@ namespace IBus {
             
             using value_type = etl::uint_ranged_NaN<uint16_t, 988, 2011>;
             
-            using channel_t = etl::uint_ranged<uint8_t, 0, 17>;
+            using channel_t = etl::uint_ranged_NaN<uint8_t, 0, 17>;
             
             static inline value_type value(const channel_t ch) {
-                if (ch < 14) {
-                    const std::byte h = (*inactive)[2 * ch + 1] & 0x0f_B;
-                    const std::byte l = (*inactive)[2 * ch];
-                    return value_type{(uint16_t(h) << 8) + uint8_t(l)};
-                }
-                else if (ch < 18) {
-                    const std::byte h1 = (*inactive)[3 * (ch - 14) + 1] & 0xf0_B;
-                    const std::byte h2 = (*inactive)[3 * (ch - 14) + 3] & 0xf0_B;
-                    const std::byte h3 = (*inactive)[3 * (ch - 14) + 5] & 0xf0_B;
-                    return value_type{(uint16_t(h1) << 4) + uint8_t(h2) + (uint8_t(h3) >> 4)};
-                }
+                if (const uint8_t chi = ch.toInt(); ch) {
+                    if (chi < 14) {
+                        const std::byte h = (*inactive)[2 * chi + 1] & 0x0f_B;
+                        const std::byte l = (*inactive)[2 * chi];
+                        return value_type{(uint16_t(h) << 8) + uint8_t(l)};
+                    }
+                    else if (chi < 18) {
+                        const std::byte h1 = (*inactive)[3 * (chi - 14) + 1] & 0xf0_B;
+                        const std::byte h2 = (*inactive)[3 * (chi - 14) + 3] & 0xf0_B;
+                        const std::byte h3 = (*inactive)[3 * (chi - 14) + 5] & 0xf0_B;
+                        return value_type{(uint16_t(h1) << 4) + uint8_t(h2) + (uint8_t(h3) >> 4)};
+                    }
+                }            
                 return value_type{};
             }
             
@@ -736,7 +786,7 @@ namespace IBus {
                                 responder::start(responder::reply_state_t::DiscoverWait);
                             }
                             else if (!mLastSensorNumber) {
-                                const uint8_t index = n - mFirstSensorNumber;
+                                const uint8_t index = n.toInt() - mFirstSensorNumber.toInt();
                                 if (index == (numberOfProviders - 1)) {
                                     mLastSensorNumber = n;
                                 }

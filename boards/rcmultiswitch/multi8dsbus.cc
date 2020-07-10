@@ -6,6 +6,9 @@
 #include "swout.h"
 
 using servo_pa = External::SBus::Servo::ProtocollAdapter<0, systemTimer>;
+
+using eeprom = EEProm::Controller<Storage::ApplData<servo_pa::channel_t>>;
+
 using servo = AVR::Usart<usart0Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
 
 using terminalDevice = servo;
@@ -50,16 +53,9 @@ int main() {
     [[maybe_unused]] bool changed = false;
     
     {
-        if (!((appData[Storage::AVKey::Magic].pwmValue() == 43))) {
+        if (!((appData[Storage::AVKey::Magic].pwmValue().toInt() == 43))) {
             appData[Storage::AVKey::Magic].pwmValue(43);
-            appData[Storage::AVKey::Ch0] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch1] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch2] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch3] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch4] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch5] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch6] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch7] = Storage::ApplData::value_type{};
+            appData.clear();
             appData.change();
             changed  = true;
         }

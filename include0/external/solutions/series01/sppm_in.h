@@ -76,7 +76,7 @@ namespace External {
                 return value_type{};
             }
             inline static svalue_type svalue() {
-                return svalue_type(value() - smedium);
+                return svalue_type(value().toInt() - smedium);
             }
 
             inline static extended_value_type extended() {

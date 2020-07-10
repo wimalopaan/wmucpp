@@ -9,6 +9,9 @@
 
 using sensor = Hott::Experimental::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, Hott::TextMsg, systemTimer>;
 
+using storage_t = Storage::ApplData<etl::uint_ranged_NaN<uint8_t, 0, 7>>;
+using eeprom = EEProm::Controller<storage_t>;
+
 template<auto N = 8>
 struct SwitchStates {
     enum class SwState : uint8_t {Off, On, Blink1 = On, Steady, Blink2};
@@ -102,23 +105,25 @@ auto& appData = eeprom::data();
 
 struct PwmMenu final : public Hott::Menu<8, false, 8> {
     struct Adapter {
-        Storage::SwitchConfig::pwm_type& operator[](const Storage::AVKey k) {
+        eeprom::data_t::value_type::pwm_type& operator[](const Storage::AVKey k) {
             return appData[k].pwmValue();
         }
         void change() {
             appData.change();
         }
     };
+
+    using pwm_type = storage_t::value_type::pwm_type;
     
     PwmMenu(auto* const parent) : Menu{parent, "Pwm"_pgm, &mPwm0, &mPwm1, &mPwm2, &mPwm3, &mPwm4, &mPwm5, &mPwm6, &mPwm7} {}    
-    Hott::TextWithValue<Storage::AVKey, Adapter> mPwm0{"PWM A :"_pgm, a0, Storage::AVKey::Ch0, Storage::SwitchConfig::pwm_type::Upper};
-    Hott::TextWithValue<Storage::AVKey, Adapter> mPwm1{"PWM B :"_pgm, a1, Storage::AVKey::Ch1, Storage::SwitchConfig::pwm_type::Upper};
-    Hott::TextWithValue<Storage::AVKey, Adapter> mPwm2{"PWM C :"_pgm, a2, Storage::AVKey::Ch2, Storage::SwitchConfig::pwm_type::Upper};
-    Hott::TextWithValue<Storage::AVKey, Adapter> mPwm3{"PWM D :"_pgm, a3, Storage::AVKey::Ch3, Storage::SwitchConfig::pwm_type::Upper};
-    Hott::TextWithValue<Storage::AVKey, Adapter> mPwm4{"PWM E :"_pgm, a4, Storage::AVKey::Ch4, Storage::SwitchConfig::pwm_type::Upper};
-    Hott::TextWithValue<Storage::AVKey, Adapter> mPwm5{"PWM F :"_pgm, a5, Storage::AVKey::Ch5, Storage::SwitchConfig::pwm_type::Upper};
-    Hott::TextWithValue<Storage::AVKey, Adapter> mPwm6{"PWM G :"_pgm, a6, Storage::AVKey::Ch6, Storage::SwitchConfig::pwm_type::Upper};
-    Hott::TextWithValue<Storage::AVKey, Adapter> mPwm7{"PWM H :"_pgm, a7, Storage::AVKey::Ch7, Storage::SwitchConfig::pwm_type::Upper};
+    Hott::TextWithValue<Storage::AVKey, Adapter> mPwm0{"PWM A :"_pgm, a0, Storage::AVKey::Ch0, pwm_type::Upper};
+    Hott::TextWithValue<Storage::AVKey, Adapter> mPwm1{"PWM B :"_pgm, a1, Storage::AVKey::Ch1, pwm_type::Upper};
+    Hott::TextWithValue<Storage::AVKey, Adapter> mPwm2{"PWM C :"_pgm, a2, Storage::AVKey::Ch2, pwm_type::Upper};
+    Hott::TextWithValue<Storage::AVKey, Adapter> mPwm3{"PWM D :"_pgm, a3, Storage::AVKey::Ch3, pwm_type::Upper};
+    Hott::TextWithValue<Storage::AVKey, Adapter> mPwm4{"PWM E :"_pgm, a4, Storage::AVKey::Ch4, pwm_type::Upper};
+    Hott::TextWithValue<Storage::AVKey, Adapter> mPwm5{"PWM F :"_pgm, a5, Storage::AVKey::Ch5, pwm_type::Upper};
+    Hott::TextWithValue<Storage::AVKey, Adapter> mPwm6{"PWM G :"_pgm, a6, Storage::AVKey::Ch6, pwm_type::Upper};
+    Hott::TextWithValue<Storage::AVKey, Adapter> mPwm7{"PWM H :"_pgm, a7, Storage::AVKey::Ch7, pwm_type::Upper};
     
     Adapter a0;
     Adapter a1;
@@ -260,14 +265,7 @@ struct SystemMenu final : public Hott::Menu<8, true, 2> {
 
     struct R {
         static inline void process() {
-            appData[Storage::AVKey::Ch0] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch1] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch2] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch3] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch4] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch5] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch6] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch7] = Storage::ApplData::value_type{};
+            appData.clear();
             appData.change();
         }
     };
@@ -304,16 +302,9 @@ int main() {
     eeprom::init();
     
     {
-        if (!((appData[Storage::AVKey::Magic].pwmValue() == 44))) {
+        if (!((appData[Storage::AVKey::Magic].pwmValue().toInt() == 44))) {
             appData[Storage::AVKey::Magic].pwmValue(44);
-            appData[Storage::AVKey::Ch0] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch1] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch2] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch3] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch4] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch5] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch6] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch7] = Storage::ApplData::value_type{};
+            appData.clear();
             appData.change();
         }
     }

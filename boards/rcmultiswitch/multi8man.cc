@@ -23,6 +23,8 @@
 #include "board.h"
 #include "swout.h"
 
+using eeprom = EEProm::Controller<Storage::ApplData<etl::uint_ranged_NaN<uint8_t, 0, 7>>>;
+
 template<typename Timer, typename Out, typename NVM, typename Input = void>
 struct FSM {
     inline static constexpr auto size = Out::size();
@@ -77,9 +79,9 @@ struct FSM {
                     resetAll();                    
                 }
                 else {
-                    if (const auto c = getFirstSelected()) {
-                        if (c <= Out::pwm_index_t::Upper) {
-                            mLearn.set(c);
+                    if (const auto c = getFirstSelected(); c) {
+                        if (const auto ci = c.toInt(); ci <= Out::pwm_index_t::Upper) {
+                            mLearn.set(ci);
                             Input::enable(false);
                             mState = State::LearnPWMStart;
                         }
@@ -95,8 +97,8 @@ struct FSM {
                     resetAll();                    
                 }
                 else {
-                    if (const auto c = getFirstSelected()) {
-                        mLearn.set(c);
+                    if (const auto c = getFirstSelected(); c) {
+                        mLearn.set(c.toInt());
                         Input::enable(false);
                         Out::setSwitchOff(mLearn);
                         mState = State::LearnBlinkIntStart;
@@ -108,10 +110,10 @@ struct FSM {
             }
             break;
         case State::LearnPWMStart:
-            if (Input::ppm() > ppmDead) {
+            if (Input::ppm().toInt() > ppmDead) {
                 mState = State::LearnPWM;
             }
-            else if (Input::ppm() < ppmDead2) {
+            else if (Input::ppm().toInt() < ppmDead2) {
                 resetAll();
                 mState = State::Run;
             }
@@ -121,17 +123,20 @@ struct FSM {
             }
             break;
         case State::LearnBlinkIntStart:
-            if (Input::ppm() > ppmDead) {
-                Out::setSwitchOn(mLearn);
-                mState = State::LearnBlinkInt;
-            }
-            else if (Input::ppm() < ppmDead2) {
-                resetAll();
-                mState = State::Run;
+            if (const auto v = Input::ppm(); v) {
+                const auto vi = v.toInt();
+                if (vi > ppmDead) {
+                    Out::setSwitchOn(mLearn);
+                    mState = State::LearnBlinkInt;
+                }
+                else if (vi < ppmDead2) {
+                    resetAll();
+                    mState = State::Run;
+                }
             }
             break;
         case State::LearnBlinkDurStart:
-            if (Input::ppm() > ppmDead) {
+            if (Input::ppm().toInt() > ppmDead) {
                 mState = State::LearnBlinkDur;
             }
             break;
@@ -140,15 +145,17 @@ struct FSM {
                 mState = State::LearnPWMEnd;
             }
             else {
-                if (const auto x = Input::ppm(); x > ppmMedium) {
-                    if (x > ppmFull) {
-                        NVM::data()[mLearn].pwmValue(pwm_type{});    
+                if (const auto x = Input::ppm(); x) {
+                    if (const auto xi = x.toInt(); xi > ppmMedium) {
+                        if (xi > ppmFull) {
+                            NVM::data()[mLearn].pwmValue(pwm_type{});    
+                        }
+                        else {
+                            uint8_t p = (((uint32_t)xi - ppmMedium) * Out::pwmMax) / ppmSpan;
+                            NVM::data()[mLearn].pwmValue(p);
+                        }
+                        Out::setSwitch(mLearn);
                     }
-                    else {
-                        uint8_t p = (((uint32_t)x - ppmMedium) * Out::pwmMax) / ppmSpan;
-                        NVM::data()[mLearn].pwmValue(p);
-                    }
-                    Out::setSwitch(mLearn);
                 }
             }
             break;
@@ -157,11 +164,13 @@ struct FSM {
                 mState = State::LearnBlinkIntEnd;
             }
             else {
-                if (const auto x = Input::ppm(); x > ppmMedium) {
-                    uint8_t p = (((uint32_t)x - ppmMedium) * Out::blinkMax) / ppm::span;
-                    Out::duration(mLearn, Storage::tick_type::fromRaw(p / 2));
-                    Out::intervall(mLearn, Storage::tick_type::fromRaw(p));
-                    Out::setSwitch(mLearn);
+                if (const auto x = Input::ppm(); x) {
+                    if (const auto xi = Input::ppm().toInt(); xi > ppmMedium) {
+                        uint8_t p = (((uint32_t)xi - ppmMedium) * Out::blinkMax) / ppm::span;
+                        Out::duration(mLearn, Storage::tick_type::fromRaw(p / 2));
+                        Out::intervall(mLearn, Storage::tick_type::fromRaw(p));
+                        Out::setSwitch(mLearn);
+                    }
                 }
             }
             break;
@@ -170,34 +179,40 @@ struct FSM {
                 mState = State::LearnBlinkDurEnd;
             }
             else {
-                if (const auto x = Input::ppm(); x > ppmMedium) {
-                    uint8_t p = (((uint32_t)x - ppmMedium) * (Out::intervall(mLearn).value.toInt() - 1)) / ppm::span;
-                    Out::duration(mLearn, Storage::tick_type::fromRaw(p));
-//                    NVM::data()[mLearn].blinks()[0].duration = Storage::tick_type::fromRaw(p);
-                    Out::setSwitch(mLearn);
+                if (const auto x = Input::ppm(); x) {
+                    if (const auto xi = Input::ppm().toInt(); xi > ppmMedium) {
+                        uint8_t p = (((uint32_t)xi - ppmMedium) * (Out::intervall(mLearn).value.toInt() - 1)) / ppm::span;
+                        Out::duration(mLearn, Storage::tick_type::fromRaw(p));
+    //                    NVM::data()[mLearn].blinks()[0].duration = Storage::tick_type::fromRaw(p);
+                        Out::setSwitch(mLearn);
+                    }
                 }
             }
             break;
         case State::LearnPWMEnd:
-            if (const auto x = Input::ppm(); x < ppmDead2) {
-                NVM::data().change();
-                Out::setSwitchOff(mLearn);
-                resetAll();
-                Input::enable(true);
-                mState = State::Run;
+            if (const auto x = Input::ppm(); x) {
+                if (x.toInt() < ppmDead2) {
+                    NVM::data().change();
+                    Out::setSwitchOff(mLearn);
+                    resetAll();
+                    Input::enable(true);
+                    mState = State::Run;
+                }
             }
             break;
         case State::LearnBlinkIntEnd:
-            if (Input::ppm() < ppmDead2) {
+            if (Input::ppm().toInt() < ppmDead2) {
                 mState = State::LearnBlinkDurStart;
             }
             break;
         case State::LearnBlinkDurEnd:
-            if (const auto x = Input::ppm(); x < ppmDead2) {
-                NVM::data().change();
-                resetAll();
-                Input::enable(true);
-                mState = State::Run;
+            if (const auto x = Input::ppm(); x) {
+                if (x.toInt() < ppmDead2) {
+                    NVM::data().change();
+                    resetAll();
+                    Input::enable(true);
+                    mState = State::Run;
+                }
             }
             break;
         }
@@ -262,16 +277,9 @@ int main() {
     [[maybe_unused]] bool changed = false;
     
     {
-        if (!((appData[Storage::AVKey::Magic].pwmValue() == 43))) {
+        if (!((appData[Storage::AVKey::Magic].pwmValue().toInt() == 43))) {
             appData[Storage::AVKey::Magic].pwmValue(43);
-            appData[Storage::AVKey::Ch0] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch1] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch2] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch3] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch4] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch5] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch6] = Storage::ApplData::value_type{};
-            appData[Storage::AVKey::Ch7] = Storage::ApplData::value_type{};
+            appData.clear();
             appData.change();
             changed  = true;
         }

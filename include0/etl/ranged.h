@@ -254,6 +254,21 @@ namespace etl {
         inline const T& operator*() const {
             return mValue;
         }
+
+        inline constexpr bool isTop() const {
+            return mValue == Upper;
+        }
+        
+        inline constexpr bool isBottom() const {
+            return mValue == Lower;
+        }
+        
+        inline constexpr void setToBottom() volatile {
+            mValue = LowerBound;
+        }
+        inline constexpr void setToTop() {
+            mValue = UpperBound;
+        }
         
         template<typename R>
         inline constexpr uint_ranged_NaN operator+(R rhs) const {
@@ -292,9 +307,9 @@ namespace etl {
         inline constexpr T toInt() const {
             return mValue;
         }
-        constexpr operator T() const {
-            return mValue;
-        }
+//        constexpr operator T() const {
+//            return mValue;
+//        }
         
         template<typename TO>
         inline constexpr TO mapTo() const {
