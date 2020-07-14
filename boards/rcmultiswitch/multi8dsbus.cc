@@ -7,7 +7,7 @@
 
 using servo_pa = External::SBus::Servo::ProtocollAdapter<0, systemTimer>;
 
-using eeprom = EEProm::Controller<Storage::ApplData<servo_pa::channel_t>>;
+using eeprom = EEProm::Controller<Storage::ApplData<servo_pa::channel_t, IBus::Switch::Protocol1::addr_t>>;
 
 using servo = AVR::Usart<usart0Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
 
@@ -86,9 +86,8 @@ int main() {
                     for(const auto& s: sw::switches()) {
                         etl::out<terminal>((uint8_t) s);
                     }
-                    etl::outl<terminal>(" c: "_pgm, servo_pa::c, " ch: "_pgm, ibus_switch::lv, 
-                                        " s: "_pgm, (uint8_t)servo_pa::mState,
-                                        " lo: "_pgm, ibus_switch::lastOnIndex.toInt()
+                    etl::outl<terminal>(" c: "_pgm, servo_pa::c, 
+                                        " s: "_pgm, (uint8_t)servo_pa::mState
                                         );
                     appData.expire();
                 }

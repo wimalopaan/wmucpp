@@ -44,13 +44,15 @@ Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 
 <<<
 
-== Vorwort
-
 .Lizenz
 ****
 This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License. To view a copy of this license, visit 
 http://creativecommons.org/licenses/by-nc-sa/4.0[] or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
 ****
+
+<<<
+
+== Vorwort
 
 [NOTE]
 Das Modul wie auch diese Doku ist noch unvollständig und _work-in-progess_. 
@@ -227,6 +229,11 @@ Dadurch kann das Modul zerstört werden, wenn der maximale Schaltstrom überschr
 
 Betätigen Sie den Kontakt kurz bzw. nähern sie den Magneten kurz an den Reed-Kontakt. Nun ist das Modul im Zustand `AUS`.
 Die LED ist dunkel.
+
+=== Vermeidung von ungewolltem schnellen Ein-Aus-Ein
+
+Zwischen den Schaltvorgängen `Aus` -> `Ein` und dann wieder `Ein` -> `Aus` (oder auch umgekehrt) muss eine Zeit von wenigen Sekunden verstreichen, bevor
+der zweite Schaltvorgang ausgeführt werden kann. Dies ist keine Fehlfunktion, sondern so beabsichtigt, um die Bedienung mit einem Magneten sicherer zu gestalten.
 
 === Ruhe
 
@@ -408,6 +415,9 @@ image::simple/simple_d1.jpg[width=500,align=center]
 
 D2:: Z-Diode 18V 
 
+Hinweis: Diese Z-Diode ist auf der Stückliste aufgeklebt. Sollte sie sich gelöst haben oder andere Zweifel bestehen, um welches Bauteil es sich handelt, 
+löten Sie die Z-Diode nicht ein und klären Sie die Fragen zunächst.
+
 .Diode *D2* bestückt
 image::simple/simple_d2.jpg[width=500,align=center]
 
@@ -460,7 +470,7 @@ image::simple/simple_r7.jpg[width=500,align=center]
 ===== Kondensatoren
 
 Der Kondensator _C1_ ist ein _Elektrolykondensator und *muss* in einer bestimmten Richtung eingebaut werden. Auf dem Gehäuse ist ein andersfarblicher Strich mit einem
-kleiner `-` Zeichen auf der Seite, wo das entsprechende Beinchen ist. Dies muss in die Bohrung, die ebenfalls gekennzeichnet ist.
+kleiner `-` Zeichen auf der Seite, wo das entsprechende Beinchen ist. Dies muss in die Bohrung, die ebenfalls mit `-` gekennzeichnet ist.
 
 C1:: 47µF 
 
@@ -475,7 +485,7 @@ image::simple/simple_c2.jpg[width=500,align=center]
 ===== Transistoren
 
 Die Transistoren _T9_, _T2_ und _T1_ sind leicht verwechselbar. Auf der flachen Seite des Gehäuses steht die Bezeichnung. Benutzen sie ggf. eine 
-Lichtlupe, um die Schrift eindeutig zu erkennen.
+_Lichtlupe_, um die Schrift eindeutig zu erkennen.
 
 Beachten Sie auch die korrekte Einbauposition anhand des Bestückungsaufdrucks. Wichtig: abgeflachte Seite des Gehäuses.
 
@@ -518,6 +528,8 @@ Pfostenverbinder angeschlossen. Dies ist nur für diese Anleitung so geschehen u
 Kabel verlängert werden, um die Bauteile an gut zugänglichen bzw. sichtbaren Stellen im Modell einzubauen.
 
 ===== Reed-Kontakt oder Taster
+
+Hinweis: um Transportschäden zu reduzieren, ist der Reed-Kontakt auch auf der Stückliste aufgeklebt.
 
 [CAUTION]
 Der _Reed_-Kontakt hat einen *Glaskörper*. Dieser ist recht empfindlich und zerbricht bei starker mechanischer Beanspruchung leicht. Daher die Anschlussdrähte 

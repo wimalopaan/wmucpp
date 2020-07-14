@@ -307,6 +307,7 @@ boards/ppmmatrix/test04.cc
 boards/rcactor/Makefile
 boards/rcactor/test00.cc
 boards/rcmultiswitch/Makefile
+boards/rcmultiswitch/ToDo.txt
 boards/rcmultiswitch/board.h
 boards/rcmultiswitch/fsm.h
 boards/rcmultiswitch/multi8d.cc

@@ -316,7 +316,8 @@ namespace IBus {
             }
             static inline bool periodic() {
                 const auto cv = PA::value(mChannel);
-                lv = cv.toInt();
+
+                if (!cv) return true;
                 
                 const addr_t addr = Protocol1::toAddress(cv);
                 const index_t index = Protocol1::toIndex(cv);
@@ -335,8 +336,6 @@ namespace IBus {
                         }
                     }
                     else {
-                        lp2 = param;
-                        lp = value;
                         if (param == Protocol1::reset) {
 //                            Out::reset(lastOnIndex);
                         }
@@ -401,11 +400,10 @@ namespace IBus {
                 return true;                
             }
             
-            static inline uint16_t lv;
-            static inline uint8_t lp;
-            static inline uint8_t lp2;
-//        private: 
-//            using ch_t = etl::uint_ranged<uint8_t, PA::channel_t::Lower, PA::channel_t::Upper>;
+//            static inline uint16_t lv;
+//            static inline uint8_t lp;
+//            static inline uint8_t lp2;
+        private: 
             static inline index_t lastOnIndex;
             static inline channel_t mChannel{9};
             static inline addr_t    mAddr{0};

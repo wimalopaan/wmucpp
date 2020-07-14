@@ -575,6 +575,9 @@ namespace etl {
         inline constexpr uint_ranged<T, LowerBound, UpperBound> toRanged() const {
             return uint_ranged<T, LowerBound, UpperBound>{mValue};
         }
+        inline constexpr uint_ranged_NaN<T, LowerBound, UpperBound> toRangedNaN() const {
+            return uint_ranged_NaN<T, LowerBound, UpperBound>{mValue};
+        }
         inline constexpr operator T() const {
             return mValue;
         }
