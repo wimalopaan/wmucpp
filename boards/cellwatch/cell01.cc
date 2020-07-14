@@ -191,7 +191,7 @@ struct FSM {
     enum class State : uint8_t {Init, Run, Sleep};
 
     static constexpr auto intervall = Timer::intervall;
-    static constexpr External::Tick<Timer> idleTimeBeforeSleepTicks{10000_ms};
+    static constexpr External::Tick<Timer> idleTimeBeforeSleepTicks{5000_ms};
     
     inline static void ratePeriodic() {
         auto lastState = mState;

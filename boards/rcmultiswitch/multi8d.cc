@@ -5,6 +5,74 @@
 #include "board.h"
 #include "swout.h"
 
+template<typename PA, typename SW, typename OUT, typename NVM, typename Timer, typename Term = void>
+struct FSM {
+    enum class State : uint8_t {Undefined, SearchChannel, Run, ShowAddress, LearnTimeout};
+    
+    static constexpr auto intervall = Timer::intervall;
+    static constexpr External::Tick<Timer> learnTimeoutTicks{5000_ms};
+    
+    static inline void init() {}
+    
+    static inline void ratePeriodic() {
+        ++stateTicks;
+        switch(mState) {
+        case State::Undefined:
+            mState = State::SearchChannel;
+            break;
+        case State::SearchChannel:
+            stateTicks.on(learnTimeoutTicks, []{
+                mState = State::LearnTimeout;
+            });
+            if (search()) {
+                mState = State::ShowAddress;
+            }
+            break;
+        case State::LearnTimeout:
+            etl::outl<Term>("timeout ch: "_pgm, NVM::data().channel().toInt(), " adr: "_pgm, NVM::data().address().toInt());
+            if (NVM::data().channel() && NVM::data().address()) {
+                SW::channel(NVM::data().channel());
+                SW::address(NVM::data().address());
+            }
+            mState = State::Run;
+            break;
+        case State::ShowAddress:
+            etl::outl<Term>("learned ch: "_pgm, NVM::data().channel().toInt(), " adr: "_pgm, NVM::data().address().toInt());
+            mState = State::Run;
+            break;
+        case State::Run:
+            SW::periodic();
+            OUT::setSwitches();
+            break;
+        }
+    }
+private:
+    using protocol_t = typename SW::protocol_t;
+    using addr_t = typename protocol_t::addr_t;
+    
+    static inline bool search() {
+        etl::outl<Term>("test: "_pgm, learnChannel.toInt());
+        if (const auto lc = PA::value(learnChannel.toRangedNaN()); lc && SW::isLearnCode(lc)) {
+            const auto addr = protocol_t::toParameter(lc).toInt() - 1;
+            if ((addr <= SW::protocol_t::addr_t::Upper)) {
+                SW::channel(learnChannel.toRangedNaN());
+                SW::address(addr_t(addr));
+                NVM::data().channel() = learnChannel;
+                NVM::data().address() = addr;
+                NVM::data().change();
+                return true;
+            }
+        }   
+        ++learnChannel;
+        return false;
+    }
+    using ch_t = PA::channel_t;
+
+    static inline etl::uint_ranged_circular<uint8_t, ch_t::Lower, ch_t::Upper> learnChannel{0};
+    static inline State mState{State::Undefined};
+    inline static External::Tick<Timer> stateTicks;
+};
+
 using servo_pa = IBus::Servo::ProtocollAdapter<0>;
 
 using eeprom = EEProm::Controller<Storage::ApplData<servo_pa::channel_t, IBus::Switch::Protocol1::addr_t>>;
@@ -37,12 +105,16 @@ using ibus_switch = IBus::Switch::Digital<servo_pa, sw, out>;
 
 auto& appData = eeprom::data();
 
+using fsm = FSM<servo_pa, ibus_switch, out, eeprom, systemTimer, terminal>;
+
 int main() {
     portmux::init();
     
     ccp::unlock([]{
         clock::prescale<1>();
     });
+    
+    fsm::init();
     
     servo::init<BaudRate<115200>>();
     systemTimer::init();
@@ -61,18 +133,10 @@ int main() {
         etl::outl<terminal>("eep ch: "_pgm, appData.channel().toInt(), " adr: "_pgm, appData.address().toInt());        
     }
     
-    ibus_switch::address(ibus_switch::addr_t{1});
-    
     const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
-    const auto learnTimer = alarmTimer::create(5000_ms, External::Hal::AlarmFlags::Periodic);
     const auto eepromTimer = alarmTimer::create(3000_ms, External::Hal::AlarmFlags::Periodic);
     
     uint16_t counter{};
-    
-    using ch_t = servo_pa::channel_t;
-    
-    bool learn{true};
-    etl::uint_ranged_circular<uint8_t, ch_t::Lower, ch_t::Upper> learnChannel{0};
     
     while(true) {
         eeprom::saveIfNeeded([&]{
@@ -80,32 +144,10 @@ int main() {
         });
         servo::periodic();
         systemTimer::periodic([&]{
-            if (learn) {
-                etl::outl<terminal>("test: "_pgm, learnChannel.toInt());
-                if (const auto lc = servo_pa::value(learnChannel.toRangedNaN()); lc && ibus_switch::isLearnCode(lc)) {
-                    const auto addr = ibus_switch::protocol_t::toParameter(lc).toInt() - 1;
-                    if ((addr <= ibus_switch::protocol_t::addr_t::Upper)) {
-                        ibus_switch::channel(learnChannel.toRangedNaN());
-                        ibus_switch::address(ibus_switch::protocol_t::addr_t(addr));
-                        appData.channel() = learnChannel;
-                        appData.address() = addr;
-                        appData.change();
-                        learn = false;
-                        etl::outl<terminal>("learned ch: "_pgm, learnChannel.toInt(), " adr: "_pgm, addr);
-                    }
-                }   
-                ++learnChannel;
-            }
-            else {
-                ibus_switch::periodic();
-                out::setSwitches();
-            }
+            fsm::ratePeriodic();
             alarmTimer::periodic([&](const auto& t){
                 if (periodicTimer == t) {
                     etl::outl<terminal>("c: "_pgm, counter++);
-                }
-                else if (learnTimer == t) {
-                    learn = false;
                 }
                 else if (eepromTimer == t) {
                     appData.expire();

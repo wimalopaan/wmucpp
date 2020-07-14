@@ -85,7 +85,7 @@ namespace  {
     
     constexpr double Ro = 4'700;
     constexpr auto RPs = []{
-        const std::array<double, 3> Rx {4'700, 10'000, 20'000};
+        const std::array<double, 3> Rx {4'700, 10'000, 20'000}; // 24K???
         std::array<double, 1 << Rx.size()> R;
         auto parallel = [](const double a, const double b){
             double z = a * b;

@@ -3,12 +3,14 @@
 = RC MultiSwitch-D
 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 :revnumber: 0.01
+:revremark: {revnumber}
 :revdate: 01.01.1970
 :lang: de
 :toc:
 :toc-title: Inhalt
 :toclevels: 4
 :numbered:
+:pagenums:
 :src_numbered: 
 :icons: font
 :icontype: svg
@@ -23,18 +25,18 @@ Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 :duration: 90
 :source-highlighter: pygments
 :pygments-css: class
-:status:
-:menu:
-:navigation:
-:split:
-:goto:
-:blank:
+//:status:
+//:menu:
+//:navigation:
+//:split:
+//:goto:
+//:blank:
 :showtitle:
 :docinfo1:
 :stem:
 // for attributes in link:[] macro like link:xxx[window="_blank"]
 :linkattrs:
-:nofooter:
+//:nofooter:
 
 //:imgdir: ./images
 
@@ -148,7 +150,7 @@ diese alle (parallel) an den IBus/SBus angeschlossen. Jeder `RC MultiSwitch-D` h
 
 === Weitere Möglichkeiten
 
-Adapter 
+Adapter für alte, analoge Zeitmultiplex-Schaltmodule (Robbe, Graupner/JR, CP-Elektronik, Beier, NMS).
 
 TipTip
 
@@ -251,7 +253,7 @@ interessant mit der Möglichkeit der _Overlays_ (Ebenenumschaltung).
 --
 
 .Parameterwerte einstellen mit Potentiometer `S1`
-[INFO]
+[NOTE]
 --
 Im Widget für die _Konfiguration_ des `RC MultiSwitch-D` kann/muss man einige Parameter einstellen wie etwa die Blinkfrequenz oder die Einschaltdauer für den 
 Schaltzustand `blink1` oder `blink2`. Wenn dieser Parameter im Menu angewählt ist, kann man den Wert diekt über das Poti `S1` einstellen. Dies wird dann 
