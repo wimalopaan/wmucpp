@@ -3,7 +3,7 @@
 = RC MultiSwitch-D
 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 :revnumber: 0.01
-:revremark: {revnumber}
+:revremark: HW_1.0
 :revdate: 01.01.1970
 :lang: de
 :toc:
@@ -25,33 +25,22 @@ Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 :duration: 90
 :source-highlighter: pygments
 :pygments-css: class
-//:status:
-//:menu:
-//:navigation:
-//:split:
-//:goto:
-//:blank:
 :showtitle:
 :docinfo1:
 :stem:
 // for attributes in link:[] macro like link:xxx[window="_blank"]
 :linkattrs:
-//:nofooter:
 
-//:imgdir: ./images
-
-//:short: // without images 
-
-//include::license.adoc[]
 
 <<<
 
 == Vorwort
 
+image::by-nc-nd.eu.svg[align="center"]
+
 .Lizenz
 ****
-This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License. To view a copy of this license, visit 
-http://creativecommons.org/licenses/by-nc-sa/4.0[] or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
+Dieses Werk ist unter einer Creative Commons Lizenz vom Typ Namensnennung - Nicht kommerziell - Keine Bearbeitungen 4.0 International zugänglich. Um eine Kopie dieser Lizenz einzusehen, konsultieren Sie http://creativecommons.org/licenses/by-nc-nd/4.0/ oder wenden Sie sich brieflich an Creative Commons, Postfach 1866, Mountain View, California, 94042, USA.
 ****
 
 [NOTE]
@@ -159,6 +148,13 @@ TipTip
 Für den Betrieb und zur Konfiguration des RC-MultiSwitch sind einige Scripte notwendig.
 Diese findet man in der aktuellesten Version jeweils auf https://github.com/wimalopaan/opentx[GitHub].
 
+.Lizenz der Software, des Übertragungsverfahrens und der Dokumentation
+[IMPORTANT]
+--
+image:by-nc-nd.eu.svg[]
+Bitte beachten Sie, dass neben dieser Dokumentation auch die https://github.com/wimalopaan/opentx[Software] und das Übertragungsverfahren als Konzept der einer Lizenz (Nutzungsvereinbarung) unterliegt. Die genauen Bedingungen dieser Lizenz finden Sie https://creativecommons.org/licenses/by-nc-nd/4.0/deed.de[hier].
+--
+
 Für den RC-MultiSwitch sind die folgenden relevant:
 
 * Widgets
@@ -208,10 +204,13 @@ Das Schaltmodul ist standardmäßig auf Kanal `10` eingestellt. Es kann jedoch a
 
 Im Sender muss daher für diesen Kanal als Quelle das entspechende Mixer-Script eingetragen werden.
 
+.Das Mischer-Skript `encsb.lua`
 image::m1.png[]
 
+.Hier wird der Übertragungskanal `10` wird für die Schaltmodule verwendet.
 image::m2.png[]
 
+.Als Quelle des Mischers des Übertragungskanals wird das Mischer-Skript `encsb.lua` eingetragen
 image::m3.png[]
 
 s.a. Anlernen ds Moduls

@@ -9,6 +9,75 @@
 
 #include "board.h"
 
+template<typename PA, typename SW, typename OUT, typename NVM, typename Timer, typename Term = void>
+struct GFSM {
+    enum class State : uint8_t {Undefined, SearchChannel, Run, ShowAddress, LearnTimeout};
+    
+    static constexpr auto intervall = Timer::intervall;
+    static constexpr External::Tick<Timer> learnTimeoutTicks{5000_ms};
+    
+    static inline void init() {}
+    
+    static inline void ratePeriodic() {
+        ++stateTicks;
+        switch(mState) {
+        case State::Undefined:
+            mState = State::SearchChannel;
+            break;
+        case State::SearchChannel:
+            stateTicks.on(learnTimeoutTicks, []{
+                mState = State::LearnTimeout;
+            });
+            if (search()) {
+                mState = State::ShowAddress;
+            }
+            break;
+        case State::LearnTimeout:
+//            etl::outl<Term>("timeout ch: "_pgm, NVM::data().channel().toInt(), " adr: "_pgm, NVM::data().address().toInt());
+            if (NVM::data().channel() && NVM::data().address()) {
+                SW::channel(NVM::data().channel());
+                SW::address(NVM::data().address());
+            }
+            mState = State::Run;
+            break;
+        case State::ShowAddress:
+//            etl::outl<Term>("learned ch: "_pgm, NVM::data().channel().toInt(), " adr: "_pgm, NVM::data().address().toInt());
+            mState = State::Run;
+            break;
+        case State::Run:
+            SW::periodic();
+//            OUT::setSwitches();
+            break;
+        }
+    }
+private:
+    using protocol_t = typename SW::protocol_t;
+    using addr_t = typename protocol_t::addr_t;
+    
+    static inline bool search() {
+//        etl::outl<Term>("test: "_pgm, learnChannel.toInt());
+        if (const auto lc = PA::value(learnChannel.toRangedNaN()); lc && SW::isLearnCode(lc)) {
+            const auto addr = protocol_t::toParameter(lc).toInt() - 1;
+            if ((addr <= SW::protocol_t::addr_t::Upper)) {
+                SW::channel(learnChannel.toRangedNaN());
+                SW::address(addr_t(addr));
+                NVM::data().channel() = learnChannel;
+                NVM::data().address() = addr;
+                NVM::data().change();
+                return true;
+            }
+        }   
+        ++learnChannel;
+        return false;
+    }
+    using ch_t = PA::channel_t;
+
+    static inline etl::uint_ranged_circular<uint8_t, ch_t::Lower, ch_t::Upper> learnChannel{0};
+    static inline State mState{State::Undefined};
+    inline static External::Tick<Timer> stateTicks;
+};
+
+
 using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::Default>;
 using ppmA = External::Ppm::PpmOut<tcaPosition, Meta::List<PWM::WO<0>, PWM::WO<1>, PWM::WO<2>>>;
 
@@ -23,7 +92,7 @@ using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition, tc
 using servo_pa = IBus::Servo::ProtocollAdapter<0>;
 using servo = AVR::Usart<usart0Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
 
-using eeprom = EEProm::Controller<Storage::ApplData<servo_pa::channel_t>>;
+using eeprom = EEProm::Controller<Storage::ApplData<servo_pa::channel_t, IBus::Switch::Protocol1::addr_t>>;
 
 template<typename PPM, uint8_t Channel = 0>
 struct Adapter {
@@ -160,6 +229,8 @@ using evuser0 = Event::Route<evch0, Event::Users::Tcb<0>>;
 using evuser1 = Event::Route<evch1, Event::Users::Tcb<1>>;
 using evrouter = Event::Router<Event::Channels<evch0, evch1>, Event::Routes<evuser0, evuser1>>;
 
+using gfsm = GFSM<servo_pa, ibus_switch, void, eeprom, systemTimer>;
+
 auto& appData = eeprom::data();
 
 int main() {
@@ -201,13 +272,13 @@ int main() {
     }
     
     const auto periodicTimer = alarmTimer::create(20_ms, External::Hal::AlarmFlags::Periodic);
-    const auto learnTimer = alarmTimer::create(5000_ms, External::Hal::AlarmFlags::Periodic);
+//    const auto learnTimer = alarmTimer::create(5000_ms, External::Hal::AlarmFlags::Periodic);
     const auto eepromTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
 
-    using ch_t = servo_pa::channel_t;
+//    using ch_t = servo_pa::channel_t;
     
-    bool learn{true};
-    ch_t learnChannel{0};
+//    bool learn{true};
+//    ch_t learnChannel{0};
     
     while(true) {
         eeprom::saveIfNeeded([&]{
@@ -215,36 +286,38 @@ int main() {
         });
         servo::periodic();
         
-        if (!learn) {
-            ibus_switch::periodic();
-        }
+//        if (!learn) {
+//            ibus_switch::periodic();
+//        }
         fsm1::periodic();
         fsm2::periodic();
         fsm3::periodic();
         
         systemTimer::periodic([&]{
             wdt::reset();
-            if (learn) {
-                if (const auto lc = servo_pa::value(learnChannel); ibus_switch::isLearnCode(lc)) {
-                    const auto addr = ibus_switch::protocol_t::toParameter(lc).toInt() - 1;
-                    if ((addr <= ibus_switch::protocol_t::addr_t::Upper)) {
-                        ibus_switch::channel(learnChannel);
-                        ibus_switch::address(ibus_switch::protocol_t::addr_t(addr));
-                        appData.channel() = learnChannel;
-                        appData.address() = addr;
-                        appData.change();
-                        learn = false;
-                    }
-                }   
-                else {
-                    if (learnChannel.isTop()) {
-                        learnChannel.setToBottom();
-                    }
-                    else {
-                        ++learnChannel;
-                    }
-                }
-            }
+            gfsm::ratePeriodic();
+            
+//            if (learn) {
+//                if (const auto lc = servo_pa::value(learnChannel); ibus_switch::isLearnCode(lc)) {
+//                    const auto addr = ibus_switch::protocol_t::toParameter(lc).toInt() - 1;
+//                    if ((addr <= ibus_switch::protocol_t::addr_t::Upper)) {
+//                        ibus_switch::channel(learnChannel);
+//                        ibus_switch::address(ibus_switch::protocol_t::addr_t(addr));
+//                        appData.channel() = learnChannel;
+//                        appData.address() = addr;
+//                        appData.change();
+//                        learn = false;
+//                    }
+//                }   
+//                else {
+//                    if (learnChannel.isTop()) {
+//                        learnChannel.setToBottom();
+//                    }
+//                    else {
+//                        ++learnChannel;
+//                    }
+//                }
+//            }
             alarmTimer::periodic([&](const auto& t){
                 if (periodicTimer == t) {
                     ppmB::onReload([]{
@@ -256,9 +329,9 @@ int main() {
                         evrouter::strobe<1>();
                     });
                 }
-                else if (learnTimer == t) {
-                    learn = false;
-                }
+//                else if (learnTimer == t) {
+//                    learn = false;
+//                }
                 else if (eepromTimer == t) {
                     appData.expire();
                 }

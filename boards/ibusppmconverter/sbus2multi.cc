@@ -22,7 +22,7 @@ using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition, tc
 using servo_pa = External::SBus::Servo::ProtocollAdapter<0, systemTimer>;
 using servo = AVR::Usart<usart0Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
 
-using eeprom = EEProm::Controller<Storage::ApplData<servo_pa::channel_t>>;
+using eeprom = EEProm::Controller<Storage::ApplData<servo_pa::channel_t, IBus::Switch::Protocol1::addr_t>>;
 
 template<typename PPM, uint8_t Channel = 0>
 struct Adapter {

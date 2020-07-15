@@ -46,8 +46,7 @@ Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 
 .Lizenz
 ****
-This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License. To view a copy of this license, visit 
-http://creativecommons.org/licenses/by-nc-sa/4.0[] or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
+Dieses Werk ist unter einer Creative Commons Lizenz vom Typ Namensnennung - Nicht kommerziell - Keine Bearbeitungen 4.0 International zugänglich. Um eine Kopie dieser Lizenz einzusehen, konsultieren Sie http://creativecommons.org/licenses/by-nc-nd/4.0/ oder wenden Sie sich brieflich an Creative Commons, Postfach 1866, Mountain View, California, 94042, USA.
 ****
 
 <<<
