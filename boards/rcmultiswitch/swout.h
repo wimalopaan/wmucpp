@@ -139,6 +139,10 @@ namespace External {
         inline static auto intervall(const index_t index) {
             return NVM::data()[index].blinks()[blinkIndex].intervall;
         }
+        inline static void mpxMode(uint8_t a, auto v) {
+            NVM::data().mpxMode(a, v);
+            NVM::data().change();
+        }
         
     private:
         inline static void on(const index_t index) {

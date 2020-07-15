@@ -1,11 +1,7 @@
 #define USE_IBUS
 
-#define ROBBE_8370
+//#define ROBBE_8370
 //#define CP_ONEPULSE
-
-#ifdef ROBBE_8370
-//# define HAS_MEMORY_FUNCTION
-#endif
 
 #include "board.h"
 
@@ -33,7 +29,7 @@ struct GFSM {
             }
             break;
         case State::LearnTimeout:
-//            etl::outl<Term>("timeout ch: "_pgm, NVM::data().channel().toInt(), " adr: "_pgm, NVM::data().address().toInt());
+            //            etl::outl<Term>("timeout ch: "_pgm, NVM::data().channel().toInt(), " adr: "_pgm, NVM::data().address().toInt());
             if (NVM::data().channel() && NVM::data().address()) {
                 SW::channel(NVM::data().channel());
                 SW::address(NVM::data().address());
@@ -41,12 +37,12 @@ struct GFSM {
             mState = State::Run;
             break;
         case State::ShowAddress:
-//            etl::outl<Term>("learned ch: "_pgm, NVM::data().channel().toInt(), " adr: "_pgm, NVM::data().address().toInt());
+            //            etl::outl<Term>("learned ch: "_pgm, NVM::data().channel().toInt(), " adr: "_pgm, NVM::data().address().toInt());
             mState = State::Run;
             break;
         case State::Run:
             SW::periodic();
-//            OUT::setSwitches();
+            //            OUT::setSwitches();
             break;
         }
     }
@@ -55,7 +51,7 @@ private:
     using addr_t = typename protocol_t::addr_t;
     
     static inline bool search() {
-//        etl::outl<Term>("test: "_pgm, learnChannel.toInt());
+        //        etl::outl<Term>("test: "_pgm, learnChannel.toInt());
         if (const auto lc = PA::value(learnChannel.toRangedNaN()); lc && SW::isLearnCode(lc)) {
             const auto addr = protocol_t::toParameter(lc).toInt() - 1;
             if ((addr <= SW::protocol_t::addr_t::Upper)) {
@@ -71,12 +67,11 @@ private:
         return false;
     }
     using ch_t = PA::channel_t;
-
+    
     static inline etl::uint_ranged_circular<uint8_t, ch_t::Lower, ch_t::Upper> learnChannel{0};
     static inline State mState{State::Undefined};
     inline static External::Tick<Timer> stateTicks;
 };
-
 
 using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::Default>;
 using ppmA = External::Ppm::PpmOut<tcaPosition, Meta::List<PWM::WO<0>, PWM::WO<1>, PWM::WO<2>>>;
@@ -91,8 +86,6 @@ using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition, tc
 
 using servo_pa = IBus::Servo::ProtocollAdapter<0>;
 using servo = AVR::Usart<usart0Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
-
-using eeprom = EEProm::Controller<Storage::ApplData<servo_pa::channel_t, IBus::Switch::Protocol1::addr_t>>;
 
 template<typename PPM, uint8_t Channel = 0>
 struct Adapter {
@@ -115,7 +108,7 @@ struct Adapter {
     inline static void ppmRaw(const auto v) {
         PPM::ppmRaw(ppm_index_t{Channel}, v);
     }
-
+    
     inline static void ppm(const auto v) {
         PPM::ppm(ppm_index_t{Channel}, v);
     }
@@ -127,14 +120,11 @@ struct FSM {
     inline static constexpr uint8_t address = Address;
     
     enum class SwState : uint8_t {Off, Steady, Blink1, Blink2};
-
+    
     using ppm_value_t = PPM::ranged_type;
-
-#if defined(ROBBE_8370) || defined(CP_ONEPULSE)
-    using cycle_t = etl::uint_ranged_circular<uint8_t, 0, 8>;
-#else 
-    using cycle_t = etl::uint_ranged_circular<uint8_t, 0, 9>;
-#endif
+    
+    using cycle10_t = etl::uint_ranged_circular<uint8_t, 0, 9>; // Robbe / CP mode use only 9 cycles, so we have to increment twice
+    using cycle9_t = etl::uint_ranged_circular<uint8_t, 0, 8>; // Robbe / CP mode use only 9 cycles, so we have to increment twice
     
     static inline constexpr uint8_t offset{10};
     
@@ -149,68 +139,86 @@ struct FSM {
     static inline auto& switches() {
         return swStates;
     }
-//private:
+    //private:
     inline static void update() {
-#ifdef ROBBE_8370
-        if (cycle < 1) {
-            PPM::ppmRaw(PPM::ocMin - 100);
-        }
-#elif defined(CP_ONEPULSE)
-        if (cycle < 1) {
-            PPM::ppmRaw(PPM::ocMax + 100);
-        }
-#else
-        if (cycle < 2) {
-            PPM::ppmRaw(PPM::ocMax + 100);
-        }
-#endif
-        else {
-#ifdef ROBBE_8370
-            const uint8_t i = Size - 1 - (cycle - 1); // Robbe counts channels in reverse order
-#elif defined(CP_ONEPULSE)
-            const uint8_t i = cycle - 1;
-#else
-            const uint8_t i = cycle - 2;
-#endif
-            if (const auto pch = NVM::data()[i].passThru()) {
-                using ch_t = PA::channel_t;
-                auto v = PA::value(ch_t{pch.toInt()});
-//                decltype(v)::_;
-                PPM::ppm(v);
-            }
-            else if (swStates[i] == SwState::Off) {
-                PPM::ppmRaw(PPM::ocMedium);
-            }
-#ifdef HAS_MEMORY_FUNCTION
-            else if (swStates[i] != swStatesLast[i]) {
-                swStatesLast[i] = swStates[i];
-                if (swStates[i] == SwState::Steady) {
-                    PPM::ppmRaw(PPM::ocMax - 200);
-                }
-                else if (swStates[i] == SwState::Blink1) {
-                    PPM::ppmRaw(PPM::ocMin + 200);
-                }
+        const auto mode = NVM::data().mpxMode(Address);
+        
+        if (mode == Storage::Mode::Graupner) {
+            if (cycle10 < 2) {
+                PPM::ppmRaw(PPM::ocMax + 100);
             }
             else {
-                PPM::ppmRaw(PPM::ocMedium);
+                uint8_t i = cycle10 - 2;
+                pulse(i);
             }
-#else
-            else if (swStates[i] == SwState::Steady) {
-                PPM::ppmRaw(PPM::ocMax - 200);
-            }
-            else if (swStates[i] == SwState::Blink1) {
-                PPM::ppmRaw(PPM::ocMin + 200);
-            }
-#endif
+            ++cycle10;
         }
-        ++cycle;
+        else if (mode == Storage::Mode::Robbe) {
+            if (cycle9 < 1) {
+                PPM::ppmRaw(PPM::ocMin - 100);
+            }
+            else {
+                uint8_t i = Size - 1 - (cycle9 - 1); // Robbe counts channels in reverse order
+                pulse(i);
+            }
+            ++cycle9;
+        }
+        else if (mode == Storage::Mode::CP) {
+            if (cycle9 < 1) {
+                PPM::ppmRaw(PPM::ocMax + 100);
+            }
+            else {
+                uint8_t i = cycle9 - 1;
+                pulse(i);
+            }
+            ++cycle9;
+        }
+        else if (mode == Storage::Mode::XXX) {
+            if (cycle10 < 2) {
+                PPM::ppmRaw(PPM::ocMin - 100);
+            }            
+            else {
+                uint8_t i = cycle10 - 2;
+                pulse(i);
+            }
+            ++cycle10;
+        }
+        else {
+            if (cycle10 < 2) {
+                PPM::ppmRaw(PPM::ocMax + 100);
+            }
+            else {
+                uint8_t i = cycle10 - 2;
+                pulse(i);
+            }
+            ++cycle10;
+        }
     }
-    static inline cycle_t cycle;
+    
+    static inline void pulse(uint8_t i) {
+        if (const auto pch = NVM::data()[i].passThru()) {
+            using ch_t = PA::channel_t;
+            auto v = PA::value(ch_t{pch.toInt()});
+            //                decltype(v)::_;
+            PPM::ppm(v);
+        }
+        else if (swStates[i] == SwState::Off) {
+            PPM::ppmRaw(PPM::ocMedium);
+        }
+        else if (swStates[i] == SwState::Steady) {
+            PPM::ppmRaw(PPM::ocMax - 200);
+        }
+        else if (swStates[i] == SwState::Blink1) {
+            PPM::ppmRaw(PPM::ocMin + 200);
+        }
+        
+    }
+    static inline cycle10_t cycle10;
+    static inline cycle9_t cycle9;
     static inline std::array<SwState, Size> swStates;
-#ifdef HAS_MEMORY_FUNCTION
-    static inline std::array<SwState, Size> swStatesLast;
-#endif
 };
+
+using eeprom = EEProm::Controller<Storage::ApplData<servo_pa::channel_t, IBus::Switch::Protocol1::addr_t>>;
 
 using ppmCh1 = Adapter<ppmA, 0>;
 using ppmCh2 = Adapter<ppmA, 1>;
@@ -272,13 +280,13 @@ int main() {
     }
     
     const auto periodicTimer = alarmTimer::create(20_ms, External::Hal::AlarmFlags::Periodic);
-//    const auto learnTimer = alarmTimer::create(5000_ms, External::Hal::AlarmFlags::Periodic);
+    //    const auto learnTimer = alarmTimer::create(5000_ms, External::Hal::AlarmFlags::Periodic);
     const auto eepromTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
-
-//    using ch_t = servo_pa::channel_t;
     
-//    bool learn{true};
-//    ch_t learnChannel{0};
+    //    using ch_t = servo_pa::channel_t;
+    
+    //    bool learn{true};
+    //    ch_t learnChannel{0};
     
     while(true) {
         eeprom::saveIfNeeded([&]{
@@ -286,9 +294,9 @@ int main() {
         });
         servo::periodic();
         
-//        if (!learn) {
-//            ibus_switch::periodic();
-//        }
+        //        if (!learn) {
+        //            ibus_switch::periodic();
+        //        }
         fsm1::periodic();
         fsm2::periodic();
         fsm3::periodic();
@@ -297,27 +305,27 @@ int main() {
             wdt::reset();
             gfsm::ratePeriodic();
             
-//            if (learn) {
-//                if (const auto lc = servo_pa::value(learnChannel); ibus_switch::isLearnCode(lc)) {
-//                    const auto addr = ibus_switch::protocol_t::toParameter(lc).toInt() - 1;
-//                    if ((addr <= ibus_switch::protocol_t::addr_t::Upper)) {
-//                        ibus_switch::channel(learnChannel);
-//                        ibus_switch::address(ibus_switch::protocol_t::addr_t(addr));
-//                        appData.channel() = learnChannel;
-//                        appData.address() = addr;
-//                        appData.change();
-//                        learn = false;
-//                    }
-//                }   
-//                else {
-//                    if (learnChannel.isTop()) {
-//                        learnChannel.setToBottom();
-//                    }
-//                    else {
-//                        ++learnChannel;
-//                    }
-//                }
-//            }
+            //            if (learn) {
+            //                if (const auto lc = servo_pa::value(learnChannel); ibus_switch::isLearnCode(lc)) {
+            //                    const auto addr = ibus_switch::protocol_t::toParameter(lc).toInt() - 1;
+            //                    if ((addr <= ibus_switch::protocol_t::addr_t::Upper)) {
+            //                        ibus_switch::channel(learnChannel);
+            //                        ibus_switch::address(ibus_switch::protocol_t::addr_t(addr));
+            //                        appData.channel() = learnChannel;
+            //                        appData.address() = addr;
+            //                        appData.change();
+            //                        learn = false;
+            //                    }
+            //                }   
+            //                else {
+            //                    if (learnChannel.isTop()) {
+            //                        learnChannel.setToBottom();
+            //                    }
+            //                    else {
+            //                        ++learnChannel;
+            //                    }
+            //                }
+            //            }
             alarmTimer::periodic([&](const auto& t){
                 if (periodicTimer == t) {
                     ppmB::onReload([]{
@@ -329,9 +337,9 @@ int main() {
                         evrouter::strobe<1>();
                     });
                 }
-//                else if (learnTimer == t) {
-//                    learn = false;
-//                }
+                //                else if (learnTimer == t) {
+                //                    learn = false;
+                //                }
                 else if (eepromTimer == t) {
                     appData.expire();
                 }

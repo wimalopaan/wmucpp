@@ -46,12 +46,13 @@ struct FSM {
             break;
         }
     }
+    
 private:
     using protocol_t = typename SW::protocol_t;
     using addr_t = typename protocol_t::addr_t;
     
     static inline bool search() {
-        etl::outl<Term>("test: "_pgm, learnChannel.toInt());
+        etl::outl<Term>("test: "_pgm, learnChannel.toInt(), " v: "_pgm, PA::value(learnChannel.toRangedNaN()).toInt());
         if (const auto lc = PA::value(learnChannel.toRangedNaN()); lc && SW::isLearnCode(lc)) {
             const auto addr = protocol_t::toParameter(lc).toInt() - 1;
             if ((addr <= SW::protocol_t::addr_t::Upper)) {
@@ -147,7 +148,7 @@ int main() {
             fsm::ratePeriodic();
             alarmTimer::periodic([&](const auto& t){
                 if (periodicTimer == t) {
-                    etl::outl<terminal>("c: "_pgm, counter++);
+                    etl::outl<terminal>("c: "_pgm, counter++, " mpx0: "_pgm, (uint8_t)appData.mMpxModes[0]);
                 }
                 else if (eepromTimer == t) {
                     appData.expire();

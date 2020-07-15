@@ -148,6 +148,13 @@ struct IBusThrough {
 using ibt = IBusThrough;
 
 namespace Storage {
+    
+    enum class Mode : uint8_t {Graupner, // 2 long
+                               Robbe,  // 1 short
+                               CP, // 1 long
+                               XXX // 2 short
+                              }; 
+    
 //    using tick_type = External::Tick<SoftTimer, uint8_t>;
 //    struct Blink {
 //        tick_type duration{};
@@ -215,7 +222,35 @@ namespace Storage {
         value_type::addr_type& address() {
             return mAddress;
         }
+        void mpxMode(uint8_t addressOffset, auto v) {
+            if (addressOffset < mMpxModes.size()) {
+                if (v == 0) {
+                    mMpxModes[addressOffset] = Mode::Graupner;
+                }
+                else if (v == 1) {
+                    mMpxModes[addressOffset] = Mode::Robbe;
+                }
+                else if (v == 2) {
+                    mMpxModes[addressOffset] = Mode::CP;
+                }
+                else if (v == 3) {
+                    mMpxModes[addressOffset] = Mode::XXX;
+                }
+                
+            }
+        }
+        Mode mpxMode(uint8_t addressOffset) {
+            if (addressOffset < mMpxModes.size()) {
+                const Mode v = mMpxModes[addressOffset];
+                if (v > Mode::XXX) {
+                    return Mode::Graupner;
+                }
+                return v;
+            }
+            return Mode::Graupner;
+        }
     private:
+        std::array<Mode, 5> mMpxModes;
         uint8_t mMagic;
         value_type::channel_type mChannel;
         value_type::addr_type mAddress;
@@ -245,4 +280,3 @@ namespace Storage {
     };
 }
 
-//using eeprom = EEProm::Controller<Storage::ApplData>;

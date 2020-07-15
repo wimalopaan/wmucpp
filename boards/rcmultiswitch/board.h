@@ -170,6 +170,11 @@ namespace Storage {
         tick_type duration{};
         tick_type intervall{};
     };
+    enum class Mode : uint8_t {Graupner, // 2 long
+                               Robbe,  // 1 short
+                               CP, // 1 long
+                               XXX // 2 short
+                              }; 
 
     template<typename Channel, typename Address>
     struct SwitchConfig {
@@ -235,6 +240,24 @@ namespace Storage {
         value_type::addr_type& address() {
             return mAddress;
         }
+        void mpxMode(uint8_t addressOffset, auto v) { // only for Protocoll check (not used here)
+            if (addressOffset < mMpxModes.size()) {
+                if (v == 0) {
+                    mMpxModes[addressOffset] = Mode::Graupner;
+                }
+                else if (v == 1) {
+                    mMpxModes[addressOffset] = Mode::Robbe;
+                }
+                else if (v == 2) {
+                    mMpxModes[addressOffset] = Mode::CP;
+                }
+                else if (v == 3) {
+                    mMpxModes[addressOffset] = Mode::XXX;
+                }
+                
+            }
+        }
+        std::array<Mode, 5> mMpxModes; // only for Protocoll check (not used here)
     private:
         uint8_t mMagic;
         value_type::channel_type mChannel;

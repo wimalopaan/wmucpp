@@ -1,6 +1,6 @@
 // -*- mode: adoc ; fill-column: 120 -*-
 // ---- Beginn Standardheader
-= RC MultiSwitch-D
+= RC MultiSwitch-D 
 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 :revnumber: 0.01
 :revremark: HW_1.0
@@ -16,7 +16,7 @@ Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 :icontype: svg
 :figure-caption: Abbildung
 :description: RC MultiSwitch-D
-:title: RC MultiSwitch-D
+:title: RC MultiSwitch-D : ... und RC MultiAdapter-DA sowie TipTip
 :title-page:
 :sectanchors:
 :sectlinks:
@@ -30,7 +30,6 @@ Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 :stem:
 // for attributes in link:[] macro like link:xxx[window="_blank"]
 :linkattrs:
-
 
 <<<
 
@@ -127,25 +126,38 @@ ACHTUNG: Der Bausatz enthält verschluckbare Kleinteile. Von Kindern fernhalten.
 
 == Einführung
 
-Der `RC MultiSwitch-D` ist ein digitales Schaltmodul (8-Kanal) zum Betrieb mit einem `OpenTX`-Sender, vorzugsweise eine _Radiomaster_ `TX16s`. 
+Der `RC MultiSwitch-D` ist ein digitales Schaltmodul (8-Kanal) zum Betrieb mit einem `OpenTX`-Sender, vorzugsweise eine _Radiomaster_ `TX16s`
+oder anderen sog. _color-LCD_ Sendern mit `OpenTX`.
 Im Gegensatz zu alten, im analogen Zeitmultiplex-Verfahren arbeitenden Schaltmodulen, wird bei dem `RC MultiSwitch-D` die Information für die zu 
 schaltenden Funktion vollständig digital übertragen. Daher ist ein störungsfreier Betrieb gewährleistet.
 
-Der `RC MultiSwitch-D` hat 8 Ausgänge, diese ein- oder ausgeschaltet werden, entweder statisch, oder in zwei unterschiedlichen Blink-Modi. Zusätzlich 
-kann der _Ein_-Zustand `PWM`-moduliert werden. Die Konfiguration der Zustände erfolg komplett über den Sender und ein entsprechendes Menu.
+Der `RC MultiSwitch-D` hat 8 Ausgänge, diese können ein- oder ausgeschaltet werden, entweder statisch, oder in zwei unterschiedlichen Blink-Modi. Zusätzlich 
+kann der _Ein_-Zustand `PWM`-moduliert werden (auch beim Blinken ist die `PWM`-Modulation aktiv). 
+Die Konfiguration der Zustände erfolg komplett über den Sender und ein entsprechendes Menu.
 
-Der `RC MultiSwitch-D` wird an den IBus- oder SBus-Ausgang eines Empfängers angeschlossen. Sollen mehrere `RC MultiSwitch` verwendet werden, so werden 
-diese alle (parallel) an den IBus/SBus angeschlossen. Jeder `RC MultiSwitch-D` hat eine eindeutige _Adresse_ und kann so vom Sender angesprochen werden.
+Der `RC MultiSwitch-D` wird an den `IBus`- oder `SBus`-Ausgang eines Empfängers angeschlossen. Sollen mehrere `RC MultiSwitch-D` verwendet werden, so werden 
+diese _alle_ (parallel) an den IBus/SBus-Ausgang des Empfängers angeschlossen. 
+Jeder `RC MultiSwitch-D` hat eine eindeutige _Adresse_ und kann so vom Sender angesprochen werden.
 
 === Weitere Möglichkeiten
 
-Adapter für alte, analoge Zeitmultiplex-Schaltmodule (Robbe, Graupner/JR, CP-Elektronik, Beier, NMS).
+Nach dem gleichen Funktionsprinzip arbeitet der `RC MultiAdapter-DA`. Dieser ermöglocht den Betrieb alter, analoger 
+Zeitmultiplex-Schaltmodule, die nach dem Verfahren von _Robbe_, oder _Graupner/JR_, oder _CP-Elektronik_ oder  _Beier NMS_ arbeiten. 
+Der `RC MultiAdapter-DA` ermöglicht es, bis zu 5 analoge Zeitmultiplex-Schaltmodule anzuschließen. Dadurch bekommt jedes dieser 
+analogen Schaltmodule über den Adapter ebenfalls eine _eindeutige_ Adresse, und kann vom Sender angesprochen werden. 
+Eine PWM-Modulation der Ausgänge eines analogen Zeitmultiplex-Schaltmoduls ist allerdings nicht möglich.
 
-TipTip
+Analoge Zeitmultiplex-Schaltmodule der Fa. _Robbe_ besitzen neben den 6 Schaltfunktionen (12 Ausgänge) auch noch 2 proportionale Ausgänge. Mit 
+Hilfe des `RC MultiAdapter-DA` können zwei beliebige `OpenTX`-Kanäle den beiden proportionalen Ausgängen des _Robbe_-Modules zugewiesen werden.
+
+Weiterhin kann die Software für `OpenTX` auch direkt Schaltmodule im sog. _TipTip_ Verfahren bedienen. Hierzu ist im Moment kein Adapter 
+`RC MultiAdapter-DA` notwendig. Stattdessen müssen die _TipTip_-Module wie üblich jeweils an einem eigenen Ausgang des Empfängers angeschlossen werden.
+Durch die Zusatzfunktionen ist das Bedienen (inkl. Beschriftung der Funktionen und Zustände) wie auch bei allen anderen Varianten (`RC MultiSwitch-D` 
+und `RC MultiAdapter-DA`) komfortabel über das Menu im Sender möglich.
 
 == Software für OpenTX
 
-Für den Betrieb und zur Konfiguration des RC-MultiSwitch sind einige Scripte notwendig.
+Für den Betrieb und zur Konfiguration des `RCMultiSwitch-D` und `RC MultiAdapter-DA`  sind einige Scripte und Konfigurationsdatein notwendig.
 Diese findet man in der aktuellesten Version jeweils auf https://github.com/wimalopaan/opentx[GitHub].
 
 .Lizenz der Software, des Übertragungsverfahrens und der Dokumentation
@@ -155,7 +167,7 @@ image:by-nc-nd.eu.svg[]
 Bitte beachten Sie, dass neben dieser Dokumentation auch die https://github.com/wimalopaan/opentx[Software] und das Übertragungsverfahren als Konzept der einer Lizenz (Nutzungsvereinbarung) unterliegt. Die genauen Bedingungen dieser Lizenz finden Sie https://creativecommons.org/licenses/by-nc-nd/4.0/deed.de[hier].
 --
 
-Für den RC-MultiSwitch sind die folgenden relevant:
+Für den `RC MultiSwitch-D` und `RC MultiAdapter-DA` sind die folgenden relevant:
 
 * Widgets
 ** `Widgets/WMSW/main.lua`
@@ -175,8 +187,17 @@ Für den RC-MultiSwitch sind die folgenden relevant:
 
 === Installation der Software auf dem Sender
 
-Kopieren Sie die o.g. Dateien in korrespondierende Verzeichnisse auf der SD-Karte des Senders. 
+Kopieren Sie die o.g. Dateien in _korrespondierende_ (gleichlautende) Verzeichnisse auf der SD-Karte des Senders. 
 
+[TIP]
+--
+Die Datei `MODELS/swstd.lua` sollte unangetastet bleiben (als _fallback_). Stattdessen kopieren Sie diese Datei in 
+für jedes Modell jeweils eigene Dateien. Dann ist für das Modell mit dem Namen `ABC` der _Dateiname_ `ABC.lua`. 
+
+Kommen weitere Modelle hinzu, so wiederholen Sie diesen Schritt für _jedes_ Modell.
+
+Anschließend kann der _Datei-Inhalt_ mit einem normalen Texteditor (etwa `NotePad`) editiert werden.
+--
 modellspezifische Dateien
 
 === Konfiguration des Modells

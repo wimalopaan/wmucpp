@@ -107,6 +107,7 @@ namespace IBus {
             using param_t  = etl::uint_ranged<uint8_t, 0, 15>; // 4 Bits
             using pvalue_t  = etl::uint_ranged<uint8_t, 0, 31>; // 5 Bits
             
+            inline static constexpr mode_t unused{0};
             inline static constexpr mode_t off{1};
             inline static constexpr mode_t on{2};
             inline static constexpr mode_t blink1{3};
@@ -120,9 +121,18 @@ namespace IBus {
             inline static constexpr param_t blink2Intervall{4};
             inline static constexpr param_t blink2Duration{5};
             inline static constexpr param_t passThruChannel{6};
+            inline static constexpr param_t timeMpxMode0{7};
+            inline static constexpr param_t timeMpxMode1{8};
+            inline static constexpr param_t timeMpxMode2{9};
+            inline static constexpr param_t timeMpxMode3{10};
+            inline static constexpr param_t timeMpxMode4{11};
             inline static constexpr param_t broadCast{15};
             
-            inline static constexpr pvalue_t bCastReset{11};
+            inline static constexpr pvalue_t bCastReset{1};
+            inline static constexpr pvalue_t timeMpxGraupner{2}; // 2 long sync
+            inline static constexpr pvalue_t timeMpxRobbe{3}; // 1 short sync
+            inline static constexpr pvalue_t timeMpxCP{4}; // 1 long sync
+            inline static constexpr pvalue_t timeMpxXXX{5}; // 2 short sync
             inline static constexpr pvalue_t bCastOff{31};
             
             template<typename ValueType>
@@ -139,17 +149,20 @@ namespace IBus {
             template<typename ValueType>
             inline static constexpr addr_t toAddress(const ValueType& v) {
                 const uint16_t c = v.toInt() - ValueType::Lower;
-                return addr_t((c & (0x03 << 7)) >> 7);
+//                return addr_t((c & (0x03 << 7)) >> 7);
+                return addr_t((c & (0x07 << 6)) >> 6);
             }   
             template<typename ValueType>
             inline static constexpr index_t toIndex(const ValueType& v) {
                 const uint16_t c = v.toInt() - ValueType::Lower;
-                return index_t((c & (0x07 << 4)) >> 4);
+//                return index_t((c & (0x07 << 4)) >> 4);
+                return index_t((c & (0x07 << 3)) >> 3);
             }   
             template<typename ValueType>
             inline static constexpr mode_t toMode(const ValueType& v) {
                 const uint16_t c = v.toInt() - ValueType::Lower;
-                return mode_t((c & 0x0f));
+//                return mode_t((c & 0x0f));
+                return mode_t((c & 0x07));
             }   
             template<typename ValueType>
             inline static constexpr bool isControlMessage(const ValueType& v) {
@@ -222,6 +235,26 @@ namespace IBus {
                     else if (param == Protocol1::reset) {
                         using sw_t = std::remove_cvref_t<decltype(NVM::data()[0])>;
                         NVM::data()[lastOnIndex] = sw_t{};
+                        NVM::data().change();
+                    }
+                    else if (param == Protocol1::timeMpxMode0) {
+                        NVM::data().mpxMode(0, value);
+                        NVM::data().change();
+                    }
+                    else if (param == Protocol1::timeMpxMode1) {
+                        NVM::data().mpxMode(1, value);
+                        NVM::data().change();
+                    }
+                    else if (param == Protocol1::timeMpxMode2) {
+                        NVM::data().mpxMode(2, value);
+                        NVM::data().change();
+                    }
+                    else if (param == Protocol1::timeMpxMode3) {
+                        NVM::data().mpxMode(3, value);
+                        NVM::data().change();
+                    }
+                    else if (param == Protocol1::timeMpxMode4) {
+                        NVM::data().mpxMode(4, value);
                         NVM::data().change();
                     }
                 }
@@ -371,6 +404,21 @@ namespace IBus {
                             const uint16_t intervall = Out::intervall(lastOnIndex).value;
                             const uint8_t duration = (value * intervall) / pvalue_t::Upper; 
                             Out::duration(lastOnIndex, tick_t::fromRaw(duration));
+                        }
+                        else if (param == Protocol1::timeMpxMode0) {
+                            Out::mpxMode(0, value);
+                        }
+                        else if (param == Protocol1::timeMpxMode1) {
+                            Out::mpxMode(1, value);
+                        }
+                        else if (param == Protocol1::timeMpxMode2) {
+                            Out::mpxMode(2, value);
+                        }
+                        else if (param == Protocol1::timeMpxMode3) {
+                            Out::mpxMode(3, value);
+                        }
+                        else if (param == Protocol1::timeMpxMode4) {
+                            Out::mpxMode(4, value);
                         }
                     }
                 }
