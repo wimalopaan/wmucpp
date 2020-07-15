@@ -59,7 +59,7 @@ private:
                 SW::channel(learnChannel.toRangedNaN());
                 SW::address(addr_t(addr));
                 NVM::data().channel() = learnChannel;
-                NVM::data().address() = addr;
+                NVM::data().address().set(addr);
                 NVM::data().change();
                 return true;
             }

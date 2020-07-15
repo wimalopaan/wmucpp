@@ -124,6 +124,10 @@ namespace Storage {
         value_type& operator[](const T i) {
             return operator[](mapToKey(i));
         }
+        
+        inline void mpxMode(uint8_t, auto) {
+            
+        }
     private:
         template<typename T>
         inline Storage::AVKey mapToKey(const T i) {
@@ -193,20 +197,25 @@ int main() {
             alarmTimer::periodic([&](const auto& t){
                 if (periodicTimer == t) {
                     led::toggle();
-                    etl::out<terminal>("sw: "_pgm);
-                    for(const auto& s: sw::switches()) {
-                        etl::out<terminal>((uint8_t) s);
-                    }
+//                    etl::out<terminal>("sw: "_pgm);
+//                    for(const auto& s: sw::switches()) {
+//                        etl::out<terminal>((uint8_t) s);
+//                    }
 //                    etl::outl<terminal>(" cnt: "_pgm, servo_pa::c, " ch0: "_pgm, servo_pa::value(ch_t{9}).toInt(), " s: "_pgm, (uint8_t)servo_pa::mState);
-                    etl::outl<terminal>(" ch0: "_pgm, servo_pa::value(ch_t{9}).toInt(), " pt0: "_pgm, eeprom::data()[0].passThru().toInt());
+//                    etl::outl<terminal>(" ch0: "_pgm, servo_pa::value(ch_t{9}).toInt(), " pt0: "_pgm, eeprom::data()[0].passThru().toInt());
+                    etl::outl<terminal>(" ch14: "_pgm, servo_pa::value(ch_t{13}).toInt());
+                    etl::outl<terminal>(" ch15: "_pgm, servo_pa::value(ch_t{14}).toInt());
+                    etl::outl<terminal>(" ch16: "_pgm, servo_pa::value(ch_t{15}).toInt());
+                    etl::outl<terminal>(" ch17: "_pgm, servo_pa::value(ch_t{16}).toInt());
+                    etl::outl<terminal>(" ch18: "_pgm, servo_pa::value(ch_t{17}).toInt());
                     
                     const auto cv = servo_pa::value(ch_t{9});
                     
-                    if (IBus::Switch::Protocol1::isControlMessage(cv)) {
-                        const auto p = IBus::Switch::Protocol1::toParameter(cv);
-                        const auto v = IBus::Switch::Protocol1::toParameterValue(cv);
-                        etl::outl<terminal>(" p: "_pgm, p.toInt(), " v: "_pgm, v.toInt());
-                    }
+//                    if (IBus::Switch::Protocol1::isControlMessage(cv)) {
+//                        const auto p = IBus::Switch::Protocol1::toParameter(cv);
+//                        const auto v = IBus::Switch::Protocol1::toParameterValue(cv);
+//                        etl::outl<terminal>(" p: "_pgm, p.toInt(), " v: "_pgm, v.toInt());
+//                    }
                     
                 }
             });

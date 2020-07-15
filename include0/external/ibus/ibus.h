@@ -616,10 +616,10 @@ namespace IBus {
                         return value_type{(uint16_t(h) << 8) + uint8_t(l)};
                     }
                     else if (chi < 18) {
-                        const std::byte h1 = (*inactive)[3 * (chi - 14) + 1] & 0xf0_B;
-                        const std::byte h2 = (*inactive)[3 * (chi - 14) + 3] & 0xf0_B;
-                        const std::byte h3 = (*inactive)[3 * (chi - 14) + 5] & 0xf0_B;
-                        return value_type{(uint16_t(h1) << 4) + uint8_t(h2) + (uint8_t(h3) >> 4)};
+                        const std::byte h1 = (*inactive)[6 * (chi - 14) + 1] & 0xf0_B;
+                        const std::byte h2 = (*inactive)[6 * (chi - 14) + 3] & 0xf0_B;
+                        const std::byte h3 = (*inactive)[6 * (chi - 14) + 5] & 0xf0_B;
+                        return value_type{(uint8_t(h1) >> 4) + uint8_t(h2) + (uint16_t(h3) << 4)};
                     }
                 }            
                 return value_type{};
