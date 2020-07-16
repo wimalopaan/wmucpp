@@ -100,9 +100,9 @@ namespace IBus {
 
     namespace Switch {
         struct Protocol1 {
-            using addr_t  = etl::uint_ranged<uint8_t, 0, 3>; // 2 Bits
+            using addr_t  = etl::uint_ranged<uint8_t, 0, 7>; // 3 Bits
             using index_t = etl::uint_ranged<uint8_t, 0, 7>; // 3 Bits
-            using mode_t  = etl::uint_ranged<uint8_t, 0, 15>; // 4 Bits
+            using mode_t  = etl::uint_ranged<uint8_t, 0, 7>; // 3 Bits
             
             using param_t  = etl::uint_ranged<uint8_t, 0, 15>; // 4 Bits
             using pvalue_t  = etl::uint_ranged<uint8_t, 0, 31>; // 5 Bits
@@ -126,6 +126,9 @@ namespace IBus {
             inline static constexpr param_t timeMpxMode2{9};
             inline static constexpr param_t timeMpxMode3{10};
             inline static constexpr param_t timeMpxMode4{11};
+            inline static constexpr param_t servoMin{12};
+            inline static constexpr param_t servoMax{13};
+            inline static constexpr param_t resetOrLearnAddress{14};
             inline static constexpr param_t broadCast{15};
             
             inline static constexpr pvalue_t bCastReset{1};
@@ -139,7 +142,7 @@ namespace IBus {
             inline static constexpr bool isLearnCode(const ValueType& v) {
                 if (isControlMessage(v)) {
                     const auto p = toParameter(v);
-                    if (p != Protocol1::reset) {
+                    if (p == Protocol1::resetOrLearnAddress) {
                         return true;
                     }
                 }

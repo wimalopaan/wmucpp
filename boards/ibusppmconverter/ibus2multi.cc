@@ -53,12 +53,12 @@ private:
     static inline bool search() {
         //        etl::outl<Term>("test: "_pgm, learnChannel.toInt());
         if (const auto lc = PA::value(learnChannel.toRangedNaN()); lc && SW::isLearnCode(lc)) {
-            const auto addr = protocol_t::toParameter(lc).toInt() - 1;
-            if ((addr <= SW::protocol_t::addr_t::Upper)) {
+            if (const auto pv = protocol_t::toParameterValue(lc).toInt(); (pv >= 1) && ((pv - 1) <= SW::protocol_t::addr_t::Upper)) {
+                const uint8_t addr = pv - 1;
                 SW::channel(learnChannel.toRangedNaN());
                 SW::address(addr_t(addr));
                 NVM::data().channel() = learnChannel;
-                NVM::data().address() = addr;
+                NVM::data().address().set(addr);
                 NVM::data().change();
                 return true;
             }
