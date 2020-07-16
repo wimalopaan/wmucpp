@@ -155,6 +155,80 @@ Weiterhin kann die Software für `OpenTX` auch direkt Schaltmodule im sog. _TipT
 Durch die Zusatzfunktionen ist das Bedienen (inkl. Beschriftung der Funktionen und Zustände) wie auch bei allen anderen Varianten (`RC MultiSwitch-D` 
 und `RC MultiAdapter-DA`) komfortabel über das Menu im Sender möglich.
 
+=== Grundsätzliches
+
+==== Bedienung
+
+Die Bedienung der Schaltmodule erfolgt grundsätzlich über ein _Menu_. Dieses ist als _Widget_ in `OpenTx` realisiert. 
+
+In <<menu1>> sieht man eine Seite (oben rechts: `Page: 1/4`) des Menus. Diese Seite ist für die Bedienung eines `RC MultiSwitch-D` konfiguriert: 
+in der ersten Spalte stehen die _Namen_ der Funktionen (hier: `Fun A` ... `Fun H`) für die 8 Ausgänge des Schaltmoduls. Diese Namen können 
+in der Konfigurationsdatei (s.a. <<config>>) frei gewählt werden. Damit _entfällt_ das Problem einer _Schalterbeschriftung_, was man von früher her kennt.
+
+In den weiteren Spalten stehen die verschiedenen _Zustände_, die eine Schaltfunktion annehmen kann. Jeder Zustand kann durch eine _Selektion_ 
+aktiviert werden.
+
+[[menu1]]
+.Die Bedienoberfläche als Widget (Seite 1) 
+image::wmsw2.png[]
+
+Sollte eine Schaltfunktion auch ein _ShortCut_ in Form eines physischen Schalters (3-Positionenschalter) zugeordnet haben, so erscheint der _Name_
+des Schalters zusätzlich hinter dem Namen der Funktion. In der ersten Zeile bedeutet `Fun A/sa`, dass der Funktion `Fun A` zusätzlich der _ShortCut_ 
+Schalter `sa` zugeordent wurde. Dies geschieht auch in der Konfigurationsdatei. Mit einem 3-Positionenschalter sind natürlich nur die ersten _drei_
+Zustände `aus`, `ein` und `blink1` erreichbar.
+
+Im Bild <<menu2>> sieht man dann die nä. Seite mit den Funktionen des nä. Schaltmoduls. Hier sind die Menu-Seiten entsprechend 
+der Platzierung der Funktionen auf den Schaltmodulen strukturiert. Das muss aber so nicht sein: man kann auch Funktionen unterschiedlicher 
+Module eher _thematisch_ auf einer Menu-Seite zusammen fassen.
+
+[[menu2]]
+.Die Bedienoberfläche als Widget (Seite 2)
+image::wmsw.png[]
+
+Die _vierte_ Seite dieses Beispiels stellt das Menu für ein `RC MultiAdapter-DA` dar. Hier hat jede Funktion nur _drei_ Zustände. Die beiden 
+`Ein`-Zustände entsprechen bei den üblichen analogen Zeitmultiplex-Schaltmodulen jeweils zwei unterschiedlichen Ausgängen. Natürlich können auch hier die 
+Namen geändert werden.
+
+[[menu3]]
+.Die Bedienoberfläche als Widget (Seite 4)
+image::wmsw3.png[]
+
+Weil die Anzahl der phys. Schalter am Sender naturgemäß begrenzt ist (etwa: `sa`, ... `sh`), kann man nicht für alle Funktionen _ShortCuts_ 
+über Schalter definieren. Eine Abhilfe bieten die sog. _Overlays_. Dies ist bei den analogen Schaltmodulen als _Ebenenumschaltung_ bekannt. 
+Wird ein phys. Schalter für _mehr_ als eine Funktion definiert, so wird er _automatisch_ zu einem _Overlay_. Dies bedeutet, dass die 
+Zuordnung des Schalters zu einer Funktion von der gerade sichtbaren Menu-Seite abhängig ist (Analogie: Menu-Seite = Ebene).
+
+Zusammen mit dem schnellen Umschalten zwischen Menu-Seite mit Hilfe des 6-Positionen-Tasters `6pos` bei manchen Sendern (etwa: _Radiomaster_ `TX16s`)
+ergibt sich eine sehr komfortable Bedienung.
+
+==== Konfiguration
+
+Die Konfiguration wichtiger _Parameter_ der Schaltfunktionen erfolgt ebenfalls über ein Menu-System. Dies ist als eigenes Widget realisiert. 
+
+Im Bild <<menuc1>> sind zu jeder Funktion die konfigurierbaren _Parameter_ aufgelistet. Zudem besteht die Möglichkeit, ein _Reset_ durchzuführen.
+
+Soll ein Parameter konfiguriert werden, so muss er _selektiert_ werden und sein _Wert_ wird dann anschließend über das Potentiometer `S1` eingestellt. 
+Der Wert wird _oben rechts_ im Menu in `%` und auf einer Skala von `0` ... `31` angezeigt. 
+
+[[menuc1]]
+.Die Konfigurationsoberfläche als Widget (Funktionsspezifische Parameter)
+image::wmswc.png[]
+
+Zusätzlich zu den _funktionsspezifischen_ Parametern für jedes Schaltmodul (Achtung: nicht jedes Schaltmodul kann alle Parameter ausführen), 
+existiert noch eine _weitere_ Menu-Seite für modul-spezifische (für ein Modul als Ganzes) Parameter (s.a. <<menuc2>>). 
+
+Dies betrifft vor allem das Anlernen der Modul-Adresse, wobei dies aus Sicherheitsgründen nur beim _Einschalten_ des Moduls möglich ist (s.a. <<learn>>).
+
+Die Parameter `MPX0` ... `MPX4` beziehen sich _nur_ auf das `RC MultiAdapter-DA`: hiermit kann die _Art_ des am jeweiligen Ausgangs `0` ... `4` 
+angeschlossenen analogen Zeitmultiplex-Schaltmodul festgelegt werden (Wert `1` := Graupner/JR, Wert `2` := Robbe, Wert `3` := CP).
+
+[[menuc2]]
+.Die Konfigurationsoberfläche als Widget (modulglobale Parameter)
+image::wmswc2.png[]
+
+Da dieses Widget zum eigentlichen Betrieb _nicht_ erforderlich ist, kann es _nach_ der Konfiguration deaktiviert werden bzw. durch andere 
+Widgets ersetzt werden.
+
 == Software für OpenTX
 
 Für den Betrieb und zur Konfiguration des `RCMultiSwitch-D` und `RC MultiAdapter-DA`  sind einige Scripte und Konfigurationsdatein notwendig.
@@ -221,7 +295,7 @@ Richten Sie ein `LUA`-Script ein. Hier wählen Sie _nur eines_ der Auswahl aus:
 
 Das Schaltmodul wird über eine serielle Schnittstelle an den Empfänger angeschlossen. Dies ist je nach Empfänger `IBus` oder `SBus`.
 
-Das Schaltmodul ist standardmäßig auf Kanal `10` eingestellt. Es kann jedoch auch ein anderer Kanal angelernt werden.
+Das Schaltmodul ist standardmäßig auf Kanal `10` eingestellt. Es kann jedoch auch ein anderer Kanal angelernt werden (s.a. <<learn>>).
 
 Im Sender muss daher für diesen Kanal als Quelle das entspechende Mixer-Script eingetragen werden.
 
@@ -234,7 +308,6 @@ image::m2.png[]
 .Als Quelle des Mischers des Übertragungskanals wird das Mischer-Skript `encsb.lua` eingetragen
 image::m3.png[]
 
-s.a. Anlernen ds Moduls
 
 ==== Definition der Geber (Inputs)
 
@@ -256,8 +329,20 @@ Möchten Sie andere Geber-Nummern verwenden, so ist dies auch möglich. Die Gebe
 definiert werden. Dies ist dann für beide Widgets gleichmaßen notwendig.
 
 [[inputs]]
-.Benötigte Geber zur Bedienung der Widgets
+.Benötigte Geber zur Bedienung der Widgets (Darstellung im Companion)
 image::inputs.png[]
+
+.Benötigte Geber (Darstellung im Sender)
+image::in1.png[]
+
+.Benötigte Geber (Darstellung im Sender)
+image::in2.png[]
+
+.Benötigte Geber (Darstellung im Sender)
+image::in3.png[]
+
+Um die Bedienung weiter zu vereinfachen, werden standardmäßig weitere Bedienelemente für die Widgets verwendet. Diese sind voreingestellt.
+Sie können aber in der Datei `MODELS/swstd.lua` bzw. der modellspezifischen Datein `MODELS/<name>.lua` geändert werden. 
 
 .SpeedDial mit den Gebern `LS` und `RS`
 [TIP]
@@ -287,12 +372,15 @@ Die geschieht in der entsprechenden _Flugphase_, in der die Bedienung der Widget
 Flugphase `0`.
 
 [[flugph]]
-.Deaktivierung der Trimmer `T5` und `T6` in der Flugphase `0`
+.Deaktivierung der Trimmer `T5` und `T6` in der Flugphase `0` (Darstellung im Companion)
 image::fp.png[]
 
+.Deaktivierung der Trimmer `T5` und `T6` in der Flugphase `0` (Darstellung im Sender)
+image::fm1.png[]
 
 === Konfigurationsdateien
 
+[[config]]
 ==== Die Datei `MODELS/swstd.lua` und weitere Dateien
 
 In dem Ordner `MODELS` des SD-Karte werden modellspezifische Menu-Konfigurationen abgelegt.
@@ -310,8 +398,13 @@ In der Datenstruktur `menu` können an folgenden Elementen Veränderungen vorgen
 * Namen der Funktionen (`menu.pages.items.name`)
 * Namen der Zustände (`menu.pages.items.states`)
 * Namen der phys. Schalter (`menu.pages.items.data.switch`)
+* Adresse des Moduls (`menu.pages.items.data.module`)
 
-Wird ein phys. Schalter einer Schaltfunktion zugeordnet, dann kann diese Funktion _immer_ mit diesem Schalter bedient werden.
+Wird ein phys. Schalter _einer_ Schaltfunktion zugeordnet, dann kann diese Funktion _immer_ mit diesem Schalter bedient werden. Der Schalter ist dann 
+ein _ShortCut_ (Abkürzung).
+
+Wird ein phys. Schalter _mehr als einer_ Schaltfunktion zugeordnet, dann wird dieser Schalter _automatisch_ zu einem _Overlay_. Dies wird dann im Menu durch 
+ein `!` hinter dem Namen des Schalters dargestellt. Damit wirkt der Schalter dann _nur_ auf die zugeordnete Funktion der _altiven_ Menu-Seite (sichtbar).
 
 .ShortCuts (Abkürzungen)
 [CAUTION]
@@ -335,11 +428,17 @@ man mit einem Schalter und Mischern etwa den Ausgangskanal für das Zeitmultiple
 wurden die Schaltmodule _als Ganzes_ umgeschaltet. Bei `RC MultiSwitch-D` ist dies flexibler bezogen auf individuelle Schalter möglich.
 --
 
+.Menuseiten und Schaltmodule
+[TIP]
+--
+Die Menu-Seiten mit jeweils 8 Zeilen müssen _nicht_ immer der Zuordnung zu den phys. Schaltmodulen entsprechen: auf einer Menu-Seite können 
+Funktionen _unterschiedlicher_ Schaltmodule untergebracht werden. Denn jedes Modul hat eine _Adresse_, und diese Adresse ist Bestandteil der Funktionsdefinition
+in der Datei. Man kann also die Menu-Seiten auch eher nach Funktionsgruppen strukturieren als nach Schaltmodulen.
+--
+
 ==== Das Widget `WMSW/main.lua`
 
-keine Änderungen notwendig
-
-Bild
+In dieser Datei sind üblicherweise keine Änderungen notwendig.
 
 Dieses Widget ist die _Zentrale_ zur Bedienung aller Schaltfunktionen in allen Schaltmodulen. Am Beispiel der Datei `swstd.lua` sieht man 
 eine Gliederung der Funktionen in Gruppen zu je 8 Funktionen, die sich auf einem `RC MultiSwitch-D` befinden. Für jeden Ausgang des `RC MultiSwitch-D` 
@@ -356,23 +455,31 @@ Zusätzlich stehen `LS` zu schnellen Auswahl der Menuzeile und `RS` für die Spa
 
 ==== Das Widget `WMSWC/main.lua` (Konfiguration)
 
-keine Änderungen notwendig
-
-Bild
+In dieser Datei sind üblicherweise keine Änderungen notwendig.
 
 Dieses Widget dient zur _Konfiguration_ aller Parameter jeder Funktion wie dem _Anlernen_ von Übertragungskanal sowie der Adresse eines Moduls
 
 Die einzelnen Parameter des Menus lassen die _nur_ mit `T5`-hoch und -herunter anwählen sowie `T6`-hoch selektieren. _Nach_ der Selektion wird das 
 Potentiometer `S1` zum Einstellen des Parameterwertes:
 
-* `RES`: Reset aller Werte
+* `RES`: Reset aller Werte der Funktion
 * `PWN`: Einstellen der PWM-Modulation, kann direkt an der _Helligkeit_ der Kontroll-LED beobachtet werden.
 * `B1/I`: Intervall des Blinkens für Schaltzustand `blink1`
 * `B1/D`: Einschaltdauer des Blinkens für Schaltzustand `blink1`
 * `B2/I`: Intervall des Blinkens für Schaltzustand `blink2`
 * `B2/D`: Einschaltdauer des Blinkens für Schaltzustand `blink2`
+* `PThus`: Der sog. PassThrough-Kanal: ein beliebiger `OpenTX`-Kanal (`1` ... `16`) kann zur Weiterleitung an den Ausgang des Schaltmoduls ausgewählt werden
+* `Min`: (unbenutzt)
+* `Max`: (unbenutzt)
 
-Die _erste_ Zeile der _ersten_ Menuseite dient auch zum _Anlernen_ des Übertragungskanals und der _Adresse_ eines `RC MultiSwitch-D`.
+Es existiert eine zusätzliche Seite (am Ende) mit modul-globalen Einstellungen:
+
+* `L/Res`: Reset _aller_ Modulparameter bzw. _Anlernen_ der Moduladresse und des Übertragungskanals
+* `MPX0`: Zeitmultiplex-Verfahren für Ausgang `1`
+* `MPX1`: Zeitmultiplex-Verfahren für Ausgang `2`
+* `MPX2`: Zeitmultiplex-Verfahren für Ausgang `3`
+* `MPX3`: Zeitmultiplex-Verfahren für Ausgang `4`
+* `MPX4`: Zeitmultiplex-Verfahren für Ausgang `5`
 
 === Physische Schalter und die Schaltzustände
 
@@ -406,6 +513,7 @@ Ein Einschrumpfen mit Schrumpfschlauch ist möglich.
 Im Auslieferungszustand sind die `RC MultiSwitch-D` auf den Übertragungskanal `10` und die Adress `0` eingestellt. 
 Damit kann an einem Übertragungskanal natürlich nur ein Modul betrieben werden (jedes Modul _muss_ eine eigene eindeutige Adresse haben).
 
+[[learn]]
 === Kanal und Adresse
 
 Das _Anlernen_ von _Kanal_ und _Adresse_ geschieht in _einem_ Schritt. Dazu _muss_ das zu konfigurierende `RC MultiSwitch-D` _allein_ am betreffenden `IBus` oder `SBus` 
@@ -419,14 +527,15 @@ _dekativiert_ werden (keine _Mischer_ aktivieren).
 * An den Ausgängen des Moduls dürfen keine Verbraucher angeschlossen sein.
 --
 
-Ablauf:
+.Ablauf:
 
 . Sender und Empfänger sowie Schaltmodule aus.
 . Ein `RC MultiSwitch-D` an den `IBus` oder `SBus` anschließen.
 . Die Mischer-Skripte `encsb.lua` oder `encib.lua` für den gewünschten Übertragungskanal einrichten (s.o.).
 . Sender einschalten.
 . Konfigurationsmenu auswählen
-. Im Konfigurationsmenu in der _ersten_ Funktion (erste Zeile) den Parameter `PWM` für Adresse `0`, den Parameter `B1/I` für Adresse `1` u.s.w. selektieren.
+. Im Konfigurationsmenu auf der _letzten_ Seite (modul-spezifische Einstellungen) den Parameter `L/Res` selektieren. Mit Potentiometer `S1` die _Adresse_ einstellen 
+(Wert `1` ... `8`).
 . Empfänger einschalten
 . das zu konfigurierende `RC MultiSwitch-D` einschalten.
 . nach ca. 3 Sekunden das `RC MultiSwitch-D` ausschalten
@@ -434,22 +543,19 @@ Ablauf:
 . das nä. `RC MultiSwitch-D` anschließen und einschalten
 . ...
 
+.Kontrolle:
 
-Quittung
+Nach dem Anlernen von Kanal und Adresse kann man auch sofort ins Bedien-Menu wechseln, dort die Seite für die Modul-Adresse auswählen und kontrollieren, ob sich das 
+Schaltmodul ansprechen lässt. Andernfalls ist der Anlernvorgang zu wiederholen.
 
 == Funktion
 
 === Bedienung der Schaltunktionen
 
-Bild
-
 Mit dem Widget `WM MultiSwitch` können Schaltfunktionen ausgewählt werden. 
 
 Dies geschieht im Normalfall über `T5 - Up` und `T5 - Down` zur Navigation durch die Zeilen und Spalten des Menus. Mit `T6 - Up` kann eine Funktion ausgewählt
-werden. 
-
-[CAUTION]
-Wenn eine Funktion einen phys. Schalter zugewiesen hat, kann die Funktion nicht mehr über das Menu selektiert werden.
+(selektiert) werden. 
 
 Sind die beiden Schieber `LS` und `RS` vorhanden und erkannt worden, so kann mit `LS` in den Zeilen gescrollt werden und mit 
 `RS` in den Spalten des Menus.
@@ -457,16 +563,28 @@ Sind die beiden Schieber `LS` und `RS` vorhanden und erkannt worden, so kann mit
 Sind im Menu _mehr_ als eine Seite (also _mehr_ als 8 Schaltfunktionen bzw. mehr als ein Schaltmodul) enthalten. so kommt man auf die nächste Seite, indem man auf
 den Eintrag _ganz unten rechts_ navigiert und dann noch einmal nach unten navigiert (`T5 - Down`). Entsprechend auf die vorige Seite.
 
-=== Konfiguration
+Wird der 6-Positionenschalter `6pos` erkannt, so kann damit schnell zwischen den ersten sechs Menu-Seiten navigiert werden.
 
-Bild 
+.ShortCuts
+
+Haben Schaltfunktionen _ShortCuts_ zugeordnet (_ein_ phys. Schalter: `sa` ... `sh`), so können diese Funktionen und die 
+_ersten drei_ Zustände mit diesem Schalter aktiviert werden. Dies gilt _unabhängig_ von der gerade angezeigten Menu-Seite. Daher der Name 
+_ShortCut_ (Abkürzung). Oft benötigte Funktionen sollte also mit einem _eindeutigen_ Schalter belegt werden.
+
+Der Name des Schalters (bspw.: `sg`) wird dann nach dem Funktionsnamen (bspw.: `Fun A`) angegeben: dann `Fun A/sg`.
+
+.Overlays / Ebenenumschaltung 
+
+Wurde eine Schalter _mehreren_ Funktionen zugordnet, so wird zu einem _Overlay_. Dies wird dann mit einem _zusätzlichen_ `!` nach dem Namen 
+gekennzeichnet: etwa `Fun A/sb!` und `Nuf C/sb!`. Der Schalter `sb` schaltet die Zustände von `Fun A` nur dann, wenn die Menu-Seite
+mit `Fun A` aktiv (sichtbar) ist. Ist die Seite mit `Nuf C` sichtbar, so schaltet der Schalter `sb` die Zustände von `Nuf C`. 
+
+=== Konfiguration
 
 Mit dem Widget `WM MultiSwitch Config` können Schaltfunktionen konfiguriert werden. 
 
-
-
-[CAUTION]
-
+Dies über `T5 - Up` und `T5 - Down` zur Navigation durch die Zeilen und Spalten des Menus. Mit `T6 - Up` kann eine Funktion ausgewählt
+(selektiert) werden. 
 
 [[Betrieb]]
 == Betrieb
@@ -532,9 +650,6 @@ Bereiches kann zu einem Totalausfall und damit zu einem Modellverlust sowie Pers
 
 == Aufbau 
 
-
-
 == Kontakt
 
 Anfragen: wilhelm.wm.meier@googlemail.com
-
