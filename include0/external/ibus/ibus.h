@@ -100,12 +100,56 @@ namespace IBus {
 
     namespace Switch {
         struct Protocol1 {
+            
+#ifdef USE_SBUS
+            inline static constexpr auto sbusLut = []{
+                std::array<uint8_t, 32> lut{};
+                lut[0] = 0;
+                lut[1] = 1;
+                lut[2] = 1;
+                lut[3] = 2;
+                lut[4] = 2;
+                lut[5] = 3;
+                lut[6] = 3;
+                lut[7] = 4;
+                lut[8] = 4;
+                lut[9] = 5;
+                lut[10] = 5;
+                lut[11] = 6;
+                lut[12] = 6;
+                lut[13] = 7;
+                lut[14] = 7;
+                lut[15] = 7;
+                lut[16] = 8;
+                lut[17] = 9;
+                lut[18] = 9;
+                lut[19] = 10;
+                lut[20] = 10;
+                lut[21] = 11;
+                lut[22] = 11;
+                lut[23] = 12;
+                lut[24] = 12;
+                lut[25] = 13;
+                lut[26] = 13;
+                lut[27] = 14;
+                lut[28] = 14;
+                lut[29] = 15;
+                lut[30] = 15;
+                lut[31] = 15;
+                return lut;
+            }();
+#endif
             using addr_t  = etl::uint_ranged<uint8_t, 0, 7>; // 3 Bits
             using index_t = etl::uint_ranged<uint8_t, 0, 7>; // 3 Bits
-            using mode_t  = etl::uint_ranged<uint8_t, 0, 7>; // 3 Bits
             
             using param_t  = etl::uint_ranged<uint8_t, 0, 15>; // 4 Bits
+#ifdef USE_SBUS
+            using mode_t  = etl::uint_ranged<uint8_t, 0, 3>; // 2 Bits
+            using pvalue_t  = etl::uint_ranged<uint8_t, 0, 15>; // 4 Bits
+#else
+            using mode_t  = etl::uint_ranged<uint8_t, 0, 7>; // 3 Bits
             using pvalue_t  = etl::uint_ranged<uint8_t, 0, 31>; // 5 Bits
+#endif
             
             inline static constexpr mode_t unused{0};
             inline static constexpr mode_t off{1};
@@ -165,6 +209,9 @@ namespace IBus {
             inline static constexpr mode_t toMode(const ValueType& v) {
                 const uint16_t c = v.toInt() - ValueType::Lower;
 //                return mode_t((c & 0x0f));
+#ifdef USE_SBUS
+                return mode_t(sbusLut[(c & 0x07)]);
+#endif
                 return mode_t((c & 0x07));
             }   
             template<typename ValueType>
@@ -179,7 +226,10 @@ namespace IBus {
             }   
             template<typename ValueType>
             inline static constexpr pvalue_t toParameterValue(const ValueType& v) {
-                const uint16_t c = v.toInt() - ValueType::Lower;
+                uint16_t c = v.toInt() - ValueType::Lower;
+#ifdef USE_SBUS
+                return pvalue_t(sbusLut[(c & 0x1f)]);
+#endif
                 return pvalue_t(c & 0x1f);
             }   
         };
@@ -217,7 +267,7 @@ namespace IBus {
                 mAddr = a;
             }
             inline static bool periodic() {
-                const auto cv = PA::value(mChannel);
+                const auto cv = PA::valueMapped(mChannel);
                 const addr_t addr = Protocol1::toAddress(cv);
                 const index_t index = Protocol1::toIndex(cv);
                 const mode_t mode = Protocol1::toMode(cv);
@@ -231,34 +281,45 @@ namespace IBus {
                             off(Meta::List<Actors...>{});                    
                         }
                     }
-                    else if (param == Protocol1::passThruChannel) {
-                        NVM::data()[lastOnIndex].passThru() = value;
-                        NVM::data().change();
-                    }
-                    else if (param == Protocol1::reset) {
-                        using sw_t = std::remove_cvref_t<decltype(NVM::data()[0])>;
-                        NVM::data()[lastOnIndex] = sw_t{};
-                        NVM::data().change();
-                    }
-                    else if (param == Protocol1::timeMpxMode0) {
-                        NVM::data().mpxMode(0, value);
-                        NVM::data().change();
-                    }
-                    else if (param == Protocol1::timeMpxMode1) {
-                        NVM::data().mpxMode(1, value);
-                        NVM::data().change();
-                    }
-                    else if (param == Protocol1::timeMpxMode2) {
-                        NVM::data().mpxMode(2, value);
-                        NVM::data().change();
-                    }
-                    else if (param == Protocol1::timeMpxMode3) {
-                        NVM::data().mpxMode(3, value);
-                        NVM::data().change();
-                    }
-                    else if (param == Protocol1::timeMpxMode4) {
-                        NVM::data().mpxMode(4, value);
-                        NVM::data().change();
+                    else if (lastOnIndex) {
+                        index_t lastOn{lastOnIndex.toInt()};
+                        if (param == Protocol1::passThruChannel) {
+                            if ((value >= 1) && (value <= 16)) {
+                                channel_t v{value};
+                                NVM::data()[lastOn].passThru() = v;
+                                NVM::data().change();
+                            }
+                            else {
+    //                            decltype(NVM::data()[lastOnIndex].passThru())::_;
+                                NVM::data()[lastOn].passThru().setNaN();
+                                NVM::data().change();
+                            }
+                        }
+                        else if (param == Protocol1::reset) {
+                            using sw_t = std::remove_cvref_t<decltype(NVM::data()[0])>;
+                            NVM::data()[lastOn] = sw_t{};
+                            NVM::data().change();
+                        }
+                        else if (param == Protocol1::timeMpxMode0) {
+                            NVM::data().mpxMode(0, value);
+                            NVM::data().change();
+                        }
+                        else if (param == Protocol1::timeMpxMode1) {
+                            NVM::data().mpxMode(1, value);
+                            NVM::data().change();
+                        }
+                        else if (param == Protocol1::timeMpxMode2) {
+                            NVM::data().mpxMode(2, value);
+                            NVM::data().change();
+                        }
+                        else if (param == Protocol1::timeMpxMode3) {
+                            NVM::data().mpxMode(3, value);
+                            NVM::data().change();
+                        }
+                        else if (param == Protocol1::timeMpxMode4) {
+                            NVM::data().mpxMode(4, value);
+                            NVM::data().change();
+                        }
                     }
                 }
                 else { // command (execute)
@@ -307,7 +368,8 @@ namespace IBus {
                 }
             }
         private:
-            static inline index_t lastOnIndex;            
+            using lastindex_t = etl::uint_ranged_NaN<uint8_t, index_t::Lower, index_t::Upper>; 
+            static inline lastindex_t lastOnIndex;
             static inline channel_t mChannel{9};
             static inline addr_t mAddr{0};
         };
@@ -351,7 +413,7 @@ namespace IBus {
                 return Protocol1::isLearnCode(v);
             }
             static inline bool periodic() {
-                const auto cv = PA::value(mChannel);
+                const auto cv = PA::valueMapped(mChannel);
 
                 if (!cv) return true;
                 
@@ -371,42 +433,43 @@ namespace IBus {
                             }                        
                         }
                     }
-                    else {
+                    else if (lastOnIndex) {
+                        index_t lastOn{lastOnIndex.toInt()};
                         if (param == Protocol1::reset) {
-//                            Out::reset(lastOnIndex);
+                            Out::reset(lastOn);
                         }
                         else if (param == Protocol1::pwm) {
-                            Actor::switches()[lastOnIndex] = Actor::SwState::Steady;
+                            Actor::switches()[lastOn] = Actor::SwState::Steady;
                             const uint8_t pwm = ((uint16_t)value * pwmMax) / pvalue_t::Upper;
-                            Out::pwm(lastOnIndex, pwm);
+                            Out::pwm(lastOn, pwm);
                         }
                         else if (param == Protocol1::blink1Intervall) {
-                            Actor::switches()[lastOnIndex] = Actor::SwState::Blink1;
-                            const uint8_t intervall = ((uint16_t)value * tick_t::max()) / pvalue_t::Upper;
+                            Actor::switches()[lastOn] = Actor::SwState::Blink1;
+                            const uint16_t intervall = ((uint32_t)value * tick_t::max()) / pvalue_t::Upper;
                             Out::mode(blink_index_t{0});
-                            Out::intervall2(lastOnIndex, tick_t::fromRaw(intervall));
-                            Out::duration(lastOnIndex, tick_t::fromRaw(intervall / 2));
+                            Out::intervall2(lastOn, tick_t::fromRaw(intervall));
+                            Out::duration(lastOn, tick_t::fromRaw(intervall / 2));
                         }
                         else if (param == Protocol1::blink1Duration) {
-                            Actor::switches()[lastOnIndex] = Actor::SwState::Blink1;
+                            Actor::switches()[lastOn] = Actor::SwState::Blink1;
                             Out::mode(blink_index_t{0});
-                            const uint16_t intervall = Out::intervall(lastOnIndex).value;
-                            const uint8_t duration = (value * intervall) / pvalue_t::Upper; 
-                            Out::duration(lastOnIndex, tick_t::fromRaw(duration));
+                            const uint16_t intervall = Out::intervall(lastOn).value;
+                            const uint16_t duration = ((uint32_t)value * intervall) / pvalue_t::Upper; 
+                            Out::duration(lastOn, tick_t::fromRaw(duration));
                         }
                         else if (param == Protocol1::blink2Intervall) {
-                            Actor::switches()[lastOnIndex] = Actor::SwState::Blink2;
-                            const uint8_t intervall = ((uint16_t)value * tick_t::max()) / pvalue_t::Upper;
+                            Actor::switches()[lastOn] = Actor::SwState::Blink2;
+                            const uint16_t intervall = ((uint32_t)value * tick_t::max()) / pvalue_t::Upper;
                             Out::mode(blink_index_t{1});
-                            Out::intervall2(lastOnIndex, tick_t::fromRaw(intervall));
-                            Out::duration(lastOnIndex, tick_t::fromRaw(intervall / 2));
+                            Out::intervall2(lastOn, tick_t::fromRaw(intervall));
+                            Out::duration(lastOn, tick_t::fromRaw(intervall / 2));
                         }
                         else if (param == Protocol1::blink2Duration) {
-                            Actor::switches()[lastOnIndex] = Actor::SwState::Blink2;
+                            Actor::switches()[lastOn] = Actor::SwState::Blink2;
                             Out::mode(blink_index_t{1});
-                            const uint16_t intervall = Out::intervall(lastOnIndex).value;
-                            const uint8_t duration = (value * intervall) / pvalue_t::Upper; 
-                            Out::duration(lastOnIndex, tick_t::fromRaw(duration));
+                            const uint16_t intervall = Out::intervall(lastOn).value;
+                            const uint16_t duration = ((uint32_t)value * intervall) / pvalue_t::Upper; 
+                            Out::duration(lastOn, tick_t::fromRaw(duration));
                         }
                         else if (param == Protocol1::timeMpxMode0) {
                             Out::mpxMode(0, value);
@@ -430,7 +493,7 @@ namespace IBus {
                         return false;
                     }
                     if (mode != Protocol1::off) {
-                        lastOnIndex = index;
+                        lastOnIndex = index.toInt();
                         if (mode == Protocol1::on) {
                             Actor::switches()[index] = Actor::SwState::Steady;
                         }
@@ -451,11 +514,9 @@ namespace IBus {
                 return true;                
             }
             
-//            static inline uint16_t lv;
-//            static inline uint8_t lp;
-//            static inline uint8_t lp2;
-        private: 
-            static inline index_t lastOnIndex;
+//        private: 
+            using lastindex_t = etl::uint_ranged_NaN<uint8_t, index_t::Lower, index_t::Upper>; 
+            static inline lastindex_t lastOnIndex;
             static inline channel_t mChannel{9};
             static inline addr_t    mAddr{0};
         };
@@ -626,6 +687,9 @@ namespace IBus {
                     }
                 }            
                 return value_type{};
+            }
+            static inline value_type valueMapped(const channel_t ch) {
+                return value(ch);
             }
             
             static inline bool process(const std::byte b) {

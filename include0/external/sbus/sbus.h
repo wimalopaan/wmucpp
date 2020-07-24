@@ -90,14 +90,24 @@ uint32_t sbusTime = 0;
                 enum class State : uint8_t {Undefined, Data, GotEnd, WaitEnd};
 
                 using data_t = std::array<uint16_t, 16>; 
-                using value_type = etl::uint_ranged_NaN<uint16_t, 480, 1504>;
-                using channel_t = etl::uint_ranged<uint8_t, 0, data_t::size() - 1>;
+                using value_type = etl::uint_ranged_NaN<uint16_t, 172, 1810>;
+                using mapped_type = etl::uint_ranged_NaN<uint16_t, 480, 1504>;
+                using channel_t = etl::uint_ranged_NaN<uint8_t, 0, data_t::size() - 1>;
                 
                 static inline constexpr std::byte start_byte = 0x0f_B;
                 static inline constexpr std::byte end_byte = 0x00_B;
                 
                 static inline value_type value(const channel_t ch) {
-                    return mChannels[ch];
+                    if (const uint8_t chi = ch.toInt(); ch) {
+                        return mChannels[chi];
+                    }
+                    return value_type{};
+                }
+                static inline mapped_type valueMapped(const channel_t ch) {
+                    if (const uint8_t chi = ch.toInt(); ch) {
+                        return mChannels[chi];
+                    }
+                    return mapped_type{};
                 }
 
                 static_assert(Timer::frequency >= 1000_Hz);
@@ -110,7 +120,7 @@ uint32_t sbusTime = 0;
                 }
                 
                 static inline bool process(const std::byte b) {
-                    ++c;
+//                    ++c;
                     tc = 0;
                     switch(mState) {
                     case State::Undefined:
@@ -156,7 +166,7 @@ uint32_t sbusTime = 0;
                     return true;
                 }
                 
-                inline static uint8_t c{};
+//                inline static uint8_t c{};
                 
 //            private:
                 static inline void decode() {

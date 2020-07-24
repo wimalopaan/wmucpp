@@ -7,7 +7,7 @@
 
 namespace External {
     
-    template<typename Timer, typename T = uint16_t>
+    template<typename Timer, typename T = uint16_t, T MAX = std::numeric_limits<T>::max()>
     struct Tick {
         inline static constexpr auto intervall = Timer::intervall;
         
@@ -73,11 +73,11 @@ namespace External {
         }
 
         inline static constexpr T max() {
-            return std::numeric_limits<T>::max();
+            return decltype(value)::Upper;
         }
         
         //    private: // structural type
-        etl::uint_ranged<T> value;
+        etl::uint_ranged<T, 0, MAX> value;
         
     private:
         inline constexpr Tick(const T v) : value{v} {}

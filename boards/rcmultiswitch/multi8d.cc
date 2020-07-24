@@ -1,6 +1,7 @@
 #define NDEBUG
 
-#define USE_IBUS
+//#define USE_IBUS
+#define USE_SBUS
 
 #include "board.h"
 #include "swout.h"
@@ -15,6 +16,9 @@ struct FSM {
     static inline void init() {}
     
     static inline void ratePeriodic() {
+#ifdef USE_SBUS
+        PA::ratePeriodic();
+#endif
         ++stateTicks;
         switch(mState) {
         case State::Undefined:
@@ -34,6 +38,7 @@ struct FSM {
                 SW::channel(NVM::data().channel());
                 SW::address(NVM::data().address());
             }
+            etl::outl<Term>("using ch: "_pgm, SW::mChannel.toInt(), " adr: "_pgm, SW::mAddr.toInt());
             mState = State::Run;
             break;
         case State::ShowAddress:
@@ -52,8 +57,13 @@ private:
     using addr_t = typename protocol_t::addr_t;
     
     static inline bool search() {
-        etl::outl<Term>("test: "_pgm, learnChannel.toInt(), " v: "_pgm, PA::value(learnChannel.toRangedNaN()).toInt());
-        if (const auto lc = PA::value(learnChannel.toRangedNaN()); lc && SW::isLearnCode(lc)) {
+//        if (const auto lc = PA::value(learnChannel.toRangedNaN())) {
+//            etl::outl<Term>("c: "_pgm, learnChannel.toInt(), " v: "_pgm, lc.toInt());
+//        }
+//        else {
+//            etl::outl<Term>("c: "_pgm, learnChannel.toInt());
+//        }
+        if (const auto lc = PA::valueMapped(learnChannel.toRangedNaN()); lc && SW::isLearnCode(lc)) {
             if (const auto pv = protocol_t::toParameterValue(lc).toInt(); (pv >= 1) && ((pv - 1) <= SW::protocol_t::addr_t::Upper)) {
                 const uint8_t addr = pv - 1;
                 SW::channel(learnChannel.toRangedNaN());
@@ -74,11 +84,16 @@ private:
     inline static External::Tick<Timer> stateTicks;
 };
 
+#ifdef USE_IBUS
 using servo_pa = IBus::Servo::ProtocollAdapter<0>;
+#endif
+#ifdef USE_SBUS
+using servo_pa = External::SBus::Servo::ProtocollAdapter<0, systemTimer>;
+#endif
 
 using eeprom = EEProm::Controller<Storage::ApplData<servo_pa::channel_t, IBus::Switch::Protocol1::addr_t>>;
 
-using servo = AVR::Usart<usart0Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
+using servo = AVR::Usart<usart0Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
 using terminalDevice = servo;
 using terminal = etl::basic_ostream<servo>;
 
@@ -117,11 +132,21 @@ int main() {
     
     fsm::init();
     
+#ifdef USE_SBUS
+    servo::init<AVR::BaudRate<100000>, FullDuplex, true, 1>(); // 8E2
+#endif
+#ifdef USE_IBUS
     servo::init<BaudRate<115200>>();
+#endif
     systemTimer::init();
     out::init();
-    
-    etl::outl<terminal>("multi8d"_pgm);
+
+#ifdef USE_SBUS
+    etl::outl<terminal>("multi8d sbus"_pgm);
+#endif    
+#ifdef USE_IBUS
+    etl::outl<terminal>("multi8d ibus"_pgm);
+#endif    
     
     eeprom::init();
     if (!((appData.magic() == 42))) {
@@ -148,7 +173,12 @@ int main() {
             fsm::ratePeriodic();
             alarmTimer::periodic([&](const auto& t){
                 if (periodicTimer == t) {
-                    etl::outl<terminal>("c: "_pgm, counter++, " mpx0: "_pgm, (uint8_t)appData.mMpxModes[0]);
+//                    etl::outl<terminal>("c: "_pgm, counter++, " mpx0: "_pgm, (uint8_t)appData.mMpxModes[0]);
+                    etl::outl<terminal>("c9: "_pgm, servo_pa::valueMapped(9).toInt(), " r: "_pgm, servo_pa::value(9).toInt());
+//                    etl::outl<terminal>("c9: "_pgm, servo_pa::valueMapped(9).toInt(), " r: "_pgm, servo_pa::value(9).toInt());
+//                    etl::outl<terminal>("c0: "_pgm, servo_pa::mChannels[0]);
+                    etl::outl<terminal>("lo: "_pgm, ibus_switch::lastOnIndex.toInt());
+                    etl::outl<terminal>("bi1: "_pgm, appData[0].blinks()[0].intervall.value.toInt());
                 }
                 else if (eepromTimer == t) {
                     appData.expire();

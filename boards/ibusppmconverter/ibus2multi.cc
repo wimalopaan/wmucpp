@@ -1,7 +1,5 @@
-#define USE_IBUS
-
-//#define ROBBE_8370
-//#define CP_ONEPULSE
+#define USE_SBUS
+//#define USE_IBUS
 
 #include "board.h"
 
@@ -52,7 +50,7 @@ private:
     
     static inline bool search() {
         //        etl::outl<Term>("test: "_pgm, learnChannel.toInt());
-        if (const auto lc = PA::value(learnChannel.toRangedNaN()); lc && SW::isLearnCode(lc)) {
+        if (const auto lc = PA::valueMapped(learnChannel.toRangedNaN()); lc && SW::isLearnCode(lc)) {
             if (const auto pv = protocol_t::toParameterValue(lc).toInt(); (pv >= 1) && ((pv - 1) <= SW::protocol_t::addr_t::Upper)) {
                 const uint8_t addr = pv - 1;
                 SW::channel(learnChannel.toRangedNaN());
@@ -84,7 +82,12 @@ using ppmC = External::Ppm::PpmOut<tcb1Position>;
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition, tcb0Position, tcb1Position>>;
 
+#ifdef USE_SBUS
+using servo_pa = External::SBus::Servo::ProtocollAdapter<0, systemTimer>;
+#endif
+#ifdef USE_IBUS
 using servo_pa = IBus::Servo::ProtocollAdapter<0>;
+#endif
 using servo = AVR::Usart<usart0Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
 
 template<typename PPM, uint8_t Channel = 0>
@@ -109,11 +112,10 @@ struct Adapter {
         PPM::ppmRaw(ppm_index_t{Channel}, v);
     }
     
-    inline static void ppm(const auto v) {
+    inline static void ppm_async(const auto v) {
         PPM::ppm(ppm_index_t{Channel}, v);
     }
 };
-
 
 template<typename PPM, typename PA, typename NVM, uint8_t Address = 0, uint8_t Size = 8>
 struct FSM {
@@ -125,6 +127,7 @@ struct FSM {
     
     using cycle10_t = etl::uint_ranged_circular<uint8_t, 0, 9>; // Robbe / CP mode use only 9 cycles, so we have to increment twice
     using cycle9_t = etl::uint_ranged_circular<uint8_t, 0, 8>; // Robbe / CP mode use only 9 cycles, so we have to increment twice
+    using cycle6_t = etl::uint_ranged_circular<uint8_t, 0, 5>; // Robbe / CP mode use only 9 cycles, so we have to increment twice
     
     static inline constexpr uint8_t offset{10};
     
@@ -143,15 +146,26 @@ struct FSM {
     inline static void update() {
         const auto mode = NVM::data().mpxMode(Address);
         
-        if (mode == Storage::Mode::Graupner) {
+        if (mode == Storage::Mode::Graupner8K) {
             if (cycle10 < 2) {
                 PPM::ppmRaw(PPM::ocMax + 100);
+//                PPM::ppmRaw(PPM::ocMax + 200);
             }
             else {
                 uint8_t i = cycle10 - 2;
                 pulse(i);
             }
             ++cycle10;
+        }
+        else if (mode == Storage::Mode::Graupner4K) {
+            if (cycle6 < 2) {
+                PPM::ppmRaw(PPM::ocMax + 100);
+            }
+            else {
+                uint8_t i = cycle6 - 2;
+                pulse(i);
+            }
+            ++cycle6;
         }
         else if (mode == Storage::Mode::Robbe) {
             if (cycle9 < 1) {
@@ -197,10 +211,10 @@ struct FSM {
     
     static inline void pulse(uint8_t i) {
         if (const auto pch = NVM::data()[i].passThru()) {
-            using ch_t = PA::channel_t;
-            auto v = PA::value(ch_t{pch.toInt()});
-            //                decltype(v)::_;
-            PPM::ppm(v);
+//            using ch_t = PA::channel_t;
+//            auto v = PA::value(ch_t{pch.toInt()});
+            auto v = PA::value(pch);
+            PPM::ppm_async(v);
         }
         else if (swStates[i] == SwState::Off) {
             PPM::ppmRaw(PPM::ocMedium);
@@ -211,10 +225,14 @@ struct FSM {
         else if (swStates[i] == SwState::Blink1) {
             PPM::ppmRaw(PPM::ocMin + 200);
         }
+        else {
+            PPM::ppmRaw(PPM::ocMedium);
+        }
         
     }
     static inline cycle10_t cycle10;
     static inline cycle9_t cycle9;
+    static inline cycle6_t cycle6;
     static inline std::array<SwState, Size> swStates;
 };
 
@@ -260,9 +278,14 @@ int main() {
     portmux::init();
     systemTimer::init();
     
+#ifdef USE_IBUS
     servo::init<AVR::BaudRate<115200>, HalfDuplex>();
     servo::txEnable<false>();
-    
+#endif
+#ifdef USE_SBUS
+    servo::init<AVR::BaudRate<100000>, HalfDuplex, true, 1>(); // 8E2
+    servo::txEnable<false>();
+#endif
     fsm1::init();
     fsm2::init();
     fsm3::init();

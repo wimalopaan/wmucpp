@@ -122,6 +122,10 @@ namespace External {
             }
         }
         
+        inline static void reset(const index_t index) {
+            NVM::data()[index] = nvm_data_t{};
+            NVM::data().change();
+        }
         inline static void duration(const index_t index, const tick_t d) {
             NVM::data()[index].blinks()[blinkIndex].duration = d;
             NVM::data().change();

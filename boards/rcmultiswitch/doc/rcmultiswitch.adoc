@@ -170,7 +170,7 @@ aktiviert werden.
 
 [[menu1]]
 .Die Bedienoberfläche als Widget (Seite 1) 
-image::wmsw2.png[]
+image::wmsw2.png[align="center"]
 
 Sollte eine Schaltfunktion auch ein _ShortCut_ in Form eines physischen Schalters (3-Positionenschalter) zugeordnet haben, so erscheint der _Name_
 des Schalters zusätzlich hinter dem Namen der Funktion. In der ersten Zeile bedeutet `Fun A/sa`, dass der Funktion `Fun A` zusätzlich der _ShortCut_ 
@@ -183,7 +183,7 @@ Module eher _thematisch_ auf einer Menu-Seite zusammen fassen.
 
 [[menu2]]
 .Die Bedienoberfläche als Widget (Seite 2)
-image::wmsw.png[]
+image::wmsw.png[align="center"]
 
 Die _vierte_ Seite dieses Beispiels stellt das Menu für ein `RC MultiAdapter-DA` dar. Hier hat jede Funktion nur _drei_ Zustände. Die beiden 
 `Ein`-Zustände entsprechen bei den üblichen analogen Zeitmultiplex-Schaltmodulen jeweils zwei unterschiedlichen Ausgängen. Natürlich können auch hier die 
@@ -191,7 +191,7 @@ Namen geändert werden.
 
 [[menu3]]
 .Die Bedienoberfläche als Widget (Seite 4)
-image::wmsw3.png[]
+image::wmsw3.png[align="center"]
 
 Weil die Anzahl der phys. Schalter am Sender naturgemäß begrenzt ist (etwa: `sa`, ... `sh`), kann man nicht für alle Funktionen _ShortCuts_ 
 über Schalter definieren. Eine Abhilfe bieten die sog. _Overlays_. Dies ist bei den analogen Schaltmodulen als _Ebenenumschaltung_ bekannt. 
@@ -212,7 +212,7 @@ Der Wert wird _oben rechts_ im Menu in `%` und auf einer Skala von `0` ... `31` 
 
 [[menuc1]]
 .Die Konfigurationsoberfläche als Widget (Funktionsspezifische Parameter)
-image::wmswc.png[]
+image::wmswc.png[align="center"]
 
 Zusätzlich zu den _funktionsspezifischen_ Parametern für jedes Schaltmodul (Achtung: nicht jedes Schaltmodul kann alle Parameter ausführen), 
 existiert noch eine _weitere_ Menu-Seite für modul-spezifische (für ein Modul als Ganzes) Parameter (s.a. <<menuc2>>). 
@@ -224,7 +224,7 @@ angeschlossenen analogen Zeitmultiplex-Schaltmodul festgelegt werden (Wert `1` :
 
 [[menuc2]]
 .Die Konfigurationsoberfläche als Widget (modulglobale Parameter)
-image::wmswc2.png[]
+image::wmswc2.png[align="center"]
 
 Da dieses Widget zum eigentlichen Betrieb _nicht_ erforderlich ist, kann es _nach_ der Konfiguration deaktiviert werden bzw. durch andere 
 Widgets ersetzt werden.
@@ -300,13 +300,13 @@ Das Schaltmodul ist standardmäßig auf Kanal `10` eingestellt. Es kann jedoch a
 Im Sender muss daher für diesen Kanal als Quelle das entspechende Mixer-Script eingetragen werden.
 
 .Das Mischer-Skript `encsb.lua`
-image::m1.png[]
+image::m1.png[align="center"]
 
 .Hier wird der Übertragungskanal `10` wird für die Schaltmodule verwendet.
-image::m2.png[]
+image::m2.png[align="center"]
 
 .Als Quelle des Mischers des Übertragungskanals wird das Mischer-Skript `encsb.lua` eingetragen
-image::m3.png[]
+image::m3.png[align="center"]
 
 
 ==== Definition der Geber (Inputs)
@@ -330,16 +330,16 @@ definiert werden. Dies ist dann für beide Widgets gleichmaßen notwendig.
 
 [[inputs]]
 .Benötigte Geber zur Bedienung der Widgets (Darstellung im Companion)
-image::inputs.png[]
+image::inputs.png[align="center"]
 
 .Benötigte Geber (Darstellung im Sender)
-image::in1.png[]
+image::in1.png[align="center"]
 
 .Benötigte Geber (Darstellung im Sender)
-image::in2.png[]
+image::in2.png[align="center"]
 
 .Benötigte Geber (Darstellung im Sender)
-image::in3.png[]
+image::in3.png[align="center"]
 
 Um die Bedienung weiter zu vereinfachen, werden standardmäßig weitere Bedienelemente für die Widgets verwendet. Diese sind voreingestellt.
 Sie können aber in der Datei `MODELS/swstd.lua` bzw. der modellspezifischen Datein `MODELS/<name>.lua` geändert werden. 
@@ -373,10 +373,10 @@ Flugphase `0`.
 
 [[flugph]]
 .Deaktivierung der Trimmer `T5` und `T6` in der Flugphase `0` (Darstellung im Companion)
-image::fp.png[]
+image::fp.png[align="center"]
 
 .Deaktivierung der Trimmer `T5` und `T6` in der Flugphase `0` (Darstellung im Sender)
-image::fm1.png[]
+image::fm1.png[align="center"]
 
 === Konfigurationsdateien
 
@@ -481,6 +481,24 @@ Es existiert eine zusätzliche Seite (am Ende) mit modul-globalen Einstellungen:
 * `MPX3`: Zeitmultiplex-Verfahren für Ausgang `4`
 * `MPX4`: Zeitmultiplex-Verfahren für Ausgang `5`
 
+Bei der Einstellung des Zeitmultiplexverfahrens gelten folgende Zuordnungen von eingestelltem Wert und Verfahren:
+
+* Wert 0 -> Graupner-8K
+* Wert 1 -> Graupner-4K
+* Wert 2 -> Robbe
+* Wert 3 -> CP-Elektronik
+* Wert 4 -> unbenutzt
+* alle anderen Werte -> Graupner-8K
+
+.Einrichten von sog. Multi-Prop-Modulen
+[TIP]
+--
+Zum Betrieb von sog. Multi-Prop-Modulen ist es nötig, für die _gewünschten_ Kanäle Zuordnungen zu den `OpenTx`-Kanälen zu machen. Dies 
+macht man mit dem `PassThru`-Parameter (s.o.).
+
+Konfiguriert man _keinen_ `PassThru`-Kanal, so bewegt sich das dort angeschlossene Servo von _Endstellung_1_ über _Neutral_ zu _Endstellung_2_.
+--
+
 === Physische Schalter und die Schaltzustände
 
 In den Konfigurationsdateien für die Modelle, also etwa `MODELS/ABC.lua` für das Modell mit dem Namen `ABC` kann man den einzelnen Funktionen
@@ -498,7 +516,37 @@ bedeutet, dass dieses phys. Schalter nur dann aktiv sind, wenn das entsprechende
 
 == Einbau 
 
+=== IBus oder SBus
+
+Die Module sind fest programmiert für `IBus` oder `SBus`-Eingangssignale. 
+
+*Zusätzlich* braucht man für den Anschluß an ein `SBus` noch einen *Signal-Inverter*. Dieser muss in die Zuleitung vom `SBus` zum 
+`RC MultiSwitch-D` oder `RC MultiAdapter-DA` eingeschleift werden (wie ein Verlängerungskabel).
+
+[[inverter]]
+.Einfacher Inverter mit einem Kleinsignal-MosFet
+image::inverter.png[pdfwidth=50%,align="center"]
+
+Ein Inverter wie in <<inverter>> kann einfach in ein Servokabel eingebaut werden.
+
+.SBus ist nicht gleich SBus
+[CAUTION]
+--
+Leider ist der _Werte-Bereich_, in denen die einzelnen Kanäle eines SBus-Signal skaliert werden, nicht wohl definiert, und einige Hersteller 
+legen unterschiedliche Grenzen des Wertebereiches fest. Dies führt zu Problemen!
+
+Als Referenz wurde der Wertebereich eines `FrSky R8X`- Empfängers zu Grunde gelegt.
+
+Abweichend hiervon sind:
+
+* `FlySky FS-iA4B` in der Einstellung `SBus,PWM`
+* `FlySky FS-iA6B` in der Einstellung `SBus,PWM`
+* `FlySky FS-iA10B` in der Einstellung `SBus,PWM`
+--
+
 === Anschluß an den Akku
+
+Achten Sie auf richtige Polung.
 
 === Schutz 
 
@@ -548,6 +596,18 @@ _dekativiert_ werden (keine _Mischer_ aktivieren).
 Nach dem Anlernen von Kanal und Adresse kann man auch sofort ins Bedien-Menu wechseln, dort die Seite für die Modul-Adresse auswählen und kontrollieren, ob sich das 
 Schaltmodul ansprechen lässt. Andernfalls ist der Anlernvorgang zu wiederholen.
 
+=== Adressen beim `RC MultiAdapter-DA`
+
+Weil der `RC MultiAdapter-DA` insgesamt 5 alte Schaltmodule ansteuern kann, belegt er auch 5 _unmittelbar aufeinanderfolgende_ Adressen.
+
+Damit gilt das folgende Schema für die Zuordnung von Adressen zu den Ausgängen des `RC MultiAdapter-DA` und den daran angeschlossenen Schaltmodulen:
+
+* erlernte Adresse `A` -> Ausgang `S2`
+* Adresse `(A+1)` -> Ausgang `S1`
+* Adresse `(A+2)` -> Ausgang `Q0`
+* Adresse `(A+3)` -> Ausgang `S3`
+* Adresse `(A+4)` -> Ausgang `S4`
+
 == Funktion
 
 === Bedienung der Schaltunktionen
@@ -585,6 +645,27 @@ Mit dem Widget `WM MultiSwitch Config` können Schaltfunktionen konfiguriert wer
 
 Dies über `T5 - Up` und `T5 - Down` zur Navigation durch die Zeilen und Spalten des Menus. Mit `T6 - Up` kann eine Funktion ausgewählt
 (selektiert) werden. 
+
+.Keine unmittelbare Rückmeldung
+[NOTE]
+--
+Im Gegensatz zu vielen anderen technischen Geräten, die über ein Menu-System konfiguriert werden, gibt es im Konfigurationsmenu hier nach der 
+_Selektion_ und dem _Einstellen_ eine _Parameterwertes_ keine besondere _Rückmeldung_ an den Benutzer über den Erfolg oder Misserfolg! Daher ist hier 
+sorgsam vorzugehen.
+--
+
+.Delektion nach dem Einstellen eines Parameters
+[TIP]
+--
+Als Schutz vor einem unbeabsichtigen Ändern eines Parameterwertes, sollte man folgendermaßen vorgehen:
+
+. Zum Parameter navigieren
+. Parameter selektieren
+. Parameterwert einstellen
+. *Zu einem anderen Parameter navigieren (ohne ihn zu selektieren)*
+
+Der letze Schritt hebt die vorige Selektion auf. Damit kann nichts mehr unbeabsichtigt verändert werden.
+--
 
 [[Betrieb]]
 == Betrieb

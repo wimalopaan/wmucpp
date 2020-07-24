@@ -159,13 +159,21 @@ namespace  {
 }
 
 struct SoftTimer {
+#ifdef USE_SBUS
+    static constexpr auto intervall = 1_ms;
+#else
     static constexpr auto intervall = 50_ms;
+#endif
 //    static constexpr auto intervall = 1 / fRtc;
 };
 
 
 namespace Storage {
+#ifdef USE_SBUS
+    using tick_type = External::Tick<SoftTimer, uint16_t, 8000>; // max 8 Seconds
+#else
     using tick_type = External::Tick<SoftTimer, uint8_t>;
+#endif
     struct Blink {
         tick_type duration{};
         tick_type intervall{};

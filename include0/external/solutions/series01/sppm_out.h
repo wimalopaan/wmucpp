@@ -79,7 +79,8 @@ namespace External {
             static_assert(ccPulse > 0, "wrong oc value");
             
             using ranged_type   = etl::uint_ranged_NaN<uint16_t, ocMin, ocMax> ;
-//            using extended_type = etl::uint_ranged_NaN<uint16_t, ocMin, ocMax> ;
+//            ranged_type::_;
+                //            using extended_type = etl::uint_ranged_NaN<uint16_t, ocMin, ocMax> ;
             
             static inline constexpr auto pv = []{
                 for(auto p : mcu_timer_t::prescalerValues) {

@@ -62,15 +62,15 @@
 
 // PA1: IBUS / SBUS 
 // PA2: DaisyEnable
-// PA3: SO4 (AIN3) (rpm0) (tcb1 wo)
+// PA3: SO4 (AIN3) (rpm0) (tcb1 wo) (adr4)
 // PA4:
-// PA5: SO3 (AIN5) (tcb0 wo)
+// PA5: SO3 (AIN5) (tcb0 wo) (adr3)
 // PA6: 
 // PA7: 
 // PB3:
-// PB2: Q0   (WO2) (rpm1)
-// PB1: SO1  (WO1) (AIN10)
-// PB0: SO2  (WO0) (AIN11)
+// PB2: Q0   (WO2) (rpm1)  (adr2)
+// PB1: SO1  (WO1) (AIN10) (adr1)
+// PB0: SO2  (WO0) (AIN11) (adr0)
 
 using namespace AVR;
 using namespace std::literals::chrono;
@@ -149,11 +149,13 @@ using ibt = IBusThrough;
 
 namespace Storage {
     
-    enum class Mode : uint8_t {Graupner, // 2 long
-                               Robbe,  // 1 short
-                               CP, // 1 long
-                               XXX // 2 short
-                              }; 
+    enum class Mode : uint8_t {
+        Graupner8K, // 2 long
+        Graupner4K, // 2 long
+        Robbe,  // 1 short
+        CP, // 1 long
+        XXX // 2 short
+    }; 
     
 //    using tick_type = External::Tick<SoftTimer, uint8_t>;
 //    struct Blink {
@@ -164,7 +166,8 @@ namespace Storage {
     template<typename Channel, typename Address>
     struct SwitchConfig {
 //        using pwm_type = etl::uint_ranged_NaN<uint8_t, 0, pwm::pwmMax>;
-//        using channel_type = etl::uint_ranged_NaN<uint8_t, 0, 15>;
+//        using channel_type = etl::uint_ranged_NaN<uint8_t, 0, 17>;
+//        Channel::_;
         using channel_type = Channel;
         using addr_type = Address;
 //        using tick_t = tick_type;
@@ -181,7 +184,8 @@ namespace Storage {
 //        auto& blinks() {
 //            return mBlinks;
 //        }
-        auto& passThru() {
+//        channel_type::_;
+        channel_type& passThru() {
             return mPassThruChannel;
         }
     private:
@@ -225,29 +229,34 @@ namespace Storage {
         void mpxMode(uint8_t addressOffset, auto v) {
             if (addressOffset < mMpxModes.size()) {
                 if (v == 0) {
-                    mMpxModes[addressOffset] = Mode::Graupner;
+                    mMpxModes[addressOffset] = Mode::Graupner8K;
                 }
                 else if (v == 1) {
-                    mMpxModes[addressOffset] = Mode::Robbe;
+                    mMpxModes[addressOffset] = Mode::Graupner4K;
                 }
                 else if (v == 2) {
-                    mMpxModes[addressOffset] = Mode::CP;
+                    mMpxModes[addressOffset] = Mode::Robbe;
                 }
                 else if (v == 3) {
+                    mMpxModes[addressOffset] = Mode::CP;
+                }
+                else if (v == 4) {
                     mMpxModes[addressOffset] = Mode::XXX;
                 }
-                
+                else {
+                    mMpxModes[addressOffset] = Mode::Graupner8K;
+                }
             }
         }
         Mode mpxMode(uint8_t addressOffset) {
             if (addressOffset < mMpxModes.size()) {
                 const Mode v = mMpxModes[addressOffset];
                 if (v > Mode::XXX) {
-                    return Mode::Graupner;
+                    return Mode::Graupner8K;
                 }
                 return v;
             }
-            return Mode::Graupner;
+            return Mode::Graupner8K;
         }
     private:
         std::array<Mode, 5> mMpxModes;
