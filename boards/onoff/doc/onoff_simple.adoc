@@ -1,9 +1,10 @@
 // -*- mode: adoc ; fill-column: 120 -*-
 // ---- Beginn Standardheader
-= Elektronischer Hauptschalter Bausatz
+= Elektronischer Hauptschalter
 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 :revnumber: 0.01
 :revdate: 01.01.1970
+:revremark: HW 1.2
 :lang: de
 :toc:
 :toc-title: Inhalt
@@ -13,8 +14,8 @@ Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 :icons: font
 :icontype: svg
 :figure-caption: Abbildung
-:description: Elektronischer Hauptschalter
-:title: Elektronischer Hauptschalter Bausatz
+:description: Elektronischer Hauptschalter : Bausatz
+:title: Elektronischer Hauptschalter Bausatz : Bausatz
 :title-page:
 :sectanchors:
 :sectlinks:
@@ -34,13 +35,6 @@ Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 :stem:
 // for attributes in link:[] macro like link:xxx[window="_blank"]
 :linkattrs:
-:nofooter:
-
-//:imgdir: ./images
-
-//:short: // without images 
-
-//include::license.adoc[]
 
 <<<
 
@@ -379,7 +373,7 @@ Für den Zusammenbau sind keine Spezialkentnisse oder Spezialwerkzeug erforderli
 .Werkzeuge und Hilfsmittel
 [TIP]
 Benutzen Sie einen feinen und *geregelten* Lötkolben von mindestens 25W Leistung (bei Lötstationen bbis 80W). Benutzen Sie nur 
-*Elektroniklot* mit eine *Flussmittelseele* von 0,5mm bis 1mm Stärke. Verwenden Sie zum Abschneiden der überstehenden Bauteildrähte einen 
+*Elektroniklot* mit einer *Flussmittelseele* von 0,5mm bis 1mm Stärke. Verwenden Sie zum Abschneiden der überstehenden Bauteildrähte einen 
 *Elektronikseitenschneider*. Schneiden Sie die Drähte auf der Unterseite der Platine knapp über des Lötpunktes ab.
 
 Löten Sie alle Bauteile wie angegeben auf. Hierzu muss ein ausreichend starker Lötkolben verwendet werden. Achten Sie auch auf eine hohe Löttemperatur (400 °C) und eine kurze Lötdauer. 

@@ -26,7 +26,7 @@ ASCIIDOCTORFLAGSPDF2 += -I $(EXTENSIONSDIR) -I $(EXTENSIONSDIR2) -a allow-uri-re
 ASCIIDOCTORFLAGSPDF2 += -a pdf-stylesdir=themes -a pdf-style=basic_land.yml -a mathematical-format=svg --trace
 
 ASCIIDOCTORVARS += -a data-uri -a imagesdir=`pwd`/images -a stylesdir=css # -a stylesheet=asciidoctor-wide.css
-ASCIIDOCTORVARS += -a revnumber=1.0 -a revdate="${shell date +'%x'}"
+ASCIIDOCTORVARS += -a revnumber=1.3 -a revdate="${shell date +'%x'}"
 
 
 NUP = pdfnup
@@ -36,7 +36,7 @@ NUPFLAGSP += -q --nup 2x1 --keepinfo --frame true
 # convert -filter Cubic -resize 300 pcb24.jpg pcb24_s.jpg
 
 # all: images html pdf src # check
-all: html # pdf 
+all: html  pdf 
 
 images:
 	make -C images images
