@@ -7,8 +7,8 @@
 #define USE_16V // (3k1 im Spannungsteiler)
 
 //#define USE_SPORT
-//#define USE_HOTT
-#define USE_IBUS
+#define USE_HOTT
+//#define USE_IBUS
 //#define FS_I6S
 #define USE_OFFSET
 
@@ -345,7 +345,7 @@ using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>,
 using sensor = Hott::Experimental::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, Hott::TextMsg, systemTimer>;
 using battVoltageConverter = Hott::Units::Converter<adc, Hott::Units::battery_voltage_t, 
                                                     std::ratio<Parameter::R1vd + Parameter::R2vd, Parameter::R2vd>>; // todo: richtiger scale faktor
-using currentSensor = External::AnalogSensor<adcController, 1, std::ratio<1,2>, std::ratio<40,1000>, std::ratio<10,1>>;
+using currentSensor = External::AnalogSensor<adcController, 1, std::ratio<490,1000>, std::ratio<40,1000>, std::ratio<10,1>>;
 
 template<typename ValueType, typename Sensor>
 struct CurrentConverter {
