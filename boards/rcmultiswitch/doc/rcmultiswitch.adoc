@@ -272,7 +272,8 @@ Kommen weitere Modelle hinzu, so wiederholen Sie diesen Schritt für _jedes_ Mod
 
 Anschließend kann der _Datei-Inhalt_ mit einem normalen Texteditor (etwa `NotePad`) editiert werden.
 --
-modellspezifische Dateien
+
+Die beachten Sie auch die Unterscheidung zwischen `Sbus` und `IBus`.
 
 === Konfiguration des Modells
 
@@ -284,6 +285,7 @@ Richten Sie eine Telemetrie-Seite (volle Größe) ein mit dem Widget `Widgets/WM
 
 Richten Sie eine Telemetrie-Seite (volle Größe) ein mit dem Widget `Widgets/WMSWC/main.lua`. Dieses stellt sich als `Wm MultiKanal Config x.y` dar.
 
+[[mixes]]
 ==== Mixer-Script
 
 Richten Sie ein `LUA`-Script ein. Hier wählen Sie _nur eines_ der Auswahl aus:
@@ -399,6 +401,22 @@ In der Datenstruktur `menu` können an folgenden Elementen Veränderungen vorgen
 * Namen der Zustände (`menu.pages.items.states`)
 * Namen der phys. Schalter (`menu.pages.items.data.switch`)
 * Adresse des Moduls (`menu.pages.items.data.module`)
+
+.Unterscheidung zwischen `SBus` und `IBus`
+[NOTE]
+--
+Leider muss durch die Beschränkungen des `SBus`-Protokolls noch an einer zweiten Stelle ein Änderung vorgenommen werden. Damit die folgende Änderung 
+jeweils für ein bestimmtes Modell gültig ist, sollte sie auch in der modellspezifischen Datei bspw. `ABC.lua` vorgenommen werden:
+
+* Für `SBus`: der Parameter `useSbus = 1`
+* Für `IBus`, etc.: der Parameter `useSbus = 0`
+
+Achten Sie ebenfalls darauf, dass Sie das _dazu passende_ Mixer-Script `encsb.lua` oder `encib.lua` eingerichtet haben (s.a. <<mixes>>).
+
+Diese Beschränkungen haben zur Folge, dass nur 16 verschieden Parameterwerte (etwa für den PWM-Wert oder das Blink-Intervall) eingestellt werden können.
+
+Am _unteren, rechten_ Rand des Widgets wird angezeigt, ob eine `SBus` oder `IBus` Konfiguration aktiv ist (zur Kontrolle).
+--
 
 Wird ein phys. Schalter _einer_ Schaltfunktion zugeordnet, dann kann diese Funktion _immer_ mit diesem Schalter bedient werden. Der Schalter ist dann 
 ein _ShortCut_ (Abkürzung).
@@ -543,6 +561,8 @@ Abweichend hiervon sind:
 * `FlySky FS-iA6B` in der Einstellung `SBus,PWM`
 * `FlySky FS-iA10B` in der Einstellung `SBus,PWM`
 --
+
+Mit den o.g. Empfängern funktioniert das Modul derzeit nur im Modus `IBus,PWM` oder `IBus,PPM`
 
 === Anschluß an den Akku
 

@@ -151,11 +151,11 @@ namespace IBus {
             using pvalue_t  = etl::uint_ranged<uint8_t, 0, 31>; // 5 Bits
 #endif
             
-            inline static constexpr mode_t unused{0};
-            inline static constexpr mode_t off{1};
-            inline static constexpr mode_t on{2};
-            inline static constexpr mode_t blink1{3};
-            inline static constexpr mode_t blink2{4};
+//            inline static constexpr mode_t unused{0};
+            inline static constexpr mode_t off{0};
+            inline static constexpr mode_t on{1};
+            inline static constexpr mode_t blink1{2};
+            inline static constexpr mode_t blink2{3};
             inline static constexpr mode_t config{15};
             
             inline static constexpr param_t reset{0};

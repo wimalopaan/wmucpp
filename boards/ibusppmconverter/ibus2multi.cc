@@ -211,8 +211,6 @@ struct FSM {
     
     static inline void pulse(uint8_t i) {
         if (const auto pch = NVM::data()[i].passThru()) {
-//            using ch_t = PA::channel_t;
-//            auto v = PA::value(ch_t{pch.toInt()});
             auto v = PA::value(pch);
             PPM::ppm_async(v);
         }
@@ -303,13 +301,7 @@ int main() {
     }
     
     const auto periodicTimer = alarmTimer::create(20_ms, External::Hal::AlarmFlags::Periodic);
-    //    const auto learnTimer = alarmTimer::create(5000_ms, External::Hal::AlarmFlags::Periodic);
     const auto eepromTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
-    
-    //    using ch_t = servo_pa::channel_t;
-    
-    //    bool learn{true};
-    //    ch_t learnChannel{0};
     
     while(true) {
         eeprom::saveIfNeeded([&]{
@@ -317,9 +309,6 @@ int main() {
         });
         servo::periodic();
         
-        //        if (!learn) {
-        //            ibus_switch::periodic();
-        //        }
         fsm1::periodic();
         fsm2::periodic();
         fsm3::periodic();
@@ -328,27 +317,6 @@ int main() {
             wdt::reset();
             gfsm::ratePeriodic();
             
-            //            if (learn) {
-            //                if (const auto lc = servo_pa::value(learnChannel); ibus_switch::isLearnCode(lc)) {
-            //                    const auto addr = ibus_switch::protocol_t::toParameter(lc).toInt() - 1;
-            //                    if ((addr <= ibus_switch::protocol_t::addr_t::Upper)) {
-            //                        ibus_switch::channel(learnChannel);
-            //                        ibus_switch::address(ibus_switch::protocol_t::addr_t(addr));
-            //                        appData.channel() = learnChannel;
-            //                        appData.address() = addr;
-            //                        appData.change();
-            //                        learn = false;
-            //                    }
-            //                }   
-            //                else {
-            //                    if (learnChannel.isTop()) {
-            //                        learnChannel.setToBottom();
-            //                    }
-            //                    else {
-            //                        ++learnChannel;
-            //                    }
-            //                }
-            //            }
             alarmTimer::periodic([&](const auto& t){
                 if (periodicTimer == t) {
                     ppmB::onReload([]{
@@ -360,9 +328,6 @@ int main() {
                         evrouter::strobe<1>();
                     });
                 }
-                //                else if (learnTimer == t) {
-                //                    learn = false;
-                //                }
                 else if (eepromTimer == t) {
                     appData.expire();
                 }

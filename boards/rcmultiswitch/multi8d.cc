@@ -99,7 +99,7 @@ using terminal = etl::basic_ostream<servo>;
 
 template<auto N = 8>
 struct SwitchStates {
-    enum class SwState : uint8_t {Off, On, Blink1 = On, Steady, Blink2, PassThru};
+    enum class SwState : uint8_t {Off, Blink1, Steady, Blink2, PassThru};
     
     static constexpr void init() {
     }
@@ -174,11 +174,11 @@ int main() {
             alarmTimer::periodic([&](const auto& t){
                 if (periodicTimer == t) {
 //                    etl::outl<terminal>("c: "_pgm, counter++, " mpx0: "_pgm, (uint8_t)appData.mMpxModes[0]);
-                    etl::outl<terminal>("c9: "_pgm, servo_pa::valueMapped(9).toInt(), " r: "_pgm, servo_pa::value(9).toInt());
+//                    etl::outl<terminal>("c9: "_pgm, servo_pa::valueMapped(9).toInt(), " r: "_pgm, servo_pa::value(9).toInt());
 //                    etl::outl<terminal>("c9: "_pgm, servo_pa::valueMapped(9).toInt(), " r: "_pgm, servo_pa::value(9).toInt());
 //                    etl::outl<terminal>("c0: "_pgm, servo_pa::mChannels[0]);
-                    etl::outl<terminal>("lo: "_pgm, ibus_switch::lastOnIndex.toInt());
-                    etl::outl<terminal>("bi1: "_pgm, appData[0].blinks()[0].intervall.value.toInt());
+//                    etl::outl<terminal>("lo: "_pgm, ibus_switch::lastOnIndex.toInt());
+                    etl::outl<terminal>("sw0: "_pgm, (uint8_t)sw::switches()[0], "bm: "_pgm, out::mode().toInt(), " bi0_1: "_pgm, appData[0].blinks()[0].intervall.value.toInt(), " bi0_2: "_pgm, appData[0].blinks()[1].intervall.value.toInt());
                 }
                 else if (eepromTimer == t) {
                     appData.expire();

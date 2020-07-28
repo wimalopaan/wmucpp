@@ -83,7 +83,7 @@ namespace External {
                 setSwitchOff(index);
                 blinkTicks[index] = NVM::data()[index].blinks()[blinkIndex].intervall;
             }
-            else if ((StateProvider::switches()[index] == StateProvider::SwState::On) || (StateProvider::switches()[index] == StateProvider::SwState::Blink2)) {
+            else if ((StateProvider::switches()[index] == StateProvider::SwState::Blink1) || (StateProvider::switches()[index] == StateProvider::SwState::Blink2)) {
                 if (NVM::data()[index].blinks()[blinkIndex].duration) {
                     blinkTicks[index].match(NVM::data()[index].blinks()[blinkIndex].duration, [&]{
                         setSwitchOff(index);
@@ -109,6 +109,9 @@ namespace External {
         
         inline static void mode(const blink_index_t m) {
             blinkIndex = m;
+        }
+        inline static auto mode() {
+            return blinkIndex;
         }
 
         inline static void pwm(const index_t index, const uint8_t p) {
