@@ -117,6 +117,9 @@ namespace Hott {
                 if (mSelected) {
                     mProvider.change();
                 }
+                else {
+                    mProvider.select(mKey);
+                }
                 mSelected = !mSelected;
                 break;
             case Hott::key_t::nokey:

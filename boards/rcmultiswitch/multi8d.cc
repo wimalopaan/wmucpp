@@ -162,7 +162,7 @@ int main() {
     const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
     const auto eepromTimer = alarmTimer::create(3000_ms, External::Hal::AlarmFlags::Periodic);
     
-    uint16_t counter{};
+//    uint16_t counter{};
     
     while(true) {
         eeprom::saveIfNeeded([&]{

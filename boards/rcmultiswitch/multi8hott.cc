@@ -24,6 +24,11 @@ struct SwitchStates {
     static inline auto& switches() {
         return swStates;
     }
+    static inline void off() {
+        for(auto& i : swStates) {
+            i = SwState::Off;
+        }
+    }
 private:
     static inline std::array<SwState, N> swStates{};
     
@@ -111,6 +116,11 @@ struct PwmMenu final : public Hott::Menu<8, false, 8> {
         void change() {
             appData.change();
         }
+        void select(const Storage::AVKey k) {
+            sw::off();
+            sw::switches()[Storage::keyToInt(k)] = sw::SwState::Steady;
+            out::setSwitches();
+        }
     };
 
     using pwm_type = storage_t::value_type::pwm_type;
@@ -192,6 +202,11 @@ public:
         case Hott::key_t::set:
             if (mSelected) {
                 appData.change();
+            }
+            else {
+                sw::off();
+                sw::switches()[Storage::keyToInt(mNumber)] = sw::SwState::Blink1;
+                out::setSwitches();
             }
             mSelected = !mSelected;
             break;
@@ -275,7 +290,7 @@ struct SystemMenu final : public Hott::Menu<8, true, 2> {
 struct RCMenu final : public Hott::Menu<8, true, 5> {
     inline static constexpr uint8_t valueTextLength{6};
     
-    RCMenu() : Hott::Menu<8, true, 5>{nullptr, "WM Switch 1.3"_pgm, &mSW, &mPwm, &mBlink, &mSystem} {}
+    RCMenu() : Hott::Menu<8, true, 5>{nullptr, "WM Switch 1.4"_pgm, &mSW, &mPwm, &mBlink, &mSystem} {}
 
 private:
     SwitchesMenu mSW{this};
