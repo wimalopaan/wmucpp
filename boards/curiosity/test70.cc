@@ -1,5 +1,8 @@
 #define NDEBUG
 
+#define USE_SBUS
+//#define USE_IBUS
+
 #include <mcu/avr.h>
 #include <mcu/common/delay.h>
 
@@ -11,6 +14,7 @@
 
 #include <external/hal/alarmtimer.h>
 #include <external/sbus/sbus.h>
+#include <external/ibus/ibus.h>
 
 #include <std/chrono>
 
@@ -46,7 +50,13 @@ namespace  {
 using systemTimer = SystemTimer<Component::Rtc<0>, fRtc>;
 using alarmTimer = External::Hal::AlarmTimer<systemTimer>;
 
+#ifdef USE_SBUS
 using servo_pa = External::SBus::Servo::ProtocollAdapter<0, systemTimer>;
+#endif
+#ifdef USE_IBUS
+using servo_pa = IBus::Servo::ProtocollAdapter<0>;
+#endif
+
 using servo = AVR::Usart<usart1Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
 
 
@@ -60,10 +70,15 @@ int main() {
     });
    
     terminalDevice::init<BaudRate<9600>>();
-   
+
+#ifdef USE_SBUS
     servo::init<AVR::BaudRate<100000>, FullDuplex, true, 1>(); // 8E2
 //    servo::txEnable<false>();
-    
+#endif
+#ifdef USE_IBUS
+    servo::init<AVR::BaudRate<115200>>();
+//    servo::txEnable<false>();
+#endif
     systemTimer::init();
     
     led::template dir<Output>();     
@@ -78,12 +93,16 @@ int main() {
         servo::periodic();        
         
         systemTimer::periodic([&]{
-            pa0::toggle();
-            
+#ifdef USE_SBUS
+            servo_pa::ratePeriodic();
+#endif
             alarmTimer::periodic([&](const auto& t){
                 if (periodicTimer == t) {
                     led::toggle();
-                    etl::outl<terminal>("cnt: "_pgm, servo_pa::c, " ch0: "_pgm, servo_pa::value(ch_t{15}).toInt());
+                    etl::outl<terminal>(" ch9: "_pgm, servo_pa::value(ch_t{9}).toInt());
+//                    etl::outl<terminal>(" ch5: "_pgm, servo_pa::value(ch_t{5}).toInt());
+//                    etl::outl<terminal>(" ch15: "_pgm, servo_pa::value(ch_t{14}).toInt());
+//                    etl::outl<terminal>(" ch16: "_pgm, servo_pa::value(ch_t{15}).toInt());
                 }
             });
         });
