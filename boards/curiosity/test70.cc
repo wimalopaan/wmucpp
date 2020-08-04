@@ -1,7 +1,12 @@
 #define NDEBUG
 
+<<<<<<< HEAD
 #define USE_SBUS
 //#define USE_IBUS
+=======
+//#define USE_SBUS
+#define USE_IBUS
+>>>>>>> c4d87ffad7a689224419a0a7400a6e6aa232df53
 
 #include <mcu/avr.h>
 #include <mcu/common/delay.h>
@@ -99,10 +104,17 @@ int main() {
             alarmTimer::periodic([&](const auto& t){
                 if (periodicTimer == t) {
                     led::toggle();
+<<<<<<< HEAD
                     etl::outl<terminal>(" ch9: "_pgm, servo_pa::value(ch_t{9}).toInt());
 //                    etl::outl<terminal>(" ch5: "_pgm, servo_pa::value(ch_t{5}).toInt());
 //                    etl::outl<terminal>(" ch15: "_pgm, servo_pa::value(ch_t{14}).toInt());
 //                    etl::outl<terminal>(" ch16: "_pgm, servo_pa::value(ch_t{15}).toInt());
+=======
+//                    etl::outl<terminal>(" ch0: "_pgm, servo_pa::value(ch_t{0}).toInt());
+//                    etl::outl<terminal>(" ch5: "_pgm, servo_pa::value(ch_t{5}).toInt());
+                    etl::outl<terminal>(" ch15: "_pgm, servo_pa::value(ch_t{14}).toInt());
+                    etl::outl<terminal>(" ch16: "_pgm, servo_pa::value(ch_t{15}).toInt());
+>>>>>>> c4d87ffad7a689224419a0a7400a6e6aa232df53
                 }
             });
         });

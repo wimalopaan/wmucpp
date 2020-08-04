@@ -146,7 +146,7 @@ using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V4_3>;
 using adcController = External::Hal::AdcController<adc, Meta::NList<6, 0x1e>>; // 1e = temp
 
 namespace  {
-    uint8_t getConfigValue() {
+    inline uint8_t getConfigValue() {
         constexpr auto ch0 = adcController::index_type{0};
         const auto cv = adcController::value(ch0).toInt();
         for(uint8_t i = 0; i < JumperIntervalls.size(); ++i) {
@@ -216,6 +216,10 @@ namespace Storage {
                                 Ch0, Ch1, Ch2, Ch3, Ch4, Ch5, Ch6, Ch7,
                                 Undefined, 
                                 _Number};
+    
+    static inline uint8_t keyToInt(const AVKey k) {
+        return (uint8_t)k - (uint8_t)AVKey::Ch0;
+    }
     
     struct Empty{};
     
