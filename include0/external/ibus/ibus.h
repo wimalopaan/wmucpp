@@ -105,7 +105,7 @@ namespace IBus {
             inline static constexpr auto sbusLut = []{
                 std::array<uint8_t, 32> lut{};
                 lut[0] = 0;
-                lut[1] = 1;
+                lut[1] = 0;
                 lut[2] = 1;
                 lut[3] = 2;
                 lut[4] = 2;
