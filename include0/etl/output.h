@@ -155,14 +155,14 @@ namespace etl {
     template<Stream Stream, typename... TT>
     inline constexpr void out(const TT&... v __attribute__((unused))) {
         using namespace detail;
-        if constexpr(!std::is_same_v<typename Stream::device_type, void>) {
+        if constexpr(!std::is_same_v<Stream, void> && !std::is_same_v<typename Stream::device_type, void>) {
             ((out_impl<Stream>(v)),...);
         }
     }
 
     template<Stream Stream, typename... TT>
     inline constexpr void outl(const TT&... v __attribute__((unused))) {
-        if constexpr(!std::is_same_v<typename Stream::device_type, void>) {
+        if constexpr(!std::is_same_v<Stream, void> && !std::is_same_v<typename Stream::device_type, void>) {
             using namespace detail;
             ((out_impl<Stream>(v)),..., out_impl<Stream>(typename Stream::line_terminator_type()));
         }

@@ -255,7 +255,6 @@ boards/ibusppmconverter/gps.h
 boards/ibusppmconverter/ibus2multi.cc
 boards/ibusppmconverter/lua_encoder.cc
 boards/ibusppmconverter/rpm.h
-boards/ibusppmconverter/sbus2multi.cc
 boards/ibusppmconverter/temp.h
 boards/ibusppmconverter/test00.cc
 boards/ibusppmconverter/volt.h
@@ -313,7 +312,6 @@ boards/rcmultiswitch/ToDo.txt
 boards/rcmultiswitch/board.h
 boards/rcmultiswitch/fsm.h
 boards/rcmultiswitch/multi8d.cc
-boards/rcmultiswitch/multi8dsbus.cc
 boards/rcmultiswitch/multi8hott.cc
 boards/rcmultiswitch/multi8man.cc
 boards/rcmultiswitch/multi8mk4.cc

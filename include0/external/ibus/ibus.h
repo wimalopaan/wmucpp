@@ -156,8 +156,10 @@ namespace IBus {
             inline static constexpr mode_t on{1};
             inline static constexpr mode_t blink1{2};
             inline static constexpr mode_t blink2{3};
-            inline static constexpr mode_t config{15};
-            
+
+#ifdef USE_IBUS            
+            inline static constexpr mode_t config{7};
+#endif
             inline static constexpr param_t reset{0};
             inline static constexpr param_t pwm{1};
             inline static constexpr param_t blink1Intervall{2};
@@ -180,7 +182,11 @@ namespace IBus {
             inline static constexpr pvalue_t timeMpxRobbe{3}; // 1 short sync
             inline static constexpr pvalue_t timeMpxCP{4}; // 1 long sync
             inline static constexpr pvalue_t timeMpxXXX{5}; // 2 short sync
+#ifdef USE_SBUS
+            inline static constexpr pvalue_t bCastOff{15};
+#else
             inline static constexpr pvalue_t bCastOff{31};
+#endif
             
             template<typename ValueType>
             inline static constexpr bool isLearnCode(const ValueType& v) {
@@ -211,8 +217,9 @@ namespace IBus {
 //                return mode_t((c & 0x0f));
 #ifdef USE_SBUS
                 return mode_t(sbusLut[(c & 0x07)]);
-#endif
+#else
                 return mode_t((c & 0x07));
+#endif
             }   
             template<typename ValueType>
             inline static constexpr bool isControlMessage(const ValueType& v) {
@@ -229,8 +236,9 @@ namespace IBus {
                 uint16_t c = v.toInt() - ValueType::Lower;
 #ifdef USE_SBUS
                 return pvalue_t(sbusLut[(c & 0x1f)]);
-#endif
+#else
                 return pvalue_t(c & 0x1f);
+#endif
             }   
         };
         
@@ -357,9 +365,11 @@ namespace IBus {
                         else if (mode == Protocol1::blink2) {
                             Actor::switches()[index] = Actor::SwState::Blink2;
                         }
+#ifdef USE_IBUS
                         else if (mode == Protocol1::config) {
                             Actor::switches()[index] = Actor::SwState::Off;
                         }
+#endif
                     }
                     else {
                         lastOnIndex = index_t{};

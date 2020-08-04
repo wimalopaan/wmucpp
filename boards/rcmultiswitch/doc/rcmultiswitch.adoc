@@ -251,6 +251,10 @@ Für den `RC MultiSwitch-D` und `RC MultiAdapter-DA` sind die folgenden relevant
 ** `MIXES/encib.lua`
 ** `MIXES/encsb.lua`
 
+* Telemetrie-Scripte
+** `SCRPTS/TELEMETRY/wmsw.lua`
+** `SCRPTS/TELEMETRY/wmswc.lua`
+
 * Bibliotheken
 ** `SCRIPTS/CONFIG/wmcfg.lua`
 ** `SCRIPTS/WM/wmlib.lua`
@@ -274,6 +278,22 @@ Anschließend kann der _Datei-Inhalt_ mit einem normalen Texteditor (etwa `NoteP
 --
 
 Die beachten Sie auch die Unterscheidung zwischen `Sbus` und `IBus`.
+
+==== Unterscheidung der verschiedenen Sendermodelle
+
+Grundsätzlich unterscheiden sich die Sender mit den `480x272`-Pixel großen _Farbdisplay_ von den Sendern mit 
+den `128x64`-Pixel oder `212x64`-Pixel großen _monochromen_ Displays von einander: 
+
+* Typ-1: `128x64`-Pixel oder `212x64`-Pixel großes _monochromes_ Display
+* Typ-2: `480x272`-Pixel großen _Farbdisplay_ (auch _Touchdisplay_)
+
+Bei _Typ-1_ Sendern existieren im Menu-System keine sog. _Widgets_ sondern nur _Telemetrie_-Seiten. Auf der 
+anderen Seite existieren bei den _Typ-2_ Sendern keine _Telemetrie_-Seiten sondern wiederum nur _Widgets_. Dies 
+macht eine Unterscheidung bei den Skripten für die Schaltmodule notwendig.
+
+Zudem sind die _Typ-1_ Sender im verfügbaren `RAM` sehr _eingeschränkt_. Daher kann hier oft das 
+Telemetrie-Skript zur _Bedienung_ und das Telemetrie-Skript zur _Konfiguration_ nicht gleichzeitig 
+geladen werden. Es kommt in diesem Fall zu einer Fehlermeldung des Senders.
 
 === Konfiguration des Modells
 

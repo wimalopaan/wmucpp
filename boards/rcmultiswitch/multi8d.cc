@@ -1,4 +1,4 @@
-#define NDEBUG
+//#define NDEBUG
 
 //#define USE_IBUS
 #define USE_SBUS
@@ -33,7 +33,9 @@ struct FSM {
             }
             break;
         case State::LearnTimeout:
-            etl::outl<Term>("timeout ch: "_pgm, NVM::data().channel().toInt(), " adr: "_pgm, NVM::data().address().toInt());
+            if constexpr(!std::is_same_v<Term, void>) {
+                etl::outl<Term>("timeout ch: "_pgm, NVM::data().channel().toInt(), " adr: "_pgm, NVM::data().address().toInt());
+            }
             if (NVM::data().channel() && NVM::data().address()) {
                 SW::channel(NVM::data().channel());
                 SW::address(NVM::data().address());
@@ -94,8 +96,13 @@ using servo_pa = External::SBus::Servo::ProtocollAdapter<0, systemTimer>;
 using eeprom = EEProm::Controller<Storage::ApplData<servo_pa::channel_t, IBus::Switch::Protocol1::addr_t>>;
 
 using servo = AVR::Usart<usart0Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
+
+#ifndef NDEBUG
 using terminalDevice = servo;
-using terminal = etl::basic_ostream<servo>;
+#else
+using terminalDevice = void;
+#endif
+using terminal = etl::basic_ostream<terminalDevice>;
 
 template<auto N = 8>
 struct SwitchStates {
@@ -153,10 +160,14 @@ int main() {
         appData.magic() = 42;
         appData.clear();
         appData.change();
+#ifndef NDEBUG
         etl::outl<terminal>("eep init"_pgm);
+#endif
     }
     else {
+#ifndef NDEBUG
         etl::outl<terminal>("eep ch: "_pgm, appData.channel().toInt(), " adr: "_pgm, appData.address().toInt());        
+#endif
     }
     
     const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
@@ -176,7 +187,7 @@ int main() {
 //                    etl::outl<terminal>("c: "_pgm, counter++, " mpx0: "_pgm, (uint8_t)appData.mMpxModes[0]);
 //                    etl::outl<terminal>("c9: "_pgm, servo_pa::valueMapped(9).toInt(), " r: "_pgm, servo_pa::value(9).toInt());
 //                    etl::outl<terminal>("c9: "_pgm, servo_pa::valueMapped(9).toInt(), " r: "_pgm, servo_pa::value(9).toInt());
-                    etl::outl<terminal>("c0: "_pgm, servo_pa::mChannels[9]);
+//                    etl::outl<terminal>("c0: "_pgm, servo_pa::mChannels[9]);
 //                    etl::outl<terminal>("lo: "_pgm, ibus_switch::lastOnIndex.toInt());
                     etl::outl<terminal>("sw0: "_pgm, (uint8_t)sw::switches()[0], "bm: "_pgm, out::mode().toInt(), " bi0_1: "_pgm, appData[0].blinks()[0].intervall.value.toInt(), " bi0_2: "_pgm, appData[0].blinks()[1].intervall.value.toInt());
                 }
@@ -188,3 +199,18 @@ int main() {
     }
 }
 
+#ifndef NDEBUG
+[[noreturn]] inline void assertOutput(const AVR::Pgm::StringView& expr [[maybe_unused]], const AVR::Pgm::StringView& file[[maybe_unused]], unsigned int line [[maybe_unused]]) noexcept {
+#if !(defined(USE_IBUS) || defined(USE_HOTT))
+    etl::outl<terminal>("Assertion failed: "_pgm, expr, etl::Char{','}, file, etl::Char{','}, line);
+#endif
+    while(true) {
+//        dbg1::toggle();
+    }
+}
+
+template<typename String1, typename String2>
+[[noreturn]] inline void assertFunction(const String1& s1, const String2& s2, unsigned int l) {
+    assertOutput(s1, s2, l);
+}
+#endif
