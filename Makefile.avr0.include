@@ -86,7 +86,7 @@ CXXFLAGS += -ftemplate-depth=2048
 CXXFLAGS += -fstrict-aliasing -Wstrict-aliasing=1 
 CXXFLAGS += -Wall -Wextra -Wswitch -Wswitch-enum
 CXXFLAGS += -DF_OSC=$(F_OSC) -DF_CPU=$(F_OSC)
-#CXXINLUDES0 += -I/usr/local/avr/avr/include
+#CXXINLUDES0 += -I/usr/local/avr/include
 CXXINLUDES1 += -I. -I../include0 -I../../include0 -I../../../include0
 CXXINLUDES2 += -I../../include0/std -I../include0/std -I../../../include0/std
 CXXINLUDES3 += -I../../3rdparty/boost
@@ -104,7 +104,7 @@ CFLAGS += -funsigned-char -funsigned-bitfields -fshort-enums
 CFLAGS += -Wall -Wextra
 CFLAGS += -fstrict-aliasing -Wstrict-aliasing=1 
 CFLAGS += -DF_OSC=$(F_OSC) -DF_CPU=$(F_OSC)
-#CFLAGS += -I/usr/local/avr/avr/include
+#CFLAGS += -I/usr/local/avr/include
 CFLAGS += -I. -I../include0 -I../../include0
 #CFLAGS += -I/usr/include/simavr
 #CFLAGS += -I/usr/avr/include
@@ -130,10 +130,10 @@ AVRDUDE_FLAGS += -C+/home/lmeier/Projekte/wmucpp/avrdude.conf
 
 #CC = clang
 #CXX = clang++
-CC = /usr/local/bin/avr-gcc
-CXX = /usr/local/bin/avr-g++
-#CC = /usr/bin/avr-gcc
-#CXX = /usr/bin/avr-g++
+#CC = /usr/local/bin/avr-gcc
+#CXX = /usr/local/bin/avr-g++
+CC = /usr/bin/avr-gcc
+CXX = /usr/bin/avr-g++
 OBJCOPY = avr-objcopy
 OBJDUMP = avr-objdump
 SIZE = avr-size
