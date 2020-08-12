@@ -61,7 +61,7 @@ using servo = AVR::Usart<usart1Position, servo_pa, AVR::UseInterrupts<false>, AV
 
 
 int main() {
-    uint8_t counter = 0;
+//    uint8_t counter = 0;
     
     portmux::init();
     
