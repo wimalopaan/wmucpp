@@ -1,4 +1,4 @@
-//#define NDEBUG
+#define NDEBUG
 
 //#define USE_IBUS
 #define USE_SBUS
@@ -184,12 +184,14 @@ int main() {
             fsm::ratePeriodic();
             alarmTimer::periodic([&](const auto& t){
                 if (periodicTimer == t) {
+#ifndef NDEBUG
 //                    etl::outl<terminal>("c: "_pgm, counter++, " mpx0: "_pgm, (uint8_t)appData.mMpxModes[0]);
 //                    etl::outl<terminal>("c9: "_pgm, servo_pa::valueMapped(9).toInt(), " r: "_pgm, servo_pa::value(9).toInt());
 //                    etl::outl<terminal>("c9: "_pgm, servo_pa::valueMapped(9).toInt(), " r: "_pgm, servo_pa::value(9).toInt());
 //                    etl::outl<terminal>("c0: "_pgm, servo_pa::mChannels[9]);
 //                    etl::outl<terminal>("lo: "_pgm, ibus_switch::lastOnIndex.toInt());
-                    etl::outl<terminal>("sw0: "_pgm, (uint8_t)sw::switches()[0], "bm: "_pgm, out::mode().toInt(), " bi0_1: "_pgm, appData[0].blinks()[0].intervall.value.toInt(), " bi0_2: "_pgm, appData[0].blinks()[1].intervall.value.toInt());
+                    etl::outl<terminal>("sw0: "_pgm, (uint8_t)sw::switches()[0]);
+#endif
                 }
                 else if (eepromTimer == t) {
                     appData.expire();

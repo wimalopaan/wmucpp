@@ -2,7 +2,7 @@
 // ---- Beginn Standardheader
 = RC MultiSwitch-D 
 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
-:revnumber: 0.01
+:revnumber: 0.8
 :revremark: HW_1.0
 :revdate: 01.01.1970
 :lang: de
@@ -293,9 +293,11 @@ macht eine Unterscheidung bei den Skripten für die Schaltmodule notwendig.
 
 Zudem sind die _Typ-1_ Sender im verfügbaren `RAM` sehr _eingeschränkt_. Daher kann hier oft das 
 Telemetrie-Skript zur _Bedienung_ und das Telemetrie-Skript zur _Konfiguration_ nicht gleichzeitig 
-geladen werden. Es kommt in diesem Fall zu einer Fehlermeldung des Senders.
+geladen werden. Es kommt in diesem Fall zu einer _Fehlermeldung_ des Senders.
 
-=== Konfiguration des Modells
+=== Konfiguration des Modells (Sender mit `480x272`-Pixel _Farbdisplay_)
+
+Die folgenden Einstallungen gelten _nur_ für Sender mit `480x272`-Pixel _Farbdisplay_.
 
 ==== Widget für die Bedienung
 
@@ -313,6 +315,7 @@ Richten Sie ein `LUA`-Script ein. Hier wählen Sie _nur eines_ der Auswahl aus:
 * `encib` für `IBus`-Empfänger
 * `encsb` für `SBus`-Empfänger
 
+[[channels]]
 ==== Definition eines Übertragungskanals für das Schaltmodul am Empfänger
 
 Das Schaltmodul wird über eine serielle Schnittstelle an den Empfänger angeschlossen. Dies ist je nach Empfänger `IBus` oder `SBus`.
@@ -400,6 +403,32 @@ image::fp.png[align="center"]
 .Deaktivierung der Trimmer `T5` und `T6` in der Flugphase `0` (Darstellung im Sender)
 image::fm1.png[align="center"]
 
+=== Konfiguration des Modells (Sender mit `128x64`-Pixel oder `212x54`-Pixel _monochrome Display_)
+
+Die folgenden Einstellungen gelten nur für Sender mit `128x64`-Pixel oder `212x54`-Pixel _monochromem Display_.
+
+==== Telemetrie-Seiten
+
+Richten Sie je eine Telemetrie-Seite mit dem Skript `SCRIPTS/TELEMETRY/wmsw.lua` bzw.
+`SCRIPTS/TELEMETRY/wmswc.lua` ein.
+
+[CAUTION]
+Diese Sender haben sehr wenig RAM. Der Betrieb von _beiden_ o.g. Scripten _gleichzeitig_ ist oft nicht möglich und 
+kann zu unterschiedlichen Fehlermeldungen führen. Sollte das passieren, so können Sie eintweder nur das eine _oder_ 
+das andere Script einstellen. Die Einschränkung ist nicht so groß, da man das Konfigurationsscript ja nur 
+selten (in der Werkstatt) benötigt.
+
+==== Mixer-Script und Übertragungskanal
+
+Für die Einrichtung des passenden _Mixer_-Scripts und _Übertragungskanals_ folgende sie bitte 
+<<mixes>> bzw. <<channels>>.
+
+==== Geber und Flugphasen
+
+Die _Bedienung_ der Skripte erfolgt _vollständig_ über die normalen Bedienelemente für die 
+Benutzerschnittstelle: Navigationstasten bzw. Navigationsrad. Daher ist eine Konfiguration von 
+speziellen Gebern und Flugphasen nicht notwendig.
+
 === Konfigurationsdateien
 
 [[config]]
@@ -410,7 +439,7 @@ In dem Ordner `MODELS` des SD-Karte werden modellspezifische Menu-Konfiguratione
 Dabei gilt folgende Suchreihenfolge für ein Model mit dem Namen `ABC`:
 
 . `MODELS/ABC.lua`
-. `MODELS/swstd.lua`
+. `MODELS/swstd.lua` (bzw. `MODELS/swstdx.lua` für kleine Sender)
 
 Sinnvollerweise kopiert man die Datei `swstd.lua` in eine Datei `ABC.lua` für das Model `ABC` und editiert diese entsprechend 
 den eigenen Wünschen.
@@ -549,8 +578,9 @@ Wird _einer_ Funktionen _genau_ ein Schalter zugewiesen, so ist dieser Schalter 
 
 ==== Overlays / Ebenenumschaltung
 
-Werden _mehreren_ Funktionen _derselbe_ Schalter zugewiesen, so ist dieser Schalter ein _Overlay_ für die ersten drei Zustände dieser Funktionen. Dies
-bedeutet, dass dieses phys. Schalter nur dann aktiv sind, wenn das entsprechende Menu _ausgwählt_ ist (etwa durch `6pos`). 
+Werden _mehreren_ Funktionen _derselbe_ Schalter zugewiesen, so ist dieser Schalter ein _Overlay_ für die ersten drei 
+Zustände dieser Funktionen. Dies bedeutet, dass dieses phys. Schalter nur dann aktiv sind, wenn das entsprechende 
+Menu _ausgwählt_ ist (etwa durch `6pos`). 
 
 == Einbau 
 
@@ -570,8 +600,8 @@ Ein Inverter wie in <<inverter>> kann einfach in ein Servokabel eingebaut werden
 .SBus ist nicht gleich SBus
 [CAUTION]
 --
-Leider ist der _Werte-Bereich_, in denen die einzelnen Kanäle eines SBus-Signal skaliert werden, nicht wohl definiert, und einige Hersteller 
-legen unterschiedliche Grenzen des Wertebereiches fest. Dies führt zu Problemen!
+Leider ist der _Werte-Bereich_, in denen die einzelnen Kanäle eines SBus-Signal skaliert werden, nicht wohl definiert, und 
+einige Hersteller legen unterschiedliche Grenzen des Wertebereiches fest. Dies führt zu Problemen!
 
 Als Referenz wurde der Wertebereich eines `FrSky R8X`- Empfängers zu Grunde gelegt.
 

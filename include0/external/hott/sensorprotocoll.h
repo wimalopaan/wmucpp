@@ -182,6 +182,112 @@ namespace Hott {
 //        var_txt_msg_size::_;
     }
 
+    struct VarioMsg {
+        using value_type = uint8_t;
+        const std::byte start_byte = start_code;          //#01 start byte constant value 0x7c
+        const std::byte vario_sensor_id = binary_id(var_code);
+        uint8_t warning_beeps = 0;
+        const std::byte sensor_id = (vario_sensor_id << 4) & 0xf0_B;
+
+        uint8_t status = 0x00;
+        uint16_t height = 0x00;
+        uint16_t height_max = 0x00;
+        uint16_t height_min = 0x00;
+        uint16_t speed = 0x00;
+        uint16_t acc = 0x00;
+        uint16_t acc10 = 0x00;
+        
+        uint8_t a[21] {};
+        uint8_t afree[3] {};
+        uint8_t free;
+        uint8_t version;
+        
+        const std::byte end_byte = end_code;
+        uint8_t parity = 0;
+    };
+    namespace detail {
+        using vario_size = std::integral_constant<uint8_t, sizeof(VarioMsg)>;
+//        vario_size::_;
+    }
+
+    struct GpsMsg {
+        using value_type = uint8_t;
+        const std::byte start_byte = start_code;          //#01 start byte constant value 0x7c
+        const std::byte gps_sensor_id = binary_id(gps_code);
+        uint8_t warning_beeps = 0;
+        const std::byte sensor_id = (gps_sensor_id << 4) & 0xf0_B;
+        uint8_t status  = 0x00;
+        uint8_t status1 = 0x00;
+        uint8_t dir     = 0x00;
+        uint16_t speed  = 0x00;
+        uint8_t d[10] {};
+        uint16_t dist = 0x00;
+        uint16_t height = 0x00;
+        uint16_t vario  = 0x00;
+        uint8_t  acc  = 0x00;
+        uint8_t  sat  = 0x00;
+        uint8_t  fix  = 0x00;
+        uint8_t  home = 0x00;
+        uint8_t angle[3] {};
+        uint16_t gyro_x = 0x00;
+        uint16_t gyro_y = 0x00;
+        uint16_t gyro_z = 0x00;
+        uint8_t  vib = 0x00;
+        uint8_t  free1 = 0x00;
+        uint8_t  free2 = 0x00;
+        uint8_t  free3 = 0x00;
+        uint8_t  ver   = 0x00;
+        const std::byte end_byte = end_code;
+        uint8_t parity = 0;
+    };
+    namespace detail {
+        using gps_size = std::integral_constant<uint8_t, sizeof(GpsMsg)>;
+//        gps_size::_;
+    }
+    
+    struct AirMsg {
+        using value_type = uint8_t;
+        const std::byte start_byte = start_code;          //#01 start byte constant value 0x7c
+        const std::byte air_sensor_id = binary_id(air_code);
+        uint8_t warning_beeps = 0;
+        const std::byte sensor_id = (air_sensor_id << 4) & 0xf0_B;
+        uint8_t alarm1 = 0x00;
+        uint8_t alarm2 = 0x00;
+        uint8_t cell1l = 0x00;
+        uint8_t cell2l = 0x00;
+        uint8_t cell3l = 0x00;
+        uint8_t cell4l = 0x00;
+        uint8_t cell5l = 0x00;
+        uint8_t cell6l = 0x00;
+        uint8_t cell7l = 0x00;
+        uint8_t cell1h = 0x00;
+        uint8_t cell2h = 0x00;
+        uint8_t cell3h = 0x00;
+        uint8_t cell4h = 0x00;
+        uint8_t cell5h = 0x00;
+        uint8_t cell6h = 0x00;
+        uint8_t cell7h = 0x00;
+        uint16_t batt1 = 0x00;
+        uint16_t batt2 = 0x00;
+        uint8_t temp1  = 0x00;
+        uint8_t temp2  = 0x00;
+        uint16_t alt   = 0x00;
+        uint16_t curr  = 0x00;
+        uint16_t power = 0x00;
+        uint16_t mAh   = 0x00;
+        uint16_t velocity = 0x00;
+        uint8_t  acc = 0x00;
+        uint16_t rpm = 0x00;
+        uint16_t time  = 0x00;
+        uint8_t  speed = 0x00;
+        uint8_t  version = 0x00;
+        const std::byte end_byte = end_code;
+        uint8_t parity = 0;
+    };
+    namespace detail {
+        using air_size = std::integral_constant<uint8_t, sizeof(AirMsg)>;
+//        air_size::_;
+    }
     
     struct EscMsg {
         using value_type = uint8_t;
@@ -285,8 +391,6 @@ namespace Hott {
             }
         }
     };
-
-
     
     namespace detail {
         using esc_size = std::integral_constant<uint8_t, sizeof(EscMsg)>;
@@ -407,6 +511,12 @@ namespace Hott {
     struct code_from_type<EscMsg> : std::integral_constant<std::byte, esc_code> {};
     template<>
     struct code_from_type<EscMsg_1> : std::integral_constant<std::byte, esc_code> {};
+    template<>
+    struct code_from_type<AirMsg> : std::integral_constant<std::byte, air_code> {};
+    template<>
+    struct code_from_type<VarioMsg> : std::integral_constant<std::byte, var_code> {};
+    template<>
+    struct code_from_type<GpsMsg> : std::integral_constant<std::byte, gps_code> {};
 
     template<typename M>
     struct size;
@@ -420,6 +530,12 @@ namespace Hott {
     struct size<TextMsg> : std::integral_constant<uint8_t, sizeof(TextMsg)> {};
     template<uint8_t L>
     struct size<VarTextMsg<L>> : std::integral_constant<uint8_t, sizeof(TextMsg)> {};
+    template<>
+    struct size<AirMsg> : std::integral_constant<uint8_t, sizeof(AirMsg)> {};
+    template<>
+    struct size<VarioMsg> : std::integral_constant<uint8_t, sizeof(VarioMsg)> {};
+    template<>
+    struct size<GpsMsg> : std::integral_constant<uint8_t, sizeof(GpsMsg)> {};
     
 }
 

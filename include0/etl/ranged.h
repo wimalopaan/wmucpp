@@ -323,7 +323,10 @@ namespace etl {
             return *this;
         }
         inline constexpr void operator+=(const T value) {
-            mValue = std::min(UpperBound, mValue + value);
+            mValue = std::min(decltype(mValue + value){UpperBound}, mValue + value);
+        }
+        inline constexpr void operator-=(const T value) {
+            mValue = std::max(decltype(mValue + value){LowerBound}, mValue - value);
         }
         inline constexpr void operator/=(const T d) {
             mValue = std::clamp(mValue / d, LowerBound, UpperBound);

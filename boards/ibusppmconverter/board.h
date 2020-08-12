@@ -64,7 +64,7 @@
 // PA2: DaisyEnable
 // PA3: SO4 (AIN3) (rpm0) (tcb1 wo) (adr4)
 // PA4:
-// PA5: SO3 (AIN5) (tcb0 wo) (adr3)
+// PA5: SO3 (AIN5) (tcb0 wo) (adr3) (GPS)
 // PA6: 
 // PA7: 
 // PB3:

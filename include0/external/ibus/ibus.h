@@ -456,30 +456,30 @@ namespace IBus {
                         else if (param == Protocol1::blink1Intervall) {
                             Actor::switches()[lastOn] = Actor::SwState::Blink1;
                             const uint16_t intervall = ((uint32_t)value * tick_t::max()) / pvalue_t::Upper;
-                            Out::mode(blink_index_t{0});
-                            Out::intervall2(lastOn, tick_t::fromRaw(intervall));
-                            Out::duration(lastOn, tick_t::fromRaw(intervall / 2));
+//                            Out::mode(blink_index_t{0});
+                            Out::intervall2(lastOn, tick_t::fromRaw(intervall), blink_index_t{0});
+                            Out::duration(lastOn, tick_t::fromRaw(intervall / 2), blink_index_t{0});
                         }
                         else if (param == Protocol1::blink1Duration) {
                             Actor::switches()[lastOn] = Actor::SwState::Blink1;
-                            Out::mode(blink_index_t{0});
-                            const uint16_t intervall = Out::intervall(lastOn).value;
+//                            Out::mode(blink_index_t{0});
+                            const uint16_t intervall = Out::intervall(lastOn, blink_index_t{0}).value;
                             const uint16_t duration = ((uint32_t)value * intervall) / pvalue_t::Upper; 
-                            Out::duration(lastOn, tick_t::fromRaw(duration));
+                            Out::duration(lastOn, tick_t::fromRaw(duration), blink_index_t{0});
                         }
                         else if (param == Protocol1::blink2Intervall) {
                             Actor::switches()[lastOn] = Actor::SwState::Blink2;
                             const uint16_t intervall = ((uint32_t)value * tick_t::max()) / pvalue_t::Upper;
-                            Out::mode(blink_index_t{1});
-                            Out::intervall2(lastOn, tick_t::fromRaw(intervall));
-                            Out::duration(lastOn, tick_t::fromRaw(intervall / 2));
+//                            Out::mode(blink_index_t{1});
+                            Out::intervall2(lastOn, tick_t::fromRaw(intervall), blink_index_t{1});
+                            Out::duration(lastOn, tick_t::fromRaw(intervall / 2), blink_index_t{1});
                         }
                         else if (param == Protocol1::blink2Duration) {
                             Actor::switches()[lastOn] = Actor::SwState::Blink2;
-                            Out::mode(blink_index_t{1});
-                            const uint16_t intervall = Out::intervall(lastOn).value;
+//                            Out::mode(blink_index_t{1});
+                            const uint16_t intervall = Out::intervall(lastOn, blink_index_t{1}).value;
                             const uint16_t duration = ((uint32_t)value * intervall) / pvalue_t::Upper; 
-                            Out::duration(lastOn, tick_t::fromRaw(duration));
+                            Out::duration(lastOn, tick_t::fromRaw(duration), blink_index_t{1});
                         }
                         else if (param == Protocol1::timeMpxMode0) {
                             Out::mpxMode(0, value);
@@ -508,11 +508,11 @@ namespace IBus {
                             Actor::switches()[index] = Actor::SwState::Steady;
                         }
                         else if (mode == Protocol1::blink1) {
-                            Out::mode(blink_index_t{0});
+//                            Out::mode(blink_index_t{0});
                             Actor::switches()[index] = Actor::SwState::Blink1;
                         }
                         else if (mode == Protocol1::blink2) {
-                            Out::mode(blink_index_t{1});
+//                            Out::mode(blink_index_t{1});
                             Actor::switches()[index] = Actor::SwState::Blink2;
                         }
                     }

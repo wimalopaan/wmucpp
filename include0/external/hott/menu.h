@@ -37,7 +37,7 @@ namespace Hott {
 
     // fixme: keine mag. Konstanten 18 3 Aufteilung
     
-    template<typename Key, typename Provider, uint8_t ValueWidth = 3, typename F = void>
+    template<typename Key, typename Provider, uint8_t ValueWidth = 3, typename F = void, uint8_t SpeedDelta = 0>
     requires requires (Provider p, Key k) {
         p[k];
         p.change();
@@ -65,12 +65,22 @@ namespace Hott {
             buffer.insertAtFill(1, mTitle);
             
             const auto& value = mProvider[mKey];
-            if (value) {
-                valueToText(*value, etl::make_span<valueBeginColumn, valueWidth>(buffer));
+            using vt_t = std::remove_cvref_t<decltype(value)>;
+            
+            if constexpr(requires(vt_t v) {
+                *v;
+            }) {
+                if (value) {
+                    valueToText((uint8_t)*value, etl::make_span<valueBeginColumn, valueWidth>(buffer));
+                }
+                else {
+                    etl::fill(etl::make_span<valueBeginColumn, valueWidth>(buffer), Char{'-'});
+                }
             }
             else {
-                etl::fill(etl::make_span<valueBeginColumn, valueWidth>(buffer), Char{'-'});
+                valueToText((uint8_t)value, etl::make_span<valueBeginColumn, valueWidth>(buffer));
             }
+            
             
             if (mSelected) {
                 etl::apply(etl::make_span<valueBeginColumn, valueWidth>(buffer), [](auto& c) {c |= Char{0x80};});
@@ -78,53 +88,126 @@ namespace Hott {
         }
         virtual MenuItem* processKey(const Hott::key_t key) override {
             auto& v = mProvider[mKey];
-            switch (key) {
-            case Hott::key_t::up:
-                if (mSelected) {
-                    if (v) {
-                        if (*v > 0) {
-                            --v;
+            using vt_t = std::remove_cvref_t<decltype(v)>;
+            if constexpr(requires(vt_t v) {*v;}) {
+                switch (key) {
+                case Hott::key_t::up:
+                    if (mSelected) {
+                        if (v) {
+                            if (*v > 0) {
+                                --v;
+                            }
+                            else {
+                                v.setNaN();
+                            }
                         }
                         else {
-                            v.setNaN();
+                            *v = mMax;
                         }
                     }
-                    else {
-                        *v = mMax;
-                    }
-                }
-                break;
-            case Hott::key_t::down:
-                if (mSelected) {
-                    if (v) {
-                        if (*v < mMax) {
-                            ++v;
+                    break;
+                case Hott::key_t::down:
+                    if (mSelected) {
+                        if (v) {
+                            if (*v < mMax) {
+                                ++v;
+                            }
+                            else {
+                                v.setNaN();
+                            }
                         }
                         else {
-                            v.setNaN();
+                            *v = 0;
                         }
                     }
-                    else {
-                        *v = 0;
+                    break;
+                case Hott::key_t::left:
+                    if constexpr(SpeedDelta > 0) {
+                        if (mSelected) {
+                            if (v) {
+                                if (*v > SpeedDelta) {
+                                    v -= SpeedDelta;
+                                }
+                                else {
+                                    v.setNaN();
+                                }
+                            }
+                            else {
+                                *v = mMax;
+                            }
+                        }                        
                     }
+                    break;
+                case Hott::key_t::right:
+                    if constexpr(SpeedDelta > 0) {
+                        if (mSelected) {
+                            if (v) {
+                                if (*v < (mMax - SpeedDelta)) {
+                                    v += SpeedDelta;
+                                }
+                                else {
+                                    v.setNaN();
+                                }
+                            }
+                            else {
+                                *v = 0;
+                            }
+                        }                        
+                    }
+                    break;
+                case Hott::key_t::set:
+                    if (mSelected) {
+                        mProvider.change();
+                    }
+                    else {
+                        mProvider.select(mKey);
+                    }
+                    mSelected = !mSelected;
+                    break;
+                case Hott::key_t::nokey:
+                    break;
                 }
-                break;
-            case Hott::key_t::left:
-                break;
-            case Hott::key_t::right:
-                break;
-            case Hott::key_t::set:
-                if (mSelected) {
-                    mProvider.change();
-                }
-                else {
-                    mProvider.select(mKey);
-                }
-                mSelected = !mSelected;
-                break;
-            case Hott::key_t::nokey:
-                break;
             }
+            else {
+                switch (key) {
+                case Hott::key_t::up:
+                    if (mSelected) {
+                        if ((uint8_t)v > 0) {
+                            v = vt_t((uint8_t)v - 1);
+                        }
+                        else {
+                            v = vt_t{mMax};
+                        }
+                    }
+                    break;
+                case Hott::key_t::down:
+                    if (mSelected) {
+                        if ((uint8_t)v < mMax) {
+                            v = vt_t((uint8_t)v + 1);
+                        }
+                        else {
+                            v = vt_t{0};
+                        }
+                    }
+                    break;
+                case Hott::key_t::left:
+                    break;
+                case Hott::key_t::right:
+                    break;
+                case Hott::key_t::set:
+                    if (mSelected) {
+                        mProvider.change();
+                    }
+                    else {
+                        mProvider.select(mKey);
+                    }
+                    mSelected = !mSelected;
+                    break;
+                case Hott::key_t::nokey:
+                    break;
+                }
+                
+            }            
             return this;
         }
     private:

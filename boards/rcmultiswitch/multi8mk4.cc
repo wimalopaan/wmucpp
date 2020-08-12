@@ -34,6 +34,8 @@ struct FSM {
     using nvm_data_t = nvm_t::value_type;
     using pwm_type = nvm_data_t::pwm_type;
     
+    using blink_index_t = Out::blink_index_t;
+    
     enum class State : uint8_t {Init, Run, 
                                 LearnPWMWait, LearnPWMStart, LearnPWM, LearnPWMEnd,
                                 LearnBlinkIntWait, LearnBlinkIntStart, LearnBlinkInt, LearnBlinkIntEnd,
@@ -147,8 +149,8 @@ struct FSM {
                 if (const auto x = Input::ppm()) {
                     if (const auto xi = Input::ppm().toInt(); xi > ppmMedium) {
                         uint8_t p = (((uint32_t)xi - ppmMedium) * Out::blinkMax) / ppm::span;
-                        Out::duration(mLearn, Storage::tick_type::fromRaw(p / 2));
-                        Out::intervall(mLearn, Storage::tick_type::fromRaw(p));
+                        Out::duration(mLearn, Storage::tick_type::fromRaw(p / 2), blink_index_t{0});
+                        Out::intervall(mLearn, Storage::tick_type::fromRaw(p), blink_index_t{0});
                         Out::setSwitch(mLearn);
                     }
                 }
@@ -161,8 +163,8 @@ struct FSM {
             else {
                 if (const auto x = Input::ppm()) {
                     if (const auto xi = Input::ppm().toInt(); xi > ppmMedium) {
-                        uint8_t p = (((uint32_t)xi - ppmMedium) * (Out::intervall(mLearn).value.toInt() - 1)) / ppm::span;
-                        Out::duration(mLearn, Storage::tick_type::fromRaw(p));
+                        uint8_t p = (((uint32_t)xi - ppmMedium) * (Out::intervall(mLearn, blink_index_t{0}).value.toInt() - 1)) / ppm::span;
+                        Out::duration(mLearn, Storage::tick_type::fromRaw(p), blink_index_t{0});
                         Out::setSwitch(mLearn);
                     }
                 }

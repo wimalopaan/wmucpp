@@ -81,9 +81,11 @@ namespace External {
         inline static void setSwitch(const index_t index) {
             if (StateProvider::switches()[index] == StateProvider::SwState::Off) {
                 setSwitchOff(index);
-                blinkTicks[index] = NVM::data()[index].blinks()[blinkIndex].intervall;
+//                blinkTicks[index] = NVM::data()[index].blinks()[blinkIndex].intervall;
             }
             else if ((StateProvider::switches()[index] == StateProvider::SwState::Blink1) || (StateProvider::switches()[index] == StateProvider::SwState::Blink2)) {
+                blink_index_t blinkIndex((StateProvider::switches()[index] == StateProvider::SwState::Blink1) ? 0 : 1);
+                                
                 if (NVM::data()[index].blinks()[blinkIndex].duration) {
                     blinkTicks[index].match(NVM::data()[index].blinks()[blinkIndex].duration, [&]{
                         setSwitchOff(index);
@@ -107,12 +109,12 @@ namespace External {
             }        
         }
         
-        inline static void mode(const blink_index_t m) {
-            blinkIndex = m;
-        }
-        inline static auto mode() {
-            return blinkIndex;
-        }
+//        inline static void mode(const blink_index_t m) {
+//            blinkIndex = m;
+//        }
+//        inline static auto mode() {
+//            return blinkIndex;
+//        }
 
         inline static void pwm(const index_t index, const uint8_t p) {
             NVM::data()[index].pwmValue(p);
@@ -129,21 +131,21 @@ namespace External {
             NVM::data()[index] = nvm_data_t{};
             NVM::data().change();
         }
-        inline static void duration(const index_t index, const tick_t d) {
+        inline static void duration(const index_t index, const tick_t d, const blink_index_t blinkIndex) {
             NVM::data()[index].blinks()[blinkIndex].duration = d;
             NVM::data().change();
         }
-        inline static void intervall(const index_t index, const tick_t i) {
+        inline static void intervall(const index_t index, const tick_t i, const blink_index_t blinkIndex) {
             NVM::data()[index].blinks()[blinkIndex].intervall = i;
             NVM::data().change();
             blinkTicks[index] = std::min(blinkTicks[index], i);
         }
-        inline static void intervall2(const index_t index, const tick_t i) {
+        inline static void intervall2(const index_t index, const tick_t i, const blink_index_t blinkIndex) {
             NVM::data()[index].blinks()[blinkIndex].intervall = i;
             NVM::data().change();
 //            blinkTicks[index] = std::min(blinkTicks[index], i);
         }
-        inline static auto intervall(const index_t index) {
+        inline static auto intervall(const index_t index, const blink_index_t blinkIndex) {
             return NVM::data()[index].blinks()[blinkIndex].intervall;
         }
         inline static void mpxMode(uint8_t a, auto v) {
@@ -163,7 +165,7 @@ namespace External {
                                    });
         }
         inline static std::array<Storage::tick_type, size()> blinkTicks;
-        inline static blink_index_t blinkIndex;
+//        inline static blink_index_t blinkIndex;
     };
 }
 

@@ -273,7 +273,12 @@ namespace Hott {
             
             static inline 
             bool sendNextBinaryByte() {
-                if constexpr(std::is_same_v<BinaryMesgType, EscMsg> || std::is_same_v<BinaryMesgType, GamMsg>) {
+                if constexpr(std::is_same_v<BinaryMesgType, EscMsg> 
+                        || std::is_same_v<BinaryMesgType, GamMsg> 
+                        || std::is_same_v<BinaryMesgType, AirMsg>
+                        || std::is_same_v<BinaryMesgType, VarioMsg>
+                        || std::is_same_v<BinaryMesgType, GpsMsg>
+                        ) {
                     if (mByteIndexBinary < (sizeof(mMsg) - 1)) {
                         /*constexpr */const std::byte* ptr = (const std::byte*) &mMsg;  
                         const std::byte value = ptr[mByteIndexBinary];

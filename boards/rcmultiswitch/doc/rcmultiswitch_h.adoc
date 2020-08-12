@@ -1,0 +1,372 @@
+= RC MultiSwitch-H
+Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+:revnumber: 1.7
+:revremark: HW_1.0
+:revdate: 01.01.1970
+:lang: de
+:toc:
+:toc-title: Inhalt
+:toclevels: 4
+:numbered:
+:pagenums:
+:src_numbered: 
+:icons: font
+:icontype: svg
+:figure-caption: Abbildung
+:description: RC MultiSwitch-H
+:title: RC MultiSwitch-H : MultiSwitch für Hott
+:title-page:
+:sectanchors:
+:sectlinks:
+:experimental:
+:copyright: Wilhelm Meier
+:duration: 90
+:source-highlighter: pygments
+:pygments-css: class
+:showtitle:
+:docinfo1:
+:stem:
+// for attributes in link:[] macro like link:xxx[window="_blank"]
+:linkattrs:
+
+<<<
+
+== Vorwort
+
+image::by-nc-nd.eu.svg[align="center"]
+
+.Lizenz
+****
+Dieses Werk ist unter einer Creative Commons Lizenz vom Typ Namensnennung - Nicht kommerziell - Keine Bearbeitungen 4.0 International zugänglich. Um eine Kopie dieser Lizenz einzusehen, konsultieren Sie http://creativecommons.org/licenses/by-nc-nd/4.0/ oder wenden Sie sich brieflich an Creative Commons, Postfach 1866, Mountain View, California, 94042, USA.
+****
+
+[NOTE]
+Das Modul wie auch diese Doku ist noch unvollständig und _work-in-progess_. 
+Bei jeglichen Unklarheiten in dieser Funktionsbeschreibung und generellem Aufbau und Anschluß, 
+unterlassen Sie den Betrieb und kontaktieren Sie den Bausatzersteller.
+
+<<<
+
+== Symbolerklärung
+
+[TIP]
+Ein wichtiger allgemeiner Hinweis für den sicheren Aufbau und die sichere Bedienung. Dieser sollte durch den Anwender bachtet werden,
+um einen sicheren Betrieb zu gewährleisten.
+
+[NOTE]
+Ein genereller Hinweis, der durch den Anwender beachtet werden sollte.
+
+[IMPORTANT]
+Ein technischer oder sicherheitstechnischer Hinweis, der unbedingt durch den Anwender beachtet werden muss.
+
+[CAUTION]
+Ein technischer oder sicherheitstechnischer Gefahrenhinweis, der unbedingt durch den Anwender beachtet werden muss. Zur 
+Gefahrenabwendung muss der Anwender unbedingt die gegebenen Anweisungen befolgen und die beschriebenen Maßnahmen ergreifen.
+
+== Rechtliches
+
+Der vorliegende Bausatz wird dem Anwender für eigene Experimente überlassen. Er stellt kein Produkt im Sinne des ProdHaftG 
+oder elektronisches Gerät im Sinne des ElektroG dar und wird als Gerät nicht kommerziell vertrieben. 
+
+[IMPORTANT]
+--
+Die Überlassung gegen Unkostenerstattung erfolgt unter Ausschluss jeglicher Sach­mangelhaftung.
+
+Für den vorliegenden Bausatz werden keine Funktionsgarantien gegeben. Für Schäden am Bausatz oder an damit verbundenen Geräten oder Modulen
+wird keine Haftung übernommen. Gewährleistungen, Garantien und Widerrufsrechte gibt es nicht.
+--
+
+== Sicherheitshinweise
+
+Beim Umgang mit Produkten, die mit elektrischer Spannung in Berührung kommen, müssen die gültigen VDE-Vorschriften beachtet werden, insbesondere 
+VDE 0100, VDE 0550/0551, VDE 0700, VDE 0711 und VDE 0860.
+
+Werkzeuge dürfen an Geräten, Bauteilen oder Baugruppen nur benutzt werden, wenn sichergestellt ist, dass die Geräte von der Versorgungsspannung 
+getrennt sind und elektrische Ladungen, die in den im Gerät befindlichen Bauteilen gespeichert sind, vorher entladen wurden.
+
+Spannungsführende Kabel oder Leitungen, mit denen das Gerät, das Bauteil oder die Baugruppe verbunden ist, müssen stets auf Isolationsfehler 
+oder Bruchstellen untersucht werden. Bei Feststellen eines Fehlers in der Zuleitung muss das Gerät unverzüglich aus dem Betrieb genommen werden, 
+bis die defekte Leitung ausgewechselt worden ist. Bei Einsatz von Bauelementen oder Baugruppen muss stets auf die strikte Einhaltung der in der 
+zugehörigen Beschreibung genannten Kenndaten für elektrische Größen hingewiesen werden. Wenn aus einer vorliegenden Beschreibung für den nicht 
+gewerblichen Endverbraucher nicht eindeutig hervorgeht, welche elektrischen Kennwerte für ein Bauteil oder eine Baugruppe gelten, wie eine 
+externe Beschaltung durchzuführen ist oder welche externen Bauteile oder Zusatzgeräte angeschlossen werden dürfen und welche Anschlusswerte 
+diese externen Komponenten haben dürfen, so muss stets ein Fachmann um Auskunft ersucht werden. Es ist vor der Inbetriebnahme eines Gerätes 
+generell zu prüfen, ob dieses Gerät oder Baugruppe grundsätzlich für den Anwendungsfall, für den es verwendet werden soll, geeignet ist!
+
+Im Zweifelsfalle sind unbedingt Rückfragen bei Fachleuten, Sachverständigen oder den Herstellern der verwendeten Baugruppen notwendig!
+
+Bitte beachten Sie, dass Bedien- und Anschlussfehler außerhalb unseres Einflussbereiches liegen. Verständlicherweise können wir für Schäden, die 
+daraus entstehen, keinerlei Haftung übernehmen. Bei Installationen und beim Umgang mit Netzspannung sind unbedingt die VDE-Vorschriften zu 
+beachten. Geräte, die an einer Spannung über 35 V betrieben werden, dürfen nur vom Fachmann angeschlossen werden. In jedem Fall ist zu prüfen, 
+ob der Bausatz oder die Platine für den jeweiligen Anwendungsfall und Einsatzort geeignet ist bzw. eingesetzt werden kann.
+
+Derjenige, der eine Schaltung oder einen Bausatz aufbaut und fertigstellt oder eine Baugruppe durch Erweiterung bzw. Gehäuseeinbau 
+betriebsbereit macht, gilt nach DIN VDE 0869 als Hersteller und ist verpflichtet, bei der Weitergabe des Gerätes alle Begleitpapiere 
+mitzuliefern und auch seinen Namen und Anschrift anzugeben. Geräte, die aus Bausätzen selbst zusammengestellt werden, sind sicherheitstechnisch 
+wie ein industrielles Produkt zu betrachten.
+
+Für alle Personen- und Sachschäden, die aus nicht bestimmungsgemäßer Verwendung entstehen, ist nicht der Hersteller sondern der Betreiber 
+verantwortlich. Bitte beachten Sie, das Bedien- und/und Anschlussfehler außerhalb unseres Einfußbereiches liegen. Verständlicherweise können wir 
+für Schäden, die daraus entstehen, keinerlei Haftung übernehmen.
+
+Jegliche Vorschriften und Vorsichtsmaßnahmen im Umgang mit elektrischen Komponenten sind vom Anwender einzuhalten.
+
+Beachten Sie ebenfalls die Richtlinien unter <<Betrieb>>.
+
+== Spezieller Sicherheitshinweis: Kleinteile
+
+[CAUTION]
+--
+ACHTUNG: Der Bausatz enthält verschluckbare Kleinteile. Von Kindern fernhalten.
+--
+
+<<< 
+
+== Einführung
+
+Der `RC MultiSwitch-H` ist ein digitales Schaltmodul (8-Kanal) zum Betrieb mit einem `Hott`-Sender und einem `Hott`-Empfänger _mit_ Telemetrie.
+Im Gegensatz zu alten, im analogen Zeitmultiplex-Verfahren arbeitenden Schaltmodulen, wird bei dem `RC MultiSwitch-H` die Information für die zu 
+schaltenden Funktion vollständig digital übertragen. Daher ist ein störungsfreier Betrieb gewährleistet.
+
+.Ansicht von oben (Stiftleisten für Ausgänge noch nicht eingelötet)
+image::mod1.jpg[align="center",pdfwidth=50%, width=50%]
+
+.Ansicht von unten (Stiftleisten für Ausgänge noch nicht eingelötet)
+image::mod2.jpg[align="center",pdfwidth=50%, width=50%]
+
+Der `RC MultiSwitch-H` hat 8 Ausgänge, diese können ein- oder ausgeschaltet werden, entweder statisch, oder in zwei unterschiedlichen Blink-Modi. Zusätzlich 
+kann der _Ein_-Zustand `PWM`-moduliert werden (auch beim Blinken ist die `PWM`-Modulation aktiv). 
+Die Konfiguration der Zustände erfolg komplett über den Sender und ein entsprechendes Menu.
+
+Der `RC MultiSwitch-H` wird an den _Telemetrie_-Bus eines Empfängers angeschlossen. Sollen mehrere `RC MultiSwitch-H` verwendet werden, so werden 
+diese _alle_ (parallel) an den _Telemetrie_-Bus des Empfängers angeschlossen. 
+Jeder `RC MultiSwitch-H` hat eine eindeutige _Kennung_ (`EAM`, `GAM`, `ESC`, `Vario`) und kann so vom Sender angesprochen werden.
+
+Aus naheligenden Gründen dürfen bei einem `Hott`-System nicht zwei Sensor-Module mit _derselben_ Kennung angeschlossen werden. 
+Hierauf ist unbedingt zu achten. 
+Ggf. ist bei mehreren `RC-MultiSwitch-H` an _einem_ Empfänger die Kennung unterschiedlich einzustellen. Dies betrifft auch andere 
+Sensor-Module, etwa Graupner-`Hott`-Fahrtensteller (ESC) oder Fremdprodukte.
+
+== Grundsätzliches
+
+Im Gegensatz zu den alten, _analogen_ Schaltmodulen wie etwa Graupner-Multiswitch 8/16K arbeitet das vorliegende `RC-MultiSwitch-H`-Modul 
+vollständig _digital_. Daher ist auch eine andere Art der Ansteuerung notwendig. Daher wird das Modul an den _Sensor-Bus_ 
+des Empfängers angeschlossen.
+
+.Anschluß des Moduls an den Sensor-Bus des `Hott`-Empfängers
+[TIP]
+--
+Das Modul wird an den Sensor-Bus angeschlossen. Bei manchen Empfängern wie etwa dem `GR-16` hat der Sensor-Bus am Empfänger eine 
+_eigene_ Buchse. Bei anderen Empfängern wie etwa dem `GR-12L` wird hierzu eine der Servo-Buchsen verwendet. Zusätzlich muss bei diesen 
+Empfängern in der Empfänger-Konfiguration (Telemetrie) eingestellt werden, dass dieser spezielle Anschluss als _Sensor_-Port 
+verwendet werden soll.
+--
+
+Obwohl das Schaltmodul als Telemetrie-Modul angeschlossen wird, liefert es in der _Daten_-Ansicht _keine_ Messwerte! 
+
+.Datenansicht des Schaltmoduls (GPS): es werden keine Werte angezeigt
+image::gps.jpg[align="center",pdfwidth=50%, width=50%]
+
+Für die Bedienung und Konfiguration des Moduls wird ausschließlich der Text-Modus verwendet.
+
+Um das _Menu_ des Schaltmoduls zu erreichen, navigieren Sie im Sender 
+
+. Telemetrie -> Einstellungen
+. wählen mit den _linken_ Bedientasten (up, down) den Sensor-Modul-Typ aus (etwa _General_, wenn das Schaltmodul als `GAM` erworben wurde).
+. navigieren sie mit den _rechten_ Bedientasten soweit nach _rechts_, bis das Menu des Schaltmoduls auftaucht.
+
+Sowohl die Konfiguration wie auch die Bedienung des Schaltmoduls erfolgt über das nun sichtbare Menu.
+
+Eine Verwendung von einzelnen Geber-Schaltern des Senders ist _nicht_ möglich.
+
+== Haupt-Menu
+
+Die einzige Funktion, die direkt im Haupt-Menu ausgelöst werden kann, ist
+
+* _alle Schaltfunktionen ausschalten_.
+
+Die ist praktisch, um sehr schnell ggf. einen unerwünschten Zustand zu deaktivieren.
+
+.Das Hauptmenu des Schaltmoduls
+image::menu1.jpg[align="center",pdfwidth=50%, width=50%]
+
+Die Aktivierung der einzelnen Schaltfunktionen erfolgt über das Menu `Switches`.
+
+== Bedienung
+
+Navigieren sie in die Zeile `Switches` (_up_ / _down_ im rechten Tastenfeld). 
+Selektieren Sie den Eintrag mit der Taste `Select` (zentrale Taste im rechten Tastenfeld). 
+
+.Das Schaltmenu
+image::menu2.jpg[align="center",pdfwidth=50%, width=50%]
+
+Um den Zustand einer Schaltfunktion zu ändern, 
+
+. navigieren Sie in die entsprechende Zeile (_up_ / _down_ im rechten Tastenfeld),
+. selektieren Sie die Schaltfunktion mit der Taste `Select` (zentrale Taste im rechten Tastenfeld),
+. wählen Sie den gewünschten Zustand aus (_up_ / _down_ im rechten Tastenfeld),
+. aktivieren Sie den Zustand mit der Taste `Select` (zentrale Taste im rechten Tastenfeld).
+
+[TIP]
+--
+Sollte noch _kein_ Blink-Modus konfiguriert worden sein, so entspricht dies einem dauerhaftem `ein`-Zustand.
+--
+
+== Konfiguration
+
+Es stehen die Konfigurationsmöglichkeiten für 
+
+* PWM (Puls-Weiten-Modulation)
+* Blink-Modus 1
+* Blink-Modus 2
+
+zur Verfügung.
+
+Die Konfigurationen werden im Schaltmodul _dauerhaft_ gespeichert.
+
+Um in eines der Untermenus zu wechseln, 
+
+. navigieren Sie in die entsprechende Zeile (_up_ / _down_ im rechten Tastenfeld),
+. selektieren Sie das Untermenu mit der Taste `Select` (zentrale Taste im rechten Tastenfeld),
+
+anschließend erscheint das Untermenu.
+
+=== PWM
+
+Oft hat man den Fall, dass die Bordspannung etwa 12V ist, jedoch bestimmte, zu schaltende Verbraucher wie etwa 
+kleine Motoren mit einer niedrigeren Spannung wie etwa 6V oder 3V arbeiten. Um etwa einen 6V Motor an 12V betreiben 
+zu können. kann man mit einer PWM-Rate von 50% arbeiten.
+
+[CAUTION]
+--
+Dieses Vorgehen darf *nur* für _ohmsche_ oder _induktive_ Verbraucher angewendet werden und ist 
+_ausdrücklich_ nicht für LEDs _ohne_ Vorwiderstand geeignet: LEDs benötigen _immer_ einen Vorwiderstand oder 
+eine _Konstantstromquelle_. Dimensionieren Sie den Vorwiederstand für die LED ganz normal auf den maximal 
+zulässigen Strom und benutzen Sie die PWM-Funktion nur, um die maximale Helligkeit zu reduzieren.
+--
+
+.Das PWM-Menu
+image::menu3.jpg[align="center",pdfwidth=50%, width=50%]
+
+.Das PWM-Menu mit Selektion
+image::menu4.jpg[align="center",pdfwidth=50%, width=50%]
+
+Um die PWM-Rate einer Schaltfunktion `A` - `F` zu ändern, 
+
+. navigieren Sie in die entsprechende Zeile (_up_ / _down_ im rechten Tastenfeld),
+. selektieren Sie die Schaltfunktion mit der Taste `Select` (zentrale Taste im rechten Tastenfeld),
+. wählen Sie den gewünschten Wert aus (_up_ / _down_ im rechten Tastenfeld) und kontrollieren ggf. Sie mir einem 
+angeschlossenen Verbraucher 
+. speichern Sie den Wert und verlassen Sie die Modifikation mit der Taste `Select` (zentrale Taste im rechten Tastenfeld).
+
+=== Blinken
+
+Es stehen _zwei_ unterschiedliche Blink-Modi zur Verfügung. Ist eine PWM-Modulation konfiguriert
+worden, so findet sie auch in den Blink-Modi Anwendung.
+
+.Das Blink1-Menu
+image::menu5.jpg[align="center",pdfwidth=50%, width=50%]
+
+.Das Blink2-Menu
+image::menu6.jpg[align="center",pdfwidth=50%, width=50%]
+
+Um den Blink-Modu einer Schaltfunktion `A` - `H` zu ändern, 
+
+. navigieren Sie in die entsprechende Zeile (_up_ / _down_ im rechten Tastenfeld),
+. selektieren Sie die Schaltfunktion mit der Taste `Select` (zentrale Taste im rechten Tastenfeld),
+. wählen Sie den gewünschten Wert für das Intervall aus (_up_ / _down_ im rechten Tastenfeld),
+. wählen Sie den gewünschten Wert für die Einschaltdauer aus (_left_ / _right_ im rechten Tastenfeld),
+. und kontrollieren ggf. Sie mir einem angeschlossenen Verbraucher
+. speichern Sie den Wert und verlassen Sie die Modifikation mit der Taste `Select` (zentrale Taste im rechten Tastenfeld).
+
+
+=== Einstellungen
+
+Mit der Funktion 
+
+* `Reset` können Sie alle Konfigurationen zurücksetzen
+
+.Das Settings-Menu
+image::menu7.jpg[align="center",pdfwidth=50%, width=50%]
+
+
+=== Beschriftung
+
+Derzeit sind die Schaltfunktionen _fest_ mit `A` ... `G` bezeichnet.
+
+Abweichende Namen können nur bei der Lieferung des Moduls berücksichtig werden.
+
+[[first]]
+== Einbau 
+
+=== Anschluß an den Akku
+
+Achten Sie auf richtige Polung.
+
+Das Schaltmudul an sich ist verpolungssicher. Bei einer Verpolung _und_ angeschlossenem Empfänger kann 
+dieser jedoch Schaden nehmen.
+
+=== Schutz 
+
+Um das Modul gegen Feuchtigkeit zu schützen, empfielt es sich, das Modul 
+mit Polyurethan-Lack-Schutzlack (z.B. Kontakt 70) zu überziehen. Bitte kleben Sie jedoch voher den Pfostenverbinder für den 
+Kontackt, den die Löt-Pads für die Anschlußkabel ab.
+
+Ein Einschrumpfen mit Schrumpfschlauch ist möglich.
+
+== Funktion
+
+=== Maximale Belastbarkeit
+
+Je Ausgang beträgt die _maximale_ Belastbarkeit 500mA. Insgesamt dürfen von _allen_ angeschlosenen 
+Verbrauchen nich mehr als 2A _gleichzeitig_ verbraucht werden.
+
+Die maximale Versorgungsspannung ist 30V.
+
+[[Betrieb]]
+== Betrieb
+
+[TIP]
+Beachten Sie unbedingt die Anweisungen unter <<first>>.
+
+[NOTE]
+Die üblichen Sicherheitsvorkehrungen im Betrieb mit ferngesteuerten Modellen, insbesonder Schiffsmodellen sind einzuhalten.
+
+[IMPORTANT]
+Beachten Sie *alle* folgenden Hinweise zum Betrieb.
+
+[CAUTION]
+Eine Verwendung des Moduls in Rennbooten oder Flugmodellen ist nicht zulässig.
+
+[CAUTION]
+Das Modul darf nicht in Kontakt mit Wasser, Wasserdampf oder anderen Flässigkeiten kommen. Wasser oder Wasserdampf bzw. andere 
+Flüssigkeiten können zu einem Totalausfall und damit zu einem Modellverlust sowie Personenschäden führen.
+
+[CAUTION]
+Die erforderlichen Kabelquerschnitte für die Verbindung mit dem Akku und auch mit dem elektrischen Verbraucher sind unbedingt 
+einzuhalten. Hier besteht Brandgefahr. Gefahr von Personenschäden!
+
+[CAUTION]
+Beim Betrieb ist der maximale Stromdurchfluß zu begrenzen und zu überwachen. Ein zu langer und zu hoher Stromfluß kann zu einem 
+Totalausfall und damit zu einem Modellverlust sowie Personenschäden führen.
+
+[CAUTION]
+Das Modul ist nicht kurzschlußfest. Ein Kurzschluß führt zu einem Totalausfall 
+und damit zu einem Modellverlust sowie Personenschäden.
+
+[CAUTION]
+Der maximale Schaltstrom ist ist unbedingt einzuhalten und darf nicht überschritten werden. Ein zu hoher Schaltstrom kann zu 
+einem Totalausfall und damit zu einem Modellverlust sowie Personenschäden führen.
+
+[CAUTION]
+Das Modul darf keinen Vibrationen ausgesetzt werden. Treffen Sie entsprechende Vorkehrungen zu einem vibrationsgeschützten 
+Einbau. Zu starke Vibrationen können zu einem Totalausfall und damit zu einem Modellverlust sowie Personenschäden führen.
+
+[CAUTION]
+Das Modul darf nur innerhalb eines Temperaturbereiches von -10°C bis +55°C betrieben werden. Ein Betrieb außerhalb dieses 
+Bereiches kann zu einem Totalausfall und damit zu einem Modellverlust sowie Personenschäden führen.
+
+
+== Kontakt
+
+Anfragen: wilhelm.wm.meier@googlemail.com
