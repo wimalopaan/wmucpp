@@ -109,13 +109,6 @@ namespace External {
             }        
         }
         
-//        inline static void mode(const blink_index_t m) {
-//            blinkIndex = m;
-//        }
-//        inline static auto mode() {
-//            return blinkIndex;
-//        }
-
         inline static void pwm(const index_t index, const uint8_t p) {
             NVM::data()[index].pwmValue(p);
             NVM::data().change();

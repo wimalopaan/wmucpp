@@ -102,7 +102,7 @@ struct SwitchesMenu final : public Hott::Menu<8, false, 8> {
                 return lastState;
             }
             else {
-            return sw::switches()[Storage::keyToInt(i)];    
+                return sw::switches()[Storage::keyToInt(i)];    
             }
         }
         void change() {

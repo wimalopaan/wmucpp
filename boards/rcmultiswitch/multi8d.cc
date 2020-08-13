@@ -157,8 +157,8 @@ int main() {
     
     eeprom::init();
     if (!((appData.magic() == 42))) {
-        appData.magic() = 42;
         appData.clear();
+        appData.magic() = 42;
         appData.change();
 #ifndef NDEBUG
         etl::outl<terminal>("eep init"_pgm);
@@ -188,9 +188,17 @@ int main() {
 //                    etl::outl<terminal>("c: "_pgm, counter++, " mpx0: "_pgm, (uint8_t)appData.mMpxModes[0]);
 //                    etl::outl<terminal>("c9: "_pgm, servo_pa::valueMapped(9).toInt(), " r: "_pgm, servo_pa::value(9).toInt());
 //                    etl::outl<terminal>("c9: "_pgm, servo_pa::valueMapped(9).toInt(), " r: "_pgm, servo_pa::value(9).toInt());
-//                    etl::outl<terminal>("c0: "_pgm, servo_pa::mChannels[9]);
+                    etl::outl<terminal>("c0: "_pgm, servo_pa::mChannels[9]);
 //                    etl::outl<terminal>("lo: "_pgm, ibus_switch::lastOnIndex.toInt());
-                    etl::outl<terminal>("sw0: "_pgm, (uint8_t)sw::switches()[0]);
+//                    etl::outl<terminal>("sw0: "_pgm, (uint8_t)sw::switches()[0], "sw1: "_pgm, (uint8_t)sw::switches()[1]);
+//                    etl::out<terminal>("sw: [ "_pgm);
+//                    for(const auto& l : sw::switches()) {
+//                        etl::out<terminal>(uint8_t(l), " "_pgm);
+//                    }
+//                    etl::outl<terminal>(" ]"_pgm);
+                    etl::outl<terminal>("lpp: "_pgm, (uint8_t)ibus_switch::lpp, " lpv: "_pgm, (uint8_t)ibus_switch::lpv, " lmv: "_pgm, (uint8_t)ibus_switch::lmv, " lo: "_pgm, (uint8_t)ibus_switch::lastOnIndex.toInt());
+                    etl::outl<terminal>("b0: "_pgm, (uint8_t)appData[0].blinks()[0].intervall.value, "b1: "_pgm, (uint8_t)appData[0].blinks()[1].intervall.value);
+                    
 #endif
                 }
                 else if (eepromTimer == t) {
@@ -202,13 +210,13 @@ int main() {
 }
 
 #ifndef NDEBUG
-[[noreturn]] inline void assertOutput(const AVR::Pgm::StringView& expr [[maybe_unused]], const AVR::Pgm::StringView& file[[maybe_unused]], unsigned int line [[maybe_unused]]) noexcept {
+/*[[noreturn]] */inline void assertOutput(const AVR::Pgm::StringView& expr [[maybe_unused]], const AVR::Pgm::StringView& file[[maybe_unused]], unsigned int line [[maybe_unused]]) noexcept {
 #if !(defined(USE_IBUS) || defined(USE_HOTT))
     etl::outl<terminal>("Assertion failed: "_pgm, expr, etl::Char{','}, file, etl::Char{','}, line);
 #endif
-    while(true) {
-//        dbg1::toggle();
-    }
+//    while(true) {
+////        dbg1::toggle();
+//    }
 }
 
 template<typename String1, typename String2>

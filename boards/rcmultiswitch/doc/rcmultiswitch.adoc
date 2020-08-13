@@ -2,7 +2,7 @@
 // ---- Beginn Standardheader
 = RC MultiSwitch-D 
 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
-:revnumber: 0.8
+:revnumber: 0.9
 :revremark: HW_1.0
 :revdate: 01.01.1970
 :lang: de
@@ -249,9 +249,11 @@ Für den `RC MultiSwitch-D` und `RC MultiAdapter-DA` sind die folgenden relevant
 
 * Mixer-Scripte
 ** `MIXES/encib.lua`
-** `MIXES/encsb.lua`
+** `MIXES/encsbm.lua` (für Anlagen mit MPM-HF-Modul)
+** `MIXES/encxjt.lua` (für Anlagen mit internem XJT-HF-Modul)
+** `MIXES/encsb.lua` (nur zu Testzwecken)
 
-* Telemetrie-Scripte
+* Telemetrie-Scripte (für monochrome Sender)
 ** `SCRPTS/TELEMETRY/wmsw.lua`
 ** `SCRPTS/TELEMETRY/wmswc.lua`
 
@@ -293,7 +295,8 @@ macht eine Unterscheidung bei den Skripten für die Schaltmodule notwendig.
 
 Zudem sind die _Typ-1_ Sender im verfügbaren `RAM` sehr _eingeschränkt_. Daher kann hier oft das 
 Telemetrie-Skript zur _Bedienung_ und das Telemetrie-Skript zur _Konfiguration_ nicht gleichzeitig 
-geladen werden. Es kommt in diesem Fall zu einer _Fehlermeldung_ des Senders.
+geladen werden. Es kommt in diesem Fall zu einer _Fehlermeldung_ des Senders. Man kann sich in so einem Fall behelfen, 
+indem man die (nicht so häufige) Konfiguration und die (häufigere) Bedienung abwechselnd auf _eine_ Telemetrie-Seite legt.
 
 === Konfiguration des Modells (Sender mit `480x272`-Pixel _Farbdisplay_)
 
@@ -313,7 +316,8 @@ Richten Sie eine Telemetrie-Seite (volle Größe) ein mit dem Widget `Widgets/WM
 Richten Sie ein `LUA`-Script ein. Hier wählen Sie _nur eines_ der Auswahl aus:
 
 * `encib` für `IBus`-Empfänger
-* `encsb` für `SBus`-Empfänger
+* `encsbm` für `SBus`-Empfänger und Sender mit MPM-Multiprotokoll-HF-Modul
+* `encxjt` für `SBus`-Empfänger und Sender mit XJT-HF-Modul
 
 [[channels]]
 ==== Definition eines Übertragungskanals für das Schaltmodul am Empfänger
@@ -529,7 +533,7 @@ Dieses Widget dient zur _Konfiguration_ aller Parameter jeder Funktion wie dem _
 Die einzelnen Parameter des Menus lassen die _nur_ mit `T5`-hoch und -herunter anwählen sowie `T6`-hoch selektieren. _Nach_ der Selektion wird das 
 Potentiometer `S1` zum Einstellen des Parameterwertes:
 
-* `RES`: Reset aller Werte der Funktion
+* `RES`: Reset aller Werte der Funktion (Wert _muss_ auf `1` stehen)
 * `PWN`: Einstellen der PWM-Modulation, kann direkt an der _Helligkeit_ der Kontroll-LED beobachtet werden.
 * `B1/I`: Intervall des Blinkens für Schaltzustand `blink1`
 * `B1/D`: Einschaltdauer des Blinkens für Schaltzustand `blink1`

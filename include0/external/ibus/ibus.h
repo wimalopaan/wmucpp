@@ -286,6 +286,7 @@ namespace IBus {
 
                     if (param == Protocol1::broadCast) {
                         if (value == Protocol1::bCastOff) {
+                            lastOnIndex = lastindex_t{};
                             off(Meta::List<Actors...>{});                    
                         }
                     }
@@ -304,9 +305,11 @@ namespace IBus {
                             }
                         }
                         else if (param == Protocol1::reset) {
-                            using sw_t = std::remove_cvref_t<decltype(NVM::data()[0])>;
-                            NVM::data()[lastOn] = sw_t{};
-                            NVM::data().change();
+                            if (value == Protocol1::bCastReset) {
+                                using sw_t = std::remove_cvref_t<decltype(NVM::data()[0])>;
+                                NVM::data()[lastOn] = sw_t{};
+                                NVM::data().change();
+                            }
                         }
                         else if (param == Protocol1::timeMpxMode0) {
                             NVM::data().mpxMode(0, value);
@@ -372,7 +375,7 @@ namespace IBus {
 #endif
                     }
                     else {
-                        lastOnIndex = index_t{};
+                        lastOnIndex = lastindex_t{};
                         Actor::switches()[index] = Actor::SwState::Off;
                     }
                 }
@@ -435,9 +438,12 @@ namespace IBus {
                     const param_t param = Protocol1::toParameter(cv);
                     const pvalue_t value = Protocol1::toParameterValue(cv);
                     
+                    lpv = value;
+                    lpp = param;
+                    
                     if (param == Protocol1::broadCast) {
                         if (value == Protocol1::bCastOff) {
-                            lastOnIndex = index_t{};
+                            lastOnIndex = lastindex_t{};
                             for(auto& s : Actor::switches()) {
                                 s = Actor::SwState::Off;
                             }                        
@@ -446,7 +452,9 @@ namespace IBus {
                     else if (lastOnIndex) {
                         index_t lastOn{lastOnIndex.toInt()};
                         if (param == Protocol1::reset) {
-                            Out::reset(lastOn);
+                            if (value == Protocol1::bCastReset) {
+                                Out::reset(lastOn);
+                            }
                         }
                         else if (param == Protocol1::pwm) {
                             Actor::switches()[lastOn] = Actor::SwState::Steady;
@@ -456,13 +464,11 @@ namespace IBus {
                         else if (param == Protocol1::blink1Intervall) {
                             Actor::switches()[lastOn] = Actor::SwState::Blink1;
                             const uint16_t intervall = ((uint32_t)value * tick_t::max()) / pvalue_t::Upper;
-//                            Out::mode(blink_index_t{0});
                             Out::intervall2(lastOn, tick_t::fromRaw(intervall), blink_index_t{0});
                             Out::duration(lastOn, tick_t::fromRaw(intervall / 2), blink_index_t{0});
                         }
                         else if (param == Protocol1::blink1Duration) {
                             Actor::switches()[lastOn] = Actor::SwState::Blink1;
-//                            Out::mode(blink_index_t{0});
                             const uint16_t intervall = Out::intervall(lastOn, blink_index_t{0}).value;
                             const uint16_t duration = ((uint32_t)value * intervall) / pvalue_t::Upper; 
                             Out::duration(lastOn, tick_t::fromRaw(duration), blink_index_t{0});
@@ -470,13 +476,11 @@ namespace IBus {
                         else if (param == Protocol1::blink2Intervall) {
                             Actor::switches()[lastOn] = Actor::SwState::Blink2;
                             const uint16_t intervall = ((uint32_t)value * tick_t::max()) / pvalue_t::Upper;
-//                            Out::mode(blink_index_t{1});
                             Out::intervall2(lastOn, tick_t::fromRaw(intervall), blink_index_t{1});
                             Out::duration(lastOn, tick_t::fromRaw(intervall / 2), blink_index_t{1});
                         }
                         else if (param == Protocol1::blink2Duration) {
                             Actor::switches()[lastOn] = Actor::SwState::Blink2;
-//                            Out::mode(blink_index_t{1});
                             const uint16_t intervall = Out::intervall(lastOn, blink_index_t{1}).value;
                             const uint16_t duration = ((uint32_t)value * intervall) / pvalue_t::Upper; 
                             Out::duration(lastOn, tick_t::fromRaw(duration), blink_index_t{1});
@@ -502,28 +506,29 @@ namespace IBus {
                     if (addr != mAddr) {
                         return false;
                     }
+                    lmv = mode;
                     if (mode != Protocol1::off) {
                         lastOnIndex = index.toInt();
                         if (mode == Protocol1::on) {
                             Actor::switches()[index] = Actor::SwState::Steady;
                         }
                         else if (mode == Protocol1::blink1) {
-//                            Out::mode(blink_index_t{0});
                             Actor::switches()[index] = Actor::SwState::Blink1;
                         }
                         else if (mode == Protocol1::blink2) {
-//                            Out::mode(blink_index_t{1});
                             Actor::switches()[index] = Actor::SwState::Blink2;
                         }
                     }
                     else {
-                        lastOnIndex = index_t{};
+                        lastOnIndex = lastindex_t{};
                         Actor::switches()[index] = Actor::SwState::Off;
                     }
                 }
                 return true;                
             }
-            
+            static inline mode_t lmv;
+            static inline pvalue_t lpv;
+            static inline param_t lpp;
 //        private: 
             using lastindex_t = etl::uint_ranged_NaN<uint8_t, index_t::Lower, index_t::Upper>; 
             static inline lastindex_t lastOnIndex;

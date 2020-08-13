@@ -1,3 +1,5 @@
+#define NDEBUG
+
 #define USE_SBUS
 //#define USE_IBUS
 
@@ -129,7 +131,7 @@ struct FSM {
     using cycle9_t = etl::uint_ranged_circular<uint8_t, 0, 8>; // Robbe / CP mode use only 9 cycles, so we have to increment twice
     using cycle6_t = etl::uint_ranged_circular<uint8_t, 0, 5>; // Robbe / CP mode use only 9 cycles, so we have to increment twice
     
-    static inline constexpr uint8_t offset{10};
+//    static inline constexpr uint8_t offset{10};
     
     static inline void init() {
         PPM::init();    
@@ -294,8 +296,8 @@ int main() {
     eeprom::init();
     {
         if (!((appData.magic() == 42))) {
-            appData.magic() = 42;
             appData.clear();
+            appData.magic() = 42;
             appData.change();
         }
     }

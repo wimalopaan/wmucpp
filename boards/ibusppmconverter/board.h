@@ -219,6 +219,9 @@ namespace Storage {
             for(auto& v : AValues) {
                 v = value_type{};
             }
+            for(auto& v : mMpxModes) {
+                v = Mode::Graupner8K;
+            }
         }
         value_type::channel_type& channel() {
             return mChannel;
@@ -259,7 +262,7 @@ namespace Storage {
             return Mode::Graupner8K;
         }
     private:
-        std::array<Mode, 5> mMpxModes;
+        std::array<Mode, 5> mMpxModes {};
         uint8_t mMagic;
         value_type::channel_type mChannel;
         value_type::addr_type mAddress;
