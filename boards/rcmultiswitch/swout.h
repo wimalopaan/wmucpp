@@ -141,11 +141,6 @@ namespace External {
         inline static auto intervall(const index_t index, const blink_index_t blinkIndex) {
             return NVM::data()[index].blinks()[blinkIndex].intervall;
         }
-        inline static void mpxMode(uint8_t a, auto v) {
-            NVM::data().mpxMode(a, v);
-            NVM::data().change();
-        }
-        
     private:
         inline static void on(const index_t index) {
             Meta::visitAt<OutList>(index, []<typename L>(Meta::Wrapper<L>){

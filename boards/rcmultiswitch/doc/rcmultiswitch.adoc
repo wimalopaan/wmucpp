@@ -2,7 +2,7 @@
 // ---- Beginn Standardheader
 = RC MultiSwitch-D 
 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
-:revnumber: 0.9
+:revnumber: 0.91
 :revremark: HW_1.0
 :revdate: 01.01.1970
 :lang: de
@@ -539,18 +539,14 @@ Potentiometer `S1` zum Einstellen des Parameterwertes:
 * `B1/D`: Einschaltdauer des Blinkens für Schaltzustand `blink1`
 * `B2/I`: Intervall des Blinkens für Schaltzustand `blink2`
 * `B2/D`: Einschaltdauer des Blinkens für Schaltzustand `blink2`
-* `PThus`: Der sog. PassThrough-Kanal: ein beliebiger `OpenTX`-Kanal (`1` ... `16`) kann zur Weiterleitung an den Ausgang des Schaltmoduls ausgewählt werden
+* `PThu`: Der sog. PassThrough-Kanal: ein beliebiger `OpenTX`-Kanal (`1` ... `16`) kann zur Weiterleitung an den Ausgang des Schaltmoduls ausgewählt werden
 * `Min`: (unbenutzt)
 * `Max`: (unbenutzt)
 
 Es existiert eine zusätzliche Seite (am Ende) mit modul-globalen Einstellungen:
 
-* `L/Res`: Reset _aller_ Modulparameter bzw. _Anlernen_ der Moduladresse und des Übertragungskanals
-* `MPX0`: Zeitmultiplex-Verfahren für Ausgang `1`
-* `MPX1`: Zeitmultiplex-Verfahren für Ausgang `2`
-* `MPX2`: Zeitmultiplex-Verfahren für Ausgang `3`
-* `MPX3`: Zeitmultiplex-Verfahren für Ausgang `4`
-* `MPX4`: Zeitmultiplex-Verfahren für Ausgang `5`
+* `Learn Ch/Adr`:  _Anlernen_ der Moduladresse und des Übertragungskanals
+* `TMpx`: Zeitmultiplex-Verfahren für Ausgang die jeweilige Adresse (nur bei `RC-MultiAdapter-DA`)
 
 Bei der Einstellung des Zeitmultiplexverfahrens gelten folgende Zuordnungen von eingestelltem Wert und Verfahren:
 

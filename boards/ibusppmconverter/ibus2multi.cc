@@ -212,7 +212,10 @@ struct FSM {
     }
     
     static inline void pulse(uint8_t i) {
-        if (const auto pch = NVM::data()[i].passThru()) {
+        constexpr Storage::ChannelIndex::addr_type adr{Address};
+        Storage::ChannelIndex chi{adr, Storage::ChannelIndex::channel_type{i}};
+        
+        if (const auto pch = NVM::data().passThru(chi)) {
             auto v = PA::value(pch);
             PPM::ppm_async(v);
         }
