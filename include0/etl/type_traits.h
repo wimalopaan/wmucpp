@@ -24,7 +24,6 @@
 #include <algorithm>
 
 #include "concepts.h"
-#include "meta.h"
 
 namespace etl {
     template<typename T>

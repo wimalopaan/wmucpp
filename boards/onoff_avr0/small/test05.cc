@@ -56,9 +56,10 @@ namespace Storage {
     
     struct ApplData final : public EEProm::DataBase<ApplData> {
         using value_type = etl::uint_NaN<uint8_t>;
-        value_type& operator[](AVKey key) {
+        inline value_type& operator[](const AVKey key) {
             return AValues[static_cast<uint8_t>(key)];
         }
+        inline void select(const AVKey) {}
     private:
         std::array<value_type, static_cast<uint8_t>(AVKey::_Number)> AValues;
     };

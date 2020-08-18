@@ -33,9 +33,11 @@ namespace etl {
     class FiFo final {
     public:
         using size_type = etl::typeForValue_t<Size>;
-
-        using index_type = etl::uint_ranged_circular<size_type, 0, Size - 1>;
-//        using index_type = size_type;
+        
+        inline static constexpr size_type size() {
+            return Size;
+        }
+        using index_type = etl::uint_ranged_circular<size_type, 0, size() - 1>;
         
         inline static constexpr bool sizeIsAtomic = DefaultMcuType::template is_atomic<size_type>();
         
@@ -154,9 +156,6 @@ namespace etl {
         inline bool empty() volatile const {
             Scoped<DisbaleInterrupt<RestoreState>, !sizeIsAtomic> di;
             return in.toInt() == out.toInt();
-        }
-        inline constexpr size_type size() const {
-            return Size;
         }
     private:
         index_type in{};

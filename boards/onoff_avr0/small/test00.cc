@@ -32,9 +32,10 @@ struct Storage final {
                                 _Number};
     
     struct ApplData final : public EEProm::DataBase<ApplData> {
-        etl::uint_NaN<uint8_t>& operator[](AVKey key) {
+        etl::uint_NaN<uint8_t>& operator[](const AVKey key) {
             return AValues[static_cast<uint8_t>(key)];
         }
+        inline void select(const AVKey) {}
     private:
         std::array<etl::uint_NaN<uint8_t>, static_cast<uint8_t>(AVKey::_Number)> AValues;
     };

@@ -3,9 +3,13 @@
 #include <cstdint>
 #include <algorithm>
 #include <array>
-#include "etl/concepts.h"
+
+#include "concepts.h"
+#include "type_traits.h"
 
 namespace etl {
+    using namespace etl::Concepts;
+
     template<Unsigned T = uint8_t, T LowerBound = 0, T UpperBound = std::numeric_limits<T>::max()>
     class uint_ranged_circular;
     

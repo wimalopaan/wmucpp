@@ -1,4 +1,4 @@
-/*
+/*^
  * WMuCpp - Bare Metal C++ 
  * Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
@@ -23,8 +23,9 @@
 #include <type_traits>
 #include <limits>
 #include <cassert>
+#include <optional>
 
-//#include "util/type_traits.h"
+//#include <etl/ranged.h>
 
 namespace Meta {
     namespace detail {
@@ -369,8 +370,7 @@ namespace Meta {
                 else {
                     return visit<Meta::rest<List>>::find(callable, index + 1);
                 }
-            }
-            
+            }            
         };
         template<> 
         struct visit<Meta::List<>> {
