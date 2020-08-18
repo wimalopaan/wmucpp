@@ -3,6 +3,8 @@
 //#define USE_IBUS
 #define USE_SBUS
 
+#define LEARN_DOWN // start at highest channel number downwards
+
 #include "board.h"
 #include "swout.h"
 
@@ -33,9 +35,7 @@ struct FSM {
             }
             break;
         case State::LearnTimeout:
-            if constexpr(!std::is_same_v<Term, void>) {
-                etl::outl<Term>("timeout ch: "_pgm, NVM::data().channel().toInt(), " adr: "_pgm, NVM::data().address().toInt());
-            }
+            etl::outl<Term>("timeout ch: "_pgm, NVM::data().channel().toInt(), " adr: "_pgm, NVM::data().address().toInt());
             if (NVM::data().channel() && NVM::data().address()) {
                 SW::channel(NVM::data().channel());
                 SW::address(NVM::data().address());
@@ -59,12 +59,6 @@ private:
     using addr_t = typename protocol_t::addr_t;
     
     static inline bool search() {
-//        if (const auto lc = PA::value(learnChannel.toRangedNaN())) {
-//            etl::outl<Term>("c: "_pgm, learnChannel.toInt(), " v: "_pgm, lc.toInt());
-//        }
-//        else {
-//            etl::outl<Term>("c: "_pgm, learnChannel.toInt());
-//        }
         if (const auto lc = PA::valueMapped(learnChannel.toRangedNaN()); lc && SW::isLearnCode(lc)) {
             if (const auto pv = protocol_t::toParameterValue(lc).toInt(); (pv >= 1) && ((pv - 1) <= SW::protocol_t::addr_t::Upper)) {
                 const uint8_t addr = pv - 1;
@@ -76,12 +70,20 @@ private:
                 return true;
             }
         }   
+#ifdef LEARN_DOWN
+        --learnChannel;
+#else
         ++learnChannel;
+#endif
         return false;
     }
     using ch_t = PA::channel_t;
 
+#ifdef LEARN_DOWN
+    static inline etl::uint_ranged_circular<uint8_t, ch_t::Lower, ch_t::Upper> learnChannel{ch_t::Upper};
+#else
     static inline etl::uint_ranged_circular<uint8_t, ch_t::Lower, ch_t::Upper> learnChannel{0};
+#endif
     static inline State mState{State::Undefined};
     inline static External::Tick<Timer> stateTicks;
 };

@@ -2,7 +2,7 @@
 // ---- Beginn Standardheader
 = RC MultiSwitch-D 
 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
-:revnumber: 0.91
+:revnumber: 0.92
 :revremark: HW_1.0
 :revdate: 01.01.1970
 :lang: de
@@ -328,15 +328,26 @@ Das Schaltmodul ist standardmäßig auf Kanal `10` eingestellt. Es kann jedoch a
 
 Im Sender muss daher für diesen Kanal als Quelle das entspechende Mixer-Script eingetragen werden.
 
-.Das Mischer-Skript `encsb.lua`
+.Das Mischer-Skript `encsbm.lua`
 image::m1.png[align="center"]
 
 .Hier wird der Übertragungskanal `10` wird für die Schaltmodule verwendet.
 image::m2.png[align="center"]
 
-.Als Quelle des Mischers des Übertragungskanals wird das Mischer-Skript `encsb.lua` eingetragen
+.Als Quelle des Mischers des Übertragungskanals wird das Mischer-Skript `encsbm.lua` eingetragen
 image::m3.png[align="center"]
 
+.Mögliche Fehlerquelle im späteren Betrieb
+[CAUTION]
+--
+Bei _jedem_ Einschalten scannen die Schaltmodule _alle_ Übertragungskanäle auf ein spezielles Konfigurationssignal,
+um den Übertragungskanal zu finden und ggf. die Adresse des Moduls neu zu lernen. Dieses Konfigurationssignal kann auch 
+durch zufällige Geberposition auf anderen Kanälen unbeabsichtigt entstehen. Um dieses Problem zu umgehen, sollten
+die Übertragungskanäle mit Nummern _oberhalb_ des gewählten Kanals für die digitalen Schaltmodule _unbenutzt_ sein. 
+Um auch bei späteren Erweiterung von Modellen hier vor Fehlern geschützt zu sein, sollte sich der Übertragungskanal für die 
+digitalen Schaltmodule auf der _höchsten_ Kanalnummer befinden. Dies ist bei `SBus` der Kanal `16` und bei `IBus` 
+der Kanal `14` oder `16` (je nach verwendeter Version der Firmware im _4in1-MPM-HF-Modul_).
+--
 
 ==== Definition der Geber (Inputs)
 
@@ -634,9 +645,18 @@ Damit kann an einem Übertragungskanal natürlich nur ein Modul betrieben werden
 [[learn]]
 === Kanal und Adresse
 
-Das _Anlernen_ von _Kanal_ und _Adresse_ geschieht in _einem_ Schritt. Dazu _muss_ das zu konfigurierende `RC MultiSwitch-D` _allein_ am betreffenden `IBus` oder `SBus` 
-hängen. Weiterhin sollten außer dem zu konfiguriereden Übertragungskanal für die `RC MultiSwitch-D`-Module alle anderen Übertragungskanäle im Sender 
-_dekativiert_ werden (keine _Mischer_ aktivieren).
+Das _Anlernen_ von _Kanal_ und _Adresse_ geschieht in _einem_ Schritt. Dazu _muss_ das zu konfigurierende `RC MultiSwitch-D` 
+_allein_ am betreffenden `IBus` oder `SBus` hängen. Weiterhin sollten außer dem zu konfiguriereden Übertragungskanal 
+für die `RC MultiSwitch-D`-Module alle anderen Übertragungskanäle im Sender _dekativiert_ werden (keine _Mischer_ aktivieren).
+
+.Spezielles Modell für das Anlernen der Module
+[TIP]
+--
+Um den Anlernvorgang zu erleichtern, kann man sich ein spezielles _Modell_ nur für das Anlernen einrichten. 
+Dieses Modell wird _niemals_ für die Steuerung eines realen Modells verwendet.
+Bei diesem Modell sind _alle_ Übertragungskanäle bis auf den Kanal für die digitalen Schaltmodule deaktiviert 
+(keine Mischer).
+--
 
 .Anschluß des Moduls zum Anlernen
 [CAUTION]
@@ -649,13 +669,13 @@ _dekativiert_ werden (keine _Mischer_ aktivieren).
 
 . Sender und Empfänger sowie Schaltmodule aus.
 . Ein `RC MultiSwitch-D` an den `IBus` oder `SBus` anschließen.
-. Die Mischer-Skripte `encsb.lua` oder `encib.lua` für den gewünschten Übertragungskanal einrichten (s.o.).
+. Die Mischer-Skripte `encsbm.lua`, `encxjt.lua` oder `encib.lua` für den gewünschten Übertragungskanal einrichten (s.o.).
 . Sender einschalten.
 . Konfigurationsmenu auswählen
-. Im Konfigurationsmenu auf der _letzten_ Seite (modul-spezifische Einstellungen) den Parameter `L/Res` selektieren. Mit Potentiometer `S1` die _Adresse_ einstellen 
-(Wert `1` ... `8`).
+. Im Konfigurationsmenu auf der _letzten_ Seite (modul-spezifische Einstellungen) den Parameter `Learn Ch/Adr` selektieren. 
+Mit Potentiometer `S1` die _Adresse_ einstellen (Wert `1` ... `8` bedeutet Adresse `1` ... `8`).
 . Empfänger einschalten
-. das zu konfigurierende `RC MultiSwitch-D` einschalten.
+. das zu konfigurierende `RC MultiSwitch-D` einschalten (`RC-MultiAdapter-DA` wird vom Empfänger versorgt).
 . nach ca. 3 Sekunden das `RC MultiSwitch-D` ausschalten
 . Für weitere `RC MultiSwitch-D`-Module die nä. Adresse selektieren
 . das nä. `RC MultiSwitch-D` anschließen und einschalten
@@ -663,12 +683,13 @@ _dekativiert_ werden (keine _Mischer_ aktivieren).
 
 .Kontrolle:
 
-Nach dem Anlernen von Kanal und Adresse kann man auch sofort ins Bedien-Menu wechseln, dort die Seite für die Modul-Adresse auswählen und kontrollieren, ob sich das 
-Schaltmodul ansprechen lässt. Andernfalls ist der Anlernvorgang zu wiederholen.
+Nach dem Anlernen von Kanal und Adresse kann man auch sofort ins Bedien-Menu wechseln, dort die Seite für die Modul-Adresse 
+auswählen und kontrollieren, ob sich das Schaltmodul ansprechen lässt. Andernfalls ist der Anlernvorgang zu wiederholen.
 
 === Adressen beim `RC MultiAdapter-DA`
 
-Weil der `RC MultiAdapter-DA` insgesamt 5 alte Schaltmodule ansteuern kann, belegt er auch 5 _unmittelbar aufeinanderfolgende_ Adressen.
+Weil der `RC MultiAdapter-DA` insgesamt 5 alte Schaltmodule ansteuern kann, belegt er auch 5 
+_unmittelbar aufeinanderfolgende_ Adressen.
 
 Damit gilt das folgende Schema für die Zuordnung von Adressen zu den Ausgängen des `RC MultiAdapter-DA` und den daran angeschlossenen Schaltmodulen:
 
