@@ -6,8 +6,8 @@
 
 #define USE_16V // (3k1 im Spannungsteiler)
 
-//#define USE_SPORT
-#define USE_HOTT
+#define USE_SPORT
+//#define USE_HOTT
 //#define USE_IBUS
 //#define FS_I6S
 #define USE_OFFSET
@@ -84,9 +84,10 @@ namespace Storage {
     
     struct ApplData final : public EEProm::DataBase<ApplData> {
         using value_type = etl::uint_NaN<uint16_t>;
-        value_type& operator[](AVKey key) {
+        inline value_type& operator[](const AVKey key) {
             return AValues[static_cast<uint8_t>(key)];
         }
+        inline void select(const AVKey) {}
     private:
         std::array<value_type, static_cast<uint8_t>(AVKey::_Number)> AValues;
     };
@@ -129,7 +130,9 @@ using PortB = Port<B>;
 using daisyChain= Pin<PortA, 7>; 
 #endif
 
-using dbg       = Pin<PortA, 2>; 
+#ifndef NDEBUG
+using dbg1       = Pin<PortA, 2>; 
+#endif
 using ledPin    = ActiveHigh<Pin<PortB, 1>, Output>;
 using led       = External::Blinker<ledPin, systemTimer::intervall, 30_ms, 1000_ms>;
 using buttonPin = Pin<PortA, 5>;
@@ -680,7 +683,13 @@ struct FSM {
                 UnInit::value = 0x00_B;
                 led::off();
                 wdt::off<ccp>();
+#ifdef USE_SPORT
+                sensor::enable<false>();
+#endif                
                 sleep::down();
+#ifdef USE_SPORT
+                sensor::enable<true>();
+#endif                
                 wdt::init<ccp>();
                 mState = State::Idle;
                 break;
@@ -963,7 +972,7 @@ ISR(TCD0_OVF_vect) {
 
 #ifndef NDEBUG
 [[noreturn]] inline void assertOutput(const AVR::Pgm::StringView& expr [[maybe_unused]], const AVR::Pgm::StringView& file[[maybe_unused]], unsigned int line [[maybe_unused]]) noexcept {
-#if !(defined(USE_IBUS) || defined(USE_HOTT))
+#if !(defined(USE_IBUS) || defined(USE_HOTT) || defined(USE_SPORT))
     etl::outl<terminal>("Assertion failed: "_pgm, expr, etl::Char{','}, file, etl::Char{','}, line);
 #endif
     while(true) {
