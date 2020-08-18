@@ -292,7 +292,7 @@ namespace IBus {
                     else if (lastOnIndex && lastOnAddr) {
                         index_t lastOn{lastOnIndex.toInt()};
                         if ((lastOnAddr.toInt() - mAddr) < nActors) {
-                            etl::uint_ranged<uint8_t, 0, (nActors - 1)> lastAddrOffset{lastOnAddr.toInt() - mAddr};
+                            etl::uint_ranged<uint8_t, 0, (nActors - 1)> lastAddrOffset{(uint8_t)(lastOnAddr.toInt() - mAddr)};
                             if (param == Protocol1::passThruChannel) {
                                 if ((value >= 1) && (value <= 16)) {
                                     channel_t v{value};

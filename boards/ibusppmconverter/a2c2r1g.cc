@@ -1,3 +1,5 @@
+#define NDEBUG
+
 #define USE_IBUS
 
 #include "board.h"
@@ -43,7 +45,10 @@ struct FSM {
             break;
         }
     }
-//private:
+    inline static State state() {
+        return mState;
+    }
+private:
     inline static uint8_t mTickCount{};
     inline static State mState{State::Init};
 };
@@ -51,10 +56,10 @@ using fsm = FSM<>;
 
 template<typename FSM>
 struct StateProvider {
-    inline static constexpr auto ibus_type = IBus::Type::type::ARMED; 
+    inline static constexpr auto ibus_type = IBus::Type::type::FLIGHT_MODE; 
     inline static constexpr void init() {}
     inline static constexpr uint16_t value() {
-        return uint16_t(FSM::mState);
+        return uint16_t(FSM::state());
     }
 };
 
@@ -62,7 +67,7 @@ using stateP = StateProvider<fsm>;
 
 using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, 
                           Meta::List<curr0P, curr1P, rpm0P, rpm1P, speedP, 
-                          bytesRP, bytesVP, stateP>, 
+                          bytesP, packagesR, packagesV, stateP>, 
                           systemTimer, ibt>;
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position>>;

@@ -46,11 +46,11 @@
 // Config
 // A        Sensor (I-Bus)
 // ----
-// A4t      4xTemperatur
-// A2t2c    2xTemperatur, 2xStrom 
-// A3t2r    3xTemperatur, 2xDrehzahl
 // A2c2r    2xStrom, 2xDrehzahl
-// A3c2r    3xStrom, 2xDrehzahl
+// A2c2r1g  2xStrom, 2xDrehzahl, 1xGPS
+// A2t2c    2xTemperatur, 2xStrom 
+// A3t2r    2xTemperatur, 2xDrehzahl
+// A4t      4xTemperatur
 
 // H        Sensor (Hott)
 

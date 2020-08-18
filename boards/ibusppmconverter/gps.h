@@ -36,14 +36,24 @@ private:
 
 using speedP = SpeedProvider<vtg>;
 
-template<typename VTG>
+template<typename Dekoder>
+struct PackagesProvider {
+    inline static constexpr auto ibus_type = IBus::Type::type::GPS_STATUS; 
+    inline static constexpr void init() {}
+    inline static constexpr uint16_t value() {
+        return Dekoder::receivedPackages();
+    }
+};
+template<typename Dekoder>
 struct BytesProvider {
     inline static constexpr auto ibus_type = IBus::Type::type::ARMED; 
     inline static constexpr void init() {}
     inline static constexpr uint16_t value() {
-        return VTG::receivedBytes;
+        return Dekoder::receivedBytes();
     }
 };
 
-using bytesRP = BytesProvider<rmc>;
-using bytesVP = BytesProvider<vtg>;
+using packagesR = PackagesProvider<rmc>;
+using packagesV = PackagesProvider<vtg>;
+
+using bytesP = BytesProvider<gpsPA>;

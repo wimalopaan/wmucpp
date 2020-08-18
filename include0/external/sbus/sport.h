@@ -86,6 +86,10 @@ namespace External {
             static inline void init() {
                 uart::template init<AVR::HalfDuplex>();
             }
+            template<bool B = true>
+            static inline void enable() {
+                uart::template rxEnable<B>();
+            }
             static inline void periodic() {
                 switch(mState) {
                 case State::ReplyWait:

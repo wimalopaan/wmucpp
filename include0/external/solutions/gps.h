@@ -47,37 +47,51 @@ namespace External::GPS {
     
     struct VTG {
         inline static constexpr auto prefix = "VTG"_pgm;
-        inline static void process(std::byte b, uint8_t index, uint8_t field) {
+        inline static void process(const std::byte b, const uint8_t index, const uint8_t field) {
             if (field == SpeedFieldNumber) {
                 if (index < std::size(speed)) {
+                    if (index == 0) {
+                        ++mReceivedPackages;
+                    }
                     speed[index] = b;
-                    ++receivedBytes;
                 }
             }
         }  
+        inline static uint16_t receivedPackages() {
+            return mReceivedPackages;
+        }
         inline static void speedRaw(StringBuffer<Sentence::DecimalMaxWidth>& result) {
             Scoped<DisbaleInterrupt<RestoreState>> di;
             etl::copy(result, speed);
         }
-        inline static uint16_t receivedBytes{};
+    private:
+        inline static uint16_t mReceivedPackages{};
         inline static constexpr uint8_t SpeedFieldNumber = 6;
         inline static std::array<std::byte, Sentence::DecimalMaxWidth> speed;
     };
     struct RMC {
         inline static constexpr auto prefix = "RMC"_pgm;
-        inline static void process(std::byte b, uint8_t index, uint8_t field) {
+        inline static void process(const std::byte b, const uint8_t index, const uint8_t field) {
             if (field == TimeFieldNumber) {
                 if (index < std::size(time)) {
+                    if (index == 0) {
+                        ++mReceivedPackages;
+                    }
                     time[index] = b;
-                    ++receivedBytes;
                 }
             }
             else if (field == DateFieldNumber) {
+                if (index == 0) {
+                    ++mReceivedPackages;
+                }
                 if (index < std::size(date)) {
                     date[index] = b;
                 }
             } 
         }  
+        inline static uint16_t receivedPackages() {
+            return mReceivedPackages;
+        }
         inline static void timeRaw(StringBuffer<Sentence::TimeMaxWidth>& result) {
             Scoped<DisbaleInterrupt<RestoreState>> di;
             copy(result, time);
@@ -86,7 +100,8 @@ namespace External::GPS {
             Scoped<DisbaleInterrupt<RestoreState>> di;
             copy(result, date);
         }
-        inline static uint16_t receivedBytes{};
+    private:
+        inline static uint16_t mReceivedPackages{};
         inline static constexpr uint8_t TimeFieldNumber = 0;
         inline static constexpr uint8_t DateFieldNumber = 8;
         inline static std::array<std::byte, Sentence::TimeMaxWidth> time;
@@ -98,7 +113,12 @@ namespace External::GPS {
 
         using decoders = Meta::List<SentenceDecoder...>;
         
-        inline static bool process(std::byte b) { // from isr only
+        inline static uint16_t receivedBytes() {
+            return mReceivedBytes;
+        }
+        
+        inline static bool process(const std::byte b) { // from isr only
+            ++mReceivedBytes;
             switch(state) {
             case State::Undefined:
                 if (b == Sentence::StartSymbol) {
@@ -166,12 +186,12 @@ namespace External::GPS {
             }
             return true;
         }    
-        inline static void periodic() {
-        }
-        inline static State state = State::Undefined;
-        inline static uint8_t index = 0;
-        inline static uint8_t field = 0;
-        inline static uint8_t decoder = std::numeric_limits<uint8_t>::max();
+    private:
+        inline static uint16_t mReceivedBytes{0};
+        inline static State state{State::Undefined};
+        inline static uint8_t index{0};
+        inline static uint8_t field{0};
+        inline static uint8_t decoder{std::numeric_limits<uint8_t>::max()};
         inline static std::array<etl::Char, Sentence::SentenceTypeMaxWidth> sentenceType;
     };
 }
