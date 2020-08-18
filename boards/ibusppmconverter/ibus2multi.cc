@@ -3,6 +3,8 @@
 #define USE_SBUS
 //#define USE_IBUS
 
+#define LEARN_DOWN // start at highest channel number downwards
+
 #include "board.h"
 
 template<typename PA, typename SW, typename OUT, typename NVM, typename Timer, typename Term = void>
@@ -29,7 +31,7 @@ struct GFSM {
             }
             break;
         case State::LearnTimeout:
-            //            etl::outl<Term>("timeout ch: "_pgm, NVM::data().channel().toInt(), " adr: "_pgm, NVM::data().address().toInt());
+            etl::outl<Term>("timeout ch: "_pgm, NVM::data().channel().toInt(), " adr: "_pgm, NVM::data().address().toInt());
             if (NVM::data().channel() && NVM::data().address()) {
                 SW::channel(NVM::data().channel());
                 SW::address(NVM::data().address());
@@ -37,7 +39,7 @@ struct GFSM {
             mState = State::Run;
             break;
         case State::ShowAddress:
-            //            etl::outl<Term>("learned ch: "_pgm, NVM::data().channel().toInt(), " adr: "_pgm, NVM::data().address().toInt());
+            etl::outl<Term>("learned ch: "_pgm, NVM::data().channel().toInt(), " adr: "_pgm, NVM::data().address().toInt());
             mState = State::Run;
             break;
         case State::Run:
@@ -51,7 +53,6 @@ private:
     using addr_t = typename protocol_t::addr_t;
     
     static inline bool search() {
-        //        etl::outl<Term>("test: "_pgm, learnChannel.toInt());
         if (const auto lc = PA::valueMapped(learnChannel.toRangedNaN()); lc && SW::isLearnCode(lc)) {
             if (const auto pv = protocol_t::toParameterValue(lc).toInt(); (pv >= 1) && ((pv - 1) <= SW::protocol_t::addr_t::Upper)) {
                 const uint8_t addr = pv - 1;
@@ -63,12 +64,19 @@ private:
                 return true;
             }
         }   
+#ifdef LEARN_DOWN
+        --learnChannel;
+#else
         ++learnChannel;
+#endif
         return false;
     }
     using ch_t = PA::channel_t;
-    
+#ifdef LEARN_DOWN
+    static inline etl::uint_ranged_circular<uint8_t, ch_t::Lower, ch_t::Upper> learnChannel{ch_t::Upper};
+#else
     static inline etl::uint_ranged_circular<uint8_t, ch_t::Lower, ch_t::Upper> learnChannel{0};
+#endif
     static inline State mState{State::Undefined};
     inline static External::Tick<Timer> stateTicks;
 };
@@ -258,7 +266,8 @@ using evuser0 = Event::Route<evch0, Event::Users::Tcb<0>>;
 using evuser1 = Event::Route<evch1, Event::Users::Tcb<1>>;
 using evrouter = Event::Router<Event::Channels<evch0, evch1>, Event::Routes<evuser0, evuser1>>;
 
-using gfsm = GFSM<servo_pa, ibus_switch, void, eeprom, systemTimer>;
+using terminal = etl::basic_ostream<void>;
+using gfsm = GFSM<servo_pa, ibus_switch, void, eeprom, systemTimer, terminal>;
 
 auto& appData = eeprom::data();
 
