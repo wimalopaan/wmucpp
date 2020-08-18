@@ -143,7 +143,6 @@ struct Sender {
             mValues.reserve(data.size() + offset);
         }
         for(uint8_t i = 0; i < data.size(); ++i) {
-//            mValues[i + offset] = 42;
             mValues[i + offset] = data[i];
         }
     }    
@@ -152,10 +151,6 @@ struct Sender {
             mValues.reserve(1);
         }
         mValues[0] = v;
-        
-//        mValues.reserve(2);
-//        mValues[0] = 42;
-//        mValues[1] = cell::c;
     }
     template<typename Dev>
     static inline void send() {
@@ -216,7 +211,7 @@ struct FSM {
             case State::Run:
                 break; 
             case State::Sleep:
-//                sleep::down();
+                sleep::down();
                 mState = State::Run;
                 break;        
             }
@@ -276,3 +271,16 @@ int main() {
 ISR(PORTA_PORT_vect) {
     activate::resetInt();
 }
+
+#ifndef NDEBUG
+[[noreturn]] inline void assertOutput(const AVR::Pgm::StringView& expr [[maybe_unused]], const AVR::Pgm::StringView& file[[maybe_unused]], unsigned int line [[maybe_unused]]) noexcept {
+    while(true) {
+//        dbg1::toggle();
+    }
+}
+
+template<typename String1, typename String2>
+[[noreturn]] inline void assertFunction(const String1& s1, const String2& s2, unsigned int l) {
+    assertOutput(s1, s2, l);
+}
+#endif

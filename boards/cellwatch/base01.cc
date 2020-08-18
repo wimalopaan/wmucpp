@@ -1,12 +1,8 @@
-// cell-min/cell-max: modus
-// cell-min/akku-max: modus
 // opentx 16bit / 14-bit: obere 2 bits nummer der Zelle
 
 #define NDEBUG
 
 #define USE_IBUS
-//#define USE_SPORT
-//#define USE_HOTT
 
 #include <mcu/avr.h>
 
@@ -17,12 +13,15 @@
 #include <mcu/internals/portmux.h>
 #include <mcu/internals/adc.h>
 #include <mcu/internals/sigrow.h>
+#include <mcu/internals/sleep.h>
 
 #include <external/ibus/ibus.h>
 #include <external/hal/alarmtimer.h>
 #include <external/hal/adccontroller.h>
 #include <external/solutions/series01/swuart.h>
 #include <external/solutions/analogsensor.h>
+#include <external/solutions/tick.h>
+
 #include <std/chrono>
 
 #include <etl/output.h>
@@ -32,9 +31,11 @@ using namespace AVR;
 using namespace std::literals::chrono;
 using namespace External::Units::literals;
 
-using activate = Pin<Port<A>, 1>;
+using activate = Pin<Port<A>, 1>; // and led
 using conn12 = Pin<Port<A>, 7>;
 using daisy = Pin<Port<A>, 2>;
+
+//using txrx = Pin<Port<A>, 6>; // used for wake-up
 
 // AIN3 = Voltage
 
@@ -45,6 +46,7 @@ namespace  {
 using ccp = Cpu::Ccp<>;
 using clock = Clock<>;
 using sigrow = SigRow<>;
+using sleep = Sleep<>;
 
 using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Default>;
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position>>;
@@ -55,6 +57,9 @@ using channel_t = adcController::index_type;
 
 using systemTimer = SystemTimer<Component::Rtc<0>, fRtc>;
 using alarmTimer = External::Hal::AlarmTimer<systemTimer, 8>;
+
+template<typename Timer> struct FSM;
+using fsm = FSM<systemTimer>;
 
 template<typename ADC, uint8_t Channel>
 struct CellsCollector {
@@ -86,12 +91,44 @@ struct CellsCollector {
     template<auto N>
     struct Provider {
         inline static constexpr auto ibus_type = IBus::Type::type::CELL;
-        inline static constexpr void init() {
-        }
+        inline static constexpr void init() {}
         inline static constexpr uint16_t value() {
             return mValues[N];
         }
     };
+    
+    template<typename FSM>
+    struct MinProvider {
+        inline static constexpr auto ibus_type = IBus::Type::type::CELL;
+        inline static constexpr void init() {}
+        inline static constexpr uint16_t value() {
+            
+            FSM::reset();
+            
+            auto min = mValues[0];
+            for(uint8_t i = 1; i < mValues.size(); ++i) {
+                if (mValues[i] > 0) {
+                    if (mValues[i] < min) {
+                        min = mValues[i];
+                    } 
+                }
+            }
+            return min;
+        }
+    };
+    struct TotalProvider {
+        inline static constexpr auto ibus_type = IBus::Type::type::EXTERNAL_VOLTAGE;
+        inline static constexpr void init() {}
+        inline static constexpr uint16_t value() {
+            uint16_t t = 0;
+            for(uint8_t i = 0; i < mValues.size(); ++i) {
+                t += mValues[i];
+            }
+            return t;
+        }
+        
+    };
+
 private:
     inline static constexpr uint8_t mSize = 16;
     inline static volatile etl::FixedVector<uint16_t, mSize> mValues{};
@@ -222,18 +259,59 @@ struct IBusThrough {
 using ibt = IBusThrough;
 
 using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, 
-                          Meta::List<cell0P, cell1P, cell2P, cell3P>, systemTimer, ibt
+                          Meta::List<cell0P, cell1P, cell2P, cell3P, cellsColl::MinProvider<fsm>, cellsColl::TotalProvider>, systemTimer, ibt
 //                          ,etl::NamedFlag<true>
 //                          ,etl::NamedFlag<true>
                           >;
 
+
 using upperCell = External::SoftSerial::Usart<Meta::List<conn12, void>, Component::Tcd<0>, cellPA,
                                             AVR::BaudRate<9600>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<16>, 
                                             etl::NamedFlag<false>, etl::NamedFlag<false>>;
-
-
+template<typename Timer>
 struct FSM {
     enum class State : uint8_t {Init, Run, Sleep};
+    
+    static constexpr auto intervall = Timer::intervall;
+    static constexpr External::Tick<Timer> idleTimeBeforeSleepTicks{5000_ms};
+    
+    inline static void reset() {
+        stateTicks.reset();
+    }
+    
+    inline static void ratePeriodic() {
+        auto lastState = mState;
+        ++stateTicks;
+        switch(mState) {
+        case State::Init:
+            mState = State::Run;
+            break;
+        case State::Run:
+            if (stateTicks > idleTimeBeforeSleepTicks) {
+                mState = State::Sleep;
+            }
+            break; 
+        case State::Sleep:
+            break;        
+        }
+        if (lastState != mState) {
+            stateTicks.reset();
+            switch(mState) {
+            case State::Init:
+                break;
+            case State::Run:
+                break; 
+            case State::Sleep:
+                sleep::down();
+                ibus::clear();
+                mState = State::Run;
+                break;        
+            }
+        }
+    }
+private:    
+    inline static State mState = State::Init;
+    inline static External::Tick<Timer> stateTicks;
 };
 
 using isrRegistrar = IsrRegistrar<typename upperCell::StartBitHandler, typename upperCell::BitHandler>;
@@ -266,6 +344,7 @@ int main() {
         adcController::periodic();
         systemTimer::periodic([&]{
             ibus::ratePeriodic();
+            fsm::ratePeriodic();
             alarmTimer::periodic([&](const auto& t){
                 if (activateTimer == t) {
                     activate::toggle();
@@ -286,3 +365,19 @@ ISR(PORTA_PORT_vect) {
 ISR(TCD0_OVF_vect) {
     isrRegistrar::isr<AVR::ISR::Tcd<0>::Ovf>();
 }
+
+#ifndef NDEBUG
+[[noreturn]] inline void assertOutput(const AVR::Pgm::StringView& expr [[maybe_unused]], const AVR::Pgm::StringView& file[[maybe_unused]], unsigned int line [[maybe_unused]]) noexcept {
+//#if !(defined(USE_IBUS) || defined(USE_HOTT))
+//    etl::outl<terminal>("Assertion failed: "_pgm, expr, etl::Char{','}, file, etl::Char{','}, line);
+//#endif
+    while(true) {
+//        dbg1::toggle();
+    }
+}
+
+template<typename String1, typename String2>
+[[noreturn]] inline void assertFunction(const String1& s1, const String2& s2, unsigned int l) {
+    assertOutput(s1, s2, l);
+}
+#endif
