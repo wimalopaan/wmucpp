@@ -25,6 +25,7 @@ F_OSC = 20000000
 subdirs =
 
 #targets += test00.elf test00.hex
+targets += a1g.hex
 targets += a4t.hex
 targets += a3t2r.hex
 targets += a2t2c.hex

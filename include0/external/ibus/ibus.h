@@ -1011,7 +1011,6 @@ namespace IBus {
                 else {
                     return {};
                 }
-                
             }
             static inline CheckSum csum;
             static inline ibus_state_t  mState = ibus_state_t::Undefined;

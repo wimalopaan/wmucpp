@@ -231,7 +231,8 @@ namespace etl {
     
     template<etl::Concepts::Container A, etl::Concepts::Container B>
     constexpr void copy(A& dest, const B& src) {
-        static_assert(dest.size() >= src.size());
+        static_assert(A::size() >= B::size());
+//        static_assert(dest.size() >= src.size());
 //                static_assert(std::size(dest) >= std::size(src));
         detail::copyElements(dest, src, std::make_index_sequence<src.size()>{});
 //        detail::copyElements(dest, src, std::make_index_sequence<std::size(src)>{});

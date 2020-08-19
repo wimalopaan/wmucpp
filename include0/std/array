@@ -30,7 +30,7 @@ namespace std {
         using value_type = T;
         using size_type = std::conditional_t<(Size < 256), uint8_t, uint16_t>;
         using signed_size_type = std::conditional_t<(Size < 128), int8_t, int16_t>;
-        
+
         static_assert(Size <= std::numeric_limits<uint16_t>::max());
         
         inline constexpr const T* begin() const {

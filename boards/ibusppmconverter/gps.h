@@ -41,7 +41,7 @@ struct PackagesProvider {
     inline static constexpr auto ibus_type = IBus::Type::type::GPS_STATUS; 
     inline static constexpr void init() {}
     inline static constexpr uint16_t value() {
-        return Dekoder::receivedPackages();
+        return Dekoder::receivedPackages() << 8;
     }
 };
 template<typename Dekoder>

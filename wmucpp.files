@@ -242,6 +242,7 @@ boards/doorbell/test00.cc
 boards/ibusgps/Makefile
 boards/ibusgps/test00.cc
 boards/ibusppmconverter/Makefile
+boards/ibusppmconverter/a1g.cc
 boards/ibusppmconverter/a2c2r.cc
 boards/ibusppmconverter/a2c2r1g.cc
 boards/ibusppmconverter/a2t2c.cc
