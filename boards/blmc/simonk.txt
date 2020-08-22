@@ -47,6 +47,9 @@
 # RedBrick 70A (blaues board)
 # sudo avrdude -p atmega8 -P usb -c avrisp2 -V -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -U flash:w:rb70a2.hex
 
+# ZWT Beatle 30A (blaues board, pads verteilt, diskrete Treiber)
+# sudo avrdude -p atmega8 -P usb -c avrisp2 -V -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -U flash:w:bs_nfet.hex
+
 # ZWT Beatle 80A (blaues board, ein(!) Treiber-Chip für alle FETs)
 # sudo avrdude -p atmega8 -P usb -c avrisp2 -V -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -U flash:w:bs.hex
 
