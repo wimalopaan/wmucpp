@@ -6,9 +6,11 @@
 
 #define USE_16V // (3k1 im Spannungsteiler)
 
-#define USE_SPORT
+#define USE_ACS_PIN_POWER // ACS über tiny-Pin
+
+//#define USE_SPORT
 //#define USE_HOTT
-//#define USE_IBUS
+#define USE_IBUS
 //#define FS_I6S
 #define USE_OFFSET
 
@@ -127,7 +129,11 @@ using PortA = Port<A>;
 using PortB = Port<B>;
 
 #ifdef USE_DAISY
-using daisyChain= Pin<PortA, 7>; 
+using daisyChain = Pin<PortA, 7>; 
+#endif
+
+#ifdef USE_ACS_PIN_POWER
+using acsPower = Pin<PortA, 6>; 
 #endif
 
 #ifndef NDEBUG
@@ -230,9 +236,17 @@ using sleep = Sleep<>;
 #ifdef USE_IBUS
 
 #ifdef FS_I6S
-using acs770 = External::AnalogSensor<adcController, 1, std::ratio<1,2>, std::ratio<40,1000>, std::ratio<10,1>>;
+# ifdef USE_ACS_PIN_POWER
+using acs770 = External::AnalogSensor<adcController, 1, std::ratio<460,1000>, std::ratio<40,1000>, std::ratio<10,1>>;
+# else
+using acs770 = External::AnalogSensor<adcController, 1, std::ratio<490,1000>, std::ratio<40,1000>, std::ratio<10,1>>;
+# endif
 #else
+# ifdef USE_ACS_PIN_POWER
+using acs770 = External::AnalogSensor<adcController, 1, std::ratio<460,1000>, std::ratio<40,1000>, std::ratio<100,1>>;
+# else
 using acs770 = External::AnalogSensor<adcController, 1, std::ratio<490,1000>, std::ratio<40,1000>, std::ratio<100,1>>;
+# endif
 #endif
 using vdiv = External::AnalogSensor<adcController, 0, std::ratio<0,1>, 
                                     std::ratio<Parameter::R2vd, Parameter::R2vd + Parameter::R1vd>, 
@@ -259,7 +273,7 @@ struct CurrentProvider {
 #endif
     inline static constexpr void init() {}
     inline static constexpr uint16_t value() {
-        uint16_t v = Sensor::value();
+        const uint16_t v = Sensor::value();
         if (v >= mOffset) {
 #ifdef FS_I6S
         return v - mOffset + 400;
@@ -281,8 +295,7 @@ struct CurrentProvider {
     inline static void setOffset() {
         mOffset = Sensor::value();
     }
-
-    inline static void setOffset(uint16_t v) {
+    inline static void setOffset(const uint16_t v) {
         mOffset = v;
     }
     inline static uint16_t mOffset{};
@@ -514,7 +527,8 @@ template<typename Timer, typename Wdt, typename UnInit>
 struct FSM {
     enum class State : uint8_t {Init, Startup, Idle, WaitSleep, Sleep, WaitOn, WaitOnInterrupted, On, FetOn, WaitOff, WaitOffInterrupted, WdtOn
                         #ifdef USE_OFFSET
-                                ,CurrCalibrateStart, CurrentCalibrateEnd
+                                ,CurrOnCalibrateStart, CurrentOnCalibrateEnd
+                                ,CurrOffCalibrateStart, CurrentOffCalibrateEnd
                         #endif
                                };
     
@@ -522,6 +536,7 @@ struct FSM {
     
     static constexpr External::Tick<Timer> idleTimeBeforeSleepTicks{10000_ms};
     static constexpr External::Tick<Timer> resetWaitOffCounter{5000_ms};
+    static constexpr External::Tick<Timer> resetWaitOnCounter{5000_ms};
     static constexpr External::Tick<Timer> calibTicks{500_ms};
     
     //    std::integral_constant<uint16_t, idleTimeBeforeSleepTicks.value>::_;
@@ -529,6 +544,7 @@ struct FSM {
 #ifdef USE_OFFSET
     static constexpr uint8_t calibInterrupts{3};
     inline static etl::uint_ranged<uint8_t, 0, calibInterrupts> waitOffInterrupts;
+    inline static etl::uint_ranged<uint8_t, 0, calibInterrupts> waitOnInterrupts;
 #endif
     inline static External::Tick<Timer> onDelay;
 
@@ -584,6 +600,9 @@ struct FSM {
             }
             break;
         case State::Idle:
+            if (stateTicks > resetWaitOnCounter){
+                waitOnInterrupts.setToBottom();
+            }
             if (stateTicks > idleTimeBeforeSleepTicks) {
                 mState = State::WaitSleep;
             }
@@ -609,10 +628,16 @@ struct FSM {
             }
             else if (event == button::Press::Release) {
                 mState = State::WaitOnInterrupted;
+                ++waitOnInterrupts;
             }
             break;
         case State::WaitOnInterrupted:
-            mState = State::Idle;
+            if (waitOnInterrupts.isTop()) {
+                mState = State::CurrOffCalibrateStart;
+            }
+            else {
+                mState = State::Idle;
+            }
             break;
         case State::On:
             if (stateTicks > onDelay) {
@@ -646,21 +671,32 @@ struct FSM {
             break;
         case State::WaitOffInterrupted:
             if (waitOffInterrupts.isTop()) {
-                mState = State::CurrCalibrateStart;
+                mState = State::CurrOnCalibrateStart;
             }
             else {
                 mState = State::FetOn;
             }
             break;
-        case State::CurrCalibrateStart:
+        case State::CurrOffCalibrateStart:
             if (stateTicks > calibTicks) {
                 currentProvider::setOffset();
                 appData[Storage::AVKey::CurrentOffset] = currentProvider::mOffset;
                 appData.change();                
-                mState = State::CurrentCalibrateEnd;
+                mState = State::CurrentOffCalibrateEnd;
             }
             break;
-        case State::CurrentCalibrateEnd:
+        case State::CurrentOffCalibrateEnd:
+            mState = State::Idle;
+            break;
+        case State::CurrOnCalibrateStart:
+            if (stateTicks > calibTicks) {
+                currentProvider::setOffset();
+                appData[Storage::AVKey::CurrentOffset] = currentProvider::mOffset;
+                appData.change();                
+                mState = State::CurrentOnCalibrateEnd;
+            }
+            break;
+        case State::CurrentOnCalibrateEnd:
             mState = State::FetOn;
             break;
         }
@@ -686,7 +722,13 @@ struct FSM {
 #ifdef USE_SPORT
                 sensor::enable<false>();
 #endif                
+#ifdef USE_ACS_PIN_POWER
+                acsPower::low();                
+#endif
                 sleep::down();
+#ifdef USE_ACS_PIN_POWER
+                acsPower::high();                
+#endif
 #ifdef USE_SPORT
                 sensor::enable<true>();
 #endif                
@@ -729,16 +771,25 @@ struct FSM {
                 led::blink(led::count_type{3});
                 toneGenerator::play(waitOffMelody, true);
                 break;
-            case State::CurrCalibrateStart:
+            case State::CurrOffCalibrateStart:
                 break;
-            case State::CurrentCalibrateEnd:
+            case State::CurrentOffCalibrateEnd:
+                if (!toneGenerator::busy()) {
+                    toneGenerator::play(calibMelody); // does not play ???
+                }
+                break;
+            case State::CurrOnCalibrateStart:
+                break;
+            case State::CurrentOnCalibrateEnd:
                 if (!toneGenerator::busy()) {
                     toneGenerator::play(calibMelody);
                 }
                 break;
             case State::Idle:
                 if (lastState != State::WaitOnInterrupted) {
-                    toneGenerator::play(offMelody);
+                    if (!toneGenerator::busy()) {
+                        toneGenerator::play(offMelody);
+                    }
                 }
                 led::blink(led::count_type{1});
                 fet::inactivate();
@@ -819,8 +870,13 @@ int main() {
         uninitialzed::counter = uninitialzed::counter + 1;        
     });
     
+#ifdef USE_ACS_PIN_POWER
+    acsPower::dir<Output>();
+    acsPower::high();
+#endif
     
     fet::init();
+    
 #ifdef USE_EEPROM
     eeprom::init();
     [[maybe_unused]] bool changed = false;
