@@ -2,6 +2,8 @@
 
 #define NDEBUG
 
+// Hott???
+
 #define USE_IBUS
 
 #include <mcu/avr.h>

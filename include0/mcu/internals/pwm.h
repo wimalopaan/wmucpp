@@ -505,7 +505,7 @@ namespace AVR {
             }();
             
             using index_type = etl::uint_ranged<uint8_t, 0, 5>;
-            
+
             inline static void on(const index_type c) {
                 if (c == 0) {
                     on<0>();

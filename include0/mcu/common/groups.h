@@ -239,6 +239,15 @@ namespace AVR {
         };
 
         template<>
+        struct Map<Position<AVR::Component::Tca<0>, Default>, AVR::ATMega4809> {
+            using wo0pin = AVR::Pin<AVR::Port<AVR::A>, 0>; 
+            using wo1pin = AVR::Pin<AVR::Port<AVR::A>, 1>; 
+            using wo2pin = AVR::Pin<AVR::Port<AVR::A>, 2>; 
+            using wo3pin = AVR::Pin<AVR::Port<AVR::A>, 3>; 
+            using wo4pin = AVR::Pin<AVR::Port<AVR::A>, 4>; 
+            using wo5pin = AVR::Pin<AVR::Port<AVR::A>, 5>; 
+        };
+        template<>
         struct Map<Position<AVR::Component::Tca<0>, Default>, AVR::ATTiny1614> {
             using wo0pin = AVR::Pin<AVR::Port<AVR::B>, 0>; 
             using wo1pin = AVR::Pin<AVR::Port<AVR::B>, 1>; 
