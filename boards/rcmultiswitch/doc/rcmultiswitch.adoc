@@ -2,7 +2,7 @@
 // ---- Beginn Standardheader
 = RC MultiSwitch-D 
 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
-:revnumber: 0.92
+:revnumber: 0.93
 :revremark: HW_1.0
 :revdate: 01.01.1970
 :lang: de
@@ -820,7 +820,152 @@ Vibrationen können zu einem Totalausfall und damit zu einem Modellverlust sowie
 Das Modul darf nur innerhalb eines Temperaturbereiches von -10°C bis +55°C betrieben werden. Ein Betrieb außerhalb dieses 
 Bereiches kann zu einem Totalausfall und damit zu einem Modellverlust sowie Personenschäden führen.
 
-== Aufbau 
+== Fehlersuche und Tests
+
+Weder der `RC-MultiSwitch-D` noch der `RC-MultiAdapter-DA` können dem Benutzer direkt Rückmeldung über ihre Einstellungen geben. Daher ist die 
+Fehlersuche auf ein klar strukturiertes Vorgehen angewiesen.
+
+Die häufigsten Fehlerquellen sind:
+
+* Unterscheidung `IBus` / `SBus` 
+** Unterscheidung `SBus` mit `XJT`-Sendemodul oder MPM-Sendemodul.
+* `SBus`-Inverter
+* Addressvergabe
+
+=== Checkliste `IBus`
+
+`IBus` ist ein Bus-System der Fa. _FlySky_ und kommt daher nur bei _FlySky_-Empfängern vor.
+
+.*Richtiger `IBus`-Ausgang*?
+
+An den Empfängern gibt es _zwei_ `IBus`-Ausgänger: `IBus`-Servo und `IBus`-Sensor. 
+Es muss der `IBus`-Servo Ausgang gewählt werden.
+
+.Aufbau mit einem Empfänger, der `IBus`-Servo liefert
+[ditaa]
+....
+
+ +----------------+      +---------------------+
+ |                |      |                     |
+ | Empfänger IBus | -+-> | RC_MultiSwitch_D    | --> Verbraucher
+ |                |  |   |                     |
+ +----------------+  |   +---------------------+
+                     |  
+                     |   +---------------------+
+                     |   |                     |
+                     +-> | RC_MultiAdapater_DA | --> analoge Schaltmodule
+                         |                     |
+                     ^   +---------------------+
+                     :
+                     :
+                     :
+                IBus-Servo
+....
+
+.*Korrekte Verkabelung*?
+
+Anders als beim `IBus`-Sensor werden beim `IBus`-Servo - wie bei einem Bus-System üblich - alle Teilnehmer _parallel_ geschaltet.
+
+Beim `RC-MultiAdapter-DA` existieren keine _Kontroll-LEDs_. Man also zur Funktionskontrolle ein analoge Schaltmodul anschließen. Und auch hier an dessen
+Ausgänge z.B. Leuchtdioden zur Kontrolle anschließen sowie eine Spannungsversorgung.
+
+.*Richtige Konfiguration Multi-Protokol-HF-Modul*?
+
+Das _MPM_ im Sender muss auf `MULTI FlySky_2A PWM,IBUS` eingestellt sein.
+
+.*Richtige Konfiguration des Models*?
+
+In den Konfigurationsdateien muss _ebenfalls_ der richtige Bus-Typ ausgewählt werden. Dies geschieht am Anfang der Konfigurationsdatei.
+
+.Ausschnitt aus der Datei `swstd.lua`, `swstdm.lua` oder `swstds.lua`
+[source,lua,linenums]
+----
+local name = "Default";
+
+local gVariable = 5;
+
+local useSbus = 0; -- only 4 states, only 16 parameter values <1>
+
+local gstates1 = {"aus", "ein", "blink1", "blink2"};
+local gstates2 = {"aus", "ein 1", "ein 2"};----
+----
+<1> Richtige Einstellung für `IBus` ist: `useSbus = 0`
+
+Achten Sie auf die korrekte Auswahl der Konfigurationsdatei (ggf. Name des Modells): der verwendete Name wird am Fuß des _Widget_ angezeigt.
+
+.*Korrektes Mixer-Script*?
+
+Es muss das Script `encib` eingerichtet sein.
+
+=== Checkliste `SBus`
+
+`SBus` wird von vielen Herstellen als Bus-System verwendet, so auch von der Fa. _FrSky_.
+
+.*Richtiger `SBus`-Ausgang*?
+
+Viele `SBus`-fähige Empfänger haben auch eine Telemetrie-Möglichkeit. Der dafür verwendete Bus heißt `S.Port` und ist anders am Empfänger gekennzeichnet.
+
+.Aufbau mit einem Empfänger, der `IBus`-Servo liefert
+[ditaa]
+....
+
+ +----------------+                              +---------------------+
+ |                |      +---------------+       |                     |
+ | Empfänger SBus |--+-> | SBus-Inverter |  -+-> | RC_MultiSwitch_D    | --> Verbraucher
+ |                |  |   +---------------+   |   |                     |
+ +----------------+  |                       |   +---------------------+
+                     |                       |  
+                     |                       |   +---------------------+
+                     |                       |   |                     |
+                     |                       +-> | RC_MultiAdapater_DA | --> analoge Schaltmodule
+                     |                           |                     |
+                     |                           +---------------------+
+                     |
+                     |       +-------------+
+                     +-----> | andere SBus |
+                             | Teilnehmer  |
+                             +-------------+
+                
+....
+
+.*Korrekte Verkabelung*?
+
+Für `RC-MultiSwitch-D` und `RC-MultiAdapter-DA` benötigt man einen `SBus`-Inverter. _Andere_ `SBus`-Teilnehmer sind nach wie vor _vor_ 
+dem Inverter anzuschließen.
+
+Beim `RC-MultiAdapter-DA` existieren keine _Kontroll-LEDs_. Man also zur Funktionskontrolle ein analoge Schaltmodul anschließen. Und auch hier an dessen
+Ausgänge z.B. Leuchtdioden zur Kontrolle anschließen sowie eine Spannungsversorgung.
+
+.*Richtige Konfiguration des Models*?
+
+In den Konfigurationsdateien muss _ebenfalls_ der richtige Bus-Typ ausgewählt werden. Dies geschieht am Anfang der Konfigurationsdatei.
+
+.Ausschnitt aus der Datei `swstd.lua`, `swstdm.lua` oder `swstds.lua`
+[source,lua,linenums]
+----
+local name = "Default";
+
+local gVariable = 5;
+
+local useSbus = 1; -- only 4 states, only 16 parameter values <1>
+
+local gstates1 = {"aus", "ein", "blink1", "blink2"};
+local gstates2 = {"aus", "ein 1", "ein 2"};----
+----
+<1> Richtige Einstellung für `SBus` ist: `useSbus = 1`
+
+Achten Sie auf die korrekte Auswahl der Konfigurationsdatei (ggf. Name des Modells): der verwendete Name wird am Fuß des _Widget_ angezeigt.
+
+.*Korrektes Mixer-Script*?
+
+Je nach verwendetem HF-Modul im Sender ist eine Unterscheidung zu treffen:
+
+[horizontal]
+
+`XJT`-Modul:: es muss das Script `encxjt` eingerichtet sein.
+
+`MPM`-Modul:: es muss das Script `encsbm` eingerichtet sein.
+
 
 == Kontakt
 
