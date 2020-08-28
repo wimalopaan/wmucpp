@@ -4,7 +4,7 @@
 
 #define NDEBUG
 
-#define USE_16V // (3k1 im Spannungsteiler)
+#define USE_16V // (3k1 oder 3k0 im Spannungsteiler)
 
 #define USE_ACS_PIN_POWER // ACS über tiny-Pin
 
@@ -75,7 +75,7 @@ namespace Parameter {
     constexpr uint16_t R1vd = 10'000;
     
 #ifdef USE_16V
-    constexpr uint16_t R2vd = 3'100;
+    constexpr uint16_t R2vd = 3'000;
 #else
     constexpr uint16_t R2vd = 1'000;
 #endif
@@ -786,10 +786,11 @@ struct FSM {
                 }
                 break;
             case State::Idle:
-                if (lastState != State::WaitOnInterrupted) {
-                    if (!toneGenerator::busy()) {
-                        toneGenerator::play(offMelody);
-                    }
+                if (lastState == State::WaitOff) {
+                    toneGenerator::play(offMelody);
+                }
+                else if (lastState == State::Startup) {
+                    toneGenerator::play(offMelody);
                 }
                 led::blink(led::count_type{1});
                 fet::inactivate();
@@ -824,6 +825,7 @@ private:
     inline static uint32_t c = 0;
     
     static inline void part0() {
+        sensorData.cellVoltageRaw(etl::uint_ranged<uint8_t,0,6>{0}, 200);
         auto v = battVoltageConverter::convert(adcController::value(adcController::index_type{0}));
         last_voltage = v;
         sensorData.voltage(v);
@@ -833,6 +835,7 @@ private:
         }
     }
     static inline void part1() {
+        sensorData.cellVoltageRaw(etl::uint_ranged<uint8_t,0,6>{1}, 201);
         auto c = currentProvider::value();
         last_current = c;
         sensorData.current(c);
@@ -840,12 +843,14 @@ private:
         sensorData.currentMax(current_max);
     }
     static inline void part2() {
+        sensorData.cellVoltageRaw(etl::uint_ranged<uint8_t,0,6>{2}, 202);
         auto t = sigrow::adcValueToTemperature(adcController::value(adcController::index_type{2}));
         sensorData.temp(t);
         temp_max = std::max(temp_max, t);
         sensorData.tempMax(temp_max);
     }
     static inline void part3() {
+        sensorData.cellVoltageRaw(etl::uint_ranged<uint8_t,0,6>{3}, 203);
         sensorData.capRaw(c / 3600);
 //        sensorData.state(es);
         sensorData.state(fsm::autoCalibCounter);
