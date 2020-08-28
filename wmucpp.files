@@ -320,6 +320,8 @@ boards/rcmultiswitch/swout.h
 boards/rcmultiswitch/test00.cc
 boards/rcmultiswitch/test01.cc
 boards/rcmultiswitch/test10.cc
+boards/rcquadc/Makefile
+boards/rcquadc/test00.cc
 boards/rcsensor/Makefile
 boards/rcsensor/test00.cc
 boards/rcsensorled/test100.cc
