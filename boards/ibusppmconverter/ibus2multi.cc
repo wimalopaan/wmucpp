@@ -9,10 +9,11 @@
 
 template<typename PA, typename SW, typename OUT, typename NVM, typename Timer, typename Term = void>
 struct GFSM {
-    enum class State : uint8_t {Undefined, SearchChannel, Run, ShowAddress, LearnTimeout};
+    enum class State : uint8_t {Undefined, StartWait, SearchChannel, Run, ShowAddress, LearnTimeout};
     
     static constexpr auto intervall = Timer::intervall;
-    static constexpr External::Tick<Timer> learnTimeoutTicks{5000_ms};
+    static constexpr External::Tick<Timer> learnTimeoutTicks{3000_ms};
+    static constexpr External::Tick<Timer> waitTimeoutTicks{1000_ms};
     
     static inline void init() {}
     
@@ -20,7 +21,12 @@ struct GFSM {
         ++stateTicks;
         switch(mState) {
         case State::Undefined:
-            mState = State::SearchChannel;
+            mState = State::StartWait;
+            break;
+        case State::StartWait:
+            stateTicks.on(waitTimeoutTicks, []{
+                mState = State::SearchChannel;
+            });
             break;
         case State::SearchChannel:
             stateTicks.on(learnTimeoutTicks, []{
@@ -53,22 +59,26 @@ private:
     using addr_t = typename protocol_t::addr_t;
     
     static inline bool search() {
-        if (const auto lc = PA::valueMapped(learnChannel.toRangedNaN()); lc && SW::isLearnCode(lc)) {
-            if (const auto pv = protocol_t::toParameterValue(lc).toInt(); (pv >= 1) && ((pv - 1) <= SW::protocol_t::addr_t::Upper)) {
-                const uint8_t addr = pv - 1;
-                SW::channel(learnChannel.toRangedNaN());
-                SW::address(addr_t(addr));
-                NVM::data().channel() = learnChannel;
-                NVM::data().address().set(addr);
-                NVM::data().change();
-                return true;
-            }
-        }   
-#ifdef LEARN_DOWN
-        --learnChannel;
-#else
-        ++learnChannel;
-#endif
+        if (cc.isBottom()) {
+            if (const auto lc = PA::valueMapped(learnChannel.toRangedNaN()); lc && SW::isLearnCode(lc)) {
+                if (const auto pv = protocol_t::toParameterValue(lc).toInt(); (pv >= 1) && ((pv - 1) <= SW::protocol_t::addr_t::Upper)) {
+                    const uint8_t addr = pv - 1;
+                    SW::channel(learnChannel.toRangedNaN());
+                    SW::address(addr_t(addr));
+                    NVM::data().channel() = learnChannel;
+                    NVM::data().address().set(addr);
+                    NVM::data().change();
+                    return true;
+                }
+            }   
+    #ifdef LEARN_DOWN
+            --learnChannel;
+    #else
+            ++learnChannel;
+    #endif
+            return false;
+        }
+        ++cc;
         return false;
     }
     using ch_t = PA::channel_t;
@@ -79,6 +89,8 @@ private:
 #endif
     static inline State mState{State::Undefined};
     inline static External::Tick<Timer> stateTicks;
+
+    inline static etl::uint_ranged_circular<uint8_t, 0, 11> cc;
 };
 
 using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::Default>;

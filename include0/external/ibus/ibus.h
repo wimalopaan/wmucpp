@@ -508,7 +508,7 @@ namespace IBus {
 //        private: 
             using lastindex_t = etl::uint_ranged_NaN<uint8_t, index_t::Lower, index_t::Upper>; 
             static inline lastindex_t lastOnIndex;
-            static inline channel_t mChannel{9};
+            static inline channel_t mChannel{15}; // ch 16
             static inline addr_t    mAddr{0};
         };
 

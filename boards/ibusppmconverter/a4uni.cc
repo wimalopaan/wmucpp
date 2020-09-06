@@ -8,6 +8,19 @@
 
 using adcController = External::Hal::AdcController<adc, Meta::NList<10, 11, 5, 3, 0x1e>>; // 1e = temp
 
+template<typename ADC, uint8_t Channel>
+struct RawProvider {
+    using index_t = ADC::index_type;
+    static_assert(Channel <= index_t::Upper);
+    inline static constexpr auto channel = index_t{Channel};
+    inline static constexpr auto ibus_type = IBus::Type::type::ARMED;
+    inline static constexpr void init() {
+    }
+    inline static constexpr uint16_t value() {
+        return ADC::value(channel).toInt();
+    }
+};
+
 #ifdef USE_SPORT
 using rxPin = Pin<Port<A>, 1>; // alt1
 using txPin = rxPin;
@@ -46,15 +59,17 @@ using portmux = Portmux::StaticMapper<Meta::List<>>;
 #endif
 
 #ifdef USE_IBUS
-using mcp0P = Mcp9700aProvider<adcController, 0>;
-using mcp1P = Mcp9700aProvider<adcController, 1>;
-using mcp2P = Mcp9700aProvider<adcController, 2>;
-using mcp3P = Mcp9700aProvider<adcController, 3>;
+
+
+using raw0P = RawProvider<adcController, 0>;
+using raw1P = RawProvider<adcController, 1>;
+using raw2P = RawProvider<adcController, 2>;
+using raw3P = RawProvider<adcController, 3>;
 
 using iTempP = InternalTempProvider<adcController, 4>;
 
 using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, 
-                          Meta::List<mcp0P, mcp1P, mcp2P, mcp3P>, 
+                          Meta::List<raw0P, raw1P, raw2P, raw3P>, 
                           systemTimer, ibt>;
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position>>;

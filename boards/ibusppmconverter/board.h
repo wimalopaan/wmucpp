@@ -69,8 +69,8 @@
 // PA7: 
 // PB3:
 // PB2: Q0   (WO2) (rpm1)  (adr2)
-// PB1: SO1  (WO1) (AIN10) (adr1)
-// PB0: SO2  (WO0) (AIN11) (adr0)
+// PB1: SO1  (WO1) (AIN10) (adr1) (temp0)
+// PB0: SO2  (WO0) (AIN11) (adr0) (temp1) (uni)
 
 using namespace AVR;
 using namespace std::literals::chrono;

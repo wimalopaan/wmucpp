@@ -246,6 +246,7 @@ int main() {
     activate::attributes<Meta::List<Attributes::Interrupt<Attributes::BothEdges>>>();
     
     const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
+    const auto sleepTimer = alarmTimer::create(5000_ms, External::Hal::AlarmFlags::Periodic);
 
     {
         activate::resetInt();
@@ -261,6 +262,10 @@ int main() {
                         auto v = vdiv::value();
                         sendDown::set(v);
                         sendDown::send<upDown>();
+                    }
+                    else if (sleepTimer == t) {
+                        sleep::down();
+                        alarmTimer::restart(sleepTimer);
                     }
                 });
             });

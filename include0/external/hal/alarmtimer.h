@@ -92,6 +92,12 @@ namespace External {
                     mTimers[*id].ticksLeft = mTimers[*id].ticks;
                 }
             }
+
+            inline static void restart(index_type id) {
+                if (id) {
+                    mTimers[*id].ticksLeft = mTimers[*id].ticks;
+                }
+            }
             
             inline static void stop(index_type id) {
                 if (id) {

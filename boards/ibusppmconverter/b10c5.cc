@@ -55,7 +55,7 @@ int main() {
     using channel_t = servo_pa::channel_t;
 //    using value_t = servo_pa::value_type;
 
-    constexpr uint8_t offset{9};
+    constexpr uint8_t offset{9}; // ch 10
     etl::uint_ranged_circular<uint8_t, 0, 4> index;
 
     while(true) {

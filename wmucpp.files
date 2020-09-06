@@ -243,11 +243,14 @@ boards/ibusgps/Makefile
 boards/ibusgps/test00.cc
 boards/ibusppmconverter/Makefile
 boards/ibusppmconverter/a1g.cc
+boards/ibusppmconverter/a1t1u1r1g.cc
 boards/ibusppmconverter/a2c2r.cc
 boards/ibusppmconverter/a2c2r1g.cc
 boards/ibusppmconverter/a2t2c.cc
+boards/ibusppmconverter/a2t2r1g.cc
 boards/ibusppmconverter/a3t2r.cc
 boards/ibusppmconverter/a4t.cc
+boards/ibusppmconverter/a4uni.cc
 boards/ibusppmconverter/b10c5.cc
 boards/ibusppmconverter/b11c4.cc
 boards/ibusppmconverter/board.h
@@ -322,6 +325,7 @@ boards/rcmultiswitch/test01.cc
 boards/rcmultiswitch/test10.cc
 boards/rcquadc/Makefile
 boards/rcquadc/test00.cc
+boards/rcquadc/test01.cc
 boards/rcsensor/Makefile
 boards/rcsensor/test00.cc
 boards/rcsensorled/test100.cc

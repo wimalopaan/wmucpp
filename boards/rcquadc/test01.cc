@@ -47,6 +47,108 @@ namespace  {
 #endif
 }
 
+template<uint8_t N, typename PWM, typename ADC, typename InA, typename InB, typename PA>
+struct ChannelFsm {
+    using adc_index_t = typename ADC::index_type;
+    static inline constexpr adc_index_t adci{N};
+    
+    using pa_value_t = typename PA::value_type;
+    using channel_t = typename PA::channel_t;
+    
+    static inline constexpr channel_t channel{N};
+    
+    using pwm_value_t = typename PWM::value_type;
+    
+    enum class State : uint8_t {Init, Off, Forward, Backward};
+    
+    inline static void init() {
+        InA::template dir<Output>();
+        InA::off();
+        InB::template dir<Output>();
+        InB::off();
+    }
+    inline static void periodic() {
+//        switch(mState) {
+        
+//        }
+    }
+    inline static void ratePeriodic() {
+        auto cv = ADC::value(adci);                
+        
+        pa_value_t pv = PA::value(channel);
+//        pa_value_t::_;
+        
+        constexpr uint16_t pa_mid = (pa_value_t::Upper + pa_value_t::Lower) / 2;
+        constexpr uint16_t pa_half = (pa_value_t::Upper - pa_value_t::Lower) / 2;
+        
+        pwm_value_t pvs{0};
+        
+        if (pv.toInt() > (pa_mid + 10)) {
+            pvs = ((uint32_t)pv.toInt() - pa_mid) * PWM::pwmMax / pa_half; 
+            forward();
+        }
+        else if (pv.toInt() < (pa_mid - 10)) {
+            pvs = (pa_mid - (uint32_t)pv.toInt()) * PWM::pwmMax / pa_half; 
+            backward();
+        }
+        else {
+            pvs = 0;
+            off();
+        }
+        v0 = pvs;
+        PWM::template pwm<N>(pvs);
+    }
+//private:
+    inline static pwm_value_t v0;
+    inline static void forward() {
+        InA::on();
+        InB::off();
+    }
+    inline static void backward() {
+        InA::on();
+        InB::on();
+    }
+    inline static void off() {
+        InA::off();
+        InB::off();
+    }
+    
+    
+    inline static State mState{State::Init};
+};
+
+template<typename PWM, typename ChList, typename Led>
+struct GlobalFsm;
+
+template<typename PWM, typename Led, typename... Chs>
+struct GlobalFsm<PWM, Meta::List<Chs...>, Led> {
+    using channel_list = Meta::List<Chs...>;
+    static_assert(Meta::size_v<channel_list> <= 4, "too much channels");
+    static_assert(Meta::is_set_v<channel_list>, "channels must be different");
+    
+    enum class State : uint8_t {Init};
+    
+    inline static void init() {
+        Led::template dir<Output>();
+        
+        PWM::init();    
+        (Chs::init(), ...);
+    }
+    inline static void periodic() {
+        (Chs::periodic(), ...);
+        switch(mState) {
+        
+        }
+    }
+    inline static void ratePeriodic() {
+        (Chs::ratePeriodic(), ...);
+    }
+    
+private:
+    static inline State mState{State::Init};
+    
+};
+
 using ccp = Cpu::Ccp<>;
 using clock = Clock<>;
 
@@ -124,8 +226,14 @@ using ibus_sensor = IBus::Sensor<usart2Position, AVR::Usart, AVR::BaudRate<11520
 
 using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V4_3>;
 using adcController = External::Hal::AdcController<adc, Meta::NList<12, 7, 5, 0, 0x1e>>; // 1e = temp
-
 using adi_t = adcController::index_type;
+
+using ch0 = ChannelFsm<0, pwm, adcController, inA1Pin, inB1Pin, servo_pa>;
+using ch1 = ChannelFsm<1, pwm, adcController, inA2Pin, inB2Pin, servo_pa>;
+using ch2 = ChannelFsm<2, pwm, adcController, inA3Pin, inB3Pin, servo_pa>;
+using ch3 = ChannelFsm<3, pwm, adcController, inA4Pin, inB4Pin, servo_pa>;
+
+using gfsm = GlobalFsm<pwm, Meta::List<ch0, ch1, ch2, ch3>, ledPin>;
 
 int main() {
     portmux::init();
@@ -140,35 +248,32 @@ int main() {
     ibus_sensor::init();
     systemTimer::init();
     adcController::init();
-    pwm::init();
 
-    inA1Pin::dir<Output>();
-    inB1Pin::dir<Output>();
-    
-    inA1Pin::on();
-    inB1Pin::off();
-    
-    pwm::on<0>();
-    pwm::pwm<0>(10);
+    gfsm::init();
     
     const auto periodicTimer = alarmTimer::create(100_ms, External::Hal::AlarmFlags::Periodic);
     const auto aTimer = alarmTimer::create(1000_ms, External::Hal::AlarmFlags::Periodic);
-    etl::outl<terminal>("rcquadc 00"_pgm);
+    etl::outl<terminal>("rcquadc 01"_pgm);
 
     while(true) {
+       
         adcController::periodic();
         servo::periodic();
         ibus_sensor::periodic();
+        
+        gfsm::periodic();
+        
         systemTimer::periodic([&]{
             ibus_sensor::ratePeriodic();
+            
+            gfsm::ratePeriodic();
+            
             alarmTimer::periodic([&](const auto& t){
                 if (periodicTimer == t) {
                     ledPin::toggle();
-                    etl::outl<terminal>("c1: "_pgm, adcController::value(adi_t{0}).toInt());
+                    etl::outl<terminal>("c1: "_pgm, adcController::value(adi_t{0}).toInt(), " v0: "_pgm, ch0::v0);
                 }
                 if (aTimer == t) {
-                    inA1Pin::toggle();
-//                    inB1Pin::toggle();
                 }
             });
         });

@@ -104,9 +104,7 @@ struct CellsCollector {
         inline static constexpr auto ibus_type = IBus::Type::type::CELL;
         inline static constexpr void init() {}
         inline static constexpr uint16_t value() {
-            
             FSM::reset();
-            
             auto min = mValues[0];
             for(uint8_t i = 1; i < mValues.size(); ++i) {
                 if (mValues[i] > 0) {
@@ -128,13 +126,12 @@ struct CellsCollector {
             }
             return t;
         }
-        
     };
-
 private:
     inline static constexpr uint8_t mSize = 16;
     inline static volatile etl::FixedVector<uint16_t, mSize> mValues{};
 };
+
 using cellsColl = CellsCollector<adcController, 0>;
 
 using cell0P = cellsColl::Provider<0>;
@@ -261,7 +258,7 @@ struct IBusThrough {
 using ibt = IBusThrough;
 
 using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, 
-                          Meta::List<cell0P, cell1P, cell2P, cell3P, cellsColl::MinProvider<fsm>, cellsColl::TotalProvider>, systemTimer, ibt
+                          Meta::List<cell0P, cell1P, cell2P, cell3P, cellsColl::MinProvider<fsm>, cellsColl::TotalProvider, tempP>, systemTimer, ibt
 //                          ,etl::NamedFlag<true>
 //                          ,etl::NamedFlag<true>
                           >;
