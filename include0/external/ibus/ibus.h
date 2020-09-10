@@ -174,10 +174,10 @@ namespace IBus {
             inline static constexpr param_t broadCast{15};
             
             inline static constexpr pvalue_t bCastReset{1};
-            inline static constexpr pvalue_t timeMpxGraupner{2}; // 2 long sync
-            inline static constexpr pvalue_t timeMpxRobbe{3}; // 1 short sync
-            inline static constexpr pvalue_t timeMpxCP{4}; // 1 long sync
-            inline static constexpr pvalue_t timeMpxXXX{5}; // 2 short sync
+//            inline static constexpr pvalue_t timeMpxGraupner{2}; // 2 long sync
+//            inline static constexpr pvalue_t timeMpxRobbe{3}; // 1 short sync
+//            inline static constexpr pvalue_t timeMpxCP{4}; // 1 long sync
+//            inline static constexpr pvalue_t timeMpxXXX{5}; // 2 short sync
 #ifdef USE_SBUS
             inline static constexpr pvalue_t bCastOff{15};
 #else
@@ -296,7 +296,7 @@ namespace IBus {
                             if (param == Protocol1::passThruChannel) {
                                 if ((value >= 1) && (value <= 16)) {
                                     channel_t v{value};
-                                    NVM::data().passThru({lastAddrOffset, lastOn}) = v;
+                                    NVM::data().passThru({lastAddrOffset, lastOn}) = v.toInt() - 1;
                                     NVM::data().change();
                                 }
                                 else {
@@ -508,7 +508,7 @@ namespace IBus {
 //        private: 
             using lastindex_t = etl::uint_ranged_NaN<uint8_t, index_t::Lower, index_t::Upper>; 
             static inline lastindex_t lastOnIndex;
-            static inline channel_t mChannel{15}; // ch 16
+            static inline channel_t mChannel{14}; // ch 16
             static inline addr_t    mAddr{0};
         };
 

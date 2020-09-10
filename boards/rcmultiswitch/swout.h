@@ -42,8 +42,15 @@ namespace External {
                     }
                 }
             }
-            
         }        
+        inline static void allOff() {
+            index_t i{};
+            while(true) {
+                setSwitchOff(i);
+                if (i.isTop()) break;
+                ++i;
+            };
+        }
         
         inline static void setSwitchOff(const index_t index) {
             if (index <= pwm_index_t::Upper) {
@@ -153,7 +160,6 @@ namespace External {
                                    });
         }
         inline static std::array<Storage::tick_type, size()> blinkTicks;
-//        inline static blink_index_t blinkIndex;
     };
 }
 

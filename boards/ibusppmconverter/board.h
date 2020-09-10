@@ -68,7 +68,7 @@
 // PA6: 
 // PA7: 
 // PB3:
-// PB2: Q0   (WO2) (rpm1)  (adr2)
+// PB2: Q0   (WO2) (rpm1)  (adr2)  (LED für Adress-Impulse)k
 // PB1: SO1  (WO1) (AIN10) (adr1) (temp0)
 // PB0: SO2  (WO0) (AIN11) (adr0) (temp1) (uni)
 
@@ -79,7 +79,7 @@ using namespace External::Units::literals;
 using PortA = Port<A>;
 using PortB = Port<B>;
 
-using so4Pin = Pin<PortA, 3>;
+using so4Pin = Pin<PortA, 3>; // beim Lernen kann hier externe LED angeschlossen werden
 using so3Pin = Pin<PortA, 5>; // watch out for gps 
 using q0Pin = Pin<PortB, 2>; 
 
@@ -180,9 +180,11 @@ namespace Storage {
         channel_type channel;
     };
     
-    template<typename Channel, typename Address>
-    struct ApplData final : public EEProm::DataBase<ApplData<Channel, Address>> {
-        
+    template<typename Channel, typename AddressR>
+    struct ApplData final : public EEProm::DataBase<ApplData<Channel, AddressR>> {
+//                Channel::_;
+        using Address = etl::uint_ranged_NaN<typename AddressR::value_type, AddressR::Lower, AddressR::Upper>;
+//        Address::_;
         using value_type = SwitchConfig<Channel>;
 
         Channel& passThru(const ChannelIndex& i) {

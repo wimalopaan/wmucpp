@@ -7,51 +7,180 @@
 
 #include "board.h"
 
-template<typename PA, typename SW, typename OUT, typename NVM, typename Timer, typename Term = void>
-struct GFSM {
-    enum class State : uint8_t {Undefined, StartWait, SearchChannel, Run, ShowAddress, LearnTimeout};
+template<typename Pin, typename Timer, auto PulseWidth>
+struct SimpleBlinker {
+    enum class State : uint8_t {Inactive, Off, On};
+    static constexpr External::Tick<Timer> pulseTicks{PulseWidth};
+
+    static inline void init() {
+        Pin::off();
+        Pin::template dir<Output>();
+    }
+    static inline void steady() {
+        mState = State::Inactive;
+        Pin::on();
+    }
+    static inline void off() {
+        mState = State::Inactive;
+        Pin::off();
+    }
+    static inline void ratePeriodic() {
+        const auto oldstate = mState;
+        ++stateTicks;
+        switch(mState) {
+        case State::Inactive:   
+            break;
+        case State::On:   
+            Pin::on();
+            stateTicks.on(pulseTicks, []{
+                ++mNumber;
+                mState = State::Off;
+            });
+            break;
+        case State::Off:   
+            Pin::off();
+            stateTicks.on(pulseTicks, []{
+                if (mNumber < mPulses) {
+                    mState = State::On;        
+                }
+                else {
+                    mState = State::Inactive;
+                    mNumber = 0;
+                }
+            });
+            break;
+        }
+        if (oldstate != mState) {
+            stateTicks.reset();
+        }
+    }
+    static inline void blink(uint8_t pulses) {
+        mPulses = pulses;
+        mNumber = 0;
+        mState = State::On;
+        stateTicks.reset();
+    }
+    static inline bool isActive() {
+        return mState != State::Inactive;
+    }
+private:
+    static inline uint8_t mPulses{1};
+    static inline uint8_t mNumber{0};
+    static inline State mState{State::Inactive};
+    inline static External::Tick<Timer> stateTicks;
+    
+};
+
+
+template<typename PA, typename SW, typename OUT, typename NVM, typename Timer, typename FsmList, typename RELD, typename LED = void, typename Term = void>
+struct GFSM;
+
+template<typename PA, typename SW, typename OUT, typename NVM, typename Timer, typename... Fsms, typename RELD, typename LED, typename Term>
+struct GFSM<PA, SW, OUT, NVM, Timer, Meta::List<Fsms...>, RELD, LED, Term> {
+    using ch_t = PA::channel_t;
+    
+    enum class State : uint8_t {Undefined, StartWait, SearchChannel, AfterSearch, InitRun, Run, ShowAddress, ShowAddressWait, LearnTimeout};
     
     static constexpr auto intervall = Timer::intervall;
-    static constexpr External::Tick<Timer> learnTimeoutTicks{3000_ms};
-    static constexpr External::Tick<Timer> waitTimeoutTicks{1000_ms};
     
-    static inline void init() {}
+    inline static constexpr auto learnTimeout = 4000_ms;
+    inline static constexpr auto scanTimeout = 50_ms;
+    
+    static_assert(learnTimeout > (scanTimeout * (ch_t::Upper + 1) * 2), "");
+    
+    static constexpr External::Tick<Timer> learnTimeoutTicks{learnTimeout};
+    static constexpr External::Tick<Timer> scanTimeoutTicks{scanTimeout};
+    static constexpr External::Tick<Timer> waitTimeoutTicks{3000_ms};
+    static constexpr External::Tick<Timer> reloadTimeoutTicks{20_ms};
+    static constexpr External::Tick<Timer> signalTimeoutTicks{500_ms};
+
+    using blinker = SimpleBlinker<LED, Timer, 300_ms>;
+    
+    static inline void init() {
+        blinker::init();
+    }
+
+    static inline void periodic() {
+        switch(mState) {
+        case State::Run:
+            (Fsms::periodic(), ...);
+            break;
+        case State::Undefined:
+        case State::StartWait:
+        case State::SearchChannel:
+        case State::AfterSearch:
+        case State::InitRun:
+        case State::ShowAddress:
+        case State::ShowAddressWait:
+        case State::LearnTimeout:
+        default:
+            break;
+        }
+    }
     
     static inline void ratePeriodic() {
+        const auto oldState = mState;
+        blinker::ratePeriodic();
         ++stateTicks;
         switch(mState) {
         case State::Undefined:
             mState = State::StartWait;
+            blinker::steady();
             break;
         case State::StartWait:
             stateTicks.on(waitTimeoutTicks, []{
+                blinker::off();
                 mState = State::SearchChannel;
             });
             break;
         case State::SearchChannel:
+            if (search()) {
+                mState = State::AfterSearch;
+            }
             stateTicks.on(learnTimeoutTicks, []{
                 mState = State::LearnTimeout;
             });
-            if (search()) {
+            break;
+        case State::AfterSearch:
+            stateTicks.on(signalTimeoutTicks, []{
                 mState = State::ShowAddress;
-            }
+            });
             break;
         case State::LearnTimeout:
             etl::outl<Term>("timeout ch: "_pgm, NVM::data().channel().toInt(), " adr: "_pgm, NVM::data().address().toInt());
             if (NVM::data().channel() && NVM::data().address()) {
                 SW::channel(NVM::data().channel());
-                SW::address(NVM::data().address());
+                SW::address(typename SW::addr_t{NVM::data().address().toInt()});
             }
-            mState = State::Run;
+            mState = State::InitRun;
             break;
         case State::ShowAddress:
             etl::outl<Term>("learned ch: "_pgm, NVM::data().channel().toInt(), " adr: "_pgm, NVM::data().address().toInt());
-            mState = State::Run;
+            blinker::blink(NVM::data().address().toInt() + 1);
+            mState = State::ShowAddressWait;
+            break;
+        case State::ShowAddressWait:
+            if (!blinker::isActive()) {
+                mState = State::InitRun;
+            }
             break;
         case State::Run:
             SW::periodic();
+            stateTicks.on(reloadTimeoutTicks, []{
+                RELD::reload();
+            });
             //            OUT::setSwitches();
             break;
+        case State::InitRun:
+            LED::off();
+            LED::template dir<Input>();
+            (Fsms::init(), ...);
+            RELD::init();
+            mState = State::Run;
+            break;
+        }
+        if (oldState != mState) {
+            stateTicks.reset();
         }
     }
 private:
@@ -59,29 +188,24 @@ private:
     using addr_t = typename protocol_t::addr_t;
     
     static inline bool search() {
-        if (cc.isBottom()) {
-            if (const auto lc = PA::valueMapped(learnChannel.toRangedNaN()); lc && SW::isLearnCode(lc)) {
-                if (const auto pv = protocol_t::toParameterValue(lc).toInt(); (pv >= 1) && ((pv - 1) <= SW::protocol_t::addr_t::Upper)) {
-                    const uint8_t addr = pv - 1;
-                    SW::channel(learnChannel.toRangedNaN());
-                    SW::address(addr_t(addr));
-                    NVM::data().channel() = learnChannel;
-                    NVM::data().address().set(addr);
-                    NVM::data().change();
-                    return true;
-                }
-            }   
-    #ifdef LEARN_DOWN
-            --learnChannel;
-    #else
-            ++learnChannel;
-    #endif
-            return false;
-        }
-        ++cc;
+        if (const auto lc = PA::valueMapped(learnChannel.toRangedNaN()); lc && SW::isLearnCode(lc)) {
+            if (const auto pv = protocol_t::toParameterValue(lc).toInt(); (pv >= 1) && ((pv - 1) <= SW::protocol_t::addr_t::Upper)) {
+                const uint8_t addr = pv - 1;
+                SW::channel(learnChannel.toRangedNaN());
+                SW::address(addr_t(addr));
+                NVM::data().channel() = learnChannel;
+                NVM::data().address() = addr;
+                NVM::data().change();
+                return true;
+            }
+        }   
+#ifdef LEARN_DOWN
+        --learnChannel;
+#else
+        ++learnChannel;
+#endif
         return false;
     }
-    using ch_t = PA::channel_t;
 #ifdef LEARN_DOWN
     static inline etl::uint_ranged_circular<uint8_t, ch_t::Lower, ch_t::Upper> learnChannel{ch_t::Upper};
 #else
@@ -89,8 +213,6 @@ private:
 #endif
     static inline State mState{State::Undefined};
     inline static External::Tick<Timer> stateTicks;
-
-    inline static etl::uint_ranged_circular<uint8_t, 0, 11> cc;
 };
 
 using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::Default>;
@@ -278,8 +400,26 @@ using evuser0 = Event::Route<evch0, Event::Users::Tcb<0>>;
 using evuser1 = Event::Route<evch1, Event::Users::Tcb<1>>;
 using evrouter = Event::Router<Event::Channels<evch0, evch1>, Event::Routes<evuser0, evuser1>>;
 
+struct Reloader {
+    static inline void init() {
+        fsm4::init();
+        fsm5::init();
+    }
+    static inline void reload() {
+        ppmB::onReload([]{
+            fsm4::update();
+            evrouter::strobe<0>();
+        });
+        ppmC::onReload([]{
+            fsm5::update();
+            evrouter::strobe<1>();
+        });
+    }
+};
+using reloader = Reloader;
+
 using terminal = etl::basic_ostream<void>;
-using gfsm = GFSM<servo_pa, ibus_switch, void, eeprom, systemTimer, terminal>;
+using gfsm = GFSM<servo_pa, ibus_switch, void, eeprom, systemTimer, Meta::List<fsm1, fsm2, fsm3>, reloader, q0Pin, terminal>;
 
 auto& appData = eeprom::data();
 
@@ -310,11 +450,15 @@ int main() {
     servo::init<AVR::BaudRate<100000>, HalfDuplex, true, 1>(); // 8E2
     servo::txEnable<false>();
 #endif
-    fsm1::init();
-    fsm2::init();
-    fsm3::init();
-    fsm4::init();
-    fsm5::init();
+    
+    gfsm::init();
+    
+//    fsm1::init();
+//    fsm2::init();
+//    fsm3::init();
+//    fsm4::init();
+//    fsm5::init();
+
     ibus_switch::init();
     
     eeprom::init();
@@ -335,9 +479,11 @@ int main() {
         });
         servo::periodic();
         
-        fsm1::periodic();
-        fsm2::periodic();
-        fsm3::periodic();
+        gfsm::periodic();
+        
+//        fsm1::periodic();
+//        fsm2::periodic();
+//        fsm3::periodic();
         
         systemTimer::periodic([&]{
             wdt::reset();
@@ -345,14 +491,15 @@ int main() {
             
             alarmTimer::periodic([&](const auto& t){
                 if (periodicTimer == t) {
-                    ppmB::onReload([]{
-                        fsm4::update();
-                        evrouter::strobe<0>();
-                    });
-                    ppmC::onReload([]{
-                        fsm5::update();
-                        evrouter::strobe<1>();
-                    });
+//                    gfsm::timer20ms();
+//                    ppmB::onReload([]{
+//                        fsm4::update();
+//                        evrouter::strobe<0>();
+//                    });
+//                    ppmC::onReload([]{
+//                        fsm5::update();
+//                        evrouter::strobe<1>();
+//                    });
                 }
                 else if (eepromTimer == t) {
                     appData.expire();
