@@ -2,7 +2,7 @@
 // ---- Beginn Standardheader
 = RC MultiSwitch-D 
 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
-:revnumber: 0.93
+:revnumber: 0.95
 :revremark: HW_1.0
 :revdate: 01.01.1970
 :lang: de
@@ -235,7 +235,7 @@ Für den Betrieb und zur Konfiguration des `RCMultiSwitch-D` und `RC MultiAdapte
 Diese findet man in der aktuellesten Version jeweils auf https://github.com/wimalopaan/opentx[GitHub].
 
 .Lizenz der Software, des Übertragungsverfahrens und der Dokumentation
-[IMPORTANT]
+[IMPORTANT]^
 --
 image:by-nc-nd.eu.svg[]
 Bitte beachten Sie, dass neben dieser Dokumentation auch die https://github.com/wimalopaan/opentx[Software] und das Übertragungsverfahren als Konzept der einer Lizenz (Nutzungsvereinbarung) unterliegt. Die genauen Bedingungen dieser Lizenz finden Sie https://creativecommons.org/licenses/by-nc-nd/4.0/deed.de[hier].
@@ -254,16 +254,19 @@ Für den `RC MultiSwitch-D` und `RC MultiAdapter-DA` sind die folgenden relevant
 ** `MIXES/encsb.lua` (nur zu Testzwecken)
 
 * Telemetrie-Scripte (für monochrome Sender)
-** `SCRPTS/TELEMETRY/wmsw.lua`
-** `SCRPTS/TELEMETRY/wmswc.lua`
+** `SCRIPTS/TELEMETRY/wmsw.lua`
+** `SCRIPTS/TELEMETRY/wmswc.lua`
 
 * Bibliotheken
 ** `SCRIPTS/CONFIG/wmcfg.lua`
 ** `SCRIPTS/WM/wmlib.lua`
 
 * Konfiguration
-** `MODELS/swstd.lua`
-** `MODELS/....lua` (modellspezifische Konfigurationen)
+** `MODELS/swstd.lua` (Standardkonfiguration für Anlagen mit großem Display)
+** `MODELS/swstdm.lua` (Standardkonfiguration für Anlagen mit mittlerem Display)
+** `MODELS/swstds.lua` (Standardkonfiguration für Anlagen mit kleinem Display)
+** `MODELS/swstdx.lua` (Standardkonfiguration für Anlagen mit kleinem Display und wenigen Modulen)
+** `MODELS/<name>.lua` (modellspezifische Konfigurationen)(z.B. `Abc.lua` für das Model mit dem Namen `Abc`)
 
 === Installation der Software auf dem Sender
 

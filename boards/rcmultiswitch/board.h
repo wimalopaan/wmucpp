@@ -186,9 +186,10 @@ namespace Storage {
 
     template<typename Channel, typename Address>
     struct SwitchConfig {
+//        Address::_;
         using pwm_type = etl::uint_ranged_NaN<uint8_t, 0, pwm::pwmMax>;
-        using channel_type = Channel;
-        using addr_type = Address;
+        using channel_type = etl::uint_ranged_NaN<typename Channel::value_type, Channel::Lower, Channel::Upper>;
+        using addr_type = etl::uint_ranged_NaN<typename Address::value_type, Address::Lower, Address::Upper>;
         using tick_t = tick_type;
         
         const auto& pwmValue() const {
@@ -221,9 +222,7 @@ namespace Storage {
         return (uint8_t)k - (uint8_t)AVKey::Ch0;
     }
     
-    struct Empty{};
-    
-    template<typename Channel, typename Address = Empty>
+    template<typename Channel, typename Address = etl::uint_ranged_NaN<uint8_t, 0, 7>>
     struct ApplData final : public EEProm::DataBase<ApplData<Channel, Address>> {
         using value_type = SwitchConfig<Channel, Address>;
         

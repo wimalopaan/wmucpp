@@ -1,7 +1,7 @@
 #define NDEBUG
 
-#define USE_IBUS
-//#define USE_SBUS
+//#define USE_IBUS
+#define USE_SBUS
 
 #define LEARN_DOWN // start at highest channel number downwards
 
@@ -10,15 +10,17 @@
 
 template<typename PA, typename SW, typename OUT, typename NVM, typename Timer, typename Term = void>
 struct FSM {
-    enum class State : uint8_t {Undefined, StartWait, SearchChannel, Run, ShowAddress, LearnTimeout};
+    enum class State : uint8_t {Undefined, StartWait, SearchChannel, Run, ShowAddress, ShowAddressWait, LearnTimeout};
     
     static constexpr auto intervall = Timer::intervall;
     static constexpr External::Tick<Timer> learnTimeoutTicks{3000_ms};
     static constexpr External::Tick<Timer> waitTimeoutTicks{1000_ms};
+    static constexpr External::Tick<Timer> showAdressTimeoutTicks{2000_ms};
     
     static inline void init() {}
     
     static inline void ratePeriodic() {
+        const auto oldstate = mState;
 #ifdef USE_SBUS
         PA::ratePeriodic();
 #endif
@@ -42,21 +44,39 @@ struct FSM {
             break;
         case State::LearnTimeout:
             etl::outl<Term>("timeout ch: "_pgm, NVM::data().channel().toInt(), " adr: "_pgm, NVM::data().address().toInt());
+            
             if (NVM::data().channel() && NVM::data().address()) {
+                etl::outl<Term>("load eep"_pgm);
                 SW::channel(NVM::data().channel());
-                SW::address(NVM::data().address());
+                SW::address(typename SW::addr_t{NVM::data().address().toInt()});
             }
             etl::outl<Term>("using ch: "_pgm, SW::mChannel.toInt(), " adr: "_pgm, SW::mAddr.toInt());
             mState = State::Run;
             break;
         case State::ShowAddress:
             etl::outl<Term>("learned ch: "_pgm, NVM::data().channel().toInt(), " adr: "_pgm, NVM::data().address().toInt());
-            mState = State::Run;
+            if (auto const a = NVM::data().address()) {
+                using index_t = typename OUT::index_t;
+                OUT::setSwitchOn(index_t{a.toInt()});
+                mState = State::ShowAddressWait;
+            }
+            else {
+                mState = State::Run;
+            }
+            break;
+        case State::ShowAddressWait:
+            stateTicks.on(showAdressTimeoutTicks, []{
+                mState = State::Run;
+                OUT::allOff();
+            });
             break;
         case State::Run:
             SW::periodic();
             OUT::setSwitches();
             break;
+        }
+        if (oldstate != mState) {
+            stateTicks.reset();
         }
     }
 #ifdef NDEBUG    
@@ -66,27 +86,23 @@ private:
     using addr_t = typename protocol_t::addr_t;
     
     static inline bool search() {
-        if (cc.isBottom()) {
-            etl::outl<Term>("check: "_pgm, learnChannel.toInt(), " v: "_pgm, protocol_t::toParameterValue(PA::valueMapped(learnChannel.toRangedNaN())).toInt(), " r: "_pgm, PA::valueMapped(learnChannel.toRangedNaN()).toInt());
-            if (const auto lc = PA::valueMapped(learnChannel.toRangedNaN()); lc && SW::isLearnCode(lc)) {
-                if (const auto pv = protocol_t::toParameterValue(lc).toInt(); (pv >= 1) && ((pv - 1) <= SW::protocol_t::addr_t::Upper)) {
-                    const uint8_t addr = pv - 1;
-                    SW::channel(learnChannel.toRangedNaN());
-                    SW::address(addr_t(addr));
-                    NVM::data().channel() = learnChannel;
-                    NVM::data().address().set(addr);
-                    NVM::data().change();
-                    return true;
-                }
-            }   
-    #ifdef LEARN_DOWN
-            --learnChannel;
-    #else
-            ++learnChannel;
-    #endif
-            return false;
-        }
-        ++cc;
+        etl::outl<Term>("c: "_pgm, learnChannel.toInt(), " v: "_pgm, protocol_t::toParameterValue(PA::valueMapped(learnChannel.toRangedNaN())).toInt(), " r: "_pgm, PA::valueMapped(learnChannel.toRangedNaN()).toInt());
+        if (const auto lc = PA::valueMapped(learnChannel.toRangedNaN()); lc && SW::isLearnCode(lc)) {
+            if (const auto pv = protocol_t::toParameterValue(lc).toInt(); (pv >= 1) && ((pv - 1) <= SW::protocol_t::addr_t::Upper)) {
+                const uint8_t addr = pv - 1;
+                SW::channel(learnChannel.toRangedNaN());
+                SW::address(addr_t(addr));
+                NVM::data().channel() = learnChannel;
+                NVM::data().address() = addr;
+                NVM::data().change();
+                return true;
+            }
+        }   
+#ifdef LEARN_DOWN
+        --learnChannel;
+#else
+        ++learnChannel;
+#endif
         return false;
     }
     using ch_t = PA::channel_t;
@@ -98,8 +114,6 @@ private:
 #endif
     static inline State mState{State::Undefined};
     inline static External::Tick<Timer> stateTicks;
-    
-    inline static etl::uint_ranged_circular<uint8_t, 0, 11> cc;
 };
 
 #ifdef USE_IBUS
@@ -207,11 +221,11 @@ int main() {
 //                    etl::outl<terminal>("c0: "_pgm, servo_pa::mChannels[9]);
 //                    etl::outl<terminal>("lo: "_pgm, ibus_switch::lastOnIndex.toInt());
 //                    etl::outl<terminal>("sw0: "_pgm, (uint8_t)sw::switches()[0], "sw1: "_pgm, (uint8_t)sw::switches()[1]);
-//                    etl::out<terminal>("sw: [ "_pgm);
-//                    for(const auto& l : sw::switches()) {
-//                        etl::out<terminal>(uint8_t(l), " "_pgm);
-//                    }
-//                    etl::outl<terminal>(" ]"_pgm);
+                    etl::out<terminal>("sw: [ "_pgm);
+                    for(const auto& l : sw::switches()) {
+                        etl::out<terminal>(uint8_t(l), " "_pgm);
+                    }
+                    etl::outl<terminal>(" ]"_pgm);
 //                    etl::outl<terminal>("lpp: "_pgm, (uint8_t)ibus_switch::lpp, " lpv: "_pgm, (uint8_t)ibus_switch::lpv, " lmv: "_pgm, (uint8_t)ibus_switch::lmv, " lo: "_pgm, (uint8_t)ibus_switch::lastOnIndex.toInt());
 //                    etl::outl<terminal>("b0: "_pgm, (uint8_t)appData[0].blinks()[0].intervall.value, "b1: "_pgm, (uint8_t)appData[0].blinks()[1].intervall.value);
                     etl::outl<terminal>("state:  "_pgm, (uint8_t)fsm::mState);

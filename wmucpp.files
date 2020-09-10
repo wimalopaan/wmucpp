@@ -259,6 +259,7 @@ boards/ibusppmconverter/gps.h
 boards/ibusppmconverter/ibus2multi.cc
 boards/ibusppmconverter/lua_encoder.cc
 boards/ibusppmconverter/rpm.h
+boards/ibusppmconverter/servoswitch.cc
 boards/ibusppmconverter/temp.h
 boards/ibusppmconverter/test00.cc
 boards/ibusppmconverter/volt.h
