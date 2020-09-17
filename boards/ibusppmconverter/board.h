@@ -149,6 +149,7 @@ using ibt = IBusThrough;
 
 namespace Storage {
     inline static constexpr uint8_t NAdresses = 5;
+    inline static constexpr uint8_t NChannels = 8;
     
     enum class Mode : uint8_t {
         Graupner8K, // 2 long
@@ -168,14 +169,15 @@ namespace Storage {
         channel_type mPassThruChannel{};
     };
     
-    enum class AVKey : uint8_t {Magic, 
-                                Ch0, Ch1, Ch2, Ch3, Ch4, Ch5, Ch6, Ch7,
-                                Undefined, 
-                                _Number};
+//    enum class AVKey : uint8_t {
+////        Magic, 
+////                                Ch0, Ch1, Ch2, Ch3, Ch4, Ch5, Ch6, Ch7,
+////                                Undefined, 
+//                                _Number};
     
     struct ChannelIndex {
-        using channel_type = etl::uint_ranged<uint8_t, 0, 7>;
-        using addr_type = etl::uint_ranged<uint8_t, 0, 4>;
+        using channel_type = etl::uint_ranged<uint8_t, 0, NChannels - 1>;
+        using addr_type = etl::uint_ranged<uint8_t, 0, NAdresses - 1>;
         addr_type address;
         channel_type channel;
     };
@@ -246,7 +248,8 @@ namespace Storage {
         uint8_t mMagic;
         Channel mChannel;
         Address mAddress;
-        std::array<std::array<value_type, static_cast<uint8_t>(AVKey::_Number)>, NAdresses> AValues;
+//        std::array<std::array<value_type, static_cast<uint8_t>(AVKey::_Number)>, NAdresses> AValues;
+        std::array<std::array<value_type, NChannels>, NAdresses> AValues;
     };
 }
 

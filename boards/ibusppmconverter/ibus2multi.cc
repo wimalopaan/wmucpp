@@ -1,5 +1,7 @@
 #define NDEBUG
 
+//#define DEBUG2 // RX/TX change -> full duplex
+
 //#define USE_SBUS
 #define USE_IBUS
 
@@ -7,76 +9,11 @@
 
 #include "board.h"
 
-template<typename Pin, typename Timer, auto PulseWidth>
-struct SimpleBlinker {
-    enum class State : uint8_t {Inactive, Off, On};
-    static constexpr External::Tick<Timer> pulseTicks{PulseWidth};
-
-    static inline void init() {
-        Pin::off();
-        Pin::template dir<Output>();
-    }
-    static inline void steady() {
-        mState = State::Inactive;
-        Pin::on();
-    }
-    static inline void off() {
-        mState = State::Inactive;
-        Pin::off();
-    }
-    static inline void ratePeriodic() {
-        const auto oldstate = mState;
-        ++stateTicks;
-        switch(mState) {
-        case State::Inactive:   
-            break;
-        case State::On:   
-            Pin::on();
-            stateTicks.on(pulseTicks, []{
-                ++mNumber;
-                mState = State::Off;
-            });
-            break;
-        case State::Off:   
-            Pin::off();
-            stateTicks.on(pulseTicks, []{
-                if (mNumber < mPulses) {
-                    mState = State::On;        
-                }
-                else {
-                    mState = State::Inactive;
-                    mNumber = 0;
-                }
-            });
-            break;
-        }
-        if (oldstate != mState) {
-            stateTicks.reset();
-        }
-    }
-    static inline void blink(uint8_t pulses) {
-        mPulses = pulses;
-        mNumber = 0;
-        mState = State::On;
-        stateTicks.reset();
-    }
-    static inline bool isActive() {
-        return mState != State::Inactive;
-    }
-private:
-    static inline uint8_t mPulses{1};
-    static inline uint8_t mNumber{0};
-    static inline State mState{State::Inactive};
-    inline static External::Tick<Timer> stateTicks;
-    
-};
-
-
-template<typename PA, typename SW, typename OUT, typename NVM, typename Timer, typename FsmList, typename RELD, typename LED = void, typename Term = void>
+template<typename PA, typename SW, typename NVM, typename Timer, typename FsmList, typename RELD, typename LED = void, typename Term = void>
 struct GFSM;
 
-template<typename PA, typename SW, typename OUT, typename NVM, typename Timer, typename... Fsms, typename RELD, typename LED, typename Term>
-struct GFSM<PA, SW, OUT, NVM, Timer, Meta::List<Fsms...>, RELD, LED, Term> {
+template<typename PA, typename SW, typename NVM, typename Timer, typename... Fsms, typename RELD, typename LED, typename Term>
+struct GFSM<PA, SW, NVM, Timer, Meta::List<Fsms...>, RELD, LED, Term> {
     using ch_t = PA::channel_t;
     
     enum class State : uint8_t {Undefined, StartWait, SearchChannel, AfterSearch, InitRun, Run, ShowAddress, ShowAddressWait, LearnTimeout};
@@ -94,7 +31,7 @@ struct GFSM<PA, SW, OUT, NVM, Timer, Meta::List<Fsms...>, RELD, LED, Term> {
     static constexpr External::Tick<Timer> reloadTimeoutTicks{20_ms};
     static constexpr External::Tick<Timer> signalTimeoutTicks{500_ms};
 
-    using blinker = SimpleBlinker<LED, Timer, 300_ms>;
+    using blinker = External::SimpleBlinker<LED, Timer, 300_ms>;
     
     static inline void init() {
         blinker::init();
@@ -169,11 +106,14 @@ struct GFSM<PA, SW, OUT, NVM, Timer, Meta::List<Fsms...>, RELD, LED, Term> {
             stateTicks.on(reloadTimeoutTicks, []{
                 RELD::reload();
             });
-            //            OUT::setSwitches();
+            if (SW::receivedControl()) {
+                blinker::steady();                
+            }
+            else {
+                blinker::off();                
+            }
             break;
         case State::InitRun:
-            LED::off();
-            LED::template dir<Input>();
             (Fsms::init(), ...);
             RELD::init();
             mState = State::Run;
@@ -181,6 +121,24 @@ struct GFSM<PA, SW, OUT, NVM, Timer, Meta::List<Fsms...>, RELD, LED, Term> {
         }
         if (oldState != mState) {
             stateTicks.reset();
+            switch(mState) {
+            case State::Run:
+                break;
+            case State::Undefined:
+            case State::StartWait:
+                etl::outl<Term>("swait"_pgm);
+                break;
+            case State::SearchChannel:
+                etl::outl<Term>("search"_pgm);
+                break;
+            case State::AfterSearch:
+            case State::InitRun:
+            case State::ShowAddress:
+            case State::ShowAddressWait:
+            case State::LearnTimeout:
+            default:
+                break;
+            }
         }
     }
 private:
@@ -273,8 +231,6 @@ struct FSM {
     using cycle9_t = etl::uint_ranged_circular<uint8_t, 0, 8>; // Robbe / CP mode use only 9 cycles, so we have to increment twice
     using cycle6_t = etl::uint_ranged_circular<uint8_t, 0, 5>; // Robbe / CP mode use only 9 cycles, so we have to increment twice
     
-//    static inline constexpr uint8_t offset{10};
-    
     static inline void init() {
         PPM::init();    
     }
@@ -286,14 +242,12 @@ struct FSM {
     static inline auto& switches() {
         return swStates;
     }
-    //private:
     inline static void update() {
         const auto mode = NVM::data().mpxMode(Address);
         
         if (mode == Storage::Mode::Graupner8K) {
             if (cycle10 < 2) {
                 PPM::ppmRaw(PPM::ocMax + 100);
-//                PPM::ppmRaw(PPM::ocMax + 200);
             }
             else {
                 uint8_t i = cycle10 - 2;
@@ -352,7 +306,7 @@ struct FSM {
             ++cycle10;
         }
     }
-    
+    private:
     static inline void pulse(uint8_t i) {
         constexpr Storage::ChannelIndex::addr_type adr{Address};
         Storage::ChannelIndex chi{adr, Storage::ChannelIndex::channel_type{i}};
@@ -418,8 +372,14 @@ struct Reloader {
 };
 using reloader = Reloader;
 
+#ifndef DEBUG2
 using terminal = etl::basic_ostream<void>;
-using gfsm = GFSM<servo_pa, ibus_switch, void, eeprom, systemTimer, Meta::List<fsm1, fsm2, fsm3>, reloader, q0Pin, terminal>;
+#else
+using terminal = etl::basic_ostream<servo>;
+#endif
+
+//using gfsm = GFSM<servo_pa, ibus_switch, eeprom, systemTimer, Meta::List<fsm1, fsm2, fsm3>, reloader, q0Pin, terminal>;
+using gfsm = GFSM<servo_pa, ibus_switch, eeprom, systemTimer, Meta::List<fsm1, fsm2, fsm3>, reloader, daisyChain, terminal>;
 
 auto& appData = eeprom::data();
 
@@ -443,8 +403,12 @@ int main() {
     systemTimer::init();
     
 #ifdef USE_IBUS
+# ifndef DEBUG2
     servo::init<AVR::BaudRate<115200>, HalfDuplex>();
     servo::txEnable<false>();
+# else
+    servo::init<AVR::BaudRate<115200>>();
+# endif
 #endif
 #ifdef USE_SBUS
     servo::init<AVR::BaudRate<100000>, HalfDuplex, true, 1>(); // 8E2
@@ -453,55 +417,33 @@ int main() {
     
     gfsm::init();
     
-//    fsm1::init();
-//    fsm2::init();
-//    fsm3::init();
-//    fsm4::init();
-//    fsm5::init();
-
     ibus_switch::init();
     
     eeprom::init();
-    {
-        if (!((appData.magic() == 42))) {
-            appData.clear();
-            appData.magic() = 42;
-            appData.change();
-        }
+
+    if (appData.magic() != 42) {
+        appData.clear();
+        appData.magic() = 42;
+        appData.change();
     }
     
-    const auto periodicTimer = alarmTimer::create(20_ms, External::Hal::AlarmFlags::Periodic);
     const auto eepromTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
     
     while(true) {
-        eeprom::saveIfNeeded([&]{
-            //            fsm::load();                
-        });
+        eeprom::saveIfNeeded([&]{});
         servo::periodic();
         
         gfsm::periodic();
-        
-//        fsm1::periodic();
-//        fsm2::periodic();
-//        fsm3::periodic();
         
         systemTimer::periodic([&]{
             wdt::reset();
             gfsm::ratePeriodic();
             
             alarmTimer::periodic([&](const auto& t){
-                if (periodicTimer == t) {
-//                    gfsm::timer20ms();
-//                    ppmB::onReload([]{
-//                        fsm4::update();
-//                        evrouter::strobe<0>();
-//                    });
-//                    ppmC::onReload([]{
-//                        fsm5::update();
-//                        evrouter::strobe<1>();
-//                    });
-                }
-                else if (eepromTimer == t) {
+                if (eepromTimer == t) {
+                    etl::outl<terminal>(" x0: "_pgm, (uint8_t)appData.mpxMode(0), " x1: "_pgm, (uint8_t)appData.mpxMode(1), " x2: "_pgm, (uint8_t)appData.mpxMode(2));
+                    etl::outl<terminal>(" p00: "_pgm, appData.passThru({Storage::ChannelIndex::addr_type{0}, Storage::ChannelIndex::channel_type{0}}).toInt(), " p01: "_pgm, appData.passThru({Storage::ChannelIndex::addr_type{0}, Storage::ChannelIndex::channel_type{1}}).toInt());
+                    etl::outl<terminal>(" s00: "_pgm, (uint8_t)fsm1::switches()[0], " s01: "_pgm, (uint8_t)fsm1::switches()[1]);
                     appData.expire();
                 }
             });

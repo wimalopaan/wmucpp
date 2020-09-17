@@ -30,6 +30,68 @@
 #include "mcu/common/concepts.h"
 
 namespace External {
+    template<typename Pin, typename Timer, auto PulseWidth>
+    struct SimpleBlinker {
+        enum class State : uint8_t {Inactive, Off, On};
+        static constexpr External::Tick<Timer> pulseTicks{PulseWidth};
+    
+        static inline void init() {
+            Pin::off();
+            Pin::template dir<AVR::Output>();
+        }
+        static inline void steady() {
+            mState = State::Inactive;
+            Pin::on();
+        }
+        static inline void off() {
+            mState = State::Inactive;
+            Pin::off();
+        }
+        static inline void ratePeriodic() {
+            const auto oldstate = mState;
+            ++stateTicks;
+            switch(mState) {
+            case State::Inactive:   
+                break;
+            case State::On:   
+                Pin::on();
+                stateTicks.on(pulseTicks, []{
+                    ++mNumber;
+                    mState = State::Off;
+                });
+                break;
+            case State::Off:   
+                Pin::off();
+                stateTicks.on(pulseTicks, []{
+                    if (mNumber < mPulses) {
+                        mState = State::On;        
+                    }
+                    else {
+                        mState = State::Inactive;
+                        mNumber = 0;
+                    }
+                });
+                break;
+            }
+            if (oldstate != mState) {
+                stateTicks.reset();
+            }
+        }
+        static inline void blink(uint8_t pulses) {
+            mPulses = pulses;
+            mNumber = 0;
+            mState = State::On;
+            stateTicks.reset();
+        }
+        static inline bool isActive() {
+            return mState != State::Inactive;
+        }
+    private:
+        static inline uint8_t mPulses{1};
+        static inline uint8_t mNumber{0};
+        static inline State mState{State::Inactive};
+        inline static External::Tick<Timer> stateTicks;
+    };
 
     template<typename Pin, auto Intervall, std::chrono::milliseconds Pulse, std::chrono::milliseconds Period>
     struct Blinker {

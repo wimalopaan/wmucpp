@@ -167,17 +167,13 @@ namespace IBus {
             inline static constexpr param_t blink2Intervall{4};
             inline static constexpr param_t blink2Duration{5};
             inline static constexpr param_t passThruChannel{6};
-            inline static constexpr param_t timeMpxMode{7};
+            inline static constexpr param_t timeMpxMode{7}; // MK8 = 0, MK4 = 1, Robbe = 2, CP = 3
             inline static constexpr param_t servoMin{12};
             inline static constexpr param_t servoMax{13};
             inline static constexpr param_t resetOrLearnAddress{14};
             inline static constexpr param_t broadCast{15};
             
             inline static constexpr pvalue_t bCastReset{1};
-//            inline static constexpr pvalue_t timeMpxGraupner{2}; // 2 long sync
-//            inline static constexpr pvalue_t timeMpxRobbe{3}; // 1 short sync
-//            inline static constexpr pvalue_t timeMpxCP{4}; // 1 long sync
-//            inline static constexpr pvalue_t timeMpxXXX{5}; // 2 short sync
 #ifdef USE_SBUS
             inline static constexpr pvalue_t bCastOff{15};
 #else
@@ -292,6 +288,7 @@ namespace IBus {
                     else if (lastOnIndex && lastOnAddr) {
                         index_t lastOn{lastOnIndex.toInt()};
                         if ((lastOnAddr.toInt() - mAddr) < nActors) {
+                            mReceivedControl = true;
                             etl::uint_ranged<uint8_t, 0, (nActors - 1)> lastAddrOffset{(uint8_t)(lastOnAddr.toInt() - mAddr)};
                             if (param == Protocol1::passThruChannel) {
                                 if ((value >= 1) && (value <= 16)) {
@@ -316,14 +313,17 @@ namespace IBus {
                                 NVM::data().mpxMode(lastAddrOffset, value);
                                 NVM::data().change();
                             }
-                            
                         }
                     }
                 }
                 else { // command (execute)
+                    mReceivedControl = false;
                     update(Meta::List<Actors...>{}, mode, index, addr);                    
                 }
                 return true;                
+            }
+            inline static bool receivedControl() {
+                return mReceivedControl;
             }
         private:
             template<typename F, typename... AA>
@@ -369,7 +369,7 @@ namespace IBus {
                     }
                 }
             }
-        private:
+            static inline bool mReceivedControl{false};
             using lastindex_t = etl::uint_ranged_NaN<uint8_t, index_t::Lower, index_t::Upper>; 
             using lastaddr_t = etl::uint_ranged_NaN<uint8_t, 0, addr_t::Upper>; 
             static inline lastindex_t lastOnIndex;
@@ -505,14 +505,135 @@ namespace IBus {
             static inline mode_t lmv;
             static inline pvalue_t lpv;
             static inline param_t lpp;
-//        private: 
+        private: 
             using lastindex_t = etl::uint_ranged_NaN<uint8_t, index_t::Lower, index_t::Upper>; 
             static inline lastindex_t lastOnIndex;
             static inline channel_t mChannel{14}; // ch 16
             static inline addr_t    mAddr{0};
         };
 
-    template<typename PA>
+        template<typename PA, typename ActorList>
+        struct Digital2;
+        
+        template<typename PA, typename... Actors>
+        struct Digital2<PA, Meta::List<Actors...>> {
+            using actor_list = Meta::List<Actors...>;
+            using channel_t = PA::channel_t;
+            using value_t = PA::value_type;
+            
+            using protocol_t = Protocol1;
+            
+            using addr_t = Protocol1::addr_t;
+            using index_t = Protocol1::index_t;
+            using mode_t = Protocol1::mode_t;
+            using param_t = Protocol1::param_t;
+            using pvalue_t = Protocol1::pvalue_t;
+            
+            static inline void init(const channel_t c = 0) {
+                mChannel = c;
+            }
+
+            static inline void channel(const channel_t c) {
+                if (c) {
+                    mChannel = c;
+                }
+            }
+
+            static inline void address(const addr_t a) {
+                mAddr = a;
+            }
+            
+            template<typename T>
+            inline static constexpr bool isLearnCode(const T& v) {
+                return Protocol1::isLearnCode(v);
+            }
+            static inline bool ratePeriodic() {
+                const auto cv = PA::valueMapped(mChannel);
+
+                if (!cv) return true;
+                
+                const addr_t addr = Protocol1::toAddress(cv);
+                const index_t index = Protocol1::toIndex(cv);
+                const mode_t mode = Protocol1::toMode(cv);
+                                
+                if (Protocol1::isControlMessage(cv)) { // control
+                    const param_t param = Protocol1::toParameter(cv);
+                    const pvalue_t value = Protocol1::toParameterValue(cv);
+                    
+                    lpv = value;
+                    lpp = param;
+                    
+                    if (param == Protocol1::broadCast) {
+                        if (value == Protocol1::bCastOff) {
+                            lastOnIndex = lastindex_t{};
+                            (Actors::position(Protocol1::off), ...);
+                        }
+                    }
+                    else if (lastOnIndex) {
+                        index_t lastOn{lastOnIndex.toInt()};
+                        if (param == Protocol1::reset) {
+                            if (value == Protocol1::bCastReset) {
+                                Meta::visitAt<actor_list>(lastOn.toInt(), [&]<typename A>(const Meta::Wrapper<A>&) {
+                                                              A::reset();
+                                                          });
+                                              
+                            }
+                        }
+                        else if (param == Protocol1::pwm) {
+                        }
+                        else if (param == Protocol1::blink1Intervall) {
+                            Meta::visitAt<actor_list>(lastOn.toInt(), [&]<typename A>(const Meta::Wrapper<A>&) {
+                                                          A::position(mode_t{0}, value);
+                                                      });
+                        }
+                        else if (param == Protocol1::blink1Duration) {
+//                            Actor::switches()[lastOn] = Actor::SwState::Blink1;
+//                            const uint16_t intervall = Out::intervall(lastOn, blink_index_t{0}).value;
+//                            const uint16_t duration = ((uint32_t)value * intervall) / pvalue_t::Upper; 
+//                            Out::duration(lastOn, tick_t::fromRaw(duration), blink_index_t{0});
+                        }
+                        else if (param == Protocol1::blink2Intervall) {
+//                            Actor::switches()[lastOn] = Actor::SwState::Blink2;
+//                            const uint16_t intervall = ((uint32_t)value * tick_t::max()) / pvalue_t::Upper;
+//                            Out::intervall2(lastOn, tick_t::fromRaw(intervall), blink_index_t{1});
+//                            Out::duration(lastOn, tick_t::fromRaw(intervall / 2), blink_index_t{1});
+                        }
+                        else if (param == Protocol1::blink2Duration) {
+//                            Actor::switches()[lastOn] = Actor::SwState::Blink2;
+//                            const uint16_t intervall = Out::intervall(lastOn, blink_index_t{1}).value;
+//                            const uint16_t duration = ((uint32_t)value * intervall) / pvalue_t::Upper; 
+//                            Out::duration(lastOn, tick_t::fromRaw(duration), blink_index_t{1});
+                        }
+                    }
+                }
+                else { // command
+                    if (addr != mAddr) {
+                        return false;
+                    }
+                    lmv = mode;
+                    if (mode != Protocol1::off) {
+                        lastOnIndex = index.toInt();
+                    }
+                    else {
+                        lastOnIndex = lastindex_t{};
+                    }
+                    Meta::visitAt<actor_list>(lastOnIndex.toInt(), [&]<typename A>(const Meta::Wrapper<A>&) {
+                                                  A::position(mode);
+                                              });
+                }
+                return true;                
+            }
+            static inline mode_t lmv;
+            static inline pvalue_t lpv;
+            static inline param_t lpp;
+//        private: 
+            using lastindex_t = etl::uint_ranged_NaN<uint8_t, 0, Meta::size_v<actor_list> - 1>; 
+            static inline lastindex_t lastOnIndex;
+            static inline channel_t mChannel{14}; // ch 16
+            static inline addr_t    mAddr{0};
+        };
+
+        template<typename PA>
         struct Switch2 {
             using channel_t = PA::channel_t;
             using value_t = PA::value_type;
