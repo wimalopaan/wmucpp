@@ -90,13 +90,44 @@ namespace External {
                 setSwitchOff(index);
 //                blinkTicks[index] = NVM::data()[index].blinks()[blinkIndex].intervall;
             }
-            else if ((StateProvider::switches()[index] == StateProvider::SwState::Blink1) || (StateProvider::switches()[index] == StateProvider::SwState::Blink2)) {
-                blink_index_t blinkIndex((StateProvider::switches()[index] == StateProvider::SwState::Blink1) ? 0 : 1);
+            else if ((StateProvider::switches()[index] == StateProvider::SwState::Blink1)) {
+                const blink_index_t blinkIndex((StateProvider::switches()[index] == StateProvider::SwState::Blink1) ? 0 : 1);
                                 
                 if (NVM::data()[index].blinks()[blinkIndex].duration) {
                     blinkTicks[index].match(NVM::data()[index].blinks()[blinkIndex].duration, [&]{
                         setSwitchOff(index);
                     });
+                    blinkTicks[index].on(NVM::data()[index].blinks()[blinkIndex].intervall, [&]{
+                        setSwitchOn(index);
+                    });
+                    ++blinkTicks[index];
+                }
+                else {
+                    setSwitchOn(index);
+                }
+            }
+            else if ((StateProvider::switches()[index] == StateProvider::SwState::Blink2)) {
+                const blink_index_t blinkIndex((StateProvider::switches()[index] == StateProvider::SwState::Blink1) ? 0 : 1);
+                                
+                if (NVM::data()[index].blinks()[blinkIndex].duration) {
+                    static uint8_t b{0};
+                    ++b;
+                    if (b == 1) {
+                        blinkTicks[index].match(NVM::data()[index].blinks()[blinkIndex].duration / 4, [&]{
+                            setSwitchOff(index);
+                        });
+                    }
+                    else if (b == 2) {
+                        blinkTicks[index].match(NVM::data()[index].blinks()[blinkIndex].duration / 2, [&]{
+                            setSwitchOn(index);
+                        });
+                    }
+                    else if (b == 3) {
+                        blinkTicks[index].match((NVM::data()[index].blinks()[blinkIndex].duration * 3) / 4, [&]{
+                            setSwitchOff(index);
+                        });
+                        b = 0;
+                    }
                     blinkTicks[index].on(NVM::data()[index].blinks()[blinkIndex].intervall, [&]{
                         setSwitchOn(index);
                     });

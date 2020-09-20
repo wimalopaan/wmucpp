@@ -2,6 +2,8 @@
 
 //#define DEBUG2 // RX/TX change -> full duplex
 
+#define INV_LED // onboad LED inverted
+
 //#define USE_SBUS
 #define USE_IBUS
 
@@ -16,7 +18,9 @@ template<typename PA, typename SW, typename NVM, typename Timer, typename... Fsm
 struct GFSM<PA, SW, NVM, Timer, Meta::List<Fsms...>, RELD, LED, Term> {
     using ch_t = PA::channel_t;
     
-    enum class State : uint8_t {Undefined, StartWait, SearchChannel, AfterSearch, InitRun, Run, ShowAddress, ShowAddressWait, LearnTimeout};
+    enum class State : uint8_t {Undefined, StartWait, SearchChannel, AfterSearch, InitRun, Run, 
+                                ShowAddress, ShowAddressWait, LearnTimeout,
+                                Test1};
     
     static constexpr auto intervall = Timer::intervall;
     
@@ -50,9 +54,14 @@ struct GFSM<PA, SW, NVM, Timer, Meta::List<Fsms...>, RELD, LED, Term> {
         case State::ShowAddress:
         case State::ShowAddressWait:
         case State::LearnTimeout:
+        case State::Test1:
         default:
             break;
         }
+    }
+    
+    static inline void test(const SW::mode_t) {
+        
     }
     
     static inline void ratePeriodic() {
@@ -102,7 +111,7 @@ struct GFSM<PA, SW, NVM, Timer, Meta::List<Fsms...>, RELD, LED, Term> {
             }
             break;
         case State::Run:
-            SW::periodic();
+            SW::ratePeriodic();
             stateTicks.on(reloadTimeoutTicks, []{
                 RELD::reload();
             });
@@ -117,6 +126,11 @@ struct GFSM<PA, SW, NVM, Timer, Meta::List<Fsms...>, RELD, LED, Term> {
             (Fsms::init(), ...);
             RELD::init();
             mState = State::Run;
+            break;
+        case State::Test1:
+            if (!SW::receivedControl()) {
+                mState = State::Run;
+            }
             break;
         }
         if (oldState != mState) {
@@ -136,6 +150,7 @@ struct GFSM<PA, SW, NVM, Timer, Meta::List<Fsms...>, RELD, LED, Term> {
             case State::ShowAddress:
             case State::ShowAddressWait:
             case State::LearnTimeout:
+            case State::Test1:
             default:
                 break;
             }
@@ -379,7 +394,13 @@ using terminal = etl::basic_ostream<servo>;
 #endif
 
 //using gfsm = GFSM<servo_pa, ibus_switch, eeprom, systemTimer, Meta::List<fsm1, fsm2, fsm3>, reloader, q0Pin, terminal>;
-using gfsm = GFSM<servo_pa, ibus_switch, eeprom, systemTimer, Meta::List<fsm1, fsm2, fsm3>, reloader, daisyChain, terminal>;
+
+#ifdef INV_LED
+using led = AVR::ActiveLow<daisyChain, Output>;
+#else
+using led = AVR::ActiveHigh<daisyChain, Output>;
+#endif
+using gfsm = GFSM<servo_pa, ibus_switch, eeprom, systemTimer, Meta::List<fsm1, fsm2, fsm3>, reloader, led, terminal>;
 
 auto& appData = eeprom::data();
 

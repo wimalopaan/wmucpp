@@ -76,6 +76,14 @@ namespace External {
             return decltype(value)::Upper;
         }
         
+        inline constexpr auto operator/(const uint16_t& d) {
+            return Tick(value / d);    
+        }
+
+        inline constexpr auto operator*(const uint16_t& m) {
+            return Tick(value * m);    
+        }
+        
         //    private: // structural type
         etl::uint_ranged<T, 0, MAX> value;
         

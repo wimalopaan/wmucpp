@@ -1,4 +1,4 @@
-//#define NDEBUG
+#define NDEBUG
 
 #define DEBUG2 // RX/TX change -> full duplex
 
@@ -16,9 +16,11 @@ namespace Storage2 {
     template<typename ModeType, typename PPM>
     struct ChannelConfig {
         constexpr ChannelConfig() {
-            std::fill(std::begin(positions), std::end(positions), PPM::ocMedium);
+            std::fill(std::begin(mPositions), std::end(mPositions), PPM::ocMedium);
         } 
-        std::array<uint16_t, ModeType::Upper + 1> positions;        
+//    private:
+        std::array<uint16_t, ModeType::Upper + 1> mPositions;        
+        etl::uint_ranged<uint8_t, 1, 100> mIncrement{1};
     };
     
     template<typename Channel, typename AddressR, typename ModeType, typename PPM>
@@ -58,14 +60,17 @@ template<typename PA, typename SW, typename NVM, typename Timer, typename... Fsm
 struct GFSM<PA, SW, NVM, Timer, Meta::List<Fsms...>, RELD, LED, Term> {
     using ch_t = PA::channel_t;
     
-    enum class State : uint8_t {Undefined, StartWait, SearchChannel, AfterSearch, InitRun, Run, ShowAddress, ShowAddressWait, LearnTimeout};
+    enum class State : uint8_t {Undefined, StartWait, SearchChannel, AfterSearch, InitRun, Run, 
+                                ShowAddress, ShowAddressWait, LearnTimeout,
+//                                Test1
+                               };
     
     static constexpr auto intervall = Timer::intervall;
     
     inline static constexpr auto learnTimeout = 4000_ms;
     inline static constexpr auto scanTimeout = 50_ms;
     
-    static_assert(learnTimeout > (scanTimeout * (ch_t::Upper + 1) * 2), "");
+    static_assert(learnTimeout > (scanTimeout * (ch_t::Upper + 1) * 2), "wrong learn timeout");
     
     static constexpr External::Tick<Timer> learnTimeoutTicks{learnTimeout};
     static constexpr External::Tick<Timer> scanTimeoutTicks{scanTimeout};
@@ -92,6 +97,7 @@ struct GFSM<PA, SW, NVM, Timer, Meta::List<Fsms...>, RELD, LED, Term> {
         case State::ShowAddress:
         case State::ShowAddressWait:
         case State::LearnTimeout:
+//        case State::Test1:
         default:
             break;
         }
@@ -149,16 +155,44 @@ struct GFSM<PA, SW, NVM, Timer, Meta::List<Fsms...>, RELD, LED, Term> {
             stateTicks.on(reloadTimeoutTicks, []{
                 RELD::reload();
             });
+            if (SW::receivedControl()) {
+                blinker::steady();                
+            }
+            else {
+                blinker::off();                
+            }
             break;
         case State::InitRun:
-            LED::off();
-            LED::template dir<Input>();
             (Fsms::init(), ...);
             mState = State::Run;
             break;
+//        case State::Test1:
+//            if (!SW::receivedControl()) {
+//                mState = State::Run;
+//            }
+//            break;
         }
         if (oldState != mState) {
             stateTicks.reset();
+            switch(mState) {
+            case State::Run:
+                break;
+            case State::Undefined:
+            case State::StartWait:
+                etl::outl<Term>("swait"_pgm);
+                break;
+            case State::SearchChannel:
+                etl::outl<Term>("search"_pgm);
+                break;
+            case State::AfterSearch:
+            case State::InitRun:
+            case State::ShowAddress:
+            case State::ShowAddressWait:
+            case State::LearnTimeout:
+//            case State::Test1:
+            default:
+                break;
+            }
         }
     }
 private:
@@ -235,35 +269,97 @@ struct Adapter {
     }
 };
 
-template<typename PPM, typename PA, typename NVM, etl::uint_ranged<uint8_t, 0, Storage2::NChannels - 1> Channel>
+template<typename PPM, typename PA, typename NVM, typename Timer, etl::uint_ranged<uint8_t, 0, Storage2::NChannels - 1> Channel>
 struct FSM {
-    using mode_t = std::remove_cvref_t<decltype(NVM::data())>::mode_t;
-    using ch_config_t = std::remove_cvref_t<decltype(NVM::data())>::value_type;
+    inline static constexpr auto& appData = NVM::data();
+    inline static constexpr auto& chData = appData.AValues[Channel];
+    
+    using storage_t = std::remove_cvref_t<decltype(appData)>; 
+    
+    using mode_t = storage_t::mode_t;
+    using ch_config_t = storage_t::value_type;
     using ppm_value_t = PPM::ranged_type;
     
+    enum class State : uint8_t {Init, Steady, Run, Test};
+    
+    
     static inline void reset() {
-        NVM::data().AValues[Channel] = ch_config_t{};
+        chData = ch_config_t{};
+        jump(chData.mPositions[0]);
     }
     static inline void init() {
         PPM::init();
+        mState = State::Init;
     }
+
+    static inline void setTest(const mode_t& m) {
+        
+    }
+    
+    static constexpr External::Tick<Timer> waitTimeoutTicks{20_ms};
+//    std::integral_constant<uint16_t, waitTimeoutTicks.value.toInt()>::_;
+    
     static inline void ratePeriodic() {
+        ++stateTicks;
+        const auto oldState = mState;
+        switch(mState) {
+        case State::Init:
+            mActualPosition = mTargetPosition = chData.mPositions[0];
+            PPM::ppmRaw(mActualPosition);
+            mState = State::Steady;
+            break;
+        case State::Steady:
+            if (mTargetPosition != mActualPosition) {
+                mState = State::Run;
+            }
+            break;
+        case State::Run:
+            if (mActualPosition == mTargetPosition) {
+                mState = State::Steady;
+            }
+            stateTicks.on(waitTimeoutTicks, []{
+                if (mTargetPosition > mActualPosition) {
+                    mActualPosition += chData.mIncrement;
+                }
+                else if (mTargetPosition < mActualPosition) {
+                    mActualPosition -= chData.mIncrement;
+                }
+                PPM::ppmRaw(mActualPosition);
+            });
+            break;
+        case State::Test:
+            break;
+        }
+        if (oldState != mState) {
+            stateTicks.reset();
+        }
     }
     static inline void periodic() {
     }
-    static inline void position(const mode_t& p, const auto& v) {
-        using v_t = std::remove_cvref_t<decltype(v)>;
-        uint16_t pv = ((uint32_t)(PPM::ocMax - PPM::ocMin) * v.toInt() / v_t::Upper) + PPM::ocMin;          
-        NVM::data().AValues[Channel].positions[p] = pv;
-        
-        position(p);
+    static inline void setIncrement(const uint8_t increment) {
+        chData.mIncrement.set(increment);
+        appData.change();
     }
-    static inline void position(const mode_t& p) {
+    static inline void setPosition(const mode_t& p, const auto& v) {
+        using v_t = std::remove_cvref_t<decltype(v)>;
+        uint16_t pv = (((uint32_t)(PPM::ocMax - PPM::ocMin) * (v.toInt() - v_t::Lower)) / (v_t::Upper - v_t::Lower)) + PPM::ocMin;          
+        chData.mPositions[p] = pv;
+        appData.change();
+        jump(pv);
+    }
+    static inline void moveToPosition(const mode_t& p) {
         mMode = p;
-        const auto pv = NVM::data().AValues[Channel].positions[p];
-        PPM::ppmRaw(pv);
+        mTargetPosition = chData.mPositions[p];
     }
 //private:
+    static inline void jump(const uint16_t p) {
+        PPM::ppmRaw(p);
+        mActualPosition = mTargetPosition = p;        
+    } 
+    inline static State mState{State::Init};
+    inline static External::Tick<Timer> stateTicks;
+    inline static uint16_t mActualPosition = PPM::ocMedium;
+    inline static uint16_t mTargetPosition;
     inline static mode_t mMode;
 };
 
@@ -272,13 +368,13 @@ using eeprom = EEProm::Controller<Storage2::ApplData<servo_pa::channel_t, IBus::
 using ppmCh1 = Adapter<ppmA, 0>;
 using ppmCh2 = Adapter<ppmA, 1>;
 using ppmCh3 = Adapter<ppmA, 2>;
-using fsm1 = FSM<ppmCh1, servo_pa, eeprom, Storage2::ch_index_t{0}>;
-using fsm2 = FSM<ppmCh2, servo_pa, eeprom, Storage2::ch_index_t{1}>;
-using fsm3 = FSM<ppmCh3, servo_pa, eeprom, Storage2::ch_index_t{2}>;
-using fsm4 = FSM<ppmB, servo_pa, eeprom, Storage2::ch_index_t{3}>;
-using fsm5 = FSM<ppmC, servo_pa, eeprom, Storage2::ch_index_t{4}>;
+using fsm1 = FSM<ppmCh1, servo_pa, eeprom, systemTimer, Storage2::ch_index_t{0}>;
+using fsm2 = FSM<ppmCh2, servo_pa, eeprom, systemTimer, Storage2::ch_index_t{1}>;
+using fsm3 = FSM<ppmCh3, servo_pa, eeprom, systemTimer, Storage2::ch_index_t{2}>;
+using fsm4 = FSM<ppmB, servo_pa, eeprom, systemTimer, Storage2::ch_index_t{3}>;
+using fsm5 = FSM<ppmC, servo_pa, eeprom, systemTimer, Storage2::ch_index_t{4}>;
 
-using ibus_switch = IBus::Switch::Digital2<servo_pa, Meta::List<fsm1, fsm2, fsm3, fsm4, fsm5>>;
+using ibus_switch = IBus::Switch::ServoSwitch<servo_pa, Meta::List<fsm1, fsm2, fsm3, fsm4, fsm5>>;
 
 using evch0 = Event::Channel<0, void>;
 using evch1 = Event::Channel<1, void>;
@@ -298,12 +394,16 @@ struct Reloader {
 };
 using reloader = Reloader;
 
+
 #ifndef DEBUG2
+using led = AVR::ActiveLow<daisyChain, Output>;
 using terminal = etl::basic_ostream<void>;
 #else
+using led = AVR::ActiveHigh<q0Pin, Output>;
 using terminal = etl::basic_ostream<servo>;
 #endif
-using gfsm = GFSM<servo_pa, ibus_switch, eeprom, systemTimer, Meta::List<fsm1, fsm2, fsm3, fsm4, fsm5>, reloader, q0Pin, terminal>;
+
+using gfsm = GFSM<servo_pa, ibus_switch, eeprom, systemTimer, Meta::List<fsm1, fsm2, fsm3, fsm4, fsm5>, reloader, led, terminal>;
 
 auto& appData = eeprom::data();
 
@@ -354,19 +454,16 @@ int main() {
     const auto eepromTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
     
     while(true) {
-        eeprom::saveIfNeeded([&]{
-        });
+        eeprom::saveIfNeeded([&]{});
         servo::periodic();
-        
         gfsm::periodic();
         
         systemTimer::periodic([&]{
             wdt::reset();
             gfsm::ratePeriodic();
-            
             alarmTimer::periodic([&](const auto& t){
                 if (eepromTimer == t) {
-                    etl::outl<terminal>("s1: "_pgm, fsm1::mMode.toInt());
+                    etl::outl<terminal>("lc0: "_pgm, ibus_switch::lc0.toInt(), " pv: "_pgm, appData.AValues[0].mPositions[0]);
                     appData.expire();
                 }
             });

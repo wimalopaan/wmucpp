@@ -2,7 +2,7 @@
 // ---- Beginn Standardheader
 = RC MultiSwitch-D 
 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
-:revnumber: 0.95
+:revnumber: 0.96
 :revremark: HW_1.0
 :revdate: 01.01.1970
 :lang: de
@@ -16,7 +16,7 @@ Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 :icontype: svg
 :figure-caption: Abbildung
 :description: RC MultiSwitch-D
-:title: RC MultiSwitch-D : ... und RC MultiAdapter-DA sowie TipTip
+:title: RC MultiSwitch-D : ... und RC MultiAdapter-DA, RC ServoSwitch-D sowie TipTip
 :title-page:
 :sectanchors:
 :sectlinks:
@@ -139,6 +139,8 @@ Der `RC MultiSwitch-D` wird an den `IBus`- oder `SBus`-Ausgang eines Empfängers
 diese _alle_ (parallel) an den IBus/SBus-Ausgang des Empfängers angeschlossen. 
 Jeder `RC MultiSwitch-D` hat eine eindeutige _Adresse_ und kann so vom Sender angesprochen werden.
 
+Insgesamt können über _einen_ Übertragungskanal bis zu 8 `RC-MultiSwitch-D`, `RC-MultiAdapter-DA` oder `RC-ServoSwitch-D` angeschlossen werden. 
+
 === Weitere Möglichkeiten
 
 Nach dem gleichen Funktionsprinzip arbeitet der `RC MultiAdapter-DA`. Dieser ermöglocht den Betrieb alter, analoger 
@@ -148,7 +150,12 @@ analogen Schaltmodule über den Adapter ebenfalls eine _eindeutige_ Adresse, und
 Eine PWM-Modulation der Ausgänge eines analogen Zeitmultiplex-Schaltmoduls ist allerdings nicht möglich.
 
 Analoge Zeitmultiplex-Schaltmodule der Fa. _Robbe_ besitzen neben den 6 Schaltfunktionen (12 Ausgänge) auch noch 2 proportionale Ausgänge. Mit 
-Hilfe des `RC MultiAdapter-DA` können zwei beliebige `OpenTX`-Kanäle den beiden proportionalen Ausgängen des _Robbe_-Modules zugewiesen werden.
+Hilfe des `RC MultiAdapter-DA` können zwei beliebige `OpenTX`-Kanäle den beiden proportionalen Ausgängen des _Robbe_-Modules zugewiesen werden. 
+Auch gibt es von der Fa. _Robbe_ ein 8-Kanal Multi-Prop Modul, was ebenfalls angesteuert werden kann.
+
+Das Modul `RC-ServoSwitch-D` ist eine Ansteuerung für bis zu 5 Servos. Diese Servos können bis zu 8 Positionen annehmen. Diese Positionen sind den 
+Schalterstellungen bzw. den Menu-Buttons zugeordnet. Statt Verbraucher ein/aus zu schalten, fahren die Servos bestimmte, vorher erlernte Positionen an. Die 
+Geschwindigkeit, mit der sich die Servos bewegen, kann ebenfalls eingestellt werden.
 
 Weiterhin kann die Software für `OpenTX` auch direkt Schaltmodule im sog. _TipTip_ Verfahren bedienen. Hierzu ist im Moment kein Adapter 
 `RC MultiAdapter-DA` notwendig. Stattdessen müssen die _TipTip_-Module wie üblich jeweils an einem eigenen Ausgang des Empfängers angeschlossen werden.
@@ -547,13 +554,16 @@ Dieses Widget dient zur _Konfiguration_ aller Parameter jeder Funktion wie dem _
 Die einzelnen Parameter des Menus lassen die _nur_ mit `T5`-hoch und -herunter anwählen sowie `T6`-hoch selektieren. _Nach_ der Selektion wird das 
 Potentiometer `S1` zum Einstellen des Parameterwertes:
 
-* `RES`: Reset aller Werte der Funktion (Wert _muss_ auf `1` stehen)
-* `PWN`: Einstellen der PWM-Modulation, kann direkt an der _Helligkeit_ der Kontroll-LED beobachtet werden.
-* `B1/I`: Intervall des Blinkens für Schaltzustand `blink1`
-* `B1/D`: Einschaltdauer des Blinkens für Schaltzustand `blink1`
-* `B2/I`: Intervall des Blinkens für Schaltzustand `blink2`
-* `B2/D`: Einschaltdauer des Blinkens für Schaltzustand `blink2`
-* `PThu`: Der sog. PassThrough-Kanal: ein beliebiger `OpenTX`-Kanal (`1` ... `16`) kann zur Weiterleitung an den Ausgang des Schaltmoduls ausgewählt werden
+* `RES`: Reset aller Werte der Funktion (Wert _muss_ auf `1` stehen, damit de Reset ausgeführt wird)
+* `PWN`: Einstellen der PWM-Modulation, kann direkt an der _Helligkeit_ der Kontroll-LED beobachtet werden. Beim `RC-ServoSwitch-D` wird hier die _Geschwindigkeit_ 
+eingestellt (1=langsam, 31=schnell).
+* `B1/I`: Intervall des Blinkens für Schaltzustand `blink1` bzw. _Position1_ (aus) beim `RC-ServoSwitch-D`
+* `B1/D`: Einschaltdauer des Blinkens für Schaltzustand `blink1`  bzw. _Position2_ beim `RC-ServoSwitch-D`
+* `B2/I`: Intervall des Blinkens für Schaltzustand `blink2` bzw. _Position3_ beim `RC-ServoSwitch-D`
+* `B2/D`: Einschaltdauer des Blinkens für Schaltzustand `blink2` bzw. _Position4_ beim `RC-ServoSwitch-D`
+* `PThu`: Der sog. PassThrough-Kanal: ein beliebiger `OpenTX`-Kanal (`1` ... `16`) kann zur Weiterleitung an den Ausgang des Schaltmoduls ausgewählt werden. 
+Beim `RC-ServoSwitch` kann bei einem Wert von `1` mit Hilfe des Kanals `1` des Senders (fest zugeordnet) die _Position1_ gelernt werden, beim einem Wert `2` 
+die _Position2_ u.s.w.
 * `Min`: (unbenutzt)
 * `Max`: (unbenutzt)
 
@@ -561,6 +571,7 @@ Es existiert eine zusätzliche Seite (am Ende) mit modul-globalen Einstellungen:
 
 * `Learn Ch/Adr`:  _Anlernen_ der Moduladresse und des Übertragungskanals
 * `TMpx`: Zeitmultiplex-Verfahren für Ausgang die jeweilige Adresse (nur bei `RC-MultiAdapter-DA`)
+* `Test`: Verschiedene Test-Modi (nur zur Funktionsüberprüfung des Moduls).
 
 Bei der Einstellung des Zeitmultiplexverfahrens gelten folgende Zuordnungen von eingestelltem Wert und Verfahren:
 
@@ -675,11 +686,14 @@ Bei diesem Modell sind _alle_ Übertragungskanäle bis auf den Kanal für die di
 . Die Mischer-Skripte `encsbm.lua`, `encxjt.lua` oder `encib.lua` für den gewünschten Übertragungskanal einrichten (s.o.).
 . Sender einschalten.
 . Konfigurationsmenu auswählen
-. Im Konfigurationsmenu auf der _letzten_ Seite (modul-spezifische Einstellungen) den Parameter `Learn Ch/Adr` selektieren. 
-Mit Potentiometer `S1` die _Adresse_ einstellen (Wert `1` ... `8` bedeutet Adresse `1` ... `8`).
+. Im Konfigurationsmenu auf der _letzten_ Seite (modul-spezifische Einstellungen) den Parameter `Learn Ch/Adr` selektieren. Oben rechts muss dann 
+der Wert dunkel unterlegt sein. Mit dem Potentiometer `S1` die _Adresse_ einstellen (Wert `1` ... `8` bedeutet Adresse `1` ... `8`).
 . Empfänger einschalten
 . das zu konfigurierende `RC MultiSwitch-D` einschalten (`RC-MultiAdapter-DA` wird vom Empfänger versorgt).
-. nach ca. 3 Sekunden das `RC MultiSwitch-D` ausschalten
+.. `RC-MultiAdapter-DA`: die Kontroll-LED leuchtet für 3 Sekunden, anschließend blinkt sie `1` ... `8` mal, je nach eingestellter Adresse. Sollte dies nicht passieren, 
+so wurde der Übertragungskanal nicht gefunden.
+.. `RC-MultiSwitch-D`: entsprechend der gelernten Adresse leuchtet ein Kanal auf. 
+. nach ca. 2 weiteren Sekunden das `RC MultiSwitch-D` ausschalten
 . Für weitere `RC MultiSwitch-D`-Module die nä. Adresse selektieren
 . das nä. `RC MultiSwitch-D` anschließen und einschalten
 . ...
@@ -746,6 +760,9 @@ Dies über `T5 - Up` und `T5 - Down` zur Navigation durch die Zeilen und Spalten
 Im Gegensatz zu vielen anderen technischen Geräten, die über ein Menu-System konfiguriert werden, gibt es im Konfigurationsmenu hier nach der 
 _Selektion_ und dem _Einstellen_ eine _Parameterwertes_ keine besondere _Rückmeldung_ an den Benutzer über den Erfolg oder Misserfolg! Daher ist hier 
 sorgsam vorzugehen.
+
+Wird jedoch ein `RC-MultiAdapter-DA` über das Konfigurationsmenu _angesprochen_, so leuchtet die Kontroll-LED auf, um anzuzeigen, dass ein 
+Parameter des Moduls konfiguriert wird. Wechselt man wieder in das Funktionsmenu, so muss die Kontroll-LED erlischen.
 --
 
 .Delektion nach dem Einstellen eines Parameters
@@ -754,9 +771,9 @@ sorgsam vorzugehen.
 Als Schutz vor einem unbeabsichtigen Ändern eines Parameterwertes, sollte man folgendermaßen vorgehen:
 
 . Zum Parameter navigieren
-. Parameter selektieren
+. Parameter selektieren (oben rechts mit die Wertanzeige _invertiert_ erscheinen).
 . Parameterwert einstellen
-. *Zu einem anderen Parameter navigieren (ohne ihn zu selektieren)*
+. *Zu einem anderen Parameter navigieren (ohne ihn zu selektieren)*. Die Invertierung der Wertanzeige ist beendet.
 
 Der letze Schritt hebt die vorige Selektion auf. Damit kann nichts mehr unbeabsichtigt verändert werden.
 --

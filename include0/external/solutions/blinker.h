@@ -36,16 +36,16 @@ namespace External {
         static constexpr External::Tick<Timer> pulseTicks{PulseWidth};
     
         static inline void init() {
-            Pin::off();
-            Pin::template dir<AVR::Output>();
+            Pin::init();
+//            Pin::template dir<AVR::Output>();
         }
         static inline void steady() {
             mState = State::Inactive;
-            Pin::on();
+            Pin::activate();
         }
         static inline void off() {
             mState = State::Inactive;
-            Pin::off();
+            Pin::inactivate();
         }
         static inline void ratePeriodic() {
             const auto oldstate = mState;
@@ -54,14 +54,14 @@ namespace External {
             case State::Inactive:   
                 break;
             case State::On:   
-                Pin::on();
+                Pin::activate();
                 stateTicks.on(pulseTicks, []{
                     ++mNumber;
                     mState = State::Off;
                 });
                 break;
             case State::Off:   
-                Pin::off();
+                Pin::inactivate();
                 stateTicks.on(pulseTicks, []{
                     if (mNumber < mPulses) {
                         mState = State::On;        
