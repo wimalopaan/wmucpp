@@ -11,6 +11,8 @@
 
 #include <mcu/internals/usart.h>
 
+#include <external/solutions/tick.h>
+
 // Ablauf des Starts
 // 1) Reset-Nachrichten (mehrere)
 // 2) Discovery beginnend mit 0x81 (1. Sensor)
@@ -934,12 +936,20 @@ namespace IBus {
             inline static constexpr auto ibus_type = IBus::Type::type::FLIGHT_MODE;
             inline static constexpr void init() {}
             inline static constexpr uint16_t value() {
-                return counter;
+                return 10000 + (lossCounter * 100) + noQueriesCounter;
             }
-            inline static void increment() {
-                ++counter;
+            inline static void incLoss() {
+                if (++lossCounter == 100) {
+                    lossCounter = 0;
+                }
             }
-            static inline uint16_t counter{};
+            inline static void incNoQuery() {
+                if (++noQueriesCounter == 100) {
+                    noQueriesCounter = 0;
+                }
+            }
+            static inline uint8_t lossCounter{};
+            static inline uint8_t noQueriesCounter{};
         };
         struct StatisticProvider {
             inline static constexpr auto ibus_type = IBus::Type::type::FLIGHT_MODE;
@@ -1008,6 +1018,8 @@ namespace IBus {
                 start();
             }
             
+            static constexpr External::Tick<Clock> timeoutTicks{300_ms};
+            
             inline static bool process(const std::byte c) {
 //                debug::template set<1>();
                 StatisticProvider::incBytes();
@@ -1053,7 +1065,7 @@ namespace IBus {
                                 mReceivedNumber = n;
                                 mState = ibus_state_t::Discover;
                                 responder::start(responder::reply_state_t::DiscoverWait);
-                                LossProvider::increment();
+                                LossProvider::incLoss();
                             }
                             else {
                                 mState = ibus_state_t::Skip;
@@ -1081,6 +1093,7 @@ namespace IBus {
                     else if (command(c) == CgetValue) {
                         if (const sensor_number_t n{address(c)}; n) {
                             if (inRange(n)) {
+                                ++mQueries;
                                 mReceivedNumber = n;
                                 mState = ibus_state_t::Value;                        
                                 responder::start(responder::reply_state_t::ValueWait);
@@ -1141,6 +1154,29 @@ namespace IBus {
             inline static constexpr bool permitReply() {
                 return mState == ibus_state_t::Reply;
             }
+            inline static void ratePeriodic() {
+                static uint16_t lastQueries{};
+                stateTicks.on(timeoutTicks, [&]{
+                    if (mQueries == lastQueries) {
+                        reset();
+                        LossProvider::incNoQuery();
+                    }
+                    lastQueries = mQueries;
+                });
+//                switch(mState) {
+//                case ibus_state_t::Undefined:   
+//                case ibus_state_t::Reset:   
+//                case ibus_state_t::Length:   
+//                case ibus_state_t::Discover:   
+//                case ibus_state_t::Type:   
+//                case ibus_state_t::Value:   
+//                case ibus_state_t::Skip:   
+//                case ibus_state_t::CheckSum:   
+//                case ibus_state_t::CheckSumSkip:   
+//                case ibus_state_t::Reply:
+//                    break;
+//                }
+            }
         private:
             static inline constexpr std::byte command(const std::byte b) {
                 if (std::none(b & 0x0f_B)) {
@@ -1163,6 +1199,8 @@ namespace IBus {
                     return {};
                 }
             }
+            static inline uint16_t mQueries{0};
+            static inline External::Tick<Clock> stateTicks{};
             static inline CheckSum csum;
             static inline ibus_state_t  mState = ibus_state_t::Undefined;
         };
@@ -1333,6 +1371,7 @@ namespace IBus {
         using responder = Responder;
         
         inline static constexpr void ratePeriodic() {
+            pa::ratePeriodic();
             responder::ratePeriodic();
         }
         inline static constexpr void periodic() {

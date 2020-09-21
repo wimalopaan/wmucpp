@@ -11,11 +11,16 @@ using adcController = External::Hal::AdcController<adc, Meta::NList<0x1e>>; // 0
 
 using ibus_full = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, 
                           Meta::List<speedP, bytesP, packagesR, packagesV>, 
-                          systemTimer, ibt>;
+                          systemTimer, ibt
+                            , etl::NamedFlag<true>, etl::NamedFlag<true>
+>;
 
 using ibus_gps = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, 
                           Meta::List<speedP>, 
-                          systemTimer, ibt>;
+                          systemTimer, ibt
+                        , etl::NamedFlag<true>
+//                        , etl::NamedFlag<true>
+>;
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position>>;
 

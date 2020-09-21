@@ -66,8 +66,9 @@ struct StateProvider {
 using stateP = StateProvider<fsm>;
 
 using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, 
-                          Meta::List<curr0P, curr1P, rpm0P, rpm1P, speedP, 
-                          bytesP, packagesR, packagesV, stateP>, 
+                          Meta::List<curr0P, curr1P, rpm0P, rpm1P, speedP 
+//                          ,bytesP, packagesR, packagesV, stateP
+>, 
                           systemTimer, ibt>;
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position>>;
