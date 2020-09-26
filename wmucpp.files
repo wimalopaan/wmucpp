@@ -327,6 +327,12 @@ boards/rcmultiswitch/test10.cc
 boards/rcquadc/Makefile
 boards/rcquadc/test00.cc
 boards/rcquadc/test01.cc
+boards/rcquadc/test02.cc
+boards/rcquadc/test03.cc
+boards/rcquadc/test04.cc
+boards/rcquadc/test05.cc
+boards/rcquadc/test06.cc
+boards/rcquadc/test07.cc
 boards/rcsensor/Makefile
 boards/rcsensor/test00.cc
 boards/rcsensorled/test100.cc

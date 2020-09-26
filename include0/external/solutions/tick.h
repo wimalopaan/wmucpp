@@ -52,7 +52,7 @@ namespace External {
             }
         }
         template<typename F>
-        inline constexpr void match(const Tick& t, F f) {
+        inline constexpr void match(const Tick& t, F f) const{
             if (value == t.value) {
                 f();
             }
@@ -76,11 +76,11 @@ namespace External {
             return decltype(value)::Upper;
         }
         
-        inline constexpr auto operator/(const uint16_t& d) {
+        inline constexpr auto operator/(const uint16_t& d) const {
             return Tick(value / d);    
         }
 
-        inline constexpr auto operator*(const uint16_t& m) {
+        inline constexpr auto operator*(const uint16_t& m) const {
             return Tick(value * m);    
         }
         

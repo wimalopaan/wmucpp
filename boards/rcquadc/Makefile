@@ -8,5 +8,11 @@ subdirs =
 
 targets += test00.hex
 targets += test01.hex
+targets += test02.hex
+targets += test03.hex
+targets += test04.hex
+targets += test05.hex
+targets += test06.hex
+targets += test07.hex
 
 -include ../../Makefile.avr0.include

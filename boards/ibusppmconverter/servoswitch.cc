@@ -292,7 +292,7 @@ struct FSM {
         mState = State::Init;
     }
 
-    static inline void setTest(const mode_t& m) {
+    static inline void setTest(const mode_t&) {
         
     }
     

@@ -487,7 +487,10 @@ namespace AVR {
             
 //            std::integral_constant<decltype(all_mask), all_mask>::_;
             
-            using value_type = uint8_t;
+            //            inline static constexpr value_type pwmMax = 99;
+            inline static constexpr uint8_t pwmMax = 99;
+            using value_type = etl::uint_ranged<uint8_t, 0, pwmMax>;
+            using raw_value_type = uint8_t;
             
             using mcu_timer_t = typename MCU::TCA; 
             static constexpr auto mcu_tca = getBaseAddr<mcu_timer_t, 0>;
@@ -590,9 +593,7 @@ namespace AVR {
                 }                
             }
             
-            inline static constexpr value_type pwmMax = 99;
-            
-            inline static void pwm(const index_type c, const uint8_t v) {
+            inline static void pwm(const index_type c, const raw_value_type v) {
                 if (c == 0) {
                     pwm<0>(v);
                 }
@@ -614,8 +615,31 @@ namespace AVR {
             }
             
             template<auto N>
-            inline static void pwm(const uint8_t vv) {
-                auto v = std::clamp(vv, value_type{0}, pwmMax);
+            inline static void pwm(const raw_value_type vv) {
+                const raw_value_type v = std::clamp(vv, raw_value_type{0}, pwmMax);
+                if constexpr(N == 0) {
+                    lset(*mcu_tca()->cmp0, v);
+                }
+                else if constexpr(N == 1) {
+                    lset(*mcu_tca()->cmp1, v);
+                }
+                else if constexpr(N == 2) {
+                    lset(*mcu_tca()->cmp2, v);
+                }
+                else if constexpr(N == 3) {
+                    hset(*mcu_tca()->cmp0, v);
+                }
+                else if constexpr(N == 4) {
+                    hset(*mcu_tca()->cmp1, v);
+                }
+                else if constexpr(N == 5) {
+                    hset(*mcu_tca()->cmp2, v);
+                }
+            }
+
+            template<auto N>
+            inline static void pwm(const value_type vv) {
+                const raw_value_type v = vv.toInt();
                 if constexpr(N == 0) {
                     lset(*mcu_tca()->cmp0, v);
                 }

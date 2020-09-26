@@ -6,6 +6,8 @@
 #include "format.h"
 #include "pointer.h"
 
+#include "ranged.h"
+
 namespace etl {
     using namespace std::literals::chrono;
  
@@ -65,7 +67,7 @@ namespace etl {
         }
 
         template<Stream Stream>
-        constexpr inline void out_impl(std::byte b) {
+        constexpr inline void out_impl(const std::byte b) {
             constexpr uint8_t Base = 16;
             std::array<Char, numberOfDigits<uint8_t, Base>()> buffer;
             etl::fill(buffer, Char{'0'});
@@ -75,13 +77,13 @@ namespace etl {
         }
         
         template<Stream Stream>
-        constexpr inline void out_impl(Char v) {
+        constexpr inline void out_impl(const Char v) {
             put<typename Stream::device_type>(std::byte{v});
         }
         
         template<Stream Stream, typename T>
         requires std::is_same_v<std::remove_cv_t<T>, bool>
-        constexpr inline void out_impl(T b) {
+        constexpr inline void out_impl(const T b) {
             if (b) {
                 out_impl<Stream>("true"_pgm);
             }
@@ -139,6 +141,12 @@ namespace etl {
 //            out<Stream>("us"_pgm);
 //        }
 
+        template<typename Stream, typename T, auto L, auto U>
+        constexpr inline void out_impl(const etl::uint_ranged<T, L, U> v) {
+            out_impl<Stream>(v.toInt());
+        }
+        
+        
         template<etl::Concepts::Stream Stream, typename T, uint8_t Bits>
         inline void out_impl(const Fraction<T, Bits>& f);
         

@@ -156,7 +156,9 @@ namespace IBus {
 //            inline static constexpr mode_t unused{0};
             inline static constexpr mode_t off{0};
             inline static constexpr mode_t on{1};
+            inline static constexpr mode_t forward = on;
             inline static constexpr mode_t blink1{2};
+            inline static constexpr mode_t backward = blink1;
             inline static constexpr mode_t blink2{3};
 
 #ifdef USE_IBUS            
@@ -165,14 +167,19 @@ namespace IBus {
             inline static constexpr param_t reset{0};
             inline static constexpr param_t pwm{1};
             inline static constexpr param_t increment = pwm;
+            inline static constexpr param_t motorRampTime = pwm;
             inline static constexpr param_t blink1Intervall{2};
             inline static constexpr param_t position1 = blink1Intervall;
+            inline static constexpr param_t pwm1 = blink1Intervall;
             inline static constexpr param_t blink1Duration{3};
             inline static constexpr param_t position2 = blink1Duration;
+            inline static constexpr param_t offCurr1 = blink1Duration;
             inline static constexpr param_t blink2Intervall{4};
             inline static constexpr param_t position3 = blink2Intervall;
+            inline static constexpr param_t pwm2 = blink2Intervall;
             inline static constexpr param_t blink2Duration{5};
             inline static constexpr param_t position4 = blink2Duration;
+            inline static constexpr param_t offCurr2 = blink2Duration;
             inline static constexpr param_t passThruChannel{6};
             inline static constexpr param_t timeMpxMode{7}; // MK8 = 0, MK4 = 1, Robbe = 2, CP = 3
             inline static constexpr param_t testMode{8};

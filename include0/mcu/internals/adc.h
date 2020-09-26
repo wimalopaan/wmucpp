@@ -232,8 +232,39 @@ namespace AVR {
             });
         }
 
+        inline static void nsamples(const uint8_t n) {
+            switch(n) {
+            case 0x01:  
+                mcu_adc()->ctrlb.template set<cb_t::accu_2>();           
+                break;
+            case 0x02:  
+                mcu_adc()->ctrlb.template set<cb_t::accu_4>();           
+                break;
+            case 0x03:  
+                mcu_adc()->ctrlb.template set<cb_t::accu_8>();           
+                break;
+            case 0x04:  
+                mcu_adc()->ctrlb.template set<cb_t::accu_16>();           
+                break;
+            case 0x05:  
+                mcu_adc()->ctrlb.template set<cb_t::accu_32>();           
+                break;
+            case 0x06:  
+                mcu_adc()->ctrlb.template set<cb_t::accu_64>();           
+                break;
+            default:
+                mNSamples = 1;
+                mcu_adc()->ctrlb.template set<cb_t::accu_none>();           
+                break;
+            }
+        }
+        
         inline static auto value() {
             return value_type{*mcu_adc()->res};
+        }
+
+        inline static auto valueShifted() {
+            return value_type{(*mcu_adc()->res) >> mNSamples};
         }
         
         static void channel(uint8_t ch) {
@@ -261,6 +292,8 @@ namespace AVR {
         inline static bool conversionReady() {
             return mcu_adc()->intflags.template isSet<int_t::resrdy>();        
         }
+        
+        inline static uint8_t mNSamples{1};
     };
     
     

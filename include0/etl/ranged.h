@@ -49,9 +49,9 @@ namespace etl {
         
         inline constexpr uint_ranged() = default; // LowerBound
         
-        inline constexpr explicit uint_ranged(T v){
-//            assert(v >= LowerBound);
-//            assert(v <= UpperBound);
+        inline constexpr explicit uint_ranged(T v) {
+            assert(v >= LowerBound);
+            assert(v <= UpperBound);
             mValue = std::clamp({v}, LowerBound, UpperBound);
         }
         

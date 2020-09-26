@@ -283,7 +283,7 @@ namespace AVR {
         using ctrlb_t = MCU::Usart::CtrlB_t;
         using ctrlc_t = MCU::Usart::CtrlC_t;
         using status_t = MCU::Usart::Status_t;
-
+        
         using usart = Usart<CP, PA, useISR, RecvQLength, SendQLength>;
         
         using Config = Project::Config;
@@ -336,6 +336,7 @@ namespace AVR {
             }
         };
     public:
+        using protocoll_adapter_type = PA;
         
         template<etl::Concepts::NamedConstant Baud, typename Mode = FullDuplex, bool pullUp = true, auto flags = 0>
         inline static void init() {
