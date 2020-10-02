@@ -1,4 +1,4 @@
-#define NDEBUG
+//#define NDEBUG
 
 #define USE_IBUS
 //#define USE_SBUS
@@ -145,6 +145,20 @@ struct SwitchStates {
     }
     static inline auto& switches() {
         return swStates;
+    }
+    static inline void testMode(const auto& v) {
+//        decltype(v)::_;
+        if (const auto vv = v.toInt(); vv == 0) {
+            std::fill(std::begin(swStates), std::end(swStates), SwState::Off);
+        }
+        else if ((vv > 0) && (vv <= 8)) {
+            std::fill(std::begin(swStates), std::end(swStates), SwState::Off);
+            swStates[vv - 1] = SwState::Steady;
+        }
+        else {
+            std::fill(std::begin(swStates), std::end(swStates), SwState::Steady);
+        }
+        
     }
 private:
     static inline std::array<SwState, N> swStates{};
