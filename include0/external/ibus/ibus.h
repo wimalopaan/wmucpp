@@ -491,6 +491,9 @@ namespace IBus {
                             const uint16_t duration = ((uint32_t)value * intervall) / pvalue_t::Upper; 
                             Out::duration(lastOn, tick_t::fromRaw(duration), blink_index_t{1});
                         }
+                        else if (param == Protocol1::testMode) {
+                            Actor::testMode(value);
+                        }
                     }
                 }
                 else { // command
