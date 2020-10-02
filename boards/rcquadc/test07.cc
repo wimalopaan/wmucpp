@@ -85,8 +85,8 @@ namespace IBus::Switch {
                 const param_t param = Protocol1::toParameter(cv);
                 const pvalue_t value = Protocol1::toParameterValue(cv);
                 
-                lpv = value;
-                lpp = param;
+//                lpv = value;
+//                lpp = param;
                 
                 if (param == Protocol1::broadCast) {
                     if (value == Protocol1::bCastOff) {
@@ -149,7 +149,7 @@ namespace IBus::Switch {
                 if (addr != mAddr) {
                     return false;
                 }
-                lmv = mode;
+//                lmv = mode;
                 if (mode != Protocol1::off) {
                     lastOnIndex = index.toInt();
                 }
@@ -173,18 +173,17 @@ namespace IBus::Switch {
         inline static bool receivedControl() {
             return mReceivedControl;
         }
-        static inline PA::value_type lc0;
-        static inline mode_t lmv;
-        static inline pvalue_t lpv;
-        static inline param_t lpp;
-//        private: 
+//        static inline PA::value_type lc0;
+//        static inline mode_t lmv;
+//        static inline pvalue_t lpv;
+//        static inline param_t lpp;
+        private: 
         static inline bool mReceivedControl{false};
         using lastindex_t = etl::uint_ranged_NaN<uint8_t, 0, Meta::size_v<actor_list> - 1>; 
         static inline lastindex_t lastOnIndex;
         static inline channel_t mChannel{14}; // ch 16
         static inline addr_t    mAddr{0};
     };
-    
 }
 
 namespace Storage {
@@ -408,10 +407,9 @@ struct ChannelFsm {
         return data().rampCyles;
     }
     
-    inline static void setRamp(const auto v) {
-        if ((v > 0) && (v <= (channel_t::Upper + 1))) {
+    inline static void setRamp(const pvalue_t v) {
+        if ((v > 0) && (v <= pvalue_t::Upper)) {
             data().currentCheckTO(data().defaultCurrentCheckTimeout * v.toInt());
-            
         }
         else {
             data().currentCheckTO(data().defaultCurrentCheckTimeout);
@@ -876,10 +874,7 @@ struct ChannelFsm {
         etl::outl<Term>(" brc: "_pgm, backwardRefCurr(), " boc: "_pgm, backwardOffCurr());
     }
     
-//    inline static uint16_t lcv{};
-//    inline static uint16_t lpv{};
-    
-//private:
+private:
 
     inline static void updateForwardPwm() {
         const auto cv = ADC::value(adci);                
@@ -945,14 +940,13 @@ struct GlobalFsm<Timer, PWM, NVM, Meta::List<Chs...>, Led, Adc, Servo, BaudRate<
     
     enum class State : uint8_t {Undefined, StartWait, SearchChannel, AfterSearch, InitRun, Run, 
                                 ShowAddress, ShowAddressWait, LearnTimeout,
-                                EEPromWrite,
                                 Debug1};
 
     static constexpr External::Tick<Timer> learnTimeoutTicks{4000_ms};
     static constexpr External::Tick<Timer> scanTimeoutTicks{50_ms};
     static constexpr External::Tick<Timer> waitTimeoutTicks{3000_ms};
     static constexpr External::Tick<Timer> signalTimeoutTicks{500_ms};
-    static constexpr External::Tick<Timer> eepromTimeout{1000_ms};
+    static constexpr External::Tick<Timer> eepromTimeout{2000_ms};
     static constexpr External::Tick<Timer> debugTimeout{500_ms};
     
     using blinker = External::SimpleBlinker<Led, Timer, 300_ms>;
@@ -967,12 +961,15 @@ struct GlobalFsm<Timer, PWM, NVM, Meta::List<Chs...>, Led, Adc, Servo, BaudRate<
         blinker::init();
         Servo::template init<BaudRate<baud>>();
         Sensor::init();
+        Adc::mcu_adc_type::nsamples(6); 
         Adc::init();
         PWM::init();    
         (Chs::init(), ...);
     }
     inline static void periodic() {
-        NVM::saveIfNeeded([&]{});
+        NVM::saveIfNeeded([&]{
+            etl::outl<Term>("ep s"_pgm);
+        });
         Adc::periodic();
         Servo::periodic();
         Sensor::periodic();
@@ -981,6 +978,7 @@ struct GlobalFsm<Timer, PWM, NVM, Meta::List<Chs...>, Led, Adc, Servo, BaudRate<
     inline static void ratePeriodic() {
         const auto oldState = mState;
         ++mStateTick;
+        ++mEepromTick;
         Sensor::ratePeriodic();
         SW::ratePeriodic();
         (Chs::ratePeriodic(), ...);
@@ -1037,12 +1035,13 @@ struct GlobalFsm<Timer, PWM, NVM, Meta::List<Chs...>, Led, Adc, Servo, BaudRate<
             else {
                 blinker::off();
             }
+            mEepromTick.on(eepromTimeout, []{
+                etl::outl<Term>("exp"_pgm);
+                NVM::data().expire();
+            });
             mStateTick.match(debugTimeout, []{
                 mState = State::Debug1;
             });
-            break;
-        case State::EEPromWrite:
-            mState = State::Run;
             break;
         case State::Debug1:
             mState = State::Run;
@@ -1065,12 +1064,8 @@ struct GlobalFsm<Timer, PWM, NVM, Meta::List<Chs...>, Led, Adc, Servo, BaudRate<
                 break;
             case State::Run:
                 break;
-            case State::EEPromWrite:
-                NVM::data().expire();
-                break;
             case State::Debug1:
-                Meta::nth_element<3, channel_list>::debug();
-//                etl::circular_call(Chs::debug...);
+                etl::circular_call(Chs::debug...);
                 break;
             }
         }
@@ -1104,6 +1099,7 @@ private:
     static inline etl::uint_ranged_circular<uint8_t, ch_t::Lower, ch_t::Upper> learnChannel{0};
 #endif
     static inline External::Tick<Timer> mStateTick;
+    static inline External::Tick<Timer> mEepromTick;
     static inline State mState{State::Undefined};
 };
 
@@ -1219,9 +1215,7 @@ int main() {
     });
     systemTimer::init();
     gfsm::init();
-    
-//    adc::nsamples(2);
-    
+
     while(true) {
         gfsm::periodic();
         systemTimer::periodic([&]{
