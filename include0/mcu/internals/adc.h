@@ -233,6 +233,7 @@ namespace AVR {
         }
 
         inline static void nsamples(const uint8_t n) {
+            mNSamplesShift = n;
             switch(n) {
             case 0x01:  
                 mcu_adc()->ctrlb.template set<cb_t::accu_2>();           
@@ -253,19 +254,20 @@ namespace AVR {
                 mcu_adc()->ctrlb.template set<cb_t::accu_64>();           
                 break;
             default:
-                mNSamples = 1;
+                mNSamplesShift = 0;
                 mcu_adc()->ctrlb.template set<cb_t::accu_none>();           
                 break;
             }
         }
         
         inline static auto value() {
-            return value_type{*mcu_adc()->res};
+            return value_type{(*mcu_adc()->res) >> mNSamplesShift};
+//            return value_type{*mcu_adc()->res};
         }
 
-        inline static auto valueShifted() {
-            return value_type{(*mcu_adc()->res) >> mNSamples};
-        }
+//        inline static auto valueShifted() {
+//            return value_type{(*mcu_adc()->res) >> mNSamplesShift};
+//        }
         
         static void channel(uint8_t ch) {
             if (ch == 0x1e) { // temperature
@@ -293,7 +295,7 @@ namespace AVR {
             return mcu_adc()->intflags.template isSet<int_t::resrdy>();        
         }
         
-        inline static uint8_t mNSamples{1};
+        inline static uint8_t mNSamplesShift{0};
     };
     
     
