@@ -61,14 +61,14 @@
 // B 10c5      5-Kanäle ab Kanal 10
 
 // PA1: IBUS / SBUS 
-// PA2: DaisyEnable
+// PA2: DaisyEnable (auch LED)
 // PA3: SO4 (AIN3) (rpm0) (tcb1 wo) (adr4)
 // PA4:
 // PA5: SO3 (AIN5) (tcb0 wo) (adr3) (GPS)
 // PA6: 
 // PA7: 
 // PB3:
-// PB2: Q0   (WO2) (rpm1)  (adr2)  (LED für Adress-Impulse)k
+// PB2: Q0   (WO2) (rpm1)  (adr2) 
 // PB1: SO1  (WO1) (AIN10) (adr1) (temp0)
 // PB0: SO2  (WO0) (AIN11) (adr0) (temp1) (uni)
 
@@ -202,6 +202,9 @@ namespace Storage {
             for(auto& v : mMpxModes) {
                 v = Mode::Graupner8K;
             }
+            for(auto& v : mMpxOffsets) {
+                v = 200;
+            }
         }
         Channel& channel() {
             return mChannel;
@@ -209,6 +212,19 @@ namespace Storage {
         Address& address() {
             return mAddress;
         }
+        void mpxOffset(uint8_t addressOffset, uint8_t v) {
+            if (addressOffset < mMpxModes.size()) {
+#ifdef USE_SBUS
+                mMpxOffsets[addressOffset] = 40 * (v + 1); // 20 - 640
+#else
+                mMpxOffsets[addressOffset] = 20 * (v + 1); // 20 - 640
+#endif
+            }
+        }
+        uint16_t mpxOffset(uint8_t addressOffset) {
+                return mMpxOffsets[addressOffset];
+        }
+
         void mpxMode(uint8_t addressOffset, uint8_t v) {
             if (addressOffset < mMpxModes.size()) {
                 if (v == 0) {
@@ -239,6 +255,7 @@ namespace Storage {
         }
     private:
         std::array<Mode, NAdresses> mMpxModes {};
+        std::array<uint16_t, NAdresses> mMpxOffsets{};
         uint8_t mMagic;
         Channel mChannel;
         Address mAddress;

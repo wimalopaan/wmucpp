@@ -1,11 +1,11 @@
 #define NDEBUG
 
-//#define DEBUG2 // RX/TX change -> full duplex
+//#define DEBUG2 // RX/TX change -> full duplex (man muss dann Ibus-Input und Telemetrie tauschen)
 
 #define INV_LED // onboad LED inverted
 
-//#define USE_SBUS
-#define USE_IBUS
+#define USE_SBUS
+//#define USE_IBUS
 
 #define LEARN_DOWN // start at highest channel number downwards
 
@@ -258,11 +258,12 @@ struct FSM {
         return swStates;
     }
     inline static void update() {
+        const uint16_t impulsOffset = NVM::data().mpxOffset(Address);
         const auto mode = NVM::data().mpxMode(Address);
         
         if (mode == Storage::Mode::Graupner8K) {
             if (cycle10 < 2) {
-                PPM::ppmRaw(PPM::ocMax + 100);
+                PPM::ppmRaw(PPM::ocMax + impulsOffset);
             }
             else {
                 uint8_t i = cycle10 - 2;
@@ -272,7 +273,7 @@ struct FSM {
         }
         else if (mode == Storage::Mode::Graupner4K) {
             if (cycle6 < 2) {
-                PPM::ppmRaw(PPM::ocMax + 100);
+                PPM::ppmRaw(PPM::ocMax + impulsOffset);
             }
             else {
                 uint8_t i = cycle6 - 2;
@@ -282,7 +283,7 @@ struct FSM {
         }
         else if (mode == Storage::Mode::Robbe) {
             if (cycle9 < 1) {
-                PPM::ppmRaw(PPM::ocMin - 100);
+                PPM::ppmRaw(PPM::ocMin - impulsOffset);
             }
             else {
                 uint8_t i = Size - 1 - (cycle9 - 1); // Robbe counts channels in reverse order
@@ -292,7 +293,7 @@ struct FSM {
         }
         else if (mode == Storage::Mode::CP) {
             if (cycle9 < 1) {
-                PPM::ppmRaw(PPM::ocMax + 100);
+                PPM::ppmRaw(PPM::ocMax + impulsOffset);
             }
             else {
                 uint8_t i = cycle9 - 1;
@@ -302,7 +303,7 @@ struct FSM {
         }
         else if (mode == Storage::Mode::XXX) {
             if (cycle10 < 2) {
-                PPM::ppmRaw(PPM::ocMin - 100);
+                PPM::ppmRaw(PPM::ocMin - impulsOffset);
             }            
             else {
                 uint8_t i = cycle10 - 2;
@@ -312,7 +313,7 @@ struct FSM {
         }
         else {
             if (cycle10 < 2) {
-                PPM::ppmRaw(PPM::ocMax + 100);
+                PPM::ppmRaw(PPM::ocMax + impulsOffset);
             }
             else {
                 uint8_t i = cycle10 - 2;
@@ -320,6 +321,9 @@ struct FSM {
             }
             ++cycle10;
         }
+    }
+    static inline void mpxOffset(const auto v) {
+        
     }
     private:
     static inline void pulse(uint8_t i) {
@@ -395,10 +399,14 @@ using terminal = etl::basic_ostream<servo>;
 
 //using gfsm = GFSM<servo_pa, ibus_switch, eeprom, systemTimer, Meta::List<fsm1, fsm2, fsm3>, reloader, q0Pin, terminal>;
 
-#ifdef INV_LED
+#ifndef DEBUG2
+# ifdef INV_LED
 using led = AVR::ActiveLow<daisyChain, Output>;
-#else
+# else
 using led = AVR::ActiveHigh<daisyChain, Output>;
+# endif
+#else
+using led = AVR::ActiveLow<AVR::NoPin, Output>;
 #endif
 using gfsm = GFSM<servo_pa, ibus_switch, eeprom, systemTimer, Meta::List<fsm1, fsm2, fsm3>, reloader, led, terminal>;
 
@@ -462,9 +470,15 @@ int main() {
             
             alarmTimer::periodic([&](const auto& t){
                 if (eepromTimer == t) {
-                    etl::outl<terminal>(" x0: "_pgm, (uint8_t)appData.mpxMode(0), " x1: "_pgm, (uint8_t)appData.mpxMode(1), " x2: "_pgm, (uint8_t)appData.mpxMode(2));
-                    etl::outl<terminal>(" p00: "_pgm, appData.passThru({Storage::ChannelIndex::addr_type{0}, Storage::ChannelIndex::channel_type{0}}).toInt(), " p01: "_pgm, appData.passThru({Storage::ChannelIndex::addr_type{0}, Storage::ChannelIndex::channel_type{1}}).toInt());
-                    etl::outl<terminal>(" s00: "_pgm, (uint8_t)fsm1::switches()[0], " s01: "_pgm, (uint8_t)fsm1::switches()[1]);
+//                    etl::outl<terminal>(" x0: "_pgm, (uint8_t)appData.mpxMode(0), " x1: "_pgm, (uint8_t)appData.mpxMode(1), " x2: "_pgm, (uint8_t)appData.mpxMode(2));
+//                    etl::outl<terminal>(" p00: "_pgm, appData.passThru({Storage::ChannelIndex::addr_type{0}, Storage::ChannelIndex::channel_type{0}}).toInt(), " p01: "_pgm, appData.passThru({Storage::ChannelIndex::addr_type{0}, Storage::ChannelIndex::channel_type{1}}).toInt());
+//                    etl::outl<terminal>(" s00: "_pgm, (uint8_t)fsm1::switches()[0], " s01: "_pgm, (uint8_t)fsm1::switches()[1]);
+                    etl::out<terminal>("sw: [ "_pgm);
+                    for(const auto& l : fsm1::switches()) {
+                        etl::out<terminal>(uint8_t(l), " "_pgm);
+                    }
+                    etl::out<terminal>("] "_pgm);
+                    etl::outl<terminal>("off: "_pgm, appData.mpxOffset(0));            
                     appData.expire();
                 }
             });
