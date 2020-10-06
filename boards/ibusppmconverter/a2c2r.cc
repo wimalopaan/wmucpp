@@ -5,6 +5,8 @@
 #include "curr.h"
 #include "rpm.h"
 
+using dbg1 = so4Pin;
+
 using adcController = External::Hal::AdcController<adc, Meta::NList<10, 11, 0x1e>>; // 1e = temp
 
 using curr0P = ACS723U40Provider<adcController, 0>;

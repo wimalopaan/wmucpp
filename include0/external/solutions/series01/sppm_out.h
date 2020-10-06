@@ -78,7 +78,8 @@ namespace External {
             static constexpr uint16_t ccPulseFrame = ocMax + ccPulse;
             static_assert(ccPulse > 0, "wrong oc value");
             
-            using ranged_type   = etl::uint_ranged_NaN<uint16_t, ocMin, ocMax> ;
+//            using ranged_type   = etl::uint_ranged_NaN<uint16_t, ocMin, ocMax> ;
+            using ranged_type   = etl::uint_ranged<uint16_t, ocMin, ocMax> ;
 //            ranged_type::_;
                 //            using extended_type = etl::uint_ranged_NaN<uint16_t, ocMin, ocMax> ;
             
@@ -90,14 +91,23 @@ namespace External {
                 }
             }();
             
+            template<bool start = true>
             static inline void init() {
                 mcu_tca()->ctrla.template set<pv | mcu_timer_t::CtrlA_t::enable>();
                 mcu_tca()->ctrlb.template set<mcu_timer_t::CtrlB_t::pwm>();
                 constexpr auto value = Meta::value_or_v<flag_list>;
 //                std::integral_constant<decltype(value), value>::_;
+                if constexpr(start) {
+                    mcu_tca()->ctrlb.template add<value, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
+                    AVR::PinGroup<pin_list>::template dir<AVR::Output>();
+                }
+                *mcu_tca()->perbuf = period;
+            }
+            
+            static inline void on() {
+                constexpr auto value = Meta::value_or_v<flag_list>;
                 mcu_tca()->ctrlb.template add<value, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
                 AVR::PinGroup<pin_list>::template dir<AVR::Output>();
-                *mcu_tca()->perbuf = period;
             }
             
             template<typename WO>
@@ -184,6 +194,7 @@ namespace External {
             
             using ranged_type = etl::uint_ranged<uint16_t, ocMin, ocMax> ;
             
+            template<bool start = true>
             static inline void init() {
                 *mcu_tcb()->cnt = 0xffff;
                 mcu_tcb()->ctrla.template set<mcu_timer_t::CtrlA_t::clktca | mcu_timer_t::CtrlA_t::enable>();

@@ -651,12 +651,12 @@ namespace IBus {
                             }
                             else if (value == 10) { // not follow-above
                                 Meta::visitAt<actor_list>(lastOn, [&]<typename A>(const Meta::Wrapper<A>&) {
-                                                              A::chData.mFollow = follow_t::Off;
-                                                              if (A::chData.mFollowIndex) {
-                                                                  Meta::visitAt<actor_list>(A::chData.mFollowIndex.toInt(), [&]<typename AA>(const Meta::Wrapper<AA>&) {
+                                                              A::chData.followMode(follow_t::Off);
+                                                              if (A::chData.followMaster()) {
+                                                                  Meta::visitAt<actor_list>(A::chData.followMaster().toInt(), [&]<typename AA>(const Meta::Wrapper<AA>&) {
                                                                                                 AA::chData.removeFollower(lastOn);
                                                                                             });
-                                                                  A::chData.mFollowIndex.setNaN();
+                                                                  A::chData.removeMaster();
                                                                   appData.change();
                                                               }
                                                           });
@@ -665,11 +665,11 @@ namespace IBus {
                                 if (lastOn > 0) {
                                     for(int8_t i = lastOn - 1; i >= 0; --i) { // search backward
                                         Meta::visitAt<actor_list>(i, [&]<typename A>(const Meta::Wrapper<A>&) {
-                                                                      if (A::chData.mFollow == follow_t::Off) { // first candidate in backward search direction
+                                                                      if (A::chData.isFollowMode(follow_t::Off)) { // first candidate in backward search direction
                                                                           A::chData.addFollower(lastOn);
                                                                           Meta::visitAt<actor_list>(lastOn, [&]<typename AA>(const Meta::Wrapper<AA>&) {
-                                                                              AA::chData.mFollow = follow_t::CopyPositions;
-                                                                              AA::chData.mFollowIndex = i;
+                                                                              AA::chData.followMode(follow_t::CopyPositions);
+                                                                              AA::chData.followMaster(i);
                                                                                                     });
                                                                           appData.change();
                                                                           i = -1; // break out loop
@@ -682,11 +682,11 @@ namespace IBus {
                                 if (lastOn > 0) {
                                     for(int8_t i = lastOn - 1; i >= 0; --i) {
                                         Meta::visitAt<actor_list>(i, [&]<typename A>(const Meta::Wrapper<A>&) {
-                                                                      if (A::chData.mFollow == follow_t::Off) {
+                                                                      if (A::chData.isFollowMode(follow_t::Off)) {
                                                                           A::chData.addFollower(lastOn);
                                                                           Meta::visitAt<actor_list>(lastOn, [&]<typename AA>(const Meta::Wrapper<AA>&) {
-                                                                              AA::chData.mFollow = follow_t::OwnPositions;
-                                                                              AA::chData.mFollowIndex = i;
+                                                                              AA::chData.followMode(follow_t::OwnPositions);
+                                                                              AA::chData.followMaster(i);
                                                                                                     });
                                                                           appData.change();
                                                                           i = -1; // break out loop
@@ -718,16 +718,13 @@ namespace IBus {
                         lastOnIndex = lastindex_t{};
                     }
                     Meta::visitAt<actor_list>(index.toInt(), [&]<typename A>(const Meta::Wrapper<A>&) {
-                                                  if (A::chData.mFollow == follow_t::Off) {
+                                                  if (A::chData.isFollowMode(follow_t::Off)) {
                                                       A::moveToPosition(mode);
-                                                      for(const auto& f : A::chData.mFollower) {
-                                                          if (f) {
-                                                              Meta::visitAt<actor_list>(f.toInt(), [&]<typename AA>(const Meta::Wrapper<AA>&) {
-                                                                  AA::moveToPosition(mode);
-                                                              });
-                                                              
-                                                          }
-                                                      }
+                                                      A::chData.forFollowers([&](const auto& f){
+                                                          Meta::visitAt<actor_list>(f.toInt(), [&]<typename AA>(const Meta::Wrapper<AA>&) {
+                                                              AA::moveToPosition(mode);
+                                                          });
+                                                      });
                                                   }
                                               });
                 }

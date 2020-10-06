@@ -2,6 +2,8 @@
 
 #include "board.h"
 
+using dbg1 = daisyChain;
+
 using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::Default>;
 using ppmA = External::Ppm::PpmOut<tcaPosition, Meta::List<PWM::WO<0>, PWM::WO<1>, PWM::WO<2>>>;
 

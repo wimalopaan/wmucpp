@@ -26,6 +26,14 @@ namespace etl {
         };
     }
     
+    template<typename Dest, auto SrcL, auto SrcU, typename SrcT>
+    Dest scaleTo(const uint_ranged<SrcT, SrcL, SrcU>& in) {
+        static_assert(sizeof(typename Dest::value_type) >= sizeof(SrcT));
+        using enc_t = etl::enclosing_t<typename Dest::value_type>;
+        return Dest(Dest::Lower + (((Dest::Upper - Dest::Lower) * (enc_t(in) - SrcL)) / (SrcU - SrcL)));
+    }
+    
+    
     template<typename A>
     using index_type_t = detail::index_type<A>::type;
     
@@ -285,9 +293,6 @@ namespace etl {
             return uint_ranged_NaN(mValue + rhs);
         }
         
-        //        inline constexpr bool operator>(T rhs) const {
-        //            return mValue > rhs;
-        //        }
         inline void operator--() {
             if (mValue > LowerBound) {
                 --mValue;
@@ -298,9 +303,6 @@ namespace etl {
                 ++mValue;
             }
         }
-        //        inline constexpr bool operator==(T rhs) const {
-        //            return mValue == rhs;
-        //        }
         inline constexpr uint_ranged_NaN& operator=(T rhs) {
 //            assert(rhs >= LowerBound);
 //            assert(rhs <= UpperBound);
@@ -311,13 +313,15 @@ namespace etl {
         inline constexpr T toInt() const {
             return mValue;
         }
-//        constexpr operator T() const {
-//            return mValue;
-//        }
         
         template<typename TO>
         inline constexpr TO mapTo() const {
             return (etl::enclosing_t<T>(mValue - Lower) * std::numeric_limits<TO>::max()) / (Upper - Lower);
+        }
+        
+        inline constexpr uint_ranged<T, LowerBound, UpperBound> toRanged() const {
+            assert(*this);
+            return uint_ranged<T, LowerBound, UpperBound>{mValue};
         }
         
         inline constexpr uint_ranged_NaN<T, LowerBound, UpperBound> invert() const {

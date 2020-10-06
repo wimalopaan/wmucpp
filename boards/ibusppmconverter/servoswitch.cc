@@ -1,9 +1,9 @@
-#define NDEBUG
+//#define NDEBUG -> board.h
 
 //#define DEBUG2 // RX/TX change -> full duplex
 
-//#define USE_SBUS
-#define USE_IBUS
+#define USE_SBUS
+//#define USE_IBUS
 
 #define LEARN_DOWN // start at highest channel number downwards
 
@@ -11,18 +11,20 @@
 
 namespace Storage2 {
     inline static constexpr uint8_t NChannels = 5;
-    using ch_index_t = etl::uint_ranged<uint8_t, 0, NChannels - 1>;
-    using fo_index_t = etl::uint_ranged_NaN<uint8_t, 0, NChannels - 1>;
 
     enum class FollowMode : uint8_t {Off, CopyPositions, OwnPositions};
     
     template<typename ModeType, typename PPM>
     struct ChannelConfig {
+        using ch_index_t = etl::uint_ranged<uint8_t, 0, NChannels - 1>;
+        using fo_index_t = etl::uint_ranged_NaN<uint8_t, 0, NChannels - 1>;
+        
+        using ppm_value_t = typename PPM::ranged_type;
+        
         constexpr ChannelConfig() {
             std::fill(std::begin(mPositions), std::end(mPositions), PPM::ocMedium);
         } 
-        template<typename T>
-        void addFollower(const T& i) {
+        void addFollower(const IBus::Switch::Protocol1::index_t& i) {
             for(const auto& v : mFollower) {
                 if (v && (v.toInt() == i)) {
                     return;
@@ -35,25 +37,62 @@ namespace Storage2 {
                 }
             }
         }
-        template<typename T>
-        void removeFollower(const T& i) {
+        void removeFollower(const IBus::Switch::Protocol1::index_t& i) {
             for(auto& v: mFollower) {
                 if (v && i && (v.toInt() == i.toInt())) {
                     v.setNaN();
                 }
             }
         }
-        template<typename T>
-        void print() {
-            etl::out<T>("F["_pgm);
+        template<typename Term>
+        void print() const {
+            etl::out<Term>("F["_pgm);
             for(const auto& f: mFollower) {
-                etl::out<T>(" "_pgm, f.toInt());
+                etl::out<Term>(" "_pgm, f.toInt());
             }            
-            etl::outl<T>("]"_pgm);
+            etl::outl<Term>("]"_pgm);
         }
-//    private:
-        std::array<uint16_t, ModeType::Upper + 1> mPositions;        
-        etl::uint_ranged<uint8_t, 1, 100> mIncrement{50};
+        FollowMode followMode() const {
+            return mFollow;
+        }
+        void followMode(const FollowMode m){
+            mFollow = m;
+        }
+        bool isFollowMode(const FollowMode& m) const {
+            return mFollow == m;
+        }
+        void forFollowers(const auto& func) {
+            for (const auto& follower : mFollower) {
+                if (follower) {
+                    func(follower);
+                }
+            }
+        }
+        const auto& positions() const {
+            return mPositions;
+        }
+        auto& position(const ModeType& m) {
+            return mPositions[m];
+        }
+        fo_index_t followMaster() const {
+            return mFollowIndex;
+        }
+        void followMaster(const fo_index_t& i) {
+            mFollowIndex = i;
+        }
+        void removeMaster() {
+            mFollowIndex.setNaN();
+        }
+        using increment_t = etl::uint_ranged<uint8_t, 1, 100>;
+        void increment(const increment_t& i) {
+            mIncrement = i;
+        }
+        increment_t increment() const{
+            return mIncrement;
+        }
+    private:
+        std::array<ppm_value_t, ModeType::Upper + 1> mPositions;        
+        increment_t mIncrement{50};
         FollowMode mFollow{FollowMode::Off};
         fo_index_t mFollowIndex;
         std::array<fo_index_t, NChannels> mFollower;
@@ -66,25 +105,47 @@ namespace Storage2 {
 //        Address::_;
         using mode_t = ModeType;
         using value_type = ChannelConfig<ModeType, PPM>;
-        
+        using fo_index_t = typename value_type::fo_index_t;
+        using ch_index_t = typename value_type::ch_index_t;
+        using increment_t = typename value_type::increment_t;
         using follow_t = FollowMode;
         
-        uint8_t& magic() {
+        constexpr uint8_t& magic() {
             return mMagic;
         }
-        void clear() {
+        constexpr void clear() {
             for(auto& v : AValues) {
                 v = value_type{};
             }
         }
-        Channel& channel() {
+        constexpr Channel& channel() {
             return mChannel;
         }
-        Address& address() {
+        constexpr Address& address() {
             return mAddress;
         }
-        
-//    private:
+        constexpr void addFollower(const ch_index_t& i, const fo_index_t& follower) {
+            AValues[i].addFollower(follower);
+        }
+        constexpr void removeFollower(const ch_index_t& i, const fo_index_t& follower) {
+            AValues[i].removeFollower(follower);
+        }
+        constexpr const auto& positions(const ch_index_t& i) const {
+            return AValues[i].positions();
+        }
+        constexpr increment_t increment(const ch_index_t i) const {
+            return AValues[i].increment();
+        }
+        constexpr value_type& channel(const etl::uint_ranged<uint8_t, 0, NChannels - 1>& ch) {
+            return AValues[ch];
+        }
+        template<typename Term>
+        constexpr void print() {
+            for(const auto& ch : AValues) {
+                ch.template print<Term>();
+            }
+        }
+    private:
         uint8_t mMagic;
         Channel mChannel;
         Address mAddress;
@@ -302,10 +363,13 @@ struct Adapter {
     inline static constexpr auto ocMin =  PPM::ocMin;
     inline static constexpr auto ocMedium =  PPM::ocMedium;
     
+    template<bool start = true>
     inline static void init() {
-        PPM::init();
+        PPM::template init<start>();
     }
     using ranged_type = PPM::ranged_type;    
+    
+//    ranged_type::_;
     
     inline static void ppmRaw(const auto v) {
         PPM::ppmRaw(ppm_index_t{Channel}, v);
@@ -319,12 +383,15 @@ struct Adapter {
 template<typename PPM, typename PA, typename NVM, typename Timer, etl::uint_ranged<uint8_t, 0, Storage2::NChannels - 1> Channel>
 struct FSM {
     inline static constexpr auto& appData = NVM::data();
-    inline static constexpr auto& chData = appData.AValues[Channel];
+    inline static constexpr auto& chData = appData.channel(Channel);
     
     using storage_t = std::remove_cvref_t<decltype(appData)>; 
     
     using mode_t = storage_t::mode_t;
     using ch_config_t = storage_t::value_type;
+    using ch_index_t = storage_t::ch_index_t;
+    using fo_index_t = storage_t::fo_index_t;
+    using increment_t = storage_t::increment_t;
     using ppm_value_t = PPM::ranged_type;
     
     enum class State : uint8_t {Init, Steady, Run, Test};
@@ -332,10 +399,12 @@ struct FSM {
     
     static inline void reset() {
         chData = ch_config_t{};
-        jump(chData.mPositions[0]);
+        jump(chData.positions()[0]);
     }
+    
+//    template<bool start = true>
     static inline void init() {
-        PPM::init();
+//        PPM::template init<start>();
         mState = State::Init;
     }
 
@@ -350,13 +419,14 @@ struct FSM {
         const auto oldState = mState;
         switch(mState) {
         case State::Init:
-            if (chData.mFollow == Storage2::FollowMode::CopyPositions) {
-                mActualPosition = mTargetPosition = appData.AValues[chData.mFollowIndex.toInt()].mPositions[0];
+            if (chData.isFollowMode(Storage2::FollowMode::CopyPositions) && chData.followMaster()) {
+                mActualPosition = mTargetPosition = appData.positions(ch_index_t{chData.followMaster().toInt()})[0];
             }
             else {
-                mActualPosition = mTargetPosition = chData.mPositions[0];
+                mActualPosition = mTargetPosition = chData.positions()[0];
             }            
             PPM::ppmRaw(mActualPosition);
+            PPM::init();
             mState = State::Steady;
             break;
         case State::Steady:
@@ -369,11 +439,14 @@ struct FSM {
                 mState = State::Steady;
             }
             stateTicks.on(waitTimeoutTicks, []{
-                if (mTargetPosition > mActualPosition) {
+                if (mTargetPosition > (mActualPosition + increment)) {
                     mActualPosition += increment;
                 }
-                else if (mTargetPosition < mActualPosition) {
+                else if (mTargetPosition < (mActualPosition - increment)) {
                     mActualPosition -= increment;
+                }
+                else {
+                    mActualPosition = mTargetPosition;
                 }
                 PPM::ppmRaw(mActualPosition);
             });
@@ -387,37 +460,49 @@ struct FSM {
     }
     static inline void periodic() {
     }
-    static inline void setIncrement(const uint8_t increment) {
-        chData.mIncrement.set(increment);
+    static inline void setIncrement(const auto& increment) {
+//        decltype(increment)::_;
+        const auto i = etl::scaleTo<increment_t>(increment);
+        chData.increment(i);
         appData.change();
     }
-    static inline void setPosition(const mode_t& p, const auto& v) {
-        using v_t = std::remove_cvref_t<decltype(v)>;
-        uint16_t pv = (((uint32_t)(PPM::ocMax - PPM::ocMin) * (v.toInt() - v_t::Lower)) / (v_t::Upper - v_t::Lower)) + PPM::ocMin;          
-        chData.mPositions[p] = pv;
+    template<typename T, auto L, auto U>
+    static inline void setPosition(const mode_t& p, const etl::uint_ranged<T, L, U>& v) {
+        ppm_value_t pv = etl::scaleTo<ppm_value_t>(v);          
+        chData.position(p) = pv;
         appData.change();
         jump(pv);
     }
+    template<typename T, auto L, auto U>
+    static inline void setPosition(const mode_t& p, const etl::uint_ranged_NaN<T, L, U>& v) {
+        if (v) {
+            ppm_value_t pv = etl::scaleTo<ppm_value_t>(v.toRanged());          
+            chData.position(p) = pv;
+            appData.change();
+            jump(pv);
+        }
+    }
+
     static inline void moveToPosition(const mode_t& p) {
         mMode = p;
-        if (chData.mFollow == Storage2::FollowMode::CopyPositions) {
-            increment = appData.AValues[chData.mFollowIndex.toInt()].mIncrement;
-            mTargetPosition = appData.AValues[chData.mFollowIndex.toInt()].mPositions[p];
+        if (chData.isFollowMode(Storage2::FollowMode::CopyPositions) && chData.followMaster()) {
+            increment = appData.increment(ch_index_t{chData.followMaster().toInt()});
+            mTargetPosition = appData.positions(ch_index_t{chData.followMaster().toInt()})[p];
         }
         else {
-            increment = chData.mIncrement;
-            mTargetPosition = chData.mPositions[p];
+            increment = chData.increment();
+            mTargetPosition = chData.positions()[p];
         }
     }
 //private:
-    static inline void jump(const uint16_t p) {
+    static inline void jump(const ppm_value_t& p) {
         PPM::ppmRaw(p);
         mActualPosition = mTargetPosition = p;        
     } 
     inline static State mState{State::Init};
     inline static External::Tick<Timer> stateTicks;
-    inline static uint16_t mActualPosition = PPM::ocMedium;
-    inline static uint16_t mTargetPosition;
+    inline static ppm_value_t mActualPosition{PPM::ocMedium};
+    inline static ppm_value_t mTargetPosition{PPM::ocMedium};
     inline static mode_t mMode;
     inline static etl::uint_ranged<uint8_t, 1, 100> increment{50};
 };
@@ -427,11 +512,11 @@ using eeprom = EEProm::Controller<Storage2::ApplData<servo_pa::channel_t, IBus::
 using ppmCh1 = Adapter<ppmA, 0>;
 using ppmCh2 = Adapter<ppmA, 1>;
 using ppmCh3 = Adapter<ppmA, 2>;
-using fsm1 = FSM<ppmCh1, servo_pa, eeprom, systemTimer, Storage2::ch_index_t{0}>;
-using fsm2 = FSM<ppmCh2, servo_pa, eeprom, systemTimer, Storage2::ch_index_t{1}>;
-using fsm3 = FSM<ppmCh3, servo_pa, eeprom, systemTimer, Storage2::ch_index_t{2}>;
-using fsm4 = FSM<ppmB, servo_pa, eeprom, systemTimer, Storage2::ch_index_t{3}>;
-using fsm5 = FSM<ppmC, servo_pa, eeprom, systemTimer, Storage2::ch_index_t{4}>;
+using fsm1 = FSM<ppmCh1, servo_pa, eeprom, systemTimer, eeprom::data_t::ch_index_t{0}>;
+using fsm2 = FSM<ppmCh2, servo_pa, eeprom, systemTimer, eeprom::data_t::ch_index_t{1}>;
+using fsm3 = FSM<ppmCh3, servo_pa, eeprom, systemTimer, eeprom::data_t::ch_index_t{2}>;
+using fsm4 = FSM<ppmB, servo_pa, eeprom, systemTimer, eeprom::data_t::ch_index_t{3}>;
+using fsm5 = FSM<ppmC, servo_pa, eeprom, systemTimer, eeprom::data_t::ch_index_t{4}>;
 
 using ibus_switch = IBus::Switch::ServoSwitch<servo_pa, eeprom, Meta::List<fsm1, fsm2, fsm3, fsm4, fsm5>>;
 
@@ -480,7 +565,15 @@ int main() {
     reset::onWatchDog([]{
         uninitialzed::counter = uninitialzed::counter + 1;        
     });
-    
+
+    eeprom::init();
+
+    if (appData.magic() != 42) {
+        appData.clear();
+        appData.magic() = 42;
+        appData.change();
+    }
+
     evrouter::init();
     portmux::init();
     systemTimer::init();
@@ -502,14 +595,6 @@ int main() {
     
     ibus_switch::init();
     
-    eeprom::init();
-
-    if (appData.magic() != 42) {
-        appData.clear();
-        appData.magic() = 42;
-        appData.change();
-    }
-    
     const auto eepromTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
     
     while(true) {
@@ -522,15 +607,7 @@ int main() {
             gfsm::ratePeriodic();
             alarmTimer::periodic([&](const auto& t){
                 if (eepromTimer == t) {
-//                    etl::outl<terminal>("lc0: "_pgm, ibus_switch::lc0.toInt(), " pv: "_pgm, appData.AValues[0].mPositions[0]);
-                    appData.AValues[0].print<terminal>();
-                    appData.AValues[1].print<terminal>();
-                    appData.AValues[2].print<terminal>();
-                    appData.AValues[3].print<terminal>();
-                    etl::outl<terminal>("s0 fm: "_pgm, (uint8_t)appData.AValues[0].mFollow, " fi: "_pgm, appData.AValues[0].mFollowIndex.toInt(), " i: "_pgm, (uint8_t)appData.AValues[0].mIncrement, " p: "_pgm, fsm1::mMode);            
-                    etl::outl<terminal>("s1 fm: "_pgm, (uint8_t)appData.AValues[1].mFollow, " fi: "_pgm, appData.AValues[1].mFollowIndex.toInt(), " i: "_pgm, (uint8_t)appData.AValues[1].mIncrement, " p: "_pgm, fsm2::mMode);            
-                    etl::outl<terminal>("s2 fm: "_pgm, (uint8_t)appData.AValues[2].mFollow, " fi: "_pgm, appData.AValues[2].mFollowIndex.toInt(), " i: "_pgm, (uint8_t)appData.AValues[2].mIncrement, " p: "_pgm, fsm3::mMode);            
-                    etl::outl<terminal>("s3 fm: "_pgm, (uint8_t)appData.AValues[3].mFollow, " fi: "_pgm, appData.AValues[3].mFollowIndex.toInt(), " i: "_pgm, (uint8_t)appData.AValues[3].mIncrement, " p: "_pgm, fsm4::mMode);            
+                    appData.print<terminal>();
                     appData.expire();
                 }
             });
@@ -540,11 +617,11 @@ int main() {
 
 #ifndef NDEBUG
 [[noreturn]] inline void assertOutput(const AVR::Pgm::StringView& expr [[maybe_unused]], const AVR::Pgm::StringView& file[[maybe_unused]], unsigned int line [[maybe_unused]]) noexcept {
-#if !(defined(USE_IBUS) || defined(USE_HOTT))
+#if defined(DEBUG2)
     etl::outl<terminal>("Assertion failed: "_pgm, expr, etl::Char{','}, file, etl::Char{','}, line);
 #endif
     while(true) {
-        dbg1::toggle();
+        daisyChain::toggle();
     }
 }
 
