@@ -180,9 +180,10 @@ namespace IBus {
             inline static constexpr param_t blink2Duration{5};
             inline static constexpr param_t position4 = blink2Duration;
             inline static constexpr param_t offCurr2 = blink2Duration;
-            inline static constexpr param_t passThruChannel{6};
+            inline static constexpr param_t passThruChannel{6}; // auch follow mode für ServoSwitch
             inline static constexpr param_t timeMpxMode{7}; // MK8 = 0, MK4 = 1, Robbe = 2, CP = 3
             inline static constexpr param_t testMode{8};
+            inline static constexpr param_t timeMpxOffsetIncrement{9};
             inline static constexpr param_t servoMin{12};
             inline static constexpr param_t servoMax{13};
             inline static constexpr param_t resetOrLearnAddress{14};
@@ -326,6 +327,10 @@ namespace IBus {
                             }
                             else if (param == Protocol1::timeMpxMode) {
                                 NVM::data().mpxMode(lastAddrOffset, value);
+                                NVM::data().change();
+                            }
+                            else if (param == Protocol1::timeMpxOffsetIncrement) {
+                                NVM::data().mpxOffset(lastAddrOffset, value);
                                 NVM::data().change();
                             }
                         }
@@ -530,11 +535,11 @@ namespace IBus {
             static inline addr_t    mAddr{0};
         };
 
-        template<typename PA, typename ActorList>
+        template<typename PA, typename NVM, typename ActorList>
         struct ServoSwitch;
         
-        template<typename PA, typename... Actors>
-        struct ServoSwitch<PA, Meta::List<Actors...>> {
+        template<typename PA, typename NVM, typename... Actors>
+        struct ServoSwitch<PA, NVM, Meta::List<Actors...>> {
             using actor_list = Meta::List<Actors...>;
             using channel_t = PA::channel_t;
             using value_t = PA::value_type;
@@ -547,8 +552,13 @@ namespace IBus {
             using param_t = Protocol1::param_t;
             using pvalue_t = Protocol1::pvalue_t;
             
-            static inline void init(const channel_t c = 0) {
-                mChannel = c;
+            inline static constexpr auto& appData = NVM::data();
+            using appData_t = std::remove_cvref_t<decltype(appData)>;
+//            inline static constexpr auto& chData = appData.AValues[Channel];
+
+            using follow_t = appData_t::follow_t;
+            
+            static inline void init() {
             }
 
             static inline void channel(const channel_t c) {
@@ -556,7 +566,15 @@ namespace IBus {
                     mChannel = c;
                 }
             }
+            
+            static inline auto channel() {
+                return mChannel;
+            }
 
+            static inline auto address() {
+                return mAddr;
+            }
+            
             static inline void address(const addr_t a) {
                 mAddr = a;
             }
@@ -588,38 +606,38 @@ namespace IBus {
                         }
                     }
                     else if (lastOnIndex) {
-                        mReceivedControl = false;
+                        mReceivedControl = true;
                         index_t lastOn{lastOnIndex.toInt()};
                         if (param == Protocol1::reset) {
                             if (value == Protocol1::bCastReset) {
-                                Meta::visitAt<actor_list>(lastOn.toInt(), [&]<typename A>(const Meta::Wrapper<A>&) {
+                                Meta::visitAt<actor_list>(lastOn, [&]<typename A>(const Meta::Wrapper<A>&) {
                                                               A::reset();
                                                           });
                                               
                             }
                         }
                         else if (param == Protocol1::increment) {
-                            Meta::visitAt<actor_list>(lastOn.toInt(), [&]<typename A>(const Meta::Wrapper<A>&) {
+                            Meta::visitAt<actor_list>(lastOn, [&]<typename A>(const Meta::Wrapper<A>&) {
                                                           A::setIncrement(value);
                                                       });
                         }
                         else if (param == Protocol1::position1) {
-                            Meta::visitAt<actor_list>(lastOn.toInt(), [&]<typename A>(const Meta::Wrapper<A>&) {
+                            Meta::visitAt<actor_list>(lastOn, [&]<typename A>(const Meta::Wrapper<A>&) {
                                                           A::setPosition(mode_t{0}, value);
                                                       });
                         }
                         else if (param == Protocol1::position2) {
-                            Meta::visitAt<actor_list>(lastOn.toInt(), [&]<typename A>(const Meta::Wrapper<A>&) {
+                            Meta::visitAt<actor_list>(lastOn, [&]<typename A>(const Meta::Wrapper<A>&) {
                                                           A::setPosition(mode_t{1}, value);
                                                       });
                         }
                         else if (param == Protocol1::position3) {
-                            Meta::visitAt<actor_list>(lastOn.toInt(), [&]<typename A>(const Meta::Wrapper<A>&) {
+                            Meta::visitAt<actor_list>(lastOn, [&]<typename A>(const Meta::Wrapper<A>&) {
                                                           A::setPosition(mode_t{2}, value);
                                                       });
                         }
                         else if (param == Protocol1::position4) {
-                            Meta::visitAt<actor_list>(lastOn.toInt(), [&]<typename A>(const Meta::Wrapper<A>&) {
+                            Meta::visitAt<actor_list>(lastOn, [&]<typename A>(const Meta::Wrapper<A>&) {
                                                           A::setPosition(mode_t{3}, value);
                                                       });
                         }
@@ -627,10 +645,55 @@ namespace IBus {
                             if ((value >= 1) && (value <= 8)) {
                                 const auto pv = PA::valueMapped(0); // channel1                   
                                 lc0 = pv;
-//                                decltype(pv)::_;
-                                Meta::visitAt<actor_list>(lastOn.toInt(), [&]<typename A>(const Meta::Wrapper<A>&) {
+                                Meta::visitAt<actor_list>(lastOn, [&]<typename A>(const Meta::Wrapper<A>&) {
                                                               A::setPosition(mode_t(value - 1), pv);
                                                           });
+                            }
+                            else if (value == 10) { // not follow-above
+                                Meta::visitAt<actor_list>(lastOn, [&]<typename A>(const Meta::Wrapper<A>&) {
+                                                              A::chData.mFollow = follow_t::Off;
+                                                              if (A::chData.mFollowIndex) {
+                                                                  Meta::visitAt<actor_list>(A::chData.mFollowIndex.toInt(), [&]<typename AA>(const Meta::Wrapper<AA>&) {
+                                                                                                AA::chData.removeFollower(lastOn);
+                                                                                            });
+                                                                  A::chData.mFollowIndex.setNaN();
+                                                                  appData.change();
+                                                              }
+                                                          });
+                            }
+                            else if (value == 11) { // follow-above: full
+                                if (lastOn > 0) {
+                                    for(int8_t i = lastOn - 1; i >= 0; --i) { // search backward
+                                        Meta::visitAt<actor_list>(i, [&]<typename A>(const Meta::Wrapper<A>&) {
+                                                                      if (A::chData.mFollow == follow_t::Off) { // first candidate in backward search direction
+                                                                          A::chData.addFollower(lastOn);
+                                                                          Meta::visitAt<actor_list>(lastOn, [&]<typename AA>(const Meta::Wrapper<AA>&) {
+                                                                              AA::chData.mFollow = follow_t::CopyPositions;
+                                                                              AA::chData.mFollowIndex = i;
+                                                                                                    });
+                                                                          appData.change();
+                                                                          i = -1; // break out loop
+                                                                      }
+                                                                  });
+                                    }
+                                }
+                            }
+                            else if (value == 12) { // follow-above: own positions
+                                if (lastOn > 0) {
+                                    for(int8_t i = lastOn - 1; i >= 0; --i) {
+                                        Meta::visitAt<actor_list>(i, [&]<typename A>(const Meta::Wrapper<A>&) {
+                                                                      if (A::chData.mFollow == follow_t::Off) {
+                                                                          A::chData.addFollower(lastOn);
+                                                                          Meta::visitAt<actor_list>(lastOn, [&]<typename AA>(const Meta::Wrapper<AA>&) {
+                                                                              AA::chData.mFollow = follow_t::OwnPositions;
+                                                                              AA::chData.mFollowIndex = i;
+                                                                                                    });
+                                                                          appData.change();
+                                                                          i = -1; // break out loop
+                                                                      }
+                                                                  });
+                                    }
+                                }
                             }
                         }
                         else if (param == Protocol1::testMode) {
@@ -655,7 +718,17 @@ namespace IBus {
                         lastOnIndex = lastindex_t{};
                     }
                     Meta::visitAt<actor_list>(index.toInt(), [&]<typename A>(const Meta::Wrapper<A>&) {
-                                                  A::moveToPosition(mode);
+                                                  if (A::chData.mFollow == follow_t::Off) {
+                                                      A::moveToPosition(mode);
+                                                      for(const auto& f : A::chData.mFollower) {
+                                                          if (f) {
+                                                              Meta::visitAt<actor_list>(f.toInt(), [&]<typename AA>(const Meta::Wrapper<AA>&) {
+                                                                  AA::moveToPosition(mode);
+                                                              });
+                                                              
+                                                          }
+                                                      }
+                                                  }
                                               });
                 }
                 return true;                
@@ -663,7 +736,7 @@ namespace IBus {
             inline static bool receivedControl() {
                 return mReceivedControl;
             }
-            static inline PA::value_type lc0;
+            static inline std::remove_cvref_t<decltype(PA::valueMapped(0))> lc0;
             static inline mode_t lmv;
             static inline pvalue_t lpv;
             static inline param_t lpp;
