@@ -1,7 +1,7 @@
-//#define NDEBUG
-
-#define USE_IBUS
-//#define USE_SBUS
+#define NDEBUG
+ 
+//#define USE_IBUS
+#define USE_SBUS
 
 #define LEARN_DOWN // start at highest channel number downwards
 
@@ -151,7 +151,7 @@ struct SwitchStates {
         if (const auto vv = v.toInt(); vv == 0) {
             std::fill(std::begin(swStates), std::end(swStates), SwState::Off);
         }
-        else if ((vv > 0) && (vv <= 8)) {
+        else if ((vv >= 1) && (vv <= 8)) {
             std::fill(std::begin(swStates), std::end(swStates), SwState::Off);
             swStates[vv - 1] = SwState::Steady;
         }
