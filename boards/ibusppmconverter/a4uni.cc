@@ -61,8 +61,6 @@ using portmux = Portmux::StaticMapper<Meta::List<>>;
 #endif
 
 #ifdef USE_IBUS
-
-
 using raw0P = RawProvider<adcController, 0>;
 using raw1P = RawProvider<adcController, 1>;
 using raw2P = RawProvider<adcController, 2>;

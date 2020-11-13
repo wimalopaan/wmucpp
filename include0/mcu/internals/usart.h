@@ -341,6 +341,13 @@ namespace AVR {
         };
     public:
         using protocoll_adapter_type = PA;
+
+        inline static void txOpenDrain() {
+            mcu_usart()->ctrlb.template add<ctrlb_t::odme, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
+        }
+        inline static void txPinDisable() {
+            txpin::template dir<AVR::Input>();
+        }
         
         template<etl::Concepts::NamedConstant Baud, typename Mode = FullDuplex, bool pullUp = true, auto flags = 0>
         inline static void init() {
