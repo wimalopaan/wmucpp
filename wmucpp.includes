@@ -61,3 +61,4 @@ boards/cellwatch
 include0/external/solutions/rc
 boards/rcdesk
 boards/rcquadc
+boards/rcministep

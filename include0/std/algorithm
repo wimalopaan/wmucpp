@@ -91,11 +91,20 @@ namespace std {
         return out;
     }
     template<typename It, typename Ot, typename F>
-    void transform(It first, const It& last, Ot out, F f) {
+    constexpr void transform(It first, const It& last, Ot out, F f) {
         while(first != last) {
             *out= f(*first);
             ++out;
             ++first;
+        }
+    }
+    template<typename It, typename Ot, typename IT2, typename F>
+    constexpr void transform(It first, const It& last, IT2 first2, Ot out, F f) {
+        while(first != last) {
+            *out= f(*first, *first2);
+            ++out;
+            ++first;
+            ++first2;
         }
     }
     

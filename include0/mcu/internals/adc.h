@@ -212,7 +212,7 @@ namespace AVR {
             set<VRefType>();
 
             if constexpr(CN::value == 0) {
-                mcu_adc()->ctrlc.template set<cc_t::samcap |cc_t::div256 | cc_t::ref_internal>();           
+                mcu_adc()->ctrlc.template set<cc_t::samcap | cc_t::div256 | cc_t::ref_internal>();           
             }
             if constexpr(CN::value == 1) {
                 mcu_adc()->ctrlc.template set<cc_t::samcap | cc_t::div256 | cc_t::ref_internal>();           

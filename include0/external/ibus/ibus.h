@@ -184,6 +184,8 @@ namespace IBus {
             inline static constexpr param_t timeMpxMode{7}; // MK8 = 0, MK4 = 1, Robbe = 2, CP = 3
             inline static constexpr param_t testMode{8};
             inline static constexpr param_t timeMpxOffsetIncrement{9};
+            inline static constexpr param_t adcSensitivity = timeMpxOffsetIncrement;
+            inline static constexpr param_t cutOffSensitivity{10}; // Kennlinie
             inline static constexpr param_t servoMin{12};
             inline static constexpr param_t servoMax{13};
             inline static constexpr param_t resetOrLearnAddress{14};

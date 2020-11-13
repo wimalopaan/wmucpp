@@ -5,7 +5,7 @@
 namespace External {
     namespace SPort {
         // https://github.com/jcheger/frsky-arduino/tree/master/FrskySP
-        
+        // https://github.com/opentx/opentx/blob/2.3/radio/src/telemetry/frsky.h
         using namespace AVR;
         using namespace std::literals::chrono;
         using namespace External::Units::literals;
@@ -22,7 +22,10 @@ namespace External {
             Temp1   = 0x0400, // 15: °C
             Temp2   = 0x0410, // 15: °C
             Rpm     = 0x0500, // 15: Rpm
+            Fuel    = 0x0600, // 15: 0-100%
             Speed   = 0x0830, // 15: Knoten 0,001Kn
+            State   = 0x0B20, // 15: RBox-State
+            DIY     = 0x5100, // 255: DIY (State Info)
         };
 
         template<SensorId ID, template<typename> typename Uart, typename Timer, typename ProviderList = Meta::List<>>
@@ -38,6 +41,8 @@ namespace External {
             using providerList = Meta::List<Providers...>;
             inline static constexpr auto numberOfProviders = sizeof...(Providers);
 //            std::integral_constant<uint8_t, numberOfProviders>::_;
+            
+            static_assert(numberOfProviders > 0, "need at least one provider");
             
             using index_type = etl::uint_ranged_circular<uint8_t, 0, numberOfProviders - 1>;
             
@@ -77,6 +82,7 @@ namespace External {
             };
             
             using uart = Uart<ProtocollAdapter>;   
+            
             static_assert(uart::sendQLength >= 16);
             
             inline static constexpr bool useInterrupts = uart::useInterrupts;
@@ -84,13 +90,26 @@ namespace External {
             using state_type = std::conditional_t<useInterrupts, volatile State, State>;
             
             static inline void init() {
-                uart::template init<AVR::HalfDuplex>();
+                if constexpr(std::is_same_v<typename uart::component_type, void>) {
+                    uart::template init<AVR::HalfDuplex>();
+                }
+                else {
+                    uart::template init<AVR::BaudRate<57600>, AVR::FullDuplex, false>(); // no pullup
+                    uart::rxInvert(true); // SPort Protocoll
+                }
             }
             template<bool B = true>
             static inline void enable() {
                 uart::template rxEnable<B>();
             }
+
+            static inline void ratePeriodic() {
+            }
+            
             static inline void periodic() {
+                if constexpr(!std::is_same_v<typename uart::component_type, void>) {
+                    uart::periodic();
+                }            
                 switch(mState) {
                 case State::ReplyWait:
                     mState = State::Reply;    

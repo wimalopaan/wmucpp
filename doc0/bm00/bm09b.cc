@@ -1,13 +1,9 @@
+#include <avr/io.h>
 #include <cstdint>
 #include <array>
 #include <algorithm>
-#include <numeric>
-
-namespace UC {
-    volatile uint8_t portb;
-}
-
-#define PORTB UC::portb
+ 
+#if 1
 
 template<size_t N>
 using Iterations = std::integral_constant<size_t, N>;
@@ -32,12 +28,12 @@ class Setup {
     using MeinContainer = MeinArray;
     static inline constexpr auto a = []{
         MeinArray data;
-        std::iota(std::begin(data), std::end(data), 0);
+        std::iota(std::begin(data), std::end(data), 0, 1);
         return data;
     }();
     static inline constexpr auto b = []{
         MeinArray data;
-        std::iota(std::begin(data), std::end(data), 0);
+        std::iota(std::begin(data), std::end(data), 0, 10);
         return data;
     }();
     static inline constexpr auto c = []{
@@ -60,3 +56,41 @@ public:
 int main() {
     Setup<>::init();
 }
+
+#else
+
+constexpr unsigned arraySize {20};
+
+using MeinArray = int[arraySize];
+
+constexpr MeinArray a {1,2,3};
+constexpr MeinArray b {4,5,6};
+
+struct MeinContainer
+{
+  MeinArray array;
+};
+
+constexpr MeinContainer fillContainer()
+{
+  MeinContainer c {{0}};
+  for(unsigned i = 0; i < arraySize; i++)
+  {
+    c.array[i] = a[i] + b[i] + i; // Beispiel für eine beliebige Berechnung
+  }
+  return c;
+}
+
+void setup() 
+{
+  constexpr MeinContainer c {fillContainer()};
+
+  for(unsigned i = 0; i < arraySize; i++)
+  {
+    PORTB = c.array[i]; // Ausgabe
+  }
+}
+
+int main() {
+}
+#endif

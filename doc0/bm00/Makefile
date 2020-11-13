@@ -19,11 +19,11 @@
 
 F_OSC = 20000000
 
-#MCU = atmega328pb
+MCU = atmega328p
 #MCU = atmega1284p
 #MCU = atmega4809
-MCU = attiny1614
-#MCU = atxmega32e5
+#MCU = attiny1614
+##MCU = atxmega32e5
 
 bm01.s bm01.elf : MCU = atmega88p
 bm02.s bm02.elf : MCU = atmega88p
@@ -49,6 +49,9 @@ targets += bm01.S bm01.elf
 targets += bm01a.S bm01a.elf
 targets += bm02.S bm02.elf
 targets += bm03.S bm03.elf
+targets += bm09a.S bm09a.elf
+targets += bm09b.S bm09b.elf
+targets += bm10.S bm10.elf
 targets += bm10.S bm10.elf
 targets += bm11.S bm11.elf
 targets += bm12.S bm12.elf

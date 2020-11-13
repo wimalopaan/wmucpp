@@ -264,9 +264,13 @@ namespace AVR {
     class Usart<CP, PA, useISR, RecvQLength, SendQLength, MCU> final : public UsartBase<MCU, CP::component_type::value> {
         
         static inline constexpr auto N = CP::component_type::value;
-
+    public:
         static inline constexpr bool useInterrupts = useISR::value;
+        static inline constexpr auto sendQLength = SendQLength::value;
         
+        using component_type = CP::component_type;
+        
+    private:
         typedef typename std::conditional<useISR::value, volatile etl::FiFo<std::byte, SendQLength::value>, etl::FiFo<std::byte, SendQLength::value>>::type send_queue_type;
         typedef typename std::conditional<useISR::value, volatile etl::FiFo<std::byte, RecvQLength::value>, etl::FiFo<std::byte, RecvQLength::value>>::type recv_queue_type;
 
@@ -461,7 +465,14 @@ namespace AVR {
                 mcu_usart()->ctrlb.template clear<ctrlb_t::txen>();
             }
         }
-
+        inline static void rxInvert(const bool f) {
+            if (f) {
+                rxpin::template attributes<Meta::List<Attributes::Inverting<>>>();
+            }
+            else {
+                rxpin::template attributes<Meta::List<Attributes::Reset<>>>();
+            }
+        }
     private:
         inline static send_queue_type mSendQueue;
         inline static recv_queue_type mRecvQueue;

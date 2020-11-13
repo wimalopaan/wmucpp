@@ -225,11 +225,15 @@ boards/curiosity/test09.cc
 boards/curiosity/test10.cc
 boards/curiosity/test11.cc
 boards/curiosity/test12.cc
+boards/curiosity/test15.cc
+boards/curiosity/test16.cc
 boards/curiosity/test20.cc
 boards/curiosity/test21.cc
 boards/curiosity/test30.cc
 boards/curiosity/test40.cc
 boards/curiosity/test50.cc
+boards/curiosity/test60.cc
+boards/curiosity/test61.cc
 boards/curiosity/test70.cc
 boards/curiosity/test71.cc
 boards/curiosity/test80.cc
@@ -259,7 +263,10 @@ boards/ibusppmconverter/gps.h
 boards/ibusppmconverter/ibus2multi.cc
 boards/ibusppmconverter/lua_encoder.cc
 boards/ibusppmconverter/rpm.h
+boards/ibusppmconverter/sbus_test.cc
+boards/ibusppmconverter/servo360.cc
 boards/ibusppmconverter/servoswitch.cc
+boards/ibusppmconverter/sport_test.cc
 boards/ibusppmconverter/temp.h
 boards/ibusppmconverter/test00.cc
 boards/ibusppmconverter/volt.h
@@ -312,6 +319,11 @@ boards/rcactor/Makefile
 boards/rcactor/test00.cc
 boards/rcdesk/Makefile
 boards/rcdesk/test00.cc
+boards/rcministep/Makefile
+boards/rcministep/test00.cc
+boards/rcministep/test01.cc
+boards/rcministep/test50.cc
+boards/rcministep/test60.cc
 boards/rcmultiswitch/Makefile
 boards/rcmultiswitch/ToDo.txt
 boards/rcmultiswitch/board.h
@@ -333,6 +345,9 @@ boards/rcquadc/test04.cc
 boards/rcquadc/test05.cc
 boards/rcquadc/test06.cc
 boards/rcquadc/test07.cc
+boards/rcquadc/test08.cc
+boards/rcquadc/test10.cc
+boards/rcquadc/test11.cc
 boards/rcsensor/Makefile
 boards/rcsensor/test00.cc
 boards/rcsensorled/test100.cc
@@ -464,7 +479,6 @@ doc0/bm00/bm01.cc
 doc0/bm00/bm01a.c
 doc0/bm00/bm02.cc
 doc0/bm00/bm03.cc
-doc0/bm00/bm09.c
 doc0/bm00/bm10.cc
 doc0/bm00/bm11.cc
 doc0/bm00/bm12.cc
@@ -1224,6 +1238,8 @@ doc/bmcpp99/bm70a.cc
 doc/bmcpp99/bm99a.c
 doc/bmcpp99/simavrconsole.c
 doc/bmcpp99/sort.h
+doc0/bm00/bm09a.c
+doc0/bm00/bm09b.cc
 example/atmega1284p/simavrconsole.c
 example/atmega1284p/simpleisr2.cc
 example/atmega1284p/usitiny.cc

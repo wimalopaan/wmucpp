@@ -17,6 +17,7 @@ namespace Control {
         
         constexpr inline error_type correctionValue(const value_type& actual, const value_type& setPoint) {
             av = actual;
+            sp = setPoint;
             error_type error = std::clamp(actual - setPoint, -maxError, maxError);
             ev = error;
             error_type pterm = error * pFactor;
@@ -24,20 +25,36 @@ namespace Control {
             di = iFactor * error;
         
             if (di > factor_type{0.0}) {
-                if (integral < (integral.max() - di)) {
+                if constexpr(!std::is_same_v<T, float>) {
+                    if (integral < (integral.max() - di)) {
+                        integral += di;
+                    }
+                }
+                else {
                     integral += di;
                 }
             }
             else if (di < factor_type{0.0}) {
-                if (integral > (integral.min() - di)) {
-                    integral += di;
+                if constexpr(!std::is_same_v<T, float>) {
+                    if (integral > (integral.min() - di)) {
+                        integral += di;
+                    }
                 }
+                else {
+                    integral += di;
+                    
+                }
+
             }
-            
             error_type dterm = (actual - prevValue) * dFactor;    
             prevValue = actual;
             
-            return cv = std::clamp(pterm + integral.integer() + dterm, -maxCorrection, maxCorrection);
+            if constexpr(!std::is_same_v<T, float>) {
+                return cv = std::clamp(pterm + integral.integer() + dterm, -maxCorrection, maxCorrection);
+            }
+            else {
+                return cv = std::clamp((value_type)(pterm + integral + dterm), -maxCorrection, maxCorrection);
+            }
         }
         constexpr inline void reset() {
             prevValue = value_type{0};
@@ -48,6 +65,7 @@ namespace Control {
         error_type pt{};
         value_type prevValue{0};
         value_type av{};
+        value_type sp{};
         value_type ev{};
         factor_type di{};
         factor_type integral{0.0};
@@ -60,6 +78,12 @@ namespace Control {
     
     template<typename Stream, typename V, typename F> 
     constexpr inline void out_impl(const PID<V, F>& pid) {
-        etl::out<Stream>("in: "_pgm, pid.av, " er: "_pgm, pid.ev, " pt: "_pgm, pid.pt, " it:"_pgm, pid.integral, " cv:"_pgm, pid.cv);
+        if constexpr(!std::is_same_v<F, float>) {
+            etl::out<Stream>("sp: "_pgm, pid.sp, " in: "_pgm, pid.av, " er: "_pgm, pid.ev, " pt: "_pgm, pid.pt, " it:"_pgm, pid.integral, " cv:"_pgm, pid.cv);
+        }
+        else {
+            etl::out<Stream>("sp: "_pgm, pid.sp, " in: "_pgm, pid.av, 
+                             " er: "_pgm, (V)pid.ev, " pt: "_pgm, (V)pid.pt, " it:"_pgm, (V)pid.integral, " cv:"_pgm, pid.cv);
+        }
     }
 }

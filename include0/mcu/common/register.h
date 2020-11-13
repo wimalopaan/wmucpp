@@ -26,6 +26,7 @@
 
 #include "etl/scoped.h"
 #include "etl/concepts.h"
+#include "etl/meta.h"
 
 namespace AVR {
     namespace detail {

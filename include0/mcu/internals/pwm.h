@@ -759,6 +759,17 @@ namespace AVR {
                 mcu_tca()->ctrlb.template clear<value, etl::DisbaleInterrupt<IMode>>();
             }
             
+            template<typename Out>
+            inline static constexpr void invert() {
+                using pin = typename pinmapper<Out>::type;
+                pin::template attributes<Meta::List<Attributes::Inverting<>>>();
+            }
+            template<typename Out>
+            inline static constexpr void noinvert() {
+                using pin = typename pinmapper<Out>::type;
+                pin::template attributes<Meta::List<Attributes::Reset<>>>();
+            }
+
             template<typename... Outs>
             inline static constexpr void set() {
                 using pin_list = Meta::transform_type<pinmapper, Meta::List<Outs...>>;
@@ -779,6 +790,9 @@ namespace AVR {
             }
             inline static constexpr void frequency(const uint16_t& f) {
                 *mcu_tca()->perbuf = f;
+            }
+            inline static constexpr void period(const uint16_t& p) {
+                *mcu_tca()->perbuf = p;
             }
             inline static constexpr value_type max() {
                 return mMax;

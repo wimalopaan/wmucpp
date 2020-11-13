@@ -77,6 +77,10 @@ using gpsUsart = External::SoftSerial::Usart<Meta::List<rxPin, void>, Component:
                                             External::GPS::GpsProtocollAdapter<0, vtg, rmc>,
                                             AVR::BaudRate<9600>>;
 
+//using gpsUsart = External::SoftSerial::Usart<Meta::List<rxPin, void>, Component::Tcb<0>,
+//                                            External::GPS::GpsProtocollAdapter<0, vtg, rmc>,
+//                                            AVR::BaudRate<9600>, AVR::ReceiveQueueLength<0>>;
+
 template<typename VTG>
 struct SpeedProvider {
 //    inline static constexpr auto ibus_type = IBus::Type::type::GROUND_SPEED; // m/s
@@ -133,7 +137,7 @@ int main() {
     });
    
     terminalDevice::init<BaudRate<9600>>();
-//    gpsUsart::init<BaudRate<9600>>();
+//    gpsUsart::init<AVR::HalfDuplex>();
     gpsUsart::init();
     ibus::init();
     

@@ -46,6 +46,7 @@
 // Config
 // A        Sensor (I-Bus)
 // ----
+// a1t1u1r1g
 // A2c2r    2xStrom, 2xDrehzahl
 // A2c2r1g  2xStrom, 2xDrehzahl, 1xGPS
 // A2t2c    2xTemperatur, 2xStrom 

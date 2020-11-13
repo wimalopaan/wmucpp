@@ -20,6 +20,7 @@
 # ~/Projekte/updi/pyupdi/pyupdi.py -d mega4809 -c /dev/ttyUSB3  -f test00.hex
 
 MCU = atmega4809
+#MCU = attiny1614
 F_OSC = 20000000
 
 subdirs =
@@ -37,16 +38,20 @@ subdirs =
 #targets += test10.elf test10.S test10.hex
 #targets += test11.elf test11.S test11.hex
 #targets += test12.elf test12.S test12.hex
+#targets += test15.hex
+#targets += test16.hex
 #targets += test20.elf test20.S test20.hex
 #targets += test21.elf test21.S test21.hex
 #targets += test30.elf test30.S test30.hex
 #targets += test40.elf test40.S test40.hex
 #targets += test50.elf test50.S test50.hex
-targets += test70.hex
+#targets += test60.hex
+targets += test61.hex
+#targets += test70.hex
 #targets += test71.hex
-targets += test80.hex
+#targets += test80.hex
 #targets += test81.hex
-targets += test82.hex
+#targets += test82.hex
 #targets += test90.elf test90.S test90.hex
 #targets += test99.elf test99.S test99.hex
 
