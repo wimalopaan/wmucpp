@@ -71,7 +71,6 @@ namespace Parameter {
 #ifdef USE_SPORT
     constexpr auto fRtc = 2000_Hz;
 #endif
-    
     constexpr uint16_t R1vd = 10'000;
     
 #ifdef USE_16V
