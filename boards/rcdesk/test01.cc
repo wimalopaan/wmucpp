@@ -151,6 +151,11 @@ using rot_t = etl::uint_ranged_circular<uint16_t, sbus::sbus_min, sbus::sbus_max
 using rotary0 = External::RotaryEncoder<rotary0A, rotary0B, rot_t, rot_t{sbus::sbus_mid}>;
 using rotary1 = External::RotaryEncoder<rotary1A, rotary1B, rot_t, rot_t{sbus::sbus_mid}>;
 
+uint16_t encode(const auto v, const uint8_t func, const uint8_t module) {
+    const uint32_t e = (v + 8 * func + 64 * module); 
+    return (e * 1638 + 819) / 1024;
+}
+
 int main() {
     portmux::init();
     
@@ -191,53 +196,20 @@ int main() {
             rotary0::rateProcess();
             rotary1::rateProcess();
             
-            const uint16_t v0 = adcController::value(adi_t{0}).toInt();
-            sbus::output[0] = (v0 - 512) + 992;
-            const uint16_t v1 = adcController::value(adi_t{1}).toInt();
-            sbus::output[1] = (v1 - 512) + 992;
-            const uint16_t v2 = adcController::value(adi_t{2}).toInt();
-            sbus::output[2] = (v2 - 512) + 992;
-            const uint16_t v3 = adcController::value(adi_t{3}).toInt();
-            sbus::output[3] = (v3 - 512) + 992;
-            const uint16_t v4 = adcController::value(adi_t{4}).toInt();
-            sbus::output[4] = (v4 - 512) + 992;
-            const uint16_t v5 = adcController::value(adi_t{5}).toInt();
-            sbus::output[5] = (v5 - 512) + 992;
-
-            auto l = [](uint8_t i){
-                if (buttons::states()[i] == buttons::State::On1) {
-                    return sbus::sbus_max;
+            robo_pa::whenTargetChanged([](auto t, auto f){
+                if (f && (t == robo_pa::Target::Switch)) {
+                    const auto index = f.toInt();
+                    sbus::output[0] = 172; 
+                    sbus::output[0] += encode(robo_pa::switchValues[index], index, 0);
                 }
-                else if (buttons::states()[i] == buttons::State::On2) {
-                    return sbus::sbus_min;
-                }
-                return sbus::sbus_mid;
-            };
-            
-            sbus::output[6] = l(0);
-            sbus::output[7] = l(1);
-            
-            sbus::output[8] = rotary0::value();
-            sbus::output[9] = rotary1::value();
-            
-            sbus::output[10] = robo_pa::propValues[0] * 16 + sbus::sbus_min;
-            sbus::output[11] = robo_pa::propValues[1] * 16 + sbus::sbus_min;
-            sbus::output[12] = robo_pa::propValues[2] * 16 + sbus::sbus_min ;
-            sbus::output[13] = robo_pa::propValues[3] * 16 + sbus::sbus_min;
+            });            
 
-            
-            sbus::output[14] = robo_pa::toggleValues[0] ? sbus::sbus_max : sbus::sbus_min;
-            sbus::output[15] = robo_pa::toggleValues[1] ? sbus::sbus_max : sbus::sbus_min;
-            
-            
             alarmTimer::periodic([&](const auto& t){
                 if (sbusTimer == t) {
                     sbus::ratePeriodic();
                 }
                 if (periodicTimer == t) {
-                    etl::outl<terminal>("r0: "_pgm, rotary0::value().toInt(), " r1: "_pgm, rotary1::value().toInt());
-                    etl::outl<terminal>("p0: "_pgm, robo_pa::propValues[0]);
-                    etl::outl<terminal>("t0: "_pgm, robo_pa::toggleValues[0]);
+                    etl::outl<terminal>("s0: "_pgm, robo_pa::switchValues[0]);
                 }
             });
         });
