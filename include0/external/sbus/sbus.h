@@ -205,6 +205,7 @@ uint32_t sbusTime = 0;
                 inline static constexpr uint16_t sbus_min = 172;
                 inline static constexpr uint16_t sbus_max = 1811;
                 
+                inline static constexpr uint16_t sbus_mid = (sbus_max + sbus_min) / 2;
                 
                 inline static void init() {
                     usart::template init<AVR::BaudRate<100000>, AVR::FullDuplex, true, 1>();
