@@ -132,6 +132,13 @@ namespace External {
                         index.set(number);
                         number = 0;
                     }
+                    else if (etl::contains(lineEnds, b) && (target == Target::Toggle)) {
+                        if (index < std::size(switchValues)) {
+                            toggleValues[index] = !toggleValues[index];
+                            changed = true;
+                            state = State::Undefined;
+                        }
+                    }
                     else {
                         state = State::Undefined;
                     }
@@ -141,24 +148,35 @@ namespace External {
                         number *= 10;
                         number += asDigit(b);
                     }
+                    else if (b == std::byte{'-'}) {
+                        
+                    }
+                    else if (b == std::byte{'+'}) {
+                    }
                     else if (etl::contains(lineEnds, b)) {
                         if (number <= std::numeric_limits<uint8_t>::max()) {
                             if (target == Target::Prop) {
                                 if (index < std::size(propValues)) {
                                     propValues[index] = number;
                                     changed = true;
+                                    lastTarget = Target::Prop;
+                                    lastIndex = index;
                                 }
                             }
                             else if (target == Target::Switch) {
                                 if (index < std::size(switchValues)) {
                                     switchValues[index] = number;
                                     changed = true;
+                                    lastTarget = Target::Switch;
+                                    lastIndex = index;
                                 }
                             }
                             else if (target == Target::Toggle) {
                                 if (index < std::size(switchValues)) {
                                     toggleValues[index] = !toggleValues[index];
                                     changed = true;
+                                    lastTarget = Target::Toggle;
+                                    lastIndex = index;
                                 }
                             }
                         }
@@ -187,6 +205,13 @@ namespace External {
                     changed = false;
                 }
             }
+            inline static void whenTargetChanged(const auto& f) {
+                if (lastIndex && (lastTarget != Target::Undefined)) {
+                    f(lastTarget, lastIndex);
+                    lastTarget = Target::Undefined;
+                    lastIndex.setNaN();
+                }
+            }
             inline static void whenPinged(const auto& f) {
                 if (pingReceived) {
                     f();
@@ -200,9 +225,11 @@ namespace External {
             inline static Target target = Target::Undefined;
             inline static bool changed = false;
             inline static bool pingReceived = false;
+            inline static Target lastTarget = Target::Undefined;
+            inline static etl::uint_ranged_NaN<uint8_t, 0, NumberOfChannels - 1> lastIndex;
         public:
-            inline static std::array<uint8_t, NumberOfChannels> propValues;
-            inline static std::array<bool, NumberOfChannels> switchValues;
+            inline static std::array<uint16_t, NumberOfChannels> propValues;
+            inline static std::array<uint8_t, NumberOfChannels> switchValues;
             inline static std::array<bool, NumberOfChannels> toggleValues;
         };
     }
