@@ -4,8 +4,8 @@
 
 #define INV_LED // onboad LED inverted
 
-//#define USE_SBUS
-#define USE_IBUS
+#define USE_SBUS
+//#define USE_IBUS
 
 #define LEARN_DOWN // start at highest channel number downwards
 
@@ -322,9 +322,6 @@ struct FSM {
             ++cycle10;
         }
     }
-    static inline void mpxOffset(const auto v) {
-        
-    }
     private:
     static inline void pulse(uint8_t i) {
         constexpr Storage::ChannelIndex::addr_type adr{Address};
@@ -442,6 +439,8 @@ int main() {
 #ifdef USE_SBUS
     servo::init<AVR::BaudRate<100000>, HalfDuplex, true, 1>(); // 8E2
     servo::txEnable<false>();
+    // maybe invert the tx pin as rx
+//    servo::txInvertHalfDuplex<true>();
 #endif
     
     gfsm::init();
