@@ -319,6 +319,7 @@ boards/rcactor/Makefile
 boards/rcactor/test00.cc
 boards/rcdesk/Makefile
 boards/rcdesk/test00.cc
+boards/rcdesk/test01.cc
 boards/rcministep/Makefile
 boards/rcministep/test00.cc
 boards/rcministep/test01.cc
@@ -1550,6 +1551,7 @@ include/util/type_traits.h
 include/util/types.h
 include/util/types.h
 include/util/util.h
+include0/external/solutions/rotaryencoder.h
 projects/03_general/simavr.cc
 projects/03_general/simavr.h
 projects/03_general/simavrconsole.c
