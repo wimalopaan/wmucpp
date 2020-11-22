@@ -164,4 +164,101 @@ namespace External {
         static inline etl::uint_ranged_circular<value_type, 0, periodWidthCount + 1> mStateCounter{};
         static inline etl::uint_ranged<uint8_t, 0, maxDisplayablePulses> mBlinkCount{};
     };
+
+    template<typename Pin, typename Timer, std::chrono::milliseconds Pulse, std::chrono::milliseconds Period>
+    struct Blinker2 {
+        enum class State : uint8_t {Undefined, Off, Steady, Blink, OnePeriodBlink};
+        
+        static_assert(Pulse <= Period, "wrong parameter");
+        
+        static inline constexpr auto intervall = Timer::intervall;
+        
+        static inline constexpr auto pulseWidthCount = Pulse / intervall;
+        static inline constexpr auto periodWidthCount = Period / intervall;
+        
+//        decltype(pulseWidthCount)::_;
+        
+        using value_type = etl::typeForValue_t<periodWidthCount>;
+//        value_type::_;
+        
+        static inline constexpr auto maxDisplayablePulses = periodWidthCount / (2 * pulseWidthCount);
+        
+        using count_type = etl::uint_ranged<uint8_t, 0, maxDisplayablePulses>;
+        
+        static inline void init() {
+            Pin::init();
+        }
+        static inline void off() {
+            mState = State::Off;
+        }
+        static inline void steady() {
+            mState = State::Steady;
+        }
+        static inline void blink(count_type count) {
+            mState = State::Blink;
+            mBlinkCount = count;
+            mStateCounter.setToBottom();
+        }
+        static inline void onePeriod(count_type count) {
+            mState = State::OnePeriodBlink;
+            mBlinkCount = count;
+            mStateCounter.setToBottom();
+        }
+        static inline bool isActive() {
+            return mState != State::Off;
+        }
+        static inline void ratePeriodic() {
+            switch(mState) {
+            case State::Undefined:
+                Pin::inactivate();
+                mState = State::Off;
+                break;
+            case State::Off:
+                Pin::inactivate();
+                break;
+            case State::Steady:
+                Pin::activate();
+                break;
+            case State::Blink:
+                if (shouldBlink()) {
+                    const auto phase = mStateCounter % (2 * pulseWidthCount);
+                    if (phase < pulseWidthCount) {
+                        Pin::activate();
+                    }
+                    else {
+                        Pin::inactivate();
+                    }
+                }
+                else {
+                    Pin::inactivate();
+                }
+                ++mStateCounter;
+                break;
+            case State::OnePeriodBlink:
+                if (shouldBlink()) {
+                    const auto phase = mStateCounter % (2 * pulseWidthCount);
+                    if (phase < pulseWidthCount) {
+                        Pin::activate();
+                    }
+                    else {
+                        Pin::inactivate();
+                    }
+                }
+                else {
+                    mState = State::Off;
+                }
+                ++mStateCounter;
+                break;
+            default:
+                break;
+            }
+        }
+    private:
+        static inline bool shouldBlink() {
+            return mStateCounter < (2 * pulseWidthCount * mBlinkCount);
+        }
+        static inline State mState = State::Off;
+        static inline etl::uint_ranged_circular<value_type, 0, periodWidthCount + 1> mStateCounter{};
+        static inline etl::uint_ranged<uint8_t, 0, maxDisplayablePulses> mBlinkCount{};
+    };
 }

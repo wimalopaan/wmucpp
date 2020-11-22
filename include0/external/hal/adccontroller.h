@@ -151,6 +151,10 @@ namespace External {
             inline static typename MCUAdc::value_type value(index_type index) {
                 return values[index];
             }
+            template<uint8_t U>
+            inline static typename MCUAdc::value_type value(index_type index, etl::uint_ranged<uint8_t, 0, U> s) {
+                return typename MCUAdc::value_type((uint32_t(values[index]) * s) / U);
+            }
             
         private:
             inline static value_type values[NumberOfChannels]{};
