@@ -487,7 +487,6 @@ namespace AVR {
             
 //            std::integral_constant<decltype(all_mask), all_mask>::_;
             
-            //            inline static constexpr value_type pwmMax = 99;
             inline static constexpr uint8_t pwmMax = 99;
             using value_type = etl::uint_ranged<uint8_t, 0, pwmMax>;
             using raw_value_type = uint8_t;
@@ -668,6 +667,16 @@ namespace AVR {
                 lhset(*mcu_tca()->per, pwmMax, pwmMax);
 //                mcu_tca()->ctrlb.template set<all_mask>();
                 mcu_tca()->ctrla.template set<mcu_timer_t::CtrlA_t::enable | pv>();
+            }
+            
+            template<uint8_t Pr>
+            inline static constexpr void prescale() {
+                constexpr auto lpv = []{
+                    return MCU::TCA::prescalerValues[Pr].bits;
+                }();
+                mcu_tca()->ctrla.template set<mcu_timer_t::CtrlA_t::enable | lpv>();
+//                mcu_tca()->ctrla.template setPartial(pv);
+                
             }
         private:
             template<typename T>
