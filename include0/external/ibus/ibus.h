@@ -1312,10 +1312,10 @@ namespace IBus {
         struct Responder final {
             inline static constexpr auto delayBeforeReply = 700_us;
             static inline constexpr auto intervall = Clock::intervall;
-            //                    std::integral_constant<uint16_t, intervall.value>::_;
+//                                std::integral_constant<uint16_t, intervall.value>::_;
             static inline constexpr auto ticks_to_wait = delayBeforeReply / intervall;
-            //                    std::integral_constant<uint8_t, ticks_to_wait>::_;
-            static_assert(ticks_to_wait > 0);        
+//                                std::integral_constant<uint8_t, ticks_to_wait>::_;
+            static_assert((ticks_to_wait > 0) || (intervall <= 1000_us));        
             using wait_t = etl::uint_ranged<uint8_t, 0, ticks_to_wait+1>;
             
             enum class reply_state_t {Undefined = 0, 
