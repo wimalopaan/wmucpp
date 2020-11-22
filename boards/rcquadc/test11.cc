@@ -293,8 +293,8 @@ namespace  {
 #ifdef USE_PPM
     constexpr auto fRtc = 128_Hz;
 #endif
-    
-    constexpr uint16_t Ri = 2700;
+//    constexpr uint16_t Ri = 2700;
+    constexpr uint16_t Ri = 3000;
 }
 
 #ifdef USE_IBUS
@@ -449,13 +449,18 @@ struct ChannelFsm {
         return data().forwardOffC;        
     }
     static inline auto forwardOffCurr(const uint16_t pwm) {
-        if (forwardOffCurr() > forwardStartOffCurr()) {
-            const uint16_t cv1 = forwardOffCurr() - forwardStartOffCurr();
-            const uint16_t cv2 = ((((uint32_t)pwm - pa_mid) * cv1) / pa_half) + forwardStartOffCurr(); 
-            return cv2;
+        if (forwardOffCurr() == std::numeric_limits<uint16_t>::max()) {
+            return forwardOffCurr();
         }
         else {
-            return forwardOffCurr();
+            if (forwardOffCurr() > forwardStartOffCurr()) {
+                const uint16_t cv1 = forwardOffCurr() - forwardStartOffCurr();
+                const uint16_t cv2 = ((((uint32_t)pwm - pa_mid) * cv1) / pa_half) + forwardStartOffCurr(); 
+                return cv2;
+            }
+            else {
+                return forwardOffCurr();
+            }
         }
     }
     static inline auto backwardOffCurr(const uint16_t pwm) {
@@ -485,7 +490,6 @@ struct ChannelFsm {
     }
     
     static inline pwm_value_t mRampPwm{};
-
     static inline Event mEvent{Event::None};
     
     inline static void init() {
@@ -568,7 +572,7 @@ struct ChannelFsm {
             backwardOffCurr() = std::numeric_limits<uint16_t>::max();
         }
         else {
-            backwardOffCurr() = backwardRefCurr()+ ((backwardRefCurr() * v.toInt()) >> 3);
+            backwardOffCurr() = backwardRefCurr() + ((backwardRefCurr() * v.toInt()) >> 3);
         }
         change();
         mEvent = Event::SetBackwardOC;
@@ -738,6 +742,8 @@ struct ChannelFsm {
             if (passThru()) {
                 mState = State::ForwardPassThru;
             }
+            lcv = ADC::value(adci, pwmForward());
+            lcv2 = ADC::value(adci);
             if (const auto cv = ADC::value(adci); cv >= forwardOffCurr()) {
                 mState = State::OffForwardOC;
             }
@@ -786,11 +792,14 @@ struct ChannelFsm {
                             mState = State::OffForwardEnd;
                         }
                         else {
-                            if (const auto cv = ADC::value(adci); cv >= forwardOffCurr(rv)) {
+//                            pwm_value_t::_;
+                            pwm_value_t pvs(((uint32_t)rv - pa_mid) * pwmForward() / pa_half); 
+                            lcv = ADC::value(adci, pvs);
+                            if (const auto cv = ADC::value(adci, pvs); cv >= forwardOffCurr(rv)) {
                                 lcv = cv;
+                                lcv2 = forwardOffCurr(rv);
                                 mState = State::OffForwardOC;
                             }
-                            pwm_value_t pvs(((uint32_t)rv - pa_mid) * pwmForward() / pa_half); 
                             PWM::template pwm<N>(pvs);
                         }
                     }
@@ -983,7 +992,7 @@ struct ChannelFsm {
                 forward();
                 break;
             case State::OffForwardOC:
-                etl::outl<Term>("S ocf: "_pgm, lcv);
+                etl::outl<Term>("S ocf: "_pgm, lcv, ","_pgm, lcv2);
                 StateProvider::setOcF(true);
                 off();
                 break;
@@ -1027,16 +1036,18 @@ struct ChannelFsm {
     
     static inline void debug() {
         if constexpr(N == 0) {
-            etl::outl<Term>("Ch"_pgm, N, " St: "_pgm, uint8_t(mState));
+            etl::out<Term>("Ch"_pgm, N, " St: "_pgm, uint8_t(mState), " c: "_pgm, lcv, " c2: "_pgm, lcv2, " mr: "_pgm, mRampPwm);
 //            etl::out<Term>(" to:"_pgm, ccTimeout().value, " rc: "_pgm, rampCycles().value);
 //            etl::out<Term>(" fpw: "_pgm, pwmForward(), " bpw: "_pgm, pwmBackward());
 //            etl::out<Term>(" frc: "_pgm, forwardRefCurr(), " foc: "_pgm, forwardOffCurr(), " sfoc: "_pgm, forwardStartOffCurr());
+            etl::outl<Term>(" foc: "_pgm, forwardOffCurr(), " sfoc: "_pgm, forwardStartOffCurr());
 //            etl::outl<Term>(" brc: "_pgm, backwardRefCurr(), " boc: "_pgm, backwardOffCurr());
         }
     }
     
 private:
     inline static uint16_t lcv{};
+    inline static uint16_t lcv2{};
     
     inline static void updateForwardPwm() {
         const auto cv = ADC::value(adci);                
@@ -1130,7 +1141,8 @@ struct GlobalFsm<Timer, PWM, NVM, Meta::List<Chs...>, Led, Adc, Servo, BaudRate<
         Sensor::init();
         Adc::mcu_adc_type::nsamples(6); 
         Adc::init();
-        PWM::init();    
+        PWM::init();
+        PWM::template prescale<6>();
         (Chs::init(), ...);
     }
     inline static void periodic() {
@@ -1206,7 +1218,7 @@ struct GlobalFsm<Timer, PWM, NVM, Meta::List<Chs...>, Led, Adc, Servo, BaudRate<
                 blinker::off();
             }
             mEepromTick.on(eepromTimeout, []{
-                etl::outl<Term>("exp"_pgm);
+//                etl::outl<Term>("exp"_pgm);
                 NVM::data().expire();
             });
             mStateTick.match(debugTimeout, []{
@@ -1376,8 +1388,8 @@ using ibt = void;
 
 using eeprom = EEProm::Controller<Storage::ApplData<systemTimer, servo_pa::channel_t, IBus::Switch::Protocol1::addr_t, pwm::value_type>>;
 
-using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V2_5>;
-//using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V4_3>;
+//using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V2_5>;
+using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V4_3>;
 using adcController = External::Hal::AdcController<adc, Meta::NList<12, 7, 5, 0, 0x1e>>; // 1e = temp
 
 //using vn1 = External::AnalogSensor<adcController, 0, std::ratio<0,1>, std::ratio<Ri,1900>, std::ratio<100,1>>;
