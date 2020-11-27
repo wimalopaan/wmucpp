@@ -351,6 +351,9 @@ boards/rcquadc/test10.cc
 boards/rcquadc/test11.cc
 boards/rcquadc/test12.cc
 boards/rcquadc/test13.cc
+boards/rcquadc/test14.cc
+boards/rcquadc/test15.cc
+boards/rcquadc/test16.cc
 boards/rcsensor/Makefile
 boards/rcsensor/test00.cc
 boards/rcsensorled/test100.cc

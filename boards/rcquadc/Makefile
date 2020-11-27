@@ -5,6 +5,8 @@
 MCU = atmega4809
 F_OSC = 20000000
 
+#OPTFLAGS = -O3
+
 subdirs =
 
 #targets += test00.hex
@@ -20,5 +22,8 @@ subdirs =
 #targets += test11.hex
 targets += test12.hex
 targets += test13.hex
+targets += test14.hex
+targets += test15.hex
+targets += test16.hex
 
 -include ../../Makefile.avr0.include

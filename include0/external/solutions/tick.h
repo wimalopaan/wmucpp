@@ -21,7 +21,11 @@ namespace External {
         template<typename R, typename P>
         inline constexpr void operator=(const std::chrono::duration<R, P>& v) {
             value.set(v / intervall);
-        }        
+        }  
+        
+        inline constexpr auto time() const {
+            return intervall * value.toInt();
+        }
         
         inline explicit constexpr operator bool() const {
             return value != 0;
