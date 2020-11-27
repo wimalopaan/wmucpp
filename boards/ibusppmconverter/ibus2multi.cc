@@ -4,8 +4,8 @@
 
 #define INV_LED // onboad LED inverted
 
-#define USE_SBUS
-//#define USE_IBUS
+//#define USE_SBUS
+#define USE_IBUS
 
 #define LEARN_DOWN // start at highest channel number downwards
 
@@ -326,6 +326,8 @@ struct FSM {
     static inline void pulse(uint8_t i) {
         constexpr Storage::ChannelIndex::addr_type adr{Address};
         Storage::ChannelIndex chi{adr, Storage::ChannelIndex::channel_type{i}};
+
+        const uint16_t pulseOffset = NVM::data().pulseOffset(Address);
         
         if (const auto pch = NVM::data().passThru(chi)) {
             auto v = PA::value(pch);
@@ -335,10 +337,12 @@ struct FSM {
             PPM::ppmRaw(PPM::ocMedium);
         }
         else if (swStates[i] == SwState::Steady) {
-            PPM::ppmRaw(PPM::ocMax - 200);
+//            PPM::ppmRaw(PPM::ocMax - 200);
+            PPM::ppmRaw(PPM::ocMax - pulseOffset);
         }
         else if (swStates[i] == SwState::Blink1) {
-            PPM::ppmRaw(PPM::ocMin + 200);
+//            PPM::ppmRaw(PPM::ocMin + 200);
+            PPM::ppmRaw(PPM::ocMin + pulseOffset);
         }
         else {
             PPM::ppmRaw(PPM::ocMedium);

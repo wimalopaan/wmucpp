@@ -206,6 +206,9 @@ namespace Storage {
             for(auto& v : mMpxOffsets) {
                 v = 200;
             }
+            for(auto& v : mPulseOffsets) {
+                v = 200;
+            }
         }
         Channel& channel() {
             return mChannel;
@@ -213,6 +216,20 @@ namespace Storage {
         Address& address() {
             return mAddress;
         }
+
+        void pulseOffset(uint8_t addressOffset, uint8_t v) {
+            if (addressOffset < mMpxModes.size()) {
+#ifdef USE_SBUS
+                mPulseOffsets[addressOffset] = 40 * (v + 1); // 20 - 640
+#else
+                mPulseOffsets[addressOffset] = 20 * (v + 1); // 20 - 640
+#endif
+            }
+        }        
+        uint16_t pulseOffset(uint8_t addressOffset) {
+                return mPulseOffsets[addressOffset];
+        }
+        
         void mpxOffset(uint8_t addressOffset, uint8_t v) {
             if (addressOffset < mMpxModes.size()) {
 #ifdef USE_SBUS
@@ -257,6 +274,7 @@ namespace Storage {
     private:
         std::array<Mode, NAdresses> mMpxModes {};
         std::array<uint16_t, NAdresses> mMpxOffsets{};
+        std::array<uint16_t, NAdresses> mPulseOffsets{};
         uint8_t mMagic;
         Channel mChannel;
         Address mAddress;

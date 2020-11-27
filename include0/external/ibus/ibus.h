@@ -335,6 +335,10 @@ namespace IBus {
                                 NVM::data().mpxOffset(lastAddrOffset, value);
                                 NVM::data().change();
                             }
+                            else if (param == Protocol1::testMode) {
+                                NVM::data().pulseOffset(lastAddrOffset, value);
+                                NVM::data().change();
+                            }
                         }
                     }
                 }
