@@ -36,6 +36,7 @@ targets += a2c2r.hex
 targets += a2c2r1g.hex
 targets += a2t2r1g.hex
 targets += a1t1u1r1g.hex
+targets += a2t1c1r1g.hex
 targets += b10c5.hex
 targets += b11c4.hex
 targets += ibus2multi.hex
