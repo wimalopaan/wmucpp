@@ -211,6 +211,8 @@ boards/cellwatch/Makefile
 boards/cellwatch/base01.cc
 boards/cellwatch/base02.cc
 boards/cellwatch/cell01.cc
+boards/cellwatch/doc/Makefile
+boards/cellwatch/doc/cellwatch.adoc
 boards/cellwatch/test00.cc
 boards/curiosity/Makefile
 boards/curiosity/test00.cc
@@ -251,6 +253,7 @@ boards/ibusppmconverter/a1g.cc
 boards/ibusppmconverter/a1t1u1r1g.cc
 boards/ibusppmconverter/a2c2r.cc
 boards/ibusppmconverter/a2c2r1g.cc
+boards/ibusppmconverter/a2t1c1r1g.cc
 boards/ibusppmconverter/a2t2c.cc
 boards/ibusppmconverter/a2t2r1g.cc
 boards/ibusppmconverter/a3t2r.cc
