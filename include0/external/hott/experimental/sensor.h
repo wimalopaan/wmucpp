@@ -303,6 +303,19 @@ namespace Hott {
                     
                 }
             }
+        public:
+            static inline void clear() {
+                mState = hott_state_t::Undefined;
+                mWaitTicks.setToBottom();
+                mByteIndexBinary.setToBottom();
+                mByteIndexText.setToBottom();
+                mLastKey = Hott::key_t::nokey;
+                mBytesReceivedInIdlePeriod = 0;
+                mCollisions = 0;
+                mAsciiReceived = 0;
+                mBinaryReceived = 0;
+            }
+        private:
             
             static inline hott_state_t mState = hott_state_t::Undefined;
             

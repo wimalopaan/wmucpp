@@ -1,10 +1,7 @@
-// opentx 16bit / 14-bit: obere 2 bits nummer der Zelle
-
 #define NDEBUG
 
-// Hott???
-//#define USE_HOTT
-#define USE_IBUS
+#define USE_HOTT
+//#define USE_IBUS
 
 #include <mcu/avr.h>
 
@@ -45,8 +42,15 @@ using daisy = Pin<Port<A>, 2>;
 
 // AIN3 = Voltage
 
-namespace  {
+namespace Parameter {
+#ifdef USE_IBUS
     constexpr auto fRtc = 2000_Hz;
+#endif
+#ifdef USE_HOTT
+    constexpr auto fRtc = 500_Hz;
+#endif
+    constexpr uint16_t R1vd = 100;
+    constexpr uint16_t R2vd = 220;
 }
 
 using ccp = Cpu::Ccp<>;
@@ -61,11 +65,11 @@ using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V1_5>;
 using adcController = External::Hal::AdcController<adc, Meta::NList<3, 0x1e>>; // 1e = temp
 using channel_t = adcController::index_type;
 
-using systemTimer = SystemTimer<Component::Rtc<0>, fRtc>;
+using systemTimer = SystemTimer<Component::Rtc<0>, Parameter::fRtc>;
 using alarmTimer = External::Hal::AlarmTimer<systemTimer, 8>;
 
-template<typename Timer> struct FSM;
-using fsm = FSM<systemTimer>;
+//template<typename Timer> struct FSM;
+//using fsm = FSM<systemTimer>;
 
 template<typename ADC, uint8_t Channel>
 struct CellsCollector {
@@ -100,12 +104,11 @@ struct CellsCollector {
         }
     };
     
-    template<typename FSM>
     struct MinProvider {
         inline static constexpr auto ibus_type = IBus::Type::type::CELL;
         inline static constexpr void init() {}
         inline static constexpr uint16_t value() {
-            FSM::reset();
+//            FSM::reset();
             auto min = mValues[0];
             for(uint8_t i = 1; i < mValues.size(); ++i) {
                 if (mValues[i] > 0) {
@@ -115,6 +118,20 @@ struct CellsCollector {
                 }
             }
             return min;
+        }
+        inline static constexpr std::pair<uint8_t, uint16_t> indexedValue() {
+//            FSM::reset();
+            auto min = mValues[0];
+            uint8_t index = 0;
+            for(uint8_t i = 1; i < mValues.size(); ++i) {
+                if (mValues[i] > 0) {
+                    if (mValues[i] < min) {
+                        min = mValues[i];
+                        index = i;
+                    } 
+                }
+            }
+            return {index, min};
         }
     };
     struct TotalProvider {
@@ -140,95 +157,7 @@ using cell1P = cellsColl::Provider<1>;
 using cell2P = cellsColl::Provider<2>;
 using cell3P = cellsColl::Provider<3>;
 
-
-// In header auslagern
-//template<auto N, typename CallBack = void, typename MCU = DefaultMcuType>
-//struct CellPA {
-//    inline static constexpr std::byte startByte{0xa5};
-
-//    enum class State : uint8_t {Init, AwaitLength, AwaitDataL, AwaitDataH, AwaitCSLow, AwaitCSHigh};
-//    inline static bool process(const std::byte b) {
-//        static uint16_t v{};
-//        static IBus::CheckSum cs;
-//        switch(mState) {
-//        case State::Init:
-//            cs.reset();
-//            if (b == startByte) {
-//                cs += b;
-//                mState = State::AwaitLength;
-//                mLength.setToBottom();
-//            }
-//            break;
-//        case State::AwaitLength:
-//            cs += b;
-//            mLength.set(static_cast<uint8_t>(b));
-//            if ((mLength != 0) && (mLength <= mValues.capacity)) {
-//                mState = State::AwaitDataL;
-//                mValues.clear();
-//                mValues.reserve(mLength);
-//                mIndex.setToBottom();
-//            }
-//            else {
-//                mState = State::Init;
-//            }
-//            break;
-//        case State::AwaitDataL:
-//            cs += b;
-//            --mLength;
-//            v = static_cast<uint16_t>(b);
-//            mState = State::AwaitDataH;
-//            break;
-//        case State::AwaitDataH:
-//            cs += b;
-//            v |= (static_cast<uint16_t>(b) << 8);
-//            mValues[mIndex] = v;
-//            ++mIndex;
-//            if (mLength.isBottom()) {
-//                mState = State::AwaitCSLow;
-//            }
-//            else {
-//                mState = State::AwaitDataL;
-//            }
-//            break;
-//        case State::AwaitCSLow:
-//            cs.lowByte(b);
-//            mState = State::AwaitCSHigh;
-//            break;
-//        case State::AwaitCSHigh:
-//            cs.highByte(b);
-//            if (cs) {
-//                if constexpr(!std::is_same_v<CallBack, void>) {
-//                    CallBack::copy(mValues);                
-//                }
-//            }
-//            mState = State::Init;
-//            break;
-//        }
-//        return true;
-//    }
-//private:
-//    inline static constexpr uint8_t mSize = 16;
-//    inline static etl::FixedVector<uint16_t, mSize> mValues{};
-//    inline static etl::uint_ranged<uint8_t, 0, mSize - 1> mLength{};
-//    inline static etl::uint_ranged<uint8_t, 0, mSize - 1> mIndex{};
-//    inline static State mState{State::Init};
-//};
-
 using cellPA = External::CellPA<0, cellsColl, IBus::CheckSum>;
-
-//struct TestProvider {
-//    inline static constexpr auto ibus_type = IBus::Type::type::FLIGHT_MODE;
-//    inline static constexpr void init() {
-//    }
-    
-//    inline static volatile uint8_t i = 0;
-    
-//    inline static uint16_t value() {
-////        return i;
-////        return cellsColl::c;
-////        return cellPA::c;
-//    }
-//};
 
 template<typename ADC, uint8_t Channel>
 struct TempProvider {
@@ -258,53 +187,29 @@ struct IBusThrough {
 using ibt = IBusThrough;
 
 #ifdef USE_IBUS
-using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, 
-                          Meta::List<cell0P, cell1P, cell2P, cell3P, cellsColl::MinProvider<fsm>, cellsColl::TotalProvider, tempP>, systemTimer, ibt
+using telemetry = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, 
+                          Meta::List<cell0P, cell1P, cell2P, cell3P, cellsColl::MinProvider, cellsColl::TotalProvider, tempP>, systemTimer, ibt
 //                          ,etl::NamedFlag<true>
 //                          ,etl::NamedFlag<true>
                           >;
 #endif
 
 #ifdef USE_HOTT
-using sensor = Hott::Experimental::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, Hott::TextMsg, systemTimer>;
+using telemetry = Hott::Experimental::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, Hott::TextMsg, systemTimer>;
 using battVoltageConverter = Hott::Units::Converter<adc, Hott::Units::battery_voltage_t, 
-                                                    std::ratio<Parameter::R1vd + Parameter::R2vd, Parameter::R2vd>>; // todo: richtiger scale faktor
-using currentSensor = External::AnalogSensor<adcController, 1, std::ratio<490,1000>, std::ratio<40,1000>, std::ratio<10,1>>;
+                                                    std::ratio<Parameter::R1vd + Parameter::R2vd, Parameter::R2vd>>;
+using cellVoltageConverter = Hott::Units::Converter<adc, Hott::Units::cell_voltage_t, 
+                                                    std::ratio<Parameter::R1vd + Parameter::R2vd, Parameter::R2vd>>;
 
-template<typename ValueType, typename Sensor>
-struct CurrentConverter {
-    inline static constexpr void init() {}
-    inline static constexpr ValueType value() {
-        auto v = Sensor::value();
-        if (v >= mOffset) {
-            return ValueType{v - mOffset};
-        }
-        else {
-            return ValueType{0};
-        }
-    }
-    inline static void resetOffset() {
-        mOffset = 0;
-    }
-    inline static void setOffset() {
-        mOffset = Sensor::value();
-    }
-    inline static void setOffset(uint16_t v) {
-        mOffset = v;
-    }
-    inline static uint16_t mOffset{0};
-};
-
-using currentProvider = CurrentConverter<Hott::Units::current_t, currentSensor>;
+//inline static auto sensorData = Hott::Experimental::Adapter<telemetry::binaryMessage_type>(telemetry::data());
+inline static auto& sensorData = telemetry::data();
 
 #endif
-
-
 
 using upperCell = External::SoftSerial::Usart<Meta::List<conn12, void>, Component::Tcd<0>, cellPA,
                                             AVR::BaudRate<9600>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<16>, 
                                             etl::NamedFlag<false>, etl::NamedFlag<false>>;
-template<typename Timer>
+template<typename Timer, typename TELE>
 struct FSM {
     enum class State : uint8_t {Init, Run, Sleep};
     
@@ -313,6 +218,9 @@ struct FSM {
     
     inline static void reset() {
         stateTicks.reset();
+    }
+
+    inline static void periodic() {
     }
     
     inline static void ratePeriodic() {
@@ -339,7 +247,7 @@ struct FSM {
                 break; 
             case State::Sleep:
                 sleep::down();
-                ibus::clear();
+                TELE::clear();
                 mState = State::Run;
                 break;        
             }
@@ -350,13 +258,19 @@ private:
     inline static External::Tick<Timer> stateTicks;
 };
 
+using fsm = FSM<systemTimer, telemetry>;
+
 using isrRegistrar = IsrRegistrar<typename upperCell::StartBitHandler, typename upperCell::BitHandler>;
 
 using vdiv = External::AnalogSensor<adcController, 0, std::ratio<0,1>, 
-                                    std::ratio<100, 320>, 
+                                    std::ratio<Parameter::R1vd, Parameter::R1vd + Parameter::R2vd>, 
                                     std::ratio<100,1>>;
 
 int main() {
+#ifdef USE_HOTT
+    etl::copy(telemetry::text()[0], "WM 4S Sensor"_pgm);
+    etl::copy(telemetry::text()[1], "Version 0.1"_pgm);
+#endif
     portmux::init();
     
     ccp::unlock([]{
@@ -366,14 +280,11 @@ int main() {
     systemTimer::init();
     adcController::init();
     
+    adc::nsamples(6);
+    
     activate::template dir<Output>();
     
-#ifdef USE_HOTT
-    sensor::init();
-#endif
-#ifdef USE_IBUS
-    ibus::init();
-#endif
+    telemetry::init();
     upperCell::init<AVR::HalfDuplex>();
     
     const auto activateTimer = alarmTimer::create(1000_ms, External::Hal::AlarmFlags::Periodic);
@@ -381,18 +292,32 @@ int main() {
 
     while(true) {
         etl::Scoped<etl::EnableInterrupt<>> ei;
-        ibus::periodic();
+        telemetry::periodic();
         adcController::periodic();
         systemTimer::periodic([&]{
-            ibus::ratePeriodic();
+            telemetry::ratePeriodic();
             fsm::ratePeriodic();
             alarmTimer::periodic([&](const auto& t){
                 if (activateTimer == t) {
                     activate::toggle();
                 }
                 if (measureTimer == t) {
+#ifdef USE_IBUS
                     auto v = vdiv::value();
                     cellsColl::set(v);
+#endif
+#ifdef USE_HOTT 
+                    sensorData.cell[0] = cellVoltageConverter::convert(cell0P::value()).value;
+                    sensorData.cell[1] = cellVoltageConverter::convert(cell1P::value()).value;
+                    sensorData.cell[2] = cellVoltageConverter::convert(cell2P::value()).value;
+                    sensorData.cell[3] = cellVoltageConverter::convert(cell3P::value()).value;
+                    
+                    auto [i,v] = cellsColl::MinProvider::indexedValue();
+                    sensorData.min_cell_volt = cellVoltageConverter::convert(v).value;
+                    sensorData.min_cell_volt_num = i;
+                    
+                    sensorData.Battery1 = battVoltageConverter::convert(cellsColl::TotalProvider::value()).value;
+#endif
                 }
             });
         });
