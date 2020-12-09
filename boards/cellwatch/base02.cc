@@ -1,7 +1,7 @@
 #define NDEBUG
 
-#define USE_HOTT
-//#define USE_IBUS
+//#define USE_HOTT
+#define USE_IBUS
 
 #include <mcu/avr.h>
 
@@ -68,9 +68,6 @@ using channel_t = adcController::index_type;
 using systemTimer = SystemTimer<Component::Rtc<0>, Parameter::fRtc>;
 using alarmTimer = External::Hal::AlarmTimer<systemTimer, 8>;
 
-//template<typename Timer> struct FSM;
-//using fsm = FSM<systemTimer>;
-
 template<typename ADC, uint8_t Channel>
 struct CellsCollector {
     using index_t = ADC::index_type;
@@ -104,11 +101,12 @@ struct CellsCollector {
         }
     };
     
+    template<typename R>
     struct MinProvider {
         inline static constexpr auto ibus_type = IBus::Type::type::CELL;
         inline static constexpr void init() {}
         inline static constexpr uint16_t value() {
-//            FSM::reset();
+            R::reset();
             auto min = mValues[0];
             for(uint8_t i = 1; i < mValues.size(); ++i) {
                 if (mValues[i] > 0) {
@@ -120,7 +118,6 @@ struct CellsCollector {
             return min;
         }
         inline static constexpr std::pair<uint8_t, uint16_t> indexedValue() {
-//            FSM::reset();
             auto min = mValues[0];
             uint8_t index = 0;
             for(uint8_t i = 1; i < mValues.size(); ++i) {
@@ -187,8 +184,10 @@ struct IBusThrough {
 using ibt = IBusThrough;
 
 #ifdef USE_IBUS
+struct Resetter;
 using telemetry = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, 
-                          Meta::List<cell0P, cell1P, cell2P, cell3P, cellsColl::MinProvider, cellsColl::TotalProvider, tempP>, systemTimer, ibt
+                          Meta::List<cell0P, cell1P, cell2P, cell3P, 
+                                    cellsColl::MinProvider<Resetter>, cellsColl::TotalProvider, tempP>, systemTimer, ibt
 //                          ,etl::NamedFlag<true>
 //                          ,etl::NamedFlag<true>
                           >;
@@ -259,6 +258,12 @@ private:
 };
 
 using fsm = FSM<systemTimer, telemetry>;
+
+struct Resetter {
+    static inline void reset() {
+        fsm::reset();
+    }
+};
 
 using isrRegistrar = IsrRegistrar<typename upperCell::StartBitHandler, typename upperCell::BitHandler>;
 
