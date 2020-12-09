@@ -1,9 +1,7 @@
-// -*- mode: adoc ; fill-column: 120 -*-
-// ---- Beginn Standardheader
-= RC MultiSwitch-D 
+= RC Quad-D 
 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
-:revnumber: 1.02
-:revremark: HW_1.2
+:revnumber: 0.1
+:revremark: HW_0.1
 :revdate: 01.01.1970
 :lang: de
 :toc:
@@ -15,8 +13,8 @@ Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 :icons: font
 :icontype: svg
 :figure-caption: Abbildung
-:description: RC MultiSwitch-D
-:title: RC MultiSwitch-D : ... und RC MultiAdapter-DA, RC ServoSwitch-D sowie TipTip
+:description: RC Quad-D
+:title: RC Quad-D : Kran- und Sonderfunktionssteuerung
 :title-page:
 :sectanchors:
 :sectlinks:
@@ -126,18 +124,31 @@ ACHTUNG: Der Bausatz enthält verschluckbare Kleinteile. Von Kindern fernhalten.
 
 == Einführung
 
-Der `RC MultiSwitch-D` ist ein digitales Schaltmodul (8-Kanal) zum Betrieb mit einem `OpenTX`-Sender, vorzugsweise eine _Radiomaster_ `TX16s`
+Der `RC Quad-D` ist ein digitales Steuermodul (4-Kanal) zum Betrieb mit einem `OpenTX`-Sender, vorzugsweise eine _Radiomaster_ `TX16s`
 oder anderen sog. _color-LCD_ Sendern mit `OpenTX`.
-Im Gegensatz zu alten, im analogen Zeitmultiplex-Verfahren arbeitenden Schaltmodulen, wird bei dem `RC MultiSwitch-D` die Information für die zu 
-schaltenden Funktion vollständig digital übertragen. Daher ist ein störungsfreier Betrieb gewährleistet.
+Im Gegensatz zu alten, im analogen Zeitmultiplex-Verfahren arbeitenden Schaltmodulen, wird bei dem `RC Quad-D` die Information für die zu 
+steuernde Funktion vollständig digital übertragen. Daher ist ein störungsfreier Betrieb gewährleistet.
 
-Der `RC MultiSwitch-D` hat 8 Ausgänge, diese können ein- oder ausgeschaltet werden, entweder statisch, oder in zwei unterschiedlichen Blink-Modi. Zusätzlich 
-kann der _Ein_-Zustand `PWM`-moduliert werden (auch beim Blinken ist die `PWM`-Modulation aktiv). 
-Die Konfiguration der Zustände erfolg komplett über den Sender und ein entsprechendes Menu.
+Der `RC Quad-D` hat 4 Ausgänge, an denen 4 Motoren (bis 24V/3A) angeschlossen werden können. Jeder Ausgang kann individuell gesteuert werden. Man kann
+die Motoren getrennt vorwärts/rückwärts laufen lassen. Die Drehzahl ist wie bei einem Fahrtensteller für vorwärts/rückwärts getrennt einstellbar. 
+Alternativ kann auch jeder Ausgang proportional über einen Übertragungskanal gesteuert werden (dann hat man bis zu 4 Fahrtensteller in einem Modul).
 
-Der `RC MultiSwitch-D` wird an den `IBus`- oder `SBus`-Ausgang eines Empfängers angeschlossen. Sollen mehrere `RC MultiSwitch-D` verwendet werden, so werden 
+Um Schäden an den Motoren bzw. an den zu steuernden Funktionen zu vermeiden, können die Motoren beim Erreichen ihrer jeweiligen 
+Endlage abgeschaltet werden. Diese Abschaltung erfolgt entweder durch eine Stromüberwachung oder durch Endschalter. Die jeweiligen Abschaltströme 
+können durch das Kranmodul gelernt bzw. vom Anwedner eingestellt und angepasst werden. Dies gilt auch für den Proportionalbetrieb.
+
+Die jeweiligen, vom Modul gemessenen Ströme der 4 Ausgänge werden per _Telemetrie_ an den Sender übertragen. Auch werden die _Zustände_ der einzelnen 
+Ausgänge zur Anzeige auf dem Sender per Telemetrie übertragen. Damit kann man am Sender genau erkennen, ob der Motor bspw. frei läuft, ausgeschaltet ist, sich in einer
+Endlage befindet oder wegen Überstrom abgeschaltet wurde.
+
+Weiterhin kann ein _Sanftanlauf_ eingestellt werden, für jeden Ausgang getrennt.
+
+Die Konfiguration der Parameter erfolg komplett über den Sender und ein entsprechendes Menu.
+
+Der `RC Quad-D` wird an den `IBus`- oder `SBus`-Ausgang eines Empfängers angeschlossen. Sollen mehrere `RC Quad-D` verwendet werden, so werden 
 diese _alle_ (parallel) an den IBus/SBus-Ausgang des Empfängers angeschlossen. 
-Jeder `RC MultiSwitch-D` hat eine eindeutige _Adresse_ und kann so vom Sender angesprochen werden.
+Jeder `RC Quad-D` hat eine eindeutige _Adresse_ und kann so vom Sender angesprochen werden. Da das `RC Quad-D` auch ein _Telemetrie-Modul_ darstellt,
+muss (sollte) es auch mit dem Telemetrie-Bus (IBus, S.Port) verbunden werden.
 
 Insgesamt können über _einen_ Übertragungskanal bis zu 8 `RC-MultiSwitch-D`, `RC-MultiAdapter-DA` oder `RC-ServoSwitch-D` und `RC-Quad-D` angeschlossen werden. 
 
@@ -153,14 +164,13 @@ Analoge Zeitmultiplex-Schaltmodule der Fa. _Robbe_ besitzen neben den 6 Schaltfu
 Hilfe des `RC MultiAdapter-DA` können zwei beliebige `OpenTX`-Kanäle den beiden proportionalen Ausgängen des _Robbe_-Modules zugewiesen werden. 
 Auch gibt es von der Fa. _Robbe_ ein 8-Kanal Multi-Prop Modul, was ebenfalls angesteuert werden kann.
 
+Das Modul `RC-MultiSwitch-D` ist ein digitales 8-Kanal-Schaltmodul. Jeder Ausgang kann individuell `ein`/`aus` geschaltet werden. Für den Zustand `ein`
+kann eine PWM-Rate festgelegt werden, falls dort etwa ein Motor angeschlossen werden soll oder die Leuchtstärke von Lampen / LEDs reduziert werden 
+soll. Zusätzlich können unterschiedliche Blinkmodi konfiguriert werden.
+
 Das Modul `RC-ServoSwitch-D` ist eine Ansteuerung für bis zu 5 Servos. Diese Servos können bis zu 8 Positionen annehmen. Diese Positionen sind den 
 Schalterstellungen bzw. den Menu-Buttons zugeordnet. Statt Verbraucher ein/aus zu schalten, fahren die Servos bestimmte, vorher erlernte Positionen an. Die 
 Geschwindigkeit, mit der sich die Servos bewegen, kann ebenfalls eingestellt werden. Auch können zwei oder mehrere Servos dieselben Bewegungen ausführen.
-
-Weiterhin kann die Software für `OpenTX` auch direkt Schaltmodule im sog. _TipTip_ Verfahren bedienen. Hierzu ist im Moment kein Adapter 
-`RC MultiAdapter-DA` notwendig. Stattdessen müssen die _TipTip_-Module wie üblich jeweils an einem eigenen Ausgang des Empfängers angeschlossen werden.
-Durch die Zusatzfunktionen ist das Bedienen (inkl. Beschriftung der Funktionen und Zustände) wie auch bei allen anderen Varianten (`RC MultiSwitch-D` 
-und `RC MultiAdapter-DA`) komfortabel über das Menu im Sender möglich.
 
 === Grundsätzliches
 
@@ -168,8 +178,9 @@ und `RC MultiAdapter-DA`) komfortabel über das Menu im Sender möglich.
 
 Die Bedienung der Schaltmodule erfolgt grundsätzlich über ein _Menu_. Dieses ist als _Widget_ in `OpenTx` realisiert. 
 
-In <<menu1>> sieht man eine Seite (oben rechts: `Page: 1/4`) des Menus. Diese Seite ist für die Bedienung eines `RC MultiSwitch-D` konfiguriert: 
-in der ersten Spalte stehen die _Namen_ der Funktionen (hier: `Fun A` ... `Fun H`) für die 8 Ausgänge des Schaltmoduls. Diese Namen können 
+In <<menu1>> sieht man eine Seite (oben rechts: `Page: 1/4`) des Menus. Diese Seite ist für die Bedienung eines `RC-Quad-D` konfiguriert: 
+in der ersten Spalte stehen die _Namen_ der Funktionen (hier: `HubObn`, `Auslgr`, `HubUnt`, `Drehen` stellvertretend 
+für _Hubarm-oben_, _Ausleger_, _Hubarm-unten_ und _Drehteller_) für die 4 Ausgänge des Steuermoduls. Diese Namen können 
 in der Konfigurationsdatei (s.a. <<config>>) frei gewählt werden. Damit _entfällt_ das Problem einer _Schalterbeschriftung_, was man von früher her kennt.
 
 In den weiteren Spalten stehen die verschiedenen _Zustände_, die eine Schaltfunktion annehmen kann. Jeder Zustand kann durch eine _Selektion_ 
@@ -177,28 +188,11 @@ aktiviert werden.
 
 [[menu1]]
 .Die Bedienoberfläche als Widget (Seite 1) 
-image::wmsw2.png[align="center"]
+image::M1.png[align="center"]
 
 Sollte eine Schaltfunktion auch ein _ShortCut_ in Form eines physischen Schalters (3-Positionenschalter) zugeordnet haben, so erscheint der _Name_
-des Schalters zusätzlich hinter dem Namen der Funktion. In der ersten Zeile bedeutet `Fun A/sa`, dass der Funktion `Fun A` zusätzlich der _ShortCut_ 
-Schalter `sa` zugeordent wurde. Dies geschieht auch in der Konfigurationsdatei. Mit einem 3-Positionenschalter sind natürlich nur die ersten _drei_
-Zustände `aus`, `ein` und `blink1` erreichbar.
-
-Im Bild <<menu2>> sieht man dann die nä. Seite mit den Funktionen des nä. Schaltmoduls. Hier sind die Menu-Seiten entsprechend 
-der Platzierung der Funktionen auf den Schaltmodulen strukturiert. Das muss aber so nicht sein: man kann auch Funktionen unterschiedlicher 
-Module eher _thematisch_ auf einer Menu-Seite zusammen fassen.
-
-[[menu2]]
-.Die Bedienoberfläche als Widget (Seite 2)
-image::wmsw.png[align="center"]
-
-Die _vierte_ Seite dieses Beispiels stellt das Menu für ein `RC MultiAdapter-DA` dar. Hier hat jede Funktion nur _drei_ Zustände. Die beiden 
-`Ein`-Zustände entsprechen bei den üblichen analogen Zeitmultiplex-Schaltmodulen jeweils zwei unterschiedlichen Ausgängen. Natürlich können auch hier die 
-Namen geändert werden.
-
-[[menu3]]
-.Die Bedienoberfläche als Widget (Seite 4)
-image::wmsw3.png[align="center"]
+des Schalters zusätzlich hinter dem Namen der Funktion. In der ersten Zeile bedeutet `HubObn/sa*`, dass der Funktion `HubObn` zusätzlich der _ShortCut_ 
+Schalter `sa` zugeordent wurde. Dies geschieht auch in der Konfigurationsdatei. 
 
 Weil die Anzahl der phys. Schalter am Sender naturgemäß begrenzt ist (etwa: `sa`, ... `sh`), kann man nicht für alle Funktionen _ShortCuts_ 
 über Schalter definieren. Eine Abhilfe bieten die sog. _Overlays_. Dies ist bei den analogen Schaltmodulen als _Ebenenumschaltung_ bekannt. 
@@ -219,36 +213,34 @@ Der Wert wird _oben rechts_ im Menu in `%` und auf einer Skala von `0` ... `31` 
 
 [[menuc1]]
 .Die Konfigurationsoberfläche als Widget (Funktionsspezifische Parameter)
-image::wmswc.png[align="center"]
+image::MC1.png[align="center"]
 
 Zusätzlich zu den _funktionsspezifischen_ Parametern für jedes Schaltmodul (Achtung: nicht jedes Schaltmodul kann alle Parameter ausführen), 
 existiert noch eine _weitere_ Menu-Seite für modul-spezifische (für ein Modul als Ganzes) Parameter (s.a. <<menuc2>>). 
 
 Dies betrifft vor allem das Anlernen der Modul-Adresse, wobei dies aus Sicherheitsgründen nur beim _Einschalten_ des Moduls möglich ist (s.a. <<learn>>).
 
-Die Parameter `MPX0` ... `MPX4` beziehen sich _nur_ auf das `RC MultiAdapter-DA`: hiermit kann die _Art_ des am jeweiligen Ausgangs `0` ... `4` 
-angeschlossenen analogen Zeitmultiplex-Schaltmodul festgelegt werden (Wert `1` := Graupner/JR, Wert `2` := Robbe, Wert `3` := CP).
 
 [[menuc2]]
 .Die Konfigurationsoberfläche als Widget (modulglobale Parameter)
-image::wmswc2.png[align="center"]
+image::MC2.png[align="center"]
 
 Da dieses Widget zum eigentlichen Betrieb _nicht_ erforderlich ist, kann es _nach_ der Konfiguration deaktiviert werden bzw. durch andere 
 Widgets ersetzt werden.
 
 == Software für OpenTX
 
-Für den Betrieb und zur Konfiguration des `RCMultiSwitch-D` und `RC MultiAdapter-DA`  sind einige Scripte und Konfigurationsdatein notwendig.
-Diese findet man in der aktuellesten Version jeweils auf https://github.com/wimalopaan/opentx[GitHub].
+Für den Betrieb und zur Konfiguration des `RC-Quad-D` sind einige Scripte und Konfigurationsdatein notwendig.
+Diese findet man in der aktuellesten Version jeweils auf https://github.com/wimalopaan/OpenTxSwitch[GitHub].
 
 .Lizenz der Software, des Übertragungsverfahrens und der Dokumentation
-[IMPORTANT]^
+[IMPORTANT]
 --
 image:by-nc-nd.eu.svg[]
-Bitte beachten Sie, dass neben dieser Dokumentation auch die https://github.com/wimalopaan/opentx[Software] und das Übertragungsverfahren als Konzept der einer Lizenz (Nutzungsvereinbarung) unterliegt. Die genauen Bedingungen dieser Lizenz finden Sie https://creativecommons.org/licenses/by-nc-nd/4.0/deed.de[hier].
+Bitte beachten Sie, dass neben dieser Dokumentation auch die https://github.com/wimalopaan/OpenTxSwitch[Software] und das Übertragungsverfahren als Konzept der einer Lizenz (Nutzungsvereinbarung) unterliegt. Die genauen Bedingungen dieser Lizenz finden Sie https://creativecommons.org/licenses/by-nc-nd/4.0/deed.de[hier].
 --
 
-Für den `RC MultiSwitch-D` und `RC MultiAdapter-DA` sind die folgenden relevant:
+Für den `RC-Quad-D` sind die folgenden relevant (wie auch bei allen anderen _digitalen_ Modulen):
 
 * Widgets
 ** `Widgets/WMSW/main.lua`
@@ -314,7 +306,7 @@ Die folgenden Einstallungen gelten _nur_ für Sender mit `480x272`-Pixel _Farbdi
 
 ==== Widget für die Bedienung
 
-Richten Sie eine Telemetrie-Seite (volle Größe) ein mit dem Widget `Widgets/WMSW/main.lua`. Dieses stellt sich als `Wm MultiSwitch x.y` dar.
+Richten Sie eine Telemetrie-Seite (volle Größe) ein mit dem Widget `Widgets/WMSW/main.lua`. Dieses stellt sich als `Wm MultiModule x.y` dar.
 
 ==== Widget für die Konfiguration
 
@@ -377,7 +369,7 @@ Definieren Sie die folgenden, in den Widgets voreingestellten _Inputs_ nach dem 
 
 Möchten Sie andere Geber-Nummern verwenden, so ist dies auch möglich. Die Gebernummern müssen dann in der entsprechenden _Widget_-Konfiguration 
 definiert werden. Dies ist dann für beide Widgets gleichmaßen notwendig.
-
+ 
 [[inputs]]
 .Benötigte Geber zur Bedienung der Widgets (Darstellung im Companion)
 image::inputs.png[align="center"]
@@ -410,8 +402,8 @@ interessant mit der Möglichkeit der _Overlays_ (Ebenenumschaltung).
 .Parameterwerte einstellen mit Potentiometer `S1`
 [NOTE]
 --
-Im Widget für die _Konfiguration_ des `RC MultiSwitch-D` kann/muss man einige Parameter einstellen wie etwa die Blinkfrequenz oder die Einschaltdauer für den 
-Schaltzustand `blink1` oder `blink2`. Wenn dieser Parameter im Menu angewählt ist, kann man den Wert diekt über das Poti `S1` einstellen. Dies wird dann 
+Im Widget für die _Konfiguration_ des `RC Quad-D` kann/muss man einige Parameter einstellen wie etwa die `PWM`-Rate für die Motoren oder die 
+Abschaltströme. Wenn dieser Parameter im Menu angewählt ist, kann man den Wert diekt über das Poti `S1` einstellen. Dies wird dann 
 auch im Menu als Wert (oben rechts) angezeigt. Die aktive Selektion wird durch eine _Invers_-Darstellung der Werte oben rechts im Menu kenntlich gemacht.
 --
 
@@ -517,7 +509,7 @@ Funktion `Fun3` des Moduls `2`.
 
 Einige Modellbauer werden diese Funktion als _Ebenenumschaltung_ kennen. Bei analogen Schaltmodulen hat man eine Ebenenumschaltung dadurch realisiert, dann
 man mit einem Schalter und Mischern etwa den Ausgangskanal für das Zeitmultiplexsignal umgeschaltet hat, um mehrere analoge Schaltmodule zu erreichen. Damit 
-wurden die Schaltmodule _als Ganzes_ umgeschaltet. Bei `RC MultiSwitch-D` ist dies flexibler bezogen auf individuelle Schalter möglich.
+wurden die Schaltmodule _als Ganzes_ umgeschaltet. Bei `RC Quad-D` ist dies flexibler bezogen auf individuelle Schalter möglich.
 --
 
 .Menuseiten und Schaltmodule
@@ -533,13 +525,13 @@ in der Datei. Man kann also die Menu-Seiten auch eher nach Funktionsgruppen stru
 In dieser Datei sind üblicherweise keine Änderungen notwendig.
 
 Dieses Widget ist die _Zentrale_ zur Bedienung aller Schaltfunktionen in allen Schaltmodulen. Am Beispiel der Datei `swstd.lua` sieht man 
-eine Gliederung der Funktionen in Gruppen zu je 8 Funktionen, die sich auf einem `RC MultiSwitch-D` befinden. Für jeden Ausgang des `RC MultiSwitch-D` 
+eine Gliederung der Funktionen in Gruppen zu je 8 Funktionen, die sich auf einem `RC Quad-D` befinden. Für jeden Ausgang des `RC MultiSwitch-D` 
 können dann die unterschiedlichen Zustände ausgewählt werden.
 
 Die Anwahl der Funktion und des Zustandes erfolgt mit `T5`-hoch und -herunter, die Selektion erfolgt mit `T6`-hoch. 
 
-Um auf die nächte Seite (für das nä. Schaltmodul `RC MultiSwitch-D`) gelangen, navigiert man mit `T5`-herunter bis unter die letzte Zeile, oder mit 
-`T5`-hoch bis vor die erste Zeile des aktuellen Menus. Damit wird auf die anderen Menuseiten (andere `RC MultiSwitch-D`) umgeschaltet.
+Um auf die nächte Seite (für das nä. Schaltmodul `RC Quad-D`) gelangen, navigiert man mit `T5`-herunter bis unter die letzte Zeile, oder mit 
+`T5`-hoch bis vor die erste Zeile des aktuellen Menus. Damit wird auf die anderen Menuseiten (andere `RC Quad-D`) umgeschaltet.
 
 Alternativ kann mit dem 6-Positionentaster `6pos` umgeschaltet werden.
 
@@ -563,21 +555,22 @@ eingestellt (1=langsam, 31=schnell).
 * `B2/D`: Einschaltdauer des Blinkens für Schaltzustand `blink2` bzw. _Position4_ beim `RC-ServoSwitch-D`
 * `PThu`: Der sog. PassThrough-Kanal: ein beliebiger `OpenTX`-Kanal (`1` ... `16`) kann zur Weiterleitung an den Ausgang des Schaltmoduls ausgewählt werden. 
 Beim `RC-ServoSwitch` kann bei einem Wert von `1` mit Hilfe des Kanals `1` des Senders (fest zugeordnet) die _Position1_ gelernt werden, beim einem Wert `2` 
-die _Position2_ u.s.w. Bei einem Wert von `11` wird der _Follow_-Mode als _Copy Positions_, bei einem Wert von `12` wird der _Follow_-Mode als `Own-Positions` eingestellt, der Wert von `10` stellt wieder den normalen Bewegungsmodus ein.
-* `Min`: (unbenutzt / nicht vorhanden in neueren Versionen)
-* `Max`: (unbenutzt / nicht vorhanden in neueren Versionen)
+die _Position2_ u.s.w. Bei einem Wert von `11` wird der _Follow_-Mode als _Copy Positions_, bei einem Wert von `12` wird der _Follow_-Mode als `Own-Positions` 
+eingestellt, der Wert von `10` stellt wieder den normalen Bewegungsmodus ein.
+* `Min`: (unbenutzt/nicht vorhanden in neueren Versionen)
+* `Max`: (unbenutzt/nicht vorhanden in neueren Versionen)
 
 Es existiert eine zusätzliche Seite (am Ende) mit modul-globalen Einstellungen:
 
-* `Learn Ch/Adr`:  _Anlernen_ der Moduladresse und des Übertragungskanals (s.a. <<learn>>)
+* `Learn Ch/Adr`:  _Anlernen_ der Moduladresse _und_ des Übertragungskanals (s.a. <<lean>>)
 * `TMpx`: Zeitmultiplex-Verfahren für den Ausgang mit der jeweilige Adresse (nur bei `RC-MultiAdapter-DA`, s.u.)
 * `TMode`: 
-..  Anpassung der Impulslänge für ein/aus im Zeitmultiplex-Verfahren für den Ausgang mit der jeweilige Adresse (nur bei `RC-MultiAdapter-DA`, s.a. <<adapt>>)
-..  Testmuster (nur bei `RC-MultiSwitch-D`)
-* `OMpx`: Länge des Synchron-Impulses für analoge Schaltmodul (nur bei `RC-MultiAdapter-DA`), damit lassen sich Toleranzen der analogen Schaltmodule ausgleichen (s.a. <<adapt>>).
+..  Anpassung der Impulslänge für ein/aus/ein im Zeitmultiplex-Verfahren für den Ausgang mit der jeweilige Adresse (nur bei `RC-MultiAdapter-DA`) 
+..  Testmuster (nur bei `RC-Quad-D`)
+* `OMpx`: Länge des Synchron-Impulses für analoge Schaltmodul (nur bei `RC-MultiAdapter-DA`), damit lassen sich Toleranzen der analogen Schaltmodule ausgleichen.
 * `Test`: Verschiedene Test-Modi (nur zur Funktionsüberprüfung des Moduls).
 
-Bei der Einstellung des Zeitmultiplexverfahrens gelten folgende Zuordnungen von eingestelltem Wert und Verfahren:
+Bei der Einstellung des Zeitmultiplexverfahrens gelten folgende Zuordnungen von eingestelltem Wert und Verfahren (nur bei `RC-MultiAdapter-DA`):
 
 * Wert 0 -> Graupner-8K
 * Wert 1 -> Graupner-4K
@@ -593,17 +586,6 @@ Zum Betrieb von sog. Multi-Prop-Modulen ist es nötig, für die _gewünschten_ K
 macht man mit dem `PassThru`-Parameter (s.o.).
 
 Konfiguriert man _keinen_ `PassThru`-Kanal, so bewegt sich das dort angeschlossene Servo von _Endstellung_1_ über _Neutral_ zu _Endstellung_2_.
---
-
-[[adapt]]
-.`RC_MultiAdapater-DA`: Anpassungen an Toleranzen der analogen Schaltmodule
-[TIP]
---
-Es kommt vor, dass die analogen Schaltmodule mit einem sporadischen _Flackern_ der Ausgänge reagieren. Um dies zu kompensieren, dient der Parameter `Ompx`.
-Neutrale Werte sind bei `Ibus` etwa 16, bei `SBus` etwa 8. Es kann sein, dass dieser Wert beim Auftreten des Flackern vergrößert werden muss.
-
-Seltener kommt es vor, das zwar _kein_ Flackern auftritt, jedoch die _ein_-Positionen nicht immer erkannt werden. _nur_ in diesem Fall den Parameter 
-`TMode` verändern.
 --
 
 === Physische Schalter und die Schaltzustände
@@ -629,7 +611,7 @@ Menu _ausgwählt_ ist (etwa durch `6pos`).
 Die Module sind fest programmiert für `IBus` oder `SBus`-Eingangssignale. 
 
 *Zusätzlich* braucht man für den Anschluß an ein `SBus` noch einen *Signal-Inverter*. Dieser muss in die Zuleitung vom `SBus` zum 
-`RC MultiSwitch-D` oder `RC MultiAdapter-DA` eingeschleift werden (wie ein Verlängerungskabel).
+`RC Quad-D` oder `RC MultiAdapter-DA` eingeschleift werden (wie ein Verlängerungskabel).
 
 [[inverter]]
 .Einfacher Inverter mit einem Kleinsignal-MosFet
@@ -668,15 +650,15 @@ Ein Einschrumpfen mit Schrumpfschlauch ist möglich.
 
 == Erste Einrichtung und Anlernen
 
-Im Auslieferungszustand sind die `RC MultiSwitch-D` auf den Übertragungskanal `10` und die Adress `0` eingestellt. 
+Im Auslieferungszustand sind die `RC Quad-D` auf den Übertragungskanal `10` und die Adress `0` eingestellt. 
 Damit kann an einem Übertragungskanal natürlich nur ein Modul betrieben werden (jedes Modul _muss_ eine eigene eindeutige Adresse haben).
 
 [[learn]]
 === Kanal und Adresse
 
-Das _Anlernen_ von _Kanal_ und _Adresse_ geschieht in _einem_ Schritt. Dazu _muss_ das zu konfigurierende `RC MultiSwitch-D` 
+Das _Anlernen_ von _Kanal_ und _Adresse_ geschieht in _einem_ Schritt. Dazu _muss_ das zu konfigurierende `RC Quad-D` 
 _allein_ am betreffenden `IBus` oder `SBus` hängen. Weiterhin sollten außer dem zu konfiguriereden Übertragungskanal 
-für die `RC MultiSwitch-D`-Module alle anderen Übertragungskanäle im Sender _dekativiert_ werden (keine _Mischer_ aktivieren).
+für die `RC Quad-D`-Module alle anderen Übertragungskanäle im Sender _dekativiert_ werden (keine _Mischer_ aktivieren).
 
 .Spezielles Modell für das Anlernen der Module
 [TIP]
@@ -697,20 +679,20 @@ Bei diesem Modell sind _alle_ Übertragungskanäle bis auf den Kanal für die di
 .Ablauf:
 
 . Sender und Empfänger sowie Schaltmodule aus.
-. Ein `RC MultiSwitch-D` an den `IBus` oder `SBus` anschließen.
+. Ein `RC Quad-D` an den `IBus` oder `SBus` anschließen.
 . Die Mischer-Skripte `encsbm.lua`, `encxjt.lua` oder `encib.lua` für den gewünschten Übertragungskanal einrichten (s.o.).
 . Sender einschalten.
 . Konfigurationsmenu auswählen
 . Im Konfigurationsmenu auf der _letzten_ Seite (modul-spezifische Einstellungen) den Parameter `Learn Ch/Adr` selektieren. Oben rechts muss dann 
 der Wert dunkel unterlegt sein. Mit dem Potentiometer `S1` die _Adresse_ einstellen (Wert `1` ... `8` bedeutet Adresse `1` ... `8`).
 . Empfänger einschalten
-. das zu konfigurierende `RC MultiSwitch-D` einschalten, sofern nicht über BEC versorgt (neue Version) (`RC-MultiAdapter-DA` wird vom Empfänger versorgt).
+. das zu konfigurierende `RC Quad-D` einschalten, sofern nicht über BEC versorgt (neue Version) (`RC-MultiAdapter-DA` wird vom Empfänger versorgt).
 .. `RC-MultiAdapter-DA` und `RC-ServoSwitch-D`: die Kontroll-LED leuchtet für 3 Sekunden, anschließend blinkt sie `1` ... `8` mal, je nach eingestellter Adresse. Sollte dies nicht passieren, 
 so wurde der Übertragungskanal nicht gefunden.
-.. `RC-MultiSwitch-D`: entsprechend der gelernten Adresse leuchtet ein Kanal auf. 
-. nach ca. 2 weiteren Sekunden das `RC MultiSwitch-D` ausschalten
-. Für weitere `RC MultiSwitch-D`-Module die nä. Adresse selektieren
-. das nä. `RC MultiSwitch-D` anschließen und einschalten
+.. `RC-Quad-D`: entsprechend der gelernten Adresse leuchtet ein Kanal auf. 
+. nach ca. 2 weiteren Sekunden das `RC Quad-D` ausschalten
+. Für weitere `RC Quad-D`-Module die nä. Adresse selektieren
+. das nä. `RC Quad-D` anschließen und einschalten
 . ...
 
 .Kontrolle:
@@ -857,7 +839,7 @@ Bereiches kann zu einem Totalausfall und damit zu einem Modellverlust sowie Pers
 
 == Fehlersuche und Tests
 
-Weder der `RC-MultiSwitch-D` noch der `RC-MultiAdapter-DA` können dem Benutzer direkt Rückmeldung über ihre Einstellungen geben. Daher ist die 
+Weder der `RC-Quad-D` noch der `RC-MultiAdapter-DA` können dem Benutzer direkt Rückmeldung über ihre Einstellungen geben. Daher ist die 
 Fehlersuche auf ein klar strukturiertes Vorgehen angewiesen.
 
 Die häufigsten Fehlerquellen sind:
@@ -980,7 +962,7 @@ Viele `SBus`-fähige Empfänger haben auch eine Telemetrie-Möglichkeit. Der daf
 
 .*Korrekte Verkabelung*?
 
-Für `RC-MultiSwitch-D` und `RC-MultiAdapter-DA` benötigt man einen `SBus`-Inverter. _Andere_ `SBus`-Teilnehmer sind nach wie vor _vor_ 
+Für `RC-Quad-D` und `RC-MultiAdapter-DA` benötigt man einen `SBus`-Inverter. _Andere_ `SBus`-Teilnehmer sind nach wie vor _vor_ 
 dem Inverter anzuschließen.
 
 Beim `RC-MultiAdapter-DA` existieren keine _Kontroll-LEDs_. Man also zur Funktionskontrolle ein analoge Schaltmodul anschließen. Und auch hier an dessen
@@ -1016,9 +998,6 @@ Je nach verwendetem HF-Modul im Sender ist eine Unterscheidung zu treffen:
 
 `MPM`-Modul:: es muss das Script `encsbm` eingerichtet sein.
 
-=== Gelegentliches Flackern oder Kanalfehlfunktion bei `RC-MultiAdapter-DA`
-
-Manchmal kommt es zu Toleranzen bei den alten, analogen Schaltmodulen. Bitte nach <<adapt>> verfahren.
 
 == Kontakt
 
