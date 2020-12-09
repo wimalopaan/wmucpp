@@ -18,7 +18,7 @@
 #
 
 # ~/Projekte/updi/pyupdi/pyupdi.py -d tiny1614 -c /dev/ttyUSB1  -f test00.hex
-#  .local/bin/pyupdi -d tiny1614 -c /dev/ttyUSB1  -f test00.hex
+# ~/.local/bin/pyupdi -d tiny1614 -c /dev/ttyUSB1  -f test00.hex
 
 MCU = attiny1614
 F_OSC = 20000000
