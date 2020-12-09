@@ -80,8 +80,8 @@ CONSTEXPR to_type get2(const from_type d) { // violates constexpr because of std
 
 #if __cpp_lib_bit_cast 
     static_assert(sizeof(to_type) == sizeof(from_type));
-    static_assert(std::is_trivially_copyable<from_type>::value);
-    static_assert(std::is_trivial<to_type>::value);
+//    static_assert(std::is_trivially_copyable<from_type>::value);
+//    static_assert(std::is_trivial<to_type>::value);
 CONSTEXPR to_type get3(const from_type d) {
     return std::bit_cast<to_type>(d);
 }
@@ -153,6 +153,7 @@ int main() {
 #ifdef USE_STRUCT
     return get1(FromS()).a[0] + get2(FromS()).a[1];
 #else
-    return get1(1.1) + get2(1.1) + get4(1.1);
+    return get3(1.1);
+//    return get1(1.1) + get2(1.1) + get4(1.1);
 #endif
 }

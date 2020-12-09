@@ -31,13 +31,15 @@ CPPFLAGS += -DNDEBUG
 
 #LDLIBS += -lasan
 
-OPTFLAGS = -O3
+OPTFLAGS = -Os
 
 targets += shtml
 
 targets += bm00.S bm00.elf
 targets += bm01.S bm01.elf
 targets += bm02.S bm02.elf
+targets += bm10.S bm10.elf
 
 -include ../../Makefile.avr0.include
 
+CXX = /usr/local/bin/avr-g++

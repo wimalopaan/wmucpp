@@ -62,3 +62,5 @@ include0/external/solutions/rc
 boards/rcdesk
 boards/rcquadc
 boards/rcministep
+boards/rcmultiswitch/doc
+boards/rcquadc/doc

@@ -209,6 +209,7 @@ boards/breakout/test00.cc
 boards/breakout/test01.cc
 boards/cellwatch/Makefile
 boards/cellwatch/base01.cc
+boards/cellwatch/base02.cc
 boards/cellwatch/cell01.cc
 boards/cellwatch/test00.cc
 boards/curiosity/Makefile
@@ -328,6 +329,9 @@ boards/rcministep/test60.cc
 boards/rcmultiswitch/Makefile
 boards/rcmultiswitch/ToDo.txt
 boards/rcmultiswitch/board.h
+boards/rcmultiswitch/doc/Makefile
+boards/rcmultiswitch/doc/rcmultiswitch.adoc
+boards/rcmultiswitch/doc/rcmultiswitch_h.adoc
 boards/rcmultiswitch/fsm.h
 boards/rcmultiswitch/multi8d.cc
 boards/rcmultiswitch/multi8hott.cc
@@ -338,6 +342,8 @@ boards/rcmultiswitch/test00.cc
 boards/rcmultiswitch/test01.cc
 boards/rcmultiswitch/test10.cc
 boards/rcquadc/Makefile
+boards/rcquadc/doc/Makefile
+boards/rcquadc/doc/rcquad.adoc
 boards/rcquadc/test00.cc
 boards/rcquadc/test01.cc
 boards/rcquadc/test02.cc
@@ -1246,6 +1252,7 @@ doc/bmcpp99/simavrconsole.c
 doc/bmcpp99/sort.h
 doc0/bm00/bm09a.c
 doc0/bm00/bm09b.cc
+doc0/bm10/bm10.cc
 example/atmega1284p/simavrconsole.c
 example/atmega1284p/simpleisr2.cc
 example/atmega1284p/usitiny.cc
@@ -1373,6 +1380,7 @@ host/test50.cc
 host/test50.cc
 host/test60.cc
 host/test60.cc
+host/test88.cc
 host/test90.cc
 host/test90.cc
 host/test98.cc
@@ -1556,7 +1564,9 @@ include/util/type_traits.h
 include/util/types.h
 include/util/types.h
 include/util/util.h
+include0/external/solutions/cells.h
 include0/external/solutions/rotaryencoder.h
+include0/std/bit
 projects/03_general/simavr.cc
 projects/03_general/simavr.h
 projects/03_general/simavrconsole.c
