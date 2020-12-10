@@ -374,6 +374,10 @@ Definieren Sie die folgenden, in den Widgets voreingestellten _Inputs_ nach dem 
 * I8
 * I9
 * I10
+* (I11) : unbenutzt (für zukünftige Erweiterungen)
+* (I12) : unbenutzt (für zukünftige Erweiterungen)
+
+(Lassen die die _unbenutzten_ Inputs in ihrem Modell frei. Andernfalls sind Fehlfunktionen nicht ausgeschlossen.)
 
 Möchten Sie andere Geber-Nummern verwenden, so ist dies auch möglich. Die Gebernummern müssen dann in der entsprechenden _Widget_-Konfiguration 
 definiert werden. Dies ist dann für beide Widgets gleichmaßen notwendig.
@@ -491,6 +495,73 @@ Diese Beschränkungen haben zur Folge, dass nur 16 verschieden Parameterwerte (e
 
 Am _unteren, rechten_ Rand des Widgets wird angezeigt, ob eine `SBus` oder `IBus` Konfiguration aktiv ist (zur Kontrolle).
 --
+
+.Ausschnitt A (aus der Datei `swstd.lua`, `swstdm.lua`, ...)
+[source,lua,linenums]
+----
+local name = "Default";
+
+local gVariable = 5;
+
+local useSbus = 1; -- only 4 states, only 16 parameter values <1>
+
+local gstates1 = {"aus", "ein", "blink1", "blink2"}; -- <1>
+local gstates2 = {"aus", "ein 1", "ein 2"};
+local gstates3 = {"Pos1", "Pos2", "Pos3", "Pos4", "Pos5"};
+
+local menu = {
+  title = "WM MultiSwitch",
+
+  scrollUpDn = "ls", -- direct navigating
+  scrollLR = "rs",
+
+  parameterDial = "s1",
+  
+  pageSwitch = "6pos";
+
+  remote = "trn16";
+
+  state = {
+    activeRow = 1,
+    activeCol = 1,
+    activePage = nil
+  },
+  pages = {
+    { -- template for digital multiswitch RC-MultiSwitch-D @ Address(1) 
+      items = { -- <2>
+        {name = "M1A", states = gstates1, state = 1, data = {switch = "sa", count = 1, module = 1}}, -- <3>
+        {name = "M1B", states = gstates1, state = 1, data = {switch = "sb", count = 2, module = 1}},
+        {name = "M1C", states = gstates1, state = 1, data = {switch = nil, count = 3, module = 1}},
+        {name = "M1D", states = gstates1, state = 1, data = {switch = "se", count = 4, module = 1}}, -- <5>
+        {name = "M1E", states = gstates1, state = 1, data = {switch = nil, count = 5, module = 1}},
+        {name = "M1F", states = gstates1, state = 1, data = {switch = nil, count = 6, module = 1}},
+        {name = "M1G", states = gstates1, state = 1, data = {switch = nil, count = 7, module = 1}},
+        {name = "M1H", states = gstates1, state = 1, data = {switch = nil, count = 8, module = 1}},
+      }
+    },
+    { -- template for digital multiswitch RC-MultiSwitch-D @ Address(2)
+      items = { -- <4>
+        {name = "M2A", states = gstates1, state = 1, data = {switch = "sc", count = 1, module = 2}},
+        {name = "M2B", states = gstates1, state = 1, data = {switch = "sd", count = 2, module = 2}},
+        {name = "M2C", states = gstates1, state = 1, data = {switch = nil, count = 3, module = 2}},
+        {name = "M2D", states = gstates1, state = 1, data = {switch = "se", count = 4, module = 2}}, -- <6>
+        {name = "M2E", states = gstates1, state = 1, data = {switch = nil, count = 5, module = 2}},
+        {name = "M2F", states = gstates1, state = 1, data = {switch = nil, count = 6, module = 2}},
+        {name = "M2G", states = gstates1, state = 1, data = {switch = nil, count = 7, module = 2}},
+        {name = "M2H", states = gstates1, state = 1, data = {switch = nil, count = 8, module = 2}},
+      }
+    },
+    ...
+};
+...
+----
+<1> Diese Namen für die Schaltzustände können frei gewählt werden.
+<2> Dies ist die Konfiguration für das Module mit der Adresse `1` (s.a. `module = 1`) auf der Seite `1` des Menus (der _erste_ `items` Block).
+<3> Den Namen der Funktione (`name = "M1A"`) können Sie beliebig ändern.
+<4> Dies ist die Konfiguration für das Module mit der Adresse `1` (s.a. `module = 2`)
+<5> Diese Funktion hat einen Schalter zugeordnet (`switch = "se"`).
+<6> Diese Funktion hat einen Schalter zugeordnet (`switch = "se"`). Da es derselbe Schalter ist, der schon für eine Funktion auf der Seite `1` verwendet wurde, ist dies 
+ein sog. _Overlay_ (im Menu dann besonders gekennzeichnet)
 
 Wird ein phys. Schalter _einer_ Schaltfunktion zugeordnet, dann kann diese Funktion _immer_ mit diesem Schalter bedient werden. Der Schalter ist dann 
 ein _ShortCut_ (Abkürzung).
