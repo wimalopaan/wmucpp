@@ -83,11 +83,12 @@ using stateP = StateProvider<fsm>;
 
 using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, 
                           Meta::List<mcp0P, raw0P, rpm0P, rpm1P, speedP, 
-                          bytesP, packagesR, packagesV, stateP>, 
+                          bytesP, packagesV, stateP>, 
                           systemTimer, ibt>;
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position>>;
 
+// ???
 using evrouter = Event::Router<Event::Channels<evch0, evch1>, Event::Routes<evuser0, evuser1>>;
 using isrRegistrar = IsrRegistrar<typename gpsUsart::StartBitHandler, typename gpsUsart::BitHandler>;
 

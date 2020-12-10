@@ -10,7 +10,7 @@ using adcController = External::Hal::AdcController<adc, Meta::NList<0x1e>>; // 0
 
 
 using ibus_full = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, 
-                          Meta::List<speedP, bytesP, packagesR, packagesV>, 
+                          Meta::List<speedP, bytesP, packagesV>, 
                           systemTimer, ibt
                             , etl::NamedFlag<true>, etl::NamedFlag<true>
 >;

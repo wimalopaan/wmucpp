@@ -116,12 +116,13 @@ namespace External {
             static_assert(NumberOfChannels >  0, "use at least one channel");
             static_assert(Meta::is_set_v<typename Meta::NList<Channels...>::list_type>, "the channels must be different");
             
+            template<bool pullup = false>
             inline static void init() {
 //                ch_list::_;
 //                pin_list::_;
                 []<typename... Pin>(Meta::List<Pin...>) {
                     (Pin::template attributes<Meta::List<AVR::Attributes::DigitalDisable<>>>(), ...);
-                    (Pin::template pullup<false>(), ...);
+                    (Pin::template pullup<pullup>(), ...);
                 }(pin_list{});
                 MCUAdc::init();
                 MCUAdc::channel(channels[0]);

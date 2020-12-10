@@ -19,6 +19,9 @@
 // #0: time
 // #8: date
 
+// GSV: $GPGSV,3,1,11,03,03,111,00,04,15,270,00,06,01,010,00,13,06,292,00*74
+// terme:      0 1  2  3  3   5  6  7  8   9 10 11 12 13  14 15 16 18  18 
+
 // Formate:
 // latitude / longitude: DDDMM.MMMM (D = degree, M = minute) (DDD kann fehlen, MM.MM ist mindestens da)
 // decimal: dddd.ddd (.ddd muss nicht da sein)
@@ -38,11 +41,42 @@ namespace External::GPS {
         inline static constexpr std::byte NL{'\n'};
         inline static constexpr uint8_t DegreeMaxWidth = 10;
         inline static constexpr uint8_t DecimalMaxWidth = 7;
+        inline static constexpr uint8_t IntegerMaxWidth = 3;
         inline static constexpr uint8_t TimeMaxWidth = 9;
         inline static constexpr uint8_t DateMaxWidth = 6;
         inline static constexpr uint8_t SentenceTypeMaxWidth = 3;
         inline static constexpr std::byte GpsChar1 = std::byte{'G'};
 //        inline static constexpr std::byte GpsChar2 = std::byte{'N'}; // verschiedene provider moeglich
+        //        inline static constexpr std::byte GpsChar2 = std::byte{'P'}; 
+    };
+    
+    struct GSV {
+        inline static constexpr auto prefix = "GSV"_pgm;
+        inline static void process(const std::byte b, const uint8_t index, const uint8_t field) {
+            if (field == SatelliteNumberFieldNumber) {
+                if (index < std::size(sNumber)) {
+                    if (index == 0) {
+                        mReceivedPackages = mReceivedPackages + 1;
+                        copy(sNumber, raw);
+                        fill(raw, std::byte{'\0'});
+                    }
+                    raw[index] = b;
+                }
+            }
+        }  
+        inline static uint16_t receivedPackages() {
+            Scoped<DisbaleInterrupt<RestoreState>> di;
+            return mReceivedPackages;
+        }
+        inline static void numberRaw(StringBuffer<Sentence::DecimalMaxWidth>& result) {
+            Scoped<DisbaleInterrupt<RestoreState>> di;
+            etl::copy(result, sNumber);
+        }
+    private:
+        inline static volatile uint16_t mReceivedPackages{0};
+        inline static constexpr uint8_t SatelliteNumberFieldNumber = 2;
+        inline static volatile std::array<std::byte, Sentence::IntegerMaxWidth> raw;
+        inline static volatile std::array<std::byte, Sentence::IntegerMaxWidth> sNumber;
     };
     
     struct VTG {
@@ -50,10 +84,12 @@ namespace External::GPS {
         inline static void process(const std::byte b, const uint8_t index, const uint8_t field) {
             if (field == SpeedFieldNumber) {
                 if (index < std::size(speed)) {
-                    if (index == 1) {
+                    if (index == 0) {
                         mReceivedPackages = mReceivedPackages + 1;
+                        copy(speed, raw);
+                        fill(raw, std::byte{'\0'});
                     }
-                    speed[index] = b;
+                    raw[index] = b;
                 }
             }
         }  
@@ -66,8 +102,9 @@ namespace External::GPS {
             etl::copy(result, speed);
         }
     private:
-        inline static volatile uint16_t mReceivedPackages{10};
+        inline static volatile uint16_t mReceivedPackages{0};
         inline static constexpr uint8_t SpeedFieldNumber = 6;
+        inline static volatile std::array<std::byte, Sentence::DecimalMaxWidth> raw;
         inline static volatile std::array<std::byte, Sentence::DecimalMaxWidth> speed;
     };
     struct RMC {
@@ -77,16 +114,20 @@ namespace External::GPS {
                 if (index < std::size(time)) {
                     if (index == 0) {
                         mReceivedPackages = mReceivedPackages + 1; 
+                        copy(time, rawtime);
+                        fill(rawtime, std::byte{'\0'});
                     }
-                    time[index] = b;
+                    rawtime[index] = b;
                 }
             }
             else if (field == DateFieldNumber) {
                 if (index < std::size(date)) {
                     if (index == 0) {
                         mReceivedPackages = mReceivedPackages + 1;
+                        copy(date, rawdate);
+                        fill(rawdate, std::byte{'\0'});
                     }
-                    date[index] = b;
+                    rawdate[index] = b;
                 }
             } 
         }  
@@ -106,8 +147,10 @@ namespace External::GPS {
         inline static volatile uint16_t mReceivedPackages{};
         inline static constexpr uint8_t TimeFieldNumber = 0;
         inline static constexpr uint8_t DateFieldNumber = 8;
-        inline static volatile std::array<std::byte, Sentence::TimeMaxWidth> time;
-        inline static volatile std::array<std::byte, Sentence::DateMaxWidth> date;
+        inline static volatile std::array<std::byte, Sentence::TimeMaxWidth> rawtime{};
+        inline static volatile std::array<std::byte, Sentence::TimeMaxWidth> time{};
+        inline static volatile std::array<std::byte, Sentence::DateMaxWidth> rawdate{};
+        inline static volatile std::array<std::byte, Sentence::DateMaxWidth> date{};
     };
     template<uint8_t N, typename... SentenceDecoder>
     struct GpsProtocollAdapter {
@@ -170,8 +213,8 @@ namespace External::GPS {
                 }
                 else {
                     if (decoder < Meta::size<decoders>::value) {
-                        Meta::visitAt<decoders>(decoder, [&]<typename type>(Meta::Wrapper<type>){
-                            type::process(b, index++, field);
+                        Meta::visitAt<decoders>(decoder, [&]<typename Decoder>(Meta::Wrapper<Decoder>){
+                            Decoder::process(b, index++, field);
                         });
                     }
                 }

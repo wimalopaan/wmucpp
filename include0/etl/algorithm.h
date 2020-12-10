@@ -201,11 +201,13 @@ namespace etl {
 //    }
     
     namespace detail {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wvolatile"
         template<typename A, etl::Concepts::Container B, auto... II>
         inline static constexpr void copyElements(A& a, const B& b, std::index_sequence<II...>) {
 //           static_assert(((II < std::size(a)) && ...));
 //            static_assert(((II < std::size(b)) && ...));
-            ((a[II] = typename A::value_type(b[II])),...);
+            (((void)(a[II] = typename A::value_type(b[II]))),...);
 //            copyElements<II...>(a, b);
         }
         template<typename A, typename... BB, auto... II>
@@ -217,6 +219,7 @@ namespace etl {
         inline static constexpr bool contains(const B& c, const A& a, std::index_sequence<II...>) {
             return ((c[II] == a) || ...);
         }
+#pragma GCC diagnostic pop
     }
     
     template<auto... II, typename A>

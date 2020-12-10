@@ -33,12 +33,12 @@ struct FSM {
             }
             break;
         case State::Calibrate:
-//            curr0P::accumulateCalibration();
+            curr0P::accumulateCalibration();
 //            curr1P::accumulateCalibration();
             if (mTickCount > caliCount) {
                 mState = State::Run;
                 mTickCount = 0;
-//                curr0P::setCalibration();
+                curr0P::setCalibration();
 //                curr1P::setCalibration();
             }
             break;
@@ -67,13 +67,14 @@ struct StateProvider {
 using stateP = StateProvider<fsm>;
 
 using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, 
-                          Meta::List<mcp0P, mcp1P, curr0P, rpm1P, speedP, 
-                          bytesP, packagesR, packagesV, stateP>, 
+                          Meta::List<mcp0P, mcp1P, curr0P, curr0P::OffsetProvider, rpm1P, speedP, satP,
+                          bytesP, packagesV, stateP>, 
                           systemTimer, ibt>;
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position>>;
 
-using evrouter = Event::Router<Event::Channels<evch0, evch1>, Event::Routes<evuser0, evuser1>>;
+//using evrouter = Event::Router<Event::Channels<evch0, evch1>, Event::Routes<evuser0, evuser1>>;
+using evrouter = Event::Router<Event::Channels<evch1>, Event::Routes<evuser1>>; // rpm1
 using isrRegistrar = IsrRegistrar<typename gpsUsart::StartBitHandler, typename gpsUsart::BitHandler>;
 
 int main() {
@@ -94,12 +95,16 @@ int main() {
     evrouter::init();
     portmux::init();
     systemTimer::init();
-    adcController::init();
+    
+    adcController::init<true>(); // use Pullups
+    
+    adc::nsamples(6);
     
     ibus::init();
     gpsUsart::init<AVR::HalfDuplex>();
     
-    rpm0::init();   
+    q0Pin::dir<Input>();
+    q0Pin::pullup<true>();
     rpm1::init();   
     
     const auto periodicTimer = alarmTimer::create(100_ms, External::Hal::AlarmFlags::Periodic);
@@ -118,7 +123,6 @@ int main() {
                     fsm::tick();
                 }
                 else if (resetTimer == t) {
-                    rpm0::reset();
                     rpm1::reset();
                 }
             });

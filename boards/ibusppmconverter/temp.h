@@ -21,10 +21,21 @@ struct Mcp9700aProvider {
     inline static constexpr void init() {
     }
     inline static constexpr uint16_t value() {
-        auto raw = ADC::value(channel).toInt();
-        raw *= 34;
-        raw >>= 3;
-        return raw - 100;
+        auto raw = ADC::value(channel);
+        if (raw.isTop()) {
+            return 0;
+        }
+        else {
+            auto v = raw.toInt(); 
+            v *= 34;
+            v >>= 3;
+            if (v >= 100) {
+                return v - 100;
+            }
+            else {
+                return 0;
+            }
+        }
     }
 };
 
