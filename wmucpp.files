@@ -273,6 +273,7 @@ boards/ibusppmconverter/servoswitch.cc
 boards/ibusppmconverter/sport_test.cc
 boards/ibusppmconverter/temp.h
 boards/ibusppmconverter/test00.cc
+boards/ibusppmconverter/verions.txt
 boards/ibusppmconverter/volt.h
 boards/include/ppmmatrix.h
 boards/include/rcsensorled01b.h

@@ -1,0 +1,9 @@
+Versionen:
+
+a2t1c1r1g:
+----------
+SO4 curr0
+SO3 GPS
+Q0  rpm 
+SO1 temp0
+SO2 temp1
