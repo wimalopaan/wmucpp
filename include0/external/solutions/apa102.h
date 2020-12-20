@@ -34,7 +34,7 @@ namespace External {
         }
         
         inline static constexpr auto startFrame() {
-            return APA102({0, 0, 0, 0});
+            return APA102({0x00_B, 0x00_B, 0x00_B, 0x00_B});
         }
         inline static constexpr auto endFrame() {
             constexpr std::byte ones{0xff};
@@ -99,7 +99,7 @@ namespace External {
                 if (Dev::put(sf.data()[byte_index])) {
                     if (byte_index.isTop()) {
                         mState = State::Data;
-                        byte_index = 0;
+                        byte_index.setToBottom();
                     }
                     else {
                         ++byte_index;
@@ -115,7 +115,7 @@ namespace External {
                         else {
                             ++index;
                         }
-                        byte_index = 0;
+                        byte_index.setToBottom();
                     }
                     else {
                         ++byte_index;
