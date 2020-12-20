@@ -7,3 +7,11 @@ SO3 GPS
 Q0  rpm 
 SO1 temp0
 SO2 temp1
+
+a1t1u1r1g:
+----------
+SO4 rpm0
+SO3 GPS
+Q0  rpm1 
+SO1 temp
+SO2 water
