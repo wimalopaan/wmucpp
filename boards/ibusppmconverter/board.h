@@ -156,7 +156,8 @@ namespace Storage {
         Graupner8K, // 2 long
         Graupner4K, // 2 long
         Robbe,  // 1 short
-        CP, // 1 long
+        CP8, // 1 long (nur Aktivierung zu kurzen Impulsen)
+        CP16, // 1 long (nur Aktivierung zu kurzen Impulsen)
         XXX // 2 short
     }; 
     
@@ -255,9 +256,12 @@ namespace Storage {
                     mMpxModes[addressOffset] = Mode::Robbe;
                 }
                 else if (v == 3) {
-                    mMpxModes[addressOffset] = Mode::CP;
+                    mMpxModes[addressOffset] = Mode::CP8;
                 }
                 else if (v == 4) {
+                    mMpxModes[addressOffset] = Mode::CP16;
+                }
+                else if (v == 5) {
                     mMpxModes[addressOffset] = Mode::XXX;
                 }
                 else {

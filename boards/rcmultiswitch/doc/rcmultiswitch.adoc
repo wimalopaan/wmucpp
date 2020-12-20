@@ -653,8 +653,9 @@ Bei der Einstellung des Zeitmultiplexverfahrens gelten folgende Zuordnungen von 
 * Wert 0 -> Graupner-8K
 * Wert 1 -> Graupner-4K
 * Wert 2 -> Robbe
-* Wert 3 -> CP-Elektronik
-* Wert 4 -> unbenutzt
+* Wert 3 -> CP-Elektronik 8-Ausgänge
+* Wert 4 -> CP-Elektronik 16-Aufgänge
+* Wert 5 -> unbenutzt
 * alle anderen Werte -> Graupner-8K
 
 .Einrichten von sog. Multi-Prop-Modulen
@@ -675,6 +676,22 @@ Neutrale Werte sind bei `Ibus` etwa 16, bei `SBus` etwa 8. Es kann sein, dass di
 
 Seltener kommt es vor, das zwar _kein_ Flackern auftritt, jedoch die _ein_-Positionen nicht immer erkannt werden. _nur_ in diesem Fall den Parameter 
 `TMode` verändern.
+--
+
+[[adaptcp]]
+.`RC_MultiAdapater-DA`: Anpassungen an CP-Elektronik Schaltmodule
+[TIP]
+--
+Kanalzählung von 8 zu 1 (anders herum) bzw. 16 zu 1
+
+LED des CP-Moduls muss _erlöschen_ -> gültiges Signal
+
+Falls kein gültiges Signal erkannt wird:
+
+* `OMpx`  <= 8`
+* `TMode` <= 8
+
+
 --
 
 === Physische Schalter und die Schaltzustände
