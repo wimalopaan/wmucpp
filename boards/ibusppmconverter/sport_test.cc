@@ -1,7 +1,7 @@
 #define NDEBUG
 
-//#define USE_SPORT
-#define USE_IBUS
+#define USE_SPORT
+//#define USE_IBUS
 
 #include <mcu/avr.h>
 #include <mcu/common/delay.h>
