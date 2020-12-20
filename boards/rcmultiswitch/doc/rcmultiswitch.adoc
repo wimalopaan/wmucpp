@@ -2,7 +2,7 @@
 // ---- Beginn Standardheader
 = RC MultiSwitch-D 
 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
-:revnumber: 1.02
+:revnumber: 1.04
 :revremark: HW_1.2
 :revdate: 01.01.1970
 :lang: de
@@ -654,7 +654,7 @@ Bei der Einstellung des Zeitmultiplexverfahrens gelten folgende Zuordnungen von 
 * Wert 1 -> Graupner-4K
 * Wert 2 -> Robbe
 * Wert 3 -> CP-Elektronik 8-Ausgänge
-* Wert 4 -> CP-Elektronik 16-Aufgänge
+* Wert 4 -> CP-Elektronik 16-Ausgänge
 * Wert 5 -> unbenutzt
 * alle anderen Werte -> Graupner-8K
 
