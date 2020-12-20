@@ -12,11 +12,12 @@ MCU = atmega328pb
 F_OSC = 16000000
 
 #subdirs += robbenavy540
-subdirs += small01
+#subdirs += small01
+subdirs += medium10
 
-targets += test00.elf
-targets += test10.elf
-targets += blink.elf
-targets += blink01.elf
+#targets += test00.elf
+#targets += test10.elf
+#targets += blink.elf
+#targets += blink01.elf
 
 -include ../../Makefile.avr0.include

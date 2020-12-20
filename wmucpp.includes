@@ -65,3 +65,4 @@ boards/rcministep
 boards/rcmultiswitch/doc
 boards/rcquadc/doc
 boards/cellwatch/doc
+boards/bmc/medium10
