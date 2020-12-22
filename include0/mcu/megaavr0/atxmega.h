@@ -8,10 +8,6 @@
 
 #include <external/units/physical.h>
 
-namespace AVR {
-    
-}
-
 #if defined(__AVR_ATmega4809__)
 # include "atmega4809.h"
 #endif

@@ -69,7 +69,7 @@ struct IBusThrough {
         Pin::off();
     }
 };
-
+ 
 template<typename Timer, typename PWM>
 struct EscFsm {
     enum class State : uint8_t {Undefined, Init, Forward, Off, Backward};

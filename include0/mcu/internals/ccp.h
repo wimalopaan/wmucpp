@@ -28,7 +28,7 @@ namespace AVR {
         template<typename MCU = DefaultMcuType>
         struct Ccp;
 
-        template<AVR::Concepts::AtMega0 MCU>
+        template<AVR::Concepts::At01DxSeries MCU>
         struct Ccp<MCU> {
             static constexpr auto mcu_cpu = getBaseAddr<typename MCU::Cpu>;
             
@@ -38,15 +38,15 @@ namespace AVR {
             }
         };
  
-        template<AVR::Concepts::AtTiny1 MCU>
-        struct Ccp<MCU> {
-            static constexpr auto mcu_cpu = getBaseAddr<typename MCU::Cpu>;
+//        template<AVR::Concepts::AtTiny1 MCU>
+//        struct Ccp<MCU> {
+//            static constexpr auto mcu_cpu = getBaseAddr<typename MCU::Cpu>;
             
-            static inline constexpr void unlock(const auto& f) {
-                *mcu_cpu()->ccp = 0xd8_B;
-                f();
-            }
-        };
-        
+//            static inline constexpr void unlock(const auto& f) {
+//                *mcu_cpu()->ccp = 0xd8_B;
+//                f();
+//            }
+//        };
+
     }
 }

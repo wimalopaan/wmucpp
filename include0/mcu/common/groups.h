@@ -211,7 +211,33 @@ namespace AVR {
             using txpin = AVR::Pin<AVR::Port<AVR::A>, 1>; 
             using rxpin = AVR::Pin<AVR::Port<AVR::A>, 2>; 
         };
-        
+
+        template<AVR::Concepts::AtDa32 MCU>
+        struct Map<Position<AVR::Component::Usart<0>, Default>, MCU> {
+            using txpin = AVR::Pin<AVR::Port<AVR::A>, 0>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::A>, 1>; 
+        };
+        template<AVR::Concepts::AtDa32 MCU>
+        struct Map<Position<AVR::Component::Usart<0>, Alt1>, MCU> {
+            using txpin = AVR::Pin<AVR::Port<AVR::A>, 4>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::A>, 5>; 
+        };
+        template<AVR::Concepts::AtDa32 MCU>
+        struct Map<Position<AVR::Component::Usart<1>, Default>, MCU> {
+            using txpin = AVR::Pin<AVR::Port<AVR::C>, 0>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::C>, 1>; 
+        };
+        template<AVR::Concepts::AtDa32 MCU>
+        struct Map<Position<AVR::Component::Usart<2>, Default>, MCU> {
+            using txpin = AVR::Pin<AVR::Port<AVR::F>, 0>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::F>, 1>; 
+        };
+        template<AVR::Concepts::AtDa32 MCU>
+        struct Map<Position<AVR::Component::Usart<2>, Alt1>, MCU> {
+            using txpin = AVR::Pin<AVR::Port<AVR::F>, 4>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::F>, 5>; 
+        };
+
         template<AVR::Concepts::AtMega0 MCU>
         struct Map<Position<AVR::Component::Usart<0>, Default>, MCU> {
             using txpin = AVR::Pin<AVR::Port<AVR::A>, 0>; 

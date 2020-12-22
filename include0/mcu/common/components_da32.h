@@ -19,23 +19,30 @@
 #pragma once
 
 #include <cstdint>
+#include <std/utility>
 
-#include "../common/timer.h"
-#include "../common/concepts.h"
+#include "components/cpu.h"
+#include "components/clock.h"
+#include "components/rtc.h"
+#include "components/cclda4.h"
+#include "components/port0.h"
+#include "components/portmux_da32.h"
+#include "components/tca.h"
+#include "components/tcb.h"
+#include "components/usart_da.h"
+#include "components/event0.h"
+#include "components/event1.h"
+#include "components/adc.h"
+#include "components/vref.h"
+#include "components/sleep.h"
+#include "components/adcomparator.h"
+#include "components/sigrow.h"
+#include "components/spi.h"
+#include "components/gpior.h"
+
+#include "components/bitmask_operators_da.h"
 
 namespace AVR {
-    template<typename MCU = DefaultMcuType>
-    struct Clock;
-    
-    template<AVR::Concepts::At01DxSeries MCU>
-    struct Clock<MCU> {
-        static inline constexpr auto mcu_clock = getBaseAddr<typename MCU::Clock>;
-        static inline constexpr auto prescaler_values = MCU::Clock::prescalerValues;
-        
-        template<uint8_t P>
-        static inline constexpr void prescale() {
-            constexpr auto p = AVR::Util::Timer::bitsFrom<P>(prescaler_values);
-            mcu_clock()->mclkctrlb.set(p);
-        }
-    };
+    namespace SeriesDa {
+    }
 }

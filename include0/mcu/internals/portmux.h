@@ -161,6 +161,45 @@ namespace AVR {
         }
         template<typename CCList, typename MCU = DefaultMcuType>
         struct StaticMapper;
+
+        template<typename CCList, AVR::Concepts::AtDxSeries MCU>
+        struct StaticMapper<CCList, MCU> final {
+        private:
+            static constexpr auto mcu_pmux = getBaseAddr<typename MCU::Portmux>;
+            using usart_list = Meta::filter<Meta::nonVoid, Meta::transform_type<detail::usart::Mapper, CCList>>;
+            using ccl_list = Meta::filter<Meta::nonVoid, Meta::transform_type<detail::ccl::Mapper, CCList>>;
+            using tca_list = Meta::filter<Meta::nonVoid, Meta::transform_type<detail::tca::Mapper, CCList>>;
+            using tcb_list = Meta::filter<Meta::nonVoid, Meta::transform_type<detail::tcb::Mapper, CCList>>;
+            
+            static_assert(Meta::size_v<usart_list> <= 4);
+            static_assert(Meta::size_v<ccl_list> <= 4);
+            static_assert(Meta::size_v<tca_list> <= 1);
+            
+        public:
+            static inline void init() {
+                if constexpr(Meta::size_v<usart_list> > 0) {
+                    constexpr auto value = Meta::value_or_v<usart_list>;
+//                    std::integral_constant<decltype(value), value>::_;
+                    mcu_pmux()->usartroutea.template set<value>();                
+                }
+                if constexpr(Meta::size_v<ccl_list> > 0) {
+                    constexpr auto value = Meta::value_or_v<ccl_list>;
+//                    std::integral_constant<decltype(value), value>::_;
+                    mcu_pmux()->cclroutea.template set<value>();                
+                }
+                if constexpr(Meta::size_v<tca_list> > 0) {
+                    constexpr auto value = Meta::front<tca_list>::value;
+//                    tca_list::_;
+//                    std::integral_constant<decltype(value), value>::_;
+                    mcu_pmux()->tcaroutea.template set<value>();                
+                }
+                if constexpr(Meta::size_v<tcb_list> > 0) {
+                    constexpr auto value = Meta::value_or_v<tcb_list>;
+//                    std::integral_constant<decltype(value), value>::_;
+                    mcu_pmux()->tcbroutea.template set<value>();                
+                }
+            }
+        };
         
         template<typename CCList, AVR::Concepts::AtMega0 MCU>
         struct StaticMapper<CCList, MCU> final {

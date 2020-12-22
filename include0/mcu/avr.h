@@ -49,10 +49,15 @@ namespace AVR {
     //AVR1-Series
     struct ATTiny412;
     struct ATTiny1614;
+
+    // DA-Series
+    struct Avr128da32;
     
     namespace Series0 {
     }
     namespace Series1 {
+    }
+    namespace SeriesDa {
     }
 }
 
@@ -84,6 +89,8 @@ typedef AVR::ATMega4809 DefaultMcuType;
 typedef AVR::ATTiny412 DefaultMcuType;
 #elif defined(__AVR_ATtiny1614__)
 typedef AVR::ATTiny1614 DefaultMcuType;
+#elif defined(__AVR_AVR128DA32__)
+typedef AVR::Avr128da32 DefaultMcuType;
 #else
 typedef AVR::ATMegaNone DefaultMcuType;
 # warning "No CPU found"
@@ -217,6 +224,11 @@ namespace AVR::detail::test {
 # include "tinyavr1/attiny1.h"
 # include "internals/port.h"
 //# include "internals/usart.h"
+#endif
+
+#if (__AVR_ARCH__ == 104)
+# include "avrdx/avrda.h"
+# include "internals/port.h"
 #endif
 
 #ifdef _MMIO_BYTE_CHANGED
