@@ -84,8 +84,8 @@ namespace External {
         }
         inline static void out() {
             if (mState == State::Complete) {
-                index = 0;
-                byte_index = 0;
+                index.setToBottom();
+                byte_index.setToBottom();
                 mState = State::Start;
             }
         }

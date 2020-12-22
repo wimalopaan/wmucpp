@@ -73,11 +73,11 @@ namespace AVR {
                 if (std::byte b; mData.pop_front(b)) {
 //                    mcu_spi()->data;
                     *mcu_spi()->data = b;
-//                    ++counter;
+                    ++counter;
                 }
             }
         }
-//        inline static uint16_t counter{};
+        inline static uint16_t counter{};
     private:
         inline static fifo_type mData;
     };

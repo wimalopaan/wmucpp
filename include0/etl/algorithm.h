@@ -26,8 +26,6 @@
 #include "meta.h"
 #include "types.h"
 
-// todo: std::size() not constexpr
-
 namespace etl {
     template<typename T>
     struct Intervall {
@@ -298,6 +296,17 @@ namespace etl {
     template<etl::Concepts::Container C>
     constexpr void reverse(C& c) {
         detail::reverse_impl(c, std::make_index_sequence<c.size() / 2>{});
+    }
+ 
+    namespace detail {
+        template<etl::Concepts::Container C, auto... II>
+        constexpr bool all_of_impl(const C& c, const typename C::value_type& v, std::index_sequence<II...>) {
+            return ((c[II] == v) && ...);
+        }
+    }
+    template<etl::Concepts::Container C>
+    constexpr bool all_of(const C& c, const typename C::value_type& v) {
+        return detail::all_of_impl(c, v, std::make_index_sequence<c.size()>{});
     }
     
     template<typename... T>

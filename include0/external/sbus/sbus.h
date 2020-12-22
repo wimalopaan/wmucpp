@@ -207,6 +207,8 @@ uint32_t sbusTime = 0;
                 
                 inline static constexpr uint16_t sbus_mid = (sbus_max + sbus_min) / 2;
                 
+                using value_type = etl::uint_ranged<uint16_t, sbus_min, sbus_max>;
+                
                 inline static void init() {
                     usart::template init<AVR::BaudRate<100000>, AVR::FullDuplex, true, 1>();
                     for(auto& o : output) {
