@@ -11,5 +11,5 @@ targets += test00.elf test00.hex
 
 -include ../../../Makefile.avr0.include
 
-CC = /usr/local/bin/avr-gcc
-CXX = /usr/local/bin/avr-g++
+#CC = /usr/local/bin/avr-gcc
+#CXX = /usr/local/bin/avr-g++

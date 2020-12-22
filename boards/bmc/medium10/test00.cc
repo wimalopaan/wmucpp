@@ -77,6 +77,12 @@ struct EscFsm {
     static constexpr External::Tick<Timer> deadTicks{500_ms}; // fw <-> bw
     
     inline static void init() {
+        PWM::init();
+        PWM::period(15000);
+        PWM::template on<Meta::List<AVR::PWM::WO<1>, AVR::PWM::WO<2>>>();
+        PWM::template off<Meta::List<AVR::PWM::WO<0>>>();
+        PWM::template off<Meta::List<AVR::PWM::WO<2>>>();
+        PWM::template duty<Meta::List<AVR::PWM::WO<1>>>(6000);
     }
     inline static void periodic() {
     }
@@ -84,6 +90,8 @@ struct EscFsm {
         const auto oldState = mState;
         switch(mState) {
         case State::Undefined:
+            break;
+        case State::Init:
             break;
         case State::Forward:
             break;
@@ -105,9 +113,11 @@ private:
 
 template<typename Timer, typename Led, typename Esc, typename Term = void>
 struct GlobalFsm {
-    enum class State : uint8_t {Undefined, Init};
+    enum class State : uint8_t {Undefined, Init, Run};
     
     static constexpr External::Tick<Timer> startupTicks{100_ms};
+    static constexpr External::Tick<Timer> initTicks{500_ms};
+    static constexpr External::Tick<Timer> debugTicks{500_ms};
     static constexpr External::Tick<Timer> learnTimeoutTicks{4000_ms};
     
     inline static void init() {
@@ -122,6 +132,7 @@ struct GlobalFsm {
         Esc::ratePeriodic();
         const auto oldState = mState;
         ++mStateTick;
+        ++mDebugTick;
         switch(mState) {
         case State::Undefined:
             mStateTick.on(startupTicks, []{
@@ -129,19 +140,39 @@ struct GlobalFsm {
             });
             break;
         case State::Init:
+            mStateTick.on(initTicks, []{
+                mState = State::Run;
+            });
+            break;
+        case State::Run:
+            mDebugTick.on(debugTicks, debug);
             break;
         }
         if (oldState != mState) {
+            mStateTick.reset();
             switch(mState) {
             case State::Undefined:
                 break;
             case State::Init:
+                etl::outl<Term>("init"_pgm);
                 led(color_t{0});
+                break;
+            case State::Run:
+                etl::outl<Term>("run"_pgm);
                 break;
             }
         }
     }
 private:
+    
+    using colors_t = std::array<External::Crgb, 6>; 
+    
+    static inline etl::uint_ranged_circular<uint8_t, 0, colors_t::size() - 1> dc;
+    static inline void debug() {
+        etl::outl<Term>("d: "_pgm, Led::device_type::counter);
+        led(color_t{dc});
+        ++dc;
+    }
     static constexpr External::Crgb red{External::Red{255}, External::Green{0}, External::Blue{0}};
     static constexpr External::Crgb green{External::Red{0}, External::Green{255}, External::Blue{0}};
     static constexpr External::Crgb blue{External::Red{0}, External::Green{0}, External::Blue{255}};
@@ -149,16 +180,17 @@ private:
     static constexpr External::Crgb c2{External::Red{255}, External::Green{0}, External::Blue{255}};
     static constexpr External::Crgb c3{External::Red{0}, External::Green{255}, External::Blue{255}};
     
-    using colors_t = std::array<External::Crgb, 6>; 
     inline static constexpr colors_t colors{red, c1, green, c2, blue, c3};
     using color_t = etl::uint_ranged<uint8_t, 0, colors_t::size() - 1>;
     
     inline static void led(const color_t c) {
         using index_t = Led::index_type;
         Led::set(index_t{0}, colors[c]);
+        Led::out();
     }
     static inline State mState{State::Undefined};
     static inline External::Tick<Timer> mStateTick;
+    static inline External::Tick<Timer> mDebugTick;
 };
 
 #ifndef NDEBUG
@@ -181,8 +213,6 @@ using ccl1Position = Portmux::Position<Component::Ccl<1>, Portmux::Default>;
 using lut1 = Ccl::SimpleLut<1, Ccl::Input::Mask, Ccl::Input::Usart<1>, Ccl::Input::Mask>;
 
 using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::Default>;
-
-using portmux = Portmux::StaticMapper<Meta::List<ccl1Position, tcaPosition, usart1Position, usart2Position>>;
 
 // WO0: unbenutzt
 // WO1: pwm1
@@ -207,7 +237,7 @@ using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V4_3>;
 using adcController = External::Hal::AdcController<adc, Meta::NList<0, 1, 6, 7, 13, 14, 15, 0x1e>>; // 1e = temp
 
 using spiPosition = Portmux::Position<Component::Spi<0>, Portmux::Default>;
-using spi = AVR::Spi<spiPosition, AVR::QueueLength<1>,  AVR::UseInterrupts<false>>;
+using spi = AVR::Spi<spiPosition, AVR::QueueLength<16>,  AVR::UseInterrupts<false>>;
 using led = External::LedStripe<spi, External::APA102, 1>;
 
 using sensor = IBus::Sensor<usart1Position, AVR::Usart, AVR::BaudRate<115200>, Meta::List<>, systemTimer, ibt
@@ -215,8 +245,11 @@ using sensor = IBus::Sensor<usart1Position, AVR::Usart, AVR::BaudRate<115200>, M
 //                           , etl::NamedFlag<true>
 >;
 
+
 using escfsm = EscFsm<systemTimer, pwm>;
 using gfsm = GlobalFsm<systemTimer, led, escfsm, terminal>;
+
+using portmux = Portmux::StaticMapper<Meta::List<spiPosition, ccl1Position, tcaPosition, usart1Position, usart2Position>>;
 
 int main() {
     portmux::init();
@@ -224,16 +257,25 @@ int main() {
         clock::prescale<1>();
     });
     systemTimer::init();
+    
+    inh1Pin::dir<Output>();
+    inh1Pin::on();
+    inh2Pin::dir<Output>();
+    inh2Pin::on();
+    
+    servo::init<BaudRate<115200>>();
+
     gfsm::init();
     
 //    lut1::init(std::byte{0xcc}); // route TXD to lut1-out no-inv
-    lut1::init(std::byte{0x33}); // route TXD to lut1-out inv
+//    lut1::init(std::byte{0x33}); // route TXD to lut1-out inv
     
     {
         etl::outl<terminal>("test00"_pgm);
         
         while(true) {
             gfsm::periodic();
+            servo::periodic();
             systemTimer::periodic([&]{
                 gfsm::ratePeriodic();
             });
