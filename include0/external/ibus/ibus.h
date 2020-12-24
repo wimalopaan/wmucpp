@@ -907,13 +907,26 @@ namespace IBus {
                     if (chi < 14) {
                         const std::byte h = (*inactive)[2 * chi + 1] & 0x0f_B;
                         const std::byte l = (*inactive)[2 * chi];
-                        return value_type{(uint16_t(h) << 8) + uint8_t(l)};
+                        const uint16_t  v = (uint16_t(h) << 8) + uint8_t(l);
+                        if ((v >= value_type::Lower) && (v <= value_type::Upper)) {
+                            return value_type{v};
+                        }
+                        else {
+                            return {};
+                        }
                     }
                     else if (chi < 18) {
                         const std::byte h1 = (*inactive)[6 * (chi - 14) + 1] & 0xf0_B;
                         const std::byte h2 = (*inactive)[6 * (chi - 14) + 3] & 0xf0_B;
                         const std::byte h3 = (*inactive)[6 * (chi - 14) + 5] & 0xf0_B;
-                        return value_type{(uint8_t(h1) >> 4) + uint8_t(h2) + (uint16_t(h3) << 4)};
+                        const uint16_t v = (uint8_t(h1) >> 4) + uint8_t(h2) + (uint16_t(h3) << 4);
+                        if ((v >= value_type::Lower) && (v <= value_type::Upper)) {
+                            return value_type{v};
+                        }
+                        else {
+                            return {};
+                        }
+//                        return value_type{(uint8_t(h1) >> 4) + uint8_t(h2) + (uint16_t(h3) << 4)};
                     }
                 }            
                 return value_type{};
