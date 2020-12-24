@@ -169,6 +169,7 @@ boards/bmc/blink01.cc
 boards/bmc/medium01/Makefile
 boards/bmc/medium10/Makefile
 boards/bmc/medium10/test00.cc
+boards/bmc/medium10/test01.cc
 boards/bmc/medium10/test99.cc
 boards/bmc/robbenavy540/Makefile
 boards/bmc/robbenavy540/blink.cc

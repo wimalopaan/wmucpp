@@ -53,7 +53,6 @@ namespace  {
 #endif
 #ifdef USE_IBUS
     constexpr auto fRtc = 1000_Hz;
-    //    constexpr auto fRtc = 2000_Hz;
 #endif
 }
 
@@ -78,11 +77,11 @@ struct EscFsm {
     
     inline static void init() {
         PWM::init();
-        PWM::period(15000);
+        PWM::period(60000);
         PWM::template on<Meta::List<AVR::PWM::WO<1>, AVR::PWM::WO<2>>>();
         PWM::template off<Meta::List<AVR::PWM::WO<0>>>();
         PWM::template off<Meta::List<AVR::PWM::WO<2>>>();
-        PWM::template duty<Meta::List<AVR::PWM::WO<1>>>(6000);
+        PWM::template duty<Meta::List<AVR::PWM::WO<1>>>(30000);
     }
     inline static void periodic() {
     }
@@ -244,7 +243,6 @@ using sensor = IBus::Sensor<usart1Position, AVR::Usart, AVR::BaudRate<115200>, M
 //                          , etl::NamedFlag<true>
 //                           , etl::NamedFlag<true>
 >;
-
 
 using escfsm = EscFsm<systemTimer, pwm>;
 using gfsm = GlobalFsm<systemTimer, led, escfsm, terminal>;
