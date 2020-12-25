@@ -152,6 +152,14 @@ namespace AVR {
         template<typename CompPos, typename MCU = DefaultMcuType>
         struct Map;
 
+        template<AVR::Concepts::AtDa32 MCU>
+        struct Map<Position<AVR::Component::Spi<0>, Default>, MCU> {
+            using sspin = AVR::Pin<AVR::Port<AVR::A>, 7>; 
+            using mosipin = AVR::Pin<AVR::Port<AVR::A>, 4>; 
+            using misopin = AVR::Pin<AVR::Port<AVR::A>, 5>; 
+            using sckpin = AVR::Pin<AVR::Port<AVR::A>, 6>; 
+        };
+
         template<>
         struct Map<Position<AVR::Component::Spi<0>, Default>, AVR::ATMega4809> {
             using sspin = AVR::Pin<AVR::Port<AVR::A>, 7>; 
@@ -226,6 +234,11 @@ namespace AVR {
         struct Map<Position<AVR::Component::Usart<1>, Default>, MCU> {
             using txpin = AVR::Pin<AVR::Port<AVR::C>, 0>; 
             using rxpin = AVR::Pin<AVR::Port<AVR::C>, 1>; 
+        };
+        template<AVR::Concepts::AtDa32 MCU>
+        struct Map<Position<AVR::Component::Usart<1>, Alt1>, MCU> {
+            using txpin = AVR::Pin<AVR::Port<AVR::C>, 4>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::C>, 5>; 
         };
         template<AVR::Concepts::AtDa32 MCU>
         struct Map<Position<AVR::Component::Usart<2>, Default>, MCU> {
@@ -324,6 +337,16 @@ namespace AVR {
         struct Map<Position<AVR::Component::Tcd<0>, Default>, AVR::ATTiny412> {
             using wo0pin = AVR::Pin<AVR::Port<AVR::A>, 6>; 
             using wo1pin = AVR::Pin<AVR::Port<AVR::A>, 7>; 
+        };
+
+        template<AVR::Concepts::AtDa32 MCU>
+        struct Map<Position<AVR::Component::Tca<0>, AltA>, MCU> {
+            using wo0pin = AVR::Pin<AVR::Port<AVR::A>, 0>; 
+            using wo1pin = AVR::Pin<AVR::Port<AVR::A>, 1>; 
+            using wo2pin = AVR::Pin<AVR::Port<AVR::A>, 2>; 
+            using wo3pin = AVR::Pin<AVR::Port<AVR::A>, 3>; 
+            using wo4pin = AVR::Pin<AVR::Port<AVR::A>, 4>; 
+            using wo5pin = AVR::Pin<AVR::Port<AVR::A>, 5>; 
         };
         
         template<AVR::Concepts::AtMega0 MCU>

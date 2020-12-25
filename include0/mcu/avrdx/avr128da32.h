@@ -48,7 +48,7 @@ namespace AVR {
         using TCA = AVR::Series0::TCA;
         using TCB = AVR::Series0::TCB;
         using Ccl = AVR::SeriesDa::Ccl;
-        using Events = AVR::Series0::Events;
+        using Events = AVR::SeriesDa::Events;
         using Adc = AVR::Series0::Adc;
         using AdComparator = AVR::Series0::AdComparator;
         using Vref = AVR::Series0::Vref;

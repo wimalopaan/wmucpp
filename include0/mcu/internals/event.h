@@ -204,6 +204,12 @@ namespace AVR {
                 inline static constexpr auto value = AVR::Series0::Events::Generator_t{uint8_t(AVR::Series0::Events::Generator_t::port1_pin0) + N};
             };
 
+            template<uint8_t N, uint8_t C, AVR::Concepts::AtDa32 MCU>  requires((C == 4) || (C == 5)) struct map_generator<Generators::Pin<AVR::Pin<AVR::Port<AVR::F>, N>>, std::integral_constant<uint8_t, C>, MCU> {
+                inline static constexpr auto value = AVR::Series0::Events::Generator_t{uint8_t(AVR::Series0::Events::Generator_t::port1_pin0) + N};
+            };
+            
+            
+            
             template<uint8_t N, AVR::Concepts::AtTiny1 MCU> struct map_generator<void, std::integral_constant<uint8_t, N>, MCU> {
                 inline static constexpr auto value = AVR::Series1::Events::AsyncGenerator_t{0};
             };
@@ -227,7 +233,12 @@ namespace AVR {
             template<uint8_t N> struct Usart;
             struct Tca0;
             template<uint8_t N> struct Tcb;
-            
+
+            template<uint8_t N> struct TcaCntA;
+            template<uint8_t N> struct TcaCntB;
+            template<uint8_t N> struct TcbCapt;
+            template<uint8_t N> struct TcbCount;
+                        
             namespace detail {
                 template<typename U, typename MCU = DefaultMcuType> struct user_to_index;
                 
@@ -258,7 +269,37 @@ namespace AVR {
 
                 template<AVR::Concepts::AtTiny1 MCU> struct user_to_index<Tcb<0>, MCU> : std::integral_constant<uint8_t, 0>{};
                 template<AVR::Concepts::AtTiny1 MCU> struct user_to_index<Tcb<1>, MCU> : std::integral_constant<uint8_t, 11>{};
-            
+
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<Lut<0, A>, MCU> : std::integral_constant<uint8_t, 0>{};
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<Lut<0, B>, MCU> : std::integral_constant<uint8_t, 1>{};
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<Lut<1, A>, MCU> : std::integral_constant<uint8_t, 2>{};
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<Lut<1, B>, MCU> : std::integral_constant<uint8_t, 3>{};
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<Lut<2, A>, MCU> : std::integral_constant<uint8_t, 4>{};
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<Lut<2, B>, MCU> : std::integral_constant<uint8_t, 5>{};
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<Lut<3, A>, MCU> : std::integral_constant<uint8_t, 6>{};
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<Lut<3, B>, MCU> : std::integral_constant<uint8_t, 7>{};
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<Adc0, MCU> : std::integral_constant<uint8_t,     12>{};
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<EvOut<A>, MCU> : std::integral_constant<uint8_t, 13>{};
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<EvOut<B>, MCU> : std::integral_constant<uint8_t, 14>{};
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<EvOut<C>, MCU> : std::integral_constant<uint8_t, 15>{};
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<EvOut<D>, MCU> : std::integral_constant<uint8_t, 16>{};
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<EvOut<E>, MCU> : std::integral_constant<uint8_t, 17>{};
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<EvOut<F>, MCU> : std::integral_constant<uint8_t, 18>{};
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<Usart<0>, MCU> : std::integral_constant<uint8_t, 20>{};
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<Usart<1>, MCU> : std::integral_constant<uint8_t, 21>{};
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<Usart<2>, MCU> : std::integral_constant<uint8_t, 22>{};
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<Usart<3>, MCU> : std::integral_constant<uint8_t, 23>{};
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<TcaCntA<0>, MCU> : std::integral_constant<uint8_t, 26>{};
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<TcaCntB<0>, MCU> : std::integral_constant<uint8_t, 27>{};
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<TcbCapt<0>, MCU> : std::integral_constant<uint8_t, 30>{};
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<TcbCount<0>, MCU> : std::integral_constant<uint8_t, 31>{};
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<TcbCapt<1>, MCU> : std::integral_constant<uint8_t, 32>{};
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<TcbCount<1>, MCU> : std::integral_constant<uint8_t, 33>{};
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<TcbCapt<2>, MCU> : std::integral_constant<uint8_t, 34>{};
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<TcbCount<2>, MCU> : std::integral_constant<uint8_t, 35>{};
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<TcbCapt<3>, MCU> : std::integral_constant<uint8_t, 36>{};
+                template<AVR::Concepts::AtDa32 MCU> struct user_to_index<TcbCount<3>, MCU> : std::integral_constant<uint8_t, 37>{};
+                
             
             }
         }   
@@ -285,6 +326,25 @@ namespace AVR {
                 mcu_evsys()->channels[Number].template set<gen_code>();
             }    
         };
+
+        template<uint8_t Number, typename Generator, AVR::Concepts::AtDa32 MCU>
+        requires(Number < 8)
+        struct Channel<Number, Generator, MCU> {
+            template<typename Channels, typename Routes, typename > friend struct Router;
+            
+            using number_type = std::integral_constant<uint8_t, Number>;
+            using generator_type = Generator;
+
+            private:
+            inline static constexpr auto gen_code = detail::map_generator<generator_type, number_type>::value;
+
+            static constexpr auto mcu_evsys = getBaseAddr<typename MCU::Events>;
+            
+            inline static void setup() {
+                mcu_evsys()->channels[Number].template set<gen_code>();
+            }    
+        };
+
         template<uint8_t Number, typename Generator, AVR::Concepts::AtTiny1 MCU>
         requires(Number < 6)
         struct Channel<Number, Generator, MCU> {
@@ -332,6 +392,26 @@ namespace AVR {
                 mcu_evsys()->users[userNumber].template set<typename MCU::Events::Channel_t{channel_number_type::value + 1}>();
             }
         };
+
+        template<typename C, typename User, AVR::Concepts::AtDa32 MCU>
+        requires requires(C){typename C::generator_type;}
+        struct Route<C, User, MCU> {
+            template<typename Channels, typename Routes, typename> friend struct Router;
+            using channel_number_type = typename C::number_type;
+            static_assert(channel_number_type::value < 8, "wrong channel");
+            
+            inline static constexpr uint8_t userNumber = Users::detail::user_to_index<User>::value;
+            
+        private:
+            static constexpr auto mcu_evsys = getBaseAddr<typename MCU::Events>;
+            static_assert(userNumber < std::tuple_size<decltype(MCU::Events::users)>::value, "wrong user index");
+
+            inline static void setup() {
+                mcu_evsys()->users[userNumber].template set<typename MCU::Events::Channel_t{channel_number_type::value + 1}>();
+            }
+        };
+        
+        
         template<typename C, typename User, AVR::Concepts::AtTiny1 MCU>
         requires requires(C){typename C::generator_type;}
         struct Route<C, User, MCU> {
@@ -399,6 +479,40 @@ namespace AVR {
             }
         };
 
+        template<typename Channels, typename Routes, AVR::Concepts::AtDa32 MCU>
+        struct Router<Channels, Routes, MCU> {
+            static_assert(Meta::size_v<Channels> < 8, "too much channels");
+            static_assert(Meta::size_v<Routes> < 24, "too much users");
+            static_assert(Meta::is_set_v<Routes>, "duplicate route");
+            static_assert(Meta::is_set_v<Channels>, "duplicate channel");
+            
+            template<typename C>
+            struct get_channel_t {
+                using type = typename C::number_type;  
+            };
+            using channel_number_list = Meta::transform_type<get_channel_t, Channels>;
+//            channel_number_list::_;
+            static_assert(Meta::is_set_v<channel_number_list>, "duplicate channels in generation definition");
+            
+            inline static void init() {
+                []<typename... C>(Meta::List<C...>){
+                    (C::setup(), ...);
+                }(Channels{});
+                []<typename... R>(Meta::List<R...>){
+                    (R::setup(), ...);
+                }(Routes{});
+            }
+            
+            static constexpr auto mcu_evsys = getBaseAddr<typename MCU::Events>;
+
+            template<uint8_t N>
+            inline static void strobe() {
+                static_assert(N < 8, "wrong channel, must be 0 to 7");
+                constexpr auto code = typename MCU::Events::Strobe_t{1 << N};
+                mcu_evsys()->strobe.template set<code>();
+            }
+        };
+        
         template<typename Channels, typename Routes, AVR::Concepts::AtTiny1 MCU>
         struct Router<Channels, Routes, MCU> {
             static_assert(Meta::size_v<Channels> < 6, "too much channels");

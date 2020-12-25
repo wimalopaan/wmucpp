@@ -693,7 +693,7 @@ namespace AVR {
             }
         };
         
-        template<typename P, AVR::Concepts::At01Series MCU>
+        template<typename P, AVR::Concepts::At01DxSeries MCU>
         struct DynamicPwm<Portmux::Position<Component::Tca<0>, P>, MCU> final {
             
             using all_channels = Meta::List<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>;

@@ -23,7 +23,7 @@ namespace AVR {
              typename MCU = DefaultMcuType> struct Spi;
     
     template<AVR::Concepts::ComponentPosition CP, etl::Concepts::NamedConstant Size, 
-             etl::Concepts::NamedFlag useISR, AVR::Concepts::At01Series MCU>
+             etl::Concepts::NamedFlag useISR, AVR::Concepts::At01DxSeries MCU>
     struct Spi<CP, Size, useISR, MCU> final {
         static inline constexpr auto N = CP::component_type::value;
 

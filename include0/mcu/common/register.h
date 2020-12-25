@@ -265,7 +265,7 @@ namespace AVR {
     };
 
 
-    template<typename Component, typename... BitTypes, typename ValueType, AVR::Concepts::At01Series MCU>
+    template<typename Component, typename... BitTypes, typename ValueType, AVR::Concepts::At01DxSeries MCU>
     struct ControlRegister<Component, Meta::List<BitTypes...>, ValueType, MCU> final {
         using component_type = Component;
         using value_type = ValueType;    

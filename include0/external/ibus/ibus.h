@@ -1022,7 +1022,7 @@ namespace IBus {
              etl::Concepts::NamedFlag useLoss,
              etl::Concepts::NamedFlag useStats,
              typename Debug, 
-             AVR::Concepts::At01Series MCU>
+             AVR::Concepts::At01DxSeries MCU>
     struct Sensor<CNumber, Uart, Baud, Meta::List<Providers...>, Clock, DaisyChainEnable, useLoss, useStats, Debug, MCU> final {
         struct NoDebug {
             static inline void init() {}
