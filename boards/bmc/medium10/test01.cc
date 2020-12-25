@@ -1,5 +1,5 @@
 //#define NDEBUG
-
+ 
 #define USE_IBUS
 
 //#define USE_SBUS
@@ -192,6 +192,18 @@ struct EscFsm {
         std::swap(e, mEvent);
         return e;
     }
+    inline static bool isThrottleValid() {
+        return !!mThrottle;
+    }
+    inline static bool isThrottleForward() {
+        return mThrottle && (mThrottle.toInt() >= thrStartForward);
+    }
+    inline static bool isThrottleBackward() {
+        return mThrottle && (mThrottle.toInt() <= thrStartBackward);
+    }
+    inline static bool isThrottleOn() {
+        return isThrottleBackward() || isThrottleForward();
+    }
     inline static void ratePeriodic() {
         mThrottle = PA::value(0);
         ++mStateTicks;
@@ -303,14 +315,13 @@ template<typename Timer, typename Servo, typename Led, typename Esc,
          typename Term = void>
 struct GlobalFsm {
     using TermDev = Term::device_type;
-    using ServoPa = Servo::protocoll_adapter_type;
     
-    enum class State : uint8_t {Undefined, Init, SignalWait, Run};
+    enum class State : uint8_t {Undefined, Init, SignalWait, CheckStart, Run};
     
     static constexpr External::Tick<Timer> startupTicks{100_ms};
     static constexpr External::Tick<Timer> initTicks{500_ms};
     static constexpr External::Tick<Timer> debugTicks{500_ms};
-    static constexpr External::Tick<Timer> resetTicks{500_ms};
+    static constexpr External::Tick<Timer> resetTicks{2000_ms};
     static constexpr External::Tick<Timer> learnTimeoutTicks{4000_ms};
     
     inline static void init() {
@@ -325,7 +336,7 @@ struct GlobalFsm {
         }
         Led::init();
         Esc::init();
-
+ 
         //    lut1::init(std::byte{0xcc}); // route TXD to lut1-out no-inv
         //    lut1::init(std::byte{0x33}); // route TXD to lut1-out inv
         Lut::init(std::byte{0x00}); 
@@ -334,6 +345,8 @@ struct GlobalFsm {
         
         Adc::template init<true>(); // pullups
         Adc::mcu_adc_type::nsamples(6);
+        
+        Rpm::init();
     }
     inline static void periodic() {
         Servo::periodic();
@@ -361,8 +374,13 @@ struct GlobalFsm {
             });
             break;
         case State::SignalWait:
-            if (const auto tv = ServoPa::value(0); tv) {
-                mState = State::Run;
+            if (Esc::isThrottleValid()) {
+                mState = State::CheckStart;
+            }
+            break;
+        case State::CheckStart:
+            if (!(Esc::isThrottleForward() || Esc::isThrottleBackward())) {
+                    mState = State::Run;
             }
             break;
         case State::Run:
@@ -385,6 +403,10 @@ struct GlobalFsm {
                 etl::outl<Term>("sigw"_pgm);
                 led(yellow);
                 break;
+            case State::CheckStart:
+                etl::outl<Term>("check"_pgm);
+                led(magenta);
+                break;
             case State::Run:
                 etl::outl<Term>("run"_pgm);
                 Esc::event(Esc::Event::Start);
@@ -395,7 +417,8 @@ struct GlobalFsm {
     }
 private:
     static inline void debug() {
-        etl::outl<Term>("t: "_pgm, Esc::mThrottle.toInt(), " s: "_pgm, (uint8_t)Esc::mState);
+        etl::outl<Term>("t: "_pgm, Esc::mThrottle.toInt(), " s: "_pgm, (uint8_t)Esc::mState, 
+                        " r: "_pgm, Rpm::value(), " o: "_pgm, Rpm::overflows());
     }
     
     using Crgb = External::Crgb;
@@ -430,6 +453,10 @@ struct VersionProvider {
 using assertPin = Pin<Port<A>, 0>; 
 #endif
 
+using timing0Pin = Pin<Port<D>, 3>; 
+using timing1Pin = Pin<Port<D>, 4>; 
+using timing2Pin = Pin<Port<D>, 5>; 
+
 using daisyChain= Pin<Port<A>, 7>; 
 
 using inh1Pin = Pin<Port<A>, 3>; 
@@ -448,7 +475,7 @@ using usart2Position = Portmux::Position<Component::Usart<2>, Portmux::Default>;
 using ccl1Position = Portmux::Position<Component::Ccl<1>, Portmux::Default>;
 using lut1 = Ccl::SimpleLut<1, Ccl::Input::Mask, Ccl::Input::Usart<1>, Ccl::Input::Mask>;
 
-using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::Default>;
+using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::AltA>;
 
 // WO0: unbenutzt
 // WO1: pwm1
@@ -478,7 +505,7 @@ using led = External::LedStripe<spi, External::APA102, 1>;
 
 using rpmPosition = Portmux::Position<Component::Tcb<0>, Portmux::Default>;
 using rpm = External::Rpm::RpmFreq<void, rpmPosition::component_type>;
-using evch0 = Event::Channel<0, Event::Generators::Pin<rpmPin>>;
+using evch0 = Event::Channel<4, Event::Generators::Pin<rpmPin>>;
 using evuser0  = Event::Route<evch0, Event::Users::Tcb<0>>;
 
 using temp1P = Mcp9700aProvider<adcController, 0>;
@@ -512,12 +539,18 @@ using sensor = IBus::Sensor<usart1Position, AVR::Usart, AVR::BaudRate<115200>,
 //                           , etl::NamedFlag<true>
 >;
 
+using evrouter = Event::Router<Event::Channels<evch0>, Event::Routes<evuser0>>;
+
 using escfsm = EscFsm<systemTimer, pwm, servo_pa>;
 using gfsm = GlobalFsm<systemTimer, servo, led, escfsm, sensor, lut1, adcController, rpm, terminal>;
 
 using portmux = Portmux::StaticMapper<Meta::List<spiPosition, ccl1Position, tcaPosition, usart1Position, usart2Position, rpmPosition>>;
 
 int main() {
+    timing0Pin::dir<Output>();
+    timing1Pin::dir<Output>();
+    timing2Pin::dir<Output>();
+    
     portmux::init();
     ccp::unlock([]{
         clock::prescale<1>();
@@ -529,12 +562,15 @@ int main() {
     inh2Pin::dir<Output>();
     inh2Pin::on();
     
+    evrouter::init();
     gfsm::init();
     
     {
         etl::outl<terminal>("test01"_pgm);
         
         while(true) {
+            timing0Pin::toggle();
+            
             gfsm::periodic();
             systemTimer::periodic([&]{
                 gfsm::ratePeriodic();

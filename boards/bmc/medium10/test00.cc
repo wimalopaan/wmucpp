@@ -211,7 +211,7 @@ using usart2Position = Portmux::Position<Component::Usart<2>, Portmux::Default>;
 using ccl1Position = Portmux::Position<Component::Ccl<1>, Portmux::Default>;
 using lut1 = Ccl::SimpleLut<1, Ccl::Input::Mask, Ccl::Input::Usart<1>, Ccl::Input::Mask>;
 
-using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::Default>;
+using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::AltA>;
 
 // WO0: unbenutzt
 // WO1: pwm1
