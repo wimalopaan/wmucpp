@@ -107,7 +107,7 @@ struct InternalTempProvider {
     inline static constexpr void init() {
     }
     inline static constexpr uint16_t value() {
-        return SigRow::template adcValueToTemperature<std::ratio<1,10>, 40 - 15>(ADC::value(channel)).value;
+        return SigRow::template adcValueToTemperature<std::ratio<1,10>, 0>(ADC::value(channel)).value;
     }
 };
 
@@ -353,7 +353,7 @@ struct GlobalFsm {
         Led::periodic();
         Sensor::periodic();
         Adc::periodic();
-        Rpm::periodic();
+//        Rpm::periodic();
     }
     inline static void ratePeriodic() {
         Sensor::ratePeriodic();
@@ -418,7 +418,7 @@ struct GlobalFsm {
 private:
     static inline void debug() {
         etl::outl<Term>("t: "_pgm, Esc::mThrottle.toInt(), " s: "_pgm, (uint8_t)Esc::mState, 
-                        " r: "_pgm, Rpm::value(), " o: "_pgm, Rpm::overflows());
+                        " r: "_pgm, Rpm::value());
     }
     
     using Crgb = External::Crgb;
@@ -497,14 +497,14 @@ using ibt = IBusThrough<daisyChain>;
 
 using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V4_3>;
 // ADC Channels: T1, BecI1, BecI2, V+, Text, T2, Curr
-using adcController = External::Hal::AdcController<adc, Meta::NList<0, 1, 6, 7, 13, 14, 15, 0x1e>>; // 1e = temp
+using adcController = External::Hal::AdcController<adc, Meta::NList<0, 1, 6, 7, 19, 20, 21, 0x42>>; // 42 = temp
 
 using spiPosition = Portmux::Position<Component::Spi<0>, Portmux::Default>;
 using spi = AVR::Spi<spiPosition, AVR::QueueLength<16>,  AVR::UseInterrupts<false>>;
 using led = External::LedStripe<spi, External::APA102, 1>;
 
 using rpmPosition = Portmux::Position<Component::Tcb<0>, Portmux::Default>;
-using rpm = External::Rpm::RpmFreq<void, rpmPosition::component_type>;
+using rpm = External::Rpm::RpmFreq<tcaPosition::component_type, rpmPosition::component_type>;
 using evch0 = Event::Channel<4, Event::Generators::Pin<rpmPin>>;
 using evuser0  = Event::Route<evch0, Event::Users::TcbCapt<0>>;
 
