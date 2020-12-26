@@ -39,7 +39,7 @@ namespace AVR {
         };
         
         using Cpu = AVR::Series0::Cpu;
-        using Clock = AVR::Series0::Clock;
+        using Clock = AVR::SeriesDa::Clock;
         using Rtc = AVR::Series0::Rtc;
         using Usart = AVR::SeriesDa::Usart;
         using PortRegister = AVR::Series0::PortRegister;
@@ -47,11 +47,12 @@ namespace AVR {
         using Portmux= AVR::SeriesDa::Portmux;
         using TCA = AVR::Series0::TCA;
         using TCB = AVR::Series0::TCB;
+        using TCD = AVR::Series1::TCD;
         using Ccl = AVR::SeriesDa::Ccl;
         using Events = AVR::SeriesDa::Events;
         using Adc = AVR::Series0::Adc;
         using AdComparator = AVR::Series0::AdComparator;
-        using Vref = AVR::Series0::Vref;
+        using Vref = AVR::SeriesDa::Vref;
         using Sleep = AVR::Series0::Sleep;
         using SigRow = AVR::SeriesDa::SigRow;
         using Spi = AVR::Series0::Spi;
@@ -64,9 +65,10 @@ namespace AVR {
 
 namespace AVR {
     template<> struct AVR::Component::Count<Avr128da32::Gpior> : std::integral_constant<uint8_t, 4> {};
-    template<> struct AVR::Component::Count<Avr128da32::Usart> : std::integral_constant<uint8_t, 4> {};
+    template<> struct AVR::Component::Count<Avr128da32::Usart> : std::integral_constant<uint8_t, 3> {};
     template<> struct AVR::Component::Count<Avr128da32::TCA> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<Avr128da32::TCB> : std::integral_constant<uint8_t, 4> {};
+    template<> struct AVR::Component::Count<Avr128da32::TCD> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<Avr128da32::Rtc> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<Avr128da32::PortRegister> : std::integral_constant<uint8_t, 6> {};
     template<> struct AVR::Component::Count<Avr128da32::VPort> : std::integral_constant<uint8_t, 6> {};

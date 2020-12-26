@@ -8,10 +8,15 @@ F_OSC = 20000000
 subdirs =
 
 test02.hex : MCU = avr128da32
+test02.hex : F_OSC = 24000000
+
+test10.hex : MCU = avr128da32
+test10.hex : F_OSC = 32000000
 
 targets += test00.elf test00.hex
 targets += test01.elf test01.hex
 targets += test02.hex
+targets += test10.hex
 
 -include ../../../Makefile.avr0.include
 

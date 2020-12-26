@@ -27,8 +27,27 @@ namespace AVR {
     template<typename MCU = DefaultMcuType>
     struct Clock;
     
-    template<AVR::Concepts::At01DxSeries MCU>
+    template<AVR::Concepts::AtDxSeries MCU>
     struct Clock<MCU> {
+        using ca_t = typename MCU::Clock::OscHFCtrlA_t;
+        
+        static inline constexpr auto mcu_clock = getBaseAddr<typename MCU::Clock>;
+        static inline constexpr auto prescaler_values = MCU::Clock::prescalerValues;
+        
+        template<uint8_t P>
+        static inline constexpr void prescale() {
+            constexpr auto p = AVR::Util::Timer::bitsFrom<P>(prescaler_values);
+            mcu_clock()->mclkctrlb.set(p);
+        }
+        template<uint8_t F>
+        static inline constexpr void init() {
+            mcu_clock()->oschfctrla.template set<ca_t::f_32mhz>();            
+        }
+    };
+    
+    template<AVR::Concepts::At01Series MCU>
+    struct Clock<MCU> {
+        
         static inline constexpr auto mcu_clock = getBaseAddr<typename MCU::Clock>;
         static inline constexpr auto prescaler_values = MCU::Clock::prescalerValues;
         

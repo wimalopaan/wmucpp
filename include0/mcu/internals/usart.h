@@ -168,7 +168,7 @@ namespace AVR {
             
             if constexpr (Baud::value > 100000) {
                 constexpr auto ubrr = ubrrValue2(Config::fMcu.value, Baud::value); 
-//                using u = std::integral_constant<uint16_t, ubrr>;
+                using u = std::integral_constant<uint16_t, ubrr>;
 //                u::_;
                 mcu_usart()->ucsra.template add<ucsra_type::u2x>();
                 if constexpr(AVR::Groups::isAtMega_8<MCU>::value) {

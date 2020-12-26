@@ -6,7 +6,7 @@
 //#define USE_SPORT
 
 #define LEARN_DOWN
-
+ 
 #include <mcu/avr.h>
 #include <mcu/common/delay.h>
 
@@ -370,7 +370,7 @@ struct GlobalFsm {
             break;
         case State::Init:
             mStateTick.on(initTicks, []{
-                mState = State::SignalWait;
+                mState = State::Run;
             });
             break;
         case State::SignalWait:
@@ -553,6 +553,9 @@ int main() {
     
     portmux::init();
     ccp::unlock([]{
+        clock::init<32>();
+    });
+    ccp::unlock([]{
         clock::prescale<1>();
     });
     systemTimer::init();
@@ -566,7 +569,7 @@ int main() {
     gfsm::init();
     
     {
-        etl::outl<terminal>("test02"_pgm);
+        etl::outl<terminal>("test10"_pgm);
         
         while(true) {
             timing0Pin::toggle();

@@ -21,30 +21,31 @@
 #include <cstdint>
 #include <std/utility>
 
-#include "components/cpu.h"
-#include "components/clock_da32.h"
-#include "components/rtc.h"
-#include "components/cclda4.h"
-#include "components/port0.h"
-#include "components/portmux_da32.h"
-#include "components/tca.h"
-#include "components/tcb.h"
-#include "components/tcd.h"
-#include "components/usart_da.h"
-#include "components/event0.h"
-#include "components/event1.h"
-#include "components/event_da32.h"
-#include "components/adc.h"
-#include "components/vref_da32.h"
-#include "components/sleep.h"
-#include "components/adcomparator.h"
-#include "components/sigrow_da32.h"
-#include "components/spi.h"
-#include "components/gpior.h"
-
-#include "components/bitmask_operators_da.h"
-
 namespace AVR {
     namespace SeriesDa {
+        struct Vref {
+            enum class VRef_t : uint8_t { 
+                V1024  = 0x00,
+                V2048  = 0x01,
+                V4096  = 0x02,
+                V2500  = 0x03,
+                Vdd    = 0x05,
+                Vext   = 0x06,
+                on     = 0x80
+            };
+            
+            ControlRegister<Vref, VRef_t> adc0ref;
+
+            volatile const std::byte reserved1;
+            
+            ControlRegister<Vref, VRef_t> dac0ref;
+
+            volatile const std::byte reserved2;
+            
+            ControlRegister<Vref, VRef_t> acref;
+
+            static inline constexpr uintptr_t address = 0x00a0;
+            
+        };
     }
 }

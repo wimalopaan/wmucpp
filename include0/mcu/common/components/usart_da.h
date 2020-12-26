@@ -24,8 +24,6 @@
 namespace AVR {
     namespace SeriesDa {
         struct Usart {
-//            static constexpr const uint8_t count = 4;
-            
             DataRegister<Usart, ReadOnly, std::byte> rxd;
             
             enum class RxDataH_t : uint8_t {

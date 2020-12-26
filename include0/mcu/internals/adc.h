@@ -60,6 +60,15 @@ namespace AVR {
         struct V4_3 {
             inline static constexpr double value = 4.3;
         };
+        struct V1_024 {
+            inline static constexpr double value = 1.024;
+        };
+        struct V2_048 {
+            inline static constexpr double value = 2.048;
+        };
+        struct V4_096 {
+            inline static constexpr double value = 4.096;
+        };
         namespace detail {
             template<typename V> struct isVref : std::false_type {};
             template<> struct isVref<V0_55> : std::true_type {};
@@ -67,6 +76,9 @@ namespace AVR {
             template<> struct isVref<V1_5> : std::true_type {};
             template<> struct isVref<V2_5> : std::true_type {};
             template<> struct isVref<V4_3> : std::true_type {};
+            template<> struct isVref<V1_024> : std::true_type {};
+            template<> struct isVref<V2_048> : std::true_type {};
+            template<> struct isVref<V4_096> : std::true_type {};
         }
     }
     
@@ -99,7 +111,7 @@ namespace AVR {
     class Adc;
 
     template<AVR::Concepts::ComponentNumber CN, typename Reso, typename VRefType, AVR::Concepts::AtDa32 MCU>
-    requires ((CN::value <= 1) && (Vref::detail::isVref<VRefType>::value))
+    requires ((CN::value == 0) && (Vref::detail::isVref<VRefType>::value))
     class Adc<CN, Reso, VRefType, MCU> final {
         inline static constexpr uint8_t number = CN::value;
         static inline constexpr auto mcu_adc  = AVR::getBaseAddr<typename MCU::Adc, number>;
@@ -112,9 +124,8 @@ namespace AVR {
         using co_t = typename MCU::Adc::Command_t;
         using int_t = typename MCU::Adc::IntCtrl_t;
         
-        using va1_t = typename MCU::Vref::CtrlA1_t;
-        using va2_t = typename MCU::Vref::CtrlA2_t;
-        using vb_t = typename MCU::Vref::CtrlB_t;
+        using ref_t = typename MCU::Vref::VRef_t;
+//        using vb_t = typename MCU::Vref::CtrlB_t;
     public:
         using reso_type = Reso;
         using value_type = typename Reso::type;
@@ -127,68 +138,24 @@ namespace AVR {
         template<typename V>
         requires (Vref::detail::isVref<V>::value)
         inline static void set() {
-            if constexpr(AVR::Groups::isAtMega0<MCU>::value) {
-                if constexpr(std::is_same_v<V, Vref::V1_1>) {
-                    mcu_vref()->ctrla.template set<va1_t::adc_V1_1>();           
+            if constexpr(AVR::Groups::isAtDa32<MCU>::value) {
+                if constexpr(std::is_same_v<V, Vref::V1_024>) {
+                    mcu_vref()->adc0ref.template set<ref_t::V1024>();           
                 }
-                else if constexpr(std::is_same_v<V, Vref::V1_5>) {
-                    mcu_vref()->ctrla.template set<va1_t::adc_V1_5>();           
+                else if constexpr(std::is_same_v<V, Vref::V2_048>) {
+                    mcu_vref()->adc0ref.template set<ref_t::V2048>();           
+                }
+                else if constexpr(std::is_same_v<V, Vref::V4_096>) {
+                    mcu_vref()->adc0ref.template set<ref_t::V4096>();           
+//                    V::_;
                 }
                 else if constexpr(std::is_same_v<V, Vref::V2_5>) {
-                    mcu_vref()->ctrla.template set<va1_t::adc_V2_5>();           
-                }
-                else if constexpr(std::is_same_v<V, Vref::V4_3>) {
-                    mcu_vref()->ctrla.template set<va1_t::adc_V4_3>();           
+                    mcu_vref()->adc0ref.template set<ref_t::V2_5>();           
                 } 
                 else {
-                    static_assert(std::false_v<V>, "wrong VRef selection");
+//                    static_assert(std::false_v<V>, "wrong VRef selection");
                 }
-                mcu_vref()->ctrlb.template set<vb_t::adc_refen>();           
-            }
-            else if constexpr(AVR::Groups::isAtTiny1<MCU>::value) {
-                if constexpr(CN::value == 0) {
-                    if constexpr(std::is_same_v<V, Vref::V1_1>) {
-                        mcu_vref()->ctrla.template setPartial(va1_t::adc0_V1_1);           
-                    }
-                    else if constexpr(std::is_same_v<V, Vref::V1_5>) {
-                        mcu_vref()->ctrla.template setPartial(va1_t::adc0_V1_5);           
-                    }
-                    else if constexpr(std::is_same_v<V, Vref::V2_5>) {
-                        mcu_vref()->ctrla.template setPartial(va1_t::adc0_V2_5);           
-                    }
-                    else if constexpr(std::is_same_v<V, Vref::V4_3>) {
-                        mcu_vref()->ctrla.template setPartial(va1_t::adc0_V4_3);           
-                    } 
-                    else {
-                        static_assert(std::false_v<V>, "wrong VRef selection");
-                    }
-                    mcu_vref()->ctrlb.template add<vb_t::adc0_refen>();           
-                }
-                else if constexpr(CN::value == 1) {
-                    using vc1_t = typename MCU::Vref::CtrlC1_t; // only attiny1
-                    if constexpr(std::is_same_v<V, Vref::V0_55>) {
-                        mcu_vref()->ctrlc.template setPartial(vc1_t::adc1_V0_55);           
-                    }
-                    else if constexpr(std::is_same_v<V, Vref::V1_1>) {
-                        mcu_vref()->ctrlc.template setPartial(vc1_t::adc1_V1_1);           
-                    }
-                    else if constexpr(std::is_same_v<V, Vref::V1_5>) {
-                        mcu_vref()->ctrlc.template setPartial(vc1_t::adc1_V1_5);           
-                    }
-                    else if constexpr(std::is_same_v<V, Vref::V2_5>) {
-                        mcu_vref()->ctrlc.template setPartial(vc1_t::adc1_V2_5);           
-                    }
-                    else if constexpr(std::is_same_v<V, Vref::V4_3>) {
-                        mcu_vref()->ctrlc.template add<vc1_t::adc1_V4_3>();           
-                    } 
-                    else {
-                        static_assert(std::false_v<V>, "wrong VRef selection");
-                    }
-                    mcu_vref()->ctrlb.template add<vb_t::adc1_refen>();           
-                }
-                else {
-                    static_assert(std::false_v<V>);
-                }
+                mcu_vref()->adc0ref.template add<ref_t::on>();           
             }
             else {
                 static_assert(std::false_v<V>);
@@ -198,11 +165,11 @@ namespace AVR {
         template<bool On>
         inline static void enable() {
             if constexpr(On) {
-                if constexpr(std::is_same_v<Reso, Resolution<8>>) {
-                    mcu_adc()->ctrla.template set<ca_t::ressel | ca_t::enable>();           
+                if constexpr(std::is_same_v<Reso, Resolution<10>>) {
+                    mcu_adc()->ctrla.template add<ca_t::enable>();           
                 }
-                else if constexpr(std::is_same_v<Reso, Resolution<10>>) {
-                    mcu_adc()->ctrla.template set<ca_t::enable>();           
+                else if constexpr(std::is_same_v<Reso, Resolution<12>>) {
+                    mcu_adc()->ctrla.template add<ca_t::enable>();           
                 }
                 else {
                     static_assert(std::false_v<Reso>, "wrong resolution");
@@ -216,12 +183,8 @@ namespace AVR {
         inline static void init() {
             set<VRefType>();
 
-            if constexpr(CN::value == 0) {
-                mcu_adc()->ctrlc.template set<cc_t::samcap | cc_t::div256 | cc_t::ref_internal>();           
-            }
-            if constexpr(CN::value == 1) {
-                mcu_adc()->ctrlc.template set<cc_t::samcap | cc_t::div256 | cc_t::ref_internal>();           
-            }
+//            mcu_adc()->ctrla.template set<cc_t::samcap | cc_t::div256 | cc_t::ref_internal>();           
+            mcu_adc()->ctrlc.template set<cc_t::samcap | cc_t::div256 | cc_t::ref_internal>();           
 
             enable<true>();            
         }

@@ -15,7 +15,7 @@ namespace Project {
         inline static constexpr megahertz fMcuMhz {F_CPU / 1000000};
         inline static constexpr hertz fMcu{F_CPU};
     
-        static_assert(fMcuMhz.value <= 20, "F_CPU too high");
+        static_assert(fMcuMhz.value <= 32, "F_CPU too high");
         static_assert(fMcuMhz.value >=  1, "F_CPU too low");
 
         inline static constexpr hertz fRtc{32768};
