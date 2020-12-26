@@ -37,7 +37,7 @@
 #include "components/vref.h"
 #include "components/sleep.h"
 #include "components/adcomparator.h"
-#include "components/sigrow.h"
+#include "components/sigrow_da32.h"
 #include "components/spi.h"
 #include "components/gpior.h"
 

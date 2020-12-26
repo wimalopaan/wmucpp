@@ -53,7 +53,7 @@ namespace AVR {
         using AdComparator = AVR::Series0::AdComparator;
         using Vref = AVR::Series0::Vref;
         using Sleep = AVR::Series0::Sleep;
-        using SigRow = AVR::Series0::SigRow;
+        using SigRow = AVR::SeriesDa::SigRow;
         using Spi = AVR::Series0::Spi;
         using Gpior = AVR::Series0::GPIOR;
         

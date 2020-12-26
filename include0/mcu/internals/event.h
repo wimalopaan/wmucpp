@@ -205,7 +205,7 @@ namespace AVR {
             };
 
             template<uint8_t N, uint8_t C, AVR::Concepts::AtDa32 MCU>  requires((C == 4) || (C == 5)) struct map_generator<Generators::Pin<AVR::Pin<AVR::Port<AVR::F>, N>>, std::integral_constant<uint8_t, C>, MCU> {
-                inline static constexpr auto value = AVR::Series0::Events::Generator_t{uint8_t(AVR::Series0::Events::Generator_t::port1_pin0) + N};
+                inline static constexpr auto value = AVR::SeriesDa::Events::Generator_t{uint8_t(AVR::SeriesDa::Events::Generator_t::port1_pin0) + N};
             };
             
             

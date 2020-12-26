@@ -27,6 +27,40 @@
 namespace AVR {
     template<typename MCU = DefaultMcuType>
     struct SigRow;
+
+    template<AVR::Concepts::AtDxSeries MCU>
+    struct SigRow<MCU> {
+        static inline constexpr auto mcu_sigrow = getBaseAddr<typename MCU::SigRow>;
+        
+        static inline constexpr External::Units::celsius<uint16_t, std::ratio<1,1>> adcValueToTemperature(const etl::uint_ranged<uint16_t, 0, 4095>& v) {
+            uint16_t offset = *mcu_sigrow()->tempSense1;
+            uint16_t gain   = *mcu_sigrow()->tempSense0;
+            
+            uint32_t t = v.toInt() - offset;
+            t *= gain;
+            t += 0x8000;
+            t >>= 12;
+            t -= 273;
+            return {uint16_t(t)};
+        }
+        template<typename R, uint8_t Offset>
+        static inline constexpr External::Units::celsius<uint16_t, R> adcValueToTemperature(const etl::uint_ranged<uint16_t, 0, 4095>& v) {
+            constexpr uint16_t divider = 4096 / R::denom;
+//            std::integral_constant<uint16_t, divider>::_;
+            constexpr uint16_t offset1  = (273 - Offset) * R::denom;
+            
+            uint16_t offset = *mcu_sigrow()->tempSense1;
+            uint16_t gain   = *mcu_sigrow()->tempSense0;
+            
+            uint32_t t = v.toInt() - offset;
+            t *= gain;
+            t += 0x8000;
+            t /= divider;
+            t -= offset1;
+            return {uint16_t(t)};
+        }
+    };
+
     
     template<AVR::Concepts::At01Series MCU>
     struct SigRow<MCU> {

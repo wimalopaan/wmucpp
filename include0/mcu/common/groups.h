@@ -8,6 +8,21 @@ namespace AVR {
         template<typename NumberType, typename MMCU = DefaultMcuType>
         struct ChannelPinMapper;
 
+        template<auto V, AVR::Concepts::AtDa32 MMCU>
+        requires(V < 8)
+        struct ChannelPinMapper<std::integral_constant<decltype(V), V>, MMCU> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::D>, V>;  
+        };
+        template<auto V, AVR::Concepts::AtDa32 MMCU>
+        requires((V >= 16) && (V <= 21))
+        struct ChannelPinMapper<std::integral_constant<decltype(V), V>, MMCU> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::F>, V - 16>;  
+        };
+        template<AVR::Concepts::AtDa32 MMCU>
+        struct ChannelPinMapper<std::integral_constant<decltype(0x42), 0x42>, MMCU> {
+            using pin_type = void;
+        };
+        
         template<auto V, AVR::Concepts::AtMega0 MMCU>
         requires(V < 8)
         struct ChannelPinMapper<std::integral_constant<decltype(V), V>, MMCU> {

@@ -1590,6 +1590,7 @@ include0/mcu/common/components/bitmask_operators_da.h
 include0/mcu/common/components/cclda4.h
 include0/mcu/common/components/event_da32.h
 include0/mcu/common/components/portmux_da32.h
+include0/mcu/common/components/sigrow_da32.h
 include0/mcu/common/components/usart_da.h
 include0/mcu/common/components_da32.h
 include0/std/bit
