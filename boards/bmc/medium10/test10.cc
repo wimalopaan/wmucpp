@@ -370,7 +370,7 @@ struct GlobalFsm {
             break;
         case State::Init:
             mStateTick.on(initTicks, []{
-                mState = State::Run;
+                mState = State::SignalWait;
             });
             break;
         case State::SignalWait:
@@ -417,10 +417,9 @@ struct GlobalFsm {
     }
 private:
     static inline void debug() {
-        led(green);
         etl::outl<Term>("t: "_pgm, Esc::mThrottle.toInt(), " s: "_pgm, (uint8_t)Esc::mState, 
-                        " r: "_pgm, Rpm::value());
-        etl::outl<Term>("d: "_pgm, Led::device_type::count());
+                        " r: "_pgm, Rpm::value(), " c: "_pgm, Rpm::captures());
+//        etl::outl<Term>("d: "_pgm, Led::device_type::count());
     }
     
    
@@ -509,20 +508,14 @@ using led = External::LedStripe<spi, External::APA102, 1>;
 using rpmPositionL = Portmux::Position<Component::Tcb<0>, Portmux::Default>;
 using rpmPositionH = Portmux::Position<Component::Tcb<1>, Portmux::Default>;
 
-using evch0 = Event::Channel<4, Event::Generators::Pin<rpmPin>>;
-//using evuser00  = Event::Route<evch0, Event::Users::TcbCapt<0>>;
-//using evuser01  = Event::Route<evch0, Event::Users::TcbCapt<1>>;
-//using evch1 = Event::Channel<0, Event::Generators::TcbOvf<0>>;
-//using evuser1  = Event::Route<evch0, Event::Users::TcbCount<1>>;
+using evch4 = Event::Channel<4, Event::Generators::Pin<rpmPin>>;
 
-//using rpm = External::Rpm::RpmFreq<rpmPositionH::component_type, rpmPositionL::component_type>;
-using rpm = External::Rpm::RpmFreq<evch0, Meta::List<rpmPositionL, rpmPositionH>>;
+using rpm = External::Rpm::RpmFreq<evch4, Meta::List<rpmPositionL, rpmPositionH>>;
 
 using rpmOvfChannel = rpm::overflow_channel<0>;
 using rpmRoutes = rpm::event_routes<rpmOvfChannel>;
 
-//using evrouter = Event::Router<Event::Channels<evch0, evch1>, Event::Routes<evuser00, evuser01, evuser1>>;
-using evrouter = Event::Router<Event::Channels<evch0, rpmOvfChannel>, rpmRoutes::routes>;
+using evrouter = Event::Router<Event::Channels<evch4, rpmOvfChannel>, rpmRoutes::routes>;
 
 using temp1P = Mcp9700aProvider<adcController, 0>;
 using textP  = Mcp9700aProvider<adcController, 4>;
@@ -559,7 +552,7 @@ using sensor = IBus::Sensor<usart1Position, AVR::Usart, AVR::BaudRate<115200>,
 using escfsm = EscFsm<systemTimer, pwm, servo_pa>;
 using gfsm = GlobalFsm<systemTimer, servo, led, escfsm, sensor, lut1, adcController, rpm, terminal>;
 
-using portmux = Portmux::StaticMapper<Meta::List<spiPosition, ccl1Position, tcaPosition, usart1Position, usart2Position, rpmPositionL, rpmPositionL>>;
+using portmux = Portmux::StaticMapper<Meta::List<spiPosition, ccl1Position, tcaPosition, usart1Position, usart2Position, rpmPositionL, rpmPositionH>>;
 
 int main() {
     timing0Pin::dir<Output>();

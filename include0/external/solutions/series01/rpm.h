@@ -24,6 +24,9 @@ namespace External {
             inline static constexpr uint8_t tcb_low_number = RL::component_type::value;
             inline static constexpr uint8_t tcb_high_number = RH::component_type::value;
             
+//            std::integral_constant<uint8_t, tcb_low_number>::_;
+//            std::integral_constant<uint8_t, tcb_high_number>::_;
+            
             using capture_route0 = AVR::Event::Route<InputEventChannel, AVR::Event::Users::TcbCapt<tcb_low_number>>;
             using capture_route1 = AVR::Event::Route<InputEventChannel, AVR::Event::Users::TcbCapt<tcb_high_number>>;
             
@@ -32,20 +35,19 @@ namespace External {
             
             template<typename Channel>
             struct event_routes {
-                using ovfl_route  = AVR::Event::Route<Channel, AVR::Event::Users::TcbCount<1>>;
+                using ovfl_route  = AVR::Event::Route<Channel, AVR::Event::Users::TcbCount<tcb_high_number>>;
                 using routes = AVR::Event::Routes<capture_route0, capture_route1, ovfl_route>;
             };
             
-            
             static inline constexpr auto mcu_tcb0 = AVR::getBaseAddr<typename MCU::TCB, tcb_low_number>;
             static inline constexpr auto mcu_tcb1 = AVR::getBaseAddr<typename MCU::TCB, tcb_high_number>;
-            
+
             using Ctrla_t = MCU::TCB::CtrlA_t;
             using Ctrlb_t = MCU::TCB::CtrlB_t;
             using Ev_t = MCU::TCB::EvCtrl_t;
             using Int_t = MCU::TCB::IntFlags_t;
             
-            inline static constexpr uint16_t prescaler = 1;
+            inline static constexpr uint16_t prescaler = 256;
             inline static constexpr auto fTimer = Project::Config::fMcu / prescaler;
             inline static constexpr auto rpm = fTimer.value * 60;
             inline static constexpr auto cmin = rpm / std::numeric_limits<uint16_t>::max();
@@ -74,13 +76,33 @@ namespace External {
             
             inline static External::Units::RPM value() {
                 if (mcu_tcb0()->intflags.template isSet<Int_t::capt>()) {
-                    const auto c = *mcu_tcb0()->ccmp;
+                    const uint16_t c0 = *mcu_tcb0()->ccmp;
+                    const uint16_t c1 = *mcu_tcb1()->ccmp;
+                    const uint16_t c = (c1 << 8) | (c0 >> 8);
                     last = External::Units::RPM(rpm / c);
                     gotValue = true;
+#ifndef NDEBUG
+                    ++mCaptures;
+#endif
                 }
+#ifndef NDEBUG
+                ++mRequests;
+#endif
                 return External::Units::RPM{last};    
             }
+#ifndef NDEBUG
+            inline static uint16_t captures() {
+                return mCaptures;
+            }
+            inline static uint16_t requests() {
+                return mRequests;
+            }
+#endif
         private:
+#ifndef NDEBUG
+            inline static uint16_t mRequests{};
+            inline static uint16_t mCaptures{};
+#endif
             inline static bool gotValue{false};
             inline static External::Units::RPM last;
         };
