@@ -74,11 +74,15 @@ namespace AVR {
                 }
             }
         }
+#ifndef NDEBUG
         inline static auto count() {
             return counter;
         }
+#endif
     private:
+#ifndef NDEBUG
         inline static uint16_t counter{};
+#endif
         inline static fifo_type mData;
     };
 
