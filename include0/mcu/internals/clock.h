@@ -41,7 +41,15 @@ namespace AVR {
         }
         template<uint8_t F>
         static inline constexpr void init() {
-            mcu_clock()->oschfctrla.template set<ca_t::f_32mhz>();            
+            if constexpr(F == 32) {
+                mcu_clock()->oschfctrla.template set<ca_t::f_32mhz>();            
+            }
+            else if constexpr(F == 24) {
+                mcu_clock()->oschfctrla.template set<ca_t::f_24mhz>();            
+            }
+            else {
+                static_assert(std::false_v<F>);
+            }
         }
     };
     
