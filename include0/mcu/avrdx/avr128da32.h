@@ -107,9 +107,9 @@ namespace AVR {
 
     
     template<> struct Avr128da32::Spi::Address<0> {
-        inline static constexpr uintptr_t value = 0x0900;
+        inline static constexpr uintptr_t value = 0x0940;
     };
-    template<> struct Avr128da32::Spi::Address<01> {
+    template<> struct Avr128da32::Spi::Address<1> {
         inline static constexpr uintptr_t value = 0x0960;
     };
     template<> struct Avr128da32::Adc::Address<0> {
