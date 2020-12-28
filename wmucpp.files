@@ -1593,6 +1593,7 @@ include0/mcu/common/components/clock_da32.h
 include0/mcu/common/components/event_da32.h
 include0/mcu/common/components/portmux_da32.h
 include0/mcu/common/components/sigrow_da32.h
+include0/mcu/common/components/tcb_da32.h
 include0/mcu/common/components/usart_da.h
 include0/mcu/common/components/vref_da32.h
 include0/mcu/common/components_da32.h

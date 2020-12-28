@@ -79,14 +79,14 @@ namespace AVR {
                 tca0_cmp0  = 0x84,           
                 tca0_cmp1  = 0x85,           
                 tca0_cmp2  = 0x86,           
-                tcab0_capt = 0xa0,           
-                tcab0_ovf  = 0xa1,           
-                tcab1_capt = 0xa2,           
-                tcab1_ovf  = 0xa3,           
-                tcab2_capt = 0xa4,           
-                tcab2_ovf  = 0xa5,           
-                tcab3_capt = 0xa6,           
-                tcab3_ovf = 0xa7,           
+                tcb0_capt = 0xa0,           
+                tcb0_ovf  = 0xa1,           
+                tcb1_capt = 0xa2,           
+                tcb1_ovf  = 0xa3,           
+                tcb2_capt = 0xa4,           
+                tcb2_ovf  = 0xa5,           
+                tcb3_capt = 0xa6,           
+                tcb3_ovf = 0xa7,           
             };
             std::array<ControlRegister<Events, Generator_t>, 10> channels;
         
@@ -104,7 +104,7 @@ namespace AVR {
             };
             std::array<ControlRegister<Events, Channel_t>, 54> users;
             
-            static inline constexpr uintptr_t address = 0x0180;
+            static inline constexpr uintptr_t address = 0x0200;
             
         };
         

@@ -168,7 +168,7 @@ private:
     
     static inline etl::uint_ranged_circular<uint8_t, 0, colors_t::size() - 1> dc;
     static inline void debug() {
-        etl::outl<Term>("d: "_pgm, Led::device_type::counter);
+        etl::outl<Term>("d: "_pgm, Led::device_type::count());
         led(color_t{dc});
         ++dc;
     }

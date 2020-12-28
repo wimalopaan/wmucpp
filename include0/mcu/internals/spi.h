@@ -77,8 +77,11 @@ namespace AVR {
                 }
             }
         }
-        inline static uint16_t counter{};
+        inline static auto count() {
+            return counter;
+        }
     private:
+        inline static uint16_t counter{};
         inline static fifo_type mData;
     };
 }

@@ -46,7 +46,7 @@ namespace AVR {
         using VPort = AVR::Series0::VPort;
         using Portmux= AVR::SeriesDa::Portmux;
         using TCA = AVR::Series0::TCA;
-        using TCB = AVR::Series0::TCB;
+        using TCB = AVR::SeriesDa::TCB;
         using TCD = AVR::Series1::TCD;
         using Ccl = AVR::SeriesDa::Ccl;
         using Events = AVR::SeriesDa::Events;
@@ -67,7 +67,7 @@ namespace AVR {
     template<> struct AVR::Component::Count<Avr128da32::Gpior> : std::integral_constant<uint8_t, 4> {};
     template<> struct AVR::Component::Count<Avr128da32::Usart> : std::integral_constant<uint8_t, 3> {};
     template<> struct AVR::Component::Count<Avr128da32::TCA> : std::integral_constant<uint8_t, 1> {};
-    template<> struct AVR::Component::Count<Avr128da32::TCB> : std::integral_constant<uint8_t, 4> {};
+    template<> struct AVR::Component::Count<Avr128da32::TCB> : std::integral_constant<uint8_t, 3> {};
     template<> struct AVR::Component::Count<Avr128da32::TCD> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<Avr128da32::Rtc> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<Avr128da32::PortRegister> : std::integral_constant<uint8_t, 6> {};
@@ -76,7 +76,7 @@ namespace AVR {
     template<> struct AVR::Component::Count<Avr128da32::Ccl> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<Avr128da32::AdComparator> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<Avr128da32::Adc> : std::integral_constant<uint8_t, 1> {};
-    template<> struct AVR::Component::Count<Avr128da32::Spi> : std::integral_constant<uint8_t, 1> {};
+    template<> struct AVR::Component::Count<Avr128da32::Spi> : std::integral_constant<uint8_t, 2> {};
 
     template<uint8_t N>
     struct Avr128da32::Gpior::Address {
@@ -101,16 +101,28 @@ namespace AVR {
     template<> struct Avr128da32::VPort::Address<F> {
         inline static constexpr uintptr_t value = 0x0014;
     };
+//    template<> struct Avr128da32::VPort::Address<G> {
+//        inline static constexpr uintptr_t value = 0x0018;
+//    };
 
     
     template<> struct Avr128da32::Spi::Address<0> {
-        inline static constexpr uintptr_t value = 0x08C0;
+        inline static constexpr uintptr_t value = 0x0900;
+    };
+    template<> struct Avr128da32::Spi::Address<01> {
+        inline static constexpr uintptr_t value = 0x0960;
     };
     template<> struct Avr128da32::Adc::Address<0> {
         inline static constexpr uintptr_t value = 0x0600;
     };
     template<> struct Avr128da32::AdComparator::Address<0> {
         inline static constexpr uintptr_t value = 0x0680;
+    };
+    template<> struct Avr128da32::AdComparator::Address<1> {
+        inline static constexpr uintptr_t value = 0x0688;
+    };
+    template<> struct Avr128da32::AdComparator::Address<2> {
+        inline static constexpr uintptr_t value = 0x0690;
     };
     template<> struct Avr128da32::Usart::Address<0> {
         inline static constexpr uintptr_t value = 0x0800;
@@ -128,16 +140,16 @@ namespace AVR {
         inline static constexpr uintptr_t value = 0x0A00;
     };
     template<> struct Avr128da32::TCB::Address<0> {
-        inline static constexpr uintptr_t value = 0x0A80;
+        inline static constexpr uintptr_t value = 0x0B00;
     };
     template<> struct Avr128da32::TCB::Address<1> {
-        inline static constexpr uintptr_t value = 0x0A90;
+        inline static constexpr uintptr_t value = 0x0B10;
     };
     template<> struct Avr128da32::TCB::Address<2> {
-        inline static constexpr uintptr_t value = 0x0Aa0;
+        inline static constexpr uintptr_t value = 0x0B20;
     };
     template<> struct Avr128da32::TCB::Address<3> {
-        inline static constexpr uintptr_t value = 0x0Ab0;
+        inline static constexpr uintptr_t value = 0x0B30;
     };
     template<> struct Avr128da32::PortRegister::Address<A> {
         inline static constexpr uintptr_t value = 0x0400;

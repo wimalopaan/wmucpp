@@ -49,6 +49,8 @@ namespace AVR {
            template<typename K> struct Spi0;
            template<typename K> struct Tca0;
            template<uint8_t N> struct Tcb;
+           template<uint8_t N> struct TcbCapt;
+           template<uint8_t N> struct TcbOvf;
         }
         
         namespace detail {
@@ -206,6 +208,12 @@ namespace AVR {
 
             template<uint8_t N, uint8_t C, AVR::Concepts::AtDa32 MCU>  requires((C == 4) || (C == 5)) struct map_generator<Generators::Pin<AVR::Pin<AVR::Port<AVR::F>, N>>, std::integral_constant<uint8_t, C>, MCU> {
                 inline static constexpr auto value = AVR::SeriesDa::Events::Generator_t{uint8_t(AVR::SeriesDa::Events::Generator_t::port1_pin0) + N};
+            };
+            template<uint8_t N, AVR::Concepts::AtDa32 MCU> struct map_generator<Generators::TcbOvf<0>, std::integral_constant<uint8_t, N>, MCU> {
+                inline static constexpr auto value = AVR::SeriesDa::Events::Generator_t::tcb0_ovf;
+            };
+            template<uint8_t N, AVR::Concepts::AtDa32 MCU> struct map_generator<Generators::TcbOvf<1>, std::integral_constant<uint8_t, N>, MCU> {
+                inline static constexpr auto value = AVR::SeriesDa::Events::Generator_t::tcb1_ovf;
             };
             
             

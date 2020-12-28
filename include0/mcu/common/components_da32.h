@@ -28,7 +28,7 @@
 #include "components/port0.h"
 #include "components/portmux_da32.h"
 #include "components/tca.h"
-#include "components/tcb.h"
+#include "components/tcb_da32.h"
 #include "components/tcd.h"
 #include "components/usart_da.h"
 #include "components/event0.h"
