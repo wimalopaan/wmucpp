@@ -75,6 +75,9 @@ namespace AVR {
         void inline reset() {
             hwRegister = static_cast<value_type>(F); // clears the bit by writing "1"
         }
+        value_type inline raw() {
+            return hwRegister;
+        }
     private:
         volatile value_type hwRegister;
     };
@@ -334,9 +337,9 @@ namespace AVR {
 //        bool inline isSet() {
 //            return hwRegister & static_cast<value_type>(F);
 //        }
-//        value_type inline raw() {
-//            return hwRegister;
-//        }
+        auto inline raw() {
+            return std::byte{hwRegister};
+        }
 //        BitType inline value() {
 //            return static_cast<BitType>(hwRegister);
 //        }
