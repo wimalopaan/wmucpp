@@ -157,6 +157,7 @@ uint32_t sbusTime = 0;
                         if (b == end_byte) {
                             mState = State::GotEnd;
                             decode();
+                            ++mPackages;
                         }
                         else {
                             mState = State::Undefined;
@@ -165,10 +166,13 @@ uint32_t sbusTime = 0;
                     }
                     return true;
                 }
-                
-//                inline static uint8_t c{};
-                
-//            private:
+                inline static uint16_t packages() {
+                    return mPackages;
+                }
+                inline static void resetStats() {
+                    mPackages = 0;
+                }
+            private:
                 static inline void decode() {
                     mChannels[0]  = (uint16_t) (((mData[0]    | mData[1] << 8))                     & 0x07FF);
                     mChannels[1]  = (uint16_t) ((mData[1]>>3  | mData[2] <<5)                     & 0x07FF);
@@ -187,13 +191,13 @@ uint32_t sbusTime = 0;
                     mChannels[14] = (uint16_t) ((mData[19]>>2 | mData[20]<<6)                     & 0x07FF);
                     mChannels[15] = (uint16_t) ((mData[20]>>5 | mData[21]<<3)                     & 0x07FF);
                 }
-                using MesgType = std::array<uint8_t, 23>;
 
+                using MesgType = std::array<uint8_t, 23>;
                 inline static data_t mChannels;
-                
                 inline static State mState{State::Undefined};
                 inline static MesgType mData; 
                 inline static etl::index_type_t<MesgType> mIndex;
+                inline static uint16_t mPackages{};
             };
         }
         namespace Output {
