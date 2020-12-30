@@ -1,9 +1,11 @@
-#define NDEBUG
+//#define NDEBUG
  
-#define USE_IBUS
+//#define USE_IBUS
   
-//#define USE_SBUS
-//#define USE_SPORT
+#define USE_SBUS
+#ifdef USE_SBUS
+# define USE_SPORT
+#endif
 
 #define LEARN_DOWN
  
@@ -474,7 +476,7 @@ struct EscFsm {
     
     template<typename Term>
     static inline void debug() {
-        etl::outl<Term>("s: "_pgm, (uint8_t)mState, " rs: "_pgm, (uint8_t)mRunState, " p: "_pgm, PWM::max(), " thr: "_pgm, mThrottle.toInt(), " tv: "_pgm, mTv);
+//        etl::outl<Term>("s: "_pgm, (uint8_t)mState, " rs: "_pgm, (uint8_t)mRunState, " p: "_pgm, PWM::max(), " thr: "_pgm, mThrottle.toInt(), " tv: "_pgm, mTv);
     }
     inline static void activate() {
         Meta::visit<InhPinList>([]<typename W>(W) {
@@ -560,6 +562,7 @@ struct GlobalFsm {
     static inline auto& appData = NVM::data();
     
     inline static void init() {
+#ifdef USE_IBUS
         if constexpr (std::is_same_v<Servo, TermDev>) {
             Servo::template init<AVR::BaudRate<115200>>();            
         }
@@ -569,6 +572,20 @@ struct GlobalFsm {
                 TermDev::template init<AVR::BaudRate<9600>>();
             }
         }
+#endif
+#ifdef USE_SBUS
+        if constexpr (std::is_same_v<Servo, TermDev>) {
+            Servo::template init<AVR::BaudRate<100000>, FullDuplex, true, 1>(); // 8E2
+            Servo::rxInvert(true);
+        }
+        else {
+            Servo::template init<AVR::BaudRate<100000>, FullDuplex, true, 1>(); // 8E2
+            Servo::rxInvert(true);
+            if constexpr(!std::is_same_v<TermDev, void>) {
+                TermDev::template init<AVR::BaudRate<9600>>();
+            }
+        }
+#endif
         NVM::init();
         if (!((appData.magic() == 42))) {
             appData.clear();
@@ -578,11 +595,16 @@ struct GlobalFsm {
         blinkLed::init();
         Esc::init(); 
  
-        //    lut1::init(std::byte{0xcc}); // route TXD to lut1-out no-inv
-        //    lut1::init(std::byte{0x33}); // route TXD to lut1-out inv
+#ifdef USE_SPORT
+        Lut::init(std::byte{0x33}); // route TXD to lut1-out no-inv
+        Sensor::init();
+        Sensor::uart::txPinDisable();
+#endif
+#ifdef USE_IBUS
         Lut::init(std::byte{0x00}); 
         Sensor::init();
         Sensor::uart::txOpenDrain();
+#endif
         
         Adc::template init<false>(); // no pullups
         Adc::mcu_adc_type::nsamples(4);
@@ -599,6 +621,9 @@ struct GlobalFsm {
         Adc::periodic();
     }
     inline static void ratePeriodic() {
+#ifdef USE_SBUS
+        pa::ratePeriodic();
+#endif
         blinkLed::ratePeriodic();
         Sensor::ratePeriodic();
         Esc::ratePeriodic();
@@ -826,8 +851,14 @@ using pwm = PWM::DynamicPwm<tcaPosition>;
 
 using systemTimer = SystemTimer<Component::Rtc<0>, fRtc>;
 
+#ifdef USE_IBUS
 using servo_pa = IBus::Servo::ProtocollAdapter<0>;
 using servo = Usart<usart2Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<1024>>;
+#endif
+#ifdef USE_SBUS
+using servo_pa = External::SBus::Servo::ProtocollAdapter<0, systemTimer>;
+using servo = AVR::Usart<usart2Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
+#endif
 
 #ifndef NDEBUG
 using terminal = etl::basic_ostream<servo>;
@@ -890,6 +921,7 @@ using currP = CurrentProvider<currS>;
 
 using rpmP = RpmProvider<rpm>;
 
+#ifdef USE_IBUS
 using sensor = IBus::Sensor<usart1Position, AVR::Usart, AVR::BaudRate<115200>, 
                             Meta::List<VersionProvider, 
                                        temp1P, temp2P, tempiP, textP, 
@@ -898,8 +930,14 @@ using sensor = IBus::Sensor<usart1Position, AVR::Usart, AVR::BaudRate<115200>,
 //                          , etl::NamedFlag<true>
 //                           , etl::NamedFlag<true>
 >;
+#endif
+#ifdef USE_SPORT
+template<typename PA>
+using sensorUsart = AVR::Usart<usart1Position, PA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<64>>;
+using sensor = External::SPort::Sensor<External::SPort::SensorId::ID3, sensorUsart, systemTimer, 
+                                       Meta::List<VersionProvider>>;
+#endif
 
- 
 using escfsm = EscFsm<systemTimer, pwm, Meta::List<inh1Pin, inh2Pin>, servo_pa>;
 
 using eeprom = EEProm::Controller<Data>;
@@ -928,7 +966,7 @@ int main() {
     gfsm::init();
     
     {
-        etl::outl<terminal>("test11"_pgm);
+        etl::outl<terminal>("test12"_pgm);
         
         while(true) {
             timing0Pin::toggle();
