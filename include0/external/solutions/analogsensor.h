@@ -15,9 +15,14 @@ namespace External {
         inline static constexpr double scale = (kd * VRef) / (k * admax);        
         inline static constexpr double offset= (kd * uoff) / k;
         
+//        std::integral_constant<uint16_t, (uint16_t)(k * 1000)>::_;
+//        std::integral_constant<uint16_t, (uint16_t)(kd)>::_;
+        //        std::integral_constant<uint16_t, (uint16_t)(VRef * 1000)>::_;
 //        std::integral_constant<uint16_t, (uint16_t)admax>::_;
 //        std::integral_constant<uint16_t, (uint16_t)(scale * 1000)>::_;
 //        std::integral_constant<uint16_t, (uint16_t)offset>::_;
+        
+//        ADCont::_;
         
         inline static constexpr uint8_t freeBits = etl::numberOfBits<value_type>() - ADCont::mcu_adc_type::reso_type::bits;
 //        std::integral_constant<uint8_t, freeBits>::_;
@@ -44,6 +49,11 @@ namespace External {
         
         inline static constexpr auto channel_n = index_type{Channel};
 
+        template<bool on = false>
+        static inline void pullup() {
+            ADCont::template pullup<Channel, on>();
+        }
+        
         static inline value_type value() {
             uint16_t sv = a * ADCont::value(channel_n) ;
             if (sv >= b) {
@@ -52,6 +62,9 @@ namespace External {
             else {
                 return 0;
             }
+        }
+        static inline ADCont::value_type raw() {
+            return ADCont::value(channel_n);
         }
     };
 

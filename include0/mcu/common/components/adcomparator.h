@@ -66,7 +66,7 @@ namespace AVR {
             
             volatile std::byte reserved2;
             
-            DataRegister<Adc, ReadWrite, uint8_t> dacref;
+            DataRegister<AdComparator, ReadWrite, uint8_t> dacref;
             
             volatile std::byte reserved3;
 

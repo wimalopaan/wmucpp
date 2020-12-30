@@ -30,6 +30,7 @@ namespace AVR {
     template<AVR::Concepts::AtDxSeries MCU>
     struct Clock<MCU> {
         using ca_t = typename MCU::Clock::OscHFCtrlA_t;
+        using cb_t = typename MCU::Clock::MClkCtrlB_t;
         
         static inline constexpr auto mcu_clock = getBaseAddr<typename MCU::Clock>;
         static inline constexpr auto prescaler_values = MCU::Clock::prescalerValues;
@@ -39,17 +40,18 @@ namespace AVR {
             constexpr auto p = AVR::Util::Timer::bitsFrom<P>(prescaler_values);
             mcu_clock()->mclkctrlb.set(p);
         }
-        template<uint8_t F>
+        template<External::Units::megahertz F>
         static inline constexpr void init() {
-            if constexpr(F == 32) {
+            if constexpr(F.value == 32) {
                 mcu_clock()->oschfctrla.template set<ca_t::f_32mhz>();            
             }
-            else if constexpr(F == 24) {
+            else if constexpr(F.value == 24) {
                 mcu_clock()->oschfctrla.template set<ca_t::f_24mhz>();            
             }
             else {
-                static_assert(std::false_v<F>);
+                static_assert(std::false_v<MCU>, "wrong frequency");
             }
+            mcu_clock()->mclkctrlb.set(cb_t{0});
         }
     };
     

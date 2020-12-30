@@ -109,6 +109,7 @@ namespace External {
             inline static constexpr uint8_t channels[] {Channels...};
             inline static constexpr uint8_t NumberOfChannels = sizeof... (Channels);    
             inline static constexpr auto VRef = MCUAdc::VRef;
+            using VRef_type = MCUAdc::VRef_type;
             
             using index_type = etl::uint_ranged_circular<uint8_t, 0, NumberOfChannels - 1>;     
             
@@ -126,6 +127,12 @@ namespace External {
                 }(pin_list{});
                 MCUAdc::init();
                 MCUAdc::channel(channels[0]);
+            }
+            
+            template<uint8_t Ch, bool on = false>
+            inline static void pullup() {
+                using pin = Meta::nth_element<Ch, pin_list>;
+                pin::template pullup<on>();
             }
             
             inline static void periodic() {

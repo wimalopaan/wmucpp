@@ -34,7 +34,7 @@
 #include "components/event0.h"
 #include "components/event1.h"
 #include "components/event_da32.h"
-#include "components/adc.h"
+#include "components/adc_da32.h"
 #include "components/vref_da32.h"
 #include "components/sleep.h"
 #include "components/adcomparator.h"

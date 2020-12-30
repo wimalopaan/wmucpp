@@ -926,7 +926,6 @@ namespace IBus {
                         else {
                             return {};
                         }
-//                        return value_type{(uint8_t(h1) >> 4) + uint8_t(h2) + (uint16_t(h3) << 4)};
                     }
                 }            
                 return value_type{};
@@ -972,6 +971,7 @@ namespace IBus {
                     csum.highByte(b);
                     mState = State::Undefined;
                     if (csum) {
+                        ++mPackagesCounter;
                         if constexpr (!std::is_same_v<Dbg, void>) {
                             Dbg::toggle();
                         }
@@ -982,7 +982,12 @@ namespace IBus {
                 }
                 return true;
             }
-            
+            inline static void resetStats() {
+                mPackagesCounter = 0;
+            }
+            inline static uint16_t packages() {
+                return mPackagesCounter;
+            }
         private:
             using MesgType = std::array<std::byte, 28>;
             
@@ -993,6 +998,7 @@ namespace IBus {
             inline static MesgType* active = &mData0;
             inline static MesgType* inactive = &mData1;
             inline static etl::index_type_t<MesgType> mIndex;
+            inline static uint16_t mPackagesCounter{};
         };
     }
     

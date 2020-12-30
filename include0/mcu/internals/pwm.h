@@ -799,9 +799,11 @@ namespace AVR {
             }
             inline static constexpr void frequency(const uint16_t& f) {
                 *mcu_tca()->perbuf = f;
+                mMax = f;
             }
             inline static constexpr void period(const uint16_t& p) {
                 *mcu_tca()->perbuf = p;
+                mMax = p;
             }
             inline static constexpr value_type max() {
                 return mMax;

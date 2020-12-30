@@ -32,32 +32,52 @@ namespace AVR {
     struct SigRow<MCU> {
         static inline constexpr auto mcu_sigrow = getBaseAddr<typename MCU::SigRow>;
         
+        static inline uint16_t toffset() {
+            return *mcu_sigrow()->tempSense1;
+        }
+        static inline uint16_t tgain() {
+            return *mcu_sigrow()->tempSense0;
+        }
+        
         static inline constexpr External::Units::celsius<uint16_t, std::ratio<1,1>> adcValueToTemperature(const etl::uint_ranged<uint16_t, 0, 4095>& v) {
-            uint16_t offset = *mcu_sigrow()->tempSense1;
-            uint16_t gain   = *mcu_sigrow()->tempSense0;
+            const uint16_t offset = toffset();
+            const uint16_t gain   = tgain();
             
-            uint32_t t = v.toInt() - offset;
+            uint32_t t = offset - v.toInt() * 2;
             t *= gain;
-            t += 0x8000;
+            t += 0x0800;
             t >>= 12;
             t -= 273;
             return {uint16_t(t)};
         }
-        template<typename R, uint8_t Offset>
+        template<typename R, uint8_t Offset, typename VRef = AVR::Vref::V2_048>
         static inline constexpr External::Units::celsius<uint16_t, R> adcValueToTemperature(const etl::uint_ranged<uint16_t, 0, 4095>& v) {
             constexpr uint16_t divider = 4096 / R::denom;
 //            std::integral_constant<uint16_t, divider>::_;
             constexpr uint16_t offset1  = (273 - Offset) * R::denom;
             
-            uint16_t offset = *mcu_sigrow()->tempSense1;
-            uint16_t gain   = *mcu_sigrow()->tempSense0;
+            const uint16_t offset = toffset();
+            const uint16_t gain   = tgain();
             
-            uint32_t t = v.toInt() - offset;
-            t *= gain;
-            t += 0x8000;
-            t /= divider;
-            t -= offset1;
-            return {uint16_t(t)};
+            if constexpr(std::is_same_v<VRef, AVR::Vref::V2_048>) {
+                uint32_t t = offset - v.toInt();
+                t *= gain;
+                t += 0x0800;
+                t /= divider;
+                t -= offset1;
+                return {uint16_t(t)};
+            }
+            else if constexpr(std::is_same_v<VRef, AVR::Vref::V4_096>) {
+                uint32_t t = offset - v.toInt() * 2;
+                t *= gain;
+                t += 0x0800;
+                t /= divider;
+                t -= offset1;
+                return {uint16_t(t)};
+            }
+            else {
+                static_assert(std::false_v<VRef>);
+            }
         }
     };
 

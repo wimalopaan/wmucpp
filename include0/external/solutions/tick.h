@@ -30,11 +30,13 @@ namespace External {
         inline explicit constexpr operator bool() const {
             return value != 0;
         }
-        inline constexpr void operator++() {
+        inline constexpr Tick& operator++() {
             ++value;
+            return *this;
         }
-        inline constexpr void operator--() {
+        inline constexpr Tick& operator--() {
             --value;
+            return *this;
         }
 
         inline constexpr void operator++() volatile {

@@ -103,16 +103,18 @@ namespace AVR {
         typedef etl::uint_ranged<uint8_t, 0, 255> type;
         inline static constexpr uint8_t bits = 8;
     };
-
+    
     
     
     
     template<AVR::Concepts::ComponentNumber CN, typename Reso = Resolution<10>, typename VRefType = AD::VRef<AD::V1_1, DefaultMcuType>, typename MCU = DefaultMcuType>
     class Adc;
-
+    
     template<AVR::Concepts::ComponentNumber CN, typename Reso, typename VRefType, AVR::Concepts::AtDa32 MCU>
     requires ((CN::value == 0) && (Vref::detail::isVref<VRefType>::value))
     class Adc<CN, Reso, VRefType, MCU> final {
+        //        VRefType::_;
+        
         inline static constexpr uint8_t number = CN::value;
         static inline constexpr auto mcu_adc  = AVR::getBaseAddr<typename MCU::Adc, number>;
         static inline constexpr auto mcu_vref = AVR::getBaseAddr<typename MCU::Vref>;
@@ -125,41 +127,37 @@ namespace AVR {
         using int_t = typename MCU::Adc::IntCtrl_t;
         
         using ref_t = typename MCU::Vref::VRef_t;
-//        using vb_t = typename MCU::Vref::CtrlB_t;
-    public:
+        //        using vb_t = typename MCU::Vref::CtrlB_t;
+        public:
         using reso_type = Reso;
         using value_type = typename Reso::type;
-
+        
+        using VRef_type = VRefType;
+        
         static constexpr auto VRef = VRefType::value;
-//        static constexpr auto refs = VRefType::refs;
+        //        static constexpr auto refs = VRefType::refs;
         
         static constexpr double VBit = VRef / Reso::type::Upper;
-
+        
         template<typename V>
         requires (Vref::detail::isVref<V>::value)
-        inline static void set() {
-            if constexpr(AVR::Groups::isAtDa32<MCU>::value) {
-                if constexpr(std::is_same_v<V, Vref::V1_024>) {
-                    mcu_vref()->adc0ref.template set<ref_t::V1024>();           
-                }
-                else if constexpr(std::is_same_v<V, Vref::V2_048>) {
-                    mcu_vref()->adc0ref.template set<ref_t::V2048>();           
-                }
-                else if constexpr(std::is_same_v<V, Vref::V4_096>) {
-                    mcu_vref()->adc0ref.template set<ref_t::V4096>();           
-//                    V::_;
-                }
-                else if constexpr(std::is_same_v<V, Vref::V2_5>) {
-                    mcu_vref()->adc0ref.template set<ref_t::V2_5>();           
-                } 
-                else {
-//                    static_assert(std::false_v<V>, "wrong VRef selection");
-                }
-                mcu_vref()->adc0ref.template add<ref_t::on>();           
+                inline static void set() {
+            if constexpr(std::is_same_v<V, Vref::V1_024>) {
+                mcu_vref()->adc0ref.template set<ref_t::V1024>();           
             }
+            else if constexpr(std::is_same_v<V, Vref::V2_048>) {
+                mcu_vref()->adc0ref.template set<ref_t::V2048>();           
+            }
+            else if constexpr(std::is_same_v<V, Vref::V4_096>) {
+                mcu_vref()->adc0ref.template set<ref_t::V4096>();           
+            }
+            else if constexpr(std::is_same_v<V, Vref::V2_5>) {
+                mcu_vref()->adc0ref.template set<ref_t::V2_5>();           
+            } 
             else {
-                static_assert(std::false_v<V>);
+                static_assert(std::false_v<V>, "wrong VRef selection");
             }
+            mcu_vref()->adc0ref.template add<ref_t::on>();           
         }
         
         template<bool On>
@@ -176,19 +174,17 @@ namespace AVR {
                 }
             }
             else {
-                    mcu_adc()->ctrla.template clear<ca_t::enable>();           
+                mcu_adc()->ctrla.template clear<ca_t::enable>();           
             }
         }
         
         inline static void init() {
             set<VRefType>();
-
-//            mcu_adc()->ctrla.template set<cc_t::samcap | cc_t::div256 | cc_t::ref_internal>();           
-            mcu_adc()->ctrlc.template set<cc_t::samcap | cc_t::div256 | cc_t::ref_internal>();           
-
+            mcu_adc()->ctrlc.template set<cc_t::div64>();           
+            mcu_adc()->muxneg.template set<MCU::Adc::MuxNeg_t::gnd>();
             enable<true>();            
         }
-
+        
         inline static void startConversion() {
             mcu_adc()->command.template set<co_t::stconv>();           
         }
@@ -199,7 +195,7 @@ namespace AVR {
                 f();
             });
         }
-
+        
         inline static void nsamples(const uint8_t n) {
             mNSamplesShift = n;
             switch(n) {
@@ -230,45 +226,38 @@ namespace AVR {
         
         inline static auto value() {
             return value_type{(*mcu_adc()->res) >> mNSamplesShift};
-//            return value_type{*mcu_adc()->res};
         }
-
-//        inline static auto valueShifted() {
-//            return value_type{(*mcu_adc()->res) >> mNSamplesShift};
-//        }
         
-        static void channel(uint8_t ch) {
-            if (ch == 0x1e) { // temperature
-                enable<false>();
-                *mcu_adc()->sampctl = std::byte{31};
-                mcu_adc()->ctrld.template set<cd_t::delay256>();           
-                set<Vref::V1_1>();
-                enable<true>();
-            }
-            else {
-                if (mcu_adc()->muxpos.value() == typename MCU::Adc::MuxPos_t{0x1e}) {
-                    enable<false>();
-                    *mcu_adc()->sampctl = std::byte{0};
-                    mcu_adc()->ctrld.template set<cd_t::delay0>();           
-                    set<VRefType>();
-                    enable<true>();
-                }
-            }
+        inline static void channel(uint8_t ch) {
+            //            if (ch == 0x42) { // temperature
+            //                enable<false>();
+            //                *mcu_adc()->sampctl = std::byte{31};
+            //                mcu_adc()->ctrld.template set<cd_t::delay256>();           
+            //                set<Vref::V1_1>();
+            //                enable<true>();
+            //            }
+            //            else {
+            //                if (mcu_adc()->muxpos.value() == typename MCU::Adc::MuxPos_t{0x42}) {
+            //                    enable<false>();
+            //                    *mcu_adc()->sampctl = std::byte{0};
+            //                    mcu_adc()->ctrld.template set<cd_t::delay0>();           
+            //                    set<VRefType>();
+            //                    enable<true>();
+            //                }
+            //            }
             mcu_adc()->muxpos.template set(typename MCU::Adc::MuxPos_t{ch});
         }
         
+        inline static std::byte ref() {
+            return std::byte{mcu_vref()->adc0ref.raw()};
+        }
+        
         private:
-
         inline static bool conversionReady() {
             return mcu_adc()->intflags.template isSet<int_t::resrdy>();        
         }
-        
         inline static uint8_t mNSamplesShift{0};
     };
-    
-    
-    
-    
     
     template<AVR::Concepts::ComponentNumber CN, typename Reso, typename VRefType, AVR::Concepts::At01Series MCU>
     requires ((CN::value <= 1) && (Vref::detail::isVref<VRefType>::value))
@@ -287,18 +276,18 @@ namespace AVR {
         using va1_t = typename MCU::Vref::CtrlA1_t;
         using va2_t = typename MCU::Vref::CtrlA2_t;
         using vb_t = typename MCU::Vref::CtrlB_t;
-    public:
+        public:
         using reso_type = Reso;
         using value_type = typename Reso::type;
-
+        
         static constexpr auto VRef = VRefType::value;
-//        static constexpr auto refs = VRefType::refs;
+        //        static constexpr auto refs = VRefType::refs;
         
         static constexpr double VBit = VRef / Reso::type::Upper;
-
+        
         template<typename V>
         requires (Vref::detail::isVref<V>::value)
-        inline static void set() {
+                inline static void set() {
             if constexpr(AVR::Groups::isAtMega0<MCU>::value) {
                 if constexpr(std::is_same_v<V, Vref::V1_1>) {
                     mcu_vref()->ctrla.template set<va1_t::adc_V1_1>();           
@@ -381,23 +370,23 @@ namespace AVR {
                 }
             }
             else {
-                    mcu_adc()->ctrla.template clear<ca_t::enable>();           
+                mcu_adc()->ctrla.template clear<ca_t::enable>();           
             }
         }
         
         inline static void init() {
             set<VRefType>();
-
+            
             if constexpr(CN::value == 0) {
                 mcu_adc()->ctrlc.template set<cc_t::samcap | cc_t::div256 | cc_t::ref_internal>();           
             }
             if constexpr(CN::value == 1) {
                 mcu_adc()->ctrlc.template set<cc_t::samcap | cc_t::div256 | cc_t::ref_internal>();           
             }
-
+            
             enable<true>();            
         }
-
+        
         inline static void startConversion() {
             mcu_adc()->command.template set<co_t::stconv>();           
         }
@@ -408,7 +397,7 @@ namespace AVR {
                 f();
             });
         }
-
+        
         inline static void nsamples(const uint8_t n) {
             mNSamplesShift = n;
             switch(n) {
@@ -439,12 +428,12 @@ namespace AVR {
         
         inline static auto value() {
             return value_type{(*mcu_adc()->res) >> mNSamplesShift};
-//            return value_type{*mcu_adc()->res};
+            //            return value_type{*mcu_adc()->res};
         }
-
-//        inline static auto valueShifted() {
-//            return value_type{(*mcu_adc()->res) >> mNSamplesShift};
-//        }
+        
+        //        inline static auto valueShifted() {
+        //            return value_type{(*mcu_adc()->res) >> mNSamplesShift};
+        //        }
         
         static void channel(uint8_t ch) {
             if (ch == 0x1e) { // temperature
@@ -467,7 +456,7 @@ namespace AVR {
         }
         
         private:
-
+        
         inline static bool conversionReady() {
             return mcu_adc()->intflags.template isSet<int_t::resrdy>();        
         }
@@ -489,7 +478,7 @@ namespace AVR {
         typedef typename Reso::type value_type;
         typedef etl::FixedPoint<uint16_t, 8> voltage_type;
         
-//        static constexpr auto VRef = MCU::Adc::template Parameter<N>::VRef;
+        //        static constexpr auto VRef = MCU::Adc::template Parameter<N>::VRef;
         static constexpr auto VRef = VRefType::value;
         static constexpr auto refs = VRefType::refs;
         
@@ -505,7 +494,7 @@ namespace AVR {
         template<typename S = LowSpeed>
         static void init() {
             if constexpr(std::is_same_v<Reso, Resolution<8>>) {
-//                mcuAdc()->admux.template add<refs | MCU::Adc::MUX::adlar, DisbaleInterrupt<NoDisableEnable>>();
+                //                mcuAdc()->admux.template add<refs | MCU::Adc::MUX::adlar, DisbaleInterrupt<NoDisableEnable>>();
                 mcuAdc()->admux.template set<refs | MCU::Adc::MUX::adlar>();
             }
             else {
@@ -535,14 +524,14 @@ namespace AVR {
         static bool conversionReady() {
             return !mcuAdc()->adcsra.template isSet<MCU::Adc::SRA::adsc>();
         }
-
+        
         template<typename F>
         static void whenConversionReady(const F& f) {
             if (mcuAdc()->adcsra.template isSet<MCU::Adc::SRA::adif>()) {
                 f(value());
             }
         }
-
+        
         template<typename F>
         static void waitUntilConversionReady(const F& f) {
             while(!mcuAdc()->adcsra.template isSet<MCU::Adc::SRA::adif>());
@@ -568,8 +557,8 @@ namespace AVR {
             mcuAdc()->admux.template setPartial<channelMask, etl::DisbaleInterrupt<etl::NoDisableEnable>>(mcuadc_parameter_type::channelMasks[ch]);
         }
         
-//        std::integral_constant<uint8_t, (uint8_t)mcuadc_parameter_type::channelMasks[6]>::_;;
-//        std::integral_constant<uint8_t, (uint8_t)mcuadc_parameter_type::channelMasks[7]>::_;;
+        //        std::integral_constant<uint8_t, (uint8_t)mcuadc_parameter_type::channelMasks[6]>::_;;
+        //        std::integral_constant<uint8_t, (uint8_t)mcuadc_parameter_type::channelMasks[7]>::_;;
         
     };
     

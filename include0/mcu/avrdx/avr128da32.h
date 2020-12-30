@@ -50,7 +50,7 @@ namespace AVR {
         using TCD = AVR::Series1::TCD;
         using Ccl = AVR::SeriesDa::Ccl;
         using Events = AVR::SeriesDa::Events;
-        using Adc = AVR::Series0::Adc;
+        using Adc = AVR::SeriesDa::Adc;
         using AdComparator = AVR::Series0::AdComparator;
         using Vref = AVR::SeriesDa::Vref;
         using Sleep = AVR::Series0::Sleep;
