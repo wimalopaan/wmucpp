@@ -61,6 +61,42 @@ namespace  {
     constexpr uint16_t R2vd = 1'200;
 }
 
+struct Data final : public EEProm::DataBase<Data> {
+    auto magic() const {
+        return mMagic;
+    }
+    void clear() {
+        mMagic = 42;    
+    }
+private:
+    uint8_t mMagic{};
+};
+
+template<typename L>
+struct ColorLedAdapter {
+    using index_t = L::index_type;
+    static inline void init() {
+        L::init();
+    }
+    static inline void activate() {
+        L::set(index_t{0}, mColor);
+        L::out();
+    }
+    static inline void inactivate() {
+        L::set(index_t{0}, External::cRGB{});
+        L::out();        
+    }
+    static inline void periodic() {
+        L::periodic();
+    }    
+    static inline void color(const External::Crgb& c) {
+        mColor = c;
+    }
+private:
+    inline static External::Crgb mColor;
+    
+};
+
 template<typename R>
 struct RpmProvider {
 #ifdef FS_I6S    
@@ -71,8 +107,7 @@ struct RpmProvider {
     inline static constexpr void init() {
     }
     inline static constexpr uint16_t value() {
-        auto rpm = R::value();
-        if (rpm) {
+        if (const auto rpm = R::value(); rpm) {
             return rpm.value();
         }
         return 0;
@@ -84,9 +119,35 @@ struct TempProvider {
     inline static constexpr auto ibus_type = IBus::Type::type::TEMPERATURE;
     inline static constexpr void init() {}
     
-    inline static constexpr uint16_t value() {
-        return Sensor::value() + 400;
+    inline static constexpr void calibrateStart() {
+        Sensor::template pullup<true>();
     }
+    inline static constexpr void calibrate() {
+        constexpr uint16_t U = decltype(Sensor::raw())::Upper;
+//        std::integral_constant<uint16_t, U>::_;
+        mCalibration = Sensor::raw();
+        if (mCalibration == U) {
+            mActive = false;
+        }
+        else {
+            mActive = true;
+        }
+        Sensor::template pullup<false>();
+    }
+    inline static constexpr uint16_t value() {
+        if (mActive) {
+            return Sensor::value() + 400;
+        }
+        else {
+            return 400;
+        }
+    }
+    inline static uint16_t offset() {
+        return mCalibration;
+    }
+private:
+    inline static uint16_t mCalibration{};
+    inline static bool mActive{false};
 };
 template<typename Sensor>
 struct VoltageProvider {
@@ -101,10 +162,25 @@ template<typename Sensor>
 struct CurrentProvider {
     inline static constexpr auto ibus_type = IBus::Type::type::BAT_CURR;
     inline static constexpr void init() {}
+
+    inline static constexpr void calibrateStart() {
+    }
+    inline static constexpr void calibrate() {
+        mOffset = Sensor::value();
+    }
     
     inline static constexpr uint16_t value() {
-        return Sensor::value();
+        const auto value = Sensor::value();
+        if (value > mOffset) {
+            return (value - mOffset);
+        }
+        return 0;
     }
+    inline static uint16_t offset() {
+        return mOffset;
+    }
+private:
+    inline static uint16_t mOffset{};
 };
 
 template<typename ADC, uint8_t Channel, typename SigRow>
@@ -131,15 +207,60 @@ struct IBusThrough {
         Pin::off();
     }
 };
- 
-template<typename Timer, typename PWM, typename PA>
-struct EscFsm {
-    enum class State : uint8_t {Undefined = 0, Init, 
-                                Off = 10, 
-                                Forward = 20, ForwardWait, 
-                                Backward = 30, BackwardWait};
 
-    enum class Event : uint8_t {None, Start};
+template<typename Timer> 
+struct TimeRegulator {
+    static constexpr External::Tick<Timer> deltaTicks{40_ms}; 
+    
+    static inline uint16_t value(const uint16_t& v) {
+        mTarget = v;
+        return mActual;
+    }
+    
+    static inline void ratePeriodic() {
+        (++deltaTick).on(deltaTicks, []{
+            if (mTarget > mActual) {
+                const uint16_t d = std::min(mMaxDiff, mTarget - mActual);
+                mActual += d;            
+            }
+            else if (mTarget < mActual) {
+                const uint16_t d = std::min(mMaxDiff, mActual - mTarget);
+                mActual -= d;            
+            }
+        });
+    }
+    static inline void off(const uint16_t& ov) {
+        mActual = ov;
+        mTarget = ov;
+    }
+    static inline void slow(bool on) {
+        if (on) {
+            mMaxDiff = 2;
+        }
+        else {
+            mMaxDiff = 10;
+        }
+    }
+private:
+    static inline External::Tick<Timer> deltaTick;
+    static inline uint16_t mMaxDiff{4};
+    static inline uint16_t mTarget{};
+    static inline uint16_t mActual{};
+};
+
+
+template<typename Timer, typename PWM, typename InhPinList, typename PA>
+struct EscFsm {
+    using timeRegulator  = TimeRegulator<Timer>;
+    
+    enum class State : uint8_t {Undefined = 0, Init, 
+                                Off = 10, OffForwardWait, OffBackwardWait, 
+                                Forward = 20, ForwardWait, ForwardKick,  
+                                Backward = 30, BackwardWait};
+    
+    enum class RunState : uint8_t {Undefined = 0, Off, Low, Medium, High};
+
+    enum class Event : uint8_t {None, Start, Reset};
     
     using throttle_type = typename PA::value_type;
     using thr_t = typename throttle_type::value_type;
@@ -151,16 +272,19 @@ struct EscFsm {
     static inline constexpr thr_t thrMax{throttle_type::Upper};
     static inline constexpr thr_t thrMin{throttle_type::Lower};
     static inline constexpr thr_t thrMedium{(throttle_type::Upper + throttle_type::Lower) / 2};
+    static inline constexpr thr_t thrHalf{(throttle_type::Upper - throttle_type::Lower) / 2};
     
-    static inline constexpr thr_t thrStartForward{thrMedium + 20};
+    static inline constexpr thr_t thrStartForward{thrMedium  + 20};
     static inline constexpr thr_t thrStartBackward{thrMedium - 20};
     
-    static constexpr External::Tick<Timer> waitTicks{100_ms}; // fw <-> bw
-    static constexpr External::Tick<Timer> deadTicks{500_ms}; // fw <-> bw
+    static constexpr External::Tick<Timer> initTicks{100_ms}; 
+    static constexpr External::Tick<Timer> deadTicks{100_ms}; // fw <-> bw
+    static constexpr External::Tick<Timer> startTicks{10_ms}; 
+    static constexpr External::Tick<Timer> kickTicks{200_ms}; 
     
     inline static void init() {
         PWM::init();
-        PWM::period(mPwmPeriod);
+        PWM::period(mPwmPeriodMin);
         PWM::template off<Meta::List<AVR::PWM::WO<0>>>();
         PWM::template off<Meta::List<AVR::PWM::WO<1>, AVR::PWM::WO<2>>>();
     }
@@ -186,12 +310,13 @@ struct EscFsm {
         return isThrottleBackward() || isThrottleForward();
     }
     inline static void ratePeriodic() {
+        timeRegulator::ratePeriodic();
         mThrottle = PA::value(0);
         ++mStateTicks;
         const auto oldState = mState;
         switch(mState) {
         case State::Undefined:
-            mStateTicks.on(waitTicks, []{
+            mStateTicks.on(initTicks, []{
                 mState = State::Init;
             });
             break;
@@ -201,47 +326,106 @@ struct EscFsm {
             }
             break;
         case State::ForwardWait:
-            mStateTicks.on(deadTicks, []{
+            mStateTicks.on(startTicks, []{
                 mState = State::Forward;
             });
-            if (!mThrottle || (mThrottle.toInt() < thrStartForward)) {
+            if (!isThrottleForward()) {
                 mState = State::Off;
             }
             break;
+        case State::ForwardKick:
+            mStateTicks.on(kickTicks, []{
+                mState = State::Forward;
+            });
+        {
+            const auto tv = thrMedium + thrHalf / 10;
+            timeRegulator::off(tv);
+            mTv = tv;
+            PWM::period(pwmPeriod(tv));
+            const auto d = etl::distance(tv, thrStartForward);
+            const auto pv = etl::scale(d, etl::Intervall{thr_t{0}, thrMax - thrStartForward}, etl::Intervall{pwm_t{0}, PWM::max()});
+            PWM::template duty<Meta::List<AVR::PWM::WO<1>>>(pv);
+        }
+            break;
         case State::Forward:
-            if (const auto tv = mThrottle.toInt(); !mThrottle || (tv < thrStartForward)) {
-                mState = State::Off;
+            if (const auto e = event(); e == Event::Reset) {
+                mState = State::Init;
+            }
+            else if (!isThrottleForward()) {
+                mState = State::OffForwardWait;
             }
             else {
+                const auto tv = timeRegulator::value(mThrottle.toInt());
+                mTv = tv;
+                PWM::period(pwmPeriod(tv));
                 const auto d = etl::distance(tv, thrStartForward);
-                const auto pv = etl::scale(d, etl::Intervall{thr_t{0}, thrMax - thrStartForward}, etl::Intervall{pwm_t{0}, mPwmPeriod});
+                const auto pv = etl::scale(d, etl::Intervall{thr_t{0}, thrMax - thrStartForward}, etl::Intervall{pwm_t{0}, PWM::max()});
                 PWM::template duty<Meta::List<AVR::PWM::WO<1>>>(pv);
             }
             break;
         case State::Off:
-            if (mThrottle && (mThrottle.toInt() > thrStartForward)) {
+            if (const auto e = event(); e == Event::Reset) {
+                mState = State::Init;
+            }
+            else if (isThrottleForward()) {
                 mState = State::ForwardWait;
             }
-            else if (mThrottle && (mThrottle.toInt() < thrStartBackward)) {
+            else if (isThrottleBackward()) {
                 mState = State::BackwardWait;
             } 
             break;
+        case State::OffForwardWait:
+            if (isThrottleForward()) {
+                mState = State::Forward;
+            }
+            else if (const auto tv = timeRegulator::value(mThrottle.toInt()); tv > thrStartForward) {
+                mTv = tv;
+                PWM::period(pwmPeriod(tv));
+                const auto d = etl::distance(tv, thrStartForward);
+                const auto pv = etl::scale(d, etl::Intervall{thr_t{0}, thrMax - thrStartForward}, etl::Intervall{pwm_t{0}, PWM::max()});
+                PWM::template duty<Meta::List<AVR::PWM::WO<1>>>(pv);
+            }
+            else {
+                mState = State::Off;
+            }
+            break;
         case State::BackwardWait:
-            mStateTicks.on(deadTicks, []{
+            mStateTicks.on(startTicks, []{
                 mState = State::Backward;
             });
-            if (!mThrottle || (mThrottle.toInt() > thrStartBackward)) {
+            if (!isThrottleBackward()) {
                 mState = State::Off;
             }
             break;
         case State::Backward:
-            if (const auto tv = mThrottle.toInt(); !mThrottle || (tv > thrStartBackward)) {
-                mState = State::Off;
+            if (const auto e = event(); e == Event::Reset) {
+                mState = State::Init;
+            }
+            else if (!isThrottleBackward()) {
+                mState = State::OffBackwardWait;
             }
             else {
+                const auto tv = timeRegulator::value(mThrottle.toInt());
+                mTv = tv;
+                PWM::period(pwmPeriod(tv));
                 const auto d = etl::distance(tv, thrStartBackward);
-                const auto pv = etl::scale(d, etl::Intervall{thr_t{0}, thrStartBackward - thrMin}, etl::Intervall{pwm_t{0}, mPwmPeriod});
+                const auto pv = etl::scale(d, etl::Intervall{thr_t{0}, thrStartBackward - thrMin}, etl::Intervall{pwm_t{0}, PWM::max()});
                 PWM::template duty<Meta::List<AVR::PWM::WO<2>>>(pv);
+            }
+            break;
+        case State::OffBackwardWait:
+            if (isThrottleBackward()) {
+                mState = State::Backward;
+            }
+            else if (const auto tv = timeRegulator::value(mThrottle.toInt()); tv < thrStartBackward) {
+                mTv = tv;
+                PWM::period(pwmPeriod(tv));
+                const auto d = etl::distance(tv, thrStartBackward);
+                const auto pv = etl::scale(d, etl::Intervall{thr_t{0}, thrStartBackward - thrMin}, etl::Intervall{pwm_t{0}, PWM::max()});
+                PWM::template duty<Meta::List<AVR::PWM::WO<2>>>(pv);
+            }
+            else {
+                mState = State::Off;
             }
             break;
         }
@@ -251,39 +435,97 @@ struct EscFsm {
             case State::Undefined:
                 break;
             case State::Init:
+                mRunState = RunState::Undefined;
                 off();
                 break;
             case State::ForwardWait:
+                break;
+            case State::ForwardKick:
+                timeRegulator::slow(false);
                 forward();
                 break;
             case State::Forward:
+                timeRegulator::slow(false);
                 forward();
                 break;
+            case State::OffForwardWait:
+                timeRegulator::slow(true);
+                break;
+            case State::OffBackwardWait:
+                timeRegulator::slow(true);
+                break;
             case State::Off:
+                mRunState = RunState::Off;
                 off();
                 break;
             case State::BackwardWait:
-                backward();
                 break;
             case State::Backward:
+                timeRegulator::slow(false);
                 backward();
                 break;
             }   
         }
     }    
-//private:
+    
+    static inline auto runstate() {
+        return mRunState;
+    }
+    
+    template<typename Term>
+    static inline void debug() {
+        etl::outl<Term>("s: "_pgm, (uint8_t)mState, " rs: "_pgm, (uint8_t)mRunState, " p: "_pgm, PWM::max(), " thr: "_pgm, mThrottle.toInt(), " tv: "_pgm, mTv);
+    }
+    inline static void activate() {
+        Meta::visit<InhPinList>([]<typename W>(W) {
+                                    W::type::on();
+                                });
+    }
+    inline static void deactivate() {
+        Meta::visit<InhPinList>([]<typename W>(W) {
+                                    W::type::off();
+                                });
+    }
+private:
     inline static void off() {
+        deactivate();
+        timeRegulator::off(thrMedium);
+        PWM::template duty<Meta::List<AVR::PWM::WO<1>>>(0);
+        PWM::template duty<Meta::List<AVR::PWM::WO<2>>>(0);
         PWM::template off<Meta::List<AVR::PWM::WO<1>, AVR::PWM::WO<2>>>();
     }
     inline static void forward() {
+        activate();
         PWM::template off<Meta::List<AVR::PWM::WO<2>>>();
         PWM::template on<Meta::List<AVR::PWM::WO<1>>>();
     }
     inline static void backward() {
+        activate();
         PWM::template off<Meta::List<AVR::PWM::WO<1>>>();
         PWM::template on<Meta::List<AVR::PWM::WO<2>>>();
     }
-    inline static PWM::value_type mPwmPeriod{60000};
+//    inline static PWM::value_type mPwmPeriod{2500};
+    inline static PWM::value_type mPwmPeriodMin{2500};
+    inline static PWM::value_type mPwmPeriodMax{65535};
+    
+    inline static thr_t throttle_delta_1{thrHalf / 3};
+    inline static thr_t throttle_delta_2{3 * thrHalf / 4};
+    
+    inline static uint16_t pwmPeriod(const uint16_t& v) {
+        const auto d = etl::distance(v, thrMedium);
+        if (d < throttle_delta_1) {
+            mRunState = RunState::Low;
+        }
+        else if (d > throttle_delta_2) {
+            mRunState = RunState::High;
+        }
+        else {
+            mRunState = RunState::Medium;
+        }
+        return etl::scale(d, etl::Intervall{throttle_delta_1, throttle_delta_2}, etl::Intervall{mPwmPeriodMin, mPwmPeriodMax});
+    }
+    static inline RunState mRunState{RunState::Undefined};
+    static inline uint16_t mTv{};
     static inline throttle_type mThrottle;
     inline static External::Tick<Timer> mStateTicks;
     inline static State mState{State::Undefined};
@@ -293,19 +535,29 @@ struct EscFsm {
 template<typename Timer, typename Servo, typename Led, typename Esc, 
          typename Sensor, typename Lut, 
          typename Adc, typename Rpm,
+         typename NVM, typename ProviderList,
          typename Term = void>
 struct GlobalFsm {
+    using blinkLed = External::Blinker2<Led, Timer, 100_ms, 2000_ms>;
+    using count_type = blinkLed::count_type;
+
+    using pa = Servo::protocoll_adapter_type;
+    
     using TermDev = Term::device_type;
     
     using adc_i_t = Adc::index_type;
     
-    enum class State : uint8_t {Undefined, Init, SignalWait, CheckStart, Run};
+    enum class State : uint8_t {Undefined, Init, SignalWait, PreCheckStart, CheckStart, 
+                                CalibrateOn, CalibrateMes, PreRun, Run};
     
     static constexpr External::Tick<Timer> startupTicks{100_ms};
-    static constexpr External::Tick<Timer> initTicks{500_ms};
+    static constexpr External::Tick<Timer> stateChangeTicks{500_ms};
     static constexpr External::Tick<Timer> debugTicks{500_ms};
-    static constexpr External::Tick<Timer> resetTicks{2000_ms};
+    static constexpr External::Tick<Timer> nvmTicks{1000_ms};
+    static constexpr External::Tick<Timer> rpmResetTicks{250_ms};
     static constexpr External::Tick<Timer> learnTimeoutTicks{4000_ms};
+    
+    static inline auto& appData = NVM::data();
     
     inline static void init() {
         if constexpr (std::is_same_v<Servo, TermDev>) {
@@ -317,7 +569,13 @@ struct GlobalFsm {
                 TermDev::template init<AVR::BaudRate<9600>>();
             }
         }
-        Led::init();
+        NVM::init();
+        if (!((appData.magic() == 42))) {
+            appData.clear();
+            appData.change();
+        }            
+
+        blinkLed::init();
         Esc::init(); 
  
         //    lut1::init(std::byte{0xcc}); // route TXD to lut1-out no-inv
@@ -332,19 +590,33 @@ struct GlobalFsm {
         Rpm::init();
     }
     inline static void periodic() {
+        NVM::saveIfNeeded([&]{
+            etl::outl<Term>("save eep"_pgm);
+        });
         Servo::periodic();
         Led::periodic();
         Sensor::periodic();
         Adc::periodic();
-//        Rpm::periodic();
     }
     inline static void ratePeriodic() {
+        blinkLed::ratePeriodic();
         Sensor::ratePeriodic();
         Esc::ratePeriodic();
         const auto oldState = mState;
         ++mStateTick;
-        ++mDebugTick;
-        ++mResetTick;
+        
+        (++mNvmTick).on(nvmTicks, appData.expire);
+        (++mDebugTick).on(debugTicks, debug);
+        (++mResetTick).on(rpmResetTicks, []{
+            Rpm::reset();
+            if (pa::packages() == 0) {
+                mState = State::Undefined;
+                RunState::reset();
+                Esc::event(Esc::Event::Reset);
+            }
+            pa::resetStats();
+        });
+
         switch(mState) {
         case State::Undefined:
             mStateTick.on(startupTicks, []{
@@ -352,25 +624,42 @@ struct GlobalFsm {
             });
             break;
         case State::Init:
-            mStateTick.on(initTicks, []{
+            mStateTick.on(stateChangeTicks, []{
                 mState = State::SignalWait;
             });
             break;
         case State::SignalWait:
             if (Esc::isThrottleValid()) {
-                mState = State::CheckStart;
+                mState = State::PreCheckStart;
             }
+            break;
+        case State::PreCheckStart:
+            mStateTick.on(stateChangeTicks, []{
+                mState = State::CheckStart;
+            });
             break;
         case State::CheckStart:
             if (!(Esc::isThrottleForward() || Esc::isThrottleBackward())) {
-                    mState = State::Run;
+                    mState = State::CalibrateOn;
             }
             break;
-        case State::Run:
-            mDebugTick.on(debugTicks, debug);
-            mResetTick.on(resetTicks, []{
-                Rpm::reset();
+        case State::CalibrateOn:
+            mStateTick.on(stateChangeTicks, []{
+                mState = State::CalibrateMes;
             });
+            break;
+        case State::CalibrateMes:
+            mStateTick.on(stateChangeTicks, []{
+                mState = State::PreRun;
+            });
+            break;
+        case State::PreRun:
+            mStateTick.on(stateChangeTicks, []{
+                mState = State::Run;
+            });
+            break;
+        case State::Run:
+            RunState::led(Esc::runstate());
             break;
         }
         if (oldState != mState) {
@@ -390,28 +679,50 @@ struct GlobalFsm {
                 etl::outl<Term>("check"_pgm);
                 led(magenta);
                 break;
+            case State::CalibrateOn:
+                Esc::activate();
+                Meta::visit<ProviderList>([]<typename W>(W){
+                                              using provider = W::type;
+                                              provider::calibrateStart();
+                                          });
+                break;
+            case State::CalibrateMes:
+                Meta::visit<ProviderList>([]<typename W>(W){
+                                              using provider = W::type;
+                                              provider::calibrate();
+                                          });
+                break;
             case State::Run:
                 etl::outl<Term>("run"_pgm);
                 Esc::event(Esc::Event::Start);
-                led(green);
                 break;
+            case State::PreCheckStart:
+                break;
+            case State::PreRun:
+                Esc::deactivate();
+                break;                
             }
         }
     }
 private:
     static inline void debug() {
-        etl::outl<Term>("t: "_pgm, Esc::mThrottle.toInt(), " s: "_pgm, (uint8_t)Esc::mState, 
-                        " r: "_pgm, Rpm::value(), " c: "_pgm, Rpm::captures());
+        etl::out<Term>("p: "_pgm, pa::packages(), " r: "_pgm, Rpm::value(), " c: "_pgm, Rpm::captures());
 //        etl::out<Term>(" a0: "_pgm, Adc::value(adc_i_t{0}));
 //        etl::out<Term>(" a1: "_pgm, Adc::value(adc_i_t{1}));
 //        etl::out<Term>(" a2: "_pgm, Adc::value(adc_i_t{2}));
 //        etl::out<Term>(" a3: "_pgm, Adc::value(adc_i_t{3}));
 //        etl::out<Term>(" a4: "_pgm, Adc::value(adc_i_t{4}));
 //        etl::out<Term>(" a5: "_pgm, Adc::value(adc_i_t{5}));
-//        etl::out<Term>(" a6: "_pgm, Adc::value(adc_i_t{6}));
+        
+        Meta::visit<ProviderList>([]<typename W>(W){
+                                      etl::out<Term>(" off: "_pgm, W::type::offset());
+                                  });
+        
+        etl::outl<Term>(" a6: "_pgm, Adc::value(adc_i_t{6}));
 //        etl::out<Term>(" ga: "_pgm, SigRow<>::tgain());
 //        etl::out<Term>(" of: "_pgm, SigRow<>::toffset());
-        etl::outl<Term>(" a7: "_pgm, Adc::value(adc_i_t{7}));
+//        etl::outl<Term>(" a7: "_pgm, Adc::value(adc_i_t{7}));
+        Esc::template debug<Term>();
     } 
    
     using Crgb = External::Crgb;
@@ -421,16 +732,54 @@ private:
     static constexpr Crgb yellow{External::Red{255}, External::Green{255}, External::Blue{0}};
     static constexpr Crgb magenta{External::Red{255}, External::Green{0}, External::Blue{255}};
     static constexpr Crgb cyan{External::Red{0}, External::Green{255}, External::Blue{255}};
+
+    struct RunState {
+        inline static void led(const Esc::RunState rs) {
+            if (rs != oldState) {
+                oldState = rs;
+                switch(rs) {
+                case Esc::RunState::Undefined:
+                    break;
+                case Esc::RunState::Off:
+                    etl::outl<Term>("rs off"_pgm);
+                    Led::color(green);
+                    blinkLed::blink(count_type{1});
+                    break;
+                case Esc::RunState::Low:
+                    etl::outl<Term>("rs low"_pgm);
+                    Led::color(green);
+                    blinkLed::steady();
+                    break;
+                case Esc::RunState::Medium:
+                    etl::outl<Term>("rs med"_pgm);
+                    Led::color(yellow);
+                    blinkLed::steady();
+                    break;
+                case Esc::RunState::High:
+                    etl::outl<Term>("rs high"_pgm);
+                    Led::color(red);
+                    blinkLed::steady();
+                    break;
+                }
+            }
+        }
+        inline static void reset() {
+            oldState = Esc::RunState::Undefined;
+        }
+    private:
+        inline static auto oldState{Esc::RunState::Undefined};
+    };
     
     inline static void led(const Crgb& c) {
-        using index_t = Led::index_type;
-        Led::set(index_t{0}, c);
-        Led::out();
+        Led::color(c);
+        blinkLed::steady();
     }
+    
     static inline State mState{State::Undefined};
     static inline External::Tick<Timer> mStateTick;
     static inline External::Tick<Timer> mDebugTick;
     static inline External::Tick<Timer> mResetTick;
+    static inline External::Tick<Timer> mNvmTick;
 };
 
 struct VersionProvider {
@@ -438,7 +787,7 @@ struct VersionProvider {
     inline static constexpr auto ibus_type = IBus::Type::type::ARMED;
     inline static constexpr void init() {}
     inline static constexpr uint16_t value() {
-        return 1010;
+        return 1011;
     }
 };
 
@@ -488,13 +837,14 @@ using terminal = etl::basic_ostream<void>;
 
 using ibt = IBusThrough<daisyChain>;
 
-using adc = Adc<Component::Adc<0>, AVR::Resolution<12>, Vref::V4_096>;
+using adc = Adc<Component::Adc<0>, AVR::Resolution<12>, Vref::V2_048>;
 // ADC Channels: T1, BecI1, BecI2, V+, Text, T2, Curr
 using adcController = External::Hal::AdcController<adc, Meta::NList<0, 1, 6, 7, 19, 20, 21, 0x42>>; // 42 = temp
 
 using spiPosition = Portmux::Position<Component::Spi<0>, Portmux::Default>;
 using spi = AVR::Spi<spiPosition, AVR::QueueLength<16>,  AVR::UseInterrupts<false>>;
-using led = External::LedStripe<spi, External::APA102, 1>;
+using ledStripe = External::LedStripe<spi, External::APA102, 1>;
+using led = ColorLedAdapter<ledStripe>;
 
 using rpmPositionL = Portmux::Position<Component::Tcb<0>, Portmux::Default>;
 using rpmPositionH = Portmux::Position<Component::Tcb<1>, Portmux::Default>;
@@ -529,13 +879,13 @@ using vdiv = External::AnalogSensor<adcController, 3, std::ratio<0,1>,
 using voltageP = VoltageProvider<vdiv>;
 
 using bec1S = External::AnalogSensor<adcController, 1, std::ratio<0,1>, 
-                                    std::ratio<24000, 1000>, 
+                                    std::ratio<1900, 1000>, 
                                     std::ratio<100,1>>;
 using cBecP = CurrentProvider<bec1S>;
 
 using currS = External::AnalogSensor<adcController, 6, std::ratio<0,1>, 
-                                    std::ratio<1900, 1000>, 
-                                    std::ratio<100,1>>;
+                                    std::ratio<550, 1000>, 
+                                    std::ratio<1000,1>>;
 using currP = CurrentProvider<currS>;
 
 using rpmP = RpmProvider<rpm>;
@@ -550,8 +900,11 @@ using sensor = IBus::Sensor<usart1Position, AVR::Usart, AVR::BaudRate<115200>,
 >;
 
  
-using escfsm = EscFsm<systemTimer, pwm, servo_pa>;
-using gfsm = GlobalFsm<systemTimer, servo, led, escfsm, sensor, lut1, adcController, rpm, terminal>;
+using escfsm = EscFsm<systemTimer, pwm, Meta::List<inh1Pin, inh2Pin>, servo_pa>;
+
+using eeprom = EEProm::Controller<Data>;
+
+using gfsm = GlobalFsm<systemTimer, servo, led, escfsm, sensor, lut1, adcController, rpm, eeprom, Meta::List<currP, textP, temp1P>, terminal>;
 
 using portmux = Portmux::StaticMapper<Meta::List<spiPosition, ccl1Position, tcaPosition, usart1Position, usart2Position, rpmPositionL, rpmPositionH>>;
 
@@ -566,21 +919,16 @@ int main() {
     ccp::unlock([]{
         clock::init<Project::Config::fMcuMhz>();
     });
-//    ccp::unlock([]{
-//        clock::prescale<1>();
-//    });
     systemTimer::init();
     
     inh1Pin::dir<Output>();
-    inh1Pin::on();
     inh2Pin::dir<Output>();
-    inh2Pin::on();
     
     evrouter::init();
     gfsm::init();
     
     {
-        etl::outl<terminal>("test10"_pgm);
+        etl::outl<terminal>("test11"_pgm);
         
         while(true) {
             timing0Pin::toggle();

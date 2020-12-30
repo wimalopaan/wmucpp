@@ -1,22 +1,20 @@
 
 # ~/Projekte/updi/pyupdi/pyupdi.py -d tiny412 -c /dev/ttyUSB1  -f test00.hex
 
-MCU = atmega4809
-#MCU = avr128da32
-F_OSC = 20000000
+#MCU = atmega4809
+MCU = avr128da32
+F_OSC = 32000000
 
 subdirs =
 
 test02.hex : MCU = avr128da32
 test02.hex : F_OSC = 24000000
 
-test10.hex : MCU = avr128da32
-test10.hex : F_OSC = 32000000
-
-targets += test00.elf test00.hex
-targets += test01.elf test01.hex
-targets += test02.hex
+#targets += test00.elf test00.hex
+#targets += test01.elf test01.hex
+#targets += test02.hex
 targets += test10.hex
+targets += test11.hex
 
 -include ../../../Makefile.avr0.include
 

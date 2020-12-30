@@ -172,6 +172,7 @@ boards/bmc/medium10/test00.cc
 boards/bmc/medium10/test01.cc
 boards/bmc/medium10/test02.cc
 boards/bmc/medium10/test10.cc
+boards/bmc/medium10/test11.cc
 boards/bmc/medium10/test99.cc
 boards/bmc/robbenavy540/Makefile
 boards/bmc/robbenavy540/blink.cc
@@ -1587,6 +1588,7 @@ include0/external/solutions/cells.h
 include0/external/solutions/rotaryencoder.h
 include0/mcu/avrdx/avr128da32.h
 include0/mcu/avrdx/avrda.h
+include0/mcu/common/components/adc_da32.h
 include0/mcu/common/components/bitmask_operators_da.h
 include0/mcu/common/components/cclda4.h
 include0/mcu/common/components/clock_da32.h
