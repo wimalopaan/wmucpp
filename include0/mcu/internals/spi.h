@@ -70,7 +70,9 @@ namespace AVR {
             if (mcu_spi()->intflags.template isSet<intflags_t::dreif>()) {
                 if (std::byte b; mData.pop_front(b)) {
                     *mcu_spi()->data = b;
+#ifndef NDEBUG
                     ++counter;
+#endif
                 }
             }
         }
