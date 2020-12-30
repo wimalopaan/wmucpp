@@ -173,6 +173,7 @@ boards/bmc/medium10/test01.cc
 boards/bmc/medium10/test02.cc
 boards/bmc/medium10/test10.cc
 boards/bmc/medium10/test11.cc
+boards/bmc/medium10/test12.cc
 boards/bmc/medium10/test99.cc
 boards/bmc/robbenavy540/Makefile
 boards/bmc/robbenavy540/blink.cc

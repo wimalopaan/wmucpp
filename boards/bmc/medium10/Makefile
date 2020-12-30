@@ -15,6 +15,7 @@ test02.hex : F_OSC = 24000000
 #targets += test02.hex
 targets += test10.hex
 targets += test11.hex
+targets += test12.hex
 
 -include ../../../Makefile.avr0.include
 
