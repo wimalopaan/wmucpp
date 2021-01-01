@@ -2,7 +2,7 @@
 // ---- Beginn Standardheader
 = RC MultiSwitch-D 
 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
-:revnumber: 1.04
+:revnumber: 1.06
 :revremark: HW_1.2
 :revdate: 01.01.1970
 :lang: de
@@ -431,6 +431,39 @@ image::fp.png[align="center"]
 
 .Deaktivierung der Trimmer `T5` und `T6` in der Flugphase `0` (Darstellung im Sender)
 image::fm1.png[align="center"]
+
+==== Spezielle Konfiguration für Sender mit Joystick (FrSky X12s)
+
+Der Sender _FrSky Horus X12s_ besitzt ein besonderes Bedienelement: den _Joystick_ links unten. Dieser kann statt der o.g. Trimm-Buttons ebenfalls für die 
+Navigation im Menu-System der Schaltmodule verwendet werden. Da es sich dabei um proportionale Geber handelt, muss mit Hilfe eine Kurve (Sprungfunktion) aus der 
+proportionalen Informations des Gebers eine digitale gemacht werden.
+
+Es muss dazu _eine_ Kurve nach dem Muster <<curve1>> erstellt werden. Diese Kurve kann für beide Richtungen (positive und negative Richtung) jeder Achse 
+des Joysticks verwendet werden. Die _Spiegelung_ der Kurve geschieht durch eine _Negation_ (das _Ausrufezeichen `!` in der Input-Konfiguration). Getrue nach der Regel, dass
+_Unzulänglichkeiten_ der Geber in der Input-Konfiguration _korrigiert_ werden, geschieht dies durch _vier_ Input-Definitionen aus den 
+zwei Gebern `Jsx` und `Jsy` für die Navigation `rechts`, `links`, `oben` und `unten`.
+
+[[curve1]]
+.Kurve zur Umwandlung einer JoyStick-Bewegung in eine Navigation
+image::joystick/curveJoy2.png[align="center"]
+
+In <<curve2>> sieht man die Verwendung der Kurve in _einem_ Input.
+
+[[curve2]]
+.Verwendung der Kurve aus <<curve1>> für den Joystick in y-Richtung
+image::joystick/curveJoy.png[align="center"]
+
+In <<curve3>> sieht man den Überblick über die gesamte Konfiguration aller _vier_ Inputs. Man achte auf die _Spiegelung_ der Kurve durch `!`.
+
+[[curve3]]
+.Konfiguration der alternativen Inputs 11...14 für die Bedienung
+image::joystick/inputsJoy.png[align="center"]
+
+Der letzte Schritt besteht im _Einbau_ der Inputs in die Widget-Konfiguration: 
+
+[[curve4]]
+.Konfiguration des Widget zur Verwendung der alternativen Inputs
+image::joystick/widgetJoy.png[align="center"]
 
 === Konfiguration des Modells (Sender mit `128x64`-Pixel oder `212x54`-Pixel _monochrome Display_)
 
