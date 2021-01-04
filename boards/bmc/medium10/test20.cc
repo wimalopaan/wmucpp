@@ -1,14 +1,14 @@
 //#define NDEBUG
- 
+
 //#define USE_IBUS
-  
+
 #define USE_SBUS
 #ifdef USE_SBUS
 # define USE_SPORT
 #endif
 
 #define LEARN_DOWN
- 
+
 #include <mcu/avr.h>
 #include <mcu/common/delay.h>
 
@@ -32,6 +32,8 @@
 #include <external/sbus/sbus.h>
 #include <external/sbus/sport.h>
 #include <external/ibus/ibus.h>
+#include <external/hott/experimental/adapter.h>
+#include <external/hott/experimental/sensor.h>
 
 #include <external/solutions/button.h>
 #include <external/solutions/blinker.h>
@@ -39,6 +41,7 @@
 #include <external/solutions/series01/swuart.h>
 #include <external/solutions/series01/rpm.h>
 #include <external/solutions/apa102.h>
+#include <external/solutions/series01/sppm_in.h>
 
 #include <std/chrono>
 
@@ -61,6 +64,13 @@ namespace  {
 #endif
     constexpr uint16_t R1vd = 10'000;
     constexpr uint16_t R2vd = 1'200;
+}
+
+namespace Input {
+    struct SBus;
+    struct IBus;
+    struct SumD;
+    struct Sppm;
 }
 
 struct Data final : public EEProm::DataBase<Data> {
@@ -126,7 +136,7 @@ struct TempProvider {
     }
     inline static constexpr void calibrate() {
         constexpr uint16_t U = decltype(Sensor::raw())::Upper;
-//        std::integral_constant<uint16_t, U>::_;
+        //        std::integral_constant<uint16_t, U>::_;
         mCalibration = Sensor::raw();
         if (mCalibration == U) {
             mActive = false;
@@ -164,7 +174,7 @@ template<typename Sensor>
 struct CurrentProvider {
     inline static constexpr auto ibus_type = IBus::Type::type::BAT_CURR;
     inline static constexpr void init() {}
-
+    
     inline static constexpr void calibrateStart() {
     }
     inline static constexpr void calibrate() {
@@ -196,7 +206,7 @@ struct InternalTempProvider {
         return SigRow::template adcValueToTemperature<std::ratio<1,10>, 40, typename ADC::VRef_type>(ADC::value(channel)).value;
     }
 };
- 
+
 template<typename Pin>
 struct IBusThrough {
     inline static void init() {
@@ -265,16 +275,16 @@ struct EscFsm {
                                 Backward = 30, BackwardWait};
     
     enum class RunState : uint8_t {Undefined = 0, Off, Low, Medium, High};
-
+    
     enum class Event : uint8_t {None, Start, Reset};
     
     using throttle_type = typename PA::value_type;
     using thr_t = typename throttle_type::value_type;
-//    thr_t::_;
+    //    thr_t::_;
     
     using pwm_t = PWM::value_type;
-//    pwm_t::_;
-
+    //    pwm_t::_;
+    
     static inline constexpr thr_t thrMax{throttle_type::Upper};
     static inline constexpr thr_t thrMin{throttle_type::Lower};
     static inline constexpr thr_t thrMedium{(throttle_type::Upper + throttle_type::Lower) / 2};
@@ -480,7 +490,7 @@ struct EscFsm {
     
     template<typename Term>
     static inline void debug() {
-//        etl::outl<Term>("s: "_pgm, (uint8_t)mState, " rs: "_pgm, (uint8_t)mRunState, " p: "_pgm, PWM::max(), " thr: "_pgm, mThrottle.toInt(), " tv: "_pgm, mTv);
+        //        etl::outl<Term>("s: "_pgm, (uint8_t)mState, " rs: "_pgm, (uint8_t)mRunState, " p: "_pgm, PWM::max(), " thr: "_pgm, mThrottle.toInt(), " tv: "_pgm, mTv);
     }
     inline static void activate() {
         Meta::visit<InhPinList>([]<typename W>(W) {
@@ -510,7 +520,7 @@ private:
         PWM::template off<Meta::List<AVR::PWM::WO<1>>>();
         PWM::template on<Meta::List<AVR::PWM::WO<2>>>();
     }
-//    inline static PWM::value_type mPwmPeriod{2500};
+    //    inline static PWM::value_type mPwmPeriod{2500};
     inline static PWM::value_type mPwmPeriodMin{2500};
     inline static PWM::value_type mPwmPeriodMax{65535};
     
@@ -538,7 +548,8 @@ private:
     inline static Event mEvent{Event::None};
 };
 
-template<typename Timer, typename Servo, typename Led, typename Esc, 
+template<typename Kind,
+         typename Timer, typename Servo, typename Led, typename Esc, 
          typename Sensor, typename Lut, 
          typename Adc, typename Rpm,
          typename NVM, typename ProviderList,
@@ -546,7 +557,7 @@ template<typename Timer, typename Servo, typename Led, typename Esc,
 struct GlobalFsm {
     using blinkLed = External::Blinker2<Led, Timer, 100_ms, 2000_ms>;
     using count_type = blinkLed::count_type;
-
+    
     using pa = Servo::protocoll_adapter_type;
     
     using TermDev = Term::device_type;
@@ -566,50 +577,57 @@ struct GlobalFsm {
     static inline auto& appData = NVM::data();
     
     inline static void init() {
-#ifdef USE_IBUS
-        if constexpr (std::is_same_v<Servo, TermDev>) {
-            Servo::template init<AVR::BaudRate<115200>>();            
-        }
-        else {
-            Servo::template init<AVR::BaudRate<115200>>();
-            if constexpr(!std::is_same_v<TermDev, void>) {
-                TermDev::template init<AVR::BaudRate<9600>>();
+        if constexpr(std::is_same_v<Kind, Input::IBus>) {
+            if constexpr (std::is_same_v<Servo, TermDev>) {
+                Servo::template init<AVR::BaudRate<115200>>();            
+            }
+            else {
+                Servo::template init<AVR::BaudRate<115200>>();
+                if constexpr(!std::is_same_v<TermDev, void>) {
+                    TermDev::template init<AVR::BaudRate<9600>>();
+                }
             }
         }
-#endif
-#ifdef USE_SBUS
-        if constexpr (std::is_same_v<Servo, TermDev>) {
-            Servo::template init<AVR::BaudRate<100000>, FullDuplex, true, 1>(); // 8E2
-            Servo::rxInvert(true);
-        }
-        else {
-            Servo::template init<AVR::BaudRate<100000>, FullDuplex, true, 1>(); // 8E2
-            Servo::rxInvert(true);
-            if constexpr(!std::is_same_v<TermDev, void>) {
-                TermDev::template init<AVR::BaudRate<9600>>();
+        else if constexpr(std::is_same_v<Kind, Input::SBus>) {
+            if constexpr (std::is_same_v<Servo, TermDev>) {
+                Servo::template init<AVR::BaudRate<100000>, FullDuplex, true, 1>(); // 8E2
+                Servo::rxInvert(true);
+            }
+            else {
+                Servo::template init<AVR::BaudRate<100000>, FullDuplex, true, 1>(); // 8E2
+                Servo::rxInvert(true);
+                if constexpr(!std::is_same_v<TermDev, void>) {
+                    TermDev::template init<AVR::BaudRate<9600>>();
+                }
             }
         }
-#endif
+        else if constexpr(std::is_same_v<Kind, Input::SumD>) {
+        }
+        else if constexpr(std::is_same_v<Kind, Input::Sppm>) {
+        }
+        else {
+            static_assert(std::false_v<Kind>);
+        }
+        
         NVM::init();
         if (!((appData.magic() == 42))) {
             appData.clear();
             appData.change();
         }            
-
+        
         blinkLed::init();
         Esc::init(); 
- 
-#ifdef USE_SPORT
-        Lut::init(std::byte{0x33}); // route TXD to lut1-out no-inv
-        Sensor::init();
-        Sensor::uart::txPinDisable();
-#endif
-#ifdef USE_IBUS
-        Lut::init(std::byte{0x00}); 
-        Sensor::init();
-        Sensor::uart::txOpenDrain();
-#endif
         
+        if constexpr(std::is_same_v<Kind, Input::SBus>) {
+            Lut::init(std::byte{0x33}); // route TXD to lut1-out no-inv
+            Sensor::init();
+            Sensor::uart::txPinDisable();
+        }
+        else if constexpr(std::is_same_v<Kind, Input::IBus>) {
+            Lut::init(std::byte{0x00}); 
+            Sensor::init();
+            Sensor::uart::txOpenDrain();
+        }
         Adc::template init<false>(); // no pullups
         Adc::mcu_adc_type::nsamples(4);
         
@@ -625,9 +643,9 @@ struct GlobalFsm {
         Adc::periodic();
     }
     inline static void ratePeriodic() {
-#ifdef USE_SBUS
-        pa::ratePeriodic();
-#endif
+        if constexpr(std::is_same_v<Kind, Input::SBus>) {
+            pa::ratePeriodic();
+        }
         blinkLed::ratePeriodic();
         Sensor::ratePeriodic();
         Esc::ratePeriodic();
@@ -645,7 +663,7 @@ struct GlobalFsm {
             }
             pa::resetStats();
         });
-
+        
         switch(mState) {
         case State::Undefined:
             mStateTick.on(startupTicks, []{
@@ -669,7 +687,7 @@ struct GlobalFsm {
             break;
         case State::CheckStart:
             if (!(Esc::isThrottleForward() || Esc::isThrottleBackward())) {
-                    mState = State::CalibrateOn;
+                mState = State::CalibrateOn;
             }
             break;
         case State::CalibrateOn:
@@ -736,24 +754,24 @@ struct GlobalFsm {
 private:
     static inline void debug() {
         etl::out<Term>("p: "_pgm, pa::packages(), " r: "_pgm, Rpm::value(), " c: "_pgm, Rpm::captures());
-//        etl::out<Term>(" a0: "_pgm, Adc::value(adc_i_t{0}));
-//        etl::out<Term>(" a1: "_pgm, Adc::value(adc_i_t{1}));
-//        etl::out<Term>(" a2: "_pgm, Adc::value(adc_i_t{2}));
-//        etl::out<Term>(" a3: "_pgm, Adc::value(adc_i_t{3}));
-//        etl::out<Term>(" a4: "_pgm, Adc::value(adc_i_t{4}));
-//        etl::out<Term>(" a5: "_pgm, Adc::value(adc_i_t{5}));
+        //        etl::out<Term>(" a0: "_pgm, Adc::value(adc_i_t{0}));
+        //        etl::out<Term>(" a1: "_pgm, Adc::value(adc_i_t{1}));
+        //        etl::out<Term>(" a2: "_pgm, Adc::value(adc_i_t{2}));
+        //        etl::out<Term>(" a3: "_pgm, Adc::value(adc_i_t{3}));
+        //        etl::out<Term>(" a4: "_pgm, Adc::value(adc_i_t{4}));
+        //        etl::out<Term>(" a5: "_pgm, Adc::value(adc_i_t{5}));
         
         Meta::visit<ProviderList>([]<typename W>(W){
                                       etl::out<Term>(" off: "_pgm, W::type::offset());
                                   });
         
         etl::outl<Term>(" a6: "_pgm, Adc::value(adc_i_t{6}));
-//        etl::out<Term>(" ga: "_pgm, SigRow<>::tgain());
-//        etl::out<Term>(" of: "_pgm, SigRow<>::toffset());
-//        etl::outl<Term>(" a7: "_pgm, Adc::value(adc_i_t{7}));
+        //        etl::out<Term>(" ga: "_pgm, SigRow<>::tgain());
+        //        etl::out<Term>(" of: "_pgm, SigRow<>::toffset());
+        //        etl::outl<Term>(" a7: "_pgm, Adc::value(adc_i_t{7}));
         Esc::template debug<Term>();
     } 
-   
+    
     using Crgb = External::Crgb;
     static constexpr Crgb red{External::Red{255}, External::Green{0}, External::Blue{0}};
     static constexpr Crgb green{External::Red{0}, External::Green{255}, External::Blue{0}};
@@ -761,7 +779,7 @@ private:
     static constexpr Crgb yellow{External::Red{255}, External::Green{255}, External::Blue{0}};
     static constexpr Crgb magenta{External::Red{255}, External::Green{0}, External::Blue{255}};
     static constexpr Crgb cyan{External::Red{0}, External::Green{255}, External::Blue{255}};
-
+    
     struct RunState {
         inline static void led(const Esc::RunState rs) {
             if (rs != oldState) {
@@ -851,30 +869,15 @@ using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::AltA>;
 // WO0: unbenutzt
 // WO1: pwm1
 // WO2: pwm2
-using pwm = PWM::DynamicPwm<tcaPosition>;
+using pwm = PWM::DynamicPwmPrescale<tcaPosition, AVR::Prescaler<4>>;
 
 using systemTimer = SystemTimer<Component::Rtc<0>, fRtc>;
-
-#ifdef USE_IBUS
-using servo_pa = IBus::Servo::ProtocollAdapter<0>;
-using servo = Usart<usart2Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<1024>>;
-#endif
-#ifdef USE_SBUS
-using servo_pa = External::SBus::Servo::ProtocollAdapter<0, systemTimer>;
-using servo = AVR::Usart<usart2Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
-#endif
-
-#ifndef NDEBUG
-using terminal = etl::basic_ostream<servo>;
-#else
-using terminal = etl::basic_ostream<void>;
-#endif
 
 using ibt = IBusThrough<daisyChain>;
 
 using adc = Adc<Component::Adc<0>, AVR::Resolution<12>, Vref::V2_048>;
 // ADC Channels: T1, BecI1, BecI2, V+, Text, T2, Curr
-using adcController = External::Hal::AdcController<adc, Meta::NList<0, 1, 6, 7, 19, 20, 21, 0x42>>; // 42 = temp
+using adcController = External::Hal::AdcController<adc, Meta::NList<0, 1, 6, 7, 19, 20, 21, 0x42>>; // 0x42 = temp
 
 using spiPosition = Portmux::Position<Component::Spi<0>, Portmux::Default>;
 using spi = AVR::Spi<spiPosition, AVR::QueueLength<16>,  AVR::UseInterrupts<false>>;
@@ -884,9 +887,12 @@ using led = ColorLedAdapter<ledStripe>;
 using rpmPositionL = Portmux::Position<Component::Tcb<0>, Portmux::Default>;
 using rpmPositionH = Portmux::Position<Component::Tcb<1>, Portmux::Default>;
 
+using sppmPosition = Portmux::Position<Component::Tcb<2>, Portmux::Default>;
+
 using evch4 = Event::Channel<4, Event::Generators::Pin<rpmPin>>;
 
-using rpm = External::Rpm::RpmFreq<evch4, Meta::List<rpmPositionL, rpmPositionH>>;
+using clockProvider = pwm::clock_provider;
+using rpm = External::Rpm::RpmFreq<evch4, Meta::List<rpmPositionL, rpmPositionH>, clockProvider>;
 
 using rpmOvfChannel = rpm::overflow_channel<0>;
 using rpmRoutes = rpm::event_routes<rpmOvfChannel>;
@@ -894,98 +900,202 @@ using rpmRoutes = rpm::event_routes<rpmOvfChannel>;
 using evrouter = Event::Router<Event::Channels<evch4, rpmOvfChannel>, rpmRoutes::routes>;
 
 using tempiP = InternalTempProvider<adcController, 7, sigrow>;
-
+ 
 using temp1 = External::AnalogSensor<adcController, 0, std::ratio<500,1000>, 
-                                    std::ratio<10, 1000>, 
-                                    std::ratio<10,1>>;
+std::ratio<10, 1000>, 
+std::ratio<10,1>>;
 using temp2 = External::AnalogSensor<adcController, 5, std::ratio<500,1000>, 
-                                    std::ratio<10, 1000>, 
-                                    std::ratio<10,1>>;
+std::ratio<10, 1000>, 
+std::ratio<10,1>>;
 using text = External::AnalogSensor<adcController, 4, std::ratio<500,1000>, 
-                                    std::ratio<10, 1000>, 
-                                    std::ratio<10,1>>;
+std::ratio<10, 1000>, 
+std::ratio<10,1>>;
 using temp1P = TempProvider<temp1>;
 using temp2P = TempProvider<temp1>;
 using textP = TempProvider<text>;
 
 using vdiv = External::AnalogSensor<adcController, 3, std::ratio<0,1>, 
-                                    std::ratio<R2vd, R2vd + R1vd>, 
-                                    std::ratio<100,1>>;
+std::ratio<R2vd, R2vd + R1vd>, 
+std::ratio<100,1>>;
 using voltageP = VoltageProvider<vdiv>;
 
 using bec1S = External::AnalogSensor<adcController, 1, std::ratio<0,1>, 
-                                    std::ratio<1900, 1000>, 
-                                    std::ratio<100,1>>;
+std::ratio<1900, 1000>, 
+std::ratio<100,1>>;
 using cBecP = CurrentProvider<bec1S>;
 
 using currS = External::AnalogSensor<adcController, 6, std::ratio<0,1>, 
-                                    std::ratio<550, 1000>, 
-                                    std::ratio<1000,1>>;
+std::ratio<550, 1000>, 
+std::ratio<1000,1>>;
 using currP = CurrentProvider<currS>;
 
 using rpmP = RpmProvider<rpm>;
 
-#ifdef USE_IBUS
-using sensor = IBus::Sensor<usart1Position, AVR::Usart, AVR::BaudRate<115200>, 
-                            Meta::List<VersionProvider, 
-                                       temp1P, temp2P, tempiP, textP, 
-                                       voltageP, cBecP, currP, rpmP>, 
-                            systemTimer, ibt
-//                          , etl::NamedFlag<true>
-//                           , etl::NamedFlag<true>
->;
-#endif
-#ifdef USE_SPORT
-template<typename PA>
-using sensorUsart = AVR::Usart<usart1Position, PA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<64>>;
-using sensor = External::SPort::Sensor<External::SPort::SensorId::ID3, sensorUsart, systemTimer, 
-                                       Meta::List<VersionProvider>>;
-#endif
-
-using escfsm = EscFsm<systemTimer, pwm, Meta::List<inh1Pin, inh2Pin>, servo_pa>;
-
 using eeprom = EEProm::Controller<Data>;
-
-using gfsm = GlobalFsm<systemTimer, servo, led, escfsm, sensor, lut1, adcController, rpm, eeprom, Meta::List<currP, textP, temp1P>, terminal>;
 
 using portmux = Portmux::StaticMapper<Meta::List<spiPosition, ccl1Position, tcaPosition, usart1Position, usart2Position, rpmPositionL, rpmPositionH>>;
 
-int main() {
+template<typename A>
+struct AppCommon {
+    
+    inline static void run() {
 #ifndef NDEBUG
-    timing0Pin::dir<Output>();
-    timing1Pin::dir<Output>();
-    timing2Pin::dir<Output>();
+        timing0Pin::dir<Output>();
+        timing1Pin::dir<Output>();
+        timing2Pin::dir<Output>();
 #endif
-    
-    portmux::init();
-    ccp::unlock([]{
-        clock::init<Project::Config::fMcuMhz>();
-    });
-    systemTimer::init();
-    
-    inh1Pin::dir<Output>();
-    inh2Pin::dir<Output>();
-    
-    evrouter::init();
-    gfsm::init();
-    
-    {
-        etl::outl<terminal>("test12"_pgm);
         
-        while(true) {
-            timing0Pin::toggle();
+        portmux::init();
+        ccp::unlock([]{
+            clock::init<Project::Config::fMcuMhz>();
+        });
+        systemTimer::init();
+        
+        inh1Pin::dir<Output>();
+        inh2Pin::dir<Output>();
+        
+        evrouter::init();
+        A::gfsm::init();
+        
+        {
+            etl::outl<typename A::terminal>("test20"_pgm);
             
-            gfsm::periodic();
-            systemTimer::periodic([&]{
-                gfsm::ratePeriodic();
-            });
+            while(true) {
+                timing0Pin::toggle();
+                
+                A::gfsm::periodic();
+                systemTimer::periodic([&]{
+                    A::gfsm::ratePeriodic();
+                });
+            }
         }
+    }
+    
+    
+};
+
+template<typename Kind>
+struct App : AppCommon<App<Kind>> {};
+
+template<>
+struct App<Input::SBus> : AppCommon<App<Input::SBus>> {
+    using kind = Input::SBus;
+
+    using servo_pa = External::SBus::Servo::ProtocollAdapter<0, systemTimer>;
+    using servo = AVR::Usart<usart2Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
+    
+    #ifndef NDEBUG
+    using terminal = etl::basic_ostream<servo>;
+    #else
+    using terminal = etl::basic_ostream<void>;
+    #endif
+    
+    template<typename PA>
+    using sensorUsart = AVR::Usart<usart1Position, PA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<64>>;
+    using sensor = External::SPort::Sensor<External::SPort::SensorId::ID3, sensorUsart, systemTimer, 
+    Meta::List<VersionProvider>>;
+
+    using escfsm = EscFsm<systemTimer, pwm, Meta::List<inh1Pin, inh2Pin>, servo_pa>;
+    
+    using gfsm = GlobalFsm<kind, systemTimer, servo, led, escfsm, sensor, lut1, adcController, rpm, eeprom, Meta::List<currP, textP, temp1P>, terminal>;
+};
+
+template<>
+struct App<Input::IBus> : AppCommon<App<Input::IBus>> {
+    using kind = Input::IBus;
+
+    using servo_pa = IBus::Servo::ProtocollAdapter<0>;
+    using servo = Usart<usart2Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<1024>>;
+    
+    #ifndef NDEBUG
+    using terminal = etl::basic_ostream<servo>;
+    #else
+    using terminal = etl::basic_ostream<void>;
+    #endif
+    
+    using sensor = IBus::Sensor<usart1Position, AVR::Usart, AVR::BaudRate<115200>, 
+    Meta::List<VersionProvider, 
+    temp1P, temp2P, tempiP, textP, 
+    voltageP, cBecP, currP, rpmP>, 
+    systemTimer, ibt
+    //                          , etl::NamedFlag<true>
+    //                           , etl::NamedFlag<true>
+    >;
+    using escfsm = EscFsm<systemTimer, pwm, Meta::List<inh1Pin, inh2Pin>, servo_pa>;
+    
+
+    using gfsm = GlobalFsm<kind, systemTimer, servo, led, escfsm, sensor, lut1, adcController, rpm, eeprom, Meta::List<currP, textP, temp1P>, terminal>;
+};
+
+template<>
+struct App<Input::SumD> : AppCommon<App<Input::SumD>> {
+    using kind = Input::SumD;
+
+    using servo_pa = Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>;
+    using servo = Usart<usart2Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<1024>>;
+    
+    #ifndef NDEBUG
+    using terminal = etl::basic_ostream<servo>;
+    #else
+    using terminal = etl::basic_ostream<void>;
+    #endif
+    
+    using sensor = Hott::Experimental::Sensor<usart1Position, AVR::Usart, AVR::BaudRate<19200>, Hott::EscMsg, Hott::TextMsg, systemTimer>;
+    using escfsm = EscFsm<systemTimer, pwm, Meta::List<inh1Pin, inh2Pin>, servo_pa>;
+    
+    using gfsm = GlobalFsm<kind, systemTimer, servo, led, escfsm, sensor, lut1, adcController, rpm, eeprom, Meta::List<currP, textP, temp1P>, terminal>;
+};
+
+template<>
+struct App<Input::Sppm> : AppCommon<App<Input::Sppm>> {
+    using kind = Input::Sppm;
+    
+    using dbg = Usart<usart2Position, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<1024>>;
+    
+    #ifndef NDEBUG
+    using terminal = etl::basic_ostream<dbg>;
+    #else
+    using terminal = etl::basic_ostream<void>;
+    #endif
+    
+    using sensor = IBus::Sensor<usart1Position, AVR::Usart, AVR::BaudRate<115200>, 
+    Meta::List<VersionProvider, 
+    temp1P, temp2P, tempiP, textP, 
+    voltageP, cBecP, currP, rpmP>, 
+    systemTimer, ibt
+    //                          , etl::NamedFlag<true>
+    //                           , etl::NamedFlag<true>
+    >;
+
+    using sppm_input = External::Ppm::SinglePpmIn<sppmPosition::component_type, clockProvider>;
+     
+    using servo = External::Ppm::Adapter<sppm_input>;
+    
+    using escfsm = EscFsm<systemTimer, pwm, Meta::List<inh1Pin, inh2Pin>, servo::protocoll_adapter_type>;
+    
+    using gfsm = GlobalFsm<kind, systemTimer, servo, led, escfsm, sensor, lut1, adcController, rpm, eeprom, Meta::List<currP, textP, temp1P>, terminal>;
+};
+
+uint8_t a = 0;
+
+int main() {
+    if (a == 0) {
+        App<Input::SBus>::run();
+    }
+    else if (a == 1) {
+        App<Input::IBus>::run();
+    }
+    else if (a == 2) {
+        App<Input::SumD>::run();
+    }
+    else if (a == 3) {
+        App<Input::Sppm>::run();
     }
 }
 
 #ifndef NDEBUG
 [[noreturn]] inline void assertOutput(const AVR::Pgm::StringView& expr [[maybe_unused]], const AVR::Pgm::StringView& file[[maybe_unused]], unsigned int line [[maybe_unused]]) noexcept {
-    etl::outl<terminal>("Assertion failed: "_pgm, expr, etl::Char{','}, file, etl::Char{','}, line);
+//    etl::outl<terminal>("Assertion failed: "_pgm, expr, etl::Char{','}, file, etl::Char{','}, line);
     while(true) {
         assertPin::toggle();
     }
