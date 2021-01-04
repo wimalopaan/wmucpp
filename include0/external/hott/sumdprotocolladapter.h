@@ -283,9 +283,12 @@ namespace Hott {
         inline static uint16_t packageCount() {
             return mPackageCounter;
         }
+        inline static constexpr auto& packages = packageCount;
+        
         inline static void resetCount() {
             mPackageCounter = 0;
         }
+        inline static constexpr auto& resetStats = resetCount;
     private:
         inline static etl::uint_ranged<uint8_t, Hott::SumDMsg::Low8Bit, Hott::SumDMsg::High8Bit> value8Bit_unsafe(uint8_t channel) {
             if (mMsgInactive->channelData[channel].first < Hott::SumDMsg::Low8Bit) {
