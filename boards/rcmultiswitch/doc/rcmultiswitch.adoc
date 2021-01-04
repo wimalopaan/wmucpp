@@ -2,7 +2,7 @@
 // ---- Beginn Standardheader
 = RC MultiSwitch-D 
 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
-:revnumber: 1.06
+:revnumber: 1.07
 :revremark: HW_1.2
 :revdate: 01.01.1970
 :lang: de
@@ -338,14 +338,17 @@ Das Schaltmodul ist standardmäßig auf Kanal `10` eingestellt. Es kann jedoch a
 
 Im Sender muss daher für diesen Kanal als Quelle das entspechende Mixer-Script eingetragen werden.
 
-.Das Mischer-Skript `encsbm.lua`
-image::m1.png[align="center"]
+// todo: encsbm.lua
+.Das Mischer-Skript `encsbm.lua` 
+image::m1a.png[align="center"]
 
+// todo: encsbm.lua
 .Hier wird der Übertragungskanal `10` wird für die Schaltmodule verwendet.
-image::m2.png[align="center"]
+image::m2a.png[align="center"]
 
+// todo: encsbm.lua
 .Als Quelle des Mischers des Übertragungskanals wird das Mischer-Skript `encsbm.lua` eingetragen
-image::m3.png[align="center"]
+image::m3a.png[align="center"]
 
 .Mögliche Fehlerquelle im späteren Betrieb
 [CAUTION]
@@ -438,6 +441,12 @@ Der Sender _FrSky Horus X12s_ besitzt ein besonderes Bedienelement: den _Joystic
 Navigation im Menu-System der Schaltmodule verwendet werden. Da es sich dabei um proportionale Geber handelt, muss mit Hilfe eine Kurve (Sprungfunktion) aus der 
 proportionalen Informations des Gebers eine digitale gemacht werden.
 
+[CAUTION]
+--
+Wird die hier beschriebene Konfiguration ausgeführt, so sollten die Geber `Jsx` und `Jsy` nicht mehr als _normale_ Geber verwendet werden, da sie in jedem Fall den _Cursor_ 
+der Widgets beinflussen. 
+--
+
 Es muss dazu _eine_ Kurve nach dem Muster <<curve1>> erstellt werden. Diese Kurve kann für beide Richtungen (positive und negative Richtung) jeder Achse 
 des Joysticks verwendet werden. Die _Spiegelung_ der Kurve geschieht durch eine _Negation_ (das _Ausrufezeichen `!` in der Input-Konfiguration). Getrue nach der Regel, dass
 _Unzulänglichkeiten_ der Geber in der Input-Konfiguration _korrigiert_ werden, geschieht dies durch _vier_ Input-Definitionen aus den 
@@ -457,13 +466,16 @@ In <<curve3>> sieht man den Überblick über die gesamte Konfiguration aller _vi
 
 [[curve3]]
 .Konfiguration der alternativen Inputs 11...14 für die Bedienung
-image::joystick/inputsJoy.png[align="center"]
+image::joystick/inputsJoy2.png[align="center"]
 
 Der letzte Schritt besteht im _Einbau_ der Inputs in die Widget-Konfiguration: 
 
 [[curve4]]
 .Konfiguration des Widget zur Verwendung der alternativen Inputs
-image::joystick/widgetJoy.png[align="center"]
+image::joystick/widgetJoy2.png[align="center"]
+
+Diese Konfiguration kann sowohl für das _Bedienungswidget_ `wmsw` wie auch für das _Konfigurationswidget_ `wmswc` durchgeführt werden.
+
 
 === Konfiguration des Modells (Sender mit `128x64`-Pixel oder `212x54`-Pixel _monochrome Display_)
 
@@ -522,7 +534,7 @@ jeweils für ein bestimmtes Modell gültig ist, sollte sie auch in der modellspe
 * Für `SBus`: der Parameter `useSbus = 1`
 * Für `IBus`, etc.: der Parameter `useSbus = 0`
 
-Achten Sie ebenfalls darauf, dass Sie das _dazu passende_ Mixer-Script `encsb.lua` oder `encib.lua` eingerichtet haben (s.a. <<mixes>>).
+Achten Sie ebenfalls darauf, dass Sie das _dazu passende_ Mixer-Script `encsbm.lua`, `encxjt.lua` oder `encib.lua` eingerichtet haben (s.a. <<mixes>>).
 
 Diese Beschränkungen haben zur Folge, dass nur 16 verschieden Parameterwerte (etwa für den PWM-Wert oder das Blink-Intervall) eingestellt werden können.
 
@@ -723,7 +735,6 @@ Falls kein gültiges Signal erkannt wird:
 
 * `OMpx`  <= 8`
 * `TMode` <= 8
-
 
 --
 
@@ -1140,6 +1151,15 @@ Je nach verwendetem HF-Modul im Sender ist eine Unterscheidung zu treffen:
 === Gelegentliches Flackern oder Kanalfehlfunktion bei `RC-MultiAdapter-DA`
 
 Manchmal kommt es zu Toleranzen bei den alten, analogen Schaltmodulen. Bitte nach <<adapt>> verfahren.
+
+== Anerkennungen
+
+Die folgenden Personen haben durch ihr unermüdliches Testen, Bereitstellung von Sender und Empfängern, und ihr konstruktives Feedback wesentlich zum Erfolg des Projektes beigetragen:
+
+* Stefan Becker
+* Jürgen Jahn
+* Axel Müller
+* Johannes Unrath
 
 == Kontakt
 
