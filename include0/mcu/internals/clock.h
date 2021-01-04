@@ -45,6 +45,9 @@ namespace AVR {
             if constexpr(F.value == 32) {
                 mcu_clock()->oschfctrla.template set<ca_t::f_32mhz>();            
             }
+            else if constexpr(F.value == 28) {
+                mcu_clock()->oschfctrla.template set<ca_t::f_28mhz>();            
+            }
             else if constexpr(F.value == 24) {
                 mcu_clock()->oschfctrla.template set<ca_t::f_24mhz>();            
             }
