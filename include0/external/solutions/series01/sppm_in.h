@@ -11,11 +11,36 @@ namespace External {
     using namespace std::literals::chrono;
     
     namespace Ppm {
-        template<typename TimerNumber, typename MCU = DefaultMcuType>
+        
+        template<typename SPpmIn>
+        struct Adapter {
+            struct Protocoll_Adapter {
+                using value_type = SPpmIn::value_type;
+                
+                static inline value_type value(uint8_t) {
+                    return SPpmIn::value();
+                }
+                
+                static inline uint16_t packages() {
+                    return SPpmIn::counter();    
+                }
+                static inline void resetStats() {
+                    SPpmIn::reset();    
+                }
+                
+            };  
+            using protocoll_adapter_type = Protocoll_Adapter;
+            
+            inline static void periodic() {
+                SPpmIn::periodic();
+            }
+        };
+        
+        template<typename TimerNumber, typename ClockP = void, typename MCU = DefaultMcuType>
         struct SinglePpmIn;
         
-        template<uint8_t N, AVR::Concepts::At01Series MCU>
-        struct SinglePpmIn<AVR::Component::Tcb<N>, MCU> {
+        template<uint8_t N, typename ClockP, AVR::Concepts::At01DxSeries MCU>
+        struct SinglePpmIn<AVR::Component::Tcb<N>, ClockP, MCU> {
             static inline constexpr auto mcu_tcb = AVR::getBaseAddr<typename MCU::TCB, N>;
             
             using ctrla_t = MCU::TCB::CtrlA_t;
@@ -23,7 +48,17 @@ namespace External {
             using intflags_t = MCU::TCB::IntFlags_t;
             using ev_t = MCU::TCB::EvCtrl_t;
             
-            inline static constexpr uint8_t prescaler = 2;
+            using clock_provider = ClockP;
+            
+//            inline static constexpr uint8_t prescaler = 2;
+            inline static constexpr uint16_t prescaler = []{
+                if constexpr(std::is_same_v<clock_provider, void>) {
+                    return 2;
+                }
+                else if constexpr(std::is_same_v<typename clock_provider::component_type, AVR::Component::Tca<0>>) {
+                    return clock_provider::prescaler_type::value;
+                }
+            }();
             
             inline static constexpr uint16_t ppmMaxExtended = 2250_us * (Project::Config::fMcu / prescaler);
             inline static constexpr uint16_t ppmMax = 2_ms * (Project::Config::fMcu / prescaler);
@@ -62,6 +97,16 @@ namespace External {
             inline static uint16_t raw() {
                 return *mcu_tcb()->ccmp;
             }
+            
+            inline static void periodic() {
+                onCapture([]{
+                    auto v = *mcu_tcb()->ccmp;
+                    if ((v >= ppmMinExtended) && (v <ppmMaxExtended)) {
+                        ++mCounter;
+                        mValue = std::clamp(v, ppmMin, ppmMax);
+                    }
+                });                
+            }
 
             inline static void onCapture(auto f) {
                 mcu_tcb()->intflags.template testAndReset<intflags_t::capt>(f);
@@ -86,7 +131,17 @@ namespace External {
                 }
                 return extended_value_type{};
             }
-
+            
+            inline static auto counter() {
+                return mCounter;
+            }
+            inline static void reset() {
+                mCounter.setToBottom();
+                mValue.setNaN();
+            }
+        private:
+            static inline value_type mValue;
+            static inline etl::uint_ranged<uint16_t> mCounter{};
         };
     }
 }

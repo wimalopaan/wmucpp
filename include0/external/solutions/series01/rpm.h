@@ -12,14 +12,14 @@
 
 namespace External {
     namespace Rpm {
-        template<typename T, typename U, typename MCU = DefaultMcuType>
+        template<typename T, typename U, typename ClockProvider = void, typename MCU = DefaultMcuType>
         struct RpmFreq;
 
 //        template<typename InputEventChannel, auto Nb0, auto Nb1, AVR::Concepts::AtDxSeries MCU>
 //        struct RpmFreq<InputEventChannel, Meta::List<AVR::Component::Tcb<Nb0>, AVR::Component::Tcb<Nb1>>, MCU> {
             
-        template<typename InputEventChannel, typename RL, typename RH, AVR::Concepts::AtDxSeries MCU>
-        struct RpmFreq<InputEventChannel, Meta::List<RL, RH>, MCU> {
+        template<typename InputEventChannel, typename RL, typename RH, typename ClockP, AVR::Concepts::AtDxSeries MCU>
+        struct RpmFreq<InputEventChannel, Meta::List<RL, RH>, ClockP, MCU> {
             
             inline static constexpr uint8_t tcb_low_number = RL::component_type::value;
             inline static constexpr uint8_t tcb_high_number = RH::component_type::value;
@@ -56,10 +56,20 @@ namespace External {
 //            std::integral_constant<decltype(rpm), rpm>::_;
 //            decltype(fTimer)::_;
             
+            using clock_provider = ClockP;
+            
             inline static void init() {
                 mcu_tcb0()->ctrlb.template set<Ctrlb_t::mode_frq>();
                 mcu_tcb0()->evctrl.template set<Ev_t::captei>();
-                mcu_tcb0()->ctrla.template set<Ctrla_t::clkdiv1 | Ctrla_t::enable>();
+                if constexpr(std::is_same_v<clock_provider, void>) {
+                    mcu_tcb0()->ctrla.template set<Ctrla_t::clkdiv1 | Ctrla_t::enable>();
+                }
+                else if constexpr(std::is_same_v<typename clock_provider::component_type, AVR::Component::Tca<0>>) {
+                    mcu_tcb0()->ctrla.template set<Ctrla_t::clktca0 | Ctrla_t::enable>();
+                }
+                else {
+                    static_assert(std::false_v<MCU>);
+                }
 
                 mcu_tcb1()->ctrlb.template set<Ctrlb_t::mode_frq>();
                 mcu_tcb1()->evctrl.template set<Ev_t::captei>();

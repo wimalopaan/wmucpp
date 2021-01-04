@@ -215,6 +215,9 @@ namespace AVR {
         struct DynamicPwm;
         template<typename TimerNumber, typename MCU = DefaultMcuType>
         struct DynamicPwm8Bit;
+
+        template<typename TimerNumber, etl::Concepts::NamedConstant P, typename MCU = DefaultMcuType>
+        struct DynamicPwmPrescale;
         
         // WGM Mode 15
         // dynamic changeable frequnecy
@@ -676,7 +679,6 @@ namespace AVR {
                 }();
                 mcu_tca()->ctrla.template set<mcu_timer_t::CtrlA_t::enable | lpv>();
 //                mcu_tca()->ctrla.template setPartial(pv);
-                
             }
         private:
             template<typename T>
@@ -794,8 +796,8 @@ namespace AVR {
             }
             
             inline static constexpr void frequency(const External::Units::hertz& f) {
-                *mcu_tca()->perbuf = Config::fMcu / f;
-                mMax = Config::fMcu / f;
+                *mcu_tca()->perbuf = f_timer / f;
+                mMax = f_timer / f;
             }
             inline static constexpr void frequency(const uint16_t& f) {
                 *mcu_tca()->perbuf = f;
@@ -824,6 +826,158 @@ namespace AVR {
         private:
             inline static value_type mMax = 0;
         };
+
+        template<typename P, typename Pre, AVR::Concepts::AtDxSeries MCU>
+        struct DynamicPwmPrescale<Portmux::Position<Component::Tca<0>, P>, Pre, MCU> final {
+            
+            using all_channels = Meta::List<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>;
+            
+            using value_type = uint16_t;
+            
+            using prescale_type = Pre;
+            
+            struct Clock {
+                using component_type = Component::Tca<0>;
+                using prescaler_type = Pre;;
+            };
+            
+            using clock_provider = Clock;
+            
+            inline static constexpr auto f_timer = Project::Config::fMcu / Pre::value;
+            
+            template<typename Position, uint8_t N>
+            struct WOMapper;
+            
+            template<typename Position>
+            struct WOMapper<Position, 0> {
+                using pin = typename AVR::Portmux::Map<Position>::wo0pin;
+                inline static constexpr auto value = MCU::TCA::CtrlB_t::cmp0en;
+                using type = std::integral_constant<decltype(value), value>;
+            };
+            template<typename Position>
+            struct WOMapper<Position, 1> {
+                using pin = typename AVR::Portmux::Map<Position>::wo1pin;
+                inline static constexpr auto value = MCU::TCA::CtrlB_t::cmp1en;
+                using type = std::integral_constant<decltype(value), value>;
+            };
+            template<typename Position>
+            struct WOMapper<Position, 2> {
+                using pin = typename AVR::Portmux::Map<Position>::wo2pin;
+                inline static constexpr auto value = MCU::TCA::CtrlB_t::cmp2en;
+                using type = std::integral_constant<decltype(value), value>;
+            };
+            
+            DynamicPwmPrescale() = delete;
+            
+            using mcu_timer_t = typename MCU::TCA; 
+            static constexpr auto mcu_tca = getBaseAddr<mcu_timer_t, 0>;
+            using position = Portmux::Position<Component::Tca<0>, P>;
+            
+            static inline constexpr auto cmpMask = mcu_timer_t::CtrlB_t::cmp2en | mcu_timer_t::CtrlB_t::cmp1en | mcu_timer_t::CtrlB_t::cmp0en;
+            
+            template<typename WO>
+            using womapper = WOMapper<position, WO::value>;
+            
+            template<typename WO>
+            struct pinmapper {
+                using type = typename WOMapper<position, WO::value>::pin;
+            };
+            
+            using pins = Meta::List<typename pinmapper<WO<0>>::type, typename pinmapper<WO<1>>::type, typename pinmapper<WO<2>>::type>;
+            
+            using f = Meta::front<pins>;
+
+            
+            inline static constexpr void init() {
+                constexpr auto lpv = []{
+                    for(const auto& pre : MCU::TCA::prescalerValues) {
+                        if (pre.scale == Pre::value) {
+                            return pre.bits;
+                        }
+                    }
+                }();
+                mcu_tca()->ctrla.template set<mcu_timer_t::CtrlA_t::enable | lpv>();
+                //                mcu_tca()->ctrlb.template set<MCU::TCA::CtrlB_t::cmp2en | MCU::TCA::CtrlB_t::pwm>();
+                mcu_tca()->ctrlb.template set<mcu_timer_t::CtrlB_t::pwm>();
+                
+                AVR::PinGroup<pins>::template dir<Output>();
+            }
+            
+            template<Meta::concepts::List OutList, typename IMode = etl::RestoreState>
+            inline static constexpr void on() {
+                using out_list = Meta::transform_type<womapper, OutList>;
+                constexpr auto value = Meta::value_or_v<out_list>;
+//                                std::integral_constant<decltype(value), value>::_;
+                mcu_tca()->ctrlb.template add<value, etl::DisbaleInterrupt<IMode>>();
+            }
+
+            template<Meta::concepts::List OutList, typename IMode = etl::RestoreState>
+            inline static constexpr void off() {
+                using out_list = Meta::transform_type<womapper, OutList>;
+                constexpr auto value = Meta::value_or_v<out_list>;
+//                                std::integral_constant<decltype(value), value>::_;
+                mcu_tca()->ctrlb.template clear<value, etl::DisbaleInterrupt<IMode>>();
+            }
+            
+            template<typename Out>
+            inline static constexpr void invert() {
+                using pin = typename pinmapper<Out>::type;
+                pin::template attributes<Meta::List<Attributes::Inverting<>>>();
+            }
+            template<typename Out>
+            inline static constexpr void noinvert() {
+                using pin = typename pinmapper<Out>::type;
+                pin::template attributes<Meta::List<Attributes::Reset<>>>();
+            }
+
+            template<typename... Outs>
+            inline static constexpr void set() {
+                using pin_list = Meta::transform_type<pinmapper, Meta::List<Outs...>>;
+                //                pin_list::_;
+                off<Outs...>();
+                AVR::PinGroup<pin_list>::on();
+            }
+            template<typename... Outs>
+            inline static constexpr void reset() {
+                using pin_list = Meta::transform_type<pinmapper, Meta::List<Outs...>>;
+                //                pin_list::_;
+                AVR::PinGroup<pin_list>::off();
+            }
+            
+            inline static constexpr void frequency(const External::Units::hertz& f) {
+                *mcu_tca()->perbuf = f_timer / f;
+                mMax = f_timer / f;
+            }
+            inline static constexpr void frequency(const uint16_t& f) {
+                *mcu_tca()->perbuf = f;
+                mMax = f;
+            }
+            inline static constexpr void period(const uint16_t& p) {
+                *mcu_tca()->perbuf = p;
+                mMax = p;
+            }
+            inline static constexpr value_type max() {
+                return mMax;
+            }
+            template<Meta::concepts::List OutList>
+            inline static constexpr void duty(uint16_t d) {
+                using out_list = OutList;
+                if constexpr(Meta::contains<out_list, WO<0>>::value) {
+                    *mcu_tca()->cmp0buf = d;
+                }
+                if constexpr(Meta::contains<out_list, WO<1>>::value) {
+                    *mcu_tca()->cmp1buf = d;
+                }
+                if constexpr(Meta::contains<out_list, WO<2>>::value) {
+                    *mcu_tca()->cmp2buf = d;
+                }
+            }
+        private:
+            inline static value_type mMax = 0;
+        };
+
+
+
         
         template<etl::Concepts::NamedConstant TimerNumber, 
                  etl::Concepts::NamedFlag UseA = etl::NamedFlag<true>, etl::Concepts::NamedFlag UseB = etl::NamedFlag<true>, 

@@ -162,6 +162,9 @@ namespace AVR {
     template<uint8_t N>
     using Size = etl::NamedConstant<N>;
 
+    template<uint16_t P>
+    using Prescaler = etl::NamedConstant<P>;
+    
     using register_type = std::byte;
 
     namespace Util {
