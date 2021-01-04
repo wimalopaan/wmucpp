@@ -20,7 +20,7 @@ namespace Hott {
                  typename BinaryMesgType,
                  typename TextMesgType,
                  typename Clock,
-                 AVR::Concepts::At01Series MCU>
+                 AVR::Concepts::At01DxSeries MCU>
         struct Sensor<CNumber, Uart, Baud, BinaryMesgType, TextMesgType, Clock, MCU> final {
             static inline constexpr auto UartNumber = CNumber::component_type::value;
             enum class hott_state_t {Undefined = 0, BinaryStartRequest, AsciiStartRequest, BinaryWaitIdle, AsciiWaitIdle, BinaryReply, AsciiReply};
