@@ -24,6 +24,7 @@
 #include <mcu/internals/ccl.h>
 #include <mcu/internals/sigrow.h>
 #include <mcu/internals/event.h>
+#include <mcu/internals/syscfg.h>
 
 #include <external/hal/adccontroller.h>
 #include <external/hal/alarmtimer.h>
@@ -938,6 +939,8 @@ using portmux = Portmux::StaticMapper<Meta::List<spiPosition, ccl1Position, tcaP
 template<typename A>
 struct AppCommon {
     
+    using syscfg = AVR::Cpu::SysCfg<>;
+    
     inline static void run() {
 #ifndef NDEBUG
         timing0Pin::dir<Output>();
@@ -958,7 +961,7 @@ struct AppCommon {
         A::gfsm::init();
         
         {
-            etl::outl<typename A::terminal>("test20"_pgm);
+            etl::outl<typename A::terminal>("test20 id: "_pgm, syscfg::id());
             
             while(true) {
                 timing0Pin::toggle();
