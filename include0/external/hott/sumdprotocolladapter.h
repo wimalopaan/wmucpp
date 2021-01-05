@@ -271,6 +271,8 @@ namespace Hott {
                     mMultiState = MultiState::Undefined;
                 }
                 break;
+            case NumberOfStates:
+                break;
             default:
                 assert(false);
                 break;
