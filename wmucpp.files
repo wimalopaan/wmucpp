@@ -1597,6 +1597,7 @@ include0/mcu/common/components/clock_da32.h
 include0/mcu/common/components/event_da32.h
 include0/mcu/common/components/portmux_da32.h
 include0/mcu/common/components/sigrow_da32.h
+include0/mcu/common/components/syscfg.h
 include0/mcu/common/components/tcb_da32.h
 include0/mcu/common/components/usart_da.h
 include0/mcu/common/components/vref_da32.h
@@ -2132,3 +2133,4 @@ example/basics/Makefile
 example/basics/register.cc
 include0/external/sbus/sport.h
 include0/external/solutions/analogsensor.h
+include0/mcu/internals/syscfg.h

@@ -21,31 +21,16 @@
 #include <cstdint>
 #include <std/utility>
 
-#include "components/cpu.h"
-#include "components/clock_da32.h"
-#include "components/rtc.h"
-#include "components/cclda4.h"
-#include "components/port0.h"
-#include "components/portmux_da32.h"
-#include "components/tca.h"
-#include "components/tcb_da32.h"
-#include "components/tcd.h"
-#include "components/usart_da.h"
-#include "components/event0.h"
-#include "components/event1.h"
-#include "components/event_da32.h"
-#include "components/adc_da32.h"
-#include "components/vref_da32.h"
-#include "components/sleep.h"
-#include "components/adcomparator.h"
-#include "components/sigrow_da32.h"
-#include "components/spi.h"
-#include "components/gpior.h"
-#include "components/syscfg.h"
-
-#include "components/bitmask_operators_da.h"
-
 namespace AVR {
     namespace SeriesDa {
+        struct SysCfg final {
+            volatile const uint8_t reserved;
+
+            DataRegister<SysCfg, ReadOnly, std::byte> devId;
+            
+            static inline constexpr uintptr_t address = 0x0f00;
+        };
+       static_assert(sizeof(SysCfg) == 2);
+
     }
 }

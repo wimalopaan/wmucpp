@@ -19,33 +19,29 @@
 #pragma once
 
 #include <cstdint>
-#include <std/utility>
 
-#include "components/cpu.h"
-#include "components/clock_da32.h"
-#include "components/rtc.h"
-#include "components/cclda4.h"
-#include "components/port0.h"
-#include "components/portmux_da32.h"
-#include "components/tca.h"
-#include "components/tcb_da32.h"
-#include "components/tcd.h"
-#include "components/usart_da.h"
-#include "components/event0.h"
-#include "components/event1.h"
-#include "components/event_da32.h"
-#include "components/adc_da32.h"
-#include "components/vref_da32.h"
-#include "components/sleep.h"
-#include "components/adcomparator.h"
-#include "components/sigrow_da32.h"
-#include "components/spi.h"
-#include "components/gpior.h"
-#include "components/syscfg.h"
-
-#include "components/bitmask_operators_da.h"
+#include "../common/concepts.h"
 
 namespace AVR {
-    namespace SeriesDa {
+    namespace Cpu {
+
+        template<typename MCU = DefaultMcuType>
+        struct SysCfg;
+
+        template<AVR::Concepts::AtDxSeries MCU>
+        struct SysCfg<MCU> {
+            static constexpr auto mcu_cfg = getBaseAddr<typename MCU::SysCfg>;
+            
+            static inline uint8_t major() {
+                return (uint8_t)((*mcu_cfg()->devId >> 4) & 0x0f_B);
+            }
+            static inline uint8_t minor() {
+                return (uint8_t)(*mcu_cfg()->devId & 0x0f_B);
+            }
+            static inline std::byte id () {
+                return std::byte((('a' + major()) << 4) + minor());
+            }
+        };
+ 
     }
 }

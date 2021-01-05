@@ -57,6 +57,7 @@ namespace AVR {
         using SigRow = AVR::SeriesDa::SigRow;
         using Spi = AVR::Series0::Spi;
         using Gpior = AVR::Series0::GPIOR;
+        using SysCfg = AVR::SeriesDa::SysCfg;
         
     };
     template<>
