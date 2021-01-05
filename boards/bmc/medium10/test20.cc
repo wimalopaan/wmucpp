@@ -961,7 +961,7 @@ struct AppCommon {
         A::gfsm::init();
         
         {
-            etl::outl<typename A::terminal>("test20 id: "_pgm, syscfg::id());
+            etl::outl<typename A::terminal>("test20 rev: "_pgm, syscfg::revision(), " id: "_pgm, sigrow::id()); 
             
             while(true) {
                 timing0Pin::toggle();

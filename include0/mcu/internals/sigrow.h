@@ -32,6 +32,14 @@ namespace AVR {
     struct SigRow<MCU> {
         static inline constexpr auto mcu_sigrow = getBaseAddr<typename MCU::SigRow>;
         
+        static inline auto id() {
+            std::array<std::byte, 3> data;
+            data[2] = *mcu_sigrow()->deviceId2;
+            data[1] = *mcu_sigrow()->deviceId1;
+            data[0] = *mcu_sigrow()->deviceId0;
+            return data;
+        }
+        
         static inline uint16_t toffset() {
             return *mcu_sigrow()->tempSense1;
         }

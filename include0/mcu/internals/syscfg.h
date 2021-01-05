@@ -38,7 +38,7 @@ namespace AVR {
             static inline uint8_t minor() {
                 return (uint8_t)(*mcu_cfg()->devId & 0x0f_B);
             }
-            static inline std::byte id () {
+            static inline std::byte revision () {
                 return std::byte((('a' + major()) << 4) + minor());
             }
         };
