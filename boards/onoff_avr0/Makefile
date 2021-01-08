@@ -23,5 +23,6 @@ MCU = attiny412
 F_OSC = 2000000
 
 subdirs = small big
+#subdirs = big
 
 -include ../../Makefile.include

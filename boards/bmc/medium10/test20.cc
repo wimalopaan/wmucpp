@@ -947,7 +947,7 @@ struct AppCommon {
         timing1Pin::dir<Output>();
         timing2Pin::dir<Output>();
 #endif
-        
+       
         portmux::init();
         ccp::unlock([]{
             clock::init<Project::Config::fMcuMhz>();
@@ -959,7 +959,7 @@ struct AppCommon {
         
         evrouter::init();
         A::gfsm::init();
-        
+         
         {
             etl::outl<typename A::terminal>("test20 rev: "_pgm, syscfg::revision(), " id: "_pgm, sigrow::id()); 
             
