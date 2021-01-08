@@ -53,6 +53,9 @@
 # ZWT Beatle 80A (blaues board, ein(!) Treiber-Chip für alle FETs)
 # sudo avrdude -p atmega8 -P usb -c avrisp2 -V -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -U flash:w:bs.hex
 
+# RedBrick 70A blaues board mit SBEC und Treiber-ICs
+# rb50a.hex
+
 # HobbyKing RedBrick 30/50A ohne BEC
 # (rb50a.hex) stottert -> rb50a2.inc (H/L-Side vertauscht und Phase A und C (mux) vertauscht)
 
