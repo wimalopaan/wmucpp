@@ -1,92 +1,171 @@
-#include <cstddef>
-#include <cstdint>
-#include <cassert>
 #include <iostream>
-#include <string>
+#include <vector>
+#include <array>
+#include <limits>
 
-namespace Bounded {
-    template<typename T, T Lower, T Upper>
-    struct int_ranged {
-        explicit constexpr int_ranged(T v) : value{v} {
-            assert(v >= Lower); assert(v <= Upper);
-        }
-        constexpr void operator+=(T rhs) {
-            value = std::clamp(T(value + rhs), Lower, Upper);
-        }
-        constexpr void operator+=(int_ranged rhs) {
-            value = std::clamp(T(value + rhs.value), Lower, Upper);
-        }
-        constexpr operator T() const {
-            return value;
+template<typename T>
+class MyVector {
+public:
+    explicit MyVector(const std::initializer_list<T>&) {}
+    
+    using value_type = T;
+    
+    class Filler {
+        friend class MyVector<T>;
+    public:
+        MyVector& with(const T&) {
+            // ...
+            return m;
         }
     private:
-        T value{}; 
+        explicit Filler(MyVector& v) : m{v} {}
+        MyVector& m;
     };
+    
+    Filler fill(const size_t n) {
+        reserve(n);
+        return Filler(*this);
+    }
+    void reserve(const size_t n) {
+        // ...
+        mSize = n;
+    }
+private:
+    size_t mSize{};
+};
+
+template<typename C>
+class Filler {
+public:
+    explicit Filler(const size_t n) : mSize{n} {}
+    C with(const typename C::value_type& v) {
+        C c{};
+        c.reserve(mSize);
+        // ...
+        return c;    
+    }
+private:
+    const size_t mSize{};
+};
+
+template<typename C>
+Filler<C> fill(const size_t n) {
+    return Filler<C>{n};
 }
 
-namespace Geom2D {
-    template<typename T = intmax_t>
-    struct X {
-        template<typename U>
-        explicit constexpr X(U v) : value(v) {}
-        T value{};
-    };
-    template<typename T = intmax_t>
-    struct Y {
-        template<typename U>
-        explicit constexpr Y(U v) : value{v} {}
-        constexpr void operator+=(Y rhs) {
-            value += rhs.value;
-        }
-        T value{};
-    };
-    template<typename XT = X<intmax_t>, typename YT = Y<intmax_t>>
-    struct Point {
-        explicit constexpr Point(XT x, YT y) : mX{x}, mY{y} {}
+class MyClass1 {
+};
+class MyClass2 {
+public:
+    MyClass2(int) {}
+};
+class MyClass3 {
+public:
+    explicit MyClass3(int) {}
+};
+class MyClass4 {
+    
+};
+
+template<typename T>
+struct Foo {
+    T f() {
+        T m{};  
+        return m;
+    }
+};
+
+int main() {
+    Foo<int> f;
+    std::cout << f.f() << '\n';
+    
+    {
+        std::vector<int> v1(); // ups
+        std::vector<int> v2(3);
+        std::vector<int> v3(3, 2); // ist das [2, 2, 2] oder [3, 3] ?
+        std::vector<int> v4(2, 3);    
+//        std::vector<int> v5(1, 2, 3);  // warum geht das nicht? 
+    }
+    {
+        std::vector<int> v1{};
+        std::vector<int> v2{3};
+        std::vector<int> v3{3, 2};
+        std::vector<int> v4{2, 3};    
+        std::vector<int> v5{1, 2, 3};    
+    }
+    {
+        std::array<int, 10> a1; // warum uninitialisierte Elemente?
+//        std::array<int, 10> a2(3); // warum geht das nicht?
+    }
+    {
+        std::array<int, 10> a1{};
+        std::array<int, 10> a2{3};
+        std::array<int, 10> a3{3, 2};
+        std::array<int, 10> a4{1, 2, 3};
+    }
+    {
+        int i1(); // ups
+        int i2(4); // s.o. Konsistenz
+    }
+    {
+        int i1{}; 
+        int i2{4};
+    }
+    {
+        std::vector<MyClass1> v1;
+    }    
+    {
+        std::vector<MyClass1> v2{3};
+    }    
+    {
+//        MyVector<MyClass1> v2(3);        
+    }    
+    {
+//        MyVector<MyClass1> v2{3};
+    }    
+    {
+//        MyVector<MyClass2> v2(3);        
+    }    
+    {
+        MyVector<MyClass2> v2{3};
+    }    
+    {
+        auto v1 = MyVector<MyClass2>{}.fill(10).with(MyClass2{3});
+        auto v2 = MyVector<int>{}.fill(10).with(1);
         
-        constexpr void operator+=(YT dy) {
-            mY += dy;
-        }
-    private:
-        XT mX{};
-        YT mY{};
-    };
-}
+        auto v3 = fill<MyVector<MyClass2>>(10).with(MyClass2{3});
+    }
+#if 0
+    
+  // use uniform initialization
 
-namespace UI {
-    template<size_t Width, size_t Height>
-    struct Display {
-        using x_t = Geom2D::X<Bounded::int_ranged<uint8_t, 0, Width>>;
-        using y_t = Geom2D::Y<Bounded::int_ranged<uint8_t, 0, Height>>;
-        using point_t = Geom2D::Point<x_t, y_t>;
-        
-//        inline static void drawText(const std::string &text, const x_t x, const y_t y) {}
-//        inline static void drawText(const x_t x, const y_t y, const std::string &text) {}
-        inline static void drawText(const point_t &p, const std::string &text) {}
-        inline static void drawText(const std::string& text, const point_t &p) {}
-    };
-}
+    std::vector<MyClass1> v1{MyClass1{1}};
+  std::vector<MyClass2> v2{2};
 
-using display = UI::Display<100, 100>;
-using x_t = display::x_t;
-using y_t = display::y_t;
-using point_t = display::point_t;
+  std::cout << v1.size() << '\n';
+  std::cout << v2.size() << '\n';
 
-int main(){
-    using namespace std::literals;
-    
-//    display::drawText(x_t{1}, y_t{2}, "Bla"s);
-    
-    auto x1 = x_t{1};
-    auto y1 = y_t{2};
-    
-//    display::drawText(x1, y1, "Bla"s);
-    
-    auto p1 = point_t{x1, y1};
-    display::drawText(p1, "Bla"s);
-    
-    p1 += y_t{10};
-    display::drawText(p1, "Bla"s);
-    
-//    auto what = x1 + y1;
+  // use classic initialization
+
+//  std::vector<MyClass3> v3={2}; // initlist
+  std::vector<MyClass4> v4(2);
+
+//  std::cout << v3.size() << '\n';
+  std::cout << v4.size() << '\n';
+
+
+  MyVector<MyClass1> v10{2}; // 
+  MyVector<MyClass2> v20{2};
+
+  std::cout << v10.size() << '\n';
+  std::cout << v20.size() << '\n';
+
+  // use classic initialization
+
+//  std::vector<MyClass3> v3={2}; // initlist
+  MyVector<MyClass4> v40(2);
+
+//  std::cout << v3.size() << '\n';
+  std::cout << v40.size() << '\n';
+#endif
 }

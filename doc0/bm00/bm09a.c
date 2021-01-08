@@ -33,6 +33,29 @@ void setup(void)
   }
 }
 
-int main() {
+//int main() {
     
+//}
+
+
+#include <stdlib.h>
+// Anzahl an Kanaelen
+#define MAX_CH 4
+// Aufzaehlung fuer die verfuegbaren Kanaele
+enum nutzbare_kanaele {CH1=1, CH2=2, CH3=3, CH4=4};
+// structure fuer Infos zum Anschluss der HW
+struct kanal_info {
+  enum nutzbare_kanaele nummer;
+  uint8_t on_off_pin;
+  uint8_t flowcontrol_pin;
+  uint8_t pwm_pin;
+  uint8_t pwm_timer;
+};
+
+typedef struct kanal_info aaa;
+
+// Array mit Infos/Daten fuer die Kanaele erstellen
+aaa kanal_daten[MAX_CH] = {{.nummer = CH1}};
+
+int main(void) {
 }
