@@ -9,15 +9,15 @@
 #define USE_ACS_PIN_POWER // ACS über tiny-Pin
 
 //#define USE_SPORT
-//#define USE_HOTT
-#define USE_IBUS
+#define USE_HOTT
+//#define USE_IBUS
 //#define FS_I6S
 #define USE_OFFSET
 
 #ifdef USE_IBUS
 # define USE_DAISY
 #endif
-
+ 
 #define USE_EEPROM
 
 #include <mcu/avr.h>
@@ -74,7 +74,7 @@ namespace Parameter {
     constexpr uint16_t R1vd = 10'000;
     
 #ifdef USE_16V
-    constexpr uint16_t R2vd = 3'000;
+    constexpr uint16_t R2vd = 3'100;
 #else
     constexpr uint16_t R2vd = 1'000;
 #endif
@@ -360,8 +360,11 @@ using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>,
 using sensor = Hott::Experimental::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, Hott::TextMsg, systemTimer>;
 using battVoltageConverter = Hott::Units::Converter<adc, Hott::Units::battery_voltage_t, 
                                                     std::ratio<Parameter::R1vd + Parameter::R2vd, Parameter::R2vd>>; // todo: richtiger scale faktor
+# ifdef USE_ACS_PIN_POWER
+using currentSensor = External::AnalogSensor<adcController, 1, std::ratio<460,1000>, std::ratio<37,1000>, std::ratio<10,1>>;
+#else
 using currentSensor = External::AnalogSensor<adcController, 1, std::ratio<490,1000>, std::ratio<40,1000>, std::ratio<10,1>>;
-
+#endif
 template<typename ValueType, typename Sensor>
 struct CurrentConverter {
     inline static constexpr void init() {}

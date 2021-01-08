@@ -280,6 +280,8 @@ namespace AVR {
         using reso_type = Reso;
         using value_type = typename Reso::type;
         
+        using VRef_type = VRefType;
+
         static constexpr auto VRef = VRefType::value;
         //        static constexpr auto refs = VRefType::refs;
         
