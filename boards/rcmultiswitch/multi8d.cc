@@ -2,7 +2,7 @@
  
 //#define USE_IBUS
 #define USE_SBUS
-
+ 
 #define LEARN_DOWN // start at highest channel number downwards
 
 #include "board.h"

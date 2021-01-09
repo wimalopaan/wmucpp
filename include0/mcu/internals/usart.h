@@ -342,6 +342,9 @@ namespace AVR {
     public:
         using protocoll_adapter_type = PA;
 
+        inline static void lbmeDisable() {
+            mcu_usart()->ctrla.template clear<ctrla_t::lbme, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
+        }
         inline static void txOpenDrain() {
             mcu_usart()->ctrlb.template add<ctrlb_t::odme, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
         }

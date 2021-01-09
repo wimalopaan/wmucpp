@@ -1,4 +1,4 @@
-#define VERSION "1.8"
+#define VERSION "1.10"
 #define TITLE   "WM-Switch"
 
 #define NDEBUG
@@ -10,10 +10,10 @@
 
 #ifdef USE_HOTT
 
-//#define GAM
+#define GAM
 //#define AIR
 //#define ESC
-#define VARIO
+//#define VARIO
 //#define GPS
 
 #ifdef GAM
@@ -400,6 +400,9 @@ using menu = Hott::BasePage<sensor, RCMenu>;
 #endif
 
 int main() {
+    
+//    lvPin::dir<Output>();
+    
     portmux::init();
     
     ccp::unlock([]{
