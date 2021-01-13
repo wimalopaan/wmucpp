@@ -5,13 +5,7 @@
 ASCIIDOC = asciidoc
 ASCIIDOCTOR = asciidoctor
 
-#ASCIIDOCTORPDF = ~/asciidoctor/asciidoctor-pdf/bin/asciidoctor-pdf
-#ASCIIDOCTORPDF = ~/.gem/ruby/2.6.0/gems/asciidoctor-pdf-1.5.0.alpha.16/bin/asciidoctor-pdf
-ASCIIDOCTORPDF = ~/.gem/ruby/2.7.0/gems/asciidoctor-pdf-1.5.3/bin/asciidoctor-pdf
-
-# rendered admonitions als image
-#ASCIIDOCTORPDF = ~/asciidoctor/jessedoyle-asciidoctor-pdf/bin/asciidoctor-pdf
-
+ASCIIDOCTORPDF = ~/.gem/ruby/2.7.0/gems/asciidoctor-pdf-1.5.4/bin/asciidoctor-pdf
 
 EXTENSIONSDIR = ~/asciidoctor/extensions/lib 
 EXTENSIONSDIR2 = ~/asciidoctor/local

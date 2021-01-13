@@ -5,13 +5,7 @@
 ASCIIDOC = asciidoc
 ASCIIDOCTOR = asciidoctor
 
-#ASCIIDOCTORPDF = ~/asciidoctor/asciidoctor-pdf/bin/asciidoctor-pdf
-#ASCIIDOCTORPDF = ~/.gem/ruby/2.6.0/gems/asciidoctor-pdf-1.5.0.alpha.16/bin/asciidoctor-pdf
-ASCIIDOCTORPDF = ~/.gem/ruby/2.7.0/gems/asciidoctor-pdf-1.5.3/bin/asciidoctor-pdf
-
-# rendered admonitions als image
-#ASCIIDOCTORPDF = ~/asciidoctor/jessedoyle-asciidoctor-pdf/bin/asciidoctor-pdf
-
+ASCIIDOCTORPDF = ~/.gem/ruby/2.7.0/gems/asciidoctor-pdf-1.5.4/bin/asciidoctor-pdf
 
 EXTENSIONSDIR = ~/asciidoctor/extensions/lib 
 EXTENSIONSDIR2 = ~/asciidoctor/local
@@ -28,7 +22,8 @@ ASCIIDOCTORFLAGSPDF += -a pdf-themesdir=themes -a pdf-theme=basic.yml -a mathema
 ASCIIDOCTORFLAGSPDF2 += -I $(EXTENSIONSDIR) -I $(EXTENSIONSDIR2) -a allow-uri-read -r asciidoctor-diagram -r asciidoctor-mathematical -r tree-block-macro 
 ASCIIDOCTORFLAGSPDF2 += -a pdf-stylesdir=themes -a pdf-style=basic_land.yml -a mathematical-format=svg --trace
 
-ASCIIDOCTORVARS += -a data-uri -a imagesdir=`pwd`/images -a stylesdir=css # -a stylesheet=asciidoctor-wide.css
+#ASCIIDOCTORVARS += -a data-uri -a stylesdir=css # -a stylesheet=asciidoctor-wide.css
+ASCIIDOCTORVARS += -a data-uri -a localimages=`pwd`/images -a stylesdir=css # -a stylesheet=asciidoctor-wide.css
 ASCIIDOCTORVARS += -a revdate="${shell date +'%x'}"
 #ASCIIDOCTORVARS += -a revnumber=0.8 -a revdate="${shell date +'%x'}"
 
