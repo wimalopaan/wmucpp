@@ -1,4 +1,4 @@
-#define VERSION "1.10"
+#define VERSION "1.11"
 #define TITLE   "WM-Switch"
 
 #define NDEBUG
