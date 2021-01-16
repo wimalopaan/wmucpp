@@ -1,3 +1,5 @@
+//#define NDEBUG
+
 #include <mcu/avr.h>
 #include <mcu/common/delay.h>
 
@@ -41,7 +43,7 @@ namespace  {
     constexpr auto fRtc = 1000_Hz;
 }
 
-template<typename SpiPosition, AVR::Concepts::Pin OePin>
+template<typename SpiPosition, AVR::Concepts::Pin OePin, AVR::Concepts::Pin IRef1Pin, AVR::Concepts::Pin IRef2Pin>
 struct PCA9745 {
     struct Ramp {
         std::byte rate{};
@@ -111,8 +113,15 @@ struct PCA9745 {
     using spi = AVR::SpiSS<SpiPosition, Command, AVR::QueueLength<16>>;
     using oePin = OePin;
     
+    using iref1Pin = IRef1Pin;
+    using iref2Pin = IRef2Pin;
+    
     static inline void init() {
+        iref1Pin::template dir<AVR::Output>();
+        iref2Pin::template dir<AVR::Input>();
         oePin::template dir<AVR::Output>();
+        iref1Pin::low();
+//        iref2Pin::high();
         oePin::low();
         spi::init();
         spi::put(Command{Write{}, 0, 0x00_B});
@@ -237,8 +246,11 @@ using terminal = etl::basic_ostream<terminal_device>;
 using spiPosition = Portmux::Position<Component::Spi<0>, Portmux::Default>;
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, spiPosition>>;
 
+using iref1Pin = Pin<Port<A>, 5>;
+using iref2Pin = Pin<Port<A>, 6>;
+
 using oePin = Pin<Port<A>, 7>;
-using pca9745 = PCA9745<spiPosition, oePin>;
+using pca9745 = PCA9745<spiPosition, oePin, iref1Pin, iref2Pin>;
 using gfsm = GFSM<systemTimer, terminal, pca9745>;
 
 int main() {
