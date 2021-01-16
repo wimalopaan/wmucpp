@@ -115,8 +115,8 @@ namespace AVR {
 //    requires requires {
 //        typename Mode::mosi_dir;
 //    }
-    class Spi final : public SpiBase<Spi<N, MCU>, std::is_same<Flags, void>::value>, 
-            public std::conditional<Mode::useInterrupts, IsrBaseHandler<typename AVR::ISR::Spi<N>::Stc>, NoIsrBaseHandler>::type {
+    class Spi final : public SpiBase<Spi<N, MCU>, std::is_same_v<Flags, void>>, 
+            public std::conditional_t<Mode::useInterrupts, IsrBaseHandler<typename AVR::ISR::Spi<N>::Stc>, NoIsrBaseHandler> {
         
         static_assert(N < MCU::Spi::count, "wrong spi number");
         
