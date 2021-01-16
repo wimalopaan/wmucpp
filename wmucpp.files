@@ -335,6 +335,8 @@ boards/rcdesk/Makefile
 boards/rcdesk/test00.cc
 boards/rcdesk/test01.cc
 boards/rcdesk/test02.cc
+boards/rcled/Makefile
+boards/rcled/test00.cc
 boards/rcministep/Makefile
 boards/rcministep/test00.cc
 boards/rcministep/test01.cc
