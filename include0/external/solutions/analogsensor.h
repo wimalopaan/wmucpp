@@ -90,7 +90,7 @@ namespace External {
 //        std::integral_constant<uint16_t, (uint16_t)qmax>::_;
         
         inline static constexpr uint16_t shift = []{
-            for(uint8_t i = 8; i--> 0;) {
+            for(uint8_t i = 12; i--> 0;) {
                 auto x = (1U << i);
                 if (x <= qmax) {
                     return i;
