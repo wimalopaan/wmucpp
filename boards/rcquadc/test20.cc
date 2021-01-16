@@ -7,7 +7,7 @@
 # define USE_SPORT
 #endif
 
-//#define SCALE_ADC_PWM
+#define SCALE_ADC_PWM
 
 #define LEARN_DOWN
 
@@ -1216,7 +1216,7 @@ struct GlobalFsm<Timer, PWM, NVM, Meta::List<Chs...>, Led, Adc, Servo, BaudRate<
         Servo::template init<AVR::BaudRate<baud>, FullDuplex, true, 1>(); // 8E2
 #endif
         Sensor::init();
-        Adc::mcu_adc_type::nsamples(6); 
+        Adc::mcu_adc_type::nsamples(4); 
         Adc::init();
         PWM::init();
         PWM::template prescale<6>();
