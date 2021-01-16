@@ -39,7 +39,7 @@ namespace AVR {
                 return (uint8_t)(*mcu_cfg()->devId & 0x0f_B);
             }
             static inline std::byte revision () {
-                return std::byte((('a' + major()) << 4) + minor());
+                return std::byte((major() << 4) + minor());
             }
         };
  
