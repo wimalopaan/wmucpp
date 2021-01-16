@@ -24,7 +24,7 @@ namespace External {
                  etl::Concepts::NamedFlag Inverted,
                  etl::Concepts::NamedFlag Pullup,
                  typename Dbg,
-                 AVR::Concepts::At01Series MCU>
+                 AVR::Concepts::At01DxSeries MCU>
         struct Usart<Meta::List<RxPin, TxPin>, AVR::Component::Tcb<N>, PA, Baud, 
                 RecvQLength, SendQLength, Inverted, Pullup, Dbg, MCU> final {
             
