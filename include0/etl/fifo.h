@@ -145,6 +145,12 @@ namespace etl {
 //            if (++out == Size) out = 0;
             return item;
         }
+        inline T& front() {
+            return data[out];
+        }
+        inline const T& front() const {
+            return data[out];
+        }
         inline void clear() volatile {
             Scoped<DisbaleInterrupt<RestoreState>, !sizeIsAtomic> di;
             in = out = 0;
