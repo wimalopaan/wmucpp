@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #if 0
 #define RISING_AGE( DATA, BIT )            \
@@ -69,8 +70,21 @@ typedef union {
     const char* array[3];
 } Strings;
 
+
+void sendString(const char* str) {
+    assert(str);
+    do {
+       printf("%c",*str);
+    }  while (*str++);
+}
+
+void foo(char*) {
+    
+}
+
 int main() {
-    int foo();
+    
+    foo("abc");
     
     
     DevBoard_t db = {"abc", "def", "ghi"};
