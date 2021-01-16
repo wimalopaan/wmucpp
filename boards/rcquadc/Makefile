@@ -9,6 +9,9 @@ F_OSC = 20000000
 
 subdirs =
 
+test20.hex : MCU = avr128da32 
+test20.hex : F_OSC = 32000000
+
 #targets += test00.hex
 #targets += test01.hex
 #targets += test02.hex
@@ -20,10 +23,15 @@ subdirs =
 #targets += test08.hex
 #targets += test10.hex
 #targets += test11.hex
-targets += test12.hex
-targets += test13.hex
-targets += test14.hex
-targets += test15.hex
-targets += test16.hex
+#targets += test12.hex
+#targets += test13.hex
+#targets += test14.hex
+#targets += test15.hex
+#targets += test16.hex
+
+targets += test20.hex
 
 -include ../../Makefile.avr0.include
+
+#CC = /usr/local/bin/avr-gcc
+#CXX = /usr/local/bin/avr-g++
