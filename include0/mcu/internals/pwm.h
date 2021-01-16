@@ -474,7 +474,7 @@ namespace AVR {
             
         }
         
-        template<typename P, AVR::Concepts::At01Series MCU>
+        template<typename P, AVR::Concepts::At01DxSeries MCU>
         struct DynamicPwm8Bit<Portmux::Position<Component::Tca<0>, P>, MCU> final {
             DynamicPwm8Bit() = delete;
             
