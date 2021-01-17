@@ -117,8 +117,8 @@ namespace External {
             inline static External::Units::RPM last;
         };
         
-        template<auto Na, auto Nb, AVR::Concepts::AtDxSeries MCU>
-        struct RpmFreq<AVR::Component::Tca<Na>, AVR::Component::Tcb<Nb>, MCU> {
+        template<auto Na, auto Nb, AVR::Concepts::AtDxSeries MCU, typename CP>
+        struct RpmFreq<AVR::Component::Tca<Na>, AVR::Component::Tcb<Nb>, CP, MCU> {
             static inline constexpr auto mcu_tca = AVR::getBaseAddr<typename MCU::TCA, Na>;
             static inline constexpr auto mcu_tcb = AVR::getBaseAddr<typename MCU::TCB, Nb>;
             
@@ -173,8 +173,8 @@ namespace External {
         };
         
         
-        template<auto Na, auto Nb, AVR::Concepts::At01Series MCU>
-        struct RpmFreq<AVR::Component::Tca<Na>, AVR::Component::Tcb<Nb>, MCU> {
+        template<auto Na, auto Nb, AVR::Concepts::At01Series MCU, typename CP>
+        struct RpmFreq<AVR::Component::Tca<Na>, AVR::Component::Tcb<Nb>, CP, MCU> {
             static inline constexpr auto mcu_tca = AVR::getBaseAddr<typename MCU::TCA, Na>;
             static inline constexpr auto mcu_tcb = AVR::getBaseAddr<typename MCU::TCB, Nb>;
             
