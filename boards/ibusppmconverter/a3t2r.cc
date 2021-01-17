@@ -40,6 +40,7 @@ int main() {
     portmux::init();
     systemTimer::init();
     adcController::init();
+    adc::nsamples(6);
     
     rpm0::init();   
     rpm1::init();   
