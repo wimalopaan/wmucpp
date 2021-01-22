@@ -12,6 +12,11 @@ subdirs =
 test20.hex : MCU = avr128da32 
 test20.hex : F_OSC = 32000000
 
+avr128da32_01.hex : MCU = avr128da32 
+avr128da32_01.hex : F_OSC = 32000000
+avr128da32_02.hex : MCU = avr128da32 
+avr128da32_02.hex : F_OSC = 32000000
+
 #targets += test00.hex
 #targets += test01.hex
 #targets += test02.hex
@@ -27,9 +32,14 @@ test20.hex : F_OSC = 32000000
 #targets += test13.hex
 #targets += test14.hex
 #targets += test15.hex
-#targets += test16.hex
+targets += test16.hex
+targets += atmega4808_01.hex
 
 targets += test20.hex
+targets += avr128da32_01.hex
+targets += avr128da32_02.hex
+
+targets += test99.hex
 
 -include ../../Makefile.avr0.include
 

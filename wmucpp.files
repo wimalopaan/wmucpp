@@ -358,6 +358,9 @@ boards/rcmultiswitch/test00.cc
 boards/rcmultiswitch/test01.cc
 boards/rcmultiswitch/test10.cc
 boards/rcquadc/Makefile
+boards/rcquadc/atmega4808_01.cc
+boards/rcquadc/avr128da32_01.cc
+boards/rcquadc/avr128da32_02.cc
 boards/rcquadc/doc/Makefile
 boards/rcquadc/doc/rcquad.adoc
 boards/rcquadc/test00.cc
@@ -377,6 +380,7 @@ boards/rcquadc/test14.cc
 boards/rcquadc/test15.cc
 boards/rcquadc/test16.cc
 boards/rcquadc/test20.cc
+boards/rcquadc/test99.cc
 boards/rcsensor/Makefile
 boards/rcsensor/test00.cc
 boards/rcsensorled/test100.cc
