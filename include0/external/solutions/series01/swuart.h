@@ -285,6 +285,8 @@ namespace External {
                 RecvQLength, SendQLength, Inverted, Pullup, Dbg, MCU> final {
             
             static inline constexpr bool useInterrupts = true;
+
+            using component_type = void;
             
             using mcu_timer_t = typename MCU::TCD; 
             static constexpr auto mcu_tcd = AVR::getBaseAddr<mcu_timer_t, N>;
