@@ -193,6 +193,10 @@ include::{idir}/function.adoc[]
 
 <<<
 
+include::details.adoc[]
+
+<<<
+
 include::{idir}/operate.adoc[]
 
 <<<

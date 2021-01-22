@@ -42,6 +42,8 @@ images:
 
 sources += rcquad.adoc
 
+rcquad.html: rcquad.adoc details.adoc
+
 .PHONY: html src pdf images clean
 
 test: test3.html 
@@ -61,36 +63,14 @@ PDF += $(patsubst %.adoc, %_r.pdf, $(sources))
 
 pdf: $(PDF) # images
 
-
 %.source_list: %.adoc
 	grep '^include::{.*}' $< | grep -v aout | sed 's/include::.*\}\///g' | sed -E 's/(cc|S|s|h|c)\..*\[\]/\1/g' | sort | uniq >$@
-
-%_p.html: %.adoc
-	$(ASCIIDOCTOR) $(ASCIIDOCTORFLAGS) $(ASCIIDOCTORVARS) -a deckjs -a split -T $(HOME)/asciidoctor/asciidoctor-backends/haml/deckjs -o $@ $<
-
-%_r.html: %.adoc
-	$(ASCIIDOCTOR) $(ASCIIDOCTORFLAGS) $(ASCIIDOCTORVARS) -a revealjs -a split -b revealjs -T $(HOME)/asciidoctor/asciidoctor-reveal.js/templates/slim -o $@ $<
 
 %.html: %.adoc
 	$(ASCIIDOCTOR) $(ASCIIDOCTORFLAGS) $(ASCIIDOCTORVARS) -a single -o $@ $<
 
 %_t.html: %.adoc
 	$(ASCIIDOCTOR) $(ASCIIDOCTORFLAGS) $(ASCIIDOCTORVARS) -a single -a 'toc2!' -a toc -o $@ $<
-
-%.xml: %.adoc
-	$(ASCIIDOCTOR) -b docbook5 -a print -r asciidoctor-diagram -o $@ $<
-
-%.foc: %.xml
-	xsltproc --nonet $(HOME)/asciidoctor/xsl/codeblocks.xsl $< > $@
-
-%.fo: %.foc
-	java -classpath /usr/share/java/docbook-xsl-saxon/docbook-xsl-saxon.jar:/usr/share/java/saxon6/saxon.jar:/usr/local/share/java/xslthl-2.1.0.jar -Dxslthl.config=file:///usr/local/share/java/highlighters/xslthl-config.xml com.icl.saxon.StyleSheet -o $@ $< $(HOME)/asciidoctor/xsl/fo.xsl
-
-%_draft.fo: %.foc
-	java -classpath /usr/share/java/docbook-xsl-saxon/docbook-xsl-saxon.jar:/usr/share/java/saxon6/saxon.jar:/usr/local/share/java/xslthl-2.1.0.jar -Dxslthl.config=file:///usr/local/share/java/highlighters/xslthl-config.xml com.icl.saxon.StyleSheet -o $@ $< $(HOME)/asciidoctor/xsl/fo-simple.xsl
-
-%.pdf: %.fo
-	fop $< $@
 
 %_r.pdf: %.adoc
 	$(ASCIIDOCTORPDF) $(ASCIIDOCTORFLAGSPDF) $(ASCIIDOCTORVARS) -a pagenums -o $@ $<
@@ -103,18 +83,6 @@ pdf: $(PDF) # images
 
 %_rl2.pdf: %_rl.pdf 
 	$(NUP) $(NUPFLAGSL) -o $@ $<
-
-%_w.pdf: %.html
-	$(WK) $(WKFLAGS) $(WKLANDSCAPE) $< $@
-
-%_w2.pdf: %_w.pdf 
-	$(NUP) $(NUPFLAGSL) -o $@ $<
-
-%_wp.pdf: %.html
-	$(WK) $(WKFLAGS) $(WKPORTRAIT) $< $@
-
-%_wp2.pdf: %_wp.pdf 
-	$(NUP) $(NUPFLAGSP) -o $@ $<
 
 clean:
 	$(RM) *~
