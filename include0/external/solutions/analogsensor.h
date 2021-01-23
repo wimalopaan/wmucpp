@@ -3,8 +3,12 @@
 #include <cstdint>
 
 namespace External {
+    namespace detail {
+        struct Shift{};
+        struct ExcactDivider{};
+    }
     
-    template<typename ADCont, auto Channel, typename Uoff, typename K, typename Kd, typename value_type = uint16_t>
+    template<typename ADCont, auto Channel, typename Uoff, typename K, typename Kd, typename Mode = detail::Shift, typename value_type = uint16_t>
     struct AnalogSensor {
         inline static constexpr double VRef = ADCont::VRef;
         inline static constexpr double uoff = (double)Uoff::nom / (double)Uoff::denom;
@@ -40,8 +44,8 @@ namespace External {
         }();
 //        std::integral_constant<uint8_t, shift>::_;
         
-        inline static constexpr uint16_t a = scale * (1 << shift) + 0.5;
-        inline static constexpr uint16_t b = offset * (1 << shift) + 0.5;
+//        inline static constexpr uint16_t a = scale * (1 << shift) + 0.5;
+//        inline static constexpr uint16_t b = offset * (1 << shift) + 0.5;
 //        std::integral_constant<uint16_t, a>::_;
 //        std::integral_constant<uint16_t, b>::_;
         
@@ -55,12 +59,38 @@ namespace External {
         }
         
         static inline value_type value() {
-            uint16_t sv = a * ADCont::value(channel_n) ;
-            if (sv >= b) {
-                return (sv - b) >> shift;
+            if constexpr(std::is_same_v<Mode, detail::Shift>) {
+                constexpr uint16_t a = scale * (1 << shift) + 0.5;
+                constexpr uint16_t b = offset * (1 << shift) + 0.5;
+        //        std::integral_constant<uint16_t, a>::_;
+        //        std::integral_constant<uint16_t, b>::_;
+                uint16_t sv = a * ADCont::value(channel_n) ;
+                if (sv >= b) {
+                    return (sv - b) >> shift;
+                }
+                else {
+                    return 0;
+                }
+            }
+            else if constexpr(std::is_same_v<Mode, detail::ExcactDivider>) {
+                constexpr uint16_t a = scale + 0.5;
+                constexpr uint16_t b = offset + 0.5;
+                static_assert([]{
+                    const double d = fabs(scale - a);
+                    return d;
+                }() < 0.001, "not excat divider");
+//                std::integral_constant<uint16_t, a>::_;
+//                std::integral_constant<uint16_t, b>::_;
+                uint16_t sv = a * ADCont::value(channel_n) ;
+                if (sv >= b) {
+                    return (sv - b);
+                }
+                else {
+                    return 0;
+                }                
             }
             else {
-                return 0;
+                static_assert(std::false_v<Mode>);
             }
         }
         static inline ADCont::value_type raw() {

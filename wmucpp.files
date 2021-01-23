@@ -1381,6 +1381,8 @@ gcc/base/lib/gcc/avr/11.0.0/device-specs/specs-attiny412
 gcc/base/lib/gcc/avr/11.0.0/device-specs/specs-avr128da32
 host/old/meta.h
 host/old/meta.h
+host/rdiv.cc
+host/rswitch.cc
 host/test01.cc
 host/test02.cc
 host/test03.cc

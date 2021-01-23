@@ -4,12 +4,14 @@
 
 #define NDEBUG
 
-#define USE_16V // (3k1 oder 3k0 im Spannungsteiler)
+#define EXCACT // must measure the offset manually
+
+//#define USE_16V // (3k1 oder 3k0 im Spannungsteiler)
 
 #define USE_ACS_PIN_POWER // ACS über tiny-Pin
 
-//#define USE_SPORT
-#define USE_HOTT
+#define USE_SPORT
+//#define USE_HOTT
 //#define USE_IBUS
 //#define FS_I6S
 #define USE_OFFSET
@@ -61,6 +63,8 @@ using namespace std::literals::chrono;
 using namespace External::Units::literals;
 
 namespace Parameter {
+    constexpr uint8_t Version = 13;
+    
     constexpr uint8_t menuLines = 8;
 #ifdef USE_IBUS
     constexpr auto fRtc = 2000_Hz;
@@ -71,12 +75,31 @@ namespace Parameter {
 #ifdef USE_SPORT
     constexpr auto fRtc = 2000_Hz;
 #endif
-    constexpr uint16_t R1vd = 10'000;
     
-#ifdef USE_16V
-    constexpr uint16_t R2vd = 3'100;
+    auto parallel = [](const double a, const double b){
+        double z = a * b;
+        double n = a + b;
+        if (n != 0) {
+            return z / n; 
+        }
+        return 0.0;
+    };
+    
+    constexpr uint16_t TempOffset = 15;
+    
+#ifdef EXCACT 
+    constexpr uint32_t R1vd = parallel(620'000, 68'000);
+    constexpr uint32_t R2vd = parallel(10'000, 6'800'000); // in der Mitte neben 100nF
+    constexpr uint16_t OffsetError = 16;
+    using SensorMode = External::detail::ExcactDivider;
 #else
-    constexpr uint16_t R2vd = 1'000;
+    using SensorMode = External::detail::Shift;
+    constexpr uint16_t R1vd = 10'000;
+# ifdef USE_16V
+    constexpr uint16_t R2vd = 3'100;
+# else
+    constexpr uint16_t R2vd = 1'780;
+# endif
 #endif
 }
 
@@ -158,9 +181,15 @@ AVR::SendQueueLength<64>,
 etl::NamedFlag<true>
 >;
 
-using acs770 = External::AnalogSensor<adcController, 1, std::ratio<1,2>, std::ratio<40,1000>, std::ratio<10,1>>;
+using acs770 = External::AnalogSensor<adcController, 1, std::ratio<460,1000>, std::ratio<40,1000>, std::ratio<10,1>>;
+
+#ifdef EXCACT
 using vdiv = External::AnalogSensor<adcController, 0, std::ratio<0,1>, 
-                                    std::ratio<Parameter::R2vd, Parameter::R2vd + Parameter::R1vd>, std::ratio<100,1>>;
+std::ratio<Parameter::R2vd,Parameter::R2vd + Parameter::R1vd>, std::ratio<100,1>, Parameter::SensorMode>;
+#else
+using vdiv = External::AnalogSensor<adcController, 0, std::ratio<0,1>, 
+                                    std::ratio<Parameter::R2vd, Parameter::R2vd + Parameter::R1vd>, std::ratio<100,1>, Parameter::SensorMode>;
+#endif
 
 template<typename Sensor>
 struct CurrentProvider {
@@ -186,11 +215,18 @@ struct CurrentProvider {
     inline static volatile uint32_t mOffset{0};
 };
 
+struct VersionProvider {
+    inline static constexpr auto valueId = External::SPort::ValueId::DIY;
+    inline static uint32_t value() {
+        return Parameter::Version;
+    }
+};
+
 template<typename Sensor>
 struct VoltageProvider {
     inline static constexpr auto valueId = External::SPort::ValueId::Voltage;
     inline static uint32_t value() {
-        return Sensor::value();
+        return Sensor::value() + Parameter::OffsetError;
     }
 };
 template<typename ADC, uint8_t Channel>
@@ -200,7 +236,7 @@ struct TempProvider {
     inline static constexpr auto channel = index_t{Channel};
     inline static constexpr auto valueId = External::SPort::ValueId::Temp1;
     inline static uint32_t value() {
-        return sigrow::adcValueToTemperature<std::ratio<1,1>, 0>(ADC::value(channel)).value;
+        return sigrow::adcValueToTemperature(ADC::value(channel)).value - Parameter::TempOffset;
     }
 };
 
@@ -219,7 +255,7 @@ struct OffsetProvider {
 using offsetP = OffsetProvider<currentProvider>;
 
 using sensor = External::SPort::Sensor<External::SPort::SensorId::ID3, sensorUsart, systemTimer, 
-                                       Meta::List<currentProvider, offsetP, voltageProvider, tempProvider>>;
+                                       Meta::List<currentProvider, offsetP, voltageProvider, tempProvider, VersionProvider>>;
 
 using isrRegistrar = IsrRegistrar<sensor::uart::StartBitHandler, sensor::uart::BitHandler>;
 
@@ -911,6 +947,7 @@ int main() {
     portmux::init();
     systemTimer::init();
     adcController::init();
+    adc::nsamples(6);
     
     toneGenerator::init();    
 
