@@ -25,6 +25,9 @@ subdirs += hott music
 #test02a: CXX = clang++
 #test04: CXXFLAGS = -g -std=c++17 -Wall -Wextra -fPIC -I../include 
 
+targets += rswitch
+targets += rdiv
+
 targets += test01 
 targets += test02 
 targets += test04

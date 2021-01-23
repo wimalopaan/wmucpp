@@ -1,0 +1,135 @@
+#include <cstdint>
+#include <array>
+#include <algorithm>
+#include <optional>
+#include <iostream>
+
+//inline static const std::array<double, 13> E12 {1000, 1200, 1500, 1800, 2200, 2700, 3300, 3900, 4700, 5600, 6800, 8200, 10000 };
+//inline static const std::array<double, 24> E12 {390, 470, 560, 680, 820, 1000, 1200, 1500, 1800, 2200, 2700, 3300, 3900, 4700, 5600, 6800, 8200, 10000, 12000, 15000, 18000, 22000, 27000, 33000};
+inline static const std::array<double, 48> E12 {510, 560, 620, 680, 750, 820, 910, 
+                                                1000, 1100, 1200, 1300, 1500, 1600, 1800, 2000, 2200, 2400, 2700, 3000, 3300, 3600, 3900, 4300, 4700, 5100, 5600, 6200, 6800, 7500, 8200, 9100, 
+                                                10000, 11000, 12000, 13000, 15000, 16000, 18000, 20000, 22000, 24000, 27000, 30000, 33000, 36000, 39000, 43000, 47000};
+
+struct Sim {
+    std::array<double, 16> R;
+    double Ro;
+    
+    explicit Sim(const double Ro, const double R0, const double R1, const double R2, const double R3) :
+            Ro{Ro}
+    {
+        auto parallel = [](const double a, const double b){
+            double z = a * b;
+            double n = a + b;
+            if (n != 0) {
+                return z / n; 
+            }
+            return 0.0;
+        };
+        for(uint8_t i = 0; i < R.size(); ++i) {
+            double r1 = 1000'000'000.0;
+            double r2 = 1000'000'000.0;
+            double r3 = 1000'000'000.0;
+            double r4 = 1000'000'000.0;
+            if (i & 0x01) {
+                r1 = R0;
+            }
+            if (i & 0x02) {
+                r2 = R1;
+            }
+            if (i & 0x04) {
+                r3 = R2;
+            }
+            if (i & 0x08) {
+                r4 = R3;
+            }
+            const double ra = parallel(parallel(parallel(r1, r2), r3), r4);
+            R[i] = ra;
+        }
+    }
+    
+    auto result() const {
+        const double Vref = 4.096;
+        const double amax = 4095;
+        const double vmax = 5.0;
+        const double p = 0.01;
+        std::array<std::pair<uint16_t, uint16_t>, 16> ii;
+        for(uint8_t i = 0; const auto& r: R) {
+            const double v = vmax * r / (r + Ro); 
+            const double vl = v * (1.0 - p);
+            const double al = vl * amax / Vref;
+            const double vh = v * (1.0 + p);
+            const double ah = vh * amax / Vref;
+            
+            ii[i].first = std::min(amax, al);
+            ii[i].second= std::min(amax, ah);
+            ++i;
+        }
+        sort(std::begin(ii), std::end(ii));
+        return ii;
+    };
+    
+    uint16_t mindiff(const std::array<std::pair<uint16_t, uint16_t>, 16>& r) {
+        int16_t diff{4096};
+        for(size_t i = 0; i < r.size() - 1; ++i) {
+            int16_t d = r[i + 1].first - r[i].second;
+            if (d < 0) {
+                d = 0;
+            }
+            if (d < diff) {
+                diff = d;
+            }
+        }
+        return diff;
+    }
+    
+};
+
+int main() {
+    uint16_t diff = 0;
+    uint16_t mA;
+    uint16_t m0;
+    uint16_t m1;
+    uint16_t m2;
+    uint16_t m3;
+    for(size_t iA = 0; iA < E12.size(); ++iA) {
+        for(size_t i0 = 0; i0 < E12.size(); ++i0) {
+            for(size_t i1 = i0; i1 < E12.size(); ++i1) {
+                for(size_t i2 = i1; i2 < E12.size(); ++i2) {
+                    for(size_t i3 = i2; i3 < E12.size(); ++i3) {
+                        Sim s1 = Sim(E12[iA], E12[i0], E12[i1], E12[i2], E12[i3]);
+                        auto r = s1.result();
+                        auto d = s1.mindiff(r);
+                        if (d > diff) {
+                            diff = d;
+                            mA = iA;
+                            m0 = i0;
+                            m1 = i1;
+                            m2 = i2;
+                            m3 = i3;
+                        }
+                    }   
+                }
+            }
+        }
+    }
+    std:: cout << diff << '\n';
+    std:: cout << mA << '\n';
+    std:: cout << m0 << '\n';
+    std:: cout << m1 << '\n';
+    std:: cout << m2 << '\n';
+    std:: cout << m3 << '\n';
+    std:: cout << E12[mA] << '\n';
+    std:: cout << E12[m0] << '\n';
+    std:: cout << E12[m1] << '\n';
+    std:: cout << E12[m2] << '\n';
+    std:: cout << E12[m3] << '\n';
+    
+    Sim s1 = Sim(E12[mA], E12[m0], E12[m1], E12[m2], E12[m3]);
+    auto r = s1.result();
+    
+    for(auto& i: r) {
+        std::cout << i.first << "," << i.second << '\n';
+    }
+    
+    std::cout << s1.mindiff(r) << '\n';
+}
