@@ -1,6 +1,5 @@
-// Abbruchtöne länger
-// calibrierung über eeprom (offset / steigung) für spannung / strom
-// hott-sensor-type (eeprom)
+//
+// Anpassen (s.u.): VoltageOffset, TempOffset
 
 #define NDEBUG
 
@@ -63,7 +62,7 @@ using namespace std::literals::chrono;
 using namespace External::Units::literals;
 
 namespace Parameter {
-    constexpr uint8_t Version = 13;
+    constexpr uint8_t Version = 14;
     
     constexpr uint8_t menuLines = 8;
 #ifdef USE_IBUS
@@ -85,12 +84,14 @@ namespace Parameter {
         return 0.0;
     };
     
+    using currentOffset = std::ratio<460,1000>;
+    
     constexpr uint16_t TempOffset = 15;
     
 #ifdef EXCACT 
     constexpr uint32_t R1vd = parallel(620'000, 68'000);
     constexpr uint32_t R2vd = parallel(10'000, 6'800'000); // in der Mitte neben 100nF
-    constexpr uint16_t OffsetError = 16;
+    constexpr uint16_t VoltageOffset = 16;
     using SensorMode = External::detail::ExcactDivider;
 #else
     using SensorMode = External::detail::Shift;
@@ -181,7 +182,7 @@ AVR::SendQueueLength<64>,
 etl::NamedFlag<true>
 >;
 
-using acs770 = External::AnalogSensor<adcController, 1, std::ratio<460,1000>, std::ratio<40,1000>, std::ratio<10,1>>;
+using acs770 = External::AnalogSensor<adcController, 1, Parameter::currentOffset, std::ratio<40,1000>, std::ratio<10,1>>;
 
 #ifdef EXCACT
 using vdiv = External::AnalogSensor<adcController, 0, std::ratio<0,1>, 
@@ -226,7 +227,7 @@ template<typename Sensor>
 struct VoltageProvider {
     inline static constexpr auto valueId = External::SPort::ValueId::Voltage;
     inline static uint32_t value() {
-        return Sensor::value() + Parameter::OffsetError;
+        return Sensor::value() + Parameter::VoltageOffset;
     }
 };
 template<typename ADC, uint8_t Channel>
