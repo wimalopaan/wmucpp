@@ -15,6 +15,16 @@ namespace External {
                                         ID15 = 0x8E, ID16 = 0x2F, ID17 = 0xD0, ID18 = 0x71, ID19 = 0xF2, ID20 = 0x53, ID21 = 0x34,
                                         ID22 = 0x95, ID23 = 0x16, ID24 = 0xB7, ID25 = 0x98, ID26 = 0x39, ID27 = 0xBA, ID28 = 0x1B, ID_IGNORE = 0xFF };
         
+        constexpr std::array sensor_ids{SensorId::ID1, SensorId::ID2, SensorId::ID3, SensorId::ID4, SensorId::ID5, SensorId::ID6,
+                                       SensorId::ID7, SensorId::ID8, SensorId::ID9, SensorId::ID10, SensorId::ID11, SensorId::ID12,
+                                       SensorId::ID13, SensorId::ID14, SensorId::ID15, SensorId::ID16, SensorId::ID17, SensorId::ID18,
+                                       SensorId::ID19, SensorId::ID20, SensorId::ID21, SensorId::ID22, SensorId::ID23, SensorId::ID24,
+                                       SensorId::ID25, SensorId::ID26, SensorId::ID27, SensorId::ID28};
+        namespace detail {
+            static_assert(etl::isSet(sensor_ids), "sensor ids not unique");
+        }
+        
+        
         enum class ValueId : uint16_t {
             Current = 0x0200, // 15: 0,1A
             Voltage = 0x0210, // 15: 0,01V
@@ -30,7 +40,7 @@ namespace External {
 
         template<SensorId ID, template<typename> typename Uart, typename Timer, typename ProviderList = Meta::List<>>
         struct Sensor;
-        
+
         template<SensorId ID, template<typename> typename Uart, typename Timer, typename... Providers>
         struct Sensor<ID, Uart, Timer, Meta::List<Providers...>> {
 //            inline static constexpr External::Tick<Timer> mResponseDelay{10};
@@ -41,6 +51,7 @@ namespace External {
             using providerList = Meta::List<Providers...>;
             inline static constexpr auto numberOfProviders = sizeof...(Providers);
 //            std::integral_constant<uint8_t, numberOfProviders>::_;
+                
             
             static_assert(numberOfProviders > 0, "need at least one provider");
             
@@ -49,6 +60,10 @@ namespace External {
             enum class State : uint8_t {Init, Request, ReplyWait, Reply, WaitReplyComplete};
             
             struct ProtocollAdapter {
+//                using requests_t = std::conditional_t<uart::useInterrupts, volatile uint8_t, uint8_t>;
+//                using requests_t = volatile uint8_t;
+                using requests_t = uint8_t;
+
                 static inline bool process(const std::byte b) {
                     switch(mState) {
                     case State::Init: 
@@ -57,7 +72,7 @@ namespace External {
                         }
                         break;
                     case State::Request: 
-                        if (b == std::byte{ID}) {
+                        if (b == mPhysId) {
                             mRequests = mRequests + 1;
                             mState = State::ReplyWait;
                         }
@@ -73,16 +88,20 @@ namespace External {
                     }
                     return true;
                 }
+                inline static void id(const SensorId v) {
+                    mPhysId = std::byte{v};
+                }
                 inline static void ratePeriodic() {}
+                
                 inline static uint8_t requests() {
                     return mRequests;
                 }
             private:
-                static inline volatile uint8_t mRequests{};
+                static inline std::byte mPhysId{ID};
+                static inline requests_t mRequests{};
             };
             
             using uart = Uart<ProtocollAdapter>;   
-            
             static_assert(uart::sendQLength >= 16);
             
             inline static constexpr bool useInterrupts = uart::useInterrupts;
