@@ -81,6 +81,18 @@ namespace etl {
         return array;
     }
     
+    template<typename C>
+    inline constexpr bool isSet(const C& c) {
+        for(typename C::size_type i{0}; i < c.size(); ++i) {
+            for(typename C::size_type n = i + 1; n < c.size(); ++n) {
+                if (c[i] == c[n]) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    
     //    template<typename T>
     //    class reverse_iterator {
     //    public:
