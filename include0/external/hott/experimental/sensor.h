@@ -103,6 +103,7 @@ namespace Hott {
                     }
                     return true;
                 }
+                static inline void ratePeriodic() {}
             };
             
             using uart = Uart<CNumber, ProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<2>>;

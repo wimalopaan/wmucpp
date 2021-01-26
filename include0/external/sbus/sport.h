@@ -59,7 +59,6 @@ namespace External {
                     case State::Request: 
                         if (b == std::byte{ID}) {
                             mRequests = mRequests + 1;
-//                            mStateTicks.reset();
                             mState = State::ReplyWait;
                         }
                         else {
@@ -74,6 +73,7 @@ namespace External {
                     }
                     return true;
                 }
+                inline static void ratePeriodic() {}
                 inline static uint8_t requests() {
                     return mRequests;
                 }

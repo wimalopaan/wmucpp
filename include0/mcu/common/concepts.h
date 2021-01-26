@@ -167,7 +167,8 @@ namespace AVR {
 
         template<typename PA>
         concept /*bool */ProtocolAdapter = requires(PA) {
-                PA::process(std::byte{0});
+                                           PA::process(std::byte{});
+                                           PA::ratePeriodic();
         };
 
         template<typename AC>

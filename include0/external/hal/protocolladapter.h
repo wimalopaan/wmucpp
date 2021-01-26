@@ -26,9 +26,10 @@ namespace External {
         class NullProtocollAdapter final {
         public:
             NullProtocollAdapter() = delete;
-            static constexpr bool process(std::byte) {
+            static inline constexpr bool process(const std::byte) {
                 return false;
             }
+            static inline void ratePeriodic() {}
         };
     }
 }
