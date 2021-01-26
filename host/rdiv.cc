@@ -72,7 +72,6 @@ private:
     const double mK{};
 };
 
-
 //const auto E24 = []{
 //    const double base = 10;
 //    std::array<double, 24> a;
@@ -100,6 +99,7 @@ private:
 //                                                1000, 1100, 1200, 1300, 1500, 1600, 1800, 2000, 2200, 2400, 2700, 3000, 3300, 3600, 3900, 4300, 4700, 5100, 5600, 6200, 6800, 7500, 8200, 9100, 
 //                                                10000, 11000, 12000, 13000, 15000, 16000, 18000, 20000, 22000, 24000, 27000, 30000, 33000, 36000, 39000, 43000, 47000};
 
+// vorhandene Widerstände
 const std::array E24{1'000'000'000, 
                      6'800'000, 3'160, 430'000, 12'000, 10'000, 68'000, 560'000, 100'000, 220'000, 16'000, 
                      330'000, 3'000, 100, 2'100, 1'000'000, 1'000, 30'000, 470, 
@@ -107,13 +107,19 @@ const std::array E24{1'000'000'000,
                      51'000, 3'900, 390, 24'000};
 
 int main() {
+    // avr128da
+//    const double vref = 4.096;
+//    const double steps = 4095;
+//    const double delta = 0.01;
+    
+    // mega4808
     const double vref = 4.3;
     const double steps = 1023;
     const double delta = 0.03;
     
     const double k = delta * steps / vref;
     
-    std::cout << "K: " << k << '\n';
+    std::cout << "Vmax: " << (steps * delta) << " K: " << k << '\n';
     
     RDiv rdiv{k};
     
