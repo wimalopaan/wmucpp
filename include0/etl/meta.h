@@ -111,6 +111,11 @@ namespace Meta {
             using value_type = std::conditional_t<sizeof...(I) < 256, uint8_t, uint16_t>;
             using type = std::integral_constant<value_type, sizeof...(I)>;
         };
+        template<auto... I>
+        struct size_impl<NList<I...>> {
+            using value_type = std::conditional_t<sizeof...(I) < 256, uint8_t, uint16_t>;
+            using type = std::integral_constant<value_type, sizeof...(I)>;
+        };
         
         template<template<typename...> typename, typename> struct apply_impl;
         template<template<typename...> typename F, template<typename...> typename L, typename... I>
@@ -209,6 +214,7 @@ namespace Meta {
             >::type type;
         };
         template<size_t, typename L> struct nth_element_impl;
+
         template<template<typename F, typename...> typename L, typename F, typename... I>
         struct nth_element_impl<0, L<F, I...>> {
             typedef F type;  
@@ -217,7 +223,7 @@ namespace Meta {
         struct nth_element_impl<N, L<F, I...>> {
             typedef typename nth_element_impl<N-1, L<I...>>::type type;  
         };
-        
+       
         template<typename List, typename T> struct count_impl {
             template<typename U>
             using p = std::is_same<U, T>;
