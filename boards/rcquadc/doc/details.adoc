@@ -1,3 +1,196 @@
+ifdef::xxx[]
+= Highlight 
+endif::[]
+
+[[Details]]
 == Details: Einstellungen im Einzelnen
 
+Nach dem Anlernen des _Übertragungskanals_ und der _Adresse_ des Moduls kann diese sofort über das Steuerungs-Widget
+bedient werden (sa. <<BetrOhneA>>). 
+
+[[BetrOhneA]]
+=== Betrieb _ohne_ Abschaltung
+
+Im Auslieferungszustand oder nach einem _Reset_ der Funktion findet (ohne weitere Beschaltung (s.a. <<BetrEndl>>) *keine* 
+Abschaltung der Funktion statt. Die Motoren laufen also ggf. in eine mechanische Begrenzung und können dadurch _Schaden_ nehmen. Dies
+ist deswegen unbedingt zu vermeiden.
+
+Natürlich gibt es auch Anwendungsfälle, in denen eine Funktionen _keine mechanische_ Begrenzung ausweist. 
+Die könnte sein:
+
+* Betrieb eines Mikro-Motors zum Drehen eines Radarbalkens
+* Querstrahlruder
+* nicht-mechanische Anwendungen (Helligkeitssteuerung von Glühlampen und LEDs).
+
+Für alle diese Anwendungsfälle kann das Modul jedoch trotzdem sinnvoll eingesetzte werden:
+
+* man hat _vier_ PWM-Steller (Fahrtenregler) mit Telemetrie (Strom) auf einem Modul.
+* man hat eine Anlaufsteuerung (langsames Hochfahren bis auf Nenndrehzahl).
+* man kann kleinere Motoren mit einer hohen Versorgungsspannung betreiben.
+
+[[BetrMitA]]
+=== Betrieb _mit_ Abschaltung
+
+Der Betrieb _mit_ einer Abschaltung der Motoren benötigt eine weitere Konfiguration / Verkabelung.
+
+[[BetrEndl]]
+==== Abschaltung durch Endlagenkontakte
+
+Die _einfachste_ Form der Endlagenabschaltung eines jeden Kanals ist diejenige, die je Kanala _zwei_ Endlagenkontakte verwenden. Wird _einer_ der beiden 
+Kontakte _geschlossen_, so wird der Motor unmittelbar abgeschaltet. Ein erneutes Anlaufen ist dann nur in die _Gegenrichtung_ möglich. Bei Kontakte werden 
+_parallel_ angeschlossen.
+
+.Anschluss der Endlagenschalter
+image::end1.jpg[]
+
+Der Ablauf ist damit der folgende:
+
+* Einschalten der Funktion am Widget (Richtung `A`).
+* Die Funktion erreicht die Endlage und der Endlagenkontakt wird ausgelöst (schließt).
+* Die Funktion wird abgeschaltet (Motor stoppt).
+* Ein Widereinschalten der Funktion in _dieselbe_ Richtung `A` ist _nicht_ möglich.
+* Die Funktion kann nur in die _andere_ Richtung `B` wieder gestartet werden.
+* Wird die Funktion nicht zuvor gestoppt und erreicht auch hier die Endlage, so wiederholt sich der Ablauf für die Richtung `B`.
+
+Alle diese Zustandsänderungen lassen sich auch durch Telemetrie beobachten (s.a. <<FuncStates>>).
+
+[[BetrCurr]]
+==== Abschaltung durch Stromüberwachung
+
+Diese Betriebsart wird _aktiviert_ durch ein Anlernen des Abschaltstromes.
+
+.Motorstrom ~ Drehmoment
+[TIP]
+--
+Das Drehmoment eines Elektromotors ist direkt proportional zum Strom, der die Wicklung des Motors durchfließt. Wird ein laufende Elektromotor 
+abgebremst durch äußere Einflüsse, so sinkt seine Drehzahl. Dies bedeutet (durch Absinken der Gegen-EMK) eine _Erhöhung_ des Motorstromes. Wie 
+stark diese Erhöhung ist, hängt wiederum von _Innenwiderstand_ des Motors und anderer Faktoren ab. Der Motor produziert ein erhöhtes Drehmoment. 
+
+Bremst man den Motor zum Stillstand ab (mechanische Begrenzung), so ist dieser Anstrieg am stärksten. 
+
+Allerdings wird dann die gesamte zugeführte elektrische Leistung als _Verlustleistung_ in der Wicklung des Motors in _Wärme_ umgesetzt. Dies 
+kann einen Motor zerstören (kleine Motoren meistens schneller als große Motoren, da deren Wärmekapazität kleiner ist).
+--
+
+Um ein _zuverlässiges_ und _schonendes_ Abschalten zu ermöglichen, wenn der Motor einer Funktion in eine mechanische Begrenzung läuft, 
+muss der _niedrigste_ Abschaltstrom eingestellt werden, mit dem trotzdem ein sicherer Normalbetrieb möglich ist. 
+Das Modul überwacht permanent den Stromfluss durch den Motor und schaltet den Motor 
+unmittelbar nach Überschreiten des _Abschaltstromes_ aus. Ist der Abschaltstrom zu niedrig, so kann es durch ungünstige äußere Einflüsse 
+auch im Normalbetrieb dazu kommen, dass abgeschaltet wird. Etwa bei tiefen Umgebungstemperaturen läuft eine Mechanik durch die sich 
+verändernde Öl-Viskosität schwergängiger als bei höheren Temperaturen. Zudem hängt dies auch oft mit der Laufrichtung der 
+Mechanik / des Motors zusammen.
+
+Auf der anderen Seite kommt beim _Anlaufen_ eines Motors zu einem _erhöhten_ Motorstrom. Dieser Effekt kann durch die zu beschleunigenden 
+Schwungmassen noch verstärkt werden. Aus diesem Grunde bietet das Modul die Möglichkeit, ein sog. _Anlaufphase_ festzulegen. In dieser 
+Phase findet _keine_ strombedingte Abschaltung statt. Die Dauer dieser Phase sollte daher so _kurz wie möglich_ sein.
+
+Das Bild <<curr1>> verdeutlicht (hoffentlich) die Zusammenhänge.
+
+[[curr1]]
+.Zeitlicher Verlauf des Motorstromes
+image::{localimages}/curr1.svg[]
+
+
+Das Einstellen eines Abschaltstromes ist also immer ein _Kompromiss_.
+
+Daher *muss* der _normale_ Betriebsstrom der Funktion gelernt werden. Anschließend kann daraus der _Abschaltstrom_ abgeleitet werden. Dies 
+geschieht dann für beide Richtungen `A` und `B` getrennt bei jeder Funktion.
+
+Man geht hier schrittweise vor: zunächst wird für _eine_ Funktion und _eine_ Richtung eine Einstellung der Parameter 
+im Konfigurations-Widget vorgenommen.
+
+Je Funktion und Richtung wird folgendermaßen verfahren (*bitte* lesen Sie den folgenden Ablauf komplett durch, *bevor* Sie 
+eine Funktion im Einbauzustand testen):
+
+. Parameter `B1/I`: Einstellen des PWM-Grades (Geschwindigkeit / Helligkeit) und damit auch _Anlernen_ des für den _Normalbetrieb_ notwendigen 
+Stromes. Der PWM-Grade kann mit Potentiometer `S1` eingestellt werden (s.a. <<ConfigWidget>>)).
+. Der Motor läuft _nach der Selektion_ dieses Parameters für _1s_ in Richtung `A`. Bitte sorgen sie für einen blockadefreien Lauf.
+. Der Motor schaltet selbständig ab und der _Nominalstrom_ ist erlernt.
+. _Ohne_ eine weitere Änderung ist nun der _Abschaltstrom_ das _1,5_-fache des Nominalstromes. 
+. Mit dieser Einstallung sollte die Funktion jetzt würder das _Bedienwidget_ getestet werden. Bitte achten Sie auf eine Abschltung: dies wird durch 
+Aufleuchten der Kontroll-LED angezeigt.
+. Findet eine sofortige Abschaltung statt (LED), so kann entweder der Abschaltstrom zu gering sein, oder - besonders bei größeren Motoren - die 
+Abschaltung ist maßgeblich durch den _Anlaufvorgang_ herbei geführt worden.
+. Findet eine Abschaltung (LED) statt, _ohne_ dass die Mechanik unter zu hohe Last kommt, so ist die Einstellung brauchbar.
+. Findet *keine* Abschaltung statt, bedeutet dies eine Überlastsituation sowohl für den Motor als auch für die Mechanik. Es *muss* nun 
+schnellstmöglich eine Abschaltung *manuell* durchgeführt werden.
+. Sollte die Abschaltung nicht oder zu spät erfolgen, wechseln Sie wieder in des Konfigurations-Widget und verändern Sie den Abschaltstrom zu 
+kleineren Werten. Andernfalls vergößern Sie den Wert.
+. Parameter `B1/D`: Zum Verkleinern des Abschaltstromes und damit zum früheren Abschalten stellen Sie schrittweise kleinere Werte ein (8: Standardwert).
+. Nach einer Veränderung testen Sie wieder!
+. Erfolgt die Abschaltung _sofort_, so kann auch ein _erhöhter Anlaufstrom_ dafür die Ursache sein. Um dies als Ursache auszuschließen, stellen Sie 
+für die Anlaufphase eine sicher ausreichende Zeitspanne ein. Bei kleinen Motoren etwa 600ms, bei mittleren Motoren etwa 1200ms und bei großen Motoren etwa 
+2400ms.
+. Parameter `PWM`: hiermit wird die Anlaufzeit in _Vielfachen_ von 200ms eingstellt: der Wert von 3 ergibt also 600ms.
+. Wiederholen Sie nun den Test (zunächst ohne den Abschaltstrom veräbdert zu haben).
+. Achten Sie auch den Motor: erreicht der Motor in der Anlaufphase schon seine nominelle Drehzahl? 
+. Hat der Motor in der _Anlaufphase_ seine nominelle Drehzahl erreicht und erfolgt die Abschaltung anschließend, so ist die Anlaufzeit ausreichend aber der 
+Abschaltstrom zu niedrig. Vergößern Sie daher den Abschaltstrom und testen Sie wieder (_ohne_ die Anlaufdauer zu verändern).
+. Andernfalls verlängern Sie die Anlaufphase weiter.
+. Haben Sie eine befriedigende Einstellung für den Abschaltstrom gefunden, kann es erforderlich sein, die Anlaufphase wieder zu verkürzen.
+
+[TIP]
+Das obige Vorgehen erscheint sehr komplex. Vergleichen Sie daher das Vorgehen mit der grafischen Darstellung in <<curr1>>.
+
+=== Proportionaler Betrieb
+
+
+[[FuncTelem]]
+=== Telemetrie
+
+Das Modul kann an den jedeiligen _Telemetrie_-Bus angeschlossen werden (`IBus`, `SBus`). 
+
+Das Modul stellt dabei die aktuellen _Stromwerte_ eines jeden Kanals und auch den _Funktionszustand_ eines jeden Kanals zur Verfügung.
+
+Sollten die Sensorwerte des Moduls nicht in der Telemetrie des `OpenTx`-Systems _nicht_ sichtbar sein, so starten die 
+_Sensorsuche_ im _Telemetrie-Menu_ des Senders erneut. Nach dem Erscheinen der Sensorwerte _stoppen_ sie die Sensorsuche wieder.
+
+[[FuncCurrents]]
+==== Funktionsströme
+
+Die Ströme jedes Funktionskanals werden als Sensortyp _Strom_ (`curr`) angezeigt. Die Zuordnung zu den einzelnen Ausgängen des Moduls
+erfolgt _normalerweise_ in _aufsteigender_ Reihenfolge. Dies ist aber durchaus davon abhängig, welche _weiteren_ Sensoren am Sensorbus angeschlossen sind. 
+
+[TIP]
+Es ist daher empfehlenswert, die Telemetrieseiten im Sender erst dann endgültig einzurichten, wenn die _Verkabelung_ im Modell abgeschlossen ist.
+Insbesondere sollte die Position in der `IBus`-_daisy-chain_ nicht mehr geändert werden.
+
+
+[[FuncStates]]
+==== Funktionszustände
+
+In den _üblichen_ Telemetrieprotokollen existieren meistens _keine_ Sensortypen, um einheitenlose Zustandsinformation zu übertragen. Daher 
+werden folgende Sensoren verwendet:
+
+.SBus/S.Port
+Für ein `S.Port`-System werden sog. _DIY_-Typen verwendet.
+
+.IBus
+Für ein `IBus`-System werden Sensoren des Typs _Flightmode_ (`FM`) verwendet.
+
+Die Zustände einer _jeden_ Funktion lassen sich auch via Telemetrie beobachten.
+
+.Tabelle der Zustands-Codes
+[[FuncCodes]]
+[%header]
+|===
+| Code | Bedeutung
+| 1000 | Initialisierung
+| 1001 | Aus
+| 1002 | Aus (wartend)
+| 1010 | An (Richtung A)
+| 1012 | An (Richtung B)
+| 1011 | Anlauf (Richtung A)
+| 1013 | Anlauf (Richtung B)
+| 102x | (intern)
+| 103x | (intern)
+| 1040 | Stromabschaltung (Richtung A)
+| 1041 | Stromabschaltung (Richtung B)
+| 1042 | Kontaktabschaltung (Richtung A)
+| 1043 | Kontaktabschaltung (Richtung B)
+| 1050 | Betriebsart `passthru` (Richtung A)
+| 1051 | Betriebsart `passthru` (Richtung B)
+| 1052 | Anlauf Betriebsart `passthru` (Richtung A)
+| 1053 | Anlauf Betriebsart `passthru` (Richtung B)
+|===
 

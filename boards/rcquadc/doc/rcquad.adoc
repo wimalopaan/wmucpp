@@ -117,6 +117,14 @@ image::{localimages}/top.jpg[align="center"]
 .Ansicht der Kran- und Sonderfunktionssteuerung von unten
 image::{localimages}/bottom.jpg[align="center"]
 
+Das Modul wird vom Empfänger mit Spannung versorgt.
+
+.Achtung: Hardware Version 1
+[CAUTION]
+--
+Die *maximale Spannung* (Empfängerspannung) darf 5,5V *nicht* überschreiten.
+--
+
 === Grundsätzliches
 
 ==== Bedienung

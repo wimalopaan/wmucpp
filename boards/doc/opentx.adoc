@@ -422,6 +422,7 @@ Alternativ kann mit dem 6-Positionentaster `6pos` umgeschaltet werden (zwischen 
 
 Zusätzlich steht `LS` zur schnellen Auswahl der Menuzeile und `RS` für die Spalte zur Verfügung.
 
+[[ConfigWidget]]
 ==== Das Widget `WMSWC/main.lua` (Konfiguration)
 
 In dieser Datei sind üblicherweise keine Änderungen notwendig.
