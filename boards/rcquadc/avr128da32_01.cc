@@ -339,8 +339,6 @@ struct ChannelFsm {
     using value_type = typename ADC::value_type;
     using reso_type = typename ADC::mcu_adc_type::reso_type;
     
-//    using x = value_type::_;
-    
     using pwm_value_t = typename PWM::value_type;
     
     using pa_value_t = typename PA::value_type;
@@ -795,7 +793,9 @@ public:
             mStateTick.on(ccTimeout(), []{
                 mState = State::Forward; 
             });
-            if (e == Event::Stop) {
+            if (e == Event::Forward) {
+            }
+            else if (e == Event::Stop) {
                 mState = State::OffWait;
             }
             else if (e == Event::SetFowardPwm) {
@@ -803,6 +803,9 @@ public:
             }
             else if (e == Event::SetBackwardPwm) {
                 mState = State::SetBackwardPwm;
+            }
+            else if (e != Event::None) {
+                mState = State::OffWait;
             }
             break;
         case State::Forward:
@@ -812,7 +815,9 @@ public:
             if (buttenEvent == endButton::Press::Long) {
                 mState = State::OffForwardEnd;
             }
-            if (e == Event::Stop) {
+            if (e == Event::Forward) {
+            }
+            else if (e == Event::Stop) {
                 mState = State::OffWait;
             }
             else if (e == Event::SetFowardPwm) {
@@ -820,6 +825,9 @@ public:
             }
             else if (e == Event::SetBackwardPwm) {
                 mState = State::SetBackwardPwm;
+            }
+            else if (e != Event::None) {
+                mState = State::OffWait;
             }
             break;
         case State::ForwardPassThruWait:
@@ -898,7 +906,12 @@ public:
             mStateTick.on(ccTimeout(), []{
                 mState = State::Backward; 
             });
-            if (e == Event::Stop) {
+            if (e == Event::Backward) {
+            }
+            else if (e == Event::Stop) {
+                mState = State::OffWait;
+            }
+            else if (e != Event::None) {
                 mState = State::OffWait;
             }
             break;
@@ -1232,6 +1245,9 @@ struct GlobalFsm<Timer, PWM, NVM, Meta::List<Chs...>, Led, Adc, Servo, BaudRate<
         (Chs::periodic(), ...);
     }
     inline static void ratePeriodic() {
+#ifdef USE_SBUS
+        Servo::protocoll_adapter_type::ratePeriodic();
+#endif
         const auto oldState = mState;
         ++mStateTick;
         ++mEepromTick;

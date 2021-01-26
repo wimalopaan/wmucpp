@@ -32,12 +32,18 @@ avr128da32_02.hex : F_OSC = 32000000
 #targets += test13.hex
 #targets += test14.hex
 #targets += test15.hex
+
+# HW 02 (erste Version)
 targets += test16.hex
 targets += atmega4808_01.hex
 
 targets += test20.hex
 targets += avr128da32_01.hex
+
+# HW 03 (hat noch Fehler)
 targets += avr128da32_02.hex
+
+# HW 04
 
 targets += test99.hex
 
