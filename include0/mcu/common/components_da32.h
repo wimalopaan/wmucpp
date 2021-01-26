@@ -42,6 +42,7 @@
 #include "components/spi.h"
 #include "components/gpior.h"
 #include "components/syscfg.h"
+#include "components/nvm_da32.h"
 
 #include "components/bitmask_operators_da.h"
 

@@ -20,10 +20,12 @@
 
 #include <cstdint>
 #include <avr/eeprom.h>
+#include <mcu/common/concepts.h>
+#include <mcu/internals/nvm.h> 
 
 namespace EEProm {
 
-    template<typename DataType, uint16_t Offset = 0>
+    template<typename DataType, uint16_t Offset = 0, typename MCU = DefaultMcuType>
     class Controller;
 
     template<typename T, bool UseMemberFlags> struct Base;
@@ -113,9 +115,9 @@ namespace EEProm {
             }
         }
     };
-
-    template<typename DataType, uint16_t Offset>
-    class Controller final {
+   
+    template<typename DataType, uint16_t Offset, AVR::Concepts::At01Series MCU>
+    class Controller<DataType, Offset, MCU> final {
         Controller() = delete;
     public:
         using data_t = DataType;
@@ -165,4 +167,58 @@ namespace EEProm {
         inline static DataType mData{};
     };
 
+    template<typename DataType, uint16_t Offset, AVR::Concepts::AtDxSeries MCU>
+    class Controller<DataType, Offset, MCU> final {
+        Controller() = delete;
+    public:
+        
+        using nvm = AVR::NvmCtrl<MCU>;
+        
+        using data_t = DataType;
+        inline static void init() {
+            nvm::read_eeprom((std::byte*)&mData, Offset, sizeof(DataType));
+        }
+        inline constexpr static DataType& data() {
+            return mData;
+        }
+        inline static bool saveIfNeeded() {
+            if (mData.timeout() && mData.changed()) {
+                mData.saveStart();
+                if (nvm::eeprom_ready()) {
+                    nvm::write_eeprom(rawData(mOffset), mOffset);
+                    if (++mOffset == sizeof(DataType)) {
+                        mOffset = 0;
+                    }
+                    if (mOffset == 0) {
+                        mData.saveEnd();
+                        mData.resetTimeout();
+                        return false; // ready
+                    }
+                    else {
+                        return true; // need to call once more
+                    }
+                }
+                else {
+                    return true; // need to call once more
+                }
+            }
+            return true;
+        }
+        template<typename F>
+        inline static void saveIfNeeded(const F& func_when_finished){
+            if (!saveIfNeeded()) {
+                func_when_finished();
+            }
+        }
+    private:
+        inline static std::byte* ePtr(uintptr_t offset) {
+            return reinterpret_cast<std::byte*>(offset + Offset);
+        }
+        inline static std::byte rawData(uintptr_t offset) {
+            return *(reinterpret_cast<std::byte*>(&mData) + offset);
+        }
+        inline static uintptr_t mOffset = 0;
+        inline static DataType mData{};
+    };
+    
 }

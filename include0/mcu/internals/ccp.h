@@ -36,6 +36,11 @@ namespace AVR {
                 *mcu_cpu()->ccp = 0xd8_B;
                 f();
             }
+
+            static inline constexpr void spm(const auto& f) {
+                *mcu_cpu()->ccp = 0x9d_B;
+                f();
+            }
         };
  
 //        template<AVR::Concepts::AtTiny1 MCU>

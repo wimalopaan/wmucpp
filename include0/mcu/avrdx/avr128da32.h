@@ -58,6 +58,7 @@ namespace AVR {
         using Spi = AVR::Series0::Spi;
         using Gpior = AVR::Series0::GPIOR;
         using SysCfg = AVR::SeriesDa::SysCfg;
+        using NvmCtrl = AVR::SeriesDa::NvmCtrl;
         
     };
     template<>
@@ -78,6 +79,7 @@ namespace AVR {
     template<> struct AVR::Component::Count<Avr128da32::AdComparator> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<Avr128da32::Adc> : std::integral_constant<uint8_t, 1> {};
     template<> struct AVR::Component::Count<Avr128da32::Spi> : std::integral_constant<uint8_t, 2> {};
+    template<> struct AVR::Component::Count<Avr128da32::NvmCtrl> : std::integral_constant<uint8_t, 1> {};
 
     template<uint8_t N>
     struct Avr128da32::Gpior::Address {

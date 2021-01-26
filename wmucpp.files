@@ -363,6 +363,8 @@ boards/rcquadc/avr128da32_01.cc
 boards/rcquadc/avr128da32_02.cc
 boards/rcquadc/doc/Makefile
 boards/rcquadc/doc/rcquad.adoc
+boards/rcquadc/eeprom.cc
+boards/rcquadc/eeprom2.cc
 boards/rcquadc/test00.cc
 boards/rcquadc/test01.cc
 boards/rcquadc/test02.cc
@@ -1604,6 +1606,7 @@ include0/mcu/common/components/bitmask_operators_da.h
 include0/mcu/common/components/cclda4.h
 include0/mcu/common/components/clock_da32.h
 include0/mcu/common/components/event_da32.h
+include0/mcu/common/components/nvm_da32.h
 include0/mcu/common/components/portmux_da32.h
 include0/mcu/common/components/sigrow_da32.h
 include0/mcu/common/components/syscfg.h
@@ -2142,4 +2145,5 @@ example/basics/Makefile
 example/basics/register.cc
 include0/external/sbus/sport.h
 include0/external/solutions/analogsensor.h
+include0/mcu/internals/nvm.h
 include0/mcu/internals/syscfg.h
