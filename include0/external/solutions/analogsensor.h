@@ -112,6 +112,7 @@ namespace External {
         
 //        std::integral_constant<uint16_t, (uint16_t)admax>::_;
 //        std::integral_constant<uint16_t, (uint16_t)(scale * 1000)>::_;
+//        std::integral_constant<uint16_t, (uint16_t)(VRef * 1000)>::_;
 //        std::integral_constant<uint16_t, (uint16_t)offset>::_;
         
         inline static constexpr uint8_t freeBits = etl::numberOfBits<value_type>() - Provider::reso_type::bits;
