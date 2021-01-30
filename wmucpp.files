@@ -337,6 +337,7 @@ boards/rcdesk/test01.cc
 boards/rcdesk/test02.cc
 boards/rcled/Makefile
 boards/rcled/test00.cc
+boards/rcled/test10.cc
 boards/rcministep/Makefile
 boards/rcministep/test00.cc
 boards/rcministep/test01.cc
@@ -1420,6 +1421,9 @@ host/test98.cc
 host/test98.cc
 host/test99.c
 host/test99.c
+host/tools/Makefile
+host/tools/rdiv.cc
+host/tools/rswitch.cc
 include/appl/blink.h
 include/appl/clockstatemachine.h
 include/appl/command.h

@@ -69,3 +69,4 @@ boards/bmc/medium10
 gcc/base/lib/gcc/avr/11.0.0/device-specs
 include0/mcu/avrdx
 boards/rcled
+host/tools
