@@ -36,6 +36,7 @@ namespace External {
             Speed   = 0x0830, // 15: Knoten 0,001Kn
             State   = 0x0B20, // 15: RBox-State
             DIY     = 0x5100, // 255: DIY (State Info)
+            DIY2    = 0x5200, // 255: DIY (State Info)
         };
 
         template<SensorId ID, template<typename> typename Uart, typename Timer, typename ProviderList = Meta::List<>>

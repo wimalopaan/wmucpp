@@ -343,6 +343,13 @@ struct CProvider {
         return Sensor::value();
     }
 };
+template<typename Sensor>
+struct PackagesP {
+    inline static constexpr auto valueId = External::SPort::ValueId::DIY2;
+    inline static uint32_t value() {
+        return Sensor::packages();
+    }
+};
 #endif
 
 template<typename Timer, uint8_t N, typename PWM, typename ADC, 
@@ -1214,14 +1221,17 @@ struct GlobalFsm<Timer, PWM, NVM, Meta::List<Chs...>, Led, Adc, Servo, BaudRate<
     
     using ch_t = protocoll_adapter_t::channel_t;
     
-    enum class State : uint8_t {Undefined, StartWait, SearchChannel, AfterSearch, 
+    enum class State : uint8_t {Undefined,
+                                CheckPolarityInverted, CheckPolarityNormal, 
+                                StartWait, SearchChannel, AfterSearch, 
                                 InitRun, Run,  
                                 ShowAddress, ShowAddressWait, LearnTimeout,
                                 Debug1};
     
+    static constexpr External::Tick<Timer> waitTimeoutTicks{1000_ms};
+    static constexpr External::Tick<Timer> polarityTimeoutTicks{1000_ms};
     static constexpr External::Tick<Timer> learnTimeoutTicks{4000_ms};
     static constexpr External::Tick<Timer> scanTimeoutTicks{50_ms};
-    static constexpr External::Tick<Timer> waitTimeoutTicks{3000_ms};
     static constexpr External::Tick<Timer> signalTimeoutTicks{500_ms};
     static constexpr External::Tick<Timer> eepromTimeout{2000_ms};
     static constexpr External::Tick<Timer> debugTimeout{500_ms};
@@ -1288,7 +1298,17 @@ struct GlobalFsm<Timer, PWM, NVM, Meta::List<Chs...>, Led, Adc, Servo, BaudRate<
         case State::StartWait:
             mStateTick.on(waitTimeoutTicks, []{
                 blinker::off();
-                mState = State::SearchChannel;
+                mState = State::CheckPolarityInverted;
+            });
+            break;
+        case State::CheckPolarityInverted:
+            mStateTick.on(polarityTimeoutTicks, []{
+                mState = State::CheckPolarityNormal;
+            });
+            break;
+        case State::CheckPolarityNormal:
+            mStateTick.on(polarityTimeoutTicks, []{
+                mState = State::CheckPolarityInverted;
             });
             break;
         case State::SearchChannel:
@@ -1365,6 +1385,27 @@ struct GlobalFsm<Timer, PWM, NVM, Meta::List<Chs...>, Led, Adc, Servo, BaudRate<
                 break;
             case State::StartWait:
                 etl::outl<Term>("rcQ avr128da32_01 "_pgm, sigrow::id()[0], sigrow::id()[1], sigrow::id()[2], syscfg::revision());
+                protocoll_adapter_t::resetStats();
+                break;
+            case State::CheckPolarityInverted:
+                if (protocoll_adapter_t::packages() > 10) {
+                    etl::outl<Term>("pol inv"_pgm);
+                    mState = State::SearchChannel;
+                }
+                else {
+                    Servo::rxInvert(false);
+                    protocoll_adapter_t::resetStats();
+                }
+                break;
+            case State::CheckPolarityNormal:
+                if (protocoll_adapter_t::packages() > 10) {
+                    etl::outl<Term>("pol"_pgm);
+                    mState = State::SearchChannel;
+                }
+                else {
+                    Servo::rxInvert(true);
+                    protocoll_adapter_t::resetStats();
+                }
                 break;
             case State::SearchChannel:
             case State::AfterSearch:
@@ -1559,6 +1600,8 @@ using sp3 = ch2::StateProvider;
 using sp4 = ch3::StateProvider;
 
 #ifdef USE_SPORT
+using packagesP = PackagesP<servo_pa>;
+
 template<typename PA>
 using sensorUsart = External::SoftSerial::Usart<Meta::List<rxtxPin, rxtxPin>, Component::Tcb<0>, 
 PA, AVR::BaudRate<57600>,
@@ -1569,7 +1612,7 @@ etl::NamedFlag<false>
 //                                            ,dbg1
 >;
 using sensor = External::SPort::Sensor<External::SPort::SensorId::ID3, sensorUsart, systemTimer, 
-Meta::List<cp1, cp2, cp3, cp4, sp1, sp2, sp3, sp4>>;
+Meta::List<cp1, cp2, cp3, cp4, sp1, sp2, sp3, sp4, packagesP>>;
 
 #else
 using sensor = IBus::Sensor<usart2Position, AVR::Usart, AVR::BaudRate<115200>, 
