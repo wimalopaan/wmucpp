@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-subdirs += hott music
+subdirs += hott music tools
 
 #test23a: CXXFLAGS = -g -std=c++17 -Wall -Wextra -fPIC -I../include 
 #test23a: CXX = clang++
@@ -25,15 +25,15 @@ subdirs += hott music
 #test02a: CXX = clang++
 #test04: CXXFLAGS = -g -std=c++17 -Wall -Wextra -fPIC -I../include 
 
-targets += rswitch
-targets += rdiv
+#targets += rswitch
+#targets += rdiv
 
 targets += test01 
 targets += test02 
 targets += test04
 targets += test04b
 targets += test06
-targets += test07
+#targets += test07
 targets += test08
 ##targets += test10
 #targets += test11

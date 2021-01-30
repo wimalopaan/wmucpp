@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-targets += test01
+#targets += test01
 
 -include ../../Makefile.include
 
