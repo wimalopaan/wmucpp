@@ -230,7 +230,8 @@ namespace External::GPS {
                 break;
             }
             return true;
-        }    
+        }  
+        inline static void ratePeriodic() {}
     private:
         inline static volatile uint16_t mReceivedBytes{0};
         inline static State state{State::Undefined};
