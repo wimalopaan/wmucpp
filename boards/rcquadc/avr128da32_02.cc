@@ -52,11 +52,11 @@ using namespace std::literals::chrono;
 using namespace External::Units::literals;
 
 namespace IBus::Switch {
-    template<typename PA, typename ActorList, typename NVM>
+    template<typename PA, typename Sensor, typename ActorList, typename NVM>
     struct GeneralSwitch;
     
-    template<typename PA, typename... Actors, typename NVM>
-    struct GeneralSwitch<PA, Meta::List<Actors...>, NVM> {
+    template<typename PA, typename Sensor, typename... Actors, typename NVM>
+    struct GeneralSwitch<PA, Sensor, Meta::List<Actors...>, NVM> {
         using actor_list = Meta::List<Actors...>;
         using channel_t = PA::channel_t;
         using value_t = PA::value_type;
@@ -118,6 +118,16 @@ namespace IBus::Switch {
                             Meta::visitAt<actor_list>(lastOn.toInt(), [&]<typename A>(const Meta::Wrapper<A>&) {
                                                           A::reset();
                                                       });
+                        }
+                    }
+                    else if (param == Protocol1::timeMpxMode) { // FrSky: phys. Sensor-Id
+                        if ((value >= 1) && (value < External::SPort::sensor_ids.size())) {
+#ifdef USE_SBUS
+                            const External::SPort::SensorId id = External::SPort::sensor_ids[value - 1];
+                            Sensor::ProtocollAdapter::id(id);
+                            NVM::data().physicalId(id);
+                            NVM::data().change();
+#endif
                         }
                     }
                     else if (param == Protocol1::motorRampTime) {
@@ -255,8 +265,6 @@ namespace Storage {
         //        Address::_;
         using value_type = Output<Timer, Channel, PWM_T>;
         
-//        enum class AdcSensitivity : uint8_t {Low, Mid, High};
-        
         uint8_t& magic() {
             return mMagic;
         }
@@ -267,7 +275,7 @@ namespace Storage {
             }
             mChannel = 14;
             mAddress = 0;
-//            mAdcSens = AdcSensitivity::Low;
+            mPhysId = External::SPort::SensorId::ID3;
         }
         
         Channel& channel() {
@@ -275,6 +283,12 @@ namespace Storage {
         }
         Address& address() {
             return mAddress;
+        }
+        void physicalId(const External::SPort::SensorId id) {
+            mPhysId = id;
+        }
+        External::SPort::SensorId physicalId() {
+            return mPhysId;
         }
         
         using index_type = etl::uint_ranged<uint8_t, 0, NChannels - 1>;
@@ -286,8 +300,8 @@ namespace Storage {
         uint8_t mMagic;
         Channel mChannel;
         Address mAddress;
-//        AdcSensitivity mAdcSens{AdcSensitivity::Low};
         std::array<value_type, NChannels> mData;
+        External::SPort::SensorId mPhysId{External::SPort::SensorId::ID1};
     };
 }
 
@@ -1214,6 +1228,7 @@ struct GlobalFsm<Timer, PWM, NVM, Meta::List<Chs...>, Led, Led2, Jp, Adc, Servo,
     using adi_t = Adc::index_type;
     
     using servo_pa = Servo::protocoll_adapter_type;
+    using sensor_pa = Sensor::uart::protocoll_adapter_type;
     
     using ch_t = servo_pa::channel_t;
     
@@ -1244,6 +1259,7 @@ struct GlobalFsm<Timer, PWM, NVM, Meta::List<Chs...>, Led, Led2, Jp, Adc, Servo,
             data().magic() = 42;
             data().clear();
             data().change();
+            etl::outl<Term>("e init"_pgm);
         }
         blinker::init();
 //        blinker2::init();
@@ -1260,6 +1276,8 @@ struct GlobalFsm<Timer, PWM, NVM, Meta::List<Chs...>, Led, Led2, Jp, Adc, Servo,
         lut3::init(std::byte{0x0f}); // route TXD (inverted) to lut3-out 
         Sensor::init();
         Sensor::uart::txPinDisable();
+        
+        sensor_pa::id(data().physicalId());
 #endif
 #ifdef USE_SBUS
         Servo::template init<AVR::BaudRate<baud>, FullDuplex, true, 1>(); // 8E2
@@ -1365,7 +1383,7 @@ struct GlobalFsm<Timer, PWM, NVM, Meta::List<Chs...>, Led, Led2, Jp, Adc, Servo,
                                       });                            
             
             mEepromTick.on(eepromTimeout, []{
-                //                etl::outl<Term>("exp"_pgm);
+                etl::outl<Term>("exp"_pgm);
                 NVM::data().expire();
             });
             mDebugTick.on(debugTimeout, debug);
@@ -1394,7 +1412,8 @@ struct GlobalFsm<Timer, PWM, NVM, Meta::List<Chs...>, Led, Led2, Jp, Adc, Servo,
 private:
     static inline void debug() {
         (Chs::debug(),...);
-        etl::outl<Term>("es: "_pgm, AS::states());
+        etl::outl<Term>("id: "_pgm, (uint8_t)NVM::data().physicalId());
+//        etl::outl<Term>("es: "_pgm, AS::states());
 //        etl::outl<Term>("ch: "_pgm, protocoll_adapter_t::valueMapped(NVM::data().channel()).toInt());
         //                etl::circular_call(Chs::debug...);        
     }
@@ -1661,7 +1680,7 @@ Meta::List<cp1, cp2, cp3, cp4, sp1, sp2, sp3, sp4>, systemTimer, ibt
 >;
 #endif
 
-using gswitch = IBus::Switch::GeneralSwitch<servo_pa, Meta::List<ch0, ch1, ch2, ch3>, eeprom>;
+using gswitch = IBus::Switch::GeneralSwitch<servo_pa, sensor, Meta::List<ch0, ch1, ch2, ch3>, eeprom>;
 
 using led1 = AVR::ActiveHigh<led1Pin, Output>;
 using led2 = AVR::ActiveHigh<led2Pin, Output>;
@@ -1688,9 +1707,6 @@ int main() {
 //    dbgPin::dir<Output>();
     
     {
-#ifdef USE_SPORT
-        etl::Scoped<etl::EnableInterrupt<>> ei;
-#endif
         while(true) {
             gfsm::periodic();
             systemTimer::periodic([&]{
@@ -1701,7 +1717,6 @@ int main() {
         }
     }
 }
-
 
 #ifndef NDEBUG
 [[noreturn]] inline void assertOutput(const AVR::Pgm::StringView& expr [[maybe_unused]], const AVR::Pgm::StringView& file[[maybe_unused]], unsigned int line [[maybe_unused]]) noexcept {
