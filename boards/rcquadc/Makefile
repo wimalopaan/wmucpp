@@ -42,10 +42,10 @@ targets += eeprom.hex
 targets += eeprom2.hex
 
 # HW 02 (erste Version)
-targets += test16.hex
+#targets += test16.hex
 targets += atmega4808_01.hex
 
-targets += test20.hex
+#targets += test20.hex
 targets += avr128da32_01.hex
 
 # HW 03 (hat noch Fehler)

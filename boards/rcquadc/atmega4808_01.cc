@@ -1,10 +1,11 @@
-#define NDEBUG
+//#define NDEBUG
 
 //#define USE_IBUS
 
 #define USE_SBUS
 
 #ifdef USE_SBUS
+# define USE_INVERTED_SBUS
 # define USE_SPORT
 #endif
 
@@ -45,11 +46,11 @@ using namespace std::literals::chrono;
 using namespace External::Units::literals;
 
 namespace IBus::Switch {
-    template<typename PA, typename ActorList, typename NVM>
+    template<typename PA, typename Sensor, typename ActorList, typename NVM>
     struct GeneralSwitch;
     
-    template<typename PA, typename... Actors, typename NVM>
-    struct GeneralSwitch<PA, Meta::List<Actors...>, NVM> {
+    template<typename PA, typename Sensor, typename... Actors, typename NVM>
+    struct GeneralSwitch<PA, Sensor, Meta::List<Actors...>, NVM> {
         using actor_list = Meta::List<Actors...>;
         using channel_t = PA::channel_t;
         using value_t = PA::value_type;
@@ -111,6 +112,16 @@ namespace IBus::Switch {
                             Meta::visitAt<actor_list>(lastOn.toInt(), [&]<typename A>(const Meta::Wrapper<A>&) {
                                                           A::reset();
                                                       });
+                        }
+                    }
+                    else if (param == Protocol1::timeMpxMode) { // FrSky: phys. Sensor-Id
+                        if ((value >= 1) && (value < External::SPort::sensor_ids.size())) {
+#ifdef USE_SBUS
+                            const External::SPort::SensorId id = External::SPort::sensor_ids[value - 1];
+                            Sensor::ProtocollAdapter::id(id);
+                            NVM::data().physicalId(id);
+                            NVM::data().change();
+#endif
                         }
                     }
                     else if (param == Protocol1::motorRampTime) {
@@ -269,6 +280,12 @@ namespace Storage {
         Address& address() {
             return mAddress;
         }
+        void physicalId(const External::SPort::SensorId id) {
+            mPhysId = id;
+        }
+        External::SPort::SensorId physicalId() {
+            return mPhysId;
+        }
         
         using index_type = etl::uint_ranged<uint8_t, 0, NChannels - 1>;
         
@@ -281,6 +298,7 @@ namespace Storage {
         Address mAddress;
         AdcSensitivity mAdcSens{AdcSensitivity::Low};
         std::array<value_type, NChannels> mData;
+        External::SPort::SensorId mPhysId{External::SPort::SensorId::ID1};
     };
 }
 
@@ -1220,6 +1238,9 @@ struct GlobalFsm<Timer, PWM, NVM, Meta::List<Chs...>, Led, Adc, Servo, BaudRate<
 #endif
 #ifdef USE_SBUS
         Servo::template init<AVR::BaudRate<baud>, FullDuplex, true, 1>(); // 8E2
+# ifdef USE_INVERTED_SBUS
+        Servo::rxInvert(true);
+# endif
 #endif
         Sensor::init();
         Adc::mcu_adc_type::nsamples(6); 
@@ -1418,7 +1439,6 @@ using servo_pa = External::SBus::Servo::ProtocollAdapter<0, systemTimer>;
 using servo_pa = IBus::Servo::ProtocollAdapter<0>;
 #endif
 
-
 using servo = Usart<usart1Position, servo_pa, AVR::UseInterrupts<false>, 
 AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
 
@@ -1505,10 +1525,18 @@ using ch1 = ChannelFsm<pseudoTimer, 1, pwm, adcController, inA2Pin, inB2Pin, end
 using ch2 = ChannelFsm<pseudoTimer, 2, pwm, adcController, inA3Pin, inB3Pin, end3, servo_pa, eeprom, terminal>;
 using ch3 = ChannelFsm<pseudoTimer, 3, pwm, adcController, inA4Pin, inB4Pin, end4, servo_pa, eeprom, terminal>;
 
+#ifdef USE_SPORT
+using vn1 = External::AnalogConverter<ch0, std::ratio<0,1>, std::ratio<Ri,1900>, std::ratio<10,1>>;
+using vn2 = External::AnalogConverter<ch1, std::ratio<0,1>, std::ratio<Ri,1900>, std::ratio<10,1>>;
+using vn3 = External::AnalogConverter<ch2, std::ratio<0,1>, std::ratio<Ri,1900>, std::ratio<10,1>>;
+using vn4 = External::AnalogConverter<ch3, std::ratio<0,1>, std::ratio<Ri,1900>, std::ratio<10,1>>;
+#endif
+#ifdef USE_IBUS
 using vn1 = External::AnalogConverter<ch0, std::ratio<0,1>, std::ratio<Ri,1900>, std::ratio<100,1>>;
 using vn2 = External::AnalogConverter<ch1, std::ratio<0,1>, std::ratio<Ri,1900>, std::ratio<100,1>>;
 using vn3 = External::AnalogConverter<ch2, std::ratio<0,1>, std::ratio<Ri,1900>, std::ratio<100,1>>;
 using vn4 = External::AnalogConverter<ch3, std::ratio<0,1>, std::ratio<Ri,1900>, std::ratio<100,1>>;
+#endif
 
 using cp1 = CProvider<vn1>;
 using cp2 = CProvider<vn2>;
@@ -1541,7 +1569,7 @@ Meta::List<cp1, cp2, cp3, cp4, sp1, sp2, sp3, sp4>, systemTimer, ibt
 >;
 #endif
 
-using gswitch = IBus::Switch::GeneralSwitch<servo_pa, Meta::List<ch0, ch1, ch2, ch3>, eeprom>;
+using gswitch = IBus::Switch::GeneralSwitch<servo_pa, sensor, Meta::List<ch0, ch1, ch2, ch3>, eeprom>;
 
 using led = AVR::ActiveHigh<ledPin, Output>;
 #ifdef USE_IBUS

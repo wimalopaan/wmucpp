@@ -7,6 +7,7 @@
 #define USE_SBUS
 
 #ifdef USE_SBUS
+# define USE_INVERTED_SBUS
 # define USE_SPORT
 #endif
 
@@ -1281,7 +1282,9 @@ struct GlobalFsm<Timer, PWM, NVM, Meta::List<Chs...>, Led, Led2, Jp, Adc, Servo,
 #endif
 #ifdef USE_SBUS
         Servo::template init<AVR::BaudRate<baud>, FullDuplex, true, 1>(); // 8E2
+# ifdef USE_INVERTED_SBUS
         Servo::rxInvert(true);
+# endif
 #endif
         Adc::mcu_adc_type::nsamples(4); 
         Adc::init();
@@ -1650,10 +1653,18 @@ using ch1 = ChannelFsm<pseudoTimer, 1, pwm, adcController, inA2Pin, inB2Pin, sw1
 using ch2 = ChannelFsm<pseudoTimer, 2, pwm, adcController, inA3Pin, inB3Pin, sw2, servo_pa, eeprom, terminal>;
 using ch3 = ChannelFsm<pseudoTimer, 3, pwm, adcController, inA4Pin, inB4Pin, sw3, servo_pa, eeprom, terminal>;
 
+#ifdef USE_SPORT
+using vn1 = External::AnalogConverter<ch0, std::ratio<0,1>, std::ratio<Ri,1900>, std::ratio<10,1>>;
+using vn2 = External::AnalogConverter<ch1, std::ratio<0,1>, std::ratio<Ri,1900>, std::ratio<10,1>>;
+using vn3 = External::AnalogConverter<ch2, std::ratio<0,1>, std::ratio<Ri,1900>, std::ratio<10,1>>;
+using vn4 = External::AnalogConverter<ch3, std::ratio<0,1>, std::ratio<Ri,1900>, std::ratio<10,1>>;
+#endif
+#ifdef USE_IBSU
 using vn1 = External::AnalogConverter<ch0, std::ratio<0,1>, std::ratio<Ri,1900>, std::ratio<100,1>>;
 using vn2 = External::AnalogConverter<ch1, std::ratio<0,1>, std::ratio<Ri,1900>, std::ratio<100,1>>;
 using vn3 = External::AnalogConverter<ch2, std::ratio<0,1>, std::ratio<Ri,1900>, std::ratio<100,1>>;
 using vn4 = External::AnalogConverter<ch3, std::ratio<0,1>, std::ratio<Ri,1900>, std::ratio<100,1>>;
+#endif
 
 using cp1 = CProvider<vn1>;
 using cp2 = CProvider<vn2>;
