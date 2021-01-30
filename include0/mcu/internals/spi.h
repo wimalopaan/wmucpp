@@ -27,6 +27,7 @@ namespace AVR {
     template<AVR::Concepts::ComponentPosition CP,
              etl::Concepts::Container Tuple, 
              etl::Concepts::NamedConstant Size = etl::NamedConstant<16>,
+             typename SSPin = void,
              typename MCU = DefaultMcuType> struct SpiSS;
     
     template<AVR::Concepts::ComponentPosition CP, etl::Concepts::NamedConstant Size, 
@@ -163,8 +164,8 @@ namespace AVR {
     };
 
     template<AVR::Concepts::ComponentPosition CP, etl::Concepts::Container Tuple, 
-             etl::Concepts::NamedConstant Size, AVR::Concepts::At01Series MCU>
-    struct SpiSS<CP, Tuple, Size, MCU> final {
+             etl::Concepts::NamedConstant Size, typename SSPin, AVR::Concepts::At01Series MCU>
+    struct SpiSS<CP, Tuple, Size, SSPin, MCU> final {
         static inline constexpr auto N = CP::component_type::value;
         static constexpr auto mcu_spi = getBaseAddr<typename MCU::Spi, N>;
         static_assert(N < AVR::Component::Count<typename MCU::Spi>::value, "wrong number of spi");
@@ -184,11 +185,13 @@ namespace AVR {
         
         using mosipin = AVR::Portmux::Map<CP, MCU>::mosipin;
         using sckpin = AVR::Portmux::Map<CP, MCU>::sckpin;
-        using sspin = AVR::Portmux::Map<CP, MCU>::sspin;
+
+        using sspin = std::conditional_t<std::is_same_v<SSPin, void>, typename AVR::Portmux::Map<CP, MCU>::sspin, SSPin>;
         using ss = AVR::ActiveLow<sspin, AVR::Output>;
         
 //        mosipin::_;
 //        sckpin::_;
+//        sspin::_;
 
         enum class State : uint8_t {Undefined, Idle, WaitIdle, Transfer};
         
