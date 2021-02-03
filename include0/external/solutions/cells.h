@@ -69,6 +69,7 @@ namespace External {
             }
             return true;
         }
+        inline static void ratePeriodic() {}
     private:
         inline static constexpr uint8_t mSize = 16;
         inline static etl::FixedVector<uint16_t, mSize> mValues{};

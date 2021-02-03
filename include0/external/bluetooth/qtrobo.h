@@ -218,6 +218,7 @@ namespace External {
                     pingReceived = false;                    
                 }
             }
+            inline static void ratePeriodic() {}
         private:
             inline static uint8_t number;
             inline static index_type index;

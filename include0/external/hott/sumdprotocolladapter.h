@@ -132,6 +132,8 @@ namespace Hott {
             return mMultiData.state(channel);
         }
         
+        inline static void ratePeriodic() {}
+        
         inline static bool process(std::byte  c) { // (ca 3µs)
             static sumdstate state = sumdstate::Undefined;
             static uint8_t channel = 0;
