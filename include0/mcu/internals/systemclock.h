@@ -277,10 +277,13 @@ namespace AVR {
 
         static constexpr auto intervall = uint16_t{1} / Frequency;
         static constexpr auto frequency = Frequency;
+//        static constexpr External::Units::hertz frequency = Frequency;
 
+//        decltype(Frequency)::_;
+        
         using tsd_type = TimerSetupData<value_type>;
         
-        static inline constexpr auto calculate(const hertz& ftimer) {
+        static inline constexpr auto calculate(const hertz ftimer) {
             auto prescalers = prescalerValues(prescaler_values);
             
             for(const auto& p : etl::sort(prescalers)) { // aufsteigend

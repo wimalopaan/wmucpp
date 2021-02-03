@@ -28,7 +28,7 @@
 namespace AVR {
     namespace Portmux {
         namespace detail {
-            namespace usart {
+            namespace spi {
                 template<typename T, typename MCU = DefaultMcuType>
                 struct Mapper {
                     using type = void;    
@@ -39,13 +39,28 @@ namespace AVR {
                     using route_t = typename MCU::Portmux::CtrlB_t;
                     using type = std::integral_constant<route_t, route_t::spi0_alt1>;
                 };
+            }
+            namespace usart {
+                template<typename T, typename MCU = DefaultMcuType>
+                struct Mapper {
+                    using type = void;    
+                };
 
+                template<AVR::Concepts::AtTiny1 MCU, typename P>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Usart<0>, P>, MCU> {
+                    static_assert(std::false_v<P>, "wrong position");
+                };
+                template<AVR::Concepts::AtTiny1 MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Usart<0>, AVR::Portmux::Default>, MCU> {
+                    using type = void;
+                };
                 template<AVR::Concepts::AtTiny1 MCU>
                 struct Mapper<AVR::Portmux::Position<AVR::Component::Usart<0>, AVR::Portmux::Alt1>, MCU> {
                     using route_t = typename MCU::Portmux::CtrlB_t;
                     using type = std::integral_constant<route_t, route_t::usart0_alt1>;
                 };
 
+                
                 template<AVR::Concepts::AtMega0 MCU>
                 struct Mapper<AVR::Portmux::Position<AVR::Component::Usart<0>, AVR::Portmux::Alt1>, MCU> {
                     using route_t = typename MCU::Portmux::UsartRoute_t;
@@ -246,9 +261,11 @@ namespace AVR {
             static constexpr auto mcu_pmux = getBaseAddr<typename MCU::Portmux>;
             using usart_list = Meta::filter<Meta::nonVoid, Meta::transform_type<detail::usart::Mapper, CCList>>;
             using tca_list = Meta::filter<Meta::nonVoid, Meta::transform_type<detail::tca::Mapper, CCList>>;
+            using spi_list = Meta::filter<Meta::nonVoid, Meta::transform_type<detail::spi::Mapper, CCList>>;
             
             static_assert(Meta::size_v<usart_list> <= 4);
             static_assert(Meta::size_v<tca_list> <= 1);
+            static_assert(Meta::size_v<spi_list> <= 1);
             
         public:
             static inline void init() {
@@ -262,6 +279,11 @@ namespace AVR {
 //                    tca_list::_;
 //                    std::integral_constant<decltype(value), value>::_;
                     mcu_pmux()->ctrlc.template set<value>();                
+                }
+                if constexpr(Meta::size_v<spi_list> > 0) {
+                    constexpr auto value = Meta::front<spi_list>::value;
+//                    std::integral_constant<decltype(value), value>::_;
+                    mcu_pmux()->ctrlb.template add<value>();                
                 }
             }
         };
