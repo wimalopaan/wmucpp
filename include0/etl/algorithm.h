@@ -258,15 +258,18 @@ namespace etl {
     }
     
     namespace detail {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wvolatile"        
         template<auto offset, auto... II, typename A, typename B>
         inline constexpr void fill_impl(A& dest, B src, std::index_sequence<II...>) {
-            ((dest[II + offset] = src),...);
+            ((void)(dest[II + offset] = src),...);
         }
         
         template<auto... II, typename A>
         inline constexpr void reverse_impl(A& dest, std::index_sequence<II...>) {
             ((dest[II] = dest[dest.size() - II - 1]),...);
         }
+#pragma GCC diagnostic pop
     }
     
     template<etl::Concepts::Container C>
