@@ -9,7 +9,7 @@ namespace AVR {
             enum class CtrlA_t : uint8_t {
                 standby = DAC_RUNSTDBY_bm,
                 enable  = DAC_ENABLE_bm,
-                iuten   = DAC_OUTEN_bm,
+                outen   = DAC_OUTEN_bm,
             };  
             ControlRegister<Dac, CtrlA_t> ctrla;
             DataRegister<Dac, ReadWrite, std::byte> data;

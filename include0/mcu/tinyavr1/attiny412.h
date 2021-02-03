@@ -105,7 +105,7 @@ namespace AVR {
 //        inline static constexpr uintptr_t value = 0x0014;
 //    };
     template<> struct ATTiny412::Dac::Address<0> {
-        inline static constexpr uintptr_t value = 0x06a0;
+        inline static constexpr uintptr_t value = 0x0680;
     };
 
     template<> struct ATTiny412::Adc::Address<0> {

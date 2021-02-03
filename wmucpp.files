@@ -270,6 +270,7 @@ boards/ibusppmconverter/a4t.cc
 boards/ibusppmconverter/a4uni.cc
 boards/ibusppmconverter/b10c5.cc
 boards/ibusppmconverter/b11c4.cc
+boards/ibusppmconverter/b11c4uni.cc
 boards/ibusppmconverter/board.h
 boards/ibusppmconverter/curr.h
 boards/ibusppmconverter/gps.h
@@ -335,6 +336,8 @@ boards/rcdesk/Makefile
 boards/rcdesk/test00.cc
 boards/rcdesk/test01.cc
 boards/rcdesk/test02.cc
+boards/rcincremental/Makefile
+boards/rcincremental/test00.cc
 boards/rcled/Makefile
 boards/rcled/test00.cc
 boards/rcled/test10.cc
@@ -2149,5 +2152,6 @@ example/basics/Makefile
 example/basics/register.cc
 include0/external/sbus/sport.h
 include0/external/solutions/analogsensor.h
+include0/mcu/internals/dac.h
 include0/mcu/internals/nvm.h
 include0/mcu/internals/syscfg.h
