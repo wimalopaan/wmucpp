@@ -80,6 +80,9 @@ namespace External {
         static inline State state() {
             return mState;
         }
+        static inline void reset() {
+            mCounter.reset();
+        }
     private:
         static inline Press mEvent{Press::None};
         static inline State mState{State::Released};
