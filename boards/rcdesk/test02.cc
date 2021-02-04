@@ -164,7 +164,7 @@ namespace Application {
             StickButtons::init();
             (Switches::init(), ...);
             Adc::init();
-            (Rotarys::init(), ...);
+            (Rotarys::init(typename Rotarys::value_type{SBus::sbus_mid}), ...);
             
             mState = State::Init;
         }    
@@ -327,8 +327,8 @@ using rotary0B = Pin<Port<E>, 1>;
 using rotary1A = Pin<Port<F>, 2>;
 using rotary1B = Pin<Port<F>, 3>;
 using rot_t = etl::uint_ranged_circular<uint16_t, sbus::sbus_min, sbus::sbus_max>;
-using rotary0 = External::RotaryEncoder<rotary0A, rotary0B, rot_t, rot_t{sbus::sbus_mid}>;
-using rotary1 = External::RotaryEncoder<rotary1A, rotary1B, rot_t, rot_t{sbus::sbus_mid}>;
+using rotary0 = External::RotaryEncoder<rotary0A, rotary0B, rot_t>;
+using rotary1 = External::RotaryEncoder<rotary1A, rotary1B, rot_t>;
 
 using eeprom = EEProm::Controller<Application::Data<adcController>>;
 

@@ -148,8 +148,8 @@ using rotary1B = Pin<Port<F>, 3>;
 
 using rot_t = etl::uint_ranged_circular<uint16_t, sbus::sbus_min, sbus::sbus_max>;
 
-using rotary0 = External::RotaryEncoder<rotary0A, rotary0B, rot_t, rot_t{sbus::sbus_mid}>;
-using rotary1 = External::RotaryEncoder<rotary1A, rotary1B, rot_t, rot_t{sbus::sbus_mid}>;
+using rotary0 = External::RotaryEncoder<rotary0A, rotary0B, rot_t>;
+using rotary1 = External::RotaryEncoder<rotary1A, rotary1B, rot_t>;
 
 int main() {
     portmux::init();
@@ -176,8 +176,8 @@ int main() {
     
     adcController::init();
     
-    rotary0::init();
-    rotary1::init();
+    rotary0::init(rot_t{sbus::sbus_mid});
+    rotary1::init(rot_t{sbus::sbus_mid});
     
     while(true) {
         adcController::periodic();
