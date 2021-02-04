@@ -50,54 +50,54 @@ namespace AVR {
         }
 
         template<typename MCU>
-        concept /*bool */AtDa32 = AVR::Groups::isAtDa32<MCU>::value;
+        concept AtDa32 = AVR::Groups::isAtDa32<MCU>::value;
 
         template<typename MCU>
-        concept /*bool */AtDxSeries = (AVR::Groups::isAtDa<MCU>::value || AVR::Groups::isAtDb<MCU>::value);
+        concept AtDxSeries = (AVR::Groups::isAtDa<MCU>::value || AVR::Groups::isAtDb<MCU>::value);
         
         template<typename MCU>
-        concept /*bool */AtMega0 = AVR::Groups::isAtMega0<MCU>::value;
+        concept AtMega0 = AVR::Groups::isAtMega0<MCU>::value;
 
         template<typename MCU>
-        concept /*bool */AtTiny1 = AVR::Groups::isAtTiny1<MCU>::value;
+        concept AtTiny1 = AVR::Groups::isAtTiny1<MCU>::value;
 
         template<typename MCU>
-        concept /*bool */At01Series = (AVR::Groups::isAtTiny1<MCU>::value || AVR::Groups::isAtMega0<MCU>::value);
+        concept At01Series = (AVR::Groups::isAtTiny1<MCU>::value || AVR::Groups::isAtMega0<MCU>::value);
 
         template<typename MCU>
-        concept /*bool */At01DxSeries = At01Series<MCU>|| AtDxSeries<MCU>;
+        concept At01DxSeries = At01Series<MCU>|| AtDxSeries<MCU>;
         
         template<typename MCU>
-        concept /*bool */AtMega  = AVR::Groups::isAtMega<MCU>::value;
+        concept AtMega  = AVR::Groups::isAtMega<MCU>::value;
         
         template<typename MCU>
-        concept /*bool */AtMega_8 = AVR::Groups::isAtMega_8<MCU>::value;
+        concept AtMega_8 = AVR::Groups::isAtMega_8<MCU>::value;
 
         template<typename MCU>
-        concept /*bool */AtMega_X = AVR::Groups::isAtMega_X<MCU>::value;
+        concept AtMega_X = AVR::Groups::isAtMega_X<MCU>::value;
  
         template<typename MCU>
-        concept /*bool */AtMega_X8 = AVR::Groups::isAtMega_X8<MCU>::value;
+        concept AtMega_X8 = AVR::Groups::isAtMega_X8<MCU>::value;
 
         template<typename MCU>
-        concept /*bool */AtMega_X4 = AVR::Groups::isAtMega_X4<MCU>::value;
+        concept AtMega_X4 = AVR::Groups::isAtMega_X4<MCU>::value;
 
         template<typename MCU>
-        concept /*bool */AtTiny_X4 = AVR::Groups::isAtTiny_X4<MCU>::value;
+        concept AtTiny_X4 = AVR::Groups::isAtTiny_X4<MCU>::value;
 
         template<typename MCU>
-        concept /*bool */AtTiny_X5 = AVR::Groups::isAtTiny_X5<MCU>::value;
+        concept AtTiny_X5 = AVR::Groups::isAtTiny_X5<MCU>::value;
         
         template<typename L>
-        concept /*bool */Letter = std::is_same_v<typename L::value_type, char>;
+        concept Letter = std::is_same_v<typename L::value_type, char>;
         
         template<typename C>
-        concept /*bool */McuSingleComponent = requires(C) {
+        concept McuSingleComponent = requires(C) {
                 C::address;
         };
         
         template<typename C>
-        concept /*bool */McuMultipleComponent = requires(C) {
+        concept McuMultipleComponent = requires(C) {
                 C::count;
 //                C::template Address<0>::value; // not possible beacuse of timer numbering scheme 
         } || requires(C) {
@@ -105,23 +105,23 @@ namespace AVR {
         };
         
         template<typename P>
-        concept /*bool */McuPart = std::is_same_v<typename P::value_type, char> && ((P::value >= 'A') && (P::value <= 'H'));
+        concept McuPart = std::is_same_v<typename P::value_type, char> && ((P::value >= 'A') && (P::value <= 'H'));
 
         template<typename C>
-        concept /*bool */ComponentNumber = requires(C) {
+        concept ComponentNumber = requires(C) {
             typename C::value_type;
             C::value;
         };        
 
         template<typename C>
-        concept /*bool */ComponentSpecifier = requires(C) {
+        concept ComponentSpecifier = requires(C) {
             typename C::component_type;
 //            typename C::value_type;
 //            C::value_type::value;
         };        
 
         template<typename CP>
-        concept /*bool */ComponentPosition = requires(CP) {
+        concept ComponentPosition = requires(CP) {
             typename CP::component_type;
             typename CP::place_type;
 //            typename C::value_type;
@@ -129,52 +129,58 @@ namespace AVR {
         };        
         
         template<typename P>
-        concept /*bool */Port = requires (P p) { 
+        concept Port = requires (P p) { 
                 typename P::mcuport_type;
                 typename P::name_type;
                 p.get();
         };
         
         template<typename P>
-        concept /*bool */Pin = std::is_same_v<P, void> || requires (P p) { 
+        concept Pin = std::is_same_v<P, void> || requires (P p) { 
                 p.on();
                 p.off();
         };
         
         template<typename I>
-        concept /*bool */IServiceRNonVoid = requires (I) {
+        concept IServiceRNonVoid = requires (I) {
                 I::isr();
                 I::isr_number;
         };
         template<typename I>
-        concept /*bool */IServiceR = std::is_same_v<I, void> || IServiceRNonVoid<I>;
+        concept IServiceR = std::is_same_v<I, void> || IServiceRNonVoid<I>;
         
         template<typename I>
-        concept /*bool */Interrupt = std::is_same_v<I, void>|| requires (I i) {
+        concept Interrupt = std::is_same_v<I, void>|| requires (I i) {
                 I::number;
         };
         
         template<typename D>
-        concept /*bool */Device = requires(D) {
+        concept Device = requires(D) {
                 D::put(std::byte{0});
         };
 
         template<typename S>
-        concept /*bool */Stream = requires(S s) { 
+        concept Stream = requires(S s) { 
                 typename S::device_type;
                 typename S::line_terminator_type;
         };
 
         template<typename PA>
-        concept /*bool */ProtocolAdapter = requires(PA) {
+        concept ProtocolAdapter = requires(PA) {
                                            PA::process(std::byte{});
                                            PA::ratePeriodic();
         };
 
         template<typename AC>
-        concept /*bool */Actor = requires(AC) {
+        concept Actor = requires(AC) {
                 typename AC::value_type;     
                 AC::set(typename AC::value_type{});
+        };
+        
+        template<typename I>
+        concept Activatable = requires(I) {
+                              I::init();                      
+                              I::isActive();                      
         };
         
     }

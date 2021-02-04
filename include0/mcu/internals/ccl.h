@@ -131,7 +131,7 @@ namespace AVR {
                 template<AVR::Concepts::AtTiny1 MCU> struct map_input<IOPin, 1, MCU> : std::integral_constant<std::byte, 0x05_B> {};
                 template<AVR::Concepts::AtTiny1 MCU> struct map_input<Ac0, 1, MCU> : std::integral_constant<std::byte, 0x06_B> {};
                 template<AVR::Concepts::AtTiny1 MCU> struct map_input<Tcb<0>, 1, MCU> : std::integral_constant<std::byte, 0x07_B> {};
-                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Tca0<0>, 1, MCU> : std::integral_constant<std::byte, 0x08_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Tca0<1>, 1, MCU> : std::integral_constant<std::byte, 0x08_B> {};
                 template<AVR::Concepts::AtTiny1 MCU> struct map_input<Tcd<0>, 1, MCU> : std::integral_constant<std::byte, 0x09_B> {};
                 template<AVR::Concepts::AtTiny1 MCU> struct map_input<Usart<0>, 1, MCU> : std::integral_constant<std::byte, 0x0a_B> {};
                 template<AVR::Concepts::AtTiny1 MCU> struct map_input<Spi0, 1, MCU> : std::integral_constant<std::byte, 0x0b_B> {};
@@ -156,7 +156,7 @@ namespace AVR {
                 template<AVR::Concepts::AtTiny1 MCU> struct map_input<IOPin, 2, MCU> : std::integral_constant<std::byte, 0x05_B> {};
                 template<AVR::Concepts::AtTiny1 MCU> struct map_input<Ac0, 2, MCU> : std::integral_constant<std::byte, 0x06_B> {};
                 template<AVR::Concepts::AtTiny1 MCU> struct map_input<Tcb<0>, 2, MCU> : std::integral_constant<std::byte, 0x07_B> {};
-                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Tca0<0>, 2, MCU> : std::integral_constant<std::byte, 0x08_B> {};
+                template<AVR::Concepts::AtTiny1 MCU> struct map_input<Tca0<2>, 2, MCU> : std::integral_constant<std::byte, 0x08_B> {};
                 template<AVR::Concepts::AtTiny1 MCU> struct map_input<Tcd<0>, 2, MCU> : std::integral_constant<std::byte, 0x09_B> {};
                 template<AVR::Concepts::AtTiny1 MCU> struct map_input<Spi0, 2, MCU> : std::integral_constant<std::byte, 0x0b_B> {};
             }
