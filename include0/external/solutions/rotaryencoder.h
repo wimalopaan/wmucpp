@@ -22,6 +22,8 @@
 #include <cstddef>
 
 #include <std/chrono>
+#include <std/variant>
+
 #include <etl/rational.h>
 #include <etl/concepts.h>
 #include <etl/algorithm.h>
@@ -31,18 +33,93 @@
 #include "tick.h"
 
 namespace External {
-    template<typename Pin1, typename Pin2, typename ValueType = uint8_t, ValueType d = ValueType{}>
-    class RotaryEncoder {
+    template<typename Pin1, typename Pin2, typename ValueType = uint8_t>
+    class RotaryEncoder;
+
+    template<AVR::Concepts::Pin Pin1, AVR::Concepts::Pin Pin2, typename... VTs>
+    class RotaryEncoder<Pin1, Pin2, std::variant<VTs...>> {
     public:
-        typedef ValueType value_type;
+        using value_type = std::variant<VTs...>;
+        using ValueType = value_type;
         typedef Pin1 pin1_type;
         typedef Pin2 pin2_type;
-        static void init() {
+        
+        using type_list = Meta::List<VTs...>;
+        using first_t = Meta::front<type_list>;
+        
+        static inline void init(const first_t& v = first_t{}) {
+            mValue = v;
             Pin1::template dir<AVR::Input>();
             Pin2::template dir<AVR::Input>();
             Pin1::template pullup<true>();
             Pin2::template pullup<true>();
         }
+        
+        template<typename V>
+        requires(Meta::contains_v<type_list, V>)
+        static inline void set(const V& v) {
+            mValue = v;
+        }
+        
+        static inline void rateProcess() {
+            uint8_t newState = (Pin1::read() ? 2 : 0) + (Pin2::read() ? 1 : 0);    
+            switch (mLastState) {
+            case 0:
+                if (newState == 1) {
+                    mValue.visit([](auto& v){
+                        ++v;
+                    });
+                }
+                else if (newState == 2) {
+                    mValue.visit([](auto& v){
+                        --v;
+                    });
+                }
+                break;
+            case 1:
+                if (newState == 0) {
+                    mValue.visit([](auto& v){
+                        --v;
+                    });
+                }
+                break;
+            case 2:
+                if (newState == 0) {
+                    mValue.visit([](auto& v){
+                        ++v;
+                    });
+                }
+                break;
+            case 3:
+                break;
+            default:
+                assert(false);
+            }
+            mLastState = newState;
+        }
+        static inline const ValueType& value() {
+            return mValue;
+        }   
+    private:
+        inline static ValueType mValue{};
+        inline static uint8_t mLastState{};
+    };
+    
+    template<AVR::Concepts::Pin Pin1, AVR::Concepts::Pin Pin2, typename ValueType>
+    class RotaryEncoder<Pin1, Pin2, ValueType> {
+    public:
+        typedef ValueType value_type;
+        typedef Pin1 pin1_type;
+        typedef Pin2 pin2_type;
+        
+        static void init(const ValueType& v = ValueType{}) {
+            mValue = v;
+            Pin1::template dir<AVR::Input>();
+            Pin2::template dir<AVR::Input>();
+            Pin1::template pullup<true>();
+            Pin2::template pullup<true>();
+        }
+        
         static void start() {}
 
         static inline void rateProcess() {
@@ -77,7 +154,67 @@ namespace External {
             return mValue;
         }   
     private:
-        inline static ValueType mValue{d};
+        inline static ValueType mValue{};
         inline static uint8_t mLastState = 0;
     };
+    
+    namespace deprecated {
+        template<typename Pin1, typename Pin2, typename ValueType = uint8_t, ValueType d = ValueType{}>
+        class RotaryEncoder;
+    
+        template<AVR::Concepts::Pin Pin1, AVR::Concepts::Pin Pin2, typename... VTs, std::variant<VTs...> d>
+        class RotaryEncoder<Pin1, Pin2, std::variant<VTs...>, d> {
+            
+        };
+        
+        template<AVR::Concepts::Pin Pin1, AVR::Concepts::Pin Pin2, typename ValueType, ValueType d>
+        class RotaryEncoder<Pin1, Pin2, ValueType, d> {
+        public:
+            typedef ValueType value_type;
+            typedef Pin1 pin1_type;
+            typedef Pin2 pin2_type;
+            static void init() {
+                Pin1::template dir<AVR::Input>();
+                Pin2::template dir<AVR::Input>();
+                Pin1::template pullup<true>();
+                Pin2::template pullup<true>();
+            }
+            static void start() {}
+    
+            static inline void rateProcess() {
+                uint8_t newState = (Pin1::read() ? 2 : 0) + (Pin2::read() ? 1 : 0);    
+                switch (mLastState) {
+                case 0:
+                    if (newState == 1) {
+                        ++mValue;
+                    }
+                    else if (newState == 2) {
+                        --mValue;
+                    }
+                    break;
+                case 1:
+                    if (newState == 0) {
+                        --mValue;
+                    }
+                    break;
+                case 2:
+                    if (newState == 0) {
+                        ++mValue;
+                    }
+                    break;
+                case 3:
+                    break;
+                default:
+                    assert(false);
+                }
+                mLastState = newState;
+            }
+            static ValueType value() {
+                return mValue;
+            }   
+        private:
+            inline static ValueType mValue{d};
+            inline static uint8_t mLastState = 0;
+        };
+    }
 }
