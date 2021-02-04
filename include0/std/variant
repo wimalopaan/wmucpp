@@ -15,7 +15,7 @@ namespace std {
 
             inline constexpr recursive_union() : value{} {
 //                asm(";rc0");
-            }
+            }   
             
             template<typename... U>
             inline constexpr explicit recursive_union(U&&... v) : r{std::forward<U>(v)...} {
