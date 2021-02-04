@@ -18,11 +18,18 @@ namespace etl {
 
     namespace detail {
         template<typename A> struct index_type;
+        template<typename A> struct cyclic_type;
         
         template<typename T, auto S>
         struct index_type<std::array<T, S>> final {
             using size_type = std::array<T, S>::size_type;
             using type = etl::uint_ranged<size_type, 0, S - 1>;
+        };
+
+        template<typename T, auto S>
+        struct cyclic_type<std::array<T, S>> final {
+            using size_type = std::array<T, S>::size_type;
+            using type = etl::uint_ranged_circular<size_type, 0, S - 1>;
         };
     }
     
@@ -33,9 +40,11 @@ namespace etl {
         return Dest(Dest::Lower + (((Dest::Upper - Dest::Lower) * (enc_t(in) - SrcL)) / (SrcU - SrcL)));
     }
     
-    
     template<typename A>
     using index_type_t = detail::index_type<A>::type;
+
+    template<typename A>
+    using cyclic_type_t = detail::cyclic_type<A>::type;
     
     template<bool B>
     using RangeCheck = std::integral_constant<bool, B>;
