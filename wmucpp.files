@@ -338,6 +338,7 @@ boards/rcdesk/test01.cc
 boards/rcdesk/test02.cc
 boards/rcincremental/Makefile
 boards/rcincremental/test00.cc
+boards/rcincremental/test01.cc
 boards/rcled/Makefile
 boards/rcled/test00.cc
 boards/rcled/test10.cc
@@ -1606,6 +1607,7 @@ include/util/types.h
 include/util/util.h
 include0/external/solutions/cells.h
 include0/external/solutions/rotaryencoder.h
+include0/external/solutions/series01/cppm_out.h
 include0/mcu/avrdx/avr128da32.h
 include0/mcu/avrdx/avrda.h
 include0/mcu/common/components/adc_da32.h
