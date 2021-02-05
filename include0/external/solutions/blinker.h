@@ -21,6 +21,7 @@
 #include <cstdint>
 #include <cstddef>
 
+#include <external/solutions/tick.h>
 #include <std/chrono>
 #include <etl/rational.h>
 #include <etl/concepts.h>
@@ -165,7 +166,7 @@ namespace External {
         static inline etl::uint_ranged<uint8_t, 0, maxDisplayablePulses> mBlinkCount{};
     };
 
-    template<typename Pin, typename Timer, std::chrono::milliseconds Pulse, std::chrono::milliseconds Period>
+    template<typename Pin, typename Timer, std::chrono::milliseconds Pulse, std::chrono::milliseconds Period, uint8_t maxBlinks = 255>
     struct Blinker2 {
         enum class State : uint8_t {Undefined, Off, Steady, Blink, OnePeriodBlink};
         
@@ -181,15 +182,20 @@ namespace External {
         using value_type = etl::typeForValue_t<periodWidthCount>;
 //        value_type::_;
         
-        static inline constexpr auto maxDisplayablePulses = periodWidthCount / (2 * pulseWidthCount);
+        static inline constexpr auto maxDisplayablePulses = std::min<uint8_t>(maxBlinks, (periodWidthCount / (2 * pulseWidthCount)));
         
-        using count_type = etl::uint_ranged<uint8_t, 0, maxDisplayablePulses>;
+        using count_type = etl::uint_ranged<uint8_t, 1, maxDisplayablePulses>;
+
+        using safe_count_type = etl::uint_ranged<uint8_t, 1, maxDisplayablePulses>;
         
         static inline void init() {
             Pin::init();
         }
         static inline void off() {
             mState = State::Off;
+        }
+        static inline auto blinkCount() {
+            return mBlinkCount;
         }
         static inline void steady() {
             mState = State::Steady;
@@ -259,6 +265,6 @@ namespace External {
         }
         static inline State mState = State::Off;
         static inline etl::uint_ranged_circular<value_type, 0, periodWidthCount + 1> mStateCounter{};
-        static inline etl::uint_ranged<uint8_t, 0, maxDisplayablePulses> mBlinkCount{};
+        static inline count_type mBlinkCount{};
     };
 }

@@ -31,9 +31,79 @@
 #include "tick.h"
 
 namespace External {
-    template<AVR::Concepts::Activatable Pin, typename Timer, auto ShortPressTicks, auto LongPressTicks, auto UltraLongPressTicks>
-    struct ExtendedButton {
+    template<AVR::Concepts::Activatable Pin, typename Timer, auto ShortPressTicks, auto LongPressTicks>
+    struct Button2 {
+        enum class Press : uint8_t {Short, Long, Release, None};
+        enum class State : uint8_t {PressedShort, PressedLong, Released, Wait};
         
+        static_assert(ShortPressTicks < LongPressTicks);
+        
+        static inline void init() {
+            Pin::init();
+        }
+        static inline void ratePeriodic() {
+            const auto oldState = mState;
+            const auto on = Pin::isActive();
+            ++mStateCounter;
+            switch(mState) {
+            case State::Released:
+                if (on) {
+                    mState = State::Wait;
+                }
+                break;
+            case State::Wait:
+                if (!on) {
+                    mState = State::Released;
+                }
+                mStateCounter.on(ShortPressTicks, []{
+                    mState = State::PressedShort;
+                });
+                break;
+            case State::PressedShort:
+                if (!on) {
+                    mState = State::Released;
+                }
+                mStateCounter.on(LongPressTicks, []{
+                    mState = State::PressedLong;
+                });
+                break;
+            case State::PressedLong:
+                if (!on) {
+                    mState = State::Released;
+                }
+                break;
+            }
+            if (oldState != mState) {
+                mStateCounter.reset();
+                switch(mState) {
+                case State::Released:
+                    if (oldState != State::Wait) {
+                        mEvent = Press::Release;
+                    }
+                    break;
+                case State::PressedShort:
+                    mEvent = Press::Short;
+                    break;
+                case State::PressedLong:
+                    mEvent = Press::Long;
+                    break;
+                case State::Wait:
+                    break;
+                }
+            }
+        }
+        static inline Press event() {
+            auto e = Press::None;
+            std::swap(e, mEvent);
+            return e;
+        }
+        static inline bool pressed() {
+            return (mState == State::PressedLong) || (mState == State::PressedShort); 
+        }
+private:        
+        static inline Press mEvent{Press::None};
+        static inline State mState{State::Released};
+        static inline Tick<Timer> mStateCounter;
     };
 
     template<AVR::Concepts::Activatable Pin, typename Timer, auto ShortPressTicks, auto LongPressTicks>
@@ -70,12 +140,16 @@ namespace External {
             }
         }
         static inline void periodic() {
-            periodic([&](auto v){
+            periodic([&](const auto v){
                 if (v != Press::None) {
                     mEvent = v;
                 }
             });
         }
+        static inline void ratePeriodic() {
+            periodic();
+        }
+        
         static inline Press event() {
             auto e = Press::None;
             std::swap(e, mEvent);

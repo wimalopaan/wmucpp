@@ -98,17 +98,12 @@ namespace etl {
             mValue = UpperBound;
         }
 
-        inline void operator--() {
-            if (mValue > LowerBound) {
-                --mValue;
-            }
-        }
         inline void operator++() volatile {
             if (mValue < UpperBound) {
                 mValue = mValue + 1;
             }
         }
-        inline uint_ranged operator++() {
+        inline uint_ranged& operator++() {
             if (mValue < UpperBound) {
                 ++mValue;
             }
@@ -118,6 +113,12 @@ namespace etl {
             if (mValue > LowerBound) {
                 mValue = mValue - 1;
             }
+        }
+        inline uint_ranged& operator--() {
+            if (mValue > LowerBound) {
+                --mValue;
+            }
+            return *this;
         }
         
         inline constexpr void operator+=(T rhs) {
