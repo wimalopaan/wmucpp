@@ -337,6 +337,7 @@ boards/rcdesk/test00.cc
 boards/rcdesk/test01.cc
 boards/rcdesk/test02.cc
 boards/rcincremental/Makefile
+boards/rcincremental/inc3mode10Mhz.cc
 boards/rcincremental/test00.cc
 boards/rcincremental/test01.cc
 boards/rcled/Makefile
