@@ -28,9 +28,10 @@ struct SpeedProvider {
     inline static constexpr void init() {}
     inline static constexpr uint16_t value() {
         VTG::speedRaw(data);
-        auto ss = etl::StringConverter<etl::FixedPoint<uint16_t, 4>>::parse<1>(data);
-        auto s = ss * 100;
-        return s.integer();
+        const auto ss = etl::StringConverter<etl::FixedPoint<uint16_t, 4>>::parse<1>(data); // max: 4096.xxx
+        const auto s10 = ss * 10; // so: 409.6 km/h
+        const uint16_t s100 = s10.integer() * 10; 
+        return s100;
     }
 private:
     static inline etl::StringBuffer<External::GPS::Sentence::DecimalMaxWidth> data;
