@@ -337,6 +337,8 @@ boards/rcdesk/test00.cc
 boards/rcdesk/test01.cc
 boards/rcdesk/test02.cc
 boards/rcincremental/Makefile
+boards/rcincremental/doc/Makefile
+boards/rcincremental/doc/rcincr.adoc
 boards/rcincremental/inc3mode10Mhz.cc
 boards/rcincremental/test00.cc
 boards/rcincremental/test01.cc
@@ -367,6 +369,7 @@ boards/rcquadc/Makefile
 boards/rcquadc/atmega4808_01.cc
 boards/rcquadc/avr128da32_01.cc
 boards/rcquadc/avr128da32_02.cc
+boards/rcquadc/busscan.h
 boards/rcquadc/doc/Makefile
 boards/rcquadc/doc/rcquad.adoc
 boards/rcquadc/eeprom.cc
@@ -388,6 +391,7 @@ boards/rcquadc/test14.cc
 boards/rcquadc/test15.cc
 boards/rcquadc/test16.cc
 boards/rcquadc/test20.cc
+boards/rcquadc/test30.cc
 boards/rcquadc/test99.cc
 boards/rcsensor/Makefile
 boards/rcsensor/test00.cc

@@ -1,0 +1,216 @@
+= RC Quad-D 
+Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+:revnumber: 0.1
+:revremark: HW_0.1
+:revdate: 01.01.1970
+:lang: de
+:toc:
+:toc-title: Inhalt
+:toclevels: 4
+:numbered:
+:pagenums:
+:src_numbered: 
+:icons: font
+:icontype: svg
+:figure-caption: Abbildung
+:description: RC Quad-D
+:title: RC Quad-D : Kran- und Sonderfunktionssteuerung
+:title-page:
+:sectanchors:
+:sectlinks:
+:experimental:
+:copyright: Wilhelm Meier
+:duration: 90
+:source-highlighter: pygments
+:pygments-css: class
+:showtitle:
+:docinfo1:
+:stem:
+// for attributes in link:[] macro like link:xxx[window="_blank"]
+:linkattrs:
+
+:imagesdir: ../../doc/images
+:idir: ../../doc
+
+:mName: RC-Quad-D
+:model: quad
+
+include::{idir}/defs.adoc[]
+
+<<<
+
+include::{idir}/preface.adoc[]
+ 
+<<<
+
+include::{idir}/symbols.adoc[]
+
+include::{idir}/law.adoc[]
+
+include::{idir}/security.adoc[]
+
+<<< 
+
+== Einführung
+
+Der `RC Quad-D` ist ein digitales Steuermodul (4-Kanal) zum Betrieb mit einem `OpenTX`-Sender, vorzugsweise eine _Radiomaster_ `TX16s`
+oder anderen sog. _color-LCD_ Sendern mit `OpenTX` wie etwa eine _FrSky_ `Horus X12s`.
+Im Gegensatz zu alten, im analogen Zeitmultiplex-Verfahren arbeitenden Schaltmodulen, wird bei dem `RC Quad-D` die Information für die zu 
+steuernde Funktion vollständig digital übertragen. Daher ist ein störungsfreier Betrieb gewährleistet.
+
+Der `RC Quad-D` hat 4 Ausgänge, an denen 4 Motoren (bis 24V/3A) angeschlossen werden können. Jeder Ausgang kann individuell gesteuert werden. Man kann
+die Motoren getrennt vorwärts/rückwärts laufen lassen. Die Drehzahl ist wie bei einem Fahrtensteller für vorwärts/rückwärts getrennt einstellbar. 
+Alternativ kann auch jeder Ausgang proportional über einen Übertragungskanal gesteuert werden (dann hat man bis zu 4 Fahrtensteller in einem Modul).
+
+Um Schäden an den Motoren bzw. an den zu steuernden Funktionen zu vermeiden, können die Motoren beim Erreichen ihrer jeweiligen 
+Endlage abgeschaltet werden. Diese Abschaltung erfolgt entweder durch eine Stromüberwachung oder durch Endschalter. Die jeweiligen Abschaltströme 
+können durch das Kranmodul gelernt bzw. vom Anwedner eingestellt und angepasst werden. Dies gilt auch für den Proportionalbetrieb.
+
+Die jeweiligen, vom Modul gemessenen Ströme der 4 Ausgänge werden per _Telemetrie_ an den Sender übertragen. Auch werden die _Zustände_ der einzelnen 
+Ausgänge zur Anzeige auf dem Sender per Telemetrie übertragen. Damit kann man am Sender genau erkennen, ob der Motor bspw. frei läuft, ausgeschaltet ist, sich in einer
+Endlage befindet oder wegen Überstrom abgeschaltet wurde.
+
+Weiterhin kann ein _Sanftanlauf_ eingestellt werden, für jeden Ausgang getrennt.
+
+Die Konfiguration der Parameter erfolg komplett über den Sender und ein entsprechendes Menu.
+
+Der `RC Quad-D` wird an den `IBus`- oder `SBus`-Ausgang eines Empfängers angeschlossen. Sollen mehrere `RC Quad-D` verwendet werden, so werden 
+diese _alle_ (parallel) an den IBus/SBus-Ausgang des Empfängers angeschlossen. 
+Jeder `RC Quad-D` hat eine eindeutige _Adresse_ und kann so vom Sender angesprochen werden. Da das `RC Quad-D` auch ein _Telemetrie-Modul_ darstellt,
+muss (sollte) es auch mit dem Telemetrie-Bus (IBus, S.Port) verbunden werden.
+
+Insgesamt können über _einen_ Übertragungskanal bis zu 8 `RC-MultiSwitch-D`, `RC-MultiAdapter-DA` oder `RC-ServoSwitch-D` und `RC-Quad-D` angeschlossen werden. 
+
+=== Weitere Möglichkeiten
+
+Nach dem gleichen Funktionsprinzip arbeitet der `RC MultiAdapter-DA`. Dieser ermöglocht den Betrieb alter, analoger 
+Zeitmultiplex-Schaltmodule, die nach dem Verfahren von _Robbe_, oder _Graupner/JR_, oder _CP-Elektronik_ oder  _Beier NMS_ arbeiten. 
+Der `RC MultiAdapter-DA` ermöglicht es, bis zu 5 analoge Zeitmultiplex-Schaltmodule anzuschließen. Dadurch bekommt jedes dieser 
+analogen Schaltmodule über den Adapter ebenfalls eine _eindeutige_ Adresse, und kann vom Sender angesprochen werden. 
+Eine PWM-Modulation der Ausgänge eines analogen Zeitmultiplex-Schaltmoduls ist allerdings nicht möglich.
+
+Analoge Zeitmultiplex-Schaltmodule der Fa. _Robbe_ besitzen neben den 6 Schaltfunktionen (12 Ausgänge) auch noch 2 proportionale Ausgänge. Mit 
+Hilfe des `RC MultiAdapter-DA` können zwei beliebige `OpenTX`-Kanäle den beiden proportionalen Ausgängen des _Robbe_-Modules zugewiesen werden. 
+Auch gibt es von der Fa. _Robbe_ ein 8-Kanal Multi-Prop Modul, was ebenfalls angesteuert werden kann.
+
+Das Modul `RC-MultiSwitch-D` ist ein digitales 8-Kanal-Schaltmodul. Jeder Ausgang kann individuell `ein`/`aus` geschaltet werden. Für den Zustand `ein`
+kann eine PWM-Rate festgelegt werden, falls dort etwa ein Motor angeschlossen werden soll oder die Leuchtstärke von Lampen / LEDs reduziert werden 
+soll. Zusätzlich können unterschiedliche Blinkmodi konfiguriert werden.
+
+Das Modul `RC-ServoSwitch-D` ist eine Ansteuerung für bis zu 5 Servos. Diese Servos können bis zu 8 Positionen annehmen. Diese Positionen sind den 
+Schalterstellungen bzw. den Menu-Buttons zugeordnet. Statt Verbraucher ein/aus zu schalten, fahren die Servos bestimmte, vorher erlernte Positionen an. Die 
+Geschwindigkeit, mit der sich die Servos bewegen, kann ebenfalls eingestellt werden. Auch können zwei oder mehrere Servos dieselben Bewegungen ausführen.
+
+=== Ansicht
+
+In den Bildern <<top>> und <<bottom>> ist jeweils die Ansicht von oben und unten abgebildet. 
+
+Die Maße betragen 46mm x 46mm. Die Platine hat Befestigungslöcher mit 3mm Durchmesser. 
+
+Die Stromzuführung und der Anschluss der Motoren erfolgt über Schraubklemmverbinder.
+
+[[top]]
+.Ansicht der Kran- und Sonderfunktionssteuerung von oben
+image::{localimages}/top.jpg[align="center"]
+
+[[bottom]]
+.Ansicht der Kran- und Sonderfunktionssteuerung von unten
+image::{localimages}/bottom.jpg[align="center"]
+
+Das Modul wird vom Empfänger mit Spannung versorgt.
+
+.Achtung: Hardware Version 1
+[CAUTION]
+--
+Die *maximale Spannung* (Empfängerspannung) darf 5,5V *nicht* überschreiten.
+--
+
+=== Grundsätzliches
+
+==== Bedienung
+
+Die Bedienung der Schaltmodule erfolgt grundsätzlich über ein _Menu_. Dieses ist als _Widget_ in `OpenTx` realisiert (Telemetrie-Skript für kleinere Anlagen). 
+
+In <<menu1>> sieht man eine Seite (oben rechts: `Page: 1/3`) des Menus. Diese Seite ist für die Bedienung eines `RC-Quad-D` konfiguriert: 
+in der ersten Spalte stehen die _Namen_ der Funktionen (hier: `HubObn`, `Auslgr`, `HubUnt`, `Drehen` stellvertretend 
+für _Hubarm-oben_, _Ausleger_, _Hubarm-unten_ und _Drehteller_) für die 4 Ausgänge des Steuermoduls. Diese Namen können 
+in der Konfigurationsdatei (s.a. <<config>>) frei gewählt werden. Damit _entfällt_ das Problem einer _Schalterbeschriftung_, was man von früher her kennt.
+
+In den weiteren Spalten stehen die verschiedenen _Zustände_, die eine Schaltfunktion annehmen kann. Jeder Zustand kann durch eine _Selektion_ 
+aktiviert werden. 
+
+Auch die Namen dieser Zustände können in der Konfigurationsdatei frei geändert werden.
+
+[[menu1]]
+.Die Bedienoberfläche als Widget (Seite 1) 
+image::{localimages}/M1.png[align="center"]
+
+Sollte eine Schaltfunktion auch ein _ShortCut_ in Form eines physischen Schalters (3-Positionenschalter) zugeordnet haben, so erscheint der _Name_
+des Schalters zusätzlich hinter dem Namen der Funktion. In der ersten Zeile bedeutet `HubObn/sa*`, dass der Funktion `HubObn` zusätzlich der _ShortCut_ 
+Schalter `sa` zugeordent wurde. Dies geschieht auch in der Konfigurationsdatei. 
+
+Weil die Anzahl der phys. Schalter am Sender naturgemäß begrenzt ist (etwa: `sa`, ... `sh`), kann man nicht für alle Funktionen _ShortCuts_ 
+über Schalter definieren. Eine Abhilfe bieten die sog. _Overlays_. Dies ist bei den analogen Schaltmodulen als _Ebenenumschaltung_ bekannt. 
+Wird ein phys. Schalter für _mehr_ als eine Funktion definiert, so wird er _automatisch_ zu einem _Overlay_. Dies bedeutet, dass die 
+Zuordnung des Schalters zu einer Funktion von der gerade sichtbaren Menu-Seite abhängig ist (Analogie: Menu-Seite = Ebene).
+
+Zusammen mit dem schnellen Umschalten zwischen Menu-Seite mit Hilfe des 6-Positionen-Tasters `6pos` bei manchen Sendern (etwa: _Radiomaster_ `TX16s` oder _FrSky_ `X12s`)
+ergibt sich eine sehr komfortable Bedienung.
+
+==== Konfiguration
+
+Die Konfiguration wichtiger _Parameter_ der Schaltfunktionen erfolgt ebenfalls über ein Menu-System. Dies ist als eigenes Widget realisiert. 
+
+Im Bild <<menuc1>> sind zu jeder Funktion die konfigurierbaren _Parameter_ aufgelistet. Zudem besteht die Möglichkeit, ein _Reset_ durchzuführen. Ein _Reset_
+setzt für _alle_ Parameter wieder die Standardwerte ein.
+
+Soll ein Parameter konfiguriert werden, so muss er _selektiert_ werden und sein _Wert_ wird dann anschließend über das Potentiometer `S1` eingestellt. 
+Der Wert wird _oben rechts_ im Menu in `%` und auf einer Skala von `0` ... `31` angezeigt (bei `SBus`: `0` ... `15`).
+
+[[menuc1]]
+.Die Konfigurationsoberfläche als Widget (Funktionsspezifische Parameter)
+image::{localimages}/MC1.png[align="center"]
+
+Zusätzlich zu den _funktionsspezifischen_ Parametern für jedes Schaltmodul (Achtung: nicht jedes Schaltmodul kann alle Parameter ausführen), 
+existiert noch eine _weitere_ Menu-Seite für modul-spezifische (für ein Modul als Ganzes) Parameter (s.a. <<menuc2>>). 
+
+Dies betrifft vor allem das Anlernen der Modul-Adresse, wobei dies aus Sicherheitsgründen nur beim _Einschalten_ des Moduls möglich ist (s.a. <<learn>>).
+
+[[menuc2]]
+.Die Konfigurationsoberfläche als Widget (modulglobale Parameter)
+image::{localimages}/MC2.png[align="center"]
+
+Da dieses Widget zum eigentlichen Betrieb _nicht_ erforderlich ist, kann es _nach_ der Konfiguration deaktiviert werden bzw. durch andere 
+Widgets ersetzt werden (dies gilt auch für das Telemetrie-Skript zu Konfiguration).
+
+<<<
+
+include::{idir}/opentx.adoc[]
+
+<<<
+
+include::{idir}/einbau.adoc[]
+
+<<<
+
+include::{idir}/learn.adoc[]
+
+<<<
+
+include::{idir}/function.adoc[]
+
+<<<
+
+include::details.adoc[]
+
+<<<
+
+include::{idir}/operate.adoc[]
+
+<<<
+
+include::{idir}/tests.adoc[]
+
+<<<
+
+include::{idir}/contact.adoc[]
