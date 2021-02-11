@@ -387,14 +387,15 @@ namespace AVR {
 //                std::integral_constant<uint16_t, ubrr>::_;
 //                std::integral_constant<uint32_t, Config::fMcu.value>::_;
 //                std::integral_constant<uint16_t, Baud::value>::_;
+                mcu_usart()->ctrlb.template clear<ctrlb_t::rxm0, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
                 *mcu_usart()->baud = ubrr;
             }            
 
             if constexpr(flags == 1) {
-                mcu_usart()->ctrlc.template add<ctrlc_t::xfer8bit | ctrlc_t::evenparity | ctrlc_t::xfer2stopbit, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
+                mcu_usart()->ctrlc.template set<ctrlc_t::xfer8bit | ctrlc_t::evenparity | ctrlc_t::xfer2stopbit>();
             }
             else {
-                mcu_usart()->ctrlc.template add<ctrlc_t::xfer8bit | ctrlc_t::noparity | ctrlc_t::xfer1stopbit, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
+                mcu_usart()->ctrlc.template set<ctrlc_t::xfer8bit | ctrlc_t::noparity | ctrlc_t::xfer1stopbit>();
             }
             mcu_usart()->ctrlb.template add<ctrlb_t::txen | ctrlb_t::rxen, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
   
