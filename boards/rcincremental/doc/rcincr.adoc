@@ -1,4 +1,4 @@
-= RC Quad-D 
+= RC Inkremental 
 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 :revnumber: 0.1
 :revremark: HW_0.1
@@ -13,8 +13,8 @@ Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 :icons: font
 :icontype: svg
 :figure-caption: Abbildung
-:description: RC Quad-D
-:title: RC Quad-D : Kran- und Sonderfunktionssteuerung
+:description: RC Inkremental
+:title: RC Inkremental : Inkrementalgeber für RC-Sender
 :title-page:
 :sectanchors:
 :sectlinks:
@@ -32,8 +32,8 @@ Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 :imagesdir: ../../doc/images
 :idir: ../../doc
 
-:mName: RC-Quad-D
-:model: quad
+:mName: RC-Incr
+:model: incr
 
 include::{idir}/defs.adoc[]
 
@@ -53,163 +53,373 @@ include::{idir}/security.adoc[]
 
 == Einführung
 
-Der `RC Quad-D` ist ein digitales Steuermodul (4-Kanal) zum Betrieb mit einem `OpenTX`-Sender, vorzugsweise eine _Radiomaster_ `TX16s`
-oder anderen sog. _color-LCD_ Sendern mit `OpenTX` wie etwa eine _FrSky_ `Horus X12s`.
-Im Gegensatz zu alten, im analogen Zeitmultiplex-Verfahren arbeitenden Schaltmodulen, wird bei dem `RC Quad-D` die Information für die zu 
-steuernde Funktion vollständig digital übertragen. Daher ist ein störungsfreier Betrieb gewährleistet.
+Der `RC-Inkremental` ist ein sog. _Inkrementalgeber_. Dies ist ein _Drehgeber_ ähnlich wie ein Potentiometer, 
+jedoch kann dieser Geber beliebig oft gedreht werden. Er besitzt _keinen_ Anschlag wie ein Potentiometer. 
+Man kennt diese Art von Gebern etwa aus der Unterhaltungselektronik oder anderen Bedienfunktionen. 
 
-Der `RC Quad-D` hat 4 Ausgänge, an denen 4 Motoren (bis 24V/3A) angeschlossen werden können. Jeder Ausgang kann individuell gesteuert werden. Man kann
-die Motoren getrennt vorwärts/rückwärts laufen lassen. Die Drehzahl ist wie bei einem Fahrtensteller für vorwärts/rückwärts getrennt einstellbar. 
-Alternativ kann auch jeder Ausgang proportional über einen Übertragungskanal gesteuert werden (dann hat man bis zu 4 Fahrtensteller in einem Modul).
+Zusätzlich besitzt der Geber noch einen _Taster_.
 
-Um Schäden an den Motoren bzw. an den zu steuernden Funktionen zu vermeiden, können die Motoren beim Erreichen ihrer jeweiligen 
-Endlage abgeschaltet werden. Diese Abschaltung erfolgt entweder durch eine Stromüberwachung oder durch Endschalter. Die jeweiligen Abschaltströme 
-können durch das Kranmodul gelernt bzw. vom Anwedner eingestellt und angepasst werden. Dies gilt auch für den Proportionalbetrieb.
-
-Die jeweiligen, vom Modul gemessenen Ströme der 4 Ausgänge werden per _Telemetrie_ an den Sender übertragen. Auch werden die _Zustände_ der einzelnen 
-Ausgänge zur Anzeige auf dem Sender per Telemetrie übertragen. Damit kann man am Sender genau erkennen, ob der Motor bspw. frei läuft, ausgeschaltet ist, sich in einer
-Endlage befindet oder wegen Überstrom abgeschaltet wurde.
-
-Weiterhin kann ein _Sanftanlauf_ eingestellt werden, für jeden Ausgang getrennt.
-
-Die Konfiguration der Parameter erfolg komplett über den Sender und ein entsprechendes Menu.
-
-Der `RC Quad-D` wird an den `IBus`- oder `SBus`-Ausgang eines Empfängers angeschlossen. Sollen mehrere `RC Quad-D` verwendet werden, so werden 
-diese _alle_ (parallel) an den IBus/SBus-Ausgang des Empfängers angeschlossen. 
-Jeder `RC Quad-D` hat eine eindeutige _Adresse_ und kann so vom Sender angesprochen werden. Da das `RC Quad-D` auch ein _Telemetrie-Modul_ darstellt,
-muss (sollte) es auch mit dem Telemetrie-Bus (IBus, S.Port) verbunden werden.
-
-Insgesamt können über _einen_ Übertragungskanal bis zu 8 `RC-MultiSwitch-D`, `RC-MultiAdapter-DA` oder `RC-ServoSwitch-D` und `RC-Quad-D` angeschlossen werden. 
-
-=== Weitere Möglichkeiten
-
-Nach dem gleichen Funktionsprinzip arbeitet der `RC MultiAdapter-DA`. Dieser ermöglocht den Betrieb alter, analoger 
-Zeitmultiplex-Schaltmodule, die nach dem Verfahren von _Robbe_, oder _Graupner/JR_, oder _CP-Elektronik_ oder  _Beier NMS_ arbeiten. 
-Der `RC MultiAdapter-DA` ermöglicht es, bis zu 5 analoge Zeitmultiplex-Schaltmodule anzuschließen. Dadurch bekommt jedes dieser 
-analogen Schaltmodule über den Adapter ebenfalls eine _eindeutige_ Adresse, und kann vom Sender angesprochen werden. 
-Eine PWM-Modulation der Ausgänge eines analogen Zeitmultiplex-Schaltmoduls ist allerdings nicht möglich.
-
-Analoge Zeitmultiplex-Schaltmodule der Fa. _Robbe_ besitzen neben den 6 Schaltfunktionen (12 Ausgänge) auch noch 2 proportionale Ausgänge. Mit 
-Hilfe des `RC MultiAdapter-DA` können zwei beliebige `OpenTX`-Kanäle den beiden proportionalen Ausgängen des _Robbe_-Modules zugewiesen werden. 
-Auch gibt es von der Fa. _Robbe_ ein 8-Kanal Multi-Prop Modul, was ebenfalls angesteuert werden kann.
-
-Das Modul `RC-MultiSwitch-D` ist ein digitales 8-Kanal-Schaltmodul. Jeder Ausgang kann individuell `ein`/`aus` geschaltet werden. Für den Zustand `ein`
-kann eine PWM-Rate festgelegt werden, falls dort etwa ein Motor angeschlossen werden soll oder die Leuchtstärke von Lampen / LEDs reduziert werden 
-soll. Zusätzlich können unterschiedliche Blinkmodi konfiguriert werden.
-
-Das Modul `RC-ServoSwitch-D` ist eine Ansteuerung für bis zu 5 Servos. Diese Servos können bis zu 8 Positionen annehmen. Diese Positionen sind den 
-Schalterstellungen bzw. den Menu-Buttons zugeordnet. Statt Verbraucher ein/aus zu schalten, fahren die Servos bestimmte, vorher erlernte Positionen an. Die 
-Geschwindigkeit, mit der sich die Servos bewegen, kann ebenfalls eingestellt werden. Auch können zwei oder mehrere Servos dieselben Bewegungen ausführen.
+Der `RC-Inkremental` hat die Baugröße eines Potentiometers und kann auch als solches eingebaut und an die 
+Senderelektronik angeschlossen werden. Allerdings sind auch noch andere Anschlussmöglichkeiten vorgesehen.
 
 === Ansicht
 
+
 In den Bildern <<top>> und <<bottom>> ist jeweils die Ansicht von oben und unten abgebildet. 
 
-Die Maße betragen 46mm x 46mm. Die Platine hat Befestigungslöcher mit 3mm Durchmesser. 
-
-Die Stromzuführung und der Anschluss der Motoren erfolgt über Schraubklemmverbinder.
+Die Maße betragen ca. 15mm x 15mm. Die Welle des Drehgebers hat einen Durchmesser von 6mm.
+Die Befestigung erfolgt mit einer zentralen Mutter. Der Durchmesser des Bohrlochs muss 7,5mm betragen.
 
 [[top]]
-.Ansicht der Kran- und Sonderfunktionssteuerung von oben
-image::{localimages}/top.jpg[align="center"]
+.Ansicht des Inkrementalgebers von oben
+image::{localimages}/top.PNG[align="center"]
 
 [[bottom]]
-.Ansicht der Kran- und Sonderfunktionssteuerung von unten
-image::{localimages}/bottom.jpg[align="center"]
+.Ansicht des Inkrementalgebers von unten
+image::{localimages}/bottom.PNG[align="center"]
 
-Das Modul wird vom Empfänger mit Spannung versorgt.
+Die Spannungsversorgung erfolgt vom Sender über den Pfostensteckverbinder.
 
-.Achtung: Hardware Version 1
+* `Pin 1`: Masse 
+* `Pin 2`:
+** Konfigurations-Modus: Kontrollleuchte
+** `Poti`-Modus: analoges Gebersignal
+** `Cppm-Master`: Verbindung zum _Slave_
+** `Cppm-Slave`: Verbingung zum _Master_
+* `Pin 3`:
+** `Poti`-Modus: Taster
+** `Cppm-Master`: `Cppm`-Signal zur Verbing zur `DSC`-Buchse des Senders
+** `Cppm-Slave`: unbenutzt
+* `Pin 4`: `V+` (<= 5,5V) Versorgungsspannung
+
+.Achtung
 [CAUTION]
 --
-Die *maximale Spannung* (Empfängerspannung) darf 5,5V *nicht* überschreiten.
+Die *maximale Spannung* (Senderspannung) darf 5,5V *nicht* überschreiten. Eine höhere Spannung kann das 
+Modul zerstören, ebenso eine Verpolung. Um einen zuverlässigen Betrieb
+zu gewährleisten, sollte die Betriebsspannung *nicht* unter 2,8V sinken. 
 --
 
-=== Grundsätzliches
+[[connect]]
+.Anschlüsse
+image::{localimages}/top2.png[align="center"]
 
-==== Bedienung
+== Einbau
 
-Die Bedienung der Schaltmodule erfolgt grundsätzlich über ein _Menu_. Dieses ist als _Widget_ in `OpenTx` realisiert (Telemetrie-Skript für kleinere Anlagen). 
+Der Einbau erfolgt unproblematisch über ein zentrales Loch mit 7,5mm Durchmesser an einer geeigneten Stelle 
+im Sendergehäuse. Stellen Sie sicher, dass _hinter_ dem Loch auch genügend Platz ist, um die mit dem Drehgeber 
+verbundene, kleine Platine zu platzieren. 
 
-In <<menu1>> sieht man eine Seite (oben rechts: `Page: 1/3`) des Menus. Diese Seite ist für die Bedienung eines `RC-Quad-D` konfiguriert: 
-in der ersten Spalte stehen die _Namen_ der Funktionen (hier: `HubObn`, `Auslgr`, `HubUnt`, `Drehen` stellvertretend 
-für _Hubarm-oben_, _Ausleger_, _Hubarm-unten_ und _Drehteller_) für die 4 Ausgänge des Steuermoduls. Diese Namen können 
-in der Konfigurationsdatei (s.a. <<config>>) frei gewählt werden. Damit _entfällt_ das Problem einer _Schalterbeschriftung_, was man von früher her kennt.
+Vergessen Sie auch nicht, ggf. noch die Höhe eines Steckverbinders einzuplanen.
 
-In den weiteren Spalten stehen die verschiedenen _Zustände_, die eine Schaltfunktion annehmen kann. Jeder Zustand kann durch eine _Selektion_ 
-aktiviert werden. 
+Wenn Sie ein neues Loch in das Sendergehäuse bohren, vergewissern Sie sich, dass _hinter_ dem geplanten Bohrloch 
+keine weiteren Kabel verlaufen, die ggf. beschädigt werden könnten.
 
-Auch die Namen dieser Zustände können in der Konfigurationsdatei frei geändert werden.
+== Konfiguration
 
-[[menu1]]
-.Die Bedienoberfläche als Widget (Seite 1) 
-image::{localimages}/M1.png[align="center"]
+Die Konfiguration des Gebers wird beim _Einschalten_ eingestellt. Ist der Geber schon im Sender eingebaut, 
+so muss dazu der Sender eingeschaltet werden. In diesem Fall sollte man besondere Vorsicht walten lassen, um 
+den Sender nicht zu beschädigen.
 
-Sollte eine Schaltfunktion auch ein _ShortCut_ in Form eines physischen Schalters (3-Positionenschalter) zugeordnet haben, so erscheint der _Name_
-des Schalters zusätzlich hinter dem Namen der Funktion. In der ersten Zeile bedeutet `HubObn/sa*`, dass der Funktion `HubObn` zusätzlich der _ShortCut_ 
-Schalter `sa` zugeordent wurde. Dies geschieht auch in der Konfigurationsdatei. 
+.Empfehlung für die Konfiguration
+[TIP]
+Es wird empfohlen, für die Konfiguration das Modul _nur_ mit der Spannungsversorgung und der Kontrollleuchte zu
+verbinden. Idealerweise erfolgt die Konfiguration _vor_ dem Einbau.
 
-Weil die Anzahl der phys. Schalter am Sender naturgemäß begrenzt ist (etwa: `sa`, ... `sh`), kann man nicht für alle Funktionen _ShortCuts_ 
-über Schalter definieren. Eine Abhilfe bieten die sog. _Overlays_. Dies ist bei den analogen Schaltmodulen als _Ebenenumschaltung_ bekannt. 
-Wird ein phys. Schalter für _mehr_ als eine Funktion definiert, so wird er _automatisch_ zu einem _Overlay_. Dies bedeutet, dass die 
-Zuordnung des Schalters zu einer Funktion von der gerade sichtbaren Menu-Seite abhängig ist (Analogie: Menu-Seite = Ebene).
+=== LED zur Kontrolle der eingestellten Konfiguration
 
-Zusammen mit dem schnellen Umschalten zwischen Menu-Seite mit Hilfe des 6-Positionen-Tasters `6pos` bei manchen Sendern (etwa: _Radiomaster_ `TX16s` oder _FrSky_ `X12s`)
-ergibt sich eine sehr komfortable Bedienung.
+Da der Inkrementalgeber nicht in der Lage ist, seine Konfiguration direkt dem Benutzer zurück zu melden, sollte 
+man sich eine LED *mit* Vorwiderstand (390 Ohm) als Kontrollleuchte wie in <<led>> anfertigen.
 
-==== Konfiguration
+Die _Anode_ wird über den Vorwiderstand mit dem `Pin 2` des 4-poligen Pfostensteckverbinders verbunden.
 
-Die Konfiguration wichtiger _Parameter_ der Schaltfunktionen erfolgt ebenfalls über ein Menu-System. Dies ist als eigenes Widget realisiert. 
+[[led]]
+.Kontrollleuchte
+image::{localimages}/wirering1.svg[align="center",width=75%,pdfwidth=75%]
 
-Im Bild <<menuc1>> sind zu jeder Funktion die konfigurierbaren _Parameter_ aufgelistet. Zudem besteht die Möglichkeit, ein _Reset_ durchzuführen. Ein _Reset_
-setzt für _alle_ Parameter wieder die Standardwerte ein.
+Die Kontrollleuchte zeigt mit einem Blinkmuster an, welche Konfiguration gerade gewählt ist.
 
-Soll ein Parameter konfiguriert werden, so muss er _selektiert_ werden und sein _Wert_ wird dann anschließend über das Potentiometer `S1` eingestellt. 
-Der Wert wird _oben rechts_ im Menu in `%` und auf einer Skala von `0` ... `31` angezeigt (bei `SBus`: `0` ... `15`).
+=== Konfigurationsmodus
 
-[[menuc1]]
-.Die Konfigurationsoberfläche als Widget (Funktionsspezifische Parameter)
-image::{localimages}/MC1.png[align="center"]
+Um in den _Konfigurationsmodus_ zu gelangen, muss _beim Einschalten_ der Taster mindestens 3s lang gedrückt (gehalten) 
+werden. Anschließend beginnt die Kontrollleuchte mit einem Blinkmuster.
 
-Zusätzlich zu den _funktionsspezifischen_ Parametern für jedes Schaltmodul (Achtung: nicht jedes Schaltmodul kann alle Parameter ausführen), 
-existiert noch eine _weitere_ Menu-Seite für modul-spezifische (für ein Modul als Ganzes) Parameter (s.a. <<menuc2>>). 
+Folgende Konfigurationen <<configs>> sind möglich: 
 
-Dies betrifft vor allem das Anlernen der Modul-Adresse, wobei dies aus Sicherheitsgründen nur beim _Einschalten_ des Moduls möglich ist (s.a. <<learn>>).
+. 1x Blinken: Poti-Modus <<c1>>
+. 2x Blinken: Cppm-Master-Modus <<c2>>
+. 3x Blinken: Cppm-Slave-Modus <<c3>>
 
-[[menuc2]]
-.Die Konfigurationsoberfläche als Widget (modulglobale Parameter)
-image::{localimages}/MC2.png[align="center"]
+[[configs]]
+=== Konfigurationen
 
-Da dieses Widget zum eigentlichen Betrieb _nicht_ erforderlich ist, kann es _nach_ der Konfiguration deaktiviert werden bzw. durch andere 
-Widgets ersetzt werden (dies gilt auch für das Telemetrie-Skript zu Konfiguration).
+[[c1]]
+==== Poti-Modus
 
-<<<
+Der Inkrementalgeber verhält sich wie ein Potentiometer (Spannungsteiler). 
 
-include::{idir}/opentx.adoc[]
+Der Poti-Ausgang kann mit einem Geber-Eingang des Senders verbunden werden. Die Ausgangsspannung der Gebers 
+kann maximal 2,5V erreichen. Diese bedeutet, dass der Sender ggf. auf das Spannungsintervall `[0;2,5]V` 
+für diesen Geber kalibriert werden muss.
 
-<<<
+Der Taster-Ausgang kann ebenfalls mit einem Eingang des Senders verbunden werden. Die Spannung am 
+Ausgang dieses Ausgangs umfasst das Intervall `[0;U_b]` mit `U_b` die interne Betriebsspannung des Senders.
 
-include::{idir}/einbau.adoc[]
 
-<<<
+[[bc1]]
+.Verkabelung im `Poti`-Modus
+image::{localimages}/wirering_p.svg[align="center",width=75%,pdfwidth=75%]
 
-include::{idir}/learn.adoc[]
+[[c2]]
+==== Cppm-Master-Modus
 
-<<<
+Es gibt Situationen, in denen im Sender auf der Hauptplatine des Senders keine Möglichkeit mehr besteht, 
+einen oder zwei weitere Geber direkt anzuschließen. Jedoch bietet (fast) jeder Sender die Möglichkeit zu einem 
+Betrieb im sog. _Lehrer-/Schüler_-Betrieb (LS) an. 
 
-include::{idir}/function.adoc[]
+In diesem Fall generiert dann der Inkrementalgeber ein übliches _Schüler_-Signal, was über den LS-Eingang 
+eingespeist werden kann. Dies kann über die vorhandene externe LS-Buchse im Sender erfolgen. Besonders wenn der Geber 
+ggf. extern am Sender montiert wird, ist dies sinnvoll und einfach. Jedoch benötigt der Geber auch eine Spannungsversorgung 
+aus dem Sender. Dazu ist u.U. ein weiteres Kabel notwendig. Denn die meisten Sender stellem an der LS-Buchse _keine_ 
+Spannungsversorgung zur Verfügung. 
 
-<<<
+Die LS-Buchse wird auch oft als `DSC`-Buchse bezeichnet.
 
-include::details.adoc[]
+Meistens sinnvoller ist die Verkabelung zur `DSC`-Buchse im Sender intern. Dazu muss vom `Cppm`-Pin des 
+Gebers ein Kabel zur `DSC`-Buchse gezogen werden. Welcher Pin der Buchse das ist, kann nicht mit Sicherheit 
+allgemein gesagt werden. Es ist _üblicherweise_ der der Spitze des 3,5mm-Klinkensteckers zugeordnete Pin. 
+leider gibt es auch viele andere Ausführungen der `DSC`-Buchse.
+
+Der Werte des Inkrementalgebers steht als Schülersignal Kanal `1`, und der des Tasters 
+als Schülersignal Kanal `2` zur Verfügung.
+
+[CAUTION]
+Ist der Inkrementalgeber intern an die `DSC`-Buchse wie oben beschrieben angeschlossen, so 
+kann die `DSC`-Buchse *nicht* mehr als _normale_ Schülerbuchse verwendet werden.
+
+[[bc2]]
+.Verkabelung im `Cppm-Master`-Modus
+image::{localimages}/wirering_m.svg[align="center",width=75%,pdfwidth=75%]
+
+[[c3]]
+==== Cppm-Slave-Modus
+
+Damit man einen _weitere_ Inkrementalgeber anschließen kann, wenn der Sender keine direkte Anschlussmöglichkeit 
+mehr hat _und_ schon ein Inkrementalgeber im `Cppm-Master`-Modus eingebaut ist, kann man 
+_einen_ weiteren Inkrementalgeber im `Cppm-Slave`-Modus an den `Cpmm-Master` anschließen.
+
+Der Werte des Inkrementalgebers steht als Schülersignal Kanal `3`, und der des Tasters 
+als Schülersignal Kanal `4` zur Verfügung.
+
+[[bc3]]
+.Verkabelung im `Cppm-Slave`-Modus
+image::{localimages}/wirering_s.svg[align="center",width=75%,pdfwidth=75%]
+
+== Bedienung
+
+Die Rotation des Inkrementalgebers kann unterschiedliche Ausgangswerte produzieren:
+
+. Modus: Absolutwerte mit _direktem Übergang_ vom maximalen zum minimalen Wert und umgekehrt (_wrap-around_).
+. Modus: Absolutwerte mit _Begrenzung_ auf den maximalen bzw. minimalen Wert (_no wrap-around_).
+. Modus: Wert protortional zur Änderungsrate des Gebers (_echter_ Inkrementalbetrieb). 
+
+Die _Umschaltung_ zwischen diesen Betriebsarten wird durch eine _langen_ Tastendruch (> 3s) erreicht. 
+Es erfolgt keine _direkte_ Rückmeldung an den Benutzer. Nach einem derartigen Umschalten muss 
+das Verhalten durch Drehen am Geber verifiziert werden.
+
+Die Einstellung wird gespeichert.
+
+== Anwendungen
+
+Es folgen einige Einsatzbeispiele des Inkrementalgebers.
+
+=== Bewegungen mit natürlicher Begrenzung
+
+Beispiele für Bewegungen mit _natürlicher_ Begrenzung im Modell sind etwa:
+
+* Segelwinde
+* Kranausleger auf/ab
+* Lukendeckel 
+
+Sofern diese Abläufe protortional bedient werden sollen, haben die in jeder Richtung einen _maximalen_
+Ausschlag.  In diesem Fall ist eine Bedienung im 2. Modus (_ohne_ direktem Übergang der Extremwerte) sinnvoll.
+
+=== Kontinuierliche Drehbewegungen am Modell
+
+Es gibt Bewegungen im Modell die grundsätzlich kontinuierlich im Kreis erfolgen sollen / können.
+Dazu zählt etwa:
+
+* Schottelbewegung
+* Krandrehung
+* Löschmonitor- / Geschützturm-Drehung
+
+Werden hierzu im Modell sog. 360°-Servos (mit Rückmeldung) so kann mit dem Inkrementalgeber dies auch so 
+am Sender bedient werden. Ein permanentes Drehen des Gebers in eine Richtung wird dann auch als eine solche Rotation 
+im Modell in eine Richtung umgesetzt - eben auch beliebig oft hinterweinander im Kreis.
+
+[TIP]
+Diese Betriebsart benötigt im Modell spezielle Servos und (meistens) eine spezielle Ansteuerelektronik 
+(s.a. Schottelsteuerung).
+
+=== Ebenenumschaltungen
+
+Als sog. _Ebenenumschaltung_ bezeichnet man oft das Verteilen (Umschalten) _eines_ Gebers auf _unterschiedliche_ 
+Kanäle. Die Umschaltung wird durch ein weiteres Bedienelement im Sender gemacht. Bei mehr als 2 Ebenen werden 
+dadurch also Bedienelemente im Sender eingespart. Natürlich kann dann immer nur die Funktion der entsprechenden 
+Ebene an den Empfänger übermittelt werden.
+
+Die _Ebenenumschaltung_ hat jedoch ein Problem (sofern sie ausschließlich im Sender realisiert wird):
+
+* Der Geber wird auf eine bestimmte Position `P1` eingestellt.
+* Das in dieser Ebene / Kanal `E1` angeschlossene Servo folgt der Bewegung.
+* Die Ebene wird umgeschaltet auf Ebene `E2`.
+* Das in dieser Ebene / Kanal `E2` angeschlossene Servo bewegt sich _schlagartig_ auf die Position `P1`
+* u.s.w.
+
+Dies ist natürlich nicht erwünscht.
+
+Das o.g. Problem lässt sich mit einem selbstneutralisierenden Geber lösen. Die selbstneutralisierenden 
+Knüppelaggregate eines jeden Senders sind dazu geeignet. Wird hier dann in Neutralstellung der Knüppel 
+umgeschaltet, so passiert dies ja immer von der Neutralposition des Servos der einen Ebene auf die Neutralposition 
+des Servos der anderen Ebene. Die Servos bewegen sich also nicht beim Umschalten. Nachteilig ist hier, dass 
+die Umschaltung nur in der Neutralstellung des Knüppels erfolgt (sofern man ihn beim Umschalten auch loslässt). 
+Oder anders ausgedrückt: vor dem Umschalten der Ebenen fährt das beteiligte Servo zunächst in die 
+Neutralposition.
+
+Ggf. hat man aber auch keine _selbstneutralisierenden_ Geber mehr frei am Sender. In diesem Fall kann man 
+den RC-Inkrementalgeber im Modus `3` benutzen. Dreht man _nicht_ am Inkrementalgeber, so ist sein Ausgangswert 
+auch `0` so wie einem selbstneutralisierenden Knüppel.
+
+==== Der Geschwingkeit/Weg-Umformer (Integrator)
+
+Wesentlich eleganter lässt sich die Ebenenumschaltung realisieren, wenn man den Wert, der von dem selbstneutralisierenden 
+Geber (Inkrementalgeber, Knüppel) nicht als Absolutwert auffasst, sondern als eine _Geschwindigkeit_, mit der sich 
+das Servo am Ausgang bewegen soll: ist der Wert des Gebers groß, so dreht sich das Servo schnell, ist der Wert klein, 
+so dreht es sich langsam, und ist der Wert `0`, so bleibt das Servo an der erreichten Position stehen. 
+
+Diese Funktion ist ein _Geschwindigkeit / Weg_-Umformer (mathematisch: Integrator). Einige wenige Sender haben 
+diese Funktion eingebaut, bei _OpenTx_ wird dies durch ein _Mischerscript_ bereitgestellt.
+
+==== Konfiguration in `OpenTx`
+
+Im folgenden wird eine Ebenenumschaltung für 3 Ebenen exemplarisch eingerichtet. Dabei wird das 
+folgende Schema zu Grunde gelegt:
+
+* Ausgang der Ebene 1: Kanal 1
+* Ausgang der Ebene 2: Kanal 2
+* Ausgang der Ebene 3: Kanal 3
+* Schalter zum Umschalten der 3 Ebenen: `SA` 
+* Inkrementalgeber: Schülersignal Kanal 1 `TR1`
+
+[[setin]]
+===== Einrichten der Inputs (Geber)
+
+Zunächst werden die virtuellen Geber (_Inputs_) eingerichtet. Ziel ist es ja, den _einen_ physischen Geber
+(Inkrementalgeber) durch den Schalter `SA` zu _verdreifachen_: je nach Schalterstellung von `SA` soll der 
+Wert des physischen Inkrementalgebers als Wert des ausgewählten _Inputs_ zur Verfügung stehen. Die anderen beiden 
+_Inputs_ sollen in diesem Fall den Wert `0` liefern.
+
+[[inputs]]
+.Übersicht der `Inputs` (Geber) mit der jeweiligen Aktivierung durch den Schalter `SA`
+image::{localimages}/inputs.png[align="center"]
+
+Um die <<inputs, obige>> Menge an _Inputs_ einzustellen, verfahren wir für jeden der _Inputs_ nach dem folgenden 
+Muster (<<input1>>):
+
+[[input1]]
+.Einrichtung des `Inputs 1`
+image::{localimages}/input1.png[align="center"]
+
+Man beachte die Wahl der Quelle (hier: `TR1`) und die Aktivierung des _Input_ durch die gewünschte 
+Schalterstellung von `SA`.
+
+Ähnlich verfahren wir mit dem _Input 2_ (<<input2>>). Hier wählen wir natürlich die zweite Schalterstellung von `SA` 
+als Aktivierung:
+
+[[input2]]
+.Einrichtung des `Inputs 2`
+image::{localimages}/input2.png[align="center"]
+
+Auch _Input 3_ (<<input3>>) ist wie oben aufgebaut, jedoch auch wieder mit einer _anderen_ Schalterstellung von `SA`:
+
+[[input3]]
+.Einrichtung des `Inputs 3`
+image::{localimages}/input3.png[align="center"]
+
+Damit sollte sich die Situation <<inputs>> ergeben.
+
+[[setlua]]
+===== Einrichten des Mischerscriptes
+
+Zunächst muss das Mischerscript zur _Geschwindigkeit / Weg_-Umformung eingerichtet werden.
+Das https://github.com/wimalopaan/OpenTxLua/blob/main/SCRIPTS/MIXES/increm.lua[Script] wird auf die 
+SD-Karte des Sender unter `SCRIPTS/MIXES/` kopiert. 
+
+Dann wird es im Sender geladen. Dies geschieht im Menue `LUA-Scripte`:
+
+[[lua]]
+.Das leere Menue `LUA-Skripte`
+image::{localimages}/lua.png[align="center"]
+
+Hier selektieren wir die erste Zeile. Im Dialog für das Script, wählen wir zunächst 
+das `Lua Skript` aus: `increm`. 
+
+Im Dialog für dieses _erste_ Mischerscript (<<lua1>>) ist zunächt die Einstellung für den _Input_ wichtig: 
+dieser _Geschwindigkeit / Weg_-Umformer soll ja den Wert des _Input 1_, also den Wert des ersten _virtualisierten_ 
+Inkrementalgebers in einen Weg (Ausschlag) umformen (ausummieren). Deswegen stellen wir hier als _Input_ 
+den _Input 1_ ein:
+
+[[lua1]]
+.Das erste Mischerscript
+image::{localimages}/lua1.png[align="center"]
+
+Es kann sein, dass für eine konkrete Anwendung der Inkrementalgeber zu oft gedreht werden muss, um den 
+gewünschten Ausschlag des Servos zu erzielen. In diesem Fall kann die _Skalierung_ geändert (erhöht) werden. U.U. kann 
+es sinnvoll sein, den Ausgangswert dieses Umformers auf `0` zu setzen: dies kann durch die Eintragung eines 
+Schalters / Tasters bei `Reset` erreicht werden.
+
+So wie in <<lua1>> verfahren wir analog für den _zweiten_ (<<lua2>>) und den dritten (<<lua3>>) Umformer.
+
+[[lua2]]
+.Das zweite Mischerscript
+image::{localimages}/lua2.png[align="center"]
+
+[[lua3]]
+.Das dritte Mischerscript
+image::{localimages}/lua3.png[align="center"]
+
+Am Ende dieses Schrittes ergibt sich dann die folgende (<<lua4>>) Übersicht an Mischerscripten:
+
+[[lua4]]
+.Das endgültige Menue `LUA-Skripte`
+image::{localimages}/lua4.png[align="center"]
+
+[[setmix]]
+===== Einrichten der Mischer für die Ebenen 1...3
+
+Nach den Schritten <<setin>> und <<setlua>> stehen nun an den Ausgängen der _Mischerscripte_ die gewünschten 
+Werte zur Verfügung: jeder der _virtualisierten_ Inkrementalgeber wird von einer _Geschwindigkeit_ in einen 
+_Servoweg_ umgeformt. Nun sollen diese Werte noch an den Kanälen 1...3 zum Empfänger übertragen werden.
+
+Für jeden der Kanäle 1 ... 3 richten wir wie üblich einen Mischer ein. Jeder diese Mischer ist allerdings in einem 
+Punkten besonders:
+
+* Der Eingang ist nicht wie üblich ein sog. `Input`, sondern jeweils eines der drei Mischerscripte.
+
+.Achtung: Auswahl des Mischerscriptes
+[TIP]
+Wir haben zwar für jede Ebene ein eigenes Mischerscript eingerichtet, jedoch tragen sie alle _denselben_ Namen, 
+und sie werden leider bei der Auflistung im Michermenue von `OpenTx` _nicht_ unterschieden. Man muss also 
+bei der Auswahl _mitzählen_, welches der Scripte (1...3) man selektiert.
+
+[[mixer1]]
+.Einrichtung der Mischer für die drei Ebenen auf den Kanälen 1...3
+image::{localimages}/mix1.png[align="center"]
+
 
 <<<
 
 include::{idir}/operate.adoc[]
-
-<<<
-
-include::{idir}/tests.adoc[]
 
 <<<
 
