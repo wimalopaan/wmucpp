@@ -20,6 +20,8 @@
 # define NDEBUG
 #endif
 
+#define USE_IBUS // dummy
+
 #include <mcu/avr.h>
 
 #include <mcu/internals/ccp.h>

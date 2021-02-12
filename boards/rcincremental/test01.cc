@@ -27,7 +27,7 @@
 
 #include <external/solutions/cells.h>
 #include <external/solutions/blinker.h>
-#include <external/ibus/ibus.h>
+//#include <external/ibus/ibus.h>
 #include <external/hott/hott.h>
 #include <external/hott/experimental/sensor.h>
 #include <external/hott/experimental/adapter.h>
