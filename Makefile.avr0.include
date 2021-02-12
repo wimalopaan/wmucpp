@@ -74,6 +74,8 @@ ifndef OPTFLAGS
 OPTFLAGS = -Os
 endif
 
+GITTAG := $(shell git describe --abbrev=4 --dirty --always --tags)
+
 #CXXFLAGS += $(OPTFLAGS) -std=c++17 #-pedantic
 CXXFLAGS += $(OPTFLAGS) -std=c++2a # -pedantic
 #CXXFLAGS += -O3 -std=c++17 # -pedantic
@@ -97,6 +99,7 @@ CXXFLAGS += $(CXXINLUDES2)
 CXXFLAGS += $(CXXINLUDES3)
 CXXFLAGS += $(CXXINLUDES4)
 CXXFLAGS += $(MCUFLAGS)
+CXXFLAGS += -DGITTAG=$(GITTAG) -DGITTAG_PGM=\"$(GITTAG)\"_pgm
 
 CFLAGS += $(OPTFLAGS) -std=gnu11 # wegen __flash
 #CFLAGS += -Os -std=c11 -pedantic
