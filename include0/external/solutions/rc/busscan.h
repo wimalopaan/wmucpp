@@ -2,6 +2,11 @@
 
 #include <mcu/internals/usart.h>
 #include <external/hott/sumdprotocolladapter.h>
+#include <external/sbus/sbus.h>
+#include <external/sbus/sport.h>
+#include <external/ibus/ibus2.h>
+
+#include <external/solutions/blinker.h>
 
 namespace External {
     using namespace AVR;
@@ -32,6 +37,15 @@ namespace External {
             using servo_pa = periodic_dev::ProtocollAdapter;
             using terminal_device = void;
         };
+        
+        template<typename> struct isSBus : std::false_type {};
+        template<typename D> struct isSBus<SBusSPort<D>> : std::true_type {};
+
+        template<typename> struct isIBus : std::false_type {};
+        template<typename D> struct isIBus<IBusIBus<D>> : std::true_type {};
+
+        template<typename> struct isSumD : std::false_type {};
+        template<typename D> struct isSumD<SumDHott<D>> : std::true_type {};
     }
     
     template<typename Devs, template<typename> typename App>
@@ -55,6 +69,10 @@ namespace External {
         
         using term_dev = devs::scan_term_dev;
         using terminal = etl::basic_ostream<term_dev>;
+
+        using ledPin = std::conditional_t<std::is_same_v<typename Devs::scanLedPin, void>, AVR::NoPin, typename Devs::scanLedPin>;
+        using led = AVR::ActiveHigh<typename Devs::scanLedPin, AVR::Output>;
+        using blinker = External::Blinker2<led, systemTimer, 100_ms, 2000_ms>;
         
         static constexpr External::Tick<systemTimer> initTimeout{100_ms};
         static constexpr External::Tick<systemTimer> checkTimeout{1000_ms};
@@ -173,15 +191,19 @@ namespace External {
                 break;
             case State::IsSBus:
                 App<Bus::SBusSPort<Devs>>::run(false);
+                mState = State::Init;
                 break;
             case State::IsSBusInv:
                 App<Bus::SBusSPort<Devs>>::run(true);
+                mState = State::Init;
                 break;
             case State::IsIBus:
                 App<Bus::IBusIBus<Devs>>::run();
+                mState = State::Init;
                 break;
             case State::IsSumD:
                 App<Bus::SumDHott<Devs>>::run();
+                mState = State::Init;
                 break;
             }
             if (oldState != mState) {
@@ -193,7 +215,7 @@ namespace External {
                     if constexpr(!std::is_same_v<term_dev, void>) {
                         term_dev::template init<AVR::BaudRate<115200>>();
                     }
-                    etl::outl<terminal>("s: i"_pgm);
+                    etl::outl<terminal>("s: i "_pgm, GITTAG_PGM);
                     break;
                 case State::InitIBus:
                     ibus_test_dev::template init<AVR::BaudRate<115200>>();

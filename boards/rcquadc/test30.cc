@@ -1,5 +1,7 @@
 //#define NDEBUG
 
+#define USE_BUS_TEMPLATE
+
 #include <mcu/avr.h>
 #include <mcu/common/delay.h>
 
@@ -21,7 +23,7 @@
 #include <external/bluetooth/qtrobo.h>
 #include <external/sbus/sbus.h>
 #include <external/sbus/sport.h>
-#include <external/ibus/ibus.h>
+#include <external/ibus/ibus2.h>
 
 #include <external/hott/sumdprotocolladapter.h>
 #include <external/hott/experimental/sensor.h>
@@ -34,13 +36,12 @@
 #include <external/solutions/series01/swuart.h>
 #include <external/solutions/series01/rpm.h>
 #include <external/solutions/apa102.h>
+#include <external/solutions/rc/busscan.h>
 
 #include <std/chrono>
 
 #include <etl/output.h>
 #include <etl/meta.h>
-
-#include "busscan.h"
 
 using namespace AVR;
 using namespace std::literals::chrono;
@@ -78,6 +79,8 @@ struct Devices {
     using scan_term_dev = Usart<scanTermPosition, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<1>, AVR::SendQueueLength<256>>;
 #endif
     
+    using scanLedPin = void;
+    
     static inline void init() {
         using portmux = Portmux::StaticMapper<Meta::List<servoPosition, sensorPosition>>;
         portmux::init();
@@ -95,7 +98,7 @@ struct Devices {
         systemTimer::init(); 
     }
 };
-
+  
 template<typename BusSystem, typename MCU = DefaultMcuType>
 struct Application {
     using devs = BusSystem::devs;
@@ -109,9 +112,9 @@ struct Application {
     
     [[noreturn]] inline static void run(const bool inverted = false) {
         gfsm::init();
-        etl::outl<terminal>("test30"_pgm);
+        etl::outl<terminal>("test30: "_pgm, GITTAG_PGM);
         while(true) {
-            gfsm::periodic();
+            gfsm::periodic(); 
             systemTimer::periodic([&]{
                 gfsm::ratePeriodic();
             });
