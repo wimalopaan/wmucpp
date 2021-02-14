@@ -660,6 +660,22 @@ namespace AVR {
             Pin::toggle();
         }
     };
+    template<>
+    struct ActiveHigh<NoPin, Output> {
+        typedef NoPin pin_type;
+        typedef Output dir_type;
+        inline static void init() {
+        }
+        inline static void activate() {
+        }
+        inline static void inactivate() {
+        }    
+        inline static bool activated() {
+            return false;
+        }
+        inline static void toggle() {
+        }
+    };
     template<AVR::Concepts::Pin Pin>
     struct ActiveHigh<Pin, Input> {
         typedef Pin pin_type;

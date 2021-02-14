@@ -81,6 +81,7 @@ namespace External {
         
         [[noreturn]] static inline auto run() {
             devs::init();
+            blinker::init();
             while(true) {
                 periodic();            
                 systemTimer::periodic([]{
@@ -117,6 +118,7 @@ namespace External {
             }                    
         }
         inline static void ratePeriodic() {
+            blinker::ratePeriodic();
             const auto oldState = mState;
             ++mStateTick;
             ++mCheckTick;
@@ -190,18 +192,22 @@ namespace External {
                 }
                 break;
             case State::IsSBus:
+                blinker::off();
                 App<Bus::SBusSPort<Devs>>::run(false);
                 mState = State::Init;
                 break;
             case State::IsSBusInv:
+                blinker::off();
                 App<Bus::SBusSPort<Devs>>::run(true);
                 mState = State::Init;
                 break;
             case State::IsIBus:
+                blinker::off();
                 App<Bus::IBusIBus<Devs>>::run();
                 mState = State::Init;
                 break;
             case State::IsSumD:
+                blinker::off();
                 App<Bus::SumDHott<Devs>>::run();
                 mState = State::Init;
                 break;
@@ -212,6 +218,7 @@ namespace External {
                 case State::Undefined:
                     break;
                 case State::Init:
+                    blinker::steady();
                     if constexpr(!std::is_same_v<term_dev, void>) {
                         term_dev::template init<AVR::BaudRate<115200>>();
                     }

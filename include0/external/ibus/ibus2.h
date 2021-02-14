@@ -27,43 +27,53 @@ namespace RCSwitch {
     struct Protocol2 {            
         inline static constexpr bool isLowResolution = std::is_same_v<Reso, Low>;
         
-        inline static constexpr auto sbusLut = []{
-            if constexpr(isLowResolution) {
-                std::array<uint8_t, 32> lut{};
-                lut[0] = 0;
-                lut[1] = 0;
-                lut[2] = 1;
-                lut[3] = 2;
-                lut[4] = 2;
-                lut[5] = 3;
-                lut[6] = 3;
-                lut[7] = 4;
-                lut[8] = 4;
-                lut[9] = 5;
-                lut[10] = 5;
-                lut[11] = 6;
-                lut[12] = 6;
-                lut[13] = 7;
-                lut[14] = 7;
-                lut[15] = 7;
-                lut[16] = 8;
-                lut[17] = 9;
-                lut[18] = 9;
-                lut[19] = 10;
-                lut[20] = 10;
-                lut[21] = 11;
-                lut[22] = 11;
-                lut[23] = 12;
-                lut[24] = 12;
-                lut[25] = 13;
-                lut[26] = 13;
-                lut[27] = 14;
-                lut[28] = 14;
-                lut[29] = 15;
-                lut[30] = 15;
-                lut[31] = 15;
-                return lut;
-            }
+        inline static constexpr auto sbusParamLut = []{
+            std::array<uint8_t, 32> lut{};
+            lut[0] = 0;
+            lut[1] = 0;
+            lut[2] = 1;
+            lut[3] = 2;
+            lut[4] = 2;
+            lut[5] = 3;
+            lut[6] = 3;
+            lut[7] = 4;
+            lut[8] = 4;
+            lut[9] = 5;
+            lut[10] = 5;
+            lut[11] = 6;
+            lut[12] = 6;
+            lut[13] = 7;
+            lut[14] = 7;
+            lut[15] = 7;
+            lut[16] = 8;
+            lut[17] = 9;
+            lut[18] = 9;
+            lut[19] = 10;
+            lut[20] = 10;
+            lut[21] = 11;
+            lut[22] = 11;
+            lut[23] = 12;
+            lut[24] = 12;
+            lut[25] = 13;
+            lut[26] = 13;
+            lut[27] = 14;
+            lut[28] = 14;
+            lut[29] = 15;
+            lut[30] = 15;
+            lut[31] = 15;
+            return lut;
+        }();
+        inline static constexpr auto sbusModeLut = []{
+            std::array<uint8_t, 8> lut{};
+            lut[0] = 0;
+            lut[1] = 0;
+            lut[2] = 1;
+            lut[3] = 2;
+            lut[4] = 2;
+            lut[5] = 3;
+            lut[6] = 3;
+            lut[7] = 3;
+            return lut;
         }();
 
         using sb_mode_t  = etl::uint_ranged<uint8_t, 0, 3>; // 2 Bits
@@ -149,7 +159,7 @@ namespace RCSwitch {
         inline static constexpr mode_t toMode(const ValueType& v) {
             const uint16_t c = v.toInt() - ValueType::Lower;
             if constexpr(isLowResolution) {
-                return mode_t(sbusLut[(c & 0x07)]);
+                return mode_t(sbusModeLut[(c & 0x07)]);
             }
             else {
                 return mode_t((c & 0x07));
@@ -169,7 +179,7 @@ namespace RCSwitch {
         inline static constexpr pvalue_t toParameterValue(const ValueType& v) {
             uint16_t c = v.toInt() - ValueType::Lower;
             if constexpr(isLowResolution) {
-                return pvalue_t(sbusLut[(c & 0x1f)]);
+                return pvalue_t(sbusParamLut[(c & 0x1f)]);
             }
             else {
                 return pvalue_t(c & 0x1f);

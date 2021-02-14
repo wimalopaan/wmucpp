@@ -1,7 +1,11 @@
-//#define NDEBUG
+#define NDEBUG
 
 #define LEARN_DOWN
 #define SCALE_ADC_PWM
+
+#ifndef NDEBUG
+static unsigned int assertKey{1234};
+#endif
 
 #include <mcu/avr.h>
 #include <mcu/common/delay.h>
@@ -39,13 +43,19 @@
 #include <external/solutions/series01/rpm.h>
 #include <external/solutions/apa102.h>
 #include <external/solutions/rc/busscan.h>
-
+ 
 #include <std/chrono>
 
 #include <etl/output.h>
 #include <etl/meta.h>
 
- using namespace AVR;
+namespace xassert {
+    etl::StringBuffer<81> ab;
+    etl::StringBuffer<10> aline;
+    bool on{false};
+}
+
+using namespace AVR;
 using namespace std::literals::chrono;
 using namespace External::Units::literals;
 
@@ -121,6 +131,11 @@ namespace IBus::Switch {
                         }
                     }
                     else if (param == protocol_t::timeMpxMode) { // FrSky: phys. Sensor-Id
+                        // Why??
+                        Meta::visit<actor_list>([]<typename A>(const Meta::Wrapper<A>){
+                                                    A::stop();
+                                                });
+                        
                         if ((value >= 1) && (value < External::SPort::sensor_ids.size())) {
                             if constexpr(External::Bus::isSBus<bus_t>::value) {
                                 const External::SPort::SensorId id = External::SPort::sensor_ids[value - 1];
@@ -293,9 +308,14 @@ namespace Storage {
         
         using index_type = etl::uint_ranged<uint8_t, 0, NChannels - 1>;
         
-        value_type& output(const index_type i) {
-            return mData[i];
-        }
+//        value_type& output(const index_type i) {
+//            return mData[i];
+//        }
+        
+        template<index_type I>
+        value_type& output() {
+            return mData[I];
+        }        
     private:
         uint8_t mMagic;
         Channel mChannel;
@@ -474,7 +494,8 @@ private:
         return (backwardOffCurr() * data().startOffCFactor) / 10;   
     }
     inline static auto& data() {
-        return NVM::data().output(data_index);
+//        std::integral_constant<uint8_t, data_index>::_;
+        return NVM::data().template output<data_index>();
     }
     inline static void change() {
         NVM::data().change();
@@ -1163,6 +1184,7 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
     static constexpr External::Tick<typename Devs::systemTimer> debugTimeout{500_ms};
     
     using blinker = External::Blinker2<typename devs::led1, typename Devs::systemTimer, 100_ms, 2000_ms>;
+    using blinker2 = External::Blinker2<typename devs::led2, typename Devs::systemTimer, 100_ms, 2000_ms>;
     using bl_count_t = blinker::count_type;
     
     using NVM = Devs::eeprom;
@@ -1170,7 +1192,6 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
     using PWM = Devs::pwm;
     using AS = Devs::analogSwitch;
     using SW = Devs::gswitch;
-    using Led2 = devs::led2;
     
     using jumper = devs::jp1;
     
@@ -1187,15 +1208,18 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
             etl::outl<Term>("e init"_pgm);
         }
         blinker::init();
-//        blinker2::init();
+        blinker2::init();
         jumper::init();
         jumper::pin_type::template pullup<true>();
+        
+        using count_t = blinker2::count_type;
         
         if constexpr(External::Bus::isIBus<bus_type>::value) {
             lut3::init(std::byte{0x00}); // low on lut3-out 
             Sensor::init();
             Sensor::uart::txOpenDrain();
             Servo::template init<BaudRate<115200>>();
+            blinker2::blink(count_t{1});
         }
         else if constexpr(External::Bus::isSBus<bus_type>::value) {
             lut3::init(std::byte{0x0f}); // route TXD (inverted) to lut3-out 
@@ -1206,7 +1230,11 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
             
             Servo::template init<AVR::BaudRate<100000>, FullDuplex, true, 1>(); // 8E2
             if (inverted) {
+                blinker2::blink(count_t{2});
                 Servo::rxInvert(true);
+            }
+            else {
+                blinker2::blink(count_t{3});
             }
         }
         else {
@@ -1221,8 +1249,6 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
         AS::init();
     }
     inline static void periodic() {
-        Led2::pin_type::toggle();
-        
         NVM::saveIfNeeded([&]{
             etl::outl<Term>("ep s"_pgm);
         });
@@ -1246,6 +1272,7 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
         //        (Chs::ratePeriodic(), ...);
         
         blinker::ratePeriodic();
+        blinker2::ratePeriodic();
         switch(mState) {
         case State::Undefined:
             mState = State::StartWait;
@@ -1350,6 +1377,14 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
     }
 private:
     static inline void debug() {
+#ifndef NDEBUG
+        if (xassert::on) {
+//            etl::outl<Term>("aassert: "_pgm, assertKey);
+            etl::outl<Term>("a: "_pgm, assertKey, " : "_pgm, xassert::ab);
+            xassert::on = false;
+            assertKey = 0;
+        }
+#endif
         (Chs::debug(),...);
         etl::outl<Term>("id: "_pgm, (uint8_t)NVM::data().physicalId());
 //        etl::outl<Term>("es: "_pgm, AS::states());
@@ -1513,11 +1548,11 @@ struct Devices {
 
     using JP1Pin  = Pin<Port<A>, 5>; 
       
-    using led1Pin  = Pin<Port<F>, 4>; 
-    using scanLedPin = led1Pin;
-    using assertPin = led1Pin;
+    using led2Pin  = Pin<Port<F>, 4>; 
+    using scanLedPin = led2Pin;
     
-    using led2Pin  = Pin<Port<D>, 3>; 
+    using led1Pin  = Pin<Port<D>, 3>; 
+    using assertPin = led1Pin;
     
     using pwmPin1 = Pin<Port<A>, 0>; 
     using pwmPin2 = Pin<Port<A>, 1>; 
@@ -1758,7 +1793,7 @@ struct Application {
             using gfsm = GlobalFsm<devs, typename devs::ch_list>;
             
             gfsm::init(inverted);
-            etl::outl<terminal>("test31"_pgm);
+            etl::outl<terminal>("avr128da32_04"_pgm);
             while(true) {
                 devs::servo::periodic();
                 gfsm::periodic(); 
@@ -1778,13 +1813,19 @@ int main() {
 }
 
 #ifndef NDEBUG
-[[noreturn]] inline void assertOutput(const AVR::Pgm::StringView& expr [[maybe_unused]], const AVR::Pgm::StringView& file[[maybe_unused]], const unsigned int line [[maybe_unused]]) noexcept {
-    using terminal = etl::basic_ostream<devices::scan_term_dev>;
-    devices::assertPin::dir<AVR::Output>();
-    etl::outl<terminal>("Assertion failed: "_pgm, expr, etl::Char{','}, file, etl::Char{','}, line);
-    while(true) {
-        devices::assertPin::toggle();
-    }
+/*[[noreturn]] */inline void assertOutput(const AVR::Pgm::StringView& expr [[maybe_unused]], const AVR::Pgm::StringView& file[[maybe_unused]], const unsigned int line [[maybe_unused]]) noexcept {
+//    using terminal = etl::basic_ostream<devices::scan_term_dev>;
+//    devices::assertPin::dir<AVR::Output>();
+//    etl::outl<terminal>("Assertion failed: "_pgm, expr, etl::Char{','}, file, etl::Char{','}, line);
+    xassert::ab.clear();
+    xassert::ab.insertAt(0, expr);
+    etl::itoa(line, xassert::aline);
+    xassert::ab.insertAt(20, xassert::aline);
+    xassert::ab.insertAt(30, file);
+    xassert::on = true;
+//    while(true) {
+//        devices::assertPin::toggle();
+//    }
 }
 
 template<typename String1, typename String2>
