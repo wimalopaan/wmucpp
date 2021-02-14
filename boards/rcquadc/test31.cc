@@ -1508,7 +1508,7 @@ struct Devices {
 #else
     using scan_term_dev = Usart<scanTermPosition, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<1>, AVR::SendQueueLength<256>>;
 #endif
-    using scanLedPin = void;
+    using scanLedPin = NoPin;
   
     using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::Default>;
     using pwm = PWM::DynamicPwm8Bit<tcaPosition>;

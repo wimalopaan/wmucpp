@@ -48,10 +48,10 @@ eeprom2.hex : F_OSC = 24000000
 #targets += test13.hex
 #targets += test14.hex
 #targets += test15.hex
-targets += eeprom.hex
-targets += eeprom2.hex
-targets += test30.hex
-targets += test31.hex
+#targets += eeprom.hex
+#targets += eeprom2.hex
+#targets += test30.hex
+#targets += test31.hex
 
 # HW 02 (erste Version)
 #targets += test16.hex
