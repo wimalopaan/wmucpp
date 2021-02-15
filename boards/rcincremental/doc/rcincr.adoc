@@ -1,6 +1,6 @@
 = RC Inkremental 
 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
-:revnumber: 0.1
+:revnumber: 0.2
 :revremark: HW_0.1
 :revdate: 01.01.1970
 :lang: de
@@ -63,7 +63,6 @@ Der `RC-Inkremental` hat die Baugröße eines Potentiometers und kann auch als s
 Senderelektronik angeschlossen werden. Allerdings sind auch noch andere Anschlussmöglichkeiten vorgesehen.
 
 === Ansicht
-
 
 In den Bildern <<top>> und <<bottom>> ist jeweils die Ansicht von oben und unten abgebildet. 
 
@@ -201,6 +200,14 @@ kann die `DSC`-Buchse *nicht* mehr als _normale_ Schülerbuchse verwendet werden
 .Verkabelung im `Cppm-Master`-Modus
 image::{localimages}/wirering_m.svg[align="center",width=75%,pdfwidth=75%]
 
+[[cppm1]]
+.Prinzipielle Darstellung des `Cppm`-Signals
+image::{localimages}/cppm1.png[align="center",width=75%,pdfwidth=75%]
+
+[[cppm]]
+.`Cppm`-Signal für die `DSC`-Buchse
+image::{localimages}/cppm.png[align="center",width=75%,pdfwidth=75%]
+
 [[c3]]
 ==== Cppm-Slave-Modus
 
@@ -321,14 +328,14 @@ _Inputs_ sollen in diesem Fall den Wert `0` liefern.
 
 [[inputs]]
 .Übersicht der `Inputs` (Geber) mit der jeweiligen Aktivierung durch den Schalter `SA`
-image::{localimages}/inputs.png[align="center"]
+image::{localimages}/inputs.png[align="center",width=75%,pdfwidth=75%]
 
 Um die <<inputs, obige>> Menge an _Inputs_ einzustellen, verfahren wir für jeden der _Inputs_ nach dem folgenden 
 Muster (<<input1>>):
 
 [[input1]]
 .Einrichtung des `Inputs 1`
-image::{localimages}/input1.png[align="center"]
+image::{localimages}/input1.png[align="center",width=75%,pdfwidth=75%]
 
 Man beachte die Wahl der Quelle (hier: `TR1`) und die Aktivierung des _Input_ durch die gewünschte 
 Schalterstellung von `SA`.
@@ -338,13 +345,13 @@ als Aktivierung:
 
 [[input2]]
 .Einrichtung des `Inputs 2`
-image::{localimages}/input2.png[align="center"]
+image::{localimages}/input2.png[align="center",width=75%,pdfwidth=75%]
 
 Auch _Input 3_ (<<input3>>) ist wie oben aufgebaut, jedoch auch wieder mit einer _anderen_ Schalterstellung von `SA`:
 
 [[input3]]
 .Einrichtung des `Inputs 3`
-image::{localimages}/input3.png[align="center"]
+image::{localimages}/input3.png[align="center",width=75%,pdfwidth=75%]
 
 Damit sollte sich die Situation <<inputs>> ergeben.
 
@@ -359,7 +366,7 @@ Dann wird es im Sender geladen. Dies geschieht im Menue `LUA-Scripte`:
 
 [[lua]]
 .Das leere Menue `LUA-Skripte`
-image::{localimages}/lua.png[align="center"]
+image::{localimages}/lua.png[align="center",width=75%,pdfwidth=75%]
 
 Hier selektieren wir die erste Zeile. Im Dialog für das Script, wählen wir zunächst 
 das `Lua Skript` aus: `increm`. 
@@ -371,7 +378,7 @@ den _Input 1_ ein:
 
 [[lua1]]
 .Das erste Mischerscript
-image::{localimages}/lua1.png[align="center"]
+image::{localimages}/lua1.png[align="center",width=75%,pdfwidth=75%]
 
 Es kann sein, dass für eine konkrete Anwendung der Inkrementalgeber zu oft gedreht werden muss, um den 
 gewünschten Ausschlag des Servos zu erzielen. In diesem Fall kann die _Skalierung_ geändert (erhöht) werden. U.U. kann 
@@ -382,17 +389,17 @@ So wie in <<lua1>> verfahren wir analog für den _zweiten_ (<<lua2>>) und den dr
 
 [[lua2]]
 .Das zweite Mischerscript
-image::{localimages}/lua2.png[align="center"]
+image::{localimages}/lua2.png[align="center",width=75%,pdfwidth=75%]
 
 [[lua3]]
 .Das dritte Mischerscript
-image::{localimages}/lua3.png[align="center"]
+image::{localimages}/lua3.png[align="center",width=75%,pdfwidth=75%]
 
 Am Ende dieses Schrittes ergibt sich dann die folgende (<<lua4>>) Übersicht an Mischerscripten:
 
 [[lua4]]
 .Das endgültige Menue `LUA-Skripte`
-image::{localimages}/lua4.png[align="center"]
+image::{localimages}/lua4.png[align="center",width=75%,pdfwidth=75%]
 
 [[setmix]]
 ===== Einrichten der Mischer für die Ebenen 1...3
@@ -414,8 +421,19 @@ bei der Auswahl _mitzählen_, welches der Scripte (1...3) man selektiert.
 
 [[mixer1]]
 .Einrichtung der Mischer für die drei Ebenen auf den Kanälen 1...3
-image::{localimages}/mix1.png[align="center"]
+image::{localimages}/mix1.png[align="center",width=75%,pdfwidth=75%]
 
+== Graupner/SJ
+
+Der Inkrementalgeber kann auch (neben der _Poti_-Konfiguration) über die `DSC`-Buchse an eine _Grauper/SJ_-Sender angeschlossen werden. 
+Im folgenden Bild sieht man die _Aktivierung_ der Schülerkanäle `1` und `2` für den Inkrementalgeber und den 
+Taster. 
+
+[[grsl1]]
+.Einrichtung des Inkrementalgebers und des Tasters als Kanal `1` und `2` des Schülersignals
+image::{localimages}/gr_s.jpg[align="center",width=75%,pdfwidth=75%]
+
+Für die Weiterverarbeitung im Sender stehen die normalen Mischer zur Verfügung.
 
 <<<
 

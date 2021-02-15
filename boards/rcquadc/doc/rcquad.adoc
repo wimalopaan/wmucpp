@@ -1,7 +1,7 @@
 = RC Quad-D 
 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
-:revnumber: 0.1
-:revremark: HW_0.1
+:revnumber: 0.2
+:revremark: HW_0.4
 :revdate: 01.01.1970
 :lang: de
 :toc:
