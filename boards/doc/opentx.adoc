@@ -501,7 +501,7 @@ Es existiert eine zusätzliche Seite (am Ende, bzw. vor dem Anfang der Menu-Seit
 .Bedeutung der modul-globalen Parameter
 ====
 * `Learn Ch/Adr`:  _Anlernen_ der Moduladresse _und_ des Übertragungskanals (s.a. <<learn>>)
-* `TMpx`: unrelevant
+* `TMpx`: (ab Firmware Version `V20`) Sensor-`Id` für die Zustandsübermittelung (nur `S.Port`) 
 * `TMode`: unrelevant
 * `OMpx`: unrelevant
 ====

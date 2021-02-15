@@ -110,8 +110,14 @@ Die Maße betragen 46mm x 46mm. Die Platine hat Befestigungslöcher mit 3mm Durc
 Die Stromzuführung und der Anschluss der Motoren erfolgt über Schraubklemmverbinder.
 
 [[top]]
-.Ansicht der Kran- und Sonderfunktionssteuerung von oben
+.Ansicht der Kran- und Sonderfunktionssteuerung von oben (Version 1)
 image::{localimages}/top.jpg[align="center"]
+
+Achtung: die neue `Version 4` hat einige Besonderheiten. Zum Erkennen hier die geänderte Ansicht von oben:
+
+[[top4]]
+.Ansicht der Kran- und Sonderfunktionssteuerung von oben (Version 4)
+image::{localimages}/top2.jpg[align="center"]
 
 [[bottom]]
 .Ansicht der Kran- und Sonderfunktionssteuerung von unten
@@ -123,6 +129,12 @@ Das Modul wird vom Empfänger mit Spannung versorgt.
 [CAUTION]
 --
 Die *maximale Spannung* (Empfängerspannung) darf 5,5V *nicht* überschreiten.
+--
+
+.Achtung: Hardware Version 4
+[CAUTION]
+--
+Die *maximale Spannung* (Empfängerspannung) darf 16V *nicht* überschreiten.
 --
 
 === Grundsätzliches
@@ -189,11 +201,11 @@ include::{idir}/opentx.adoc[]
 
 <<<
 
-include::{idir}/einbau.adoc[]
+include::{idir}/einbau_auto.adoc[]
 
 <<<
 
-include::{idir}/learn.adoc[]
+include::{idir}/learn_auto.adoc[]
 
 <<<
 
@@ -210,6 +222,18 @@ include::{idir}/operate.adoc[]
 <<<
 
 include::{idir}/tests.adoc[]
+
+<<<
+
+== Veraltete Informationen
+
+<<einbau_alt>>
+
+<<<
+
+[[einbau_alt]]
+[appendix]
+include::{idir}/einbau.adoc[]
 
 <<<
 

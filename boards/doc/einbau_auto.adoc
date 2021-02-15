@@ -1,0 +1,48 @@
+== Einbau
+
+=== Autoerkennung: IBus oder SBus
+
+.Änderung in Hardware Version 4 / ab Firmware `V20`
+[TIP]
+--
+Ab der o.g. Hardware Version in Zusammenhang mit der o.g. Firmwareversion ist das Modul universell für den Betrieb 
+an `IBus` oder `SBus` (invertiert _oder_ nicht-invertiert) geeignet.
+
+Alte Dokumentation: <<einbau_alt>>
+--
+
+Schließen Sie das Modul am `IBus-Servo` oder `SBus` mit dem als `Servo` gekennzeichneten Verbinder an. 
+
+Schließen Sie das Modul am `IBus-Sensor` oder `S.Port` mit dem als `SIn` gekennzeichneten Verbinder an.
+
+Bei `IBus` können Sie weitere Sensoren am `SOut`-Pin-Header anschließen.
+
+.SBus ist nicht gleich SBus
+[CAUTION]
+--
+Leider ist der _Werte-Bereich_, in denen die einzelnen Kanäle eines SBus-Signal skaliert werden, nicht wohl definiert, und 
+einige Hersteller legen unterschiedliche Grenzen des Wertebereiches fest. Dies führt zu Problemen!
+
+Als Referenz wurde der Wertebereich eines `FrSky R8X`- Empfängers zu Grunde gelegt.
+
+Abweichend hiervon sind:
+
+* `FlySky FS-iA4B` in der Einstellung `SBus,PWM`
+* `FlySky FS-iA6B` in der Einstellung `SBus,PWM`
+* `FlySky FS-iA10B` in der Einstellung `SBus,PWM`
+--
+
+Mit den o.g. Empfängern funktioniert das Modul derzeit nur im Modus `IBus,PWM` oder `IBus,PPM`.
+
+=== Anschluß an den Akku
+
+Achten Sie auf richtige Polung (auf der Platine markiert).
+
+=== Schutz 
+
+Um das Modul gegen Feuchtigkeit zu schützen, empfielt es sich, das Modul 
+mit Polyurethan-Lack-Schutzlack (z.B. Kontakt 70) zu überziehen. Bitte kleben Sie jedoch voher die Pfostenverbinder für alle externen Kontakte und die Pads für die weiteren 
+Anschlußkabel ab. Schützen Sie auch ggf. vorhandene Schraubklemmen.
+
+Ein Einschrumpfen mit Schrumpfschlauch ist auch möglich.
+
