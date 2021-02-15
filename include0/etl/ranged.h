@@ -66,22 +66,28 @@ namespace etl {
         
         inline constexpr uint_ranged() = default; // LowerBound
         
-        inline constexpr explicit uint_ranged(T v) {
+        inline constexpr explicit uint_ranged(const T v, const etl::RangeCheck<true> = etl::RangeCheck<true>{}) {
             assert(v >= LowerBound);
             assert(v <= UpperBound);
             mValue = std::clamp({v}, LowerBound, UpperBound);
+        }
+        inline constexpr explicit uint_ranged(const T v, const etl::RangeCheck<false>) {
+            assert(v >= LowerBound);
+            assert(v <= UpperBound);
+            mValue = v;
         }
         
         template<T L, T U>
         requires((L >= LowerBound) && (U <= UpperBound))
         inline constexpr uint_ranged(const uint_ranged<T, L, U>& v) {
-            mValue = std::clamp(T{v}, LowerBound, UpperBound);
+//            mValue = std::clamp(T{v}, LowerBound, UpperBound); // not needed
+            mValue = v; 
         }
         
         inline constexpr uint_ranged(const uint_ranged&) = default;
         inline constexpr uint_ranged(volatile const uint_ranged& v) : mValue{v}{}
         
-        inline constexpr uint_ranged(uint_ranged_circular<T, LowerBound, UpperBound> v) : mValue{v} {}
+        inline constexpr uint_ranged(const uint_ranged_circular<T, LowerBound, UpperBound> v) : mValue{v} {}
         
         inline constexpr bool isTop() const {
             return mValue == Upper;
@@ -121,7 +127,7 @@ namespace etl {
             return *this;
         }
         
-        inline constexpr void operator+=(T rhs) {
+        inline constexpr void operator+=(const T rhs) {
             if ((mValue + rhs) <= UpperBound) {
                 mValue += rhs;
             }
@@ -129,7 +135,7 @@ namespace etl {
                 mValue = UpperBound;
             }
         }
-        inline constexpr void operator+=(T rhs) volatile {
+        inline constexpr void operator+=(const T rhs) volatile {
             if ((mValue + rhs) <= UpperBound) {
                 mValue = mValue + rhs;
             }
@@ -138,7 +144,7 @@ namespace etl {
             }
         }
         
-        inline constexpr void operator-=(T rhs) {
+        inline constexpr void operator-=(const T rhs) {
             if (mValue >= (LowerBound + rhs)) {
                 mValue -= rhs;
             }
@@ -146,7 +152,7 @@ namespace etl {
                 mValue = LowerBound;
             }
         }
-        inline constexpr void operator-=(T rhs) volatile {
+        inline constexpr void operator-=(const T rhs) volatile {
             if (mValue >= (LowerBound + rhs)) {
                 mValue = mValue - rhs;
             }
@@ -154,7 +160,7 @@ namespace etl {
                 mValue = LowerBound;
             }
         }
-        inline constexpr void operator/=(T f) {
+        inline constexpr void operator/=(const T f) {
             value_type t{mValue / f};
             if (mValue >= LowerBound) {
                 mValue = t;
@@ -174,7 +180,7 @@ namespace etl {
         }
         
         template<etl::Concepts::NamedFlag Check = std::integral_constant<bool, true>>
-        inline constexpr void set(T rhs) volatile {
+        inline constexpr void set(const T rhs) volatile {
             assert(rhs >= LowerBound);
             assert(rhs <= UpperBound);
             if constexpr(Check::value) {
@@ -185,13 +191,13 @@ namespace etl {
             }
         }
 
-        [[deprecated("use set...()")]] inline constexpr uint_ranged& operator=(T rhs){
+        [[deprecated("use set...()")]] inline constexpr uint_ranged& operator=(const T rhs){
             assert(rhs >= LowerBound);
             assert(rhs <= UpperBound);
             mValue = std::clamp(rhs, LowerBound, UpperBound);
             return *this;
         }
-        [[deprecated("use set...()")]] inline constexpr void operator=(T rhs) volatile {
+        [[deprecated("use set...()")]] inline constexpr void operator=(const T rhs) volatile {
             assert(rhs >= LowerBound);
             assert(rhs <= UpperBound);
             mValue = std::clamp(rhs, LowerBound, UpperBound);
