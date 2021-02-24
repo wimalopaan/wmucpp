@@ -78,8 +78,11 @@ struct Devices {
 #else
     using scan_term_dev = Usart<scanTermPosition, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<1>, AVR::SendQueueLength<256>>;
 #endif
+
+    using ppmDevPosition = void;
+    using evrouter = void;
     
-    using scanLedPin = NoPin;
+    using scanLedPin = AVR::ActiveLow<NoPin, Output>;
     
     static inline void init() {
         using portmux = Portmux::StaticMapper<Meta::List<servoPosition, sensorPosition>>;

@@ -27,6 +27,9 @@ test30.hex : F_OSC = 32000000
 test31.hex : MCU = avr128da32 
 test31.hex : F_OSC = 32000000
 
+test40.hex : MCU = avr128da32 
+test40.hex : F_OSC = 32000000
+
 eeprom.hex : MCU = avr128da32 
 eeprom.hex : F_OSC = 32000000
 
@@ -50,8 +53,9 @@ eeprom2.hex : F_OSC = 24000000
 #targets += test15.hex
 #targets += eeprom.hex
 #targets += eeprom2.hex
-#targets += test30.hex
+targets += test30.hex
 #targets += test31.hex
+targets += test40.hex
 
 # HW 02 (erste Version)
 #targets += test16.hex

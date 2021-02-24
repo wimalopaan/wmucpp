@@ -1543,13 +1543,16 @@ struct Devices {
     using scan_term_dev = Usart<scanTermPosition, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<1>, AVR::SendQueueLength<256>>;
 #endif
   
+    using ppmDevPosition = void;
+    using evrouter = void;
+    
     using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::Default>;
     using pwm = PWM::DynamicPwm8Bit<tcaPosition>;
 
     using JP1Pin  = Pin<Port<A>, 5>; 
       
     using led2Pin  = Pin<Port<F>, 4>; 
-    using scanLedPin = led2Pin;
+    using scanLedPin = AVR::ActiveLow<led2Pin, Output>;
     
     using led1Pin  = Pin<Port<D>, 3>; 
     using assertPin = led1Pin;
@@ -1787,7 +1790,7 @@ struct Application {
     using devs = BusDevs<BusSystem>;
     
     inline static void run(const bool inverted = false) {
-        if constexpr(!External::Bus::isSumD<BusSystem>::value) {
+        if constexpr(External::Bus::isIBus<BusSystem>::value || External::Bus::isSBus<BusSystem>::value) {
             using terminal = devs::terminal;
             using systemTimer = devs::systemTimer;
             using gfsm = GlobalFsm<devs, typename devs::ch_list>;
