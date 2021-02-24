@@ -1,6 +1,6 @@
 = RC Inkremental 
 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
-:revnumber: 0.2
+:revnumber: 0.3
 :revremark: HW_0.1
 :revdate: 01.01.1970
 :lang: de
@@ -158,7 +158,7 @@ Folgende Konfigurationen <<configs>> sind möglich:
 Der Inkrementalgeber verhält sich wie ein Potentiometer (Spannungsteiler). 
 
 Der Poti-Ausgang kann mit einem Geber-Eingang des Senders verbunden werden. Die Ausgangsspannung der Gebers 
-kann maximal 2,5V erreichen. Diese bedeutet, dass der Sender ggf. auf das Spannungsintervall `[0;2,5]V` 
+kann maximal `2,5V` erreichen. Diese bedeutet, dass der Sender ggf. auf das Spannungsintervall `[0;2,5]V` 
 für diesen Geber kalibriert werden muss.
 
 Der Taster-Ausgang kann ebenfalls mit einem Eingang des Senders verbunden werden. Die Spannung am 
