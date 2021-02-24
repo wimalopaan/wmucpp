@@ -189,7 +189,7 @@ namespace RCSwitch {
 }
 
 
-namespace IBus {
+namespace IBus2 {
     struct CheckSum final {
         inline void reset() {
             mSum = std::numeric_limits<uint16_t>::max();
@@ -422,7 +422,7 @@ namespace IBus {
         };
         
         struct LossProvider {
-            inline static constexpr auto ibus_type = IBus::Type::type::FLIGHT_MODE;
+            inline static constexpr auto ibus_type = IBus2::Type::type::FLIGHT_MODE;
             inline static constexpr void init() {}
             inline static constexpr uint16_t value() {
                 return 10000 + (lossCounter * 100) + noQueriesCounter;
@@ -441,7 +441,7 @@ namespace IBus {
             static inline uint8_t noQueriesCounter{};
         };
         struct StatisticProvider {
-            inline static constexpr auto ibus_type = IBus::Type::type::FLIGHT_MODE;
+            inline static constexpr auto ibus_type = IBus2::Type::type::FLIGHT_MODE;
             inline static constexpr void init() {}
             inline static constexpr uint16_t value() {
                 return 10000 + (mPackets * 100) + mBytes;
@@ -783,7 +783,7 @@ namespace IBus {
                 case reply_state_t::Type:
                     if (inRange(mReceivedNumber)) {
                         uint8_t index = mReceivedNumber.toInt() - mFirstSensorNumber.toInt();
-                        auto type = IBus::Type::type::NONE;
+                        auto type = IBus2::Type::type::NONE;
                         Meta::visitAt<provider_list>(index, [&]<typename P>(Meta::Wrapper<P>){
                                                          type = P::ibus_type;
                                                      });

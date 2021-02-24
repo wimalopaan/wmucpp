@@ -5,6 +5,7 @@
 #define INV_LED // onboad LED inverted
 
 #define AUTO_BUS // SCAN für SBus / IBus
+#define SBUS_IBUS_NO_WARN
 
 #define LEARN_DOWN // start at highest channel number downwards
 
@@ -603,17 +604,17 @@ struct BusDevs<External::Bus::IBusIBus<Devs>> {
         using bus_t = bus_type;
         using proto_type = RCSwitch::Protocol2<RCSwitch::High>;
         //        inline static constexpr auto ibus_type = IBus::Type::type::FLIGHT_MODE;
-        inline static constexpr auto stateProviderId = IBus::Type::type::FLIGHT_MODE;
+        inline static constexpr auto stateProviderId = IBus2::Type::type::FLIGHT_MODE;
     };
     
     using systemTimer = Devs::systemTimer;
     using led = Devs::led;
 //    using eeprom = Devs::eeprom;    
     
-    using servo_pa = IBus::Servo::ProtocollAdapter<0>;
+    using servo_pa = IBus2::Servo::ProtocollAdapter<0>;
     using servo = AVR::Usart<usart0Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<16>>;
     
-    using eeprom = EEProm::Controller<Storage::ApplDataBus<typename servo_pa::channel_t, RCSwitch::addr_t>>;
+    using eeprom = EEProm::Controller<Storage::ApplDataBus<typename servo_pa::channel_t, RCSwitch::addr_t, bus_type>>;
     
     using evrouter = Devs::evrouter;
     
@@ -661,7 +662,7 @@ struct BusDevs<External::Bus::SBusSPort<Devs>> {
         using bus_t = bus_type;
         using proto_type = RCSwitch::Protocol2<RCSwitch::High>;
         //        inline static constexpr auto ibus_type = IBus::Type::type::FLIGHT_MODE;
-        inline static constexpr auto stateProviderId = IBus::Type::type::FLIGHT_MODE;
+        inline static constexpr auto stateProviderId = IBus2::Type::type::FLIGHT_MODE;
     };
     
     using systemTimer = Devs::systemTimer;
@@ -671,7 +672,7 @@ struct BusDevs<External::Bus::SBusSPort<Devs>> {
     using servo_pa = External::SBus::Servo::ProtocollAdapter<0, systemTimer>;
     using servo = AVR::Usart<usart0Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<16>>;
     
-    using eeprom = EEProm::Controller<Storage::ApplDataBus<typename servo_pa::channel_t, RCSwitch::addr_t>>;
+    using eeprom = EEProm::Controller<Storage::ApplDataBus<typename servo_pa::channel_t, RCSwitch::addr_t, bus_type>>;
     
     using evrouter = Devs::evrouter;
 

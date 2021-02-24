@@ -27,7 +27,7 @@ namespace External {
         template<typename Devs>
         struct IBusIBus {
             using devs = Devs;
-            using servo_pa = IBus::Servo::ProtocollAdapter<0>;
+            using servo_pa = IBus2::Servo::ProtocollAdapter<0>;
             using periodic_dev = Usart<typename Devs::servoPosition, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
             using terminal_device = periodic_dev;
         };
@@ -70,7 +70,7 @@ namespace External {
         using devs = Devs;
         using systemTimer = devs::systemTimer;
     
-        using ibus_pa = IBus::Servo::ProtocollAdapter<0>;
+        using ibus_pa = IBus2::Servo::ProtocollAdapter<0>;
         using ibus_test_dev = Usart<typename Devs::scanDevPosition, ibus_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
         
         using sbus_pa = External::SBus::Servo::ProtocollAdapter<0, systemTimer>;

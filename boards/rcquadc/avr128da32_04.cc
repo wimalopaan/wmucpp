@@ -1633,7 +1633,7 @@ struct BusDevs<External::Bus::IBusIBus<Devs>> {
     struct BusParam {
         using bus_t = bus_type;
         using proto_type = RCSwitch::Protocol2<RCSwitch::High>;
-        inline static constexpr auto stateProviderId = IBus::Type::type::FLIGHT_MODE;
+        inline static constexpr auto stateProviderId = IBus2::Type::type::FLIGHT_MODE;
     };
     
     using systemTimer = Devs::systemTimer;
@@ -1644,7 +1644,7 @@ struct BusDevs<External::Bus::IBusIBus<Devs>> {
     
     using analogSwitch = Devs::analogSwitch;
     
-    using servo_pa = IBus::Servo::ProtocollAdapter<0>;
+    using servo_pa = IBus2::Servo::ProtocollAdapter<0>;
     using servo = Usart<typename Devs::servoPosition, servo_pa, AVR::UseInterrupts<false>, 
     AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
     
@@ -1672,7 +1672,7 @@ struct BusDevs<External::Bus::IBusIBus<Devs>> {
 
     template<typename Sensor>
     struct CProvider {
-        inline static constexpr auto ibus_type = IBus::Type::type::BAT_CURR;
+        inline static constexpr auto ibus_type = IBus2::Type::type::BAT_CURR;
         inline static void init() {
         }
         inline static uint16_t value() {
@@ -1704,7 +1704,7 @@ struct BusDevs<External::Bus::IBusIBus<Devs>> {
     };
     using ibt = IBusThrough<typename Devs::daisyChain>;
     
-    using sensor = IBus::Sensor<typename Devs::sensorPosition, AVR::Usart, AVR::BaudRate<115200>, 
+    using sensor = IBus2::Sensor<typename Devs::sensorPosition, AVR::Usart, AVR::BaudRate<115200>, 
     Meta::List<cp1, cp2, cp3, cp4, sp1, sp2, sp3, sp4>, systemTimer, ibt
     //                          , etl::NamedFlag<true>
     //                           , etl::NamedFlag<true>

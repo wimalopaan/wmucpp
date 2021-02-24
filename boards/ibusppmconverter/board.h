@@ -26,11 +26,10 @@
 #include <external/hott/experimental/sensor.h>
 #include <external/hott/experimental/adapter.h>
 #include <external/hott/menu.h>
-#ifdef AUTO_BUS
-# include <external/ibus/ibus2.h>
-# include <external/solutions/rc/busscan.h>
-# include <external/solutions/rc/multi.h>
-#else
+#include <external/ibus/ibus2.h>
+#include <external/solutions/rc/busscan.h>
+#include <external/solutions/rc/multi.h>
+#ifndef AUTO_BUS
 # include <external/ibus/ibus.h>
 #endif
 #include <external/sbus/sbus.h>
@@ -134,7 +133,11 @@ using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V4_3>;
 
 template<typename Counter>
 struct WdtProvider {
+#ifdef AUTO_BUS
+    inline static constexpr auto ibus_type = IBus2::Type::type::ARMED;
+#else
     inline static constexpr auto ibus_type = IBus::Type::type::ARMED;
+#endif
     inline static constexpr void init() {
     }
     inline static constexpr uint16_t value() {
@@ -296,8 +299,9 @@ namespace Storage {
     };
 
 
-    template<typename Channel, typename AddressR>
+    template<typename Channel, typename AddressR, typename Bus>
     struct ApplDataBus final : public EEProm::DataBase<ApplData<Channel, AddressR>> {
+        static_assert(External::Bus::isSBus<Bus>::value || External::Bus::isIBus<Bus>::value);
 //                Channel::_;
         using Address = etl::uint_ranged_NaN<typename AddressR::value_type, AddressR::Lower, AddressR::Upper>;
 //        Address::_;
@@ -338,11 +342,12 @@ namespace Storage {
 
         void pulseOffset(uint8_t addressOffset, uint8_t v) {
             if (addressOffset < mMpxModes.size()) {
-#ifdef USE_SBUS
-                mPulseOffsets[addressOffset] = 40 * (v + 1); // 20 - 640
-#else
-                mPulseOffsets[addressOffset] = 20 * (v + 1); // 20 - 640
-#endif
+                if constexpr(External::Bus::isSBus<Bus>::value) {
+                    mPulseOffsets[addressOffset] = 40 * (v + 1); // 20 - 640
+                }
+                else {
+                    mPulseOffsets[addressOffset] = 20 * (v + 1); // 20 - 640
+                }
             }
         }        
         uint16_t pulseOffset(uint8_t addressOffset) {
@@ -351,11 +356,12 @@ namespace Storage {
         
         void mpxOffset(uint8_t addressOffset, uint8_t v) {
             if (addressOffset < mMpxModes.size()) {
-#ifdef USE_SBUS
-                mMpxOffsets[addressOffset] = 40 * (v + 1); // 20 - 640
-#else
-                mMpxOffsets[addressOffset] = 20 * (v + 1); // 20 - 640
-#endif
+                if constexpr(External::Bus::isSBus<Bus>::value) {
+                    mMpxOffsets[addressOffset] = 40 * (v + 1); // 20 - 640
+                }
+                else {
+                    mMpxOffsets[addressOffset] = 20 * (v + 1); // 20 - 640
+                }
             }
         }
         uint16_t mpxOffset(uint8_t addressOffset) {
@@ -402,8 +408,5 @@ namespace Storage {
         Address mAddress;
         std::array<std::array<value_type, NChannels>, NAdresses> AValues;
     };
-
-
-
 }
 
