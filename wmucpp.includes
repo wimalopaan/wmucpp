@@ -72,3 +72,4 @@ boards/rcled
 host/tools
 boards/rcincremental
 boards/rcincremental/doc
+boards/doc

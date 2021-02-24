@@ -175,6 +175,7 @@ boards/bmc/medium10/test10.cc
 boards/bmc/medium10/test11.cc
 boards/bmc/medium10/test12.cc
 boards/bmc/medium10/test20.cc
+boards/bmc/medium10/test21.cc
 boards/bmc/medium10/test99.cc
 boards/bmc/robbenavy540/Makefile
 boards/bmc/robbenavy540/blink.cc
@@ -253,6 +254,13 @@ boards/curiosity/test81.cc
 boards/curiosity/test82.cc
 boards/curiosity/test90.cc
 boards/curiosity/test99.c
+boards/doc/einbau.adoc
+boards/doc/einbau_auto.adoc
+boards/doc/function.adoc
+boards/doc/learn.adoc
+boards/doc/learn_auto.adoc
+boards/doc/opentx.adoc
+boards/doc/operate.adoc
 boards/doorbell/Makefile
 boards/doorbell/test00.cc
 boards/ibusgps/Makefile
@@ -268,6 +276,7 @@ boards/ibusppmconverter/a2t2r1g.cc
 boards/ibusppmconverter/a3t2r.cc
 boards/ibusppmconverter/a4t.cc
 boards/ibusppmconverter/a4uni.cc
+boards/ibusppmconverter/auto2multi.cc
 boards/ibusppmconverter/b10c5.cc
 boards/ibusppmconverter/b11c4.cc
 boards/ibusppmconverter/b11c4uni.cc
@@ -393,6 +402,7 @@ boards/rcquadc/test16.cc
 boards/rcquadc/test20.cc
 boards/rcquadc/test30.cc
 boards/rcquadc/test31.cc
+boards/rcquadc/test40.cc
 boards/rcquadc/test99.cc
 boards/rcsensor/Makefile
 boards/rcsensor/test00.cc
@@ -1614,6 +1624,7 @@ include/util/util.h
 include0/external/ibus/ibus2.h
 include0/external/solutions/cells.h
 include0/external/solutions/rc/busscan.h
+include0/external/solutions/rc/multi.h
 include0/external/solutions/rotaryencoder.h
 include0/external/solutions/series01/cppm_out.h
 include0/mcu/avrdx/avr128da32.h
