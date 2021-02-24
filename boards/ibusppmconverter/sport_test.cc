@@ -1,5 +1,6 @@
 #define NDEBUG
 
+#define USE_SBUS
 #define USE_SPORT
 //#define USE_IBUS
 

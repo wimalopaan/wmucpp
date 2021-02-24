@@ -1,5 +1,7 @@
 #define NDEBUG
 
+#define USE_SBUS
+
 #include <mcu/avr.h>
 #include <mcu/common/delay.h>
 
