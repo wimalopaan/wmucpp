@@ -484,6 +484,14 @@ namespace AVR {
                 rxpin::template attributes<Meta::List<Attributes::Reset<>>>();
             }
         }
+        inline static void txInvert(const bool f) {
+            if (f) {
+                txpin::template attributes<Meta::List<Attributes::Inverting<>>>();
+            }
+            else {
+                txpin::template attributes<Meta::List<Attributes::Reset<>>>();
+            }
+        }
     private:
         inline static send_queue_type mSendQueue;
         inline static recv_queue_type mRecvQueue;

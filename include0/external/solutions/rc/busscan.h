@@ -7,6 +7,7 @@
 #include <external/ibus/ibus2.h>
 
 #include <external/solutions/blinker.h>
+#include <external/solutions/series01/sppm_in.h>
 
 namespace External {
     using namespace AVR;
@@ -37,6 +38,13 @@ namespace External {
             using servo_pa = periodic_dev::ProtocollAdapter;
             using terminal_device = void;
         };
+        template<typename Devs>
+        struct Ppm {
+            using devs = Devs;
+            using periodic_dev = Hott::Experimental::Sensor<typename Devs::servoPosition, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, Hott::TextMsg, typename Devs::systemTimer>;
+            using servo_pa = periodic_dev::ProtocollAdapter;
+            using terminal_device = void;
+        };
         
         template<typename> struct isSBus : std::false_type {};
         template<typename D> struct isSBus<SBusSPort<D>> : std::true_type {};
@@ -46,15 +54,19 @@ namespace External {
 
         template<typename> struct isSumD : std::false_type {};
         template<typename D> struct isSumD<SumDHott<D>> : std::true_type {};
+
+        template<typename> struct isPpm : std::false_type {};
+        template<typename D> struct isPpm<Ppm<D>> : std::true_type {};
     }
     
-    template<typename Devs, template<typename> typename App>
+    template<typename Devs, template<typename> typename App, typename Duplex = AVR::FullDuplex>
     struct Scanner {
         enum class State : uint8_t {Undefined, Init, 
-                                    InitSBus, InitSBusInv, InitIBus, InitSumD,
-                                    CheckSBus, CheckSBusInv, CheckIBus, CheckSumD, 
-                                    IsSBus, IsSBusInv, IsIBus, IsSumD};
+                                    InitSBus, InitSBusInv, InitIBus, InitSumD, InitPpm, 
+                                    CheckSBus, CheckSBusInv, CheckIBus, CheckSumD, CheckPpm,
+                                    IsSBus, IsSBusInv, IsIBus, IsSumD, IsPpm};
          
+        static_assert(std::is_same_v<Duplex, AVR::FullDuplex> || std::is_same_v<Duplex, AVR::HalfDuplex>);
         using devs = Devs;
         using systemTimer = devs::systemTimer;
     
@@ -66,12 +78,15 @@ namespace External {
         
         using sumd_pa = Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>;
         using sumd_test_dev = Usart<typename Devs::scanDevPosition, sumd_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
+
+        using ppm_test_dev = External::Ppm::SinglePpmIn<typename Devs::ppmDevPosition>;
+        using evrouter = Devs::evrouter;
         
         using term_dev = devs::scan_term_dev;
         using terminal = etl::basic_ostream<term_dev>;
 
-        using ledPin = std::conditional_t<std::is_same_v<typename Devs::scanLedPin, void>, AVR::NoPin, typename Devs::scanLedPin>;
-        using led = AVR::ActiveHigh<typename Devs::scanLedPin, AVR::Output>;
+        using led = std::conditional_t<std::is_same_v<typename Devs::scanLedPin, void>, AVR::NoPin, typename Devs::scanLedPin>;
+//        using led = AVR::ActiveHigh<typename Devs::scanLedPin, AVR::Output>;
         using blinker = External::Blinker2<led, systemTimer, 100_ms, 2000_ms>;
         
         static constexpr External::Tick<systemTimer> initTimeout{100_ms};
@@ -108,11 +123,19 @@ namespace External {
             case State::InitSumD:
             case State::CheckSumD:
                 sumd_test_dev::periodic();
+                break;
+            case State::InitPpm:
+            case State::CheckPpm:
+                if constexpr(!std::is_same_v<typename Devs::ppmDevPosition, void>) {
+                    ppm_test_dev::periodic();
+                }
+                break;
             case State::Init:
             case State::IsIBus:
             case State::IsSBus:
             case State::IsSBusInv:
             case State::IsSumD:
+            case State::IsPpm:
             case State::Undefined:
                 break;
             }                    
@@ -155,6 +178,16 @@ namespace External {
                     mState = State::CheckSumD;
                 });
                 break;
+            case State::InitPpm:
+                if constexpr(!std::is_same_v<typename Devs::ppmDevPosition, void>) {
+                    mStateTick.on(checkTimeout, []{
+                        mState = State::CheckPpm;
+                    });                    
+                }
+                else {
+                    mState = State::CheckPpm;
+                }
+                break;
             case State::CheckIBus:
                 ibus_pa::ratePeriodic();
                 if (ibus_pa::packages() >= minPackages) {
@@ -188,6 +221,19 @@ namespace External {
                     mState = State::IsSumD;
                 }
                 else {
+                    mState = State::InitPpm;
+                }
+                break;
+            case State::CheckPpm:
+                if constexpr(!std::is_same_v<typename Devs::ppmDevPosition, void>) {
+                    if (ppm_test_dev::counter() > 10) {
+                        mState = State::IsPpm;
+                    }
+                    else {
+                        mState = State::InitIBus;
+                    }
+                }
+                else {
                     mState = State::InitIBus;
                 }
                 break;
@@ -211,6 +257,11 @@ namespace External {
                 App<Bus::SumDHott<Devs>>::run();
                 mState = State::Init;
                 break;
+            case State::IsPpm:
+                blinker::off();
+                App<Bus::Ppm<Devs>>::run();
+                mState = State::Init;
+                break;
             }
             if (oldState != mState) {
                 mStateTick.reset();
@@ -225,28 +276,60 @@ namespace External {
                     etl::outl<terminal>("s: i "_pgm, GITTAG_PGM);
                     break;
                 case State::InitIBus:
-                    ibus_test_dev::template init<AVR::BaudRate<115200>>();
-                    sbus_test_dev::rxInvert(false);
+                    ibus_test_dev::template init<AVR::BaudRate<115200>, Duplex>();
+                    ibus_test_dev::txPinDisable();
+                    if constexpr(std::is_same_v<Duplex, AVR::FullDuplex>) {
+                        ibus_test_dev::rxInvert(false);
+                    }
+                    else {
+                        ibus_test_dev::txInvert(false);
+                    }
                     ibus_pa::resetStats();
                     etl::outl<terminal>("s: iib"_pgm);
                     break;
                 case State::InitSBus:
-                    sbus_test_dev::template init<AVR::BaudRate<100000>, AVR::FullDuplex, true, 1>();
-                    sbus_test_dev::rxInvert(false);
+                    sbus_test_dev::template init<AVR::BaudRate<100000>, Duplex, true, 1>();
+                    sbus_test_dev::txPinDisable();
+                    if constexpr(std::is_same_v<Duplex, AVR::FullDuplex>) {
+                        sbus_test_dev::rxInvert(false);
+                    }
+                    else {
+                        sbus_test_dev::txInvert(false);
+                    }
                     sbus_pa::resetStats();
                     etl::outl<terminal>("s: isb"_pgm);
                     break;
                 case State::InitSBusInv:
-                    sbus_test_dev::template init<AVR::BaudRate<100000>, AVR::FullDuplex, true, 1>();
-                    sbus_test_dev::rxInvert(true);
+                    sbus_test_dev::template init<AVR::BaudRate<100000>, Duplex, true, 1>();
+                    sbus_test_dev::txPinDisable();
+                    if constexpr(std::is_same_v<Duplex, AVR::FullDuplex>) {
+                        sbus_test_dev::rxInvert(true);
+                    }
+                    else {
+                        sbus_test_dev::txInvert(true);
+                    }
                     sbus_pa::resetStats();
                     etl::outl<terminal>("s: isbi"_pgm);
                     break;
                 case State::InitSumD:
-                    sumd_test_dev::template init<AVR::BaudRate<115200>>();
-                    sbus_test_dev::rxInvert(false);
+                    sumd_test_dev::template init<AVR::BaudRate<115200>, Duplex>();
+                    sumd_test_dev::txPinDisable();
+                    if constexpr(std::is_same_v<Duplex, AVR::FullDuplex>) {
+                        sumd_test_dev::rxInvert(false);
+                    }
+                    else {
+                        sumd_test_dev::txInvert(false);
+                    }
                     sumd_pa::resetStats();
                     etl::outl<terminal>("s: isd"_pgm);
+                    break;
+                case State::InitPpm:
+                    if constexpr(!std::is_same_v<typename Devs::ppmDevPosition, void>) {
+                        evrouter::init();
+                        ppm_test_dev::init();
+                        ppm_test_dev::reset();
+                    }
+                    etl::outl<terminal>("s: ippm"_pgm);
                     break;
                 case State::CheckIBus:
                     etl::outl<terminal>("s: cib"_pgm);
@@ -260,6 +343,9 @@ namespace External {
                 case State::CheckSumD:
                     etl::outl<terminal>("s: csd"_pgm);
                     break;
+                case State::CheckPpm:
+                    etl::outl<terminal>("s: cppm"_pgm);
+                    break;
                 case State::IsIBus:
                     etl::outl<terminal>("s: IB"_pgm);
                     break;
@@ -271,6 +357,9 @@ namespace External {
                     break;
                 case State::IsSumD:
                     etl::outl<terminal>("s: SD"_pgm);
+                    break;
+                case State::IsPpm:
+                    etl::outl<terminal>("s: SPpm"_pgm);
                     break;
                 }
             }        
