@@ -39,10 +39,15 @@ targets += a1t1u1r1g.hex
 targets += a2t1c1r1g.hex
 targets += b10c5.hex
 targets += b11c4.hex
+targets += b11c4uni.hex
 targets += ibus2multi.hex
 targets += servoswitch.hex
 targets += servo360.hex
 targets += sbus_test.hex
 targets += sport_test.hex
+targets += auto2multi.hex
 
 -include ../../Makefile.avr0.include
+
+#CC = /usr/local/bin/avr-gcc
+#CXX = /usr/local/bin/avr-g++

@@ -26,7 +26,13 @@
 #include <external/hott/experimental/sensor.h>
 #include <external/hott/experimental/adapter.h>
 #include <external/hott/menu.h>
-#include <external/ibus/ibus.h>
+#ifdef AUTO_BUS
+# include <external/ibus/ibus2.h>
+# include <external/solutions/rc/busscan.h>
+# include <external/solutions/rc/multi.h>
+#else
+# include <external/ibus/ibus.h>
+#endif
 #include <external/sbus/sbus.h>
 #include <external/sbus/sport.h>
 #include <external/units/music.h>
@@ -37,6 +43,7 @@
 #include <external/solutions/blinker.h>
 #include <external/solutions/series01/rpm.h>
 #include <external/solutions/series01/sppm_out.h>
+
 
 #include <std/chrono>
 #include <etl/output.h>
@@ -97,6 +104,9 @@ namespace Parameter {
 #ifdef USE_SBUS
     // SBUS-Frame: 3ms
     // SBUS Rate: 7ms
+    constexpr auto fRtc = 1000_Hz; // 1ms
+#endif
+#ifdef AUTO_BUS
     constexpr auto fRtc = 1000_Hz; // 1ms
 #endif
     constexpr uint16_t R1vd = 10'000;
@@ -284,5 +294,116 @@ namespace Storage {
         Address mAddress;
         std::array<std::array<value_type, NChannels>, NAdresses> AValues;
     };
+
+
+    template<typename Channel, typename AddressR>
+    struct ApplDataBus final : public EEProm::DataBase<ApplData<Channel, AddressR>> {
+//                Channel::_;
+        using Address = etl::uint_ranged_NaN<typename AddressR::value_type, AddressR::Lower, AddressR::Upper>;
+//        Address::_;
+        using value_type = SwitchConfig<Channel>;
+
+        Channel& passThru(const ChannelIndex& i) {
+            return AValues[i.address][i.channel].passThru();               
+        }
+        
+        value_type& sw(const ChannelIndex& i) {
+            return AValues[i.address][i.channel];    
+        }
+        uint8_t& magic() {
+            return mMagic;
+        }
+        void clear() {
+            for(auto& adr : AValues) {
+                for(auto& v : adr) {
+                    v = value_type{};
+                }
+            }
+            for(auto& v : mMpxModes) {
+                v = Mode::Graupner8K;
+            }
+            for(auto& v : mMpxOffsets) {
+                v = 200;
+            }
+            for(auto& v : mPulseOffsets) {
+                v = 200;
+            }
+        }
+        Channel& channel() {
+            return mChannel;
+        }
+        Address& address() {
+            return mAddress;
+        }
+
+        void pulseOffset(uint8_t addressOffset, uint8_t v) {
+            if (addressOffset < mMpxModes.size()) {
+#ifdef USE_SBUS
+                mPulseOffsets[addressOffset] = 40 * (v + 1); // 20 - 640
+#else
+                mPulseOffsets[addressOffset] = 20 * (v + 1); // 20 - 640
+#endif
+            }
+        }        
+        uint16_t pulseOffset(uint8_t addressOffset) {
+                return mPulseOffsets[addressOffset];
+        }
+        
+        void mpxOffset(uint8_t addressOffset, uint8_t v) {
+            if (addressOffset < mMpxModes.size()) {
+#ifdef USE_SBUS
+                mMpxOffsets[addressOffset] = 40 * (v + 1); // 20 - 640
+#else
+                mMpxOffsets[addressOffset] = 20 * (v + 1); // 20 - 640
+#endif
+            }
+        }
+        uint16_t mpxOffset(uint8_t addressOffset) {
+                return mMpxOffsets[addressOffset];
+        }
+
+        void mpxMode(uint8_t addressOffset, uint8_t v) {
+            if (addressOffset < mMpxModes.size()) {
+                if (v == 0) {
+                    mMpxModes[addressOffset] = Mode::Graupner8K;
+                }
+                else if (v == 1) {
+                    mMpxModes[addressOffset] = Mode::Graupner4K;
+                }
+                else if (v == 2) {
+                    mMpxModes[addressOffset] = Mode::Robbe;
+                }
+                else if (v == 3) {
+                    mMpxModes[addressOffset] = Mode::CP8;
+                }
+                else if (v == 4) {
+                    mMpxModes[addressOffset] = Mode::CP16;
+                }
+                else if (v == 5) {
+                    mMpxModes[addressOffset] = Mode::XXX;
+                }
+                else {
+                    mMpxModes[addressOffset] = Mode::Graupner8K;
+                }
+            }
+        }
+        Mode mpxMode(uint8_t addressOffset) {
+            if (addressOffset < mMpxModes.size()) {
+                return  mMpxModes[addressOffset];
+            }
+            return Mode::Graupner8K;
+        }
+    private:
+        std::array<Mode, NAdresses> mMpxModes {};
+        std::array<uint16_t, NAdresses> mMpxOffsets{};
+        std::array<uint16_t, NAdresses> mPulseOffsets{};
+        uint8_t mMagic;
+        Channel mChannel;
+        Address mAddress;
+        std::array<std::array<value_type, NChannels>, NAdresses> AValues;
+    };
+
+
+
 }
 
