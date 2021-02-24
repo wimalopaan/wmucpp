@@ -190,6 +190,8 @@ uint32_t sbusTime = 0;
                     mChannels[13] = (uint16_t) ((mData[17]>>7 | mData[18]<<1 |mData[19]<<9)  	 & 0x07FF);
                     mChannels[14] = (uint16_t) ((mData[19]>>2 | mData[20]<<6)                     & 0x07FF);
                     mChannels[15] = (uint16_t) ((mData[20]>>5 | mData[21]<<3)                     & 0x07FF);
+                    
+                    // todo: decode binary channel ch17,ch18,frame lost, failset,x,x,x,x in byte 22
                 }
 
                 using MesgType = std::array<uint8_t, 23>;

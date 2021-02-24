@@ -19,6 +19,7 @@
 //    5) dann einschalten bewirkt die PWM
 
 #define USE_PPM
+#define SBUS_IBUS_NO_WARN
 
 #include "board.h"
 #include "swout.h"

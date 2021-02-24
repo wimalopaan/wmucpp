@@ -81,12 +81,15 @@ namespace External {
             inline static constexpr int16_t sppmMaxExtended = ppmMaxExtended;
             
             using svalue_type = etl::int_ranged_NaN<int16_t, sppmMin - smedium, sppmMax - smedium>;
-            using extended_svalue_type = etl::int_ranged_NaN<int16_t, sppmMinExtended - smedium, sppmMaxExtended - smedium>;
+//            using extended_svalue_type = etl::int_ranged_NaN<int16_t, (sppmMinExtended - smedium), (sppmMaxExtended - smedium)>;
             
 //            std::integral_constant<decltype(ppmMax), ppmMax>::_;
 //            std::integral_constant<decltype(ppmMin), ppmMin>::_;
 //            std::integral_constant<decltype(ppmMaxExtended), ppmMaxExtended>::_;
 //            std::integral_constant<decltype(ppmMinExtended), ppmMinExtended>::_;
+
+//            std::integral_constant<decltype(sppmMaxExtended), (sppmMaxExtended - smedium)>::_;
+//            std::integral_constant<decltype(sppmMaxExtended), sppmMinExtended - smedium>::_;
             
             inline static void init() {
                 mcu_tcb()->ctrlb.template set<ctrlb_t::mode_pw>();
@@ -100,7 +103,7 @@ namespace External {
             
             inline static void periodic() {
                 onCapture([]{
-                    auto v = *mcu_tcb()->ccmp;
+                    const auto v = *mcu_tcb()->ccmp;
                     if ((v >= ppmMinExtended) && (v <ppmMaxExtended)) {
                         ++mCounter;
                         mValue = std::clamp(v, ppmMin, ppmMax);
@@ -113,19 +116,18 @@ namespace External {
             }
             
             inline static value_type value() {
-                auto v = *mcu_tcb()->ccmp;
+                const auto v = *mcu_tcb()->ccmp;
                 if ((v >= ppmMinExtended) && (v <ppmMaxExtended)) {
-                    v = std::clamp(v, ppmMin, ppmMax);
-                    return {v};
+                    return {std::clamp(v, ppmMin, ppmMax)};
                 }
-                return value_type{};
+                return {};
             }
             inline static svalue_type svalue() {
-                return svalue_type(value().toInt() - smedium);
+                return svalue_type{value().toInt() - smedium};
             }
 
             inline static extended_value_type extended() {
-                auto v = *mcu_tcb()->ccmp;
+                const auto v = *mcu_tcb()->ccmp;
                 if ((v >= ppmMinExtended) && (v <ppmMaxExtended)) {
                     return {v};
                 }
@@ -140,7 +142,7 @@ namespace External {
                 mValue.setNaN();
             }
         private:
-            static inline value_type mValue;
+            static inline value_type mValue{};
             static inline etl::uint_ranged<uint16_t> mCounter{};
         };
     }

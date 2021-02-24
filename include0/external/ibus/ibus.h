@@ -23,7 +23,9 @@
 #if defined(USE_SBUS) || defined(USE_IBUS)
 //# warning "old protocoll implementation" 
 #else
-# warning " use one or the other"
+# ifndef SBUS_IBUS_NO_WARN
+#  warning "use one or the other"
+# endif 
 #endif
 
 namespace IBus {

@@ -1,5 +1,7 @@
 #define NDEBUG
 
+#define SBUS_IBUS_NO_WARN
+
 #include <mcu/avr.h>
 
 #include <mcu/internals/ccp.h>

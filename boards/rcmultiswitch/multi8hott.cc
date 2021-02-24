@@ -4,6 +4,7 @@
 #define NDEBUG
 
 #define USE_HOTT
+#define SBUS_IBUS_NO_WARN
 
 #include "board.h"
 #include "swout.h"
