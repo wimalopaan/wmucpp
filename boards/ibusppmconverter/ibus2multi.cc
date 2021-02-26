@@ -4,8 +4,8 @@
 
 #define INV_LED // onboad LED inverted
 
-//#define USE_SBUS
-#define USE_IBUS
+#define USE_SBUS
+//#define USE_IBUS
 
 #define LEARN_DOWN // start at highest channel number downwards
 
@@ -496,7 +496,7 @@ int main() {
     servo::init<AVR::BaudRate<100000>, HalfDuplex, true, 1>(); // 8E2
     servo::txEnable<false>();
     // maybe invert the tx pin as rx
-//    servo::txInvertHalfDuplex<true>();
+//    servo::txInvert(true);
 #endif
     
     gfsm::init();

@@ -277,6 +277,7 @@ boards/ibusppmconverter/a3t2r.cc
 boards/ibusppmconverter/a4t.cc
 boards/ibusppmconverter/a4uni.cc
 boards/ibusppmconverter/auto2multi.cc
+boards/ibusppmconverter/autoSchottel.cc
 boards/ibusppmconverter/b10c5.cc
 boards/ibusppmconverter/b11c4.cc
 boards/ibusppmconverter/b11c4uni.cc
@@ -380,6 +381,7 @@ boards/rcquadc/avr128da32_01.cc
 boards/rcquadc/avr128da32_02.cc
 boards/rcquadc/avr128da32_04.cc
 boards/rcquadc/doc/Makefile
+boards/rcquadc/doc/details.adoc
 boards/rcquadc/doc/rcquad.adoc
 boards/rcquadc/eeprom.cc
 boards/rcquadc/eeprom2.cc

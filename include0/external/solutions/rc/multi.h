@@ -10,6 +10,7 @@ namespace RCSwitch {
         using value_t = PA::value_type;
         
         using protocol_t = BusParam::proto_type;
+//        protocol_t::_;
         
         using addr_t = RCSwitch::addr_t;
         using index_t = RCSwitch::index_t;

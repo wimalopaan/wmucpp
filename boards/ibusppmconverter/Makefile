@@ -46,6 +46,7 @@ targets += servo360.hex
 targets += sbus_test.hex
 targets += sport_test.hex
 targets += auto2multi.hex
+targets += autoSchottel.hex
 
 -include ../../Makefile.avr0.include
 

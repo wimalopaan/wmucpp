@@ -147,6 +147,23 @@ namespace External {
                     }
                 }
             }
+            template<typename T, auto L, auto U>
+            static inline void ppm(index_type ch, etl::uint_ranged<T, L, U> raw) {
+                T v1 = raw.toInt() - L;
+                constexpr uint64_t denom = U - L;
+                constexpr uint64_t nom = ranged_type::Upper - ranged_type::Lower;
+                if constexpr(nom < denom) {
+                    uint16_t ocr = etl::Rational::RationalDivider<uint16_t, nom, denom>::scale(v1) + ranged_type::Lower;
+                    uint16_t v = clamp(ocr, ocMin, ocMax);
+                    duty(ch, v);
+                }
+                else {
+                    static_assert( (((10 * nom) / denom) * 255) <= std::numeric_limits<uint16_t>::max());
+                    uint16_t ocr = ((v1 * ((10 * nom) / denom)) / 10) + ranged_type::Lower;
+                    uint16_t v = clamp(ocr, ocMin, ocMax);
+                    duty(ch, v);
+                }
+            }
         private:
             inline static constexpr void duty(const index_type ch, const uint16_t d) {
                 if (ch == 0) {

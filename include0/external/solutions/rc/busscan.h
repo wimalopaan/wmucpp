@@ -71,13 +71,13 @@ namespace External {
         using systemTimer = devs::systemTimer;
     
         using ibus_pa = IBus2::Servo::ProtocollAdapter<0>;
-        using ibus_test_dev = Usart<typename Devs::scanDevPosition, ibus_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
+        using ibus_test_dev = Usart<typename Devs::scanDevPosition, ibus_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<0>>;
         
         using sbus_pa = External::SBus::Servo::ProtocollAdapter<0, systemTimer>;
-        using sbus_test_dev = Usart<typename Devs::scanDevPosition, sbus_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
+        using sbus_test_dev = Usart<typename Devs::scanDevPosition, sbus_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<0>>;
         
         using sumd_pa = Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>;
-        using sumd_test_dev = Usart<typename Devs::scanDevPosition, sumd_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
+        using sumd_test_dev = Usart<typename Devs::scanDevPosition, sumd_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<0>>;
 
         using ppm_test_dev = External::Ppm::SinglePpmIn<typename Devs::ppmDevPosition>;
         using evrouter = Devs::evrouter;

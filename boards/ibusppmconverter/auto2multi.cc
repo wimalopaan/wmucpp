@@ -24,7 +24,7 @@ struct GFSM<Devs, Meta::List<Fsms...>> {
     
     using ch_t = servo_pa::channel_t;
     
-    enum class State : uint8_t {Undefined, ShowBus, StartWait, SearchChannel, AfterSearch, InitRun, Run, 
+    enum class State : uint8_t {Undefined, StartShowBus, ShowBus, StartWait, SearchChannel, AfterSearch, InitRun, Run, 
                                 ShowAddress, ShowAddressWait, LearnTimeout,
                                 Test1};
     
@@ -101,6 +101,7 @@ struct GFSM<Devs, Meta::List<Fsms...>> {
             (Fsms::periodic(), ...);
             break;
         case State::Undefined:
+        case State::StartShowBus:
         case State::ShowBus:
         case State::StartWait:
         case State::SearchChannel:
@@ -127,7 +128,12 @@ struct GFSM<Devs, Meta::List<Fsms...>> {
 
         switch(mState) {
         case State::Undefined:
-            mState = State::ShowBus;
+            mState = State::StartShowBus;
+            break;
+        case State::StartShowBus:
+            stateTicks.on(signalTimeoutTicks, []{
+                mState = State::ShowBus;
+            });
             break;
         case State::ShowBus:
             stateTicks.on(waitTimeoutTicks, []{
@@ -203,11 +209,14 @@ struct GFSM<Devs, Meta::List<Fsms...>> {
                 break;
             case State::Undefined:
                 break;
+            case State::StartShowBus:
+                blinker::off();
+                break;
             case State::ShowBus:
                 if constexpr(External::Bus::isIBus<bus_type>::value) {
                     blinker::blink(1);
                 }
-                if constexpr(External::Bus::isSBus<bus_type>::value) {
+                else if constexpr(External::Bus::isSBus<bus_type>::value) {
                     blinker::blink(2);
                 }
                 break;
@@ -463,70 +472,6 @@ private:
     static inline std::array<SwState, Size> swStates;
 };
 
-#if 0
-int main() {
-    evrouter::init();
-    portmux::init();
-    systemTimer::init();
-    
-#ifdef USE_IBUS
-# ifndef DEBUG2
-    servo::init<AVR::BaudRate<115200>, HalfDuplex>();
-    servo::txEnable<false>();
-# else
-    servo::init<AVR::BaudRate<115200>>();
-# endif
-#endif
-#ifdef USE_SBUS
-    servo::init<AVR::BaudRate<100000>, HalfDuplex, true, 1>(); // 8E2
-    servo::txEnable<false>();
-    // maybe invert the tx pin as rx
-    //    servo::txInvertHalfDuplex<true>();
-#endif
-    
-    gfsm::init();
-    
-    ibus_switch::init();
-    
-    eeprom::init();
-    
-    if (appData.magic() != 42) {
-        appData.clear();
-        appData.magic() = 42;
-        appData.change();
-    }
-    
-    const auto eepromTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
-    
-    while(true) {
-        eeprom::saveIfNeeded([&]{});
-        servo::periodic();
-        
-        gfsm::periodic();
-        
-        systemTimer::periodic([&]{
-            wdt::reset();
-            gfsm::ratePeriodic();
-            
-            alarmTimer::periodic([&](const auto& t){
-                if (eepromTimer == t) {
-                    //                    etl::outl<terminal>(" x0: "_pgm, (uint8_t)appData.mpxMode(0), " x1: "_pgm, (uint8_t)appData.mpxMode(1), " x2: "_pgm, (uint8_t)appData.mpxMode(2));
-                    //                    etl::outl<terminal>(" p00: "_pgm, appData.passThru({Storage::ChannelIndex::addr_type{0}, Storage::ChannelIndex::channel_type{0}}).toInt(), " p01: "_pgm, appData.passThru({Storage::ChannelIndex::addr_type{0}, Storage::ChannelIndex::channel_type{1}}).toInt());
-                    //                    etl::outl<terminal>(" s00: "_pgm, (uint8_t)fsm1::switches()[0], " s01: "_pgm, (uint8_t)fsm1::switches()[1]);
-//                    etl::out<terminal>("sw: [ "_pgm);
-//                    for(const auto& l : fsm1::switches()) {
-//                        etl::out<terminal>(uint8_t(l), " "_pgm);
-//                    }
-//                    etl::out<terminal>("] "_pgm);
-//                    etl::outl<terminal>("off: "_pgm, appData.mpxOffset(0));            
-                    appData.expire();
-                }
-            });
-        });
-    }
-}
-#endif
-
 template<typename HWRev = void, typename MCU = DefaultMcuType>
 struct Devices {
     using ccp = Cpu::Ccp<>;
@@ -603,8 +548,6 @@ struct BusDevs<External::Bus::IBusIBus<Devs>> {
     struct BusParam {
         using bus_t = bus_type;
         using proto_type = RCSwitch::Protocol2<RCSwitch::High>;
-        //        inline static constexpr auto ibus_type = IBus::Type::type::FLIGHT_MODE;
-        inline static constexpr auto stateProviderId = IBus2::Type::type::FLIGHT_MODE;
     };
     
     using systemTimer = Devs::systemTimer;
@@ -660,9 +603,7 @@ struct BusDevs<External::Bus::SBusSPort<Devs>> {
     
     struct BusParam {
         using bus_t = bus_type;
-        using proto_type = RCSwitch::Protocol2<RCSwitch::High>;
-        //        inline static constexpr auto ibus_type = IBus::Type::type::FLIGHT_MODE;
-        inline static constexpr auto stateProviderId = IBus2::Type::type::FLIGHT_MODE;
+        using proto_type = RCSwitch::Protocol2<RCSwitch::Low>;
     };
     
     using systemTimer = Devs::systemTimer;

@@ -408,5 +408,25 @@ namespace Storage {
         Address mAddress;
         std::array<std::array<value_type, NChannels>, NAdresses> AValues;
     };
+
+    template<typename Channel, typename Bus>
+    struct ApplDataSchottel final : public EEProm::DataBase<ApplDataSchottel<Channel, Bus>> {
+        static_assert(External::Bus::isSBus<Bus>::value || External::Bus::isIBus<Bus>::value);
+//        Channel::_;
+
+        uint8_t& magic() {
+            return mMagic;
+        }
+        void clear() {
+            mChannel = Channel{};
+        }
+        
+        Channel& channel() {
+            return mChannel;
+        }
+    private:
+        uint8_t mMagic{0};
+        Channel mChannel;
+    };
 }
 
