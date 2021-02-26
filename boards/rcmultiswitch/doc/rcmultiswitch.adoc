@@ -448,7 +448,7 @@ der Widgets beinflussen.
 --
 
 Es muss dazu _eine_ Kurve nach dem Muster <<curve1>> erstellt werden. Diese Kurve kann für beide Richtungen (positive und negative Richtung) jeder Achse 
-des Joysticks verwendet werden. Die _Spiegelung_ der Kurve geschieht durch eine _Negation_ (das _Ausrufezeichen `!` in der Input-Konfiguration). Getrue nach der Regel, dass
+des Joysticks verwendet werden. Die _Spiegelung_ der Kurve geschieht durch eine _Negation_ (das _Ausrufezeichen_ `!` in der Input-Konfiguration). Getreu nach der Regel, dass
 _Unzulänglichkeiten_ der Geber in der Input-Konfiguration _korrigiert_ werden, geschieht dies durch _vier_ Input-Definitionen aus den 
 zwei Gebern `Jsx` und `Jsy` für die Navigation `rechts`, `links`, `oben` und `unten`.
 
@@ -757,6 +757,19 @@ Menu _ausgwählt_ ist (etwa durch `6pos`).
 == Einbau 
 
 === IBus oder SBus
+
+==== Ab Firmware `V21`
+
+Ab dieser _Firmware_-Version werden die Module auf eine _automatische_ Erkennung des Bus-Systems (`IBus`, `SBus`, `SBus` (invertiert) ) umgestellt. Auch 
+ein _Inverter_ bei `Sbus` (s.a. <<inverter>>) _entfällt_.
+
+[options="header"]
+|====
+| Version | Modul mit _Bus_-Erkennung
+| >= V21   | `RC-MultiAdapter-DA`
+|====
+
+==== Bevor Firmware `V21` 
 
 Die Module sind fest programmiert für `IBus` oder `SBus`-Eingangssignale. 
 

@@ -1,6 +1,6 @@
 == Software für OpenTX für den Betrieb von `{mName}`
 
-Für den Betrieb und zur Konfiguration des `{mName}` sind einige Scripte und Konfigurationsdatein notwendig.
+Für den Betrieb und zur Konfiguration des `{mName}` sind einige Scripte und Konfigurationsdateien notwendig.
 Diese findet man in der aktuellesten Version jeweils auf https://github.com/wimalopaan/OpenTxSwitch[GitHub].
 
 .Lizenz der Software, des Übertragungsverfahrens und der Dokumentation
