@@ -55,6 +55,7 @@ namespace etl {
     public:
         inline static constexpr T Lower = LowerBound;
         inline static constexpr T Upper = UpperBound;
+        inline static constexpr T Mid = (UpperBound + LowerBound) / 2;
         using value_type = T;
      
         inline static constexpr uint_ranged upper() {
@@ -62,6 +63,9 @@ namespace etl {
         }
         inline static constexpr uint_ranged lower() {
             return uint_ranged{Lower};
+        }
+        inline static constexpr uint_ranged mid() {
+            return uint_ranged{Mid};
         }
         
         inline constexpr uint_ranged() = default; // LowerBound
@@ -245,6 +249,8 @@ namespace etl {
         static_assert(Upper != NaN);
         
         using value_type = T;
+        
+        using ranged_type = uint_ranged<T, LowerBound, UpperBound>;
         
         inline constexpr uint_ranged_NaN() = default;
         

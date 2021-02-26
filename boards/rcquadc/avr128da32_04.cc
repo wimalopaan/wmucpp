@@ -366,6 +366,11 @@ struct ChannelFsm {
             mChanged = false;   
             return (mValue>= State::SettingsBegin) && (mValue <= State::SettingsEnd);
         }
+        
+        [[nodiscard]] static inline bool resetted() {
+            mChanged = false;   
+            return mValue == State::Reset;
+        }
         static inline void error(const bool b) {
             if (mError != b) {
                 mError = b;
@@ -420,7 +425,7 @@ struct ChannelFsm {
     inline static constexpr data_index_t data_index{N};
     
     enum class State : uint8_t {Init = 0, 
-                                Off = 1, OffWait, 
+                                Off = 1, OffWait, Reset,
                                 Forward = 10, Backward, ForwardWait, BackwardWait, 
                                 SettingsBegin = 20, SetForwardPwm = SettingsBegin, SetBackwardPwm, SetParameter, SetParameterWait,  
                                 SettingsEnd = SetParameterWait, 
@@ -431,7 +436,7 @@ struct ChannelFsm {
     enum class Event : uint8_t {None, Stop, 
                                 Forward, Backward, 
                                 SetFowardPwm, SetBackwardPwm, 
-                                SetParameter,
+                                SetParameter, Reset
                                };
     
     using stateP = StateProvider<stateProviderId, State>;
@@ -525,6 +530,7 @@ public:
         data() = data_t{};
         stateP::error(false);
         change();
+        mEvent = Event::Reset;
     }
     
     inline static void setRamp(const pvalue_t v) {
@@ -677,6 +683,9 @@ public:
             else if (e == Event::SetParameter) {
                 mState = State::SetParameter;
             }
+            else if (e == Event::Reset) {
+                mState = State::Reset;
+            }
             break;
         case State::SetForwardPwm:
             if (e != Event::None) {
@@ -726,6 +735,20 @@ public:
                 if (e != Event::SetBackwardPwm) {
                     mState = State::OffWait;
                 }
+            }
+            break;
+        case State::Reset:
+            if (e != Event::None) {
+                if (e == Event::Reset) {
+                }
+                else {
+                    mState = State::OffWait;                
+                }
+            }
+            else {
+                mStateTick.on(setPwmTimeout, []{
+                    mState = State::SetParameterWait;
+                });
             }
             break;
         case State::SetParameter:
@@ -991,6 +1014,10 @@ public:
                 break;
             case State::ForwardPwmSetPause:
                 etl::outl<Term>("S sfp"_pgm);
+                off();
+                break;
+            case State::Reset:
+                etl::outl<Term>("S reset"_pgm);
                 off();
                 break;
             case State::SetParameter:
@@ -1332,6 +1359,9 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
                                               }
                                               else if ((C::stateP::changingParameters())) {
                                                   blinker::blink(bl_count_t{4});
+                                              }
+                                              else if ((C::stateP::resetted())) {
+                                                  blinker::blink(bl_count_t{6});
                                               }
                                               else {
                                                   blinker::off();
