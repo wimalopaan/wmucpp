@@ -1,4 +1,6 @@
-//#define NDEBUG
+#define NDEBUG
+
+#define USE_IBUS
 
 #include <mcu/avr.h>
 #include <mcu/common/delay.h>
@@ -21,7 +23,13 @@
 #include <external/bluetooth/qtrobo.h>
 #include <external/sbus/sbus.h>
 #include <external/sbus/sport.h>
-#include <external/ibus/ibus.h>
+#include <external/ibus/ibus2.h>
+#include <external/solutions/rc/busscan.h>
+
+#include <external/hott/sumdprotocolladapter.h>
+#include <external/hott/experimental/sensor.h>
+#include <external/hott/experimental/adapter.h>
+#include <external/hott/menu.h>
 
 #include <external/solutions/button.h>
 #include <external/solutions/blinker.h>
@@ -164,252 +172,137 @@ private:
     
 };
 
-template<typename Timer, typename Term, typename SW, AVR::Concepts::Pin Led>
-struct GFSM {
-    using terminal = Term;
-    using terminal_device = typename Term::device_type;
-    using pca = Pca;
-    using spi = pca::spi;
 
-    using led = AVR::ActiveHigh<Led>;
-    using blinker = External::Blinker2<led, Timer, 100_ms, 2000_ms>;
-    
-    static constexpr External::Tick<Timer> startupTicks{100_ms};
-    static constexpr External::Tick<Timer> debugTicks{500_ms};
 
-    enum class State : uint8_t {Undefined, 
-                                Init, Run,
-                                StartWait, SearchChannel, AfterSearch, 
-                                ShowAddress, ShowAddressWait, LearnTimeout,
-                               };
+template<typename BusSystem>
+struct GlobalFSM {
+    inline static void init(const bool) {
+        
+    }
+    inline static void periodic() {
+        
+    }
+    inline static void ratePeriodic() {
+        
+    }
+};
+
+template<typename HWRev = void, typename MCU = DefaultMcuType>
+struct Devices {
+    using ccp = Cpu::Ccp<>;
+    using clock = Clock<>;
+    using sigrow = SigRow<>;
     
+    using iref1Pin = Pin<Port<A>, 6>;
+    using iref2Pin = Pin<Port<A>, 7>;
+    
+    using csPin = Pin<Port<B>, 0>;
+    using oePin = Pin<Port<B>, 1>;
+    
+    using ledPin = Pin<Port<A>, 4>;
+    
+    using systemTimer = SystemTimer<Component::Rtc<0>, fRtc>;
+    
+    using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Default>; 
+
+    using scanDevPosition = usart0Position;
+    using ppmDevPosition = void;
+    using evrouter = void;
+    using scan_term_dev = Usart<usart0Position, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<1>, AVR::SendQueueLength<32>>;
+    using scanLedPin = AVR::ActiveLow<ledPin, Output>;
+    
+    using spiPosition = Portmux::Position<Component::Spi<0>, Portmux::Default>;
+
+    template<typename Command>
+    using spi = AVR::SpiSS<spiPosition, Command, AVR::QueueLength<16>, csPin>;
+    
+    using portmux = Portmux::StaticMapper<Meta::List<usart0Position, spiPosition>>;
+    
+    using pca9745 = PCA9745<spi, oePin, iref1Pin, iref2Pin>;
+
     static inline void init() {
-        terminal_device::template init<AVR::BaudRate<115200>>();
-        pca::init();        
-        blinker::init();    
-    }    
-    
-    static inline void periodic() {
-        terminal_device::periodic();
-        pca::periodic();        
-    }    
-    static inline void ratePeriodic() {
-        blinker::ratePeriodic();
-        const auto oldState = mState;
-        ++mStateTicks;
-        switch(mState) {
-        case State::Undefined:
-            mState = State::StartWait;
-            blinker::steady();
-            break;
-        case State::StartWait:
-            mStateTick.on(waitTimeoutTicks, []{
-                blinker::off();
-                mState = State::SearchChannel;
-            });
-            break;
-        case State::SearchChannel:
-            if (search()) {
-                mState = State::AfterSearch;
-            }
-            mStateTick.on(learnTimeoutTicks, []{
-                mState = State::LearnTimeout;
-            });
-            break;
-        case State::AfterSearch:
-            mStateTick.on(signalTimeoutTicks, []{
-                mState = State::ShowAddress;
-            });
-            break;
-        case State::LearnTimeout:
-            etl::outl<Term>("timeout ch: "_pgm, NVM::data().channel().toInt(), " adr: "_pgm, NVM::data().address().toInt());
-            if (NVM::data().channel() && NVM::data().address()) {
-                SW::channel(NVM::data().channel());
-                SW::address(typename SW::addr_t{NVM::data().address().toInt()});
-            }
-            mState = State::InitRun;
-            break;
-        case State::ShowAddress:
-            etl::outl<Term>("learned ch: "_pgm, NVM::data().channel().toInt(), " adr: "_pgm, NVM::data().address().toInt());
-            blinker::onePeriod(bl_count_t(data().address().toInt() + 1));
-            mState = State::ShowAddressWait;
-            break;
-        case State::ShowAddressWait:
-            if (!blinker::isActive()) {
-                mState = State::InitRun;
-            }
-            break;
-        case State::Undefined:
-            mStateTicks.on(startupTicks, []{
-               mState = State::Init; 
-            });
-            break;
-        case State::Init:
-            mStateTicks.on(startupTicks, []{
-               mState = State::Run; 
-            });
-            break;
-        case State::Run:
-            mStateTicks.on(debugTicks, debug);
-            break;
-        }
-        if (oldState != mState) {
-            mStateTicks.reset();
-            switch(mState) {
-            case State::Undefined:
-                break;
-            case State::Init:
-                etl::outl<terminal>("Init"_pgm);
-                break;
-            case State::Run:
-                etl::outl<terminal>("Run"_pgm);
-                break;
-            }
-        }
-        
+        using portmux = Portmux::StaticMapper<Meta::List<usart0Position, spiPosition>>; 
+        portmux::init();
+        ccp::unlock([]{
+            clock::template prescale<1>();
+        });
+        systemTimer::init(); 
     }
-private:
-    inline static void debug() {
-        etl::outl<terminal>("c: "_pgm, ++mCounter, " sc: "_pgm, spi::count());
-        if (mCounter & 0x01) {
-            pca::template out<true>(0);
-        }
-        else {
-            pca::template out<false>(0);
-        }
-    }
-    static inline uint16_t mCounter{};
-
-    
-    using addr_t = typename protocol_t::addr_t;
-    
-    static inline bool search() {
-        if (learnChannel < 16) {
-            if (const auto lc = protocoll_adapter_t::valueMapped(learnChannel.toRangedNaN()); lc && SW::isLearnCode(lc)) {
-                etl::outl<Term>("ch: "_pgm, learnChannel.toInt(), " : "_pgm, lc.toInt());
-                if (const auto pv = protocol_t::toParameterValue(lc).toInt(); (pv >= 1) && ((pv - 1) <= SW::protocol_t::addr_t::Upper)) {
-                    const uint8_t addr = pv - 1;
-                    SW::channel(learnChannel.toRangedNaN());
-                    SW::address(addr_t(addr));
-                    NVM::data().channel() = learnChannel;
-                    NVM::data().address() = addr;
-                    NVM::data().change();
-                    return true;
-                }
-            }   
-        }
-#ifdef LEARN_DOWN
-        --learnChannel;
-#else
-        ++learnChannel;
-#endif
-        return false;
-    }
-#ifdef LEARN_DOWN
-    static inline etl::uint_ranged_circular<uint8_t, ch_t::Lower, ch_t::Upper> learnChannel{ch_t::Upper};
-#else
-    static inline etl::uint_ranged_circular<uint8_t, ch_t::Lower, ch_t::Upper> learnChannel{0};
-#endif
-    static inline External::Tick<Timer> mStateTick;
-    static inline External::Tick<Timer> mEepromTick;
-    static inline External::Tick<Timer> mStateTicks;
-    static inline State mState{State::Undefined};
 };
 
-template<auto N = 8>
-struct SwitchStates {
-    enum class SwState : uint8_t {Off, Blink1, Steady, Blink2, PassThru};
+template<typename Bus>
+struct BusDevs;
+
+template<typename Devs>
+struct BusDevs<External::Bus::IBusIBus<Devs>> {
+    using bus_type = External::Bus::IBusIBus<Devs>;
+
+    struct BusParam {
+        using bus_t = bus_type;
+        using proto_type = RCSwitch::Protocol2<RCSwitch::High>;
+        inline static constexpr auto stateProviderId = IBus2::Type::type::FLIGHT_MODE;
+    };
     
-    static constexpr void init() {
-    }
-    static constexpr uint8_t size() {
-        return N;
-    }
-    static inline auto& switches() {
-        return swStates;
-    }
-    static inline void testMode(const auto& v) {
-//        decltype(v)::_;
-        if (const auto vv = v.toInt(); vv == 0) {
-            std::fill(std::begin(swStates), std::end(swStates), SwState::Off);
+    using systemTimer = Devs::systemTimer;
+    
+    using terminal = etl::basic_ostream<void>;
+};
+
+template<typename Devs>
+struct BusDevs<External::Bus::SBusSPort<Devs>> {
+    using bus_type = External::Bus::SBusSPort<Devs>;
+
+    struct BusParam {
+        using bus_t = bus_type;
+        using proto_type = RCSwitch::Protocol2<RCSwitch::High>;
+        inline static constexpr auto stateProviderId = IBus2::Type::type::FLIGHT_MODE;
+    };
+    
+    using systemTimer = Devs::systemTimer;
+
+    using terminal = etl::basic_ostream<void>;
+};
+
+template<typename BusSystem, typename MCU = DefaultMcuType>
+struct Application {
+    using devs = BusDevs<BusSystem>;
+
+    inline static void run(const bool inverted = false) {
+        if constexpr(External::Bus::isIBus<BusSystem>::value || External::Bus::isSBus<BusSystem>::value) {
+            using terminal = devs::terminal;
+            using systemTimer = devs::systemTimer;
+            using gfsm = GlobalFSM<devs>;
+            
+            gfsm::init(inverted);
+            etl::outl<terminal>("test10"_pgm);
+            while(true) {
+                gfsm::periodic(); 
+                systemTimer::periodic([&]{
+                    gfsm::ratePeriodic();
+                });
+            }
         }
-        else if ((vv >= 1) && (vv <= 8)) {
-            std::fill(std::begin(swStates), std::end(swStates), SwState::Off);
-            swStates[vv - 1] = SwState::Steady;
-        }
-        else {
-            std::fill(std::begin(swStates), std::end(swStates), SwState::Steady);
-        }
-        
     }
-private:
-    static inline std::array<SwState, N> swStates{};
 };
 
 
-using ccp = Cpu::Ccp<>;
-using clock = Clock<>;
-using sigrow = SigRow<>;
-
-using iref1Pin = Pin<Port<A>, 6>;
-using iref2Pin = Pin<Port<A>, 7>;
-
-using csPin = Pin<Port<B>, 0>;
-using oePin = Pin<Port<B>, 1>;
-
-using ledPin = Pin<Port<A>, 4>;
-
-using systemTimer = SystemTimer<Component::Rtc<0>, fRtc>;
-
-using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Default>; 
-
-using servo_pa = IBus::Servo::ProtocollAdapter<0>;
-
-using terminal_device = Usart<usart0Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
-using terminal = etl::basic_ostream<terminal_device>;
-
-using spiPosition = Portmux::Position<Component::Spi<0>, Portmux::Default>;
-
-template<typename Command>
-using spi = AVR::SpiSS<spiPosition, Command, AVR::QueueLength<16>, csPin>;
-
-using portmux = Portmux::StaticMapper<Meta::List<usart0Position, spiPosition>>;
-
-using pca9745 = PCA9745<spi, oePin, iref1Pin, iref2Pin>;
-
-using sw = SwitchStates<>;
-using ibus_switch = IBus::Switch::Digital<servo_pa, sw, void>;
-
-using gfsm = GFSM<systemTimer, terminal, ibus_switch, ledPin>;
+using devices = Devices<>;
+using scanner = External::Scanner<devices, Application>;
 
 int main() {
-    portmux::init();
-    ccp::unlock([]{
-        clock::prescale<1>();
-    });
-    systemTimer::init();
-
-    gfsm::init();
-    
-    etl::outl<terminal>("test10"_pgm);
-    while(true) {
-        gfsm::periodic();
-        systemTimer::periodic([&]{
-            gfsm::ratePeriodic();
-        });
-    }
+    scanner::run();
 }
 
 #ifndef NDEBUG
-[[noreturn]] inline void assertOutput(const AVR::Pgm::StringView& expr [[maybe_unused]], const AVR::Pgm::StringView& file[[maybe_unused]], unsigned int line [[maybe_unused]]) noexcept {
-    etl::outl<terminal>("Assertion failed: "_pgm, expr, etl::Char{','}, file, etl::Char{','}, line);
+[[noreturn]] inline void assertOutput(const AVR::Pgm::StringView& expr [[maybe_unused]], const AVR::Pgm::StringView& file[[maybe_unused]], const unsigned int line [[maybe_unused]]) noexcept {
+//    etl::outl<terminal>("Assertion failed: "_pgm, expr, etl::Char{','}, file, etl::Char{','}, line);
     while(true) {
 //        assertPin::toggle();
     }
 }
 
 template<typename String1, typename String2>
-[[noreturn]] inline void assertFunction(const String1& s1, const String2& s2, unsigned int l) {
+[[noreturn]] inline void assertFunction(const String1& s1, const String2& s2, const unsigned int l) {
     assertOutput(s1, s2, l);
 }
 #endif

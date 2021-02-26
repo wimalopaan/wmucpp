@@ -18,8 +18,9 @@ targets += test10.hex
 targets += test11.hex
 targets += test12.hex
 targets += test20.hex
+targets += test21.hex
 
 -include ../../../Makefile.avr0.include
 
-CC = /usr/local/bin/avr-gcc
-CXX = /usr/local/bin/avr-g++
+#CC = /usr/local/bin/avr-gcc
+#CXX = /usr/local/bin/avr-g++
