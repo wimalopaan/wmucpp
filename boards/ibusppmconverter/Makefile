@@ -23,7 +23,7 @@
 MCU = attiny1614
 F_OSC = 20000000
 
-subdirs =
+subdirs = doc
 
 #targets += test00.elf test00.hex
 
