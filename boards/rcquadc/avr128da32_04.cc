@@ -1582,7 +1582,7 @@ struct Devices {
     using JP1Pin  = Pin<Port<A>, 5>; 
       
     using led2Pin  = Pin<Port<F>, 4>; 
-    using scanLedPin = AVR::ActiveLow<led2Pin, Output>;
+    using scanLedPin = AVR::ActiveHigh<led2Pin, Output>;
     
     using led1Pin  = Pin<Port<D>, 3>; 
     using assertPin = led1Pin;
