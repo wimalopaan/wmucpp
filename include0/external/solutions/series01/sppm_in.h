@@ -27,12 +27,19 @@ namespace External {
                 static inline void resetStats() {
                     SPpmIn::reset();    
                 }
+                static inline void ratePeriodic() {}
                 
             };  
             using protocoll_adapter_type = Protocoll_Adapter;
             
             inline static void periodic() {
                 SPpmIn::periodic();
+            }
+
+            static inline void put(std::byte) {}
+            
+            static inline std::byte get() {
+                return std::byte{};
             }
         };
         

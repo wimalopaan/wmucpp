@@ -47,7 +47,7 @@ using namespace AVR;
 using namespace std::literals::chrono;
 using namespace External::Units::literals;
 
-template<typename BusSystem, typename Timer, typename ServoUart>
+template<typename BusSystem, typename Timer>
 struct GlobalFSM {
     inline static void init() {
         
@@ -100,22 +100,23 @@ struct Devices {
         });
         systemTimer::init(); 
     }
+    static inline void periodic() {}
 };
   
 template<typename BusSystem, typename MCU = DefaultMcuType>
 struct Application {
     using devs = BusSystem::devs;
-    using periodic_dev = BusSystem::periodic_dev;
-    using servo_pa = BusSystem::servo_pa;
-    using terminal_device = BusSystem::terminal_device;
-    using terminal = etl::basic_ostream<terminal_device>;
+//    using periodic_dev = BusSystem::periodic_dev;
+//    using servo_pa = BusSystem::servo_pa;
+//    using terminal_device = BusSystem::terminal_device;
+//    using terminal = etl::basic_ostream<terminal_device>;
     using systemTimer = devs::systemTimer;
     
-    using gfsm = GlobalFSM<BusSystem, systemTimer, periodic_dev>;
+    using gfsm = GlobalFSM<BusSystem, systemTimer>;
     
     [[noreturn]] inline static void run(const bool inverted = false) {
         gfsm::init();
-        etl::outl<terminal>("test30: "_pgm, GITTAG_PGM);
+//        etl::outl<terminal>("test30: "_pgm, GITTAG_PGM);
         while(true) {
             gfsm::periodic(); 
             systemTimer::periodic([&]{

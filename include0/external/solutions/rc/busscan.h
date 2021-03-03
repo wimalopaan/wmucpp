@@ -20,30 +20,30 @@ namespace External {
         template<typename Devs>
         struct SBusSPort {
             using devs = Devs;
-            using servo_pa = External::SBus::Servo::ProtocollAdapter<0, typename Devs::systemTimer>;
-            using periodic_dev = Usart<typename Devs::servoPosition, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
-            using terminal_device = periodic_dev;
+//            using servo_pa = External::SBus::Servo::ProtocollAdapter<0, typename Devs::systemTimer>;
+//            using periodic_dev = Usart<typename Devs::servoPosition, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
+//            using terminal_device = periodic_dev;
         };
         template<typename Devs>
         struct IBusIBus {
             using devs = Devs;
-            using servo_pa = IBus2::Servo::ProtocollAdapter<0>;
-            using periodic_dev = Usart<typename Devs::servoPosition, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
-            using terminal_device = periodic_dev;
+//            using servo_pa = IBus2::Servo::ProtocollAdapter<0>;
+//            using periodic_dev = Usart<typename Devs::servoPosition, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
+//            using terminal_device = periodic_dev;
         };
         template<typename Devs>
         struct SumDHott {
             using devs = Devs;
-            using periodic_dev = Hott::Experimental::Sensor<typename Devs::servoPosition, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, Hott::TextMsg, typename Devs::systemTimer>;
-            using servo_pa = periodic_dev::ProtocollAdapter;
-            using terminal_device = void;
+//            using periodic_dev = Hott::Experimental::Sensor<typename Devs::servoPosition, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, Hott::TextMsg, typename Devs::systemTimer>;
+//            using servo_pa = periodic_dev::ProtocollAdapter;
+//            using terminal_device = void;
         };
         template<typename Devs>
         struct Ppm {
             using devs = Devs;
-            using periodic_dev = Hott::Experimental::Sensor<typename Devs::servoPosition, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, Hott::TextMsg, typename Devs::systemTimer>;
-            using servo_pa = periodic_dev::ProtocollAdapter;
-            using terminal_device = void;
+//            using periodic_dev = Hott::Experimental::Sensor<typename Devs::servoPosition, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, Hott::TextMsg, typename Devs::systemTimer>;
+//            using servo_pa = periodic_dev::ProtocollAdapter;
+//            using terminal_device = void;
         };
         
         template<typename> struct isSBus : std::false_type {};
@@ -86,7 +86,6 @@ namespace External {
         using terminal = etl::basic_ostream<term_dev>;
 
         using led = std::conditional_t<std::is_same_v<typename Devs::scanLedPin, void>, AVR::NoPin, typename Devs::scanLedPin>;
-//        using led = AVR::ActiveHigh<typename Devs::scanLedPin, AVR::Output>;
         using blinker = External::Blinker2<led, systemTimer, 100_ms, 2000_ms>;
         
         static constexpr External::Tick<systemTimer> initTimeout{100_ms};
@@ -106,6 +105,7 @@ namespace External {
         }   
     private:
         inline static void periodic() {
+            devs::periodic();
             if constexpr(!std::is_same_v<term_dev, void>) {
                 term_dev::periodic();
             }

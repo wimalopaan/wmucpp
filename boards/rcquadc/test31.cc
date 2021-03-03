@@ -1579,6 +1579,7 @@ struct Devices {
         });
         systemTimer::init(); 
     }
+    static inline void periodic() {}
 };
 
 template<typename Bus>
