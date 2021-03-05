@@ -1199,7 +1199,8 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
     
     enum class State : uint8_t {Undefined, StartWait, SearchChannel, AfterSearch, 
                                 InitRun, Run,  
-                                ShowAddress, ShowAddressWait, LearnTimeout};
+                                ShowAddress, ShowAddressWait, LearnTimeout,
+                                MasterReset, MasterResetWait};
     
     using Timer = Devs::systemTimer;
     
@@ -1209,6 +1210,7 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
     static constexpr External::Tick<typename Devs::systemTimer> signalTimeoutTicks{500_ms};
     static constexpr External::Tick<typename Devs::systemTimer> eepromTimeout{2000_ms};
     static constexpr External::Tick<typename Devs::systemTimer> debugTimeout{500_ms};
+    static constexpr External::Tick<typename Devs::systemTimer> masterResetTimeout{4000_ms};
     
     using blinker = External::Blinker2<typename devs::led1, typename Devs::systemTimer, 100_ms, 2000_ms>;
     using blinker2 = External::Blinker2<typename devs::led2, typename Devs::systemTimer, 100_ms, 2000_ms>;
@@ -1306,10 +1308,25 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
             blinker::steady();
             break;
         case State::StartWait:
-            mStateTick.on(waitTimeoutTicks, []{
-                blinker::off();
-                mState = State::SearchChannel;
+            if (jumper::isActive()) {
+                mState = State::MasterReset;
+            }
+            else {
+                mStateTick.on(waitTimeoutTicks, []{
+                    blinker::off();
+                    mState = State::SearchChannel;
+                });
+            }
+            break;
+        case State::MasterReset:
+            mStateTick.on(masterResetTimeout, []{
+                mState = State::MasterResetWait;
             });
+            break;
+        case State::MasterResetWait:
+            if (!jumper::isActive()) {
+                mState = State::StartWait;
+            }
             break;
         case State::SearchChannel:
             if (search()) {
@@ -1380,6 +1397,16 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
             mStateTick.reset();
             switch(mState) {
             case State::Undefined:
+                break;
+            case State::MasterReset:
+                blinker::steady();
+                blinker2::steady();
+                data().clear();
+                data().change();
+                break;
+            case State::MasterResetWait:
+                blinker::off();
+                blinker2::off();
                 break;
             case State::StartWait:
                 if constexpr(External::Bus::isIBus<bus_type>::value) {
