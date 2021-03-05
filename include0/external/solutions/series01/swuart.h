@@ -222,6 +222,23 @@ namespace External {
                 rxEnable<true>();
             }
             
+            inline static bool get(std::byte& item) {
+                if constexpr(RecvQLength::value > 0) {
+                    return mRecvQueue.pop_front(item);
+                }
+                else {
+                    return false;
+                }
+            }
+            inline static std::optional<std::byte> get() {
+                if constexpr(RecvQLength::value > 0) {
+                    return mRecvQueue.pop_front();
+                }
+                else {
+                    return {};
+                }
+            }
+            
             inline static void put(const std::byte b) {
                 etl::Scoped<etl::DisbaleInterrupt<>> di;
                 mSendQueue.push_back(b);
