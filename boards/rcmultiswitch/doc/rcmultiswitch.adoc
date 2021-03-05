@@ -668,7 +668,7 @@ In dieser Datei sind üblicherweise keine Änderungen notwendig.
 Dieses Widget dient zur _Konfiguration_ aller Parameter jeder Funktion wie dem _Anlernen_ von Übertragungskanal sowie der Adresse eines Moduls
 
 Die einzelnen Parameter des Menus lassen die _nur_ mit `T5`-hoch und -herunter anwählen sowie `T6`-hoch selektieren. _Nach_ der Selektion wird das 
-Potentiometer `S1` zum Einstellen des Parameterwertes:
+Potentiometer `S1` zum Einstellen des Parameterwertes verwendet, der dann dunkel unterlegt wird:
 
 * `RES`: Reset aller Werte der Funktion (Wert _muss_ auf `1` stehen, damit de Reset ausgeführt wird)
 * `PWN`: Einstellen der PWM-Modulation, kann direkt an der _Helligkeit_ der Kontroll-LED beobachtet werden. Beim `RC-ServoSwitch-D` wird hier die _Geschwindigkeit_ 

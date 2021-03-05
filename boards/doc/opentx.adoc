@@ -248,7 +248,7 @@ Richten Sie je eine Telemetrie-Seite mit dem Skript `SCRIPTS/TELEMETRY/wmsw.lua`
 
 [CAUTION]
 Diese Sender haben sehr wenig RAM. Der Betrieb von _beiden_ o.g. Scripten _gleichzeitig_ ist oft nicht möglich und 
-kann zu unterschiedlichen Fehlermeldungen führen. Sollte das passieren, so können Sie eintweder nur das eine _oder_ 
+kann zu unterschiedlichen Fehlermeldungen führen. Sollte das passieren, so können Sie entweder nur das eine _oder_ 
 das andere Script einstellen. Die Einschränkung ist nicht so groß, da man das Konfigurationsscript ja nur 
 selten (in der Werkstatt) benötigt.
 

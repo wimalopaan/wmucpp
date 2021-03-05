@@ -8,6 +8,14 @@ endif::[]
 Nach dem Anlernen des _Übertragungskanals_ und der _Adresse_ des Moduls kann diese sofort über das Steuerungs-Widget
 bedient werden (sa. <<BetrOhneA>>). 
 
+[TIP]
+.Master-Reset
+--
+In diesem Modul gibt es Vielzahl von Parametern, die eingestellt werden können bzw. müssen. Zwar können die _einzelnen_ Kanäle 
+jeweils für sich zurück gesetzt werden. Manchmal (_lost in space_) ist es jedoch wünschenswert, das _gesamte_ Modul auf den 
+Auslieferungszustand zurück zu setzen. Die kann mit der Funktion _Master-Reset_ erreicht werden (s.a. <<mreset>>).
+--
+
 [[BetrOhneA]]
 === Betrieb _ohne_ Abschaltung
 
@@ -103,11 +111,11 @@ Je Funktion und Richtung wird folgendermaßen verfahren (*bitte* lesen Sie den f
 eine Funktion im Einbauzustand testen):
 
 . Parameter `B1/I`: Einstellen des PWM-Grades (Geschwindigkeit / Helligkeit) und damit auch _Anlernen_ des für den _Normalbetrieb_ notwendigen 
-Stromes. Der PWM-Grade kann mit Potentiometer `S1` eingestellt werden (s.a. <<ConfigWidget>>)).
+Stromes. Der PWM-Grad kann mit Potentiometer `S1` eingestellt werden (s.a. <<ConfigWidget>>)).
 . Der Motor läuft _nach der Selektion_ dieses Parameters für _1s_ in Richtung `A`. Bitte sorgen sie für einen blockadefreien Lauf.
 . Der Motor schaltet selbständig ab und der _Nominalstrom_ ist erlernt.
 . _Ohne_ eine weitere Änderung ist nun der _Abschaltstrom_ das _1,5_-fache des Nominalstromes. 
-. Mit dieser Einstallung sollte die Funktion jetzt würder das _Bedienwidget_ getestet werden. Bitte achten Sie auf eine Abschltung: dies wird durch 
+. Mit dieser Einstallung sollte die Funktion jetzt über das _Bedienwidget_ getestet werden. Bitte achten Sie auf eine Abschltung: dies wird durch 
 Aufleuchten der Kontroll-LED angezeigt.
 . Findet eine sofortige Abschaltung statt (LED), so kann entweder der Abschaltstrom zu gering sein, oder - besonders bei größeren Motoren - die 
 Abschaltung ist maßgeblich durch den _Anlaufvorgang_ herbei geführt worden.
@@ -122,7 +130,7 @@ kleineren Werten. Andernfalls vergößern Sie den Wert.
 für die Anlaufphase eine sicher ausreichende Zeitspanne ein. Bei kleinen Motoren etwa 600ms, bei mittleren Motoren etwa 1200ms und bei großen Motoren etwa 
 2400ms.
 . Parameter `PWM`: hiermit wird die Anlaufzeit in _Vielfachen_ von 200ms eingstellt: der Wert von 3 ergibt also 600ms.
-. Wiederholen Sie nun den Test (zunächst ohne den Abschaltstrom veräbdert zu haben).
+. Wiederholen Sie nun den Test (zunächst ohne den Abschaltstrom verändert zu haben).
 . Achten Sie auch den Motor: erreicht der Motor in der Anlaufphase schon seine nominelle Drehzahl? 
 . Hat der Motor in der _Anlaufphase_ seine nominelle Drehzahl erreicht und erfolgt die Abschaltung anschließend, so ist die Anlaufzeit ausreichend aber der 
 Abschaltstrom zu niedrig. Vergößern Sie daher den Abschaltstrom und testen Sie wieder (_ohne_ die Anlaufdauer zu verändern).
@@ -134,6 +142,7 @@ Das obige Vorgehen erscheint sehr komplex. Vergleichen Sie daher das Vorgehen mi
 
 === Proportionaler Betrieb
 
+t.b.d.
 
 [[FuncTelem]]
 === Telemetrie
@@ -194,3 +203,32 @@ Die Zustände einer _jeden_ Funktion lassen sich auch via Telemetrie beobachten.
 | 1053 | Anlauf Betriebsart `passthru` (Richtung B)
 |===
 
+[[mreset]]
+=== Master-Reset
+
+Es kann notwendig bzw. praktisch sein, das Modul einfach wieder auf seinen _Auslieferungszustand_ zurück zu setzen. Vielleicht hat man vergessen, welcher Kanal und welche Adresse das Modul verwendet. Oder es ist zu mühsam, für jede der vier Kanäle ein eigenes Reset auszuführen.
+
+In diesem Fall bedient man sich des https://github.com/chrislgarry/Apollo-11/blob/master/Comanche055/FRESH_START_AND_RESTART.agc[Masterreset].
+Dazu ist auch kein Empfänger / Sender notwendig.
+
+Es muss lediglich der _Jumper_ `JP1` *vor dem Einschalten* gesteckt werden (s.a. <<mr1>>).
+*Nach dem Erlischen* der beiden LEDs muss der _Jumper_ `JP1` wieder entfernt werden. Anschließend beginnt der Normalbetrieb.
+
+[[mr1]]
+.Ablauf des Master-Reset
+[plantuml]
+....
+state "Ausgeschaltet" as off
+off : Beide LEDs aus
+state "Master-Reset" as mreset
+mreset : Beide LEDs an
+state "Warten" as wait
+wait : Beide LEDs aus 
+state "Begin Normalbetrieb" as normal
+normal: Alle Einstellung auf Auslieferungszustand
+[*] --> off : Jumper bei JP1 setzen
+off --> mreset : Einschalten
+mreset --> wait : nach 4sec
+wait --> normal : Jumper JP1 entfernen
+normal --> [*]
+....
