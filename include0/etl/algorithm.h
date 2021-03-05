@@ -36,10 +36,10 @@ namespace etl {
     
     template<typename T>
     T scale(const T& v, const Intervall<T>& irange, const Intervall<T>& orange) {
-        if (v < irange.low) {
+        if (v <= irange.low) {
             return orange.low;
         }
-        else if (v > irange.high) {
+        else if (v >= irange.high) {
             return orange.high;
         }
         else {

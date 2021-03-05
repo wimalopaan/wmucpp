@@ -87,6 +87,12 @@ namespace etl {
 //            mValue = std::clamp(T{v}, LowerBound, UpperBound); // not needed
             mValue = v; 
         }
+        template<T L, T U>
+        requires((L >= LowerBound) && (U <= UpperBound))
+        inline constexpr uint_ranged(const uint_ranged_circular<T, L, U>& v) {
+//            mValue = std::clamp(T{v}, LowerBound, UpperBound); // not needed
+            mValue = v; 
+        }
         
         inline constexpr uint_ranged(const uint_ranged&) = default;
         inline constexpr uint_ranged(volatile const uint_ranged& v) : mValue{v}{}
