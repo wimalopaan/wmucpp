@@ -115,7 +115,8 @@ Es muss das Script `encib` eingerichtet sein.
 
 Viele `SBus`-fähige Empfänger haben auch eine Telemetrie-Möglichkeit. Der dafür verwendete Bus heißt `S.Port` und ist anders am Empfänger gekennzeichnet.
 
-.Aufbau mit einem Empfänger, der `SBus`-Servo liefert
+ifeval::["{bus}" != "auto"]
+.Aufbau mit einem Empfänger, der `SBus`-Servo liefert (ohne eingeschleiften Inverter)
 [ditaa]
 ....
 
@@ -142,18 +143,76 @@ Viele `SBus`-fähige Empfänger haben auch eine Telemetrie-Möglichkeit. Der daf
                      |                           | RC_Quad_D           | --> Verbraucher / Motor
                      |                           |                     |
                      |                           +---------------------+
-                     |
-                     |       +-------------+
-                     +-----> | andere SBus |
-                             | Teilnehmer  |
-                             +-------------+
+                     |                                     ^
+              +-------------+                              |
+              | andere SBus |                              |
+              | Teilnehmer  |                            S.Port
+              +-------------+
                 
 ....
+endif::[]
+
+ifeval::["{bus}" == "auto"]
+.Aufbau mit einem Empfänger, der `SBus`-Servo liefert (ohne eingeschleiften Inverter)
+[ditaa]
+....
+
+ +----------------+       +---------------------+
+ |                |       |                     |
+ | Empfänger SBus |--+->  | RC_MultiSwitch_D    | --> Verbraucher
+ |                |  |    |                     |
+ +----------------+  |    +---------------------+
+                     |      
+                     |    +---------------------+
+                     |    |                     |
+                     +->  | RC_MultiAdapater_DA | --> analoge Schaltmodule
+                     |    |                     |
+                     |    +---------------------+
+                     |      
+                     |    +---------------------+
+                     |    |                     |
+                     +->  | RC_ServoSwitch_D    | --> Servos
+                     |    |                     |
+                     |    +---------------------+
+                     |    
+                     |    +---------------------+
+                     |    |                     |
+                     +->  | RC_Quad_D           | --> Verbraucher / Motor
+                     |    |                     |
+                     |    +---------------------+
+                     |                     ^
+              +-------------+              |
+              | andere SBus |              |
+              | Teilnehmer  |            S.Port
+              +-------------+
+                
+....
+endif::[]
 
 .*Korrekte Verkabelung*?
 
+ifeval::["{bus}" == "auto"]
+.Alt: Bis vor der Firmware-Version `V21` 
+[NOTE]
+--
 Für das `{mName}` benötigt man einen `SBus`-Inverter. _Andere_ `SBus`-Teilnehmer sind nach wie vor _vor_ 
 dem Inverter anzuschließen.
+--
+
+.Neu: Ab der Firmware-Version `V21` 
+[NOTE]
+--
+Für das `{mName}` benötigt man *keine* `SBus`-Inverter mehr.
+--
+endif::[]
+ifeval::["{bus}" != "auto"]
+[NOTE]
+--
+Für das `{mName}` benötigt man einen `SBus`-Inverter. _Andere_ `SBus`-Teilnehmer sind nach wie vor _vor_ 
+dem Inverter anzuschließen.
+--
+endif::[]
+
 
 ifeval::["{model}" == "adapter"]
 Beim `RC-MultiAdapter-DA` existieren keine _Kontroll-LEDs_. Man muss also zur Funktionskontrolle ein analoges Schaltmodul anschließen. Und auch hier an dessen

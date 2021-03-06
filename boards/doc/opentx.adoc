@@ -1,3 +1,4 @@
+[[opentx]]
 == Software für OpenTX für den Betrieb von `{mName}`
 
 Für den Betrieb und zur Konfiguration des `{mName}` sind einige Scripte und Konfigurationsdateien notwendig.
@@ -434,23 +435,26 @@ Potentiometer `S1` zum Einstellen des Parameterwertes verwendet.
 
 ifndef::model[]
 
+[[param1]]
 .Die Bedeutung der Parameter für das Modul (allgemein)
 ====
 * `RES`: Reset aller Werte der Funktion (Wert _muss_ auf `1` stehen, damit der Reset ausgeführt wird)
-* `PWN`: Einstellen der PWM-Modulation, kann direkt an der _Helligkeit_ der Kontroll-LED beobachtet werden. Beim `RC-ServoSwitch-D` wird hier die _Geschwindigkeit_ 
-eingestellt (1=langsam, 31=schnell).
+* `PWM`: Einstellen der PWM-Modulation, kann direkt an der _Helligkeit_ der Kontroll-LED beobachtet werden. Beim `RC-ServoSwitch-D` wird hier die _Geschwindigkeit_ 
+eingestellt (1=langsam, 31=schnell (15: `SBus`)).
 * `B1/I`: Intervall des Blinkens für Schaltzustand `blink1` bzw. _Position1_ (aus) beim `RC-ServoSwitch-D`
 * `B1/D`: Einschaltdauer des Blinkens für Schaltzustand `blink1`  bzw. _Position2_ beim `RC-ServoSwitch-D`
 * `B2/I`: Intervall des Blinkens für Schaltzustand `blink2` bzw. _Position3_ beim `RC-ServoSwitch-D`
 * `B2/D`: Einschaltdauer des Blinkens für Schaltzustand `blink2` bzw. _Position4_ beim `RC-ServoSwitch-D`
-* `PThu`: Der sog. PassThrough-Kanal: ein beliebiger `OpenTX`-Kanal (`1` ... `16`) kann zur Weiterleitung an den Ausgang des Schaltmoduls ausgewählt werden. 
+* `PT`: Der sog. PassThrough-Kanal: ein beliebiger `OpenTX`-Kanal (`1` ... `16`) kann zur Weiterleitung an den Ausgang des Schaltmoduls ausgewählt werden. 
 Beim `RC-ServoSwitch` kann bei einem Wert von `1` mit Hilfe des Kanals `1` des Senders (fest zugeordnet) die _Position1_ gelernt werden, beim einem Wert `2` 
 die _Position2_ u.s.w. Bei einem Wert von `11` wird der _Follow_-Mode als _Copy Positions_, bei einem Wert von `12` wird der _Follow_-Mode als `Own-Positions` 
 eingestellt, der Wert von `10` stellt wieder den normalen Bewegungsmodus ein.
+* `CK`: unbenutzt
 ====
 
 Es existiert eine zusätzliche Seite (am Ende) mit modul-globalen Einstellungen.
 
+[[param2]]
 .Bedeutung der modul-globalen Parameter
 ====
 * `Learn Ch/Adr`:  _Anlernen_ der Moduladresse _und_ des Übertragungskanals (s.a. <<learn>>)
@@ -483,21 +487,23 @@ endif::[]
 
 ifeval::["{model}" == "quad"]
 
+[[param1]]
 .Die Bedeutung der Parameter für das Modul `{mName}`
 ====
 * `RES`: Reset aller Werte der Funktion (Wert _muss_ auf `1` stehen, damit der Reset ausgeführt wird)
-* `PWN`: Einstellen PWM-_Startrampe_ beim _Anlaufen_ einer Funktion (1=schnell, 31=langsam).
-* `B1/I`: PWM-Grad für Richtung _vorwärts_. Der Kanal wird für 1 Sekunde eingeschaltet, dabei wird der Betriebsstrom gelernt.
-* `B1/D`: Strombegrenzung für Richtung _vorwärts_. Dies ist _relativ_ zum _gelernten_ Strom.
+* `PWM`: Einstellen PWM-_Startrampe_ beim _Anlaufen_ einer Funktion (1=schnell, 31=langsam (15: `SBus`)).
+* `B1/I`: PWM-Grad (Motor: Drehzahl) für Richtung _vorwärts_. Der Kanal wird für 1 Sekunde eingeschaltet, dabei wird der Betriebsstrom gelernt.
+* `B1/D`: Strombegrenzung für Richtung _vorwärts_. Dies ist _relativ_ zum _gelernten_ Strom. Ein Wert von `15` (`SBus`) bzw. `31` (`IBus`) deaktiviert Stromabschaltung wieder. 
 * `B2/I`: PWM-Grad für Richtung _rückwärts_.
-* `B2/D`: Strombegrenzung für Richtung _rückwärts_. Dies ist _relativ_ zum _gelernten_ Strom.
+* `B2/D`: Strombegrenzung für Richtung _rückwärts_. Dies ist _relativ_ zum _gelernten_ Strom. Ein Wert von `15` (`SBus`) bzw. `31` (`IBus`) deaktiviert Stromabschaltung wieder.
 * `PT`: Der sog. PassThrough-Kanal: ein beliebiger `OpenTX`-Kanal (`1` ... `16`) kann zur Weiterleitung an den Ausgang des `{mName}` ausgewählt werden. Damit steuert man den PWM-Grad 
-in den Grenzen, die durch `B1/I` und `B2/I` gesetzt wurden.
-* `Ck`: Stromkennlinie für die Strombegrenzung im _PassThrough_-Betrieb (1=starke Abhängigkeit, 31=keine Abhängigkeit).
+in den Grenzen, die durch `B1/I` und `B2/I` gesetzt wurden. Ein Wert von `0` deaktiviert die PassThrough-Funktion wieder. 
+* `Ck`: Stromkennlinie für die Strombegrenzung im _PassThrough_-Betrieb (1=starke Abhängigkeit, 31=keine Abhängigkeit (15: `SBus`)).
 ====
 
 Es existiert eine zusätzliche Seite (am Ende, bzw. vor dem Anfang der Menu-Seiten, da diese zyklisch sind) mit modul-globalen Einstellungen.
 
+[[param2]]
 .Bedeutung der modul-globalen Parameter
 ====
 * `Learn Ch/Adr`:  _Anlernen_ der Moduladresse _und_ des Übertragungskanals (s.a. <<learn>>)

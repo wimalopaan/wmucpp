@@ -34,7 +34,8 @@ Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 
 :mName: RC-Quad-D
 :model: quad
-
+:bus: auto 
+  
 include::{idir}/defs.adoc[]
 
 <<<

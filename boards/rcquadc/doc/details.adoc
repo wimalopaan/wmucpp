@@ -49,13 +49,32 @@ Kontakte _geschlossen_, so wird der Motor unmittelbar abgeschaltet. Ein erneutes
 _parallel_ angeschlossen.
 
 .Anschluss der Endlagenschalter
-image::end1.jpg[]
+image::{localimages}/end11.jpg[align="center"]
+
+.Endlagenkontakte: Prinzip für Motor4 (`e4`). Für `e1` ... `e3` entsprechend. 
+[ditaa]
+....
+
+   +--------------+
+   |              |
+   |    RC-Quad-D |
+   |              |
+   | ooooo        |
+   +--------------+          links
+     ^^^^^                +--+/+--- Gnd
+     |||||                |
+     ||||e4 --------------+
+     |||e3                |
+     ||e2                 +--+/+--- Gnd
+     |e1                     rechts
+     Gnd
+....
 
 Der Ablauf ist damit der folgende:
 
 * Einschalten der Funktion am Widget (Richtung `A`).
 * Die Funktion erreicht die Endlage und der Endlagenkontakt wird ausgelöst (schließt).
-* Die Funktion wird abgeschaltet (Motor stoppt).
+* Die Funktion wird abgeschaltet (Motor stoppt). LED blinkt 1x.
 * Ein Widereinschalten der Funktion in _dieselbe_ Richtung `A` ist _nicht_ möglich.
 * Die Funktion kann nur in die _andere_ Richtung `B` wieder gestartet werden.
 * Wird die Funktion nicht zuvor gestoppt und erreicht auch hier die Endlage, so wiederholt sich der Ablauf für die Richtung `B`.
@@ -97,7 +116,6 @@ Das Bild <<curr1>> verdeutlicht (hoffentlich) die Zusammenhänge.
 [[curr1]]
 .Zeitlicher Verlauf des Motorstromes
 image::{localimages}/curr1.svg[]
-
 
 Das Einstellen eines Abschaltstromes ist also immer ein _Kompromiss_.
 
@@ -142,7 +160,40 @@ Das obige Vorgehen erscheint sehr komplex. Vergleichen Sie daher das Vorgehen mi
 
 === Proportionaler Betrieb
 
-t.b.d.
+Ist ein _PassThrough_ konfigurier worden, so dann der entsprechende Kanal proportional gesteuert werden.
+
+.Reihenfolge
+[TIP]
+--
+Der _Bereich_ der proportionalen Steuerung erstreckt sich auf den durch die `PWM-Raten` vorgegebenen Bereich. Es *emphiehlt* sich daher, 
+_zuerst_ die `PWM`-Raten in beide Richtungen einzustellen (Damit ist dann auch ein Abschaltstromwert gelernt).
+
+Erst danach legt man einen _PassThrough_-Kanal fest (der am Sender natürlich auch aus _Ausgang_ (Mixer) konfiguriert sein muss.
+
+Auch im Proportionalbetrieb grift die Stromabschaltung.
+--
+
+.Stromabschaltung
+[NOTE]
+--
+Der für die Abschaltung erlernte / eingestellt Strom gilt für den eingestellten (maximalen) `PWM`-Grad. Im Proportionalbetrieb ist dies dann strenggenommen nur 
+für die maximalen Wert des _PassThrough_-Kanals korrekt. Mit Hilfe des Parameters `CK` kann der Abschaltstrom aber auch heuristisch auf niedrige Kanalwerte 
+angepasst werden.
+--
+
+[[leds]]
+=== Die LEDs des Moduls
+
+Das Modul besitzt _zwei_ LEDs auf der Oberseite (s.a. <<learn>> und <<BetrCurr>> sowie <<BetrEndl>>).
+
+Die LED für die Abschaltungsanzeige kann weiteres ignalisieren:
+
+[horizontal]
+dauerhaft im Betrieb:: Stromabschaltung
+Blinken(1x) im Betrieb:: Endlagenabschaltung
+Blinken(2x) bei Parametereinstellung:: fehlerhafte Parameterwahl 
+Blinken(4x) bei Parametereinstellung:: Veränderung der Parameter 
+Blinken(6x) bei Parametereinstellung:: Reset
 
 [[FuncTelem]]
 === Telemetrie
@@ -164,7 +215,6 @@ erfolgt _normalerweise_ in _aufsteigender_ Reihenfolge. Dies ist aber durchaus d
 Es ist daher empfehlenswert, die Telemetrieseiten im Sender erst dann endgültig einzurichten, wenn die _Verkabelung_ im Modell abgeschlossen ist.
 Insbesondere sollte die Position in der `IBus`-_daisy-chain_ nicht mehr geändert werden.
 
-
 [[FuncStates]]
 ==== Funktionszustände
 
@@ -172,7 +222,7 @@ In den _üblichen_ Telemetrieprotokollen existieren meistens _keine_ Sensortypen
 werden folgende Sensoren verwendet:
 
 .SBus/S.Port
-Für ein `S.Port`-System werden sog. _DIY_-Typen verwendet.
+Für ein `S.Port`-System werden sog. _DIY_-Typen verwendet. Die `Id` der kann eingestellt werden (s.a. <<param2>>).
 
 .IBus
 Für ein `IBus`-System werden Sensoren des Typs _Flightmode_ (`FM`) verwendet.
