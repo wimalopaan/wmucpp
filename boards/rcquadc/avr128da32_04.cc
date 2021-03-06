@@ -1444,6 +1444,7 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
                 etl::outl<Term>("sig: "_pgm, sigrow::id()[0], sigrow::id()[1], sigrow::id()[2], syscfg::revision());
                 break;
             case State::SearchChannel:
+                blinker::steady();
                 etl::outl<Term>("SC"_pgm);
                 break;
             case State::AfterSearch:
