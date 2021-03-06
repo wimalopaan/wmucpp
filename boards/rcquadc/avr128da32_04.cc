@@ -443,7 +443,7 @@ struct ChannelFsm {
 
     static inline constexpr uint16_t pa_mid = (pa_value_t::Upper + pa_value_t::Lower) / 2;
     static inline constexpr uint16_t pa_half = (pa_value_t::Upper - pa_value_t::Lower) / 2;
-    static inline constexpr uint16_t pa_hysterese = 10;
+    static inline constexpr uint16_t pa_hysterese = pa_half / 10;
     
     static inline constexpr External::Tick<Timer> offTimeout{300_ms};
     static inline constexpr External::Tick<Timer> setPwmTimeout{2000_ms};
@@ -474,13 +474,18 @@ private:
         }
     }
     static inline auto backwardOffCurr(const uint16_t pwm) {
-        if (backwardOffCurr() > backwardStartOffCurr()) {
-            const uint16_t cv1 = backwardOffCurr() - backwardStartOffCurr();
-            const uint16_t cv2 = ((((uint32_t)pa_mid - pwm) * cv1) / pa_half) + backwardStartOffCurr(); 
-            return cv2;
+        if (backwardOffCurr() == std::numeric_limits<uint16_t>::max()) {
+            return backwardOffCurr();
         }
         else {
-            return backwardOffCurr();
+            if (backwardOffCurr() > backwardStartOffCurr()) {
+                const uint16_t cv1 = backwardOffCurr() - backwardStartOffCurr();
+                const uint16_t cv2 = ((((uint32_t)pa_mid - pwm) * cv1) / pa_half) + backwardStartOffCurr(); 
+                return cv2;
+            }
+            else {
+                return backwardOffCurr();
+            }
         }
     }
     static inline auto& backwardOffCurr() {
@@ -557,7 +562,7 @@ public:
         }           
         else {
             if (passThru()) {
-                passThru() = channel_t{}.toInt();
+                passThru() = channel_t{};
                 change();
                 mEvent = Event::SetParameter;
             }
@@ -577,6 +582,8 @@ public:
     inline static void setOffCurrentForward(const pvalue_t& v) {
         if (v.isTop()) {
             forwardOffCurr() = std::numeric_limits<uint16_t>::max();
+            change();
+            mEvent = Event::SetParameter;
         }
         else {
             const auto n = forwardRefCurr() + ((forwardRefCurr() * v.toInt()) >> 3);
@@ -596,6 +603,8 @@ public:
     inline static void setOffCurrentBackward(const pvalue_t& v) {
         if (v.isTop()) {
             backwardOffCurr() = std::numeric_limits<uint16_t>::max();
+            change();
+            mEvent = Event::SetParameter;
         }
         else {
             const auto n = backwardRefCurr() + ((backwardRefCurr() * v.toInt()) >> 3);
@@ -1200,7 +1209,7 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
     enum class State : uint8_t {Undefined, StartWait, SearchChannel, AfterSearch, 
                                 InitRun, Run,  
                                 ShowAddress, ShowAddressWait, LearnTimeout,
-                                MasterReset, MasterResetWait};
+                                MasterReset, MasterResetWait, MasterResetWait2};
     
     using Timer = Devs::systemTimer;
     
@@ -1215,6 +1224,7 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
     using blinker = External::Blinker2<typename devs::led1, typename Devs::systemTimer, 100_ms, 2000_ms>;
     using blinker2 = External::Blinker2<typename devs::led2, typename Devs::systemTimer, 100_ms, 2000_ms>;
     using bl_count_t = blinker::count_type;
+    using count_t = blinker2::count_type;
     
     using NVM = Devs::eeprom;
     using Term = Devs::terminal;
@@ -1223,12 +1233,14 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
     using SW = Devs::gswitch;
     
     using jumper = devs::jp1;
+    using jp1pin = devs::JP1Pin;
     
     inline static auto& data() {
         return NVM::data();
     }
     
     inline static void init(const bool inverted) {
+        mInverted = inverted;
         NVM::init();
         if (data().magic() != 42) {
             data().magic() = 42;
@@ -1238,17 +1250,12 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
         }
         blinker::init();
         blinker2::init();
-        jumper::init();
-        jumper::pin_type::template pullup<true>();
-        
-        using count_t = blinker2::count_type;
         
         if constexpr(External::Bus::isIBus<bus_type>::value) {
             lut3::init(std::byte{0x00}); // low on lut3-out 
             Sensor::init();
             Sensor::uart::txOpenDrain();
             Servo::template init<BaudRate<115200>>();
-            blinker2::blink(count_t{1});
         }
         else if constexpr(External::Bus::isSBus<bus_type>::value) {
             lut3::init(std::byte{0x0f}); // route TXD (inverted) to lut3-out 
@@ -1258,13 +1265,6 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
             sensor_pa::id(data().physicalId());
             
             Servo::template init<AVR::BaudRate<100000>, FullDuplex, true, 1>(); // 8E2
-            if (inverted) {
-                blinker2::blink(count_t{2});
-                Servo::rxInvert(true);
-            }
-            else {
-                blinker2::blink(count_t{3});
-            }
         }
         else {
             static_assert(std::false_v<bus_type>, "bus type not supported");
@@ -1274,8 +1274,14 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
         Adc::init();
         PWM::init();
         PWM::template prescale<6>();
+        PWM::template off<4>();
+        PWM::template off<5>();
         (Chs::init(), ...);
         AS::init();
+        jumper::init();
+//        jumper::pin_type::template pullup<true>();
+//        jp1pin::template pullup<true>();
+        
     }
     inline static void periodic() {
         NVM::saveIfNeeded([&]{
@@ -1305,7 +1311,6 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
         switch(mState) {
         case State::Undefined:
             mState = State::StartWait;
-            blinker::steady();
             break;
         case State::StartWait:
             if (jumper::isActive()) {
@@ -1325,8 +1330,13 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
             break;
         case State::MasterResetWait:
             if (!jumper::isActive()) {
-                mState = State::StartWait;
+                mState = State::MasterResetWait2;
             }
+            break;
+        case State::MasterResetWait2:
+            mStateTick.on(waitTimeoutTicks, []{
+                mState = State::StartWait;
+            });
             break;
         case State::SearchChannel:
             if (search()) {
@@ -1342,7 +1352,7 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
             });
             break;
         case State::LearnTimeout:
-            etl::outl<Term>("timeout ch: "_pgm, NVM::data().channel(), " adr: "_pgm, NVM::data().address().toInt());
+            etl::outl<Term>("timeout ch: "_pgm, NVM::data().channel().toInt(), " adr: "_pgm, NVM::data().address().toInt());
             if (NVM::data().channel() && NVM::data().address()) {
                 SW::channel(NVM::data().channel());
                 SW::address(typename SW::addr_t{NVM::data().address().toInt()});
@@ -1350,7 +1360,7 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
             mState = State::InitRun;
             break;
         case State::ShowAddress:
-            etl::outl<Term>("learned ch: "_pgm, NVM::data().channel(), " adr: "_pgm, NVM::data().address().toInt());
+            etl::outl<Term>("learned ch: "_pgm, NVM::data().channel().toInt(), " adr: "_pgm, NVM::data().address().toInt());
             blinker::onePeriod(bl_count_t(data().address().toInt() + 1));
             mState = State::ShowAddressWait;
             break;
@@ -1387,7 +1397,7 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
                                       });                            
             
             mEepromTick.on(eepromTimeout, []{
-                etl::outl<Term>("exp"_pgm);
+//                etl::outl<Term>("exp"_pgm);
                 NVM::data().expire();
             });
             mDebugTick.on(debugTimeout, debug);
@@ -1399,21 +1409,34 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
             case State::Undefined:
                 break;
             case State::MasterReset:
+                etl::outl<Term>("MR"_pgm);
                 blinker::steady();
                 blinker2::steady();
                 data().clear();
                 data().change();
                 break;
             case State::MasterResetWait:
+                etl::outl<Term>("MRW"_pgm);
                 blinker::off();
                 blinker2::off();
                 break;
+            case State::MasterResetWait2:
+                break;
             case State::StartWait:
+                etl::outl<Term>("SW"_pgm);
                 if constexpr(External::Bus::isIBus<bus_type>::value) {
                     etl::outl<Term>("rcQ: IBus"_pgm);
+                    blinker2::blink(count_t{1});
                 }
                 else if constexpr(External::Bus::isSBus<bus_type>::value) {
                     etl::outl<Term>("rcQ: SBus"_pgm);
+                    if (mInverted) {
+                        blinker2::blink(count_t{2});
+                        Servo::rxInvert(true);
+                    }
+                    else {
+                        blinker2::blink(count_t{3});
+                    }
                 }
                 else {
                     static_assert(std::false_v<Term>, "wrong bus");    
@@ -1421,13 +1444,25 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
                 etl::outl<Term>("sig: "_pgm, sigrow::id()[0], sigrow::id()[1], sigrow::id()[2], syscfg::revision());
                 break;
             case State::SearchChannel:
+                etl::outl<Term>("SC"_pgm);
+                break;
             case State::AfterSearch:
+                etl::outl<Term>("AS"_pgm);
+                break;
             case State::ShowAddress:
+                etl::outl<Term>("SA"_pgm);
+                break;
             case State::ShowAddressWait:
+                etl::outl<Term>("SAW"_pgm);
+                break;
             case State::LearnTimeout:
+                etl::outl<Term>("LW"_pgm);
+                break;
             case State::InitRun:
+                etl::outl<Term>("IR"_pgm);
                 break;
             case State::Run:
+                etl::outl<Term>("RU"_pgm);
                 break;
             }
         }
@@ -1443,10 +1478,12 @@ private:
         }
 #endif
         (Chs::debug(),...);
-        etl::outl<Term>("id: "_pgm, (uint8_t)NVM::data().physicalId());
-//        etl::outl<Term>("es: "_pgm, AS::states());
-//        etl::outl<Term>("ch: "_pgm, protocoll_adapter_t::valueMapped(NVM::data().channel()).toInt());
         //                etl::circular_call(Chs::debug...);        
+//        etl::outl<Term>("id: "_pgm, (uint8_t)NVM::data().physicalId());
+//        etl::outl<Term>("es: "_pgm, AS::states());
+        const auto v = servo_pa::valueMapped(NVM::data().channel());
+        etl::outl<Term>("ch: "_pgm, v.toInt(), " A: "_pgm, protocol_t::toAddress(v), " F: "_pgm, protocol_t::toIndex(v), " M: "_pgm, protocol_t::toMode(v));
+        etl::outl<Term>("ch: "_pgm, v.toInt(), " A: "_pgm, protocol_t::toAddress(v), " P: "_pgm, protocol_t::toParameter(v), " V: "_pgm, protocol_t::toParameterValue(v));
     }
     using protocol_t = typename SW::protocol_t;
     using addr_t = RCSwitch::addr_t;
@@ -1482,6 +1519,7 @@ private:
     static inline External::Tick<Timer> mEepromTick;
     static inline External::Tick<Timer> mDebugTick;
     static inline State mState{State::Undefined};
+    static inline bool mInverted{false};
 };
 
 template<typename ADC, uint8_t Ch, uint16_t Ro, uint16_t... Rs>
@@ -1645,8 +1683,8 @@ struct Devices {
     };
     using pseudoTimer = PseudoTimer<systemTimer>;
 
-    using eeprom = EEProm::Controller<Storage::ApplData<pseudoTimer, uint8_t, 
-                                      RCSwitch::addr_t, typename pwm::value_type>>;
+//    using eeprom = EEProm::Controller<Storage::ApplData<pseudoTimer, uint8_t, 
+//                                      RCSwitch::addr_t, typename pwm::value_type>>;
             
     using adc = Adc<Component::Adc<0>, AVR::Resolution<12>, Vref::V4_096>;
     using adcController = External::Hal::AdcController<adc, Meta::NList<18, 7, 5, 1, 2, 0x42>>; // 42 = temp
@@ -1705,6 +1743,11 @@ struct BusDevs<External::Bus::IBusIBus<Devs>> {
     using servo_pa = IBus2::Servo::ProtocollAdapter<0>;
     using servo = Usart<typename Devs::servoPosition, servo_pa, AVR::UseInterrupts<false>, 
     AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
+
+    using channel_t = servo_pa::channel_t;
+   
+    using eeprom = EEProm::Controller<Storage::ApplData<pseudoTimer, channel_t, 
+                                      RCSwitch::addr_t, typename pwm::value_type>>;
     
     #ifndef NDEBUG
     using terminal = etl::basic_ostream<servo>;
@@ -1712,7 +1755,7 @@ struct BusDevs<External::Bus::IBusIBus<Devs>> {
     using terminal = etl::basic_ostream<void>;
     #endif
 
-    using eeprom = Devs::eeprom;    
+//    using eeprom = Devs::eeprom;    
     
     using adcController = Devs::adcController;
 
@@ -1792,6 +1835,11 @@ struct BusDevs<External::Bus::SBusSPort<Devs>> {
     using servo_pa = External::SBus::Servo::ProtocollAdapter<0, systemTimer>;
     using servo = Usart<typename Devs::servoPosition, servo_pa, AVR::UseInterrupts<false>, 
     AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
+
+    using channel_t = servo_pa::channel_t;
+    
+    using eeprom = EEProm::Controller<Storage::ApplData<pseudoTimer, channel_t, 
+                                      RCSwitch::addr_t, typename pwm::value_type>>;
     
 #ifndef NDEBUG
 using terminal = etl::basic_ostream<servo>;
@@ -1799,7 +1847,7 @@ using terminal = etl::basic_ostream<servo>;
 using terminal = etl::basic_ostream<void>;
 #endif
     
-    using eeprom = Devs::eeprom;    
+//    using eeprom = Devs::eeprom;    
     
     using adcController = Devs::adcController;  
  
