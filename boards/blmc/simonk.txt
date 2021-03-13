@@ -67,6 +67,7 @@
 # andere Pinbelegung bzw. wie Black Mantis Schaltbild
 # sudo avrdude -p atmega8 -P usb -c avrisp2 -V -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -U flash:w:bs_nfet_12a.hex
 
+# blaues board mit "modernen" Fets (8pin)
 # Hobbyking 25A Orange
 # Robby Roxxy Bl-Control 730
 # sudo avrdude -p atmega8 -P usb -c avrisp2 -V -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -U flash:w:tp.hex
@@ -80,3 +81,4 @@
 # 30A gelb (von Amazon)
 # NoName: auch blaue Platine mit 2x3 ISP Pins
 # tgy.hex
+# tgy_8mhz.hex (hört man am Ton)
