@@ -16,6 +16,9 @@ namespace etl {
     template<Unsigned T = uint8_t, T LowerBound = 0, T UpperBound = std::numeric_limits<T>::max()>
     class uint_ranged;
 
+    template<Unsigned T = uint8_t, T LowerBound = 0, T UpperBound = std::numeric_limits<T>::max() - 1>
+    class uint_ranged_NaN;
+    
     namespace detail {
         template<typename A> struct index_type;
         template<typename A> struct cyclic_type;
@@ -212,6 +215,11 @@ namespace etl {
             assert(rhs <= UpperBound);
             mValue = std::clamp(rhs, LowerBound, UpperBound);
         }
+
+        inline constexpr uint_ranged_NaN<T, Lower, Upper> toNaN() {
+            return uint_ranged_NaN<T, Lower, Upper>{mValue};
+        }
+                                                                      
         inline constexpr operator T() const {
             return mValue;
         }
@@ -244,13 +252,13 @@ namespace etl {
         return lhs;
     }
     
-    template<Unsigned T = uint8_t, T LowerBound = 0, T UpperBound = std::numeric_limits<T>::max() - 1>
+    template<Unsigned T, T LowerBound, T UpperBound>
     class uint_ranged_NaN final {
         static_assert(LowerBound <= UpperBound);
     public:
         inline static constexpr T Lower = LowerBound;
         inline static constexpr T Upper = UpperBound;
-        inline static constexpr T Mid = (UpperBound + LowerBound) / 2;
+        inline static constexpr T Mid   = (UpperBound + LowerBound) / 2;
         inline static constexpr T NaN   = std::numeric_limits<T>::max();
         static_assert(Upper != NaN);
         
