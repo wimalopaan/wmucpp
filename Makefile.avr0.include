@@ -75,6 +75,8 @@ OPTFLAGS = -Os
 endif
 
 GITTAG := $(shell git describe --abbrev=4 --dirty --always --tags)
+GITMAJOR := $(shell git describe --abbrev=4 --tags | cut -d- -f1 | sed 's/v//g')
+GITMINOR := $(shell git describe --abbrev=4 --tags | cut -d- -f2)
 
 #CXXFLAGS += $(OPTFLAGS) -std=c++17 #-pedantic
 CXXFLAGS += $(OPTFLAGS) -std=c++2a # -pedantic
@@ -100,6 +102,8 @@ CXXFLAGS += $(CXXINLUDES3)
 CXXFLAGS += $(CXXINLUDES4)
 CXXFLAGS += $(MCUFLAGS)
 CXXFLAGS += -DGITTAG=$(GITTAG) -DGITTAG_PGM=\"$(GITTAG)\"_pgm
+CXXFLAGS += -DGITMAJOR=$(GITMAJOR)
+CXXFLAGS += -DGITMINOR=$(GITMINOR)
 
 CFLAGS += $(OPTFLAGS) -std=gnu11 # wegen __flash
 #CFLAGS += -Os -std=c11 -pedantic
