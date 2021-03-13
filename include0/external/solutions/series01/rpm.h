@@ -15,9 +15,6 @@ namespace External {
         template<typename T, typename U, typename ClockProvider = void, typename MCU = DefaultMcuType>
         struct RpmFreq;
 
-//        template<typename InputEventChannel, auto Nb0, auto Nb1, AVR::Concepts::AtDxSeries MCU>
-//        struct RpmFreq<InputEventChannel, Meta::List<AVR::Component::Tcb<Nb0>, AVR::Component::Tcb<Nb1>>, MCU> {
-            
         template<typename InputEventChannel, typename RL, typename RH, typename ClockP, AVR::Concepts::AtDxSeries MCU>
         struct RpmFreq<InputEventChannel, Meta::List<RL, RH>, ClockP, MCU> {
             
@@ -47,8 +44,9 @@ namespace External {
             using Ev_t = MCU::TCB::EvCtrl_t;
             using Int_t = MCU::TCB::IntFlags_t;
             
-            inline static constexpr uint16_t prescaler = 256;
-            inline static constexpr auto fTimer = Project::Config::fMcu / prescaler;
+            using pre_t = ClockP::prescaler_type;
+            
+            inline static constexpr auto fTimer = Project::Config::fMcu / (256 * pre_t::value); // 8bit shift
             inline static constexpr auto rpm = fTimer.value * 60;
             inline static constexpr auto cmin = rpm / std::numeric_limits<uint16_t>::max();
 
