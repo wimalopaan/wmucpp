@@ -654,6 +654,7 @@ struct GlobalFsm {
                                 SetupWaitButtonRelease, SetupScan, SetupGotChannel, SetupTestRun, SetupSetParameter, SetupSetParameterWait, 
                                 DigitalSetupChoose, DigitalSetupSet, DigitalSetupTestRun,
                                 DigitalSetupSel, DigitalSetupSel2, DigitalSetupLeave,
+                                SetupCalibrateMes, SetupCalibrateOn
                                };
     
     static constexpr External::Tick<Timer> startupTicks{100_ms};
@@ -943,6 +944,16 @@ struct GlobalFsm {
                 mState = State::PreRun;
             });
             break;
+        case State::SetupCalibrateOn:
+            mStateTick.on(stateChangeTicks, []{
+                mState = State::CalibrateMes;
+            });
+            break;
+        case State::SetupCalibrateMes:
+            mStateTick.on(stateChangeTicks, []{
+                mState = State::PreRun;
+            });
+            break;
         case State::PreRun:
             mStateTick.on(stateChangeTicks, []{
                 mState = State::Run;
@@ -1039,6 +1050,19 @@ struct GlobalFsm {
                                           });
                 break;
             case State::CalibrateMes:
+                Meta::visit<ProviderList>([]<typename W>(W){
+                                              using provider = W::type;
+                                              provider::calibrate();
+                                          });
+                break;
+            case State::SetupCalibrateOn:
+                Esc::activate();
+                Meta::visit<ProviderList>([]<typename W>(W){
+                                              using provider = W::type;
+                                              provider::calibrateStart();
+                                          });
+                break;
+            case State::SetupCalibrateMes:
                 Meta::visit<ProviderList>([]<typename W>(W){
                                               using provider = W::type;
                                               provider::calibrate();
