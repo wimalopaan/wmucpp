@@ -12,6 +12,7 @@
 #include <mcu/internals/adc.h>
 #include <mcu/internals/pwm.h>
 #include <mcu/internals/eeprom.h>
+#include <mcu/internals/sigrow.h>
 
 #include <external/hal/alarmtimer.h>
 #include <external/hal/adccontroller.h>
@@ -26,8 +27,14 @@
 #include <external/hott/experimental/adapter.h>
 #include <external/hott/menu.h>
 
-#include <external/ibus/ibus.h>
+#ifndef AUTO_BUS
+# include <external/ibus/ibus.h>
+#endif
 #include <external/sbus/sbus.h>
+
+#include <external/ibus/ibus2.h>
+#include <external/solutions/rc/busscan.h>
+#include <external/solutions/rc/multi.h>
 
 #include <external/solutions/series01/swuart.h>
 
@@ -70,6 +77,9 @@ using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition, tc
 
 namespace  {
     constexpr auto dt = 2_ms;
+#ifdef AUTO_BUS
+    constexpr auto fRtc = 1000_Hz; // 1ms
+#endif
 #ifdef USE_HOTT
     constexpr auto fRtc = 500_Hz;
 #endif
