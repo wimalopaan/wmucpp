@@ -168,6 +168,7 @@ boards/bmc/blink.cc
 boards/bmc/blink01.cc
 boards/bmc/medium01/Makefile
 boards/bmc/medium10/Makefile
+boards/bmc/medium10/esc10_avr128_hw03.cc
 boards/bmc/medium10/test00.cc
 boards/bmc/medium10/test01.cc
 boards/bmc/medium10/test02.cc
@@ -176,6 +177,7 @@ boards/bmc/medium10/test11.cc
 boards/bmc/medium10/test12.cc
 boards/bmc/medium10/test20.cc
 boards/bmc/medium10/test21.cc
+boards/bmc/medium10/test30.cc
 boards/bmc/medium10/test99.cc
 boards/bmc/robbenavy540/Makefile
 boards/bmc/robbenavy540/blink.cc
@@ -362,6 +364,7 @@ boards/rcministep/test50.cc
 boards/rcministep/test60.cc
 boards/rcmultiswitch/Makefile
 boards/rcmultiswitch/ToDo.txt
+boards/rcmultiswitch/auto8d.cc
 boards/rcmultiswitch/board.h
 boards/rcmultiswitch/doc/Makefile
 boards/rcmultiswitch/doc/rcmultiswitch.adoc
@@ -371,6 +374,7 @@ boards/rcmultiswitch/multi8d.cc
 boards/rcmultiswitch/multi8hott.cc
 boards/rcmultiswitch/multi8man.cc
 boards/rcmultiswitch/multi8mk4.cc
+boards/rcmultiswitch/switch.h
 boards/rcmultiswitch/swout.h
 boards/rcmultiswitch/test00.cc
 boards/rcmultiswitch/test01.cc

@@ -2,6 +2,10 @@
 
 #define LEARN_DOWN
 
+#ifndef GITMAJOR
+# define VERSION_NUMBER 2300
+#endif
+
 #include <mcu/avr.h>
 #include <mcu/common/delay.h>
 
@@ -57,7 +61,7 @@ namespace  {
 struct Data final : public EEProm::DataBase<Data> {
     uint8_t mMagic{};
     
-    enum class Param : uint8_t {Dead, ThrD1, ThrD2, PwmMax, PwmMin, KickThr, KickTicks, PwmLow, _Number};
+    enum class Param : uint8_t {Dead, ThrD1, ThrD2, PwmMax, PwmMin, KickThr, KickTicks, PwmLow, SPortID, _Number};
     
     using pa_t = std::array<uint16_t, (uint8_t)Param::_Number>;
     using index_t = etl::index_type_t<pa_t>;
@@ -222,13 +226,17 @@ struct EscFsm {
         NVM::data().change();
     }
 
-    static inline constexpr uint16_t pwmStep1 = 1800;
+    static inline constexpr uint16_t pwmStep1 = PWM::f_timer.value / 18000;
+//    std::integral_constant<uint16_t, pwmStep1>::_;
+    
     static inline void pwmFreq1(const etl::uint_ranged<uint8_t, 0, 9>& v) {
         NVM::data().param(Param::PwmMin) = (10 - v ) * pwmStep1;
         NVM::data().change();
     }
     
-    static inline constexpr uint16_t pwmStep2 = 5281;
+    static inline constexpr uint16_t pwmStep2 = (65535 - 10 * pwmStep1) / 9;
+    static_assert((10 * pwmStep1) <= pwmStep2);    
+//        std::integral_constant<uint16_t, pwmStep2>::_;
     static inline void pwmFreq2(const etl::uint_ranged<uint8_t, 0, 9>& v) {
         NVM::data().param(Param::PwmMax) = 65535 - v * pwmStep2;    
         NVM::data().change();
@@ -262,8 +270,8 @@ struct EscFsm {
         NVM::data().param(Param::Dead) = deadStep * 2;   
         NVM::data().param(Param::ThrD1) = thrHalf / 2;
         NVM::data().param(Param::ThrD2) = (5 * thrHalf) / 6;
-        NVM::data().param(Param::PwmMin) = 1800;
-        NVM::data().param(Param::PwmMax) = 65535;
+        NVM::data().param(Param::PwmMin) = pwmStep1;
+        NVM::data().param(Param::PwmMax) = pwmStep2;
         NVM::data().param(Param::KickThr) = thrHalf / 8;
         NVM::data().param(Param::KickTicks) = External::Tick<Timer>{75_ms}.value;
         NVM::data().param(Param::PwmLow) = 0;
@@ -616,14 +624,18 @@ struct GlobalFsm {
             lut1::init(std::byte{0x0f}); // route TXD (inverted) to lut3-out 
             Sensor::init();
             Sensor::uart::txPinDisable();
+
+            // ???            
+            devs::ibt::init();
+            devs::ibt::on();
             
-//            sensor_pa::id(data.physicalId());
+            const auto value = data.param(Data::Param::SPortID);
+            const External::SPort::SensorId id = External::SPort::idFromIndex(value);
+            sensor_pa::id(id);
             
             Servo::template init<AVR::BaudRate<100000>, FullDuplex, true, 1>(); // 8E2
             if (inverted) {
                 Servo::rxInvert(true);
-            }
-            else {
             }
         }
         else if constexpr(External::Bus::isSumD<bus_type>::value) {
@@ -1026,10 +1038,14 @@ struct VersionProvider {
     inline static constexpr auto ibus_type = IBus2::Type::type::ARMED;
     inline static constexpr void init() {}
     inline static constexpr uint16_t value() {
-        return 1012;
+#if defined(GITMAJOR) && defined(GITMINOR)
+        static_assert(GITMINOR < 10);
+        return GITMAJOR * 100 + GITMINOR;
+#else
+        return VERSION_NUMBER;
+#endif
     }
 };
-
 
 template<typename HWRev = void, typename MCU = DefaultMcuType>
 struct Devices {
@@ -1078,6 +1094,8 @@ struct Devices {
     // WO1: pwm1
     // WO2: pwm2
     using pwm = PWM::DynamicPwmPrescale<tcaPosition, AVR::Prescaler<4>>;
+    static_assert(pwm::f_timer <= 8000000_Hz);
+    static_assert(pwm::f_timer >= 1000000_Hz);
     
     using ibt = IBusThrough<daisyChain>;
     
@@ -1211,21 +1229,13 @@ struct BusDevs<External::Bus::IBusIBus<Devs>> {
     template<typename Sensor>
     struct TempProvider {
         inline static constexpr auto ibus_type = IBus2::Type::type::TEMPERATURE;
+        using value_type = Sensor::value_type;
         inline static constexpr void init() {}
-        
         inline static constexpr void calibrateStart() {
             Sensor::template pullup<true>();
         }
         inline static constexpr void calibrate() {
-            constexpr uint16_t U = decltype(Sensor::raw())::Upper;
-            //        std::integral_constant<uint16_t, U>::_;
-            mCalibration = Sensor::raw();
-            if (mCalibration == U) {
-                mActive = false;
-            }
-            else {
-                mActive = true;
-            }
+            mActive = !Sensor::raw().isTop();
             Sensor::template pullup<false>();
         }
         inline static constexpr uint16_t value() {
@@ -1236,18 +1246,14 @@ struct BusDevs<External::Bus::IBusIBus<Devs>> {
                 return 400;
             }
         }
-        inline static uint16_t offset() {
-            return mCalibration;
-        }
     private:
-        inline static uint16_t mCalibration{};
         inline static bool mActive{false};
     };
+    
     template<typename Sensor>
     struct VoltageProvider {
         inline static constexpr auto ibus_type = IBus2::Type::type::EXTERNAL_VOLTAGE;
         inline static constexpr void init() {}
-        
         inline static constexpr uint16_t value() {
             return Sensor::value();
         }
@@ -1256,13 +1262,10 @@ struct BusDevs<External::Bus::IBusIBus<Devs>> {
     struct CurrentProvider {
         inline static constexpr auto ibus_type = IBus2::Type::type::BAT_CURR;
         inline static constexpr void init() {}
-        
-        inline static constexpr void calibrateStart() {
-        }
+        inline static constexpr void calibrateStart() {}
         inline static constexpr void calibrate() {
             mOffset = Sensor::value();
         }
-        
         inline static constexpr uint16_t value() {
             const auto value = Sensor::value();
             if (value > mOffset) {
@@ -1333,6 +1336,19 @@ struct BusDevs<External::Bus::SBusSPort<Devs>> {
     template<typename PA>
     using sensorUsart = AVR::Usart<typename Devs::sensorPosition, PA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<64>>;
     
+    template<typename R>
+    struct RpmProvider {
+        inline static constexpr auto valueId = External::SPort::ValueId::Rpm;
+        inline static constexpr void init() {
+        }
+        inline static constexpr uint16_t value() {
+            if (const auto rpm = R::value(); rpm) {
+                return rpm.value();
+            }
+            return 0;
+        }
+    };
+    
     template<typename Sensor>
     struct CurrentProvider {
         inline static constexpr auto valueId = External::SPort::ValueId::Current;
@@ -1354,10 +1370,65 @@ struct BusDevs<External::Bus::SBusSPort<Devs>> {
     private:
         inline static uint16_t mOffset{};
     };
+
+    template<typename ADC, uint8_t Channel, typename SigRow>
+    struct InternalTempProvider {
+        using index_t = ADC::index_type;
+        static_assert(Channel <= index_t::Upper);
+        inline static constexpr auto channel = index_t{Channel};
+        inline static constexpr auto valueId = External::SPort::ValueId::Temp2;
+        inline static constexpr void init() {}
+        inline static constexpr uint16_t value() {
+            return SigRow::template adcValueToTemperature<std::ratio<1,10>, 40, typename ADC::VRef_type>(ADC::value(channel)).value;
+        }
+    };
+
+    template<typename Sensor>
+    struct TempProvider {
+        inline static constexpr auto valueId = External::SPort::ValueId::Temp1;
+        using value_type = Sensor::value_type;
+        inline static constexpr void init() {}
+        inline static constexpr void calibrateStart() {
+            Sensor::template pullup<true>();
+        }
+        inline static constexpr void calibrate() {
+            mActive = !Sensor::raw().isTop();
+            Sensor::template pullup<false>();
+        }
+        inline static constexpr uint16_t value() {
+            if (mActive) {
+                return Sensor::value() + 400;
+            }
+            else {
+                return 400;
+            }
+        }
+    private:
+        inline static bool mActive{false};
+    };
+
+    template<typename Sensor>
+    struct VoltageProvider {
+        inline static constexpr auto valueId = External::SPort::ValueId::Voltage;
+        inline static constexpr void init() {}
+        inline static constexpr uint16_t value() {
+            return Sensor::value();
+        }
+    };
+
+    using tempiP = InternalTempProvider<typename Devs::adcController, 7, typename Devs::sigrow>;
+    using temp1P = TempProvider<typename Devs::temp1>;
+    using temp2P = TempProvider<typename Devs::temp1>;
+    using textP = TempProvider<typename Devs::text>;
+
     
+    using voltageP = VoltageProvider<typename Devs::vdiv>;
+    using cBecP = CurrentProvider<typename Devs::bec1S>;
     using currP = CurrentProvider<typename Devs::currS>;
+    using rpmP = RpmProvider<typename Devs::rpm>;
     
-    using sensor = External::SPort::Sensor<External::SPort::SensorId::ID1, sensorUsart, systemTimer, Meta::List<VersionProvider>>;
+    using sensor = External::SPort::Sensor<External::SPort::SensorId::ID1, sensorUsart, systemTimer, 
+                                           Meta::List<VersionProvider, temp1P, temp2P, tempiP, textP, voltageP, cBecP, currP, rpmP>>;
 
     using calibratePs = Meta::List<currP>;
 };
@@ -1439,9 +1510,7 @@ struct Application {
             using gfsm = GlobalFsm<devs>;
             
             gfsm::init(inverted);
-            etl::outl<terminal>("test21"_pgm);
-
-//            etl::Scoped<etl::EnableInterrupt<>> ei;
+            etl::outl<terminal>("test30"_pgm);
             
             while(true) {
                 gfsm::periodic(); 
