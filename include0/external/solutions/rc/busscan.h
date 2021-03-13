@@ -85,7 +85,7 @@ namespace External {
         using term_dev = devs::scan_term_dev;
         using terminal = etl::basic_ostream<term_dev>;
 
-        using led = std::conditional_t<std::is_same_v<typename Devs::scanLedPin, void>, AVR::NoPin, typename Devs::scanLedPin>;
+        using led = std::conditional_t<std::is_same_v<typename Devs::scanLedPin, void>, AVR::ActiveHigh<AVR::NoPin, Output>, typename Devs::scanLedPin>;
         using blinker = External::Blinker2<led, systemTimer, 100_ms, 2000_ms>;
         
         static constexpr External::Tick<systemTimer> initTimeout{100_ms};
