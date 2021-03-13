@@ -9,8 +9,9 @@ namespace External {
         struct ExcactDivider{};
     }
     
-    template<typename ADCont, auto Channel, typename Uoff, typename K, typename Kd, typename Mode = detail::Shift, typename value_type = uint16_t>
+    template<typename ADCont, auto Channel, typename Uoff, typename K, typename Kd, typename Mode = detail::Shift, typename VT = uint16_t>
     struct AnalogSensor {
+        using value_type = VT;
         inline static constexpr double VRef = ADCont::VRef;
         inline static constexpr double uoff = (double)Uoff::nom / (double)Uoff::denom;
         inline static constexpr double k    = (double)K::nom / (double)K::denom;
@@ -51,6 +52,7 @@ namespace External {
 //        std::integral_constant<uint16_t, b>::_;
         
         using index_type = ADCont::index_type;
+        using raw_type = ADCont::value_type;
         
         inline static constexpr auto channel_n = index_type{Channel};
 

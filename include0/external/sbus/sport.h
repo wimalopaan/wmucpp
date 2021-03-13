@@ -20,10 +20,17 @@ namespace External {
                                        SensorId::ID13, SensorId::ID14, SensorId::ID15, SensorId::ID16, SensorId::ID17, SensorId::ID18,
                                        SensorId::ID19, SensorId::ID20, SensorId::ID21, SensorId::ID22, SensorId::ID23, SensorId::ID24,
                                        SensorId::ID25, SensorId::ID26, SensorId::ID27, SensorId::ID28};
+        
+        static inline constexpr SensorId idFromIndex(const uint8_t i) {
+            if (i < sensor_ids.size()) {
+                return sensor_ids[i];
+            }
+            return SensorId::ID3;
+        }
+        
         namespace detail {
             static_assert(etl::isSet(sensor_ids), "sensor ids not unique");
         }
-        
         
         enum class ValueId : uint16_t {
             Current = 0x0200, // 15: 0,1A
@@ -59,6 +66,10 @@ namespace External {
             using index_type = etl::uint_ranged_circular<uint8_t, 0, numberOfProviders - 1>;
             
             enum class State : uint8_t {Init, Request, ReplyWait, Reply, WaitReplyComplete};
+            
+            inline static void maxProvider(uint8_t) {
+                
+            }
             
             struct ProtocollAdapter {
 //                using requests_t = std::conditional_t<uart::useInterrupts, volatile uint8_t, uint8_t>;

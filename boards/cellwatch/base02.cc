@@ -1,7 +1,7 @@
 #define NDEBUG
 
-//#define USE_HOTT
-#define USE_IBUS
+#define USE_HOTT
+//#define USE_IBUS
 
 #include <mcu/avr.h>
 
@@ -317,7 +317,7 @@ int main() {
                     sensorData.cell[2] = cellVoltageConverter::convert(cell2P::value()).value;
                     sensorData.cell[3] = cellVoltageConverter::convert(cell3P::value()).value;
                     
-                    auto [i,v] = cellsColl::MinProvider::indexedValue();
+                    auto [i,v] = cellsColl::MinProvider<Resetter>::indexedValue();
                     sensorData.min_cell_volt = cellVoltageConverter::convert(v).value;
                     sensorData.min_cell_volt_num = i;
                     
