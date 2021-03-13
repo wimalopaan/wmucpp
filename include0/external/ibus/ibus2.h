@@ -482,6 +482,11 @@ namespace IBus2 {
         inline static constexpr std::byte Creset    = 0xf0_B;
         
         using sensor_number_t = etl::uint_ranged_NaN<uint8_t, 1, 15>;
+
+//        using prov_type = etl::uint_ranged<uint8_t, 0, numberOfProviders - 1>;        
+        inline static void maxProvider(const uint8_t n) {
+                mEnabledProviders = std::min(n, numberOfProviders);
+        }
         
         struct ProtocollAdapter final {
             inline static constexpr uint8_t   Length    = 4;
@@ -534,7 +539,7 @@ namespace IBus2 {
                         if (const sensor_number_t n{address(c)}; n) {
                             if (!mFirstSensorNumber) {
                                 mFirstSensorNumber = n;
-                                if (numberOfProviders == 1) {
+                                if (mEnabledProviders == 1) {
                                     mLastSensorNumber = n;
                                 }
                                 mReceivedNumber = n;
@@ -543,7 +548,7 @@ namespace IBus2 {
                             }
                             else if (!mLastSensorNumber) {
                                 const uint8_t index = n.toInt() - mFirstSensorNumber.toInt();
-                                if (index == (numberOfProviders - 1)) {
+                                if (index == (mEnabledProviders - 1)) {
                                     mLastSensorNumber = n;
                                 }
                                 mReceivedNumber = n;
@@ -871,13 +876,14 @@ namespace IBus2 {
         static inline constexpr bool inRange(const sensor_number_t n) {
             if (!n) return false;
             const auto in = n.toInt();
-            return (in >= mFirstSensorNumber.toInt()) && (in < (mFirstSensorNumber.toInt() + numberOfProviders));
+            return (in >= mFirstSensorNumber.toInt()) && (in < (mFirstSensorNumber.toInt() + mEnabledProviders));
         }
         
         static inline sensor_number_t mReceivedNumber;
         static inline sensor_number_t mFirstSensorNumber;
         static inline sensor_number_t mLastSensorNumber;
-    };
 
+        static inline uint8_t mEnabledProviders{numberOfProviders};
+    };
 }
 
