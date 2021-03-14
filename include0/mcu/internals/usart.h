@@ -351,6 +351,10 @@ namespace AVR {
         inline static void txPinDisable() {
             txpin::template dir<AVR::Input>();
         }
+        template<bool on>
+        inline static void txPinPullup() {
+            txpin::template pullup<on>(); 
+        }
         
         template<etl::Concepts::NamedConstant Baud, typename Mode = FullDuplex, bool pullUp = true, auto flags = 0>
         inline static void init() {
