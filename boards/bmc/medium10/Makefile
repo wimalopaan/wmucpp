@@ -19,7 +19,7 @@ subdirs =
 #targets += test12.hex
 #targets += test20.hex
 #targets += test21.hex
-#targets += test30.hex
+targets += test30.hex
 targets += esc10_avr128_hw03.hex
 
 -include ../../../Makefile.avr0.include
