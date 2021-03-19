@@ -8,6 +8,10 @@
 
 #define HOTT_TITLE "BMC " GITTAG_PGM
 
+#ifndef NDEBUG
+static unsigned int assertKey{1234};
+#endif
+
 #include <mcu/avr.h>
 #include <mcu/common/delay.h>
 
@@ -55,6 +59,12 @@ using namespace AVR;
 using namespace std::literals::chrono;
 using namespace External::Units::literals;
 
+namespace xassert {
+    etl::StringBuffer<160> ab;
+    etl::StringBuffer<10> aline;
+    bool on{false};
+}
+
 namespace  {
     constexpr auto fRtc = 1000_Hz;
 
@@ -78,16 +88,19 @@ struct Data final : public EEProm::DataBase<Data> {
     enum class Param : uint8_t {Dead, ThrD1, ThrD2, PwmMax, PwmMin, KickThr, KickTicks, PwmLow, SlowDown, SPortID, NSensors, _Number};
     
     using pa_t = std::array<uint16_t, (uint8_t)Param::_Number>;
+//    pa_t::_;
     using index_t = etl::index_type_t<pa_t>;
+//    index_t::_
     using cyclic_t = etl::cyclic_type_t<pa_t>;
-
-    uint16_t& param(const index_t i) {
-        return mParameter[i.toInt()];
-    }
+//    cyclic_t::_;
+//    uint16_t& param(const index_t i) {
+//        return mParameter[i.toInt()];
+//    }
     uint16_t& param(const Param i) {
         return mParameter[(uint8_t)i];
     }
 private:
+    uint16_t dummy;
     pa_t mParameter{};
 };
 
@@ -165,14 +178,26 @@ struct TimeRegulator {
     }
     static inline void slow(bool on) {
         if (on) {
-            mMaxDiff = std::max(raw_type{2}, (halfSpan / 300));
+            mMaxDiff = std::max(raw_type{2}, mSlowDiff);
+//            mMaxDiff = std::max(raw_type{2}, (halfSpan / 300));
         }
         else {
-            mMaxDiff = std::max(raw_type{10}, (halfSpan / 40));
+            mMaxDiff = std::max(raw_type{10}, (halfSpan / halfSpanDivider));
+//            mMaxDiff = std::max(raw_type{10}, (halfSpan / 40));
         }
     }
+    static inline void slowValue(const raw_type& d) {
+        mSlowDiff = std::min(d, (halfSpan/halfSpanDivider));
+    }
+    static inline raw_type slowValue() {
+        return mSlowDiff;
+    }
+    static inline constexpr uint16_t halfSpanDivider = 25;
+//    std::integral_constant<uint16_t, halfSpan/halfSpanDivider>::_;
+//    std::integral_constant<uint16_t, halfSpan/(10*halfSpanDivider)>::_;
 private:
     static inline External::Tick<Timer> deltaTick;
+    static inline raw_type mSlowDiff{halfSpan / (10 * halfSpanDivider)};
     static inline raw_type mMaxDiff{4};
     static inline raw_type mTarget{};
     static inline raw_type mActual{};
@@ -271,6 +296,18 @@ struct EscFsm {
         return pvalue_t(NVM::data().param(Param::Dead) / deadStep() - 1);
     }
 
+    static inline void setSlowDown(const pvalue_t& v) {
+        timeRegulator::slowValue((timeRegulator::halfSpan * (v + 1)) / (10 * timeRegulator::halfSpanDivider));               
+    }
+    static inline void slowdown(const pvalue_t& v) {
+        setSlowDown(v);
+        NVM::data().param(Param::SlowDown) = v;               
+        NVM::data().change();
+    }
+    static inline pvalue_t p_slowdown() {
+        return pvalue_t(NVM::data().param(Param::SlowDown));
+    }
+    
     static inline constexpr uint16_t pwmStep1 = PWM::f_timer.value / 18000;
 //    std::integral_constant<uint16_t, pwmStep1>::_;
     
@@ -350,6 +387,7 @@ struct EscFsm {
         NVM::data().param(Param::KickThr) = thrHalf() / 8;
         NVM::data().param(Param::KickTicks) = External::Tick<Timer>{75_ms}.value;
         NVM::data().param(Param::PwmLow) = 0;
+        NVM::data().param(Param::SlowDown) = 9;
         
         NVM::data().change();
     }
@@ -370,6 +408,8 @@ struct EscFsm {
         PWM::period(mPwmPeriodMin());
         PWM::template off<Meta::List<AVR::PWM::WO<0>>>();
         PWM::template off<Meta::List<AVR::PWM::WO<1>, AVR::PWM::WO<2>>>();
+
+        setSlowDown(pvalue_t(NVM::data().param(Param::SlowDown)));
     }
     
     inline static void event(const Event e) {
@@ -572,7 +612,8 @@ struct EscFsm {
     
     template<typename Term>
     static inline void debug() {
-                etl::outl<Term>("s: "_pgm, (uint8_t)mState, " rs: "_pgm, (uint8_t)mRunState, " p: "_pgm, PWM::max(), " thr: "_pgm, mThrottle.toInt());
+//                etl::outl<Term>("s: "_pgm, (uint8_t)mState, " rs: "_pgm, (uint8_t)mRunState, " p: "_pgm, PWM::max(), " thr: "_pgm, mThrottle.toInt());
+                etl::outl<Term>("s: "_pgm, (uint8_t)mState, " sd: "_pgm, timeRegulator::slowValue());
     }
     inline static void activate() {
         inhPin::on();
@@ -722,7 +763,7 @@ struct GlobalFsm {
             searchCh().setToBottom();
         }
         data.param(Param::SPortID) = 3;
-        data.param(Param::NSensors) = 10;
+        data.param(Param::NSensors) = maxParamValue;
         
         data.change();
         updateSensorId();
@@ -990,7 +1031,7 @@ struct GlobalFsm {
         case State::SetupSetParameter:
             if (const auto be = button::event(); be == button::Press::Short) {
                 setParam(mParam, servo_pa::value(searchCh().toInt()));
-                NVM::data().param(mParam);
+//                NVM::data().param(mParam);
                 mState = State::SetupSetParameterWait;
             }
             else if (be == button::Press::Long) {
@@ -1241,6 +1282,7 @@ private:
                 cp::actual(Esc::p_pwmLow());
                 break;
             case 8: // slowdown
+                cp::actual(Esc::p_slowdown());
                 break;
             case 9:
                 using cpv_t = BusDevs::configProvider::value_type;
@@ -1248,6 +1290,7 @@ private:
                 cp::actual(cpv_t(data.param(Param::SPortID)));
                 break;
             case 10: // NSensors
+                cp::actual(cpv_t(data.param(Param::NSensors)));
                 break;
             case 11: // Reset
                 break;
@@ -1286,6 +1329,7 @@ private:
             Esc::pwmLow(sv);
             break;
         case 8: // slowdown
+            Esc::slowdown(sv);
             break;
         case 9:
             NVM::data().param(Param::SPortID) = sv;
@@ -1294,7 +1338,7 @@ private:
         case 10:
             NVM::data().param(Param::NSensors) = sv;
             if constexpr(External::Bus::isSBus<bus_type>::value || External::Bus::isIBus<bus_type>::value) {
-                Sensor::maxProvider(sv + 3);
+                Sensor::maxProvider(sv + 4);
             }
             break;
         case 11: // Reset
@@ -1353,6 +1397,14 @@ private:
     
     
     static inline void debug() {
+#ifndef NDEBUG
+        if (xassert::on) {
+//            etl::outl<terminal>("a: "_pgm, assertKey);
+            etl::outl<terminal>("a: "_pgm, assertKey, " : "_pgm, xassert::ab);
+            xassert::on = false;
+            assertKey = 0;
+        }
+#endif
 //        etl::out<terminal>("p: "_pgm, servo_pa::packages(), " r: "_pgm, Rpm::value(), " c: "_pgm, Rpm::captures());
 //        etl::out<terminal>(" a0: "_pgm, Adc::value(adc_i_t{0}));
 //        etl::out<terminal>(" a1: "_pgm, Adc::value(adc_i_t{1}));
@@ -1478,7 +1530,6 @@ struct ConfigProvider {
         mActual.setToBottom();
         mNew.setToBottom();
     }
-
 private:
     static inline State mState{State::Display}; 
     static inline param_type mParameter{}; 
@@ -1993,28 +2044,42 @@ struct RCMenu final : public Hott::Menu<8, true, 6> {
     RCMenu() : Hott::Menu<8, true, 6>{nullptr, HOTT_TITLE, &mDead, &mSlow, &mSystem, &mKick, &mReset} {}
 private:
     using esc = GFsm::Esc;
+    using eeprom = GFsm::devs::eeprom;
     
     struct ResetAdapter {
         static inline void process() {
+            GFsm::nvmDefaults();
         }
     };
-    template<Data::Param N>
     struct Adapter {
-//        Adapter() : mD{esc::p_dead()} {}
-        auto& operator[](const uint8_t) {
-            return mD;
+        auto& operator[](const uint8_t p) {
+            switch(p) {
+            case 0:
+                mD[0] = esc::p_dead();
+                break;
+            case 1:
+                mD[1] = esc::p_slowdown();
+                break;
+            }
+            assertKey = 42;
+            return mD[0];
         }
         void change() {
-            esc::dead(mD);
+            esc::dead(mD[0]);
+            esc::slowdown(mD[1]);
+            eeprom::data().change();
         }
-        void select(const uint8_t) {}
+        void select(const uint8_t p) {
+//            lastSelected = p;
+        }
     private:
-        etl::uint_ranged<uint8_t, 0, 9> mD{};
+//        uint8_t lastSelected{};
+//        etl::uint_ranged<uint8_t, 0, 9> lastState{};
+        std::array<etl::uint_ranged<uint8_t, 0, 9>, 2> mD{};
     };
-    Adapter<Data::Param::Dead> a0;
-    Adapter<Data::Param::SlowDown> a1;
-    Hott::TextWithValue<uint8_t, Adapter<Data::Param::Dead>, 3, void, 5> mDead{"Deadband:"_pgm, a0, 0, 9};
-    Hott::TextWithValue<uint8_t, Adapter<Data::Param::SlowDown>, 3, void, 5> mSlow{"Slowdown:"_pgm, a1, 0, 9};
+    Adapter a;
+    Hott::TextWithValue<uint8_t, Adapter, 3, void, 5> mDead{"Deadband:"_pgm, a, 0, 9};
+    Hott::TextWithValue<uint8_t, Adapter, 3, void, 5> mSlow{"Slowdown:"_pgm, a, 1, 9};
     ThrottleMenu mSystem{this};
     KickMenu mKick{this};
     Button<ResetAdapter> mReset{"Reset"_pgm};
@@ -2124,9 +2189,12 @@ int main() {
 
 #ifndef NDEBUG
 /*[[noreturn]] */inline void assertOutput(const AVR::Pgm::StringView& expr [[maybe_unused]], const AVR::Pgm::StringView& file[[maybe_unused]], const unsigned int line [[maybe_unused]]) noexcept {
-        while(true) {
-            devices::assertPin::toggle();
-        }
+    xassert::ab.clear();
+    xassert::ab.insertAt(0, expr);
+    etl::itoa(line, xassert::aline);
+    xassert::ab.insertAt(20, xassert::aline);
+    xassert::ab.insertAt(30, file);
+    xassert::on = true;
 }
 
 template<typename String1, typename String2>
