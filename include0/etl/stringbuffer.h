@@ -141,24 +141,24 @@ namespace etl {
             return data[index];
         }
         inline constexpr const volatile T& operator[](uint8_t index) const volatile {
-            assert(index < size);
+            assert(index < size());
             return data[index];
         }
         inline constexpr volatile T& operator[](uint8_t index) volatile {
-            assert(index < size);
+            assert(index < size());
             return data[index];
         }
         inline constexpr const T* begin() const {
             return &data[0];
         }
         inline constexpr const T* end() const {
-            return &data[Length];
+            return &data[Length - 1] + 1;
         }
         inline constexpr T* begin(){
             return &data[0];
         }
         inline constexpr T* end() {
-            return &data[Length];
+            return &data[Length - 1] + 1;
         }
     private:
         std::array<T, Length> data;
