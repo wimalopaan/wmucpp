@@ -61,6 +61,7 @@ struct Sender {
     template<auto N>
     static inline void copy(const etl::FixedVector<uint16_t, N>& data) {
         static_assert(mSize == N);
+        ++mUpdateCounter;
         const uint8_t newSize = std::min((uint8_t)(data.size() + offset), mSize);
         if (mValues.size() < newSize) {
             mValues.reserve(newSize);
@@ -82,6 +83,9 @@ struct Sender {
         mValues[0] = v;
     }
     static inline void clear() {
+        for(uint8_t i = 1; i < mValues.size(); ++i) {
+            mValues[i] = 0;
+        }
         mValues.clear();
     }
     
@@ -110,6 +114,7 @@ struct Sender {
     static inline constexpr uint8_t size() {
         return mSize * sizeof(uint16_t) + 2 + 2;
     }
+    inline static etl::uint_ranged<uint8_t, 10> mUpdateCounter{10};
 private:
     inline static constexpr uint8_t mSize = 16;
     inline static etl::FixedVector<uint16_t, mSize> mValues{};
@@ -131,6 +136,7 @@ struct FSM {
     static constexpr auto intervall = Timer::intervall;
     static constexpr External::Tick<Timer> idleTimeBeforeSleepTicks{5000_ms};
     static constexpr External::Tick<Timer> measurmentTicks{100_ms};
+    static constexpr External::Tick<Timer> updateTicks{300_ms};
     
     inline static void reset() {
         stateTick.reset();
@@ -140,16 +146,22 @@ struct FSM {
         auto lastState = mState;
         ++stateTick;
         ++measureTick;
+        ++updateTick;
         switch(mState) {
         case State::Init:
             mState = State::Run;
             break;
         case State::Run:
+            updateTick.on(updateTicks, []{
+                --sendDown::mUpdateCounter;
+                if (sendDown::mUpdateCounter.isBottom()) {
+                    sendDown::clear();
+                }
+            });
             measureTick.on(measurmentTicks, []{
                 auto v = vdiv::value();
                 sendDown::set(v);
                 sendDown::send<upDown>();
-                
             });
             stateTick.on(idleTimeBeforeSleepTicks, []{
                 mState = State::Sleep;
@@ -182,6 +194,7 @@ struct FSM {
     inline static State mState = State::Init;
     inline static External::Tick<Timer> stateTick;
     inline static External::Tick<Timer> measureTick;
+    inline static External::Tick<Timer> updateTick;
 };
 
 using fsm = FSM<systemTimer>;

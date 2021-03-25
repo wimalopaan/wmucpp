@@ -94,6 +94,7 @@ struct CellsCollector {
     template<auto N>
     static inline void copy(const etl::FixedVector<uint16_t, N>& data) {
         etl::Scoped<etl::DisbaleInterrupt<>> ei;
+        ++mUpdateCounter;
         for(uint8_t i = offset; i < mValues.size(); ++i) {
             const uint8_t k = i - offset;
             if (k < data.size()) {
@@ -111,6 +112,12 @@ struct CellsCollector {
     static inline uint8_t size() {
         return mValues.size();
     }
+    static inline void clear() {
+        etl::Scoped<etl::DisbaleInterrupt<>> ei;
+        for(uint8_t i = 1; i < mValues.size(); ++i) {
+            mValues[i] = 0;
+        }
+    }
     template<uint8_t N>
     struct SPortCell {
         inline static constexpr auto valueId = External::SPort::ValueId::Cells;
@@ -118,11 +125,11 @@ struct CellsCollector {
         inline static constexpr uint32_t value() {
             return (((uint32_t)(mValues[N + 1]*5) & 0x0fff) << 20) | (((uint32_t)(mValues[N]*5) & 0x0fff) << 8) | (mCellTotal << 4) | N;
         }
-        inline static void setTotal(const uint8_t max) {
-            mCellTotal = max;
-        }
+//        inline static void setTotal(const uint8_t max) {
+//            mCellTotal = max;
+//        }
     private:
-        static inline uint8_t mCellTotal{0};
+        static inline uint8_t mCellTotal{4};
     };
     struct VersionProvider {
         inline static constexpr auto valueId = External::SPort::ValueId::DIY;
@@ -130,6 +137,7 @@ struct CellsCollector {
         inline static constexpr uint16_t value() {
 #if defined(GITMAJOR) && defined(GITMINOR)
         static_assert(GITMINOR < 10);
+//            return mUpdateCounter;
         return GITMAJOR * 100 + GITMINOR;
 #else
         return VERSION_NUMBER;
@@ -190,6 +198,7 @@ struct CellsCollector {
             return t;
         }
     };
+    inline static etl::uint_ranged<uint8_t, 0, 10> mUpdateCounter{10};
 private:
     inline static constexpr uint8_t mSize = 4;
     inline static volatile etl::array<uint16_t, mSize> mValues{};
@@ -267,7 +276,7 @@ using cells01 = cellsColl::SPortCell<0>;
 using cells23 = cellsColl::SPortCell<2>;
 using telemetry = External::SPort::Sensor<External::SPort::SensorId::ID1, sensorUsart, systemTimer
                                        ,Meta::List<cellsColl::VersionProvider, cells01, cells23
-//                                       ,cell0P, cell1P, cell2P, cell3P
+                                       ,cell0P, cell1P, cell2P, cell3P
 , cellsColl::MinProvider
 , cellsColl::TotalProvider
 >>;
@@ -308,6 +317,7 @@ int main() {
     
     const auto activateTimer = alarmTimer::create(1000_ms, External::Hal::AlarmFlags::Periodic);
     const auto measureTimer = alarmTimer::create(100_ms, External::Hal::AlarmFlags::Periodic);
+    const auto updateTimer = alarmTimer::create(300_ms, External::Hal::AlarmFlags::Periodic);
 
     while(true) {
         etl::Scoped<etl::EnableInterrupt<>> ei;
@@ -321,6 +331,12 @@ int main() {
             alarmTimer::periodic([&](const auto& t){
                 if (activateTimer == t) {
                     activate::toggle();
+                }
+                if (updateTimer == t) {
+                    --cellsColl::mUpdateCounter;
+                    if (cellsColl::mUpdateCounter.isBottom()) {
+                        cellsColl::clear();
+                    }
                 }
                 if (measureTimer == t) {
                     const auto v0 = vdiv::value();  
@@ -338,8 +354,8 @@ int main() {
                     sensorData.Battery1 = cellsColl::TotalProvider::value() / 10; // 100mV
 #endif
 #ifdef USE_SPORT
-                    cells01::setTotal(cellsColl::size());
-                    cells23::setTotal(cellsColl::size());
+//                    cells01::setTotal(cellsColl::size());
+//                    cells23::setTotal(cellsColl::size());
 #endif
                 }
             });
