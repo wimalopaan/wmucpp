@@ -108,6 +108,9 @@ namespace Parameter {
 #ifdef AUTO_BUS
     constexpr auto fRtc = 1000_Hz; // 1ms
 #endif
+#ifdef USE_SPORT
+    constexpr auto fRtc = 1000_Hz; // 1ms
+#endif
     constexpr uint16_t R1vd = 10'000;
     constexpr uint16_t R2vd = 1'000;
 

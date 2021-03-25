@@ -1,12 +1,12 @@
-#define USE_IBUS
+//#define USE_IBUS
 
-//#define USE_SPORT
+#define USE_SPORT
 //#define USE_HOTT
 
 #include "board.h"
 #include "temp.h"
 
-using dbg1 = so4Pin;
+//using dbg1 = so4Pin;
 
 using adcController = External::Hal::AdcController<adc, Meta::NList<10, 11, 5, 3, 0x1e>>; // 1e = temp
 

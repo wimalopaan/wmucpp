@@ -24,3 +24,12 @@ SO3 GPS
 Q0  rpm1 
 SO1 temp
 SO2 water
+
+a4uni:
+----------
+SO4 analog
+SO3 analog
+Q0  ---
+SO1 analog
+SO2 analog
+

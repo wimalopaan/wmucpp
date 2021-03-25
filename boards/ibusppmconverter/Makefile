@@ -45,6 +45,7 @@ targets += servoswitch.hex
 targets += servo360.hex
 targets += sbus_test.hex
 targets += sport_test.hex
+targets += hott.hex
 targets += auto2multi.hex
 targets += autoSchottel.hex
 
