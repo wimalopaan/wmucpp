@@ -1,13 +1,17 @@
 #define NDEBUG
 
-//#define USE_HOTT
+#define USE_HOTT
 //#define USE_IBUS
-#define USE_SPORT
+//#define USE_SPORT
 
 #define SBUS_IBUS_NO_WARN
 
 #ifndef GITMAJOR
 # define VERSION_NUMBER 2300
+#endif
+
+#ifdef USE_HOTT
+# define HOTT_VERSION "Ver: " GITTAG2_PGM
 #endif
 
 #include <mcu/avr.h>
@@ -290,7 +294,7 @@ int main() {
     ccp::unlock([]{
         clock::prescale<1>(); 
     });
-   
+    
     systemTimer::init();
     adcController::init();
     
@@ -312,7 +316,8 @@ int main() {
     daisy::dir<Output>();
     daisy::on();
     
-    etl::copy(telemetry::text()[0], "WM 4S Sensor 0.2"_pgm);
+    etl::copy(telemetry::text()[0], "WM 4S Sensor"_pgm);
+    etl::copy(telemetry::text()[1], HOTT_VERSION);
 #endif
     
     const auto activateTimer = alarmTimer::create(1000_ms, External::Hal::AlarmFlags::Periodic);
