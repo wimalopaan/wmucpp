@@ -34,8 +34,10 @@ using activate = Pin<Port<A>, 7>;
 
 // AIN3 = Voltage
 
-namespace  {
-    constexpr auto fRtc = 2000_Hz;
+namespace Parameter {
+    constexpr auto fRtc = 1000_Hz;
+    constexpr uint16_t R1vd = 100; // 100K
+    constexpr uint16_t R2vd = 220; // 220K
 }
 
 using ccp = Cpu::Ccp<>;
@@ -50,85 +52,8 @@ using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V1_5>;
 using adcController = External::Hal::AdcController<adc, Meta::NList<3, 0x1e>>; // 1e = temp
 using channel_t = adcController::index_type;
 
-using systemTimer = SystemTimer<Component::Rtc<0>, fRtc>;
+using systemTimer = SystemTimer<Component::Rtc<0>, Parameter::fRtc>;
 using alarmTimer = External::Hal::AlarmTimer<systemTimer, 8>;
-
-//template<auto N, typename CallBack, typename MCU = DefaultMcuType>
-//struct CellPA {
-//    inline static constexpr std::byte startByte{0xa5};
-
-//    enum class State : uint8_t {Init, AwaitLength, AwaitDataL, AwaitDataH, AwaitCSLow, AwaitCSHigh};
-//    inline static bool process(const std::byte b) {
-//        static uint16_t v{};
-//        static IBus::CheckSum cs;
-//        switch(mState) {
-//        case State::Init:
-//            cs.reset();
-//            if (b == startByte) {
-//                cs += b;
-//                mState = State::AwaitLength;
-//                mLength.setToBottom();
-//            }
-//            break;
-//        case State::AwaitLength:
-//            cs += b;
-//            mLength.set(static_cast<uint8_t>(b));
-//            if ((mLength != 0) && (mLength <= mValues.capacity)) {
-//                mState = State::AwaitDataL;
-//                mValues.clear();
-//                mValues.reserve(mLength);
-//                mIndex.setToBottom();
-//            }
-//            else {
-//                mState = State::Init;
-//            }
-//            break;
-//        case State::AwaitDataL:
-//            cs += b;
-//            --mLength;
-//            v = static_cast<uint16_t>(b);
-//            mState = State::AwaitDataH;
-//            break;
-//        case State::AwaitDataH:
-//            cs += b;
-//            v |= (static_cast<uint16_t>(b) << 8);
-//            mValues[mIndex] = v;
-//            ++mIndex;
-//            if (mLength.isBottom()) {
-//                mState = State::AwaitCSLow;
-//            }
-//            else {
-//                mState = State::AwaitDataL;
-//            }
-//            break;
-//        case State::AwaitCSLow:
-//            cs.lowByte(b);
-//            mState = State::AwaitCSHigh;
-//            break;
-//        case State::AwaitCSHigh:
-//            cs.highByte(b);
-//            if (cs) {
-//                if constexpr(!std::is_same_v<CallBack, void>) {
-//                    CallBack::copy(mValues);                
-//                }
-//            }
-//            mState = State::Init;
-//            break;
-//        }
-//        return true;
-//    }
-//private:
-//    inline static constexpr uint8_t mSize = 16;
-//    inline static etl::FixedVector<uint16_t, mSize> mValues{};
-//    inline static etl::uint_ranged<uint8_t, 0, mSize - 1> mLength{};
-//    inline static etl::uint_ranged<uint8_t, 0, mSize - 1> mIndex{};
-//    inline static State mState{State::Init};
-//};
-
-struct Sender;
-using sendDown = Sender;
-
-using cell = External::CellPA<0, sendDown, IBus::CheckSum>;
 
 struct Sender {
     inline static constexpr std::byte startByte{0xa5};
@@ -173,12 +98,18 @@ struct Sender {
         Dev::put(cs.lowByte());
         Dev::put(cs.highByte());
     }
+    static inline constexpr uint8_t size() {
+        return mSize * sizeof(uint16_t) + 2 + 2;
+    }
 private:
     inline static constexpr uint8_t mSize = 16;
     inline static etl::FixedVector<uint16_t, mSize> mValues{};
 };
 
-using upDown = AVR::Usart<usart0Position, cell, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<16>>;
+using sendDown = Sender;
+using cell = External::CellPA<0, sendDown, IBus::CheckSum>;
+
+using upDown = AVR::Usart<usart0Position, cell, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<sendDown::size()>>;
 
 template<typename Timer>
 struct FSM {
@@ -210,7 +141,11 @@ struct FSM {
             case State::Run:
                 break; 
             case State::Sleep:
+                upDown::txEnable<false>();
+                upDown::txPinDisable();
                 sleep::down();
+                upDown::txPinEnable();
+                upDown::txEnable<true>();
                 mState = State::Run;
                 break;        
             }
@@ -224,7 +159,7 @@ struct FSM {
 using fsm = FSM<systemTimer>;
 
 using vdiv = External::AnalogSensor<adcController, 0, std::ratio<0,1>, 
-                                    std::ratio<100, 320>, // 100k + 220K
+                                    std::ratio<Parameter::R1vd, Parameter::R1vd + Parameter::R2vd>, // 100k + 220K
                                     std::ratio<100,1>>; // 10mV
 namespace  {
     alarmTimer::index_type sleepTimer;

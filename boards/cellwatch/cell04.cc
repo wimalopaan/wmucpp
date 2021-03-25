@@ -34,8 +34,10 @@ using activate = Pin<Port<A>, 7>;
 
 // AIN3 = Voltage
 
-namespace  {
-    constexpr auto fRtc = 2000_Hz;
+namespace Parameter {
+    constexpr auto fRtc = 1000_Hz;
+    constexpr uint16_t R1vd = 100; // 100K
+    constexpr uint16_t R2vd = 220; // 220K
 }
 
 using ccp = Cpu::Ccp<>;
@@ -50,85 +52,7 @@ using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V1_5>;
 using adcController = External::Hal::AdcController<adc, Meta::NList<3, 0x1e>>; // 1e = temp
 using channel_t = adcController::index_type;
 
-using systemTimer = SystemTimer<Component::Rtc<0>, fRtc>;
-using alarmTimer = External::Hal::AlarmTimer<systemTimer, 8>;
-
-//template<auto N, typename CallBack, typename MCU = DefaultMcuType>
-//struct CellPA {
-//    inline static constexpr std::byte startByte{0xa5};
-
-//    enum class State : uint8_t {Init, AwaitLength, AwaitDataL, AwaitDataH, AwaitCSLow, AwaitCSHigh};
-//    inline static bool process(const std::byte b) {
-//        static uint16_t v{};
-//        static IBus::CheckSum cs;
-//        switch(mState) {
-//        case State::Init:
-//            cs.reset();
-//            if (b == startByte) {
-//                cs += b;
-//                mState = State::AwaitLength;
-//                mLength.setToBottom();
-//            }
-//            break;
-//        case State::AwaitLength:
-//            cs += b;
-//            mLength.set(static_cast<uint8_t>(b));
-//            if ((mLength != 0) && (mLength <= mValues.capacity)) {
-//                mState = State::AwaitDataL;
-//                mValues.clear();
-//                mValues.reserve(mLength);
-//                mIndex.setToBottom();
-//            }
-//            else {
-//                mState = State::Init;
-//            }
-//            break;
-//        case State::AwaitDataL:
-//            cs += b;
-//            --mLength;
-//            v = static_cast<uint16_t>(b);
-//            mState = State::AwaitDataH;
-//            break;
-//        case State::AwaitDataH:
-//            cs += b;
-//            v |= (static_cast<uint16_t>(b) << 8);
-//            mValues[mIndex] = v;
-//            ++mIndex;
-//            if (mLength.isBottom()) {
-//                mState = State::AwaitCSLow;
-//            }
-//            else {
-//                mState = State::AwaitDataL;
-//            }
-//            break;
-//        case State::AwaitCSLow:
-//            cs.lowByte(b);
-//            mState = State::AwaitCSHigh;
-//            break;
-//        case State::AwaitCSHigh:
-//            cs.highByte(b);
-//            if (cs) {
-//                if constexpr(!std::is_same_v<CallBack, void>) {
-//                    CallBack::copy(mValues);                
-//                }
-//            }
-//            mState = State::Init;
-//            break;
-//        }
-//        return true;
-//    }
-//private:
-//    inline static constexpr uint8_t mSize = 16;
-//    inline static etl::FixedVector<uint16_t, mSize> mValues{};
-//    inline static etl::uint_ranged<uint8_t, 0, mSize - 1> mLength{};
-//    inline static etl::uint_ranged<uint8_t, 0, mSize - 1> mIndex{};
-//    inline static State mState{State::Init};
-//};
-
-struct Sender;
-using sendDown = Sender;
-
-using cell = External::CellPA<0, sendDown, IBus::CheckSum>;
+using systemTimer = SystemTimer<Component::Rtc<0>, Parameter::fRtc>;
 
 struct Sender {
     inline static constexpr std::byte startByte{0xa5};
@@ -142,7 +66,13 @@ struct Sender {
             mValues.reserve(newSize);
         }
         for(uint8_t i = offset; i < mValues.size(); ++i) {
-            mValues[i] = data[i - offset];
+            const uint8_t k = i - offset;
+            if (k < data.size()) {
+                mValues[i] = data[k];
+            }
+            else {
+                mValues[i] = 0;
+            } 
         }
     }    
     static inline void set(const uint16_t v) {
@@ -151,6 +81,10 @@ struct Sender {
         }
         mValues[0] = v;
     }
+    static inline void clear() {
+        mValues.clear();
+    }
+    
     template<typename Dev>
     static inline void send() {
         IBus::CheckSum cs;
@@ -173,12 +107,22 @@ struct Sender {
         Dev::put(cs.lowByte());
         Dev::put(cs.highByte());
     }
+    static inline constexpr uint8_t size() {
+        return mSize * sizeof(uint16_t) + 2 + 2;
+    }
 private:
     inline static constexpr uint8_t mSize = 16;
     inline static etl::FixedVector<uint16_t, mSize> mValues{};
 };
 
-using upDown = AVR::Usart<usart0Position, cell, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<16>>;
+using sendDown = Sender;
+using cell = External::CellPA<0, sendDown, IBus::CheckSum>;
+
+using upDown = AVR::Usart<usart0Position, cell, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<sendDown::size()>>;
+
+using vdiv = External::AnalogSensor<adcController, 0, std::ratio<0,1>, 
+                                    std::ratio<Parameter::R1vd, Parameter::R1vd + Parameter::R2vd>, // 100k + 220K
+                                    std::ratio<100,1>>; // 10mV
 
 template<typename Timer>
 struct FSM {
@@ -186,49 +130,61 @@ struct FSM {
 
     static constexpr auto intervall = Timer::intervall;
     static constexpr External::Tick<Timer> idleTimeBeforeSleepTicks{5000_ms};
+    static constexpr External::Tick<Timer> measurmentTicks{100_ms};
+    
+    inline static void reset() {
+        stateTick.reset();
+    }
     
     inline static void ratePeriodic() {
         auto lastState = mState;
-        ++stateTicks;
+        ++stateTick;
+        ++measureTick;
         switch(mState) {
         case State::Init:
             mState = State::Run;
             break;
         case State::Run:
-            if (stateTicks > idleTimeBeforeSleepTicks) {
+            measureTick.on(measurmentTicks, []{
+                auto v = vdiv::value();
+                sendDown::set(v);
+                sendDown::send<upDown>();
+                
+            });
+            stateTick.on(idleTimeBeforeSleepTicks, []{
                 mState = State::Sleep;
-            }
-            break; 
+            });
+            break;        
         case State::Sleep:
             break;        
         }
         if (lastState != mState) {
-            stateTicks.reset();
+            stateTick.reset();
             switch(mState) {
             case State::Init:
                 break;
             case State::Run:
                 break; 
             case State::Sleep:
+                upDown::txEnable<false>();
+                upDown::txPinDisable();
                 sleep::down();
+                Sender::clear();
+                upDown::txPinEnable();
+                upDown::txEnable<true>();
                 mState = State::Run;
+                stateTick.reset();
                 break;        
             }
         }
     }
     
     inline static State mState = State::Init;
-    inline static External::Tick<Timer> stateTicks;
+    inline static External::Tick<Timer> stateTick;
+    inline static External::Tick<Timer> measureTick;
 };
 
 using fsm = FSM<systemTimer>;
-
-using vdiv = External::AnalogSensor<adcController, 0, std::ratio<0,1>, 
-                                    std::ratio<100, 320>, // 100k + 220K
-                                    std::ratio<100,1>>; // 10mV
-namespace  {
-    alarmTimer::index_type sleepTimer;
-}
 
 int main() {
     portmux::init();
@@ -249,9 +205,6 @@ int main() {
     activate::template dir<Input>();
     activate::attributes<Meta::List<Attributes::Interrupt<Attributes::BothEdges>>>();
     
-    const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
-    sleepTimer = alarmTimer::create(5000_ms, External::Hal::AlarmFlags::Periodic);
-
     {
         activate::resetInt();
         etl::Scoped<etl::EnableInterrupt<>> ei;
@@ -261,17 +214,6 @@ int main() {
             adcController::periodic();
             systemTimer::periodic([&]{
                 fsm::ratePeriodic();
-                alarmTimer::periodic([&](const auto& t){
-                    if (periodicTimer == t) {
-                        auto v = vdiv::value();
-                        sendDown::set(v);
-                        sendDown::send<upDown>();
-                    }
-                    else if (sleepTimer == t) {
-                        sleep::down();
-                        alarmTimer::restart(sleepTimer);
-                    }
-                });
             });
         }
     }
@@ -279,7 +221,7 @@ int main() {
 
 ISR(PORTA_PORT_vect) {
     activate::resetInt();
-    alarmTimer::restart(sleepTimer);
+    fsm::reset();
 }
 
 #ifndef NDEBUG

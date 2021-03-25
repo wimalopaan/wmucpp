@@ -169,6 +169,8 @@ boards/bmc/blink01.cc
 boards/bmc/medium01/Makefile
 boards/bmc/medium10/Makefile
 boards/bmc/medium10/esc10_avr128_hw03.cc
+boards/bmc/medium10/hott00.cc
+boards/bmc/medium10/hott01.cc
 boards/bmc/medium10/test00.cc
 boards/bmc/medium10/test01.cc
 boards/bmc/medium10/test02.cc
@@ -222,10 +224,18 @@ boards/breakout/test01.cc
 boards/cellwatch/Makefile
 boards/cellwatch/base01.cc
 boards/cellwatch/base02.cc
+boards/cellwatch/base03.cc
+boards/cellwatch/base04.cc
 boards/cellwatch/cell01.cc
+boards/cellwatch/cell03.cc
+boards/cellwatch/cell04.cc
 boards/cellwatch/doc/Makefile
 boards/cellwatch/doc/cellwatch.adoc
 boards/cellwatch/test00.cc
+boards/cellwatch/test01.cc
+boards/cellwatch/test02.cc
+boards/cellwatch/test03.cc
+boards/cellwatch/test04.cc
 boards/curiosity/Makefile
 boards/curiosity/test00.cc
 boards/curiosity/test01.cc
@@ -286,6 +296,7 @@ boards/ibusppmconverter/b11c4uni.cc
 boards/ibusppmconverter/board.h
 boards/ibusppmconverter/curr.h
 boards/ibusppmconverter/gps.h
+boards/ibusppmconverter/hott.cc
 boards/ibusppmconverter/ibus2multi.cc
 boards/ibusppmconverter/lua_encoder.cc
 boards/ibusppmconverter/rpm.h
