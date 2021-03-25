@@ -59,11 +59,13 @@ using namespace AVR;
 using namespace std::literals::chrono;
 using namespace External::Units::literals;
 
+#ifndef NDEBUG
 namespace xassert {
     etl::StringBuffer<160> ab;
     etl::StringBuffer<10> aline;
     bool on{false};
 }
+#endif
 
 namespace  {
     constexpr auto fRtc = 1000_Hz;
@@ -187,7 +189,7 @@ struct TimeRegulator {
         }
     }
     static inline void slowValue(const raw_type& d) {
-        mSlowDiff = std::min(d, (halfSpan/halfSpanDivider));
+        mSlowDiff = std::min(d, (halfSpan / halfSpanDivider));
     }
     static inline raw_type slowValue() {
         return mSlowDiff;
@@ -209,9 +211,9 @@ struct EscFsm {
     using Param = NVM::data_t::Param;
     
     enum class State : uint8_t {Undefined = 0, Init, 
-                                Off = 10, OffForwardWait, OffBackwardWait, 
-                                Forward = 20, ForwardWait, ForwardKick,  
-                                Backward = 30, BackwardWait, BackwardKick};
+                                Off = 10,  
+                                Forward = 20, ForwardWait, ForwardKick, OffForwardWait, 
+                                Backward = 30, BackwardWait, BackwardKick, OffBackwardWait };
     
     enum class RunState : uint8_t {Undefined = 0, Off, Low, Medium, High};
     
@@ -232,6 +234,16 @@ struct EscFsm {
     static inline constexpr thr_t CthrMin{throttle_type::Lower};
     static inline constexpr thr_t CthrHalf{(throttle_type::Upper - throttle_type::Lower) / 2};
     static inline constexpr thr_t CthrMedium{(throttle_type::Upper + throttle_type::Lower) / 2};
+
+    static inline auto state() {
+        return mState;
+    }
+    static inline bool isForward() {
+        return (mState >= State::Forward) && (mState <= State::OffForwardWait);
+    }
+    static inline bool isBackward() {
+        return (mState >= State::Backward) && (mState <= State::OffBackwardWait);
+    }
 
     static inline thr_t thrMax() {
 //        return CthrMax;
@@ -366,11 +378,11 @@ struct EscFsm {
     }
 
     static inline void pwmLow(const pvalue_t& v) {
-        NVM::data().param(Param::PwmLow) = (PWM::max() / 20) * v;
+        NVM::data().param(Param::PwmLow) = (PWM::max() / 40) * v;
         NVM::data().change();
     }
     static inline pvalue_t p_pwmLow() {
-        return pvalue_t(NVM::data().param(Param::PwmLow) / (PWM::max() / 20));
+        return pvalue_t(NVM::data().param(Param::PwmLow) / (PWM::max() / 40));
     }
     
     static inline void nvmInit() {
@@ -827,8 +839,10 @@ struct GlobalFsm {
             etl::outl<terminal>("SD"_pgm);
         }
         else if constexpr(External::Bus::isPpm<bus_type>::value) {
-            TermDev::template init<BaudRate<115200>>();
-            TermDev::template rxEnable<false>();
+            if constexpr(!std::is_same_v<TermDev, void>) {
+                TermDev::template init<BaudRate<115200>>();
+                TermDev::template rxEnable<false>();
+            }
             etl::outl<terminal>("PPm"_pgm);
         }
         else {
@@ -854,7 +868,9 @@ struct GlobalFsm {
         Led::periodic();
         Adc::periodic();
         if constexpr(External::Bus::isPpm<bus_type>::value) {
-            TermDev::periodic();
+            if constexpr(!std::is_same_v<TermDev, void>) {
+                TermDev::periodic();
+            }
         }
         if constexpr(External::Bus::isSumD<bus_type>::value) {
             menu::periodic();
@@ -1108,7 +1124,12 @@ struct GlobalFsm {
             if constexpr(!std::is_same_v<cp, void>) {
                 const auto rs = Esc::runstate();
                 using v_t = cp::value_type;
-                cp::set(v_t((uint8_t)rs));                
+                if (Esc::isBackward()) {
+                    cp::set(v_t((uint8_t)rs + 3));                
+                }
+                else {
+                    cp::set(v_t((uint8_t)rs));                
+                }
             }
             break;
         }
@@ -1772,7 +1793,7 @@ struct BusDevs<External::Bus::IBusIBus<Devs>> {
     std::ratio<100,1>>;
     
     using bec1S = External::AnalogSensor<adcController, 1, std::ratio<0,1>, 
-    std::ratio<190, 1000>, 
+    std::ratio<650, 1000>, 
     std::ratio<100,1>>;
     
     using currS = External::AnalogSensor<adcController, 5, std::ratio<0,1>, 
@@ -1925,8 +1946,8 @@ struct BusDevs<External::Bus::SBusSPort<Devs>> {
     std::ratio<100,1>>;
     
     using bec1S = External::AnalogSensor<adcController, 1, std::ratio<0,1>, 
-    std::ratio<190, 1000>, 
-    std::ratio<1,1>>;
+    std::ratio<650, 1000>, 
+    std::ratio<10,1>>;
     
     using currS = External::AnalogSensor<adcController, 5, std::ratio<0,1>, 
     std::ratio<550, 1000>, 
@@ -2061,7 +2082,6 @@ private:
                 mD[1] = esc::p_slowdown();
                 break;
             }
-            assertKey = 42;
             return mD[0];
         }
         void change() {
