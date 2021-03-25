@@ -351,6 +351,9 @@ namespace AVR {
         inline static void txPinDisable() {
             txpin::template dir<AVR::Input>();
         }
+        inline static void txPinEnable() {
+            txpin::template dir<AVR::Output>();
+        }
         template<bool on>
         inline static void txPinPullup() {
             txpin::template pullup<on>(); 
@@ -472,6 +475,7 @@ namespace AVR {
         inline static void txEnable() {
             if constexpr (enable) {
                 if(SendQLength::value > 0) {
+//                    decltype(mSendQueue)::_;
                     mSendQueue.clear();
                 }
                 mcu_usart()->ctrlb.template add<ctrlb_t::txen>();
