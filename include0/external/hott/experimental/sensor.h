@@ -126,14 +126,14 @@ namespace Hott {
             }
             
             static inline constexpr auto intervall = Clock::intervall;
-            //            std::integral_constant<uint16_t, intervall.value>::_;
-            //            std::integral_constant<uint16_t, hottDelayBetweenBytes.value>::_;
+//                        std::integral_constant<uint16_t, intervall.value>::_;
+//                        std::integral_constant<uint16_t, hottDelayBetweenBytes.value>::_;
             
             static_assert(intervall <= (hottDelayBetweenBytes * 2));
             static_assert(intervall >= (hottDelayBetweenBytes / 2));
             
             static inline constexpr auto ticks_to_wait = hottDelayBeforeAnswer / intervall;
-            //            std::integral_constant<uint8_t, ticks_to_wait>::_;
+//                        std::integral_constant<uint8_t, ticks_to_wait>::_;
             
             inline static constexpr void ratePeriodic() {
                 hott_state_t oldstate = mState;
