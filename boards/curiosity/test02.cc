@@ -48,11 +48,12 @@ using rcUsart = AVR::Usart<usart1Position, sumd, AVR::UseInterrupts<false>, AVR:
 namespace  {
 //    constexpr auto dt = 2_ms;
     constexpr auto dt = 2000_us;
-    constexpr auto fRtc = 128_Hz;
+//    constexpr auto fRtc = 128_Hz;
+    constexpr auto fRtc = 1000_Hz;
 }
 
-//using systemTimer = SystemTimer<Component::Rtc<0>, fRtc>;
-using systemTimer = SystemTimer<Component::Timer<0, A>, dt>;
+using systemTimer = SystemTimer<Component::Rtc<0>, fRtc>;
+//using systemTimer = SystemTimer<Component::Timer<0, A>, dt>;
 using alarmTimer = External::Hal::AlarmTimer<systemTimer>;
 
 using sensor = Hott::Experimental::Sensor<usart3Position, AVR::Usart, AVR::BaudRate<19200>, Hott::GamMsg, Hott::TextMsg, systemTimer>;
