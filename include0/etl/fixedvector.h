@@ -51,11 +51,11 @@ namespace etl {
         
         inline constexpr void reserve(size_type s) {
             assert(s <= Capacity);
-            mSize = s;
+            mSize = std::min(s, Capacity);
         }
         inline constexpr void reserve(size_type s) volatile {
             assert(s <= Capacity);
-            mSize = s;
+            mSize = std::min(s, Capacity);
         }
 
         inline constexpr size_type size() const {
@@ -65,7 +65,6 @@ namespace etl {
             return mSize;
         }
 
-        
         inline constexpr void clear() {
             mSize = 0;
         }
