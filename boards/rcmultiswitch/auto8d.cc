@@ -7,10 +7,10 @@
 #include "swout.h"
 #include "switch.h"
 
-//template<typename PA, typename SW, typename OUT, typename NVM, typename Timer, typename Term = void>
 template<typename BusDevs>
 struct FSM {
     using devs = BusDevs::devs;
+    using bus_type = BusDevs::bus_type;
     using addr_t = RCSwitch::addr_t;
     
     using protocol_t = BusDevs::BusParam::proto_type;
@@ -19,6 +19,7 @@ struct FSM {
     using Term = BusDevs::terminal;
     using NVM = BusDevs::eeprom;
     using SW = BusDevs::ibus_switch;
+    using Servo = BusDevs::servo;
     using PA = BusDevs::servo_pa;
     using OUT = BusDevs::out;
     
@@ -28,20 +29,57 @@ struct FSM {
     static constexpr External::Tick<Timer> learnTimeoutTicks{3000_ms};
     static constexpr External::Tick<Timer> waitTimeoutTicks{1000_ms};
     static constexpr External::Tick<Timer> showAdressTimeoutTicks{2000_ms};
+    static constexpr External::Tick<Timer> eepromTimeoutTicks{1000_ms};
+    
+    inline static auto& data() {
+        return NVM::data();
+    }
     
     static inline void init(const bool inverted) {
+        if constexpr(External::Bus::isIBus<bus_type>::value) {
+            Servo::template init<BaudRate<115200>>();
+            etl::outl<Term>("multi8d ibus"_pgm);
+        }
+        else if constexpr(External::Bus::isSBus<bus_type>::value) {
+            Servo::template init<AVR::BaudRate<100000>, FullDuplex, true, 1>(); // 8E2
+            if (inverted) {
+                Servo::rxInvert(true);
+            }
+            etl::outl<Term>("multi8d sbus"_pgm);
+        }
+        else {
+            static_assert(std::false_v<bus_type>, "bus type not supported");
+        }
         // todo:
+        systemTimer::init();
+        OUT::init();
+        
+        NVM::init();
+        if (!((data().magic() == 42))) {
+            data().clear();
+            data().magic() = 42;
+            data().change();
+#ifndef NDEBUG
+            etl::outl<Term>("eep init"_pgm);
+#endif
+        }
+        else {
+#ifndef NDEBUG
+            etl::outl<Term>("eep ch: "_pgm, data().channel().toInt(), " adr: "_pgm, data().address().toInt());        
+#endif
+        }
     }
     
     static inline void periodic() {
-        //todo: 
+        NVM::saveIfNeeded([&]{
+            etl::outl<Term>("save eep"_pgm);
+        });
+        Servo::periodic();
     }
     
     static inline void ratePeriodic() {
         const auto oldstate = mState;
-#ifdef USE_SBUS
         PA::ratePeriodic();
-#endif
         ++stateTicks;
         switch(mState) {
         case State::Undefined:
@@ -89,6 +127,9 @@ struct FSM {
             });
             break;
         case State::Run:
+            stateTicks.on(eepromTimeoutTicks, []{
+                data().expire();
+            });
             SW::periodic();
             OUT::setSwitches();
             break;
@@ -275,89 +316,6 @@ using scanner = External::Scanner<devices, Application, AVR::HalfDuplex>;
 int main() {
     scanner::run();
 }
-
-#if 0
-
-int main() {
-    portmux::init();
-    
-    ccp::unlock([]{
-        clock::prescale<1>();
-    });
-    
-    fsm::init();
-    
-#ifdef USE_SBUS
-    servo::init<AVR::BaudRate<100000>, FullDuplex, true, 1>(); // 8E2
-#endif
-#ifdef USE_IBUS
-    servo::init<BaudRate<115200>>();
-#endif
-    systemTimer::init();
-    out::init();
-
-#ifdef USE_SBUS
-    etl::outl<terminal>("multi8d sbus"_pgm);
-#endif    
-#ifdef USE_IBUS
-    etl::outl<terminal>("multi8d ibus"_pgm);
-#endif    
-    
-    eeprom::init();
-    if (!((appData.magic() == 42))) {
-        appData.clear();
-        appData.magic() = 42;
-        appData.change();
-#ifndef NDEBUG
-        etl::outl<terminal>("eep init"_pgm);
-#endif
-    }
-    else {
-#ifndef NDEBUG
-        etl::outl<terminal>("eep ch: "_pgm, appData.channel().toInt(), " adr: "_pgm, appData.address().toInt());        
-#endif
-    }
-    
-    const auto periodicTimer = alarmTimer::create(500_ms, External::Hal::AlarmFlags::Periodic);
-    const auto eepromTimer = alarmTimer::create(3000_ms, External::Hal::AlarmFlags::Periodic);
-    
-//    uint16_t counter{};
-    
-    while(true) {
-        eeprom::saveIfNeeded([&]{
-            etl::outl<terminal>("save eep"_pgm);
-        });
-        servo::periodic();
-        systemTimer::periodic([&]{
-            fsm::ratePeriodic();
-            alarmTimer::periodic([&](const auto& t){
-                if (periodicTimer == t) {
-#ifndef NDEBUG
-//                    etl::outl<terminal>("c: "_pgm, counter++, " mpx0: "_pgm, (uint8_t)appData.mMpxModes[0]);
-//                    etl::outl<terminal>("c9: "_pgm, servo_pa::valueMapped(9).toInt(), " r: "_pgm, servo_pa::value(9).toInt());
-//                    etl::outl<terminal>("c9: "_pgm, servo_pa::valueMapped(9).toInt(), " r: "_pgm, servo_pa::value(9).toInt());
-//                    etl::outl<terminal>("c0: "_pgm, servo_pa::mChannels[9]);
-//                    etl::outl<terminal>("lo: "_pgm, ibus_switch::lastOnIndex.toInt());
-//                    etl::outl<terminal>("sw0: "_pgm, (uint8_t)sw::switches()[0], "sw1: "_pgm, (uint8_t)sw::switches()[1]);
-                    etl::out<terminal>("sw: [ "_pgm);
-                    for(const auto& l : sw::switches()) {
-                        etl::out<terminal>(uint8_t(l), " "_pgm);
-                    }
-                    etl::outl<terminal>(" ]"_pgm);
-//                    etl::outl<terminal>("lpp: "_pgm, (uint8_t)ibus_switch::lpp, " lpv: "_pgm, (uint8_t)ibus_switch::lpv, " lmv: "_pgm, (uint8_t)ibus_switch::lmv, " lo: "_pgm, (uint8_t)ibus_switch::lastOnIndex.toInt());
-//                    etl::outl<terminal>("b0: "_pgm, (uint8_t)appData[0].blinks()[0].intervall.value, "b1: "_pgm, (uint8_t)appData[0].blinks()[1].intervall.value);
-                    etl::outl<terminal>("state:  "_pgm, (uint8_t)fsm::mState);
-                    
-#endif
-                }
-                else if (eepromTimer == t) {
-                    appData.expire();
-                }
-            });
-        });
-    }
-}
-#endif
 
 #ifndef NDEBUG
 /*[[noreturn]] */inline void assertOutput(const AVR::Pgm::StringView& expr [[maybe_unused]], const AVR::Pgm::StringView& file[[maybe_unused]], unsigned int line [[maybe_unused]]) noexcept {

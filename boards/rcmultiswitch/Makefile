@@ -18,7 +18,6 @@ subdirs =
 # multi8man     (ppm)
 # multi8manhott (sumd)
 
-
 #targets += test00.elf test00.hex test00.S
 #targets += test01.elf test01.hex
 #targets += test10.elf test10.hex
