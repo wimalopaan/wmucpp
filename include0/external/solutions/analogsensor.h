@@ -65,8 +65,8 @@ namespace External {
             if constexpr(std::is_same_v<Mode, detail::Shift>) {
                 constexpr uint16_t a = scale * (1 << shift) + 0.5;
                 constexpr uint16_t b = offset * (1 << shift) + 0.5;
-        //        std::integral_constant<uint16_t, a>::_;
-        //        std::integral_constant<uint16_t, b>::_;
+//                std::integral_constant<uint16_t, a>::_;
+//                std::integral_constant<uint16_t, b>::_;
                 uint16_t sv = a * ADCont::value(channel_n) ;
                 if (sv >= b) {
                     return (sv - b) >> shift;
