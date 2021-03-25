@@ -155,6 +155,10 @@ namespace etl {
             Scoped<DisbaleInterrupt<RestoreState>, !sizeIsAtomic> di;
             in = out = 0;
         }
+        inline void clear() {
+            in.setToBottom();
+            out.setToBottom();
+        }
         inline bool empty() const {
             Scoped<DisbaleInterrupt<RestoreState>, !sizeIsAtomic> di;
             return in == out;
