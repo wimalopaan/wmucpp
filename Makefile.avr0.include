@@ -76,7 +76,7 @@ endif
 
 GITTAG := $(shell git describe --abbrev=4 --dirty --always --tags)
 GITMAJOR := $(shell git describe --abbrev=4 --tags | cut -d- -f1 | sed 's/v//g')
-GITMINOR := $(shell git describe --abbrev=4 --tags | cut -d- -f2)
+GITMINOR := $(shell git describe --abbrev=4 --tags | cut -d- -f2 | sed 's/v.*/0/g')
 
 #CXXFLAGS += $(OPTFLAGS) -std=c++17 #-pedantic
 CXXFLAGS += $(OPTFLAGS) -std=c++2a # -pedantic
