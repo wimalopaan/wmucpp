@@ -51,15 +51,15 @@ namespace External {
 
         template<SensorId ID, template<typename> typename Uart, typename Timer, typename... Providers>
         struct Sensor<ID, Uart, Timer, Meta::List<Providers...>> {
-//            inline static constexpr External::Tick<Timer> mResponseDelay{10};
-//            inline static constexpr External::Tick<Timer> mResponseDelay{2_ms};
-//                        std::integral_constant<uint16_t, mResponseDelay.value>::_;
-//            static_assert(mResponseDelay.value > 0);
+            //            inline static constexpr External::Tick<Timer> mResponseDelay{10};
+            //            inline static constexpr External::Tick<Timer> mResponseDelay{2_ms};
+            //                        std::integral_constant<uint16_t, mResponseDelay.value>::_;
+            //            static_assert(mResponseDelay.value > 0);
             
             using providerList = Meta::List<Providers...>;
             inline static constexpr auto numberOfProviders = sizeof...(Providers);
-//            std::integral_constant<uint8_t, numberOfProviders>::_;
-                
+            //            std::integral_constant<uint8_t, numberOfProviders>::_;
+            
             
             static_assert(numberOfProviders > 0, "need at least one provider");
             
@@ -72,10 +72,10 @@ namespace External {
             }
             
             struct ProtocollAdapter {
-//                using requests_t = std::conditional_t<uart::useInterrupts, volatile uint8_t, uint8_t>;
-//                using requests_t = volatile uint8_t;
+                //                using requests_t = std::conditional_t<uart::useInterrupts, volatile uint8_t, uint8_t>;
+                //                using requests_t = volatile uint8_t;
                 using requests_t = uint8_t;
-
+                
                 static inline bool process(const std::byte b) {
                     switch(mState) {
                     case State::Init: 
@@ -133,7 +133,7 @@ namespace External {
             static inline void enable() {
                 uart::template rxEnable<B>();
             }
-
+            
             static inline void ratePeriodic() {
             }
             
@@ -182,7 +182,7 @@ namespace External {
                                                 auto id = ValueId(uint16_t(P::valueId) + mActualProvider);
                                                 stuff(id, cs);
                                                 stuff(P::value(), cs);
-                              });
+                                            });
                 stuff(cs);
                 ++mActualProvider;
             }
@@ -200,15 +200,35 @@ namespace External {
                 stuffResponse(etl::nth_byte<0>(static_cast<t>(b)), cs);
                 stuffResponse(etl::nth_byte<1>(static_cast<t>(b)), cs);
             }
-            inline static void stuffResponse(const std::byte b, CheckSum& cs) {
+            inline static void stuffResponse_old(const std::byte b, CheckSum& cs) {
                 if (b == 0x7e_B) {
                     cs += 0x7d_B;
                     uart::put(0x7d_B);
-                    cs += 0x5d_B;
+                    cs += 0x5e_B;
                     uart::put(0x5e_B);
+                }
+                else if (b == 0x7d_B) {
+                    cs += 0x7d_B;
+                    uart::put(0x7d_B);
+                    cs += 0x5d_B;
+                    uart::put(0x5d_B);
                 }
                 else {
                     cs += b;
+                    uart::put(b);
+                }
+            }
+            inline static void stuffResponse(const std::byte b, CheckSum& cs) {
+                cs += b;
+                if (b == 0x7e_B) {
+                    uart::put(0x7d_B);
+                    uart::put(0x5e_B);
+                }
+                else if (b == 0x7d_B) {
+                    uart::put(0x7d_B);
+                    uart::put(0x5d_B);
+                }
+                else {
                     uart::put(b);
                 }
             }
