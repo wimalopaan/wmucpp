@@ -1,4 +1,4 @@
-// analogInput fuer feedbach: 120K/2µ2F RC Tiefpass
+// analogInput fuer feedback: 120K/2µ2F RC Tiefpass
 
 // SO2 = Servo (Ch N + 0)
 // SO1 = ESC   (Ch N + 1)
@@ -428,7 +428,7 @@ struct EscFsm {
             }
         }
     }    
-//private:
+private:
 //    ranged_type::_;
     static inline ranged_type mTarget;
     static inline ranged_type mActual;
@@ -574,7 +574,7 @@ struct GFSM {
             
         (++debugTicks).on(debugTimeoutTicks, []{
 //            etl::outl<terminal>("e: "_pgm, (uint8_t)esc::mState, " "_pgm, esc::mTarget.toInt(), " "_pgm, esc::mActual.toInt());
-            etl::outl<terminal>("e: "_pgm, (uint8_t)esc::mState, " "_pgm, esc::mTarget.toInt(), " "_pgm, esc::mActual.toInt(), " "_pgm, out360::adiff());
+//            etl::outl<terminal>("e: "_pgm, (uint8_t)esc::mState, " "_pgm, esc::mTarget.toInt(), " "_pgm, esc::mActual.toInt(), " "_pgm, out360::adiff());
         });
         (++mEepromTicks).on(eepromTimeoutTicks, []{
             NVM::data().expire();

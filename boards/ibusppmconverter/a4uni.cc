@@ -1,7 +1,13 @@
+#define NDEBUG
+
 //#define USE_IBUS
 
 #define USE_SPORT
 //#define USE_HOTT
+
+#ifdef USE_SPORT
+#define SBUS_IBUS_NO_WARN
+#endif
 
 #include "board.h"
 #include "temp.h"
@@ -16,8 +22,8 @@ struct RawProvider {
     static_assert(Channel <= index_t::Upper);
     inline static constexpr auto channel = index_t{Channel};
     inline static constexpr auto ibus_type = IBus::Type::type::ARMED;
-    inline static constexpr void init() {
-    }
+    inline static constexpr auto valueId = External::SPort::ValueId::DIY;
+    inline static constexpr void init() {}
     inline static constexpr uint16_t value() {
         return ADC::value(channel).toInt();
     }
@@ -34,26 +40,31 @@ AVR::SendQueueLength<64>,
 etl::NamedFlag<true>
 >;
 
-using a1 = External::AnalogSensor<adcController, 0, std::ratio<500,1000>, std::ratio<1,100>, std::ratio<1,1>>;
-using a2 = External::AnalogSensor<adcController, 1, std::ratio<500,1000>, std::ratio<1,100>, std::ratio<1,1>>;
-using a3 = External::AnalogSensor<adcController, 2, std::ratio<500,1000>, std::ratio<1,100>, std::ratio<1,1>>;
-using a4 = External::AnalogSensor<adcController, 3, std::ratio<500,1000>, std::ratio<1,100>, std::ratio<1,1>>;
+//using a1 = External::AnalogSensor<adcController, 0, std::ratio<500,1000>, std::ratio<1,100>, std::ratio<1,1>>;
+//using a2 = External::AnalogSensor<adcController, 1, std::ratio<500,1000>, std::ratio<1,100>, std::ratio<1,1>>;
+//using a3 = External::AnalogSensor<adcController, 2, std::ratio<500,1000>, std::ratio<1,100>, std::ratio<1,1>>;
+//using a4 = External::AnalogSensor<adcController, 3, std::ratio<500,1000>, std::ratio<1,100>, std::ratio<1,1>>;
 
-template<typename Sensor>
-struct TempProvider {
-    inline static constexpr auto valueId = External::SPort::ValueId::Temp1;
-    inline static uint32_t value() {
-        return Sensor::value();
-    }
-};
+//template<typename Sensor>
+//struct TempProvider {
+//    inline static constexpr auto valueId = External::SPort::ValueId::Temp1;
+//    inline static uint32_t value() {
+//        return Sensor::value();
+//    }
+//};
 
-using p1 = TempProvider<a1>;
-using p2 = TempProvider<a2>;
-using p3 = TempProvider<a3>;
-using p4 = TempProvider<a4>;
+//using p1 = TempProvider<a1>;
+//using p2 = TempProvider<a2>;
+//using p3 = TempProvider<a3>;
+//using p4 = TempProvider<a4>;
 
-using sport = External::SPort::Sensor<External::SPort::SensorId::ID3, sensorUsart, systemTimer, 
-                                       Meta::List<p1, p2, p3, p4>>;
+using r0 = RawProvider<adcController, 0>;
+using r1 = RawProvider<adcController, 1>;
+using r2 = RawProvider<adcController, 2>;
+using r3 = RawProvider<adcController, 3>;
+
+using sport = External::SPort::Sensor<External::SPort::SensorId::ID4, sensorUsart, systemTimer, 
+                                       Meta::List<r0, r1, r2, r3>>;
 
 using isrRegistrar = IsrRegistrar<sport::uart::StartBitHandler, sport::uart::BitHandler>;
 

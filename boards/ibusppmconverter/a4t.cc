@@ -39,7 +39,7 @@ using p2 = TempProvider<a2>;
 using p3 = TempProvider<a3>;
 using p4 = TempProvider<a4>;
 
-using sport = External::SPort::Sensor<External::SPort::SensorId::ID3, sensorUsart, systemTimer, 
+using sport = External::SPort::Sensor<External::SPort::SensorId::ID4, sensorUsart, systemTimer, 
                                        Meta::List<p1, p2, p3, p4>>;
 
 using isrRegistrar = IsrRegistrar<sport::uart::StartBitHandler, sport::uart::BitHandler>;

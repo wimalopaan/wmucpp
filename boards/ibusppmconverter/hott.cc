@@ -1,4 +1,6 @@
-//#define NDEBUG
+#define NDEBUG
+
+#define SBUS_IBUS_NO_WARN
 
 #include <mcu/avr.h>
 
