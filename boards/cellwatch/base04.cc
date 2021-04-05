@@ -62,7 +62,7 @@ namespace Parameter {
     constexpr auto fRtc = 2000_Hz;
 #endif
 #ifdef USE_HOTT
-    constexpr auto fRtc = 1000_Hz;
+    constexpr auto fRtc = 500_Hz;
 #endif
 #ifdef USE_SPORT
     constexpr auto fRtc = 1000_Hz;

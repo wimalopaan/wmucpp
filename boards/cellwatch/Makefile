@@ -22,6 +22,8 @@
 MCU = attiny412
 F_OSC = 20000000
 
+cell04.hex : F_OSC = 10000000
+
 subdirs =
 
 #targets += test00.hex

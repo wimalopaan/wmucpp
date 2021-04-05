@@ -90,6 +90,14 @@ Bitte beachten Sie den Anschluss des Akkus über seinen Balancerstecker.
 Eine Verpolung oder Verschiebung des Balancersteckers oder führt zur Zerstörung des Sensor-Moduls.
 --
 
+.BEC
+[CAUTION]
+--
+Ein Teil des Moduls wird durch den Empfänger mit Spannung versorgt. 
+
+*Warnung*: die BEC-Spannung für den Empfänger darf *5,5V* *nicht überschreiten*!.
+--
+
 [[a1]]
 .Masse/Gnd des Balancersteckers
 image::top_gnd.jpg[align="center"]

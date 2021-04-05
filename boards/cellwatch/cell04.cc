@@ -203,7 +203,9 @@ int main() {
     portmux::init();
     
     ccp::unlock([]{
-        clock::prescale<1>(); 
+        static_assert(F_OSC == 10000000);
+//        clock::prescale<1>(); 
+        clock::prescale<2>(); // 20MHz / 2  
     });
     
     sleep::template init<sleep::PowerDown>();
