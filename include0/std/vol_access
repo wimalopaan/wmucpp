@@ -1,16 +1,38 @@
 #pragma once
+#include <cassert>
+#include "type_traits"
+
 namespace std {
     namespace experimental {
-
         template<typename T>
-        T volatile_load(const volatile T* p) {
+        T volatile_load(const volatile T* const p) {
+            assert(p);
+//            static_assert(std::is_trivially_copyable_v<T>);
             return *p;
         }
         
         template<typename T>
-        void volatile_store(volatile T* p, T v) {
+        void volatile_store(volatile T* const p, const T v) {
+            assert(p);
+//            static_assert(std::is_trivially_copyable_v<T>);
             *p = v;
         }
         
     } // namespace experimental
 } // namespace std
+
+//        template<typename TType>
+//        constexpr inline TType volatile_load(volatile const TType* const target) {
+//            assert(target);
+////            static_assert(std::is_trivially_copyable<TType>::value,
+////                "Volatile load can only be used with trivially copiable types");
+//            return *static_cast<const volatile TType*>(target);
+//        }
+        
+//        template<typename TType>
+//        inline void volatile_store(volatile TType* const target, const TType value) {
+//            assert(target);
+////            static_assert(std::is_trivially_copyable<TType>::value,
+////                "Volatile store can only be used with trivially copiable types");
+//            *static_cast<volatile TType*>(target) = value;
+//        }
