@@ -102,7 +102,10 @@ namespace AVR {
             ControlRegister<TCA, Evctrl_t> evctrl;
             
             enum class Intctrl_t : uint8_t {
-                ovf = 0x01
+                ovf = 0x01,
+                cmp0 = (1 << 4),
+                cmp1 = (1 << 5),
+                cmp2 = (1 << 6),
             };
             ControlRegister<TCA, Intctrl_t> intctrl;
             
