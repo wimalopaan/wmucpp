@@ -1,3 +1,5 @@
+#include <vol_access>
+
 struct A {
 	A() {}
     volatile int m{42};

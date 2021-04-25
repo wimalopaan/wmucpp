@@ -6,7 +6,6 @@
 #include <etl/type_traits.h>
 #include <etl/constant.h>
 
-
 using namespace std::experimental;
 
 template<size_t Bits>

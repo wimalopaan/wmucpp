@@ -8,7 +8,10 @@ volatile int8_t r2;
 
 typedef signed short _Accum fp_t;
 
+
 int main() {
+//    const int x = 2;
+//    int a[x];
     CCP = 0xd8;
     CLKCTRL.MCLKCTRLB = 0x00;
     PORTA.DIR = (1 << 6);
