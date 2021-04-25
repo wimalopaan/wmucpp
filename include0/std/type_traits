@@ -72,8 +72,8 @@ namespace std {
         typedef T type;
     };
 
-    template<bool B>
-    using enable_if_not_t = typename enable_if_not<B>::type;
+    template<bool B, typename T = void>
+    using enable_if_not_t = typename enable_if_not<B, T>::type;
     
     template<bool B, class T, class F>
     struct conditional { 
@@ -347,4 +347,57 @@ namespace std {
     template<typename _Tp>
       auto declval() noexcept -> decltype(__declval<_Tp>(0));
     
+      
+      template<typename...>
+      struct __or_;
+      
+      template<>
+      struct __or_<>
+      : public false_type
+      { };
+      
+      template<typename _B1>
+      struct __or_<_B1>
+      : public _B1
+      { };
+      
+      template<typename _B1, typename _B2>
+      struct __or_<_B1, _B2>
+      : public conditional<_B1::value, _B1, _B2>::type
+      { };
+      
+      template<typename _B1, typename _B2, typename _B3, typename... _Bn>
+      struct __or_<_B1, _B2, _B3, _Bn...>
+      : public conditional<_B1::value, _B1, __or_<_B2, _B3, _Bn...>>::type
+      { };
+      template <typename _Type>
+      struct __type_identity
+      { using type = _Type; };
+      
+      template<typename _Tp>
+      using __type_identity_t = typename __type_identity<_Tp>::type;
+      template <typename _Tp, unsigned long = sizeof(_Tp)>
+      constexpr true_type __is_complete_or_unbounded(__type_identity<_Tp>)
+      { return {}; }
+      
+//      template <typename _TypeIdentity,
+//      typename _NestedType = typename _TypeIdentity::type>
+//      constexpr typename __or_<
+//      is_reference<_NestedType>,
+//      is_function<_NestedType>,
+//      is_void<_NestedType>,
+//      __is_array_unknown_bounds<_NestedType>
+//      >::type __is_complete_or_unbounded(_TypeIdentity)
+//      { return {}; }
+      
+      // is_trivially_copyable
+      template<typename _Tp>
+      struct is_trivially_copyable
+      : public integral_constant<bool, __is_trivially_copyable(_Tp)>
+      {
+      static_assert(std::__is_complete_or_unbounded(__type_identity<_Tp>{}),
+      "template argument must be a complete class or an unbounded array");
+      };
+      
+      
 }
