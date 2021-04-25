@@ -39,6 +39,13 @@ targets += bm01.S bm01.elf bm01.hex
 targets += bm02.S bm02.elf bm02.hex
 targets += bm10.S bm10.elf bm10.hex
 targets += bm20.S bm20.elf bm20.hex
+targets += bm30.S bm30.elf bm30.hex
+targets += bm40.S bm40.o bm41.o bm41.S bm40a 
+
+#bm40.o: bm40.o bm41.o 
+
+bm40a: bm40.o bm41.o
+
 #targets += bm02.S bm02.elf
 
 -include ../../Makefile.avr0.include

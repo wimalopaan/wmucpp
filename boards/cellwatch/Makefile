@@ -22,7 +22,9 @@
 MCU = attiny412
 F_OSC = 20000000
 
-cell04.hex : F_OSC = 10000000
+#cell04.hex : F_OSC = 10000000
+cell04.hex : F_OSC = 5000000
+base04.hex : F_OSC = 20000000
 
 subdirs =
 
@@ -32,10 +34,10 @@ subdirs =
 #targets += test03.hex
 #targets += test04.hex
 #targets += base01.hex
-targets += cell01.hex
+#targets += cell01.hex
 #targets += base02.hex
-targets += cell03.hex
-targets += base03.hex
+#targets += cell03.hex
+#targets += base03.hex
 targets += cell04.hex
 targets += base04.hex
 

@@ -6,12 +6,9 @@ F_OSC = 20000000
 
 subdirs =
 
-targets += test00.elf test00.hex
-targets += test01.elf test01.hex
-#targets += test02.elf
-#targets += test03.elf
-#targets += test04.elf
-#targets += test05.elf
-targets += test99.elf test99.hex
+#targets += test00.elf test00.hex
+#targets += test01.elf test01.hex
+targets += test10.elf test10.hex
+#targets += test99.elf test99.hex
 
 -include ../../../Makefile.avr0.include

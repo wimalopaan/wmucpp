@@ -193,6 +193,7 @@ boards/bmc/robbenavy540/test05.cc
 boards/bmc/small01/Makefile
 boards/bmc/small01/test00.cc
 boards/bmc/small01/test01.cc
+boards/bmc/small01/test10.cc
 boards/bmc/small01/test99.cc
 boards/bmc/test/atmel_start.c
 boards/bmc/test/gcc/Makefile
@@ -266,6 +267,11 @@ boards/curiosity/test81.cc
 boards/curiosity/test82.cc
 boards/curiosity/test90.cc
 boards/curiosity/test99.c
+boards/dds/Makefile
+boards/dds/test00.cc
+boards/dds/test10.cc
+boards/dds/test11.cc
+boards/dds/test12.cc
 boards/doc/einbau.adoc
 boards/doc/einbau_auto.adoc
 boards/doc/function.adoc
@@ -1314,6 +1320,9 @@ doc/bmcpp99/sort.h
 doc0/bm00/bm09a.c
 doc0/bm00/bm09b.cc
 doc0/bm10/bm10.cc
+doc0/bm11/bm30.cc
+doc0/bm11/bm40.cc
+doc0/bm11/bm41.cc
 example/atmega1284p/simavrconsole.c
 example/atmega1284p/simpleisr2.cc
 example/atmega1284p/usitiny.cc
