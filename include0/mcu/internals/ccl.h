@@ -52,7 +52,7 @@ namespace AVR {
                 template<AVR::Concepts::AtDa32 MCU> struct map_input<Usart<0>, 0, MCU> : std::integral_constant<std::byte, 0x08_B> {};
                 template<AVR::Concepts::AtDa32 MCU> struct map_input<Spi0, 0, MCU> : std::integral_constant<std::byte, 0x09_B> {};
                 template<AVR::Concepts::AtDa32 MCU> struct map_input<Tca0<0>, 0, MCU> : std::integral_constant<std::byte, 0x0a_B> {};
-                template<AVR::Concepts::AtDa32 MCU> struct map_input<Tca0<1>, 0, MCU> : std::integral_constant<std::byte, 0x0b_B> {};
+//                template<AVR::Concepts::AtDa32 MCU> struct map_input<Tca0<1>, 0, MCU> : std::integral_constant<std::byte, 0x0b_B> {};
                 template<AVR::Concepts::AtDa32 MCU> struct map_input<Tcb<0>, 0, MCU> : std::integral_constant<std::byte, 0x0c_B> {};
                 template<AVR::Concepts::AtDa32 MCU> struct map_input<Tcd<0>, 0, MCU> : std::integral_constant<std::byte, 0x0d_B> {};
 
@@ -66,8 +66,8 @@ namespace AVR {
                 template<AVR::Concepts::AtDa32 MCU> struct map_input<Zcd<1>, 1, MCU> : std::integral_constant<std::byte, 0x07_B> {};
                 template<AVR::Concepts::AtDa32 MCU> struct map_input<Usart<1>, 1, MCU> : std::integral_constant<std::byte, 0x08_B> {};
                 template<AVR::Concepts::AtDa32 MCU> struct map_input<Spi0, 1, MCU> : std::integral_constant<std::byte, 0x09_B> {};
-                template<AVR::Concepts::AtDa32 MCU> struct map_input<Tca0<0>, 1, MCU> : std::integral_constant<std::byte, 0x0a_B> {};
-                template<AVR::Concepts::AtDa32 MCU> struct map_input<Tca0<1>, 1, MCU> : std::integral_constant<std::byte, 0x0b_B> {};
+//                template<AVR::Concepts::AtDa32 MCU> struct map_input<Tca0<0>, 1, MCU> : std::integral_constant<std::byte, 0x0a_B> {};
+                template<AVR::Concepts::AtDa32 MCU> struct map_input<Tca0<1>, 1, MCU> : std::integral_constant<std::byte, 0x0a_B> {};
                 template<AVR::Concepts::AtDa32 MCU> struct map_input<Tcb<1>, 1, MCU> : std::integral_constant<std::byte, 0x0c_B> {};
                 template<AVR::Concepts::AtDa32 MCU> struct map_input<Tcd<0>, 1, MCU> : std::integral_constant<std::byte, 0x0d_B> {};
 
@@ -81,8 +81,8 @@ namespace AVR {
                 template<AVR::Concepts::AtDa32 MCU> struct map_input<Zcd<2>, 2, MCU> : std::integral_constant<std::byte, 0x07_B> {};
                 template<AVR::Concepts::AtDa32 MCU> struct map_input<Usart<2>, 2, MCU> : std::integral_constant<std::byte, 0x08_B> {};
                 template<AVR::Concepts::AtDa32 MCU> struct map_input<Spi0, 2, MCU> : std::integral_constant<std::byte, 0x09_B> {};
-                template<AVR::Concepts::AtDa32 MCU> struct map_input<Tca0<0>, 2, MCU> : std::integral_constant<std::byte, 0x0a_B> {};
-                template<AVR::Concepts::AtDa32 MCU> struct map_input<Tca0<1>, 2, MCU> : std::integral_constant<std::byte, 0x0b_B> {};
+                template<AVR::Concepts::AtDa32 MCU> struct map_input<Tca0<2>, 2, MCU> : std::integral_constant<std::byte, 0x0a_B> {};
+//                template<AVR::Concepts::AtDa32 MCU> struct map_input<Tca0<1>, 2, MCU> : std::integral_constant<std::byte, 0x0b_B> {};
                 template<AVR::Concepts::AtDa32 MCU> struct map_input<Tcb<2>, 2, MCU> : std::integral_constant<std::byte, 0x0c_B> {};
                 template<AVR::Concepts::AtDa32 MCU> struct map_input<Tcd<0>, 2, MCU> : std::integral_constant<std::byte, 0x0d_B> {};
                 
