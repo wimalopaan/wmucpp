@@ -31,7 +31,7 @@
 #include "tick.h"
 
 namespace External {
-    template<AVR::Concepts::Activatable Pin, typename Timer, auto ShortPressTicks, auto LongPressTicks>
+    template<AVR::Concepts::ActivatableIn Pin, typename Timer, auto ShortPressTicks, auto LongPressTicks>
     struct ButtonRelese {
         enum class Press : uint8_t {Short, Long, None};
         enum class State : uint8_t {PressedShort, PressedLong, Released, Wait};
@@ -108,7 +108,7 @@ private:
     };
 
 
-    template<AVR::Concepts::Activatable Pin, typename Timer, auto ShortPressTicks, auto LongPressTicks>
+    template<AVR::Concepts::ActivatableIn Pin, typename Timer, auto ShortPressTicks, auto LongPressTicks>
     struct Button2 {
         enum class Press : uint8_t {Short, Long, Release, None};
         enum class State : uint8_t {PressedShort, PressedLong, Released, Wait};
@@ -183,7 +183,7 @@ private:
         static inline Tick<Timer> mStateCounter;
     };
 
-    template<AVR::Concepts::Activatable Pin, typename Timer, auto ShortPressTicks, auto LongPressTicks>
+    template<AVR::Concepts::ActivatableIn Pin, typename Timer, auto ShortPressTicks, auto LongPressTicks>
     struct Button {
         enum class Press : uint8_t {Short, Long, Release, None};
         enum class State : uint8_t {Pressed, Released};

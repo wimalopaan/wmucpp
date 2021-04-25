@@ -140,6 +140,13 @@ namespace AVR {
                 p.on();
                 p.off();
         };
+
+        template<typename A>
+        concept ActivatableOut = requires (A a) { 
+                a.init();
+                a.activate();
+                a.inactivate();
+        };
         
         template<typename I>
         concept IServiceRNonVoid = requires (I) {
@@ -178,7 +185,7 @@ namespace AVR {
         };
         
         template<typename I>
-        concept Activatable = requires(I) {
+        concept ActivatableIn = requires(I) {
                               I::init();                      
                               I::isActive();                      
         };
