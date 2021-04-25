@@ -223,6 +223,7 @@ struct TempProvider {
     static_assert(Channel <= index_t::Upper);
     inline static constexpr auto channel = index_t{Channel};
     inline static constexpr auto ibus_type = IBus::Type::type::TEMPERATURE;
+        
     inline static constexpr void init() {
     }
     inline static constexpr uint16_t value() {
@@ -270,6 +271,21 @@ using vdiv = External::AnalogSensor<adcController, 0, std::ratio<0,1>,
                                     std::ratio<100,1>>; // 10mV
 
 #ifdef USE_SPORT
+template<typename ADC, uint8_t Channel, typename SigRow>
+struct InternalTempProvider {
+    using index_t = ADC::index_type;
+    static_assert(Channel <= index_t::Upper);
+    inline static constexpr auto channel = index_t{Channel};
+    inline static constexpr auto valueId = External::SPort::ValueId::Temp2;
+    inline static constexpr void init() {}
+    inline static constexpr uint32_t value() {
+//        return SigRow::template adcValueToTemperature<std::ratio<1,10>, 40 - 15>(ADC::value(channel)).value;
+        return SigRow::template adcValueToTemperature<std::ratio<1,1>, 0>(ADC::value(channel)).value;
+    }
+};
+
+using tempiP = InternalTempProvider<adcController, 1, sigrow>;
+
 using upperCell = Usart<usart0Position, cellPA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<0>>;
 
 // inverted soft-uart
@@ -280,7 +296,7 @@ using cells01 = cellsColl::SPortCell<0>;
 using cells23 = cellsColl::SPortCell<2>;
 using telemetry = External::SPort::Sensor<External::SPort::SensorId::ID1, sensorUsart, systemTimer
                                        ,Meta::List<cellsColl::VersionProvider, cells01, cells23
-                                       ,cell0P, cell1P, cell2P, cell3P
+                                       ,cell0P, cell1P, cell2P, cell3P, tempiP
 , cellsColl::MinProvider
 , cellsColl::TotalProvider
 >>;
@@ -292,7 +308,9 @@ int main() {
     portmux::init();
     
     ccp::unlock([]{
+        static_assert(F_OSC == 20000000);
         clock::prescale<1>(); 
+//        clock::prescale<2>(); 
     });
     
     systemTimer::init();
@@ -357,6 +375,10 @@ int main() {
                     sensorData.min_cell_volt_num = i;
                     
                     sensorData.Battery1 = cellsColl::TotalProvider::value() / 10; // 100mV
+                            
+                    using adci_t = adcController::index_type;
+                    sensorData.temperature1 = 20 + sigrow::adcValueToTemperature<std::ratio<1,1>, 0>(adcController::value(adci_t{1})).value;
+                    sensorData.temperature2 = sensorData.temperature1;
 #endif
 #ifdef USE_SPORT
 //                    cells01::setTotal(cellsColl::size());

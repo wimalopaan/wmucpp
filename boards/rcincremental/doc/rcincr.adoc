@@ -83,7 +83,7 @@ Die Spannungsversorgung erfolgt vom Sender über den Pfostensteckverbinder.
 * `Pin 2`:
 ** Konfigurations-Modus: Kontrollleuchte
 ** `Poti`-Modus: analoges Gebersignal
-** `Cppm-Master`: Verbindung zum _Slave_
+** `Cppm-Master`: Verbindung zum _Slaev_
 ** `Cppm-Slave`: Verbingung zum _Master_
 * `Pin 3`:
 ** `Poti`-Modus: Taster
@@ -113,6 +113,73 @@ Vergessen Sie auch nicht, ggf. noch die Höhe eines Steckverbinders einzuplanen.
 
 Wenn Sie ein neues Loch in das Sendergehäuse bohren, vergewissern Sie sich, dass _hinter_ dem geplanten Bohrloch 
 keine weiteren Kabel verlaufen, die ggf. beschädigt werden könnten.
+
+.Das Board
+image::{localimages}/board_2.jpg[align="center",width=75%,pdfwidth=75%]
+
+.Anschluss: rot=V+, schwarz=Masse, gelb=Ausgang des Masters
+image::{localimages}/board_1.jpg[align="center",width=75%,pdfwidth=75%]
+
+.Anschluss
+image::{localimages}/board_3.jpg[align="center",width=75%,pdfwidth=75%]
+
+=== Beispiel RadioMaster TX16S
+
+Die folgenden Bilder stellen die Einbausituation in einer RadioMaster TX16s da.
+
+.Der Pin an der Lehrer-Schüler-Buchse für das Cppm-Signal
+image::{localimages}/x16_1.jpg[align="center",width=75%,pdfwidth=75%]
+
+.Fertiger Einbau mit 2 Gebern
+image::{localimages}/x16_2.jpg[align="center",width=75%,pdfwidth=75%]
+
+
+//image::{localimages}/x16_3.jpg[align="center",width=75%,pdfwidth=75%]
+
+//image::{localimages}/x16_4.jpg[align="center",width=75%,pdfwidth=75%]
+
+.Einbausituation Übersicht
+image::{localimages}/x16_5.jpg[align="center",width=75%,pdfwidth=75%]
+
+.Einbausituation Poti-Modus
+image::{localimages}/x16_10.jpg[align="center",width=75%,pdfwidth=75%]
+
+.Einbausituation Poti-Modus
+image::{localimages}/x16_11.jpg[align="center",width=75%,pdfwidth=75%]
+
+.Ein Geber eingebaut
+image::{localimages}/x16_12.jpg[align="center",width=75%,pdfwidth=75%]
+
+.Ein Geber eingebaut
+image::{localimages}/x16_13.jpg[align="center",width=75%,pdfwidth=75%]
+
+.Ein Geber eingebaut
+image::{localimages}/x61_14.jpg[align="center",width=75%,pdfwidth=75%]
+
+=== Beispiel FrSky X12S
+
+Die folgenden Bilder sollen den Einbei in einer FrSky X12s verdeutlichen.
+
+.Notwendige Brücke bei der FrSky X12s zur Aktivierung des Schülersignals
+image::{localimages}/x12_1.jpg[align="center",width=75%,pdfwidth=75%]
+
+.Einspeisung des Schülersignals vom Master-Geber
+image::{localimages}/x12_2.jpg[align="center",width=75%,pdfwidth=75%]
+
+.Spannungsversorgung des Gebers bei der FrSky X12s
+image::{localimages}/x12_3.jpg[align="center",width=75%,pdfwidth=75%]
+
+=== Externe Buchse
+
+Das folgende Bild verdeutlicht die Kaskadierung zweier Geber.
+
+.Master-Slave-Verkabelung
+image::{localimages}/t12_1.jpg[align="center",width=75%,pdfwidth=75%]
+
+Das folgende Bild zeigt den Anschluss an einer externen LS-Buchse:
+
+.Anschluss an externe LS-Buchse
+image::{localimages}/t12_2.jpg[align="center",width=75%,pdfwidth=75%]
 
 == Konfiguration
 
