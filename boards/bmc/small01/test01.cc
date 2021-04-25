@@ -164,7 +164,7 @@ struct EscStateFsm {
         case State::Off:
             Actuator::off();
             ++mOffStateCounter;
-            if (mOffStateCounter > 5) {
+            if (mOffStateCounter.toInt() > 5) {
                 if (v >= 0) {
                     mState = State::Forward;
                 }
