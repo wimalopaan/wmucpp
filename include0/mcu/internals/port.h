@@ -460,6 +460,9 @@ namespace AVR {
         static inline constexpr uint8_t number = PinNumber;
         static inline constexpr std::byte pinMask{(1 << PinNumber)};
         
+        static inline void on_fast() {
+            Port::outset() = pinMask; 
+        }
         static inline void on() {
             Port::get() |= pinMask; 
 //            Port::outset() = pinMask; 
@@ -468,6 +471,9 @@ namespace AVR {
         static inline void off() {
             Port::get() &= ~pinMask; 
 //            Port::outclear() = pinMask; 
+        }
+        static inline void off_fast() {
+            Port::outclear() = pinMask; 
         }
         static inline constexpr auto& low = off;
         static inline void toggle() {
