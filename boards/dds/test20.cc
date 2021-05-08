@@ -39,7 +39,10 @@
 #include <external/solutions/rc/busscan.h>
 #include <external/solutions/series01/cppm_out.h>
 
+#include <mcu/pgm/pgmarray.h>
+
 #include <std/chrono>
+#include <std/bit>
 
 #include <etl/output.h>
 #include <etl/meta.h>
@@ -76,17 +79,6 @@ using a5Pin = Pin<Port<A>, 5>;
 
 using ad_data = Port<D>;
 
-//template<AVR::Concepts::ActivatableOut A>
-//struct SinglePulse {
-//    static inline void init() {
-//        A::init();
-//    }
-//    static inline void pulse() {
-//        A::activate();
-//        A::inactivate();
-//    }
-//};
-
 using clkPin = Pin<Port<C>, 0>;
 using clkAct = ActiveHigh<clkPin, Output>;
 using clkSig = SinglePulse<clkAct>;
@@ -109,111 +101,164 @@ using lut0 = Ccl::SimpleLut<0, Ccl::Input::Mask, Ccl::Input::Tca0<1>, Ccl::Input
 
 using portmux = Portmux::StaticMapper<Meta::List<tca0Position>>;
 
-template<typename Data, typename WClkSig, typename FUpdSig, typename ResetSig>
-struct AD9851 {
-    static inline constexpr uint64_t ad_f87  = 40'915'000;
-    static inline constexpr uint64_t ad_f87u = 40'917'000; // besser 2KHz?
-    static inline constexpr uint64_t ad_c = uint64_t{1} << 32;
-    static inline constexpr uint64_t ad_sysclk = 30'000'000 * 6; // 180MHz bei 30MHz Quarz
-    static inline constexpr uint32_t ad_v87  = (ad_f87 * ad_c) / ad_sysclk;
-    static inline constexpr uint32_t ad_v87u = (ad_f87u * ad_c) / ad_sysclk;
-//    std::integral_constant<uint64_t, ad_v87>::_;
-//    std::integral_constant<uint64_t, ad_v87u>::_;  
-    
-    static inline constexpr auto ff = []{
-        std::array<std::byte, 4> data{};
+namespace External {
+    namespace DDS {
+        enum class Band : uint8_t {_27MHz, _35AMHz, _35BMHz, _40MHz, _41MHz, _72MHz};
+        struct Channel {
+            const Band     mBand{};
+            const uint16_t mNumber;
+            const uint32_t mFreq{};
+        };
         
-        data[0] = std::byte((ad_v87 >> 24) & 0xff);
-        data[1] = std::byte((ad_v87 >> 16) & 0xff);
-        data[2] = std::byte((ad_v87 >>  8) & 0xff);
-        data[3] = std::byte((ad_v87 >>  0) & 0xff);
+        inline static constexpr std::array channels {
+            Channel{Band::_40MHz, 50, 40'000'000},
+            Channel{Band::_40MHz, 50, 40'000'000},
+            Channel{Band::_40MHz, 50, 40'000'000},
+            Channel{Band::_40MHz, 50, 40'000'000},
+            Channel{Band::_40MHz, 50, 40'000'000},
+            Channel{Band::_40MHz, 50, 40'000'000},
+            Channel{Band::_40MHz, 50, 40'000'000},
+            Channel{Band::_40MHz, 50, 40'000'000},
+            Channel{Band::_40MHz, 50, 40'000'000},
+            Channel{Band::_40MHz, 50, 40'000'000},
+            Channel{Band::_40MHz, 50, 40'000'000},
+            Channel{Band::_40MHz, 50, 40'000'000},
+            Channel{Band::_40MHz, 50, 40'000'000},
+            Channel{Band::_40MHz, 50, 40'000'000},
+        };
         
-        return data;
-    }();
-    static inline constexpr auto ffu = []{
-        std::array<std::byte, 4> data{};
         
-        data[0] = std::byte((ad_v87u >> 24) & 0xff);
-        data[1] = std::byte((ad_v87u >> 16) & 0xff);
-        data[2] = std::byte((ad_v87u >>  8) & 0xff);
-        data[3] = std::byte((ad_v87u >>  0) & 0xff);
-        
-        return data;
-    }();
-    
-    enum class Freq : uint8_t {Ch87 = 0};
-    
-    enum class State : uint8_t {Undefined, Init, Ready, Transfer};
-    
-    static inline bool ready() {
-        return mState == State::Ready;
-    }
+        template<typename Data, AVR::Concepts::Pulseable WClkSig, AVR::Concepts::Pulseable FUpdSig, AVR::Concepts::Pulseable ResetSig>
+        struct AD9851 {
+            static inline constexpr uint64_t ad_c = uint64_t{1} << 32;
+            static inline constexpr uint64_t ad_sysclk = 30'000'000 * 6; // 180MHz bei 30MHz Quarz
+            
+            struct FreqWord {
+                static inline constexpr uint32_t dw(const uint32_t f) {
+                    const uint32_t v = (f * ad_c) / ad_sysclk;
+                    return v;                                        
+                }
+                constexpr FreqWord(const uint32_t f) :
+                    data{etl::nth_byte<3>(dw(f)), etl::nth_byte<2>(dw(f)), etl::nth_byte<1>(dw(f)), etl::nth_byte<0>(dw(f))}
+                {}
+                constexpr FreqWord(auto it) :
+                    data{*it++, *it++, *it++, *it++}
+                {}
+                const std::array<std::byte, 4> data{};
+            } __attribute__((packed));
+            
+            struct ChannelData {
+                constexpr ChannelData(const uint32_t f) : 
+                    f0{f}, f1{f + 2'000}{}
+                
+                ChannelData(const AVR::Pgm::Ptr<ChannelData>& ptr) :
+                    f0{AVR::Pgm::ByteRange{ptr}.begin()}, f1{AVR::Pgm::ByteRange<ChannelData, sizeof(f0)>{ptr}.begin()}
+                {}
+                const FreqWord f0;
+                const FreqWord f1;
+            } __attribute__((packed));
+            
+            struct Generator {
+                constexpr auto operator()() {
+                    return []<auto... II>(std::index_sequence<II...>){
+                        return std::array<ChannelData, channels.size()>{ChannelData{channels[II].mFreq}...};
+                    }(std::make_index_sequence<channels.size()>{});
+                }
+            };
+            
+            using PgmChData = AVR::Pgm::Util::Converter<Generator>::pgm_type;
 
-    static inline void put(const std::byte b) {
-        Data::get() = b;
-        WClkSig::pulse();
-    }
-    
-    static inline void put(const std::array<std::byte, 4>& a) {
-        put(0x01_B);
-        put(a[0]);
-        put(a[1]);
-        put(a[2]);
-        put(a[3]);
-    }
-    
-    static inline void set(const Freq) {
-        put(ff);
-        FUpdSig::pulse();
-    }
-    
-    static inline void setu() {
-        put(ffu);
-        FUpdSig::pulse();
-    }
-    
-    static inline void init() {
-        Data::dir() = 0xff_B;        
-        Data::get() = 0x00_B;        
-        
-        WClkSig::init();
-        FUpdSig::init();
-        ResetSig::init();
-    }  
-    
-    static inline void periodic() {
-        const auto oldState = mState;
-        switch (mState) {
-        case State::Undefined:
-            mState = State::Init;
-            break;
-        case State::Init:
-            mState = State::Ready;
-            break;
-        case State::Ready:
-            break;
-        case State::Transfer:
-            break;
-        }
-        if (oldState != mState) {
-            switch (mState) {
-            case State::Undefined:
-                break;
-            case State::Init:
-                ResetSig::pulse();
-                break;
-            case State::Ready:
-                break;
-            case State::Transfer:
-                break;
+            using d7Pin = AVR::Pin<Data, 7>;
+            
+            enum class State : uint8_t {Undefined, Init, Ready, Transfer};
+            
+            static inline bool ready() {
+                return mState == State::Ready;
             }
-        }
+        
+            static inline void put(std::byte b) {
+                for(uint8_t i{}; i < 8; ++i) {
+                    if (std::any(b & 0x01_B)) {
+                        d7Pin::on();
+                    }
+                    else {
+                        d7Pin::off();
+                    }
+                    b >>= 1;
+                    WClkSig::pulse();
+                }
+            }
+            
+            // Reihenfolge gegenüber parallel Mode vertauscht.
+            static inline void put(const std::array<std::byte, 4>& a) {
+                put(a[3]);
+                put(a[2]);
+                put(a[1]);
+                put(a[0]);
+                put(0x01_B); // refclock 6x
+            }
+            
+            static inline void set() {
+                put(PgmChData::value(mIndex).f0.data);
+                FUpdSig::pulse();
+            }
+            
+            static inline void setu() {
+                put(PgmChData::value(mIndex).f1.data);
+                FUpdSig::pulse();
+            }
+        
+            static inline void setSerial() {
+                Data::get() = 0x03_B;        
+                WClkSig::pulse();
+                FUpdSig::pulse();
+            }
+            
+            static inline void init() {
+                Data::dir() = 0xff_B;        
+                Data::get() = 0x00_B;        
+                WClkSig::init();
+                FUpdSig::init();
+                ResetSig::init();
+            }  
+            
+            static inline void periodic() {
+                const auto oldState = mState;
+                switch (mState) {
+                case State::Undefined:
+                    mState = State::Init;
+                    break;
+                case State::Init:
+                    mState = State::Ready;
+                    break;
+                case State::Ready:
+                    break;
+                case State::Transfer:
+                    break;
+                }
+                if (oldState != mState) {
+                    switch (mState) {
+                    case State::Undefined:
+                        break;
+                    case State::Init:
+                        ResetSig::pulse();
+                        setSerial();
+                        break;
+                    case State::Ready:
+                        break;
+                    case State::Transfer:
+                        break;
+                    }
+                }
+            }
+        private:
+            static inline State mState{State::Undefined};
+            static inline PgmChData::ranged_type mIndex;
+        };
     }
-private:
-    static inline State mState{State::Undefined};
-};
+}
 
-using ad9851 = AD9851<ad_data, clkSig, fupSig, rstSig>;
+using ad9851 = External::DDS::AD9851<ad_data, clkSig, fupSig, rstSig>;
 
 template<typename MCU = DefaultMcuType>
 struct Fsm {
@@ -234,9 +279,6 @@ struct Fsm {
         a5Pin::dir<Output>();
         ad9851::init();
         tdev::init<BaudRate<9600>>();
-        cppm::init();
-        lut0::init(0x33_B); // invert
-//        lut0::enable(); // nicht notwendig
         
         cppm::set(ch_t{0}, rv_t{cppm::ocMedium});
         cppm::set(ch_t{1}, rv_t{cppm::ocMedium});
@@ -253,10 +295,6 @@ struct Fsm {
         dbgPin::toggle();
         tdev::periodic();
         ad9851::periodic();
-//        cppm::periodic([]{
-//        });
-//        cppm::onOvfl([]{
-//        });
     }
     static inline void ratePeriodic() {
         const auto oldState = mState;
@@ -299,9 +337,12 @@ struct Fsm {
             case State::Init:
                 break;
             case State::Set:
-                ad9851::set(ad9851::Freq::Ch87);
+                ad9851::set();
                 break;
             case State::Run:
+                cppm::init();
+                lut0::init(0x33_B); // invert
+        //        lut0::enable(); // nicht notwendig
                 break;
             }
         } 
@@ -324,7 +365,7 @@ struct Setter {
 };
 struct ReSetter {
     inline static void once() {
-        ad9851::set(ad9851::Freq::Ch87);
+        ad9851::set();
         a5Pin::on();        
     }
 };

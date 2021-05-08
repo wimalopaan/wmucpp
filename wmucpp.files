@@ -220,6 +220,8 @@ boards/bootloader/fastboot/get_avr_arch.sh
 boards/bootloader/optiboot.txt
 boards/bootloader/owl.txt
 boards/breakout/Makefile
+boards/breakout/da00.cc
+boards/breakout/da01.cc
 boards/breakout/test00.cc
 boards/breakout/test01.cc
 boards/cellwatch/Makefile
@@ -272,6 +274,10 @@ boards/dds/test00.cc
 boards/dds/test10.cc
 boards/dds/test11.cc
 boards/dds/test12.cc
+boards/dds/test20.cc
+boards/dds/test21.cc
+boards/dds/test22.cc
+boards/dds/test30.cc
 boards/doc/einbau.adoc
 boards/doc/einbau_auto.adoc
 boards/doc/function.adoc
@@ -1651,6 +1657,7 @@ include0/external/ibus/ibus2.h
 include0/external/solutions/cells.h
 include0/external/solutions/rc/busscan.h
 include0/external/solutions/rc/multi.h
+include0/external/solutions/rc/rf.h
 include0/external/solutions/rotaryencoder.h
 include0/external/solutions/series01/cppm_out.h
 include0/mcu/avrdx/avr128da32.h
@@ -1925,6 +1932,8 @@ include/util/outputparameter.h
 include/util/rational.h
 include/util/sort.h
 include/util/static_container.h
+include0/mcu/common/components/twi.h
+include0/mcu/internals/twi.h
 text/bmcppdefs.adoc
 text/Makefile
 text/bmcpp01.adoc

@@ -76,16 +76,16 @@ using a5Pin = Pin<Port<A>, 5>;
 
 using ad_data = Port<D>;
 
-template<AVR::Concepts::ActivatableOut A>
-struct SinglePulse {
-    static inline void init() {
-        A::init();
-    }
-    static inline void pulse() {
-        A::activate();
-        A::inactivate();
-    }
-};
+//template<AVR::Concepts::ActivatableOut A>
+//struct SinglePulse {
+//    static inline void init() {
+//        A::init();
+//    }
+//    static inline void pulse() {
+//        A::activate();
+//        A::inactivate();
+//    }
+//};
 
 using clkPin = Pin<Port<C>, 0>;
 using clkAct = ActiveHigh<clkPin, Output>;

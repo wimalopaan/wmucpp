@@ -39,7 +39,7 @@ namespace External {
             static constexpr uint16_t ocMedium = (ocMin + ocMax) / 2;
             static_assert(ocMedium> 0, "wrong oc value");
         
-            static constexpr uint16_t ccPulse = 300_us * timerFrequency;
+            static constexpr uint16_t ccPulse = 500_us * timerFrequency;
             static_assert(ccPulse > 0, "wrong oc value");
             static constexpr uint16_t ccPulseFrame = ocMax + ccPulse;
             static_assert(ccPulse > 0, "wrong oc value");

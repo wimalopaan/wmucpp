@@ -237,6 +237,9 @@ namespace AVR {
                 mcu_ccl()->luts.raw[N].ctrla.template clear<MCU::Ccl::Lut0CtrlA_t::enable, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
                 mcu_ccl()->luts.raw[N].ctrla.template clear<MCU::Ccl::Lut0CtrlA_t::outenable, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
             }
+            inline static void on() {
+                mcu_ccl()->ctrla.template set<MCU::Ccl::CtrlA_t::enable>();
+            }
         };
         
         template<typename Lut>

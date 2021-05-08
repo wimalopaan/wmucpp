@@ -1,9 +1,13 @@
 #include <cstdint>
+#include <mcu/avr.h>
+#include <mcu/internals/ccp.h>
+#include <mcu/internals/clock.h>
 
-constexpr int x{};
-
-const int y{};
+using ccp = AVR::Cpu::Ccp<>;
+using clock = AVR::Clock<>;
 
 int main() {
-    *const_cast<int*>(&x) = 42;
+    ccp::unlock([]{
+        clock::prescale<2>();
+    } );
 }

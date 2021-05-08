@@ -23,6 +23,7 @@
 #include <type_traits>
 #include <memory>
 #include <etl/meta.h>
+#include <etl/ranged.h>
 
 #if __has_include(<avr/pgmspace.h>)
 # include <avr/pgmspace.h>
@@ -100,10 +101,13 @@ namespace AVR {
 			
             using value_type = std::remove_const_t<std::remove_reference_t<T>>;
 			using size_type = typename std::conditional<(sizeof...(Ts) < 256), uint8_t, uint16_t>::type;
+
             
             inline static constexpr size_type size() {
                 return sizeof... (Ts);
 			}
+            
+            using ranged_type = etl::uint_ranged<size_type, 0, size() - 1>;
             
             inline static constexpr Ptr<value_type> ptr(size_type index) {
                 return Ptr{&data[index]};

@@ -49,5 +49,9 @@ namespace std {
 
     template<> struct enable_bitmask_operators<AVR::Series0::Spi::CtrlA1_t> : std::true_type {};
     template<> struct enable_bitmask_operators<AVR::Series0::Spi::CtrlB1_t> : std::true_type {};
+
+    template<> struct enable_bitmask_operators<AVR::SeriesDa::Twi::MStatus_t> : std::true_type {};
+    template<> struct enable_bitmask_operators<AVR::SeriesDa::Twi::MCtrlA_t> : std::true_type {};
+    template<> struct enable_bitmask_operators<AVR::SeriesDa::Twi::MCtrlB_t> : std::true_type {};
 }
 

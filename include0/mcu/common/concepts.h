@@ -147,6 +147,12 @@ namespace AVR {
                 a.activate();
                 a.inactivate();
         };
+
+        template<typename A>
+        concept Pulseable = requires (A a) { 
+                a.init();
+                a.pulse();
+        };
         
         template<typename I>
         concept IServiceRNonVoid = requires (I) {

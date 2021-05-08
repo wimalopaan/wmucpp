@@ -74,7 +74,7 @@ namespace AVR {
             return mData.empty();
         }
 
-        inline static void periodic() {
+        inline static void periodic() requires(!useISR::value){
             if (mcu_spi()->intflags.template isSet<intflags_t::dreif>()) {
                 if (std::byte b; mData.pop_front(b)) {
                     *mcu_spi()->data = b;
@@ -146,7 +146,7 @@ namespace AVR {
             return mcu_spi()->intflags.template isSet<intflags_t::txcif>();
         }
 
-        inline static void periodic() {
+        inline static void periodic() requires(!useISR::value){
             if (mcu_spi()->intflags.template isSet<intflags_t::dreif>()) {
                 if (std::byte b; mData.pop_front(b)) {
                     *mcu_spi()->data = b;

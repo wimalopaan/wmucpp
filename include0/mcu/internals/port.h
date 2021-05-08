@@ -706,6 +706,19 @@ namespace AVR {
             Pin::inactivate();
         }
     };
+
+    template<AVR::Concepts::ActivatableOut A>
+    struct SinglePulse {
+        static inline void init() {
+            A::init();
+        }
+        static inline void pulse() {
+            A::activate();
+            A::inactivate();
+        }
+    };
+    
+
 }
 
 template<typename Pin>

@@ -88,6 +88,11 @@ namespace AVR {
                 struct Mapper {
                     using type = void;
                 };
+                template<AVR::Concepts::AtDxSeries MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Ccl<0>, AVR::Portmux::Alt1>, MCU> {
+                    using route_t = typename MCU::Portmux::CclRoute_t;
+                    using type = std::integral_constant<route_t, route_t::lut0_alt1>;
+                };
                 template<AVR::Concepts::AtMega0 MCU>
                 struct Mapper<AVR::Portmux::Position<AVR::Component::Ccl<0>, AVR::Portmux::Alt1>, MCU> {
                     using route_t = typename MCU::Portmux::CclRoute_t;
@@ -189,9 +194,11 @@ namespace AVR {
             static_assert(Meta::size_v<usart_list> <= 4);
             static_assert(Meta::size_v<ccl_list> <= 4);
             static_assert(Meta::size_v<tca_list> <= 1);
+            static_assert(Meta::size_v<ccl_list> <= 4);
             
         public:
             static inline void init() {
+//                static_assert(std::false_v<MCU>);
                 if constexpr(Meta::size_v<usart_list> > 0) {
                     constexpr auto value = Meta::value_or_v<usart_list>;
 //                    std::integral_constant<decltype(value), value>::_;

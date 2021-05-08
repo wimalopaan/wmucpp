@@ -40,6 +40,7 @@
 #include "components/adcomparator.h"
 #include "components/sigrow_da32.h"
 #include "components/spi.h"
+#include "components/twi.h"
 #include "components/gpior.h"
 #include "components/syscfg.h"
 #include "components/nvm_da32.h"

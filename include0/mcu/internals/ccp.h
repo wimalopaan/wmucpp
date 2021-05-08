@@ -24,7 +24,6 @@
 
 namespace AVR {
     namespace Cpu {
-
         template<typename MCU = DefaultMcuType>
         struct Ccp;
 
@@ -32,26 +31,14 @@ namespace AVR {
         struct Ccp<MCU> {
             static constexpr auto mcu_cpu = getBaseAddr<typename MCU::Cpu>;
             
-            static inline constexpr void unlock(const auto& f) {
+            [[gnu::optimize("Os")]] static inline constexpr void unlock(const auto& f) {
                 *mcu_cpu()->ccp = 0xd8_B;
                 f();
             }
-
-            static inline constexpr void spm(const auto& f) {
+            [[gnu::optimize("Os")]] static inline constexpr void spm(const auto& f) {
                 *mcu_cpu()->ccp = 0x9d_B;
                 f();
             }
         };
- 
-//        template<AVR::Concepts::AtTiny1 MCU>
-//        struct Ccp<MCU> {
-//            static constexpr auto mcu_cpu = getBaseAddr<typename MCU::Cpu>;
-            
-//            static inline constexpr void unlock(const auto& f) {
-//                *mcu_cpu()->ccp = 0xd8_B;
-//                f();
-//            }
-//        };
-
     }
 }

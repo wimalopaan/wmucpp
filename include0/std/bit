@@ -2,7 +2,6 @@
 
 namespace std {
     
-    
 #if __cplusplus > 201703l && __has_builtin(__builtin_bit_cast)
 #define __cpp_lib_bit_cast 201806L
     
