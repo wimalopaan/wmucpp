@@ -29,6 +29,21 @@ struct RawProvider {
     }
 };
 
+struct VersionProvider {
+    inline static constexpr auto valueId = External::SPort::ValueId::DIY;
+    inline static constexpr void init() {}
+    inline static constexpr uint16_t value() {
+#if defined(GITMAJOR) && defined(GITMINOR)
+    static_assert(GITMINOR < 10);
+//            return mUpdateCounter;
+    return GITMAJOR * 100 + GITMINOR;
+#else
+    return VERSION_NUMBER;
+#endif
+        return 42;
+    }
+};
+
 #ifdef USE_SPORT
 using rxPin = Pin<Port<A>, 1>; // alt1
 using txPin = rxPin;
@@ -64,7 +79,7 @@ using r2 = RawProvider<adcController, 2>;
 using r3 = RawProvider<adcController, 3>;
 
 using sport = External::SPort::Sensor<External::SPort::SensorId::ID4, sensorUsart, systemTimer, 
-                                       Meta::List<r0, r1, r2, r3>>;
+                                       Meta::List<r0, r1, r2, r3, VersionProvider>>;
 
 using isrRegistrar = IsrRegistrar<sport::uart::StartBitHandler, sport::uart::BitHandler>;
 
