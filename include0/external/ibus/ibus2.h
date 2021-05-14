@@ -97,25 +97,27 @@ namespace RCSwitch {
 
         inline static constexpr param_t reset{0};
         inline static constexpr param_t pwm{1};
-        inline static constexpr param_t increment = pwm;
-        inline static constexpr param_t motorRampTime = pwm;
+        inline static constexpr param_t increment{pwm};
+//        inline static constexpr param_t increment = pwm;
+        inline static constexpr param_t motorRampTime{pwm};
+//        inline static constexpr param_t motorRampTime = pwm;
         inline static constexpr param_t blink1Intervall{2};
-        inline static constexpr param_t position1 = blink1Intervall;
-        inline static constexpr param_t pwm1 = blink1Intervall;
+        inline static constexpr param_t position1{blink1Intervall};
+        inline static constexpr param_t pwm1{blink1Intervall};
         inline static constexpr param_t blink1Duration{3};
-        inline static constexpr param_t position2 = blink1Duration;
-        inline static constexpr param_t offCurr1 = blink1Duration;
+        inline static constexpr param_t position2{blink1Duration};
+        inline static constexpr param_t offCurr1{blink1Duration};
         inline static constexpr param_t blink2Intervall{4};
-        inline static constexpr param_t position3 = blink2Intervall;
-        inline static constexpr param_t pwm2 = blink2Intervall;
+        inline static constexpr param_t position3{blink2Intervall};
+        inline static constexpr param_t pwm2{blink2Intervall};
         inline static constexpr param_t blink2Duration{5};
-        inline static constexpr param_t position4 = blink2Duration;
-        inline static constexpr param_t offCurr2 = blink2Duration;
+        inline static constexpr param_t position4{blink2Duration};
+        inline static constexpr param_t offCurr2{blink2Duration};
         inline static constexpr param_t passThruChannel{6}; // auch follow mode für ServoSwitch
         inline static constexpr param_t timeMpxMode{7}; // MK8 = 0, MK4 = 1, Robbe = 2, CP = 3
         inline static constexpr param_t testMode{8};
         inline static constexpr param_t timeMpxOffsetIncrement{9};
-        inline static constexpr param_t adcSensitivity = timeMpxOffsetIncrement;
+        inline static constexpr param_t adcSensitivity{timeMpxOffsetIncrement};
         inline static constexpr param_t cutOffSensitivity{10}; // Kennlinie
         inline static constexpr param_t servoMin{12};
         inline static constexpr param_t servoMax{13};
