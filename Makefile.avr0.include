@@ -80,7 +80,7 @@ GITMINOR := $(shell git describe --abbrev=4 --tags | cut -d- -f2 | sed 's/v.*/0/
 GITTAG2 := $(shell git describe --abbrev=4 --tags | cut -d- -f1-2)
 
 #CXXFLAGS += $(OPTFLAGS) -std=c++17 #-pedantic
-CXXFLAGS += $(OPTFLAGS) -std=c++2a # -pedantic
+CXXFLAGS += $(OPTFLAGS) -std=c++20 # -pedantic
 #CXXFLAGS += -O3 -std=c++17 # -pedantic
 #CXXFLAGS += -nostdlib -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics
 CXXFLAGS += -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics #-Wgnu-string-literal-operator-template
