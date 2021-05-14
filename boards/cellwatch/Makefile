@@ -17,14 +17,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# ~/Projekte/updi/pyupdi/pyupdi.py -d tiny412 -c /dev/ttyUSB1  -f test00.hex
+
+# ~/.local/bin/pyupdi -c /dev/ttyUSB0 -d tiny412 -fs 2:0x01 -f base04.hex 
+# ~/.local/bin/pyupdi -c /dev/ttyUSB0 -d tiny412 -f cell04.hex 
 
 MCU = attiny412
 F_OSC = 20000000
 
 #cell04.hex : F_OSC = 10000000
 cell04.hex : F_OSC = 5000000
-base04.hex : F_OSC = 20000000
+base04.hex : F_OSC = 16000000
 
 subdirs =
 

@@ -1,8 +1,8 @@
 #define NDEBUG
 
-#define USE_HOTT
+//#define USE_HOTT
 //#define USE_IBUS
-//#define USE_SPORT
+#define USE_SPORT
 
 #define SBUS_IBUS_NO_WARN
 
@@ -308,11 +308,12 @@ int main() {
     portmux::init();
     
     ccp::unlock([]{
-        static_assert(F_OSC == 20000000);
+//        static_assert(F_OSC == 20000000);
+        static_assert(F_OSC == 16000000); // ACHTUNG: fuse-setting
         clock::prescale<1>(); 
 //        clock::prescale<2>(); 
     });
-    
+     
     systemTimer::init();
     adcController::init();
     
