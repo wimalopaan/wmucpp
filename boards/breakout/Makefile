@@ -45,5 +45,6 @@ subdirs =
 #targets += test04.elf
 targets += da00.hex
 targets += da01.hex
+targets += da02.hex
 
 -include ../../Makefile.avr0.include

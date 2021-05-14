@@ -222,6 +222,7 @@ boards/bootloader/owl.txt
 boards/breakout/Makefile
 boards/breakout/da00.cc
 boards/breakout/da01.cc
+boards/breakout/da02.cc
 boards/breakout/test00.cc
 boards/breakout/test01.cc
 boards/cellwatch/Makefile
@@ -270,6 +271,7 @@ boards/curiosity/test82.cc
 boards/curiosity/test90.cc
 boards/curiosity/test99.c
 boards/dds/Makefile
+boards/dds/rfmodule00.cc
 boards/dds/test00.cc
 boards/dds/test10.cc
 boards/dds/test11.cc
@@ -1654,6 +1656,7 @@ include/util/types.h
 include/util/types.h
 include/util/util.h
 include0/external/ibus/ibus2.h
+include0/external/solutions/ad9851.h
 include0/external/solutions/cells.h
 include0/external/solutions/rc/busscan.h
 include0/external/solutions/rc/multi.h
@@ -1932,6 +1935,7 @@ include/util/outputparameter.h
 include/util/rational.h
 include/util/sort.h
 include/util/static_container.h
+include0/external/solutions/si5351.h
 include0/mcu/common/components/twi.h
 include0/mcu/internals/twi.h
 text/bmcppdefs.adoc
