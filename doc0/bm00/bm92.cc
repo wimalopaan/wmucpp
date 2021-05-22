@@ -13,12 +13,7 @@ struct MCU {
         static inline volatile std::byte r2;
     };
 };
-
-
 struct A {
-//    A(std::byte v = 0_B) : value(v){
-//        asm(";Ac");
-//    }
     inline constexpr std::byte get() const {
         return value;
     }
@@ -32,14 +27,8 @@ struct A {
         value = MCU::P1::r2;
     }
     std::byte value{};
-//    ~A() {
-//        asm(";Ad");
-//    }
 };
 struct B {
-//    B(std::byte v = 0_B) : value(v){
-//        asm(";Bc");
-//    }
     inline constexpr std::byte get() const {
         return value;
     }
@@ -53,9 +42,17 @@ struct B {
         value = MCU::P2::r2;
     }
     std::byte value{};
-//    ~B() {
-//        asm(";Bd");
-//    }
+};
+struct Null {
+    inline constexpr std::byte get() const {
+        return 0x00_B;
+    }
+    inline constexpr void set(std::byte) const {
+    }
+    inline constexpr void toggle(std::byte) const {
+    }
+    inline constexpr void store() {
+    }
 };
 
 namespace  {
@@ -65,25 +62,25 @@ namespace  {
     B x4{62_B};   
 }
 
+struct I{};
+template<auto N> struct Foo : public I {};
+
+Foo<0> f0;
+Foo<1> f1;
+
+I* a[] {&f0, &f1};
+
 int main() {
-    std::array<std::variant<A, B, nullptr_t>, 4> p{x1, x2, x3, nullptr};
-//    p[0] = x4;
+    std::array<std::variant<A, B, Null>, 4> p{x1, x2, x3, Null{}};
+//    p[3] = x4;
     while(true) {
         std::byte x{};
         for(auto&& i : p) {
             i.visit([&]<typename P>(P& v){
-                        if constexpr(!std::is_same_v<P, nullptr_t>) {
                             v.store();
                             x |= v.get();
-                        }
             });
         }
         x1.set(x);
-//        p[0].visit([&]<typename V>(V& v){
-//                       if constexpr(!std::is_same_v<V, nullptr_t>) {
-            
-//                           v.set(x);
-//                       }
-//        });
     }
 }

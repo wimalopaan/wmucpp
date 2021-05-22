@@ -19,8 +19,8 @@ extern int a;
 int main() {
 //    setBit(1);
 //    PORTA.INTFLAGS = 0x01; // korrekt
-    auto p = reinterpret_cast<volatile Bits*>(&PORTA);
+//    auto p = reinterpret_cast<volatile Bits*>(&PORTA);
 //    auto p = reinterpret_cast<volatile Bits*>(0x10);
-    p->bit0 = 1; // falsch
+//    p->bit0 = 1; // falsch
     
 }

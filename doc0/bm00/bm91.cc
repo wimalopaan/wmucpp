@@ -19,7 +19,7 @@ struct I {
     inline virtual void store() = 0;
 };
 
-struct A : public I {
+struct A final : public I {
     inline constexpr explicit A(std::byte v) : value{v} {}
     inline constexpr std::byte get() const override {
         return value;
@@ -36,7 +36,7 @@ struct A : public I {
     std::byte value{};
 };
 
-struct B : public I {
+struct B final : public I {
     inline constexpr explicit B(std::byte v) : value{v} {}
     inline constexpr std::byte get() const override {
         return value;
@@ -62,7 +62,7 @@ namespace  {
 
 int main() {
     std::array<I*, 4> p{&x1, &x2, &x3, nullptr};
-    p[0] = &x1;
+//    p[3] = &x4;
     while(true) {
         std::byte x{};
         for(auto&& i : p) {

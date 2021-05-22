@@ -54,7 +54,7 @@ namespace  {
 
 int main() {
     std::array<std::variant<B*, A*, nullptr_t>, 4> p{&x1, &x2, &x3, nullptr};
-    p[0] = &x4;
+//    p[3] = &x4;
     while(true) {
         std::byte x{};
         for(auto&& i : p) {

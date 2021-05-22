@@ -7,59 +7,57 @@
 #include <initializer_list>
 #include <etl/stringbuffer.h>
 #include <etl/algorithm.h>
-#include <mcu/pgm/pgmarray.h>
-#include <mcu/pgm/pgmstring.h>
 
-namespace  {
-    struct Data {
-        inline constexpr Data() : fl{}, by{}, ar{} {}
-        inline explicit Data(const AVR::Pgm::Ptr<Data>& p) {
-            //            memcpy_P((std::byte*)this, p.raw(), sizeof(Data));
-//            for(auto src{p.raw()}; auto&& dst : std::span<uint8_t, sizeof(Data)>{this}) {
-//                dst = pgm_read_byte(src++);
-//            }
-            AVR::Pgm::ByteRange pgm{p};
-            std::byte* dst = reinterpret_cast<std::byte*>(this);
-            std::copy(std::begin(pgm), std::end(pgm), dst);
-//            auto dst = (uint8_t*)this;
-//            auto src = (const uint8_t*) p.raw();
-//            for(uint8_t i{0}; i < sizeof(Data); ++i) {
-//                *dst = pgm_read_byte(src);
-//                ++src;
-//                ++dst;
-//            }
+template<typename T, typename I = T>
+static inline consteval auto indexes() {
+    return []<auto... II>(std::index_sequence<II...>){
+        return std::array<I, sizeof...(II)>{I(II)...};
+    }(std::make_index_sequence<T::Upper + 1>{});
+}
+
+template<typename T, typename I = T::value_type>
+struct range {
+    struct Iterator {
+        inline constexpr bool operator!=(const Iterator& o) const {
+            return i != o.i;
         }
-        uint32_t fl; // float member renders this type to be non-structural, which is strange. So, test it with another 4-byte type
-        uint8_t by;
-        std::array<uint8_t, 100> ar;
+        inline constexpr void operator++() {
+            ++i;
+        }
+        inline constexpr I operator*() const {
+            return i;
+        }
+        I i{};
     };
-    
-    struct Generator {
-        constexpr auto operator()() {
-            std::array<Data, 1> d{};
-            auto& data = d[0];
-            data.fl = 1234;
-            data.by = 123;
-            for(size_t i{0}; auto& e : data.ar) {
-                e = std::numeric_limits<decltype(data.ar)::value_type>::max() * (1.0 + sin((2.0 * 3.14 * i++) / data.ar.size())) / 2.0;
-            }
-            return d;
-        }        
-    };
-    
-    using pgm_type = typename AVR::Pgm::Util::Converter<Generator>::pgm_type;
-    
-    Data ram_data; // uninitialized
-}
+    inline constexpr Iterator begin() const {
+        return Iterator{0};
+    }    
+    inline constexpr Iterator end() const {
+        return Iterator{T::Upper + 1};
+    }    
+};
 
-template<typename T, typename... V>
-void construct_inplace(T& d, const V& ... v) {
-    new (&d) T{v...};
-}
+
+volatile uint8_t v;
 
 int main() {
-    construct_inplace(ram_data, pgm_type{}.ptr(0));
+    using index_type = etl::uint_ranged<uint8_t, 0, 8>;
     
-    return ram_data.ar[10];
+//    for(const auto& i : indexes<index_type>()) {
+//        v = i;
+//    }
+
+    for(auto&& i : range<index_type>{}) {
+        v = i;
+    }
+
+    for(uint8_t i{0}; i < index_type::Upper + 1; ++i) {
+        v = i;
+    }
+    
+//    for(const auto& i : {0, 1, 2, 3, 4, 5, 6, 7}) {
+//        v = i;
+//    }
+
 }
 
