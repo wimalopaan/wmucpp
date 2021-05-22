@@ -380,8 +380,14 @@ boards/rcincremental/inc3mode10Mhz.cc
 boards/rcincremental/test00.cc
 boards/rcincremental/test01.cc
 boards/rcled/Makefile
+boards/rcled/generic.h
+boards/rcled/pca9745.h
 boards/rcled/test00.cc
 boards/rcled/test10.cc
+boards/rcled/test20.cc
+boards/rcled/test21.cc
+boards/rcled/test22.cc
+boards/rcled/test23.cc
 boards/rcministep/Makefile
 boards/rcministep/test00.cc
 boards/rcministep/test01.cc
