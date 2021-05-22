@@ -85,7 +85,6 @@ namespace RCSwitch {
         using mode_t  = std::conditional_t<isLowResolution, sb_mode_t, ib_mode_t>; 
         using pvalue_t  = std::conditional_t<isLowResolution, sb_pvalue_t, ib_pvalue_t>;
         
-//            inline static constexpr mode_t unused{0};
         inline static constexpr mode_t off{0};
         inline static constexpr mode_t on{1};
         inline static constexpr mode_t forward = on;
@@ -98,9 +97,7 @@ namespace RCSwitch {
         inline static constexpr param_t reset{0};
         inline static constexpr param_t pwm{1};
         inline static constexpr param_t increment{pwm};
-//        inline static constexpr param_t increment = pwm;
         inline static constexpr param_t motorRampTime{pwm};
-//        inline static constexpr param_t motorRampTime = pwm;
         inline static constexpr param_t blink1Intervall{2};
         inline static constexpr param_t position1{blink1Intervall};
         inline static constexpr param_t pwm1{blink1Intervall};
@@ -114,11 +111,14 @@ namespace RCSwitch {
         inline static constexpr param_t position4{blink2Duration};
         inline static constexpr param_t offCurr2{blink2Duration};
         inline static constexpr param_t passThruChannel{6}; // auch follow mode für ServoSwitch
+        inline static constexpr param_t rampParam1{passThruChannel}; // pca9745 ramp zusammen mit Index
         inline static constexpr param_t timeMpxMode{7}; // MK8 = 0, MK4 = 1, Robbe = 2, CP = 3
+        inline static constexpr param_t maxCurrent{timeMpxMode};
         inline static constexpr param_t testMode{8};
         inline static constexpr param_t timeMpxOffsetIncrement{9};
         inline static constexpr param_t adcSensitivity{timeMpxOffsetIncrement};
         inline static constexpr param_t cutOffSensitivity{10}; // Kennlinie
+        inline static constexpr param_t rampParam2{cutOffSensitivity}; // pca9745 ramp zusammen mit Index
         inline static constexpr param_t servoMin{12};
         inline static constexpr param_t servoMax{13};
         inline static constexpr param_t resetOrLearnAddress{14};
@@ -150,21 +150,21 @@ namespace RCSwitch {
         template<typename ValueType>
         inline static constexpr addr_t toAddress(const ValueType& v) {
             const uint16_t c = v.toInt() - ValueType::Lower;
-            return addr_t((c & (0x07 << 6)) >> 6);
+            return addr_t((c & (0x07 << 6)) >> 6, etl::RangeCheck<false>{});
         }   
         template<typename ValueType>
         inline static constexpr index_t toIndex(const ValueType& v) {
             const uint16_t c = v.toInt() - ValueType::Lower;
-            return index_t((c & (0x07 << 3)) >> 3);
+            return index_t((c & (0x07 << 3)) >> 3, etl::RangeCheck<false>{});
         }   
         template<typename ValueType>
         inline static constexpr mode_t toMode(const ValueType& v) {
             const uint16_t c = v.toInt() - ValueType::Lower;
             if constexpr(isLowResolution) {
-                return mode_t(sbusModeLut[(c & 0x07)]);
+                return mode_t(sbusModeLut[(c & 0x07)], etl::RangeCheck<false>{});
             }
             else {
-                return mode_t((c & 0x07));
+                return mode_t((c & 0x07), etl::RangeCheck<false>{});
             }
         }   
         template<typename ValueType>
@@ -175,16 +175,16 @@ namespace RCSwitch {
         template<typename ValueType>
         inline static constexpr param_t toParameter(const ValueType& v) {
             const uint16_t c = v.toInt() - ValueType::Lower;
-            return param_t((c & (0x0f << 5)) >> 5);
+            return param_t((c & (0x0f << 5)) >> 5, etl::RangeCheck<false>{});
         }   
         template<typename ValueType>
         inline static constexpr pvalue_t toParameterValue(const ValueType& v) {
             uint16_t c = v.toInt() - ValueType::Lower;
             if constexpr(isLowResolution) {
-                return pvalue_t(sbusParamLut[(c & 0x1f)]);
+                return pvalue_t(sbusParamLut[(c & 0x1f)], etl::RangeCheck<false>{});
             }
             else {
-                return pvalue_t(c & 0x1f);
+                return pvalue_t(c & 0x1f, etl::RangeCheck<false>{});
             }
         }   
     };
