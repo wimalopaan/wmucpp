@@ -357,7 +357,7 @@ namespace etl {
         
         inline constexpr uint_ranged<T, LowerBound, UpperBound> toRanged() const {
             assert(*this);
-            return uint_ranged<T, LowerBound, UpperBound>{mValue};
+            return uint_ranged<T, LowerBound, UpperBound>{mValue, etl::RangeCheck<false>{}};
         }
         
         inline constexpr uint_ranged_NaN<T, LowerBound, UpperBound> invert() const {
@@ -515,6 +515,10 @@ namespace etl {
         inline constexpr void setToBottom() {
             mValue = LowerBound;
         }
+
+        inline constexpr void setToTop() {
+            mValue = UpperBound;
+        }
         
         inline constexpr uint_ranged_circular& operator--() {
             if constexpr(use_mask_modulo) {
@@ -620,11 +624,18 @@ namespace etl {
             return uint_ranged_circular(UpperBound - mValue);
         }
         inline constexpr uint_ranged<T, LowerBound, UpperBound> toRanged() const {
-            return uint_ranged<T, LowerBound, UpperBound>{mValue};
+            return uint_ranged<T, LowerBound, UpperBound>{mValue, etl::RangeCheck<false>{}};
         }
         inline constexpr uint_ranged_NaN<T, LowerBound, UpperBound> toRangedNaN() const {
             return uint_ranged_NaN<T, LowerBound, UpperBound>{mValue};
         }
+        
+        template<typename R>
+        requires((R::Lower <= Lower) && (R::Upper >= Upper) && (std::is_same_v<value_type, typename R::value_type>))
+        inline constexpr R to() {
+            return R{mValue};
+        }
+        
         inline constexpr operator T() const {
             return mValue;
         }
@@ -637,5 +648,28 @@ namespace etl {
         //    private: // structural
         T mValue{LowerBound};
     };
+    
+    template<typename T, typename I = T::value_type>
+    struct make_range {
+        struct Iterator {
+            inline constexpr bool operator!=(const Iterator& o) const {
+                return i != o.i;
+            }
+            inline constexpr void operator++() {
+                ++i;
+            }
+            inline constexpr I operator*() const {
+                return i;
+            }
+            I i{};
+        };
+        inline constexpr Iterator begin() const {
+            return Iterator{I{0}};
+        }    
+        inline constexpr Iterator end() const {
+            return Iterator{I{T::Upper + 1}};
+        }    
+    };
+    
     
 }
