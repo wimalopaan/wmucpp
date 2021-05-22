@@ -10,10 +10,17 @@ namespace std {
     template<typename... V> struct tuple {};
     template<typename T, typename... V>
     struct tuple<T, V...> : tuple<V...> { 
-        constexpr tuple() : tuple<V...>{}, mData{} {}
-        constexpr tuple(T t, V... vs) : tuple<V...>{vs...}, mData{t} {}
+        inline constexpr tuple() : tuple<V...>{}, mData{} {}
+        inline constexpr tuple(T t, V... vs) : tuple<V...>{vs...}, mData{t} {}
+        
+//        inline bool constexpr operator==(const tuple& o) const {
+//            return [&]<auto... II>(std::index_sequence<II...>){
+//                return ((get<II>() == o.template get<II>()) && ...);
+//            }(std::make_index_sequence<sizeof...(V)+1>{});
+//        }
+        
         template<uint8_t N>
-        constexpr const auto& get() const {
+        inline constexpr const auto& get() const {
             if constexpr(N == 0) {
                 return mData;
             }
@@ -22,7 +29,7 @@ namespace std {
             }
         }
         template<uint8_t N>
-        constexpr auto& get() {
+        inline constexpr auto& get() {
             if constexpr(N == 0) {
                 return mData;
             }
@@ -31,7 +38,7 @@ namespace std {
             }
         }
         template<typename U>
-        constexpr auto& get() {
+        inline constexpr auto& get() {
             if constexpr(std::is_same_v<T, U>) {
                 return mData;
             }
@@ -40,7 +47,7 @@ namespace std {
             }
         }
         template<typename U>
-        constexpr const auto& get() const {
+        inline constexpr const auto& get() const {
             if constexpr(std::is_same_v<T, U>) {
                 return mData;
             }
@@ -50,6 +57,14 @@ namespace std {
         }
         T mData;
     };
+
+    template<typename... TT>
+    bool constexpr operator==(const tuple<TT...>& l, const tuple<TT...>& r) {
+        return [&]<auto... II>(std::index_sequence<II...>){
+            return ((l.template get<II>() == r.template get<II>()) && ...);
+        }(std::make_index_sequence<sizeof...(TT)>{});  
+     }
+
     template<uint8_t N, typename T, typename... TT>
     constexpr const auto& get(const std::tuple<T, TT...>& tuple) {
         if constexpr(N == 0) {
