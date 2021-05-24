@@ -490,6 +490,9 @@ struct Startup {
 #ifndef NDEBUG
     using term = etl::basic_ostream<typename Devs::uart>;
 #endif
+
+    using rot1_t = Meta::nth_element<0, typename rotary::type_list>;
+    using rot2_t = Meta::nth_element<1, typename rotary::type_list>;
     
     inline static void init() {
 //        Devs::wdt::template init<typename Devs::ccp>();
@@ -561,18 +564,19 @@ struct Startup {
                         eeprom::data().change();
                     }
                     else {
-                        rotary::value().visit([]<typename T>(const T& vv){
+                        rotary::value().visit([&]<typename T>(const T& vv){
                                                   if constexpr(std::is_same_v<T, uint8_t>) {
                                                       static uint8_t last{127};
-                                                      if (vv > last) {
+                                                      if (vv > (last + 10)) {
                                                           auto bc = blinker::blinkCount();
                                                           blinker::blink(++bc);
+                                                          last = vv;
                                                       }
-                                                      if (vv < last) {
+                                                      else if (vv < (last - 10)) {
                                                           auto bc = blinker::blinkCount();
                                                           blinker::blink(--bc);                                                      
+                                                          last = vv;
                                                       }
-                                                      last = vv;
                                                   }
                                               }); 
                     }
@@ -604,6 +608,7 @@ struct Startup {
                         break;
                     case State::Config:
 //                        etl::outl<term>("s c"_pgm);
+                        rotary::set(rot1_t{127});
                         blinker::init();
                         blinker::blink(bl_count_t{(uint8_t)eeprom::data().mode()});
 //                        blinker::blink(bl_count_t{2});

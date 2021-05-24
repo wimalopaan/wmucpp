@@ -1,6 +1,6 @@
 = RC Inkremental 
 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
-:revnumber: 0.3
+:revnumber: 0.4
 :revremark: HW_0.1
 :revdate: 01.01.1970
 :lang: de
@@ -36,7 +36,7 @@ Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 :model: incr
 
 include::{idir}/defs.adoc[]
-
+ 
 <<<
 
 include::{idir}/preface.adoc[]
@@ -82,11 +82,11 @@ Die Spannungsversorgung erfolgt vom Sender über den Pfostensteckverbinder.
 * `Pin 1`: Masse 
 * `Pin 2`:
 ** Konfigurations-Modus: Kontrollleuchte
-** `Poti`-Modus: analoges Gebersignal
-** `Cppm-Master`: Verbindung zum _Slaev_
+** `Poti`-Modus: Taster
+** `Cppm-Master`: Verbindung zum _Slave_
 ** `Cppm-Slave`: Verbingung zum _Master_
 * `Pin 3`:
-** `Poti`-Modus: Taster
+** `Poti`-Modus: analoges Gebersignal
 ** `Cppm-Master`: `Cppm`-Signal zur Verbing zur `DSC`-Buchse des Senders
 ** `Cppm-Slave`: unbenutzt
 * `Pin 4`: `V+` (<= 5,5V) Versorgungsspannung
@@ -186,7 +186,7 @@ image::{localimages}/t12_2.jpg[align="center",width=75%,pdfwidth=75%]
 Die Konfiguration des Gebers wird beim _Einschalten_ eingestellt. Ist der Geber schon im Sender eingebaut, 
 so muss dazu der Sender eingeschaltet werden. In diesem Fall sollte man besondere Vorsicht walten lassen, um 
 den Sender nicht zu beschädigen.
-
+ 
 .Empfehlung für die Konfiguration
 [TIP]
 Es wird empfohlen, für die Konfiguration das Modul _nur_ mit der Spannungsversorgung und der Kontrollleuchte zu
@@ -216,6 +216,22 @@ Folgende Konfigurationen <<configs>> sind möglich:
 . 2x Blinken: Cppm-Master-Modus <<c2>>
 . 3x Blinken: Cppm-Slave-Modus <<c3>>
 
+Der Modus kann nun durch drehen des Drehgebers stufenweise verstellt werden.
+Nachdem das richtige Blinkmuster erscheint, zum Abspeichern dann wieder 3s den Taster drücken. 
+Der Modus ist nun dauerhalt gespeichert. Soll der Modus wieder geändert werden, diese Prozedur 
+einfach wieder beginnen.
+
+[TIP]
+--
+Auch wenn die LED zum endgültigen Einbau / Betrieb natürlich wieder entfernt werden sollte, kann man sie 
+jedoch nach dem Einstellen des Modus direkt auch noch zur Kontrolle benutzen:
+
+[horizontal]
+Poti-Modus:: beim Drücken des Tasters muss sie für die Dauers des Drückens aufleuchten.
+Cppm-Master-Modus:: die LED glimmt dauerhaft schwach
+Cppm-Slave-Modus:: die LED leuchtet dauerhaft hell
+--
+
 [[configs]]
 === Konfigurationen
 
@@ -230,7 +246,6 @@ für diesen Geber kalibriert werden muss.
 
 Der Taster-Ausgang kann ebenfalls mit einem Eingang des Senders verbunden werden. Die Spannung am 
 Ausgang dieses Ausgangs umfasst das Intervall `[0;U_b]` mit `U_b` die interne Betriebsspannung des Senders.
-
 
 [[bc1]]
 .Verkabelung im `Poti`-Modus
