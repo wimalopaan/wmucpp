@@ -388,6 +388,7 @@ boards/rcled/test20.cc
 boards/rcled/test21.cc
 boards/rcled/test22.cc
 boards/rcled/test23.cc
+boards/rcled/test24.cc
 boards/rcministep/Makefile
 boards/rcministep/test00.cc
 boards/rcministep/test01.cc
