@@ -1,9 +1,9 @@
-//#define NDEBUG
+#define NDEBUG
 
 #define LEARN_DOWN
 
 #ifndef GITMAJOR
-# define VERSION_NUMBER 2300
+# define VERSION_NUMBER 0001
 #endif
 
 #define HOTT_TITLE "BMC " GITTAG_PGM
@@ -70,7 +70,7 @@ namespace xassert {
 namespace  {
     constexpr auto fRtc = 1000_Hz;
 
-    constexpr uint16_t R1vd = 10'000;
+    constexpr uint16_t R1vd = 22'000; // 220k (wrong in schematics)
     constexpr uint16_t R2vd = 1'200;
 }
 
@@ -765,7 +765,7 @@ struct GlobalFsm {
         using r_t = etl::uint_ranged<uint8_t, 0, N>; 
         constexpr uint16_t mid = (value_t::Upper + value_t::Lower) / 2;
         constexpr uint16_t top = value_t::Upper;
-        return r_t(etl::scale(v.toInt(), etl::Intervall{mid, top}, etl::Intervall<uint16_t>{r_t::Lower, r_t::Upper}));
+        return r_t(etl::scale(v.toInt(), etl::Intervall{mid, top}, etl::Intervall<uint16_t>{r_t::Lower, r_t::Upper}), etl::RangeCheck<false>{});
     }
 
     template<bool full = false>
