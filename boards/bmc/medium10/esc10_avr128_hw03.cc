@@ -58,7 +58,7 @@ static unsigned int assertKey{1234};
 using namespace AVR;
 using namespace std::literals::chrono;
 using namespace External::Units::literals;
-
+ 
 #ifndef NDEBUG
 namespace xassert {
     etl::StringBuffer<160> ab;
