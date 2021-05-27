@@ -48,6 +48,7 @@ targets += sport_test.hex
 targets += hott.hex
 targets += auto2multi.hex
 targets += autoSchottel.hex
+targets += autoc5.hex
 
 -include ../../Makefile.avr0.include
 

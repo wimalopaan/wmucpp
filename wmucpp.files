@@ -304,6 +304,7 @@ boards/ibusppmconverter/a4t.cc
 boards/ibusppmconverter/a4uni.cc
 boards/ibusppmconverter/auto2multi.cc
 boards/ibusppmconverter/autoSchottel.cc
+boards/ibusppmconverter/autoc5.cc
 boards/ibusppmconverter/b10c5.cc
 boards/ibusppmconverter/b11c4.cc
 boards/ibusppmconverter/b11c4uni.cc
