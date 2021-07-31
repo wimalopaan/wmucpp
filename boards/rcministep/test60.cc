@@ -41,7 +41,7 @@ struct DirPhaseStepper {
     inline static constexpr auto sine1 = []{
         std::array<uint16_t, steps> data;
         for(uint16_t i = 0; i < steps; ++i) {
-            data[i] = (double)(period - 1) * sin((i * M_PI) / steps);
+            data[i] = (double)(period - 1) * sin((i * M_PI) / steps); // falsch
         }
         return data;
     }();
