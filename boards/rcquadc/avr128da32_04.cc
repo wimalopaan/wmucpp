@@ -59,6 +59,20 @@ using namespace AVR;
 using namespace std::literals::chrono;
 using namespace External::Units::literals;
 
+struct VersionProvider {
+    inline static constexpr auto valueId = External::SPort::ValueId::DIY;
+    inline static constexpr auto ibus_type = IBus2::Type::type::ARMED;
+    inline static constexpr void init() {}
+    inline static constexpr uint16_t value() {
+#if defined(GITMAJOR) && defined(GITMINOR)
+        static_assert(GITMINOR < 10);
+        return GITMAJOR * 100 + GITMINOR;
+#else
+        return VERSION_NUMBER;
+#endif
+    }
+};
+
 namespace IBus::Switch {
     template<typename Param, typename PA, typename Sensor, typename ActorList, typename NVM>
     struct GeneralSwitch;
@@ -1807,7 +1821,7 @@ struct BusDevs<External::Bus::IBusIBus<Devs>> {
     using ibt = IBusThrough<typename Devs::daisyChain>;
     
     using sensor = IBus2::Sensor<typename Devs::sensorPosition, AVR::Usart, AVR::BaudRate<115200>, 
-    Meta::List<cp1, cp2, cp3, cp4, sp1, sp2, sp3, sp4>, systemTimer, ibt
+    Meta::List<cp1, cp2, cp3, cp4, sp1, sp2, sp3, sp4, VersionProvider>, systemTimer, ibt
     //                          , etl::NamedFlag<true>
     //                           , etl::NamedFlag<true>
     >;
@@ -1886,7 +1900,7 @@ using terminal = etl::basic_ostream<void>;
     using sp4 = ch3::stateP;
     
     using sensor = External::SPort::Sensor<External::SPort::SensorId::ID1, sensorUsart, systemTimer, 
-    Meta::List<cp1, cp2, cp3, cp4, sp1, sp2, sp3, sp4>>;
+    Meta::List<cp1, cp2, cp3, cp4, sp1, sp2, sp3, sp4, VersionProvider>>;
 
     using gswitch = IBus::Switch::GeneralSwitch<BusParam, servo_pa, sensor, Meta::List<ch0, ch1, ch2, ch3>, eeprom>;
 };

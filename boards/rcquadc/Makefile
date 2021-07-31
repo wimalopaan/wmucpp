@@ -53,19 +53,19 @@ eeprom2.hex : F_OSC = 24000000
 #targets += test15.hex
 #targets += eeprom.hex
 #targets += eeprom2.hex
-targets += test30.hex
+#targets += test30.hex
 #targets += test31.hex
-targets += test40.hex
+#targets += test40.hex
 
 # HW 02 (erste Version)
 #targets += test16.hex
-targets += atmega4808_01.hex
+#targets += atmega4808_01.hex
 
 #targets += test20.hex
-targets += avr128da32_01.hex
+#targets += avr128da32_01.hex
 
 # HW 03 (hat noch Fehler)
-targets += avr128da32_02.hex
+#targets += avr128da32_02.hex
 
 # HW 04
 

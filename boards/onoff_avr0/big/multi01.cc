@@ -9,9 +9,9 @@
 
 #define USE_ACS_PIN_POWER // ACS über tiny-Pin
 
-#define USE_SPORT
+//#define USE_SPORT
 //#define USE_HOTT
-//#define USE_IBUS
+#define USE_IBUS
 //#define FS_I6S
 #define USE_OFFSET
 
@@ -384,8 +384,22 @@ using ibt = IBusThrough;
 using ibt = void;
 #endif
 
+struct VersionProvider {
+    inline static constexpr auto valueId = External::SPort::ValueId::DIY;
+    inline static constexpr auto ibus_type = IBus::Type::type::ARMED;
+    inline static constexpr void init() {}
+    inline static constexpr uint16_t value() {
+#if defined(GITMAJOR) && defined(GITMINOR)
+        static_assert(GITMINOR < 10);
+        return GITMAJOR * 100 + GITMINOR;
+#else
+        return VERSION_NUMBER;
+#endif
+    }
+};
+
 using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, 
-                          Meta::List<voltageP, currentProvider
+                          Meta::List<VersionProvider, voltageP, currentProvider
                                     , offsetP
                                         , tempP>, systemTimer, ibt
 //                          , etl::NamedFlag<true>
