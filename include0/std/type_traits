@@ -153,6 +153,9 @@ namespace std {
         template<typename T>
         struct is_integral_base : public false_type {};
         template<>
+        struct is_integral_base<bool> : public true_type {
+        };
+        template<>
         struct is_integral_base<uint8_t> : public true_type {
         };
         template<>

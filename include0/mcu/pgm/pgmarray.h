@@ -32,18 +32,18 @@
 #include "pgm.h"
 
 namespace AVR {
-	namespace Pgm {
-//		namespace detail {
-//			template<typename T>
-//			using maybe_cref = typename std::conditional<std::is_integral<T>::value || std::is_same_v<T, std::byte> || std::is_same_v<T, char>, T, const T&>::type;
-//		}
-		
-//        template<typename T, detail::maybe_cref<T>... Ts> struct Array;
+    namespace Pgm {
+        //		namespace detail {
+        //			template<typename T>
+        //			using maybe_cref = typename std::conditional<std::is_integral<T>::value || std::is_same_v<T, std::byte> || std::is_same_v<T, char>, T, const T&>::type;
+        //		}
+        
+        //        template<typename T, detail::maybe_cref<T>... Ts> struct Array;
         template<typename T, T... Ts> struct Array;
         
         template<typename T, typename S = uint8_t>
         struct ArrayView final {
-//            template<typename U, detail::maybe_cref<U>... Ts> friend struct Array;
+            //            template<typename U, detail::maybe_cref<U>... Ts> friend struct Array;
             template<typename U, U... Ts> friend struct Array;
             using value_type = T;
             using size_type = S;
@@ -52,31 +52,31 @@ namespace AVR {
                 return value_type{Ptr{&ptrToPgmData[index]}};
             }
             inline constexpr ArrayView() = default;
-
+            
             struct Iterator final {
                 friend class ArrayView;
-				inline constexpr value_type operator*() {
+                inline constexpr value_type operator*() {
                     return view[mIndex];
-				}
-				inline constexpr void operator++() {
-					++mIndex;
-				}
-				inline constexpr bool operator!=(const Iterator& rhs) {
-					return mIndex != rhs.mIndex;
-				}
-			private:
+                }
+                inline constexpr void operator++() {
+                    ++mIndex;
+                }
+                inline constexpr bool operator!=(const Iterator& rhs) {
+                    return mIndex != rhs.mIndex;
+                }
+            private:
                 explicit constexpr Iterator(const ArrayView& v, size_type index = 0) : mIndex(index), view{v} {}
                 size_type mIndex{};
                 const ArrayView& view;
-			};
-
+            };
+            
             inline constexpr Iterator begin() const {
-				return Iterator(*this);
-			}
-			inline constexpr Iterator end() const {
-				return Iterator(*this, size());
-			}
-
+                return Iterator(*this);
+            }
+            inline constexpr Iterator end() const {
+                return Iterator(*this, size());
+            }
+            
             explicit operator bool() const {
                 return (mSize > 0);
             }
@@ -93,19 +93,19 @@ namespace AVR {
             S mSize{};            
         };
         
-
+        
         template<typename T, T... Ts>
-//        template<typename T, detail::maybe_cref<T>... Ts>
-		struct Array final {
+        //        template<typename T, detail::maybe_cref<T>... Ts>
+        struct Array final {
             inline constexpr Array() = default;
-			
+            
             using value_type = std::remove_const_t<std::remove_reference_t<T>>;
-			using size_type = typename std::conditional<(sizeof...(Ts) < 256), uint8_t, uint16_t>::type;
-
+            using size_type = typename std::conditional<(sizeof...(Ts) < 256), uint8_t, uint16_t>::type;
+            
             
             inline static constexpr size_type size() {
                 return sizeof... (Ts);
-			}
+            }
             
             using ranged_type = etl::uint_ranged<size_type, 0, size() - 1>;
             
@@ -131,192 +131,251 @@ namespace AVR {
                 else {
                     return value_type{Ptr{&data[index]}};
                 }
-			}
-			
-			struct Iterator final {
+            }
+            
+            struct Iterator final {
                 friend class Array;
-				inline constexpr value_type operator*() {
-					return value(mIndex);
-				}
-				inline constexpr void operator++() {
-					++mIndex;
-				}
-				inline constexpr bool operator!=(const Iterator& rhs) {
-					return mIndex != rhs.mIndex;
-				}
-			private:
+                inline constexpr value_type operator*() {
+                    return value(mIndex);
+                }
+                inline constexpr void operator++() {
+                    ++mIndex;
+                }
+                inline constexpr bool operator!=(const Iterator& rhs) {
+                    return mIndex != rhs.mIndex;
+                }
+            private:
                 explicit constexpr Iterator(size_type index = 0) : mIndex(index) {}
                 size_type mIndex{0};
-			};
-			inline constexpr Iterator begin() const {
-				return Iterator();
-			}
-			inline constexpr Iterator end() const {
-				return Iterator(size());
-			}
-			inline constexpr value_type operator[](size_type index) const {
-				return value(index);
-			}
+            };
+            inline constexpr Iterator begin() const {
+                return Iterator();
+            }
+            inline constexpr Iterator end() const {
+                return Iterator(size());
+            }
+            inline constexpr value_type operator[](size_type index) const {
+                return value(index);
+            }
             inline constexpr operator ArrayView<T, size_type>() const {
                 return ArrayView{Ptr<T>{data}, size()};
             }
-		private:
-			inline static constexpr const value_type data[] PROGMEM = {value_type{Ts}...}; 
-		};
-		
-//		template<typename T, auto N, const std::array<T, N>& values>
-//		class Array1 final {
-//			using U = std::remove_const_t<std::remove_reference_t<T>>;
-//			template<typename> struct Mapper;
-//			using mapper = Mapper<std::make_index_sequence<N>>;
-//		public:
-//            constexpr Array1() = default;
-//			typedef typename std::conditional<(N < 256), uint8_t, uint16_t>::type size_type;
-//			inline static constexpr size_type size = N;
-//			typedef U type;
-//			typedef U value_type;
-			
-//			inline static U value(size_type index) {
-//				if constexpr(std::is_same<uint8_t, T>::value || std::is_same<std::byte, T>::value || std::is_same<char, T>::value) {
-//					return U{pgm_read_byte((uint8_t*)& mapper::data[index])};
-//				}
-//                else if constexpr(std::is_same<int, T>::value || std::is_same<unsigned int, T>::value || std::is_same<int16_t, T>::value || std::is_same<uint16_t, T>::value) {
-//                    return U{pgm_read_word((uint8_t*)& mapper::data[index])};
-//				}
-//				else {
-//					std::array<std::byte, sizeof(T)> bytes;
-//					for(uint8_t i = 0; i < sizeof(T); ++i) {
-//						bytes[i] = std::byte{pgm_read_byte((uint8_t*)(&mapper::data[index]) + i)};
-//					}
-//					return U::createFrom(bytes);
-//				}
-//			}
-			
-//			class Iterator final {
-//			public:
-//				constexpr Iterator(size_type index = 0) : mIndex(index) {}
-//				inline U operator*() {
-//					return value(mIndex);
-//				}
-//				inline void operator++() {
-//					++mIndex;
-//				}
-//				inline bool operator!=(const Iterator& rhs) {
-//					return mIndex != rhs.mIndex;
-//				}
-//			private:
-//				size_type mIndex = 0;
-//			};
-//			constexpr Iterator begin() const {
-//				return Iterator();
-//			}
-//			constexpr Iterator end() const {
-//				return Iterator(size);
-//			}
-//			U operator[](size_type index) const {
-//				return value(index);
-//			}
-//		private:
-//			template<auto... II>
-//			struct Mapper<std::index_sequence<II...>> {
-//				inline static constexpr const U data[N] PROGMEM = {values[II]...}; 
-//			};
-//		};
+        private:
+            inline static constexpr const value_type data[] PROGMEM = {value_type{Ts}...}; 
+        };
         
-//        template<const auto& A> class Array2;
+        //		template<typename T, auto N, const std::array<T, N>& values>
+        //		class Array1 final {
+        //			using U = std::remove_const_t<std::remove_reference_t<T>>;
+        //			template<typename> struct Mapper;
+        //			using mapper = Mapper<std::make_index_sequence<N>>;
+        //		public:
+        //            constexpr Array1() = default;
+        //			typedef typename std::conditional<(N < 256), uint8_t, uint16_t>::type size_type;
+        //			inline static constexpr size_type size = N;
+        //			typedef U type;
+        //			typedef U value_type;
         
-//        template<typename T, uint8_t N>
-//		class Array2<std::array<T, N>> final {
-//			using U = std::remove_const_t<std::remove_reference_t<T>>;
-//			template<typename> struct Mapper;
-//			using mapper = Mapper<std::make_index_sequence<N>>;
-//		public:
-//            constexpr Array2() = default;
-//			typedef typename std::conditional<(N < 256), uint8_t, uint16_t>::type size_type;
-//			inline static constexpr size_type size = N;
-//			typedef U type;
-//			typedef U value_type;
-			
-//			inline static U value(size_type index) {
-//				if constexpr(std::is_same<uint8_t, T>::value || std::is_same<std::byte, T>::value || std::is_same<char, T>::value) {
-//					return U{pgm_read_byte((uint8_t*)& mapper::data[index])};
-//				}
-//                else if constexpr(std::is_same<int, T>::value || std::is_same<unsigned int, T>::value || std::is_same<int16_t, T>::value || std::is_same<uint16_t, T>::value) {
-//                    return U{pgm_read_word((uint8_t*)& mapper::data[index])};
-//				}
-//				else {
-//					std::array<std::byte, sizeof(T)> bytes;
-//					for(uint8_t i = 0; i < sizeof(T); ++i) {
-//						bytes[i] = std::byte{pgm_read_byte((uint8_t*)(&mapper::data[index]) + i)};
-//					}
-//					return U::createFrom(bytes);
-//				}
-//			}
-			
-//			class Iterator {
-//			public:
-//				constexpr Iterator(size_type index = 0) : mIndex(index) {}
-//				inline U operator*() {
-//					return value(mIndex);
-//				}
-//				inline void operator++() {
-//					++mIndex;
-//				}
-//				inline bool operator!=(const Iterator& rhs) {
-//					return mIndex != rhs.mIndex;
-//				}
-//			private:
-//				size_type mIndex = 0;
-//			};
-//			constexpr Iterator begin() const {
-//				return Iterator();
-//			}
-//			constexpr Iterator end() const {
-//				return Iterator(size);
-//			}
-//			U operator[](size_type index) const {
-//				return value(index);
-//			}
-//		private:
-//			template<auto... II>
-//			struct Mapper<std::index_sequence<II...>> {
-//				inline static constexpr const U data[N] PROGMEM = {values[II]...}; 
-//			};
-//		};
-		
-		namespace Util {
-			template<typename Generator>
-			class Converter {
-				inline static constexpr auto mData = Generator{}();    
-				
-				using size_type = typename decltype(mData)::size_type;
-				using value_type = typename decltype(mData)::value_type;
-				using index_list = std::make_integer_sequence<size_type, mData.size()>;
+        //			inline static U value(size_type index) {
+        //				if constexpr(std::is_same<uint8_t, T>::value || std::is_same<std::byte, T>::value || std::is_same<char, T>::value) {
+        //					return U{pgm_read_byte((uint8_t*)& mapper::data[index])};
+        //				}
+        //                else if constexpr(std::is_same<int, T>::value || std::is_same<unsigned int, T>::value || std::is_same<int16_t, T>::value || std::is_same<uint16_t, T>::value) {
+        //                    return U{pgm_read_word((uint8_t*)& mapper::data[index])};
+        //				}
+        //				else {
+        //					std::array<std::byte, sizeof(T)> bytes;
+        //					for(uint8_t i = 0; i < sizeof(T); ++i) {
+        //						bytes[i] = std::byte{pgm_read_byte((uint8_t*)(&mapper::data[index]) + i)};
+        //					}
+        //					return U::createFrom(bytes);
+        //				}
+        //			}
+        
+        //			class Iterator final {
+        //			public:
+        //				constexpr Iterator(size_type index = 0) : mIndex(index) {}
+        //				inline U operator*() {
+        //					return value(mIndex);
+        //				}
+        //				inline void operator++() {
+        //					++mIndex;
+        //				}
+        //				inline bool operator!=(const Iterator& rhs) {
+        //					return mIndex != rhs.mIndex;
+        //				}
+        //			private:
+        //				size_type mIndex = 0;
+        //			};
+        //			constexpr Iterator begin() const {
+        //				return Iterator();
+        //			}
+        //			constexpr Iterator end() const {
+        //				return Iterator(size);
+        //			}
+        //			U operator[](size_type index) const {
+        //				return value(index);
+        //			}
+        //		private:
+        //			template<auto... II>
+        //			struct Mapper<std::index_sequence<II...>> {
+        //				inline static constexpr const U data[N] PROGMEM = {values[II]...}; 
+        //			};
+        //		};
+        
+        //        template<const auto& A> class Array2;
+        
+        //        template<typename T, uint8_t N>
+        //		class Array2<std::array<T, N>> final {
+        //			using U = std::remove_const_t<std::remove_reference_t<T>>;
+        //			template<typename> struct Mapper;
+        //			using mapper = Mapper<std::make_index_sequence<N>>;
+        //		public:
+        //            constexpr Array2() = default;
+        //			typedef typename std::conditional<(N < 256), uint8_t, uint16_t>::type size_type;
+        //			inline static constexpr size_type size = N;
+        //			typedef U type;
+        //			typedef U value_type;
+        
+        //			inline static U value(size_type index) {
+        //				if constexpr(std::is_same<uint8_t, T>::value || std::is_same<std::byte, T>::value || std::is_same<char, T>::value) {
+        //					return U{pgm_read_byte((uint8_t*)& mapper::data[index])};
+        //				}
+        //                else if constexpr(std::is_same<int, T>::value || std::is_same<unsigned int, T>::value || std::is_same<int16_t, T>::value || std::is_same<uint16_t, T>::value) {
+        //                    return U{pgm_read_word((uint8_t*)& mapper::data[index])};
+        //				}
+        //				else {
+        //					std::array<std::byte, sizeof(T)> bytes;
+        //					for(uint8_t i = 0; i < sizeof(T); ++i) {
+        //						bytes[i] = std::byte{pgm_read_byte((uint8_t*)(&mapper::data[index]) + i)};
+        //					}
+        //					return U::createFrom(bytes);
+        //				}
+        //			}
+        
+        //			class Iterator {
+        //			public:
+        //				constexpr Iterator(size_type index = 0) : mIndex(index) {}
+        //				inline U operator*() {
+        //					return value(mIndex);
+        //				}
+        //				inline void operator++() {
+        //					++mIndex;
+        //				}
+        //				inline bool operator!=(const Iterator& rhs) {
+        //					return mIndex != rhs.mIndex;
+        //				}
+        //			private:
+        //				size_type mIndex = 0;
+        //			};
+        //			constexpr Iterator begin() const {
+        //				return Iterator();
+        //			}
+        //			constexpr Iterator end() const {
+        //				return Iterator(size);
+        //			}
+        //			U operator[](size_type index) const {
+        //				return value(index);
+        //			}
+        //		private:
+        //			template<auto... II>
+        //			struct Mapper<std::index_sequence<II...>> {
+        //				inline static constexpr const U data[N] PROGMEM = {values[II]...}; 
+        //			};
+        //		};
+        
+        namespace Util {
+            
+            template <class Sequence1, class Sequence2>
+            struct _merge_and_renumber;
+            
+            template <size_t... I1, size_t... I2>
+            struct _merge_and_renumber<std::index_sequence<I1...>, std::index_sequence<I2...>>
+                    : std::index_sequence<I1..., (sizeof...(I1) + I2)...>
+            { };
+            
+            template <size_t N>
+            struct make_index_sequence
+                    : _merge_and_renumber<typename make_index_sequence<N/2>::type,
+                    typename make_index_sequence<N - N/2>::type>
+            { };
+            
+            template<> struct make_index_sequence<0> : std::index_sequence<> { };
+            template<> struct make_index_sequence<1> : std::index_sequence<0> { };
+            
+//            template <typename T, T M, T ... Indx>
+//            constexpr std::integer_sequence<T, Indx...> make_index_sequence_(std::false_type)
+//            {
+//                return {};
+//            }
+            
+//            template <typename T, T M, T ... Indx>
+//            constexpr auto make_index_sequence_(std::true_type)
+//            {
+//                return make_index_sequence_<T, M, Indx..., sizeof...(Indx)>(
+//                        std::integral_constant<bool, sizeof...(Indx) + 1 < M>());
+//            }
+            
+//            template <size_t M>
+//            constexpr auto make_index_sequence()
+//            {
+//                return make_index_sequence_<size_t, M>(std::integral_constant<bool, (0 < M)>());
+//            }
+            
+            template<typename Generator>
+            class Converter {
+                inline static constexpr auto mData = Generator{}();    
                 
-//				inline static constexpr bool isPrimitive = std::is_same_v<uint8_t, value_type> || 
-//                                                           std::is_same_v<std::byte, value_type> ||    
-//                                                           std::is_same_v<int, value_type> || 
-//                                                           std::is_same_v<char, value_type>;
-				
-//				template<bool, typename> struct Pgm;
+                using size_type = typename decltype(mData)::size_type;
+                using value_type = typename decltype(mData)::value_type;
+//                using index_list = std::make_integer_sequence<size_type, mData.size()>;
+                using index_list = make_index_sequence<mData.size()>::type;
+                
+                //				inline static constexpr bool isPrimitive = std::is_same_v<uint8_t, value_type> || 
+                //                                                           std::is_same_v<std::byte, value_type> ||    
+                //                                                           std::is_same_v<int, value_type> || 
+                //                                                           std::is_same_v<char, value_type>;
+                
+                //				template<bool, typename> struct Pgm;
                 template<typename> struct Pgm;
                 
                 template<auto... I, typename ValueType> 
-				struct Pgm<std::integer_sequence<ValueType, I...>> {
-					using type = Array<value_type, mData[I]...>; 
-				};
-//				template<auto... I, typename ValueType> 
-//				struct Pgm<true, std::integer_sequence<ValueType, I...>> {
-//					using type = Array<value_type, mData[I]...>; 
-//				};
-//				template<auto... I, typename ValueType> 
-//				struct Pgm<false, std::integer_sequence<ValueType, I...>> {
-//					using type = Array1<value_type, mData.size(), mData>;
-//				};
-			public:
-//				using pgm_type = typename Pgm<isPrimitive, index_list>::type;
+                struct Pgm<std::integer_sequence<ValueType, I...>> {
+                    using type = Array<value_type, mData[I]...>; 
+                };
+                //				template<auto... I, typename ValueType> 
+                //				struct Pgm<true, std::integer_sequence<ValueType, I...>> {
+                //					using type = Array<value_type, mData[I]...>; 
+                //				};
+                //				template<auto... I, typename ValueType> 
+                //				struct Pgm<false, std::integer_sequence<ValueType, I...>> {
+                //					using type = Array1<value_type, mData.size(), mData>;
+                //				};
+            public:
+                //				using pgm_type = typename Pgm<isPrimitive, index_list>::type;
                 using pgm_type = typename Pgm<index_list>::type;
-			};
-		}
-	}
+            };
+        }
+        
+        namespace detail {
+            template<typename Dest, typename Src>
+            struct GeneratorScale {
+                constexpr auto operator()() {
+                    std::array<typename Dest::value_type, Src::Upper + 1> lut;
+                    for(typename Src::value_type v{0}; auto& l : lut) {
+                        l = etl::scaleTo<Dest>(Src{v});
+                        ++v;
+                    }
+                    return lut;
+                }
+            };
+        }
+        
+        template<typename Dest, auto SrcL, auto SrcU, typename SrcT>
+        Dest scaleTo(const etl::uint_ranged<SrcT, SrcL, SrcU>& in) {
+            using Lut = AVR::Pgm::Util::Converter<detail::GeneratorScale<Dest, etl::uint_ranged<SrcT, SrcL, SrcU>>>::pgm_type;
+            return Dest{Lut::value(in)};
+        }
+        
+    }
 }

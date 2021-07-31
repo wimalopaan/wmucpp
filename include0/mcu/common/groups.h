@@ -373,6 +373,34 @@ namespace AVR {
             using wo4pin = AVR::Pin<AVR::Port<AVR::A>, 4>; 
             using wo5pin = AVR::Pin<AVR::Port<AVR::A>, 5>; 
         };
+        template<AVR::Concepts::AtDa32 MCU>
+        struct Map<Position<AVR::Component::Tca<0>, AltC>, MCU> {
+            using wo0pin = AVR::Pin<AVR::Port<AVR::C>, 0>; 
+            using wo1pin = AVR::Pin<AVR::Port<AVR::C>, 1>; 
+            using wo2pin = AVR::Pin<AVR::Port<AVR::C>, 2>; 
+            using wo3pin = AVR::Pin<AVR::Port<AVR::C>, 3>; 
+            using wo4pin = AVR::Pin<AVR::Port<AVR::C>, 4>; 
+            using wo5pin = AVR::Pin<AVR::Port<AVR::C>, 5>; 
+        };
+        template<AVR::Concepts::AtDa32 MCU>
+        struct Map<Position<AVR::Component::Tca<0>, AltD>, MCU> {
+            using wo0pin = AVR::Pin<AVR::Port<AVR::D>, 0>; 
+            using wo1pin = AVR::Pin<AVR::Port<AVR::D>, 1>; 
+            using wo2pin = AVR::Pin<AVR::Port<AVR::D>, 2>; 
+            using wo3pin = AVR::Pin<AVR::Port<AVR::D>, 3>; 
+            using wo4pin = AVR::Pin<AVR::Port<AVR::D>, 4>; 
+            using wo5pin = AVR::Pin<AVR::Port<AVR::D>, 5>; 
+        };
+
+        template<AVR::Concepts::AtDa32 MCU>
+        struct Map<Position<AVR::Component::Tca<0>, AltF>, MCU> {
+            using wo0pin = AVR::Pin<AVR::Port<AVR::F>, 0>; 
+            using wo1pin = AVR::Pin<AVR::Port<AVR::F>, 1>; 
+            using wo2pin = AVR::Pin<AVR::Port<AVR::F>, 2>; 
+            using wo3pin = AVR::Pin<AVR::Port<AVR::F>, 3>; 
+            using wo4pin = AVR::Pin<AVR::Port<AVR::F>, 4>; 
+            using wo5pin = AVR::Pin<AVR::Port<AVR::F>, 5>; 
+        };
         
         template<AVR::Concepts::AtMega0 MCU>
         struct Map<Position<AVR::Component::Tca<0>, AltA>, MCU> {

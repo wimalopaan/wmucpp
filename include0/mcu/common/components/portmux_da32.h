@@ -50,7 +50,9 @@ namespace AVR {
             };
             ControlRegister<Portmux, UsartRoute_t> usartroutea;
 
-            enum class TwiSpiRoute_t : uint8_t {
+            ControlRegister<Portmux, UsartRoute_t> usartrouteb;
+            
+            enum class SpiRoute_t : uint8_t {
                 spi0_alt1 = PORTMUX_SPI00_bm,
                 spi0_alt2 = PORTMUX_SPI01_bm,
                 spi0_none = PORTMUX_SPI00_bm | PORTMUX_SPI01_bm,
@@ -58,8 +60,18 @@ namespace AVR {
                 twi0_alt2 = PORTMUX_TWI01_bm,
                 twi0_none = PORTMUX_TWI00_bm | PORTMUX_TWI01_bm,
             };
-            ControlRegister<Portmux, TwiSpiRoute_t> twispiroutea;
+            ControlRegister<Portmux, SpiRoute_t> spiroutea;
 
+            enum class TwiRoute_t : uint8_t {
+                spi0_alt1 = PORTMUX_SPI00_bm,
+                spi0_alt2 = PORTMUX_SPI01_bm,
+                spi0_none = PORTMUX_SPI00_bm | PORTMUX_SPI01_bm,
+                twi0_alt1 = PORTMUX_TWI00_bm,
+                twi0_alt2 = PORTMUX_TWI01_bm,
+                twi0_none = PORTMUX_TWI00_bm | PORTMUX_TWI01_bm,
+            };
+            ControlRegister<Portmux, TwiRoute_t> twiroutea;
+            
             enum class TcaRoute_t : uint8_t {
                 onA = 0x00,
                 onB = 0x01,
@@ -76,7 +88,19 @@ namespace AVR {
                 tcb2_alt1 = PORTMUX_TCB2_bm,
             };
             ControlRegister<Portmux, TcbRoute_t> tcbroutea;
+
+            enum class TcdRoute_t : uint8_t {
+            };
+            ControlRegister<Portmux, TcdRoute_t> tcdroutea;
             
+            enum class AcRoute_t : uint8_t {
+            };
+            ControlRegister<Portmux, AcRoute_t> acroutea;
+
+            enum class ZcdRoute_t : uint8_t {
+            };
+            ControlRegister<Portmux, ZcdRoute_t> zcdroutea;
+
             static inline constexpr uintptr_t address = 0x05e0;
         };
 

@@ -45,6 +45,11 @@ namespace External {
 //            using servo_pa = periodic_dev::ProtocollAdapter;
 //            using terminal_device = void;
         };
+        template<typename Devs>
+        struct NoBus {
+            using devs = Devs;
+        };
+
         
         template<typename> struct isSBus : std::false_type {};
         template<typename D> struct isSBus<SBusSPort<D>> : std::true_type {};
@@ -57,6 +62,9 @@ namespace External {
 
         template<typename> struct isPpm : std::false_type {};
         template<typename D> struct isPpm<Ppm<D>> : std::true_type {};
+
+        template<typename> struct isNoBus: std::false_type {};
+        template<typename D> struct isNoBus<NoBus<D>> : std::true_type {};
     }
     
     template<typename Devs, template<typename> typename App, typename Duplex = AVR::FullDuplex>

@@ -81,6 +81,27 @@ namespace AVR {
                     using route_t = typename MCU::Portmux::UsartRoute_t;
                     using type = std::integral_constant<route_t, route_t::usart3_alt1>;
                 };
+
+                template<AVR::Concepts::AtDxSeries MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Usart<0>, AVR::Portmux::Alt1>, MCU> {
+                    using route_t = typename MCU::Portmux::UsartRoute_t;
+                    using type = std::integral_constant<route_t, route_t::usart0_alt1>;
+                };
+                template<AVR::Concepts::AtDxSeries MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Usart<1>, AVR::Portmux::Alt1>, MCU> {
+                    using route_t = typename MCU::Portmux::UsartRoute_t;
+                    using type = std::integral_constant<route_t, route_t::usart1_alt1>;
+                };
+                template<AVR::Concepts::AtDxSeries MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Usart<2>, AVR::Portmux::Alt1>, MCU> {
+                    using route_t = typename MCU::Portmux::UsartRoute_t;
+                    using type = std::integral_constant<route_t, route_t::usart2_alt1>;
+                };
+                template<AVR::Concepts::AtDxSeries MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Usart<3>, AVR::Portmux::Alt1>, MCU> {
+                    using route_t = typename MCU::Portmux::UsartRoute_t;
+                    using type = std::integral_constant<route_t, route_t::usart3_alt1>;
+                };
                 
             }
             namespace ccl {
@@ -150,6 +171,36 @@ namespace AVR {
                     using type = std::integral_constant<route_t, route_t::onF>;
                 };
                 
+                template<AVR::Concepts::AtDxSeries MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Tca<0>, AVR::Portmux::AltA>, MCU> {
+                    using route_t = typename MCU::Portmux::TcaRoute_t;
+                    using type = std::integral_constant<route_t, route_t::onA>;
+                };
+                template<AVR::Concepts::AtDxSeries MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Tca<0>, AVR::Portmux::AltB>, MCU> {
+                    using route_t = typename MCU::Portmux::TcaRoute_t;
+                    using type = std::integral_constant<route_t, route_t::onB>;
+                };
+                template<AVR::Concepts::AtDxSeries MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Tca<0>, AVR::Portmux::AltC>, MCU> {
+                    using route_t = typename MCU::Portmux::TcaRoute_t;
+                    using type = std::integral_constant<route_t, route_t::onC>;
+                };
+                template<AVR::Concepts::AtDxSeries MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Tca<0>, AVR::Portmux::AltD>, MCU> {
+                    using route_t = typename MCU::Portmux::TcaRoute_t;
+                    using type = std::integral_constant<route_t, route_t::onD>;
+                };
+                template<AVR::Concepts::AtDxSeries MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Tca<0>, AVR::Portmux::AltE>, MCU> {
+                    using route_t = typename MCU::Portmux::TcaRoute_t;
+                    using type = std::integral_constant<route_t, route_t::onE>;
+                };
+                template<AVR::Concepts::AtDxSeries MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Tca<0>, AVR::Portmux::AltF>, MCU> {
+                    using route_t = typename MCU::Portmux::TcaRoute_t;
+                    using type = std::integral_constant<route_t, route_t::onF>;
+                };
             }
             namespace tcb {
                 template<typename T, typename MCU = DefaultMcuType>
@@ -212,7 +263,8 @@ namespace AVR {
                 if constexpr(Meta::size_v<tca_list> > 0) {
                     constexpr auto value = Meta::front<tca_list>::value;
 //                    tca_list::_;
-//                    std::integral_constant<decltype(value), value>::_;
+//                    constexpr uint8_t x = uint8_t(value);
+//                    std::integral_constant<uint8_t, x>::_;
                     mcu_pmux()->tcaroutea.template set<value>();                
                 }
                 if constexpr(Meta::size_v<tcb_list> > 0) {

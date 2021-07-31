@@ -72,6 +72,10 @@ namespace AVR {
             return std::any(hwRegister & static_cast<value_type>(F));
         }
         template<BitType F>
+        void inline waitFor() const {
+            while(std::none(hwRegister & static_cast<value_type>(F)));
+        }
+        template<BitType F>
         void inline reset() {
             hwRegister = static_cast<value_type>(F); // clears the bit by writing "1"
         }

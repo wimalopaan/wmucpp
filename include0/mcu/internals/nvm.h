@@ -36,12 +36,12 @@ namespace AVR {
         using ccp = AVR::Cpu::Ccp<MCU>;
         
         inline static std::byte read_eeprom(const uint16_t offset) {
-            const volatile std::byte* eepromStart = reinterpret_cast<volatile std::byte*>(EEPROM_START);
+            const volatile std::byte* const eepromStart = reinterpret_cast<volatile std::byte*>(EEPROM_START);
             return *(eepromStart + offset);
         }
 
-        inline static void read_eeprom(std::byte* p, const uint16_t offset, uint16_t size) {
-            const volatile std::byte* eepromStart = reinterpret_cast<volatile std::byte*>(EEPROM_START);
+        inline static void read_eeprom(std::byte* const p, const uint16_t offset, uint16_t size) {
+            const volatile std::byte* const volatile eepromStart = reinterpret_cast<volatile std::byte*>(EEPROM_START);
             std::memcpy(p, (void*)(eepromStart + offset), size);
         }
         

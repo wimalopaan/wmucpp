@@ -75,3 +75,5 @@ boards/rcincremental/doc
 boards/doc
 boards/dds
 boards/breakout
+boards/rc720
+boards/rcfoc

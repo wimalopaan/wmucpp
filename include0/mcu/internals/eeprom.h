@@ -176,6 +176,7 @@ namespace EEProm {
         
         using data_t = DataType;
         inline static void init() {
+//            std::integral_constant<size_t, sizeof(DataType)>::_;
             nvm::read_eeprom((std::byte*)&mData, Offset, sizeof(DataType));
         }
         inline constexpr static DataType& data() {

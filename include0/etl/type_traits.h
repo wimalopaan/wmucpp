@@ -240,7 +240,8 @@ namespace etl {
         };
     };  
     template<typename T>
-    consteval /*constexpr*/ uint8_t numberOfOnes(T x) {
+//    consteval /*constexpr*/ uint8_t numberOfOnes(T x) {
+    constexpr uint8_t numberOfOnes(T x) {
         return (x != T{0}) ? T(x & T{0x01}) + numberOfOnes(T(x>>1u)) : 0u;
     }
     template<typename T>
