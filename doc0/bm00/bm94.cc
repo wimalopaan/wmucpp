@@ -1,7 +1,4 @@
 #include <utility>
-#include <variant>
-#include <type_traits>
-#include <etl/vector.h>
 
 struct MCU {
     struct P1 {
@@ -14,74 +11,79 @@ struct MCU {
     };
 };
 
-struct A {
-    inline constexpr std::byte get() const {
+template<auto N, typename P>
+struct Per {
+    static void init(const std::byte v){
+        value = v;
+    }
+    static std::byte get(){
         return value;
     }
-    inline void set(std::byte v) const {
-        MCU::P1::r1 = v;
+    static void set(const std::byte v) {
+        P::r1 = v;
     }
-    inline void toggle(std::byte v) const {
-        MCU::P1::r1 |= v;
+    static void toggle(const std::byte v) {
+        P::r1 |= v;
     }
-    inline void store() {
-        value = MCU::P1::r2;
+    static void store() {
+        value = P::r2;
     }
-    std::byte value{};
-};
-struct B {
-    //    B(std::byte v = 0_B) : value(v){
-    //        asm(";Bc");
-    //    }
-    inline constexpr std::byte get() const {
-        return value;
-    }
-    inline void set(std::byte v) const {
-        MCU::P2::r1 = v;
-    }
-    inline void toggle(std::byte v) const {
-        MCU::P2::r1 |= v;
-    }
-    inline void store() {
-        value = MCU::P2::r2;
-    }
-    std::byte value{};
+    static inline std::byte value{};
 };
 
-namespace  {
-    //    A x1{32_B};
-    //    B x2{42_B};
-    //    A x3{52_B};   
-    //    B x4{62_B};   
+template<typename... TT> struct List {};
+
+template<typename> struct Visit;
+template<typename... II>
+struct Visit<List<II...>> {
+    static void all(const auto& c) {
+        (c(II{}),...);
+    }
+};
+
+namespace detail {
+    template<typename L> struct front_impl;
+    
+    template<typename F, typename... II>
+    struct front_impl<List<F, II...>> {
+        using type = F;
+    };
+    
+    template<typename L> struct back_impl;
+    template<typename... II>
+    struct back_impl<List<II...>> {
+        using type = decltype((II{}, ...));
+    };
 }
 
+template<typename L>
+using front = detail::front_impl<L>::type;
+
+template<typename L>
+using back= detail::back_impl<L>::type;
+
 int main() {
-    //    etl::Vector<std::variant<B, A>, 4> p{A{32_B}, B{42_B}, B{52_B}};
-    //    etl::Vector<std::variant<B, A>, 4> p{x1, x2, x3, x4};
-    etl::Vector<std::variant<B, A>, 4> p;
-    p.push_back(A{32_B});
-    p.push_back(B{42_B});
-    p.push_back(A{52_B});
-    p.push_back(B{62_B});
+    using a = Per<0, MCU::P1>;
+    using b = Per<0, MCU::P2>;
+    using c = Per<1, MCU::P1>;
+    using d = Per<1, MCU::P2>;
     
-    //    p.push_back(x1);
-    //    p.push_back(x2);
-    //    p.push_back(x3);
-    //    p.push_back(x4);
+    using list = List<a, b, c, d>;
+
+    a::init(32_B);
+    b::init(42_B);
+    c::init(52_B);
+    d::init(62_B);
+    
     while(true) {
         std::byte x{};
-        for(auto&& i : p) {
-            i.visit([&]<typename P>(P& v){
-                        v.store();
-                        x |= v.get();
+        
+        Visit<list>::all([&]<typename C>(C){
+                             C::store();
+                             x |= C::get();
                     });
-        }
-        //        x1.set(x);
-        p[0].visit([&]<typename V>(V& v){
-                       if constexpr(!std::is_same_v<V, nullptr_t>) {
-                           v.set(x);
-                       }
-                   });
+        
+        front<list>::set(x);
     }
 }
 

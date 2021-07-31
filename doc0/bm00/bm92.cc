@@ -62,14 +62,6 @@ namespace  {
     B x4{62_B};   
 }
 
-struct I{};
-template<auto N> struct Foo : public I {};
-
-Foo<0> f0;
-Foo<1> f1;
-
-I* a[] {&f0, &f1};
-
 int main() {
     std::array<std::variant<A, B, Null>, 4> p{x1, x2, x3, Null{}};
 //    p[3] = x4;

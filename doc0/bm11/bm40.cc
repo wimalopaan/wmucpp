@@ -7,7 +7,5 @@ using ccp = AVR::Cpu::Ccp<>;
 using clock = AVR::Clock<>;
 
 int main() {
-    ccp::unlock([]{
-        clock::prescale<2>();
-    } );
+    return  etl::uint_ranged<uint8_t, 0, 9>{10};
 }
