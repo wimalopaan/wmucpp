@@ -86,10 +86,25 @@ struct Servo {
     
     inline static uint16_t deadP{100};
     inline static uint16_t deadN{deadP};
+    inline static uint16_t deadOffset{30};
 
+    inline static int16_t servoSpeedMax = (ppm_delta / 4);
+    
     inline static int16_t targetPos;
     
     inline static adc_t lastAnalog;
+
+    template<auto L, auto U>
+    static inline void speed(const etl::uint_ranged_NaN<uint16_t, L, U>& pv) {
+        if (pv) {
+            const auto s = etl::scale(pv.toInt(), etl::Intervall{L, U}, etl::Intervall{ppm_t::Upper, ppm_t::Lower});
+//            decltype(s)::_;
+            if (s > ppm_mid) {
+//                deadP deadN deadOffset
+                servoSpeedMax = std::min(s - ppm_mid, ppm_t::Upper - std::max(deadN, deadP) - deadOffset);
+            }
+        }
+    }
     
     inline static int16_t error(const int16_t actual) {
         constexpr uint8_t hysterese = 1;
@@ -237,8 +252,9 @@ struct Servo {
             }
             else {
                 aDiff = err;
-                const auto cv = std::min(err * 2, ppm_delta / 4);
-                PPM::set(ppm_t{ppm_mid + deadP + 30 + cv});
+//                const auto cv = std::min(err * 2, ppm_delta / 4);
+                const auto cv = std::min(err * 2, servoSpeedMax);
+                PPM::set(ppm_t{ppm_mid + deadP + deadOffset + cv});
             }
             break;
         case State::Backward:
@@ -247,8 +263,9 @@ struct Servo {
             }
             else {
                 aDiff = -err;
-                const auto cv = std::max(err * 2, -ppm_delta / 4);
-                PPM::set(ppm_t{ppm_mid - deadN - 30 + cv});
+//                const auto cv = std::max(err * 2, -ppm_delta / 4);
+                const auto cv = std::max(err * 2, -servoSpeedMax);
+                PPM::set(ppm_t{ppm_mid - deadN - deadOffset + cv});
             }
             break;
         }
@@ -456,9 +473,12 @@ struct GFSM {
     using value_t = PA::value_type;
     using adcv_t = ADC::value_type; 
     
-    static inline constexpr value_t chThreshH = value_t{value_t::Mid + (value_t::Upper - value_t::Lower) / 4};
-    static inline constexpr value_t chThreshL = value_t{value_t::Mid + (value_t::Upper - value_t::Lower) / 6};
+    static inline constexpr value_t chThreshPosH = value_t{value_t::Mid + (value_t::Upper - value_t::Lower) / 4};
+    static inline constexpr value_t chThreshPosL = value_t{value_t::Mid + (value_t::Upper - value_t::Lower) / 6};
 
+    static inline constexpr value_t chThreshNegH = value_t{value_t::Mid - (value_t::Upper - value_t::Lower) / 4};
+    static inline constexpr value_t chThreshNegL = value_t{value_t::Mid - (value_t::Upper - value_t::Lower) / 6};
+    
     using NVM = BusDevs::eeprom;
     
     using ppm1 = PPMAdapter<PPM, 0>;
@@ -552,7 +572,6 @@ struct GFSM {
         esc::init();
                     
         configPin::init();
-        
     }
 
     static inline void periodic() {
@@ -606,7 +625,7 @@ struct GFSM {
             break;
         case State::SearchChannel:
             if (const auto v = PA::value(searchCh.toInt()); v) {
-                if (v.toInt() > chThreshH.toInt()) {
+                if (v.toInt() > chThreshPosH.toInt()) {
                     mState = State::ShowChannel;
                 }
                 else {
@@ -616,7 +635,7 @@ struct GFSM {
             break;
         case State::ShowChannel:
             if (const auto v = PA::value(searchCh.toInt()); v) {
-                if (v.toInt() < chThreshL.toInt()) {
+                if (v.toInt() < chThreshPosL.toInt()) {
                     mState = State::ShowChannel2;
                 }
             }
@@ -643,6 +662,8 @@ struct GFSM {
             }
             const auto thru = PA::value(searchCh + 2);
             setThru(thru);
+            const auto servoSpeed = PA::value(searchCh + 3);
+            out360::speed(servoSpeed);
             break;
         }
         if (oldState != mState) {
