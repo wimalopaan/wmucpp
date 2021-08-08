@@ -823,6 +823,11 @@ namespace AVR {
                     *mcu_tca()->cmp2buf = d;
                 }
             }
+            inline static constexpr void onOvl(auto f) {
+                mcu_tca()->intflags.template waitFor<mcu_timer_t::Intflags_t::ovf>();
+                f();
+                mcu_tca()->intflags.template reset<mcu_timer_t::Intflags_t::ovf>();
+            }
         private:
             inline static value_type mMax = 0;
         };
