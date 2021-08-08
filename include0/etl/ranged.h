@@ -46,7 +46,7 @@ namespace etl {
     
     template<typename Dest, auto SrcL, auto SrcU, typename SrcT>
     constexpr Dest scaleTo(const uint_ranged<SrcT, SrcL, SrcU>& in) {
-        static_assert(sizeof(typename Dest::value_type) >= sizeof(SrcT));
+//        static_assert(sizeof(typename Dest::value_type) >= sizeof(SrcT));
         using enc_t = etl::enclosing_t<typename Dest::value_type>;
         return Dest(Dest::Lower + (((Dest::Upper - Dest::Lower) * (enc_t(in) - SrcL)) / (SrcU - SrcL)));
     }
@@ -404,6 +404,28 @@ namespace etl {
             }
             return *this;
         }
+
+        template<etl::Concepts::NamedFlag Check = std::integral_constant<bool, true>>
+        inline constexpr void set(const T rhs) volatile {
+            assert(rhs >= LowerBound);
+            assert(rhs <= UpperBound);
+            if constexpr(Check::value) {
+                if (__builtin_constant_p(rhs)) {
+                    if ((rhs >= Lower) && (rhs <= Upper)) {
+                        mValue = rhs;    
+                    }
+                    else {
+                        etl::detail::constant_assert();
+                    }
+                }
+                else {
+                    mValue = std::clamp(rhs, LowerBound, UpperBound);
+                }
+            }
+            else {
+                mValue = rhs;
+            }
+        }
         
         inline constexpr T toInt() const {
             return mValue;
@@ -543,18 +565,23 @@ namespace etl {
     class uint_ranged_circular final {
         static_assert(LowerBound <= UpperBound);
         
+    public:
         inline static constexpr T module{UpperBound + 1};
         inline static constexpr T module_mask = UpperBound;
         inline static constexpr bool use_mask_modulo = (LowerBound == 0) && (etl::isPowerof2(module));
         
-    public:
         inline static constexpr T Lower = LowerBound;
         inline static constexpr T Upper = UpperBound;
         using value_type = T;
         
         inline constexpr uint_ranged_circular() = default;
         
-        inline constexpr explicit uint_ranged_circular(T v) : mValue(v) {
+        inline constexpr explicit uint_ranged_circular(const T v) requires(use_mask_modulo) : mValue(v & module_mask) {
+            assert(v >= LowerBound);
+            assert(v <= UpperBound);
+        }
+
+        inline constexpr explicit uint_ranged_circular(const T v) requires(!use_mask_modulo) : mValue(v) {
             assert(v >= LowerBound);
             assert(v <= UpperBound);
             if (v < LowerBound) {
@@ -579,6 +606,10 @@ namespace etl {
         
         inline constexpr bool isBottom() const {
             return mValue == Lower;
+        }
+
+        inline constexpr bool isHalf() const {
+            return mValue == (Upper + Lower) / 2;
         }
         
         inline constexpr void setToBottom() {
