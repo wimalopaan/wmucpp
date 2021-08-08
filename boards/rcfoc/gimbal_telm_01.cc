@@ -141,9 +141,14 @@ struct GlobalFsm {
     
     using sout = BusDevs::sbusGen;
 
-    using link_dev = BusDevs::link_dev;
-    using link = BusDevs::link;
-    using link_pa = BusDevs::link_pa;
+//    using link_dev = BusDevs::link_dev;
+//    using link = BusDevs::link;
+//    using link_pa = BusDevs::link_pa;
+    
+    using telemirror_dev = BusDevs::telemirror_dev;
+    using telemirror_pa = BusDevs::telemirror_pa;
+    
+    using telem_aindex_t = telemirror_pa::angle_index_type; 
     
     using lut3 = devs::lut3;
     using Adc = devs::adcController;
@@ -182,14 +187,14 @@ struct GlobalFsm {
         
         sout::init();
 
-        link_dev::template init<AVR::BaudRate<115200>>();
+        telemirror_dev::template init<AVR::BaudRate<115200>>();
         
         dbg::template dir<Output>();
     }
     
     static inline void periodic() {
         TermDev::periodic();
-        link_dev::periodic();
+        telemirror_dev::periodic();
         Adc::periodic();
         
         encoder::periodic();
@@ -211,30 +216,27 @@ struct GlobalFsm {
         sout::ratePeriodic();
         blinkLed::ratePeriodic();
         
+        telemirror_pa::ratePeriodic();
+        
         const auto oldState = mState;
         ++mStateTick;
         
         const m_angle_t angle = encoder::angle();
         
-        link::template set<0>(etl::nth_byte<0>(angle.toInt()));
-        link::template set<1>(etl::nth_byte<1>(angle.toInt()));
-        link::template send<link_dev>();
-
-        uint16_t lv = uint8_t(link_pa::data()[0]);
-        lv |= uint16_t(link_pa::data()[1]) << 8;
-        const m_angle_t la{lv};
-
         const auto analog_i = Adc::value(adc_i_t{0});
         const auto analog_v = Adc::value(adc_i_t{1});
         const auto analog_te = Adc::value(adc_i_t{2});
         const auto analog_ti = Adc::value(adc_i_t{4});
         
+        const auto ta = telemirror_pa::angle(telem_aindex_t{2});
+                
         (++mDebugTick).on(debugTicks, [&]{
-            etl::outl<terminal>("ma: "_pgm, angle.toInt(), " eo: "_pgm, eoffset.toInt(), " l: "_pgm, lv,
-                                " i: "_pgm, analog_i, " v: "_pgm, analog_v, " te: "_pgm, analog_te, " ti: "_pgm, analog_ti,
-                                " cs: "_pgm, checkStart, " ce: "_pgm, checkEnd, " ld: "_pgm, ld, " ccs: "_pgm, currStart,
-                                " c: "_pgm, c);
-            etl::outl<terminal>(mPid);
+            etl::outl<terminal>("tp: "_pgm, telemirror_pa::packages(), " rssi: "_pgm, telemirror_pa::rssi(), " snr: "_pgm, telemirror_pa::snr(), " noise: "_pgm, telemirror_pa::noise(), " a: "_pgm, ta);
+//            etl::outl<terminal>("ma: "_pgm, angle.toInt(), " eo: "_pgm, eoffset.toInt(),
+//                                " i: "_pgm, analog_i, " v: "_pgm, analog_v, " te: "_pgm, analog_te, " ti: "_pgm, analog_ti,
+//                                " cs: "_pgm, checkStart, " ce: "_pgm, checkEnd, " ld: "_pgm, ld, " ccs: "_pgm, currStart,
+//                                " c: "_pgm, c);
+//            etl::outl<terminal>(mPid);
         });
         
         switch(mState) {
@@ -334,10 +336,10 @@ struct GlobalFsm {
             break;
         case State::Run:
         {
-            m_angle_t target{la};
+            m_angle_t target{ta};
             
             auto d = cyclic_diff(target, angle);
-            d *= 3;
+            d *= 1;
 
 //            const auto cv = mPid.correctionValue(d.toInt(), 0);
             
@@ -354,9 +356,9 @@ struct GlobalFsm {
             driver::scale(ccv);
             
             const auto sb0 = AVR::Pgm::scaleTo<sbus_value_t>(angle);
-            const auto sb1 = AVR::Pgm::scaleTo<sbus_value_t>(la);
+//            const auto sb1 = AVR::Pgm::scaleTo<sbus_value_t>(la);
             sout::set(sbus_index_t{0}, sb0);
-            sout::set(sbus_index_t{1}, sb1);
+//            sout::set(sbus_index_t{1}, sb1);
         }
             break;
         case State::Error:
@@ -452,7 +454,7 @@ struct Application {
             
             gfsm::init();
             
-            etl::outl<terminal>("foc_t25_hw01"_pgm);
+            etl::outl<terminal>("Telem_01"_pgm);
             
             while(true) {
                 gfsm::periodic(); 

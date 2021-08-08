@@ -19,8 +19,12 @@ subdirs =
 #targets += test11.hex
 #targets += test20.hex
 #targets += test21.hex
-targets += test25.hex
-targets += test30.hex
+#targets += test25.hex
+#targets += test30.hex
+
+targets += gimbal_sbus_01.hex
+targets += gimbal_telm_01.hex
+targets += servo_01.hex
 
 -include ../../Makefile.avr0.include
 

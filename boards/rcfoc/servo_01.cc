@@ -62,7 +62,6 @@ static unsigned int assertKey{1234};
 #include "devices.h"
 #include "busses.h"
 #include "link.h"
-#include "telemetry.h"
 
 using namespace AVR;
 using namespace std::literals::chrono;
@@ -115,6 +114,7 @@ constexpr auto cyclic_diff(const etl::uint_ranged<T, L, U>& a, const etl::uint_r
 template<typename BusDevs>
 struct GlobalFsm {
     using gfsm = GlobalFsm<BusDevs>;
+    using bus_type = BusDevs::bus_type;
     
     using devs = BusDevs::devs;
     using Timer = devs::systemTimer;
@@ -139,22 +139,19 @@ struct GlobalFsm {
     
     static inline constexpr m_angle_t zeroAngle{1023};
     
-    using sout = BusDevs::sbusGen;
-
-    using link_dev = BusDevs::link_dev;
-    using link = BusDevs::link;
-    using link_pa = BusDevs::link_pa;
-    
     using lut3 = devs::lut3;
     using Adc = devs::adcController;
     
     using terminal = BusDevs::terminal;
     using TermDev = terminal::device_type;
     
-    using adc_i_t = Adc::index_type;
+    using servo = BusDevs::servo;
+    using servo_pa = BusDevs::servo_pa;
     
-    using sbus_value_t = typename sout::value_type;
-    using sbus_index_t = typename sout::index_type;
+    using sensor = BusDevs::sensor;
+    using angle_p = BusDevs::AngleProvider;
+    
+    using adc_i_t = Adc::index_type;
     
     enum class State : uint8_t {Undefined, Init, Enable,
                                 CheckCurrentStart, CheckCurrentEnd,
@@ -168,8 +165,40 @@ struct GlobalFsm {
     static constexpr External::Tick<Timer> zeroGTicks{5000_ms};
     static constexpr External::Tick<Timer> zeroTicks{10_ms};
     
-    static inline void init() {
+    static inline void init(const bool inverted) {
         TermDev::template init<AVR::BaudRate<115200>>();
+        
+        
+        if constexpr(External::Bus::isIBus<bus_type>::value) {
+//            lut3::init(std::byte{0x00}); // low on lut3-out 
+            sensor::init();
+            sensor::uart::txOpenDrain();
+            servo::template init<BaudRate<115200>>();
+
+            etl::outl<terminal>("IB"_pgm);
+        }
+        else if constexpr(External::Bus::isSBus<bus_type>::value) {
+//            lut3::init(std::byte{0x33}); // route TXD (inverted) to lut1-out 
+            sensor::init();
+            sensor::uart::txPinDisable();
+
+//            devs::ibt::init();
+//            devs::ibt::off();
+            
+            servo::template init<AVR::BaudRate<100000>, FullDuplex, true, 1>(); // 8E2
+            if (inverted) {
+                servo::rxInvert(true);
+                etl::outl<terminal>("SB I"_pgm);
+            }
+            else {
+                etl::outl<terminal>("SB"_pgm);
+            }
+        }
+        else {
+            static_assert(std::false_v<bus_type>, "bus type not supported");
+        }
+        
+        
         
         blinkLed::init();
         enable::init();
@@ -180,16 +209,11 @@ struct GlobalFsm {
         encoder::init();
         driver::init();
         
-        sout::init();
-
-        link_dev::template init<AVR::BaudRate<115200>>();
-        
         dbg::template dir<Output>();
     }
     
     static inline void periodic() {
         TermDev::periodic();
-        link_dev::periodic();
         Adc::periodic();
         
         encoder::periodic();
@@ -200,37 +224,37 @@ struct GlobalFsm {
         encoder::template read<true>(); // increased time
 //        encoder::read(); 
         
-        sout::periodic();
-        
+        servo::periodic();
+        sensor::periodic();
     }
     
     static inline void ratePeriodic() {
         dbg::toggle();
         
         driver::ratePeriodic();
-        sout::ratePeriodic();
         blinkLed::ratePeriodic();
+
+        servo_pa::ratePeriodic();
+        sensor::ratePeriodic();
+
+        const auto ch0 = servo_pa::value(0);
+//        decltype(t)::_;
+        const auto a0 = AVR::Pgm::scaleTo<m_angle_t>(ch0.toRanged());
         
         const auto oldState = mState;
         ++mStateTick;
         
         const m_angle_t angle = encoder::angle();
+        angle_p::mAngle = angle;
         
-        link::template set<0>(etl::nth_byte<0>(angle.toInt()));
-        link::template set<1>(etl::nth_byte<1>(angle.toInt()));
-        link::template send<link_dev>();
-
-        uint16_t lv = uint8_t(link_pa::data()[0]);
-        lv |= uint16_t(link_pa::data()[1]) << 8;
-        const m_angle_t la{lv};
-
+        
         const auto analog_i = Adc::value(adc_i_t{0});
         const auto analog_v = Adc::value(adc_i_t{1});
         const auto analog_te = Adc::value(adc_i_t{2});
         const auto analog_ti = Adc::value(adc_i_t{4});
         
         (++mDebugTick).on(debugTicks, [&]{
-            etl::outl<terminal>("ma: "_pgm, angle.toInt(), " eo: "_pgm, eoffset.toInt(), " l: "_pgm, lv,
+            etl::outl<terminal>("ma: "_pgm, angle.toInt(), " eo: "_pgm, eoffset.toInt(),
                                 " i: "_pgm, analog_i, " v: "_pgm, analog_v, " te: "_pgm, analog_te, " ti: "_pgm, analog_ti,
                                 " cs: "_pgm, checkStart, " ce: "_pgm, checkEnd, " ld: "_pgm, ld, " ccs: "_pgm, currStart,
                                 " c: "_pgm, c);
@@ -334,7 +358,7 @@ struct GlobalFsm {
             break;
         case State::Run:
         {
-            m_angle_t target{la};
+            m_angle_t target{a0};
             
             auto d = cyclic_diff(target, angle);
             d *= 3;
@@ -352,11 +376,6 @@ struct GlobalFsm {
 
             driver::torque(d, angle, eoffset);
             driver::scale(ccv);
-            
-            const auto sb0 = AVR::Pgm::scaleTo<sbus_value_t>(angle);
-            const auto sb1 = AVR::Pgm::scaleTo<sbus_value_t>(la);
-            sout::set(sbus_index_t{0}, sb0);
-            sout::set(sbus_index_t{1}, sb1);
         }
             break;
         case State::Error:
@@ -444,15 +463,15 @@ template<typename BusSystem, typename MCU = DefaultMcuType>
 struct Application {
     using busdevs = BusDevs<BusSystem>;
     
-    inline static void run() {
-        if constexpr(External::Bus::isNoBus<BusSystem>::value) {
+    inline static void run(const bool inverted = false) {
+        if constexpr(External::Bus::isSBus<BusSystem>::value || External::Bus::isIBus<BusSystem>::value) {
             using terminal = busdevs::terminal;
             using systemTimer = busdevs::systemTimer;
             using gfsm = GlobalFsm<busdevs>;
             
-            gfsm::init();
+            gfsm::init(inverted);
             
-            etl::outl<terminal>("foc_t25_hw01"_pgm);
+            etl::outl<terminal>("Servo_01"_pgm);
             
             while(true) {
                 gfsm::periodic(); 
@@ -465,11 +484,13 @@ struct Application {
 };
 
 using devices = Devices<>;
-using app = Application<External::Bus::NoBus<devices>>;
+//using app = Application<External::Bus::NoBus<devices>>;
+using scanner = External::Scanner2<devices, Application, Meta::List<External::Bus::IBusIBus<devices>, External::Bus::SBusSPort<devices>>>;
 
 int main() {
-    devices::init();
-    app::run();
+//    devices::init();
+//    app::run();
+    scanner::run();
 }
 
 #ifndef NDEBUG

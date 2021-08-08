@@ -28,13 +28,14 @@ struct Devices {
     using usart1Position = AVR::Portmux::Position<AVR::Component::Usart<1>, AVR::Portmux::Default>; // Servo (in / out)
     using usart2Position = AVR::Portmux::Position<AVR::Component::Usart<2>, AVR::Portmux::Alt1>; // Sensor
     
-    using servoPosition = usart1Position; 
+    using servoPosition = usart1Position; // servo / link / telem-mirror
     using scanDevPosition = servoPosition;
     
-    using sensorPosition = usart2Position; // Sensor
-    using scanTermPosition = usart0Position;
-    
+    using sensorPosition = usart2Position; // sensor / sbus-out
+
+    using scanTermPosition = usart0Position;  // terminal
     using scan_term_dev = AVR::Usart<scanTermPosition, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<1>, AVR::SendQueueLength<256>>;
+    using terminal = etl::basic_ostream<scan_term_dev>;
 
     using dbgPin = AVR::Pin<AVR::Port<AVR::A>, 3>; 
     

@@ -2,6 +2,7 @@
 
 #include "devices.h"
 #include "link.h"
+#include "telemetry.h"
 
 template<typename Bus>
 struct BusDevs;
@@ -11,22 +12,22 @@ struct BusDevs<External::Bus::NoBus<Devs>> {
     static inline uint8_t magic = 42;
     using devs = Devs;
     
+    // terminal
     using systemTimer = Devs::systemTimer;
-    
-//    using servo_pa = IBus2::Servo::ProtocollAdapter<0>;
-//    using servo = AVR::Usart<typename Devs::servoPosition, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
-    
-    using terminal = etl::basic_ostream<typename devs::scan_term_dev>;
-    
-    using adcController = devs::adcController;
-    
-    using sbusGen = External::SBus::Output::Generator<typename devs::sensorPosition, systemTimer>;
+    using terminal = Devs::terminal;
 
+    // servo    
     using link = SimpleProtocol::Sender<2>;
     using link_pa = SimpleProtocol::Adapter<2>;
-    
     using link_dev = AVR::Usart<typename devs::servoPosition, link_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<8>>;
     
+    using telemirror_pa = External::OpenTx::TelemetryMirror::FlySky2A::ProtocollAdapter<0, systemTimer>; 
+    using telemirror_dev = AVR::Usart<typename devs::servoPosition, telemirror_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<8>>;
+    
+    //sensor
+    using sbusGen = External::SBus::Output::Generator<typename devs::sensorPosition, systemTimer>;
+    
+    using adcController = devs::adcController;
 };
 
 template<typename Devs>
@@ -43,7 +44,7 @@ struct BusDevs<External::Bus::IBusIBus<Devs>> {
     using servo_pa = IBus2::Servo::ProtocollAdapter<0>;
     using servo = AVR::Usart<typename Devs::servoPosition, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
     
-    using terminal = etl::basic_ostream<typename devs::scan_term_dev>;
+    using terminal = Devs::terminal;
     
     template<typename ADC, uint8_t Channel, typename SigRow>
     struct InternalTempProvider {
@@ -57,13 +58,23 @@ struct BusDevs<External::Bus::IBusIBus<Devs>> {
         }
     };
     
+    struct AngleProvider {
+        inline static constexpr auto valueId = External::SPort::ValueId::DIY;
+        inline static constexpr auto ibus_type = IBus2::Type::type::ANGLE;
+        inline static constexpr void init() {}
+        inline static constexpr uint16_t value() {
+            return mAngle;
+        }
+        inline static uint16_t mAngle{};
+    };
+    
     using adcController = devs::adcController;
     
     using tempiP = InternalTempProvider<typename Devs::adcController, 3, typename Devs::sigrow>;
     
     using sensor = IBus2::Sensor<typename Devs::sensorPosition, AVR::Usart, AVR::BaudRate<115200>, 
-    Meta::List<tempiP>, 
-    systemTimer, void>;
+                                Meta::List<tempiP, AngleProvider>, 
+                                systemTimer, void>;
 };
 
 template<typename Devs>
@@ -80,7 +91,7 @@ struct BusDevs<External::Bus::SBusSPort<Devs>> {
     using servo_pa = External::SBus::Servo::ProtocollAdapter<0, systemTimer>;
     using servo = AVR::Usart<typename Devs::servoPosition, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
     
-    using terminal = etl::basic_ostream<typename devs::scan_term_dev>;
+    using terminal = Devs::terminal;
     
     template<typename PA>
     using sensorUsart = AVR::Usart<typename Devs::sensorPosition, PA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<64>>;
@@ -97,13 +108,22 @@ struct BusDevs<External::Bus::SBusSPort<Devs>> {
         }
     };
     
+    struct AngleProvider {
+        inline static constexpr auto valueId = External::SPort::ValueId::DIY;
+        inline static constexpr auto ibus_type = IBus2::Type::type::ANGLE;
+        inline static constexpr void init() {}
+        inline static constexpr uint16_t value() {
+            return mAngle;
+        }
+        inline static uint16_t mAngle{};
+    };
     
     using adcController = devs::adcController;
     
     using tempiP = InternalTempProvider<typename Devs::adcController, 3, typename Devs::sigrow>;
     
     using sensor = External::SPort::Sensor<External::SPort::SensorId::ID1, sensorUsart, systemTimer, 
-    Meta::List<tempiP>>;
+    Meta::List<tempiP, AngleProvider>>;
     
 };
 
