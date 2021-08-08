@@ -363,7 +363,8 @@ namespace AVR {
                 constexpr auto operator()() {
                     std::array<typename Dest::value_type, Src::Upper + 1> lut;
                     for(typename Src::value_type v{0}; auto& l : lut) {
-                        l = etl::scaleTo<Dest>(Src{v});
+                        const auto v2 = std::clamp(v, Src::Lower, Src::Upper);
+                        l = etl::scaleTo<Dest>(Src{v2});
                         ++v;
                     }
                     return lut;
