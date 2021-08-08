@@ -1,4 +1,4 @@
-//#define NDEBUG
+#define NDEBUG
  
 #define AUTO_BUS
 #define LEARN_DOWN // start at highest channel number downwards
@@ -23,7 +23,9 @@ struct FSM {
     using PA = BusDevs::servo_pa;
     using OUT = BusDevs::out;
     
-    enum class State : uint8_t {Undefined, StartWait, SearchChannel, Run, ShowAddress, ShowAddressWait, LearnTimeout};
+    enum class State : uint8_t {Undefined,
+                                ShowBus, ShowBusWait,
+                                StartWait, SearchChannel, Run, ShowAddress, ShowAddressWait, LearnTimeout};
     
     static constexpr auto intervall = Timer::intervall;
     static constexpr External::Tick<Timer> learnTimeoutTicks{3000_ms};
@@ -50,7 +52,7 @@ struct FSM {
         else {
             static_assert(std::false_v<bus_type>, "bus type not supported");
         }
-        // todo:
+
         systemTimer::init();
         OUT::init();
         
@@ -83,7 +85,27 @@ struct FSM {
         ++stateTicks;
         switch(mState) {
         case State::Undefined:
-            mState = State::StartWait;
+            mState = State::ShowBus;
+            break;
+        case State::ShowBus:
+            if constexpr(External::Bus::isIBus<bus_type>::value) {
+                using index_t = typename OUT::index_t;
+                OUT::setSwitchOn(index_t{5});                    
+                OUT::setSwitchOn(index_t{6});                    
+                OUT::setSwitchOn(index_t{7});                    
+            }
+            if constexpr(External::Bus::isSBus<bus_type>::value) {
+                using index_t = typename OUT::index_t;
+                OUT::setSwitchOn(index_t{6});                    
+                OUT::setSwitchOn(index_t{7});                    
+            }
+            mState = State::ShowBusWait;
+            break;
+        case State::ShowBusWait:
+            stateTicks.on(waitTimeoutTicks, []{
+                mState = State::StartWait;
+                OUT::allOff();
+            });
             break;
         case State::StartWait:
             stateTicks.on(waitTimeoutTicks, []{
@@ -307,11 +329,13 @@ struct Application {
 
 using devices = Devices<>;
 
-#ifndef NDEBUG
+//#ifndef NDEBUG
+//using scanner = External::Scanner<devices, Application>;
+//#else
+//using scanner = External::Scanner<devices, Application, AVR::HalfDuplex>;
+//#endif
+
 using scanner = External::Scanner<devices, Application>;
-#else
-using scanner = External::Scanner<devices, Application, AVR::HalfDuplex>;
-#endif
 
 int main() {
     scanner::run();
