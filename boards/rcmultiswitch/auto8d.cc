@@ -24,7 +24,7 @@ struct FSM {
     using OUT = BusDevs::out;
     
     enum class State : uint8_t {Undefined,
-                                ShowBus, ShowBusWait,
+//                                ShowBus, ShowBusWait,
                                 StartWait, SearchChannel, Run, ShowAddress, ShowAddressWait, LearnTimeout};
     
     static constexpr auto intervall = Timer::intervall;
@@ -85,28 +85,28 @@ struct FSM {
         ++stateTicks;
         switch(mState) {
         case State::Undefined:
-            mState = State::ShowBus;
+            mState = State::StartWait;
             break;
-        case State::ShowBus:
-            if constexpr(External::Bus::isIBus<bus_type>::value) {
-                using index_t = typename OUT::index_t;
-                OUT::setSwitchOn(index_t{5});                    
-                OUT::setSwitchOn(index_t{6});                    
-                OUT::setSwitchOn(index_t{7});                    
-            }
-            if constexpr(External::Bus::isSBus<bus_type>::value) {
-                using index_t = typename OUT::index_t;
-                OUT::setSwitchOn(index_t{6});                    
-                OUT::setSwitchOn(index_t{7});                    
-            }
-            mState = State::ShowBusWait;
-            break;
-        case State::ShowBusWait:
-            stateTicks.on(waitTimeoutTicks, []{
-                mState = State::StartWait;
-                OUT::allOff();
-            });
-            break;
+//        case State::ShowBus:
+//            if constexpr(External::Bus::isIBus<bus_type>::value) {
+//                using index_t = typename OUT::index_t;
+//                OUT::setSwitchOn(index_t{5});                    
+//                OUT::setSwitchOn(index_t{6});                    
+//                OUT::setSwitchOn(index_t{7});                    
+//            }
+//            if constexpr(External::Bus::isSBus<bus_type>::value) {
+//                using index_t = typename OUT::index_t;
+//                OUT::setSwitchOn(index_t{6});                    
+//                OUT::setSwitchOn(index_t{7});                    
+//            }
+//            mState = State::ShowBusWait;
+//            break;
+//        case State::ShowBusWait:
+//            stateTicks.on(waitTimeoutTicks, []{
+//                mState = State::StartWait;
+//                OUT::allOff();
+//            });
+//            break;
         case State::StartWait:
             stateTicks.on(waitTimeoutTicks, []{
                 mState = State::SearchChannel;
