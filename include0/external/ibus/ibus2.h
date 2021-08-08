@@ -22,6 +22,9 @@ namespace RCSwitch {
     using index_t = etl::uint_ranged<uint8_t, 0, 7>; // 3 Bits
     using param_t  = etl::uint_ranged<uint8_t, 0, 15>; // 4 Bits
     
+    namespace detail {
+    }
+    
     template<typename Reso>
     requires(Meta::contains_v<Meta::List<Low, High>, Reso>)
     struct Protocol2 {            
@@ -92,7 +95,7 @@ namespace RCSwitch {
         inline static constexpr mode_t backward = blink1;
         inline static constexpr mode_t blink2{3};
 
-        inline static constexpr mode_t config{7};
+        inline static constexpr mode_t config{7}; // not for sbus
 
         inline static constexpr param_t reset{0};
         inline static constexpr param_t pwm{1};
@@ -251,6 +254,9 @@ namespace IBus2 {
             ARMED            = 0x15, //2 bytes
             FLIGHT_MODE      = 0x16, //2 bytes
             PRES             = 0x41, // Pressure
+
+            ANGLE            = 0x70,
+            
             ODO1             = 0x7c, // Odometer1
             ODO2             = 0x7d, // Odometer2
             SPEED              = 0x7e, // Speed 2bytes km/h
@@ -261,13 +267,22 @@ namespace IBus2 {
             ALT              = 0x83, //4bytes signed!!! Alt m*100
             ALT_MAX          = 0x84, //4bytes signed MaxAlt m*100
             
+            ID_S85           = 0x85,     
+            ID_S86           = 0x86,     
+            ID_S87           = 0x87,     
+            ID_S88           = 0x85,     
+            ID_S89           = 0x89,     
+            ID_S8a           = 0x8a,     
+            
             ALT_FLYSKY       = 0xf9, // Altitude 2 bytes signed in m
-    #if defined(USE_TELEMETRY_IBUS_EXTENDED)
-            GPS_FULL         = 0xfd,
-            VOLT_FULL        = 0xf0,
-            ACC_FULL         = 0xef,
-    #endif //defined(TELEMETRY_IBUS_EXTENDED)
-            UNKNOWN          = 0xff
+            
+            RX_SNR           = 0xfa,
+            RX_NOISE         = 0xfb,
+            RX_RSSI          = 0xfc,
+            RX_ERR_RATE      = 0xfe,
+            
+            UNKNOWN          = 0xff,
+            END              = 0xff
         };
     }
     

@@ -132,8 +132,12 @@ namespace RCSwitch {
                     else if (mode == protocol_t::blink2) {
                         Actor::switches()[index] = Actor::SwState::Blink2;
                     }
-                    else if (mode == protocol_t::config) {
-                        Actor::switches()[index] = Actor::SwState::Off;
+                    else {
+                        if constexpr(!protocol_t::isLowResolution) {
+                            if (mode == protocol_t::config) {
+                                Actor::switches()[index] = Actor::SwState::Off;
+                            }
+                        }
                     }
                 }
                 else {
