@@ -263,8 +263,10 @@ namespace Application {
             }
         };
         static inline void update() {
+            using i_t = SBus::index_type;
             []<auto... II>(std::index_sequence<II...>){
-                ((SBus::output[II] = Stick<II>::sbus()), ...);
+                ((SBus::set(i_t{II}, Stick<II>::sbus())), ...);
+//                ((SBus::output[II] = Stick<II>::sbus()), ...);
             }(std::make_index_sequence<numberOfSticks>{});
 
             robo_pa::whenTargetChanged([](robo_pa::Target t, auto f){
@@ -305,7 +307,7 @@ using terminal = etl::basic_ostream<terminalDevice>;
 using systemTimer = SystemTimer<Component::Rtc<0>, fRtc>;
 using alarmTimer = External::Hal::AlarmTimer<systemTimer>;
 
-using sbus = External::SBus::Output::Generator<usart1Position>;
+using sbus = External::SBus::Output::Generator<usart1Position, systemTimer>;
 
 using robo_pa = External::QtRobo::ProtocollAdapter<0>;
 using robo = Usart<usart2Position, robo_pa, UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
