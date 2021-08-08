@@ -7,6 +7,32 @@
 
 namespace External {
     
+    template<typename T = uint8_t, T MAX = std::numeric_limits<T>::max()>
+    struct CountDown {
+        using value_type = etl::uint_ranged<T, 0, MAX>;
+        
+        inline constexpr CountDown() = default;
+        
+        inline constexpr CountDown& operator++() {
+            ++mValue;
+            return *this;
+        }
+
+        template<typename F>
+        inline constexpr void on(const T& t, const F f) {
+            if (mValue >= t) {
+                f();
+                reset();
+            }
+        }
+        inline constexpr void reset() {
+            mValue.setToBottom();
+        }
+        
+    private:
+        value_type mValue{};
+    };
+    
     template<typename Timer, typename T = uint16_t, T MAX = std::numeric_limits<T>::max()>
     struct Tick {
         inline static constexpr auto intervall = Timer::intervall;
