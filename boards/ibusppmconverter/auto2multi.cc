@@ -1,6 +1,6 @@
 #define NDEBUG
 
-//#define DEBUG2 // RX/TX change -> full duplex (man muss dann Ibus-Input und Telemetrie tauschen)
+//#define DEBUG2 // RX/TX change -> full duplex (man muss dann Ibus-Input und Telemetrie tauschen) 
 
 #define INV_LED // onboad LED inverted
 
