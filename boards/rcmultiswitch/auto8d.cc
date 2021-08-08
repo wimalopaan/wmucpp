@@ -2,7 +2,7 @@
  
 #define AUTO_BUS
 #define LEARN_DOWN // start at highest channel number downwards
-
+ 
 #include "board.h"
 #include "swout.h"
 #include "switch.h"
