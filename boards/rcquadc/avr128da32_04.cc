@@ -1234,6 +1234,7 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
     static constexpr External::Tick<typename Devs::systemTimer> eepromTimeout{2000_ms};
     static constexpr External::Tick<typename Devs::systemTimer> debugTimeout{500_ms};
     static constexpr External::Tick<typename Devs::systemTimer> masterResetTimeout{4000_ms};
+    static constexpr External::Tick<typename Devs::systemTimer> afterSearchTimeoutTicks{3000_ms};
     
     using blinker = External::Blinker2<typename devs::led1, typename Devs::systemTimer, 100_ms, 2000_ms>;
     using blinker2 = External::Blinker2<typename devs::led2, typename Devs::systemTimer, 100_ms, 2000_ms>;
@@ -1361,7 +1362,7 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
             });
             break;
         case State::AfterSearch:
-            mStateTick.on(signalTimeoutTicks, []{
+            mStateTick.on(afterSearchTimeoutTicks, []{
                 mState = State::ShowAddress;
             });
             break;
@@ -1462,6 +1463,7 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
                 etl::outl<Term>("SC"_pgm);
                 break;
             case State::AfterSearch:
+                blinker::off();
                 etl::outl<Term>("AS"_pgm);
                 break;
             case State::ShowAddress:
@@ -1505,6 +1507,7 @@ private:
     
     static inline bool search() {
         if (learnChannel < 16) {
+//            etl::outl<Term>("s:"_pgm, learnChannel.toInt(), " v:"_pgm, servo_pa::valueMapped(learnChannel.toRangedNaN()).toInt());
             if (const auto lc = servo_pa::valueMapped(learnChannel.toRangedNaN()); lc && SW::isLearnCode(lc)) {
                 etl::outl<Term>("ch: "_pgm, learnChannel.toInt(), " : "_pgm, lc.toInt());
                 if (const auto pv = protocol_t::toParameterValue(lc).toInt(); (pv >= 1) && ((pv - 1) <= RCSwitch::addr_t::Upper)) {
