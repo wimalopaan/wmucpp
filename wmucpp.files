@@ -369,6 +369,8 @@ boards/ppmmatrix/test02.cc
 boards/ppmmatrix/test03.cc
 boards/ppmmatrix/test04.cc
 boards/rc720/Makefile
+boards/rc720/busdevs.h
+boards/rc720/devices.h
 boards/rc720/test00.cc
 boards/rcactor/Makefile
 boards/rcactor/test00.cc
@@ -2256,6 +2258,7 @@ doc/bmcpp04/bm05bb.c
 doc/bmcpp04/bm05aa.cc
 example/basics/Makefile
 example/basics/register.cc
+include0/external/hal/nulldev.h
 include0/external/sbus/sport.h
 include0/external/solutions/analogsensor.h
 include0/mcu/internals/dac.h
