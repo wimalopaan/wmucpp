@@ -23,8 +23,10 @@ struct FSM {
     using PA = BusDevs::servo_pa;
     using OUT = BusDevs::out;
     
+    using jp = devs::jpPin;
+    
     enum class State : uint8_t {Undefined,
-//                                ShowBus, ShowBusWait,
+                                CheckJp, ShowBus, ShowBusWait,
                                 StartWait, SearchChannel, Run, ShowAddress, ShowAddressWait, LearnTimeout};
     
     static constexpr auto intervall = Timer::intervall;
@@ -38,6 +40,8 @@ struct FSM {
     }
     
     static inline void init(const bool inverted) {
+        jp::template dir<Input>();
+        jp::template pullup<true>();
         if constexpr(External::Bus::isIBus<bus_type>::value) {
             Servo::template init<BaudRate<115200>>();
             etl::outl<Term>("multi8d ibus"_pgm);
@@ -79,34 +83,43 @@ struct FSM {
         Servo::periodic();
     }
     
+    using index_t = typename OUT::index_t;
+    
     static inline void ratePeriodic() {
         const auto oldstate = mState;
         PA::ratePeriodic();
         ++stateTicks;
         switch(mState) {
         case State::Undefined:
-            mState = State::StartWait;
+            mState = State::CheckJp;
             break;
-//        case State::ShowBus:
-//            if constexpr(External::Bus::isIBus<bus_type>::value) {
-//                using index_t = typename OUT::index_t;
-//                OUT::setSwitchOn(index_t{5});                    
-//                OUT::setSwitchOn(index_t{6});                    
-//                OUT::setSwitchOn(index_t{7});                    
-//            }
-//            if constexpr(External::Bus::isSBus<bus_type>::value) {
-//                using index_t = typename OUT::index_t;
-//                OUT::setSwitchOn(index_t{6});                    
-//                OUT::setSwitchOn(index_t{7});                    
-//            }
-//            mState = State::ShowBusWait;
-//            break;
-//        case State::ShowBusWait:
-//            stateTicks.on(waitTimeoutTicks, []{
-//                mState = State::StartWait;
-//                OUT::allOff();
-//            });
-//            break;
+        case State::CheckJp:
+            if (!jp::read()) {
+                mShow = true;
+                mState = State::ShowBus;
+            }
+            else {
+                mState = State::StartWait;
+            }
+            break;
+        case State::ShowBus:
+            if constexpr(External::Bus::isIBus<bus_type>::value) {
+                OUT::setSwitchOn(index_t{5});                    
+                OUT::setSwitchOn(index_t{6});                    
+                OUT::setSwitchOn(index_t{7});                    
+            }
+            if constexpr(External::Bus::isSBus<bus_type>::value) {
+                OUT::setSwitchOn(index_t{6});                    
+                OUT::setSwitchOn(index_t{7});                    
+            }
+            mState = State::ShowBusWait;
+            break;
+        case State::ShowBusWait:
+            stateTicks.on(waitTimeoutTicks, []{
+                mState = State::StartWait;
+                OUT::allOff();
+            });
+            break;
         case State::StartWait:
             stateTicks.on(waitTimeoutTicks, []{
                 mState = State::SearchChannel;
@@ -134,7 +147,6 @@ struct FSM {
         case State::ShowAddress:
             etl::outl<Term>("learned ch: "_pgm, NVM::data().channel().toInt(), " adr: "_pgm, NVM::data().address().toInt());
             if (auto const a = NVM::data().address()) {
-                using index_t = typename OUT::index_t;
                 OUT::setSwitchOn(index_t{a.toInt()});
                 mState = State::ShowAddressWait;
             }
@@ -158,11 +170,69 @@ struct FSM {
         }
         if (oldstate != mState) {
             stateTicks.reset();
+            switch(mState) {
+            case State::Undefined:
+                break;
+            case State::CheckJp:
+                break;
+            case State::ShowBus:
+                if constexpr(External::Bus::isIBus<bus_type>::value) {
+                    if (mShow) {
+                        OUT::setSwitchOn(index_t{5});                    
+                        OUT::setSwitchOn(index_t{6});                    
+                        OUT::setSwitchOn(index_t{7});                    
+                    }
+                }
+                if constexpr(External::Bus::isSBus<bus_type>::value) {
+                    if (mShow) {
+                        OUT::setSwitchOn(index_t{6});                    
+                        OUT::setSwitchOn(index_t{7});                    
+                    }
+                }
+                break;
+            case State::ShowBusWait:
+                break;
+            case State::StartWait:
+                if (mShow) {
+                    OUT::allOff();
+                    OUT::setSwitchOn(index_t{7});    
+                }
+                break;
+            case State::SearchChannel:
+                if (mShow) {
+                    OUT::allOff();
+                    OUT::setSwitchOn(index_t{6});    
+                }
+                break;
+            case State::LearnTimeout:
+                if (mShow) {
+                    OUT::allOff();
+                    OUT::setSwitchOn(index_t{5});    
+                }
+                break;
+            case State::ShowAddress:
+                if (mShow) {
+                    OUT::allOff();
+                    OUT::setSwitchOn(index_t{4});    
+                }
+                break;
+            case State::ShowAddressWait:
+                if (mShow) {
+                    OUT::allOff();
+                    OUT::setSwitchOn(index_t{3});    
+                }
+                break;
+            case State::Run:
+                OUT::allOff();
+                break;
+            }
         }
     }
 #ifdef NDEBUG    
 private:
 #endif
+    static inline bool mShow{false};
+    
     static inline bool search() {
         etl::outl<Term>("c: "_pgm, learnChannel.toInt(), " v: "_pgm, protocol_t::toParameterValue(PA::valueMapped(learnChannel.toRangedNaN())).toInt(), " r: "_pgm, PA::valueMapped(learnChannel.toRangedNaN()).toInt());
         if (const auto lc = PA::valueMapped(learnChannel.toRangedNaN()); lc && SW::isLearnCode(lc)) {
@@ -241,6 +311,8 @@ struct Devices {
     using scan_term_dev = void;
 
     using scanLedPin = void;
+    
+    using jpPin = lvPin;
     
     static inline void init() {
         portmux::init();
