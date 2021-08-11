@@ -191,8 +191,12 @@ namespace External {
         static inline void init() {
             Pin::init();
         }
+        template<bool immediate = false>
         static inline void off() {
             mState = State::Off;
+            if constexpr(immediate) {
+                Pin::inactivate();
+            }
         }
         static inline auto blinkCount() {
             return mBlinkCount;
