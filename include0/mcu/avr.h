@@ -216,6 +216,7 @@ namespace AVR {
 namespace AVR::detail::test {
     using arch = std::integral_constant<int, __AVR_ARCH__>;
 //    arch::_;
+//    DefaultMcuType::_;
 }
 
 #if (__AVR_ARCH__ >= 2) && (__AVR_ARCH__ <= 51)
