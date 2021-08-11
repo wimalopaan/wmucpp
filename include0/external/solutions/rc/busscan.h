@@ -14,6 +14,8 @@ namespace External {
     using namespace std::literals::chrono;
     using namespace External::Units::literals;
     
+    struct TermSameAsScanDevice {};
+    
     namespace Bus {
         static inline constexpr auto fRtc = 1000_Hz;
         
@@ -394,25 +396,30 @@ namespace External {
         using systemTimer = devs::systemTimer;
         using scanDevPosition = Devs::scanDevPosition;
         
+        static inline constexpr bool termOnScanDev = std::is_same_v<typename devs::scan_term_dev, TermSameAsScanDevice>;
+      
+        using ScanDevSendQueueLength = std::conditional_t<termOnScanDev, AVR::SendQueueLength<128>, AVR::SendQueueLength<0>>;
+        
         using ibus_pa = std::conditional_t<checkIbus, IBus2::Servo::ProtocollAdapter<0>, External::Hal::NullProtocollAdapter>;
         using ibus_test_dev = std::conditional_t<checkIbus, 
-                                                 Usart<scanDevPosition, ibus_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<0>>,
+                                                 Usart<scanDevPosition, ibus_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, ScanDevSendQueueLength>,
                                                  void>; 
         
         using sbus_pa = std::conditional_t<checkSbus, External::SBus::Servo::ProtocollAdapter<0, systemTimer>, External::Hal::NullProtocollAdapter>;
         using sbus_test_dev = std::conditional_t<checkSbus,
-                                                 Usart<scanDevPosition, sbus_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<0>>,
+                                                 Usart<scanDevPosition, sbus_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, ScanDevSendQueueLength>,
                                                   void>;
         
         using sumd_pa = std::conditional_t<checkSumd, Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>, External::Hal::NullProtocollAdapter>;
         using sumd_test_dev = std::conditional_t<checkSumd,
-                                                 Usart<scanDevPosition, sumd_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<0>>,
+                                                 Usart<scanDevPosition, sumd_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, ScanDevSendQueueLength>,
                                                  void>;
 
         using ppm_test_dev = External::Ppm::SinglePpmIn<typename Devs::ppmDevPosition>;
         using evrouter = Devs::evrouter;
         
-        using term_dev = devs::scan_term_dev;
+        
+        using term_dev = std::conditional_t<termOnScanDev, void, typename devs::scan_term_dev>;
         using terminal = etl::basic_ostream<term_dev>;
 
         using led = std::conditional_t<std::is_same_v<typename Devs::scanLedPin, void>, AVR::ActiveHigh<AVR::NoPin, Output>, typename Devs::scanLedPin>;
@@ -462,7 +469,7 @@ namespace External {
                 break;
             case State::InitPpm:
             case State::CheckPpm:
-                if constexpr(!std::is_same_v<typename Devs::ppmDevPosition, void>) {
+                if constexpr(!std::is_same_v<typename Devs::ppmDevPosition, void> && checkPpm) {
                     ppm_test_dev::periodic();
                 }
                 break;
@@ -535,13 +542,13 @@ namespace External {
                 }
                 break;
             case State::InitPpm:
-                if constexpr(!std::is_same_v<typename Devs::ppmDevPosition, void>) {
-                    mStateTick.on(checkTimeout, []{
-                        mState = State::CheckPpm;
-                    });                    
+                if constexpr(!checkPpm) {
+                    mState = State::InitIBus;
                 }
                 else {
+                mStateTick.on(checkTimeout, []{
                     mState = State::CheckPpm;
+                });                    
                 }
                 break;
             case State::CheckIBus:
@@ -601,7 +608,7 @@ namespace External {
                 }
                 break;
             case State::CheckPpm:
-                if constexpr(!std::is_same_v<typename Devs::ppmDevPosition, void>) {
+                if constexpr(checkPpm) {
                     if (ppm_test_dev::counter() > 10) {
                         mState = State::IsPpm;
                     }
@@ -614,27 +621,47 @@ namespace External {
                 }
                 break;
             case State::IsSBus:
-                blinker::off();
+                blinker::template off<true>();
+                if constexpr(termOnScanDev && checkSbus) {
+                    while(!sbus_test_dev::isEmpty()) {
+                        sbus_test_dev::periodic();
+                    }                    
+                }
                 App<Bus::SBusSPort<Devs>>::run(false);
                 mState = State::Init;
                 break;
             case State::IsSBusInv:
-                blinker::off();
+                blinker::template off<true>();
+                if constexpr(termOnScanDev && checkSbus) {
+                    while(!sbus_test_dev::isEmpty()) {
+                        sbus_test_dev::periodic();
+                    }                    
+                }
                 App<Bus::SBusSPort<Devs>>::run(true);
                 mState = State::Init;
                 break;
             case State::IsIBus:
-                blinker::off();
+                blinker::template off<true>();
+                if constexpr(termOnScanDev && checkIbus) {
+                    while(!ibus_test_dev::isEmpty()) {
+                        ibus_test_dev::periodic();
+                    }                    
+                }
                 App<Bus::IBusIBus<Devs>>::run();
                 mState = State::Init;
                 break;
             case State::IsSumD:
-                blinker::off();
+                blinker::template off<true>();
+                if constexpr(termOnScanDev && checkSumd) {
+                    while(!sumd_test_dev::isEmpty()) {
+                        sumd_test_dev::periodic();
+                    }                    
+                }
                 App<Bus::SumDHott<Devs>>::run();
                 mState = State::Init;
                 break;
             case State::IsPpm:
-                blinker::off();
+                blinker::template off<true>();
                 App<Bus::Ppm<Devs>>::run();
                 mState = State::Init;
                 break;
@@ -648,49 +675,70 @@ namespace External {
                     blinker::steady();
                     if constexpr(!std::is_same_v<term_dev, void>) {
                         term_dev::template init<AVR::BaudRate<115200>>();
+                        etl::outl<terminal>("s: i "_pgm, GITTAG_PGM);
                     }
-                    etl::outl<terminal>("s: i "_pgm, GITTAG_PGM);
                     break;
                 case State::InitIBus:
                     if constexpr(!std::is_same_v<scanDevPosition, void> && checkIbus) {
                         ibus_test_dev::template init<AVR::BaudRate<115200>, Duplex>();
-                        ibus_test_dev::txPinDisable();
                         if constexpr(std::is_same_v<Duplex, AVR::FullDuplex>) {
+                            ibus_test_dev::txPinEnable();
                             ibus_test_dev::rxInvert(false);
                         }
                         else {
+                            ibus_test_dev::txPinDisable();
                             ibus_test_dev::txInvert(false);
                         }
                         ibus_pa::resetStats();
-                        etl::outl<terminal>("s: iib"_pgm);
+                        if constexpr(termOnScanDev) {
+                            using t = etl::basic_ostream<ibus_test_dev>; 
+                            etl::outl<t>("s: iib"_pgm);
+                        }
+                        else {
+                            etl::outl<terminal>("s: iib"_pgm);
+                        }      
                     }
                     break;
                 case State::InitSBus:
                     if constexpr(!std::is_same_v<scanDevPosition, void> && checkSbus) {
                         sbus_test_dev::template init<AVR::BaudRate<100000>, Duplex, true, 1>();
-                        sbus_test_dev::txPinDisable();
                         if constexpr(std::is_same_v<Duplex, AVR::FullDuplex>) {
+                            sbus_test_dev::txPinEnable();
                             sbus_test_dev::rxInvert(false);
                         }
                         else {
+                            sbus_test_dev::txPinDisable();
                             sbus_test_dev::txInvert(false);
                         }
                         sbus_pa::resetStats();
-                        etl::outl<terminal>("s: isb"_pgm);
+                        if constexpr(termOnScanDev) {
+                            using t = etl::basic_ostream<sbus_test_dev>;
+                            etl::outl<t>("s: isb"_pgm);
+                        }
+                        else {
+                            etl::outl<terminal>("s: isb"_pgm);
+                        }      
                     }
                     break;
                 case State::InitSBusInv:
                     if constexpr(!std::is_same_v<scanDevPosition, void> && checkSbus) {
                         sbus_test_dev::template init<AVR::BaudRate<100000>, Duplex, true, 1>();
-                        sbus_test_dev::txPinDisable();
                         if constexpr(std::is_same_v<Duplex, AVR::FullDuplex>) {
+                            sbus_test_dev::txPinEnable();
                             sbus_test_dev::rxInvert(true);
                         }
                         else {
+                            sbus_test_dev::txPinDisable();
                             sbus_test_dev::txInvert(true);
                         }
                         sbus_pa::resetStats();
-                        etl::outl<terminal>("s: isbi"_pgm);
+                        if constexpr(termOnScanDev) {
+                            using t = etl::basic_ostream<sbus_test_dev>;
+                            etl::outl<t>("s: isbi"_pgm);
+                        }
+                        else {
+                            etl::outl<terminal>("s: isbi"_pgm);
+                        }      
                     }
                     break;
                 case State::InitSumD:
@@ -698,49 +746,115 @@ namespace External {
                         sumd_test_dev::template init<AVR::BaudRate<115200>, Duplex>();
                         sumd_test_dev::txPinDisable();
                         if constexpr(std::is_same_v<Duplex, AVR::FullDuplex>) {
+                            sumd_test_dev::txPinEnable();
                             sumd_test_dev::rxInvert(false);
                         }
                         else {
+                            sumd_test_dev::txPinDisable();
                             sumd_test_dev::txInvert(false);
                         }
                         sumd_pa::resetStats();
-                        etl::outl<terminal>("s: isd"_pgm);
+                        if constexpr(termOnScanDev) {
+                            using t = etl::basic_ostream<sumd_test_dev>;
+                            etl::outl<t>("s: isd"_pgm);
+                        }
+                        else {
+                            etl::outl<terminal>("s: isd"_pgm);
+                        }      
                     }
                     break;
                 case State::InitPpm:
-                    if constexpr(!std::is_same_v<typename Devs::ppmDevPosition, void>) {
+                    if constexpr(!std::is_same_v<typename Devs::ppmDevPosition, void> && checkPpm) {
                         evrouter::init();
                         ppm_test_dev::init();
                         ppm_test_dev::reset();
+                        etl::outl<terminal>("s: ippm"_pgm);
                     }
-                    etl::outl<terminal>("s: ippm"_pgm);
                     break;
                 case State::CheckIBus:
-                    etl::outl<terminal>("s: cib"_pgm);
+                    if constexpr(checkIbus) {
+                        if constexpr(termOnScanDev) {
+                            using t = etl::basic_ostream<ibus_test_dev>;
+                            etl::outl<t>("s: cib"_pgm);
+                        }
+                        else {
+                            etl::outl<terminal>("s: cib"_pgm);
+                        }      
+                    }
                     break;
                 case State::CheckSBus:
-                    etl::outl<terminal>("s: csb"_pgm);
+                    if constexpr(checkSbus) {
+                        if constexpr(termOnScanDev) {
+                            using t = etl::basic_ostream<sbus_test_dev>;
+                            etl::outl<t>("s: csb"_pgm);
+                        }
+                        else {
+                            etl::outl<terminal>("s: csb"_pgm);
+                        }      
+                    }
                     break;
                 case State::CheckSBusInv:
-                    etl::outl<terminal>("s: csbi"_pgm);
+                    if constexpr(checkSbus) {
+                        if constexpr(termOnScanDev) {
+                            using t = etl::basic_ostream<sbus_test_dev>;
+                            etl::outl<t>("s: csbi"_pgm);
+                        }
+                        else {
+                            etl::outl<terminal>("s: csbi"_pgm);
+                        }      
+                    }
                     break;
                 case State::CheckSumD:
-                    etl::outl<terminal>("s: csd"_pgm);
+                    if constexpr(checkSumd) {
+                        if constexpr(termOnScanDev) {
+                            using t = etl::basic_ostream<sumd_test_dev>;
+                            etl::outl<t>("s: csd"_pgm);
+                        }
+                        else {
+                            etl::outl<terminal>("s: csd"_pgm);
+                        }      
+                    }
                     break;
                 case State::CheckPpm:
-                    etl::outl<terminal>("s: cppm"_pgm);
+                    if constexpr(checkPpm) {
+                        etl::outl<terminal>("s: cppm"_pgm);
+                    }
                     break;
                 case State::IsIBus:
-                    etl::outl<terminal>("s: IB"_pgm);
+                    if constexpr(termOnScanDev) {
+                        using t = etl::basic_ostream<ibus_test_dev>;
+                        etl::outl<t>("s: IB"_pgm);
+                    }
+                    else {
+                        etl::outl<terminal>("s: IB"_pgm);
+                    }      
                     break;
                 case State::IsSBus:
-                    etl::outl<terminal>("s: SB"_pgm);
+                    if constexpr(termOnScanDev) {
+                        using t = etl::basic_ostream<sbus_test_dev>;
+                        etl::outl<t>("s: SB"_pgm);
+                    }
+                    else {
+                        etl::outl<terminal>("s: SB"_pgm);
+                    }      
                     break;
                 case State::IsSBusInv:
-                    etl::outl<terminal>("s: SBI"_pgm);
+                    if constexpr(termOnScanDev) {
+                        using t = etl::basic_ostream<sbus_test_dev>;
+                        etl::outl<t>("s: SBI"_pgm);
+                    }
+                    else {
+                        etl::outl<terminal>("s: SBI"_pgm);
+                    }      
                     break;
                 case State::IsSumD:
-                    etl::outl<terminal>("s: SD"_pgm);
+                    if constexpr(termOnScanDev) {
+                        using t = etl::basic_ostream<sumd_test_dev>;
+                        etl::outl<t>("s: SD"_pgm);
+                    }
+                    else {
+                        etl::outl<terminal>("s: SD"_pgm);
+                    }      
                     break;
                 case State::IsPpm:
                     etl::outl<terminal>("s: SPpm"_pgm);
