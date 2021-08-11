@@ -26,8 +26,8 @@ F_OSC = 10000000
 
 subdirs = doc
 
-targets += test00.hex
-targets += test01.hex
+#targets += test00.hex
+#targets += test01.hex
 targets += inc3mode10Mhz.hex
 
 -include ../../Makefile.avr0.include
