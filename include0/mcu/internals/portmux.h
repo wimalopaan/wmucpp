@@ -227,6 +227,28 @@ namespace AVR {
                     using route_t = typename MCU::Portmux::TcbRoute_t;
                     using type = std::integral_constant<route_t, route_t::tcb3_alt1>;
                 };
+
+                template<AVR::Concepts::AtDxSeries MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Tcb<0>, AVR::Portmux::Alt1>, MCU> {
+                    using route_t = typename MCU::Portmux::TcbRoute_t;
+                    using type = std::integral_constant<route_t, route_t::tcb0_alt1>;
+                };
+                template<AVR::Concepts::AtDxSeries MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Tcb<1>, AVR::Portmux::Alt1>, MCU> {
+                    using route_t = typename MCU::Portmux::TcbRoute_t;
+                    using type = std::integral_constant<route_t, route_t::tcb1_alt1>;
+                };
+                template<AVR::Concepts::AtDxSeries MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Tcb<2>, AVR::Portmux::Alt1>, MCU> {
+                    using route_t = typename MCU::Portmux::TcbRoute_t;
+                    using type = std::integral_constant<route_t, route_t::tcb2_alt1>;
+                };
+                template<AVR::Concepts::AtDxSeries MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Tcb<3>, AVR::Portmux::Alt1>, MCU> {
+                    using route_t = typename MCU::Portmux::TcbRoute_t;
+                    using type = std::integral_constant<route_t, route_t::tcb3_alt1>;
+                };
+
                 
             }
         }

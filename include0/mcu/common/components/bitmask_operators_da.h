@@ -42,6 +42,7 @@ namespace std {
     template<> struct enable_bitmask_operators<AVR::Series0::Cpu::SReg_t> : std::true_type {};
     template<> struct enable_bitmask_operators<AVR::SeriesDa::Portmux::UsartRoute_t> : std::true_type {};
     template<> struct enable_bitmask_operators<AVR::SeriesDa::Portmux::CclRoute_t> : std::true_type {};
+    template<> struct enable_bitmask_operators<AVR::SeriesDa::Portmux::TcbRoute_t> : std::true_type {};
     template<> struct enable_bitmask_operators<AVR::SeriesDa::Ccl::CtrlA_t> : std::true_type {};
     template<> struct enable_bitmask_operators<AVR::SeriesDa::Ccl::Lut0CtrlA_t> : std::true_type {};
 

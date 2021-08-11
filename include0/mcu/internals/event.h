@@ -216,6 +216,9 @@ namespace AVR {
                 inline static constexpr auto value = AVR::SeriesDa::Events::Generator_t::tcb1_ovf;
             };
             
+            template<uint8_t N, AVR::Concepts::AtDa32 MCU> struct map_generator<void, std::integral_constant<uint8_t, N>, MCU> {
+                inline static constexpr auto value = AVR::SeriesDa::Events::Generator_t{0};
+            };
             
             
             template<uint8_t N, AVR::Concepts::AtTiny1 MCU> struct map_generator<void, std::integral_constant<uint8_t, N>, MCU> {
@@ -517,7 +520,7 @@ namespace AVR {
             inline static void strobe() {
                 static_assert(N < 8, "wrong channel, must be 0 to 7");
                 constexpr auto code = typename MCU::Events::Strobe_t{1 << N};
-                mcu_evsys()->strobe.template set<code>();
+                mcu_evsys()->strobe1.template set<code>();
             }
         };
         
