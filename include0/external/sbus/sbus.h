@@ -101,29 +101,41 @@ uint32_t sbusTime = 0;
                 
                 static inline value_type value(const channel_t ch) {
                     if (const uint8_t chi = ch.toInt(); ch) {
-                        return mChannels[chi];
+                        if (mValid) {
+                            return mChannels[chi];
+                        }
                     }
                     return value_type{};
                 }
                 static inline mapped_type valueMapped(const channel_t ch) {
                     if (const uint8_t chi = ch.toInt(); ch) {
-                        return mChannels[chi];
+                        if (mValid) {
+                            return mChannels[chi];
+                        }
                     }
                     return mapped_type{};
                 }
 
                 static_assert(Timer::frequency >= 1000_Hz);
                 
-                static inline uint8_t tc{0};
+                static inline constexpr External::Tick<Timer> byteTimeout{2_ms};
+                static inline constexpr External::Tick<Timer> packageTimeout{500_ms};
+
                 static inline void ratePeriodic() {
-                    if (++tc > 5) {
+                    ++mByteTimer;
+                    ++mPackageTimer;
+
+                    mByteTimer.on(byteTimeout, []{
                         mState = State::Undefined;
-                    }
+                    });                  
+
+                    mPackageTimer.on(packageTimeout, []{
+                        mValid = false;
+                    });
                 }
                 
                 static inline bool process(const std::byte b) {
-//                    ++c;
-                    tc = 0;
+                    mByteTimer.reset();
                     switch(mState) {
                     case State::Undefined:
                         if (b == end_byte) {
@@ -175,6 +187,9 @@ uint32_t sbusTime = 0;
                     mPackages = 0;
                 }
             private:
+                static inline External::Tick<Timer> mPackageTimer{};
+                static inline External::Tick<Timer> mByteTimer{};
+
                 static inline void decode() {
                     mChannels[0]  = (uint16_t) (((mData[0]    | mData[1] << 8))                     & 0x07FF);
                     mChannels[1]  = (uint16_t) ((mData[1]>>3  | mData[2] <<5)                     & 0x07FF);
@@ -194,6 +209,8 @@ uint32_t sbusTime = 0;
                     mChannels[15] = (uint16_t) ((mData[20]>>5 | mData[21]<<3)                     & 0x07FF);
                     
                     // todo: decode binary channel ch17,ch18,frame lost, failset,x,x,x,x in byte 22
+                    mPackageTimer.reset();
+                    mValid = true;
                 }
 
                 using MesgType = std::array<uint8_t, 23>;
@@ -202,6 +219,7 @@ uint32_t sbusTime = 0;
                 inline static MesgType mData; 
                 inline static etl::index_type_t<MesgType> mIndex;
                 inline static uint16_t mPackages{};
+                inline static bool mValid{false};
             };
         }
         namespace Output {
