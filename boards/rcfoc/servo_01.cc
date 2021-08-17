@@ -168,7 +168,6 @@ struct GlobalFsm {
     static inline void init(const bool inverted) {
         TermDev::template init<AVR::BaudRate<115200>>();
         
-        
         if constexpr(External::Bus::isIBus<bus_type>::value) {
 //            lut3::init(std::byte{0x00}); // low on lut3-out 
             sensor::init();
