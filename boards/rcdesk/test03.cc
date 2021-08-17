@@ -126,13 +126,21 @@ namespace Application {
         std::array<Calibration, Adc::NumberOfChannels> stickCalibrations; 
     };
     
-    template<typename Timer, typename SBus, typename Robo, typename StickButtons, typename Adc, typename SwitchList, typename RotaryList, typename NVM, typename Term>
+    template<typename Timer, typename SBus, typename Robo, typename Lua, typename StickButtons, typename Adc, typename SwitchList, typename RotaryList, typename NVM, typename Term>
     struct GFSM;
-    template<typename Timer, typename SBus, typename Robo, typename StickButtons, typename Adc, typename... Switches, typename... Rotarys, typename NVM, typename Term>
-    struct GFSM<Timer, SBus, Robo, StickButtons, Adc, Meta::List<Switches...>, Meta::List<Rotarys...>, NVM, Term> {
+    template<typename Timer, typename SBus, typename Robo, typename Lua, typename StickButtons, typename Adc, typename... Switches, typename... Rotarys, typename NVM, typename Term>
+    struct GFSM<Timer, SBus, Robo, Lua, StickButtons, Adc, Meta::List<Switches...>, Meta::List<Rotarys...>, NVM, Term> {
         using TermDev = Term::device_type;
+
+        using lua_pa = Lua::protocoll_adapter_type;
+        
         using robo_pa = Robo::protocoll_adapter_type;
 
+        using rotary_list = Meta::List<Rotarys...>;
+        
+        using rot0 = Meta::nth_element<0, rotary_list>;
+        using rot1 = Meta::nth_element<1, rotary_list>;
+        
         using adc_i_t = Adc::index_type;
         using adc_v_t = Adc::value_type;
         static inline constexpr uint8_t numberOfSticks = adc_i_t::Upper + 1;
@@ -142,11 +150,11 @@ namespace Application {
         
         static inline constexpr External::Tick<Timer> eepromTicks{1000_ms};
         static inline constexpr External::Tick<Timer> initTicks{500_ms};
-        static inline constexpr External::Tick<Timer> roboTicks{100_ms};
+        static inline constexpr External::Tick<Timer> roboTicks{200_ms};
         static inline constexpr External::Tick<Timer> sbusTicks{14_ms};
         static_assert(sbusTicks.value > 1);
 
-        static inline constexpr External::Tick<Timer> debugTicks{14_ms};
+        static inline constexpr External::Tick<Timer> debugTicks{500_ms};
         
         static inline auto& appData = NVM::data();
         
@@ -158,7 +166,14 @@ namespace Application {
             }            
             
             Timer::init();
-            TermDev::template init<AVR::BaudRate<9600>>();
+            if constexpr(!std::is_same_v<TermDev, void>) {
+                TermDev::template init<AVR::BaudRate<9600>>();
+            }
+            else {
+                if constexpr(!std::is_same_v<Lua, void>) {
+                    Lua::template init<AVR::BaudRate<115200>>();
+                }
+            }
             Robo::template init<AVR::BaudRate<9600>>();    
             SBus::init();
             StickButtons::init();
@@ -173,23 +188,35 @@ namespace Application {
                 etl::outl<Term>("save eep"_pgm);
             });
             Adc::periodic();
-            TermDev::periodic();
+            if constexpr(!std::is_same_v<TermDev, void>) {
+                TermDev::periodic();
+            }
+            else {
+                if constexpr(!std::is_same_v<Lua, void>) {
+                    Lua::periodic();
+                }
+            }
             SBus::periodic();
             Robo::periodic();
         }    
         static inline void ratePeriodic() {
-            mDebugTicks.on(debugTicks, debug);
-            mEepromTicks.on(eepromTicks, []{
-                appData.expire();
-            });
-            
             StickButtons::ratePeriodic();
             (Switches::ratePeriodic(), ...);
             (Rotarys::rateProcess(), ...);
+
+            (++mDebugTicks).on(debugTicks, debug);
+            (++mEepromTicks).on(eepromTicks, []{
+                appData.expire();
+            });
+            (++mRoboTicks).on(roboTicks, []{
+                sendToRobo();
+            });
+            (++mSBusTicks).on(sbusTicks, []{
+                SBus::ratePeriodic();                    
+            });
             
-            const auto oldState = mState;
             ++mStateTicks;
-            
+            const auto oldState = mState;
             switch(mState) {
             case State::Undefined:
                 break;
@@ -208,24 +235,22 @@ namespace Application {
                 break;
             case State::Run:
                 update();            
-                mStateTicks.on(sbusTicks, []{
-                    SBus::ratePeriodic();                    
-                });
-                mRoboTicks.on(roboTicks, []{
-                    sendToRobo();
-                });
                 break;
             }
             if (oldState != mState) {
                 mStateTicks.reset();
                 switch(mState) {
                 case State::Undefined:
+                    etl::outl<Term>("S U"_pgm);
                     break;
                 case State::Init:
+                    etl::outl<Term>("S I"_pgm);
                     break;
                 case State::Calibrate:
+                    etl::outl<Term>("S C"_pgm);
                     break;
                 case State::Run:
+                    etl::outl<Term>("S R"_pgm);
                     break;
                 }
             }
@@ -234,10 +259,29 @@ namespace Application {
         inline static void debug() {
             const auto& max = appData.calibrations()[0].max;
             const auto& min = appData.calibrations()[0].min;
-            etl::outl<Term>("min0: "_pgm, min, " max0: "_pgm, max);
+            etl::outl<Term>("min0: "_pgm, min, " max0: "_pgm, max, 
+                            " q0: "_pgm, robo_pa::propValues[0], " q1: "_pgm, robo_pa::propValues[1]);
         }
+        
+//        static inline etl::uint_ranged_circular<uint8_t, 0, 100> z1;
+//        static inline etl::uint_ranged_circular<uint8_t, 0, 100> z2;
+//        static inline etl::uint_ranged_circular<uint8_t, 0, 100> l2{75};
+        
         inline static void sendToRobo() {
+            using rt = etl::basic_ostream<Robo>;
+            External::QtRobo::Toggle<rt, 0>::put(robo_pa::toggleValues[0]);
             External::QtRobo::Toggle<Term, 0>::put(robo_pa::toggleValues[0]);
+            
+//            External::QtRobo::Wind<rt, 0>::put(z1, z2, l2);
+//            External::QtRobo::Wind<Term, 0>::put(z1, z2, l2);
+//            ++z1;
+            
+            const int16_t w0 = lua_pa::windValues[0][0];
+            const int16_t w1 = lua_pa::windValues[0][1];
+            const int16_t w2 = lua_pa::windValues[0][2];
+            
+            External::QtRobo::Wind<rt, 0, int16_t>::put(w0, w1, w2);
+            
         }
 
         template<uint8_t I>
@@ -270,6 +314,14 @@ namespace Application {
 //                ((SBus::output[II] = Stick<II>::sbus()), ...);
             }(std::make_index_sequence<numberOfSticks>{});
 
+            SBus::set(i_t{numberOfSticks}, rot0::value());
+            SBus::set(i_t{numberOfSticks + 1}, rot1::value());
+
+            []<auto... II>(std::index_sequence<II...>){
+//                ((SBus::set(i_t(II + 8), robo_pa::propValues[II])), ...);
+            }(std::make_index_sequence<8>{});
+
+            
             robo_pa::whenTargetChanged([](robo_pa::Target t, auto f){
                 if (f && (t == robo_pa::Target::Switch)) {
                     const auto index = f.toInt();
@@ -278,6 +330,7 @@ namespace Application {
             });           
         }
         static inline State mState{State::Undefined};
+        static inline External::Tick<Timer> mSBusTicks;
         static inline External::Tick<Timer> mStateTicks;
         static inline External::Tick<Timer> mDebugTicks;
         static inline External::Tick<Timer> mEepromTicks;
@@ -296,22 +349,25 @@ namespace  {
 using ccp = Cpu::Ccp<>;
 using clock = Clock<>;
 
-using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Default>;
-using usart1Position = Portmux::Position<Component::Usart<1>, Portmux::Default>;
-using usart2Position = Portmux::Position<Component::Usart<2>, Portmux::Default>;
+using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Default>; // LUA
+using usart1Position = Portmux::Position<Component::Usart<1>, Portmux::Default>; // SBus-out
+using usart2Position = Portmux::Position<Component::Usart<2>, Portmux::Default>; // Bluetooth / Robo
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, usart1Position, usart2Position>>;
 
-using terminalDevice = Usart<usart0Position, External::Hal::NullProtocollAdapter, UseInterrupts<false>>;
+//using terminalDevice = Usart<usart0Position, External::Hal::NullProtocollAdapter, UseInterrupts<false>>;
+using terminalDevice = void;
 using terminal = etl::basic_ostream<terminalDevice>;
 
+using lua_pa = External::QtRobo::ProtocollAdapter<1>;
+using lua = Usart<usart0Position, lua_pa, UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<128>>;
+
 using systemTimer = SystemTimer<Component::Rtc<0>, fRtc>;
-using alarmTimer = External::Hal::AlarmTimer<systemTimer>;
 
 using sbus = External::SBus::Output::Generator<usart1Position, systemTimer>;
 
 using robo_pa = External::QtRobo::ProtocollAdapter<0>;
-using robo = Usart<usart2Position, robo_pa, UseInterrupts<false>, AVR::ReceiveQueueLength<0>>;
+using robo = Usart<usart2Position, robo_pa, UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<128>>;
 
 using adc = Adc<Component::Adc<0>, AVR::Resolution<10>, Vref::V4_3>;
 using adcController = External::Hal::AdcController<adc, Meta::NList<0, 1, 2, 4, 6, 7>>; // 1e = temp
@@ -335,7 +391,7 @@ using rotary1 = External::RotaryEncoder<rotary1A, rotary1B, rot_t>;
 
 using eeprom = EEProm::Controller<Application::Data<adcController>>;
 
-using gfsm = Application::GFSM<systemTimer, sbus, robo, buttons, adcController, Meta::List<sw0>, Meta::List<rotary0, rotary1>, eeprom, terminal>;
+using gfsm = Application::GFSM<systemTimer, sbus, robo, lua, buttons, adcController, Meta::List<sw0>, Meta::List<rotary0, rotary1>, eeprom, terminal>;
 
 int main() {
     portmux::init();
@@ -344,22 +400,16 @@ int main() {
         clock::prescale<1>();
     });
     
+    systemTimer::init(); 
+    
     gfsm::init();
     
-    const auto periodicTimer = alarmTimer::create(300_ms, External::Hal::AlarmFlags::Periodic);
-    
-    etl::outl<terminal>("rcboard test02"_pgm);
+    etl::outl<terminal>("rcboard test03"_pgm);
     
     while(true) {
         gfsm::periodic();
         systemTimer::periodic([&]{
             gfsm::ratePeriodic();
-            
-            alarmTimer::periodic([&](const auto& t){
-                if (periodicTimer == t) {
-                    etl::outl<terminal>("s0: "_pgm, robo_pa::switchValues[0]);
-                }
-            });
         });
     }
 }
@@ -368,7 +418,7 @@ int main() {
 [[noreturn]] inline void assertOutput(const AVR::Pgm::StringView& expr [[maybe_unused]], const AVR::Pgm::StringView& file[[maybe_unused]], unsigned int line [[maybe_unused]]) noexcept {
     etl::outl<terminal>("Assertion failed: "_pgm, expr, etl::Char{','}, file, etl::Char{','}, line);
     while(true) {
-        terminalDevice::periodic();
+//        terminalDevice::periodic();
 //        dbg1::toggle();
     }
 }
