@@ -6,18 +6,27 @@
 #include <algorithm>
 
 // Proportionalwerte Kanäle 1-19
-// $p[01][0-9] d[\n\r]
-// $p[01][0-9] dd[\n\r]
-// $p[01][0-9] ddd[\n\r]
+// $p[01][0-9]:d[\n\r]
+// $p[01][0-9]:dd[\n\r]
+// $p[01][0-9]:ddd[\n\r]
 
 // Schalter on/off [01] 1-19
-// $s[01][0-9] [01][\n\r]
+// $s[01][0-9]:[01][\n\r]
+
+// $t[01][0-9]:[01][\n\r]
 
 // Output
 // Logging
-// l[0-9] <text>
+// l[0-9]:<text>\n
+
 // Gauge
-// g[0-9] <0-255>
+// g[0-9]:<0-255>\n
+
+// Value
+// v[0-9]:<0-255>\n
+
+// Wind Zeiger1(innen) Zeiger2(aussen) LängeZeiger1(innen)
+// w[0-9]:<0-255>:<0-255>:<0-255>\n
 
 namespace External {
     namespace QtRobo {
@@ -34,6 +43,7 @@ namespace External {
         constexpr auto logSymbol = std::byte{'l'};
         constexpr auto gaugeSymbol = std::byte{'g'};
         constexpr auto valueSymbol = std::byte{'v'};
+        constexpr auto windSymbol = std::byte{'w'};
         
         constexpr auto pingSymbol = std::byte{'>'};
         constexpr auto pongSymbol = std::byte{'<'};
@@ -49,8 +59,14 @@ namespace External {
         };
         template<typename Device, auto N>
         struct Gauge final {
-            inline static constexpr void put(uint8_t v) {
+            inline static constexpr void put(const uint8_t v) {
                 outl<Device>(Char{startSymbol}, Char{gaugeSymbol}, uint8_t{N}, Char{seperator}, v);
+            }
+        };
+        template<typename Device, auto N, typename T>
+        struct Wind final {
+            inline static constexpr void put(const T& z1, const T& z2, const T& l1) {
+                outl<Device>(Char{startSymbol}, Char{windSymbol}, uint8_t{N}, Char{seperator}, z1, Char{seperator}, z2, Char{seperator}, l1);
             }
         };
         template<typename Device>
@@ -61,7 +77,7 @@ namespace External {
         };
         template<typename Device, auto N>
         struct Toggle final {
-            inline static constexpr void put(bool v) {
+            inline static constexpr void put(const bool v) {
                 if (v) {
                     outl<Device>(Char{startSymbol}, Char{toggleSymbol}, uint8_t{N}, Char{seperator}, 1);
                 }
@@ -72,27 +88,31 @@ namespace External {
         };
         template<typename Device, auto N>
         struct ValuePlot final {
-            inline static constexpr void put(uint8_t v) {
+            inline static constexpr void put(const uint8_t v) {
                 outl<Device>(Char{startSymbol}, Char{valueSymbol}, uint8_t{N}, Char{seperator}, v);
             }
         };
         
-        constexpr inline bool isDigit(std::byte b) {
+        constexpr inline bool isDigit(const std::byte b) {
             return ((static_cast<uint8_t>(b) >= '0') && (static_cast<uint8_t>(b) <= '9'));
         }
 
-        constexpr inline uint8_t asDigit(std::byte b) {
+        constexpr inline uint8_t asDigit(const std::byte b) {
             return (static_cast<uint8_t>(b) - '0');
         }
 
         template<uint8_t N, uint8_t NChannels = 16>
         class ProtocollAdapter final {
             inline static constexpr uint8_t NumberOfChannels = NChannels;
+            
             typedef uint_ranged<uint8_t, 0, NumberOfChannels - 1> index_type;
-            enum class State : uint8_t {Undefined, Start, Number, Seperator, Value, Ping};
-            enum class Target: uint8_t {Undefined, Prop, Switch, Toggle, Ping};
+            
+            enum class State : uint8_t {Undefined, Start, Number, Seperator, Value, Ping, 
+                                        Wind, WindV1, WindV2, WindV3};
         public:
-            inline static bool process(std::byte b) { 
+            enum class Target: uint8_t {Undefined, Prop, Switch, Toggle, Ping, Wind};
+            
+            inline static bool process(const std::byte b) { 
                 switch (state) {
                 case State::Undefined:
                     if (b == startSymbol) {
@@ -117,9 +137,27 @@ namespace External {
                         state = State::Ping;
                         target = Target::Undefined;
                     }
+                    else if (b == windSymbol) {
+                        state = State::Wind;
+                        target = Target::Wind;
+                    }
                     else {
                         state = State::Undefined;
                         target = Target::Undefined;
+                    }
+                    break;
+                case State::Wind:
+                    if (isDigit(b)) {
+                        number *= 10;
+                        number += asDigit(b);
+                    }
+                    else if (b == seperator) {
+                        state = State::WindV1;
+                        index.set(number);
+                        number = 0;
+                    }
+                    else {
+                        state = State::Undefined;
                     }
                     break;
                 case State::Number:
@@ -131,10 +169,76 @@ namespace External {
                         state = State::Value;
                         index.set(number);
                         number = 0;
+                        sign = 1;
                     }
                     else if (etl::contains(lineEnds, b) && (target == Target::Toggle)) {
-                        if (index < std::size(switchValues)) {
+                        if (index < std::size(toggleValues)) {
                             toggleValues[index] = !toggleValues[index];
+                            changed = true;
+                            state = State::Undefined;
+                        }
+                    }
+                    else {
+                        state = State::Undefined;
+                    }
+                    break;
+                case State::WindV1:
+                    if (isDigit(b)) {
+                        number *= 10;
+                        number += asDigit(b);
+                    }
+                    else if (b == std::byte{'-'}) {
+                        sign = -1;
+                    }
+                    else if (b == std::byte{'+'}) {
+                    }
+                    else if (b == seperator) {
+                        w0 = number * sign;
+                        number = 0;
+                        sign = 1;
+                        state = State::WindV2;
+                    }
+                    else {
+                        state = State::Undefined;
+                    }
+                    break;
+                case State::WindV2:
+                    if (isDigit(b)) {
+                        number *= 10;
+                        number += asDigit(b);
+                    }
+                    else if (b == std::byte{'-'}) {
+                        sign = -1;
+                    }
+                    else if (b == std::byte{'+'}) {
+                    }
+                    else if (b == seperator) {
+                        w1 = number * sign;
+                        number = 0;
+                        sign = 1;
+                        state = State::WindV3;
+                    }
+                    else {
+                        state = State::Undefined;
+                    }
+                    break;
+                case State::WindV3:
+                    if (isDigit(b)) {
+                        number *= 10;
+                        number += asDigit(b);
+                    }
+                    else if (b == std::byte{'-'}) {
+                        sign = -1;
+                    }
+                    else if (b == std::byte{'+'}) {
+                    }
+                    else if (etl::contains(lineEnds, b)) {
+                        if (index < std::size(windValues)) {
+                            windValues[index][0] = w0;
+                            windValues[index][1] = w1;
+                            windValues[index][2] = number * sign;
+                            number = 0;
+                            sign = 1;
                             changed = true;
                             state = State::Undefined;
                         }
@@ -149,35 +253,33 @@ namespace External {
                         number += asDigit(b);
                     }
                     else if (b == std::byte{'-'}) {
-                        
+                        sign = -1;
                     }
                     else if (b == std::byte{'+'}) {
                     }
                     else if (etl::contains(lineEnds, b)) {
-                        if (number <= std::numeric_limits<uint8_t>::max()) {
-                            if (target == Target::Prop) {
-                                if (index < std::size(propValues)) {
-                                    propValues[index] = number;
-                                    changed = true;
-                                    lastTarget = Target::Prop;
-                                    lastIndex = index;
-                                }
+                        if (target == Target::Prop) {
+                            if (index < std::size(propValues)) {
+                                propValues[index] = number * sign;
+                                changed = true;
+                                lastTarget = Target::Prop;
+                                lastIndex = index;
                             }
-                            else if (target == Target::Switch) {
-                                if (index < std::size(switchValues)) {
-                                    switchValues[index] = number;
-                                    changed = true;
-                                    lastTarget = Target::Switch;
-                                    lastIndex = index;
-                                }
+                        }
+                        else if (target == Target::Switch) {
+                            if (index < std::size(switchValues)) {
+                                switchValues[index] = number;
+                                changed = true;
+                                lastTarget = Target::Switch;
+                                lastIndex = index;
                             }
-                            else if (target == Target::Toggle) {
-                                if (index < std::size(switchValues)) {
-                                    toggleValues[index] = !toggleValues[index];
-                                    changed = true;
-                                    lastTarget = Target::Toggle;
-                                    lastIndex = index;
-                                }
+                        }
+                        else if (target == Target::Toggle) {
+                            if (index < std::size(toggleValues)) {
+                                toggleValues[index] = !toggleValues[index];
+                                changed = true;
+                                lastTarget = Target::Toggle;
+                                lastIndex = index;
                             }
                         }
                         state = State::Undefined;
@@ -220,7 +322,11 @@ namespace External {
             }
             inline static void ratePeriodic() {}
         private:
-            inline static uint8_t number;
+            inline static int16_t w0;
+            inline static int16_t w1;
+            
+            inline static int8_t sign;
+            inline static int16_t number;
             inline static index_type index;
             inline static State state = State::Undefined;
             inline static Target target = Target::Undefined;
@@ -229,7 +335,8 @@ namespace External {
             inline static Target lastTarget = Target::Undefined;
             inline static etl::uint_ranged_NaN<uint8_t, 0, NumberOfChannels - 1> lastIndex;
         public:
-            inline static std::array<uint16_t, NumberOfChannels> propValues;
+            inline static std::array<std::array<int16_t, 3>, NumberOfChannels> windValues;
+            inline static std::array<int16_t, NumberOfChannels> propValues;
             inline static std::array<uint8_t, NumberOfChannels> switchValues;
             inline static std::array<bool, NumberOfChannels> toggleValues;
         };
