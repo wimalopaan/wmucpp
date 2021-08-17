@@ -114,6 +114,16 @@ namespace AVR {
                     using route_t = typename MCU::Portmux::CclRoute_t;
                     using type = std::integral_constant<route_t, route_t::lut0_alt1>;
                 };
+                template<AVR::Concepts::AtDxSeries MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Ccl<1>, AVR::Portmux::Alt1>, MCU> {
+                    using route_t = typename MCU::Portmux::CclRoute_t;
+                    using type = std::integral_constant<route_t, route_t::lut1_alt1>;
+                };
+                template<AVR::Concepts::AtDxSeries MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Ccl<2>, AVR::Portmux::Alt1>, MCU> {
+                    using route_t = typename MCU::Portmux::CclRoute_t;
+                    using type = std::integral_constant<route_t, route_t::lut2_alt1>;
+                };
                 template<AVR::Concepts::AtMega0 MCU>
                 struct Mapper<AVR::Portmux::Position<AVR::Component::Ccl<0>, AVR::Portmux::Alt1>, MCU> {
                     using route_t = typename MCU::Portmux::CclRoute_t;
