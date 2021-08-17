@@ -82,6 +82,7 @@
 # tarnsparent, blauer Kühlkörper 
 # tp.hex
 
+# RedBrick 30A (blaues Board, 4/6  Pins/Pads, moderne Fets) 
 # 30A gelb (von Amazon)
 # NoName: auch blaue Platine mit 2x3 ISP Pins
 # tgy.hex
