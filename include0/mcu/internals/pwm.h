@@ -746,19 +746,19 @@ namespace AVR {
             
             using f = Meta::front<pins>;
             
+            template<Meta::concepts::List OutList = Meta::List<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>>
             inline static constexpr void init() {
                 mcu_tca()->ctrla.template set<mcu_timer_t::CtrlA_t::enable>();
-                //                mcu_tca()->ctrlb.template set<MCU::TCA::CtrlB_t::cmp2en | MCU::TCA::CtrlB_t::pwm>();
                 mcu_tca()->ctrlb.template set<mcu_timer_t::CtrlB_t::pwm>();
-                
-                AVR::PinGroup<pins>::template dir<Output>();
+                using pin_list = Meta::transform_type<pinmapper, OutList>;
+                AVR::PinGroup<pin_list>::template dir<Output>();
             }
             
             template<Meta::concepts::List OutList, typename IMode = etl::RestoreState>
             inline static constexpr void on() {
                 using out_list = Meta::transform_type<womapper, OutList>;
                 constexpr auto value = Meta::value_or_v<out_list>;
-//                                std::integral_constant<decltype(value), value>::_;
+//                std::integral_constant<decltype(value), value>::_;
                 mcu_tca()->ctrlb.template add<value, etl::DisbaleInterrupt<IMode>>();
             }
 
@@ -793,6 +793,13 @@ namespace AVR {
                 using pin_list = Meta::transform_type<pinmapper, Meta::List<Outs...>>;
                 //                pin_list::_;
                 AVR::PinGroup<pin_list>::off();
+            }
+            template<typename... Outs>
+            inline static constexpr void disable() {
+                using pin_list = Meta::transform_type<pinmapper, Meta::List<Outs...>>;
+//                                pin_list::_;
+                off<Meta::List<Outs...>>();
+                AVR::PinGroup<pin_list>::template dir<AVR::Input>();
             }
             
             inline static constexpr void frequency(const External::Units::hertz& f) {
