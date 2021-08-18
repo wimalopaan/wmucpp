@@ -31,6 +31,26 @@ struct BusDevs<External::Bus::IBusIBus<Devs>> {
     };
     
     using devs = Devs;
+
+    using servo_pa = IBus2::Servo::ProtocollAdapter<0>;
+    using servo = AVR::Usart<typename devs::usart0Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<128>>;
+    using term_dev = servo;
+    
+};
+template<typename Devs>
+struct BusDevs<External::Bus::SBusSPort<Devs>> {
+    using bus_type = External::Bus::SBusSPort<Devs>;
+    
+    struct BusParam {
+        using bus_t = bus_type;
+    };
+    
+    using devs = Devs;
+
+    using servo_pa = External::SBus::Servo::ProtocollAdapter<0, typename devs::systemTimer>;
+    using servo = AVR::Usart<typename devs::usart0Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<128>>;
+    using term_dev = servo;
+    
 };
 
 template<typename Devs>

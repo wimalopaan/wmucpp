@@ -265,7 +265,7 @@ struct Stepper {
 //private:    
     template<auto D, typename P, auto N>
     static inline void set() {
-        PWM::onOvl([]{
+        PWM::onOvlWait([]{
             P::template dir<Input>();
             if constexpr(D == Pol::Positiv) {
                 if constexpr(N == 0) {

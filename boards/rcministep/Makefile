@@ -8,11 +8,14 @@ subdirs =
 
 test412_00.hex: MCU = attiny412
 test412_01.hex: MCU = attiny412
+micro_01.hex: MCU = attiny412
 
-targets += test412_00.hex
-targets += test412_01.hex
-targets += test1614_00.hex
-targets += test1614_01.hex
+#targets += test412_00.hex
+#targets += test412_01.hex
+#targets += test1614_00.hex
+#targets += test1614_01.hex
+targets += mini_01.hex
+targets += micro_01.hex
 #targets += test00.hex
 #targets += test01.hex
 #targets += test50.hex

@@ -14,19 +14,46 @@
 #include <mcu/internals/ccl.h>
 #include <mcu/internals/event.h>
 #include <mcu/internals/adc.h>
+#include <mcu/internals/eeprom.h>
 
 #include <external/hal/adccontroller.h>
 #include <external/solutions/tick.h>
-#include <external/solutions/series01/sppm_in.h>
-
-#include <external/sbus/sbus.h>
-#include <external/sbus/sport.h>
-#include <external/ibus/ibus2.h>
 
 #include <std/chrono>
 
 #include <etl/output.h>
 #include <etl/meta.h>
+
+struct ApplData {
+};
+
+template<typename MCU>
+struct Devices<Board412_01, MCU> {
+    using PortA = AVR::Port<AVR::A>;
+    
+    using an0 = AVR::Pin<PortA, 6>; 
+    using bn0 = AVR::Pin<PortA, 7>; 
+    
+    using ccp = AVR::Cpu::Ccp<>;
+    using clock = AVR::Clock<>;
+    using tcaPosition = AVR::Portmux::Position<AVR::Component::Tca<0>, AVR::Portmux::Default>;
+    
+    using systemTimer = AVR::SystemTimer<AVR::Component::Rtc<0>, fRtc>;
+    
+    using adc = AVR::Adc<AVR::Component::Adc<0>, AVR::Resolution<10>, AVR::Vref::V4_3>;
+    using adcController = External::Hal::AdcController<adc, Meta::NList<2>>;
+    using adc_i_t = adcController::index_type;
+    
+    using pwm = AVR::PWM::DynamicPwm<tcaPosition>;
+    using stepper = External::StepMotor::DirPhaseDriver<pwm, an0, bn0, etl::NamedFlag<true>, void, void>; // stepper direct on pins
+
+    using term_dev = void;
+
+    using eeprom = EEProm::Controller<ApplData>;
+    
+    using portmux = AVR::Portmux::StaticMapper<Meta::List<tcaPosition>>;
+    
+};
 
 
 template<typename MCU>
@@ -46,6 +73,8 @@ struct Devices<NoBoard412, MCU> {
     using tcaPosition = AVR::Portmux::Position<AVR::Component::Tca<0>, AVR::Portmux::Default>;
     
     using systemTimer = AVR::SystemTimer<AVR::Component::Rtc<0>, fRtc>;
+
+    using eeprom = EEProm::Controller<ApplData>;
     
     using adc = AVR::Adc<AVR::Component::Adc<0>, AVR::Resolution<10>, AVR::Vref::V4_3>;
     using adcController = External::Hal::AdcController<adc, Meta::NList<7>>;

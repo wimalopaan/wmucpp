@@ -26,82 +26,165 @@ namespace Bus {
     template<template<typename> typename BD, typename Devices, typename MCU>
     requires(External::Bus::isIBus<typename BD<Devices>::bus_type>::value || External::Bus::isSBus<typename BD<Devices>::bus_type>::value)
     struct GFSM<BD<Devices>, MCU> {
-        static inline constexpr bool noAdc = std::is_same_v<MCU, ATTiny412>;
-        static inline constexpr bool noTerm= std::is_same_v<MCU, ATTiny412>;
         using BusDevs = BD<Devices>;
         using devices = BusDevs::devs;
         using bus     = BusDevs::bus_type;
-        using term_dev = std::conditional_t<noTerm, void, typename devices::term_dev>;
-        using adc      = std::conditional_t<noAdc, void, typename devices::adcController>;
+        using term_dev = typename BusDevs::term_dev;
         using timer    = devices::systemTimer;
         using stepper  = devices::stepper;
-        using servo    = devices::servo;
+        using servo    = BusDevs::servo;
+        using servo_pa = BusDevs::servo_pa;
+        using servo_v_t=servo_pa::value_type;
+        using nvm      = devices::eeprom;
         using pa       = servo::protocoll_adapter_type;
         
         using terminal = etl::basic_ostream<term_dev>;
-//        using adc_i_t  = std::conditional_t<noAdc, void, typename adc::index_type>;
         
-        inline static constexpr External::Tick<timer> debugTicks{1000_ms}; 
+        inline static constexpr External::Tick<timer> debugTicks{300_ms}; 
+        inline static constexpr External::Tick<timer> eepromTicks{1000_ms}; 
+        inline static constexpr External::Tick<timer> initTicks{100_ms}; 
         
+        using blinker = External::Blinker2<typename devices::scanLedPin, timer, 100_ms, 2000_ms>;
+        using bl_t = blinker::count_type;
         using speed_type = etl::uint_ranged<uint8_t, 1, 8>;
         
-        inline static constexpr void init() {
+        enum class State : uint8_t {Undefined, Init, Setup, Run, Load};
+        
+        inline static constexpr void init(const bool inverted = false) {
+            nvm::init();
+            if (nvm::data().mMagic != 42) {
+                nvm::data().mMagic = 42;
+                nvm::data().mSpeed = 1;
+                nvm::data().mCurrent = 1;
+                nvm::data().mBalance = (servo_v_t::Upper + servo_v_t::Lower)/2;
+                nvm::data().changed();
+            }
             if constexpr(External::Bus::isIBus<bus>::value) {
                 servo::template init<BaudRate<115200>>();
-                servo::template txEnable<false>();
+                etl::outl<terminal>("IB"_pgm); 
             }
-            stepper::init();
-            if constexpr(!noAdc) {
-                adc::init();
-            }
-            if constexpr(!std::is_same_v<term_dev, void>) {
-                if constexpr(!std::is_same_v<term_dev, servo>) {
-                    term_dev::template init<AVR::BaudRate<115200>>();
+            else if constexpr(External::Bus::isSBus<bus>::value) {
+                servo::template init<AVR::BaudRate<100000>, FullDuplex, true, 1>(); // 8E2
+                if (inverted) {
+                    etl::outl<terminal>("SBI"_pgm); 
+                    servo::rxInvert(true);
+                }
+                else {
+                    etl::outl<terminal>("SBI"_pgm); 
                 }
             }
+            blinker::init();
         }
         inline static constexpr void periodic() {
             stepper::periodic();
             servo::periodic();
-            if constexpr(!noAdc) {
-                adc::periodic();
-            }
             if constexpr(!std::is_same_v<term_dev, void>) {
                 term_dev::periodic();
             }
+            nvm::saveIfNeeded([&]{
+                etl::outl<terminal>("ep s"_pgm);
+            });
         }
         inline static constexpr void ratePeriodic() {
-            (++speedDivider).on(speed, []{
-                stepper::ratePeriodic();
+            blinker::ratePeriodic();
+            servo_pa::ratePeriodic();
+            (++eepromTick).on(eepromTicks, []{
+                nvm::data().expire();
             });
-            
-            if (const auto s = pa::value(0); s) {
-                speed = etl::scaleTo<speed_type>(s.toRanged());
-            } 
-            if (const auto b = pa::value(1); b) {
-                stepper::balance(b.toRanged());
-            }
-            if constexpr(!noAdc) {
-                using adc_i_t  = adc::index_type;
-                const auto s = adc::value(adc_i_t{0});
-                speed = etl::scaleTo<speed_type>(s);
-            }
-            
+            (++debugTick).on(debugTicks, [&]{
+                 etl::outl<terminal>("s: "_pgm, speed, " p: "_pgm, servo_pa::packages()); 
+                 etl::outl<terminal>("sc0: "_pgm, stepper::mScale0, " sc1: "_pgm, stepper::mScale1, " max: "_pgm, stepper::mCurrentMax); 
+            });
+
+            const auto oldState = mState;
             ++stateTick;
-            stateTick.on(debugTicks, [&]{
-    //           etl::outl<terminal>("bal: "_pgm, balance, " s0: "_pgm, Stepper::mScale0, " s1: "_pgm, Stepper::mScale1, " ds: "_pgm, Stepper::deltaShift); 
-//               etl::outl<terminal>(" i0: "_pgm, stepper::index0.toInt(), " i1: "_pgm, stepper::index1.toInt(), " ds: "_pgm, stepper::deltaShift); 
-                 etl::outl<terminal>("s: "_pgm, speed); 
-               
-            });
             
-    //        Stepper::balance(balance);
-    //        Stepper::shift(balance);
+            switch(mState) {
+            case State::Undefined:
+                stateTick.on(initTicks, []{
+                    packages = servo_pa::packages();
+                    mState = State::Init; 
+                });
+                break;
+            case State::Init:
+                stateTick.on(initTicks, []{
+                    if (packages != servo_pa::packages()) {
+                        mState = State::Setup; 
+                    }
+                    else {
+                        mState = State::Load; 
+                    }
+                });
+                break;
+            case State::Load:
+                mState = State::Run;
+                break;
+            case State::Setup:
+                if (const auto s = pa::value(0); s) {
+                    speed = etl::scaleTo<speed_type>(s.toRanged());
+                    nvm::data().mSpeed = speed.toInt();
+                    nvm::data().change();
+                } 
+                if (const auto b = pa::value(1); b) {
+                    stepper::balance(b.toRanged());
+                    nvm::data().mBalance = b.toInt();
+                    nvm::data().change();
+                }
+                if (const auto c = pa::value(2); c) {
+                    stepper::current(c.toRanged());
+                    nvm::data().mCurrent = c.toInt();
+                    nvm::data().change();
+                }
+                stateTick.on(initTicks, []{
+                    if (servo_pa::packages() == 0) {
+                        mState = State::Run; 
+                    }
+                    servo_pa::resetStats();
+                });
+                [[fallthrough]];
+            case State::Run:
+                (++speedDivider).on(speed, []{
+                    stepper::ratePeriodic();
+                });
+                break;
+            }
+            if (oldState != mState) {
+                stateTick.reset();
+                switch (mState) {
+                case State::Undefined:
+                    break;
+                case State::Init:
+                    etl::outl<terminal>("S I"_pgm); 
+                    break;
+                case State::Setup:
+                    etl::outl<terminal>("S S"_pgm); 
+                    blinker::blink(bl_t{2});
+                    stepper::setDuty();
+                    stepper::init();
+                    break;
+                case State::Load:
+                    etl::outl<terminal>("S L s:"_pgm, nvm::data().mSpeed, " b: "_pgm, nvm::data().mBalance, " c: "_pgm, nvm::data().mCurrent); 
+                    speed.set(nvm::data().mSpeed);
+                    stepper::balance(servo_v_t{nvm::data().mBalance}.toRanged());
+                    stepper::current(servo_v_t{nvm::data().mCurrent}.toRanged());
+                    stepper::setDuty();
+                    stepper::init();
+                    break;
+                case State::Run:
+                    blinker::blink(bl_t{1});
+                    etl::outl<terminal>("S R"_pgm); 
+                    break;
+                }
+            }
         }
     private:
+        inline static uint16_t packages{};
+        inline static State mState{State::Undefined};
         inline static speed_type speed{1};
         inline static External::CountDown speedDivider{};
+        inline static External::Tick<timer> eepromTick{}; 
         inline static External::Tick<timer> stateTick{}; 
+        inline static External::Tick<timer> debugTick{}; 
     };
 
         template<template<typename> typename BD, typename Devices, typename MCU>
@@ -117,7 +200,7 @@ namespace Bus {
             using terminal = etl::basic_ostream<term_dev>;
             using adc_i_t = adc::index_type;
             
-            inline static constexpr External::Tick<timer> debugTicks{1000_ms}; 
+            inline static constexpr External::Tick<timer> debugTicks{200_ms}; 
             
             using speed_type = etl::uint_ranged<uint8_t, 1, 8>;
             
@@ -137,17 +220,12 @@ namespace Bus {
                     stepper::ratePeriodic();
                 });
                 
-                
                 ++stateTick;
                 stateTick.on(debugTicks, [&]{
-        //           etl::outl<terminal>("bal: "_pgm, balance, " s0: "_pgm, Stepper::mScale0, " s1: "_pgm, Stepper::mScale1, " ds: "_pgm, Stepper::deltaShift); 
-    //               etl::outl<terminal>(" i0: "_pgm, stepper::index0.toInt(), " i1: "_pgm, stepper::index1.toInt(), " ds: "_pgm, stepper::deltaShift); 
-                     etl::outl<terminal>("s: "_pgm, speed); 
-                   
+//                    etl::outl<terminal>("s: "_pgm, speed); 
+                    const auto sv = adc::value(adc_i_t{0});
+                    speed.set((sv >> 7) + 1);
                 });
-                
-        //        Stepper::balance(balance);
-        //        Stepper::shift(balance);
             }
         private:
             inline static speed_type speed{8};

@@ -16,6 +16,17 @@ struct NoBoard1614 {
     // ibus/sbus= pb3
     // tx       = pb2
 };
+struct Board1614_01 {
+    // tca:wo0 = pb0
+    // lut0    = pa4
+    // tca:wo1 = pb1
+    // lut1    = pa7
+    
+    // led     = pb2
+    
+    // ibus/sbus= pa3 + pa2 Fehler auf Board
+    // tx       = pa1
+};
 struct NoBoard412 {
     // tca:wo0 = pa3
     // tca:wo1 = pa1
@@ -25,6 +36,15 @@ struct NoBoard412 {
     
     // ibus/sbus= pa7 (ain7/ppm)
     // tx       = (pa6)
+};
+struct Board412_01 {
+    // tca:wo0 = pa3
+    // tca:wo1 = pa1
+    
+    // an0      = pa6
+    // bn0      = pa7
+
+    // ain2     = pa2 = poti    
 };
 
 template<typename Board, typename MCU = DefaultMcuType> 
