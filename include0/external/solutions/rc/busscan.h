@@ -154,7 +154,6 @@ namespace External {
             blinker::ratePeriodic();
             const auto oldState = mState;
             ++mStateTick;
-            ++mCheckTick;
             switch(mState) {
             case State::Undefined:
                 mState = State::Init;
@@ -375,11 +374,10 @@ namespace External {
             }        
         }
         static inline State mState{State::Undefined};
-        static inline External::Tick<systemTimer> mCheckTick;
         static inline External::Tick<systemTimer> mStateTick;
     };
 
-    template<typename Devs, template<typename> typename App, typename PList, typename Duplex = AVR::FullDuplex>
+    template<typename Devs, template<typename> typename App, typename PList, typename Duplex = AVR::FullDuplex, bool useTimeout = false>
     struct Scanner2 {
         enum class State : uint8_t {Undefined, Init, 
                                     InitSBus, InitSBusInv, InitIBus, InitSumD, InitPpm, 
@@ -394,7 +392,7 @@ namespace External {
         static_assert(std::is_same_v<Duplex, AVR::FullDuplex> || std::is_same_v<Duplex, AVR::HalfDuplex>);
         using devs = Devs;
         using systemTimer = devs::systemTimer;
-        using scanDevPosition = Devs::scanDevPosition;
+        using scanDevPosition = devs::scanDevPosition;
         
         static inline constexpr bool termOnScanDev = std::is_same_v<typename devs::scan_term_dev, TermSameAsScanDevice>;
       
@@ -427,6 +425,7 @@ namespace External {
         
         static constexpr External::Tick<systemTimer> initTimeout{100_ms};
         static constexpr External::Tick<systemTimer> checkTimeout{1000_ms};
+        static constexpr External::Tick<systemTimer> totalTimeout{15000_ms};
         
         static constexpr uint8_t minPackages{10};
         
@@ -487,7 +486,13 @@ namespace External {
             blinker::ratePeriodic();
             const auto oldState = mState;
             ++mStateTick;
-            ++mCheckTick;
+
+            if constexpr(useTimeout) {
+                (++mTotalTick).on(totalTimeout, []{
+                    blinker::template off<true>();
+                    App<Bus::SBusSPort<Devs>>::timeout();
+                });
+            }            
             switch(mState) {
             case State::Undefined:
                 mState = State::Init;
@@ -863,7 +868,7 @@ namespace External {
             }        
         }
         static inline State mState{State::Undefined};
-        static inline External::Tick<systemTimer> mCheckTick;
+        static inline External::Tick<systemTimer> mTotalTick;
         static inline External::Tick<systemTimer> mStateTick;
     };
     
