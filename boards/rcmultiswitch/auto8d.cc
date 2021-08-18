@@ -1,5 +1,8 @@
 #define NDEBUG
  
+// additional 470R over hott-jumper
+#define HALFDUPLEX_MOD
+
 #define AUTO_BUS
 #define LEARN_DOWN // start at highest channel number downwards
  
@@ -43,11 +46,19 @@ struct FSM {
         jp::template dir<Input>();
         jp::template pullup<true>();
         if constexpr(External::Bus::isIBus<bus_type>::value) {
+#ifdef HALFDUPLEX_MOD
+            Servo::template init<BaudRate<115200>, AVR::HalfDuplex>();
+#else
             Servo::template init<BaudRate<115200>>();
             etl::outl<Term>("multi8d ibus"_pgm);
+#endif
         }
         else if constexpr(External::Bus::isSBus<bus_type>::value) {
+#ifdef HALFDUPLEX_MOD
+            Servo::template init<AVR::BaudRate<100000>, HalfDuplex, true, 1>(); // 8E2
+#else
             Servo::template init<AVR::BaudRate<100000>, FullDuplex, true, 1>(); // 8E2
+#endif
             if (inverted) {
                 Servo::rxInvert(true);
             }
@@ -407,7 +418,11 @@ using devices = Devices<>;
 //using scanner = External::Scanner<devices, Application, AVR::HalfDuplex>;
 //#endif
 
+#ifdef HALFDUPLEX_MOD
+using scanner = External::Scanner<devices, Application, AVR::HalfDuplex>;
+#else
 using scanner = External::Scanner<devices, Application>;
+#endif
 
 int main() {
     scanner::run();
