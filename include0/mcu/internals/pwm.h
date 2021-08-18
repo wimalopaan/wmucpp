@@ -785,7 +785,7 @@ namespace AVR {
             inline static constexpr void set() {
                 using pin_list = Meta::transform_type<pinmapper, Meta::List<Outs...>>;
                 //                pin_list::_;
-                off<Outs...>();
+                off<Meta::List<Outs...>>();
                 AVR::PinGroup<pin_list>::on();
             }
             template<typename... Outs>
@@ -823,7 +823,7 @@ namespace AVR {
                     *mcu_tca()->cmp2buf = d;
                 }
             }
-            inline static constexpr void onOvl(auto f) {
+            inline static constexpr void onOvlWait(auto f) {
                 mcu_tca()->intflags.template waitFor<mcu_timer_t::Intflags_t::ovf>();
                 f();
                 mcu_tca()->intflags.template reset<mcu_timer_t::Intflags_t::ovf>();
