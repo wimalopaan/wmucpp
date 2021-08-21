@@ -253,7 +253,8 @@ namespace etl {
     
     template<typename A, typename... BB>
     constexpr void copy(A& dest, const BB&... bb) {
-        static_assert(std::size(dest) >= sizeof...(bb));
+//        static_assert(std::size(dest) >= sizeof...(bb));
+        static_assert(dest.size() >= sizeof...(bb));
         detail::copyElements(dest, std::make_index_sequence<sizeof...(bb)>{}, bb...);
     }
     

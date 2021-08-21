@@ -168,11 +168,13 @@ namespace etl {
     class StringBufferView {
     public:
         typedef ItemType type;
-        static constexpr uint8_t size = Length;
-    
+        static constexpr uint8_t size() {
+            return Length;
+        }
+        
         template<typename C>
         inline StringBufferView(const C& c) : data((const ItemType*)c.begin() + Begin) {
-            static_assert((Begin + Length) <= C::length, "wrong begin or length");
+            static_assert((Begin + Length) <= C::size(), "wrong begin or length");
         }
         inline const ItemType* begin() const {
             return data;
@@ -180,8 +182,8 @@ namespace etl {
         inline const ItemType* end() const {
             return data + Length;
         }
-        inline constexpr const ItemType& operator[](uint8_t index) const {
-            assert(index < size);
+        inline constexpr const ItemType& operator[](const uint8_t index) const {
+            assert(index < size());
             return data[index];
         }
     private:
@@ -195,17 +197,19 @@ namespace etl {
     
         template<typename C>
         inline StringBufferPart(C& c) : data(c.begin() + Begin) {
-            static_assert((Begin + Length) <= C::length, "wrong begin or length");
+            static_assert((Begin + Length) <= C::size(), "wrong begin or length");
         }
     
-        static constexpr uint8_t size = Length;
+        static constexpr uint8_t size() {
+            return Length;
+        }
         
         inline constexpr const ItemType& operator[](uint8_t index) const {
-            assert(index < size);
+            assert(index < size());
             return data[index];
         }
         inline constexpr ItemType& operator[](uint8_t index) {
-            assert(index < size);
+            assert(index < size());
             return data[index];
         }
     private:
