@@ -46,9 +46,6 @@ using namespace std::literals::chrono;
 using namespace External::Units::literals;
 
 using devices = Devices<Board1614_01>;
-//using busdevs = BusDevs<External::Bus::IBusIBus<devices>>;
-//using busdevs = BusDevs<External::Bus::SBusSPort<devices>>;
-//using gfsm = Bus::GFSM<busdevs>;
 
 template<typename BusSystem, typename MCU = DefaultMcuType>
 struct Application {
@@ -59,7 +56,7 @@ struct Application {
     }
     
     inline static void run(const bool inverted = false) {
-        if constexpr(External::Bus::isIBus<BusSystem>::value || External::Bus::isSBus<BusSystem>::value) {
+        if constexpr(External::Bus::isIBus<BusSystem>::value || External::Bus::isSBus<BusSystem>::value || External::Bus::isSumD<BusSystem>::value) {
             using devs = busdevs::devs;
             using systemTimer = devs::systemTimer;
             using gfsm = Bus::GFSM<busdevs>;
@@ -75,7 +72,7 @@ struct Application {
     }
 };
 
-using scanner = External::Scanner2<devices, Application, Meta::List<External::Bus::IBusIBus<devices>, External::Bus::SBusSPort<devices>>, AVR::FullDuplex, true>;
+using scanner = External::Scanner2<devices, Application, Meta::List<External::Bus::IBusIBus<devices>, External::Bus::SBusSPort<devices>, External::Bus::SumDHott<devices>>, AVR::FullDuplex, true>;
 
 int main() {
     scanner::run();

@@ -407,7 +407,7 @@ namespace External {
                 }
                 ++index1;
             }  
-        //private:    
+        private:    
             template<auto D, typename P, auto N>
             static inline void set() {
                 PWM::onOvlWait([]{
