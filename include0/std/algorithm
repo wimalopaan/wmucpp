@@ -113,12 +113,21 @@ namespace std {
     inline constexpr auto size(const C& c) noexcept{
         return c.size();
     }
-//    template <typename C>
-//    requires requires(C c) {c.size;}
-//    constexpr auto size(const C& c) {
-//        return c.size;
-//    }
     
+    template<class ForwardIt>
+    ForwardIt max_element(ForwardIt first, ForwardIt last) {
+        if (first == last) return last;
+     
+        ForwardIt largest = first;
+        ++first;
+        for (; first != last; ++first) {
+            if (*largest < *first) {
+                largest = first;
+            }
+        }
+        return largest;
+    }
+
     template <typename T, size_t N>
     inline constexpr size_t size(const T (&)[N]) noexcept {
         return N;
