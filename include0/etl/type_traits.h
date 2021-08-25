@@ -192,6 +192,20 @@ namespace etl {
         return number;
     }
 
+    template<auto V, uint8_t Base = 10>
+    inline consteval /*constexpr*/ uint8_t numberOfDigits() {
+        auto v = V;
+        uint8_t number = 0;
+        while(v > 0) {
+            v /= Base;
+            ++number;
+        }
+        if (number == 0) {
+            number = 1;
+        }
+        return number;
+    }
+
     template<typename T, uint8_t Base = 10>
     requires (T::valid_bits > 0)
     inline consteval /*constexpr */ uint8_t numberOfDigits() {
