@@ -97,7 +97,7 @@ namespace External {
                 output[21] = std::byte{'0'};
                 output[22] = std::byte{'/'};
                 output[23] = std::byte{'5'};
-                output[24] = std::byte{'0' + ch};
+                output[24] = std::byte('0' + ch);
             }
 
             inline static void periodic() {
@@ -106,7 +106,7 @@ namespace External {
             inline static void ratePeriodic() { 
                 ++mSendTick;
                 mSendTick.on(msendTicks, []{
-                    output[24] = std::byte{'0' + ch};
+                    output[24] = std::byte('0' + ch);
                     for(const std::byte& b : output) {
                         Dev::put(b);
                     }
@@ -338,8 +338,8 @@ namespace External {
             struct Generator {
                 constexpr auto operator()() {
                     return []<auto... II>(std::index_sequence<II...>){
-                        return std::array<ChannelData, RC::channels.size()>{ChannelData{RC::channels[II].mFreq, (uint8_t)RC::channels[II].mBand, (uint8_t)RC::channels[II].mNumber}...};
-                    }(std::make_index_sequence<RC::channels.size()>{});
+                        return std::array<ChannelData, RC::channels1.size()>{ChannelData{RC::channels1[II].mFreq, (uint8_t)RC::channels1[II].mBand, (uint8_t)RC::channels1[II].mNumber}...};
+                    }(std::make_index_sequence<RC::channels1.size()>{});
                 }
             };
             
