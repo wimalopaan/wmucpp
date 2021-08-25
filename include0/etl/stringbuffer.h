@@ -196,7 +196,7 @@ namespace etl {
         typedef ItemType value_type;
     
         template<typename C>
-        inline StringBufferPart(C& c) : data(c.begin() + Begin) {
+        inline StringBufferPart(C& c) : data((ItemType*)(c.begin()) + Begin) {
             static_assert((Begin + Length) <= C::size(), "wrong begin or length");
         }
     
