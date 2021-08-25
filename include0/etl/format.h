@@ -107,10 +107,31 @@ namespace etl {
     } // detail
     
     template<uint8_t Base = 10, Integral T = uint8_t, typename C>
-    inline constexpr auto& itoa_r(T value, C& data)  {
+    inline constexpr auto& itoa_r(const T value, C& data)  {
         static_assert((Base >= 2) && (Base <= 16), "wrong base");
         static_assert(data.size() >= numberOfDigits<T, Base>(), "wrong length");
         constexpr uint8_t Position = numberOfDigits<T, Base>() - 1;
+        T v = value;
+        if constexpr(std::is_signed<T>::value) {
+            if (value < 0) {
+                v = -value; 
+            }
+            uint8_t last = etl::detail::itoa_single_impl<Position, Base, T>(v, data);
+            if (value < 0) {
+                data[last] = Char{'-'};
+            }
+        }   
+        else {
+            etl::detail::itoa_single_impl<Position, Base, T>(v, data);
+        }
+        return data;
+    }
+
+    template<uint8_t Base = 10, Integral T = uint8_t, T L, T U, typename C>
+    inline constexpr auto& itoa_r(const etl::uint_ranged<T, L, U>& value, C& data)  {
+        static_assert((Base >= 2) && (Base <= 16), "wrong base");
+        static_assert(data.size() >= numberOfDigits<U, Base>(), "wrong length");
+        constexpr uint8_t Position = numberOfDigits<U, Base>() - 1;
         T v = value;
         if constexpr(std::is_signed<T>::value) {
             if (value < 0) {
@@ -134,6 +155,15 @@ namespace etl {
         static_assert(std::is_same<typename C::value_type, Char>::value, "not a char container");
         return etl::detail::itoa_impl<Base>(value, data);
     }
+
+    template<uint8_t Base = 10, Integral T = uint8_t, T L, T U, typename C>
+    inline constexpr auto& itoa(const etl::uint_ranged<T, L, U>& value, C& data) {
+        static_assert((Base >= 2) && (Base <= 16), "wrong base");
+        static_assert(data.size() >= numberOfDigits<U, Base>(), "wrong char buffer length");
+        static_assert(std::is_same<typename C::value_type, Char>::value, "not a char container");
+        return etl::detail::itoa_impl<Base>(value.toInt(), data);
+    }
+
     
     template<typename T, Container C>
     requires (T::valid_bits > 0)
