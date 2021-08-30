@@ -1,0 +1,215 @@
+= RC-MicroStep und RC-MiniStep 
+Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+:revnumber: 1.0
+:revremark: HW_1.0
+:revdate: 01.01.1970
+:lang: de
+:toc:
+:toc-title: Inhalt
+:toclevels: 4
+:numbered:
+:pagenums:
+:src_numbered: 
+:icons: font
+:icontype: svg
+:figure-caption: Abbildung
+:description: RC-MicroStep und RC-MiniStep
+:title: RC-MicroStep und RC-MiniStep: Schrittmotorsteuerungen
+:title-page:
+:sectanchors:
+:sectlinks:
+:experimental:
+:copyright: Wilhelm Meier
+:duration: 90
+:source-highlighter: pygments
+:pygments-css: class
+:showtitle:
+:docinfo1:
+:stem:
+// for attributes in link:[] macro like link:xxx[window="_blank"]
+:linkattrs:
+
+:imagesdir: ../../doc/images
+:idir: ../../doc
+
+:mName: RC-MiniStep-D
+:model: step
+:bus: auto 
+  
+include::{idir}/defs.adoc[]
+
+<<<
+
+include::{idir}/preface.adoc[]
+ 
+<<<
+
+include::{idir}/symbols.adoc[]
+
+include::{idir}/law.adoc[]
+
+include::{idir}/security.adoc[]
+
+<<< 
+
+== Einführung
+
+`RC-MicroStep` und `RC-MiniStep` sind Schrittmotorsteuerungen für einen _kontinuierlichen_ (über eine Schaltmodul auch geschaltet) 
+und _gleichförmigen_ sowie _lautlosen_ Betrieb von Sonderfunktionen.
+
+== Ansicht
+
+=== RC-MicroStep
+
+.RC-MicroStep mt angeschlossenem 6mm Micro-Schrittmotor
+image::micro01.jpg[align="center",width=75%,pdfwidth=75%]
+
+.Detailansicht Oberseite mit Anschlussleitungen A1-A2 B1-B2 für den Motor
+image::micro02.jpg[align="center",width=75%,pdfwidth=75%]
+
+.Detailansicht Unterseite mit dem Trimmer zum Einstellen der Drehgeschwindigkeit
+image::micro03.jpg[align="center",width=75%,pdfwidth=75%]
+
+=== RC-Ministep
+
+// .Die Oberseite (4er Modulgruppe) mit Anschluss der Servopeitsche
+// image::mini01.jpg[align="center",width=75%,pdfwidth=75%]
+
+.Die Oberseite (4er Modulgruppe) mit Anschluss der Servopeitsche
+image::mini02.jpg[align="center",width=75%,pdfwidth=75%]
+
+.Die Unterseite mit den Versorgungsanschlüssen (jeweils linke Seite der Platine) und Motoranschlüsse (jeweils rechte Seite der Platine)
+image::mini03.jpg[align="center",width=75%,pdfwidth=75%]
+
+.Größenvergleich: 4 RC-MicroStep (links) und ein 6mm Motor, 3 RC-MiniStep (mitte) und darunter ein 8mm Motor, 1 RC-MiniStep mit einem NEMA-8 Motor (rechts)
+image::mini04.jpg[align="center",width=75%,pdfwidth=75%]
+
+[[first]]
+== Grundsätzliches
+
+.Sicherheitshinweis
+[CAUTION]
+Die Versorgungsspannung darf sowohl beim `RC-MicroStep` wie auch beim `RC-MiniStep` *nicht* über `10V` liegen.
+
+.Bedingungen
+[IMPORTANT]
+Die Versorgungsspannung sollte minimal ca. `3V` betragen. Darunter ist keine gesicherter Betrieb gewährleistet.
+
+Beachten Sie bitte die folgenden Unterschiede in der Auslegung der beiden Module.
+
+[horizontal]
+RC-MicroStep:: für Micro-Schrittmotoren der 6mm (8mm) Klasse mit maximal `20mA` Phasenstrom. Der Motor wird dabei mit maximal `5V` angesteuert. Es kann nur die _Geschwindigkeit_ per Trimmer eingestellt werden.
+RC-MiniStep:: für Mini-Schrittmotoren bis etwa Nema-8 (20mm) und maximal `600mA` Phasenstrom. Der Motor wird mit der Betriebsspannung des Moduls angesteuert. Damit sind die höheren
+Motorströme realisierbar. Es kann über den `SBus`, `IBus` oder `Sumd`-Eingang sowohl die _Geschwindigkeit_, der _Motorphasenstrom_ wie auch die _Balance_ eingestellt werden. Die Verbindung zum Empfänger ist nur für die Konfiguration notwendig.
+
+.RC-MicroStep
+[TIP]
+--
+Das `RC-MicroStep` liefert maximal `20mA` Phasenstrom an den Motor. Daher muss der Motor möglichst ohne mechanische Belastung laufen, da nicht viel Drehmoment entwickelt wird.
+Bei Versorgungspannungen bis `10V` kann es zu einer Erwärmung des Moduls kommen. Dies ist normal.
+--
+
+.RC-MiniStep
+[TIP]
+--
+Das `RC-MiniStep` kann bis zu `600mA` Phasenstrom bei maximal `10V` Betriebsspannung liefern. Ein zu hoher Phasenstrom kann einen kleinen Mini-Schrittmotor schnell
+zerstören. Aber auch bei korrekt eingestelltem Phasenstrom kommt es zu einer leichten Erwärmung des Motors bis etwa `40°C`. Dies ist normal und sollte beim Einbau 
+des Motors berücksichtig werden.
+--
+
+
+== RC-MicroStep
+
+=== Erste Inbetriebnahme
+
+Schließen Sie den Micro-Schrittmotor an die beschrifteten Ausgänge des Moduls an. Beachten Sie die Zuordnung der Anschlüsse zu den bei den Wicklungen `A` und `B` des Motors.
+
+Verwenden Sie ein Labornetzteil zur Versorgung. Stellen Sie hier eine Spannung von `5V` und eine Strombegrenzung von `80mA` ein. Erst danach verbinden Sie das Modul mit dem Labornetzteil.
+Nun sollte sich eine Stromaufnahme von ca. `50-80mA` einstellen. Ist das der Fall, können Sie das Modul einbauen.
+
+=== Betrieb
+
+Man kann den Motor über ein konventionelles Schaltmodul einschalten. Achten Sie auf die Polung und die zulässige _Versorgungsspannung_ von maximal `10V`
+
+Mit Hilfe des kleinen Trimmers am Modul könen Sie die Drehgeschwindigkeit einstellen.
+
+Ein leichte Erwärmung des Moduls ist normal.
+
+== RC-MiniStep
+
+Um zu verhindern, dass ein zu hoch eingestellter Phasenstrom den angeschlossenen Motor zerstört oder auch das Modul dabei Schaden nimmt, 
+beachten Sie bitte _immer_ die folgende Prozedur, wenn Sie
+
+* das Modul zum ersten Mal in Betrieb nehmen,
+* den angeschlossenen Motor austauschen
+* die Versorgungsspanung variieren.
+
+[[setup]]
+=== Erste Inbetriebnahme
+
+[CAUTION]
+Verwenden Sie ein Labornetzteil zur Versorgung des Empfängers und des Moduls. Stellen Sie aus Sicherheitsgründen zunächst eine Strombegrenzung von '200mA' ein. 
+Für das Modul ist eine maximal Spannung
+von `10V` zulässig. Sofern Sie für den Empfänger kein BEC benutzen, achten Sie auch hier auf die maximal zulässige Versorgungsspannung!
+
+Manche Schrittmotoren haben einen geringen Innenwiderstand, Deswegen ist es _absolut notwendig_, zunächst einen möglichst _geringen_ Motorstrom einzustellen. 
+
+Gehen Sie folgendermaßen vor:
+
+. Schließen Sie den Motor _noch nicht_ an das Modul an.
+. Verwenden Sie das Servokabel (nur _Signal_ und _Masse_) zum Anschluss an einen `SBus` oder `IBus` oder `SumD` Empfänger.
+. Programmieren Sie den Sender so, dass sie für die Kanäle 1 - 3 nicht neutralisierende Geber verwenden.
+.. Kanal 1: GeSchwindigkeit
+.. Kanal 2: Balance
+.. Kanal 3: Strom 
+. Zur Kontrolle, ob Ihre Programmierung erfolgreich ist, können Sie an den PWM-Ausgängen des Empfängers Servos anschließen.
+. Stellen Sie nun ein:
+.. Kanal 1 Geschwindigkeit: _neutral_ (Mitte)
+.. Kanal 2 Balance: _neutral_ (Mitte)
+.. Kanal 3 Strom: -100% (Minimum)
+. Schalten Sie nun die Versorgungsspannung für Empfänger und Modul (max. `10V`) ein (Strombegrenzung: `200mA`).
+. Das Modul scannt den Bus (LED ist kurz an) und meldet nach ein paar Sekunden durch _Doppelblinken_, dass der _Konfigurationsmodus_ aktiv ist.
+. Zum Anschluss des Motors trennen Sie die Empfängerstromversorgung wieder.
+. Nach Anschluss des Motors schalten Sie das Lobornetzteil wieder ein (Einstellungen immer noch wie oben).
+. Sie gelangen wieder in den _Konfigurationsmodus_.
+. Sofern Sie noch keine Drehung des Motors feststellen, erhöhen Sie _langsam_ am Kanal `3` den Motostrom, bis dieser sich beginnt zu drehen. Beachten Sie auch hierbei die Stromaufnahme!
+. Stellen Sie nun die gewünschte Drehzahl an Kanal `1` ein.
+.. Es kann notwendig sein, für eine höhere Drehzahl den Motorstrom _leicht_ zu erhöhen.
+. Bei qualitativ minderwertigen Motoren mit großem Schrittwinkel (> `3,6°`) kann es notwendig sein, die Phasenströme gegeneinader zu verschieben, um einen runden Lauf zu erreichen. Die kann mit Kanal `2` (Balance) eventuell kompensiert werden.
+. Nun kann die Stromversorgung getrennt werden. Das Modul hat alle Einstellungen gespeichert.
+
+Das Servokabel kann wieder abgelötet werden oder einfach vom Empfänger getrennt werden. Die kann auch bei laufendem Betrieb erfolgen, das Modul wechselt dann
+sofort in den Betriebsmodus (Einfachblinken der LED).
+
+[TIP]
+Sollte bei angeschlossenem Motor das Modul nicht in den Konfigurationsmodus (Doppelblinken der LED) oder Betriebsmodus (Einfachblinken der LED) gelangen, sondern immer
+wieder in den Busscan (langes dauerhaftes Leuchten der LED) gehen, so kann es sein, dass eine weitere Abblockung der Betriebsspannung des Moduls durch einen größeren Elektrolytkondensator notwendig ist. Löten Sie in diesem 
+Fall parallel zu den Betriebsspannungsanschlüsen des Modul einen `100µF-470µF/16V` Elektrolytkondensator.
+
+=== Betrieb
+
+Gehen Sie zunächst wie in <<setup>> vor, sofern noch nicht geschehen.
+
+Wird nun das Modul eingeschaltet, dreht sich der Motor mit den vorgenommenen Einstellungen. 
+
+Die Kontroll-LED 
+
+. ist zunächst für einige Sekunden dauerhaft (Busscan) an, und anschließend
+. blinkt sie einfach (Normalbetrieb).
+
+Wenn Sie den Motor wechseln, gehen Sie wieder wie in <<setup>> vor..
+
+[IMPORTANT]
+Eine nachträgliche Änderung der Betriebsspannung führt zu einer Veränderung des Motorstromes. Dies kann einerseits eine Überlasutung des Moduls herbeiführen oder 
+einen ungleichmäßigen Motorlauf. Daher auch hier jedesmal wie unter <<setup>> verfahren.
+
+.Normalbetrieb
+[TIP]
+Für den _Normalbetrieb_ ist der Anschluss an den Empfänger nicht notwendig. Das Servokabel kann heraus gezogen werden oder auch abgelötet werden.
+<<<
+
+include::{idir}/operate.adoc[]
+
+
+<<<
+

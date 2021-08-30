@@ -50,7 +50,13 @@ using gfsm = Bus::GFSM<busdevs>;
 int main() {
     devices::portmux::init();
     devices::ccp::unlock([]{
+#if (F_OSC == 20000000)
         devices::clock::prescale<1>();
+#elif (F_OSC == 10000000)
+        devices::clock::prescale<2>();
+#else
+#error "wrong F_OSC"
+#endif
     });
     devices::systemTimer::init();
     

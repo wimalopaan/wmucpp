@@ -380,6 +380,7 @@ boards/rc720/devices.h
 boards/rc720/esc.h
 boards/rc720/fbservo.h
 boards/rc720/internaltemp.h
+boards/rc720/rc720_01.cc
 boards/rc720/test00.cc
 boards/rc720/test01.cc
 boards/rc720/test02.cc
@@ -440,6 +441,8 @@ boards/rcministep/busses.h
 boards/rcministep/devices.h
 boards/rcministep/devices1614.h
 boards/rcministep/devices412.h
+boards/rcministep/doc/Makefile
+boards/rcministep/doc/mmstep.adoc
 boards/rcministep/gfsm.h
 boards/rcministep/micro_01.cc
 boards/rcministep/mini_01.cc

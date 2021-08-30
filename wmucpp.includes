@@ -77,3 +77,4 @@ boards/dds
 boards/breakout
 boards/rc720
 boards/rcfoc
+boards/rcministep/doc

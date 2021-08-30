@@ -8,7 +8,9 @@ subdirs =
 
 test412_00.hex: MCU = attiny412
 test412_01.hex: MCU = attiny412
+
 micro_01.hex: MCU = attiny412
+#micro_01.hex: F_OSC = 10000000
 
 #targets += test412_00.hex
 #targets += test412_01.hex

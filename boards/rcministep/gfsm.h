@@ -24,7 +24,7 @@ namespace Bus {
     struct GFSM;
     
     template<template<typename> typename BD, typename Devices, typename MCU>
-    requires(External::Bus::isIBus<typename BD<Devices>::bus_type>::value || External::Bus::isSBus<typename BD<Devices>::bus_type>::value)
+    requires(External::Bus::isIBus<typename BD<Devices>::bus_type>::value || External::Bus::isSBus<typename BD<Devices>::bus_type>::value || External::Bus::isSumD<typename BD<Devices>::bus_type>::value)
     struct GFSM<BD<Devices>, MCU> {
         using BusDevs = BD<Devices>;
         using devices = BusDevs::devs;
@@ -37,6 +37,8 @@ namespace Bus {
         using servo_v_t=servo_pa::value_type;
         using nvm      = devices::eeprom;
         using pa       = servo::protocoll_adapter_type;
+        
+//        bus::_;
         
         using terminal = etl::basic_ostream<term_dev>;
         
