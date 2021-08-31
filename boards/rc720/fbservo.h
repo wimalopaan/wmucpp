@@ -32,6 +32,9 @@ namespace External {
         
         struct PositionProvider {
             inline static constexpr auto valueId = External::SPort::ValueId::DIY;
+            inline static constexpr auto ibus_type = IBus2::Type::type::ID_S85;
+            inline static constexpr void init() {
+            }
             inline static constexpr uint32_t value() {
                 const uint16_t d = std::max(int16_t(mActual) - int16_t(amin), 0);
                 const uint16_t v = (uint32_t(d) * 1024) / (amax - amin);

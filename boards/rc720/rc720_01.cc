@@ -35,6 +35,7 @@
 
 #include "devices.h"
 #include "busdevs.h"
+#include "version.h"
 
 using namespace AVR;
 using namespace std::literals::chrono;
@@ -126,6 +127,8 @@ struct GlobalFsm {
     static inline void init(const bool inverted) {
         BusDevs::init(inverted);
         
+        searchCh = search_t{appData.channel()};
+        
         blinker1::init();
         blinker2::init();
         
@@ -134,6 +137,10 @@ struct GlobalFsm {
     }
     
     static inline void periodic() {
+        nvm::saveIfNeeded([&]{
+            etl::outl<terminal>("ep s"_pgm);
+        });
+        
         servo::periodic();        
         servo_0::periodic();
         servo_1::periodic();

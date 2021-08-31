@@ -7,12 +7,13 @@
 #include <external/sbus/sbus.h>
 #include <external/ibus/ibus2.h>
 
+#include "version.h"
+
 template<typename Bus>
 struct BusDevs;
 
 template<typename Devs>
 struct BusDevs<External::Bus::IBusIBus<Devs>> {
-    static inline uint8_t magic = 42;
     using bus_type = External::Bus::IBusIBus<Devs>;
     using devs = Devs;
     
@@ -49,9 +50,12 @@ struct BusDevs<External::Bus::IBusIBus<Devs>> {
     using pwm5 = PPMAsyncAdapter<typename devs::pwm5>;
     
     using tempiP = External::InternalTempProvider<typename Devs::adcController, 2, typename Devs::sigrow, bus_type>;
+
+    using s0pp = servo_0::PositionProvider;
+    using s1pp = servo_1::PositionProvider;
     
     using sensor = IBus2::Sensor<typename Devs::sensorPosition, AVR::Usart, AVR::BaudRate<115200>, 
-                                Meta::List<tempiP>, 
+                                Meta::List<tempiP, VersionProvider, s0pp, s1pp>, 
                                 systemTimer, typename devs::ibt>;
 
     inline static void init(const bool) {
@@ -98,7 +102,6 @@ struct BusDevs<External::Bus::IBusIBus<Devs>> {
 
 template<typename Devs>
 struct BusDevs<External::Bus::SBusSPort<Devs>> {
-    static inline uint8_t magic = 43;
     using bus_type = External::Bus::SBusSPort<Devs>;
     using devs = Devs;
     
@@ -142,11 +145,11 @@ struct BusDevs<External::Bus::SBusSPort<Devs>> {
     using s0pp = servo_0::PositionProvider;
     using s1pp = servo_1::PositionProvider;
     
-    using sensor = External::SPort::Sensor<External::SPort::SensorId::ID1, sensorUsart, systemTimer, Meta::List<tempiP, s0pp, s1pp>>;
+    using sensor = External::SPort::Sensor<External::SPort::SensorId::ID1, sensorUsart, systemTimer, Meta::List<tempiP, s0pp, s1pp, VersionProvider>>;
     
     inline static void init(const bool inverted) {
         devs::eeprom::init();
-        if (!((devs::eeprom::data().magic() == 43))) {
+        if (!((devs::eeprom::data().magic() == 42))) {
             devs::eeprom::data().clear();
             devs::eeprom::data().change();
         }            
