@@ -528,6 +528,10 @@ namespace IBus2 {
                 }
                 start();
             }
+
+            inline static constexpr auto requests() {
+                return StatisticProvider::mPackets;
+            }
             
             static constexpr External::Tick<Clock> timeoutTicks{300_ms};
             
