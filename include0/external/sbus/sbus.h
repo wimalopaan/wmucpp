@@ -92,7 +92,7 @@ uint32_t sbusTime = 0;
                 enum class State : uint8_t {Undefined, Data, GotEnd, WaitEnd};
 
                 using data_t = std::array<uint16_t, 16>; 
-                using value_type = etl::uint_ranged_NaN<uint16_t, 172, 1810>;
+                using value_type = etl::uint_ranged_NaN<uint16_t, 172, 1811>;
                 using mapped_type = etl::uint_ranged_NaN<uint16_t, 480, 1504>;
                 using channel_t = etl::uint_ranged_NaN<uint8_t, 0, data_t::size() - 1>;
                 
