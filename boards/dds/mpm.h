@@ -85,6 +85,7 @@ namespace External {
 
             inline static void channel(const ch_t& c) {
                 etl::StringBufferPart<24, 4, etl::Char> sb(output);
+                etl::fill(sb, etl::Char{' '});
                 etl::itoa_r(c, sb);
             }
             
@@ -120,7 +121,8 @@ namespace External {
             enum class State : uint8_t {Undefined, Data, GotStartLow, GotStartHigh, GotProto, GotSub};
 
             using data_t = std::array<uint16_t, 16>; 
-            using value_type = etl::uint_ranged_NaN<uint16_t, 172, 1810>;
+//            using value_type = etl::uint_ranged_NaN<uint16_t, 172, 1810>;
+            using value_type = etl::uint_ranged_NaN<uint16_t, 205, 1844>;
             using channel_t = etl::uint_ranged_NaN<uint8_t, 0, data_t::size() - 1>;
             
             static inline value_type value(const channel_t ch) {

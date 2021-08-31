@@ -157,7 +157,7 @@ struct Fsm {
     enum class State : uint8_t {Undefined, Init, Search, Run, RunCheck, RunRF};
     
     static inline constexpr External::Tick<systemTimer> mInitTicks{500_ms};
-    static inline constexpr External::Tick<systemTimer> mChangeTicks{100_ms};
+    static inline constexpr External::Tick<systemTimer> mChangeTicks{300_ms};
     static inline constexpr External::Tick<systemTimer> mDebugTicks{500_ms};
     
     using Crgb = External::Crgb;
@@ -210,7 +210,7 @@ struct Fsm {
         const auto subProto = mpm_pa::subProto();
         if (subProto <= uint8_t(External::RC::Band::_72MHz)) {
             External::RC::Band band{subProto.toInt()};
-            if (mState == State::Run) {
+            if (mState != State::RunRF) {
                 if (const auto rfCh = ad9851::channel(band, ch)) {
                     mpm_out::band(band);
                     mpm_out::channel(rfCh.toRanged());
@@ -219,6 +219,7 @@ struct Fsm {
         }
     }
     
+    using sbus_t = mpm_pa::value_type;
    
     static inline void ratePeriodic() {
         blinkLed::ratePeriodic();
@@ -228,7 +229,8 @@ struct Fsm {
         const auto oldState = mState;
         ++mStateTick;
         (++mDebugTick).on(mDebugTicks, []{
-            etl::outl<terminal>("rf: "_pgm, mpm_pa::channel(), " P: "_pgm, mpm_pa::proto(), " S:"_pgm, mpm_pa::subProto(), " bi: "_pgm, (uint8_t)mpm_pa::bind());
+            etl::outl<terminal>("la: "_pgm, mLastValueChannel16.toInt(), " ch0: "_pgm, mpm_pa::value(0).toInt());
+//            etl::outl<terminal>("rf: "_pgm, mpm_pa::channel(), " P: "_pgm, mpm_pa::proto(), " S:"_pgm, mpm_pa::subProto(), " bi: "_pgm, (uint8_t)mpm_pa::bind());
         });
         
         update();
@@ -259,9 +261,12 @@ struct Fsm {
             break;
         case State::RunCheck:
             (++mChangeTick).on(mChangeTicks, []{
-                if (const auto v = mpm_pa::value(BindOnChannelChannel)) {
-                    if (v.isTop() && mLastValueChannel16.isBottom() && mpm_pa::bind()) {
-                        mState = State::RunRF;
+                if (mpm_pa::bind()) {
+                    if (const auto v = mpm_pa::value(BindOnChannelChannel)) {
+                        if (v.isTop() && (mLastValueChannel16.toInt() < sbus_t::Lower + 100)) {
+                            mState = State::RunRF;
+                        }
+                        mLastValueChannel16 = v;
                     }
                 }
                 else {
@@ -270,7 +275,7 @@ struct Fsm {
             });
             break;
         case State::RunRF:
-            if (!(mpm_pa::bind() && mpm_pa::value(BindOnChannelChannel).isTop())) {
+            if (!mpm_pa::bind()) {
                 mState = State::Run;
             }
             []<uint8_t... II>(std::integer_sequence<uint8_t, II...>){
