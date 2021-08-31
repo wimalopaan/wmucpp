@@ -1973,12 +1973,12 @@ struct BusDevs<External::Bus::SBusSPort<Devs>> {
 
 struct ThrottleMenu final : public Hott::Menu<8, false, 4> {
     struct Adapter {
-        uint8_t& operator[](const uint8_t k) {
+        uint8_t& operator[](const uint8_t) {
             return mD;
         }
         void change() {
         }
-        void select(const uint8_t k) {
+        void select(const uint8_t) {
         }
         uint8_t mD{};
     };
@@ -1997,12 +1997,12 @@ struct ThrottleMenu final : public Hott::Menu<8, false, 4> {
 
 struct KickMenu final : public Hott::Menu<8, false, 3> {
     struct Adapter {
-        uint8_t& operator[](const uint8_t k) {
+        uint8_t& operator[](const uint8_t) {
             return mD;
         }
         void change() {
         }
-        void select(const uint8_t k) {
+        void select(const uint8_t) {
         }
         uint8_t mD{};
     };
@@ -2089,7 +2089,7 @@ private:
             esc::slowdown(mD[1]);
             eeprom::data().change();
         }
-        void select(const uint8_t p) {
+        void select(const uint8_t) {
 //            lastSelected = p;
         }
     private:
