@@ -377,6 +377,8 @@ boards/rc720/Makefile
 boards/rc720/adapter.h
 boards/rc720/busdevs.h
 boards/rc720/devices.h
+boards/rc720/doc/Makefile
+boards/rc720/doc/rc720.adoc
 boards/rc720/esc.h
 boards/rc720/fbservo.h
 boards/rc720/internaltemp.h
