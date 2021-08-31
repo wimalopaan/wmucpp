@@ -40,6 +40,11 @@ include::{idir}/defs.adoc[]
 
 <<<
 
+.QR-Code zu Informationen und Downloads
+qrcode::https://github.com/wimalopaan/Electronics[xdim=10, align="center"]
+
+<<<
+
 include::{idir}/preface.adoc[]
  
 <<<
