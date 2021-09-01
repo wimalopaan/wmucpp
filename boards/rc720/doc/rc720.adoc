@@ -271,28 +271,51 @@ Damit die Kalibrierungsphase störungsfrei ablaufen kannm, stellen Sie sicher, d
 
 ==== Sensordarstellung für `S.Port`
 
-Das `RC-720-D` benutzt die _physische_ Sensor-ID `1` und stellt die folgenden Sensoren zur Verfügung:
+Das `RC-720-D` benutzt die _physische_ Sensor-ID `1` und stellt die folgenden Sensoren zur Verfügung (s.a. <<sens1>>):
 
 [horizontal]
 `Tmp2`:: _interne_ Temperatur des Moduls
 `5101`:: Position des Schottel 1
 `5102`:: Position des Schottel 2
+`5103`:: Software-Version des Moduls
 
+[[sens1]]
 .Darstellung der Sensoren für `S.Port`
 image::telem01.png[align="center",width=75%,pdfwidth=75%]
 
 Die Positionssensoren können zur graphischen Darstellung der Schottel-Lage verwendet werden.
 
+.Umbenennung der Sensoren
+[TIP]
+Weil es für die _Winkelposition_ der Schottels im `S.Port`-Protokoll keine eigene Kennung gibt, wird hier die generische Kennung `5101` und `5102` verwendet. 
+Natürlich können diese Sensoren aus umbenannt werden (s.a. <<rename>>).
+
 ==== Sensordarstellung für `IBus`
 
+Das `RC-720-D` verwendet für `IBus` die folgenden Sensoren (s.a. <<sens2>>):
+
+[horizontal]
+`Tmp2`:: _interne_ Temperatur des Moduls
+`0085`:: Position des Schottel 1 (s.a. <<rename>> zur Umbenennugn von Sensoren)
+`0085`:: Position des Schottel 2
+`Arm`:: Software-Version des Moduls
+
+[[sens2]]
+.Übersicht der Sensoren am `IBus`: man erkennt `Tmp1` als interne Temperatur, `Arm` für die Software-Version des `RC-720-D` sowie die beiden Sensoren mit der ID `0085` für die beiden Positionen.
+image::telem02.png[align="center",width=75%,pdfwidth=75%]
+
+[[rename]]
+.Gerade für die Positionssensoren empfiehlt es sich, eine _Umbenennung_ in etwa `Pos1` und `Pos2` vorzunehmen.
+image::telem04.png[align="center",width=75%,pdfwidth=75%]
 
 ==== Anzeige-Widget für EdgeTx / OpenTx Color-LCD-Sender
 
 Für die Anzeige des Soll-Schibvektors und der Ist-Lage des Schottel-Antriebs existiert ein 
 https://github.com/wimalopaan/OpenTxLua/tree/main/WIDGETS/Schottel[Schottel-Widget] für EdgeTx / OpenTx Color-LCD-Sender.
 
-.Das Telemetrie-Widget: es sind hier _zwei_ Instanzen des Schottel-Telemetrie-Widgets konfiguriert. 
-image::widget01.png[align="center",width=75%,pdfwidth=75%]
+.Das Telemetrie-Widget: es sind hier _zwei_ Instanzen des Schottel-Telemetrie-Widgets konfiguriert. In der Info-Leiste am oberen Bildschirmrand sind zwei weitere Widgets mit dem Temperatursensor und der Anzeige der Version konfiguriert.
+image::telem03.png[align="center",width=75%,pdfwidth=75%]
+//image::widget01.png[align="center",width=75%,pdfwidth=75%]
 
 Um beide Schottelzustände gleichzeitig auf einer Telemetrie-Seite anzeigen zu können, bietet sich ein 
 Layout `1x2` an. Für beide Widgets wird dann jeweils das https://github.com/wimalopaan/OpenTxLua/tree/main/WIDGETS/Schottel[Schottel-Widget] eingerichtet 

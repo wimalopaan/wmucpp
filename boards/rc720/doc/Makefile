@@ -16,7 +16,7 @@ ASCIIDOCTORFLAGS += -I $(EXTENSIONSDIR) -I $(EXTENSIONSDIR2) -r view-result-doci
 ASCIIDOCTORFLAGSINC += -I $(EXTENSIONSDIR) -I $(EXTENSIONSDIR2) -r include-file-extractor -r view-result-docinfoprocessor -r man-inline-macro-local -r asciidoctor-diagram -r tree-block-macro -r asciidoctor-mathematical # -r mathematical-treeprocessor -r mathoid-treeprocessor
 
 ASCIIDOCTORFLAGSPDF += -v -I $(EXTENSIONSDIR) -I $(EXTENSIONSDIR2) -a allow-uri-read -r asciidoctor-diagram -r tree-block-macro -r asciidoctor-mathematical
-#ASCIIDOCTORFLAGSPDF += -a pdf-themesdir=themes -a pdf-theme=basic.yml -a mathematical-format=svg --trace
+ASCIIDOCTORFLAGSPDF += -a pdf-themesdir=themes -a pdf-theme=basic.yml -a mathematical-format=svg --trace
 #ASCIIDOCTORFLAGSPDF += -a pdf-stylesdir=themes -a pdf-style=basic.yml -a mathematical-format=svg --trace
 
 ASCIIDOCTORFLAGSPDF2 += -I $(EXTENSIONSDIR) -I $(EXTENSIONSDIR2) -a allow-uri-read -r asciidoctor-diagram -r asciidoctor-mathematical -r tree-block-macro 

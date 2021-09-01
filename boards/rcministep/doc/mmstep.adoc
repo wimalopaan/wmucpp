@@ -215,6 +215,5 @@ Für den _Normalbetrieb_ ist der Anschluss an den Empfänger nicht notwendig. Da
 
 include::{idir}/operate.adoc[]
 
-
 <<<
 
