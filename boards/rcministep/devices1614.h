@@ -30,6 +30,10 @@ struct ApplData : public EEProm::DataBase<ApplData> {
     uint16_t mSpeed;
     uint16_t mBalance;
     uint16_t mCurrent;
+#ifndef NO_SHIFT
+    uint16_t mShift;
+#endif
+    uint16_t mSine;
     uint8_t mMagic;
 };
 

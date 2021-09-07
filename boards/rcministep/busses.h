@@ -33,8 +33,15 @@ struct BusDevs<External::Bus::IBusIBus<Devs>> {
     using devs = Devs;
 
     using servo_pa = IBus2::Servo::ProtocollAdapter<0>;
+//    using servo = AVR::Usart<typename devs::usart0Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<128>>;
+//    using term_dev = servo;
+#ifndef NDEBUG
     using servo = AVR::Usart<typename devs::usart0Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<128>>;
     using term_dev = servo;
+#else
+    using servo = AVR::Usart<typename devs::usart0Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<0>>;
+    using term_dev = void;
+#endif
 };
 
 template<typename Devs>
@@ -48,8 +55,15 @@ struct BusDevs<External::Bus::SBusSPort<Devs>> {
     using devs = Devs;
 
     using servo_pa = External::SBus::Servo::ProtocollAdapter<0, typename devs::systemTimer>;
+//    using servo = AVR::Usart<typename devs::usart0Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<128>>;
+//    using term_dev = servo;
+#ifndef NDEBUG
     using servo = AVR::Usart<typename devs::usart0Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<128>>;
     using term_dev = servo;
+#else
+    using servo = AVR::Usart<typename devs::usart0Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<0>>;
+    using term_dev = void;
+#endif
 };
 
 template<typename Devs>
@@ -63,8 +77,15 @@ struct BusDevs<External::Bus::SumDHott<Devs>> {
     using devs = Devs;
 
     using servo_pa = Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>;
+//    using servo = AVR::Usart<typename devs::usart0Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<128>>;
+//    using term_dev = servo;
+#ifndef NDEBUG
     using servo = AVR::Usart<typename devs::usart0Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<128>>;
     using term_dev = servo;
+#else
+    using servo = AVR::Usart<typename devs::usart0Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<0>>;
+    using term_dev = void;
+#endif
 };
 
 template<typename Devs>

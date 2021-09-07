@@ -44,7 +44,7 @@ namespace Bus {
         
         inline static constexpr External::Tick<timer> debugTicks{300_ms}; 
         inline static constexpr External::Tick<timer> eepromTicks{1000_ms}; 
-        inline static constexpr External::Tick<timer> initTicks{100_ms}; 
+        inline static constexpr External::Tick<timer> initTicks{300_ms}; 
         
         using blinker = External::Blinker2<typename devices::scanLedPin, timer, 100_ms, 2000_ms>;
         using bl_t = blinker::count_type;
@@ -58,7 +58,11 @@ namespace Bus {
                 nvm::data().mMagic = 42;
                 nvm::data().mSpeed = 1;
                 nvm::data().mCurrent = 1;
-                nvm::data().mBalance = (servo_v_t::Upper + servo_v_t::Lower)/2;
+                nvm::data().mBalance = (servo_v_t::Upper + servo_v_t::Lower) / 2;
+#ifndef NO_SHIFT
+                nvm::data().mShift = (servo_v_t::Upper + servo_v_t::Lower) / 2;
+#endif
+                nvm::data().mSine = 0;
                 nvm::data().changed();
             }
             if constexpr(External::Bus::isIBus<bus>::value) {
@@ -94,8 +98,9 @@ namespace Bus {
                 nvm::data().expire();
             });
             (++debugTick).on(debugTicks, [&]{
-                 etl::outl<terminal>("s: "_pgm, speed, " p: "_pgm, servo_pa::packages()); 
-                 etl::outl<terminal>("sc0: "_pgm, stepper::mScale0, " sc1: "_pgm, stepper::mScale1, " max: "_pgm, stepper::mCurrentMax); 
+                etl::outl<terminal>("s: "_pgm, stepper::mSineType); 
+//                 etl::outl<terminal>("s: "_pgm, speed, " p: "_pgm, servo_pa::packages()); 
+//                 etl::outl<terminal>("sc0: "_pgm, stepper::mScale0, " sc1: "_pgm, stepper::mScale1, " max: "_pgm, stepper::mCurrentMax); 
             });
 
             const auto oldState = mState;
@@ -137,6 +142,24 @@ namespace Bus {
                     nvm::data().mCurrent = c.toInt();
                     nvm::data().change();
                 }
+#ifndef NO_SHIFT
+                if (const auto c = pa::value(3); c) {
+                    stepper::shift(c.toRanged());
+                    nvm::data().mShift = c.toInt();
+                    nvm::data().change();
+                }
+                if (const auto c = pa::value(4); c) {
+                    stepper::sine(c.toRanged());
+                    nvm::data().mSine = c.toInt();
+                    nvm::data().change();
+                }
+#else
+                if (const auto c = pa::value(3); c) {
+                    stepper::sine(c.toRanged());
+                    nvm::data().mSine = c.toInt();
+                    nvm::data().change();
+                }
+#endif
                 stateTick.on(initTicks, []{
                     if (servo_pa::packages() == 0) {
                         mState = State::Run; 
@@ -156,25 +179,29 @@ namespace Bus {
                 case State::Undefined:
                     break;
                 case State::Init:
-                    etl::outl<terminal>("S I"_pgm); 
+//                    etl::outl<terminal>("S I"_pgm); 
                     break;
                 case State::Setup:
-                    etl::outl<terminal>("S S"_pgm); 
+//                    etl::outl<terminal>("S S"_pgm); 
                     blinker::blink(bl_t{2});
                     stepper::setDuty();
                     stepper::init();
                     break;
                 case State::Load:
-                    etl::outl<terminal>("S L s:"_pgm, nvm::data().mSpeed, " b: "_pgm, nvm::data().mBalance, " c: "_pgm, nvm::data().mCurrent); 
+//                    etl::outl<terminal>("S L s:"_pgm, nvm::data().mSpeed, " b: "_pgm, nvm::data().mBalance, " c: "_pgm, nvm::data().mCurrent); 
                     speed.set(nvm::data().mSpeed);
                     stepper::balance(servo_v_t{nvm::data().mBalance}.toRanged());
                     stepper::current(servo_v_t{nvm::data().mCurrent}.toRanged());
+#ifndef NO_SHIFT                    
+                    stepper::shift(servo_v_t{nvm::data().mShift}.toRanged());
+#endif
+                    stepper::sine(servo_v_t{nvm::data().mSine}.toRanged());
                     stepper::setDuty();
                     stepper::init();
                     break;
                 case State::Run:
+//                    etl::outl<terminal>("S R"_pgm); 
                     blinker::blink(bl_t{1});
-                    etl::outl<terminal>("S R"_pgm); 
                     break;
                 }
             }

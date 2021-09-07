@@ -1,5 +1,7 @@
 #define NDEBUG
 
+#define NO_SHIFT
+
 #include <cmath>
 
 #include <mcu/avr.h>
@@ -73,8 +75,22 @@ struct Application {
 };
 
 using scanner = External::Scanner2<devices, Application, Meta::List<External::Bus::IBusIBus<devices>, External::Bus::SBusSPort<devices>, External::Bus::SumDHott<devices>>, AVR::FullDuplex, true>;
+//using scanner = External::Scanner2<devices, Application, Meta::List<External::Bus::SBusSPort<devices>>, AVR::FullDuplex, true>;
 
 int main() {
     scanner::run();
 }
 
+
+#ifndef NDEBUG
+/*[[noreturn]] */inline void assertOutput(const AVR::Pgm::StringView& expr [[maybe_unused]], const AVR::Pgm::StringView& file[[maybe_unused]], unsigned int line [[maybe_unused]]) noexcept {
+    while(true) {
+////        dbg1::toggle();
+    }
+}
+
+template<typename String1, typename String2>
+[[noreturn]] inline void assertFunction(const String1& s1, const String2& s2, unsigned int l) {
+    assertOutput(s1, s2, l);
+}
+#endif

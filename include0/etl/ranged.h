@@ -662,6 +662,15 @@ namespace etl {
                 return uint_ranged_circular(mValue + (Upper + 1 - T{Shift}));
             }
         }
+
+        inline constexpr uint_ranged_circular leftShift(const T s) volatile {
+            if (s <= mValue) {
+                return uint_ranged_circular(mValue - s);
+            }
+            else {
+                return uint_ranged_circular(mValue + (Upper + 1 - s));
+            }
+        }
         
 //        inline bool operator==(value_type rhs) const {
 //            return mValue == rhs;

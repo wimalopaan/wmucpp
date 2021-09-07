@@ -36,17 +36,23 @@ namespace External {
             using scale_type = etl::uint_ranged<uint8_t, 1, scale>;
             using index_type = etl::uint_ranged_circular<uint16_t, 0, steps - 1> ;
             
-            template<size_t Steps>    
+            template<size_t Steps, double E = 1.0>    
             struct Generator {
                 constexpr auto operator()() {
                     std::array<uint16_t, Steps> data;
                     for(uint16_t i = 0; i < Steps; ++i) {
-                        data[i] = maxPeriodValue * sin((i * M_PI) / steps);
+                        data[i] = maxPeriodValue * pow(sin((i * M_PI) / steps), E);
                     }
                     return data;
                 }
             };
-            using Sine = AVR::Pgm::Util::Converter<Generator<steps>>::pgm_type;
+            using Sine10 = AVR::Pgm::Util::Converter<Generator<steps, 1.0>>::pgm_type;
+            using Sine12 = AVR::Pgm::Util::Converter<Generator<steps, 1.2>>::pgm_type;
+            using Sine14 = AVR::Pgm::Util::Converter<Generator<steps, 1.4>>::pgm_type;
+            using Sine15 = AVR::Pgm::Util::Converter<Generator<steps, 1.5>>::pgm_type;
+            using Sine16 = AVR::Pgm::Util::Converter<Generator<steps, 1.6>>::pgm_type;
+            using Sine18 = AVR::Pgm::Util::Converter<Generator<steps, 1.8>>::pgm_type;
+            using Sine20 = AVR::Pgm::Util::Converter<Generator<steps, 2.0>>::pgm_type;
             
             inline static void init() {
                 PWM::init();
@@ -64,18 +70,19 @@ namespace External {
                 mDirection = d;
             }
             
+#ifndef NO_SHIFT
             template<typename T, auto L, auto U>
             static inline void shift(const etl::uint_ranged<T, L, U>& b) {
                 constexpr T mid = b.mid();
                 constexpr T delta = (U - L) / 2;
                 
-                if (b > mid) {
-                    const T d = b - mid;            
+                if (const T v = b.toInt(); v > mid) {
+                    const T d = v - mid;            
                     const T x = etl::scale(d, etl::Intervall{0u, delta + 1}, etl::Intervall{0u, steps/8});
                     deltaShift = x;
                 }
-                else if (b < mid) {
-                    const T d = mid - b;            
+                else if (v < mid) {
+                    const T d = mid - v;            
                     const T x = etl::scale(d, etl::Intervall{0u, delta + 1}, etl::Intervall{0u, steps/8});
                     deltaShift = -x;
                 }
@@ -83,7 +90,7 @@ namespace External {
                     deltaShift = 0;
                 }   
             }
-            
+#endif            
             template<typename T, auto L, auto U>
             static inline void balance(const etl::uint_ranged<T, L, U>& b) {
                 constexpr T mid = b.mid();
@@ -112,14 +119,51 @@ namespace External {
                 const T x = etl::scaleTo<scale_type>(b);
                 mCurrentMax.set<etl::RangeCheck<false>>(x);
             }
+
+            template<typename T, auto L, auto U>
+            static inline void sine(const etl::uint_ranged<T, L, U>& s) {
+                const T x = etl::scaleTo<etl::uint_ranged<uint8_t, 0, 7>>(s);
+                mSineType = x;
+            }
             
             inline static void setDuty() {
-                index0 = index_type((index1.toInt() + steps / 2 + deltaShift));
+#ifndef NO_SHIFT
+                index0 = index1.leftShift((steps / 2) + deltaShift);
+#endif
                 const auto s0 = std::min(mScale0, mCurrentMax);
                 const auto s1 = std::min(mScale1, mCurrentMax);
-                
-                PWM::template duty<Meta::List<AVR::PWM::WO<0>>>((s0 * Sine::value(index0)) >> scaleBits);
-                PWM::template duty<Meta::List<AVR::PWM::WO<1>>>((s1 * Sine::value(index1)) >> scaleBits);
+
+                switch(mSineType) {
+                case 1:
+                    PWM::template duty<Meta::List<AVR::PWM::WO<0>>>((s0 * Sine12::value(index0)) >> scaleBits);
+                    PWM::template duty<Meta::List<AVR::PWM::WO<1>>>((s1 * Sine12::value(index1)) >> scaleBits);
+                    break;
+                case 2:
+                    PWM::template duty<Meta::List<AVR::PWM::WO<0>>>((s0 * Sine14::value(index0)) >> scaleBits);
+                    PWM::template duty<Meta::List<AVR::PWM::WO<1>>>((s1 * Sine14::value(index1)) >> scaleBits);
+                    break;
+                case 3:
+                    PWM::template duty<Meta::List<AVR::PWM::WO<0>>>((s0 * Sine15::value(index0)) >> scaleBits);
+                    PWM::template duty<Meta::List<AVR::PWM::WO<1>>>((s1 * Sine15::value(index1)) >> scaleBits);
+                    break;
+                case 4:
+                    PWM::template duty<Meta::List<AVR::PWM::WO<0>>>((s0 * Sine16::value(index0)) >> scaleBits);
+                    PWM::template duty<Meta::List<AVR::PWM::WO<1>>>((s1 * Sine16::value(index1)) >> scaleBits);
+                    break;
+                case 5:
+                    PWM::template duty<Meta::List<AVR::PWM::WO<0>>>((s0 * Sine18::value(index0)) >> scaleBits);
+                    PWM::template duty<Meta::List<AVR::PWM::WO<1>>>((s1 * Sine18::value(index1)) >> scaleBits);
+                    break;
+                case 6:
+                    PWM::template duty<Meta::List<AVR::PWM::WO<0>>>((s0 * Sine20::value(index0)) >> scaleBits);
+                    PWM::template duty<Meta::List<AVR::PWM::WO<1>>>((s1 * Sine20::value(index1)) >> scaleBits);
+                    break;
+                case 0:
+                default:
+                    PWM::template duty<Meta::List<AVR::PWM::WO<0>>>((s0 * Sine10::value(index0)) >> scaleBits);
+                    PWM::template duty<Meta::List<AVR::PWM::WO<1>>>((s1 * Sine10::value(index1)) >> scaleBits);
+                    break;
+                }
             }
             inline static void ratePeriodic() {
                 const auto oldState = mState;
@@ -190,6 +234,9 @@ namespace External {
                         }
                     }
                 }
+#ifdef NO_SHIFT
+                ++index0;
+#endif
                 ++index1;
             }  
         //private:    
@@ -217,13 +264,17 @@ namespace External {
                     }
                 });
             }
+            static inline uint8_t mSineType{0};
+            
             static inline scale_type mCurrentMax{scale_type::Lower};
             
             static inline scale_type mScale0{scale};
             static inline scale_type mScale1{scale};
         
             static inline State mState{State::Init};
+#ifndef NO_SHIFT
             static inline int16_t deltaShift{0};
+#endif
             
             inline static index_type index0{steps / 2};
             inline static index_type index1{0};
