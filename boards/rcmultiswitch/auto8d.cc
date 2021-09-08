@@ -1,7 +1,7 @@
 #define NDEBUG
  
 // additional 470R over hott-jumper
-#define HALFDUPLEX_MOD
+//#define HALFDUPLEX_MOD
 
 #define AUTO_BUS
 #define LEARN_DOWN // start at highest channel number downwards
@@ -174,6 +174,16 @@ struct FSM {
         case State::Run:
             stateTicks.on(eepromTimeoutTicks, []{
                 data().expire();
+#ifndef NDEBUG
+                if (const auto lc = PA::valueMapped(learnChannel.toRangedNaN()); lc) {
+                    if (protocol_t::isControlMessage(lc)) {
+                        etl::outl<Term>("p: "_pgm, protocol_t::toParameter(lc).toInt(), " pv: "_pgm, protocol_t::toParameterValue(lc).toInt());
+                    }
+                    else {
+                        etl::outl<Term>("a: "_pgm, protocol_t::toAddress(lc).toInt(), " i: "_pgm, protocol_t::toIndex(lc).toInt(), " m: "_pgm, protocol_t::toMode(lc).toInt());
+                    }
+                }
+#endif
             });
             SW::periodic();
             OUT::setSwitches();
