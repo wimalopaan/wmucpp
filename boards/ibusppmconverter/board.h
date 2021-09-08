@@ -53,6 +53,7 @@
 // A        Sensor (I-Bus)
 // ----
 // a1t1u1r1g
+// a2t1c1r1g: so1:t1, so2:t2, so3: gps, so4: curr, q0: rpm
 // A2c2r    2xStrom, 2xDrehzahl
 // A2c2r1g  2xStrom, 2xDrehzahl, 1xGPS
 // A2t2c    2xTemperatur, 2xStrom 
