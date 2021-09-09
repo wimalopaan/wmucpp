@@ -63,13 +63,23 @@ namespace  {
         void channel(const uint8_t c) {
             mChannel = c;
         }
+        int16_t& userZero1() {
+            return mUserZero1;
+        }
+        int16_t& userZero2() {
+            return mUserZero2;
+        }
         void clear() {
             mMagic = 42;   
             mChannel = 0;
+            mUserZero1 = 0;
+            mUserZero2 = 0;
         }
     private:
         uint8_t mMagic{};
         uint8_t mChannel{};
+        int16_t mUserZero1{};
+        int16_t mUserZero2{};
     };
 }
 

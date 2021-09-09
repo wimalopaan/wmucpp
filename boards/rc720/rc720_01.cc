@@ -90,6 +90,7 @@ struct GlobalFsm {
                                 ShowBus,
                                 CheckConfig, SearchChannel, ShowChannel, ShowChannel2,
                                 Init, Calibrate1, Calibrate2, 
+                                SetZero, SaveZero,
                                 InitRun,
                                 Run};
     
@@ -98,6 +99,7 @@ struct GlobalFsm {
     static constexpr auto showTimeout = 1000_ms;
     static constexpr External::Tick<timer> showTimeoutTicks{showTimeout};
     static constexpr External::Tick<timer> eepromTicks{1000_ms};
+    static constexpr External::Tick<timer> showTimeoutTicksLong{2000_ms};
     
     static constexpr External::Tick<timer> debugTicks{500_ms};
     static constexpr External::Tick<timer> pulseTicks{20_ms};
@@ -128,6 +130,13 @@ struct GlobalFsm {
         BusDevs::init(inverted);
         
         searchCh = search_t{appData.channel()};
+        
+        if (const auto z = appData.userZero1(); (z < 4096) && (z > -4096)) {
+            servo_0::zero() = appData.userZero1();
+        }
+        if (const auto z = appData.userZero2(); (z < 4096) && (z > -4096)) {
+            servo_1::zero() = appData.userZero2();
+        }
         
         blinker1::init();
         blinker2::init();
@@ -169,7 +178,8 @@ struct GlobalFsm {
         mDebugTick.on(debugTicks, []{
 //            etl::outl<terminal>("ch0: "_pgm, servo_pa::value(0).toInt(), " ch3: "_pgm, servo_pa::value(3).toInt());
 //            etl::outl<terminal>("p: "_pgm, sensor_pa::requests());
-            etl::outl<terminal>("ad0: "_pgm, servo_0::adiff());
+//            etl::outl<terminal>("ad0: "_pgm, servo_0::adiff());
+            etl::outl<terminal>("z0: "_pgm, servo_0::zero());
 //            etl::outl<terminal>("ch0: "_pgm, servo_pa::value(0).toInt(), " ch3: "_pgm, servo_pa::value(3).toInt());
             servo_0::debug();
             servo_1::debug();
@@ -204,8 +214,10 @@ struct GlobalFsm {
         case State::CheckConfig:
             if (config1::isActive()) {
                 mState = State::SearchChannel;
+                inConfigMode = true;
             }
             else {
+                inConfigMode = false;
                 mState = State::Calibrate1;
             }
             break;
@@ -243,6 +255,34 @@ struct GlobalFsm {
             break;
         case State::InitRun:
             mStateTick.on(startupTicks, []{
+                if (inConfigMode) {
+                    mState = State::SetZero; 
+                }
+                else {
+                    mState = State::Run;
+                }
+            });
+            break;
+        case State::SetZero:
+        {
+            constexpr value_t neutral{(value_t::Upper + value_t::Lower) / 2};
+            if (const auto dir = servo_pa::value(searchCh + 4); dir) {
+                servo_0::zero(dir);
+                servo_0::position(neutral);
+            }
+            if (const auto dir = servo_pa::value(searchCh + 5); dir) {
+                servo_1::zero(dir);
+                servo_1::position(neutral);
+            }
+            if (const auto v = servo_pa::value(searchCh.toInt()); v) {
+                if (v.toInt() > chThreshPosH.toInt()) {
+                    mState = State::SaveZero;
+                }
+            }
+        }
+            break;
+        case State::SaveZero:
+            mStateTick.on(showTimeoutTicksLong, []{
                 mState = State::Run; 
             });
             break;
@@ -332,8 +372,25 @@ struct GlobalFsm {
                 break;
             case State::InitRun:
                 etl::outl<terminal>("S InitRun"_pgm);
+                blinker1::off();
+                blinker2::off();
                 devs::pwm4::init();
                 devs::pwm5::init();
+                break;
+            case State::SetZero:
+                etl::outl<terminal>("S SetZ"_pgm);
+                blinker1::blink(bcount_t{3});
+                blinker2::blink(bcount_t{3});
+                servo_0::run();
+                servo_1::run();
+                break;
+            case State::SaveZero:
+                etl::outl<terminal>("S SetSZ"_pgm);
+                blinker1::blink(bcount_t{4});
+                blinker2::blink(bcount_t{4});
+                devs::eeprom::data().userZero1() = servo_0::zero();
+                devs::eeprom::data().userZero2() = servo_1::zero();
+                devs::eeprom::data().change();
                 break;
             case State::Run:
                 etl::outl<terminal>("S Run"_pgm);
@@ -350,6 +407,7 @@ struct GlobalFsm {
         }
     }
 private:
+    static inline bool inConfigMode{false};
     static inline uint16_t offDiff0{4000};
     static inline uint16_t offDiff1{4000};
     

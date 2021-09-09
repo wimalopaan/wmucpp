@@ -78,11 +78,29 @@ namespace External {
         static inline uint16_t span() {
             return adelta;
         }
+
+        template<auto L, auto U>
+        static inline void zero(const etl::uint_ranged_NaN<uint16_t, L, U>& pv) {
+            if (pv) {
+                zeroPos = pv.toInt() - (U + L) / 2;
+            }
+        }
+        
+        static inline int16_t& zero() {
+            return zeroPos;
+        }
         
         template<auto L, auto U>
         static inline void position(const etl::uint_ranged_NaN<uint16_t, L, U>& pv) {
             if (pv) {
-                const uint16_t sv = pv.toInt();
+//                const uint16_t sv = pv.toInt();
+                int16_t sv = pv.toInt() + zeroPos;
+                if (sv > int16_t{U}) {
+                    sv += L - U;    
+                }
+                else if (sv < int16_t{L}) {
+                    sv += U - L;
+                }
                 targetPos = amin + ((uint32_t)(sv - L) * (amax - amin)) / (U - L);
             }
         }
@@ -435,6 +453,7 @@ namespace External {
         static inline Control::PD<int16_t, float> mPd{2.0, 6.0, 500, int16_t(servoSpeedMax)};
         
         inline static int16_t targetPos{};
+        inline static int16_t zeroPos{};
         
         inline static adc_t lastAnalog;
     
