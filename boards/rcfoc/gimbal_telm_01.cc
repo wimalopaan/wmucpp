@@ -231,7 +231,8 @@ struct GlobalFsm {
         const auto ta = telemirror_pa::angle(telem_aindex_t{2});
                 
         (++mDebugTick).on(debugTicks, [&]{
-            etl::outl<terminal>("tp: "_pgm, telemirror_pa::packages(), " rssi: "_pgm, telemirror_pa::rssi(), " snr: "_pgm, telemirror_pa::snr(), " noise: "_pgm, telemirror_pa::noise(), " a: "_pgm, ta);
+            etl::outl<terminal>("tp: "_pgm, telemirror_pa::packages(), " rssi: "_pgm, telemirror_pa::rssi(), " snr: "_pgm, telemirror_pa::snr(), " noise: "_pgm, telemirror_pa::noise(), " angle: "_pgm, ta);
+            etl::outl<terminal>(" ld: "_pgm, ld);
 //            etl::outl<terminal>("ma: "_pgm, angle.toInt(), " eo: "_pgm, eoffset.toInt(),
 //                                " i: "_pgm, analog_i, " v: "_pgm, analog_v, " te: "_pgm, analog_te, " ti: "_pgm, analog_ti,
 //                                " cs: "_pgm, checkStart, " ce: "_pgm, checkEnd, " ld: "_pgm, ld, " ccs: "_pgm, currStart,
@@ -358,7 +359,6 @@ struct GlobalFsm {
             const auto sb0 = AVR::Pgm::scaleTo<sbus_value_t>(angle);
 //            const auto sb1 = AVR::Pgm::scaleTo<sbus_value_t>(la);
             sout::set(sbus_index_t{0}, sb0);
-//            sout::set(sbus_index_t{1}, sb1);
         }
             break;
         case State::Error:
@@ -371,7 +371,7 @@ struct GlobalFsm {
                 break;
             case State::Init:
                 etl::outl<terminal>("S: Init"_pgm);
-                blinkLed::blink(count_type{1});
+                blinkLed::blink(count_type{2});
                 enable::activate();
                 break;
             case State::Enable:
@@ -414,9 +414,11 @@ struct GlobalFsm {
                 etl::outl<terminal>("S: ZE"_pgm);
                 break;
             case State::Run:
+                blinkLed::blink(count_type{1});
                 etl::outl<terminal>("S: Run"_pgm);
                 break;
             case State::Error:
+                blinkLed::blink(count_type{4});
                 etl::outl<terminal>("S: Error"_pgm);
                 break;
             }

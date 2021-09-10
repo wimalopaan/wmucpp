@@ -134,7 +134,11 @@ struct GlobalFsm {
 //    m_diff_t::_;
 //    m_absdiff_t::_;
 
-    using driver = Driver<typename devs::pwm, std::integral_constant<size_t, 2048>, std::integral_constant<uint8_t, 11>, m_absdiff_t>;
+//    using driver = Driver<typename devs::pwm, std::integral_constant<size_t, 2048>, std::integral_constant<uint8_t, 11>, m_absdiff_t>;
+
+    // 2205
+    using driver = Driver<typename devs::pwm, std::integral_constant<size_t, 2048>, std::integral_constant<uint8_t, 7>, m_absdiff_t>;
+
     using e_angle_t = driver::angle_type;
     
     static inline constexpr m_angle_t zeroAngle{1023};
@@ -452,7 +456,7 @@ struct Application {
             
             gfsm::init();
             
-            etl::outl<terminal>("foc_t25_hw01"_pgm);
+            etl::outl<terminal>("gimbal_sbus_hw01"_pgm);
             
             while(true) {
                 gfsm::periodic(); 
