@@ -1,6 +1,6 @@
 = RC-720-D
 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
-:revnumber: 1.0
+:revnumber: 1.2
 :revremark: HW_1.1
 :revdate: 01.01.1970
 :lang: de
@@ -139,7 +139,7 @@ PWM-Outputs benutzt werden.
 === Schema der Übertragungskanäle
 
 Das `RC-720-D` verwendet sechs _direkt aufeinander folgende_ Übertragungskanäle. In dieser Anleitung sind das die Kanäle `10-15` als _Beispiel_. Sie können jedoch auch 
-eine andere Festlegung treffen. Daher ist es nur wichtig festzulegen, welche Kanal der _erste_ Kanal dieser Gruppe sein soll, die anderen Kanäle ergeben sich dann 
+eine andere Festlegung treffen. Daher ist es nur wichtig festzulegen, welcher Kanal der _erste_ Kanal dieser Gruppe sein soll, die anderen Kanäle ergeben sich dann 
 als die direkt folgenden.
 
 Der _erste_ Kanal der Gruppe sei mit stem:[S_0] bezeichnet. Dann haben wir folgende Zuordnungen:
@@ -150,13 +150,13 @@ Kanal stem:[(S_0)]::     Schub für Schottel 1
 Kanal stem:[(S_0 + 1)]:: Richtung für Schottel 1 
 Kanal stem:[(S_0 + 2)]:: Schub für Schottel 2 
 Kanal stem:[(S_0 + 3)]:: Richtung für Schottel 2 
-Kanal stem:[(S_0 + 4)]:: Kalibrierungskanal 1 (oder Hilfskanal 1)
-Kanal stem:[(S_0 + 5)]:: Kalibrierungskanal 2 (oder Hilfskanal 2)
+Kanal stem:[(S_0 + 4)]:: Kalibrierungskanal 1 (oder Hilfskanal 1) bzw. mechanische Null-Position 1 (nur im _Anlernmodus_ ab Version `V48`)
+Kanal stem:[(S_0 + 5)]:: Kalibrierungskanal 2 (oder Hilfskanal 2) bzw. mechanische Null-Position 1 (nur im _Anlernmodus_ ab Version `V48`)
 
 .Motorsteller
 [NOTE]
 Im Schiffsmodellbau ist es üblich, dass man Vorwärts/Rückwärts-Motorsteller einsetzt. Dies wird auch im `RC-720-D` so beibehalten, obgleich bei einem Schottelantrieb die 
-Drehrichtung des Propellers niemal umgekehrt wird. Der am `RC-720-D` eingesetzte Steller muss jedoch trotzdem ein V/R-Steller sein. Dieser wird allerdings nur in _Vorwärtsrichtung_ 
+Drehrichtung des Propellers niemals umgekehrt wird. Der am `RC-720-D` eingesetzte Steller muss jedoch trotzdem ein V/R-Steller sein. Dieser wird allerdings nur in _Vorwärtsrichtung_ 
 betrieben. So bleiben alle Ihre Steller universell einsetzbar.
 
 Entsprechend dem obigen Schema stellen Sie an Ihrem Sender ein, dass am Kanal stem:[S_0] (in diesem Dokument beispielsweise Kanal `10`) der Schub für Schottel 1 ausgegeben wird. 
@@ -173,6 +173,14 @@ für den Kanal stem:[S_0] die Nummer `13` gewählt wird. Damit liegen Kanäle st
 erscheinen nicht an den Ausgängen `O1` und `O2`.
 --
 
+.Mechanische Null-Position der Servos (ab *V48* der Firmware)
+[IMPORTANT]
+--
+Beim Einbau der Schottels ist es nicht immer möglich durch Verschieben der Anlenkung (Zahnriemen), die Null-Position des Servos mit der Geradeaus-Position des Schottelantriebes
+zur Deckung zu bringen. Aus diesem Grunde kann mit den Kanälen stem:[(S_0 + 4)] und stem:[(S_0 + 5)] _im Anlernvorgang_ die Geradeaus-Position über eine Verschiebung der Null-Position
+der Servos erreicht werden.
+--
+
 [[mix]]
 === Einrichtungen am EdgeTx/OpenTx-Sender
 
@@ -183,6 +191,12 @@ Dies geschieht durch ein entsprechendes Mischer-Skript (https://github.com/wimal
 [NOTE]
 Natürlich müssen Sie das Schottelsteuerungsskript zunächst auf die `SD-Karte` Ihres Senders kopieren (Ordner: `SCRIPTS/MIXES`). Dies wird als bekannt 
 vorausgesetzt und hier nicht weiter beschrieben.
+
+.Neuere Versionen des Mischer-Skriptes
+[TIP]
+--
+Bitte achten Sie auf regelmäßige Updates des Mischer-Skriptes. Ggf. können einige _ScreenShots_ in dieser Anleitung davon abweichen.
+--
 
 Als ersten Schritt erzeugen Sie eine neue Zeile in der Übersicht der Mischer-Skripte und wählen hier das 
 Skript `schotl.lua` von der `SD-Karte` aus.
@@ -205,7 +219,7 @@ die _Schubvektorkomponenten_ `SchottDir1`, `SchottPow1`, `SchottDir2` und `Schot
 image::screen03.png[align="center",width=75%,pdfwidth=75%]
 
 Damit werden dann nun auch die Übertragungskanäle `10` und `11` für den Schubvektor 1 und die Übertragungskanäle `13` und `14` für den 
-Schubvektor 2 definiert. Zusätzlich wird der _Input_ `Gas` auch noch für die beiden Kalibrierungskanäle `12` und `15` eingesetzt.
+Schubvektor 2 definiert. Zusätzlich wird der _Input_ `Gas` auch noch für die beiden Kalibrierungskanäle `14` und `15` eingesetzt.
 
 .Übersicht über die eingerichteten Übertragungskanäle für das `RC-720-D`
 image::screen04a.png[align="center",width=75%,pdfwidth=75%]
@@ -234,7 +248,7 @@ Gehen Sie nun folgendermaßen vor:
 ein gesonderten Steckverbinder besitzt).
 . Schalten Sie den Sender ein.
 .. Bringen Sie alle benutzten Geber in _Neutralstellung_.
-.. Achten Sie vor allem auch darauf, dass die Richtunsübertragungskanäle ebenfalls den Neutralwert liefern.
+.. Achten Sie vor allem auch darauf, dass die Richtungsübertragungskanäle ebenfalls den Neutralwert liefern.
 .. Dies können Sie am bestem am _Kanalmonitor_ kontrollieren.
 . Schalten Sie nun die Versorgung der Modellelektronik über das `RC-720-D` ein: dazu versorgen Sie beide Steller mit der notwendigen Quelle.
 . Warten Sie, bis der Empfänger den Sender auch erkannt hat.
@@ -246,10 +260,14 @@ ein gesonderten Steckverbinder besitzt).
 . Lenken Sie nun den _Schub_ des _ersten_ Schottels auf Maximalausschlag aus, _ohne_ dabei die Richtung nach links oder rechts wesentlich auszulenken.
 .. Wurde der Ausschag vom `RC-720-D` erfolgreich erkannt, so erlischt die LED 1 und die LED 2 erleuchtet.
 . Neutralisieren Sie nun wieder den Schub des Schottels 1.
-.. Wurde die Neuralposition erfolgreich erkannt, so leuchtet zusätzlich zu LED 2 nun auch wieder die LED 1 für ca. 1 Sekunde auf.
+.. Wurde die Neutralposition erfolgreich erkannt, so leuchtet zusätzlich zu LED 2 nun auch wieder die LED 1 für ca. 1 Sekunde auf.
 . Der Anlernvorgang ist damit abgeschlossen.
 .. Das `RC-720-D` geht nun - wie bei _jedem_ Einschalten - in die notwendige _Kalibrierungsphase_.
-. Nachdem auch die Kalibrierungsphase für beide Servos abgeschlossen ist, geht das `RC-720-D` in den _Betriebsmodus_ über. Anhand der Servos sollten Sie nun 
+. In der Kalibrierungsphase (bei jedem Einschalten) durchlaufen die Servos eine Umdrehung bzw. einen Suchlauf. 
+. Anschließend (_nur_ in diesem _Anlernvorgang_) kann die Null-Postion über Kanal stem:[(S_0 + 4)] und stem:[(S_0 + 5)] eingestellt werden. Die LEDs blinken dreifach.
+. Soll das Einstellen der Null-Positionen beendet werden, so betätigen Sie wieder einmal stem:[S_0] in Richtung Vollausschlag (dies braucht nur kurz zu sein, denn anschließend ist das Modul 
+betriebsbereit).
+. Danach geht das `RC-720-D` in den _Betriebsmodus_ über. Anhand der Servos sollten Sie nun 
 einen ersten Test durchführen können.
 
 [[operate]]
