@@ -25,6 +25,7 @@ namespace External {
     namespace Hal {
         class NullProtocollAdapter final {
         public:
+            using value_type = void;
             NullProtocollAdapter() = delete;
             static inline constexpr bool process(const std::byte) {
                 return false;

@@ -112,9 +112,65 @@ constexpr auto cyclic_diff(const etl::uint_ranged<T, L, U>& a, const etl::uint_r
     }
 }
 
+template<typename Encoder>
+struct EncoderStats {
+    using encoder = Encoder;
+    using m_angle_t = encoder::angle_type;
+    using m_diff_t = decltype(cyclic_diff(m_angle_t{}, m_angle_t{}));
+    using m_absdiff_t = decltype(cyclic_diff(m_angle_t{}, m_angle_t{}).rabs());
+
+    static inline auto angle() {
+        const auto a = encoder::angle();
+        
+        mSpeed = cyclic_diff(a, lastAngle);
+        mAngleEnd = a;
+        if (upWrapAround(a, lastAngle)) {
+            mFullConv -= 1;
+        }
+        else if (downWrapAround(a, lastAngle)) {
+            mFullConv += 1;
+        }
+        lastAngle = a;
+        return a;
+    }
+    
+    static inline int32_t diff() {
+        return mAngleEnd - mAngleStart + mFullConv * uint32_t(m_angle_t::Upper + 1);
+    }
+    
+    static inline m_diff_t speed() {
+        return mSpeed;
+    }
+    
+    static inline void reset() {
+        mAngleStart = lastAngle;
+        mAngleEnd = lastAngle;
+        mFullConv = 0;
+    }
+    static inline void start() {
+        reset();
+    }
+private:
+    template<typename T>
+    static inline bool upWrapAround(const T& first, const T& second) {
+        return first.toInt() > (second.toInt() + (T::Upper + T::Lower)/2);        
+    }
+    template<typename T>
+    static inline bool downWrapAround(const T& first, const T& second) {
+        return (first.toInt() + (T::Upper + T::Lower)/2) < second.toInt() ;        
+    }
+    static inline int16_t mAngleStart{0};
+    static inline int16_t mAngleEnd{0};
+    static inline int16_t mFullConv{0};
+    
+    static inline m_diff_t mSpeed{0};
+    static inline m_angle_t lastAngle;
+};
+
 template<typename BusDevs>
 struct GlobalFsm {
     using gfsm = GlobalFsm<BusDevs>;
+    using bus_type = BusDevs::bus_type;
     
     using devs = BusDevs::devs;
     using Timer = devs::systemTimer;
@@ -128,6 +184,8 @@ struct GlobalFsm {
     
     using encoder = devs::encoder;
     using m_angle_t = encoder::angle_type;
+    
+    using stats = EncoderStats<encoder>;
     
     using m_diff_t = decltype(cyclic_diff(m_angle_t{}, m_angle_t{}));
     using m_absdiff_t = decltype(cyclic_diff(m_angle_t{}, m_angle_t{}).rabs());
@@ -148,23 +206,72 @@ struct GlobalFsm {
     
     using terminal = BusDevs::terminal;
     using TermDev = terminal::device_type;
+
+    static inline constexpr bool useBus = !External::Bus::isNoBus<bus_type>::value;
+    using servo = std::conditional_t<useBus, typename BusDevs::servo, void>;
+    using servo_pa = std::conditional_t<useBus, typename BusDevs::servo_pa, External::Hal::NullProtocollAdapter>;
+
+    using servo_value_t = servo_pa::value_type;
+    static inline constexpr auto servo_mid  = []{
+        if constexpr(useBus) {
+            return (servo_value_t::Upper + servo_value_t::Lower) / 2;
+        }
+        return 0;
+    }();
+    static inline constexpr auto servo_span = []{
+        if constexpr(useBus) {
+            return (servo_value_t::Upper - servo_value_t::Lower);
+        }
+        return 0;
+    }();
+    static inline constexpr auto chThreshUp = servo_mid + servo_span / 4;
+    static inline constexpr auto chThreshDn = servo_mid - servo_span / 4;
     
     using adc_i_t = Adc::index_type;
     
     enum class State : uint8_t {Undefined, Init, Enable,
                                 CheckCurrentStart, CheckCurrentEnd,
                                 CheckDirStart, CheckDirEnd, CheckPolesStart, CheckPolesEnd,
-                                ZeroStart, ZeroEnd, 
-                                Run, Error};
+                                ZeroStart, ZeroEnd,
+                                RepositionStart, RepositionEnd,
+                                HoldUp, RampFW, CoastFW, SlowFW, 
+                                HoldDown, RampBW, RunBW, SlowBW,
+                                Run, 
+                                Error};
     
     static constexpr External::Tick<Timer> startupTicks{100_ms};
     static constexpr External::Tick<Timer> enableTicks{500_ms};
     static constexpr External::Tick<Timer> debugTicks{300_ms};
-    static constexpr External::Tick<Timer> zeroGTicks{5000_ms};
+    static constexpr External::Tick<Timer> zeroGTicks{1000_ms};
     static constexpr External::Tick<Timer> zeroTicks{10_ms};
+    static constexpr External::Tick<Timer> rampTicks{100_ms};
+    static constexpr External::Tick<Timer> rampTicksSlow{200_ms};
     
-    static inline void init() {
+    static constexpr External::Tick<Timer> autoStartTicks{3000_ms};
+    
+    static inline void init(const bool inverted) {
         TermDev::template init<AVR::BaudRate<115200>>();
+
+        if constexpr(External::Bus::isIBus<bus_type>::value) {
+            servo::template init<BaudRate<115200>>();
+            etl::outl<terminal>("IB"_pgm);
+        }
+        else if constexpr(External::Bus::isSBus<bus_type>::value) {
+            servo::template init<AVR::BaudRate<100000>, FullDuplex, true, 1>(); // 8E2
+            if (inverted) {
+                servo::rxInvert(true);
+                etl::outl<terminal>("SB I"_pgm);
+            }
+            else {
+                etl::outl<terminal>("SB"_pgm);
+            }
+        }
+        else if constexpr(External::Bus::isNoBus<bus_type>::value) {
+            
+        }
+        else {
+            static_assert(std::false_v<bus_type>, "bus type not supported");
+        }
         
         blinkLed::init();
         enable::init();
@@ -185,10 +292,11 @@ struct GlobalFsm {
         encoder::periodic();
         driver::periodic();
         
-        Adc::periodic();
-        
         encoder::template read<true>(); // increased time
         
+        if constexpr(useBus) {
+            servo::periodic();
+        }
     }
     
     static inline void ratePeriodic() {
@@ -196,12 +304,14 @@ struct GlobalFsm {
         
         driver::ratePeriodic();
         blinkLed::ratePeriodic();
+
+        servo_pa::ratePeriodic();
         
         const auto oldState = mState;
         ++mStateTick;
         
-        const m_angle_t angle = encoder::angle();
-        
+//        const m_angle_t angle = encoder::angle();
+        const m_angle_t angle = stats::angle();
 
         const auto analog_i = Adc::value(adc_i_t{0});
         const auto analog_v = Adc::value(adc_i_t{1});
@@ -209,11 +319,13 @@ struct GlobalFsm {
         const auto analog_ti = Adc::value(adc_i_t{4});
         
         (++mDebugTick).on(debugTicks, [&]{
-            etl::outl<terminal>("ma: "_pgm, angle.toInt(), " eo: "_pgm, eoffset.toInt(), 
-                                " i: "_pgm, analog_i, " v: "_pgm, analog_v, " te: "_pgm, analog_te, " ti: "_pgm, analog_ti,
-                                " cs: "_pgm, checkStart, " ce: "_pgm, checkEnd, " ld: "_pgm, ld, " ccs: "_pgm, currStart
-                                );
-            etl::outl<terminal>(mPid);
+            etl::outl<terminal>(
+                        "cv: "_pgm, stats::diff(), " sp: "_pgm, stats::speed().toInt()
+//                        "ma: "_pgm, angle.toInt(), " eo: "_pgm, eoffset.toInt(), 
+//                        " i: "_pgm, analog_i, " v: "_pgm, analog_v, " te: "_pgm, analog_te, " ti: "_pgm, analog_ti,
+//                        " cs: "_pgm, checkStart, " ce: "_pgm, checkEnd, " ld: "_pgm, ld, " ccs: "_pgm, currStart
+                        );
+//            etl::outl<terminal>(mPid);
         });
         
         switch(mState) {
@@ -228,9 +340,10 @@ struct GlobalFsm {
             });
             break;
         case State::Enable:
-            mStateTick.on(enableTicks, []{
+            mStateTick.on(enableTicks, [&]{
                 mState = State::CheckCurrentStart;
                 currStart.setToBottom();
+                stats::start();
             });
             break;
         case State::CheckCurrentStart:
@@ -261,6 +374,7 @@ struct GlobalFsm {
             }
             break;
         case State::CheckDirEnd:
+            lastAngle = angle;
             if (const auto diff = cyclic_diff(checkEnd, checkStart); diff > 0) {
                 mState = State::ZeroStart;
             }
@@ -276,8 +390,9 @@ struct GlobalFsm {
             }
             break;
         case State::CheckPolesEnd:
-            if (const auto d = cyclic_diff(m_angle_t{0}, angle); abs(d) < 10) {
-                mState = State::Run;
+            if (const auto d = cyclic_diff(m_angle_t{0}, angle); abs(d) < 50) {
+                mState = State::RepositionStart;
+                mLastSpeed.set(0);
             }
             else {
                 mState = State::Error;
@@ -310,49 +425,108 @@ struct GlobalFsm {
                 driver::angle(eoffset);
             });
             break;
+        case State::RepositionStart:
+        {
+            if (stats::speed() > -2) {
+                mLastSpeed -= 1;    
+            }
+            else if (stats::speed() < -3) {
+                mLastSpeed += 1;    
+            }
+            m_angle_t target = circularAdd(lastAngle, mLastSpeed.toInt());
+            setFOC(target, angle);
+            lastAngle = angle;
+            
+            if (stats::diff() < 0) {
+                mState = State::RepositionEnd;
+            }
+        }
+            break;
+        case State::RepositionEnd:
+            mStateTick.on(enableTicks, []{
+                mState = State::HoldUp;
+            });
+            break;
         case State::Run:
         {
-            int16_t dd = std::clamp(int16_t(angle.toInt() - lastAngle.toInt()), -50, 50);
-
-            if (dd <= -2) {
-                dd *= 4;
-                dd -= 20;
-            }
-            else if (dd >= 2) {
-                dd *= 4;
-                dd += 20;
-            }
-            
-            int16_t ta = angle + dd;
-            
-            ld = dd;
-            
-            if (ta < 0) {
-                ta += m_angle_t::Upper;
-            }            
-            else if (ta > m_angle_t::Upper) {
-                ta -= m_angle_t::Upper;
-            }            
-            
-            m_angle_t target{ta};
-            
-            auto d = cyclic_diff(target, angle);
-            
-            const auto da = d.rabs();
-//            const m_absdiff_t ccv{da + currEnd};
-            const m_absdiff_t ccv{da + (3 * currEnd) / 4};
-
-            driver::torque(d, angle, eoffset);
-            driver::scale(ccv);        
-            
+            m_angle_t target = coastAngle(lastAngle, angle);
+            setFOC(target, angle);
             lastAngle = angle;
         }
+            break;
+        case State::HoldUp:
+            setFOC(lastAngle, angle);
+            if constexpr(useBus) {
+                if (const auto v = servo_pa::value(0); v && v.toInt() > chThreshUp) {
+                    mRampInc = 1;
+                    mRampAngle = lastAngle;
+                    mState = State::RampFW;
+                }
+            }
+            else {
+                mStateTick.on(autoStartTicks, []{
+                    mRampInc = 1;
+                    mRampAngle = lastAngle;
+                    mRampStop = stats::diff() + m_angle_t::Upper + 1;
+                    mState = State::RampFW;
+                });    
+            }
+            break;
+        case State::RampFW:
+            if (stats::diff() >= mRampStop) {
+                mState = State::CoastFW;
+            }
+            mRampAngle = circularAdd(mRampAngle, mRampInc);
+            setFOC(mRampAngle, angle);
+            (++mSubStateTick).on(rampTicks, []{
+                mRampInc += 1;
+            });
+            break;
+        case State::CoastFW:
+        {
+            m_angle_t target = coastAngle(lastAngle, angle);
+            setFOC(target, angle);
+            lastAngle = angle;
+            
+            if (stats::diff() > 5 * m_angle_t::Upper) {
+                mLastSpeed = stats::speed();
+                mState = State::SlowFW;
+            }
+        }
+            break;
+        case State::SlowFW:
+        {
+            m_angle_t target = circularAdd(lastAngle, mLastSpeed.toInt());
+            setFOC(target, angle);
+            (++mSubStateTick).on(rampTicksSlow, []{
+                if (mLastSpeed > 0) {
+                    mLastSpeed -= 1;
+                }
+                else {
+                    mState = State::HoldDown;
+                }
+            });
+            lastAngle = target;
+        }
+            break;
+        case State::HoldDown:
+            setFOC(lastAngle, angle);
+            mStateTick.on(autoStartTicks, []{
+                mState = State::RepositionStart;
+            });
+            break;
+        case State::RampBW:
+            break;
+        case State::RunBW:
+            break;
+        case State::SlowBW:
             break;
         case State::Error:
             break;
         }
         if (oldState != mState) {
             mStateTick.reset();
+            mSubStateTick.reset();
             switch(mState) {
             case State::Undefined:
                 break;
@@ -365,13 +539,14 @@ struct GlobalFsm {
                 etl::outl<terminal>("S: Enable"_pgm);
                 break;
             case State::CheckCurrentStart:
+                etl::outl<terminal>("S: CCS"_pgm);
                 eoffset.setToBottom();
                 checkStart = angle;
-                etl::outl<terminal>("S: CCS"_pgm);
+                lastAngle = angle;
                 break;
             case State::CheckCurrentEnd:
-                checkEnd = angle;
                 etl::outl<terminal>("S: CCE"_pgm);
+                checkEnd = angle;
                 break;
             case State::CheckDirStart:
                 etl::outl<terminal>("S: CDS"_pgm);
@@ -384,18 +559,18 @@ struct GlobalFsm {
                 checkEnd = angle;
                 break;
             case State::CheckPolesStart:
+                etl::outl<terminal>("S: CPS"_pgm);
                 eangle = eoffset;
                 checkStart = angle;
 //                driver::scale(currEnd);
-                etl::outl<terminal>("S: CPS"_pgm);
                 break;
             case State::CheckPolesEnd:
-                checkEnd = angle;
                 etl::outl<terminal>("S: CPE"_pgm);
+                checkEnd = angle;
                 break;
             case State::ZeroStart:
-                driver::scale(m_absdiff_t{currEnd + currEnd});
                 etl::outl<terminal>("S: ZS"_pgm);
+                driver::scale(m_absdiff_t{currEnd + currEnd});
                 break;
             case State::ZeroEnd:
                 etl::outl<terminal>("S: ZE"_pgm);
@@ -403,17 +578,103 @@ struct GlobalFsm {
             case State::Run:
                 etl::outl<terminal>("S: Run"_pgm);
                 break;
+            case State::HoldUp:
+                etl::outl<terminal>("S: HUP"_pgm);
+                break;
+            case State::RampFW:
+                etl::outl<terminal>("S: RFW"_pgm);
+                break;
+            case State::CoastFW:
+                etl::outl<terminal>("S: CFW"_pgm);
+                break;
+            case State::SlowFW:
+                etl::outl<terminal>("S: SlFW"_pgm);
+                break;
+            case State::HoldDown:
+                etl::outl<terminal>("S: HDn"_pgm);
+                break;
+            case State::RampBW:
+                etl::outl<terminal>("S: RBW"_pgm);
+                break;
+            case State::RunBW:
+                etl::outl<terminal>("S: RunBW"_pgm);
+                break;
+            case State::SlowBW:
+                etl::outl<terminal>("S: SlBW"_pgm);
+                break;
+            case State::RepositionStart:
+                etl::outl<terminal>("S: RPS"_pgm);
+                break;
+            case State::RepositionEnd:
+                etl::outl<terminal>("S: RPE"_pgm);
+                break;
             case State::Error:
                 etl::outl<terminal>("S: Error"_pgm);
+                blinkLed::blink(count_type{5});
                 break;
             }
         }
     }
 private:
-    static inline m_angle_t lastAngle;
+    template<typename T, auto U, typename A>
+    inline static auto circularAdd(const etl::uint_ranged<T, 0, U>& v, const A& a) {
+        A t = v + a;        
+        while (t > A{U}) {
+            t -= U; 
+        }
+        while (t < 0) {
+            t += U;
+        }
+        return etl::uint_ranged<T, 0, U>(t);
+    }
     
+    
+    
+    static inline m_angle_t coastAngle(const m_angle_t& last, const m_angle_t& angle) {
+        int16_t dd = std::clamp(int16_t(angle.toInt() - last.toInt()), -50, 50);
+
+        if (dd <= -2) {
+            dd *= 4;
+            dd -= 30;
+        }
+        else if (dd >= 2) {
+            dd *= 4;
+            dd += 30;
+        }
+        
+        int16_t ta = angle + dd;
+        
+        ld = dd;
+        
+        static_assert(m_angle_t::Lower == 0);
+        if (ta < 0) {
+            ta += m_angle_t::Upper;
+        }            
+        else if (ta > int16_t(m_angle_t::Upper)) {
+            ta -= m_angle_t::Upper;
+        }            
+        return m_angle_t(ta);
+    }
+    
+    static inline void setFOC(const m_angle_t& target, const m_angle_t& angle) {
+        auto d = cyclic_diff(target, angle);
+        
+        const auto da = d.rabs();
+        const m_absdiff_t ccv{da + (3 * currEnd) / 4};
+        driver::torque(d, angle, eoffset);
+        driver::scale(ccv);        
+    }
+
+//    static inline uint16_t mConvolutions{0};
+    static inline uint16_t mRampInc{0};
+    static inline m_angle_t mRampAngle{};
+    
+    static inline m_angle_t lastAngle;
+    static inline m_diff_t mLastSpeed{0};
     
     static inline Control::PID<int16_t, float> mPid{2.0, 0.005, 9.0, 500, 500};
+    
+    static inline int32_t mRampStop{};
     
 //    static inline uint16_t c{0};
     static inline int16_t ld{0};
@@ -436,13 +697,13 @@ template<typename BusSystem, typename MCU = DefaultMcuType>
 struct Application {
     using busdevs = BusDevs<BusSystem>;
     
-    inline static void run() {
-        if constexpr(External::Bus::isNoBus<BusSystem>::value) {
+    inline static void run(const bool inverted = false) {
+        if constexpr(External::Bus::isNoBus<BusSystem>::value || External::Bus::isSBus<BusSystem>::value) {
             using terminal = busdevs::terminal;
             using systemTimer = busdevs::systemTimer;
             using gfsm = GlobalFsm<busdevs>;
             
-            gfsm::init();
+            gfsm::init(inverted);
             
             etl::outl<terminal>("ankerwinde_hw01"_pgm);
             
@@ -458,6 +719,7 @@ struct Application {
 
 using devices = Devices<>;
 using app = Application<External::Bus::NoBus<devices>>;
+//using app = Application<External::Bus::SBusSPort<devices>>;
 
 int main() {
     devices::init();

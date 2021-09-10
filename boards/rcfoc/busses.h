@@ -10,6 +10,7 @@ struct BusDevs;
 template<typename Devs>
 struct BusDevs<External::Bus::NoBus<Devs>> {
     static inline uint8_t magic = 42;
+    using bus_type = External::Bus::NoBus<Devs>;
     using devs = Devs;
     
     // terminal
@@ -26,6 +27,9 @@ struct BusDevs<External::Bus::NoBus<Devs>> {
     
     //sensor
     using sbusGen = External::SBus::Output::Generator<typename devs::sensorPosition, systemTimer>;
+
+    using servo = void;
+    using servo_pa = void;
     
     using adcController = devs::adcController;
 };
