@@ -398,6 +398,7 @@ boards/rcdesk/test01.cc
 boards/rcdesk/test02.cc
 boards/rcdesk/test03.cc
 boards/rcfoc/Makefile
+boards/rcfoc/ankerwinde_01.cc
 boards/rcfoc/busses.h
 boards/rcfoc/devices.h
 boards/rcfoc/driver.h

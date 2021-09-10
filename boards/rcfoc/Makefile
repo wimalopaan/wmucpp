@@ -25,6 +25,7 @@ subdirs =
 targets += gimbal_sbus_01.hex
 targets += gimbal_telm_01.hex
 targets += servo_01.hex
+targets += ankerwinde_01.hex
 
 -include ../../Makefile.avr0.include
 
