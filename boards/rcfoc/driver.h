@@ -78,6 +78,18 @@ struct Driver {
         mIndex.set(i);
         setDuty();
     }
+    static inline void torque(const int32_t& t, const index_type& a, const index_type& offset) {
+        const int16_t t_pi2 = std::clamp(t, -int32_t(piHalf), int32_t(piHalf));
+        int16_t i = a.toInt() + offset.toInt() + t_pi2;
+        while(i >= int16_t(steps)) {
+            i -= steps;    
+        }
+        while(i < 0) {
+            i += steps;    
+        }
+        mIndex.set(i);
+        setDuty();
+    }
 
     static inline void angleMaxTorqueRight(const index_type& a, const index_type& offset) {
         int16_t i = a.toInt() + offset.toInt() - piHalf;

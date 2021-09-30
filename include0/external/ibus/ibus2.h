@@ -256,6 +256,8 @@ namespace IBus2 {
             PRES             = 0x41, // Pressure
 
             ANGLE            = 0x70,
+            FW_VERSION          = 0x71,
+            STATE            = 0x72,
             
             ODO1             = 0x7c, // Odometer1
             ODO2             = 0x7d, // Odometer2

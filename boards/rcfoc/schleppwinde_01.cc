@@ -128,7 +128,11 @@ struct EncoderStats {
     }
     
     static inline int32_t diff() {
-        return mAngleEnd - mAngleStart + mFullConv * uint32_t(m_angle_t::Upper + 1);
+        return int32_t(mAngleEnd.toInt()) - mAngleStart.toInt() + mFullConv * int32_t(m_angle_t::Upper + 1) - mZero;
+    }
+    
+    static inline void zero() {
+        mZero = diff();
     }
     
     static inline m_diff_t speed() {
@@ -145,10 +149,10 @@ struct EncoderStats {
 private:
     template<typename T>
     static inline auto wrapAround(const T& first, const T& second) {
-        if (first.toInt() > (second.toInt() + (T::Upper + T::Lower)/2)) {
+        if (first.toInt() > (second.toInt() + (T::Upper - T::Lower)/2)) {
             return -1;
         }
-        else if ((first.toInt() + (T::Upper + T::Lower)/2) < second.toInt()) {
+        else if ((first.toInt() + (T::Upper - T::Lower)/2) < second.toInt()) {
             return 1;
         }
         return 0;
@@ -156,6 +160,7 @@ private:
     static inline m_angle_t mAngleStart{0};
     static inline m_angle_t mAngleEnd{0};
     static inline int16_t mFullConv{0};
+    static inline int32_t mZero{0};
     static inline m_diff_t mSpeed{0};
 };
 
@@ -224,8 +229,9 @@ struct GlobalFsm {
                                 CheckDirStart, CheckDirEnd, CheckPolesStart, CheckPolesEnd,
                                 ZeroStart, ZeroEnd,
                                 RepositionStart, RepositionEnd,
-                                HoldUp, RampFW, CoastFW, SlowFW, 
-                                HoldDown, RampBW, RunBW, SlowBW,
+                                
+                                Hold1, Hold2, Forward, Backward,
+
                                 Run, 
                                 Error};
     
@@ -433,7 +439,7 @@ struct GlobalFsm {
             break;
         case State::RepositionEnd:
             mStateTick.on(enableTicks, []{
-                mState = State::HoldUp;
+                mState = State::Hold1;
             });
             break;
         case State::Run:
@@ -443,72 +449,53 @@ struct GlobalFsm {
             lastAngle = angle;
         }
             break;
-        case State::HoldUp:
-            setFOC(lastAngle, angle);
+        case State::Hold1:
+            setFOC(-stats::diff(), angle);
             if constexpr(useBus) {
                 if (const auto v = servo_pa::value(0); v && v.toInt() > chThreshUp) {
-                    mRampInc = 1;
-                    mRampAngle = lastAngle;
-                    mState = State::RampFW;
+                    mState = State::Forward;
                 }
             }
             else {
                 mStateTick.on(autoStartTicks, []{
-                    mRampInc = 1;
-                    mRampAngle = lastAngle;
-                    mRampStop = stats::diff() + m_angle_t::Upper + 1;
-                    mState = State::RampFW;
+                    mState = State::Forward;
                 });    
             }
             break;
-        case State::RampFW:
-            if (stats::diff() >= mRampStop) {
-                mState = State::CoastFW;
+        case State::Hold2:
+            setFOC(-stats::diff(), angle);
+            if constexpr(useBus) {
+                if (const auto v = servo_pa::value(0); v && v.toInt() > chThreshUp) {
+                    mState = State::Backward;
+                }
             }
-            mRampAngle = circularAdd(mRampAngle, mRampInc);
-            setFOC(mRampAngle, angle);
-            (++mSubStateTick).on(rampTicks, []{
-                mRampInc += 1;
-            });
+            else {
+                mStateTick.on(autoStartTicks, []{
+                    mState = State::Backward;
+                });    
+            }
             break;
-        case State::CoastFW:
+        case State::Forward:
         {
-            m_angle_t target = coastAngle(lastAngle, angle);
+            if (stats::diff() >= 20000) {
+                stats::reset();
+                mState = State::Hold2;
+            }
+            m_angle_t target = circularAdd(lastAngle, 50);
             setFOC(target, angle);
             lastAngle = angle;
-            
-            if (stats::diff() > 5 * m_angle_t::Upper) {
-                mLastSpeed = stats::speed();
-                mState = State::SlowFW;
-            }
         }
             break;
-        case State::SlowFW:
+        case State::Backward:
         {
-            m_angle_t target = circularAdd(lastAngle, mLastSpeed.toInt());
+            if (stats::diff() <= -20000) {
+                stats::reset();
+                mState = State::Hold1;
+            }
+            m_angle_t target = circularAdd(lastAngle, -50);
             setFOC(target, angle);
-            (++mSubStateTick).on(rampTicksSlow, []{
-                if (mLastSpeed > 0) {
-                    mLastSpeed -= 1;
-                }
-                else {
-                    mState = State::HoldDown;
-                }
-            });
-            lastAngle = target;
+            lastAngle = angle;
         }
-            break;
-        case State::HoldDown:
-            setFOC(lastAngle, angle);
-            mStateTick.on(autoStartTicks, []{
-                mState = State::RepositionStart;
-            });
-            break;
-        case State::RampBW:
-            break;
-        case State::RunBW:
-            break;
-        case State::SlowBW:
             break;
         case State::Error:
             break;
@@ -567,29 +554,17 @@ struct GlobalFsm {
             case State::Run:
                 etl::outl<terminal>("S: Run"_pgm);
                 break;
-            case State::HoldUp:
-                etl::outl<terminal>("S: HUP"_pgm);
+            case State::Hold1:
+                etl::outl<terminal>("S: Hold1"_pgm);
                 break;
-            case State::RampFW:
-                etl::outl<terminal>("S: RFW"_pgm);
+            case State::Hold2:
+                etl::outl<terminal>("S: Hold2"_pgm);
                 break;
-            case State::CoastFW:
-                etl::outl<terminal>("S: CFW"_pgm);
+            case State::Forward:
+                etl::outl<terminal>("S: FW"_pgm);
                 break;
-            case State::SlowFW:
-                etl::outl<terminal>("S: SlFW"_pgm);
-                break;
-            case State::HoldDown:
-                etl::outl<terminal>("S: HDn"_pgm);
-                break;
-            case State::RampBW:
-                etl::outl<terminal>("S: RBW"_pgm);
-                break;
-            case State::RunBW:
-                etl::outl<terminal>("S: RunBW"_pgm);
-                break;
-            case State::SlowBW:
-                etl::outl<terminal>("S: SlBW"_pgm);
+            case State::Backward:
+                etl::outl<terminal>("S: BW"_pgm);
                 break;
             case State::RepositionStart:
                 etl::outl<terminal>("S: RPS"_pgm);
@@ -653,11 +628,13 @@ private:
         driver::torque(d, angle, eoffset);
         driver::scale(ccv);        
     }
+    static inline void setFOC(const int32_t& d, const m_angle_t& angle) {
+        const auto da = abs(d);
+        const m_absdiff_t ccv{da + (3 * currEnd) / 4};
+        driver::torque(d, angle, eoffset);
+        driver::scale(ccv);        
+    }
 
-//    static inline uint16_t mConvolutions{0};
-    static inline uint16_t mRampInc{0};
-    static inline m_angle_t mRampAngle{};
-    
     static inline m_angle_t lastAngle;
     static inline m_diff_t mLastSpeed{0};
     
@@ -694,7 +671,7 @@ struct Application {
             
             gfsm::init(inverted);
             
-            etl::outl<terminal>("ankerwinde_hw01"_pgm);
+            etl::outl<terminal>("schleppwinde_hw01"_pgm);
             
             while(true) {
                 gfsm::periodic(); 

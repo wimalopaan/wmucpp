@@ -407,6 +407,9 @@ boards/rcfoc/gimbal_sbus_01.cc
 boards/rcfoc/gimbal_telm_01.cc
 boards/rcfoc/link.h
 boards/rcfoc/parity.h
+boards/rcfoc/schleppwinde_01.cc
+boards/rcfoc/schleppwinde_02.cc
+boards/rcfoc/schleppwinde_03.cc
 boards/rcfoc/servo_01.cc
 boards/rcfoc/telemetry.h
 boards/rcfoc/test00.cc

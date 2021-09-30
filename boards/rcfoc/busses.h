@@ -63,7 +63,7 @@ struct BusDevs<External::Bus::IBusIBus<Devs>> {
     };
     
     struct AngleProvider {
-        inline static constexpr auto valueId = External::SPort::ValueId::DIY;
+//        inline static constexpr auto valueId = External::SPort::ValueId::DIY;
         inline static constexpr auto ibus_type = IBus2::Type::type::ANGLE;
         inline static constexpr void init() {}
         inline static constexpr uint16_t value() {
@@ -71,13 +71,30 @@ struct BusDevs<External::Bus::IBusIBus<Devs>> {
         }
         inline static uint16_t mAngle{};
     };
+    struct VersionProvider {
+//        inline static constexpr auto valueId = External::SPort::ValueId::DIY;
+        inline static constexpr auto ibus_type = IBus2::Type::type::FW_VERSION;
+        inline static constexpr void init() {}
+        inline static constexpr uint16_t value() {
+            return GITMAJOR;
+        }
+    };
+    struct StateProvider {
+//        inline static constexpr auto valueId = External::SPort::ValueId::DIY;
+        inline static constexpr auto ibus_type = IBus2::Type::type::STATE;
+        inline static constexpr void init() {}
+        inline static constexpr uint16_t value() {
+            return mState;
+        }
+        inline static uint16_t mState{};
+    };
     
     using adcController = devs::adcController;
     
     using tempiP = InternalTempProvider<typename Devs::adcController, 3, typename Devs::sigrow>;
     
     using sensor = IBus2::Sensor<typename Devs::sensorPosition, AVR::Usart, AVR::BaudRate<115200>, 
-                                Meta::List<tempiP, AngleProvider>, 
+                                Meta::List<tempiP, AngleProvider, VersionProvider, StateProvider>, 
                                 systemTimer, void>;
 };
 
