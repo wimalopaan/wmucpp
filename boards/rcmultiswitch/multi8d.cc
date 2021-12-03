@@ -1,7 +1,7 @@
-#define NDEBUG
+//#define NDEBUG
  
-//#define USE_IBUS
-#define USE_SBUS
+#define USE_IBUS
+//#define USE_SBUS
  
 #define LEARN_DOWN // start at highest channel number downwards
 
@@ -173,7 +173,7 @@ using ibus_switch = IBus::Switch::Digital<servo_pa, sw, out>;
 auto& appData = eeprom::data();
 
 using fsm = FSM<servo_pa, ibus_switch, out, eeprom, systemTimer, terminal>;
-
+  
 int main() {
     portmux::init();
     

@@ -4,6 +4,9 @@
 MCU = attiny1614
 F_OSC = 20000000
 
+# tiny1624 needed adapted linker script avrxmega3.xn
+#auto8d.hex: MCU = attiny1624
+
 subdirs =
 
 # digital (OpenTx)

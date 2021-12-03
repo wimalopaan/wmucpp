@@ -1,7 +1,7 @@
 #define NDEBUG
- 
+
 // additional 470R over hott-jumper
-//#define HALFDUPLEX_MOD
+#define HALFDUPLEX_MOD
 
 #define AUTO_BUS
 #define LEARN_DOWN // start at highest channel number downwards
@@ -108,6 +108,7 @@ struct FSM {
             if (!jp::read()) {
                 mShow = true;
                 mState = State::ShowBus;
+                OUT::setSwitchOn(index_t{0});                    
             }
             else {
                 mState = State::StartWait;

@@ -496,7 +496,8 @@ int main() {
     servo::init<AVR::BaudRate<100000>, HalfDuplex, true, 1>(); // 8E2
     servo::txEnable<false>();
     // maybe invert the tx pin as rx
-//    servo::txInvert(true);
+    servo::txInvert(true);
+//        servo::rxInvert(true);
 #endif
     
     gfsm::init();

@@ -3,7 +3,7 @@
 //#define DEBUG2 // RX/TX change -> full duplex (man muss dann Ibus-Input und Telemetrie tauschen) 
 
 #define INV_LED // onboad LED inverted
-
+ 
 #define AUTO_BUS // SCAN für SBus / IBus
 #define SBUS_IBUS_NO_WARN
 
@@ -576,8 +576,9 @@ struct BusDevs<External::Bus::IBusIBus<Devs>> {
     using fsm5 = FSM<typename Devs::ppmC, servo_pa, eeprom, 4>;
     
     using fsms = Meta::List<fsm1, fsm2, fsm3>;
+    using fsms2 = Meta::List<fsm1, fsm2, fsm3, fsm4, fsm5>;
     
-    using bus_switch = RCSwitch::MultiAdapter<BusParam, servo_pa, fsms, eeprom>;
+    using bus_switch = RCSwitch::MultiAdapter<BusParam, servo_pa, fsms2, eeprom>;
 
     struct Reloader {
         static inline void init() {
@@ -632,8 +633,9 @@ struct BusDevs<External::Bus::SBusSPort<Devs>> {
     using fsm5 = FSM<typename Devs::ppmC, servo_pa, eeprom, 4>;
     
     using fsms = Meta::List<fsm1, fsm2, fsm3>;
+    using fsms2 = Meta::List<fsm1, fsm2, fsm3, fsm4, fsm5>;
     
-    using bus_switch = RCSwitch::MultiAdapter<BusParam, servo_pa, fsms, eeprom>;
+    using bus_switch = RCSwitch::MultiAdapter<BusParam, servo_pa, fsms2, eeprom>;
 
     struct Reloader {
         static inline void init() {
