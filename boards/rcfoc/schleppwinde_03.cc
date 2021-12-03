@@ -683,6 +683,7 @@ struct GlobalFsm {
                 break;
             case State::Error:
                 etl::outl<terminal>("S: Error"_pgm);
+                enable::inactivate();
                 blinkLed::blink(count_type{5});
                 break;
             }

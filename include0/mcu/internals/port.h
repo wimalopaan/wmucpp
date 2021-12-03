@@ -56,7 +56,7 @@ namespace AVR {
     template<AVR::Concepts::Letter Name, typename MCU = DefaultMcuType>
     struct Port;
 
-    template<AVR::Concepts::Letter Name, AVR::Concepts::At01DxSeries MCU>
+    template<AVR::Concepts::Letter Name, AVR::Concepts::At012DxSeries MCU>
     struct Port<Name, MCU> final {
         using mcu = MCU;
         using mcuport_type = typename MCU::PortRegister;
@@ -354,7 +354,7 @@ namespace AVR {
         };
     }
     
-    template<AVR::Concepts::Pin... Pins, AVR::Concepts::At01DxSeries MCU>
+    template<AVR::Concepts::Pin... Pins, AVR::Concepts::At012DxSeries MCU>
     requires Meta::all_same_front_v<Meta::transform_type<detail::getPort, Meta::List<Pins...>>>
     struct PinGroup<Meta::List<Pins...>, MCU> {
         using pin_list = Meta::List<Pins...>;
@@ -446,7 +446,7 @@ namespace AVR {
     template<AVR::Concepts::Port Port, uint8_t PinNumber, typename MCU = DefaultMcuType>
     struct Pin;
     
-    template<AVR::Concepts::Port Port, uint8_t PinNumber, AVR::Concepts::At01DxSeries MCU>
+    template<AVR::Concepts::Port Port, uint8_t PinNumber, AVR::Concepts::At012DxSeries MCU>
     struct Pin<Port, PinNumber, MCU> final {
         static_assert(PinNumber < 8, "wrong pin number");
         Pin() = delete;

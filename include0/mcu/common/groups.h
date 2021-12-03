@@ -113,6 +113,53 @@ namespace AVR {
         struct ChannelPinMapper<std::integral_constant<decltype(0x1e), 0x1e>, AVR::ATTiny1614> {
             using pin_type = void;
         };
+
+        template<>
+        struct ChannelPinMapper<std::integral_constant<decltype(1), 1>, AVR::ATTiny1624> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::A>, 1>;  
+        };
+        template<>
+        struct ChannelPinMapper<std::integral_constant<decltype(2), 2>, AVR::ATTiny1624> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::A>, 2>;  
+        };
+        template<>
+        struct ChannelPinMapper<std::integral_constant<decltype(3), 3>, AVR::ATTiny1624> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::A>, 3>;  
+        };
+        template<>
+        struct ChannelPinMapper<std::integral_constant<decltype(4), 4>, AVR::ATTiny1624> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::A>, 4>;  
+        };
+        template<>
+        struct ChannelPinMapper<std::integral_constant<decltype(5), 5>, AVR::ATTiny1624> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::A>, 5>;  
+        };
+        template<>
+        struct ChannelPinMapper<std::integral_constant<decltype(6), 6>, AVR::ATTiny1624> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::A>, 6>;  
+        };
+        template<>
+        struct ChannelPinMapper<std::integral_constant<decltype(7), 7>, AVR::ATTiny1624> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::A>, 7>;  
+        };
+        template<>
+        struct ChannelPinMapper<std::integral_constant<decltype(10), 10>, AVR::ATTiny1624> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::B>, 1>;  
+        };
+        template<>
+        struct ChannelPinMapper<std::integral_constant<decltype(11), 11>, AVR::ATTiny1624> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::B>, 0>;  
+        };
+        template<>
+        struct ChannelPinMapper<std::integral_constant<decltype(0x1d), 0x1d>, AVR::ATTiny1624> {
+            using pin_type = void;
+        };
+        template<>
+        struct ChannelPinMapper<std::integral_constant<decltype(0x1e), 0x1e>, AVR::ATTiny1624> {
+            using pin_type = void;
+        };
+
+
         
         template<>
         struct ChannelPinMapper<std::integral_constant<decltype(0), 0>, AVR::ATTiny412> {
@@ -235,6 +282,17 @@ namespace AVR {
             using rxpin = AVR::Pin<AVR::Port<AVR::A>, 2>; 
         };
 
+        template<>
+        struct Map<Position<AVR::Component::Usart<0>, Default>, AVR::ATTiny1624> {
+            using txpin = AVR::Pin<AVR::Port<AVR::B>, 2>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::B>, 3>; 
+        };
+        template<>
+        struct Map<Position<AVR::Component::Usart<0>, Alt1>, AVR::ATTiny1624> {
+            using txpin = AVR::Pin<AVR::Port<AVR::A>, 1>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::A>, 2>; 
+        };
+        
         template<AVR::Concepts::AtDa32 MCU>
         struct Map<Position<AVR::Component::Usart<0>, Default>, MCU> {
             using txpin = AVR::Pin<AVR::Port<AVR::A>, 0>; 
@@ -345,6 +403,25 @@ namespace AVR {
             using wo5pin = AVR::Pin<AVR::Port<AVR::A>, 5>; 
         };
 
+        template<>
+        struct Map<Position<AVR::Component::Tca<0>, Default>, AVR::ATTiny1624> {
+            using wo0pin = AVR::Pin<AVR::Port<AVR::B>, 0>; 
+            using wo1pin = AVR::Pin<AVR::Port<AVR::B>, 1>; 
+            using wo2pin = AVR::Pin<AVR::Port<AVR::B>, 2>; 
+            using wo3pin = AVR::Pin<AVR::Port<AVR::A>, 3>; 
+            using wo4pin = AVR::Pin<AVR::Port<AVR::A>, 4>; 
+            using wo5pin = AVR::Pin<AVR::Port<AVR::A>, 5>; 
+        };
+        template<>
+        struct Map<Position<AVR::Component::Tca<0>, Alt1>, AVR::ATTiny1624> {
+            using wo0pin = AVR::Pin<AVR::Port<AVR::B>, 3>; 
+            using wo1pin = AVR::Pin<AVR::Port<AVR::B>, 1>; 
+            using wo2pin = AVR::Pin<AVR::Port<AVR::B>, 2>; 
+            using wo3pin = AVR::Pin<AVR::Port<AVR::A>, 3>; 
+            using wo4pin = AVR::Pin<AVR::Port<AVR::A>, 4>; 
+            using wo5pin = AVR::Pin<AVR::Port<AVR::A>, 5>; 
+        };
+        
         template<>
         struct Map<Position<AVR::Component::Tca<0>, Default>, AVR::ATTiny412> {
             using wo0pin = AVR::Pin<AVR::Port<AVR::A>, 3>; 
@@ -525,6 +602,14 @@ namespace AVR {
             using wopin = AVR::Pin<AVR::Port<AVR::A>, 3>; 
         };
 
+        template<>
+        struct Map<Position<AVR::Component::Tcb<0>, Default>, AVR::ATTiny1624> {
+            using wopin = AVR::Pin<AVR::Port<AVR::A>, 5>; 
+        };
+        template<>
+        struct Map<Position<AVR::Component::Tcb<1>, Default>, AVR::ATTiny1624> {
+            using wopin = AVR::Pin<AVR::Port<AVR::A>, 3>; 
+        };
         
         
     }

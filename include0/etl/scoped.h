@@ -79,7 +79,7 @@ namespace etl {
         typename MCU::Status::Bits v{0};
     };
 
-    template<bool Active, AVR::Concepts::At01DxSeries MCU>
+    template<bool Active, AVR::Concepts::At012DxSeries MCU>
     class Scoped<EnableInterrupt<RestoreState>, Active, MCU> final
     {
         inline static constexpr auto cpu = AVR::getBaseAddr<typename MCU::Cpu>;
@@ -142,7 +142,7 @@ namespace etl {
         typename MCU::Status::Bits v{0};
     };
 
-    template<bool Active, AVR::Concepts::At01DxSeries MCU>
+    template<bool Active, AVR::Concepts::At012DxSeries MCU>
     class Scoped<DisbaleInterrupt<RestoreState>, Active, MCU> final
     {
         inline static constexpr auto cpu = AVR::getBaseAddr<typename MCU::Cpu>;

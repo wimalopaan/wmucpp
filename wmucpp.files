@@ -1504,6 +1504,7 @@ example/features/softusart.cc
 example/main.cc
 example/main.h
 gcc/base/avr/include/avr/ioavr128da32.h
+gcc/base/avr/include/avr/iotn1624.h
 gcc/base/lib/gcc/avr/11.0.0/device-specs/specs-atmega324pb
 gcc/base/lib/gcc/avr/11.0.0/device-specs/specs-atmega328pb
 gcc/base/lib/gcc/avr/11.0.0/device-specs/specs-atmega4808
@@ -2288,6 +2289,13 @@ example/basics/register.cc
 include0/external/hal/nulldev.h
 include0/external/sbus/sport.h
 include0/external/solutions/analogsensor.h
+include0/mcu/common/components/adc2.h
+include0/mcu/common/components/bitmask_operators2.h
+include0/mcu/common/components/ccltiny2_4.h
+include0/mcu/common/components_tiny2.h
 include0/mcu/internals/dac.h
 include0/mcu/internals/nvm.h
 include0/mcu/internals/syscfg.h
+include0/mcu/tinyavr2/attiny1624.h
+include0/mcu/tinyavr2/attiny2.h
+include0/mcu/tinyavr2/components2.h

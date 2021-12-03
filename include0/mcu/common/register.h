@@ -86,7 +86,7 @@ namespace AVR {
         volatile value_type hwRegister;
     };
 
-    template<typename Component, typename BitType, typename ValueType, AVR::Concepts::At01DxSeries MCU>
+    template<typename Component, typename BitType, typename ValueType, AVR::Concepts::At012DxSeries MCU>
     struct FlagRegister<Component, BitType, WriteOnly, ValueType, MCU> final {
         typedef Component component_type;
         typedef ValueType value_type;    
@@ -213,7 +213,7 @@ namespace AVR {
         volatile value_type hwRegister;
     };
 
-    template<typename Component, typename BitType, typename ValueType, AVR::Concepts::At01DxSeries MCU>
+    template<typename Component, typename BitType, typename ValueType, AVR::Concepts::At012DxSeries MCU>
     struct ControlRegister<Component, BitType, ValueType, MCU> final {
         typedef Component component_type;
         typedef ValueType value_type;    
@@ -272,7 +272,7 @@ namespace AVR {
     };
 
 
-    template<typename Component, typename... BitTypes, typename ValueType, AVR::Concepts::At01DxSeries MCU>
+    template<typename Component, typename... BitTypes, typename ValueType, AVR::Concepts::At012DxSeries MCU>
     struct ControlRegister<Component, Meta::List<BitTypes...>, ValueType, MCU> final {
         using component_type = Component;
         using value_type = ValueType;    

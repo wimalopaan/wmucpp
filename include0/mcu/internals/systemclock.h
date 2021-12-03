@@ -198,7 +198,7 @@ namespace AVR {
         }
     };
 
-    template<AVR::Concepts::ComponentSpecifier CNumber, const auto& Interval, AVR::Concepts::At01DxSeries MCU>
+    template<AVR::Concepts::ComponentSpecifier CNumber, const auto& Interval, AVR::Concepts::At012DxSeries MCU>
     requires (std::is_same_v<AVR::A, typename CNumber::component_type>) && AVR::Util::is_duration_v<decltype(Interval)>
     struct SystemTimer<CNumber, Interval, MCU> {
         using value_type  = uint16_t;  
@@ -262,7 +262,7 @@ namespace AVR {
     };
 
 
-    template<const auto& Frequency, AVR::Concepts::At01DxSeries MCU>
+    template<const auto& Frequency, AVR::Concepts::At012DxSeries MCU>
     requires AVR::Util::is_frequency_v<decltype(Frequency)>
     struct SystemTimer<AVR::Component::Rtc<0>, Frequency, MCU> final {
         using value_type  = uint16_t;  

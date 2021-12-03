@@ -116,7 +116,7 @@ namespace EEProm {
         }
     };
    
-    template<typename DataType, uint16_t Offset, AVR::Concepts::At01Series MCU>
+    template<typename DataType, uint16_t Offset, AVR::Concepts::At012Series MCU>
     class Controller<DataType, Offset, MCU> final {
         Controller() = delete;
     public:

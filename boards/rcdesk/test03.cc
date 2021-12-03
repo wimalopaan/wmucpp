@@ -108,8 +108,8 @@ namespace Application {
     template<typename Adc>
     struct Data final : public EEProm::DataBase<Data<Adc>> {
         struct Calibration {
-            Adc::value_type min;
-            Adc::value_type max;
+            Adc::value_type min{200};
+            Adc::value_type max{800};
         };
         auto magic() const {
             return mMagic;
@@ -150,7 +150,7 @@ namespace Application {
         
         static inline constexpr External::Tick<Timer> eepromTicks{1000_ms};
         static inline constexpr External::Tick<Timer> initTicks{500_ms};
-        static inline constexpr External::Tick<Timer> roboTicks{200_ms};
+        static inline constexpr External::Tick<Timer> roboTicks{500_ms};
         static inline constexpr External::Tick<Timer> sbusTicks{14_ms};
         static_assert(sbusTicks.value > 1);
 
@@ -259,8 +259,14 @@ namespace Application {
         inline static void debug() {
             const auto& max = appData.calibrations()[0].max;
             const auto& min = appData.calibrations()[0].min;
-            etl::outl<Term>("min0: "_pgm, min, " max0: "_pgm, max, 
-                            " q0: "_pgm, robo_pa::propValues[0], " q1: "_pgm, robo_pa::propValues[1]);
+            etl::outl<Term>(
+//                        "min0: "_pgm, min, " max0: "_pgm, max, 
+                        " q0: "_pgm, robo_pa::propValues[0], " q1: "_pgm, robo_pa::propValues[1],
+//                    " s: "_pgm, (uint8_t)robo_pa::state, " lt: "_pgm, (uint8_t)robo_pa::lastTarget, " li: "_pgm, robo_pa::lastIndex.toInt(),
+//                    " lb: "_pgm, robo_pa::mLastByte,
+                    " bb: "_pgm, robo_pa::bytes(), " pp: "_pgm, robo_pa::packages()
+                    
+                    );
         }
         
 //        static inline etl::uint_ranged_circular<uint8_t, 0, 100> z1;
@@ -281,7 +287,6 @@ namespace Application {
             const int16_t w2 = lua_pa::windValues[0][2];
             
             External::QtRobo::Wind<rt, 0, int16_t>::put(w0, w1, w2);
-            
         }
 
         template<uint8_t I>
@@ -309,26 +314,27 @@ namespace Application {
         };
         static inline void update() {
             using i_t = SBus::index_type;
+            using v_t = SBus::value_type;
             []<auto... II>(std::index_sequence<II...>){
                 ((SBus::set(i_t(II), Stick<II>::sbus())), ...);
-//                ((SBus::output[II] = Stick<II>::sbus()), ...);
             }(std::make_index_sequence<numberOfSticks>{});
 
             SBus::set(i_t{numberOfSticks}, rot0::value());
             SBus::set(i_t{numberOfSticks + 1}, rot1::value());
 
             []<auto... II>(std::index_sequence<II...>){
-//                ((SBus::set(i_t(II + 8), robo_pa::propValues[II])), ...);
+                ((SBus::set(i_t(II + 8), v_t{std::clamp((uint16_t)(robo_pa::propValues[II] + 992), v_t::Lower, v_t::Upper)})), ...);
             }(std::make_index_sequence<8>{});
 
-            
             robo_pa::whenTargetChanged([](robo_pa::Target t, auto f){
                 if (f && (t == robo_pa::Target::Switch)) {
                     const auto index = f.toInt();
-//                    SBus::output[15] = SBus::sbus_min + encode(robo_pa::switchValues[index], index, 0);
+                    SBus::output[15] = SBus::sbus_min + encode(robo_pa::switchValues[index], index, 0);
+                    using ll = etl::basic_ostream<Lua>;
                 }
             });           
         }
+        
         static inline State mState{State::Undefined};
         static inline External::Tick<Timer> mSBusTicks;
         static inline External::Tick<Timer> mStateTicks;

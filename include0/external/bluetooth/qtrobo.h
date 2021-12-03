@@ -113,6 +113,7 @@ namespace External {
             enum class Target: uint8_t {Undefined, Prop, Switch, Toggle, Ping, Wind};
             
             inline static bool process(const std::byte b) { 
+                ++mBytes;
                 switch (state) {
                 case State::Undefined:
                     if (b == startSymbol) {
@@ -264,6 +265,7 @@ namespace External {
                                 changed = true;
                                 lastTarget = Target::Prop;
                                 lastIndex = index;
+                                ++mPackages;
                             }
                         }
                         else if (target == Target::Switch) {
@@ -272,6 +274,7 @@ namespace External {
                                 changed = true;
                                 lastTarget = Target::Switch;
                                 lastIndex = index;
+                                ++mPackages;
                             }
                         }
                         else if (target == Target::Toggle) {
@@ -280,6 +283,7 @@ namespace External {
                                 changed = true;
                                 lastTarget = Target::Toggle;
                                 lastIndex = index;
+                                ++mPackages;
                             }
                         }
                         state = State::Undefined;
@@ -321,7 +325,21 @@ namespace External {
                 }
             }
             inline static void ratePeriodic() {}
+            
+            inline static uint16_t packages() {
+                return mPackages;
+            }
+            inline static uint16_t bytes() {
+                return mBytes;
+            }
+            inline static void resetStats() {
+                mBytes = mPackages = 0;
+            }
+            
         private:
+            inline static uint16_t mBytes{};
+            inline static uint16_t mPackages{};
+            
             inline static int16_t w0;
             inline static int16_t w1;
             

@@ -87,7 +87,7 @@ namespace External {
         };
 
     
-        template<typename MCUAdc, auto... Channels, AVR::Concepts::At01DxSeries MCU>
+        template<typename MCUAdc, auto... Channels, AVR::Concepts::At012DxSeries MCU>
         class AdcController<MCUAdc, Meta::NList<Channels...>, MCU> final {
             enum class State : uint8_t {Start, Converting, ConversionComplete};
 

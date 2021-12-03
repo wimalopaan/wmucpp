@@ -474,7 +474,7 @@ namespace AVR {
             
         }
         
-        template<typename P, AVR::Concepts::At01DxSeries MCU>
+        template<typename P, AVR::Concepts::At012DxSeries MCU>
         struct DynamicPwm8Bit<Portmux::Position<Component::Tca<0>, P>, MCU> final {
             DynamicPwm8Bit() = delete;
             
@@ -695,7 +695,7 @@ namespace AVR {
             }
         };
         
-        template<typename P, AVR::Concepts::At01DxSeries MCU>
+        template<typename P, AVR::Concepts::At012DxSeries MCU>
         struct DynamicPwm<Portmux::Position<Component::Tca<0>, P>, MCU> final {
             
             using all_channels = Meta::List<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>;

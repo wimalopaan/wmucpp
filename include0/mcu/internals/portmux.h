@@ -378,6 +378,39 @@ namespace AVR {
                 }
             }
         };
+
+        template<typename CCList, AVR::Concepts::AtTiny2 MCU>
+        struct StaticMapper<CCList, MCU> final {
+        private:
+            static constexpr auto mcu_pmux = getBaseAddr<typename MCU::Portmux>;
+            using usart_list = Meta::filter<Meta::nonVoid, Meta::transform_type<detail::usart::Mapper, CCList>>;
+            using tca_list = Meta::filter<Meta::nonVoid, Meta::transform_type<detail::tca::Mapper, CCList>>;
+            using spi_list = Meta::filter<Meta::nonVoid, Meta::transform_type<detail::spi::Mapper, CCList>>;
+            
+            static_assert(Meta::size_v<usart_list> <= 4);
+            static_assert(Meta::size_v<tca_list> <= 1);
+            static_assert(Meta::size_v<spi_list> <= 1);
+            
+        public:
+            static inline void init() {
+                if constexpr(Meta::size_v<usart_list> > 0) {
+                    constexpr auto value = Meta::value_or_v<usart_list>;
+//                    std::integral_constant<decltype(value), value>::_;
+                    mcu_pmux()->ctrlb.template set<value>();                
+                }
+                if constexpr(Meta::size_v<tca_list> > 0) {
+                    constexpr auto value = Meta::front<tca_list>::value;
+//                    tca_list::_;
+//                    std::integral_constant<decltype(value), value>::_;
+                    mcu_pmux()->ctrlc.template set<value>();                
+                }
+                if constexpr(Meta::size_v<spi_list> > 0) {
+                    constexpr auto value = Meta::front<spi_list>::value;
+//                    std::integral_constant<decltype(value), value>::_;
+                    mcu_pmux()->ctrlb.template add<value>();                
+                }
+            }
+        };
         
         struct DynamicMapper {
             

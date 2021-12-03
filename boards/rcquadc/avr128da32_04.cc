@@ -1,4 +1,4 @@
-#define NDEBUG
+//#define NDEBUG
 
 #define LEARN_DOWN
 #define SCALE_ADC_PWM
@@ -71,6 +71,19 @@ struct VersionProvider {
         return VERSION_NUMBER;
 #endif
     }
+};
+
+struct LearnStateProvider {
+    inline static constexpr auto valueId = External::SPort::ValueId::DIY2;
+//    inline static constexpr auto ibus_type = IBus2::Type::type::ARMED;
+    inline static constexpr void init() {}
+    inline static uint16_t value() {
+        return channel + 100 * address + 10000 * reason;
+    }
+    
+    static inline uint8_t channel{};
+    static inline uint8_t address{};
+    static inline uint8_t reason{};
 };
 
 namespace IBus::Switch {
@@ -550,6 +563,9 @@ public:
         stateP::error(false);
         change();
         mEvent = Event::Reset;
+        
+        LearnStateProvider::reason = 3;
+        
     }
     
     inline static void setRamp(const pvalue_t v) {
@@ -1233,6 +1249,7 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
     static constexpr External::Tick<typename Devs::systemTimer> signalTimeoutTicks{500_ms};
     static constexpr External::Tick<typename Devs::systemTimer> eepromTimeout{2000_ms};
     static constexpr External::Tick<typename Devs::systemTimer> debugTimeout{500_ms};
+    static constexpr External::Tick<typename Devs::systemTimer> startTimeout{500_ms};
     static constexpr External::Tick<typename Devs::systemTimer> masterResetTimeout{4000_ms};
     static constexpr External::Tick<typename Devs::systemTimer> afterSearchTimeoutTicks{3000_ms};
     
@@ -1262,6 +1279,8 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
             data().clear();
             data().change();
             etl::outl<Term>("e init"_pgm);
+            
+            LearnStateProvider::reason = 1;
         }
         blinker::init();
         blinker2::init();
@@ -1325,10 +1344,13 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
         blinker2::ratePeriodic();
         switch(mState) {
         case State::Undefined:
-            mState = State::StartWait;
+            mStateTick.on(startTimeout, []{
+                mState = State::StartWait;
+            });
             break;
         case State::StartWait:
             if (jumper::isActive()) {
+                LearnStateProvider::reason = 2;
                 mState = State::MasterReset;
             }
             else {
@@ -1385,6 +1407,8 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
             }
             break;
         case State::InitRun:
+            LearnStateProvider::channel = NVM::data().channel().toInt();
+            LearnStateProvider::address = NVM::data().address().toInt();
             mState = State::Run;
             break;
         case State::Run:
@@ -1903,7 +1927,7 @@ using terminal = etl::basic_ostream<void>;
     using sp4 = ch3::stateP;
     
     using sensor = External::SPort::Sensor<External::SPort::SensorId::ID1, sensorUsart, systemTimer, 
-    Meta::List<cp1, cp2, cp3, cp4, sp1, sp2, sp3, sp4, VersionProvider>>;
+    Meta::List<cp1, cp2, cp3, cp4, sp1, sp2, sp3, sp4, VersionProvider, LearnStateProvider>>;
 
     using gswitch = IBus::Switch::GeneralSwitch<BusParam, servo_pa, sensor, Meta::List<ch0, ch1, ch2, ch3>, eeprom>;
 };

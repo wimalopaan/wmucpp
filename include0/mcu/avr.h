@@ -49,6 +49,8 @@ namespace AVR {
     //AVR1-Series
     struct ATTiny412;
     struct ATTiny1614;
+    //AVR2-Series
+    struct ATTiny1624;
 
     // DA-Series
     struct Avr128da32;
@@ -89,6 +91,8 @@ typedef AVR::ATMega4809 DefaultMcuType;
 typedef AVR::ATTiny412 DefaultMcuType;
 #elif defined(__AVR_ATtiny1614__)
 typedef AVR::ATTiny1614 DefaultMcuType;
+#elif defined(__AVR_ATtiny1624__)
+typedef AVR::ATTiny1624 DefaultMcuType;
 #elif defined(__AVR_AVR128DA32__)
 typedef AVR::Avr128da32 DefaultMcuType;
 #else
@@ -229,6 +233,7 @@ namespace AVR::detail::test {
 #if (__AVR_ARCH__ == 103)
 # include "megaavr0/atxmega.h"
 # include "tinyavr1/attiny1.h"
+# include "tinyavr2/attiny2.h"
 # include "internals/port.h"
 //# include "internals/usart.h"
 #endif

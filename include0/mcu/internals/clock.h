@@ -58,7 +58,7 @@ namespace AVR {
         }
     };
     
-    template<AVR::Concepts::At01Series MCU>
+    template<AVR::Concepts::At012Series MCU>
     struct Clock<MCU> {
         
         static inline constexpr auto mcu_clock = getBaseAddr<typename MCU::Clock>;

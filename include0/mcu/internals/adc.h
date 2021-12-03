@@ -259,7 +259,7 @@ namespace AVR {
         inline static uint8_t mNSamplesShift{0};
     };
     
-    template<AVR::Concepts::ComponentNumber CN, typename Reso, typename VRefType, AVR::Concepts::At01Series MCU>
+    template<AVR::Concepts::ComponentNumber CN, typename Reso, typename VRefType, AVR::Concepts::At012Series MCU>
     requires ((CN::value <= 1) && (Vref::detail::isVref<VRefType>::value))
     class Adc<CN, Reso, VRefType, MCU> final {
         inline static constexpr uint8_t number = CN::value;

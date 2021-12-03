@@ -1,3 +1,5 @@
+#pragma once
+
 /*
  * WMuCpp - Bare Metal C++ 
  * Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
@@ -19,26 +21,6 @@
 #pragma once
 
 #include <cstdint>
+#include <std/utility>
 
-#include "../common/concepts.h"
-
-namespace AVR {
-    namespace Cpu {
-        template<typename MCU = DefaultMcuType>
-        struct Ccp;
-
-        template<AVR::Concepts::At012DxSeries MCU>
-        struct Ccp<MCU> {
-            static constexpr auto mcu_cpu = getBaseAddr<typename MCU::Cpu>;
-            
-            [[gnu::optimize("Os")]] static inline constexpr void unlock(const auto& f) {
-                *mcu_cpu()->ccp = 0xd8_B;
-                f();
-            }
-            [[gnu::optimize("Os")]] static inline constexpr void spm(const auto& f) {
-                *mcu_cpu()->ccp = 0x9d_B;
-                f();
-            }
-        };
-    }
-}
+#include "../common/components_tiny2.h"

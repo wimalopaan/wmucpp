@@ -260,7 +260,7 @@ namespace AVR {
     };
 
     template<AVR::Concepts::ComponentPosition CP, AVR::Concepts::ProtocolAdapter PA, etl::Concepts::NamedFlag useISR,
-             etl::Concepts::NamedConstant RecvQLength, etl::Concepts::NamedConstant SendQLength , AVR::Concepts::At01DxSeries MCU >
+             etl::Concepts::NamedConstant RecvQLength, etl::Concepts::NamedConstant SendQLength , AVR::Concepts::At012DxSeries MCU >
     class Usart<CP, PA, useISR, RecvQLength, SendQLength, MCU> final : public UsartBase<MCU, CP::component_type::value> {
         
         static inline constexpr auto N = CP::component_type::value;
