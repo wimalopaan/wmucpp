@@ -376,13 +376,17 @@ boards/ppmmatrix/test04.cc
 boards/rc720/Makefile
 boards/rc720/adapter.h
 boards/rc720/busdevs.h
+boards/rc720/busdevs_multi.h
 boards/rc720/devices.h
 boards/rc720/doc/Makefile
 boards/rc720/doc/rc720.adoc
 boards/rc720/esc.h
 boards/rc720/fbservo.h
+boards/rc720/fsm.h
 boards/rc720/internaltemp.h
+boards/rc720/multiAdapter_01.cc
 boards/rc720/rc720_01.cc
+boards/rc720/storage.h
 boards/rc720/test00.cc
 boards/rc720/test01.cc
 boards/rc720/test02.cc
