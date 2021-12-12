@@ -6,6 +6,8 @@
 #define AUTO_BUS
 #define LEARN_DOWN // start at highest channel number downwards
  
+#define START_AT_CHANNEL_16
+
 #include "board.h"
 #include "swout.h"
 #include "switch.h"
@@ -278,7 +280,11 @@ private:
     using ch_t = PA::channel_t;
 
 #ifdef LEARN_DOWN
+#ifdef START_AT_CHANNEL_16
+    static inline etl::uint_ranged_circular<uint8_t, ch_t::Lower, ch_t::Upper> learnChannel{16};
+#else
     static inline etl::uint_ranged_circular<uint8_t, ch_t::Lower, ch_t::Upper> learnChannel{ch_t::Upper};
+#endif
 #else
     static inline etl::uint_ranged_circular<uint8_t, ch_t::Lower, ch_t::Upper> learnChannel{0};
 #endif
