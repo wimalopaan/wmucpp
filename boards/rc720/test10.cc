@@ -98,8 +98,6 @@ struct GFSM<Devs, Meta::List<Fsms...>> {
     }
     
     static inline void init(const bool inverted) {
-        Devs::init(inverted);
-        
         SW::init();
         NVM::init();
         if (data().magic() != 42) {
@@ -119,20 +117,20 @@ struct GFSM<Devs, Meta::List<Fsms...>> {
         
         blinker::init();
         
-//        if constexpr(External::Bus::isIBus<bus_type>::value) {
-//            Servo::template init<BaudRate<115200>, HalfDuplex>();
-//            Servo::template txEnable<false>();
-//        }
-//        else if constexpr(External::Bus::isSBus<bus_type>::value) {
-//            Servo::template init<AVR::BaudRate<100000>, HalfDuplex, true, 1>(); // 8E2
-//            Servo::template txEnable<false>();
-//            if (inverted) {
-//                Servo::txInvert(true);
-//            }
-//        }
-//        else {
-//            static_assert(std::false_v<bus_type>, "bus type not supported");
-//        }
+        if constexpr(External::Bus::isIBus<bus_type>::value) {
+            Servo::template init<BaudRate<115200>, HalfDuplex>();
+            Servo::template txEnable<false>();
+        }
+        else if constexpr(External::Bus::isSBus<bus_type>::value) {
+            Servo::template init<AVR::BaudRate<100000>, HalfDuplex, true, 1>(); // 8E2
+            Servo::template txEnable<false>();
+            if (inverted) {
+                Servo::txInvert(true);
+            }
+        }
+        else {
+            static_assert(std::false_v<bus_type>, "bus type not supported");
+        }
     }
     
     static inline void periodic() {
@@ -317,152 +315,152 @@ private:
 };
 
 
-//template<typename BusDevs>
-//struct GlobalFsm {
-//    using gfsm = GlobalFsm<BusDevs>;
+template<typename BusDevs>
+struct GlobalFsm {
+    using gfsm = GlobalFsm<BusDevs>;
     
-//    using bus_type = BusDevs::bus_type;
-//    using devs = BusDevs::devs;
-//    using nvm = devs::eeprom;
-//    using timer = devs::systemTimer;
+    using bus_type = BusDevs::bus_type;
+    using devs = BusDevs::devs;
+    using nvm = devs::eeprom;
+    using timer = devs::systemTimer;
     
-//    using lut2 = devs::lut2;
+    using lut2 = devs::lut2;
     
-//    using adc = devs::adcController;
-//    using adc_i_t = adc::index_type;
-////    adc_i_t::_;
+    using adc = devs::adcController;
+    using adc_i_t = adc::index_type;
+//    adc_i_t::_;
 
-//    using servo = BusDevs::servo;
-//    using servo_pa = BusDevs::servo_pa;
-//    using search_t = etl::uint_ranged_circular<uint8_t, 0, 15>;
-//    using value_t = servo_pa::value_type;
+    using servo = BusDevs::servo;
+    using servo_pa = BusDevs::servo_pa;
+    using search_t = etl::uint_ranged_circular<uint8_t, 0, 15>;
+    using value_t = servo_pa::value_type;
     
-//    using sensor = BusDevs::sensor;
-//    using sensor_pa = sensor::ProtocollAdapter;
+    using sensor = BusDevs::sensor;
+    using sensor_pa = sensor::ProtocollAdapter;
     
-//    using terminal = BusDevs::terminal;
-//    using TermDev = terminal::device_type;
+    using terminal = BusDevs::terminal;
+    using TermDev = terminal::device_type;
     
-//    enum class State : uint8_t {Undefined, 
-//                                ShowBus, Init,
-//                                Run};
+    enum class State : uint8_t {Undefined, 
+                                ShowBus, Init,
+                                Run};
     
-//    static constexpr External::Tick<timer> startupTicks{100_ms};
-//    static constexpr External::Tick<timer> initTimeoutTicks{300_ms};
-//    static constexpr auto showTimeout = 1000_ms;
-//    static constexpr External::Tick<timer> showTimeoutTicks{showTimeout};
-//    static constexpr External::Tick<timer> eepromTicks{1000_ms};
-//    static constexpr External::Tick<timer> showTimeoutTicksLong{2000_ms};
+    static constexpr External::Tick<timer> startupTicks{100_ms};
+    static constexpr External::Tick<timer> initTimeoutTicks{300_ms};
+    static constexpr auto showTimeout = 1000_ms;
+    static constexpr External::Tick<timer> showTimeoutTicks{showTimeout};
+    static constexpr External::Tick<timer> eepromTicks{1000_ms};
+    static constexpr External::Tick<timer> showTimeoutTicksLong{2000_ms};
     
-//    static constexpr External::Tick<timer> debugTicks{500_ms};
-//    static constexpr External::Tick<timer> pulseTicks{20_ms};
-
-
-//    using blinker1 = External::Blinker2<typename devs::led1, timer, 100_ms, showTimeout>;
-//    using blinker2 = External::Blinker2<typename devs::led2, timer, 100_ms, showTimeout>;
-//    using bcount_t = blinker1::count_type;
+    static constexpr External::Tick<timer> debugTicks{500_ms};
+    static constexpr External::Tick<timer> pulseTicks{20_ms};
 
 
-//    using pwm4 = BusDevs::pwm4;
-//    using pwm5 = BusDevs::pwm5;
+    using blinker1 = External::Blinker2<typename devs::led1, timer, 100_ms, showTimeout>;
+    using blinker2 = External::Blinker2<typename devs::led2, timer, 100_ms, showTimeout>;
+    using bcount_t = blinker1::count_type;
+
+
+    using pwm4 = BusDevs::pwm4;
+    using pwm5 = BusDevs::pwm5;
     
-//    static_assert(std::is_same_v<typename pwm4::ranged_type, typename pwm5::ranged_type>);
-//    using pwm_t = pwm4::ranged_type;
+    static_assert(std::is_same_v<typename pwm4::ranged_type, typename pwm5::ranged_type>);
+    using pwm_t = pwm4::ranged_type;
     
-//    static inline void init(const bool inverted) {
-//        BusDevs::init(inverted);
+    static inline void init(const bool inverted) {
+        BusDevs::init(inverted);
         
-//        searchCh = search_t{appData.channel()};
+        searchCh = search_t{appData.channel()};
         
-//        blinker1::init();
-//        blinker2::init();
+        blinker1::init();
+        blinker2::init();
         
-//    }
+    }
     
-//    static inline void periodic() {
-//        nvm::saveIfNeeded([&]{
-//            etl::outl<terminal>("ep s"_pgm);
-//        });
+    static inline void periodic() {
+        nvm::saveIfNeeded([&]{
+            etl::outl<terminal>("ep s"_pgm);
+        });
         
-//        servo::periodic();        
-//        adc::periodic();
-//        sensor::periodic();
-//    }
+        servo::periodic();        
+        adc::periodic();
+        sensor::periodic();
+    }
     
-//    static inline void ratePeriodic() {
-//        servo_pa::ratePeriodic();
-//        sensor::ratePeriodic();
+    static inline void ratePeriodic() {
+        servo_pa::ratePeriodic();
+        sensor::ratePeriodic();
         
-//        blinker1::ratePeriodic();
-//        blinker2::ratePeriodic();
+        blinker1::ratePeriodic();
+        blinker2::ratePeriodic();
         
-//        const auto oldState = mState;
-//        ++mPulseTick;
-//        ++mStateTick;
-//        ++mDebugTick;
+        const auto oldState = mState;
+        ++mPulseTick;
+        ++mStateTick;
+        ++mDebugTick;
         
-//        mDebugTick.on(debugTicks, []{
-//#ifndef NDEBUG
-//            if (xassert::on) {
-//                etl::outl<terminal>("assert: "_pgm, xassert::ab);
-//                xassert::on = false;
-//            }
-//#endif
-//        });
-//        mPulseTick.on(pulseTicks, []{
-//            BusDevs::onPulse();
-//        });
-//        (++mEepromTick).on(eepromTicks, []{
-//            appData.expire();
-//        });
+        mDebugTick.on(debugTicks, []{
+#ifndef NDEBUG
+            if (xassert::on) {
+                etl::outl<terminal>("assert: "_pgm, xassert::ab);
+                xassert::on = false;
+            }
+#endif
+        });
+        mPulseTick.on(pulseTicks, []{
+            BusDevs::onPulse();
+        });
+        (++mEepromTick).on(eepromTicks, []{
+            appData.expire();
+        });
 
-//        switch(mState) {
-//        case State::Undefined:
-//            mState = State::Init;
-//            break;
-//        case State::Init:
-//            mStateTick.on(initTimeoutTicks, []{
-//                mState = State::ShowBus;
-//            });
-//            break;
-//        case State::ShowBus:
-//            break;
-//        }
-//        if (oldState != mState) {
-//            mStateTick.reset();
-//            switch(mState) {
-//            case State::Undefined:
-//                break;
-//            case State::Init:
-//                etl::outl<terminal>("S Ini"_pgm);
-//                break;
-//            case State::ShowBus:
-//                etl::outl<terminal>("S Sbu"_pgm);
-//                if constexpr(External::Bus::isIBus<bus_type>::value) {
-//                    blinker1::onePeriod(bcount_t{1});
-//                }
-//                else if constexpr(External::Bus::isSBus<bus_type>::value) {
-//                    blinker1::onePeriod(bcount_t{2});
-//                }
-//                break;
-//            }
-//        }
-//    }
-//private:
-//    static inline bool inConfigMode{false};
-//    static inline uint16_t offDiff0{4000};
-//    static inline uint16_t offDiff1{4000};
+        switch(mState) {
+        case State::Undefined:
+            mState = State::Init;
+            break;
+        case State::Init:
+            mStateTick.on(initTimeoutTicks, []{
+                mState = State::ShowBus;
+            });
+            break;
+        case State::ShowBus:
+            break;
+        }
+        if (oldState != mState) {
+            mStateTick.reset();
+            switch(mState) {
+            case State::Undefined:
+                break;
+            case State::Init:
+                etl::outl<terminal>("S Ini"_pgm);
+                break;
+            case State::ShowBus:
+                etl::outl<terminal>("S Sbu"_pgm);
+                if constexpr(External::Bus::isIBus<bus_type>::value) {
+                    blinker1::onePeriod(bcount_t{1});
+                }
+                else if constexpr(External::Bus::isSBus<bus_type>::value) {
+                    blinker1::onePeriod(bcount_t{2});
+                }
+                break;
+            }
+        }
+    }
+private:
+    static inline bool inConfigMode{false};
+    static inline uint16_t offDiff0{4000};
+    static inline uint16_t offDiff1{4000};
     
-//    static inline auto& appData = nvm::data();
+    static inline auto& appData = nvm::data();
 
-//    inline static search_t searchCh{0};
+    inline static search_t searchCh{0};
 
-//    static inline State mState{State::Undefined};
-//    static inline External::Tick<timer> mStateTick{};
-//    static inline External::Tick<timer> mDebugTick{};
-//    static inline External::Tick<timer> mPulseTick{};
-//    static inline External::Tick<timer> mEepromTick{};
-//};
+    static inline State mState{State::Undefined};
+    static inline External::Tick<timer> mStateTick{};
+    static inline External::Tick<timer> mDebugTick{};
+    static inline External::Tick<timer> mPulseTick{};
+    static inline External::Tick<timer> mEepromTick{};
+};
 
 template<typename BusSystem, typename MCU = DefaultMcuType>
 struct Application {
@@ -492,7 +490,16 @@ using devices = Devices<>;
 using scanner = External::Scanner2<devices, Application, Meta::List<External::Bus::IBusIBus<devices>, External::Bus::SBusSPort<devices>>, AVR::FullDuplex>;
 
 int main() {
-    scanner::run();
+    devices::init();
+    
+    devices::led1::init();
+
+    while(true) {
+        devices::led1::activate();
+        devices::led1::inactivate();
+        
+    }    
+//    scanner::run();
 }
 
 #ifndef NDEBUG

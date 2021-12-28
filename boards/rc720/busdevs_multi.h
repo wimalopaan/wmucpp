@@ -164,9 +164,10 @@ struct BusDevs<External::Bus::SBusSPort<Devs>> {
     using fsm3 = FSM<pwm2, servo_pa, eeprom, 2>;
     using fsm4 = FSM<pwm3, servo_pa, eeprom, 3>;
     using fsm5 = FSM<pwm4, servo_pa, eeprom, 4>;
+    using fsm6 = FSM<pwm5, servo_pa, eeprom, 5>;
     
     using fsms = Meta::List<fsm1, fsm2, fsm3>;
-    using fsms2 = Meta::List<fsm1, fsm2, fsm3, fsm4, fsm5>;
+    using fsms2 = Meta::List<fsm1, fsm2, fsm3, fsm4, fsm5, fsm6>;
     
     using bus_switch = RCSwitch::MultiAdapter<BusParam, servo_pa, fsms2, eeprom>;
     
@@ -178,6 +179,7 @@ struct BusDevs<External::Bus::SBusSPort<Devs>> {
         static inline void init() {
             fsm4::init();
             fsm5::init();
+            fsm6::init();
         }
         static inline void reload() {
             devs::pwm3::onReload([]{
@@ -187,6 +189,10 @@ struct BusDevs<External::Bus::SBusSPort<Devs>> {
             devs::pwm4::onReload([]{
                 fsm5::update();
                 evrouter::template strobe<1>();
+            });
+            devs::pwm5::onReload([]{
+                fsm6::update();
+                evrouter::template strobe<2>();
             });
         }
     };
@@ -209,17 +215,17 @@ struct BusDevs<External::Bus::SBusSPort<Devs>> {
         servo::template init<AVR::BaudRate<100000>, AVR::FullDuplex, true, 1>(); // 8E2
         if (inverted) {
             servo::rxInvert(true);
-            etl::outl<terminal>("SB I"_pgm);
+            etl::outl<terminal>("xxSB I"_pgm);
         }
         else {
-            etl::outl<terminal>("SB"_pgm);
+            etl::outl<terminal>("xxSB"_pgm);
         }
         
         devs::adcController::init();
         devs::adc::nsamples(4);
         
         devs::pwm0_2::init();
-        devs::pwm3::init();
+//        devs::pwm3::init();
 //        devs::pwm4::init(); // later initialised
 //        devs::pwm5::init();
         

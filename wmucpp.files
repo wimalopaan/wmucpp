@@ -393,6 +393,7 @@ boards/rc720/test02.cc
 boards/rc720/test03.cc
 boards/rc720/test04.cc
 boards/rc720/test05.cc
+boards/rc720/test10.cc
 boards/rc720/version.h
 boards/rcactor/Makefile
 boards/rcactor/test00.cc

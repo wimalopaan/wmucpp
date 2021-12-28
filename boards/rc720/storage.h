@@ -1,7 +1,7 @@
 #pragma once
 
 namespace Storage {
-    inline static constexpr uint8_t NAdresses = 5;
+    inline static constexpr uint8_t NAdresses = 6;
     inline static constexpr uint8_t NChannels = 8;
     
     enum class Mode : uint8_t {
