@@ -398,6 +398,7 @@ boards/rc720/version.h
 boards/rcactor/Makefile
 boards/rcactor/test00.cc
 boards/rcdesk/Makefile
+boards/rcdesk/spacemouse.cc
 boards/rcdesk/test00.cc
 boards/rcdesk/test01.cc
 boards/rcdesk/test02.cc
@@ -1545,6 +1546,7 @@ host/test24.cc
 host/test24.cc
 host/test30.cc
 host/test30.cc
+host/test300.cc
 host/test50.cc
 host/test50.cc
 host/test60.cc
@@ -2294,6 +2296,7 @@ example/basics/register.cc
 include0/external/hal/nulldev.h
 include0/external/sbus/sport.h
 include0/external/solutions/analogsensor.h
+include0/external/solutions/spacemouse.h
 include0/mcu/common/components/adc2.h
 include0/mcu/common/components/bitmask_operators2.h
 include0/mcu/common/components/ccltiny2_4.h
