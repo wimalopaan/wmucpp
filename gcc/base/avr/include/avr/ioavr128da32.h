@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020, Microchip Technology Inc. and its subsidiaries ("Microchip")
+ * Copyright (C) 2021, Microchip Technology Inc. and its subsidiaries ("Microchip")
  * All rights reserved.
  *
  * This software is developed by Microchip Technology Inc. and its subsidiaries ("Microchip").
@@ -168,18 +168,17 @@ typedef enum AC_MUXPOS_enum
 /* Power profile select */
 typedef enum AC_POWER_enum
 {
-    AC_POWER_PROFILE0_gc = (0x00<<3),  /* Power profile 0, lowest consumption and highest response time. */
+    AC_POWER_PROFILE0_gc = (0x00<<3),  /* Power profile 0, Shortest response time, highest consumption */
     AC_POWER_PROFILE1_gc = (0x01<<3),  /* Power profile 1 */
     AC_POWER_PROFILE2_gc = (0x02<<3),  /* Power profile 2 */
-    AC_POWER_PROFILE3_gc = (0x03<<3),  /* Power profile 3 */
 } AC_POWER_t;
 
 /* Window selection mode select */
 typedef enum AC_WINSEL_enum
 {
     AC_WINSEL_DISABLED_gc = (0x00<<0),  /* Window function disabled */
-    AC_WINSEL_UPSEL1_gc = (0x01<<0),  /* Select ACn+1 as upper limit in window compare. */
-    AC_WINSEL_UPSEL2_gc = (0x02<<0),  /* Select ACn+2 as upper limit in window compare. */
+    AC_WINSEL_UPSEL1_gc = (0x01<<0),  /* Select ACn+1 as upper limit in window compare */
+    AC_WINSEL_UPSEL2_gc = (0x02<<0),  /* Select ACn+2 as upper limit in window compare */
 } AC_WINSEL_t;
 
 /* Analog Comparator Window State select */
@@ -433,21 +432,21 @@ typedef struct CCL_struct
     register8_t INTCTRL0;  /* Interrupt Control 0 */
     register8_t reserved_2[1];
     register8_t INTFLAGS;  /* Interrupt Flags */
-    register8_t LUT0CTRLA;  /* LUT Control 0 A */
-    register8_t LUT0CTRLB;  /* LUT Control 0 B */
-    register8_t LUT0CTRLC;  /* LUT Control 0 C */
+    register8_t LUT0CTRLA;  /* LUT 0 Control A */
+    register8_t LUT0CTRLB;  /* LUT 0 Control B */
+    register8_t LUT0CTRLC;  /* LUT 0 Control C */
     register8_t TRUTH0;  /* Truth 0 */
-    register8_t LUT1CTRLA;  /* LUT Control 1 A */
-    register8_t LUT1CTRLB;  /* LUT Control 1 B */
-    register8_t LUT1CTRLC;  /* LUT Control 1 C */
+    register8_t LUT1CTRLA;  /* LUT 1 Control A */
+    register8_t LUT1CTRLB;  /* LUT 1 Control B */
+    register8_t LUT1CTRLC;  /* LUT 1 Control C */
     register8_t TRUTH1;  /* Truth 1 */
-    register8_t LUT2CTRLA;  /* LUT Control 2 A */
-    register8_t LUT2CTRLB;  /* LUT Control 2 B */
-    register8_t LUT2CTRLC;  /* LUT Control 2 C */
+    register8_t LUT2CTRLA;  /* LUT 2 Control A */
+    register8_t LUT2CTRLB;  /* LUT 2 Control B */
+    register8_t LUT2CTRLC;  /* LUT 2 Control C */
     register8_t TRUTH2;  /* Truth 2 */
-    register8_t LUT3CTRLA;  /* LUT Control 3 A */
-    register8_t LUT3CTRLB;  /* LUT Control 3 B */
-    register8_t LUT3CTRLC;  /* LUT Control 3 C */
+    register8_t LUT3CTRLA;  /* LUT 3 Control A */
+    register8_t LUT3CTRLB;  /* LUT 3 Control B */
+    register8_t LUT3CTRLC;  /* LUT 3 Control C */
     register8_t TRUTH3;  /* Truth 3 */
     register8_t reserved_3[40];
 } CCL_t;
@@ -509,7 +508,7 @@ typedef enum CCL_INSEL1_enum
     CCL_INSEL1_SPI0_gc = (0x09<<4),  /* SPI0 MOSI input source */
     CCL_INSEL1_TCA0_gc = (0x0A<<4),  /* TCA0 WO1 input source */
     CCL_INSEL1_TCB1_gc = (0x0C<<4),  /* TCB1 WO input source */
-    CCL_INSEL1_TCD0_gc = (0x0D<<4),  /* TCD0 WOB input soruce */
+    CCL_INSEL1_TCD0_gc = (0x0D<<4),  /* TCD0 WOB input source */
 } CCL_INSEL1_t;
 
 /* LUT Input 2 Source Selection select */
@@ -566,24 +565,14 @@ typedef enum CCL_INTMODE3_enum
 } CCL_INTMODE3_t;
 
 /* Sequential Selection select */
-typedef enum CCL_SEQSEL0_enum
+typedef enum CCL_SEQSEL_enum
 {
-    CCL_SEQSEL0_DISABLE_gc = (0x00<<0),  /* Sequential logic disabled */
-    CCL_SEQSEL0_DFF_gc = (0x01<<0),  /* D FlipFlop */
-    CCL_SEQSEL0_JK_gc = (0x02<<0),  /* JK FlipFlop */
-    CCL_SEQSEL0_LATCH_gc = (0x03<<0),  /* D Latch */
-    CCL_SEQSEL0_RS_gc = (0x04<<0),  /* RS Latch */
-} CCL_SEQSEL0_t;
-
-/* Sequential Selection select */
-typedef enum CCL_SEQSEL1_enum
-{
-    CCL_SEQSEL1_DISABLE_gc = (0x00<<0),  /* Sequential logic disabled */
-    CCL_SEQSEL1_DFF_gc = (0x01<<0),  /* D FlipFlop */
-    CCL_SEQSEL1_JK_gc = (0x02<<0),  /* JK FlipFlop */
-    CCL_SEQSEL1_LATCH_gc = (0x03<<0),  /* D Latch */
-    CCL_SEQSEL1_RS_gc = (0x04<<0),  /* RS Latch */
-} CCL_SEQSEL1_t;
+    CCL_SEQSEL_DISABLE_gc = (0x00<<0),  /* Sequential logic disabled */
+    CCL_SEQSEL_DFF_gc = (0x01<<0),  /* D FlipFlop */
+    CCL_SEQSEL_JK_gc = (0x02<<0),  /* JK FlipFlop */
+    CCL_SEQSEL_LATCH_gc = (0x03<<0),  /* D Latch */
+    CCL_SEQSEL_RS_gc = (0x04<<0),  /* RS Latch */
+} CCL_SEQSEL_t;
 
 /*
 --------------------------------------------------------------------------
@@ -629,18 +618,18 @@ typedef enum CLKCTRL_CSUT_enum
 } CLKCTRL_CSUT_t;
 
 /* Frequency select select */
-typedef enum CLKCTRL_FREQSEL_enum
+typedef enum CLKCTRL_FRQSEL_enum
 {
-    CLKCTRL_FREQSEL_1M_gc = (0x00<<2),  /* 1 MHz system clock */
-    CLKCTRL_FREQSEL_2M_gc = (0x01<<2),  /* 2 MHz system clock */
-    CLKCTRL_FREQSEL_3M_gc = (0x02<<2),  /* 3 MHz system clock */
-    CLKCTRL_FREQSEL_4M_gc = (0x03<<2),  /* 4 MHz system clock (default) */
-    CLKCTRL_FREQSEL_8M_gc = (0x05<<2),  /* 8 MHz system clock */
-    CLKCTRL_FREQSEL_12M_gc = (0x06<<2),  /* 12 MHz system clock */
-    CLKCTRL_FREQSEL_16M_gc = (0x07<<2),  /* 16 MHz system clock */
-    CLKCTRL_FREQSEL_20M_gc = (0x08<<2),  /* 20 MHz system clock */
-    CLKCTRL_FREQSEL_24M_gc = (0x09<<2),  /* 24 MHz system clock */
-} CLKCTRL_FREQSEL_t;
+    CLKCTRL_FRQSEL_1M_gc = (0x00<<2),  /* 1 MHz system clock */
+    CLKCTRL_FRQSEL_2M_gc = (0x01<<2),  /* 2 MHz system clock */
+    CLKCTRL_FRQSEL_3M_gc = (0x02<<2),  /* 3 MHz system clock */
+    CLKCTRL_FRQSEL_4M_gc = (0x03<<2),  /* 4 MHz system clock (default) */
+    CLKCTRL_FRQSEL_8M_gc = (0x05<<2),  /* 8 MHz system clock */
+    CLKCTRL_FRQSEL_12M_gc = (0x06<<2),  /* 12 MHz system clock */
+    CLKCTRL_FRQSEL_16M_gc = (0x07<<2),  /* 16 MHz system clock */
+    CLKCTRL_FRQSEL_20M_gc = (0x08<<2),  /* 20 MHz system clock */
+    CLKCTRL_FRQSEL_24M_gc = (0x09<<2),  /* 24 MHz system clock */
+} CLKCTRL_FRQSEL_t;
 
 /* Multiplication factor select */
 typedef enum CLKCTRL_MULFAC_enum
@@ -671,6 +660,8 @@ typedef enum CLKCTRL_PDIV_enum
 CPU - CPU
 --------------------------------------------------------------------------
 */
+
+#define CORE_VERSION  V4S
 
 /* CCP signature select */
 typedef enum CCP_enum
@@ -1242,9 +1233,9 @@ typedef FUSE_t NVM_FUSES_t;
 typedef enum ACTIVE_enum
 {
     ACTIVE_DISABLE_gc = (0x00<<2),  /* BOD disabled */
-    ACTIVE_ENABLE_gc = (0x01<<2),  /* BOD enabled in continiuous mode */
+    ACTIVE_ENABLE_gc = (0x01<<2),  /* BOD enabled in continuous mode */
     ACTIVE_SAMPLE_gc = (0x02<<2),  /* BOD enabled in sampled mode */
-    ACTIVE_ENABLEWAIT_gc = (0x03<<2),  /* BOD enabled in continiuous mode. Execution is halted at wake-up until BOD is running. */
+    ACTIVE_ENABLEWAIT_gc = (0x03<<2),  /* BOD enabled in continuous mode. Execution is halted at wake-up until BOD is running. */
 } ACTIVE_t;
 
 /* Frequency Select select */
@@ -1314,7 +1305,7 @@ typedef enum SAMPFREQ_enum
 typedef enum SLEEP_enum
 {
     SLEEP_DISABLE_gc = (0x00<<0),  /* BOD disabled */
-    SLEEP_ENABLE_gc = (0x01<<0),  /* BOD enabled in continiuous mode */
+    SLEEP_ENABLE_gc = (0x01<<0),  /* BOD enabled in continuous mode */
     SLEEP_SAMPLE_gc = (0x02<<0),  /* BOD enabled in sampled mode */
 } SLEEP_t;
 
@@ -2018,6 +2009,7 @@ typedef enum TCA_SINGLE_EVACTA_enum
 /* Event Action B select */
 typedef enum TCA_SINGLE_EVACTB_enum
 {
+    TCA_SINGLE_EVACTB_NONE_gc = (0x00<<5),  /* No Action */
     TCA_SINGLE_EVACTB_UPDOWN_gc = (0x03<<5),  /* Count on prescaled clock. Event controls count direction. Up-count when event line is 0, down-count when event line is 1. */
     TCA_SINGLE_EVACTB_RESTART_POSEDGE_gc = (0x04<<5),  /* Restart counter at positive edge event */
     TCA_SINGLE_EVACTB_RESTART_ANYEDGE_gc = (0x05<<5),  /* Restart counter on any edge event */
@@ -2287,18 +2279,18 @@ typedef struct TWI_struct
     register8_t CTRLA;  /* Control A */
     register8_t DUALCTRL;  /* Dual Control */
     register8_t DBGCTRL;  /* Debug Control Register */
-    register8_t MCTRLA;  /* Master Control A */
-    register8_t MCTRLB;  /* Master Control B */
-    register8_t MSTATUS;  /* Master Status */
-    register8_t MBAUD;  /* Master Baud Rate Control */
-    register8_t MADDR;  /* Master Address */
-    register8_t MDATA;  /* Master Data */
-    register8_t SCTRLA;  /* Slave Control A */
-    register8_t SCTRLB;  /* Slave Control B */
-    register8_t SSTATUS;  /* Slave Status */
-    register8_t SADDR;  /* Slave Address */
-    register8_t SDATA;  /* Slave Data */
-    register8_t SADDRMASK;  /* Slave Address Mask */
+    register8_t MCTRLA;  /* Host Control A */
+    register8_t MCTRLB;  /* Host Control B */
+    register8_t MSTATUS;  /* Host Status */
+    register8_t MBAUD;  /* Host Baud Rate Control */
+    register8_t MADDR;  /* Host Address */
+    register8_t MDATA;  /* Host Data */
+    register8_t SCTRLA;  /* Client Control A */
+    register8_t SCTRLB;  /* Client Control B */
+    register8_t SSTATUS;  /* Client Status */
+    register8_t SADDR;  /* Client Address */
+    register8_t SDATA;  /* Client Data */
+    register8_t SADDRMASK;  /* Client Address Mask */
     register8_t reserved_1[1];
 } TWI_t;
 
@@ -2309,7 +2301,7 @@ typedef enum TWI_ACKACT_enum
     TWI_ACKACT_NACK_gc = (0x01<<2),  /* Send NACK */
 } TWI_ACKACT_t;
 
-/* Slave Address or Stop select */
+/* Client Address or Stop select */
 typedef enum TWI_AP_enum
 {
     TWI_AP_STOP_gc = (0x00<<0),  /* Stop condition generated APIF */
@@ -2426,7 +2418,7 @@ typedef enum USART_CMODE_enum
     USART_CMODE_ASYNCHRONOUS_gc = (0x00<<6),  /* Asynchronous Mode */
     USART_CMODE_SYNCHRONOUS_gc = (0x01<<6),  /* Synchronous Mode */
     USART_CMODE_IRCOM_gc = (0x02<<6),  /* Infrared Communication */
-    USART_CMODE_MSPI_gc = (0x03<<6),  /* Master SPI Mode */
+    USART_CMODE_MSPI_gc = (0x03<<6),  /* SPI Host Mode */
 } USART_CMODE_t;
 
 /* Parity Mode select */
@@ -3739,24 +3731,17 @@ IO Module Instances. Mapped to memory.
 #define CCL_RUNSTDBY_bp  6  /* Run in Standby bit position. */
 
 /* CCL.SEQCTRL0  bit masks and bit positions */
-#define CCL_SEQSEL0_gm  0x07  /* Sequential Selection group mask. */
-#define CCL_SEQSEL0_gp  0  /* Sequential Selection group position. */
-#define CCL_SEQSEL00_bm  (1<<0)  /* Sequential Selection bit 0 mask. */
-#define CCL_SEQSEL00_bp  0  /* Sequential Selection bit 0 position. */
-#define CCL_SEQSEL01_bm  (1<<1)  /* Sequential Selection bit 1 mask. */
-#define CCL_SEQSEL01_bp  1  /* Sequential Selection bit 1 position. */
-#define CCL_SEQSEL02_bm  (1<<2)  /* Sequential Selection bit 2 mask. */
-#define CCL_SEQSEL02_bp  2  /* Sequential Selection bit 2 position. */
+#define CCL_SEQSEL_gm  0x07  /* Sequential Selection group mask. */
+#define CCL_SEQSEL_gp  0  /* Sequential Selection group position. */
+#define CCL_SEQSEL0_bm  (1<<0)  /* Sequential Selection bit 0 mask. */
+#define CCL_SEQSEL0_bp  0  /* Sequential Selection bit 0 position. */
+#define CCL_SEQSEL1_bm  (1<<1)  /* Sequential Selection bit 1 mask. */
+#define CCL_SEQSEL1_bp  1  /* Sequential Selection bit 1 position. */
+#define CCL_SEQSEL2_bm  (1<<2)  /* Sequential Selection bit 2 mask. */
+#define CCL_SEQSEL2_bp  2  /* Sequential Selection bit 2 position. */
 
 /* CCL.SEQCTRL1  bit masks and bit positions */
-#define CCL_SEQSEL1_gm  0x07  /* Sequential Selection group mask. */
-#define CCL_SEQSEL1_gp  0  /* Sequential Selection group position. */
-#define CCL_SEQSEL10_bm  (1<<0)  /* Sequential Selection bit 0 mask. */
-#define CCL_SEQSEL10_bp  0  /* Sequential Selection bit 0 position. */
-#define CCL_SEQSEL11_bm  (1<<1)  /* Sequential Selection bit 1 mask. */
-#define CCL_SEQSEL11_bp  1  /* Sequential Selection bit 1 position. */
-#define CCL_SEQSEL12_bm  (1<<2)  /* Sequential Selection bit 2 mask. */
-#define CCL_SEQSEL12_bp  2  /* Sequential Selection bit 2 position. */
+/* CCL_SEQSEL  is already defined. */
 
 /* CCL.INTCTRL0  bit masks and bit positions */
 #define CCL_INTMODE0_gm  0x03  /* Interrupt Mode for LUT0 group mask. */
@@ -3851,6 +3836,25 @@ IO Module Instances. Mapped to memory.
 #define CCL_INSEL23_bm  (1<<3)  /* LUT Input 2 Source Selection bit 3 mask. */
 #define CCL_INSEL23_bp  3  /* LUT Input 2 Source Selection bit 3 position. */
 
+/* CCL.TRUTH0  bit masks and bit positions */
+#define CCL_TRUTH_gm  0xFF  /* Truth Table group mask. */
+#define CCL_TRUTH_gp  0  /* Truth Table group position. */
+#define CCL_TRUTH0_bm  (1<<0)  /* Truth Table bit 0 mask. */
+#define CCL_TRUTH0_bp  0  /* Truth Table bit 0 position. */
+#define CCL_TRUTH1_bm  (1<<1)  /* Truth Table bit 1 mask. */
+#define CCL_TRUTH1_bp  1  /* Truth Table bit 1 position. */
+#define CCL_TRUTH2_bm  (1<<2)  /* Truth Table bit 2 mask. */
+#define CCL_TRUTH2_bp  2  /* Truth Table bit 2 position. */
+#define CCL_TRUTH3_bm  (1<<3)  /* Truth Table bit 3 mask. */
+#define CCL_TRUTH3_bp  3  /* Truth Table bit 3 position. */
+#define CCL_TRUTH4_bm  (1<<4)  /* Truth Table bit 4 mask. */
+#define CCL_TRUTH4_bp  4  /* Truth Table bit 4 position. */
+#define CCL_TRUTH5_bm  (1<<5)  /* Truth Table bit 5 mask. */
+#define CCL_TRUTH5_bp  5  /* Truth Table bit 5 position. */
+#define CCL_TRUTH6_bm  (1<<6)  /* Truth Table bit 6 mask. */
+#define CCL_TRUTH6_bp  6  /* Truth Table bit 6 position. */
+#define CCL_TRUTH7_bm  (1<<7)  /* Truth Table bit 7 mask. */
+#define CCL_TRUTH7_bp  7  /* Truth Table bit 7 position. */
 
 /* CCL.LUT1CTRLA  bit masks and bit positions */
 /* CCL_ENABLE  is already defined. */
@@ -3866,6 +3870,8 @@ IO Module Instances. Mapped to memory.
 /* CCL.LUT1CTRLC  bit masks and bit positions */
 /* CCL_INSEL2  is already defined. */
 
+/* CCL.TRUTH1  bit masks and bit positions */
+/* CCL_TRUTH  is already defined. */
 
 /* CCL.LUT2CTRLA  bit masks and bit positions */
 /* CCL_ENABLE  is already defined. */
@@ -3881,6 +3887,8 @@ IO Module Instances. Mapped to memory.
 /* CCL.LUT2CTRLC  bit masks and bit positions */
 /* CCL_INSEL2  is already defined. */
 
+/* CCL.TRUTH2  bit masks and bit positions */
+/* CCL_TRUTH  is already defined. */
 
 /* CCL.LUT3CTRLA  bit masks and bit positions */
 /* CCL_ENABLE  is already defined. */
@@ -3896,6 +3904,8 @@ IO Module Instances. Mapped to memory.
 /* CCL.LUT3CTRLC  bit masks and bit positions */
 /* CCL_INSEL2  is already defined. */
 
+/* CCL.TRUTH3  bit masks and bit positions */
+/* CCL_TRUTH  is already defined. */
 
 /* CLKCTRL - Clock controller */
 /* CLKCTRL.MCLKCTRLA  bit masks and bit positions */
@@ -3945,16 +3955,16 @@ IO Module Instances. Mapped to memory.
 /* CLKCTRL.OSCHFCTRLA  bit masks and bit positions */
 #define CLKCTRL_AUTOTUNE_bm  0x01  /* Autotune bit mask. */
 #define CLKCTRL_AUTOTUNE_bp  0  /* Autotune bit position. */
-#define CLKCTRL_FREQSEL_gm  0x3C  /* Frequency select group mask. */
-#define CLKCTRL_FREQSEL_gp  2  /* Frequency select group position. */
-#define CLKCTRL_FREQSEL0_bm  (1<<2)  /* Frequency select bit 0 mask. */
-#define CLKCTRL_FREQSEL0_bp  2  /* Frequency select bit 0 position. */
-#define CLKCTRL_FREQSEL1_bm  (1<<3)  /* Frequency select bit 1 mask. */
-#define CLKCTRL_FREQSEL1_bp  3  /* Frequency select bit 1 position. */
-#define CLKCTRL_FREQSEL2_bm  (1<<4)  /* Frequency select bit 2 mask. */
-#define CLKCTRL_FREQSEL2_bp  4  /* Frequency select bit 2 position. */
-#define CLKCTRL_FREQSEL3_bm  (1<<5)  /* Frequency select bit 3 mask. */
-#define CLKCTRL_FREQSEL3_bp  5  /* Frequency select bit 3 position. */
+#define CLKCTRL_FRQSEL_gm  0x3C  /* Frequency select group mask. */
+#define CLKCTRL_FRQSEL_gp  2  /* Frequency select group position. */
+#define CLKCTRL_FRQSEL0_bm  (1<<2)  /* Frequency select bit 0 mask. */
+#define CLKCTRL_FRQSEL0_bp  2  /* Frequency select bit 0 position. */
+#define CLKCTRL_FRQSEL1_bm  (1<<3)  /* Frequency select bit 1 mask. */
+#define CLKCTRL_FRQSEL1_bp  3  /* Frequency select bit 1 position. */
+#define CLKCTRL_FRQSEL2_bm  (1<<4)  /* Frequency select bit 2 mask. */
+#define CLKCTRL_FRQSEL2_bp  4  /* Frequency select bit 2 position. */
+#define CLKCTRL_FRQSEL3_bm  (1<<5)  /* Frequency select bit 3 mask. */
+#define CLKCTRL_FRQSEL3_bp  5  /* Frequency select bit 3 position. */
 #define CLKCTRL_RUNSTDBY_bm  0x80  /* Run standby bit mask. */
 #define CLKCTRL_RUNSTDBY_bp  7  /* Run standby bit position. */
 
@@ -4669,8 +4679,27 @@ IO Module Instances. Mapped to memory.
 
 
 
-
 /* PORT - I/O Ports */
+/* PORT.INTFLAGS  bit masks and bit positions */
+#define PORT_INT_gm  0xFF  /* Interrupt Masks group mask. */
+#define PORT_INT_gp  0  /* Interrupt Masks group position. */
+#define PORT_INT0_bm  (1<<0)  /* Interrupt Masks bit 0 mask. */
+#define PORT_INT0_bp  0  /* Interrupt Masks bit 0 position. */
+#define PORT_INT1_bm  (1<<1)  /* Interrupt Masks bit 1 mask. */
+#define PORT_INT1_bp  1  /* Interrupt Masks bit 1 position. */
+#define PORT_INT2_bm  (1<<2)  /* Interrupt Masks bit 2 mask. */
+#define PORT_INT2_bp  2  /* Interrupt Masks bit 2 position. */
+#define PORT_INT3_bm  (1<<3)  /* Interrupt Masks bit 3 mask. */
+#define PORT_INT3_bp  3  /* Interrupt Masks bit 3 position. */
+#define PORT_INT4_bm  (1<<4)  /* Interrupt Masks bit 4 mask. */
+#define PORT_INT4_bp  4  /* Interrupt Masks bit 4 position. */
+#define PORT_INT5_bm  (1<<5)  /* Interrupt Masks bit 5 mask. */
+#define PORT_INT5_bp  5  /* Interrupt Masks bit 5 position. */
+#define PORT_INT6_bm  (1<<6)  /* Interrupt Masks bit 6 mask. */
+#define PORT_INT6_bp  6  /* Interrupt Masks bit 6 position. */
+#define PORT_INT7_bm  (1<<7)  /* Interrupt Masks bit 7 mask. */
+#define PORT_INT7_bp  7  /* Interrupt Masks bit 7 position. */
+
 /* PORT.PORTCTRL  bit masks and bit positions */
 #define PORT_SRL_bm  0x01  /* Slew Rate Limit Enable bit mask. */
 #define PORT_SRL_bp  0  /* Slew Rate Limit Enable bit position. */
@@ -5147,8 +5176,8 @@ IO Module Instances. Mapped to memory.
 #define SPI_PRESC1_bp  2  /* Prescaler bit 1 position. */
 #define SPI_CLK2X_bm  0x10  /* Enable Double Speed bit mask. */
 #define SPI_CLK2X_bp  4  /* Enable Double Speed bit position. */
-#define SPI_MASTER_bm  0x20  /* Master Operation Enable bit mask. */
-#define SPI_MASTER_bp  5  /* Master Operation Enable bit position. */
+#define SPI_MASTER_bm  0x20  /* Host Operation Enable bit mask. */
+#define SPI_MASTER_bp  5  /* Host Operation Enable bit position. */
 #define SPI_DORD_bm  0x40  /* Data Order Setting bit mask. */
 #define SPI_DORD_bp  6  /* Data Order Setting bit position. */
 
@@ -5159,8 +5188,8 @@ IO Module Instances. Mapped to memory.
 #define SPI_MODE0_bp  0  /* SPI Mode bit 0 position. */
 #define SPI_MODE1_bm  (1<<1)  /* SPI Mode bit 1 mask. */
 #define SPI_MODE1_bp  1  /* SPI Mode bit 1 position. */
-#define SPI_SSD_bm  0x04  /* Slave Select Disable bit mask. */
-#define SPI_SSD_bp  2  /* Slave Select Disable bit position. */
+#define SPI_SSD_bm  0x04  /* SPI Select Disable bit mask. */
+#define SPI_SSD_bp  2  /* SPI Select Disable bit position. */
 #define SPI_BUFWR_bm  0x40  /* Buffer Mode Wait for Receive bit mask. */
 #define SPI_BUFWR_bp  6  /* Buffer Mode Wait for Receive bit position. */
 #define SPI_BUFEN_bm  0x80  /* Buffer Mode Enable bit mask. */
@@ -5169,8 +5198,8 @@ IO Module Instances. Mapped to memory.
 /* SPI.INTCTRL  bit masks and bit positions */
 #define SPI_IE_bm  0x01  /* Interrupt Enable bit mask. */
 #define SPI_IE_bp  0  /* Interrupt Enable bit position. */
-#define SPI_SSIE_bm  0x10  /* Slave Select Trigger Interrupt Enable bit mask. */
-#define SPI_SSIE_bp  4  /* Slave Select Trigger Interrupt Enable bit position. */
+#define SPI_SSIE_bm  0x10  /* SPI Select Trigger Interrupt Enable bit mask. */
+#define SPI_SSIE_bp  4  /* SPI Select Trigger Interrupt Enable bit position. */
 #define SPI_DREIE_bm  0x20  /* Data Register Empty Interrupt Enable bit mask. */
 #define SPI_DREIE_bp  5  /* Data Register Empty Interrupt Enable bit position. */
 #define SPI_TXCIE_bm  0x40  /* Transfer Complete Interrupt Enable bit mask. */
@@ -5181,8 +5210,8 @@ IO Module Instances. Mapped to memory.
 /* SPI.INTFLAGS  bit masks and bit positions */
 #define SPI_BUFOVF_bm  0x01  /* Buffer Overflow bit mask. */
 #define SPI_BUFOVF_bp  0  /* Buffer Overflow bit position. */
-#define SPI_SSIF_bm  0x10  /* Slave Select Trigger Interrupt Flag bit mask. */
-#define SPI_SSIF_bp  4  /* Slave Select Trigger Interrupt Flag bit position. */
+#define SPI_SSIF_bm  0x10  /* SPI Select Trigger Interrupt Flag bit mask. */
+#define SPI_SSIF_bp  4  /* SPI Select Trigger Interrupt Flag bit position. */
 #define SPI_DREIF_bm  0x20  /* Data Register Empty Interrupt Flag bit mask. */
 #define SPI_DREIF_bp  5  /* Data Register Empty Interrupt Flag bit position. */
 #define SPI_TXCIF_bm  0x40  /* Transfer Complete Interrupt Flag bit mask. */
@@ -5820,8 +5849,8 @@ IO Module Instances. Mapped to memory.
 /* TWI_ACKACT  is already defined. */
 
 /* TWI.SSTATUS  bit masks and bit positions */
-#define TWI_AP_bm  0x01  /* Slave Address or Stop bit mask. */
-#define TWI_AP_bp  0  /* Slave Address or Stop bit position. */
+#define TWI_AP_bm  0x01  /* Client Address or Stop bit mask. */
+#define TWI_AP_bp  0  /* Client Address or Stop bit position. */
 #define TWI_DIR_bm  0x02  /* Read/Write Direction bit mask. */
 #define TWI_DIR_bp  1  /* Read/Write Direction bit position. */
 /* TWI_BUSERR  is already defined. */
@@ -5945,10 +5974,10 @@ IO Module Instances. Mapped to memory.
 #define USART_RXEN_bp  7  /* Reciever enable bit position. */
 
 /* USART.CTRLC  bit masks and bit positions */
-#define USART_UCPHA_bm  0x02  /* SPI Master Mode, Clock Phase bit mask. */
-#define USART_UCPHA_bp  1  /* SPI Master Mode, Clock Phase bit position. */
-#define USART_UDORD_bm  0x04  /* SPI Master Mode, Data Order bit mask. */
-#define USART_UDORD_bp  2  /* SPI Master Mode, Data Order bit position. */
+#define USART_UCPHA_bm  0x02  /* SPI Host Mode, Clock Phase bit mask. */
+#define USART_UCPHA_bp  1  /* SPI Host Mode, Clock Phase bit position. */
+#define USART_UDORD_bm  0x04  /* SPI Host Mode, Data Order bit mask. */
+#define USART_UDORD_bp  2  /* SPI Host Mode, Data Order bit position. */
 #define USART_CHSIZE_gm  0x07  /* Character Size group mask. */
 #define USART_CHSIZE_gp  0  /* Character Size group position. */
 #define USART_CHSIZE0_bm  (1<<0)  /* Character Size bit 0 mask. */
@@ -5985,8 +6014,6 @@ IO Module Instances. Mapped to memory.
 /* USART.DBGCTRL  bit masks and bit positions */
 #define USART_DBGRUN_bm  0x01  /* Debug Run bit mask. */
 #define USART_DBGRUN_bp  0  /* Debug Run bit position. */
-#define USART_ABMBP_bm  0x80  /* Autobaud majority voter bypass bit mask. */
-#define USART_ABMBP_bp  7  /* Autobaud majority voter bypass bit position. */
 
 /* USART.EVCTRL  bit masks and bit positions */
 #define USART_IREI_bm  0x01  /* IrDA Event Input Enable bit mask. */
@@ -6065,6 +6092,26 @@ IO Module Instances. Mapped to memory.
 
 
 
+/* VPORT - Virtual Ports */
+/* VPORT.INTFLAGS  bit masks and bit positions */
+#define VPORT_INT_gm  0xFF  /* Interrupt Flag group mask. */
+#define VPORT_INT_gp  0  /* Interrupt Flag group position. */
+#define VPORT_INT0_bm  (1<<0)  /* Interrupt Flag bit 0 mask. */
+#define VPORT_INT0_bp  0  /* Interrupt Flag bit 0 position. */
+#define VPORT_INT1_bm  (1<<1)  /* Interrupt Flag bit 1 mask. */
+#define VPORT_INT1_bp  1  /* Interrupt Flag bit 1 position. */
+#define VPORT_INT2_bm  (1<<2)  /* Interrupt Flag bit 2 mask. */
+#define VPORT_INT2_bp  2  /* Interrupt Flag bit 2 position. */
+#define VPORT_INT3_bm  (1<<3)  /* Interrupt Flag bit 3 mask. */
+#define VPORT_INT3_bp  3  /* Interrupt Flag bit 3 position. */
+#define VPORT_INT4_bm  (1<<4)  /* Interrupt Flag bit 4 mask. */
+#define VPORT_INT4_bp  4  /* Interrupt Flag bit 4 position. */
+#define VPORT_INT5_bm  (1<<5)  /* Interrupt Flag bit 5 mask. */
+#define VPORT_INT5_bp  5  /* Interrupt Flag bit 5 position. */
+#define VPORT_INT6_bm  (1<<6)  /* Interrupt Flag bit 6 mask. */
+#define VPORT_INT6_bp  6  /* Interrupt Flag bit 6 position. */
+#define VPORT_INT7_bm  (1<<7)  /* Interrupt Flag bit 7 mask. */
+#define VPORT_INT7_bp  7  /* Interrupt Flag bit 7 position. */
 
 /* VREF - Voltage reference */
 /* VREF.ADC0REF  bit masks and bit positions */

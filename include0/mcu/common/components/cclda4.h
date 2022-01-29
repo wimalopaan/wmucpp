@@ -31,20 +31,20 @@ namespace AVR {
             ControlRegister<Ccl, CtrlA_t> ctrla;
             
             enum class SeqCtrl0_t : uint8_t {
-                disable = CCL_SEQSEL0_DISABLE_gc,
-                dff     = CCL_SEQSEL0_DFF_gc,
-                jk      = CCL_SEQSEL0_JK_gc,
-                latch   = CCL_SEQSEL0_LATCH_gc,
-                rs      = CCL_SEQSEL0_RS_gc,
+                disable = CCL_SEQSEL_DISABLE_gc,
+                dff     = CCL_SEQSEL_DFF_gc,
+                jk      = CCL_SEQSEL_JK_gc,
+                latch   = CCL_SEQSEL_LATCH_gc,
+                rs      = CCL_SEQSEL_RS_gc,
             };  
             ControlRegister<Ccl, SeqCtrl0_t> seqctrl0;
             
             enum class SeqCtrl1_t : uint8_t {
-                disable = CCL_SEQSEL1_DISABLE_gc,
-                dff     = CCL_SEQSEL1_DFF_gc,
-                jk      = CCL_SEQSEL1_JK_gc,
-                latch   = CCL_SEQSEL1_LATCH_gc,
-                rs      = CCL_SEQSEL1_RS_gc,
+                disable = CCL_SEQSEL_DISABLE_gc,
+                dff     = CCL_SEQSEL_DFF_gc,
+                jk      = CCL_SEQSEL_JK_gc,
+                latch   = CCL_SEQSEL_LATCH_gc,
+                rs      = CCL_SEQSEL_RS_gc,
             };  
             ControlRegister<Ccl, SeqCtrl1_t> seqctrl1;
             
