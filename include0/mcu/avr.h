@@ -54,6 +54,7 @@ namespace AVR {
 
     // DA-Series
     struct Avr128da32;
+    struct Avr128da48;
     
     namespace Series0 {
     }
@@ -95,6 +96,8 @@ typedef AVR::ATTiny1614 DefaultMcuType;
 typedef AVR::ATTiny1624 DefaultMcuType;
 #elif defined(__AVR_AVR128DA32__)
 typedef AVR::Avr128da32 DefaultMcuType;
+#elif defined(__AVR_AVR128DA48__)
+typedef AVR::Avr128da48 DefaultMcuType;
 #else
 typedef AVR::ATMegaNone DefaultMcuType;
 # warning "No CPU found"

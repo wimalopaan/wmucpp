@@ -584,6 +584,37 @@ namespace AVR {
             };
 #endif
         };
+
+
+        template<>
+        struct Usart<4> {
+            struct RX {
+#ifdef USART4_RX_vect_num
+                static constexpr const uint32_t number = USART4_RX_vect_num;
+#endif
+            };
+            struct UDREmpty {
+#ifdef USART4_UDRE_vect_num
+                static constexpr const uint32_t number = USART4_UDRE_vect_num;
+#endif
+            };
+#ifdef USART4_DRE_vect_num
+            struct DRE {
+                static constexpr const uint32_t number = USART4_DRE_vect_num;
+            };
+#endif
+#ifdef USART4_TXC_vect_num
+            struct TXC {
+                static constexpr const uint32_t number = USART4_TXC_vect_num;
+            };
+#endif
+#ifdef USART4_RXC_vect_num
+            struct RXC {
+                static constexpr const uint32_t number = USART4_RXC_vect_num;
+            };
+#endif
+        };
+
         
         template<uint8_t> 
         struct AdComparator;

@@ -403,6 +403,9 @@ boards/rcdesk/test00.cc
 boards/rcdesk/test01.cc
 boards/rcdesk/test02.cc
 boards/rcdesk/test03.cc
+boards/rcdesk_mini/Makefile
+boards/rcdesk_mini/devices.h
+boards/rcdesk_mini/test00.cc
 boards/rcfoc/Makefile
 boards/rcfoc/ankerwinde_01.cc
 boards/rcfoc/busses.h
@@ -1510,6 +1513,7 @@ example/features/softusart.cc
 example/main.cc
 example/main.h
 gcc/base/avr/include/avr/ioavr128da32.h
+gcc/base/avr/include/avr/ioavr128da48.h
 gcc/base/avr/include/avr/iotn1624.h
 gcc/base/lib/gcc/avr/11.0.0/device-specs/specs-atmega324pb
 gcc/base/lib/gcc/avr/11.0.0/device-specs/specs-atmega328pb
@@ -2297,6 +2301,7 @@ include0/external/hal/nulldev.h
 include0/external/sbus/sport.h
 include0/external/solutions/analogsensor.h
 include0/external/solutions/spacemouse.h
+include0/mcu/avrdx/avr128da48.h
 include0/mcu/common/components/adc2.h
 include0/mcu/common/components/bitmask_operators2.h
 include0/mcu/common/components/ccltiny2_4.h
