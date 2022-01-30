@@ -277,6 +277,7 @@ boards/dds/rfmodule00.cc
 boards/dds/rfmodule01.cc
 boards/dds/rfmodule02.cc
 boards/dds/rfmodule03.cc
+boards/dds/rxrf01.cc
 boards/dds/test00.cc
 boards/dds/test10.cc
 boards/dds/test11.cc
