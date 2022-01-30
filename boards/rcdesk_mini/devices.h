@@ -39,8 +39,7 @@ namespace  {
     constexpr auto fRtc = 1000_Hz;
     
     
-    template<typename Adc>
-    struct Data final : public EEProm::DataBase<Data<Adc>> {
+    struct Data final : public EEProm::DataBase<Data> {
         auto magic() const {
             return mMagic;
         }
@@ -84,8 +83,10 @@ struct Devices {
     using btPower  = AVR::ActiveLow<AVR::Pin<AVR::Port<AVR::D>, 4>, AVR::Output>; 
     
 #ifndef NDEBUG 
-    using assertPin = led1;
+    using assertPin = AVR::ActiveHigh<AVR::Pin<AVR::Port<AVR::A>, 5>, AVR::Output>; // Pin1
 #endif
+    using test1Pin = AVR::ActiveHigh<AVR::Pin<AVR::Port<AVR::A>, 6>, AVR::Output>; // Pin2
+    using test2Pin = AVR::ActiveHigh<AVR::Pin<AVR::Port<AVR::A>, 7>, AVR::Output>; // Pin3
 
     using ccl1Position = AVR::Portmux::Position<AVR::Component::Ccl<1>, AVR::Portmux::Default>; // PC3 = Serial2 TX
     using lut1 = AVR::Ccl::SimpleLut<1, AVR::Ccl::Input::Mask, AVR::Ccl::Input::Mask, AVR::Ccl::Input::Usart<1>>;
@@ -95,7 +96,7 @@ struct Devices {
     
 //    using tcaPosition = AVR::Portmux::Position<AVR::Component::Tca<0>, AVR::Portmux::Default>;
           
-//    using eeprom = EEProm::Controller<Data<adcController>>;
+    using eeprom = EEProm::Controller<Data>;
     
     using portmux = AVR::Portmux::StaticMapper<Meta::List<ccl1Position, ccl2Position, usart0Position, usart1Position, usart2Position, usart3Position, usart4Position>>;
     
