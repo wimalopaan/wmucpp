@@ -19,6 +19,8 @@
 #pragma once
 
 #include <cstdint>
+#include <etl/fsm.h>
+
 #include "sumdprotocoll.h"
 
 namespace Hott {
@@ -45,6 +47,241 @@ namespace Hott {
     private:
         uint16_t mData{0};
     };
+
+    namespace V3_1 { // using FSM StateProcessor "etl/fsm.h"
+        
+    }
+
+    namespace V3_2 { // using switch
+        
+    }
+    
+    template<uint8_t M, etl::Concepts::NamedFlag UseInts = AVR::UseInterrupts<true>>
+    class SumDV3ProtocollAdapter final {
+        enum class sumdstate : uint8_t {Undefined = 0, Start1, StartNormal, StartFailSafe, ChannelDataL, ChannelDataH, 
+                                        FuncnctionCode, LastValidPackage, ModeCmd, SubCmd,
+                                        CrcL, CrcH, NumberOfStates};
+        
+        using sumDV3MesgType = std::conditional_t<UseInts::value, volatile SumDMsgV3, SumDMsgV3>;
+        using validType = std::conditional_t<UseInts::value, volatile bool, bool>;
+        using counterType = std::conditional_t<UseInts::value, volatile uint16_t, uint16_t>;
+        
+    public:
+        using value_type = Hott::hott_t;
+
+        SumDV3ProtocollAdapter() = delete;
+        
+        inline static etl::uint_ranged<uint16_t, Hott::SumDMsgV3::ExtendedLow, Hott::SumDMsgV3::ExtendedHigh> valueExtended(uint8_t channel) {
+            etl::Scoped<etl::DisbaleInterrupt<>, UseInts::value> di;
+            if (!mMsgInactive->valid) {
+                return {};
+            }
+            uint16_t v = etl::combinedValue(mMsgInactive->channelData[channel]);
+            if (v < Hott::SumDMsgV3::ExtendedLow) {
+                return {Hott::SumDMsgV3::ExtendedLow};
+            }
+            else if (v > Hott::SumDMsgV3::ExtendedHigh) {
+                return {Hott::SumDMsgV3::ExtendedHigh};
+            }
+            else {
+                return {v};
+            }
+        }
+        
+        inline static etl::uint_ranged_NaN<uint16_t, Hott::SumDMsgV3::Low, Hott::SumDMsgV3::High> value(uint8_t channel) {
+            etl::Scoped<etl::DisbaleInterrupt<>, UseInts::value> di;
+
+            if (!mMsgInactive->valid) {
+                return {};
+            }
+            uint16_t v = etl::combinedValue(mMsgInactive->channelData[channel]);
+            if (v < Hott::SumDMsgV3::Low) {
+                return Hott::SumDMsgV3::Low;
+            }
+            else if (v > Hott::SumDMsgV3::High) {
+                return Hott::SumDMsgV3::High;
+            }
+            else {
+                return v;
+            }
+        }
+        inline static etl::uint_ranged<uint8_t, Hott::SumDMsgV3::Low8Bit, Hott::SumDMsgV3::High8Bit> value8Bit(uint8_t channel) {
+            etl::Scoped<etl::DisbaleInterrupt<>, UseInts::value> di;
+
+            if (!mMsgInactive->valid) {
+                return {};
+            }
+            return value8Bit_unsafe(channel);
+        }
+        inline static etl::uint_ranged<uint8_t, Hott::SumDMsgV3::ExtendedLow8Bit, Hott::SumDMsgV3::ExtendedHigh8Bit> value8BitExtended(uint8_t channel) {
+            etl::Scoped<etl::DisbaleInterrupt<>, UseInts::value> di;
+
+            if (!mMsgInactive->valid) {
+                return {};
+            }
+            return value8BitExtended_unsafe(channel);
+        }
+        inline static uint8_t numberOfChannels() {
+            return mMsgInactive->nChannels;
+        }
+
+        inline static void ratePeriodic() {}
+        
+        inline static bool process(std::byte  c) { // (ca 3µs)
+            static sumdstate state = sumdstate::Undefined;
+            static uint8_t channel = 0;
+            static uint16_t crc = 0;
+            static uint8_t actualHighValue = Hott::SumDMsgV3::Mid8Bit;        
+            static uint8_t actualLowValue  = 0;
+            
+            switch (state) {
+            case sumdstate::Undefined:
+                if (c == SumDMsgV3::start_code) {
+                    crc = 0;
+                    etl::crc16(crc, std::to_integer(c));
+                    state = sumdstate::Start1;
+                }
+                else {
+                    state = sumdstate::Undefined;
+                }
+                break;
+            case sumdstate::Start1:
+                if (c == SumDMsgV3::version_code) {
+                    etl::crc16(crc, std::to_integer(c));
+                    state = sumdstate::StartNormal;
+                }
+                else if (c == (SumDMsgV3::version_code | std::byte{0x80})) {
+                    state = sumdstate::StartFailSafe;
+                }
+                else {
+                    state = sumdstate::Undefined;
+                }
+                break;
+            case sumdstate::StartNormal:
+            {
+                const uint8_t nwords = std::to_integer(c);
+                if (nwords > 2) {
+                    mMsgActive->nChannels = nwords - 2;
+                    mMsgActive->valid = false;
+                    etl::crc16(crc, nwords);
+                    if (mMsgActive->nChannels < SumDMsgV3::MaxChannels) {
+                        state = sumdstate::ChannelDataH;
+                    }
+                    else {
+                        state = sumdstate::Undefined;
+                    }
+                    
+                }
+                else {
+                    state = sumdstate::Undefined;
+                }
+            }
+                break;
+            case sumdstate::StartFailSafe:
+            {
+                const uint8_t nwords = std::to_integer(c);
+                if (nwords > 2) {
+                    mMsgActive->nChannels = nwords - 2;
+                    mMsgActive->valid = false;
+                    etl::crc16(crc, nwords);
+                    if (mMsgActive->nChannels < SumDMsgV3::MaxChannels) {
+                        state = sumdstate::ChannelDataH;
+                    }
+                    else {
+                        state = sumdstate::Undefined;
+                    }                        
+                }
+                else {
+                    state = sumdstate::Undefined;
+                }
+            }
+                break;
+            case sumdstate::ChannelDataH:
+                actualHighValue = std::to_integer<uint8_t>(c);
+                etl::crc16(crc, actualHighValue);
+                state = sumdstate::ChannelDataL;
+                break;
+            case sumdstate::ChannelDataL:
+                actualLowValue = std::to_integer<uint8_t>(c);
+                etl::crc16(crc, actualLowValue);
+                mMsgActive->channelData[channel] = {actualHighValue, actualLowValue};
+                state = sumdstate::ChannelDataH;
+                ++channel;
+                if (channel < mMsgActive->nChannels) {
+                    state = sumdstate::ChannelDataH;
+                }
+                else {
+                    state = sumdstate::CrcH;
+                    channel = 0;
+                }
+                break;
+            case sumdstate::CrcH:
+                mMsgActive->crc = std::to_integer(c) << 8;
+                state = sumdstate::CrcL;
+                break;
+            case sumdstate::CrcL:
+                ++mPackageCounter;
+                mMsgActive->crc |= std::to_integer(c);
+                
+                state = sumdstate::Undefined;
+                
+                if (crc == mMsgActive->crc) {
+                    mMsgActive->valid = true;
+                    std::swap(mMsgActive, mMsgInactive);
+                }
+                break;
+            case sumdstate::NumberOfStates:
+                break;
+            default:
+                assert(false);
+                break;
+            }
+            return true;
+        }
+        inline static bool valid() {
+            return mMsgInactive->valid;
+        }
+        inline static uint16_t packageCount() {
+            return mPackageCounter;
+        }
+        inline static constexpr auto& packages = packageCount;
+        
+        inline static void resetCount() {
+            mPackageCounter = 0;
+        }
+        inline static constexpr auto& resetStats = resetCount;
+    private:
+        inline static etl::uint_ranged<uint8_t, Hott::SumDMsgV3::Low8Bit, Hott::SumDMsgV3::High8Bit> value8Bit_unsafe(uint8_t channel) {
+            if (mMsgInactive->channelData[channel].first < Hott::SumDMsgV3::Low8Bit) {
+                return etl::uint_ranged<uint8_t, Hott::SumDMsgV3::Low8Bit, Hott::SumDMsgV3::High8Bit>{Hott::SumDMsgV3::Low8Bit};
+            }
+            else if (mMsgInactive->channelData[channel].first > Hott::SumDMsgV3::High8Bit) {
+                return etl::uint_ranged<uint8_t, Hott::SumDMsgV3::Low8Bit, Hott::SumDMsgV3::High8Bit>{Hott::SumDMsgV3::High8Bit};
+            } 
+            else {
+                return etl::uint_ranged<uint8_t, Hott::SumDMsgV3::Low8Bit, Hott::SumDMsgV3::High8Bit>{mMsgInactive->channelData[channel].first};
+            }
+        }
+        inline static etl::uint_ranged<uint8_t, Hott::SumDMsgV3::ExtendedLow8Bit, Hott::SumDMsgV3::ExtendedHigh8Bit> value8BitExtended_unsafe(uint8_t channel) {
+            if (mMsgInactive->channelData[channel].first < Hott::SumDMsgV3::ExtendedLow8Bit) {
+                return etl::uint_ranged<uint8_t, Hott::SumDMsgV3::ExtendedLow8Bit, Hott::SumDMsgV3::ExtendedHigh8Bit>{Hott::SumDMsgV3::ExtendedLow8Bit};
+            }
+            else if (mMsgInactive->channelData[channel].first > Hott::SumDMsgV3::ExtendedHigh8Bit) {
+                return etl::uint_ranged<uint8_t, Hott::SumDMsgV3::ExtendedLow8Bit, Hott::SumDMsgV3::ExtendedHigh8Bit>{Hott::SumDMsgV3::ExtendedHigh8Bit};
+            } 
+            else {
+                return etl::uint_ranged<uint8_t, Hott::SumDMsgV3::ExtendedLow8Bit, Hott::SumDMsgV3::ExtendedHigh8Bit>{mMsgInactive->channelData[channel].first};
+            }
+        }
+        inline static sumDV3MesgType mMsg1;
+        inline static sumDV3MesgType mMsg2;
+        inline static sumDV3MesgType* mMsgActive   = &mMsg1;
+        inline static sumDV3MesgType* mMsgInactive = &mMsg2;
+        
+        inline static counterType mPackageCounter = 0;
+    };
+
+
     
     template<uint8_t M, etl::Concepts::NamedFlag UseInts = AVR::UseInterrupts<true>>
     class SumDProtocollAdapter final {

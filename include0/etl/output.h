@@ -5,7 +5,6 @@
 #include "concepts.h"
 #include "format.h"
 #include "pointer.h"
-
 #include "ranged.h"
 
 namespace etl {
@@ -54,7 +53,7 @@ namespace etl {
                 if (c == typename C::value_type{'\0'}) {
                     break;
                 }
-                put<typename Stream::device_type>(std::byte{c});
+                put<typename Stream::device_type>(std::byte(c));
             };   
         }
         
@@ -78,7 +77,7 @@ namespace etl {
         
         template<Stream Stream>
         constexpr inline void out_impl(const Char v) {
-            put<typename Stream::device_type>(std::byte{v});
+            put<typename Stream::device_type>(std::byte(v));
         }
         
         template<Stream Stream, typename T>

@@ -1,4 +1,4 @@
-#define NDEBUG
+//#define NDEBUG
 
 #include <mcu/avr.h>
 #include <mcu/common/delay.h>
@@ -40,7 +40,6 @@
 #include <external/solutions/rc/busscan.h>
 #include <external/solutions/series01/cppm_out.h>
 #include <external/solutions/rc/rf.h>
-#include <external/solutions/ad9851.h>
 #include <external/solutions/si5351.h>
 
 #include <mcu/pgm/pgmarray.h>
@@ -83,20 +82,8 @@ using dbgPin = Pin<Port<A>, 6>;
 
 using a5Pin = Pin<Port<A>, 5>; 
 
-using dataPin = Pin<Port<D>, 7>;
-using dataAct = ActiveHigh<dataPin, Output>;
-
-using clkPin = Pin<Port<C>, 0>;
-using clkAct = ActiveHigh<clkPin, Output>;
-using clkSig = SinglePulse<clkAct>;
-
-using fupPin = Pin<Port<C>, 1>;
-using fupAct = ActiveHigh<fupPin, Output>;
-using fupSig = SinglePulse<fupAct>;
-
-using rstPin = Pin<Port<C>, 2>;
-using rstAct = ActiveHigh<rstPin, Output>;
-using rstSig = SinglePulse<rstAct>;
+using fSwitchPin = Pin<Port<D>, 7>;
+using fSwitch = ActiveHigh<fSwitchPin, Output>;
 
 using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Default>; // Sensor
 using tdev = Usart<usart0Position, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<16>, AVR::SendQueueLength<256>>;
@@ -111,7 +98,6 @@ using twi = AVR::Twi::Master<twi0Position>;
 
 using portmux = Portmux::StaticMapper<Meta::List<tca0Position, twi0Position>>;
 
-//using ad9851 = External::DDS::AD9851<systemTimer, dataAct, clkSig, fupSig, rstSig>;
 using si = External::SI5351::Clock<twi, si5351>;
 
 template<typename MCU = DefaultMcuType>
@@ -128,7 +114,9 @@ struct Fsm {
     static inline void init() {
         dbgPin::dir<Output>();
         a5Pin::dir<Output>();
-//        ad9851::init();
+        
+        fSwitch::init();
+        
         twi::init();
         tdev::init<BaudRate<9600>>();
         
@@ -146,12 +134,10 @@ struct Fsm {
     static inline void periodic() {
         dbgPin::toggle();
         tdev::periodic();
-//        ad9851::periodic();
         twi::periodic();
         si::periodic();
     }
     static inline void ratePeriodic() {
-//        ad9851::ratePeriodic();
         const auto oldState = mState;
         ++mStateTick;
         ++mChangeTick;
@@ -174,20 +160,12 @@ struct Fsm {
                 si::setOutput(1);
                 mState = State::Set2;
             }
-//            if (si::setupWithClockBuilderData()) {
-//                mState = State::Run;
-//            }
             break;
         case State::Set2:
             if (si::setChannelUpperFreq(0)) {
                 mState = State::Run;
             }
             break;
-//        case State::Set:
-////            if (ad9851::ready()) {
-////                mState = State::Run;
-////            }
-//            break;
         case State::Run:
             mChangeTick.on(mChangeTicks, []{
                 cppm::set(ch_t{0}, vv);
@@ -205,15 +183,13 @@ struct Fsm {
                 break;
             case State::Init:
                 break;
-            case State::Set2:
-                break;
             case State::Set:
-//                ad9851::channel(ad9851::index_type{0});
+                break;
+            case State::Set2:
                 break;
             case State::Run:
                 cppm::init();
                 lut0::init(0x33_B); // invert
-        //        lut0::enable(); // nicht notwendig
                 break;
             }
         } 
@@ -228,12 +204,18 @@ private:
 
 using fsm = Fsm<>;
 
-struct Dummy {
-    inline static void once() {}
+struct SetBaseFreq {
+    inline static void once() {
+        fSwitch::inactivate();
+    }
+};
+struct SetUpperFreq {
+    inline static void once() {
+        fSwitch::activate();
+    }
 };
 
-//using isrRegistrar = IsrRegistrar<cppm::CmpHandler<ad9851::SetBaseFrequency>, cppm::OvfHandler<ad9851::SetUpperFrequency>>;
-using isrRegistrar = IsrRegistrar<cppm::CmpHandler<Dummy>, cppm::OvfHandler<Dummy>>;
+using isrRegistrar = IsrRegistrar<cppm::CmpHandler<SetBaseFreq>, cppm::OvfHandler<SetUpperFreq>>;
 
 int main() {
     portmux::init();
@@ -262,3 +244,18 @@ ISR(TCA0_CMP1_vect) {
     a5Pin::off();
     isrRegistrar::isr<AVR::ISR::Tca<0>::Cmp<1>>();
 }
+
+#ifndef NDEBUG
+[[noreturn]] inline void assertOutput(const AVR::Pgm::StringView& expr [[maybe_unused]], const AVR::Pgm::StringView& file[[maybe_unused]], unsigned int line [[maybe_unused]]) noexcept {
+    etl::outl<terminal>("Assertion failed: "_pgm, expr, etl::Char{','}, file, etl::Char{','}, line);
+    while(true) {
+//        terminalDevice::periodic();
+//        dbg1::toggle();
+    }
+}
+
+template<typename String1, typename String2>
+[[noreturn]] inline void assertFunction(const String1& s1, const String2& s2, unsigned int l) {
+    assertOutput(s1, s2, l);
+}
+#endif

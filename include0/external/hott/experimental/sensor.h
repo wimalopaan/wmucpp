@@ -49,7 +49,7 @@ namespace Hott {
                     case hott_state_t::AsciiStartRequest:
                         if (compare<Nibble::Upper>(c, ascii_id(msg_code))) {
                             mAsciiReceived++;
-                            mLastKey = Hott::key_t{c & 0x0f_B};
+                            mLastKey = Hott::key_t(c & 0x0f_B);
                             mState = hott_state_t::AsciiWaitIdle;
                             mTextMsg.esc = ascii_id(msg_code);
                         }
@@ -367,7 +367,7 @@ namespace Hott {
                     case hott_state_t::AsciiStartRequest:
                         if (compare<Nibble::Upper>(c, ascii_id(msg_code))) {
                             mAsciiReceived++;
-                            mLastKey = Hott::key_t{c & 0x0f_B};
+                            mLastKey = Hott::key_t(c & 0x0f_B);
                             mState = hott_state_t::AsciiWaitIdle;
                         }
                         else {

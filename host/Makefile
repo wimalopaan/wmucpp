@@ -71,6 +71,7 @@ targets += test90
 targets += test91
 targets += test92
 targets += test93
+targets += test94
 #targets += test98
 targets += test99
 targets += test100
@@ -81,13 +82,13 @@ targets += test300
 
 -include ../Makefile.include
 
-#CXX = /usr/bin/g++
-CXX = /usr/local/bin/g++
+CXX = /usr/bin/g++
+#CXX = /usr/local/bin/g++
 #CXX = clang++
-CC = /usr/local/bin/gcc
+#CC = /usr/local/bin/gcc
 #LDFLAGS = -lasan -lubsan -lpthread -lstdc++ 
 LDFLAGS = -lpthread -lstdc++ 
-CXXFLAGS = -g -std=c++2a -fconcepts -ftemplate-depth=2048 -fno-threadsafe-statics # -fsanitize=address -fsanitize=undefined 
+CXXFLAGS = -g -std=c++2b -fconcepts -ftemplate-depth=2048 -fno-threadsafe-statics  -fsanitize=address -fsanitize=undefined 
 CXXFLAGS += -O3
 CXXFLAGS += -Wall -Wextra
 CXXFLAGS += -I../include0/etl

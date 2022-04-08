@@ -51,13 +51,16 @@ namespace External {
         inline bool isdigit(std::byte b) {
             return ((static_cast<uint8_t>(b) >= '0') && (static_cast<uint8_t>(b) <= '9'));
         }
-        template<uint8_t N, uint8_t NChannels = 16>
+
+        template<uint8_t N, uint8_t NChannels = 16, typename Buffer = void>
         class ProtocollAdapter final {
             inline static constexpr uint8_t NumberOfChannels = NChannels;
             typedef uint_ranged<uint8_t, 0, NumberOfChannels - 1> index_type;
             enum class State : uint8_t {Undefined, Start, Prop, PropNumber, Space, Value};
         public:
-            inline static bool process(std::byte b) { 
+            using buffer_t = Buffer;
+
+            inline static bool process(const std::byte b) { 
                 switch (state) {
                 case State::Undefined:
                     if (b == '$'_B) {
@@ -122,6 +125,7 @@ namespace External {
                 }
                 return true;
             }    
+            inline static void ratePeriodic() {}
         private:
             inline static uint8_t number;
             inline static index_type index;

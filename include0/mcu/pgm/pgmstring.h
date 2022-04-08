@@ -134,11 +134,16 @@ consteval /*constexpr */AVR::Pgm::String<C, CC...> operator"" _pgm(){
     return AVR::Pgm::String<C, CC...>{};
 }
 
+namespace etl {
+    template<etl::Concepts::Device Device, bool ensure = false>
+    constexpr void put(std::byte b);
+}
+
 namespace etl::detail {
     template<etl::Concepts::Stream Stream>
     constexpr inline void out_impl(const AVR::Pgm::StringView& a) {
         for(uint8_t i{0}; a[i] != etl::Char{'\0'}; ++i) {
-            put<typename Stream::device_type>(std::byte{a[i]});
+            put<typename Stream::device_type>(std::byte(a[i]));
         }
     }
 }

@@ -21,8 +21,31 @@
 #include <cstdint>
 #include <cstddef>
 
+#include <etl/fifo.h>
+
 namespace External {
     namespace Hal {
+        template<uint8_t Size>
+        struct ActivatableBuffer {
+            static inline bool isActive() {
+                return active;
+            }  
+            static inline void activate(const bool on) {
+                active = on;
+            }
+            static inline void clear() {
+                fifo.clear();
+            }
+            static inline void push(const std::byte b) {
+                if (active) {
+                    fifo.push_back(b);
+                }
+            }  
+        private:
+            static inline bool active{false};
+            static inline etl::FiFo<std::byte, Size> fifo;
+        };
+        
         class NullProtocollAdapter final {
         public:
             using value_type = void;

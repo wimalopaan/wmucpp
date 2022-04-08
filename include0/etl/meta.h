@@ -1,4 +1,4 @@
-/*^
+/*
  * WMuCpp - Bare Metal C++ 
  * Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
@@ -64,6 +64,7 @@ namespace Meta {
         template<typename> struct front_impl;
         template<typename> struct size_impl;
         template<typename> struct rest_impl;
+        template<typename> struct middle_impl;
         template<typename, typename> struct contains_impl;
         template<typename, typename> struct concat_impl;
     }
@@ -86,6 +87,9 @@ namespace Meta {
     template<concepts::List List>
     using rest = typename detail::rest_impl<List>::type;
 
+    template<concepts::List List>
+    using middle_element = typename detail::middle_impl<List>::type;
+    
     template<concepts::List List, typename T>
     struct contains : public std::integral_constant<bool, detail::contains_impl<List, T>::value> {};
 
@@ -223,7 +227,15 @@ namespace Meta {
         struct nth_element_impl<N, L<F, I...>> {
             typedef typename nth_element_impl<N-1, L<I...>>::type type;  
         };
-       
+
+        template<typename L> struct middle_impl;
+        template<template<typename...> typename L, typename... I>
+        struct middle_impl<L<I...>> {
+            static inline constexpr size_t mid = sizeof...(I) / 2;
+            using type = typename nth_element_impl<mid, L<I...>>::type;
+        };
+        
+        
         template<typename List, typename T> struct count_impl {
             template<typename U>
             using p = std::is_same<U, T>;
@@ -347,15 +359,53 @@ namespace Meta {
         struct reverse_impl<L<F>> {
             typedef L<F> type;
         };
+        template<concepts::List List> 
+        struct visitBinary {
+            template<typename I, typename C>
+            inline static constexpr void at(I index, const C& callable) {
+                constexpr I mid = size_v<List> / 2;
+                using mid_t = middle_element<List>;
+                if (index == mid) {
+                    callable(Wrapper<mid_t>{});
+                }
+                else if (index < mid) {
+//                    using lower_t = lower_half<List>;
+//                    visitBinary<lower_t>::at(mid - index, callable);
+                }
+                else {
+//                    using upper_t = upper_half<List>;
+//                    visitBinary<upper_t>::at(index - mid, callable);                    
+                }
+            }
+        };
+        
+        struct visitJT {
+            template<typename> struct vhelper;
+            template<template<auto> typename A, auto I>
+            struct vhelper<A<I>> {
+                inline static constexpr auto index = I;
+            };
+            
+            template<concepts::List List, typename I, typename C>
+            inline static constexpr void at(const I index, const C& callable) {
+                if constexpr(size_v<List> > 0) {
+                    using first = Meta::front<List>;
+                    if (index == vhelper<first>::index) {
+                        callable(Wrapper<first>{});
+                    }
+                    else {
+                        using r_t = Meta::rest<List>;
+                        visitJT::template at<r_t>(index, callable);
+                    }                    
+                }
+            }
+        };
         
         template<concepts::List List> 
         struct visit {
-//            template<typename T> struct Wrapper{
-//                typedef T type;
-//            };
             using first = Meta::front<List>;
             template<typename I, typename C>
-            inline static constexpr void at(I index, const C& callable) {
+            inline static constexpr void at(const I index, const C& callable) {
                 if (index == I{0}) {
                     callable(Wrapper<first>{});
                 }
@@ -377,6 +427,13 @@ namespace Meta {
                     return visit<Meta::rest<List>>::find(callable, index + 1);
                 }
             }            
+        };
+        template<> 
+        struct visitBinary<Meta::List<>> {
+            template<typename I, typename C>
+            constexpr inline static void at(I, const C&) {
+//                assert(false);
+            }
         };
         template<> 
         struct visit<Meta::List<>> {
@@ -553,8 +610,16 @@ namespace Meta {
     inline static constexpr auto value_or_v = detail::value_or_impl<List>::value;
     
     template<concepts::List List, typename I, typename C>
-    inline void constexpr visitAt(I index, const C& callable) {
+    inline void constexpr visitAt(const I index, const C& callable) {
         detail::visit<List>::at(index, callable);
+    }
+    template<concepts::List List, typename I, typename C>
+    inline void constexpr visitAtJT(const I index, const C& callable) {
+        detail::visitJT::template at<List>(index, callable);
+    }
+    template<concepts::List List, typename I, typename C>
+    inline void constexpr visitAtBinary(const I index, const C& callable) {
+        detail::visitBinary<List>::at(index, callable);
     }
 
     template<concepts::List List, typename C>

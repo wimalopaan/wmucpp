@@ -33,7 +33,6 @@ namespace External {
         using namespace etl;
         using namespace std;
         
-        constexpr auto seperator = std::byte{':'};
         constexpr auto startSymbol = std::byte{'$'};
         
         constexpr auto propSymbol = std::byte{'p'};
@@ -48,25 +47,27 @@ namespace External {
         constexpr auto pingSymbol = std::byte{'>'};
         constexpr auto pongSymbol = std::byte{'<'};
         
-        constexpr auto lineEnds = std::make_array('\n'_B, '\r'_B, '\0'_B);
+        constexpr auto lineEnds  = std::make_array('\n'_B, '\r'_B, '\0'_B);
+        constexpr auto outSeperator = std::byte{':'};
+        constexpr auto inSeperators = std::make_array(' '_B, ':'_B);
         
         template<typename Device, auto N>
         struct Logging final {
             template<typename... PP>
             inline static constexpr void outl(const PP&... pp) {
-                etl::outl<Device>(Char{startSymbol}, Char{logSymbol}, uint8_t{N}, Char{seperator}, pp...);
+                etl::outl<Device>(Char(startSymbol), Char(logSymbol), uint8_t{N}, Char(outSeperator), pp...);
             }
         };
         template<typename Device, auto N>
         struct Gauge final {
             inline static constexpr void put(const uint8_t v) {
-                outl<Device>(Char{startSymbol}, Char{gaugeSymbol}, uint8_t{N}, Char{seperator}, v);
+                outl<Device>(Char(startSymbol), Char(gaugeSymbol), uint8_t{N}, Char(outSeperator), v);
             }
         };
         template<typename Device, auto N, typename T>
         struct Wind final {
             inline static constexpr void put(const T& z1, const T& z2, const T& l1) {
-                outl<Device>(Char{startSymbol}, Char{windSymbol}, uint8_t{N}, Char{seperator}, z1, Char{seperator}, z2, Char{seperator}, l1);
+                outl<Device>(Char(startSymbol), Char(windSymbol), uint8_t{N}, Char(outSeperator), z1, Char(outSeperator), z2, Char(outSeperator), l1);
             }
         };
         template<typename Device>
@@ -75,21 +76,29 @@ namespace External {
                 outl<Device>(Char{startSymbol}, Char{pongSymbol});
             }
         };
-        template<typename Device, auto N>
+        template<typename Device, auto N = 0>
         struct Toggle final {
             inline static constexpr void put(const bool v) {
                 if (v) {
-                    outl<Device>(Char{startSymbol}, Char{toggleSymbol}, uint8_t{N}, Char{seperator}, 1);
+                    outl<Device>(Char{startSymbol}, Char{toggleSymbol}, uint8_t{N}, Char{outSeperator}, 1);
                 }
                 else {
-                    outl<Device>(Char{startSymbol}, Char{toggleSymbol}, uint8_t{N}, Char{seperator}, 0);
+                    outl<Device>(Char{startSymbol}, Char{toggleSymbol}, uint8_t{N}, Char{outSeperator}, 0);
+                }
+            }
+            inline static constexpr void put(const uint8_t i, const bool v) {
+                if (v) {
+                    outl<Device>(Char{startSymbol}, Char{toggleSymbol}, i, Char{outSeperator}, 1);
+                }
+                else {
+                    outl<Device>(Char{startSymbol}, Char{toggleSymbol}, i, Char{outSeperator}, 0);
                 }
             }
         };
         template<typename Device, auto N>
         struct ValuePlot final {
             inline static constexpr void put(const uint8_t v) {
-                outl<Device>(Char{startSymbol}, Char{valueSymbol}, uint8_t{N}, Char{seperator}, v);
+                outl<Device>(Char{startSymbol}, Char{valueSymbol}, uint8_t{N}, Char{outSeperator}, v);
             }
         };
         
@@ -101,7 +110,7 @@ namespace External {
             return (static_cast<uint8_t>(b) - '0');
         }
 
-        template<uint8_t N, uint8_t NChannels = 16>
+        template<uint8_t N, uint8_t NChannels = 16, typename Buffer = void>
         class ProtocollAdapter final {
             inline static constexpr uint8_t NumberOfChannels = NChannels;
             
@@ -111,8 +120,16 @@ namespace External {
                                         Wind, WindV1, WindV2, WindV3};
         public:
             enum class Target: uint8_t {Undefined, Prop, Switch, Toggle, Ping, Wind};
+
+            using buffer_t = Buffer;
             
             inline static bool process(const std::byte b) { 
+                if constexpr(!std::is_same_v<Buffer, void>) {
+                    if (Buffer::isActive()) {
+                        Buffer::push(b);
+                        return true;
+                    }
+                }
                 ++mBytes;
                 switch (state) {
                 case State::Undefined:
@@ -152,7 +169,7 @@ namespace External {
                         number *= 10;
                         number += asDigit(b);
                     }
-                    else if (b == seperator) {
+                    else if (etl::contains(inSeperators, b)) {
                         state = State::WindV1;
                         index.set(number);
                         number = 0;
@@ -166,7 +183,7 @@ namespace External {
                         number *= 10;
                         number += asDigit(b);
                     }
-                    else if (b == seperator) {
+                    else if (etl::contains(inSeperators, b)) {
                         state = State::Value;
                         index.set(number);
                         number = 0;
@@ -193,7 +210,7 @@ namespace External {
                     }
                     else if (b == std::byte{'+'}) {
                     }
-                    else if (b == seperator) {
+                    else if (etl::contains(inSeperators, b)) {
                         w0 = number * sign;
                         number = 0;
                         sign = 1;
@@ -213,7 +230,7 @@ namespace External {
                     }
                     else if (b == std::byte{'+'}) {
                     }
-                    else if (b == seperator) {
+                    else if (etl::contains(inSeperators, b)) {
                         w1 = number * sign;
                         number = 0;
                         sign = 1;
@@ -293,7 +310,7 @@ namespace External {
                     }
                     break;
                 case State::Ping:
-                    if (etl::contains(lineEnds, b)) {
+                    if (etl::contains(  lineEnds, b)) {
                         state = State::Undefined;
                         pingReceived = true;
                     }
@@ -313,7 +330,7 @@ namespace External {
             }
             inline static void whenTargetChanged(const auto& f) {
                 if (lastIndex && (lastTarget != Target::Undefined)) {
-                    f(lastTarget, lastIndex);
+                    f(lastTarget, lastIndex.toInt());
                     lastTarget = Target::Undefined;
                     lastIndex.setNaN();
                 }

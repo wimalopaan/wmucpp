@@ -101,7 +101,7 @@ namespace External {
                     return true;
                 }
                 inline static void id(const SensorId v) {
-                    mPhysId = std::byte{v};
+                    mPhysId = std::byte(v);
                 }
                 inline static void ratePeriodic() {}
                 
@@ -335,7 +335,7 @@ namespace External {
                     return true;
                 }
                 inline static void id(const SensorId v) {
-                    mPhysId = std::byte{v};
+                    mPhysId = std::byte(v);
                 }
                 inline static void ratePeriodic() {}
                 

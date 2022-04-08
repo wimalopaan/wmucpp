@@ -223,6 +223,7 @@ boards/breakout/Makefile
 boards/breakout/da00.cc
 boards/breakout/da01.cc
 boards/breakout/da02.cc
+boards/breakout/si5351.cc
 boards/breakout/test00.cc
 boards/breakout/test01.cc
 boards/cellwatch/Makefile
@@ -406,7 +407,10 @@ boards/rcdesk/test02.cc
 boards/rcdesk/test03.cc
 boards/rcdesk_mini/Makefile
 boards/rcdesk_mini/devices.h
+boards/rcdesk_mini/hc05.h
 boards/rcdesk_mini/test00.cc
+boards/rcdesk_mini/test01.cc
+boards/rcdesk_mini/test02.cc
 boards/rcfoc/Makefile
 boards/rcfoc/ankerwinde_01.cc
 boards/rcfoc/busses.h
@@ -1412,6 +1416,13 @@ doc/bmcpp99/simavrconsole.c
 doc/bmcpp99/sort.h
 doc0/bm00/bm09a.c
 doc0/bm00/bm09b.cc
+doc0/bm00/bm57.cc
+doc0/bm00/bm58.cc
+doc0/bm00/bm59.cc
+doc0/bm00/bm65.cc
+doc0/bm00/bm66.cc
+doc0/bm00/bm67.cc
+doc0/bm00/bm68.cc
 doc0/bm10/bm10.cc
 doc0/bm11/bm30.cc
 doc0/bm11/bm40.cc
@@ -2023,6 +2034,8 @@ include/util/outputparameter.h
 include/util/rational.h
 include/util/sort.h
 include/util/static_container.h
+include0/etl/fsm.h
+include0/external/hott/generator.h
 include0/external/solutions/si5351.h
 include0/mcu/common/components/twi.h
 include0/mcu/internals/twi.h

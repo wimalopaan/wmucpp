@@ -225,7 +225,7 @@ uint32_t sbusTime = 0;
         namespace Output {
             using namespace std::literals::chrono;
             
-            template<typename CN, typename Timer>
+            template<typename CN, typename Timer, typename dbg = void>
             struct Generator {
                 static constexpr External::Tick<Timer> timeoutTicks{14_ms};
                 static_assert(timeoutTicks.value > 1);
@@ -259,10 +259,11 @@ uint32_t sbusTime = 0;
                 }
                 
                 inline static void ratePeriodic() { // 14ms
-                    ++ticks;
-                    ticks.on(timeoutTicks, []{
+                    (++ticks).on(timeoutTicks, []{
+                        if constexpr(!std::is_same_v<dbg, void>) {
+                            dbg::toggle();
+                        }
                         usart::put(sbus_start);
-                    
                         usart::put((std::byte) (output[0] & 0x07FF));
                         usart::put((std::byte) ((output[0] & 0x07FF)>>8 | (output[1] & 0x07FF)<<3));
                         usart::put((std::byte) ((output[1] & 0x07FF)>>5 | (output[2] & 0x07FF)<<6));
@@ -285,10 +286,8 @@ uint32_t sbusTime = 0;
                         usart::put((std::byte) ((output[13] & 0x07FF)>>9 | (output[14] & 0x07FF)<<2));
                         usart::put((std::byte) ((output[14] & 0x07FF)>>6 | (output[15] & 0x07FF)<<5));
                         usart::put((std::byte) ((output[15] & 0x07FF)>>3));
-                    
                         usart::put(0x00_B); //Flags byte
                         usart::put(0x00_B); //Footer
-                        
                     });
                 }
             private:

@@ -68,11 +68,14 @@ namespace Hott {
         inline static constexpr uint8_t High8Bit = High >> 8; // 59
         inline static constexpr uint8_t ExtendedHigh8Bit = ExtendedHigh >> 8; // 65
         
-        inline static constexpr const uint8_t nWords = 18;
+        inline static constexpr const uint8_t MaxWords = 18;
+        inline static constexpr const uint8_t MaxChannels = 16;
 
-        inline static constexpr const uint8_t nChannles = 16;
+        inline static constexpr const uint8_t TotalChannels = 32;
         
-        std::array<std::pair<uint8_t, uint8_t>, nChannles> channelData = {};
+        std::array<std::pair<uint8_t, uint8_t>, TotalChannels> channels = {};
+
+        std::array<std::pair<uint8_t, uint8_t>, MaxChannels> protoData = {};
         std::byte func_code = 0_B;
         std::byte reserved = 0_B;
         std::byte mode_cmd = 0_B;

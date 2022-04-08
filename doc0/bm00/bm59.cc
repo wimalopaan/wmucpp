@@ -1,31 +1,22 @@
 #include <mcu/avr.h>
 
+#define MORE
+//#define ENTER
+
 volatile uint8_t r = 0;
 volatile uint8_t x = 0;
 
 namespace {
     struct FSM {
-        enum class State : uint8_t {Off, Start, Running, Test0, Test1, Test2, Test3, Test4, Test5, Test6, Test7, Test8, Test9, Error};
+        enum class State : uint8_t {Test0, Test1, Test2, Test3, Test4
+                        #ifdef MORE
+                                    , Test5, Test6, Test7
+                        #endif
+                                   };
         
-//        inline static void periodic() {
-//            process(r);
-//        }
         inline static void process(const uint8_t b) {
             const auto oldState = mState;
             switch(mState) {
-            case State::Off:
-                if (b == 1) {
-                    mState = State::Start;
-                }
-                break;
-            case State::Start:
-                if (b == 3) {
-                    mState = State::Test0;
-                }
-                else if (b == 0) {
-                    mState = State::Error;
-                }
-                break;
             case State::Test0:
                 if (b == 0) {
                     mState = State::Test1;
@@ -48,9 +39,14 @@ namespace {
                 break;
             case State::Test4:
                 if (b == 4) {
+#ifdef MORE
                     mState = State::Test5;
+#else
+                    mState = State::Test0;
+#endif
                 }
                 break;
+#ifdef MORE
             case State::Test5:
                 if (b == 5) {
                     mState = State::Test6;
@@ -63,37 +59,14 @@ namespace {
                 break;
             case State::Test7:
                 if (b == 7) {
-                    mState = State::Test8;
+                    mState = State::Test0;
                 }
                 break;
-            case State::Test8:
-                if (b == 8) {
-                    mState = State::Test9;
-                }
-                break;
-            case State::Test9:
-                if (b == 9) {
-                    mState = State::Running;
-                }
-                break;
-            case State::Running:
-                if (b == 3) {
-                    mState = State::Off;
-                }
-                else if (b > 100) {
-                    mState = State::Error;
-                }
-                break;
-            case State::Error:
-                break;
+#endif
             }
+#ifdef ENTER
             if (oldState != mState) {
                 switch(mState) {
-                case State::Off:
-                    break;
-                case State::Start:
-                    x = 43;
-                    break;
                 case State::Test0:
                     x = 40;
                     break;
@@ -109,6 +82,7 @@ namespace {
                 case State::Test4:
                     x = 44;
                     break;
+#ifdef MORE
                 case State::Test5:
                     x = 45;
                     break;
@@ -118,26 +92,17 @@ namespace {
                 case State::Test7:
                     x = 47;
                     break;
-                case State::Test8:
-                    x = 48;
-                    break;
-                case State::Test9:
-                    x = 49;
-                    break;
-                case State::Running:
-                    x = 44;
-                    break;
-                case State::Error:
-                    break;
+#endif
                 }
             }
+#endif
         }
     private:
-        inline static State mState = State::Off;
+            inline static State mState{State::Test0};
     };
+    
+    using fsm = FSM;
 }
-
-using fsm = FSM;
 
 int main() {
     while(true) {

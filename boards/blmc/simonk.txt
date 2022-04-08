@@ -29,8 +29,9 @@
 # DPower 25 A (sowohl alt (linear Regler) wie neu (Schaltregler)
 # sudo avrdude -p atmega8 -P usb -c avrisp2 -V -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -U flash:w:bs_nfet.hex
 
-# HobbyKing 10A (+, -, Mosi, Miso, sck, rst)
+# HobbyKing 10A (+, -, Mosi, Miso, sck, rst)(rot, braun, grau, grün, gelb, blau)
 # HobbyKing 6A (Mosi, Miso, sck, rst)
+# DPower Wave 45A
 # DPower Wave 65A
 # Reely BL-12A-Air
 # Hobbyking 80A F-80A
