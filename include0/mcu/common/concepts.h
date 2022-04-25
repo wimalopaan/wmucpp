@@ -60,6 +60,9 @@ namespace AVR {
 
         template<typename MCU>
         concept AtDa48 = AVR::Groups::isAtDa48<MCU>::value;
+
+        template<typename MCU>
+        concept AtDaSeries = (AVR::Groups::isAtDa32<MCU>::value || AVR::Groups::isAtDa48<MCU>::value);
         
         template<typename MCU>
         concept AtDxSeries = (AVR::Groups::isAtDa<MCU>::value || AVR::Groups::isAtDb<MCU>::value);

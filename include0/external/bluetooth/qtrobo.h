@@ -38,6 +38,7 @@ namespace External {
         constexpr auto propSymbol = std::byte{'p'};
         constexpr auto switchSymbol = std::byte{'s'};
         constexpr auto toggleSymbol = std::byte{'t'};
+        constexpr auto menuSymbol = std::byte{'m'};
 
         constexpr auto logSymbol = std::byte{'l'};
         constexpr auto gaugeSymbol = std::byte{'g'};
@@ -119,7 +120,7 @@ namespace External {
             enum class State : uint8_t {Undefined, Start, Number, Seperator, Value, Ping, 
                                         Wind, WindV1, WindV2, WindV3};
         public:
-            enum class Target: uint8_t {Undefined, Prop, Switch, Toggle, Ping, Wind};
+            enum class Target: uint8_t {Undefined, Prop, Switch, Toggle, Ping, Wind, Menu};
 
             using buffer_t = Buffer;
             
@@ -159,6 +160,10 @@ namespace External {
                         state = State::Wind;
                         target = Target::Wind;
                     }
+                    else if (b == menuSymbol) {
+                        state = State::Number;
+                        target = Target::Menu;
+                    }
                     else {
                         state = State::Undefined;
                         target = Target::Undefined;
@@ -189,11 +194,23 @@ namespace External {
                         number = 0;
                         sign = 1;
                     }
-                    else if (etl::contains(lineEnds, b) && (target == Target::Toggle)) {
-                        if (index < std::size(toggleValues)) {
-                            toggleValues[index] = !toggleValues[index];
+                    else if (etl::contains(lineEnds, b)) {
+                        if (target == Target::Toggle) {
+                            if (index < std::size(toggleValues)) {
+                                toggleValues[index] = !toggleValues[index];
+                                changed = true;
+                                lastTarget = Target::Toggle;
+                                state = State::Undefined;
+                            }
+                        }
+                        else if (target == Target::Menu) {
                             changed = true;
                             state = State::Undefined;
+                            lastIndex.setNaN();
+                            lastTarget = Target::Menu;                            
+                        }
+                        else {
+                            state = State::Undefined;                            
                         }
                     }
                     else {
@@ -303,6 +320,12 @@ namespace External {
                                 ++mPackages;
                             }
                         }
+                        else if (target == Target::Menu) {
+                            changed = true;
+                            lastIndex = index;
+                            lastTarget = Target::Menu;
+                            ++mPackages;
+                        }
                         state = State::Undefined;
                     }
                     else {
@@ -330,7 +353,7 @@ namespace External {
             }
             inline static void whenTargetChanged(const auto& f) {
                 if (lastIndex && (lastTarget != Target::Undefined)) {
-                    f(lastTarget, lastIndex.toInt());
+                    f(lastTarget, lastIndex);
                     lastTarget = Target::Undefined;
                     lastIndex.setNaN();
                 }

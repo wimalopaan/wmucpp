@@ -22,11 +22,48 @@
 #include <cstddef>
 
 #include <etl/concepts.h>
+#include "../common/concepts.h"
 
 namespace AVR {
     template<typename StaticByteStorage, etl::Concepts::NamedConstant StartBit, etl::Concepts::NamedConstant = StartBit>
     struct GPIORFlags;
     
+    template<AVR::Concepts::ComponentNumber CN, etl::Concepts::NamedConstant StartBit, etl::Concepts::NamedConstant LastBit>
+    struct GPIORFlags<CN, StartBit, LastBit> final {
+        GPIORFlags() = delete;
+        static constexpr uint8_t N = CN::value;
+        static constexpr auto mcu_gpio = getBaseAddr<typename DefaultMcuType::Gpior, N>;
+        
+        inline static constexpr uint8_t startBit = StartBit::value;
+        inline static constexpr uint8_t lastBit = LastBit::value;
+        static_assert(startBit <= lastBit, "wrong ordering");
+        static_assert(lastBit < 8, "wrong end bit in flag register");
+
+        static constexpr uint8_t Size = lastBit - startBit + 1;
+        
+        static inline constexpr std::byte mask = std::byte(((1 << (lastBit + 1)) - 1) & ~((1 << startBit) - 1));
+        
+        static inline void clear() {
+            mcu_gpio()->data &= ~mask;            
+        }
+        
+        template<uint8_t N = 0>                                  
+        static inline void set() {
+            static_assert(N <= (lastBit - startBit), "wrong bit in flag");
+            mcu_gpio()->data |= std::byte(1 << (startBit + N));
+        }  
+        template<uint8_t N = 0>                                  
+        static inline void reset() {
+            static_assert(N <= (lastBit - startBit), "wrong bit in flag");
+            mcu_gpio()->data &= ~std::byte(1 << (startBit + N));
+        }  
+        template<uint8_t N = 0>                                  
+        static inline bool isSet() {
+            static_assert(N <= (lastBit - startBit), "wrong bit in flag");
+            return std::any(mcu_gpio()->data & std::byte(1 << (startBit + N)));                  
+        }
+    };
+
     template<typename StaticFlagStorage, etl::Concepts::NamedConstant StartBit, etl::Concepts::NamedConstant LastBit>
     requires requires() {
         StaticFlagStorage::raw();

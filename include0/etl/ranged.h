@@ -42,6 +42,12 @@ namespace etl {
             using size_type = std::array<T, S>::size_type;
             using type = etl::uint_ranged_circular<size_type, 0, S - 1>;
         };
+
+        template<typename T, auto L, auto U>
+        struct cyclic_type<uint_ranged<T,L, U>> final {
+            using type = etl::uint_ranged_circular<T, L, U>;
+        };
+    
     }
     
     template<typename Dest, auto SrcL, auto SrcU, typename SrcT>
@@ -51,6 +57,12 @@ namespace etl {
         return Dest(Dest::Lower + (((Dest::Upper - Dest::Lower) * (enc_t(in) - SrcL)) / (SrcU - SrcL)));
     }
 
+    template<typename Dest>
+    constexpr Dest scaleTo(const uint8_t& in) {
+//        static_assert(sizeof(typename Dest::value_type) >= sizeof(SrcT));
+        using enc_t = etl::enclosing_t<typename Dest::value_type>;
+        return Dest(Dest::Lower + (((Dest::Upper - Dest::Lower) * enc_t(in)) / (255)));
+    }
     
     template<typename A>
     using index_type_t = detail::index_type<A>::type;

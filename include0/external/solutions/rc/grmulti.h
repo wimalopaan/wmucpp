@@ -13,7 +13,7 @@ namespace External {
 
             using gpior_t = typename MCU::Gpior; 
             static inline constexpr auto flags = AVR::getBaseAddr<gpior_t, 1>;
-            static inline constexpr uint8_t enableMask = 0x01;
+            static inline constexpr auto enableMask = 0x01_B;
 
             
             static inline constexpr uint16_t thresh_up = Ppm::medium + (Ppm::span / 4);
@@ -65,7 +65,7 @@ namespace External {
                         case State::GotSync2:
                             if (vi < Ppm::ppmMax) {
                                 pValues[index] = vi;
-                                if (flags()->data & enableMask) {
+                                if (std::any(flags()->data & enableMask)) {
                                     if (vi >= thresh_up) {
                                         swStates[toSwitchIndex(index, true)] = SwState::On;
                                         swStates[toSwitchIndex(index, false)] = SwState::Off;

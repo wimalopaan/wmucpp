@@ -6,7 +6,7 @@
 namespace AVR {
     namespace Series0 {
         struct GPIOR {
-            volatile uint8_t data;
+            volatile std::byte data;
 
             template<int N> struct Address;
         };

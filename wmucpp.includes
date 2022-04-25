@@ -82,3 +82,4 @@ boards/rc720/doc
 include0/mcu/tinyavr2
 boards/rcdesk_mini
 include0/external/hott
+boards/rcswitch

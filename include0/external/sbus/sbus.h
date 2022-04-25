@@ -14,75 +14,14 @@
 
 namespace External {
     namespace SBus {
-#if 0
-#define RC_CHANNEL_MIN 990
-#define RC_CHANNEL_MAX 2010
+        static inline constexpr std::byte start_byte = 0x0f_B;
+        static inline constexpr std::byte end_byte = 0x00_B;
+        
+        static inline constexpr std::byte ch17 = 0x01_B;
+        static inline constexpr std::byte ch18 = 0x02_B;
+        static inline constexpr std::byte frameLost = 0x04_B;
+        static inline constexpr std::byte failSafe = 0x08_B;
 
-#define SBUS_MIN_OFFSET 173
-#define SBUS_MID_OFFSET 992
-#define SBUS_MAX_OFFSET 1811
-#define SBUS_CHANNEL_NUMBER 16
-#define SBUS_PACKET_LENGTH 25
-#define SBUS_FRAME_HEADER 0x0f
-#define SBUS_FRAME_FOOTER 0x00
-#define SBUS_FRAME_FOOTER_V2 0x04
-#define SBUS_STATE_FAILSAFE 0x08
-#define SBUS_STATE_SIGNALLOSS 0x04
-#define SBUS_UPDATE_RATE 15 //ms
-
-void sbusPreparePacket(uint8_t packet[], int channels[], bool isSignalLoss, bool isFailsafe){
-
-    static int output[SBUS_CHANNEL_NUMBER] = {0};
-
-    /*
-     * Map 1000-2000 with middle at 1500 chanel values to
-     * 173-1811 with middle at 992 S.BUS protocol requires
-     */
-    for (uint8_t i = 0; i < SBUS_CHANNEL_NUMBER; i++) {
-        output[i] = map(channels[i], RC_CHANNEL_MIN, RC_CHANNEL_MAX, SBUS_MIN_OFFSET, SBUS_MAX_OFFSET);
-    }
-
-    uint8_t stateByte = 0x00;
-    if (isSignalLoss) {
-        stateByte |= SBUS_STATE_SIGNALLOSS;
-    }
-    if (isFailsafe) {
-        stateByte |= SBUS_STATE_FAILSAFE;
-    }
-    packet[0] = SBUS_FRAME_HEADER; //Header
-
-    packet[1] = (uint8_t) (output[0] & 0x07FF);
-    usart::put((uint8_t) ((output[0] & 0x07FF)>>8 | (output[1] & 0x07FF)<<3);
-    packet[3] = (uint8_t) ((output[1] & 0x07FF)>>5 | (output[2] & 0x07FF)<<6);
-    packet[4] = (uint8_t) ((output[2] & 0x07FF)>>2);
-    packet[5] = (uint8_t) ((output[2] & 0x07FF)>>10 | (output[3] & 0x07FF)<<1);
-    packet[6] = (uint8_t) ((output[3] & 0x07FF)>>7 | (output[4] & 0x07FF)<<4);
-    packet[7] = (uint8_t) ((output[4] & 0x07FF)>>4 | (output[5] & 0x07FF)<<7);
-    packet[8] = (uint8_t) ((output[5] & 0x07FF)>>1);
-    packet[9] = (uint8_t) ((output[5] & 0x07FF)>>9 | (output[6] & 0x07FF)<<2);
-    packet[10] = (uint8_t) ((output[6] & 0x07FF)>>6 | (output[7] & 0x07FF)<<5);
-    packet[11] = (uint8_t) ((output[7] & 0x07FF)>>3);
-    packet[12] = (uint8_t) ((output[8] & 0x07FF));
-    packet[13] = (uint8_t) ((output[8] & 0x07FF)>>8 | (output[9] & 0x07FF)<<3);
-    packet[14] = (uint8_t) ((output[9] & 0x07FF)>>5 | (output[10] & 0x07FF)<<6);  
-    packet[15] = (uint8_t) ((output[10] & 0x07FF)>>2);
-    packet[16] = (uint8_t) ((output[10] & 0x07FF)>>10 | (output[11] & 0x07FF)<<1);
-    packet[17] = (uint8_t) ((output[11] & 0x07FF)>>7 | (output[12] & 0x07FF)<<4);
-    packet[18] = (uint8_t) ((output[12] & 0x07FF)>>4 | (output[13] & 0x07FF)<<7);
-    packet[19] = (uint8_t) ((output[13] & 0x07FF)>>1);
-    packet[20] = (uint8_t) ((output[13] & 0x07FF)>>9 | (output[14] & 0x07FF)<<2);
-    packet[21] = (uint8_t) ((output[14] & 0x07FF)>>6 | (output[15] & 0x07FF)<<5);
-    packet[22] = (uint8_t) ((output[15] & 0x07FF)>>3);
-
-    packet[23] = stateByte; //Flags byte
-    packet[24] = SBUS_FRAME_FOOTER; //Footer
-}
-
-uint8_t sbusPacket[SBUS_PACKET_LENGTH];
-int rcChannels[SBUS_CHANNEL_NUMBER];
-uint32_t sbusTime = 0;
-
-#endif   
         namespace Servo {
             using namespace std::literals::chrono;
             using namespace External::Units::literals;
@@ -96,8 +35,13 @@ uint32_t sbusTime = 0;
                 using mapped_type = etl::uint_ranged_NaN<uint16_t, 480, 1504>;
                 using channel_t = etl::uint_ranged_NaN<uint8_t, 0, data_t::size() - 1>;
                 
-                static inline constexpr std::byte start_byte = 0x0f_B;
-                static inline constexpr std::byte end_byte = 0x00_B;
+                static inline std::byte switches() {
+                    return mFlagsAndSwitches & (ch17 | ch18);
+                }
+                
+                static inline std::byte flags() {
+                    return mFlagsAndSwitches & (failSafe | frameLost);
+                }
                 
                 static inline value_type value(const channel_t ch) {
                     if (const uint8_t chi = ch.toInt(); ch) {
@@ -207,8 +151,7 @@ uint32_t sbusTime = 0;
                     mChannels[13] = (uint16_t) ((mData[17]>>7 | mData[18]<<1 |mData[19]<<9)  	 & 0x07FF);
                     mChannels[14] = (uint16_t) ((mData[19]>>2 | mData[20]<<6)                     & 0x07FF);
                     mChannels[15] = (uint16_t) ((mData[20]>>5 | mData[21]<<3)                     & 0x07FF);
-                    
-                    // todo: decode binary channel ch17,ch18,frame lost, failset,x,x,x,x in byte 22
+                    mFlagsAndSwitches = std::byte(mData[22] & 0x0f);
                     mPackageTimer.reset();
                     mValid = true;
                 }
@@ -220,18 +163,24 @@ uint32_t sbusTime = 0;
                 inline static etl::index_type_t<MesgType> mIndex;
                 inline static uint16_t mPackages{};
                 inline static bool mValid{false};
+                inline static std::byte mFlagsAndSwitches{0};
             };
         }
         namespace Output {
             using namespace std::literals::chrono;
             
-            template<typename CN, typename Timer, typename dbg = void>
+            template<typename CN, typename Timer, typename dbg = void, typename PA = External::Hal::NullProtocollAdapter, uint8_t Size = 128>
             struct Generator {
                 static constexpr External::Tick<Timer> timeoutTicks{14_ms};
                 static_assert(timeoutTicks.value > 1);
 //                std::integral_constant<uint8_t, timeoutTicks.value>::_;
                 
-                using usart = AVR::Usart<CN, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<2>, AVR::SendQueueLength<128>>;
+                using usart = std::conditional_t<std::is_same_v<PA, External::Hal::NullProtocollAdapter>, 
+                                               AVR::Usart<CN, PA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<2>, AVR::SendQueueLength<Size>>,
+                                               AVR::Usart<CN, PA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<Size>>
+                                               >;
+                
+                using pa_t = PA;
                 
                 inline static constexpr uint16_t sbus_min = 172;
                 inline static constexpr uint16_t sbus_max = 1811;
@@ -250,6 +199,15 @@ uint32_t sbusTime = 0;
 
                 static inline void set(const index_type& i, const value_type& v) {
                     output[i] = v;
+                }
+                template<uint8_t I>
+                static inline void set(const value_type& v) {
+                    output[I] = v;
+                }
+                
+                static inline void switches(const std::byte s) {
+                    static constexpr std::byte mask = ch17 | ch18;
+                    mFlagsAndSwitches = (mFlagsAndSwitches & ~mask) | (s & mask);
                 }
                 
                 static inline constexpr std::byte sbus_start = 0x0f_B;
@@ -286,11 +244,12 @@ uint32_t sbusTime = 0;
                         usart::put((std::byte) ((output[13] & 0x07FF)>>9 | (output[14] & 0x07FF)<<2));
                         usart::put((std::byte) ((output[14] & 0x07FF)>>6 | (output[15] & 0x07FF)<<5));
                         usart::put((std::byte) ((output[15] & 0x07FF)>>3));
-                        usart::put(0x00_B); //Flags byte
+                        usart::put(mFlagsAndSwitches); //Flags byte
                         usart::put(0x00_B); //Footer
                     });
                 }
             private:
+                static inline std::byte mFlagsAndSwitches{};
                 static inline std::array<uint16_t, 16> output;                 
                 static inline External::Tick<Timer> ticks{};
             };  

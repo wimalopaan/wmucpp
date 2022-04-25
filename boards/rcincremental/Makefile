@@ -18,17 +18,24 @@
 #
 
 # ~/Projekte/updi/pyupdi/pyupdi.py -d tiny412 -c /dev/ttyUSB1  -f test00.hex
+# ~/.local/bin/pymcuprog write --erase -d attiny412 -t uart -u /dev/ttyUSB1 -f sbusOut.hex
 
 MCU = attiny412
-#F_OSC = 20000000
+F_OSC = 20000000
 # 3V Betrieb
-F_OSC = 10000000 
+#F_OSC = 10000000 
+
+inc3mode10Mhz.hex: F_OSC = 10000000 
+potiOnly00.hex: F_OSC = 5000000 
 
 subdirs = doc
 
 #targets += test00.hex
 #targets += test01.hex
 targets += inc3mode10Mhz.hex
+#targets += serialOnly.hex
+targets += sbusOut.hex
+targets += potiOnly00.hex
 
 -include ../../Makefile.avr0.include
 

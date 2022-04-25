@@ -26,8 +26,11 @@ struct GlobalFsm {
     using hc05 = devs::hc05;
     
     using dbg = devs::dbg;    
-//    using sbus1 = devs::sbus1;    
-    using sumd = devs::sumd;    
+
+//    using sbus2 = devs::sbus2;    
+    using sumd = devs::sumd2;    
+    
+    using lut1 = devs::lut1;
     
     using led1 = devs::led1;    
 
@@ -47,6 +50,10 @@ struct GlobalFsm {
     static inline constexpr External::Tick<timer> waitTicks{2000_ms};
     
     static inline void init() {
+        nvm::init();
+        if (nvm::data().magic() != nvm::data().marker) {
+            nvm::data().clear();
+        }
         devs::init();
         test1::init();
         test2::init();
@@ -55,11 +62,17 @@ struct GlobalFsm {
         hc05::init();
         
         dbg::template init<AVR::BaudRate<9600>>();    
-//        sbus1::init();
+
         sumd::init();
+        
+        if (std::any(nvm::data().template serial<1>().flags & Data::outputInverted)) {
+            sumd::usart::txPinDisable();
+            lut1::init(std::byte{0x33}); // route TXD (inverted) to lut1-out 
+        }
 
         led1::init();
     }
+
     static inline void periodic() {
 #if defined(USE_CTR_AS_DEBUG)
         dbgPin::toggle();
@@ -187,8 +200,9 @@ private:
 
         template<typename PA, uint8_t N, uint8_t Offset>
         static inline void sm() {
-            const int16_t v = 2 * (PA::axis(axis_index_t{N}) - 8192) + sumd::sumd_mid;
-            sumd::set(i_t{N + Offset}, v_t(v));
+            const auto v = PA::axis(axis_index_t{N});
+            const v_t sv = etl::scaleTo<v_t>(v);
+            sumd::set(i_t{N + Offset}, sv);
         }
         static inline void process() {
             switch(mState) {
@@ -242,19 +256,30 @@ private:
                 break;
             case State::Robo:
                 robo_pa::whenTargetChanged([](const robo_pa::Target t, const auto index){
-                    if (t == robo_pa::Target::Prop) {
-                        if (index < 4) {
-                            const etl::uint_ranged<uint8_t> v{robo_pa::propValues[index]};
-                            const v_t sv = etl::scaleTo<v_t>(v);
-                            etl::outl<term>("p: "_pgm, index, " sv: "_pgm, sv.toInt());
-                            sumd::set(i_t{index + 12}, sv);                            
+                    if (const uint8_t idx = index.toInt(); index) {
+                        if (t == robo_pa::Target::Prop) {
+                            if (idx < 16) {
+                                const etl::uint_ranged<uint8_t> v(robo_pa::propValues[idx]);
+                                const v_t sv = etl::scaleTo<v_t>(v);
+                                etl::outl<term>("p: "_pgm, idx, " sv: "_pgm, sv.toInt());
+                                sumd::set(i_t(idx + 16), sv);                            
+                            }
                         }
-                    }
-                    else if (t == robo_pa::Target::Toggle) {
-                        if (index < 64) {
-                            etl::outl<term>("t: "_pgm, index);
-                            sumd::setSwitch(i_t{index}, robo_pa::toggleValues[index]);
-                            toggle::put(index, robo_pa::toggleValues[index]);                        
+                        else if (t == robo_pa::Target::Toggle) {
+                            if (idx < 64) {
+                                etl::outl<term>("t: "_pgm, idx);
+                                sumd::setSwitch(i_t{idx}, robo_pa::toggleValues[idx]);
+                                toggle::put(idx, robo_pa::toggleValues[idx]);                        
+                            }
+                        }
+                        else if (t == robo_pa::Target::Switch) {
+                            if (idx < 64) {
+                                etl::outl<term>("s: "_pgm, idx, " : "_pgm, robo_pa::switchValues[idx]);
+                                typename sumd::command_t c;
+                                c.first = std::byte{idx};
+                                c.second = std::byte{robo_pa::switchValues[idx]};
+                                sumd::setCmd(c);
+                            }
                         }
                     }
                 });

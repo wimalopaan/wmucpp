@@ -17,11 +17,18 @@ namespace External {
             enum class State : uint8_t {Undefined, Data, CheckSumL, CheckSumH, End};
             
             using message_t = std::array<std::byte, 12>;
-            using axis_t = std::array<uint16_t, 6>;            
+            
+            inline static constexpr uint16_t halfSpan = 360;
+        public:
+            inline static constexpr uint16_t midValue = 8192;
+            inline static constexpr uint16_t maxValue = midValue + halfSpan;
+            inline static constexpr uint16_t minValue = midValue - halfSpan;
+            using value_t = etl::uint_ranged<uint16_t, minValue, maxValue>; 
+        private:
+            using axis_t = std::array<value_t, 6>;            
         public:
             inline static constexpr std::byte startSymbol = 0x96_B;
             inline static constexpr std::byte endSymbol = 0x8D_B;
-
             using index_t = etl::index_type_t<axis_t>;
             
             inline static bool process(const std::byte b) { 
@@ -60,7 +67,7 @@ namespace External {
                     break;
                 case State::End:
                     if (b == endSymbol) {
-                        ++mPackages;
+                        ++mPackages; 
                         decode();
                     }
                     else {
@@ -81,16 +88,16 @@ namespace External {
             inline static void resetStats() {
                 mBytes = mPackages = 0;
             }   
-            inline static uint16_t axis(const index_t index) {
+            inline static value_t axis(const index_t index) {
                 return mAxis[index];
             }
         private:
-            static inline uint16_t axisValue(const uint8_t axis) {
+            static inline uint16_t rawValue(const uint8_t axis) {
                 return (std::to_integer(mRawValues[2 * axis]) << 7) + std::to_integer(mRawValues[2 * axis + 1]);
             }
             static inline void decode() {
                 for(uint8_t i = 0; auto& a : mAxis) {
-                    a = axisValue(i++);
+                    a.set(rawValue(i++));
                 }
             }
             inline static State mState{State::Undefined};

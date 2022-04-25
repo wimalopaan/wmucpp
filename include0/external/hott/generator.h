@@ -80,13 +80,17 @@ namespace Hott {
             static inline External::Tick<Timer> ticks{};
         };  
 
-        template<typename CN, typename Timer>
+        template<typename CN, typename Timer, typename dbg = void, typename PA = External::Hal::NullProtocollAdapter, uint8_t Size = 128>
         struct GeneratorV3 {
             static constexpr External::Tick<Timer> timeoutTicks{10_ms};
             static_assert(timeoutTicks.value > 1);
 //                std::integral_constant<uint8_t, timeoutTicks.value>::_;
             
-            using usart = AVR::Usart<CN, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<2>, AVR::SendQueueLength<128>>;
+//            using usart = AVR::Usart<CN, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<2>, AVR::SendQueueLength<128>>;
+            using usart = std::conditional_t<std::is_same_v<PA, External::Hal::NullProtocollAdapter>, 
+                                           AVR::Usart<CN, PA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<2>, AVR::SendQueueLength<Size>>,
+                                           AVR::Usart<CN, PA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<Size>>
+                                           >;
             
             inline static constexpr uint16_t sumd_min = Hott::SumDMsgV3::Low;
             inline static constexpr uint16_t sumd_max = Hott::SumDMsgV3::High;
@@ -99,6 +103,7 @@ namespace Hott {
             using value_type = etl::uint_ranged<uint16_t, sumd_min, sumd_max>;
             using index_type = etl::uint_ranged<uint8_t, 0, 31>;
             using switch_index_type = etl::uint_ranged<uint8_t, 0, 63>;
+            using command_t = std::pair<std::byte, std::byte>;
             
             enum class State : uint8_t {Ch1to16 = 0x02, Ch1to8and17to24 = 0x03, Ch1to8and25to32 = 0x04, ch1to8andSwitches = 0x05};
             
@@ -109,6 +114,11 @@ namespace Hott {
                 }
             }
 
+            static inline void setCmd(const command_t& c) {
+                modeCmd = c.first;
+                subCmd = c.second;
+            }
+            
             static inline void setSwitch(const switch_index_type& i, const bool v) {
                 const uint8_t byteNumber = 7 - (i / 8);
                 const uint8_t bitNumber = i & 0x07;

@@ -9,7 +9,7 @@ namespace External {
         struct MultiSwitch {
             using gpior_t = typename MCU::Gpior; 
             static inline constexpr auto flags = AVR::getBaseAddr<gpior_t, 1>;
-            static inline constexpr uint8_t enableMask = 0x01;
+            static inline constexpr auto enableMask = 0x01_B;
 
             enum class State : uint8_t {UnDefined, CountUp, CountUpPause, ToggleUp, CountDown, CountDownPause, ToggleDown};
             enum class SwState : uint8_t {Off, On, Blink1 = On, Steady, Blink2};
@@ -40,7 +40,7 @@ namespace External {
                 }
             }            
             inline static void periodic() {
-                if (flags()->data & enableMask) {
+                if (std::any(flags()->data & enableMask)) {
                     Ppm::onCapture([]{
                         const auto v = Ppm::value(); 
                         if (!v) return;

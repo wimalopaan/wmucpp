@@ -42,6 +42,8 @@ targets += shtml
 #targets += bm30.S bm30.elf bm30.hex
 targets += bm40.S
 
+bm00.o: bm00.o bm00b.o
+
 #bm40.o: bm40.o bm41.o 
 
 #bm40a: bm40.o bm41.o

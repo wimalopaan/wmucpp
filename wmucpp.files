@@ -411,6 +411,8 @@ boards/rcdesk_mini/hc05.h
 boards/rcdesk_mini/test00.cc
 boards/rcdesk_mini/test01.cc
 boards/rcdesk_mini/test02.cc
+boards/rcdesk_mini/test03.cc
+boards/rcdesk_mini/test99.cc
 boards/rcfoc/Makefile
 boards/rcfoc/ankerwinde_01.cc
 boards/rcfoc/busses.h
@@ -445,6 +447,9 @@ boards/rcincremental/Makefile
 boards/rcincremental/doc/Makefile
 boards/rcincremental/doc/rcincr.adoc
 boards/rcincremental/inc3mode10Mhz.cc
+boards/rcincremental/potiOnly00.cc
+boards/rcincremental/sbusOut.cc
+boards/rcincremental/serialOnly.cc
 boards/rcincremental/test00.cc
 boards/rcincremental/test01.cc
 boards/rcled/Makefile
@@ -572,6 +577,9 @@ boards/rcsensorled10_avr0/test30.cc
 boards/rcsensorled10_avr0/test31.cc
 boards/rcsensorled10_avr0/test40.cc
 boards/rcsensorled10_avr0/test41.cc
+boards/rcswitch/Makefile
+boards/rcswitch/telemetrySwitch00.cc
+boards/rcswitch/test00.cc
 boards/tx/Makefile
 boards/tx/varioprop/Makefile
 boards/tx/varioprop/board.txt
@@ -1424,6 +1432,7 @@ doc0/bm00/bm66.cc
 doc0/bm00/bm67.cc
 doc0/bm00/bm68.cc
 doc0/bm10/bm10.cc
+doc0/bm11/bm00b.c
 doc0/bm11/bm30.cc
 doc0/bm11/bm40.cc
 doc0/bm11/bm41.cc
@@ -2312,6 +2321,7 @@ doc/bmcpp04/bm05aa.cc
 example/basics/Makefile
 example/basics/register.cc
 include0/external/hal/nulldev.h
+include0/external/sbus/frskyD.h
 include0/external/sbus/sport.h
 include0/external/solutions/analogsensor.h
 include0/external/solutions/spacemouse.h
