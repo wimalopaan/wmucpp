@@ -28,13 +28,15 @@ subdirs += hott music tools
 #targets += rswitch
 #targets += rdiv
 
+test23: test23.cc test23a.cc
+
 targets += test01 
 targets += test02 
 targets += test04
-targets += test04b
+#targets += test04b
 targets += test06
 #targets += test07
-targets += test08
+#targets += test08
 ##targets += test10
 #targets += test11
 #targets += test12
@@ -71,11 +73,11 @@ targets += test90
 targets += test91
 targets += test92
 targets += test93
-targets += test94
+#targets += test94
 #targets += test98
-targets += test99
+#targets += test99
 targets += test100
-targets += test200
+#targets += test200
 targets += test201
 targets += test210
 targets += test300

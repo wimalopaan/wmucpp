@@ -17,6 +17,9 @@
 
 # programmieren
 
+# Wasabi 30A
+# sudo avrdude -p atmega8 -P usb -c avrisp2 -V -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -U flash:w:wasabi.hex
+
 # AeroStar 70A
 # sudo avrdude -p atmega8 -P usb -c avrisp2 -V -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -U flash:w:bs.hex
 

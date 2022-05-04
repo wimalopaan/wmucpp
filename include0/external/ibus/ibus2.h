@@ -292,14 +292,139 @@ namespace IBus2 {
     using namespace std::literals::chrono;
     
     namespace Servo {
+        namespace Timed {
+            template<auto N, typename Timer, typename Dbg = void>
+            struct ProtocollAdapter {
+                // AFHDS2A: 14 channels
+                // there should be an update to 16 / 18 channels
+                enum class State : uint8_t {Undefined, GotStart20, Data, CheckL, CheckH};
+                
+                using value_type = etl::uint_ranged_NaN<uint16_t, 988, 2011>;            
+                using channel_t = etl::uint_ranged_NaN<uint8_t, 0, 17>;
+                
+                static inline constexpr External::Tick<Timer> packageTimeout{500_ms};
+                
+                static inline value_type value(const channel_t ch) {
+                    if (const uint8_t chi = ch.toInt(); ch) {
+                        if (chi < 14) {
+                            const std::byte h = (*inactive)[2 * chi + 1] & 0x0f_B;
+                            const std::byte l = (*inactive)[2 * chi];
+                            const uint16_t  v = (uint16_t(h) << 8) + uint8_t(l);
+                            if ((v >= value_type::Lower) && (v <= value_type::Upper)) {
+                                return value_type{v};
+                            }
+                            else {
+                                return {};
+                            }
+                        }
+                        else if (chi < 18) {
+                            const std::byte h1 = (*inactive)[6 * (chi - 14) + 1] & 0xf0_B;
+                            const std::byte h2 = (*inactive)[6 * (chi - 14) + 3] & 0xf0_B;
+                            const std::byte h3 = (*inactive)[6 * (chi - 14) + 5] & 0xf0_B;
+                            const uint16_t v = (uint8_t(h1) >> 4) + uint8_t(h2) + (uint16_t(h3) << 4);
+                            if ((v >= value_type::Lower) && (v <= value_type::Upper)) {
+                                return value_type{v};
+                            }
+                            else {
+                                return {};
+                            }
+                        }
+                    }            
+                    return value_type{};
+                }
+                static inline value_type valueMapped(const channel_t ch) {
+                    return value(ch);
+                }
+                
+                static inline bool process(const std::byte b) {
+                    switch(mState) {
+                    case State::Undefined:
+                        csum.reset();
+                        if (b == 0x20_B) {
+                            csum += b;
+                            mState = State::GotStart20;
+                        }
+                        break;
+                    case State::GotStart20:
+                        if (b == 0x40_B) {
+                            csum += b;
+                            mState = State::Data;
+                            mIndex.setToBottom();
+                        }
+                        else {
+                            mState = State::Undefined;
+                        }
+                        break;
+                    case State::Data:
+                        (*active)[mIndex] = b;
+                        csum += b;
+                        if (mIndex.isTop()) {
+                            mState = State::CheckL;
+                        }
+                        else {
+                            ++mIndex;
+                        }
+                        break;
+                    case State::CheckL:
+                        csum.lowByte(b);
+                        mState = State::CheckH;
+                        break;
+                    case State::CheckH:
+                        csum.highByte(b);
+                        mState = State::Undefined;
+                        if (csum) {
+                            ++mPackagesCounter;
+                            if constexpr (!std::is_same_v<Dbg, void>) {
+                                Dbg::toggle();
+                            }
+                            using std::swap;
+                            swap(active, inactive);
+                            mPackageTimer.reset();
+                            mValid = true;
+                        }
+                        break;
+                    }
+                    return true;
+                }
+                
+                inline static void ratePeriodic() {
+                    mPackageTimer.on(packageTimeout, []{
+                        mValid = false;
+                    });
+                }
+                
+                inline static void resetStats() {
+                    mPackagesCounter = 0;
+                }
+                inline static uint16_t packages() {
+                    return mPackagesCounter;
+                }
+            private:
+                using MesgType = std::array<std::byte, 28>;
+                
+                inline static CheckSum csum;
+                inline static State mState{State::Undefined};
+                inline static MesgType mData0; // 0x20, 0x40 , 28 Bytes, checkH, checkL
+                inline static MesgType mData1; // 0x20, 0x40 , 28 Bytes, checkH, checkL
+                inline static MesgType* active = &mData0;
+                inline static MesgType* inactive = &mData1;
+                inline static etl::index_type_t<MesgType> mIndex;
+                inline static uint16_t mPackagesCounter{};
+    
+                static inline External::Tick<Timer> mPackageTimer{};
+                inline static bool mValid{false};
+            };
+            
+        }
+        
+        
         template<auto N = 0, typename Dbg = void>
         struct ProtocollAdapter {
             // AFHDS2A: 14 channels
             // there should be an update to 16 / 18 channels
             enum class State : uint8_t {Undefined, GotStart20, Data, CheckL, CheckH};
             
-            using value_type = etl::uint_ranged_NaN<uint16_t, 988, 2011>;
-            
+            using value_type = etl::uint_ranged_NaN<uint16_t, 988, 2011>;            
             using channel_t = etl::uint_ranged_NaN<uint8_t, 0, 17>;
             
             static inline value_type value(const channel_t ch) {
@@ -383,7 +508,8 @@ namespace IBus2 {
                 return true;
             }
             
-            inline static void ratePeriodic() {}
+            inline static void ratePeriodic() {
+            }
             
             inline static void resetStats() {
                 mPackagesCounter = 0;

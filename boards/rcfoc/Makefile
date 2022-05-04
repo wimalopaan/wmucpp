@@ -1,5 +1,6 @@
 
 # ~/.local/bin/pyupdi -d avr128da32 -c /dev/ttyUSB0 -f test00.hex
+# ~/.local/bin/pymcuprog write --erase -d avr128da32 -t uart -u /dev/ttyUSB0 -f test10.hex
 
 MCU = avr128da32
 F_OSC = 32000000
@@ -29,6 +30,7 @@ targets += ankerwinde_01.hex
 #targets += schleppwinde_01.hex
 #targets += schleppwinde_02.hex
 targets += schleppwinde_03.hex
+targets += steller_01.hex
 
 -include ../../Makefile.avr0.include
 

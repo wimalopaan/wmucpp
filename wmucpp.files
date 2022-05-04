@@ -406,6 +406,7 @@ boards/rcdesk/test01.cc
 boards/rcdesk/test02.cc
 boards/rcdesk/test03.cc
 boards/rcdesk_mini/Makefile
+boards/rcdesk_mini/desk10.cc
 boards/rcdesk_mini/devices.h
 boards/rcdesk_mini/hc05.h
 boards/rcdesk_mini/test00.cc
@@ -427,6 +428,7 @@ boards/rcfoc/schleppwinde_01.cc
 boards/rcfoc/schleppwinde_02.cc
 boards/rcfoc/schleppwinde_03.cc
 boards/rcfoc/servo_01.cc
+boards/rcfoc/steller_01.cc
 boards/rcfoc/telemetry.h
 boards/rcfoc/test00.cc
 boards/rcfoc/test01.cc

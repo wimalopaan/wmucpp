@@ -97,7 +97,7 @@ struct Devices {
     //    using rot2_t = etl::cyclic_type_t<rot1_t>; // saturating
     using rotary = External::RotaryEncoder<pinA, pinB, std::variant<rot1_t, rot2_t>>;
     
-    using pinT = Pin<Port<A>, 7>;
+    using pinT = Pin<Port<A>, 1>;
     using b = ActiveLow<pinT, Input>;
     using button = External::Button2<b, systemTimer, External::Tick<systemTimer>(50_ms), External::Tick<systemTimer>(longPress)>;
     
@@ -152,10 +152,11 @@ struct GlobalFSM {
         }
         std::byte s{};
         if (std::any(sbus_pa::switches() & External::SBus::ch18)) {
-            s = External::SBus::ch17;
+            s |= External::SBus::ch17;
         }
         if (But::pressed()) {
             s |= External::SBus::ch18;
+//            sbus::switches(External::SBus::ch18);
         }
         sbus::switches(s);
     }

@@ -335,7 +335,7 @@ struct EscFsm {
     static_assert((10 * pwmStep1) <= pwmStep2);    
 //        std::integral_constant<uint16_t, pwmStep2>::_;
     static inline void pwmFreq2(const pvalue_t& v) {
-        NVM::data().param(Param::PwmMax) = 65535 - v * pwmStep2;    
+        NVM::data().param(Param::PwmMax) = 65535 - v * pwmStep2; // 9: 10 * pwmStep1     
         NVM::data().change();
     }
     static inline pvalue_t p_pwmFreq2() {
