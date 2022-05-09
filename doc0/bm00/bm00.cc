@@ -1,18 +1,7 @@
-#include <vol_access>
-
-struct A {
-	A() {}
-    volatile int m{42};
-};
-
-
-namespace {
-    int  g() {
-        static A a; // guards generated
-        return a.m;
-    }
-}
+#include <avr/io.h>
 
 int main() {
-	return g();
+    PORTB = 0x01; // no warning
+    
+    (*(volatile uint8_t *)((0x05) + 0x20)) = 0x01; // warning
 }

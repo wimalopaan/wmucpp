@@ -118,12 +118,12 @@ struct GlobalFSM {
     using eeprom = EEProm;
     
     inline static void init() {
-        Rot::init();
-        But::init();
         eeprom::init();
         if (eeprom::data().magic() != 42) {
             eeprom::data().clear();
         }
+        Rot::init();
+        But::init();
         Dac::init();        
         OutPin::low();
         OutPin::template dir<Output>();

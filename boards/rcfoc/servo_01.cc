@@ -486,7 +486,7 @@ struct Application {
     }
 };
 
-using devices = Devices<>;
+using devices = Devices<0>;
 //using app = Application<External::Bus::NoBus<devices>>;
 using scanner = External::Scanner2<devices, Application, Meta::List<External::Bus::IBusIBus<devices>, External::Bus::SBusSPort<devices>>>;
 

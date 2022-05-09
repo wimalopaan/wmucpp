@@ -753,6 +753,11 @@ namespace AVR {
                 using pin_list = Meta::transform_type<pinmapper, OutList>;
                 AVR::PinGroup<pin_list>::template dir<Output>();
             }
+
+            inline static constexpr void init() {
+                mcu_tca()->ctrla.template set<mcu_timer_t::CtrlA_t::enable>();
+                mcu_tca()->ctrlb.template set<mcu_timer_t::CtrlB_t::pwm>();
+            }
             
             template<Meta::concepts::List OutList, typename IMode = etl::RestoreState>
             inline static constexpr void on() {

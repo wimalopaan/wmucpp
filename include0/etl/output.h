@@ -10,7 +10,7 @@
 namespace etl {
     using namespace std::literals::chrono;
  
-    template<Device Device, bool ensure = false>
+    template<Device Device, bool ensure>
     constexpr void put(std::byte b) {
         if constexpr(ensure) {
             while(!Device::put(b)) {

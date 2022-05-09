@@ -217,7 +217,7 @@ namespace AVR {
             static constexpr uint8_t number = N;
             static constexpr auto mcu_ccl = getBaseAddr<typename MCU::Ccl>;
             
-            inline static void init(std::byte truthTable) {
+            inline static void init(const std::byte truthTable) {
                 constexpr auto insel0 = Input::detail::map_input<In0, 0, MCU>::value;                
                 constexpr auto insel1 = (Input::detail::map_input<In1, 1, MCU>::value << 4);                
                 constexpr auto insel01 = insel0 | insel1;

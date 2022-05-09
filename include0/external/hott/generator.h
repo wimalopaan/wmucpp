@@ -200,7 +200,7 @@ namespace Hott {
                 }
             }
             static inline void putFunctionCode() {
-                usart::put(std::byte{mState});
+                usart::put(std::byte(mState));
                 etl::crc16(csum, uint8_t(mState));
             }
             static inline void putCmds() {

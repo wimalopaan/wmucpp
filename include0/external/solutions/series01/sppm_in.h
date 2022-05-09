@@ -41,6 +41,10 @@ namespace External {
             static inline std::byte get() {
                 return std::byte{};
             }
+            
+            static inline void init() {
+                SPpmIn::init();
+            }
         };
         
         template<typename TimerNumber, typename ClockP = void, typename MCU = DefaultMcuType>

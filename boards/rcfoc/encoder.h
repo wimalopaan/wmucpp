@@ -75,6 +75,7 @@ namespace External::AS5147 {
 //        raw_type::_;
         static inline constexpr raw_type maxValue = (1 << bits) - 1;
 //        std::integral_constant<raw_type, maxValue>::_;
+        static inline constexpr raw_type steps = (1 << bits);
         
         using angle_type = etl::uint_ranged<raw_type, 0, maxValue>;
         

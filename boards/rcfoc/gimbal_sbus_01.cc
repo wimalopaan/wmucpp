@@ -468,7 +468,7 @@ struct Application {
     }
 };
 
-using devices = Devices<>;
+using devices = Devices<0>;
 using app = Application<External::Bus::NoBus<devices>>;
 
 int main() {

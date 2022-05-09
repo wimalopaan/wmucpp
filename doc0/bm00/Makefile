@@ -44,7 +44,7 @@ OPTFLAGS = -Os
 
 #bm30: bm30.o bm30a.o
 
-#targets += bm00.S bm00.elf
+targets += bm00.S bm00.elf
 #targets += bm01.S bm01.elf
 #targets += bm01a.S bm01a.elf
 targets += bm02.S bm02.elf

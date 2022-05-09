@@ -9,6 +9,7 @@ subdirs =
 #targets += test00.elf test00.hex
 #targets += test01.elf test01.hex
 targets += test10.elf test10.hex
+targets += esc_ppm_22.hex
 #targets += test99.elf test99.hex
 
 -include ../../../Makefile.avr0.include

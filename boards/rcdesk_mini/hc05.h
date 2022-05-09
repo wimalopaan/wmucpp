@@ -225,11 +225,11 @@ namespace External {
                 case State::NameResult:
                     etl::outl<term>("H NR: "_pgm, atName.size(), " , "_pgm, atValue.size(), " , "_pgm, pa_buffer::bytes());
                     for(uint8_t i{}; i < atName.size(); ++i) {
-                        etl::out<term>(etl::Char{atName[i]});
+                        etl::out<term>(etl::Char(atName[i]));
                     }
                     etl::out<term>(etl::Char{'='});
                     for(uint8_t i{}; i < atValue.size(); ++i) {
-                        etl::out<term>(etl::Char{atValue[i]});
+                        etl::out<term>(etl::Char(atValue[i]));
                     }
                     etl::outl<term>();
                     break;

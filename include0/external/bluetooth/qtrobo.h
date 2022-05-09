@@ -74,32 +74,32 @@ namespace External {
         template<typename Device>
         struct Pong final {
             inline static constexpr void put() {
-                outl<Device>(Char{startSymbol}, Char{pongSymbol});
+                outl<Device>(Char(startSymbol), Char(pongSymbol));
             }
         };
         template<typename Device, auto N = 0>
         struct Toggle final {
             inline static constexpr void put(const bool v) {
                 if (v) {
-                    outl<Device>(Char{startSymbol}, Char{toggleSymbol}, uint8_t{N}, Char{outSeperator}, 1);
+                    outl<Device>(Char(startSymbol), Char(toggleSymbol), uint8_t{N}, Char(outSeperator), 1);
                 }
                 else {
-                    outl<Device>(Char{startSymbol}, Char{toggleSymbol}, uint8_t{N}, Char{outSeperator}, 0);
+                    outl<Device>(Char(startSymbol), Char(toggleSymbol), uint8_t{N}, Char(outSeperator), 0);
                 }
             }
             inline static constexpr void put(const uint8_t i, const bool v) {
                 if (v) {
-                    outl<Device>(Char{startSymbol}, Char{toggleSymbol}, i, Char{outSeperator}, 1);
+                    outl<Device>(Char(startSymbol), Char(toggleSymbol), i, Char(outSeperator), 1);
                 }
                 else {
-                    outl<Device>(Char{startSymbol}, Char{toggleSymbol}, i, Char{outSeperator}, 0);
+                    outl<Device>(Char(startSymbol), Char(toggleSymbol), i, Char(outSeperator), 0);
                 }
             }
         };
         template<typename Device, auto N>
         struct ValuePlot final {
             inline static constexpr void put(const uint8_t v) {
-                outl<Device>(Char{startSymbol}, Char{valueSymbol}, uint8_t{N}, Char{outSeperator}, v);
+                outl<Device>(Char(startSymbol), Char(valueSymbol), uint8_t{N}, Char(outSeperator), v);
             }
         };
         
@@ -352,10 +352,11 @@ namespace External {
                 }
             }
             inline static void whenTargetChanged(const auto& f) {
-                if (lastIndex && (lastTarget != Target::Undefined)) {
+                if (lastTarget != Target::Undefined) {
                     f(lastTarget, lastIndex);
                     lastTarget = Target::Undefined;
                     lastIndex.setNaN();
+                    changed = false;
                 }
             }
             inline static void whenPinged(const auto& f) {

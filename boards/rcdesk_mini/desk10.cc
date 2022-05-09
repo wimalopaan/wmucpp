@@ -3,32 +3,84 @@
 #define USE_CTR_AS_DEBUG
 
 #include "devices.h"
-
+ 
+template<typename NVM, typename SBusPA, typename IBusPA>
 struct Menu {
+    using nvm = NVM;
+    using sbus_pa = SBusPA;
+    using ibus_pa = IBusPA;
+    
     static inline void select(const uint8_t i, const auto f) {
+        switch(i) {
+        case 0:
+            nvm::data().template serial<0>().flags ^= Data::inputInverted;
+            nvm::data().change();
+            break;
+        case 1:
+            nvm::data().template serial<0>().flags ^= Data::outputInverted;
+            nvm::data().change();
+            break;
+        case 2:
+            nvm::data().template serial<1>().flags ^= Data::inputInverted;
+            nvm::data().change();
+            break;
+        case 3:
+            nvm::data().template serial<1>().flags ^= Data::outputInverted;
+            nvm::data().change();
+            break;
+        default:
+            break;
+        }
+        
+        f();
     }
     template<typename Out>
     static inline void out() {
-        if (mMenu == 0) {
-            for(const auto& s : mPage1) {
-                etl::outl<Out>(s);
-            }
+        etl::out<Out>(mPage1[0]);
+        if (std::any(nvm::data().template serial<0>().flags & Data::inputInverted)) {
+            etl::out<Out>(niText.second);
         }
+        else {
+            etl::out<Out>(niText.first);
+        }
+        etl::outl<Out>(" (Pakete: "_pgm, sbus_pa::packages(), ")"_pgm);
+        
+        etl::out<Out>(mPage1[1]);
+        if (std::any(nvm::data().template serial<0>().flags & Data::outputInverted)) {
+            etl::outl<Out>(niText.second);
+        }
+        else {
+            etl::outl<Out>(niText.first);
+        }
+        
+        etl::out<Out>(mPage1[2]);
+        if (std::any(nvm::data().template serial<1>().flags & Data::inputInverted)) {
+            etl::out<Out>(niText.second);
+        }
+        else {
+            etl::out<Out>(niText.first);
+        }
+        etl::outl<Out>(" (Pakete: "_pgm, ibus_pa::packages(), ")"_pgm);
+        
+        etl::out<Out>(mPage1[3]);
+        if (std::any(nvm::data().template serial<1>().flags & Data::outputInverted)) {
+            etl::outl<Out>(niText.second);
+        }
+        else {
+            etl::outl<Out>(niText.first);
+        }
+        etl::outl<Out>(footerMenu);
     }
 private:
-    static inline uint8_t mMenu{};
-    static inline uint8_t mItem{};
-    
-    static inline std::array<AVR::Pgm::StringView, 8> mPage1{
-        "Eingang1 (SBus) normal"_pgm,
-        "Eingang1 (SBus) intertiert"_pgm,
-        "Ausgang1 (SBus) normal"_pgm,
-        "Ausgang1 (SBus) intertiert"_pgm,
-        "Eingang2 (IBus) normal"_pgm,
-        "Eingang2 (IBus) intertiert"_pgm,
-        "Ausgang2 (SumDV3) normal"_pgm,
-        "Ausgang2 (SumDV3) intertiert"_pgm
+    static inline std::array<AVR::Pgm::StringView, 4> mPage1{
+        "Eingang1 (SBus)   : "_pgm,
+        "Ausgang1 (SBus)   : "_pgm,
+        "Eingang2 (IBus)   : "_pgm,
+        "Ausgang2 (SumDV3) : "_pgm,
     };
+    
+    static inline std::pair niText{"normal"_pgm, "invertiert"_pgm};
+    static inline auto footerMenu{"Eintrag auswaehlen (aendern) [$m:<zeilennummer><enter>]\n\rMenu anzeigen [$m<enter>]"_pgm};
 };
 
 template<typename Devices>
@@ -49,6 +101,7 @@ struct GlobalFsm {
     using robo_pa = devs::robo_pa;    
     using robo_out = devs::robo_out;    
     using toggle = External::QtRobo::Toggle<robo_out>;
+    using log = External::QtRobo::Logging<robo_out, 0>;
     
     using hc05 = devs::hc05;
     
@@ -57,7 +110,8 @@ struct GlobalFsm {
     using sumd = devs::sumd2;    
     using lut1 = devs::lut1;
     using ibus_pa = devs::ibus2_pa;
-    using led1 = devs::led1;    
+    using blinkLed = devs::blinkLed;    
+    using bcount_t = blinkLed::count_type;
 
     using sbus = devs::sbus1;
     using sbus_pa = devs::sbus_pa;
@@ -71,8 +125,11 @@ struct GlobalFsm {
     using test1 = devs::test1Pin;
     using test2 = devs::test2Pin;
     
+    using menu = Menu<nvm, sbus_pa, ibus_pa>;
+    
     static inline constexpr External::Tick<timer> initTicks{100_ms};
     static inline constexpr External::Tick<timer> debugTicks{500_ms};
+    static inline constexpr External::Tick<timer> checkTicks{500_ms};
     static inline constexpr External::Tick<timer> eepromTicks{1000_ms};
     static inline constexpr External::Tick<timer> waitTicks{2000_ms};
     
@@ -89,24 +146,46 @@ struct GlobalFsm {
         hc05::init();
 
         sbus::template init<AVR::BaudRate<100000>, AVR::FullDuplex, true, 1>(); // 8E2            
+        sumd::init();
         
+        updateUsarts();
+
+        blinkLed::init();
+    }
+
+    static inline void updateUsarts() {
         if (std::any(nvm::data().template serial<0>().flags & Data::outputInverted)) {
             sbus::txPinDisable();
             lut2::init(std::byte{0x33}); // route TXD (inverted) to lut2-out     
+            lut2::enable();
+        }
+        else {
+            lut2::disable();
+            sbus::txPinEnable();
         }
         if (std::any(nvm::data().template serial<0>().flags & Data::inputInverted)) {
             sbus::rxInvert(true);  
         }
-        
-        sumd::init();
+        else {
+            sbus::rxInvert(false);  
+        }
         if (std::any(nvm::data().template serial<1>().flags & Data::outputInverted)) {
             sumd::usart::txPinDisable();
             lut1::init(std::byte{0x33}); // route TXD (inverted) to lut1-out 
+            lut1::enable();
         }
-
-        led1::init();
+        else {
+            lut1::disable();
+            sumd::usart::txPinEnable();
+        }
+        if (std::any(nvm::data().template serial<1>().flags & Data::inputInverted)) {
+            sumd::usart::rxInvert(true);  
+        }        
+        else {
+            sumd::usart::rxInvert(false);  
+        }
     }
-
+    
     static inline void periodic() {
 #if defined(USE_CTR_AS_DEBUG)
         dbgPin::toggle();
@@ -123,11 +202,12 @@ struct GlobalFsm {
     
     enum class State : uint8_t {Start, InitSM1, InitSM1Wait, InitSM1End, InitSM2, InitSM2Wait, InitSM2End, 
                                 BTSetName, 
-                                Run};
+                                Run1, Run2, Run3, Run4};
 
     static inline void debug() {
         using i_t = sumd::index_type;
-        etl::outl<term>("desk10"_pgm, " ch0: "_pgm, sumd::raw(i_t{0}), " s1: "_pgm, (uint8_t)std::any(sbus_pa::switches() & External::SBus::ch17));
+//        etl::outl<term>("desk10"_pgm, " ch0: "_pgm, sumd::raw(i_t{0}));
+        etl::outl<term>("desk10"_pgm, " sm1: "_pgm, sm1Packages, " sm2: "_pgm, sm2Packages);
     }
     
     static inline void ratePeriodic() {
@@ -140,6 +220,7 @@ struct GlobalFsm {
         hc05::ratePeriodic();
         sbus_pa::ratePeriodic();
         ibus_pa::ratePeriodic();
+        blinkLed::ratePeriodic();
         
         ++mStateTicks;
         const auto oldState = mState;
@@ -175,10 +256,62 @@ struct GlobalFsm {
             break;
         case State::BTSetName:
             mStateTicks.on(waitTicks, []{
-                mState = State::Run;
+                mState = State::Run1;
             });
             break;
-        case State::Run:
+        case State::Run1:
+            (++mCheckTicks).on(checkTicks, []{
+                if (sm1_pa::packages() != sm1Packages) {
+                    sm1Active = true;
+                    sm1Packages = sm1_pa::packages();
+                }
+                else {
+                    sm1Active = false;
+                }
+                mState = State::Run2;
+            });
+            UpdateFSM::process();
+            break;
+        case State::Run2:
+            (++mCheckTicks).on(checkTicks, []{
+                if (sm2_pa::packages() != sm2Packages) {
+                    sm2Active = true;
+                    sm2Packages = sm2_pa::packages();
+                }
+                else {
+                    sm2Active = false;
+                }
+                mState = State::Run3;
+            });
+            UpdateFSM::process();
+            break;
+        case State::Run3:
+            (++mCheckTicks).on(checkTicks, []{
+                if (sbus_pa::packages() != sbPackages) {
+                    sbusActive = true;
+                    sbPackages = sbus_pa::packages();
+                    blinkCount.set(1);
+                }
+                else {
+                    blinkCount.set(0);
+                    sbusActive = false;
+                }
+                mState = State::Run4;
+            });
+            UpdateFSM::process();
+            break;
+        case State::Run4:
+            (++mCheckTicks).on(checkTicks, []{
+                if (ibus_pa::packages() != ibPackages) {
+                    ibusActive = true;
+                    ibPackages = ibus_pa::packages();
+                    blinkCount += 2;
+                }
+                else {
+                    ibusActive = false;
+                }
+                mState = State::Run1;
+            });
             UpdateFSM::process();
             break;
         }
@@ -189,6 +322,7 @@ struct GlobalFsm {
                 break;
             case State::InitSM1:
                 etl::outl<term>("S InitSM1"_pgm);
+                blinkLed::blink(bcount_t{5});                
                 sm1::put(0xad_B);
                 sm1::put(sm1_pa::endSymbol);
                 sm1::put(0xae_B);
@@ -216,12 +350,20 @@ struct GlobalFsm {
                 etl::outl<term>("S InitSM2End"_pgm);
                 break;       
             case State::BTSetName:
+                blinkLed::blink(bcount_t{6});                
                 etl::outl<term>("S BTSetName"_pgm);
                 hc05::event(hc05::Event::SetName);
                 break;
-            case State::Run:
-                etl::outl<term>("S Run"_pgm);
-                led1::activate();
+            case State::Run1:
+                etl::outl<term>("S Run1"_pgm);
+                blinkCount += 1;
+                blinkLed::blink(blinkCount);
+                break;
+            case State::Run2:
+                break;
+            case State::Run3:
+                break;
+            case State::Run4:
                 break;
             }
         }
@@ -323,16 +465,16 @@ private:
                         }
                         else if (t == robo_pa::Target::Menu) {
                             etl::outl<term>("m sel: "_pgm, idx);
-                            Menu::select(idx, [](){
-                                
-                            });
-                            Menu::template out<robo_out>();
+                            menu::select(idx, []{
+                                updateUsarts();
+                            });          
+                            menu::template out<robo_out>();
                         }
                     }
                     else {
                         if (t == robo_pa::Target::Menu) {
                             etl::outl<term>("m txt: "_pgm);
-                            Menu::template out<robo_out>();
+                            menu::template out<robo_out>();
                         }
                     }
                 });
@@ -341,15 +483,50 @@ private:
             case State::SB_SW:
                 sumd::setSwitch(i_t{14}, std::any(sbus_pa::switches() & External::SBus::ch17));
                 sumd::setSwitch(i_t{15}, std::any(sbus_pa::switches() & External::SBus::ch18));
-                mState = State::SB0_3;
+                if (sm1Active || sm2Active) {
+                    mState = State::SB12_15;
+                }
+                else {
+                    mState = State::SB0_3;
+                }
                 break;
             case State::SB0_3:
+                if (const auto v = sbus_pa::value(0); v) {
+                    const v_t sv0 = etl::scaleTo<v_t>(v.toRanged());
+                    sumd::set(i_t{0}, sv0);                            
+                    const v_t sv1 = etl::scaleTo<v_t>(sbus_pa::value(1).toRanged());
+                    sumd::set(i_t{1}, sv1);                            
+                    const v_t sv2 = etl::scaleTo<v_t>(sbus_pa::value(2).toRanged());
+                    sumd::set(i_t{2}, sv2);                            
+                    const v_t sv3 = etl::scaleTo<v_t>(sbus_pa::value(3).toRanged());
+                    sumd::set(i_t{3}, sv3);                            
+                }
                 mState = State::SB4_7;
                 break;
             case State::SB4_7:
+                if (const auto v = sbus_pa::value(4); v) {
+                    const v_t sv0 = etl::scaleTo<v_t>(v.toRanged());
+                    sumd::set(i_t{4}, sv0);                            
+                    const v_t sv1 = etl::scaleTo<v_t>(sbus_pa::value(5).toRanged());
+                    sumd::set(i_t{5}, sv1);                            
+                    const v_t sv2 = etl::scaleTo<v_t>(sbus_pa::value(6).toRanged());
+                    sumd::set(i_t{6}, sv2);                            
+                    const v_t sv3 = etl::scaleTo<v_t>(sbus_pa::value(7).toRanged());
+                    sumd::set(i_t{7}, sv3);                            
+                }
                 mState = State::SB8_11;
                 break;
             case State::SB8_11:
+                if (const auto v = sbus_pa::value(8); v) {
+                    const v_t sv0 = etl::scaleTo<v_t>(v.toRanged());
+                    sumd::set(i_t{8}, sv0);                            
+                    const v_t sv1 = etl::scaleTo<v_t>(sbus_pa::value(9).toRanged());
+                    sumd::set(i_t{9}, sv1);                            
+                    const v_t sv2 = etl::scaleTo<v_t>(sbus_pa::value(10).toRanged());
+                    sumd::set(i_t{10}, sv2);                            
+                    const v_t sv3 = etl::scaleTo<v_t>(sbus_pa::value(11).toRanged());
+                    sumd::set(i_t{11}, sv3);                            
+                }
                 mState = State::SB12_15;
                 break;
             case State::SB12_15:
@@ -415,7 +592,12 @@ private:
                     const v_t sv3 = etl::scaleTo<v_t>(ibus_pa::value(15).toRanged());
                     sumd::set(i_t{31}, sv3);                            
                 }
-                mState = State::A1;
+                if (sm1Active || sm2Active) {
+                    mState = State::A1;
+                }
+                else {
+                    mState = State::SB_SW;
+                }
                 break;
             }
         }  
@@ -428,11 +610,24 @@ private:
     static inline External::Tick<timer> mDebugTicks;
     static inline External::Tick<timer> mEepromTicks;
     static inline External::Tick<timer> mRoboTicks;    
+    static inline External::Tick<timer> mCheckTicks;    
+    
+    static inline uint16_t sm1Packages{};
+    static inline uint16_t sm2Packages{};
+    static inline uint16_t sbPackages{};
+    static inline uint16_t ibPackages{};
+    
+    static inline bool sm1Active{true};
+    static inline bool sm2Active{true};
+    static inline bool sbusActive{true};
+    static inline bool ibusActive{true};
+    
+    static inline bcount_t blinkCount{0};
 };
 
 using devices = Devices<10>;
 using gfsm = GlobalFsm<devices>;
-
+ 
 int main() {
     gfsm::init();    
     while(true) {
@@ -442,7 +637,7 @@ int main() {
         });
     }
 }
-
+ 
 #ifndef NDEBUG
 [[noreturn]] inline void assertOutput(const AVR::Pgm::StringView& expr [[maybe_unused]], const AVR::Pgm::StringView& file[[maybe_unused]], unsigned int line [[maybe_unused]]) noexcept {
     etl::outl<devices::terminal>("Assertion failed: "_pgm, expr, etl::Char{','}, file, etl::Char{','}, line);

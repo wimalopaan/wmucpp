@@ -40,7 +40,7 @@ namespace External {
                 }
 
                 static inline void set(const uint8_t index, const ID id, const uint16_t v) {
-                    data[index][0] = std::byte{id};
+                    data[index][0] = std::byte(id);
                     data[index][1] = std::byte(v);
                     data[index][2] = std::byte(v >> 8);
                 }

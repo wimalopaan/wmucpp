@@ -49,12 +49,10 @@ namespace {
     using eepromGpior = AVR::GPIORFlags<AVR::Component::GPIOR<0>, etl::NamedConstant<0>, etl::NamedConstant<2>>;
     
     struct Data final : public EEProm::DataBase<Data, eepromGpior> {
-        enum class SerialMode : uint8_t {Sbus, SumdV3};
         static inline constexpr std::byte outputInverted = 0x01_B;        
         static inline constexpr std::byte inputInverted  = 0x02_B;        
 
         struct SerialData {
-            SerialMode mode{};
             std::byte flags{};
         };
         
@@ -72,7 +70,6 @@ namespace {
             mMagic = marker;   
             for(auto& s : mSerialData) {
                 s.flags = 0x00_B;
-                s.mode = SerialMode::Sbus;
             }
             change();
         }
@@ -452,14 +449,15 @@ struct Devices<10, MCU> {
     using atbuffer = External::AT::Response<16>;
     using robo_pa = External::QtRobo::ProtocollAdapter<0, 16, atbuffer>;
 //    using robo_pa = External::RoboRemo::ProtocollAdapter<0, 16, atbuffer>;
-    using robo = AVR::Usart<usart4Position, robo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<128>>;
+    using robo = AVR::Usart<usart4Position, robo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
     using robo_out = etl::basic_ostream<robo>;
     
     using sbus_pa = External::SBus::Servo::ProtocollAdapter<0, systemTimer>;
     using sbus1 = AVR::Usart<usart2Position, sbus_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<128>>;    
     using terminal = etl::basic_ostream<sbus1>;
     
-    using led1 = AVR::ActiveHigh<AVR::Pin<AVR::Port<AVR::A>, 4>, AVR::Output>; 
+    using ledPin = AVR::ActiveHigh<AVR::Pin<AVR::Port<AVR::A>, 4>, AVR::Output>; 
+    using blinkLed = External::Blinker2<ledPin, systemTimer, 100_ms, 2000_ms>;
 
     using btEnable = AVR::ActiveHigh<AVR::Pin<AVR::Port<AVR::D>, 5>, AVR::Output>; 
     using btPower  = AVR::ActiveLow<AVR::Pin<AVR::Port<AVR::D>, 4>, AVR::Output>; 

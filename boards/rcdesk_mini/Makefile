@@ -12,6 +12,6 @@ targets += test01.hex
 targets += test02.hex 
 targets += test03.hex 
 targets += test99.hex test99.S 
-targets += desk10.hex 
+targets += desk10.hex desk10.elf
 
 -include ../../Makefile.avr0.include

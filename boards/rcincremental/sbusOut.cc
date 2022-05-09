@@ -128,16 +128,14 @@ struct GlobalFSM {
     using eeprom = EEProm;
     
     inline static void init() {
-        Rot::init();
-        But::init();
-
-        sbus::init(); 
-//        sbus::usart::template rxEnable<false>();
-        
         eeprom::init();
         if (eeprom::data().magic() != 42) {
             eeprom::data().clear();
         }
+
+        Rot::init();
+        But::init();
+        sbus::init(); 
     }  
     inline static void periodic() {
         sbus::periodic(); 
@@ -156,7 +154,6 @@ struct GlobalFSM {
         }
         if (But::pressed()) {
             s |= External::SBus::ch18;
-//            sbus::switches(External::SBus::ch18);
         }
         sbus::switches(s);
     }
@@ -212,7 +209,7 @@ struct GlobalFSM {
             }
             else if (be == But::Press::Long) {
                 eeprom::data().rotation() = Storage::Rotation::Absolute;
-                eeprom::data().changed();
+                eeprom::data().change();
                 mState = State::RunAbsolute;
             }
             break;
@@ -222,7 +219,7 @@ struct GlobalFSM {
             }
             else if (be == But::Press::Long) {
                 eeprom::data().rotation() = Storage::Rotation::Bounded;
-                eeprom::data().changed();
+                eeprom::data().change();
                 mState = State::RunBounded;
             }
             break;
@@ -232,7 +229,7 @@ struct GlobalFSM {
             }
             else if (be == But::Press::Long) {
                 eeprom::data().rotation() = Storage::Rotation::Speed;
-                eeprom::data().changed();
+                eeprom::data().change();
                 mState = State::RunSpeed;                
             }
             break;
@@ -258,6 +255,7 @@ struct GlobalFSM {
             break;
         }
         if (oldState != mState) {
+            mStateTicks.reset();
             switch(mState) {
             case State::Undefined:
                 break;

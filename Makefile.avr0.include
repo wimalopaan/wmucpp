@@ -79,9 +79,7 @@ GITMAJOR := $(shell git describe --abbrev=4 --tags | cut -d- -f1 | sed 's/v//g')
 GITMINOR := $(shell git describe --abbrev=4 --tags | cut -d- -f2 | sed 's/v.*/0/g')
 GITTAG2 := $(shell git describe --abbrev=4 --tags | cut -d- -f1-2)
 
-#CXXFLAGS += $(OPTFLAGS) -std=c++17 #-pedantic
-CXXFLAGS += $(OPTFLAGS) -std=c++20 # -pedantic
-#CXXFLAGS += -O3 -std=c++17 # -pedantic
+CXXFLAGS += $(OPTFLAGS) -std=c++23 # -pedantic
 #CXXFLAGS += -nostdlib -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics
 CXXFLAGS += -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics #-Wgnu-string-literal-operator-template
 CXXFLAGS += -funsigned-char -funsigned-bitfields -fshort-enums 
@@ -90,6 +88,7 @@ CXXFLAGS += -fconcepts
 CXXFLAGS += -ftemplate-depth=8192
 CXXFLAGS += -fstrict-aliasing -Wstrict-aliasing=1 
 CXXFLAGS += -Wall -Wextra -Wswitch -Wswitch-enum
+CXXFLAGS += --param=min-pagesize=0 # avr-gcc-12.1, avr-gcc-13.0  (doc0/bm00/bm00.cc)
 CXXFLAGS += -DF_OSC=$(F_OSC) -DF_CPU=$(F_OSC)
 #CXXINLUDES0 += -I/usr/local/avr/include
 CXXINLUDES1 += -I. -I../include0 -I../../include0 -I../../../include0
@@ -106,7 +105,7 @@ CXXFLAGS += -DGITTAG=$(GITTAG) -DGITTAG_PGM=\"$(GITTAG)\"_pgm -DGITTAG2_PGM=\"$(
 CXXFLAGS += -DGITMAJOR=$(GITMAJOR)
 CXXFLAGS += -DGITMINOR=$(GITMINOR)
 
-CFLAGS += $(OPTFLAGS) -std=gnu11 # wegen __flash
+CFLAGS += $(OPTFLAGS) -std=gnu2x # wegen __flash
 #CFLAGS += -Os -std=c11 -pedantic
 CFLAGS += -funsigned-char -funsigned-bitfields -fshort-enums
 CFLAGS += -Wall -Wextra
@@ -138,10 +137,10 @@ AVRDUDE_FLAGS += -C+/home/lmeier/Projekte/wmucpp/avrdude.conf
 
 #CC = clang
 #CXX = clang++
-#CC = /usr/local/bin/avr-gcc
-#CXX = /usr/local/bin/avr-g++
-CC = /usr/bin/avr-gcc
-CXX = /usr/bin/avr-g++
+CC = /usr/local/bin/avr-gcc
+CXX = /usr/local/bin/avr-g++
+#CC = /usr/bin/avr-gcc
+#CXX = /usr/bin/avr-g++
 OBJCOPY = avr-objcopy
 OBJDUMP = avr-objdump
 SIZE = avr-size

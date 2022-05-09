@@ -23,9 +23,12 @@ F_OSC = 24000000
 
 #MCU = atmega328pb
 #MCU = atmega1284p
-MCU = atmega4809
-#MCU = avr128da32
+#MCU = atmega4809
+#MCU = atmega328p
+MCU = avr128da32
 #MCU = atxmega32e5
+
+bm01.s: MCU = atmega328p
 
 CPPFLAGS += -DNDEBUG
 #CXXINLUDES4 = -I /home/lmeier/Projekte/cnl/cnl/include
@@ -35,14 +38,14 @@ OPTFLAGS = -Os
 targets += shtml
 
 #targets += bm00.S bm00.elf bm00.hex
-#targets += bm01.S bm01.elf bm01.hex
+targets += bm01.S 
 #targets += bm02.S bm02.elf bm02.hex
 #targets += bm10.S bm10.elf bm10.hex
 #targets += bm20.S bm20.elf bm20.hex
 #targets += bm30.S bm30.elf bm30.hex
-targets += bm40.S
+#targets += bm40.S
 
-bm00.o: bm00.o bm00b.o
+#bm00.o: bm00.o bm00b.o
 
 #bm40.o: bm40.o bm41.o 
 

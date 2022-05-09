@@ -191,6 +191,8 @@ boards/bmc/robbenavy540/test03.cc
 boards/bmc/robbenavy540/test04.cc
 boards/bmc/robbenavy540/test05.cc
 boards/bmc/small01/Makefile
+boards/bmc/small01/devices.h
+boards/bmc/small01/esc_ppm_22.cc
 boards/bmc/small01/test00.cc
 boards/bmc/small01/test01.cc
 boards/bmc/small01/test10.cc
@@ -428,6 +430,7 @@ boards/rcfoc/schleppwinde_01.cc
 boards/rcfoc/schleppwinde_02.cc
 boards/rcfoc/schleppwinde_03.cc
 boards/rcfoc/servo_01.cc
+boards/rcfoc/servo_02.cc
 boards/rcfoc/steller_01.cc
 boards/rcfoc/telemetry.h
 boards/rcfoc/test00.cc
