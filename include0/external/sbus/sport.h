@@ -343,7 +343,7 @@ namespace External {
                     return mRequests;
                 }
             private:
-                static inline std::byte mPhysId{ID};
+                static inline std::byte mPhysId{std::byte(SensorId::ID3)};
                 static inline requests_t mRequests{};
             };
             

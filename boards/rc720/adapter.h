@@ -49,6 +49,7 @@ struct PPMAsyncAdapter {
 
 template<typename ADC, uint8_t N>
 struct ADCAdapter {
+    static inline constexpr uint8_t number = N;
     using value_type = ADC::value_type; 
     using index_type = ADC::index_type; 
     inline static value_type value() {

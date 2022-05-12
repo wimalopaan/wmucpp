@@ -99,11 +99,11 @@ struct Devices {
     
     using sensorPosition = usart2Position; // Sensor
 
-#ifdef NDEBUG
+#ifdef LOG_OUTPUT
+    using scan_term_dev = External::TermSameAsScanDevice;
+#else
     using scanTermPosition = void;
     using scan_term_dev = void;
-#else
-    using scan_term_dev = External::TermSameAsScanDevice;
 #endif
     
     using daisyChain= AVR::Pin<AVR::Port<AVR::D>, 4>; 

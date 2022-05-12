@@ -29,6 +29,8 @@ namespace External {
         using ppm_t = PPM::ranged_type;
         using adc_t = ADC::value_type;
     //    adc_t::_;
+
+        constexpr static inline auto Number = ADC::number;
         
         struct PositionProvider {
             inline static constexpr auto valueId = External::SPort::ValueId::DIY;
@@ -154,6 +156,8 @@ namespace External {
             const auto oldState = mState;
             const auto e = event();        
             const adc_t actual = ADC::value();
+            aactual = actual;
+            
             PositionProvider::set(actual);
             
             ++stateTicks;
@@ -337,10 +341,10 @@ namespace External {
                 stateTicks.reset();
                 switch(mState) {
                 case State::Undefined:
-    //                etl::outl<terminal>("FB: U"_pgm);
+                    etl::outl<terminal>("FB: U"_pgm);
                     break;
                 case State::Init:
-    //                etl::outl<terminal>("FB: I"_pgm);
+                    etl::outl<terminal>("FB: I"_pgm);
                     PPM::set(ppm_t{ppm_mid});
                     break;
                 case State::CalibrateADStart:
@@ -349,18 +353,18 @@ namespace External {
                     PPM::set(ppm_t{ppm_mid + deadP + 20});
                     break;
                 case State::CalibrateADRun1:
-    //                etl::outl<terminal>("FB: C AD Run1"_pgm);
+                    etl::outl<terminal>("FB: C AD Run1"_pgm);
                     amaxLast = amax;
                     break;
                 case State::CalibrateADTest1:
-    //                etl::outl<terminal>("FB: C AD Test1"_pgm);
+                    etl::outl<terminal>("FB: C AD Test1"_pgm);
                     break;
                 case State::CalibrateADRun2:
-    //                etl::outl<terminal>("FB: C AD Run2"_pgm);
+                    etl::outl<terminal>("FB: C AD Run2"_pgm);
                     aminLast = amin;
                     break;
                 case State::CalibrateADTest2:
-    //                etl::outl<terminal>("FB: C AD Test2"_pgm);
+                    etl::outl<terminal>("FB: C AD Test2"_pgm);
                     break;
                 case State::CalibrateADFinish:
                     etl::outl<terminal>("FB: C AD Fin"_pgm);
@@ -370,46 +374,46 @@ namespace External {
                     targetPos = (amax + amin) / 2;
                     break;
                 case State::CalibrateDeadStartP:
-    //                etl::outl<terminal>("FB: C D StartP "_pgm);
+                    etl::outl<terminal>("FB: C D StartP "_pgm);
                     deadP = deadInitialValue;
                     PPM::set(ppm_t{ppm_mid});
                     break;
                 case State::CalibrateDeadSetP:
-    //                etl::outl<terminal>("FB: C D SetP "_pgm);
+                    etl::outl<terminal>("FB: C D SetP "_pgm);
                     lastAnalog = actual;
                     PPM::set(ppm_t{ppm_mid + deadP});
                     break;
                 case State::CalibrateDeadTestP:
-    //                etl::outl<terminal>("FB: C D TestP "_pgm);
+                    etl::outl<terminal>("FB: C D TestP "_pgm);
                     break;
                 case State::CalibrateDeadStartN:
-    //                etl::outl<terminal>("FB: C D StartN "_pgm);
+                    etl::outl<terminal>("FB: C D StartN "_pgm);
                     deadN = deadInitialValue;
                     PPM::set(ppm_t{ppm_mid});
                     break;
                 case State::CalibrateDeadSetN:
-    //                etl::outl<terminal>("FB: C D SetN "_pgm);
+                    etl::outl<terminal>("FB: C D SetN "_pgm);
                     lastAnalog = actual;
                     PPM::set(ppm_t{ppm_mid - deadN});
                     break;
                 case State::CalibrateDeadTestN:
-    //                etl::outl<terminal>("FB: C D TestN "_pgm);
+                    etl::outl<terminal>("FB: C D TestN "_pgm);
                     break;
                 case State::NeutralStart:
-    //                etl::outl<terminal>("FB: NS "_pgm);
+                    etl::outl<terminal>("FB: NS "_pgm);
                     PPM::set(ppm_t{ppm_mid});
                     targetPos = (amax + amin) / 2;
                     break;
                 case State::NeutralReachForward:
-    //                etl::outl<terminal>("FB: NRF "_pgm);
+                    etl::outl<terminal>("FB: NRF "_pgm);
                     PPM::set(ppm_t{ppm_mid + deadP + 20});
                     break;
                 case State::NeutralReachBackward:
-    //                etl::outl<terminal>("FB: NRB "_pgm);
+                    etl::outl<terminal>("FB: NRB "_pgm);
                     PPM::set(ppm_t{ppm_mid - deadN - 20});
                     break;
                 case State::Neutral:
-    //                etl::outl<terminal>("FB: N"_pgm);
+                    etl::outl<terminal>("FB: N"_pgm);
                     PPM::set(ppm_t{ppm_mid});
                     break;
 //                case State::Stop:
@@ -429,11 +433,13 @@ namespace External {
             }
         } 
         static inline void debug() {
-    //        etl::outl<terminal>("FB a: "_pgm, av, " dp: "_pgm, deadP, " dn: "_pgm, deadN, " ami: "_pgm, amin, " ama: "_pgm, amax);
+            etl::outl<terminal>("FB"_pgm, Number, " act: "_pgm, aactual, " dp: "_pgm, deadP, " dn: "_pgm, deadN, " ami: "_pgm, amin, " ama: "_pgm, amax);
+//            etl::outl<terminal>("FB dp: "_pgm, deadP, " dn: "_pgm, deadN, " ami: "_pgm, amin, " ama: "_pgm, amax);
     //        etl::outl<terminal>("FB t: "_pgm, targetPos, " ami: "_pgm, amin, " ama: "_pgm, amax);
 //            etl::outl<terminal>("FB t: "_pgm, targetPos, " ad: "_pgm, aDiff);
         }
     private:
+        inline static adc_t aactual{adc_mid};
         inline static adc_t amin{adc_mid};
         inline static adc_t amax{adc_mid};
         inline static adc_t aminLast{adc_mid};
@@ -450,7 +456,8 @@ namespace External {
         inline static uint16_t errorDiv = 2;
         inline static uint16_t servoSpeedMax = (ppm_delta / 4);
     
-        static inline Control::PD<int16_t, float> mPd{2.0, 6.0, 500, int16_t(servoSpeedMax)};
+        static inline Control::PD<int16_t, float> mPd{3.0f, 5.0f, 500, int16_t(servoSpeedMax)};
+//        static inline Control::PD<int16_t, float> mPd{2.0, 6.0, 500, int16_t(servoSpeedMax)};
         
         inline static int16_t targetPos{};
         inline static int16_t zeroPos{};

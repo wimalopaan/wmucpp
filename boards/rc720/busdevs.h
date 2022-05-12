@@ -25,7 +25,7 @@ struct BusDevs<External::Bus::IBusIBus<Devs>> {
     using servo_pa = IBus2::Servo::ProtocollAdapter<0>;
     using servo = AVR::Usart<typename Devs::servoPosition, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
 
-#ifndef NDEBUG
+#ifdef LOG_OUTPUT
     using terminal = etl::basic_ostream<servo>;
 #else
     using terminal = etl::basic_ostream<void>;
@@ -113,7 +113,7 @@ struct BusDevs<External::Bus::SBusSPort<Devs>> {
     using servo_pa = External::SBus::Servo::ProtocollAdapter<0, systemTimer>;
     using servo = AVR::Usart<typename Devs::servoPosition, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
     
-#ifndef NDEBUG
+#ifdef LOG_OUTPUT
     using terminal = etl::basic_ostream<servo>;
 #else
     using terminal = etl::basic_ostream<void>;
@@ -212,7 +212,7 @@ struct BusDevs<External::Bus::SumDHott<Devs>> {
     using servo_pa = Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>;
     using servo = AVR::Usart<typename Devs::servoPosition, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
        
-#ifndef NDEBUG
+#ifdef LOG_OUTPUT
     using terminal = etl::basic_ostream<servo>;
 #else
     using terminal = etl::basic_ostream<void>;

@@ -1,4 +1,6 @@
-//#define NDEBUG
+#define NDEBUG
+
+//#define LOG_OUTPUT
 
 #ifndef NDEBUG
 //static unsigned int assertKey{1234};
@@ -179,7 +181,7 @@ struct GlobalFsm {
 //            etl::outl<terminal>("ch0: "_pgm, servo_pa::value(0).toInt(), " ch3: "_pgm, servo_pa::value(3).toInt());
 //            etl::outl<terminal>("p: "_pgm, sensor_pa::requests());
 //            etl::outl<terminal>("ad0: "_pgm, servo_0::adiff());
-            etl::outl<terminal>("z0: "_pgm, servo_0::zero());
+//            etl::outl<terminal>("z0: "_pgm, servo_0::zero());
 //            etl::outl<terminal>("ch0: "_pgm, servo_pa::value(0).toInt(), " ch3: "_pgm, servo_pa::value(3).toInt());
             servo_0::debug();
             servo_1::debug();
