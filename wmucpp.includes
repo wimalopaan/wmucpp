@@ -83,3 +83,6 @@ include0/mcu/tinyavr2
 boards/rcdesk_mini
 include0/external/hott
 boards/rcswitch
+boards/dds2
+gcc/base/lib/gcc/avr/13.0.0/device-specs
+gcc/base/lib/gcc/avr/12.0.1/device-specs

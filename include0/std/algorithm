@@ -180,7 +180,7 @@ namespace std {
         return last;
     }
     
-    template<class InputIt, class UnaryPredicate>
+    template<typename InputIt, typename UnaryPredicate>
     constexpr InputIt find_if(InputIt first, InputIt last, UnaryPredicate p)
     {
         for (; first != last; ++first) {

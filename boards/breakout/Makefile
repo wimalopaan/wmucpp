@@ -28,6 +28,8 @@
 
 # sudo avrdude -p atmega1284p -P usb -c avrisp2 -U lfuse:w:0xf7:m -U hfuse:w:0xd6:m -U efuse:w:0xff:m
 
+# ~/.local/bin/pymcuprog write --erase -d avr128da32 -t uart -u /dev/ttyUSB0 -f test10.hex
+
 
 #MCU = atmega1284p
 MCU = avr128da32

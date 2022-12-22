@@ -49,6 +49,8 @@ struct CommandAdapter {
                                   IncPwm, IncFast, DecPwm, IncDelay, DecDelay,
                                   Commute, CommuteSet, Test, Reverse};
     
+    static inline bool ratePeriodic() {}
+    
     static inline bool process(std::byte v) {
         switch (v) {
         case std::byte{'s'}:

@@ -28,7 +28,7 @@ F_OSC = 20000000
 inc3mode10Mhz.hex: F_OSC = 10000000 
 potiOnly00.hex: F_OSC = 5000000 
 
-subdirs = doc
+# subdirs = doc
 
 #targets += test00.hex
 #targets += test01.hex

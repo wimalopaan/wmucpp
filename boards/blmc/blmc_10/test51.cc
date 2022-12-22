@@ -50,6 +50,7 @@ struct CommandAdapter {
                                   IncPwm, IncFast, DecPwm, IncDelay, DecDelay,
                                   Commute, CommuteSet, Test,
                                  NextTable, PrevTable, incPeriod, decPeriod};
+    static inline bool ratePeriodic() {}
     
     static inline bool process(std::byte v) {
         switch (v) {

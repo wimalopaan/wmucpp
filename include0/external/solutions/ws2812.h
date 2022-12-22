@@ -34,7 +34,7 @@ namespace External {
     class WS2812 final {
         WS2812() = delete;
     public:
-        static constexpr uint8_t size = N;
+        static inline constexpr uint8_t size = N;
         typedef Pin pin_type;
         typedef cRGB<ColorComp> item_type;
         
@@ -48,7 +48,7 @@ namespace External {
             set(cRGB<ColorComp>());
         }
         template<bool writeOut = true>
-        static void set(uint8_t number, const item_type& color) {
+        static void set(const uint8_t number, const item_type& color) {
             assert(number < N);
             leds[number] = color;
             if constexpr(writeOut) {
@@ -56,7 +56,7 @@ namespace External {
             }
         }
         template<bool writeOut = true>
-        static void add(uint8_t number, const item_type& color) {
+        static void add(const uint8_t number, const item_type& color) {
             assert(number < N);
             leds[number] += color;
             if constexpr(writeOut) {
@@ -72,7 +72,7 @@ namespace External {
                 write();
             }
         }
-        static constexpr item_type& elementAt(uint8_t index) {
+        static constexpr item_type& elementAt(const uint8_t index) {
             assert(index < N);
             return leds[index];
         }

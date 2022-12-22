@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <functional>
 #include <array>
+#include <utility>
 
 #include "meta.h"
 #include "types.h"
@@ -376,6 +377,7 @@ namespace etl {
                 return select(s - 1, vv...);
             }
             else {
+//                std::unreachable();
                 assert(false);
                 return v0;
             }
@@ -406,6 +408,7 @@ namespace etl {
                 }    
             }
             else {
+//                std::unreachable();
                 assert(false);
                 if constexpr(std::is_same_v<decltype(v0()), void>) {
                     

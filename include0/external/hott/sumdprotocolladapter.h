@@ -127,7 +127,7 @@ namespace Hott {
 
         inline static void ratePeriodic() {}
         
-        inline static bool process(std::byte  c) { // (ca 3µs)
+        inline static bool process(const std::byte  c) { // (ca 3µs)
             static sumdstate state = sumdstate::Undefined;
             static uint8_t channel = 0;
             static uint16_t crc = 0;
@@ -232,9 +232,10 @@ namespace Hott {
                 break;
             case sumdstate::NumberOfStates:
                 break;
-            default:
-                assert(false);
-                break;
+//            default:
+//                std::unreachable();
+////                assert(false);
+//                break;
             }
             return true;
         }
@@ -500,8 +501,9 @@ namespace Hott {
                                 }
                             }
                             break;
-                        default:
-                            assert(false);
+//                        default:
+//                            std::unreachable();
+////                            assert(false);
                         }
                     }
                     
@@ -512,9 +514,10 @@ namespace Hott {
                 break;
             case NumberOfStates:
                 break;
-            default:
-                assert(false);
-                break;
+//            default:
+//                std::unreachable();
+////                assert(false);
+//                break;
             }
             return true;
         }

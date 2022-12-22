@@ -28,7 +28,7 @@ subdirs += blmc_10
 #subdirs += hobbyking30a
 #subdirs += blmc_avr444
 #subdirs += blmc_mcopter
-subdirs += simonk_pintest
+#subdirs += simonk_pintest
 
 
 -include ../../Makefile.include

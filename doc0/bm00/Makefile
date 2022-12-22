@@ -21,7 +21,9 @@ F_OSC = 20000000
 
 #MCU = atmega328p
 #MCU = atmega1284p
-MCU = atmega4809
+#MCU = atmega4809
+MCU = avr128da48
+#MCU = attiny10
 #MCU = attiny1614
 ##MCU = atxmega32e5
 
@@ -54,14 +56,14 @@ targets += bm02.S bm02.elf
 targets += bm10.S bm10.elf
 #targets += bm10.S bm10.elf
 #targets += bm11.S bm11.elf
-#targets += bm12.S bm12.elf
-#targets += bm13.S bm13.elf
+targets += bm12.S bm12.elf
+targets += bm13.S bm13.elf
 #targets += bm15.S bm15.elf
 #targets += bm16.S bm16.elf
 #targets += bm17.S bm17.elf
 ##targets += bm20.S bm20.elf
 #targets += bm25.S bm25.elf
-#targets += bm30.S bm30.elf
+targets += bm30.S bm30.elf
 ##targets += bm31.S bm31.elf
 #targets += bm40.S bm40.elf
 #targets += bm41.S bm41.elf
@@ -90,7 +92,7 @@ targets += bm68.S bm68.elf
 #targets += bm71.S bm71.elf
 #targets += bm80.S bm80.elf
 #targets += bm85.S bm85.elf
-#targets += bm86.S bm86.elf
+targets += bm86.S bm86.elf
 #targets += bm87.S bm87.elf
 targets += bm90.S bm90.elf
 targets += bm91.S bm91.elf
@@ -101,6 +103,8 @@ targets += bm94.S bm94.elf
 #targets += bm96.S bm96.elf
 #targets += bm97.S bm97.elf
 #targets += bm99.S bm99.elf
+
+bm12.elf: bm12.o bm12b.o
 
 -include ../../Makefile.avr0.include
 

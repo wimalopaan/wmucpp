@@ -1,4 +1,4 @@
-//#define NDEBUG
+#define NDEBUG
 
 #define LEARN_DOWN
 #define SCALE_ADC_PWM

@@ -64,6 +64,8 @@ struct CommandAdapter {
                                   Commute, CommuteSet, Test,
                                  incSpeed, decSpeed, closedLoopOn, closedLoopOff};
     
+    static inline bool ratePeriodic() {}
+    
     static inline bool process(std::byte v) {
         switch (v) {
         case std::byte{'o'}:

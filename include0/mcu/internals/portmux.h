@@ -40,6 +40,23 @@ namespace AVR {
                     using type = std::integral_constant<route_t, route_t::spi0_alt1>;
                 };
             }
+            namespace twi {
+                template<typename T, typename MCU = DefaultMcuType>
+                struct Mapper {
+                    using type = void;    
+                };
+
+                template<AVR::Concepts::AtDxSeries MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Twi<0>, AVR::Portmux::Alt1>, MCU> {
+                    using route_t = typename MCU::Portmux::TwiRoute_t;
+                    using type = std::integral_constant<route_t, route_t::twi0_alt1>;
+                };
+                template<AVR::Concepts::AtDxSeries MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Twi<0>, AVR::Portmux::Alt2>, MCU> {
+                    using route_t = typename MCU::Portmux::TwiRoute_t;
+                    using type = std::integral_constant<route_t, route_t::twi0_alt2>;
+                };
+            }
             namespace usart {
                 template<typename T, typename MCU = DefaultMcuType>
                 struct Mapper {
@@ -273,11 +290,13 @@ namespace AVR {
             using ccl_list = Meta::filter<Meta::nonVoid, Meta::transform_type<detail::ccl::Mapper, CCList>>;
             using tca_list = Meta::filter<Meta::nonVoid, Meta::transform_type<detail::tca::Mapper, CCList>>;
             using tcb_list = Meta::filter<Meta::nonVoid, Meta::transform_type<detail::tcb::Mapper, CCList>>;
+            using twi_list = Meta::filter<Meta::nonVoid, Meta::transform_type<detail::twi::Mapper, CCList>>;
             
             static_assert(Meta::size_v<usart_list> <= 4);
             static_assert(Meta::size_v<ccl_list> <= 4);
             static_assert(Meta::size_v<tca_list> <= 1);
             static_assert(Meta::size_v<ccl_list> <= 4);
+            static_assert(Meta::size_v<twi_list> <= 2);
             
         public:
             static inline void init() {
@@ -303,6 +322,11 @@ namespace AVR {
                     constexpr auto value = Meta::value_or_v<tcb_list>;
 //                    std::integral_constant<decltype(value), value>::_;
                     mcu_pmux()->tcbroutea.template set<value>();                
+                }
+                if constexpr(Meta::size_v<twi_list> > 0) {
+                    constexpr auto value = Meta::value_or_v<twi_list>;
+//                    std::integral_constant<decltype(value), value>::_;
+                    mcu_pmux()->twiroutea.template set<value>();                
                 }
             }
         };

@@ -47,6 +47,7 @@ struct CommandAdapter {
     enum class Command : uint8_t {Undefined, Off, Start, Info, Reset, 
                                   IncPwm, IncFast, DecPwm, IncDelay, DecDelay,
                                   Commute, CommuteSet, Test};
+    static inline bool ratePeriodic() {}
     
     static inline bool process(std::byte v) {
         switch (v) {

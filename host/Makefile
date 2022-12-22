@@ -36,7 +36,7 @@ targets += test04
 #targets += test04b
 targets += test06
 #targets += test07
-#targets += test08
+targets += test08
 ##targets += test10
 #targets += test11
 #targets += test12
@@ -67,31 +67,42 @@ targets += test74
 targets += test80
 targets += test85
 #targets += test86
-targets += test87
+#targets += test87
 targets += test88
 targets += test90
 targets += test91
 targets += test92
-targets += test93
-#targets += test94
+#targets += test93
+targets += test94
 #targets += test98
-#targets += test99
+targets += test99
+targets += test99b
 targets += test100
 #targets += test200
-targets += test201
+#targets += test201
 targets += test210
 targets += test300
+targets += p00a
+
+p00a: p00a.o p00b.o
+
+p00a.o: p00a.c p00.h
+
+p00b.o: p00b.c p00.h
 
 -include ../Makefile.include
 
-CXX = /usr/bin/g++
-#CXX = /usr/local/bin/g++
+#CXX = /usr/bin/g++
+CXX = /usr/local/bin/g++
+CC = /usr/local/bin/gcc
 #CXX = clang++
 #CC = /usr/local/bin/gcc
 #LDFLAGS = -lasan -lubsan -lpthread -lstdc++ 
-LDFLAGS = -lpthread -lstdc++ 
-CXXFLAGS = -g -std=c++2b -fconcepts -ftemplate-depth=2048 -fno-threadsafe-statics  -fsanitize=address -fsanitize=undefined 
+#LDFLAGS = -lpthread -lstdc++ 
+CXXFLAGS = -g -std=c++23 -fconcepts -ftemplate-depth=2048 -fno-threadsafe-statics  -fsanitize=address -fsanitize=undefined 
 CXXFLAGS += -O3
 CXXFLAGS += -Wall -Wextra
 CXXFLAGS += -I../include0/etl
+CFLAGS = -g -std=c2x 
+CFLAGS += -O3
 MCUFLAGS =

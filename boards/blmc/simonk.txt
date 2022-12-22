@@ -26,6 +26,7 @@
 # Hobbyking 30A F-30A UBEC
 # Hobbyking 20A F-20A UBEC
 # Hobbyking BlueSeries 12A
+# Wasasbi 12A
 # sudo avrdude -p atmega8 -P usb -c avrisp2 -V -C+/home/lmeier/Projekte/wmucpp/avrdude.conf -U flash:w:bs_nfet.hex
 
 # FMS 35A (FMS-DT35)

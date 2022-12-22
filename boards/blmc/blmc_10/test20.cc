@@ -47,6 +47,7 @@ struct CommandAdapter {
     enum class Command : uint8_t {Undefined, Off, Start, Info, Reset, 
                                   IncPwm, IncFast, DecPwm, IncDelay, DecDelay,
                                   Commute, CommuteSet, Test};
+    static inline bool ratePeriodic() {}
     
     static inline bool process(std::byte v) {
         switch (v) {
@@ -135,7 +136,7 @@ using hott_t = Hott::hott_t;
 using rcUsart = AVR::Usart<usart0Position, sumd, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
 
 
-using terminalDevice = AVR::Usart<usart2Position, CommandAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
+using terminalDevice = AVR::Usart<usart2Position, CommandAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<255>>;
 using terminal = etl::basic_ostream<terminalDevice>;
 
 using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::AltA>;

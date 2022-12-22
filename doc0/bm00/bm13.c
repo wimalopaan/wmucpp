@@ -6,7 +6,7 @@
 
 //const char* const strings[] PROGMEM = {s1, s2};
 
-const char string_table[2][10] PROGMEM = {{"abc"}, {"def"}};
+//const char string_table[2][10] PROGMEM = {{"abc"}, {"def"}};
 
 //const unsigned char displayMenus[7][12][18] PROGMEM = {
 //  {{"Kurzschlusszeit"}, {"Stromgrenze"}, {"Stufenkurzschl."}, {"Abtastzeit"}, {"Weiche RCN-213"}, {"Kurze Lokaddr."}, {"RailCom BiDiB"}, {"Umschaltzeit"}, {"Neustarten"}, {"Sprache"}, {"Hilfe"}, {"Version"}},
@@ -18,6 +18,52 @@ const char string_table[2][10] PROGMEM = {{"abc"}, {"def"}};
 //  {{"Orario ridotto"}, {"Limite di corr."}, {"Piccoli passi"}, {"Campionatura"}, {"Interru. RCN-213"}, {"Breve ind. loco."}, {"RailCom BiDiB"}, {"Commutazione"}, {"Ripresa"}, {"Lingua"}, {"Aiuto"}, {"Versione"}}
 //};
 
+//void foo(const char (*p)[500]) {
+//}
+
+//void bar(const char* p) {
+//}
+
+
+
+typedef struct {
+	int a;
+	int b;
+} element_t;
+
+typedef struct {
+	element_t* const element;
+	const size_t anzahl;
+} config_t;
+
+extern const config_t config;
+
+
+struct S1 {
+    int x;
+};
+
+
+void S1() {
+}
+
+void foo(config_t c) {
+    
+}
+
 int main() {
+     element_t e1;
+     element_t e2;
+    
+     e1 = e2;
+    
+     config_t c1;
+     config_t c2;
+     config_t c3 = c1;
+     
+//     c1 = c2;
+     
+    struct S1 s1 = {}; // Disambiguation: S1 s1; funktioniert nicht mehr, wenn Funktion S1() deklariert ist
+    return s1.x;
 }
 

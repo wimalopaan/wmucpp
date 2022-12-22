@@ -37,9 +37,17 @@ targets += shtml
 
 targets += bm00.S bm00.elf
 targets += bm01.S bm01.elf
-targets += bm02.S bm02.elf
+#targets += bm02.S bm02.elf
 targets += bm10.S bm10.elf
+targets += bm20a bm20a.S bm20b.S
+
+bm20a: bm20a.o bm20b.o
+ 
+bm20a.o: bm20a.c bm20.h
+
+bm20b.o: bm20b.c bm20.h
 
 -include ../../Makefile.avr0.include
 
-CXX = /usr/local/bin/avr-g++
+#CXX = /usr/local/bin/avr-g++
+#CC = clang

@@ -48,7 +48,7 @@ namespace AVR {
             using value_type = T;
             using size_type = S;
             
-            inline constexpr T operator[](size_type index) const {
+            inline constexpr T operator[](const size_type index) const {
                 return value_type{Ptr{&ptrToPgmData[index]}};
             }
             inline constexpr ArrayView() = default;
@@ -65,7 +65,7 @@ namespace AVR {
                     return mIndex != rhs.mIndex;
                 }
             private:
-                explicit constexpr Iterator(const ArrayView& v, size_type index = 0) : mIndex(index), view{v} {}
+                explicit constexpr Iterator(const ArrayView& v, const size_type index = 0) : mIndex(index), view{v} {}
                 size_type mIndex{};
                 const ArrayView& view;
             };
@@ -109,11 +109,11 @@ namespace AVR {
             
             using ranged_type = etl::uint_ranged<size_type, 0, size() - 1>;
             
-            inline static constexpr Ptr<value_type> ptr(size_type index) {
+            inline static constexpr Ptr<value_type> ptr(const size_type index) {
                 return Ptr{&data[index]};
             }
             
-            inline static constexpr value_type value(size_type index) {
+            inline static constexpr value_type value(const size_type index) {
                 if constexpr(std::is_fundamental_v<T>) {
                     if constexpr(sizeof(T) == 1) {
                         return {pgm_read_byte((uint8_t*)&data[index])};
@@ -145,7 +145,7 @@ namespace AVR {
                     return mIndex != rhs.mIndex;
                 }
             private:
-                explicit constexpr Iterator(size_type index = 0) : mIndex(index) {}
+                explicit constexpr Iterator(const size_type index = 0) : mIndex(index) {}
                 size_type mIndex{0};
             };
             inline constexpr Iterator begin() const {
@@ -154,7 +154,7 @@ namespace AVR {
             inline constexpr Iterator end() const {
                 return Iterator(size());
             }
-            inline constexpr value_type operator[](size_type index) const {
+            inline constexpr value_type operator[](const size_type index) const {
                 return value(index);
             }
             inline constexpr operator ArrayView<T, size_type>() const {

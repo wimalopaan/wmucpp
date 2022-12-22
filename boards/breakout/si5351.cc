@@ -1,4 +1,4 @@
-//#define NDEBUG
+#define NDEBUG
 
 #include <mcu/avr.h>
 #include <mcu/common/delay.h>
@@ -17,7 +17,7 @@
 #include <mcu/internals/event.h>
 #include <mcu/internals/syscfg.h>
 #include <mcu/internals/twi.h>
-
+ 
 #include <external/hal/adccontroller.h>
 #include <external/hal/alarmtimer.h>
 #include <external/bluetooth/roboremo.h>
@@ -108,7 +108,7 @@ struct Fsm {
     enum class State : uint8_t {Undefined, Init, Set, Set2, Run};
     
     static inline constexpr External::Tick<systemTimer> mInitTicks{500_ms};
-    static inline constexpr External::Tick<systemTimer> mChangeTicks{100_ms};
+    static inline constexpr External::Tick<systemTimer> mChangeTicks{2000_ms};
     static inline constexpr External::Tick<systemTimer> mDebugTicks{500_ms};
     
     static inline void init() {
@@ -152,26 +152,29 @@ struct Fsm {
             break;
         case State::Init:
             mStateTick.on(mInitTicks, []{
+                si::setOutput(0);
                mState = State::Set; 
             });
             break;
         case State::Set:
-            if (si::setChannel(0)) {
+            if (si::setChannel(50)) {
                 si::setOutput(1);
                 mState = State::Set2;
             }
             break;
         case State::Set2:
-            if (si::setChannelUpperFreq(0)) {
+            if (si::setChannelUpperFreq(50)) {
                 mState = State::Run;
             }
             break;
         case State::Run:
             mChangeTick.on(mChangeTicks, []{
                 cppm::set(ch_t{0}, vv);
-                vv += 10;
                 if (vv.isTop()) {
                     vv.setToBottom();
+                }
+                else {
+                    vv.setToTop();
                 }
             });
             break;
@@ -180,14 +183,19 @@ struct Fsm {
             mStateTick.reset();
             switch(mState) {
             case State::Undefined:
+                etl::outl<terminal>("S: Undef"_pgm);
                 break;
             case State::Init:
+                etl::outl<terminal>("S: Init"_pgm);
                 break;
             case State::Set:
+                etl::outl<terminal>("S: Set"_pgm);
                 break;
             case State::Set2:
+                etl::outl<terminal>("S: Set2"_pgm);
                 break;
             case State::Run:
+                etl::outl<terminal>("S: Run"_pgm);
                 cppm::init();
                 lut0::init(0x33_B); // invert
                 break;

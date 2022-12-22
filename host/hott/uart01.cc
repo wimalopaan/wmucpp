@@ -62,7 +62,7 @@ void addCRC(uint8_t (&a)[N]) {
 int main() {
     int fd = -1;
     
-    if ((fd = open("/dev/ttyUSB0",O_RDWR | O_NOCTTY | O_NDELAY)) < 0) {
+    if ((fd = open("/dev/ttyUSB0",O_RDWR | O_NOCTTY)) < 0) {
         perror("open");
         exit(EXIT_FAILURE);
     }

@@ -293,7 +293,7 @@ namespace etl {
         inline constexpr T toInt() volatile const {
             return mValue;
         }
-        //    private: // necessary to be structural
+//            private: // necessary to be structural
         T mValue{LowerBound};
     };
     
@@ -575,10 +575,10 @@ namespace etl {
     
     template<Unsigned T, T LowerBound, T UpperBound >
     class uint_ranged_circular final {
-        static_assert(LowerBound <= UpperBound);
-        
+        static_assert(LowerBound <= UpperBound);        
+//        static_assert(UpperBound < std::numeric_limits<T>::max());
     public:
-        inline static constexpr T module{UpperBound + 1};
+        inline static constexpr etl::enclosing_t<T> module{UpperBound + 1};
         inline static constexpr T module_mask = UpperBound;
         inline static constexpr bool use_mask_modulo = (LowerBound == 0) && (etl::isPowerof2(module));
         

@@ -23,6 +23,7 @@
 
 #include <std/chrono>
 #include <std/variant>
+#include <std/utility>
 
 #include <etl/rational.h>
 #include <etl/concepts.h>
@@ -62,7 +63,7 @@ namespace External {
         }
         
         static inline void rateProcess() {
-            uint8_t newState = (Pin1::read() ? 2 : 0) + (Pin2::read() ? 1 : 0);    
+            const uint8_t newState = (Pin1::read() ? 2 : 0) + (Pin2::read() ? 1 : 0);    
             switch (mLastState) {
             case 0:
                 if (newState == 1) {
@@ -93,7 +94,9 @@ namespace External {
             case 3:
                 break;
             default:
-                assert(false);
+                std::unreachable();
+//                __builtin_unreachable();
+//                assert(false);
             }
             mLastState = newState;
         }
@@ -123,7 +126,7 @@ namespace External {
         static void start() {}
 
         static inline void rateProcess() {
-            uint8_t newState = (Pin1::read() ? 2 : 0) + (Pin2::read() ? 1 : 0);    
+            const uint8_t newState = (Pin1::read() ? 2 : 0) + (Pin2::read() ? 1 : 0);    
             switch (mLastState) {
             case 0:
                 if (newState == 1) {
@@ -146,7 +149,9 @@ namespace External {
             case 3:
                 break;
             default:
-                assert(false);
+                std::unreachable();
+//                __builtin_unreachable();
+//                assert(false);
             }
             mLastState = newState;
         }
@@ -155,7 +160,7 @@ namespace External {
         }   
     private:
         inline static ValueType mValue{};
-        inline static uint8_t mLastState = 0;
+        inline static uint8_t mLastState{};
     };
     
     namespace deprecated {

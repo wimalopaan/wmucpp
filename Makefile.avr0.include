@@ -85,9 +85,10 @@ CXXFLAGS += -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics
 CXXFLAGS += -funsigned-char -funsigned-bitfields -fshort-enums 
 #CXXFLAGS += -ffunction-sections  -fdata-sections # seperate sections -> see --gc-sections 
 CXXFLAGS += -fconcepts
+CXXFLAGS += -fcoroutines
 CXXFLAGS += -ftemplate-depth=8192
 CXXFLAGS += -fstrict-aliasing -Wstrict-aliasing=1 
-CXXFLAGS += -Wall -Wextra -Wswitch -Wswitch-enum
+CXXFLAGS += -Wall -Wextra -Wswitch -Wswitch-enum -Wshift-count-overflow
 CXXFLAGS += --param=min-pagesize=0 # avr-gcc-12.1, avr-gcc-13.0  (doc0/bm00/bm00.cc)
 CXXFLAGS += -DF_OSC=$(F_OSC) -DF_CPU=$(F_OSC)
 #CXXINLUDES0 += -I/usr/local/avr/include
@@ -108,7 +109,7 @@ CXXFLAGS += -DGITMINOR=$(GITMINOR)
 CFLAGS += $(OPTFLAGS) -std=gnu2x # wegen __flash
 #CFLAGS += -Os -std=c11 -pedantic
 CFLAGS += -funsigned-char -funsigned-bitfields -fshort-enums
-CFLAGS += -Wall -Wextra
+CFLAGS += -Wall -Wextra -Wconversion
 CFLAGS += -fstrict-aliasing -Wstrict-aliasing=1 
 CFLAGS += -DF_OSC=$(F_OSC) -DF_CPU=$(F_OSC)
 #CFLAGS += -I/usr/local/avr/include
@@ -137,10 +138,10 @@ AVRDUDE_FLAGS += -C+/home/lmeier/Projekte/wmucpp/avrdude.conf
 
 #CC = clang
 #CXX = clang++
-CC = /usr/local/bin/avr-gcc
-CXX = /usr/local/bin/avr-g++
-#CC = /usr/bin/avr-gcc
-#CXX = /usr/bin/avr-g++
+#CC = /usr/local/bin/avr-gcc
+#CXX = /usr/local/bin/avr-g++
+CC = /usr/bin/avr-gcc
+CXX = /usr/bin/avr-g++
 OBJCOPY = avr-objcopy
 OBJDUMP = avr-objdump
 SIZE = avr-size

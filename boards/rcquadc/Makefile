@@ -7,7 +7,7 @@ F_OSC = 20000000
 
 #OPTFLAGS = -O3
 
-subdirs = doc
+#subdirs = doc
 
 test20.hex : MCU = avr128da32 
 test20.hex : F_OSC = 32000000

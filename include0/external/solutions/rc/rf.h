@@ -64,7 +64,7 @@ namespace External::RC {
         Channel{Band::_35BMHz, 191, 35'910'000},
         Channel{Band::_40MHz, 50, 40'665'000},
         Channel{Band::_40MHz, 51, 40'675'000},
-        Channel{Band::_40MHz, 52, 40'685'000},
+        Channel{Band::_40MHz, 52, 40'685'000}, // 50
         Channel{Band::_40MHz, 53, 40'695'000},
         Channel{Band::_40MHz, 54, 40'715'000},
         Channel{Band::_40MHz, 55, 40'725'000},

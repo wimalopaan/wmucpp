@@ -1,39 +1,41 @@
-#include <avr/io.h>
-#include <stdfix.h>
 #include <stdint.h>
+#include <util/atomic.h>
+#include <avr/interrupt.h>
+#include <stdatomic.h>
 #include <stdbool.h>
-
-volatile int8_t r1;
-volatile int8_t r2;
-
-//typedef signed short _Accum fp_t;
-
-void bar(void);
-
-static void foo();
-
-int main() {
-    foo();
-    bar();
-//    const int x = 2;
-//    int a[x];
-//    CCP = 0xd8;
-//    CLKCTRL.MCLKCTRLB = 0x00;
-//    PORTA.DIR = (1 << 6);
     
-//    fp_t sum = 0;
-//    while(true) {
-//        PORTA.OUTTGL = (1 << 6);
-        
-//        const fp_t a = r1;
-//        const fp_t b = r1;
-//        sum += a * b;
-//        fp_t d = sum * a;
-//        r2 = d / 2.0hk;
-////        r2 = sum;
+static volatile  uint8_t x;
+
+//ISR( TIMER2_OVF_vect ) {
+//    volatile uint8_t y = x;
+    
+//}
+
+void foo() __attribute__ ((__signal__));
+void foo() {
+//    x *= 2;
+//    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+        x += 3;
 //    }
 }
 
-static void foo() {
+int main() {
+    
+    while(true) {
+        ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+            x += 2;
+        }
+    }
+
+//    x = 0;
+//    x = 1;
+//    atomic_signal_fence(memory_order_seq_cst);    
+//    x = 10;
+//    x = 20;
+//    atomic_signal_fence(memory_order_seq_cst); 
+    
+//    while(true) {}
+    
 }
+
 

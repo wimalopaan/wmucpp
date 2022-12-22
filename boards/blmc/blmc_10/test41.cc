@@ -49,6 +49,8 @@ struct CommandAdapter {
                                   IncPwm, IncFast, DecPwm, IncDelay, DecDelay,
                                   Commute, CommuteSet, Reverse, Test};
     
+    static inline bool ratePeriodic() {}
+    
     static inline bool process(std::byte v) {
         switch (v) {
         case std::byte{'s'}:
@@ -311,7 +313,7 @@ int main() {
                     break;
                 case CommandAdapter::Command::Reverse:
                     commuter::mReverse = !commuter::mReverse;
-                    etl::outl<terminal>("Reverse: "_pgm, commuter::mReverse);
+//                    etl::outl<terminal>("Reverse: "_pgm, commuter::mReverse);
                     break;
                 case CommandAdapter::Command::Info:
                     etl::outl<terminal>("Info"_pgm);

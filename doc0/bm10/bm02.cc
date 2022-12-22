@@ -122,13 +122,13 @@ CONSTEXPR1 to_type test2(const from_type d) { // violates constexpr because of s
 
 auto foo() {
     constexpr from_type x{1};
-    return test1(x);    
+//    return test1(x);    
 }
 int main() {
     from_type x{1};
 #ifdef USE_STRUCT
     return foo().m + test2(x).m;    
 #else
-    return foo() + test2(x);    
+//    return foo() + test2(x);    
 #endif
 }
