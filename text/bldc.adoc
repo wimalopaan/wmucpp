@@ -1,0 +1,125 @@
+= bmCpp
+Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+:revnumber: 0.01
+:revdate: 01.01.1970
+:revremark: undefined
+:lang: de
+:toc:
+:toc-title: Inhalt
+:toclevels: 4
+:numbered:
+:src_numbered: 
+:icons: font
+:icontype: svg
+:figure-caption: Abbildung
+:description: Bürstenlose Elektromotoren
+:title: Bürstenlose Elektromotoren
+:sectanchors:
+:sectlinks:
+:experimental:
+:copyright: Wilhelm Meier
+:duration: 90
+:source-highlighter: pygments
+:pygments-css: class
+:status:
+:menu:
+:navigation:
+:split:
+:goto:
+:blank:
+:showtitle:
+:docinfo1:
+:stem:
+// for attributes in link:[] macro like link:xxx[window="_blank"]
+:linkattrs:
+
+include::bmcppdefs.adoc[]
+
+//:srcdir: ../doc/bmcpp01
+
+== Einführung
+
+Um das nochmal klar zu stellen, um was es bei meinen Steller-Projekten geht:
+
+1) Standard-BLDC-Steller (ohne Sensoren)
+
+Diese Steller haben alle(!) das Problem des Anlaufs: man muss den Motor auf eine gewisse Mindestdrehzahl bringen, damit man die Eigeninduktionsspannung der freien Wicklung in der Sternschaltung zur Detektion des Kommutierungszeitpunktes verwenden kann. Manche Steller können das gut (die, die einen leistungsfähigen Analog-Digital-Wandler haben), andere weniger gut (nur ein Komparator für die Nulldurchgangsdetektion). Zudem ist manche Firmware dieser einfachen Steller einfach schlecht programmiert. Dafür habe ich Abhilfe.
+
+2) Standard-BLDC-Steller (mit Sensoren)
+
+Diese Steller sind im RC-Car Bereich üblich bzw. dort, wo die Antriebe keinen Schlupf haben, damit das Gefährt durch den Hochlaufprozess wie unter 1) unkontrolliert sich bewegt. Mit Hilfe der Hall-Sensoren (oder andere) kann man die Rotor-Position erkennen, und damit das Hochlaufproblem ganz gut auch mit einer simplen Blockkommutierung lösen.
+
+3) BLDC-Steller mit Sinus-Kommutierung (ohne Sensoren)
+
+Auch die Steller in 2) haben ein Anlaufproblem, wenn sie mit Blockkommutierung bestrieben werden. Steller mit Sinus-kommutierung lösen dieses Problem in optimaler Weise. Um die sinusförmigen Phasenströme gleichlaufend mit der Rotordrehzahl steuern zu können, muss man viel Aufwand betreiben, um das ohne Sensoren machen zu können. Oder: man benutzt dieses Verfahren nur, um das Hochlaufproblem zu lösen, und danach wieder auf die einfache Blockkummutierung umzuschalten. Dies ist derzeit mein Ansatz. Der Vorteil ist weiterhin, dass ein beliebig steuerbares Drehmoment am Drezahl 0 zur Verfügung steht. Dabei kann der Motor natürlich recht warm werden, wenn das verlangte Drehmoment bei niedriger Drehzahl hoch sein soll.
+
+4) BLDC-Steller mit Sinus-Kommutierung (mit Sensoren)
+
+Das wiederum wäre eine einfach Version von 3). Eigentlich für Modellbau optimal geeignet, nur gibt es gerade für Schiffmodelle nicht genügend Auswahl an Motoren mit Sensoren. Zudem sind es typischerweise "digitale" Hallsensoren. Man muss aber eigentlich analoge Hallsensoren verwendet, damit auch jede Zwischenposition der Rotorstellung erkannt werden kann. Dazu habe ich mal als 3D-Druck einen Adapter für Motoren gedruckt, in den man dann zumindest für Außenläufen solche Sensoren stecken kann. Derzeit warte ich auf die Lieferung der Sensoren aus China.
+
+=== Elektromotoren
+
+Arten beschreiben
+
+Grundgleichungen
+
+=== Bürstenmotoren
+
+Prinzip
+Kommutierung
+
+=== Bürstenlose Motoren
+
+https://de.wikipedia.org/wiki/B%C3%BCrstenloser_Gleichstrommotor[]
+
+
+video::gNpoTPzEkco[youtube]
+
+video::WYJWdMV3YMs[youtube]
+
+
+
+PMSM
+
+BLDC / EC
+
+=== Schrittmotoren
+
+Vollschritt / Mikroschritt
+
+== Bürstenlose Antriebe
+
+=== Steuergeräre
+
+elektronische Kommutierung
+
+=== Betriebsarten
+
+==== Blockkommutierung
+
+wie bei DC Motor 
+
+==== Sinuskommutierung
+
+wie Schrittmotor / feiner
+
+=== Positionserkennung
+
+warum
+
+==== Sensorlos
+
+===== BEMF
+
+===== HF-Induktion
+
+==== Sensorbehaftet
+
+hall
+im Käfig / ausserhalb
+
+optisch
+
+=== Anwendungen
+
+==== Antriene und Schlupf

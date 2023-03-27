@@ -1,0 +1,447 @@
+// -*- mode: adoc ; fill-column: 120 -*-
+// ---- Beginn Standardheader
+= Elektronischer Hauptschalter mit Telemetrie
+Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+:revnumber: 0.01
+:revdate: 01.01.1970
+:revremark: HW_1.9
+:lang: de
+:toc:
+:toc-title: Inhalt
+:toclevels: 4
+:numbered:
+:src_numbered: 
+:icons: font
+:icontype: svg
+:figure-caption: Abbildung
+:description: Elektronischer Hauptschalter mit Telemetrie
+:title: Elektronischer Hauptschalter mit Telemetrie
+:title-page:
+:sectanchors:
+:sectlinks:
+:experimental:
+:copyright: Wilhelm Meier
+:duration: 90
+:source-highlighter: pygments
+:pygments-css: class
+:status:
+:menu:
+:navigation:
+:split:
+:goto:
+:blank:
+:showtitle:
+:docinfo1:
+:stem:
+// for attributes in link:[] macro like link:xxx[window="_blank"]
+:linkattrs:
+
+<<<
+
+== Vorwort
+
+.Lizenz
+****
+Dieses Werk ist unter einer Creative Commons Lizenz vom Typ Namensnennung - Nicht kommerziell - Keine Bearbeitungen 4.0 International zugänglich. Um eine Kopie dieser Lizenz einzusehen, konsultieren Sie http://creativecommons.org/licenses/by-nc-nd/4.0/ oder wenden Sie sich brieflich an Creative Commons, Postfach 1866, Mountain View, California, 94042, USA.
+****
+
+[NOTE]
+Das Modul wie auch diese Doku ist noch unvollständig und _work-in-progess_. 
+Bei jeglichen Unklarheiten in dieser Funktionsbeschreibung und generellem Aufbau und Anschluß, 
+unterlassen Sie den Betrieb und kontaktieren Sie den Bausatzersteller.
+
+<<<
+
+== Symbolerklärung
+
+[TIP]
+Ein wichtiger allgemeiner Hinweis für den sicheren Aufbau und die sichere Bedienung. Dieser sollte durch den Anwender bachtet werden,
+um einen sicheren Betrieb zu gewährleisten.
+
+[NOTE]
+Ein genereller Hinweis, der durch den Anwender beachtet werden sollte.
+
+[IMPORTANT]
+Ein technischer oder sicherheitstechnischer Hinweis, der unbedingt durch den Anwender beachtet werden muss.
+
+[CAUTION]
+Ein technischer oder sicherheitstechnischer Gefahrenhinweis, der unbedingt durch den Anwender beachtet werden muss. Zur 
+Gefahrenabwendung muss der Anwender unbedingt die gegebenen Anweisungen befolgen und die beschriebenen Maßnahmen ergreifen.
+
+== Rechtliches
+
+Der vorliegende Bausatz wird dem Anwender für eigene Experimente überlassen. Er stellt kein Produkt im Sinne des ProdHaftG 
+oder elektronisches Gerät im Sinne des ElektroG dar und wird als Gerät nicht kommerziell vertrieben. 
+
+[IMPORTANT]
+--
+Die Überlassung gegen Unkostenerstattung erfolgt unter Ausschluss jeglicher Sach­mangelhaftung.
+
+Für den vorliegenden Bausatz werden keine Funktionsgarantien gegeben. Für Schäden am Bausatz oder an damit verbundenen Geräten oder Modulen
+wird keine Haftung übernommen. Gewährleistungen, Garantien und Widerrufsrechte gibt es nicht.
+--
+
+== Sicherheitshinweise
+
+Beim Umgang mit Produkten, die mit elektrischer Spannung in Berührung kommen, müssen die gültigen VDE-Vorschriften beachtet werden, insbesondere 
+VDE 0100, VDE 0550/0551, VDE 0700, VDE 0711 und VDE 0860.
+
+Werkzeuge dürfen an Geräten, Bauteilen oder Baugruppen nur benutzt werden, wenn sichergestellt ist, dass die Geräte von der Versorgungsspannung 
+getrennt sind und elektrische Ladungen, die in den im Gerät befindlichen Bauteilen gespeichert sind, vorher entladen wurden.
+
+Spannungsführende Kabel oder Leitungen, mit denen das Gerät, das Bauteil oder die Baugruppe verbunden ist, müssen stets auf Isolationsfehler 
+oder Bruchstellen untersucht werden. Bei Feststellen eines Fehlers in der Zuleitung muss das Gerät unverzüglich aus dem Betrieb genommen werden, 
+bis die defekte Leitung ausgewechselt worden ist. Bei Einsatz von Bauelementen oder Baugruppen muss stets auf die strikte Einhaltung der in der 
+zugehörigen Beschreibung genannten Kenndaten für elektrische Größen hingewiesen werden. Wenn aus einer vorliegenden Beschreibung für den nicht 
+gewerblichen Endverbraucher nicht eindeutig hervorgeht, welche elektrischen Kennwerte für ein Bauteil oder eine Baugruppe gelten, wie eine 
+externe Beschaltung durchzuführen ist oder welche externen Bauteile oder Zusatzgeräte angeschlossen werden dürfen und welche Anschlusswerte 
+diese externen Komponenten haben dürfen, so muss stets ein Fachmann um Auskunft ersucht werden. Es ist vor der Inbetriebnahme eines Gerätes 
+generell zu prüfen, ob dieses Gerät oder Baugruppe grundsätzlich für den Anwendungsfall, für den es verwendet werden soll, geeignet ist!
+
+Im Zweifelsfalle sind unbedingt Rückfragen bei Fachleuten, Sachverständigen oder den Herstellern der verwendeten Baugruppen notwendig!
+
+Bitte beachten Sie, dass Bedien- und Anschlussfehler außerhalb unseres Einflussbereiches liegen. Verständlicherweise können wir für Schäden, die 
+daraus entstehen, keinerlei Haftung übernehmen. Bei Installationen und beim Umgang mit Netzspannung sind unbedingt die VDE-Vorschriften zu 
+beachten. Geräte, die an einer Spannung über 35 V betrieben werden, dürfen nur vom Fachmann angeschlossen werden. In jedem Fall ist zu prüfen, 
+ob der Bausatz oder die Platine für den jeweiligen Anwendungsfall und Einsatzort geeignet ist bzw. eingesetzt werden kann.
+
+Derjenige, der eine Schaltung oder einen Bausatz aufbaut und fertigstellt oder eine Baugruppe durch Erweiterung bzw. Gehäuseeinbau 
+betriebsbereit macht, gilt nach DIN VDE 0869 als Hersteller und ist verpflichtet, bei der Weitergabe des Gerätes alle Begleitpapiere 
+mitzuliefern und auch seinen Namen und Anschrift anzugeben. Geräte, die aus Bausätzen selbst zusammengestellt werden, sind sicherheitstechnisch 
+wie ein industrielles Produkt zu betrachten.
+
+Für alle Personen- und Sachschäden, die aus nicht bestimmungsgemäßer Verwendung entstehen, ist nicht der Hersteller sondern der Betreiber 
+verantwortlich. Bitte beachten Sie, das Bedien- und/und Anschlussfehler außerhalb unseres Einfußbereiches liegen. Verständlicherweise können wir 
+für Schäden, die daraus entstehen, keinerlei Haftung übernehmen.
+
+Jegliche Vorschriften und Vorsichtsmaßnahmen im Umgang mit elektrischen Komponenten sind vom Anwender einzuhalten.
+
+Beachten Sie ebenfalls die Richtlinien unter <<Betrieb>>.
+
+== Spezieller Sicherheitshinweis: Kleinteile
+
+[CAUTION]
+--
+ACHTUNG: Der Bausatz enthält verschluckbare Kleinteile. Von Kindern fernhalten.
+--
+
+== Einbau 
+
+.Ansicht von oben
+image::big/big_01.png[]
+
+.Ansicht von unten
+image::big/big_02.PNG[]
+
+[NOTE]
+Das Modul wie auch diese Doku ist noch unvollständig und _work-in-progess_. 
+Bei jeglichen Unklarheiten in dieser Funktionsbeschreibung und generellem Aufbau und Anschluß, 
+unterlassen Sie den Betrieb und kontaktieren Sie den Bausatzersteller.
+
+Das Modul dient zum zentralen Einschalten der zentralen Stromversorgung von Schiffsmodellen. Das Einschalten und das Ausschalten 
+erfolgen über einen Tastkontakt / Reed-Kontakt. Das Modul gibt akustische und optische Rückmeldung über seinen Zustand.
+
+Das folgende Bild zeigt den Einbau schematisch:
+
+[[schema1]]
+.Schematischer Anschluß des Moduls an Akku, Verbraucher, Reed-Kontakt und Telemetrie.
+image::big/schema.jpg[]
+
+[TIP]
+Achten Sie auf die richtige Variante passend zu Ihrem Telemetrie-System (s.a. <<Variants>>).
+
+=== Anschluß an den Akku
+
+Für einen ordnungsgemäßen Betrieb ist das Modul mit entsprechenden Kabeln zu versehen, die einen ausreichenden Querschnitt 
+aufweisen.
+
+Die Anschlüsse `Vin` / `Gnd` sind mit dem Akku zu verbinden. Diese werden auf der Oberseite angelötet.
+
+Die Anschlüsse `Vout` / `Gnd` sind mit den zu versorgenden Geräten zu verbinden. Hier ist `Gnd` auf der Unterseite anzulöten.
+
+Ein Verpolen der Anschlüsse kann zu einem Defekt führen.
+
+[TIP]
+Beim ersten Anschluß an den Akku ertönt eine aufsteigende Tonfolge. Danach ein tiefer Ton dreimalig, um anzuzeigen, dass das Modul 
+in den Zustand `AUS` wechselt. Die Led blinkt einmal kurz periodisch. Nach einigen Sekunden ertönt ein Dreiklang und die LED hört auf zu blinken.
+Damit hat sich das Modul in den _Schlafzustand_ versetzt und verbraucht nun nur noch unwesentlich Strom.
+
+[CAUTION]
+Achten Sie neben ausreichenden Querschnitten der Kabel auch immer auf kurze Verbindungen, vor allem vom Akku zu Hauptschalter bzw. 
+bei allen, hohen Strom führenden Leitungen.
+
+=== Anschluß des Tastkontaktes
+
+An den mit `Taster` gekennzeichneten Pfostenverbinder ist ein Taster (kein Schalter) oder Reed-Kontakt anzuschließen. 
+
+[CAUTION]
+--
+Der Anschluß des Tasters sollte über ein verdrilltes Leitungspaar erfolgen. Es reicht ein sehr dünner Querschnitt aus, da hier keine 
+hohen Ströme fließen. Das Leitungspaar sollte nicht parallel zu Leitungen mit hohen Strömen und Impulsen (etwa Motorzuleitungen) 
+im Modell verlegt werden. Die Leitungslänge sollte 75cm nicht überschreiten.
+--
+
+Vor der Montage eines Reed-Kontaktes die _Vorzugsrichtung_ des Reed-Kontaktes ermitteln, damit ein sicheres Ansprechen 
+gewährleistet ist. Vorsicht beim Biegen der Anschlußdrähte eines 
+Reed-Kontaktes, denn diese brechen leicht.
+
+Beachten Sie den maximalen Abstand des Magneten zum Reed-Kontakt bei der Montage. Mehr als 1,5mm kann zu Problemen beim 
+Ein- oder Ausschalten führen. Dies hängt wesentlich von der Stärke des Magneten ab.
+
+=== Position
+
+Bauen Sie das Modul so ein, das ein gute Schallübertragung möglich ist. Die seitliche Öffnung des Piezo-Summers darf nicht verdeckt werden.
+
+[TIP]
+Sollte auf dem Summer (Lautsprecher) noch eine Schutzfolie sein, so entfernen Sie diese (nach dem Besprühen mit Schutzlack).
+
+=== Schutz 
+
+Um das Modul gegen Feuchtigkeit zu schützen und glichzeitig die Schallausbreitung nicht zu beeinträchtigen, empfielt es sich, das Modul 
+mit Polyurethan-Lack-Schutzlack (z.B. Kontakt 70) zu überziehen. Bitte kleben Sie jedoch voher den Pfostenverbinder für den Kontackt, den 
+Piezosummer und (falls noch nicht angelötet) die Lötpads für die Anschlußkabel ab.
+
+Ein Einschrumpfen mit Schrumpfschlauch ist möglich, aber auch hier muss streng darauf geachtet werden, dass eine gute Schallausbreitung
+ermöglicht bleibt.
+
+== Funktion
+
+[IMPORTANT]
+--
+Die Funktion dieses Bausatzes wird wesentlich durch Software des Bausatzes bereit gestellt. Eine Veränderung der Software ist durch den 
+Anwender möglich. Der Anwender hat sich vor dem Einsatz der bereitgestellten Software des Moduls anhand des mitgelieferten 
+Source-Codes davon zu überzeugen, dass die im folgenden beschriebene Funktion auch tatsächlich eingehalten wird und sich 
+keine Fehlfunktionen ergeben. Der Bausatzersteller gibt keine irgendwie geartete Funktionsgarantie für die Software des Moduls.
+
+Durch den Anwender aufgebrachte (Update), veränderte Software kann einen anderen Betrieb ermöglichen und gleichzeitig erhöhte bzw. veränderte 
+Gefahren mit sich bringen.
+--
+
+[[funcon]]
+=== Einschalten
+
+.Vorsichtsmaßnahmen
+[CAUTION]
+--
+Treffen Sie die üblichen Sicherheitsvorkehrungen beim Einschalten von Stromversorgungen in Modellen.
+
+Schalten Sie den Sender _vorher_ ein. Kontrollieren Sie die _Gasstellung_.
+--
+
+Betätigen Sie den Kontakt dauerhaft. Es ertönen zwei Töne im Wechsel (Tritonus). Die LED blinkt zweimal periodisch sehr kurz. Halten Sie den Taster so lange, 
+bis ein aufsteigender Dreiklang (Tusch) erfolgt. Jetzt können Sie den Taster loslassen. Das Modul geht mit einem einzelnen Ton in den eingeschalteten Zustand 
+und die LED blink dreimal periodisch sehr kurz. 
+
+Lassen Sie den Taster los _bevor_ das Modul einschaltet, ertönt ein kurzer Quittungston und das Modul bleibt ausgeschaltet.
+
+Um das Modul wieder auszuchalten, muss der Kontakt kurz getrennt werden.
+
+[[funcoff]]
+=== Ausschalten
+
+.Ausschalten von induktiven Lasten
+[CAUTION]
+--
+Schalten Sie keine direkt angeschlossenen, induktiven Lasten (große Motoren, Transformatoren) im laufenden Betrieb aus. 
+Dadurch kann das Modul zerstört werden, wenn der maximale Schaltstrom überschritten wird.
+--
+
+Betätigen Sie den Kontakt dauerhaft.  Es ertönt eine Tonfolge (ein hoher und tiefer werdende Töne im Wechsel). Die LED blinkt zweimal periodisch sehr kurz. 
+Halten Sie den Taster so lange, bis drei tiefe Töne erklingen. Jetzt können Sie den Taster loslassen, Das Modul geht in den ausgeschalteten Zustand. Die LED blinkt
+nun wieder einmal kurz periodisch. nach einigen Sekungen geht das Modul in den Schlafzustand und die LED geht aus.
+
+Wird der Kontakt vorzeitig losgelassen, bleibt das Modul im Zustand `EIN`. Zur Kontrolle ertönt ein hoher Ton.
+
+Um das Modul wieder einzuchalten, muss der Kontakt kurz getrennt werden.
+
+=== Ruhe
+
+Ist das Modul im Zustand `AUS`, geht es nach ca. 3 Sekunden in den Schlafzustand. Es verbraucht nun sehr wenig Strom (<= 2 µA) 
+(Achtung: s.a. <<Betrieb>>) 
+
+[[Prog]]
+=== Programmierung
+
+=== Einschaltverzögerung
+
+Die Verzögerung vom Zeitpunkt der Betriebsbereitschaft bis zum Einschalten kann programmiert werden. Im Normalfall ist diese 
+Verzögerung 1s. 
+
+Die Programmiermöglichkeit steht derzeit nur in der Variante `Hott` zur Verfügung.
+
+=== Strom-Offset
+
+Oftmals möchte man den Betriebsstrom messen, allerdings nicht den Stromverbrauch, wenn die Elektronik zwar eingeschaltet ist (v.a. Empfänger und Servos in Ruhe), 
+jedoch die Motoren nicht laufen. Dazu kann man einen Offset (Abzug) bei der Strommessung programmieren. Dieser wird im Moduk gespeichert. Es wird 
+auch über die Telemetrie angezeigt und ist im Auslieferungszustand natürlich 0.0A.
+
+Schalten Sie das Modul ein. Das Modell sollte nun vollständig betriebsbereit sein. Die Stromaufnahme ist nun gering, aber vorhanden. Die Motoren laufen nicht.
+
+Drücken Sie nun den Taster dreimal kurz hintereinander. Bei jedem Tastendruck erfolgt ein Quittungston. Nach dem dritten Tastendruck eine Tonfolge. Damit hat das 
+Modul den aktuell fließenden Strom als Offset (Abzug) gespeichert. Dieser Wert wird nun von dem per Telemetrie übermittelten Wert abgezogen. Damit entspricht der 
+Telemetriewert dem Stromverbrauch der später eingeschalteten Verbraucher wie Motoren und Sonderfunktionen.
+
+=== Spannungs-Offset
+
+Die Programmiermöglichkeit steht derzeit nur in der Variante `Hott` zur Verfügung.
+
+=== Hinweise
+
+Das Modul befindet sich im Auslieferungszustand in den Modi: 
+
+* _eine_ Sekunde Einschaltverzögerung
+* _kein_ Offset für Strom oder Spannungsmessung
+* _keine_ Auto-Kalibrierung
+
+Sie können jeweils nur _eine_ Einstellung je Programmiervorgang ändern: entweder die Einschaltverzögerung _oder_ Softstart. Wollen Sie 
+beide Einstellungen ändern, so sind _zwei_ getrennte Programmiervorgänge erforderlich.
+
+[[Variants]]
+== Varianten
+
+Die Module können in unterschiedlichen _Telemetrie_-Varianten ausgeliefert werden. Die Grundfunktion bleibt jedoch immer gleich.
+
+=== Allgemeine Daten
+
+Die Spannungsfestigkeit beträgt 30V, die Strombelastbarkeit beträgt max. 80A. Keine der Grenzen darf überschritten werden.
+
+[CAUTION]
+Unterhalb einer Eingangsspannung von 6V ist kein gesicherter Betrieb mehr möglich. Daher ist es sinnvoll,
+eine Telemetriefunktion zur Unterspannungserkennung einzusetzen. Bei stark abnehmender Spannung ist daher sofort eine 
+Rückkehr des Schiffsmodells zum Ufer angebracht. Anderfalls kann es zu einem totalen Stromausfall kommen.
+
+=== Variante IBUS (FlySky)
+
+Wird die Telemetrie für einen IBUS-Empfänger genutzt, so erscheinen am Sender folgende Sensorwerte:
+
+* Spannung am Ausgang des Moduls
+* Strom
+* Strom-Offset
+* interne Temperatur
+
+=== Variante Hott (Graupner/SJ)
+
+Wird die Telemetrie für einen Hott-Empfänger genutzt, so erscheint das Modul als `GAM`-Modul im Sender. Von den Werten, die 
+ein `GAM` anzeigen kann, werden nur die folgenden benutzt.
+
+* Spannung am Ausgang des Moduls
+* Strom
+* interne Temperatur
+
+Das Modul stellt im Sender ein Telemetrie-Konfigurationsmenu zur Verfügung. Damit können die folgenden Parameter angezeigt und verändert werden:
+
+* Einschaltverzögerung
+* Strom-Offset
+* Spannungs-Offset
+
+=== Variante S.Port (FrSky)
+
+Wird die Telemetrie für einen S.Port-Empfänger genutzt, so erscheinen am Sender folgende Sensorwerte:
+
+* Spannung am Ausgang des Moduls
+* Strom
+* Strom-Offset
+* interne Temperatur
+
+[[Betrieb]]
+== Betrieb
+
+[TIP]
+Beachten Sie unbedingt die Anweisungen unter <<first>>.
+
+[NOTE]
+Die üblichen Sicherheitsvorkehrungen im Betrieb mit ferngesteuerten Modellen, insbesonder Schiffsmodellen sind einzuhalten.
+
+[IMPORTANT]
+Beachten Sie *alle* folgenden Hinweise zum Betrieb.
+
+[CAUTION]
+Eine Verwendung des Moduls in Rennbooten ist nicht zulässig.
+
+[CAUTION]
+Das Modul darf nicht in Kontakt mit Wasser, Wasserdampf oder anderen Flässigkeiten kommen. Wasser oder Wasserdampf bzw. andere 
+Flüssigkeiten können zu einem Totalausfall 
+und damit zu einem Modellverlust sowie Personenschäden führen.
+
+[CAUTION]
+Das Modul verbraucht im Ruhezustand nur sehr wenig Strom. Trotzdem darf ein dauerhafter Anschluß an einen unüberwachten Akku nicht erfolgen.
+Hier besteht Brandgefahr! Gefahr von Personenschäden!
+
+[CAUTION]
+Beim Betrieb ist die Erwärmung des Moduls zwingend zu überwachen! Eine Überhitzung kann zu einem Totalausfall und damit 
+zu einem Modellverlust führen. Gefahr von Personenschäden!
+
+[CAUTION]
+Die Spannunsgversorgung ist Moduls ist im Betrieb zu überwachen. Bei Unterspannung kann das Modul abschalten oder bei gleichzeitiger 
+hoher Stromaufnahme überhitzen und so zu einem Totalausfall 
+und damit zu einem Modellverlust sowie Personenschäden führen
+
+[CAUTION]
+Die erforderlichen Kabelquerschnitte für die Verbindung mit dem Akku und auch mit dem elektrischen Verbraucher sind unbedingt einzuhalten. 
+Hier besteht Brandgefahr. Gefahr von Personenschäden!
+
+[CAUTION]
+Beim Betrieb ist der maximale Stromdurchfluß zu begrenzen und zu überwachen. Ein zu langer und zu hoher Stromfluß kann zu einem Totalausfall 
+und damit zu einem Modellverlust sowie Personenschäden führen.
+
+[CAUTION]
+Das Modul ist nicht kurzschlußfest. Ein Kurzschluß führt zu einem Totalausfall 
+und damit zu einem Modellverlust sowie Personenschäden.
+
+[CAUTION]
+Der maximale Schaltstrom ist ist unbedingt einzuhalten und darf nicht überschritten werden. Ein zu hoher Schaltstrom kann zu einem Totalausfall 
+und damit zu einem Modellverlust sowie Personenschäden führen.
+
+[CAUTION]
+Die Kapazitäten (Elkos, Siebelkos) am Ausgang des Moduls, etwa in Fahrtreglern (Stellern) für Motoren, 
+dürfen 10.000µF nicht überschreiten. Zu hohe Kapazitäten können zu einem Totalausfall 
+und damit zu einem Modellverlust sowie Personenschäden führen.
+
+[CAUTION]
+Das Modul darf keinen Vibrationen ausgesetzt werden. Treffen Sie entsprechende Vorkehrungen zu einem vibrationsgeschützten Einbau. Zu starke 
+Vibrationen können zu einem Totalausfall und damit zu einem Modellverlust sowie Personenschäden führen.
+
+[CAUTION]
+Das Modul darf nur innerhalb eines Temperaturbereiches von -10°C bis +55°C betrieben werden. Ein Betrieb außerhalb dieses 
+Bereiches kann zu einem Totalausfall und damit zu einem Modellverlust sowie Personenschäden führen.
+
+== Aufbau 
+
+Der Bausatz enthält den Hauptschalter sowie einen Reed-kontakt. Der Anwender hat das Modul mit dem Kontakt oder Taster zu verkabeln und 
+auch die Zuleitungen zum Akku sowie zum Steller bzw. Modellelektronik zu verbinden.
+
+[IMPORTANT]
+Das Modul ist durch den Erwerber frei programmierbar. Daher kann keine Funktionsgarantie gegeben werden. 
+Der Anwender muss sich vor dem Einsatz in seinem
+Anwendungsfall (Schiffmodell) anhand des Sources-Codes davon überzeugen, dass das Modul seinen Anforderungen gerecht wird und keine 
+Fehlfunktionen enthält.
+
+=== Schrittweise Anleitung
+
+[[first]]
+=== Erste Inberiebnahme
+
+Die erste Inbetriebnahme _muss_ unbedingt
+
+* ohne Verbraucher
+* mit einem Labornetzteil mit einstellbarer Spannung und Strombegrenzung 
+
+erfolgen. Am Ausgang des Moduls schließen Sie ein Multimeter oder eine LED mit passendem Vorwiderstand an.
+
+Stellen Sie ein:
+
+* Spannung: 8V
+* Strombegrenzung: 50mA
+
+Schließen Sie _erst jetzt_ das Modul eingangsseitig an das Labornetzteil an. Die Strombegrenzung des Labornetzteils _darf nicht_ 
+ansprechen. Der Stromverbrauch sollte in der Anzeige zunächst nicht mehr als 2mA sein und nach drei Sekunden auf ca. 20µA sinken.
+
+Führen Sie erst nun die Einschalt- und Ausschaltsequenz aus und beobachten Sie die Ausgangsspannung bzw. LED. 
+
+[CAUTION]
+Bauen Sie erst dann das Modul in ein Modell ein, wenn Sie sich von der einwandfreien Funktion überzeugt haben.
+
+== Kontakt
+
+Anfragen: wilhelm.wm.meier@googlemail.com
+
