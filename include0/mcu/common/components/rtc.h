@@ -140,7 +140,7 @@ namespace AVR {
             static inline constexpr uintptr_t address = 0x0140;
         };
         
-        static_assert(sizeof(Rtc) == 22);
+        static_assert(sizeof(Rtc) == 0x16);
 
     }
 }

@@ -45,4 +45,23 @@ namespace AVR {
             *mcu_dac()->data = std::byte{v};
         }
     };
+
+    template<uint8_t N, AVR::Concepts::AtDxSeries MCU>
+    struct DAC<N, MCU> {
+        using ca_t = typename MCU::Dac::CtrlA_t;
+        using ref_t = typename MCU::Vref::VRef_t;
+
+        static inline constexpr auto mcu_dac = getBaseAddr<typename MCU::Dac, N>;
+        static inline constexpr auto mcu_vref = AVR::getBaseAddr<typename MCU::Vref>;
+        
+        static inline void init() {
+            mcu_vref()->dac0ref.template set<ref_t::V2500>();           
+            mcu_vref()->dac0ref.template add<ref_t::on, etl::DisbaleInterrupt<etl::NoDisableEnable>>();           
+            mcu_dac()->ctrla.template set<ca_t::outen | ca_t::enable>();
+        }
+        
+        static inline void put(const uint16_t v) {
+            *mcu_dac()->data = (v << 6) & 0xFFC0;
+        }
+    };
 }

@@ -46,8 +46,10 @@ namespace External {
             static inline etl::FiFo<std::byte, Size> fifo;
         };
         
+        template<typename Buf = void>
         class NullProtocollAdapter final {
         public:
+            using buffer_t = Buf;
             using value_type = void;
             NullProtocollAdapter() = delete;
             static inline constexpr bool process(const std::byte) {

@@ -56,6 +56,9 @@ namespace AVR {
     struct Avr128da32;
     struct Avr128da48;
     
+    // DB-Series
+    struct Avr128db64;
+    
     namespace Series0 {
     }
     namespace Series1 {
@@ -98,6 +101,8 @@ typedef AVR::ATTiny1624 DefaultMcuType;
 typedef AVR::Avr128da32 DefaultMcuType;
 #elif defined(__AVR_AVR128DA48__)
 typedef AVR::Avr128da48 DefaultMcuType;
+#elif defined(__AVR_AVR128DB64__)
+typedef AVR::Avr128db64 DefaultMcuType;
 #else
 typedef AVR::ATMegaNone DefaultMcuType;
 # warning "No CPU found"
@@ -126,6 +131,7 @@ namespace AVR {
     struct D : std::integral_constant<char, 'D'> {};
     struct E : std::integral_constant<char, 'E'> {};
     struct F : std::integral_constant<char, 'F'> {};
+    struct G : std::integral_constant<char, 'G'> {};
     
     namespace Component {
         template<typename Component> struct Count;

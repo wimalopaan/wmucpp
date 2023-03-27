@@ -398,17 +398,17 @@ namespace External {
       
         using ScanDevSendQueueLength = std::conditional_t<termOnScanDev, AVR::SendQueueLength<128>, AVR::SendQueueLength<0>>;
         
-        using ibus_pa = std::conditional_t<checkIbus, IBus2::Servo::ProtocollAdapter<0>, External::Hal::NullProtocollAdapter>;
+        using ibus_pa = std::conditional_t<checkIbus, IBus2::Servo::ProtocollAdapter<0>, External::Hal::NullProtocollAdapter<>>;
         using ibus_test_dev = std::conditional_t<checkIbus, 
                                                  Usart<scanDevPosition, ibus_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, ScanDevSendQueueLength>,
                                                  void>; 
         
-        using sbus_pa = std::conditional_t<checkSbus, External::SBus::Servo::ProtocollAdapter<0, systemTimer>, External::Hal::NullProtocollAdapter>;
+        using sbus_pa = std::conditional_t<checkSbus, External::SBus::Servo::ProtocollAdapter<0, systemTimer>, External::Hal::NullProtocollAdapter<>>;
         using sbus_test_dev = std::conditional_t<checkSbus,
                                                  Usart<scanDevPosition, sbus_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, ScanDevSendQueueLength>,
                                                   void>;
         
-        using sumd_pa = std::conditional_t<checkSumd, Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>, External::Hal::NullProtocollAdapter>;
+        using sumd_pa = std::conditional_t<checkSumd, Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>, External::Hal::NullProtocollAdapter<>>;
         using sumd_test_dev = std::conditional_t<checkSumd,
                                                  Usart<scanDevPosition, sumd_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, ScanDevSendQueueLength>,
                                                  void>;

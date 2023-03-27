@@ -35,6 +35,12 @@
 namespace AVR {
     using namespace std::literals::chrono;
 
+    template<typename PA>
+    struct isNullPA : std::false_type {};
+    
+    template<typename T>
+    struct isNullPA<External::Hal::NullProtocollAdapter<T>> : std::true_type {};
+    
     struct FullDuplex final {};
     struct HalfDuplex final {};
     
@@ -73,7 +79,7 @@ namespace AVR {
         
     } //!Util
 
-    template<typename CN, AVR::Concepts::ProtocolAdapter PA = External::Hal::NullProtocollAdapter, etl::Concepts::NamedFlag useISR = etl::NamedFlag<true>,
+    template<typename CN, AVR::Concepts::ProtocolAdapter PA = External::Hal::NullProtocollAdapter<>, etl::Concepts::NamedFlag useISR = etl::NamedFlag<true>,
              etl::Concepts::NamedConstant RecvQLength = ReceiveQueueLength<64>, 
              etl::Concepts::NamedConstant SendQLength = SendQueueLength<64>, typename MCU = DefaultMcuType> class Usart;
     
@@ -303,12 +309,13 @@ namespace AVR {
             inline static void isr_impl() {
                 const auto c = *mcu_usart()->rxd;
                 if constexpr (RecvQLength::value > 0) {
-                    static_assert(std::is_same_v<PA, External::Hal::NullProtocollAdapter>, "recvQueue is used, no need for PA");
+                    static_assert(std::is_same_v<PA, External::Hal::NullProtocollAdapter<>>, "recvQueue is used, no need for PA");
                     mRecvQueue.push_back(c);
                 }
                 else {
                     static_assert(RecvQLength::value == 0);
-                    if constexpr(!std::is_same_v<PA, External::Hal::NullProtocollAdapter>) {
+//                    if constexpr(!isNullPA<PA>::value) {
+                    if constexpr(!etl::is_same_v<PA, External::Hal::NullProtocollAdapter<>>) {
                         if (!PA::process(c)) {
                             assert("input not handled by protocoll adapter");
                         }

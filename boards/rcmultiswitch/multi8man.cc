@@ -249,7 +249,7 @@ struct FSM {
     inline static Storage::tick_type stateTicks;
 };
 
-using terminalDevice = AVR::Usart<usart0Position, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<2>, AVR::SendQueueLength<512>>;
+using terminalDevice = AVR::Usart<usart0Position, External::Hal::NullProtocollAdapter<>, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<2>, AVR::SendQueueLength<512>>;
 using terminal = etl::basic_ostream<terminalDevice>;
 
 using multi = External::Ppm::MultiSwitch<ppm, 8>;

@@ -22,7 +22,7 @@ F_OSC = 20000000
 #MCU = atmega328pb
 #MCU = atmega1284p
 #MCU = atmega4809
-MCU = attiny1614
+MCU = attiny1604
 #MCU = atxmega32e5
 
 
@@ -38,6 +38,8 @@ targets += shtml
 targets += bm00.S bm00.elf
 targets += bm01.S bm01.elf
 #targets += bm02.S bm02.elf
+targets += bm03.S bm03.elf bm03.hex
+targets += bm04.S bm04.elf bm04.hex
 targets += bm10.S bm10.elf
 targets += bm20a bm20a.S bm20b.S
 

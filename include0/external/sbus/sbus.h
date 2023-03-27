@@ -169,13 +169,13 @@ namespace External {
         namespace Output {
             using namespace std::literals::chrono;
             
-            template<typename CN, typename Timer, typename dbg = void, typename PA = External::Hal::NullProtocollAdapter, uint8_t Size = 128>
+            template<typename CN, typename Timer, typename dbg = void, typename PA = External::Hal::NullProtocollAdapter<>, uint8_t Size = 128>
             struct Generator {
                 static constexpr External::Tick<Timer> timeoutTicks{14_ms};
                 static_assert(timeoutTicks.value > 1);
 //                std::integral_constant<uint8_t, timeoutTicks.value>::_;
                 
-                using usart = std::conditional_t<std::is_same_v<PA, External::Hal::NullProtocollAdapter>, 
+                using usart = std::conditional_t<std::is_same_v<PA, External::Hal::NullProtocollAdapter<>>, 
                                                AVR::Usart<CN, PA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<2>, AVR::SendQueueLength<Size>>,
                                                AVR::Usart<CN, PA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<Size>>
                                                >;

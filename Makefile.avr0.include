@@ -112,6 +112,7 @@ CFLAGS += -funsigned-char -funsigned-bitfields -fshort-enums
 CFLAGS += -Wall -Wextra -Wconversion
 CFLAGS += -fstrict-aliasing -Wstrict-aliasing=1 
 CFLAGS += -DF_OSC=$(F_OSC) -DF_CPU=$(F_OSC)
+CFLAGS += --param=min-pagesize=0 # avr-gcc-12.1, avr-gcc-13.0  (doc0/bm00/bm00.cc)
 #CFLAGS += -I/usr/local/avr/include
 CFLAGS += -I. -I../include0 -I../../include0
 #CFLAGS += -I/usr/include/simavr

@@ -99,26 +99,50 @@ namespace AVR {
                     using type = std::integral_constant<route_t, route_t::usart3_alt1>;
                 };
 
-                template<AVR::Concepts::AtDxSeries MCU>
+                template<AVR::Concepts::AtDaSeries MCU>
                 struct Mapper<AVR::Portmux::Position<AVR::Component::Usart<0>, AVR::Portmux::Alt1>, MCU> {
                     using route_t = typename MCU::Portmux::UsartRoute_t;
                     using type = std::integral_constant<route_t, route_t::usart0_alt1>;
                 };
-                template<AVR::Concepts::AtDxSeries MCU>
+                template<AVR::Concepts::AtDaSeries MCU>
                 struct Mapper<AVR::Portmux::Position<AVR::Component::Usart<1>, AVR::Portmux::Alt1>, MCU> {
                     using route_t = typename MCU::Portmux::UsartRoute_t;
                     using type = std::integral_constant<route_t, route_t::usart1_alt1>;
                 };
-                template<AVR::Concepts::AtDxSeries MCU>
+                template<AVR::Concepts::AtDaSeries MCU>
                 struct Mapper<AVR::Portmux::Position<AVR::Component::Usart<2>, AVR::Portmux::Alt1>, MCU> {
                     using route_t = typename MCU::Portmux::UsartRoute_t;
                     using type = std::integral_constant<route_t, route_t::usart2_alt1>;
                 };
-                template<AVR::Concepts::AtDxSeries MCU>
+                template<AVR::Concepts::AtDaSeries MCU>
                 struct Mapper<AVR::Portmux::Position<AVR::Component::Usart<3>, AVR::Portmux::Alt1>, MCU> {
                     using route_t = typename MCU::Portmux::UsartRoute_t;
                     using type = std::integral_constant<route_t, route_t::usart3_alt1>;
                 };
+
+
+
+                template<AVR::Concepts::AtDbSeries MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Usart<0>, AVR::Portmux::Alt1>, MCU> {
+                    using route_t = typename MCU::Portmux::UsartRouteA_t;
+                    using type = std::integral_constant<route_t, route_t::usart0_alt1>;
+                };
+                template<AVR::Concepts::AtDbSeries MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Usart<1>, AVR::Portmux::Alt1>, MCU> {
+                    using route_t = typename MCU::Portmux::UsartRouteA_t;
+                    using type = std::integral_constant<route_t, route_t::usart1_alt1>;
+                };
+                template<AVR::Concepts::AtDbSeries MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Usart<2>, AVR::Portmux::Alt1>, MCU> {
+                    using route_t = typename MCU::Portmux::UsartRouteA_t;
+                    using type = std::integral_constant<route_t, route_t::usart2_alt1>;
+                };
+                template<AVR::Concepts::AtDbSeries MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Usart<3>, AVR::Portmux::Alt1>, MCU> {
+                    using route_t = typename MCU::Portmux::UsartRouteA_t;
+                    using type = std::integral_constant<route_t, route_t::usart3_alt1>;
+                };
+
                 
             }
             namespace ccl {
@@ -304,6 +328,7 @@ namespace AVR {
                 if constexpr(Meta::size_v<usart_list> > 0) {
                     constexpr auto value = Meta::value_or_v<usart_list>;
 //                    std::integral_constant<decltype(value), value>::_;
+                    // Unterscheidung fuer usart >4 fehlt noch
                     mcu_pmux()->usartroutea.template set<value>();                
                 }
                 if constexpr(Meta::size_v<ccl_list> > 0) {

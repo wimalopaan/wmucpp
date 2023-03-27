@@ -26,6 +26,16 @@
 #include "concepts.h"
 
 namespace etl {
+    
+    template <template <typename...> typename, template<typename...> typename > 
+    struct is_same_template : std::false_type{};
+    
+    template <template <typename...> typename T>
+    struct is_same_template<T,T> : std::true_type{};
+    
+    template <template <typename...> typename T1, template<typename...> typename T2> 
+    static inline constexpr bool is_same_template_v = is_same_template<T1, T2>::value;
+    
     template<typename T>
     consteval bool has_arithmetic_right_shift() {
         T v1{std::numeric_limits<T>::min()};

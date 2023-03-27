@@ -105,6 +105,29 @@ namespace AVR {
     private:
         volatile value_type hwRegister;
     };
+
+    template<typename Component, typename ValueType, AVR::Concepts::At012DxSeries MCU>
+    struct FlagRegister<Component, std::byte, WriteOnly, ValueType, MCU> final {
+        typedef Component component_type;
+        typedef ValueType value_type;    
+        
+        FlagRegister() = delete;
+        FlagRegister(const FlagRegister&) = delete;
+        FlagRegister(FlagRegister&&) = delete;
+        FlagRegister& operator=(const FlagRegister&) = delete;
+        FlagRegister& operator=(FlagRegister&&) = delete;
+
+        template<uint8_t N>        
+        void inline reset() {
+            hwRegister = (0x01 << N); // clears the bit by writing "1"
+        }
+        template<uint8_t N>        
+        void inline set() {
+            hwRegister = (0x01 << N); // sets the bit by writing "1"
+        }
+    private:
+        volatile value_type hwRegister;
+    };
     
     template<typename Component, typename BitType, typename ValueType, typename MCU>
     struct FlagRegister<Component, BitType, ReadOnly, ValueType, MCU> final {

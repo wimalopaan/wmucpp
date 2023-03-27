@@ -8,7 +8,7 @@
 namespace External {
     namespace SoftSerial {
         
-        template<typename Pins, typename Timer, AVR::Concepts::ProtocolAdapter PA = External::Hal::NullProtocollAdapter,
+        template<typename Pins, typename Timer, AVR::Concepts::ProtocolAdapter PA = External::Hal::NullProtocollAdapter<>,
                  etl::Concepts::NamedConstant Baud = AVR::BaudRate<9600>,
                  etl::Concepts::NamedConstant RecvQLength = AVR::ReceiveQueueLength<64>, 
                  etl::Concepts::NamedConstant SendQLength = AVR::SendQueueLength<64>, 
@@ -337,13 +337,13 @@ namespace External {
             static inline constexpr auto sendQLength = SendQLength::value;
             
             static inline constexpr auto flags = AVR::getBaseAddr<gpior_t, 0>;
-            static inline constexpr uint8_t startMask = 0x01;
-            static inline constexpr uint8_t rxMask = 0x02;
-            static inline constexpr uint8_t recvMask = 0x04;
-            static inline constexpr uint8_t sendMask = 0x08;
+            static inline constexpr std::byte startMask{0x01};
+            static inline constexpr std::byte rxMask{0x02};
+            static inline constexpr std::byte recvMask{0x04};
+            static inline constexpr std::byte sendMask{0x08};
             
             static inline bool isStartBit() {
-                return (flags()->data & startMask);
+                return etl::any(flags()->data & startMask);
             }
             static inline void clearStartBit() {
                 flags()->data = flags()->data & ~startMask;
@@ -352,7 +352,7 @@ namespace External {
                 flags()->data = flags()->data | startMask;
             }
             static inline bool isRxEn() {
-                return (flags()->data & rxMask);
+                return etl::any(flags()->data & rxMask);
             }
             static inline void clearRxEn() {
                 flags()->data = flags()->data & ~rxMask;
@@ -361,7 +361,7 @@ namespace External {
                 flags()->data = flags()->data | rxMask;
             }
             static inline bool isReceiving() {
-                return (flags()->data & recvMask);
+                return etl::any(flags()->data & recvMask);
             }
             static inline void clearReceiving() {
                 flags()->data = flags()->data & ~recvMask;
@@ -370,7 +370,7 @@ namespace External {
                 flags()->data = flags()->data | recvMask;
             }
             static inline bool isSending() {
-                return (flags()->data & sendMask);
+                return etl::any(flags()->data & sendMask);
             }
             static inline void clearSending() {
                 flags()->data = flags()->data & ~sendMask;
@@ -380,7 +380,7 @@ namespace External {
             }
             
             static inline void clearBits() {
-                flags()->data = 0x00;
+                flags()->data = std::byte{0x00};
             }
             
             static inline constexpr uint16_t period = Project::Config::fMcu.value / Baud::value - 1;
@@ -432,7 +432,7 @@ namespace External {
                                     }
                                     else {
                                         static_assert(RecvQLength::value == 0);
-                                        if constexpr(!std::is_same_v<PA, External::Hal::NullProtocollAdapter>) {
+                                        if constexpr(!std::is_same_v<PA, External::Hal::NullProtocollAdapter<>>) {
                                             if (!PA::process(std::byte{data})) {
                                                 assert("input not handled by protocoll adapter");
                                             }

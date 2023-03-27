@@ -8,6 +8,27 @@ namespace AVR {
         template<typename NumberType, typename MMCU = DefaultMcuType>
         struct ChannelPinMapper;
 
+        template<auto V, AVR::Concepts::AtDb64 MMCU>
+        requires(V < 8)
+        struct ChannelPinMapper<std::integral_constant<decltype(V), V>, MMCU> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::D>, V>;  
+        };
+        template<auto V, AVR::Concepts::AtDb64 MMCU>
+        requires((V >= 8) && (V < 16))
+        struct ChannelPinMapper<std::integral_constant<decltype(V), V>, MMCU> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::E>, V - 8>;  
+        };
+        template<auto V, AVR::Concepts::AtDb64 MMCU>
+        requires((V >= 16) && (V <= 21))
+        struct ChannelPinMapper<std::integral_constant<decltype(V), V>, MMCU> {
+            using pin_type = AVR::Pin<AVR::Port<AVR::F>, V - 16>;  
+        };
+        template<AVR::Concepts::AtDb64 MMCU>
+        struct ChannelPinMapper<std::integral_constant<decltype(0x42), 0x42>, MMCU> {
+            using pin_type = void;
+        };
+        
+        
         template<auto V, AVR::Concepts::AtDa32 MMCU>
         requires(V < 8)
         struct ChannelPinMapper<std::integral_constant<decltype(V), V>, MMCU> {
@@ -214,6 +235,14 @@ namespace AVR {
         template<typename CompPos, typename MCU = DefaultMcuType>
         struct Map;
 
+        template<AVR::Concepts::AtDb64 MCU>
+        struct Map<Position<AVR::Component::Spi<0>, Default>, MCU> {
+            using sspin = AVR::Pin<AVR::Port<AVR::A>, 7>; 
+            using mosipin = AVR::Pin<AVR::Port<AVR::A>, 4>; 
+            using misopin = AVR::Pin<AVR::Port<AVR::A>, 5>; 
+            using sckpin = AVR::Pin<AVR::Port<AVR::A>, 6>; 
+        };
+        
         template<AVR::Concepts::AtDa32 MCU>
         struct Map<Position<AVR::Component::Spi<0>, Default>, MCU> {
             using sspin = AVR::Pin<AVR::Port<AVR::A>, 7>; 
@@ -378,6 +407,67 @@ namespace AVR {
         };
         
         
+        
+        template<AVR::Concepts::AtDb64 MCU>
+        struct Map<Position<AVR::Component::Usart<0>, Default>, MCU> {
+            using txpin = AVR::Pin<AVR::Port<AVR::A>, 0>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::A>, 1>; 
+        };
+        template<AVR::Concepts::AtDb64 MCU>
+        struct Map<Position<AVR::Component::Usart<0>, Alt1>, MCU> {
+            using txpin = AVR::Pin<AVR::Port<AVR::A>, 4>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::A>, 5>; 
+        };
+        template<AVR::Concepts::AtDb64 MCU>
+        struct Map<Position<AVR::Component::Usart<1>, Default>, MCU> {
+            using txpin = AVR::Pin<AVR::Port<AVR::C>, 0>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::C>, 1>; 
+        };
+        template<AVR::Concepts::AtDb64 MCU>
+        struct Map<Position<AVR::Component::Usart<1>, Alt1>, MCU> {
+            using txpin = AVR::Pin<AVR::Port<AVR::C>, 4>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::C>, 5>; 
+        };
+        template<AVR::Concepts::AtDb64 MCU>
+        struct Map<Position<AVR::Component::Usart<2>, Default>, MCU> {
+            using txpin = AVR::Pin<AVR::Port<AVR::F>, 0>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::F>, 1>; 
+        };
+        template<AVR::Concepts::AtDb64 MCU>
+        struct Map<Position<AVR::Component::Usart<2>, Alt1>, MCU> {
+            using txpin = AVR::Pin<AVR::Port<AVR::F>, 4>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::F>, 5>; 
+        };
+        template<AVR::Concepts::AtDb64 MCU>
+        struct Map<Position<AVR::Component::Usart<3>, Default>, MCU> {
+            using txpin = AVR::Pin<AVR::Port<AVR::B>, 0>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::B>, 1>; 
+        };
+        template<AVR::Concepts::AtDb64 MCU>
+        struct Map<Position<AVR::Component::Usart<3>, Alt1>, MCU> {
+            using txpin = AVR::Pin<AVR::Port<AVR::B>, 4>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::B>, 5>; 
+        };
+        template<AVR::Concepts::AtDb64 MCU>
+        struct Map<Position<AVR::Component::Usart<4>, Default>, MCU> {
+            using txpin = AVR::Pin<AVR::Port<AVR::E>, 0>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::E>, 1>; 
+        };
+        template<AVR::Concepts::AtDb64 MCU>
+        struct Map<Position<AVR::Component::Usart<4>, Alt1>, MCU> {
+            using txpin = AVR::Pin<AVR::Port<AVR::E>, 4>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::E>, 5>; 
+        };
+        template<AVR::Concepts::AtDb64 MCU>
+        struct Map<Position<AVR::Component::Usart<5>, Default>, MCU> {
+            using txpin = AVR::Pin<AVR::Port<AVR::G>, 0>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::G>, 1>; 
+        };
+        template<AVR::Concepts::AtDb64 MCU>
+        struct Map<Position<AVR::Component::Usart<5>, Alt1>, MCU> {
+            using txpin = AVR::Pin<AVR::Port<AVR::G>, 4>; 
+            using rxpin = AVR::Pin<AVR::Port<AVR::G>, 5>; 
+        };
         
         
         template<AVR::Concepts::AtMega0 MCU>
@@ -666,8 +756,6 @@ namespace AVR {
         struct Map<Position<AVR::Component::Tcb<1>, Default>, AVR::ATTiny1624> {
             using wopin = AVR::Pin<AVR::Port<AVR::A>, 3>; 
         };
-        
-        
     }
     
     namespace Util::SoftUart {

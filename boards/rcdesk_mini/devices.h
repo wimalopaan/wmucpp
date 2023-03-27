@@ -184,7 +184,7 @@ struct Devices<1, MCU> {
 //    using robo_pa = External::RoboRemo::ProtocollAdapter<0, 16, atbuffer>;
     using robo = AVR::Usart<usart4Position, robo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<128>>;
     
-    using dbg = AVR::Usart<usart2Position, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<8>, AVR::SendQueueLength<128>>;    
+    using dbg = AVR::Usart<usart2Position, External::Hal::NullProtocollAdapter<>, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<8>, AVR::SendQueueLength<128>>;    
     using terminal = etl::basic_ostream<dbg>;
     
     using led1 = AVR::ActiveHigh<AVR::Pin<AVR::Port<AVR::A>, 4>, AVR::Output>; 
@@ -272,7 +272,7 @@ struct Devices<2, MCU> {
     using robo = AVR::Usart<usart4Position, robo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<128>>;
     using robo_out = etl::basic_ostream<robo>;
     
-    using dbg = AVR::Usart<usart2Position, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<8>, AVR::SendQueueLength<128>>;    
+    using dbg = AVR::Usart<usart2Position, External::Hal::NullProtocollAdapter<>, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<8>, AVR::SendQueueLength<128>>;    
     using terminal = etl::basic_ostream<dbg>;
     
     using led1 = AVR::ActiveHigh<AVR::Pin<AVR::Port<AVR::A>, 4>, AVR::Output>; 

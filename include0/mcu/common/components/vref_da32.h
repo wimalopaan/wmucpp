@@ -48,4 +48,30 @@ namespace AVR {
             
         };
     }
+    namespace SeriesDb {
+        struct Vref {
+            enum class VRef_t : uint8_t { 
+                V1024  = 0x00,
+                V2048  = 0x01,
+                V4096  = 0x02,
+                V2500  = 0x03,
+                Vdd    = 0x05,
+                Vext   = 0x06,
+                on     = 0x80
+            };
+            
+            ControlRegister<Vref, VRef_t> adc0ref;
+
+            volatile const std::byte reserved1;
+            
+            ControlRegister<Vref, VRef_t> dac0ref;
+
+            volatile const std::byte reserved2;
+            
+            ControlRegister<Vref, VRef_t> acref;
+
+            static inline constexpr uintptr_t address = 0x00b0;
+            
+        };
+    }
 }

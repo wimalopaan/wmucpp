@@ -142,7 +142,11 @@ namespace AVR {
                 mState = State::TransferWriteAdr;
                 return true;
             }        
-                       
+            
+            inline static bool isIdle() {
+                return mState == State::Idle;
+            }
+            
             inline static void periodic() {
                 const auto oldState = mState;
                 switch(mState) {
@@ -246,7 +250,7 @@ namespace AVR {
                     }
                 }
             }
-//        private:
+        private:
             inline static BusAddress mBA;
             inline static etl::FiFo<std::byte, Size> mData;
             inline static std::byte lastReadData{};

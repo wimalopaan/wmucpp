@@ -33,7 +33,7 @@ namespace External {
 
                 static constexpr uint8_t bufferLength = 10;
                 
-                using usart = AVR::Usart<CN, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<2>, AVR::SendQueueLength<bufferLength>>;
+                using usart = AVR::Usart<CN, External::Hal::NullProtocollAdapter<>, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<2>, AVR::SendQueueLength<bufferLength>>;
                 
                 inline static void init() {
                     usart::template init<AVR::BaudRate<9600>>();

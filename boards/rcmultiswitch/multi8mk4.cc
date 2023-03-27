@@ -230,7 +230,7 @@ struct FSM {
     inline static Storage::tick_type stateTicks;
 };
 
-using terminalDevice = AVR::Usart<usart0Position, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>>;
+using terminalDevice = AVR::Usart<usart0Position, External::Hal::NullProtocollAdapter<>, AVR::UseInterrupts<false>>;
 using terminal = etl::basic_ostream<terminalDevice>;
 
 using mk4 = External::Graupner::MultiSwitch2N<ppm, 4>;

@@ -84,7 +84,7 @@ namespace AVR {
             sckpin::template dir<Output>();
             
             mcu_spi()->ctrlb.template set<ctrlb1_t::ssd | ctrlb1_t::bufen>();
-            mcu_spi()->ctrla.template add<ctrla1_t::enable | ctrla1_t::master>();
+            mcu_spi()->ctrla.template add<ctrla1_t::enable | ctrla1_t::master, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
         }
         
         inline static bool put(std::byte b) {

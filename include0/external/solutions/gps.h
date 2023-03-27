@@ -198,7 +198,7 @@ namespace External::GPS {
                 }
                 else {
                     if (index < std::size(sentenceType)) {
-                        sentenceType[index++] = etl::Char{b};
+                        sentenceType[index++] = etl::Char(b);
                     }
                 }
                 break;

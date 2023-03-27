@@ -35,6 +35,13 @@ namespace External {
         constexpr cRGB(Green v) : g(v.value) {}
         constexpr cRGB(Blue v) : b(v.value) {}
         constexpr cRGB& operator=(const cRGB& o) = default;
+        constexpr cRGB& operator/=(const uint8_t v) {
+            r /= v;
+            g /= v;
+            b /= v;
+            return *this;
+        }
+
         constexpr cRGB& operator+=(const cRGB& c) {
             if (r > 0) {
                 r = (r + c.r) / 2;
@@ -73,6 +80,9 @@ namespace External {
     //constexpr cRGB<ColorSequenceRGB> operator*(cRGB<ColorSequenceRGB> c, const std::percent& p) {
     //    return c *= p;
     //}
+    constexpr cRGB<ColorSequenceRGB> operator/(cRGB<ColorSequenceRGB> c, const uint8_t p) {
+        return c /= p;
+    }
     
     template<>
     struct cRGB<ColorSequenceGRB> {

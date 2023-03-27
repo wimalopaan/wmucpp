@@ -123,7 +123,7 @@ using rstAct = ActiveHigh<rstPin, Output>;
 using rstSig = SinglePulse<rstAct>;
 
 using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Default>; 
-using tdev = Usart<usart0Position, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<16>, AVR::SendQueueLength<256>>;
+using tdev = Usart<usart0Position, External::Hal::NullProtocollAdapter<>, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<16>, AVR::SendQueueLength<256>>;
 using terminal = etl::basic_ostream<tdev>;
 
 using tca0Position = AVR::Portmux::Position<AVR::Component::Tca<0>, Portmux::Default>;

@@ -30,6 +30,18 @@ MCU = avr128da48
 
 bm01.s: MCU = atmega328p
 
+bm60.s: MCU = atmega328p
+bm60.elf: MCU = atmega328p
+
+bm65.s: MCU = atmega328p
+bm65.elf: MCU = atmega328p
+
+bm66.s: MCU = atmega328p
+bm66.elf: MCU = atmega328p
+
+bm61.s: MCU = atmega328p
+bm61.elf: MCU = atmega328p
+
 CXXFLAGS += -pedantic
 CFLAGS += -pedantic
 
@@ -57,6 +69,8 @@ targets += bm60.S bm60.elf
 targets += bm61.S bm61.elf
 targets += bm62.S bm62.elf
 targets += bm63.S bm63.elf
+targets += bm65.S bm65.elf
+targets += bm66.S bm66.elf
 targets += bm70.S bm70.elf
 targets += bm80.S bm80.elf
 targets += bm90.S bm90.elf

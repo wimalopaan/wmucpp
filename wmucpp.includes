@@ -86,3 +86,4 @@ boards/rcswitch
 boards/dds2
 gcc/base/lib/gcc/avr/13.0.0/device-specs
 gcc/base/lib/gcc/avr/12.0.1/device-specs
+boards/avr128db64_proto

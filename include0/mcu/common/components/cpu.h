@@ -40,6 +40,5 @@ namespace AVR {
             static inline constexpr uintptr_t address = 0x0030;
         };
        static_assert(sizeof(Cpu) == 16);
-
     }
 }

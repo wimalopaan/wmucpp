@@ -89,6 +89,9 @@ namespace External {
                 mState = State::Start;
             }
         }
+        inline static bool isIdle() {
+            return (mState == State::Complete);
+        }
         inline static void periodic() {
             Dev::periodic();
             
