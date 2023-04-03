@@ -1,12 +1,12 @@
 #define NDEBUG
- 
+
 #include "devices.h"
 
 template<typename Devices>
 struct GlobalFsm {
     using devs = Devices;
-
-    enum class State : uint8_t {Undefined, Init, On, BT_SetName};
+    
+    enum class State : uint8_t {Undefined, Init, On, On2, BT_SetName};
     
     static inline constexpr External::Tick<typename devs::systemTimer> powerTicks{1000_ms};
     static inline constexpr External::Tick<typename devs::systemTimer> debugTicks{500_ms};
@@ -36,17 +36,17 @@ struct GlobalFsm {
         
         devs::blinkLed1::init();
         devs::blinkLed2::init();
-
+        
         devs::blinkLed1::blink(blink1_t{4});
         devs::blinkLed2::blink(blink2_t{2});
-
+        
         devs::serial1::template init<AVR::BaudRate<9600>>();
         devs::serial2::template init<AVR::BaudRate<9600>>();
         
         devs::buzz::init();
         
         devs::ds3231::init();
-
+        
         devs::ledStripe::init();
         
         devs::hc05::init();
@@ -61,6 +61,11 @@ struct GlobalFsm {
         devs::sbus::template init<AVR::BaudRate<100000>, AVR::FullDuplex, true, 1>(); // 8E2 
         devs::sbus::rxInvert(true);
         devs::sbus::txPinDisable();
+        
+        devs::rotary::init(127);
+        devs::rotaryButton::init();
+        
+        devs::dac::init();
     } 
     static void periodic() {
         devs::la0::toggle();
@@ -70,22 +75,28 @@ struct GlobalFsm {
         devs::ledStripe::periodic();
         devs::hc05::periodic();
         devs::adcController::periodic();
-
+        
         devs::sbus::periodic();
         devs::sensor::periodic();
-    } 
+        
+    }
     static void ratePeriodic() {
-        devs::la1::toggle();        
-
+        devs::la1::toggle();
+        
         devs::blinkLed1::ratePeriodic();
         devs::blinkLed2::ratePeriodic();
-
+        
         devs::ds3231::ratePeriodic();
         
         devs::hc05::ratePeriodic();
-
+        
         devs::sbus_pa::ratePeriodic();
         devs::sensor::ratePeriodic();
+        
+        devs::rotary::rateProcess();
+        devs::rotaryButton::ratePeriodic();
+        
+        const uint16_t r = devs::rotary::value();
         
         const auto oldState{mState};
         ++mStateTicks;
@@ -107,9 +118,11 @@ struct GlobalFsm {
             });
             break;
         case State::On:
-            (++mDebugTicks).on(debugTicks, []{
-                etl::outl<terminal1>("serial1: "_pgm, "test3_10"_pgm);                
-                etl::outl<terminal2>("serial2: "_pgm, "sbus p: "_pgm, devs::sbus_pa::packages(), " v[0]: "_pgm, devs::sbus_pa::value(0).toInt(), " s.port p: "_pgm, devs::sensor::ProtocollAdapter::requests());                
+            devs::dac::put(r);
+            (++mDebugTicks).on(debugTicks, [&]{
+                etl::outl<terminal1>("serial1: "_pgm, "test3_11"_pgm);                
+                etl::outl<terminal2>("serial2: "_pgm, "sbus p: "_pgm, devs::sbus_pa::packages(), " v[0]: "_pgm, devs::sbus_pa::value(0).toInt(), " s.port p: "_pgm, devs::sensor::ProtocollAdapter::requests());
+                etl::outl<terminal2>("serial2: "_pgm, "rot: "_pgm, r);                
             });
             (++mLedTicks).on(outTicks, []{
                 ++color;
@@ -130,7 +143,15 @@ struct GlobalFsm {
                 devs::ledStripe::set(index_t{7}, colors[color]);
                 devs::ledStripe::out();
             });
+            if (const auto e = devs::rotaryButton::event(); e == devs::rotaryButton::Press::Short) {
+                mState = State::On2;
+            }
             break;
+        case State::On2:
+            break;
+            if (const auto e = devs::rotaryButton::event(); e == devs::rotaryButton::Press::Short) {
+                mState = State::On;
+            }
         }
         if (oldState != mState) {
             mStateTicks.reset();
@@ -145,6 +166,9 @@ struct GlobalFsm {
                 break;
             case State::BT_SetName:
                 devs::hc05::event(devs::hc05::Event::SetName);
+                break;
+            case State::On2:
+                devs::blinkLed1::off();
                 break;
             }
         }

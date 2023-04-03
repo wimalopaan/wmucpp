@@ -46,7 +46,7 @@ namespace AVR {
         }
     };
 
-    template<uint8_t N, AVR::Concepts::AtDxSeries MCU>
+    template<uint8_t N, AVR::Concepts::AtDxSeriesAll MCU>
     struct DAC<N, MCU> {
         using ca_t = typename MCU::Dac::CtrlA_t;
         using ref_t = typename MCU::Vref::VRef_t;

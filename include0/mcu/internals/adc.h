@@ -112,7 +112,7 @@ namespace AVR {
     
     template<AVR::Concepts::ComponentNumber CN, typename Reso, typename VRefType, 
 //             AVR::Concepts::AtDa32 MCU>
-             AVR::Concepts::AtDxSeries MCU>
+             AVR::Concepts::AtDxSeriesAll MCU>
     requires ((CN::value == 0) && (Vref::detail::isVref<VRefType>::value))
     class Adc<CN, Reso, VRefType, MCU> final {
         //        VRefType::_;

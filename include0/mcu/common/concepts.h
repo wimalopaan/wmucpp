@@ -19,9 +19,14 @@ namespace AVR {
         template<typename MCU> struct isAtDa : std::false_type {};
         template<typename MCU> struct isAtDa32 : std::false_type {};
         template<typename MCU> struct isAtDa48 : std::false_type {};
+        template<typename MCU> struct isAtDa64 : std::false_type {};
 
         template<typename MCU> struct isAtDb : std::false_type {};
+        
+        template<typename MCU> struct isAtDx64 : std::false_type {};
         template<typename MCU> struct isAtDb32 : std::false_type {};
+        template<typename MCU> struct isAtDb48 : std::false_type {};
+        template<typename MCU> struct isAtDb64 : std::false_type {};
         
         template<> struct isAtMega_8<ATMega8> : std::true_type {};
 
@@ -42,10 +47,15 @@ namespace AVR {
         
         template<> struct isAtDa32<Avr128da32> : std::true_type {};
         template<> struct isAtDa48<Avr128da48> : std::true_type {};
+        template<> struct isAtDa64<Avr128da64> : std::true_type {};
         template<> struct isAtDa<Avr128da32> : std::true_type {};
         template<> struct isAtDa<Avr128da48> : std::true_type {};
 
         template<> struct isAtDb<Avr128db64> : std::true_type {};
+        template<> struct isAtDb64<Avr128db64> : std::true_type {};
+        
+        template<> struct isAtDx64<Avr128db64> : std::true_type {};
+        template<> struct isAtDx64<Avr128da64> : std::true_type {};
         
         template<typename... PP> struct isAtMega : std::disjunction<isAtMega_8<PP>..., isAtMega_X4<PP>..., isAtMega_X8<PP>...> {};
         template<typename... PP> struct isAtMega_X : std::disjunction<isAtMega_X4<PP>..., isAtMega_X8<PP>...> {};
@@ -64,7 +74,7 @@ namespace AVR {
         concept AtDa48 = AVR::Groups::isAtDa48<MCU>::value;
 
         template<typename MCU>
-        concept AtDb64 = AVR::Groups::isAtDb<MCU>::value;
+        concept AtDb64 = AVR::Groups::isAtDb64<MCU>::value;
         
         template<typename MCU>
         concept AtDaSeries = (AVR::Groups::isAtDa32<MCU>::value || AVR::Groups::isAtDa48<MCU>::value);
@@ -73,7 +83,25 @@ namespace AVR {
         concept AtDbSeries = (AVR::Groups::isAtDb<MCU>::value);
         
         template<typename MCU>
-        concept AtDxSeries = (AVR::Groups::isAtDa<MCU>::value || AVR::Groups::isAtDb<MCU>::value);
+        concept AtDx64Series = (AVR::Groups::isAtDx64<MCU>::value);
+        
+        template<typename MCU>
+        concept AtDxSeries = (AVR::Groups::isAtDa32<MCU>::value || AVR::Groups::isAtDb32<MCU>::value
+                              || AVR::Groups::isAtDa48<MCU>::value || AVR::Groups::isAtDb48<MCU>::value);
+        
+        template<typename MCU>
+        concept AtDxSeriesAll = (AVR::Groups::isAtDa32<MCU>::value || AVR::Groups::isAtDb32<MCU>::value
+                              || AVR::Groups::isAtDa48<MCU>::value || AVR::Groups::isAtDb48<MCU>::value
+                                 || AVR::Groups::isAtDa64<MCU>::value || AVR::Groups::isAtDb64<MCU>::value);
+        
+        template<typename MCU>
+        concept AtDxSmall = (AVR::Groups::isAtDa32<MCU>::value || AVR::Groups::isAtDb32<MCU>::value);
+        
+        template<typename MCU>
+        concept AtDxMedium = (AVR::Groups::isAtDa48<MCU>::value || AVR::Groups::isAtDb48<MCU>::value);
+        
+        template<typename MCU>
+        concept AtDxLarge = (AVR::Groups::isAtDa64<MCU>::value || AVR::Groups::isAtDb64<MCU>::value);
         
         template<typename MCU>
         concept AtMega0 = AVR::Groups::isAtMega0<MCU>::value;
@@ -94,7 +122,7 @@ namespace AVR {
         concept At01DxSeries = At01Series<MCU> || AtDxSeries<MCU>;
 
         template<typename MCU>
-        concept At012DxSeries = At012Series<MCU> || AtDxSeries<MCU>;
+        concept At012DxSeries = At012Series<MCU> || AtDxSeries<MCU> || AtDx64Series<MCU>;
         
         template<typename MCU>
         concept AtMega  = AVR::Groups::isAtMega<MCU>::value;

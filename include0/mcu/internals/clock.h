@@ -27,7 +27,7 @@ namespace AVR {
     template<typename MCU = DefaultMcuType>
     struct Clock;
     
-    template<AVR::Concepts::AtDxSeries MCU>
+    template<AVR::Concepts::AtDxSeriesAll MCU>
     struct Clock<MCU> {
         using ca_t = typename MCU::Clock::OscHFCtrlA_t;
         using cb_t = typename MCU::Clock::MClkCtrlB_t;

@@ -29,5 +29,7 @@ targets += test2_08.hex test2_08.S
 # AVR128ProtoBoard_3
 targets += test3_09.hex test3_09.S
 targets += test3_10.hex test3_10.S
+targets += test3_11.hex test3_11.S
+targets += test3_12.hex test3_12.S
 
 -include ../../Makefile.avr0.include

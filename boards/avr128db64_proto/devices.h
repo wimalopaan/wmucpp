@@ -14,6 +14,7 @@
 #include <mcu/internals/dac.h>
 #include <mcu/internals/adc.h>
 #include <mcu/internals/eeprom.h>
+#include <mcu/internals/pwm.h>
 
 #include <external/solutions/rotaryencoder.h>
 #include <external/solutions/button.h>
@@ -135,10 +136,6 @@ struct Devices<2, MCU> {
     using rotaryButtonPin = AVR::ActiveLow<AVR::Pin<AVR::Port<AVR::G>, 6>, AVR::Input>; 
     using rotaryButton = External::Button2<rotaryButtonPin, systemTimer, External::Tick<systemTimer>(50_ms), External::Tick<systemTimer>(3000_ms)>;
     
-    using portmux = AVR::Portmux::StaticMapper<Meta::List<usart0Position, usart1Position, usart2Position, usart3Position, usart4Position, 
-                                                          spi0Position, spi1Position, 
-                                                          twi0Position, twi1Position, ccl4Position>>;
-
     using powerOn = AVR::ActiveHigh<AVR::Pin<AVR::Port<AVR::G>, 2>, AVR::Output>; 
     using powerSwitch = AVR::ActiveLow<AVR::Pin<AVR::Port<AVR::G>, 7>, AVR::Input>; 
     
@@ -151,11 +148,28 @@ struct Devices<2, MCU> {
     using adcController = External::Hal::AdcController<adc, Meta::NList<4, 5, 0x42>>; // PD4=A_I, PD5 = A_Vin, 0x42 = temp
     using adc_i_t = adcController::index_type;
     
+    // pwmA1 = PA3 = TCA0-WO3 (def) = LUT0
+    // pwmA2 = PD0 = TCA0-WO0 (alt) 
+    // pwmB1 = PG0 = TCA1-WO0 (alt)
+    // pwmB2 = PG3 = TCA1-WO3 (alt) = LUT5
+    
+    using tca0Position = AVR::Portmux::Position<AVR::Component::Tca<0>, AVR::Portmux::AltD>;    
+    using pwm1 = AVR::PWM::DynamicPwm<tca0Position>;
+    
+    using tca1Position = AVR::Portmux::Position<AVR::Component::Tca<1>, AVR::Portmux::AltG>;    
+    using pwm2 = AVR::PWM::DynamicPwm<tca1Position>;
+    
+    using portmux = AVR::Portmux::StaticMapper<Meta::List<usart0Position, usart1Position, usart2Position, usart3Position, usart4Position, 
+                                                          spi0Position, spi1Position, 
+                                                          twi0Position, twi1Position,
+                                                          ccl2Position, ccl4Position,
+                                                          tca0Position>>;
+    
     static inline void init() {
         portmux::init();
         
         ccp::unlock([]{
-            if constexpr(AVR::Concepts::AtDxSeries<MCU>) {
+            if constexpr(AVR::Concepts::AtDxSeriesAll<MCU>) {
                 clock::template init<Project::Config::fMcuMhz>();
             }
             else {
@@ -249,7 +263,7 @@ struct Devices<1, MCU> {
         portmux::init();
         
         ccp::unlock([]{
-            if constexpr(AVR::Concepts::AtDxSeries<MCU>) {
+            if constexpr(AVR::Concepts::AtDxSeriesAll<MCU>) {
                 clock::template init<Project::Config::fMcuMhz>();
             }
             else {
@@ -338,7 +352,7 @@ struct Devices<0, MCU> {
         portmux::init();
         
         ccp::unlock([]{
-            if constexpr(AVR::Concepts::AtDxSeries<MCU>) {
+            if constexpr(AVR::Concepts::AtDxSeriesAll<MCU>) {
                 clock::template init<Project::Config::fMcuMhz>();
             }
             else {

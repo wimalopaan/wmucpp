@@ -55,8 +55,11 @@ namespace AVR {
     // DA-Series
     struct Avr128da32;
     struct Avr128da48;
+    struct Avr128da64;
     
     // DB-Series
+    struct Avr128db32;
+    struct Avr128db48;
     struct Avr128db64;
     
     namespace Series0 {
@@ -101,6 +104,8 @@ typedef AVR::ATTiny1624 DefaultMcuType;
 typedef AVR::Avr128da32 DefaultMcuType;
 #elif defined(__AVR_AVR128DA48__)
 typedef AVR::Avr128da48 DefaultMcuType;
+#elif defined(__AVR_AVR128DA64__)
+typedef AVR::Avr128da64 DefaultMcuType;
 #elif defined(__AVR_AVR128DB64__)
 typedef AVR::Avr128db64 DefaultMcuType;
 #else
