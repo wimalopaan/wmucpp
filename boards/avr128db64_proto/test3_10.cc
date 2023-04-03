@@ -1,5 +1,5 @@
 #define NDEBUG
-
+ 
 #include "devices.h"
 
 template<typename Devices>

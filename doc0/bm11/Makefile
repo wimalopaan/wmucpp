@@ -30,6 +30,9 @@ MCU = avr128da48
 
 bm01.s: MCU = atmega328p
 
+bm42.s: MCU = atmega8
+bm42.elf: MCU = atmega8
+
 bm60.s: MCU = atmega328p
 bm60.elf: MCU = atmega328p
 
@@ -58,9 +61,9 @@ targets += bm01.S
 #targets += bm10.S bm10.elf bm10.hex
 #targets += bm20.S bm20.elf bm20.hex
 #targets += bm30.S bm30.elf bm30.hex
-#targets += bm40.S
+targets += bm40.S
 targets += bm41.S
-targets += bm42.S
+targets += bm42.S bm42.elf
 targets += bm50.S bm50.elf
 targets += bm51.S bm51.elf
 targets += bm52.S bm52.elf
