@@ -71,15 +71,19 @@ struct GlobalFsm {
         devs::pwm1::frequency(60000);
         devs::pwm1::template on<Meta::List<AVR::PWM::WO<0>>>();
         devs::pwm1::template duty<Meta::List<AVR::PWM::WO<0>>>(30000);
-        devs::lut0::init(std::byte{0x55}); // route TXD (inverted) to lut2-out
+        devs::lut0::init(std::byte{0x55}); 
         devs::lut0::enable();
+        devs::lutPin1::template dir<AVR::Output>();
+        devs::lutPin1::on();
         
         devs::pwm2::template init<Meta::List<AVR::PWM::WO<0>>>();
         devs::pwm2::frequency(60000);
         devs::pwm2::template on<Meta::List<AVR::PWM::WO<0>>>();
         devs::pwm2::template duty<Meta::List<AVR::PWM::WO<0>>>(10000);
-        devs::lut5::init(std::byte{0x55}); // route TXD (inverted) to lut2-out
+        devs::lut5::init(std::byte{0x55}); 
         devs::lut5::enable();
+        devs::lutPin2::template dir<AVR::Output>();
+        devs::lutPin2::on();
         
     } 
     static void periodic() {

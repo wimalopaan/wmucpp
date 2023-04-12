@@ -183,6 +183,32 @@ namespace AVR {
                     using pin_type = AVR::Pin<AVR::Port<AVR::F>, 3>;
                 };
                 
+                // alternative Positions missing
+                template<AVR::Concepts::AtDxSeriesAll MCU>
+                struct map_output<0, MCU> {
+                    using pin_type = AVR::Pin<AVR::Port<AVR::A>, 3>;
+                };
+                template<AVR::Concepts::AtDxSeriesAll MCU>
+                struct map_output<1, MCU> {
+                    using pin_type = AVR::Pin<AVR::Port<AVR::C>, 3>;
+                };
+                template<AVR::Concepts::AtDxSeriesAll MCU>
+                struct map_output<2, MCU> {
+                    using pin_type = AVR::Pin<AVR::Port<AVR::D>, 3>;
+                };
+                template<AVR::Concepts::AtDxSeriesAll MCU>
+                struct map_output<3, MCU> {
+                    using pin_type = AVR::Pin<AVR::Port<AVR::F>, 3>;
+                };
+                template<AVR::Concepts::AtDxSeriesAll MCU>
+                struct map_output<4, MCU> {
+                    using pin_type = AVR::Pin<AVR::Port<AVR::B>, 3>;
+                };
+                template<AVR::Concepts::AtDxSeriesAll MCU>
+                struct map_output<5, MCU> {
+                    using pin_type = AVR::Pin<AVR::Port<AVR::G>, 3>;
+                };
+                
             }
             
         }

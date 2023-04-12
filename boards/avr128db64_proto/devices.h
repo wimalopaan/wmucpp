@@ -158,11 +158,13 @@ struct Devices<4, MCU> {
     using pwm1 = AVR::PWM::DynamicPwm<tca0Position>;
     using ccl0Position = AVR::Portmux::Position<AVR::Component::Ccl<0>, AVR::Portmux::Default>;
     using lut0 = AVR::Ccl::SimpleLut<0, AVR::Ccl::Input::Tca0<0>, AVR::Ccl::Input::Mask, AVR::Ccl::Input::Mask >;
+    using lutPin1= AVR::Ccl::LutOutPin<lut0>;
     
     using tca1Position = AVR::Portmux::Position<AVR::Component::Tca<1>, AVR::Portmux::AltG>;    
     using pwm2 = AVR::PWM::DynamicPwm<tca1Position>;
     using ccl5Position = AVR::Portmux::Position<AVR::Component::Ccl<5>, AVR::Portmux::Default>;
-    using lut5 = AVR::Ccl::SimpleLut<5, AVR::Ccl::Input::Tca1<0>, AVR::Ccl::Input::Mask, AVR::Ccl::Input::Mask >;   
+    using lut5 = AVR::Ccl::SimpleLut<5, AVR::Ccl::Input::Tca1<0>, AVR::Ccl::Input::Mask, AVR::Ccl::Input::Mask >;
+    using lutPin2 = AVR::Ccl::LutOutPin<lut5>;
     
     using portmux = AVR::Portmux::StaticMapper<Meta::List<usart0Position, usart1Position, usart2Position, usart3Position, usart4Position, 
                                                           spi0Position, spi1Position, 
@@ -290,12 +292,14 @@ struct Devices<2, MCU> {
     using tca0Position = AVR::Portmux::Position<AVR::Component::Tca<0>, AVR::Portmux::AltD>;    
     using pwm1 = AVR::PWM::DynamicPwm<tca0Position>;
     using ccl0Position = AVR::Portmux::Position<AVR::Component::Ccl<0>, AVR::Portmux::Default>;
-    using lut0 = AVR::Ccl::SimpleLut<0, AVR::Ccl::Input::Tca0<0>, AVR::Ccl::Input::Mask, AVR::Ccl::Input::Mask >;   
+    using lut0 = AVR::Ccl::SimpleLut<0, AVR::Ccl::Input::Tca0<0>, AVR::Ccl::Input::Mask, AVR::Ccl::Input::Mask >;
+    using lutPin1 = AVR::Ccl::LutOutPin<lut0>;
     
     using tca1Position = AVR::Portmux::Position<AVR::Component::Tca<1>, AVR::Portmux::AltG>;    
     using pwm2 = AVR::PWM::DynamicPwm<tca1Position>;
     using ccl5Position = AVR::Portmux::Position<AVR::Component::Ccl<5>, AVR::Portmux::Default>;
-    using lut5 = AVR::Ccl::SimpleLut<5, AVR::Ccl::Input::Tca1<0>, AVR::Ccl::Input::Mask, AVR::Ccl::Input::Mask >;   
+    using lut5 = AVR::Ccl::SimpleLut<5, AVR::Ccl::Input::Tca1<0>, AVR::Ccl::Input::Mask, AVR::Ccl::Input::Mask >;
+    using lutPin2 = AVR::Ccl::LutOutPin<lut5>;
     
     using portmux = AVR::Portmux::StaticMapper<Meta::List<usart0Position, usart1Position, usart2Position, usart3Position, usart4Position, 
                                                           spi0Position, spi1Position, 
