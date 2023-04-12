@@ -25,12 +25,18 @@ namespace AVR {
     namespace Series0 {
         struct Portmux {
             enum class EvRoute_t : uint8_t {
-                A_alt1 = PORTMUX_EVOUT0_bm,
-                B_alt1 = PORTMUX_EVOUT1_bm,
-                C_alt1 = PORTMUX_EVOUT2_bm,
-                D_alt1 = PORTMUX_EVOUT3_bm,
-                E_alt1 = PORTMUX_EVOUT4_bm,
-                F_alt1 = PORTMUX_EVOUT5_bm,
+//                A_alt1 = PORTMUX_EVOUT0_bm,
+//                B_alt1 = PORTMUX_EVOUT1_bm,
+//                C_alt1 = PORTMUX_EVOUT2_bm,
+//                D_alt1 = PORTMUX_EVOUT3_bm,
+//                E_alt1 = PORTMUX_EVOUT4_bm,
+//                F_alt1 = PORTMUX_EVOUT5_bm,
+                A_alt1 = PORTMUX_EVOUTA_bm,
+                B_alt1 = PORTMUX_EVOUTB_bm,
+                C_alt1 = PORTMUX_EVOUTC_bm,
+                D_alt1 = PORTMUX_EVOUTD_bm,
+                E_alt1 = PORTMUX_EVOUTE_bm,
+                F_alt1 = PORTMUX_EVOUTF_bm,
             };
             ControlRegister<Portmux, EvRoute_t> evsysroutea;
 

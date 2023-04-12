@@ -691,6 +691,42 @@ namespace AVR {
             using wo5pin = AVR::Pin<AVR::Port<AVR::G>, 5>; 
         };
         
+        template<AVR::Concepts::AtDxLarge MCU>
+        struct Map<Position<AVR::Component::Tca<1>, AltB>, MCU> {
+            using wo0pin = AVR::Pin<AVR::Port<AVR::B>, 0>; 
+            using wo1pin = AVR::Pin<AVR::Port<AVR::B>, 1>; 
+            using wo2pin = AVR::Pin<AVR::Port<AVR::B>, 2>; 
+            using wo3pin = AVR::Pin<AVR::Port<AVR::B>, 3>; 
+            using wo4pin = AVR::Pin<AVR::Port<AVR::B>, 4>; 
+            using wo5pin = AVR::Pin<AVR::Port<AVR::B>, 5>; 
+        };
+        template<AVR::Concepts::AtDxLarge MCU>
+        struct Map<Position<AVR::Component::Tca<1>, AltC>, MCU> {
+            using wo0pin = AVR::Pin<AVR::Port<AVR::C>, 0>; 
+            using wo1pin = AVR::Pin<AVR::Port<AVR::C>, 1>; 
+            using wo2pin = AVR::Pin<AVR::Port<AVR::C>, 2>; 
+            using wo3pin = AVR::Pin<AVR::Port<AVR::C>, 3>; 
+            using wo4pin = AVR::Pin<AVR::Port<AVR::C>, 4>; 
+            using wo5pin = AVR::Pin<AVR::Port<AVR::C>, 5>; 
+        };
+        template<AVR::Concepts::AtDxLarge MCU>
+        struct Map<Position<AVR::Component::Tca<1>, AltE>, MCU> {
+            using wo0pin = AVR::Pin<AVR::Port<AVR::E>, 0>; 
+            using wo1pin = AVR::Pin<AVR::Port<AVR::E>, 1>; 
+            using wo2pin = AVR::Pin<AVR::Port<AVR::E>, 2>; 
+            using wo3pin = AVR::Pin<AVR::Port<AVR::E>, 3>; 
+            using wo4pin = AVR::Pin<AVR::Port<AVR::E>, 4>; 
+            using wo5pin = AVR::Pin<AVR::Port<AVR::E>, 5>; 
+        };
+        template<AVR::Concepts::AtDxLarge MCU>
+        struct Map<Position<AVR::Component::Tca<1>, AltG>, MCU> {
+            using wo0pin = AVR::Pin<AVR::Port<AVR::G>, 0>; 
+            using wo1pin = AVR::Pin<AVR::Port<AVR::G>, 1>; 
+            using wo2pin = AVR::Pin<AVR::Port<AVR::G>, 2>; 
+            using wo3pin = AVR::Pin<AVR::Port<AVR::G>, 3>; 
+            using wo4pin = AVR::Pin<AVR::Port<AVR::G>, 4>; 
+            using wo5pin = AVR::Pin<AVR::Port<AVR::G>, 5>; 
+        };
         
         
         template<AVR::Concepts::AtDa32 MCU>

@@ -93,7 +93,7 @@ namespace AVR {
                 onG = 0x06,
             };
             enum class Tca1Route_t : uint8_t {
-                onB = 0x01 << 3,
+                onB = 0x00 << 3,
                 onC = 0x01 << 3,
                 onE = 0x02 << 3,
                 onG = 0x03 << 3,

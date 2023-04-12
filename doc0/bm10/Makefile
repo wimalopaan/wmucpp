@@ -20,28 +20,31 @@
 F_OSC = 20000000
 
 #MCU = atmega328pb
-#MCU = atmega1284p
+MCU = atmega8
 #MCU = atmega4809
-MCU = attiny1604
+#MCU = attiny1604
 #MCU = atxmega32e5
 
 
 CPPFLAGS += -DNDEBUG
 #CXXFLAGS += -fsanitize=address
 
+
+
 #LDLIBS += -lasan
 
-OPTFLAGS = -Os
+OPTFLAGS = -O3
 
 targets += shtml
 
 targets += bm00.S bm00.elf
 targets += bm01.S bm01.elf
-#targets += bm02.S bm02.elf
-targets += bm03.S bm03.elf bm03.hex
+targets += bm02.S bm02.elf
+targets += bm30.S bm30.elf
+#targets += bm03.S bm03.elf bm03.hex
 targets += bm04.S bm04.elf bm04.hex
-targets += bm10.S bm10.elf
-targets += bm20a bm20a.S bm20b.S
+#targets += bm10.S bm10.elf
+#targets += bm20a bm20a.S bm20b.S
 
 bm20a: bm20a.o bm20b.o
  
@@ -51,5 +54,5 @@ bm20b.o: bm20b.c bm20.h
 
 -include ../../Makefile.avr0.include
 
-#CXX = /usr/local/bin/avr-g++
-#CC = clang
+CXX = /usr/local/bin/avr-g++
+CC = /usr/local/bin/avr-gcc

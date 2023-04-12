@@ -8,6 +8,7 @@ F_OSC = 32000000
 subdirs =
 
 # AVR128ProtoBoard
+# Devices: HWRev = 0
 targets += test00.hex test00.S
 targets += test01.hex test01.S
 targets += test02.hex test02.S
@@ -16,6 +17,7 @@ targets += test04.hex test04.S
 targets += test05.hex test05.S
 
 # AVR128ProtoBoard_2
+# Devices: HWRev = 1
 targets += test2_00.hex test2_00.S
 targets += test2_01.hex test2_01.S
 targets += test2_02.hex test2_02.S
@@ -27,9 +29,14 @@ targets += test2_07.hex test2_07.S
 targets += test2_08.hex test2_08.S
 
 # AVR128ProtoBoard_3
+# Devices: HWRev = 2
 targets += test3_09.hex test3_09.S
 targets += test3_10.hex test3_10.S
 targets += test3_11.hex test3_11.S
 targets += test3_12.hex test3_12.S
+
+# AVR128ProtoBoard_5
+# Devices: HWRev = 4
+targets += test5_12.hex test5_12.S
 
 -include ../../Makefile.avr0.include

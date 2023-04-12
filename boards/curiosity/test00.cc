@@ -56,7 +56,7 @@ using usart2Position = Portmux::Position<Component::Usart<2>, Portmux::Alt1>;
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, usart2Position>>;
 
-using terminalDevice = Usart<usart2Position, External::Hal::NullProtocollAdapter, UseInterrupts<false>>;
+using terminalDevice = Usart<usart2Position, External::Hal::NullProtocollAdapter<>, UseInterrupts<false>>;
 using terminal = etl::basic_ostream<terminalDevice>;
 
 //using sumd = Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>;
@@ -125,7 +125,6 @@ using alarmTimer = External::Hal::AlarmTimer<systemTimer>;
 using ibus = IBus::Sensor<usart0Position, AVR::Usart, AVR::BaudRate<115200>, 
                           Meta::List<speedP, iTempP>, 
                           systemTimer, void>;
-
 
 
 int main() {

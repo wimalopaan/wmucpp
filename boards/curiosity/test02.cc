@@ -39,7 +39,7 @@ using usart3Position = Portmux::Position<Component::Usart<3>, Portmux::Default>;
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, usart1Position>>;
 
-using terminalDevice = Usart<usart0Position, External::Hal::NullProtocollAdapter, UseInterrupts<false>>;
+using terminalDevice = Usart<usart0Position, External::Hal::NullProtocollAdapter<>, UseInterrupts<false>>;
 using terminal = etl::basic_ostream<terminalDevice>;
 
 using sumd = Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>;

@@ -48,6 +48,7 @@ boards/avr128db64_proto/test3_09.cc
 boards/avr128db64_proto/test3_10.cc
 boards/avr128db64_proto/test3_11.cc
 boards/avr128db64_proto/test3_12.cc
+boards/avr128db64_proto/test5_12.cc
 boards/blmc/Makefile
 boards/blmc/blheli.txt
 boards/blmc/blmc_01/Makefile
@@ -1467,11 +1468,12 @@ doc0/bm00/bm66.cc
 doc0/bm00/bm67.cc
 doc0/bm00/bm68.cc
 doc0/bm10/bm03.c
-doc0/bm10/bm04.c
+doc0/bm10/bm04.cc
 doc0/bm10/bm10.cc
 doc0/bm10/bm20.h
 doc0/bm10/bm20a.c
 doc0/bm10/bm20b.c
+doc0/bm10/bm30.cc
 doc0/bm11/bm00b.c
 doc0/bm11/bm30.cc
 doc0/bm11/bm40.cc

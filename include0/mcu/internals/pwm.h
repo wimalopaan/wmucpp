@@ -695,8 +695,8 @@ namespace AVR {
             }
         };
         
-        template<typename P, AVR::Concepts::At012DxSeries MCU>
-        struct DynamicPwm<Portmux::Position<Component::Tca<0>, P>, MCU> final {
+        template<auto NT, typename P, AVR::Concepts::At012DxSeries MCU>
+        struct DynamicPwm<Portmux::Position<Component::Tca<NT>, P>, MCU> final {
             
             using all_channels = Meta::List<AVR::PWM::WO<0>, AVR::PWM::WO<1>, AVR::PWM::WO<2>>;
             
@@ -710,6 +710,7 @@ namespace AVR {
             template<typename Position>
             struct WOMapper<Position, 0> {
                 using pin = typename AVR::Portmux::Map<Position>::wo0pin;
+//                pin::_;
                 inline static constexpr auto value = MCU::TCA::CtrlB_t::cmp0en;
                 using type = std::integral_constant<decltype(value), value>;
             };
@@ -729,8 +730,8 @@ namespace AVR {
             DynamicPwm() = delete;
             
             using mcu_timer_t = typename MCU::TCA; 
-            static constexpr auto mcu_tca = getBaseAddr<mcu_timer_t, 0>;
-            using position = Portmux::Position<Component::Tca<0>, P>;
+            static constexpr auto mcu_tca = getBaseAddr<mcu_timer_t, NT>;
+            using position = Portmux::Position<Component::Tca<NT>, P>;
             
             static inline constexpr auto cmpMask = mcu_timer_t::CtrlB_t::cmp2en | mcu_timer_t::CtrlB_t::cmp1en | mcu_timer_t::CtrlB_t::cmp0en;
             

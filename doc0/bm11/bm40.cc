@@ -113,6 +113,7 @@ namespace MCU {
     struct E;
     struct F;
     
+    // structure-mapping for MCU Port    
     template<typename L> 
     struct Port {
         using letter = L;
@@ -123,6 +124,7 @@ namespace MCU {
         volatile std::byte dirout;
         // usw.
     };
+    // structure-mapping for MCU VPort    
     template<typename L> 
     struct VPort {
         using letter = L;
@@ -132,11 +134,13 @@ namespace MCU {
         volatile std::byte intflags;
     };
     
+    // Meta-Function: maps MCU Port -> MCU VPort
     template<typename> struct PortToVPort;
     template<typename L> struct PortToVPort<Port<L>> {using type = VPort<L>;};
     
+    // Meta-Function: maps MCU component -> address
     template<typename C> struct Address;
-    template<> struct Address<VPort<A>> {static constexpr uintptr_t value = 0x0000; static inline constexpr C* p = 0x0000;};
+    template<> struct Address<VPort<A>> {static constexpr uintptr_t value = 0x0000;};
     template<> struct Address<VPort<B>> {static constexpr uintptr_t value = 0x0004;};
     template<> struct Address<VPort<C>> {static constexpr uintptr_t value = 0x0008;};
     template<> struct Address<VPort<D>> {static constexpr uintptr_t value = 0x000a;};
@@ -150,6 +154,7 @@ namespace MCU {
     template<> struct Address<Port<E>> {static constexpr uintptr_t value = 0x0480;};
     template<> struct Address<Port<F>> {static constexpr uintptr_t value = 0x04a0;};
     
+    // get type-safe pointer to MCU component
     template<typename Component>
     inline Component& getBaseAddress() {
         return *reinterpret_cast<Component*>(Address<Component>::value);
@@ -160,6 +165,7 @@ namespace Boards {
     using namespace MCU;
     struct NanoEvery;
     
+    // Meta-Function: maps board pin number -> MCU component     
     template<uint8_t Pin, typename Board> struct PinToPort;
     template<> struct PinToPort<0, NanoEvery> {using type = Port<C>;};
     template<> struct PinToPort<1, NanoEvery> {using type = Port<C>;};
@@ -174,6 +180,7 @@ namespace Boards {
     // u.s.w.
 }
 namespace HAL {
+    
     template<uint8_t Pin, typename Board>
     struct Button {
         using port = Boards::PinToPort<Pin, Board>::type;

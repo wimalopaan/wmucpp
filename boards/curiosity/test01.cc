@@ -23,9 +23,13 @@ using namespace std::literals::chrono;
 using namespace External::Units::literals;
 
 using PortA = Port<A>;
+using PortC = Port<C>;
+using PortD = Port<D>;
 using PortF = Port<F>;
 
-using led = Pin<PortF, 5>; 
+using led = Pin<PortF, 5>;
+//using led = Pin<PortC, 6>;
+//using led = Pin<PortD, 0>; 
 using pa0 = Pin<PortF, 2>; 
 
 using ccp = Cpu::Ccp<>;
@@ -36,7 +40,7 @@ using usart1Position = Portmux::Position<Component::Usart<1>, Portmux::Default>;
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, usart1Position>>;
 
-using terminalDevice = Usart<usart0Position, External::Hal::NullProtocollAdapter, UseInterrupts<false>>;
+using terminalDevice = Usart<usart0Position, External::Hal::NullProtocollAdapter<>, UseInterrupts<false>>;
 using terminal = etl::basic_ostream<terminalDevice>;
 
 using sumd = Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>;
@@ -53,7 +57,7 @@ using alarmTimer = External::Hal::AlarmTimer<systemTimer>;
 
 int main() {
     uint8_t counter = 0;
-    
+     
     portmux::init();
     
     ccp::unlock([]{

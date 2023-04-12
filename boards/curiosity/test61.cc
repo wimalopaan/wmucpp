@@ -362,7 +362,7 @@ using tcaPosition = Portmux::Position<Component::Tca<0>, Portmux::Default>;
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition>>;
 
-using terminalDevice = Usart<usart0Position, External::Hal::NullProtocollAdapter, UseInterrupts<false>>;
+using terminalDevice = Usart<usart0Position, External::Hal::NullProtocollAdapter<>, UseInterrupts<false>>;
 using terminal = etl::basic_ostream<terminalDevice>;
 
 namespace  {

@@ -285,6 +285,27 @@ namespace AVR {
                     using type = std::integral_constant<route_t, route_t::onF>;
                 };
                 
+                template<AVR::Concepts::AtDx64Series MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Tca<1>, AVR::Portmux::AltB>, MCU> {
+                    using route_t = typename MCU::Portmux::Tca1Route_t;
+                    using type = std::integral_constant<route_t, route_t::onB>;
+                };
+                template<AVR::Concepts::AtDx64Series MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Tca<1>, AVR::Portmux::AltC>, MCU> {
+                    using route_t = typename MCU::Portmux::Tca1Route_t;
+                    using type = std::integral_constant<route_t, route_t::onC>;
+                };
+                template<AVR::Concepts::AtDx64Series MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Tca<1>, AVR::Portmux::AltE>, MCU> {
+                    using route_t = typename MCU::Portmux::Tca1Route_t;
+                    using type = std::integral_constant<route_t, route_t::onE>;
+                };
+                template<AVR::Concepts::AtDx64Series MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Tca<1>, AVR::Portmux::AltG>, MCU> {
+                    using route_t = typename MCU::Portmux::Tca1Route_t;
+                    using type = std::integral_constant<route_t, route_t::onG>;
+                };
+                
             }
             namespace tcb {
                 template<typename T, typename MCU = DefaultMcuType>
@@ -349,9 +370,10 @@ namespace AVR {
             using tcb_list = Meta::filter<Meta::nonVoid, Meta::transform_type<detail::tcb::Mapper, CCList>>;
             using twi_list = Meta::filter<Meta::nonVoid, Meta::transform_type<detail::twi::Mapper, CCList>>;
             
+            // sizes / counts of components must be adapted to CPU types
             static_assert(Meta::size_v<usart_list> <= 4);
             static_assert(Meta::size_v<ccl_list> <= 4);
-            static_assert(Meta::size_v<tca_list> <= 1);
+            static_assert(Meta::size_v<tca_list> <= 2);
             static_assert(Meta::size_v<ccl_list> <= 4);
             static_assert(Meta::size_v<twi_list> <= 2);
             
@@ -369,12 +391,17 @@ namespace AVR {
 //                    std::integral_constant<decltype(value), value>::_;
                     mcu_pmux()->cclroutea.template set<value>();                
                 }
+                
+                // allow bitmask on different types
                 if constexpr(Meta::size_v<tca_list> > 0) {
-                    constexpr auto value = Meta::front<tca_list>::value;
-//                    tca_list::_;
-//                    constexpr uint8_t x = uint8_t(value);
-//                    std::integral_constant<uint8_t, x>::_;
-                    mcu_pmux()->tcaroutea.template set<value>();                
+//                    constexpr auto value = Meta::front<tca_list>::value;
+                    constexpr auto value = Meta::nth_element<0, tca_list>::value;
+//                    constexpr auto value = Meta::value_or_v<tca_list>;
+                    mcu_pmux()->tcaroutea.template set<value>();
+                    if constexpr(Meta::size_v<tca_list> == 2) {
+                        constexpr auto value = Meta::nth_element<1, tca_list>::value;
+                        mcu_pmux()->tcaroutea.template add<value>();
+                    }
                 }
                 if constexpr(Meta::size_v<tcb_list> > 0) {
                     constexpr auto value = Meta::value_or_v<tcb_list>;
