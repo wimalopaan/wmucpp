@@ -46,15 +46,25 @@ namespace AVR {
                     using type = void;    
                 };
 
-                template<AVR::Concepts::AtDxSeries MCU>
+                template<AVR::Concepts::AtDxSeriesAll MCU>
                 struct Mapper<AVR::Portmux::Position<AVR::Component::Twi<0>, AVR::Portmux::Alt1>, MCU> {
                     using route_t = typename MCU::Portmux::TwiRoute_t;
                     using type = std::integral_constant<route_t, route_t::twi0_alt1>;
                 };
-                template<AVR::Concepts::AtDxSeries MCU>
+                template<AVR::Concepts::AtDxSeriesAll MCU>
                 struct Mapper<AVR::Portmux::Position<AVR::Component::Twi<0>, AVR::Portmux::Alt2>, MCU> {
                     using route_t = typename MCU::Portmux::TwiRoute_t;
                     using type = std::integral_constant<route_t, route_t::twi0_alt2>;
+                };
+                template<AVR::Concepts::AtDxSeriesAll MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Twi<1>, AVR::Portmux::Alt1>, MCU> {
+                    using route_t = typename MCU::Portmux::TwiRoute_t;
+                    using type = std::integral_constant<route_t, route_t::twi1_alt1>;
+                };
+                template<AVR::Concepts::AtDxSeriesAll MCU>
+                struct Mapper<AVR::Portmux::Position<AVR::Component::Twi<1>, AVR::Portmux::Alt2>, MCU> {
+                    using route_t = typename MCU::Portmux::TwiRoute_t;
+                    using type = std::integral_constant<route_t, route_t::twi1_alt2>;
                 };
             }
             namespace usart {
@@ -369,6 +379,8 @@ namespace AVR {
             using tca_list = Meta::filter<Meta::nonVoid, Meta::transform_type<detail::tca::Mapper, CCList>>;
             using tcb_list = Meta::filter<Meta::nonVoid, Meta::transform_type<detail::tcb::Mapper, CCList>>;
             using twi_list = Meta::filter<Meta::nonVoid, Meta::transform_type<detail::twi::Mapper, CCList>>;
+            
+//            twi_list::_;
             
             // sizes / counts of components must be adapted to CPU types
             static_assert(Meta::size_v<usart_list> <= 4);

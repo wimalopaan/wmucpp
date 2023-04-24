@@ -27,6 +27,8 @@ Makefile.clang.include
 boards/avr128db64_proto/Makefile
 boards/avr128db64_proto/devices.h
 boards/avr128db64_proto/ds3231.h
+boards/avr128db64_proto/fonts.h
+boards/avr128db64_proto/framebuffer.h
 boards/avr128db64_proto/hc05.h
 boards/avr128db64_proto/ssd1306.h
 boards/avr128db64_proto/test00.cc
@@ -49,6 +51,7 @@ boards/avr128db64_proto/test3_10.cc
 boards/avr128db64_proto/test3_11.cc
 boards/avr128db64_proto/test3_12.cc
 boards/avr128db64_proto/test5_12.cc
+boards/avr128db64_proto/test5_20.cc
 boards/blmc/Makefile
 boards/blmc/blheli.txt
 boards/blmc/blmc_01/Makefile
@@ -1491,6 +1494,7 @@ doc0/bm11/bm63.cc
 doc0/bm11/bm65.cc
 doc0/bm11/bm66.cc
 doc0/bm11/bm70.cc
+doc0/bm11/bm71.c
 doc0/bm11/bm80.cc
 doc0/bm11/bm90.cc
 doc0/bm11/bm91.cc

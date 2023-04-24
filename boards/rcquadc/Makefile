@@ -75,5 +75,5 @@ targets += avr128da32_04.hex
 
 -include ../../Makefile.avr0.include
 
-#CC = /usr/local/bin/avr-gcc
-#CXX = /usr/local/bin/avr-g++
+CC = /usr/local/bin/avr-gcc
+CXX = /usr/local/bin/avr-g++

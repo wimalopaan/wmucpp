@@ -1,49 +1,48 @@
-//#define NDEBUG
+#include <avr/io.h>
 
-#include <std/compare>
-#include <etl/ranged.h>
-#include <cstdint>
-#include <type_traits>
+// enum-class ist int, wenn nicht spezifiziert
+// enum-class mit underlying-type verhindert -fstrict-enums, da alle Werte des underlying-types möglich sind
+// unscoped-enums werden mit -fshort-enums optimiert zu kleinstem möglichen Datentyp
+// unscoped-enums mit 2er-Potenz an Werten werden mit -fstrict-enums optimiert -> kein std::unreachable notwendig
+//    es werden nur die enum-Werte auf Gleichheit geprüft bei -fstrict-enums
+//    ohne -fstrict-enums gibt es Werte des underlying ohne Action
+//    allerdings: mit std::unreachable gibt es leicht kleineren Code wegen Zusammenfassung
+// unscoped-enums ohne 2er-Potenz an Werten werden mit -fstrict-enums nicht optimiert -> std::unreachable
+//    hier bleiben ungenutzte Werte in dem hypothetischen Integer übrig, d.h. es gibt trotzdem im Assembler Pfad ohne Aktion
+//    damit gleiches Verhalten wie ohne -fstrict-enums
 
-#if 0
-struct A {
-    uint8_t m1{0};
-};
 
-volatile uint8_t v;
-
-template<typename T>
-void f(const T& x) __attribute__((noinline));
-
-template<typename T>
-void f(const T& x) {
-    if constexpr(std::is_same<T, A>::value) {
-        v = x.m1;
-    }
-    else {
-        v = x;
-    }
-}
-
-uint8_t n1;
-A n2;
-
-etl::uint_ranged<uint8_t, 0, 10> n3;
-
-int main() {
-    f(n1);
-    f(n2);
-    f(n3);
-}
+#ifdef NDEBUG
+# undef NDEBUG
 #endif
 
-#if 1
-volatile uint8_t r;
+#define NDEBUG
+#define P2
+//#define MISS
+
+// NDEBUG    P2      strict-enums |  optimal     size
+//---------------------------------------------------------------
+//    -       -            -      |    -          314 
+//    -       -            x      |    -          314
+//    -       x            -      |    -          322
+//    -       x            x      |    x          318
+//    x       -            -      |    x          310
+//    x       -            x      |    x          310       
+//    x       x            -      |    x          316
+//    x       x            x      |    x          318
+
+
+#include <stdint.h>
+
 volatile uint8_t o;
 
 struct FSM {
-    enum class State : uint8_t {A, B, C};
-    static void f() __attribute__((noinline)){
+#ifdef P2
+    enum State {A, B, C, D};
+#else
+    enum State {A, B, C};
+#endif
+    static void f() __attribute__((noinline)) {
         switch(mState) {
         case State::A:
             o = 10;
@@ -51,112 +50,35 @@ struct FSM {
         case State::B:
             o = 11;
             break;
+#if defined(P2) || !defined(MISS)
         case State::C:
             o = 12;
             break;
-        default:
-    //        std::unreachable();
+#endif
+#ifdef P2
+# ifndef MISS
+        case State::D:
+            o = 13;
             break;
+# endif
+#endif
+#ifdef NDEBUG
+        default:
+            __builtin_unreachable();
+            break;
+#endif
         }
     }
-    
-    static void g() __attribute__((noinline)){
-        static State mState2{State::A};
-        switch(mState2) {
-        case State::A:
-            o = 10;
-            break;
-        case State::B:
-            o = 11;
-            break;
-        case State::C:
-            o = 12;
-            break;
-        default:
-            std::unreachable();
-            break;
-        }
+    static void set(State s) {
+        mState = s;
     }
 private:
-    inline static State mState{State::A}; // still modifyable via explicit template instantiation
+    inline static State mState{State::A};
 };
-
-enum class State : uint8_t {A, B, C};
-
-void g(const State s) {
-    switch(s) {
-    case State::A:
-        o = 10;
-        break;
-    case State::B:
-        o = 11;
-        break;
-    case State::C:
-        o = 12;
-        break;
-    default:
-//        std::unreachable();
-        break;
-    }
-}
-
-template<typename T>
-void f(const T& x) __attribute__((noinline));
-
-template<typename T>
-void f(const T& v) {
-    switch(v) {
-    case 10:
-        o = v;
-        break;
-    case 11:
-        o = v + 1;
-        break;
-    case 12:
-        o = v + 2;
-        break;
-    default:
-        //            break;
-        std::unreachable();
-    }
-}
-
-template<typename T>
-void h(const etl::uint_ranged<T, 10, 12>& v) __attribute__((noinline));
-
-template<typename T>
-void h(const etl::uint_ranged<T, 10, 12>& v) {
-    switch(v) {
-    case 10:
-        o = v;
-        break;
-    case 11:
-        o = v + 1;
-        break;
-    case 12:
-        o = v + 2;
-        break;
-//    default:
-//        //            break;
-//        std::unreachable();
-    }
-}
 
 int main() {
     while(true) {
-        etl::uint_ranged<uint8_t, 10, 12> a{r, etl::RangeCheck<false>{}};
-//        etl::uint_ranged<uint8_t, 10, 12> a{r};
-//        uint8_t a{r};
-        f(a);
-        
-        h(a);
-        
-        g(State::A);
-        g(State{0x0f});
-        
         FSM::f();
-        FSM::g();
+        //        FSM::set(FSM::A);
     }
 }
-#endif
-

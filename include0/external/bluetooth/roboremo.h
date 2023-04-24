@@ -56,7 +56,7 @@ namespace External {
         class ProtocollAdapter final {
             inline static constexpr uint8_t NumberOfChannels = NChannels;
             typedef uint_ranged<uint8_t, 0, NumberOfChannels - 1> index_type;
-            enum class State : uint8_t {Undefined, Start, Prop, PropNumber, Space, Value};
+            enum State {Undefined, Start, Prop, PropNumber, Space, Value};
         public:
             using buffer_t = Buffer;
 
@@ -120,8 +120,11 @@ namespace External {
                         state = State::Undefined;
                     }
                     break;
+#ifdef NDEBUG
                 default:
+                    __builtin_unreachable();
                     break;
+#endif     
                 }
                 return true;
             }    

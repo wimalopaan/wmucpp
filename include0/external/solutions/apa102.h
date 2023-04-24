@@ -55,7 +55,7 @@ namespace External {
     struct LedStripe final {
         LedStripe() = delete;
         
-        enum class State : uint8_t {Complete, Start, Data, End};
+        enum State {Complete, Start, Data, End};
         inline static constexpr auto ef = Led::endFrame();
         inline static constexpr auto sf = Led::startFrame();
         
@@ -135,6 +135,11 @@ namespace External {
                     }
                 }
                 break;
+#ifdef NDEBUG
+            default:
+                __builtin_unreachable();
+                break;
+#endif     
             }
         }
     private:

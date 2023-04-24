@@ -72,6 +72,11 @@ namespace External {
                     mState = State::Released;
                 }
                 break;
+#ifdef NDEBUG
+            default:
+                __builtin_unreachable();
+                break;
+#endif     
             }
             if (oldState != mState) {
                 mStateCounter.reset();
@@ -90,6 +95,11 @@ namespace External {
                     break;
                 case State::Wait:
                     break;
+#ifdef NDEBUG
+                default:
+                    __builtin_unreachable();
+                    break;
+#endif     
                 }
             }
         }
@@ -149,6 +159,11 @@ private:
                     mState = State::Released;
                 }
                 break;
+#ifdef NDEBUG
+            default:
+                __builtin_unreachable();
+                break;
+#endif     
             }
             if (oldState != mState) {
                 mStateCounter.reset();
@@ -166,6 +181,11 @@ private:
                     break;
                 case State::Wait:
                     break;
+#ifdef NDEBUG
+                default:
+                    __builtin_unreachable();
+                    break;
+#endif     
                 }
             }
         }

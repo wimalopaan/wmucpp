@@ -70,7 +70,7 @@ namespace External {
                             }
                             break;
                         case State::Length:
-                            if (const IBus2::Type::type t{b}; t != IBus2::Type::type::UNKNOWN) {
+                            if (const IBus2::Type::type t{std::to_integer(b)}; t != IBus2::Type::type::UNKNOWN) {
                                 mActualType = t;
                                 mState = State::Type;                                
                             } 

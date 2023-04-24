@@ -19,9 +19,9 @@
 
 F_OSC = 20000000
 
-#MCU = atmega328pb
-MCU = atmega8
-#MCU = atmega4809
+#MCU = atmega328p
+#MCU = atmega8
+MCU = atmega4809
 #MCU = attiny1604
 #MCU = atxmega32e5
 

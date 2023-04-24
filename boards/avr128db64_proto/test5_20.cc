@@ -32,10 +32,10 @@ struct GlobalFsm {
     using index_t = devs::ledStripe::index_type;
     
     static void init() {
-        devs::pc1::init();
-        devs::pc2::init();
-        devs::pc1::activate();
-        devs::pc2::activate();
+//        devs::pc1::init();
+//        devs::pc2::init();
+//        devs::pc1::activate();
+//        devs::pc2::activate();
         
         devs::init();
         
@@ -94,7 +94,10 @@ struct GlobalFsm {
     } 
     static void periodic() {
         devs::la0::toggle();
+        
         devs::ds3231::periodic();
+        devs::oled::periodic();
+        
         devs::serial1::periodic();
         devs::serial2::periodic();
         devs::ledStripe::periodic();
@@ -104,7 +107,6 @@ struct GlobalFsm {
         devs::sbus::periodic();
         devs::sensor::periodic();
         
-        devs::oled::periodic();
     }
     static void ratePeriodic() {
         devs::la1::toggle();
@@ -136,7 +138,10 @@ struct GlobalFsm {
             });
             break;
         case State::Init:
-            if (devs::ds3231::isIdle()) {
+//            if (devs::oled::isIdle()) {
+//                mState = State::BT_SetName;
+//            } 
+                    if (devs::ds3231::isIdle()) {
                 mState = State::BT_SetName;
             }
             break;
@@ -148,9 +153,10 @@ struct GlobalFsm {
         case State::On:
             devs::dac::put(r);
             (++mDebugTicks).on(debugTicks, [&]{
-                etl::outl<terminal1>("serial1: "_pgm, "test3_12"_pgm);                
-                etl::outl<terminal2>("serial2: "_pgm, "sbus p: "_pgm, devs::sbus_pa::packages(), " v[0]: "_pgm, devs::sbus_pa::value(0).toInt(), " s.port p: "_pgm, devs::sensor::ProtocollAdapter::requests());
-                etl::outl<terminal2>("serial2: "_pgm, "rot: "_pgm, r);                
+                devs::oled::put('0' + ((mC++) % 10));
+                etl::outl<terminal1>("serial1: "_pgm, "test5_10"_pgm);                
+//                etl::outl<terminal2>("serial2: "_pgm, "sbus p: "_pgm, devs::sbus_pa::packages(), " v[0]: "_pgm, devs::sbus_pa::value(0).toInt(), " s.port p: "_pgm, devs::sensor::ProtocollAdapter::requests());
+//                etl::outl<terminal2>("serial2: "_pgm, "rot: "_pgm, r);                
             });
             (++mLedTicks).on(outTicks, []{
                 ++color;
@@ -192,12 +198,14 @@ struct GlobalFsm {
             case State::Undefined:
                 break;
             case State::Init:
-                devs::rtcI2C::write(AVR::Twi::Address{0b1101000}, {0x0e, 0x40});                
+                devs::oled::clear();
                 break;
             case State::On:
                 devs::blinkLed1::blink(blink1_t{4});
+//                devs::oled::put('a');
                 break;
             case State::BT_SetName:
+//                devs::oled::home();
                 devs::hc05::event(devs::hc05::Event::SetName);
                 break;
             case State::On2:
@@ -212,6 +220,7 @@ struct GlobalFsm {
         }
     }     
 private:    
+    static inline uint8_t mC{};
     static inline State mState{State::Undefined};
     static inline External::Tick<typename devs::systemTimer> mStateTicks;
     static inline External::Tick<typename devs::systemTimer> mDebugTicks;
@@ -221,8 +230,7 @@ private:
     inline static cindex_type color{};
 };
 
-using devices = Devices<4
->;
+using devices = Devices<41>;
 using gfsm = GlobalFsm<devices>;
 
 int main() {

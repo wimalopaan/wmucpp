@@ -171,6 +171,11 @@ struct GlobalFsm {
                 mState = State::On;
             }
             break;
+#ifdef NDEBUG
+        default:
+            __builtin_unreachable();
+            break;
+#endif     
         }
         if (oldState != mState) {
             mStateTicks.reset();
@@ -189,6 +194,11 @@ struct GlobalFsm {
             case State::On2:
                 devs::blinkLed1::off();
                 break;
+#ifdef NDEBUG
+            default:
+                __builtin_unreachable();
+                break;
+#endif     
             }
         }
     }     

@@ -6,6 +6,26 @@
 #include "algorithm.h"
 
 namespace etl {
+    
+    template<auto Offset, auto Length, typename ValueType, auto N>
+    struct subspan {
+        explicit subspan(std::array<ValueType, N>& data) : mData{data}{}
+        constexpr auto begin() {
+            return mData.begin() + Offset;
+        }
+        constexpr auto end() {
+            return mData.begin() + Offset + Length;
+        }
+    private:
+        std::array<ValueType, N>& mData;
+    };
+
+    template<auto Offset, auto Length, typename ValueType, auto N>
+    constexpr auto make_subspan(std::array<ValueType, N>& data) {
+        return subspan<Offset, Length, ValueType, N>{data};
+    }
+        
+    
     template<uint8_t Length, typename ValueType>
     class span {
     public:
@@ -47,7 +67,7 @@ namespace etl {
         ValueType* const mData = nullptr;
     };
     
-    template<uint8_t Offset, uint8_t Length, typename C>
+    template<uint8_t Offset, uint16_t Length, typename C>
     inline auto make_span(C& c) {
         static_assert((Offset + Length) <= C::size());
         
@@ -64,5 +84,4 @@ namespace etl {
         
         return span<Length, value_type>(&c[offset]);
     }
-    
 }

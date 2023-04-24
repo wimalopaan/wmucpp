@@ -148,6 +148,11 @@ namespace External {
             case State::IsPpm:
             case State::Undefined:
                 break;
+#ifdef NDEBUG
+            default:
+                __builtin_unreachable();
+                break;
+#endif     
             }                    
         }
         inline static void ratePeriodic() {
@@ -271,6 +276,11 @@ namespace External {
                 App<Bus::Ppm<Devs>>::run();
                 mState = State::Init;
                 break;
+#ifdef NDEBUG
+            default:
+                __builtin_unreachable();
+                break;
+#endif     
             }
             if (oldState != mState) {
                 mStateTick.reset();
@@ -370,6 +380,11 @@ namespace External {
                 case State::IsPpm:
                     etl::outl<terminal>("s: SPpm"_pgm);
                     break;
+#ifdef NDEBUG
+                default:
+                    __builtin_unreachable();
+                    break;
+#endif     
                 }
             }        
         }
@@ -480,6 +495,11 @@ namespace External {
             case State::IsPpm:
             case State::Undefined:
                 break;
+#ifdef NDEBUG
+            default:
+                __builtin_unreachable();
+                break;
+#endif     
             }                    
         }
         inline static void ratePeriodic() {
@@ -670,6 +690,11 @@ namespace External {
                 App<Bus::Ppm<Devs>>::run();
                 mState = State::Init;
                 break;
+#ifdef NDEBUG
+            default:
+                __builtin_unreachable();
+                break;
+#endif     
             }
             if (oldState != mState) {
                 mStateTick.reset();
@@ -864,6 +889,11 @@ namespace External {
                 case State::IsPpm:
                     etl::outl<terminal>("s: SPpm"_pgm);
                     break;
+#ifdef NDEBUG
+                default:
+                    __builtin_unreachable();
+                    break;
+#endif     
                 }
             }        
         }

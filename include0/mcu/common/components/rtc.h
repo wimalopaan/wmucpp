@@ -82,8 +82,8 @@ namespace AVR {
             DataRegister<Rtc, ReadWrite, std::byte> calib;
             
             enum class ClockSel_t : uint8_t {
-                cs1 = RTC_CLKSEL1_bm,
-                cs0 = RTC_CLKSEL0_bm,
+                cs1 = RTC_CLKSEL_1_bm,
+                cs0 = RTC_CLKSEL_0_bm,
             };
             ControlRegister<Rtc, ClockSel_t> clksel;
 

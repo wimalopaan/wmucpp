@@ -16,6 +16,9 @@ struct MbedSPI {
 
 
 int main() {
+    
+    
+    
     char a[3];
     MbedSPI spi;
     

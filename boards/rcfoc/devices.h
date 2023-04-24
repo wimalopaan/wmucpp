@@ -37,7 +37,7 @@ struct Devices<0, MCU> {
     using sensorPosition = usart2Position; // sensor / sbus-out
 
     using scanTermPosition = usart0Position;  // terminal
-    using scan_term_dev = AVR::Usart<scanTermPosition, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<1>, AVR::SendQueueLength<256>>;
+    using scan_term_dev = AVR::Usart<scanTermPosition, External::Hal::NullProtocollAdapter<>, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<1>, AVR::SendQueueLength<256>>;
     using terminal = etl::basic_ostream<scan_term_dev>;
 
     using dbgPin = AVR::Pin<AVR::Port<AVR::A>, 3>; 
@@ -126,7 +126,7 @@ struct Devices<1, MCU> {
     using sensorPosition = usart2Position; // sensor / sbus-out
 
     using scanTermPosition = usart0Position;  // terminal
-    using scan_term_dev = AVR::Usart<scanTermPosition, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<1>, AVR::SendQueueLength<256>>;
+    using scan_term_dev = AVR::Usart<scanTermPosition, External::Hal::NullProtocollAdapter<>, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<1>, AVR::SendQueueLength<256>>;
     using terminal = etl::basic_ostream<scan_term_dev>;
 
     using dbgPin = AVR::Pin<AVR::Port<AVR::A>, 3>; 

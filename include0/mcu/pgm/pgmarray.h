@@ -128,6 +128,9 @@ namespace AVR {
                         return value_type{Ptr{&data[index]}};
                     }
                 }
+                else if constexpr(std::is_same_v<std::byte, T>) {
+                    return std::byte{pgm_read_byte((uint8_t*)&data[index])};
+                }
                 else {
                     return value_type{Ptr{&data[index]}};
                 }

@@ -204,7 +204,7 @@ struct GlobalFsm {
 
     static inline constexpr bool useBus = !External::Bus::isNoBus<bus_type>::value;
     using servo = std::conditional_t<useBus, typename BusDevs::servo, void>;
-    using servo_pa = std::conditional_t<useBus, typename BusDevs::servo_pa, External::Hal::NullProtocollAdapter>;
+    using servo_pa = std::conditional_t<useBus, typename BusDevs::servo_pa, External::Hal::NullProtocollAdapter<>>;
 
     using servo_value_t = servo_pa::value_type;
     static inline constexpr auto servo_mid  = []{

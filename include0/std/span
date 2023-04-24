@@ -25,7 +25,7 @@ namespace std {
     struct span {
         using value_type = T;
         using size_type = std::conditional_t<Size <= std::numeric_limits<uint8_t>::max(), uint8_t, uint16_t>;
-        explicit span(void* ptr) : mData{(T*)ptr} {}
+        explicit span(T* const ptr) : mData{ptr} {}
         T* begin() const {
             return mData;
         }  

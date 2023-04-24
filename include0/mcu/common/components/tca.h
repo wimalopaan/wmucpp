@@ -30,9 +30,9 @@ namespace AVR {
 //            static constexpr const uint8_t count = 1;
 
             enum class CtrlA_t : uint8_t {
-                clksel2 = TCA_SINGLE_CLKSEL2_bm,
-                clksel1 = TCA_SINGLE_CLKSEL1_bm,
-                clksel0 = TCA_SINGLE_CLKSEL0_bm,
+                clksel2 = TCA_SINGLE_CLKSEL_2_bm,
+                clksel1 = TCA_SINGLE_CLKSEL_1_bm,
+                clksel0 = TCA_SINGLE_CLKSEL_0_bm,
                 enable = TCA_SINGLE_ENABLE_bm,
             };
             static inline constexpr std::array<pp_t<CtrlA_t>, 8> prescalerValues {
@@ -52,9 +52,9 @@ namespace AVR {
                 cmp1en = TCA_SINGLE_CMP1EN_bm,
                 cmp0en = TCA_SINGLE_CMP0EN_bm,
                 alupd  = TCA_SINGLE_ALUPD_bm,
-                wgm2   = TCA_SINGLE_WGMODE2_bm,
-                wgm1   = TCA_SINGLE_WGMODE1_bm,
-                wgm0   = TCA_SINGLE_WGMODE0_bm,
+                wgm2   = TCA_SINGLE_WGMODE_2_bm,
+                wgm1   = TCA_SINGLE_WGMODE_1_bm,
+                wgm0   = TCA_SINGLE_WGMODE_0_bm,
                 pwm    = wgm0 | wgm1,
                 
                 scmp0en  = 0x01,

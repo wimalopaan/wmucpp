@@ -45,7 +45,7 @@ bm66.elf: MCU = atmega328p
 bm61.s: MCU = atmega328p
 bm61.elf: MCU = atmega328p
 
-CXXFLAGS += -pedantic
+CXXFLAGS += -pedantic -Wextra # -fstrict-enums
 CFLAGS += -pedantic
 
 CPPFLAGS += -DNDEBUG
@@ -75,6 +75,7 @@ targets += bm63.S bm63.elf
 targets += bm65.S bm65.elf
 targets += bm66.S bm66.elf
 targets += bm70.S bm70.elf
+targets += bm71.S bm71.elf
 targets += bm80.S bm80.elf
 targets += bm90.S bm90.elf
 targets += bm91.S bm91.elf
@@ -96,3 +97,5 @@ bm52b.o: bm52b.c bm52.h
 
 -include ../../Makefile.avr0.include
 
+CXX = /usr/local/bin/avr-g++
+CC = /usr/local/bin/avr-gcc

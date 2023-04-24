@@ -59,4 +59,6 @@ public:
 
 int main() {
     Setup<>::init();
+    
+    UC::portb; 
 }

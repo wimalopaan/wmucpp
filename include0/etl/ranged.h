@@ -1025,4 +1025,29 @@ namespace etl {
         T mValue{LowerBound};
     };
     
+    template<typename T, uint8_t X, uint8_t Y>
+    struct uint2D_ranged {
+        T x() const {
+            return mX;
+        }
+        T y() const {
+            return mY;
+        }
+        const uint2D_ranged& operator++() {
+            ++mX;
+            if (mX == X) {
+                mX = 0;
+                ++mY;
+                if (mY == Y) {
+                    mY = 0;
+                }
+            }
+            return *this;
+        }
+    private:
+        T mX{};
+        T mY{};
+    };
+    
+    
 }

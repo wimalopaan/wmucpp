@@ -20,7 +20,12 @@ A<T> asA(const B<T>& v){
     return std::bit_cast<A<T>>(v);
 }
 
+#define UDR *(reinterpret_cast<volatile char*>(0x0010));
+
 int main() {
+    
+    UDR;
+    
     B<char> b;
     auto x = asA(b);
 }

@@ -1028,6 +1028,11 @@ public:
                 mState = State::ForwardWait;
             }
             break;
+#ifdef NDEBUG
+        default:
+            __builtin_unreachable();
+            break;
+#endif
         }
         if (oldState != mState) {
             stateP::set(mState);
@@ -1128,6 +1133,11 @@ public:
                 etl::outl<Term>("S obe: "_pgm, mActualAdc);
                 off();
                 break;
+#ifdef NDEBUG
+            default:
+                __builtin_unreachable();
+                break;
+#endif
             }
         }
     }
@@ -1441,6 +1451,11 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
             });
             mDebugTick.on(debugTimeout, debug);
             break;
+#ifdef NDEBUG
+        default:
+            __builtin_unreachable();
+            break;
+#endif
         }
         if (oldState != mState) {
             mStateTick.reset();
@@ -1505,6 +1520,11 @@ struct GlobalFsm<Devs, Meta::List<Chs...>> {
             case State::Run:
                 etl::outl<Term>("RU"_pgm);
                 break;
+#ifdef NDEBUG
+            default:
+                __builtin_unreachable();
+                break;
+#endif
             }
         }
     }

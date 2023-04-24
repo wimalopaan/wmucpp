@@ -73,6 +73,11 @@ namespace External {
                     }
                 });
                 break;
+#ifdef NDEBUG
+            default:
+                __builtin_unreachable();
+                break;
+#endif     
             }
             if (oldstate != mState) {
                 stateTicks.reset();
@@ -153,8 +158,11 @@ namespace External {
                 }
                 ++mStateCounter;
                 break;
+#ifdef NDEBUG
             default:
+                __builtin_unreachable();
                 break;
+#endif     
             }
         }
     private:
@@ -259,8 +267,11 @@ namespace External {
                 }
                 ++mStateCounter;
                 break;
+#ifdef NDEBUG
             default:
+                __builtin_unreachable();
                 break;
+#endif     
             }
         }
     private:
