@@ -52,15 +52,15 @@ namespace  {
     Data ram_data;
 }
 
-uint8_t digit_sum(uint32_t n) {
-  uint8_t sum = 0;
-  do {
-    uint8_t x = n % 10u;
-    n /= 10u;
-    sum += x;
-  } while(n != 0);
-  return sum;
-}
+//uint8_t digit_sum(uint32_t n) {
+//  uint8_t sum = 0;
+//  do {
+//    uint8_t x = n % 10u;
+//    n /= 10u;
+//    sum += x;
+//  } while(n != 0);
+//  return sum;
+//}
 
 template<typename T> 
 uint8_t digit_sum2(T n) {
@@ -70,7 +70,7 @@ uint8_t digit_sum2(T n) {
     uint8_t x = n % 10;
     n /= 10;
     sum += x;
-  } while(n != 0);
+  } while(n != T{0});
 
   return sum; 
 }

@@ -28,7 +28,6 @@ boards/avr128db64_proto/Makefile
 boards/avr128db64_proto/devices.h
 boards/avr128db64_proto/ds3231.h
 boards/avr128db64_proto/fonts.h
-boards/avr128db64_proto/framebuffer.h
 boards/avr128db64_proto/hc05.h
 boards/avr128db64_proto/ssd1306.h
 boards/avr128db64_proto/test00.cc

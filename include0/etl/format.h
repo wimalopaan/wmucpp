@@ -116,13 +116,16 @@ namespace etl {
             if (value < 0) {
                 v = -value; 
             }
-            uint8_t last = etl::detail::itoa_single_impl<Position, Base, T>(v, data);
+            const uint8_t last = etl::detail::itoa_single_impl<Position, Base, T>(v, data);
             if (value < 0) {
                 data[last] = Char{'-'};
             }
         }   
         else {
-            etl::detail::itoa_single_impl<Position, Base, T>(v, data);
+            const uint8_t last = etl::detail::itoa_single_impl<Position, Base, T>(v, data);
+            for(uint8_t i = 0; i < last; ++i) {
+                data[i] = Char{' '};
+            }
         }
         return data;
     }
@@ -137,13 +140,16 @@ namespace etl {
             if (value < 0) {
                 v = -value; 
             }
-            uint8_t last = etl::detail::itoa_single_impl<Position, Base, T>(v, data);
+            const uint8_t last = etl::detail::itoa_single_impl<Position, Base, T>(v, data);
             if (value < 0) {
                 data[last] = Char{'-'};
             }
         }   
         else {
-            etl::detail::itoa_single_impl<Position, Base, T>(v, data);
+            const uint8_t last = etl::detail::itoa_single_impl<Position, Base, T>(v, data);
+            for(uint8_t i = 0; i < last; ++i) {
+                data[i] = Char{' '};
+            }
         }
         return data;
     }

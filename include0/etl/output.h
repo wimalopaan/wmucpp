@@ -14,7 +14,6 @@ namespace etl {
     constexpr void put(std::byte b) {
         if constexpr(ensure) {
             while(!Device::put(b)) {
-//                AVR::Util::delay(1_us);
             }
         }
         else {
@@ -34,10 +33,11 @@ namespace etl {
     template <typename Mode>
     struct lineTerminator final : public basic_iomanip<lineTerminator<Mode>> {};
     
-    template<typename DeviceType, typename LT = lineTerminator<CRLF>>
+    template<typename DeviceType, typename LT = lineTerminator<CRLF>, typename AlignRight = std::integral_constant<bool, false>>
     struct basic_ostream final {
         typedef DeviceType device_type;
         typedef LT line_terminator_type;
+        using alignRight = AlignRight;
     };
     
     template<Unsigned T, uint8_t Bits>
@@ -61,7 +61,12 @@ namespace etl {
         requires Signed<V> || Unsigned<V>
         constexpr inline void out_impl(V v) {
             std::array<Char, numberOfDigits<V>()> buffer{};
-            itoa(v, buffer);
+            if constexpr(std::is_same_v<typename Stream::alignRight, std::integral_constant<bool, true>>) {
+                itoa_r(v, buffer);
+            }
+            else {
+                itoa(v, buffer);
+            }
             out_impl<Stream>(buffer);
         }
 

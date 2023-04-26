@@ -9,6 +9,10 @@
 #include <etl/span.h>
 
 namespace External {
+    
+    //Font Parameter!!!
+    // Scroll Parameter
+
     template<typename TWI, typename Timer, typename term = void>
     struct SSD1306;
     
@@ -43,6 +47,8 @@ namespace External {
         inline static constexpr typename AVR::Pgm::Util::Converter<InitGenerator>::pgm_type init_sequence{}; 
         
         enum class State : uint8_t {Undefined, Init, Clear, Run};
+
+        inline static constexpr bool scroll{false};
         
         inline static constexpr uint8_t pxColumns{128};
         inline static constexpr uint8_t pxRows{64};
@@ -69,9 +75,41 @@ namespace External {
             mData[0] = 0x40_B;
         }
         
+        inline static void home() {
+            mCharPosition.reset();
+        }
+        
         inline static void put(const char c) {
+            auto shiftUp = []{
+                std::copy(std::begin(mData) + offset + pxColumns, std::end(mData), std::begin(mData) + offset);
+            };
+            if (c == '\r') {
+                mCharPosition.resetX();
+                return;
+            }
+            if (c == '\n') {
+                if constexpr(scroll) {
+                    mCharPosition.incY(shiftUp);
+                }
+                else {
+                    mCharPosition.incY();
+                }
+                return;
+            }
             std::copy(std::begin(font()[c]), std::end(font()[c]), &mData[offset] + (mCharPosition.x() * font::Width) + (mCharPosition.y() * pxColumns));
-            ++mCharPosition;
+            if constexpr(scroll) {
+                mCharPosition.next(shiftUp);                
+            }
+            else {
+                ++mCharPosition;
+            }
+        }
+        inline static void put(const std::byte b) {
+            put(std::to_integer(b));
+        }
+
+        inline static std::byte get() {
+            return 0x00_B;
         }
         
         static inline void init() {

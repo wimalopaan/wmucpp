@@ -32,7 +32,6 @@
 #include "hc05.h"
 #include "ds3231.h"
 #include "ssd1306.h"
-#include "framebuffer.h"
 
 namespace {
     using namespace std::literals::chrono;
@@ -121,8 +120,6 @@ struct Devices<41, MCU> {
     using ledStripe = External::LedStripe<ledSpi, External::APA102, 8>;
     
 //    using oledI2C = AVR::Twi::Master<twi0Position, etl::NamedConstant<255>>;
-//    using fb = Util::FramBuffer<0, 64, 128>;
-//    using oledI2C = AVR::Twi::Master<twi0Position, fb>;
     using rtcI2C = AVR::Twi::Master<twi1Position, etl::NamedConstant<32>>;
     
     using pc1  = AVR::ActiveLow<AVR::Pin<AVR::Port<AVR::C>, 2>, AVR::Output>; 
@@ -131,8 +128,8 @@ struct Devices<41, MCU> {
     using ds3231 = External::DS3231<rtcI2C, systemTimer>;
     
 //    using oled = External::SSD1306<oledI2C, systemTimer, terminal1>;
-
     using oled = External::SSD1306<twi0Position, systemTimer, terminal1>;
+    using terminal3 = etl::basic_ostream<oled, etl::lineTerminator<etl::CRLF>, std::integral_constant<bool, true>>;
     
     using buzz = AVR::ActiveHigh<AVR::Pin<AVR::Port<AVR::A>, 2>, AVR::Output>; 
     

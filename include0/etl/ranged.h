@@ -1027,22 +1027,46 @@ namespace etl {
     
     template<typename T, uint8_t X, uint8_t Y>
     struct uint2D_ranged {
-        T x() const {
+        constexpr T x() const {
             return mX;
         }
-        T y() const {
+        constexpr T y() const {
             return mY;
         }
-        const uint2D_ranged& operator++() {
+        constexpr const uint2D_ranged& operator++() {
             ++mX;
             if (mX == X) {
                 mX = 0;
-                ++mY;
-                if (mY == Y) {
-                    mY = 0;
-                }
+                incY();
             }
             return *this;
+        }
+        constexpr void next(const auto f) {
+            ++mX;
+            if (mX == X) {
+                mX = 0;
+                incY(f);
+            }
+        }
+        constexpr void resetX() {
+            mX = 0;
+        }
+        constexpr void reset() {
+            mX = mY = 0;
+        }
+        constexpr void incY() {
+            ++mY;
+            if (mY == Y) {
+                mY = 0;
+            }
+        }
+        constexpr void incY(auto const f) {
+            if (mY == (Y - 1)) {
+                f();
+            }
+            else {
+                ++mY;
+            }
         }
     private:
         T mX{};

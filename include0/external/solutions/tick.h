@@ -89,6 +89,18 @@ namespace External {
                 f();
             }
         }
+
+        template<typename F>
+        inline constexpr void testForNext(const Tick& t, F f) {
+            if (value == t.value) {
+                if (f()) {
+                    reset();
+                }
+            }
+            else {
+                ++value;
+            }
+        }
         
         inline constexpr auto operator<=>(const Tick& rhs) const = default;
         
