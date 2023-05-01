@@ -1,0 +1,15 @@
+
+# ~/Projekte/updi/pyupdi/pyupdi.py -d atmega4808 -c /dev/ttyUSB1  -f test00.hex
+# ~/.local/bin/pymcuprog write --erase -d avr128da48 -t uart -u /dev/ttyUSB0 -f test10.hex
+
+MCU = attiny412
+F_OSC = 20000000
+
+subdirs =
+
+targets += client5_01.hex client5_01.S
+
+-include ../../Makefile.avr0.include
+
+CC = /usr/local/bin/avr-gcc
+CXX = /usr/local/bin/avr-g++

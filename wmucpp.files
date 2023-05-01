@@ -25,6 +25,8 @@ Makefile.arm.include
 Makefile.avr0.include
 Makefile.clang.include
 boards/avr128db64_proto/Makefile
+boards/avr128db64_proto/Makefile.client
+boards/avr128db64_proto/client5_01.cc
 boards/avr128db64_proto/devices.h
 boards/avr128db64_proto/ds3231.h
 boards/avr128db64_proto/fonts.h

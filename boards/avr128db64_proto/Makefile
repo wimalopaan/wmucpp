@@ -39,7 +39,11 @@ subdirs =
 # Devices: HWRev = 4
 targets += test5_12.hex test5_12.S
 targets += test5_20.hex test5_20.S
+targets += client
 
+client:
+	make -f Makefile.client all
+	
 -include ../../Makefile.avr0.include
 
 CC = /usr/local/bin/avr-gcc

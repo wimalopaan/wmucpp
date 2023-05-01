@@ -26,16 +26,16 @@ namespace AVR {
         struct Clock final {
             enum class MClkCtrlA_t : uint8_t {
                 clkout = CLKCTRL_CLKOUT_bm,
-                clksel1 = CLKCTRL_CLKSEL1_bm,
-                clksel0 = CLKCTRL_CLKSEL0_bm
+                clksel1 = CLKCTRL_CLKSEL_1_bm,
+                clksel0 = CLKCTRL_CLKSEL_0_bm
             };
             ControlRegister<Clock, MClkCtrlA_t> mclkctrla;
 
             enum class MClkCtrlB_t : uint8_t {
-                pdiv3 = CLKCTRL_PDIV3_bm,
-                pdiv2 = CLKCTRL_PDIV2_bm,
-                pdiv1 = CLKCTRL_PDIV1_bm,
-                pdiv0 = CLKCTRL_PDIV0_bm,
+                pdiv3 = CLKCTRL_PDIV_3_bm,
+                pdiv2 = CLKCTRL_PDIV_2_bm,
+                pdiv1 = CLKCTRL_PDIV_1_bm,
+                pdiv0 = CLKCTRL_PDIV_0_bm,
                 pen = CLKCTRL_PEN_bm,
             };
             

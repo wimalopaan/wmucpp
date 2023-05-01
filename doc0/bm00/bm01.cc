@@ -8,6 +8,7 @@
 #include <mcu/pgm/pgmarray.h>
 #include <mcu/pgm/pgmstring.h>
 
+#if 0
 namespace  {
     struct SineGenerator {
         constexpr auto operator()() {
@@ -52,15 +53,36 @@ namespace  {
     Data ram_data;
 }
 
-//uint8_t digit_sum(uint32_t n) {
-//  uint8_t sum = 0;
-//  do {
-//    uint8_t x = n % 10u;
-//    n /= 10u;
-//    sum += x;
-//  } while(n != 0);
-//  return sum;
-//}
+#endif
+
+uint8_t digit_sum(uint32_t n) {
+  uint8_t sum = 0;
+  do {
+    uint8_t x = n % 10u;
+    n /= 10u;
+    sum += x;
+  } while(n != 0);
+  return sum;
+}
+ 
+#define VPORTA_OUTTGL VPORTA_IN
+
+struct R {
+private:
+    struct P {
+        friend class R;
+        void operator=(const int val) && {
+            VPORTA_IN = val;    
+        }
+    private:
+        explicit P(R& r) : r{r} {}
+        R& r;
+    };
+public:
+    P operator*() {
+        return P{*this};
+    }
+};
 
 template<typename T> 
 uint8_t digit_sum2(T n) {
@@ -75,9 +97,16 @@ uint8_t digit_sum2(T n) {
   return sum; 
 }
 int main() {
-    return digit_sum2(42UL);
+    VPORTA_INTFLAGS = 0x01;
+    R r;
+    *r = 1;
+
+//    auto& rr = *r;
+//    rr = 1;
     
-    ram_data.reset();
+//    return digit_sum2(42UL);
     
-    return ram_data.ar[10];
+//    ram_data.reset();
+    
+//    return ram_data.ar[10];
 }

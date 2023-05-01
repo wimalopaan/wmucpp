@@ -407,6 +407,33 @@ namespace AVR {
     private:    
         volatile value_type hwRegister;
     };
+
+    template<typename Component, typename ValueType, typename MCU>
+    struct DataRegister<Component, WriteOnly, ValueType, MCU> final {
+        typedef Component component_type;
+        typedef ValueType value_type;    
+        DataRegister() = delete;
+        DataRegister(const DataRegister&) = delete;
+        DataRegister(DataRegister&&) = delete;
+        DataRegister& operator=(const DataRegister&) = delete;
+        DataRegister& operator=(DataRegister&&) = delete;
+    private:
+        struct Proxy {
+            friend class R;
+            void operator=(const value_type v) && {
+                r.hwRegister = v;
+            }
+        private:
+            explicit Proxy(DataRegister& dr) : r{dr}{}
+            DataRegister& r;
+        };
+    public:
+        inline const Proxy operator*() {
+            return Proxy{*this};
+        }
+    private:    
+        volatile value_type hwRegister;
+    };
     
     template<typename Component, typename ValueType, typename MCU>
     struct DataRegister<Component, ReadWrite, ValueType, MCU> final {

@@ -40,7 +40,7 @@ struct GlobalFsm {
     
     static void init() {
         devs::init();
-        
+
         devs::blinkLed1::init();
         devs::blinkLed2::init();
         
@@ -93,7 +93,9 @@ struct GlobalFsm {
         devs::lut5::enable();
         devs::lutPin2::template dir<AVR::Output>();
         devs::lutPin2::on();
-        
+
+        devs::bec_en::init();
+//        devs::bec_en::activate();
     } 
     static void periodic() {
         devs::la0::toggle();
@@ -242,6 +244,7 @@ struct GlobalFsm {
             break;
             case State::On:
                 devs::blinkLed1::blink(blink1_t{4});
+                devs::bec_en::activate();
             break;
             case State::BT_SetName:
                 devs::hc05::event(devs::hc05::Event::SetName);

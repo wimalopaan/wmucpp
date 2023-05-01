@@ -148,7 +148,8 @@ struct Devices<41, MCU> {
     
     using sqwpin = AVR::Pin<AVR::Port<AVR::D>, 1>;
     
-    using bec_en = AVR::ActiveLow<AVR::Pin<AVR::Port<AVR::A>, 5>, AVR::Output>; 
+//    using bec_en = AVR::ActiveLow<AVR::Pin<AVR::Port<AVR::A>, 5>, AVR::Output>; 
+    using bec_en = AVR::ActiveLow<AVR::Pin<AVR::Port<AVR::A>, 7>, AVR::Output>; // HW 5_B
     
     using adc = AVR::Adc<AVR::Component::Adc<0>, AVR::Resolution<12>, AVR::Vref::V2_048>;
     using adcController = External::Hal::AdcController<adc, Meta::NList<4, 5, 0x42>>; // PD4=A_I, PD5 = A_Vin, 0x42 = temp

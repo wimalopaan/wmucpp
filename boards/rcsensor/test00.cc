@@ -68,7 +68,7 @@ using portmux = Portmux::StaticMapper<Meta::List<usart0Position, usart1Position,
 
 //using sensorQuery = Hott::Experimental::SensorQuery<usart0Position, AVR::Usart, AVR::BaudRate<19200>>;
 
-using terminalDevice = Usart<usart0Position, External::Hal::NullProtocollAdapter, UseInterrupts<false>>;
+using terminalDevice = Usart<usart0Position, External::Hal::NullProtocollAdapter<>, UseInterrupts<false>>;
 using terminal = etl::basic_ostream<terminalDevice>;
 
 //using sumd = Hott::SumDProtocollAdapter<0, AVR::UseInterrupts<false>>;
@@ -81,7 +81,7 @@ using gps = External::GPS::GpsProtocollAdapter<0, External::GPS::VTG>;
 using gpsUsart = AVR::Usart<usart2Position, gps, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
 
 namespace {
-    constexpr uint8_t menuLines = 8;
+    constexpr uint8_t menuLines = 4;
     constexpr auto dt = 2_ms;
     constexpr auto fRtc = 512_Hz;
 }
@@ -119,7 +119,7 @@ auto& appData = eeprom::data();
 
 class RCMenu final : public Hott::Menu<menuLines> {
 public:
-    RCMenu() : Menu(this, "WM Sensor 1.0"_pgm, &mSoft, &mTimeout, &mType) {}
+    RCMenu() : Menu<menuLines>(this, "WM Sensor 1.0"_pgm, &mSoft, &mTimeout, &mType) {}
 private:
     Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mSoft{"Start"_pgm, appData, Storage::AVKey::SoftStart, 2};
     Hott::TextWithValue<Storage::AVKey, Storage::ApplData> mTimeout{"TimeOut"_pgm, appData, Storage::AVKey::TimeOut, 10};

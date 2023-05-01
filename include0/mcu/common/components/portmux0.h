@@ -49,24 +49,24 @@ namespace AVR {
             ControlRegister<Portmux, CclRoute_t> cclroutea;
             
             enum class UsartRoute_t : uint8_t {
-                usart0_alt1 = PORTMUX_USART00_bm,
-                usart0_none = PORTMUX_USART00_bm | PORTMUX_USART01_bm ,
-                usart1_alt1 = PORTMUX_USART10_bm,
-                usart1_none = PORTMUX_USART10_bm | PORTMUX_USART11_bm ,
-                usart2_alt1 = PORTMUX_USART20_bm,
-                usart2_none = PORTMUX_USART20_bm | PORTMUX_USART21_bm ,
-                usart3_alt1 = PORTMUX_USART30_bm,
-                usart3_none = PORTMUX_USART30_bm | PORTMUX_USART31_bm ,
+                usart0_alt1 = PORTMUX_USART0_0_bm,
+                usart0_none = PORTMUX_USART0_0_bm | PORTMUX_USART0_1_bm ,
+                usart1_alt1 = PORTMUX_USART1_0_bm,
+                usart1_none = PORTMUX_USART1_0_bm | PORTMUX_USART1_1_bm ,
+                usart2_alt1 = PORTMUX_USART2_0_bm,
+                usart2_none = PORTMUX_USART2_0_bm | PORTMUX_USART2_1_bm ,
+                usart3_alt1 = PORTMUX_USART3_0_bm,
+                usart3_none = PORTMUX_USART3_0_bm | PORTMUX_USART3_1_bm ,
             };
             ControlRegister<Portmux, UsartRoute_t> usartroutea;
 
             enum class TwiSpiRoute_t : uint8_t {
-                spi0_alt1 = PORTMUX_SPI00_bm,
-                spi0_alt2 = PORTMUX_SPI01_bm,
-                spi0_none = PORTMUX_SPI00_bm | PORTMUX_SPI01_bm,
-                twi0_alt1 = PORTMUX_TWI00_bm,
-                twi0_alt2 = PORTMUX_TWI01_bm,
-                twi0_none = PORTMUX_TWI00_bm | PORTMUX_TWI01_bm,
+                spi0_alt1 = PORTMUX_SPI0_0_bm,
+                spi0_alt2 = PORTMUX_SPI0_1_bm,
+                spi0_none = PORTMUX_SPI0_0_bm | PORTMUX_SPI0_1_bm,
+                twi0_alt1 = PORTMUX_TWI0_0_bm,
+                twi0_alt2 = PORTMUX_TWI0_1_bm,
+                twi0_none = PORTMUX_TWI0_0_bm | PORTMUX_TWI0_1_bm,
             };
             ControlRegister<Portmux, TwiSpiRoute_t> twispiroutea;
 

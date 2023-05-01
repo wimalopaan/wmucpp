@@ -65,7 +65,7 @@ struct VersionProvider {
     inline static constexpr void init() {}
     inline static constexpr uint16_t value() {
 #if defined(GITMAJOR) && defined(GITMINOR)
-        static_assert(GITMINOR < 10);
+        static_assert(GITMINOR < 20);
         return GITMAJOR * 100 + GITMINOR;
 #else
         return VERSION_NUMBER;
