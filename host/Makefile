@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-subdirs += hott music tools
+#subdirs += hott music tools
 
 #test23a: CXXFLAGS = -g -std=c++17 -Wall -Wextra -fPIC -I../include 
 #test23a: CXX = clang++
@@ -28,67 +28,72 @@ subdirs += hott music tools
 #targets += rswitch
 #targets += rdiv
 
-test23: test23.cc test23a.cc
+#test23: test23.cc test23a.cc
 
-targets += test01 
-targets += test02 
-targets += test04
-#targets += test04b
-targets += test06
-#targets += test07
-targets += test08
-##targets += test10
-#targets += test11
-#targets += test12
-#targets += test13
-#targets += test15
-#targets += test20
-#targets += test21
-#targets += test22
-#targets += test23
-#targets += test23a
-##targets += test24
-##targets += test25
-##targets += test26
-#targets += test30
-#targets += test35
-#targets += test36
-#targets += test37
-#targets += test38
-#targets += test40
-#targets += test50
-#targets += test51
-targets += test60
-#targets += test70
-#targets += test71
-#targets += test72
-#targets += test73
-targets += test74
-targets += test80
-targets += test85
-#targets += test86
-#targets += test87
-targets += test88
-targets += test90
-targets += test91
-targets += test92
-#targets += test93
-targets += test94
-#targets += test98
-targets += test99
-targets += test99b
-targets += test100
-#targets += test200
-#targets += test201
-targets += test210
-targets += test300
-targets += p00a
+#targets += test01 
+#targets += test02 
+#targets += test04
+##targets += test04b
+#targets += test06
+##targets += test07
+#targets += test08
+###targets += test10
+##targets += test11
+##targets += test12
+##targets += test13
+##targets += test15
+##targets += test20
+##targets += test21
+##targets += test22
+##targets += test23
+##targets += test23a
+###targets += test24
+###targets += test25
+###targets += test26
+##targets += test30
+##targets += test35
+##targets += test36
+##targets += test37
+##targets += test38
+##targets += test40
+##targets += test50
+##targets += test51
+#targets += test60
+##targets += test70
+##targets += test71
+##targets += test72
+##targets += test73
+#targets += test74
+#targets += test80
+#targets += test85
+##targets += test86
+##targets += test87
+#targets += test88
+#targets += test90
+#targets += test91
+#targets += test92
+##targets += test93
+#targets += test94
+##targets += test98
+#targets += test99
+#targets += test99b
+#targets += test100
+##targets += test200
+##targets += test201
+#targets += test210
+#targets += test300
+targets += test400
+targets += test401
+#targets += p00a
 
-p00a: p00a.o p00b.o
+#test400: modA.o test400.o
+#	$(LINK.cc) $^
 
-p00a.o: p00a.c p00.h
+#p00a: p00a.o p00b.o
 
-p00b.o: p00b.c p00.h
+#p00a.o: p00a.c p00.h
+
+#p00b.o: p00b.c p00.h
 
 -include ../Makefile.include
 
@@ -99,10 +104,13 @@ CC = /usr/local/bin/gcc
 #CC = /usr/local/bin/gcc
 #LDFLAGS = -lasan -lubsan -lpthread -lstdc++ 
 #LDFLAGS = -lpthread -lstdc++ 
-CXXFLAGS = -g -std=c++23 -fconcepts -ftemplate-depth=2048 -fno-threadsafe-statics  -fsanitize=address -fsanitize=undefined 
+CXXFLAGS = -g -std=c++23 -fconcepts -fmodules-ts -ftemplate-depth=2048 -fno-threadsafe-statics  -fsanitize=address -fsanitize=undefined 
 CXXFLAGS += -O3
 CXXFLAGS += -Wall -Wextra
 CXXFLAGS += -I../include0/etl
-CFLAGS = -g -std=c2x 
+CFLAGS = -Wall -Wextra -g -std=c2x 
 CFLAGS += -O3
 MCUFLAGS =
+
+%.o: %.cxx
+	$(CXX) -std=c++23 -c -fmodules-ts -x c++ $< -o $@ 

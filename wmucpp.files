@@ -53,6 +53,7 @@ boards/avr128db64_proto/test3_11.cc
 boards/avr128db64_proto/test3_12.cc
 boards/avr128db64_proto/test5_12.cc
 boards/avr128db64_proto/test5_20.cc
+boards/avr128db64_proto/test6_20.cc
 boards/blmc/Makefile
 boards/blmc/blheli.txt
 boards/blmc/blmc_01/Makefile
@@ -1237,6 +1238,7 @@ boards/unimaxi/atmega328p/test16.cc
 boards/unimaxi/attiny84/main.cc
 boards/unimaxi/attiny85_1/main.cc
 boards/unimaxi/attiny85_2/main.cc
+book/wmucbook.adoc
 doc/bmcpp01/bm01.cc
 doc/bmcpp01/bm02.cc
 doc/bmcpp01/bm03a.cc
@@ -1612,6 +1614,11 @@ gcc/base/lib/gcc/avr/12.0.1/device-specs/specs-avr128da32
 gcc/base/lib/gcc/avr/12.0.1/device-specs/specs-avr128da48
 gcc/base/lib/gcc/avr/13.0.0/device-specs/specs-avr128da32
 gcc/base/lib/gcc/avr/13.0.0/device-specs/specs-avr128da48
+host/modA.cxx
+host/modA.hxx
+host/modB.cpp
+host/modB_A.cpp
+host/modB_B.cpp
 host/old/meta.h
 host/old/meta.h
 host/p00.h
@@ -1644,6 +1651,8 @@ host/test24.cc
 host/test30.cc
 host/test30.cc
 host/test300.cc
+host/test400.cc
+host/test401.c
 host/test50.cc
 host/test50.cc
 host/test60.cc
@@ -2422,3 +2431,4 @@ include0/mcu/tinyavr2/attiny2.h
 include0/mcu/tinyavr2/components2.h
 include0/std/compare
 include0/std/coroutine
+include1/wmucpp.h

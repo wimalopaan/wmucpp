@@ -41,6 +41,11 @@ targets += test5_12.hex test5_12.S
 targets += test5_20.hex test5_20.S
 targets += client
 
+# AVR128ProtoBoard_6
+# Devices: HWRev = 5
+targets += test6_20.hex test6_20.S
+targets += client
+
 client:
 	make -f Makefile.client all
 	

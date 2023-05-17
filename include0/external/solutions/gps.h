@@ -50,7 +50,9 @@ namespace External::GPS {
         //        inline static constexpr std::byte GpsChar2 = std::byte{'P'}; 
     };
     
+    template<typename UseInts = AVR::UseInterrupts<false>>
     struct GSV {
+        inline static constexpr bool useISR = UseInts::value;
         inline static constexpr auto prefix = "GSV"_pgm;
         inline static void process(const std::byte b, const uint8_t index, const uint8_t field) {
             if (field == SatelliteNumberFieldNumber) {
@@ -65,21 +67,30 @@ namespace External::GPS {
             }
         }  
         inline static uint16_t receivedPackages() {
-            Scoped<DisbaleInterrupt<RestoreState>> di;
+            if constexpr(useISR) {
+                Scoped<DisbaleInterrupt<RestoreState>> di;
+            }
             return mReceivedPackages;
         }
         inline static void numberRaw(StringBuffer<Sentence::DecimalMaxWidth>& result) {
-            Scoped<DisbaleInterrupt<RestoreState>> di;
+            if constexpr(useISR) {
+                Scoped<DisbaleInterrupt<RestoreState>> di;
+            }
             etl::copy(result, sNumber);
         }
     private:
-        inline static volatile uint16_t mReceivedPackages{0};
+        using count_t = std::conditional_t<useISR, volatile uint16_t, uint16_t>;
+        inline static count_t mReceivedPackages{0};
         inline static constexpr uint8_t SatelliteNumberFieldNumber = 2;
-        inline static volatile std::array<std::byte, Sentence::IntegerMaxWidth> raw;
-        inline static volatile std::array<std::byte, Sentence::IntegerMaxWidth> sNumber;
+        
+        using arr_t = std::conditional_t<useISR, volatile std::array<std::byte, Sentence::IntegerMaxWidth>, std::array<std::byte, Sentence::IntegerMaxWidth>>;
+        inline static arr_t raw;
+        inline static arr_t sNumber;
     };
     
+    template<typename UseInts = AVR::UseInterrupts<false>>
     struct VTG {
+        inline static constexpr bool useISR = UseInts::value;
         inline static constexpr auto prefix = "VTG"_pgm;
         inline static void process(const std::byte b, const uint8_t index, const uint8_t field) {
             if (field == SpeedFieldNumber) {
@@ -94,20 +105,30 @@ namespace External::GPS {
             }
         }  
         inline static uint16_t receivedPackages() {
-            Scoped<DisbaleInterrupt<RestoreState>> di;
+            if constexpr(useISR) {
+                Scoped<DisbaleInterrupt<RestoreState>> di;
+            }
             return mReceivedPackages;
         }
         inline static void speedRaw(StringBuffer<Sentence::DecimalMaxWidth>& result) {
-            Scoped<DisbaleInterrupt<RestoreState>> di;
+            if constexpr(useISR) {
+                Scoped<DisbaleInterrupt<RestoreState>> di;
+            }
             etl::copy(result, speed);
         }
     private:
-        inline static volatile uint16_t mReceivedPackages{0};
+        using count_t = std::conditional_t<useISR, volatile uint16_t, uint16_t>;
+        inline static count_t mReceivedPackages{0};
         inline static constexpr uint8_t SpeedFieldNumber = 6;
-        inline static volatile std::array<std::byte, Sentence::DecimalMaxWidth> raw;
-        inline static volatile std::array<std::byte, Sentence::DecimalMaxWidth> speed;
+        
+        using arr_t = std::conditional_t<useISR, volatile std::array<std::byte, Sentence::DecimalMaxWidth>, std::array<std::byte, Sentence::DecimalMaxWidth>>;
+        inline static arr_t raw;
+        inline static arr_t speed;
     };
+
+    template<typename UseInts = AVR::UseInterrupts<false>>
     struct RMC {
+        inline static constexpr bool useISR = UseInts::value;
         inline static constexpr auto prefix = "RMC"_pgm;
         inline static void process(const std::byte b, const uint8_t index, const uint8_t field) {
             if (field == TimeFieldNumber) {
@@ -132,28 +153,42 @@ namespace External::GPS {
             } 
         }  
         inline static uint16_t receivedPackages() {
-            Scoped<DisbaleInterrupt<RestoreState>> di;
+            if constexpr(useISR) {
+                Scoped<DisbaleInterrupt<RestoreState>> di;
+            }
             return mReceivedPackages;
         }
         inline static void timeRaw(StringBuffer<Sentence::TimeMaxWidth>& result) {
-            Scoped<DisbaleInterrupt<RestoreState>> di;
+            if constexpr(useISR) {
+                Scoped<DisbaleInterrupt<RestoreState>> di;
+            }
             copy(result, time);
         }
         inline static void dateRaw(StringBuffer<Sentence::DateMaxWidth>& result) {
-            Scoped<DisbaleInterrupt<RestoreState>> di;
+            if constexpr(useISR) {
+                Scoped<DisbaleInterrupt<RestoreState>> di;
+            }
             copy(result, date);
         }
     private:
-        inline static volatile uint16_t mReceivedPackages{};
+        using count_t = std::conditional_t<useISR, volatile uint16_t, uint16_t>;
+        inline static count_t mReceivedPackages{};
         inline static constexpr uint8_t TimeFieldNumber = 0;
         inline static constexpr uint8_t DateFieldNumber = 8;
-        inline static volatile std::array<std::byte, Sentence::TimeMaxWidth> rawtime{};
-        inline static volatile std::array<std::byte, Sentence::TimeMaxWidth> time{};
-        inline static volatile std::array<std::byte, Sentence::DateMaxWidth> rawdate{};
-        inline static volatile std::array<std::byte, Sentence::DateMaxWidth> date{};
+        
+        using time_array_t = std::conditional_t<useISR, volatile std::array<std::byte, Sentence::TimeMaxWidth>, std::array<std::byte, Sentence::TimeMaxWidth>>;
+        inline static time_array_t rawtime{};
+        inline static time_array_t time{};
+        using date_array_t = std::conditional_t<useISR, volatile std::array<std::byte, Sentence::DateMaxWidth>, std::array<std::byte, Sentence::DateMaxWidth>>;
+        inline static date_array_t rawdate{};
+        inline static date_array_t date{};
     };
-    template<uint8_t N, typename... SentenceDecoder>
-    struct GpsProtocollAdapter {
+
+    template<uint8_t N, typename DecoderList, typename UseIsr = AVR::UseInterrupts<false>>
+    struct GpsProtocollAdapter;
+    
+    template<uint8_t N, typename... SentenceDecoder, bool useISR>
+    struct GpsProtocollAdapter<N, Meta::List<SentenceDecoder...>, AVR::UseInterrupts<useISR>> {
         enum class State : uint8_t {Undefined, Prefix1, Prefix2, Type, FieldData, Checksum};
 
         using decoders = Meta::List<SentenceDecoder...>;
@@ -162,7 +197,7 @@ namespace External::GPS {
             return mReceivedBytes;
         }
         
-        inline static bool process(const std::byte b) { // from isr only
+        inline static bool process(const std::byte b) { 
             mReceivedBytes = mReceivedBytes + 1;
             switch(state) {
             case State::Undefined:
@@ -233,7 +268,8 @@ namespace External::GPS {
         }  
         inline static void ratePeriodic() {}
     private:
-        inline static volatile uint16_t mReceivedBytes{0};
+        using count_t = std::conditional_t<useISR, volatile uint16_t, uint16_t>;
+        inline static count_t mReceivedBytes{0};
         inline static State state{State::Undefined};
         inline static uint8_t index{0};
         inline static uint8_t field{0};

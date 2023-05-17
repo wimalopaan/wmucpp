@@ -239,7 +239,7 @@ namespace Application {
                 case State::Undefined:
                     etl::outl<Term>("S U"_pgm);
                     break;
-                case State::Init:
+                case State::Init: 
                     etl::outl<Term>("S I"_pgm);
                     break;
                 case State::Calibrate:
