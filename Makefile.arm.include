@@ -52,11 +52,11 @@ ASM += $(CASM)
 DEP += $(CCDEP)
 DEP += $(CDEP)
 
-ifndef  CPU
+ifndef CPU
 CPU = cortex-m0
 endif
 
-MCUFLAGS = -mthumb -mcpu=$(CPU) -D$(PTYPE) -D$(MCU)
+MCUFLAGS = -mthumb -mcpu=$(CPU) $(FPU) $(FLOAT-ABI)
 
 AXTRACTOR = $(HOME)/Projekte/wmgit/extract/axtractor
 EXTRACTOR = $(HOME)/Projekte/wmgit/extract/extractor
@@ -73,11 +73,11 @@ shtml: $(cchtml) $(chtml) $(hhtml) $(ahtml)
 #CPPFLAGS += -DNDEBUG
 
 ifndef OPTFLAGS
-OPTFLAGS = -Os
+OPTFLAGS = -O3
 endif
 
 #CXXFLAGS += $(OPTFLAGS) -std=c++17 #-pedantic
-CXXFLAGS += $(OPTFLAGS) -std=c++2a # -pedantic
+CXXFLAGS += $(OPTFLAGS) -std=c++23 # -pedantic
 #CXXFLAGS += -O3 -std=c++17 # -pedantic
 #CXXFLAGS += -nostdlib -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics
 CXXFLAGS += -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics #-Wgnu-string-literal-operator-template
@@ -88,30 +88,27 @@ CXXFLAGS += -ftemplate-depth=2048
 CXXFLAGS += -fstrict-aliasing -Wstrict-aliasing=1 
 CXXFLAGS += -Wall -Wextra
 CXXFLAGS += -DF_OSC=$(F_OSC) -DF_CPU=$(F_OSC)
-CXXFLAGS += -I. -I../../include -I../include -I../../../include
-//CXXFLAGS += -I. -I../../include/std -I../include/std -I../../../include/std
+CXXFLAGS += -I.
 CXXFLAGS += $(MCUFLAGS)
-#CXXFLAGS +=  -Wa,-mgcc-isr # only for target atmega324pb - was missing in specs-atmega24pb
-#CXXFLAGS += -fno-tree-switch-conversion
 
-CFLAGS += $(OPTFLAGS) -std=gnu11 # wegen __flash
-#CFLAGS += -Os -std=c11 -pedantic
+CFLAGS += $(OPTFLAGS) -std=c11 # wegen __flash
 CFLAGS += -funsigned-char -funsigned-bitfields -fshort-enums
 CFLAGS += -Wall -Wextra
 CFLAGS += -fstrict-aliasing -Wstrict-aliasing=1 
 CFLAGS += -DF_OSC=$(F_OSC) -DF_CPU=$(F_OSC)
-CFLAGS += -I. -I../../include
-CFLAGS += -I../include
+CFLAGS += -I. 
 CFLAGS += $(MCUFLAGS)
 
 ASMFLAGS += -fverbose-asm
 ASMFLAGS +=  -Wa,-adhln
 
 LDFLAGS += -Wl,--gc-sections
+LDFLAGS += -specs=nano.specs
 LDFLAGS += $(MCUFLAGS) -T$(LDSCRIPT) 
 
 CC = arm-none-eabi-gcc
 CXX = arm-none-eabi-g++
+AS = arm-none-eabi-as
 OBJCOPY = arm-none-eabi-objcopy
 OBJDUMP = arm-none-eabi-objdump
 SIZE = arm-none-eabi-size
@@ -126,27 +123,6 @@ NM = arm-none-eabi-nm
 %.S: %.s
 	cat $< | c++filt | grep -v "^[ \t]*;" | grep -v "^[ \t]*\/\*.*\*\/$$" | grep -v "^[ \t]*__[Stz]" | grep -v "^\.L__" | grep -v "^.L[FV]" | grep -v "^\s*\.[fgi]" | grep -v "^[ \t]*$$" > $@
 	#cat $< | grep -v "^#" | grep -v "^[ \t]*$$" | grep -v "[ \t]*\.cfi_" | grep -v "^\.L[A-Z][A-Z]" > $@
-
-%.s: %.s.save
-	cp $< $@
-	
-%.size: %.elf
-	avr-size $< > $@
-
-# Program the device.  
-%.pgr: %.hex %.eep
-	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:w:$< $(AVRDUDE_WRITE_EEPROM)
-
-%.btl: %.hex
-	$(AVRDUDE) -p $(MCU) -P /dev/ttyUSB0 -c arduino -b 57600 -U flash:w:$< 
-
-# Create final output files (.hex, .eep) from ELF output file.
-%.hex: %.elf
-	$(OBJCOPY) -O ihex -R .eeprom $< $@
-
-%.eep: %.elf
-	-$(OBJCOPY) -j .eeprom --set-section-flags=.eeprom="alloc,load" \
-	--change-section-lma .eeprom=0 -O ihex $< $@
 
 # Create extended listing file from ELF output file.
 %.lss: %.elf
@@ -192,26 +168,6 @@ NM = arm-none-eabi-nm
 %.s.html: %.s
 	$(SRCHI) -sasm -i $< -o $@
 
-%.out: %
-	./$< $(PARGS) > $@
-
-%.aout: %
-	echo -n ".{output-caption} {counter:output}. Ausgabe des Programms: \`" > $@
-	echo -n $< >> $@
-	echo "\`" >> $@
-	echo "[role=\"output\"]" >> $@
-	echo "...." >> $@
-	-SIMPLETEST=${SIMPLETEST} ./$< $(PARGS) >> $@ 2>&1
-	echo "...." >> $@
-
-%.aout2: %
-	echo -n ".{output-caption} {counter:output}. Ausgabe des Programms: \`" > $@
-	echo -n $< >> $@
-	echo "\`" >> $@
-	echo "[role=\"output\"]" >> $@
-	echo "...." >> $@
-	-SIMPLETEST=${SIMPLETEST} ./$< $(PARGS) >> $@ 2>/dev/null
-	echo "...." >> $@
 
 subclean:
 	@for d in ${subdirs}; do \
