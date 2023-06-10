@@ -1,5 +1,7 @@
 #define NDEBUG
 
+#define RF_EXTRA
+
 #include <mcu/avr.h>
 #include <mcu/common/delay.h>
 
@@ -94,10 +96,10 @@ using terminal = etl::basic_ostream<tdev>;
 
 using tca0Position = AVR::Portmux::Position<AVR::Component::Tca<0>, Portmux::Default>;
 using cppm = External::Ppm::Cppm<tca0Position, std::integral_constant<uint8_t, 16>, AVR::UseInterrupts<true>>;
-using lut0 = Ccl::SimpleLut<0, Ccl::Input::Mask, Ccl::Input::Tca0<1>, Ccl::Input::Mask>;    
+//using lut0 = Ccl::SimpleLut<0, Ccl::Input::Mask, Ccl::Input::Tca0<1>, Ccl::Input::Mask>;    
 
 using twi0Position = Portmux::Position<Component::Twi<0>, Portmux::Alt2>;
-using twi = AVR::Twi::Master<twi0Position>;
+using twi = AVR::Twi::Master<twi0Position, etl::NamedConstant<128>>;
 
 using portmux = Portmux::StaticMapper<Meta::List<tca0Position, twi0Position, usart0Position>>;
 
@@ -108,10 +110,10 @@ struct Fsm {
     using ch_t = cppm::channel_t;
     using rv_t = cppm::ranged_type;
     
-    enum class State : uint8_t {Undefined, Init, Set, Set2, Run};
+    enum class State : uint8_t {Undefined, Init, SetPhase, Set, Set2, Run};
     
     static inline constexpr External::Tick<systemTimer> mInitTicks{500_ms};
-    static inline constexpr External::Tick<systemTimer> mChangeTicks{2000_ms};
+    static inline constexpr External::Tick<systemTimer> mChangeTicks{1_ms};
     static inline constexpr External::Tick<systemTimer> mDebugTicks{500_ms};
     
     static inline void init() {
@@ -122,19 +124,20 @@ struct Fsm {
 //        a5Pin::dir<Output>();
         
         fSwitch::init();
+        fSwitch::activate();
         
         twi::init();
         
         tdev::init<BaudRate<9600>>();
         
-//        cppm::set(ch_t{0}, rv_t{cppm::ocMedium});
-//        cppm::set(ch_t{1}, rv_t{cppm::ocMedium});
-//        cppm::set(ch_t{2}, rv_t{cppm::ocMedium});
-//        cppm::set(ch_t{3}, rv_t{cppm::ocMedium});
-//        cppm::set(ch_t{4}, rv_t{cppm::ocMedium});
-//        cppm::set(ch_t{5}, rv_t{cppm::ocMedium});
-//        cppm::set(ch_t{6}, rv_t{cppm::ocMedium});
-//        cppm::set(ch_t{7}, rv_t{cppm::ocMedium});
+        cppm::set(ch_t{0}, rv_t{cppm::ocMedium});
+        cppm::set(ch_t{1}, rv_t{cppm::ocMedium});
+        cppm::set(ch_t{2}, rv_t{cppm::ocMedium});
+        cppm::set(ch_t{3}, rv_t{cppm::ocMedium});
+        cppm::set(ch_t{4}, rv_t{cppm::ocMedium});
+        cppm::set(ch_t{5}, rv_t{cppm::ocMedium});
+        cppm::set(ch_t{6}, rv_t{cppm::ocMedium});
+        cppm::set(ch_t{7}, rv_t{cppm::ocMedium});
         
         etl::outl<terminal>("dds10"_pgm);
     }
@@ -149,7 +152,7 @@ struct Fsm {
         ++mStateTick;
         ++mChangeTick;
         (++mDebugTick).on(mDebugTicks, []{
-            etl::outl<terminal>("v: "_pgm, vv.toInt());
+            etl::outl<terminal>("v: "_pgm, vv.toInt(), " div: "_pgm, div);
         });
         switch(mState) {
         case State::Undefined:
@@ -159,24 +162,34 @@ struct Fsm {
             break;
         case State::Init:
             mStateTick.on(mInitTicks, []{
-                si::setOutput(0);
+                si::setOutputSamePll(0);
+//                si::setOutput(0);
                 mState = State::Set; 
             });
             break;
+        case State::SetPhase:
+            if (si::phase(2, 127)) {
+                mState = State::Set2;
+            }
+            break;
         case State::Set:
-            if (si::setChannel(50)) {
-                si::setOutput(2);
+            if (si::setFrequency(7'000'000_Hz, &div)) {
+//            if (si::setChannel(1)) {
+                si::setOutputSamePll(2, true); // invert
+//                si::setOutput(2);
                 mState = State::Set2;
             }
             break;
         case State::Set2:
-            if (si::setChannelUpperFreq(50)) {
+            if (si::setFrequency(7'000'000_Hz)) {
+//            if (si::setChannelUpperFreq(1)) {
                 mState = State::Run;
             }
             break;
         case State::Run:
             mChangeTick.on(mChangeTicks, []{
-//                cppm::set(ch_t{0}, vv);
+//                fSwitch::toggle();
+                cppm::set(ch_t{0}, ++vv);
                 if (vv.isTop()) {
                     vv.setToBottom();
                 }
@@ -196,6 +209,8 @@ struct Fsm {
                 etl::outl<terminal>("S: Init"_pgm);
                 led1::activate();
                 break;
+            case State::SetPhase:
+                break;
             case State::Set:
                 etl::outl<terminal>("S: Set"_pgm);
                 led2::activate();
@@ -205,13 +220,14 @@ struct Fsm {
                 break;
             case State::Run:
                 etl::outl<terminal>("S: Run"_pgm);
-//                cppm::init();
+                cppm::init();
 //                lut0::init(0x33_B); // invert
                 break;
             }
         } 
     }
 private:
+    static inline uint32_t div{0};
     static inline rv_t vv{cppm::ocMedium};    
     static inline State mState{State::Undefined};
     static inline External::Tick<systemTimer> mStateTick;
@@ -223,12 +239,12 @@ using fsm = Fsm<>;
 
 struct SetBaseFreq {
     inline static void once() {
-        fSwitch::inactivate();
+        fSwitch::activate();
     }
 };
 struct SetUpperFreq {
     inline static void once() {
-        fSwitch::activate();
+        fSwitch::inactivate();
     }
 };
 

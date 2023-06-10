@@ -372,6 +372,11 @@ boards/include/rcsensorled10.h
 boards/include/varioprop.h
 boards/ledstripe/Makefile
 boards/ledstripe/test00.cc
+boards/nucleo_g431/Makefile
+boards/nucleo_g431/link.ld
+boards/nucleo_g431/startup.s
+boards/nucleo_g431/system.c
+boards/nucleo_g431/test00.cc
 boards/onoff/Makefile
 boards/onoff/doc/Makefile
 boards/onoff/doc/onoff.adoc

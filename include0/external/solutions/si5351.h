@@ -83,6 +83,8 @@ namespace External {
             
             static_assert(bus::size() > 8);
 
+//            std::integral_constant<uint16_t, External::RC::channels.size()>::_;
+            
             static inline constexpr auto setupChannels = []{
                 std::array<SetupData, External::RC::channels.size()> data;
                 
@@ -116,6 +118,7 @@ namespace External {
             static inline uint8_t imsynth{42};
             static inline uint8_t ireg{16};
             static inline uint8_t iregValue{0x4f};
+            static inline uint8_t iclk0PhaseOffset{165};
             
             static inline void periodic() {
                 switch(mState) {
@@ -172,7 +175,12 @@ namespace External {
             static inline bool on() {
                 return bus::write(Adr, {OutputEnableReg, 0x00});
             }
-            
+
+            static inline bool phase(const uint8_t output, uint8_t phase) {
+                phase &= 0x7f;
+                return bus::write(Adr, {iclk0PhaseOffset + output, phase});
+            }
+
             static inline bool setupWithClockBuilderData() {
                 if (mState == State::DefaultSetupComplete) {
                     mState = State::Idle;
@@ -206,8 +214,32 @@ namespace External {
                     iregValue = 0x4f; // use PLLA
                 }
             }
+
+            static inline void setOutputSamePll(const uint8_t o, bool invert = false) {
+                if (o == 2) {
+                    ipll = 26; // PLLA
+                    imsynth = 58;
+                    ireg = 18;
+                    iregValue = 0x4f; // use PLLA                    
+                }
+                else if (o == 1) {
+                    ipll = 26; // PLLA
+                    imsynth = 50;
+                    ireg = 17;
+                    iregValue = 0x4f; // use PLLA
+                }
+                else {
+                    ipll = 26; // PLLA
+                    imsynth = 42;
+                    ireg = 16;
+                    iregValue = 0x4f; // use PLLA
+                }
+                if (invert) {
+                    iregValue |= 0x10;
+                }
+            }
             
-            static inline bool setFrequency(const External::Units::hertz& f) {
+            static inline bool setFrequency(const External::Units::hertz& f, uint32_t* div = nullptr) {
                 if (mState == State::SetupChannelComplete) {
                     mState = State::Idle;
                     return true;
@@ -215,13 +247,16 @@ namespace External {
                 else {
                     if (mState == State::Idle) {
                         actual = calculateSetupData(f.value + FreqOffset);
+                        if (div) {
+                            *div = actual.div;
+                        }
                         mState = State::SetupChannelStart;
                     }
                     return false;
                 }
             }
             
-            static inline bool setChannel(const uint8_t c) {
+            static inline bool setChannel(const uint16_t c) {
                 if (mState == State::SetupChannelComplete) {
                     mState = State::Idle;
                     return true;
@@ -236,7 +271,7 @@ namespace External {
                 }
                 
             }
-            static inline bool setChannelUpperFreq(const uint8_t c) {
+            static inline bool setChannelUpperFreq(const uint16_t c) {
                 if (mState == State::SetupChannelComplete) {
                     mState = State::Idle;
                     return true;

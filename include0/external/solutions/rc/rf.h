@@ -3,9 +3,9 @@
 #include <cstdint>
 
 namespace External::RC {
-    enum class Band : uint8_t {_27MHz, _35AMHz, _35BMHz, _40MHz, _41MHz, _72MHz};
+    enum class Band : uint8_t {_27MHz, _35AMHz, _35BMHz, _40MHz, _41MHz, _72MHz, _Test};
     
-    static inline constexpr uint8_t NumberOfBands = 6;
+//    static inline constexpr uint8_t NumberOfBands = 7;
     
     struct Channel {
         const Band     mBand{};
@@ -14,6 +14,10 @@ namespace External::RC {
     };
     
     inline static constexpr std::array channels {
+#ifdef RF_EXTRA
+        Channel{Band::_Test,   500, 7'000'000 * 4}, // 
+        Channel{Band::_Test,   501, 7'000'000}, // 
+#endif
         Channel{Band::_27MHz,   4, 26'995'000},
         Channel{Band::_27MHz,   5, 27'005'000},
         Channel{Band::_27MHz,   6, 27'015'000},

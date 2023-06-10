@@ -1,5 +1,7 @@
 #define NDEBUG
 
+#define RF_EXTRA // extra frequencies
+
 #include <mcu/avr.h>
 #include <mcu/common/delay.h>
 
@@ -86,7 +88,7 @@ using fSwitchPin = Pin<Port<D>, 7>;
 using fSwitch = ActiveHigh<fSwitchPin, Output>;
 
 using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Default>; // Sensor
-using tdev = Usart<usart0Position, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<16>, AVR::SendQueueLength<256>>;
+using tdev = Usart<usart0Position, External::Hal::NullProtocollAdapter<>, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<16>, AVR::SendQueueLength<256>>;
 using terminal = etl::basic_ostream<tdev>;
 
 using tca0Position = AVR::Portmux::Position<AVR::Component::Tca<0>, Portmux::Default>;
@@ -152,18 +154,19 @@ struct Fsm {
             break;
         case State::Init:
             mStateTick.on(mInitTicks, []{
-                si::setOutput(0);
+                si::setOutput(1);
                mState = State::Set; 
             });
             break;
         case State::Set:
-            if (si::setChannel(50)) {
-                si::setOutput(1);
-                mState = State::Set2;
+            if (si::setFrequency(7'000'000_Hz * 4)) {
+//            if (si::setChannel(0)) { 
+//                si::setOutput(1);
+                mState = State::Run;
             }
             break;
         case State::Set2:
-            if (si::setChannelUpperFreq(50)) {
+            if (si::setChannelUpperFreq(0)) {
                 mState = State::Run;
             }
             break;

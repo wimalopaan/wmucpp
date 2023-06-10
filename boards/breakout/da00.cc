@@ -81,7 +81,7 @@ using c1Pin = Pin<Port<C>, 1>;
 using c2Pin = Pin<Port<C>, 2>;
 
 using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Default>; 
-using tdev = Usart<usart0Position, External::Hal::NullProtocollAdapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<16>, AVR::SendQueueLength<256>>;
+using tdev = Usart<usart0Position, External::Hal::NullProtocollAdapter<>, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<16>, AVR::SendQueueLength<256>>;
 using terminal = etl::basic_ostream<tdev>;
 //using terminal = etl::basic_ostream<void>;
 
