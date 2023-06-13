@@ -76,18 +76,14 @@ ifndef OPTFLAGS
 OPTFLAGS = -O3
 endif
 
-#CXXFLAGS += $(OPTFLAGS) -std=c++17 #-pedantic
 CXXFLAGS += $(OPTFLAGS) -std=c++23 # -pedantic
-#CXXFLAGS += -O3 -std=c++17 # -pedantic
-#CXXFLAGS += -nostdlib -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics
 CXXFLAGS += -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics #-Wgnu-string-literal-operator-template
 CXXFLAGS += -funsigned-char -funsigned-bitfields -fshort-enums 
-#CXXFLAGS += -ffunction-sections  -fdata-sections # seperate sections -> see --gc-sections 
+CXXFLAGS += -ffunction-sections  -fdata-sections # seperate sections -> see --gc-sections 
 CXXFLAGS += -fconcepts
 CXXFLAGS += -ftemplate-depth=2048
 CXXFLAGS += -fstrict-aliasing -Wstrict-aliasing=1 
 CXXFLAGS += -Wall -Wextra
-CXXFLAGS += -DF_OSC=$(F_OSC) -DF_CPU=$(F_OSC)
 CXXFLAGS += -I.
 CXXFLAGS += $(MCUFLAGS)
 
@@ -95,7 +91,6 @@ CFLAGS += $(OPTFLAGS) -std=c11 # wegen __flash
 CFLAGS += -funsigned-char -funsigned-bitfields -fshort-enums
 CFLAGS += -Wall -Wextra
 CFLAGS += -fstrict-aliasing -Wstrict-aliasing=1 
-CFLAGS += -DF_OSC=$(F_OSC) -DF_CPU=$(F_OSC)
 CFLAGS += -I. 
 CFLAGS += $(MCUFLAGS)
 
@@ -103,6 +98,7 @@ ASMFLAGS += -fverbose-asm
 ASMFLAGS +=  -Wa,-adhln
 
 LDFLAGS += -Wl,--gc-sections
+LDFLAGS += -Wl,--no-warn-rwx-segments
 LDFLAGS += -specs=nano.specs
 LDFLAGS += $(MCUFLAGS) -T$(LDSCRIPT) 
 
@@ -140,6 +136,9 @@ NM = arm-none-eabi-nm
 
 %.hex: %.elf
 	$(OBJCOPY) -O ihex -R .eeprom $(shell pwd)/$< $@
+
+%.bin: %.elf
+	$(OBJCOPY) -O binary -S $< $@  
 
 %.d: %.cc
 	$(CXX) -MM -MG $(CXXFLAGS) $< | sed 's/$*\.o/& $@ $*.elf $<.extract/g' > $@
@@ -188,7 +187,6 @@ clean:	subclean
 	$(RM) *.eep
 	$(RM) *.size
 	$(RM) *.html
-	$(RM) *.s
 	$(RM) *.S
 
 
