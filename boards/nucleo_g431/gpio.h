@@ -1,14 +1,33 @@
 #pragma once
 
+#include "mcu.h"
+#include "mcu_traits.h"
+#include "concepts.h"
+
+#include <type_traits>
+#include <concepts>
+
 namespace Mcu::Stm {
     using namespace Units::literals;
 
+    template<typename Letter, typename MCU = void>
+    struct GPIO;
+
     template<typename Letter, typename MCU>
     struct GPIO {
-        static inline /*constexpr */ GPIO_TypeDef* const mcuGpio = reinterpret_cast<GPIO_TypeDef*>(Mcu::Stm::Address<GPIO<Letter>>::value);
+        static inline /*constexpr */ GPIO_TypeDef* const mcuGpio = reinterpret_cast<GPIO_TypeDef*>(Mcu::Stm::Address<GPIO<Letter, MCU>>::value);
         static inline void init() {
             RCC->AHB2ENR |= Letter::ahb2Bit;
         }
+    };
+    
+    template<G4xx MCU> 
+    struct Address<GPIO<A, MCU>> {
+        static inline constexpr uintptr_t value = GPIOA_BASE;
+    };
+    template<G4xx MCU> 
+    struct Address<GPIO<B, MCU>> {
+        static inline constexpr uintptr_t value = GPIOB_BASE;
     };
     
     template<typename GP, uint8_t N, typename MCU = void>

@@ -141,7 +141,7 @@ NM = arm-none-eabi-nm
 	$(OBJCOPY) -O binary -S $< $@  
 
 %.d: %.cc
-	$(CXX) -MM -MG $(CXXFLAGS) $< | sed 's/$*\.o/& $@ $*.elf $<.extract/g' > $@
+	$(CXX) -MM -MG $(CPPFLAGS) $(CXXFLAGS) $< | sed 's/$*\.o/& $@ $*.elf $<.extract/g' > $@
 
 %.cc.extract: %.cc
 	$(EXTRACTOR) -lcpp -aA2 -aN -o$@ -d$(EXTRACTDIR) $<

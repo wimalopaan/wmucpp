@@ -17,7 +17,6 @@ namespace Mcu {
             
         template<typename MCU> concept G4xx = isG4xx<MCU>::value;
         
-        
         struct A {
             static inline constexpr uint8_t ahb2Bit = 0x01;
         };
@@ -28,19 +27,5 @@ namespace Mcu {
     
         template<typename C> struct Address;
 
-        template<typename Letter, typename MCU = void>
-        struct GPIO;
-        
-        
-        template<> 
-        struct Address<GPIO<A>> {
-            static inline constexpr uintptr_t value = GPIOA_BASE;
-        };
-        template<> 
-        struct Address<GPIO<B>> {
-            static inline constexpr uintptr_t value = GPIOB_BASE;
-        };
-        
-        
     }
 }

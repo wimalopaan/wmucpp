@@ -1,10 +1,10 @@
-#include <stm32g4xx.h>
-
 #include "devices.h"
 
 template<typename Devices>
 struct GFSM {
     using devs = Devices;
+    using trace = devs::trace;
+    using systemTimer = devs::systemTimer;
     
     static inline void init() {
         devs::init();
@@ -14,9 +14,12 @@ struct GFSM {
         ++r;
     }
     static inline void ratePeriodic() {
+        ++a;
+        a &= 0x0fff;
+        devs::dac1::set(a);
         if (++c == 1000) {
             c = 0;
-            IO::outl<typename devs::trace>("bla: ", devs::systemTimer::value, " r: ", r);
+            IO::outl<trace>("systick: ", systemTimer::value, " r: ", r, " a: ", a);
             r = 0;
         }
         devs::pinb4::toggle();
@@ -25,6 +28,7 @@ struct GFSM {
 private:
     static inline uint32_t c;
     static inline uint32_t r;
+    static inline uint16_t a;
 };
 
 //extern "C" void SysTick_Handler()  {                               
