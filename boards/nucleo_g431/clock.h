@@ -2,6 +2,7 @@
 
 #include <type_traits>
 #include <concepts>
+#include <chrono>
 
 #include "units.h"
 #include "concepts.h"
@@ -24,6 +25,8 @@ namespace Mcu::Stm {
         
         static inline constexpr Units::megahertz f{170_MHz};
         static inline constexpr uint32_t systick{f / SysTickFreq}; 
+        
+        static inline constexpr std::chrono::microseconds systickIntervall{1'000'000 / SysTickFreq.value};
     };
     
     template<typename Config, typename MCU = void> struct Clock;
@@ -68,6 +71,9 @@ namespace Mcu::Stm {
     template<typename Clock,  typename UseInterrupts = std::false_type, typename MCU = void> struct SystemTimer;
     template<typename Clock, Concept::Flag UseInterrupts, Mcu::Stm::G4xx MCU>
     struct SystemTimer<Clock, UseInterrupts, MCU> {
+        
+        static inline constexpr std::chrono::microseconds intervall = Clock::config::systickIntervall;
+        
         inline static void init() {
             SysTick->LOAD = Clock::config::systick;
             SysTick->CTRL |= (1 << SysTick_CTRL_ENABLE_Pos) 

@@ -1,6 +1,7 @@
 
 /home/lmeier/Projekte/STM32CubeG4/Drivers/CMSIS/Core/Include
 /home/lmeier/Projekte/STM32CubeG4/Drivers/CMSIS/Device/ST/STM32G4xx/Include
+/home/lmeier/Projekte/STM32CubeG4/Drivers/STM32G4xx_HAL_Driver/Inc
 
 /home/lmeier/Software/asf/sam0/utils/cmsis/samd21/include
 include0

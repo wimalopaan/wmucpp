@@ -8,4 +8,4 @@ test00.o test00.d test00.elf test00.cc.extract: test00.cc devices.h mcu.h \
  ../../../STM32CubeG4/Drivers/CMSIS/Core/Include/mpu_armv7.h \
  ../../../STM32CubeG4/Drivers/CMSIS/Device/ST/STM32G4xx/Include/system_stm32g4xx.h \
  adc.h units.h concepts.h mcu_traits.h dac.h clock.h output.h traits.h \
- arm.h gpio.h
+ arm.h gpio.h tick.h

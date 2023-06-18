@@ -387,6 +387,7 @@ boards/nucleo_g431/output.h
 boards/nucleo_g431/startup.s
 boards/nucleo_g431/system.c
 boards/nucleo_g431/test00.cc
+boards/nucleo_g431/tick.h
 boards/nucleo_g431/traits.h
 boards/nucleo_g431/units.h
 boards/onoff/Makefile

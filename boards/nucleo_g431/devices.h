@@ -10,6 +10,7 @@
 #include "mcu_traits.h"
 #include "arm.h"
 #include "gpio.h"
+#include "tick.h"
 
 template<typename HW, typename MCU = void>
 struct Devices {

@@ -4,6 +4,7 @@ FLOAT-ABI = -mfloat-abi=hard
 
 CPPFLAGS += -I../../../STM32CubeG4/Drivers/CMSIS/Core/Include
 CPPFLAGS += -I../../../STM32CubeG4/Drivers/CMSIS/Device/ST/STM32G4xx/Include
+CPPFLAGS += -I../../../STM32CubeG4/Drivers/STM32G4xx_HAL_Driver/Inc
 CPPFLAGS += -DSTM32G431xx
 
 LDSCRIPT = link.ld
