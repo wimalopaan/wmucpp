@@ -262,6 +262,75 @@ namespace AVR {
     };
 
 
+    template<AVR::Concepts::ComponentSpecifier CNumber, const auto& Frequency, AVR::Concepts::At012DxSeries MCU>
+    requires (std::is_same_v<AVR::A, typename CNumber::component_type>) && AVR::Util::is_frequency_v<decltype(Frequency)>
+    struct SystemTimer<CNumber, Frequency, MCU> {
+        using value_type  = uint16_t;  
+        
+        using ctrla_t = typename MCU::TCA::CtrlA_t;
+        using intflags_t = typename MCU::TCA::Intflags_t;
+        
+        inline static auto constexpr n = CNumber::value;
+        
+        static constexpr auto mcu_timer = AVR::getBaseAddr<typename MCU::TCA, n>;
+        static constexpr auto prescaler_values = MCU::TCA::prescalerValues;
+
+        static constexpr auto intervall = uint16_t{1} / Frequency;
+        static constexpr auto frequency = Frequency;
+        
+        
+//        static constexpr auto intervall = Interval;
+//        std::integral_constant<uint16_t, intervall.value>::_;
+        
+//        static constexpr auto frequency = uint16_t{1} / Interval;
+
+        using tsd_type = TimerSetupData<value_type>;
+        
+        static inline constexpr auto calculate(const hertz& ftimer) {
+            auto prescalers = prescalerValues(prescaler_values);
+            
+            for(const auto& p : etl::sort(prescalers)) { // aufsteigend
+                if (p > 0) {
+                    const auto tv = (Project::Config::fMcu / ftimer) / p;
+                    if ((tv > 0) && (tv < std::numeric_limits<value_type>::max())) {
+                        const bool exact = ((Project::Config::fMcu.value / p) % tv) == 0;
+                        return tsd_type{p, static_cast<value_type>(tv), Project::Config::fMcu / tv / uint32_t(p), exact};
+                    }
+                }
+            }
+            return tsd_type{};
+        }
+        
+        static constexpr auto tsd = calculate(frequency);
+        static_assert(tsd, "falscher wert für p");
+        static constexpr auto exact_intervall = duration_cast<milliseconds>(uint16_t{1} / tsd.f);
+        
+//        decltype(exact_intervall)::_;
+//        std::integral_constant<uint16_t, exact_intervall.value>::_;        
+//        std::integral_constant<uint16_t, tsd.ocr>::_;        
+//        std::integral_constant<uint16_t, tsd.prescaler>::_;        
+        
+        template<uint16_t PreScale>
+        inline static void prescale() {
+            constexpr auto p = AVR::Util::Timer::bitsFrom<PreScale>(prescaler_values);
+            mcu_timer()->ctrla.template set<p | ctrla_t::enable>();
+        }
+        
+        inline static void init() {
+            prescale<tsd.prescaler>();
+            *mcu_timer()->perbuf = tsd.ocr;
+        }
+        
+        template<etl::Concepts::Callable Callable, auto Flag = MCU::TCA::Intflags_t::ovf>
+        inline static void periodic(const Callable& f) {
+            mcu_timer()->intflags.template testAndReset<Flag>([&](){
+                f();
+            });
+        }
+    };
+    
+    
+    
     template<const auto& Frequency, AVR::Concepts::At012DxSeries MCU>
     requires AVR::Util::is_frequency_v<decltype(Frequency)>
     struct SystemTimer<AVR::Component::Rtc<0>, Frequency, MCU> final {
@@ -272,7 +341,7 @@ namespace AVR {
         using ctrla_t = typename MCU::Rtc::CtrlA_t;
         using intflags_t = typename MCU::Rtc::IntFlags_t;
         
-        static constexpr auto mcu_rtc = AVR::getBaseAddr<typename MCU::Rtc>;
+        static constexpr auto mcu_rtc = AVR::getBaseAddr<typename MCU::Rtc>;        
         static constexpr auto prescaler_values = MCU::Rtc::prescalerValues;
 
         static constexpr auto intervall = uint16_t{1} / Frequency;

@@ -49,5 +49,6 @@ targets += da00.hex
 targets += da01.hex
 targets += da02.hex
 targets += si5351.hex
+targets += fsk00.hex
 
 -include ../../Makefile.avr0.include

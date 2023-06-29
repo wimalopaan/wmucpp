@@ -30,5 +30,6 @@ subdirs =
 targets += test01.elf test01.hex
 targets += test02.elf test02.hex
 targets += test03.elf test03.hex
+targets += fsk00.hex
 
 -include ../../Makefile.avr0.include

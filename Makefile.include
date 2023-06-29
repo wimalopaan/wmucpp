@@ -71,27 +71,27 @@ shtml: $(cchtml) $(chtml) $(hhtml) $(ahtml)
 #CPPFLAGS += -DNDEBUG
 
 ifndef OPTFLAGS
-OPTFLAGS = -Os
+OPTFLAGS = -O2
 endif
 
 #CXXFLAGS += $(OPTFLAGS) -std=c++17 #-pedantic
-CXXFLAGS += $(OPTFLAGS) -std=c++2a # -pedantic
+CXXFLAGS += $(OPTFLAGS) -std=c++23 # -pedantic
 #CXXFLAGS += -O3 -std=c++17 # -pedantic
 #CXXFLAGS += -nostdlib -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics
-CXXFLAGS += -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics #-Wgnu-string-literal-operator-template
-CXXFLAGS += -funsigned-char -funsigned-bitfields -fshort-enums 
+#CXXFLAGS += -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics #-Wgnu-string-literal-operator-template
+#CXXFLAGS += -funsigned-char -funsigned-bitfields -fshort-enums 
 #CXXFLAGS += -ffunction-sections  -fdata-sections # seperate sections -> see --gc-sections 
 CXXFLAGS += -fconcepts
 CXXFLAGS += -ftemplate-depth=2048
 CXXFLAGS += -fstrict-aliasing -Wstrict-aliasing=1 
 CXXFLAGS += -Wall -Wextra
-CXXFLAGS += -DF_OSC=$(F_OSC) -DF_CPU=$(F_OSC)
+#CXXFLAGS += -DF_OSC=$(F_OSC) -DF_CPU=$(F_OSC)
 #CXXFLAGS += -I/usr/local/avr/avr/include
-CXXFLAGS += -I. -I../../include -I../include -I../../../include
-CXXFLAGS += -I. -I../../include/std -I../include/std -I../../../include/std
-CXXFLAGS += -I/usr/include/simavr
+#CXXFLAGS += -I. -I../../include -I../include -I../../../include
+#CXXFLAGS += -I. -I../../include/std -I../include/std -I../../../include/std
+#CXXFLAGS += -I/usr/include/simavr
 #CXXFLAGS += -I/usr/avr/include
-CXXFLAGS += $(MCUFLAGS)
+#CXXFLAGS += $(MCUFLAGS)
 #CXXFLAGS +=  -Wa,-mgcc-isr # only for target atmega324pb - was missing in specs-atmega24pb
 #CXXFLAGS += -fno-tree-switch-conversion
 
@@ -100,13 +100,13 @@ CFLAGS += $(OPTFLAGS) -std=gnu11 # wegen __flash
 CFLAGS += -funsigned-char -funsigned-bitfields -fshort-enums
 CFLAGS += -Wall -Wextra
 CFLAGS += -fstrict-aliasing -Wstrict-aliasing=1 
-CFLAGS += -DF_OSC=$(F_OSC) -DF_CPU=$(F_OSC)
-CFLAGS += -I/usr/local/avr/avr/include
-CFLAGS += -I. -I../../include
-CFLAGS += -I../include
-CFLAGS += -I/usr/include/simavr
+#CFLAGS += -DF_OSC=$(F_OSC) -DF_CPU=$(F_OSC)
+#CFLAGS += -I/usr/local/avr/avr/include
+#CFLAGS += -I. -I../../include
+#CFLAGS += -I../include
+#CFLAGS += -I/usr/include/simavr
 #CFLAGS += -I/usr/avr/include
-CFLAGS += $(MCUFLAGS)
+#CFLAGS += $(MCUFLAGS)
 #CFLAGS +=  -Wa,-mgcc-isr # only for target atmega324pb - was missing in specs-atmega24pb
 
 ASMFLAGS += -fverbose-asm
@@ -126,8 +126,8 @@ AVRDUDE_FLAGS += $(AVRDUDE_VERBOSE)
 AVRDUDE_FLAGS += $(AVRDUDE_ERASE_COUNTER)
 AVRDUDE_FLAGS += -C+/home/lmeier/Projekte/wmucpp/avrdude.conf
 
-CC = /usr/local/bin/avr-gcc
-CXX = /usr/local/bin/avr-g++
+#CC = /usr/local/bin/avr-gcc
+#CXX = /usr/local/bin/avr-g++
 #CC = /usr/bin/avr-gcc
 #CXX = /usr/bin/avr-g++
 OBJCOPY = avr-objcopy

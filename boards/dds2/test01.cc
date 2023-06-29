@@ -162,8 +162,8 @@ struct Fsm {
             break;
         case State::Init:
             mStateTick.on(mInitTicks, []{
-                si::setOutputSamePll(0);
-//                si::setOutput(0);
+//                si::setOutputSamePll(0);
+                si::setOutput(0);
                 mState = State::Set; 
             });
             break;
@@ -175,13 +175,13 @@ struct Fsm {
         case State::Set:
             if (si::setFrequency(7'000'000_Hz, &div)) {
 //            if (si::setChannel(1)) {
-                si::setOutputSamePll(2, true); // invert
-//                si::setOutput(2);
+//                si::setOutputSamePll(2, true); // invert
+                si::setOutput(2);
                 mState = State::Set2;
             }
             break;
         case State::Set2:
-            if (si::setFrequency(7'000'000_Hz)) {
+            if (si::setFrequency(7'005'000_Hz)) {
 //            if (si::setChannelUpperFreq(1)) {
                 mState = State::Run;
             }
