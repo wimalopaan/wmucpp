@@ -1,14 +1,12 @@
-#include <iostream>
-#include <vector>
-#include <string>
-#include <fstream>
-#include <sstream>
+#pragma once
+
 #include <cstdint>
 #include <limits>
 #include <algorithm>
 #include <array>
 #include <cmath>
 #include <iterator>
+#include <numbers>
 
 enum class State {High, Low};
 
@@ -35,14 +33,10 @@ struct IQ_Bands {
     IQ high{};
 };
 
-std::ostream& operator<<(std::ostream& s, const IQ_Bands v) {
-    return s << v.low.i << ',' << v.low.q << ',' << v.high.i << ',' << v.high.q << '\n';
-}
-
 
 constexpr double sinc(const double x) {
     if (x == 0.0) return 1.0;
-    return sin(M_PI * x) / (M_PI * x);
+    return sin(std::numbers::pi * x) / (std::numbers::pi * x);
 }
 
 constexpr inline void crc16(uint16_t& crc, const uint8_t value) {
@@ -61,8 +55,8 @@ constexpr inline void crc16(uint16_t& crc, const uint8_t value) {
 
 struct Config {
     Config() = delete;
-    static inline constexpr uint8_t down = 16;
-    static inline constexpr float fs = 781250.0 / down;
+    static inline constexpr uint8_t down = 1;
+    static inline constexpr float fs = 48000.0 / down;
         static inline constexpr float fb = 2048.0f;
 //    static inline constexpr float fb = 2 * 2048.0f;
     static inline constexpr float bitTicks = fs / fb;
@@ -124,7 +118,7 @@ public:
         constexpr double alpha   = 0.54;
         constexpr double beta    = 0.46;
         for(int i = 0; i < L; i++) {
-            window[i] = alpha - beta * cos(2.0 * M_PI * i / (L - 1));
+            window[i] = alpha - beta * cos(2.0 * std::numbers::pi * i / (L - 1));
         }
         std::array<float, L> cc;
         constexpr double df1 = f1 / fs;
@@ -140,8 +134,8 @@ public:
         double gain_r = 0.0;
         double gain_i = 0.0;
         for(int i = 0; i < L; i++) {
-            gain_r += cos(2 * M_PI * (fc / fs) * i) * cc[i];
-            gain_i += sin(2 * M_PI * (fc / fs) * i) * cc[i];
+            gain_r += cos(2 * std::numbers::pi * (fc / fs) * i) * cc[i];
+            gain_i += sin(2 * std::numbers::pi * (fc / fs) * i) * cc[i];
         }
         gain_c = sqrt(gain_r * gain_r + gain_i * gain_i);
         for(int i = 0; i < L; i++) {
@@ -176,7 +170,7 @@ struct Square {
     }        
 };
 
-template<uint8_t L>
+template<uint16_t L>
 struct Max {
     constexpr float process(const float v) {
         buffer[in] = v;
@@ -270,16 +264,20 @@ struct Stats {
     Stats() = delete;
     static inline constexpr void process(const IQ v) {
         ++numberOfSamples;
-        min = std::min(min, v.i);
-        min = std::min(min, v.q);
-        max = std::max(max, v.i);
-        max = std::max(max, v.q);
+        mMaxValue = fExp * mMaxValue;
+        if (v.i > mMaxValue) mMaxValue = v.i;
+        if (v.q > mMaxValue) mMaxValue = v.q;
     }
-    static inline float min{std::numeric_limits<float>::max()};
-    static inline float max{std::numeric_limits<float>::min()};
+    static inline constexpr uint16_t max() {
+        return mMaxValue;
+    }
+private:
+    static inline float fExp{0.9999f};
+    static inline float mMaxValue{};
     static inline uint32_t numberOfSamples{};
 };
 
+template<typename Term = void, typename dbg = void>
 struct Protocoll {
     Protocoll() = delete;
     struct ByteStuff {
@@ -310,22 +308,22 @@ struct Protocoll {
                     return v;
                 }();
                 reset();
-                for(const auto& v : mData) {
-                    if (&v == &mData[0]) {
-                        data << (uint16_t)v;
-                    }
-                    else {
-                        data << ',' << (uint16_t)v;
-                    }
-                }
                 const uint16_t cs_p = mData[8] + (mData[9] << 8);
-                if (cs_p == cs) {
-                    data << " +";
+                if (cs != cs_p) {
+                    ++mErrors;
+                    if constexpr (!std::is_same_v<dbg, void>) {
+                        dbg::set();
+                    }
                 }
                 else {
-                    data << " !";
+                    if constexpr (!std::is_same_v<dbg, void>) {
+                        dbg::reset();
+                    }
                 }
-                data << '\n';
+                if constexpr (!std::is_same_v<Term, void>) {
+                    IO::outl<Term>(mData[0], ',', mData[1], ',', mData[2], ',', mData[3], ',', mData[4], ',', mData[5], ',', mData[6], ',', mData[7], ',', (cs_p == cs) ? '+' : '-');
+                }
+                ++mPackages;
                 return true; // complete
             }
             return false; // not complete
@@ -335,11 +333,18 @@ struct Protocoll {
             mBitInByteCounter = 0;
             mByteCounter = 0;
         }
+        static inline uint16_t errors() {
+            return mErrors;
+        }
+        static inline uint16_t packages() {
+            return mPackages;
+        }
     private:
+        static inline uint16_t mPackages = 0;
+        static inline uint16_t mErrors = 0;
         static inline uint8_t mActual = 0;
         static inline uint8_t mBitInByteCounter = 0;
         static inline uint32_t mByteCounter{0};
-        static inline std::ofstream data{"data.csv"};
     };
     
     enum class State {Undefined, WaitForSync, Sync, Start, Bit};
@@ -419,7 +424,6 @@ struct Protocoll {
             break;
             }                
         }
-        frame << mBitCounter << ',' << mSyncs << '\n';
     }
 private:    
     static inline uint32_t mBitTickCounter{};
@@ -433,126 +437,30 @@ private:
     static inline State mState{State::Undefined};
     
     static inline std::array<uint8_t, Config::bytesInFrame> mData;
-    
-    static inline std::ofstream frame{"frame.csv"};
 };
 
+template<typename Term = void, typename Pin = void>
 struct Demodulation {
     Demodulation() = delete;
+    
+    using proto = Protocoll<Term, Pin>;
+    
     static inline constexpr IQ_Bit process(const IQ v) {
         Stats::process(v);
-        
         const IQ_Bands iq_p = Bandpass::process(v);        
-        filt << iq_p;
         
         IQ_Bands iq_s = Square::process(iq_p);
-        sq << iq_s;   
 
         IQ_Bands iq_m = Maximum<Config::lobeLow, Config::lobeHigh>::process(iq_s);
-        maxs << iq_m;
         
         // ggf. kann man auch max_i und max_q addieren vor der Thresh
         
         IQ_Bit b = Thresh::process(iq_m);
-        bits << b.i << ',' << b.q << '\n';
 
-        Protocoll::process(b);
+        proto::process(b);
         
         return b;
     }
 private:
-    static inline std::ofstream filt{"filt.csv"};
-    static inline std::ofstream sq{"sq.csv"};
-    static inline std::ofstream maxs{"max.csv"};
-    static inline std::ofstream bits{"bits.csv"};
 };
 
-constexpr void normalize(std::vector<IQ>& values) {
-    float min{std::numeric_limits<float>::max()};
-    float max{std::numeric_limits<float>::min()};
-    for(const auto v : values) {
-        min = std::min(min, v.i);
-        min = std::min(min, v.q);
-        max = std::max(max, v.i);
-        max = std::max(max, v.q);
-    }
-    float s = float{0xff00} / 0x8000; 
-    for(auto& v : values) {
-        v.i = s * (v.i - min) / (max - min);
-        v.q = s * (v.q - min) / (max - min);
-    }
-}
-
-int main(const int argc, const char* const* const argv) {
-    std::vector<std::string> args{argv, argv + argc};    
-    std::cout << "demod_fsk_01\n";
-    if (args.size() <= 1) {
-        std::cerr << "filename?\n";
-        return -1;
-    }
-    std::cout << "file: " << args[1] << "\n";
-    
-    std::vector<IQ> adcValues;
-    
-    std::ifstream dataFile{args[1]};
-    
-    if (!dataFile.is_open()) {
-        std::cerr << "open?\n";
-        return -1;
-    }
-    std::string line;
-    while(std::getline(dataFile, line)) {
-        std::stringstream lineStream{line};
-        std::string token;
-        IQ iq;
-        if (std::getline(lineStream, token, ',')) {
-            if (!std::isdigit(token[0])) {
-                continue;
-            }            
-        }
-        if (std::getline(lineStream, token, ',')) {
-            iq.i = std::stof(token);
-        }
-        if (std::getline(lineStream, token, ',')) {
-            iq.q = std::stof(token);
-        }
-        adcValues.push_back(iq);
-    }   
-    
-    normalize(adcValues);
-    
-    std::vector<IQ_Bit> bits;
-    
-    uint8_t c = 0;
-    for(const auto& v : adcValues) {
-        if (c == 0) {
-            const auto r = Demodulation::process(v);
-            bits.push_back(r);
-        }
-        c += 1;
-        if (c == Config::down) c = 0;
-    }
-    
-    std::cout << "nsamples: " << Stats::numberOfSamples << '\n';
-    std::cout << "min: " << Stats::min << '\n';
-    std::cout << "max: " << Stats::max << '\n';
-    
-//    std::cout << "g low: " << '\n';
-    
-//    for(const auto& c : Bandpass::fir_bp_low_i.coeff) {
-//        std::cout << c << '\n';
-//    }
-
-//    std::cout << "g high: " << '\n';
-    
-//    for(const auto& c : Bandpass::fir_bp_high_i.coeff) {
-//        std::cout << c << '\n';
-//    }
-    
-    
-    std::cout << "bit ticks: " << Config::bitTicks << '\n';
-    std::cout << "lobe low: " << Config::lobeLow << '\n';
-    std::cout << "lobe high: " << Config::lobeHigh << '\n';
-    std::cout << "fir length: " << Config::firLength << '\n';
-    
-}

@@ -29,12 +29,20 @@ namespace Mcu::Stm {
     struct Address<GPIO<B, MCU>> {
         static inline constexpr uintptr_t value = GPIOB_BASE;
     };
+    template<G4xx MCU> 
+    struct Address<GPIO<F, MCU>> {
+        static inline constexpr uintptr_t value = GPIOF_BASE;
+    };
     
     template<typename GP, uint8_t N, typename MCU = void>
     struct Pin {
         static inline /*constexpr */ GPIO_TypeDef* const& mcuGpio = GP::mcuGpio;
         static inline constexpr uint8_t moderPos   =  (2 * N);
         static inline constexpr uint32_t moderMask =  0x03UL << moderPos;
+    
+        static inline void analog() {
+            mcuGpio->MODER |= GPIO_MODER_MODE0 << moderPos;
+        }
         
         template<typename S = Mcu::High>
         static inline void speed() {

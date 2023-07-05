@@ -14,10 +14,9 @@ struct GFSM {
     
     static inline constexpr External::Tick<systemTimer> mInitTicks{500ms};
     
-    
     static inline void init() {
         devs::init();
-        devs::pinb8::set();
+        devs::led::set();
     }
     static inline void periodic() {
         ++r;
@@ -29,10 +28,12 @@ struct GFSM {
         switch(mState) {
         case State::Undefined:
             mState = State::Init;
+//            devs::dac1::set(0x2ff);
         break;
         case State::Init:
             if (devs::adc1::ready()) {
                 mState = State::StartConv;
+                devs::adc1::start();
             }
         break;
         case State::StartConv:
@@ -44,6 +45,7 @@ struct GFSM {
         case State::ReadResult:
             aValue = devs::adc1::value();
             mState = State::StartConv;
+            devs::adc1::start();
         break;
         }
 
@@ -54,7 +56,6 @@ struct GFSM {
             case State::Init:
             break;
             case State::StartConv:
-                devs::adc1::start();
             break;
             case State::ReadResult:
             break;

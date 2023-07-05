@@ -18,13 +18,15 @@ namespace Mcu {
         template<typename MCU> concept G4xx = isG4xx<MCU>::value;
         
         struct A {
-            static inline constexpr uint8_t ahb2Bit = 0x01;
-        };
-    
+            static inline constexpr uint8_t ahb2Bit = 0x01 << 0;
+        };    
         struct B {
-            static inline constexpr uint8_t ahb2Bit = 0x02;
+            static inline constexpr uint8_t ahb2Bit = 0x01 << 1;
         };
-    
+        struct F {
+            static inline constexpr uint8_t ahb2Bit = 0x01 << 5;
+        };
+        
         template<typename C> struct Address;
 
     }
