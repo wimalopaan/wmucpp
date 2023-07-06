@@ -13,7 +13,7 @@ struct GFSM {
     using systemTimer = devs::systemTimer;
     
 //    using demod = Demodulation<trace>;
-    using demod = Demodulation<void, typename devs::pinb6>;
+    using demod = Demodulation<void, void, typename devs::pinb6>;
     
 //    using adc1 = devs::adc1;
 

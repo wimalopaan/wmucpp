@@ -30,8 +30,10 @@ struct GFSM {
     using adc_i = devs::adc2;
     using dac_ref = devs::dac3;
     
+    using i2c2 = devs::i2c2;
+    using si = devs::si;
     
-    enum class State : uint8_t {Undefined, Init, Conv, Wait};
+    enum class State : uint8_t {Undefined, Init, Setup, Conv, Wait};
     
 //    static inline constexpr External::Tick<systemTimer> mInitTicks{500ms};
     
@@ -40,11 +42,16 @@ struct GFSM {
         devs::led::set();
     }
     static inline void periodic() {
+        si::periodic();
+        i2c2::periodic();
+        
         const auto oldState = mState;
         switch(mState) {
         case State::Undefined:
         break;
         case State::Init:
+        break;
+        case State::Setup:
         break;
         case State::Conv:
         break;
@@ -73,6 +80,8 @@ struct GFSM {
             break;
             case State::Init:
             break;
+            case State::Setup:
+            break;
             case State::Conv:
             break;
             case State::Wait:
@@ -89,8 +98,15 @@ struct GFSM {
         break;
         case State::Init:
             if (adc_i::ready()) {
-                mState = State::Conv;
                 dac_ref::set(0x0fff / 2);
+                si::setOutput(1);
+//                si::off();    
+                mState = State::Setup;
+            }
+        break;
+        case State::Setup:
+            if (si::setFrequency(Units::hertz{6'995'000 * 4})) { // zf = 5 KHz
+                mState = State::Conv;
             }
         break;
         case State::Conv:
@@ -106,6 +122,8 @@ struct GFSM {
             case State::Undefined:
             break;
             case State::Init:
+            break;
+            case State::Setup:
             break;
             case State::Conv:
             break;
@@ -141,7 +159,7 @@ private:
 //}
 
 int main() {
-    using devs = Devices<FSK01, Mcu::Stm::Stm32G431>;
+    using devs = Devices<SDR01, Mcu::Stm::Stm32G431>;
     using gfsm = GFSM<devs>;
     gfsm::init();
 

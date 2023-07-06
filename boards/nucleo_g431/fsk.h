@@ -277,7 +277,7 @@ private:
     static inline uint32_t numberOfSamples{};
 };
 
-template<typename Term = void, typename dbg = void>
+template<typename Term = void, typename Callback = void, typename ErrorPin = void>
 struct Protocoll {
     Protocoll() = delete;
     struct ByteStuff {
@@ -311,13 +311,16 @@ struct Protocoll {
                 const uint16_t cs_p = mData[8] + (mData[9] << 8);
                 if (cs != cs_p) {
                     ++mErrors;
-                    if constexpr (!std::is_same_v<dbg, void>) {
-                        dbg::set();
+                    if constexpr (!std::is_same_v<ErrorPin, void>) {
+                        ErrorPin::set();
                     }
                 }
-                else {
-                    if constexpr (!std::is_same_v<dbg, void>) {
-                        dbg::reset();
+                else { // ok
+                    if constexpr (!std::is_same_v<ErrorPin, void>) {
+                        ErrorPin::reset();
+                    }
+                    if constexpr(!std::is_same_v<Callback, void>) {
+                        Callback::process(mData);
                     }
                 }
                 if constexpr (!std::is_same_v<Term, void>) {
@@ -425,7 +428,7 @@ struct Protocoll {
             }                
         }
     }
-private:    
+//private:    
     static inline uint32_t mBitTickCounter{};
     static inline float mNextBitTick{Config::halfBitTicks};
 
@@ -439,11 +442,11 @@ private:
     static inline std::array<uint8_t, Config::bytesInFrame> mData;
 };
 
-template<typename Term = void, typename Pin = void>
+template<typename Term = void, typename CallBack = void, typename ErrorPin = void>
 struct Demodulation {
     Demodulation() = delete;
     
-    using proto = Protocoll<Term, Pin>;
+    using proto = Protocoll<Term, CallBack, ErrorPin>;
     
     static inline constexpr IQ_Bit process(const IQ v) {
         Stats::process(v);

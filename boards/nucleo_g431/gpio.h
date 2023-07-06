@@ -66,6 +66,28 @@ namespace Mcu::Stm {
         static inline void toggle() {
             mcuGpio->BSRR = (mcuGpio->ODR ^ (0x01UL << N)) | (0x01UL << (N + 16));
         }
+        static inline void openDrain() {
+            mcuGpio->OTYPER |= (0x01 << N);
+        }
+        static inline void afunction(const uint8_t f) {
+            auto temp = mcuGpio->MODER;
+            temp &= ~(GPIO_MODER_MODE0 << moderPos);
+            temp |= (0x02 << moderPos);
+            mcuGpio->MODER = temp;
+            
+            if constexpr(N < 8) {
+                uint32_t temp = mcuGpio->AFR[0];
+                temp &= ~(0x0f << (N * 4));
+                temp |= (f & 0x0f) << (N * 4);
+                mcuGpio->AFR[0] = temp;
+            }
+            else {
+                uint32_t temp = mcuGpio->AFR[1];
+                temp &= ~(0x0f << ((N - 8) * 4));
+                temp |= (f & 0x0f) << ((N - 8) * 4);
+                mcuGpio->AFR[1] = temp;
+            }
+        }
     };
     
 }

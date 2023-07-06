@@ -18,4 +18,6 @@ targets += test01.elf test01.bin
 targets += fsk00.elf fsk00.bin
 targets += fsk01.elf fsk01.bin
 
+targets += sdr01.elf sdr01.bin
+
 -include ../../Makefile.arm.include
