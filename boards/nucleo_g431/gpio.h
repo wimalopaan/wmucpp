@@ -10,6 +10,21 @@
 namespace Mcu::Stm {
     using namespace Units::literals;
 
+    
+#ifdef USE_MCU_STM_V2
+    inline 
+#endif
+    namespace V2 {
+        
+    }
+    
+#ifdef USE_MCU_STM_V1
+    inline 
+#endif
+    namespace V1 {
+        
+    }
+    
     template<typename Letter, typename MCU = void>
     struct GPIO;
 
@@ -42,6 +57,16 @@ namespace Mcu::Stm {
     
         static inline void analog() {
             mcuGpio->MODER |= GPIO_MODER_MODE0 << moderPos;
+        }
+
+        template<bool ON = true>
+        static inline void pullup() {
+            if constexpr(ON) {
+                MODIFY_REG(mcuGpio->PUPDR, (GPIO_PUPDR_PUPD0 << moderPos), (1 << moderPos));;
+            }
+            else {
+                MODIFY_REG(mcuGpio->PUPDR, (GPIO_PUPDR_PUPD0 << moderPos), (0 << moderPos));;
+            }
         }
         
         template<typename S = Mcu::High>

@@ -85,7 +85,7 @@ targets += bm62.S bm62.elf
 targets += bm63.S bm63.elf
 targets += bm64.S bm64.elf
 targets += bm65.S bm65.elf
-targets += bm66.S bm66.elf
+#targets += bm66.S bm66.elf
 targets += bm67.S bm67.elf
 targets += bm68.S bm68.elf
 #targets += bm70.S bm70.elf
@@ -108,5 +108,5 @@ bm12.elf: bm12.o bm12b.o
 
 -include ../../Makefile.avr0.include
 
-CXX = /usr/local/bin/avr-g++
-CC = /usr/local/bin/avr-gcc
+#CXX = /usr/local/bin/avr-g++
+#CC = /usr/local/bin/avr-gcc

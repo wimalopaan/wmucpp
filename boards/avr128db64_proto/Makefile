@@ -46,6 +46,9 @@ targets += client
 targets += test6_20.hex test6_20.S
 targets += client
 
+# alles in einer Datei
+targets += test99.hex test99.S
+
 client:
 	make -f Makefile.client all
 	

@@ -10,9 +10,14 @@
 
 namespace Mcu::Stm {
     using namespace Units::literals;
+
+    struct NoTriggerSource;
     
-    template<uint8_t N, uint8_t Channel = 0, typename MCU = void>
-    struct Adc {
+    template<uint8_t N, uint8_t Channel = 0, typename TriggerSource = void, typename MCU = void> struct Adc;
+    
+    template<uint8_t N, uint8_t Channel, typename TriggerSource, typename MCU>
+    requires (N >= 1) && (N <=2)
+    struct Adc<N, Channel, TriggerSource, MCU> {
         static inline /*constexpr */ ADC_TypeDef* const mcuAdc = reinterpret_cast<ADC_TypeDef*>(Mcu::Stm::Address<Adc<N, Channel, MCU>>::value);
         static inline /*constexpr */ ADC_Common_TypeDef* const mcuAdcCommon = reinterpret_cast<ADC_Common_TypeDef*>(Mcu::Stm::Address<Adc<N, Channel, MCU>>::common);
         
@@ -22,9 +27,9 @@ namespace Mcu::Stm {
                 w = w - 1;
             }
         }
-        
+
         static inline void init() {
-            RCC->CCIPR |= 0x02 << RCC_CCIPR_ADC12SEL_Pos;
+            RCC->CCIPR |= 0x02 << RCC_CCIPR_ADC12SEL_Pos; // System Clock
             RCC->AHB2ENR |= RCC_AHB2ENR_ADC12EN;
             
             MODIFY_REG(mcuAdc->CR , ADC_CR_DEEPPWD_Msk, 0x00 << ADC_CR_DEEPPWD_Pos); 
@@ -36,10 +41,14 @@ namespace Mcu::Stm {
             
             // VREF ?
             
-            mcuAdcCommon->CCR |= (0x05 << ADC_CCR_PRESC_Pos); // prescaler 10
-//            mcuAdcCommon->CCR |= (0x0a << ADC_CCR_PRESC_Pos); // prescaler 10
+            MODIFY_REG(mcuAdcCommon->CCR, ADC_CCR_PRESC_Msk, (0 << ADC_CCR_PRESC_Pos)); // prescaler 10
             MODIFY_REG(mcuAdc->CFGR , ADC_CFGR_RES_Msk, (0x00 << ADC_CFGR_RES_Pos)); // 12 bit
             
+            if constexpr(!std::is_same_v<TriggerSource, NoTriggerSource>) {
+                MODIFY_REG(mcuAdc->CFGR , ADC_CFGR_EXTSEL_Msk, (TriggerSource::trgo() << ADC_CFGR_EXTSEL_Pos));
+                MODIFY_REG(mcuAdc->CFGR , ADC_CFGR_EXTEN_Msk, (0x01 << ADC_CFGR_EXTEN_Pos));
+            }
+
             mcuAdc->SQR1 = (0x00 << ADC_SQR1_L_Pos) | (Channel << ADC_SQR1_SQ1_Pos); // AIN10P
             
             if constexpr(Channel == 16) { // temp
@@ -61,6 +70,14 @@ namespace Mcu::Stm {
         static inline uint16_t value() {
             return mcuAdc->DR;
         }
+//        static inline void trigger(const uint8_t t) {
+//            uint32_t temp = mcuAdc->CFGR;
+//            temp &= ~ADC_CFGR_EXTSEL_Msk;
+//            temp |= (t & 0x1f) << ADC_CFGR_EXTSEL_Pos;
+//            temp &= ~ADC_CFGR_EXTEN_Msk;
+//            temp |= (0x01) << ADC_CFGR_EXTEN_Pos;
+//            mcuAdc->CFGR = temp;
+//        }
     };
     
     template<uint8_t C, G4xx MCU> 

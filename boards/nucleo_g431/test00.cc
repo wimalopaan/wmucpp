@@ -1,3 +1,5 @@
+#define USE_MCU_STM_V1
+
 #include "devices.h"
 
 #include <chrono>

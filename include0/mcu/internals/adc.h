@@ -141,9 +141,9 @@ namespace AVR {
         
         static constexpr double VBit = VRef / Reso::type::Upper;
         
-        template<typename V>
+        template<typename V, typename DI>
         requires (Vref::detail::isVref<V>::value)
-                inline static void set() {
+        inline static void set() {
             if constexpr(std::is_same_v<V, Vref::V1_024>) {
                 mcu_vref()->adc0ref.template set<ref_t::V1024>();           
             }
@@ -159,32 +159,33 @@ namespace AVR {
             else {
                 static_assert(std::false_v<V>, "wrong VRef selection");
             }
-            mcu_vref()->adc0ref.template add<ref_t::on>();           
+            mcu_vref()->adc0ref.template add<ref_t::on, DI>();           
         }
         
-        template<bool On>
+        template<bool On, typename DI = etl::DisbaleInterrupt<etl::RestoreState>>
         inline static void enable() {
             if constexpr(On) {
                 if constexpr(std::is_same_v<Reso, Resolution<10>>) {
-                    mcu_adc()->ctrla.template add<ca_t::enable>();           
+                    mcu_adc()->ctrla.template add<ca_t::enable, DI>();           
                 }
                 else if constexpr(std::is_same_v<Reso, Resolution<12>>) {
-                    mcu_adc()->ctrla.template add<ca_t::enable>();           
+                    mcu_adc()->ctrla.template add<ca_t::enable, DI>();           
                 }
                 else {
                     static_assert(std::false_v<Reso>, "wrong resolution");
                 }
             }
             else {
-                mcu_adc()->ctrla.template clear<ca_t::enable>();           
+                mcu_adc()->ctrla.template clear<ca_t::enable, DI>();           
             }
         }
         
+        template<typename DI = etl::DisbaleInterrupt<etl::RestoreState>>
         inline static void init() {
-            set<VRefType>();
+            set<VRefType, DI>();
             mcu_adc()->ctrlc.template set<cc_t::div64>();           
             mcu_adc()->muxneg.template set<MCU::Adc::MuxNeg_t::gnd>();
-            enable<true>();            
+            enable<true, DI>();            
         }
         
         inline static void startConversion() {

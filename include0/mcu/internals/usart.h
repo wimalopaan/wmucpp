@@ -120,12 +120,12 @@ namespace AVR {
             inline static void isr_impl() {
                 const auto c = *mcu_usart()->udr;
                 if constexpr (RecvQLength::value > 0) {
-                    static_assert(std::is_same_v<PA, External::Hal::NullProtocollAdapter>, "recvQueue is used, no need for PA");
+                    static_assert(std::is_same_v<PA, External::Hal::NullProtocollAdapter<>>, "recvQueue is used, no need for PA");
                     mRecvQueue.push_back(c);
                 }
                 else {
                     static_assert(RecvQLength::value == 0);
-                    if constexpr(!std::is_same_v<PA, External::Hal::NullProtocollAdapter>) {
+                    if constexpr(!std::is_same_v<PA, External::Hal::NullProtocollAdapter<>>) {
                         if (!PA::process(c)) {
                             assert("input not handled by protocoll adapter");
                         }

@@ -25,11 +25,10 @@ MCU = atmega4809
 #MCU = attiny1604
 #MCU = atxmega32e5
 
+bm99.s: MCU = atxmega256a3bu
 
 CPPFLAGS += -DNDEBUG
 #CXXFLAGS += -fsanitize=address
-
-
 
 #LDLIBS += -lasan
 
@@ -44,6 +43,8 @@ targets += bm30.S bm30.elf
 #targets += bm03.S bm03.elf bm03.hex
 targets += bm04.S bm04.elf bm04.hex
 #targets += bm10.S bm10.elf
+
+targets += bm99.S 
 #targets += bm20a bm20a.S bm20b.S
 
 bm20a: bm20a.o bm20b.o
@@ -54,5 +55,5 @@ bm20b.o: bm20b.c bm20.h
 
 -include ../../Makefile.avr0.include
 
-CXX = /usr/local/bin/avr-g++
-CC = /usr/local/bin/avr-gcc
+#CXX = /usr/local/bin/avr-g++
+#CC = /usr/local/bin/avr-gcc

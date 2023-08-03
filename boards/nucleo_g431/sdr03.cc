@@ -1,11 +1,11 @@
-#define NDEBUG
-#define USE_MCU_STM_V1
+#define USE_MCU_STM_V2
 
 #include "devices.h"
 
 #include "fsk.h"
 
 #include <chrono>
+#include <cassert>
 
 using namespace std::literals::chrono_literals;
 
@@ -40,6 +40,8 @@ struct Config1 {
 };
 
 
+
+
 template<typename Devices>
 struct GFSM {
     using devs = Devices;
@@ -57,15 +59,19 @@ struct GFSM {
     };
     
 //    using demod = Demodulation<trace>;
-    using demod = Dsp::FSK::Demodulation<Config1, void, Callback, typename devs::pinb6>;
+    using demod = Dsp::FSK::Demodulation<Config1, void, Callback, void, typename devs::dac1>;
     
 //    using adc1 = devs::adc1;
 
     using adc_i = devs::adc2;
     using dac_ref = devs::dac3;
     
+    using i2c2 = devs::i2c2;
+    using si = devs::si;
+ 
+    using serial1 = devs::serial1;
     
-    enum class State : uint8_t {Undefined, Init, Conv, Wait};
+    enum class State : uint8_t {Undefined, Init, Setup, Conv, Wait};
     
 //    static inline constexpr External::Tick<systemTimer> mInitTicks{500ms};
     
@@ -74,45 +80,67 @@ struct GFSM {
         devs::led::set();
     }
     static inline void periodic() {
-        const auto oldState = mState;
-        switch(mState) {
-        case State::Undefined:
-        break;
-        case State::Init:
-        break;
-        case State::Conv:
-        break;
-        case State::Wait:
-            if (!adc_i::busy()) {
-                aValue = adc_i::value();
-                devs::pina11::reset();
-                devs::dac1::set(aValue);
-                devs::pinb5::set();
-                iq_bit = demod::process({aValue, aValue});
-                if (iq_bit.i) {
-                    devs::pinb0::set();
-                }
-                else {
-                    devs::pinb0::reset();
-                }
-                devs::pinb5::reset();
-                ++ac;
-                mState = State::Conv;
+        trace::periodic();
+        si::periodic();
+        i2c2::periodic();
+        serial1::periodic();
+        
+        if (!adc_i::busy()) {
+            const auto aValue = adc_i::value();
+            devs::pina11::reset();
+//            devs::dac1::set(aValue);
+            devs::pinb5::set();
+            iq_bit = demod::process(Dsp::IQ(aValue, aValue));
+            if (iq_bit.i) {
+                devs::pinb0::set();
             }
-        break;
-        }
-        if (oldState != mState) {
-            switch(mState) {
-            case State::Undefined:
-            break;
-            case State::Init:
-            break;
-            case State::Conv:
-            break;
-            case State::Wait:
-            break;
+            else {
+                devs::pinb0::reset();
             }
+            devs::pinb5::reset();
         }
+        
+//        const auto oldState = mState;
+//        switch(mState) {
+//        case State::Undefined:
+//        break;
+//        case State::Init:
+//        break;
+//        case State::Setup:
+//        break;
+//        case State::Conv:
+//        break;
+//        case State::Wait:
+//            if (!adc_i::busy()) {
+//                aValue = adc_i::value();
+//                devs::pina11::reset();
+//                devs::dac1::set(aValue);
+//                devs::pinb5::set();
+//                iq_bit = demod::process({aValue, aValue});
+//                if (iq_bit.i) {
+//                    devs::pinb0::set();
+//                }
+//                else {
+//                    devs::pinb0::reset();
+//                }
+//                devs::pinb5::reset();
+//            }
+//        break;
+//        }
+//        if (oldState != mState) {
+//            switch(mState) {
+//            case State::Undefined:
+//            break;
+//            case State::Init:
+//            break;
+//            case State::Setup:
+//            break;
+//            case State::Conv:
+//            break;
+//            case State::Wait:
+//            break;
+//            }
+//        }
     }
     static inline void ratePeriodic() {
         
@@ -123,8 +151,15 @@ struct GFSM {
         break;
         case State::Init:
             if (adc_i::ready()) {
-                mState = State::Conv;
                 dac_ref::set(0x0fff / 2);
+                si::setOutput(1);
+//                si::off();    
+                mState = State::Setup;
+            }
+        break;
+        case State::Setup:
+            if (si::setFrequency(Units::hertz{6'995'000 * 4})) { // zf = 5 KHz
+                mState = State::Conv;
             }
         break;
         case State::Conv:
@@ -141,6 +176,8 @@ struct GFSM {
             break;
             case State::Init:
             break;
+            case State::Setup:
+            break;
             case State::Conv:
             break;
             case State::Wait:
@@ -150,9 +187,9 @@ struct GFSM {
 
         if (++c == 48000) {
             c = 0;
-////            IO::outl<trace>("systick: ", systemTimer::value, " r: ", r, " a: ", a);
 //            IO::outl<trace>("State: ", (uint8_t)mState, " adc: ", aValue, " ac: ", ac);
             IO::outl<trace>("max i: ", Dsp::Stats::max(), " e: ", demod::proto::ByteStuff::errors(), " p: ", demod::proto::ByteStuff::packages());
+            IO::outl<serial1>("max i: ", Dsp::Stats::max(), " e: ", demod::proto::ByteStuff::errors(), " p: ", demod::proto::ByteStuff::packages());
         }
     }
 private:
@@ -164,8 +201,7 @@ private:
     static inline uint16_t a;
     
     static inline State mState{State::Undefined};
-    static inline uint16_t aValue{42};
-    static inline uint16_t ac;
+//    static inline uint16_t aValue{42};
 };
 
 //extern "C" void SysTick_Handler()  {                               
@@ -175,7 +211,7 @@ private:
 //}
 
 int main() {
-    using devs = Devices<FSK01, Mcu::Stm::Stm32G431>;
+    using devs = Devices<SDR03, Mcu::Stm::Stm32G431>;
     using gfsm = GFSM<devs>;
     gfsm::init();
 

@@ -22,10 +22,16 @@
 MCU = atmega4809
 #MCU = avr128da48
 #MCU = attiny1614
-F_OSC = 20000000
+#F_OSC = 20000000
+F_OSC = 32000000
 
 subdirs =
 
+charly.s: MCU = avr128da48
+charly.hex: MCU = avr128da48
+charly.elf: MCU = avr128da48
+
+targets += charly.elf charly.S charly.hex
 #targets += test00.elf test00.S test00.hex
 targets += test01.elf test01.S test01.hex
 targets += test02.elf test02.S test02.hex

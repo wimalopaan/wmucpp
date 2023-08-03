@@ -29,11 +29,11 @@ namespace Mcu::Stm {
             const value_type value{};  
         };
         
-        template<uint8_t N, typename MCU = void> struct Master;
+        template<uint8_t N, size_t Size = 16, typename MCU = void> struct Master;
         
-        template<uint8_t N, G4xx MCU>
-        struct Master<N, MCU> {
-            static inline /*constexpr */ I2C_TypeDef* const mcuI2c = reinterpret_cast<I2C_TypeDef*>(Mcu::Stm::Address<Master<N, MCU>>::value);
+        template<uint8_t N, size_t Size, G4xx MCU>
+        struct Master<N, Size, MCU> {
+            static inline /*constexpr */ I2C_TypeDef* const mcuI2c = reinterpret_cast<I2C_TypeDef*>(Mcu::Stm::Address<Master<N, Size, MCU>>::value);
             static inline void init() {
                 if constexpr(N == 1) {
                     RCC->APB1ENR1 |= RCC_APB1ENR1_I2C1EN;
@@ -51,7 +51,6 @@ namespace Mcu::Stm {
             enum class State : uint8_t {Idle, WriteAdress, WriteWaitAdress, WriteData, WriteWaitData, WriteWaitComplete, WriteError};
             
             static inline void periodic() {
-                const auto oldState = mState;
                 switch(mState) {
                 case State::Idle:
                 break;
@@ -130,6 +129,21 @@ namespace Mcu::Stm {
                 mAddress = adr.value;
                 mState = State::WriteAdress;
                 return true;
+            }       
+            template<auto L>
+            requires (L < Size)
+            inline static bool write(const I2C::Address adr, const std::byte offset, const std::array<std::byte, L>& data) {
+                if (mState != State::Idle) {
+                    return false;
+                }
+                mIndex = 0;
+                mCount = L;
+                mErrors = 0;
+                mData[0] = offset;
+                std::copy(std::begin(data), std::end(data), std::begin(mData) + 1);
+                mAddress = adr.value;
+                mState = State::WriteAdress;
+                return true;
             }        
         private:
             static inline uint8_t mAddress{0};
@@ -137,17 +151,17 @@ namespace Mcu::Stm {
             static inline uint8_t mIndex{0};
             static inline uint8_t mErrors{0};
             static inline State mState{State::Idle};
-            static inline std::array<std::byte, 16> mData;
+            static inline std::array<std::byte, Size> mData;
         };
     }
     
 
-    template<G4xx MCU>
-    struct Address<I2C::Master<1, MCU>> {
+    template<size_t S, G4xx MCU>
+    struct Address<I2C::Master<1, S, MCU>> {
         static inline constexpr uintptr_t value = I2C1_BASE;        
     };
-    template<G4xx MCU>
-    struct Address<I2C::Master<2, MCU>> {
+    template<size_t S, G4xx MCU>
+    struct Address<I2C::Master<2, S, MCU>> {
         static inline constexpr uintptr_t value = I2C2_BASE;        
     };
 }

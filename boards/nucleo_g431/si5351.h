@@ -14,20 +14,32 @@
 
 namespace External {
     namespace SI5351 {
-        static inline constexpr std::byte OutputEnableReg{3};
-        static inline constexpr std::byte PllResetReg{177};
+        static inline constexpr uint8_t OutputEnableReg{3};
+        static inline constexpr uint8_t Clk0Control{16};
+        static inline constexpr uint8_t Clk1Control{17};
+        static inline constexpr uint8_t Clk2Control{18};
+        static inline constexpr uint8_t PllResetReg{177};
+        static inline constexpr uint8_t Clk0Phase{165};
+        static inline constexpr uint8_t Clk1Phase{166};
+        static inline constexpr uint8_t Clk2Phase{167};
+        
+        static inline constexpr uint8_t PllARegStart{26};
+        static inline constexpr uint8_t MSynth0RegStart{42};
+        static inline constexpr uint8_t MSynth1RegStart{50};
+        static inline constexpr uint8_t MSynth2RegStart{58};
 
-        static inline constexpr uint32_t maxPllf{900'000'000UL};
+//        static inline constexpr uint32_t maxPllf{900'000'000UL};
+        static inline constexpr uint32_t maxPllf{700'000'000UL};
         static inline constexpr uint32_t xtalfreq{25'000'000UL};
         
         struct SetupData {
             using data_type = std::array<std::byte, 8>;
-            data_type pll;
-            data_type msynth;
-            uint32_t a;
-            uint32_t b;
-            uint32_t c;
-            uint32_t div;
+            data_type pll{};
+            data_type msynth{};
+            uint32_t a{};
+            uint32_t b{};
+            uint32_t c{};
+            uint32_t div{};
         };
 
         static inline constexpr auto calculateSetupData(const uint32_t ff) {
@@ -85,13 +97,135 @@ namespace External {
             
             return data;
         }
-                
+
+        template<uint8_t N>
+        requires (N <= 2) 
+        using IOutput = std::integral_constant<uint8_t, N>;
+
+        template<uint8_t N>
+        requires (N <= 2) 
+        using QOutput = std::integral_constant<uint8_t, N>;
+        
+        template<typename Bus, auto Adr, typename IO, typename QO, int32_t FreqOffset = 0>
+        struct IQClock { // 90 degree between outputs
+            using bus = Bus;
+            
+//            static_assert(bus::size() > 8);
+//            std::integral_constant<uint16_t, External::RC::channels.size()>::_;
+            
+            enum class State : uint8_t {Idle, 
+                                        ReadWait, 
+                                        SetupChannelStart, SetupPLLA, 
+                                        SetupMSynth0, SetupMSynth1, SetupMSynth2,
+                                        SetupPhase,
+                                        SetupChannelReset, 
+                                        SetupChannelOutput0, SetupChannelOutput1, SetupChannelOutput2, 
+                                        SetupChannelOutputEnable, 
+                                        SetupChannelComplete
+                                       };
+
+            static inline void periodic() {
+                switch(mState) {
+                case State::Idle:
+                    break;
+                case State::ReadWait:
+                    break;
+                case State::SetupChannelStart:
+                    mState = State::SetupPLLA;
+                    break;
+                case State::SetupPLLA:
+                    if (bus::write(Adr, std::byte{PllARegStart}, actual.pll)) {
+                        mState = State::SetupMSynth0;
+                    }
+                    break;
+                case State::SetupMSynth0:
+                    if (bus::write(Adr, std::byte{MSynth0RegStart}, actual.msynth)) {
+                        mState = State::SetupMSynth1;
+                    }
+                    break;
+                case State::SetupMSynth1:
+                    if (bus::write(Adr, std::byte{MSynth1RegStart}, actual.msynth)) {
+                        mState = State::SetupMSynth2;
+                    }
+                    break;
+                case State::SetupMSynth2:
+                    if (bus::write(Adr, std::byte{MSynth2RegStart}, actual.msynth)) {
+                        mState = State::SetupPhase;
+                    }
+                    break;
+                case State::SetupPhase:
+                {
+                    uint8_t phase = actual.div & 0x7f;
+                    if constexpr(QO::value == 0) {
+                        if (bus::write(Adr, {std::byte{Clk0Phase}, std::byte{phase}})) {
+                            mState = State::SetupChannelReset;
+                        }
+                    }
+                    else if constexpr(QO::value == 1) {
+                        if (bus::write(Adr, {std::byte{Clk1Phase}, std::byte{phase}})) {
+                            mState = State::SetupChannelReset;
+                        }
+                    }
+                    else {
+                        if (bus::write(Adr, {std::byte{Clk2Phase}, std::byte{phase}})) {
+                            mState = State::SetupChannelReset;
+                        }
+                    }
+                }
+                break;
+                case State::SetupChannelReset:
+                    if (bus::write(Adr, {std::byte{PllResetReg}, std::byte{0xA0}})) {
+                        mState = State::SetupChannelOutput0;
+                    }
+                    break;
+                case State::SetupChannelOutput0:
+                    if (bus::write(Adr, {std::byte{Clk0Control}, std::byte{0x4f}})) {
+                        mState = State::SetupChannelOutput1;
+                    }
+                    break;
+                case State::SetupChannelOutput1:
+                    if (bus::write(Adr, {std::byte{Clk1Control}, std::byte{0x4f}})) {
+                        mState = State::SetupChannelOutput2;
+                    }
+                    break;
+                case State::SetupChannelOutput2:
+                    if (bus::write(Adr, {std::byte{Clk2Control}, std::byte{0x4f}})) {
+                        mState = State::SetupChannelOutputEnable;
+                    }
+                    break;
+                case State::SetupChannelOutputEnable:
+                    if (bus::write(Adr, {std::byte{OutputEnableReg}, std::byte{0x00}})) {
+                        mState = State::SetupChannelComplete;
+                    }
+                    break;
+                case State::SetupChannelComplete:
+                    break;
+                }
+            }
+            static inline bool setFrequency(const Units::hertz& f) {
+                if (mState == State::SetupChannelComplete) {
+                    mState = State::Idle;
+                    return true;
+                }
+                else {
+                    if (mState == State::Idle) {
+                        actual = calculateSetupData(f.value + FreqOffset);
+                        mState = State::SetupChannelStart;
+                    }
+                    return false;
+                }
+            }
+            
+        private:
+            static inline SetupData actual;
+            static inline State mState{State::Idle};
+        };
+        
         template<typename Bus, auto Adr, int32_t FreqOffset = 0>
         struct Clock {
             using bus = Bus;
             
 //            static_assert(bus::size() > 8);
-
 //            std::integral_constant<uint16_t, External::RC::channels.size()>::_;
             
             static inline constexpr auto setupChannels = []{
@@ -143,7 +277,6 @@ namespace External {
                     if (bus::write(Adr, {std::byte(iindex + ipll), actual.pll[iindex]})) {
                         ++iindex;
                         if (iindex >= std::tuple_size<SetupData::data_type>::value) {
-//                        if (iindex >= SetupData::data_type::size()) {
                             mState = State::SetupChannelMSynth;
                             iindex = 0;
                         }
@@ -159,7 +292,7 @@ namespace External {
                     }
                     break;
                 case State::SetupChannelReset:
-                    if (bus::write(Adr, {PllResetReg, std::byte{0xA0}})) {
+                    if (bus::write(Adr, {std::byte{PllResetReg}, std::byte{0xA0}})) {
                         mState = State::SetupChannelOutput;
                     }
                     break;
@@ -169,7 +302,7 @@ namespace External {
                     }
                     break;
                 case State::SetupChannelOutput2:
-                    if (bus::write(Adr, {OutputEnableReg, std::byte{0x00}})) {
+                    if (bus::write(Adr, {std::byte{OutputEnableReg}, std::byte{0x00}})) {
                         mState = State::SetupChannelComplete;
                     }
                     break;
@@ -298,11 +431,8 @@ namespace External {
             }
         private:
             static inline SetupData actual;
-            
             static inline uint8_t nextRegNr{0};
             static inline State mState{State::Idle};
         };
-        
-        
     }
 }

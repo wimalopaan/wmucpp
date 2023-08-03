@@ -41,7 +41,8 @@ namespace Mcu::Stm {
             
             RCC->CFGR |= RCC_CFGR_HPRE_DIV2;            
             
-            FLASH->ACR |= FLASH_ACR_LATENCY_5WS 
+//            FLASH->ACR |= FLASH_ACR_LATENCY_5WS 
+            FLASH->ACR |= FLASH_ACR_LATENCY_4WS // sollte laut DB reichen
                           | FLASH_ACR_ICEN 
                           | FLASH_ACR_DCEN 
                           | FLASH_ACR_PRFTEN;

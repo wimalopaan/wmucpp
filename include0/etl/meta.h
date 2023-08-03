@@ -516,13 +516,14 @@ namespace Meta {
         template<typename T> using type = F<T>;
     };
     
-    
     template<template<typename> typename Func, concepts::List List>
     using transform = typename detail::transform_impl<Func, List>::type;
 
     template<template<typename> typename Func, concepts::List List>
     using transform_type = typename detail::transform_type_impl<Func, List>::type;
 
+    template<template<typename> typename Func, typename List>
+    using transform_list = typename detail::transform_type_impl<Func, List>::type;
     
     template<template<typename, size_t> typename Func, concepts::List List>
     using transformN = typename detail::transformN_impl<Func, List, std::make_index_sequence<size<List>::value>>::type;
