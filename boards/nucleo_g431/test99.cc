@@ -1,41 +1,67 @@
-#include "mcu.h"
+#include <stm32g4xx.h>
+#include <atomic>
 
-#include "algorithm.h"
+namespace  {
+    std::atomic_uint32_t a1;
+    uint32_t a2;
+    std::atomic_uint32_t a3;
 
-volatile uint16_t a;
-volatile uint16_t b;
-volatile uint16_t c;
-
-void f() __attribute__((noinline));
-void f() {
-    c = a % b;
+//    volatile std::atomic_uint64_t l1;
+//    volatile std::atomic_uint64_t l3;
+    
+    volatile uint64_t x1;
+    volatile uint64_t x3;
+    
+    volatile float f1;
+    volatile float f3;
 }
-
-std::array<float, 32> v;
-volatile float m;
-
-void g1() {
-    m = etl::maximum(v);
-}
-
-void g2() {
-    float r{};
-    for(uint8_t i = 0; i < v.size(); ++i) {
-        if (v[i] > r) {
-            r = v[i];
-        }
-    }
-    m = r;
-}
-
-volatile float f1, f2;
 
 int main(){
-    
-    f1 = f1 * f2;
-    
+//    __NVIC_EnableIRQ(RCC_IRQn); // only for interrupts, not exceptions
+
     while(true) {
-//        f();
-        g2();
+        x3 = x1; // LDRD not atomic
+        
+        f3 = f1;
+        
+        // 1
+        uint32_t val;                                            
+        do {                                                     
+            val = __LDREXW(&a2);  
+            val += 1;
+        } while ((__STREXW(val, &a2)) != 0U); 
+        
+        // 2
+        __disable_irq();
+        std::atomic_signal_fence(std::memory_order_seq_cst);    // compile-time barrier really neccessary?
+        ++a2;          
+        std::atomic_signal_fence(std::memory_order_seq_cst);    // compile-time barrier really neccessary?
+        __enable_irq();
+        
+        // 3
+        std::atomic_fetch_add(&a1, 1);
+        
+        // 4
+        std::atomic_signal_fence(std::memory_order_seq_cst);    // compile-time barrier
+        std::atomic_fetch_add_explicit(&a1, 1, std::memory_order_relaxed);
+        std::atomic_signal_fence(std::memory_order_seq_cst);
     }
 }
+
+#pragma GCC push_options
+#pragma GCC target("general-regs-only")
+extern "C" {
+void SysTick_Handler() __attribute__ ((isr));
+void SysTick_Handler() {                              
+    volatile uint32_t& va{a2};
+    va += 1;
+//    f1 *= 3.1415f;
+
+
+    std::atomic_signal_fence(std::memory_order_seq_cst);    // compile-time barrier
+    std::atomic_fetch_add_explicit(&a1, 1, std::memory_order_relaxed);
+    std::atomic_signal_fence(std::memory_order_seq_cst);
+
+}
+}
+#pragma GCC pop_options

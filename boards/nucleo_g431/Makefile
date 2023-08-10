@@ -23,6 +23,7 @@ targets += system.o
 targets += sdr03.elf sdr03.bin sdr03.S
 targets += sdr04.elf sdr04.bin sdr04.S
 
-targets += test99.S
+targets += test99.elf test99.S
+targets += test100.elf test100.S
 
 -include ../../Makefile.arm.include

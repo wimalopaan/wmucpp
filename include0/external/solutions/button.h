@@ -32,7 +32,8 @@
 
 namespace External {
     template<AVR::Concepts::ActivatableIn Pin, typename Timer, auto ShortPressTicks, auto LongPressTicks>
-    struct ButtonRelese {
+    struct ButtonRelease {
+        ButtonRelease() = delete;
         enum class Press : uint8_t {Short, Long, None};
         enum class State : uint8_t {PressedShort, PressedLong, Released, Wait};
         

@@ -205,9 +205,12 @@ private:
 };
 
 //extern "C" void SysTick_Handler()  {                               
-////    devs::systemTimer::isr();
-//    devs::pinb3::set();
-//    devs::pinb3::reset();
+//    asm("# systickA");
+//    using devs = Devices<SDR03, Mcu::Stm::Stm32G431>;
+//    using gfsm = GFSM<devs>;
+//    devs::systemTimer::periodic([]{
+//        gfsm::ratePeriodic();
+//    });
 //}
 
 int main() {

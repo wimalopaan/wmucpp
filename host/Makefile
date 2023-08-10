@@ -79,7 +79,7 @@ subdirs += sdr
 #targets += test99
 #targets += test99b
 #targets += test100
-##targets += test200
+targets += test200
 ##targets += test201
 #targets += test210
 #targets += test300
@@ -100,7 +100,7 @@ targets += test401
 
 #CXX = /usr/bin/g++
 CXX = /usr/local/bin/g++
-CC = /usr/local/bin/gcc
+CC = /usr/bin/gcc
 #CXX = clang++
 #CC = /usr/local/bin/gcc
 #LDFLAGS = -lasan -lubsan -lpthread -lstdc++ 
@@ -109,7 +109,7 @@ CXXFLAGS = -g -std=c++23 -fconcepts -fmodules-ts -ftemplate-depth=2048 -fno-thre
 CXXFLAGS += -O3
 CXXFLAGS += -Wall -Wextra
 CXXFLAGS += -I../include0/etl
-CFLAGS = -Wall -Wextra -g -std=c2x 
+CFLAGS = -Wall -Wextra -g -std=gnu2x
 CFLAGS += -O3
 MCUFLAGS =
 

@@ -380,6 +380,7 @@ boards/nucleo_g431/Makefile
 boards/nucleo_g431/adc.h
 boards/nucleo_g431/algorithm.h
 boards/nucleo_g431/arm.h
+boards/nucleo_g431/atomic.h
 boards/nucleo_g431/clock.h
 boards/nucleo_g431/concepts.h
 boards/nucleo_g431/dac.h
@@ -391,6 +392,7 @@ boards/nucleo_g431/fsk00.cc
 boards/nucleo_g431/fsk01.cc
 boards/nucleo_g431/gpio.h
 boards/nucleo_g431/i2c.h
+boards/nucleo_g431/isr.h
 boards/nucleo_g431/link.ld
 boards/nucleo_g431/mcu.h
 boards/nucleo_g431/mcu_traits.h
@@ -407,6 +409,7 @@ boards/nucleo_g431/startup.s
 boards/nucleo_g431/system.c
 boards/nucleo_g431/test00.cc
 boards/nucleo_g431/test01.cc
+boards/nucleo_g431/test100.cc
 boards/nucleo_g431/test99.cc
 boards/nucleo_g431/tick.h
 boards/nucleo_g431/timer.h

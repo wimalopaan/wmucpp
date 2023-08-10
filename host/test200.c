@@ -10,6 +10,9 @@ volatile uint16_t r3;
 //typedef signed short  _Accum fp_t;
 
 int main() {
+//    unsigned _Accum x;
+    
+    
 //    fp_t sum = 0;
 //    while(true) {
 //        const fp_t a = r1;

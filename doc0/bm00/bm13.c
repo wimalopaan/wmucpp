@@ -51,7 +51,12 @@ void foo(config_t c) {
     
 }
 
+#include <stdfix.h>
+
 int main() {
+    unsigned _Sat _Accum a;
+    
+    
      element_t e1;
      element_t e2;
     

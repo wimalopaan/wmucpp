@@ -82,6 +82,14 @@ namespace Mcu::Stm {
             }
             mcuGpio->MODER = temp;
         }
+        static inline void set(const bool b) {
+            if (b) {
+                set();
+            }
+            else {
+                reset();
+            }
+        }
         static inline void set() {
             mcuGpio->BSRR |= (0x01UL << N);
         }

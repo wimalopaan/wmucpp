@@ -98,6 +98,9 @@ namespace Mcu::Stm {
         isr() {
             ++mValue;
         }
+        inline static void test() {
+            periodic();
+        }
     private:
 //        inline static Interrupt::volatile_atomic<uint32_t> mValue{0};
         inline static uint32_t mValue{0};

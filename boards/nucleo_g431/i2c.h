@@ -137,10 +137,10 @@ namespace Mcu::Stm {
                     return false;
                 }
                 mIndex = 0;
-                mCount = L;
                 mErrors = 0;
                 mData[0] = offset;
-                std::copy(std::begin(data), std::end(data), std::begin(mData) + 1);
+                const auto last = std::copy(std::begin(data), std::end(data), std::begin(mData) + 1);
+                mCount = last - std::begin(mData);
                 mAddress = adr.value;
                 mState = State::WriteAdress;
                 return true;

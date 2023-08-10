@@ -85,12 +85,7 @@ struct GFSM {
             devs::pina11::reset();
             devs::pinb5::set(); 
             iq_bit = demod::process(Dsp::IQ(aValue, aValue));
-            if (iq_bit.i) {
-                devs::pinb0::set();
-            }
-            else {
-                devs::pinb0::reset();
-            }
+            devs::pinb0::set(iq_bit.i);
             devs::pinb5::reset();
         }
     }
@@ -106,7 +101,7 @@ struct GFSM {
             }
         break;
         case State::Setup:
-            if (si::setFrequency(Units::hertz{uint32_t(Config::ft - Config::zf) * 4})) { 
+            if (si::setFrequency(Units::hertz{uint32_t(Config::ft - Config::zf)})) { 
                 mState = State::StartConv;
             }
         break;
@@ -129,19 +124,10 @@ struct GFSM {
     }
 private:
     static inline Dsp::IQ_Bit iq_bit;
-    
     static inline uint32_t g{0};
     static inline uint32_t c{};
-    static inline uint16_t a{};
-    
     static inline State mState{State::Undefined};
 };
-
-//extern "C" void SysTick_Handler()  {                               
-////    devs::systemTimer::isr();
-//    devs::pinb3::set();
-//    devs::pinb3::reset();
-//}
 
 int main() {
     using devs = Devices<SDR04, Mcu::Stm::Stm32G431>;

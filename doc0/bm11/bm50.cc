@@ -141,26 +141,26 @@ namespace {
         }
     }
     
-    volatile uint8_t r;
+//    volatile uint8_t r; 
 
-    ReturnObject<bool> g2() {
-        while (true) {
-            asm(";co while");            
-            r = 1;
-            co_yield false;
-            r = 2;
-            co_yield false;
-            r = 10;
-            co_yield false;
-            r = 20;
-            co_yield true;
-        }
-    }
+//    ReturnObject<bool> g2() {
+//        while (true) {
+//            asm(";co while");            
+//            r = 1;
+//            co_yield false;
+//            r = 2;
+//            co_yield false;
+//            r = 10;
+//            co_yield false;
+//            r = 20;
+//            co_yield true;
+//        }
+//    }
     
 }
 
 [[noreturn]] int main() {
-    auto h = g2();
+    auto h = g();
     while(true) {
         asm(";main while");            
 //        r = h();
