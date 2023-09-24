@@ -3,6 +3,7 @@
 #include "mcu.h"
 #include "mcu_traits.h"
 #include "concepts.h"
+#include "components.h"
 
 #include <type_traits>
 #include <concepts>
@@ -30,6 +31,8 @@ namespace Mcu::Stm {
 
     template<typename Letter, typename MCU>
     struct GPIO {
+        using port_t = Letter;
+        using mcu_t = MCU;
         static inline /*constexpr */ GPIO_TypeDef* const mcuGpio = reinterpret_cast<GPIO_TypeDef*>(Mcu::Stm::Address<GPIO<Letter, MCU>>::value);
         static inline void init() {
             RCC->AHB2ENR |= Letter::ahb2Bit;
@@ -51,6 +54,11 @@ namespace Mcu::Stm {
     
     template<typename GP, uint8_t N, typename MCU = void>
     struct Pin {
+//        using component_t = Mcu::Components::Pin<typename GP::port_t, N>;
+        
+        using gpio_t = GP;
+        using number_t = std::integral_constant<uint8_t, N>;
+        
         static inline /*constexpr */ GPIO_TypeDef* const& mcuGpio = GP::mcuGpio;
         static inline constexpr uint8_t moderPos   =  (2 * N);
         static inline constexpr uint32_t moderMask =  0x03UL << moderPos;

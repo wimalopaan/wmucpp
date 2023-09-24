@@ -39,7 +39,6 @@ std::ostream& operator<<(std::ostream& s, const IQ_Bands v) {
     return s << v.low.i << ',' << v.low.q << ',' << v.high.i << ',' << v.high.q << '\n';
 }
 
-
 constexpr double sinc(const double x) {
     if (x == 0.0) return 1.0;
     return sin(M_PI * x) / (M_PI * x);

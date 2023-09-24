@@ -10,8 +10,6 @@ namespace Mcu {
     struct High;
     
     namespace Stm {
-        struct Stm32G431;
-        
         template<typename MCU> struct isG4xx : std::false_type {};
         template<> struct isG4xx<Stm32G431> : std::true_type {};
             

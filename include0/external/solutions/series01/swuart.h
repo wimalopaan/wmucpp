@@ -145,12 +145,12 @@ namespace External {
                                 if (bitCount == 0) {
                                     mcu_tcb()->ctrla.template clear<CtrlA_t::enable, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
                                     if constexpr (RecvQLength::value > 0) {
-                                        static_assert(std::is_same_v<PA, External::Hal::NullProtocollAdapter>, "recvQueue is used, no need for PA");
+                                        static_assert(std::is_same_v<PA, External::Hal::NullProtocollAdapter<>>, "recvQueue is used, no need for PA");
                                         mRecvQueue.push_back(data);
                                     }
                                     else {
                                         static_assert(RecvQLength::value == 0);
-                                        if constexpr(!std::is_same_v<PA, External::Hal::NullProtocollAdapter>) {
+                                        if constexpr(!std::is_same_v<PA, External::Hal::NullProtocollAdapter<>>) {
                                             if (!PA::process(std::byte{data})) {
                                                 assert("input not handled by protocoll adapter");
                                             }
@@ -427,7 +427,7 @@ namespace External {
                                 if (bitCount == 0) {
                                     mcu_tcd()->ctrla.template clear<CtrlA4_t::enable, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
                                     if constexpr (RecvQLength::value > 0) {
-                                        static_assert(std::is_same_v<PA, External::Hal::NullProtocollAdapter>, "recvQueue is used, no need for PA");
+                                        static_assert(std::is_same_v<PA, External::Hal::NullProtocollAdapter<>>, "recvQueue is used, no need for PA");
                                         mRecvQueue.push_back(data);
                                     }
                                     else {

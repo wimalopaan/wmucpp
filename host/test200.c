@@ -9,7 +9,11 @@ volatile uint16_t r3;
 
 //typedef signed short  _Accum fp_t;
 
+#define X 1
 int main() {
+    while(X) {
+        
+    }
 //    unsigned _Accum x;
     
     

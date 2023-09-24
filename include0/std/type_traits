@@ -153,6 +153,9 @@ namespace std {
         template<typename T>
         struct is_integral_base : public false_type {};
         template<>
+        struct is_integral_base<char> : public true_type {
+        };
+        template<>
         struct is_integral_base<bool> : public true_type {
         };
         template<>
@@ -291,6 +294,11 @@ namespace std {
 
     template<typename T>
     inline constexpr bool is_volatile_v = is_volatile<T>::value;
+    
+    template<class T> struct is_const          : std::false_type {};
+    template<class T> struct is_const<const T> : std::true_type {};
+    template< class T >
+    inline constexpr bool is_const_v = is_const<T>::value;
     
 //    template< class T >
 //    struct is_void : std::is_same<void, typename std::remove_cv<T>::type> {};

@@ -38,6 +38,9 @@ F_OSC = 32000000
 
 #OPTFLAGS = -O3
 
+#CXXFLAGS += -ffreestanding
+
+
 subdirs =
 
 #targets += test00.elf test00.S

@@ -98,6 +98,6 @@ int main() {
         r += 4;
     }
 #endif
-    auto it = std::find_if(std::begin(a), std::end(a), Dry::equal(any_of(x, y, z)));
+//    auto it = std::find_if(std::begin(a), std::end(a), Dry::equal(any_of(x, y, z)));
     return r;
 }

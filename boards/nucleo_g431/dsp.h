@@ -44,6 +44,98 @@ namespace Dsp {
         }
     }
 
+    template<typename Config>
+    struct ExpMax {
+        constexpr explicit ExpMax(const float f) : f{f} {}
+        constexpr float process(const float v) {
+            max *= (1.0 - f);
+            if (v > max) max = v;
+            return max;
+        }
+    private:
+        float f{};
+        float max{};
+    };
+
+    template<typename Config>
+    struct ExpMean {
+        constexpr explicit ExpMean(const float f = 0.0f) : f{f} {}
+        constexpr float process(const float v) {
+            mean = f * v + (1.0 - f) * mean;
+            return mean;
+        }
+        constexpr void set(const float m) {
+            mean = m;
+        }
+        constexpr float value() const {
+            return mean;
+        }
+    private:
+        float f{};
+        float mean{};
+    };
+
+    template<typename Config>
+    struct StepLimiter {
+        constexpr uint16_t process(const uint16_t v) {
+            if (v < (last - Config::maxImpulseDelta)) {
+                last = std::max(last - Config::maxImpulseDelta, int(Config::nMinPulse));
+            }            
+            else if (v > (last + Config::maxImpulseDelta)) {
+                last = std::min(last + Config::maxImpulseDelta, int(Config::nMaxPulse));
+            }
+            else {
+                last = v;
+            }            
+            return last;
+        }
+        constexpr uint16_t value() const {
+            return last;
+        }
+    private:
+        uint16_t last{(Config::nMaxPulse + Config::nMinPulse) / 2};
+    };
+
+    
+    template<typename Config>
+    struct HighPass {
+        constexpr float process(const float v) {
+            last = Config::alphaHighPass * v + (1 - Config::alphaHighPass) * last;
+            return v - last;
+        }
+    private:
+        float last{};
+    };
+    
+    
+    template<uint8_t L>
+    struct Convolve {
+        constexpr Convolve(const std::array<float, L>& c) : coeff{c} {}
+        constexpr float process(const float v) {
+            buffer[in] = v;
+            const float result = [&]{
+                float sum{0};
+                uint8_t i{0};
+                for(int8_t k = in; k >= 0; ++i, --k) {
+                    sum += coeff[i] * buffer[k];
+                }
+                for(int8_t k = L - 1; i < L; ++i, --k) {
+                    sum += coeff[i] * buffer[k];
+                }
+                return sum;
+            }();
+            in += 1;
+            if (in == L) in = 0;
+            return result;
+        }
+    private:
+        uint8_t in{0};
+        std::array<float, L> buffer{};    
+        std::array<float, L> coeff{};    
+    };    
+    
+    
+    
     struct BandPass;
     
     template<uint8_t Length, typename Type = BandPass, float fs = 48000, FCut ff_l = FCut{4500, 5500}, FCut ff_h = FCut{9500, 10500}>
@@ -213,4 +305,8 @@ namespace Dsp {
         std::array<float, L> buffer{};
         uint_fast16_t in{0};
     };
+    
+    
+    
+    
 }

@@ -31,6 +31,12 @@ namespace std {
     constexpr T to_integer(byte b) noexcept {
         return T((uint8_t)b);
     }
+
+    template<typename T>
+    requires std::is_integral_v<T>
+    constexpr T to_integer(const T v) noexcept {
+        return v;
+    }
     
     constexpr bool any(std::byte b) noexcept {
         return b != std::byte{0};

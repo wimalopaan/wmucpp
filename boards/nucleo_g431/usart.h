@@ -54,6 +54,9 @@ namespace Mcu::Stm {
             if (mcuUart->ISR & USART_ISR_TXE_TXFNF) {
                 if (!mSendData.empty()) {
                     mcuUart->TDR = *mSendData.pop_front();
+                    // Byte access of USART registers not allowed according to ref-manual
+                    // may be "accessed" only by 32bit words
+//                    *(uint8_t*)(&mcuUart->TDR) = *mSendData.pop_front();
                 }
             }
             if (mcuUart->ISR & USART_ISR_RXNE_RXFNE) {

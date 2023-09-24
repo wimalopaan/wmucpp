@@ -179,4 +179,9 @@ int g() {
     X1 x{};
     return fn(x, x.k);
 }
-int main() {}
+
+#include <stdfix.h>
+int main() {
+//        unsigned _Accum x;
+    
+}

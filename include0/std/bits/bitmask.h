@@ -26,24 +26,31 @@ namespace std {
     
     template<typename E>
     inline constexpr bool enable_bitmask_operators_v = enable_bitmask_operators<E>::value;
+    
+    template<typename E>
+    concept BitMaskType = std::enable_bitmask_operators_v<E>;
 }
 
-template<typename E, typename = std::enable_if_t<std::enable_bitmask_operators_v<E>>>
-inline constexpr E
-operator|(E lhs, E rhs){
-    typedef typename std::underlying_type<E>::type underlying;
-    return static_cast<E>(
-                static_cast<underlying>(lhs) | static_cast<underlying>(rhs));
+//template<typename E, typename = std::enable_if_t<std::enable_bitmask_operators_v<E>>>
+//requires(std::enable_bitmask_operators_v<E>)
+template<std::BitMaskType E>
+constexpr E operator|(const E lhs, const E rhs){
+    using underlying = std::underlying_type<E>::type;
+    return static_cast<E>(static_cast<underlying>(lhs) | static_cast<underlying>(rhs));
 }
 
-template<typename E, typename = std::enable_if_t<std::enable_bitmask_operators_v<E>>>
+//template<typename E, typename = std::enable_if_t<std::enable_bitmask_operators_v<E>>>
+template<typename E>
+requires(std::enable_bitmask_operators_v<E>)
 inline constexpr E&
 operator|=(E& lhs, E rhs){
     typedef typename std::underlying_type<E>::type underlying;
     return lhs = static_cast<E>(
                 static_cast<underlying>(lhs) | static_cast<underlying>(rhs));
 }
-template<typename E, typename = std::enable_if_t<std::enable_bitmask_operators_v<E>>>
+//template<typename E, typename = std::enable_if_t<std::enable_bitmask_operators_v<E>>>
+template<typename E>
+requires(std::enable_bitmask_operators_v<E>)
 inline constexpr void operator|=(volatile E& lhs, E rhs){
     typedef typename std::underlying_type<E>::type underlying;
     lhs = static_cast<E>(
@@ -51,7 +58,9 @@ inline constexpr void operator|=(volatile E& lhs, E rhs){
                 );
 }
 
-template<typename E, typename = std::enable_if_t<std::enable_bitmask_operators_v<E>>>
+//template<typename E, typename = std::enable_if_t<std::enable_bitmask_operators_v<E>>>
+template<typename E>
+requires(std::enable_bitmask_operators_v<E>)
 inline constexpr E
 operator&(E lhs, E rhs){
     typedef typename std::underlying_type<E>::type underlying;
@@ -60,7 +69,9 @@ operator&(E lhs, E rhs){
                 );
 }
 
-template<typename E, typename = std::enable_if_t<std::enable_bitmask_operators_v<E>>>
+//template<typename E, typename = std::enable_if_t<std::enable_bitmask_operators_v<E>>>
+                                template<typename E>
+                                requires(std::enable_bitmask_operators_v<E>)
 inline constexpr E&
 operator&=(E& lhs, E rhs){
     typedef typename std::underlying_type<E>::type underlying;
@@ -69,7 +80,9 @@ operator&=(E& lhs, E rhs){
                 );
 }
 
-template<typename E, typename = std::enable_if_t<std::enable_bitmask_operators_v<E>>>
+//template<typename E, typename = std::enable_if_t<std::enable_bitmask_operators_v<E>>>
+          template<typename E>
+          requires(std::enable_bitmask_operators_v<E>)
 inline constexpr void 
 operator&=(volatile E& lhs, E rhs){
     typedef typename std::underlying_type<E>::type underlying;
@@ -78,7 +91,9 @@ operator&=(volatile E& lhs, E rhs){
                 );
 }
 
-template<typename E, typename = std::enable_if_t<std::enable_bitmask_operators_v<E>>>
+//template<typename E, typename = std::enable_if_t<std::enable_bitmask_operators_v<E>>>
+          template<typename E>
+          requires(std::enable_bitmask_operators_v<E>)
 inline constexpr E
 operator~(E rhs){
     typedef typename std::underlying_type<E>::type underlying;
@@ -87,7 +102,9 @@ operator~(E rhs){
                 );
 }
 
-template<typename E, typename = std::enable_if_t<std::enable_bitmask_operators_v<E>>>
+//template<typename E, typename = std::enable_if_t<std::enable_bitmask_operators_v<E>>>
+          template<typename E>
+          requires(std::enable_bitmask_operators_v<E>)
 inline constexpr E
 operator^(E lhs, E rhs){
     typedef typename std::underlying_type<E>::type underlying;

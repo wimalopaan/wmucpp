@@ -17,8 +17,7 @@ namespace  {
 }
 
 int main(){
-//    __NVIC_EnableIRQ(RCC_IRQn); // only for interrupts, not exceptions
-
+//    std::integral_constant<uint8_t, __FPU_PRESENT>::_;
     while(true) {
         x3 = x1; // LDRD not atomic
         
@@ -45,6 +44,11 @@ int main(){
         std::atomic_signal_fence(std::memory_order_seq_cst);    // compile-time barrier
         std::atomic_fetch_add_explicit(&a1, 1, std::memory_order_relaxed);
         std::atomic_signal_fence(std::memory_order_seq_cst);
+
+        asm("# xx");        
+        // 5
+        a1.load();
+        a1.store(42);
     }
 }
 
@@ -56,12 +60,9 @@ void SysTick_Handler() {
     volatile uint32_t& va{a2};
     va += 1;
 //    f1 *= 3.1415f;
-
-
     std::atomic_signal_fence(std::memory_order_seq_cst);    // compile-time barrier
     std::atomic_fetch_add_explicit(&a1, 1, std::memory_order_relaxed);
     std::atomic_signal_fence(std::memory_order_seq_cst);
-
 }
 }
 #pragma GCC pop_options

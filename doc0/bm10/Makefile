@@ -34,9 +34,9 @@ CPPFLAGS += -DNDEBUG
 
 OPTFLAGS = -O3
 
-targets += shtml
+#targets += shtml
 
-targets += bm00.S bm00.elf
+#targets += bm00.S bm00.elf
 targets += bm01.S bm01.elf
 targets += bm02.S bm02.elf
 targets += bm30.S bm30.elf

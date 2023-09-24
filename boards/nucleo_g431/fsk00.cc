@@ -164,6 +164,7 @@ private:
 //}
 
 int main() {
+    std::integral_constant<uint8_t, __FPU_PRESENT>::_;
     using devs = Devices<FSK, Mcu::Stm::Stm32G431>;
     using gfsm = GFSM<devs>;
     gfsm::init();

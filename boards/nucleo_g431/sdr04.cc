@@ -11,15 +11,18 @@ using namespace std::literals::chrono_literals;
 
 struct Config {
     Config() = delete;
-    static inline constexpr uint8_t down = 1;
-    static inline constexpr float fs = 48000.0 / down;
+//    static inline constexpr uint8_t down = 1;
+//    static inline constexpr float fs = 48000.0 / down;
+    static inline constexpr float fs = 48000.0;
         static inline constexpr float fb = 2048.0f;
     static inline constexpr float bitTicks = fs / fb;
     static inline constexpr uint16_t firLength = bitTicks + 0.5;
     static inline constexpr float halfBitTicks = fs / (2.0f * fb);
     static inline constexpr float syncTicks = bitTicks * 10.0f - halfBitTicks;
-    static inline constexpr float zf = 5'000.0f;
-    static inline constexpr float ft = 7'000'000.0f;
+//    static inline constexpr float zf = 5'000.0f;
+//    static inline constexpr float ft = 7'000'000.0f;
+    static inline constexpr float zf = 40'000.0f;
+    static inline constexpr float ft = 40'915'000.0f;
     static inline constexpr float fSymbolLow = 0.0f;
     static inline constexpr float fSymbolHigh = 5'000.0f;
     static inline constexpr float fLow  = zf + fSymbolLow;
@@ -130,7 +133,7 @@ private:
 };
 
 int main() {
-    using devs = Devices<SDR04, Mcu::Stm::Stm32G431>;
+    using devs = Devices<SDR04, Config, Mcu::Stm::Stm32G431>;
     using gfsm = GFSM<devs>;
     gfsm::init();
 

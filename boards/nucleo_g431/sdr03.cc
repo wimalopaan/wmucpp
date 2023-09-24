@@ -214,7 +214,9 @@ private:
 //}
 
 int main() {
-    using devs = Devices<SDR03, Mcu::Stm::Stm32G431>;
+//    std::integral_constant<uint8_t, __FPU_PRESENT>::_;
+//    std::integral_constant<uint8_t, __FPU_USED>::_;
+    using devs = Devices<SDR03, Config1, Mcu::Stm::Stm32G431>;
     using gfsm = GFSM<devs>;
     gfsm::init();
 

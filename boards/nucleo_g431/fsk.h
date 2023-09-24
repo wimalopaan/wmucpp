@@ -9,6 +9,7 @@
 #include <numbers>
 
 #include "dsp.h"
+#include "output.h"
 
 // TODO:
 // - oversampling der Bits: drei Werte je Bit

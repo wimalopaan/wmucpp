@@ -22,7 +22,7 @@ namespace std {
 // using constexpr renders function inline
 //#define USE_CONSTEXPR
 // using consteval make UB visible
-//#define USE_CONSTEVAL
+#define USE_CONSTEVAL
 //#define USE_STRUCT 
 //#define USE_MISMATCH
 

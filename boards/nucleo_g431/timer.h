@@ -6,6 +6,7 @@
 #include "units.h"
 #include "concepts.h"
 #include "mcu_traits.h"
+#include "components.h"
 
 #include <type_traits>
 #include <concepts>
@@ -16,12 +17,17 @@ namespace Mcu::Stm {
     template<bool V = true>
     struct Trigger : std::integral_constant<bool, V> {};
     
-    template<uint8_t N, typename Period, typename Prescaler, typename Trigger = Trigger<false>, typename MCU = void> struct Timer;
+    template<uint8_t N, typename Period, typename Prescaler, typename Trigger = Trigger<false>, typename MCU = DefaultMcu> struct Timer;
     
     template<uint8_t N, uint16_t Per, uint16_t Pre, bool Tr, typename MCU>
     requires (N >=3) && (N <= 4)
     struct Timer<N, std::integral_constant<uint16_t, Per>, std::integral_constant<uint16_t, Pre>, Trigger<Tr>, MCU> {
+        using mcu_t = MCU;
+        using number_t = std::integral_constant<uint8_t, N>;
+//        using component_t = Mcu::Components::Timer<N>;
+
         static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Timer<N, std::integral_constant<uint16_t, Per>, std::integral_constant<uint16_t, Pre>, MCU>>::value);
+        
         static inline void init() {
             if constexpr(N == 3) {
                 RCC->APB1ENR1 |= RCC_APB1ENR1_TIM3EN;
@@ -53,6 +59,9 @@ namespace Mcu::Stm {
     template<uint8_t N, uint16_t Per, uint16_t Pre, bool Tr, typename MCU>
     requires (N >= 6) && (N <= 7)
     struct Timer<N, std::integral_constant<uint16_t, Per>, std::integral_constant<uint16_t, Pre>, Trigger<Tr>, MCU> {
+        using mcu_t = MCU;
+        using number_t = std::integral_constant<uint8_t, N>;
+
         static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Timer<N, std::integral_constant<uint16_t, Per>, std::integral_constant<uint16_t, Pre>, MCU>>::value);
 
         static inline constexpr uint8_t trgo() {

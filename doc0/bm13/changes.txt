@@ -1,0 +1,13 @@
+* Pfadnamen: "/" statt "\"
+* PinRegister.h: #include <stdint.h>
+* Pin.h: #include <avr/io.h>
+* self-contained header files
+* DA: PORT_INLVL_bm nicht vorhanden
+* C-Declaration: updateEncoder(void)
+* fehlende Deklaration: updateEncoder(void)
+* main()
+* Encoder2
+* mit O3 sehr groß: wegen __attribute__((always_inline)) überall!
+
+
+* wenn Arduino, warum dann nicht auch die Funktionen zum Lesen von Pins: digitalRead()?
