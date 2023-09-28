@@ -24,8 +24,8 @@ namespace Mcu::Stm {
         static inline constexpr uint8_t pllQ{2};
         
         static inline constexpr Units::megahertz f{170_MHz};
+        static inline constexpr Units::hertz frequency = f;
         static inline constexpr uint32_t systick{f / SysTickFreq}; 
-        
 //        std::integral_constant<uint32_t, systick>::_;
         
         static inline constexpr std::chrono::microseconds systickIntervall{1'000'000 / SysTickFreq.value};
@@ -74,8 +74,9 @@ namespace Mcu::Stm {
     template<typename Clock,  typename UseInterrupts = std::false_type, typename MCU = void> struct SystemTimer;
     template<typename Clock, Concept::Flag UseInterrupts, Mcu::Stm::G4xx MCU>
     struct SystemTimer<Clock, UseInterrupts, MCU> {
-        
         static inline constexpr std::chrono::microseconds intervall = Clock::config::systickIntervall;
+        
+        static inline constexpr Units::hertz frequency{1'000'000 / intervall.count()};
         
         inline static void init() {
             SysTick->LOAD = Clock::config::systick;

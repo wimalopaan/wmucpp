@@ -34,7 +34,7 @@ namespace IO {
         template<typename Device, typename T>
         requires ((std::is_signed_v<T> || std::is_unsigned_v<T>)) 
         inline constexpr void out_impl(const T& v) {
-            std::array<char, Etl::numberOfDigits<std::remove_volatile_t<T>>()> buffer{};
+            std::array<char, etl::numberOfDigits<std::remove_volatile_t<T>>()> buffer{};
             std::to_chars(std::begin(buffer), std::end(buffer), v);
             out_impl<Device>(buffer);
         }

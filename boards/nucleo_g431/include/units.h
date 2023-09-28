@@ -19,6 +19,11 @@ namespace Units {
     };
     
     template<typename Rep, typename Div>
+    constexpr bool operator>=(const frequency<Rep, Div>& fl, const frequency<Rep, Div>& fr) {
+        return fl.value >= fr.value;
+    }
+    
+    template<typename Rep, typename Div>
     constexpr uint32_t operator/(const frequency<Rep, Div>& fl, const frequency<Rep, Div>& fr) {
         return fl.value / fr.value;
     }
@@ -30,10 +35,10 @@ namespace Units {
     }
     
     namespace literals {
-        constexpr hertz operator"" _Hz(unsigned long long v) {
+        constexpr hertz operator ""_Hz(unsigned long long v) {
             return hertz{static_cast<uint32_t>(v)};
         }
-        constexpr megahertz operator"" _MHz(unsigned long long v) {
+        constexpr megahertz operator ""_MHz(unsigned long long v) {
             return megahertz{static_cast<uint8_t>(v)};
         }
     }

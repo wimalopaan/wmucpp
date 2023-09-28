@@ -10,10 +10,10 @@
 #include <cmath>
 #include <iterator>
 
-#include "mcu/algorithm.h"
-#include "mcu/dsp.h"
-#include "mcu/fsk.h"
-#include "mcu/output.h"
+#include "mcu/include/algorithm.h"
+#include "mcu/include/dsp.h"
+#include "mcu/include/fsk.h"
+#include "mcu/include/output.h"
 
 struct Config {
     Config() = delete;

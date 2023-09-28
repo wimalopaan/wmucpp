@@ -10,7 +10,7 @@
 #include <cmath>
 #include <iterator>
 
-#include "mcu/cppm.h"
+#include "mcu/include/cppm.h"
 
 struct Config {
     Config() = delete;

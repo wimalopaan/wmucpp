@@ -103,11 +103,11 @@ namespace External {
         inline constexpr auto operator<=>(const Tick& rhs) const = default;
         
         inline constexpr void reset() {
-            value.setToBottom();
+            value.toBottom();
         }
 
         inline constexpr void reset() volatile {
-            value.setToBottom();
+            value.toBottom();
         }
 
         inline static constexpr Tick fromRaw(const T v) {
@@ -126,9 +126,8 @@ namespace External {
             return Tick(value * m);    
         }
         
-        //    private: // structural type
-//        etl::uint_ranged<T, 0, MAX> value;
-        T value{};
+    private:
+        etl::ranged<0u, MAX> value;
         
     private:
         inline constexpr Tick(const T v) : value{v} {}

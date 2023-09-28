@@ -42,6 +42,34 @@ namespace Mcu::Stm {
             mcuUart->CR1 |= USART_CR1_UE;
         }
         
+        static inline void parity(const bool even) {
+            mcuUart->CR1 &= ~USART_CR1_UE;
+            if (even) {
+                mcuUart->CR1 |= USART_CR1_PCE;
+            }
+            else {
+                mcuUart->CR1 &= ~(USART_CR1_PCE);
+            }
+            mcuUart->CR1 |= USART_CR1_UE;
+        }
+
+        static inline void stop(const uint8_t) {
+            mcuUart->CR1 &= ~USART_CR1_UE;
+            MODIFY_REG(mcuUart->CR2, USART_CR2_STOP_Msk, 0b10 << USART_CR2_STOP_Pos);
+            mcuUart->CR1 |= USART_CR1_UE;
+        }
+        
+        static inline void invert(const bool invert) {
+            mcuUart->CR1 &= ~USART_CR1_UE;
+            if (invert) {
+                mcuUart->CR2 |= (USART_CR2_TXINV | USART_CR2_RXINV);
+            }
+            else {
+                mcuUart->CR2 &= ~(USART_CR2_TXINV | USART_CR2_RXINV);
+            }
+            mcuUart->CR1 |= USART_CR1_UE;
+        } 
+        
         static inline void baud(const uint32_t baud) {
             mcuUart->BRR = static_cast<Units::hertz>(Clock::config::f).value / baud;
         }
@@ -77,5 +105,17 @@ namespace Mcu::Stm {
     template<typename PA, uint8_t Size, typename V, typename Clock, G4xx MCU> 
     struct Address<Uart<1, PA, Size, V, Clock, MCU>> {
         static inline constexpr uintptr_t value = USART1_BASE;
+    };
+    template<typename PA, uint8_t Size, typename V, typename Clock, G4xx MCU> 
+    struct Address<Uart<2, PA, Size, V, Clock, MCU>> {
+        static inline constexpr uintptr_t value = USART2_BASE;
+    };
+    template<typename PA, uint8_t Size, typename V, typename Clock, G4xx MCU> 
+    struct Address<Uart<3, PA, Size, V, Clock, MCU>> {
+        static inline constexpr uintptr_t value = USART3_BASE;
+    };
+    template<typename PA, uint8_t Size, typename V, typename Clock, G4xx MCU> 
+    struct Address<Uart<4, PA, Size, V, Clock, MCU>> {
+        static inline constexpr uintptr_t value = UART4_BASE;
     };
 }

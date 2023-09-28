@@ -32,7 +32,7 @@ namespace etl {
     class FiFo final {
     public:
         static_assert(Size <= std::numeric_limits<uint16_t>::max());
-        static_assert(Etl::isPowerof2(Size));
+        static_assert(etl::isPowerof2(Size));
         
         using size_type = uint16_t;
 //        using size_type = etl::typeForValue_t<Size>;

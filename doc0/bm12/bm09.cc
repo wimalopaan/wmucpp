@@ -205,6 +205,56 @@ namespace etl {
     static_assert(std::is_same_v<typeFromValue_t<65535>, uint16_t>);
     static_assert(std::is_same_v<typeFromValue_t<-128>, int16_t>);
     
+    template<typename T, typename V> 
+    constexpr bool isInIntervallOf(V l, V h) {
+        return (l >= std::numeric_limits<T>::min()) && (h <= std::numeric_limits<T>::max());
+    }
+    
+    template<auto L, auto H>
+    consteval auto typeForIntervall() {
+        if constexpr ((L >= 0) && (H >= 0)) {
+            if constexpr (isInIntervallOf<uint8_t>(L, H)) {
+                return uint8_t{};
+            }
+            else if constexpr (isInIntervallOf<uint16_t>(L, H)) {
+                return uint16_t{};
+            }
+            else if constexpr (isInIntervallOf<uint32_t>(L, H)) {
+                return uint32_t{};
+            }
+            else if constexpr (isInIntervallOf<uint64_t>(L, H)) {
+                return uint64_t{};
+            }
+        }
+        else {
+            if constexpr (isInIntervallOf<int8_t>(L, H)) {
+                return int8_t{};
+            }
+            else if constexpr (isInIntervallOf<int16_t>(L, H)) {
+                return int16_t{};
+            }
+            else if constexpr (isInIntervallOf<int32_t>(L, H)) {
+                return int32_t{};
+            }
+            else if constexpr (isInIntervallOf<int64_t>(L, H)) {
+                return int64_t{};
+            }
+        }
+    }
+    
+    template<auto L, auto H>
+    struct typeFromIntervall {
+        using type = decltype(typeForIntervall<L, H>());
+    };
+    template<auto L, auto H>
+    using typeForIntervall_t = typeFromIntervall<L, H>::type;
+    
+    static_assert(std::is_same_v<typeForIntervall_t<0, 128>, uint8_t>);
+    static_assert(std::is_same_v<typeForIntervall_t<1, 128>, uint8_t>);
+    static_assert(std::is_same_v<typeForIntervall_t<1, 255>, uint8_t>);
+    static_assert(std::is_same_v<typeForIntervall_t<-128, 127>, int8_t>);
+    static_assert(std::is_same_v<typeForIntervall_t<-128, 128>, int16_t>);
+    
     template<typename T> 
     struct TypeParameter {
         using type = T;

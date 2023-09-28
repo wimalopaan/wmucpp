@@ -70,10 +70,19 @@ namespace Mcu::Stm {
         template<bool ON = true>
         static inline void pullup() {
             if constexpr(ON) {
-                MODIFY_REG(mcuGpio->PUPDR, (GPIO_PUPDR_PUPD0 << moderPos), (1 << moderPos));;
+                MODIFY_REG(mcuGpio->PUPDR, (GPIO_PUPDR_PUPD0 << moderPos), (0b01 << moderPos));;
             }
             else {
-                MODIFY_REG(mcuGpio->PUPDR, (GPIO_PUPDR_PUPD0 << moderPos), (0 << moderPos));;
+                MODIFY_REG(mcuGpio->PUPDR, (GPIO_PUPDR_PUPD0 << moderPos), (0b00 << moderPos));;
+            }
+        }
+        template<bool ON = true>
+        static inline void pulldown() {
+            if constexpr(ON) {
+                MODIFY_REG(mcuGpio->PUPDR, (GPIO_PUPDR_PUPD0 << moderPos), (0b10 << moderPos));;
+            }
+            else {
+                MODIFY_REG(mcuGpio->PUPDR, (GPIO_PUPDR_PUPD0 << moderPos), (0b00 << moderPos));;
             }
         }
         

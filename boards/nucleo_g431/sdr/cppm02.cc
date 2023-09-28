@@ -128,11 +128,11 @@ struct GFSM {
     enum class State : uint8_t {Undefined, Init, Setup, StartConv, Run};
     
 //    static inline constexpr External::Tick<systemTimer> mInitTicks{500ms};
-    
+ 
     static inline void init() {
         devs::init();
         devs::led::set();
-    }
+    }   
     static inline void periodic() {
         trace::periodic();
         si::periodic();
