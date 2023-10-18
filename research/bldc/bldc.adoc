@@ -1,0 +1,51 @@
+// -*- mode: adoc ; fill-column: 120 -*-
+= Brushless-Motor-Controller
+Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+:revnumber: 0.01
+:revremark: HW_1.0
+:revdate: 01.01.1970
+:lang: de
+:toc:
+:toc-title: Inhalt
+:toclevels: 4
+:numbered:
+:pagenums:
+:src_numbered: 
+:icons: font
+:icontype: svg
+:figure-caption: Abbildung
+:description: Brushless-Motor-Controller
+:title: Brushless-Motor-Controller : ein Odyssee
+:title-page:
+:sectanchors:
+:sectlinks:
+:experimental:
+:copyright: Wilhelm Meier
+:source-highlighter: pygments
+:pygments-css: class
+:showtitle:
+:docinfo1:
+:stem:
+// for attributes in link:[] macro like link:xxx[window="_blank"]
+:linkattrs:
+ 
+<<<
+
+== Vorwort
+
+=== Lizenz
+
+Dieses Dokument wird unter der folgenden _Lizenz_ veröffentlicht:
+
+image::by-nc-nd.eu.svg[align="center"]
+
+.Lizenz
+****
+Dieses Werk ist unter einer Creative Commons Lizenz vom Typ Namensnennung - Nicht kommerziell - Keine Bearbeitungen 4.0 International zugänglich. Um eine Kopie dieser Lizenz einzusehen, konsultieren Sie http://creativecommons.org/licenses/by-nc-nd/4.0/ oder wenden Sie sich brieflich an Creative Commons, Postfach 1866, Mountain View, California, 94042, USA.
+****
+
+=== Zweck
+
+== Kontakt
+
+Anfragen: wilhelm.wm.meier@googlemail.com
