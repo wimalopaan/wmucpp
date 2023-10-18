@@ -69,5 +69,11 @@ namespace etl {
     constexpr inline std::byte nth_byte<3, uint32_t>(const uint32_t& v) {
         return std::byte(v >> 24);
     }
-}
+
+    template<>
+    constexpr inline std::byte nth_byte<0, int>(const int& v) {
+        return std::byte(v);
+    }
+    
+    }
 

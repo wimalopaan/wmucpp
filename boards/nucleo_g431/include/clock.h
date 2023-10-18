@@ -39,7 +39,7 @@ namespace Mcu::Stm {
             RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;            
             RCC->APB1ENR1 |= RCC_APB1ENR1_PWREN;
             
-            RCC->CFGR |= RCC_CFGR_HPRE_DIV2;            
+            RCC->CFGR |= RCC_CFGR_HPRE_DIV2;         
             
 //            FLASH->ACR |= FLASH_ACR_LATENCY_5WS 
             FLASH->ACR |= FLASH_ACR_LATENCY_4WS // sollte laut DB reichen
@@ -53,7 +53,7 @@ namespace Mcu::Stm {
             RCC->CR |= RCC_CR_HSION;
             while (!(RCC->CR & RCC_CR_HSIRDY));
             
-            RCC->PLLCFGR |= (Config::pllM << RCC_PLLCFGR_PLLM_Pos) 
+            RCC->PLLCFGR = (Config::pllM << RCC_PLLCFGR_PLLM_Pos) 
                             | (Config::pllR << RCC_PLLCFGR_PLLR_Pos)
                             | (Config::pllN << RCC_PLLCFGR_PLLN_Pos)
                             | (Config::pllP << RCC_PLLCFGR_PLLPDIV_Pos)
@@ -68,6 +68,8 @@ namespace Mcu::Stm {
             while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != RCC_CFGR_SWS_PLL);
 
             MODIFY_REG(RCC->CFGR, RCC_CFGR_HPRE_Msk, RCC_CFGR_HPRE_DIV1);            
+            MODIFY_REG(RCC->CFGR, RCC_CFGR_PPRE1_Msk, RCC_CFGR_PPRE1_DIV1);            
+            MODIFY_REG(RCC->CFGR, RCC_CFGR_PPRE2_Msk, RCC_CFGR_PPRE2_DIV1);            
         }        
     };
 

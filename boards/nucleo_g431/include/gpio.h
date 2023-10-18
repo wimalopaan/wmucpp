@@ -48,13 +48,17 @@ namespace Mcu::Stm {
         static inline constexpr uintptr_t value = GPIOB_BASE;
     };
     template<G4xx MCU> 
+    struct Address<GPIO<C, MCU>> {
+        static inline constexpr uintptr_t value = GPIOC_BASE;
+    };
+    template<G4xx MCU> 
     struct Address<GPIO<F, MCU>> {
         static inline constexpr uintptr_t value = GPIOF_BASE;
     };
     
     template<typename GP, uint8_t N, typename MCU = void>
     struct Pin {
-//        using component_t = Mcu::Components::Pin<typename GP::port_t, N>;
+        using component_t = Mcu::Components::Pin<typename GP::port_t, N>;
         
         using gpio_t = GP;
         using number_t = std::integral_constant<uint8_t, N>;

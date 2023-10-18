@@ -21,6 +21,9 @@ namespace Mcu {
         struct B {
             static inline constexpr uint8_t ahb2Bit = 0x01 << 1;
         };
+        struct C {
+            static inline constexpr uint8_t ahb2Bit = 0x01 << 2;
+        };
         struct F {
             static inline constexpr uint8_t ahb2Bit = 0x01 << 5;
         };

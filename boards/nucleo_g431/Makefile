@@ -22,6 +22,7 @@
 
 #subdirs += sdr 
 subdirs += rc
+subdirs += esc
 
 -include ../../Makefile.include
 

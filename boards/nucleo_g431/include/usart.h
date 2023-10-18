@@ -19,6 +19,9 @@ namespace Mcu::Stm {
     struct Uart<N, PA, Size, ValueType, Clock, MCU> {
         static inline /*constexpr */ USART_TypeDef* const mcuUart = reinterpret_cast<USART_TypeDef*>(Mcu::Stm::Address<Uart<N, PA, Size, ValueType, Clock, MCU>>::value);
         
+        static inline constexpr uint8_t QueueLength{Size};
+        static inline constexpr bool useInterrupts{false};
+        
         static inline void init() {
             if constexpr(N == 1) {
                 RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
@@ -39,6 +42,28 @@ namespace Mcu::Stm {
             mcuUart->CR1 |= USART_CR1_FIFOEN;
             mcuUart->CR1 |= USART_CR1_RE;
             mcuUart->CR1 |= USART_CR1_TE;
+            mcuUart->CR1 |= USART_CR1_UE;
+        }
+        
+        template<bool Enable>
+        static inline void rxEnable() {
+            if constexpr(Enable) {
+                mcuUart->CR1 |= USART_CR1_RE;
+            }
+            else {
+                mcuUart->CR1 &= ~USART_CR1_RE;
+            }            
+        }
+        
+        template<bool Enable = true>
+        static inline void halfDuplex() {
+            mcuUart->CR1 &= ~USART_CR1_UE;
+            if constexpr(Enable) {
+                mcuUart->CR3 |= USART_CR3_HDSEL;
+            }
+            else {
+                mcuUart->CR3 &= ~USART_CR3_HDSEL;
+            }            
             mcuUart->CR1 |= USART_CR1_UE;
         }
         
@@ -77,11 +102,15 @@ namespace Mcu::Stm {
         static inline void put(const ValueType c) {
             mSendData.push_back(c);    
         }
+
+        static inline bool isIdle() {
+            return mcuUart->ISR & USART_ISR_TC;
+        }
         
         static inline void periodic() {
             if (mcuUart->ISR & USART_ISR_TXE_TXFNF) {
                 if (!mSendData.empty()) {
-                    mcuUart->TDR = *mSendData.pop_front();
+                    mcuUart->TDR = uint8_t(*mSendData.pop_front());
                     // Byte access of USART registers not allowed according to ref-manual
                     // may be "accessed" only by 32bit words
 //                    *(uint8_t*)(&mcuUart->TDR) = *mSendData.pop_front();

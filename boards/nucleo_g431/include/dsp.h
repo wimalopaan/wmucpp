@@ -67,7 +67,7 @@ namespace Dsp {
         constexpr void set(const float m) {
             mean = m;
         }
-        constexpr float value() const {
+        constexpr float value() const volatile {
             return mean;
         }
     private:

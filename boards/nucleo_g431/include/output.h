@@ -43,7 +43,10 @@ namespace IO {
     constexpr inline void outl(const TT&... vv) {
         ((detail::out_impl<Stream>(vv)),..., detail::out_impl<Stream>('\n'));
     }    
-
+    template<typename Stream, typename... TT>
+    constexpr inline void out(const TT&... vv) {
+        ((detail::out_impl<Stream>(vv)),...);
+    }    
 }
 
 

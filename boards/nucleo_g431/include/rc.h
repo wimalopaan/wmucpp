@@ -32,6 +32,74 @@ namespace RC {
             };
         }
         namespace IBus {
+            
+            namespace Type {
+                // https://github.com/betaflight/betaflight/tree/master/src/main/telemetry
+                
+                // FlySky i6A: TEMPERATURE, RPM_FLYSKY, EXTERNAL_VOLTAGE
+                
+                enum class type : uint8_t {
+                    NONE             = 0x00,
+                    TEMPERATURE      = 0x01, // 0.1°C per step, -40°C offset (400 = 0°C)
+                    RPM_FLYSKY       = 0x02,
+                    EXTERNAL_VOLTAGE = 0x03, // 0.01V per step
+                    CELL             = 0x04, // Avg Cell voltage
+                    BAT_CURR         = 0x05, // battery current A * 100
+                    FUEL             = 0x06, // remaining battery percentage / mah drawn otherwise or fuel level no unit!
+                    RPM              = 0x07, // throttle value / battery capacity
+                    CMP_HEAD         = 0x08, //Heading  0..360 deg, 0=north 2bytes
+                    CLIMB_RATE       = 0x09, //2 bytes m/s *100
+                    COG              = 0x0a, //2 bytes  Course over ground(NOT heading, but direction of movement) in degrees * 100, 0.0..359.99 degrees. unknown max uint
+                    GPS_STATUS       = 0x0b, //2 bytes
+                    ACC_X            = 0x0c, //2 bytes m/s *100 signed
+                    ACC_Y            = 0x0d, //2 bytes m/s *100 signed
+                    ACC_Z            = 0x0e, //2 bytes m/s *100 signed
+                    ROLL             = 0x0f, //2 bytes deg *100 signed
+                    PITCH            = 0x10, //2 bytes deg *100 signed
+                    YAW              = 0x11, //2 bytes deg *100 signed
+                    VERTICAL_SPEED   = 0x12, //2 bytes m/s *100
+                    GROUND_SPEED     = 0x13, //2 bytes m/s *100 different unit than build-in sensor
+                    GPS_DIST         = 0x14, //2 bytes dist from home m unsigned
+                    ARMED            = 0x15, //2 bytes
+                    FLIGHT_MODE      = 0x16, //2 bytes
+                    PRES             = 0x41, // Pressure
+        
+                    ANGLE            = 0x70,
+                    FW_VERSION          = 0x71,
+                    STATE            = 0x72,
+                    
+                    ODO1             = 0x7c, // Odometer1
+                    ODO2             = 0x7d, // Odometer2
+                    SPEED              = 0x7e, // Speed 2bytes km/h
+                    
+                    GPS_LAT          = 0x80, //4bytes signed WGS84 in degrees * 1E7
+                    GPS_LON          = 0x81, //4bytes signed WGS84 in degrees * 1E7
+                    GPS_ALT          = 0x82, //4bytes signed!!! GPS alt m*100
+                    ALT              = 0x83, //4bytes signed!!! Alt m*100
+                    ALT_MAX          = 0x84, //4bytes signed MaxAlt m*100
+                    
+                    ID_S85           = 0x85,     
+                    ID_S86           = 0x86,     
+                    ID_S87           = 0x87,     
+                    ID_S88           = 0x85,     
+                    ID_S89           = 0x89,     
+                    ID_S8a           = 0x8a,     
+                    
+                    ALT_FLYSKY       = 0xf9, // Altitude 2 bytes signed in m
+                    
+                    RX_SNR           = 0xfa,
+                    RX_NOISE         = 0xfb,
+                    RX_RSSI          = 0xfc,
+                    RX_ERR_RATE      = 0xfe,
+                    
+                    UNKNOWN          = 0xff,
+                    END              = 0xff
+                };
+            }
+            
+            
+            
+            
             struct CheckSum final {
                 inline void reset() {
                     mSum = std::numeric_limits<uint16_t>::max();
@@ -161,6 +229,513 @@ namespace RC {
                 inline static index_type mIndex;
                 inline static uint16_t mPackagesCounter{};
             };
+            
+            
+            using namespace etl::literals;
+            using namespace std::literals::chrono_literals;
+            using namespace Units::literals;
+            
+            
+            template<
+                     template<typename PA> typename Uart, 
+                     typename Clock,
+                     typename ProviderList,
+                     typename DaisyChainEnable = void,
+                     bool useLoss = false,
+                     bool useStats = false,
+                     typename Debug = void> 
+            struct  Sensor;
+            
+            template<
+                     template<typename PA> typename Uart, 
+                     typename Clock,
+                     typename... Providers,
+                     typename DaisyChainEnable,
+                     bool useLoss,
+                     bool useStats,
+                     typename Debug>
+            struct Sensor<Uart, Clock, Meta::List<Providers...>, DaisyChainEnable, useLoss, useStats, Debug> final {
+                struct NoDebug {
+                    static inline void init() {}
+                    template<auto T>
+                    static inline constexpr void set() {}
+                    static inline constexpr void set(std::byte) {}
+                };
+                
+                struct LossProvider {
+                    inline static constexpr auto ibus_type = Type::type::FLIGHT_MODE;
+                    inline static constexpr void init() {}
+                    inline static constexpr uint16_t value() {
+                        return 10000 + (lossCounter * 100) + noQueriesCounter;
+                    }
+                    inline static void incLoss() {
+                        if (++lossCounter == 100) {
+                            lossCounter = 0;
+                        }
+                    }
+                    inline static void incNoQuery() {
+                        if (++noQueriesCounter == 100) {
+                            noQueriesCounter = 0;
+                        }
+                    }
+                    static inline uint8_t lossCounter{};
+                    static inline uint8_t noQueriesCounter{};
+                };
+                struct StatisticProvider {
+                    inline static constexpr auto ibus_type = Type::type::FLIGHT_MODE;
+                    inline static constexpr void init() {}
+                    inline static constexpr uint16_t value() {
+                        return 10000 + (mPackets * 100) + mBytes;
+                    }
+                    inline static constexpr void incBytes() {
+                        if (++mBytes == 100) {
+                            mBytes = 0;
+                        }
+                    }
+                    inline static constexpr void incPackets() {
+                        if (++mPackets == 100) {
+                            mPackets = 0;
+                        }
+                    }
+                    static inline uint8_t mBytes{};
+                    static inline uint8_t mPackets{};
+                };
+                
+                using debug = std::conditional_t<std::is_same_v<Debug, void>, NoDebug, Debug>;
+                
+                using provider_list_extern = Meta::List<Providers...>;
+        
+                using provider_list1 = std::conditional_t<useLoss, 
+                                                         Meta::push_back<provider_list_extern, LossProvider>,
+                                                         provider_list_extern>;
+                using provider_list = std::conditional_t<useStats, 
+                                                         Meta::push_back<provider_list1, StatisticProvider>,
+                                                         provider_list1>;
+                
+                
+                inline static constexpr auto numberOfProviders = Meta::size_v<provider_list>;
+                
+                inline static constexpr std::byte Cdiscover = 0x80_B;
+                inline static constexpr std::byte CgetType  = 0x90_B;
+                inline static constexpr std::byte CgetValue = 0xa0_B;
+                inline static constexpr std::byte Creset    = 0xf0_B;
+                
+                using sensor_number_t = etl::ranged<1, 15>;
+        
+        //        using prov_type = etl::uint_ranged<uint8_t, 0, numberOfProviders - 1>;        
+                inline static void maxProvider(const uint8_t n) {
+                        mEnabledProviders = std::min(n, numberOfProviders);
+                }
+                
+                struct ProtocollAdapter final {
+                    inline static constexpr uint8_t   Length    = 4;
+                    
+                    enum class ibus_state_t {Undefined = 0, Reset, 
+                                             Length, Discover, Type, Value, Skip, 
+                                             CheckSum, CheckSumSkip,
+                                             Reply};
+                    
+                    ProtocollAdapter() = delete;
+                    
+                    inline static void start() {
+                        mState = ibus_state_t::Undefined;
+                        uart::template rxEnable<true>();
+                    }
+                    inline static void reset() {
+                        mFirstSensorNumber= sensor_number_t{};
+                        mLastSensorNumber = sensor_number_t{};
+                        mReceivedNumber   = sensor_number_t{};
+                        if constexpr(!std::is_same_v<DaisyChainEnable, void>) {
+                            DaisyChainEnable::off();
+                        }
+                        start();
+                    }
+        
+                    inline static constexpr auto requests() {
+                        return StatisticProvider::mPackets;
+                    }
+                    
+                    static constexpr External::Tick<Clock> timeoutTicks{300ms};
+                    
+                    inline static bool process(const std::byte c) {
+        //                debug::template set<1>();
+                        StatisticProvider::incBytes();
+                        switch (mState) {
+                        case ibus_state_t::Undefined:
+                            csum.reset();
+                            responder::start();
+                            if (length(c) == Length) {
+                                mState = ibus_state_t::Length;
+                                csum += c;
+                            }
+                            break;
+                        case ibus_state_t::Reset:
+                            reset();
+                            mState = ibus_state_t::CheckSumSkip;
+                            break;
+                        case ibus_state_t::Length:
+                            StatisticProvider::incPackets(); 
+                            csum += c;  
+                            mReceivedNumber = sensor_number_t{};
+                            if (command(c) == Cdiscover) {
+                                debug::template set<1>();
+                                if (const sensor_number_t n{address(c)}; n) {
+                                    if (!mFirstSensorNumber) {
+                                        mFirstSensorNumber = n;
+                                        if (mEnabledProviders == 1) {
+                                            mLastSensorNumber = n;
+                                        }
+                                        mReceivedNumber = n;
+                                        mState = ibus_state_t::Discover;
+                                        responder::start(responder::reply_state_t::DiscoverWait);
+                                    }
+                                    else if (!mLastSensorNumber) {
+                                        const uint8_t index = n - mFirstSensorNumber;
+                                        if (index == (mEnabledProviders - 1)) {
+                                            mLastSensorNumber = n;
+                                        }
+                                        mReceivedNumber = n;
+                                        mState = ibus_state_t::Discover;
+                                        responder::start(responder::reply_state_t::DiscoverWait);
+                                    }
+                                    else if (mFirstSensorNumber && mLastSensorNumber && inRange(n)) { // maybe a loss of connection
+                                        mReceivedNumber = n;
+                                        mState = ibus_state_t::Discover;
+                                        responder::start(responder::reply_state_t::DiscoverWait);
+                                        LossProvider::incLoss();
+                                    }
+                                    else {
+                                        mState = ibus_state_t::Skip;
+                                    }
+                                }
+                                else {
+                                    mState = ibus_state_t::Undefined;
+                                }
+                            }
+                            else if (command(c) == CgetType) {
+                                if (const sensor_number_t n{address(c)}; n) {
+                                    if (inRange(n)) {
+                                        mReceivedNumber = n;
+                                        mState = ibus_state_t::Type;                        
+                                        responder::start(responder::reply_state_t::TypeWait);
+                                    }
+                                    else {
+                                        mState = ibus_state_t::Skip;
+                                    }
+                                }
+                                else {
+                                    mState = ibus_state_t::Undefined;
+                                }
+                            }
+                            else if (command(c) == CgetValue) {
+                                if (const sensor_number_t n{address(c)}; n) {
+                                    if (inRange(n)) {
+                                        ++mQueries;
+                                        mReceivedNumber = n;
+                                        mState = ibus_state_t::Value;                        
+                                        responder::start(responder::reply_state_t::ValueWait);
+                                    }
+                                    else {
+                                        mState = ibus_state_t::Skip;
+                                    }
+                                }
+                                else {
+                                    mState = ibus_state_t::Undefined;
+                                }
+                            }
+        //                    else if (command(c) == Creset) {
+                            else if (c == Creset) {
+                                mState = ibus_state_t::Reset;                        
+                            }
+                            else {
+                                mState = ibus_state_t::Undefined;
+                            }
+                            break;
+                        case ibus_state_t::Skip:
+                            mState = ibus_state_t::CheckSumSkip;                        
+                            break;
+                        case ibus_state_t::Discover:
+                            csum.lowByte(c);
+                            mState = ibus_state_t::CheckSum;                        
+                            break;
+                        case ibus_state_t::Type:
+                            csum.lowByte(c);
+                            mState = ibus_state_t::CheckSum;                        
+                            break;
+                        case ibus_state_t::Value:
+                            csum.lowByte(c);
+                            mState = ibus_state_t::CheckSum;                        
+                            break;
+                        case ibus_state_t::CheckSum:
+                            csum.highByte(c);
+                            if (csum) { // mReceivedNumber valid
+                                mState = ibus_state_t::Reply;                        
+                                uart::template rxEnable<false>();
+                            }
+                            else {
+                                mState = ibus_state_t::Undefined;
+                            }
+                            break;
+                        case ibus_state_t::CheckSumSkip:
+                            mState = ibus_state_t::Undefined;                        
+                            break;
+                        case ibus_state_t::Reply:
+                            break;
+                        default:
+                            break;
+                        }
+        //                debug::template set<0>();
+                        debug::set(std::byte(mState));
+                        return true;
+                    }
+                    inline static constexpr bool permitReply() {
+                        return mState == ibus_state_t::Reply;
+                    }
+                    inline static void ratePeriodic() {
+                        static uint16_t lastQueries{};
+                        stateTicks.on(timeoutTicks, [&]{
+                            if (mQueries == lastQueries) {
+                                reset();
+                                LossProvider::incNoQuery();
+                            }
+                            lastQueries = mQueries;
+                        });
+        //                switch(mState) {
+        //                case ibus_state_t::Undefined:   
+        //                case ibus_state_t::Reset:   
+        //                case ibus_state_t::Length:   
+        //                case ibus_state_t::Discover:   
+        //                case ibus_state_t::Type:   
+        //                case ibus_state_t::Value:   
+        //                case ibus_state_t::Skip:   
+        //                case ibus_state_t::CheckSum:   
+        //                case ibus_state_t::CheckSumSkip:   
+        //                case ibus_state_t::Reply:
+        //                    break;
+        //                }
+                    }
+                private:
+                    static inline constexpr std::byte command(const std::byte b) {
+                        if ((b & 0x0f_B) == 0x00_B) {
+                            return 0x00_B;
+                        }
+                        return (b & 0xf0_B) ;
+                    }
+                    static inline constexpr uint8_t length(const std::byte b) {
+                        if ((b & 0xf0_B) != 0x00_B) {
+                            return {};
+                        }
+                        return uint8_t(b & 0x0f_B);
+                    }
+                    static inline constexpr sensor_number_t address(const std::byte b) {
+                        auto v = uint8_t(b & 0x0f_B);
+                        if (v != 0) {
+                            return sensor_number_t{v};
+                        }
+                        else {
+                            return {};
+                        }
+                    }
+                    static inline uint16_t mQueries{0};
+                    static inline External::Tick<Clock> stateTicks{};
+                    static inline CheckSum csum;
+                    static inline ibus_state_t  mState = ibus_state_t::Undefined;
+                };
+                
+                using pa = ProtocollAdapter;
+                using uart = Uart<pa>;
+        
+                inline static constexpr void init() {
+                    (Providers::init(), ...);
+                    uart::init();
+                    uart::baud(115200);
+                    uart::halfDuplex();
+//                    uart::template init<Baud, AVR::HalfDuplex>();
+                    if constexpr(!std::is_same_v<DaisyChainEnable, void>) {
+                        DaisyChainEnable::init();
+                    }
+                    clear();
+                }            
+                
+                inline static constexpr void clear() {
+                    if constexpr(!std::is_same_v<DaisyChainEnable, void>) {
+                        DaisyChainEnable::off();
+                    }
+                    pa::reset();
+                    responder::start();
+                    debug::init();
+        //            debug::template set<0x00>();
+                }
+                
+                struct Responder final {
+                    inline static constexpr auto delayBeforeReply = 700us;
+                    static inline constexpr auto intervall = Clock::intervall;
+        //                                std::integral_constant<uint16_t, intervall.value>::_;
+                    static inline constexpr auto ticks_to_wait = delayBeforeReply / intervall;
+//                                        std::integral_constant<uint8_t, ticks_to_wait>::_;
+                    static_assert((ticks_to_wait > 0) || (intervall <= 1000us));        
+                    using wait_t = etl::ranged<0, ticks_to_wait+1>;
+                    
+                    enum class reply_state_t {Undefined = 0, 
+                                              DiscoverWait, TypeWait, ValueWait, 
+                                              Discover, Type, Value,
+                                              DaisyWait, DaisySet,
+                                              Wait, WaitOver};
+                    
+                    Responder() = delete;
+                    inline static constexpr void start(const reply_state_t s = reply_state_t::Undefined) {
+                        mReply = s;
+                        mTicks.toBottom(); 
+//                        mTicks.template set<etl::RangeCheck<false>>(0); 
+                    }
+                    inline static constexpr void ratePeriodic() {
+                        if (pa::permitReply()) {
+                            ++mTicks;
+                            if (mTicks.isTop()) {
+                                switch(mReply) {
+                                case reply_state_t::DiscoverWait:
+                                    mReply = reply_state_t::Discover;
+                                    break;
+                                case reply_state_t::TypeWait:
+                                    mReply = reply_state_t::Type;
+                                    break;
+                                case reply_state_t::ValueWait:
+                                    mReply = reply_state_t::Value;
+                                    break;
+                                case reply_state_t::Undefined:
+                                case reply_state_t::Discover:
+                                case reply_state_t::Type:
+                                case reply_state_t::Value:
+                                case reply_state_t::Wait:
+                                case reply_state_t::WaitOver:
+                                case reply_state_t::DaisyWait:
+                                case reply_state_t::DaisySet:
+                                    break;
+                                default:
+                                    break;
+                                }
+                                debug::set(std::byte(uint8_t(mReply) + 16));
+                            }
+                        }
+                    }
+                    inline static constexpr void periodic() {
+                        uart::periodic();
+                        switch(mReply) {
+                        case reply_state_t::Discover:
+                            if (inRange(mReceivedNumber)) {
+                                CheckSum cs;
+                                uart::put(cs += 0x04_B);
+                                uart::put(cs += Cdiscover | std::byte((uint8_t)mReceivedNumber));
+                                uart::put(cs.lowByte());
+                                uart::put(cs.highByte());
+                                mReply = reply_state_t::Wait;
+                                debug::set(std::byte(uint8_t(mReply) + 16));
+                            }
+                            break;
+                        case reply_state_t::Type:
+                            if (inRange(mReceivedNumber)) {
+                                uint8_t index = mReceivedNumber - mFirstSensorNumber;
+                                auto type = Type::type::NONE;
+                                Meta::visitAt<provider_list>(index, [&]<typename P>(Meta::Wrapper<P>){
+                                                                 type = P::ibus_type;
+                                                             });
+                                CheckSum cs;
+                                uart::put(cs += 0x06_B);
+                                uart::put(cs += CgetType | std::byte((uint8_t)mReceivedNumber));
+                                uart::put(cs += std::byte(type));
+                                uart::put(cs += 0x02_B); // fix
+                                uart::put(cs.lowByte());
+                                uart::put(cs.highByte());
+                                mReply = reply_state_t::DaisyWait;
+                                debug::set(std::byte(uint8_t(mReply) + 16));
+                            }
+                            break;
+                        case reply_state_t::Value:
+                            if (inRange(mReceivedNumber)) {
+                                uint8_t index = mReceivedNumber - mFirstSensorNumber;
+                                uint16_t value{};
+                                Meta::visitAt<provider_list>(index, [&]<typename P>(Meta::Wrapper<P>){
+                                                                 value = P::value();
+                                                             });
+                                CheckSum cs;
+                                uart::put(cs += 0x06_B);
+                                uart::put(cs += CgetValue | std::byte{(uint8_t)mReceivedNumber});
+                                uart::put(cs += etl::nth_byte<0>(value));
+                                uart::put(cs += etl::nth_byte<1>(value)); 
+                                uart::put(cs.lowByte());
+                                uart::put(cs.highByte());
+                                mReply = reply_state_t::Wait;
+                                debug::set(std::byte(uint8_t(mReply) + 16));
+                            }
+                            break;
+                        case reply_state_t::Wait:
+                            if (uart::isIdle()) {
+                                mReply = reply_state_t::WaitOver;
+                                debug::set(std::byte(uint8_t(mReply) + 16));
+                            }
+                            break;
+                        case reply_state_t::DaisyWait:
+                            if (uart::isIdle()) {
+                                mReply = reply_state_t::DaisySet;
+                                debug::set(std::byte(uint8_t(mReply) + 16));
+                            }
+                            break;
+                        case reply_state_t::WaitOver:
+                            pa::start();
+                            mReply = reply_state_t::Undefined;
+                            debug::set(std::byte(uint8_t(mReply) + 16));
+                            break;
+                        case reply_state_t::DaisySet:
+                            pa::start();
+                            mReply = reply_state_t::Undefined;
+                            if constexpr(!std::is_same_v<DaisyChainEnable, void>) {
+                                if (mLastSensorNumber) {
+                                    DaisyChainEnable::on();
+                                }
+                            }
+                            debug::set(std::byte(uint8_t(mReply) + 16));
+                            break;
+                        case reply_state_t::Undefined:
+                        case reply_state_t::DiscoverWait:
+                        case reply_state_t::TypeWait:
+                        case reply_state_t::ValueWait:
+                            break;
+                        default:
+                            break;
+                        }
+                    }
+                private:
+                    static inline reply_state_t mReply = reply_state_t::Undefined;
+                    inline static wait_t mTicks;
+                };
+                
+                using responder = Responder;
+                
+                inline static constexpr void ratePeriodic() {
+                    pa::ratePeriodic();
+                    responder::ratePeriodic();
+                }
+                inline static constexpr void periodic() {
+                    responder::periodic();
+                }
+                
+                private:
+                static inline constexpr bool inRange(const sensor_number_t n) {
+                    if (!n) return false;
+                    const auto in = n;
+                    return (in >= mFirstSensorNumber) && (in < (mFirstSensorNumber + mEnabledProviders));
+                }
+                
+                static inline sensor_number_t mReceivedNumber;
+                static inline sensor_number_t mFirstSensorNumber;
+                static inline sensor_number_t mLastSensorNumber;
+        
+                static inline uint8_t mEnabledProviders{numberOfProviders};
+            };
+            
+            
+            
+            
         }
         
         namespace SBus {
@@ -351,7 +926,7 @@ namespace RC {
                                             ID15 = 0x8E, ID16 = 0x2F, ID17 = 0xD0, ID18 = 0x71, ID19 = 0xF2, ID20 = 0x53, ID21 = 0x34,
                                             ID22 = 0x95, ID23 = 0x16, ID24 = 0xB7, ID25 = 0x98, ID26 = 0x39, ID27 = 0xBA, ID28 = 0x1B, ID_IGNORE = 0xFF };
             
-            constexpr std::array sensor_ids{SensorId::ID1, SensorId::ID2, SensorId::ID3, SensorId::ID4, SensorId::ID5, SensorId::ID6,
+            static inline constexpr std::array sensor_ids{SensorId::ID1, SensorId::ID2, SensorId::ID3, SensorId::ID4, SensorId::ID5, SensorId::ID6,
                                            SensorId::ID7, SensorId::ID8, SensorId::ID9, SensorId::ID10, SensorId::ID11, SensorId::ID12,
                                            SensorId::ID13, SensorId::ID14, SensorId::ID15, SensorId::ID16, SensorId::ID17, SensorId::ID18,
                                            SensorId::ID19, SensorId::ID20, SensorId::ID21, SensorId::ID22, SensorId::ID23, SensorId::ID24,
@@ -403,14 +978,13 @@ namespace RC {
                 
                 enum class State : uint8_t {Init, Request, ReplyWait, Reply, WaitReplyComplete};
                 
-                inline static void maxProvider(uint8_t) {
-                    
-                }
+//                inline static void maxProvider(uint8_t) {
+//                }
                 
                 struct ProtocollAdapter {
                     //                using requests_t = std::conditional_t<uart::useInterrupts, volatile uint8_t, uint8_t>;
                     //                using requests_t = volatile uint8_t;
-                    using requests_t = uint8_t;
+                    using requests_t = uint16_t;
                     
                     static inline bool process(const std::byte b) {
                         switch(mState) {
@@ -441,7 +1015,7 @@ namespace RC {
                     }
                     inline static void ratePeriodic() {}
                     
-                    inline static uint8_t requests() {
+                    inline static auto requests() {
                         return mRequests;
                     }
                 private:
@@ -450,10 +1024,10 @@ namespace RC {
                 };
                 
                 using uart = Uart<ProtocollAdapter>;   
-                static_assert(uart::sendQLength >= 16);
+                static_assert(uart::QueueLength >= 16);
                 
                 inline static constexpr bool useInterrupts = uart::useInterrupts;
-                using tick_type = std::conditional_t<useInterrupts, volatile External::Tick<Timer>, External::Tick<Timer>>;
+//                using tick_type = std::conditional_t<useInterrupts, volatile External::Tick<Timer>, External::Tick<Timer>>;
                 using state_type = std::conditional_t<useInterrupts, volatile State, State>;
                 
                 static inline void init() {
@@ -464,6 +1038,7 @@ namespace RC {
 //                        uart::template init<AVR::BaudRate<57600>, AVR::FullDuplex, false>(); // no pullup
 //                        uart::rxInvert(true); // SPort Protocoll
 //                    }
+//                    uart::baud(57600);
                 }
                 template<bool B = true>
                 static inline void enable() {
@@ -474,9 +1049,7 @@ namespace RC {
                 }
                 
                 static inline void periodic() {
-                    if constexpr(!std::is_same_v<typename uart::component_type, void>) {
-                        uart::periodic();
-                    }            
+                    uart::periodic();
                     switch(mState) {
                     case State::ReplyWait:
                         mState = State::Reply;    
@@ -488,6 +1061,7 @@ namespace RC {
                         break;
                     case State::WaitReplyComplete:
                         if (uart::isIdle()) {
+                            ++mReplies;
                             uart::template rxEnable<true>();
                             mState = State::Init;
                         }
@@ -498,7 +1072,11 @@ namespace RC {
                         break;
                     }
                 }
+                static uint16_t replies() {
+                    return mReplies;
+                }
             private:
+                static inline uint16_t mReplies{};
                 struct CheckSum {
                     void operator+=(const std::byte b) {
                         mValue += uint8_t(b);

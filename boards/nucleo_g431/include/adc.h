@@ -41,10 +41,11 @@ namespace Mcu::Stm {
             
             // VREF ?
             
-            MODIFY_REG(mcuAdcCommon->CCR, ADC_CCR_PRESC_Msk, (0 << ADC_CCR_PRESC_Pos)); // prescaler 10
+            MODIFY_REG(mcuAdcCommon->CCR, ADC_CCR_PRESC_Msk, (0 << ADC_CCR_PRESC_Pos)); // kein
             MODIFY_REG(mcuAdc->CFGR , ADC_CFGR_RES_Msk, (0x00 << ADC_CFGR_RES_Pos)); // 12 bit
             
             if constexpr(!std::is_same_v<TriggerSource, NoTriggerSource>) {
+//                TriggerSource::_;
                 MODIFY_REG(mcuAdc->CFGR , ADC_CFGR_EXTSEL_Msk, (TriggerSource::trgo() << ADC_CFGR_EXTSEL_Pos));
                 MODIFY_REG(mcuAdc->CFGR , ADC_CFGR_EXTEN_Msk, (0x01 << ADC_CFGR_EXTEN_Pos));
             }

@@ -114,21 +114,20 @@ namespace etl {
 //            }
 //            return *this;
 //        }
-//        inline constexpr uint_ranged_circular& operator++() {
-//            if constexpr(use_mask_modulo) {
-//                ++mValue;
-//                mValue &= module_mask;
-//            }
-//            else {
-//                if (mValue < UpperBound) {
-//                    ++mValue;
-//                }
-//                else {
-//                    mValue = LowerBound;
-//                }
-//            }
-//            return *this;
-//        }
+        inline constexpr void operator++() {
+            if constexpr(use_mask_modulo) {
+                ++mValue;
+                mValue &= module_mask;
+            }
+            else {
+                if (mValue < Upper) {
+                    ++mValue;
+                }
+                else {
+                    mValue = Lower;
+                }
+            }
+        }
         
 //        template<T Shift>
 //        inline constexpr uint_ranged_circular leftShift() volatile {
@@ -224,9 +223,9 @@ namespace etl {
 //            return R{mValue};
 //        }
         
-//        inline constexpr operator T() const {
-//            return mValue;
-//        }
+        constexpr operator value_type() const {
+            return mValue;
+        }
 //        inline constexpr T toInt() const {
 //            return mValue;
 //        }

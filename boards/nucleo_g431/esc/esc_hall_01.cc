@@ -1,5 +1,6 @@
 #define USE_MCU_STM_V2
 #define NDEBUG
+#define OLD
 
 #include "devices.h"
 
@@ -15,19 +16,17 @@ struct Config {
 template<typename Devices>
 struct GFSM {
     using devs = Devices;
-    using trace = devs::trace;
+    using term = devs::serial2;
     using systemTimer = devs::systemTimer;
     
-    using pwm1 = devs::pwm1;
-//    using servo = devs::servo;
-//    using servo_pa = devs::servo_pa;
-
-//    using sensor = devs::sport_sensor;
-    using sensor = devs::ibus_sensor;
-    
-//    using channel_t = servo_pa::channel_type;
-    
     using led = devs::led;
+    using driver = devs::driver;
+    using hall = devs::hall;
+//    using exti = devs::exti;
+    
+    using adc = devs::adc1;
+    using tp2 = devs::tp2;
+//    using tp3 = devs::tp3;
     
     static inline constexpr External::Tick<systemTimer> debugTicks{500ms};
     
@@ -38,14 +37,13 @@ struct GFSM {
         devs::led::set();
     }   
     static inline void periodic() {
-        trace::periodic();
-//        servo::periodic();
-        sensor::periodic();
+        term::periodic();
+        if (!adc::busy()) {
+//            tp2::toggle();
+            mLastAdc = adc::value();
+        }
     }
     static inline void ratePeriodic() {
-//        servo_pa::ratePeriodic();
-        sensor::ratePeriodic();
-        
         const auto oldState = mState;
         ++mStateTick;
         switch(mState) {
@@ -57,24 +55,33 @@ struct GFSM {
         case State::Init:
             mStateTick.on(debugTicks, []{
                 mState = State::Run;
+                adc::start();
+//                driver::all_on();
+                hall::isr();
             });
         break;
         case State::Run:
+            driver::duty((0.3 * mLastAdc) / 4095);
+            driver::duty(1.0, 1.0, 1.0);
+//            driver::forceStep();
             (++mDebugTick).on(debugTicks, []{
                 led::toggle();
-//                IO::outl<trace>("ch0: ", servo_pa::value(channel_t{0}), " p: ", servo_pa::packages(), " b: ", servo_pa::bytes(), " s: ", servo_pa::starts()); 
-//                                IO::outl<trace>("req: ", sensor::ProtocollAdapter::requests(), "rpy: ", sensor::replies()); 
-                                                IO::outl<trace>("req: ", sensor::ProtocollAdapter::requests()); 
+                IO::outl<term>("\no: ", hall::overTrigger, " h: ", hall::lastmean(), " ic: ", hall::isrCount); 
+                IO::outl<term>("a: ", mLastAdc, " s: ", hall::state);
+//                for(const auto v: hall::last) {
+//                    IO::out<term>(v, ' ');
+//                }
             });
         break;
         }
         if (oldState != mState) {
             mStateTick.reset();
-            
         }
     }
-
 private:
+    static inline uint16_t mLastAdc{};
+//    static inline float mScale = 0.7;
+//    static inline uint32_t mCounter{};
     static inline External::Tick<systemTimer> mStateTick;
     static inline External::Tick<systemTimer> mDebugTick;
     static inline State mState{State::Undefined};
@@ -85,15 +92,36 @@ void __assert_func (const char *, int, const char *, const char *){
     }
 }
 
+using devs = Devices<ESC_HALL_01, Config, Mcu::Stm::Stm32G431>;
+
 int main() {
-    using devs = Devices<RC01, Config, Mcu::Stm::Stm32G431>;
     using gfsm = GFSM<devs>;
     gfsm::init();
 
+    NVIC_EnableIRQ(TIM4_IRQn);
+//    NVIC_EnableIRQ(EXTI9_5_IRQn);
+    __enable_irq();
+    
     while(true) {
         gfsm::periodic();
         devs::systemTimer::periodic([]{
             gfsm::ratePeriodic();
         });
     }
+}
+
+extern "C" {
+
+//void EXTI9_5_IRQHandler() __attribute__ ((isr));
+//void EXTI9_5_IRQHandler()  { 
+//    EXTI->PR1 |= EXTI_PR1_PIF6;
+//    devs::exti::isr();    
+//}
+
+
+void TIM4_IRQHandler() __attribute__ ((isr));
+void TIM4_IRQHandler()  {   
+    devs::tp2::toggle();
+    devs::hall::isr();    
+}
 }
