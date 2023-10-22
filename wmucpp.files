@@ -393,8 +393,10 @@ boards/nucleo_g431/devices.h
 boards/nucleo_g431/dsp.h
 boards/nucleo_g431/esc/Makefile
 boards/nucleo_g431/esc/devices.h
+boards/nucleo_g431/esc/devices_foc.h
 boards/nucleo_g431/esc/driver.h
 boards/nucleo_g431/esc/esc01.cc
+boards/nucleo_g431/esc/esc_foc_01.cc
 boards/nucleo_g431/esc/esc_hall_01.cc
 boards/nucleo_g431/esc/esc_hall_02.cc
 boards/nucleo_g431/esc/link.ld
@@ -419,9 +421,11 @@ boards/nucleo_g431/include/concepts.h
 boards/nucleo_g431/include/cppm.h
 boards/nucleo_g431/include/dac.h
 boards/nucleo_g431/include/devices.h
+boards/nucleo_g431/include/dma.h
 boards/nucleo_g431/include/dsp.h
 boards/nucleo_g431/include/exti.h
 boards/nucleo_g431/include/fifo.h
+boards/nucleo_g431/include/foc.h
 boards/nucleo_g431/include/fsk.h
 boards/nucleo_g431/include/gpio.h
 boards/nucleo_g431/include/i2c.h

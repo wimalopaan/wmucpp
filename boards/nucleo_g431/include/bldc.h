@@ -66,7 +66,8 @@ namespace Mcu::Stm {
             
             static inline constexpr uint16_t intervallLength = 64;
             static inline constexpr uint16_t rotLength = 6 * intervallLength;
-            static inline constexpr uint16_t time = 100; // 100 µs 
+//            static inline constexpr uint16_t time = 100; // 100 µs 
+            static inline constexpr uint16_t time = 50; // 100 µs 
             static inline constexpr uint16_t sineLength = 4 * intervallLength;
             
             static inline constexpr float wave(const uint16_t i) {
@@ -143,20 +144,18 @@ namespace Mcu::Stm {
                 mcuTimer->CR1 |= TIM_CR1_CEN;
             }
             static inline void set(const uint8_t s, const float intTimeEst) {
-//                const uint16_t deg90 = rotLength / 4 - intervallLength / 2;
-                const uint16_t deg90 = 0;
+                const uint16_t deg90 = rotLength / 8;
+//                const uint16_t deg90 = 0;
 //                const uint8_t state = (s + 3) % 6; // sin: 2 // saddle: 3
                 const uint8_t state = (s + 2) % 6; // sin: 2 // saddle: 3
                 if (state == 0) {
                     mPos = deg90;
                 }
-//                mPos = state * intervallLength;
                 mTickIncrement = (1.0f * intervallLength * time) / std::max(1.0f, intTimeEst);
             }
             static inline void isr() {
                 mcuTimer->SR = ~TIM_SR_UIF; // clear if
                 mPos += mTickIncrement;
-//                const uint16_t index = std::min((int)mPos, rotLength - 1);
                 const uint16_t index = (uint16_t)mPos % rotLength;
                 driver::duty(phaseU[index], phaseV[index], phaseW[index]);
 //                driver::duty(sPhaseU[index], sPhaseV[index], sPhaseW[index]);
@@ -349,11 +348,27 @@ namespace Mcu::Stm {
         static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Timer<N, std::integral_constant<uint16_t, 0>, std::integral_constant<uint16_t, Pre>, MCU>>::value);
 
         static inline void isr() {
-            ++mIsrCount;
             mcuTimer->SR = ~TIM_SR_CC2IF; // reset if
-
+            const uint8_t hall = mHalls = ((GPIOB->IDR >> 6) & 0b0111);
+            const uint8_t state = Motor::Util<MCU>::hallToState(hall);
+            int8_t stateDiff = state - mState;
+            mState = state;
+            if (stateDiff == -5) stateDiff = 1;
+            if (stateDiff ==  5) stateDiff = -1;
+            mMechSection += stateDiff;
+            if (mMechSection >= mMechSectionMax) {
+                mMechSection -= mMechSectionMax;
+                ++mRotations;
+            }
+            if (mMechSection < 0) {
+                mMechSection += mMechSectionMax;
+                ++mRotations;
+            }
+            if (mRotations >= mMechSectionLengths.size()) {
+                mRotations = 0;
+            }
             if (!(mcuTimer->SR & TIM_SR_CC1OF)) {
-                mLast[mLastIndex] = mcuTimer->CCR1; // reset if
+                mMechSectionLengths[mRotations][mMechSection] = mLast[mLastIndex] = mcuTimer->CCR1; // reset if
                 ++mLastIndex;
                 mVMean.process(lastmean());
             }
@@ -361,8 +376,6 @@ namespace Mcu::Stm {
                 mcuTimer->SR = ~TIM_SR_CC1OF;
                 ++mOverTrigger;
             }
-            const uint8_t hall = mHalls = ((GPIOB->IDR >> 6) & 0b0111);
-            const uint8_t state = mState = Motor::Util<MCU>::hallToState(hall);
 #ifndef OLD
             pos::set(state, mVMean.value());
 #else
@@ -405,6 +418,8 @@ namespace Mcu::Stm {
             
             mcuTimer->EGR |= TIM_EGR_UG;
             mcuTimer->CR1 |= TIM_CR1_CEN;
+
+            mHalls = ((GPIOB->IDR >> 6) & 0b0111);
         }
 #ifdef OLD
         static inline uint16_t lastmean() {
@@ -425,23 +440,28 @@ namespace Mcu::Stm {
             return sum / lastSize;
         }
 #endif
-        static inline Dsp::ExpMean<void> mVMean{0.5};
+        static inline Dsp::ExpMean<void> mVMean{0.9};
         static inline constexpr uint8_t lastSize{3};
-        static inline uint16_t mLast[lastSize] {};
+        static inline std::array<uint16_t, lastSize> mLast{};
         static inline etl::ranged_circular<0, lastSize - 1> mLastIndex;
         static inline uint8_t mHalls{};
         static inline uint8_t mState{};
-        static inline uint16_t mIsrCount{};
         static inline uint16_t mOverTrigger{};
+        static inline uint16_t mPolePairs{7};
+        static inline int16_t mMechSection{};
+        static inline int16_t mMechSectionMax{6 * mPolePairs};
+        static inline uint8_t mRotations{};
+        static inline std::array<std::array<uint16_t, 6 * 7>, 10> mMechSectionLengths {}; // 32 Poles
     public:
         volatile static inline const auto& hallSensors{mHalls};
         volatile static inline const auto& state{mState};
-        volatile static inline const auto& isrCount{mIsrCount};
+        volatile static inline const auto& mechSection{mMechSection};
+        /*volatile*/ static inline const auto& mechSectionLengths{mMechSectionLengths};
 #ifdef OLD
         volatile static inline const auto& last{mLast};
 #endif
         volatile static inline const auto& overTrigger{mOverTrigger};
-        volatile static inline const auto& vMean{mVMean};
+//        volatile static inline const auto& vMean{mVMean};
     };    
     
     template<uint8_t N, typename Period, typename Prescaler, typename MCU = DefaultMcu> struct Bldc;

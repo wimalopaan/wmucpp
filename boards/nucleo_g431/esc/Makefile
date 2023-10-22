@@ -17,8 +17,9 @@ LOADLIBES += startup.o system.o
 targets += startup.o
 targets += system.o
 
-targets += esc01.elf esc01.S esc01.bin
-targets += esc_hall_01.elf esc_hall_01.bin
-targets += esc_hall_02.elf esc_hall_02.bin
+#targets += esc01.elf esc01.S esc01.bin
+#targets += esc_hall_01.elf esc_hall_01.bin
+#targets += esc_hall_02.elf esc_hall_02.bin
+targets += esc_foc_01.elf esc_foc_01.bin
 
 -include ../../../Makefile.arm.include

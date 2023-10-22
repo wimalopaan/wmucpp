@@ -102,7 +102,7 @@ targets += bm94.S bm94.elf
 #targets += bm95.S bm95.elf
 #targets += bm96.S bm96.elf
 #targets += bm97.S bm97.elf
-#targets += bm99.S bm99.elf
+targets += bm99.S bm99.elf
 
 bm12.elf: bm12.o bm12b.o
 

@@ -13,13 +13,16 @@ namespace Mcu::Stm {
 
     struct NoTriggerSource;
     
-    template<uint8_t N, uint8_t Channel = 0, typename TriggerSource = void, typename MCU = void> struct Adc;
+    template<bool V>
+    struct UseDma : std::integral_constant<bool, V> {};
     
-    template<uint8_t N, uint8_t Channel, typename TriggerSource, typename MCU>
+    template<uint8_t N, uint8_t Channel = 0, typename TriggerSource = void, typename UseDma = std::integral_constant<bool, false>, typename MCU = DefaultMcu> struct Adc;
+    
+    template<uint8_t N, uint8_t Channel, typename TriggerSource, typename useDma, typename MCU>
     requires (N >= 1) && (N <=2)
-    struct Adc<N, Channel, TriggerSource, MCU> {
-        static inline /*constexpr */ ADC_TypeDef* const mcuAdc = reinterpret_cast<ADC_TypeDef*>(Mcu::Stm::Address<Adc<N, Channel, MCU>>::value);
-        static inline /*constexpr */ ADC_Common_TypeDef* const mcuAdcCommon = reinterpret_cast<ADC_Common_TypeDef*>(Mcu::Stm::Address<Adc<N, Channel, MCU>>::common);
+    struct Adc<N, Channel, TriggerSource, useDma, MCU> {
+        static inline /*constexpr */ ADC_TypeDef* const mcuAdc = reinterpret_cast<ADC_TypeDef*>(Mcu::Stm::Address<Adc<N, Channel, TriggerSource, useDma, MCU>>::value);
+        static inline /*constexpr */ ADC_Common_TypeDef* const mcuAdcCommon = reinterpret_cast<ADC_Common_TypeDef*>(Mcu::Stm::Address<Adc<N, Channel, TriggerSource, useDma, MCU>>::common);
         
         static inline void wait_us(const uint32_t us) {
             volatile uint32_t w = us * 170;
@@ -50,7 +53,13 @@ namespace Mcu::Stm {
                 MODIFY_REG(mcuAdc->CFGR , ADC_CFGR_EXTEN_Msk, (0x01 << ADC_CFGR_EXTEN_Pos));
             }
 
-            mcuAdc->SQR1 = (0x00 << ADC_SQR1_L_Pos) | (Channel << ADC_SQR1_SQ1_Pos); // AIN10P
+            if constexpr(useDma::value) {
+                mcuAdc->CFGR |= ADC_CFGR_DMACFG;
+                mcuAdc->CFGR |= ADC_CFGR_DMAEN;
+            }
+            
+//            mcuAdc->SQR1 = (0x00 << ADC_SQR1_L_Pos) | (Channel << ADC_SQR1_SQ1_Pos); 
+            mcuAdc->SQR1 = (0x01 << ADC_SQR1_L_Pos) | (Channel << ADC_SQR1_SQ1_Pos) | (3 << ADC_SQR1_SQ2_Pos); // opamp1
             
             if constexpr(Channel == 16) { // temp
                 mcuAdcCommon->CCR |= ADC_CCR_VSENSESEL;
@@ -81,13 +90,13 @@ namespace Mcu::Stm {
 //        }
     };
     
-    template<uint8_t C, G4xx MCU> 
-    struct Address<Adc<1, C, MCU>> {
+    template<uint8_t C, typename T, typename D, G4xx MCU> 
+    struct Address<Adc<1, C, T, D, MCU>> {
         static inline constexpr uintptr_t value = ADC1_BASE;
         static inline constexpr uintptr_t common = ADC12_COMMON_BASE;
     };
-    template<uint8_t C, G4xx MCU> 
-    struct Address<Adc<2, C, MCU>> {
+    template<uint8_t C, typename T, typename D, G4xx MCU> 
+    struct Address<Adc<2, C, T, D, MCU>> {
         static inline constexpr uintptr_t value = ADC2_BASE;
         static inline constexpr uintptr_t common = ADC12_COMMON_BASE;
     };

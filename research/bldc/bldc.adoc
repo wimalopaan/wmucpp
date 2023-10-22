@@ -46,6 +46,40 @@ Dieses Werk ist unter einer Creative Commons Lizenz vom Typ Namensnennung - Nich
 
 === Zweck
 
+== Umbau eines Motors zur Verwendung von Hall-Sensoren
+
+image::motor1.jpg[]
+
+image::motor2.jpg[]
+
+image::motor3.jpg[]
+
+image::motor4.jpg[]
+
+image::halls.jpg[]
+
+image::hall1.jpg[]
+
+image::hall2.jpg[]
+
+image::pos1.jpg[]
+
+image::mount1.jpg[]
+
+image::mount2.jpg[]
+
+image::mount3.jpg[]
+
+image::mount4.jpg[]
+
+image::mount5.jpg[]
+
+image::cables.jpg[]
+
+image::../data/SensorTest01.png[]
+
+image::../data/SensorTimings.png[]
+
 == Kontakt
 
 Anfragen: wilhelm.wm.meier@googlemail.com

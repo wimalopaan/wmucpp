@@ -22,7 +22,7 @@ namespace Mcu::Stm {
         }        
     };    
     
-    template<uint8_t N, typename MCU = void>
+    template<uint8_t N, typename MCU = DefaultMcu>
     struct PGA {
         static inline /*constexpr */ OPAMP_TypeDef* const mcuOpamp = reinterpret_cast<OPAMP_TypeDef*>(Mcu::Stm::Address<PGA<N, MCU>>::value);
         static inline void init() {
@@ -47,6 +47,10 @@ namespace Mcu::Stm {
     template<G4xx MCU>
     struct Address<PGA<2, MCU>> {
         static inline constexpr uintptr_t value = OPAMP2_BASE;        
+    };
+    template<G4xx MCU>
+    struct Address<PGA<3, MCU>> {
+        static inline constexpr uintptr_t value = OPAMP3_BASE;        
     };
     template<G4xx MCU>
     struct Address<Follower<1, MCU>> {

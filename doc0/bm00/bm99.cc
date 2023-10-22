@@ -1,25 +1,17 @@
+#include <avr/io.h>
 #include <cstdint>
 
-volatile uint8_t x;
+struct TCA_INTFLAGS_bits {
+    uint8_t ovl:1;   
+    uint8_t cmp0:1;   
+} __attribute__((__packed__));
 
-template<typename T>
-[[gnu::noinline]] void f(const T& v);
+#define BF_TCA_INTFLAGS  (*(volatile struct TCA_INTFLAGS_bits *) &TCA0.SINGLE.INTFLAGS)
 
-template<typename T>
-void f(const T& v) {
-    x = v / 2;
-}
-uint8_t a = 10;
-uint16_t b = 20;
 
-class Test{
-  public:
-    enum class Testenum;
-};
+int main() {  
 
-enum class Test::Testenum {A, B};
+    BF_TCA_INTFLAGS.ovl = 1;
 
-int main() {
-    f(a);
-    f(b);
+    return 0; 
 }

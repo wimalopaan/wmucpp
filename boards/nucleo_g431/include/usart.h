@@ -103,6 +103,10 @@ namespace Mcu::Stm {
             mSendData.push_back(c);    
         }
 
+        static inline std::optional<ValueType> get() {
+            return mReceiveData.pop_front();
+        }
+        
         static inline bool isIdle() {
             return mcuUart->ISR & USART_ISR_TC;
         }
