@@ -382,6 +382,12 @@ boards/nucleo_g431/algorithm.h
 boards/nucleo_g431/alternate.h
 boards/nucleo_g431/arm.h
 boards/nucleo_g431/atomic.h
+boards/nucleo_g431/cc/Makefile
+boards/nucleo_g431/cc/cc01.cc
+boards/nucleo_g431/cc/devices.h
+boards/nucleo_g431/cc/link.ld
+boards/nucleo_g431/cc/startup.s
+boards/nucleo_g431/cc/system.cc
 boards/nucleo_g431/clock.h
 boards/nucleo_g431/components.h
 boards/nucleo_g431/concepts.h

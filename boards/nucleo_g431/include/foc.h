@@ -183,7 +183,7 @@ namespace Mcu::Stm {
                 static inline State mMeasureState{State::Wait};
                 static inline volatile etl::ranged_circular<0, sine::length - 1> mSineIndex;
             public:
-                static inline volatile const auto& measureState{mMeasureState};
+                static inline volatile /*const*/ auto& measureState{mMeasureState};
             };
 
             static inline Motor::Sector actual() {
