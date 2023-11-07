@@ -128,6 +128,20 @@ namespace etl {
                 }
             }
         }
+        inline constexpr void operator++() volatile {
+            if constexpr(use_mask_modulo) {
+                ++mValue;
+                mValue &= module_mask;
+            }
+            else {
+                if (mValue < Upper) {
+                    ++mValue;
+                }
+                else {
+                    mValue = Lower;
+                }
+            }
+        }
         
 //        template<T Shift>
 //        inline constexpr uint_ranged_circular leftShift() volatile {
@@ -224,6 +238,9 @@ namespace etl {
 //        }
         
         constexpr operator value_type() const {
+            return mValue;
+        }
+        constexpr operator value_type() const volatile {
             return mValue;
         }
 //        inline constexpr T toInt() const {

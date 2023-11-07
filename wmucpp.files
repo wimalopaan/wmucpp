@@ -397,6 +397,8 @@ boards/nucleo_g431/esc/devices_foc.h
 boards/nucleo_g431/esc/driver.h
 boards/nucleo_g431/esc/esc01.cc
 boards/nucleo_g431/esc/esc_foc_01.cc
+boards/nucleo_g431/esc/esc_foc_02.cc
+boards/nucleo_g431/esc/esc_foc_03.cc
 boards/nucleo_g431/esc/esc_hall_01.cc
 boards/nucleo_g431/esc/esc_hall_02.cc
 boards/nucleo_g431/esc/link.ld
@@ -440,6 +442,7 @@ boards/nucleo_g431/include/ranged.h
 boards/nucleo_g431/include/rc.h
 boards/nucleo_g431/include/rf.h
 boards/nucleo_g431/include/si5351.h
+boards/nucleo_g431/include/spi.h
 boards/nucleo_g431/include/tick.h
 boards/nucleo_g431/include/timer.h
 boards/nucleo_g431/include/traits.h

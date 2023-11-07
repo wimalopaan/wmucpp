@@ -49,7 +49,6 @@ namespace Mcu::Stm {
             static inline constexpr uint16_t length = rotLength;
             static inline constexpr uint16_t intervallLength = rotLength / 6;
             static inline constexpr auto PhaseU = []{
-                const uint16_t start = 0;
                 std::array<float, rotLength> data{};
                 for(uint16_t i = 0; i < rotLength; ++i) {
                     data[i] = (1.0 + std::sin((2 * std::numbers::pi * i) / rotLength)) / 2.0;
@@ -57,7 +56,6 @@ namespace Mcu::Stm {
                 return data;
             }();
             static inline constexpr auto PhaseV = []{
-                const uint16_t start = 0;
                 std::array<float, rotLength> data{};
                 for(uint16_t i = 0; i < rotLength; ++i) {
                     data[i] = (1.0 + std::sin((2 * std::numbers::pi * (i - 2 * intervallLength)) / rotLength)) / 2.0;
@@ -65,14 +63,12 @@ namespace Mcu::Stm {
                 return data;
             }();
             static inline constexpr auto PhaseW = []{
-                const uint16_t start = 0;
                 std::array<float, rotLength> data{};
                 for(uint16_t i = 0; i < rotLength; ++i) {
                     data[i] = (1.0 + std::sin((2 * std::numbers::pi * (i - 4 * intervallLength)) / rotLength)) / 2.0;
                 }
                 return data;
             }();
-            
         };
 
         struct Sector {
@@ -89,7 +85,7 @@ namespace Mcu::Stm {
     
             static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Timer<N, void, void, MCU>>::value);
 
-            using sine = Sinus<128>;
+            using sine = Sinus<1024>;
             using driver = Driver;
             
             static inline void init() {
@@ -103,48 +99,131 @@ namespace Mcu::Stm {
                     static_assert(false);
                 }
                 mcuTimer->PSC = Pre;
-                mcuTimer->ARR = 1000; 
-                mcuTimer->DIER |= TIM_DIER_UIE;
+                mcuTimer->ARR = 100; 
                 mcuTimer->EGR |= TIM_EGR_UG;
                 mcuTimer->CR1 |= TIM_CR1_ARPE;
                 mcuTimer->CR1 |= TIM_CR1_CEN;
             }
-        
+            static inline void start() {
+                mcuTimer->DIER |= TIM_DIER_UIE;
+                mRotation = 0;
+                mMechSection = 0;
+                mMeasuring = true;
+                Interrupt::measureState = Interrupt::State::Wait;
+            }
+            static inline void stop() {
+                mcuTimer->DIER &= ~TIM_DIER_UIE;
+                mMeasuring = false;
+            }
             static inline void period(const uint16_t p) {
                 mcuTimer->ARR = p; 
             }
-            
-            static inline uint16_t index() {
-                return mIndex;
+            static inline uint16_t period() {
+                return mcuTimer->ARR; 
             }
-            static inline void isr() {
-                mcuTimer->SR = ~TIM_SR_UIF; // clear if
-                driver::duty(sine::PhaseU[mIndex], sine::PhaseV[mIndex], sine::PhaseW[mIndex]);    
-                ++mIndex;
-            }
+
+            struct Interrupt {
+                static inline void hall(const uint8_t hall) {
+                    const uint8_t state = Motor::Util<MCU>::hallToState(hall);
+                    int8_t stateDiff = state - mHallState;
+                    mHallState = state;
+                    if (stateDiff <= -4) stateDiff += 6;
+                    if (stateDiff >=  4) stateDiff -= 6;
+                    mMechSection += stateDiff;
+                    if (mMechSection >= mMechSectionMax) {
+                        mMechSection -= mMechSectionMax;
+                        ++mRotation;
+                    }
+                    else if (mMechSection < 0) {
+                        mMechSection += mMechSectionMax;
+                        ++mRotation;
+                    }
+                }
+                enum class State {Wait, Record, Done};
+                
+                static inline void measure(const uint16_t lastHallSectorLength) {
+                    static uint16_t m = 0;
+                    if (mMeasuring) {
+                        switch(mMeasureState) {
+                        case State::Wait:
+                            if (mRotation > mWaitRotationsBeforeMeasuring) {
+                                if (mMechSection == 0) {
+                                    m = 0;
+                                    mHallSectionLengths[mMechSection].lastLength = lastHallSectorLength;
+                                    mHallSectionLengths[mMechSection].sineIndex = mSineIndex;
+                                    ++m;
+                                    mMeasureState = State::Record;
+                                }
+                            }
+                        break;
+                        case State::Record:
+    //                        const Motor::Sector sector{lastHallSectorLength, mSineIndex};
+    //                        mHallSectionLengths[m++] = sector;
+                            mHallSectionLengths[mMechSection].lastLength = lastHallSectorLength;
+                            mHallSectionLengths[mMechSection].sineIndex = mSineIndex;
+                            ++m;
+                            if (m >= (6 * 7)) {
+    //                        if (m >= mHallSectionLengths.size()) {
+                                mMeasureState = State::Done;
+                                mMeasuring = false;
+                            }
+                        break;
+                        case State::Done:
+                        break;
+                        }
+                    }
+                }
+                static inline void isr() {
+                    mcuTimer->SR = ~TIM_SR_UIF; // clear if
+                    const uint16_t i = mSineIndex;
+                    driver::duty(sine::PhaseU[i], sine::PhaseV[i], sine::PhaseW[i]);    
+                    ++mSineIndex;
+                }
             private:
-            static inline etl::ranged_circular<0, sine::length - 1> mIndex;
+                static inline State mMeasureState{State::Wait};
+                static inline volatile etl::ranged_circular<0, sine::length - 1> mSineIndex;
+            public:
+                static inline volatile const auto& measureState{mMeasureState};
+            };
+
+            static inline Motor::Sector actual() {
+                Motor::Sector s;
+                s.lastLength = mHallSectionLengths[mMechSection].lastLength;
+                s.sineIndex = mHallSectionLengths[mMechSection].sineIndex;
+                return s;
+//                return mHallSectionLengths[mMechSection];
+            }
+            static inline uint16_t section() {
+                return mMechSection;
+            }
+            
+            static inline uint16_t mWaitRotationsBeforeMeasuring{3};
+            static inline uint8_t mHallState{};
+            static inline uint16_t mPolePairs{7};
+            static inline volatile int16_t mMechSection{};
+            static inline int16_t mMechSectionMax{6 * mPolePairs};
+            static inline volatile uint32_t mRotation{};
+            
+            static inline volatile bool mMeasuring{};
+//            static inline std::array<volatile Motor::Sector, 6 * 7> mHallSectionLengths{};
+            static inline volatile Motor::Sector mHallSectionLengths[6 * 7];
         };
         
         
-        template<uint8_t N, typename PreScaler, typename Driver, typename Dac, typename MCU>
+        template<uint8_t N, typename PreScaler, typename Driver, typename Measure, typename Dac, typename MCU>
         struct Estimator;
         
-        template<uint8_t N, uint16_t Pre, typename Driver, typename Dac, typename MCU>
+        template<uint8_t N, uint16_t Pre, typename Driver, typename Measure, typename Dac, typename MCU>
         requires ((N == 6) || (N == 7))
-        struct Estimator<N, std::integral_constant<uint16_t, Pre>, Driver, Dac, MCU> {
+        struct Estimator<N, std::integral_constant<uint16_t, Pre>, Driver, Measure, Dac, MCU> {
             using dac = Dac;
             using driver = Driver;
+            using measure = Measure;
+            
+            static inline constexpr uint16_t k = 3;
             
             static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Timer<N, void, void, MCU>>::value);
             
-            static inline constexpr uint16_t intervallLength = 64;
-            static inline constexpr uint16_t rotLength = 6 * intervallLength;
-//            static inline constexpr uint16_t time = 100; // 100 µs 
-            static inline constexpr uint16_t time = 50; // 100 µs 
-
-            using sine = Sinus<rotLength>;
-                       
             static inline void init() {
                 if constexpr(N == 6) {
                     RCC->APB1ENR1 |= RCC_APB1ENR1_TIM6EN;
@@ -156,35 +235,44 @@ namespace Mcu::Stm {
                     static_assert(false);
                 }
                 mcuTimer->PSC = Pre;
-                mcuTimer->ARR = time; 
-                mcuTimer->DIER |= TIM_DIER_UIE;
+//                mcuTimer->ARR = Measure::period(); 
+//                mcuTimer->ARR = 100; 
+                mcuTimer->ARR = 100 / k; 
                 mcuTimer->EGR |= TIM_EGR_UG;
                 mcuTimer->CR1 |= TIM_CR1_ARPE;
                 mcuTimer->CR1 |= TIM_CR1_CEN;
             }
-            static inline void set(const Sector sector) {
-            }            
-//            static inline void set(const uint8_t s, const float intTimeEst) {
-//                const uint16_t deg90 = rotLength / 8;
-////                const uint16_t deg90 = 0;
-////                const uint8_t state = (s + 3) % 6; // sin: 2 // saddle: 3
-//                const uint8_t state = (s + 2) % 6; // sin: 2 // saddle: 3
-//                if (state == 0) {
-//                    mPos = deg90;
-//                }
-//                mTickIncrement = (1.0f * intervallLength * time) / std::max(1.0f, intTimeEst);
-//            }
-            static inline void isr() {
-                mcuTimer->SR = ~TIM_SR_UIF; // clear if
-//                mPos += mTickIncrement;
-//                const uint16_t index = (uint16_t)mPos % rotLength;
-//                driver::duty(sine::PhaseU[index], sine::PhaseV[index], sine::PhaseW[index]);
+            static inline void start() {
+                mcuTimer->DIER |= TIM_DIER_UIE;
             }
-//        private:
-            static inline float mPos = 0;
-            static inline volatile float mTickIncrement = 0;
-        public:
-            static inline volatile const auto& pos{mPos};
+            static inline void stop() {
+                mcuTimer->DIER &= ~TIM_DIER_UIE;
+            }
+
+            struct Interrupt {
+                static inline void update(const uint16_t lastHallSectorLength) {
+                    const Motor::Sector actual = measure::actual();
+                    const float v1 = (1.0 * actual.lastLength) / lastHallSectorLength;
+                    const float v = mExpMean.process(v1);
+                    const float si = actual.sineIndex + v + (mAngleFaktor * measure::sine::length) / 8;
+                    mSineIndex = si;
+                    mTickIncrement = v / k;
+                }            
+                static inline void isr() {
+                    mcuTimer->SR = ~TIM_SR_UIF; // clear if
+                    const uint16_t index = ((uint16_t)mSineIndex) % measure::sine::length;
+                    driver::duty(measure::sine::PhaseU[index], measure::sine::PhaseV[index], measure::sine::PhaseW[index]);
+                    mSineIndex += mTickIncrement;
+                    dac::set2(4 * index);
+                }
+            private:
+                static inline  Dsp::ExpMean<void> mExpMean{0.1};
+                static inline volatile float mSineIndex = 0;
+                static inline volatile float mTickIncrement = 0;
+            public:
+                static inline volatile const auto& expMean{mExpMean};
+                static inline volatile float mAngleFaktor = 1.0;
+            };
         };
         
         template<typename Pin, typename Function>
@@ -293,19 +381,19 @@ namespace Mcu::Stm {
                 lp_t::afunction(AlternateFunctions::mapper_v<lp_t, this_t, lf_t>); 
             }
             static inline void all_on() {
+//                scale(0);
                 both<PhaseU>();
                 both<PhaseV>();
                 both<PhaseW>();
-                scale(0);
             }
             static inline void all_off() {
                 floating<PhaseU>();
                 floating<PhaseV>();
                 floating<PhaseW>();
-                scale(0);
+//                scale(0);
             }
-        private:
-            volatile static inline float mScale = 0.1;
+//        private:
+            volatile static inline float mScale = 0.0;
         };
     }
     
@@ -317,43 +405,33 @@ namespace Mcu::Stm {
         using mcu_t = MCU;
         using number_t = std::integral_constant<uint8_t, N>;
 
-        using pos = PosEst;
+        using estimator = PosEst;
         using measure = Measure;
         
         static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Timer<N, std::integral_constant<uint16_t, 0>, std::integral_constant<uint16_t, Pre>, MCU>>::value);
 
-        static inline void isr() {
-            mcuTimer->SR = ~TIM_SR_CC2IF; // reset if
-            const uint8_t hall = ((GPIOB->IDR >> 6) & 0b0111);
-            const uint8_t state = Motor::Util<MCU>::hallToState(hall);
-            int8_t stateDiff = state - mState;
-            mState = state;
-            if (stateDiff == -5) stateDiff = 1;
-            if (stateDiff ==  5) stateDiff = -1;
-            mMechSection += stateDiff;
-            if (mMechSection >= mMechSectionMax) {
-                mMechSection -= mMechSectionMax;
-                ++mRotations;
+        struct Interrupt {
+            static inline void isr() {
+                mcuTimer->SR = ~TIM_SR_CC2IF; // reset if
+                const uint8_t hall = ((GPIOB->IDR >> 6) & 0b0111);
+                
+                measure::Interrupt::hall(hall);
+                
+                if (!(mcuTimer->SR & TIM_SR_CC1OF)) {
+                    const uint16_t lastHallSectorLength = mcuTimer->CCR1;
+                    measure::Interrupt::measure(lastHallSectorLength);
+                    estimator::Interrupt::update(lastHallSectorLength);
+                }
+                else {
+                    mcuTimer->SR = ~TIM_SR_CC1OF;
+                    ++mOverTrigger;
+                }
             }
-            if (mMechSection < 0) {
-                mMechSection += mMechSectionMax;
-                ++mRotations;
-            }
-            if (mRotations >= mMechSectionLengths.size()) {
-                mRotations = 0;
-            }
-            if (!(mcuTimer->SR & TIM_SR_CC1OF)) {
-                Motor::Sector sector;
-                sector.lastLength = mcuTimer->CCR1; // reset if
-                sector.sineIndex = measure::index();
-                mMechSectionLengths[mRotations][mMechSection] = sector;
-                pos::set(sector);
-            }
-            else {
-                mcuTimer->SR = ~TIM_SR_CC1OF;
-                ++mOverTrigger;
-            }
-        }
+        private:
+            static inline uint16_t mOverTrigger{};
+        public:
+            volatile static inline const auto& overTrigger{mOverTrigger};
+        };
         
         static inline void init() {
             if constexpr(N == 4) {
@@ -394,19 +472,6 @@ namespace Mcu::Stm {
 
 //            mHalls = ((GPIOB->IDR >> 6) & 0b0111);
         }
-    private:
-        static inline uint8_t mState{};
-        static inline uint16_t mOverTrigger{};
-        static inline uint16_t mPolePairs{7};
-        static inline int16_t mMechSection{};
-        static inline int16_t mMechSectionMax{6 * mPolePairs};
-        static inline uint8_t mRotations{};
-        static inline std::array<std::array<Motor::Sector, 6 * 7>, 10> mMechSectionLengths {}; // 32 Poles
-    public:
-        volatile static inline const auto& state{mState};
-        volatile static inline const auto& mechSection{mMechSection};
-        /*volatile*/ static inline const auto& mechSectionLengths{mMechSectionLengths};
-        volatile static inline const auto& overTrigger{mOverTrigger};
     };    
     
 }

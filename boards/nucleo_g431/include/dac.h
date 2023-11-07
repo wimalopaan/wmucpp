@@ -26,6 +26,7 @@ namespace Mcu::Stm {
                 if constexpr(N == 3) {
                     RCC->AHB2ENR |= RCC_AHB2ENR_DAC3EN;
                     mcuDac->MCR |= DAC_MCR_MODE1_0 | DAC_MCR_MODE1_1; 
+                    mcuDac->MCR |= DAC_MCR_MODE2_0 | DAC_MCR_MODE2_1; 
                     mcuDac->CR |= DAC_CR_EN1;
                     mcuDac->CR |= DAC_CR_EN2;
                 }

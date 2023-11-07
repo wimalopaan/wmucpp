@@ -22,6 +22,7 @@ struct GFSM {
     using driver = devs::driver;
     using hall = devs::hall;
     using pos = devs::pos_estimator;
+    using meas = devs::measurement;
     
     using adc = devs::adc1;
 //    using tp2 = devs::tp2;
@@ -44,7 +45,7 @@ struct GFSM {
                 mState = State::Elements;
             break;
             case State::Elements:
-                IO::out<term>(" ", hall::mechSectionLengths[rIndex][sIndex].lastLength); 
+                IO::out<term>(" ", meas::mMechSectionLengths[rIndex][sIndex].lastLength); 
                 ++sIndex;
                 if (sIndex == 42) {
                     sIndex = 0;
@@ -94,14 +95,17 @@ struct GFSM {
             });
         break;
         case State::MeasureRamp:
+            mStateTick.on(debugTicks, []{
+                mState = State::Measure;
+            });
             (++mMeasTick).on(incTicks, []{
                 devs::measurement::period(mMeasPeriod);
                 driver::scale(mMeasScale);
-                mMeasScale += 0.1 / 700;
-                --mMeasPeriod;
-                if (mMeasPeriod < 300) {
-                    mState = State::Measure;
-                }
+//                mMeasScale += 0.1 / 700;
+//                --mMeasPeriod;
+//                if (mMeasPeriod < 300) {
+//                    mState = State::Measure;
+//                }
             });
         break;
         case State::Measure:
@@ -137,6 +141,9 @@ struct GFSM {
                 case 's':
                     mState = State::Set;  
                 break;
+                case 'm':
+                    mState = State::MeasureStart;  
+                break;
                 default:
                 break;
                 }
@@ -167,6 +174,7 @@ struct GFSM {
                 IO::outl<term>("> MeasureStart");
                 driver::scale(0.0);
                 driver::all_on();
+                devs::measurement::start();
             break;
             case State::MeasureRamp:
                 IO::outl<term>("> MeasureRamp");
@@ -178,6 +186,7 @@ struct GFSM {
             break;
             case State::MeasureStop:
                 IO::outl<term>("> MeasureStop");
+                devs::measurement::stop();
                 driver::all_off();
             break;
             case State::Print:
@@ -185,7 +194,7 @@ struct GFSM {
             break;
             case State::Run:
                 IO::outl<term>("> Run");
-                driver::all_on();
+//                driver::all_on();
             break;
             case State::Set:
                 IO::outl<term>("> Set");
@@ -194,9 +203,9 @@ struct GFSM {
             }
         }
     }
-private:
+//private:
     static inline float mMeasScale{0.1};
-    static inline uint16_t mMeasPeriod{1000};
+    static inline uint16_t mMeasPeriod{100}; // 10KHz
     static inline External::Tick<systemTimer> mStateTick;
     static inline External::Tick<systemTimer> mDebugTick;
     static inline External::Tick<systemTimer> mMeasTick;
@@ -208,10 +217,13 @@ void __assert_func (const char *, int, const char *, const char *){
     }
 }
 
+
 using devs = Devices<ESC_FOC_01, Config, Mcu::Stm::Stm32G431>;
+using gfsm = GFSM<devs>;
+
+const auto& xxx = gfsm::mDebugTick;
 
 int main() {
-    using gfsm = GFSM<devs>;
     gfsm::init();
 
     NVIC_EnableIRQ(TIM4_IRQn);

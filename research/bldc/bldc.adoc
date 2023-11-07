@@ -80,6 +80,20 @@ image::../data/SensorTest01.png[]
 
 image::../data/SensorTimings.png[]
 
+image::../data/hall_act_motor.png[]
+
+image::../data/hall_black_motor.png[]
+
+image::hall_values_gold.png[]
+
+image::hall_values_black.png[]
+
+image::hall_values_act.png[]
+
+image::misplaced_gold.jpg[]
+
+image::misplaced_gold2.jpg[]
+
 == Kontakt
 
 Anfragen: wilhelm.wm.meier@googlemail.com
