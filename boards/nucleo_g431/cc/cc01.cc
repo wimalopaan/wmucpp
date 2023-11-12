@@ -19,13 +19,7 @@ struct GFSM {
     using systemTimer = devs::systemTimer;
     
     using pwm1 = devs::pwm1;
-//    using servo = devs::servo;
-//    using servo_pa = devs::servo_pa;
-
-//    using sensor = devs::sport_sensor;
-    using sensor = devs::ibus_sensor;
-    
-//    using channel_t = servo_pa::channel_type;
+    using crsf = devs::crsf;
     
     using led = devs::led;
     
@@ -39,13 +33,9 @@ struct GFSM {
     }   
     static inline void periodic() {
         trace::periodic();
-//        servo::periodic();
-        sensor::periodic();
+        crsf::periodic();
     }
     static inline void ratePeriodic() {
-//        servo_pa::ratePeriodic();
-        sensor::ratePeriodic();
-        
         const auto oldState = mState;
         ++mStateTick;
         switch(mState) {
@@ -64,7 +54,7 @@ struct GFSM {
                 led::toggle();
 //                IO::outl<trace>("ch0: ", servo_pa::value(channel_t{0}), " p: ", servo_pa::packages(), " b: ", servo_pa::bytes(), " s: ", servo_pa::starts()); 
 //                                IO::outl<trace>("req: ", sensor::ProtocollAdapter::requests(), "rpy: ", sensor::replies()); 
-                                                IO::outl<trace>("req: ", sensor::ProtocollAdapter::requests()); 
+//                IO::outl<trace>("req: ", crsf::ProtocollAdapter::requests()); 
             });
         break;
         }
@@ -86,7 +76,7 @@ void __assert_func (const char *, int, const char *, const char *){
 }
 
 int main() {
-    using devs = Devices<RC01, Config, Mcu::Stm::Stm32G431>;
+    using devs = Devices<CC01, Config, Mcu::Stm::Stm32G431>;
     using gfsm = GFSM<devs>;
     gfsm::init();
 

@@ -384,6 +384,7 @@ boards/nucleo_g431/arm.h
 boards/nucleo_g431/atomic.h
 boards/nucleo_g431/cc/Makefile
 boards/nucleo_g431/cc/cc01.cc
+boards/nucleo_g431/cc/crsf.h
 boards/nucleo_g431/cc/devices.h
 boards/nucleo_g431/cc/link.ld
 boards/nucleo_g431/cc/startup.s
@@ -427,6 +428,7 @@ boards/nucleo_g431/include/clock.h
 boards/nucleo_g431/include/components.h
 boards/nucleo_g431/include/concepts.h
 boards/nucleo_g431/include/cppm.h
+boards/nucleo_g431/include/crc.h
 boards/nucleo_g431/include/dac.h
 boards/nucleo_g431/include/devices.h
 boards/nucleo_g431/include/dma.h
