@@ -10,6 +10,12 @@
 
 namespace etl {
     template<typename C>
+    constexpr void push_back_ntbs(const char* s, C& c) {
+        do {
+            c.push_back(typename C::value_type{*s});
+        } while(*s++ != '\0');
+    }
+    template<typename C>
     constexpr C::value_type maximum(const C& c) {
         return [&]<auto... II>(const std::index_sequence<II...>){
             typename C::value_type max{c[0]};
@@ -67,10 +73,20 @@ namespace etl {
     constexpr inline std::byte nth_byte<3, uint32_t>(const uint32_t& v) {
         return std::byte(v >> 24);
     }
-
     template<>
     constexpr inline std::byte nth_byte<0, int>(const int& v) {
         return std::byte(v);
     }
+    template<typename C>
+    constexpr void serialize(const char* s, C& c) {
+        push_back_ntbs(s, c);
+    }
+    template<typename T, typename C>
+    constexpr void serialize(const T& v, C& c) {
+        [&]<auto... II>(std::index_sequence<II...>){
+            (c.push_back(nth_byte<II>(v)), ...);
+        }(std::make_index_sequence<sizeof(T)>{});
+    }
+    
 }
 

@@ -110,6 +110,10 @@ namespace Mcu::Stm {
         static inline bool isIdle() {
             return mcuUart->ISR & USART_ISR_TC;
         }
+
+        static inline bool isTxQueueEmpty() {
+            return mSendData.empty();
+        }
         
         static inline void periodic() {
             if (mcuUart->ISR & USART_ISR_TXE_TXFNF) {

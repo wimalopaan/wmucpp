@@ -387,6 +387,7 @@ boards/nucleo_g431/cc/cc01.cc
 boards/nucleo_g431/cc/crsf.h
 boards/nucleo_g431/cc/devices.h
 boards/nucleo_g431/cc/link.ld
+boards/nucleo_g431/cc/sport.h
 boards/nucleo_g431/cc/startup.s
 boards/nucleo_g431/cc/system.cc
 boards/nucleo_g431/clock.h
@@ -435,6 +436,7 @@ boards/nucleo_g431/include/dma.h
 boards/nucleo_g431/include/dsp.h
 boards/nucleo_g431/include/exti.h
 boards/nucleo_g431/include/fifo.h
+boards/nucleo_g431/include/fixedvector.h
 boards/nucleo_g431/include/foc.h
 boards/nucleo_g431/include/fsk.h
 boards/nucleo_g431/include/gpio.h
@@ -451,6 +453,7 @@ boards/nucleo_g431/include/rc.h
 boards/nucleo_g431/include/rf.h
 boards/nucleo_g431/include/si5351.h
 boards/nucleo_g431/include/spi.h
+boards/nucleo_g431/include/stackstring.h
 boards/nucleo_g431/include/tick.h
 boards/nucleo_g431/include/timer.h
 boards/nucleo_g431/include/traits.h
