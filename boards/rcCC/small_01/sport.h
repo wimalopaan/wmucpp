@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../include/rc.h"
+#include "rc.h"
 
 namespace RC::SPort {
     using namespace etl::literals;

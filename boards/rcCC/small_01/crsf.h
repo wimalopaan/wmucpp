@@ -10,9 +10,9 @@
 #include <numbers>
 #include <chrono>
 
-#include "../include/rc.h"
-#include "../include/crc.h"
-#include "../include/fixedvector.h"
+#include "rc.h"
+#include "crc.h"
+#include "fixedvector.h"
 
 namespace RC {
     namespace Protokoll {

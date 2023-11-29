@@ -12,5 +12,12 @@
 3) rfcomm bind 0 <mac>
 4) picocom -b 9600 /dev/rfcomm0
 
+* JDY-10 (BLE)
+
+0) falls venv nicht da: python -m venv ble-venv
+1) source ble-venv/bin/activate
+2) ble-scan
+3) ble-serial -d <dev>
+4) andere shell: picocom /dev/pts/3 (bzw: /tmp/ttyBLE)
 
 * JDY-30 scheint nicht zu gehen
