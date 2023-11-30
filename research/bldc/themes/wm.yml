@@ -1,0 +1,65 @@
+extends: default
+header:
+  font_size: $base_font_size_small
+  border_color: DDDDDD
+  border_width: 0.25
+  height: $base_line_height_length * 2.5
+  line_height: 1
+  padding: [$base_line_height_length / 2, 1, 0, 1]
+  vertical_align: middle
+  recto:
+    #columns: "<50% =0% >50%"
+    right:
+      content: '{section-or-chapter-title}'
+#      content: '{page-number}'
+    left:
+      content: 'v{revnumber} - {docdate}'
+  verso:
+    #columns: $footer_recto_columns
+    right:
+      content: $header_recto_left_content
+    left:
+      content: $header_recto_right_content    
+footer:
+  font_size: $base_font_size_small
+  # NOTE if background_color is set, background and border will span width of page
+  border_color: DDDDDD
+  border_width: 0.25
+  height: $base_line_height_length * 2.5
+  line_height: 1
+  padding: [$base_line_height_length / 2, 1, 0, 1]
+  vertical_align: top
+  recto:
+    #columns: "<50% =0% >50%"
+    left:
+      content: '{document-title}'
+    right:
+      content: 'Seite {page-number} ({page-count})'
+#      content: '{page-number}'
+  verso:
+    #columns: $footer_recto_columns
+    left:
+      content: '{document-title}'
+    right:
+      content: 'Seite {page-number} ({page-count})'
+# font:
+#   catalog:
+#     Noto Serif:
+#       normal: notoserif-regular-subset.ttf
+#       bold: notoserif-bold-subset.ttf
+#       italic: notoserif-italic-subset.ttf
+#       bold_italic: notoserif-bold_italic-subset.ttf
+#     M+ 1mn:
+#       normal: mplus1mn-regular-subset.ttf
+#       bold: mplus1mn-bold-subset.ttf
+#       italic: mplus1mn-italic-subset.ttf
+#       bold_italic: mplus1mn-bold_italic-subset.ttf
+#     # M+ 1p supports Latin, Latin-1 Supplement, Latin Extended, Greek, Cyrillic, Vietnamese, Japanese & an assortment of symbols
+#     # It also provides arrows for ->, <-, => and <= replacements in case these glyphs are missing from font
+#     M+ 1p Fallback:
+#       normal: mplus1p-regular-fallback.ttf
+#       bold: mplus1p-regular-fallback.ttf
+#       italic: mplus1p-regular-fallback.ttf
+#       bold_italic: mplus1p-regular-fallback.ttf
+#   fallbacks:
+#   - M+ 1p Fallback

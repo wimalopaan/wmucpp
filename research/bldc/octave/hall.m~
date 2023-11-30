@@ -1,0 +1,9 @@
+data = csvread("../data/hallChanges.csv");
+
+hc = data(2:, 1);
+
+plot(hc);
+
+dhc = diff(hc);
+
+plot(dhc);
