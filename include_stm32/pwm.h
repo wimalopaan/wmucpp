@@ -1,8 +1,8 @@
-#include "mcu.h"
+#include "mcu/mcu.h"
 #include "units.h"
 #include "concepts.h"
-#include "mcu_traits.h"
-#include "alternate.h"
+#include "mcu/mcu_traits.h"
+#include "mcu/alternate.h"
 #include "meta.h"
 
 #include <type_traits>

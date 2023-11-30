@@ -1,10 +1,10 @@
 #pragma once
 
-#include "mcu.h"
+#include "mcu/mcu.h"
 #include "units.h"
 #include "concepts.h"
-#include "mcu_traits.h"
-#include "fifo.h"
+#include "mcu/mcu_traits.h"
+#include "etl/fifo.h"
 
 #include <type_traits>
 #include <concepts>

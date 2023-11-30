@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 namespace Mcu {
     template<bool F>
     using UseInterrupts = std::integral_constant<bool, F>;

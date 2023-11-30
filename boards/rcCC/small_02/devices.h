@@ -6,9 +6,8 @@
 #include "etl/stackstring.h"
 
 #include "mcu/mcu.h"
-#include "mcu/mcu_traits.h"
-#include "mcu/arm.h"
 #include "pwm.h"
+#include "rc/rc.h"
 #include "usart.h"
 #include "si5351.h"
 #include "i2c.h"
@@ -20,10 +19,12 @@
 #include "units.h"
 #include "output.h"
 #include "concepts.h"
+#include "mcu/mcu_traits.h"
+#include "mcu/arm.h"
 #include "gpio.h"
 #include "tick.h"
 #include "meta.h"
-#include "rc/rc.h"
+ 
 #include "rc/crsf.h"
 #include "rc/sport.h"
 

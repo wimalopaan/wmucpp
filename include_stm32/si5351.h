@@ -1,9 +1,9 @@
 #pragma once
 
-#include "mcu.h"
+#include "mcu/mcu.h"
 #include "units.h"
 #include "concepts.h"
-#include "mcu_traits.h"
+#include "mcu/mcu_traits.h"
 #include "rf.h"
 #include "units.h"
 

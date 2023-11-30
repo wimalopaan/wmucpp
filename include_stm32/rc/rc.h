@@ -11,8 +11,8 @@
 #include <chrono>
 
 #include "byte.h"
-#include "algorithm.h"
-#include "ranged.h"
+#include "etl/algorithm.h"
+#include "etl/ranged.h"
 #include "units.h"
 #include "tick.h"
 

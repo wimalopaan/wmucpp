@@ -1,6 +1,6 @@
 #pragma once 
 
-#include "mcu_traits.h"
+#include "mcu/mcu_traits.h"
 #include "concepts.h"
 
 namespace Mcu::Arm {

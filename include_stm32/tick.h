@@ -3,6 +3,8 @@
 #include <chrono>
 #include <compare>
 
+#include "etl/ranged.h"
+
 namespace External {
 #if 0
     template<typename T = uint8_t, T MAX = std::numeric_limits<T>::max()>

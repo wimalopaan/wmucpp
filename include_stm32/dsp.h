@@ -9,7 +9,7 @@
 #include <numbers>
 #include <numeric>
 
-#include "algorithm.h"
+#include "etl/algorithm.h"
 
 namespace Dsp {
     struct IQ {

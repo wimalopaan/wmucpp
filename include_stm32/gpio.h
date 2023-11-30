@@ -1,7 +1,7 @@
 #pragma once
 
-#include "mcu.h"
-#include "mcu_traits.h"
+#include "mcu/mcu.h"
+#include "mcu/mcu_traits.h"
 #include "concepts.h"
 #include "components.h"
 

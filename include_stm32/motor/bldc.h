@@ -1,13 +1,13 @@
 #pragma once
 
-#include "mcu.h"
+#include "mcu/mcu.h"
 #include "timer.h"
 #include "units.h"
 #include "concepts.h"
-#include "mcu_traits.h"
+#include "mcu/mcu_traits.h"
 #include "meta.h"
-#include "alternate.h"
-#include "ranged.h"
+#include "mcu/alternate.h"
+#include "etl/ranged.h"
 #include "dsp.h"
 
 #include <type_traits>

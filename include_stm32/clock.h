@@ -6,7 +6,7 @@
 
 #include "units.h"
 #include "concepts.h"
-#include "mcu_traits.h"
+#include "mcu/mcu_traits.h"
 
 namespace Mcu::Stm {
     using namespace Units::literals;

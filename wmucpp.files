@@ -582,6 +582,7 @@ boards/rcCC/small_01/startup_g431.s
 boards/rcCC/small_01/system_g4.cc
 boards/rcCC/small_02/Makefile
 boards/rcCC/small_02/cc01.cc
+boards/rcCC/small_02/devices.h
 boards/rcactor/Makefile
 boards/rcactor/test00.cc
 boards/rcdesk/Makefile

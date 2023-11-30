@@ -12,7 +12,7 @@
 
 #include "rc.h"
 #include "crc.h"
-#include "fixedvector.h"
+#include "etl/fixedvector.h"
 
 namespace RC {
     namespace Protokoll {
