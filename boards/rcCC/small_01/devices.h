@@ -121,19 +121,19 @@ struct Devices<CC01, Config, Mcu::Stm::Stm32G431> {
     using tp2 = Mcu::Stm::Pin<gpioc, 15, MCU>;
     
     template<typename Out>
-    struct Telemetry {
+    struct CrsfTelemetry {
         using out = Out;
         static inline constexpr External::Tick<systemTimer> telemTicks{1ms};
         static inline void ratePeriodic() {
             (++mTelemTick).on(telemTicks, []{
-                out::data(std::byte{0x03}, mData);
+                out::data(std::byte{0x03}, mData); // crsf gps data
             });
         }
     private:
         static inline std::array<std::byte, 4> mData;
         static inline External::Tick<systemTimer> mTelemTick;
     };
-    using telemetry = Telemetry<crsf_out>;
+    using crsfTelemetry = CrsfTelemetry<crsf_out>;
     
     struct CrsfCallback {
         using out = crsf_out;

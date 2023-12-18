@@ -27,7 +27,7 @@ struct GFSM {
     using crsf = devs::crsf;
     using crsf_pa = devs::crsf_pa;
     using crsf_out = devs::crsf_out;
-    using telemetry = devs::telemetry;
+    using crsfTelemetry = devs::crsfTelemetry;
     
     using sport = devs::sport;
     using sport_pa = devs::sport_pa;
@@ -109,7 +109,7 @@ struct GFSM {
         
         sport::ratePeriodic();
         crsf_out::ratePeriodic();
-        telemetry::ratePeriodic();
+        crsfTelemetry::ratePeriodic();
         sbus::ratePeriodic();
         
         const auto oldState = mState;
