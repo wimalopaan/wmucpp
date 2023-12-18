@@ -909,9 +909,97 @@ namespace RC {
                     inline static std::byte mFlagsAndSwitches{0};
                 };
             }
+
+            namespace Output {
+                // using namespace std::literals::chrono;
+                using namespace std::literals::chrono_literals;
+                
+                template<typename Usart, typename Timer, typename dbg = void>
+                struct Generator {
+                    using usart = Usart;
+                    static constexpr External::Tick<Timer> timeoutTicks{14ms};
+                    // static_assert(timeoutTicks.value > 1);
+    //                std::integral_constant<uint8_t, timeoutTicks.value>::_;
+                    
+                    inline static constexpr uint16_t sbus_min = 172;
+                    inline static constexpr uint16_t sbus_max = 1811;
+                    
+                    inline static constexpr uint16_t sbus_mid = (sbus_max + sbus_min) / 2;
+                    
+                    using value_type = etl::ranged<sbus_min, sbus_max>;
+                    using index_type = etl::ranged<0, 15>;
+                    
+                    inline static void init() {
+                        // usart::template init<AVR::BaudRate<100000>, AVR::FullDuplex, true, 1>();
+                        for(auto& o : output) {
+                            o = (sbus_max + sbus_min) / 2;
+                        }
+                    }
+    
+                    static inline void set(const index_type& i, const value_type& v) {
+                        output[i] = v;
+                    }
+                    template<uint8_t I>
+                    static inline void set(const value_type& v) {
+                        output[I] = v;
+                    }
+                    
+                    template<typename C>
+                    static inline void set(const C& v) {
+                        etl::copy(v, output);
+                    }
+                    
+                    static inline void switches(const std::byte s) {
+                        static constexpr std::byte mask = ch17 | ch18;
+                        mFlagsAndSwitches = (mFlagsAndSwitches & ~mask) | (s & mask);
+                    }
+                    
+                    static inline constexpr std::byte sbus_start = 0x0f_B;
+    
+                    inline static void periodic() {
+                        usart::periodic();
+                    }
+                    
+                    inline static void ratePeriodic() { // 14ms
+                        (++ticks).on(timeoutTicks, []{
+                            if constexpr(!std::is_same_v<dbg, void>) {
+                                dbg::toggle();
+                            }
+                            usart::put(sbus_start);
+                            usart::put((std::byte) (output[0] & 0x07FF));
+                            usart::put((std::byte) ((output[0] & 0x07FF)>>8 | (output[1] & 0x07FF)<<3));
+                            usart::put((std::byte) ((output[1] & 0x07FF)>>5 | (output[2] & 0x07FF)<<6));
+                            usart::put((std::byte) ((output[2] & 0x07FF)>>2));
+                            usart::put((std::byte) ((output[2] & 0x07FF)>>10 | (output[3] & 0x07FF)<<1));
+                            usart::put((std::byte) ((output[3] & 0x07FF)>>7 | (output[4] & 0x07FF)<<4));
+                            usart::put((std::byte) ((output[4] & 0x07FF)>>4 | (output[5] & 0x07FF)<<7));
+                            usart::put((std::byte) ((output[5] & 0x07FF)>>1));
+                            usart::put((std::byte) ((output[5] & 0x07FF)>>9 | (output[6] & 0x07FF)<<2));
+                            usart::put((std::byte) ((output[6] & 0x07FF)>>6 | (output[7] & 0x07FF)<<5));
+                            usart::put((std::byte) ((output[7] & 0x07FF)>>3));
+                            usart::put((std::byte) ((output[8] & 0x07FF)));
+                            usart::put((std::byte) ((output[8] & 0x07FF)>>8 | (output[9] & 0x07FF)<<3));
+                            usart::put((std::byte) ((output[9] & 0x07FF)>>5 | (output[10] & 0x07FF)<<6));  
+                            usart::put((std::byte) ((output[10] & 0x07FF)>>2));
+                            usart::put((std::byte) ((output[10] & 0x07FF)>>10 | (output[11] & 0x07FF)<<1));
+                            usart::put((std::byte) ((output[11] & 0x07FF)>>7 | (output[12] & 0x07FF)<<4));
+                            usart::put((std::byte) ((output[12] & 0x07FF)>>4 | (output[13] & 0x07FF)<<7));
+                            usart::put((std::byte) ((output[13] & 0x07FF)>>1));
+                            usart::put((std::byte) ((output[13] & 0x07FF)>>9 | (output[14] & 0x07FF)<<2));
+                            usart::put((std::byte) ((output[14] & 0x07FF)>>6 | (output[15] & 0x07FF)<<5));
+                            usart::put((std::byte) ((output[15] & 0x07FF)>>3));
+                            usart::put(mFlagsAndSwitches); //Flags byte
+                            usart::put(0x00_B); //Footer
+                        });
+                    }
+                private:
+                    static inline std::byte mFlagsAndSwitches{};
+                    static inline std::array<uint16_t, 16> output;                 
+                    static inline External::Tick<Timer> ticks{};
+                }; 
+            }
         }
         namespace Hott {
-            
         }
         
         namespace SPort {

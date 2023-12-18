@@ -31,7 +31,6 @@ namespace Mcu::Stm {
                 static_assert(false);
             }
         }
-
     };
     template<uint8_t Ch, G4xx MCU> 
     struct Address<Dma<1, Ch, MCU>> {

@@ -10,6 +10,22 @@
 
 namespace etl {
     template<typename C>
+    bool contains(const C& c, const typename C::value_type e) {
+        for(const auto& i : c) {
+            if (e == i) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    
+    template<typename C1, typename C2>
+    void copy(const C1& src, C2& dst) {
+        std::copy(std::begin(src), std::end(src), std::begin(dst));
+    }
+    
+    template<typename C>
     constexpr void push_back_ntbs(const char* s, C& c) {
         do {
             c.push_back(typename C::value_type{*s});

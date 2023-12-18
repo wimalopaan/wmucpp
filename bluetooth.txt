@@ -19,5 +19,9 @@
 2) ble-scan
 3) ble-serial -d <dev>
 4) andere shell: picocom /dev/pts/3 (bzw: /tmp/ttyBLE)
+5) Verbindung mit Android nicht möglich
+
+* JDY-23 (BLE)
+
 
 * JDY-30 scheint nicht zu gehen

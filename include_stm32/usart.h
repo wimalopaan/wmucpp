@@ -9,13 +9,33 @@
 #include <type_traits>
 #include <concepts>
 
+static const uint16_t LPUART_PRESCALER_TAB[] =
+{
+  (uint16_t)1,
+  (uint16_t)2,
+  (uint16_t)4,
+  (uint16_t)6,
+  (uint16_t)8,
+  (uint16_t)10,
+  (uint16_t)12,
+  (uint16_t)16,
+  (uint16_t)32,
+  (uint16_t)64,
+  (uint16_t)128,
+  (uint16_t)256
+};
+
 namespace Mcu::Stm {
     using namespace Units::literals;
 
-    template<uint8_t N, typename PA, uint8_t Size, typename ValueType, typename Clock, typename MCU = void> struct Uart;
+    template<uint8_t N, typename PA, uint8_t Size, typename ValueType, typename Clock, typename MCU = void> 
+    struct Uart;
+
+    template<uint8_t N, typename PA, uint8_t Size, typename ValueType, typename Clock, typename MCU = void> 
+    using LpUart = Uart<N + 100, PA, Size, ValueType, Clock, MCU>;
     
     template<uint8_t N, typename PA, uint8_t Size, typename ValueType, typename Clock, typename MCU>
-    requires (N >= 1) && (N <= 3)
+    requires ((N >= 1) && (N <= 3)) || (N == 101)
     struct Uart<N, PA, Size, ValueType, Clock, MCU> {
         using pa_t = PA;
         
@@ -36,6 +56,10 @@ namespace Mcu::Stm {
             else if constexpr(N == 3) {
                 RCC->APB1ENR1 |= RCC_APB1ENR1_USART3EN;
                 RCC->CCIPR |= 0x01 << RCC_CCIPR_USART3SEL_Pos;                
+            }
+            else if constexpr(N == 101) {
+                RCC->APB1ENR2 |= RCC_APB1ENR2_LPUART1EN;
+                RCC->CCIPR |= 0x01 << RCC_CCIPR_LPUART1SEL_Pos;                
             }
             else {
                 static_assert(false);
@@ -73,9 +97,21 @@ namespace Mcu::Stm {
             mcuUart->CR1 &= ~USART_CR1_UE;
             if (even) {
                 mcuUart->CR1 |= USART_CR1_PCE;
+                mcuUart->CR1 |= USART_CR1_M0;
             }
             else {
                 mcuUart->CR1 &= ~(USART_CR1_PCE);
+                mcuUart->CR1 |= USART_CR1_M0;
+            }
+            mcuUart->CR1 |= USART_CR1_UE;
+        }
+        static inline void rxtxswap(const bool swap) {
+            mcuUart->CR1 &= ~USART_CR1_UE;
+            if (swap) {
+                mcuUart->CR2 |= USART_CR2_SWAP;
+            }
+            else {
+                mcuUart->CR2 &= ~(USART_CR2_SWAP);
             }
             mcuUart->CR1 |= USART_CR1_UE;
         }
@@ -96,9 +132,17 @@ namespace Mcu::Stm {
             }
             mcuUart->CR1 |= USART_CR1_UE;
         } 
-        
+
         static inline void baud(const uint32_t baud) {
-            mcuUart->BRR = static_cast<Units::hertz>(Clock::config::f).value / baud;
+            mcuUart->CR1 &= ~USART_CR1_UE;
+            if constexpr(N == 101) {
+                mcuUart->PRESC = 0b0111; // 16
+                mcuUart->BRR = (16 * static_cast<Units::hertz>(Clock::config::f).value) / baud;
+            }
+            else {
+                mcuUart->BRR = static_cast<Units::hertz>(Clock::config::f).value / baud;
+            }
+            mcuUart->CR1 |= USART_CR1_UE;
         }
         
         static inline void put(const ValueType c) {
@@ -157,4 +201,11 @@ namespace Mcu::Stm {
     struct Address<Uart<4, PA, Size, V, Clock, MCU>> {
         static inline constexpr uintptr_t value = UART4_BASE;
     };
+    
+    template<typename PA, uint8_t Size, typename V, typename Clock, G4xx MCU> 
+    struct Address<Uart<101, PA, Size, V, Clock, MCU>> {
+        static inline constexpr uintptr_t value = LPUART1_BASE;
+    };
+        
+    
 }

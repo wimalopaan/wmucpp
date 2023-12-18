@@ -78,6 +78,7 @@ struct Devices<CC01, Config, Mcu::Stm::Stm32G431> {
     struct CrsfCallback {
         using out = crsf_out;
         using Param_t = RC::Protokoll::Crsf::Parameter;
+        using PType = RC::Protokoll::Crsf::Parameter::Type;
 
         static inline void setParameter(const uint8_t index, const uint8_t value) {
             IO::outl<trace>("SetP adr: ", index, " v: ", value);
@@ -128,22 +129,23 @@ struct Devices<CC01, Config, Mcu::Stm::Stm32G431> {
         }();
         static inline constexpr const char* const mName = "CruiseControl";
         static inline etl::FixedVector<Param_t, 64> params {
-            Param_t{0, 9, "P00", "Off;On", 0, 0, 2},
-            Param_t{0, 0x0b, "Serial"}, // 2
-            Param_t{2, 9, "Protocol", "Off;S.Port;SBus;IBus-Sens;IBus-Servo", 0, 0, 4},
-            Param_t{2, 9, "Baudrate", "100k;115k;420k", 0, 0, 2},
-            Param_t{0, 0x0c, "Version(HW/SW)", &mVersionString[0]},
-            Param_t{0, 0x0b, "Channels"}, // 6
-            Param_t{6, 0x00, "Output 1", nullptr, 1, 1, 16},
-            Param_t{6, 0x00, "Output 2", nullptr, 2, 1, 16},
-            Param_t{6, 0x00, "Output 3", nullptr, 3, 1, 16},
-            Param_t{6, 0x00, "Output 4", nullptr, 4, 1, 16},
-            Param_t{0, 0x0b, "Modes"},
-            Param_t{11, 0x09, "Output 1", "PWM;M-Graupner;M-Robbe;M-Cp", 0, 0, 3},
-            Param_t{11, 0x09, "Output 2", "PWM;M-Graupner;M-Robbe;M-Cp", 0, 0, 3},
-            Param_t{11, 0x09, "Output 3", "PWM;M-Graupner;M-Robbe;M-Cp", 0, 0, 3},
-            Param_t{11, 0x09, "Output 4", "PWM;M-Graupner;M-Robbe;M-Cp", 0, 0, 3},
-            Param_t{0, 0x0d, "Reset", "Resetting...", 0}, // Command, timeout: 200 = 2s (value 0xc8)
+            Param_t{0, PType::Sel, "P00", "Off;On", 0, 0, 1},
+            Param_t{0, PType::Folder, "Serial"}, // 2
+            Param_t{2, PType::Sel, "Protocol", "Off;S.Port;SBus;IBus-Sens;IBus-Servo", 0, 0, 4},
+            Param_t{2, PType::Sel, "Baudrate", "100k;115k;420k", 0, 0, 2},
+            Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]},
+            Param_t{0, PType::Folder, "Channels"}, // 6
+            Param_t{6, PType::U8, "Output 1", nullptr, 1, 1, 16},
+            Param_t{6, PType::U8, "Output 2", nullptr, 2, 1, 16},
+            Param_t{6, PType::U8, "Output 3", nullptr, 3, 1, 16},
+            Param_t{6, PType::U8, "Output 4", nullptr, 4, 1, 16},
+            Param_t{0, PType::Folder, "Modes"},
+            Param_t{11, PType::Sel, "Output 1", "PWM;M-Graupner;M-Robbe;M-Cp", 0, 0, 3},
+            Param_t{11, PType::Sel, "Output 2", "PWM;M-Graupner;M-Robbe;M-Cp", 0, 0, 3},
+            Param_t{11, PType::Sel, "Output 3", "PWM;M-Graupner;M-Robbe;M-Cp", 0, 0, 3},
+            Param_t{11, PType::Sel, "Output 4", "PWM;M-Graupner;M-Robbe;M-Cp", 0, 0, 3},
+            Param_t{0, PType::Command, "Reset", "Resetting...", 0}, // Command, timeout: 200 = 2s (value 0xc8)
+            Param_t{0, PType::Sel, "Blutooth", "Off;On", 0, 0, 1},
         };
     };
     

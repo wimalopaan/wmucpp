@@ -16,17 +16,28 @@ __attribute__((__error__("assert error"))) inline void constant_assert();
 
 namespace etl {
     template<auto Low, auto High>
+    struct ranged_NaN;
+    
+    template<auto Low, auto High>
     struct ranged final {
+        using nan_type = ranged_NaN<Low, High>;
+        
         using value_type = typeForIntervall_t<Low, High>;
-//        std::integral_constant<value_type, NaN>::_;
         
         static inline constexpr value_type Lower = Low;
         static inline constexpr value_type Upper = High;
         
         constexpr ranged() = default;
-        explicit constexpr ranged(const value_type v) : mValue{std::clamp(v, value_type{Low}, value_type{High})} {
+        explicit constexpr ranged(const value_type v) : mValue{std::clamp(v, Lower, Upper)} {
             assert(v >= Low);
             assert(v <= High);
+        }
+        ranged& operator=(const ranged& rhs) = default;
+        
+        void set(const value_type v) {
+            assert(v >= Low);
+            assert(v <= High);
+            mValue = std::clamp(v, Lower, Upper);            
         }
         constexpr operator value_type() const {
             return {mValue};
@@ -258,6 +269,8 @@ namespace etl {
     template<auto Low, auto High>
     struct ranged_NaN final {
         using value_type = typeForIntervall_t<Low, High>;
+        using ranged_type = ranged<Low, High>;
+        
         static inline constexpr value_type NaN = []{
             if constexpr (Low != std::numeric_limits<value_type>::min()) {
                 return std::numeric_limits<value_type>::min();
@@ -283,6 +296,15 @@ namespace etl {
                     constant_assert();
                 }
             }
+        }
+        
+        ranged_NaN& operator=(const ranged_type& rhs) {
+            mValue = rhs;
+            return *this;
+        }
+        
+        void setNaN() {
+            mValue = NaN;
         }
         operator value_type() const {
             assert(mValue != NaN);
@@ -318,9 +340,8 @@ namespace etl {
     
     template<typename A>
     using index_type_t = index_type<A>::type;
-    
-    
 }
+
 namespace IO {
     namespace detail {
         template<typename Device>

@@ -31,7 +31,7 @@ namespace RC {
             /*
              * sonstige Messages [dst, src]:
              * type: 0x3a [0xea, 0xee] : Radio-ID
-             * type: 0x14 link 
+             * type: 0x14 : link 
              * 
              */
             
@@ -68,7 +68,8 @@ namespace RC {
                 inline static constexpr std::byte SelectID{0x05};
             }
             namespace CcCommand {
-                inline static constexpr std::byte SetSwitches{0x01};
+                inline static constexpr std::byte SetChannel{0x01}; // Index: [0, 63], value 16bit
+                inline static constexpr std::byte SetAltData{0x02}; // Index: [0, 255], value 8bit
             }
             namespace PacketIndex {
                 inline static constexpr uint8_t address = 0;
@@ -83,7 +84,7 @@ namespace RC {
             static inline constexpr uint8_t  ValueBits = 11;
             static inline constexpr uint16_t ValueMask = ((1 << ValueBits) - 1);
             
-            static inline constexpr uint16_t CenterValue = 0x3e0;            
+            static inline constexpr uint16_t CenterValue = 0x3e0; // same center and range as sbus    
 
             using namespace std::literals::chrono_literals;
             using namespace etl::literals;
@@ -101,8 +102,10 @@ namespace RC {
             }            
             
             struct Parameter {
+                enum Type {U8 = 0, I8, U16, I16, F32 = 8, Sel, Str, Folder, Info, Command};                
+                
                 const uint8_t mParent{};
-                const uint8_t mType;
+                const Type mType;
                 const char* const mName{};
                 const char* const mOptions{};
                 uint8_t mValue{};
@@ -163,9 +166,9 @@ namespace RC {
                 using debug = Debug;
                 using out = CB::out;
                 
-                static constexpr uint8_t mPauseCount{2}; // 2ms
+                static inline constexpr uint8_t mPauseCount{2}; // 2ms
                 
-                static constexpr uint8_t CRSFChannels{16};
+                static inline constexpr uint8_t CRSFChannels{16};
                 
                 enum class State : uint8_t {Undefined, 
                                             GotAddress, GotLength, 
@@ -213,7 +216,7 @@ namespace RC {
                         etl::serialize(pIndex, mReply);
                         etl::serialize(uint8_t{}, mReply); // remaining chunks
                         etl::serialize(CB::parameter(pIndex).mParent, mReply); // parent
-                        etl::serialize(CB::parameter(pIndex).mType, mReply); // field type
+                        etl::serialize((uint8_t)CB::parameter(pIndex).mType, mReply); // field type
                         if (CB::parameter(pIndex).mName) {
                             etl::push_back_ntbs(CB::parameter(pIndex).mName, mReply);
                         }
@@ -239,7 +242,7 @@ namespace RC {
                         etl::serialize(pIndex, mReply);
                         etl::serialize(uint8_t{}, mReply); // remaining chunks
                         etl::serialize(CB::parameter(pIndex).mParent, mReply); // parent
-                        etl::serialize(CB::parameter(pIndex).mType, mReply); // field type
+                        etl::serialize((uint8_t)CB::parameter(pIndex).mType, mReply); // field type
                         if (CB::parameter(pIndex).mName) {
                             etl::push_back_ntbs(CB::parameter(pIndex).mName, mReply);
                         }
@@ -501,7 +504,23 @@ namespace RC {
                 static inline uint16_t getBytes() {
                     return mBytesCounter;
                 }
-//            private:
+                static inline const auto& values() {
+                    return mChannels;
+                }
+                
+                template<typename C>
+                static inline void copyChangedChannels(C& out) {
+                    for(uint8_t i = 0; (i < mChannels.size()) && (i < out.size()); ++i) {
+                        if (mChannels[i] != mPreviousChannelValues[i]) {
+                            if ((mChannels[i] >= 172) && (mChannels[i] <= 1812)) {
+                                mPreviousChannelValues[i] = mChannels[i];
+                                out[i] = mChannels[i];
+                            }
+                        }
+                    }
+                }
+                
+//           private:
                 static inline void convert() {
                     mChannels[0]  = (uint16_t) (((mData[0]    | mData[1] << 8))                 & Crsf::ValueMask);
                     mChannels[1]  = (uint16_t) ((mData[1]>>3  | mData[2] <<5)                   & Crsf::ValueMask);
@@ -544,7 +563,10 @@ namespace RC {
                 
                 inline static uint16_t mBytesCounter{};
                 inline static uint8_t mPauseCounter{};
-                inline static std::array<uint16_t, 16> mChannels;
+                
+                using values_t = std::array<uint16_t, 16>;
+                inline static values_t mChannels;
+                inline static values_t mPreviousChannelValues;
             };
         }
     }

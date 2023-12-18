@@ -150,6 +150,10 @@ namespace Mcu::Stm {
         static inline constexpr uintptr_t value = TIM1_BASE;        
     };
     template<typename Per, typename Pre, G4xx MCU>
+    struct Address<Timer<2, Per, Pre, MCU>> {
+        static inline constexpr uintptr_t value = TIM2_BASE;        
+    };
+    template<typename Per, typename Pre, G4xx MCU>
     struct Address<Timer<3, Per, Pre, MCU>> {
         static inline constexpr uintptr_t value = TIM3_BASE;        
     };
