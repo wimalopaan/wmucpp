@@ -117,6 +117,11 @@ namespace Mcu::Stm {
             return mSendData.empty();
         }
         
+        static inline void clear() {
+            mSendData.clear();
+            mReceiveData.clear();
+        }
+        
         static inline void periodic() {
             if (mcuUart->ISR & USART_ISR_TXE_TXFNF) {
                 if (!mSendData.empty()) {

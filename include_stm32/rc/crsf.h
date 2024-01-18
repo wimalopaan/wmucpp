@@ -16,6 +16,9 @@
 
 namespace RC {
     namespace Protokoll {
+        
+        // https://github.com/crsf-wg/crsf/wiki
+        
         namespace Crsf {
             /*
              * Richting: Handset (EdgeTx) -> TX-Module (ELRS) -> RX -> CC
@@ -49,6 +52,7 @@ namespace RC {
                 inline static constexpr std::byte Vario{0x07};
                 inline static constexpr std::byte Battery{0x08};
                 inline static constexpr std::byte Baro{0x09};
+                inline static constexpr std::byte HeartBeat{0x0b};
                 inline static constexpr std::byte Link{0x14};
                 inline static constexpr std::byte Channels{0x16};
                 // extended
@@ -58,10 +62,28 @@ namespace RC {
                 inline static constexpr std::byte ParamRead{0x2c};
                 inline static constexpr std::byte ParamWrite{0x2d};
                 inline static constexpr std::byte Command{0x32};
-                                
+
+                inline static constexpr std::byte Custom1{0x40}; // pack type / instance-nr in payload
+                inline static constexpr std::byte Custom2{0x41}; // pack type / instance-nr in payload
+                inline static constexpr std::byte Custom3{0x42}; // pack type / instance-nr in payload
+                inline static constexpr std::byte Custom4{0x43}; // pack type / instance-nr in payload
+                inline static constexpr std::byte Temp1{0x48}; 
+                inline static constexpr std::byte Temp2{0x49}; 
+                inline static constexpr std::byte Temp3{0x4a}; 
+                inline static constexpr std::byte Temp4{0x4b};
+                //inline static constexpr std::byte Rpm1{0x78};
+                inline static constexpr std::byte Rpm1{0x4c};
+                inline static constexpr std::byte Rpm2{0x4d};
+                inline static constexpr std::byte Rpm3{0x4e};
+                inline static constexpr std::byte Rpm4{0x4f};
+
+                inline static constexpr std::byte KissReq{0x78};
+                inline static constexpr std::byte KissResp{0x79};
             }
             namespace CommandType {
-                inline static constexpr std::byte Crsf{0x10};
+                inline static constexpr std::byte bind{0x01}; // bind
+                inline static constexpr std::byte rx{0x10}; // receiver command
+                inline static constexpr std::byte general{0x0a}; // general command
                 inline static constexpr std::byte CC{0xa0}; // CruiseController
             }
             namespace CrsfCommand {

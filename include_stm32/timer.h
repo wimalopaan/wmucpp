@@ -15,6 +15,26 @@
 namespace Mcu::Stm {
     using namespace Units::literals;
 
+    namespace Timers {
+        template<uint8_t N> struct Properties;
+        template<> struct Properties<2> {
+            using value_type = uint32_t;
+            static inline constexpr std::array<uint8_t, 4> dmamux_src{56, 57, 58, 59};
+        };
+        template<> struct Properties<3> {
+            using value_type = uint16_t;
+            static inline constexpr std::array<uint8_t, 4> dmamux_src{61, 62, 63, 64};
+        };
+        template<> struct Properties<4> {
+            using value_type = uint16_t;
+            static inline constexpr std::array<uint8_t, 4> dmamux_src{67, 68, 69, 70};
+        };
+        template<> struct Properties<5> {
+            using value_type = uint32_t;
+            static inline constexpr std::array<uint8_t, 4> dmamux_src{72, 73, 74, 75};
+        };
+    }
+
     template<bool V = true>
     struct Trigger : std::integral_constant<bool, V> {};
     

@@ -960,7 +960,16 @@ namespace RC {
                         usart::periodic();
                     }
                     
+                    inline static void start() {
+                        mActive = true;
+                    }
+                    inline static void stop() {
+                        mActive = false;
+                    }
+
                     inline static void ratePeriodic() { // 14ms
+                        if (!mActive) return;
+
                         (++ticks).on(timeoutTicks, []{
                             if constexpr(!std::is_same_v<dbg, void>) {
                                 dbg::toggle();
@@ -989,10 +998,11 @@ namespace RC {
                             usart::put((std::byte) ((output[14] & 0x07FF)>>6 | (output[15] & 0x07FF)<<5));
                             usart::put((std::byte) ((output[15] & 0x07FF)>>3));
                             usart::put(mFlagsAndSwitches); //Flags byte
-                            usart::put(0x00_B); //Footer
+                            usart::put(0x04_B); //Footer
                         });
                     }
                 private:
+                    static inline bool mActive{true};
                     static inline std::byte mFlagsAndSwitches{};
                     static inline std::array<uint16_t, 16> output;                 
                     static inline External::Tick<Timer> ticks{};

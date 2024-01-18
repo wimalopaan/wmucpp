@@ -33,6 +33,7 @@ namespace External {
         constexpr auto switchSymbol = std::byte{'s'};
         constexpr auto toggleSymbol = std::byte{'t'};
         constexpr auto menuSymbol = std::byte{'m'};
+        constexpr auto connectSymbol = std::byte{'c'}; // kind of passthru
 
         constexpr auto logSymbol = std::byte{'l'};
         constexpr auto gaugeSymbol = std::byte{'g'};
@@ -45,7 +46,11 @@ namespace External {
         constexpr auto lineEnds  = std::array{'\n'_B, '\r'_B, '\0'_B};
         constexpr auto outSeperator = std::byte{':'};
         constexpr auto inSeperators = std::array{' '_B, ':'_B};
-        
+
+        constexpr auto passthruStart1 = std::byte{0x00};
+        constexpr auto passthruStart2 = std::byte{0xff};
+
+
         // template<typename Device, auto N>
         // struct Logging final {
         //     template<typename... PP>
@@ -105,13 +110,18 @@ namespace External {
             return (static_cast<uint8_t>(b) - '0');
         }
 
-        template<uint8_t N, uint8_t NChannels = 16, typename Buffer = void, typename Dbg = void>
+        template<uint8_t N, typename Timer, typename PassThru, typename SendBack = void, uint8_t NChannels = 16, typename Buffer = void, typename Dbg = void>
         struct ProtocollAdapter final {
             inline static constexpr uint8_t NumberOfChannels = NChannels;
             using index_type = etl::ranged<0, NumberOfChannels - 1>;
             enum class State : uint8_t {Undefined, Start, Number, Seperator, Value, Ping, 
-                                        Wind, WindV1, WindV2, WindV3};
+                                        Wind, WindV1, WindV2, WindV3,
+                                        PassThru1, PassThru2,
+                                        CPassThru1, CPassThru2, CPassThruEnd1, CPassThruEnd2,
+                                        };
             enum class Target: uint8_t {Undefined, Prop, Switch, Toggle, Ping, Wind, Menu};
+
+            static inline constexpr External::Tick<Timer> byteTimeout{1000ms};
 
             using buffer_t = Buffer;
             
@@ -122,11 +132,77 @@ namespace External {
                         return true;
                     }
                 }
+                mByteTimer.reset();
                 ++mBytes;
                 switch (state) {
                 case State::Undefined:
                     if (b == startSymbol) {
                         state = State::Start;
+                    }
+                    else if (b == passthruStart1) {
+                        PassThru::start();
+                        state = State::PassThru1;
+                    }
+                    break;
+                case State::PassThru1:
+                    if (b == passthruStart2) {
+                        PassThru::put(passthruStart1);
+                        PassThru::put(passthruStart2);
+                        state = State::PassThru2;
+                    }
+                    else {
+                        state = State::Undefined;
+                    }
+                    break;
+                case State::PassThru2:
+                    PassThru::put(b);
+                    break;
+                case State::CPassThru1:
+                    if (etl::contains(lineEnds, b)) {
+                        PassThru::start();
+                        SendBack::put('$'_B);
+                        SendBack::put('l'_B);
+                        SendBack::put('0'_B);
+                        SendBack::put(' '_B);
+                        SendBack::put('1'_B);
+                        SendBack::put('\n'_B);
+                        state = State::CPassThru2;
+                    }
+                    else {
+                        state = State::Undefined;
+                    }
+                    break;
+                case State::CPassThru2:
+                    if (b == startSymbol) {
+                        state = State::CPassThruEnd1;
+                    }
+                    else {
+                        PassThru::put(b);
+                    }
+                    break;
+                case State::CPassThruEnd1:
+                    if (b == connectSymbol) {
+                        state = State::CPassThruEnd2;
+                    }
+                    else {
+                        PassThru::put(startSymbol);
+                        PassThru::put(b);
+                        state = State::CPassThru2;
+                    }
+                    break;
+                case State::CPassThruEnd2:
+                    if (etl::contains(lineEnds, b)) {
+                        PassThru::stop();
+                        SendBack::put('$'_B);
+                        SendBack::put('l'_B);
+                        SendBack::put('0'_B);
+                        SendBack::put(' '_B);
+                        SendBack::put('0'_B);
+                        SendBack::put('\n'_B);
+                        state = State::Undefined;
+                    }
+                    else {
+                        state = State::CPassThru2;
                     }
                     break;
                 case State::Start:
@@ -154,6 +230,10 @@ namespace External {
                     else if (b == menuSymbol) {
                         state = State::Number;
                         target = Target::Menu;
+                    }
+                    else if (b == connectSymbol) {
+                        state = State::CPassThru1;
+                        target = Target::Undefined;
                     }
                     else {
                         state = State::Undefined;
@@ -187,9 +267,11 @@ namespace External {
                     }
                     else if (etl::contains(lineEnds, b)) {
                         if (target == Target::Toggle) {
+                            index.set(number);
                             if (index < std::size(toggleValues)) {
                                 toggleValues[index] = !toggleValues[index];
                                 changed = true;
+                                lastIndex = index;
                                 lastTarget = Target::Toggle;
                                 state = State::Undefined;
                             }
@@ -356,7 +438,15 @@ namespace External {
                     pingReceived = false;                    
                 }
             }
-            inline static void ratePeriodic() {}
+            inline static void ratePeriodic() {
+                ++mByteTimer;
+                mByteTimer.on(byteTimeout, []{
+                    if (state == State::PassThru2) {
+                        PassThru::stop();
+                        state = State::Undefined;
+                    }
+                });                  
+            }
             
             inline static uint16_t packages() {
                 return mPackages;
@@ -368,6 +458,7 @@ namespace External {
                 mBytes = mPackages = 0;
             }
         private:
+            static inline External::Tick<Timer> mByteTimer{};
             inline static uint16_t mBytes{};
             inline static uint16_t mPackages{};
             

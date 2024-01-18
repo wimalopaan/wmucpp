@@ -320,7 +320,7 @@ namespace etl {
     private:
         value_type mValue{NaN};
     };
-    
+
     template<auto L, auto U, typename R>
     requires(std::is_arithmetic_v<R>)
     bool operator<(const ranged_NaN<L, U> lhs, const R rhs) {
@@ -330,6 +330,58 @@ namespace etl {
         return false;
     }
     
+
+    template<typename T, uint8_t X, uint8_t Y>
+    struct uint2D_ranged {
+        constexpr T x() const {
+            return mX;
+        }
+        constexpr T y() const {
+            return mY;
+        }
+        constexpr const uint2D_ranged& operator++() {
+            ++mX;
+            if (mX == X) {
+                mX = 0;
+                incY();
+            }
+            return *this;
+        }
+        constexpr void next(const auto f) {
+            ++mX;
+            if (mX == X) {
+                mX = 0;
+                incY(f);
+            }
+        }
+        constexpr void resetX() {
+            mX = 0;
+        }
+        constexpr void reset() {
+            mX = mY = 0;
+        }
+        constexpr void incY() {
+            ++mY;
+            if (mY == Y) {
+                mY = 0;
+            }
+        }
+        constexpr void incY(auto const f) {
+            if (mY == (Y - 1)) {
+                f();
+            }
+            else {
+                ++mY;
+            }
+        }
+    private:
+        T mX{};
+        T mY{};
+    };
+
+
+
+
     template<typename A>
     struct index_type;
     

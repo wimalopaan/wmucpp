@@ -20,6 +20,8 @@
 3) ble-serial -d <dev>
 4) andere shell: picocom /dev/pts/3 (bzw: /tmp/ttyBLE)
 5) Verbindung mit Android nicht möglich
+6) RoboRemo (s.a. Manual): local action bei button:
+   connect ble 0000ffe0-0000-1000-8000-00805f9b34fb 0000ffe1-0000-1000-8000-00805f9b34fb 0000ffe1-0000-1000-8000-00805f9b34fb 0 0
 
 * JDY-23 (BLE)
 

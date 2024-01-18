@@ -1,11 +1,16 @@
 #define USE_MCU_STM_V2
 #define NDEBUG
 
+// Usart 3
+// #define USE_ESC
+// #define USE_SPORT
+#define USE_VESC
+
 #include "devices.h"
 
 #include <chrono>
 #include <cassert>
- 
+
 using namespace std::literals::chrono_literals;
 
 struct Config {
@@ -29,11 +34,24 @@ struct GFSM {
     using crsf_out = devs::crsf_out;
     using crsfTelemetry = devs::crsfTelemetry;
     
+#ifdef USE_SPORT
     using sport = devs::sport;
     using sport_pa = devs::sport_pa;
     using sport_uart = devs::sport_uart;
+#endif
+#ifdef USE_ESC
+    using esc = devs::esc;
+    using esc_pa = devs::esc_pa;
+    using esc_uart = devs::esc_uart;
+#endif
+#ifdef USE_VESC
+    using vesc = devs::vesc;
+    using vesc_pa = devs::vesc_pa;
+    using vesc_uart = devs::vesc_uart;
+#endif
     
     using sbus = devs::sbus;
+    using sbus_pa = devs::sbus_pa;
     
     using bt_uart = devs::bt_uart;
     using robo_pa = devs::robo_pa;
@@ -64,21 +82,29 @@ struct GFSM {
         tp1::set();
         trace::periodic();
         crsf::periodic();
+#ifdef USE_SPORT
         sport::periodic();
         sport_uart::periodic();
+#endif
+#ifdef USE_ESC
+        esc::periodic();
+        esc_uart::periodic();
+#endif
+#ifdef USE_VESC
+        vesc::periodic();
+        vesc_uart::periodic();
+#endif
+
         sbus::periodic();
         bt_uart::periodic();
-        
-        // if (LPUART1->ISR & USART_ISR_RXNE_RXFNE) {
-        //     uint8_t b = LPUART1->RDR;
-        //     IO::outl<trace>("LPUART: ", b);
-        // }
         
         tp1::reset();
     }
     static inline void ratePeriodic() {
         tp2::set();        
         
+        robo_pa::ratePeriodic();
+
         crsf_pa::copyChangedChannels(Data::mChannels);
 
         robo_pa::whenTargetChanged([&](const robo_pa::Target t, const robo_pa::index_type::nan_type i){
@@ -88,26 +114,36 @@ struct GFSM {
                 if (i < Data::mChannels.size()) {
                     Data::mChannels[i] = robo_pa::propValues[i];                    
                 }
-            break;
+                break;
             case robo_pa::Target::Switch:
                 if (i < Data::mAltData.size()) {
                     Data::mAltData[i] = robo_pa::switchValues[i];                    
                 }
-            break;
+                break;
             case robo_pa::Target::Toggle:
                 if (i < Data::mAltData.size()) {
                     Data::mAltData[i] = robo_pa::toggleValues[i];                    
                 }
-            break;
+                break;
             default:
-            break;
+                break;
             }
         });
-
         
-        sbus::set(std::span{&Data::mChannels[0], 16});;
+        sbus::set(std::span{&Data::mChannels[0], 16});
         
+#ifdef USE_SPORT
         sport::ratePeriodic();
+#endif
+#ifdef USE_ESC
+        esc::throttle(Data::mChannels[0]);
+        esc::ratePeriodic();
+#endif
+#ifdef USE_VESC
+        vesc::throttle(Data::mChannels[0]);
+        vesc::ratePeriodic();
+#endif
+
         crsf_out::ratePeriodic();
         crsfTelemetry::ratePeriodic();
         sbus::ratePeriodic();
@@ -120,12 +156,12 @@ struct GFSM {
                 mState = State::Init;
                 btpwr::reset(); // on
             });
-        break;
+            break;
         case State::Init:
             mStateTick.on(initTicks, []{
                 mState = State::Run;
             });
-        break;
+            break;
         case State::Run:
             (++mDebugTick).on(debugTicks, []{
                 led1::toggle();
@@ -141,21 +177,33 @@ struct GFSM {
                 //             " pw: ", crsf_pa::mParameterWritePackagesCounter, 
                 //             " c: ", crsf_pa::mCommandPackagesCounter, 
                 //             " d: ", crsf_pa::mDataPackagesCounter); 
+                // IO::outl<trace>(
+                //     "ch0: ", Data::mChannels[0],
+                //     " ch1: ", Data::mChannels[1],
+                //     " ch2: ", Data::mChannels[2],
+                //     " ch3: ", Data::mChannels[3],
+                //     " rpm: ", (uint8_t)sbus_pa::mSlots[0][1],
+                //     " rpm: ", (uint8_t)sbus_pa::mSlots[0][2]
+                //     );
                 IO::outl<trace>(
-                            "ch0: ", Data::mChannels[0],
-                            " ch1: ", Data::mChannels[1],
-                            " ch2: ", Data::mChannels[2],
-                            " ch3: ", Data::mChannels[3]
-                        );
-                IO::outl<trace>(
-                            " ro0: ", robo_pa::propValues[0],
-                            " ro1: ", robo_pa::propValues[1],
-                            " ro2: ", robo_pa::propValues[2],
-                            " ro3: ", robo_pa::propValues[3]
-                        );
+                    "ch0: ", Data::mChannels[0],
+                    " ch1: ", Data::mChannels[1],
+                    " ch2: ", Data::mChannels[2],
+                    " ch3: ", Data::mChannels[3],
+                    " v b: ", vesc_pa::mBytes,
+                    " v p: ", vesc_pa::mPackages,
+                    " v t: ", (uint8_t)vesc_pa::mType,
+                    " v l: ", vesc_pa::mLength
+                    );
+                // IO::outl<trace>(
+                //             " ro0: ", robo_pa::propValues[0],
+                //             " ro1: ", robo_pa::propValues[1],
+                //             " ro2: ", robo_pa::propValues[2],
+                //             " ro3: ", robo_pa::propValues[3]
+                //         );
                 
             });
-        break;
+            break;
         }
         if (oldState != mState) {
             mStateTick.reset();

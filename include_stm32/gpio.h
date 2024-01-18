@@ -51,7 +51,11 @@ namespace Mcu::Stm {
     struct Address<GPIO<C, MCU>> {
         static inline constexpr uintptr_t value = GPIOC_BASE;
     };
-    template<G4xx MCU> 
+    template<G4xx MCU>
+    struct Address<GPIO<D, MCU>> {
+        static inline constexpr uintptr_t value = GPIOD_BASE;
+    };
+    template<G4xx MCU>
     struct Address<GPIO<F, MCU>> {
         static inline constexpr uintptr_t value = GPIOF_BASE;
     };

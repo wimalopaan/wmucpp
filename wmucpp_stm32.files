@@ -1,3 +1,4 @@
+Makefile.arm.include
 bluetooth.txt
 boards/nucleo_g431/esc/devices.h
 boards/nucleo_g431/esc/devices_foc.h
@@ -62,6 +63,7 @@ include_stm32/exti.h
 include_stm32/fifo.h
 include_stm32/fixedvector.h
 include_stm32/foc.h
+include_stm32/fonts.h
 include_stm32/fsk.h
 include_stm32/gpio.h
 include_stm32/i2c.h
@@ -82,15 +84,19 @@ include_stm32/ranged.h
 include_stm32/rc.h
 include_stm32/rc/cppm.h
 include_stm32/rc/crsf.h
+include_stm32/rc/escape.h
 include_stm32/rc/rc.h
 include_stm32/rc/roboremo.h
+include_stm32/rc/sbus2.h
 include_stm32/rc/sport.h
 include_stm32/rf.h
 include_stm32/si5351.h
 include_stm32/spi.h
+include_stm32/ssd1306.h
 include_stm32/stackstring.h
 include_stm32/tick.h
 include_stm32/timer.h
+include_stm32/tlc59108.h
 include_stm32/traits.h
 include_stm32/units.h
 include_stm32/usart.h

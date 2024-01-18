@@ -18,7 +18,8 @@
 #
 
 #subdirs += hott music tools
-subdirs += sdr
+#subdirs += sdr
+subdirs += bdc
 
 #test23a: CXXFLAGS = -g -std=c++17 -Wall -Wextra -fPIC -I../include 
 #test23a: CXX = clang++

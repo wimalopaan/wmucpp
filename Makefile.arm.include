@@ -116,9 +116,9 @@ NM = arm-none-eabi-nm
 %.s: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(ASMFLAGS) -S -o $@ $(shell pwd)/$<
 
-%.S: %.s
-	cat $< | c++filt | grep -v "^[ \t]*;" | grep -v "^[ \t]*\/\*.*\*\/$$" | grep -v "^[ \t]*__[Stz]" | grep -v "^\.L__" | grep -v "^.L[FV]" | grep -v "^\s*\.[fgi]" | grep -v "^[ \t]*$$" > $@
-	#cat $< | grep -v "^#" | grep -v "^[ \t]*$$" | grep -v "[ \t]*\.cfi_" | grep -v "^\.L[A-Z][A-Z]" > $@
+#%.S: %.s
+#	cat $< | c++filt | grep -v "^[ \t]*;" | grep -v "^[ \t]*\/\*.*\*\/$$" | grep -v "^[ \t]*__[Stz]" | grep -v "^\.L__" | grep -v "^.L[FV]" | grep -v "^\s*\.[fgi]" | grep -v "^[ \t]*$$" > $@
+#	#cat $< | grep -v "^#" | grep -v "^[ \t]*$$" | grep -v "[ \t]*\.cfi_" | grep -v "^\.L[A-Z][A-Z]" > $@
 
 # Create extended listing file from ELF output file.
 %.lss: %.elf

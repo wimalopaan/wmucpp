@@ -202,10 +202,10 @@ namespace Dsp {
         static inline constexpr auto coeff_h = calculate(fh.f1, fh.f2);
     };
     
-    template<uint8_t Length, typename Type = BandPass, float fs = 48000, float f1 = 4500, float f2 = 5500>
+    template<uint16_t Length, typename Type = BandPass, float fs = 48000, float f1 = 4500, float f2 = 5500>
     struct FirFilter;
     
-    template<uint8_t L, float fs, float f1, float f2>
+    template<uint16_t L, float fs, float f1, float f2>
     struct FirFilter<L, BandPass, fs, f1, f2> {
         constexpr float process(const float v) {
             buffer[in] = v;
