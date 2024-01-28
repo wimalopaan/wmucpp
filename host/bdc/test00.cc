@@ -10,6 +10,8 @@
 #include <cmath>
 #include <iterator>
 
+#include "Iir.h"
+
 #include "mcu/dsp.h"
 
 struct Config {
@@ -53,20 +55,59 @@ struct Export {
     static void f1(const float v) {
         filter << v << '\n';
     }
+    static void mean(const float v) {
+        m0 << v << '\n';
+    }
+    static void max(const float v) {
+        ma << v << '\n';
+    }
+    static void min(const float v) {
+        mi << v << '\n';
+    }
+    static void res(const bool v) {
+        r << v << '\n';
+    }
     static inline size_t globalCounter{0};
 private:    
     static inline std::ofstream in{"in.csv"};
+    static inline std::ofstream m0{"mean.csv"};
+    static inline std::ofstream ma{"max.csv"};
+    static inline std::ofstream mi{"min.csv"};
     static inline std::ofstream filter{"f1.csv"};
+    static inline std::ofstream r{"res.csv"};
 };
 
 template<typename C>
 struct Estimator {
-    static inline Dsp::FirFilter<128, Dsp::BandPass, C::fs, 10.0f, 1000.0f> filter;
+    static inline Dsp::HystereseThreshold<void> th{0.0001};
+
+    // static inline auto expMean = []{
+    //     Dsp::ExpMean<void> filter{0.0001};
+    //     return filter;
+    // }();
+
+    static inline auto iirFilter = []{
+        Dsp::Butterworth::LowPass<6> filter;
+        filter.setup(Config::fs, 1000);
+        // Iir::Butterworth::LowPass<6> filter;
+        // // filter.setup(Config::fs, 200, 5);
+        // filter.setup(Config::fs, 200);
+        return filter;
+    }();
 
     static inline void process(const float v) {
+
+        // median-filter
+
+        const auto x = iirFilter.process(v);
+        const bool t = th.process(x);
+
         Export::input(v);
-        const auto x = filter.process(v);
-        Export::f1(x);
+        Export::f1(th.v0);
+        Export::mean(th.mMean.value());
+        Export::max(th.mMax.value());
+        Export::min(th.mMin.value());
+        Export::res(th.state);
     }
 };
 
