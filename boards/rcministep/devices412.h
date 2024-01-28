@@ -28,12 +28,38 @@ struct ApplData {
 };
 
 template<typename MCU>
+struct Devices<Board412_FOC_01, MCU> {
+    using PortA = AVR::Port<AVR::A>;
+
+    using ccp = AVR::Cpu::Ccp<>;
+    using clock = AVR::Clock<>;
+    using tcaPosition = AVR::Portmux::Position<AVR::Component::Tca<0>, AVR::Portmux::Default>;
+
+    using pa7 = AVR::Pin<PortA, 7>;
+
+    using systemTimer = AVR::SystemTimer<AVR::Component::Rtc<0>, fRtc>;
+
+    using adc = AVR::Adc<AVR::Component::Adc<0>, AVR::Resolution<10>, AVR::Vref::V4_3>;
+    using adcController = External::Hal::AdcController<adc, Meta::NList<2>>;
+    using adc_i_t = adcController::index_type;
+
+    using pwm = AVR::PWM::DynamicPwm<tcaPosition>;
+
+    using term_dev = void;
+
+    using eeprom = EEProm::Controller<ApplData>;
+
+    using portmux = AVR::Portmux::StaticMapper<Meta::List<tcaPosition>>;
+
+};
+
+template<typename MCU>
 struct Devices<Board412_01, MCU> {
     using PortA = AVR::Port<AVR::A>;
     
-    using an0 = AVR::Pin<PortA, 6>; 
-    using bn0 = AVR::Pin<PortA, 7>; 
-    
+    using an0 = AVR::Pin<PortA, 6>;
+    using bn0 = AVR::Pin<PortA, 7>;
+
     using ccp = AVR::Cpu::Ccp<>;
     using clock = AVR::Clock<>;
     using tcaPosition = AVR::Portmux::Position<AVR::Component::Tca<0>, AVR::Portmux::Default>;
@@ -51,8 +77,7 @@ struct Devices<Board412_01, MCU> {
 
     using eeprom = EEProm::Controller<ApplData>;
     
-    using portmux = AVR::Portmux::StaticMapper<Meta::List<tcaPosition>>;
-    
+    using portmux = AVR::Portmux::StaticMapper<Meta::List<tcaPosition>>;    
 };
 
 

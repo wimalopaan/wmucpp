@@ -38,14 +38,24 @@ struct NoBoard412 {
     // tx       = (pa6)
 };
 struct Board412_01 {
-    // tca:wo0 = pa3
-    // tca:wo1 = pa1
+    // tca:wo0 = pa3 : A1
+    // tca:wo1 = pa1 : B1
     
-    // an0      = pa6
-    // bn0      = pa7
+    // an0      = pa6 : A2
+    // bn0      = pa7 : B2
 
     // ain2     = pa2 = poti    
 };
+
+struct Board412_FOC_01 {
+    // tca:wo0 = pa3 : A1
+    // tca:wo1 = pa1 : B1
+
+    // tca:wo3(alt) = pa7 : B2
+
+    // ain2     = pa2 = poti
+};
+
 
 template<typename Board, typename MCU = DefaultMcuType> 
 struct Devices;
