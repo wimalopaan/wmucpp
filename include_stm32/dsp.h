@@ -44,6 +44,41 @@ namespace Dsp {
         }
     }
 
+    namespace Butterworth {
+
+    template<uint8_t N>
+    struct LowPass {
+        constexpr void setup(const float fs, const float fc) {
+            const float w = 2 * M_PI * fc / fs;
+            for(uint8_t i{0}; i < N; ++i) {
+                uint8_t k = N - i - 1;
+                const float phi = M_PI / (4.0 * N) * (k * 2 + 1);
+                const float alpha = sin(w) * cos(phi);
+                b[i][0] = (1.0 - cos(w)) / (2 * (1.0 + alpha));
+                b[i][1] = (1 - cos(w)) / (1.0 + alpha);
+                b[i][2] = (1.0 - cos(w)) / (2 * (1.0 + alpha));
+                a[i][0] = 1;
+                a[i][1] = -2 * cos(w) / (1.0 + alpha);
+                a[i][2] = (1.0 - alpha) / (1.0 + alpha);
+            }
+        }
+        constexpr float process(float v) {
+            for(uint8_t i{0}; i < N; ++i) {
+                w[i][0] = v - a[i][1] * w[i][1] - a[i][2] * w[i][2];
+                v = b[i][0] * w[i][0] + b[i][1] * w[i][1] + b[i][2] * w[i][2];
+                w[i][2] = w[i][1];
+                w[i][1] = w[i][0];
+            }
+            return v;
+        }
+    private:
+        std::array<std::array<float, 3>, N> w;
+        std::array<std::array<float, 3>, N> a;
+        std::array<std::array<float, 3>, N> b;
+    };
+
+    }
+
     template<typename Config>
     struct ExpMax {
         constexpr explicit ExpMax(const float f) : f{f} {}
@@ -52,10 +87,29 @@ namespace Dsp {
             if (v > max) max = v;
             return max;
         }
+        constexpr float value() const {
+            return max;
+        }
     private:
         float f{};
         float max{};
     };
+    template<typename Config>
+    struct ExpMin {
+        constexpr explicit ExpMin(const float f) : f{f} {}
+        constexpr float process(const float v) {
+            min *= (1.0 - f);
+            if (v < min) min = v;
+            return min;
+        }
+        constexpr float value() const {
+            return min;
+        }
+    private:
+        float f{};
+        float min{};
+    };
+
 
     template<typename Config>
     struct ExpMean {
@@ -74,6 +128,39 @@ namespace Dsp {
         float f{};
         float mean{};
     };
+
+
+    template<typename Config>
+    struct HystereseThreshold {
+        HystereseThreshold(const float f) : mMean{f}, mMax{0.1f * f}, mMin{0.1f * f} {}
+
+        bool process(const float v) {
+            v0 = v - mMean.process(v);
+
+            const float max = mMax.process(v0);
+            const float min = mMin.process(v0);
+            const float h = (max - min) / 10.0f;
+
+            if (state) { // high
+                if (v0 < (-h)) {
+                    state = false;
+                }
+            }
+            else { // low
+                if (v0 > (h)) {
+                    state = true;
+                }
+            }
+            return state;
+        }
+    // private:
+        float v0{0};
+        bool state{false};
+        ExpMean<void> mMean{0.0001};
+        ExpMax<void> mMax{0.0001};
+        ExpMin<void> mMin{0.0001};
+    };
+
 
     template<typename Config>
     struct StepLimiter {
