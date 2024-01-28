@@ -35,16 +35,16 @@ struct Switch {
 
     static inline constexpr uint8_t AutoIncrFlag = 0b1000'0000;
 
-        static inline constexpr uint8_t OscOffFlag    = 0b0001'0000;
+    static inline constexpr uint8_t OscOffFlag    = 0b0001'0000;
     static inline constexpr uint8_t GrpDimFlag = 0b0010'0000;
 
-        static inline void init() {
+    static inline void init() {
         std::array<std::byte, 2> data{std::byte(0 & ~OscOffFlag), std::byte(GrpDimFlag)};
         bus::write(Adr, std::byte(Mode1Reg | AutoIncrFlag), data);
     }
 
-    static inline void set(const uint8_t out, const uint8_t pwm) {
-        const uint8_t r = 0b1000'0000 | ((out & 0x0f) + 2);
+    static inline void pwm(const uint8_t out, const uint8_t pwm) {
+        const uint8_t r = ((out & 0x07) + Pwm0Reg);
         bus::write(Adr, std::pair<uint8_t, uint8_t>{r, pwm});
     }
 

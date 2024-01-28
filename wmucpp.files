@@ -652,6 +652,7 @@ boards/rcled/test22.cc
 boards/rcled/test23.cc
 boards/rcled/test24.cc
 boards/rcministep/Makefile
+boards/rcministep/bldc_01.cc
 boards/rcministep/busses.h
 boards/rcministep/devices.h
 boards/rcministep/devices1614.h

@@ -214,10 +214,12 @@ struct GFSM {
                 if (++c > 1) c = 0;
 
                 if (c == 0) {
-                    tlc_01::on(0);
+                    tlc_01::pwm(0, 64);
+                    // tlc_01::on(0);
                 }
                 else {
-                    tlc_01::off(0);
+                    tlc_01::pwm(0, 0);
+                    // tlc_01::off(0);
                 }
 
 
