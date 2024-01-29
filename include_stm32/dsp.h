@@ -49,10 +49,10 @@ namespace Dsp {
     template<uint8_t N>
     struct LowPass {
         constexpr void setup(const float fs, const float fc) {
-            const float w = 2 * M_PI * fc / fs;
+            const float w = 2 * std::numbers::pi * fc / fs;
             for(uint8_t i{0}; i < N; ++i) {
                 uint8_t k = N - i - 1;
-                const float phi = M_PI / (4.0 * N) * (k * 2 + 1);
+                const float phi = std::numbers::pi / (4.0 * N) * (k * 2 + 1);
                 const float alpha = sin(w) * cos(phi);
                 b[i][0] = (1.0 - cos(w)) / (2 * (1.0 + alpha));
                 b[i][1] = (1 - cos(w)) / (1.0 + alpha);
