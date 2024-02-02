@@ -74,8 +74,8 @@ struct VoltageProvider {
 template<typename Config>
 struct Devices<ESC04, Config, Mcu::Stm::Stm32G431> {
     using MCU = Mcu::Stm::Stm32G431;
-    using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<170_MHz, 2'000_Hz, Mcu::Stm::HSI>, MCU>;
-    // using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<60_MHz, 2'000_Hz, Mcu::Stm::HSI>, MCU>;
+    // using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<170_MHz, 2'000_Hz, Mcu::Stm::HSI>, MCU>;
+    using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<60_MHz, 2'000_Hz, Mcu::Stm::HSI>, MCU>; // besser wegen Abwärme im BD433 (bis 24V)
     using systemTimer = Mcu::Stm::SystemTimer<clock, Mcu::UseInterrupts<false>, MCU>;
     using trace = Arm::Trace<clock, 2_MHz, 128>;
 
@@ -101,7 +101,7 @@ struct Devices<ESC04, Config, Mcu::Stm::Stm32G431> {
 
     template<typename PA>
     using ibus_uart = Mcu::Stm::Uart<2, PA, 16, std::byte, clock, MCU>;
-    using ibus_sensor = RC::Protokoll::IBus::Sensor<ibus_uart, systemTimer, Meta::List<RpmProvider, CurrentProvider, VoltageProvider>>;
+    using ibus_sensor = RC::Protokoll::IBus::Sensor<ibus_uart, systemTimer, Meta::List<RpmProvider, CurrentProvider, VoltageProvider>, void, true, true>;
     using ibusrxtx = Mcu::Stm::Pin<gpioa, 2, MCU>;
 
            // PB7 Led
@@ -120,28 +120,26 @@ struct Devices<ESC04, Config, Mcu::Stm::Stm32G431> {
     using disable = Mcu::Stm::Pin<gpiob, 0, MCU>;
     using nsleep = Mcu::Stm::Pin<gpioa, 15, MCU>;
     using fault = Mcu::Stm::Pin<gpiob, 4, MCU>;
-    using nsleepPulseWaiter = Mcu::Stm::Waiter<6,
-                                               std::integral_constant<uint16_t, 35 * 170>,
-                                               std::integral_constant<uint16_t, 0>, MCU>;
+    using nsleepPulseWaiter = Mcu::Stm::Waiter<6, std::integral_constant<uint16_t, (35 * clock::config::f.value)>,
+                                                  std::integral_constant<uint16_t, 0>, MCU>;
 
-           // DMA
+    // DMA
     using dma1 = Mcu::Stm::Dma::Controller<1, MCU>;
 
-           // besser auch die PGA genutzt
-           // PA0 ISense : ADC12-IN1 (auf Platine geändert -> VSense)
-           // PA3 VInSense : ADC1-IN4 (auf Platine geändert -> ISense)
+   // besser auch die PGA genutzt
+   // PA0 ISense : ADC12-IN1 (auf Platine geändert -> VSense)
+   // PA3 VInSense : ADC1-IN4 (auf Platine geändert -> ISense)
 
     using adcDmaChannel = Mcu::Stm::Dma::Channel<dma1, 1, MCU>;
     using adcDmaStorage = std::array<volatile uint16_t, 2>;
     using adc = Mcu::Stm::V3::Adc<1, Meta::NList<13, 1>, pwm, adcDmaChannel, adcDmaStorage, MCU>; // opamp1
-    // using adc = Mcu::Stm::V3::Adc<1, Meta::NList<13, 1>, Mcu::Stm::NoTriggerSource, adcDmaChannel, adcDmaStorage, MCU>; // opamp1
     using isense = Mcu::Stm::Pin<gpioa, 0, MCU>;
     using vsense = Mcu::Stm::Pin<gpioa, 3, MCU>;
     using pga = Mcu::Stm::PGA<1, MCU>;
 
            // PA1 Comparator Lmt01
 
-           // PA5 Testpunkt, DAC1-Out2
+    // PA5 Testpunkt, DAC1-Out2
 
     using tp = Mcu::Stm::Pin<gpioa, 5, MCU>;
     using dac = Mcu::Stm::Dac<1, MCU>;
@@ -171,19 +169,20 @@ struct Devices<ESC04, Config, Mcu::Stm::Stm32G431> {
 
         led::template dir<Mcu::Output>();
 
-               // tp::template dir<Mcu::Output>();
+        // tp::template dir<Mcu::Output>();
         dac::init();
 
         isense::analog();
         vsense::analog();
         pga::init();
         pga::input(1);
-        pga::gain(1); // 4
+        pga::gain(2); // 4
         adc::init();
 
         pwm::init();
         fault::pullup();
-        fault::template dir<Mcu::Input>();
+        // fault::template dir<Mcu::Input>();
+        fault::template dir<Mcu::Output>();
 
         disable::template dir<Mcu::Output>();
         disable::reset();

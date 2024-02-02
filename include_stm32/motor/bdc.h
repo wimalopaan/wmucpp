@@ -26,7 +26,7 @@ struct Bdc {
     static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Timer<TimerNumber, void, void, MCU>>::value);
 
     static inline constexpr uint16_t period = 1640;
-    // static inline constexpr uint16_t period = 164;
+    // static inline constexpr uint16_t period = 100;
     static inline constexpr uint16_t freq   = 20'000;
 
     static inline constexpr uint16_t prescaler = (Clock::config::frequency.value / (freq * period));
@@ -64,7 +64,7 @@ struct Bdc {
 
         mcuTimer->CCR1 = 0;
         mcuTimer->CCR2 = 0;
-        mcuTimer->CCR3 = 0;
+        mcuTimer->CCR3 = 1;
         mcuTimer->CR1 |= TIM_CR1_ARPE;
 
         mcuTimer->CR2 |= (0b110 << TIM_CR2_MMS_Pos); // ch3 as trigger-output
@@ -73,10 +73,9 @@ struct Bdc {
     }
 
     static inline void duty(uint16_t v) {
-        // v /= 10;
         mcuTimer->CCR1 = v;
         mcuTimer->CCR2 = v;
-        mcuTimer->CCR3 = (9 * v) / 10; // trigger
+        mcuTimer->CCR3 = std::max(1.0f, (9.0f * v) / 10.0f); // trigger
     }
 
     constexpr static inline uint8_t trgo() {

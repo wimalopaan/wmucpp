@@ -22,7 +22,7 @@ struct Data {
 };
 
 struct Estimator {
-    static inline Dsp::HystereseThreshold<void> th{0.0001};
+    static inline Dsp::HystereseThreshold<void> th{0.001};
 
            // static inline auto expMean = []{
            //     Dsp::ExpMean<void> filter{0.0001};
@@ -31,7 +31,7 @@ struct Estimator {
 
     static inline auto iirFilter = []{
         Dsp::Butterworth::LowPass<6> filter;
-        filter.setup(20'000, 200);
+        filter.setup(20'000, 2000);
         // Iir::Butterworth::LowPass<6> filter;
         // // filter.setup(Config::fs, 200, 5);
         // filter.setup(Config::fs, 200);
@@ -43,6 +43,7 @@ struct Estimator {
         v1 = x;
         const bool t = th.process(x);
 
+        // todo: mehrere Perioden, da Perioden teilw. unterschiedlich lang
         ++pCounter;
         if (!last && t) { // rising
             period = pCounter;
@@ -66,7 +67,8 @@ struct GFSM {
     using systemTimer = devs::systemTimer;
 
     using led = devs::led;
-    // using tp = devs::tp;
+    using tp = devs::tp;
+    using fault = devs::fault;
 
     using pwm = devs::pwm;
     using nsleep = devs::nsleep;
@@ -76,6 +78,7 @@ struct GFSM {
 
     using adc = devs::adc;
     using adcDmaChannel = devs::adcDmaChannel;
+    using pga = devs::pga;
 
     using dac = devs::dac;
 
@@ -92,7 +95,7 @@ struct GFSM {
 
     static inline Dsp::ExpMean<void> rpmEst{0.3};
 
-    static inline void periodic() { // 300ns
+    static inline void periodic() {
         // devs::tp::set();
         // devs::tp::reset();
         trace::periodic();
@@ -106,13 +109,24 @@ struct GFSM {
         case State::Init:
             break;
         case State::Run:
-            if (adc::gotSequence()) {
+            adc::whenSequenceComplete([]{
+                // tp::set();
                 const float c = adc::mData[0];
                 estimator::process(c);
-                dac::set2(estimator::v1);
+                // dac::set2(std::min(estimator::v1, 4095.0f));
                 // dac::set2(adc::mData[0]);
+                dac::set2(std::min(estimator::th.mMean.value(), 4095.0f));
 
-            }
+                if (estimator::last) {
+                    fault::set();
+                    // tp::set();
+                }
+                else {
+                    fault::reset();
+                    // tp::reset();
+                }
+                // tp::reset();
+            });
             break;
         case State::Reset:
             break;
@@ -156,22 +170,33 @@ struct GFSM {
                         RpmProvider::mValue = 0;
                     }
                     else {
-                        RpmProvider::mValue = rpmEst.process(60.0f * (20'000.0f / estimator::period) / 2.0f);
+                        RpmProvider::mValue = rpmEst.process(60.0f * (20'000.0f / estimator::period) / 7.0f); // 7-Pole
                     }
                 }
                 float d = abs(servo_pa::value(ch_t{0}).toInt() - 1500);
                 d *= 1640;
                 d /= 512;
-                pwm::duty(d);
+                dd = d;
+                pwm::duty(dd);
 
                 VoltageProvider::mValue = adc::mData[1];
 
-                CurrentProvider::mValue = estimator::th.mMean.value();
+                CurrentProvider::mValue = estimator::th.mMean.value() / 10.0f;
+
+
+                if (estimator::th.mMean.value() > (4095.0f * 0.9)) {
+                    if (gain > 0) gain -= 1;
+                }
+                else if (estimator::th.mMean.value() < (4095.0f * 0.1)) {
+                    if (gain < 5) gain += 1;
+                }
+                pga::gain(gain);
+
             });
 
             mStateTick.on(initTicks, []{
                 IO::outl<trace>("a0: ", adc::mData[0], " a1: ", adc::mData[1], " p: ", estimator::period);
-                IO::outl<trace>("c0: ", servo_pa::value(ch_t{0}).toInt());
+                IO::outl<trace>("c0: ", servo_pa::value(ch_t{0}).toInt(), " dd: ", dd);
                 IO::outl<trace>("r: ", sensor::ProtocollAdapter::requests(), " b: ", sensor::StatisticProvider::mBytes);
             });
             break;
@@ -189,7 +214,7 @@ struct GFSM {
             case State::Run:
                 // in1::afunction(2);
                 in2::afunction(2);
-                pwm::duty(400);
+                pwm::duty(0);
                 led::reset();
                 break;
             case State::Reset:
@@ -199,8 +224,9 @@ struct GFSM {
             }
         }
     }
-
 private:
+    static inline uint8_t gain{1};
+    static inline uint16_t dd{};
     static inline volatile State mState{State::Undefined};
     static inline External::Tick<systemTimer> mStateTick;
     static inline External::Tick<systemTimer> mTelemTick;

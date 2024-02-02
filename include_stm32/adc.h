@@ -127,6 +127,13 @@ namespace Mcu::Stm {
         static inline bool gotSequence() {
             return (mcuAdc->ISR & ADC_ISR_EOS);
         }
+        static inline void whenSequenceComplete(auto f) {
+            if (mcuAdc->ISR & ADC_ISR_EOS) {
+                mcuAdc->ISR = ADC_ISR_EOS;
+                f();
+            }
+        }
+
         static inline uint16_t value() {
             return mcuAdc->DR;
         }
