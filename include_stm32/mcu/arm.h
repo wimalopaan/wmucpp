@@ -6,7 +6,39 @@
 using namespace Units::literals;
 
 namespace Arm {
-    
+
+#ifdef USE_MCU_STM_V3
+inline
+#endif
+    namespace V3 {
+template<typename Clock, Units::megahertz f = 2_MHz, size_t Size = 64>
+struct Trace {
+    static inline void init() {
+        TPI->ACPR = Clock::config::f / f - 1;
+        if (((ITM->TCR & ITM_TCR_ITMENA_Msk) != 0UL) &&      /* ITM enabled */
+            ((ITM->TER & 1UL               ) != 0UL)   )     /* ITM Port #0 enabled */
+        {
+            mActive = true;
+        }
+    }
+    static inline void put(const char c) {
+        if (mActive) {
+            mData.push_back(c);
+        }
+    }
+    static inline void periodic() {
+        if (ITM->PORT[0].u32 != 0UL) {
+            if (const auto d = mData.pop_front()) {
+                ITM->PORT[0].u8 = *d;
+            }
+        }
+    }
+private:
+    static inline bool mActive{};
+    static inline etl::FiFo<char, Size> mData;
+};
+}
+
 #ifdef USE_MCU_STM_V2
     inline 
 #endif

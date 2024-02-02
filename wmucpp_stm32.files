@@ -25,7 +25,11 @@ boards/nucleo_g431/sdr/test100.cc
 boards/nucleo_g431/sdr/test101.cc
 boards/nucleo_g431/sdr/test99.cc
 boards/rcBdc/G431Drv8245_01/Makefile
+boards/rcBdc/G431Drv8245_01/devices.h
 boards/rcBdc/G431Drv8245_01/esc01.cc
+boards/rcBdc/G431Drv8245_01/esc02.cc
+boards/rcBdc/G431Drv8245_01/esc03.cc
+boards/rcBdc/G431Drv8245_01/esc04.cc
 boards/rcBdc/G431Drv8245_01/link_g431.ld
 boards/rcBdc/G431Drv8245_01/startup_g431.s
 boards/rcBdc/G431Drv8245_01/system_g4.cc
@@ -55,6 +59,7 @@ boards/rcFocG4/G431Mp6543_01/link_g431.ld
 boards/rcFocG4/G431Mp6543_01/startup_g431.s
 boards/rcFocG4/G431Mp6543_01/system_g4.cc
 boards/rcFocG4/Makefile
+host/bdc/test00.cc
 include_stm32/adc.h
 include_stm32/algorithm.h
 include_stm32/alternate.h
@@ -92,6 +97,7 @@ include_stm32/mcu/mcu.h
 include_stm32/mcu/mcu_traits.h
 include_stm32/mcu_traits.h
 include_stm32/meta.h
+include_stm32/motor/bdc.h
 include_stm32/motor/bldc.h
 include_stm32/motor/foc.h
 include_stm32/opamp.h

@@ -555,8 +555,11 @@ namespace RC {
                         DaisyChainEnable::init();
                     }
                     clear();
-                }            
-                
+                }
+                inline static constexpr void rxtxswap(const bool b) {
+                    uart::rxtxswap(b);
+                }
+
                 inline static constexpr void clear() {
                     if constexpr(!std::is_same_v<DaisyChainEnable, void>) {
                         DaisyChainEnable::off();

@@ -14,4 +14,8 @@ namespace Mcu::Components {
     struct Timer {
         using number_t = std::integral_constant<uint8_t, N>;
     };
+    template<uint8_t N, typename MCU = DefaultMcu>
+    struct Adc {
+        using number_t = std::integral_constant<uint8_t, N>;
+    };
 }

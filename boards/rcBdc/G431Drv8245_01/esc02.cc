@@ -13,8 +13,10 @@ struct Config {
 };
 
 struct Data {
-//    static inline std::array<uint16_t, 64> mChannels{}; // sbus [172, 1812], center = 992
+    //    static inline std::array<uint16_t, 64> mChannels{}; // sbus [172, 1812], center = 992
 };
+
+volatile uint16_t aaa;
 
 template<typename Devices>
 struct GFSM {
@@ -23,9 +25,11 @@ struct GFSM {
     using systemTimer = devs::systemTimer;
 
     using led = devs::led;
+    // using tp = devs::tp;
 
     using pwm = devs::pwm;
     using nsleep = devs::nsleep;
+    using nsleepPulseWaiter = devs::nsleepPulseWaiter;
     using in1 = devs::in1;
     using in2 = devs::in2;
 
@@ -36,16 +40,34 @@ struct GFSM {
         devs::init();
         led::set();
     }
-    static inline void periodic() {
-        trace::periodic();
-
-        // if (!adc::busy()) {
-        // }
-    }
 
     enum class State : uint8_t {Undefined, Init, Run, Reset};
 
+    static inline void periodic() {
+        trace::periodic();
+
+        switch(mState) {
+        case State::Undefined:
+            break;
+        case State::Init:
+            break;
+        case State::Run:
+            if (!adc::busy()) {
+                // const uint16_t v = adc::value();
+                // dac::set2(v);
+            }
+            break;
+        case State::Reset:
+            break;
+        }
+    }
+
     static inline constexpr External::Tick<systemTimer> initTicks{500ms};
+
+    static inline void endReset() {
+        adc::start();
+        mState = State::Init;
+    }
 
     static inline void ratePeriodic() {
         const auto oldState = mState;
@@ -63,9 +85,11 @@ struct GFSM {
             });
             break;
         case State::Run:
+            mStateTick.on(initTicks, []{
+                IO::outl<trace>("a: ", aaa);
+            });
             break;
         case State::Reset:
-            mState = State::Init;
             break;
         }
         if (oldState != mState) {
@@ -74,34 +98,39 @@ struct GFSM {
             case State::Undefined:
                 break;
             case State::Init:
-                nsleep::set();
+                adc::start();
+                //nsleep::set();
+                // dac::set2(2048);
                 break;
             case State::Run:
                 // in1::afunction(2);
                 in2::afunction(2);
-                pwm::duty(1638);
+                pwm::duty(1400);
                 led::reset();
                 break;
             case State::Reset:
                 nsleep::reset();
+                nsleepPulseWaiter::start();
                 break;
             }
         }
     }
 
 private:
-    static inline State mState{State::Undefined};
+    static inline volatile State mState{State::Undefined};
     static inline External::Tick<systemTimer> mStateTick;
 };
 
-using devs = Devices<ESC01, Config, Mcu::Stm::Stm32G431>;
+using devs = Devices<ESC02, Config, Mcu::Stm::Stm32G431>;
+using gfsm = GFSM<devs>;
 
 int main() {
-    using gfsm = GFSM<devs>;
     gfsm::init();
 
-           // NVIC_EnableIRQ(DMA1_Channel1_IRQn);
-           // __enable_irq();
+    NVIC_EnableIRQ(TIM3_IRQn);
+    NVIC_EnableIRQ(TIM6_DAC_IRQn);
+    NVIC_EnableIRQ(ADC1_2_IRQn);
+    __enable_irq();
 
     while(true) {
         gfsm::periodic();
@@ -118,6 +147,30 @@ void __assert_func (const char *, int, const char *, const char *){
 }
 
 extern "C" {
+
+void ADC1_2_IRQHandler() {
+    devs::tp::set();
+    ADC1->ISR = ADC_ISR_EOC;
+    const uint16_t v = devs::adc::value();
+    devs::dac::set2(v);
+    aaa = v;
+    devs::tp::reset();
+}
+
+void TIM6_DAC_IRQHandler() {
+    TIM6->SR &= ~TIM_SR_UIF;
+    devs::nsleep::set();
+    devs::nsleepPulseWaiter::stop();
+    gfsm::endReset();
+}
+
+void TIM3_IRQHandler() {
+    devs::tp::set();
+    // devs::adc::start();
+    TIM3->SR &= ~TIM_SR_CC3IF;
+    TIM3->SR &= ~TIM_SR_CC1IF;
+    devs::tp::reset();
+}
 
 void DMA1_Channel1_IRQHandler() {
     DMA1->IFCR = DMA_IFCR_CTCIF1;

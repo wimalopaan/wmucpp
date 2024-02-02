@@ -38,7 +38,8 @@ namespace Mcu::Stm {
     template<bool V = true>
     struct Trigger : std::integral_constant<bool, V> {};
     
-    template<uint8_t N, typename Period, typename Prescaler, typename Trigger = Trigger<false>, typename MCU = DefaultMcu> struct Timer;
+    template<uint8_t N, typename Period, typename Prescaler, typename Trigger = Trigger<false>, typename MCU = DefaultMcu>
+    struct Timer;
 
 //    template<uint8_t N, uint16_t Per, uint16_t Pre, typename TR, typename MCU>
 //    requires (N == 1)
@@ -121,6 +122,48 @@ namespace Mcu::Stm {
         }        
         static inline void duty(const uint16_t d) {
             mcuTimer->CCR1 = d;            
+        }
+    };
+
+    template<uint8_t N, typename Period, typename Prescaler, typename MCU = DefaultMcu>
+    struct Waiter;
+    template<uint8_t N, uint16_t Per, uint16_t Pre, typename MCU>
+    requires (N >= 6) && (N <= 7)
+    struct Waiter<N, std::integral_constant<uint16_t, Per>, std::integral_constant<uint16_t, Pre>, MCU> {
+        using mcu_t = MCU;
+        using number_t = std::integral_constant<uint8_t, N>;
+
+        // std::integral_constant<uint16_t, Pre>::_;
+
+        static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Timer<N, void, void, MCU>>::value);
+
+        static inline void init() {
+            if constexpr(N == 6) {
+                RCC->APB1ENR1 |= RCC_APB1ENR1_TIM6EN;
+            }
+            else if constexpr(N == 7) {
+                RCC->APB1ENR1 |= RCC_APB1ENR1_TIM7EN;
+            }
+            else {
+                static_assert(false);
+            }
+            mcuTimer->PSC = Pre;
+            mcuTimer->ARR = Per;
+        }
+
+        static inline void start() {
+            mcuTimer->CNT = 0;
+            mcuTimer->SR &= ~TIM_SR_UIF;
+            // mcuTimer->EGR |= TIM_EGR_UG;
+            // mcuTimer->CR1 |= TIM_CR1_ARPE;
+            mcuTimer->CR1 |= TIM_CR1_OPM;
+            mcuTimer->DIER |= TIM_DIER_UIE;
+            mcuTimer->CR1 |= TIM_CR1_CEN;
+        }
+        static inline void stop() {
+            mcuTimer->CR1 &= ~TIM_CR1_CEN;
+            mcuTimer->SR &= ~TIM_SR_UIF;
+            mcuTimer->DIER &= ~TIM_DIER_UIE;
         }
     };
 

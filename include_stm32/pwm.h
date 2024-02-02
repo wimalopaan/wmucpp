@@ -142,7 +142,7 @@ namespace Mcu::Stm {
                     // dmaChannel::mcuDmaChannel->CPAR = (uint32_t)&mcuTimer->CCR1;
                     // dmaChannel::mcuDmaChannel->CMAR = (uint32_t)&mValues[0];
                     // dmaChannel::mcuDmaChannel->CCR |= DMA_CCR_TCIE; // for test
-                    // dmaChannel::enable();
+                    // dmaChanndmael::enable();
 
                     // dmaChannel::mcuDmaMux->CCR = Mcu::Stm::Timers::Properties<TimerNumber>::dmamux_src[0] & DMAMUX_CxCR_DMAREQ_ID_Msk; 
                     // dmaChannel::mcuDmaMux->CCR |= DMAMUX_CxCR_EGE;

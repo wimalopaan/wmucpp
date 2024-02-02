@@ -38,6 +38,9 @@ namespace Mcu::Stm {
             mcuOpamp->CSR = temp;
 //            mcuOpamp->CSR |= OPAMP_CSR_OPAMPxEN;
         }
+        static inline void input(const uint8_t i) {
+            MODIFY_REG(mcuOpamp->CSR, OPAMP_CSR_VPSEL_Msk, ((i & 0b11) << OPAMP_CSR_VPSEL_Pos));
+        }
     };
 
     template<G4xx MCU>

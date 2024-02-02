@@ -30,7 +30,22 @@ namespace Mcu::Stm {
         
         static inline constexpr std::chrono::microseconds systickIntervall{1'000'000 / SysTickFreq.value};
     };
-    
+    template<Units::hertz SysTickFreq>
+    struct ClockConfig<60_MHz, SysTickFreq, HSI> {
+        static inline constexpr uint8_t pllM{4 - 1}; // 4
+        static inline constexpr uint8_t pllN{30};
+        static inline constexpr uint8_t pllR{0}; // 2
+        static inline constexpr uint8_t pllP{2};
+        static inline constexpr uint8_t pllQ{2};
+
+        static inline constexpr Units::megahertz f{60_MHz};
+        static inline constexpr Units::hertz frequency = f;
+        static inline constexpr uint32_t systick{f / SysTickFreq};
+        //        std::integral_constant<uint32_t, systick>::_;
+
+        static inline constexpr std::chrono::microseconds systickIntervall{1'000'000 / SysTickFreq.value};
+    };
+
     template<typename Config, typename MCU = void> struct Clock;
     template<typename Config, Mcu::Stm::G4xx MCU>
     struct Clock<Config, MCU> {
