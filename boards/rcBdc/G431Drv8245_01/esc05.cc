@@ -5,7 +5,6 @@ namespace Mcu::Stm {
 inline namespace V3{}
 }
 
-
 #include "devices.h"
 
 #include <chrono>
@@ -13,30 +12,62 @@ inline namespace V3{}
 
 using namespace std::literals::chrono_literals;
 
-struct Config {
-    Config() = delete;
-};
+namespace detail {
+    template<typename T> concept ConceptPwm = requires(T) { T::pwm(0u); };
+    template<typename T> struct hasPwm : std::integral_constant<bool, false> {};
+    template<ConceptPwm T> struct hasPwm<T> : std::integral_constant<bool, true> {};
+    template<typename T> concept ConceptCutoff= requires(T) { T::cutoff(0u); };
+    template<typename T> struct hasCutoff: std::integral_constant<bool, false> {};
+    template<ConceptCutoff T> struct hasCutoff<T> : std::integral_constant<bool, true> {};
+}
 
-struct Data {
-    //    static inline std::array<uint16_t, 64> mChannels{}; // sbus [172, 1812], center = 992
+template<typename... Listener>
+struct Config {
+    using listeners = Meta::List<Listener...>;
+    using pwmListeners = Meta::filter<detail::hasPwm, listeners>;
+    using cutoffListeners = Meta::filter<detail::hasCutoff, listeners>;
+    // using pwmListeners::_;
+    // using cutoffListeners::_;
+
+    static inline uint16_t fPwm = 20'000;
+    static inline uint16_t fCutoff = 1'000;
+    static inline uint16_t maxRpm = 10'000;
+
+    static inline void servo(const uint16_t s) {
+
+    }
+
+    static inline void init() {
+        pwm(fPwm);
+        pwm(fCutoff);
+    }
+
+    static inline void pwm(const uint16_t f) {
+        fPwm = f;
+        [&]<typename... L>(Meta::List<L...>){
+            (L::pwm(f), ...);
+        }(pwmListeners{});
+    }
+    static inline void cutoff(const uint16_t f) {
+        fCutoff = f;
+        [&]<typename... L>(Meta::List<L...>){
+            (L::cutoff(f), ...);
+        }(cutoffListeners{});
+    }
 };
 
 struct Estimator {
     static inline Dsp::HystereseThreshold<void> th{0.001};
+    static inline Dsp::Butterworth::LowPass<6> iirFilter;
 
-           // static inline auto expMean = []{
-           //     Dsp::ExpMean<void> filter{0.0001};
-           //     return filter;
-           // }();
+    static inline void cutoff(const uint16_t f) {
+        iirFilter.fc(f);
+    }
 
-    static inline auto iirFilter = []{
-        Dsp::Butterworth::LowPass<6> filter;
-        filter.setup(20'000, 2000);
-        // Iir::Butterworth::LowPass<6> filter;
-        // // filter.setup(Config::fs, 200, 5);
-        // filter.setup(Config::fs, 200);
-        return filter;
-    }();
+    static inline void pwm(const uint16_t f) {
+        iirFilter.fs(f);
+        // modify th
+    }
 
     static inline void process(const float v) {
         const auto x = iirFilter.process(v);
@@ -59,6 +90,9 @@ struct Estimator {
 
 using estimator = Estimator;
 
+
+using devs = Devices<ESC05, void, Mcu::Stm::Stm32G431>;
+using config = Config<Estimator, devs::pwm>;
 
 template<typename Devices>
 struct GFSM {
@@ -89,6 +123,8 @@ struct GFSM {
     static inline void init() {
         devs::init();
         led::set();
+
+        config::init();
     }
 
     enum class State : uint8_t {Undefined, Init, Run, Reset};
@@ -173,11 +209,13 @@ struct GFSM {
                         RpmProvider::mValue = rpmEst.process(60.0f * (20'000.0f / estimator::period) / 7.0f); // 7-Pole
                     }
                 }
-                float d = abs(servo_pa::value(ch_t{0}).toInt() - 1500);
-                d *= 1640;
-                d /= 512;
-                dd = d;
-                pwm::duty(dd);
+                const auto nv = servo_pa::normalized(ch_t{0});
+                // float d = abs(servo_pa::value(ch_t{0}).toInt() - 1500);
+                // d *= 1640;
+                // d /= 512;
+                // dd = d;
+                // pwm::duty(dd);
+                pwm::normalized(nv);
 
                 VoltageProvider::mValue = adc::mData[1];
 
@@ -232,15 +270,12 @@ private:
     static inline External::Tick<systemTimer> mTelemTick;
 };
 
-using devs = Devices<ESC04, Config, Mcu::Stm::Stm32G431>;
 using gfsm = GFSM<devs>;
 
 int main() {
     gfsm::init();
 
-    // NVIC_EnableIRQ(TIM3_IRQn);
     NVIC_EnableIRQ(TIM6_DAC_IRQn);
-    // NVIC_EnableIRQ(ADC1_2_IRQn);
     __enable_irq();
 
     while(true) {

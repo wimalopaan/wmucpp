@@ -21,7 +21,6 @@ namespace etl {
     template<auto Low, auto High>
     struct ranged final {
         using nan_type = ranged_NaN<Low, High>;
-        
         using value_type = typeForIntervall_t<Low, High>;
         
         static inline constexpr value_type Lower = Low;

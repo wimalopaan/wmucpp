@@ -48,7 +48,15 @@ namespace Dsp {
 
     template<uint8_t N>
     struct LowPass {
+        constexpr void fs(const float f) {
+            setup(f, mFc);
+        }
+        constexpr void fc(const float f) {
+            setup(mFs, f);
+        }
         constexpr void setup(const float fs, const float fc) {
+            mFs = fs;
+            mFc = fc;
             const float w = 2 * std::numbers::pi * fc / fs;
             for(uint8_t i{0}; i < N; ++i) {
                 uint8_t k = N - i - 1;
@@ -72,6 +80,8 @@ namespace Dsp {
             return v;
         }
     private:
+        float mFs{20'000};
+        float mFc{1'000};
         std::array<std::array<float, 3>, N> w;
         std::array<std::array<float, 3>, N> a;
         std::array<std::array<float, 3>, N> b;

@@ -133,9 +133,19 @@ namespace RC {
             struct Adapter {
                 enum class State : uint8_t {Undefined, GotStart20, Data, CheckL, CheckH};
                 
-                using value_type = etl::ranged_NaN<988, 2011>;            
+                using value_type = etl::ranged_NaN<988, 2011>;
+                using normalized_type = etl::ranged_NaN<-1000, +1000>;
                 using channel_type = etl::ranged<0, 17>;
                 
+                static inline normalized_type normalized(const uint8_t ch) {
+                    if (ch < 18) {
+                        const float d = value(channel_type{ch}) - 1500;
+                        const float nd = d * 1000.0f / 511.0f;
+                        return normalized_type{nd};
+                    }
+                    return normalized_type{0};
+                }
+
                 static inline value_type value(const channel_type ch) {
                     if (ch < 14) {
                         const std::byte h = (*inactive)[ch * 2 + 1] & std::byte{0x0f};

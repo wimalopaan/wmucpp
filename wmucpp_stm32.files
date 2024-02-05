@@ -30,6 +30,7 @@ boards/rcBdc/G431Drv8245_01/esc01.cc
 boards/rcBdc/G431Drv8245_01/esc02.cc
 boards/rcBdc/G431Drv8245_01/esc03.cc
 boards/rcBdc/G431Drv8245_01/esc04.cc
+boards/rcBdc/G431Drv8245_01/esc05.cc
 boards/rcBdc/G431Drv8245_01/link_g431.ld
 boards/rcBdc/G431Drv8245_01/startup_g431.s
 boards/rcBdc/G431Drv8245_01/system_g4.cc

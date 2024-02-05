@@ -26,12 +26,8 @@ struct Bdc {
     static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Timer<TimerNumber, void, void, MCU>>::value);
 
     static inline constexpr uint16_t period = 1640;
-    // static inline constexpr uint16_t period = 100;
-    static inline constexpr uint16_t freq   = 20'000;
-
-    static inline constexpr uint16_t prescaler = (Clock::config::frequency.value / (freq * period));
-
-    // std::integral_constant<uint16_t, prescaler>::_;
+    static inline uint16_t freq   = 20000;
+    static inline uint16_t prescaler = (Clock::config::frequency.value / (freq * period));
 
     static inline void init() {
         if constexpr (TimerNumber == 1) {
@@ -72,7 +68,12 @@ struct Bdc {
         mcuTimer->CR1 |= TIM_CR1_CEN;
     }
 
-    static inline void duty(uint16_t v) {
+    static inline void pwm(const uint16_t f) {
+        freq = f;
+        prescaler = (Clock::config::frequency.value / (freq * period));
+    }
+
+    static inline void duty(const uint16_t v) {
         mcuTimer->CCR1 = v;
         mcuTimer->CCR2 = v;
         mcuTimer->CCR3 = std::max(1.0f, (9.0f * v) / 10.0f); // trigger
