@@ -215,7 +215,7 @@ struct GFSM {
                 // d /= 512;
                 // dd = d;
                 // pwm::duty(dd);
-                pwm::normalized(nv);
+                // pwm::normalized(nv);
 
                 VoltageProvider::mValue = adc::mData[1];
 
