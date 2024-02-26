@@ -1,4 +1,5 @@
 Makefile.arm.include
+Makefile.include
 bluetooth.txt
 boards/nucleo_g431/esc/devices.h
 boards/nucleo_g431/esc/devices_foc.h
@@ -34,6 +35,13 @@ boards/rcBdc/G431Drv8245_01/esc05.cc
 boards/rcBdc/G431Drv8245_01/link_g431.ld
 boards/rcBdc/G431Drv8245_01/startup_g431.s
 boards/rcBdc/G431Drv8245_01/system_g4.cc
+boards/rcBdc/G431_50A_01/Makefile
+boards/rcBdc/G431_50A_01/devices.h
+boards/rcBdc/G431_50A_01/esc01.cc
+boards/rcBdc/G431_50A_01/esc05.cc
+boards/rcBdc/G431_50A_01/link_g431.ld
+boards/rcBdc/G431_50A_01/startup_g431.s
+boards/rcBdc/G431_50A_01/system_g4.cc
 boards/rcBdc/Makefile
 boards/rcCC/Makefile
 boards/rcCC/small_01/Makefile
@@ -60,7 +68,17 @@ boards/rcFocG4/G431Mp6543_01/link_g431.ld
 boards/rcFocG4/G431Mp6543_01/startup_g431.s
 boards/rcFocG4/G431Mp6543_01/system_g4.cc
 boards/rcFocG4/Makefile
+boards/rcVarioprop/Makefile
+boards/rcVarioprop/V01/Makefile
+boards/rcVarioprop/V01/devices.h
+boards/rcVarioprop/V01/link_g431.ld
+boards/rcVarioprop/V01/startup_g431.s
+boards/rcVarioprop/V01/system_g4.cc
+boards/rcVarioprop/V01/var01.cc
+host/Makefile
+host/bdc/Makefile
 host/bdc/test00.cc
+host/bdc/testDSP01.cc
 include_stm32/adc.h
 include_stm32/algorithm.h
 include_stm32/alternate.h

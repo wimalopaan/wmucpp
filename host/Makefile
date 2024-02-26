@@ -61,8 +61,8 @@ subdirs += bdc
 ##targets += test50
 ##targets += test51
 #targets += test60
-targets += test70
-targets += test71
+#targets += test70
+#targets += test71
 ##targets += test72
 ##targets += test73
 #targets += test74
@@ -80,12 +80,12 @@ targets += test71
 #targets += test99
 #targets += test99b
 #targets += test100
-targets += test200
-targets += test201
+#targets += test200
+#targets += test201
 #targets += test210
 #targets += test300
-targets += test400
-targets += test401
+#targets += test400
+#targets += test401
 #targets += p00a
 
 #test400: modA.o test400.o
@@ -96,8 +96,6 @@ targets += test401
 #p00a.o: p00a.c p00.h
 
 #p00b.o: p00b.c p00.h
-
--include ../Makefile.include
 
 #CXX = /usr/bin/g++
 CXX = /usr/local/bin/g++
@@ -116,3 +114,6 @@ MCUFLAGS =
 
 %.o: %.cxx
 	$(CXX) -std=c++23 -c -fmodules-ts -x c++ $< -o $@ 
+
+-include ../Makefile.include
+
