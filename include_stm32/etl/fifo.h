@@ -42,7 +42,8 @@ namespace etl {
         inline static constexpr size_type size() {
             return Size;
         }
-        using index_type = size_type;
+        // using index_type = size_type;
+        using index_type = std::conditional_t<std::is_volatile_v<T>, volatile size_type, size_type>;
 //        using index_type = etl::uint_ranged_circular<size_type, 0, size() - 1>;
         
         

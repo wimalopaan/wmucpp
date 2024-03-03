@@ -46,15 +46,16 @@ namespace Dsp {
 
     namespace Butterworth {
 
-    template<uint8_t N>
+    template<uint8_t N, typename T = float>
     struct LowPass {
-        constexpr void fs(const float f) {
+        using NVT = std::remove_volatile_t<T>;
+        constexpr void fs(const NVT f) {
             setup(f, mFc);
         }
-        constexpr void fc(const float f) {
+        constexpr void fc(const NVT f) {
             setup(mFs, f);
         }
-        constexpr void setup(const float fs, const float fc) {
+        constexpr void setup(const NVT fs, const NVT fc) {
             mFs = fs;
             mFc = fc;
             const float w = 2 * std::numbers::pi * fc / fs;
@@ -70,7 +71,7 @@ namespace Dsp {
                 a[i][2] = (1.0 - alpha) / (1.0 + alpha);
             }
         }
-        constexpr float process(float v) {
+        constexpr float process(NVT v) {
             for(uint8_t i{0}; i < N; ++i) {
                 w[i][0] = v - a[i][1] * w[i][1] - a[i][2] * w[i][2];
                 v = b[i][0] * w[i][0] + b[i][1] * w[i][1] + b[i][2] * w[i][2];
@@ -80,11 +81,11 @@ namespace Dsp {
             return v;
         }
     private:
-        float mFs{20'000};
-        float mFc{1'000};
-        std::array<std::array<float, 3>, N> w;
-        std::array<std::array<float, 3>, N> a;
-        std::array<std::array<float, 3>, N> b;
+        T mFs{20'000};
+        T mFc{1'000};
+        std::array<std::array<T, 3>, N> w;
+        std::array<std::array<T, 3>, N> a;
+        std::array<std::array<T, 3>, N> b;
     };
 
     }

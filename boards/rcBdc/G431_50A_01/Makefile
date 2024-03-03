@@ -9,7 +9,14 @@ CPPFLAGS += -I../../../include_stm32
 CPPFLAGS += -I../../../../STM32CubeG4/Drivers/CMSIS/Core/Include
 CPPFLAGS += -I../../../../STM32CubeG4/Drivers/CMSIS/Device/ST/STM32G4xx/Include
 CPPFLAGS += -I../../../../STM32CubeG4/Drivers/STM32G4xx_HAL_Driver/Inc
+
+CPPFLAGS += -I../../../../STM32CubeG4/Drivers/CMSIS/DSP/Include 
+CPPFLAGS += -I../../../../STM32CubeG4/Drivers/CMSIS/DSP/Source
+CPPFLAGS += -ICMSIS/Include 
+
 CPPFLAGS += -DSTM32G431xx
+
+CPPFLAGS += -fpermissive
 
 LDSCRIPT = link_g431.ld
 LOADLIBES += startup_g431.o system_g4.o
@@ -19,5 +26,6 @@ targets += system_g4.o
 
 targets += esc01.elf esc01.bin
 targets += esc05.elf esc05.bin
+targets += esc10.elf esc10.bin
 
 -include ../../../Makefile.arm.include

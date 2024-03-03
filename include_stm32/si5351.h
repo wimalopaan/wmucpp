@@ -28,8 +28,8 @@ namespace External {
         static inline constexpr uint8_t MSynth1RegStart{50};
         static inline constexpr uint8_t MSynth2RegStart{58};
 
-//        static inline constexpr uint32_t maxPllf{900'000'000UL};
-        static inline constexpr uint32_t maxPllf{700'000'000UL};
+       static inline constexpr uint32_t maxPllf{900'000'000UL};
+        // static inline constexpr uint32_t maxPllf{700'000'000UL};
         static inline constexpr uint32_t xtalfreq{25'000'000UL};
         
         struct SetupData {

@@ -97,7 +97,7 @@ struct Bdc {
     static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Timer<TimerNumber, void, void, MCU>>::value);
 
     static inline constexpr uint16_t period = 1640;
-    static inline uint32_t freq  = 32000;
+    static inline uint32_t freq  = 20000;
     static inline uint16_t prescaler = (Clock::config::frequency.value / (freq * period));
 
     static inline void init() {
@@ -140,11 +140,10 @@ struct Bdc {
     }
 
     static inline void pwm(const uint16_t f) {
-        mcuTimer->CR1 &= ~TIM_CR1_CEN;
         freq = f;
         prescaler = (Clock::config::frequency.value / (freq * period));
         mcuTimer->PSC = prescaler;
-        mcuTimer->CR1 |= TIM_CR1_CEN;
+        mcuTimer->EGR |= TIM_EGR_UG;
     }
 
     static inline void duty(const uint16_t v) {
@@ -154,7 +153,15 @@ struct Bdc {
     }
 
     constexpr static inline uint8_t trgo() {
-        return 4; // tim3-trgo
+        if constexpr(TimerNumber == 3) {
+            return 4; // tim3-trgo
+        }
+        else if constexpr(TimerNumber == 2) {
+            return 11; // tim2-trgo
+        }
+        else if constexpr(TimerNumber == 4) {
+            return 12; // tim4-trgo
+        }
     }
 };
 

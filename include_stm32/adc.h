@@ -13,6 +13,9 @@
 namespace Mcu::Stm {
     using namespace Units::literals;
 
+    struct EndOfSequence;
+    struct EndOfConversion;
+
     struct NoTriggerSource;
     
     template<bool V>
@@ -35,19 +38,20 @@ namespace Mcu::Stm {
 #endif
     namespace V3 {
 
-    template<uint8_t N, typename ChannelList, typename TriggerSource = void, typename DmaChannel = void, typename DmaStorage = void, typename MCU = DefaultMcu>
+    template<uint8_t N, typename ChannelList, typename TriggerSource = void, typename DmaChannel = void, typename DmaStorage = void, typename ISRConfig = void, typename MCU = DefaultMcu>
     struct Adc;
 
-    template<uint8_t N, auto... Channels, typename TriggerSource, typename DmaChannel, typename DmaStorage, typename MCU>
+    template<uint8_t N, auto... Channels, typename TriggerSource, typename DmaChannel, typename DmaStorage, typename ISRConfig, typename MCU>
     requires ((N >= 1) && (N <= 2))
-    struct Adc<N, Meta::NList<Channels...>, TriggerSource, DmaChannel, DmaStorage, MCU> {
+    struct Adc<N, Meta::NList<Channels...>, TriggerSource, DmaChannel, DmaStorage, ISRConfig, MCU> {
         static inline /*constexpr */ ADC_TypeDef* const mcuAdc = reinterpret_cast<ADC_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Adc<N, MCU>>::value);
         static inline /*constexpr */ ADC_Common_TypeDef* const mcuAdcCommon = reinterpret_cast<ADC_Common_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Adc<N, MCU>>::common);
 
         static inline constexpr std::array<uint8_t, 4> sqr1Positions{ADC_SQR1_SQ1_Pos, ADC_SQR1_SQ2_Pos, ADC_SQR1_SQ3_Pos, ADC_SQR1_SQ4_Pos};
+        static inline constexpr std::array<uint8_t, 5> sqr2Positions{ADC_SQR2_SQ5_Pos, ADC_SQR2_SQ6_Pos, ADC_SQR2_SQ7_Pos, ADC_SQR2_SQ8_Pos, ADC_SQR2_SQ9_Pos};
 
         static inline constexpr uint8_t nChannels = sizeof...(Channels);
-        static_assert(nChannels <= 4);
+        static_assert(nChannels <= 9);
         static inline constexpr std::array<uint8_t, nChannels> channels{Channels...};
 
         static inline void wait_us(const uint32_t us) {
@@ -69,6 +73,9 @@ namespace Mcu::Stm {
             mcuAdc->ISR = ADC_ISR_ADRDY; // clear flag
 
             MODIFY_REG(mcuAdcCommon->CCR, ADC_CCR_PRESC_Msk, (0b0010 << ADC_CCR_PRESC_Pos)); // 170 / 4 = 42,5 MHz
+
+            mcuAdcCommon->CCR |= ADC_CCR_VSENSESEL; // temp
+            mcuAdcCommon->CCR |= ADC_CCR_VREFEN; // temp
 
             MODIFY_REG(mcuAdc->CFGR , ADC_CFGR_RES_Msk, (0x00 << ADC_CFGR_RES_Pos)); // 12 bit
 
@@ -109,9 +116,24 @@ namespace Mcu::Stm {
                 return r;
             }(std::make_index_sequence<nChannels>{});
 
-            // if constexpr(Channel == 16) { // temp
-            //     mcuAdcCommon->CCR |= ADC_CCR_VSENSESEL;
-            // }
+            if constexpr(nChannels > 4) {
+                mcuAdc->SQR2 = []<auto... II>(std::index_sequence<II...>){
+                    uint32_t r = 0;
+                    for(uint8_t i{4}; i < nChannels; ++i) {
+                        r |= (channels[i] << sqr2Positions[i - 4]);
+                    }
+                    return r;
+                }(std::make_index_sequence<nChannels>{});
+            }
+
+            if constexpr(!std::is_same_v<ISRConfig, void>) {
+                if constexpr(Meta::contains_v<ISRConfig, EndOfSequence>) {
+                    mcuAdc->IER |= ADC_IER_EOSIE;
+                }
+                if constexpr(Meta::contains_v<ISRConfig, EndOfConversion>) {
+                    mcuAdc->IER |= ADC_IER_EOCIE;
+                }
+            }
 
             mcuAdc->CR |= ADC_CR_ADEN;
         }
@@ -133,7 +155,6 @@ namespace Mcu::Stm {
                 f();
             }
         }
-
         static inline uint16_t value() {
             return mcuAdc->DR;
         }
