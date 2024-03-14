@@ -3,6 +3,7 @@ Makefile.include
 bluetooth.txt
 boards/dds2/fsk00.cc
 boards/dds2/test02.cc
+boards/dds2/test03.cc
 boards/nucleo_g431/esc/devices.h
 boards/nucleo_g431/esc/devices_foc.h
 boards/nucleo_g431/esc/driver.h
@@ -77,10 +78,17 @@ boards/rcVarioprop/Makefile
 boards/rcVarioprop/V01/Makefile
 boards/rcVarioprop/V01/cppm_gen.h
 boards/rcVarioprop/V01/devices.h
+boards/rcVarioprop/V01/devices_02.h
 boards/rcVarioprop/V01/link_g431.ld
+boards/rcVarioprop/V01/pulse_form.h
+boards/rcVarioprop/V01/robo_cli.h
 boards/rcVarioprop/V01/startup_g431.s
 boards/rcVarioprop/V01/system_g4.cc
 boards/rcVarioprop/V01/var01.cc
+boards/rcVarioprop/V01/var02.cc
+boards/rcVarioprop/V01/var03.cc
+boards/rcVarioprop/V01/var04.cc
+boards/rcVarioprop/V01/var05.cc
 host/Makefile
 host/bdc/Makefile
 host/bdc/test00.cc

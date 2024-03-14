@@ -115,6 +115,9 @@ namespace Mcu::Stm {
                 reset();
             }
         }
+        static inline bool read() {
+            return mcuGpio->IDR & (0x01UL << N);
+        }
         static inline void set() {
             mcuGpio->BSRR |= (0x01UL << N);
         }

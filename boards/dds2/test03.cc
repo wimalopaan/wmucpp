@@ -94,7 +94,8 @@ using twi = AVR::Twi::Master<twi0Position>;
 
 using portmux = Portmux::StaticMapper<Meta::List<tca0Position, twi0Position, usart0Position>>;
 
-using si = External::SI5351::Clock<twi, si5351, -4'200>;
+// using si = External::SI5351::Clock<twi, si5351, -4'200>;
+using si = External::SI5351::Clock<twi, si5351, 0>;
 
 template<typename MCU = DefaultMcuType>
 struct Fsm {
@@ -118,14 +119,14 @@ struct Fsm {
         
         tdev::init<BaudRate<9600>>();
         
-        cppm::set(ch_t{0}, rv_t{cppm::ocMedium});
-        cppm::set(ch_t{1}, rv_t{cppm::ocMedium});
-        cppm::set(ch_t{2}, rv_t{cppm::ocMedium});
-        cppm::set(ch_t{3}, rv_t{cppm::ocMedium});
-        cppm::set(ch_t{4}, rv_t{cppm::ocMedium});
-        cppm::set(ch_t{5}, rv_t{cppm::ocMedium});
-        cppm::set(ch_t{6}, rv_t{cppm::ocMedium});
-        cppm::set(ch_t{7}, rv_t{cppm::ocMedium});
+        cppm::set(ch_t{0}, rv_t{cppm::ocMedium - cppm::ocDelta / 10});
+        cppm::set(ch_t{1}, rv_t{cppm::ocMedium + cppm::ocDelta / 10});
+        cppm::set(ch_t{2}, rv_t{cppm::ocMedium - cppm::ocDelta / 10});
+        cppm::set(ch_t{3}, rv_t{cppm::ocMedium + cppm::ocDelta / 10});
+        cppm::set(ch_t{4}, rv_t{cppm::ocMedium - cppm::ocDelta / 10});
+        cppm::set(ch_t{5}, rv_t{cppm::ocMedium + cppm::ocDelta / 10});
+        cppm::set(ch_t{6}, rv_t{cppm::ocMedium - cppm::ocDelta / 10});
+        cppm::set(ch_t{7}, rv_t{cppm::ocMedium + cppm::ocDelta / 10} );
         
         etl::outl<terminal>("dds13"_pgm);
     }
@@ -155,19 +156,19 @@ struct Fsm {
             });
             break;
         case State::Set:
-            if (si::setChannel(50)) { 
+            if (si::setChannel(55)) {
                 si::setOutput(2);
                 mState = State::Set2;
             }
             break;
         case State::Set2:
-            if (si::setChannelUpperFreq(50)) {
+            if (si::setChannelUpperFreq(55)) {
                 mState = State::Run;
             }
             break;
         case State::Run:
             mChangeTick.on(mChangeTicks, []{
-                cppm::set(ch_t{0}, vv);
+                cppm::set(ch_t{1}, vv);
                 if (vv.isTop()) {
                     vv.setToBottom();
                 }

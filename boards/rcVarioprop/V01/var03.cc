@@ -44,14 +44,16 @@ struct GFSM {
         i2c1::periodic();
     }
 
-    enum class State : uint8_t {Undefined, Init, Run, Reset, Set, Set2};
+    enum class State : uint8_t {Undefined, Init, Run, Reset, Set};
 
     static inline constexpr External::Tick<systemTimer> initTicks{500ms};
     static inline constexpr External::Tick<systemTimer> debugTicks{500ms};
     static inline constexpr External::Tick<systemTimer> changeTicks{2000ms};
 
-    // static inline uint8_t txChannel = 56;
-    static inline uint8_t txChannel = 64;
+    static inline uint8_t txChannel = 56; // C8
+    // static inline uint8_t txChannel = 58;
+    // static inline uint8_t txChannel = 64; // Scan RX
+    // static inline uint8_t txChannel = 65;
 
     static inline void ratePeriodic() {
         const auto oldState = mState;
@@ -66,21 +68,11 @@ struct GFSM {
         case State::Init:
             mStateTick.on(initTicks, []{
                 si::setOutput(0);
-                // mState = State::Run;
                 mState = State::Set;
             });
             break;
         case State::Set:
-            // Channel{Band::_40MHz, 52, 40'685'000}, // 50
-            // if (si::setFrequency(40'871'000_Hz, &div)) {
             if (si::setChannel(txChannel)) {
-                si::setOutput(2);
-                mState = State::Set2;
-            }
-            break;
-        case State::Set2:
-            if (si::setChannelUpperFreq(txChannel)) { // 4KHz
-            // if (si::setFrequency(40'875'000_Hz)) { // 4KHz
                 mState = State::Run;
             }
             break;
@@ -112,7 +104,8 @@ struct GFSM {
             case State::Undefined:
                 break;
             case State::Init:
-                // cppm::set(1, 900);
+                break;
+            case State::Set:
                 break;
             case State::Run:
                 // adc1::start();
@@ -141,8 +134,14 @@ int main() {
     gfsm::init();
 
     // NVIC_EnableIRQ(ADC1_2_IRQn);
+    // NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+    // NVIC_EnableIRQ(DMA1_Channel2_IRQn);
     // NVIC_EnableIRQ(DMA1_Channel3_IRQn);
+    // NVIC_EnableIRQ(DMA1_Channel4_IRQn);
     NVIC_EnableIRQ(TIM3_IRQn);
+    // NVIC_EnableIRQ(TIM1_UP_TIM16_IRQn);
+    // NVIC_EnableIRQ(TIM6_DAC_IRQn);
+    // NVIC_EnableIRQ(TIM7_DAC_IRQn);
     // NVIC_EnableIRQ(EXTI15_10_IRQn);
     __enable_irq();
 
@@ -160,72 +159,32 @@ void __assert_func (const char *, int, const char *, const char *){
 
 extern "C" {
 
-static volatile uint8_t ii = 0;
-
-void EXTI15_10_IRQHandler() {
-    EXTI->PR1 = EXTI_PR1_PIF14;
-
-    devs::tp0::set();
-    devs::tp0::reset();
-
-    if (devs::an4::read()) {
-        devs::fSel::set();
-    }
-    else {
-        devs::fSel::reset();
+void TIM1_UP_TIM16_IRQHandler() {
+    if (TIM16->SR & TIM_SR_UIF) {
+        TIM16->SR &= TIM_SR_UIF;
+        // devs::tp0::set();
+        // devs::tp0::reset();
     }
 }
 
-static constexpr uint16_t n = 256;
-
-static constexpr auto cosine = []{
-    std::array<float, n> a;
-    for(uint16_t i = 0; i < n; ++i) {
-        a[i] = cos((i * std::numbers::pi) / n);
-    }
-    return a;
-}();
+void TIM6_DAC_IRQHandler() {
+    if (TIM6->SR & TIM_SR_UIF) {
+        TIM6->SR = ~TIM_SR_UIF;
+         devs::tp0::set();
+         devs::tp0::reset();
+     }
+}
 
 void TIM3_IRQHandler() {
-    static constexpr uint16_t d = 300;
-    static constexpr float dd = (1.0f * d) / n;
-    static constexpr float upper = 2048 + d;
-    static constexpr float lower = 2048 - d;
-
-    // static float v = 2048;
-
     if (TIM3->SR & TIM_SR_UIF) {
-        TIM3->SR = ~TIM_SR_UIF;
-        for(uint16_t i = 0; i < n; ++i) {
-            volatile float v = 2048 - d * cosine[i];
-            for(uint16_t k = 0; k < 20; ++k) {
-                volatile auto v1 = v;
-            }
-            devs::dac::set(v);
-        }
-
-
-        // while(v < upper) {
-        //     devs::dac::set(v);
-        //     v += dd;
-        // }
-        // devs::dac::set(2048 + d);
+        TIM3->SR &= ~TIM_SR_UIF;
+        devs::pulse::startRollon();
+        // devs::tp0::set();
     }
     if (TIM3->SR & TIM_SR_CC1IF) {
         TIM3->SR = ~TIM_SR_CC1IF;
-        for(uint16_t i = 0; i < n; ++i) {
-            volatile float v = 2048 + d * cosine[i];
-            for(uint16_t k = 0; k < 20; ++k) {
-                volatile auto v1 = v;
-            }
-            devs::dac::set(v);
-        }
-
-        // while(v > lower) {
-        //     devs::dac::set(v);
-        //     v -= dd;
-        // }
-        // devs::dac::set(2048 - d);
+        devs::pulse::startRolloff();
+        // devs::tp0::reset();
     }
 }
 
@@ -246,11 +205,28 @@ void ADC1_2_IRQHandler() {
 
 void DMA1_Channel1_IRQHandler() {
     DMA1->IFCR = DMA_IFCR_CTCIF1;
+    devs::tp0::set();
+    devs::tp0::reset();
+}
+void DMA1_Channel2_IRQHandler() {
+    DMA1->IFCR = DMA_IFCR_CTCIF2;
+    devs::tp0::set();
+    devs::tp0::reset();
 }
 void DMA1_Channel3_IRQHandler() {
     DMA1->IFCR = DMA_IFCR_CTCIF3;
-    // devs::tp0::set();
-    // devs::tp0::reset();
+    devs::tp0::set();
+    devs::tp0::reset();
+}
+void DMA1_Channel4_IRQHandler() {
+    if (DMA1->ISR & DMA_ISR_TCIF4) {
+        DMA1->IFCR = DMA_IFCR_CTCIF4;
+        devs::tp0::set();
+        devs::tp0::reset();
+    }
+    if (DMA1->ISR & DMA_ISR_TEIF4) {
+        DMA1->IFCR = DMA_IFCR_CTEIF4;
+    }
 }
 
 }

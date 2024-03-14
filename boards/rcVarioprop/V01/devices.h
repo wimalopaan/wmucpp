@@ -36,11 +36,15 @@
 #include "motor/bdc.h"
 
 #include "cppm_gen.h"
+#include "pulse_form.h"
+#include "robo_cli.h"
 
 struct Var01;
 
 using namespace Mcu::Stm;
 using namespace std::literals::chrono_literals;
+
+struct BtCallback;
 
 template<typename HW, typename Config, typename MCU = void>
 struct Devices;
@@ -48,7 +52,7 @@ struct Devices;
 template<typename Config>
 struct Devices<Var01, Config, Mcu::Stm::Stm32G431> {
     using MCU = Mcu::Stm::Stm32G431;
-    using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<170_MHz, 2'000_Hz, Mcu::Stm::HSI>, MCU>; // besser wegen Abwärme im BD433 (bis 24V)
+    using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<170_MHz, 2'000_Hz, Mcu::Stm::HSI>, MCU>;
     using systemTimer = Mcu::Stm::SystemTimer<clock, Mcu::UseInterrupts<false>, MCU>;
     using trace = Arm::Trace<clock, 2_MHz, 128>;
 
@@ -57,11 +61,45 @@ struct Devices<Var01, Config, Mcu::Stm::Stm32G431> {
     using gpioc = Mcu::Stm::GPIO<Mcu::Stm::C, MCU>;
     using gpiof = Mcu::Stm::GPIO<Mcu::Stm::F, MCU>;
 
+    // PB11 CRSF TX
+    using crsftx = Mcu::Stm::Pin<gpiob, 11, MCU>;
+    using tp0 = crsftx;
+    // PB10 CRSF RX
+    using crsfrx = Mcu::Stm::Pin<gpiob, 10, MCU>;
+    using tp1 = crsfrx;
+
+    // Usart 3: CRSF
+    struct CrsfCallback;
+    using crsf_pa = RC::Protokoll::Crsf::Adapter<0, CrsfCallback, trace, MCU>;
+    using crsf    = Mcu::Stm::Uart<3, crsf_pa, RC::Protokoll::Crsf::maxMessageSize, std::byte, clock, MCU>;
+    using crsf_out= RC::Protokoll::Crsf::Generator<crsf, systemTimer, MCU>;
+
     // PA8 Led
     using led = Mcu::Stm::Pin<gpioa, 8, MCU>;
 
     // PB5 BT Pwr
     using btPwr = Mcu::Stm::Pin<gpiob, 5, MCU>;
+
+    // Usart1: BT
+
+    struct PassThru {
+        static inline void start() {
+        }
+        static inline void stop() {
+        }
+        static inline void put(std::byte) {
+        }
+    };
+    using passthru = PassThru;
+    struct SendBack {
+        static inline void put(std::byte) {
+        }
+    };
+    using sendback = SendBack;
+    using btPa = External::RoboCli::ProtocollAdapter<0, systemTimer, passthru, sendback, BtCallback>;
+    using btUsart = Mcu::Stm::Uart<1, btPa, 2048, char, clock, MCU>;
+    using bttx = Mcu::Stm::Pin<gpioa, 10, MCU>;
+    using btrx = Mcu::Stm::Pin<gpioa, 9, MCU>;
 
     // PB13 HF Pwr
     using hfPwr = Mcu::Stm::Pin<gpiob, 13, MCU>;
@@ -75,8 +113,8 @@ struct Devices<Var01, Config, Mcu::Stm::Stm32G431> {
 
     using i2c1 = Mcu::Stm::I2C::Master<1, 16, MCU>;
     static inline constexpr Mcu::Stm::I2C::Address si5351{0x60};
-//    using si = External::SI5351::IQClock<i2c1, si5351, External::SI5351::IOutput<0>, External::SI5351::QOutput<1>>;
-    using si = External::SI5351::Clock<i2c1, si5351, 2'500>;
+    using si = External::SI5351::Clock<i2c1, si5351, 867>;
+    // using si = External::SI5351::Clock<i2c1, si5351, 0>;
 
     // PA12 Drehspul; Tim4-Ch2, AF(10)
     using ds = Mcu::Stm::Pin<gpioa, 12, MCU>;
@@ -90,23 +128,25 @@ struct Devices<Var01, Config, Mcu::Stm::Stm32G431> {
     using adcDmaChannel1 = Mcu::Stm::Dma::Channel<dma1, 1, MCU>;
     using adcDmaChannel2 = Mcu::Stm::Dma::Channel<dma1, 2, MCU>;
     using cppmDmaChannel3 = Mcu::Stm::Dma::Channel<dma1, 3, MCU>;
+    using dacDmaChannel4 = Mcu::Stm::Dma::Channel<dma1, 4, MCU>;
 
     using adcDmaStorage1 = std::array<volatile uint16_t, 7>;
     using adcDmaStorage2 = std::array<volatile uint16_t, 1>;
-    // using adc1 = Mcu::Stm::V3::Adc<1, Meta::NList<1, 2, 3, 4, 5, 10, 12>, pwm, adcDmaChannel1, adcDmaStorage1, Meta::List<EndOfSequence>, MCU>;
-    using adc1 = Mcu::Stm::V3::Adc<1, Meta::NList<1, 2, 3, 4>, pwm, adcDmaChannel1, adcDmaStorage1, Meta::List<EndOfSequence>, MCU>;
-    // using adc1 = Mcu::Stm::V3::Adc<1, Meta::NList<1, 2, 18, 16>, pwm, void, adcDmaStorage1, Meta::List<EndOfConversion>, MCU>;
-    // using adc2 = Mcu::Stm::V3::Adc<2, Meta::NList<12>, pwm, adcDmaChannel2, adcDmaStorage2, void, MCU>;
-    using an0 = Mcu::Stm::Pin<gpioa, 0, MCU>;
-    using an1 = Mcu::Stm::Pin<gpioa, 1, MCU>;
-    using an2 = Mcu::Stm::Pin<gpioa, 2, MCU>;
-    using an3 = Mcu::Stm::Pin<gpioa, 3, MCU>;
-    using an4 = Mcu::Stm::Pin<gpiob, 14, MCU>;
-    using an5 = Mcu::Stm::Pin<gpiof, 0, MCU>;
-    using vtSense = Mcu::Stm::Pin<gpiob, 1, MCU>;
-    using vinSense = Mcu::Stm::Pin<gpiob, 2, MCU>;
+    using adc1 = Mcu::Stm::V3::Adc<1, Meta::NList<1, 2, 3, 4, 5, 10, 12>, pwm, adcDmaChannel1, adcDmaStorage1, void, MCU>;
+    using adc2 = Mcu::Stm::V3::Adc<2, Meta::NList<12>, pwm, adcDmaChannel2, adcDmaStorage2, Meta::List<EndOfSequence>, MCU>;
+    using an1 = Mcu::Stm::Pin<gpioa, 0, MCU>;
+    using an2 = Mcu::Stm::Pin<gpioa, 1, MCU>;
+    using an3 = Mcu::Stm::Pin<gpioa, 2, MCU>;
+    using an4 = Mcu::Stm::Pin<gpioa, 3, MCU>;
+    using an5 = Mcu::Stm::Pin<gpiob, 14, MCU>;
+    using an10 = Mcu::Stm::Pin<gpiof, 0, MCU>;
+    using vtSense = Mcu::Stm::Pin<gpiob, 1, MCU>; // adc1 in12
+    using vinSense = Mcu::Stm::Pin<gpiob, 2, MCU>; // adc2 in12
 
     using cppm = Mcu::Stm::Cppm::Generator<3, cppmDmaChannel3, clock, MCU>;
+
+    using dac = Mcu::Stm::Dac<1, MCU>;
+    using pulse = Mcu::Stm::Cppm::RollOnOff<6, dacDmaChannel4, dac, clock, MCU>;
 
     static inline void init() {
         clock::init();
@@ -124,9 +164,9 @@ struct Devices<Var01, Config, Mcu::Stm::Stm32G431> {
         btPwr::template dir<Mcu::Output>();
         hfPwr::template dir<Mcu::Output>();
 
-        // fSel::template dir<Mcu::Output>();
-        // fSel::set();
-        fSel::afunction(2);
+        fSel::template dir<Mcu::Output>();
+        fSel::set();
+        // fSel::afunction(2);
         cppm::init();
 
         sda1::openDrain();
@@ -136,17 +176,17 @@ struct Devices<Var01, Config, Mcu::Stm::Stm32G431> {
 
         i2c1::init();
 
-        an0::analog();
         an1::analog();
         an2::analog();
         an3::analog();
         an4::analog();
         an5::analog();
+        an10::analog();
         vtSense::analog();
         vinSense::analog();
 
         adc1::init();
-        // adc2::init();
+        adc2::init();
 
         pwm::init();
         pwm::pwm(400);
@@ -154,6 +194,19 @@ struct Devices<Var01, Config, Mcu::Stm::Stm32G431> {
         ds::afunction(10);
         // ds::template dir<Mcu::Output>();
 
-               // buzz::afunction(10);
+        buzz::template dir<Mcu::Output>();
+        // buzz::afunction(10);
+
+        dac::init();
+        pulse::init();
+
+        btUsart::init();
+        btUsart::baud(115200);
+        bttx::afunction(7);
+        btrx::afunction(7);
+
+        tp0::template dir<Mcu::Output>();
+        tp1::template dir<Mcu::Output>();
+
     }
 };

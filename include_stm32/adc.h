@@ -108,24 +108,23 @@ namespace Mcu::Stm {
                 mcuAdc->CFGR |= ADC_CFGR_DMAEN;
             }
 
-            mcuAdc->SQR1 = []<auto... II>(std::index_sequence<II...>){
+            mcuAdc->SQR1 = []{
                 uint32_t r = (nChannels - 1) << ADC_SQR1_L_Pos;
-                for(uint8_t i{0}; i < nChannels; ++i) {
+                for(uint8_t i{0}; i < std::min(nChannels, uint8_t{4}); ++i) {
                     r |= (channels[i] << sqr1Positions[i]);
                 }
                 return r;
-            }(std::make_index_sequence<nChannels>{});
+            }();
 
             if constexpr(nChannels > 4) {
-                mcuAdc->SQR2 = []<auto... II>(std::index_sequence<II...>){
+                mcuAdc->SQR2 = []{
                     uint32_t r = 0;
                     for(uint8_t i{4}; i < nChannels; ++i) {
                         r |= (channels[i] << sqr2Positions[i - 4]);
                     }
                     return r;
-                }(std::make_index_sequence<nChannels>{});
+                }();
             }
-
             if constexpr(!std::is_same_v<ISRConfig, void>) {
                 if constexpr(Meta::contains_v<ISRConfig, EndOfSequence>) {
                     mcuAdc->IER |= ADC_IER_EOSIE;
@@ -134,9 +133,13 @@ namespace Mcu::Stm {
                     mcuAdc->IER |= ADC_IER_EOCIE;
                 }
             }
-
             mcuAdc->CR |= ADC_CR_ADEN;
         }
+
+        static inline void oversample(const uint8_t n) {
+
+        }
+
         static inline void start() {
             mcuAdc->CR |= ADC_CR_ADSTART;
         }

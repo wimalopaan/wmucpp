@@ -20,18 +20,37 @@ namespace Mcu::Stm {
         template<> struct Properties<2> {
             using value_type = uint32_t;
             static inline constexpr std::array<uint8_t, 4> dmamux_src{56, 57, 58, 59};
+            static inline constexpr uint8_t dmaUpdate_src{60};
         };
         template<> struct Properties<3> {
             using value_type = uint16_t;
             static inline constexpr std::array<uint8_t, 4> dmamux_src{61, 62, 63, 64};
+            static inline constexpr uint8_t dmaUpdate_src{65};
         };
         template<> struct Properties<4> {
             using value_type = uint16_t;
             static inline constexpr std::array<uint8_t, 4> dmamux_src{67, 68, 69, 70};
+            static inline constexpr uint8_t dmaUpdate_src{71};
         };
         template<> struct Properties<5> {
             using value_type = uint32_t;
             static inline constexpr std::array<uint8_t, 4> dmamux_src{72, 73, 74, 75};
+            static inline constexpr uint8_t dmaUpdate_src{76};
+        };
+        template<> struct Properties<6> {
+            using value_type = uint16_t;
+//            static inline constexpr std::array<uint8_t, 4> dmamux_src{72, 73, 74, 75};
+           static inline constexpr uint8_t dmaUpdate_src{8};
+        };
+        template<> struct Properties<7> {
+            using value_type = uint16_t;
+//            static inline constexpr std::array<uint8_t, 4> dmamux_src{72, 73, 74, 75};
+           static inline constexpr uint8_t dmaUpdate_src{9};
+        };
+        template<> struct Properties<16> {
+            using value_type = uint16_t;
+            static inline constexpr std::array<uint8_t, 4> dmamux_src{82};
+            static inline constexpr uint8_t dmaUpdate_src{83};
         };
     }
 
@@ -231,5 +250,9 @@ namespace Mcu::Stm {
     template<typename Per, typename Pre, G4xx MCU>
     struct Address<Timer<7, Per, Pre, MCU>> {
         static inline constexpr uintptr_t value = TIM7_BASE;        
+    };
+    template<typename Per, typename Pre, G4xx MCU>
+    struct Address<Timer<16, Per, Pre, MCU>> {
+        static inline constexpr uintptr_t value = TIM16_BASE;
     };
 }

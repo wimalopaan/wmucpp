@@ -56,13 +56,13 @@ namespace Mcu::Stm {
         };
     }
 
-    template<uint8_t N, typename PA, uint8_t Size, typename ValueType, typename Clock, typename MCU = void>
+    template<uint8_t N, typename PA, auto Size, typename ValueType, typename Clock, typename MCU = void>
     struct Uart;
 
-    template<uint8_t N, typename PA, uint8_t Size, typename ValueType, typename Clock, typename MCU = void>
+    template<uint8_t N, typename PA, auto Size, typename ValueType, typename Clock, typename MCU = void>
     using LpUart = Uart<N + 100, PA, Size, ValueType, Clock, MCU>;
 
-    template<uint8_t N, typename PA, uint8_t Size, typename ValueType, typename Clock, typename MCU>
+    template<uint8_t N, typename PA, auto Size, typename ValueType, typename Clock, typename MCU>
         requires (
                     ((N >= 1) && (N <= 3) && std::is_same_v<Stm32G431, MCU>) ||
                     ((N >= 1) && (N <= 5) && std::is_same_v<Stm32G473, MCU>)) || (N == 101)
@@ -241,29 +241,29 @@ namespace Mcu::Stm {
         static inline etl::FiFo<ValueType, Size> mReceiveData;
     };
 
-    template<typename PA, uint8_t Size, typename V, typename Clock, G4xx MCU>
+    template<typename PA, auto Size, typename V, typename Clock, G4xx MCU>
     struct Address<Uart<1, PA, Size, V, Clock, MCU>> {
         static inline constexpr uintptr_t value = USART1_BASE;
     };
-    template<typename PA, uint8_t Size, typename V, typename Clock, G4xx MCU>
+    template<typename PA, auto Size, typename V, typename Clock, G4xx MCU>
     struct Address<Uart<2, PA, Size, V, Clock, MCU>> {
         static inline constexpr uintptr_t value = USART2_BASE;
     };
-    template<typename PA, uint8_t Size, typename V, typename Clock, G4xx MCU>
+    template<typename PA, auto Size, typename V, typename Clock, G4xx MCU>
     struct Address<Uart<3, PA, Size, V, Clock, MCU>> {
         static inline constexpr uintptr_t value = USART3_BASE;
     };
-    template<typename PA, uint8_t Size, typename V, typename Clock, G4xx MCU>
+    template<typename PA, auto Size, typename V, typename Clock, G4xx MCU>
     struct Address<Uart<4, PA, Size, V, Clock, MCU>> {
         static inline constexpr uintptr_t value = UART4_BASE;
     };
 #ifdef STM32G473xx
-    template<typename PA, uint8_t Size, typename V, typename Clock, G4xx MCU>
+    template<typename PA, auto Size, typename V, typename Clock, G4xx MCU>
     struct Address<Uart<5, PA, Size, V, Clock, MCU>> {
         static inline constexpr uintptr_t value = UART5_BASE;
     };
 #endif
-    template<typename PA, uint8_t Size, typename V, typename Clock, G4xx MCU>
+    template<typename PA, auto Size, typename V, typename Clock, G4xx MCU>
     struct Address<Uart<101, PA, Size, V, Clock, MCU>> {
         static inline constexpr uintptr_t value = LPUART1_BASE;
     };

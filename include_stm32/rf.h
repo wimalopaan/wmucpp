@@ -29,7 +29,7 @@ namespace External::RC {
         Channel{Band::_27MHz,  11, 27'065'000},
         Channel{Band::_27MHz,  12, 27'075'000},
         Channel{Band::_27MHz,  13, 27'085'000},
-        Channel{Band::_27MHz,  14, 27'095'000},
+        Channel{Band::_27MHz,  14, 27'095'000}, // 10
         Channel{Band::_27MHz,  15, 27'105'000},
         Channel{Band::_27MHz,  16, 27'115'000},
         Channel{Band::_27MHz,  17, 27'125'000},
@@ -39,7 +39,7 @@ namespace External::RC {
         Channel{Band::_27MHz,  30, 27'255'000},
         Channel{Band::_35AMHz, 61, 35'010'000},
         Channel{Band::_35AMHz, 62, 35'020'000},
-        Channel{Band::_35AMHz, 63, 35'030'000},
+        Channel{Band::_35AMHz, 63, 35'030'000}, // 20
         Channel{Band::_35AMHz, 64, 35'040'000},
         Channel{Band::_35AMHz, 65, 35'050'000},
         Channel{Band::_35AMHz, 66, 35'060'000},
@@ -49,7 +49,7 @@ namespace External::RC {
         Channel{Band::_35AMHz, 70, 35'100'000},
         Channel{Band::_35AMHz, 71, 35'110'000},
         Channel{Band::_35AMHz, 72, 35'120'000},
-        Channel{Band::_35AMHz, 73, 35'130'000},
+        Channel{Band::_35AMHz, 73, 35'130'000}, // 30
         Channel{Band::_35AMHz, 74, 35'140'000},
         Channel{Band::_35AMHz, 75, 35'150'000},
         Channel{Band::_35AMHz, 76, 35'160'000},
@@ -59,7 +59,7 @@ namespace External::RC {
         Channel{Band::_35AMHz, 80, 35'200'000},
         Channel{Band::_35BMHz, 182, 35'820'000},
         Channel{Band::_35BMHz, 183, 35'830'000},
-        Channel{Band::_35BMHz, 184, 35'840'000},
+        Channel{Band::_35BMHz, 184, 35'840'000}, // 40
         Channel{Band::_35BMHz, 185, 35'850'000},
         Channel{Band::_35BMHz, 186, 35'860'000},
         Channel{Band::_35BMHz, 187, 35'870'000},
@@ -75,15 +75,15 @@ namespace External::RC {
         Channel{Band::_40MHz, 55, 40'725'000},
         Channel{Band::_40MHz, 56, 40'735'000},
         Channel{Band::_40MHz, 57, 40'765'000},
-        Channel{Band::_40MHz, 58, 40'778'000},
+        Channel{Band::_40MHz, 58, 40'775'000}, // 56
         Channel{Band::_40MHz, 59, 40'785'000},
-        Channel{Band::_40MHz, 81, 40'815'000},
+        Channel{Band::_40MHz, 81, 40'815'000}, // 58
         Channel{Band::_40MHz, 82, 40'825'000},
-        Channel{Band::_40MHz, 83, 40'835'000},
+        Channel{Band::_40MHz, 83, 40'835'000}, // 60
         Channel{Band::_40MHz, 84, 40'865'000},
         Channel{Band::_40MHz, 85, 40'875'000},
         Channel{Band::_40MHz, 86, 40'885'000},
-        Channel{Band::_40MHz, 87, 40'915'000},
+        Channel{Band::_40MHz, 87, 40'915'000}, // 64
         Channel{Band::_40MHz, 88, 40'925'000},
         Channel{Band::_40MHz, 89, 40'935'000},
         Channel{Band::_40MHz, 90, 40'965'000},

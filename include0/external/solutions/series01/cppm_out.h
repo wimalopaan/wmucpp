@@ -47,7 +47,7 @@ namespace External {
             using ranged_type   = etl::uint_ranged<uint16_t, ocMin, ocMax> ;
             
             struct Frame {
-                uint16_t pulse{ocMedium};
+                volatile uint16_t pulse{ocMedium};
             };
             
             using channel_t = etl::uint_ranged<uint8_t, 0, 7>;

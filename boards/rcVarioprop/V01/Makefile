@@ -17,6 +17,10 @@ LOADLIBES += startup_g431.o system_g4.o
 targets += startup_g431.o
 targets += system_g4.o
 
-targets += var01.elf var01.bin
+#targets += var01.elf var01.bin
+#targets += var02.elf var02.bin
+#targets += var03.elf var03.bin
+#targets += var04.elf var04.bin
+targets += var05.elf var05.bin
 
 -include ../../../Makefile.arm.include

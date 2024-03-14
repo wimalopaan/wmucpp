@@ -30,7 +30,8 @@ namespace External {
 
        static inline constexpr uint32_t maxPllf{900'000'000UL};
         // static inline constexpr uint32_t maxPllf{700'000'000UL};
-        static inline constexpr uint32_t xtalfreq{25'000'000UL};
+        // static inline constexpr uint32_t xtalfreq{25'000'000UL};
+        static inline constexpr uint32_t xtalfreq{27'000'000UL};
         
         struct SetupData {
             using data_type = std::array<std::byte, 8>;
@@ -242,7 +243,7 @@ namespace External {
                 std::array<SetupData, External::RC::channels.size()> data;
                 
                 for(uint8_t i{0}; const External::RC::Channel c1 : External::RC::channels) {
-                    data[i] = calculateSetupData(c1.mFreq + FreqOffset + 2'000);
+                    data[i] = calculateSetupData(c1.mFreq + FreqOffset + 1'500);  // +1500
                     i++;
                 }
                 return data;
