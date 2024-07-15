@@ -63,7 +63,7 @@ struct Devices<CC03, Config, Mcu::Stm::Stm32G473> {
     struct CrsfCallback;
 
     // Usart 1
-    using crsf_pa = RC::Protokoll::Crsf::Adapter<0, CrsfCallback, trace, MCU>;
+    using crsf_pa = RC::Protokoll::Crsf::V1::Adapter<0, CrsfCallback, trace, MCU>;
     using crsf    = Mcu::Stm::Uart<1, crsf_pa, RC::Protokoll::Crsf::maxMessageSize, std::byte, clock, MCU>;
     using crsf_out= RC::Protokoll::Crsf::Generator<crsf, systemTimer, MCU>;
     using crsftx = Mcu::Stm::Pin<gpiob, 6, MCU>; // AF 7
@@ -120,10 +120,14 @@ struct Devices<CC03, Config, Mcu::Stm::Stm32G473> {
     using aux1_uart = Mcu::Stm::Uart<4, void, 32, std::byte, clock, MCU>;
     using aux1tx = Mcu::Stm::Pin<gpioc, 11, MCU>; // rx, AF5, need swap rxtx-pins
 
+    using sbus_aux1 = RC::Protokoll::SBus::Output::Generator<aux1tx, systemTimer>;
+
     // Uart 5
 
     using aux2_uart = Mcu::Stm::Uart<5, void, 32, std::byte, clock, MCU>;
     using aux2tx = Mcu::Stm::Pin<gpiod, 2, MCU>; // rx, AF 5, need swap rxtx-pins
+
+    using sbus_aux2 = RC::Protokoll::SBus::Output::Generator<aux2tx, systemTimer>;
 
     // Leds
 
@@ -225,9 +229,9 @@ struct Devices<CC03, Config, Mcu::Stm::Stm32G473> {
     template<typename Out>
     struct CrsfTelemetry {
         using out = Out;
-        static inline constexpr External::Tick<systemTimer> telemTicks{5ms};
+        static inline constexpr External::Tick<systemTimer> telemTicks{100ms};
 
-        enum class State : uint8_t {Gps, Batt, Temp, Rpm};
+        enum class State : uint8_t {Gps, Batt, Temp1, Temp2, Rpm1, Rpm2};
 
         static inline void ratePeriodic() {
             (++mTelemTick).on(telemTicks, []{
@@ -238,21 +242,29 @@ struct Devices<CC03, Config, Mcu::Stm::Stm32G473> {
                     break;
                 case State::Batt:
                     out::data(RC::Protokoll::Crsf::Type::Battery, mBatt);
-                    mState = State::Temp;
+                    mState = State::Temp1;
                     break;
-                case State::Temp:
+                case State::Temp1:
                     out::data(RC::Protokoll::Crsf::Type::Temp1, mTemp);
-                    mState = State::Rpm;
+                    mState = State::Temp2;
                     break;
-                case State::Rpm:
+                case State::Temp2:
+                    out::data(RC::Protokoll::Crsf::Type::Temp1, mTemp);
+                    mState = State::Rpm1;
+                    break;
+                case State::Rpm1:
                     out::data(RC::Protokoll::Crsf::Type::Rpm1, mRpm);
-                    mState = State::Batt;
+                    mState = State::Rpm2;
+                    break;
+                case State::Rpm2:
+                    out::data(RC::Protokoll::Crsf::Type::Rpm1, mRpm);
+                    mState = State::Gps;
                     break;
                 }
             });
         }
         //    private:
-        static inline State mState{State::Batt};
+        static inline State mState{State::Gps};
         static inline std::array<std::byte, 4> mGps;
         static inline std::array<std::byte, 8> mBatt; //volts amps mAh percent
         static inline std::array<std::byte, 2> mTemp;
@@ -371,6 +383,11 @@ struct Devices<CC03, Config, Mcu::Stm::Stm32G473> {
         static inline uint8_t protocolVersion() {
             return 0;
         }
+        template<auto L>
+        static inline void command(const std::array<uint8_t, L>& payload) {
+
+        }
+
     private:
         static inline constexpr uint32_t mSerialNumber{1234};
         static inline constexpr uint32_t mHWVersion{1};

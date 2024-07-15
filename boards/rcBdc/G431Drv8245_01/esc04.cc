@@ -50,6 +50,7 @@ struct Estimator {
             pCounter = 0;
         }
         last = t;
+
     }
     static inline bool last;
     static inline uint32_t pCounter;

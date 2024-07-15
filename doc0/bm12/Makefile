@@ -22,23 +22,26 @@
 F_OSC = 24000000
 
 #MCU = atmega328p
-MCU = avr128da28
+MCU = avr128da32
 
 CPPFLAGS += -DNDEBUG
+CXXFLAGS += -Wl,-Map=output.map
+CXXFLAGS += -c
+OPTFLAGS = -Os # -mrodata-in-ram
 
-OPTFLAGS = -Os
-targets += shtml
+#targets += shtml
 
-targets += bm00.S bm00.elf bm00.hex
-targets += bm01.S bm01.elf bm01.hex
-targets += bm02.S bm02.elf bm02.hex
-targets += bm03.S bm03.elf bm03.hex
-targets += bm04.S bm04.elf bm04.hex
-targets += bm05.S bm05.elf bm05.hex
-targets += bm06.S bm06.elf bm06.hex
-targets += bm07.S bm07.elf bm07.hex
-targets += bm08.S bm08.elf bm08.hex
-targets += bm09.S bm09.elf bm09.hex
+#targets += bm00.S bm00.elf bm00.hex
+#targets += bm01.S bm01.elf bm01.hex
+#targets += bm02.S bm02.elf bm02.hex
+#targets += bm03.S bm03.elf bm03.hex
+#targets += bm04.S bm04.elf bm04.hex
+#targets += bm05.S bm05.elf bm05.hex
+#targets += bm06.S bm06.elf bm06.hex
+#targets += bm07.S bm07.elf bm07.hex
+#targets += bm08.S bm08.elf bm08.hex
+#targets += bm09.S bm09.elf bm09.hex
+targets += bm10.S bm10.elf bm10.hex
 
 -include ../../Makefile.avr0.include
 

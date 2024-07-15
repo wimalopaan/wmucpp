@@ -30,5 +30,6 @@ targets += multi8mk4.hex
 targets += multi8hott.hex
 targets += multi8man.hex
 targets += auto8d.hex
+targets += crsf01.hex
 
 -include ../../Makefile.avr0.include

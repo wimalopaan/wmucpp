@@ -675,6 +675,9 @@ boards/rcmultiswitch/Makefile
 boards/rcmultiswitch/ToDo.txt
 boards/rcmultiswitch/auto8d.cc
 boards/rcmultiswitch/board.h
+boards/rcmultiswitch/crc.h
+boards/rcmultiswitch/crsf.h
+boards/rcmultiswitch/crsf01.cc
 boards/rcmultiswitch/doc/Makefile
 boards/rcmultiswitch/doc/rcmultiswitch.adoc
 boards/rcmultiswitch/doc/rcmultiswitch_h.adoc
@@ -1665,6 +1668,7 @@ doc0/bm12/bm06.cc
 doc0/bm12/bm07.cc
 doc0/bm12/bm08.cc
 doc0/bm12/bm09.cc
+doc0/bm12/bm10.cc
 doc0/bm13/AVRxDB_Pin.h
 doc0/bm13/Encoder.h
 doc0/bm13/EncoderDemo.cc

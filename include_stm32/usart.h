@@ -228,7 +228,7 @@ namespace Mcu::Stm {
             }
             if (mcuUart->ISR & USART_ISR_RXNE_RXFNE) {
                 if constexpr (std::is_same_v<PA, void>) {
-                    mReceiveData.push_back(std::byte(mcuUart->RDR));
+                    mReceiveData.push_back(ValueType(mcuUart->RDR));
                 }
                 else {
                     PA::process(std::byte(mcuUart->RDR));

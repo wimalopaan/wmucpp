@@ -71,7 +71,7 @@ shtml: $(cchtml) $(chtml) $(hhtml) $(ahtml)
 #CPPFLAGS += -DNDEBUG
 
 ifndef OPTFLAGS
-OPTFLAGS = -O2
+OPTFLAGS = -O2 -Wnrvo
 endif
 
 #CXXFLAGS += $(OPTFLAGS) -std=c++17 #-pedantic

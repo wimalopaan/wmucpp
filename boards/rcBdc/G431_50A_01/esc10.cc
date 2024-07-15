@@ -99,7 +99,7 @@ struct FFTEstimator {
     }
     static inline void update() {
         __disable_irq();
-        std::copy(std::begin(Source::data), std::end(Source::data), samples);
+        std::copy(std::begin(Source::data.data()), std::end(Source::data.data()), &samples[0]);
         __enable_irq();
 
         arm_rfft_fast_f32(&fftInstance, &samples[0], &fft[0], 0); // fft[0] (real) : dc-offset

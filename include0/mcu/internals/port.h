@@ -195,7 +195,7 @@ namespace AVR {
                     std::byte masked_value = std::byte(value) & mask;
                     for(uint16_t rv = 0; rv < forward_patterns.size; ++rv) {
                         if (forward_patterns[rv] == masked_value) {
-                            data[value] = rv;
+                            data[value] = (std::byte)rv;
                             break;
                         }
                     }

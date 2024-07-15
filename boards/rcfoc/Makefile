@@ -7,6 +7,8 @@ F_OSC = 32000000
 
 subdirs =
 
+CXXFLAGS += -mrodata-in-ram
+
 #targets += test00.hex
 #targets += test01.hex
 #targets += test02.hex
@@ -35,5 +37,5 @@ targets += steller_01.hex
 
 -include ../../Makefile.avr0.include
 
-CC = /usr/local/bin/avr-gcc
-CXX = /usr/local/bin/avr-g++
+#CC = /usr/local/bin/avr-gcc
+#CXX = /usr/local/bin/avr-g++

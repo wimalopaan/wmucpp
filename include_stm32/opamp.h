@@ -31,12 +31,18 @@ namespace Mcu::Stm {
             mcuOpamp->CSR |= OPAMP_CSR_OPAMPxEN;
         }        
         static inline void gain(const uint8_t g) {
-//            mcuOpamp->CSR &= ~OPAMP_CSR_OPAMPxEN;
-            auto temp = mcuOpamp->CSR;
-            temp &= ~OPAMP_CSR_PGGAIN_Msk;
-            temp |= (g << OPAMP_CSR_PGGAIN_Pos);
-            mcuOpamp->CSR = temp;
-//            mcuOpamp->CSR |= OPAMP_CSR_OPAMPxEN;
+            if (g == 0) {
+                MODIFY_REG(mcuOpamp->CSR, OPAMP_CSR_VMSEL_Msk, (0b11 << OPAMP_CSR_VMSEL_Pos)); // follower
+            }
+            else {
+                // MODIFY_REG(mcuOpamp->CSR, OPAMP_CSR_VMSEL_Msk, (0b10 << OPAMP_CSR_VMSEL_Pos)); // pga
+                // MODIFY_REG(mcuOpamp->CSR, OPAMP_CSR_PGGAIN_Msk, ((g - 1) << OPAMP_CSR_PGGAIN_Pos)); // gain
+                MODIFY_REG(mcuOpamp->CSR, (OPAMP_CSR_VMSEL_Msk | OPAMP_CSR_PGGAIN_Msk), ((0b10 << OPAMP_CSR_VMSEL_Pos) | ((g - 1) << OPAMP_CSR_PGGAIN_Pos))); // pga
+                // auto temp = mcuOpamp->CSR;
+                // temp &= ~OPAMP_CSR_PGGAIN_Msk;
+                // temp |= ((g - 1) << OPAMP_CSR_PGGAIN_Pos);
+                // mcuOpamp->CSR = temp;
+            }
         }
         static inline void input(const uint8_t i) {
             MODIFY_REG(mcuOpamp->CSR, OPAMP_CSR_VPSEL_Msk, ((i & 0b11) << OPAMP_CSR_VPSEL_Pos));

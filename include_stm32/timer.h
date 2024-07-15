@@ -52,7 +52,82 @@ namespace Mcu::Stm {
             static inline constexpr std::array<uint8_t, 4> dmamux_src{82};
             static inline constexpr uint8_t dmaUpdate_src{83};
         };
+
+        template<uint8_t Src, uint8_t Dst>
+        requires ((Src >= 2) && (Src <= 5))
+        uint8_t trgoToTrigger() {
+            return (Src - 1);
+        }
+
+        template<uint8_t TimerNumber>
+        void reset() {
+            if constexpr (TimerNumber == 1) {
+                RCC->APB2RSTR |= RCC_APB2RSTR_TIM1RST;
+                RCC->APB2RSTR &= ~RCC_APB2RSTR_TIM1RST;
+            }
+            else if constexpr (TimerNumber == 2) {
+                RCC->APB1RSTR1 |= RCC_APB1RSTR1_TIM2RST;
+                RCC->APB1RSTR1 &= ~RCC_APB1RSTR1_TIM2RST;
+            }
+            else if constexpr (TimerNumber == 3) {
+                RCC->APB1RSTR1 |= RCC_APB1RSTR1_TIM3RST;
+                RCC->APB1RSTR1 &= ~RCC_APB1RSTR1_TIM3RST;
+            }
+            else if constexpr (TimerNumber == 4) {
+                RCC->APB1RSTR1 |= RCC_APB1RSTR1_TIM4RST;
+                RCC->APB1RSTR1 &= ~RCC_APB1RSTR1_TIM4RST;
+            }
+#ifdef RCC_APB1RSTR1_TIM5RST
+            else if constexpr (TimerNumber == 5) {
+                RCC->APB1RSTR1 |= RCC_APB1RSTR1_TIM5RST;
+                RCC->APB1RSTR1 &= ~RCC_APB1RSTR1_TIM5RST;
+            }
+#endif
+            else if constexpr (TimerNumber == 6) {
+                RCC->APB1RSTR1 |= RCC_APB1RSTR1_TIM6RST;
+                RCC->APB1RSTR1 &= ~RCC_APB1RSTR1_TIM6RST;
+            }
+            else if constexpr (TimerNumber == 7) {
+                RCC->APB1RSTR1 |= RCC_APB1RSTR1_TIM7RST;
+                RCC->APB1RSTR1 &= ~RCC_APB1RSTR1_TIM7RST;
+            }
+            else {
+                static_assert(false);
+            }
+        }
+
+        template<uint8_t TimerNumber>
+        void powerUp() {
+            if constexpr (TimerNumber == 1) {
+                RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
+            }
+            else if constexpr (TimerNumber == 2) {
+                RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN;
+            }
+            else if constexpr (TimerNumber == 3) {
+                RCC->APB1ENR1 |= RCC_APB1ENR1_TIM3EN;
+            }
+            else if constexpr (TimerNumber == 4) {
+                RCC->APB1ENR1 |= RCC_APB1ENR1_TIM4EN;
+            }
+#ifdef RCC_APB1ENR1_TIM5EN
+            else if constexpr(TimerNumber == 5) {
+                RCC->APB1ENR1 |= RCC_APB1ENR1_TIM5EN;
+            }
+#endif
+            else if constexpr(TimerNumber == 6) {
+                RCC->APB1ENR1 |= RCC_APB1ENR1_TIM6EN;
+            }
+            else if constexpr(TimerNumber == 7) {
+                RCC->APB1ENR1 |= RCC_APB1ENR1_TIM7EN;
+            }
+            else {
+                static_assert(false);
+            }
+        }
     }
+
+
 
     template<bool V = true>
     struct Trigger : std::integral_constant<bool, V> {};

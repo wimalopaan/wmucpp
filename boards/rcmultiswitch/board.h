@@ -74,6 +74,7 @@ using pwm = PWM::DynamicPwm8Bit<tcaPosition>;
 using ppm = External::Ppm::SinglePpmIn<Component::Tcb<0>>; 
 
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, tcaPosition, tcb0Position>>;
+using portmux1 = Portmux::StaticMapper<Meta::List<usart0Position>>;
 
 namespace  {
     constexpr auto dt = 2_ms;

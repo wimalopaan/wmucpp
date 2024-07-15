@@ -32,6 +32,7 @@ struct GFSM {
     using systemTimer = devs::systemTimer;
 
     using pwm1 = devs::pwm1;
+    using pwmGroup1 = devs::pwmGroup1;
     using crsf = devs::crsf;
     using crsf_pa = devs::crsf_pa;
     using crsf_out = devs::crsf_out;
@@ -79,6 +80,8 @@ struct GFSM {
 
     enum class State : uint8_t {Undefined, Init, Info, DevsInit, Run};
 
+    static inline bool crsfOn = false;
+
     static inline void init() {
         devs::init();
         devs::led1::set();
@@ -94,6 +97,7 @@ struct GFSM {
         i2c_2::periodic();
 
         crsf::periodic();
+
 #ifdef USE_SPORT
         sport::periodic();
         sport_uart::periodic();
@@ -163,8 +167,15 @@ struct GFSM {
         vesc::ratePeriodic();
 #endif
 
-        crsf_out::ratePeriodic();
-        crsfTelemetry::ratePeriodic();
+        if (crsf_pa::packages() > 100) {
+            crsfOn = true;
+            led2::set();
+        }
+
+        if (crsfOn) {
+            crsf_out::ratePeriodic();
+            crsfTelemetry::ratePeriodic();
+        }
 
 #ifndef USE_DMA_SBUS
         sbus::ratePeriodic();
@@ -208,6 +219,9 @@ struct GFSM {
             });
             break;
         case State::Run:
+            pwmGroup1::set(0, Data::mChannels[0]);
+            pwmGroup1::set(1, Data::mChannels[1]);
+
             (++mDebugTick).on(debugTicks, []{
                 led1::toggle();
 
@@ -255,13 +269,18 @@ struct GFSM {
                     " v l: ", vesc_pa::mLength
                     );
 #endif
+                // IO::outl<trace>(
+                //             " ro0: ", robo_pa::propValues[0],
+                //             " ro1: ", robo_pa::propValues[1],
+                //             " ro2: ", robo_pa::propValues[2],
+                //             " ro3: ", robo_pa::propValues[3]
+                //         );
                 IO::outl<trace>(
-                            " ro0: ", robo_pa::propValues[0],
-                            " ro1: ", robo_pa::propValues[1],
-                            " ro2: ", robo_pa::propValues[2],
-                            " ro3: ", robo_pa::propValues[3]
+                    "ch0: ", Data::mChannels[0],
+                    " ch1: ", Data::mChannels[1],
+                    " ch2: ", Data::mChannels[2],
+                    " ch3: ", Data::mChannels[3]
                         );
-
             });
             break;
         }
@@ -279,7 +298,7 @@ struct GFSM {
                 tlc_01::init();
                 break;
             case State::Run:
-                led2::set();
+                // led2::set();
                 break;
             }
         }

@@ -48,13 +48,13 @@ namespace etl {
         
         
         inline bool push_back(const T& item) {
-            index_type next{in};
+            size_type next{in};
             next = (next + 1) & size_mask;
             
             if (out == next) {
                 return false;
             }
-            data[in] = item;
+            mData[in] = item;
             in = next;
             return true;
         }
@@ -62,7 +62,7 @@ namespace etl {
             if (in == out) {
                 return false;
             }
-            item = data[out];
+            item = mData[out];
             out = (out + 1) & size_mask;
             return true;
         }
@@ -70,15 +70,15 @@ namespace etl {
             if (in == out) {
                 return {};
             }
-            const T item = data[out];
+            const T item = mData[out];
             out = (out + 1) & size_mask;
             return item;
         }
         inline T& front() {
-            return data[out];
+            return mData[out];
         }
         inline const T& front() const {
-            return data[out];
+            return mData[out];
         }
         inline void clear() {
             in = out = 0;
@@ -89,10 +89,16 @@ namespace etl {
         inline uint16_t elements() const {
             return in - out;
         }
+        const auto& data() const {
+            return mData;
+        }
+        auto& data() {
+            return mData;
+        }
     private:
         index_type in{};
         index_type out{};
-        T data[Size] {};
+        T mData[Size] {};
     };
     
     template<typename T>

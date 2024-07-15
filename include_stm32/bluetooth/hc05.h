@@ -172,6 +172,8 @@ namespace External {
 //                mStateTicks.on(waitTicks, []{
 //                   mState = State::AT; 
 //                });
+
+                // std::exchange
                 if (mEvent == Event::SetName) {
                     mState = State::AT;
                     mTargetState = State::SetName;
@@ -252,11 +254,11 @@ namespace External {
     private:
         static inline Event mEvent{Event::None};
         
-        static inline Event event() {
-            Event result{Event::None};
-            std::swap(mEvent, result);
-            return result;
-        }
+        // static inline Event event() {
+        //     Event result{Event::None};
+        //     std::swap(mEvent, result);
+        //     return result;
+        // }
         
         static inline State mTargetState{State::Init};
         static inline State mState{State::Init};

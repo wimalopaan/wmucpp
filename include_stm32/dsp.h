@@ -125,7 +125,7 @@ namespace Dsp {
     template<typename Config>
     struct ExpMean {
         constexpr explicit ExpMean(const float f = 0.0f) : f{f} {}
-        constexpr float process(const float v) {
+        constexpr float process(const float v) volatile {
             mean = f * v + (1.0 - f) * mean;
             return mean;
         }

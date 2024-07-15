@@ -80,6 +80,15 @@ namespace Mcu::Stm {
                     mcuDmaChannel->CCR &= ~DMA_CCR_EN;
                 }
             }
+
+            template<bool autoEnable = true>
+            static inline void count(const uint16_t n) {
+                enable(false);
+                mcuDmaChannel->CNDTR = n;
+                if (autoEnable) {
+                    enable(true);
+                }
+            }
             static inline void clearTransferCompleteIF() {
                 controller::mcuDma->IFCR = 0x1UL << (4 * (N - 1) + 1);
             }

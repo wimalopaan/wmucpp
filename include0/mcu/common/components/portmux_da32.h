@@ -28,7 +28,9 @@ namespace AVR {
                 A_alt1 = PORTMUX_EVOUTA_bm,
                 C_alt1 = PORTMUX_EVOUTC_bm,
                 D_alt1 = PORTMUX_EVOUTD_bm,
+#ifdef PORTMUX_EVOUTF_bm
                 F_alt1 = PORTMUX_EVOUTF_bm,
+#endif
             };
             ControlRegister<Portmux, EvRoute_t> evsysroutea;
 

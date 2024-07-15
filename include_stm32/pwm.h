@@ -22,6 +22,79 @@ namespace Mcu::Stm {
 #endif
         namespace V2 {
         namespace Pwm {
+
+            template<uint8_t TimerNumber, typename Clock, typename MCU = DefaultMcu>
+            struct Simple {
+                static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Timer<TimerNumber, void, void, MCU>>::value);
+
+                static inline constexpr uint16_t period = 1640;
+                static inline uint32_t freq  = 20000;
+                static inline uint16_t prescaler = (Clock::config::frequency.value / (freq * period));
+
+                static inline void init() {
+                    if constexpr (TimerNumber == 1) {
+                        RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
+                    }
+                    else if constexpr (TimerNumber == 2) {
+                        RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN;
+                    }
+                    else if constexpr (TimerNumber == 3) {
+                        RCC->APB1ENR1 |= RCC_APB1ENR1_TIM3EN;
+                    }
+                    else if constexpr (TimerNumber == 4) {
+                        RCC->APB1ENR1 |= RCC_APB1ENR1_TIM4EN;
+                    }
+                    else {
+                        static_assert(false);
+                    }
+                    mcuTimer->PSC = prescaler;
+                    mcuTimer->ARR = period;
+                    mcuTimer->CCMR1 |= (0b0110 << TIM_CCMR1_OC1M_Pos); // pwm1
+                    mcuTimer->CCMR1 |= (0b0110 << TIM_CCMR1_OC2M_Pos); // pwm2
+                    mcuTimer->CCMR2 |= (0b0110 << TIM_CCMR2_OC3M_Pos); // pwm3
+                    mcuTimer->CCMR2 |= (0b0110 << TIM_CCMR2_OC4M_Pos); // pwm4
+                    mcuTimer->CCER |= TIM_CCER_CC1E;
+                    mcuTimer->CCER |= TIM_CCER_CC2E;
+
+                    mcuTimer->CCR1 = 0;
+                    mcuTimer->CCR2 = 0;
+                    mcuTimer->CCR3 = 0;
+                    mcuTimer->CCR4 = 0;
+                    mcuTimer->CR1 |= TIM_CR1_ARPE;
+
+                    mcuTimer->CR2 |= (0b010 << TIM_CR2_MMS_Pos); // update as trigger-output
+
+                    mcuTimer->CR1 |= TIM_CR1_CEN;
+                }
+
+                static inline void frequency(const uint16_t f) {
+                    freq = f;
+                    prescaler = (Clock::config::frequency.value / (freq * period));
+                    mcuTimer->PSC = prescaler;
+                    mcuTimer->EGR |= TIM_EGR_UG;
+                }
+
+                static inline void duty1(const uint16_t v) {
+                    mcuTimer->CCR1 = v;
+                }
+                static inline void duty2(const uint16_t v) {
+                    mcuTimer->CCR2 = v;
+                }
+
+                constexpr static inline uint8_t trgo() {
+                    if constexpr(TimerNumber == 3) {
+                        return 4; // tim3-trgo
+                    }
+                    else if constexpr(TimerNumber == 2) {
+                        return 11; // tim2-trgo
+                    }
+                    else if constexpr(TimerNumber == 4) {
+                        return 12; // tim4-trgo
+                    }
+                }
+            };
+
+
             // Cyclic DMA        
             template<uint8_t TimerNumber, uint8_t MaxLength, typename DmaChannelList, typename Clock, typename MCU = DefaultMcu>
             struct Sequence;

@@ -32,12 +32,19 @@ namespace IO {
         }
         
         template<typename Device, typename T>
-        requires ((std::is_signed_v<T> || std::is_unsigned_v<T>)) 
+        requires ((std::is_signed_v<T> || std::is_unsigned_v<T>) && std::is_integral_v<T>)
         inline constexpr void out_impl(const T& v) {
             std::array<char, etl::numberOfDigits<std::remove_volatile_t<T>>()> buffer{};
             std::to_chars(std::begin(buffer), std::end(buffer), v);
             out_impl<Device>(buffer);
         }
+
+        // template<typename Device>
+        // inline constexpr void out_impl(const float v) {
+        //     std::array<char, 8> buffer{};
+        //     std::to_chars(std::begin(buffer), std::end(buffer), v);
+        //     out_impl<Device>(buffer);
+        // }
     }
     template<typename Stream, typename... TT>
     constexpr inline void outl(const TT&... vv) {

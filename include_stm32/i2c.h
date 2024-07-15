@@ -35,10 +35,14 @@ namespace Mcu::Stm {
             static constexpr uint8_t lowest = 0x08;
             static constexpr uint8_t highest = 0x77;
             
-            explicit constexpr Address(uint8_t a) : value(a & 0x7f){} // narrowing
+            constexpr Address(const uint8_t a = lowest) : value(a & 0x7f){} // narrowing
+
+            constexpr bool operator==(const Address& rhs) const {
+                return value == rhs.value;
+            }
             
-            using value_type = uint8_t; 
-            const value_type value{};  
+            using value_type = uint8_t;
+            value_type value{};
         };
         
         template<uint8_t N, size_t Size = 16, typename MCU = DefaultMcu> struct Master;
@@ -64,17 +68,96 @@ namespace Mcu::Stm {
                 mcuI2c->CR1 |= I2C_CR1_PE;
             }
             
-            enum class State : uint8_t { Idle,
-                                         WriteAdress, WriteWaitAdress, WriteData, WriteWaitData, WriteWaitComplete, WriteError,
-                                         ScanStart, ScanWaitBusy, ScanWaitAck, ScanNext, ScanEnd
-                                         };
+            enum class State : uint8_t { Idle = 0,
+                                         WriteAdress = 10, WriteWaitAdress, WriteData, WriteWaitData, WriteWaitComplete, WriteError,
+                                         ScanStart = 20, ScanWaitBusy, ScanWaitAck, ScanNext, ScanEnd,
+                                         ReadWriteAdress = 30, ReadAdressWait, ReadWriteCommand, ReadWriteComplete,
+                                         ReadWriteAdress2 = 40, ReadAdressWait2, ReadDataWait, ReadData, ReadDataComplete, ReadError
+                                       };
             
             static inline void periodic() {
                 switch(mState) {
                 case State::Idle:
-                break;
+                    break;
+                case State::ReadWriteAdress:
+                    MODIFY_REG(mcuI2c->CR2, I2C_CR2_NBYTES_Msk, (1 << I2C_CR2_NBYTES_Pos));
+                    MODIFY_REG(mcuI2c->CR2, I2C_CR2_SADD_Msk, (mAddress << 1) << I2C_CR2_SADD_Pos);
+                    mcuI2c->CR2 |= I2C_CR2_AUTOEND;
+                    mcuI2c->CR2 &= ~I2C_CR2_ADD10;
+                    mcuI2c->CR2 &= ~I2C_CR2_RD_WRN;
+                    mcuI2c->CR2 |= I2C_CR2_START;
+                    mState = State::ReadAdressWait;
+                    break;
+                case State::ReadAdressWait:
+                    if (mcuI2c->ISR & I2C_ISR_TXIS) {
+                        mState = State::ReadWriteCommand;
+                    }
+                    if (mcuI2c->ISR & I2C_ISR_NACKF) {
+                        mState = State::ReadError;
+                    }
+                    break;
+                case State::ReadWriteCommand:
+                    mcuI2c->TXDR = (uint32_t)mData[0];
+                    mState = State::ReadWriteComplete;
+                    break;
+                case State::ReadWriteComplete:
+                    if (mcuI2c->ISR & I2C_ISR_TXIS) {
+                        mState = State::ReadWriteAdress2;
+                    }
+                    if (mcuI2c->ISR & I2C_ISR_TC) {
+                        mState = State::ReadWriteAdress2;
+                    }
+                    if (mcuI2c->ISR & I2C_ISR_STOPF) {
+                        mState = State::ReadWriteAdress2;
+                    }
+                    if (mcuI2c->ISR & I2C_ISR_NACKF) {
+                        mState = State::ReadError;
+                    }
+                    break;
+                case State::ReadWriteAdress2:
+                    MODIFY_REG(mcuI2c->CR2, I2C_CR2_NBYTES_Msk, (mCount << I2C_CR2_NBYTES_Pos));
+                    MODIFY_REG(mcuI2c->CR2, I2C_CR2_SADD_Msk, (mAddress << 1) << I2C_CR2_SADD_Pos);
+                    mcuI2c->CR2 |= I2C_CR2_AUTOEND;
+                    mcuI2c->CR2 &= ~I2C_CR2_ADD10;
+                    mcuI2c->CR2 |= I2C_CR2_RD_WRN; // read
+                    mcuI2c->CR2 |= I2C_CR2_START;
+                    mState = State::ReadAdressWait2;
+                    mIndex = 0;
+                    break;
+                case State::ReadAdressWait2:
+                    if (mcuI2c->ISR & I2C_ISR_TXIS) {
+                        mState = State::ReadDataWait;
+                    }
+                    if (mcuI2c->ISR & I2C_ISR_NACKF) {
+                        mState = State::ReadError;
+                    }
+                    if (mcuI2c->ISR & I2C_ISR_RXNE) {
+                        mState = State::ReadData;
+                    }
+                    break;
+                case State::ReadDataWait:
+                    if (mcuI2c->ISR & I2C_ISR_RXNE) {
+                        mState = State::ReadData;
+                    }
+                    break;
+                case State::ReadData:
+                    mData[mIndex++] = (std::byte)mcuI2c->RXDR;
+                    if (mIndex == mCount) {
+                        mcuI2c->CR2 |= I2C_CR2_STOP;
+                        mState = State::ReadDataComplete;
+                    }
+                    else {
+                        mState = State::ReadDataWait;
+                    }
+                    break;
+                case State::ReadDataComplete:
+                    // wait until read
+                    break;
+                case State::ReadError:
+                    ++mErrors;
+                    mState = State::Idle;
+                    break;
                 case State::ScanStart:
-                {
                     MODIFY_REG(mcuI2c->CR2, I2C_CR2_NBYTES_Msk, (0 << I2C_CR2_NBYTES_Pos));
                     MODIFY_REG(mcuI2c->CR2, I2C_CR2_SADD_Msk, (mScanSlaveAddress << 1) << I2C_CR2_SADD_Pos);
                     mcuI2c->CR2 |= I2C_CR2_AUTOEND;
@@ -83,20 +166,23 @@ namespace Mcu::Stm {
                     mcuI2c->CR2 |= I2C_CR2_START;
                     mcuI2c->CR2 |= I2C_CR2_STOP;
                     mState = State::ScanWaitBusy;
-                }
-                break;
+                    break;
                 case State::ScanWaitBusy:
                     break;
                 case State::ScanWaitAck:
                     if (mcuI2c->ISR & I2C_ISR_NACKF) {
+                        mcuI2c->ICR = I2C_ISR_NACKF;
                         mState = State::ScanNext;
                     }
-                    else if (mcuI2c->ISR & I2C_ISR_TXIS) {
-                        mCallBack(mScanSlaveAddress);
+                    else {
+                    // else if (mcuI2c->ISR & I2C_ISR_TXIS) {
+                        if (mCallBack) {
+                            mCallBack(Address{mScanSlaveAddress});
+                        }
                         setPresent(Address{mScanSlaveAddress});
                         mState = State::ScanNext;
                     }
-                break;
+                    break;
                 case State::ScanNext:
                     if (mScanSlaveAddress >= Address::highest) {
                         mcuI2c->CR1 &= ~I2C_CR1_PE;
@@ -106,12 +192,12 @@ namespace Mcu::Stm {
                         ++mScanSlaveAddress;
                         mState = State::ScanStart;
                     }
-                break;
+                    break;
                 case State::ScanEnd:
                     mCallBack = nullptr;
                     mcuI2c->CR1 |= I2C_CR1_PE;
                     mState = State::Idle;
-                break;
+                    break;
                 case State::WriteAdress:
                 {
                     uint32_t temp = mcuI2c->CR2;
@@ -131,15 +217,15 @@ namespace Mcu::Stm {
                     mIndex = 0;
                     mState = State::WriteWaitAdress;
                 }
-                break;
+                    break;
                 case State::WriteWaitAdress:
                     if (mcuI2c->ISR & I2C_ISR_TXIS) {
                         mState = State::WriteData;
                     }
                     if (mcuI2c->ISR & I2C_ISR_NACKF) {
-                        mState = State::WriteError;    
+                        mState = State::WriteError;
                     }
-                break;
+                    break;
                 case State::WriteData:
                     mcuI2c->TXDR = (uint32_t)mData[mIndex++];
                     if (mIndex == mCount) {
@@ -148,15 +234,15 @@ namespace Mcu::Stm {
                     else {
                         mState = State::WriteWaitData;
                     }
-                break;
+                    break;
                 case State::WriteWaitData:
                     if (mcuI2c->ISR & I2C_ISR_TXIS) {
                         mState = State::WriteData;
                     }
                     if (mcuI2c->ISR & I2C_ISR_NACKF) {
-                        mState = State::WriteError;    
+                        mState = State::WriteError;
                     }
-                break;
+                    break;
                 case State::WriteWaitComplete:
                     if (mcuI2c->ISR & I2C_ISR_TC) {
                         mState = State::Idle;
@@ -164,11 +250,11 @@ namespace Mcu::Stm {
                     else {
                         mState = State::WriteError;
                     }
-                break;
+                    break;
                 case State::WriteError:
                     ++mErrors;
                     mState = State::Idle;
-                break;
+                    break;
                 }
             }
             static inline void ratePeriodic() {
@@ -185,8 +271,7 @@ namespace Mcu::Stm {
             inline static bool isIdle() {
                 return mState == State::Idle;
             }
-
-            inline static bool scan(void (*cb)(uint8_t)) {
+            inline static bool scan(void (* const cb)(Address)) {
                 if (mState != State::Idle) {
                     return false;
                 }
@@ -212,7 +297,27 @@ namespace Mcu::Stm {
                 mAddress = adr.value;
                 mState = State::WriteAdress;
                 return true;
-            }       
+            }
+            inline static bool read(const I2C::Address adr, const std::byte command, const uint8_t length) {
+                if (mState != State::Idle) {
+                    return false;
+                }
+                mData[0] = command;
+                mIndex = 0;
+                mCount = length;
+                mErrors = 0;
+                mAddress = adr.value;
+                mState = State::ReadWriteAdress;
+                return true;
+            }
+            inline static const auto& readData(){
+                mState = State::Idle;
+                return mData;
+            }
+            inline static bool readDataAvailable() {
+                return mState == State::ReadDataComplete;
+            }
+
             template<auto L>
             requires (L < Size)
             inline static bool write(const I2C::Address adr, const std::byte offset, const std::array<std::byte, L>& data) {
@@ -235,7 +340,7 @@ namespace Mcu::Stm {
                 return mPresent[index] & (1 << bit);
             }
 
-        private:
+            // private:
             static inline void setPresent(const Address a) {
                 const uint8_t index = a.value / 8;
                 const uint8_t bit = a.value % 8;
@@ -247,7 +352,7 @@ namespace Mcu::Stm {
                 mPresent[index] &= ~(1 << bit);
             }
             static inline uint8_t mScanSlaveAddress{0};
-            static inline void(*mCallBack)(uint8_t) = nullptr;
+            static inline void(*mCallBack)(Address) = nullptr;
 
             static inline uint8_t mAddress{0};
             static inline uint8_t mCount{0};
@@ -262,11 +367,11 @@ namespace Mcu::Stm {
 
     template<size_t S, G4xx MCU>
     struct Address<I2C::Master<1, S, MCU>> {
-        static inline constexpr uintptr_t value = I2C1_BASE;        
+        static inline constexpr uintptr_t value = I2C1_BASE;
     };
     template<size_t S, G4xx MCU>
     struct Address<I2C::Master<2, S, MCU>> {
-        static inline constexpr uintptr_t value = I2C2_BASE;        
+        static inline constexpr uintptr_t value = I2C2_BASE;
     };
     template<size_t S, G4xx MCU>
     struct Address<I2C::Master<3, S, MCU>> {

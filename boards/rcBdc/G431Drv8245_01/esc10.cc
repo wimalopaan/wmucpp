@@ -10,6 +10,8 @@ inline namespace V3{}
 #include <chrono>
 #include <cassert>
 
+#include "cmsis.h"
+
 using namespace std::literals::chrono_literals;
 
 namespace detail {

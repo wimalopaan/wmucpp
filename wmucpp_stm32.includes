@@ -2,4 +2,6 @@
 /home/lmeier/Projekte/STM32CubeG4/Drivers/CMSIS/Device/ST/STM32G4xx/Include
 /home/lmeier/Projekte/STM32CubeG4/Drivers/STM32G4xx_HAL_Driver/Inc
 
+/home/lmeier/Projekte/STM32CubeG4/Drivers/CMSIS/DSP/Source
+
 include_stm32

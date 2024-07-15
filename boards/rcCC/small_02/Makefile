@@ -17,6 +17,6 @@ LOADLIBES += startup_g473.o system_g4.o
 targets += startup_g473.o
 targets += system_g4.o
 
-targets += cc01.elf cc01.S cc01.bin
+targets += cc01.elf cc01.bin
 
 -include ../../../Makefile.arm.include
