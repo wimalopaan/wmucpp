@@ -64,16 +64,19 @@ namespace Mcu::Stm {
 
     template<uint8_t N, typename PA, auto Size, typename ValueType, typename Clock, typename MCU>
         requires (
+                    ((N >= 1) && (N <= 2) && std::is_same_v<Stm32G030, MCU>) ||
                     ((N >= 1) && (N <= 3) && std::is_same_v<Stm32G431, MCU>) ||
                     ((N >= 1) && (N <= 5) && std::is_same_v<Stm32G473, MCU>)) || (N == 101)
     struct Uart<N, PA, Size, ValueType, Clock, MCU> {
         using pa_t = PA;
 
-        static inline /*constexpr */ USART_TypeDef* const mcuUart = reinterpret_cast<USART_TypeDef*>(Mcu::Stm::Address<Uart<N, PA, Size, ValueType, Clock, MCU>>::value);
+        // static inline /*constexpr */ USART_TypeDef* const mcuUart = reinterpret_cast<USART_TypeDef*>(Mcu::Stm::Address<Uart<N, PA, Size, ValueType, Clock, MCU>>::value);
+        static inline /*constexpr */ USART_TypeDef* const mcuUart = reinterpret_cast<USART_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Usart<N>>::value);
 
         static inline constexpr uint8_t QueueLength{ Size };
         static inline constexpr bool useInterrupts{ false };
 
+#ifdef STM32G4
         static inline void init() {
             if constexpr (N == 1) {
                 RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
@@ -110,7 +113,27 @@ namespace Mcu::Stm {
             mcuUart->CR1 |= USART_CR1_TE;
             mcuUart->CR1 |= USART_CR1_UE;
         }
-
+#endif
+#ifdef STM32G0
+        static inline void init() {
+            if constexpr (N == 1) {
+                RCC->APBENR2 |= RCC_APBENR2_USART1EN;
+                RCC->CCIPR |= 0x01 << RCC_CCIPR_USART1SEL_Pos;
+            }
+            else if constexpr (N == 2) {
+                RCC->APBENR1 |= RCC_APBENR1_USART2EN;
+                // RCC->CCIPR |= 0x01 << RCC_CCIPR_USART2SEL_Pos;
+            }
+            else {
+                static_assert(false);
+            }
+            mcuUart->PRESC = 0;
+            mcuUart->CR1 |= USART_CR1_FIFOEN;
+            mcuUart->CR1 |= USART_CR1_RE;
+            mcuUart->CR1 |= USART_CR1_TE;
+            mcuUart->CR1 |= USART_CR1_UE;
+        }
+#endif
         template<bool Enable>
         static inline void rxEnable() {
             if constexpr (Enable) {
@@ -241,32 +264,33 @@ namespace Mcu::Stm {
         static inline etl::FiFo<ValueType, Size> mReceiveData;
     };
 
-    template<typename PA, auto Size, typename V, typename Clock, G4xx MCU>
-    struct Address<Uart<1, PA, Size, V, Clock, MCU>> {
+    template<>
+    struct Address<Mcu::Components::Usart<1>> {
         static inline constexpr uintptr_t value = USART1_BASE;
     };
-    template<typename PA, auto Size, typename V, typename Clock, G4xx MCU>
-    struct Address<Uart<2, PA, Size, V, Clock, MCU>> {
+    template<>
+    struct Address<Mcu::Components::Usart<2>> {
         static inline constexpr uintptr_t value = USART2_BASE;
     };
-    template<typename PA, auto Size, typename V, typename Clock, G4xx MCU>
-    struct Address<Uart<3, PA, Size, V, Clock, MCU>> {
+#ifdef STM32G4
+    template<>
+    struct Address<Mcu::Components::Usart<3>> {
         static inline constexpr uintptr_t value = USART3_BASE;
     };
-    template<typename PA, auto Size, typename V, typename Clock, G4xx MCU>
-    struct Address<Uart<4, PA, Size, V, Clock, MCU>> {
+    template<>
+    struct Address<Mcu::Components::Usart<4>> {
         static inline constexpr uintptr_t value = UART4_BASE;
     };
 #ifdef STM32G473xx
-    template<typename PA, auto Size, typename V, typename Clock, G4xx MCU>
-    struct Address<Uart<5, PA, Size, V, Clock, MCU>> {
+    template<>
+    struct Address<Mcu::Components::Usart<5>> {
         static inline constexpr uintptr_t value = UART5_BASE;
     };
 #endif
-    template<typename PA, auto Size, typename V, typename Clock, G4xx MCU>
-    struct Address<Uart<101, PA, Size, V, Clock, MCU>> {
+    template<>
+    struct Address<Mcu::Components::Usart<101>> {
         static inline constexpr uintptr_t value = LPUART1_BASE;
     };
-
+#endif
 
 }

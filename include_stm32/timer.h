@@ -3,10 +3,11 @@
 #pragma once
 
 #include "mcu/mcu.h"
+#include "mcu/mcu_traits.h"
 #include "units.h"
 #include "concepts.h"
-#include "mcu/mcu_traits.h"
 #include "components.h"
+#include "rcc.h"
 
 #include <type_traits>
 #include <concepts>
@@ -59,11 +60,14 @@ namespace Mcu::Stm {
             return (Src - 1);
         }
 
-        template<uint8_t TimerNumber>
+#ifdef STM32G4
+        template<uint8_t TimerNumber, typename MCU = DefaultMcu>
+        requires(G4xx<MCU>)
         void reset() {
+            const auto rcc = Mcu::Stm::Address<Mcu::Components::Rcc>::value;
             if constexpr (TimerNumber == 1) {
-                RCC->APB2RSTR |= RCC_APB2RSTR_TIM1RST;
-                RCC->APB2RSTR &= ~RCC_APB2RSTR_TIM1RST;
+                rcc->APB2RSTR |= RCC_APB2RSTR_TIM1RST;
+                rcc->APB2RSTR &= ~RCC_APB2RSTR_TIM1RST;
             }
             else if constexpr (TimerNumber == 2) {
                 RCC->APB1RSTR1 |= RCC_APB1RSTR1_TIM2RST;
@@ -95,7 +99,9 @@ namespace Mcu::Stm {
                 static_assert(false);
             }
         }
+#endif
 
+#ifdef STM32G4
         template<uint8_t TimerNumber>
         void powerUp() {
             if constexpr (TimerNumber == 1) {
@@ -125,9 +131,8 @@ namespace Mcu::Stm {
                 static_assert(false);
             }
         }
+#endif
     }
-
-
 
     template<bool V = true>
     struct Trigger : std::integral_constant<bool, V> {};
@@ -186,8 +191,10 @@ namespace Mcu::Stm {
         using number_t = std::integral_constant<uint8_t, N>;
 //        using component_t = Mcu::Components::Timer<N>;
 
-        static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Timer<N, std::integral_constant<uint16_t, Per>, std::integral_constant<uint16_t, Pre>, MCU>>::value);
+        // static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Timer<N, std::integral_constant<uint16_t, Per>, std::integral_constant<uint16_t, Pre>, MCU>>::value);
+        static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Timer<N>>::value);
         
+#ifdef STM32G4
         static inline void init() {
             if constexpr(N == 1) {
                 RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
@@ -214,6 +221,7 @@ namespace Mcu::Stm {
             mcuTimer->CR1 |= TIM_CR1_ARPE;
             mcuTimer->CR1 |= TIM_CR1_CEN;
         }        
+#endif
         static inline void duty(const uint16_t d) {
             mcuTimer->CCR1 = d;            
         }
@@ -229,8 +237,9 @@ namespace Mcu::Stm {
 
         // std::integral_constant<uint16_t, Pre>::_;
 
-        static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Timer<N, void, void, MCU>>::value);
+        static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Timer<N>>::value);
 
+#ifdef STM32G4
         static inline void init() {
             if constexpr(N == 6) {
                 RCC->APB1ENR1 |= RCC_APB1ENR1_TIM6EN;
@@ -244,6 +253,7 @@ namespace Mcu::Stm {
             mcuTimer->PSC = Pre;
             mcuTimer->ARR = Per;
         }
+#endif
 
         static inline void start() {
             mcuTimer->CNT = 0;
@@ -278,6 +288,7 @@ namespace Mcu::Stm {
             }
         }
         
+#ifdef STM32G4
         static inline void init() {
             if constexpr(N == 6) {
                 RCC->APB1ENR1 |= RCC_APB1ENR1_TIM6EN;
@@ -297,37 +308,51 @@ namespace Mcu::Stm {
             }
             mcuTimer->CR1 |= TIM_CR1_CEN;
         }
+#endif
         static inline uint16_t value() {
             return mcuTimer->CNT;
         }
     };
-    
-    template<typename Per, typename Pre, G4xx MCU>
-    struct Address<Timer<1, Per, Pre, MCU>> {
-        static inline constexpr uintptr_t value = TIM1_BASE;        
-    };
-    template<typename Per, typename Pre, G4xx MCU>
-    struct Address<Timer<2, Per, Pre, MCU>> {
-        static inline constexpr uintptr_t value = TIM2_BASE;        
-    };
-    template<typename Per, typename Pre, G4xx MCU>
-    struct Address<Timer<3, Per, Pre, MCU>> {
-        static inline constexpr uintptr_t value = TIM3_BASE;        
-    };
-    template<typename Per, typename Pre, G4xx MCU>
-    struct Address<Timer<4, Per, Pre, MCU>> {
-        static inline constexpr uintptr_t value = TIM4_BASE;        
-    };
-    template<typename Per, typename Pre, G4xx MCU>
-    struct Address<Timer<6, Per, Pre, MCU>> {
-        static inline constexpr uintptr_t value = TIM6_BASE;        
-    };
-    template<typename Per, typename Pre, G4xx MCU>
-    struct Address<Timer<7, Per, Pre, MCU>> {
-        static inline constexpr uintptr_t value = TIM7_BASE;        
-    };
-    template<typename Per, typename Pre, G4xx MCU>
-    struct Address<Timer<16, Per, Pre, MCU>> {
-        static inline constexpr uintptr_t value = TIM16_BASE;
-    };
+}
+
+
+namespace Mcu {
+    namespace Stm {
+        template<>
+        struct Address<Mcu::Components::Timer<1>> {
+            static inline constexpr uintptr_t value = TIM1_BASE;
+        };
+#ifdef STM32G4
+        template<>
+        struct Address<Mcu::Components::Timer<2>> {
+            static inline constexpr uintptr_t value = TIM2_BASE;
+        };
+#endif
+        template<>
+        struct Address<Mcu::Components::Timer<3>> {
+            static inline constexpr uintptr_t value = TIM3_BASE;
+        };
+#ifdef STM32G4
+        template<>
+        struct Address<Mcu::Components::Timer<4>> {
+            static inline constexpr uintptr_t value = TIM4_BASE;
+        };
+#endif
+#ifdef STM32G4
+        template<>
+        struct Address<Mcu::Components::Timer<6>> {
+            static inline constexpr uintptr_t value = TIM6_BASE;
+        };
+#endif
+#ifdef STM32G4
+        template<>
+        struct Address<Mcu::Components::Timer<7>> {
+            static inline constexpr uintptr_t value = TIM7_BASE;
+        };
+#endif
+        template<>
+        struct Address<Mcu::Components::Timer<16>> {
+            static inline constexpr uintptr_t value = TIM16_BASE;
+        };
+    }
 }

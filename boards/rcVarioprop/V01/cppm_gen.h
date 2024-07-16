@@ -23,7 +23,7 @@ namespace Mcu::Stm {
 
         template<uint8_t TimerNumber, typename DmaChannel, typename Clock, typename MCU = DefaultMcu>
         struct Generator {
-            static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Timer<TimerNumber, void, void, MCU>>::value);
+            static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Timer<TimerNumber>>::value);
 
             using dmaChannel = DmaChannel;
 

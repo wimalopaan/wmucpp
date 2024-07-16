@@ -42,5 +42,4 @@ namespace Units {
             return megahertz{static_cast<uint8_t>(v)};
         }
     }
-    
 }

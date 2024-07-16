@@ -25,12 +25,14 @@ namespace Mcu::Stm {
 
             template<uint8_t TimerNumber, typename Clock, typename MCU = DefaultMcu>
             struct Simple {
-                static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Timer<TimerNumber, void, void, MCU>>::value);
+                // static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Timer<TimerNumber, void, void, MCU>>::value);
+                static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Timer<TimerNumber>>::value);
 
                 static inline constexpr uint16_t period = 1640;
                 static inline uint32_t freq  = 20000;
                 static inline uint16_t prescaler = (Clock::config::frequency.value / (freq * period));
 
+#ifdef STM32G4
                 static inline void init() {
                     if constexpr (TimerNumber == 1) {
                         RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
@@ -66,7 +68,7 @@ namespace Mcu::Stm {
 
                     mcuTimer->CR1 |= TIM_CR1_CEN;
                 }
-
+#endif
                 static inline void frequency(const uint16_t f) {
                     freq = f;
                     prescaler = (Clock::config::frequency.value / (freq * period));
@@ -181,6 +183,7 @@ namespace Mcu::Stm {
 
                 using pwms = Meta::transformN<Single, dmaChannelList>;
 
+#ifdef STM32G4
                 static inline void init() {
                     if constexpr (TimerNumber == 1) {
                         RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
@@ -251,6 +254,7 @@ namespace Mcu::Stm {
                     mcuTimer->CR1 |= TIM_CR1_ARPE;
                     mcuTimer->CR1 |= TIM_CR1_CEN;
                 }
+#endif
                 // static inline void sequence(const uint8_t pulses, const uint8_t syncPulses) {
                 //     if ((pulses + syncPulses) <= MaxLength) {
                 //         for(auto& v : mValues) {
@@ -293,6 +297,7 @@ namespace Mcu::Stm {
                 static inline constexpr uint16_t period = onems * 20;
                 static inline constexpr uint16_t prescaler = (Clock::config::frequency.value / period) / 50;
 
+#ifdef STM32G4
                 static inline void init() {
                     if constexpr (TimerNumber == 1) {
                         RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
@@ -331,6 +336,7 @@ namespace Mcu::Stm {
                     mcuTimer->CR1 |= TIM_CR1_ARPE;
                     mcuTimer->CR1 |= TIM_CR1_CEN;
                 }
+#endif
                 static inline void set(const uint8_t channel, uint16_t sbus) {
                     const uint16_t t = sbus - 172 + onems;
                     switch (channel) {

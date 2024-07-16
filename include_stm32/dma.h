@@ -21,6 +21,7 @@ namespace Mcu::Stm {
         struct Controller<N, MCU> {
             static inline /*constexpr */ DMA_TypeDef* const mcuDma = reinterpret_cast<DMA_TypeDef*>(Mcu::Stm::Address<Controller<N, MCU>>::value);
 
+#ifdef STM32G4
             static inline void init() {
                 if constexpr (N == 1) {
                     RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
@@ -32,6 +33,7 @@ namespace Mcu::Stm {
                     static_assert(false);
                 }
             }
+#endif
         };
 
         template<typename Controller, uint8_t N = 0, typename MCU = DefaultMcu> struct Channel;
@@ -43,10 +45,12 @@ namespace Mcu::Stm {
             static inline /*constexpr */ DMA_Channel_TypeDef* const mcuDmaChannel = reinterpret_cast<DMA_Channel_TypeDef*>(Mcu::Stm::Address<Channel<controller, N, MCU>>::value);
             static inline /*constexpr */ DMAMUX_Channel_TypeDef* const mcuDmaMux = reinterpret_cast<DMAMUX_Channel_TypeDef*>(Mcu::Stm::Address<Channel<controller, N, MCU>>::mux);
 
+#ifdef STM32G4
             static inline void init() {
                 controller::init();
                 RCC->AHB1ENR |= RCC_AHB1ENR_DMAMUX1EN;
             }
+#endif
 
             template<typename T>
             static inline void msize() {
@@ -98,10 +102,12 @@ namespace Mcu::Stm {
     struct Address<Dma::Controller<1, MCU>> {
         static inline constexpr uintptr_t value = DMA1_BASE;
     };
+#ifdef STM32G4
     template<G4xx MCU>
     struct Address<Dma::Controller<2, MCU>> {
         static inline constexpr uintptr_t value = DMA2_BASE;
     };
+#endif
     template<G4xx MCU>
     struct Address<Dma::Channel<Dma::Controller<1, MCU>, 1, MCU>> {
         static inline constexpr uintptr_t value = DMA1_Channel1_BASE;
@@ -127,12 +133,16 @@ namespace Mcu::Stm {
         static inline constexpr uintptr_t value = DMA1_Channel5_BASE;
         static inline constexpr uintptr_t mux = DMAMUX1_Channel4_BASE;
     };
+
+#ifdef STM32G4
     template<G4xx MCU>
     struct Address<Dma::Channel<Dma::Controller<1, MCU>, 6, MCU>> {
         static inline constexpr uintptr_t value = DMA1_Channel6_BASE;
         static inline constexpr uintptr_t mux = DMAMUX1_Channel5_BASE;
     };
+#endif
 
+#ifdef STM32G4
     template<G4xx MCU>
     struct Address<Dma::Channel<Dma::Controller<2, MCU>, 1, MCU>> {
         static inline constexpr uintptr_t value = DMA2_Channel1_BASE;
@@ -163,7 +173,5 @@ namespace Mcu::Stm {
         static inline constexpr uintptr_t value = DMA2_Channel6_BASE;
         static inline constexpr uintptr_t mux = DMAMUX1_Channel11_BASE;
     };
-
-
-
+#endif
 }

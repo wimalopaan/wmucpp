@@ -30,7 +30,8 @@ namespace Mcu::Stm {
             using value_type = uint16_t;
             using dac_value_type = dac::value_type;
 
-            static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Timer<N, void, void, MCU>>::value);
+            // static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Timer<N, void, void, MCU>>::value);
+            static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Timer<N>>::value);
 
             static inline constexpr uint16_t prescaler = (Clock::config::frequency.value / 1'000'000) - 1;
 

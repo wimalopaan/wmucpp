@@ -23,7 +23,6 @@ namespace Mcu::Stm {
     inline 
 #endif
     namespace V1 {
-        
     }
     
     template<typename Letter, typename MCU = void>
@@ -33,30 +32,37 @@ namespace Mcu::Stm {
     struct GPIO {
         using port_t = Letter;
         using mcu_t = MCU;
-        static inline /*constexpr */ GPIO_TypeDef* const mcuGpio = reinterpret_cast<GPIO_TypeDef*>(Mcu::Stm::Address<GPIO<Letter, MCU>>::value);
+        static inline /*constexpr */ GPIO_TypeDef* const mcuGpio = reinterpret_cast<GPIO_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Port<Letter>>::value);
+#ifdef STM32G4
         static inline void init() {
             RCC->AHB2ENR |= Letter::ahb2Bit;
         }
+#endif
+#ifdef STM32G0
+        static inline void init() {
+            RCC->IOPENR |= Letter::iopBit;
+        }
+#endif
     };
     
-    template<G4xx MCU> 
-    struct Address<GPIO<A, MCU>> {
+    template<>
+    struct Address<Mcu::Components::Port<A>> {
         static inline constexpr uintptr_t value = GPIOA_BASE;
     };
-    template<G4xx MCU> 
-    struct Address<GPIO<B, MCU>> {
+    template<>
+    struct Address<Mcu::Components::Port<B>> {
         static inline constexpr uintptr_t value = GPIOB_BASE;
     };
-    template<G4xx MCU> 
-    struct Address<GPIO<C, MCU>> {
+    template<>
+    struct Address<Mcu::Components::Port<C>> {
         static inline constexpr uintptr_t value = GPIOC_BASE;
     };
-    template<G4xx MCU>
-    struct Address<GPIO<D, MCU>> {
+    template<>
+    struct Address<Mcu::Components::Port<D>> {
         static inline constexpr uintptr_t value = GPIOD_BASE;
     };
-    template<G4xx MCU>
-    struct Address<GPIO<F, MCU>> {
+    template<>
+    struct Address<Mcu::Components::Port<F>> {
         static inline constexpr uintptr_t value = GPIOF_BASE;
     };
     

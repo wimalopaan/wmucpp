@@ -9,6 +9,7 @@
 #include <iterator>
 #include <numbers>
 #include <chrono>
+#include <type_traits>
 
 #include "rc.h"
 #include "crc.h"
@@ -187,7 +188,7 @@ namespace RC {
                     requires(N >= 16)
                     static inline void channels(const std::array<uint16_t, N>& channels) {
                         Channels packed;
-                        packed.ch0 = toCrsfRange(channels[0]);
+                        // packed.ch0 = toCrsfRange(channels[0]);
                         packed.ch1 = channels[1];
                         packed.ch2 = channels[2];
                         packed.ch3 = channels[3];
@@ -359,7 +360,9 @@ namespace RC {
                         }
 
                         static inline void sendCommandResponse(const uint8_t pIndex, const uint8_t value) {
-                            IO::outl<debug>("sCR adr: ", (uint8_t)mExtendedDestination, " i: ", pIndex);
+                            if constexpr (!std::is_same_v<debug, void>) {
+                                IO::outl<debug>("sCR adr: ", (uint8_t)mExtendedDestination, " i: ", pIndex);
+                            }
                             mReply.clear();
                             mReply.push_back(mExtendedDestination);
                             mReply.push_back(mExtendedSource);
@@ -586,9 +589,13 @@ namespace RC {
                             }
                             break;
                         case State::ParameterWrite:
-                            IO::outl<debug>("PW", (uint8_t)mExtendedDestination, " i: ", mParameterIndex);
-                            if (mPayloadIndex >= mLength) {
+                            if constexpr (!std::is_same_v<debug, void>) {
                                 IO::outl<debug>("PW", (uint8_t)mExtendedDestination, " i: ", mParameterIndex);
+                            }
+                            if (mPayloadIndex >= mLength) {
+                                if constexpr (!std::is_same_v<debug, void>) {
+                                    IO::outl<debug>("PW", (uint8_t)mExtendedDestination, " i: ", mParameterIndex);
+                                }
                                 if (csum == b) {
                                     ++mParameterWritePackagesCounter;
                                     ++mPackagesCounter;
@@ -771,7 +778,9 @@ namespace RC {
                         }
 
                         static inline void sendCommandResponse(const uint8_t pIndex, const uint8_t value) {
-                            IO::outl<debug>("sCR adr: ", (uint8_t)mExtendedDestination, " i: ", pIndex);
+                            if (!std::is_same_v<debug, void>) {
+                                IO::outl<debug>("sCR adr: ", (uint8_t)mExtendedDestination, " i: ", pIndex);
+                            }
                             mReply.clear();
                             mReply.push_back(mExtendedDestination);
                             mReply.push_back(mExtendedSource);
@@ -998,9 +1007,13 @@ namespace RC {
                             }
                         break;
                         case State::ParameterWrite:
-                            IO::outl<debug>("PW", (uint8_t)mExtendedDestination, " i: ", mParameterIndex);
-                            if (mPayloadIndex >= mLength) {
+                            if (!std::is_same_v<debug, void>) {
                                 IO::outl<debug>("PW", (uint8_t)mExtendedDestination, " i: ", mParameterIndex);
+                            }
+                            if (mPayloadIndex >= mLength) {
+                                if (!std::is_same_v<debug, void>) {
+                                    IO::outl<debug>("PW", (uint8_t)mExtendedDestination, " i: ", mParameterIndex);
+                                }
                                 if (csum == b) {
                                     ++mParameterWritePackagesCounter;
                                     ++mPackagesCounter;

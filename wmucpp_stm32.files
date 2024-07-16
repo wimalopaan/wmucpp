@@ -109,6 +109,12 @@ boards/rcVarioprop/V01/var09.cc
 boards/rcVarioprop/V01/var10.cc
 boards/rcVarioprop/V01/var11.cc
 boards/rcVarioprop/V01/var12.cc
+boards/rcmultiswitchG030/Makefile
+boards/rcmultiswitchG030/devices.h
+boards/rcmultiswitchG030/link_g030.ld
+boards/rcmultiswitchG030/msw01.cc
+boards/rcmultiswitchG030/startup_g030.s
+boards/rcmultiswitchG030/system_g0.cc
 host/Makefile
 host/bdc/Makefile
 host/bdc/expfit01.cc
@@ -167,6 +173,7 @@ include_stm32/rc/rc.h
 include_stm32/rc/roboremo.h
 include_stm32/rc/sbus2.h
 include_stm32/rc/sport.h
+include_stm32/rcc.h
 include_stm32/rf.h
 include_stm32/si5351.h
 include_stm32/spi.h

@@ -51,5 +51,4 @@ namespace Mcu::Stm {
         template<typename Pin, typename Peripherie, typename Function, typename MCU = DefaultMcu>
         static inline constexpr auto mapper_v = Mapper<Pin, Peripherie, Function, MCU>::value;        
     }
-    
 }

@@ -9,6 +9,7 @@
 #include <iterator>
 #include <numbers>
 #include <chrono>
+#include <functional>
 
 #include "byte.h"
 #include "etl/algorithm.h"

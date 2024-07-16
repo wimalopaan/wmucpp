@@ -24,8 +24,8 @@ namespace Mcu::Stm {
 
             template<uint8_t PwmTimerNumber, uint8_t AdcTimerNumber, typename Clock, typename MCU = DefaultMcu>
             struct Bdc {
-                static inline /*constexpr */ TIM_TypeDef* const pwmTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Timer<PwmTimerNumber, void, void, MCU>>::value);
-                static inline /*constexpr */ TIM_TypeDef* const adcTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Timer<AdcTimerNumber, void, void, MCU>>::value);
+                static inline /*constexpr */ TIM_TypeDef* const pwmTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Timer<PwmTimerNumber>>::value);
+                static inline /*constexpr */ TIM_TypeDef* const adcTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Timer<AdcTimerNumber>>::value);
 
                 static_assert((PwmTimerNumber >= 2) && (PwmTimerNumber <= 5));
                 static_assert((AdcTimerNumber >= 2) && (AdcTimerNumber <= 5));
@@ -146,7 +146,7 @@ namespace Mcu::Stm {
 
         template<uint8_t TimerNumber, typename Clock, typename MCU = DefaultMcu>
         struct Bdc2 {
-            static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Timer<TimerNumber, void, void, MCU>>::value);
+            static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Timer<TimerNumber>>::value);
 
             static inline uint32_t period = 1640;
             static inline uint32_t freq   = 24000;
