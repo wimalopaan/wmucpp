@@ -38,7 +38,22 @@ namespace Mcu::Stm {
             struct Impl<Pin<A, 12>, Timer<1>, CC<2, Negativ>, MCU> : std::integral_constant<uint8_t, 6> {};
             template<Mcu::Stm::G4xx MCU>
             struct Impl<Pin<B, 15>, Timer<1>, CC<3, Negativ>, MCU> : std::integral_constant<uint8_t, 4> {};
-            
+
+            template<Mcu::Stm::G0xx MCU>
+            struct Impl<Pin<A, 11>, Timer<1>, CC<4>, MCU> : std::integral_constant<uint8_t, 2> {};
+            template<Mcu::Stm::G0xx MCU>
+            struct Impl<Pin<A, 8>, Timer<1>, CC<1>, MCU> : std::integral_constant<uint8_t, 2> {};
+
+            template<Mcu::Stm::G0xx MCU>
+            struct Impl<Pin<A, 4>, Timer<14>, CC<1>, MCU> : std::integral_constant<uint8_t, 4> {};
+            template<Mcu::Stm::G0xx MCU>
+            struct Impl<Pin<A, 6>, Timer<3>, CC<1>, MCU> : std::integral_constant<uint8_t, 1> {};
+            template<Mcu::Stm::G0xx MCU>
+            struct Impl<Pin<A, 7>, Timer<3>, CC<2>, MCU> : std::integral_constant<uint8_t, 1> {};
+
+            template<Mcu::Stm::G0xx MCU>
+            struct Impl<Pin<B, 7>, Timer<17>, CC<1, Negativ>, MCU> : std::integral_constant<uint8_t, 2> {};
+
         }
         
         template<typename Pin, typename Peripherie, typename Function, typename MCU = DefaultMcu>

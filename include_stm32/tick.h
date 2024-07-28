@@ -127,11 +127,11 @@ namespace External {
         inline constexpr auto operator*(const uint16_t& m) const {
             return Tick(value * m);    
         }
-        
+        inline constexpr T raw() {
+            return value;
+        }
     private:
         etl::ranged<0u, MAX> value;
-        
-    private:
         inline constexpr Tick(const T v) : value{v} {}
     };
 }

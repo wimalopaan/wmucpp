@@ -14,6 +14,7 @@
 #include "rc.h"
 #include "crc.h"
 #include "etl/fixedvector.h"
+#include "tick.h"
 
 namespace RC {
     namespace Protokoll {
@@ -97,9 +98,13 @@ namespace RC {
                 inline static constexpr std::byte rx{0x10}; // receiver command
                 inline static constexpr std::byte general{0x0a}; // general command
                 inline static constexpr std::byte CC{0xa0}; // CruiseController
+                inline static constexpr std::byte Switch{0xa1}; // CruiseController
             }
             namespace CrsfCommand {
                 inline static constexpr std::byte SelectID{0x05};
+            }
+            namespace SwitchCommand {
+                inline static constexpr std::byte Set{0x01};
             }
             namespace CcCommand {
                 inline static constexpr std::byte SetAltData{0x01}; // Index: [0, 255], value 8bit
@@ -136,18 +141,46 @@ namespace RC {
                 };
             }            
             
-            struct Parameter {
-                enum Type {U8 = 0, I8, U16, I16, F32 = 8, Sel, Str, Folder, Info, Command};                
+            // struct Parameter {
+            //     enum Type {U8 = 0, I8, U16, I16, F32 = 8, Sel, Str, Folder, Info, Command};
                 
-                const uint8_t mParent{};
-                const Type mType;
-                const char* const mName{};
-                const char* const mOptions{};
-                uint8_t mValue{};
-                const uint8_t mMinimum{};
-                const uint8_t mMaximum{};
-                const uint8_t mDefault{mMinimum};
-                const uint8_t mUnits{0};
+            //     uint8_t mParent{};
+            //     Type mType;
+            //     const char* mName{};
+            //     const char* mOptions{};
+            //     uint8_t mValue{};
+            //     uint8_t mMinimum{};
+            //     uint8_t mMaximum{};
+            //     void (*cb)(uint8_t){nullptr};
+            //     uint8_t mDefault{mMinimum};
+            //     uint8_t mUnits{0};
+            // };
+            struct Parameter {
+                enum Type {U8 = 0, I8, U16, I16, F32 = 8, Sel, Str, Folder, Info, Command};
+
+                uint8_t mParent{};
+                Type mType;
+                const char* mName{};
+                const char* mOptions{};
+                uint8_t* value_ptr = nullptr;
+                uint8_t value() const {
+                    if (value_ptr) {
+                        return *value_ptr;
+                    }
+                    else {
+                        return 0;
+                    }
+                }
+                void value(const uint8_t v) {
+                    if (value_ptr) {
+                        *value_ptr = v;
+                    }
+                }
+                uint8_t mMinimum{};
+                uint8_t mMaximum{};
+                void (*cb)(uint8_t){nullptr};
+                uint8_t mDefault{mMinimum};
+                uint8_t mUnits{0};
             };
 
 #ifdef USE_CRSF_V2
@@ -265,74 +298,21 @@ namespace RC {
                     static inline etl::FixedVector<std::byte, maxMessageSize> mData;
                 };
 
-                // template<typename UART, typename SystemTimer, typename MCU = DefaultMcu>
-                // struct Generator {
-                //     using timer = SystemTimer;
-                //     using uart = UART;
-                //     static inline constexpr External::Tick<timer> crsfTicks{2ms};
-
-                //     template<typename T>
-                //     static inline void data(const std::byte type, const T& values) {
-                //         CRC8 crc;
-                //         mData.clear();
-                //         mData.push_back(0xc8_B);
-                //         mData.push_back(std::byte(values.size() + 2));
-                //         mData.push_back(type);
-                //         crc += type;
-                //         for(const auto& v: values) {
-                //             crc += v;
-                //             mData.push_back(v);
-                //         }
-                //         mData.push_back(crc);
-                //         mState = State::Wait;
-                //     }
-
-                //     enum class State : uint8_t {Idle, Wait, Sending};
-
-                //     static inline void ratePeriodic() {
-                //         switch(mState) {
-                //         case State::Idle:
-                //             break;
-                //         case State::Wait:
-                //             if (uart::isTxQueueEmpty()) {
-                //                 mState = State::Sending;
-                //             }
-                //             break;
-                //         case State::Sending:
-                //             for(const auto& b: mData) {
-                //                 uart::put(b);
-                //             }
-                //             mState = State::Idle;
-                //             break;
-                //         }
-                //     }
-                //     private:
-                //     static inline State mState{State::Idle};
-                //     static inline etl::FixedVector<std::byte, maxMessageSize> mData;
-                // };
-
                 template<uint8_t N, typename Config, typename MCU = DefaultMcu>
                 struct Adapter {
-                    using debug = Config::debug;
+                    using debug = Config::dbg;
                     using out = Config::out;
                     using CB = Config::callback;
+                    using systemTimer = Config::timer;
 
-                    static inline constexpr uint8_t mPauseCount{2}; // 2ms
+                    static inline External::Tick<systemTimer> mPauseTick;
+                    static inline constexpr External::Tick<systemTimer> mPauseTicks{100ms};
 
                     static inline constexpr uint8_t CRSFChannels{16};
 
                     enum class State : uint8_t {Undefined,
                                                 GotAddress, GotLength,
                                                 Link, Channels, Ping, Info, ParameterEntry, ParameterRead, ParameterWrite, Data, Command};
-
-                    //                static inline void tick1ms() {
-                    //                    if (mPauseCounter > 0) {
-                    //                        --mPauseCounter;
-                    //                    }
-                    //                    else {
-                    //                        mState = State::Undefined;
-                    //                    }
-                    //                }
 
                     struct Responder {
                         static inline void setExtendedDestination(const std::byte d) {
@@ -346,7 +326,7 @@ namespace RC {
 
                         static inline void sendDeviceInfo() {
                             using namespace etl::literals;
-                            //                        IO::outl<debug>("DI adr: ", (uint8_t)mExtendedDestination);
+                            IO::outl<debug>("DI adr: ", (uint8_t)mExtendedDestination);
                             mReply.clear();
                             mReply.push_back(mExtendedDestination);
                             mReply.push_back(mExtendedSource);
@@ -360,9 +340,7 @@ namespace RC {
                         }
 
                         static inline void sendCommandResponse(const uint8_t pIndex, const uint8_t value) {
-                            if constexpr (!std::is_same_v<debug, void>) {
-                                IO::outl<debug>("sCR adr: ", (uint8_t)mExtendedDestination, " i: ", pIndex);
-                            }
+                            IO::outl<debug>("sCR adr: ", (uint8_t)mExtendedDestination, " i: ", pIndex);
                             mReply.clear();
                             mReply.push_back(mExtendedDestination);
                             mReply.push_back(mExtendedSource);
@@ -388,7 +366,7 @@ namespace RC {
                             out::data(RC::Protokoll::Crsf::Type::ParamEntry, mReply);
                         }
                         static inline void sendParameterInfo(const uint8_t pIndex) {
-                            //                        IO::outl<debug>("PI adr: ", (uint8_t)mExtendedDestination, " i: ", pIndex);
+                            IO::outl<debug>("PI adr: ", (uint8_t)mExtendedDestination, " i: ", pIndex);
                             mReply.clear();
                             mReply.push_back(mExtendedDestination);
                             mReply.push_back(mExtendedSource);
@@ -402,15 +380,19 @@ namespace RC {
                             if ((CB::parameter(pIndex).mType != 0x0d) && CB::parameter(pIndex).mOptions) {
                                 etl::push_back_ntbs(CB::parameter(pIndex).mOptions, mReply);
                             }
-                            if (CB::parameter(pIndex).mType <= 0x0a) {
-                                etl::serialize(CB::parameter(pIndex).mValue, mReply); // value
+                            if (CB::parameter(pIndex).mType < 0x0a) {
+                                etl::serialize(CB::parameter(pIndex).value(), mReply); // value
+                                // etl::serialize(CB::parameter(pIndex).mValue, mReply); // value
                                 etl::serialize(CB::parameter(pIndex).mMinimum, mReply);
                                 etl::serialize(CB::parameter(pIndex).mMaximum, mReply);
                                 etl::serialize(CB::parameter(pIndex).mDefault, mReply);
                                 etl::serialize(CB::parameter(pIndex).mUnits, mReply);
                             }
+                            if (CB::parameter(pIndex).mType == 0x0a) { // string
+                                etl::serialize(CB::parameter(pIndex).mUnits, mReply);
+                            }
                             if (CB::parameter(pIndex).mType == 0x0d) {
-                                etl::serialize(CB::parameter(pIndex).mValue, mReply);
+                                etl::serialize(CB::parameter(pIndex).value(), mReply);
                                 etl::serialize((uint8_t)0x00, mReply);
                                 etl::serialize((uint8_t)0xc8, mReply);
                                 etl::serialize((uint8_t)0x00, mReply);
@@ -423,19 +405,31 @@ namespace RC {
                         static inline std::byte mExtendedSource{RC::Protokoll::Crsf::Address::Controller};
                     };
 
+                    static inline void ratePeriodic(const auto f) {
+                        (++mPauseTick).on(mPauseTicks, [&]{
+                            mBytesCounter = 0;
+                            mPackagesCounter = 0;
+                            mCommandPackagesCounter = 0;
+                            f(false);
+                        });
+                        if (mPackagesCounter > 10) {
+                            f(true);
+                        }
+                    }
 
                     inline static void process(const std::byte b) {
-                        //                    mPauseCounter = mPauseCount;
+                        mPauseTick.reset();
                         ++mBytesCounter;
 
                         switch(mState) { // enum-switch -> no default (intentional)
                         case State::Undefined:
                             csum.reset();
-                            if ((b == Crsf::Address::Controller) ||
-                                (b == Crsf::Address::Handset) ||
-                                (b == Crsf::Address::RX) ||
-                                (b == Crsf::Address::TX) ||
-                                (b == Crsf::Address::Broadcast))
+                            if ((b == Crsf::Address::Controller))
+                            // if ((b == Crsf::Address::Controller) ||
+                            //     (b == Crsf::Address::Handset) ||
+                            //     (b == Crsf::Address::RX) ||
+                            //     (b == Crsf::Address::TX) ||
+                            //     (b == Crsf::Address::Broadcast))
                             {
                                 mAddress = b;
                                 mState = State::GotAddress;
@@ -487,6 +481,7 @@ namespace RC {
                                     ++mLinkPackagesCounter;
                                     ++mPackagesCounter;
                                     // decode
+                                    CB::gotLinkStats();
                                 }
                                 mState = State::Undefined;
                             }
@@ -501,13 +496,16 @@ namespace RC {
                                     ++mChannelsPackagesCounter;
                                     ++mPackagesCounter;
                                     convert();
+                                    CB::gotChannels();
                                 }
                                 mState = State::Undefined;
                             }
                             else {
                                 csum += b;
-                                mData[mPayloadIndex] = static_cast<uint8_t>(b);
-                                ++mPayloadIndex;
+                                // if (mPayloadIndex < mData.size()) {
+                                    mData[mPayloadIndex] = static_cast<uint8_t>(b);
+                                    ++mPayloadIndex;
+                                // }
                             }
                             break;
                         case State::Ping:
@@ -589,13 +587,8 @@ namespace RC {
                             }
                             break;
                         case State::ParameterWrite:
-                            if constexpr (!std::is_same_v<debug, void>) {
-                                IO::outl<debug>("PW", (uint8_t)mExtendedDestination, " i: ", mParameterIndex);
-                            }
                             if (mPayloadIndex >= mLength) {
-                                if constexpr (!std::is_same_v<debug, void>) {
-                                    IO::outl<debug>("PW", (uint8_t)mExtendedDestination, " i: ", mParameterIndex);
-                                }
+                                IO::outl<debug>("PW", (uint8_t)mExtendedDestination, " i: ", mParameterIndex);
                                 if (csum == b) {
                                     ++mParameterWritePackagesCounter;
                                     ++mPackagesCounter;
@@ -637,8 +630,10 @@ namespace RC {
                             }
                             else {
                                 csum += b;
-                                mData[mPayloadIndex] = static_cast<uint8_t>(b);
-                                ++mPayloadIndex;
+                                // if (mPayloadIndex < mData.size()) {
+                                    mData[mPayloadIndex] = static_cast<uint8_t>(b);
+                                    ++mPayloadIndex;
+                                // }
                             }
                             break;
                         case State::Data:
@@ -721,7 +716,6 @@ namespace RC {
                     inline static uint16_t mDataPackagesCounter{};
 
                     inline static uint16_t mBytesCounter{};
-                    inline static uint8_t mPauseCounter{};
 
                     using values_t = std::array<uint16_t, 16>;
                     inline static values_t mChannels;

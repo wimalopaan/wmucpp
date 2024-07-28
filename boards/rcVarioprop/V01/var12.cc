@@ -49,10 +49,16 @@ struct CrsfCallback {
     using Param_t = RC::Protokoll::Crsf::Parameter;
     using PType = RC::Protokoll::Crsf::Parameter::Type;
 
+    static inline constexpr void gotLinkStats() {
+    }
+    static inline constexpr void gotChannels() {
+    }
+
     static inline void setParameter(const uint8_t index, const uint8_t value) {
         // IO::outl<trace>("SetP adr: ", index, " v: ", value);
         if ((index >= 1) && (index <= params.size())) {
-            params[index - 1].mValue = value;
+            params[index - 1].value(value);
+            // params[index - 1].mValue = value;
             mLastChangedParameter = index;
         }
     }
@@ -351,7 +357,7 @@ struct GFSM {
                     IO::outl<trace>("crsf p: ", p);
                     const auto pv = crsfcallback::parameter(p);
                     if (p == 2) { // HF
-                        if (pv.mValue > 0) {
+                        if (pv.value() > 0) {
                             Data::rfOn = true;
                             hfPwr::set();
                             mState = State::Set;
@@ -362,7 +368,7 @@ struct GFSM {
                         }
                     }
                     if (p == 3) { // Override
-                        if (pv.mValue > 0) {
+                        if (pv.value() > 0) {
                             Data::crsfOverride = true;
                         }
                         else {

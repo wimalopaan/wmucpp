@@ -25,8 +25,10 @@ namespace Mcu::Stm {
 
             template<uint8_t TimerNumber, typename Clock, typename MCU = DefaultMcu>
             struct Simple {
-                // static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Timer<TimerNumber, void, void, MCU>>::value);
                 static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Timer<TimerNumber>>::value);
+
+                using component_t = Mcu::Components::Timer<TimerNumber>;
+
 
                 static inline constexpr uint16_t period = 1640;
                 static inline uint32_t freq  = 20000;
@@ -69,11 +71,99 @@ namespace Mcu::Stm {
                     mcuTimer->CR1 |= TIM_CR1_CEN;
                 }
 #endif
+#ifdef STM32G0
+                static inline void init() {
+                    if constexpr (TimerNumber == 1) {
+                        RCC->APBENR2 |= RCC_APBENR2_TIM1EN;
+                    }
+                    else if constexpr (TimerNumber == 3) {
+                        RCC->APBENR1 |= RCC_APBENR1_TIM3EN;
+                    }
+                    else if constexpr (TimerNumber == 14) {
+                        RCC->APBENR2 |= RCC_APBENR2_TIM14EN;
+                    }
+                    else if constexpr (TimerNumber == 17) {
+                        RCC->APBENR2 |= RCC_APBENR2_TIM17EN;
+                    }
+                    else {
+                        static_assert(false);
+                    }
+                    mcuTimer->PSC = prescaler;
+                    mcuTimer->ARR = period;
+                    mcuTimer->CCMR1 |= (0b0110 << TIM_CCMR1_OC1M_Pos); // pwm1
+                    mcuTimer->CCMR1 |= (0b0110 << TIM_CCMR1_OC2M_Pos); // pwm2
+                    mcuTimer->CCMR2 |= (0b0110 << TIM_CCMR2_OC3M_Pos); // pwm3
+                    mcuTimer->CCMR2 |= (0b0110 << TIM_CCMR2_OC4M_Pos); // pwm4
+                    mcuTimer->CCER |= TIM_CCER_CC1E;
+                    mcuTimer->CCER |= TIM_CCER_CC2E;
+                    mcuTimer->CCER |= TIM_CCER_CC3E;
+                    mcuTimer->CCER |= TIM_CCER_CC4E;
+
+                    if constexpr ((TimerNumber == 1) || (TimerNumber == 17)) {
+                        mcuTimer->BDTR |= TIM_BDTR_MOE;
+                        mcuTimer->CCER |= TIM_CCER_CC1E;
+                    }
+                    if constexpr ((TimerNumber == 17)) { // hack
+                        mcuTimer->CCER |= TIM_CCER_CC1NE;
+                    }
+                    mcuTimer->CCR1 = 0;
+                    mcuTimer->CCR2 = 0;
+                    mcuTimer->CCR3 = 0;
+                    mcuTimer->CCR4 = 0;
+                    mcuTimer->CR1 |= TIM_CR1_ARPE;
+
+                    mcuTimer->CR2 |= (0b010 << TIM_CR2_MMS_Pos); // update as trigger-output
+
+                    mcuTimer->CR1 |= TIM_CR1_CEN;
+                }
+#endif
+                template<auto Channel>
+                static inline void enableInts() {
+                    if constexpr(Channel == 1) {
+                        mcuTimer->DIER |= TIM_DIER_CC1IE;
+                    }
+                    else if constexpr(Channel == 2) {
+                        mcuTimer->DIER |= TIM_DIER_CC2IE;
+                    }
+                    else if constexpr(Channel == 3) {
+                        mcuTimer->DIER |= TIM_DIER_CC3IE;
+                    }
+                    else if constexpr(Channel == 4) {
+                        mcuTimer->DIER |= TIM_DIER_CC4IE;
+                    }
+                    else {
+                        static_assert(false);
+                    }
+                    mcuTimer->DIER |= TIM_DIER_UIE;
+                }
+                template<auto Channel>
+                static inline void enableDma() {
+                    if constexpr(Channel == 1) {
+                        mcuTimer->DIER |= TIM_DIER_CC1DE;
+                    }
+                    else if constexpr(Channel == 2) {
+                        mcuTimer->DIER |= TIM_DIER_CC2DE;
+                    }
+                    else if constexpr(Channel == 3) {
+                        mcuTimer->DIER |= TIM_DIER_CC3DE;
+                    }
+                    else if constexpr(Channel == 4) {
+                        mcuTimer->DIER |= TIM_DIER_CC4DE;
+                    }
+                    else {
+                        static_assert(false);
+                    }
+                    mcuTimer->DIER |= TIM_DIER_UDE;
+                }
+
                 static inline void frequency(const uint16_t f) {
                     freq = f;
                     prescaler = (Clock::config::frequency.value / (freq * period));
                     mcuTimer->PSC = prescaler;
                     mcuTimer->EGR |= TIM_EGR_UG;
+                }
+                static inline void freqCenties(const uint8_t centies) {
+                    frequency(centies * 100U);
                 }
 
                 static inline void duty1(const uint16_t v) {
@@ -81,6 +171,12 @@ namespace Mcu::Stm {
                 }
                 static inline void duty2(const uint16_t v) {
                     mcuTimer->CCR2 = v;
+                }
+                static inline void duty3(const uint16_t v) {
+                    mcuTimer->CCR3 = v;
+                }
+                static inline void duty4(const uint16_t v) {
+                    mcuTimer->CCR4 = v;
                 }
 
                 constexpr static inline uint8_t trgo() {

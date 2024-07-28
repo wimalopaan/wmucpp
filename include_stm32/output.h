@@ -35,7 +35,15 @@ namespace IO {
         requires ((std::is_signed_v<T> || std::is_unsigned_v<T>) && std::is_integral_v<T>)
         inline constexpr void out_impl(const T& v) {
             std::array<char, etl::numberOfDigits<std::remove_volatile_t<T>>()> buffer{};
+            // std::array<char, 16> buffer{};
             std::to_chars(std::begin(buffer), std::end(buffer), v);
+            out_impl<Device>(buffer);
+        }
+        template<typename Device, typename T>
+        requires (std::is_pointer_v<T>)
+        inline constexpr void out_impl(const T& v) {
+            std::array<char, 16> buffer{};
+            std::to_chars(std::begin(buffer), std::end(buffer), (uint32_t)v, 16);
             out_impl<Device>(buffer);
         }
 
@@ -48,11 +56,15 @@ namespace IO {
     }
     template<typename Stream, typename... TT>
     constexpr inline void outl(const TT&... vv) {
-        ((detail::out_impl<Stream>(vv)),..., detail::out_impl<Stream>('\n'));
+        if constexpr (!std::is_same_v<Stream, void>) {
+            ((detail::out_impl<Stream>(vv)),..., detail::out_impl<Stream>('\n'));
+        }
     }    
     template<typename Stream, typename... TT>
     constexpr inline void out(const TT&... vv) {
-        ((detail::out_impl<Stream>(vv)),...);
+        if constexpr(!std::is_same_v<Stream, void>) {
+            ((detail::out_impl<Stream>(vv)),...);
+        }
     }    
 }
 

@@ -86,7 +86,8 @@ struct Devices<Var02, Config, Mcu::Stm::Stm32G431> {
     struct CrsfAdapterConfig {
         using out = crsf_out;
         using callback = Config::crsfcallback;
-        using debug = trace;
+        using dbg = trace;
+        using timer = systemTimer;
     };
 
     // PA8 Led
@@ -308,7 +309,8 @@ struct Devices<Var01, Config, Mcu::Stm::Stm32G431> {
         static inline void setParameter(const uint8_t index, const uint8_t value) {
             IO::outl<trace>("SetP adr: ", index, " v: ", value);
             if ((index >= 1) && (index <= params.size())) {
-                params[index - 1].mValue = value;
+                params[index - 1].value(value);
+                // params[index - 1].mValue = value;
                 mLastChangedParameter = index;
             }
         }

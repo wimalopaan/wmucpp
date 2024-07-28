@@ -119,10 +119,8 @@ namespace Mcu::Stm {
 
             FLASH->ACR |= FLASH_ACR_LATENCY_1 // 2WS sollte laut DB reichen
                           | FLASH_ACR_ICEN
-                          // | FLASH_ACR_DCEN
                           | FLASH_ACR_PRFTEN;
 
-            // PWR->CR5 &= PWR_CR5_R1MODE;
             PWR->CR1 |= PWR_CR1_VOS_0;
 
             RCC->CR |= RCC_CR_HSION;
@@ -135,7 +133,6 @@ namespace Mcu::Stm {
                             | (Config::pllR << RCC_PLLCFGR_PLLR_Pos)
                             | (Config::pllN << RCC_PLLCFGR_PLLN_Pos)
                             | (Config::pllP << RCC_PLLCFGR_PLLP_Pos)
-                            // | (Config::pllQ << RCC_PLLCFGR_PLLQ_Pos)
                             | RCC_PLLCFGR_PLLSRC_HSI | RCC_PLLCFGR_PLLREN;
 
             RCC->CR |= RCC_CR_PLLON;
@@ -144,9 +141,12 @@ namespace Mcu::Stm {
             RCC->CFGR |= RCC_CFGR_SW_1; // PLL
             while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != RCC_CFGR_SWS_1);
 
-            MODIFY_REG(RCC->CFGR, RCC_CFGR_HPRE_Msk, 0x00);
-            MODIFY_REG(RCC->CFGR, RCC_CFGR_PPRE_Msk, 0x00);
-            // MODIFY_REG(RCC->CFGR, RCC_CFGR_PPRE2_Msk, RCC_CFGR_PPRE2_DIV1);
+            MODIFY_REG(RCC->CFGR, RCC_CFGR_HPRE_Msk, 0x00 << RCC_CFGR_HPRE_Pos);
+            MODIFY_REG(RCC->CFGR, RCC_CFGR_PPRE_Msk, 0x00 << RCC_CFGR_PPRE_Pos);
+
+            // mco
+            MODIFY_REG(RCC->CFGR, RCC_CFGR_MCOPRE_Msk, 0b0110 << RCC_CFGR_MCOPRE_Pos); // div 64
+            MODIFY_REG(RCC->CFGR, RCC_CFGR_MCOSEL_Msk, 0b0001 << RCC_CFGR_MCOSEL_Pos);
         }
 #endif
     };

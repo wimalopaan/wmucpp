@@ -56,10 +56,10 @@ namespace Mcu::Stm {
         };
     }
 
-    template<uint8_t N, typename PA, auto Size, typename ValueType, typename Clock, typename MCU = void>
+    template<uint8_t N, typename PA, auto Size, typename ValueType, typename Clock, typename MCU = DefaultMcu>
     struct Uart;
 
-    template<uint8_t N, typename PA, auto Size, typename ValueType, typename Clock, typename MCU = void>
+    template<uint8_t N, typename PA, auto Size, typename ValueType, typename Clock, typename MCU = DefaultMcu>
     using LpUart = Uart<N + 100, PA, Size, ValueType, Clock, MCU>;
 
     template<uint8_t N, typename PA, auto Size, typename ValueType, typename Clock, typename MCU>
@@ -70,7 +70,6 @@ namespace Mcu::Stm {
     struct Uart<N, PA, Size, ValueType, Clock, MCU> {
         using pa_t = PA;
 
-        // static inline /*constexpr */ USART_TypeDef* const mcuUart = reinterpret_cast<USART_TypeDef*>(Mcu::Stm::Address<Uart<N, PA, Size, ValueType, Clock, MCU>>::value);
         static inline /*constexpr */ USART_TypeDef* const mcuUart = reinterpret_cast<USART_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Usart<N>>::value);
 
         static inline constexpr uint8_t QueueLength{ Size };
@@ -127,8 +126,15 @@ namespace Mcu::Stm {
             else {
                 static_assert(false);
             }
-            mcuUart->PRESC = 0;
-            mcuUart->CR1 |= USART_CR1_FIFOEN;
+            // mcuUart->PRESC = 0;
+            if constexpr(N == 1) {
+                mcuUart->CR1 |= USART_CR1_FIFOEN;
+            }
+            // if constexpr(N == 2) { // overrun on usart2 (no fifo) stops receiver
+            //     mcuUart->CR3 |= USART_CR3_OVRDIS;
+            // }
+            mcuUart->CR3 |= USART_CR3_OVRDIS;
+
             mcuUart->CR1 |= USART_CR1_RE;
             mcuUart->CR1 |= USART_CR1_TE;
             mcuUart->CR1 |= USART_CR1_UE;
@@ -258,7 +264,6 @@ namespace Mcu::Stm {
                 }
             }
         }
-
     private:
         static inline etl::FiFo<ValueType, Size> mSendData;
         static inline etl::FiFo<ValueType, Size> mReceiveData;

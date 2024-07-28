@@ -28,4 +28,12 @@ namespace Mcu::Components {
     };
     struct Rcc {
     };
+    template<uint8_t N>
+    struct Dma {
+        using number_t = std::integral_constant<uint8_t, N>;
+    };
+    template<uint8_t N>
+    struct DmaChannel {
+        using number_t = std::integral_constant<uint8_t, N>;
+    };
 }

@@ -72,6 +72,8 @@ namespace Mcu::Stm {
         
         using gpio_t = GP;
         using number_t = std::integral_constant<uint8_t, N>;
+
+        static inline constexpr uint8_t number = N;
         
         static inline /*constexpr */ GPIO_TypeDef* const& mcuGpio = GP::mcuGpio;
         static inline constexpr uint8_t moderPos   =  (2 * N);
