@@ -79,6 +79,7 @@ boards/rcCrsfSwitch/devices.h
 boards/rcCrsfSwitch/link_g0b1.ld
 boards/rcCrsfSwitch/startup_g0b1.s
 boards/rcCrsfSwitch/system_g0.cc
+boards/rcCrsfSwitch/todo.txt
 boards/rcFocG4/G431L6234_01/Makefile
 boards/rcFocG4/G431L6234_01/foc01.cc
 boards/rcFocG4/G431L6234_01/link_g431.ld
