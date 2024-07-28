@@ -1,12 +1,18 @@
 todo:
+* statt Expo: PWM Duty Max Scaling 1/0.1/0.01
+
+done:
 * PWM Frequenz änderbar (Gruppen im Menu?)
 ** Top-Menu: Adresse, Outputs, Gruppen
-* statt Expo: PWM Duty Max Scaling 1/0.1/0.01
 * Flash speichern der config-Daten
 * Adresse auswerten?
 * Led blinken: kein Signal, keine Commands, Active-Mode
-* Texte konfigurierbar machen (mindestens hardcoded) (evtl. Widget)
-
-done:
 * simple Bedienung über elrsv3 (z.B. für FlySky i6x)
+
+open:
+* Texte konfigurierbar machen (mindestens hardcoded) (evtl. Widget)
+** elrsv3.lua kann das (noch) nicht
+
+impossible:
 * DMA für PWM statt ISR, geht nicht (GPIO nicht DMA fähig auf G0xx)
+
