@@ -2,19 +2,12 @@
 #define USE_CRSF_V2
 
 #define NDEBUG
-//#define USE_SWD // for SWD debugging
+//#define USE_SWD // for SWD debugging (do not reconfigure SWD/SWCLK Pins)
 
 #include <cstdint>
 #include <array>
 
 #include "devices.h"
-
-template<typename T>
-bool equalStore(T& a, const T& b) {
-    const bool result = (a == b);
-    a = b;
-    return result;
-}
 
 struct EEProm {
     struct Output {
@@ -36,14 +29,13 @@ struct EEProm {
     std::array<Output, 8> outputs;
 };
 
-__attribute__((__section__(".eeprom"))) const EEProm eeprom_flash {};
+__attribute__((__section__(".eeprom"))) const EEProm eeprom_flash{};
 
 namespace {
     EEProm eeprom;
 }
 
 using namespace std::literals::chrono_literals;
-
 
 template<typename Out, typename Timer>
 struct CrsfTelemetry {
@@ -155,7 +147,7 @@ struct CrsfCallback {
     }
     static inline void update() {
         updateName(mName);
-        savecfg(eeprom, eeprom_flash);
+        Mcu::Stm32::savecfg(eeprom, eeprom_flash);
     }
 
     static inline void setParameter(const uint8_t index, const uint8_t value) {
@@ -437,7 +429,7 @@ struct GFSM {
         crsf_out::ratePeriodic();
         crsf_pa::ratePeriodic([](const bool connected){
             static bool mLast = false;
-            if (!equalStore(mLast, connected)) {
+            if (!etl::equalStore(mLast, connected)) {
                 if (connected) {
                     led::event(led::Event::Slow);
                 }

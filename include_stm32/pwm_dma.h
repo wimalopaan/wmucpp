@@ -8,7 +8,7 @@
 
 #include "tick.h"
 
-namespace Local {
+namespace External {
     using namespace std::literals::chrono_literals;
 
     struct Set;

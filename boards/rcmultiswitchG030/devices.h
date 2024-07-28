@@ -24,12 +24,14 @@
 #include "etl/stackstring.h"
 
 #include "meta.h"
-
+#include "etl/algorithm.h"
 #include "mcu/mcu.h"
 #include "mcu/mcu_traits.h"
 #include "mcu/arm.h"
+#include "mcu/eeprom.h"
 #include "components.h"
 #include "pwm.h"
+#include "pwm_dma.h"
 #include "usart.h"
 #include "units.h"
 #include "output.h"
@@ -40,11 +42,9 @@
 #include "meta.h"
 #include "rc/rc.h"
 #include "rc/crsf.h"
-
 #include "blinker.h"
+
 #include "adapter.h"
-#include "pwm_dma.h"
-#include "eeprom.h"
 #include "button.h"
 
 struct Nucleo;
@@ -54,7 +54,7 @@ struct SW11; // board: RCMultiSwitchSmall10 // wrong dma (does not work with GPI
 struct SW12; // board: RCMultiSwitchSmall10
 struct SW13; // board: RCMultiSwitchSmall10
 
-struct SW99; // board: RCMultiSwitchSmall10
+struct SW99; // test
 
 using namespace std::literals::chrono_literals;
 
@@ -127,7 +127,7 @@ struct Devices2<SW12, CrsfCallback, MCU> {
 
     // Led
     using led = Mcu::Stm::Pin<gpioc, 15, MCU>;
-    using ledBlinker = Local::Blinker<led, systemTimer>;
+    using ledBlinker = External::Blinker<led, systemTimer>;
 
     // Taster
     using button = Mcu::Stm::Pin<gpioa, 1, MCU>;
@@ -167,14 +167,14 @@ struct Devices2<SW12, CrsfCallback, MCU> {
     using adap6 = Local::PwmAdapter<pwm3, 4, false, false, debug1>;
     using adap7 = Local::PwmAdapter<pwm14, 1, false, true, debug1>;
 
-    using bsw0 = Local::BlinkerWithPwm<sw0, systemTimer, adap0, debug1>;
-    using bsw1 = Local::BlinkerWithPwm<sw1, systemTimer, adap1, debug1>;
-    using bsw2 = Local::BlinkerWithPwm<sw2, systemTimer, adap2, debug1>;
-    using bsw3 = Local::BlinkerWithPwm<sw3, systemTimer, adap3, debug1>;
-    using bsw4 = Local::BlinkerWithPwm<sw4, systemTimer, adap4, debug1>;
-    using bsw5 = Local::BlinkerWithPwm<sw5, systemTimer, adap5, debug1>;
-    using bsw6 = Local::BlinkerWithPwm<sw6, systemTimer, adap6, debug1>;
-    using bsw7 = Local::BlinkerWithPwm<sw7, systemTimer, adap7, debug1>;
+    using bsw0 = External::BlinkerWithPwm<sw0, systemTimer, adap0, debug1>;
+    using bsw1 = External::BlinkerWithPwm<sw1, systemTimer, adap1, debug1>;
+    using bsw2 = External::BlinkerWithPwm<sw2, systemTimer, adap2, debug1>;
+    using bsw3 = External::BlinkerWithPwm<sw3, systemTimer, adap3, debug1>;
+    using bsw4 = External::BlinkerWithPwm<sw4, systemTimer, adap4, debug1>;
+    using bsw5 = External::BlinkerWithPwm<sw5, systemTimer, adap5, debug1>;
+    using bsw6 = External::BlinkerWithPwm<sw6, systemTimer, adap6, debug1>;
+    using bsw7 = External::BlinkerWithPwm<sw7, systemTimer, adap7, debug1>;
 
     using bsws = Meta::List<bsw0, bsw1, bsw2, bsw3, bsw4, bsw5, bsw6, bsw7>;
 
@@ -308,7 +308,7 @@ struct Devices2<SW11, CrsfCallback, MCU> {
     // dma to gpio is not possible  !!!!!!!!!!!!!!!!!
 
     // using sw1dmaOff = Local::PinDma<sw1, Local::Reset, pwmDmaCh_S1Off, 37>; // update
-    using sw1dmaOn  = Local::PinDma<sw1, Local::Set, pwmDmaCh_S1On, 34>; // ch3
+    using sw1dmaOn  = External::PinDma<sw1, External::Set, pwmDmaCh_S1On, 34>; // ch3
     // using sw6dmaOff = Local::PinDma<sw6, Local::Reset, pwmDmaCh_S6Off, 37>;
     // using sw6dmaOn  = Local::PinDma<sw6, Local::Set, pwmDmaCh_S6On, 35>; // ch4
 
@@ -332,14 +332,14 @@ struct Devices2<SW11, CrsfCallback, MCU> {
     using adap6 = Local::PwmAdapter<pwm3, 4, false, false, debug1>;
     using adap7 = Local::PwmAdapter<pwm14, 1, false, true, debug1>;
 
-    using bsw0 = Local::BlinkerWithPwm<sw0, systemTimer, adap0, debug1>;
-    using bsw1 = Local::BlinkerWithPwm<sw1, systemTimer, adap1, debug>;
-    using bsw2 = Local::BlinkerWithPwm<sw2, systemTimer, adap2, debug1>;
-    using bsw3 = Local::BlinkerWithPwm<sw3, systemTimer, adap3, debug1>;
-    using bsw4 = Local::BlinkerWithPwm<sw4, systemTimer, adap4, debug1>;
-    using bsw5 = Local::BlinkerWithPwm<sw5, systemTimer, adap5, debug1>;
-    using bsw6 = Local::BlinkerWithPwm<sw6, systemTimer, adap6, debug1>;
-    using bsw7 = Local::BlinkerWithPwm<sw7, systemTimer, adap7, debug1>;
+    using bsw0 = External::BlinkerWithPwm<sw0, systemTimer, adap0, debug1>;
+    using bsw1 = External::BlinkerWithPwm<sw1, systemTimer, adap1, debug>;
+    using bsw2 = External::BlinkerWithPwm<sw2, systemTimer, adap2, debug1>;
+    using bsw3 = External::BlinkerWithPwm<sw3, systemTimer, adap3, debug1>;
+    using bsw4 = External::BlinkerWithPwm<sw4, systemTimer, adap4, debug1>;
+    using bsw5 = External::BlinkerWithPwm<sw5, systemTimer, adap5, debug1>;
+    using bsw6 = External::BlinkerWithPwm<sw6, systemTimer, adap6, debug1>;
+    using bsw7 = External::BlinkerWithPwm<sw7, systemTimer, adap7, debug1>;
 
     using bsws = Meta::List<bsw0, bsw1, bsw2, bsw3, bsw4, bsw5, bsw6, bsw7>;
 
@@ -480,14 +480,14 @@ struct Devices2<SW10, CrsfCallback, MCU> {
     using adap6 = Local::PwmAdapter<pwm3, 4, false, false, debug1>;
     using adap7 = Local::PwmAdapter<pwm14, 1, false, true, debug1>;
 
-    using bsw0 = Local::BlinkerWithPwm<sw0, systemTimer, adap0, debug1>;
-    using bsw1 = Local::BlinkerWithPwm<sw1, systemTimer, adap1, debug1>;
-    using bsw2 = Local::BlinkerWithPwm<sw2, systemTimer, adap2, debug1>;
-    using bsw3 = Local::BlinkerWithPwm<sw3, systemTimer, adap3, debug1>;
-    using bsw4 = Local::BlinkerWithPwm<sw4, systemTimer, adap4, debug1>;
-    using bsw5 = Local::BlinkerWithPwm<sw5, systemTimer, adap5, debug1>;
-    using bsw6 = Local::BlinkerWithPwm<sw6, systemTimer, adap6, debug1>;
-    using bsw7 = Local::BlinkerWithPwm<sw7, systemTimer, adap7, debug1>;
+    using bsw0 = External::BlinkerWithPwm<sw0, systemTimer, adap0, debug1>;
+    using bsw1 = External::BlinkerWithPwm<sw1, systemTimer, adap1, debug1>;
+    using bsw2 = External::BlinkerWithPwm<sw2, systemTimer, adap2, debug1>;
+    using bsw3 = External::BlinkerWithPwm<sw3, systemTimer, adap3, debug1>;
+    using bsw4 = External::BlinkerWithPwm<sw4, systemTimer, adap4, debug1>;
+    using bsw5 = External::BlinkerWithPwm<sw5, systemTimer, adap5, debug1>;
+    using bsw6 = External::BlinkerWithPwm<sw6, systemTimer, adap6, debug1>;
+    using bsw7 = External::BlinkerWithPwm<sw7, systemTimer, adap7, debug1>;
 
     using bsws = Meta::List<bsw0, bsw1, bsw2, bsw3, bsw4, bsw5, bsw6, bsw7>;
 
@@ -613,14 +613,14 @@ struct Devices2<Nucleo, CrsfCallback, MCU> {
     using adap5 = Local::PwmAdapter<pwm3, 0, false, true, debug1>;
     using adap7 = Local::PwmAdapter<pwm14, 0, false, true, debug1>;
 
-    using bsw0 = Local::BlinkerWithPwm<sw0, systemTimer, void, debug1>;
-    using bsw1 = Local::BlinkerWithPwm<sw1, systemTimer, void, debug1>;
-    using bsw2 = Local::BlinkerWithPwm<sw2, systemTimer, adap2, debug1>;
-    using bsw3 = Local::BlinkerWithPwm<sw3, systemTimer, adap3, debug1>;
-    using bsw4 = Local::BlinkerWithPwm<sw4, systemTimer, adap4, debug1>;
-    using bsw5 = Local::BlinkerWithPwm<sw5, systemTimer, adap5, debug1>;
-    using bsw6 = Local::BlinkerWithPwm<sw6, systemTimer, void, debug1>;
-    using bsw7 = Local::BlinkerWithPwm<sw7, systemTimer, adap7, debug1>;
+    using bsw0 = External::BlinkerWithPwm<sw0, systemTimer, void, debug1>;
+    using bsw1 = External::BlinkerWithPwm<sw1, systemTimer, void, debug1>;
+    using bsw2 = External::BlinkerWithPwm<sw2, systemTimer, adap2, debug1>;
+    using bsw3 = External::BlinkerWithPwm<sw3, systemTimer, adap3, debug1>;
+    using bsw4 = External::BlinkerWithPwm<sw4, systemTimer, adap4, debug1>;
+    using bsw5 = External::BlinkerWithPwm<sw5, systemTimer, adap5, debug1>;
+    using bsw6 = External::BlinkerWithPwm<sw6, systemTimer, void, debug1>;
+    using bsw7 = External::BlinkerWithPwm<sw7, systemTimer, adap7, debug1>;
 
     using bsws = Meta::List<bsw0, bsw1, bsw2, bsw3, bsw4, bsw5, bsw6, bsw7>;
 
@@ -629,7 +629,6 @@ struct Devices2<Nucleo, CrsfCallback, MCU> {
         using callback = CrsfCallback<bsws, void>;
         using dbg = debug;
     };
-
 
     static inline void init() {
         CrsfAdapterConfig::callback::update();
@@ -677,7 +676,6 @@ struct Devices2<Nucleo, CrsfCallback, MCU> {
         pwm17::init();
     }
 };
-
 
 template<typename HW, typename Config, typename MCU = DefaultMcu>
 struct Devices;

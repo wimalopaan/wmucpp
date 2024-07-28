@@ -1,9 +1,10 @@
 todo:
 * statt Expo: PWM Duty Max Scaling 1/0.1/0.01
+* Telemetrie (state-machine)
 
 done:
 * PWM Frequenz änderbar (Gruppen im Menu?)
-** Top-Menu: Adresse, Outputs, Gruppen
+* Top-Menu: Adresse, Outputs, Gruppen
 * Flash speichern der config-Daten
 * Adresse auswerten?
 * Led blinken: kein Signal, keine Commands, Active-Mode

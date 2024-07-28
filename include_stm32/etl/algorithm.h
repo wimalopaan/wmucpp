@@ -9,6 +9,13 @@
 #include <numbers>
 
 namespace etl {
+    template<typename T>
+    bool equalStore(T& a, const T& b) {
+        const bool result = (a == b);
+        a = b;
+        return result;
+    }
+
     template<typename C>
     bool contains(const C& c, const typename C::value_type e) {
         for(const auto& i : c) {

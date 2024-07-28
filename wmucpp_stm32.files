@@ -120,10 +120,7 @@ boards/rcmultiadapterG030/devices.h
 boards/rcmultiadapterG030/ma01.cc
 boards/rcmultiswitchG030/Makefile
 boards/rcmultiswitchG030/adapter.h
-boards/rcmultiswitchG030/blinker.h
-boards/rcmultiswitchG030/button.h
 boards/rcmultiswitchG030/devices.h
-boards/rcmultiswitchG030/eeprom.h
 boards/rcmultiswitchG030/link_g030.ld
 boards/rcmultiswitchG030/msw01.cc
 boards/rcmultiswitchG030/msw02.cc
@@ -135,7 +132,6 @@ boards/rcmultiswitchG030/msw07.cc
 boards/rcmultiswitchG030/msw08.cc
 boards/rcmultiswitchG030/msw09.cc
 boards/rcmultiswitchG030/msw99.cc
-boards/rcmultiswitchG030/pwm_dma.h
 boards/rcmultiswitchG030/startup_g030.s
 boards/rcmultiswitchG030/system_g0.cc
 boards/rcmultiswitchG030/todo.txt
@@ -406,7 +402,9 @@ include_stm32/alternate.h
 include_stm32/arm.h
 include_stm32/atomic.h
 include_stm32/bldc.h
+include_stm32/blinker.h
 include_stm32/bluetooth/hc05.h
+include_stm32/button.h
 include_stm32/byte.h
 include_stm32/clock.h
 include_stm32/components.h
@@ -444,6 +442,7 @@ include_stm32/motor/foc.h
 include_stm32/opamp.h
 include_stm32/output.h
 include_stm32/pwm.h
+include_stm32/pwm_dma.h
 include_stm32/ranged.h
 include_stm32/rc.h
 include_stm32/rc/cppm.h
