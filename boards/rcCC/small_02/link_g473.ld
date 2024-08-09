@@ -55,7 +55,8 @@ ENTRY(Reset_Handler)
 /* Highest address of the user mode stack */
 _estack = ORIGIN(RAM) + LENGTH(RAM);    /* end of RAM */
 /* Generate a link error if heap and stack don't fit into RAM */
-_Min_Heap_Size = 0x200;      /* required amount of heap  */
+_Min_Heap_Size = 0x000;      /* required amount of heap  */
+/* _Min_Heap_Size = 0x200;      /* required amount of heap  */
 _Min_Stack_Size = 0x400; /* required amount of stack */
 
 /* Specify the memory areas */
@@ -64,6 +65,8 @@ MEMORY
 RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 128K
 FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 128K
 }
+
+_flash_start = ORIGIN(FLASH);
 
 /* Define output sections */
 SECTIONS
@@ -130,11 +133,21 @@ SECTIONS
     PROVIDE_HIDDEN (__fini_array_end = .);
   } >FLASH
 
+.eeprom ALIGN(2048) :
+{
+  _eeprom_start = .;
+  *(.eeprom)
+  *(.eeprom*)
+  . = ALIGN(2048);
+  _eeprom_end = .;
+} >FLASH
+
+
   /* used by the startup to initialize data */
   _sidata = LOADADDR(.data);
 
   /* Initialized data sections goes into RAM, load LMA copy after code */
-  .data : 
+  .data :
   {
     . = ALIGN(4);
     _sdata = .;        /* create a global symbol at data start */
@@ -145,7 +158,6 @@ SECTIONS
     _edata = .;        /* define a global symbol at data end */
   } >RAM AT> FLASH
 
-  
   /* Uninitialized data section */
   . = ALIGN(4);
   .bss :

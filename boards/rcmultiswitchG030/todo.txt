@@ -1,6 +1,11 @@
+error:
+* EEprom: ld-script
+
 todo:
 * statt Expo: PWM Duty Max Scaling 1/0.1/0.01
+* CRSF-Address einstellenbar
 * Telemetrie (state-machine)
+* DMA Usart
 
 done:
 * PWM Frequenz änderbar (Gruppen im Menu?)

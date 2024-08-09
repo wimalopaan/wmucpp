@@ -9,6 +9,40 @@
 #include <numbers>
 
 namespace etl {
+    constexpr inline uint8_t asDigit(const char c) {
+        return (static_cast<uint8_t>(c) - '0');
+    }
+
+    template<auto L>
+    inline static float from_chars(const std::array<char, L>& str) {
+        float value = 0;
+        int8_t decimals = -1;
+
+        uint8_t index = 0;
+
+        for(; index < L; ++index) {
+            if (str[index] == '.') {
+                decimals = 0;
+            }
+            else if (std::isdigit(str[index])) {
+                value *= 10;
+                value += etl::asDigit(str[index]);
+                if (decimals >= 0) {
+                    ++decimals;
+                }
+            }
+            else if (str[index] == '\0') {
+                break;
+            }
+        }
+        while(decimals > 0) {
+            value /= 10;
+            --decimals;
+        }
+        return value;
+    }
+
+
     template<typename T>
     bool equalStore(T& a, const T& b) {
         const bool result = (a == b);

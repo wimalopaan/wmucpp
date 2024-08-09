@@ -6,6 +6,7 @@
 #include "units.h"
 #include "concepts.h"
 #include "mcu/mcu_traits.h"
+#include "output.h"
 
 #include <type_traits>
 #include <concepts>
@@ -45,10 +46,10 @@ namespace Mcu::Stm {
             value_type value{};
         };
         
-        template<uint8_t N, size_t Size = 16, typename MCU = DefaultMcu> struct Master;
+        template<uint8_t N, size_t Size = 16, typename Debug = void, typename MCU = DefaultMcu> struct Master;
         
-        template<uint8_t N, size_t Size, G4xx MCU>
-        struct Master<N, Size, MCU> {
+        template<uint8_t N, size_t Size, typename Debug, G4xx MCU>
+        struct Master<N, Size, Debug, MCU> {
             static inline /*constexpr */ I2C_TypeDef* const mcuI2c = reinterpret_cast<I2C_TypeDef*>(Mcu::Stm::Address<Master<N, Size, MCU>>::value);
             static inline void init() {
                 if constexpr(N == 1) {
@@ -200,12 +201,9 @@ namespace Mcu::Stm {
                     break;
                 case State::WriteAdress:
                 {
-                    uint32_t temp = mcuI2c->CR2;
-                    temp &= ~I2C_CR2_NBYTES_Msk;
-                    temp &= ~I2C_CR2_SADD_Msk;
-                    temp |= (mCount << I2C_CR2_NBYTES_Pos);
-                    temp |= ((mAddress << 1) << I2C_CR2_SADD_Pos);
-                    mcuI2c->CR2 = temp;
+                    IO::outl<Debug>("I2C WA: ",  mAddress);
+                    MODIFY_REG(mcuI2c->CR2, I2C_CR2_NBYTES_Msk, (mCount << I2C_CR2_NBYTES_Pos));
+                    MODIFY_REG(mcuI2c->CR2, I2C_CR2_SADD_Msk, (mAddress << 1) << I2C_CR2_SADD_Pos);
 
                     mcuI2c->CR2 |= I2C_CR2_AUTOEND;
                     mcuI2c->CR2 &= ~I2C_CR2_ADD10;
@@ -286,6 +284,7 @@ namespace Mcu::Stm {
             }
 
             inline static bool write(const I2C::Address adr, const std::pair<std::byte, std::byte>& data) {
+                IO::outl<Debug>("I2C write: ", adr.value);
                 if (mState != State::Idle) {
                     return false;
                 }
@@ -299,6 +298,7 @@ namespace Mcu::Stm {
                 return true;
             }
             inline static bool read(const I2C::Address adr, const std::byte command, const uint8_t length) {
+                IO::outl<Debug>("I2C read: ", adr.value);
                 if (mState != State::Idle) {
                     return false;
                 }
@@ -311,23 +311,28 @@ namespace Mcu::Stm {
                 return true;
             }
             inline static const auto& readData(){
+                IO::outl<Debug>("I2C readData");
                 mState = State::Idle;
                 return mData;
             }
             inline static bool readDataAvailable() {
+                IO::outl<Debug>("I2C readDataAvail");
                 return mState == State::ReadDataComplete;
             }
 
-            template<auto L>
+            template<auto L, typename V>
             requires (L < Size)
-            inline static bool write(const I2C::Address adr, const std::byte offset, const std::array<std::byte, L>& data) {
+            inline static bool write(const I2C::Address adr, const V offset, const std::array<V, L>& data) {
+                IO::outl<Debug>("I2C write array: ", adr.value);
                 if (mState != State::Idle) {
                     return false;
                 }
                 mIndex = 0;
                 mErrors = 0;
-                mData[0] = offset;
-                const auto last = std::copy(std::begin(data), std::end(data), std::begin(mData) + 1);
+                mData[0] = (std::byte)offset;
+                // const auto last = std::copy(std::begin(data), std::end(data), std::begin(mData) + 1);
+                // std::copy(std::begin(data), std::end(data), std::begin(mData) + 1);
+                std::copy(std::begin(data), std::end(data), (V*)(&mData[0] + 1));
                 mCount = L + 1;
                 mAddress = adr.value;
                 mState = State::WriteAdress;

@@ -386,7 +386,8 @@ namespace Mcu::Stm {
 
             template<uint8_t TimerNumber, typename Clock, typename MCU = DefaultMcu>
             struct Servo {
-                static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Timer<TimerNumber, void, void, MCU>>::value);
+                // static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Timer<TimerNumber, void, void, MCU>>::value);
+                static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Timer<TimerNumber>>::value);
 
                 static inline constexpr uint16_t onems = 1640;
                 static inline constexpr uint16_t mid = onems + onems / 2;

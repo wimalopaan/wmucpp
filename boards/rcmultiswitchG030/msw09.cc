@@ -247,8 +247,9 @@ private:
         c.push_back(p);
     }
 
-    static inline void setAddress(const uint8_t) {
+    static inline bool setAddress(const uint8_t) {
         update();
+        return true;
     }
     using params_t = etl::FixedVector<Param_t, 128>;
     static inline params_t params = []{
@@ -504,8 +505,6 @@ struct GFSM {
 };
 
 struct Setter;
-// template<typename L, typename TList, typename T>
-// using CrsfCallback_WithSetter = CrsfCallback<L, Setter, TList, T>;
 
 template<typename L, typename T>
 using CrsfCallback_WithSetter = CrsfCallback<L, Setter, T>;

@@ -1,49 +1,41 @@
-#define USE_MCU_STM_V2
-#define USE_DEVICES1
+#define USE_MCU_STM_V3
+#define USE_CRSF_V2
+#define USE_DEVICES2
 
 #define NDEBUG
 
 // Usart 3
 // #define USE_ESC
 // #define USE_SPORT
- #define USE_VESC
+#define USE_VESC
+#define USE_GPS
 
 // USART 2
 // #define USE_DMA_SBUS
 
 #include <cstdint>
 #include <array>
-
-struct EEProm {
-    struct Output {
-        uint8_t pwm = 0;
-    };
-
-    uint8_t address = 0;
-    uint8_t pwm1 = 10;
-    uint8_t pwm2 = 10;
-    uint8_t pwm3 = 10;
-    uint8_t pwm4 = 10;
-    uint8_t telemetry = 0;
-
-    std::array<Output, 8> outputs;
-    uint8_t dummy = 10;
-};
-
-namespace {
-    EEProm eeprom;
-}
-
-#include "devices.h"
-
 #include <chrono>
 #include <cassert>
 
-using namespace std::literals::chrono_literals;
+#include "eeprom.h"
+#include "devices.h"
 
-struct Config {
-    Config() = delete;
+struct Storage {
+    __attribute__((__section__(".eeprom")))
+    static inline const EEProm eeprom_flash{};
+    static inline EEProm eeprom;
+
+    static inline void init() {
+        eeprom = eeprom_flash;
+    }
 };
+
+#include "telemetry.h"
+#include "vesc.h"
+#include "crsf.h"
+
+using namespace std::literals::chrono_literals;
 
 struct Data {
     static inline std::array<uint16_t, 64> mChannels{}; // sbus [172, 1812], center = 992
@@ -61,7 +53,8 @@ struct GFSM {
     using crsf = devs::crsf;
     using crsf_pa = devs::crsf_pa;
     using crsf_out = devs::crsf_out;
-    using crsfTelemetry = devs::crsfTelemetry;
+    using crsfTelemetry = CrsfTelemetry<crsf_out, systemTimer>;
+    using crsfCallback = devs::crsfCallback;
 
 #ifdef USE_SPORT
     using sport = devs::sport;
@@ -78,7 +71,13 @@ struct GFSM {
     using vesc_pa = devs::vesc_pa;
     using vesc_uart = devs::vesc_uart;
 #endif
-
+#ifdef USE_GPS
+    using vtg = devs::vtg;
+    using gsv = devs::gsv;
+    using rmc = devs::rmc;
+    using gps_pa = devs::gps_pa;
+    using gps_uart = devs::gps_uart;
+#endif
     using sbus = devs::sbus;
 
 #ifndef USE_DMA_SBUS
@@ -98,7 +97,7 @@ struct GFSM {
     using tp2 = devs::tp2;
 
     using i2c_2 = devs::i2c_2;
-    using tlc_01 = devs::tlc_01;
+    using switches = devs::switches;
 
     static inline constexpr External::Tick<systemTimer> debugTicks{500ms};
     static inline constexpr External::Tick<systemTimer> initTicks{500ms};
@@ -106,6 +105,14 @@ struct GFSM {
     enum class State : uint8_t {Undefined, Init, Info, DevsInit, Run};
 
     static inline bool crsfOn = false;
+
+    static inline void update() {
+        crsfCallback::update();
+        crsfCallback::callbacks();
+    }
+
+    static inline void set(const uint8_t) {
+    }
 
     static inline void init() {
         devs::init();
@@ -118,10 +125,10 @@ struct GFSM {
     static inline void periodic() {
         tp1::set();
         trace::periodic();
-
         i2c_2::periodic();
-
         crsf::periodic();
+
+        switches::periodic();
 
 #ifdef USE_SPORT
         sport::periodic();
@@ -135,17 +142,17 @@ struct GFSM {
         vesc::periodic();
         vesc_uart::periodic();
 #endif
-
 #ifndef USE_DMA_SBUS
         sbus::periodic();
 #endif
-
+#ifdef USE_GPS
+        gps_uart::periodic();
+#endif
         bt_uart::periodic();
-
         tp1::reset();
     }
     static inline void ratePeriodic() {
-        static uint8_t c{0};
+        // static uint8_t c{0};
 
         tp2::set();
 
@@ -249,19 +256,6 @@ struct GFSM {
 
             (++mDebugTick).on(debugTicks, []{
                 led1::toggle();
-
-                if (++c > 1) c = 0;
-
-                if (c == 0) {
-                    tlc_01::pwm(0, 64);
-                    // tlc_01::on(0);
-                }
-                else {
-                    tlc_01::pwm(0, 0);
-                    // tlc_01::off(0);
-                }
-
-
                 // IO::outl<trace>(
                 //             "b: ", crsf_pa::mBytesCounter
                 //             );
@@ -283,16 +277,37 @@ struct GFSM {
                 //     " rpm: ", (uint8_t)sbus_pa::mSlots[0][2]
                 //     );
 #ifdef USE_VESC
-                IO::outl<trace>(
-                    "ch0: ", Data::mChannels[0],
-                    " ch1: ", Data::mChannels[1],
-                    " ch2: ", Data::mChannels[2],
-                    " ch3: ", Data::mChannels[3],
-                    " v b: ", vesc_pa::mBytes,
-                    " v p: ", vesc_pa::mPackages,
-                    " v t: ", (uint8_t)vesc_pa::mType,
-                    " v l: ", vesc_pa::mLength
-                    );
+                // IO::outl<trace>(
+                //     "ch0: ", Data::mChannels[0],
+                //     " ch1: ", Data::mChannels[1],
+                //     " ch2: ", Data::mChannels[2],
+                //     " ch3: ", Data::mChannels[3],
+                //     " v b: ", vesc_pa::mBytes,
+                //     " v p: ", vesc_pa::mPackages,
+                //     " v t: ", (uint8_t)vesc_pa::mType,
+                //     " v l: ", vesc_pa::mLength
+                //     );
+#endif
+#ifdef USE_GPS
+                std::array<char, External::GPS::Sentence::DecimalMaxWidth> raw{};
+
+                gsv::numberRaw(raw);
+                uint16_t sats = 0;
+                std::from_chars(std::begin(raw), std::end(raw), sats);
+
+                crsfTelemetry::sats(sats);
+
+                vtg::speedRaw(raw);
+                const float speed = etl::from_chars(raw);
+                crsfTelemetry::speed(speed);
+
+                // IO::outl<trace>(
+                //             " gsv: ", gsv::receivedPackages(),
+                //             " vtg: ", vtg::receivedPackages(),
+                //             " rmc: ", rmc::receivedPackages(),
+                //             " sats: ", sats,
+                //             " speed: ", (uint16_t)(speed * 1000)
+                //             );
 #endif
                 // IO::outl<trace>(
                 //             " ro0: ", robo_pa::propValues[0],
@@ -300,12 +315,14 @@ struct GFSM {
                 //             " ro2: ", robo_pa::propValues[2],
                 //             " ro3: ", robo_pa::propValues[3]
                 //         );
-                IO::outl<trace>(
-                    "ch0: ", Data::mChannels[0],
-                    " ch1: ", Data::mChannels[1],
-                    " ch2: ", Data::mChannels[2],
-                    " ch3: ", Data::mChannels[3]
-                        );
+                // IO::outl<trace>(
+                //     "ch0: ", Data::mChannels[0],
+                //     " ch1: ", Data::mChannels[1],
+                //     " ch2: ", Data::mChannels[2],
+                //     " ch3: ", Data::mChannels[3]
+                //         );
+                // IO::outl<trace>("flash: ", &eeprom_flash, " eep start: ", (EEProm*)&_eeprom_start);
+                // IO::outl<trace>("adr: ", eeprom.address, " ", (volatile uint8_t)eeprom_flash.address);
             });
             break;
         }
@@ -315,12 +332,13 @@ struct GFSM {
             case State::Undefined:
                 break;
             case State::Init:
-                i2c_2::scan(i2c_scan_callback);
+                // i2c_2::scan(i2c_scan_callback);
+                i2c_2::scan([](Mcu::Stm::I2C::Address){});
                 break;
             case State::Info:
                 break;
             case State::DevsInit:
-                tlc_01::init();
+                switches::init();
                 break;
             case State::Run:
                 // led2::set();
@@ -329,20 +347,33 @@ struct GFSM {
         }
         tp2::reset();
     }
+    private:
     static inline void i2c_scan_callback(Mcu::Stm::I2C::Address) {
-
     }
-private:
     static inline External::Tick<systemTimer> mStateTick;
     static inline External::Tick<systemTimer> mDebugTick;
     static inline State mState{State::Undefined};
 };
 
-using devs = Devices<CC03, Config, Mcu::Stm::Stm32G473>;
+struct Setter;
+
+template<typename L, typename T>
+using CrsfCallback_WithSetter = CrsfCallback<L, Setter, T>;
+
+using devs = Devices2<CC50, CrsfCallback_WithSetter, VescCallback>;
+using gfsm = GFSM<devs>;
+
+struct Setter {
+    static inline void set(const uint8_t sw) {
+        gfsm::set(sw);
+    }
+};
 
 int main() {
-    using gfsm = GFSM<devs>;
+    Storage::init();
+    // eeprom = eeprom_flash;
     gfsm::init();
+    gfsm::update();
 
     // NVIC_EnableIRQ(DMA1_Channel1_IRQn);
     // __enable_irq();

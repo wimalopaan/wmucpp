@@ -771,6 +771,8 @@ boards/rcsensorled10_avr0/test31.cc
 boards/rcsensorled10_avr0/test40.cc
 boards/rcsensorled10_avr0/test41.cc
 boards/rcswitch/Makefile
+boards/rcswitch/hw.h
+boards/rcswitch/switch10.cc
 boards/rcswitch/telemetrySwitch00.cc
 boards/rcswitch/test00.cc
 boards/tx/Makefile

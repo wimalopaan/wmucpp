@@ -98,13 +98,12 @@ SECTIONS
   } >FLASH
 
 
-.eeprom :
+.eeprom ALIGN(2048) :
 {
-  . = ALIGN(2048);
   _eeprom_start = .;
   *(.eeprom)
   *(.eeprom*)
-  . = ALIGN(8);
+  . = ALIGN(2048);
   _eeprom_end = .;
 } >FLASH
 

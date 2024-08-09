@@ -69,10 +69,18 @@ boards/rcCC/small_01/startup_g431.s
 boards/rcCC/small_01/system_g4.cc
 boards/rcCC/small_02/Makefile
 boards/rcCC/small_02/cc01.cc
+boards/rcCC/small_02/cc50.cc
+boards/rcCC/small_02/cc51.cc
+boards/rcCC/small_02/crsf.h
 boards/rcCC/small_02/devices.h
+boards/rcCC/small_02/devicesPult.h
+boards/rcCC/small_02/eeprom.h
 boards/rcCC/small_02/link_g473.ld
+boards/rcCC/small_02/pult00.cc
 boards/rcCC/small_02/startup_g473.s
 boards/rcCC/small_02/system_g4.cc
+boards/rcCC/small_02/telemetry.h
+boards/rcCC/small_02/vesc.h
 boards/rcCrsfSwitch/Makefile
 boards/rcCrsfSwitch/crsfsw01.cc
 boards/rcCrsfSwitch/devices.h
@@ -433,6 +441,7 @@ include_stm32/isr.h
 include_stm32/mcu.h
 include_stm32/mcu/alternate.h
 include_stm32/mcu/arm.h
+include_stm32/mcu/eeprom.h
 include_stm32/mcu/mcu.h
 include_stm32/mcu/mcu_traits.h
 include_stm32/mcu_traits.h
@@ -449,6 +458,7 @@ include_stm32/rc.h
 include_stm32/rc/cppm.h
 include_stm32/rc/crsf.h
 include_stm32/rc/escape.h
+include_stm32/rc/gps.h
 include_stm32/rc/rc.h
 include_stm32/rc/roboremo.h
 include_stm32/rc/sbus2.h
