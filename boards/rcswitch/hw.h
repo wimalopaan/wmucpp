@@ -163,7 +163,9 @@ namespace External {
                         });
                     }
                 }
-                static inline uint8_t failCounter{10};
+                static inline bool fail() {
+                    return failCounter == 0;
+                }
             private:
                 inline static bool isIdle() {
                     return usart::isIdle();
@@ -180,6 +182,7 @@ namespace External {
                     usart::put(data); // payload
                     usart::put(data); // crc = sum of payload
                 }
+                static inline uint8_t failCounter{10};
                 static inline uint16_t packagesCounter{};
                 static inline std::byte data{};
                 static inline External::Tick<Timer> ticks{};

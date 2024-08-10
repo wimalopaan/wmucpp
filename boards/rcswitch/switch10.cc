@@ -97,11 +97,11 @@ struct FSM final {
         case State::Run:
             update();
 #ifdef USE_LED
-            if (serialout::failCounter > 0) {
-                led::activate();
+            if (serialout::fail()) {
+                led::inactivate();
             }
             else {
-                led::inactivate();
+                led::activate();
             }
 #endif
             break;
