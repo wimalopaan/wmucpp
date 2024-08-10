@@ -1,5 +1,9 @@
 #define NDEBUG
 
+// use the following options exclusive
+//#define USE_GPIO_AS_GND
+#define USE_LED
+
 #include <mcu/avr.h>
 #include <mcu/internals/ccp.h>
 #include <mcu/internals/clock.h>
@@ -22,16 +26,23 @@ namespace {
     // static constexpr uint8_t controllerNumber = 0x02; // 0x02: external, waiting for message from controller 0x01
 }
 
-using s11 = ActiveLow<Pin<Port<A>, 4>, Input>;
-using s12 = ActiveLow<Pin<Port<A>, 5>, Input>;
-using t1  = ActiveLow<Pin<Port<A>, 6>, Input>;
-using s2  = ActiveLow<Pin<Port<B>, 3>, Input>;
-using t2  = ActiveLow<Pin<Port<B>, 2>, Input>;
+using s11 = ActiveLow<Pin<Port<A>, 4>, Input>; // Pin 2
+using s12 = ActiveLow<Pin<Port<A>, 5>, Input>; // Pin 3
+using t1  = ActiveLow<Pin<Port<A>, 6>, Input>; // Pin 4
+using s2  = ActiveLow<Pin<Port<B>, 3>, Input>; // Pin 6
+using t2  = ActiveLow<Pin<Port<B>, 2>, Input>; // Pin 7
 
-using o1 = ActiveLow<Pin<Port<A>, 7>, Output>;
-using o2 = ActiveLow<Pin<Port<B>, 0>, Output>;
-using o3 = ActiveLow<Pin<Port<A>, 2>, Output>;
-using o4 = ActiveLow<Pin<Port<A>, 3>, Output>;
+#ifdef USE_GPIO_AS_GND
+using o1 = ActiveLow<Pin<Port<A>, 7>, Output>; // Pin 5
+using o2 = ActiveLow<Pin<Port<B>, 0>, Output>; // Pin 9
+using o3 = ActiveLow<Pin<Port<A>, 2>, Output>; // Pin 12 (rx: unused)
+using o4 = ActiveLow<Pin<Port<A>, 3>, Output>; // Pin 13
+using o5 = ActiveLow<Pin<Port<B>, 1>, Output>; // Pin 8
+#endif
+
+#ifdef USE_LED
+using led = ActiveHigh<Pin<Port<B>, 1>, Output>;
+#endif
 
 using ccp = Cpu::Ccp<>;
 using clock = Clock<>;
@@ -48,16 +59,22 @@ struct FSM final {
     enum class State : uint8_t {Undefined, Run};
 
     static inline void init() {
+#ifdef USE_GPIO_AS_GND
         o1::init(); // use some outputs as "low" for the switches ...
         o2::init(); // ... just to make to wiring easier ;-)
         o3::init();
         o4::init();
+        o5::init();
 
         o1::activate();
         o2::activate();
         o3::activate();
         o4::activate();
-
+        o5::activate();
+#endif
+#ifdef USE_LED
+        led::init();
+#endif
         s11::init();
         s12::init();
         t1::init();
@@ -69,6 +86,7 @@ struct FSM final {
         serialout::periodic();
     }
     static inline void ratePeriodic() {
+        serialout::ratePeriodic();
         ++mStateTicks;
         switch(mState) {
         case State::Undefined:
@@ -78,7 +96,14 @@ struct FSM final {
             break;
         case State::Run:
             update();
-            serialout::ratePeriodic();
+#ifdef USE_LED
+            if (serialout::failCounter > 0) {
+                led::activate();
+            }
+            else {
+                led::inactivate();
+            }
+#endif
             break;
         }
     }

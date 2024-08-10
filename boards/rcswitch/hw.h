@@ -99,6 +99,8 @@ namespace External {
                         case State::GotPayLoad:
                             if (csum == uint8_t(b)) {
                                 if (match) {
+                                    ++packagesCounter;
+                                    failCounter = 10;
                                     mState = State::Send;
                                     rxEnable<false>();
                                 }
@@ -154,8 +156,14 @@ namespace External {
                     }
                     else {
                         pa::ratePeriodic();
+                        (++ticks).on(timeoutTicks, []{
+                            if (failCounter > 0) {
+                                --failCounter;
+                            }
+                        });
                     }
                 }
+                static inline uint8_t failCounter{10};
             private:
                 inline static bool isIdle() {
                     return usart::isIdle();
@@ -172,6 +180,7 @@ namespace External {
                     usart::put(data); // payload
                     usart::put(data); // crc = sum of payload
                 }
+                static inline uint16_t packagesCounter{};
                 static inline std::byte data{};
                 static inline External::Tick<Timer> ticks{};
             };
