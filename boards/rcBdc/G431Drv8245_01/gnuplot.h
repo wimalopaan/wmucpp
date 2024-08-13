@@ -39,13 +39,13 @@ namespace Graphics {
                                                            const auto v = Set::data[indexInSet];
                                                            using DT = std::remove_cv_t<decltype(v)>;
                                                            if constexpr(std::is_same_v<DT, float>) {
-                                                               IO::outl<dev>((uint16_t)v);
+                                                               IO::outl<dev>((uint32_t)v);
                                                            }
                                                            else if constexpr(std::is_same_v<DT, uint16_t>) {
                                                                IO::outl<dev>(v);
                                                            }
                                                            else if constexpr(requires{v.first; v.second;}){
-                                                               IO::outl<dev>(v.first, ' ', (uint16_t)v.second);
+                                                               IO::outl<dev>(v.first, ' ', (uint32_t)v.second);
                                                            }
                                                            else {
                                                                static_assert(false, "wrong value type");

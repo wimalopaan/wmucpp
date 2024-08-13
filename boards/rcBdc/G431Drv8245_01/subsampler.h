@@ -24,34 +24,32 @@ namespace Dsp {
         }
         static inline void isr() {
             const float currFiltered = iirFilter.process(adc::mData[0]);
-            // const float currFiltered = iirFilter.process((64.0f * adc::mData[0]) / gainFactor[gain]); // todo: gainFactor!!!
             mMeanVoltage.process(adc::mData[1]);
 
             sampleCounter += 1;
             if (sampleCounter == factor) {
                 sampleCounter = 0;
-                const float currSubsampled = currFiltered / gainFactor[gain];
-                // const float currSubsampled = currFiltered;
-                if (index == data.size()) {
+                const float currSubsampled = currFiltered / gainFactor[gainIndex];
+                if (index == mData.size()) {
                     index = 0;
                 }
-                data[index] = currSubsampled;
+                mData[index] = currSubsampled;
                 index = index + 1;
 
                 mCurrMeanADC.process(currFiltered); // ADC overflow
                 mCurrMean.process(currSubsampled); // real value
 
                 if (mCurrMeanADC.value() > 4095.0f * (2.0f / 3.0f)) {
-                    if (gain > 0) {
-                        gain -= 1;
-                        pga::gain(gain);
+                    if (gainIndex > 0) {
+                        gainIndex -= 1;
+                        pga::gain(gainIndex);
                         mCurrMeanADC.set(mCurrMeanADC.value() / 2);
                     }
                 }
                 else if (mCurrMeanADC.value() < 4095.0f * (1.0f / 3.0f)) {
-                    if (gain < 6) {
-                        gain += 1;
-                        pga::gain(gain);
+                    if (gainIndex < 6) {
+                        gainIndex += 1;
+                        pga::gain(gainIndex);
                         mCurrMeanADC.set(mCurrMeanADC.value() * 2);
                     }
                 }
@@ -61,22 +59,39 @@ namespace Dsp {
             bool flag = false;
             float v;
             __disable_irq();
-            if (!data.empty()) {
+            if (!mData.empty()) {
                 flag = true;
-                data.pop_front(v);
+                mData.pop_front(v);
             }
             __enable_irq();
             if (flag) {
                 f(v);
             }
         }
-    // private:
-        // static inline etl::FiFo<volatile float, Size> data;
-        static inline std::array<volatile float, Size> data;
+        static inline float currMean() {
+            return mCurrMean.value();
+        }
+        static inline float meanVoltage() {
+            return mMeanVoltage.value();
+        }
+        static inline float currMeanADC() {
+            return mCurrMeanADC.value();
+        }
+        static inline uint8_t gain() {
+            return gainFactor[gainIndex];
+        }
+        static inline const auto& data() {
+            return mData;
+        }
+        static inline float samplingFrequency() {
+            return iirFilter.fs() / factor;
+        }
+    private:
+        static inline std::array<volatile float, Size> mData;
         static inline volatile uint16_t index{0};
         static inline volatile uint16_t sampleCounter{0};
         static inline volatile uint16_t factor{10};
-        static inline volatile uint8_t gain{0};
+        static inline volatile uint8_t gainIndex{0};
         static inline constexpr std::array<uint8_t, 7> gainFactor{1, 2, 4, 8, 16, 32, 64};
         static inline Dsp::Butterworth::LowPass<6, volatile float> iirFilter;
         static inline Dsp::ExpMean<void> mCurrMeanADC{0.001};

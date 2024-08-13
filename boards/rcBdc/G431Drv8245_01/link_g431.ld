@@ -66,6 +66,8 @@ RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 32K
 FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 128K
 }
 
+_flash_start = ORIGIN(FLASH);
+
 /* Define output sections */
 SECTIONS
 {
@@ -130,6 +132,15 @@ SECTIONS
     KEEP (*(.fini_array*))
     PROVIDE_HIDDEN (__fini_array_end = .);
   } >FLASH
+
+.eeprom ALIGN(2048) :
+{
+  _eeprom_start = .;
+  *(.eeprom)
+  *(.eeprom*)
+  . = ALIGN(2048);
+  _eeprom_end = .;
+} >FLASH
 
   /* used by the startup to initialize data */
   _sidata = LOADADDR(.data);

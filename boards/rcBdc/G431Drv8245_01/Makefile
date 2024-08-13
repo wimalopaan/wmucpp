@@ -36,6 +36,7 @@ targets += system_g4.o
 #targets += esc12.elf esc12.bin
 #targets += esc13.elf esc13.bin
 #targets += esc14.elf esc14.bin
-targets += esc15.elf esc15.bin
+#targets += esc15.elf esc15.bin
+targets += esc20.elf esc20.bin
 
 -include ../../../Makefile.arm.include

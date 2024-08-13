@@ -88,19 +88,19 @@ struct Adapter0 {
     static inline const char* const title = "weighted mag(FFT)";
 };
 struct Adapter1 {
-    static inline const auto& data = estimator::d1;
+    static inline const auto& data = estimator::maxWeighted;
     static inline const char* const title = "max";
 };
 struct Adapter2 {
-    static inline const auto& data = estimator::d2;
+    static inline const auto& data = estimator::rpmPos;
     static inline const char* const title = "est(Um,i,Rm)";
 };
 struct Adapter3 {
-    static inline const auto& data = estimator::d3;
+    static inline const auto& data = estimator::window;
     static inline const char* const title = "window";
 };
 struct Adapter4 {
-    static inline const auto& data = estimator::magnitude2;
+    static inline const auto& data = estimator::magnitudeWeighted;
     static inline const char* const title = "mag(FFT)";
 };
 
@@ -366,7 +366,7 @@ struct GFSM {
                 pwm::duty(d);
             });
             mStateTick.on(initTicks, []{
-                IO::outl<trace>("meanADC: ", (uint16_t)subSampler::mCurrMeanADC.value(), " mean: ", (uint16_t)subSampler::mCurrMean.value(), " g:", subSampler::gain, " volt: ", (uint16_t)(10.0f * devs::adc2Voltage(subSampler::mMeanVoltage.value())));
+                IO::outl<trace>("meanADC: ", (uint16_t)subSampler::mCurrMeanADC.value(), " mean: ", (uint16_t)subSampler::mCurrMean.value(), " g:", subSampler::gainIndex, " volt: ", (uint16_t)(10.0f * devs::adc2Voltage(subSampler::mMeanVoltage.value())));
             });
             break;
         case State::Reset:

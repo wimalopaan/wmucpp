@@ -22,6 +22,9 @@ namespace Arm {
                     mActive = true;
                 }
             }
+            static inline bool isTxQueueEmpty() {
+                return mData.empty();
+            }
             static inline void put(const char c) {
                 if (mActive) {
                     mData.push_back(c);

@@ -49,6 +49,9 @@ namespace Dsp {
     template<uint8_t N, typename T = float>
     struct LowPass {
         using NVT = std::remove_volatile_t<T>;
+        constexpr float fs() {
+            return mFs;
+        }
         constexpr void fs(const NVT f) {
             setup(f, mFc);
         }

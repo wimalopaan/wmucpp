@@ -668,6 +668,17 @@ namespace RC {
                         }
                     }
 
+                    using normalized_type = etl::ranged_NaN<-1000, +1000>;
+
+                    static inline normalized_type normalized(const uint8_t ch) {
+                        if (ch < 16) {
+                            const float d = mChannels[ch] - 992;
+                            const float nd = d * 1000.0f / 840.0f;
+                            return normalized_type(nd);
+                        }
+                        return normalized_type{0};
+                    }
+
                     //           private:
                     static inline void convert() {
                         mChannels[0]  = (uint16_t) (((mData[0]    | mData[1] << 8))                 & Crsf::ValueMask);
