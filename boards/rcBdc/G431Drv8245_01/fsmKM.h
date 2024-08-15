@@ -1,5 +1,7 @@
 #pragma once
 
+#include <etl/fixedvector.h>
+
 template<typename Timer, typename PWM, typename Est, typename Config, typename Out = void>
 struct KmFsm {
     using systemTimer = Timer;
@@ -33,8 +35,7 @@ struct KmFsm {
                 });
                 break;
             case State::Inc:
-                if (measureDuty > (pwm::maxDuty() - 200)) {
-                    // if (measureDuty > (pwm::maxDuty() / 2)) {
+                if (measureDuty > measureDutyMax) {
                     mState = State::Stop;
                 }
                 else {
@@ -58,6 +59,7 @@ struct KmFsm {
                 break;
             case State::Start:
                 IO::outl<Out>("# MeasRotStart");
+                meKMs.clear();
                 config::init();
                 pwm::dir1();
                 measureDuty = 0;
@@ -77,17 +79,34 @@ struct KmFsm {
                 IO::outl<Out>("# MeasRotStop");
                 measureDuty = 0;
                 pwm::duty(measureDuty);
+                calculate();
                 break;
             }
         }
         return false;
     }
+    static inline uint16_t getMeanEKm() {
+        return meanEKm;
+    }
     static inline void setRm(const float r) {
         IO::outl<Out>("# setRm: ", (uint16_t)(1000 * r));
         Rm = r;
     }
-
+    template<typename S = Out>
+    static inline void print() {
+        for(const auto& k : meKMs){
+            IO::outl<S>("# eKM: ", k);
+        }
+    }
     private:
+    static inline void calculate() {
+        uint32_t sum = 0;
+        for(const auto& k : meKMs){
+            sum += k;
+        }
+        meanEKm = sum / meKMs.size();
+    }
+
     static inline void saveResults() {
         const uint16_t offset = estimator::simpleFFT();
         const uint32_t erpm = estimator::eRpmNoWindow();
@@ -98,13 +117,21 @@ struct KmFsm {
 
         const float umintern = umotor - curr * Rm;
 
-        const float eKM = (float)erpm / umintern;
-        IO::outl<Out>("# eRpm: ", erpm, " off: ", offset, " eKM: ", (uint32_t)eKM, " um: ", (uint16_t)(umotor * 1000), " ui: ", (uint16_t)(umintern * 1000));
+        const uint16_t eKM = (float)erpm / umintern;
+        if ((eKM >= minEKm) && (eKM <= maxEKm)) {
+            meKMs.push_back(eKM);
+        }
+        IO::outl<Out>("# eRpm: ", erpm, " off: ", offset, " eKM: ", eKM, " um: ", (uint16_t)(umotor * 1000), " ui: ", (uint16_t)(umintern * 1000));
     }
+    static inline uint16_t minEKm = 500;
+    static inline uint16_t maxEKm = 5000;
     static inline float Rm = 0.0f;
     static inline Event mLastEvent = Event::NoEvent;
     static inline uint16_t measureDuty{};
+    static inline uint16_t measureDutyMax = (0.9f * pwm::maxDuty());
     static inline State mState = State::Idle;
+    static inline etl::FixedVector<uint16_t, 16> meKMs{};
+    static inline uint16_t meanEKm = 0;
     static inline External::Tick<systemTimer> mStateTick;
 };
 

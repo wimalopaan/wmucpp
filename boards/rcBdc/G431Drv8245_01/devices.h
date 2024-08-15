@@ -34,6 +34,7 @@
 #include "rc/vesc.h"
 #include "bluetooth/hc05.h"
 #include "motor/bdc.h"
+#include "blinker.h"
 
 #include "crsf.h"
 #include "telemetry.h"
@@ -134,6 +135,8 @@ struct Devices<ESC20, Config, Mcu::Stm::Stm32G431> {
         using telem_out = crsf_out;
         using timer = systemTimer;
         using storage = store;
+        using notifier = Config::notifier;
+        using speed = Config::speed;
     };
 
     using crsfCallback = CrsfCallback<CrsfCallbackConfig, trace>;
@@ -159,6 +162,7 @@ struct Devices<ESC20, Config, Mcu::Stm::Stm32G431> {
 
            // PB5 Led
     using led = Mcu::Stm::Pin<gpiob, 5, MCU>;
+    using ledBlinker = External::Blinker<led, systemTimer>;
 
            // PB4 Fault
            // PA15 nSleep : TIM2-CH1
@@ -241,6 +245,7 @@ struct Devices<ESC20, Config, Mcu::Stm::Stm32G431> {
         adc::init();
 
         pwm::init();
+        pwm::duty(0);
         fault::pullup();
         fault::template dir<Mcu::Input>();
         // fault::template dir<Mcu::Output>();

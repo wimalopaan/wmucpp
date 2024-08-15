@@ -65,7 +65,7 @@ struct RLFsm {
                 pwm::duty(measureDuty);
                 pwm::setMultiMode();
                 pwm::pwm(config::fPwmIdentify);
-                identifier::wait();
+                identifier::reset();
                 break;
             case State::Inc:
                 IO::outl<Out>("# MeasInc");
@@ -89,7 +89,7 @@ struct RLFsm {
                     m2 /= c2;
                     measurements += {m1, m2};
                 }
-                measureDuty += 100;
+                measureDuty += config::dutyIdentifyInc;
                 pwm::duty(measureDuty);
                 break;
             case State::Meas:
@@ -115,10 +115,11 @@ struct RLFsm {
             actualMeasCount_dir2 += 1;
         }
     }
+    template<typename S = Out>
     static inline void print() {
         for(uint8_t i = 0; i < measurements.step; ++i) {
-            IO::outl<Out>("# step: ", i, " Rm1: ", (uint16_t)(1000 * measurements.meanRL_dir1[i].Rm), " Rm2: ", (uint16_t)(1000 * measurements.meanRL_dir2[i].Rm));
-            IO::outl<Out>("# step: ", i, " Lm1: ", (uint16_t)(1000 * measurements.meanRL_dir1[i].Lm), " Lm2: ", (uint16_t)(1000 * measurements.meanRL_dir2[i].Lm));
+            IO::outl<S>("# step: ", i, " Rm1: ", (uint16_t)(1000 * measurements.meanRL_dir1[i].Rm), " Rm2: ", (uint16_t)(1000 * measurements.meanRL_dir2[i].Rm));
+            IO::outl<S>("# step: ", i, " Lm1: ", (uint16_t)(1000 * measurements.meanRL_dir1[i].Lm), " Lm2: ", (uint16_t)(1000 * measurements.meanRL_dir2[i].Lm));
         }
     }
     static inline float getLastRm(const bool dir1 = true) {
@@ -128,6 +129,15 @@ struct RLFsm {
         }
         else {
             return measurements.meanRL_dir2[last].Rm;
+        }
+    }
+    static inline float getLastLm(const bool dir1 = true) {
+        const uint8_t last = measurements.step - 1;
+        if (dir1) {
+            return measurements.meanRL_dir1[last].Lm;
+        }
+        else {
+            return measurements.meanRL_dir2[last].Lm;
         }
     }
     private:

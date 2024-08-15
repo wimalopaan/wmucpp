@@ -135,6 +135,9 @@ namespace Dsp {
         constexpr void set(const float m) {
             mean = m;
         }
+        constexpr void factor(const float factor) {
+            f = factor;
+        }
         constexpr float value() const volatile {
             return mean;
         }

@@ -90,11 +90,11 @@ struct Adapter0 {
     static inline const char* const title = "weighted mag(FFT)";
 };
 struct Adapter1 {
-    static inline const auto& data = estimator::maxWeighted;
+    static inline const auto& data = estimator::mMaxWeighted;
     static inline const char* const title = "max";
 };
 struct Adapter2 {
-    static inline const auto& data = estimator::rpmPos;
+    static inline const auto& data = estimator::mRpmPos;
     static inline const char* const title = "est(Um,i,Rm)";
 };
 struct Adapter3 {

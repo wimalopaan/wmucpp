@@ -49,6 +49,22 @@ struct CrsfTelemetry {
             }
         });
     }
+    static inline void curr(const uint16_t c) {
+        mBatt[2] = std::byte(c >> 8);
+        mBatt[3] = std::byte(c & 0xff);
+    }
+    static inline void batt(const uint16_t v) {
+        mBatt[0] = std::byte(v >> 8);
+        mBatt[1] = std::byte(v & 0xff);
+    }
+    static inline void rpm1(const uint16_t r) {
+        mRpm1[0] = std::byte(r >> 8);
+        mRpm1[1] = std::byte(r & 0xff);
+    }
+    static inline void temp1(const uint16_t t) {
+        mTemp1[0] = std::byte(t >> 8);
+        mTemp1[1] = std::byte(t & 0xff);
+    }
     static inline void sats(const uint8_t n) {
         mGps[14] = std::byte(n);
     }

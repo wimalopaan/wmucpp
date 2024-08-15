@@ -9,10 +9,9 @@ namespace Dsp {
     template<uint16_t Size, typename Source>
     struct FFTEstimator {
         static inline void init() {
-            // arm_status status = arm_rfft_fast_init_f32(&fftInstance, Size);
             arm_rfft_fast_init_f32(&fftInstance, Size);
             for(uint16_t i = 0; i < (2 * windowWidth); ++i) {
-                windowPlot[i].second = window[i];
+                mWindowPlot[i].second = window[i];
             }
         }
         static inline uint16_t simpleFFT() {
@@ -36,13 +35,15 @@ namespace Dsp {
                 }
             }
             const uint16_t offset = minIndex + 1;
-            float maxValue{};
             arm_max_f32(&mMagnitude[offset], mMagnitude.size() - offset, &maxValue, &maxIndex);
             maxIndex += offset;
             return offset;
         }
         static inline uint32_t eRpmNoWindow() {
             return index2Erpm(maxIndex);
+        }
+        static inline uint32_t eRpm() {
+            return index2Erpm(maxIndexWeighted);
         }
         static inline float uBattMean() {
             return Source::devs::adc2Voltage(Source::meanVoltage());
@@ -79,34 +80,52 @@ namespace Dsp {
                     mMagnitudeWeighted[i] = std::min(mMagnitudeWeighted[i], maxValue * 5.0f);
                 }
 
-                maxWeighted[0].first = std::max((int)maxIndexWeighted - 10, 0);
-                maxWeighted[0].second = maxValueWeighted * 0.9;
-                maxWeighted[1].first = maxIndexWeighted;
-                maxWeighted[1].second = maxValueWeighted;
-                maxWeighted[2].first = std::min((int)maxIndexWeighted + 10, Size/2);
-                maxWeighted[2].second = maxValueWeighted * 0.9;
+                mMaxWeighted[0].first = std::max((int)maxIndexWeighted - 10, 0);
+                mMaxWeighted[0].second = maxValueWeighted * 0.9;
+                mMaxWeighted[1].first = maxIndexWeighted;
+                mMaxWeighted[1].second = maxValueWeighted;
+                mMaxWeighted[2].first = std::min((int)maxIndexWeighted + 10, Size/2);
+                mMaxWeighted[2].second = maxValueWeighted * 0.9;
 
-                rpmPos[0].first = std::max((int)rpm - 10, 0);
-                rpmPos[0].second = maxValue * 0.9;
-                rpmPos[1].first = rpm;
-                rpmPos[1].second = maxValue;
-                rpmPos[2].first = std::min((int)rpm + 10, Size/2);
-                rpmPos[2].second = maxValue * 0.9;
+                mRpmPos[0].first = std::max((int)rpm - 10, 0);
+                mRpmPos[0].second = maxValue * 0.9;
+                mRpmPos[1].first = rpm;
+                mRpmPos[1].second = maxValue;
+                mRpmPos[2].first = std::min((int)rpm + 10, Size/2);
+                mRpmPos[2].second = maxValue * 0.9;
 
-                windowPlot.clear();
+                mWindowPlot.clear();
                 for(uint16_t i = windowLeft; i < windowRight; ++i) {
                     std::pair<uint16_t, float> c;
                     c.first = i;
                     c.second = maxValue * wf(i, rpm);
-                    windowPlot.push_back(c);
+                    mWindowPlot.push_back(c);
                 }
             }
         }
         static inline const auto& magnitude() {
             return mMagnitude;
         }
+        static inline const auto& windowPlot() {
+            return mWindowPlot;
+        }
+        static inline const auto& maxWeighted() {
+            return mMaxWeighted;
+        }
+        static inline const auto eRpmWeighted() {
+            return index2Erpm(maxIndexWeighted);
+        }
+        static inline const auto& rpmPos() {
+            return mRpmPos;
+        }
         static inline const auto& magnitudeWeighted() {
             return mMagnitudeWeighted;
+        }
+        static inline void setEKm(const float k) {
+            mEKM = k;
+        }
+        static inline void setRm(const float r) {
+            mRM = r;
         }
     private:
         static inline uint16_t eRpm2index(const uint32_t erpm) {
@@ -128,9 +147,9 @@ namespace Dsp {
         static inline std::array<float, Size> fft{};
         static inline std::array<float, Size / 2> mMagnitude{};
         static inline std::array<float, Size / 2> mMagnitudeWeighted{};
-        public:
-        static inline std::array<std::pair<uint16_t, float>, 3> maxWeighted;
-        static inline std::array<std::pair<uint16_t, float>, 3> rpmPos;
+
+        static inline std::array<std::pair<uint16_t, float>, 3> mMaxWeighted;
+        static inline std::array<std::pair<uint16_t, float>, 3> mRpmPos;
 
         static inline constexpr uint16_t searchFirstMinIndexMax = 100;
         static inline constexpr uint16_t windowWidth = 75;
@@ -152,6 +171,6 @@ namespace Dsp {
             }
             return window[i];
         }
-        static inline etl::FixedVector<std::pair<uint16_t, float>, 2 * windowWidth> windowPlot;
+        static inline etl::FixedVector<std::pair<uint16_t, float>, 2 * windowWidth> mWindowPlot;
     };
 }

@@ -334,7 +334,7 @@ namespace RC {
                         }
 
                         static inline void sendCommandResponse(const uint8_t pIndex, const uint8_t value) {
-                            IO::outl<debug>("sCR adr: ", (uint8_t)mExtendedDestination, " i: ", pIndex);
+                            IO::outl<debug>("sCR adr: ", (uint8_t)mExtendedDestination, " i: ", pIndex, " v: ", value);
                             mReply.clear();
                             mReply.push_back(mExtendedDestination);
                             mReply.push_back(mExtendedSource);
@@ -345,17 +345,44 @@ namespace RC {
                             if (CB::parameter(pIndex).mName) {
                                 etl::push_back_ntbs(CB::parameter(pIndex).mName, mReply);
                             }
-                            if (value == 1) {
+                            if (value == 1) { // start
+                                if (auto cb = CB::parameter(pIndex).cb; cb) {
+                                    cb(1);
+                                }
                                 etl::serialize(uint8_t{2}, mReply); // executing
-                                etl::serialize(uint8_t{0xc8}, mReply);
+                                etl::serialize(uint8_t{100}, mReply); // update-timeout: 1s
                                 if (CB::parameter(pIndex).mOptions) {
                                     etl::push_back_ntbs(CB::parameter(pIndex).mOptions, mReply);
                                 }
+                                else {
+                                    etl::serialize(uint8_t{0}, mReply);
+                                }
                             }
-                            if (value == 6) {
-                                etl::serialize(uint8_t{0}, mReply);
-                                etl::serialize(uint8_t{0xc8}, mReply);
-                                etl::serialize(uint8_t{0}, mReply);
+                            else if (value == 5) { // cancel
+                                if (auto cb = CB::parameter(pIndex).cb; cb) {
+                                    cb(5);
+                                }
+                            }
+                            else if (value == 6) { // update-request
+                                if (auto cb = CB::parameter(pIndex).cb; cb) {
+                                    const bool res = cb(6);
+                                    if (res) { // still executing
+                                        etl::serialize(uint8_t{2}, mReply);
+                                    }
+                                    else {
+                                        etl::serialize(uint8_t{0}, mReply); // finished
+                                    }
+                                }
+                                else {
+                                    etl::serialize(uint8_t{0}, mReply); // finished
+                                }
+                                etl::serialize(uint8_t{100}, mReply); // update-timeout: 1s
+                                if (CB::parameter(pIndex).mOptions) {
+                                    etl::push_back_ntbs(CB::parameter(pIndex).mOptions, mReply);
+                                }
+                                else {
+                                    etl::serialize(uint8_t{0}, mReply);
+                                }
                             }
                             out::data(RC::Protokoll::Crsf::Type::ParamEntry, mReply);
                         }
@@ -672,9 +699,11 @@ namespace RC {
 
                     static inline normalized_type normalized(const uint8_t ch) {
                         if (ch < 16) {
-                            const float d = mChannels[ch] - 992;
-                            const float nd = d * 1000.0f / 840.0f;
-                            return normalized_type(nd);
+                            if ((mChannels[ch] >= 172) && (mChannels[ch] <= 1812)) {
+                                const float d = mChannels[ch] - 992;
+                                const float nd = d * 1000.0f / 840.0f;
+                                return normalized_type(nd);
+                            }
                         }
                         return normalized_type{0};
                     }

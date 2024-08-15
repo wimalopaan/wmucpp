@@ -30,7 +30,10 @@ struct RLMeasurements {
             ++step;
         }
     }
-    uint16_t step{};
+    void reset() {
+        step = 0;
+    }
+    uint16_t step{0};
     std::array<RL<T>, Size> meanRL_dir1{};
     std::array<RL<T>, Size> meanRL_dir2{};
 };

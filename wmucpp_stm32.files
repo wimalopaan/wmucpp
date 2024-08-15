@@ -30,6 +30,7 @@ boards/nucleo_g431/sdr/test101.cc
 boards/nucleo_g431/sdr/test99.cc
 boards/rcBdc/G431Drv8245_01/Makefile
 boards/rcBdc/G431Drv8245_01/cmsis.h
+boards/rcBdc/G431Drv8245_01/config.h
 boards/rcBdc/G431Drv8245_01/crsf.h
 boards/rcBdc/G431Drv8245_01/devices.h
 boards/rcBdc/G431Drv8245_01/eeprom.h
@@ -52,6 +53,7 @@ boards/rcBdc/G431Drv8245_01/fsmRun.h
 boards/rcBdc/G431Drv8245_01/gnuplot.h
 boards/rcBdc/G431Drv8245_01/identifier.h
 boards/rcBdc/G431Drv8245_01/link_g431.ld
+boards/rcBdc/G431Drv8245_01/plotadapter.h
 boards/rcBdc/G431Drv8245_01/rlestimator.h
 boards/rcBdc/G431Drv8245_01/startup_g431.s
 boards/rcBdc/G431Drv8245_01/subsampler.h
