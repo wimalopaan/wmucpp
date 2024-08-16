@@ -140,20 +140,15 @@ namespace RC {
                     Query = 6,       // UI is requesting status update
                 };
             }            
+            template<typename T = uint8_t>
             struct Parameter {
                 enum Type {U8 = 0, I8, U16, I16, F32 = 8, Sel, Str, Folder, Info, Command};
-
-                // Parameter(uint8_t p = 0, Type t = Type::U8, const char* n = nullptr, const char* o = nullptr, uint8_t* v = nullptr,
-                //           uint8_t min = 0, uint8_t max = 0, void (*cb)(uint8_t) = nullptr) :
-                //     mParent{p}, mType{t}, mName{n}, mOptions{o}, value_ptr{v}, mMinimum{min}, mMaximum{max}, cb{cb}
-                // {}
-
                 uint8_t mParent{};
                 Type mType = Type::U8;
                 const char* mName{};
                 const char* mOptions{};
-                uint8_t* value_ptr = nullptr;
-                uint8_t value() const {
+                T* value_ptr = nullptr;
+                T value() const {
                     if (value_ptr) {
                         return *value_ptr;
                     }
@@ -161,7 +156,7 @@ namespace RC {
                         return mValue;
                     }
                 }
-                void value(const uint8_t v) {
+                void value(const T v) {
                     if (value_ptr) {
                         *value_ptr = v;
                     }
@@ -169,12 +164,12 @@ namespace RC {
                         mValue = v;
                     }
                 }
-                uint8_t mMinimum{};
-                uint8_t mMaximum{};
-                bool (*cb)(uint8_t){nullptr};
-                uint8_t mDefault{mMinimum};
-                uint8_t mUnits{0};
-                uint8_t mValue{mDefault};
+                T mMinimum{};
+                T mMaximum{};
+                bool (*cb)(T){nullptr};
+                T mDefault{mMinimum};
+                T mUnits{0};
+                T mValue{mDefault};
             };
 
 #ifdef USE_CRSF_V2
@@ -403,7 +398,6 @@ namespace RC {
                             }
                             if (CB::parameter(pIndex).mType < 0x0a) {
                                 etl::serialize(CB::parameter(pIndex).value(), mReply); // value
-                                // etl::serialize(CB::parameter(pIndex).mValue, mReply); // value
                                 etl::serialize(CB::parameter(pIndex).mMinimum, mReply);
                                 etl::serialize(CB::parameter(pIndex).mMaximum, mReply);
                                 etl::serialize(CB::parameter(pIndex).mDefault, mReply);

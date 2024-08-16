@@ -4,6 +4,8 @@
 #include <array>
 
 struct EEProm {
+    uint8_t crsf_channel = 1; // 1...16
+    uint8_t prerun_check = 1;
     uint8_t telemetry_polepairs = 9;
 
     uint8_t cutoff_freq = 10; // 100Hz
@@ -16,6 +18,11 @@ struct EEProm {
     float inductance = 0.001f;
     float eKm = 1000.0f;
 
-    uint64_t dummy;
+    uint8_t calib_ubatt = 100;
+
+    uint8_t use_pid = 0;
+    uint8_t pid_p = 90;
+    uint8_t pid_i = 10;
+    uint8_t pid_d = 10;
 };
 

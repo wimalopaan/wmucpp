@@ -95,8 +95,8 @@ namespace Dsp {
         static inline constexpr std::array<uint8_t, 7> gainFactor{1, 2, 4, 8, 16, 32, 64};
         static inline Dsp::Butterworth::LowPass<6, volatile float> iirFilter;
         static inline Dsp::ExpMean<void> mCurrMeanADC{0.001};
-        static inline Dsp::ExpMean<void> mCurrMean{0.01};
-        static inline Dsp::ExpMean<void> mMeanVoltage{0.0001};
+        static inline volatile Dsp::ExpMean<void> mCurrMean{0.01};
+        static inline volatile Dsp::ExpMean<void> mMeanVoltage{0.0001};
     };
 
 #if 0

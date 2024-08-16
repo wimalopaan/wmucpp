@@ -36,7 +36,7 @@ using namespace std::literals::chrono_literals;
 struct Storage {
     static inline void init() {
         std::memcpy(&eeprom, &eeprom_flash, sizeof(EEProm));
-        // eeprom = eeprom_flash;
+        // eeprom = eeprom_flash; // not working: needs volatile
     }
     __attribute__((__section__(".eeprom")))
     static inline const EEProm eeprom_flash{};
@@ -101,7 +101,7 @@ struct GFSM {
 
     enum class State : uint8_t {Undefined = 0x00,
                                 Init,
-                                Run, Reset,
+                                Check, Run, Reset,
                                 PrintMeasures,
                                 StartCalibrate,
                                 StopCalibrate,
@@ -119,12 +119,16 @@ struct GFSM {
         mEvent = e;
     }
 
+    static inline void updatePwm() {
+        // config::cutoff(Storage::eeprom.cutoff_freq * 100);
+        // config::subSampleFactor(Storage::eeprom.subsampling);
+        // config::pwm(Storage::eeprom.subsampling * Storage::eeprom.cutoff_freq * Storage::eeprom.n_fsample);
+    }
+
     static inline void update() {
         crsfCallback::update();
         crsfCallback::callbacks();
     }
-
-    // static inline Dsp::ExpMean<void> rpmEst{0.3};
 
     static inline void periodic() {
         trace::periodic();
@@ -135,6 +139,8 @@ struct GFSM {
         case State::Undefined:
             break;
         case State::Init:
+            break;
+        case State::Check:
             break;
         case State::Run:
 #ifdef USE_GNUPLOT
@@ -158,24 +164,18 @@ struct GFSM {
         }
     }
 
-    static inline constexpr External::Tick<systemTimer> waitTicks{2000ms};
+    static inline constexpr External::Tick<systemTimer> waitTicks{1000ms};
     static inline constexpr External::Tick<systemTimer> initTicks{500ms};
     static inline constexpr External::Tick<systemTimer> telemTicks{50ms};
 
-    static inline void endReset() {
-        event(Event::Init);
-        // adc::start();
-        // mState = State::Init;
-    }
+    static inline bool mConnected = false;
 
     static inline void ratePeriodic() {
         const auto oldState = mState;
 
         led::ratePeriodic();
-
         servo_pa::ratePeriodic([](const bool connected){
-            static bool mLast = false;
-            if (!etl::equalStore(mLast, connected)) {
+            if (!etl::equalStore(mConnected, connected)) {
                 if (connected) {
                     led::event(led::Event::Slow);
                 }
@@ -184,7 +184,6 @@ struct GFSM {
                 }
             }
         });
-
         crsfTelemetry::ratePeriodic();
         crsf_out::ratePeriodic();
 
@@ -198,8 +197,12 @@ struct GFSM {
             break;
         case State::Init:
             mStateTick.on(initTicks, []{
-                // mState = State::MeasRL;
-                mState = State::Run;
+                if (Storage::eeprom.prerun_check > 0) {
+                    mState = State::Check;
+                }
+                else {
+                    mState = State::Run;
+                }
             });
             break;
         case State::StartCalibrate:
@@ -209,7 +212,12 @@ struct GFSM {
             break;
         case State::StopCalibrate:
             mStateTick.on(waitTicks, [&]{
-                mState = State::Run;
+                if (Storage::eeprom.prerun_check > 0) {
+                    mState = State::Check;
+                }
+                else {
+                    mState = State::Run;
+                }
             });
             break;
         case State::MeasRL:
@@ -228,12 +236,22 @@ struct GFSM {
         case State::PrintMeasures:
             mState = State::StopCalibrate;
             break;
+        case State::Check: {
+            const auto input = servo_pa::normalized(Storage::eeprom.crsf_channel - 1);
+            mStateTick.on(initTicks, [&]{
+                IO::outl<trace>("# ch: ", Storage::eeprom.crsf_channel, " v: ", (int16_t)input, " conn: ", (uint8_t)mConnected);
+            });
+            if (mConnected && (input == 0)) {
+                mState = State::Run;
+            }}
+            break;
         case State::Run:
             if (std::exchange(mEvent, Event::None) == Event::StartCalibrate) {
                 mState = State::StartCalibrate;
             }
             mTelemTick.on(telemTicks, [&]{
-                estimator::update(servo_pa::normalized(0));
+                const auto input = servo_pa::normalized(Storage::eeprom.crsf_channel - 1);
+                estimator::update(input);
                 const uint16_t mRpm = estimator::eRpm() / Storage::eeprom.telemetry_polepairs;
                 if (mRpm > 26) {
                     crsfTelemetry::rpm1(mRpm);
@@ -243,16 +261,19 @@ struct GFSM {
                 }
                 crsfTelemetry::batt(devs::adc2Voltage(subSampler::meanVoltage()) * 10);
                 crsfTelemetry::curr(devs::adc2Current(subSampler::currMean()) * 10);
-                crsfTelemetry::temp1(31);
-                const int16_t v = servo_pa::normalized(0);
-                const auto vf = Speed::dutyFilter.process(v);
-                if (vf >= 0) {
+
+                const uint16_t t = Mcu::Stm::adc2Temp(adc::mData[2]);
+                crsfTelemetry::temp1(t);
+
+                const auto vf = Speed::dutyFilter.process(input);
+
+                if (const auto b = vf.absolute(); vf >= 0) {
                     pwm::dir1();
-                    pwm::duty((vf * 1640.0f) / 1000.0f);
+                    pwm::duty(b);
                 }
                 else {
                     pwm::dir2();
-                    pwm::duty((-vf * 1640.0f) / 1000.0f);
+                    pwm::duty(b);
                 }
             });
             mStateTick.on(initTicks, [&]{
@@ -303,7 +324,7 @@ struct GFSM {
                 kmfsm::template print<trace>();
                 const float Rm = rlfsm::getLastRm();
                 const float Lm = rlfsm::getLastLm();
-                const float eKm = kmfsm::getMeanEKm();
+                const float eKm = kmfsm::getMeanEKm().first;
                 // todo: distinct values for both directions
                 Storage::eeprom.resistance = Rm;
                 Storage::eeprom.inductance = Lm;
@@ -313,6 +334,9 @@ struct GFSM {
                 IO::outl<trace>("# Setting Rm: ", (uint16_t)(1000 * Rm), " Lm: ",  (uint16_t)(1000 * Lm), " eKm: ", (uint16_t)eKm);
                 estimator::setRm(Rm);
                 estimator::setEKm(eKm); }
+                break;
+            case State::Check:
+                IO::outl<trace>("# Check");
                 break;
             case State::Run:
                 IO::outl<trace>("# Run");
@@ -413,6 +437,9 @@ struct Notifier {
     static inline bool isCalibrating() {
         return gfsm::isCalibrating();
     }
+    static inline void updatePwm() {
+        gfsm::updatePwm();
+    }
 };
 
 int main() {
@@ -450,7 +477,7 @@ void TIM6_DAC_IRQHandler() {
     TIM6->SR &= ~TIM_SR_UIF;
     devs::nsleep::set();
     devs::nsleepPulseWaiter::stop();
-    gfsm::endReset();
+    gfsm::event(gfsm::Event::Init);
 }
 
 void TIM3_IRQHandler() {

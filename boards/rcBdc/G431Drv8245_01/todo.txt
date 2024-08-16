@@ -1,0 +1,19 @@
+ToDo
+-----
+* connected: after reset not shown
+* reset-to-defaults action
+* after disconnect goto state check?
+* curr sometimes not displayed correcly (after calibrate!!)
+* settings -> eeprom (pwm, cutoff);
+* determine eKm for both directions
+* use Rm / eKm for both directions in estimator
+* smooth roll-ouff after eKm measure
+* calibrate UBatt (menu)
+* implement PID-controller (use eKm * UBatt * input-duty as control-input)
+* test with crsf-parameter-type > 1byte, e.g. uint16_t
+* fft-Size -> 2048, measure processing time
+
+Done:
+-----
+* run-protection
+* select crsf-channel

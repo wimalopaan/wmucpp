@@ -35,6 +35,14 @@ namespace Mcu::Stm {
     inline
 #endif
     namespace V3 {
+        #define TEMPSENSOR_CAL1_ADDR               ((uint16_t*) (0x1FFF75A8UL))
+        #define TEMPSENSOR_CAL2_ADDR               ((uint16_t*) (0x1FFF75CAUL))
+        #define TEMPSENSOR_CAL1_TEMP               (30L)
+        #define TEMPSENSOR_CAL2_TEMP               (110L)
+
+        static inline float adc2Temp(const uint16_t v) {
+            return (float)(TEMPSENSOR_CAL2_TEMP - TEMPSENSOR_CAL1_TEMP) / (*TEMPSENSOR_CAL2_ADDR - *TEMPSENSOR_CAL1_ADDR) * (v - *TEMPSENSOR_CAL1_ADDR) + TEMPSENSOR_CAL1_TEMP;
+        }
 
         template<uint8_t N, typename ChannelList, typename TriggerSource = void, typename DmaChannel = void, typename DmaStorage = void, typename ISRConfig = void, typename MCU = DefaultMcu>
         struct Adc;

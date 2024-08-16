@@ -57,31 +57,6 @@ struct ESC20; // CRSF
 using namespace Mcu::Stm;
 using namespace std::literals::chrono_literals;
 
-struct RpmProvider {
-    inline static constexpr auto ibus_type = RC::Protokoll::IBus::Type::type::RPM;
-    inline static constexpr void init() {}
-    inline static constexpr uint16_t value() {
-        return mValue;
-    }
-    inline static uint16_t mValue{};
-};
-struct CurrentProvider {
-    inline static constexpr auto ibus_type = RC::Protokoll::IBus::Type::type::BAT_CURR;
-    inline static constexpr void init() {}
-    inline static constexpr uint16_t value() {
-        return mValue;
-    }
-    inline static uint16_t mValue{};
-};
-struct VoltageProvider {
-    inline static constexpr auto ibus_type = RC::Protokoll::IBus::Type::type::EXTERNAL_VOLTAGE;
-    inline static constexpr void init() {}
-    inline static constexpr uint16_t value() {
-        return mValue;
-    }
-    inline static uint16_t mValue{};
-};
-
 template<typename HW, typename Config, typename MCU = void>
 struct Devices;
 
@@ -104,7 +79,7 @@ struct Devices<ESC20, Config, Mcu::Stm::Stm32G431> {
     static inline constexpr float adc2Voltage(const auto a) {
         constexpr float r1 = 91'000;
         constexpr float r2 = 10'000;
-        constexpr float cal = 0.96;
+        constexpr float cal = 0.94;
         constexpr float vref = 3.3f;
         constexpr float max = 4095.0f;
 
@@ -148,8 +123,6 @@ struct Devices<ESC20, Config, Mcu::Stm::Stm32G431> {
         using timer = systemTimer;
     };
 
-    // using crsfTelemetry = CrsfTelemetry<crsf_out, systemTimer, void>;
-
     // PA2 Telem : USART2-TX, AF7
     // ggf. auch High-Spee Werte Ausgabe (nach Unterabtastung)
     // template<typename PA>
@@ -157,8 +130,6 @@ struct Devices<ESC20, Config, Mcu::Stm::Stm32G431> {
     // using ibus_sensor = RC::Protokoll::IBus::Sensor<ibus_uart, systemTimer, Meta::List<RpmProvider, CurrentProvider, VoltageProvider>, void, true, true>;
     // using ibusrxtx = Mcu::Stm::Pin<gpioa, 2, MCU>;
 
-    // using hsout = Mcu::Stm::Uart<2, void, 4096, char, clock, MCU>;
-    // using hstx = Mcu::Stm::Pin<gpioa, 2, MCU>;
 
            // PB5 Led
     using led = Mcu::Stm::Pin<gpiob, 5, MCU>;
@@ -184,14 +155,14 @@ struct Devices<ESC20, Config, Mcu::Stm::Stm32G431> {
     // DMA
     using dma1 = Mcu::Stm::Dma::Controller<1, MCU>;
 
-   // besser auch die PGA genutzt
-   // PA0 VInSense : ADC12-IN1
-   // PA3 ISense : ADC1-IN4
+    // besser auch die PGA genutzt
+    // PA0 VInSense : ADC12-IN1
+    // PA3 ISense : ADC1-IN13 (Opamp1)
+    // Temp: ADC1-IN16
 
     using adcDmaChannel = Mcu::Stm::Dma::Channel<dma1, 1, MCU>;
-    using adcDmaStorage = std::array<volatile uint16_t, 2>;
-    // using adcDmaStorage = std::array<volatile uint16_t, 2000>; // fuer Messungen max 1000 Samples
-    using adc = Mcu::Stm::V3::Adc<1, Meta::NList<13, 1>, pwm, adcDmaChannel, adcDmaStorage, Meta::List<EndOfSequence>, MCU>; // opamp1
+    using adcDmaStorage = std::array<volatile uint16_t, 3>;
+    using adc = Mcu::Stm::V3::Adc<1, Meta::NList<13, 1, 16>, pwm, adcDmaChannel, adcDmaStorage, Meta::List<EndOfSequence>, MCU>; // opamp1
     using isense = Mcu::Stm::Pin<gpioa, 0, MCU>;
     using vsense = Mcu::Stm::Pin<gpioa, 3, MCU>;
     using pga = Mcu::Stm::PGA<1, MCU>;

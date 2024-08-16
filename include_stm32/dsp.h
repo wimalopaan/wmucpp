@@ -96,6 +96,7 @@ namespace Dsp {
     template<typename Config>
     struct ExpMax {
         constexpr explicit ExpMax(const float f) : f{f} {}
+
         constexpr float process(const float v) {
             max *= (1.0 - f);
             if (v > max) max = v;
@@ -125,9 +126,16 @@ namespace Dsp {
     };
 
 
-    template<typename Config>
+    template<typename Config = void>
     struct ExpMean {
         constexpr explicit ExpMean(const float f = 0.0f) : f{f} {}
+
+        template<auto L, auto U>
+        constexpr etl::ranged_NaN<L, U> process(const etl::ranged_NaN<L, U> v) volatile {
+            const float out = process((float)v);
+            return etl::ranged_NaN<L, U>(out);
+        }
+
         constexpr float process(const float v) volatile {
             mean = f * v + (1.0 - f) * mean;
             return mean;

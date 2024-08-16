@@ -296,12 +296,13 @@ namespace etl {
                 }
             }
         }
-        
+        ranged_NaN<0, High> absolute() const requires((High > 0) && (-Low == High)) {
+            return ranged_NaN<0, High>(std::abs(mValue));
+        }
         ranged_NaN& operator=(const ranged_type& rhs) {
             mValue = rhs;
             return *this;
         }
-        
         void setNaN() {
             mValue = NaN;
         }
