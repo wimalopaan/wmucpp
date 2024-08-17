@@ -3,6 +3,12 @@
 #include <cstdint>
 #include <array>
 
+template<typename T = float>
+struct Directional {
+    T dir1;
+    T dir2;
+};
+
 struct EEProm {
     uint8_t crsf_channel = 1; // 1...16
     uint8_t prerun_check = 1;
@@ -14,9 +20,9 @@ struct EEProm {
 
     uint8_t inertia = 1;
 
-    float resistance = 1.0f;
-    float inductance = 0.001f;
-    float eKm = 1000.0f;
+    Directional<float> resistance{1.0f, 1.0f};
+    Directional<float> inductance{0.001f, 0.001f};
+    Directional<uint16_t> eKm{1000, 1000};
 
     uint8_t calib_ubatt = 100;
 

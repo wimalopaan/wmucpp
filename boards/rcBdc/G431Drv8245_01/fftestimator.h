@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "cmsis.h"
+#include "eeprom.h"
 
 namespace Dsp {
     template<uint16_t Size, typename Source>
@@ -53,15 +54,14 @@ namespace Dsp {
         }
         static inline void update(const auto p) {
             const uint16_t offset = simpleFFT();
-
             if (p) {
                 const float Ubatt = Source::devs::adc2Voltage(Source::meanVoltage());
-                const uint32_t erpmMax = Ubatt * mEKM;
+                const uint32_t erpmMax = Ubatt * (mDir1 ? mEKM.dir1 : mEKM.dir2);
                 const uint16_t pmax = eRpm2index(erpmMax);
 
                 const int16_t px = (p.toInt() >= 0) ? p.toInt() : -p.toInt();
                 const float curr = Source::devs::adc2Current(Source::currMean());
-                const float udiff = curr * mRM;
+                const float udiff = curr * (mDir1 ? mRM.dir1 : mRM.dir2);
                 const float umotor = ((Ubatt * px) / ((p.Upper - p.Lower) / 2) - udiff);
 
                 const float rpm = pmax * umotor / Ubatt;
@@ -121,11 +121,14 @@ namespace Dsp {
         static inline const auto& magnitudeWeighted() {
             return mMagnitudeWeighted;
         }
-        static inline void setEKm(const float k) {
+        static inline void setEKm(const Directional<uint16_t> k) {
             mEKM = k;
         }
-        static inline void setRm(const float r) {
+        static inline void setRm(const Directional<float> r) {
             mRM = r;
+        }
+        static inline void dir1(const bool d) {
+            mDir1 = d;
         }
     private:
         static inline uint16_t eRpm2index(const uint32_t erpm) {
@@ -134,8 +137,9 @@ namespace Dsp {
         static inline uint32_t index2Erpm(const uint16_t i) {
             return (60U * (uint32_t)i * Source::samplingFrequency()) / Size;
         }
-        static inline float mEKM{1875.0f}; // electrical-Upm/V
-        static inline float mRM{7.9f}; // resistance (Ohm)
+        static inline bool mDir1 = true;
+        static inline Directional<uint16_t > mEKM{1875, 1875}; // electrical-Upm/V
+        static inline Directional<float> mRM{7.9f, 7.9f}; // resistance (Ohm)
 
         static inline uint32_t minIndex{0};
         static inline float maxValue{};

@@ -101,11 +101,11 @@ struct KmFsm {
         }
         return false;
     }
-    static inline std::pair<uint16_t, uint16_t> getMeanEKm() {
+    static inline Directional<uint16_t> getMeanEKm() {
         return {meanEKm1, meanEKm2};
     }
-    static inline void setRm(const float r) {
-        IO::outl<Out>("# setRm: ", (uint16_t)(1000 * r));
+    static inline void setRm(const Directional<float> r) {
+        IO::outl<Out>("# setRm: ", (uint16_t)(1000 * r.dir1));
         Rm = r;
     }
     template<typename S = Out>
@@ -132,9 +132,9 @@ struct KmFsm {
         const float umotor = ubatt * duty;
         const float curr = estimator::currMean();
 
-        const float umintern = umotor - curr * Rm;
-
+        const float umintern = umotor - curr * (mDir1 ? Rm.dir1 : Rm.dir2);
         const uint16_t eKM = (float)erpm / umintern;
+
         if ((eKM >= minEKm) && (eKM <= maxEKm)) {
             if (mDir1) {
                 meKMs_dir1.push_back(eKM);
@@ -148,7 +148,7 @@ struct KmFsm {
     static inline bool mDir1 = true;
     static inline uint16_t minEKm = 500;
     static inline uint16_t maxEKm = 5000;
-    static inline float Rm = 0.0f;
+    static inline Directional Rm{0.0f, 0.0f};
     static inline Event mLastEvent = Event::NoEvent;
     static inline uint16_t measureDuty{};
     static inline uint16_t measureDutyMax = (0.9f * pwm::maxDuty()); // parameter

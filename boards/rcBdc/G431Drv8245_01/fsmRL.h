@@ -122,23 +122,25 @@ struct RLFsm {
             IO::outl<S>("# step: ", i, " Lm1: ", (uint16_t)(1000 * measurements.meanRL_dir1[i].Lm), " Lm2: ", (uint16_t)(1000 * measurements.meanRL_dir2[i].Lm));
         }
     }
-    static inline float getLastRm(const bool dir1 = true) {
+    static inline Directional<float> getLastRm(/*const bool dir1 = true*/) {
         const uint8_t last = measurements.step - 1;
-        if (dir1) {
-            return measurements.meanRL_dir1[last].Rm;
-        }
-        else {
-            return measurements.meanRL_dir2[last].Rm;
-        }
+        return {measurements.meanRL_dir1[last].Rm, measurements.meanRL_dir2[last].Rm};
+        // if (dir1) {
+        //     return measurements.meanRL_dir1[last].Rm;
+        // }
+        // else {
+        //     return measurements.meanRL_dir2[last].Rm;
+        // }
     }
-    static inline float getLastLm(const bool dir1 = true) {
+    static inline Directional<float> getLastLm(/*const bool dir1 = true*/) {
         const uint8_t last = measurements.step - 1;
-        if (dir1) {
-            return measurements.meanRL_dir1[last].Lm;
-        }
-        else {
-            return measurements.meanRL_dir2[last].Lm;
-        }
+        return {measurements.meanRL_dir1[last].Lm, measurements.meanRL_dir2[last].Lm};
+        // if (dir1) {
+        //     return measurements.meanRL_dir1[last].Lm;
+        // }
+        // else {
+        //     return measurements.meanRL_dir2[last].Lm;
+        // }
     }
     private:
     static inline constexpr uint16_t minMeasuresPerLevel = 10;

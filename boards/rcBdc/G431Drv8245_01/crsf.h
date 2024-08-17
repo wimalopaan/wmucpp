@@ -44,11 +44,19 @@ struct CrsfCallback {
         r = std::to_chars(std::begin(mPwmFreqString), std::end(mPwmFreqString), fpwm * 100);
         *r.ptr = '\0';
 
-        r = std::to_chars(std::begin(mResistanceString), std::end(mResistanceString), (uint16_t)(eeprom.resistance * 1000));
+        r = std::to_chars(std::begin(mResistanceString), std::end(mResistanceString), (uint16_t)(eeprom.resistance.dir1 * 1000));
+        *r.ptr++ = ' ';
+        r = std::to_chars(r.ptr, std::end(mResistanceString), (uint16_t)(eeprom.resistance.dir2 * 1000));
         *r.ptr = '\0';
-        r = std::to_chars(std::begin(mInductanceString), std::end(mInductanceString), (uint16_t)(eeprom.inductance * 1000));
+
+        r = std::to_chars(std::begin(mInductanceString), std::end(mInductanceString), (uint16_t)(eeprom.inductance.dir1  * 1000));
+        *r.ptr++ = ' ';
+        r = std::to_chars(r.ptr, std::end(mInductanceString), (uint16_t)(eeprom.inductance.dir2  * 1000));
         *r.ptr = '\0';
-        r = std::to_chars(std::begin(mKmString), std::end(mKmString), (uint16_t)(eeprom.eKm / eeprom.telemetry_polepairs));
+
+        r = std::to_chars(std::begin(mKmString), std::end(mKmString), (uint16_t)(eeprom.eKm.dir1 / eeprom.telemetry_polepairs));
+        *r.ptr++ = ' ';
+        r = std::to_chars(r.ptr, std::end(mKmString), (uint16_t)(eeprom.eKm.dir2 / eeprom.telemetry_polepairs));
         *r.ptr = '\0';
     }
 
