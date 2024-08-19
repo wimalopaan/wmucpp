@@ -414,7 +414,7 @@ struct GFSM {
     static inline void pwmIsr(){
         volatile static bool dir = false;
         if (TIM3->SR & TIM_SR_CC1IF) {
-            TIM3->SR &= ~TIM_SR_CC1IF;
+            TIM3->SR = ~TIM_SR_CC1IF;
             devs::tp1::set();
             if (inRLMeasuringState()) {
                 if (const auto rl = identifier::calculateIsr()) {
@@ -432,7 +432,7 @@ struct GFSM {
             devs::tp1::reset();
         }
         if (TIM3->SR & TIM_SR_UIF) {
-            TIM3->SR &= ~TIM_SR_UIF;
+            TIM3->SR = ~TIM_SR_UIF;
             if (inRLMeasuringState()) {
                 devs::tp1::set();
                 identifier::startMeasure();
@@ -508,7 +508,7 @@ void ADC1_2_IRQHandler() {
 }
 
 void TIM6_DAC_IRQHandler() {
-    TIM6->SR &= ~TIM_SR_UIF;
+    TIM6->SR = ~TIM_SR_UIF;
     devs::nsleep::set();
     devs::nsleepPulseWaiter::stop();
     gfsm::event(gfsm::Event::Init);
@@ -520,7 +520,7 @@ void TIM3_IRQHandler() {
 
 void TIM4_IRQHandler() {
     if (TIM4->SR & TIM_SR_CC1IF) {
-        TIM4->SR &= ~TIM_SR_CC1IF;
+        TIM4->SR = ~TIM_SR_CC1IF;
         devs::tp2::set();
         devs::tp2::reset();
     }

@@ -1,6 +1,9 @@
 ToDo
 -----
 * power-on tone
+* when calibrating: display different steps
+* for calibrating: user confirm
+* for resetting: user confirm
 * after disconnect goto state check?
 * curr sometimes not displayed correcly (after calibrate!!)
 * settings -> eeprom (pwm, cutoff);
