@@ -38,6 +38,10 @@ struct Storage {
         std::memcpy(&eeprom, &eeprom_flash, sizeof(EEProm));
         // eeprom = eeprom_flash; // not working: needs volatile
     }
+    static inline void reset() {
+        eeprom = EEProm{};
+    }
+
     __attribute__((__section__(".eeprom")))
     static inline const EEProm eeprom_flash{};
 
@@ -136,6 +140,11 @@ struct GFSM {
 
     static inline void event(const Event e) {
         mEvent = e;
+    }
+    static inline void resetParameter() {
+        Storage::reset();
+        crsfCallback::callbacks();
+        crsfCallback::save();
     }
 
     static inline void updatePwm() {
@@ -461,6 +470,9 @@ struct Notifier {
     }
     static inline void updatePwm() {
         gfsm::updatePwm();
+    }
+    static inline void resetParameter() {
+        gfsm::resetParameter();
     }
 };
 

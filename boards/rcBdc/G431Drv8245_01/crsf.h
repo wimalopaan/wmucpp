@@ -207,6 +207,7 @@ struct CrsfCallback {
         addNode(p, Param_t{parent, PType::Sel, "PreRun Check", "Off;On", &eeprom.prerun_check, 0, 1, [](const uint8_t){return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Calibrate UBatt [0.1%]", nullptr, &eeprom.calib_ubatt, 0, 200, [](const uint8_t){return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Temperature Filter", nullptr, &eeprom.temp_filter, 0, 9, [](const uint8_t v){speed::updateTempFilter(v); return true;}});
+        addNode(p, Param_t{parent, PType::Command, "Reset to defaults", "Resetting...", nullptr, 0, 0, [](const uint8_t v){if (v > 0) notifier::resetParameter(); return false;}});
         parent = addParent(p, Param_t{0, PType::Folder, "PID-Controller"});
         addNode(p, Param_t{parent, PType::Sel, "Enable", "Off;On", &eeprom.use_pid, 0, 1});
         addNode(p, Param_t{parent, PType::U8,  "PID-P", nullptr, &eeprom.pid_p, 0, 100, [](const uint8_t){return true;}});
