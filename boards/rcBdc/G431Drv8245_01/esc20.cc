@@ -45,7 +45,26 @@ struct Storage {
 };
 
 struct Speed {
-    static inline Dsp::ExpMean<void> dutyFilter{Storage::eeprom.inertia * 0.1f};
+    static inline void updateDutyFilter(const uint8_t v) {
+        dutyFilter.factor(inertiaF(v));
+    }
+    static inline void updateTempFilter(const uint8_t v) {
+        tempFilter.factor(tempF(v));
+    }
+    private:
+    static inline float inertiaF(const uint8_t v) {
+        if (v > 9) return 0.1f;
+        const float f = (10 - v) * 0.1f;
+        return f;
+    }
+    static inline float tempF(const uint8_t v) {
+        if (v > 9) return 0.01f;
+        const float f = (100 - (v * 11)) * 0.01f;
+        return f;
+    }
+    public:
+    static inline Dsp::ExpMean<void> dutyFilter{inertiaF(Storage::eeprom.inertia)};
+    static inline Dsp::ExpMean<void> tempFilter{tempF(Storage::eeprom.temp_filter)};
 };
 
 template<typename Devices>
@@ -265,7 +284,7 @@ struct GFSM {
                 crsfTelemetry::batt(devs::adc2Voltage(subSampler::meanVoltage()) * 10);
                 crsfTelemetry::curr(devs::adc2Current(subSampler::currMean()) * 10);
 
-                const uint16_t t = Mcu::Stm::adc2Temp(adc::mData[2]);
+                const uint16_t t = Speed::tempFilter.process(Mcu::Stm::adc2Temp(adc::mData[2]));
                 crsfTelemetry::temp1(t);
 
                 const auto vf = Speed::dutyFilter.process(input);

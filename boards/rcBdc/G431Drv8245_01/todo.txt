@@ -1,6 +1,7 @@
 ToDo
 -----
 * reset-to-defaults action
+* power-on tone
 * after disconnect goto state check?
 * curr sometimes not displayed correcly (after calibrate!!)
 * settings -> eeprom (pwm, cutoff);
@@ -12,6 +13,7 @@ ToDo
 
 Done:
 -----
+* temperatur exp filter
 * determine eKm for both directions
 * use Rm / eKm for both directions in estimator
 * connected: after reset not shown

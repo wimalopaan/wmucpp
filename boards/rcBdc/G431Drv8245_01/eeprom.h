@@ -25,6 +25,7 @@ struct EEProm {
     Directional<uint16_t> eKm{1000, 1000};
 
     uint8_t calib_ubatt = 100;
+    uint8_t temp_filter = 1;
 
     uint8_t use_pid = 0;
     uint8_t pid_p = 90;
