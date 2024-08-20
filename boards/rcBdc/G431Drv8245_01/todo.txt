@@ -1,6 +1,5 @@
 ToDo
 -----
-* power-on tone
 * when calibrating: display different steps
 * for calibrating: user confirm
 * for resetting: user confirm
@@ -15,6 +14,7 @@ ToDo
 
 Done:
 -----
+* power-on tone
 * reset-to-defaults action
 * temperatur exp filter
 * determine eKm for both directions
