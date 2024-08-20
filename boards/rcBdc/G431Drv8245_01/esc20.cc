@@ -30,6 +30,7 @@ namespace Mcu::Stm {
 #include "fsmRun.h"
 #include "fsmRL.h"
 #include "fsmKM.h"
+#include "toneplay.h"
 
 using namespace std::literals::chrono_literals;
 
@@ -111,6 +112,8 @@ struct GFSM {
     // using kmfsm = KmFsm<systemTimer, pwm, estimator, config, trace>;
     using kmfsm = KmFsm<systemTimer, pwm, estimator, config, void>;
 
+    using toneplay = External::TonePlayer<pwm, systemTimer, Storage, void>;
+
 #ifdef USE_GNUPLOT
     using plot = Graphics::Gnuplot<trace, Meta::List<Adapter0<estimator>, Adapter1<estimator>, Adapter2<estimator>, Adapter3<estimator>, Adapter4<estimator>>>;
     // using plot = Graphics::Gnuplot<hsout, Meta::List<Adapter0<estimator>>>;
@@ -125,6 +128,10 @@ struct GFSM {
     enum class State : uint8_t {Undefined = 0x00,
                                 Init,
                                 Check, Run, Reset,
+                                PlayStartupTone,
+                                PlayRunTone,
+                                PlayWaitTone,
+                                PlayTone,
                                 PrintMeasures,
                                 StartCalibrate,
                                 StopCalibrate,
@@ -169,6 +176,14 @@ struct GFSM {
         case State::Init:
             break;
         case State::Check:
+            break;
+        case State::PlayStartupTone:
+            break;
+        case State::PlayRunTone:
+            break;
+        case State::PlayWaitTone:
+            break;
+        case State::PlayTone:
             break;
         case State::Run:
 #ifdef USE_GNUPLOT
@@ -217,6 +232,8 @@ struct GFSM {
         crsfTelemetry::ratePeriodic();
         crsf_out::ratePeriodic();
 
+        toneplay::ratePeriodic();
+
         ++mStateTick;
         ++mTelemTick;
         switch(mState) {
@@ -234,6 +251,26 @@ struct GFSM {
                     mState = State::Run;
                 }
             });
+            break;
+        case State::PlayStartupTone:
+            if (toneplay::isOff()) {
+                mState = State::Init;
+            }
+            break;
+        case State::PlayRunTone:
+            if (toneplay::isOff()) {
+                mState = State::Run;
+            }
+            break;
+        case State::PlayWaitTone:
+            if (toneplay::isOff()) {
+                const auto input = servo_pa::normalized(Storage::eeprom.crsf_channel - 1);
+                if (input == 0) {
+                    mState = State::PlayRunTone;
+                }
+            }
+            break;
+        case State::PlayTone:
             break;
         case State::StartCalibrate:
             mStateTick.on(waitTicks, [&]{
@@ -271,9 +308,14 @@ struct GFSM {
             mStateTick.on(initTicks, [&]{
                 IO::outl<trace>("# ch: ", Storage::eeprom.crsf_channel, " v: ", (int16_t)input, " conn: ", (uint8_t)mLinkStatus);
             });
-            if ((mLinkStatus == LinkStatus::Connected) && (input == 0)) {
-                mState = State::Run;
-            }}
+            if (mLinkStatus == LinkStatus::Connected) {
+                if (input == 0) {
+                    mState = State::PlayRunTone;
+                } else {
+                    mState = State::PlayWaitTone;
+                }
+            }
+        }
             break;
         case State::Run:
             if (std::exchange(mEvent, Event::None) == Event::StartCalibrate) {
@@ -314,7 +356,7 @@ struct GFSM {
             break;
         case State::Reset:
             if (std::exchange(mEvent, Event::None) == Event::Init) {
-                mState = State::Init;
+                mState = State::PlayStartupTone;
             }
             break;
         }
@@ -327,6 +369,21 @@ struct GFSM {
                 IO::outl<trace>("# Init");
                 led::event(led::Event::Steady);
                 adc::start();
+                break;
+            case State::PlayStartupTone:
+                toneplay::event(toneplay::Event::PlayTune1);
+                break;
+            case State::PlayRunTone:
+                toneplay::event(toneplay::Event::PlayTune3);
+                break;
+            case State::PlayWaitTone:
+                toneplay::event(toneplay::Event::PlayTune4);
+                break;
+            case State::PlayTone:
+                IO::outl<trace>("# PlayTone");
+                pwm::setToneMode();
+                pwm::duty(100);
+                pwm::pwm(400);
                 break;
             case State::StartCalibrate:
                 IO::outl<trace>("# Start Cal");
@@ -390,9 +447,14 @@ struct GFSM {
     static inline bool isCalibrating() {
         return mState != State::Run;
     }
-
     static inline bool inRLMeasuringState() {
         return mState == State::MeasRL;
+    }
+    static inline bool inToneState() {
+        return (mState == State::PlayTone)
+                || (mState == State::PlayStartupTone)
+                || (mState == State::PlayRunTone)
+                || (mState == State::PlayWaitTone);
     }
 
     static inline void adcIsr() {
@@ -421,6 +483,15 @@ struct GFSM {
                     // IO::outl<trace>("# Rm: ", (uint16_t)(1000 * rl->Rm), " Lm: ", (uint16_t)(rl->Lm));
                     rlfsm::addMeasurement(*rl, dir);
                 }
+                if (dir) {
+                    pwm::dir1();
+                }
+                else {
+                    pwm::dir2();
+                }
+                dir = !dir;
+            }
+            else if (inToneState()) {
                 if (dir) {
                     pwm::dir1();
                 }

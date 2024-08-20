@@ -110,6 +110,13 @@ namespace Mcu::Stm {
 
                     adcTimer->CR1 |= TIM_CR1_CEN;
                 }
+                static inline void setToneMode() {
+                    Mcu::Stm::Timers::reset<AdcTimerNumber>();
+
+                    // pwmTimer: cc1 / cc2 as trgo
+                    MODIFY_REG(pwmTimer->CR2, TIM_CR2_MMS_Msk, (0b0100 << TIM_CR2_MMS_Pos));
+                }
+
                 static inline uint16_t pwmFreq() {
                     return freq;
                 }
