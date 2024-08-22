@@ -101,6 +101,9 @@ struct KmFsm {
         }
         return false;
     }
+    static inline bool isDir1() {
+        return mDir1;
+    }
     static inline Directional<uint16_t> getMeanEKm() {
         return {meanEKm1, meanEKm2};
     }

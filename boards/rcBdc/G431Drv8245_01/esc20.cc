@@ -100,6 +100,7 @@ struct GFSM {
     using crsfTelemetry = crsfCallback::crsfTelemetry;
 
     static inline constexpr uint16_t fSize = 1024;
+    // static inline constexpr uint16_t fSize = 2048; // RAM overflow
     using subSampler = Dsp::SubSampler<devs, fSize>;
     using estimator = Dsp::FFTEstimator<fSize, subSampler>;
 
@@ -113,6 +114,8 @@ struct GFSM {
     using kmfsm = KmFsm<systemTimer, pwm, estimator, config, void>;
 
     using toneplay = External::TonePlayer<pwm, systemTimer, Storage, void>;
+
+    using comp1 = devs::comp1;
 
 #ifdef USE_GNUPLOT
     using plot = Graphics::Gnuplot<trace, Meta::List<Adapter0<estimator>, Adapter1<estimator>, Adapter2<estimator>, Adapter3<estimator>, Adapter4<estimator>>>;
@@ -234,6 +237,8 @@ struct GFSM {
 
         toneplay::ratePeriodic();
 
+        comp1::ratePeriodic();
+
         ++mStateTick;
         ++mTelemTick;
         switch(mState) {
@@ -325,13 +330,14 @@ struct GFSM {
                 const auto input = servo_pa::normalized(Storage::eeprom.crsf_channel - 1);
                 estimator::dir1(input >= 0);
                 estimator::update(input);
-                const uint16_t mRpm = estimator::eRpm() / Storage::eeprom.telemetry_polepairs;
-                if (mRpm > 26) {
-                    crsfTelemetry::rpm1(mRpm);
+                const uint16_t rpm = estimator::eRpm() / Storage::eeprom.telemetry_polepairs;
+                if (rpm > 26) {
+                    crsfTelemetry::rpm1(rpm);
                 }
                 else {
                     crsfTelemetry::rpm1(0);
                 }
+
                 crsfTelemetry::batt(devs::adc2Voltage(subSampler::meanVoltage()) * 10);
                 crsfTelemetry::curr(devs::adc2Current(subSampler::currMean()) * 10);
 
@@ -348,10 +354,23 @@ struct GFSM {
                     pwm::dir2();
                     pwm::duty(b);
                 }
+
+                // Test code for estimating Rm
+                const float km1 = Storage::eeprom.eKm.dir1;
+                const float ubatt = estimator::uBattMean();
+                const float d = vf.absolute();
+                im = (estimator::currMean() * d) / 1000;
+                ue = ubatt * d / 1000;
+                um = ((float)rpm) / km1;
+                lastRm = (ue - um) / im;
             });
             mStateTick.on(initTicks, [&]{
-                IO::outl<trace>("# rpm: ", estimator::eRpmNoWindow() / Storage::eeprom.telemetry_polepairs);
-                IO::outl<trace>("# meanADC: ", (uint16_t)subSampler::currMeanADC(), " mean: ", (uint16_t)subSampler::currMean(), " g:", subSampler::gain(), " volt: ", (uint16_t)(10.0f * devs::adc2Voltage(subSampler::meanVoltage())));
+                IO::outl<trace>("# Rm: ", (uint32_t)(1000 * lastRm), " ue: ", (uint16_t)(10 * ue), " um: ", (uint16_t)(10 * um), " im: ", (uint16_t)(100 * im));
+                // IO::outl<trace>("# MTemp: ", (uint16_t)(10 * comp1::temperatur()));
+                // IO::outl<trace>("# rpm: ", estimator::eRpmNoWindow() / Storage::eeprom.telemetry_polepairs);
+                // IO::outl<trace>("# meanADC: ", (uint16_t)subSampler::currMeanADC(), " mean: ", (uint16_t)subSampler::currMean(), " g:", subSampler::gain(), " volt: ", (uint16_t)(10.0f * devs::adc2Voltage(subSampler::meanVoltage())));
+
+
             });
             break;
         case State::Reset:
@@ -371,12 +390,15 @@ struct GFSM {
                 adc::start();
                 break;
             case State::PlayStartupTone:
+                IO::outl<trace>("# Play Startup Tone");
                 toneplay::event(toneplay::Event::PlayTune1);
                 break;
             case State::PlayRunTone:
+                IO::outl<trace>("# Play Run Tone");
                 toneplay::event(toneplay::Event::PlayTune3);
                 break;
             case State::PlayWaitTone:
+                IO::outl<trace>("# Play Wait Tone");
                 toneplay::event(toneplay::Event::PlayTune4);
                 break;
             case State::PlayTone:
@@ -413,7 +435,6 @@ struct GFSM {
                 const auto Rm = rlfsm::getLastRm();
                 const auto Lm = rlfsm::getLastLm();
                 const auto eKm = kmfsm::getMeanEKm();
-                // todo: distinct values for both directions
                 Storage::eeprom.resistance = Rm;
                 Storage::eeprom.inductance = Lm;
                 Storage::eeprom.eKm = eKm;
@@ -446,6 +467,26 @@ struct GFSM {
     }
     static inline bool isCalibrating() {
         return mState != State::Run;
+    }
+    static inline uint8_t getCalibrateStateNumber() {
+        switch(mState) {
+        case State::StartCalibrate:
+            return 1;
+            break;
+        case State::MeasRL:
+            return 2;
+            break;
+        case State::MeasRot:
+            return 3 + kmfsm::isDir1();
+            break;
+        case State::PrintMeasures:
+        case State::StopCalibrate:
+            return 5;
+            break;
+        default:
+            return 0;
+            break;
+        }
     }
     static inline bool inRLMeasuringState() {
         return mState == State::MeasRL;
@@ -512,6 +553,10 @@ struct GFSM {
         }
     }
     private:
+    static inline float im;
+    static inline float ue;
+    static inline float um;
+    static inline float lastRm;
     static inline volatile State mState{State::Undefined};
     static inline External::Tick<systemTimer> mStateTick;
     static inline External::Tick<systemTimer> mTelemTick;
@@ -539,6 +584,10 @@ struct Notifier {
     static inline bool isCalibrating() {
         return gfsm::isCalibrating();
     }
+    static inline uint8_t getCalibrateStateNumber() {
+        return gfsm::getCalibrateStateNumber();
+    }
+
     static inline void updatePwm() {
         gfsm::updatePwm();
     }
@@ -553,9 +602,20 @@ int main() {
     gfsm::update();
 
     NVIC_EnableIRQ(TIM6_DAC_IRQn);
+    NVIC_SetPriority(TIM6_DAC_IRQn, 1);
+
     NVIC_EnableIRQ(ADC1_2_IRQn);
+    NVIC_SetPriority(ADC1_2_IRQn, 1);
+
     NVIC_EnableIRQ(TIM3_IRQn);
+    NVIC_SetPriority(TIM3_IRQn, 1);
+
     NVIC_EnableIRQ(TIM4_IRQn);
+    NVIC_SetPriority(TIM4_IRQn, 1);
+
+    NVIC_EnableIRQ(COMP1_2_3_IRQn);
+    NVIC_SetPriority(COMP1_2_3_IRQn, 0);
+
     __enable_irq();
 
     while(true) {
@@ -573,6 +633,15 @@ void __assert_func (const char *, int, const char *, const char *){
 }
 
 extern "C" {
+
+void COMP1_2_3_IRQHandler() {
+    devs::tp2::set();
+    if (EXTI->PR1 & EXTI_PR1_PIF21) {
+        EXTI->PR1 = EXTI_PR1_PIF21;
+        devs::comp1::isr();
+    }
+    devs::tp2::reset();
+}
 
 void ADC1_2_IRQHandler() {
     gfsm::adcIsr();
@@ -592,8 +661,8 @@ void TIM3_IRQHandler() {
 void TIM4_IRQHandler() {
     if (TIM4->SR & TIM_SR_CC1IF) {
         TIM4->SR = ~TIM_SR_CC1IF;
-        devs::tp2::set();
-        devs::tp2::reset();
+        // devs::tp2::set();
+        // devs::tp2::reset();
     }
 }
 

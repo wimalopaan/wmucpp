@@ -84,7 +84,7 @@ struct CrsfCallback {
         }
     }
     static inline RC::Protokoll::Crsf::Parameter<uint8_t> parameter(const uint8_t index) {
-        IO::outl<trace>("# GetP i: ", index);
+        // IO::outl<trace>("# GetP i: ", index);
         if ((index >= 1) && (index <= params.size())) {
             return params[index - 1];
         }
@@ -169,6 +169,9 @@ struct CrsfCallback {
 
     static inline bool sendCalibrateEvent(const uint8_t v) {
         if (v == 1) {
+            return true; // ask confirm
+        }
+        else if (v == 4) {
             return notifier::startCalibrate();
         }
         else if (v == 5) {
@@ -187,18 +190,39 @@ struct CrsfCallback {
     static inline void addNode(auto& c, const Param_t& p) {
         c.push_back(p);
     }
+
+    static inline std::array<const char*, 6> mCalibratingTexts {
+        "Initial",
+        "Calibrating ...",
+        "Measure Rm, Lm ...",
+        "Measure Km (CW) ...",
+        "Measure Km (CCW) ...",
+        "Finished calibrating"
+    };
+    static inline bool calibCallback(const uint8_t v) {
+        const bool res = sendCalibrateEvent(v);
+        const uint8_t s = notifier::getCalibrateStateNumber();
+        IO::outl<trace>("# calibCallback v: ", v, " s: ", s);
+        if (s < std::size(mCalibratingTexts)) {
+            params[mCalibCommand].mOptions = mCalibratingTexts[s];
+        }
+        return res;
+    }
+    static inline uint8_t mCalibCommand{};
+
     using params_t = etl::FixedVector<Param_t, 64>;
     static inline params_t params = []{
         params_t p;
         addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
-        addNode(p, Param_t{0, PType::U8,  "PolePairs", nullptr, &eeprom.telemetry_polepairs, 2, 12, [](const uint8_t v){update(); return true;}});
+        addNode(p, Param_t{0, PType::U8,  "PolePairs", nullptr, &eeprom.telemetry_polepairs, 2, 12, [](const uint8_t){update(); return true;}});
         addNode(p, Param_t{0, PType::U8,  "Cutoff_Freq [100Hz]", nullptr, &eeprom.cutoff_freq, 5, 15, [](const uint8_t){notifier::updatePwm(); return true;}});
         addNode(p, Param_t{0, PType::U8,  "Sample_Freq / Cutoff_Freq", nullptr, &eeprom.n_fsample, 2, 4, [](const uint8_t){notifier::updatePwm(); return true;}});
         addNode(p, Param_t{0, PType::U8,  "Pwm_Freq / Sample_Freq", nullptr, &eeprom.subsampling, 4, 16, [](const uint8_t){notifier::updatePwm(); return true;}});
         addNode(p, Param_t{0, PType::U8,  "Inertia", nullptr, &eeprom.inertia, 0, 9, [](const uint8_t v){speed::updateDutyFilter(v); return true;}});
         addNode(p, Param_t{0, PType::Sel, "PWM Freq", &mPwmFreqString[0], nullptr, 0, 0});
         addNode(p, Param_t{0, PType::Sel, "Max RPM", &mMaxRpmString[0], nullptr, 0, 0});
-        addNode(p, Param_t{0, PType::Command, "Calibrate", "Calibrating...", nullptr, 0, 0, [](uint8_t v){return sendCalibrateEvent(v); }});
+        addNode(p, Param_t{0, PType::Command, "Calibrate", mCalibratingTexts[0], nullptr, 0, 0, [](const uint8_t v){return calibCallback(v);}});
+        mCalibCommand = p.size() - 1;
         addNode(p, Param_t{0, PType::Sel, "Resistance [mOhm]", &mResistanceString[0], nullptr, 0, 0});
         addNode(p, Param_t{0, PType::Sel, "Inductance [uH]", &mInductanceString[0], nullptr, 0, 0});
         addNode(p, Param_t{0, PType::Sel, "Km [Rpm/V]", &mKmString[0], nullptr, 0, 0});
@@ -208,7 +232,7 @@ struct CrsfCallback {
         addNode(p, Param_t{parent, PType::U8,  "Tone volume", nullptr, &eeprom.volume, 0, 200, [](const uint8_t){return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Calibrate UBatt [0.1%]", nullptr, &eeprom.calib_ubatt, 0, 200, [](const uint8_t){return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Temperature Filter", nullptr, &eeprom.temp_filter, 0, 9, [](const uint8_t v){speed::updateTempFilter(v); return true;}});
-        addNode(p, Param_t{parent, PType::Command, "Reset to defaults", "Resetting...", nullptr, 0, 0, [](const uint8_t v){if (v > 0) notifier::resetParameter(); return false;}});
+        addNode(p, Param_t{parent, PType::Command, "Reset to defaults", "Resetting...", nullptr, 0, 0, [](const uint8_t v){if (v == 1) return true; if (v == 4) notifier::resetParameter(); return false;}});
         parent = addParent(p, Param_t{0, PType::Folder, "PID-Controller"});
         addNode(p, Param_t{parent, PType::Sel, "Enable", "Off;On", &eeprom.use_pid, 0, 1});
         addNode(p, Param_t{parent, PType::U8,  "PID-P", nullptr, &eeprom.pid_p, 0, 100, [](const uint8_t){return true;}});

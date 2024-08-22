@@ -315,7 +315,7 @@ namespace RC {
 
                         static inline void sendDeviceInfo() {
                             using namespace etl::literals;
-                            IO::outl<debug>("DI adr: ", (uint8_t)mExtendedDestination);
+                            IO::outl<debug>("# DI adr: ", (uint8_t)mExtendedDestination);
                             mReply.clear();
                             mReply.push_back(mExtendedDestination);
                             mReply.push_back(mExtendedSource);
@@ -329,7 +329,7 @@ namespace RC {
                         }
 
                         static inline void sendCommandResponse(const uint8_t pIndex, const uint8_t value) {
-                            IO::outl<debug>("sCR adr: ", (uint8_t)mExtendedDestination, " i: ", pIndex, " v: ", value);
+                            IO::outl<debug>("# sCR adr: ", (uint8_t)mExtendedDestination, " i: ", pIndex, " v: ", value);
                             mReply.clear();
                             mReply.push_back(mExtendedDestination);
                             mReply.push_back(mExtendedSource);
@@ -341,8 +341,25 @@ namespace RC {
                                 etl::push_back_ntbs(CB::parameter(pIndex).mName, mReply);
                             }
                             if (value == 1) { // start
-                                if (auto cb = CB::parameter(pIndex).cb; cb) {
-                                    cb(1);
+                                if (const auto cb = CB::parameter(pIndex).cb; cb) {
+                                    if (cb(1)) {
+                                        etl::serialize(uint8_t{3}, mReply); // ask confirm
+                                    }
+                                    else {
+                                        etl::serialize(uint8_t{2}, mReply); // executing
+                                    }
+                                }
+                                etl::serialize(uint8_t{100}, mReply); // update-timeout: 1s
+                                if (CB::parameter(pIndex).mOptions) {
+                                    etl::push_back_ntbs(CB::parameter(pIndex).mOptions, mReply);
+                                }
+                                else {
+                                    etl::serialize(uint8_t{0}, mReply);
+                                }
+                            }
+                            else if (value == 4) { // confirmed
+                                if (const auto cb = CB::parameter(pIndex).cb; cb) {
+                                    cb(4);
                                 }
                                 etl::serialize(uint8_t{2}, mReply); // executing
                                 etl::serialize(uint8_t{100}, mReply); // update-timeout: 1s
@@ -354,12 +371,12 @@ namespace RC {
                                 }
                             }
                             else if (value == 5) { // cancel
-                                if (auto cb = CB::parameter(pIndex).cb; cb) {
+                                if (const auto cb = CB::parameter(pIndex).cb; cb) {
                                     cb(5);
                                 }
                             }
                             else if (value == 6) { // update-request
-                                if (auto cb = CB::parameter(pIndex).cb; cb) {
+                                if (const auto cb = CB::parameter(pIndex).cb; cb) {
                                     const bool res = cb(6);
                                     if (res) { // still executing
                                         etl::serialize(uint8_t{2}, mReply);
@@ -372,7 +389,9 @@ namespace RC {
                                     etl::serialize(uint8_t{0}, mReply); // finished
                                 }
                                 etl::serialize(uint8_t{100}, mReply); // update-timeout: 1s
+
                                 if (CB::parameter(pIndex).mOptions) {
+                                    IO::outl<debug>("# sCR opt: ", CB::parameter(pIndex).mOptions);
                                     etl::push_back_ntbs(CB::parameter(pIndex).mOptions, mReply);
                                 }
                                 else {
@@ -382,7 +401,7 @@ namespace RC {
                             out::data(RC::Protokoll::Crsf::Type::ParamEntry, mReply);
                         }
                         static inline void sendParameterInfo(const uint8_t pIndex) {
-                            IO::outl<debug>("PI adr: ", (uint8_t)mExtendedDestination, " i: ", pIndex);
+                            IO::outl<debug>("# PI adr: ", (uint8_t)mExtendedDestination, " i: ", pIndex);
                             mReply.clear();
                             mReply.push_back(mExtendedDestination);
                             mReply.push_back(mExtendedSource);
@@ -603,7 +622,7 @@ namespace RC {
                             break;
                         case State::ParameterWrite:
                             if (mPayloadIndex >= mLength) {
-                                IO::outl<debug>("PW", (uint8_t)mExtendedDestination, " i: ", mParameterIndex);
+                                IO::outl<debug>("# PW", (uint8_t)mExtendedDestination, " i: ", mParameterIndex);
                                 if (csum == b) {
                                     ++mParameterWritePackagesCounter;
                                     ++mPackagesCounter;
@@ -786,7 +805,7 @@ namespace RC {
 
                         static inline void sendDeviceInfo() {
                             using namespace etl::literals;
-    //                        IO::outl<debug>("DI adr: ", (uint8_t)mExtendedDestination);
+    //                        IO::outl<debug>("# DI adr: ", (uint8_t)mExtendedDestination);
                             mReply.clear();
                             mReply.push_back(mExtendedDestination);
                             mReply.push_back(mExtendedSource);
@@ -801,7 +820,7 @@ namespace RC {
 
                         static inline void sendCommandResponse(const uint8_t pIndex, const uint8_t value) {
                             if (!std::is_same_v<debug, void>) {
-                                IO::outl<debug>("sCR adr: ", (uint8_t)mExtendedDestination, " i: ", pIndex);
+                                IO::outl<debug>("# sCR adr: ", (uint8_t)mExtendedDestination, " i: ", pIndex);
                             }
                             mReply.clear();
                             mReply.push_back(mExtendedDestination);
@@ -828,7 +847,7 @@ namespace RC {
                             out::data(RC::Protokoll::Crsf::Type::ParamEntry, mReply);
                         }
                         static inline void sendParameterInfo(const uint8_t pIndex) {
-    //                        IO::outl<debug>("PI adr: ", (uint8_t)mExtendedDestination, " i: ", pIndex);
+    //                        IO::outl<debug>("# PI adr: ", (uint8_t)mExtendedDestination, " i: ", pIndex);
                             mReply.clear();
                             mReply.push_back(mExtendedDestination);
                             mReply.push_back(mExtendedSource);
@@ -1030,11 +1049,11 @@ namespace RC {
                         break;
                         case State::ParameterWrite:
                             if (!std::is_same_v<debug, void>) {
-                                IO::outl<debug>("PW", (uint8_t)mExtendedDestination, " i: ", mParameterIndex);
+                                IO::outl<debug>("# PW", (uint8_t)mExtendedDestination, " i: ", mParameterIndex);
                             }
                             if (mPayloadIndex >= mLength) {
                                 if (!std::is_same_v<debug, void>) {
-                                    IO::outl<debug>("PW", (uint8_t)mExtendedDestination, " i: ", mParameterIndex);
+                                    IO::outl<debug>("#PW", (uint8_t)mExtendedDestination, " i: ", mParameterIndex);
                                 }
                                 if (csum == b) {
                                     ++mParameterWritePackagesCounter;

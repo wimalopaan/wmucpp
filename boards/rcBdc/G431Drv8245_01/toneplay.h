@@ -95,7 +95,7 @@ namespace External {
         }
         static inline uint8_t mNoteIndex = 0;
         static inline uint8_t mTuneIndex = 0;
-        static inline auto mTunes = []{
+        static inline constexpr auto mTunes = []{
             std::array<std::array<Note, 4>, 4> tunes;
             tunes[0] = {Note{200ms, 440}, Note{200ms, 554}, Note{200ms, 659}, Note{200ms, 880}};
             tunes[1] = {Note{200ms, 880}, Note{200ms, 659}, Note{200ms, 523}, Note{200ms, 440}};

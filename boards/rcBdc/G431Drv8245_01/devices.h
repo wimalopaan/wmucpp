@@ -35,6 +35,7 @@
 #include "bluetooth/hc05.h"
 #include "motor/bdc.h"
 #include "blinker.h"
+#include "comparator.h"
 
 #include "crsf.h"
 #include "telemetry.h"
@@ -67,7 +68,11 @@ struct Devices<ESC20, Config, Mcu::Stm::Stm32G431> {
     using MCU = Mcu::Stm::Stm32G431;
     using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<170_MHz, 2'000_Hz, Mcu::Stm::HSI>, MCU>; // besser wegen Abwärme im BD433 (bis 24V)
     using systemTimer = Mcu::Stm::SystemTimer<clock, Mcu::UseInterrupts<false>, MCU>;
+#ifdef USE_GNUPLOT
     using trace = Arm::Trace<clock, 10_MHz, 4096>;
+#else
+    using trace = Arm::Trace<clock, 10_MHz, 1024>;
+#endif
 
     using store = Config::storage;
 
@@ -168,6 +173,7 @@ struct Devices<ESC20, Config, Mcu::Stm::Stm32G431> {
     using pga = Mcu::Stm::PGA<1, MCU>;
 
     // PA1 Comparator Lmt01
+    using compinp = Mcu::Stm::Pin<gpioa, 1, MCU>;
 
     // PA4 Testpunkt0, DAC1-Out1
     // PA5 Testpunkt1, DAC1-Out2
@@ -177,6 +183,7 @@ struct Devices<ESC20, Config, Mcu::Stm::Stm32G431> {
     using tp1 = Mcu::Stm::Pin<gpioa, 5, MCU>;
     using tp2 = Mcu::Stm::Pin<gpiob, 6, MCU>;
     // using dac = Mcu::Stm::Dac<1, MCU>;
+    using comp1 = Mcu::Stm::Comparator<1, compinp, Mcu::Stm::VRefDiv<3, 4>, tp2>;
 
     static inline void init() {
         clock::init();
@@ -253,6 +260,9 @@ struct Devices<ESC20, Config, Mcu::Stm::Stm32G431> {
         // // hsout::baud(1'152'000);
         // hsout::baud(921'600);
         // // hsout::baud(115'200);
+
+        comp1::init();
+        comp1::enableInt();
 
         tp2::set();
         tp2::reset();

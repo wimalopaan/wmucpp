@@ -30,6 +30,7 @@ boards/nucleo_g431/sdr/test101.cc
 boards/nucleo_g431/sdr/test99.cc
 boards/rcBdc/G431Drv8245_01/Makefile
 boards/rcBdc/G431Drv8245_01/cmsis.h
+boards/rcBdc/G431Drv8245_01/comparator.h
 boards/rcBdc/G431Drv8245_01/config.h
 boards/rcBdc/G431Drv8245_01/crsf.h
 boards/rcBdc/G431Drv8245_01/devices.h

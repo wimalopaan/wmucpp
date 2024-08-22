@@ -36,4 +36,8 @@ namespace Mcu::Components {
     struct DmaChannel {
         using number_t = std::integral_constant<uint8_t, N>;
     };
+    template<uint8_t N>
+    struct Comparator {
+        using number_t = std::integral_constant<uint8_t, N>;
+    };
 }

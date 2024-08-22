@@ -1,8 +1,11 @@
+Tests:
+-----
+* Test 2048-FFT processing time
+
 ToDo
 -----
-* when calibrating: display different steps
-* for calibrating: user confirm
-* for resetting: user confirm
+* pulse-count hysterese via DAC
+* check Rm measure (pwm-freq?, saturation?)
 * after disconnect goto state check?
 * curr sometimes not displayed correcly (after calibrate!!)
 * settings -> eeprom (pwm, cutoff);
@@ -10,10 +13,18 @@ ToDo
 * calibrate UBatt (menu)
 * implement PID-controller (use eKm * UBatt * input-duty as control-input)
 * test with crsf-parameter-type > 1byte, e.g. uint16_t
-* fft-Size -> 2048, measure processing time
+
+Details:
+-----
+* pulse-count hysterese (DAC) via DMA
+* pulse-count: counting-timer + retriggerable-one-oulse-timer gating
 
 Done:
 -----
+* for resetting: user confirm
+* for calibrating: user confirm
+* when calibrating: display different steps
+* externer temperatursensor LMT01
 * power-on tone
 * reset-to-defaults action
 * temperatur exp filter
@@ -22,3 +33,7 @@ Done:
 * connected: after reset not shown
 * run-protection
 * select crsf-channel
+
+Rejected:
+-----
+* fft-Size: 2048, measure processing time -> not enough RAM STM32G473
