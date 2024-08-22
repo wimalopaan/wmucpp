@@ -56,19 +56,24 @@ struct RLFsm {
             mStateTick.reset();
             switch(mState) {
             case State::Idle:
+                IO::outl<Out>("# RL Idle");
                 return true;
                 break;
             case State::Start:
-                IO::outl<Out>("# MeasStart");
+                IO::outl<Out>("# RL MeasStart");
                 measurements = RLMeasurements<volatile float>{};
                 measureDuty = 0;
+                actualMeasCount_dir1 = 0;
+                actualMeasCount_dir2 = 0;
+                actualMeas_dir1 = RL<volatile float>{};
+                actualMeas_dir2 = RL<volatile float>{};
                 pwm::duty(measureDuty);
                 pwm::setMultiMode();
                 pwm::pwm(config::fPwmIdentify);
                 identifier::reset();
                 break;
             case State::Inc:
-                IO::outl<Out>("# MeasInc");
+                IO::outl<Out>("# RL MeasInc");
                 // save RL values
                 if ((actualMeasCount_dir1 > minMeasuresPerLevel) && (actualMeasCount_dir2 > minMeasuresPerLevel)) {
                     RL<> m1;
@@ -93,10 +98,10 @@ struct RLFsm {
                 pwm::duty(measureDuty);
                 break;
             case State::Meas:
-                IO::outl<Out>("# MeasMeas");
+                IO::outl<Out>("# RL MeasMeas");
                 break;
             case State::Stop:
-                IO::outl<Out>("# MeasStop");
+                IO::outl<Out>("# RL MeasStop");
                 identifier::reset();
                 measureDuty = 0;
                 pwm::duty(measureDuty);
@@ -125,22 +130,10 @@ struct RLFsm {
     static inline Directional<float> getLastRm(/*const bool dir1 = true*/) {
         const uint8_t last = measurements.step - 1;
         return {measurements.meanRL_dir1[last].Rm, measurements.meanRL_dir2[last].Rm};
-        // if (dir1) {
-        //     return measurements.meanRL_dir1[last].Rm;
-        // }
-        // else {
-        //     return measurements.meanRL_dir2[last].Rm;
-        // }
     }
     static inline Directional<float> getLastLm(/*const bool dir1 = true*/) {
         const uint8_t last = measurements.step - 1;
         return {measurements.meanRL_dir1[last].Lm, measurements.meanRL_dir2[last].Lm};
-        // if (dir1) {
-        //     return measurements.meanRL_dir1[last].Lm;
-        // }
-        // else {
-        //     return measurements.meanRL_dir2[last].Lm;
-        // }
     }
     private:
     static inline constexpr uint16_t minMeasuresPerLevel = 10;

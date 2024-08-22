@@ -4,14 +4,13 @@ Tests:
 
 ToDo
 -----
+* parameter for Rm/Lm estimator: pwm-freq: low/middle/high = 100/200/400 Hz
 * pulse-count hysterese via DAC
-* check Rm measure (pwm-freq?, saturation?)
 * after disconnect goto state check?
 * curr sometimes not displayed correcly (after calibrate!!)
 * settings -> eeprom (pwm, cutoff);
 * smooth roll-off after eKm measure
 * calibrate UBatt (menu)
-* implement PID-controller (use eKm * UBatt * input-duty as control-input)
 * test with crsf-parameter-type > 1byte, e.g. uint16_t
 
 Details:
@@ -21,6 +20,8 @@ Details:
 
 Done:
 -----
+* check Rm measure (pwm-freq?, saturation?)
+* implement PID-controller (use eKm * UBatt * input-duty as control-input)
 * for resetting: user confirm
 * for calibrating: user confirm
 * when calibrating: display different steps

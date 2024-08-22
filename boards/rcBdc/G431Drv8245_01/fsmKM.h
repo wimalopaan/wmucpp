@@ -64,10 +64,11 @@ struct KmFsm {
             mStateTick.reset();
             switch(mState) {
             case State::Idle:
+                IO::outl<Out>("# KM Idle");
                 return true;
                 break;
             case State::Start:
-                IO::outl<Out>("# MeasRotStart");
+                IO::outl<Out>("# KM MeasRotStart");
                 config::init();
                 if (mDir1) {
                     meKMs_dir1.clear();
@@ -82,17 +83,17 @@ struct KmFsm {
                 pwm::setSingleMode();
                 break;
             case State::Inc:
-                IO::outl<Out>("# MeasRotInc");
+                IO::outl<Out>("# KM MeasRotInc");
                 saveResults();
                 measureDuty += 100;
                 pwm::duty(measureDuty);
                 break;
             case State::Meas:
-                IO::outl<Out>("# MeasRotMeas");
+                IO::outl<Out>("# KM MeasRotMeas");
                 break;
             case State::Stop:
                 // smooth roll out
-                IO::outl<Out>("# MeasRotStop");
+                IO::outl<Out>("# KM MeasRotStop");
                 measureDuty = 0;
                 pwm::duty(measureDuty);
                 calculate();
@@ -146,7 +147,7 @@ struct KmFsm {
                 meKMs_dir2.push_back(eKM);
             }
         }
-        IO::outl<Out>("# eRpm: ", erpm, " off: ", offset, " eKM: ", eKM, " um: ", (uint16_t)(umotor * 1000), " ui: ", (uint16_t)(umintern * 1000));
+        IO::outl<Out>("# KM eRpm: ", erpm, " off: ", offset, " eKM: ", eKM, " um: ", (uint16_t)(umotor * 1000), " ui: ", (uint16_t)(umintern * 1000));
     }
     static inline bool mDir1 = true;
     static inline uint16_t minEKm = 500;

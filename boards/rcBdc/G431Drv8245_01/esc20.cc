@@ -31,6 +31,7 @@ namespace Mcu::Stm {
 #include "fsmRL.h"
 #include "fsmKM.h"
 #include "toneplay.h"
+#include "pid.h"
 
 using namespace std::literals::chrono_literals;
 
@@ -328,6 +329,7 @@ struct GFSM {
             }
             mTelemTick.on(telemTicks, [&]{
                 const auto input = servo_pa::normalized(Storage::eeprom.crsf_channel - 1);
+
                 estimator::dir1(input >= 0);
                 estimator::update(input);
                 const uint16_t rpm = estimator::eRpm() / Storage::eeprom.telemetry_polepairs;
@@ -346,14 +348,24 @@ struct GFSM {
 
                 const auto vf = Speed::dutyFilter.process(input);
 
-                if (const auto b = vf.absolute(); vf >= 0) {
-                    pwm::dir1();
-                    pwm::duty(b);
-                }
-                else {
-                    pwm::dir2();
-                    pwm::duty(b);
-                }
+                const float setRpm = (vf.absolute() / 1000.0f) * 5000;
+                const float co = mPid.process(setRpm, rpm);
+                const float cc = 1640.0f * (setRpm + co) / 5000.0f;
+
+                float s = std::max(std::min(cc, 1640.0f), 0.0f);
+
+                pwm::dir2();
+                pwm::duty(s);
+
+
+                // if (const auto b = vf.absolute(); vf >= 0) {
+                //     pwm::dir1();
+                //     pwm::duty(b);
+                // }
+                // else {
+                //     pwm::dir2();
+                //     pwm::duty(b);
+                // }
 
                 // Test code for estimating Rm
                 const float km1 = Storage::eeprom.eKm.dir1;
@@ -365,12 +377,10 @@ struct GFSM {
                 lastRm = (ue - um) / im;
             });
             mStateTick.on(initTicks, [&]{
-                IO::outl<trace>("# Rm: ", (uint32_t)(1000 * lastRm), " ue: ", (uint16_t)(10 * ue), " um: ", (uint16_t)(10 * um), " im: ", (uint16_t)(100 * im));
+                // IO::outl<trace>("# Rm: ", (uint32_t)(1000 * lastRm), " ue: ", (uint16_t)(10 * ue), " um: ", (uint16_t)(10 * um), " im: ", (uint16_t)(100 * im));
                 // IO::outl<trace>("# MTemp: ", (uint16_t)(10 * comp1::temperatur()));
                 // IO::outl<trace>("# rpm: ", estimator::eRpmNoWindow() / Storage::eeprom.telemetry_polepairs);
                 // IO::outl<trace>("# meanADC: ", (uint16_t)subSampler::currMeanADC(), " mean: ", (uint16_t)subSampler::currMean(), " g:", subSampler::gain(), " volt: ", (uint16_t)(10.0f * devs::adc2Voltage(subSampler::meanVoltage())));
-
-
             });
             break;
         case State::Reset:
@@ -553,6 +563,7 @@ struct GFSM {
         }
     }
     private:
+    static inline PID<float> mPid{1000.0f, -1000.0f, 0.2f, 0.1f, 0.005f};
     static inline float im;
     static inline float ue;
     static inline float um;

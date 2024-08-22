@@ -59,6 +59,7 @@ struct BdcIdentifier {
         if (mState == State::Wait) {
             voltageMean = 0.0f;
             sampleCount = 0;
+            maxEst.set(0);
             mState = State::Measure;
         }
     }

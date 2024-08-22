@@ -140,10 +140,10 @@ namespace Dsp {
             mean = f * v + (1.0 - f) * mean;
             return mean;
         }
-        constexpr void set(const float m) {
+        constexpr void set(const float m) volatile {
             mean = m;
         }
-        constexpr void factor(const float factor) {
+        constexpr void factor(const float factor) volatile {
             f = factor;
         }
         constexpr float value() const volatile {
