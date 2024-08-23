@@ -77,6 +77,10 @@ namespace Dsp {
         static inline float currMeanADC() {
             return mCurrMeanADC.value();
         }
+        static inline void reset() {
+            gainIndex = 0;
+            pga::gain(gainIndex);
+        }
         static inline uint8_t gain() {
             return gainFactor[gainIndex];
         }

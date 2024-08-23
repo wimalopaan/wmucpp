@@ -84,9 +84,10 @@ struct Devices<ESC20, Config, Mcu::Stm::Stm32G431> {
     static inline constexpr float adc2Voltage(const auto a) {
         constexpr float r1 = 91'000;
         constexpr float r2 = 10'000;
-        constexpr float cal = 0.94;
         constexpr float vref = 3.3f;
         constexpr float max = 4095.0f;
+        // constexpr float cal = 0.94;
+        const float cal = (store::eeprom.calib_ubatt - 100) * 0.001f + 1.0f;
 
         return cal * (a * vref) * (r1 + r2) / (max * r2);
     }

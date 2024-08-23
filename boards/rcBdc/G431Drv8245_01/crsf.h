@@ -192,8 +192,8 @@ struct CrsfCallback {
     }
 
     static inline std::array<const char*, 6> mCalibratingTexts {
-        "Initial",
-        "Calibrating ...",
+        "Calibrate",
+        "Start ...",
         "Measure Rm, Lm ...",
         "Measure Km (CW) ...",
         "Measure Km (CCW) ...",
@@ -232,9 +232,11 @@ struct CrsfCallback {
         addNode(p, Param_t{parent, PType::U8,  "Tone volume", nullptr, &eeprom.volume, 0, 200, [](const uint8_t){return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Calibrate UBatt [0.1%]", nullptr, &eeprom.calib_ubatt, 0, 200, [](const uint8_t){return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Temperature Filter", nullptr, &eeprom.temp_filter, 0, 9, [](const uint8_t v){speed::updateTempFilter(v); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Calibrate PWM", "100Hz;200Hz;400Hz", &eeprom.pwm_calib, 0, 2, [](const uint8_t){return true;}});
         addNode(p, Param_t{parent, PType::Command, "Reset to defaults", "Resetting...", nullptr, 0, 0, [](const uint8_t v){if (v == 1) return true; if (v == 4) notifier::resetParameter(); return false;}});
         parent = addParent(p, Param_t{0, PType::Folder, "PID-Controller"});
-        addNode(p, Param_t{parent, PType::Sel, "Enable", "Off;On", &eeprom.use_pid, 0, 1});
+        addNode(p, Param_t{parent, PType::Sel, "PID Enable", "Off;On", &eeprom.use_pid, 0, 1});
+        addNode(p, Param_t{parent, PType::Sel, "PID Mode", "relative;absolute", &eeprom.pid_mode, 0, 1});
         addNode(p, Param_t{parent, PType::U8,  "PID-P", nullptr, &eeprom.pid_p, 0, 100, [](const uint8_t){return true;}});
         addNode(p, Param_t{parent, PType::U8,  "PID-I", nullptr, &eeprom.pid_i, 0, 100, [](const uint8_t){return true;}});
         addNode(p, Param_t{parent, PType::U8,  "PID-D", nullptr, &eeprom.pid_d, 0, 100, [](const uint8_t){return true;}});

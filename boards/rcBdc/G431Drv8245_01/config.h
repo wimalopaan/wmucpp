@@ -28,7 +28,7 @@ struct Config {
     static inline uint16_t subSamplingFactor = 6;
     static inline uint16_t fPwm = fSample * subSamplingFactor;
 
-    static inline uint16_t fPwmIdentify = 400;
+    // static inline uint16_t fPwmIdentify = 400; // eeprom
     // static inline uint16_t fPwmIdentify = 200;
     static inline uint16_t dutyIdentifyInc = 50;
 

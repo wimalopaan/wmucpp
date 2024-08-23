@@ -6,6 +6,8 @@ struct RLFsm {
     using pwm = PWM;
     using identifier = Identifier;
     using config = Config;
+    using devs = identifier::devs;
+    using storage = devs::store;
 
     enum class State : uint8_t {Idle, Start, Inc, Meas, Stop};
     enum class Event : uint8_t {NoEvent, Start};
@@ -69,7 +71,16 @@ struct RLFsm {
                 actualMeas_dir2 = RL<volatile float>{};
                 pwm::duty(measureDuty);
                 pwm::setMultiMode();
-                pwm::pwm(config::fPwmIdentify);
+                // pwm::pwm(config::fPwmIdentify);
+                if (storage::eeprom.pwm_calib == 2) {
+                    pwm::pwm(400);
+                }
+                else if (storage::eeprom.pwm_calib == 1) {
+                    pwm::pwm(200);
+                }
+                else {
+                    pwm::pwm(100);
+                }
                 identifier::reset();
                 break;
             case State::Inc:

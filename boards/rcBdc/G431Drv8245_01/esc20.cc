@@ -348,24 +348,23 @@ struct GFSM {
 
                 const auto vf = Speed::dutyFilter.process(input);
 
-                const float setRpm = (vf.absolute() / 1000.0f) * 5000;
-                const float co = mPid.process(setRpm, rpm);
-                const float cc = 1640.0f * (setRpm + co) / 5000.0f;
+                // const float setRpm = (vf.absolute() / 1000.0f) * 5000;
+                // const float co = mPid.process(setRpm, rpm);
+                // const float cc = 1640.0f * (setRpm + co) / 5000.0f;
+                // float s = std::max(std::min(cc, 1640.0f), 0.0f);
 
-                float s = std::max(std::min(cc, 1640.0f), 0.0f);
-
-                pwm::dir2();
-                pwm::duty(s);
+                // pwm::dir2();
+                // pwm::duty(s);
 
 
-                // if (const auto b = vf.absolute(); vf >= 0) {
-                //     pwm::dir1();
-                //     pwm::duty(b);
-                // }
-                // else {
-                //     pwm::dir2();
-                //     pwm::duty(b);
-                // }
+                if (const auto b = vf.absolute(); vf >= 0) {
+                    pwm::dir1();
+                    pwm::duty(b);
+                }
+                else {
+                    pwm::dir2();
+                    pwm::duty(b);
+                }
 
                 // Test code for estimating Rm
                 const float km1 = Storage::eeprom.eKm.dir1;
@@ -380,7 +379,7 @@ struct GFSM {
                 // IO::outl<trace>("# Rm: ", (uint32_t)(1000 * lastRm), " ue: ", (uint16_t)(10 * ue), " um: ", (uint16_t)(10 * um), " im: ", (uint16_t)(100 * im));
                 // IO::outl<trace>("# MTemp: ", (uint16_t)(10 * comp1::temperatur()));
                 // IO::outl<trace>("# rpm: ", estimator::eRpmNoWindow() / Storage::eeprom.telemetry_polepairs);
-                // IO::outl<trace>("# meanADC: ", (uint16_t)subSampler::currMeanADC(), " mean: ", (uint16_t)subSampler::currMean(), " g:", subSampler::gain(), " volt: ", (uint16_t)(10.0f * devs::adc2Voltage(subSampler::meanVoltage())));
+                IO::outl<trace>("# meanADC: ", (uint16_t)subSampler::currMeanADC(), " mean: ", (uint16_t)subSampler::currMean(), " g:", subSampler::gain(), " volt: ", (uint16_t)(10.0f * devs::adc2Voltage(subSampler::meanVoltage())));
             });
             break;
         case State::Reset:
@@ -466,6 +465,7 @@ struct GFSM {
                 in2::afunction(2);
                 pwm::duty(0);
                 pwm::setSingleMode();
+                subSampler::reset();
                 break;
             case State::Reset:
                 IO::outl<trace>("# Reset");
