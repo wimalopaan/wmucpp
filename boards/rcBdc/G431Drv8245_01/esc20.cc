@@ -127,6 +127,8 @@ struct GFSM {
         devs::init();
         config::init();
         estimator::init();
+
+        // servo_pa::Responder::address(std::byte{0xca}); // ESC address
     }
 
     enum class State : uint8_t {Undefined = 0x00,

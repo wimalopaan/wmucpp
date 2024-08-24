@@ -19,6 +19,7 @@ Details:
 
 Done:
 -----
+* crsf-parser: address handling? response only to own address
 * parameter for Rm/Lm estimator: pwm-freq: low/middle/high = 100/200/400 Hz
 * calibrate UBatt (menu)
 * curr sometimes not displayed correcly (after calibrate!!)

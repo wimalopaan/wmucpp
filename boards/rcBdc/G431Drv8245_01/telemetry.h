@@ -6,7 +6,7 @@ using namespace std::literals::chrono_literals;
 template<typename Out, typename Timer, typename Data>
 struct CrsfTelemetry {
     using out = Out;
-    static inline constexpr External::Tick<Timer> telemTicks{20ms};
+    static inline constexpr External::Tick<Timer> telemTicks{100ms};
 
     enum class State : uint8_t {Idle, Gps, Batt, Temp1, Temp2, Rpm1, Rpm2};
     enum class Event : uint8_t {None, SendNext};

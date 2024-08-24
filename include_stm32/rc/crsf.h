@@ -41,6 +41,7 @@ namespace RC {
              */
             
             namespace Address {
+                inline static constexpr std::byte StartByte{0xc8};
                 inline static constexpr std::byte Broadcast{0x00};
                 inline static constexpr std::byte Controller{0xc8};
                 inline static constexpr std::byte Handset{0xea};
@@ -300,7 +301,7 @@ namespace RC {
                     static inline constexpr uint8_t CRSFChannels{16};
 
                     enum class State : uint8_t {Undefined,
-                                                GotAddress, GotLength,
+                                                GotStart, GotLength,
                                                 Link, Channels, Ping, Info, ParameterEntry, ParameterRead, ParameterWrite, Data, Command};
 
                     struct Responder {
@@ -315,7 +316,7 @@ namespace RC {
 
                         static inline void sendDeviceInfo() {
                             using namespace etl::literals;
-                            IO::outl<debug>("# DI adr: ", (uint8_t)mExtendedDestination);
+                            IO::outl<debug>("# DI adr: ", (uint8_t)mExtendedDestination, " src: ", (uint8_t)mExtendedSource);
                             mReply.clear();
                             mReply.push_back(mExtendedDestination);
                             mReply.push_back(mExtendedSource);
@@ -433,6 +434,12 @@ namespace RC {
                             }
                             out::data(RC::Protokoll::Crsf::Type::ParamEntry, mReply);
                         }
+                        static inline std::byte address() {
+                            return mExtendedSource;
+                        }
+                        static inline void address(const std::byte adr) {
+                            mExtendedSource = adr;
+                        }
                         private:
                         static inline etl::FixedVector<std::byte, RC::Protokoll::Crsf::maxPayloadSize> mReply;
                         static inline std::byte mExtendedDestination{};
@@ -458,20 +465,14 @@ namespace RC {
                         switch(mState) { // enum-switch -> no default (intentional)
                         case State::Undefined:
                             csum.reset();
-                            if ((b == Crsf::Address::Controller))
-                            // if ((b == Crsf::Address::Controller) ||
-                            //     (b == Crsf::Address::Handset) ||
-                            //     (b == Crsf::Address::RX) ||
-                            //     (b == Crsf::Address::TX) ||
-                            //     (b == Crsf::Address::Broadcast))
-                            {
+                            if (b == Crsf::Address::StartByte){
                                 mAddress = b;
-                                mState = State::GotAddress;
+                                mState = State::GotStart;
                             }
                             break;
-                        case State::GotAddress:
-                            if ((static_cast<uint8_t>(b) > 2) && (static_cast<uint8_t>(b) <= mData.size())) {
-                                mLength = static_cast<uint8_t>(b) - 2; // only payload (not including type and crc)
+                        case State::GotStart:
+                            if (const uint8_t l = static_cast<uint8_t>(b); (l > 2) && (l <= mData.size())) {
+                                mLength = l - 2; // only payload (not including type and crc)
                                 mPayloadIndex = 0;
                                 mState = State::GotLength;
                             }
@@ -514,7 +515,6 @@ namespace RC {
                                 if (csum == b) {
                                     ++mLinkPackagesCounter;
                                     ++mPackagesCounter;
-                                    // decode
                                     CB::gotLinkStats();
                                 }
                                 mState = State::Undefined;
@@ -536,10 +536,8 @@ namespace RC {
                             }
                             else {
                                 csum += b;
-                                // if (mPayloadIndex < mData.size()) {
-                                    mData[mPayloadIndex] = static_cast<uint8_t>(b);
-                                    ++mPayloadIndex;
-                                // }
+                                mData[mPayloadIndex] = static_cast<uint8_t>(b);
+                                ++mPayloadIndex;
                             }
                             break;
                         case State::Ping:
@@ -568,9 +566,8 @@ namespace RC {
                         case State::Info:
                             if (mPayloadIndex >= mLength) {
                                 if (csum == b) {
-                                    ++mInfoPackagesCounter;
                                     ++mPackagesCounter;
-                                    // decode
+                                    ++mInfoPackagesCounter;
                                 }
                                 mState = State::Undefined;
                             }
@@ -584,7 +581,6 @@ namespace RC {
                                 if (csum == b) {
                                     ++mParameterEntryPackagesCounter;
                                     ++mPackagesCounter;
-                                    // decode
                                 }
                                 mState = State::Undefined;
                             }
@@ -596,9 +592,12 @@ namespace RC {
                         case State::ParameterRead:
                             if (mPayloadIndex >= mLength) {
                                 if (csum == b) {
-                                    ++mParameterReadPackagesCounter;
                                     ++mPackagesCounter;
-                                    Responder::sendParameterInfo(mParameterIndex);
+                                    IO::outl<debug>("# PR ", (uint8_t)mExtendedDestination, " i: ", mParameterIndex, " src: ", (uint8_t)mExtendedSource);
+                                    if (mExtendedDestination == Responder::address()) {
+                                        ++mParameterReadPackagesCounter;
+                                        Responder::sendParameterInfo(mParameterIndex);
+                                    }
                                 }
                                 mState = State::Undefined;
                             }
@@ -622,15 +621,17 @@ namespace RC {
                             break;
                         case State::ParameterWrite:
                             if (mPayloadIndex >= mLength) {
-                                IO::outl<debug>("# PW", (uint8_t)mExtendedDestination, " i: ", mParameterIndex);
                                 if (csum == b) {
-                                    ++mParameterWritePackagesCounter;
                                     ++mPackagesCounter;
-                                    if (CB::isCommand(mParameterIndex)) {
-                                        Responder::sendCommandResponse(mParameterIndex, mParameterValue);
-                                    }
-                                    else {
-                                        CB::setParameter(mParameterIndex, mParameterValue);
+                                    IO::outl<debug>("# PW ", (uint8_t)mExtendedDestination, " i: ", mParameterIndex, " src: ", (uint8_t)mExtendedSource);
+                                    if (mExtendedDestination == Responder::address()) {
+                                        ++mParameterWritePackagesCounter;
+                                        if (CB::isCommand(mParameterIndex)) {
+                                            Responder::sendCommandResponse(mParameterIndex, mParameterValue);
+                                        }
+                                        else {
+                                            CB::setParameter(mParameterIndex, mParameterValue);
+                                        }
                                     }
                                 }
                                 mState = State::Undefined;
@@ -655,27 +656,36 @@ namespace RC {
                         case State::Command:
                             if (mPayloadIndex >= mLength) {
                                 if (csum == b) {
-                                    ++mCommandPackagesCounter;
                                     ++mPackagesCounter;
-                                    // decode
-                                    CB::command(mData);
+                                    IO::outl<debug>("# Co ", (uint8_t)mExtendedDestination, " i: ", mParameterIndex, " src: ", (uint8_t)mExtendedSource);
+                                    if (mExtendedDestination == Responder::address()) {
+                                        ++mCommandPackagesCounter;
+                                        CB::command(mData);
+                                    }
                                 }
                                 mState = State::Undefined;
                             }
                             else {
                                 csum += b;
-                                // if (mPayloadIndex < mData.size()) {
-                                    mData[mPayloadIndex] = static_cast<uint8_t>(b);
-                                    ++mPayloadIndex;
-                                // }
+                                mData[mPayloadIndex] = static_cast<uint8_t>(b);
+                                if (mPayloadIndex == 0) {
+                                    mExtendedDestination = b;
+                                }
+                                else if (mPayloadIndex == 1) {
+                                    mExtendedSource = b;
+                                }
+                                ++mPayloadIndex;
                             }
                             break;
                         case State::Data:
                             if (mPayloadIndex >= mLength) {
                                 if (csum == b) {
-                                    ++mDataPackagesCounter;
                                     ++mPackagesCounter;
-                                    // decode
+                                    IO::outl<debug>("# Da ", (uint8_t)mExtendedDestination, " i: ", mParameterIndex, " src: ", (uint8_t)mExtendedSource);
+                                    if (mExtendedDestination == Responder::address()) {
+                                        ++mDataPackagesCounter;
+                                        // decode
+                                    }
                                 }
                                 mState = State::Undefined;
                             }
