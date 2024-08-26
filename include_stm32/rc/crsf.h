@@ -637,7 +637,9 @@ namespace RC {
                                             Responder::sendCommandResponse(mParameterIndex, mParameterValue);
                                         }
                                         else {
-                                            CB::setParameter(mParameterIndex, mParameterValue);
+                                            if (mEnableReply) {
+                                                CB::setParameter(mParameterIndex, mParameterValue);
+                                            }
                                         }
                                     }
                                 }
