@@ -119,7 +119,7 @@ struct Devices2<SW12, CrsfCallback, MCU> {
     // Usart 2: CRSF
     struct CrsfAdapterConfig;
     using crsf_pa = RC::Protokoll::Crsf::Adapter<0, CrsfAdapterConfig, MCU>;
-    using crsf    = Mcu::Stm::Uart<2, crsf_pa, RC::Protokoll::Crsf::maxMessageSize, std::byte, clock, MCU>;
+    using crsf    = Mcu::Stm::Uart<2, crsf_pa, 128, std::byte, clock, MCU>;
     using crsf_out= RC::Protokoll::Crsf::Generator<crsf, systemTimer, MCU>;
 
     using debugtx = Mcu::Stm::Pin<gpiob, 6, MCU>;

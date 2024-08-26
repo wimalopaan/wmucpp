@@ -87,10 +87,10 @@ struct CrsfTelemetry {
     static inline State mState{State::Gps};
     static inline Event mEvent{Event::None};
 
-    static inline std::array<std::byte, 4> mGps;
-    static inline std::array<std::byte, 8> mBatt; //volts amps mAh percent
-    static inline std::array<std::byte, 2> mTemp;
-    static inline std::array<std::byte, 2> mRpm;
+    static inline std::array<std::byte, 15> mGps{};
+    static inline std::array<std::byte, 8> mBatt{}; //volts amps mAh percent
+    static inline std::array<std::byte, 2> mTemp{};
+    static inline std::array<std::byte, 2> mRpm{};
     static inline External::Tick<Timer> mTelemTick;
 };
 
@@ -112,7 +112,7 @@ struct CrsfCallback {
 
     using name_t = std::array<char, 32>;
 
-
+    // todo:
     // SM: only sending telemetry after getting own command
     // own-command -> channels -> send-telemetry
     // this avoids (mostly) collisions in half-duplex
@@ -273,7 +273,7 @@ private:
         addNode(p, Param_t{parent, PType::Sel, "Intervall Mode", "Off;On", &eeprom.outputs[0].blink, 0, 1, [](const uint8_t v){Meta::nth_element<0, bsws>::blink(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Intervall(on)[0.1s]", nullptr, &eeprom.outputs[0].blinkOnTime, 1, 255, [](const uint8_t v){Meta::nth_element<0, bsws>::on_dezi(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Intervall(off)[0.1s]", nullptr, &eeprom.outputs[0].blinkOffTime, 1, 255, [](const uint8_t v){Meta::nth_element<0, bsws>::off_dezi(v); return true;}});
-        addNode(p, Param_t{parent, PType::Sel, "Test", "Off;On", nullptr, 0, 1, [](const uint8_t v){Meta::nth_element<0, bsws>::on(v); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Test", "Off;On", nullptr, 0, 1, [](const uint8_t v){Meta::nth_element<0, bsws>::on(v); return false;}});
 
         parent = addParent(p, Param_t{0, PType::Folder, "Output 1"});
         addNode(p, Param_t{parent, PType::Info, "Output 1 : ", &mName[0]});
@@ -283,7 +283,7 @@ private:
         addNode(p, Param_t{parent, PType::Sel, "Intervall Mode", "Off;On", &eeprom.outputs[1].blink, 0, 1, [](const uint8_t v){Meta::nth_element<1, bsws>::blink(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Intervall(on)[0.1s]", nullptr, &eeprom.outputs[1].blinkOnTime, 1, 255, [](const uint8_t v){Meta::nth_element<1, bsws>::on_dezi(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Intervall(off)[0.1s]", nullptr, &eeprom.outputs[1].blinkOffTime, 1, 255, [](const uint8_t v){Meta::nth_element<1, bsws>::off_dezi(v); return true;}});
-        addNode(p, Param_t{parent, PType::Sel, "Test", "Off;On", nullptr, 0, 1, [](const uint8_t v){Meta::nth_element<1, bsws>::on(v); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Test", "Off;On", nullptr, 0, 1, [](const uint8_t v){Meta::nth_element<1, bsws>::on(v); return false;}});
 
         parent = addParent(p, Param_t{0, PType::Folder, "Output 2"});
         addNode(p, Param_t{parent, PType::Info, "Output 2 : ", &mName[0]});
@@ -293,7 +293,7 @@ private:
         addNode(p, Param_t{parent, PType::Sel, "Intervall Mode", "Off;On", &eeprom.outputs[2].blink, 0, 1, [](const uint8_t v){Meta::nth_element<2, bsws>::blink(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Intervall(on)[0.1s]", nullptr, &eeprom.outputs[2].blinkOnTime, 1, 255, [](const uint8_t v){Meta::nth_element<2, bsws>::on_dezi(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Intervall(off)[0.1s]", nullptr, &eeprom.outputs[2].blinkOffTime, 1, 255, [](const uint8_t v){Meta::nth_element<2, bsws>::off_dezi(v); return true;}});
-        addNode(p, Param_t{parent, PType::Sel, "Test", "Off;On", nullptr, 0, 1, [](const uint8_t v){Meta::nth_element<2, bsws>::on(v); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Test", "Off;On", nullptr, 0, 1, [](const uint8_t v){Meta::nth_element<2, bsws>::on(v); return false;}});
 
         parent = addParent(p, Param_t{0, PType::Folder, "Output 3"});
         addNode(p, Param_t{parent, PType::Info, "Output 3 : ", &mName[0]});
@@ -303,7 +303,7 @@ private:
         addNode(p, Param_t{parent, PType::Sel, "Intervall Mode", "Off;On", &eeprom.outputs[3].blink, 0, 1, [](const uint8_t v){Meta::nth_element<3, bsws>::blink(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Intervall(on)[0.1s]", nullptr, &eeprom.outputs[3].blinkOnTime, 1, 255, [](const uint8_t v){Meta::nth_element<3, bsws>::on_dezi(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Intervall(off)[0.1s]", nullptr, &eeprom.outputs[3].blinkOffTime, 1, 255, [](const uint8_t v){Meta::nth_element<3, bsws>::off_dezi(v); return true;}});
-        addNode(p, Param_t{parent, PType::Sel, "Test", "Off;On", nullptr, 0, 1, [](const uint8_t v){Meta::nth_element<3, bsws>::on(v); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Test", "Off;On", nullptr, 0, 1, [](const uint8_t v){Meta::nth_element<3, bsws>::on(v); return false;}});
 
         parent = addParent(p, Param_t{0, PType::Folder, "Output 4"});
         addNode(p, Param_t{parent, PType::Info, "Output 4 : ", &mName[0]});
@@ -313,7 +313,7 @@ private:
         addNode(p, Param_t{parent, PType::Sel, "Intervall Mode", "Off;On", &eeprom.outputs[4].blink, 0, 1, [](const uint8_t v){Meta::nth_element<4, bsws>::blink(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Intervall(on)[0.1s]", nullptr, &eeprom.outputs[4].blinkOnTime, 1, 255, [](const uint8_t v){Meta::nth_element<4, bsws>::on_dezi(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Intervall(off)[0.1s]", nullptr, &eeprom.outputs[4].blinkOffTime, 1, 255, [](const uint8_t v){Meta::nth_element<4, bsws>::off_dezi(v); return true;}});
-        addNode(p, Param_t{parent, PType::Sel, "Test", "Off;On", nullptr, 0, 4, [](const uint8_t v){Meta::nth_element<4, bsws>::on(v); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Test", "Off;On", nullptr, 0, 4, [](const uint8_t v){Meta::nth_element<4, bsws>::on(v); return false;}});
 
         parent = addParent(p, Param_t{0, PType::Folder, "Output 5"});
         addNode(p, Param_t{parent, PType::Info, "Output 5 : ", &mName[0]});
@@ -323,7 +323,7 @@ private:
         addNode(p, Param_t{parent, PType::Sel, "Intervall Mode", "Off;On", &eeprom.outputs[5].blink, 0, 1, [](const uint8_t v){Meta::nth_element<5, bsws>::blink(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Intervall(on)[0.1s]", nullptr, &eeprom.outputs[5].blinkOnTime, 1, 255, [](const uint8_t v){Meta::nth_element<5, bsws>::on_dezi(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Intervall(off)[0.1s]", nullptr, &eeprom.outputs[5].blinkOffTime, 1, 255, [](const uint8_t v){Meta::nth_element<5, bsws>::off_dezi(v); return true;}});
-        addNode(p, Param_t{parent, PType::Sel, "Test", "Off;On", nullptr, 0, 1, [](const uint8_t v){Meta::nth_element<5, bsws>::on(v); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Test", "Off;On", nullptr, 0, 1, [](const uint8_t v){Meta::nth_element<5, bsws>::on(v); return false;}});
 
         parent = addParent(p, Param_t{0, PType::Folder, "Output 6"});
         addNode(p, Param_t{parent, PType::Info, "Output 6 : ", &mName[0]});
@@ -333,7 +333,7 @@ private:
         addNode(p, Param_t{parent, PType::Sel, "Intervall Mode", "Off;On", &eeprom.outputs[6].blink, 0, 1, [](const uint8_t v){Meta::nth_element<6, bsws>::blink(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Intervall(on)[0.1s]", nullptr, &eeprom.outputs[6].blinkOnTime, 1, 255, [](const uint8_t v){Meta::nth_element<6, bsws>::on_dezi(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Intervall(off)[0.1s]", nullptr, &eeprom.outputs[6].blinkOffTime, 1, 255, [](const uint8_t v){Meta::nth_element<6, bsws>::off_dezi(v); return true;}});
-        addNode(p, Param_t{parent, PType::Sel, "Test", "Off;On", nullptr, 0, 1, [](const uint8_t v){Meta::nth_element<6, bsws>::on(v); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Test", "Off;On", nullptr, 0, 1, [](const uint8_t v){Meta::nth_element<6, bsws>::on(v); return false;}});
 
         parent = addParent(p, Param_t{0, PType::Folder, "Output 7"});
         addNode(p, Param_t{parent, PType::Info, "Output 7 : ", &mName[0]});
@@ -343,17 +343,17 @@ private:
         addNode(p, Param_t{parent, PType::Sel, "Intervall Mode", "Off;On", &eeprom.outputs[7].blink, 0, 1, [](const uint8_t v){Meta::nth_element<7, bsws>::blink(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Intervall(on)[0.1s]", nullptr, &eeprom.outputs[7].blinkOnTime, 1, 255, [](const uint8_t v){Meta::nth_element<7, bsws>::on_dezi(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Intervall(off)[0.1s]", nullptr, &eeprom.outputs[7].blinkOffTime, 1, 255, [](const uint8_t v){Meta::nth_element<7, bsws>::off_dezi(v); return true;}});
-        addNode(p, Param_t{parent, PType::Sel, "Test", "Off;On", nullptr, 0, 1, [](const uint8_t v){Meta::nth_element<7, bsws>::on(v); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Test", "Off;On", nullptr, 0, 1, [](const uint8_t v){Meta::nth_element<7, bsws>::on(v); return false;}});
 
         parent = addParent(p, Param_t{0, PType::Folder, "Operate"});
-        addNode(p, Param_t{parent, PType::Sel, "Output 0", "Off;On", 0, 0, 1, [](const uint8_t v){Meta::nth_element<0, bsws>::on(v); return true;}});
-        addNode(p, Param_t{parent, PType::Sel, "Output 1", "Off;On", 0, 0, 1, [](const uint8_t v){Meta::nth_element<1, bsws>::on(v); return true;}});
-        addNode(p, Param_t{parent, PType::Sel, "Output 2", "Off;On", 0, 0, 1, [](const uint8_t v){Meta::nth_element<2, bsws>::on(v); return true;}});
-        addNode(p, Param_t{parent, PType::Sel, "Output 3", "Off;On", 0, 0, 1, [](const uint8_t v){Meta::nth_element<3, bsws>::on(v); return true;}});
-        addNode(p, Param_t{parent, PType::Sel, "Output 4", "Off;On", 0, 0, 1, [](const uint8_t v){Meta::nth_element<4, bsws>::on(v); return true;}});
-        addNode(p, Param_t{parent, PType::Sel, "Output 5", "Off;On", 0, 0, 1, [](const uint8_t v){Meta::nth_element<5, bsws>::on(v); return true;}});
-        addNode(p, Param_t{parent, PType::Sel, "Output 6", "Off;On", 0, 0, 1, [](const uint8_t v){Meta::nth_element<6, bsws>::on(v); return true;}});
-        addNode(p, Param_t{parent, PType::Sel, "Output 7", "Off;On", 0, 0, 1, [](const uint8_t v){Meta::nth_element<7, bsws>::on(v); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Output 0", "Off;On", 0, 0, 1, [](const uint8_t v){Meta::nth_element<0, bsws>::on(v); return false;}});
+        addNode(p, Param_t{parent, PType::Sel, "Output 1", "Off;On", 0, 0, 1, [](const uint8_t v){Meta::nth_element<1, bsws>::on(v); return false;}});
+        addNode(p, Param_t{parent, PType::Sel, "Output 2", "Off;On", 0, 0, 1, [](const uint8_t v){Meta::nth_element<2, bsws>::on(v); return false;}});
+        addNode(p, Param_t{parent, PType::Sel, "Output 3", "Off;On", 0, 0, 1, [](const uint8_t v){Meta::nth_element<3, bsws>::on(v); return false;}});
+        addNode(p, Param_t{parent, PType::Sel, "Output 4", "Off;On", 0, 0, 1, [](const uint8_t v){Meta::nth_element<4, bsws>::on(v); return false;}});
+        addNode(p, Param_t{parent, PType::Sel, "Output 5", "Off;On", 0, 0, 1, [](const uint8_t v){Meta::nth_element<5, bsws>::on(v); return false;}});
+        addNode(p, Param_t{parent, PType::Sel, "Output 6", "Off;On", 0, 0, 1, [](const uint8_t v){Meta::nth_element<6, bsws>::on(v); return false;}});
+        addNode(p, Param_t{parent, PType::Sel, "Output 7", "Off;On", 0, 0, 1, [](const uint8_t v){Meta::nth_element<7, bsws>::on(v); return false;}});
 
         return p;
     }();
@@ -427,7 +427,13 @@ struct GFSM {
     static inline void ratePeriodic() {
         led::ratePeriodic();
         btn::ratePeriodic();
+
         crsf_out::ratePeriodic();
+
+        if (eeprom.telemetry) {
+            crsfCallback::ratePeriodic();
+        }
+
         crsf_pa::ratePeriodic([](const bool connected){
             static bool mLast = false;
             if (!etl::equalStore(mLast, connected)) {
@@ -439,7 +445,6 @@ struct GFSM {
                 }
             }
         });
-        crsfCallback::ratePeriodic();
 
         bsw0::ratePeriodic();
         bsw1::ratePeriodic();
@@ -489,11 +494,13 @@ struct GFSM {
             case State::RunNoTelemetry:
                 IO::outl<debug>("Run NT");
                 IO::outl<debug>("adr: ", eeprom.address);
+                crsf_pa::enableReply(false);
                 led::event(led::Event::Slow);
                 break;
             case State::RunWithTelemetry:
                 IO::outl<debug>("Run WT");
                 IO::outl<debug>("adr: ", eeprom.address);
+                crsf_pa::enableReply(true);
                 led::event(led::Event::Steady);
             }
         }
@@ -519,7 +526,7 @@ struct Setter {
 };
 
 int main() {
-    eeprom = eeprom_flash;
+    std::memcpy(&eeprom, &eeprom_flash, sizeof(EEProm));
     gfsm::init();
     gfsm::update();
 

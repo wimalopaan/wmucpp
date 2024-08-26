@@ -1,13 +1,12 @@
-error:
-* EEprom: ld-script
-
 todo:
 * statt Expo: PWM Duty Max Scaling 1/0.1/0.01
-* CRSF-Address einstellenbar
-* Telemetrie (state-machine)
+* CRSF-Address einstellbar (evtl. Problem im ELRS?)
+* Telemetrie (state-machine): für neue Hardware mit Spannungssensor
 * DMA Usart
 
 done:
+* fixed GPS telemetry problem
+* activate config-protocol only w/ telemetry on
 * PWM Frequenz änderbar (Gruppen im Menu?)
 * Top-Menu: Adresse, Outputs, Gruppen
 * Flash speichern der config-Daten
@@ -22,3 +21,5 @@ open:
 impossible:
 * DMA für PWM statt ISR, geht nicht (GPIO nicht DMA fähig auf G0xx)
 
+error:
+* EEprom: ld-script

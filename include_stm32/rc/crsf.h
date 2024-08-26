@@ -265,6 +265,10 @@ namespace RC {
 
                     enum class State : uint8_t {Idle, Wait, Sending};
 
+                    static inline void clear() {
+                        uart::clear();
+                    }
+
                     static inline void ratePeriodic() {
                         switch(mState) {
                         case State::Idle:
@@ -315,6 +319,7 @@ namespace RC {
                         }
 
                         static inline void sendDeviceInfo() {
+                            if (!mEnableReply) return;
                             using namespace etl::literals;
                             IO::outl<debug>("# DI adr: ", (uint8_t)mExtendedDestination, " src: ", (uint8_t)mExtendedSource);
                             mReply.clear();
@@ -330,6 +335,7 @@ namespace RC {
                         }
 
                         static inline void sendCommandResponse(const uint8_t pIndex, const uint8_t value) {
+                            if (!mEnableReply) return;
                             IO::outl<debug>("# sCR adr: ", (uint8_t)mExtendedDestination, " i: ", pIndex, " v: ", value);
                             mReply.clear();
                             mReply.push_back(mExtendedDestination);
@@ -402,6 +408,7 @@ namespace RC {
                             out::data(RC::Protokoll::Crsf::Type::ParamEntry, mReply);
                         }
                         static inline void sendParameterInfo(const uint8_t pIndex) {
+                            if (!mEnableReply) return;
                             IO::outl<debug>("# PI adr: ", (uint8_t)mExtendedDestination, " i: ", pIndex);
                             mReply.clear();
                             mReply.push_back(mExtendedDestination);
@@ -731,6 +738,10 @@ namespace RC {
                         return normalized_type{0};
                     }
 
+                    static inline void enableReply(const bool on = true) {
+                        mEnableReply = on;
+                    }
+
                     //           private:
                     static inline void convert() {
                         mChannels[0]  = (uint16_t) (((mData[0]    | mData[1] << 8))                 & Crsf::ValueMask);
@@ -750,6 +761,7 @@ namespace RC {
                         mChannels[14] = (uint16_t) ((mData[19]>>2 | mData[20]<<6)                   & Crsf::ValueMask);
                         mChannels[15] = (uint16_t) ((mData[20]>>5 | mData[21]<<3)                   & Crsf::ValueMask);
                     }
+                    inline static bool mEnableReply{true};
                     inline static CRC8 csum;
                     inline static State mState{State::Undefined};
                     inline static std::array<uint8_t, maxMessageSize> mData;
