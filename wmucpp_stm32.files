@@ -154,6 +154,7 @@ boards/rcmultiswitchG030/msw06.cc
 boards/rcmultiswitchG030/msw07.cc
 boards/rcmultiswitchG030/msw08.cc
 boards/rcmultiswitchG030/msw09.cc
+boards/rcmultiswitchG030/msw10.cc
 boards/rcmultiswitchG030/msw99.cc
 boards/rcmultiswitchG030/startup_g030.s
 boards/rcmultiswitchG030/system_g0.cc
