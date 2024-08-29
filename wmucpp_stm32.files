@@ -85,6 +85,7 @@ boards/rcCC/small_02/Makefile
 boards/rcCC/small_02/cc01.cc
 boards/rcCC/small_02/cc50.cc
 boards/rcCC/small_02/cc51.cc
+boards/rcCC/small_02/cc52.cc
 boards/rcCC/small_02/crsf.h
 boards/rcCC/small_02/devices.h
 boards/rcCC/small_02/devicesPult.h
@@ -94,6 +95,7 @@ boards/rcCC/small_02/pult00.cc
 boards/rcCC/small_02/startup_g473.s
 boards/rcCC/small_02/system_g4.cc
 boards/rcCC/small_02/telemetry.h
+boards/rcCC/small_02/todo.txt
 boards/rcCC/small_02/vesc.h
 boards/rcCrsfSwitch/Makefile
 boards/rcCrsfSwitch/crsfsw01.cc
@@ -478,6 +480,8 @@ include_stm32/rc/rc.h
 include_stm32/rc/roboremo.h
 include_stm32/rc/sbus2.h
 include_stm32/rc/sport.h
+include_stm32/rc/vesc.h
+include_stm32/rc/vesc_types.h
 include_stm32/rcc.h
 include_stm32/rf.h
 include_stm32/si5351.h

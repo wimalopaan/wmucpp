@@ -1,0 +1,10 @@
+ToDo:
+-----
+* Menu: channel settings
+* Menu: set inertia
+* Leds: Blinker class
+
+Done:
+-----
+* Menu: display VESC FW Version
+* select currentIn or currentMotor

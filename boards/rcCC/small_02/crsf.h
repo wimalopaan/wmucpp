@@ -8,8 +8,8 @@ template<typename Config, typename SwitchCallback,
          typename Trace = void>
 struct CrsfCallback {
     using trace = Trace;
-    using Param_t = RC::Protokoll::Crsf::Parameter;
-    using PType = RC::Protokoll::Crsf::Parameter::Type;
+    using Param_t = RC::Protokoll::Crsf::Parameter<>;
+    using PType = RC::Protokoll::Crsf::Parameter<>::Type;
     using telem_out = Config::telem_out;
     using timer = Config::timer;
     using tlc_1 = Config::tlc1;
@@ -82,7 +82,7 @@ struct CrsfCallback {
             }
         }
     }
-    static inline RC::Protokoll::Crsf::Parameter parameter(const uint8_t index) {
+    static inline RC::Protokoll::Crsf::Parameter<> parameter(const uint8_t index) {
         if ((index >= 1) && (index <= params.size())) {
             return params[index - 1];
         }
@@ -157,6 +157,10 @@ struct CrsfCallback {
         }
     }
     static inline bool bootMode = true;
+
+    static inline name_t mVescName{};
+    static inline name_t mVescFirmware{};
+
     private:
     static inline uint8_t mLastChangedParameter{};
     static inline constexpr uint32_t mSerialNumber{1234};
@@ -164,12 +168,12 @@ struct CrsfCallback {
     static inline constexpr uint32_t mSWVersion{10};
     static inline constexpr auto mVersionString = [](){
         std::array<char, 16> s{};
-        auto [ptr, e] = std::to_chars(std::begin(s), std::end(s), mHWVersion);
-        *ptr++ = ':';
-        std::to_chars(ptr, std::end(s), mSWVersion);
+        auto r = std::to_chars(std::begin(s), std::end(s), mHWVersion);
+        *r.ptr++ = ':';
+        r  = std::to_chars(r.ptr, std::end(s), mSWVersion);
+        *r.ptr = '\0';
         return s;
     }();
-
     static inline name_t mName = []{
         name_t name{};
         updateName(name);
@@ -252,7 +256,6 @@ struct CrsfCallback {
                     addNode(p, Param_t{llparent, PType::U8,  "PWM duty", nullptr, &eeprom.tlc_1[1].pwmDuty, 1, 99, [](uint8_t v){tlc_1::pwm(1, v); return true;}});
                     addNode(p, Param_t{llparent, PType::Sel, "Test", "Off;On", nullptr, 0, 1, [](uint8_t v){testWrapper(1, v); return false;}});
                 }
-#if 1
                 {
                     auto llparent = addParent(p, Param_t{lparent, PType::Folder, "Output 2"});
                     addNode(p, Param_t{llparent, PType::Info, "Output 2 : ", "Switch Ctrl 0"});
@@ -295,13 +298,13 @@ struct CrsfCallback {
                     addNode(p, Param_t{llparent, PType::U8,  "PWM duty", nullptr, &eeprom.tlc_1[7].pwmDuty, 1, 99, [](uint8_t v){tlc_1::pwm(7, v); return true;}});
                     addNode(p, Param_t{llparent, PType::Sel, "Test", "Off;On", nullptr, 0, 1, [](uint8_t v){testWrapper(7, v); return false;}});
                 }
-#endif
             }
-
-            // parent = addParent(p, Param_t{parent, PType::Folder, "LED Ctrl 0"});
-
+            lparent = addParent(p, Param_t{parent, PType::Folder, "V/ESC"});
+            {
+                addNode(p, Param_t{lparent, PType::Info, "Type : ", &mVescName[0]});
+                addNode(p, Param_t{lparent, PType::Info, "Firmware : ", &mVescFirmware[0]});
+            }
         }
-
         parent = addParent(p, Param_t{0, PType::Folder, "Serials"});
         addNode(p, Param_t{parent, PType::Sel, "Serial 1", "VEsc;SBus;IBus;SBus2", &eeprom.serial1_mode, 0, 1});
         addNode(p, Param_t{parent, PType::Sel, "Serial 2", "VEsc;SBus;IBus;SBus2", &eeprom.serial2_mode, 0, 1});
@@ -310,6 +313,7 @@ struct CrsfCallback {
 
         parent = addParent(p, Param_t{0, PType::Folder, "Telemetry"});
         addNode(p, Param_t{parent, PType::U8,  "RPM1 PolePairs", nullptr, &eeprom.telemetry_polepairs, 2, 12});
+        addNode(p, Param_t{parent, PType::Sel, "Current", "ESC In;Motor Peak", &eeprom.telemetry_currentSelect, 0, 1});
 
         return p;
     }();

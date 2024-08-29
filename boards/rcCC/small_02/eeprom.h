@@ -21,6 +21,8 @@ struct EEProm {
     uint8_t aux1_mode = 0;
     uint8_t aux2_mode = 0;
     uint8_t telemetry_polepairs = 1;
+    uint8_t telemetry_currentSelect = 0;
+    uint8_t esc_inertia = 100;
 
     std::array<Output, 4> outputs = {{
                                          {

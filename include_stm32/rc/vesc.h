@@ -141,6 +141,8 @@ namespace RC::VESC {
                         k++; // pairing
                         mFWTestVersionNumber = (uint8_t)mData[k++];
                         mHWType = (uint8_t)mData[k++]; // enum?
+
+                        CB::setFWInfo(mVersionMajor, mVersionMinor, &mName[0]);
                     }
                     else if (mType == CommPacketId::COMM_GET_VALUES) {
                         mTemperature = ((int32_t)mData[0]) << 8;
@@ -178,6 +180,11 @@ namespace RC::VESC {
 
                         mVoltage = ((int32_t)mData[26]) << 8;
                         mVoltage |= ((int32_t)mData[27]);
+
+                        mConsumption = ((int32_t)mData[28]) << 24;
+                        mConsumption |= ((int32_t)mData[29]) << 16;
+                        mConsumption |= ((int32_t)mData[30]) << 8;
+                        mConsumption |= ((int32_t)mData[31]);
 
                         mFault = (uint8_t)mData[52];
                     }
@@ -217,7 +224,7 @@ namespace RC::VESC {
                     case State::WaitComplete:
                         if (uart::isIdle() && uart::isTxQueueEmpty()) {
                             pa_t::startWait(pa_t::State::WaitForResponse);
-                           uart::clear();
+                            uart::clear();
                             uart::template rxEnable<true>();
                             mState = State::Wait;
                         }
@@ -272,7 +279,12 @@ namespace RC::VESC {
                         uart::put(std::byte(((uint16_t)cs) >> 8));
                         uart::put(std::byte(((uint16_t)cs)));
                         uart::put(0x03_B);
-                        mNextState = State::SendThrottle;
+                        if (pa_t::mVersionMajor > 0) {
+                            mNextState = State::SendThrottle;
+                        }
+                        else {
+                            mNextState = State::Version;
+                        }
                         mState = State::WaitComplete;
                     }
                     break;
@@ -307,9 +319,11 @@ namespace RC::VESC {
                     expMean.process(v);
                     mThrottle = std::clamp(100'000.0f * (expMean.value() / 840.0f), -100'000.0f, 100'000.0f);
                 }
-
+                static inline void inertia(const float f) {
+                    expMean.factor(f);
+                }
             private:
-                static inline Dsp::ExpMean<void> expMean{0.0005};
+                static inline Dsp::ExpMean<void> expMean{0.001};
                 static inline int32_t mThrottle{ 0 };
                 static inline uint8_t mBrake{ 0 };
                 static inline uint8_t mLed{ 0 };
@@ -318,8 +332,8 @@ namespace RC::VESC {
                 static inline State mState{ State::SendThrottle };
                 static inline State mNextState{ mState };
             };
-
         }
+
         namespace V1 {
             template<uint8_t N, typename CB, typename Timer, typename MCU = DefaultMcu>
             struct ProtocolAdapter {

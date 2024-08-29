@@ -19,8 +19,9 @@ targets += system_g4.o
 
 #targets += cc01.elf cc01.bin
 #targets += cc50.elf cc50.bin
-targets += cc51.elf cc51.bin
+#targets += cc51.elf cc51.bin
+targets += cc52.elf cc52.bin
 
-targets += pult00.elf pult00.bin
+#targets += pult00.elf pult00.bin
 
 -include ../../../Makefile.arm.include

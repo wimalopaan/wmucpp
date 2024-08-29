@@ -263,29 +263,12 @@ struct GFSM {
 
             (++mDebugTick).on(debugTicks, []{
                 led1::toggle();
-                // IO::outl<trace>(
-                //             "b: ", crsf_pa::mBytesCounter
-                //             );
-                //             " p: ", crsf_pa::mPackagesCounter,
-                //             " l: ", crsf_pa::mLinkPackagesCounter,
-                //             " ch: ", crsf_pa::mChannelsPackagesCounter,
-                //             " pg: ", crsf_pa::mPingPackagesCounter,
-                //             " pe: ", crsf_pa::mParameterEntryPackagesCounter,
-                //             " pr: ", crsf_pa::mParameterReadPackagesCounter,
-                //             " pw: ", crsf_pa::mParameterWritePackagesCounter,
-                //             " c: ", crsf_pa::mCommandPackagesCounter,
-                //             " d: ", crsf_pa::mDataPackagesCounter);
-                // IO::outl<trace>(
-                //     "ch0: ", Data::mChannels[0],
-                //     " ch1: ", Data::mChannels[1],
-                //     " ch2: ", Data::mChannels[2],
-                //     " ch3: ", Data::mChannels[3],
-                //     " rpm: ", (uint8_t)sbus_pa::mSlots[0][1],
-                //     " rpm: ", (uint8_t)sbus_pa::mSlots[0][2]
-                //     );
 #ifdef USE_VESC
-                // IO::outl<trace>(
-                //     "ch0: ", Data::mChannels[0],
+                IO::outl<trace>(
+                            "ch0: ", Data::mChannels[0],
+                            " maj: ", vesc_pa::mVersionMajor,
+                            " min: ", vesc_pa::mVersionMinor,
+                            " name: ", vesc_pa::mName
                 //     " ch1: ", Data::mChannels[1],
                 //     " ch2: ", Data::mChannels[2],
                 //     " ch3: ", Data::mChannels[3],
@@ -293,7 +276,7 @@ struct GFSM {
                 //     " v p: ", vesc_pa::mPackages,
                 //     " v t: ", (uint8_t)vesc_pa::mType,
                 //     " v l: ", vesc_pa::mLength
-                //     );
+                    );
 #endif
 #ifdef USE_GPS
                 std::array<char, External::GPS::Sentence::DecimalMaxWidth> raw{};
@@ -307,29 +290,7 @@ struct GFSM {
                 vtg::speedRaw(raw);
                 const float speed = etl::from_chars(raw);
                 crsfTelemetry::speed(speed);
-
-                // IO::outl<trace>(
-                //             " gsv: ", gsv::receivedPackages(),
-                //             " vtg: ", vtg::receivedPackages(),
-                //             " rmc: ", rmc::receivedPackages(),
-                //             " sats: ", sats,
-                //             " speed: ", (uint16_t)(speed * 1000)
-                //             );
 #endif
-                // IO::outl<trace>(
-                //             " ro0: ", robo_pa::propValues[0],
-                //             " ro1: ", robo_pa::propValues[1],
-                //             " ro2: ", robo_pa::propValues[2],
-                //             " ro3: ", robo_pa::propValues[3]
-                //         );
-                // IO::outl<trace>(
-                //     "ch0: ", Data::mChannels[0],
-                //     " ch1: ", Data::mChannels[1],
-                //     " ch2: ", Data::mChannels[2],
-                //     " ch3: ", Data::mChannels[3]
-                //         );
-                // IO::outl<trace>("flash: ", &eeprom_flash, " eep start: ", (EEProm*)&_eeprom_start);
-                // IO::outl<trace>("adr: ", eeprom.address, " ", (volatile uint8_t)eeprom_flash.address);
             });
             break;
         }
@@ -339,7 +300,6 @@ struct GFSM {
             case State::Undefined:
                 break;
             case State::Init:
-                // i2c_2::scan(i2c_scan_callback);
                 i2c_2::scan([](Mcu::Stm::I2C::Address){});
                 break;
             case State::Info:
