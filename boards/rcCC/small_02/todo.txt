@@ -1,5 +1,6 @@
 ToDo:
 -----
+* V/Esc: mAh scale 1/10
 * Menu: channel settings
 * Menu: set inertia
 * Leds: Blinker class

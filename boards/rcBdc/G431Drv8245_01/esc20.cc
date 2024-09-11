@@ -1,7 +1,7 @@
 #define USE_MCU_STM_V3
 #define USE_DEVICES2
 
-// #define USE_GNUPLOT
+#define USE_GNUPLOT
 
 #define NDEBUG
 
@@ -331,9 +331,10 @@ struct GFSM {
             }
             mTelemTick.on(telemTicks, [&]{
                 const auto input = servo_pa::normalized(Storage::eeprom.crsf_channel - 1);
+                const auto inputFiltered = Speed::dutyFilter.process(input);
 
-                estimator::dir1(input >= 0);
-                estimator::update(input);
+                estimator::dir1(inputFiltered >= 0);
+                estimator::update(inputFiltered);
                 const uint16_t rpm = estimator::eRpm() / Storage::eeprom.telemetry_polepairs;
                 if (rpm > 26) {
                     crsfTelemetry::rpm1(rpm);
@@ -348,7 +349,9 @@ struct GFSM {
                 const uint16_t t = Speed::tempFilter.process(Mcu::Stm::adc2Temp(adc::mData[2]));
                 crsfTelemetry::temp1(t);
 
-                const auto vf = Speed::dutyFilter.process(input);
+                const uint16_t t2 = comp1::temperatur();
+                crsfTelemetry::temp2(t2);
+
 
                 // const float setRpm = (vf.absolute() / 1000.0f) * 5000;
                 // const float co = mPid.process(setRpm, rpm);
@@ -359,7 +362,7 @@ struct GFSM {
                 // pwm::duty(s);
 
 
-                if (const auto b = vf.absolute(); vf >= 0) {
+                if (const auto b = inputFiltered.absolute(); inputFiltered >= 0) {
                     pwm::dir1();
                     pwm::duty(b);
                 }
@@ -371,7 +374,7 @@ struct GFSM {
                 // Test code for estimating Rm
                 const float km1 = Storage::eeprom.eKm.dir1;
                 const float ubatt = estimator::uBattMean();
-                const float d = vf.absolute();
+                const float d = inputFiltered.absolute();
                 im = (estimator::currMean() * d) / 1000;
                 ue = ubatt * d / 1000;
                 um = ((float)rpm) / km1;

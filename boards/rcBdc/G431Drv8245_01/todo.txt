@@ -1,9 +1,11 @@
 Tests:
 -----
-* Test 2048-FFT processing time
+* Test 2048-FFT processing time (not enough RAM, need G473)
 
 ToDo
 -----
+* use mean current of pwm-pulse to calculate Udiff (Rm * I)
+* Tmp1/2 telemetry (motor via LMT01) enable via menu
 * PID menu not functional
 * PID parameter: absolute / relative mode
 * pulse-count hysterese via DAC
@@ -20,6 +22,8 @@ Details:
 Done:
 -----
 * crsf-parser: address handling? response only to own address
+* use real duty (inertia) for estimator
+* time-domain window (Blackmann-Nuttall-Window, ggf. wählbar über Menu)
 * parameter for Rm/Lm estimator: pwm-freq: low/middle/high = 100/200/400 Hz
 * calibrate UBatt (menu)
 * curr sometimes not displayed correcly (after calibrate!!)

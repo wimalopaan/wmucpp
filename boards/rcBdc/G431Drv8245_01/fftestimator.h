@@ -16,9 +16,16 @@ namespace Dsp {
             }
         }
         static inline uint16_t simpleFFT() {
+            // atomic copy of data
             __disable_irq();
             std::copy(std::begin(Source::data()), std::end(Source::data()), &samples[0]);
             __enable_irq();
+
+            if (useTimeWindow) {
+                for(uint16_t i = 0; i < samples.size(); ++i) {
+                    samples[i] *= timeWindow[i];
+                }
+            }
 
             arm_rfft_fast_f32(&fftInstance, &samples[0], &fft[0], 0); // fft[0] (real) : dc-offset
             arm_cmplx_mag_f32(&fft[0], &mMagnitude[0], mMagnitude.size()); // interleaved (real, complex) input, normal output
@@ -35,6 +42,7 @@ namespace Dsp {
                     break;
                 }
             }
+            // find absolute maximum after the leftmost minimum (exclude signal time-average)
             const uint16_t offset = minIndex + 1;
             arm_max_f32(&mMagnitude[offset], mMagnitude.size() - offset, &maxValue, &maxIndex);
             maxIndex += offset;
@@ -52,17 +60,17 @@ namespace Dsp {
         static inline float currMean() {
             return Source::devs::adc2Current(Source::currMean());
         }
-        static inline void update(const auto p) {
+        static inline void update(const auto duty) {
             const uint16_t offset = simpleFFT();
-            if (p) {
+            if (duty) {
                 const float Ubatt = Source::devs::adc2Voltage(Source::meanVoltage());
                 const uint32_t erpmMax = Ubatt * (mDir1 ? mEKM.dir1 : mEKM.dir2);
                 const uint16_t pmax = eRpm2index(erpmMax);
 
-                const int16_t px = (p.toInt() >= 0) ? p.toInt() : -p.toInt();
+                const int16_t absDuty = (duty.toInt() >= 0) ? duty.toInt() : -duty.toInt();
                 const float curr = Source::devs::adc2Current(Source::currMean());
                 const float udiff = curr * (mDir1 ? mRM.dir1 : mRM.dir2);
-                const float umotor = ((Ubatt * px) / ((p.Upper - p.Lower) / 2) - udiff);
+                const float umotor = ((Ubatt * absDuty) / ((duty.Upper - duty.Lower) / 2) - udiff);
 
                 const float rpm = pmax * umotor / Ubatt;
 
@@ -162,6 +170,22 @@ namespace Dsp {
             for(uint16_t i = 0; i < (2 * windowWidth); ++i) {
                 const float c = cos(std::numbers::pi_v<float> * (float)(i - windowWidth) / (2 * windowWidth));
                 w[i] = c * c;
+            }
+            return w;
+        }();
+        static inline bool useTimeWindow = true;
+        static inline constexpr auto timeWindow = []{
+            // Blackmann-Nuttall
+            const float a0 = 0.3635819;
+            const float a1 = 0.4891775;
+            const float a2 = 0.1365995;
+            const float a3 = 0.0106411;
+            std::array<float, Size> w{};
+            for(uint16_t i = 0; i < Size; ++i) {
+                w[i] = a0;
+                w[i] -= a1 * cos((2 * std::numbers::pi_v<float> * i) / (Size - 1));
+                w[i] += a2 * cos((4 * std::numbers::pi_v<float> * i) / (Size - 1));
+                w[i] -= a3 * cos((6 * std::numbers::pi_v<float> * i) / (Size - 1));
             }
             return w;
         }();
