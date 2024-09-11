@@ -32,7 +32,7 @@ struct CrsfTelemetry {
                 break;
             case State::Temp1:
                 out::data(RC::Protokoll::Crsf::Type::Temp1, mTemp1);
-                mState = State::Rpm1;
+                mState = State::Temp2;
                 break;
             case State::Temp2:
                 out::data(RC::Protokoll::Crsf::Type::Temp2, mTemp2);
@@ -64,6 +64,10 @@ struct CrsfTelemetry {
     static inline void temp1(const uint16_t t) {
         mTemp1[0] = std::byte(t >> 8);
         mTemp1[1] = std::byte(t & 0xff);
+    }
+    static inline void temp2(const uint16_t t) {
+        mTemp2[0] = std::byte(t >> 8);
+        mTemp2[1] = std::byte(t & 0xff);
     }
     static inline void sats(const uint8_t n) {
         mGps[14] = std::byte(n);
