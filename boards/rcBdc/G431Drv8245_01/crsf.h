@@ -147,7 +147,7 @@ struct CrsfCallback {
     static inline uint8_t mLastChangedParameter{};
     static inline constexpr uint32_t mSerialNumber{1234};
     static inline constexpr uint32_t mHWVersion{2};
-    static inline constexpr uint32_t mSWVersion{10};
+    static inline constexpr uint32_t mSWVersion{11};
     static inline std::array<char, 16> mPwmFreqString{};
     static inline std::array<char, 16> mMaxRpmString{};
     static inline std::array<char, 16> mResistanceString{};
@@ -229,10 +229,12 @@ struct CrsfCallback {
         uint8_t parent = addParent(p, Param_t{0, PType::Folder, "Advanced"});
         addNode(p, Param_t{parent, PType::U8,  "Channel", nullptr, &eeprom.crsf_channel, 1, 16, [](const uint8_t){return true;}});
         addNode(p, Param_t{parent, PType::Sel, "PreRun Check", "Off;On", &eeprom.prerun_check, 0, 1, [](const uint8_t){return true;}});
+        addNode(p, Param_t{parent, PType::U8,  "PreRun Hysteresis", nullptr, &eeprom.prerun_hyst, 0, 200, [](const uint8_t){return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Tone volume", nullptr, &eeprom.volume, 0, 200, [](const uint8_t){return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Calibrate UBatt [0.1%]", nullptr, &eeprom.calib_ubatt, 0, 200, [](const uint8_t){return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Temperature Filter", nullptr, &eeprom.temp_filter, 0, 9, [](const uint8_t v){speed::updateTempFilter(v); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Calibrate PWM", "100Hz;200Hz;400Hz", &eeprom.pwm_calib, 0, 2, [](const uint8_t){return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Window", "None;Blackman;Hann", &eeprom.timeDomainWindow, 0, 2, [](const uint8_t){notifier::updateWindow(); return true;}});
         addNode(p, Param_t{parent, PType::Command, "Reset to defaults", "Resetting...", nullptr, 0, 0, [](const uint8_t v){if (v == 1) return true; if (v == 4) notifier::resetParameter(); return false;}});
         parent = addParent(p, Param_t{0, PType::Folder, "PID-Controller"});
         addNode(p, Param_t{parent, PType::Sel, "PID Enable", "Off;On", &eeprom.use_pid, 0, 1});

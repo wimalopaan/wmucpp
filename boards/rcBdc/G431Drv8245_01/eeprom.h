@@ -12,11 +12,14 @@ struct Directional {
 struct EEProm {
     uint8_t crsf_channel = 1; // 1...16
     uint8_t prerun_check = 1;
+    uint8_t prerun_hyst = 30;
     uint8_t telemetry_polepairs = 9;
 
     uint8_t cutoff_freq = 10; // 100Hz
     uint8_t n_fsample = 4; // n_fsample * cuttoff_freq = sampling_freq
     uint8_t subsampling = 6;
+
+    uint8_t timeDomainWindow = 1; // 0=None, 1=Blackmann-Nuttall, 2=Hann
 
     uint8_t pwm_calib = 2; // 400Hz
 

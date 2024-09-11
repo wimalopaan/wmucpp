@@ -21,9 +21,14 @@ namespace Dsp {
             std::copy(std::begin(Source::data()), std::end(Source::data()), &samples[0]);
             __enable_irq();
 
-            if (useTimeWindow) {
+            if (timeWindow == 1) {
                 for(uint16_t i = 0; i < samples.size(); ++i) {
-                    samples[i] *= timeWindow[i];
+                    samples[i] *= blackmanWindow[i];
+                }
+            }
+            else if (timeWindow == 2) {
+                for(uint16_t i = 0; i < samples.size(); ++i) {
+                    samples[i] *= hannWindow[i];
                 }
             }
 
@@ -138,6 +143,9 @@ namespace Dsp {
         static inline void dir1(const bool d) {
             mDir1 = d;
         }
+        static inline void windowFunction(const uint8_t w) {
+            timeWindow = w;
+        }
     private:
         static inline uint16_t eRpm2index(const uint32_t erpm) {
             return (erpm * Size) / (60U * Source::samplingFrequency());
@@ -173,8 +181,8 @@ namespace Dsp {
             }
             return w;
         }();
-        static inline bool useTimeWindow = true;
-        static inline constexpr auto timeWindow = []{
+        static inline uint8_t timeWindow = 1;
+        static inline constexpr auto blackmanWindow = []{
             // Blackmann-Nuttall
             const float a0 = 0.3635819;
             const float a1 = 0.4891775;
@@ -186,6 +194,13 @@ namespace Dsp {
                 w[i] -= a1 * cos((2 * std::numbers::pi_v<float> * i) / (Size - 1));
                 w[i] += a2 * cos((4 * std::numbers::pi_v<float> * i) / (Size - 1));
                 w[i] -= a3 * cos((6 * std::numbers::pi_v<float> * i) / (Size - 1));
+            }
+            return w;
+        }();
+        static inline constexpr auto hannWindow = []{
+            std::array<float, Size> w{};
+            for(uint16_t i = 0; i < Size; ++i) {
+                w[i] = 0.5f * (1.0f - cos((2 * std::numbers::pi_v<float> * i) / (Size - 1)));
             }
             return w;
         }();

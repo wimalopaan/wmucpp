@@ -21,6 +21,8 @@ Details:
 
 Done:
 -----
+* adjustable prerun hysteresis
+* enable (different) window-functions via crsf-menu
 * crsf-parser: address handling? response only to own address
 * use real duty (inertia) for estimator
 * time-domain window (Blackmann-Nuttall-Window, ggf. wählbar über Menu)

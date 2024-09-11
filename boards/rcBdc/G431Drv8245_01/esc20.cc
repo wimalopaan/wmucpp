@@ -159,6 +159,9 @@ struct GFSM {
         crsfCallback::callbacks();
         crsfCallback::save();
     }
+    static inline void updateWindow() {
+        estimator::windowFunction(Storage::eeprom.timeDomainWindow);
+    }
 
     static inline void updatePwm() {
         // config::cutoff(Storage::eeprom.cutoff_freq * 100);
@@ -273,7 +276,7 @@ struct GFSM {
         case State::PlayWaitTone:
             if (toneplay::isOff()) {
                 const auto input = servo_pa::normalized(Storage::eeprom.crsf_channel - 1);
-                if (input == 0) {
+                if (input.absolute() <= Storage::eeprom.prerun_hyst) {
                     mState = State::PlayRunTone;
                 }
             }
@@ -317,7 +320,7 @@ struct GFSM {
                 IO::outl<trace>("# ch: ", Storage::eeprom.crsf_channel, " v: ", (int16_t)input, " conn: ", (uint8_t)mLinkStatus);
             });
             if (mLinkStatus == LinkStatus::Connected) {
-                if (input == 0) {
+                if (input.absolute() <= Storage::eeprom.prerun_hyst) {
                     mState = State::PlayRunTone;
                 } else {
                     mState = State::PlayWaitTone;
@@ -603,12 +606,14 @@ struct Notifier {
     static inline uint8_t getCalibrateStateNumber() {
         return gfsm::getCalibrateStateNumber();
     }
-
     static inline void updatePwm() {
         gfsm::updatePwm();
     }
     static inline void resetParameter() {
         gfsm::resetParameter();
+    }
+    static inline void updateWindow() {
+        gfsm::updateWindow();
     }
 };
 
