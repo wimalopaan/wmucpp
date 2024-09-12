@@ -1,7 +1,7 @@
 #define USE_MCU_STM_V3
 #define USE_DEVICES2
 
-#define USE_GNUPLOT
+// #define USE_GNUPLOT
 
 #define NDEBUG
 
