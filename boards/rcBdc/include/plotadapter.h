@@ -25,4 +25,9 @@ struct Adapter4 {
     static inline const auto& data = D::magnitude();
     static inline const char* const title = "mag(FFT)";
 };
+template<typename D>
+struct Adapter5 {
+    static inline const auto& data = D::indexCutoff();
+    static inline const char* const title = "iC";
+};
 

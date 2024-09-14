@@ -64,7 +64,7 @@ struct BdcIdentifier {
         }
     }
     static inline void sampleIsr() {
-        lastAdc = adc::mData[0];
+        lastAdc = mInvert ? (4095 - adc::mData[0]) : adc::mData[0];
         const float current = devs::adc2Current(lastAdc);
         if (mState == State::Measure) {
             voltageMean += devs::adc2Voltage(adc::mData[1]);
@@ -94,7 +94,9 @@ struct BdcIdentifier {
         }
         return {};
     }
-
+    static inline void invert(const bool inv) {
+        mInvert = inv;
+    }
     private:
     static inline std::optional<RL<>> evaluate(const float Um) {
         if (const auto ab = rle.compute()) {
@@ -109,7 +111,7 @@ struct BdcIdentifier {
         }
         return {};
     }
-
+    static inline volatile bool mInvert{false};
     static inline Statistics::RLEstimator<volatile float> rle{1.0f, 0.0, 0.0};
     static inline volatile uint16_t sampleCount = 0;
     static inline volatile uint16_t lastAdc = 0;

@@ -24,8 +24,9 @@ LOADLIBES += startup_g431.o system_g4.o
 targets += startup_g431.o
 targets += system_g4.o
 
-targets += esc01.elf esc01.bin
-targets += esc05.elf esc05.bin
-targets += esc10.elf esc10.bin
+#targets += esc01.elf esc01.bin
+#targets += esc05.elf esc05.bin
+#targets += esc10.elf esc10.bin
+targets += esc20.elf esc20.bin
 
 -include ../../../Makefile.arm.include

@@ -18,7 +18,11 @@ struct CrsfCallback {
     static inline constexpr auto& eeprom = storage::eeprom;
     static inline constexpr auto& eeprom_flash = storage::eeprom_flash;
 
+#ifdef CRSF_MODULE_NAME
+    static inline constexpr const char* const title = CRSF_MODULE_NAME;
+#else
     static inline constexpr const char* const title = "WM-BDC-32-S(8A)";
+#endif
 
     using name_t = std::array<char, 32>;
 

@@ -8,6 +8,10 @@ struct KmFsm {
     using pwm = PWM;
     using estimator = Est;
     using config = Config;
+    using subSampler = Est::source;
+    using devs = subSampler::devs;
+    using offset = devs::offset;
+    using store = devs::store;
 
     enum class State : uint8_t {Idle,
                                 Start, Inc, Meas, Stop
@@ -70,12 +74,21 @@ struct KmFsm {
             case State::Start:
                 IO::outl<Out>("# KM MeasRotStart");
                 config::init();
+                subSampler::reset();
                 if (mDir1) {
                     meKMs_dir1.clear();
+                    if constexpr (!std::is_same_v<offset, void>) {
+                        offset::set();
+                        subSampler::invert(true);
+                    }
                     pwm::dir1();
                 }
                 else {
                     meKMs_dir2.clear();
+                    if constexpr (!std::is_same_v<offset, void>) {
+                        offset::reset();
+                        subSampler::invert(false);
+                    }
                     pwm::dir2();
                 }
                 measureDuty = 0;
@@ -139,7 +152,12 @@ struct KmFsm {
         const float umintern = umotor - curr * (mDir1 ? Rm.dir1 : Rm.dir2);
         const uint16_t eKM = (float)erpm / umintern;
 
-        if ((eKM >= minEKm) && (eKM <= maxEKm)) {
+        // todo: adaptive
+        const float indexCutoff = duty * (estimator::size / store::eeprom.n_fsample);
+        const uint32_t erpmCutoff = estimator::index2Erpm(indexCutoff);
+
+        // if ((eKM >= minEKm) && (eKM <= maxEKm)) {
+        if ((eKM >= minEKm) && (eKM <= erpmCutoff)) {
             if (mDir1) {
                 meKMs_dir1.push_back(eKM);
             }
@@ -147,11 +165,11 @@ struct KmFsm {
                 meKMs_dir2.push_back(eKM);
             }
         }
-        IO::outl<Out>("# KM eRpm: ", erpm, " off: ", offset, " eKM: ", eKM, " um: ", (uint16_t)(umotor * 1000), " ui: ", (uint16_t)(umintern * 1000));
+        IO::outl<Out>("# KM eRpm: ", erpm, " off: ", offset, " eKM: ", eKM, " um: ", (uint16_t)(umotor * 1000), " ui: ", (uint16_t)(umintern * 1000), " g: ", subSampler::gain(), " erpm c: ", erpmCutoff);
     }
     static inline bool mDir1 = true;
     static inline uint16_t minEKm = 500;
-    static inline uint16_t maxEKm = 5000;
+    // static inline uint16_t maxEKm = 5000;
     static inline Directional Rm{0.0f, 0.0f};
     static inline Event mLastEvent = Event::NoEvent;
     static inline uint16_t measureDuty{};

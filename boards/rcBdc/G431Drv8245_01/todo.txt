@@ -4,6 +4,10 @@ Tests:
 
 ToDo
 -----
+* eKM measuring: next erpm must be higher than previous
+* indexCutoff with factor: adjustable via menu
+* smooth roll-off after eKm measure
+* width of cos-window for spectrum-weighting adjustable (menu)
 * use mean current of pwm-pulse to calculate Udiff (Rm * I)
 * Tmp1/2 telemetry (motor via LMT01) enable via menu
 * PID menu not functional
@@ -11,11 +15,13 @@ ToDo
 * pulse-count hysterese via DAC
 * after disconnect goto state check?
 * settings -> eeprom (pwm, cutoff);
-* smooth roll-off after eKm measure
 * test with crsf-parameter-type > 1byte, e.g. uint16_t
 
 Details:
 -----
+* comparator: enable via conditional compilation
+* use defines (name, defaults)
+* remove TIM3, TIM4, ADC1 usage, instead use class-names
 * pulse-count hysterese (DAC) via DMA
 * pulse-count: counting-timer + retriggerable-one-oulse-timer gating
 

@@ -35,10 +35,10 @@
 #include "bluetooth/hc05.h"
 #include "motor/bdc.h"
 #include "blinker.h"
-#include "comparator.h"
 
-#include "crsf.h"
-#include "telemetry.h"
+#include "../include/comparator.h"
+#include "../include/crsf_cb.h"
+#include "../include/telemetry.h"
 
 struct ESC01; // nur pwm
 struct ESC02; // mit adc trigger über timer3 (geht nicht direkt)
@@ -152,6 +152,8 @@ struct Devices<ESC20, Config, Mcu::Stm::Stm32G431> {
     using in2 = Mcu::Stm::Pin<gpioa, 7, MCU>; // CC2
     using pwm = Mcu::Stm::Motor::Identification::BdcWithPins<3, 4, in1, in2, clock, MCU>;
 
+    using offset = void;
+
     using disable = Mcu::Stm::Pin<gpiob, 0, MCU>;
     using nsleep = Mcu::Stm::Pin<gpioa, 15, MCU>;
     using fault = Mcu::Stm::Pin<gpiob, 4, MCU>;
@@ -169,8 +171,8 @@ struct Devices<ESC20, Config, Mcu::Stm::Stm32G431> {
     using adcDmaChannel = Mcu::Stm::Dma::Channel<dma1, 1, MCU>;
     using adcDmaStorage = std::array<volatile uint16_t, 3>;
     using adc = Mcu::Stm::V3::Adc<1, Meta::NList<13, 1, 16>, pwm, adcDmaChannel, adcDmaStorage, Meta::List<EndOfSequence>, MCU>; // opamp1
-    using isense = Mcu::Stm::Pin<gpioa, 0, MCU>;
-    using vsense = Mcu::Stm::Pin<gpioa, 3, MCU>;
+    using isense = Mcu::Stm::Pin<gpioa, 0, MCU>; // pa3
+    using vsense = Mcu::Stm::Pin<gpioa, 3, MCU>; // pa0
     using pga = Mcu::Stm::PGA<1, MCU>;
 
     // PA1 Comparator Lmt01

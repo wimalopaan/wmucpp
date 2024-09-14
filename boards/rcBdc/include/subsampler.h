@@ -11,6 +11,7 @@ namespace Dsp {
         using devs = Devices;
         using adc = devs::adc;
         using pga = devs::pga;
+        using store = devs::store;
 
         using tp2 = devs::tp2;
         static inline void cutoff(const uint16_t f) {
@@ -22,8 +23,12 @@ namespace Dsp {
         static inline void subSampleFactor(const uint16_t f) {
             factor = f;
         }
+        static inline void invert(const bool b) { // and offset
+            mInvert = b;
+            pga::useOffset(b);
+        }
         static inline void isr() {
-            const float currFiltered = iirFilter.process(adc::mData[0]);
+            const float currFiltered = iirFilter.process(mInvert ? (4095 - adc::mData[0]) : adc::mData[0]);
             mMeanVoltage.process(adc::mData[1]);
 
             sampleCounter += 1;
@@ -96,6 +101,7 @@ namespace Dsp {
         static inline volatile uint16_t sampleCounter{0};
         static inline volatile uint16_t factor{10};
         static inline volatile uint8_t gainIndex{0};
+        static inline volatile bool mInvert{false};
         static inline constexpr std::array<uint8_t, 7> gainFactor{1, 2, 4, 8, 16, 32, 64};
         static inline Dsp::Butterworth::LowPass<6, volatile float> iirFilter;
         static inline Dsp::ExpMean<void> mCurrMeanADC{0.001};

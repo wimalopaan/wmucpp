@@ -35,18 +35,22 @@ namespace Mcu::Stm {
                 MODIFY_REG(mcuOpamp->CSR, OPAMP_CSR_VMSEL_Msk, (0b11 << OPAMP_CSR_VMSEL_Pos)); // follower
             }
             else {
-                // MODIFY_REG(mcuOpamp->CSR, OPAMP_CSR_VMSEL_Msk, (0b10 << OPAMP_CSR_VMSEL_Pos)); // pga
-                // MODIFY_REG(mcuOpamp->CSR, OPAMP_CSR_PGGAIN_Msk, ((g - 1) << OPAMP_CSR_PGGAIN_Pos)); // gain
-                MODIFY_REG(mcuOpamp->CSR, (OPAMP_CSR_VMSEL_Msk | OPAMP_CSR_PGGAIN_Msk), ((0b10 << OPAMP_CSR_VMSEL_Pos) | ((g - 1) << OPAMP_CSR_PGGAIN_Pos))); // pga
-                // auto temp = mcuOpamp->CSR;
-                // temp &= ~OPAMP_CSR_PGGAIN_Msk;
-                // temp |= ((g - 1) << OPAMP_CSR_PGGAIN_Pos);
-                // mcuOpamp->CSR = temp;
+                MODIFY_REG(mcuOpamp->CSR, (OPAMP_CSR_VMSEL_Msk | OPAMP_CSR_PGGAIN_Msk), ((0b10 << OPAMP_CSR_VMSEL_Pos) | (((g - 1) | (mUseOffset ? 0b01000 : 0b00000)) << OPAMP_CSR_PGGAIN_Pos))); // pga
             }
         }
         static inline void input(const uint8_t i) {
             MODIFY_REG(mcuOpamp->CSR, OPAMP_CSR_VPSEL_Msk, ((i & 0b11) << OPAMP_CSR_VPSEL_Pos));
         }
+
+#define OPAMP_CSR_OFFSET_Pos         (17U)
+#define OPAMP_CSR_OFFSET_Msk         (0b11UL << OPAMP_CSR_OFFSET_Pos)
+
+        static inline void useOffset(const bool use) {
+            mUseOffset = use;
+            MODIFY_REG(mcuOpamp->CSR, OPAMP_CSR_OFFSET_Msk, (mUseOffset ? 0b01 : 0b00) << OPAMP_CSR_OFFSET_Pos);
+        }
+        private:
+        static inline bool mUseOffset{false};
     };
 
     template<G4xx MCU>
