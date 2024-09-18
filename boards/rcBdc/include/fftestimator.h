@@ -86,9 +86,9 @@ namespace Dsp {
 
                 const float indexCutoff = absDutyRel * (Size / store::eeprom.n_fsample);
 
-                const float rpm = std::max(std::min(pmax * umeff / Ubatt, (float)(Size/2 - 1)), 0.0f);
+                const float r1 = std::max(std::min(pmax * umeff / Ubatt, (float)(Size/2 - 1)), 0.0f);
+                const float rpm = std::min(r1, indexCutoff);
 
-                // the following only from left to right
                 const uint16_t windowLeft = std::max(rpm - windowWidth, 1.0f);
                 const uint16_t windowRight = std::min(rpm + windowWidth, (float)(Size/2 - 1));
 
@@ -98,13 +98,6 @@ namespace Dsp {
 
                 arm_max_f32(&mMagnitudeWeighted[windowLeft], windowRight - windowLeft + 1, &maxValueWeighted, &maxIndexWeighted);
                 maxIndexWeighted += windowLeft;
-
-                // for(uint16_t i = 0; i < Size / 2; ++i) {
-                //     mMagnitudeWeighted[i] = mMagnitude[i] * wf(i, rpm);
-                // }
-
-                // arm_max_f32(&mMagnitudeWeighted[offset], mMagnitudeWeighted.size() - offset, &maxValueWeighted, &maxIndexWeighted);
-                // maxIndexWeighted += offset;
 
                 mMaxWeighted[0].first = std::max((int)maxIndexWeighted - 10, 0);
                 mMaxWeighted[0].second = maxValueWeighted * 0.9;

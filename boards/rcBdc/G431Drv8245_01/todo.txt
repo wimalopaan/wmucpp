@@ -4,9 +4,7 @@ Tests:
 
 ToDo
 -----
-* indexCutoff with factor: adjustable via menu
 * width of cos-window for spectrum-weighting adjustable (menu)
-* window: cos or cos^2
 * adaptive current measuring point in time: low-duty: at end of pulse, hight-duty: in the middle
 * limit pwm-duty zu 98% due to mosfet-driver
 * Tmp1/2 telemetry (motor via LMT01) enable via menu
@@ -24,6 +22,10 @@ Details:
 * remove TIM3, TIM4, ADC1 usage, instead use class-names
 * pulse-count hysterese (DAC) via DMA
 * pulse-count: counting-timer + retriggerable-one-oulse-timer gating
+
+Maybe/Ideas:
+-----
+* window: cos or cos^2
 
 Done:
 -----
@@ -56,3 +58,4 @@ Done:
 Rejected:
 -----
 * fft-Size: 2048, measure processing time -> not enough RAM STM32G473
+* indexCutoff with factor: adjustable via menu
