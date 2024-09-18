@@ -14,11 +14,12 @@ struct KmFsm {
     using store = devs::store;
 
     enum class State : uint8_t {Idle,
-                                Start, Inc, Meas, Stop
+                                Start, Inc, Meas, Stop, Slowdown,
                                };
     enum class Event : uint8_t {NoEvent, Start};
 
     static inline constexpr External::Tick<systemTimer> measTicks{1000ms}; // fill the fft-buffer
+    static inline constexpr External::Tick<systemTimer> slowdownTicks{50ms};
 
     static inline void start() {
         if (mState == State::Idle) {
@@ -43,7 +44,7 @@ struct KmFsm {
             break;
         case State::Inc:
             if (measureDuty > measureDutyMax) {
-                mState = State::Stop;
+                mState = State::Slowdown;
             }
             else {
                 mState = State::Meas;
@@ -52,6 +53,19 @@ struct KmFsm {
         case State::Meas:
             mStateTick.on(measTicks, []{
                 mState = State::Inc;
+            });
+            break;
+        case State::Slowdown:
+            mStateTick.on(slowdownTicks, []{
+                measureDuty -= 20;
+                if (measureDuty > 0) {
+                    pwm::duty(measureDuty);
+                }
+                else {
+                    measureDuty = 0;
+                    pwm::duty(measureDuty);
+                    mState = State::Stop;
+                }
             });
             break;
         case State::Stop:
@@ -75,6 +89,7 @@ struct KmFsm {
                 IO::outl<Out>("# KM MeasRotStart");
                 config::init();
                 subSampler::reset();
+                lastERpm = 0;
                 if (mDir1) {
                     meKMs_dir1.clear();
                     if constexpr (!std::is_same_v<offset, void>) {
@@ -104,11 +119,11 @@ struct KmFsm {
             case State::Meas:
                 IO::outl<Out>("# KM MeasRotMeas");
                 break;
+            case State::Slowdown:
+                IO::outl<Out>("# KM SlowDown");
+                break;
             case State::Stop:
-                // smooth roll out
                 IO::outl<Out>("# KM MeasRotStop");
-                measureDuty = 0;
-                pwm::duty(measureDuty);
                 calculate();
                 break;
             }
@@ -133,8 +148,22 @@ struct KmFsm {
     }
     private:
     static inline uint16_t mean(const auto& c) {
-        const auto sum = std::accumulate(std::begin(c), std::end(c), 0);
-        return sum / c.size();
+        uint32_t sum = 0;
+        uint16_t num = 0;
+        for(const auto& e: c) {
+            if (e > 0) {
+                sum += e;
+                ++num;
+            }
+        }
+        if (num > 0) {
+            return sum / num;
+        }
+        else {
+            return 0;
+        }
+        // const auto sum = std::accumulate(std::begin(c), std::end(c), 0);
+        // return sum / c.size();
     }
     static inline void calculate() {
         meanEKm1 = mean(meKMs_dir1);
@@ -152,31 +181,35 @@ struct KmFsm {
         const float umintern = umotor - curr * (mDir1 ? Rm.dir1 : Rm.dir2);
         const uint16_t eKM = (float)erpm / umintern;
 
-        // todo: adaptive
         const float indexCutoff = duty * (estimator::size / store::eeprom.n_fsample);
         const uint32_t erpmCutoff = estimator::index2Erpm(indexCutoff);
 
-        // if ((eKM >= minEKm) && (eKM <= maxEKm)) {
         if ((eKM >= minEKm) && (eKM <= erpmCutoff)) {
             if (mDir1) {
-                meKMs_dir1.push_back(eKM);
+                if (erpm > lastERpm) {
+                    meKMs_dir1.push_back(eKM);
+                    lastERpm = erpm;
+                }
             }
             else {
-                meKMs_dir2.push_back(eKM);
+                if (erpm > lastERpm) {
+                    meKMs_dir2.push_back(eKM);
+                    lastERpm = erpm;
+                }
             }
         }
         IO::outl<Out>("# KM eRpm: ", erpm, " off: ", offset, " eKM: ", eKM, " um: ", (uint16_t)(umotor * 1000), " ui: ", (uint16_t)(umintern * 1000), " g: ", subSampler::gain(), " erpm c: ", erpmCutoff);
     }
     static inline bool mDir1 = true;
     static inline uint16_t minEKm = 500;
-    // static inline uint16_t maxEKm = 5000;
     static inline Directional Rm{0.0f, 0.0f};
     static inline Event mLastEvent = Event::NoEvent;
-    static inline uint16_t measureDuty{};
+    static inline int16_t measureDuty{};
     static inline uint16_t measureDutyMax = (0.9f * pwm::maxDuty()); // parameter
     static inline State mState = State::Idle;
     static inline etl::FixedVector<uint16_t, 16> meKMs_dir1{};
     static inline etl::FixedVector<uint16_t, 16> meKMs_dir2{};
+    static inline uint16_t lastERpm = 0;
     static inline uint16_t meanEKm1 = 0;
     static inline uint16_t meanEKm2 = 0;
     static inline External::Tick<systemTimer> mStateTick;

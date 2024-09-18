@@ -145,7 +145,7 @@ struct Devices<Var02, Config, Mcu::Stm::Stm32G431> {
     using sda1 = Mcu::Stm::Pin<gpiob, 7, MCU>;
     using scl1 = Mcu::Stm::Pin<gpioa, 15, MCU>;
 
-    using i2c1 = Mcu::Stm::I2C::Master<1, 16, MCU>;
+    using i2c1 = Mcu::Stm::I2C::Master<1, 16, trace, MCU>;
     static inline constexpr Mcu::Stm::I2C::Address si5351{0x60};
     using si = External::SI5351::Clock<i2c1, si5351, 867>;
     // using si = External::SI5351::Clock<i2c1, si5351, 0>;
@@ -274,6 +274,7 @@ struct Devices<Var02, Config, Mcu::Stm::Stm32G431> {
     }
 };
 
+#if 0
 template<typename Config>
 struct Devices<Var01, Config, Mcu::Stm::Stm32G431> {
     using MCU = Mcu::Stm::Stm32G431;
@@ -303,8 +304,8 @@ struct Devices<Var01, Config, Mcu::Stm::Stm32G431> {
 
     struct CrsfCallback {
         using out = crsf_out;
-        using Param_t = RC::Protokoll::Crsf::Parameter;
-        using PType = RC::Protokoll::Crsf::Parameter::Type;
+        using Param_t = RC::Protokoll::Crsf::Parameter<>;
+        using PType = RC::Protokoll::Crsf::Parameter<>::Type;
 
         static inline void setParameter(const uint8_t index, const uint8_t value) {
             IO::outl<trace>("SetP adr: ", index, " v: ", value);
@@ -314,7 +315,7 @@ struct Devices<Var01, Config, Mcu::Stm::Stm32G431> {
                 mLastChangedParameter = index;
             }
         }
-        static inline RC::Protokoll::Crsf::Parameter parameter(const uint8_t index) {
+        static inline RC::Protokoll::Crsf::Parameter<> parameter(const uint8_t index) {
             if ((index >= 1) && (index <= params.size())) {
                 return params[index - 1];
             }
@@ -583,3 +584,4 @@ struct Devices<Var01, Config, Mcu::Stm::Stm32G431> {
     }
 };
 
+#endif

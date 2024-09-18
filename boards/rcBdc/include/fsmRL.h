@@ -71,7 +71,6 @@ struct RLFsm {
                 actualMeas_dir2 = RL<volatile float>{};
                 pwm::duty(measureDuty);
                 pwm::setMultiMode();
-                // pwm::pwm(config::fPwmIdentify);
                 if (storage::eeprom.pwm_calib == 2) {
                     pwm::pwm(400);
                 }

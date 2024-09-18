@@ -48,7 +48,22 @@ namespace etl {
             assert(mSize < Capacity);
             data[mSize++] = item;
         }
-        
+        inline constexpr const T& back() const {
+            assert(mSize > 0);
+            return data[mSize - 1];
+        }
+        inline constexpr T& back() {
+            assert(mSize > 0);
+            return data[mSize - 1];
+        }
+        inline constexpr const T& front() const {
+            assert(mSize > 0);
+            return data[0];
+        }
+        inline constexpr T& front() {
+            assert(mSize > 0);
+            return data[0];
+        }
     private:
         T data[Capacity];
         size_type mSize{0};

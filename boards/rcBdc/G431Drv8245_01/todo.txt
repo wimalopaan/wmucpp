@@ -4,11 +4,11 @@ Tests:
 
 ToDo
 -----
-* eKM measuring: next erpm must be higher than previous
 * indexCutoff with factor: adjustable via menu
-* smooth roll-off after eKm measure
 * width of cos-window for spectrum-weighting adjustable (menu)
-* use mean current of pwm-pulse to calculate Udiff (Rm * I)
+* window: cos or cos^2
+* adaptive current measuring point in time: low-duty: at end of pulse, hight-duty: in the middle
+* limit pwm-duty zu 98% due to mosfet-driver
 * Tmp1/2 telemetry (motor via LMT01) enable via menu
 * PID menu not functional
 * PID parameter: absolute / relative mode
@@ -27,6 +27,9 @@ Details:
 
 Done:
 -----
+* efficiency: outside the window no computation
+* eKM measuring: next erpm must be higher than previous
+* smooth roll-off after eKm measure
 * adjustable prerun hysteresis
 * enable (different) window-functions via crsf-menu
 * crsf-parser: address handling? response only to own address

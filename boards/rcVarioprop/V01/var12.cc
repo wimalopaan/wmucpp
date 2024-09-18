@@ -46,8 +46,8 @@ struct BtCallback {
 template<typename Trace>
 struct CrsfCallback {
     using trace = Trace;
-    using Param_t = RC::Protokoll::Crsf::Parameter;
-    using PType = RC::Protokoll::Crsf::Parameter::Type;
+    using Param_t = RC::Protokoll::Crsf::Parameter<>;
+    using PType = RC::Protokoll::Crsf::Parameter<>::Type;
 
     static inline constexpr void gotLinkStats() {
     }
@@ -62,7 +62,7 @@ struct CrsfCallback {
             mLastChangedParameter = index;
         }
     }
-    static inline RC::Protokoll::Crsf::Parameter parameter(const uint8_t index) {
+    static inline RC::Protokoll::Crsf::Parameter<> parameter(const uint8_t index) {
         if ((index >= 1) && (index <= params.size())) {
             return params[index - 1];
         }
