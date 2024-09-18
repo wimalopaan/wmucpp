@@ -77,7 +77,8 @@ struct Devices<ESC20, Config, Mcu::Stm::Stm32G431> {
     using gpiof = Mcu::Stm::GPIO<Mcu::Stm::F, MCU>;
 
     static inline constexpr float adc2Voltage(const auto a) {
-        constexpr float r1 = 91'000;
+        // constexpr float r1 = 91'000;
+        constexpr float r1 = 100'000; // watch out for assembly!
         constexpr float r2 = 10'000;
         constexpr float vref = 3.3f;
         constexpr float max = 4095.0f;

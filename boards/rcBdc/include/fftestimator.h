@@ -74,13 +74,13 @@ namespace Dsp {
             const uint16_t offset = simpleFFT();
             if (duty) {
                 const float Ubatt = Source::devs::adc2Voltage(Source::meanVoltage());
-                const uint32_t erpmMax = Ubatt * (mDir1 ? mEKM.dir1 : mEKM.dir2);
+                const uint32_t erpmMax = Ubatt * (mDir1 ? store::eeprom.eKm.dir1 : store::eeprom.eKm.dir2);
                 const uint16_t pmax = eRpm2index(erpmMax);
 
                 const float absDuty = (duty.toInt() >= 0) ? duty.toInt() : -duty.toInt();
                 const float absDutyRel = absDuty / ((duty.Upper - duty.Lower) / 2);
                 const float curr = Source::devs::adc2Current(Source::currMean());
-                const float udiff = curr * (mDir1 ? mRM.dir1 : mRM.dir2);
+                const float udiff = curr * (mDir1 ? store::eeprom.resistance.dir1 : store::eeprom.resistance.dir2);
                 const float umotor = Ubatt * absDutyRel;
                 const float umeff = umotor - udiff;
 
@@ -96,7 +96,8 @@ namespace Dsp {
                     mMagnitudeWeighted[i] = mMagnitude[i] * wf(i, rpm);
                 }
 
-                arm_max_f32(&mMagnitudeWeighted[windowLeft], windowRight - windowLeft + 1, &maxValueWeighted, &maxIndexWeighted);
+                const uint16_t left = std::max(offset, windowLeft);
+                arm_max_f32(&mMagnitudeWeighted[left], windowRight - windowLeft + 1, &maxValueWeighted, &maxIndexWeighted);
                 maxIndexWeighted += windowLeft;
 
                 mMaxWeighted[0].first = std::max((int)maxIndexWeighted - 10, 0);
@@ -148,12 +149,12 @@ namespace Dsp {
         static inline const auto& indexCutoff() {
             return mIndexCutoff;
         }
-        static inline void setEKm(const Directional<uint16_t> k) {
-            mEKM = k;
-        }
-        static inline void setRm(const Directional<float> r) {
-            mRM = r;
-        }
+        // static inline void setEKm(const Directional<uint16_t> k) {
+        //     mEKM = k;
+        // }
+        // static inline void setRm(const Directional<float> r) {
+        //     mRM = r;
+        // }
         static inline void dir1(const bool d) {
             mDir1 = d;
         }
@@ -168,8 +169,10 @@ namespace Dsp {
         }
         private:
         static inline bool mDir1 = true;
-        static inline Directional<uint16_t > mEKM{1875, 1875}; // electrical-Upm/V
-        static inline Directional<float> mRM{7.9f, 7.9f}; // resistance (Ohm)
+        // static inline Directional<uint16_t > mEKM{1875, 1875}; // electrical-Upm/V
+        // static inline Directional<uint16_t> mEKM = store::eeprom.eKm;
+        // static inline Directional<float> mRM{7.9f, 7.9f}; // resistance (Ohm)
+        // static inline Directional<float> mRM = store::eeprom.resistance;
 
         static inline uint32_t minIndex{0};
         static inline float maxValue{};

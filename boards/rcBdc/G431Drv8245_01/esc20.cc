@@ -458,8 +458,9 @@ struct GFSM {
                 crsfCallback::update();
                 crsfCallback::save();
                 IO::outl<trace>("# Setting Rm: ", (uint16_t)(1000 * Rm.dir1), " Lm: ",  (uint16_t)(1000 * Lm.dir1), " eKm: ", (uint16_t)eKm.dir1);
-                estimator::setRm(Rm);
-                estimator::setEKm(eKm); }
+                // estimator::setRm(Rm);
+                // estimator::setEKm(eKm);
+            }
                 break;
             case State::Check:
                 IO::outl<trace>("# Check");

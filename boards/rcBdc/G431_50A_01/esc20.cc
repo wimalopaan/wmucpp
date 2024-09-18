@@ -455,9 +455,10 @@ struct GFSM {
                 Storage::eeprom.eKm = eKm;
                 crsfCallback::update();
                 crsfCallback::save();
-                IO::outl<trace>("# Setting Rm: ", (uint16_t)(1000 * Rm.dir1), " Lm: ",  (uint16_t)(1000 * Lm.dir1), " eKm: ", (uint16_t)eKm.dir1);
-                estimator::setRm(Rm);
-                estimator::setEKm(eKm); }
+                IO::outl<trace>("# Setting Rm: ", (uint16_t)(1000 * Rm.dir1), " Lm: ",  (uint16_t)(1000 * Lm.dir1), " eKm d1: ", (uint16_t)eKm.dir1, " eKm d2: ", (uint16_t)eKm.dir2);
+                // estimator::setRm(Rm);
+                // estimator::setEKm(eKm);
+                }
                 break;
             case State::MeasRL:
                 IO::outl<trace>("# MeasRL");
@@ -487,7 +488,7 @@ struct GFSM {
             case State::Run:
                 IO::outl<trace>("# Run");
                 led::event(led::Event::Slow);
-                IO::outl<trace>("# ekm: ", (uint16_t)(1000 * Storage::eeprom.eKm.dir1));
+                IO::outl<trace>("# ekm d1: ", Storage::eeprom.eKm.dir1, " ekm d2: ", Storage::eeprom.eKm.dir2);
                 config::init();
                 // in1::template dir<Mcu::Output>();
                 // in2::afunction(2);

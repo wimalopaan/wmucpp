@@ -6,13 +6,10 @@ ToDo
 -----
 * width of cos-window for spectrum-weighting adjustable (menu)
 * adaptive current measuring point in time: low-duty: at end of pulse, hight-duty: in the middle
-* limit pwm-duty zu 98% due to mosfet-driver
-* Tmp1/2 telemetry (motor via LMT01) enable via menu
+* limit pwm-duty zu 98% due to mosfet-driver (large version only)
 * PID menu not functional
 * PID parameter: absolute / relative mode
-* pulse-count hysterese via DAC
 * after disconnect goto state check?
-* settings -> eeprom (pwm, cutoff);
 * test with crsf-parameter-type > 1byte, e.g. uint16_t
 
 Details:
@@ -20,8 +17,6 @@ Details:
 * comparator: enable via conditional compilation
 * use defines (name, defaults)
 * remove TIM3, TIM4, ADC1 usage, instead use class-names
-* pulse-count hysterese (DAC) via DMA
-* pulse-count: counting-timer + retriggerable-one-oulse-timer gating
 
 Maybe/Ideas:
 -----
@@ -29,6 +24,8 @@ Maybe/Ideas:
 
 Done:
 -----
+* after power off window does not fit anymore (wrong values in eeprom?)
+* voltage measuring wrong
 * efficiency: outside the window no computation
 * eKM measuring: next erpm must be higher than previous
 * smooth roll-off after eKm measure
@@ -37,6 +34,7 @@ Done:
 * crsf-parser: address handling? response only to own address
 * use real duty (inertia) for estimator
 * time-domain window (Blackmann-Nuttall-Window, ggf. wählbar über Menu)
+* settings -> eeprom (pwm, cutoff);
 * parameter for Rm/Lm estimator: pwm-freq: low/middle/high = 100/200/400 Hz
 * calibrate UBatt (menu)
 * curr sometimes not displayed correcly (after calibrate!!)
@@ -59,3 +57,7 @@ Rejected:
 -----
 * fft-Size: 2048, measure processing time -> not enough RAM STM32G473
 * indexCutoff with factor: adjustable via menu
+* Tmp1/2 telemetry (motor via LMT01) enable via menu
+* pulse-count hysterese via DAC
+* pulse-count hysterese (DAC) via DMA
+* pulse-count: counting-timer + retriggerable-one-oulse-timer gating
