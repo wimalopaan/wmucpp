@@ -379,9 +379,6 @@ namespace etl {
         T mY{};
     };
 
-
-
-
     template<typename A>
     struct index_type;
     

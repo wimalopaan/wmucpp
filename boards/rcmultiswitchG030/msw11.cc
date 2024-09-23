@@ -19,11 +19,15 @@ struct EEProm {
         uint8_t blinkOffTime = 1;
     };
 
+    uint8_t magic = 42;
+
     uint8_t address = 0;
     uint8_t pwm1 = 10;
     uint8_t pwm2 = 10;
     uint8_t pwm3 = 10;
     uint8_t pwm4 = 10;
+    uint8_t crsf_address = 0xc8;
+    uint8_t response_slot = 8;
     uint8_t telemetry = 0;
 
     std::array<Output, 8> outputs;
@@ -84,7 +88,7 @@ struct CrsfTelemetry {
         });
     }
     private:
-    static inline State mState{State::Gps};
+    static inline State mState{State::Idle};
     static inline Event mEvent{Event::None};
 
     static inline std::array<std::byte, 15> mGps{};
@@ -106,9 +110,12 @@ struct CrsfCallback {
     using telem_out = Config::telem_out;
     using timer = Config::timer;
 
+    using pa = Config::pa;
+    using responder = pa::Responder;
+
     using crsfTelemetry = CrsfTelemetry<telem_out, timer>;
 
-    static inline constexpr const char* const title = "MultiSwitch-E @ ";
+    static inline constexpr const char* const title = "MultiSwitch-E@";
 
     using name_t = std::array<char, 32>;
 
@@ -116,26 +123,23 @@ struct CrsfCallback {
 
     static inline State mStreamState{State::Undefined};
 
-    static inline constexpr void gotLinkStats() {
-        if (mStreamState == State::Undefined) {
-            mStreamState = State::GotStats;
-        }
+    static inline constexpr void disableTelemetry() {
     }
-
+    static inline constexpr void gotLinkStats() {
+    }
     static inline constexpr void gotChannels() {
-        if (mStreamState == State::GotStats) {
-            mStreamState = State::GotChannels;
-            crsfTelemetry::event(crsfTelemetry::Event::SendNext);
-        }
     }
 
     static inline constexpr void ratePeriodic() {
-        crsfTelemetry::ratePeriodic();
+        // crsfTelemetry::ratePeriodic();
     }
 
     static inline constexpr void updateName(name_t& n) {
         strncpy(&n[0], title, n.size());
-        std::to_chars(std::begin(n) + strlen(title), std::end(n), eeprom.address);
+        auto r = std::to_chars(std::begin(n) + strlen(title), std::end(n), eeprom.address);
+        *r.ptr++ = ':';
+        r = std::to_chars(r.ptr, std::end(n), eeprom.crsf_address);
+        *r.ptr++ = '\0';
     }
     static inline void update() {
         updateName(mName);
@@ -192,9 +196,13 @@ struct CrsfCallback {
     }
     template<auto L>
     static inline void command(const std::array<uint8_t, L>& payload) {
-        if (payload[0] == (uint8_t)RC::Protokoll::Crsf::Address::Controller) {
-            if (payload[2] == (uint8_t)RC::Protokoll::Crsf::CommandType::Switch) {
-                if (payload[3] == (uint8_t)RC::Protokoll::Crsf::SwitchCommand::Set) {
+        const uint8_t destAddress = payload[0];
+        const uint8_t srcAddress = payload[1];
+        const uint8_t realm = payload[2];
+        const uint8_t cmd = payload[3];
+        if ((srcAddress == (uint8_t)RC::Protokoll::Crsf::Address::Handset) && (destAddress >= 0xc0) && (destAddress <= 0xcf)) {
+            if (realm == (uint8_t)RC::Protokoll::Crsf::CommandType::Switch) {
+                if (cmd == (uint8_t)RC::Protokoll::Crsf::SwitchCommand::Set) {
                     const uint8_t address = (uint8_t)payload[4];
                     const uint8_t sw = (uint8_t)payload[5];
                     if (eeprom.address == address) {
@@ -253,6 +261,8 @@ private:
         addNode(p, Param_t{parent, PType::U8, "PWM Freq G2 (O2,3)[100Hz]", nullptr, &eeprom.pwm2, 1, 200, [](const uint8_t v){Meta::nth_element<1, pwms>::freqCenties(v); return true;}});
         addNode(p, Param_t{parent, PType::U8, "PWM Freq G3 (O0)[100Hz]", nullptr, &eeprom.pwm3, 1, 200, [](const uint8_t v){Meta::nth_element<2, pwms>::freqCenties(v); return true;}});
         addNode(p, Param_t{parent, PType::U8, "PWM Freq G4 (O7)[100Hz]", nullptr, &eeprom.pwm4, 1, 200, [](const uint8_t v){Meta::nth_element<3, pwms>::freqCenties(v); return true;}});
+        addNode(p, Param_t{parent, PType::U8, "CRSF Address", nullptr, &eeprom.crsf_address, 0xc0, 0xcf, [](const uint8_t v){eeprom.response_slot = v - 0xc0; responder::address(std::byte{v}); responder::telemetrySlot(v - 0xc0); return true;}});
+        addNode(p, Param_t{parent, PType::U8, "Response Slot", nullptr, &eeprom.response_slot, 0, 15, [](const uint8_t v){responder::telemetrySlot(v); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Telemetry", "Off;On", &eeprom.telemetry, 0, 1});
 
         // addNode(p, Param_t{parent, PType::Str, "Name", "bla"}); // not supported by elrsv3.lua?
@@ -457,7 +467,12 @@ struct GFSM {
             break;
         case State::Init:
             mStateTick.on(initTicks, []{
-                mState = State::RunNoTelemetry;
+                if (eeprom.telemetry) {
+                    mState = State::RunWithTelemetry;
+                }
+                else {
+                    mState = State::RunNoTelemetry;
+                }
             });
             break;
         case State::RunNoTelemetry:
@@ -493,7 +508,13 @@ struct GFSM {
                 IO::outl<debug>("Run WT");
                 IO::outl<debug>("adr: ", eeprom.address);
                 crsf_pa::enableReply(true);
-                led::event(led::Event::Steady);
+                if (eeprom.telemetry) {
+                    led::count(2);
+                    led::event(led::Event::Slow);
+                }
+                else {
+                    led::event(led::Event::Steady);
+                }
             }
         }
     }
@@ -518,7 +539,11 @@ struct Setter {
 };
 
 int main() {
+    if (eeprom_flash.magic != 42) {
+        Mcu::Stm32::savecfg(eeprom, eeprom_flash);
+    }
     std::memcpy(&eeprom, &eeprom_flash, sizeof(EEProm));
+
     gfsm::init();
     gfsm::update();
 

@@ -34,12 +34,13 @@ struct CrsfCallback {
 
     static inline State mStreamState{State::Undefined};
 
+    static inline constexpr void disableTelemetry() {
+    }
     static inline constexpr void gotLinkStats() {
         if (mStreamState == State::Undefined) {
             mStreamState = State::GotStats;
         }
     }
-
     static inline constexpr void gotChannels() {
         if (mStreamState == State::GotStats) {
             mStreamState = State::GotChannels;

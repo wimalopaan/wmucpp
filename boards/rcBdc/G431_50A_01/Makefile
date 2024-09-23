@@ -1,6 +1,9 @@
 # LD_PRELOAD=/usr/local/lib/libstlink.so /usr/local/bin/st-flash --reset --connect-under-reset write cc01.bin  0x8000000
 # LD_PRELOAD=/usr/local/lib/libstlink.so /usr/local/bin/st-trace --trace=24000000     
 
+# LD_PRELOAD=/usr/local/lib/libstlink.so /usr/local/bin/st-trace --trace=10m -v0 | tee -p p1 | gnuplot --persist
+# grep '^#' p1 
+
 CPU = cortex-m4
 FPU = -mfpu=fpv4-sp-d16
 FLOAT-ABI = -mfloat-abi=hard

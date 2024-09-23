@@ -9,7 +9,7 @@ struct RLFsm {
     using devs = identifier::devs;
     using storage = devs::store;
 
-    enum class State : uint8_t {Idle, Start, Inc, Meas, Stop};
+    enum class State : uint8_t {Idle, CurrentOffset, Start, Inc, Meas, Stop};
     enum class Event : uint8_t {NoEvent, Start};
 
     static inline constexpr External::Tick<systemTimer> measTicks{300ms};

@@ -1,6 +1,9 @@
 todo:
+* bei unterschiedlichen CRSF-Adressen (benötigt dann PR wmaddress im ELRS) Antwort
+  auf das DEVICE_PING mit Paket-Wartezyklen gemäß Adresse.
+* Option: unique-address -> Config-Menu immer aktiviert, DEVICE_PING Verfahren anwenden
 * statt Expo: PWM Duty Max Scaling 1/0.1/0.01
-* CRSF-Address einstellbar (evtl. Problem im ELRS?)
+* CRSF-Address einstellbar (evtl. Problem im ELRS? PR wmaddress für ELRS)
 * Telemetrie (state-machine): für neue Hardware mit Spannungssensor
 * DMA Usart
 

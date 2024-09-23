@@ -1,7 +1,7 @@
 #define USE_MCU_STM_V3
 #define USE_DEVICES2
 
-#define USE_GNUPLOT
+// #define USE_GNUPLOT
 
 #define CRSF_MODULE_NAME "WM-BDC-32-L(50A)"
 #define DEFAULT_POLE_PAIRS 12
@@ -131,13 +131,12 @@ struct GFSM {
         config::init();
         estimator::init();
 
-        // servo_pa::Responder::address(std::byte{0xca}); // ESC address
+        servo_pa::Responder::address(std::byte{0xca}); // ESC address (needs PR wmaddress for ELRS)
     }
 
     enum class State : uint8_t {Undefined = 0x00,
                                 Init,
                                 Check, Run,
-                                // Reset,
                                 PlayStartupTone,
                                 PlayRunTone,
                                 PlayWaitTone,
@@ -151,7 +150,6 @@ struct GFSM {
                                 MeasRot
                                };
     enum class Event : uint8_t {None,
-                                // Init,
                                 StartCalibrate,
                                 StopCalibrate
                                };
@@ -205,8 +203,6 @@ struct GFSM {
             plot::periodic();
 #endif
             break;
-        // case State::Reset:
-        //     break;
         case State::StartCalibrate:
             break;
         case State::StopCalibrate:
@@ -325,7 +321,8 @@ struct GFSM {
         case State::PrintMeasures2:
             mState = State::StopCalibrate;
             break;
-        case State::Check: {
+        case State::Check:
+        {
             const auto input = servo_pa::normalized(Storage::eeprom.crsf_channel - 1);
             mStateTick.on(initTicks, [&]{
                 IO::outl<trace>("# ch: ", Storage::eeprom.crsf_channel, " v: ", (int16_t)input, " conn: ", (uint8_t)mLinkStatus);
@@ -350,6 +347,7 @@ struct GFSM {
                 estimator::dir1(inputFiltered >= 0);
                 estimator::update(inputFiltered);
                 const uint16_t rpm = estimator::eRpm() / Storage::eeprom.telemetry_polepairs;
+
                 if (rpm > 26) {
                     crsfTelemetry::rpm1(rpm);
                 }
@@ -366,26 +364,26 @@ struct GFSM {
                 // const uint16_t t2 = comp1::temperatur();
                 // crsfTelemetry::temp2(t2);
 
-
                 // const float setRpm = (vf.absolute() / 1000.0f) * 5000;
                 // const float co = mPid.process(setRpm, rpm);
                 // const float cc = 1640.0f * (setRpm + co) / 5000.0f;
                 // float s = std::max(std::min(cc, 1640.0f), 0.0f);
 
-                // pwm::dir2();
-                // pwm::duty(s);
-
-
                 if (const auto b = inputFiltered.absolute(); inputFiltered >= 0) {
+                    // decltype(b)::_;
                     offset::set();
                     subSampler::invert(true);
                     pwm::dir1();
+                    const float trigger = mTriggerMin + (mTriggerMax - mTriggerMin) * ((float)b.Upper - b.toInt()) / ((float)b.Upper - b.Lower);
+                    pwm::trigger(trigger);
                     pwm::duty(b);
                 }
                 else {
                     offset::reset();
                     subSampler::invert(false);
                     pwm::dir2();
+                    const float trigger = mTriggerMin + (mTriggerMax - mTriggerMin) * ((float)b.Upper - b.toInt()) / ((float)b.Upper - b.Lower);
+                    pwm::trigger(trigger);
                     pwm::duty(b);
                 }
 
@@ -400,18 +398,11 @@ struct GFSM {
             });
             mStateTick.on(initTicks, [&]{
                 const auto input = servo_pa::normalized(Storage::eeprom.crsf_channel - 1);
-                IO::outl<trace>("# input: ", input.toInt());
-                // IO::outl<trace>("# Rm: ", (uint32_t)(1000 * lastRm), " ue: ", (uint16_t)(10 * ue), " um: ", (uint16_t)(10 * um), " im: ", (uint16_t)(100 * im));
-                // IO::outl<trace>("# MTemp: ", (uint16_t)(10 * comp1::temperatur()));
-                // IO::outl<trace>("# rpm: ", estimator::eRpmNoWindow() / Storage::eeprom.telemetry_polepairs);
+                const uint16_t t = Speed::tempFilter.value();
+                IO::outl<trace>("# input: ", input.toInt(), " Mcu Temp: ", t, " raw: ", adc::mData[2], " traw: ", (uint16_t)(10 * Mcu::Stm::adc2Temp(adc::mData[2])), " TCAL1: ", *TEMPSENSOR_CAL1_ADDR, " TCAL2: ", *TEMPSENSOR_CAL2_ADDR);
                 IO::outl<trace>("# meanADC: ", (uint16_t)subSampler::currMeanADC(), " mean: ", (uint16_t)subSampler::currMean(), " g:", subSampler::gain(), " volt: ", (uint16_t)(10.0f * devs::adc2Voltage(subSampler::meanVoltage())));
             });
             break;
-        // case State::Reset:
-        //     if (std::exchange(mEvent, Event::None) == Event::Init) {
-        //         mState = State::PlayStartupTone;
-        //     }
-        //     break;
         }
         if (oldState != mState) {
             mStateTick.reset();
@@ -456,8 +447,6 @@ struct GFSM {
                 crsfCallback::update();
                 crsfCallback::save();
                 IO::outl<trace>("# Setting Rm: ", (uint16_t)(1000 * Rm.dir1), " Lm: ",  (uint16_t)(1000 * Lm.dir1), " eKm d1: ", (uint16_t)eKm.dir1, " eKm d2: ", (uint16_t)eKm.dir2);
-                // estimator::setRm(Rm);
-                // estimator::setEKm(eKm);
                 }
                 break;
             case State::MeasRL:
@@ -490,15 +479,10 @@ struct GFSM {
                 led::event(led::Event::Slow);
                 IO::outl<trace>("# ekm d1: ", Storage::eeprom.eKm.dir1, " ekm d2: ", Storage::eeprom.eKm.dir2);
                 config::init();
-                // in1::template dir<Mcu::Output>();
-                // in2::afunction(2);
                 pwm::duty(0);
                 pwm::setSingleMode();
                 subSampler::reset();
                 break;
-            // case State::Reset:
-            //     IO::outl<trace>("# Reset");
-            //     break;
             }
         }
     }
@@ -597,6 +581,8 @@ struct GFSM {
         }
     }
     private:
+    static inline const float mTriggerMin = 0.5f;
+    static inline const float mTriggerMax = 0.9f;
     static inline PID<float> mPid{1000.0f, -1000.0f, 0.2f, 0.1f, 0.005f};
     static inline float im;
     static inline float ue;

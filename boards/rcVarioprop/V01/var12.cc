@@ -49,6 +49,8 @@ struct CrsfCallback {
     using Param_t = RC::Protokoll::Crsf::Parameter<>;
     using PType = RC::Protokoll::Crsf::Parameter<>::Type;
 
+    static inline constexpr void disableTelemetry() {
+    }
     static inline constexpr void gotLinkStats() {
     }
     static inline constexpr void gotChannels() {

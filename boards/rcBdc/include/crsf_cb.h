@@ -26,9 +26,11 @@ struct CrsfCallback {
 
     using name_t = std::array<char, 32>;
 
+
+    static inline constexpr void disableTelemetry() {
+    }
     static inline constexpr void gotLinkStats() {
     }
-
     static inline constexpr void gotChannels() {
     }
 
@@ -61,6 +63,9 @@ struct CrsfCallback {
         r = std::to_chars(std::begin(mKmString), std::end(mKmString), (uint16_t)(eeprom.eKm.dir1 / eeprom.telemetry_polepairs));
         *r.ptr++ = ' ';
         r = std::to_chars(r.ptr, std::end(mKmString), (uint16_t)(eeprom.eKm.dir2 / eeprom.telemetry_polepairs));
+        *r.ptr = '\0';
+
+        r = std::to_chars(std::begin(mCurrOffString), std::end(mCurrOffString), eeprom.current_offset);
         *r.ptr = '\0';
     }
 
@@ -157,6 +162,7 @@ struct CrsfCallback {
     static inline std::array<char, 16> mResistanceString{};
     static inline std::array<char, 16> mInductanceString{};
     static inline std::array<char, 16> mKmString{};
+    static inline std::array<char, 16> mCurrOffString{};
     static inline constexpr auto mVersionString = [](){
         std::array<char, 16> s{};
         auto [ptr, e] = std::to_chars(std::begin(s), std::end(s), mHWVersion);
@@ -230,6 +236,7 @@ struct CrsfCallback {
         addNode(p, Param_t{0, PType::Sel, "Resistance [mOhm]", &mResistanceString[0], nullptr, 0, 0});
         addNode(p, Param_t{0, PType::Sel, "Inductance [uH]", &mInductanceString[0], nullptr, 0, 0});
         addNode(p, Param_t{0, PType::Sel, "Km [Rpm/V]", &mKmString[0], nullptr, 0, 0});
+        addNode(p, Param_t{0, PType::Sel, "Current Offset", &mCurrOffString[0], nullptr, 0, 0});
         uint8_t parent = addParent(p, Param_t{0, PType::Folder, "Advanced"});
         addNode(p, Param_t{parent, PType::U8,  "Channel", nullptr, &eeprom.crsf_channel, 1, 16, [](const uint8_t){return true;}});
         addNode(p, Param_t{parent, PType::Sel, "PreRun Check", "Off;On", &eeprom.prerun_check, 0, 1, [](const uint8_t){return true;}});
@@ -237,6 +244,7 @@ struct CrsfCallback {
         addNode(p, Param_t{parent, PType::U8,  "Tone volume", nullptr, &eeprom.volume, 0, 200, [](const uint8_t){return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Calibrate UBatt [0.1%]", nullptr, &eeprom.calib_ubatt, 0, 200, [](const uint8_t){return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Temperature Filter", nullptr, &eeprom.temp_filter, 0, 9, [](const uint8_t v){speed::updateTempFilter(v); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Current", "Batt.-Mean;Motor-Peak", &eeprom.current_select, 0, 1, [](const uint8_t){return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Calibrate PWM", "100Hz;200Hz;400Hz", &eeprom.pwm_calib, 0, 2, [](const uint8_t){return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Window", "None;Blackman;Hann", &eeprom.timeDomainWindow, 0, 2, [](const uint8_t){notifier::updateWindow(); return true;}});
         addNode(p, Param_t{parent, PType::Command, "Reset to defaults", "Resetting...", nullptr, 0, 0, [](const uint8_t v){if (v == 1) return true; if (v == 4) notifier::resetParameter(); return false;}});

@@ -4,9 +4,11 @@ Tests:
 
 ToDo
 -----
-* width of cos-window for spectrum-weighting adjustable (menu)
-* adaptive current measuring point in time: low-duty: at end of pulse, hight-duty: in the middle
+* temperature (MCU) wrong (may MCU calib values wrong?)
+* menu: telemetry: choose motor current / mean source current
+* menu: current offset calibrate
 * limit pwm-duty zu 98% due to mosfet-driver (large version only)
+* RPM telemetry only if measurements are good (above minimum current)
 * PID menu not functional
 * PID parameter: absolute / relative mode
 * after disconnect goto state check?
@@ -21,9 +23,11 @@ Details:
 Maybe/Ideas:
 -----
 * window: cos or cos^2
+* width of cos-window for spectrum-weighting adjustable (menu)
 
 Done:
 -----
+* adaptive current measuring point in time: low-duty: at end of pulse, hight-duty: in the middle
 * after power off window does not fit anymore (wrong values in eeprom?)
 * voltage measuring wrong
 * efficiency: outside the window no computation

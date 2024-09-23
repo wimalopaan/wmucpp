@@ -45,6 +45,9 @@ struct EEProm {
     uint8_t temp_filter = 1;
     uint8_t volume = 100;
 
+    uint8_t current_select = 0; // 0=mean current, 1=peak current
+    uint16_t current_offset = 0;
+
     uint8_t use_pid = 0;
     uint8_t pid_mode = 0;
     uint8_t pid_p = 90;

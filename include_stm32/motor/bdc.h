@@ -183,10 +183,9 @@ namespace Mcu::Stm {
                     pinls1::afunction(pinls1AF);
                     pinhs1::afunction(pinhs1AF);
                 }
-
                 static inline void trigger(const float v) {
+                    triggerTiming = v;
                 }
-
                 constexpr static inline uint8_t trgo() {
                     if constexpr(AdcTimerNumber == 3) {
                         return 4; // tim3-trgo

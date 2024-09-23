@@ -12,7 +12,7 @@ namespace External {
 
     template<typename Pin, typename Timer, typename Debug = void>
     struct Blinker {
-        enum class State : uint8_t {Off, On, IntervallOff, IntervallOn};
+        enum class State : uint8_t {Off, On, IntervallOff, IntervallOn, BlinkOff};
 
         enum class Event : uint8_t {None, Off, Steady, Slow, Medium, Fast};
 
@@ -26,11 +26,11 @@ namespace External {
                 break;
             case Event::Medium:
                 onTicks = 500ms;
-                offTicks = 500ms;
+                offTicks = 1200ms;
                 break;
             case Event::Fast:
                 onTicks = 100ms;
-                offTicks = 100ms;
+                offTicks = 210ms;
                 break;
             default:
                 break;
@@ -56,9 +56,21 @@ namespace External {
                 break;
             case State::IntervallOn:
                 mStateTick.on(onTicks, []{
-                    mState = State::IntervallOff;
+                    ++mBlCounter;
+                    if (mBlCounter == mBlinkCount) {
+                        mState = State::IntervallOff;
+                        mBlCounter = 0;
+                    }
+                    else {
+                        mState = State::BlinkOff;
+                    }
                 });
                 processEvent2(e);
+                break;
+            case State::BlinkOff:
+                mStateTick.on(onTicks, []{
+                   mState = State::IntervallOn;
+                });
                 break;
             }
             if (oldState != mState) {
@@ -67,6 +79,7 @@ namespace External {
                 case State::Off:
                     IO::outl<Debug>("B Off");
                     Pin::reset();
+                    mBlCounter = 0;
                     break;
                 case State::On:
                     IO::outl<Debug>("B On");
@@ -80,8 +93,15 @@ namespace External {
                     IO::outl<Debug>("B I on");
                     Pin::set();
                     break;
+                case State::BlinkOff:
+                    IO::outl<Debug>("Bl Off");
+                    Pin::reset();
+                    break;
                 }
             }
+        }
+        static inline void count(const uint8_t c) {
+            mBlinkCount = c;
         }
         private:
         static inline void processEvent(const Event e) {
@@ -94,12 +114,15 @@ namespace External {
                 break;
             case Event::Slow:
                 mState = State::IntervallOn;
+                mBlCounter = 0;
                 break;
             case Event::Medium:
                 mState = State::IntervallOn;
+                mBlCounter = 0;
                 break;
             case Event::Fast:
                 mState = State::IntervallOn;
+                mBlCounter = 0;
                 break;
             case Event::None:
                 break;
@@ -125,6 +148,8 @@ namespace External {
         static inline External::Tick<Timer> offTicks{500ms};
         static inline External::Tick<Timer> onTicks{500ms};
         static inline External::Tick<Timer> mStateTick;
+        static inline uint8_t mBlinkCount = 1;
+        static inline uint8_t mBlCounter = 0;
     };
 
     template<typename Pin, typename Timer, typename Pwm = void, typename Debug = void>

@@ -309,6 +309,41 @@ namespace RC {
                                                 Link, Channels, Ping, Info, ParameterEntry, ParameterRead, ParameterWrite, Data, Command};
 
                     struct Responder {
+                        enum class State : uint8_t {Idle, Wait, Resonse};
+                        enum class Event : uint8_t {None, Send};
+
+                        static inline void event(const Event e) {
+                            mEvent = e;
+                        }
+
+                        static inline void ratePeriodic() {
+                            switch(mState) {
+                            case State::Idle:
+                                if (std::exchange(mEvent, Event::None) == Event::Send) {
+                                    if (slotCounter == mTelemetrySlot) {
+                                        sendDeviceInfo();
+                                    }
+                                    else {
+                                        mState = State::Wait;
+                                    }
+                                }
+                                break;
+                            case State::Wait:
+                                if (slotCounter == mTelemetrySlot) {
+                                    sendDeviceInfo();
+                                    mState = State::Idle;
+                                }
+                                break;
+                            case State::Resonse:
+                                break;
+                            }
+                        }
+                        static inline void resetSlot() {
+                            slotCounter = 0;
+                        }
+                        static inline void nextSlot() {
+                            ++slotCounter;
+                        }
                         static inline void setExtendedDestination(const std::byte d) {
                             if (d != std::byte{0x00}) {
                                 mExtendedDestination = d;
@@ -317,7 +352,6 @@ namespace RC {
                                 mExtendedDestination = RC::Protokoll::Crsf::Address::Handset;
                             }
                         }
-
                         static inline void sendDeviceInfo() {
                             if (!mEnableReply) return;
                             using namespace etl::literals;
@@ -447,13 +481,21 @@ namespace RC {
                         static inline void address(const std::byte adr) {
                             mExtendedSource = adr;
                         }
+                        static inline void telemetrySlot(const uint8_t s) {
+                            mTelemetrySlot = s;
+                        }
                         private:
+                        static inline Event mEvent{Event::None};
+                        static inline State mState{State::Idle};
                         static inline etl::FixedVector<std::byte, RC::Protokoll::Crsf::maxPayloadSize> mReply;
                         static inline std::byte mExtendedDestination{};
                         static inline std::byte mExtendedSource{RC::Protokoll::Crsf::Address::Controller};
+                        static inline std::uint8_t mTelemetrySlot = 8;
+                        static inline std::uint8_t slotCounter = 0;
                     };
 
                     static inline void ratePeriodic(const auto f) {
+                        Responder::ratePeriodic();
                         (++mPauseTick).on(mPauseTicks, [&]{
                             mBytesCounter = 0;
                             mPackagesCounter = 0;
@@ -537,6 +579,7 @@ namespace RC {
                                     ++mChannelsPackagesCounter;
                                     ++mPackagesCounter;
                                     convert();
+                                    Responder::nextSlot();
                                     CB::gotChannels();
                                 }
                                 mState = State::Undefined;
@@ -552,7 +595,10 @@ namespace RC {
                                 if (csum == b) {
                                     ++mPingPackagesCounter;
                                     ++mPackagesCounter;
-                                    Responder::sendDeviceInfo();
+                                    CB::disableTelemetry();
+                                    Responder::resetSlot();
+                                    Responder::event(Responder::Event::Send);
+                                    // Responder::sendDeviceInfo();
                                 }
                                 mState = State::Undefined;
                             }
@@ -667,7 +713,7 @@ namespace RC {
                                 if (csum == b) {
                                     ++mPackagesCounter;
                                     IO::outl<debug>("# Co ", (uint8_t)mExtendedDestination, " i: ", mParameterIndex, " src: ", (uint8_t)mExtendedSource);
-                                    if (mExtendedDestination == Responder::address()) {
+                                    if (mCommandNoAddressCheck || (mExtendedDestination == Responder::address())) {
                                         ++mCommandPackagesCounter;
                                         CB::command(mData);
                                     }
@@ -714,7 +760,9 @@ namespace RC {
                     static inline const auto& values() {
                         return mChannels;
                     }
-
+                    static inline void commandAddressCheck(const bool b) {
+                        mCommandNoAddressCheck = b;
+                    }
                     template<typename C>
                     static inline void copyChangedChannels(C& out) {
                         for(uint8_t i = 0; (i < mChannels.size()) && (i < out.size()); ++i) {
@@ -763,6 +811,7 @@ namespace RC {
                         mChannels[14] = (uint16_t) ((mData[19]>>2 | mData[20]<<6)                   & Crsf::ValueMask);
                         mChannels[15] = (uint16_t) ((mData[20]>>5 | mData[21]<<3)                   & Crsf::ValueMask);
                     }
+                    inline static bool mCommandNoAddressCheck{true};
                     inline static bool mEnableReply{true};
                     inline static CRC8 csum;
                     inline static State mState{State::Undefined};
