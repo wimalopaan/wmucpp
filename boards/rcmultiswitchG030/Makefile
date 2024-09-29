@@ -31,6 +31,7 @@ targets += system_g0.o
 #targets += msw09.elf msw09.bin
 #targets += msw10.elf msw10.bin
 targets += msw11.elf msw11.bin
+targets += msw12.elf msw12.bin
 
 #targets += msw99.elf msw99.bin
 

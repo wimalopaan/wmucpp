@@ -9,6 +9,8 @@
 
 #include "devices.h"
 
+#define EEPROM_MAGIC 42
+
 struct EEProm {
     struct Output {
         uint8_t pwm = 0;
@@ -19,7 +21,7 @@ struct EEProm {
         uint8_t blinkOffTime = 1;
     };
 
-    uint8_t magic = 42;
+    uint8_t magic = EEPROM_MAGIC;
 
     uint8_t address = 0;
     uint8_t pwm1 = 10;
@@ -33,10 +35,11 @@ struct EEProm {
     std::array<Output, 8> outputs{};
 };
 
-__attribute__((__section__(".eeprom"))) const EEProm eeprom_flash{};
+__attribute__((__section__(".eeprom"))) EEProm eeprom_flash{};
 
 namespace {
     EEProm eeprom;
+    bool mismatch = false;
 }
 
 using namespace std::literals::chrono_literals;
@@ -146,14 +149,14 @@ struct CrsfCallback {
     }
     static inline void save() {
         if (Mcu::Stm32::savecfg(eeprom, eeprom_flash)) {
-            IO::outl<trace>("# EEPROM OK");
+            IO::outl<trace>("# EEPROM OK, status: ", eeprom_status);
         }
         else {
-            IO::outl<trace>("# EEPROM NOK");
+            IO::outl<trace>("# EEPROM NOK, status: ", eeprom_status);
         }
     }
     static inline void setParameter(const uint8_t index, const uint8_t value) {
-        IO::outl<trace>("SetP i: ", index, " v: ", value);
+        IO::outl<trace>("# SetP i: ", index, " v: ", value);
         if ((index >= 1) && (index <= params.size())) {
             params[index - 1].value(value);
             mLastChangedParameter = index;
@@ -215,7 +218,7 @@ struct CrsfCallback {
                     const uint8_t address = (uint8_t)payload[4];
                     const uint8_t sw = (uint8_t)payload[5];
                     if (eeprom.address == address) {
-                        IO::outl<trace>("Command: ", address, " sw: ", sw);
+                        IO::outl<trace>("# Command: ", address, " sw: ", sw);
                         SwitchCallback::set(sw);
                     }
                 }
@@ -233,7 +236,7 @@ private:
     static inline uint8_t mLastChangedParameter{};
     static inline constexpr uint32_t mSerialNumber{1234};
     static inline constexpr uint32_t mHWVersion{1};
-    static inline constexpr uint32_t mSWVersion{1};
+    static inline constexpr uint32_t mSWVersion{12};
     static inline constexpr auto mVersionString = [](){
         std::array<char, 16> s{};
         auto [ptr, e] = std::to_chars(std::begin(s), std::end(s), mHWVersion);
@@ -273,7 +276,7 @@ private:
         addNode(p, Param_t{parent, PType::U8, "PWM Freq G4 (O7)[100Hz]", nullptr, &eeprom.pwm4, 1, 200, [](const uint8_t v){Meta::nth_element<3, pwms>::freqCenties(v); return true;}});
         addNode(p, Param_t{parent, PType::U8, "CRSF Address", nullptr, &eeprom.crsf_address, 0xc0, 0xcf, [](const uint8_t v){eeprom.response_slot = v - 0xc0; responder::address(std::byte{v}); responder::telemetrySlot(v - 0xc0); return true;}});
         addNode(p, Param_t{parent, PType::U8, "Response Slot", nullptr, &eeprom.response_slot, 0, 15, [](const uint8_t v){responder::telemetrySlot(v); return true;}});
-        addNode(p, Param_t{parent, PType::Sel, "Telemetry", "Off;On", &eeprom.telemetry, 0, 1});
+        addNode(p, Param_t{parent, PType::Sel, "Config resp.", "Button;Allways on", &eeprom.telemetry, 0, 1});
 
         // addNode(p, Param_t{parent, PType::Str, "Name", "bla"}); // not supported by elrsv3.lua?
 
@@ -405,16 +408,16 @@ struct GFSM {
     }
 
     static inline void set(const uint8_t sw) {
-        // IO::outl<debug>("set: ", sw);
+        // IO::outl<debug>("# set: ", sw);
         for(uint8_t i = 0; i < 8; ++i) {
             const uint8_t mask = (0x01 << i);
             Meta::visitAt<bsws>(i, [&]<typename SW>(Meta::Wrapper<SW>){
                 if (sw & mask) {
-                    // IO::outl<debug>("on: ", i);
+                    // IO::outl<debug>("# on: ", i);
                     SW::event(SW::Event::On);
                 }
                 else {
-                    // IO::outl<debug>("off: ", i);
+                    // IO::outl<debug>("# off: ", i);
                     SW::event(SW::Event::Off);
                 }
             });
@@ -489,15 +492,17 @@ struct GFSM {
             if (const auto e = btn::event(); e == btn::Press::Long) {
                 mState = State::RunWithTelemetry;
             }
-            (++mDebugTick).on(debugTicks, []{
-            });
             break;
         case State::RunWithTelemetry:
             if (const auto e = btn::event(); e == btn::Press::Long) {
-                mState = State::RunNoTelemetry;
+                if (eeprom.telemetry) {
+                    led::count(2);
+                    led::event(led::Event::Slow);
+                }
+                else {
+                    mState = State::RunNoTelemetry;
+                }
             }
-            (++mDebugTick).on(debugTicks, []{
-            });
             break;
         }
         if (oldState != mState) {
@@ -506,17 +511,17 @@ struct GFSM {
             case State::Undefined:
                 break;
             case State::Init:
-                IO::outl<debug>("Init");
+                IO::outl<debug>("# Init eep magic: ", eeprom.magic, " mism: ", (uint8_t)mismatch);
                 break;
             case State::RunNoTelemetry:
-                IO::outl<debug>("Run NT");
-                IO::outl<debug>("adr: ", eeprom.address);
+                IO::outl<debug>("# Run NT");
+                IO::outl<debug>("# adr: ", eeprom.address);
                 crsf_pa::enableReply(false);
                 led::event(led::Event::Slow);
                 break;
             case State::RunWithTelemetry:
-                IO::outl<debug>("Run WT");
-                IO::outl<debug>("adr: ", eeprom.address);
+                IO::outl<debug>("# Run WT");
+                IO::outl<debug>("# adr: ", eeprom.address);
                 crsf_pa::enableReply(true);
                 if (eeprom.telemetry) {
                     led::count(2);
@@ -549,15 +554,13 @@ struct Setter {
 };
 
 int main() {
-    // -> clock init
-    // RCC->AHBENR |= RCC_AHBENR_FLASHEN;
-    // while(FLASH->SR & FLASH_SR_BSY1);
-
-    if (eeprom_flash.magic != 42) {
-        eeprom = EEProm{};
-        Mcu::Stm32::savecfg(eeprom, eeprom_flash);
+    if (eeprom_flash.magic == EEPROM_MAGIC) {
+        std::memcpy(&eeprom, &eeprom_flash, sizeof(EEProm));
+        mismatch = false;
     }
-    std::memcpy(&eeprom, &eeprom_flash, sizeof(EEProm));
+    else {
+        mismatch = true;
+    }
 
     gfsm::init();
     gfsm::update();

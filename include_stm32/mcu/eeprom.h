@@ -11,15 +11,17 @@
 extern char const _flash_start;
 extern char const _eeprom_start;
 
+static uint32_t eeprom_status = 0;
+
 namespace Mcu::Stm32 {
     template<typename T>
     bool savecfg(const T& eeprom, const T& flash) {
+        eeprom_status = 0;
         __disable_irq();
         FLASH->KEYR = FLASH_KEYR_KEY1;
         FLASH->KEYR = FLASH_KEYR_KEY2;
         FLASH->SR = -1; // Clear errors
 
-        // FLASH->CR = FLASH_CR_PER;
 #if defined(STM32G0)
         FLASH->CR = FLASH_CR_PER | FLASH_CR_STRT | (((uint32_t)(&_eeprom_start - &_flash_start) >> 11) << FLASH_CR_PNB_Pos); // Erase page
 #elif defined(STM32G4)
@@ -63,10 +65,16 @@ namespace Mcu::Stm32 {
         FLASH->CR = FLASH_CR_LOCK;
         __enable_irq();
 
-        if (FLASH->SR & (FLASH_SR_PROGERR | FLASH_SR_WRPERR)) return false;
+        // needed at least for G030 to prevent some timing issue???
+        eeprom_status = FLASH->SR & 0x3ff;
+        eeprom_status = FLASH->SR & 0x3ff;
+        eeprom_status = FLASH->SR & 0x3ff;
+
+        if (FLASH->SR & (FLASH_SR_PROGERR | FLASH_SR_WRPERR)) {
+            return false;
+        }
 
         return (memcmp(&flash, &eeprom, sizeof(T)) == 0);
     }
-
 }
 #pragma GCC diagnostic pop

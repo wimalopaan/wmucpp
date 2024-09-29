@@ -127,7 +127,7 @@ struct Devices2<SW12, CrsfCallback, MCU> {
 
     // Led
     using led = Mcu::Stm::Pin<gpioc, 15, MCU>;
-    using ledBlinker = External::Blinker<led, systemTimer, debug>;
+    using ledBlinker = External::Blinker<led, systemTimer>;
 
     // Taster
     using button = Mcu::Stm::Pin<gpioa, 1, MCU>;
@@ -186,12 +186,12 @@ struct Devices2<SW12, CrsfCallback, MCU> {
         using pa = crsf_pa;
     };
 
-    using crsfCallback = CrsfCallback<CrsfCallbackConfig, void>;
+    using crsfCallback = CrsfCallback<CrsfCallbackConfig, debug>;
 
     struct CrsfAdapterConfig {
         using out = crsf_out;
-        using dbg = debug;
-        // using dbg = void;
+        // using dbg = debug;
+        using dbg = void;
         using callback = crsfCallback;
         using timer = systemTimer;
     };

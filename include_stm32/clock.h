@@ -71,7 +71,7 @@ namespace Mcu::Stm {
         static inline void init() {
             RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;            
             RCC->APB1ENR1 |= RCC_APB1ENR1_PWREN;
-            
+
             RCC->CFGR |= RCC_CFGR_HPRE_DIV2;         
             
 //            FLASH->ACR |= FLASH_ACR_LATENCY_5WS 
@@ -145,8 +145,8 @@ namespace Mcu::Stm {
             MODIFY_REG(RCC->CFGR, RCC_CFGR_PPRE_Msk, 0x00 << RCC_CFGR_PPRE_Pos);
 
             // mco
-            MODIFY_REG(RCC->CFGR, RCC_CFGR_MCOPRE_Msk, 0b0110 << RCC_CFGR_MCOPRE_Pos); // div 64
-            MODIFY_REG(RCC->CFGR, RCC_CFGR_MCOSEL_Msk, 0b0001 << RCC_CFGR_MCOSEL_Pos);
+            // MODIFY_REG(RCC->CFGR, RCC_CFGR_MCOPRE_Msk, 0b0110 << RCC_CFGR_MCOPRE_Pos); // div 64
+            // MODIFY_REG(RCC->CFGR, RCC_CFGR_MCOSEL_Msk, 0b0001 << RCC_CFGR_MCOSEL_Pos);
         }
 #endif
     };
