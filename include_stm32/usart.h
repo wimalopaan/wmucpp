@@ -56,6 +56,9 @@ namespace Mcu::Stm {
         };
     }
 
+#ifdef USE_USART_DMA
+
+#else
     template<uint8_t N, typename PA, auto Size, typename ValueType, typename Clock, typename MCU = DefaultMcu>
     struct Uart;
 
@@ -65,6 +68,7 @@ namespace Mcu::Stm {
     template<uint8_t N, typename PA, auto Size, typename ValueType, typename Clock, typename MCU>
         requires (
                     ((N >= 1) && (N <= 2) && std::is_same_v<Stm32G030, MCU>) ||
+                    ((N >= 1) && (N <= 3) && std::is_same_v<Stm32G0B1, MCU>) ||
                     ((N >= 1) && (N <= 3) && std::is_same_v<Stm32G431, MCU>) ||
                     ((N >= 1) && (N <= 5) && std::is_same_v<Stm32G473, MCU>)) || (N == 101)
     struct Uart<N, PA, Size, ValueType, Clock, MCU> {
@@ -268,6 +272,7 @@ namespace Mcu::Stm {
         static inline etl::FiFo<ValueType, Size> mSendData;
         static inline etl::FiFo<ValueType, Size> mReceiveData;
     };
+#endif
 
     template<>
     struct Address<Mcu::Components::Usart<1>> {

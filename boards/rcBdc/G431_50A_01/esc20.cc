@@ -1,7 +1,7 @@
 #define USE_MCU_STM_V3
 #define USE_DEVICES2
 
-// #define USE_GNUPLOT
+//#define USE_GNUPLOT
 
 #define CRSF_MODULE_NAME "WM-BDC-32-L(50A)"
 #define DEFAULT_POLE_PAIRS 12
@@ -348,15 +348,37 @@ struct GFSM {
                 estimator::update(inputFiltered);
                 const uint16_t rpm = estimator::eRpm() / Storage::eeprom.telemetry_polepairs;
 
-                if (rpm > 26) {
-                    crsfTelemetry::rpm1(rpm);
+                if (inputFiltered.absolute() < 10) {
+                    if (subSampler::currMean() < 20) {
+                        crsfTelemetry::rpm1(0);
+                    }
+                    else {
+                        if (rpm >= 26) {
+                            crsfTelemetry::rpm1(rpm);
+                        }
+                        else {
+                            crsfTelemetry::rpm1(0);
+                        }
+                    }
                 }
                 else {
-                    crsfTelemetry::rpm1(0);
+                    if (rpm >= 26) {
+                        crsfTelemetry::rpm1(rpm);
+                    }
+                    else {
+                        crsfTelemetry::rpm1(0);
+                    }
                 }
 
+
                 crsfTelemetry::batt(devs::adc2Voltage(subSampler::meanVoltage()) * 10);
-                crsfTelemetry::curr(devs::adc2Current(subSampler::currMean()) * 10);
+
+                if (Storage::eeprom.current_select == 0) {
+                    crsfTelemetry::curr(devs::adc2Current((subSampler::currMean() - 10) * inputFiltered.absolute() / inputFiltered.absolute().Upper) * 10);
+                }
+                else {
+                    crsfTelemetry::curr(devs::adc2Current((subSampler::currMean() - 10)) * 10);
+                }
 
                 const uint16_t t = Speed::tempFilter.process(Mcu::Stm::adc2Temp(adc::mData[2]));
                 crsfTelemetry::temp1(t);

@@ -70,11 +70,11 @@ struct CrsfCallback {
     }
 
     static inline void save() {
-        if (Mcu::Stm32::savecfg(eeprom, eeprom_flash)) {
+        if (auto [ok, err] = Mcu::Stm32::savecfg(eeprom, eeprom_flash); ok) {
             IO::outl<trace>("# EEPROM OK");
         }
         else {
-            IO::outl<trace>("# EEPROM NOK");
+            IO::outl<trace>("# EEPROM NOK: ", err);
         }
     }
     static inline void setParameter(const uint8_t index, const uint8_t value) {
@@ -156,7 +156,7 @@ struct CrsfCallback {
     static inline uint8_t mLastChangedParameter{};
     static inline constexpr uint32_t mSerialNumber{1234};
     static inline constexpr uint32_t mHWVersion{2};
-    static inline constexpr uint32_t mSWVersion{11};
+    static inline constexpr uint32_t mSWVersion{20};
     static inline std::array<char, 16> mPwmFreqString{};
     static inline std::array<char, 16> mMaxRpmString{};
     static inline std::array<char, 16> mResistanceString{};
@@ -167,7 +167,8 @@ struct CrsfCallback {
         std::array<char, 16> s{};
         auto [ptr, e] = std::to_chars(std::begin(s), std::end(s), mHWVersion);
         *ptr++ = ':';
-        std::to_chars(ptr, std::end(s), mSWVersion);
+        auto r = std::to_chars(ptr, std::end(s), mSWVersion);
+        *r.ptr = '\0';
         return s;
     }();
 
@@ -224,13 +225,13 @@ struct CrsfCallback {
     static inline params_t params = []{
         params_t p;
         addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
-        addNode(p, Param_t{0, PType::U8,  "PolePairs", nullptr, &eeprom.telemetry_polepairs, 2, 12, [](const uint8_t){update(); return true;}});
-        addNode(p, Param_t{0, PType::U8,  "Cutoff_Freq [100Hz]", nullptr, &eeprom.cutoff_freq, 5, 15, [](const uint8_t){notifier::updatePwm(); return true;}});
-        addNode(p, Param_t{0, PType::U8,  "Sample_Freq / Cutoff_Freq", nullptr, &eeprom.n_fsample, 2, 4, [](const uint8_t){notifier::updatePwm(); return true;}});
-        addNode(p, Param_t{0, PType::U8,  "Pwm_Freq / Sample_Freq", nullptr, &eeprom.subsampling, 4, 16, [](const uint8_t){notifier::updatePwm(); return true;}});
+        addNode(p, Param_t{0, PType::U8,  "Rotor Segments", nullptr, &eeprom.telemetry_polepairs, 2, 12, [](const uint8_t){update(); return true;}});
+        addNode(p, Param_t{0, PType::U8,  "Cutoff Freq. [100Hz]", nullptr, &eeprom.cutoff_freq, 5, 15, [](const uint8_t){notifier::updatePwm(); return true;}});
+        addNode(p, Param_t{0, PType::U8,  "Sample Freq. / Cutoff Freq.", nullptr, &eeprom.n_fsample, 2, 4, [](const uint8_t){notifier::updatePwm(); return true;}});
+        addNode(p, Param_t{0, PType::U8,  "Pwm Freq. / Sample Freq.", nullptr, &eeprom.subsampling, 4, 16, [](const uint8_t){notifier::updatePwm(); return true;}});
         addNode(p, Param_t{0, PType::U8,  "Inertia", nullptr, &eeprom.inertia, 0, 9, [](const uint8_t v){speed::updateDutyFilter(v); return true;}});
-        addNode(p, Param_t{0, PType::Sel, "PWM Freq", &mPwmFreqString[0], nullptr, 0, 0});
-        addNode(p, Param_t{0, PType::Sel, "Max RPM", &mMaxRpmString[0], nullptr, 0, 0});
+        addNode(p, Param_t{0, PType::Sel, "PWM Freq.", &mPwmFreqString[0], nullptr, 0, 0});
+        addNode(p, Param_t{0, PType::Sel, "Max. RPM", &mMaxRpmString[0], nullptr, 0, 0});
         addNode(p, Param_t{0, PType::Command, "Calibrate", mCalibratingTexts[0], nullptr, 0, 0, [](const uint8_t v){return calibCallback(v);}});
         mCalibCommand = p.size() - 1;
         addNode(p, Param_t{0, PType::Sel, "Resistance [mOhm]", &mResistanceString[0], nullptr, 0, 0});

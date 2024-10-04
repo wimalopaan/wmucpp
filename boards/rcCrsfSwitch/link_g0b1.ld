@@ -80,6 +80,16 @@ SECTIONS
 	PROVIDE_HIDDEN (__fini_array_end = .);
   } >FLASH
 
+.eeprom ALIGN(2048) :
+{
+  _eeprom_start = .;
+  *(.eeprom)
+  *(.eeprom*)
+  . = ALIGN(2048);
+  _eeprom_end = .;
+} >FLASH
+
+
   /* used by the startup to initialize data */
   _sidata = LOADADDR(.data);
 

@@ -9,7 +9,6 @@ CPPFLAGS += -I../../include_stm32
 CPPFLAGS += -I../../../STM32CubeG0/Drivers/CMSIS/Core/Include
 CPPFLAGS += -I../../../STM32CubeG0/Drivers/CMSIS/Device/ST/STM32G0xx/Include
 CPPFLAGS += -I../../../STM32CubeG0/Drivers/STM32G0xx_HAL_Driver/Inc
-#CPPFLAGS += -DSTM32G030xx
 CPPFLAGS += -DSTM32G0B1xx
 
 LDSCRIPT = link_g0b1.ld
