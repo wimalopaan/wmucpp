@@ -145,11 +145,11 @@ struct CrsfCallback {
         updateName(mName);
     }
     static inline void save() {
-        if (Mcu::Stm32::savecfg(eeprom, eeprom_flash)) {
+        if (auto [ok, err] = Mcu::Stm32::savecfg(eeprom, eeprom_flash); ok) {
             IO::outl<trace>("# EEPROM OK");
         }
         else {
-            IO::outl<trace>("# EEPROM NOK");
+            IO::outl<trace>("# EEPROM NOK: ", err);
         }
     }
     static inline void setParameter(const uint8_t index, const uint8_t value) {

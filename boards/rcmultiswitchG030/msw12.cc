@@ -148,11 +148,11 @@ struct CrsfCallback {
         updateName(mName);
     }
     static inline void save() {
-        if (Mcu::Stm32::savecfg(eeprom, eeprom_flash)) {
-            IO::outl<trace>("# EEPROM OK, status: ", eeprom_status);
+        if (auto [ok, err] = Mcu::Stm32::savecfg(eeprom, eeprom_flash); ok) {
+            IO::outl<trace>("# EEPROM OK");
         }
         else {
-            IO::outl<trace>("# EEPROM NOK, status: ", eeprom_status);
+            IO::outl<trace>("# EEPROM NOK: ", err);
         }
     }
     static inline void setParameter(const uint8_t index, const uint8_t value) {
@@ -225,14 +225,18 @@ struct CrsfCallback {
             }
         }
     }
-    static inline void callbacks() {
+    static inline void callbacks(const bool eepromMode = false) {
+        const bool prevMode = mEepromMode;
+        mEepromMode = eepromMode;
         for(const auto p: params) {
             if (p.cb) {
                 p.cb(p.value());
             }
         }
+        mEepromMode = prevMode;
     }
 private:
+    static inline bool mEepromMode = false;
     static inline uint8_t mLastChangedParameter{};
     static inline constexpr uint32_t mSerialNumber{1234};
     static inline constexpr uint32_t mHWVersion{1};
@@ -270,11 +274,19 @@ private:
         addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
         auto parent = addParent(p, Param_t{0, PType::Folder, "Global"});
         addNode(p, Param_t{parent, PType::U8, "Address", nullptr, &eeprom.address, 0, 255, setAddress});
-        addNode(p, Param_t{parent, PType::U8, "PWM Freq G1 (O1,4,5,6)[100Hz]", nullptr, &eeprom.pwm1, 1, 200, [](const uint8_t v){Meta::nth_element<0, pwms>::freqCenties(v); return true;}});
-        addNode(p, Param_t{parent, PType::U8, "PWM Freq G2 (O2,3)[100Hz]", nullptr, &eeprom.pwm2, 1, 200, [](const uint8_t v){Meta::nth_element<1, pwms>::freqCenties(v); return true;}});
-        addNode(p, Param_t{parent, PType::U8, "PWM Freq G3 (O0)[100Hz]", nullptr, &eeprom.pwm3, 1, 200, [](const uint8_t v){Meta::nth_element<2, pwms>::freqCenties(v); return true;}});
-        addNode(p, Param_t{parent, PType::U8, "PWM Freq G4 (O7)[100Hz]", nullptr, &eeprom.pwm4, 1, 200, [](const uint8_t v){Meta::nth_element<3, pwms>::freqCenties(v); return true;}});
-        addNode(p, Param_t{parent, PType::U8, "CRSF Address", nullptr, &eeprom.crsf_address, 0xc0, 0xcf, [](const uint8_t v){eeprom.response_slot = v - 0xc0; responder::address(std::byte{v}); responder::telemetrySlot(v - 0xc0); return true;}});
+        addNode(p, Param_t{parent, PType::U8, "PWM Freq G1 (O6,3,2,1)[100Hz]", nullptr, &eeprom.pwm1, 1, 200, [](const uint8_t v){Meta::nth_element<0, pwms>::freqCenties(v); return true;}});
+        addNode(p, Param_t{parent, PType::U8, "PWM Freq G2 (O5,4)[100Hz]", nullptr, &eeprom.pwm2, 1, 200, [](const uint8_t v){Meta::nth_element<1, pwms>::freqCenties(v); return true;}});
+        addNode(p, Param_t{parent, PType::U8, "PWM Freq G3 (O7)[100Hz]", nullptr, &eeprom.pwm3, 1, 200, [](const uint8_t v){Meta::nth_element<2, pwms>::freqCenties(v); return true;}});
+        addNode(p, Param_t{parent, PType::U8, "PWM Freq G4 (O0)[100Hz]", nullptr, &eeprom.pwm4, 1, 200, [](const uint8_t v){Meta::nth_element<3, pwms>::freqCenties(v); return true;}});
+        addNode(p, Param_t{parent, PType::U8, "CRSF Address", nullptr, &eeprom.crsf_address, 0xc0, 0xcf, [](const uint8_t v){
+                               if (!mEepromMode) {
+                                   const uint8_t slot = 2 * (v - 0xc0);
+                                   eeprom.response_slot = slot;
+                                   responder::telemetrySlot(slot);
+                               }
+                               responder::address(std::byte{v});
+                               return true;
+                           }});
         addNode(p, Param_t{parent, PType::U8, "Response Slot", nullptr, &eeprom.response_slot, 0, 15, [](const uint8_t v){responder::telemetrySlot(v); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Config resp.", "Button;Allways on", &eeprom.telemetry, 0, 1});
 
@@ -403,8 +415,8 @@ struct GFSM {
     static inline constexpr External::Tick<systemTimer> initTicks{500ms};
     static inline constexpr External::Tick<systemTimer> debugTicks{500ms};
 
-    static inline void update() {
-        crsfCallback::callbacks();
+    static inline void update(const bool eepromMode = true) {
+        crsfCallback::callbacks(eepromMode);
     }
 
     static inline void set(const uint8_t sw) {
@@ -563,7 +575,7 @@ int main() {
     }
 
     gfsm::init();
-    gfsm::update();
+    gfsm::update(true);
 
     NVIC_EnableIRQ(TIM3_IRQn);
     __enable_irq();

@@ -11,12 +11,12 @@
 extern char const _flash_start;
 extern char const _eeprom_start;
 
-static uint32_t eeprom_status = 0;
+// static uint32_t eeprom_status = 0;
 
 namespace Mcu::Stm32 {
     template<typename T>
-    bool savecfg(const T& eeprom, const T& flash) {
-        eeprom_status = 0;
+    std::pair<bool, uint8_t> savecfg(const T& eeprom, const T& flash) {
+        // eeprom_status = 0;
         __disable_irq();
         FLASH->KEYR = FLASH_KEYR_KEY1;
         FLASH->KEYR = FLASH_KEYR_KEY2;
@@ -62,19 +62,23 @@ namespace Mcu::Stm32 {
 #error "No MCU defined"
 #endif
         }
-        FLASH->CR = FLASH_CR_LOCK;
+
+        // checking for FLASH_SR_EOP not needed because no EOPIE is set
+
+        FLASH->CR = FLASH_CR_LOCK; // and clears all other bits (e.g. PG bit)
         __enable_irq();
 
         // needed at least for G030 to prevent some timing issue???
-        eeprom_status = FLASH->SR & 0x3ff;
-        eeprom_status = FLASH->SR & 0x3ff;
-        eeprom_status = FLASH->SR & 0x3ff;
+        // otherwise the programming does not take place
+        uint8_t eeprom_status = FLASH->SR & 0xff;
+        eeprom_status = FLASH->SR & 0xff;
+        eeprom_status = FLASH->SR & 0xff;
 
         if (FLASH->SR & (FLASH_SR_PROGERR | FLASH_SR_WRPERR)) {
-            return false;
+            return {false, eeprom_status};
         }
 
-        return (memcmp(&flash, &eeprom, sizeof(T)) == 0);
+        return {(memcmp(&flash, &eeprom, sizeof(T)) == 0), eeprom_status};
     }
 }
 #pragma GCC diagnostic pop
