@@ -274,8 +274,8 @@ private:
         addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
         auto parent = addParent(p, Param_t{0, PType::Folder, "Global"});
         addNode(p, Param_t{parent, PType::U8, "Address", nullptr, &eeprom.address, 0, 255, setAddress});
-        addNode(p, Param_t{parent, PType::U8, "PWM Freq G1 (O6,3,2,1)[100Hz]", nullptr, &eeprom.pwm1, 1, 200, [](const uint8_t v){Meta::nth_element<0, pwms>::freqCenties(v); return true;}});
-        addNode(p, Param_t{parent, PType::U8, "PWM Freq G2 (O5,4)[100Hz]", nullptr, &eeprom.pwm2, 1, 200, [](const uint8_t v){Meta::nth_element<1, pwms>::freqCenties(v); return true;}});
+        addNode(p, Param_t{parent, PType::U8, "PWM Freq G1 (O3,2)[100Hz]", nullptr, &eeprom.pwm1, 1, 200, [](const uint8_t v){Meta::nth_element<0, pwms>::freqCenties(v); return true;}});
+        addNode(p, Param_t{parent, PType::U8, "PWM Freq G2 (O1,4,5,6)[100Hz]", nullptr, &eeprom.pwm2, 1, 200, [](const uint8_t v){Meta::nth_element<1, pwms>::freqCenties(v); return true;}});
         addNode(p, Param_t{parent, PType::U8, "PWM Freq G3 (O7)[100Hz]", nullptr, &eeprom.pwm3, 1, 200, [](const uint8_t v){Meta::nth_element<2, pwms>::freqCenties(v); return true;}});
         addNode(p, Param_t{parent, PType::U8, "PWM Freq G4 (O0)[100Hz]", nullptr, &eeprom.pwm4, 1, 200, [](const uint8_t v){Meta::nth_element<3, pwms>::freqCenties(v); return true;}});
         addNode(p, Param_t{parent, PType::U8, "CRSF Address", nullptr, &eeprom.crsf_address, 0xc0, 0xcf, [](const uint8_t v){
