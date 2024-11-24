@@ -1,9 +1,6 @@
 todo:
 -----
-* EEprom read: CRSF-Adresse überschreibt Slot -> Einstellung geht verloren
-* Slots um Faktor 2 auseinander legen
 * statt Expo: PWM Duty Max Scaling 1/0.1/0.01
-* proportional Modus
 * Telemetrie (state-machine): für neue Hardware mit Spannungssensor
 
 details:
@@ -12,6 +9,9 @@ details:
 
 done:
 -----
+* proportional Modus
+* EEprom read: CRSF-Adresse überschreibt Slot -> Einstellung geht verloren
+* Slots um Faktor 2 auseinander legen
 * EEProm: return std::pair<>
 * CRSF-Address einstellbar (evtl. Problem im ELRS? PR wmaddress für ELRS)
 * bei unterschiedlichen CRSF-Adressen (benötigt dann PR wmaddress im ELRS) Antwort

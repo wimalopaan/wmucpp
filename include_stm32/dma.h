@@ -39,6 +39,11 @@ namespace Mcu::Stm {
                 if constexpr (N == 1) {
                     RCC->AHBENR |= RCC_AHBENR_DMA1EN;
                 }
+#ifdef STM32G0B1xx
+                else if constexpr(N == 2) {
+                    RCC->AHBENR |= RCC_AHBENR_DMA2EN;
+                }
+#endif
                 else {
                     static_assert(false);
                 }
@@ -68,7 +73,6 @@ namespace Mcu::Stm {
                 controller::init();
             }
 #endif
-
             template<typename T>
             static inline void msize() {
                 if constexpr(sizeof(T) == 1) {
@@ -107,7 +111,35 @@ namespace Mcu::Stm {
                     mcuDmaChannel->CCR &= ~DMA_CCR_EN;
                 }
             }
-
+            // deprecate
+            template<bool Enable = true>
+            static inline void enableTCIsr() {
+                enable(false);
+                if constexpr(Enable) {
+                    mcuDmaChannel->CCR |= DMA_CCR_TCIE;
+                }
+                else {
+                    mcuDmaChannel->CCR &= ~DMA_CCR_TCIE;
+                }
+                enable(true);
+            }
+            template<bool Enable = true>
+            static inline void setTCIsr() {
+                if constexpr(Enable) {
+                    mcuDmaChannel->CCR |= DMA_CCR_TCIE;
+                }
+                else {
+                    mcuDmaChannel->CCR &= ~DMA_CCR_TCIE;
+                }
+            }
+            template<bool autoEnable = true>
+            static inline void reenable(const auto f) {
+                enable(false);
+                f();
+                if (autoEnable) {
+                    enable(true);
+                }
+            }
             template<bool autoEnable = true>
             static inline void count(const uint16_t n) {
                 enable(false);
@@ -119,6 +151,12 @@ namespace Mcu::Stm {
             static inline void clearTransferCompleteIF() {
                 controller::mcuDma->IFCR = 0x1UL << (4 * (N - 1) + 1);
             }
+            static inline void onTransferComplete(auto f) {
+                if (controller::mcuDma->ISR & (0x1UL << (4 * (N - 1) + 1))) {
+                    clearTransferCompleteIF();
+                    f();
+                }
+            }
         };
     }
     template<typename MCU>
@@ -128,6 +166,12 @@ namespace Mcu::Stm {
     };
 #ifdef STM32G4
     template<G4xx MCU>
+    struct Address<Dma::Controller<2, MCU>> {
+        static inline constexpr uintptr_t value = DMA2_BASE;
+    };
+#endif
+#ifdef STM32G0B1xx
+    template<G0xx MCU>
     struct Address<Dma::Controller<2, MCU>> {
         static inline constexpr uintptr_t value = DMA2_BASE;
     };
@@ -163,6 +207,22 @@ namespace Mcu::Stm {
         static inline constexpr uintptr_t mux = DMAMUX1_Channel4_BASE;
     };
 
+#ifdef DMA1_Channel6_BASE
+    template<typename MCU>
+    requires(G4xx<MCU> || G0xx<MCU>)
+    struct Address<Dma::Channel<Dma::Controller<1, MCU>, 6, MCU>> {
+        static inline constexpr uintptr_t value = DMA1_Channel6_BASE;
+        static inline constexpr uintptr_t mux = DMAMUX1_Channel5_BASE;
+    };
+#endif
+#ifdef DMA1_Channel7_BASE
+    template<typename MCU>
+    requires(G4xx<MCU> || G0xx<MCU>)
+    struct Address<Dma::Channel<Dma::Controller<1, MCU>, 7, MCU>> {
+        static inline constexpr uintptr_t value = DMA1_Channel7_BASE;
+        static inline constexpr uintptr_t mux = DMAMUX1_Channel6_BASE;
+    };
+#endif
 #ifdef STM32G4
     template<G4xx MCU>
     struct Address<Dma::Channel<Dma::Controller<1, MCU>, 6, MCU>> {
@@ -171,7 +231,7 @@ namespace Mcu::Stm {
     };
 #endif
 
-#ifdef STM32G4
+#if defined(STM32G4)
     template<G4xx MCU>
     struct Address<Dma::Channel<Dma::Controller<2, MCU>, 1, MCU>> {
         static inline constexpr uintptr_t value = DMA2_Channel1_BASE;
@@ -200,6 +260,34 @@ namespace Mcu::Stm {
     template<G4xx MCU>
     struct Address<Dma::Channel<Dma::Controller<2, MCU>, 6, MCU>> {
         static inline constexpr uintptr_t value = DMA2_Channel6_BASE;
+        static inline constexpr uintptr_t mux = DMAMUX1_Channel11_BASE;
+    };
+#endif
+
+#if defined(STM32G0B1xx)
+    template<G0xx MCU>
+    struct Address<Dma::Channel<Dma::Controller<2, MCU>, 1, MCU>> {
+        static inline constexpr uintptr_t value = DMA2_Channel1_BASE;
+        static inline constexpr uintptr_t mux = DMAMUX1_Channel7_BASE;
+    };
+    template<G0xx MCU>
+    struct Address<Dma::Channel<Dma::Controller<2, MCU>, 2, MCU>> {
+        static inline constexpr uintptr_t value = DMA2_Channel2_BASE;
+        static inline constexpr uintptr_t mux = DMAMUX1_Channel8_BASE;
+    };
+    template<G0xx MCU>
+    struct Address<Dma::Channel<Dma::Controller<2, MCU>, 3, MCU>> {
+        static inline constexpr uintptr_t value = DMA2_Channel3_BASE;
+        static inline constexpr uintptr_t mux = DMAMUX1_Channel9_BASE;
+    };
+    template<G0xx MCU>
+    struct Address<Dma::Channel<Dma::Controller<2, MCU>, 4, MCU>> {
+        static inline constexpr uintptr_t value = DMA2_Channel4_BASE;
+        static inline constexpr uintptr_t mux = DMAMUX1_Channel10_BASE;
+    };
+    template<G0xx MCU>
+    struct Address<Dma::Channel<Dma::Controller<2, MCU>, 5, MCU>> {
+        static inline constexpr uintptr_t value = DMA2_Channel5_BASE;
         static inline constexpr uintptr_t mux = DMAMUX1_Channel11_BASE;
     };
 #endif

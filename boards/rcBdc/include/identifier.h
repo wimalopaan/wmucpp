@@ -64,10 +64,12 @@ struct BdcIdentifier {
         }
     }
     static inline void sampleIsr() {
-        lastAdc = mInvert ? (4095 - adc::mData[0]) : adc::mData[0];
+        // lastAdc = mInvert ? (4095 - adc::mData[0]) : adc::mData[0];
+        lastAdc = mInvert ? (4095 - adc::values()[0]) : adc::values()[0];
         const float current = devs::adc2Current(lastAdc);
         if (mState == State::Measure) {
-            voltageMean += devs::adc2Voltage(adc::mData[1]);
+            // voltageMean += devs::adc2Voltage(adc::mData[1]);
+            voltageMean += devs::adc2Voltage(adc::values()[1]);
             if (current > 0) { // warten bis Werte kommen
                 devs::tp2::set();
                 rle = Statistics::RLEstimator<volatile float>{1.0f, 0.0f, current};
@@ -79,7 +81,8 @@ struct BdcIdentifier {
         }
         else if (mState == State::Measure2) {
             devs::tp2::set();
-            voltageMean += devs::adc2Voltage(adc::mData[1]);
+            // voltageMean += devs::adc2Voltage(adc::mData[1]);
+            voltageMean += devs::adc2Voltage(adc::values()[1]);
             rle.process(current);
             sampleCount = sampleCount + 1;
             devs::tp2::reset();

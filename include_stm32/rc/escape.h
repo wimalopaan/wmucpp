@@ -11,6 +11,7 @@
 #include <numbers>
 #include <chrono>
 
+#include "mcu/alternate.h"
 #include "byte.h"
 #include "etl/algorithm.h"
 #include "etl/ranged.h"
@@ -22,18 +23,20 @@ namespace RC::ESCape {
     using namespace Units::literals;
     using namespace std::literals::chrono_literals;
 
+    template<typename T = std::byte>
     struct CheckSum {
-        void operator+=(const std::byte b) {
-            mValue = std::byte(tbl[uint8_t(mValue ^ b)]);
+        T operator+=(const T b) {
+            mValue = T(tbl[uint8_t(mValue ^ b)]);
+            return b;
         }
         void reset() {
-            mValue = std::byte{0};
+            mValue = T{0};
         }
-        operator std::byte() const {
+        operator T() const {
             return mValue;
         }
     private:
-        std::byte mValue{};
+        T mValue{};
         inline static constexpr uint8_t tbl[] = {
             0x00, 0x07, 0x0e, 0x09, 0x1c, 0x1b, 0x12, 0x15, 0x38, 0x3f, 0x36, 0x31, 0x24, 0x23, 0x2a, 0x2d,
             0x70, 0x77, 0x7e, 0x79, 0x6c, 0x6b, 0x62, 0x65, 0x48, 0x4f, 0x46, 0x41, 0x54, 0x53, 0x5a, 0x5d,
@@ -52,6 +55,183 @@ namespace RC::ESCape {
             0xae, 0xa9, 0xa0, 0xa7, 0xb2, 0xb5, 0xbc, 0xbb, 0x96, 0x91, 0x98, 0x9f, 0x8a, 0x8d, 0x84, 0x83,
             0xde, 0xd9, 0xd0, 0xd7, 0xc2, 0xc5, 0xcc, 0xcb, 0xe6, 0xe1, 0xe8, 0xef, 0xfa, 0xfd, 0xf4, 0xf3,
         };
+    };
+
+    template<uint8_t N, typename Config, typename MCU = DefaultMcu>
+    struct ConfigAscii {
+
+    };
+
+
+    template<uint8_t N, typename Config, typename MCU = DefaultMcu>
+    struct Serial {
+        using clock = Config::clock;
+        using systemTimer = Config::systemTimer;
+        using debug = Config::debug;
+        using dmaChRW = Config::dmaChRW;
+        using pin = Config::pin;
+        using tp = Config::tp;
+
+        struct UartConfig {
+            using Clock = clock;
+            using ValueType = uint8_t;
+            static inline constexpr size_t size = 11; // send size, buffer size
+            static inline constexpr size_t minSize = 11; // receive size
+            using DmaChannelWrite = dmaChRW;
+            using DmaChannelRead = dmaChRW;
+            static inline constexpr bool useDmaTCIsr = false;
+            static inline constexpr bool useIdleIsr = false;
+            static inline constexpr bool useRxToIsr = false;
+            static inline constexpr uint16_t rxToCount = 0;
+            using Adapter = void;
+            using Debug = struct {
+                using tp = void;
+            };
+        };
+
+        using uart = Mcu::Stm::V2::Uart<N, UartConfig, MCU>;
+
+        static inline constexpr uint8_t af = Mcu::Stm::AlternateFunctions::mapper_v<pin, uart, Mcu::Stm::AlternateFunctions::TX>;
+
+        static inline void init() {
+            IO::outl<debug>("# Serial init");
+            __disable_irq();
+            mState = State::Init;
+            mErrorCount = 0;
+            mEvent = Event::None;
+
+            uart::init();
+            uart::template rxEnable<false>();
+            uart::baud(460'800);
+            uart::template halfDuplex<true>();
+            uart::template enableTCIsr<true>();
+            __enable_irq();
+            pin::afunction(af);
+            pin::template pullup<true>();
+        }
+        static inline void reset() {
+            IO::outl<debug>("# Serial reset");
+            __disable_irq();
+            dmaChRW::enable(false);
+            uart::reset();
+            __enable_irq();
+            pin::analog();
+        }
+
+        enum class State : uint8_t {Init, Run};
+        enum class Event : uint8_t {None, ReceiveComplete, SendComplete};
+
+        static inline void event(const Event e) {
+            mEvent = e;
+        }
+        static inline void periodic() {
+            switch(mState) {
+            case State::Init:
+                break;
+            case State::Run:
+                if (const auto e = std::exchange(mEvent, Event::None); e == Event::ReceiveComplete) {
+                    readReply();
+                }
+                else if (e == Event::SendComplete) {
+                    rxEnable();
+                }
+                break;
+            }
+        }
+
+        static inline constexpr External::Tick<systemTimer> initTicks{1000ms};
+
+        static inline void ratePeriodic() {
+            const auto oldState = mState;
+            ++mStateTick;
+            switch(mState) {
+            case State::Init:
+                mStateTick.on(initTicks, []{
+                    mState = State::Run;
+                });
+                break;
+            case State::Run:
+                break;
+            }
+            if (oldState != mState) {
+                mStateTick.reset();
+                switch(mState) {
+                case State::Init:
+                    break;
+                case State::Run:
+                    break;
+                }
+            }
+        }
+        static inline void set(const uint16_t sbus) {
+            if (mState == State::Run) {
+                const int16_t v = (sbus - 992);
+                volatile uint8_t* const data = uart::outputBuffer();
+                CheckSum<uint8_t> cs;
+                data[0] = (cs += 0x81); // throttle + telemetry
+                data[1] = (cs += (v & 0xff));
+                data[2] = (cs += (v >> 8));
+                data[3] = cs;
+                send(4);
+            }
+        }
+        static inline void update() {
+        }
+        static inline void rxEnable() {
+            uart::dmaReenable([]{
+                dmaChRW::clearTransferCompleteIF();
+                dmaChRW::template setTCIsr<true>();
+                uart::dmaSetupRead2(UartConfig::minSize);
+            });
+            uart::template rxEnable<true>();
+        }
+        static inline auto errorCount() {
+            return mErrorCount;
+        }
+        static inline uint16_t current() {
+            return mCurrent;
+        }
+        static inline uint16_t rpm() {
+            if (mERT == std::numeric_limits<uint16_t>::max()) {
+                return 0;
+            }
+            return 60'000'000 / mERT;
+        }
+
+        private:
+
+        static inline void send(const uint8_t n) {
+            uart::template rxEnable<false>();
+            uart::startSend(n);
+        }
+        static inline void readReply() {
+            CheckSum<uint8_t> cs;
+            volatile uint8_t* const data = uart::readBuffer();
+            for(uint8_t i = 0; i < uart::minSize - 1; ++i) {
+                cs += data[i];
+            }
+            if (cs == data[uart::minSize - 1]) {
+                mEscTemperature = data[0];
+                mMotTemperature = data[1];
+                mVoltage = data[2] + (data[3] << 8);
+                mCurrent = data[4] + (data[5] << 8);
+                mConsumption = data[6] + (data[7] << 8);
+                mERT = data[8] + (data[9] << 8);
+            }
+            else {
+                ++mErrorCount;
+            }
+        }
+        static inline uint16_t mEscTemperature = 0;
+        static inline uint16_t mMotTemperature = 0;
+        static inline uint16_t mVoltage = 0;
+        static inline uint16_t mCurrent = 0;
+        static inline uint16_t mConsumption = 0;
+        static inline uint16_t mERT = 0;
+        static inline uint16_t mErrorCount = 0;
+        static inline Event mEvent = Event::None;
+        static inline State mState = State::Init;
+        static inline External::Tick<systemTimer> mStateTick;
     };
 
     namespace Master {

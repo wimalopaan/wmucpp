@@ -18,6 +18,7 @@ namespace Mcu::Stm {
             mcuOpamp->CSR &= ~OPAMP_CSR_OPAMPINTEN;
             mcuOpamp->CSR |= (OPAMP_CSR_VMSEL_1 | OPAMP_CSR_VMSEL_0); // Follower
             mcuOpamp->CSR |= (OPAMP_CSR_VPSEL_1 | OPAMP_CSR_VPSEL_0); // DAC3 O1 / O2
+            // mcuOpamp->CSR |= OPAMP_CSR_FORCEVP; // test
             mcuOpamp->CSR |= OPAMP_CSR_OPAMPxEN;
         }        
     };    

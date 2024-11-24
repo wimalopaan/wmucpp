@@ -154,9 +154,9 @@ namespace External {
 
     template<typename Pin, typename Timer, typename Pwm = void, typename Debug = void>
     struct BlinkerWithPwm {
-        enum class State : uint8_t {Off, On, IntervallOff, IntervallOn};
+        enum class State : uint8_t {Off, On, IntervallOff, IntervallOn, PwmMode};
 
-        enum class Event : uint8_t {None, Off, On};
+        enum class Event : uint8_t {None, Off, On, PwmModeOn, PwmModeOff};
 
         static inline void on(const uint8_t on) {
             if (on != 0) {
@@ -167,7 +167,9 @@ namespace External {
             }
         }
         static inline void event(const Event e) {
-            mEvent = e;
+            if (mEvent == Event::None) {
+                mEvent = e;
+            }
         }
 
         static inline void blink(const uint8_t b) {
@@ -187,17 +189,26 @@ namespace External {
 
         static inline void pwm(const uint8_t p) {
             IO::outl<Debug>("Pin: ", Pin::number, " pwm: ", p);
+            mEvent = Event::None;
             mUsePwm = p;
-            if ((mState == State::On) || (mState == State::IntervallOn)) {
-                on();
+            if (p == 0) {
+                event(Event::PwmModeOff);
             }
+            else if (p == 1) {
+                if ((mState == State::On) || (mState == State::IntervallOn)) {
+                    on();
+                }
+            }
+            else if (p == 2) {
+                event(Event::PwmModeOn);
+            }
+            ratePeriodic();
         }
         static inline void expo(const uint8_t) {
         }
-
         static inline void duty(const uint8_t d) {
             if constexpr(!std::is_same_v<Pwm, void>) {
-                IO::outl<Debug>("Pin: ", Pin::number, " duty: ", d);
+                IO::outl<Debug>("Pin: ", Pin::number, " duty: ", d, " state: ", (uint8_t)mState);
                 if constexpr(!std::is_same_v<Pwm, void>) {
                     using pol_t = Pwm::polarity_t;
                     if constexpr(std::is_same_v<pol_t, Mcu::Stm::AlternateFunctions::Negativ>) {
@@ -211,12 +222,12 @@ namespace External {
         }
 
         static inline void set() {
-            if (mUsePwm && ((mState == State::On) || (mState == State::IntervallOn))) {
+            if (mUsePwm && ((mState == State::On) || (mState == State::IntervallOn) || (mState == State::PwmMode))) {
                 Pin::set();
             }
         }
         static inline void reset() {
-            if (mUsePwm && ((mState == State::On) || (mState == State::IntervallOn))) {
+            if (mUsePwm && ((mState == State::On) || (mState == State::IntervallOn) || (mState == State::PwmMode))) {
                 Pin::reset();
             }
         }
@@ -233,6 +244,9 @@ namespace External {
                     else {
                         mState = State::On;
                     }
+                }
+                else if (e == Event::PwmModeOn) {
+                    mState = State::PwmMode;
                 }
                 break;
             case State::On:
@@ -269,6 +283,12 @@ namespace External {
                     }
                 });
                 break;
+            case State::PwmMode:
+                if (const Event e = std::exchange(mEvent, Event::None); e == Event::PwmModeOff) {
+                    mUsePwm = false;
+                    mState = State::Off;
+                }
+                break;
             }
             if (oldState != mState) {
                 mStateTick.reset();
@@ -289,6 +309,12 @@ namespace External {
                     break;
                 case State::IntervallOn:
                     IO::outl<Debug>("Pin: ", Pin::number, " IntOn");
+                    on();
+                    break;
+                case State::PwmMode:
+                    IO::outl<Debug>("Pin: ", Pin::number, " PwmMode");
+                    mUsePwm = true;
+                    duty(0);
                     on();
                     break;
                 }

@@ -1,6 +1,8 @@
 #define USE_MCU_STM_V3
 #define USE_CRSF_V2
 
+// #define TEST1
+
 #define NDEBUG
 //#define USE_SWD // for SWD debugging (do not reconfigure SWD/SWCLK Pins)
 
@@ -12,6 +14,16 @@
 #define EEPROM_MAGIC 42
 
 struct EEProm {
+    constexpr EEProm() {
+        etl::copy("Output 0", outputs[0].name);
+        etl::copy("Output 1", outputs[1].name);
+        etl::copy("Output 2", outputs[2].name);
+        etl::copy("Output 3", outputs[3].name);
+        etl::copy("Output 4", outputs[4].name);
+        etl::copy("Output 5", outputs[5].name);
+        etl::copy("Output 6", outputs[6].name);
+        etl::copy("Output 7", outputs[7].name);
+    }
     struct Output {
         uint8_t pwm = 0;
         uint8_t pwmDuty = 1;
@@ -19,6 +31,7 @@ struct EEProm {
         uint8_t blink = 0;
         uint8_t blinkOnTime = 1;
         uint8_t blinkOffTime = 1;
+        std::array<char, 16> name;
     };
 
     uint8_t magic = EEPROM_MAGIC;
@@ -35,7 +48,7 @@ struct EEProm {
     std::array<Output, 8> outputs{};
 };
 
-__attribute__((__section__(".eeprom"))) EEProm eeprom_flash{};
+__attribute__((__section__(".eeprom"))) constexpr EEProm eeprom_flash{};
 
 namespace {
     EEProm eeprom;
@@ -132,11 +145,9 @@ struct CrsfCallback {
     }
     static inline constexpr void gotChannels() {
     }
-
     static inline constexpr void ratePeriodic() {
         // crsfTelemetry::ratePeriodic();
     }
-
     static inline constexpr void updateName(name_t& n) {
         strncpy(&n[0], title, n.size());
         auto r = std::to_chars(std::begin(n) + strlen(title), std::end(n), eeprom.address);
@@ -155,14 +166,28 @@ struct CrsfCallback {
             IO::outl<trace>("# EEPROM NOK: ", err);
         }
     }
-    static inline void setParameter(const uint8_t index, const uint8_t value) {
+    static inline void setParameter(const uint8_t index, const uint8_t value, const auto& data, const uint8_t dlen) {
         IO::outl<trace>("# SetP i: ", index, " v: ", value);
         if ((index >= 1) && (index <= params.size())) {
-            params[index - 1].value(value);
             mLastChangedParameter = index;
             bool mustSave = true;
-            if (params[index - 1].cb) {
-                mustSave = params[index - 1].cb(value);
+            if (params[index - 1].mType == Param_t::Str) {
+                IO::outl<trace>("# String");
+                if (params[index - 1].mStringValue) {
+                    for(uint8_t i = 0; (i < 16) && (i < dlen); ++i) {
+                        params[index - 1].mStringValue[i] = data[i];
+                        if (data[i] == '\0') {
+                            break;
+                        }
+                    }
+                    params[index - 1].mStringValue[dlen] = '\0';
+                }
+            }
+            else {
+                params[index - 1].value(value);
+                if (params[index - 1].cb) {
+                    mustSave = params[index - 1].cb(value);
+                }
             }
             update();
             if (mustSave) {
@@ -212,14 +237,20 @@ struct CrsfCallback {
         const uint8_t srcAddress = payload[1];
         const uint8_t realm = payload[2];
         const uint8_t cmd = payload[3];
+        const uint8_t address = (uint8_t)payload[4];
         if ((srcAddress == (uint8_t)RC::Protokoll::Crsf::Address::Handset) && (destAddress >= 0xc0) && (destAddress <= 0xcf)) {
             if (realm == (uint8_t)RC::Protokoll::Crsf::CommandType::Switch) {
-                if (cmd == (uint8_t)RC::Protokoll::Crsf::SwitchCommand::Set) {
-                    const uint8_t address = (uint8_t)payload[4];
-                    const uint8_t sw = (uint8_t)payload[5];
-                    if (eeprom.address == address) {
-                        IO::outl<trace>("# Command: ", address, " sw: ", sw);
+                if (eeprom.address == address) {
+                    if (cmd == (uint8_t)RC::Protokoll::Crsf::SwitchCommand::Set) {
+                        const uint8_t sw = (uint8_t)payload[5];
+                        IO::outl<trace>("# Cmd Set: ", address, " sw: ", sw);
                         SwitchCallback::set(sw);
+                    }
+                    else if (cmd == (uint8_t)RC::Protokoll::Crsf::SwitchCommand::Prop) {
+                        const uint8_t ch = (uint8_t)payload[5];
+                        const uint8_t duty = (uint8_t)payload[6];
+                        IO::outl<trace>("# Cmd Prop: ", address, " ch: ", ch, " d: ", duty);
+                        SwitchCallback::prop(ch, duty);
                     }
                 }
             }
@@ -240,7 +271,7 @@ private:
     static inline uint8_t mLastChangedParameter{};
     static inline constexpr uint32_t mSerialNumber{1234};
     static inline constexpr uint32_t mHWVersion{1};
-    static inline constexpr uint32_t mSWVersion{12};
+    static inline constexpr uint32_t mSWVersion{13};
     static inline constexpr auto mVersionString = [](){
         std::array<char, 16> s{};
         auto [ptr, e] = std::to_chars(std::begin(s), std::end(s), mHWVersion);
@@ -268,10 +299,27 @@ private:
         update();
         return true;
     }
+
+    static inline auto mNameTest = []{
+        std::array<char, 32> a;
+        strcpy(&a[0], "bla");
+        return a;
+    }();
+
     using params_t = etl::FixedVector<Param_t, 128>;
     static inline params_t params = []{
         params_t p;
         addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
+#ifdef TEST1
+        // String-type not supported by elrsv3.lua (Issue 2859)
+        addNode(p, Param_t{0, PType::Str, "Name", nullptr, nullptr, 0, 0, nullptr, 0, 8, 0, &mNameTest[0]}); // maxlen 8
+        addNode(p, Param_t{0, PType(PType::U8), "Address", nullptr, &eeprom.address, 0, 255, setAddress});
+        addNode(p, Param_t{0, PType(PType::Str | PType::Hidden), "N0", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &mNameTest[0]});
+        addNode(p, Param_t{0, PType(PType::Str | PType::Hidden), "N2", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &mNameTest[0]});
+        addNode(p, Param_t{0, PType(PType::Str | PType::Hidden), "N3", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &mNameTest[0]});
+        addNode(p, Param_t{0, PType(PType::U8 | PType::Hidden), "HiddenInfo", nullptr, nullptr, 0, 255});
+#endif
+#ifndef TEST1
         auto parent = addParent(p, Param_t{0, PType::Folder, "Global"});
         addNode(p, Param_t{parent, PType::U8, "Address", nullptr, &eeprom.address, 0, 255, setAddress});
         addNode(p, Param_t{parent, PType::U8, "PWM Freq G1 (O3,2)[100Hz]", nullptr, &eeprom.pwm1, 1, 200, [](const uint8_t v){Meta::nth_element<0, pwms>::freqCenties(v); return true;}});
@@ -290,12 +338,12 @@ private:
         addNode(p, Param_t{parent, PType::U8, "Response Slot", nullptr, &eeprom.response_slot, 0, 15, [](const uint8_t v){responder::telemetrySlot(v); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Config resp.", "Button;Allways on", &eeprom.telemetry, 0, 1});
 
-        // addNode(p, Param_t{parent, PType::Str, "Name", "bla"}); // not supported by elrsv3.lua?
-
-        parent = addParent(p, Param_t{0, PType::Folder, "Output 0"});
+        parent = addParent(p, Param_t{0, PType::Folder, &eeprom.outputs[0].name[0]});
+        // parent = addParent(p, Param_t{0, PType::Folder, "Output 0"});
         addNode(p, Param_t{parent, PType::Info, "Output 0 : ", &mName[0]});
-        addNode(p, Param_t{parent, PType::Sel, "PWM Mode", "Off;On", &eeprom.outputs[0].pwm, 0, 1, [](const uint8_t v){Meta::nth_element<0, bsws>::pwm(v); return true;}});
-        addNode(p, Param_t{parent, PType::U8,  "PWM Duty", nullptr, &eeprom.outputs[0].pwmDuty, 1, 99, [](const uint8_t v){Meta::nth_element<0, bsws>::duty(v); return true;}});
+        addNode(p, Param_t{parent, PType::Str, "Alias", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &eeprom.outputs[0].name[0]}); // not supported by elrsv3.lua?
+        addNode(p, Param_t{parent, PType::Sel, "PWM Mode", "Off;On;Remote", &eeprom.outputs[0].pwm, 0, 2, [](const uint8_t v){Meta::nth_element<0, bsws>::pwm(v); return true;}});
+        addNode(p, Param_t{parent, PType::U8,  "PWM Duty", nullptr, &eeprom.outputs[0].pwmDuty, 1, 99, [](const uint8_t v){Meta::nth_element<0, bsws>::duty((eeprom.outputs[0].pwm == 2)?0:v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "PWM Expo", nullptr, &eeprom.outputs[0].pwmScale, 0, 100, [](const uint8_t v){Meta::nth_element<0, bsws>::expo(v); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Intervall Mode", "Off;On", &eeprom.outputs[0].blink, 0, 1, [](const uint8_t v){Meta::nth_element<0, bsws>::blink(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Intervall(on)[0.1s]", nullptr, &eeprom.outputs[0].blinkOnTime, 1, 255, [](const uint8_t v){Meta::nth_element<0, bsws>::on_dezi(v); return true;}});
@@ -304,8 +352,8 @@ private:
 
         parent = addParent(p, Param_t{0, PType::Folder, "Output 1"});
         addNode(p, Param_t{parent, PType::Info, "Output 1 : ", &mName[0]});
-        addNode(p, Param_t{parent, PType::Sel, "PWM Mode", "Off;On", &eeprom.outputs[1].pwm, 0, 1, [](const uint8_t v){Meta::nth_element<1, bsws>::pwm(v); return true;}});
-        addNode(p, Param_t{parent, PType::U8,  "PWM Duty", nullptr, &eeprom.outputs[1].pwmDuty, 1, 99, [](const uint8_t v){Meta::nth_element<1, bsws>::duty(v); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "PWM Mode", "Off;On;Remote", &eeprom.outputs[1].pwm, 0, 2, [](const uint8_t v){Meta::nth_element<1, bsws>::pwm(v); return true;}});
+        addNode(p, Param_t{parent, PType::U8,  "PWM Duty", nullptr, &eeprom.outputs[1].pwmDuty, 1, 99, [](const uint8_t v){Meta::nth_element<1, bsws>::duty((eeprom.outputs[1].pwm == 2)?0:v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "PWM Expo", nullptr, &eeprom.outputs[1].pwmScale, 0, 100, [](const uint8_t v){Meta::nth_element<1, bsws>::expo(v); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Intervall Mode", "Off;On", &eeprom.outputs[1].blink, 0, 1, [](const uint8_t v){Meta::nth_element<1, bsws>::blink(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Intervall(on)[0.1s]", nullptr, &eeprom.outputs[1].blinkOnTime, 1, 255, [](const uint8_t v){Meta::nth_element<1, bsws>::on_dezi(v); return true;}});
@@ -314,8 +362,8 @@ private:
 
         parent = addParent(p, Param_t{0, PType::Folder, "Output 2"});
         addNode(p, Param_t{parent, PType::Info, "Output 2 : ", &mName[0]});
-        addNode(p, Param_t{parent, PType::Sel, "PWM Mode", "Off;On", &eeprom.outputs[2].pwm, 0, 1, [](const uint8_t v){Meta::nth_element<2, bsws>::pwm(v); return true;}});
-        addNode(p, Param_t{parent, PType::U8,  "PWM Duty", nullptr, &eeprom.outputs[2].pwmDuty, 1, 99, [](const uint8_t v){Meta::nth_element<2, bsws>::duty(v); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "PWM Mode", "Off;On;Remote", &eeprom.outputs[2].pwm, 0, 2, [](const uint8_t v){Meta::nth_element<2, bsws>::pwm(v); return true;}});
+        addNode(p, Param_t{parent, PType::U8,  "PWM Duty", nullptr, &eeprom.outputs[2].pwmDuty, 1, 99, [](const uint8_t v){Meta::nth_element<2, bsws>::duty((eeprom.outputs[2].pwm == 2)?0:v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "PWM Expo", nullptr, &eeprom.outputs[2].pwmScale, 0, 100, [](const uint8_t v){Meta::nth_element<2, bsws>::expo(v); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Intervall Mode", "Off;On", &eeprom.outputs[2].blink, 0, 1, [](const uint8_t v){Meta::nth_element<2, bsws>::blink(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Intervall(on)[0.1s]", nullptr, &eeprom.outputs[2].blinkOnTime, 1, 255, [](const uint8_t v){Meta::nth_element<2, bsws>::on_dezi(v); return true;}});
@@ -324,8 +372,8 @@ private:
 
         parent = addParent(p, Param_t{0, PType::Folder, "Output 3"});
         addNode(p, Param_t{parent, PType::Info, "Output 3 : ", &mName[0]});
-        addNode(p, Param_t{parent, PType::Sel, "PWM Mode", "Off;On", &eeprom.outputs[3].pwm, 0, 1, [](const uint8_t v){Meta::nth_element<3, bsws>::pwm(v); return true;}});
-        addNode(p, Param_t{parent, PType::U8,  "PWM Duty", nullptr, &eeprom.outputs[3].pwmDuty, 1, 99, [](const uint8_t v){Meta::nth_element<3, bsws>::duty(v); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "PWM Mode", "Off;On;Remote", &eeprom.outputs[3].pwm, 0, 2, [](const uint8_t v){Meta::nth_element<3, bsws>::pwm(v); return true;}});
+        addNode(p, Param_t{parent, PType::U8,  "PWM Duty", nullptr, &eeprom.outputs[3].pwmDuty, 1, 99, [](const uint8_t v){Meta::nth_element<3, bsws>::duty((eeprom.outputs[3].pwm == 2)?0:v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "PWM Expo", nullptr, &eeprom.outputs[3].pwmScale, 0, 100, [](const uint8_t v){Meta::nth_element<3, bsws>::expo(v); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Intervall Mode", "Off;On", &eeprom.outputs[3].blink, 0, 1, [](const uint8_t v){Meta::nth_element<3, bsws>::blink(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Intervall(on)[0.1s]", nullptr, &eeprom.outputs[3].blinkOnTime, 1, 255, [](const uint8_t v){Meta::nth_element<3, bsws>::on_dezi(v); return true;}});
@@ -334,8 +382,8 @@ private:
 
         parent = addParent(p, Param_t{0, PType::Folder, "Output 4"});
         addNode(p, Param_t{parent, PType::Info, "Output 4 : ", &mName[0]});
-        addNode(p, Param_t{parent, PType::Sel, "PWM Mode", "Off;On", &eeprom.outputs[4].pwm, 0, 1, [](const uint8_t v){Meta::nth_element<4, bsws>::pwm(v); return true;}});
-        addNode(p, Param_t{parent, PType::U8,  "PWM Duty", nullptr, &eeprom.outputs[4].pwmDuty, 1, 99, [](const uint8_t v){Meta::nth_element<4, bsws>::duty(v); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "PWM Mode", "Off;On;Remote", &eeprom.outputs[4].pwm, 0, 2, [](const uint8_t v){Meta::nth_element<4, bsws>::pwm(v); return true;}});
+        addNode(p, Param_t{parent, PType::U8,  "PWM Duty", nullptr, &eeprom.outputs[4].pwmDuty, 1, 99, [](const uint8_t v){Meta::nth_element<4, bsws>::duty((eeprom.outputs[4].pwm == 2)?0:v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "PWM Expo", nullptr, &eeprom.outputs[4].pwmScale, 0, 100, [](const uint8_t v){Meta::nth_element<4, bsws>::expo(v); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Intervall Mode", "Off;On", &eeprom.outputs[4].blink, 0, 1, [](const uint8_t v){Meta::nth_element<4, bsws>::blink(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Intervall(on)[0.1s]", nullptr, &eeprom.outputs[4].blinkOnTime, 1, 255, [](const uint8_t v){Meta::nth_element<4, bsws>::on_dezi(v); return true;}});
@@ -344,8 +392,8 @@ private:
 
         parent = addParent(p, Param_t{0, PType::Folder, "Output 5"});
         addNode(p, Param_t{parent, PType::Info, "Output 5 : ", &mName[0]});
-        addNode(p, Param_t{parent, PType::Sel, "PWM Mode", "Off;On", &eeprom.outputs[5].pwm, 0, 1, [](const uint8_t v){Meta::nth_element<5, bsws>::pwm(v); return true;}});
-        addNode(p, Param_t{parent, PType::U8,  "PWM Duty", nullptr, &eeprom.outputs[5].pwmDuty, 1, 99, [](const uint8_t v){Meta::nth_element<5, bsws>::duty(v); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "PWM Mode", "Off;On;Remote", &eeprom.outputs[5].pwm, 0, 2, [](const uint8_t v){Meta::nth_element<5, bsws>::pwm(v); return true;}});
+        addNode(p, Param_t{parent, PType::U8,  "PWM Duty", nullptr, &eeprom.outputs[5].pwmDuty, 1, 99, [](const uint8_t v){Meta::nth_element<5, bsws>::duty((eeprom.outputs[5].pwm == 2)?0:v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "PWM Expo", nullptr, &eeprom.outputs[5].pwmScale, 0, 100, [](const uint8_t v){Meta::nth_element<5, bsws>::expo(v); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Intervall Mode", "Off;On", &eeprom.outputs[5].blink, 0, 1, [](const uint8_t v){Meta::nth_element<5, bsws>::blink(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Intervall(on)[0.1s]", nullptr, &eeprom.outputs[5].blinkOnTime, 1, 255, [](const uint8_t v){Meta::nth_element<5, bsws>::on_dezi(v); return true;}});
@@ -354,8 +402,8 @@ private:
 
         parent = addParent(p, Param_t{0, PType::Folder, "Output 6"});
         addNode(p, Param_t{parent, PType::Info, "Output 6 : ", &mName[0]});
-        addNode(p, Param_t{parent, PType::Sel, "PWM Mode", "Off;On", &eeprom.outputs[6].pwm, 0, 1, [](const uint8_t v){Meta::nth_element<6, bsws>::pwm(v); return true;}});
-        addNode(p, Param_t{parent, PType::U8,  "PWM Duty", nullptr, &eeprom.outputs[6].pwmDuty, 1, 99, [](const uint8_t v){Meta::nth_element<6, bsws>::duty(v); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "PWM Mode", "Off;On;Remote", &eeprom.outputs[6].pwm, 0, 2, [](const uint8_t v){Meta::nth_element<6, bsws>::pwm(v); return true;}});
+        addNode(p, Param_t{parent, PType::U8,  "PWM Duty", nullptr, &eeprom.outputs[6].pwmDuty, 1, 99, [](const uint8_t v){Meta::nth_element<6, bsws>::duty((eeprom.outputs[6].pwm == 2)?0:v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "PWM Expo", nullptr, &eeprom.outputs[6].pwmScale, 0, 100, [](const uint8_t v){Meta::nth_element<6, bsws>::expo(v); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Intervall Mode", "Off;On", &eeprom.outputs[6].blink, 0, 1, [](const uint8_t v){Meta::nth_element<6, bsws>::blink(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Intervall(on)[0.1s]", nullptr, &eeprom.outputs[6].blinkOnTime, 1, 255, [](const uint8_t v){Meta::nth_element<6, bsws>::on_dezi(v); return true;}});
@@ -364,8 +412,8 @@ private:
 
         parent = addParent(p, Param_t{0, PType::Folder, "Output 7"});
         addNode(p, Param_t{parent, PType::Info, "Output 7 : ", &mName[0]});
-        addNode(p, Param_t{parent, PType::Sel, "PWM Mode", "Off;On", &eeprom.outputs[7].pwm, 0, 1, [](const uint8_t v){Meta::nth_element<7, bsws>::pwm(v); return true;}});
-        addNode(p, Param_t{parent, PType::U8,  "PWM Duty", nullptr, &eeprom.outputs[7].pwmDuty, 1, 99, [](const uint8_t v){Meta::nth_element<7, bsws>::duty(v); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "PWM Mode", "Off;On;Remote", &eeprom.outputs[7].pwm, 0, 2, [](const uint8_t v){Meta::nth_element<7, bsws>::pwm(v); return true;}});
+        addNode(p, Param_t{parent, PType::U8,  "PWM Duty", nullptr, &eeprom.outputs[7].pwmDuty, 1, 99, [](const uint8_t v){Meta::nth_element<7, bsws>::duty((eeprom.outputs[7].pwm == 2)?0:v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "PWM Expo", nullptr, &eeprom.outputs[7].pwmScale, 0, 100, [](const uint8_t v){Meta::nth_element<7, bsws>::expo(v); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Intervall Mode", "Off;On", &eeprom.outputs[7].blink, 0, 1, [](const uint8_t v){Meta::nth_element<7, bsws>::blink(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Intervall(on)[0.1s]", nullptr, &eeprom.outputs[7].blinkOnTime, 1, 255, [](const uint8_t v){Meta::nth_element<7, bsws>::on_dezi(v); return true;}});
@@ -381,7 +429,7 @@ private:
         addNode(p, Param_t{parent, PType::Sel, "Output 5", "Off;On", 0, 0, 1, [](const uint8_t v){Meta::nth_element<5, bsws>::on(v); return false;}});
         addNode(p, Param_t{parent, PType::Sel, "Output 6", "Off;On", 0, 0, 1, [](const uint8_t v){Meta::nth_element<6, bsws>::on(v); return false;}});
         addNode(p, Param_t{parent, PType::Sel, "Output 7", "Off;On", 0, 0, 1, [](const uint8_t v){Meta::nth_element<7, bsws>::on(v); return false;}});
-
+#endif
         return p;
     }();
 };
@@ -418,7 +466,14 @@ struct GFSM {
     static inline void update(const bool eepromMode = true) {
         crsfCallback::callbacks(eepromMode);
     }
-
+    static inline void prop(const uint8_t channel, const uint8_t duty) {
+        IO::outl<debug>("# prop: ", channel, " duty: ", duty);
+        if (channel < 8) {
+            Meta::visitAt<bsws>(channel, [&]<typename SW>(Meta::Wrapper<SW>){
+                                    SW::duty(duty);
+                                });
+        }
+    }
     static inline void set(const uint8_t sw) {
         // IO::outl<debug>("# set: ", sw);
         for(uint8_t i = 0; i < 8; ++i) {
@@ -562,6 +617,9 @@ using gfsm = GFSM<devs>;
 struct Setter {
     static inline void set(const uint8_t sw) {
         gfsm::set(sw);
+    }
+    static inline void prop(const uint8_t channel, const uint8_t duty) {
+        gfsm::prop(channel, duty);
     }
 };
 

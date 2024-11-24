@@ -349,7 +349,8 @@ struct GFSM {
                 crsfTelemetry::batt(devs::adc2Voltage(subSampler::meanVoltage()) * 10);
                 crsfTelemetry::curr(devs::adc2Current(subSampler::currMean()) * 10);
 
-                const uint16_t t = Speed::tempFilter.process(Mcu::Stm::adc2Temp(adc::mData[2]));
+                // const uint16_t t = Speed::tempFilter.process(Mcu::Stm::adc2Temp(adc::mData[2]));
+                const uint16_t t = Speed::tempFilter.process(Mcu::Stm::adc2Temp(adc::values()[2]));
                 crsfTelemetry::temp1(t);
 
                 const uint16_t t2 = comp1::temperatur();

@@ -152,17 +152,27 @@ struct Devices<ESC20, Config, Mcu::Stm::Stm32G431> {
     using isense = Mcu::Stm::Pin<gpioa, 1, MCU>;
     using vsense = Mcu::Stm::Pin<gpioa, 0, MCU>;
     // using pga = Mcu::Stm::PGA<3, MCU>;
+#ifdef TEST_C1
+    struct PgaDummy {
+        static inline void useOffset(bool){}
+        static inline void gain(uint8_t){}
+    };
+    using pga = PgaDummy;
+#else
     using pga = Mcu::Stm::PGA<1, MCU>;
+#endif
 
     // PA3 Comparator Lmt01
     // using compinp = Mcu::Stm::Pin<gpioa, 3, MCU>;
 
     // PA2 OpAmp1-Out: Offset
     // DAC3-Out1 -> OpAmp1-Vinp
-    // using offset = Mcu::Stm::Dac<3, MCU>;
-    // using follow1 = Mcu::Stm::Follower<1, MCU>;
+#ifdef TEST_C1
+    using offset = Mcu::Stm::V3::Dac<3, MCU>;
+    using follow1 = Mcu::Stm::Follower<1, MCU>;
+#else
     using offset = Mcu::Stm::Pin<gpioa, 2, MCU>;
-
+#endif
     // PA4 Testpunkt-0, DAC1-Out1
     // PA11 Testpunkt-1
     // PA12 Testpunkt-2
@@ -192,19 +202,21 @@ struct Devices<ESC20, Config, Mcu::Stm::Stm32G431> {
         tp1::template dir<Mcu::Output>();
         tp2::template dir<Mcu::Output>();
 
-        // dac::init();
-
-        // offset::init();
-        // offset::set(0);
-        // follow1::init();
+#ifdef TEST_C1
+        offset::init();
+        offset::set(100);
+        follow1::init();
+#else
         offset::template dir<Mcu::Output>();
-
+#endif
         isense::analog();
         vsense::analog();
+#ifndef TEST_C1
         pga::init();
         // pga::input(2);
         pga::input(0);
         pga::gain(0);
+#endif
         adc::init();
 
         pwm::init();

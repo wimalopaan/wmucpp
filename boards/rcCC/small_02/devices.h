@@ -19,7 +19,7 @@
 #include "timer.h"
 #include "opamp.h"
 #include "adc.h"
-#include "dac.h"
+//#include "dac.h"
 #include "clock.h"
 #include "units.h"
 #include "output.h"
@@ -49,6 +49,393 @@ struct CC51;
 
 using namespace Mcu::Stm;
 using namespace std::literals::chrono_literals;
+
+#ifdef USE_DEVICES4
+
+template<typename HW,
+         typename Storage,
+         template<typename, typename> typename CrsfCallback,
+         template<typename, typename, typename> typename VescCallback,
+         typename MCU = DefaultMcu>
+struct Devices4;
+
+template<typename Storage,
+         template<typename, typename> typename CrsfCallback,
+         template<typename, typename, typename> typename VescCallback,
+         typename MCU>
+struct Devices4<CC51, Storage, CrsfCallback, VescCallback, MCU> {
+    using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<170_MHz, 2'000_Hz, Mcu::Stm::HSI>, MCU>;
+    using systemTimer = Mcu::Stm::SystemTimer<clock, Mcu::UseInterrupts<false>, MCU>;
+    using trace = Arm::Trace<clock, 2_MHz, 1024>;
+
+    using gpioa = Mcu::Stm::GPIO<Mcu::Stm::A, MCU>;
+    using gpiob = Mcu::Stm::GPIO<Mcu::Stm::B, MCU>;
+    using gpioc = Mcu::Stm::GPIO<Mcu::Stm::C, MCU>;
+    using gpiod = Mcu::Stm::GPIO<Mcu::Stm::D, MCU>;
+    using gpiof = Mcu::Stm::GPIO<Mcu::Stm::F, MCU>;
+
+    // I2C 2 (extern)
+    using i2c_2 = Mcu::Stm::I2C::Master<2, 16, trace>;
+    using ext_sda = Mcu::Stm::Pin<gpioa, 8, MCU>; // af 4
+    using ext_clk = Mcu::Stm::Pin<gpioa, 9, MCU>; // af 4
+
+    static inline constexpr Mcu::Stm::I2C::Address tlc_adr_01{0b1001111}; // 7bit (all high)
+    // static inline constexpr Mcu::Stm::I2C::Address pca_adr_01{0b1111101}; // 7bit (all high)
+
+    using tlc_1 = External::TLC59108::Switch<i2c_2, tlc_adr_01, trace>;
+    using switches = tlc_1;
+
+    // using leds_01 = External::PCA9955::Leds<i2c_2, pca_adr_01>;
+
+    struct CrsfAdapterConfig;
+
+    // Usart 1
+    using crsf_pa = RC::Protokoll::Crsf::V2::Adapter<0, CrsfAdapterConfig, MCU>;
+    using crsf    = Mcu::Stm::Uart<1, crsf_pa, RC::Protokoll::Crsf::maxMessageSize, std::byte, clock, MCU>;
+    using crsf_out= RC::Protokoll::Crsf::V2::Generator<crsf, systemTimer, MCU>;
+    using crsftx = Mcu::Stm::Pin<gpiob, 6, MCU>; // AF 7
+    using crsfrx = Mcu::Stm::Pin<gpioa, 10, MCU>; // AF 7
+
+    struct CrsfCallbackConfig;
+    using crsfCallback = CrsfCallback<CrsfCallbackConfig, trace>;
+
+    struct CrsfAdapterConfig {
+        using out = crsf_out;
+        using dbg = void;
+        using callback = crsfCallback;
+        using timer = systemTimer;
+    };
+
+    // Usart 3: Telem_RxTx : SPort/IBus auf Platine
+#ifdef USE_SPORT
+    using sport_pa = RC::SPort::Master::ProtocolAdapter<0, systemTimer, MCU>;
+    using sport_uart = Mcu::Stm::Uart<3, sport_pa, 16, std::byte, clock, MCU>;
+    using sport = RC::SPort::Master::Fsm<sport_uart, systemTimer, MCU>;
+    using sportrxtx = Mcu::Stm::Pin<gpiob, 11, MCU>; // rx, AF 7
+#endif
+#ifdef USE_ESC
+    using esc_pa = RC::ESCape::Master::ProtocolAdapter<0, systemTimer, MCU>;
+    using esc_uart = Mcu::Stm::Uart<3, esc_pa, 16, std::byte, clock, MCU>;
+    using esc = RC::ESCape::Master::Fsm<esc_uart, systemTimer, MCU>;
+    using escrxtx = Mcu::Stm::Pin<gpiob, 11, MCU>; // rx, AF 7
+    // using esctxinv = Mcu::Stm::Pin<gpiob, 9, MCU>; // tx, AF 7
+#endif
+#ifdef USE_VESC
+    struct VescAdapterConfig;
+
+    using vesc_pa = RC::VESC::Master::V2::ProtocolAdapter<0, VescAdapterConfig, systemTimer, MCU>;
+    using vesc_uart = Mcu::Stm::Uart<3, vesc_pa, 16, std::byte, clock, MCU>;
+    using vesc = RC::VESC::Master::V2::Fsm<vesc_uart, systemTimer, MCU>;
+    using vescrxtx = Mcu::Stm::Pin<gpiob, 11, MCU>; // rx, AF 7
+//    using vesctxinv = Mcu::Stm::Pin<gpiob, 9, MCU>; // tx, AF 7
+
+    using vescCallback = VescCallback<vesc_pa, crsfCallback, Storage>;
+
+    struct VescAdapterConfig {
+        using callback = vescCallback;
+        using timer = systemTimer;
+    };
+#endif
+
+    // DMA
+    using dma1 = Mcu::Stm::Dma::Controller<1, MCU>;
+
+    // Usart 2: SBus_RxTx : SBus(2)/IBus auf Platine
+
+#ifdef USE_DMA_SBUS
+    // use SBUS2 proto
+    struct SbusCallback;
+    // using sbus_pa = RC::Protokoll::SBus2::Adapter<0, SbusCallback>;
+    // using sbus_uart = Mcu::Stm::Uart<2, sbus_pa, 32, std::byte, clock, MCU>;
+    // using sbus = RC::Protokoll::SBus2::Fsm<sbus_uart, systemTimer>;
+    using sbusDmaChannel5 = Mcu::Stm::Dma::Channel<dma1, 5, MCU>;
+    using sbus = RC::Protokoll::SBus2::Master<2, sbusDmaChannel5, clock, MCU>;
+    using sbustx = Mcu::Stm::Pin<gpioa, 2, MCU>; // rx, AF 7, need swap rxtx-pins
+#else
+    // use SBUS2 proto
+    // struct SbusCallback;
+    // using sbus_pa = RC::Protokoll::SBus2::Adapter<0, SbusCallback>;
+    // using sbus_uart = Mcu::Stm::Uart<2, sbus_pa, 32, std::byte, clock, MCU>;
+    // using sbus = RC::Protokoll::SBus2::Fsm<sbus_uart, systemTimer>;
+    // using sbustx = Mcu::Stm::Pin<gpioa, 2, MCU>; // rx, AF 7, need swap rxtx-pins
+#endif
+
+    // Uart 4 : Aux1 auf Platine
+
+#ifdef USE_GPS
+    using vtg = External::GPS::VTG<>;
+    using gsv = External::GPS::GSV<>;
+    using rmc = External::GPS::RMC<>;
+    using gps_pa = External::GPS::GpsProtocollAdapter<0, Meta::List<vtg, gsv, rmc>>;
+    using gps_uart = Mcu::Stm::Uart<4, gps_pa, 32, std::byte, clock, MCU>;
+    using gpstx = Mcu::Stm::Pin<gpioc, 11, MCU>; // rx, AF5, need swap rxtx-pins
+#else
+    using aux1_uart = Mcu::Stm::Uart<4, void, 32, std::byte, clock, MCU>;
+    using aux1tx = Mcu::Stm::Pin<gpioc, 11, MCU>; // rx, AF5, need swap rxtx-pins
+    using sbus_aux1 = RC::Protokoll::SBus::Output::Generator<aux1_uart, systemTimer>;
+#endif
+
+    // Uart 5 : Aux2 auf Platine
+
+    using aux2_uart = Mcu::Stm::Uart<5, void, 32, std::byte, clock, MCU>;
+    using aux2tx = Mcu::Stm::Pin<gpiod, 2, MCU>; // rx, AF 5, need swap rxtx-pins
+    using sbus_aux2 = RC::Protokoll::SBus::Output::Generator<aux2_uart, systemTimer>;
+
+    struct CrsfCallbackConfig {
+        using telem_out = crsf_out;
+        using timer = systemTimer;
+        using storage = Storage;
+        using tlc1 = tlc_1;
+        using sbus2 = sbus_aux2;
+    };
+
+
+    // Leds
+
+    using led1 = Mcu::Stm::Pin<gpioc, 2, MCU>;
+    using led2 = Mcu::Stm::Pin<gpiof, 1, MCU>;
+
+    struct PassThru1 {
+        static inline void start() {
+            // sbus_uart::clear();
+            // sbus_pa::reset();
+            // sbus::stop();
+            // sbus_uart::template halfDuplex<true>();
+            // sbustx::template pullup<true>();
+            // sbus_uart::baud(38'400);
+            // sbus_uart::parityOff();
+            // sbus_uart::invert(false);
+        }
+        static inline void stop() {
+            // sbus_uart::clear();
+            // sbus_pa::reset();
+            // sbus::start();
+            // sbus_uart::template halfDuplex<true>();
+            // sbustx::template pulldown<true>();
+            // sbus_uart::baud(100'000);
+            // sbus_uart::parity(true);
+            // sbus_uart::invert(true);
+        }
+        static inline void put(const std::byte) {
+            //  sbus_uart::put(b);
+        }
+    };
+    using passthru = PassThru1;
+
+    struct SendBack;
+
+    // LPuart 1
+    using btpwr = Mcu::Stm::Pin<gpioc, 13, MCU>;
+    using bten = Mcu::Stm::Pin<gpioc, 14, MCU>;
+    using btstatus = Mcu::Stm::Pin<gpioc, 15, MCU>;
+    using robo_pa = External::QtRobo::ProtocollAdapter<0, systemTimer, passthru, SendBack>;
+    using bt_uart = Mcu::Stm::LpUart<1, robo_pa, 16, std::byte, clock, MCU>;
+    using btrx = Mcu::Stm::Pin<gpioc, 0, MCU>; // AF 12
+    using bttx = Mcu::Stm::Pin<gpioc, 1, MCU>; // AF 12
+
+    struct SendBack {
+        static inline void put(auto b) {
+            bt_uart::put(b);
+        }
+    };
+
+    // PWM Timer: t3
+    using pwm1 = Mcu::Stm::Pin<gpioa, 4, MCU>; // tim3, ch1, af 2
+    using pwm2 = Mcu::Stm::Pin<gpioa, 6, MCU>; // tim3, ch2, af 2
+    using pwm3 = Mcu::Stm::Pin<gpiob, 0, MCU>; // tim3, ch3, af 2
+    using pwm4 = Mcu::Stm::Pin<gpiob, 1, MCU>; // tim3, ch4, af 2
+
+#if 0
+    using pwmDmaChannel1 = Mcu::Stm::Dma::Channel<dma1, 1, MCU>;
+    using pwmDmaChannel2 = Mcu::Stm::Dma::Channel<dma1, 2, MCU>;
+    using pwmDmaChannel3 = Mcu::Stm::Dma::Channel<dma1, 3, MCU>;
+    // using pwmDmaChannel4 = Mcu::Stm::Dma::Channel<dma1, 4, MCU>;
+    using pwmDmaChannels = Meta::List<pwmDmaChannel1, pwmDmaChannel2, pwmDmaChannel3>;
+    using pwmSequence1 = Mcu::Stm::Pwm::Sequence<2, 10, pwmDmaChannels, clock, MCU>; // timer 2, sequence-length
+    using pwmSequences1 = pwmSequence1::pwms;
+    using pwmSequence1_0 = Meta::nth_element<0, pwmSequences1>; // pwm 3
+    using pwmSequence1_1 = Meta::nth_element<1, pwmSequences1>; // pwm 1
+    using pwmSequence1_2 = Meta::nth_element<2, pwmSequences1>; // pwm 9
+#endif
+
+    using pwmGroup1 = Mcu::Stm::V2::Pwm::Servo<3, clock, MCU>; // pwm 1, 2, 3, 4
+
+    // ppmin
+
+    using ppm_in = Mcu::Stm::Pin<gpioc, 6, MCU>; //
+
+    // Testpoints
+
+    using tp1 = Mcu::Stm::Pin<gpiof, 0, MCU>;
+    using tp2 = Mcu::Stm::Pin<gpioc, 3, MCU>;
+
+    struct SbusCallback {
+        static inline void update() {
+            // uint16_t rpm = (uint16_t) sbus_pa::mSlots[0][1];
+            // rpm += ((uint16_t) sbus_pa::mSlots[0][2]) << 8;
+            // rpm *= 6;
+
+            // crsfTelemetry::mRpm[1] = std::byte(rpm & 0xff);
+            // crsfTelemetry::mRpm[0] = std::byte((rpm >> 8));
+
+            // uint16_t volt = (uint16_t) sbus_pa::mSlots[3][2];
+            // volt += ((uint16_t) sbus_pa::mSlots[3][1]) << 8;
+
+            // volt /= 10;
+
+            // crsfTelemetry::mBatt[1] = std::byte(volt & 0xff);
+            // crsfTelemetry::mBatt[0] = std::byte(volt >> 8);
+
+
+            // uint16_t curr = (uint16_t) sbus_pa::mSlots[2][2];
+            // curr += ((uint16_t) (sbus_pa::mSlots[2][1] & std::byte(0x3f))) << 8;
+
+            // curr /= 10;
+
+            // crsfTelemetry::mBatt[3] = std::byte(curr & 0xff);
+            // crsfTelemetry::mBatt[2] = std::byte(curr >> 8);
+        }
+    };
+
+// #ifdef USE_VESC
+//     struct VescCallback {
+//         static inline void update() {
+//             // uint16_t temp = vesc_pa::mTemperature;
+//             // temp /= 10;
+//             // crsfTelemetry::mTemp[1] = std::byte(temp & 0xff);
+//             // crsfTelemetry::mTemp[0] = std::byte((temp >> 8));
+
+//             // uint16_t rpm = vesc_pa::mRPM;
+//             // rpm /= 7;
+//             // crsfTelemetry::mRpm[1] = std::byte(rpm & 0xff);
+//             // crsfTelemetry::mRpm[0] = std::byte((rpm >> 8));
+
+//             // uint16_t volt = vesc_pa::mVoltage;
+
+//             // crsfTelemetry::mBatt[1] = std::byte(volt & 0xff);
+//             // crsfTelemetry::mBatt[0] = std::byte(volt >> 8);
+
+//             // uint16_t curr = vesc_pa::mCurrent;
+//             // curr /= 10;
+//             // crsfTelemetry::mBatt[3] = std::byte(curr & 0xff);
+//             // crsfTelemetry::mBatt[2] = std::byte(curr >> 8);
+//         }
+//     };
+// #endif
+
+    static inline void init() {
+        clock::init();
+        trace::init();
+        systemTimer::init();
+
+        gpioa::init();
+        gpiob::init();
+        gpioc::init();
+        gpiod::init();
+        gpiof::init();
+
+        SET_BIT(PWR->CR3, PWR_CR3_UCPD_DBDIS);
+
+        crsf::init();
+        crsf::baud(420'000);
+        crsftx::afunction(7);
+        crsfrx::afunction(7);
+        crsfrx::template pullup<true>();
+
+#ifdef USE_SPORT
+        sport_uart::init();
+        sport_uart::baud(57'600);
+        sport_uart::invert(true);
+        sport_uart::rxtxswap(true);
+        sportrxtx::afunction(7);
+        sportrxtx::pulldown<true>();
+#endif
+#ifdef USE_ESC
+        esc_uart::init();
+        esc_uart::baud(115'200);
+        escrxtx::afunction(7);
+        escrxtx::pullup<true>();
+#endif
+#ifdef USE_VESC
+        vesc_uart::init();
+        vesc_uart::baud(115'200);
+        vesc_uart::template rxEnable<false>();
+        vescrxtx::afunction(7);
+        vescrxtx::template pullup<true>();
+        vesc_uart::template halfDuplex<true>();
+        vesc_uart::rxtxswap(true);
+#endif
+
+//         sbus::init();
+//         sbus_uart::init();
+//         sbus_uart::baud(100'000);
+//         sbus_uart::parity(true);
+//         sbus_uart::invert(true);
+//         sbus_uart::template halfDuplex<true>();
+// //        sbus_uart::rxtxswap(true);
+//         sbustx::afunction(7);
+//         sbustx::template pulldown<true>();
+
+        bt_uart::init();
+        bt_uart::baud(115200); // BLE
+        bttx::afunction(12);
+        bttx::template pullup<true>();
+        btrx::afunction(12);
+        btrx::template pullup<true>();
+
+        // bten::template dir<Mcu::Output>();
+        // bten::set();
+        btpwr::template dir<Mcu::Output>(); // floating is off (RTC config???)
+        // btpwr::set();
+
+#ifdef USE_GPS
+        gps_uart::init();
+        gps_uart::baud(9600);
+        gpstx::afunction(5);
+#else
+        aux1_uart::init();
+        aux1_uart::rxtxswap(true);
+        aux1tx::afunction(5);
+        aux1_uart::baud(100'000);
+        aux1_uart::parity(true);
+        aux1_uart::invert(true);
+#endif
+
+        aux2_uart::init();
+        aux2_uart::rxtxswap(true);
+        aux2tx::afunction(5);
+        aux2_uart::baud(100'000);
+        aux2_uart::parity(true);
+        aux2_uart::invert(true);
+        aux2tx::template pulldown<true>();
+
+        i2c_2::init();
+        ext_clk::openDrain();
+        ext_clk::pullup();
+        ext_clk::template speed<Mcu::High>();
+        ext_sda::openDrain();
+        ext_sda::pullup();
+        ext_sda::template speed<Mcu::High>();
+        ext_clk::afunction(4);
+        ext_sda::afunction(4);
+
+        led1::template dir<Mcu::Output>();
+        led2::template dir<Mcu::Output>();
+
+        tp1::template dir<Mcu::Output>();
+        tp2::template dir<Mcu::Output>();
+
+        // pwmSequence1::init();
+        pwmGroup1::init();
+
+        pwm1::afunction(2);
+        pwm2::afunction(2);
+        pwm3::afunction(2);
+        pwm4::afunction(2);
+    }
+
+};
+#endif
 
 #ifdef USE_DEVICES3
 

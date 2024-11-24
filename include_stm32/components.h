@@ -26,6 +26,10 @@ namespace Mcu::Components {
     struct Usart {
         using number_t = std::integral_constant<uint8_t, N>;
     };
+    template<uint8_t N>
+    struct Dac {
+        using number_t = std::integral_constant<uint8_t, N>;
+    };
     struct Rcc {
     };
     template<uint8_t N>

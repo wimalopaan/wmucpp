@@ -937,6 +937,7 @@ namespace RC {
                     
                     inline static constexpr uint16_t sbus_min = 172;
                     inline static constexpr uint16_t sbus_max = 1811;
+                    inline static constexpr uint16_t sbus_span = (sbus_max - sbus_min) / 2;
                     
                     inline static constexpr uint16_t sbus_mid = (sbus_max + sbus_min) / 2;
                     
@@ -949,7 +950,10 @@ namespace RC {
                             o = (sbus_max + sbus_min) / 2;
                         }
                     }
-    
+                    static inline void set(const uint8_t i, const int8_t v) {
+                        output[i] = sbus_mid + v * ((float)sbus_span) / 128.0f;
+                    }
+
                     static inline void set(const index_type& i, const value_type& v) {
                         output[i] = v;
                     }

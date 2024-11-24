@@ -77,7 +77,7 @@ struct CrsfCallback {
             IO::outl<trace>("# EEPROM NOK: ", err);
         }
     }
-    static inline void setParameter(const uint8_t index, const uint8_t value) {
+    static inline void setParameter(const uint8_t index, const uint8_t value, const auto, const auto) {
         IO::outl<trace>("# SetP i: ", index, " v: ", value);
         if ((index >= 1) && (index <= params.size())) {
             params[index - 1].value(value);

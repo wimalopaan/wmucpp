@@ -62,7 +62,7 @@ namespace etl {
     
     
     template<typename C1, typename C2>
-    void copy(const C1& src, C2& dst) {
+    constexpr void copy(const C1& src, C2& dst) {
         std::copy(std::begin(src), std::end(src), std::begin(dst));
     }
     
@@ -144,6 +144,13 @@ namespace etl {
             (c.push_back(nth_byte<II>(v)), ...);
         }(std::make_index_sequence<sizeof(T)>{});
     }
-    
+
+    template<typename T, typename C>
+    constexpr void serializeBE(const T& v, C& c) {
+        [&]<auto... II>(std::index_sequence<II...>){
+            (c.push_back(nth_byte<sizeof(T) - II - 1>(v)), ...);
+        }(std::make_index_sequence<sizeof(T)>{});
+    }
+
 }
 

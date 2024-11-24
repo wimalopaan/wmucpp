@@ -17,18 +17,38 @@ namespace Mcu::Stm {
     struct EndOfConversion;
 
     struct NoTriggerSource;
+    template<auto N>
+    struct ContinousSampling {
+        static inline constexpr auto clockDivider = N;
+    };
     
     template<bool V>
     struct UseDma : std::integral_constant<bool, V> {};
+
+    template<typename T>
+    concept isTriggerSource = requires(T t) {
+        {T::trgo()};
+    };
+    template<typename T>
+    concept isClockDivider = requires(T t) {
+        {T::clockDivider};
+    };
+
+    template<typename C>
+    struct isContinousSampling : std::false_type {};
+    template<auto N>
+    struct isContinousSampling<ContinousSampling<N>> : std::true_type {};
 
     namespace Adcs {
         template<uint8_t N> struct Properties;
         template<> struct Properties<1> {
             static inline constexpr uint8_t dmamux_src{5};
         };
+#ifdef STM32G4
         template<> struct Properties<2> {
             static inline constexpr uint8_t dmamux_src{36};
         };
+#endif
     }
 
 #ifdef USE_MCU_STM_V3
@@ -53,12 +73,15 @@ namespace Mcu::Stm {
             static inline /*constexpr */ ADC_TypeDef* const mcuAdc = reinterpret_cast<ADC_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Adc<N, MCU>>::value);
             static inline /*constexpr */ ADC_Common_TypeDef* const mcuAdcCommon = reinterpret_cast<ADC_Common_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Adc<N, MCU>>::common);
 
+#ifdef STM32G4
             static inline constexpr std::array<uint8_t, 4> sqr1Positions{ADC_SQR1_SQ1_Pos, ADC_SQR1_SQ2_Pos, ADC_SQR1_SQ3_Pos, ADC_SQR1_SQ4_Pos};
             static inline constexpr std::array<uint8_t, 5> sqr2Positions{ADC_SQR2_SQ5_Pos, ADC_SQR2_SQ6_Pos, ADC_SQR2_SQ7_Pos, ADC_SQR2_SQ8_Pos, ADC_SQR2_SQ9_Pos};
-
+#endif
             static inline constexpr uint8_t nChannels = sizeof...(Channels);
             static_assert(nChannels <= 9);
             static inline constexpr std::array<uint8_t, nChannels> channels{Channels...};
+
+            using dmaChannel = DmaChannel;
 
             static inline void wait_us(const uint32_t us) {
                 volatile uint32_t w = us * 170;
@@ -67,6 +90,7 @@ namespace Mcu::Stm {
                 }
             }
 
+#ifdef STM32G4
             static inline void init() {
                 RCC->CCIPR |= 0x02 << RCC_CCIPR_ADC12SEL_Pos; // System Clock
                 RCC->AHB2ENR |= RCC_AHB2ENR_ADC12EN;
@@ -140,13 +164,114 @@ namespace Mcu::Stm {
                         mcuAdc->IER |= ADC_IER_EOCIE;
                     }
                 }
+
+                mcuAdc->CR |= ADC_CR_ADCAL;
+                while(mcuAdc->CR & ADC_CR_ADCAL);
+
+                wait_us(1); // 4 clock cycles needed (see Datasheet)
+
                 mcuAdc->CR |= ADC_CR_ADEN;
             }
-
-            static inline void oversample(const uint8_t n) {
-
+#endif
+#ifdef STM32G0
+            static inline void reset() {
+                RCC->APBRSTR2 = RCC_APBRSTR2_ADCRST;
+                RCC->APBRSTR2 &= ~RCC_APBRSTR2_ADCRST;
             }
+            static inline void init() {
+//                RCC->CCIPR |= 0x02 << RCC_CCIPR_ADC12SEL_Pos; // System Clock
+                RCC->APBENR2 |= RCC_APBENR2_ADCEN;
 
+//                MODIFY_REG(mcuAdc->CR , ADC_CR_DEEPPWD_Msk, 0x00 << ADC_CR_DEEPPWD_Pos);
+                mcuAdc->CR |= ADC_CR_ADVREGEN;
+
+                wait_us(100);
+
+                mcuAdc->ISR = ADC_ISR_ADRDY; // clear flag
+
+                if constexpr(isClockDivider<TriggerSource>) {
+                    constexpr uint16_t values[16] = {1, 2, 4, 6, 8, 10, 12, 16, 32, 64, 128, 256};
+                    constexpr uint8_t bits = [&]{
+                        for(uint8_t i = 0; i < std::size(values); ++i) {
+                            if (values[i] == TriggerSource::clockDivider) {
+                                return i;
+                            }
+                        }
+                        assert(false);
+                    }();
+                    // std::integral_constant<uint8_t, bits>::_;
+                    MODIFY_REG(mcuAdcCommon->CCR, ADC_CCR_PRESC_Msk, (bits << ADC_CCR_PRESC_Pos)); // 64 / 4 = 42,5 MHz
+                }
+                else {
+                    MODIFY_REG(mcuAdcCommon->CCR, ADC_CCR_PRESC_Msk, (0b0010 << ADC_CCR_PRESC_Pos)); // 64 / 4 = 42,5 MHz
+                }
+
+                // mcuAdcCommon->CCR |= ADC_CCR_VSENSESEL; // temp
+                mcuAdcCommon->CCR |= ADC_CCR_VREFEN; // temp
+
+                MODIFY_REG(mcuAdc->CFGR1, ADC_CFGR1_RES_Msk, (0x00 << ADC_CFGR1_RES_Pos)); // 12 bit
+
+                if constexpr(isTriggerSource<TriggerSource>) {
+                    // TriggerSource::_;
+                    // std::integral_constant<uint16_t, TriggerSource::trgo()>::_;
+                    MODIFY_REG(mcuAdc->CFGR1, ADC_CFGR1_EXTSEL_Msk, (TriggerSource::trgo() << ADC_CFGR1_EXTSEL_Pos));
+                    MODIFY_REG(mcuAdc->CFGR1, ADC_CFGR1_EXTEN_Msk, (0b10 << ADC_CFGR1_EXTEN_Pos)); // falling
+                    // MODIFY_REG(mcuAdc->CFGR , ADC_CFGR_EXTEN_Msk, (0b11 << ADC_CFGR_EXTEN_Pos)); // both
+                }
+                if constexpr(isContinousSampling<TriggerSource>::value) {
+                    mcuAdc->CFGR1 |= ADC_CFGR1_CONT;
+                }
+
+                mcuAdc->CHSELR = ((1 << Channels) | ...);
+
+                if constexpr(!std::is_same_v<DmaChannel, void>) {
+                    DmaChannel::init();
+                    DmaChannel::template msize<uint16_t>();
+                    DmaChannel::template psize<uint16_t>();
+
+                    DmaChannel::mcuDmaChannel->CCR |= DMA_CCR_MINC;
+                    DmaChannel::mcuDmaChannel->CCR |= DMA_CCR_CIRC;
+                    DmaChannel::mcuDmaChannel->CCR &= ~DMA_CCR_DIR;
+                    DmaChannel::mcuDmaChannel->CNDTR = nChannels;
+                    DmaChannel::mcuDmaChannel->CPAR = (uint32_t)(&mcuAdc->DR);
+                    DmaChannel::mcuDmaChannel->CMAR = (uint32_t)&mData[0];
+                    DmaChannel::enable();
+
+                    DmaChannel::mcuDmaMux->CCR = Mcu::Stm::Adcs::Properties<N>::dmamux_src & DMAMUX_CxCR_DMAREQ_ID_Msk;
+                    DmaChannel::mcuDmaMux->CCR |= DMAMUX_CxCR_EGE;
+
+                    DmaChannel::mcuDmaChannel->CCR |= DMA_CCR_EN;
+
+                    mcuAdc->CFGR1 |= ADC_CFGR1_DMACFG;
+                    mcuAdc->CFGR1 |= ADC_CFGR1_DMAEN;
+                }
+
+                if constexpr(!std::is_same_v<ISRConfig, void>) {
+                    if constexpr(Meta::contains_v<ISRConfig, EndOfSequence>) {
+                        mcuAdc->IER |= ADC_IER_EOSIE;
+                    }
+                    if constexpr(Meta::contains_v<ISRConfig, EndOfConversion>) {
+                        mcuAdc->IER |= ADC_IER_EOCIE;
+                    }
+                }
+
+                mcuAdc->CR |= ADC_CR_ADCAL;
+                while(mcuAdc->CR & ADC_CR_ADCAL);
+
+                wait_us(1); // Just to be safe
+
+                mcuAdc->CR |= ADC_CR_ADEN;
+            }
+#endif
+#ifdef STM32G0
+            static inline void oversample(const uint8_t n) {
+                if (n > 0) {
+                    const uint8_t r = n - 1;
+                    MODIFY_REG(mcuAdc->CFGR2, (ADC_CFGR2_OVSE_Msk | ADC_CFGR2_OVSS_Msk | ADC_CFGR2_OVSR_Msk),
+                               (1 << ADC_CFGR2_OVSE_Pos) | (n << ADC_CFGR2_OVSS_Pos) | (r << ADC_CFGR2_OVSR_Pos));
+                }
+            }
+#endif
             static inline void start() {
                 mcuAdc->CR |= ADC_CR_ADSTART;
             }
@@ -168,12 +293,13 @@ namespace Mcu::Stm {
             static inline uint16_t value() {
                 return mcuAdc->DR;
             }
-            // private:
+            static inline const auto& values() {
+                return mData;
+            }
+            private:
             static inline DmaStorage mData;
             static_assert(nChannels <= mData.size());
-
         };
-
     }
 
 #ifdef USE_MCU_STM_V2
@@ -196,6 +322,7 @@ namespace Mcu::Stm {
                 }
             }
 
+#ifdef STM32G4
             static inline void init() {
                 RCC->CCIPR |= 0x02 << RCC_CCIPR_ADC12SEL_Pos; // System Clock
                 RCC->AHB2ENR |= RCC_AHB2ENR_ADC12EN;
@@ -264,6 +391,7 @@ namespace Mcu::Stm {
             static inline uint16_t value() {
                 return mcuAdc->DR;
             }
+#endif
         };
 
 
@@ -281,6 +409,7 @@ namespace Mcu::Stm {
                 }
             }
 
+#ifdef STM32G4
             static inline void init() {
                 RCC->CCIPR |= 0x02 << RCC_CCIPR_ADC12SEL_Pos; // System Clock
                 RCC->AHB2ENR |= RCC_AHB2ENR_ADC12EN;
@@ -326,6 +455,7 @@ namespace Mcu::Stm {
 
                 mcuAdc->CR |= ADC_CR_ADEN;
             }
+#endif
             static inline void start() {
                 mcuAdc->CR |= ADC_CR_ADSTART;
             }
@@ -342,17 +472,31 @@ namespace Mcu::Stm {
         };
 
     }
-    
-    
+
+    template<G0xx MCU>
+    struct Address<Mcu::Components::Adc<1, MCU>> {
+        static inline constexpr uintptr_t value = ADC1_BASE;
+#ifdef STM32G0
+        static inline constexpr uintptr_t common = ADC1_COMMON_BASE;
+#endif
+    };
+
     template<G4xx MCU>
     struct Address<Mcu::Components::Adc<1, MCU>> {
         static inline constexpr uintptr_t value = ADC1_BASE;
+#ifdef STM32G4
         static inline constexpr uintptr_t common = ADC12_COMMON_BASE;
+#endif
+#ifdef STM32G0
+        static inline constexpr uintptr_t common = ADC1_COMMON_BASE;
+#endif
     };
 
+#ifdef STM32G4
     template<G4xx MCU>
     struct Address<Mcu::Components::Adc<2, MCU>> {
         static inline constexpr uintptr_t value = ADC2_BASE;
         static inline constexpr uintptr_t common = ADC12_COMMON_BASE;
     };
+#endif
 }

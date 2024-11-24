@@ -28,8 +28,10 @@ namespace Dsp {
             pga::useOffset(b);
         }
         static inline void isr() {
-            const float currFiltered = iirFilter.process(mInvert ? (4095 - adc::mData[0]) : adc::mData[0]);
-            mMeanVoltage.process(adc::mData[1]);
+            // const float currFiltered = iirFilter.process(mInvert ? (4095 - adc::mData[0]) : adc::mData[0]);
+            const float currFiltered = iirFilter.process(mInvert ? (4095 - adc::values()[0]) : adc::values()[0]);
+            // mMeanVoltage.process(adc::mData[1]);
+            mMeanVoltage.process(adc::values()[1]);
 
             sampleCounter += 1;
             if (sampleCounter == factor) {

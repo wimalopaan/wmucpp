@@ -15,9 +15,9 @@ namespace Mcu::Stm {
 inline
 #endif
     namespace V3 {
-template<uint8_t N, typename MCU = void>
+template<uint8_t N, typename MCU = DefaultMcu>
 struct Dac {
-    static inline /*constexpr */ DAC_TypeDef* const mcuDac = reinterpret_cast<DAC_TypeDef*>(Mcu::Stm::Address<Dac<N, MCU>>::value);
+    static inline /*constexpr */ DAC_TypeDef* const mcuDac = reinterpret_cast<DAC_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Dac<N>>::value);
 
     // using value_type = uint16_t; // uint32_t???
     using value_type = uint32_t; // uint32_t???
@@ -141,12 +141,12 @@ struct Dac {
         };
     }
     
-    template<G4xx MCU>
-    struct Address<Dac<1, MCU>> {
+    template<>
+    struct Address<Mcu::Components::Dac<1>> {
         static inline constexpr uintptr_t value = DAC1_BASE;        
     };
-    template<G4xx MCU>
-    struct Address<Dac<3, MCU>> {
+    template<>
+    struct Address<Mcu::Components::Dac<3>> {
         static inline constexpr uintptr_t value = DAC3_BASE;        
     };
 }

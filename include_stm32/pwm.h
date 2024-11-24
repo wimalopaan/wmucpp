@@ -389,6 +389,8 @@ namespace Mcu::Stm {
                 // static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Timer<TimerNumber, void, void, MCU>>::value);
                 static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Timer<TimerNumber>>::value);
 
+                using component_t = Mcu::Components::Timer<TimerNumber>;
+
                 static inline constexpr uint16_t onems = 1640;
                 static inline constexpr uint16_t mid = onems + onems / 2;
                 static inline constexpr uint16_t period = onems * 20;
@@ -434,6 +436,89 @@ namespace Mcu::Stm {
                     mcuTimer->CR1 |= TIM_CR1_CEN;
                 }
 #endif
+                static inline void reset() {
+                    const auto rcc = Mcu::Stm::Address<Mcu::Components::Rcc>::value;
+                    if constexpr (TimerNumber == 1) {
+                        rcc->APBRSTR2 = RCC_APBRSTR2_TIM1RST;
+                        rcc->APBRSTR2 &= ~RCC_APBRSTR2_TIM1RST;
+                    }
+#ifdef STM32G0B1xx
+                    else if constexpr (TimerNumber == 2) {
+                        rcc->APBRSTR1 = RCC_APBRSTR1_TIM2RST;
+                        rcc->APBRSTR1 &= ~RCC_APBRSTR1_TIM2RST;
+                    }
+#endif
+                    else if constexpr (TimerNumber == 3) {
+                        rcc->APBRSTR1 = RCC_APBRSTR1_TIM3RST;
+                        rcc->APBRSTR1 &= ~RCC_APBRSTR1_TIM3RST;
+                    }
+#ifdef STM32G0B1xx
+                    else if constexpr (TimerNumber == 4) {
+                        rcc->APBRSTR1 = RCC_APBRSTR1_TIM4RST;
+                        rcc->APBRSTR1 &= ~RCC_APBRSTR1_TIM4RST;
+                    }
+#endif
+                    else if constexpr (TimerNumber == 17) {
+                        rcc->APBRSTR2 = RCC_APBRSTR2_TIM17RST;
+                        rcc->APBRSTR2 &= ~RCC_APBRSTR2_TIM17RST;
+                    }
+                    else {
+                        static_assert(false);
+                    }
+                }
+#ifdef STM32G0
+                static inline void init() {
+                    if constexpr (TimerNumber == 1) {
+                        RCC->APBENR2 |= RCC_APBENR2_TIM1EN;
+                    }
+#ifdef STM32G0B1xx
+                    else if constexpr (TimerNumber == 2) {
+                        RCC->APBENR1 |= RCC_APBENR1_TIM2EN;
+                    }
+#endif
+                    else if constexpr (TimerNumber == 3) {
+                        RCC->APBENR1 |= RCC_APBENR1_TIM3EN;
+                    }
+#ifdef STM32G0B1xx
+                    else if constexpr (TimerNumber == 4) {
+                        RCC->APBENR1 |= RCC_APBENR1_TIM4EN;
+                    }
+                    else if constexpr (TimerNumber == 17) {
+                        RCC->APBENR2 |= RCC_APBENR2_TIM17EN;
+                    }
+#endif
+                    else {
+                        static_assert(false);
+                    }
+                    mcuTimer->PSC = prescaler;
+                    mcuTimer->ARR = period;
+                    mcuTimer->CCMR1 |= (0b0110 << TIM_CCMR1_OC1M_Pos); // pwm1
+                    mcuTimer->CCMR1 |= TIM_CCMR1_OC1PE;
+                    mcuTimer->CCMR1 |= (0b0110 << TIM_CCMR1_OC2M_Pos); // pwm2
+                    mcuTimer->CCMR1 |= TIM_CCMR1_OC2PE;
+                    mcuTimer->CCMR2 |= (0b0110 << TIM_CCMR2_OC3M_Pos); // pwm3
+                    mcuTimer->CCMR2 |= TIM_CCMR2_OC3PE;
+                    mcuTimer->CCMR2 |= (0b0110 << TIM_CCMR2_OC4M_Pos); // pwm4
+                    mcuTimer->CCMR2 |= TIM_CCMR2_OC4PE;
+                    mcuTimer->CCER |= TIM_CCER_CC1E;
+                    mcuTimer->CCER |= TIM_CCER_CC2E;
+                    mcuTimer->CCER |= TIM_CCER_CC3E;
+                    mcuTimer->CCER |= TIM_CCER_CC4E;
+                    mcuTimer->CCR1 = mid;
+                    mcuTimer->CCR2 = mid;
+                    mcuTimer->CCR3 = mid;
+                    mcuTimer->CCR4 = mid;
+                    if constexpr ((TimerNumber == 1) || (TimerNumber == 17)) {
+                        mcuTimer->BDTR |= TIM_BDTR_MOE;
+                    }
+                    mcuTimer->EGR |= TIM_EGR_UG;
+                    mcuTimer->CR1 |= TIM_CR1_ARPE;
+                    mcuTimer->CR1 |= TIM_CR1_CEN;
+                }
+#endif
+
+                static inline constexpr uint16_t sbusMid = 992;
+
                 static inline void set(const uint8_t channel, uint16_t sbus) {
                     const uint16_t t = sbus - 172 + onems;
                     switch (channel) {

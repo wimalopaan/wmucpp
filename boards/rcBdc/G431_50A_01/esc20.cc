@@ -1,6 +1,8 @@
 #define USE_MCU_STM_V3
 #define USE_DEVICES2
 
+// #define TEST_C1
+
 //#define USE_GNUPLOT
 
 #define CRSF_MODULE_NAME "WM-BDC-32-L(50A)"
@@ -91,7 +93,9 @@ struct GFSM {
 
     using adc = devs::adc;
     using adcDmaChannel = devs::adcDmaChannel;
+#ifndef TEST_C1
     using pga = devs::pga;
+#endif
     using offset = devs::offset;
 
     using servo = devs::servo;
@@ -380,7 +384,8 @@ struct GFSM {
                     crsfTelemetry::curr(devs::adc2Current((subSampler::currMean() - 10)) * 10);
                 }
 
-                const uint16_t t = Speed::tempFilter.process(Mcu::Stm::adc2Temp(adc::mData[2]));
+                // const uint16_t t = Speed::tempFilter.process(Mcu::Stm::adc2Temp(adc::mData[2]));
+                const uint16_t t = Speed::tempFilter.process(Mcu::Stm::adc2Temp(adc::values()[2]));
                 crsfTelemetry::temp1(t);
 
                 // const uint16_t t2 = comp1::temperatur();
@@ -393,7 +398,10 @@ struct GFSM {
 
                 if (const auto b = inputFiltered.absolute(); inputFiltered >= 0) {
                     // decltype(b)::_;
+#ifdef TEST_C1
+#else
                     offset::set();
+#endif
                     subSampler::invert(true);
                     pwm::dir1();
                     const float trigger = mTriggerMin + (mTriggerMax - mTriggerMin) * ((float)b.Upper - b.toInt()) / ((float)b.Upper - b.Lower);
@@ -401,7 +409,10 @@ struct GFSM {
                     pwm::duty(b);
                 }
                 else {
+#ifdef TEST_C1
+#else
                     offset::reset();
+#endif
                     subSampler::invert(false);
                     pwm::dir2();
                     const float trigger = mTriggerMin + (mTriggerMax - mTriggerMin) * ((float)b.Upper - b.toInt()) / ((float)b.Upper - b.Lower);
@@ -421,7 +432,8 @@ struct GFSM {
             mStateTick.on(initTicks, [&]{
                 const auto input = servo_pa::normalized(Storage::eeprom.crsf_channel - 1);
                 const uint16_t t = Speed::tempFilter.value();
-                IO::outl<trace>("# input: ", input.toInt(), " Mcu Temp: ", t, " raw: ", adc::mData[2], " traw: ", (uint16_t)(10 * Mcu::Stm::adc2Temp(adc::mData[2])), " TCAL1: ", *TEMPSENSOR_CAL1_ADDR, " TCAL2: ", *TEMPSENSOR_CAL2_ADDR);
+                // IO::outl<trace>("# input: ", input.toInt(), " Mcu Temp: ", t, " raw: ", adc::mData[2], " traw: ", (uint16_t)(10 * Mcu::Stm::adc2Temp(adc::mData[2])), " TCAL1: ", *TEMPSENSOR_CAL1_ADDR, " TCAL2: ", *TEMPSENSOR_CAL2_ADDR);
+                IO::outl<trace>("# input: ", input.toInt(), " Mcu Temp: ", t, " raw: ", adc::values()[2], " traw: ", (uint16_t)(10 * Mcu::Stm::adc2Temp(adc::values()[2])), " TCAL1: ", *TEMPSENSOR_CAL1_ADDR, " TCAL2: ", *TEMPSENSOR_CAL2_ADDR);
                 IO::outl<trace>("# meanADC: ", (uint16_t)subSampler::currMeanADC(), " mean: ", (uint16_t)subSampler::currMean(), " g:", subSampler::gain(), " volt: ", (uint16_t)(10.0f * devs::adc2Voltage(subSampler::meanVoltage())));
             });
             break;
@@ -569,14 +581,18 @@ struct GFSM {
                     rlfsm::addMeasurement(*rl, dir);
                 }
                 if (dir) {
+#ifndef TEST_C1
                     offset::set();
                     pga::useOffset(true);
+#endif
                     identifier::invert(true);
                     pwm::dir1();
                 }
                 else {
+#ifndef TEST_C1
                     offset::reset();
                     pga::useOffset(false);
+#endif
                     identifier::invert(false);
                     pwm::dir2();
                 }

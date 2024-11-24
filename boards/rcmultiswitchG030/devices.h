@@ -123,7 +123,7 @@ struct Devices2<SW12, CrsfCallback, MCU> {
     using crsf_out= RC::Protokoll::Crsf::Generator<crsf, systemTimer, MCU>;
 
     using debugtx = Mcu::Stm::Pin<gpiob, 6, MCU>;
-    using debug   = Mcu::Stm::Uart<1, void, 1024, char, clock, MCU>;
+    using debug   = Mcu::Stm::Uart<1, void, 512, char, clock, MCU>;
 
     // Led
     using led = Mcu::Stm::Pin<gpioc, 15, MCU>;

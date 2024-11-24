@@ -93,7 +93,10 @@ struct KmFsm {
                 if (mDir1) {
                     meKMs_dir1.clear();
                     if constexpr (!std::is_same_v<offset, void>) {
+#ifdef TEST_C1
+#else
                         offset::set();
+#endif
                         subSampler::invert(true);
                     }
                     pwm::dir1();
@@ -101,7 +104,10 @@ struct KmFsm {
                 else {
                     meKMs_dir2.clear();
                     if constexpr (!std::is_same_v<offset, void>) {
+#ifdef TEST_C1
+#else
                         offset::reset();
+#endif
                         subSampler::invert(false);
                     }
                     pwm::dir2();

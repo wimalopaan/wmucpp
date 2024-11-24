@@ -1,6 +1,5 @@
 #define USE_MCU_STM_V3
 #define USE_CRSF_V2
-#define USE_USART_DMA
 
 #define NDEBUG
 
@@ -20,7 +19,6 @@ struct GFSM {
         devs::init();
     }
     static inline void periodic() {
-
     }
     static inline void ratePeriodic() {
 
@@ -37,11 +35,25 @@ using gfsm = GFSM<devs>;
 int main() {
     gfsm::init();
 
+    NVIC_EnableIRQ(USART1_IRQn);
+    __enable_irq();
+
     while(true) {
         gfsm::periodic();
         devs::systemTimer::periodic([]{
             gfsm::ratePeriodic();
         });
     }
+}
+extern "C" {
+void USART1_IRQHandler() {
+    using uart1 = devs::uart1;
+    static_assert(uart1::number == 1);
+
+    devs::tp0::set();
+    uart1::isr();
+    devs::tp0::reset();
 
 }
+}
+
