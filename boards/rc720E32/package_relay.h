@@ -64,7 +64,7 @@ struct PacketRelay {
     // }
 
     static inline void periodic() {
-        // besser
+        // besser:
         // dest sollte ein message-queue haben (max. size einer message wie crsf-packet (64))
         // diese queue muss dann auch vom crsf-responder
         // und telemetry genutzt werden.
