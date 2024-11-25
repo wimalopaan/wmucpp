@@ -41,6 +41,9 @@ struct PacketRelay {
         uart::baud(420'000);
         uart::template halfDuplex<HalfDuplex>();
         uart::template enableTCIsr<true>();
+        mActive = true;
+        mState = State::Init;
+        mEvent = Event::None;
         __enable_irq();
 
         pin::afunction(af);
@@ -48,7 +51,10 @@ struct PacketRelay {
     }
     static inline void reset() {
         IO::outl<typename debug::debug>("# Relay ", N, " reset");
+        __disable_irq();
+        mActive = false;
         uart::reset();
+        __enable_irq();
         pin::analog();
     }
 
@@ -60,24 +66,15 @@ struct PacketRelay {
     static inline void event(const Event e) {
         mEvent = e;
     }
-    // static inline void activateSBus2(bool) { // only technical: to fullfill type: Relay
-    // }
 
     static inline void periodic() {
-        // besser:
-        // dest sollte ein message-queue haben (max. size einer message wie crsf-packet (64))
-        // diese queue muss dann auch vom crsf-responder
-        // und telemetry genutzt werden.
-
         switch(mState) {
         case State::Init:
             break;
         case State::Run:
             if (std::exchange(mEvent, Event::None) == Event::ReceiveComplete) {
-                // const auto span = std::span{uart::readBuffer(), uart::readBuffer() + uart::readCount()};
-                // dest::emplace_back(span);
-                std::copy(uart::readBuffer(), uart::readBuffer() + uart::readCount(), (uint8_t*)dest::outputBuffer());
-                dest::startSend(uart::readCount());
+                const auto span = std::span{uart::readBuffer(), uart::readBuffer() + uart::readCount()};
+                dest::enqueue(span);
             }
             break;
         }
@@ -102,6 +99,16 @@ struct PacketRelay {
             case State::Run:
                 break;
             }
+        }
+    }
+    static inline void onTransferComplete(const auto f) {
+        if (mActive) {
+            uart::onTransferComplete(f);
+        }
+    }
+    static inline void onIdleWithDma(const auto f) {
+        if (mActive) {
+            uart::onIdleWithDma(f);
         }
     }
     static inline void rxEnable() {
@@ -157,7 +164,8 @@ struct PacketRelay {
         // debug::tp::reset();
     }
     private:
-    static inline Event mEvent = Event::None;
+    static inline volatile bool mActive = false;
+    static inline volatile Event mEvent = Event::None;
     static inline State mState = State::Init;
     static inline External::Tick<systemTimer> mStateTick;
 };

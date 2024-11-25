@@ -337,6 +337,7 @@ struct GFSM {
     using crsf_in = devs::crsf_in;
     using crsf_in_pa = crsf_in::adapter;
     using crsf_in_responder = crsf_in_pa::responder;
+    using crsfBuffer = devs::crsfBuffer;
 
     using led1 = devs::led1;
     using led2 = devs::led2;
@@ -385,6 +386,8 @@ struct GFSM {
         Escs::ratePeriodic();
         Relays::ratePeriodic();
         Auxes::ratePeriodic();
+
+        crsfBuffer::ratePeriodic();
 
         ++mStateTick;
         const auto oldState = mState;
@@ -541,7 +544,7 @@ void DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQHandler() {
 void USART2_LPUART2_IRQHandler(){
     using sbus1 = devs::sbus1;
     static_assert(sbus1::uart::number == 102);
-    sbus1::uart::onTransferComplete([]{
+    sbus1::onTransferComplete([]{
         sbus1::event(sbus1::Event::SendComplete);
     });
     using esc32_1 = devs::esc32_1;
@@ -552,15 +555,19 @@ void USART2_LPUART2_IRQHandler(){
     using relay = devs::relay1;
     if constexpr(relay::uart::number == 102) {
         static_assert(relay::uart::number == 102);
-        relay::uart::onTransferComplete([]{
+        relay::onTransferComplete([]{
             // devs::tp3::set();
             relay::rxEnable();
             // devs::tp3::reset();
         });
-        relay::uart::onIdleWithDma([]{
+        relay::onIdleWithDma([]{
+            // devs::tp3::set();
             relay::event(relay::Event::ReceiveComplete);
+            // devs::tp3::reset();
         });
     }
+    // sbus1 / relay1 use same LPUART(2), be sure to clear all flags
+    relay::uart::mcuUart->ICR = -1;
 }
 void USART3_4_5_6_LPUART1_IRQHandler(){
     using esc32_2 = devs::esc32_2;
@@ -587,7 +594,9 @@ void USART3_4_5_6_LPUART1_IRQHandler(){
             // devs::tp3::reset();
         });
         relay::uart::onIdleWithDma([]{
+            // devs::tp3::set();
             relay::event(relay::Event::ReceiveComplete);
+            // devs::tp3::reset();
         });
     }
 }

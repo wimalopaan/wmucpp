@@ -357,6 +357,16 @@ namespace RC {
                     typename T::buffer;
                 };
 
+                template<bool, typename T>
+                struct getBuffer {
+                    using type = T::buffer;
+                };
+                template<typename T>
+                struct getBuffer<false, T> {
+                    using type = void;
+                };
+
+
                 template<uint8_t N, typename Config, typename MCU = DefaultMcu>
                 struct Adapter {
                     static inline constexpr bool periodic = []{
@@ -369,8 +379,10 @@ namespace RC {
                     }();
                     // std::integral_constant<bool, periodic>::_;
 
-                    using respBuffer = std::conditional_t<hasBuffer<Config>, typename Config::buffer, etl::FixedVector<std::byte, RC::Protokoll::Crsf::maxPayloadSize>>;
+                    using respBuffer = std::conditional_t<hasBuffer<Config>, typename getBuffer<hasBuffer<Config>, Config>::type, etl::FixedVector<std::byte, RC::Protokoll::Crsf::maxPayloadSize>>;
+                    // using respBuffer = std::conditional_t<hasBuffer<Config>, typename Config::buffer, etl::FixedVector<std::byte, RC::Protokoll::Crsf::maxPayloadSize>>;
                     // respBuffer::_;
+                    // std::integral_constant<bool, hasBuffer<Config>>::_;
 
                     using debug = Config::dbg;
                     using out = Config::out;
@@ -549,10 +561,10 @@ namespace RC {
                                         etl::push_back_ntbs(CB::parameter(pIndex).mOptions, mReply);
                                     }
                                     etl::serializeBE((uint8_t)CB::parameter(pIndex).value(), mReply); // value
-                                    etl::serializeBE(CB::parameter(pIndex).mMinimum, mReply);
-                                    etl::serializeBE(CB::parameter(pIndex).mMaximum, mReply);
-                                    etl::serializeBE(CB::parameter(pIndex).mDefault, mReply);
-                                    etl::serializeBE(CB::parameter(pIndex).mUnits, mReply);
+                                    etl::serializeBE((uint8_t)CB::parameter(pIndex).mMinimum, mReply);
+                                    etl::serializeBE((uint8_t)CB::parameter(pIndex).mMaximum, mReply);
+                                    etl::serializeBE((uint8_t)CB::parameter(pIndex).mDefault, mReply);
+                                    etl::serializeBE((uint8_t)CB::parameter(pIndex).mUnits, mReply);
                                 }
                                 if (type == 0x0a) { // string
                                     etl::push_back_ntbs(CB::parameter(pIndex).mStringValue, mReply);
@@ -569,7 +581,7 @@ namespace RC {
                                     }
                                 }
                                 if (type == 0x0d) {
-                                    etl::serializeBE(CB::parameter(pIndex).value(), mReply);
+                                    etl::serializeBE((uint8_t)CB::parameter(pIndex).value(), mReply);
                                     etl::serializeBE((uint8_t)0x00, mReply);
                                     etl::serializeBE((uint8_t)0xc8, mReply);
                                     etl::serializeBE((uint8_t)0x00, mReply);

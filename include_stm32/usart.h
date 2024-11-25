@@ -503,6 +503,9 @@ namespace Mcu::Stm {
                     }
                     mcuUart->CR1 |= USART_CR1_UE;
                 }
+                static inline bool isIdle() {
+                    return mcuUart->ISR & USART_ISR_TC;
+                }
                 static inline void onHasData(auto f) {
                     __disable_irq();
                     const bool hasData = std::exchange(mBufferHasData, false);

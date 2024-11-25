@@ -2,34 +2,55 @@
 
 #include "rc/crsf.h"
 
-template<typename Dev, typename Storage, typename Debug>
+template<typename Buffer, typename Storage, typename Debug>
 struct Telemetry {
     using debug = Debug;
-    using uart = Dev;
+    using buffer = Buffer;
     using storage = Storage;
 
     static inline void next() {
-        if (uart::outputBuffer()) {
-            mCounter = 0;
-            CRC8 crc;
-            addToBuffer(std::byte{0xc8});
-            addToBuffer(std::byte{0});
-            crc += addToBuffer(RC::Protokoll::Crsf::Type::ArduPilot);
-            crc += addToBuffer(std::byte(mDataID >> 8));
-            crc += addToBuffer(std::byte(mDataID & 0xff));
-            crc += addToBuffer(std::byte(storage::eeprom.address));
-            for(uint16_t i = 0; i < mValues.size(); ++i) {
-                crc += addToBuffer(std::byte(mValues[i] >> 8));
-                crc += addToBuffer(std::byte(mValues[i] & 0xff));
-            }
-            crc += addToBuffer(std::byte(mTurns[0]));
-            crc += addToBuffer(std::byte(mTurns[1]));
-            crc += addToBuffer(std::byte(mFlags));
-            uart::outputBuffer()[1] = std::byte(mCounter - 1);
-            uart::outputBuffer()[mCounter++] = crc;
-            uart::startSend(mCounter);
+        mCounter = 0;
+        CRC8 crc;
+        mMessage[mCounter++] = std::byte{0xc8};
+        mMessage[mCounter++] = std::byte{0};
+        crc += mMessage[mCounter++] = RC::Protokoll::Crsf::Type::ArduPilot;
+        crc += mMessage[mCounter++] = std::byte(mDataID >> 8);
+        crc += mMessage[mCounter++] = std::byte(mDataID & 0xff);
+        crc += mMessage[mCounter++] = std::byte(storage::eeprom.address);
+        for(uint16_t i = 0; i < mValues.size(); ++i) {
+            crc += mMessage[mCounter++] = std::byte(mValues[i] >> 8);
+            crc += mMessage[mCounter++] = std::byte(mValues[i] & 0xff);
         }
+        crc += mMessage[mCounter++] = std::byte(mTurns[0]);
+        crc += mMessage[mCounter++] = std::byte(mTurns[1]);
+        crc += mMessage[mCounter++] = std::byte(mFlags);
+        mMessage[1] = std::byte(mCounter - 1);
+        mMessage[mCounter++] = crc;
+        buffer::enqueue(std::span<std::byte>(std::begin(mMessage), mCounter));
     }
+
+    // static inline void next() {
+    //     if (uart::outputBuffer()) {
+    //         mCounter = 0;
+    //         CRC8 crc;
+    //         addToBuffer(std::byte{0xc8});
+    //         addToBuffer(std::byte{0});
+    //         crc += addToBuffer(RC::Protokoll::Crsf::Type::ArduPilot);
+    //         crc += addToBuffer(std::byte(mDataID >> 8));
+    //         crc += addToBuffer(std::byte(mDataID & 0xff));
+    //         crc += addToBuffer(std::byte(storage::eeprom.address));
+    //         for(uint16_t i = 0; i < mValues.size(); ++i) {
+    //             crc += addToBuffer(std::byte(mValues[i] >> 8));
+    //             crc += addToBuffer(std::byte(mValues[i] & 0xff));
+    //         }
+    //         crc += addToBuffer(std::byte(mTurns[0]));
+    //         crc += addToBuffer(std::byte(mTurns[1]));
+    //         crc += addToBuffer(std::byte(mFlags));
+    //         uart::outputBuffer()[1] = std::byte(mCounter - 1);
+    //         uart::outputBuffer()[mCounter++] = crc;
+    //         uart::startSend(mCounter);
+    //     }
+    // }
     template<auto N>
     static inline void phi(const uint16_t p) {
         mValues[5 * N] = p;
@@ -58,31 +79,19 @@ struct Telemetry {
             mFlags &= ~(0x01 << n);
         }
     }
-    // static inline void next() {
-    //     if (uart::outputBuffer()) {
-    //         mCounter = 0;
-    //         CRC8 crc;
-    //         addToBuffer(std::byte{0xc8});
-    //         addToBuffer(std::byte{0});
-    //         crc += addToBuffer(RC::Protokoll::Crsf::Type::FlightMode);
-    //         crc += addToBuffer(std::byte{'N'});
-    //         crc += addToBuffer(std::byte{'N'});
-    //         crc += addToBuffer(std::byte{'\0'});
-    //         uart::outputBuffer()[1] = std::byte(mCounter - 1);
-    //         uart::outputBuffer()[mCounter++] = crc;
-    //         uart::startSend(mCounter);
-    //     }
-    // }
 
     private:
+    static inline std::array<std::byte, 64> mMessage;
+
     static inline uint16_t mDataID = 6000;
     static inline std::array<uint16_t, 10> mValues{};
     static inline std::array<int8_t, 2> mTurns{};
     static inline uint8_t mFlags = 0;
     static inline uint8_t mCounter = 0;
-    static inline std::byte addToBuffer(const std::byte b) {
-        uart::outputBuffer()[mCounter++] = b;
-        return b;
-    }
+
+    // static inline std::byte addToBuffer(const std::byte b) {
+    //     uart::outputBuffer()[mCounter++] = b;
+    //     return b;
+    // }
 };
 

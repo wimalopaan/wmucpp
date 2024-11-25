@@ -73,8 +73,9 @@ namespace RC {
                         };
                     };
 
+                // private:
                     using uart = Mcu::Stm::V2::Uart<N, UartConfig, MCU>;
-
+                // public:
                     static inline constexpr uint8_t af = Mcu::Stm::AlternateFunctions::mapper_v<pin, uart, Mcu::Stm::AlternateFunctions::TX>;
 
                     static inline void update() {
@@ -96,6 +97,9 @@ namespace RC {
                         uart::parity(true);
                         uart::invert(true);
                         uart::template enableTCIsr<true>();
+                        mActive = true;
+                        mState = State::SendFrame;
+                        mEvent = Event::None;
                         __enable_irq();
 
                         pin::afunction(af);
@@ -103,7 +107,10 @@ namespace RC {
                     }
                     static inline void reset() {
                         IO::outl<debug>("# Sbus2 ", N, " reset");
+                        __disable_irq();
+                        mActive = false;
                         uart::reset();
+                        __enable_irq();
                         pin::analog();
                     }
 
@@ -117,6 +124,11 @@ namespace RC {
                     }
                     static inline void activateSBus2(const bool a) {
                         mUseSbus2 = a;
+                    }
+                    static inline void onTransferComplete(const auto f) {
+                        if (mActive) {
+                            uart::onTransferComplete(f);
+                        }
                     }
 
                     // https://github.com/neoxic/ESCape32/blob/master/src/io.c#L662-L665
@@ -225,6 +237,7 @@ namespace RC {
                             outFrame[24] = 0x04;
                         }
                     }
+                    static inline volatile bool mActive = false;
                     static inline volatile bool mUseSbus2 = false;
                     static inline volatile uint16_t mSlotErrors = 0;
                     static inline std::array<volatile uint16_t, 32> mSlots{};

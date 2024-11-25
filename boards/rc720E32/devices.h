@@ -115,38 +115,68 @@ struct Devices<SW01, Config, MCU> {
     using crsfBuffer = MessageBuffer<crsf_in, systemTimer>;
 
     struct CrsfWriteAdapterDebug;
+
     struct CrsfWriteAdapter { // partial monostate
         using tp = CrsfWriteAdapterDebug::tp;
         using value_type = CrsfConfig::ValueType;
-        using uart = crsf_in;
+
+        using entry = crsfBuffer::Entry;
 
         template<typename R>
-        static inline void data(const value_type type, const R&) {
-            // tp::set();
-            if (uart::outputBuffer()) {
-                uart::outputBuffer()[0] = std::byte{0xc8};
-                uart::outputBuffer()[1] = std::byte(mCounter - 1);
-                uart::outputBuffer()[2] = type;
-                CRC8 crc;
-                for (uint8_t i = 2; i < mCounter; ++i) {
-                    crc += uart::outputBuffer()[i];
-                }
-                uart::outputBuffer()[mCounter++] = crc;
-                uart::startSend(mCounter);
+        static inline void data(const value_type type, const R& reply) {
+            mBuffer.message[0] = std::byte{0xc8};
+            mBuffer.message[1] = std::byte(mCounter - 1);
+            mBuffer.message[2] = type;
+            CRC8 crc;
+            for (uint8_t i = 2; i < mCounter; ++i) {
+                crc += mBuffer.message[i];
             }
-            // tp::reset();
+            mBuffer.message[mCounter++] = crc;
+            mBuffer.length = mCounter;
+            crsfBuffer::enqueue(mBuffer);
         }
         void clear() {
             mCounter = 3;
         }
         void push_back(const value_type v) {
-            if (uart::outputBuffer()) {
-                uart::outputBuffer()[mCounter++] = v;
-            }
+            mBuffer.message[mCounter++] = v;
         }
         private:
+        static inline entry mBuffer;
         static inline uint8_t mCounter = 0;
     };
+    // struct CrsfWriteAdapter { // partial monostate
+    //     using tp = CrsfWriteAdapterDebug::tp;
+    //     using value_type = CrsfConfig::ValueType;
+    //     using uart = crsf_in;
+
+    //     template<typename R>
+    //     static inline void data(const value_type type, const R&) {
+    //         // tp::set();
+    //         if (uart::outputBuffer()) {
+    //             uart::outputBuffer()[0] = std::byte{0xc8};
+    //             uart::outputBuffer()[1] = std::byte(mCounter - 1);
+    //             uart::outputBuffer()[2] = type;
+    //             CRC8 crc;
+    //             for (uint8_t i = 2; i < mCounter; ++i) {
+    //                 crc += uart::outputBuffer()[i];
+    //             }
+    //             uart::outputBuffer()[mCounter++] = crc;
+    //             uart::startSend(mCounter);
+    //         }
+    //         // tp::reset();
+    //     }
+    //     void clear() {
+    //         mCounter = 3;
+    //     }
+    //     void push_back(const value_type v) {
+    //         if (uart::outputBuffer()) {
+    //             uart::outputBuffer()[mCounter++] = v;
+    //         }
+    //     }
+    //     private:
+    //     static inline uint8_t mCounter = 0;
+    // };
 
     // AUX RX
     using auxrx = Mcu::Stm::Pin<gpioa, 1, MCU>; // AF4
@@ -232,17 +262,20 @@ struct Devices<SW01, Config, MCU> {
 
     // Uart4: CRSF-FD / AUX
     struct RelayDebug;
-    using relay_aux = PacketRelay<4, true, auxtx, crsf_in, crsf_in, relayAuxDmaChannel, systemTimer, clock, RelayDebug, MCU>;
+    using relay_aux = PacketRelay<4, true, auxtx, crsf_in, crsfBuffer, relayAuxDmaChannel, systemTimer, clock, RelayDebug, MCU>;
+    // using relay_aux = PacketRelay<4, true, auxtx, crsf_in, crsf_in, relayAuxDmaChannel, systemTimer, clock, RelayDebug, MCU>;
 
     // LPUart2: Sbus, CRSF-HD
     using sbus_crsf_pin = Mcu::Stm::Pin<gpioc, 6, MCU>;
     struct SBus1Config;
     using sbus1 = RC::Protokoll::SBus2::V3::Master<102, SBus1Config, MCU>;
-    using relay1 = PacketRelay<102, true, sbus_crsf_pin, crsf_in, crsf_in, relay1DmaChannel, systemTimer, clock, RelayDebug, MCU>;
+    using relay1 = PacketRelay<102, true, sbus_crsf_pin, crsf_in, crsfBuffer, relay1DmaChannel, systemTimer, clock, RelayDebug, MCU>;
+    // using relay1 = PacketRelay<102, true, sbus_crsf_pin, crsf_in, crsf_in, relay1DmaChannel, systemTimer, clock, RelayDebug, MCU>;
 
     using polars = Meta::List<polar1, polar2>;
 
-    using telem = Telemetry<crsf_in, storage, debug>;
+    using telem = Telemetry<crsfBuffer, storage, debug>;
+    // using telem = Telemetry<crsf_in, storage, debug>;
 
     struct CrsfCallbackConfig {
         using storage = Config::storage;
@@ -322,7 +355,7 @@ struct Devices<SW01, Config, MCU> {
     };
     struct RelayDebug {
         using debug = Devices::debug;
-        using tp = tp3;
+        using tp = void;
     };
 
     static inline void init() {

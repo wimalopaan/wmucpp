@@ -45,17 +45,16 @@ namespace etl {
         // using index_type = size_type;
         using index_type = std::conditional_t<std::is_volatile_v<T>, volatile size_type, size_type>;
 //        using index_type = etl::uint_ranged_circular<size_type, 0, size() - 1>;
-        
-        inline bool emplace_back(const T& item) {
+
+        template<typename U>
+        inline bool emplace_back(const U& item) {
             size_type next{in};
             next = (next + 1) & size_mask;
-
             if (out == next) {
                 return false;
             }
-            std::copy(std::begin(item), std::end(item), std::begin(mData[in]));
-            // mData[in] = item;
-
+            mData[in] = item;
+            // std::copy(std::begin(item), std::end(item), std::begin(mData[in]));
             in = next;
             return true;
         }
