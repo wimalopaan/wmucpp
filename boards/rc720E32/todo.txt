@@ -3,6 +3,7 @@ ToDo
 
 Prio 0
 ------
+* make tunneling crsf packets valid extended packets (modify also LUA)
 * CRSF chunking of parameter-settings-entry
 * useful LED blink patterns
 
@@ -22,3 +23,7 @@ Prio 2
 Prio 3
 ------
 * I2C
+** Compass
+
+Done:
+------
