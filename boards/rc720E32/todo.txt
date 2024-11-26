@@ -4,6 +4,7 @@ ToDo
 Prio 0
 ------
 * CRSF chunking of parameter-settings-entry
+* useful LED blink patterns
 
 Prio 1
 ------
