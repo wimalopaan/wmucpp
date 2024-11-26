@@ -373,6 +373,8 @@ struct GFSM {
         Escs::periodic();
         Relays::periodic();
         Auxes::periodic();
+
+        crsfBuffer::periodic();
     }
 
     static inline constexpr External::Tick<systemTimer> initTicks{500ms};

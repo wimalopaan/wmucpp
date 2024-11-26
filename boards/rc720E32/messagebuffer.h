@@ -7,6 +7,7 @@
 
 template<typename Out, typename Timer>
 struct MessageBuffer {
+    using systemTimer = Timer;
     struct Entry {
         using value_type = std::byte;
         static inline constexpr uint8_t size = 64;
@@ -30,23 +31,63 @@ struct MessageBuffer {
     static inline void enqueue(const auto& c) {
         mFifo.emplace_back(c);
     }
-    // todo: state-machine
+
+    static inline constexpr External::Tick<systemTimer> interMessageTicks{1ms};
+    enum class State : uint8_t {Idle, Wait, Send};
+
     static inline void periodic() {
+        switch (mState) {
+        case State::Idle:
+            if (Out::isIdle() && !mFifo.empty()) {
+                mState = State::Wait;
+                mStateTick.reset();
+            }
+            break;
+        case State::Wait:
+            break;
+        case State::Send:
+            break;
+        }
     }
-    // todo: state-machine
     static inline void ratePeriodic() {
-        if (Out::isIdle()) {
-            if (!mFifo.empty()) {
-                volatile std::byte* data = Out::outputBuffer();
-                const auto& m = mFifo.front();
-                for(uint8_t i = 0; (i < m.length) && (i < Out::size); ++i) {
-                    data[i] = m.message[i];
-                }
-                Out::startSend(m.length);
-                mFifo.pop_front();
+        const auto oldState = mState;
+        ++mStateTick;
+        switch (mState) {
+        case State::Idle:
+            break;
+        case State::Wait:
+            mStateTick.on(interMessageTicks, []{
+                mState = State::Send;
+            });
+            break;
+        case State::Send:
+            mState = State::Idle;
+            break;
+        }
+        if (oldState != mState) {
+            mStateTick.reset();
+            switch (mState) {
+            case State::Idle:
+                break;
+            case State::Wait:
+                break;
+            case State::Send:
+                send();
+                break;
             }
         }
     }
     private:
+    static inline void send() {
+        volatile std::byte* const data = Out::outputBuffer();
+        const auto& m = mFifo.front();
+        for(uint8_t i = 0; (i < m.length) && (i < Out::size); ++i) {
+            data[i] = m.message[i];
+        }
+        Out::startSend(m.length);
+        mFifo.pop_front();
+    }
+    static inline External::Tick<systemTimer> mStateTick{1ms};
+    static inline State mState = State::Idle;
     static inline etl::FiFo<Entry> mFifo;
 };

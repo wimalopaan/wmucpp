@@ -5,6 +5,7 @@
 
 using namespace std::literals::chrono_literals;
 
+// use a config-structure instead of a list of type-parameters
 template<uint8_t N, bool HalfDuplex, typename Pin, typename Src, typename Dest, typename DmaChRW, typename Timer, typename Clk, typename Debug1, typename MCU = DefaultMcu>
 struct PacketRelay {
     using pin = Pin;
