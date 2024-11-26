@@ -60,18 +60,18 @@ struct Devices<SW01, Config, MCU> {
 
     // Uebersicht: DMA
 
-    // full-duplex
+    // full-duplex: uart1
     using crsfInDmaChannel1 = Mcu::Stm::Dma::Channel<dma1, 1, MCU>;
     using crsfInDmaChannel2 = Mcu::Stm::Dma::Channel<dma1, 2, MCU>;
-
+    // adc
     using adcDmaChannel     = Mcu::Stm::Dma::Channel<dma1, 3, MCU>;
-
     // half-duplex
     using srv1DmaChannel     = Mcu::Stm::Dma::Channel<dma1, 4, MCU>;
     // half-duplex
     using sbus1DmaChannel     = Mcu::Stm::Dma::Channel<dma1, 6, MCU>;
     // half-duplex
     using relay1DmaChannel = Mcu::Stm::Dma::Channel<dma2, 1, MCU>;
+    // half-duplex
     using relayAuxDmaChannel = Mcu::Stm::Dma::Channel<dma2, 2, MCU>;
     // half-duplex
     using srv2DmaChannel     = Mcu::Stm::Dma::Channel<dma2, 3, MCU>;
@@ -111,15 +111,14 @@ struct Devices<SW01, Config, MCU> {
     };
 
     using crsf_in = Mcu::Stm::V2::Uart<1, CrsfConfig, MCU>;
-    using uart1 = crsf_in;
     using crsfBuffer = MessageBuffer<crsf_in, systemTimer>;
 
     struct CrsfWriteAdapterDebug;
 
+    // todo: convert to template
     struct CrsfWriteAdapter { // partial monostate
         using tp = CrsfWriteAdapterDebug::tp;
         using value_type = CrsfConfig::ValueType;
-
         using entry = crsfBuffer::Entry;
 
         template<typename R>
@@ -145,38 +144,6 @@ struct Devices<SW01, Config, MCU> {
         static inline entry mBuffer;
         static inline uint8_t mCounter = 0;
     };
-    // struct CrsfWriteAdapter { // partial monostate
-    //     using tp = CrsfWriteAdapterDebug::tp;
-    //     using value_type = CrsfConfig::ValueType;
-    //     using uart = crsf_in;
-
-    //     template<typename R>
-    //     static inline void data(const value_type type, const R&) {
-    //         // tp::set();
-    //         if (uart::outputBuffer()) {
-    //             uart::outputBuffer()[0] = std::byte{0xc8};
-    //             uart::outputBuffer()[1] = std::byte(mCounter - 1);
-    //             uart::outputBuffer()[2] = type;
-    //             CRC8 crc;
-    //             for (uint8_t i = 2; i < mCounter; ++i) {
-    //                 crc += uart::outputBuffer()[i];
-    //             }
-    //             uart::outputBuffer()[mCounter++] = crc;
-    //             uart::startSend(mCounter);
-    //         }
-    //         // tp::reset();
-    //     }
-    //     void clear() {
-    //         mCounter = 3;
-    //     }
-    //     void push_back(const value_type v) {
-    //         if (uart::outputBuffer()) {
-    //             uart::outputBuffer()[mCounter++] = v;
-    //         }
-    //     }
-    //     private:
-    //     static inline uint8_t mCounter = 0;
-    // };
 
     // AUX RX
     using auxrx = Mcu::Stm::Pin<gpioa, 1, MCU>; // AF4
@@ -275,7 +242,6 @@ struct Devices<SW01, Config, MCU> {
     using polars = Meta::List<polar1, polar2>;
 
     using telem = Telemetry<crsfBuffer, storage, debug>;
-    // using telem = Telemetry<crsf_in, storage, debug>;
 
     struct CrsfCallbackConfig {
         using storage = Config::storage;
@@ -288,10 +254,8 @@ struct Devices<SW01, Config, MCU> {
         using channelCallback = ChannelCallback<Devices::polars, servos, escs, relays, auxes, sbus1, telem, storage>;
         using telemetry = telem;
         using polars = Devices::polars;
-        // using tp = tp3;
         using tp = void;
     };
-
     struct CrsfAdapterConfig {
         static inline constexpr bool periodic = false;
         using out = CrsfWriteAdapter;
@@ -300,14 +264,12 @@ struct Devices<SW01, Config, MCU> {
         using callback = CrsfCallback<CrsfCallbackConfig, debug>;
         using timer = systemTimer;
     };
-
     struct CrsfConfigDebug {
         using tp = tp1;
     };
     struct CrsfWriteAdapterDebug {
         using tp = void;
     };
-
     struct SBus1Config {
         using clock = Devices::clock;
         using debug = Devices::debug;
@@ -383,17 +345,6 @@ struct Devices<SW01, Config, MCU> {
 
         // adc::init();
         // adc::oversample(8); // 256
-
-        // sbus1::init();
-        // sbus_crsf_pin::afunction(3);
-        // sbus_crsf_pin::template pulldown<true>();
-
-        // relay::init();
-        // auxrx::template pullup<true>();
-        // auxtx::template pullup<true>();
-        // auxrx::afunction(4);
-        // auxtx::afunction(4);
-
 
         // tp0::template dir<Mcu::Output>();
         tp1::template dir<Mcu::Output>();

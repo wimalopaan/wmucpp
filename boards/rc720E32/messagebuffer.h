@@ -30,8 +30,10 @@ struct MessageBuffer {
     static inline void enqueue(const auto& c) {
         mFifo.emplace_back(c);
     }
+    // todo: state-machine
     static inline void periodic() {
     }
+    // todo: state-machine
     static inline void ratePeriodic() {
         if (Out::isIdle()) {
             if (!mFifo.empty()) {
