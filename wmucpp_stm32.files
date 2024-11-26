@@ -58,6 +58,7 @@ boards/rc720E32/ressources.h
 boards/rc720E32/startup_g0b1.s
 boards/rc720E32/system_g0.cc
 boards/rc720E32/telemetry.h
+boards/rc720E32/todo.txt
 boards/rc720E32/util.h
 boards/rc720E32/waveshare.h
 boards/rcBdc/G431Drv8245_01/Makefile

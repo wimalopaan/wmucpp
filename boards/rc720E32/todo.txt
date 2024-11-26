@@ -1,0 +1,23 @@
+ToDo
+====
+
+Prio 0
+------
+* CRSF chunking of parameter-settings-entry
+
+Prio 1
+------
+* VESC
+* ESCape32-Ascii
+* GPS
+* CPPM-Input
+
+Prio 2
+------
+* HOTT-Telemetrie
+* S.Port
+* IBus-Telemetrie
+
+Prio 3
+------
+* I2C
