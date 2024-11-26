@@ -16,9 +16,11 @@ struct Telemetry {
         crc += mMessage[mCounter++] = RC::Protokoll::Crsf::Type::ArduPilot;
         // the next two bytes should contain ext. destination and source, but
         // nobody (yaapu, betaflight, ...) does this.
+        crc += mMessage[mCounter++] = RC::Protokoll::Crsf::Address::Handset;
+        crc += mMessage[mCounter++] = std::byte(storage::eeprom.address);
+
         crc += mMessage[mCounter++] = std::byte(mDataID >> 8);
         crc += mMessage[mCounter++] = std::byte(mDataID & 0xff);
-        crc += mMessage[mCounter++] = std::byte(storage::eeprom.address);
         for(uint16_t i = 0; i < mValues.size(); ++i) {
             crc += mMessage[mCounter++] = std::byte(mValues[i] >> 8);
             crc += mMessage[mCounter++] = std::byte(mValues[i] & 0xff);
