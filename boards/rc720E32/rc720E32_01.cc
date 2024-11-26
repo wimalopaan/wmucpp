@@ -339,8 +339,8 @@ struct GFSM {
     using crsf_in_responder = crsf_in_pa::responder;
     using crsfBuffer = devs::crsfBuffer;
 
-    using led1 = devs::led1;
-    using led2 = devs::led2;
+    using led1 = devs::ledBlinker1;
+    using led2 = devs::ledBlinker2;
 
     using adc = devs::adc;
 
@@ -382,8 +382,9 @@ struct GFSM {
     static inline constexpr External::Tick<systemTimer> telemetryTicks{100ms};
 
     static inline void ratePeriodic() {
-        crsf_in_pa::ratePeriodic([]{
-        });
+        led1::ratePeriodic();
+        led2::ratePeriodic();
+        crsf_in_pa::ratePeriodic([]{});
         Servos::ratePeriodic();
         Escs::ratePeriodic();
         Relays::ratePeriodic();
@@ -428,14 +429,14 @@ struct GFSM {
             case State::Undefined:
                 break;
             case State::Init:
-                led1::set();
+                led1::event(led1::Event::Steady);
                 break;
             case State::Calib:
                 // servo1::event(servo1::Event::Calibrate);
                 // servo1::event(servo1::Event::Run);
                 break;
             case State::Run:
-                led2::set();
+                led1::event(led1::Event::Slow);
                 adc::start();
                 break;
             }

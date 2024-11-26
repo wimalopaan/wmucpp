@@ -26,6 +26,7 @@
 #include "rc/sbus22.h"
 #include "pwm.h"
 #include "adc.h"
+#include "blinker.h"
 
 #include "adapter.h"
 #include "crsf_cb.h"
@@ -162,6 +163,10 @@ struct Devices<SW01, Config, MCU> {
     // Led
     using led1 = Mcu::Stm::Pin<gpiob, 7, MCU>;
     using led2 = Mcu::Stm::Pin<gpiob, 8, MCU>;
+
+    using ledBlinker1 = External::Blinker<led1, systemTimer>;
+    using ledBlinker2 = External::Blinker<led2, systemTimer>;
+
 
     // Übersicht: Timer
     // TIM2
