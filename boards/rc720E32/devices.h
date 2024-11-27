@@ -39,6 +39,7 @@
 #include "telemetry.h"
 #include "iservo.h"
 #include "messagebuffer.h"
+#include "pulse_input.h"
 
 struct SW01;
 
@@ -59,6 +60,9 @@ struct Devices<SW01, Config, MCU> {
     using dma1 = Mcu::Stm::Dma::Controller<1, MCU>;
     using dma2 = Mcu::Stm::Dma::Controller<2, MCU>;
 
+    // Ubersicht: Pins
+
+
     // Uebersicht: DMA
 
     // full-duplex: uart1
@@ -72,7 +76,7 @@ struct Devices<SW01, Config, MCU> {
     using i2cDmaChannel     = Mcu::Stm::Dma::Channel<dma1, 5, MCU>;
     // half-duplex
     using sbus1DmaChannel     = Mcu::Stm::Dma::Channel<dma1, 6, MCU>;
-
+    // dma1-channel 7: free
     // half-duplex
     using relay1DmaChannel = Mcu::Stm::Dma::Channel<dma2, 1, MCU>;
     // half-duplex
@@ -87,14 +91,16 @@ struct Devices<SW01, Config, MCU> {
     // Uebersicht: UART
     // Uart 1: CRSF-IN
     // Uart 2: ESC1
-    // Uart 4: AUX (Debug)
+    // Uart 3: ESC2
+    // Uart 4: CRSF-FD, GPS, AUX
     // Uart 5: Srv1
+    // Uart 6: Srv2
+    // LPUart 1: Debug
+    // LPUart 2: CRSF-HD, SBus(2)
 
-    // CRSF TX
-    using crsftx = Mcu::Stm::Pin<gpioa, 9, MCU>; // AF1
-    // CRSF RX
-    using crsfrx = Mcu::Stm::Pin<gpioa, 10, MCU>; // AF1
     // Usart 1: CRSF
+    using crsftx = Mcu::Stm::Pin<gpioa, 9, MCU>; // AF1
+    using crsfrx = Mcu::Stm::Pin<gpioa, 10, MCU>; // AF1
 
     struct CrsfAdapterConfig;
     struct CrsfConfigDebug;
@@ -180,13 +186,6 @@ struct Devices<SW01, Config, MCU> {
         static inline uint8_t mCounter = 0;
     };
 
-    // AUX RX
-    using auxrx = Mcu::Stm::Pin<gpioa, 1, MCU>; // AF4
-    // AUX TX
-    using auxtx = Mcu::Stm::Pin<gpioa, 0, MCU>; // AF4
-    // Usart 4
-    // using aux = Mcu::Stm::V1::Uart<4, void, 1024, char, clock, MCU>;
-
     // debug auf LPUART1 (PA3 AF(6), RX<->TX tauschen) : Telemetry-1
     using debugrx = Mcu::Stm::Pin<gpioa, 3, MCU>;
     using debug = Mcu::Stm::V1::LpUart<1, void, 1024, char, clock, MCU>;
@@ -201,13 +200,19 @@ struct Devices<SW01, Config, MCU> {
     using ledBlinker1 = External::Blinker<led1, systemTimer>;
     using ledBlinker2 = External::Blinker<led2, systemTimer>;
 
-
-    // Übersicht: Timer
-    // TIM2
-    // TIM3
-    // TIM14
-    // TIM15
-    // TIM16
+    // Übersicht: Timer <-> Pins
+    // Channel
+    //          Channel1    Channel2    Channel3    Channel4
+    // -------------------------------------------------------
+    // TIM1
+    // TIM2                             Esc1-Out    Esc1-Tlm
+    // TIM3     Srv1-Fb     Srv2-Fb     Srv1-Out
+    //          (cppm-in)
+    // TIM4     cppm-in                             Esc2-Tlm
+    // TIM14    Srv2-Out
+    // TIM15    Esc1-Out    Esc1-Tlm
+    // TIM16    Srv1-Fb
+    // TIM17    Esc2-Out
 
     // ESC1: PA2 : Uart2-TX (AF1), TIM2-CH3 (AF2), TIM15-CH1 (AF5)
     using esc1_pin = Mcu::Stm::Pin<gpioa, 2, MCU>;
@@ -249,7 +254,7 @@ struct Devices<SW01, Config, MCU> {
     struct SerialConfig2;
     using esc32_2 = RC::ESCape::Serial<3, SerialConfig2, MCU>;
 
-    // Tlm2: PB9 (tp1)
+    // Tlm2: PB9 : TIM17-CH1, TIM4-CH4
     using tp1 = Mcu::Stm::Pin<gpiob, 9, MCU>;
 
     // Srv2: PA4 : TIM14-CH1 (AF4), Uart6-TX (AF3)
@@ -261,12 +266,16 @@ struct Devices<SW01, Config, MCU> {
     struct WS2Config;
     using srv2_waveshare = WaveShare<6, WS2Config, MCU>;
 
+    // Fehler auf Platine (PWM Messung): mit PB5 (TIM3-CH2) verbinden
     // Fb2:  PA5 : ADC-IN5
     using tp3 = Mcu::Stm::Pin<gpioa, 5, MCU>;
     // using fb2_pin = Mcu::Stm::Pin<gpioa, 5, MCU>;
     // using srv2_fb = FeedbackAdapter<1, adc, fb2_pin>;
 
     // Uart4: CRSF-FD / AUX
+    using auxrx = Mcu::Stm::Pin<gpioa, 1, MCU>; // AF4
+    using auxtx = Mcu::Stm::Pin<gpioa, 0, MCU>; // AF4
+
     struct RelayDebug;
     using relay_aux = PacketRelay<4, true, auxtx, crsf_in, crsfBuffer, relayAuxDmaChannel, systemTimer, clock, RelayDebug, MCU>;
     // using relay_aux = PacketRelay<4, true, auxtx, crsf_in, crsf_in, relayAuxDmaChannel, systemTimer, clock, RelayDebug, MCU>;

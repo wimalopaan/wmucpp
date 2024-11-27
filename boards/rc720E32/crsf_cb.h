@@ -263,7 +263,7 @@ private:
         addNode(p, Param_t{parent, PType::U16,  "CRSF Address", nullptr, &eeprom.address, 192, 207, [](const uint16_t a){updateName(mName); responder::address(std::byte(a)); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Mode (not persistant)", "Full;Fwd Only", nullptr, 0, 1, [](const uint16_t){return false;}});
         parent = addParent(p, Param_t{0, PType::Folder, "Special"});
-        addNode(p, Param_t{parent, PType::Sel, "Crsf-HD/SBus", "SBus;Crsf;SBus2;None", &eeprom.crsf_hd_mode, 0, 2, [](const uint16_t r){relays::set(r); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Crsf-HD/SBus", "SBus;Crsf;SBus2;CPPM;CombinedPWMChannels;None", &eeprom.crsf_hd_mode, 0, 2, [](const uint16_t r){relays::set(r); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Crsf-FD/Aux", "Crsf;GPS;None", &eeprom.crsf_fd_aux_mode, 0, 1, [](const uint16_t a){
                                auxes::set(a);
                                return true;}});

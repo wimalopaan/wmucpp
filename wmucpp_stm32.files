@@ -53,6 +53,7 @@ boards/rc720E32/messagebuffer.h
 boards/rc720E32/package_relay.h
 boards/rc720E32/pid.h
 boards/rc720E32/polar.h
+boards/rc720E32/pulse_input.h
 boards/rc720E32/rc720E32_01.cc
 boards/rc720E32/ressources.h
 boards/rc720E32/startup_g0b1.s

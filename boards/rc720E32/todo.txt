@@ -3,6 +3,7 @@ ToDo
 
 Prio 0
 ------
+* make dma, timer, usart summary with hw-connections
 * ESCape32-Ascii: realize config-protocol
 * V/ESC: half-duplex protocol, adaption to dma-pattern
 
@@ -10,6 +11,7 @@ Prio 1
 ------
 * GPS: adaption of protocol-parser to dma-pattern
 * CPPM-Input (8/9 channels) and channel-overlay-input (blauzahn: 10µs gap; 20ms period)
+** requires: channel-input mapper (sources: crsf, cppm, sbus/ibus, ...)
 
 Prio 2
 ------
