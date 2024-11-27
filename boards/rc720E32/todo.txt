@@ -3,12 +3,11 @@ ToDo
 
 Prio 0
 ------
-* CRSF chunking of parameter-settings-entry due to huge setting lists
+* ESCape32-Ascii: realize config-protocol
+* V/ESC: half-duplex protocol, adaption to dma-pattern
 
 Prio 1
 ------
-* V/ESC: half-duplex protocol, adaption to dma-pattern
-* ESCape32-Ascii: realize config-protocol
 * GPS: adaption of protocol-parser to dma-pattern
 * CPPM-Input (8/9 channels) and channel-overlay-input (blauzahn: 10µs gap; 20ms period)
 
@@ -27,3 +26,4 @@ Done:
 ------
 * make tunneling crsf packets valid extended packets (modify also LUA)
 * useful LED blink patterns
+* CRSF chunking of parameter-settings-entry due to huge setting lists

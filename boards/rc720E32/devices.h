@@ -68,8 +68,11 @@ struct Devices<SW01, Config, MCU> {
     using adcDmaChannel     = Mcu::Stm::Dma::Channel<dma1, 3, MCU>;
     // half-duplex
     using srv1DmaChannel     = Mcu::Stm::Dma::Channel<dma1, 4, MCU>;
+    // I2C
+    using i2cDmaChannel     = Mcu::Stm::Dma::Channel<dma1, 5, MCU>;
     // half-duplex
     using sbus1DmaChannel     = Mcu::Stm::Dma::Channel<dma1, 6, MCU>;
+
     // half-duplex
     using relay1DmaChannel = Mcu::Stm::Dma::Channel<dma2, 1, MCU>;
     // half-duplex
@@ -123,7 +126,7 @@ struct Devices<SW01, Config, MCU> {
         using entry = crsfBuffer::Entry;
 
         template<typename R>
-        static inline void data(const value_type type, const R& reply) {
+        static inline void data(const value_type type, const R&) {
             mBuffer.message[0] = std::byte{0xc8};
             mBuffer.message[1] = std::byte(mCounter - 1);
             mBuffer.message[2] = type;
@@ -133,6 +136,37 @@ struct Devices<SW01, Config, MCU> {
             }
             mBuffer.message[mCounter++] = crc;
             mBuffer.length = mCounter;
+            crsfBuffer::enqueue(mBuffer);
+        }
+        template<typename R>
+        static inline void chunkOut(const value_type type, const R& payload, uint8_t chunk, uint8_t chSize) {
+            CRC8 crc;
+            const uint8_t nChunks = std::max((payload.size() - 4) / chSize, 1);
+            if (chunk > nChunks) {
+                return;
+            }
+            mBuffer.message[0] = std::byte{0xc8};
+            mBuffer.message[1] = std::byte(0);
+            crc += mBuffer.message[2] = type;
+            uint8_t counter = 3;
+            crc += mBuffer.message[counter++] = payload[0]; // ext dest
+            crc += mBuffer.message[counter++] = payload[1]; // ext src
+            crc += mBuffer.message[counter++] = payload[2]; // index
+
+            crc += mBuffer.message[counter++] = std::byte{nChunks - chunk}; // chunks remaining
+
+            for(uint8_t i = 0; i < chSize; ++i) {
+                const uint16_t index = 4 + i + (chunk * chSize);
+                if (index < payload.size()) {
+                    crc += mBuffer.message[counter++] = payload[index];
+                }
+                else {
+                    break;
+                }
+            }
+            mBuffer.message[counter++] = crc;
+            mBuffer.message[1] = std::byte(counter - 2);
+            mBuffer.length = counter;
             crsfBuffer::enqueue(mBuffer);
         }
         void clear() {
@@ -266,6 +300,7 @@ struct Devices<SW01, Config, MCU> {
         using out = CrsfWriteAdapter;
         using buffer = CrsfWriteAdapter;
         using dbg = void;
+        // using dbg = debug;
         using callback = CrsfCallback<CrsfCallbackConfig, debug>;
         using timer = systemTimer;
     };

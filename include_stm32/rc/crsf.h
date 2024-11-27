@@ -195,6 +195,16 @@ namespace RC {
                 T mValue{mDefault};
                 char* mStringValue{};
                 const char* mUnitString = nullptr;
+                uint16_t size() const {
+                    uint16_t l = 4 * sizeof(T) + 1 + 1 + 1;
+                    if (mName) {
+                        l += strlen(mName) + 1;
+                    }
+                    if (mOptions) {
+                        l += strlen(mOptions) + 1;
+                    }
+                    return l;
+                }
             };
 
 #ifdef USE_CRSF_V3
@@ -534,15 +544,92 @@ namespace RC {
                             }
                             Out::data(RC::Protokoll::Crsf::Type::ParamEntry, mReply);
                         }
-                        static inline void sendParameterInfo(const uint8_t pIndex) {
+                        static inline void composeParameterInfo(const uint8_t pIndex, auto& buffer) {
+                            buffer.clear();
+                            buffer.push_back(mExtendedDestination);
+                            buffer.push_back(mExtendedSource);
+                            etl::serializeBE(pIndex, buffer);
+                            etl::serializeBE(uint8_t{}, buffer); // remaining chunks
+                            etl::serializeBE(CB::parameter(pIndex).mParent, buffer); // parent
+                            etl::serializeBE((uint8_t)CB::parameter(pIndex).mType, buffer); // field type
+                            if (CB::parameter(pIndex).mName) {
+                                etl::push_back_ntbs(CB::parameter(pIndex).mName, buffer);
+                            }
+                            const uint8_t type = CB::parameter(pIndex).mType & 0b0111'1111;
+                            if (type <= 0x08) { // numerical
+                                etl::serializeBE(CB::parameter(pIndex).value(), buffer); // value
+                                etl::serializeBE(CB::parameter(pIndex).mMinimum, buffer);
+                                etl::serializeBE(CB::parameter(pIndex).mMaximum, buffer);
+                                etl::serializeBE(CB::parameter(pIndex).mDefault, buffer);
+                                etl::serializeBE(CB::parameter(pIndex).mUnits, buffer);
+                            }
+                            if (type == 0x09) { // select
+                                if (CB::parameter(pIndex).mOptions) {
+                                    etl::push_back_ntbs(CB::parameter(pIndex).mOptions, buffer);
+                                }
+                                etl::serializeBE((uint8_t)CB::parameter(pIndex).value(), buffer); // value
+                                etl::serializeBE((uint8_t)CB::parameter(pIndex).mMinimum, buffer);
+                                etl::serializeBE((uint8_t)CB::parameter(pIndex).mMaximum, buffer);
+                                etl::serializeBE((uint8_t)CB::parameter(pIndex).mDefault, buffer);
+                                etl::serializeBE((uint8_t)CB::parameter(pIndex).mUnits, buffer);
+                            }
+                            if (type == 0x0a) { // string
+                                etl::push_back_ntbs(CB::parameter(pIndex).mStringValue, buffer);
+                                etl::serializeBE(CB::parameter(pIndex).mUnits, buffer); // max string length
+                            }
+                            if (type == 0x0b) { // folder
+                                if (CB::parameter(pIndex).mOptions) {
+                                    etl::push_back_ntbs(CB::parameter(pIndex).mOptions, buffer);
+                                }
+                            }
+                            if (type == 0x0c) { // info
+                                if (CB::parameter(pIndex).mOptions) {
+                                    etl::push_back_ntbs(CB::parameter(pIndex).mOptions, buffer);
+                                }
+                            }
+                            if (type == 0x0d) {
+                                etl::serializeBE((uint8_t)CB::parameter(pIndex).value(), buffer);
+                                etl::serializeBE((uint8_t)0x00, buffer);
+                                etl::serializeBE((uint8_t)0xc8, buffer);
+                                etl::serializeBE((uint8_t)0x00, buffer);
+                            }
+
+                        }
+                        static inline void sendParameterInfo(const uint8_t pIndex, const uint8_t chunk) {
                             if (!mEnableReply) return;
-                            IO::outl<debug>("# PI adr: ", (uint8_t)mExtendedDestination, " i: ", pIndex);
+                            IO::outl<debug>("# PI adr: ", (uint8_t)mExtendedDestination, " i: ", pIndex, " ch: ", chunk);
+                            if constexpr(!std::is_same_v<CB, void>) {
+                                const uint16_t pLength = CB::parameter(pIndex).size() + 4 + 2 + 2;
+                                if (pLength <= 64) {
+                                    composeParameterInfo(pIndex, mReply);
+                                    Out::data(RC::Protokoll::Crsf::Type::ParamEntry, mReply);
+                                }
+                                else {
+                                    if (chunk == 0) {
+                                        composeParameterInfo(pIndex, mPayloadBuffer);
+                                    }
+                                    Out::chunkOut(RC::Protokoll::Crsf::Type::ParamEntry, mPayloadBuffer, chunk, 32);
+                                }
+                            }
+                        }
+#if 0
+                        static inline void sendParameterInfo(const uint8_t pIndex, const uint8_t chunk) {
+                            if (!mEnableReply) return;
+                            IO::outl<debug>("# PI adr: ", (uint8_t)mExtendedDestination, " i: ", pIndex, " ch: ", chunk);
                             if constexpr(!std::is_same_v<CB, void>) {
                                 mReply.clear();
                                 mReply.push_back(mExtendedDestination);
                                 mReply.push_back(mExtendedSource);
                                 etl::serializeBE(pIndex, mReply);
+
+                                const uint16_t plength = CB::parameter(pIndex).size() + 4;
+                                IO::outl<debug>("# PI length: ", plength);
+                                uint8_t Chunks = 0;
+                                if (plength >= 64) {
+
+                                }
                                 etl::serializeBE(uint8_t{}, mReply); // remaining chunks
+
                                 etl::serializeBE(CB::parameter(pIndex).mParent, mReply); // parent
                                 etl::serializeBE((uint8_t)CB::parameter(pIndex).mType, mReply); // field type
                                 if (CB::parameter(pIndex).mName) {
@@ -589,6 +676,7 @@ namespace RC {
                                 Out::data(RC::Protokoll::Crsf::Type::ParamEntry, mReply);
                             }
                         }
+#endif
                         static inline std::byte address() {
                             return mExtendedSource;
                         }
@@ -599,6 +687,7 @@ namespace RC {
                             mTelemetrySlot = s;
                         }
                         private:
+                        static inline etl::FixedVector<std::byte, 256> mPayloadBuffer;
                         static inline Event mEvent{Event::None};
                         static inline State mState{State::Idle};
                         static inline Buffer mReply;
@@ -784,7 +873,7 @@ namespace RC {
                                     IO::outl<debug>("# PR ", (uint8_t)mExtendedDestination, " i: ", mParameterIndex, " src: ", (uint8_t)mExtendedSource);
                                     if (mExtendedDestination == responder::address()) {
                                         ++mParameterReadPackagesCounter;
-                                        responder::sendParameterInfo(mParameterIndex);
+                                        responder::sendParameterInfo(mParameterIndex, mParameterChunk);
                                     }
                                 }
                                 mState = State::Undefined;
