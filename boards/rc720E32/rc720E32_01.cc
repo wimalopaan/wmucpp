@@ -357,6 +357,8 @@ struct GFSM {
     using polar1 = devs::polar1;
     using polar2 = devs::polar2;
 
+    using pulse_in = devs::pulse_in;
+
     // using tp0 = devs::tp0;
     using tp1 = devs::tp1;
     // using tp2 = devs::tp2;
@@ -427,7 +429,11 @@ struct GFSM {
             mStateTick.on(debugTicks, []{
                 // IO::outl<debug>("_end:", &_end, " _ebss:", &_ebss, " heap:", heap);
                 IO::outl<debug>("ch0: ", crsf_in_pa::values()[0], " phi: ", polar1::phi(), " amp: ", polar1::amp(), " a: ", Servos::actualPos(0), " t: ", Servos::turns(0));
-                // IO::outl<debug>("esc32_1 e:", esc32_1::errorCount());
+                IO::out<debug>("pulse: ");
+                for(uint8_t i = 0; i < 18; ++i) {
+                    IO::out<debug>(" ", pulse_in::mData[i]);
+                }
+                IO::outl<debug>(" ");
             });
             break;
         }
@@ -485,6 +491,7 @@ int main() {
     NVIC_EnableIRQ(DMA1_Channel2_3_IRQn);
     NVIC_EnableIRQ(DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQn);
     NVIC_EnableIRQ(ADC1_COMP_IRQn);
+    NVIC_EnableIRQ(TIM3_TIM4_IRQn);
     __enable_irq();
 
     while(true) {
@@ -495,6 +502,15 @@ int main() {
     }
 }
 extern "C" {
+void TIM3_TIM4_IRQHandler() {
+    using pulse_in = devs::pulse_in;
+    static_assert(pulse_in::timerNumber == 4);
+    pulse_in::onCapture([]{
+        devs::tp3::set();
+        devs::tp3::reset();
+    });
+}
+
 void ADC1_COMP_IRQHandler() {
     using adc = devs::adc;
     if (adc::mcuAdc->ISR & ADC_ISR_EOS) {

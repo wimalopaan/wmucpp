@@ -18,6 +18,7 @@ namespace Mcu::Stm {
 
     namespace Timers {
         template<uint8_t N> struct Properties;
+#ifdef STM32G4
         template<> struct Properties<2> {
             using value_type = uint32_t;
             static inline constexpr std::array<uint8_t, 4> dmamux_src{56, 57, 58, 59};
@@ -53,6 +54,14 @@ namespace Mcu::Stm {
             static inline constexpr std::array<uint8_t, 4> dmamux_src{82};
             static inline constexpr uint8_t dmaUpdate_src{83};
         };
+#endif
+#ifdef STM32G0B1xx
+        template<> struct Properties<4> {
+            using value_type = uint16_t;
+            static inline constexpr std::array<uint8_t, 4> dmamux_src{68, 69, 70, 71};
+            static inline constexpr uint8_t dmaUpdate_src{73};
+        };
+#endif
 
         template<uint8_t Src, uint8_t Dst>
         requires ((Src >= 2) && (Src <= 5))
@@ -338,7 +347,7 @@ namespace Mcu {
         struct Address<Mcu::Components::Timer<3>> {
             static inline constexpr uintptr_t value = TIM3_BASE;
         };
-#ifdef STM32G4
+#ifdef TIM4_BASE
         template<>
         struct Address<Mcu::Components::Timer<4>> {
             static inline constexpr uintptr_t value = TIM4_BASE;

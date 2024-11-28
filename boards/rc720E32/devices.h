@@ -76,7 +76,8 @@ struct Devices<SW01, Config, MCU> {
     using i2cDmaChannel     = Mcu::Stm::Dma::Channel<dma1, 5, MCU>;
     // half-duplex
     using sbus1DmaChannel     = Mcu::Stm::Dma::Channel<dma1, 6, MCU>;
-    // dma1-channel 7: free
+    // input capture
+    using pulseInDmaChannel     = Mcu::Stm::Dma::Channel<dma1, 7, MCU>;
     // half-duplex
     using relay1DmaChannel = Mcu::Stm::Dma::Channel<dma2, 1, MCU>;
     // half-duplex
@@ -288,13 +289,16 @@ struct Devices<SW01, Config, MCU> {
     using relay1 = PacketRelay<102, true, sbus_crsf_pin, crsf_in, crsfBuffer, relay1DmaChannel, systemTimer, clock, RelayDebug, MCU>;
     // using relay1 = PacketRelay<102, true, sbus_crsf_pin, crsf_in, crsf_in, relay1DmaChannel, systemTimer, clock, RelayDebug, MCU>;
 
+    using pulse_pin = Mcu::Stm::Pin<gpiob, 6, MCU>;
     struct PulseConfig;
-    using pulse_in = Pulse::CppmIn<4, PulseConfig, MCU>; // Timer 4
+    using pulse_in = Pulse::CppmIn<4, PulseConfig, MCU>; // TIM4-CH1
 
     struct PulseConfig {
-        using pin = sbus_crsf_pin;
+        using pin = pulse_pin;
         using clock = Devices::clock;
         using timer = systemTimer;
+        using dmaCh = pulseInDmaChannel;
+        using debug = Devices::debug;
         using tp = tp3;
     };
 
