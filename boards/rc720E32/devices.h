@@ -159,7 +159,7 @@ struct Devices<SW01, Config, MCU> {
             crc += mBuffer.message[counter++] = payload[1]; // ext src
             crc += mBuffer.message[counter++] = payload[2]; // index
 
-            crc += mBuffer.message[counter++] = std::byte{nChunks - chunk}; // chunks remaining
+            crc += mBuffer.message[counter++] = std::byte(nChunks - chunk); // chunks remaining
 
             for(uint8_t i = 0; i < chSize; ++i) {
                 const uint16_t index = 4 + i + (chunk * chSize);
@@ -269,8 +269,9 @@ struct Devices<SW01, Config, MCU> {
     // Fehler auf Platine (PWM Messung): mit PB5 (TIM3-CH2) verbinden
     // Fb2:  PA5 : ADC-IN5
     using tp3 = Mcu::Stm::Pin<gpioa, 5, MCU>;
-    // using fb2_pin = Mcu::Stm::Pin<gpioa, 5, MCU>;
-    // using srv2_fb = FeedbackAdapter<1, adc, fb2_pin>;
+    using fb2_pin = Mcu::Stm::Pin<gpioa, 5, MCU>;
+    using srv2_fb = FeedbackAdapter<1, adc, fb2_pin>;
+    using srv2_feetech = Feetech<1, polar2, srv2_fb, srv2_pwm, systemTimer, debug>;
 
     // Uart4: CRSF-FD / AUX
     using auxrx = Mcu::Stm::Pin<gpioa, 1, MCU>; // AF4
@@ -286,6 +287,16 @@ struct Devices<SW01, Config, MCU> {
     using sbus1 = RC::Protokoll::SBus2::V3::Master<102, SBus1Config, MCU>;
     using relay1 = PacketRelay<102, true, sbus_crsf_pin, crsf_in, crsfBuffer, relay1DmaChannel, systemTimer, clock, RelayDebug, MCU>;
     // using relay1 = PacketRelay<102, true, sbus_crsf_pin, crsf_in, crsf_in, relay1DmaChannel, systemTimer, clock, RelayDebug, MCU>;
+
+    struct PulseConfig;
+    using pulse_in = Pulse::CppmIn<4, PulseConfig, MCU>; // Timer 4
+
+    struct PulseConfig {
+        using pin = sbus_crsf_pin;
+        using clock = Devices::clock;
+        using timer = systemTimer;
+        using tp = tp3;
+    };
 
     using polars = Meta::List<polar1, polar2>;
 

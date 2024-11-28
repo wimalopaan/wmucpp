@@ -457,6 +457,10 @@ namespace Mcu::Stm {
                         rcc->APBRSTR1 = RCC_APBRSTR1_TIM4RST;
                         rcc->APBRSTR1 &= ~RCC_APBRSTR1_TIM4RST;
                     }
+                    else if constexpr (TimerNumber == 14) {
+                        rcc->APBRSTR2 = RCC_APBRSTR2_TIM14RST;
+                        rcc->APBRSTR2 &= ~RCC_APBRSTR2_TIM14RST;
+                    }
 #endif
                     else if constexpr (TimerNumber == 17) {
                         rcc->APBRSTR2 = RCC_APBRSTR2_TIM17RST;
@@ -482,6 +486,9 @@ namespace Mcu::Stm {
 #ifdef STM32G0B1xx
                     else if constexpr (TimerNumber == 4) {
                         RCC->APBENR1 |= RCC_APBENR1_TIM4EN;
+                    }
+                    else if constexpr (TimerNumber == 14) {
+                        RCC->APBENR2 |= RCC_APBENR2_TIM14EN;
                     }
                     else if constexpr (TimerNumber == 17) {
                         RCC->APBENR2 |= RCC_APBENR2_TIM17EN;

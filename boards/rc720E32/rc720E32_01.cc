@@ -79,6 +79,8 @@ struct Relays {
     using relay = devs::relay1;
     using sbus = devs::sbus1;
 
+    using pulse_in = devs::pulse_in;
+
     static inline void set(const uint8_t r) {
         IO::outl<debug>("# relay ", r);
         switch(r) {
@@ -102,7 +104,14 @@ struct Relays {
             rptr->activateSBus2(true);
         }
             break;
-        case 3: // none
+        case 3: // cppm
+            mRelay = nullptr;
+            break;
+        case 4: // combined pwm
+            mRelay = nullptr;
+            mRelay = std::make_unique<Relay<pulse_in>>();
+            break;
+        case 5: // none
             mRelay = nullptr;
             break;
         default:
@@ -225,7 +234,7 @@ struct ServoOutputs {
     using servo1_ws = devs::srv1_waveshare;
     using servo2_ws = devs::srv2_waveshare;
     using servo1_ft = devs::srv1_feetech;
-    // using servo2_ft = devs::srv2_feetech;
+    using servo2_ft = devs::srv2_feetech;
 
     template<uint8_t N>
     static inline void offset(const uint16_t o) {
@@ -263,16 +272,15 @@ struct ServoOutputs {
         IO::outl<debug>("# servo", N, ": ", s);
         static_assert(N <= 1);
         using srv_ws_t = std::conditional_t<(N == 0), Servo<servo1_ws>, Servo<servo2_ws>>;
-        // using srv_ft_t = std::conditional_t<(N == 0), Servo<servo1_ft>, Servo<servo2_ft>>;
-        using srv_ft_t = servo1_ft;
+        using srv_ft_t = std::conditional_t<(N == 0), Servo<servo1_ft>, Servo<servo2_ft>>;
         switch(s) {
         case 0: // analog FB
             servos[N] = nullptr;
-            servos[N] = std::make_unique<Servo<srv_ft_t>>();
+            servos[N] = std::make_unique<srv_ft_t>();
             break;
         case 1: // PWM feedback
             servos[N] = nullptr;
-            servos[N] = std::make_unique<Servo<srv_ft_t>>();
+            servos[N] = std::make_unique<srv_ft_t>();
             break;
         case 2: // serial
             servos[N] = nullptr;
