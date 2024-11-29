@@ -125,9 +125,10 @@ namespace Pulse {
             }
             mcuTimer->SR = 0;
         }
-        static inline void positive(const bool p) {
+        static inline void positive(const bool positiv, const bool period = true) {
             mcuTimer->CR1 &= ~TIM_CR1_CEN;
-            mStartPositiv = p;
+            mStartPositiv = positiv;
+            mPeriod = period;
             if (mStartPositiv) {
                 mcuTimer->CCER &= ~(TIM_CCER_CC1P | TIM_CCER_CC1NP); // IC1: positive
                 mcuTimer->CCER &= ~TIM_CCER_CC2NP; // IC2: negative
@@ -146,16 +147,16 @@ namespace Pulse {
         }
         static inline void ratePeriodic() {
         }
-        template<bool Period = true>
         static inline uint16_t value(const uint8_t ch) {
             if (ch < 8) {
                 const uint8_t index = ch + 1;
-                if constexpr(Period) {
+                if (mPeriod) {
                     const int s = mData[index].first - onems + 172;
                     return std::clamp(s, 172, 1812);
                 }
                 else {
-                    return 0;
+                    const int s = mData[index].second - onems + 172;
+                    return std::clamp(s, 172, 1812);
                 }
             }
             else {
@@ -166,9 +167,14 @@ namespace Pulse {
 
         private:
         static inline void startDmaSequence() {
+            if (!mPeriod) {
+                const uint16_t c = 2 * mData.size() - dmaCh::mcuDmaChannel->CNDTR;
+                mData[c/2].second = mData[0].second;
+            }
             dmaCh::count(2 * mData.size());
         }
         static inline std::array<std::pair<volatile uint16_t, volatile uint16_t>, 16> mData; // first pair is invalid (old counter values)
         static inline bool mStartPositiv = false;
+        static inline bool mPeriod = true;
     };
 }

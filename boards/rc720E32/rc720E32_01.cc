@@ -123,6 +123,12 @@ struct Relays {
             break;
         case 5: // combined pwm/P
             mRelay = nullptr;
+        {
+            mRelay = nullptr;
+            mRelay = std::make_unique<Relay<pulse_in>>();
+            Relay<pulse_in>* const rptr = static_cast<Relay<pulse_in>*>(mRelay.get());
+            rptr->positive(true, false);
+        }
             break;
         case 6: // none
             mRelay = nullptr;

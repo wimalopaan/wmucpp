@@ -59,9 +59,9 @@ struct Relay : IRelay {
     ~Relay() {
         R::reset();
     }
-    virtual void positive(const bool b) {
+    virtual void positive(const bool pos, const bool per = true) {
         if constexpr(hasPositive<R>) {
-            R::positive(b);
+            R::positive(pos, per);
         }
     }
     virtual void activateSBus2(const bool b) {
