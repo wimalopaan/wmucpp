@@ -42,6 +42,10 @@ template<typename T>
 concept hasSet = requires(T) {
     T::set(0, 0);
 };
+template<typename T>
+concept hasPositive = requires(T) {
+    T::positive(true);
+};
 // template<typename T>
 // concept hasForwardPacket = requires(T) {
 //     T::ping();
@@ -54,6 +58,11 @@ struct Relay : IRelay {
     }
     ~Relay() {
         R::reset();
+    }
+    virtual void positive(const bool b) {
+        if constexpr(hasPositive<R>) {
+            R::positive(b);
+        }
     }
     virtual void activateSBus2(const bool b) {
         if constexpr(hasActivateSBus2<R>) {

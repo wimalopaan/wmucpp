@@ -28,7 +28,7 @@ namespace Pulse {
 
         static inline constexpr uint8_t af = Mcu::Stm::AlternateFunctions::mapper_v<pin, CppmIn<TimerNumber, Config, MCU>, Mcu::Stm::AlternateFunctions::CC<1>>;
 
-        static inline constexpr uint16_t onems = 1000;
+        static inline constexpr uint16_t onems = 1640;
         static inline constexpr uint16_t mid = onems + onems / 2;
         static inline constexpr uint16_t period = onems * 20;
         static inline constexpr uint16_t prescaler = (clock::config::frequency.value / period) / 50;
@@ -83,8 +83,8 @@ namespace Pulse {
             mcuTimer->CCER |= TIM_CCER_CC3E;
             mcuTimer->CCR3 = onems * 4;
 
-            mcuTimer->DIER |= TIM_DIER_CC1IE; // Test
-            mcuTimer->DIER |= TIM_DIER_CC2IE; // Test
+            // mcuTimer->DIER |= TIM_DIER_CC1IE; // Test
+            // mcuTimer->DIER |= TIM_DIER_CC2IE; // Test
             mcuTimer->DIER |= TIM_DIER_CC3IE;
 
             mcuTimer->DIER |= TIM_DIER_CC1DE; // dma enable
@@ -92,9 +92,8 @@ namespace Pulse {
             dmaCh::init();
             dmaCh::template msize<uint16_t>();
             dmaCh::template psize<uint16_t>();
-            dmaCh::mcuDmaChannel->CNDTR = 9 * 2;
+            dmaCh::mcuDmaChannel->CNDTR = 2 * mData.size();
             dmaCh::mcuDmaChannel->CCR |= DMA_CCR_MINC;
-            // dmaCh::mcuDmaChannel->CCR |= DMA_CCR_CIRC;
             dmaCh::mcuDmaChannel->CPAR = (uint32_t)&mcuTimer->DMAR;
             dmaCh::mcuDmaChannel->CMAR = (uint32_t)&mData[0];
             MODIFY_REG(dmaCh::mcuDmaMux->CCR, DMAMUX_CxCR_DMAREQ_ID_Msk,
@@ -102,25 +101,22 @@ namespace Pulse {
 
             MODIFY_REG(mcuTimer->DCR, TIM_DCR_DBL_Msk, 0x01 << TIM_DCR_DBL_Pos); // Burstlenth = 2
 
-            static constexpr uint16_t cr1Offset = offsetof(TIM_TypeDef, CCR1) / 4;
+            static constexpr uint16_t ccr1Offset = offsetof(TIM_TypeDef, CCR1) / 4;
             static_assert(offsetof(TIM_TypeDef, CR1) == 0);
             static_assert(offsetof(TIM_TypeDef, CR2) == 4);
 
-            MODIFY_REG(mcuTimer->DCR, TIM_DCR_DBA_Msk, cr1Offset << TIM_DCR_DBA_Pos);
+            MODIFY_REG(mcuTimer->DCR, TIM_DCR_DBA_Msk, ccr1Offset << TIM_DCR_DBA_Pos);
 
             mcuTimer->CR1 |= TIM_CR1_CEN;
 
             pin::template dir<Mcu::Input>();
             pin::afunction(af);
         }
-
         static inline void onCapture(const auto f) {
             if (mcuTimer->SR & TIM_SR_CC1IF) {
-                mPulse = mcuTimer->CCR1;
                 f();
             }
             if (mcuTimer->SR & TIM_SR_CC2IF) {
-                mPeriod = mcuTimer->CCR2;
                 f();
             }
             if (mcuTimer->SR & TIM_SR_CC3IF) {
@@ -129,27 +125,50 @@ namespace Pulse {
             }
             mcuTimer->SR = 0;
         }
+        static inline void positive(const bool p) {
+            mcuTimer->CR1 &= ~TIM_CR1_CEN;
+            mStartPositiv = p;
+            if (mStartPositiv) {
+                mcuTimer->CCER &= ~(TIM_CCER_CC1P | TIM_CCER_CC1NP); // IC1: positive
+                mcuTimer->CCER &= ~TIM_CCER_CC2NP; // IC2: negative
+                mcuTimer->CCER |= TIM_CCER_CC2P;
+            }
+            else {
+                mcuTimer->CCER &= ~(TIM_CCER_CC2P | TIM_CCER_CC2NP); // IC2: positive
+                mcuTimer->CCER &= ~TIM_CCER_CC1NP; // IC1: negative
+                mcuTimer->CCER |= TIM_CCER_CC1P;
+            }
+            mcuTimer->CR1 |= TIM_CR1_CEN;
+        }
         static inline void update() {
-
         }
         static inline void periodic() {
-
         }
         static inline void ratePeriodic() {
-
         }
-        // private:
+        template<bool Period = true>
+        static inline uint16_t value(const uint8_t ch) {
+            if (ch < 8) {
+                const uint8_t index = ch + 1;
+                if constexpr(Period) {
+                    const int s = mData[index].first - onems + 172;
+                    return std::clamp(s, 172, 1812);
+                }
+                else {
+                    return 0;
+                }
+            }
+            else {
+                return 992;
+            }
+        }
 
+
+        private:
         static inline void startDmaSequence() {
-            dmaCh::reenable([]{
-                dmaCh::mcuDmaChannel->CNDTR = 9 * 2;
-            });
-
+            dmaCh::count(2 * mData.size());
         }
-
-        static inline std::array<uint16_t, 32> mData;
+        static inline std::array<std::pair<volatile uint16_t, volatile uint16_t>, 16> mData; // first pair is invalid (old counter values)
         static inline bool mStartPositiv = false;
-        static inline volatile uint16_t mPulse;
-        static inline volatile uint16_t mPeriod;
     };
 }

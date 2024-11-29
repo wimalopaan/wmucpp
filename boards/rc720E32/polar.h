@@ -15,8 +15,10 @@ struct Polar {
     static inline auto& eeprom = storage::eeprom;
 
     static inline void update() {
-        const int v1 = pa::values()[eeprom.channels[number].first] - pa::mid;
-        const int v2 = pa::values()[eeprom.channels[number].second] - pa::mid;
+        const int v1 = pa::value(eeprom.channels[number].first) - pa::mid;
+        const int v2 = pa::value(eeprom.channels[number].second) - pa::mid;
+        // const int v1 = pa::values()[eeprom.channels[number].first] - pa::mid;
+        // const int v2 = pa::values()[eeprom.channels[number].second] - pa::mid;
         const int amin = std::min(std::abs(v1), std::abs(v2));
 
         mPhi = FastMath::uatan2<820, 4096>(v1, v2);

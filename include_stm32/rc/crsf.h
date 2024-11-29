@@ -998,6 +998,9 @@ namespace RC {
                     static inline uint16_t getBytes() {
                         return mBytesCounter;
                     }
+                    static inline const auto value(const uint8_t ch) {
+                        return mChannels[ch];
+                    }
                     static inline const auto& values() {
                         return mChannels;
                     }

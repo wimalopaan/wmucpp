@@ -104,14 +104,27 @@ struct Relays {
             rptr->activateSBus2(true);
         }
             break;
-        case 3: // cppm
-            mRelay = nullptr;
-            break;
-        case 4: // combined pwm
+        case 3: // cppm/N
+        {
             mRelay = nullptr;
             mRelay = std::make_unique<Relay<pulse_in>>();
+            Relay<pulse_in>* const rptr = static_cast<Relay<pulse_in>*>(mRelay.get());
+            rptr->positive(false);
+        }
             break;
-        case 5: // none
+        case 4: // cppm/P
+            mRelay = nullptr;
+        {
+            mRelay = nullptr;
+            mRelay = std::make_unique<Relay<pulse_in>>();
+            Relay<pulse_in>* const rptr = static_cast<Relay<pulse_in>*>(mRelay.get());
+            rptr->positive(true);
+        }
+            break;
+        case 5: // combined pwm/P
+            mRelay = nullptr;
+            break;
+        case 6: // none
             mRelay = nullptr;
             break;
         default:
@@ -430,8 +443,8 @@ struct GFSM {
                 // IO::outl<debug>("_end:", &_end, " _ebss:", &_ebss, " heap:", heap);
                 IO::outl<debug>("ch0: ", crsf_in_pa::values()[0], " phi: ", polar1::phi(), " amp: ", polar1::amp(), " a: ", Servos::actualPos(0), " t: ", Servos::turns(0));
                 IO::out<debug>("pulse: ");
-                for(uint8_t i = 0; i < 18; ++i) {
-                    IO::out<debug>(" ", pulse_in::mData[i]);
+                for(uint8_t i = 0; i < 7; ++i) {
+                    IO::out<debug>(" ", pulse_in::value(i));
                 }
                 IO::outl<debug>(" ");
             });

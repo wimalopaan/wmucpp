@@ -40,6 +40,7 @@
 #include "iservo.h"
 #include "messagebuffer.h"
 #include "pulse_input.h"
+#include "inputmapper.h"
 
 struct SW01;
 
@@ -191,8 +192,13 @@ struct Devices<SW01, Config, MCU> {
     using debugrx = Mcu::Stm::Pin<gpioa, 3, MCU>;
     using debug = Mcu::Stm::V1::LpUart<1, void, 1024, char, clock, MCU>;
 
-    using polar1 = Polar<0, typename crsf_in::adapter, typename Config::storage>;
-    using polar2 = Polar<1, typename crsf_in::adapter, typename Config::storage>;
+    struct InputConfig;
+    using inputs = InputMapper<InputConfig>;
+
+    using polar1 = Polar<0, inputs, typename Config::storage>;
+    using polar2 = Polar<1, inputs, typename Config::storage>;
+    // using polar1 = Polar<0, typename crsf_in::adapter, typename Config::storage>;
+    // using polar2 = Polar<1, typename crsf_in::adapter, typename Config::storage>;
 
     // Led
     using led1 = Mcu::Stm::Pin<gpiob, 7, MCU>;
@@ -293,6 +299,11 @@ struct Devices<SW01, Config, MCU> {
     struct PulseConfig;
     using pulse_in = Pulse::CppmIn<4, PulseConfig, MCU>; // TIM4-CH1
 
+    struct InputConfig {
+        using stream1 = crsf_in::adapter;
+        using stream2 = pulse_in;
+    };
+
     struct PulseConfig {
         using pin = pulse_pin;
         using clock = Devices::clock;
@@ -314,6 +325,7 @@ struct Devices<SW01, Config, MCU> {
         using escs = Config::escs;
         using relays = Config::relays;
         using auxes = Config::auxes;
+        using mapper = inputs;
         using channelCallback = ChannelCallback<Devices::polars, servos, escs, relays, auxes, sbus1, telem, storage>;
         using telemetry = telem;
         using polars = Devices::polars;

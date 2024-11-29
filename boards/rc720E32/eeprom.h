@@ -12,6 +12,8 @@ struct EEProm {
     // CRSF
     uint16_t address = 192;
 
+    uint16_t input_stream = 0; // CRSF, Pulse
+
     // Input channels
     std::array<Pair, 2> channels{{{0, 1}, {2, 3}}};
 
