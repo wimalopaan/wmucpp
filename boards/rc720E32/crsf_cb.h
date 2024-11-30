@@ -235,10 +235,10 @@ private:
         addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
         uint8_t parent = addParent(p, Param_t{0, PType::Folder, "Channels"});
         addNode(p, Param_t{parent, PType::Sel,  "Stream", "Main/CRSF;Alternative;Aux", &eeprom.input_stream, 0, 2, [](const uint16_t s){mapper::stream(s); return true;}});
-        addNode(p, Param_t{parent, PType::U16,  "Schottel 1: f/b", nullptr, &eeprom.channels[0].first, 1, 16, [](const uint16_t){return true;}});
-        addNode(p, Param_t{parent, PType::U16,  "Schottel 1: l/r", nullptr, &eeprom.channels[0].second, 1, 16, [](const uint16_t){return true;}});
-        addNode(p, Param_t{parent, PType::U16,  "Schottel 2: f/b", nullptr, &eeprom.channels[1].first, 1, 16, [](const uint16_t){return true;}});
-        addNode(p, Param_t{parent, PType::U16,  "Schottel 2: l/r", nullptr, &eeprom.channels[1].second, 1, 16, [](const uint16_t){return true;}});
+        addNode(p, Param_t{parent, PType::U16,  "Schottel 1: f/b", nullptr, &eeprom.channels[0].first, 0, 15, [](const uint16_t){return true;}});
+        addNode(p, Param_t{parent, PType::U16,  "Schottel 1: l/r", nullptr, &eeprom.channels[0].second, 0, 15, [](const uint16_t){return true;}});
+        addNode(p, Param_t{parent, PType::U16,  "Schottel 2: f/b", nullptr, &eeprom.channels[1].first, 0, 15, [](const uint16_t){return true;}});
+        addNode(p, Param_t{parent, PType::U16,  "Schottel 2: l/r", nullptr, &eeprom.channels[1].second, 0, 15, [](const uint16_t){return true;}});
         parent = addParent(p, Param_t{0, PType::Folder, "Outputs"});
         addNode(p, Param_t{parent, PType::Sel, "Srv1 Out", "PWM/Analog;PWM/PWM;Serial/WaveShare;None", &eeprom.out_mode_srv[0], 0, 3, [](const uint16_t s){servos::template servo<0>(s); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Srv1 Fb", "Analog;PWM;WaveShare;None", &eeprom.out_mode_srv[0], 0, 3});
