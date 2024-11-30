@@ -163,8 +163,6 @@ namespace Pulse {
                 return 992;
             }
         }
-
-
         private:
         static inline void startDmaSequence() {
             if (!mPeriod) {

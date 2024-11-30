@@ -74,6 +74,5 @@ struct ChannelCallback {
         }
         return 1812;
     }
-    // static inline uint8_t mUpdateCounter = 0;
 };
 

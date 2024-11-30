@@ -68,48 +68,6 @@ struct FastMath {
             }
         }
     }
-
-    static inline float atan_scalar_approximation(const float x) {
-        static constexpr float a1  =  0.99997726f;
-        static constexpr float a3  = -0.33262347f;
-        static constexpr float a5  =  0.19354346f;
-        static constexpr float a7  = -0.11643287f;
-        static constexpr float a9  =  0.05265332f;
-        // static constexpr float a11 = -0.01172120f;
-
-        const float x_sq = x * x;
-        // return x * (a1 + x_sq * (a3 + x_sq * (a5 + x_sq * (a7 + x_sq * (a9 + x_sq * a11)))));
-        return x * (a1 + x_sq * (a3 + x_sq * (a5 + x_sq * (a7 + x_sq * (a9)))));
-        // return x * (a1 + x_sq * (a3 + x_sq * a5));
-    }
-    static inline float atan2(const float y, const float x) {
-        const float abs_y = std::fabs(y) + 1e-10f;      // kludge to prevent 0/0 condition
-        const float r = (x - std::copysign(abs_y, x)) / (abs_y + std::fabs(x));
-        float angle = pi_2 - std::copysign(pi_4, x);
-
-        angle -= atan_scalar_approximation(r);
-        // angle += (0.1963f * r * r - 0.9817f) * r;
-        return std::copysign(angle, y);
-    }
-    // static inline float atan2(const float y, const float x) {
-    //     // Ensure input is in [-1, +1]
-    //     const bool swap = fabs(x) < fabs(y);
-    //     const float atan_input = (swap ? x : y) / (swap ? y : x);
-
-    //     // Approximate atan
-    //     float res = atan_scalar_approximation(atan_input);
-
-    //     // If swapped, adjust atan output
-    //     res = swap ? (atan_input > 0.0f ? pi_2 : -pi_2) - res : res;
-    //     // Adjust quadrants
-    //     if      (x >= 0.0f && y >= 0.0f) {}                     // 1st quadrant
-    //     else if (x <  0.0f && y >= 0.0f) { res =  pi + res; } // 2nd quadrant
-    //     else if (x <  0.0f && y <  0.0f) { res = -pi + res; } // 3rd quadrant
-    //     else if (x >= 0.0f && y <  0.0f) {}                     // 4th quadrant
-
-    //     return res;
-    // }
-
     static inline unsigned usqrt4(const unsigned val) {
         unsigned a, b;
         if (val < 2) return val; /* avoid div/0 */

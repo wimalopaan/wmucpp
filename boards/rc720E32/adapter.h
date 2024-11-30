@@ -10,9 +10,6 @@ struct PwmAdapter {
 
     static inline constexpr uint8_t af = Mcu::Stm::AlternateFunctions::mapper_v<Pin, pwm, Mcu::Stm::AlternateFunctions::CC<Channel>>;
 
-    // Pin::_;
-    // std::integral_constant<uint8_t, af>::_;
-
     static inline void set(const uint16_t v) {
         Pwm::set(Channel - 1, v);
     }

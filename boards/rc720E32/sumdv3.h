@@ -156,7 +156,7 @@ struct SumDV3Input {
     static inline auto errorCount() {
         return mErrorCount;
     }
-    // private:
+    private:
 
     enum class Frame : uint8_t {Ch1to12 = 0x00, First = Ch1to12,
                                 Ch1to8and13to16 = 0x01, Ch1to16 = 0x02, Ch1to8and17to24 = 0x03,

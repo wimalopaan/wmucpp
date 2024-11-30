@@ -120,25 +120,20 @@ struct PacketRelay {
         uart::template rxEnable<true>();
     }
     static inline void update() { // channels to dest
-        // debug::tp::set();
         RC::Protokoll::Crsf::V3::pack(src::values(), uart::outputBuffer());
         uart::template rxEnable<false>();
         uart::startSend(26);
-        // debug::tp::reset();
     }
     template<typename C>
     static inline void command(const C& data, const uint16_t length) {
-        // debug::tp::set();
         uart::outputBuffer()[0] = 0xc8;
         uart::outputBuffer()[1] = length + 2;
         uart::outputBuffer()[2] = 0x32; // command
         std::copy(std::begin(data), std::begin(data) + length + 1, &uart::outputBuffer()[3]);
         uart::template rxEnable<false>();
         uart::startSend(length + 2 + 2);
-        // debug::tp::reset();
     }
     static inline void ping() {
-        // debug::tp::set();
         uart::outputBuffer()[0] = 0xc8;
         uart::outputBuffer()[1] = 0x04;
         uart::outputBuffer()[2] = 0x28; // command
@@ -147,14 +142,12 @@ struct PacketRelay {
         uart::outputBuffer()[5] = 0x54;
         uart::template rxEnable<false>();
         uart::startSend(6);
-        // debug::tp::reset();
     }
 
     template<typename C>
     static inline void forwardPacket(const std::byte type, const C& data, const uint16_t payLength) {
         const uint8_t crsfLength = payLength + 2;
         const uint8_t totalLength = crsfLength + 2;
-        // debug::tp::set();
         uart::outputBuffer()[0] = 0xc8;
         uart::outputBuffer()[1] = crsfLength;
         uart::outputBuffer()[2] = (uint8_t)type;
@@ -162,7 +155,6 @@ struct PacketRelay {
                   &uart::outputBuffer()[3]);
         uart::template rxEnable<false>();
         uart::startSend(totalLength);
-        // debug::tp::reset();
     }
     private:
     static inline volatile bool mActive = false;

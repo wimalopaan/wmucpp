@@ -3,9 +3,7 @@ ToDo
 
 Prio 0
 ------
-* channel-update: periodic instead of crsf-triggered, because CRSF isn't the one-and-only input anymore
 * make dma, timer, usart summary with hw-connections
-* SBus, IBus, Hott-Input (together with CRSF-config)
 * ESCape32-Ascii: realize config-protocol
 * V/ESC: half-duplex protocol, adaption to dma-pattern
 
@@ -26,6 +24,8 @@ Prio 3
 
 Done:
 ------
+* SBus, IBus, Hott-Input (together with CRSF-config)
+* channel-update: periodic instead of crsf-triggered, because CRSF isn't the one-and-only input anymore
 * make tunneling crsf packets valid extended packets (modify also LUA)
 * useful LED blink patterns
 * CRSF chunking of parameter-settings-entry due to huge setting lists

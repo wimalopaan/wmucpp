@@ -200,8 +200,6 @@ struct Devices<SW01, Config, MCU> {
 
     using polar1 = Polar<0, inputs, typename Config::storage>;
     using polar2 = Polar<1, inputs, typename Config::storage>;
-    // using polar1 = Polar<0, typename crsf_in::adapter, typename Config::storage>;
-    // using polar2 = Polar<1, typename crsf_in::adapter, typename Config::storage>;
 
     // Led
     using led1 = Mcu::Stm::Pin<gpiob, 7, MCU>;
@@ -256,7 +254,6 @@ struct Devices<SW01, Config, MCU> {
     // verbinden mit PA8 : TIM1-CH1 (AF2): Uart1-TX PA9 erscheint als OpenDrain hier???
     // verbinden mit PA7 : TIM17-CH1 (AF5)
     using esc2_pin_1 = Mcu::Stm::Pin<gpiob, 2, MCU>;
-    // using esc2_pin = Mcu::Stm::Pin<gpioa, 8, MCU>;
     using esc2_pin = Mcu::Stm::Pin<gpioa, 7, MCU>;
     using pwm17 = Mcu::Stm::V2::Pwm::Servo<17, clock>;
     using esc2_pwm = PwmAdapter<pwm17, esc2_pin, 1, debug>;
@@ -268,7 +265,6 @@ struct Devices<SW01, Config, MCU> {
     using tp1 = Mcu::Stm::Pin<gpiob, 9, MCU>;
 
     // Srv2: PA4 : TIM14-CH1 (AF4), Uart6-TX (AF3)
-    // using tp2 = Mcu::Stm::Pin<gpioa, 4, MCU>;
     using srv2_pin = Mcu::Stm::Pin<gpioa, 4, MCU>;
     using pwm14 = Mcu::Stm::V2::Pwm::Servo<14, clock>;
     using srv2_pwm = PwmAdapter<pwm14, srv2_pin, 1>;
@@ -289,14 +285,12 @@ struct Devices<SW01, Config, MCU> {
 
     struct RelayDebug;
     using relay_aux = PacketRelay<4, true, auxtx, crsf_in, crsfBuffer, relayAuxDmaChannel, systemTimer, clock, RelayDebug, MCU>;
-    // using relay_aux = PacketRelay<4, true, auxtx, crsf_in, crsf_in, relayAuxDmaChannel, systemTimer, clock, RelayDebug, MCU>;
 
     // LPUart2: Sbus, CRSF-HD
     using sbus_crsf_pin = Mcu::Stm::Pin<gpioc, 6, MCU>;
     struct SBus1Config;
     using sbus1 = RC::Protokoll::SBus2::V3::Master<102, SBus1Config, MCU>;
     using relay1 = PacketRelay<102, true, sbus_crsf_pin, crsf_in, crsfBuffer, relay1DmaChannel, systemTimer, clock, RelayDebug, MCU>;
-    // using relay1 = PacketRelay<102, true, sbus_crsf_pin, crsf_in, crsf_in, relay1DmaChannel, systemTimer, clock, RelayDebug, MCU>;
 
     struct IBusConfig;
     using ibus_in = IBusInput<102, IBusConfig, MCU>;
@@ -368,7 +362,6 @@ struct Devices<SW01, Config, MCU> {
         using relays = Config::relays;
         using auxes = Config::auxes;
         using mapper = inputs;
-        // using channelCallback = ChannelCallback<Devices::polars, servos, escs, relays, auxes, sbus1, telem, storage>;
         using telemetry = telem;
         using polars = Devices::polars;
         using tp = void;
@@ -464,9 +457,7 @@ struct Devices<SW01, Config, MCU> {
         // adc::init();
         // adc::oversample(8); // 256
 
-        // tp0::template dir<Mcu::Output>();
         tp1::template dir<Mcu::Output>();
-        // tp2::template dir<Mcu::Output>();
         tp3::template dir<Mcu::Output>();
     }
 };
