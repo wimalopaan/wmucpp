@@ -335,6 +335,20 @@ namespace Mcu::Stm {
                         f();
                     }
                 }
+                static inline void onParityError(const auto f) {
+                    if (mcuUart->ISR & USART_ISR_PE) {
+                        mcuUart->ICR = USART_ICR_PECF;
+                        f();
+                    }
+                }
+                static inline void onParityGood(const auto f) {
+                    if (mcuUart->ISR & USART_ISR_PE) {
+                        mcuUart->ICR = USART_ICR_PECF;
+                    }
+                    else {
+                        f();
+                    }
+                }
                 static inline void onIdleWithDma(const auto f) requires(!std::is_same_v<dmaChRead, void> && std::is_same_v<dmaChWrite, void>) {
                     if (mcuUart->ISR & USART_ISR_IDLE) {
                         mcuUart->ICR = USART_ICR_IDLECF;

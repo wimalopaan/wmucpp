@@ -81,6 +81,8 @@ struct Relays {
 
     using pulse_in = devs::pulse_in;
     using ibus_in = devs::ibus_in;
+    using sbus_in = devs::sbus_in;
+    using sumdv3_in = devs::sumdv3_in;
 
     static inline void set(const uint8_t r) {
         IO::outl<debug>("# relay ", r);
@@ -137,9 +139,11 @@ struct Relays {
             break;
         case 7: // sbus
             mRelay = nullptr;
+            mRelay = std::make_unique<Relay<sbus_in>>();
             break;
         case 8: // sumdv3
             mRelay = nullptr;
+            mRelay = std::make_unique<Relay<sumdv3_in>>();
             break;
         default:
             mRelay = nullptr;
@@ -387,6 +391,8 @@ struct GFSM {
 
     using adc = devs::adc;
 
+    using channelCallback = devs::channelCallback;
+
     using telemetry = devs::telem;
 
     using polar1 = devs::polar1;
@@ -394,6 +400,7 @@ struct GFSM {
 
     using pulse_in = devs::pulse_in;
     using ibus_in = devs::ibus_in;
+    using sumdv3_in = devs::sumdv3_in;
 
     static inline void init() {
         devs::init();
@@ -424,6 +431,7 @@ struct GFSM {
     static inline constexpr External::Tick<systemTimer> initTicks{500ms};
     static inline constexpr External::Tick<systemTimer> debugTicks{500ms};
     static inline constexpr External::Tick<systemTimer> telemetryTicks{100ms};
+    static inline constexpr External::Tick<systemTimer> updateTicks{20ms};
 
     static inline void ratePeriodic() {
         led1::ratePeriodic();
@@ -457,17 +465,21 @@ struct GFSM {
             mState = State::Run;
             break;
         case State::Run:
+            (++mUpdateTick).on(updateTicks, []{
+                channelCallback::update();
+            });
             (++mTelemetryTick).on(telemetryTicks, []{
                 telemetry::next();
             });
             mStateTick.on(debugTicks, []{
                 // IO::outl<debug>("_end:", &_end, " _ebss:", &_ebss, " heap:", heap);
                 IO::outl<debug>("ch0: ", crsf_in_pa::values()[0], " phi: ", polar1::phi(), " amp: ", polar1::amp(), " a: ", Servos::actualPos(0), " t: ", Servos::turns(0));
-                IO::out<debug>("ibus: ec: ", ibus_in::errorCount(), " uc: ", ibus_in::uart::readCount(), " d0: ", ibus_in::uart::readBuffer()[0]);
-                for(uint8_t i = 0; i < 7; ++i) {
-                    IO::out<debug>(" ", ibus_in::value(i));
-                }
-                IO::outl<debug>(" ");
+                // IO::out<debug>("ibus: ec: ", ibus_in::errorCount(), " uc: ", ibus_in::uart::readCount(), " d0: ", ibus_in::uart::readBuffer()[0]);
+                // for(uint8_t i = 0; i < 7; ++i) {
+                //     IO::out<debug>(" ", ibus_in::value(i));
+                // }
+                // IO::outl<debug>(" ");
+                IO::outl<debug>(" sumdv3: cs: ");
             });
             break;
         }
@@ -492,7 +504,7 @@ struct GFSM {
     }
 
     private:
-    // static inline External::Tick<systemTimer> mUpdateTick;
+    static inline External::Tick<systemTimer> mUpdateTick;
     static inline External::Tick<systemTimer> mTelemetryTick;
     static inline External::Tick<systemTimer> mStateTick;
     static inline State mState{State::Undefined};
@@ -636,8 +648,25 @@ void USART2_LPUART2_IRQHandler(){
             // devs::tp3::reset();
         });
     }
-
-    // sbus1 / relay1 use same LPUART(2), be sure to clear all flags
+    using sbus_in = devs::sbus_in;
+    if constexpr(sbus_in::uart::number == 102) {
+        static_assert(sbus_in::uart::number == 102);
+        sbus_in::onIdle([]{
+            // devs::tp3::set();
+            sbus_in::event(sbus_in::Event::ReceiveComplete);
+            // devs::tp3::reset();
+        });
+    }
+    using sumdv3_in = devs::sumdv3_in;
+    if constexpr(sumdv3_in::uart::number == 102) {
+        static_assert(sumdv3_in::uart::number == 102);
+        sumdv3_in::onIdle([]{
+            devs::tp3::set();
+            sumdv3_in::event(sumdv3_in::Event::ReceiveComplete);
+            devs::tp3::reset();
+        });
+    }
+    // sbus1 / relay1 / ibus / sbus_in / sumdv3 use same LPUART(2), be sure to clear all flags
     relay::uart::mcuUart->ICR = -1;
 }
 void USART3_4_5_6_LPUART1_IRQHandler(){

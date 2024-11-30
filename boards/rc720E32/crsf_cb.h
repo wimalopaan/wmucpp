@@ -16,7 +16,7 @@ struct CrsfCallback {
     using auxes = Config::auxes;
     using mapper = Config::mapper;
 
-    using channelCallback = Config::channelCallback;
+    // using channelCallback = Config::channelCallback;
     using polars = Config::polars;
 
     using responder = Config::adapter::responder;
@@ -42,7 +42,7 @@ struct CrsfCallback {
     static inline constexpr void gotLinkStats() {
     }
     static inline constexpr void gotChannels() {
-        channelCallback::update();
+        // channelCallback::update();
     }
     static inline constexpr void forwardPacket(const std::byte type, const std::array<uint8_t, 64>& data, const uint16_t length) {
         relays::forwardPacket(type, data, length);

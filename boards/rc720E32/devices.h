@@ -42,6 +42,8 @@
 #include "pulse_input.h"
 #include "inputmapper.h"
 #include "ibus.h"
+#include "sbus.h"
+#include "sumdv3.h"
 
 struct SW01;
 
@@ -297,13 +299,37 @@ struct Devices<SW01, Config, MCU> {
     // using relay1 = PacketRelay<102, true, sbus_crsf_pin, crsf_in, crsf_in, relay1DmaChannel, systemTimer, clock, RelayDebug, MCU>;
 
     struct IBusConfig;
-    using ibus_in = IBus<102, IBusConfig, MCU>;
+    using ibus_in = IBusInput<102, IBusConfig, MCU>;
+
+    struct SBusConfig;
+    using sbus_in = SBusInput<102, SBusConfig, MCU>;
+
+    struct Sumdv3Config;
+    using sumdv3_in = SumDV3Input<102, SBusConfig, MCU>;
 
     using pulse_pin = Mcu::Stm::Pin<gpiob, 6, MCU>;
     struct PulseConfig;
     using pulse_in = Pulse::CppmIn<4, PulseConfig, MCU>; // TIM4-CH1
 
     struct IBusConfig {
+        using pin = sbus_crsf_pin;
+        using clock = Devices::clock;
+        using systemTimer = Devices::systemTimer;
+        using dmaChRead = relay1DmaChannel;
+        using debug = Devices::debug;
+        using tp = tp3;
+    };
+
+    struct SBusConfig {
+        using pin = sbus_crsf_pin;
+        using clock = Devices::clock;
+        using systemTimer = Devices::systemTimer;
+        using dmaChRead = relay1DmaChannel;
+        using debug = Devices::debug;
+        using tp = tp3;
+    };
+
+    struct Sumdv3Config {
         using pin = sbus_crsf_pin;
         using clock = Devices::clock;
         using systemTimer = Devices::systemTimer;
@@ -331,6 +357,8 @@ struct Devices<SW01, Config, MCU> {
 
     using telem = Telemetry<crsfBuffer, storage, debug>;
 
+    using channelCallback = ChannelCallback<polars, typename Config::servos, typename Config::escs, typename Config::relays, typename Config::auxes, sbus1, telem, storage>;
+
     struct CrsfCallbackConfig {
         using storage = Config::storage;
         using timer = systemTimer;
@@ -340,7 +368,7 @@ struct Devices<SW01, Config, MCU> {
         using relays = Config::relays;
         using auxes = Config::auxes;
         using mapper = inputs;
-        using channelCallback = ChannelCallback<Devices::polars, servos, escs, relays, auxes, sbus1, telem, storage>;
+        // using channelCallback = ChannelCallback<Devices::polars, servos, escs, relays, auxes, sbus1, telem, storage>;
         using telemetry = telem;
         using polars = Devices::polars;
         using tp = void;

@@ -3,6 +3,7 @@ ToDo
 
 Prio 0
 ------
+* channel-update: periodic instead of crsf-triggered, because CRSF isn't the one-and-only input anymore
 * make dma, timer, usart summary with hw-connections
 * SBus, IBus, Hott-Input (together with CRSF-config)
 * ESCape32-Ascii: realize config-protocol

@@ -15,7 +15,7 @@
 #include "rc/rc.h"
 
 template<uint8_t N, typename Config, typename MCU = DefaultMcu>
-struct IBusInput {
+struct SBusInput {
     using clock = Config::clock;
     using systemTimer = Config::systemTimer;
     using debug = Config::debug;
@@ -26,7 +26,7 @@ struct IBusInput {
     struct UartConfig {
         using Clock = clock;
         using ValueType = uint8_t;
-        static inline constexpr size_t size = 34; // buffer size 32 + X
+        static inline constexpr size_t size = 27; // 25 + X buffer size
         static inline constexpr size_t minSize = 4; // receive size
         using DmaChannelWrite = void;
         using DmaChannelRead = dmaChRead;
@@ -45,7 +45,7 @@ struct IBusInput {
     static inline constexpr uint8_t af = Mcu::Stm::AlternateFunctions::mapper_v<pin, uart, Mcu::Stm::AlternateFunctions::TX>;
 
     static inline void init() {
-        IO::outl<debug>("# IBus init");
+        IO::outl<debug>("# SBus init");
         __disable_irq();
         mState = State::Init;
         mErrorCount = 0;
@@ -53,18 +53,20 @@ struct IBusInput {
         mActive = true;
         uart::init();
         uart::template txEnable<false>();
-        uart::baud(115'200);
+        uart::baud(100'000);
         uart::template halfDuplex<true>();
-        dmaChRead::enable(false);
+        uart::parity(true);
+        uart::invert(true);
         __enable_irq();
         for(auto& v: mChannels) {
             v = 992;
         }
+        mFlagsAndSwitches = 0;
         pin::afunction(af);
         pin::template pullup<true>();
     }
     static inline void reset() {
-        IO::outl<debug>("# IBus reset");
+        IO::outl<debug>("# SBus reset");
         __disable_irq();
         mActive = false;
         dmaChRead::enable(false);
@@ -120,9 +122,11 @@ struct IBusInput {
     static inline void onIdle(const auto f) {
         if (mActive) {
             uart::onIdle([&]{
-                f();
                 uart::rxClear();
                 dmaChRead::count(UartConfig::size);
+                uart::onParityGood([&]{
+                    f();
+                });
             });
         }
     }
@@ -133,84 +137,33 @@ struct IBusInput {
         return mErrorCount;
     }
     private:
-    static inline constexpr uint16_t ibmax = 2011;
-    static inline constexpr uint16_t ibmin = 988;
-    static inline constexpr uint16_t sbmax = 1812;
-    static inline constexpr uint16_t sbmin = 172;
-
-    static inline uint16_t ibus2sbus(const uint16_t ib) {
-        const int ic = std::clamp(ib, ibmin, ibmax);
-        const int sb = ((uint32_t)(ic - ibmin) * (sbmax - sbmin)) / (ibmax - ibmin) + sbmin;
-        return std::clamp(sb, 172, 1812);
-    }
-
-    struct CheckSum final {
-        inline uint8_t operator+=(const uint8_t b) {
-            mSum -= b;
-            return b;
-        }
-        inline uint8_t highByte() const {
-            return mSum >> 8;
-        }
-        inline uint8_t lowByte() const {
-            return mSum;
-        }
-        inline void highByte(const uint8_t hb) {
-            mH = hb;
-        }
-        inline void lowByte(const uint8_t lb){
-            mL = lb;
-        }
-        inline explicit operator bool() const {
-            return (lowByte() == mL) && (highByte() == mH);
-        }
-    private:
-        uint8_t mH{};
-        uint8_t mL{};
-        uint16_t mSum = std::numeric_limits<uint16_t>::max();
-    };
-
-    static inline void decode(const uint8_t ch) {
-        const volatile uint8_t* const data = uart::readBuffer();
-        if (ch < 14) {
-            const uint8_t h = data[ch * 2 + 1 + 2] & 0x0f;
-            const uint8_t l = data[ch * 2 + 2];
-            const uint16_t  v = (uint16_t(h) << 8) + uint8_t(l);
-            mChannels[ch] = ibus2sbus(v);
-        }
-        else if (ch < 18) {
-            const uint8_t h1 = data[6 * (ch - 14) + 1 + 2] & 0xf0;
-            const uint8_t h2 = data[6 * (ch - 14) + 3 + 2] & 0xf0;
-            const uint8_t h3 = data[6 * (ch - 14) + 5 + 2] & 0xf0;
-            const uint16_t v = (uint8_t(h1) >> 4) + uint8_t(h2) + (uint16_t(h3) << 4);
-            mChannels[ch] = ibus2sbus(v);
-        }
-    }
 
     static inline void readReply() {
-        const volatile uint8_t* const data = uart::readBuffer();
-        uint8_t i = 0;
-        CheckSum cs;
-
-        if ((cs += data[i++]) != 0x20) return;
-        if ((cs += data[i++]) != 0x40) return;
-
-        for(uint8_t k = 0; k < 28; ++k) {
-            cs += data[i++];
-        }
-        cs.lowByte(data[i++]);
-        cs.highByte(data[i++]);
-        if (cs) {
-            for(uint8_t k = 0; k < 18; ++k) {
-                decode(k);
-            }
-        }
-        else {
-            ++mErrorCount;
-        }
+        const volatile uint8_t* const buf = uart::readBuffer();
+        if (buf[0] != 0x0f) return;
+        if (buf[24] != 0x00) return;
+        const volatile uint8_t* const mData = buf + 1;
+        mChannels[0]  = (uint16_t) (((mData[0]    | mData[1] << 8))                     & 0x07FF);
+        mChannels[1]  = (uint16_t) ((mData[1]>>3  | mData[2] <<5)                     & 0x07FF);
+        mChannels[2]  = (uint16_t) ((mData[2]>>6  | mData[3] <<2 |mData[4]<<10)  	 & 0x07FF);
+        mChannels[3]  = (uint16_t) ((mData[4]>>1  | mData[5] <<7)                     & 0x07FF);
+        mChannels[4]  = (uint16_t) ((mData[5]>>4  | mData[6] <<4)                     & 0x07FF);
+        mChannels[5]  = (uint16_t) ((mData[6]>>7  | mData[7] <<1 |mData[8]<<9)   	 & 0x07FF);
+        mChannels[6]  = (uint16_t) ((mData[8]>>2  | mData[9] <<6)                     & 0x07FF);
+        mChannels[7]  = (uint16_t) ((mData[9]>>5  | mData[10]<<3)                     & 0x07FF);
+        mChannels[8]  = (uint16_t) ((mData[11]    | mData[12]<<8)                     & 0x07FF);
+        mChannels[9]  = (uint16_t) ((mData[12]>>3 | mData[13]<<5)                     & 0x07FF);
+        mChannels[10] = (uint16_t) ((mData[13]>>6 | mData[14]<<2 |mData[15]<<10) 	 & 0x07FF);
+        mChannels[11] = (uint16_t) ((mData[15]>>1 | mData[16]<<7)                     & 0x07FF);
+        mChannels[12] = (uint16_t) ((mData[16]>>4 | mData[17]<<4)                     & 0x07FF);
+        mChannels[13] = (uint16_t) ((mData[17]>>7 | mData[18]<<1 |mData[19]<<9)  	 & 0x07FF);
+        mChannels[14] = (uint16_t) ((mData[19]>>2 | mData[20]<<6)                     & 0x07FF);
+        mChannels[15] = (uint16_t) ((mData[20]>>5 | mData[21]<<3)                     & 0x07FF);
+        mFlagsAndSwitches = mData[22] & 0x0f;
     }
     static inline volatile bool mActive = false;
-    static inline std::array<uint16_t, 18> mChannels; // sbus
+    static inline std::array<uint16_t, 16> mChannels;
+    static inline uint8_t mFlagsAndSwitches = 0;
     static inline uint16_t mErrorCount = 0;
     static inline volatile Event mEvent = Event::None;
     static inline volatile State mState = State::Init;
