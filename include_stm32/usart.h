@@ -266,7 +266,7 @@ namespace Mcu::Stm {
                                        Uarts::Properties<N>::dmamux_tx_src << DMAMUX_CxCR_DMAREQ_ID_Pos);
                             // dmaChWrite::enable(true);
                         }
-                        else {
+                        if constexpr(std::is_same_v<dmaChRead, void> && std::is_same_v<dmaChWrite, void>) {
                             static_assert(false);
                         }
                     }
@@ -333,6 +333,15 @@ namespace Mcu::Stm {
                     if (mcuUart->ISR & USART_ISR_IDLE) {
                         mcuUart->ICR = USART_ICR_IDLECF;
                         f();
+                    }
+                }
+                static inline void onIdleWithDma(const auto f) requires(!std::is_same_v<dmaChRead, void> && std::is_same_v<dmaChWrite, void>) {
+                    if (mcuUart->ISR & USART_ISR_IDLE) {
+                        mcuUart->ICR = USART_ICR_IDLECF;
+                        if (const uint16_t nRead = (size - dmaChRead::mcuDmaChannel->CNDTR); nRead >= minSize) {
+                            mCount = nRead;
+                            f();
+                        }
                     }
                 }
                 static inline void onIdleWithDma(const auto f) requires(std::is_same_v<dmaChRead, dmaChWrite>) {
@@ -436,13 +445,13 @@ namespace Mcu::Stm {
                 static inline void isr() requires(useRxToIsr || useIdleIsr) {
                     auto reprogDma = []{
                         if constexpr(std::is_same_v<dmaChRead, dmaChWrite>) {
-                            if (const uint16_t nRead = (size - dmaChRead::mcuDmaChannel->CNDTR); nRead > minSize) {
+                            if (const uint16_t nRead = (size - dmaChRead::mcuDmaChannel->CNDTR); nRead >= minSize) {
                                 mCount = nRead;
                                 mBufferHasData = true;
                             }
                         }
                         else {
-                            if (const uint16_t nRead = (size - dmaChRead::mcuDmaChannel->CNDTR); nRead > minSize) {
+                            if (const uint16_t nRead = (size - dmaChRead::mcuDmaChannel->CNDTR); nRead >= minSize) {
                                 mCount = nRead;
                                 dmaChRead::reenable([&]{
                                     if (dmaChRead::mcuDmaChannel->CMAR == (uint32_t)&mReadBuffer1[0]) {

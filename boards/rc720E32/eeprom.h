@@ -34,7 +34,7 @@ struct EEProm {
     uint16_t amp2_ch = 2;
     uint16_t phi2_ch = 3;
 
-    uint16_t crsf_hd_mode = 0;
+    uint16_t crsf_hd_mode = 6;
     uint16_t crsf_fd_aux_mode = 0;
 
     std::array<uint16_t, 2> out_mode_srv{2, 2};

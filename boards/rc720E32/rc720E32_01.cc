@@ -80,6 +80,7 @@ struct Relays {
     using sbus = devs::sbus1;
 
     using pulse_in = devs::pulse_in;
+    using ibus_in = devs::ibus_in;
 
     static inline void set(const uint8_t r) {
         IO::outl<debug>("# relay ", r);
@@ -130,10 +131,18 @@ struct Relays {
             rptr->positive(true, false);
         }
             break;
-        case 6: // none
+        case 6: // ibus
+            mRelay = nullptr;
+            mRelay = std::make_unique<Relay<ibus_in>>();
+            break;
+        case 7: // sbus
+            mRelay = nullptr;
+            break;
+        case 8: // sumdv3
             mRelay = nullptr;
             break;
         default:
+            mRelay = nullptr;
             break;
         }
     }
@@ -142,7 +151,14 @@ struct Relays {
             mRelay->setChannel(ch, v);
         }
     }
-
+    static inline uint16_t value(const uint8_t ch) {
+        if (mRelay) {
+            return mRelay->value(ch);
+        }
+        else {
+            return 992;
+        }
+    }
     static inline constexpr void forwardPacket(const std::byte type, const std::array<uint8_t, 64>& data, const uint16_t length) {
         if (mRelay) {
             mRelay->forwardPacket(type, data, length);
@@ -377,10 +393,7 @@ struct GFSM {
     using polar2 = devs::polar2;
 
     using pulse_in = devs::pulse_in;
-
-    // using tp0 = devs::tp0;
-    using tp1 = devs::tp1;
-    // using tp2 = devs::tp2;
+    using ibus_in = devs::ibus_in;
 
     static inline void init() {
         devs::init();
@@ -396,6 +409,7 @@ struct GFSM {
     }
 
     static inline void periodic() {
+        devs::tp1::set();
         debug::periodic();
         crsf_in::periodic(); // status: new channels?
         Servos::periodic();
@@ -404,6 +418,7 @@ struct GFSM {
         Auxes::periodic();
 
         crsfBuffer::periodic();
+        devs::tp1::reset();
     }
 
     static inline constexpr External::Tick<systemTimer> initTicks{500ms};
@@ -448,9 +463,9 @@ struct GFSM {
             mStateTick.on(debugTicks, []{
                 // IO::outl<debug>("_end:", &_end, " _ebss:", &_ebss, " heap:", heap);
                 IO::outl<debug>("ch0: ", crsf_in_pa::values()[0], " phi: ", polar1::phi(), " amp: ", polar1::amp(), " a: ", Servos::actualPos(0), " t: ", Servos::turns(0));
-                IO::out<debug>("pulse: ");
+                IO::out<debug>("ibus: ec: ", ibus_in::errorCount(), " uc: ", ibus_in::uart::readCount(), " d0: ", ibus_in::uart::readBuffer()[0]);
                 for(uint8_t i = 0; i < 7; ++i) {
-                    IO::out<debug>(" ", pulse_in::value(i));
+                    IO::out<debug>(" ", ibus_in::value(i));
                 }
                 IO::outl<debug>(" ");
             });
@@ -612,6 +627,16 @@ void USART2_LPUART2_IRQHandler(){
             // devs::tp3::reset();
         });
     }
+    using ibus_in = devs::ibus_in;
+    if constexpr(ibus_in::uart::number == 102) {
+        static_assert(ibus_in::uart::number == 102);
+        ibus_in::onIdle([]{
+            // devs::tp3::set();
+            ibus_in::event(ibus_in::Event::ReceiveComplete);
+            // devs::tp3::reset();
+        });
+    }
+
     // sbus1 / relay1 use same LPUART(2), be sure to clear all flags
     relay::uart::mcuUart->ICR = -1;
 }

@@ -234,7 +234,7 @@ private:
         params_t p;
         addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
         uint8_t parent = addParent(p, Param_t{0, PType::Folder, "Channels"});
-        addNode(p, Param_t{parent, PType::Sel,  "Stream", "CRSF;Pulse", &eeprom.input_stream, 0, 1, [](const uint16_t s){mapper::stream(s); return true;}});
+        addNode(p, Param_t{parent, PType::Sel,  "Stream", "Main/CRSF;Alternative;Aux", &eeprom.input_stream, 0, 2, [](const uint16_t s){mapper::stream(s); return true;}});
         addNode(p, Param_t{parent, PType::U16,  "Schottel 1: f/b", nullptr, &eeprom.channels[0].first, 1, 16, [](const uint16_t){return true;}});
         addNode(p, Param_t{parent, PType::U16,  "Schottel 1: l/r", nullptr, &eeprom.channels[0].second, 1, 16, [](const uint16_t){return true;}});
         addNode(p, Param_t{parent, PType::U16,  "Schottel 2: f/b", nullptr, &eeprom.channels[1].first, 1, 16, [](const uint16_t){return true;}});
@@ -265,7 +265,7 @@ private:
         addNode(p, Param_t{parent, PType::U16,  "CRSF Address", nullptr, &eeprom.address, 192, 207, [](const uint16_t a){updateName(mName); responder::address(std::byte(a)); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Mode (not persistant)", "Full;Fwd Only", nullptr, 0, 1, [](const uint16_t){return false;}});
         parent = addParent(p, Param_t{0, PType::Folder, "Special"});
-        addNode(p, Param_t{parent, PType::Sel, "Crsf-HD/SBus", "SBus;Crsf;SBus2;CPPM/N;CPPM/P;CombinedPWMChannels/P;None", &eeprom.crsf_hd_mode, 0, 2, [](const uint16_t r){relays::set(r); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Crsf-HD/SBus", "SBus/Out;Crsf;SBus2/Master;CPPM/N;CPPM/P;CombinedPWMChannels/P;IBus/In;SBus/In;SumDV3/In;None", &eeprom.crsf_hd_mode, 0, 9, [](const uint16_t r){relays::set(r); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Crsf-FD/Aux", "Crsf;GPS;None", &eeprom.crsf_fd_aux_mode, 0, 1, [](const uint16_t a){
                                auxes::set(a);
                                return true;}});

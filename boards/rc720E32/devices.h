@@ -41,6 +41,7 @@
 #include "messagebuffer.h"
 #include "pulse_input.h"
 #include "inputmapper.h"
+#include "ibus.h"
 
 struct SW01;
 
@@ -295,13 +296,26 @@ struct Devices<SW01, Config, MCU> {
     using relay1 = PacketRelay<102, true, sbus_crsf_pin, crsf_in, crsfBuffer, relay1DmaChannel, systemTimer, clock, RelayDebug, MCU>;
     // using relay1 = PacketRelay<102, true, sbus_crsf_pin, crsf_in, crsf_in, relay1DmaChannel, systemTimer, clock, RelayDebug, MCU>;
 
+    struct IBusConfig;
+    using ibus_in = IBus<102, IBusConfig, MCU>;
+
     using pulse_pin = Mcu::Stm::Pin<gpiob, 6, MCU>;
     struct PulseConfig;
     using pulse_in = Pulse::CppmIn<4, PulseConfig, MCU>; // TIM4-CH1
 
+    struct IBusConfig {
+        using pin = sbus_crsf_pin;
+        using clock = Devices::clock;
+        using systemTimer = Devices::systemTimer;
+        using dmaChRead = relay1DmaChannel;
+        using debug = Devices::debug;
+        using tp = tp3;
+    };
+
     struct InputConfig {
         using stream1 = crsf_in::adapter;
-        using stream2 = pulse_in;
+        using stream2 = Config::relays; // relay connector
+        using stream3 = void; // aux
     };
 
     struct PulseConfig {

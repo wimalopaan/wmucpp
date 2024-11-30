@@ -26,6 +26,7 @@ struct IRelay : IDevice {
     virtual void forwardPacket(const std::byte type, const std::array<uint8_t, 64>& data, const uint16_t length) = 0;
     virtual void command(const std::array<uint8_t, 64>& data, const uint16_t length) = 0;
     virtual void setChannel(const uint8_t ch, const uint16_t v) = 0;
+    virtual uint16_t value(const uint8_t ch) = 0;
     virtual void update() = 0;
     virtual ~IRelay(){}
 };
@@ -41,6 +42,10 @@ concept hasPing = requires(T) {
 template<typename T>
 concept hasSet = requires(T) {
     T::set(0, 0);
+};
+template<typename T>
+concept hasValue = requires(T) {
+    T::value(0);
 };
 template<typename T>
 concept hasPositive = requires(T) {
@@ -87,6 +92,14 @@ struct Relay : IRelay {
     virtual void setChannel(const uint8_t ch, const uint16_t v) {
         if constexpr(hasSet<R>) {
             R::set(ch, v);
+        }
+    }
+    virtual uint16_t value(const uint8_t ch) {
+        if constexpr(hasValue<R>) {
+            return R::value(ch);
+        }
+        else {
+            return 992;
         }
     }
     virtual void update() {

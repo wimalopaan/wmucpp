@@ -47,6 +47,7 @@ boards/rc720E32/devices.h
 boards/rc720E32/eeprom.h
 boards/rc720E32/fastmath.h
 boards/rc720E32/fbservo.h
+boards/rc720E32/ibus.h
 boards/rc720E32/inputmapper.h
 boards/rc720E32/iservo.h
 boards/rc720E32/link_g0b1.ld
