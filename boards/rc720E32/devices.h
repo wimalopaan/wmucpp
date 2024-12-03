@@ -383,7 +383,7 @@ struct Devices<SW01, Config, MCU> {
     };
     struct SBus1Config {
         using clock = Devices::clock;
-        using debug = Devices::debug;
+        using debug = void;
         using dmaChRW = sbus1DmaChannel;
         using systemTimer = Devices::systemTimer;
         using adapter = crsf_in::adapter;
@@ -397,7 +397,7 @@ struct Devices<SW01, Config, MCU> {
         using timer = systemTimer;
         using clk = clock;
         using tp = void;
-        using dbg = debug;
+        using dbg = void;
         using storage = Devices::storage;
     };
     struct WS2Config {
@@ -407,7 +407,7 @@ struct Devices<SW01, Config, MCU> {
         using timer = systemTimer;
         using clk = clock;
         using tp = void;
-        using dbg = debug;
+        using dbg = void;
         using storage = Devices::storage;
     };
     struct SerialConfig1 {
@@ -415,7 +415,7 @@ struct Devices<SW01, Config, MCU> {
         using systemTimer = Devices::systemTimer;
         using dmaChRW = esc1DmaChannel;
         using pin = esc1_pin;
-        using debug = Devices::debug;
+        using debug = void;
         using tp = void;
     };
     struct SerialConfig2 {
@@ -423,11 +423,11 @@ struct Devices<SW01, Config, MCU> {
         using systemTimer = Devices::systemTimer;
         using dmaChRW = esc2DmaChannel;
         using pin = esc2_pin_1;
-        using debug = Devices::debug;
+        using debug = void;
         using tp = void;
     };
     struct RelayDebug {
-        using debug = Devices::debug;
+        using debug = void;
         using tp = void;
     };
 
@@ -450,6 +450,7 @@ struct Devices<SW01, Config, MCU> {
 
         crsf_in::init();
         crsf_in::baud(420'000);
+        // crsf_in::baud(921'600); // hack: for ELRS buddy
         crsftx::afunction(1);
         crsftx::template pullup<true>();
         crsfrx::afunction(1);

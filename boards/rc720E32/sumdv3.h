@@ -191,9 +191,9 @@ struct SumDV3Input {
             const uint8_t crcL = data[i++];
 
             const uint8_t fcode = data[i - 6];
-            const uint8_t reserved = data[i - 5];
-            const uint8_t command = data[i - 4];
-            const uint8_t subcmd = data[i - 3];
+            [[maybe_unused]] const uint8_t reserved = data[i - 5];
+            [[maybe_unused]] const uint8_t command = data[i - 4];
+            [[maybe_unused]] const uint8_t subcmd = data[i - 3];
 
             tp::set();
             if (cs == ((uint16_t(crcH) << 8) | crcL)) {

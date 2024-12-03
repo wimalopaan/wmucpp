@@ -70,6 +70,7 @@ namespace RC {
                 inline static constexpr std::byte ParamRead{0x2c};
                 inline static constexpr std::byte ParamWrite{0x2d};
                 inline static constexpr std::byte Command{0x32};
+                inline static constexpr std::byte RadioID{0x3a};
 
                 inline static constexpr std::byte Custom1{0x40}; // pack type / instance-nr in payload
                 inline static constexpr std::byte Custom2{0x41}; // pack type / instance-nr in payload
@@ -455,6 +456,21 @@ namespace RC {
                                 mExtendedDestination = RC::Protokoll::Crsf::Address::Handset;
                             }
                         }
+                        static inline void sendRadioID() {
+                            if (!mEnableReply) return;
+                            using namespace etl::literals;
+                            IO::outl<debug>("# send RadioID adr: ", (uint8_t)mExtendedDestination, " src: ", (uint8_t)mExtendedSource);
+                            mReply.clear();
+                            mReply.push_back(mExtendedDestination);
+                            mReply.push_back(mExtendedSource);
+                            etl::serializeBE(uint8_t{0x10}, mReply); // subtype
+                            uint32_t pint = 20 * 10'000; //20ms
+                            etl::serializeBE(pint, mReply);
+                            uint32_t pshift= 30030;
+                            etl::serializeBE(pshift, mReply);
+                            Out::data(RC::Protokoll::Crsf::Type::RadioID, mReply);
+                        }
+
                         static inline void sendDeviceInfo() {
                             if (!mEnableReply) return;
                             using namespace etl::literals;
@@ -994,6 +1010,28 @@ namespace RC {
                     }
                     static inline uint16_t packages() {
                         return mPackagesCounter;
+                    }
+                    template<bool Reset = false>
+                    static inline uint16_t linkPackages() {
+                        if constexpr(Reset) {
+                            const auto v = mLinkPackagesCounter;
+                            mLinkPackagesCounter = 0;
+                            return v;
+                        }
+                        else {
+                            return mLinkPackagesCounter;
+                        }
+                    }
+                    template<bool Reset = false>
+                    static inline uint16_t channelPackages() {
+                        if constexpr(Reset) {
+                            const auto v = mChannelsPackagesCounter;
+                            mChannelsPackagesCounter = 0;
+                            return v;
+                        }
+                        else {
+                            return mChannelsPackagesCounter;
+                        }
                     }
                     static inline uint16_t getBytes() {
                         return mBytesCounter;

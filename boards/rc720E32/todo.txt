@@ -1,8 +1,15 @@
 ToDo
 ====
 
+Hardware
+--------
+* bridge 1:
+* bridge 2:
+
 Prio 0
 ------
+* seperate channel-update from crsf-relay
+
 * make dma, timer, usart summary with hw-connections
 * ESCape32-Ascii: realize config-protocol
 * V/ESC: half-duplex protocol, adaption to dma-pattern
@@ -10,6 +17,7 @@ Prio 0
 Prio 1
 ------
 * GPS: adaption of protocol-parser to dma-pattern
+** maybe F9P support: yaw from GPS (moving baseline)
 
 Prio 2
 ------
@@ -20,10 +28,18 @@ Prio 2
 Prio 3
 ------
 * I2C
-** interface to e.g. GY-271
+** interface to e.g. GY-271, BMM150
+* disable/enable Schottel-computations via menu
 
 Done:
 ------
+* baudrate switch
+* CRSF direct-mode: use ELRSBuddy without TX(RX) <-> RX
+** wait for link-stats packages
+** if no link stats, switch to direct mode (spontaneous 0x29 info messages and 0x2B parameter)
+** start-byte: 0xEA
+** dest: 0xEA (handset)
+** src: 0xEE (TX-module)
 * SBus, IBus, Hott-Input (together with CRSF-config)
 * channel-update: periodic instead of crsf-triggered, because CRSF isn't the one-and-only input anymore
 * make tunneling crsf packets valid extended packets (modify also LUA)
