@@ -589,7 +589,7 @@ struct GFSM {
                 break;
             case State::RunConnected:
                 IO::outl<debug>("# Run con");
-                crsf_in_responder::address(std::byte{Storage::eeprom.address});
+                crsf_in_responder::address(std::byte(Storage::eeprom.address));
                 led1::event(led1::Event::Slow);
                 led2::event(led2::Event::Off);
                 adc::start();
