@@ -468,7 +468,6 @@ struct GFSM {
             else {
                 event(Event::ConnectionLost);
             }
-
         });
 
         ++mStateTick;
@@ -558,7 +557,7 @@ struct GFSM {
                 crsf_in_responder::setExtendedDestination(RC::Protokoll::Crsf::Address::Handset);
                 crsf_in_responder::address(RC::Protokoll::Crsf::Address::TX);
                 crsf_in_responder::sendRadioID();
-                IO::outl<debug>("send Radio ID");
+                // IO::outl<debug>("# send Radio ID");
             });
             break;
         }
@@ -590,6 +589,7 @@ struct GFSM {
                 break;
             case State::RunConnected:
                 IO::outl<debug>("# Run con");
+                crsf_in_responder::address(std::byte{Storage::eeprom.address});
                 led1::event(led1::Event::Slow);
                 led2::event(led2::Event::Off);
                 adc::start();

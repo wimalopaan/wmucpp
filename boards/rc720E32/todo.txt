@@ -8,8 +8,6 @@ Hardware
 
 Prio 0
 ------
-* seperate channel-update from crsf-relay
-
 * make dma, timer, usart summary with hw-connections
 * ESCape32-Ascii: realize config-protocol
 * V/ESC: half-duplex protocol, adaption to dma-pattern
@@ -33,6 +31,7 @@ Prio 3
 
 Done:
 ------
+* seperate channel-update from crsf-relay
 * baudrate switch
 * CRSF direct-mode: use ELRSBuddy without TX(RX) <-> RX
 ** wait for link-stats packages
