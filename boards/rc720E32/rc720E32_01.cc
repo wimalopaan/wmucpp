@@ -205,6 +205,7 @@ struct EscOutputs {
     using esc2_pwm = devs::esc2_pwm;
     using esc32_1 = devs::esc32_1;
     using esc32_2 = devs::esc32_2;
+    using esc32ascii_1 = devs::esc32ascii_1;
 
     template<uint8_t N>
     static inline void esc(const uint8_t e) {
@@ -212,19 +213,25 @@ struct EscOutputs {
         static_assert(N <= 1);
         using esc_pwm_t = std::conditional_t<(N == 0), Esc<esc1_pwm>, Esc<esc2_pwm>>;
         using esc_esc32_t = std::conditional_t<(N == 0), Esc<esc32_1>, Esc<esc32_2>>;
+        // using esc_esc32ascii_t = std::conditional_t<(N == 0), Esc<esc32ascii_1>, Esc<esc32ascii_2>>;
+        using esc_esc32ascii_t = Esc<esc32ascii_1>;
         switch(e) {
         case 0: // PWM
             escs[N] = nullptr;
             escs[N] = std::make_unique<esc_pwm_t>();
             break;
-        case 1: // Serial
+        case 1: // Esc32/Serial
             escs[N] = nullptr;
             escs[N] = std::make_unique<esc_esc32_t>();
             break;
-        case 2: // Vesc
+        case 2: // Esc32/Ascii
+            escs[N] = nullptr;
+            escs[N] = std::make_unique<esc_esc32ascii_t>();
+            break;
+        case 3: // V/Esc
             escs[N] = nullptr;
             break;
-        case 3: // None
+        case 4: // None
             escs[N] = nullptr;
             break;
         default:
@@ -530,14 +537,14 @@ struct GFSM {
             });
             mStateTick.on(debugTicks, []{
                 // IO::outl<debug>("_end:", &_end, " _ebss:", &_ebss, " heap:", heap);
-                // IO::outl<debug>("ch0: ", crsf_in_pa::values()[0], " phi: ", polar1::phi(), " amp: ", polar1::amp(), " a: ", Servos::actualPos(0), " t: ", Servos::turns(0));
+                IO::outl<debug>("ch0: ", crsf_in_pa::values()[0], " phi: ", polar1::phi(), " amp: ", polar1::amp(), " a: ", Servos::actualPos(0), " t: ", Servos::turns(0));
                 // IO::out<debug>("ibus: ec: ", ibus_in::errorCount(), " uc: ", ibus_in::uart::readCount(), " d0: ", ibus_in::uart::readBuffer()[0]);
                 // for(uint8_t i = 0; i < 7; ++i) {
                 //     IO::out<debug>(" ", ibus_in::value(i));
                 // }
                 // IO::outl<debug>(" ");
                 // IO::outl<debug>(" sumdv3: cs: ");
-                IO::outl<debug>(" n p: ", crsf_in_pa::packages(), " n l:", crsf_in_pa::linkPackages());
+                // IO::outl<debug>(" n p: ", crsf_in_pa::packages(), " n l:", crsf_in_pa::linkPackages());
             });
             break;
         case State::DirectMode:
@@ -727,15 +734,25 @@ void DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQHandler() {
     });
 }
 void USART2_LPUART2_IRQHandler(){
+    using esc32_1 = devs::esc32_1;
+    static_assert(esc32_1::uart::number == 2);
+    esc32_1::onTransferComplete([]{
+        esc32_1::rxEnable();
+    });
+    using esc32ascii_1 = devs::esc32ascii_1;
+    static_assert(esc32ascii_1::uart::number == 2);
+    esc32ascii_1::onTransferComplete([]{
+        esc32ascii_1::rxEnable();
+    });
+    esc32ascii_1::onIdleWithDma([]{
+        esc32ascii_1::event(esc32ascii_1::Event::ReceiveComplete);
+    });
+    esc32_1::uart::mcuUart->ICR = -1;
+
     using sbus1 = devs::sbus1;
     static_assert(sbus1::uart::number == 102);
     sbus1::onTransferComplete([]{
         sbus1::event(sbus1::Event::SendComplete);
-    });
-    using esc32_1 = devs::esc32_1;
-    static_assert(esc32_1::uart::number == 2);
-    esc32_1::uart::onTransferComplete([]{
-        esc32_1::rxEnable();
     });
     using relay = devs::relay1;
     if constexpr(relay::uart::number == 102) {
@@ -773,9 +790,9 @@ void USART2_LPUART2_IRQHandler(){
     if constexpr(sumdv3_in::uart::number == 102) {
         static_assert(sumdv3_in::uart::number == 102);
         sumdv3_in::onIdle([]{
-            devs::tp3::set();
+            // devs::tp3::set();
             sumdv3_in::event(sumdv3_in::Event::ReceiveComplete);
-            devs::tp3::reset();
+            // devs::tp3::reset();
         });
     }
     // sbus1 / relay1 / ibus / sbus_in / sumdv3 use same LPUART(2), be sure to clear all flags

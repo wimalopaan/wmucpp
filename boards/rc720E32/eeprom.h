@@ -38,7 +38,7 @@ struct EEProm {
     uint16_t crsf_fd_aux_mode = 0;
 
     std::array<uint16_t, 2> out_mode_srv{2, 2};
-    std::array<uint16_t, 2> out_mode_esc{0, 0};
+    std::array<uint16_t, 2> out_mode_esc{2, 0};
     std::array<uint16_t, 2> tlm_mode_esc{0, 0};
 
     uint16_t prerun_check = 1;

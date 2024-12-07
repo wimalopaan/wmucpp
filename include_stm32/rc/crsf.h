@@ -163,10 +163,10 @@ namespace RC {
                 Type mType = Type::U8;
                 void hide(const bool h) {
                     if (h) {
-                        mType |= Type::Hidden;
+                        mType = Type(mType | Type::Hidden);
                     }
                     else {
-                        mType &= ~Type::Hidden;
+                        mType = Type(mType & ~Type::Hidden);
                     }
                 }
                 const char* mName{};

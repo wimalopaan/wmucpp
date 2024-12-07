@@ -57,6 +57,282 @@ namespace RC::VESC {
     };
 
     namespace Master {
+        namespace V3 {
+            template<uint8_t N, typename Config, typename Timer, typename MCU = DefaultMcu>
+            struct ProtocolAdapter {
+
+                using CB = Config::callback;
+
+                enum class State : uint8_t { Idle, WaitForResponse, Length, Type, Data, CrcH, CrcL, End };
+
+                static inline void startWait(State s) {
+                    mState = s;
+                }
+                static inline void stopWait() {
+                    mState = State::Idle;
+                }
+
+                static inline void process(const std::byte b) {
+                    static CRC16 csum;
+                    ++mBytes;
+                    switch (mState) {
+                    case State::Idle:
+                        break;
+                    case State::WaitForResponse:
+                        if (b == 0x02_B) {
+                            mState = State::Length;
+                        }
+                        else {
+                            mState = State::Idle;
+                        }
+                        break;
+                    case State::Length:
+                        mLength = (uint8_t)b;
+                        csum.reset();
+                        mState = State::Type;
+                        break;
+                    case State::Type:
+                        --mLength;
+                        csum += b;
+                        mType = CommPacketId((uint8_t)b);
+                        mState = State::Data;
+                        mDataCounter = 0;
+                        break;
+                    case State::Data:
+                        csum += b;
+                        mData[mDataCounter++] = b;
+                        if (mDataCounter == mLength) {
+                            mState = State::CrcH;
+                        }
+                        break;
+                    case State::CrcH:
+                        mCRC = ((uint16_t)b) << 8;
+                        mState = State::CrcL;
+                        break;
+                    case State::CrcL:
+                        mCRC |= (uint8_t)b;
+                        if ((uint16_t)csum == mCRC) {
+                            decode();
+                            CB::update();
+                            ++mPackages;
+                        }
+                        mState = State::End;
+                        break;
+                    case State::End:
+                        mState = State::Idle;
+                        break;
+                    }
+                }
+
+                static inline uint16_t mPackages{};
+                static inline uint16_t mBytes{};
+            // private:
+                static inline void decode() {
+                    if (mType == CommPacketId::COMM_FW_VERSION) {
+                        uint16_t k = 0;
+                        mVersionMajor = (uint8_t)mData[k++];
+                        mVersionMinor = (uint8_t)mData[k++];
+                        for(uint16_t i = 0; i < mName.size(); ++i) {
+                            mName[i] = (char)mData[k++];
+                            if (mName[i] == '\0')
+                                break;
+                        }
+                        k += 12; // UUID
+                        k++; // pairing
+                        mFWTestVersionNumber = (uint8_t)mData[k++];
+                        mHWType = (uint8_t)mData[k++]; // enum?
+
+                        CB::setFWInfo(mVersionMajor, mVersionMinor, &mName[0]);
+                    }
+                    else if (mType == CommPacketId::COMM_GET_VALUES) {
+                        mTemperature = ((int32_t)mData[0]) << 8;
+                        mTemperature |= ((int32_t)mData[1]);
+
+                        mTemperatureMotor = ((int32_t)mData[2]) << 8;
+                        mTemperatureMotor |= ((int32_t)mData[3]);
+
+                        mCurrent = ((int32_t)mData[4]) << 24;
+                        mCurrent |= ((int32_t)mData[5]) << 16;
+                        mCurrent |= ((int32_t)mData[6]) << 8;
+                        mCurrent |= ((int32_t)mData[7]);
+
+                        if (mCurrent < 0) {
+                            mCurrent = -mCurrent;
+                        }
+
+                        mCurrentIn = ((int32_t)mData[8]) << 24;
+                        mCurrentIn |= ((int32_t)mData[9]) << 16;
+                        mCurrentIn |= ((int32_t)mData[10]) << 8;
+                        mCurrentIn |= ((int32_t)mData[11]);
+
+                        if (mCurrentIn < 0) {
+                            mCurrentIn = -mCurrentIn;
+                        }
+
+                        mRPM = ((int32_t)mData[22]) << 24;
+                        mRPM |= ((int32_t)mData[23]) << 16;
+                        mRPM |= ((int32_t)mData[24]) << 8;
+                        mRPM |= ((int32_t)mData[25]);
+
+                        if (mRPM < 0) {
+                            mRPM = -mRPM;
+                        }
+
+                        mVoltage = ((int32_t)mData[26]) << 8;
+                        mVoltage |= ((int32_t)mData[27]);
+
+                        mConsumption = ((int32_t)mData[28]) << 24;
+                        mConsumption |= ((int32_t)mData[29]) << 16;
+                        mConsumption |= ((int32_t)mData[30]) << 8;
+                        mConsumption |= ((int32_t)mData[31]);
+
+                        mFault = (uint8_t)mData[52];
+                    }
+
+                }
+                static inline std::array<char, 256> mName;
+                static inline std::array<std::byte, 256> mData;
+                static inline uint8_t mLength{};
+                static inline CommPacketId mType{};
+                static inline uint16_t mCRC{};
+                static inline uint8_t mDataCounter;
+                static inline uint32_t mTemperature;
+                static inline uint32_t mTemperatureMotor;
+                static inline uint32_t mVoltage;
+                static inline int32_t mCurrent;
+                static inline int32_t mCurrentIn;
+                static inline uint32_t mConsumption;
+                static inline int32_t mRPM;
+                static inline uint8_t mVersionMajor;
+                static inline uint8_t mVersionMinor;
+                static inline uint8_t mFWTestVersionNumber;
+                static inline uint8_t mHWType;
+                static inline uint8_t mFault;
+                static inline State mState{ State::Idle };
+            };
+
+            template<typename UART, typename Timer, typename MCU = DefaultMcu>
+            struct Fsm {
+                using uart = UART;
+                using pa_t = uart::pa_t;
+
+                enum class State : uint8_t { Version, GetValues, SendThrottle, WaitComplete, Wait };
+                static inline External::Tick<Timer> waitTicks{ 20ms };
+
+                static inline void periodic() {
+                    switch (mState) {
+                    case State::WaitComplete:
+                        if (uart::isIdle() && uart::isTxQueueEmpty()) {
+                            pa_t::startWait(pa_t::State::WaitForResponse);
+                            uart::clear();
+                            uart::template rxEnable<true>();
+                            mState = State::Wait;
+                        }
+                        break;
+                    default:
+                        break;
+                    }
+                }
+
+                static inline void ratePeriodic() {
+                    ++mStateTick;
+                    switch (mState) {
+                    case State::Version:
+                    {
+                        CRC16 cs;
+                        uart::template rxEnable<false>();
+                        uart::put(0x02_B);
+                        uart::put(0x01_B);
+                        cs += uart::put(std::byte(CommPacketId::COMM_FW_VERSION));
+                        uart::put(std::byte(((uint16_t)cs) >> 8));
+                        uart::put(std::byte(((uint16_t)cs)));
+                        uart::put(0x03_B);
+                        mNextState = State::SendThrottle;
+                        mState = State::WaitComplete;
+                    }
+                        break;
+                    case State::SendThrottle:
+                    {
+                        CRC16 cs;
+                        uart::template rxEnable<false>();
+                        uart::put(0x02_B);
+                        uart::put(0x05_B);
+                        cs += uart::put(std::byte(CommPacketId::COMM_SET_DUTY));
+                        cs += uart::put(std::byte(mThrottle >> 24));
+                        cs += uart::put(std::byte(mThrottle >> 16));
+                        cs += uart::put(std::byte(mThrottle >> 8));
+                        cs += uart::put(std::byte(mThrottle));
+                        uart::put(std::byte(((uint16_t)cs) >> 8));
+                        uart::put(std::byte(((uint16_t)cs)));
+                        uart::put(0x03_B);
+                        mNextState = State::GetValues;
+                        mState = State::WaitComplete;
+                    }
+                    break;
+                    case State::GetValues:
+                    {
+                        CRC16 cs;
+                        uart::template rxEnable<false>();
+                        uart::put(0x02_B);
+                        uart::put(0x01_B);
+                        cs += uart::put(std::byte(CommPacketId::COMM_GET_VALUES));
+                        uart::put(std::byte(((uint16_t)cs) >> 8));
+                        uart::put(std::byte(((uint16_t)cs)));
+                        uart::put(0x03_B);
+                        if (pa_t::mVersionMajor > 0) {
+                            mNextState = State::SendThrottle;
+                        }
+                        else {
+                            mNextState = State::Version;
+                        }
+                        mState = State::WaitComplete;
+                    }
+                    break;
+                    case State::Wait:
+                        mStateTick.on(waitTicks, [] {
+                            pa_t::stopWait();
+                            mState = mNextState;
+                            });
+                        break;
+                    default:
+                        break;
+                    }
+                }
+                // template<auto L, auto H>
+                // static inline void throttle(const etl::ranged<L, H> v) {
+                // }
+                static inline void throttle(const uint16_t sbus) {
+                    static constexpr int dead = 10;
+                    float diff = sbus - 992.0f;
+                    float v = 0;
+                    if (fabs(diff) < dead) {
+                        v = 0;
+                    }
+                    else {
+                        if (diff > 0) {
+                            v = (diff - dead) * 840.0f / (840.0f - dead);
+                        }
+                        else {
+                            v = (diff + dead) * 840.0f / (840.0f - dead);
+                        }
+                    }
+                    expMean.process(v);
+                    mThrottle = std::clamp(100'000.0f * (expMean.value() / 840.0f), -100'000.0f, 100'000.0f);
+                }
+                static inline void inertia(const float f) {
+                    expMean.factor(f);
+                }
+            private:
+                static inline Dsp::ExpMean<void> expMean{0.001};
+                static inline int32_t mThrottle{ 0 };
+                static inline uint8_t mBrake{ 0 };
+                static inline uint8_t mLed{ 0 };
+
+                static inline External::Tick<Timer> mStateTick;
+                static inline State mState{ State::SendThrottle };
+                static inline State mNextState{ mState };
+            };
+        }
         namespace V2 {
             template<uint8_t N, typename Config, typename Timer, typename MCU = DefaultMcu>
             struct ProtocolAdapter {

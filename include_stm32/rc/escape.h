@@ -12,9 +12,10 @@
 #include <chrono>
 
 #include "mcu/alternate.h"
-#include "byte.h"
 #include "etl/algorithm.h"
 #include "etl/ranged.h"
+#include "etl/event.h"
+#include "byte.h"
 #include "units.h"
 #include "tick.h"
 
@@ -59,9 +60,350 @@ namespace RC::ESCape {
 
     template<uint8_t N, typename Config, typename MCU = DefaultMcu>
     struct ConfigAscii {
+        using clock = Config::clock;
+        using systemTimer = Config::systemTimer;
+        using debug = Config::debug;
+        using dmaChRW = Config::dmaChRW;
+        using pin = Config::pin;
+        using tp = Config::tp;
 
+        struct UartConfig {
+            using Clock = clock;
+            using ValueType = uint8_t;
+            static inline constexpr size_t size = 1024; // send size, buffer size
+            static inline constexpr size_t minSize = 2;
+            using DmaChannelWrite = dmaChRW;
+            using DmaChannelRead = dmaChRW;
+            static inline constexpr bool useDmaTCIsr = false;
+            static inline constexpr bool useIdleIsr = true;
+            static inline constexpr bool useRxToIsr = false;
+            static inline constexpr uint16_t rxToCount = 0;
+            using Adapter = void;
+            using Debug = struct {
+                using tp = void;
+            };
+        };
+
+        using uart = Mcu::Stm::V2::Uart<N, UartConfig, MCU>;
+
+        static inline constexpr uint8_t af = Mcu::Stm::AlternateFunctions::mapper_v<pin, uart, Mcu::Stm::AlternateFunctions::TX>;
+
+        static inline void init() {
+            IO::outl<debug>("# ESC32Ascii init");
+            __disable_irq();
+            mState = State::Init;
+            mErrorCount = 0;
+            mEvent = Event::None;
+            mActive = true;
+            uart::init();
+            uart::template rxEnable<false>();
+            uart::baud(38'400);
+            uart::template halfDuplex<true>();
+            uart::template enableTCIsr<true>();
+            __enable_irq();
+            pin::afunction(af);
+            pin::template pullup<true>();
+        }
+        static inline void reset() {
+            IO::outl<debug>("# ESC32Ascii reset");
+            __disable_irq();
+            dmaChRW::enable(false);
+            uart::reset();
+            mActive = false;
+            __enable_irq();
+            pin::analog();
+        }
+
+        enum class State : uint8_t {Init, Music, Start, Show, Run, SendThrot, SendParam};
+        enum class Event : uint8_t {None, ReceiveComplete, OK, SendThrottle, SendParam};
+
+        static inline void event(const Event e) {
+            mEvent = e;
+        }
+        static inline void periodic() {
+            switch(mState) {
+            case State::Init:
+                break;
+            default:
+                if (mEvent.is(Event::ReceiveComplete)) {
+                    readReply();
+                }
+                break;
+            }
+        }
+
+        static inline constexpr External::Tick<systemTimer> initTicks{1000ms};
+
+        static inline void ratePeriodic() {
+            const auto oldState = mState;
+            ++mStateTick;
+            switch(mState) {
+            case State::Init:
+                mStateTick.on(initTicks, []{
+                    mState = State::Music;
+                });
+                break;
+            case State::Music:
+                if (mEvent.is(Event::OK)) {
+                    mState = State::Show;
+                }
+                break;
+            case State::Show:
+                if (mEvent.is(Event::OK)) {
+                    mState = State::Start;
+                }
+                break;
+            case State::Start:
+                if (mEvent.is(Event::OK)) {
+                    mState = State::Run;
+                }
+                else if (mEvent.is(Event::SendThrottle)) {
+                    mState = State::SendThrot;
+                }
+                break;
+            case State::Run:
+                if (mEvent.is(Event::SendThrottle)) {
+                    mState = State::SendThrot;
+                }
+                else if (mEvent.is(Event::SendParam)) {
+                    mState = State::SendParam;
+                }
+                break;
+            case State::SendThrot:
+                if (mEvent.is(Event::OK)) {
+                    mState = State::Run;
+                }
+                break;
+            case State::SendParam:
+                if (mEvent.is(Event::OK)) {
+                    mState = State::Run;
+                }
+                break;
+            }
+            if (oldState != mState) {
+                mStateTick.reset();
+                switch(mState) {
+                case State::Init:
+                    IO::outl<debug>("# ESC32Ascii init");
+                    break;
+                case State::Music:
+                    IO::outl<debug>("# ESC32Ascii music");
+                    play("cegC_cegC_");
+                    break;
+                case State::Show:
+                    IO::outl<debug>("# ESC32Ascii show");
+                    show();
+                    break;
+                case State::Start:
+                    IO::outl<debug>("# ESC32Ascii start");
+                    set(992);
+                    break;
+                case State::Run:
+                    // IO::outl<debug>("# ESC32Ascii run");
+                    break;
+                case State::SendThrot:
+                {
+                    // IO::outl<debug>("# ESC32Ascii throt");
+                    char* const data = (char*)uart::outputBuffer();
+                    const uint8_t n = snprintf(data, UartConfig::size, "throt %d\n", mNextThrottle);
+                    send(n);
+                }
+                    break;
+                case State::SendParam:
+                {
+                    IO::outl<debug>("# ESC32Ascii param");
+                    char* const data = (char*)uart::outputBuffer();
+                    const uint8_t n = snprintf(data, UartConfig::size, "set %s %d\n", mParams[mNextParam].name, mParams[mNextParam].value);
+                    send(n);
+                }
+                    break;
+                }
+            }
+        }
+        static inline void set(const uint16_t sbus) {
+            if (!mActive) return;
+            if ((mState == State::Run) || (mState == State::Start)) {
+                mNextThrottle = sbus2throt(sbus);
+                event(Event::SendThrottle);
+            }
+        }
+        static inline void update() {
+        }
+        static inline void rxEnable() {
+            if (mActive) {
+                uart::dmaReenable([]{
+                    dmaChRW::clearTransferCompleteIF();
+                    uart::dmaSetupRead2(UartConfig::size);
+                });
+                uart::template rxEnable<true>();
+            }
+        }
+        static inline void onIdleWithDma(const auto f) {
+            if (mActive) {
+                uart::onIdleWithDma(f);
+            }
+        }
+        static inline void onTransferComplete(const auto f) {
+            if (mActive) {
+                uart::onTransferComplete(f);
+            }
+        }
+        static inline auto errorCount() {
+            return mErrorCount;
+        }
+        static inline uint16_t current() {
+            return mCurrent;
+        }
+        static inline uint16_t rpm() {
+            return mERT;
+        }
+        static inline void setParam(const uint8_t n, const uint16_t v) {
+            if (!mActive) return;
+            if (mState == State::Run) {
+                if (n < mParams.size()) {
+                    if (mParams[n].name) {
+                        mParams[n].value = v;
+                        mNextParam = n;
+                        event(Event::SendParam);
+                    }
+                }
+            }
+        }
+        static inline constexpr auto& params() {
+            return mParams;
+        }
+
+        private:
+        static inline void show() {
+            char* const data = (char*)uart::outputBuffer();
+            const uint8_t n = snprintf(data, UartConfig::size, "show\n");
+            send(n);
+        }
+        static inline void play(const char* const music) {
+            char* const data = (char*)uart::outputBuffer();
+            const uint8_t n = snprintf(data, UartConfig::size, "play %s\n", music);
+            send(n);
+        }
+        static inline int sbus2throt(const uint16_t sbus) {
+            return ((sbus - 992) * 2000) / 820;
+        }
+        static inline void send(const uint8_t n) {
+            uart::template rxEnable<false>();
+            uart::startSend(n);
+        }
+        static inline void readReply() {
+            tp::set();
+            const char* const data = (char*)uart::readBuffer();
+            const uint16_t l = uart::readCount();
+            uint16_t i = 0;
+            const char* p = data;
+            // IO::outl<debug>("# reply: ", l);
+            while(i < l) {
+                if (data[i] == '\n') {
+                    analyze(p, &data[i]);
+                    p = &data[i + 1];
+                }
+                ++i;
+            }
+            tp::reset();
+        }
+        static inline void gotOk() {
+            // IO::outl<debug>("# OK");
+            event(Event::OK);
+        }
+        static inline void analyze(const char* const p, const char* const e) {
+            if ((e - p) == 2) {
+                if (strncmp(p, "OK", 2) == 0) {
+                    gotOk();
+                }
+                else if (strncmp(p, "ok", 2) == 0) {
+                    gotOk();
+                }
+            }
+            else {
+                for(uint16_t i = 0; (i < 64) && (&p[i] < e); ++i) {
+                    if (p[i] == ':') {
+                        value(p, i, e);
+                    }
+                }
+            }
+        }
+        // very ineffective
+        static inline void value(const char* const p, const uint16_t d, const char* const e) {
+            int v = 0;
+            std::from_chars(p + d + 2, e, v);
+            for(auto& param : mParams) {
+                if (strncmp(p, param.name, d) == 0) {
+                    param.value = v;
+                    IO::outl<debug>("# value: ", param.name, " : ", param.value);
+                }
+            }
+        }
+        struct Param {
+            const char* const name = nullptr;
+            uint16_t value = 0;
+            const uint16_t min = 0;
+            const uint16_t max = 1;
+        };
+        static inline std::array<Param, 40> mParams = {
+            Param{"arm", 0, 0, 1},
+            Param{"damp", 0, 0, 1},
+            Param{"revdir", 0, 0, 1},
+            Param{"brushed", 0, 0, 1},
+            Param{"timing", 0, 1, 31},
+            Param{"sine_range", 0, 0, 25},
+            Param{"sine_power", 0, 1, 15},
+            Param{"freq_min", 0, 16, 48},
+            Param{"freq_max", 0, 16, 96},
+            Param{"duty_min", 0, 1, 100},
+            Param{"duty_max", 0, 1, 100},
+            Param{"duty_spup", 0, 1, 100},
+            Param{"duty_ramp", 0, 0, 100},
+            Param{"duty_rate", 0, 1, 100},
+            Param{"duty_drag", 0, 0, 100},
+            Param{"duty_lock", 0, 0, 1},
+            Param{"throt_mode", 0, 0, 3},
+            Param{"throt_set", 0, 0, 100},
+            Param{"throt_cal", 0, 0, 1},
+            Param{"throt_min", 0, 1000, 2000},
+            Param{"throt_mid", 0, 1000, 2000},
+            Param{"throt_max", 0, 1000, 2000},
+            Param{"analog_min", 0, 0, 200},
+            Param{"analog_max", 0, 0, 3300},
+            Param{"input_mode", 0, 0, 5},
+            Param{"input_chid", 0, 0, 16},
+            Param{"telem_mode", 0, 0, 4},
+            Param{"telem_phid", 0, 0, 28},
+            Param{"telem_poles", 0, 2, 100},
+            Param{"prot_stall", 0, 0, 3500},
+            Param{"prot_temp", 0, 60, 140},
+            Param{"prot_sens", 0, 0, 2},
+            Param{"prot_volt", 0, 0, 38},
+            Param{"prot_cells", 0, 0, 24},
+            Param{"prot_curr", 0, 0, 500},
+            // {"music", 0},
+            Param{"volume", 0, 0, 100},
+            Param{"beacon", 0, 0, 100},
+            Param{"bec", 0, 0, 3},
+            Param{"led", 0, 0, 15},
+            Param{"unknown"}
+        };
+
+        static inline int mNextThrottle = 0;
+        static inline uint8_t mNextParam = 0;
+
+        static inline uint16_t mEscTemperature = 0;
+        static inline uint16_t mMotTemperature = 0;
+        static inline uint16_t mVoltage = 0;
+        static inline uint16_t mCurrent = 0;
+        static inline uint16_t mConsumption = 0;
+        static inline uint16_t mERT = 0;
+        static inline uint16_t mErrorCount = 0;
+        static inline volatile etl::Event<Event> mEvent;
+        static inline volatile State mState = State::Init;
+        static inline External::Tick<systemTimer> mStateTick;
+        static inline volatile bool mActive = false;
     };
-
 
     template<uint8_t N, typename Config, typename MCU = DefaultMcu>
     struct Serial {
@@ -99,7 +441,7 @@ namespace RC::ESCape {
             mState = State::Init;
             mErrorCount = 0;
             mEvent = Event::None;
-
+            mActive = true;
             uart::init();
             uart::template rxEnable<false>();
             uart::baud(460'800);
@@ -114,6 +456,7 @@ namespace RC::ESCape {
             __disable_irq();
             dmaChRW::enable(false);
             uart::reset();
+            mActive = false;
             __enable_irq();
             pin::analog();
         }
@@ -178,12 +521,19 @@ namespace RC::ESCape {
         static inline void update() {
         }
         static inline void rxEnable() {
-            uart::dmaReenable([]{
-                dmaChRW::clearTransferCompleteIF();
-                dmaChRW::template setTCIsr<true>();
-                uart::dmaSetupRead2(UartConfig::minSize);
-            });
-            uart::template rxEnable<true>();
+            if (mActive) {
+                uart::dmaReenable([]{
+                    dmaChRW::clearTransferCompleteIF();
+                    dmaChRW::template setTCIsr<true>();
+                    uart::dmaSetupRead2(UartConfig::minSize);
+                });
+                uart::template rxEnable<true>();
+            }
+        }
+        static inline void onTransferComplete(const auto f) {
+            if (mActive) {
+                uart::onTransferComplete(f);
+            }
         }
         static inline auto errorCount() {
             return mErrorCount;
@@ -232,6 +582,7 @@ namespace RC::ESCape {
         static inline Event mEvent = Event::None;
         static inline State mState = State::Init;
         static inline External::Tick<systemTimer> mStateTick;
+        static inline volatile bool mActive = false;
     };
 
     namespace Master {

@@ -24,6 +24,7 @@
 #include "rc/crsf.h"
 #include "rc/escape.h"
 #include "rc/sbus22.h"
+#include "rc/vesc.h"
 #include "pwm.h"
 #include "adc.h"
 #include "blinker.h"
@@ -230,8 +231,10 @@ struct Devices<SW01, Config, MCU> {
     struct SerialConfig1;
     using esc32_1 = RC::ESCape::Serial<2, SerialConfig1, MCU>;
 
-    struct Esc32AsciiConfig1;
-    using Esc32Ascii_1 = RC::ESCape::ConfigAscii<2, Esc32AsciiConfig1, MCU>;
+    using esc32ascii_1 = RC::ESCape::ConfigAscii<2, SerialConfig1, MCU>;
+
+    // struct VEscConfig1;
+    // using vesc_1 = RC::VESC::Master::V3::Serial<2, VEscConfig1, MCU>;
 
     // Tlm1: PA3 : Uart2-RX (AF1), TIM2-CH4 (AF2), TIM15-CH2 (AF5)
 
@@ -364,6 +367,9 @@ struct Devices<SW01, Config, MCU> {
         using mapper = inputs;
         using telemetry = telem;
         using polars = Devices::polars;
+        using esc32ascii_1 = Devices::esc32ascii_1;
+        // using esc32ascii_2 = Devices::esc32ascii_2;
+        using esc32ascii_2 = void;
         using tp = void;
     };
     struct CrsfAdapterConfig {
@@ -415,8 +421,8 @@ struct Devices<SW01, Config, MCU> {
         using systemTimer = Devices::systemTimer;
         using dmaChRW = esc1DmaChannel;
         using pin = esc1_pin;
-        using debug = void;
-        using tp = void;
+        using debug = Devices::debug;
+        using tp = tp3;
     };
     struct SerialConfig2 {
         using clock = Devices::clock;

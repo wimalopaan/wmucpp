@@ -113,11 +113,13 @@ struct PacketRelay {
         }
     }
     static inline void rxEnable() {
-        uart::dmaReenable([]{
-            dmaChRW::clearTransferCompleteIF();
-            uart::dmaSetupRead2(UartConfig::size);
-        });
-        uart::template rxEnable<true>();
+        if (mActive) {
+            uart::dmaReenable([]{
+                dmaChRW::clearTransferCompleteIF();
+                uart::dmaSetupRead2(UartConfig::size);
+            });
+            uart::template rxEnable<true>();
+        }
     }
     static inline void update() { // channels to dest
         RC::Protokoll::Crsf::V3::pack(src::values(), uart::outputBuffer());

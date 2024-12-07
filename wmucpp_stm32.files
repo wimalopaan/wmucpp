@@ -500,6 +500,7 @@ include_stm32/dma.h
 include_stm32/dsp.h
 include_stm32/etl/algorithm.h
 include_stm32/etl/circularbuffer.h
+include_stm32/etl/event.h
 include_stm32/etl/fifo.h
 include_stm32/etl/fixedvector.h
 include_stm32/etl/ranged.h

@@ -26,6 +26,9 @@ struct CrsfCallback {
     using Param_t = RC::Protokoll::Crsf::Parameter<uint16_t>;
     using PType = Param_t::Type;
 
+    using esc32ascii_1 = Config::esc32ascii_1;
+    using esc32ascii_2 = Config::esc32ascii_2;
+
     static inline constexpr auto& eeprom = storage::eeprom;
     static inline constexpr auto& eeprom_flash = storage::eeprom_flash;
     static inline constexpr const char* const title = "RC-720-E-32@";
@@ -196,7 +199,7 @@ private:
         c.push_back(p);
     }
 
-    static inline bool setZeroPosition(const uint8_t p) {
+    static inline bool setZeroPosition(const uint16_t p) {
         return true;
     }
 
@@ -214,9 +217,13 @@ private:
         //     params[mCalibCommand].mOptions = mCalibratingTexts[s];
         // }
         // return res;
-        return true;
+        return false;
     }
     static inline uint8_t mCalibCommand{};
+    static inline uint8_t mESCape321Folder{};
+    static inline uint8_t mESCape321End{};
+    static inline uint8_t mESCape322Folder{};
+    static inline uint8_t mESCape322End{};
 
     static inline std::array<const char*, 6> mServoAddressTexts {
         "Set Address",
@@ -226,6 +233,15 @@ private:
     static inline uint8_t mServoAddressCommand;
 
     static inline std::array<char, 16> mDeadLowString{'a'};
+
+    static inline void hide(const uint8_t n, const bool b) {
+        params[n].hide(b);
+    }
+    static inline void hide(const uint8_t start, const uint8_t end, const bool b) {
+        for(uint8_t i = start; i <= end; ++i) {
+            hide(i, b);
+        }
+    }
 
     using params_t = etl::FixedVector<Param_t, 128>;
     static inline params_t params = []{
@@ -240,11 +256,11 @@ private:
         parent = addParent(p, Param_t{0, PType::Folder, "Outputs"});
         addNode(p, Param_t{parent, PType::Sel, "Srv1 Out", "PWM/Analog;PWM/PWM;Serial/WaveShare;None", &eeprom.out_mode_srv[0], 0, 3, [](const uint16_t s){servos::template servo<0>(s); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Srv1 Fb", "Analog;PWM;WaveShare;None", &eeprom.out_mode_srv[0], 0, 3});
-        addNode(p, Param_t{parent, PType::Sel, "Esc1 Out", "PWM/-;Escape32/Serial;ESCsper32/Ascii;VEsc/Serial;None", &eeprom.out_mode_esc[0], 0, 4, [](const uint16_t s){escs::template esc<0>(s); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Esc1 Out", "PWM/-;Escape32/Serial;ESCsper32/Ascii;VEsc/Serial;None", &eeprom.out_mode_esc[0], 0, 4, [](const uint16_t s){escs::template esc<0>(s); if (s == 2) {hide(mESCape321Folder, mESCape321End, false);} else {hide(mESCape321Folder, mESCape321End, true);} return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Esc1 Tlm", "Debug;S.Port;VEsc/Bidirectional", &eeprom.tlm_mode_esc[0], 0, 4, [](const uint16_t){return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Srv2 Out", "PWM/Analog;PWM/PWM;Serial/WaveShare;None", &eeprom.out_mode_srv[1], 0, 3, [](const uint16_t s){servos::template servo<1>(s); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Srv2 Fb", "Analog;PWM;WaveShare;None", &eeprom.out_mode_srv[1], 0, 3});
-        addNode(p, Param_t{parent, PType::Sel, "Esc2 Out", "PWM/-;Escape32/Serial;ESCsper32/Ascii;VEsc/Serial;None", &eeprom.out_mode_esc[1], 0, 4, [](const uint16_t s){escs::template esc<1>(s); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Esc2 Out", "PWM/-;Escape32/Serial;ESCsper32/Ascii;VEsc/Serial;None", &eeprom.out_mode_esc[1], 0, 4, [](const uint16_t s){escs::template esc<1>(s); if (s == 2) {hide(mESCape322Folder, false);} return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Esc2 Tlm", "S.Port;VEsc/Bidirectional", &eeprom.tlm_mode_esc[1], 0, 2, [](const uint16_t){return true;}});
         parent = addParent(p, Param_t{0, PType::Folder, "Settings"});
         addNode(p, Param_t{parent, PType::U16,  "Sch1 ESC Deadband", nullptr, &eeprom.deadbands[0], 1, 20, [](const uint16_t){return true;}});
@@ -255,6 +271,21 @@ private:
         addNode(p, Param_t{parent, PType::U16,  "Sch2 Servo Speed", nullptr, &eeprom.speed2, 1, 100, [](const uint16_t v){servos::template speed<1>(10 * v); return true;}});
         addNode(p, Param_t{parent, PType::Command, "Act. Pos. as zPos 1", mCalibratingTexts[0], nullptr, 0, 0, [](const uint16_t v){return setZeroPosition(v);}});
         addNode(p, Param_t{parent, PType::Command, "Act. Pos. as zPos 2", mCalibratingTexts[0], nullptr, 0, 0, [](const uint16_t v){return setZeroPosition(v);}});
+
+        parent = addParent(p, Param_t{0, PType(PType::Folder | PType::Hidden), "ESCape32 1"});
+        mESCape321Folder = p.size() - 1;
+        addNode(p, Param_t{parent, PType::Command, "Save", mCalibratingTexts[0], nullptr, 0, 0, [](const uint16_t v){return false;}});
+        [&]<size_t... II>(std::integer_sequence<size_t, II...>){
+            (addNode(p, Param_t{parent, PType::U16, esc32ascii_1::params()[II].name, nullptr, &esc32ascii_1::params()[II].value, esc32ascii_1::params()[II].min, esc32ascii_1::params()[II].max, [](const uint16_t v){esc32ascii_1::setParam(II, v); return false;}}), ...);
+        }(std::make_index_sequence<esc32ascii_1::params().size()>{});
+
+        mESCape321End = p.size() - 1;
+
+        parent = addParent(p, Param_t{0, PType(PType::Folder | PType::Hidden), "ESCape32 2"});
+        mESCape322Folder = p.size() - 1;
+        addNode(p, Param_t{parent, PType::Command, "Save", mCalibratingTexts[0], nullptr, 0, 0, [](const uint16_t v){return false;}});
+        mESCape322End = p.size() - 1;
+
         parent = addParent(p, Param_t{0, PType::Folder, "Calibration"});
         addNode(p, Param_t{parent, PType::Command, "Calibrate", mCalibratingTexts[0], nullptr, 0, 0, [](const uint16_t v){return calibCallback(v);}});
         mCalibCommand = p.size() - 1;

@@ -5,12 +5,15 @@ Hardware
 --------
 * bridge 1:
 * bridge 2:
+* bridge 3:
 
 Prio 0
 ------
 * make dma, timer, usart summary with hw-connections
-* ESCape32-Ascii: realize config-protocol
+* ESCape32-Ascii: config-protocol
+* crsf-command popups: useful texts
 * V/ESC: half-duplex protocol, adaption to dma-pattern
+* for SBus-out: selectable range: 1-16 or 17-32 (requires crsfch.lua on radio)
 
 Prio 1
 ------
@@ -27,7 +30,7 @@ Prio 3
 ------
 * I2C
 ** interface to e.g. GY-271, BMM150
-* disable/enable Schottel-computations via menu
+* disable/enable Schottel-computations via menu -> general CruiseController
 
 Done:
 ------
