@@ -9,6 +9,7 @@
 #include <iterator>
 #include <numbers>
 #include <chrono>
+#include <cstring>
 #include <type_traits>
 
 #include "rc.h"

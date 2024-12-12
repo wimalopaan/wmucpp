@@ -48,11 +48,16 @@ boards/rc720E32/devices.h
 boards/rc720E32/eeprom.h
 boards/rc720E32/fastmath.h
 boards/rc720E32/fbservo.h
+boards/rc720E32/gfsm.h
 boards/rc720E32/ibus.h
 boards/rc720E32/inputmapper.h
 boards/rc720E32/iservo.h
 boards/rc720E32/link_g0b1.ld
 boards/rc720E32/messagebuffer.h
+boards/rc720E32/output_aux.h
+boards/rc720E32/output_esc.h
+boards/rc720E32/output_relay.h
+boards/rc720E32/output_servo.h
 boards/rc720E32/package_relay.h
 boards/rc720E32/pid.h
 boards/rc720E32/polar.h

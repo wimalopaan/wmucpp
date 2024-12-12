@@ -16,6 +16,7 @@
 #include "etl/ranged.h"
 #include "units.h"
 #include "tick.h"
+#include "meta.h"
 
 namespace RC {
     namespace Protokoll {
