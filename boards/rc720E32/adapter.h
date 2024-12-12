@@ -3,15 +3,31 @@
 #include <cstdint>
 #include "ressources.h"
 
-template<typename Pwm, typename Pin, uint8_t Channel, typename Debug = void>
+template<typename Pwm, typename Pin, uint8_t Channel, typename Storage, typename EEpromOffsetIndex, typename Debug = void>
 struct PwmAdapter {
     static_assert(Channel >= 1);
     using pwm = Pwm;
 
     static inline constexpr uint8_t af = Mcu::Stm::AlternateFunctions::mapper_v<Pin, pwm, Mcu::Stm::AlternateFunctions::CC<Channel>>;
 
+
+    template<typename T>
+    struct getValue {
+        static inline constexpr size_t value = 0;
+    };
+    template<typename T, auto V>
+    struct getValue<std::integral_constant<T, V>> {
+        static inline constexpr size_t value = V;
+    };
+
     static inline void set(const uint16_t v) {
-        Pwm::set(Channel - 1, v);
+        if (!std::is_same_v<EEpromOffsetIndex, void>) {
+            const int vv = std::clamp(v + (Storage::eeprom.esc_mid[getValue<EEpromOffsetIndex>::value] - 100), 172, 1812);
+            Pwm::set(Channel - 1, vv);
+        }
+        else {
+            Pwm::set(Channel - 1, v);
+        }
     }
     static inline void init() {
         IO::outl<Debug>("PWMA", Channel, " init");

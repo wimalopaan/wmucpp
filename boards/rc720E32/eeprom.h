@@ -9,8 +9,14 @@ struct Pair {
 };
 
 struct EEProm {
+    // Generell
+    uint16_t mode = 0;
     // CRSF
-    uint16_t address = 192;
+#ifdef CRSF_ADDRESS
+    uint16_t address = CRSF_ADDRESS;
+#else
+    uint16_t address = 0xc8;
+#endif
 
     uint16_t input_stream = 0; // CRSF, Pulse
 
@@ -38,8 +44,16 @@ struct EEProm {
     uint16_t crsf_fd_aux_mode = 0;
 
     std::array<uint16_t, 2> out_mode_srv{2, 2};
+#ifdef TEST_EEPROM
     std::array<uint16_t, 2> out_mode_esc{2, 0};
+#else
+    std::array<uint16_t, 2> out_mode_esc{0, 0};
+#endif
     std::array<uint16_t, 2> tlm_mode_esc{0, 0};
+
+    // std::array<uint16_t, 2> esc_min{992, 992};
+    // std::array<uint16_t, 2> esc_max{1812, 1812};
+    std::array<uint16_t, 2> esc_mid{50, 50}; // [0...200]
 
     uint16_t prerun_check = 1;
 };

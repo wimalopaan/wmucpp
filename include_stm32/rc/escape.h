@@ -114,8 +114,8 @@ namespace RC::ESCape {
             pin::analog();
         }
 
-        enum class State : uint8_t {Init, Music, Start, Show, Run, SendThrot, SendParam};
-        enum class Event : uint8_t {None, ReceiveComplete, OK, SendThrottle, SendParam};
+        enum class State : uint8_t {Init, Music, Start, Show, Run, SendThrot, SendParam, Save, Beep};
+        enum class Event : uint8_t {None, ReceiveComplete, OK, Error, SendThrottle, SendParam, Save, Beep};
 
         static inline void event(const Event e) {
             mEvent = e;
@@ -132,7 +132,7 @@ namespace RC::ESCape {
             }
         }
 
-        static inline constexpr External::Tick<systemTimer> initTicks{1000ms};
+        static inline constexpr External::Tick<systemTimer> initTicks{2000ms};
 
         static inline void ratePeriodic() {
             const auto oldState = mState;
@@ -168,6 +168,12 @@ namespace RC::ESCape {
                 else if (mEvent.is(Event::SendParam)) {
                     mState = State::SendParam;
                 }
+                else if (mEvent.is(Event::Save)) {
+                    mState = State::Save;
+                }
+                else if (mEvent.is(Event::Beep)) {
+                    mState = State::Beep;
+                }
                 break;
             case State::SendThrot:
                 if (mEvent.is(Event::OK)) {
@@ -176,6 +182,19 @@ namespace RC::ESCape {
                 break;
             case State::SendParam:
                 if (mEvent.is(Event::OK)) {
+                    mState = State::Run;
+                }
+                break;
+            case State::Save:
+                if (mEvent.is(Event::OK)) {
+                    mState = State::Run;
+                }
+                break;
+            case State::Beep:
+                if (mEvent.is(Event::OK)) {
+                    mState = State::Run;
+                }
+                else if (mEvent.is(Event::Error)) {
                     mState = State::Run;
                 }
                 break;
@@ -217,6 +236,18 @@ namespace RC::ESCape {
                     send(n);
                 }
                     break;
+                case State::Save:
+                {
+                    IO::outl<debug>("# ESC32Ascii save");
+                    char* const data = (char*)uart::outputBuffer();
+                    const uint8_t n = snprintf(data, UartConfig::size, "save\n");
+                    send(n);
+                }
+                    break;
+                case State::Beep:
+                    IO::outl<debug>("# ESC32Ascii beep");
+                    play("cc_d_e_f_g_a_b#_CC");
+                    break;
                 }
             }
         }
@@ -257,6 +288,18 @@ namespace RC::ESCape {
         static inline uint16_t rpm() {
             return mERT;
         }
+        static inline void save() {
+            if (!mActive) return;
+            if (mState == State::Run) {
+                event(Event::Save);
+            }
+        }
+        static inline void beep() {
+            if (!mActive) return;
+            if (mState == State::Run) {
+                event(Event::Beep);
+            }
+        }
         static inline void setParam(const uint8_t n, const uint16_t v) {
             if (!mActive) return;
             if (mState == State::Run) {
@@ -292,7 +335,9 @@ namespace RC::ESCape {
             uart::startSend(n);
         }
         static inline void readReply() {
-            tp::set();
+            if constexpr(!std::is_same_v<tp, void>) {
+                tp::set();
+            }
             const char* const data = (char*)uart::readBuffer();
             const uint16_t l = uart::readCount();
             uint16_t i = 0;
@@ -305,22 +350,36 @@ namespace RC::ESCape {
                 }
                 ++i;
             }
-            tp::reset();
+            if constexpr(!std::is_same_v<tp, void>) {
+                tp::reset();
+            }
         }
         static inline void gotOk() {
             // IO::outl<debug>("# OK");
             event(Event::OK);
         }
+        static inline void gotError() {
+            // IO::outl<debug>("# Error");
+            event(Event::Error);
+        }
         static inline void analyze(const char* const p, const char* const e) {
             if ((e - p) == 2) {
                 if (strncmp(p, "OK", 2) == 0) {
                     gotOk();
+                    return;
                 }
                 else if (strncmp(p, "ok", 2) == 0) {
                     gotOk();
+                    return;
                 }
             }
             else {
+                if ((e - p) == 5) {
+                    if (strncmp(p, "ERROR", 5) == 0) {
+                        gotError();
+                        return;
+                    }
+                }
                 for(uint16_t i = 0; (i < 64) && (&p[i] < e); ++i) {
                     if (p[i] == ':') {
                         value(p, i, e);
@@ -335,7 +394,7 @@ namespace RC::ESCape {
             for(auto& param : mParams) {
                 if (strncmp(p, param.name, d) == 0) {
                     param.value = v;
-                    IO::outl<debug>("# value: ", param.name, " : ", param.value);
+                    // IO::outl<debug>("# value: ", param.name, " : ", param.value);
                 }
             }
         }
@@ -507,15 +566,17 @@ namespace RC::ESCape {
             }
         }
         static inline void set(const uint16_t sbus) {
-            if (mState == State::Run) {
-                const int16_t v = (sbus - 992);
-                volatile uint8_t* const data = uart::outputBuffer();
-                CheckSum<uint8_t> cs;
-                data[0] = (cs += 0x81); // throttle + telemetry
-                data[1] = (cs += (v & 0xff));
-                data[2] = (cs += (v >> 8));
-                data[3] = cs;
-                send(4);
+            if (mActive) {
+                if (mState == State::Run) {
+                    const int16_t v = (sbus - 992);
+                    volatile uint8_t* const data = uart::outputBuffer();
+                    CheckSum<uint8_t> cs;
+                    data[0] = (cs += 0x81); // throttle + telemetry
+                    data[1] = (cs += (v & 0xff));
+                    data[2] = (cs += (v >> 8));
+                    data[3] = cs;
+                    send(4);
+                }
             }
         }
         static inline void update() {

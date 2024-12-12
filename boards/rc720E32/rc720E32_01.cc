@@ -1,6 +1,12 @@
 #define USE_MCU_STM_V3
 #define USE_CRSF_V3
 
+#define ESCAPE32_ASCII
+#define SERVO_CALIBRATION
+#define SERVO_ADDRESS_SET
+#define CRSF_ADDRESS 192
+#define TEST_EEPROM
+
 #define NDEBUG
 
 #include <cstdint>
@@ -8,11 +14,11 @@
 
 #include "devices.h"
 
-extern "C" {
-extern int _end;
-extern int _ebss;
-extern unsigned char *heap;
-}
+// extern "C" {
+// extern int _end;
+// extern int _ebss;
+// extern unsigned char *heap;
+// }
 
 template<typename Devs>
 struct Auxes {
@@ -206,6 +212,9 @@ struct EscOutputs {
     using esc32_1 = devs::esc32_1;
     using esc32_2 = devs::esc32_2;
     using esc32ascii_1 = devs::esc32ascii_1;
+    using esc32ascii_2 = devs::esc32ascii_2;
+    using vesc_1 = devs::vesc_1;
+    using vesc_2 = devs::vesc_2;
 
     template<uint8_t N>
     static inline void esc(const uint8_t e) {
@@ -213,8 +222,9 @@ struct EscOutputs {
         static_assert(N <= 1);
         using esc_pwm_t = std::conditional_t<(N == 0), Esc<esc1_pwm>, Esc<esc2_pwm>>;
         using esc_esc32_t = std::conditional_t<(N == 0), Esc<esc32_1>, Esc<esc32_2>>;
-        // using esc_esc32ascii_t = std::conditional_t<(N == 0), Esc<esc32ascii_1>, Esc<esc32ascii_2>>;
-        using esc_esc32ascii_t = Esc<esc32ascii_1>;
+        using esc_esc32ascii_t = std::conditional_t<(N == 0), Esc<esc32ascii_1>, Esc<esc32ascii_2>>;
+        using esc_vesc_t = std::conditional_t<(N == 0), Esc<vesc_1>, Esc<vesc_2>>;
+
         switch(e) {
         case 0: // PWM
             escs[N] = nullptr;
@@ -230,6 +240,7 @@ struct EscOutputs {
             break;
         case 3: // V/Esc
             escs[N] = nullptr;
+            escs[N] = std::make_unique<esc_vesc_t>();
             break;
         case 4: // None
             escs[N] = nullptr;
@@ -290,16 +301,21 @@ struct ServoOutputs {
         }
     }
     template<uint8_t N>
-    static inline void speed(const uint16_t o) {
+    static inline void speed(const uint16_t s) {
         static_assert(N <= 1);
         if (servos[N]) {
-            servos[N]->speed(o);
+            servos[N]->speed(s);
         }
     }
-    static inline void update(const uint8_t n) {
-        if ((n < servos.size()) && servos[n]) {
-            servos[n]->update();
+    static inline void update(/*const uint8_t n*/) {
+        for(const auto& s : servos) {
+            if (s) {
+                s->update();
+            }
         }
+        // if ((n < servos.size()) && servos[n]) {
+        //     servos[n]->update();
+        // }
     }
     static inline int8_t turns(const uint8_t n) {
         if ((n < servos.size()) && servos[n]) {
@@ -411,7 +427,9 @@ struct GFSM {
 
     static inline void init() {
         devs::init();
-        crsf_in_responder::address(std::byte(192));
+#ifdef CRSF_ADDRESS
+        crsf_in_responder::address(std::byte(CRSF_ADDRESS));
+#endif
         crsf_in_responder::telemetrySlot(0);
     }
 
@@ -747,6 +765,14 @@ void USART2_LPUART2_IRQHandler(){
     esc32ascii_1::onIdleWithDma([]{
         esc32ascii_1::event(esc32ascii_1::Event::ReceiveComplete);
     });
+    using vesc_1 = devs::vesc_1;
+    static_assert(vesc_1::uart::number == 2);
+    vesc_1::onTransferComplete([]{
+        vesc_1::rxEnable();
+    });
+    vesc_1::onIdleWithDma([]{
+        vesc_1::event(vesc_1::Event::ReceiveComplete);
+    });
     esc32_1::uart::mcuUart->ICR = -1;
 
     using sbus1 = devs::sbus1;
@@ -804,6 +830,24 @@ void USART3_4_5_6_LPUART1_IRQHandler(){
     esc32_2::uart::onTransferComplete([]{
         esc32_2::rxEnable();
     });
+    using esc32ascii_2 = devs::esc32ascii_2;
+    static_assert(esc32ascii_2::uart::number == 3);
+    esc32ascii_2::onTransferComplete([]{
+        esc32ascii_2::rxEnable();
+    });
+    esc32ascii_2::onIdleWithDma([]{
+        esc32ascii_2::event(esc32ascii_2::Event::ReceiveComplete);
+    });
+    using vesc_2 = devs::vesc_2;
+    static_assert(vesc_2::uart::number == 3);
+    vesc_2::onTransferComplete([]{
+        vesc_2::rxEnable();
+    });
+    vesc_2::onIdleWithDma([]{
+        vesc_2::event(vesc_2::Event::ReceiveComplete);
+    });
+    esc32_2::uart::mcuUart->ICR = -1;
+
     using ws1 = devs::srv1_waveshare;
     static_assert(ws1::uart::number == 5);
     ws1::uart::onTransferComplete([]{
@@ -836,18 +880,13 @@ void USART1_IRQHandler() {
 }
 
 extern int _end;
-// static
-unsigned char *heap = NULL;
+static unsigned char *heap = NULL;
 void* _sbrk(const int incr) {
-    unsigned char *prev_heap;
-
     if (heap == NULL) {
         heap = (unsigned char *)&_end;
     }
-    prev_heap = heap;
-
+    unsigned char* prev_heap = heap;
     heap += incr;
-
     return prev_heap;
 }
 void _exit(int) {

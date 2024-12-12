@@ -609,7 +609,6 @@ namespace RC {
                                 etl::serializeBE((uint8_t)0xc8, buffer);
                                 etl::serializeBE((uint8_t)0x00, buffer);
                             }
-
                         }
                         static inline void sendParameterInfo(const uint8_t pIndex, const uint8_t chunk) {
                             if (!mEnableReply) return;

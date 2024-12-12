@@ -164,8 +164,10 @@ struct CrsfCallback {
         const bool prevMode = mEepromMode;
         mEepromMode = eepromMode;
         for(const auto& p: params) {
-            if (p.cb) {
-                p.cb(p.value());
+            if (p.mType != PType::Command) {
+                if (p.cb) {
+                    p.cb(p.value());
+                }
             }
         }
         mEepromMode = prevMode;
@@ -247,6 +249,7 @@ private:
     static inline params_t params = []{
         params_t p;
         addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
+        addNode(p, Param_t{0, PType::Sel,  "Mode", "Dual-Schottel-Controller;Cruise-Controller", &eeprom.mode, 0, 1, [](const uint16_t){return true;}});
         uint8_t parent = addParent(p, Param_t{0, PType::Folder, "Channels"});
         addNode(p, Param_t{parent, PType::Sel,  "Stream", "Main/CRSF;Alternative;Aux", &eeprom.input_stream, 0, 2, [](const uint16_t s){mapper::stream(s); return true;}});
         addNode(p, Param_t{parent, PType::U16,  "Schottel 1: f/b", nullptr, &eeprom.channels[0].first, 0, 15, [](const uint16_t){return true;}});
@@ -256,40 +259,49 @@ private:
         parent = addParent(p, Param_t{0, PType::Folder, "Outputs"});
         addNode(p, Param_t{parent, PType::Sel, "Srv1 Out", "PWM/Analog;PWM/PWM;Serial/WaveShare;None", &eeprom.out_mode_srv[0], 0, 3, [](const uint16_t s){servos::template servo<0>(s); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Srv1 Fb", "Analog;PWM;WaveShare;None", &eeprom.out_mode_srv[0], 0, 3});
-        addNode(p, Param_t{parent, PType::Sel, "Esc1 Out", "PWM/-;Escape32/Serial;ESCsper32/Ascii;VEsc/Serial;None", &eeprom.out_mode_esc[0], 0, 4, [](const uint16_t s){escs::template esc<0>(s); if (s == 2) {hide(mESCape321Folder, mESCape321End, false);} else {hide(mESCape321Folder, mESCape321End, true);} return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Esc1 Out", "PWM/-;Escape32/Serial;ESCsper32/Ascii;VEsc/Serial;None", &eeprom.out_mode_esc[0], 0, 4, [](const uint16_t s){escs::template esc<0>(s); return true;}});
+        // addNode(p, Param_t{parent, PType::Sel, "Esc1 Out", "PWM/-;Escape32/Serial;ESCsper32/Ascii;VEsc/Serial;None", &eeprom.out_mode_esc[0], 0, 4, [](const uint16_t s){escs::template esc<0>(s); if (s == 2) {hide(mESCape321Folder, mESCape321End, false);} else {hide(mESCape321Folder, mESCape321End, true);} return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Esc1 Tlm", "Debug;S.Port;VEsc/Bidirectional", &eeprom.tlm_mode_esc[0], 0, 4, [](const uint16_t){return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Srv2 Out", "PWM/Analog;PWM/PWM;Serial/WaveShare;None", &eeprom.out_mode_srv[1], 0, 3, [](const uint16_t s){servos::template servo<1>(s); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Srv2 Fb", "Analog;PWM;WaveShare;None", &eeprom.out_mode_srv[1], 0, 3});
-        addNode(p, Param_t{parent, PType::Sel, "Esc2 Out", "PWM/-;Escape32/Serial;ESCsper32/Ascii;VEsc/Serial;None", &eeprom.out_mode_esc[1], 0, 4, [](const uint16_t s){escs::template esc<1>(s); if (s == 2) {hide(mESCape322Folder, false);} return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Esc2 Out", "PWM/-;Escape32/Serial;ESCsper32/Ascii;VEsc/Serial;None", &eeprom.out_mode_esc[1], 0, 4, [](const uint16_t s){escs::template esc<1>(s); return true;}});
+        // addNode(p, Param_t{parent, PType::Sel, "Esc2 Out", "PWM/-;Escape32/Serial;ESCsper32/Ascii;VEsc/Serial;None", &eeprom.out_mode_esc[1], 0, 4, [](const uint16_t s){escs::template esc<1>(s); if (s == 2) {hide(mESCape322Folder, false);} return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Esc2 Tlm", "S.Port;VEsc/Bidirectional", &eeprom.tlm_mode_esc[1], 0, 2, [](const uint16_t){return true;}});
         parent = addParent(p, Param_t{0, PType::Folder, "Settings"});
         addNode(p, Param_t{parent, PType::U16,  "Sch1 ESC Deadband", nullptr, &eeprom.deadbands[0], 1, 20, [](const uint16_t){return true;}});
+        addNode(p, Param_t{parent, PType::U16,  "Sch1 ESC PWM Mid", nullptr, &eeprom.esc_mid[0], 0, 200, [](const uint16_t){return true;}});
         addNode(p, Param_t{parent, PType::U16,  "Sch1 Servo zPosition", nullptr,  &eeprom.offset1, 0, 359, [](const uint16_t v){servos::template offset<0>((uint32_t{v} * 4096) / 360); return true;}});
         addNode(p, Param_t{parent, PType::U16,  "Sch1 Servo Speed", nullptr, &eeprom.speed1, 1, 340, [](const uint16_t v){servos::template speed<0>(10 * v); return true;}});
         addNode(p, Param_t{parent, PType::U16,  "Sch2 ESC Deadband", nullptr, &eeprom.deadbands[1], 1, 20, [](const uint16_t){return true;}});
+        addNode(p, Param_t{parent, PType::U16,  "Sch2 ESC PWM Mid", nullptr, &eeprom.esc_mid[1], 0, 200, [](const uint16_t){return true;}});
         addNode(p, Param_t{parent, PType::U16,  "Sch2 Servo zPosition", nullptr,  &eeprom.offset2, 0, 360, [](const uint16_t v){servos::template offset<1>((uint32_t{v} * 4096) / 360); return true;}});
         addNode(p, Param_t{parent, PType::U16,  "Sch2 Servo Speed", nullptr, &eeprom.speed2, 1, 100, [](const uint16_t v){servos::template speed<1>(10 * v); return true;}});
         addNode(p, Param_t{parent, PType::Command, "Act. Pos. as zPos 1", mCalibratingTexts[0], nullptr, 0, 0, [](const uint16_t v){return setZeroPosition(v);}});
         addNode(p, Param_t{parent, PType::Command, "Act. Pos. as zPos 2", mCalibratingTexts[0], nullptr, 0, 0, [](const uint16_t v){return setZeroPosition(v);}});
 
+#ifdef ESCAPE32_ASCII
         parent = addParent(p, Param_t{0, PType(PType::Folder | PType::Hidden), "ESCape32 1"});
         mESCape321Folder = p.size() - 1;
-        addNode(p, Param_t{parent, PType::Command, "Save", mCalibratingTexts[0], nullptr, 0, 0, [](const uint16_t v){return false;}});
+        addNode(p, Param_t{parent, PType::Command, "Beep", nullptr, nullptr, 0, 0, [](const uint16_t){esc32ascii_1::beep(); return false;}});
+        addNode(p, Param_t{parent, PType::Command, "Save", nullptr, nullptr, 0, 0, [](const uint16_t){esc32ascii_1::save(); return false;}});
         [&]<size_t... II>(std::integer_sequence<size_t, II...>){
             (addNode(p, Param_t{parent, PType::U16, esc32ascii_1::params()[II].name, nullptr, &esc32ascii_1::params()[II].value, esc32ascii_1::params()[II].min, esc32ascii_1::params()[II].max, [](const uint16_t v){esc32ascii_1::setParam(II, v); return false;}}), ...);
         }(std::make_index_sequence<esc32ascii_1::params().size()>{});
-
         mESCape321End = p.size() - 1;
 
         parent = addParent(p, Param_t{0, PType(PType::Folder | PType::Hidden), "ESCape32 2"});
         mESCape322Folder = p.size() - 1;
-        addNode(p, Param_t{parent, PType::Command, "Save", mCalibratingTexts[0], nullptr, 0, 0, [](const uint16_t v){return false;}});
+        addNode(p, Param_t{parent, PType::Command, "Beep", nullptr, nullptr, 0, 0, [](const uint16_t){esc32ascii_1::beep(); return false;}});
+        addNode(p, Param_t{parent, PType::Command, "Save", nullptr, nullptr, 0, 0, [](const uint16_t){esc32ascii_1::save(); return false;}});
         mESCape322End = p.size() - 1;
+#endif
 
+#ifdef SERVO_CALIBRATION
         parent = addParent(p, Param_t{0, PType::Folder, "Calibration"});
         addNode(p, Param_t{parent, PType::Command, "Calibrate", mCalibratingTexts[0], nullptr, 0, 0, [](const uint16_t v){return calibCallback(v);}});
         mCalibCommand = p.size() - 1;
         addNode(p, Param_t{parent, PType::Info, "Srv1 DeadL", &mDeadLowString[0]});
+#endif
         parent = addParent(p, Param_t{0, PType::Folder, "CRSF"});
         addNode(p, Param_t{parent, PType::U16,  "CRSF Address", nullptr, &eeprom.address, 192, 207, [](const uint16_t a){updateName(mName); responder::address(std::byte(a)); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Mode (not persistant)", "Full;Fwd Only", nullptr, 0, 1, [](const uint16_t){return false;}});
@@ -299,14 +311,11 @@ private:
                                auxes::set(a);
                                return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Inject (SBus)", "Yes;No", &eeprom.inject, 0, 1, [](const uint16_t){return true;}});
+#ifdef SERVO_ADDRESS_SET
         addNode(p, Param_t{parent, PType::Command, "Set Servo ID", mServoAddressTexts[0], nullptr, 0, 0, [](const uint16_t v){return calibCallback(v);}});
         mServoAddressCommand = p.size() - 1;
         addNode(p, Param_t{parent, PType::U16,  "Servo ID to set", nullptr, nullptr, 1, 16, [](const uint16_t){return false;}});
-
-        // hidden parameter (fixed numbers) mapping needed
-
-        // channels, modi, ...
-        // names
+#endif
 
         return p;
     }();

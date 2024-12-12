@@ -24,39 +24,363 @@ namespace RC::VESC {
     using namespace Units::literals;
     using namespace std::literals::chrono_literals;
 
-    struct CheckSum {
-        void operator+=(const std::byte b) {
-            mValue = std::byte(tbl[uint8_t(mValue ^ b)]);
-        }
-        void reset() {
-            mValue = std::byte{ 0 };
-        }
-        operator std::byte() const {
-            return mValue;
-        }
-    private:
-        std::byte mValue{};
-        inline static constexpr uint8_t tbl[] = {
-            0x00, 0x07, 0x0e, 0x09, 0x1c, 0x1b, 0x12, 0x15, 0x38, 0x3f, 0x36, 0x31, 0x24, 0x23, 0x2a, 0x2d,
-            0x70, 0x77, 0x7e, 0x79, 0x6c, 0x6b, 0x62, 0x65, 0x48, 0x4f, 0x46, 0x41, 0x54, 0x53, 0x5a, 0x5d,
-            0xe0, 0xe7, 0xee, 0xe9, 0xfc, 0xfb, 0xf2, 0xf5, 0xd8, 0xdf, 0xd6, 0xd1, 0xc4, 0xc3, 0xca, 0xcd,
-            0x90, 0x97, 0x9e, 0x99, 0x8c, 0x8b, 0x82, 0x85, 0xa8, 0xaf, 0xa6, 0xa1, 0xb4, 0xb3, 0xba, 0xbd,
-            0xc7, 0xc0, 0xc9, 0xce, 0xdb, 0xdc, 0xd5, 0xd2, 0xff, 0xf8, 0xf1, 0xf6, 0xe3, 0xe4, 0xed, 0xea,
-            0xb7, 0xb0, 0xb9, 0xbe, 0xab, 0xac, 0xa5, 0xa2, 0x8f, 0x88, 0x81, 0x86, 0x93, 0x94, 0x9d, 0x9a,
-            0x27, 0x20, 0x29, 0x2e, 0x3b, 0x3c, 0x35, 0x32, 0x1f, 0x18, 0x11, 0x16, 0x03, 0x04, 0x0d, 0x0a,
-            0x57, 0x50, 0x59, 0x5e, 0x4b, 0x4c, 0x45, 0x42, 0x6f, 0x68, 0x61, 0x66, 0x73, 0x74, 0x7d, 0x7a,
-            0x89, 0x8e, 0x87, 0x80, 0x95, 0x92, 0x9b, 0x9c, 0xb1, 0xb6, 0xbf, 0xb8, 0xad, 0xaa, 0xa3, 0xa4,
-            0xf9, 0xfe, 0xf7, 0xf0, 0xe5, 0xe2, 0xeb, 0xec, 0xc1, 0xc6, 0xcf, 0xc8, 0xdd, 0xda, 0xd3, 0xd4,
-            0x69, 0x6e, 0x67, 0x60, 0x75, 0x72, 0x7b, 0x7c, 0x51, 0x56, 0x5f, 0x58, 0x4d, 0x4a, 0x43, 0x44,
-            0x19, 0x1e, 0x17, 0x10, 0x05, 0x02, 0x0b, 0x0c, 0x21, 0x26, 0x2f, 0x28, 0x3d, 0x3a, 0x33, 0x34,
-            0x4e, 0x49, 0x40, 0x47, 0x52, 0x55, 0x5c, 0x5b, 0x76, 0x71, 0x78, 0x7f, 0x6a, 0x6d, 0x64, 0x63,
-            0x3e, 0x39, 0x30, 0x37, 0x22, 0x25, 0x2c, 0x2b, 0x06, 0x01, 0x08, 0x0f, 0x1a, 0x1d, 0x14, 0x13,
-            0xae, 0xa9, 0xa0, 0xa7, 0xb2, 0xb5, 0xbc, 0xbb, 0x96, 0x91, 0x98, 0x9f, 0x8a, 0x8d, 0x84, 0x83,
-            0xde, 0xd9, 0xd0, 0xd7, 0xc2, 0xc5, 0xcc, 0xcb, 0xe6, 0xe1, 0xe8, 0xef, 0xfa, 0xfd, 0xf4, 0xf3,
-        };
-    };
+    // struct CheckSum {
+    //     std::byte operator+=(const std::byte b) {
+    //         mValue = std::byte(tbl[uint8_t(mValue ^ b)]);
+    //         return b;
+    //     }
+    //     void reset() {
+    //         mValue = std::byte{ 0 };
+    //     }
+    //     operator std::byte() const {
+    //         return mValue;
+    //     }
+    // private:
+    //     std::byte mValue{};
+    //     inline static constexpr uint8_t tbl[] = {
+    //         0x00, 0x07, 0x0e, 0x09, 0x1c, 0x1b, 0x12, 0x15, 0x38, 0x3f, 0x36, 0x31, 0x24, 0x23, 0x2a, 0x2d,
+    //         0x70, 0x77, 0x7e, 0x79, 0x6c, 0x6b, 0x62, 0x65, 0x48, 0x4f, 0x46, 0x41, 0x54, 0x53, 0x5a, 0x5d,
+    //         0xe0, 0xe7, 0xee, 0xe9, 0xfc, 0xfb, 0xf2, 0xf5, 0xd8, 0xdf, 0xd6, 0xd1, 0xc4, 0xc3, 0xca, 0xcd,
+    //         0x90, 0x97, 0x9e, 0x99, 0x8c, 0x8b, 0x82, 0x85, 0xa8, 0xaf, 0xa6, 0xa1, 0xb4, 0xb3, 0xba, 0xbd,
+    //         0xc7, 0xc0, 0xc9, 0xce, 0xdb, 0xdc, 0xd5, 0xd2, 0xff, 0xf8, 0xf1, 0xf6, 0xe3, 0xe4, 0xed, 0xea,
+    //         0xb7, 0xb0, 0xb9, 0xbe, 0xab, 0xac, 0xa5, 0xa2, 0x8f, 0x88, 0x81, 0x86, 0x93, 0x94, 0x9d, 0x9a,
+    //         0x27, 0x20, 0x29, 0x2e, 0x3b, 0x3c, 0x35, 0x32, 0x1f, 0x18, 0x11, 0x16, 0x03, 0x04, 0x0d, 0x0a,
+    //         0x57, 0x50, 0x59, 0x5e, 0x4b, 0x4c, 0x45, 0x42, 0x6f, 0x68, 0x61, 0x66, 0x73, 0x74, 0x7d, 0x7a,
+    //         0x89, 0x8e, 0x87, 0x80, 0x95, 0x92, 0x9b, 0x9c, 0xb1, 0xb6, 0xbf, 0xb8, 0xad, 0xaa, 0xa3, 0xa4,
+    //         0xf9, 0xfe, 0xf7, 0xf0, 0xe5, 0xe2, 0xeb, 0xec, 0xc1, 0xc6, 0xcf, 0xc8, 0xdd, 0xda, 0xd3, 0xd4,
+    //         0x69, 0x6e, 0x67, 0x60, 0x75, 0x72, 0x7b, 0x7c, 0x51, 0x56, 0x5f, 0x58, 0x4d, 0x4a, 0x43, 0x44,
+    //         0x19, 0x1e, 0x17, 0x10, 0x05, 0x02, 0x0b, 0x0c, 0x21, 0x26, 0x2f, 0x28, 0x3d, 0x3a, 0x33, 0x34,
+    //         0x4e, 0x49, 0x40, 0x47, 0x52, 0x55, 0x5c, 0x5b, 0x76, 0x71, 0x78, 0x7f, 0x6a, 0x6d, 0x64, 0x63,
+    //         0x3e, 0x39, 0x30, 0x37, 0x22, 0x25, 0x2c, 0x2b, 0x06, 0x01, 0x08, 0x0f, 0x1a, 0x1d, 0x14, 0x13,
+    //         0xae, 0xa9, 0xa0, 0xa7, 0xb2, 0xb5, 0xbc, 0xbb, 0x96, 0x91, 0x98, 0x9f, 0x8a, 0x8d, 0x84, 0x83,
+    //         0xde, 0xd9, 0xd0, 0xd7, 0xc2, 0xc5, 0xcc, 0xcb, 0xe6, 0xe1, 0xe8, 0xef, 0xfa, 0xfd, 0xf4, 0xf3,
+    //     };
+    // };
 
     namespace Master {
+        namespace V4 {
+            template<uint8_t N, typename Config, typename MCU = DefaultMcu>
+            struct Serial {
+                using clock = Config::clock;
+                using systemTimer = Config::systemTimer;
+                using debug = Config::debug;
+                using dmaChRW = Config::dmaChRW;
+                using pin = Config::pin;
+                using tp = Config::tp;
+
+                struct UartConfig {
+                    using Clock = clock;
+                    using ValueType = uint8_t;
+                    static inline constexpr size_t size = 256; // send size, buffer size
+                    static inline constexpr size_t minSize = 11; // receive size
+                    using DmaChannelWrite = dmaChRW;
+                    using DmaChannelRead = dmaChRW;
+                    static inline constexpr bool useDmaTCIsr = false;
+                    static inline constexpr bool useIdleIsr = false;
+                    static inline constexpr bool useRxToIsr = false;
+                    static inline constexpr uint16_t rxToCount = 0;
+                    using Adapter = void;
+                    using Debug = struct {
+                        using tp = void;
+                    };
+                };
+
+                using uart = Mcu::Stm::V2::Uart<N, UartConfig, MCU>;
+
+                static inline constexpr uint8_t af = Mcu::Stm::AlternateFunctions::mapper_v<pin, uart, Mcu::Stm::AlternateFunctions::TX>;
+
+                static inline void init() {
+                    IO::outl<debug>("# VEsc init");
+                    __disable_irq();
+                    mState = State::Init;
+                    mEvent = Event::None;
+                    mActive = true;
+                    uart::init();
+                    uart::template rxEnable<false>();
+                    uart::baud(460'800);
+                    uart::template halfDuplex<true>();
+                    uart::template enableTCIsr<true>();
+                    __enable_irq();
+                    pin::afunction(af);
+                    pin::template pullup<true>();
+                }
+                static inline void reset() {
+                    IO::outl<debug>("# VEsc reset");
+                    __disable_irq();
+                    dmaChRW::enable(false);
+                    uart::reset();
+                    mActive = false;
+                    __enable_irq();
+                    pin::analog();
+                }
+
+                enum class State : uint8_t {Init, Run, GetVersion, GetValues, SendThrot};
+                enum class Event : uint8_t {None, OK, Error, ReceiveComplete, SendComplete, SendThrot};
+
+                static inline void event(const Event e) {
+                    mEvent = e;
+                }
+                static inline void periodic() {
+                    switch(mState) {
+                    case State::Init:
+                        break;
+                    default:
+                        if (mEvent.is(Event::ReceiveComplete)) {
+                            readReply();
+                        }
+                        break;
+                    }
+                }
+                static inline constexpr External::Tick<systemTimer> initTicks{2000ms};
+
+                static inline void ratePeriodic() {
+                    const auto oldState = mState;
+                    ++mStateTick;
+                    switch(mState) {
+                    case State::Init:
+                        mStateTick.on(initTicks, []{
+                            mState = State::GetVersion;
+                        });
+                        break;
+                    case State::GetVersion:
+                        if (mEvent.is(Event::OK)) {
+                            mState = State::Run;
+                        }
+                        break;
+                    case State::Run:
+                        if (mEvent.is(Event::SendThrot)) {
+                            mState = State::SendThrot;
+                        }
+                        break;
+                    case State::GetValues:
+                        if (mEvent.is(Event::OK)) {
+                            mState = State::Run;
+                        }
+                        break;
+                    case State::SendThrot:
+                        if (mEvent.is(Event::OK)) {
+                            mState = State::Run;
+                        }
+                        break;
+                    }
+                    if (oldState != mState) {
+                        mStateTick.reset();
+                        switch(mState) {
+                        case State::Init:
+                            IO::outl<debug>("# Vesc init");
+                            break;
+                        case State::Run:
+                            IO::outl<debug>("# Vesc run");
+                            break;
+                        case State::GetVersion:
+                            IO::outl<debug>("# Vesc ver");
+                            getVersion();
+                            break;
+                        case State::GetValues:
+                            IO::outl<debug>("# Vesc val");
+                            getValues();
+                            break;
+                        case State::SendThrot:
+                            IO::outl<debug>("# Vesc throt");
+                            sendThrottle();
+                            break;
+                        }
+                    }
+                }
+                static inline void sendThrottle() {
+                    char* const data = (char*)uart::outputBuffer();
+                    CRC16 cs;
+                    uint8_t n = 0;
+                    data[n++] = 0x02;
+                    data[n++] = 0x05;
+                    cs += data[n++] = (uint8_t)CommPacketId::COMM_SET_DUTY;
+                    data[n++] = mThrottle >> 24;
+                    data[n++] = mThrottle >> 16;
+                    data[n++] = mThrottle >> 8;
+                    data[n++] = mThrottle;
+                    data[n++] = cs >> 8;
+                    data[n++] = cs;
+                    data[n++] = 0x03;
+                    send(n);
+                }
+                static inline void getValues() {
+                    char* const data = (char*)uart::outputBuffer();
+                    CRC16 cs;
+                    uint8_t n = 0;
+                    data[n++] = 0x02;
+                    data[n++] = 0x01;
+                    cs += data[n++] = (uint8_t)CommPacketId::COMM_GET_VALUES;
+                    data[n++] = cs >> 8;
+                    data[n++] = cs;
+                    data[n++] = 0x03;
+                    send(n);
+                }
+                static inline void getVersion() {
+                    char* const data = (char*)uart::outputBuffer();
+                    CRC16 cs;
+                    uint8_t n = 0;
+                    data[n++] = 0x02;
+                    data[n++] = 0x01;
+                    cs += data[n++] = (uint8_t)CommPacketId::COMM_FW_VERSION;
+                    data[n++] = cs >> 8;
+                    data[n++] = cs;
+                    data[n++] = 0x03;
+                    send(n);
+                }
+
+                static inline void rxEnable() {
+                    if (mActive) {
+                        uart::dmaReenable([]{
+                            dmaChRW::clearTransferCompleteIF();
+                            uart::dmaSetupRead2(UartConfig::size);
+                        });
+                        uart::template rxEnable<true>();
+                    }
+                }
+                static inline void onIdleWithDma(const auto f) {
+                    if (mActive) {
+                        uart::onIdleWithDma(f);
+                    }
+                }
+                static inline void onTransferComplete(const auto f) {
+                    if (mActive) {
+                        uart::onTransferComplete(f);
+                    }
+                }
+                static inline void set(const uint16_t sbus) {
+                    if (!mActive) return;
+                    if (mState == State::Run) {
+                        mThrottle = sbus2throt(sbus);
+                        event(Event::SendThrot);
+                    }
+                }
+                static inline void update() {
+                }
+                static inline uint16_t current() {
+                    return mCurrent;
+                }
+                static inline uint16_t rpm() {
+                    return mRpm;
+                }
+
+                private:
+                static inline int32_t sbus2throt(const uint16_t sbus) {
+                    int v = (sbus - 992) * 100'000 / 820;
+                    return std::clamp(v, -100'000, 100'000);
+                }
+
+                static inline void send(const uint8_t n) {
+                    uart::template rxEnable<false>();
+                    uart::startSend(n);
+                }
+
+                static inline void readReply() {
+                    if constexpr(!std::is_same_v<tp, void>) {
+                        tp::set();
+                    }
+                    const char* const data = (char*)uart::readBuffer();
+                    const uint16_t nread = uart::readCount();
+
+                    if (data[0] != 0x02) {
+                        event(Event::Error);
+                        return;
+                    }
+                    const uint8_t length = data[1];
+                    CRC16 cs;
+                    cs += data[2];
+                    const CommPacketId type = CommPacketId(data[2]);
+                    for(uint8_t i = 0; i < (length - 1); ++i) {
+                        cs += data[i + 3];
+                    }
+                    uint16_t vcs = (data[length + 3] << 8) | data[length + 4];
+
+                    if (vcs != cs) {
+                        event(Event::Error);
+                        return;
+                    }
+
+                    uint16_t k = 0;
+                    if (type == CommPacketId::COMM_FW_VERSION) {
+                        mVersionMajor = (uint8_t)data[k++];
+                        mVersionMinor = (uint8_t)data[k++];
+                        for(uint16_t i = 0; i < mName.size(); ++i) {
+                            mName[i] = (char)data[k++];
+                            if (mName[i] == '\0')
+                                break;
+                        }
+                        k += 12; // UUID
+                        k++; // pairing
+                        mFWTestVersionNumber = (uint8_t)data[k++];
+                        mHWType = (uint8_t)data[k++]; // enum?
+                    }
+                    else if (type == CommPacketId::COMM_GET_VALUES) {
+                        mTemperature = ((int32_t)data[0]) << 8;
+                        mTemperature |= ((int32_t)data[1]);
+
+                        mTemperatureMotor = ((int32_t)data[2]) << 8;
+                        mTemperatureMotor |= ((int32_t)data[3]);
+
+                        mCurrent = ((int32_t)data[4]) << 24;
+                        mCurrent |= ((int32_t)data[5]) << 16;
+                        mCurrent |= ((int32_t)data[6]) << 8;
+                        mCurrent |= ((int32_t)data[7]);
+
+                        if (mCurrent < 0) {
+                            mCurrent = -mCurrent;
+                        }
+
+                        mCurrentIn = ((int32_t)data[8]) << 24;
+                        mCurrentIn |= ((int32_t)data[9]) << 16;
+                        mCurrentIn |= ((int32_t)data[10]) << 8;
+                        mCurrentIn |= ((int32_t)data[11]);
+
+                        if (mCurrentIn < 0) {
+                            mCurrentIn = -mCurrentIn;
+                        }
+
+                        mRpm = ((int32_t)data[22]) << 24;
+                        mRpm |= ((int32_t)data[23]) << 16;
+                        mRpm |= ((int32_t)data[24]) << 8;
+                        mRpm |= ((int32_t)data[25]);
+
+                        if (mRpm < 0) {
+                            mRpm = -mRpm;
+                        }
+
+                        mVoltage = ((int32_t)data[26]) << 8;
+                        mVoltage |= ((int32_t)data[27]);
+
+                        mConsumption = ((int32_t)data[28]) << 24;
+                        mConsumption |= ((int32_t)data[29]) << 16;
+                        mConsumption |= ((int32_t)data[30]) << 8;
+                        mConsumption |= ((int32_t)data[31]);
+
+                        mFault = (uint8_t)data[52];
+                    }
+                    event(Event::OK);
+                }
+
+                static inline int32_t mThrottle{ 0 };
+                static inline uint32_t mTemperature;
+                static inline uint32_t mTemperatureMotor;
+                static inline uint32_t mVoltage;
+                static inline int32_t mCurrent;
+                static inline int32_t mCurrentIn;
+                static inline uint32_t mConsumption;
+                static inline int32_t mRpm;
+                static inline uint8_t mVersionMajor;
+                static inline uint8_t mVersionMinor;
+                static inline uint8_t mFWTestVersionNumber;
+                static inline uint8_t mHWType;
+                static inline uint8_t mFault;
+                static inline std::array<char, 256> mName;
+                static inline volatile etl::Event<Event> mEvent;
+                static inline volatile State mState = State::Init;
+                static inline External::Tick<systemTimer> mStateTick;
+                static inline volatile bool mActive = false;
+            };
+        }
+
         namespace V3 {
             template<uint8_t N, typename Config, typename Timer, typename MCU = DefaultMcu>
             struct ProtocolAdapter {

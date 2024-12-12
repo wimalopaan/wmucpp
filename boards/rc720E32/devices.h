@@ -45,6 +45,7 @@
 #include "ibus.h"
 #include "sbus.h"
 #include "sumdv3.h"
+#include "crsfchannelcollector.h"
 
 struct SW01;
 
@@ -226,22 +227,21 @@ struct Devices<SW01, Config, MCU> {
     // ESC1: PA2 : Uart2-TX (AF1), TIM2-CH3 (AF2), TIM15-CH1 (AF5)
     using esc1_pin = Mcu::Stm::Pin<gpioa, 2, MCU>;
     using pwm2 = Mcu::Stm::V2::Pwm::Servo<2, clock>;
-    using esc1_pwm = PwmAdapter<pwm2, esc1_pin, 3, debug>;
+    using esc1_pwm = PwmAdapter<pwm2, esc1_pin, 3, storage, std::integral_constant<uint8_t, 0>, debug>;
 
     struct SerialConfig1;
     using esc32_1 = RC::ESCape::Serial<2, SerialConfig1, MCU>;
 
     using esc32ascii_1 = RC::ESCape::ConfigAscii<2, SerialConfig1, MCU>;
 
-    // struct VEscConfig1;
-    // using vesc_1 = RC::VESC::Master::V3::Serial<2, VEscConfig1, MCU>;
+    using vesc_1 = RC::VESC::Master::V4::Serial<2, SerialConfig1, MCU>;
 
     // Tlm1: PA3 : Uart2-RX (AF1), TIM2-CH4 (AF2), TIM15-CH2 (AF5)
 
     // Srv1: PB0 : TIM3-CH3 (AF1), TIM1-CH2N(AF2), Uart3-RX (AF4), Uart5-TX (AF8)
     using srv1_pin = Mcu::Stm::Pin<gpiob, 0, MCU>;
     using pwm3 = Mcu::Stm::V2::Pwm::Servo<3, clock>;
-    using srv1_pwm = PwmAdapter<pwm3, srv1_pin, 3>;
+    using srv1_pwm = PwmAdapter<pwm3, srv1_pin, 3, storage, void>;
 
     struct WS1Config;
     using srv1_waveshare = WaveShare<5, WS1Config, MCU>;
@@ -259,10 +259,15 @@ struct Devices<SW01, Config, MCU> {
     using esc2_pin_1 = Mcu::Stm::Pin<gpiob, 2, MCU>;
     using esc2_pin = Mcu::Stm::Pin<gpioa, 7, MCU>;
     using pwm17 = Mcu::Stm::V2::Pwm::Servo<17, clock>;
-    using esc2_pwm = PwmAdapter<pwm17, esc2_pin, 1, debug>;
+    using esc2_pwm = PwmAdapter<pwm17, esc2_pin, 1, storage, std::integral_constant<uint8_t, 1>, debug>;
 
     struct SerialConfig2;
     using esc32_2 = RC::ESCape::Serial<3, SerialConfig2, MCU>;
+
+    using esc32ascii_2 = RC::ESCape::ConfigAscii<3, SerialConfig2, MCU>;
+
+    using vesc_2 = RC::VESC::Master::V4::Serial<3, SerialConfig2, MCU>;
+
 
     // Tlm2: PB9 : TIM17-CH1, TIM4-CH4
     using tp1 = Mcu::Stm::Pin<gpiob, 9, MCU>;
@@ -270,7 +275,7 @@ struct Devices<SW01, Config, MCU> {
     // Srv2: PA4 : TIM14-CH1 (AF4), Uart6-TX (AF3)
     using srv2_pin = Mcu::Stm::Pin<gpioa, 4, MCU>;
     using pwm14 = Mcu::Stm::V2::Pwm::Servo<14, clock>;
-    using srv2_pwm = PwmAdapter<pwm14, srv2_pin, 1>;
+    using srv2_pwm = PwmAdapter<pwm14, srv2_pin, 1, storage, void>;
 
     struct WS2Config;
     using srv2_waveshare = WaveShare<6, WS2Config, MCU>;
@@ -354,7 +359,7 @@ struct Devices<SW01, Config, MCU> {
 
     using telem = Telemetry<crsfBuffer, storage, debug>;
 
-    using channelCallback = ChannelCallback<polars, typename Config::servos, typename Config::escs, typename Config::relays, typename Config::auxes, sbus1, telem, storage>;
+    using channelCallback = ChannelCallback<polars, typename Config::servos, typename Config::escs, typename Config::relays, typename Config::auxes, telem, storage>;
 
     struct CrsfCallbackConfig {
         using storage = Config::storage;
@@ -368,8 +373,7 @@ struct Devices<SW01, Config, MCU> {
         using telemetry = telem;
         using polars = Devices::polars;
         using esc32ascii_1 = Devices::esc32ascii_1;
-        // using esc32ascii_2 = Devices::esc32ascii_2;
-        using esc32ascii_2 = void;
+        using esc32ascii_2 = Devices::esc32ascii_2;
         using tp = void;
     };
     struct CrsfAdapterConfig {

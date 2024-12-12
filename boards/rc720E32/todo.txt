@@ -9,11 +9,13 @@ Hardware
 
 Prio 0
 ------
+* modes: Dual-Schottel, Passthru
 * make dma, timer, usart summary with hw-connections
-* ESCape32-Ascii: config-protocol
+* usart.h: sendBuffer/receiver: diffent sizes possible
 * crsf-command popups: useful texts
 * V/ESC: half-duplex protocol, adaption to dma-pattern
 * for SBus-out: selectable range: 1-16 or 17-32 (requires crsfch.lua on radio)
+* use units in crsf-parameters
 
 Prio 1
 ------
@@ -34,6 +36,8 @@ Prio 3
 
 Done:
 ------
+* PWM-Null einstellbar
+* ESCape32-Ascii: config-protocol
 * seperate channel-update from crsf-relay
 * baudrate switch
 * CRSF direct-mode: use ELRSBuddy without TX(RX) <-> RX
