@@ -194,9 +194,12 @@ struct Devices<SW01, Config, MCU> {
     };
 
     // debug auf LPUART1 (PA3 AF(6), RX<->TX tauschen) : Telemetry-1
+#ifdef SERIAL_DEBUG
     using debugrx = Mcu::Stm::Pin<gpioa, 3, MCU>;
     using debug = Mcu::Stm::V1::LpUart<1, void, 1024, char, clock, MCU>;
-
+#else
+    using debug = void;
+#endif
     struct InputConfig;
     using inputs = InputMapper<InputConfig>;
 
@@ -452,11 +455,13 @@ struct Devices<SW01, Config, MCU> {
         led1::template dir<Mcu::Output>();
         led2::template dir<Mcu::Output>();
 
+#ifdef SERIAL_DEBUG
         debug::init();
         debug::baud(115200);
         debug::rxtxswap(true);
         debugrx::afunction(6);
         debugrx::template pullup<true>();
+#endif
 
         crsf_in::init();
         crsf_in::baud(420'000);

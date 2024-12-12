@@ -6,6 +6,7 @@
 // #define SERVO_ADDRESS_SET
 // #define CRSF_ADDRESS 192
 // #define TEST_EEPROM
+// #define SERIAL_DEBUG
 
 #define NDEBUG
 

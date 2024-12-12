@@ -261,7 +261,11 @@ private:
         addNode(p, Param_t{parent, PType::Sel, "Srv1 Fb", "Analog;PWM;WaveShare;None", &eeprom.out_mode_srv[0], 0, 3});
         addNode(p, Param_t{parent, PType::Sel, "Esc1 Out", "PWM/-;Escape32/Serial;ESCsper32/Ascii;VEsc/Serial;None", &eeprom.out_mode_esc[0], 0, 4, [](const uint16_t s){escs::template esc<0>(s); return true;}});
         // addNode(p, Param_t{parent, PType::Sel, "Esc1 Out", "PWM/-;Escape32/Serial;ESCsper32/Ascii;VEsc/Serial;None", &eeprom.out_mode_esc[0], 0, 4, [](const uint16_t s){escs::template esc<0>(s); if (s == 2) {hide(mESCape321Folder, mESCape321End, false);} else {hide(mESCape321Folder, mESCape321End, true);} return true;}});
+#ifdef SERIAL_DEBUG
         addNode(p, Param_t{parent, PType::Sel, "Esc1 Tlm", "Debug;S.Port;VEsc/Bidirectional", &eeprom.tlm_mode_esc[0], 0, 4, [](const uint16_t){return true;}});
+#else
+        addNode(p, Param_t{parent, PType::Sel, "Esc1 Tlm", "S.Port;VEsc/Bidirectional", &eeprom.tlm_mode_esc[0], 0, 4, [](const uint16_t){return true;}});
+#endif
         addNode(p, Param_t{parent, PType::Sel, "Srv2 Out", "PWM/Analog;PWM/PWM;Serial/WaveShare;None", &eeprom.out_mode_srv[1], 0, 3, [](const uint16_t s){servos::template servo<1>(s); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Srv2 Fb", "Analog;PWM;WaveShare;None", &eeprom.out_mode_srv[1], 0, 3});
         addNode(p, Param_t{parent, PType::Sel, "Esc2 Out", "PWM/-;Escape32/Serial;ESCsper32/Ascii;VEsc/Serial;None", &eeprom.out_mode_esc[1], 0, 4, [](const uint16_t s){escs::template esc<1>(s); return true;}});

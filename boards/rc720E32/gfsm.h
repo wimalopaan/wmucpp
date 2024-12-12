@@ -63,7 +63,9 @@ struct GFSM {
 
     static inline void periodic() {
         devs::tp1::set();
-        debug::periodic();
+        if constexpr(!std::is_same_v<debug, void>) {
+            debug::periodic();
+        }
         crsf_in::periodic();
         Servos::periodic();
         Escs::periodic();

@@ -2,6 +2,7 @@
 #define USE_CRSF_V2
 
 // #define TEST1
+// #define SERIAL_DEBUG
 
 #define NDEBUG
 //#define USE_SWD // for SWD debugging (do not reconfigure SWD/SWCLK Pins)

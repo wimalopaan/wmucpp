@@ -267,9 +267,12 @@ struct Devices2<SW11, CrsfCallback, MCU> {
     using crsf    = Mcu::Stm::Uart<2, crsf_pa, RC::Protokoll::Crsf::maxMessageSize, std::byte, clock, MCU>;
     using crsf_out= RC::Protokoll::Crsf::Generator<crsf, systemTimer, MCU>;
 
+#ifdef SERIAL_DEBUG
     using debugtx = Mcu::Stm::Pin<gpiob, 6, MCU>;
     using debug   = Mcu::Stm::Uart<1, void, 256, char, clock, MCU>;
-    // using debug = void;
+#else
+    using debug = void;
+#endif
 
     // Led
     using led = Mcu::Stm::Pin<gpioc, 15, MCU>;
