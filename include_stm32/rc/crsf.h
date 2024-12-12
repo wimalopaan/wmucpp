@@ -1036,8 +1036,13 @@ namespace RC {
                     static inline uint16_t getBytes() {
                         return mBytesCounter;
                     }
-                    static inline const auto value(const uint8_t ch) {
-                        return mChannels[ch];
+                    static inline uint16_t value(const uint8_t ch) {
+                        if ((mChannels[ch] >= 172) && (mChannels[ch] <= 1812)) {
+                            return mChannels[ch];
+                        }
+                        else {
+                            return 992;
+                        }
                     }
                     static inline const auto& values() {
                         return mChannels;

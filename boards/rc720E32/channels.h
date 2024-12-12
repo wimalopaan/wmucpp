@@ -24,7 +24,7 @@ struct ChannelCallback {
     static inline void update() {
         if (eeprom.mode == 1) { // Passthru-Mode
             escs::set(0, pa::value(eeprom.channels[0].first));
-            escs::set(1, pa::value(eeprom.channels[0].first));
+            escs::set(1, pa::value(eeprom.channels[1].first));
 
             telemetry::current(0, escs::current(0));
             telemetry::rpm(0, escs::rpm(0));
@@ -41,8 +41,6 @@ struct ChannelCallback {
             escs::set(0, ampToSbusValue(p1::amp()));
             escs::set(1, ampToSbusValue(p2::amp()));
 
-            // servos::update(0);
-            // servos::update(1);
             servos::update();
 
             {

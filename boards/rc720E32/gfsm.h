@@ -170,7 +170,7 @@ struct GFSM {
             });
             mStateTick.on(debugTicks, []{
                 // IO::outl<debug>("_end:", &_end, " _ebss:", &_ebss, " heap:", heap);
-                IO::outl<debug>("ch0: ", crsf_in_pa::values()[0], " phi: ", polar1::phi(), " amp: ", polar1::amp(), " a: ", Servos::actualPos(0), " t: ", Servos::turns(0));
+                IO::outl<debug>("ch0: ", crsf_in_pa::value(0), " phi: ", polar1::phi(), " amp: ", polar1::amp(), " a: ", Servos::actualPos(0), " t: ", Servos::turns(0));
                 // IO::out<debug>("ibus: ec: ", ibus_in::errorCount(), " uc: ", ibus_in::uart::readCount(), " d0: ", ibus_in::uart::readBuffer()[0]);
                 // for(uint8_t i = 0; i < 7; ++i) {
                 //     IO::out<debug>(" ", ibus_in::value(i));
@@ -224,6 +224,7 @@ struct GFSM {
                 break;
             case State::RunUnconnected:
                 IO::outl<debug>("# Run Unc");
+                channelCallback::update();
                 led1::event(led1::Event::Fast);
                 led2::event(led2::Event::Off);
                 break;
