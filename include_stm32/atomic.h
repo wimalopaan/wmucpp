@@ -16,9 +16,9 @@ namespace Mcu::Arm {
             const uint32_t primask = __get_PRIMASK();
         };
         
-        void access(const auto f) {
+        auto access(const auto f) {
             DisableInterruptsRestore di; 
-                f();
+            return f();
         }
     }
 }

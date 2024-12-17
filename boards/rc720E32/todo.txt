@@ -3,19 +3,28 @@ ToDo
 
 Hardware
 --------
-* bridge 1:
-* bridge 2:
-* bridge 3:
+* HW_01:
+** bridge 1:
+** bridge 2:
+** bridge 3:
+* HW_02:
 
 Prio 0
 ------
+* V/ESC: half-duplex protocol, adaption to dma-pattern
+* UART refactor
+** use PA
+** idle: bytes to PA
+** usart.h: sendBuffer/receiver: diffent sizes possible
+** unify send/receive buffers for mutual-exclusiv protocols
+* crsf refactor
+** parameter: underlying type (Bytes: 1, 2, 4)
+** std::bitcast
+* use units in crsf-parameters
 * modes: Dual-Schottel, Passthru
 * make dma, timer, usart summary with hw-connections
-* usart.h: sendBuffer/receiver: diffent sizes possible
-* crsf-command popups: useful texts
-* V/ESC: half-duplex protocol, adaption to dma-pattern
 * for SBus-out: selectable range: 1-16 or 17-32 (requires crsfch.lua on radio)
-* use units in crsf-parameters
+* crsf-command popups: useful texts
 
 Prio 1
 ------

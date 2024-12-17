@@ -1,12 +1,12 @@
 #define USE_MCU_STM_V3
 #define USE_CRSF_V3
 
-// #define ESCAPE32_ASCII
-// #define SERVO_CALIBRATION
-// #define SERVO_ADDRESS_SET
-// #define CRSF_ADDRESS 192
-// #define TEST_EEPROM
-// #define SERIAL_DEBUG
+#define ESCAPE32_ASCII // enable ESCape32 ascii configuration parameter menu
+#define SERVO_CALIBRATION // enable snalog feedback servo calibration
+#define SERVO_ADDRESS_SET // eanble setting waveshare servo IDs
+#define CRSF_ADDRESS 192
+#define SERIAL_DEBUG // enable debug on esc-tlm-1
+#define TEST_EEPROM // fill eeprom with test setup
 
 #define NDEBUG
 
@@ -20,7 +20,6 @@
 #include "gfsm.h"
 
 #include "devices.h"
-
 
 using namespace std::literals::chrono_literals;
 
@@ -81,8 +80,8 @@ void TIM3_TIM4_IRQHandler() {
     using pulse_in = devs::pulse_in;
     static_assert(pulse_in::timerNumber == 4);
     pulse_in::onCapture([]{
-        devs::tp3::set();
-        devs::tp3::reset();
+        // devs::tp3::set();
+        // devs::tp3::reset();
     });
 }
 
@@ -159,11 +158,10 @@ void USART2_LPUART2_IRQHandler(){
     });
     using vesc_1 = devs::vesc_1;
     static_assert(vesc_1::uart::number == 2);
-    vesc_1::onTransferComplete([]{
+    vesc_1::Isr::onTransferComplete([]{
         vesc_1::rxEnable();
     });
-    vesc_1::onIdleWithDma([]{
-        vesc_1::event(vesc_1::Event::ReceiveComplete);
+    vesc_1::Isr::onIdle([]{
     });
     esc32_1::uart::mcuUart->ICR = -1;
 
@@ -232,11 +230,10 @@ void USART3_4_5_6_LPUART1_IRQHandler(){
     });
     using vesc_2 = devs::vesc_2;
     static_assert(vesc_2::uart::number == 3);
-    vesc_2::onTransferComplete([]{
+    vesc_2::Isr::onTransferComplete([]{
         vesc_2::rxEnable();
     });
-    vesc_2::onIdleWithDma([]{
-        vesc_2::event(vesc_2::Event::ReceiveComplete);
+    vesc_2::Isr::onIdle([]{
     });
     esc32_2::uart::mcuUart->ICR = -1;
 

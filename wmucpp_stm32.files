@@ -502,6 +502,7 @@ include_stm32/concepts.h
 include_stm32/cppm.h
 include_stm32/crc.h
 include_stm32/dac.h
+include_stm32/debug_pin.h
 include_stm32/dma.h
 include_stm32/dsp.h
 include_stm32/etl/algorithm.h
@@ -560,3 +561,5 @@ include_stm32/tlc59108.h
 include_stm32/traits.h
 include_stm32/units.h
 include_stm32/usart.h
+include_stm32/usart_2.h
+include_stm32/usarts.h

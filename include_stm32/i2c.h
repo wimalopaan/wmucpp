@@ -1,17 +1,16 @@
 #pragma once
 
-#pragma once
-
-#include "mcu/mcu.h"
-#include "units.h"
-#include "concepts.h"
-#include "mcu/mcu_traits.h"
-#include "output.h"
-
 #include <type_traits>
 #include <concepts>
 #include <cstddef>
 #include <functional>
+
+#include "mcu/mcu.h"
+#include "mcu/mcu_traits.h"
+#include "units.h"
+#include "concepts.h"
+#include "output.h"
+#include "components.h"
 
 namespace Mcu::Stm {
     using namespace Units::literals;
@@ -48,9 +47,15 @@ namespace Mcu::Stm {
         
         template<uint8_t N, size_t Size = 16, typename Debug = void, typename MCU = DefaultMcu> struct Master;
         
-        template<uint8_t N, size_t Size, typename Debug, G4xx MCU>
+        template<uint8_t N, size_t Size, typename Debug, typename MCU>
+        requires (
+                    ((N >= 1) && (N <= 2) && std::is_same_v<Stm32G030, MCU>) ||
+                    ((N >= 1) && (N <= 3) && std::is_same_v<Stm32G0B1, MCU>) ||
+                    ((N >= 1) && (N <= 3) && std::is_same_v<Stm32G431, MCU>)
+                )
         struct Master<N, Size, Debug, MCU> {
-            static inline /*constexpr */ I2C_TypeDef* const mcuI2c = reinterpret_cast<I2C_TypeDef*>(Mcu::Stm::Address<Master<N, Size, MCU>>::value);
+            static inline /*constexpr */ I2C_TypeDef* const mcuI2c = reinterpret_cast<I2C_TypeDef*>(Mcu::Stm::Address<Mcu::Components::I2C<N>>::value);
+#ifdef STM32G4
             static inline void init() {
                 if constexpr(N == 1) {
                     RCC->APB1ENR1 |= RCC_APB1ENR1_I2C1EN;
@@ -68,7 +73,26 @@ namespace Mcu::Stm {
                 mcuI2c->TIMINGR = 0x30A0A7FB; // CubeMX 100KHz
                 mcuI2c->CR1 |= I2C_CR1_PE;
             }
-            
+#endif
+#ifdef STM32G0
+            static inline void init() {
+                if constexpr(N == 1) {
+                    RCC->APBENR1 |= RCC_APBENR1_I2C1EN;
+                }
+                else if constexpr(N == 2) {
+                    RCC->APBENR1 |= RCC_APBENR1_I2C2EN;
+                }
+                else if constexpr(N == 3) {
+                    RCC->APBENR1 |= RCC_APBENR1_I2C3EN;
+                }
+                else {
+                    static_assert(false);
+                }
+                mcuI2c->TIMINGR  = 0x10B17DB5; // CubeMx 100KHz@64MHz
+                mcuI2c->CR1 |= I2C_CR1_PE;
+            }
+#endif
+
             enum class State : uint8_t { Idle = 0,
                                          WriteAdress = 10, WriteWaitAdress, WriteData, WriteWaitData, WriteWaitComplete, WriteError,
                                          ScanStart = 20, ScanWaitBusy, ScanWaitAck, ScanNext, ScanEnd,
@@ -369,17 +393,18 @@ namespace Mcu::Stm {
         };
     }
     
-
-    template<size_t S, G4xx MCU>
-    struct Address<I2C::Master<1, S, MCU>> {
+    template<>
+    struct Address<Mcu::Components::I2C<1>> {
         static inline constexpr uintptr_t value = I2C1_BASE;
     };
-    template<size_t S, G4xx MCU>
-    struct Address<I2C::Master<2, S, MCU>> {
+    template<>
+    struct Address<Mcu::Components::I2C<2>> {
         static inline constexpr uintptr_t value = I2C2_BASE;
     };
-    template<size_t S, G4xx MCU>
-    struct Address<I2C::Master<3, S, MCU>> {
+#ifdef I2C3_BASE
+    template<>
+    struct Address<Mcu::Components::I2C<3>> {
         static inline constexpr uintptr_t value = I2C3_BASE;
     };
+#endif
 }

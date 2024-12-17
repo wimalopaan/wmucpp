@@ -45,7 +45,8 @@ struct EEProm {
 
     std::array<uint16_t, 2> out_mode_srv{2, 2};
 #ifdef TEST_EEPROM
-    std::array<uint16_t, 2> out_mode_esc{2, 0};
+    // std::array<uint16_t, 2> out_mode_esc{2, 0}; // Esc32 Ascii
+    std::array<uint16_t, 2> out_mode_esc{3, 0}; // VEsc
 #else
     std::array<uint16_t, 2> out_mode_esc{0, 0};
 #endif

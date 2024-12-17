@@ -27,6 +27,10 @@ namespace Mcu::Components {
         using number_t = std::integral_constant<uint8_t, N>;
     };
     template<uint8_t N>
+    struct I2C {
+        using number_t = std::integral_constant<uint8_t, N>;
+    };
+    template<uint8_t N>
     struct Dac {
         using number_t = std::integral_constant<uint8_t, N>;
     };
@@ -36,8 +40,9 @@ namespace Mcu::Components {
     struct Dma {
         using number_t = std::integral_constant<uint8_t, N>;
     };
-    template<uint8_t N>
+    template<typename Controller, uint8_t N>
     struct DmaChannel {
+        using controller = Controller;
         using number_t = std::integral_constant<uint8_t, N>;
     };
     template<uint8_t N>

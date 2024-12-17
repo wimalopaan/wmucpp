@@ -18,11 +18,15 @@ namespace Mcu::Stm {
 
         struct RX;
         struct TX;
+
+        struct SDA;
+        struct SCL;
         
         namespace detail {
             using Mcu::Components::Pin;
             using Mcu::Components::Timer;
             using Mcu::Components::Usart;
+            using Mcu::Components::I2C;
             
             template<typename PinComponent, typename PeriComponent, typename Function, typename MCU>
             struct Impl;
@@ -99,6 +103,10 @@ namespace Mcu::Stm {
             template<Mcu::Stm::G0xx MCU>
             struct Impl<Pin<B, 2>, Usart<3>, TX, MCU> : std::integral_constant<uint8_t, 4> {};
 
+            template<Mcu::Stm::G0xx MCU>
+            struct Impl<Pin<B, 3>, I2C<3>, SCL, MCU> : std::integral_constant<uint8_t, 6> {};
+            template<Mcu::Stm::G0xx MCU>
+            struct Impl<Pin<B, 4>, I2C<3>, SDA, MCU> : std::integral_constant<uint8_t, 6> {};
         }
         
         template<typename Pin, typename Peripherie, typename Function, typename MCU = DefaultMcu>

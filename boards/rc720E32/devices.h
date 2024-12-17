@@ -13,6 +13,8 @@
 #include "components.h"
 #include "dma.h"
 #include "usart.h"
+#include "usart_2.h"
+#include "i2c.h"
 #include "units.h"
 #include "output.h"
 #include "concepts.h"
@@ -77,23 +79,25 @@ struct Devices<SW01, Config, MCU> {
     // adc
     using adcDmaChannel     = Mcu::Stm::Dma::Channel<dma1, 3, MCU>;
     // half-duplex
-    using srv1DmaChannel     = Mcu::Stm::Dma::Channel<dma1, 4, MCU>;
+    using srv1DmaChannel    = Mcu::Stm::Dma::Channel<dma1, 4, MCU>;
     // I2C
     using i2cDmaChannel     = Mcu::Stm::Dma::Channel<dma1, 5, MCU>;
     // half-duplex
-    using sbus1DmaChannel     = Mcu::Stm::Dma::Channel<dma1, 6, MCU>;
+    using sbus1DmaChannel   = Mcu::Stm::Dma::Channel<dma1, 6, MCU>;
     // input capture
-    using pulseInDmaChannel     = Mcu::Stm::Dma::Channel<dma1, 7, MCU>;
+    using pulseInDmaChannel = Mcu::Stm::Dma::Channel<dma1, 7, MCU>;
     // half-duplex
-    using relay1DmaChannel = Mcu::Stm::Dma::Channel<dma2, 1, MCU>;
+    using relay1DmaChannel  = Mcu::Stm::Dma::Channel<dma2, 1, MCU>;
     // half-duplex
-    using relayAuxDmaChannel = Mcu::Stm::Dma::Channel<dma2, 2, MCU>;
+    using relayAuxDmaChannel= Mcu::Stm::Dma::Channel<dma2, 2, MCU>;
     // half-duplex
-    using srv2DmaChannel     = Mcu::Stm::Dma::Channel<dma2, 3, MCU>;
+    using srv2DmaChannel    = Mcu::Stm::Dma::Channel<dma2, 3, MCU>;
     // half-duplex
-    using esc2DmaChannel = Mcu::Stm::Dma::Channel<dma2, 4, MCU>;
+    using esc2DmaChannel    = Mcu::Stm::Dma::Channel<dma2, 4, MCU>;
+    using esc2DmaChannelComponent = Mcu::Components::DmaChannel<typename dma2::component_t, 4>;
     // half-duplex
-    using esc1DmaChannel = Mcu::Stm::Dma::Channel<dma2, 5, MCU>;
+    using esc1DmaChannel    = Mcu::Stm::Dma::Channel<dma2, 5, MCU>;
+    using esc1DmaChannelComponent = Mcu::Components::DmaChannel<typename dma2::component_t, 5>;
 
     // Uebersicht: UART
     // Uart 1: CRSF-IN
@@ -237,7 +241,8 @@ struct Devices<SW01, Config, MCU> {
 
     using esc32ascii_1 = RC::ESCape::ConfigAscii<2, SerialConfig1, MCU>;
 
-    using vesc_1 = RC::VESC::Master::V4::Serial<2, SerialConfig1, MCU>;
+    struct VEscConfig1;
+    using vesc_1 = RC::VESC::Master::V5::Serial<2, VEscConfig1, MCU>;
 
     // Tlm1: PA3 : Uart2-RX (AF1), TIM2-CH4 (AF2), TIM15-CH2 (AF5)
 
@@ -269,7 +274,8 @@ struct Devices<SW01, Config, MCU> {
 
     using esc32ascii_2 = RC::ESCape::ConfigAscii<3, SerialConfig2, MCU>;
 
-    using vesc_2 = RC::VESC::Master::V4::Serial<3, SerialConfig2, MCU>;
+    struct VEscConfig2;
+    using vesc_2 = RC::VESC::Master::V5::Serial<3, VEscConfig2, MCU>;
 
 
     // Tlm2: PB9 : TIM17-CH1, TIM4-CH4
@@ -316,13 +322,19 @@ struct Devices<SW01, Config, MCU> {
     struct PulseConfig;
     using pulse_in = Pulse::CppmIn<4, PulseConfig, MCU>; // TIM4-CH1
 
+    // I2C-3
+
+    using sda3 = Mcu::Stm::Pin<gpiob, 4, MCU>;
+    using scl3 = Mcu::Stm::Pin<gpiob, 3, MCU>;
+    using i2c = Mcu::Stm::I2C::Master<3, 16, debug, MCU>;
+
     struct IBusConfig {
         using pin = sbus_crsf_pin;
         using clock = Devices::clock;
         using systemTimer = Devices::systemTimer;
         using dmaChRead = relay1DmaChannel;
         using debug = Devices::debug;
-        using tp = tp3;
+        using tp = void;
     };
 
     struct SBusConfig {
@@ -331,7 +343,7 @@ struct Devices<SW01, Config, MCU> {
         using systemTimer = Devices::systemTimer;
         using dmaChRead = relay1DmaChannel;
         using debug = Devices::debug;
-        using tp = tp3;
+        using tp = void;
     };
 
     struct Sumdv3Config {
@@ -340,7 +352,7 @@ struct Devices<SW01, Config, MCU> {
         using systemTimer = Devices::systemTimer;
         using dmaChRead = relay1DmaChannel;
         using debug = Devices::debug;
-        using tp = tp3;
+        using tp = void;
     };
 
     struct InputConfig {
@@ -355,7 +367,7 @@ struct Devices<SW01, Config, MCU> {
         using timer = systemTimer;
         using dmaCh = pulseInDmaChannel;
         using debug = Devices::debug;
-        using tp = tp3;
+        using tp = void;
     };
 
     using polars = Meta::List<polar1, polar2>;
@@ -429,12 +441,29 @@ struct Devices<SW01, Config, MCU> {
         using dmaChRW = esc1DmaChannel;
         using pin = esc1_pin;
         using debug = Devices::debug;
-        using tp = tp3;
+        using tp = void;
     };
     struct SerialConfig2 {
         using clock = Devices::clock;
         using systemTimer = Devices::systemTimer;
         using dmaChRW = esc2DmaChannel;
+        using pin = esc2_pin_1;
+        using debug = void;
+        using tp = void;
+    };
+
+    struct VEscConfig1 {
+        using clock = Devices::clock;
+        using systemTimer = Devices::systemTimer;
+        using dmaChComponent = esc1DmaChannelComponent;
+        using pin = esc1_pin;
+        using debug = Devices::debug;
+        using tp = tp3;
+    };
+    struct VEscConfig2 {
+        using clock = Devices::clock;
+        using systemTimer = Devices::systemTimer;
+        using dmaChComponent = esc2DmaChannelComponent;
         using pin = esc2_pin_1;
         using debug = void;
         using tp = void;
@@ -447,6 +476,9 @@ struct Devices<SW01, Config, MCU> {
     static inline void init() {
         clock::init();
         systemTimer::init();
+
+        dma1::init();
+        dma2::init();
 
         gpioa::init();
         gpiob::init();
@@ -465,10 +497,15 @@ struct Devices<SW01, Config, MCU> {
 
         crsf_in::init();
         crsf_in::baud(420'000);
-        // crsf_in::baud(921'600); // hack: for ELRS buddy
         crsftx::afunction(1);
         crsftx::template pullup<true>();
         crsfrx::afunction(1);
+
+        sda3::openDrain();
+        scl3::openDrain();
+        sda3::afunction(6);
+        scl3::afunction(6);
+        i2c::init();
 
         // adc::init();
         // adc::oversample(8); // 256

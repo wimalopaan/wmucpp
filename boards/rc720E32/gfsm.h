@@ -4,10 +4,10 @@
 #include <utility>
 
 #include "mcu/mcu.h"
-
+#include "meta.h"
+#include "i2c.h"
 #include "tick.h"
 #include "rc/crsf.h"
-#include "meta.h"
 
 using namespace std::literals::chrono_literals;
 
@@ -40,6 +40,8 @@ struct GFSM {
     using ibus_in = devs::ibus_in;
     using sumdv3_in = devs::sumdv3_in;
 
+    using i2c = devs::i2c;
+
     static inline void init() {
         devs::init();
 #ifdef CRSF_ADDRESS
@@ -50,7 +52,9 @@ struct GFSM {
 
     enum class Event : uint8_t {None, ConnectionLost, DirectConnected, ReceiverConnected};
 
-    enum class State : uint8_t {Undefined, Init, Calib, RunConnected, RunUnconnected, DirectMode, CheckBaudrate};
+    enum class State : uint8_t {Undefined, Init, Calib,
+                                I2CScan,
+                                RunConnected, RunUnconnected, DirectMode, CheckBaudrate};
 
     static inline void event(const Event e) {
         mEvent = e;
@@ -62,7 +66,7 @@ struct GFSM {
     }
 
     static inline void periodic() {
-        devs::tp1::set();
+        // devs::tp1::set();
         if constexpr(!std::is_same_v<debug, void>) {
             debug::periodic();
         }
@@ -73,7 +77,7 @@ struct GFSM {
         Auxes::periodic();
 
         crsfBuffer::periodic();
-        devs::tp1::reset();
+        // devs::tp1::reset();
     }
 
     static inline constexpr External::Tick<systemTimer> initTicks{500ms};
@@ -121,6 +125,7 @@ struct GFSM {
         case State::Init:
             mStateTick.on(initTicks, []{
                 if (adc::ready()) {
+                    // mState = State::I2CScan;
                     mState = State::Calib;
                 }
                 else {
@@ -202,6 +207,11 @@ struct GFSM {
                 // IO::outl<debug>("# send Radio ID");
             });
             break;
+        case State::I2CScan:
+            if (i2c::isIdle()) {
+                mState = State::RunUnconnected;
+            }
+            break;
         }
         if (oldState != mState) {
             mStateTick.reset();
@@ -241,6 +251,16 @@ struct GFSM {
                 IO::outl<debug>("# DMode");
                 led1::event(led1::Event::Fast);
                 led2::event(led2::Event::Fast);
+                break;
+            case State::I2CScan:
+                IO::outl<debug>("# I2CScan");
+                if (i2c::scan([](const Mcu::Stm::I2C::Address a){
+                            })) {
+                    IO::outl<debug>("# i2c scan start");
+                }
+                else {
+                    IO::outl<debug>("# i2c scan failed");
+                }
                 break;
             }
         }

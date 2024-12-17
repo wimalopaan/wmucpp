@@ -15,6 +15,13 @@ struct Relays {
     using sbus_in = devs::sbus_in;
     using sumdv3_in = devs::sumdv3_in;
 
+    // std::integral_constant<uint8_t, sizeof(Relay<sbus>)>::_;
+    static_assert(sizeof(Relay<sbus>) == sizeof(Relay<relay>));
+    static_assert(sizeof(Relay<sbus>) == sizeof(Relay<pulse_in>));
+    static_assert(sizeof(Relay<sbus>) == sizeof(Relay<ibus_in>));
+    static_assert(sizeof(Relay<sbus>) == sizeof(Relay<sbus_in>));
+    static_assert(sizeof(Relay<sbus>) == sizeof(Relay<sumdv3_in>));
+
     static inline void set(const uint8_t r) {
         IO::outl<debug>("# relay ", r);
         switch(r) {

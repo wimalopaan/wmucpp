@@ -180,11 +180,15 @@ struct SumDV3Input {
             const uint8_t crcH = data[i++];
             const uint8_t crcL = data[i++];
 
-            tp::set();
+            if constexpr(!std::is_same_v<tp, void>) {
+                tp::set();
+            }
             if (cs == ((uint16_t(crcH) << 8) | crcL)) {
                 decodeV1(data + 3, nChannels);
             }
-            tp::reset();
+            if constexpr(!std::is_same_v<tp, void>) {
+                tp::reset();
+            }
         }
         else if (version == 0x03) {
             const uint8_t crcH = data[i++];
@@ -195,11 +199,15 @@ struct SumDV3Input {
             [[maybe_unused]] const uint8_t command = data[i - 4];
             [[maybe_unused]] const uint8_t subcmd = data[i - 3];
 
-            tp::set();
+            if constexpr(!std::is_same_v<tp, void>) {
+                tp::set();
+            }
             if (cs == ((uint16_t(crcH) << 8) | crcL)) {
                 decodeV3(data + 3, Frame{fcode}, nChannels);
             }
-            tp::reset();
+            if constexpr(!std::is_same_v<tp, void>) {
+                tp::reset();
+            }
         }
     }
     template<uint8_t B, uint8_t E> struct range_t {};
