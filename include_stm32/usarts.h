@@ -82,4 +82,61 @@ namespace Mcu::Stm {
         };
 #endif
     }
+
+    template<>
+    struct Address<Mcu::Components::Usart<1>> {
+        static inline constexpr uintptr_t value = USART1_BASE;
+    };
+    template<>
+    struct Address<Mcu::Components::Usart<2>> {
+        static inline constexpr uintptr_t value = USART2_BASE;
+    };
+#ifdef USART3_BASE
+    template<>
+    struct Address<Mcu::Components::Usart<3>> {
+        static inline constexpr uintptr_t value = USART3_BASE;
+    };
+#endif
+#ifdef USART4_BASE
+    template<>
+    struct Address<Mcu::Components::Usart<4>> {
+        static inline constexpr uintptr_t value = USART4_BASE;
+    };
+#endif
+#ifdef UART4_BASE
+    template<>
+    struct Address<Mcu::Components::Usart<4>> {
+        static inline constexpr uintptr_t value = UART4_BASE;
+    };
+#endif
+#ifdef USART5_BASE
+    template<>
+    struct Address<Mcu::Components::Usart<5>> {
+        static inline constexpr uintptr_t value = USART5_BASE;
+    };
+#endif
+#ifdef UART5_BASE
+    template<>
+    struct Address<Mcu::Components::Usart<5>> {
+        static inline constexpr uintptr_t value = UART5_BASE;
+    };
+#endif
+#ifdef USART6_BASE
+    template<>
+    struct Address<Mcu::Components::Usart<6>> {
+        static inline constexpr uintptr_t value = USART6_BASE;
+    };
+#endif
+#ifdef LPUART1_BASE
+    template<>
+    struct Address<Mcu::Components::Usart<101>> {
+        static inline constexpr uintptr_t value = LPUART1_BASE;
+    };
+#endif
+#ifdef LPUART2_BASE
+    template<>
+    struct Address<Mcu::Components::Usart<102>> {
+        static inline constexpr uintptr_t value = LPUART2_BASE;
+    };
+#endif
 }
