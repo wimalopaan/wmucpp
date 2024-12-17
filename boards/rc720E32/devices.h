@@ -12,6 +12,7 @@
 #include "mcu/arm.h"
 #include "components.h"
 #include "dma.h"
+#include "dma_2.h"
 #include "usart.h"
 #include "usart_2.h"
 #include "i2c.h"

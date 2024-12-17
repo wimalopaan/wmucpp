@@ -11,7 +11,6 @@ Hardware
 
 Prio 0
 ------
-* V/ESC: half-duplex protocol, adaption to dma-pattern
 * UART refactor
 ** use PA
 ** idle: bytes to PA
@@ -45,6 +44,7 @@ Prio 3
 
 Done:
 ------
+* V/ESC: half-duplex protocol, adaption to dma-pattern
 * PWM-Null einstellbar
 * ESCape32-Ascii: config-protocol
 * seperate channel-update from crsf-relay

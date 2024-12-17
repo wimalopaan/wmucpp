@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 struct FastMath {
     static inline constexpr float pi = std::numbers::pi_v<float>;
     static inline constexpr float pi_2 = std::numbers::pi_v<float> / 2.0f;
