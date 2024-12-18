@@ -55,7 +55,7 @@ namespace RC::VESC {
                 struct DeviceInfo {
                     static inline uint8_t mVersionMajor;
                     static inline uint8_t mVersionMinor;
-                    static inline std::array<char, 256> mName;
+                    static inline std::array<char, 64> mName;
                     static inline uint8_t mFWTestVersionNumber;
                     static inline uint8_t mHWType;
                 };
@@ -237,16 +237,18 @@ namespace RC::VESC {
                 static inline void send(const uint8_t n) {
                     uart::startSend(n);
                 }
-                static inline void deviceInfo(const DeviceInfo& ) {
+                static inline void deviceInfo(const DeviceInfo& data) {
+                    mVersionMajor = data.mVersionMajor;
+                    mVersionMinor = data.mVersionMinor;
                 }
                 static inline void telemetry(const TelemetryValues& data) {
                     if (mUseMotorCurrent) {
-                        mCurrent = std::abs(data.mCurrent) / 100;
+                        mCurrent = std::abs(data.mCurrent);
                     }
                     else {
-                        mCurrent = std::abs(data.mCurrentIn) / 100;
+                        mCurrent = std::abs(data.mCurrentIn);
                     }
-                    mRpm = std::abs(data.mRpm) / 7;
+                    mRpm = std::abs(data.mRpm) / mPolePairs;
                 }
                 template<typename CB>
                 struct ProtocolAdapter {
@@ -255,6 +257,7 @@ namespace RC::VESC {
                                                  Values_Temp, Values_TempM, Values_CurM, Values_CurIn, Values_Rpm, Values_V, Values_Cons, Values_F, Values_Reamin,
                                                  CrcH, CrcL, End};
 
+                    // wrong: gaps are not considered (compare: readReply)
                     static inline void process(const uint8_t b) {
                         Debug::Scoped<tp> tp;
                         static CRC16 csum;
@@ -564,48 +567,48 @@ namespace RC::VESC {
                             CB::deviceInfo(mDevInfo);
                         }
                         else if (type == CommPacketId::COMM_GET_VALUES) {
-                            mTelem.mTemperature = ((int32_t)data[0]) << 8;
-                            mTelem.mTemperature |= ((int32_t)data[1]);
+                            mTelem.mTemperature = ((int32_t)data[3]) << 8;
+                            mTelem.mTemperature |= ((int32_t)data[4]);
 
-                            mTelem.mTemperatureMotor = ((int32_t)data[2]) << 8;
-                            mTelem.mTemperatureMotor |= ((int32_t)data[3]);
+                            mTelem.mTemperatureMotor = ((int32_t)data[5]) << 8;
+                            mTelem.mTemperatureMotor |= ((int32_t)data[6]);
 
-                            mTelem.mCurrent = ((int32_t)data[4]) << 24;
-                            mTelem.mCurrent |= ((int32_t)data[5]) << 16;
-                            mTelem.mCurrent |= ((int32_t)data[6]) << 8;
-                            mTelem.mCurrent |= ((int32_t)data[7]);
+                            mTelem.mCurrent = ((int32_t)data[7]) << 24;
+                            mTelem.mCurrent |= ((int32_t)data[8]) << 16;
+                            mTelem.mCurrent |= ((int32_t)data[9]) << 8;
+                            mTelem.mCurrent |= ((int32_t)data[10]);
 
                             if (mTelem.mCurrent < 0) {
                                 mTelem.mCurrent = -mTelem.mCurrent;
                             }
 
-                            mTelem.mCurrentIn = ((int32_t)data[8]) << 24;
-                            mTelem.mCurrentIn |= ((int32_t)data[9]) << 16;
-                            mTelem.mCurrentIn |= ((int32_t)data[10]) << 8;
-                            mTelem.mCurrentIn |= ((int32_t)data[11]);
+                            mTelem.mCurrentIn = ((int32_t)data[11]) << 24;
+                            mTelem.mCurrentIn |= ((int32_t)data[12]) << 16;
+                            mTelem.mCurrentIn |= ((int32_t)data[13]) << 8;
+                            mTelem.mCurrentIn |= ((int32_t)data[14]);
 
                             if (mTelem.mCurrentIn < 0) {
                                 mTelem.mCurrentIn = -mTelem.mCurrentIn;
                             }
 
-                            mTelem.mRpm = ((int32_t)data[22]) << 24;
-                            mTelem.mRpm |= ((int32_t)data[23]) << 16;
-                            mTelem.mRpm |= ((int32_t)data[24]) << 8;
-                            mTelem.mRpm |= ((int32_t)data[25]);
+                            mTelem.mRpm = ((int32_t)data[25]) << 24;
+                            mTelem.mRpm |= ((int32_t)data[26]) << 16;
+                            mTelem.mRpm |= ((int32_t)data[27]) << 8;
+                            mTelem.mRpm |= ((int32_t)data[28]);
 
                             if (mTelem.mRpm < 0) {
                                 mTelem.mRpm = -mTelem.mRpm;
                             }
 
-                            mTelem.mVoltage = ((int32_t)data[26]) << 8;
-                            mTelem.mVoltage |= ((int32_t)data[27]);
+                            mTelem.mVoltage = ((int32_t)data[29]) << 8;
+                            mTelem.mVoltage |= ((int32_t)data[30]);
 
-                            mTelem.mConsumption = ((int32_t)data[28]) << 24;
-                            mTelem.mConsumption |= ((int32_t)data[29]) << 16;
-                            mTelem.mConsumption |= ((int32_t)data[30]) << 8;
-                            mTelem.mConsumption |= ((int32_t)data[31]);
+                            mTelem.mConsumption = ((int32_t)data[31]) << 24;
+                            mTelem.mConsumption |= ((int32_t)data[32]) << 16;
+                            mTelem.mConsumption |= ((int32_t)data[33]) << 8;
+                            mTelem.mConsumption |= ((int32_t)data[34]);
 
-                            mTelem.mFault = (uint8_t)data[52];
+                            mTelem.mFault = (uint8_t)data[55];
                             CB::telemetry(mTelem);
                         }
                         event(Event::OK);
@@ -642,7 +645,10 @@ namespace RC::VESC {
                     };
                     using tp = Serial::tp;
                 };
+                static inline uint8_t mVersionMajor;
+                static inline uint8_t mVersionMinor;
                 static inline uint16_t mRpm{};
+                static inline uint8_t mPolePairs{7};
                 static inline bool mUseMotorCurrent = false;
                 static inline uint16_t mCurrent{};
                 static inline int32_t mThrottle{};
