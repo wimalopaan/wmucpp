@@ -1,25 +1,11 @@
 #pragma once
 
-static const uint16_t LPUART_PRESCALER_TAB[] =
-{
-  (uint16_t)1,
-  (uint16_t)2,
-  (uint16_t)4,
-  (uint16_t)6,
-  (uint16_t)8,
-  (uint16_t)10,
-  (uint16_t)12,
-  (uint16_t)16,
-  (uint16_t)32,
-  (uint16_t)64,
-  (uint16_t)128,
-  (uint16_t)256
-};
-
 namespace Mcu::Stm {
-    using namespace Units::literals;
-
     namespace Uarts {
+        enum class Mode : uint8_t {TxOnly, RxOnly, HalfDuplex, FullDuplex};
+
+        static constexpr uint16_t LPUART_PRESCALER_TAB[] = {1, 2, 4, 6, 8, 10, 12, 16, 32, 64, 128, 256};
+
         template<uint8_t N> struct Properties;
 #ifdef STM32G4
         template<> struct Properties<1> {

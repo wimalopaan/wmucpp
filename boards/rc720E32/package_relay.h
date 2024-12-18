@@ -161,6 +161,6 @@ struct PacketRelay {
     private:
     static inline volatile bool mActive = false;
     static inline volatile Event mEvent = Event::None;
-    static inline State mState = State::Init;
+    static inline volatile State mState = State::Init;
     static inline External::Tick<systemTimer> mStateTick;
 };

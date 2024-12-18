@@ -48,12 +48,15 @@ struct ServoOutputs {
         }
         return 0;
     }
+
     template<uint8_t N>
     static inline void servo(const uint8_t s) {
         IO::outl<debug>("# servo", N, ": ", s);
         static_assert(N <= 1);
         using srv_ws_t = std::conditional_t<(N == 0), Servo<servo1_ws>, Servo<servo2_ws>>;
         using srv_ft_t = std::conditional_t<(N == 0), Servo<servo1_ft>, Servo<servo2_ft>>;
+        static_assert(sizeof(srv_ft_t) == sizeof(srv_ws_t));
+
         switch(s) {
         case 0: // analog FB
             servos[N] = nullptr;

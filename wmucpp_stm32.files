@@ -553,8 +553,11 @@ include_stm32/rc/rc.h
 include_stm32/rc/roboremo.h
 include_stm32/rc/sbus2.h
 include_stm32/rc/sbus22.h
+include_stm32/rc/sbus2_2.h
+include_stm32/rc/sbus2_types.h
 include_stm32/rc/sport.h
 include_stm32/rc/vesc.h
+include_stm32/rc/vesc_2.h
 include_stm32/rc/vesc_types.h
 include_stm32/rcc.h
 include_stm32/rf.h

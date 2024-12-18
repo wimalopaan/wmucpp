@@ -68,7 +68,6 @@ struct SumDV3Input {
         uint16_t sum{};
     };
 
-
     static inline void init() {
         IO::outl<debug>("# SumDV3 init");
         __disable_irq();
@@ -266,8 +265,6 @@ struct SumDV3Input {
 
         return sb;
     }
-
-
     static inline void sumSwitches(const volatile uint8_t* const fptr) {
         const volatile uint8_t* sptr = fptr + 24;
         uint64_t sw = *sptr++;

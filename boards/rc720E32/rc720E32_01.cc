@@ -159,9 +159,14 @@ void USART2_LPUART2_IRQHandler(){
     using vesc_1 = devs::vesc_1;
     static_assert(vesc_1::uart::number == 2);
     vesc_1::Isr::onTransferComplete([]{
+        devs::tp3::set();
         vesc_1::rxEnable();
+        devs::tp3::reset();
     });
     vesc_1::Isr::onIdle([]{
+        devs::tp1::set();
+        vesc_1::event(vesc_1::Event::ReceiveComplete);
+        devs::tp1::reset();
     });
     esc32_1::uart::mcuUart->ICR = -1;
 

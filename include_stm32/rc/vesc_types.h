@@ -1,7 +1,6 @@
 #pragma once
 
 namespace RC::VESC {
-
     // Communication commands
     enum class  CommPacketId {
         COMM_FW_VERSION = 0,
