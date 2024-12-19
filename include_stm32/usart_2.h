@@ -351,24 +351,26 @@ namespace Mcu::Stm {
                         requires(Config::Isr::idle && !std::is_same_v<dmaChRW, void> && (Config::mode != Uarts::Mode::TxOnly)) {
                     if (mcuUart->ISR & USART_ISR_IDLE) {
                         mcuUart->ICR = USART_ICR_IDLECF;
-                        if (const uint16_t nRead = (Config::Rx::size - dmaChRW::mcuDmaChannel->CNDTR); nRead >= Config::Rx::idleMinSize) {
-                            dmaChRW::reConfigure([&]{
-                                if (dmaChRW::mcuDmaChannel->CMAR == (uint32_t)&mReadBuffer1[0]) {
-                                    dmaChRW::mcuDmaChannel->CMAR = (uint32_t)&mReadBuffer2[0];
-                                    mActiveReadBuffer = &mReadBuffer1[0];
-                                    mCount1 = nRead;
-                                    mActiveReadCount = &mCount1;
-                                }
-                                else {
-                                    dmaChRW::mcuDmaChannel->CMAR = (uint32_t)&mReadBuffer1[0];
-                                    mActiveReadBuffer = &mReadBuffer2[0];
-                                    mCount2 = nRead;
-                                    mActiveReadCount = &mCount2;
-                                }
-                                dmaChRW::mcuDmaChannel->CNDTR = Config::Rx::size;
-                            });
+                        if (const uint16_t nRead = (Config::Rx::size - dmaChRW::counter()); nRead >= Config::Rx::idleMinSize) {
+                            // f() -> bool, only reconfigure if parsing ok
+                            if (!std::is_same_v<adapter, void> || f(dmaChRW::memoryAddress(), nRead) || (nRead == Config::Rx::size)) {
+                                dmaChRW::reConfigure([&]{
+                                    if (dmaChRW::memoryAddress() == &mReadBuffer1[0]) {
+                                        dmaChRW::memoryAddress(&mReadBuffer2[0]);
+                                        mActiveReadBuffer = &mReadBuffer1[0];
+                                        mCount1 = nRead;
+                                        mActiveReadCount = &mCount1;
+                                    }
+                                    else {
+                                        dmaChRW::memoryAddress(&mReadBuffer1[0]);
+                                        mActiveReadBuffer = &mReadBuffer2[0];
+                                        mCount2 = nRead;
+                                        mActiveReadCount = &mCount2;
+                                    }
+                                    dmaChRW::size(Config::Rx::size);
+                                });
+                            }
                             mBufferHasData = true;
-                            f();
                         }
                     }
                 }

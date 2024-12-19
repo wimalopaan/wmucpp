@@ -93,7 +93,6 @@ namespace RC::VESC {
                     mEvent = e;
                 }
                 static inline void periodic() {
-                    // uart::periodic();
                     if (mEvent.is(Event::ReceiveComplete)) {
                         protocol_adapter::readReply();
                     }
@@ -157,6 +156,47 @@ namespace RC::VESC {
                         }
                     }
                 }
+                public:
+                struct Isr {
+                    static inline void onIdle(const auto f) {
+                        if (mActive) {
+                            const auto f2 = [&](const volatile uint8_t* const data, const uint16_t size){
+                                f();
+                                if (validityCheck(data, size)) {
+                                    event(Event::ReceiveComplete);
+                                    return true;
+                                }
+                                return false;
+                            };
+                            uart::Isr::onIdle(f2);
+                        }
+                    }
+                    static inline void onTransferComplete(const auto f) {
+                        auto fEnable = [&]{
+                            f();
+                            uart::template rxEnable<true>();
+                        };
+                        if (mActive) {
+                            uart::Isr::onTransferComplete(fEnable);
+                        }
+                    }
+                };
+                static inline void set(const uint16_t sbus) {
+                    if (!mActive) return;
+                    if (mState == State::Run) {
+                        mThrottle = sbus2throt(sbus);
+                        event(Event::SendThrot);
+                    }
+                }
+                static inline void update() {
+                }
+                static inline uint16_t current() {
+                    return mCurrent;
+                }
+                static inline uint16_t rpm() {
+                    return mRpm;
+                }
+                private:
                 static inline void sendThrottle() {
                     char* const data = (char*)uart::outputBuffer();
                     CRC16 cs;
@@ -197,39 +237,20 @@ namespace RC::VESC {
                     data[n++] = 0x03;
                     send(n);
                 }
-                static inline void rxEnable() {
-                    if (mActive) {
-                        uart::template rxEnable<true>();
+                static inline bool validityCheck(const volatile uint8_t* const data, const uint16_t size) {
+                    if (data[0] != 0x02) {
+                        return false;
                     }
-                }
-                struct Isr {
-                    static inline void onIdle(const auto f) {
-                        if (mActive) {
-                            uart::Isr::onIdle(f);
-                        }
+                    const uint8_t length = data[1];
+                    const uint8_t totalLength = length + 2 + 2 + 1;
+                    if (totalLength > size) {
+                        return false;
                     }
-                    static inline void onTransferComplete(const auto f) {
-                        if (mActive) {
-                            uart::Isr::onTransferComplete(f);
-                        }
+                    if (data[length + 4] != 0x03) {
+                        return false;
                     }
-                };
-                static inline void set(const uint16_t sbus) {
-                    if (!mActive) return;
-                    if (mState == State::Run) {
-                        mThrottle = sbus2throt(sbus);
-                        event(Event::SendThrot);
-                    }
+                    return true;
                 }
-                static inline void update() {
-                }
-                static inline uint16_t current() {
-                    return mCurrent;
-                }
-                static inline uint16_t rpm() {
-                    return mRpm;
-                }
-                private:
                 static inline int32_t sbus2throt(const uint16_t sbus) {
                     int v = (sbus - 992) * 100'000 / 820;
                     return std::clamp(v, -100'000, 100'000);
@@ -257,6 +278,7 @@ namespace RC::VESC {
                                                  Values_Temp, Values_TempM, Values_CurM, Values_CurIn, Values_Rpm, Values_V, Values_Cons, Values_F, Values_Reamin,
                                                  CrcH, CrcL, End};
 
+#if 0
                     // wrong: gaps are not considered (compare: readReply)
                     static inline void process(const uint8_t b) {
                         Debug::Scoped<tp> tp;
@@ -527,11 +549,11 @@ namespace RC::VESC {
                             break;
                         }
                     }
-
+#endif
                     static inline void readReply() {
                         Debug::Scoped<tp> tp;
                         const char* const data = (char*)uart::readBuffer();
-                        const uint16_t nread = uart::readCount();
+                        // const uint16_t nread = uart::readCount();
 
                         if (data[0] != 0x02) {
                             event(Event::Error);

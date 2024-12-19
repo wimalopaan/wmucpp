@@ -125,8 +125,8 @@ struct GFSM {
         case State::Init:
             mStateTick.on(initTicks, []{
                 if (adc::ready()) {
-                    // mState = State::I2CScan;
-                    mState = State::Calib;
+                    mState = State::I2CScan;
+                    // mState = State::Calib;
                 }
                 else {
                     mStateTick.reset();
@@ -255,6 +255,7 @@ struct GFSM {
             case State::I2CScan:
                 IO::outl<debug>("# I2CScan");
                 if (i2c::scan([](const Mcu::Stm::I2C::Address a){
+                              IO::outl<debug>("I2C: ", a.value);
                             })) {
                     IO::outl<debug>("# i2c scan start");
                 }

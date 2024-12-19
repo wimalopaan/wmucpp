@@ -61,6 +61,18 @@ namespace Mcu::Stm {
                     mcuDmaChannel->CCR = 0;
                 }
     #endif
+                static inline void memoryAddress(volatile value_t* adr) {
+                    mcuDmaChannel->CMAR = (uint32_t)adr;
+                }
+                static inline volatile value_t* memoryAddress() {
+                    return (volatile value_t*)mcuDmaChannel->CMAR;
+                }
+                static inline uint32_t counter() {
+                    return mcuDmaChannel->CNDTR;
+                }
+                static inline void size(const uint32_t s) {
+                    mcuDmaChannel->CNDTR = s;
+                }
                 static inline void startRead(const size_t size, const uint32_t pAdr, volatile value_t* mAdr, uint8_t mux) {
                     mcuDmaChannel->CCR &= ~DMA_CCR_EN;
                     MODIFY_REG(mcuDmaMux->CCR, DMAMUX_CxCR_DMAREQ_ID_Msk, mux << DMAMUX_CxCR_DMAREQ_ID_Pos);

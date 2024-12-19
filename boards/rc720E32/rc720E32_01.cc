@@ -160,12 +160,10 @@ void USART2_LPUART2_IRQHandler(){
     static_assert(vesc_1::uart::number == 2);
     vesc_1::Isr::onTransferComplete([]{
         devs::tp3::set();
-        vesc_1::rxEnable();
         devs::tp3::reset();
     });
     vesc_1::Isr::onIdle([]{
         devs::tp1::set();
-        vesc_1::event(vesc_1::Event::ReceiveComplete);
         devs::tp1::reset();
     });
     esc32_1::uart::mcuUart->ICR = -1;
@@ -235,11 +233,8 @@ void USART3_4_5_6_LPUART1_IRQHandler(){
     });
     using vesc_2 = devs::vesc_2;
     static_assert(vesc_2::uart::number == 3);
-    vesc_2::Isr::onTransferComplete([]{
-        vesc_2::rxEnable();
-    });
-    vesc_2::Isr::onIdle([]{
-    });
+    vesc_2::Isr::onTransferComplete([]{});
+    vesc_2::Isr::onIdle([]{});
     esc32_2::uart::mcuUart->ICR = -1;
 
     using ws1 = devs::srv1_waveshare;
