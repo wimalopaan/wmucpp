@@ -3,6 +3,7 @@
 namespace Mcu::Stm {
     namespace Uarts {
         enum class Mode : uint8_t {TxOnly, RxOnly, HalfDuplex, FullDuplex};
+        enum class Parity : uint8_t {None, Even, Odd};
 
         static constexpr uint16_t LPUART_PRESCALER_TAB[] = {1, 2, 4, 6, 8, 10, 12, 16, 32, 64, 128, 256};
 

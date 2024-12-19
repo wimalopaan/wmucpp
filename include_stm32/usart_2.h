@@ -18,8 +18,10 @@ struct UartConfig {
     using ValueType = uint8_t;
     using DmaChComponent = dmaChComponent;
     using Adapter = ProtocolAdapter<Serial>;
+    static inline constexpr bool rxtxswap = false;
     static inline constexpr bool fifo = true;
-    // static inline constexpr bool halfDuplex = true;
+    static inline constexpr bool invert = true;
+    static inline constexpr auto parity = Mcu::Stm::Uarts::Parity::Even;
     static inline constexpr Mode mode = Mode::HalfDuplex; // TxOnly, RxOnly, HalfDuplex, FullDuplex
     static inline constexpr uint32_t baudrate = 115'200;
     struct Rx {
@@ -85,6 +87,41 @@ namespace Mcu::Stm {
             };
             template<typename T>
             using getDmaComponent_t = getDmaComponent<T>::type;
+            template<typename T>
+            struct getInvert {
+                static inline constexpr bool value{false};
+            };
+            template<typename T>
+            requires(requires(T x){T::invert;})
+            struct getInvert<T>{
+                static inline constexpr bool value = T::invert;
+            };
+            template<typename T>
+            static inline constexpr bool getInvert_v = getInvert<T>::value;
+
+            template<typename T>
+            struct getSwap{
+                static inline constexpr bool value{false};
+            };
+            template<typename T>
+            requires(requires(T x){T::rxtxswap;})
+            struct getSwap<T>{
+                static inline constexpr bool value = T::rxtxswap;
+            };
+            template<typename T>
+            static inline constexpr bool getSwap_v = getSwap<T>::value;
+
+            template<typename T>
+            struct getParity{
+                static inline constexpr Uarts::Parity value{Uarts::Parity::None};
+            };
+            template<typename T>
+            requires(requires(T x){T::parity;})
+            struct getParity<T>{
+                static inline constexpr Uarts::Parity value = T::parity;
+            };
+            template<typename T>
+            static inline constexpr auto getParity_v = getParity<T>::value;
         }
 
         template<uint8_t N, typename Config, typename MCU = DefaultMcu>
@@ -231,6 +268,16 @@ namespace Mcu::Stm {
                     }
                     return cr3;
                 }();
+                mcuUart->CR2 = []{
+                    uint32_t cr2 = 0;
+                    if constexpr(detail::getInvert_v<Config>) {
+                        cr2 |= (USART_CR2_TXINV | USART_CR2_RXINV);
+                    }
+                    if constexpr(detail::getSwap_v<Config>) {
+                        cr2 |= USART_CR2_SWAP;
+                    }
+                    return cr2;
+                }();
                 mcuUart->CR1 = []{
                     uint32_t cr1 = 0;
                     if constexpr(Config::Rx::enable) {
@@ -244,6 +291,16 @@ namespace Mcu::Stm {
                     }
                     if constexpr(Config::Isr::txComplete) {
                         cr1 |= USART_CR1_TCIE;
+                    }
+                    if constexpr(detail::getParity_v<Config> == Uarts::Parity::Even) {
+                        cr1 |= USART_CR1_PCE;
+                        cr1 &= ~USART_CR1_PS;
+                        cr1 |= USART_CR1_M0;
+                    }
+                    else if constexpr(detail::getParity_v<Config> == Uarts::Parity::Odd) {
+                        cr1 |= USART_CR1_PCE;
+                        cr1 |= USART_CR1_PS;
+                        cr1 |= USART_CR1_M0;
                     }
                     if constexpr(Config::fifo) {
                         if constexpr (N == 1) {
