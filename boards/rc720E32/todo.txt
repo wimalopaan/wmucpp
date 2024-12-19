@@ -11,11 +11,7 @@ Hardware
 
 Prio 0
 ------
-* UART refactor
-** use PA
-** idle: bytes to PA
-** usart.h: sendBuffer/receiver: diffent sizes possible
-** unify send/receive buffers for mutual-exclusiv protocols
+* VEsc: slew-rate for throttle (crsf parameter)
 * crsf refactor
 ** parameter: underlying type (Bytes: 1, 2, 4)
 ** std::bitcast
@@ -44,6 +40,11 @@ Prio 3
 
 Done:
 ------
+* UART refactor
+** use PA
+** idle: bytes to PA
+** usart.h: sendBuffer/receiver: diffent sizes possible
+** unify send/receive buffers for mutual-exclusiv protocols
 * V/ESC: half-duplex protocol, adaption to dma-pattern
 * PWM-Null einstellbar
 * ESCape32-Ascii: config-protocol

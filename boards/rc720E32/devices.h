@@ -38,6 +38,7 @@
 #include "crsf_cb.h"
 #include "eeprom.h"
 #include "waveshare.h"
+#include "waveshare_2.h"
 #include "fbservo.h"
 #include "polar.h"
 #include "channels.h"
@@ -83,6 +84,7 @@ struct Devices<SW01, Config, MCU> {
     using adcDmaChannel     = Mcu::Stm::Dma::Channel<dma1, 3, MCU>;
     // half-duplex
     using srv1DmaChannel    = Mcu::Stm::Dma::Channel<dma1, 4, MCU>;
+    using srv1DmaChannelComponent = Mcu::Components::DmaChannel<typename dma1::component_t, 4>;
     // I2C
     using i2cDmaChannel     = Mcu::Stm::Dma::Channel<dma1, 5, MCU>;
     // half-duplex
@@ -97,6 +99,7 @@ struct Devices<SW01, Config, MCU> {
     using relayAuxDmaChannel= Mcu::Stm::Dma::Channel<dma2, 2, MCU>;
     // half-duplex
     using srv2DmaChannel    = Mcu::Stm::Dma::Channel<dma2, 3, MCU>;
+    using srv2DmaChannelComponent = Mcu::Components::DmaChannel<typename dma2::component_t, 3>;
     // half-duplex
     using esc2DmaChannel    = Mcu::Stm::Dma::Channel<dma2, 4, MCU>;
     using esc2DmaChannelComponent = Mcu::Components::DmaChannel<typename dma2::component_t, 4>;
@@ -257,8 +260,11 @@ struct Devices<SW01, Config, MCU> {
     using srv1_pwm = PwmAdapter<pwm3, srv1_pin, 3, storage, void>;
 
     struct WS1Config;
+#ifdef USE_UART_2
+    using srv1_waveshare = External::WaveShare::V2::Servo<5, WS1Config, MCU>;
+#else
     using srv1_waveshare = WaveShare<5, WS1Config, MCU>;
-
+#endif
     // Fb1:  PA6 : TIM3-CH1 (AF1), TIM16-CH1(AF5), ADC-IN6
     using fb1_pin = Mcu::Stm::Pin<gpioa, 6, MCU>;
     using adc = Mcu::Stm::V3::Adc<1, Meta::NList<6, 5>, Mcu::Stm::ContinousSampling<16>, adcDmaChannel, std::array<uint16_t, 2>, Meta::List<Mcu::Stm::EndOfSequence>>;
@@ -431,7 +437,11 @@ struct Devices<SW01, Config, MCU> {
     struct WS1Config {
         using pin = srv1_pin;
         using polar = polar1;
+#ifdef USE_UART_2
+        using dmaChComponent = srv1DmaChannelComponent;
+#else
         using dmaChRW = srv1DmaChannel;
+#endif
         using timer = systemTimer;
         using clk = clock;
         using tp = void;

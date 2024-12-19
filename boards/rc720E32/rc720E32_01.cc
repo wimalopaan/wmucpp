@@ -117,11 +117,14 @@ void DMA1_Channel2_3_IRQHandler() {
     });
 }
 void DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQHandler() {
+#ifdef USE_UART_2
+#else
     using ws1 = devs::srv1_waveshare;
     static_assert(ws1::dmaChRW::number == 4);
     ws1::dmaChRW::onTransferComplete([]{
         ws1::event(ws1::Event::ReadReply);
     });
+#endif
     using ws2 = devs::srv2_waveshare;
     static_assert(ws2::dmaChRW::number == 3);
     ws2::dmaChRW::onTransferComplete([]{
@@ -249,9 +252,16 @@ void USART3_4_5_6_LPUART1_IRQHandler(){
 
     using ws1 = devs::srv1_waveshare;
     static_assert(ws1::uart::number == 5);
+#ifdef USE_UART_2
+    ws1::Isr::onTransferComplete([]{
+    });
+    ws1::Isr::onIdle([]{
+    });
+#else
     ws1::uart::onTransferComplete([]{
         ws1::rxEnable();
     });
+#endif
     using ws2 = devs::srv2_waveshare;
     static_assert(ws2::uart::number == 6);
     ws2::uart::onTransferComplete([]{

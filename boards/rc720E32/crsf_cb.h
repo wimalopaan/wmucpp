@@ -201,7 +201,7 @@ private:
         c.push_back(p);
     }
 
-    static inline bool setZeroPosition(const uint16_t p) {
+    static inline bool setZeroPosition(const uint16_t) {
         return true;
     }
 
