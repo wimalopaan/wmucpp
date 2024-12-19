@@ -8,6 +8,8 @@
 #define SERIAL_DEBUG // enable debug on esc-tlm-1
 #define TEST_EEPROM // fill eeprom with test setup
 
+#define USE_UART_2
+
 #define NDEBUG
 
 #include <cstdint>
@@ -126,11 +128,13 @@ void DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQHandler() {
         ws2::event(ws2::Event::ReadReply);
     });
 
+#ifndef USE_UART_2
     using sbus1 = devs::sbus1;
     static_assert(sbus1::dmaChRW::number == 6);
     sbus1::dmaChRW::onTransferComplete([]{
         sbus1::slotReceived();
     });
+#endif
     using esc32_1 = devs::esc32_1;
     static_assert(esc32_1::dmaChRW::number == 5);
     esc32_1::dmaChRW::onTransferComplete([]{
@@ -170,9 +174,15 @@ void USART2_LPUART2_IRQHandler(){
 
     using sbus1 = devs::sbus1;
     static_assert(sbus1::uart::number == 102);
-    sbus1::onTransferComplete([]{
+    sbus1::Isr::onTransferComplete([]{
+#ifndef USE_UART_2
         sbus1::event(sbus1::Event::SendComplete);
+#endif
     });
+#ifdef USE_UART_2
+    sbus1::Isr::onIdle([]{
+    });
+#endif
     using relay = devs::relay1;
     if constexpr(relay::uart::number == 102) {
         static_assert(relay::uart::number == 102);

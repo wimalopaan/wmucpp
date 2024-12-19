@@ -87,10 +87,12 @@ struct Devices<SW01, Config, MCU> {
     using i2cDmaChannel     = Mcu::Stm::Dma::Channel<dma1, 5, MCU>;
     // half-duplex
     using sbus1DmaChannel   = Mcu::Stm::Dma::Channel<dma1, 6, MCU>;
+    using sbus1DmaChannelComponent = Mcu::Components::DmaChannel<typename dma1::component_t, 6>;
     // input capture
     using pulseInDmaChannel = Mcu::Stm::Dma::Channel<dma1, 7, MCU>;
     // half-duplex
     using relay1DmaChannel  = Mcu::Stm::Dma::Channel<dma2, 1, MCU>;
+    using relay1DmaChannelComponent = Mcu::Components::DmaChannel<typename dma2::component_t, 1>;
     // half-duplex
     using relayAuxDmaChannel= Mcu::Stm::Dma::Channel<dma2, 2, MCU>;
     // half-duplex
@@ -309,7 +311,11 @@ struct Devices<SW01, Config, MCU> {
     // LPUart2: Sbus, CRSF-HD
     using sbus_crsf_pin = Mcu::Stm::Pin<gpioc, 6, MCU>;
     struct SBus1Config;
+#ifdef USE_UART_2
+    using sbus1 = RC::Protokoll::SBus2::V4::Master<102, SBus1Config, MCU>;
+#else
     using sbus1 = RC::Protokoll::SBus2::V3::Master<102, SBus1Config, MCU>;
+#endif
     using relay1 = PacketRelay<102, true, sbus_crsf_pin, crsf_in, crsfBuffer, relay1DmaChannel, systemTimer, clock, RelayDebug, MCU>;
 
     struct IBusConfig;
@@ -412,7 +418,11 @@ struct Devices<SW01, Config, MCU> {
     struct SBus1Config {
         using clock = Devices::clock;
         using debug = void;
+#ifdef USE_UART_2
+        using dmaChComponent = sbus1DmaChannelComponent;
+#else
         using dmaChRW = sbus1DmaChannel;
+#endif
         using systemTimer = Devices::systemTimer;
         using adapter = crsf_in::adapter;
         using pin = sbus_crsf_pin;
