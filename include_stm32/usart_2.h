@@ -17,11 +17,11 @@ struct UartConfig {
     using Clock = clock;
     using ValueType = uint8_t;
     using DmaChComponent = dmaChComponent;
-    using Adapter = ProtocolAdapter<Serial>;
-    static inline constexpr bool rxtxswap = false;
+    using Adapter = ProtocolAdapter<Serial>;                                 // or: void
+    static inline constexpr bool rxtxswap = false;                           // optional
     static inline constexpr bool fifo = true;
-    static inline constexpr bool invert = true;
-    static inline constexpr auto parity = Mcu::Stm::Uarts::Parity::Even;
+    static inline constexpr bool invert = true;                              // optional
+    static inline constexpr auto parity = Mcu::Stm::Uarts::Parity::Even;     // optional
     static inline constexpr Mode mode = Mode::HalfDuplex; // TxOnly, RxOnly, HalfDuplex, FullDuplex
     static inline constexpr uint32_t baudrate = 115'200;
     struct Rx {
