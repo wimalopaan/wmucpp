@@ -551,10 +551,8 @@ namespace RC::VESC {
                     }
 #endif
                     static inline void readReply() {
-                        Debug::Scoped<tp> tp;
+                        [[maybe_unused]]Debug::Scoped<tp> tp;
                         const char* const data = (char*)uart::readBuffer();
-                        // const uint16_t nread = uart::readCount();
-
                         if (data[0] != 0x02) {
                             event(Event::Error);
                             return;
