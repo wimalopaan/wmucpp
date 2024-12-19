@@ -117,20 +117,20 @@ void DMA1_Channel2_3_IRQHandler() {
     });
 }
 void DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQHandler() {
-#ifdef USE_UART_2
-#else
+#ifndef USE_UART_2
     using ws1 = devs::srv1_waveshare;
     static_assert(ws1::dmaChRW::number == 4);
     ws1::dmaChRW::onTransferComplete([]{
         ws1::event(ws1::Event::ReadReply);
     });
 #endif
+#ifndef USE_UART_2
     using ws2 = devs::srv2_waveshare;
     static_assert(ws2::dmaChRW::number == 3);
     ws2::dmaChRW::onTransferComplete([]{
         ws2::event(ws2::Event::ReadReply);
     });
-
+#endif
 #ifndef USE_UART_2
     using sbus1 = devs::sbus1;
     static_assert(sbus1::dmaChRW::number == 6);
@@ -177,13 +177,14 @@ void USART2_LPUART2_IRQHandler(){
 
     using sbus1 = devs::sbus1;
     static_assert(sbus1::uart::number == 102);
-    sbus1::Isr::onTransferComplete([]{
-#ifndef USE_UART_2
-        sbus1::event(sbus1::Event::SendComplete);
-#endif
-    });
 #ifdef USE_UART_2
+    sbus1::Isr::onTransferComplete([]{
+    });
     sbus1::Isr::onIdle([]{
+    });
+#else
+    sbus1::onTransferComplete([]{
+        sbus1::event(sbus1::Event::SendComplete);
     });
 #endif
     using relay = devs::relay1;
@@ -264,9 +265,16 @@ void USART3_4_5_6_LPUART1_IRQHandler(){
 #endif
     using ws2 = devs::srv2_waveshare;
     static_assert(ws2::uart::number == 6);
+#ifdef USE_UART_2
+    ws2::Isr::onTransferComplete([]{
+    });
+    ws2::Isr::onIdle([]{
+    });
+#else
     ws2::uart::onTransferComplete([]{
         ws2::rxEnable();
     });
+#endif
     using relay = devs::relay_aux;
     if constexpr(relay::uart::number == 4) {
         static_assert(relay::uart::number == 4);

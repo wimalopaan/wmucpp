@@ -298,8 +298,11 @@ struct Devices<SW01, Config, MCU> {
     using srv2_pwm = PwmAdapter<pwm14, srv2_pin, 1, storage, void>;
 
     struct WS2Config;
+#ifdef USE_UART_2
+    using srv2_waveshare = External::WaveShare::V2::Servo<6, WS2Config, MCU>;
+#else
     using srv2_waveshare = WaveShare<6, WS2Config, MCU>;
-
+#endif
     // Fehler auf Platine (PWM Messung): mit PB5 (TIM3-CH2) verbinden
     // Fb2:  PA5 : ADC-IN5
     using tp3 = Mcu::Stm::Pin<gpioa, 5, MCU>;
@@ -451,7 +454,11 @@ struct Devices<SW01, Config, MCU> {
     struct WS2Config {
         using pin = srv2_pin;
         using polar = polar2;
+#ifdef USE_UART_2
+        using dmaChComponent = srv2DmaChannelComponent;
+#else
         using dmaChRW = srv2DmaChannel;
+#endif
         using timer = systemTimer;
         using clk = clock;
         using tp = void;
