@@ -58,7 +58,11 @@
 #else
 #include "ibus.h"
 #endif
+#ifdef USE_UART_2
+#include "rc/sbus_2.h"
+#else
 #include "sbus.h"
+#endif
 #include "sumdv3.h"
 #include "crsfchannelcollector.h"
 
@@ -344,10 +348,14 @@ struct Devices<SW01, Config, MCU> {
 #endif
 
     struct SBusConfig;
+#ifdef USE_UART_2
+    using sbus_in = RC::Protokoll::SBus::V2::Input<102, SBusConfig, MCU>;
+#else
     using sbus_in = SBusInput<102, SBusConfig, MCU>;
+#endif
 
     struct Sumdv3Config;
-    using sumdv3_in = SumDV3Input<102, SBusConfig, MCU>;
+    using sumdv3_in = SumDV3Input<102, Sumdv3Config, MCU>;
 
     using pulse_pin = Mcu::Stm::Pin<gpiob, 6, MCU>;
     struct PulseConfig;
@@ -368,16 +376,20 @@ struct Devices<SW01, Config, MCU> {
 #else
         using dmaChRead = relay1DmaChannel;
 #endif
-        using debug = Devices::debug;
-        using tp = tp3;
+        using debug = void;
+        using tp = void;
     };
 
     struct SBusConfig {
         using pin = sbus_crsf_pin;
         using clock = Devices::clock;
         using systemTimer = Devices::systemTimer;
+#ifdef USE_UART_2
+        using dmaChComponent = relay1DmaChannelComponent;
+#else
         using dmaChRead = relay1DmaChannel;
-        using debug = Devices::debug;
+#endif
+        using debug = void;
         using tp = void;
     };
 

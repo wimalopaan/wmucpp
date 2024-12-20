@@ -205,9 +205,14 @@ void USART2_LPUART2_IRQHandler(){
     #endif
         using sbus_in = devs::sbus_in;
         static_assert(sbus_in::uart::number == 102);
+#ifdef USE_UART_2
+        sbus_in::Isr::onIdle([]{
+        });
+#else
         sbus_in::onIdle([]{
             sbus_in::event(sbus_in::Event::ReceiveComplete);
         });
+#endif
         using sumdv3_in = devs::sumdv3_in;
         static_assert(sumdv3_in::uart::number == 102);
         sumdv3_in::onIdle([]{

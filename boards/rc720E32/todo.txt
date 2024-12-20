@@ -11,6 +11,8 @@ Hardware
 
 Prio 0
 ------
+* Null-Posisition after power-up
+* LUA: header/footer-line not displayed on all radios
 * VEsc: slew-rate for throttle (crsf parameter)
 * crsf refactor
 ** parameter: underlying type (Bytes: 1, 2, 4)
