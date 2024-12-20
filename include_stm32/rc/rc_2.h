@@ -149,7 +149,7 @@ namespace RC {
                         inline void reset() {
                             sum = 0;
                         }
-                        inline void operator+=(const uint8_t v) {
+                        inline uint8_t operator+=(const uint8_t v) {
                             sum = sum ^ (((uint16_t)v) << 8);
                             for(uint8_t i = 0; i < 8; ++i) {
                                 if (sum & 0x8000) {
@@ -159,15 +159,15 @@ namespace RC {
                                     sum = (sum << 1);
                                 }
                             }
+                            return v;
                         }
                         inline operator uint16_t() const {
                             return sum;
                         }
-                        private:
+                    private:
                         static constexpr uint16_t crc_polynome = 0x1021;
                         uint16_t sum{};
                     };
-
                 }
             }
         }

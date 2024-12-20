@@ -40,7 +40,7 @@
 #include "crsf_cb.h"
 #include "eeprom.h"
 #ifdef USE_UART_2
-#include "waveshare_2.h"
+#include "rc/waveshare_2.h"
 #else
 #include "waveshare.h"
 #endif
@@ -63,7 +63,11 @@
 #else
 #include "sbus.h"
 #endif
+#ifdef USE_UART_2
+#include "rc/sumdv3_2.h"
+#else
 #include "sumdv3.h"
+#endif
 #include "crsfchannelcollector.h"
 
 struct SW01;
@@ -355,7 +359,11 @@ struct Devices<SW01, Config, MCU> {
 #endif
 
     struct Sumdv3Config;
+#ifdef USE_UART_2
+    using sumdv3_in = RC::Protokoll::SumDV3::V2::Input<102, Sumdv3Config, MCU>;
+#else
     using sumdv3_in = SumDV3Input<102, Sumdv3Config, MCU>;
+#endif
 
     using pulse_pin = Mcu::Stm::Pin<gpiob, 6, MCU>;
     struct PulseConfig;
@@ -397,7 +405,11 @@ struct Devices<SW01, Config, MCU> {
         using pin = sbus_crsf_pin;
         using clock = Devices::clock;
         using systemTimer = Devices::systemTimer;
+#ifdef USE_UART_2
+        using dmaChComponent = relay1DmaChannelComponent;
+#else
         using dmaChRead = relay1DmaChannel;
+#endif
         using debug = Devices::debug;
         using tp = void;
     };

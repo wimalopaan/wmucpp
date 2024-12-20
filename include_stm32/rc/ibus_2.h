@@ -22,7 +22,7 @@ namespace RC::Protokoll::IBus {
             using clock = Config::clock;
             using systemTimer = Config::systemTimer;
             using debug = Config::debug;
-            using dmaChComponent = Config::dmaChComponent;
+            // using dmaChComponent = Config::dmaChComponent;
             using pin = Config::pin;
             using tp = Config::tp;
 

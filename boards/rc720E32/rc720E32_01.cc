@@ -215,9 +215,14 @@ void USART2_LPUART2_IRQHandler(){
 #endif
         using sumdv3_in = devs::sumdv3_in;
         static_assert(sumdv3_in::uart::number == 102);
+#ifdef USE_UART_2
+        sumdv3_in::Isr::onIdle([]{
+        });
+#else
         sumdv3_in::onIdle([]{
             sumdv3_in::event(sumdv3_in::Event::ReceiveComplete);
         });
+#endif
         // sbus1 / relay1 / ibus / sbus_in / sumdv3 use same LPUART(2), be sure to clear all flags
         relay::uart::mcuUart->ICR = -1;
     }

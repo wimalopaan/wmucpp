@@ -69,6 +69,7 @@ boards/rc720E32/sbus.h
 boards/rc720E32/sbus_2.h
 boards/rc720E32/startup_g0b1.s
 boards/rc720E32/sumdv3.h
+boards/rc720E32/sumdv3_2.h
 boards/rc720E32/system_g0.cc
 boards/rc720E32/telemetry.h
 boards/rc720E32/todo.txt
@@ -562,9 +563,11 @@ include_stm32/rc/sbus2_2.h
 include_stm32/rc/sbus2_types.h
 include_stm32/rc/sbus_2.h
 include_stm32/rc/sport.h
+include_stm32/rc/sumdv3_2.h
 include_stm32/rc/vesc.h
 include_stm32/rc/vesc_2.h
 include_stm32/rc/vesc_types.h
+include_stm32/rc/waveshare_2.h
 include_stm32/rcc.h
 include_stm32/rf.h
 include_stm32/si5351.h
