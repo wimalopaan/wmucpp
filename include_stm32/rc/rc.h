@@ -98,10 +98,7 @@ namespace RC {
                     END              = 0xff
                 };
             }
-            
-            
-            
-            
+
             struct CheckSum final {
                 inline void reset() {
                     mSum = std::numeric_limits<uint16_t>::max();

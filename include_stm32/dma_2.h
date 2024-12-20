@@ -73,6 +73,9 @@ namespace Mcu::Stm {
                 static inline void size(const uint32_t s) {
                     mcuDmaChannel->CNDTR = s;
                 }
+                static inline void clearMux() {
+                    MODIFY_REG(mcuDmaMux->CCR, DMAMUX_CxCR_DMAREQ_ID_Msk, 0);
+                }
                 static inline void startRead(const size_t size, const uint32_t pAdr, volatile value_t* mAdr, uint8_t mux) {
                     mcuDmaChannel->CCR &= ~DMA_CCR_EN;
                     MODIFY_REG(mcuDmaMux->CCR, DMAMUX_CxCR_DMAREQ_ID_Msk, mux << DMAMUX_CxCR_DMAREQ_ID_Pos);

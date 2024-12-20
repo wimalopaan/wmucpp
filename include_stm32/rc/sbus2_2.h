@@ -110,36 +110,38 @@ namespace RC::Protokoll::SBus2 {
             }
             struct Isr {
                 static inline void onTransferComplete(const auto f) {
-                    auto fEnable = [&]{
-                        f();
-                        uart::template rxEnable<true>();
-                    };
                     if (mActive) {
+                        auto fEnable = [&]{
+                            f();
+                            uart::template rxEnable<true>();
+                        };
                         uart::Isr::onTransferComplete(fEnable);
                     }
                 }
                 // https://github.com/neoxic/ESCape32/blob/master/src/io.c#L662-L665
                 // https://github.com/BrushlessPower/SBUS2-Telemetry/blob/master/src/SBUS2.cpp#L69
                 static inline void onIdle(const auto f) {
-                    const auto f2 = [&](const volatile uint8_t* const data, const uint16_t size){
-                        f();
-                        if (size == 3) {
-                            static constexpr std::array<uint8_t, 8> subNumbers{0, 4, 2, 6, 1, 5, 3, 7};
-                            const uint8_t slotStartByte = data[0];
-                            if ((slotStartByte & 0x1f) == response[mRequestIndex]) {
-                                const uint8_t subIndex = (slotStartByte >> 5) & 0x07;
-                                const uint8_t subNumber = subNumbers[subIndex];
-                                const uint8_t slotNumber = ((mRequestIndex * 8) + subNumber);
-                                mSlots[slotNumber] = (data[1] << 8) + data[2];
-                                return true;
+                    if (mActive) {
+                        const auto f2 = [&](const volatile uint8_t* const data, const uint16_t size){
+                            f();
+                            if (size == 3) {
+                                static constexpr std::array<uint8_t, 8> subNumbers{0, 4, 2, 6, 1, 5, 3, 7};
+                                const uint8_t slotStartByte = data[0];
+                                if ((slotStartByte & 0x1f) == response[mRequestIndex]) {
+                                    const uint8_t subIndex = (slotStartByte >> 5) & 0x07;
+                                    const uint8_t subNumber = subNumbers[subIndex];
+                                    const uint8_t slotNumber = ((mRequestIndex * 8) + subNumber);
+                                    mSlots[slotNumber] = (data[1] << 8) + data[2];
+                                    return true;
+                                }
+                                else {
+                                    mSlotErrors = mSlotErrors + 1;
+                                }
                             }
-                            else {
-                                mSlotErrors = mSlotErrors + 1;
-                            }
-                        }
-                        return false;
-                    };
-                    uart::Isr::onIdle(f2);
+                            return false;
+                        };
+                        uart::Isr::onIdle(f2);
+                    }
                 }
             };
             inline static void periodic() {

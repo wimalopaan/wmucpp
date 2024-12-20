@@ -11,6 +11,7 @@
 #include "rcc.h"
 #include "atomic.h"
 #include "usarts.h"
+#include "usart_2_reflection.h"
 
 #if 0
 struct UartConfig {
@@ -44,85 +45,6 @@ struct UartConfig {
 namespace Mcu::Stm {
     using namespace Units::literals;
     namespace V4 {
-        namespace detail {
-            template<typename T>
-            concept hasTx = requires(T) {
-                typename T::Tx;
-            };
-            template<typename T>
-            concept hasRx = requires(T) {
-                typename T::Rx;
-            };
-            template<typename T>
-            concept hasDmaComponent = requires(T) {
-                typename T::DmaChComponent;
-            };
-            template<typename T>
-            struct getRx {
-                using type = void;
-            };
-            template<typename T> requires(hasRx<T>)
-            struct getRx<T> {
-                using type = T::Rx;
-            };
-            template<typename T>
-            using getRx_t = getRx<T>::type;
-            template<typename T>
-            struct getTx {
-                using type = void;
-            };
-            template<typename T> requires(hasTx<T>)
-            struct getTx<T> {
-                using type = T::Tx;
-            };
-            template<typename T>
-            using getTx_t = getTx<T>::type;
-            template<typename T>
-            struct getDmaComponent {
-                using type = void;
-            };
-            template<typename T> requires(hasDmaComponent<T>)
-            struct getDmaComponent<T> {
-                using type = T::DmaChComponent;
-            };
-            template<typename T>
-            using getDmaComponent_t = getDmaComponent<T>::type;
-            template<typename T>
-            struct getInvert {
-                static inline constexpr bool value{false};
-            };
-            template<typename T>
-            requires(requires(T x){T::invert;})
-            struct getInvert<T>{
-                static inline constexpr bool value = T::invert;
-            };
-            template<typename T>
-            static inline constexpr bool getInvert_v = getInvert<T>::value;
-
-            template<typename T>
-            struct getSwap{
-                static inline constexpr bool value{false};
-            };
-            template<typename T>
-            requires(requires(T x){T::rxtxswap;})
-            struct getSwap<T>{
-                static inline constexpr bool value = T::rxtxswap;
-            };
-            template<typename T>
-            static inline constexpr bool getSwap_v = getSwap<T>::value;
-
-            template<typename T>
-            struct getParity{
-                static inline constexpr Uarts::Parity value{Uarts::Parity::None};
-            };
-            template<typename T>
-            requires(requires(T x){T::parity;})
-            struct getParity<T>{
-                static inline constexpr Uarts::Parity value = T::parity;
-            };
-            template<typename T>
-            static inline constexpr auto getParity_v = getParity<T>::value;
-        }
 
         template<uint8_t N, typename Config, typename MCU = DefaultMcu>
         struct Uart;
@@ -156,18 +78,22 @@ namespace Mcu::Stm {
 
             static inline constexpr bool hasRWDma = detail::hasDmaComponent<Config>;
 
-            using rwDmaComponent_t = std::conditional_t<(Config::mode == Uarts::Mode::HalfDuplex), detail::getDmaComponent_t<Config>, void>;
-            using rxDmaComponent_t = std::conditional_t<(Config::mode != Uarts::Mode::TxOnly), detail::getDmaComponent_t<detail::getRx_t<Config>>, void>;
-            using txDmaComponent_t = std::conditional_t<(Config::mode != Uarts::Mode::RxOnly), detail::getDmaComponent_t<detail::getTx_t<Config>>, void>;
+            using rwDmaComponent_t = std::conditional_t<(Config::mode != Uarts::Mode::FullDuplex), detail::getDmaComponent_t<Config>, void>;
+            using rxDmaComponent_t = std::conditional_t<(Config::mode == Uarts::Mode::FullDuplex), detail::getDmaComponent_t<detail::getRx_t<Config>>, void>;
+            using txDmaComponent_t = std::conditional_t<(Config::mode == Uarts::Mode::FullDuplex), detail::getDmaComponent_t<detail::getTx_t<Config>>, void>;
 
-            static_assert(std::is_same_v<rwDmaComponent_t, void> != std::is_same_v<rxDmaComponent_t, void>, "use either rxDma or rwDma");
-            static_assert(std::is_same_v<rwDmaComponent_t, void> != std::is_same_v<txDmaComponent_t, void>, "use either txDma or rwDma");
+            static_assert((Config::mode == Uarts::Mode::RxOnly) || (std::is_same_v<rwDmaComponent_t, void> != std::is_same_v<rxDmaComponent_t, void>), "use either rxDma or rwDma");
+            static_assert((Config::mode == Uarts::Mode::RxOnly) || (std::is_same_v<rwDmaComponent_t, void> != std::is_same_v<txDmaComponent_t, void>), "use either txDma or rwDma");
 
-            using rx_buffer_t = std::conditional_t<(Config::mode != Uarts::Mode::TxOnly), std::array<storage_t, Config::Rx::size>, struct Dummy>;
-            using tx_buffer_t = std::conditional_t<(Config::mode != Uarts::Mode::RxOnly), std::array<storage_t, Config::Tx::size>, struct Dummy>;
+            static_assert((Config::mode != Uarts::Mode::FullDuplex) || (!std::is_same_v<rxDmaComponent_t, void> && !std::is_same_v<txDmaComponent_t, void> && std::is_same_v<rwDmaComponent_t, void>));
+
+            using rx_buffer_t = std::conditional_t<(Config::mode != Uarts::Mode::TxOnly), std::array<storage_t, detail::getSize_v<detail::getRx_t<Config>>>, struct Dummy>;
+            using tx_buffer_t = std::conditional_t<(Config::mode != Uarts::Mode::RxOnly), std::array<storage_t, detail::getSize_v<detail::getTx_t<Config>>>, struct Dummy>;
 
             struct dmaChConfig;
+
             using dmaChRW = Mcu::Stm::Dma::V2::Channel<rwDmaComponent_t::number_t::value, dmaChConfig, MCU>;
+
             struct dmaChConfig {
                 using controller = Mcu::Stm::Dma::Controller<rwDmaComponent_t::controller::number_t::value, MCU>;
                 using value_t = Uart::value_t;
@@ -256,9 +182,7 @@ namespace Mcu::Stm {
                 else {
                     static_assert(false);
                 }
-
                 baud<false>(Config::baudrate);
-
                 dmaChRW::init();
 
                 mcuUart->CR3 = []{
@@ -280,16 +204,16 @@ namespace Mcu::Stm {
                 }();
                 mcuUart->CR1 = []{
                     uint32_t cr1 = 0;
-                    if constexpr(Config::Rx::enable) {
+                    if constexpr(detail::getEnable_v<detail::getRx_t<Config>>) {
                         cr1 |= USART_CR1_RE;
                     }
-                    if constexpr(Config::Tx::enable) {
+                    if constexpr(detail::getEnable_v<detail::getTx_t<Config>>) {
                         cr1 |= USART_CR1_TE;
                     }
                     if constexpr(Config::Isr::idle) {
                         cr1 |= USART_CR1_IDLEIE;
                     }
-                    if constexpr(Config::Isr::txComplete) {
+                    if constexpr(detail::getTxComplete_v<detail::getIsr_t<Config>>) {
                         cr1 |= USART_CR1_TCIE;
                     }
                     if constexpr(detail::getParity_v<Config> == Uarts::Parity::Even) {
@@ -302,7 +226,7 @@ namespace Mcu::Stm {
                         cr1 |= USART_CR1_PS;
                         cr1 |= USART_CR1_M0;
                     }
-                    if constexpr(Config::fifo) {
+                    if constexpr(detail::getFifo_v<Config>) {
                         if constexpr (N == 1) {
                             cr1 |= USART_CR1_FIFOEN;
                         }
@@ -410,7 +334,13 @@ namespace Mcu::Stm {
                         mcuUart->ICR = USART_ICR_IDLECF;
                         if (const uint16_t nRead = (Config::Rx::size - dmaChRW::counter()); nRead >= Config::Rx::idleMinSize) {
                             // f() -> bool, only reconfigure if parsing ok
-                            if (!std::is_same_v<adapter, void> || f(dmaChRW::memoryAddress(), nRead) || (nRead == Config::Rx::size)) {
+                            if (!std::is_same_v<adapter, void> || // if adapter != void: allways call the following
+                                f(dmaChRW::memoryAddress(), nRead) ||
+                                (nRead == Config::Rx::size)
+                                ) {
+                                mcuUart->RQR = USART_RQR_RXFRQ; // clear fifo
+                                mcuUart->CR3 &= ~USART_CR3_DMAR; // clear pending request
+                                mcuUart->CR3 |= USART_CR3_DMAR;
                                 dmaChRW::reConfigure([&]{
                                     if (dmaChRW::memoryAddress() == &mReadBuffer1[0]) {
                                         dmaChRW::memoryAddress(&mReadBuffer2[0]);

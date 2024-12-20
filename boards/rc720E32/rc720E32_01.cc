@@ -150,86 +150,72 @@ void DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQHandler() {
     });
 }
 void USART2_LPUART2_IRQHandler(){
-    using esc32_1 = devs::esc32_1;
-    static_assert(esc32_1::uart::number == 2);
-    esc32_1::onTransferComplete([]{
-        esc32_1::rxEnable();
-    });
-    using esc32ascii_1 = devs::esc32ascii_1;
-    static_assert(esc32ascii_1::uart::number == 2);
-    esc32ascii_1::onTransferComplete([]{
-        esc32ascii_1::rxEnable();
-    });
-    esc32ascii_1::onIdleWithDma([]{
-        esc32ascii_1::event(esc32ascii_1::Event::ReceiveComplete);
-    });
-    using vesc_1 = devs::vesc_1;
-    static_assert(vesc_1::uart::number == 2);
-    vesc_1::Isr::onTransferComplete([]{
-        devs::tp3::set();
-        devs::tp3::reset();
-    });
-    vesc_1::Isr::onIdle([]{
-        devs::tp1::set();
-        devs::tp1::reset();
-    });
-    esc32_1::uart::mcuUart->ICR = -1;
-
-    using sbus1 = devs::sbus1;
-    static_assert(sbus1::uart::number == 102);
-#ifdef USE_UART_2
-    sbus1::Isr::onTransferComplete([]{
-    });
-    sbus1::Isr::onIdle([]{
-    });
-#else
-    sbus1::onTransferComplete([]{
-        sbus1::event(sbus1::Event::SendComplete);
-    });
-#endif
-    using relay = devs::relay1;
-    if constexpr(relay::uart::number == 102) {
+    {
+        using esc32_1 = devs::esc32_1;
+        static_assert(esc32_1::uart::number == 2);
+        esc32_1::onTransferComplete([]{
+            esc32_1::rxEnable();
+        });
+        using esc32ascii_1 = devs::esc32ascii_1;
+        static_assert(esc32ascii_1::uart::number == 2);
+        esc32ascii_1::onTransferComplete([]{
+            esc32ascii_1::rxEnable();
+        });
+        esc32ascii_1::onIdleWithDma([]{
+            esc32ascii_1::event(esc32ascii_1::Event::ReceiveComplete);
+        });
+        using vesc_1 = devs::vesc_1;
+        static_assert(vesc_1::uart::number == 2);
+        vesc_1::Isr::onTransferComplete([]{
+        });
+        vesc_1::Isr::onIdle([]{
+        });
+        esc32_1::uart::mcuUart->ICR = -1;
+    }
+    {
+        using sbus1 = devs::sbus1;
+        static_assert(sbus1::uart::number == 102);
+    #ifdef USE_UART_2
+        sbus1::Isr::onTransferComplete([]{
+        });
+        sbus1::Isr::onIdle([]{
+        });
+    #else
+        sbus1::onTransferComplete([]{
+            sbus1::event(sbus1::Event::SendComplete);
+        });
+    #endif
+        using relay = devs::relay1;
         static_assert(relay::uart::number == 102);
         relay::onTransferComplete([]{
-            // devs::tp3::set();
             relay::rxEnable();
-            // devs::tp3::reset();
         });
         relay::onIdleWithDma([]{
-            // devs::tp3::set();
             relay::event(relay::Event::ReceiveComplete);
-            // devs::tp3::reset();
         });
-    }
-    using ibus_in = devs::ibus_in;
-    if constexpr(ibus_in::uart::number == 102) {
+        using ibus_in = devs::ibus_in;
         static_assert(ibus_in::uart::number == 102);
-        ibus_in::onIdle([]{
-            // devs::tp3::set();
-            ibus_in::event(ibus_in::Event::ReceiveComplete);
-            // devs::tp3::reset();
+    #ifdef USE_UART_2
+        ibus_in::Isr::onIdle([]{
         });
-    }
-    using sbus_in = devs::sbus_in;
-    if constexpr(sbus_in::uart::number == 102) {
+    #else
+        ibus_in::onIdle([]{
+            ibus_in::event(ibus_in::Event::ReceiveComplete);
+        });
+    #endif
+        using sbus_in = devs::sbus_in;
         static_assert(sbus_in::uart::number == 102);
         sbus_in::onIdle([]{
-            // devs::tp3::set();
             sbus_in::event(sbus_in::Event::ReceiveComplete);
-            // devs::tp3::reset();
         });
-    }
-    using sumdv3_in = devs::sumdv3_in;
-    if constexpr(sumdv3_in::uart::number == 102) {
+        using sumdv3_in = devs::sumdv3_in;
         static_assert(sumdv3_in::uart::number == 102);
         sumdv3_in::onIdle([]{
-            // devs::tp3::set();
             sumdv3_in::event(sumdv3_in::Event::ReceiveComplete);
-            // devs::tp3::reset();
         });
+        // sbus1 / relay1 / ibus / sbus_in / sumdv3 use same LPUART(2), be sure to clear all flags
+        relay::uart::mcuUart->ICR = -1;
     }
-    // sbus1 / relay1 / ibus / sbus_in / sumdv3 use same LPUART(2), be sure to clear all flags
-    relay::uart::mcuUart->ICR = -1;
 }
 void USART3_4_5_6_LPUART1_IRQHandler(){
     using esc32_2 = devs::esc32_2;

@@ -50,6 +50,7 @@ boards/rc720E32/fastmath.h
 boards/rc720E32/fbservo.h
 boards/rc720E32/gfsm.h
 boards/rc720E32/ibus.h
+boards/rc720E32/ibus_2.h
 boards/rc720E32/inputmapper.h
 boards/rc720E32/iservo.h
 boards/rc720E32/link_g0b1.ld
@@ -550,7 +551,9 @@ include_stm32/rc/cppm.h
 include_stm32/rc/crsf.h
 include_stm32/rc/escape.h
 include_stm32/rc/gps.h
+include_stm32/rc/ibus_2.h
 include_stm32/rc/rc.h
+include_stm32/rc/rc_2.h
 include_stm32/rc/roboremo.h
 include_stm32/rc/sbus2.h
 include_stm32/rc/sbus22.h
@@ -573,4 +576,5 @@ include_stm32/traits.h
 include_stm32/units.h
 include_stm32/usart.h
 include_stm32/usart_2.h
+include_stm32/usart_2_reflection.h
 include_stm32/usarts.h

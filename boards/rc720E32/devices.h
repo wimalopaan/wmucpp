@@ -13,8 +13,8 @@
 #include "components.h"
 #include "dma.h"
 #include "dma_2.h"
-#include "usart.h"
 #include "usart_2.h"
+#include "usart.h"
 #include "i2c.h"
 #include "units.h"
 #include "output.h"
@@ -26,9 +26,11 @@
 #include "rc/rc.h"
 #include "rc/crsf.h"
 #include "rc/escape.h"
-#include "rc/sbus22.h"
+#ifdef USE_UART_2
 #include "rc/sbus2_2.h"
-// #include "rc/vesc.h"
+#else
+#include "rc/sbus22.h"
+#endif
 #include "rc/vesc_2.h"
 #include "pwm.h"
 #include "adc.h"
@@ -37,8 +39,11 @@
 #include "adapter.h"
 #include "crsf_cb.h"
 #include "eeprom.h"
-#include "waveshare.h"
+#ifdef USE_UART_2
 #include "waveshare_2.h"
+#else
+#include "waveshare.h"
+#endif
 #include "fbservo.h"
 #include "polar.h"
 #include "channels.h"
@@ -48,7 +53,11 @@
 #include "messagebuffer.h"
 #include "pulse_input.h"
 #include "inputmapper.h"
+#ifdef USE_UART_2
+#include "rc/ibus_2.h"
+#else
 #include "ibus.h"
+#endif
 #include "sbus.h"
 #include "sumdv3.h"
 #include "crsfchannelcollector.h"
@@ -328,7 +337,11 @@ struct Devices<SW01, Config, MCU> {
     using relay1 = PacketRelay<102, true, sbus_crsf_pin, crsf_in, crsfBuffer, relay1DmaChannel, systemTimer, clock, RelayDebug, MCU>;
 
     struct IBusConfig;
+#ifdef USE_UART_2
+    using ibus_in = RC::Protokoll::IBus::V2::Input<102, IBusConfig, MCU>;
+#else
     using ibus_in = IBusInput<102, IBusConfig, MCU>;
+#endif
 
     struct SBusConfig;
     using sbus_in = SBusInput<102, SBusConfig, MCU>;
@@ -350,9 +363,13 @@ struct Devices<SW01, Config, MCU> {
         using pin = sbus_crsf_pin;
         using clock = Devices::clock;
         using systemTimer = Devices::systemTimer;
+#ifdef USE_UART_2
+        using dmaChComponent = relay1DmaChannelComponent;
+#else
         using dmaChRead = relay1DmaChannel;
+#endif
         using debug = Devices::debug;
-        using tp = void;
+        using tp = tp3;
     };
 
     struct SBusConfig {
@@ -414,12 +431,11 @@ struct Devices<SW01, Config, MCU> {
         using out = CrsfWriteAdapter;
         using buffer = CrsfWriteAdapter;
         using dbg = void;
-        // using dbg = debug;
         using callback = CrsfCallback<CrsfCallbackConfig, debug>;
         using timer = systemTimer;
     };
     struct CrsfConfigDebug {
-        using tp = tp1;
+        using tp = void;
     };
     struct CrsfWriteAdapterDebug {
         using tp = void;
@@ -470,7 +486,7 @@ struct Devices<SW01, Config, MCU> {
         using systemTimer = Devices::systemTimer;
         using dmaChRW = esc1DmaChannel;
         using pin = esc1_pin;
-        using debug = Devices::debug;
+        using debug = void;
         using tp = void;
     };
     struct SerialConfig2 {
@@ -487,8 +503,8 @@ struct Devices<SW01, Config, MCU> {
         using systemTimer = Devices::systemTimer;
         using dmaChComponent = esc1DmaChannelComponent;
         using pin = esc1_pin;
-        using debug = Devices::debug;
-        using tp = tp3;
+        using debug = void;
+        using tp = void;
     };
     struct VEscConfig2 {
         using clock = Devices::clock;
