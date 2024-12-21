@@ -29,7 +29,6 @@ namespace RC::Protokoll::IBus {
             struct UartConfig {
                 using Clock = clock;
                 using ValueType = uint8_t;
-                using Adapter = void;
                 static inline constexpr bool rxtxswap = true;
                 static inline constexpr auto mode = Mcu::Stm::Uarts::Mode::RxOnly;
                 static inline constexpr uint32_t baudrate = RC::Protokoll::IBus::V2::baudrate;

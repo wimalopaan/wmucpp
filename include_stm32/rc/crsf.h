@@ -19,9 +19,7 @@
 
 namespace RC {
     namespace Protokoll {
-        
         // https://github.com/crsf-wg/crsf/wiki
-        
         namespace Crsf {
             /*
              * Richting: Handset (EdgeTx) -> TX-Module (ELRS) -> RX -> CC

@@ -26,7 +26,6 @@ namespace External::WaveShare {
                 using Clock = clock;
                 using ValueType = uint8_t;
                 using DmaChComponent = dmaChComponent;
-                using Adapter = void;
                 static inline constexpr bool fifo = false;
                 static inline constexpr auto mode = Mcu::Stm::Uarts::Mode::HalfDuplex;
                 static inline constexpr uint32_t baudrate = 1'000'000;

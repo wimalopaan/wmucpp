@@ -11,8 +11,10 @@ Hardware
 
 Prio 0
 ------
+* mode: cruise-controller -> channel-passthru
+* steller-mode forward or forward/backward
 * Null-Posisition after power-up
-* LUA: header/footer-line not displayed on all radios
+* LUA: alarm3 test from crsf-menu
 * VEsc: slew-rate for throttle (crsf parameter)
 * crsf refactor
 ** parameter: underlying type (Bytes: 1, 2, 4)
@@ -42,6 +44,7 @@ Prio 3
 
 Done:
 ------
+* LUA: Reset button position (bug in EdgeTx)
 * UART refactor
 ** use PA
 ** idle: bytes to PA

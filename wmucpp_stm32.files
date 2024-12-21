@@ -60,6 +60,7 @@ boards/rc720E32/output_esc.h
 boards/rc720E32/output_relay.h
 boards/rc720E32/output_servo.h
 boards/rc720E32/package_relay.h
+boards/rc720E32/package_relay_2.h
 boards/rc720E32/pid.h
 boards/rc720E32/polar.h
 boards/rc720E32/pulse_input.h

@@ -34,7 +34,7 @@ namespace RC::Protokoll::SBus2 {
             using debug = Config::debug;
             using dmaChComponent = Config::dmaChComponent;
             using systemTimer = Config::systemTimer;
-            using adapter = Config::adapter;
+            using src = Config::adapter;
             using pin = Config::pin;
             using tp = Config::tp;
 
@@ -42,7 +42,6 @@ namespace RC::Protokoll::SBus2 {
                 using Clock = clock;
                 using ValueType = uint8_t;
                 using DmaChComponent = dmaChComponent;
-                using Adapter = void;
                 static inline constexpr bool invert = true;
                 static inline constexpr bool rxtxswap = false;
                 static inline constexpr auto parity = Mcu::Stm::Uarts::Parity::Even;
@@ -69,7 +68,7 @@ namespace RC::Protokoll::SBus2 {
             static inline constexpr uint8_t af = Mcu::Stm::AlternateFunctions::mapper_v<pin, uart, Mcu::Stm::AlternateFunctions::TX>;
 
             static inline void update() {
-                std::copy(std::begin(adapter::values()), std::end(adapter::values()), std::begin(output));
+                std::copy(std::begin(src::values()), std::end(src::values()), std::begin(output));
             }
             static inline void set(const uint8_t channel, const uint16_t value) {
                 output[channel] = value;

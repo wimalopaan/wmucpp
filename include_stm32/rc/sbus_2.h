@@ -27,7 +27,6 @@ namespace RC::Protokoll::SBus {
             struct UartConfig {
                 using Clock = clock;
                 using ValueType = uint8_t;
-                using Adapter = void;
                 static inline constexpr bool invert = true;
                 static inline constexpr auto parity = Mcu::Stm::Uarts::Parity::Even;
                 static inline constexpr bool rxtxswap = true;
@@ -178,5 +177,4 @@ namespace RC::Protokoll::SBus {
         static inline External::Tick<systemTimer> mStateTick;
     };
 }
-
 }

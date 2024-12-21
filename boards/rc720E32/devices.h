@@ -47,7 +47,11 @@
 #include "fbservo.h"
 #include "polar.h"
 #include "channels.h"
+#ifdef USE_UART_2
+#include "package_relay_2.h"
+#else
 #include "package_relay.h"
+#endif
 #include "telemetry.h"
 #include "iservo.h"
 #include "messagebuffer.h"
@@ -91,12 +95,13 @@ struct Devices<SW01, Config, MCU> {
 
     // Ubersicht: Pins
 
-
     // Uebersicht: DMA
 
     // full-duplex: uart1
     using crsfInDmaChannel1 = Mcu::Stm::Dma::Channel<dma1, 1, MCU>;
+    using csrfInDmaChannelComponent1 = Mcu::Components::DmaChannel<typename dma1::component_t, 1>;
     using crsfInDmaChannel2 = Mcu::Stm::Dma::Channel<dma1, 2, MCU>;
+    using csrfInDmaChannelComponent2 = Mcu::Components::DmaChannel<typename dma1::component_t, 2>;
     // adc
     using adcDmaChannel     = Mcu::Stm::Dma::Channel<dma1, 3, MCU>;
     // half-duplex
@@ -114,6 +119,7 @@ struct Devices<SW01, Config, MCU> {
     using relay1DmaChannelComponent = Mcu::Components::DmaChannel<typename dma2::component_t, 1>;
     // half-duplex
     using relayAuxDmaChannel= Mcu::Stm::Dma::Channel<dma2, 2, MCU>;
+    using relayAuxDmaChannelComponent = Mcu::Components::DmaChannel<typename dma2::component_t, 2>;
     // half-duplex
     using srv2DmaChannel    = Mcu::Stm::Dma::Channel<dma2, 3, MCU>;
     using srv2DmaChannelComponent = Mcu::Components::DmaChannel<typename dma2::component_t, 3>;
@@ -331,8 +337,13 @@ struct Devices<SW01, Config, MCU> {
     using auxrx = Mcu::Stm::Pin<gpioa, 1, MCU>; // AF4
     using auxtx = Mcu::Stm::Pin<gpioa, 0, MCU>; // AF4
 
+#ifdef USE_UART_2
+    struct RelayAuxConfig;
+    using relay_aux = RC::Protokoll::Crsf::V4::PacketRelay<4, RelayAuxConfig, MCU>;
+#else
     struct RelayDebug;
     using relay_aux = PacketRelay<4, true, auxtx, crsf_in, crsfBuffer, relayAuxDmaChannel, systemTimer, clock, RelayDebug, MCU>;
+#endif
 
     // LPUart2: Sbus, CRSF-HD
     using sbus_crsf_pin = Mcu::Stm::Pin<gpioc, 6, MCU>;
@@ -342,7 +353,13 @@ struct Devices<SW01, Config, MCU> {
 #else
     using sbus1 = RC::Protokoll::SBus2::V3::Master<102, SBus1Config, MCU>;
 #endif
+
+    struct RelayConfig;
+#ifdef USE_UART_2
+    using relay1 = RC::Protokoll::Crsf::V4::PacketRelay<102, RelayConfig, MCU>;
+#else
     using relay1 = PacketRelay<102, true, sbus_crsf_pin, crsf_in, crsfBuffer, relay1DmaChannel, systemTimer, clock, RelayDebug, MCU>;
+#endif
 
     struct IBusConfig;
 #ifdef USE_UART_2
@@ -375,6 +392,30 @@ struct Devices<SW01, Config, MCU> {
     using scl3 = Mcu::Stm::Pin<gpiob, 3, MCU>;
     using i2c = Mcu::Stm::I2C::Master<3, 16, debug, MCU>;
 
+    struct RelayConfig {
+        using pin = sbus_crsf_pin;
+        using clock = Devices::clock;
+        using systemTimer = Devices::systemTimer;
+#ifdef USE_UART_2
+        using dmaChComponent = relay1DmaChannelComponent;
+#else
+        using dmaChRead = relay1DmaChannel;
+#endif
+        using debug = void;
+        using tp = void;
+        using src = crsf_in::adapter;
+        using dest = crsfBuffer;
+    };
+    struct RelayAuxConfig {
+        using pin = auxtx;
+        using clock = Devices::clock;
+        using systemTimer = Devices::systemTimer;
+        using dmaChComponent = relayAuxDmaChannelComponent;
+        using debug = void;
+        using tp = void;
+        using src = crsf_in::adapter;
+        using dest = crsfBuffer;
+    };
     struct IBusConfig {
         using pin = sbus_crsf_pin;
         using clock = Devices::clock;
@@ -387,7 +428,6 @@ struct Devices<SW01, Config, MCU> {
         using debug = void;
         using tp = void;
     };
-
     struct SBusConfig {
         using pin = sbus_crsf_pin;
         using clock = Devices::clock;
@@ -400,7 +440,6 @@ struct Devices<SW01, Config, MCU> {
         using debug = void;
         using tp = void;
     };
-
     struct Sumdv3Config {
         using pin = sbus_crsf_pin;
         using clock = Devices::clock;

@@ -187,12 +187,19 @@ void USART2_LPUART2_IRQHandler(){
     #endif
         using relay = devs::relay1;
         static_assert(relay::uart::number == 102);
+#ifdef USE_UART_2
+        relay::Isr::onTransferComplete([]{
+        });
+        relay::Isr::onIdle([]{
+        });
+#else
         relay::onTransferComplete([]{
             relay::rxEnable();
         });
         relay::onIdleWithDma([]{
             relay::event(relay::Event::ReceiveComplete);
         });
+#endif
         using ibus_in = devs::ibus_in;
         static_assert(ibus_in::uart::number == 102);
     #ifdef USE_UART_2
@@ -272,19 +279,20 @@ void USART3_4_5_6_LPUART1_IRQHandler(){
     });
 #endif
     using relay = devs::relay_aux;
-    if constexpr(relay::uart::number == 4) {
-        static_assert(relay::uart::number == 4);
-        relay::uart::onTransferComplete([]{
-            // devs::tp3::set();
-            relay::rxEnable();
-            // devs::tp3::reset();
-        });
-        relay::uart::onIdleWithDma([]{
-            // devs::tp3::set();
-            relay::event(relay::Event::ReceiveComplete);
-            // devs::tp3::reset();
-        });
-    }
+    static_assert(relay::uart::number == 4);
+#ifdef USE_UART_2
+    relay::Isr::onTransferComplete([]{
+    });
+    relay::Isr::onIdle([]{
+    });
+#else
+    relay::uart::onTransferComplete([]{
+        relay::rxEnable();
+    });
+    relay::uart::onIdleWithDma([]{
+        relay::event(relay::Event::ReceiveComplete);
+    });
+#endif
 }
 void USART1_IRQHandler() {
     using crsf_in = devs::crsf_in;

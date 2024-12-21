@@ -10,6 +10,126 @@
 
 namespace RC {
     namespace Protokoll {
+        namespace Crsf {
+            namespace V4 {
+                static constexpr uint32_t baudrate{420'000};
+                namespace Address {
+                    inline static constexpr std::byte StartByte{0xc8};
+                    inline static constexpr std::byte Broadcast{0x00};
+                    inline static constexpr std::byte Controller{0xc8};
+                    inline static constexpr std::byte Handset{0xea};
+                    inline static constexpr std::byte RX{0xec};
+                    inline static constexpr std::byte TX{0xee};
+                }
+                namespace Type {
+                    // simple
+                    inline static constexpr std::byte Gps{0x02};
+                    inline static constexpr std::byte Vario{0x07};
+                    inline static constexpr std::byte Battery{0x08};
+                    inline static constexpr std::byte Baro{0x09};
+                    inline static constexpr std::byte HeartBeat{0x0b};
+                    inline static constexpr std::byte Link{0x14};
+                    inline static constexpr std::byte Channels{0x16};
+                    inline static constexpr std::byte SubsetChannels{0x17};
+                    inline static constexpr std::byte LinkStatsRx{0x1c};
+                    inline static constexpr std::byte LinkStatsTx{0x1d};
+                    inline static constexpr std::byte Altitude{0x1e};
+                    inline static constexpr std::byte FlightMode{0x21};
+                    // extended
+                    inline static constexpr std::byte Ping{0x28};
+                    inline static constexpr std::byte Info{0x29};
+                    inline static constexpr std::byte ParamEntry{0x2b};
+                    inline static constexpr std::byte ParamRead{0x2c};
+                    inline static constexpr std::byte ParamWrite{0x2d};
+                    inline static constexpr std::byte Command{0x32};
+                    inline static constexpr std::byte RadioID{0x3a};
+
+                    inline static constexpr std::byte Custom1{0x40}; // pack type / instance-nr in payload
+                    inline static constexpr std::byte Custom2{0x41}; // pack type / instance-nr in payload
+                    inline static constexpr std::byte Custom3{0x42}; // pack type / instance-nr in payload
+                    inline static constexpr std::byte Custom4{0x43}; // pack type / instance-nr in payload
+                    inline static constexpr std::byte Temp1{0x48};
+                    inline static constexpr std::byte Temp2{0x49};
+                    inline static constexpr std::byte Temp3{0x4a};
+                    inline static constexpr std::byte Temp4{0x4b};
+                    //inline static constexpr std::byte Rpm1{0x78};
+                    inline static constexpr std::byte Rpm1{0x4c};
+                    inline static constexpr std::byte Rpm2{0x4d};
+                    inline static constexpr std::byte Rpm3{0x4e};
+                    inline static constexpr std::byte Rpm4{0x4f};
+
+                    inline static constexpr std::byte Diy1{0x50};
+                    inline static constexpr std::byte Diy2{0x51};
+                    inline static constexpr std::byte Diy3{0x52};
+                    inline static constexpr std::byte Diy4{0x53};
+
+                    inline static constexpr std::byte KissReq{0x78};
+                    inline static constexpr std::byte KissResp{0x79};
+
+                    inline static constexpr std::byte MspReq{0x7a};
+                    inline static constexpr std::byte MspResp{0x7b};
+                    inline static constexpr std::byte MspWrite{0x7c};
+
+                    inline static constexpr std::byte DisplayPort{0x7d};
+
+                    inline static constexpr std::byte PassThru{0x7f};
+                    inline static constexpr std::byte ArduPilot{0x80};
+                }
+                namespace CommandType {
+                    // inline static constexpr std::byte bind{0x01}; // bind
+                    inline static constexpr std::byte rx{0x10}; // receiver command
+                    inline static constexpr std::byte general{0x0a}; // general command
+                    inline static constexpr std::byte CC{0xa0}; // CruiseController
+                    inline static constexpr std::byte Switch{0xa1}; // MultiSwitch
+                    inline static constexpr std::byte Schottel{0xa2}; // RC720E32
+                }
+                namespace SchottelCommand {
+                    inline static constexpr std::byte Reset{0x01};
+                }
+                namespace CrsfCommand {
+                    inline static constexpr std::byte SelectID{0x05};
+                }
+                namespace SwitchCommand {
+                    inline static constexpr std::byte Set{0x01};
+                    inline static constexpr std::byte Prop{0x02};
+                }
+                namespace CcCommand {
+                    inline static constexpr std::byte SetAltData{0x01}; // Index: [0, 255], value 8bit
+                    inline static constexpr std::byte SetAltChunk{0x02};
+                    inline static constexpr std::byte SetChannel{0x03}; // Index: [0, 63], value 16bit
+                }
+                namespace PacketIndex {
+                    inline static constexpr uint8_t address = 0;
+                    inline static constexpr uint8_t sync = 0;
+                    inline static constexpr uint8_t length = 1;
+                    inline static constexpr uint8_t type = 2;
+                }
+                static inline constexpr uint8_t  maxMessageSize = 64;
+                static inline constexpr uint8_t  minMessageSize = 4;
+                static inline constexpr uint8_t  maxPayloadSize = 60;
+                static inline constexpr uint8_t  maxExtendedPayloadSize = 58;
+
+                static inline constexpr uint8_t  ValueBits = 11;
+                static inline constexpr uint16_t ValueMask = ((1 << ValueBits) - 1);
+
+                static inline constexpr uint16_t CenterValue = 0x3e0; // same center and range as sbus
+
+                using namespace std::literals::chrono_literals;
+                using namespace etl::literals;
+
+                namespace Lua {
+                    enum class CmdStep : uint8_t {
+                        Idle = 0,
+                        Click = 1,       // user has clicked the command to execute
+                        Executing = 2,   // command is executing
+                        AskConfirm = 3,  // command pending user OK
+                        Confirmed = 4,   // user has confirmed
+                        Cancel = 5,      // user has requested cancel
+                        Query = 6,       // UI is requesting status update
+                    };
+                }
+            }
+        }
         namespace IBus {
             namespace V2 {
                 // https://github.com/betaflight/betaflight/tree/master/src/main/telemetry
@@ -171,7 +291,6 @@ namespace RC {
                 }
             }
         }
-        
         namespace SPort {
             // https://github.com/jcheger/frsky-arduino/tree/master/FrskySP
             // https://github.com/opentx/opentx/blob/2.3/radio/src/telemetry/frsky.h

@@ -5,12 +5,12 @@
 #include "tick.h"
 #include "etl/fifo.h"
 
-template<typename Out, typename Timer>
+template<typename Out, typename Timer, auto Size = 64>
 struct MessageBuffer {
     using systemTimer = Timer;
     struct Entry {
         using value_type = std::byte;
-        static inline constexpr uint8_t size = 64;
+        static inline constexpr uint8_t size = Size;
         void operator=(const std::span<volatile uint8_t>& s) {
             length = std::min((uint8_t)s.size(), size);
             auto ptr = &s[0];
@@ -19,11 +19,13 @@ struct MessageBuffer {
             }
         }
         void operator=(const std::span<volatile std::byte>& s) {
-            length = std::min((uint8_t)s.size(), size);
-            auto ptr = &s[0];
-            for(auto& v: message) {
-                v = *ptr++;
-            }
+            const std::span<volatile uint8_t> sb{(volatile uint8_t*)s.data(), s.size_bytes()};
+            this->operator=(sb);
+            // length = std::min((uint8_t)s.size(), size);
+            // auto ptr = &s[0];
+            // for(auto& v: message) {
+            //     v = *ptr++;
+            // }
         }
         uint8_t length;
         std::array<value_type, size> message;

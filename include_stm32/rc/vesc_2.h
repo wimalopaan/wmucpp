@@ -645,7 +645,6 @@ namespace RC::VESC {
                     using Clock = clock;
                     using ValueType = uint8_t;
                     using DmaChComponent = dmaChComponent;
-                    using Adapter = void;
                     static inline constexpr bool fifo = true;
                     static inline constexpr Mcu::Stm::Uarts::Mode mode = Mcu::Stm::Uarts::Mode::HalfDuplex;
                     static inline constexpr uint32_t baudrate = 115'200;
