@@ -59,7 +59,6 @@ namespace RC::Protokoll::SumDV3 {
                     mActive = true;
                 });
                 pin::afunction(af);
-                pin::template pulldown<false>();
                 pin::template pullup<true>();
             }
             static inline void reset() {

@@ -67,7 +67,6 @@ namespace Mcu::Stm {
             using value_t = Config::ValueType;
             using storage_t = volatile value_t;
             using clock_t = Config::Clock;
-            // using adapter = Config::Adapter;
             using adapter = detail::getAdapter_t<Config>;
             using tp = Config::tp;
 

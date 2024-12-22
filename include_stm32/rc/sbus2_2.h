@@ -110,7 +110,7 @@ namespace RC::Protokoll::SBus2 {
             struct Isr {
                 static inline void onTransferComplete(const auto f) {
                     if (mActive) {
-                        auto fEnable = [&]{
+                        const auto fEnable = [&]{
                             f();
                             uart::template rxEnable<true>();
                         };

@@ -138,6 +138,7 @@ void DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQHandler() {
         sbus1::slotReceived();
     });
 #endif
+#ifndef USE_UART_2
     using esc32_1 = devs::esc32_1;
     static_assert(esc32_1::dmaChRW::number == 5);
     esc32_1::dmaChRW::onTransferComplete([]{
@@ -148,11 +149,24 @@ void DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQHandler() {
     esc32_2::dmaChRW::onTransferComplete([]{
         esc32_2::event(esc32_2::Event::ReceiveComplete);
     });
+#endif
 }
 void USART2_LPUART2_IRQHandler(){
     {
         using esc32_1 = devs::esc32_1;
         static_assert(esc32_1::uart::number == 2);
+#ifdef USE_UART_2
+        esc32_1::Isr::onTransferComplete([]{
+        });
+        esc32_1::Isr::onIdle([]{
+        });
+        using esc32ascii_1 = devs::esc32ascii_1;
+        static_assert(esc32ascii_1::uart::number == 2);
+        esc32ascii_1::Isr::onTransferComplete([]{
+        });
+        esc32ascii_1::Isr::onIdle([]{
+        });
+#else
         esc32_1::onTransferComplete([]{
             esc32_1::rxEnable();
         });
@@ -164,6 +178,7 @@ void USART2_LPUART2_IRQHandler(){
         esc32ascii_1::onIdleWithDma([]{
             esc32ascii_1::event(esc32ascii_1::Event::ReceiveComplete);
         });
+#endif
         using vesc_1 = devs::vesc_1;
         static_assert(vesc_1::uart::number == 2);
         vesc_1::Isr::onTransferComplete([]{
@@ -235,64 +250,85 @@ void USART2_LPUART2_IRQHandler(){
     }
 }
 void USART3_4_5_6_LPUART1_IRQHandler(){
-    using esc32_2 = devs::esc32_2;
-    static_assert(esc32_2::uart::number == 3);
-    esc32_2::uart::onTransferComplete([]{
-        esc32_2::rxEnable();
-    });
-    using esc32ascii_2 = devs::esc32ascii_2;
-    static_assert(esc32ascii_2::uart::number == 3);
-    esc32ascii_2::onTransferComplete([]{
-        esc32ascii_2::rxEnable();
-    });
-    esc32ascii_2::onIdleWithDma([]{
-        esc32ascii_2::event(esc32ascii_2::Event::ReceiveComplete);
-    });
-    using vesc_2 = devs::vesc_2;
-    static_assert(vesc_2::uart::number == 3);
-    vesc_2::Isr::onTransferComplete([]{});
-    vesc_2::Isr::onIdle([]{});
-    esc32_2::uart::mcuUart->ICR = -1;
+    {
+        using esc32_2 = devs::esc32_2;
+        static_assert(esc32_2::uart::number == 3);
+#ifdef USE_UART_2
+        esc32_2::Isr::onTransferComplete([]{
+        });
+        esc32_2::Isr::onIdle([]{
+        });
+        using esc32ascii_2 = devs::esc32ascii_2;
+        static_assert(esc32ascii_2::uart::number == 3);
+        esc32ascii_2::Isr::onTransferComplete([]{
+        });
+        esc32ascii_2::Isr::onIdle([]{
+        });
+#else
+        esc32_2::uart::onTransferComplete([]{
+            esc32_2::rxEnable();
+        });
+        using esc32ascii_2 = devs::esc32ascii_2;
+        static_assert(esc32ascii_2::uart::number == 3);
+        esc32ascii_2::onTransferComplete([]{
+            esc32ascii_2::rxEnable();
+        });
+        esc32ascii_2::onIdleWithDma([]{
+            esc32ascii_2::event(esc32ascii_2::Event::ReceiveComplete);
+        });
+#endif
+        using vesc_2 = devs::vesc_2;
+        static_assert(vesc_2::uart::number == 3);
+        vesc_2::Isr::onTransferComplete([]{});
+        vesc_2::Isr::onIdle([]{});
 
-    using ws1 = devs::srv1_waveshare;
-    static_assert(ws1::uart::number == 5);
-#ifdef USE_UART_2
-    ws1::Isr::onTransferComplete([]{
-    });
-    ws1::Isr::onIdle([]{
-    });
-#else
-    ws1::uart::onTransferComplete([]{
-        ws1::rxEnable();
-    });
-#endif
-    using ws2 = devs::srv2_waveshare;
-    static_assert(ws2::uart::number == 6);
-#ifdef USE_UART_2
-    ws2::Isr::onTransferComplete([]{
-    });
-    ws2::Isr::onIdle([]{
-    });
-#else
-    ws2::uart::onTransferComplete([]{
-        ws2::rxEnable();
-    });
-#endif
-    using relay = devs::relay_aux;
-    static_assert(relay::uart::number == 4);
-#ifdef USE_UART_2
-    relay::Isr::onTransferComplete([]{
-    });
-    relay::Isr::onIdle([]{
-    });
-#else
-    relay::uart::onTransferComplete([]{
-        relay::rxEnable();
-    });
-    relay::uart::onIdleWithDma([]{
-        relay::event(relay::Event::ReceiveComplete);
-    });
-#endif
+        esc32_2::uart::mcuUart->ICR = -1;
+    }
+    {
+        using ws1 = devs::srv1_waveshare;
+        static_assert(ws1::uart::number == 5);
+    #ifdef USE_UART_2
+        ws1::Isr::onTransferComplete([]{
+        });
+        ws1::Isr::onIdle([]{
+        });
+    #else
+        ws1::uart::onTransferComplete([]{
+            ws1::rxEnable();
+        });
+    #endif
+    }
+    {
+        using ws2 = devs::srv2_waveshare;
+        static_assert(ws2::uart::number == 6);
+    #ifdef USE_UART_2
+        ws2::Isr::onTransferComplete([]{
+        });
+        ws2::Isr::onIdle([]{
+        });
+    #else
+        ws2::uart::onTransferComplete([]{
+            ws2::rxEnable();
+        });
+    #endif
+    }
+    {
+        using relay = devs::relay_aux;
+        static_assert(relay::uart::number == 4);
+    #ifdef USE_UART_2
+        relay::Isr::onTransferComplete([]{
+        });
+        relay::Isr::onIdle([]{
+        });
+    #else
+        relay::uart::onTransferComplete([]{
+            relay::rxEnable();
+        });
+        relay::uart::onIdleWithDma([]{
+            relay::event(relay::Event::ReceiveComplete);
+        });
+    #endif
+    }
 }
 void USART1_IRQHandler() {
     using crsf_in = devs::crsf_in;

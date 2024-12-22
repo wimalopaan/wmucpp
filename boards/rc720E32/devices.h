@@ -25,7 +25,11 @@
 #include "meta.h"
 #include "rc/rc.h"
 #include "rc/crsf.h"
+#ifdef USE_UART_2
+#include "rc/escape_2.h"
+#else
 #include "rc/escape.h"
+#endif
 #ifdef USE_UART_2
 #include "rc/sbus2_2.h"
 #else
@@ -268,9 +272,13 @@ struct Devices<SW01, Config, MCU> {
     using esc1_pwm = PwmAdapter<pwm2, esc1_pin, 3, storage, std::integral_constant<uint8_t, 0>, debug>;
 
     struct SerialConfig1;
+#ifdef USE_UART_2
+    using esc32_1 = RC::Protokoll::ESCape::V2::Serial<2, SerialConfig1, MCU>;
+    using esc32ascii_1 = RC::Protokoll::ESCape::V2::ConfigAscii<2, SerialConfig1, MCU>;
+#else
     using esc32_1 = RC::ESCape::Serial<2, SerialConfig1, MCU>;
-
     using esc32ascii_1 = RC::ESCape::ConfigAscii<2, SerialConfig1, MCU>;
+#endif
 
     struct VEscConfig1;
     using vesc_1 = RC::VESC::Master::V5::Serial<2, VEscConfig1, MCU>;
@@ -304,13 +312,16 @@ struct Devices<SW01, Config, MCU> {
     using esc2_pwm = PwmAdapter<pwm17, esc2_pin, 1, storage, std::integral_constant<uint8_t, 1>, debug>;
 
     struct SerialConfig2;
+#ifdef USE_UART_2
+    using esc32_2 = RC::Protokoll::ESCape::V2::Serial<3, SerialConfig2, MCU>;
+    using esc32ascii_2 = RC::Protokoll::ESCape::V2::ConfigAscii<3, SerialConfig2, MCU>;
+#else
     using esc32_2 = RC::ESCape::Serial<3, SerialConfig2, MCU>;
-
     using esc32ascii_2 = RC::ESCape::ConfigAscii<3, SerialConfig2, MCU>;
+#endif
 
     struct VEscConfig2;
     using vesc_2 = RC::VESC::Master::V5::Serial<3, VEscConfig2, MCU>;
-
 
     // Tlm2: PB9 : TIM17-CH1, TIM4-CH4
     using tp1 = Mcu::Stm::Pin<gpiob, 9, MCU>;
@@ -548,6 +559,7 @@ struct Devices<SW01, Config, MCU> {
         using clock = Devices::clock;
         using systemTimer = Devices::systemTimer;
         using dmaChRW = esc1DmaChannel;
+        using dmaChComponent = esc1DmaChannelComponent;
         using pin = esc1_pin;
         using debug = void;
         using tp = void;
@@ -556,6 +568,7 @@ struct Devices<SW01, Config, MCU> {
         using clock = Devices::clock;
         using systemTimer = Devices::systemTimer;
         using dmaChRW = esc2DmaChannel;
+        using dmaChComponent = esc2DmaChannelComponent;
         using pin = esc2_pin_1;
         using debug = void;
         using tp = void;

@@ -61,7 +61,6 @@ namespace RC::Protokoll::SBus {
                 uart::init();
             });
             pin::afunction(af);
-            pin::template pullup<false>();
             pin::template pulldown<true>();
         }
         static inline void reset() {

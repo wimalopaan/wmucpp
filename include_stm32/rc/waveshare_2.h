@@ -30,7 +30,6 @@ namespace External::WaveShare {
                 static inline constexpr auto mode = Mcu::Stm::Uarts::Mode::HalfDuplex;
                 static inline constexpr uint32_t baudrate = 1'000'000;
                 struct Rx {
-                    static inline constexpr bool enable = false;
                     static inline constexpr size_t size = 64;
                     static inline constexpr size_t idleMinSize = 4;
                 };
@@ -70,7 +69,6 @@ namespace External::WaveShare {
                     mActive = false;
                 });
             }
-
             static inline constexpr External::Tick<systemTimer> initTicks{3000ms};
             static inline constexpr External::Tick<systemTimer> stepTicks{50ms};
             static inline constexpr External::Tick<systemTimer> telemTicks{10ms};
@@ -126,11 +124,11 @@ namespace External::WaveShare {
                     }
                 }
                 static inline void onTransferComplete(const auto f) {
-                    auto fEnable = [&]{
-                        f();
-                        uart::template rxEnable<true>();
-                    };
                     if (mActive) {
+                        const auto fEnable = [&]{
+                            f();
+                            uart::template rxEnable<true>();
+                        };
                         uart::Isr::onTransferComplete(fEnable);
                     }
                 }
@@ -356,6 +354,7 @@ namespace External::WaveShare {
                     }
                 }
             }
+            private:
             static inline void queryFwHw() {
                 std::array<uint8_t, 1> payload;
                 payload[0] = 0x04;

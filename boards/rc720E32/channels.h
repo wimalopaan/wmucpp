@@ -1,5 +1,7 @@
 #pragma once
 
+#include "rc/rc_2.h"
+
 template<typename Polars, typename Servos, typename ESCS, typename Relays, typename Auxes,
          typename Telemetry, typename Storage>
 struct ChannelCallback {
@@ -83,15 +85,15 @@ struct ChannelCallback {
 
     static inline uint16_t phiToSbusValue(const uint16_t phi) {
         if (phi < 4096) {
-            return (phi * 1640) / 4096 + 172;
+            return (phi * RC::Protokoll::SBus::V2::amp) / 4095 + RC::Protokoll::SBus::V2::min;
         }
-        return 992;
+        return RC::Protokoll::SBus::V2::mid;
     }
     static inline uint16_t ampToSbusValue(const uint16_t amp) {
-        if (amp <= 820) {
-            return amp + 992;
+        if (amp <= RC::Protokoll::SBus::V2::span) {
+            return amp + RC::Protokoll::SBus::V2::mid;
         }
-        return 992;
+        return RC::Protokoll::SBus::V2::mid;
     }
 };
 

@@ -40,6 +40,9 @@ struct GFSM {
     using ibus_in = devs::ibus_in;
     using sumdv3_in = devs::sumdv3_in;
 
+    using esc32ascii_1 = devs::esc32ascii_1;
+    using esc32ascii_2 = devs::esc32ascii_2;
+
     using i2c = devs::i2c;
 
     static inline void init() {
@@ -177,7 +180,8 @@ struct GFSM {
             });
             mStateTick.on(debugTicks, []{
                 // IO::outl<debug>("_end:", &_end, " _ebss:", &_ebss, " heap:", heap);
-                IO::outl<debug>("ch0: ", crsf_in_pa::value(0), " phi: ", polar1::phi(), " amp: ", polar1::amp(), " a: ", Servos::actualPos(0), " t: ", Servos::turns(0));
+                IO::outl<debug>("ch0: ", crsf_in_pa::value(0), " phi0: ", polar1::phi(), " amp0: ", polar1::amp(), " a0: ", Servos::actualPos(0), " t0: ", Servos::turns(0), " phi1: ", polar2::phi(), " amp1: ", polar2::amp(), " a1: ", Servos::actualPos(1), " t1: ", Servos::turns(1));
+                // IO::outl<debug>("esc1 mthr: ", esc32ascii_1::mNextThrottle, "esc2 mthr: ", esc32ascii_2::mNextThrottle);
                 // IO::out<debug>("ibus: ec: ", ibus_in::errorCount(), " uc: ", ibus_in::uart::readCount(), " d0: ", ibus_in::uart::readBuffer()[0]);
                 // for(uint8_t i = 0; i < 7; ++i) {
                 //     IO::out<debug>(" ", ibus_in::value(i));

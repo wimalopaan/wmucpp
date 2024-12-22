@@ -172,11 +172,11 @@ namespace RC::VESC {
                         }
                     }
                     static inline void onTransferComplete(const auto f) {
-                        auto fEnable = [&]{
-                            f();
-                            uart::template rxEnable<true>();
-                        };
                         if (mActive) {
+                            const auto fEnable = [&]{
+                                f();
+                                uart::template rxEnable<true>();
+                            };
                             uart::Isr::onTransferComplete(fEnable);
                         }
                     }
