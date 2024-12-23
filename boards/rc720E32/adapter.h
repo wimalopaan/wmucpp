@@ -45,6 +45,12 @@ struct PwmAdapter {
         });
         Pin::analog();
     }
+    static inline std::pair<uint8_t, uint8_t> hwVersion() {
+        return {255, 255};
+    }
+    static inline std::pair<uint8_t, uint8_t> fwVersion() {
+        return {255, 255};
+    }
     static inline uint16_t current() {
         return 0;
     }

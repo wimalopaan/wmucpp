@@ -54,6 +54,18 @@ struct EscOutputs {
             break;
         }
     }
+    static inline std::pair<uint8_t, uint8_t> fwVersion(const uint8_t n) {
+        if ((n < escs.size()) && escs[n]) {
+            return escs[n]->fwVersion();
+        }
+        return {};
+    }
+    static inline std::pair<uint8_t, uint8_t> hwVersion(const uint8_t n) {
+        if ((n < escs.size()) && escs[n]) {
+            return escs[n]->hwVersion();
+        }
+        return {};
+    }
     static inline uint16_t current(const uint8_t n) {
         if ((n < escs.size()) && escs[n]) {
             return escs[n]->current();

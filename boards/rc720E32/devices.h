@@ -481,7 +481,7 @@ struct Devices<SW01, Config, MCU> {
 
     using polars = Meta::List<polar1, polar2>;
 
-    using telem = Telemetry<crsfBuffer, storage, debug>;
+    using telem = Telemetry<crsfBuffer, storage, typename Config::servos, typename Config::escs, debug>;
 
     using channelCallback = ChannelCallback<polars, typename Config::servos, typename Config::escs, typename Config::relays, typename Config::auxes, telem, storage>;
 

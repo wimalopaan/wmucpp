@@ -2,35 +2,76 @@
 
 #include "rc/crsf.h"
 
-template<typename Buffer, typename Storage, typename Debug>
+template<typename Buffer, typename Storage, typename Servos, typename Escs, typename Debug>
 struct Telemetry {
     using debug = Debug;
     using buffer = Buffer;
     using storage = Storage;
+    using servos = Servos;
+    using escs = Escs;
+
+    static inline constexpr uint8_t infoRate = 100;
 
     static inline void next() {
         mCounter = 0;
         CRC8 crc;
-        mMessage[mCounter++] = std::byte{0xc8};
-        mMessage[mCounter++] = std::byte{0};
-        crc += mMessage[mCounter++] = RC::Protokoll::Crsf::Type::ArduPilot;
-        // the next two bytes should contain ext. destination and source, but
-        // nobody (yaapu, betaflight, ...) does this.
-        crc += mMessage[mCounter++] = RC::Protokoll::Crsf::Address::Handset;
-        crc += mMessage[mCounter++] = std::byte(storage::eeprom.address);
+        if (++mFrameCounter < infoRate) {
+            mMessage[mCounter++] = std::byte{0xc8};
+            mCounter++;
+            crc += mMessage[mCounter++] = RC::Protokoll::Crsf::Type::ArduPilot;
+            // the next two bytes should contain ext. destination and source, but
+            // nobody (yaapu, betaflight, ...) does this.
+            crc += mMessage[mCounter++] = RC::Protokoll::Crsf::Address::Handset;
+            crc += mMessage[mCounter++] = std::byte(storage::eeprom.address);
 
-        crc += mMessage[mCounter++] = std::byte(mDataID >> 8);
-        crc += mMessage[mCounter++] = std::byte(mDataID & 0xff);
-        for(uint16_t i = 0; i < mValues.size(); ++i) {
-            crc += mMessage[mCounter++] = std::byte(mValues[i] >> 8);
-            crc += mMessage[mCounter++] = std::byte(mValues[i] & 0xff);
+            crc += mMessage[mCounter++] = std::byte(mDataID >> 8);
+            crc += mMessage[mCounter++] = std::byte(mDataID & 0xff);
+            for(uint16_t i = 0; i < mValues.size(); ++i) {
+                crc += mMessage[mCounter++] = std::byte(mValues[i] >> 8);
+                crc += mMessage[mCounter++] = std::byte(mValues[i] & 0xff);
+            }
+            crc += mMessage[mCounter++] = std::byte(mTurns[0]);
+            crc += mMessage[mCounter++] = std::byte(mTurns[1]);
+            crc += mMessage[mCounter++] = std::byte(mFlags);
+            mMessage[1] = std::byte(mCounter - 1);
+            mMessage[mCounter++] = crc;
+            buffer::enqueue(std::span<std::byte>(std::begin(mMessage), mCounter));
         }
-        crc += mMessage[mCounter++] = std::byte(mTurns[0]);
-        crc += mMessage[mCounter++] = std::byte(mTurns[1]);
-        crc += mMessage[mCounter++] = std::byte(mFlags);
-        mMessage[1] = std::byte(mCounter - 1);
-        mMessage[mCounter++] = crc;
-        buffer::enqueue(std::span<std::byte>(std::begin(mMessage), mCounter));
+        else {
+            mFrameCounter = 0;
+            mMessage[mCounter++] = std::byte{0xc8};
+            mCounter++;
+            crc += mMessage[mCounter++] = RC::Protokoll::Crsf::Type::ArduPilot;
+            // the next two bytes should contain ext. destination and source, but
+            // nobody (yaapu, betaflight, ...) does this.
+            crc += mMessage[mCounter++] = RC::Protokoll::Crsf::Address::Handset;
+            crc += mMessage[mCounter++] = std::byte(storage::eeprom.address);
+
+            crc += mMessage[mCounter++] = std::byte(mInfoID >> 8);
+            crc += mMessage[mCounter++] = std::byte(mInfoID & 0xff);
+
+            crc += mMessage[mCounter++] = std::byte{servos::fwVersion(0).first};
+            crc += mMessage[mCounter++] = std::byte{servos::fwVersion(0).second};
+            crc += mMessage[mCounter++] = std::byte{servos::hwVersion(0).first};
+            crc += mMessage[mCounter++] = std::byte{servos::hwVersion(0).second};
+            crc += mMessage[mCounter++] = std::byte{servos::fwVersion(1).first};
+            crc += mMessage[mCounter++] = std::byte{servos::fwVersion(1).second};
+            crc += mMessage[mCounter++] = std::byte{servos::hwVersion(1).first};
+            crc += mMessage[mCounter++] = std::byte{servos::hwVersion(1).second};
+
+            crc += mMessage[mCounter++] = std::byte{escs::fwVersion(0).first};
+            crc += mMessage[mCounter++] = std::byte{escs::fwVersion(0).second};
+            crc += mMessage[mCounter++] = std::byte{escs::hwVersion(0).first};
+            crc += mMessage[mCounter++] = std::byte{escs::hwVersion(0).second};
+            crc += mMessage[mCounter++] = std::byte{escs::fwVersion(1).first};
+            crc += mMessage[mCounter++] = std::byte{escs::fwVersion(1).second};
+            crc += mMessage[mCounter++] = std::byte{escs::hwVersion(1).first};
+            crc += mMessage[mCounter++] = std::byte{escs::hwVersion(1).second};
+
+            mMessage[1] = std::byte(mCounter - 1);
+            mMessage[mCounter++] = crc;
+            buffer::enqueue(std::span<std::byte>(std::begin(mMessage), mCounter));
+        }
     }
     template<auto N>
     static inline void phi(const uint16_t p) {
@@ -60,10 +101,10 @@ struct Telemetry {
             mFlags &= ~(0x01 << n);
         }
     }
-
     private:
+    static inline uint8_t mFrameCounter = 0;
+    static inline uint16_t mInfoID = 6001;
     static inline std::array<std::byte, 64> mMessage;
-
     static inline uint16_t mDataID = 6000;
     static inline std::array<uint16_t, 10> mValues{};
     static inline std::array<int8_t, 2> mTurns{};

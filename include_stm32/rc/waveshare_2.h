@@ -124,10 +124,10 @@ namespace External::WaveShare {
             static inline uint16_t errorCount() {
                 return mReadErrorCount;
             }
-            static inline uint16_t hwVersion() {
+            static inline std::pair<uint8_t, uint8_t> hwVersion() {
                 return mHW;
             }
-            static inline uint16_t fwVersion() {
+            static inline std::pair<uint8_t, uint8_t> fwVersion() {
                 return mFW;
             }
             struct Isr {
@@ -200,6 +200,7 @@ namespace External::WaveShare {
                     mStateTick.on(stepTicks, []{
                         mState = State::SetDisableAutoReply;
                     });
+                    break;
                 case State::SetDisableAutoReply:
                     mStateTick.on(stepTicks, []{
                        mState = State::SetPosition;
@@ -376,8 +377,10 @@ namespace External::WaveShare {
                 else {
                     if (const auto c = std::exchange(mLastServoCommand, ServoCommand::None); c == ServoCommand::ReadFwHw) {
                         if (dataLength == 4) {
-                            mFW = uart::readBuffer()[5] * 100 + uart::readBuffer()[6];
-                            mHW = uart::readBuffer()[7] * 100 + uart::readBuffer()[8];
+                            mFW.first  = uart::readBuffer()[5];
+                            mFW.second = uart::readBuffer()[6];
+                            mHW.first  = uart::readBuffer()[7];
+                            mHW.second = uart::readBuffer()[8];
                         }
                         else {
                             ++mReadErrorCount;
@@ -412,8 +415,8 @@ namespace External::WaveShare {
             static inline uint32_t mReadErrorCount = 0;
             static inline uint8_t mLastError = 0;
             static inline uint32_t mReceivedPackets = 0;
-            static inline uint16_t mFW = 0;
-            static inline uint16_t mHW = 0;
+            static inline std::pair<uint8_t, uint8_t> mFW{};
+            static inline std::pair<uint8_t, uint8_t> mHW{};
             static inline External::Tick<systemTimer> mStateTick;
             static inline uint8_t mId = 1;
             static inline uint16_t mLastPos = 0;

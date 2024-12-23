@@ -48,6 +48,18 @@ struct ServoOutputs {
         }
         return 0;
     }
+    static inline std::pair<uint8_t, uint8_t> fwVersion(const uint8_t n) {
+        if ((n < servos.size()) && servos[n]) {
+            return servos[n]->fwVersion();
+        }
+        return {};
+    }
+    static inline std::pair<uint8_t, uint8_t> hwVersion(const uint8_t n) {
+        if ((n < servos.size()) && servos[n]) {
+            return servos[n]->hwVersion();
+        }
+        return {};
+    }
 
     template<uint8_t N>
     static inline void servo(const uint8_t s) {

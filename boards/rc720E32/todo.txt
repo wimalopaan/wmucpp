@@ -11,9 +11,7 @@ Hardware
 
 Prio 0
 ------
-* LUA: option L/R data swap
-* LUA: display fw of servo on Widget
-* send hw/fw version to radio
+* Escape32/Ascii: get fw version
 * Coordinate system: rotate pi/2 left (mathematical 0 as head) : help-text?
 * mode: cruise-controller -> channel-passthru
 * steller-mode forward or forward/backward
@@ -47,6 +45,9 @@ Prio 3
 
 Done:
 ------
+* send hw/fw version to radio (different frame types, slower rate)
+* LUA: option L/R data swap
+* LUA: display fw of servo on Widget (different frames)
 * Null-Posisition after power-up
 * LUA: Reset button position (bug in EdgeTx)
 * UART refactor

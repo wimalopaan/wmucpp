@@ -58,6 +58,12 @@ struct Feetech {
     }
     static inline void offset(const uint16_t) {
     }
+    static inline std::pair<uint8_t, uint8_t> hwVersion() {
+        return {255, 255};
+    }
+    static inline std::pair<uint8_t, uint8_t> fwVersion() {
+        return {255, 255};
+    }
     static inline int8_t turns() {
         return 0;
     }

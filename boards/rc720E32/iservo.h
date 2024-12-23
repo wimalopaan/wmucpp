@@ -6,6 +6,8 @@ struct IDevice {
     virtual ~IDevice() {}
 };
 struct IServo : IDevice {
+    virtual std::pair<uint8_t, uint8_t> fwVersion() = 0;
+    virtual std::pair<uint8_t, uint8_t> hwVersion() = 0;
     virtual int8_t turns() = 0;
     virtual uint16_t actualPos() = 0;
     virtual void speed(uint16_t) = 0;
@@ -15,6 +17,8 @@ struct IServo : IDevice {
     virtual ~IServo(){}
 };
 struct IEsc : IDevice {
+    virtual std::pair<uint8_t, uint8_t> fwVersion() = 0;
+    virtual std::pair<uint8_t, uint8_t> hwVersion() = 0;
     virtual uint16_t current() = 0;
     virtual uint16_t rpm() = 0;
     virtual void set(uint16_t) = 0;
@@ -121,6 +125,12 @@ struct Servo : IServo {
     ~Servo() {
         S::reset();
     }
+    virtual std::pair<uint8_t, uint8_t> fwVersion() {
+        return S::fwVersion();
+    }
+    virtual std::pair<uint8_t, uint8_t> hwVersion() {
+        return S::hwVersion();
+    }
     virtual int8_t turns() {
         return S::turns();
     }
@@ -154,6 +164,12 @@ struct Esc: IEsc {
     }
     ~Esc() {
         E::reset();
+    }
+    virtual std::pair<uint8_t, uint8_t> fwVersion() {
+        return E::fwVersion();
+    }
+    virtual std::pair<uint8_t, uint8_t> hwVersion() {
+        return E::hwVersion();
     }
     virtual uint16_t current() {
         return E::current();
