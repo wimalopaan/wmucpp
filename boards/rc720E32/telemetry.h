@@ -68,6 +68,9 @@ struct Telemetry {
             crc += mMessage[mCounter++] = std::byte{escs::hwVersion(1).first};
             crc += mMessage[mCounter++] = std::byte{escs::hwVersion(1).second};
 
+            crc += mMessage[mCounter++] = std::byte{SW_VERSION};
+            crc += mMessage[mCounter++] = std::byte{HW_VERSION};
+
             mMessage[1] = std::byte(mCounter - 1);
             mMessage[mCounter++] = crc;
             buffer::enqueue(std::span<std::byte>(std::begin(mMessage), mCounter));

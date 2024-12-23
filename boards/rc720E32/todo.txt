@@ -11,6 +11,7 @@ Hardware
 
 Prio 0
 ------
+* info-packet: show RC720 fw version
 * Escape32/Ascii: get fw version
 * Coordinate system: rotate pi/2 left (mathematical 0 as head) : help-text?
 * mode: cruise-controller -> channel-passthru

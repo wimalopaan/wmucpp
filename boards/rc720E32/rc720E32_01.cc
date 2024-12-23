@@ -10,6 +10,9 @@
 
 #define USE_UART_2
 
+#define SW_VERSION 4
+#define HW_VERSION 2
+
 #define NDEBUG
 
 #include <cstdint>
