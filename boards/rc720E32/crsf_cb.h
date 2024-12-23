@@ -182,8 +182,8 @@ private:
     static inline bool mEepromMode = false;
     static inline uint8_t mLastChangedParameter{};
     static inline constexpr uint32_t mSerialNumber{1234};
-    static inline constexpr uint32_t mHWVersion{1};
-    static inline constexpr uint32_t mSWVersion{1};
+    static inline constexpr uint32_t mHWVersion{2};
+    static inline constexpr uint32_t mSWVersion{2};
     static inline constexpr auto mVersionString = [](){
         std::array<char, 16> s{};
         auto [ptr, e] = std::to_chars(std::begin(s), std::end(s), mHWVersion);

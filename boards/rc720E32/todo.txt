@@ -11,9 +11,10 @@ Hardware
 
 Prio 0
 ------
+* LUA: option L/R data swap
+* Coordinate system: rotate pi/2 left (mathematical 0 as head) : help-text?
 * mode: cruise-controller -> channel-passthru
 * steller-mode forward or forward/backward
-* Null-Posisition after power-up
 * LUA: alarm3 test from crsf-menu
 * VEsc: slew-rate for throttle (crsf parameter)
 * crsf refactor
@@ -44,6 +45,7 @@ Prio 3
 
 Done:
 ------
+* Null-Posisition after power-up
 * LUA: Reset button position (bug in EdgeTx)
 * UART refactor
 ** use PA
