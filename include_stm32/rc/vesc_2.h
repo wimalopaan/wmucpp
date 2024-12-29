@@ -383,11 +383,11 @@ namespace RC::VESC {
                     static inline constexpr Mcu::Stm::Uarts::Mode mode = Mcu::Stm::Uarts::Mode::HalfDuplex;
                     static inline constexpr uint32_t baudrate = 115'200;
                     struct Rx {
-                        static inline constexpr bool enable = false;
                         static inline constexpr size_t size = 256;
                         static inline constexpr size_t idleMinSize = 8;
                     };
                     struct Tx {
+                        static inline constexpr bool singleBuffer = true;
                         static inline constexpr bool enable = true;
                         static inline constexpr size_t size = 64;
                     };

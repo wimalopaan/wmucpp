@@ -31,6 +31,7 @@ namespace External::WaveShare {
                     static inline constexpr size_t idleMinSize = 4;
                 };
                 struct Tx {
+                    static inline constexpr bool singleBuffer = true;
                     static inline constexpr bool enable = true;
                     static inline constexpr size_t size = 16;
                 };

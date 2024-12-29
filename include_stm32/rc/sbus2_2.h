@@ -43,17 +43,15 @@ namespace RC::Protokoll::SBus2 {
                 using ValueType = uint8_t;
                 using DmaChComponent = dmaChComponent;
                 static inline constexpr bool invert = true;
-                static inline constexpr bool rxtxswap = false;
                 static inline constexpr auto parity = Mcu::Stm::Uarts::Parity::Even;
-                static inline constexpr bool fifo = false;
                 static inline constexpr auto mode = Mcu::Stm::Uarts::Mode::HalfDuplex;
                 static inline constexpr uint32_t baudrate = 100'000;
                 struct Rx {
-                    static inline constexpr bool enable = false;
                     static inline constexpr size_t size = 8;
                     static inline constexpr size_t idleMinSize = 3;
                 };
                 struct Tx {
+                    static inline constexpr bool singleBuffer = true;
                     static inline constexpr bool enable = true;
                     static inline constexpr size_t size = 26;
                 };
@@ -99,11 +97,7 @@ namespace RC::Protokoll::SBus2 {
             static constexpr External::Tick<systemTimer> timeoutTicks{ 14ms };
 
             enum class State : uint8_t { SendFrame, ReceiveSlots };
-            // enum class Event : uint8_t { None};
 
-            // static inline void event(const Event e) {
-            //     mEvent = e;
-            // }
             static inline void activateSBus2(const bool a) {
                 mUseSbus2 = a;
             }
