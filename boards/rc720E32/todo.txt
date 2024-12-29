@@ -11,17 +11,16 @@ Hardware
 
 Prio 0
 ------
-* crsf refactor
+* crsf refactor II
 ** make chunking optional
 ** make telemetry slot optional
 ** parameter: underlying type (Bytes: 1, 2, 4)
-** std::bitcast
 * use units in crsf-parameters
 * info-packet: show RC720 fw version
 * Escape32/Ascii: get fw version
 * Coordinate system: rotate pi/2 left (mathematical 0 as head) : help-text?
 * mode: cruise-controller -> channel-passthru
-* steller-mode forward or forward/backward
+* esc-mode forward or forward/backward
 * LUA: alarm3 test from crsf-menu
 * VEsc: slew-rate for throttle (crsf parameter)
 * modes: Dual-Schottel, Passthru
@@ -48,6 +47,7 @@ Prio 3
 
 Done:
 ------
+* crsf refactor I
 * send hw/fw version to radio (different frame types, slower rate)
 * LUA: option L/R data swap
 * LUA: display fw of servo on Widget (different frames)

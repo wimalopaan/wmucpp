@@ -234,25 +234,25 @@ namespace RC {
                 struct Parameter {
                     using value_type = T;
                     enum Type {U8 = 0, I8, U16, I16, F32 = 8, Sel, Str, Folder, Info, Command, OutOfRange = 127, Hidden = 0b1000'0000};
-                    uint8_t mParent{};
-                    Type mType = Type::U8;
+                    uint8_t parent{};
+                    Type type = Type::U8;
                     inline void hide(const bool h) {
                         if (h) {
-                            mType = Type(mType | Type::Hidden);
+                            type = Type(type | Type::Hidden);
                         }
                         else {
-                            mType = Type(mType & ~Type::Hidden);
+                            type = Type(type & ~Type::Hidden);
                         }
                     }
-                    const char* mName{};
-                    const char* mOptions{};
+                    const char* name = nullptr;
+                    const char* options = nullptr;
                     T* value_ptr = nullptr;
                     inline T value() const {
                         if (value_ptr) {
                             return *value_ptr;
                         }
                         else {
-                            return mValue;
+                            return val;
                         }
                     }
                     inline void value(const T v) {
@@ -260,84 +260,84 @@ namespace RC {
                             *value_ptr = v;
                         }
                         else {
-                            mValue = v;
+                            val = v;
                         }
                     }
-                    T mMinimum{};
-                    T mMaximum{};
+                    T min{0};
+                    T max{0};
                     bool (*cb)(T){nullptr};
-                    T mDefault{mMinimum};
-                    uint8_t mUnits{0}; // should be a c-string??? (not allways: for STRING this is maxLength of the string when written)
-                    T mValue{mDefault};
-                    char* mStringValue = nullptr;
-                    const char* mUnitString = nullptr;
-                    uint8_t mPrecision = 1;
-                    uint32_t mStep = 1;
+                    T def{min};
+                    uint8_t units{0}; // should be a c-string??? (not allways: for STRING this is maxLength of the string when written)
+                    T val{def};
+                    char* stringValue = nullptr;
+                    const char* unitString = nullptr;
+                    uint8_t prec = 1;
+                    uint32_t fstep = 1;
                     inline uint16_t size() const {
                         uint16_t l = 4 * sizeof(T) + 1 + 1 + 1; // 4(value, default, min, max) + type + parent + units
-                        if (mName) {
-                            l += strlen(mName) + 1;
+                        if (name) {
+                            l += strlen(name) + 1;
                         }
-                        if (mOptions) {
-                            l += strlen(mOptions) + 1;
+                        if (options) {
+                            l += strlen(options) + 1;
                         }
-                        if (mStringValue) {
-                            l += strlen(mStringValue) + 1;
+                        if (stringValue) {
+                            l += strlen(stringValue) + 1;
                         }
-                        if (mUnitString) {
-                            l += strlen(mUnitString) + 1;
+                        if (unitString) {
+                            l += strlen(unitString) + 1;
                         }
                         return l;
                     }
                     template<typename U, typename C>
                     inline void serializeNumerical(C& c) {
                         etl::serializeBE<U>(value(), c);
-                        etl::serializeBE<U>(mMinimum, c);
-                        etl::serializeBE<U>(mMaximum, c);
-                        etl::serializeBE<U>(mDefault, c); // ???
-                        etl::push_back_ntbs_or_emptyString(mUnitString, c);
+                        etl::serializeBE<U>(min, c);
+                        etl::serializeBE<U>(max, c);
+                        etl::serializeBE<U>(def, c);
+                        etl::push_back_ntbs_or_emptyString(unitString, c);
                     }
                     template<typename C>
                     inline void serialize(C& c, const Lua::CmdStep step = Lua::CmdStep::Idle) {
-                        c.push_back((uint8_t)mParent);
-                        c.push_back((uint8_t)mType);
-                        etl::push_back_ntbs_or_emptyString(mName, c);
-                        const uint8_t type = mType & 0b0111'1111;
-                        if (type <= Type::I8) {
+                        c.push_back((uint8_t)parent);
+                        c.push_back((uint8_t)type);
+                        etl::push_back_ntbs_or_emptyString(name, c);
+                        const uint8_t typ = type & 0b0111'1111;
+                        if (typ <= Type::I8) {
                             serializeNumerical<uint8_t>(c);
                         }
-                        else if (type <= Type::I16) {
+                        else if (typ <= Type::I16) {
                             serializeNumerical<uint16_t>(c);
                         }
-                        else if (type <= Type::F32) {
+                        else if (typ <= Type::F32) {
                             serializeNumerical<uint32_t>(c);
-                            c.push_back(mPrecision);
-                            etl::serializeBE(mStep, c);
+                            c.push_back(prec);
+                            etl::serializeBE(fstep, c);
                         }
-                        else if (type == Type::Sel) {
-                            etl::push_back_ntbs_or_emptyString(mOptions, c);
+                        else if (typ == Type::Sel) {
+                            etl::push_back_ntbs_or_emptyString(options, c);
                             c.push_back((uint8_t)value());
-                            c.push_back((uint8_t)mMinimum);
-                            c.push_back((uint8_t)mMaximum);
-                            c.push_back((uint8_t)mDefault);
-                            etl::push_back_ntbs_or_emptyString(mUnitString, c);
+                            c.push_back((uint8_t)min);
+                            c.push_back((uint8_t)max);
+                            c.push_back((uint8_t)def);
+                            etl::push_back_ntbs_or_emptyString(unitString, c);
                         }
-                        else if (type == Type::Str) {
-                            etl::push_back_ntbs_or_emptyString(mStringValue, c);
-                            c.push_back(mUnits); // max.length
+                        else if (typ == Type::Str) {
+                            etl::push_back_ntbs_or_emptyString(stringValue, c);
+                            c.push_back(units); // max.length
                         }
-                        else if (type == Type::Folder) {
-                            etl::push_back_ntbs_or_emptyString(mOptions, c);
+                        else if (typ == Type::Folder) {
+                            etl::push_back_ntbs_or_emptyString(options, c);
                         }
-                        else if (type == Type::Info) {
-                            etl::push_back_ntbs_or_emptyString(mOptions, c);
+                        else if (typ == Type::Info) {
+                            etl::push_back_ntbs_or_emptyString(options, c);
                         }
-                        else if (type == Type::Command) {
+                        else if (typ == Type::Command) {
                             switch(step) {
                             case Lua::CmdStep::Idle:
                                 c.push_back((uint8_t)Lua::CmdStep::Idle);
-                                c.push_back((uint8_t)mDefault); // timeout
-                                etl::push_back_ntbs_or_emptyString(mOptions, c);
+                                c.push_back((uint8_t)def); // timeout
+                                etl::push_back_ntbs_or_emptyString(options, c);
                                 break;
                             case Lua::CmdStep::Click:
                                 if (cb && cb((value_type)Lua::CmdStep::Click)) {
@@ -346,16 +346,16 @@ namespace RC {
                                 else {
                                     c.push_back((uint8_t)Lua::CmdStep::Executing);
                                 }
-                                c.push_back((uint8_t)mDefault); // timeout
-                                etl::push_back_ntbs_or_emptyString(mOptions, c);
+                                c.push_back((uint8_t)def); // timeout
+                                etl::push_back_ntbs_or_emptyString(options, c);
                                 break;
                             case Lua::CmdStep::Executing:
                                 if (cb) {
                                     cb((value_type)Lua::CmdStep::Confirmed);
                                 }
                                 c.push_back((uint8_t)Lua::CmdStep::Executing);
-                                c.push_back((uint8_t)mDefault); // timeout
-                                etl::push_back_ntbs_or_emptyString(mOptions, c);
+                                c.push_back((uint8_t)def); // timeout
+                                etl::push_back_ntbs_or_emptyString(options, c);
                                 break;
                             case Lua::CmdStep::AskConfirm:
                                 break;
@@ -373,8 +373,8 @@ namespace RC {
                                 else {
                                     c.push_back((uint8_t)Lua::CmdStep::Idle);
                                 }
-                                c.push_back((uint8_t)mDefault); // timeout
-                                etl::push_back_ntbs_or_emptyString(mOptions, c);
+                                c.push_back((uint8_t)def); // timeout
+                                etl::push_back_ntbs_or_emptyString(options, c);
                                 break;
                             }
                         }

@@ -130,15 +130,15 @@ namespace RC {
                                 messageBuffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ParamEntry, [&](auto& d){
                                     mChunkBuffer.clear();
                                     callback::parameter(index).serialize(mChunkBuffer);
-                                    // uint16_t s = mChunkBuffer.size();
+                                    uint16_t s = mChunkBuffer.size();
                                     const uint8_t chunksToFollow = mChunkBuffer.chunks() - 1;
                                     d.push_back(mDest);
                                     d.push_back(mSrc);
                                     d.push_back(index);
                                     d.push_back(chunksToFollow);
-                                    mChunkBuffer.serializeChunk(d, 0);
-                                    // int l = mChunkBuffer.serializeChunk(d, 0);
-                                    // IO::outl<debug>("# A p: ", index, " c: ", chunk, " cf: ", chunksToFollow, " l: ", l, " s: ", s);;
+                                    // mChunkBuffer.serializeChunk(d, 0);
+                                    int l = mChunkBuffer.serializeChunk(d, 0);
+                                    IO::outl<debug>("# A p: ", index, " c: ", chunk, " cf: ", chunksToFollow, " l: ", l, " s: ", s);;
                                 });
                             }
                         }
