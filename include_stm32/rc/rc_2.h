@@ -6,6 +6,7 @@
 #include <numbers>
 
 #include "byte.h"
+#include "etl/algorithm.h"
 #include "meta.h"
 
 namespace RC {
@@ -56,7 +57,8 @@ namespace RC {
         }
         namespace Crsf {
             namespace V4 {
-                static constexpr uint32_t baudrate{420'000};
+                static inline constexpr uint32_t baudrate{420'000};
+                static inline constexpr std::array<uint32_t, 2> baudrates{420'000, 921'000};
                 namespace Address {
                     inline static constexpr std::byte StartByte{0xc8};
                     inline static constexpr std::byte Broadcast{0x00};
@@ -158,9 +160,65 @@ namespace RC {
 
                 static inline constexpr uint16_t CenterValue = 0x3e0; // same center and range as sbus
 
-                using namespace std::literals::chrono_literals;
-                using namespace etl::literals;
+                inline static constexpr int min = 172;
+                inline static constexpr int max = 1811;
+                inline static constexpr int span = (max - min) / 2;
+                inline static constexpr int amp = (max - min);
+                inline static constexpr int mid = (max + min) / 2;
 
+                struct __attribute__((packed)) Channels {
+                    unsigned ch0 : 11;
+                    unsigned ch1 : 11;
+                    unsigned ch2 : 11;
+                    unsigned ch3 : 11;
+                    unsigned ch4 : 11;
+                    unsigned ch5 : 11;
+                    unsigned ch6 : 11;
+                    unsigned ch7 : 11;
+                    unsigned ch8 : 11;
+                    unsigned ch9 : 11;
+                    unsigned ch10 : 11;
+                    unsigned ch11 : 11;
+                    unsigned ch12 : 11;
+                    unsigned ch13 : 11;
+                    unsigned ch14 : 11;
+                    unsigned ch15 : 11;
+                };
+                template<typename C>
+                requires(std::is_pointer_v<C>)
+                static inline void pack(const std::array<uint16_t, 16>& channels, C out) {
+                    Channels packed;
+                    packed.ch0 = channels[0];
+                    packed.ch1 = channels[1];
+                    packed.ch2 = channels[2];
+                    packed.ch3 = channels[3];
+                    packed.ch4 = channels[4];
+                    packed.ch5 = channels[5];
+                    packed.ch6 = channels[6];
+                    packed.ch7 = channels[7];
+                    packed.ch8 = channels[8];
+                    packed.ch9 = channels[9];
+                    packed.ch10 = channels[10];
+                    packed.ch11 = channels[11];
+                    packed.ch12 = channels[12];
+                    packed.ch13 = channels[13];
+                    packed.ch14 = channels[14];
+                    packed.ch15 = channels[15];
+
+                    const uint8_t* const ptr = (uint8_t*)&packed;
+
+                    *out++ = 0xc8;
+                    *out++ = (sizeof(Channels) + 2);
+                    *out++ = (uint8_t)Type::Channels;
+                    CRC8 crc;
+                    crc += Type::Channels;
+                    static_assert(sizeof(Channels) == 22);
+                    for(uint8_t i = 0; i < sizeof(Channels); ++i) {
+                        crc += ptr[i];
+                        *out++ = ptr[i];
+                    }
+                    *out++ = crc;
+                }
                 namespace Lua {
                     enum class CmdStep : uint8_t {
                         Idle = 0,
@@ -172,6 +230,156 @@ namespace RC {
                         Query = 6,       // UI is requesting status update
                     };
                 }
+                template<typename T = uint8_t>
+                struct Parameter {
+                    using value_type = T;
+                    enum Type {U8 = 0, I8, U16, I16, F32 = 8, Sel, Str, Folder, Info, Command, OutOfRange = 127, Hidden = 0b1000'0000};
+                    uint8_t mParent{};
+                    Type mType = Type::U8;
+                    inline void hide(const bool h) {
+                        if (h) {
+                            mType = Type(mType | Type::Hidden);
+                        }
+                        else {
+                            mType = Type(mType & ~Type::Hidden);
+                        }
+                    }
+                    const char* mName{};
+                    const char* mOptions{};
+                    T* value_ptr = nullptr;
+                    inline T value() const {
+                        if (value_ptr) {
+                            return *value_ptr;
+                        }
+                        else {
+                            return mValue;
+                        }
+                    }
+                    inline void value(const T v) {
+                        if (value_ptr) {
+                            *value_ptr = v;
+                        }
+                        else {
+                            mValue = v;
+                        }
+                    }
+                    T mMinimum{};
+                    T mMaximum{};
+                    bool (*cb)(T){nullptr};
+                    T mDefault{mMinimum};
+                    uint8_t mUnits{0}; // should be a c-string??? (not allways: for STRING this is maxLength of the string when written)
+                    T mValue{mDefault};
+                    char* mStringValue = nullptr;
+                    const char* mUnitString = nullptr;
+                    uint8_t mPrecision = 1;
+                    uint32_t mStep = 1;
+                    inline uint16_t size() const {
+                        uint16_t l = 4 * sizeof(T) + 1 + 1 + 1; // 4(value, default, min, max) + type + parent + units
+                        if (mName) {
+                            l += strlen(mName) + 1;
+                        }
+                        if (mOptions) {
+                            l += strlen(mOptions) + 1;
+                        }
+                        if (mStringValue) {
+                            l += strlen(mStringValue) + 1;
+                        }
+                        if (mUnitString) {
+                            l += strlen(mUnitString) + 1;
+                        }
+                        return l;
+                    }
+                    template<typename U, typename C>
+                    inline void serializeNumerical(C& c) {
+                        etl::serializeBE<U>(value(), c);
+                        etl::serializeBE<U>(mMinimum, c);
+                        etl::serializeBE<U>(mMaximum, c);
+                        etl::serializeBE<U>(mDefault, c); // ???
+                        etl::push_back_ntbs_or_emptyString(mUnitString, c);
+                    }
+                    template<typename C>
+                    inline void serialize(C& c, const Lua::CmdStep step = Lua::CmdStep::Idle) {
+                        c.push_back((uint8_t)mParent);
+                        c.push_back((uint8_t)mType);
+                        etl::push_back_ntbs_or_emptyString(mName, c);
+                        const uint8_t type = mType & 0b0111'1111;
+                        if (type <= Type::I8) {
+                            serializeNumerical<uint8_t>(c);
+                        }
+                        else if (type <= Type::I16) {
+                            serializeNumerical<uint16_t>(c);
+                        }
+                        else if (type <= Type::F32) {
+                            serializeNumerical<uint32_t>(c);
+                            c.push_back(mPrecision);
+                            etl::serializeBE(mStep, c);
+                        }
+                        else if (type == Type::Sel) {
+                            etl::push_back_ntbs_or_emptyString(mOptions, c);
+                            c.push_back((uint8_t)value());
+                            c.push_back((uint8_t)mMinimum);
+                            c.push_back((uint8_t)mMaximum);
+                            c.push_back((uint8_t)mDefault);
+                            etl::push_back_ntbs_or_emptyString(mUnitString, c);
+                        }
+                        else if (type == Type::Str) {
+                            etl::push_back_ntbs_or_emptyString(mStringValue, c);
+                            c.push_back(mUnits); // max.length
+                        }
+                        else if (type == Type::Folder) {
+                            etl::push_back_ntbs_or_emptyString(mOptions, c);
+                        }
+                        else if (type == Type::Info) {
+                            etl::push_back_ntbs_or_emptyString(mOptions, c);
+                        }
+                        else if (type == Type::Command) {
+                            switch(step) {
+                            case Lua::CmdStep::Idle:
+                                c.push_back((uint8_t)Lua::CmdStep::Idle);
+                                c.push_back((uint8_t)mDefault); // timeout
+                                etl::push_back_ntbs_or_emptyString(mOptions, c);
+                                break;
+                            case Lua::CmdStep::Click:
+                                if (cb && cb((value_type)Lua::CmdStep::Click)) {
+                                    c.push_back((uint8_t)Lua::CmdStep::AskConfirm);
+                                }
+                                else {
+                                    c.push_back((uint8_t)Lua::CmdStep::Executing);
+                                }
+                                c.push_back((uint8_t)mDefault); // timeout
+                                etl::push_back_ntbs_or_emptyString(mOptions, c);
+                                break;
+                            case Lua::CmdStep::Executing:
+                                if (cb) {
+                                    cb((value_type)Lua::CmdStep::Confirmed);
+                                }
+                                c.push_back((uint8_t)Lua::CmdStep::Executing);
+                                c.push_back((uint8_t)mDefault); // timeout
+                                etl::push_back_ntbs_or_emptyString(mOptions, c);
+                                break;
+                            case Lua::CmdStep::AskConfirm:
+                                break;
+                            case Lua::CmdStep::Confirmed:
+                                break;
+                            case Lua::CmdStep::Cancel:
+                                if (cb) {
+                                    cb((value_type)Lua::CmdStep::Cancel);
+                                }
+                                break;
+                            case Lua::CmdStep::Query:
+                                if (cb && cb((value_type)Lua::CmdStep::Query)) {
+                                    c.push_back((uint8_t)Lua::CmdStep::Executing);
+                                }
+                                else {
+                                    c.push_back((uint8_t)Lua::CmdStep::Idle);
+                                }
+                                c.push_back((uint8_t)mDefault); // timeout
+                                etl::push_back_ntbs_or_emptyString(mOptions, c);
+                                break;
+                            }
+                        }
+                    }
+                };
             }
         }
         namespace IBus {

@@ -1,6 +1,10 @@
 #pragma once
 
+#ifdef USE_UART_2
+#include "rc/crsf_2.h"
+#else
 #include "rc/crsf.h"
+#endif
 
 template<typename Buffer, typename Storage, typename Servos, typename Escs, typename Debug>
 struct Telemetry {
@@ -18,10 +22,10 @@ struct Telemetry {
         if (++mFrameCounter < infoRate) {
             mMessage[mCounter++] = std::byte{0xc8};
             mCounter++;
-            crc += mMessage[mCounter++] = RC::Protokoll::Crsf::Type::ArduPilot;
+            crc += mMessage[mCounter++] = RC::Protokoll::Crsf::V4::Type::ArduPilot;
             // the next two bytes should contain ext. destination and source, but
             // nobody (yaapu, betaflight, ...) does this.
-            crc += mMessage[mCounter++] = RC::Protokoll::Crsf::Address::Handset;
+            crc += mMessage[mCounter++] = RC::Protokoll::Crsf::V4::Address::Handset;
             crc += mMessage[mCounter++] = std::byte(storage::eeprom.address);
 
             crc += mMessage[mCounter++] = std::byte(mDataID >> 8);
@@ -41,10 +45,10 @@ struct Telemetry {
             mFrameCounter = 0;
             mMessage[mCounter++] = std::byte{0xc8};
             mCounter++;
-            crc += mMessage[mCounter++] = RC::Protokoll::Crsf::Type::ArduPilot;
+            crc += mMessage[mCounter++] = RC::Protokoll::Crsf::V4::Type::ArduPilot;
             // the next two bytes should contain ext. destination and source, but
             // nobody (yaapu, betaflight, ...) does this.
-            crc += mMessage[mCounter++] = RC::Protokoll::Crsf::Address::Handset;
+            crc += mMessage[mCounter++] = RC::Protokoll::Crsf::V4::Address::Handset;
             crc += mMessage[mCounter++] = std::byte(storage::eeprom.address);
 
             crc += mMessage[mCounter++] = std::byte(mInfoID >> 8);

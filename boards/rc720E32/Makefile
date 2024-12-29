@@ -17,6 +17,7 @@ LOADLIBES += startup_g0b1.o system_g0.o
 targets += startup_g0b1.o
 targets += system_g0.o
 
-targets += rc720E32_01.elf rc720E32_01.bin
+#targets += rc720E32_01.elf rc720E32_01.bin
+targets += rc720E32_02.elf rc720E32_02.bin
 
 -include ../../Makefile.arm.include

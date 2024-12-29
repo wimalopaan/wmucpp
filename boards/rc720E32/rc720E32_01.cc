@@ -9,6 +9,7 @@
 #define TEST_EEPROM // fill eeprom with test setup
 
 #define USE_UART_2
+#define USE_EXTRA_FORWARDS
 
 #define SW_VERSION 4
 #define HW_VERSION 2

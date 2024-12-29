@@ -73,6 +73,17 @@ namespace etl {
         } while(*s++ != '\0');
     }
     template<typename C>
+    constexpr void push_back_ntbs_or_emptyString(const char* s, C& c) {
+        if (s) {
+            do {
+                c.push_back(typename C::value_type{*s});
+            } while(*s++ != '\0');
+        }
+        else {
+            c.push_back(uint8_t{'\0'});
+        }
+    }
+    template<typename C>
     constexpr C::value_type maximum(const C& c) {
         return [&]<auto... II>(const std::index_sequence<II...>){
             typename C::value_type max{c[0]};
@@ -95,43 +106,47 @@ namespace etl {
     }
     
     template<uint8_t Number, typename T>
-    constexpr inline std::byte nth_byte(const T& v);
+    constexpr inline std::byte nth_byte(const T v);
     
     template<>
-    constexpr inline std::byte nth_byte<0, uint8_t>(const uint8_t& v) {
+    constexpr inline std::byte nth_byte<0, uint8_t>(const uint8_t v) {
         return std::byte(v);
     }
     template<>
-    constexpr inline std::byte nth_byte<0, std::byte>(const std::byte& v) {
+    constexpr inline std::byte nth_byte<0, int8_t>(const int8_t v) {
+        return std::byte(v);
+    }
+    template<>
+    constexpr inline std::byte nth_byte<0, std::byte>(const std::byte v) {
         return v;
     }
     template<>
-    constexpr inline std::byte nth_byte<0, uint16_t>(const uint16_t& v) {
+    constexpr inline std::byte nth_byte<0, uint16_t>(const uint16_t v) {
         return std::byte(v);
     }
     template<>
-    constexpr inline std::byte nth_byte<1, uint16_t>(const uint16_t& v) {
+    constexpr inline std::byte nth_byte<1, uint16_t>(const uint16_t v) {
         return std::byte(v >> 8);
     }
     
     template<>
-    constexpr inline std::byte nth_byte<0, uint32_t>(const uint32_t& v) {
+    constexpr inline std::byte nth_byte<0, uint32_t>(const uint32_t v) {
         return std::byte(v);
     }
     template<>
-    constexpr inline std::byte nth_byte<1, uint32_t>(const uint32_t& v) {
+    constexpr inline std::byte nth_byte<1, uint32_t>(const uint32_t v) {
         return std::byte(v >> 8);
     }
     template<>
-    constexpr inline std::byte nth_byte<2, uint32_t>(const uint32_t& v) {
+    constexpr inline std::byte nth_byte<2, uint32_t>(const uint32_t v) {
         return std::byte(v >> 16);
     }
     template<>
-    constexpr inline std::byte nth_byte<3, uint32_t>(const uint32_t& v) {
+    constexpr inline std::byte nth_byte<3, uint32_t>(const uint32_t v) {
         return std::byte(v >> 24);
     }
     template<>
-    constexpr inline std::byte nth_byte<0, int>(const int& v) {
+    constexpr inline std::byte nth_byte<0, int>(const int v) {
         return std::byte(v);
     }
     template<typename C>
@@ -146,7 +161,7 @@ namespace etl {
     }
 
     template<typename T, typename C>
-    constexpr void serializeBE(const T& v, C& c) {
+    constexpr void serializeBE(const T v, C& c) {
         [&]<auto... II>(std::index_sequence<II...>){
             (c.push_back(nth_byte<sizeof(T) - II - 1>(v)), ...);
         }(std::make_index_sequence<sizeof(T)>{});

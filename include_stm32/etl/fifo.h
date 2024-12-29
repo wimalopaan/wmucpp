@@ -58,7 +58,15 @@ namespace etl {
             in = next;
             return true;
         }
-        
+        inline void create_back(const auto f) {
+            size_type next{in};
+            next = (next + 1) & size_mask;
+            if (out == next) {
+                return;
+            }
+            f(mData[in]);
+            in = next;
+        }
         inline bool push_back(const T& item) {
             size_type next{in};
             next = (next + 1) & size_mask;

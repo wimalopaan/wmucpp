@@ -9,6 +9,11 @@ namespace etl {
         void operator=(const T e) {
             mEvent = e;
         }
+        void on(const T which, const auto f) {
+            if (is(which)) {
+                f();
+            }
+        }
         bool is(const T which) {
             if (mEvent == which) {
                 mEvent = T::None;

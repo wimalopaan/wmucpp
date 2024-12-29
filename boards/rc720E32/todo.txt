@@ -11,6 +11,12 @@ Hardware
 
 Prio 0
 ------
+* crsf refactor
+** make chunking optional
+** make telemetry slot optional
+** parameter: underlying type (Bytes: 1, 2, 4)
+** std::bitcast
+* use units in crsf-parameters
 * info-packet: show RC720 fw version
 * Escape32/Ascii: get fw version
 * Coordinate system: rotate pi/2 left (mathematical 0 as head) : help-text?
@@ -18,10 +24,6 @@ Prio 0
 * steller-mode forward or forward/backward
 * LUA: alarm3 test from crsf-menu
 * VEsc: slew-rate for throttle (crsf parameter)
-* crsf refactor
-** parameter: underlying type (Bytes: 1, 2, 4)
-** std::bitcast
-* use units in crsf-parameters
 * modes: Dual-Schottel, Passthru
 * make dma, timer, usart summary with hw-connections
 * for SBus-out: selectable range: 1-16 or 17-32 (requires crsfch.lua on radio)

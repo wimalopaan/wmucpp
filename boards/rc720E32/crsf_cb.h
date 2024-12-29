@@ -1,7 +1,6 @@
 #pragma once
 
 #include "mcu/eeprom.h"
-
 #include "meta.h"
 
 template<typename Config, typename Debug = void>

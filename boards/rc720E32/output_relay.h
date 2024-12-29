@@ -101,6 +101,7 @@ struct Relays {
             return 992;
         }
     }
+#ifdef USE_EXTRA_FORWARDS
     static inline constexpr void forwardPacket(const std::byte type, const std::array<uint8_t, 64>& data, const uint16_t length) {
         if (mRelay) {
             mRelay->forwardPacket(type, data, length);
@@ -116,6 +117,13 @@ struct Relays {
             mRelay->ping();
         }
     }
+#else
+    static inline constexpr void forwardPacket(const auto data, const uint16_t length) {
+        if (mRelay) {
+            mRelay->forwardPacket(data, length);
+        }
+    }
+#endif
     static inline void update() {
         if (mRelay) {
             mRelay->update();

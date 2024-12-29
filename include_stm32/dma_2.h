@@ -112,7 +112,6 @@ namespace Mcu::Stm {
                         mcuDmaChannel->CCR &= ~DMA_CCR_EN;
                     }
                 }
-
                 static inline void reConfigure(const auto f) {
                     enable(false);
                     f();

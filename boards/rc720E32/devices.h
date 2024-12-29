@@ -23,7 +23,7 @@
 #include "gpio.h"
 #include "tick.h"
 #include "meta.h"
-#include "rc/rc.h"
+#include "rc/rc_2.h"
 #include "rc/crsf.h"
 #ifdef USE_UART_2
 #include "rc/escape_2.h"
@@ -153,8 +153,8 @@ struct Devices<SW01, Config, MCU> {
     struct CrsfConfig {
         using Clock = clock;
         using ValueType = std::byte;
-        static inline constexpr size_t size = std::max(RC::Protokoll::Crsf::maxMessageSize, uint8_t{64});
-        static inline constexpr size_t minSize = RC::Protokoll::Crsf::minMessageSize;
+        static inline constexpr size_t size = std::max(RC::Protokoll::Crsf::V4::maxMessageSize, uint8_t{64});
+        static inline constexpr size_t minSize = RC::Protokoll::Crsf::V4::minMessageSize;
         using DmaChannelRead  = crsfInDmaChannel1;
         using DmaChannelWrite = crsfInDmaChannel2;
         static inline constexpr bool useDmaTCIsr = false;
@@ -162,7 +162,7 @@ struct Devices<SW01, Config, MCU> {
         static inline constexpr bool useRxToIsr = false;
         static inline constexpr uint16_t rxToCount = 0;
         // static inline constexpr uint16_t rxToCount = 10; // 1Bytes = 1*(Start + 8 + S)
-        using Adapter = RC::Protokoll::Crsf::Adapter<0, CrsfAdapterConfig>;
+        using Adapter = RC::Protokoll::Crsf::V3::Adapter<0, CrsfAdapterConfig>;
         using Debug = CrsfConfigDebug;
     };
 
