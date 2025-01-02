@@ -204,44 +204,82 @@ namespace RC::VESC {
                 }
                 private:
                 static inline void sendThrottle() {
-                    char* const data = (char*)uart::outputBuffer();
-                    CRC16 cs;
-                    uint8_t n = 0;
-                    data[n++] = 0x02;
-                    data[n++] = 0x05;
-                    cs += data[n++] = (uint8_t)CommPacketId::COMM_SET_DUTY;
-                    cs += data[n++] = mThrottle >> 24;
-                    cs += data[n++] = mThrottle >> 16;
-                    cs += data[n++] = mThrottle >> 8;
-                    cs += data[n++] = mThrottle;
-                    data[n++] = cs >> 8;
-                    data[n++] = cs;
-                    data[n++] = 0x03;
-                    send(n);
+                    uart::fillSendBuffer([](auto& data){
+                        CRC16 cs;
+                        uint8_t n = 0;
+                        data[n++] = 0x02;
+                        data[n++] = 0x05;
+                        cs += etl::assign(data[n++], (uint8_t)CommPacketId::COMM_SET_DUTY);
+                        cs += etl::assign(data[n++], mThrottle >> 24);
+                        cs += etl::assign(data[n++], mThrottle >> 16);
+                        cs += etl::assign(data[n++], mThrottle >> 8);
+                        cs += etl::assign(data[n++], mThrottle);
+                        data[n++] = cs >> 8;
+                        data[n++] = cs;
+                        data[n++] = 0x03;
+                        return n;
+                    });
+                    // char* const data = (char*)uart::outputBuffer();
+                    // CRC16 cs;
+                    // uint8_t n = 0;
+                    // data[n++] = 0x02;
+                    // data[n++] = 0x05;
+                    // cs += data[n++] = (uint8_t)CommPacketId::COMM_SET_DUTY;
+                    // cs += data[n++] = mThrottle >> 24;
+                    // cs += data[n++] = mThrottle >> 16;
+                    // cs += data[n++] = mThrottle >> 8;
+                    // cs += data[n++] = mThrottle;
+                    // data[n++] = cs >> 8;
+                    // data[n++] = cs;
+                    // data[n++] = 0x03;
+                    // send(n);
                 }
                 static inline void getValues() {
-                    char* const data = (char*)uart::outputBuffer();
-                    CRC16 cs;
-                    uint8_t n = 0;
-                    data[n++] = 0x02;
-                    data[n++] = 0x01;
-                    cs += data[n++] = (uint8_t)CommPacketId::COMM_GET_VALUES;
-                    data[n++] = cs >> 8;
-                    data[n++] = cs;
-                    data[n++] = 0x03;
-                    send(n);
+                    uart::fillSendBuffer([](auto& data){
+                        CRC16 cs;
+                        uint8_t n = 0;
+                        data[n++] = 0x02;
+                        data[n++] = 0x01;
+                        data[n++] = (uint8_t)CommPacketId::COMM_GET_VALUES;
+                        cs += (uint8_t)CommPacketId::COMM_GET_VALUES;
+                        data[n++] = cs >> 8;
+                        data[n++] = cs;
+                        data[n++] = 0x03;
+                        return n;
+                    });
+                    // char* const data = (char*)uart::outputBuffer();
+                    // CRC16 cs;
+                    // uint8_t n = 0;
+                    // data[n++] = 0x02;
+                    // data[n++] = 0x01;
+                    // cs += data[n++] = (uint8_t)CommPacketId::COMM_GET_VALUES;
+                    // data[n++] = cs >> 8;
+                    // data[n++] = cs;
+                    // data[n++] = 0x03;
+                    // send(n);
                 }
                 static inline void getVersion() {
-                    char* const data = (char*)uart::outputBuffer();
-                    CRC16 cs;
-                    uint8_t n = 0;
-                    data[n++] = 0x02;
-                    data[n++] = 0x01;
-                    cs += data[n++] = (uint8_t)CommPacketId::COMM_FW_VERSION;
-                    data[n++] = cs >> 8;
-                    data[n++] = cs;
-                    data[n++] = 0x03;
-                    send(n);
+                    uart::fillSendBuffer([](auto& data){
+                        CRC16 cs;
+                        uint8_t n = 0;
+                        data[n++] = 0x02;
+                        data[n++] = 0x01;
+                        cs += etl::assign(data[n++], (uint8_t)CommPacketId::COMM_FW_VERSION);
+                        data[n++] = cs >> 8;
+                        data[n++] = cs;
+                        data[n++] = 0x03;
+                        return n;
+                    });
+                    // char* const data = (char*)uart::outputBuffer();
+                    // CRC16 cs;
+                    // uint8_t n = 0;
+                    // data[n++] = 0x02;
+                    // data[n++] = 0x01;
+                    // cs += data[n++] = (uint8_t)CommPacketId::COMM_FW_VERSION;
+                    // data[n++] = cs >> 8;
+                    // data[n++] = cs;
+                    // data[n++] = 0x03;
+                    // send(n);
                 }
                 static inline bool validityCheck(const volatile uint8_t* const data, const uint16_t size) {
                     if (data[0] != 0x02) {
@@ -286,86 +324,167 @@ namespace RC::VESC {
 
                     static inline void readReply() {
                         [[maybe_unused]]Debug::Scoped<tp> tp;
-                        const char* const data = (char*)uart::readBuffer();
-                        if (data[0] != 0x02) {
-                            event(Event::Error);
-                            return;
-                        }
-                        const uint8_t length = data[1];
-                        CRC16 cs;
-                        cs += data[2];
-                        const CommPacketId type = CommPacketId(data[2]);
-                        for(uint8_t i = 0; i < (length - 1); ++i) {
-                            cs += data[i + 3];
-                        }
-                        uint16_t vcs = (data[length + 2] << 8) | data[length + 3];
-
-                        if (vcs != cs) {
-                            event(Event::Error);
-                            return;
-                        }
-
-                        uint16_t k = 3;
-                        if (type == CommPacketId::COMM_FW_VERSION) {
-                            mDevInfo.mVersionMajor = (uint8_t)data[k++];
-                            mDevInfo.mVersionMinor = (uint8_t)data[k++];
-                            for(uint16_t i = 0; i < mDevInfo.mName.size(); ++i) {
-                                mDevInfo.mName[i] = (char)data[k++];
-                                if (mDevInfo.mName[i] == '\0')
-                                    break;
+                        uart::readBuffer([](const auto& data){
+                            if (data[0] != 0x02) {
+                                event(Event::Error);
+                                return;
                             }
-                            k += 12; // UUID
-                            k++; // pairing
-                            mDevInfo.mFWTestVersionNumber = (uint8_t)data[k++];
-                            mDevInfo.mHWType = (uint8_t)data[k++]; // enum?
-                            CB::deviceInfo(mDevInfo);
-                        }
-                        else if (type == CommPacketId::COMM_GET_VALUES) {
-                            mTelem.mTemperature = ((int32_t)data[3]) << 8;
-                            mTelem.mTemperature |= ((int32_t)data[4]);
+                            const uint8_t length = data[1];
+                            CRC16 cs;
+                            cs += data[2];
+                            const CommPacketId type = CommPacketId(data[2]);
+                            for(uint8_t i = 0; i < (length - 1); ++i) {
+                                cs += data[i + 3];
+                            }
+                            uint16_t vcs = (data[length + 2] << 8) | data[length + 3];
 
-                            mTelem.mTemperatureMotor = ((int32_t)data[5]) << 8;
-                            mTelem.mTemperatureMotor |= ((int32_t)data[6]);
-
-                            mTelem.mCurrent = ((int32_t)data[7]) << 24;
-                            mTelem.mCurrent |= ((int32_t)data[8]) << 16;
-                            mTelem.mCurrent |= ((int32_t)data[9]) << 8;
-                            mTelem.mCurrent |= ((int32_t)data[10]);
-
-                            if (mTelem.mCurrent < 0) {
-                                mTelem.mCurrent = -mTelem.mCurrent;
+                            if (vcs != cs) {
+                                event(Event::Error);
+                                return;
                             }
 
-                            mTelem.mCurrentIn = ((int32_t)data[11]) << 24;
-                            mTelem.mCurrentIn |= ((int32_t)data[12]) << 16;
-                            mTelem.mCurrentIn |= ((int32_t)data[13]) << 8;
-                            mTelem.mCurrentIn |= ((int32_t)data[14]);
-
-                            if (mTelem.mCurrentIn < 0) {
-                                mTelem.mCurrentIn = -mTelem.mCurrentIn;
+                            uint16_t k = 3;
+                            if (type == CommPacketId::COMM_FW_VERSION) {
+                                mDevInfo.mVersionMajor = (uint8_t)data[k++];
+                                mDevInfo.mVersionMinor = (uint8_t)data[k++];
+                                for(uint16_t i = 0; i < mDevInfo.mName.size(); ++i) {
+                                    mDevInfo.mName[i] = (char)data[k++];
+                                    if (mDevInfo.mName[i] == '\0')
+                                        break;
+                                }
+                                k += 12; // UUID
+                                k++; // pairing
+                                mDevInfo.mFWTestVersionNumber = (uint8_t)data[k++];
+                                mDevInfo.mHWType = (uint8_t)data[k++]; // enum?
+                                CB::deviceInfo(mDevInfo);
                             }
+                            else if (type == CommPacketId::COMM_GET_VALUES) {
+                                mTelem.mTemperature = ((int32_t)data[3]) << 8;
+                                mTelem.mTemperature |= ((int32_t)data[4]);
 
-                            mTelem.mRpm = ((int32_t)data[25]) << 24;
-                            mTelem.mRpm |= ((int32_t)data[26]) << 16;
-                            mTelem.mRpm |= ((int32_t)data[27]) << 8;
-                            mTelem.mRpm |= ((int32_t)data[28]);
+                                mTelem.mTemperatureMotor = ((int32_t)data[5]) << 8;
+                                mTelem.mTemperatureMotor |= ((int32_t)data[6]);
 
-                            if (mTelem.mRpm < 0) {
-                                mTelem.mRpm = -mTelem.mRpm;
+                                mTelem.mCurrent = ((int32_t)data[7]) << 24;
+                                mTelem.mCurrent |= ((int32_t)data[8]) << 16;
+                                mTelem.mCurrent |= ((int32_t)data[9]) << 8;
+                                mTelem.mCurrent |= ((int32_t)data[10]);
+
+                                if (mTelem.mCurrent < 0) {
+                                    mTelem.mCurrent = -mTelem.mCurrent;
+                                }
+
+                                mTelem.mCurrentIn = ((int32_t)data[11]) << 24;
+                                mTelem.mCurrentIn |= ((int32_t)data[12]) << 16;
+                                mTelem.mCurrentIn |= ((int32_t)data[13]) << 8;
+                                mTelem.mCurrentIn |= ((int32_t)data[14]);
+
+                                if (mTelem.mCurrentIn < 0) {
+                                    mTelem.mCurrentIn = -mTelem.mCurrentIn;
+                                }
+
+                                mTelem.mRpm = ((int32_t)data[25]) << 24;
+                                mTelem.mRpm |= ((int32_t)data[26]) << 16;
+                                mTelem.mRpm |= ((int32_t)data[27]) << 8;
+                                mTelem.mRpm |= ((int32_t)data[28]);
+
+                                if (mTelem.mRpm < 0) {
+                                    mTelem.mRpm = -mTelem.mRpm;
+                                }
+
+                                mTelem.mVoltage = ((int32_t)data[29]) << 8;
+                                mTelem.mVoltage |= ((int32_t)data[30]);
+
+                                mTelem.mConsumption = ((int32_t)data[31]) << 24;
+                                mTelem.mConsumption |= ((int32_t)data[32]) << 16;
+                                mTelem.mConsumption |= ((int32_t)data[33]) << 8;
+                                mTelem.mConsumption |= ((int32_t)data[34]);
+
+                                mTelem.mFault = (uint8_t)data[55];
+                                CB::telemetry(mTelem);
                             }
+                            event(Event::OK);
+                        });
+                        // const char* const data = (char*)uart::readBuffer();
+                        // if (data[0] != 0x02) {
+                        //     event(Event::Error);
+                        //     return;
+                        // }
+                        // const uint8_t length = data[1];
+                        // CRC16 cs;
+                        // cs += data[2];
+                        // const CommPacketId type = CommPacketId(data[2]);
+                        // for(uint8_t i = 0; i < (length - 1); ++i) {
+                        //     cs += data[i + 3];
+                        // }
+                        // uint16_t vcs = (data[length + 2] << 8) | data[length + 3];
 
-                            mTelem.mVoltage = ((int32_t)data[29]) << 8;
-                            mTelem.mVoltage |= ((int32_t)data[30]);
+                        // if (vcs != cs) {
+                        //     event(Event::Error);
+                        //     return;
+                        // }
 
-                            mTelem.mConsumption = ((int32_t)data[31]) << 24;
-                            mTelem.mConsumption |= ((int32_t)data[32]) << 16;
-                            mTelem.mConsumption |= ((int32_t)data[33]) << 8;
-                            mTelem.mConsumption |= ((int32_t)data[34]);
+                        // uint16_t k = 3;
+                        // if (type == CommPacketId::COMM_FW_VERSION) {
+                        //     mDevInfo.mVersionMajor = (uint8_t)data[k++];
+                        //     mDevInfo.mVersionMinor = (uint8_t)data[k++];
+                        //     for(uint16_t i = 0; i < mDevInfo.mName.size(); ++i) {
+                        //         mDevInfo.mName[i] = (char)data[k++];
+                        //         if (mDevInfo.mName[i] == '\0')
+                        //             break;
+                        //     }
+                        //     k += 12; // UUID
+                        //     k++; // pairing
+                        //     mDevInfo.mFWTestVersionNumber = (uint8_t)data[k++];
+                        //     mDevInfo.mHWType = (uint8_t)data[k++]; // enum?
+                        //     CB::deviceInfo(mDevInfo);
+                        // }
+                        // else if (type == CommPacketId::COMM_GET_VALUES) {
+                        //     mTelem.mTemperature = ((int32_t)data[3]) << 8;
+                        //     mTelem.mTemperature |= ((int32_t)data[4]);
 
-                            mTelem.mFault = (uint8_t)data[55];
-                            CB::telemetry(mTelem);
-                        }
-                        event(Event::OK);
+                        //     mTelem.mTemperatureMotor = ((int32_t)data[5]) << 8;
+                        //     mTelem.mTemperatureMotor |= ((int32_t)data[6]);
+
+                        //     mTelem.mCurrent = ((int32_t)data[7]) << 24;
+                        //     mTelem.mCurrent |= ((int32_t)data[8]) << 16;
+                        //     mTelem.mCurrent |= ((int32_t)data[9]) << 8;
+                        //     mTelem.mCurrent |= ((int32_t)data[10]);
+
+                        //     if (mTelem.mCurrent < 0) {
+                        //         mTelem.mCurrent = -mTelem.mCurrent;
+                        //     }
+
+                        //     mTelem.mCurrentIn = ((int32_t)data[11]) << 24;
+                        //     mTelem.mCurrentIn |= ((int32_t)data[12]) << 16;
+                        //     mTelem.mCurrentIn |= ((int32_t)data[13]) << 8;
+                        //     mTelem.mCurrentIn |= ((int32_t)data[14]);
+
+                        //     if (mTelem.mCurrentIn < 0) {
+                        //         mTelem.mCurrentIn = -mTelem.mCurrentIn;
+                        //     }
+
+                        //     mTelem.mRpm = ((int32_t)data[25]) << 24;
+                        //     mTelem.mRpm |= ((int32_t)data[26]) << 16;
+                        //     mTelem.mRpm |= ((int32_t)data[27]) << 8;
+                        //     mTelem.mRpm |= ((int32_t)data[28]);
+
+                        //     if (mTelem.mRpm < 0) {
+                        //         mTelem.mRpm = -mTelem.mRpm;
+                        //     }
+
+                        //     mTelem.mVoltage = ((int32_t)data[29]) << 8;
+                        //     mTelem.mVoltage |= ((int32_t)data[30]);
+
+                        //     mTelem.mConsumption = ((int32_t)data[31]) << 24;
+                        //     mTelem.mConsumption |= ((int32_t)data[32]) << 16;
+                        //     mTelem.mConsumption |= ((int32_t)data[33]) << 8;
+                        //     mTelem.mConsumption |= ((int32_t)data[34]);
+
+                        //     mTelem.mFault = (uint8_t)data[55];
+                        //     CB::telemetry(mTelem);
+                        // }
+                        // event(Event::OK);
                     }
                     private:
                     static inline uint16_t mCRC{};

@@ -138,6 +138,21 @@ namespace RC::Protokoll::IBus {
                 const int sb = ((uint32_t)(ic - RC::Protokoll::IBus::V2::min) * RC::Protokoll::SBus::V2::amp) / RC::Protokoll::IBus::V2::amp + RC::Protokoll::SBus::V2::min;
                 return std::clamp(sb, RC::Protokoll::SBus::V2::min, RC::Protokoll::SBus::V2::max);
             }
+            static inline void decode_s(const auto& data) {
+                for(uint8_t ch = 0; ch < 14; ++ch) {
+                    const uint8_t h = data[ch * 2 + 1 + 2] & 0x0f;
+                    const uint8_t l = data[ch * 2 + 2];
+                    const uint16_t  v = (uint16_t(h) << 8) + uint8_t(l);
+                    mChannels[ch] = ibus2sbus(v);
+                }
+                for(uint8_t ch = 14; ch < 18; ++ch) {
+                    const uint8_t h1 = data[6 * (ch - 14) + 1 + 2] & 0xf0;
+                    const uint8_t h2 = data[6 * (ch - 14) + 3 + 2] & 0xf0;
+                    const uint8_t h3 = data[6 * (ch - 14) + 5 + 2] & 0xf0;
+                    const uint16_t v = (uint8_t(h1) >> 4) + uint8_t(h2) + (uint16_t(h3) << 4);
+                    mChannels[ch] = ibus2sbus(v);
+                }
+            }
             static inline void decode(const uint8_t ch) {
                 const volatile uint8_t* const data = uart::readBuffer();
                 if (ch < 14) {
@@ -154,36 +169,53 @@ namespace RC::Protokoll::IBus {
                     mChannels[ch] = ibus2sbus(v);
                 }
             }
-            static inline bool validityCheck(const volatile uint8_t* const data, const uint16_t) {
+            static inline bool validityCheck(const volatile uint8_t* const data, const uint16_t n) {
                 if (data[0] != 0x20) {
                     return false;
                 }
                 if (data[1] != 0x40) {
                     return false;
                 }
+                if (n > RC::Protokoll::IBus::V2::maxMessageSize) {
+                    return false;
+                }
                 return true;
             }
             static inline void readReply() {
-                const volatile uint8_t* const data = uart::readBuffer();
-                uint8_t i = 0;
-                CheckSum cs;
-
-                if ((cs += data[i++]) != 0x20) return;
-                if ((cs += data[i++]) != 0x40) return;
-
-                for(uint8_t k = 0; k < 28; ++k) {
-                    cs += data[i++];
-                }
-                cs.lowByte(data[i++]);
-                cs.highByte(data[i++]);
-                if (cs) {
-                    for(uint8_t k = 0; k < 18; ++k) {
-                        decode(k);
+                uart::readBuffer([](const auto& data){
+                    uint8_t i = 2;
+                    CheckSum cs;
+                    for(uint8_t k = 0; k < 28; ++k) {
+                        cs += data[i++];
                     }
-                }
-                else {
-                    ++mErrorCount;
-                }
+                    cs.lowByte(data[i++]);
+                    cs.highByte(data[i++]);
+                    if (cs) {
+                        decode_s(data);
+                    }
+                    else {
+                        ++mErrorCount;
+                    }
+                });
+                // const volatile uint8_t* const data = uart::readBuffer();
+                // uint8_t i = 0;
+                // CheckSum cs;
+                // if ((cs += data[i++]) != 0x20) return;
+                // if ((cs += data[i++]) != 0x40) return;
+
+                // for(uint8_t k = 0; k < 28; ++k) {
+                //     cs += data[i++];
+                // }
+                // cs.lowByte(data[i++]);
+                // cs.highByte(data[i++]);
+                // if (cs) {
+                //     for(uint8_t k = 0; k < 18; ++k) {
+                //         decode(k);
+                //     }
+                // }
+                // else {
+                //     ++mErrorCount;
+                // }
             }
             static inline volatile bool mActive = false;
             static inline std::array<uint16_t, RC::Protokoll::IBus::V2::numberOfChannels> mChannels; // sbus

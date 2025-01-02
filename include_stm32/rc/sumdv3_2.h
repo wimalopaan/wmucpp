@@ -152,49 +152,94 @@ namespace RC::Protokoll::SumDV3 {
                 return true;
             }
             static inline void readReply() {
-                const volatile uint8_t* const data = uart::readBuffer();
-                uint8_t i = 0;
-                RC::Protokoll::Hott::SumDV3::V2::Crc16 cs;
-                if ((cs += data[i++]) != 0xa8) return;
-                const uint8_t version = (cs += data[i++]) & 0x0f;
-                const uint8_t nChannels = (cs += data[i++]);
-                if (!((nChannels >= 2) && (nChannels <= 32))) return;
-                for(uint8_t k = 0; k < (2 * nChannels); ++k) {
-                    cs += data[i++];
-                }
-                if (version == 0x01) {
-                    const uint8_t crcH = data[i++];
-                    const uint8_t crcL = data[i++];
+                uart::readBuffer([](const auto& data){
+                    uint8_t i = 0;
+                    RC::Protokoll::Hott::SumDV3::V2::Crc16 cs;
+                    if ((cs += data[i++]) != 0xa8) return;
+                    const uint8_t version = (cs += data[i++]) & 0x0f;
+                    const uint8_t nChannels = (cs += data[i++]);
+                    if (!((nChannels >= 2) && (nChannels <= 32))) return;
+                    for(uint8_t k = 0; k < (2 * nChannels); ++k) {
+                        cs += data[i++];
+                    }
+                    if (version == 0x01) {
+                        const uint8_t crcH = data[i++];
+                        const uint8_t crcL = data[i++];
 
-                    if constexpr(!std::is_same_v<tp, void>) {
-                        tp::set();
+                        if constexpr(!std::is_same_v<tp, void>) {
+                            tp::set();
+                        }
+                        if (cs == ((uint16_t(crcH) << 8) | crcL)) {
+                            decodeV1(&data[3], nChannels);
+                        }
+                        if constexpr(!std::is_same_v<tp, void>) {
+                            tp::reset();
+                        }
                     }
-                    if (cs == ((uint16_t(crcH) << 8) | crcL)) {
-                        decodeV1(data + 3, nChannels);
-                    }
-                    if constexpr(!std::is_same_v<tp, void>) {
-                        tp::reset();
-                    }
-                }
-                else if (version == 0x03) {
-                    const uint8_t crcH = data[i++];
-                    const uint8_t crcL = data[i++];
+                    else if (version == 0x03) {
+                        const uint8_t crcH = data[i++];
+                        const uint8_t crcL = data[i++];
 
-                    const uint8_t fcode = data[i - 6];
-                    [[maybe_unused]] const uint8_t reserved = data[i - 5];
-                    [[maybe_unused]] const uint8_t command = data[i - 4];
-                    [[maybe_unused]] const uint8_t subcmd = data[i - 3];
+                        const uint8_t fcode = data[i - 6];
+                        [[maybe_unused]] const uint8_t reserved = data[i - 5];
+                        [[maybe_unused]] const uint8_t command = data[i - 4];
+                        [[maybe_unused]] const uint8_t subcmd = data[i - 3];
 
-                    if constexpr(!std::is_same_v<tp, void>) {
-                        tp::set();
+                        if constexpr(!std::is_same_v<tp, void>) {
+                            tp::set();
+                        }
+                        if (cs == ((uint16_t(crcH) << 8) | crcL)) {
+                            decodeV3(&data[3], Frame{fcode}, nChannels);
+                        }
+                        if constexpr(!std::is_same_v<tp, void>) {
+                            tp::reset();
+                        }
                     }
-                    if (cs == ((uint16_t(crcH) << 8) | crcL)) {
-                        decodeV3(data + 3, Frame{fcode}, nChannels);
-                    }
-                    if constexpr(!std::is_same_v<tp, void>) {
-                        tp::reset();
-                    }
-                }
+                });
+
+                // const volatile uint8_t* const data = uart::readBuffer();
+                // uint8_t i = 0;
+                // RC::Protokoll::Hott::SumDV3::V2::Crc16 cs;
+                // if ((cs += data[i++]) != 0xa8) return;
+                // const uint8_t version = (cs += data[i++]) & 0x0f;
+                // const uint8_t nChannels = (cs += data[i++]);
+                // if (!((nChannels >= 2) && (nChannels <= 32))) return;
+                // for(uint8_t k = 0; k < (2 * nChannels); ++k) {
+                //     cs += data[i++];
+                // }
+                // if (version == 0x01) {
+                //     const uint8_t crcH = data[i++];
+                //     const uint8_t crcL = data[i++];
+
+                //     if constexpr(!std::is_same_v<tp, void>) {
+                //         tp::set();
+                //     }
+                //     if (cs == ((uint16_t(crcH) << 8) | crcL)) {
+                //         decodeV1(data + 3, nChannels);
+                //     }
+                //     if constexpr(!std::is_same_v<tp, void>) {
+                //         tp::reset();
+                //     }
+                // }
+                // else if (version == 0x03) {
+                //     const uint8_t crcH = data[i++];
+                //     const uint8_t crcL = data[i++];
+
+                //     const uint8_t fcode = data[i - 6];
+                //     [[maybe_unused]] const uint8_t reserved = data[i - 5];
+                //     [[maybe_unused]] const uint8_t command = data[i - 4];
+                //     [[maybe_unused]] const uint8_t subcmd = data[i - 3];
+
+                //     if constexpr(!std::is_same_v<tp, void>) {
+                //         tp::set();
+                //     }
+                //     if (cs == ((uint16_t(crcH) << 8) | crcL)) {
+                //         decodeV3(data + 3, Frame{fcode}, nChannels);
+                //     }
+                //     if constexpr(!std::is_same_v<tp, void>) {
+                //         tp::reset();
+                //     }
+                // }
             }
             template<uint8_t B, uint8_t E> struct range_t {};
             template<uint8_t O> using offset_t = std::integral_constant<uint8_t, O>;

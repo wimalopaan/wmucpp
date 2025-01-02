@@ -59,13 +59,15 @@ namespace etl {
         }
         return false;
     }
-    
-    
     template<typename C1, typename C2>
     constexpr void copy(const C1& src, C2& dst) {
         std::copy(std::begin(src), std::end(src), std::begin(dst));
     }
-    
+    template<typename T>
+    static inline T assign(T& lhs, const std::remove_cv_t<T> rhs) {
+        lhs = rhs;
+        return rhs;
+    }
     template<typename C>
     constexpr void push_back_ntbs(const char* s, C& c) {
         do {

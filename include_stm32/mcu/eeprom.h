@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+#include "atomic.h"
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 
@@ -11,15 +13,21 @@
 extern char const _flash_start;
 extern char const _eeprom_start;
 
-// static uint32_t eeprom_status = 0;
-
 namespace Mcu::Stm32 {
     template<typename T>
     std::pair<bool, uint8_t> savecfg(const T& eeprom, const T& flash) {
-        // eeprom_status = 0;
-        __disable_irq();
+        uint8_t eeprom_status = 0;
+
+        Mcu::Arm::Atomic::DisableInterruptsRestore _di;
+
         FLASH->KEYR = FLASH_KEYR_KEY1;
         FLASH->KEYR = FLASH_KEYR_KEY2;
+
+        eeprom_status = FLASH->SR & 0xff;
+        if (FLASH->SR & 0xff) {
+            return {false, eeprom_status};
+        }
+
         FLASH->SR = -1; // Clear errors
 
 #if defined(STM32G0)
@@ -38,6 +46,11 @@ namespace Mcu::Stm32 {
 #error "No MCU defined"
 #endif
 
+        eeprom_status = FLASH->SR & 0xff;
+        if (FLASH->SR & 0xff) {
+            return {false, eeprom_status};
+        }
+
         FLASH->SR = -1; // Clear errors
         FLASH->CR = FLASH_CR_PG;
 #if defined(STM32G0) || defined(STM32G4)
@@ -45,10 +58,11 @@ namespace Mcu::Stm32 {
 #else
         using value_type = uint16_t;
 #endif
-        value_type* dst = (value_type*)&flash;
+        volatile value_type* dst = (value_type*)&flash;
         // value_type* dst = (value_type*)&_eeprom_start; // why not???
-        value_type* src = (value_type*)&eeprom;
+        volatile value_type* src = (value_type*)&eeprom;
         value_type* end = (value_type*)(((char*)&eeprom) + sizeof(T));
+
         while (src < end) { // Write data
             *dst++ = *src++;
 #if defined(STM32G0) || defined(STM32G4)
@@ -61,23 +75,16 @@ namespace Mcu::Stm32 {
 #else
 #error "No MCU defined"
 #endif
+            if (FLASH->SR & 0xff) {
+                break;
+            }
         }
-
-        // checking for FLASH_SR_EOP not needed because no EOPIE is set
-
+        eeprom_status = FLASH->SR & 0xff;
         FLASH->CR = FLASH_CR_LOCK; // and clears all other bits (e.g. PG bit)
-        __enable_irq();
 
-        // needed at least for G030 to prevent some timing issue???
-        // otherwise the programming does not take place
-        uint8_t eeprom_status = FLASH->SR & 0xff;
-        eeprom_status = FLASH->SR & 0xff;
-        eeprom_status = FLASH->SR & 0xff;
-
-        if (FLASH->SR & (FLASH_SR_PROGERR | FLASH_SR_WRPERR)) {
+        if (FLASH->SR & 0xff) {
             return {false, eeprom_status};
         }
-
         return {(memcmp(&flash, &eeprom, sizeof(T)) == 0), eeprom_status};
     }
 }

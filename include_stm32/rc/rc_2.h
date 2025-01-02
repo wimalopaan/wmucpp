@@ -5,6 +5,7 @@
 #include <limits>
 #include <numbers>
 
+#include "crc.h"
 #include "byte.h"
 #include "etl/algorithm.h"
 #include "meta.h"
@@ -218,6 +219,43 @@ namespace RC {
                         *out++ = ptr[i];
                     }
                     *out++ = crc;
+                }
+                template<typename T, auto L>
+                static inline uint8_t pack(const std::array<uint16_t, 16>& channels, std::array<T, L>& out) {
+                    static_assert(L > 26);
+                    Channels packed;
+                    packed.ch0 = channels[0];
+                    packed.ch1 = channels[1];
+                    packed.ch2 = channels[2];
+                    packed.ch3 = channels[3];
+                    packed.ch4 = channels[4];
+                    packed.ch5 = channels[5];
+                    packed.ch6 = channels[6];
+                    packed.ch7 = channels[7];
+                    packed.ch8 = channels[8];
+                    packed.ch9 = channels[9];
+                    packed.ch10 = channels[10];
+                    packed.ch11 = channels[11];
+                    packed.ch12 = channels[12];
+                    packed.ch13 = channels[13];
+                    packed.ch14 = channels[14];
+                    packed.ch15 = channels[15];
+
+                    const uint8_t* const ptr = (uint8_t*)&packed;
+
+                    uint8_t n = 0;
+                    out[n++] = 0xc8;
+                    out[n++] = (sizeof(Channels) + 2);
+                    out[n++] = (uint8_t)Type::Channels;
+                    CRC8 crc;
+                    crc += Type::Channels;
+                    static_assert(sizeof(Channels) == 22);
+                    for(uint8_t i = 0; i < sizeof(Channels); ++i) {
+                        crc += ptr[i];
+                        out[n++] = ptr[i];
+                    }
+                    out[n++] = crc;
+                    return n;
                 }
                 namespace Lua {
                     enum class CmdStep : uint8_t {
@@ -443,6 +481,7 @@ namespace RC {
                     UNKNOWN          = 0xff,
                     END              = 0xff
                 };
+                static inline constexpr uint8_t maxMessageSize = 32;
                 static constexpr uint32_t baudrate{115'200};
                 static constexpr uint8_t numberOfChannels{18};
                 inline static constexpr uint16_t min = 988;

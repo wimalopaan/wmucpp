@@ -82,8 +82,11 @@ namespace RC::Protokoll::Crsf {
                     break;
                 case State::Run:
                     if (mEvent.is(Event::ReceiveComplete)) {
-                        const auto span = std::span{uart::readBuffer(), uart::readBuffer() + uart::readCount()};
-                        dest::enqueue(span);
+                        tp::set();
+                        uart::readBuffer([](const auto& data){
+                            dest::enqueue(data);
+                        });
+                        tp::reset();
                     }
                     break;
                 }
@@ -141,8 +144,12 @@ namespace RC::Protokoll::Crsf {
                 return true;
             }
             static inline void update() { // channels to dest
-                RC::Protokoll::Crsf::V4::pack(src::values(), uart::outputBuffer());
-                uart::startSend(26);
+                uart::fillSendBuffer([](auto& data){
+                    RC::Protokoll::Crsf::V4::pack(src::values(), data);
+                    return 26;
+                });
+                // RC::Protokoll::Crsf::V4::pack(src::values(), uart::outputBuffer());
+                // uart::startSend(26);
             }
 #ifdef USE_EXTRA_FORWARDS
             template<typename C>
@@ -175,8 +182,11 @@ namespace RC::Protokoll::Crsf {
             }
 #else
             static inline void forwardPacket(const volatile uint8_t* data, const uint16_t length) {
-                std::copy(data, data + length, &uart::outputBuffer()[0]);
-                uart::startSend(length);
+                uart::fillSendBuffer([&](auto& b){
+                    const uint8_t l = std::min((uint16_t)b.size(), length);
+                    std::copy(data, data + l, &b[0]);
+                    return length;
+                });
             }
 #endif
             private:

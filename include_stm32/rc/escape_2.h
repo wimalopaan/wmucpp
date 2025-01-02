@@ -189,17 +189,23 @@ namespace RC::Protokoll::ESCape {
                     case State::SendParam:
                     {
                         IO::outl<debug>("# ESC32Ascii param");
-                        char* const data = (char*)uart::outputBuffer();
-                        const uint8_t n = snprintf(data, UartConfig::Tx::size, "set %s %d\n", mParams[mNextParam].name, mParams[mNextParam].value);
-                        uart::startSend(n);
+                        uart::fillSendBuffer([](auto& data){
+                            return snprintf((char*)&data[0], UartConfig::Tx::size, "set %s %d\n", mParams[mNextParam].name, mParams[mNextParam].value);
+                        });
+                        // char* const data = (char*)uart::outputBuffer();
+                        // const uint8_t n = snprintf(data, UartConfig::Tx::size, "set %s %d\n", mParams[mNextParam].name, mParams[mNextParam].value);
+                        // uart::startSend(n);
                     }
                         break;
                     case State::Save:
                     {
                         IO::outl<debug>("# ESC32Ascii save");
-                        char* const data = (char*)uart::outputBuffer();
-                        const uint8_t n = snprintf(data, UartConfig::Tx::size, "save\n");
-                        uart::startSend(n);
+                        uart::fillSendBuffer([](auto& data){
+                            return snprintf((char*)&data[0], UartConfig::Tx::size, "save\n");
+                        });
+                        // char* const data = (char*)uart::outputBuffer();
+                        // const uint8_t n = snprintf(data, UartConfig::Tx::size, "save\n");
+                        // uart::startSend(n);
                     }
                         break;
                     case State::Beep:
@@ -280,21 +286,30 @@ namespace RC::Protokoll::ESCape {
             static inline constexpr auto& params() {
                 return mParams;
             }
-            // private:
+            private:
             static inline void throttle(const int throt) {
-                char* const data = (char*)uart::outputBuffer();
-                const uint8_t n = snprintf(data, UartConfig::Tx::size, "throt %d\n", throt);
-                uart::startSend(n);
+                uart::fillSendBuffer([&](auto& data){
+                    return snprintf((char*)&data[0], UartConfig::Tx::size, "throt %d\n", throt);
+                });
+                // char* const data = (char*)uart::outputBuffer();
+                // const uint8_t n = snprintf(data, UartConfig::Tx::size, "throt %d\n", throt);
+                // uart::startSend(n);
             }
             static inline void show() {
-                char* const data = (char*)uart::outputBuffer();
-                const uint8_t n = snprintf(data, UartConfig::Tx::size, "show\n");
-                uart::startSend(n);
+                uart::fillSendBuffer([&](auto& data){
+                    return snprintf((char*)&data[0], UartConfig::Tx::size, "show\n");
+                });
+                // char* const data = (char*)uart::outputBuffer();
+                // const uint8_t n = snprintf(data, UartConfig::Tx::size, "show\n");
+                // uart::startSend(n);
             }
             static inline void play(const char* const music) {
-                char* const data = (char*)uart::outputBuffer();
-                const uint8_t n = snprintf(data, UartConfig::Tx::size, "play %s\n", music);
-                uart::startSend(n);
+                uart::fillSendBuffer([&](auto& data){
+                    return snprintf((char*)&data[0], UartConfig::Tx::size, "play %s\n", music);
+                });
+                // char* const data = (char*)uart::outputBuffer();
+                // const uint8_t n = snprintf(data, UartConfig::Tx::size, "play %s\n", music);
+                // uart::startSend(n);
             }
             static inline int sbus2throt(const uint16_t sbus) {
                 const int t = ((sbus - RC::Protokoll::SBus::V2::mid) * RC::Protokoll::ESCape::span) / RC::Protokoll::SBus::V2::span;
@@ -304,17 +319,28 @@ namespace RC::Protokoll::ESCape {
                 return true;
             }
             static inline void readReply() {
-                const char* const data = (char*)uart::readBuffer();
-                const uint16_t l = uart::readCount();
-                uint16_t i = 0;
-                const char* p = data;
-                while(i < l) {
-                    if (data[i] == '\n') {
-                        analyze(p, &data[i]);
-                        p = &data[i + 1];
+                uart::readBuffer([](const auto& data){
+                    uint16_t i = 0;
+                    auto p = &data[0];
+                    while(i < data.size()) {
+                        if (data[i] == '\n') {
+                            analyze((const char*)p, (const char*)&data[i]);
+                            p = &data[i + 1];
+                        }
+                        ++i;
                     }
-                    ++i;
-                }
+                });
+                // const char* const data = (char*)uart::readBuffer();
+                // const uint16_t l = uart::readCount();
+                // uint16_t i = 0;
+                // const char* p = data;
+                // while(i < l) {
+                //     if (data[i] == '\n') {
+                //         analyze(p, &data[i]);
+                //         p = &data[i + 1];
+                //     }
+                //     ++i;
+                // }
             }
             static inline void gotOk() {
                 // IO::outl<debug>("# OK");
@@ -541,14 +567,23 @@ namespace RC::Protokoll::ESCape {
             static inline void set(const uint16_t sbus) {
                 if (mActive) {
                     if (mState == State::Run) {
-                        const int16_t v = (sbus - 992);
-                        volatile uint8_t* const data = uart::outputBuffer();
-                        RC::Protokoll::ESCape::CheckSum<uint8_t> cs;
-                        data[0] = (cs += 0x81); // throttle + telemetry
-                        data[1] = (cs += (v & 0xff));
-                        data[2] = (cs += (v >> 8));
-                        data[3] = cs;
-                        uart::startSend(4);
+                        uart::fillSendBuffer([&](auto& data){
+                            const int16_t v = (sbus - RC::Protokoll::SBus::V2::mid);
+                            RC::Protokoll::ESCape::CheckSum<uint8_t> cs;
+                            data[0] = (cs += 0x81); // throttle + telemetry
+                            data[1] = (cs += (v & 0xff));
+                            data[2] = (cs += (v >> 8));
+                            data[3] = cs;
+                            return 4;
+                        });
+                        // const int16_t v = (sbus - RC::Protokoll::SBus::V2::mid);
+                        // volatile uint8_t* const data = uart::outputBuffer();
+                        // RC::Protokoll::ESCape::CheckSum<uint8_t> cs;
+                        // data[0] = (cs += 0x81); // throttle + telemetry
+                        // data[1] = (cs += (v & 0xff));
+                        // data[2] = (cs += (v >> 8));
+                        // data[3] = cs;
+                        // uart::startSend(4);
                     }
                 }
             }
@@ -605,22 +640,39 @@ namespace RC::Protokoll::ESCape {
                 return true;
             }
             static inline void readReply() {
-                CheckSum<uint8_t> cs;
-                volatile uint8_t* const data = uart::readBuffer();
-                for(uint8_t i = 0; i < uart::readCount() - 1; ++i) {
-                    cs += data[i];
-                }
-                if (cs == data[uart::readCount() - 1]) {
-                    mEscTemperature = data[0];
-                    mMotTemperature = data[1];
-                    mVoltage = data[2] + (data[3] << 8);
-                    mCurrent = data[4] + (data[5] << 8);
-                    mConsumption = data[6] + (data[7] << 8);
-                    mERT = data[8] + (data[9] << 8);
-                }
-                else {
-                    ++mErrorCount;
-                }
+                uart::readBuffer([&](const auto& data){
+                    CheckSum<uint8_t> cs;
+                    for(uint8_t i = 0; i < data.size() - 1; ++i) {
+                        cs += data[i];
+                    }
+                    if (cs == data[data.size() - 1]) {
+                        mEscTemperature = data[0];
+                        mMotTemperature = data[1];
+                        mVoltage = data[2] + (data[3] << 8);
+                        mCurrent = data[4] + (data[5] << 8);
+                        mConsumption = data[6] + (data[7] << 8);
+                        mERT = data[8] + (data[9] << 8);
+                    }
+                    else {
+                        ++mErrorCount;
+                    }
+                });
+                // CheckSum<uint8_t> cs;
+                // volatile uint8_t* const data = uart::readBuffer();
+                // for(uint8_t i = 0; i < uart::readCount() - 1; ++i) {
+                //     cs += data[i];
+                // }
+                // if (cs == data[uart::readCount() - 1]) {
+                //     mEscTemperature = data[0];
+                //     mMotTemperature = data[1];
+                //     mVoltage = data[2] + (data[3] << 8);
+                //     mCurrent = data[4] + (data[5] << 8);
+                //     mConsumption = data[6] + (data[7] << 8);
+                //     mERT = data[8] + (data[9] << 8);
+                // }
+                // else {
+                //     ++mErrorCount;
+                // }
             }
             static inline uint16_t mEscTemperature = 0;
             static inline uint16_t mMotTemperature = 0;

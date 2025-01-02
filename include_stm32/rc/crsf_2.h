@@ -35,7 +35,6 @@ namespace RC {
                 template<uint8_t N, typename Config, typename MCU = DefaultMcu>
                 struct Master {
                     static inline constexpr uint8_t number = N;
-
                     using clock = Config::clock;
                     using systemTimer = Config::systemTimer;
                     using debug = Config::debug;
@@ -43,9 +42,12 @@ namespace RC {
                     using txpin = Config::txpin;
                     using tp = Config::tp;
                     using callback = Config::callback;
-
                     using value_t = uint8_t;
 
+                    static inline constexpr uint8_t fifoSize = Config::fifoSize;
+                    static inline constexpr bool halfDuplex = std::is_same_v<rxpin, txpin>;
+
+                    template<bool fullDuplex, typename M>
                     struct UartConfig {
                         using Clock = clock;
                         using ValueType = Master::value_t;
@@ -69,11 +71,35 @@ namespace RC {
                         };
                         using tp = Config::tp;
                     };
+                    template<typename M>
+                    struct UartConfig<false, M> {
+                        using Clock = clock;
+                        using ValueType = Master::value_t;
+                        static inline constexpr auto mode = Mcu::Stm::Uarts::Mode::HalfDuplex;
+                        static inline constexpr uint32_t baudrate = RC::Protokoll::Crsf::V4::baudrate;
+                        using DmaChComponent = Config::dmaChRW;
+                        struct Rx {
+                            static inline constexpr bool enable = true;
+                            static inline constexpr size_t size = RC::Protokoll::Crsf::V4::maxMessageSize;
+                            static inline constexpr size_t idleMinSize = 4;
+                        };
+                        struct Tx {
+                            static inline constexpr bool singleBuffer = true;
+                            static inline constexpr bool enable = true;
+                            static inline constexpr size_t size = RC::Protokoll::Crsf::V4::maxMessageSize;
+                        };
+                        struct Isr {
+                            static inline constexpr bool idle = true;
+                            static inline constexpr bool txComplete = true;
+                        };
+                        using tp = Config::tp;
+                    };
                     private:
-                    using uart = Mcu::Stm::V4::Uart<N, UartConfig, MCU>;
+                    using uartConfig = UartConfig<!halfDuplex, MCU>;
+                    using uart = Mcu::Stm::V4::Uart<N, uartConfig, MCU>;
 
                     public:
-                    using messageBuffer = Util::MessageBuffer<uart, value_t, systemTimer, tp, RC::Protokoll::Crsf::V4::maxMessageSize>;
+                    using messageBuffer = Util::MessageBuffer<uart, value_t, systemTimer, tp, RC::Protokoll::Crsf::V4::maxMessageSize, fifoSize>;
                     using input  = RC::Protokoll::Crsf::V4::Input<Master>;
 
                     static inline constexpr uint16_t chunkBufferSize = 256;
@@ -81,19 +107,28 @@ namespace RC {
                     friend output;
 
                     static inline void init() {
-                        static constexpr uint8_t txaf = Mcu::Stm::AlternateFunctions::mapper_v<txpin, uart, Mcu::Stm::AlternateFunctions::TX>;
-                        static constexpr uint8_t rxaf = Mcu::Stm::AlternateFunctions::mapper_v<rxpin, uart, Mcu::Stm::AlternateFunctions::RX>;
                         IO::outl<debug>("# CRSF Master init");
                         Mcu::Arm::Atomic::access([]{
                             uart::init();
                             input::init();
                             mActive = true;
                             mState = State::Init;
-                            mEvent = Event::None;
+                            mRxEvent = Event::None;
+                            mTxEvent = Event::None;
                         });
-                        rxpin::afunction(rxaf);
-                        rxpin::template pullup<true>();
-                        txpin::afunction(txaf);
+                        if constexpr(halfDuplex) {
+                            static constexpr uint8_t txaf = Mcu::Stm::AlternateFunctions::mapper_v<txpin, uart, Mcu::Stm::AlternateFunctions::TX>;
+                            txpin::afunction(txaf);
+                            txpin::template pullup<true>();
+
+                        }
+                        else {
+                            static constexpr uint8_t rxaf = Mcu::Stm::AlternateFunctions::mapper_v<rxpin, uart, Mcu::Stm::AlternateFunctions::RX>;
+                            rxpin::afunction(rxaf);
+                            rxpin::template pullup<true>();
+                            static constexpr uint8_t txaf = Mcu::Stm::AlternateFunctions::mapper_v<txpin, uart, Mcu::Stm::AlternateFunctions::TX>;
+                            txpin::afunction(txaf);
+                        }
                     }
                     static inline void reset() {
                         IO::outl<debug>("# CRSF Master reset");
@@ -122,7 +157,7 @@ namespace RC {
                             if (mActive) {
                                 const auto fEnable = [&]{
                                     f();
-                                    event(Event::TransmitComplete);
+                                    mTxEvent = Event::TransmitComplete;
                                 };
                                 uart::Isr::onTransferComplete(fEnable);
                             }
@@ -132,7 +167,7 @@ namespace RC {
                                 const auto f2 = [&](const volatile uint8_t* const data, const uint16_t size){
                                     f();
                                     if (validityCheck(data, size)) {
-                                        event(Event::ReceiveComplete);
+                                        mRxEvent = Event::ReceiveComplete;
                                         return true;
                                     }
                                     return false;
@@ -145,17 +180,14 @@ namespace RC {
                     enum class State : uint8_t {Init};
                     enum class Event : uint8_t {None, ReceiveComplete, TransmitComplete};
 
-                    static inline void event(const Event e) {
-                        mEvent = e;
-                    }
                     static inline void address(const std::byte adr) {
                         mAddress = (uint8_t)adr;
                     }
                     static inline void periodic() {
-                        if (mEvent.is(Event::ReceiveComplete)) {
+                        if (mRxEvent.is(Event::ReceiveComplete)) {
                             readReply();
                         }
-                        else if (mEvent.is(Event::TransmitComplete)) {
+                        else if (mTxEvent.is(Event::TransmitComplete)) {
                             messageBuffer::event(messageBuffer::Event::TransmitComplete);
                         }
                         messageBuffer::periodic();
@@ -207,7 +239,7 @@ namespace RC {
                                 output::resetSlot();
                                 output::setDestination((std::byte)src);
                                 output::event(output::Event::SendDeviceInfo);
-                                callback::forwardPacket(data, paylength + 4);
+                                callback::forwardPacket(data, paylength + 2);
                             }
                             break;
                         case RC::Protokoll::Crsf::V4::Type::Info:
@@ -223,7 +255,7 @@ namespace RC {
                                 output::sendParameterInfo(pIndex, pChunk);
                             }
                             else {
-                                callback::forwardPacket(data, paylength + 4);
+                                callback::forwardPacket(data, paylength + 2);
                             }
                             break;
                         case RC::Protokoll::Crsf::V4::Type::ParamWrite:
@@ -240,11 +272,11 @@ namespace RC {
                                 }
                             }
                             else {
-                                callback::forwardPacket(data, paylength + 4);
+                                callback::forwardPacket(data, paylength + 2);
                             }
                             break;
                         case RC::Protokoll::Crsf::V4::Type::Command:
-                            callback::forwardPacket(data, paylength + 4);
+                            callback::forwardPacket(data, paylength + 2);
                             if (const uint8_t dest = data[3]; mCommandNoAddressCheck || (dest == mAddress)) {
                                 // const uint8_t src = data[4];
                                 callback::command(data, paylength);
@@ -253,23 +285,23 @@ namespace RC {
                         }
                     }
                     static inline void readReply() {
-                        const volatile uint8_t* const data = uart::readBuffer();
-                        const uint8_t totalLength = uart::readCount();
-
-                        uint8_t offset = 0;
-                        do { // analyze all packages in one contiguous frame
-                            const uint8_t paylength = std::min((uint8_t)data[1 + offset], maxPayloadSize);
-                            if (!crcCheck(data + offset, paylength)) {
-                                return;
-                            }
-                            analyze(data + offset, paylength);
-                            offset += paylength + 2;
-                        } while(totalLength > offset);
+                        uart::readBuffer([&](const auto& data){
+                            uint8_t offset = 0;
+                            do { // analyze all packages in one contiguous frame
+                                const uint8_t paylength = std::min((uint8_t)data[1 + offset], maxPayloadSize);
+                                if (!crcCheck(&data[offset], paylength)) {
+                                    return;
+                                }
+                                analyze(&data[offset], paylength);
+                                offset += paylength + 2;
+                            } while(data.size() > offset);
+                        });
                     }
                     inline static bool mCommandNoAddressCheck{true};
                     static inline uint8_t mAddress = 0xc8;
                     static inline volatile bool mActive = false;
-                    static inline volatile etl::Event<Event> mEvent;
+                    static inline volatile etl::Event<Event> mRxEvent;
+                    static inline volatile etl::Event<Event> mTxEvent;
                     static inline volatile State mState = State::Init;
                     static inline External::Tick<systemTimer> mStateTick;
                 };

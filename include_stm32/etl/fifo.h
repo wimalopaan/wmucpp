@@ -107,7 +107,7 @@ namespace etl {
             return in == out;
         }
         inline uint16_t elements() const {
-            return in - out;
+            return std::abs(in - out);
         }
         const auto& data() const {
             return mData;

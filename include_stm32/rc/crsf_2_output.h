@@ -69,15 +69,20 @@ namespace RC {
                     enum class State : uint8_t {Idle, SendDeviceInfo};
                     enum class Event : uint8_t {None, SendDeviceInfo};
 
+                    static inline void enableReply(const bool b) {
+                        mEnableReply = b;
+                    }
                     static inline void event(const Event e) {
                         mEvent = e;
                     }
                     static inline void periodic() {
                         switch(mState) {
                         case State::Idle:
-                            mEvent.on(Event::SendDeviceInfo, []{
-                                mState = State::SendDeviceInfo;
-                            });
+                            if (mEnableReply) {
+                                mEvent.on(Event::SendDeviceInfo, []{
+                                    mState = State::SendDeviceInfo;
+                                });
+                            }
                             break;
                         case State::SendDeviceInfo:
                             if (mSlotNumber == mActualSlot) {
@@ -102,10 +107,10 @@ namespace RC {
                     static inline void telemetrySlot(const uint8_t s) {
                         mSlotNumber = s;
                     }
-                    static inline void sendRadioID() {
+                    static inline void sendRadioID1() {
                     }
                     static inline void sendCommandResponse(const uint8_t index, const uint8_t step) {
-                        IO::outl<debug>("# PI adr: ", mDest, " src: ", mSrc, " i: ", index, " st: ", step);
+                        IO::outl<debug>("# CR adr: ", mDest, " src: ", mSrc, " i: ", index, " st: ", step);
                         messageBuffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ParamEntry, [&](auto& d){
                             d.push_back(mDest);
                             d.push_back(mSrc);
@@ -177,6 +182,7 @@ namespace RC {
                     static inline uint8_t mDest = 0;
                     static inline uint8_t mSlotNumber = 0;
                     static inline uint8_t mActualSlot = 0;
+                    static inline uint8_t mEnableReply = true;
                 };
             }
         }

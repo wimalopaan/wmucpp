@@ -33,8 +33,9 @@ struct SerialBuffered {
             return false;
         }();
         struct Tx {
+            static inline constexpr bool singleBuffer = true;
             static inline constexpr bool enable = true;
-            static inline constexpr size_t size = 1024;
+            static inline constexpr size_t size = Config::bufferSize;
         };
     };
     using uart = Mcu::Stm::V4::Uart<N, UartConfig, MCU>;

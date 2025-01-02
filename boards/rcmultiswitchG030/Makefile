@@ -11,8 +11,8 @@ CPPFLAGS += -I../../../STM32CubeG0/Drivers/CMSIS/Device/ST/STM32G0xx/Include
 CPPFLAGS += -I../../../STM32CubeG0/Drivers/STM32G0xx_HAL_Driver/Inc
 CPPFLAGS += -DSTM32G030xx
 
-#CXXFLAGS += -g
-OPTFLAGS = -O2
+CXXFLAGS += -g
+OPTFLAGS = -Os
 
 LDSCRIPT = link_g030.ld
 LOADLIBES += startup_g030.o system_g0.o
@@ -32,6 +32,7 @@ targets += system_g0.o
 #targets += msw10.elf msw10.bin
 #targets += msw11.elf msw11.bin
 targets += msw12.elf msw12.bin
+targets += msw20.elf msw20.bin
 
 #targets += msw99.elf msw99.bin
 

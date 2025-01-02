@@ -131,6 +131,7 @@ struct Devices<SW01, Config, MCU> {
     struct DebugConfig;
     using debug = SerialBuffered<101, DebugConfig, MCU>;
     struct DebugConfig {
+        static inline constexpr uint16_t bufferSize = 1024;
         static inline constexpr bool rxtxswap = true;
         using pin = debugrx;
         using clock = Devices::clock;
@@ -316,7 +317,7 @@ struct Devices<SW01, Config, MCU> {
         using dmaChRead = relay1DmaChannel;
 #endif
         using debug = void;
-        using tp = void;
+        using tp = tp1;
         using src = crsf_in::input;
         using dest = crsfBuffer;
     };
@@ -326,7 +327,7 @@ struct Devices<SW01, Config, MCU> {
         using systemTimer = Devices::systemTimer;
         using dmaChComponent = relayAuxDmaChannelComponent;
         using debug = void;
-        using tp = void;
+        using tp = tp1;
         using src = crsf_in::input;
         using dest = crsfBuffer;
     };
@@ -414,6 +415,7 @@ struct Devices<SW01, Config, MCU> {
         using debug = Devices::debug;
         using tp = tp1;
         using callback = CrsfCallback<CrsfCallbackConfig, debug>;
+        static inline constexpr uint8_t fifoSize = 16;
     };
 
 

@@ -11,12 +11,15 @@ Hardware
 
 Prio 0
 ------
+* watchdog
+* use additional CRC in command frames as describe by TBS
+* correct packaging of ArduPilot frames
+* send device info packet multiple times
 * crsf refactor II
 ** make chunking optional
 ** make telemetry slot optional
 ** parameter: underlying type (Bytes: 1, 2, 4)
 * use units in crsf-parameters
-* info-packet: show RC720 fw version
 * Escape32/Ascii: get fw version
 * Coordinate system: rotate pi/2 left (mathematical 0 as head) : help-text?
 * mode: cruise-controller -> channel-passthru
@@ -47,6 +50,11 @@ Prio 3
 
 Done:
 ------
+* info-packet: show RC720 fw version
+* Escape32
+** remove parameters that do no fit into crsf U8/I8
+** make them uint8_t and crsf:U8/I8
+** this was not saving substantial RAM space and has multiple complications
 * crsf refactor I
 * send hw/fw version to radio (different frame types, slower rate)
 * LUA: option L/R data swap

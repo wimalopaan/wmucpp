@@ -220,6 +220,7 @@ boards/rcmultiadapterG030/ma01.cc
 boards/rcmultiswitchG030/Makefile
 boards/rcmultiswitchG030/adapter.h
 boards/rcmultiswitchG030/devices.h
+boards/rcmultiswitchG030/devices_2.h
 boards/rcmultiswitchG030/link_g030.ld
 boards/rcmultiswitchG030/msw01.cc
 boards/rcmultiswitchG030/msw02.cc
@@ -233,6 +234,7 @@ boards/rcmultiswitchG030/msw09.cc
 boards/rcmultiswitchG030/msw10.cc
 boards/rcmultiswitchG030/msw11.cc
 boards/rcmultiswitchG030/msw12.cc
+boards/rcmultiswitchG030/msw20.cc
 boards/rcmultiswitchG030/msw99.cc
 boards/rcmultiswitchG030/startup_g030.s
 boards/rcmultiswitchG030/system_g0.cc
@@ -514,6 +516,7 @@ include_stm32/concepts.h
 include_stm32/cppm.h
 include_stm32/crc.h
 include_stm32/dac.h
+include_stm32/debug_2.h
 include_stm32/debug_pin.h
 include_stm32/dma.h
 include_stm32/dma_2.h

@@ -104,6 +104,9 @@ namespace Mcu::Stm {
             struct Impl<Pin<B, 2>, Usart<3>, TX, MCU> : std::integral_constant<uint8_t, 4> {};
 
             template<Mcu::Stm::G0xx MCU>
+            struct Impl<Pin<B, 6>, Usart<1>, TX, MCU> : std::integral_constant<uint8_t, 0> {};
+
+            template<Mcu::Stm::G0xx MCU>
             struct Impl<Pin<A, 9>, Usart<1>, TX, MCU> : std::integral_constant<uint8_t, 1> {};
             template<Mcu::Stm::G0xx MCU>
             struct Impl<Pin<A, 10>, Usart<1>, RX, MCU> : std::integral_constant<uint8_t, 1> {};

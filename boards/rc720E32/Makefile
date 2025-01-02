@@ -4,6 +4,7 @@
 CPU = cortex-m0plus
 #FPU = -mfpu=softvfp
 #FLOAT-ABI = -mfloat-abi=soft
+OPTFLAGS = -Os
 
 CPPFLAGS += -I../../include_stm32
 CPPFLAGS += -I../../../STM32CubeG0/Drivers/CMSIS/Core/Include

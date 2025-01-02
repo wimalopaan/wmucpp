@@ -35,11 +35,12 @@ namespace External {
         static inline constexpr auto longPressTicks = External::Tick<Timer>::fromRaw(LongPressTicks);
 
         static inline void init() {
-            Pin::init();
+            Pin::template pullup<true>();
+            Pin::template dir<Mcu::Input>();
         }
         static inline void ratePeriodic() {
             const auto oldState = mState;
-            const auto on = !Pin::read();
+            const bool on = !Pin::read();
             ++mStateCounter;
             switch(mState) {
             case State::Released:
@@ -68,11 +69,6 @@ namespace External {
                     mState = State::Released;
                 }
                 break;
-#ifdef NDEBUG
-            default:
-                __builtin_unreachable();
-                break;
-#endif
             }
             if (oldState != mState) {
                 mStateCounter.reset();
@@ -94,11 +90,6 @@ namespace External {
                     IO::outl<Debug>("Long");
                     mEvent = Press::Long;
                     break;
-#ifdef NDEBUG
-                default:
-                    __builtin_unreachable();
-                    break;
-#endif
                 }
             }
         }
@@ -109,9 +100,8 @@ namespace External {
             return (mState == State::PressedLong) || (mState == State::PressedShort);
         }
 private:
-        static inline Press mEvent{Press::None};
         static inline State mState{State::Released};
         static inline Tick<Timer> mStateCounter;
+        static inline Press mEvent{Press::None};
     };
-
 }

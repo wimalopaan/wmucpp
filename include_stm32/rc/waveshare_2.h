@@ -320,32 +320,58 @@ namespace External::WaveShare {
             }
             static inline void send(const uint8_t id, const uint8_t address, const auto& payload,
                                     const uint8_t cmd = CmdWrite) {
-                volatile uint8_t* const data = uart::outputBuffer();
-                uint8_t csum = 0;
-                uint8_t i = 0;
-                add(data, i, 0xff);
-                add(data, i, 0xff);
-                csum += add(data, i, id);
-                csum += add(data, i, 1 + 1 + 1 + payload.size()); // len = 1(cmd) + 1(adr) + payload + 1(cs)
-                csum += add(data, i, cmd);
-                csum += add(data, i, address);
-                for(uint8_t p = 0; p < payload.size(); ++p) {
-                    csum += add(data, i, payload[p]);
-                }
-                add(data, i, ~csum);
-                uart::startSend(i);
+                uart::fillSendBuffer([&](auto& data){
+                    uint8_t csum = 0;
+                    uint8_t i = 0;
+                    etl::assign(data[i++], 0xff);
+                    etl::assign(data[i++], 0xff);
+                    csum += etl::assign(data[i++], id);
+                    csum += etl::assign(data[i++], 1 + 1 + 1 + payload.size()); // len = 1(cmd) + 1(adr) + payload + 1(cs)
+                    csum += etl::assign(data[i++], cmd);
+                    csum += etl::assign(data[i++], address);
+                    for(uint8_t p = 0; p < payload.size(); ++p) {
+                        csum += etl::assign(data[i++], payload[p]);
+                    }
+                    etl::assign(data[i++], ~csum);
+                    return i;
+                });
+                // volatile uint8_t* const data = uart::outputBuffer();
+                // uint8_t csum = 0;
+                // uint8_t i = 0;
+                // add(data, i, 0xff);
+                // add(data, i, 0xff);
+                // csum += add(data, i, id);
+                // csum += add(data, i, 1 + 1 + 1 + payload.size()); // len = 1(cmd) + 1(adr) + payload + 1(cs)
+                // csum += add(data, i, cmd);
+                // csum += add(data, i, address);
+                // for(uint8_t p = 0; p < payload.size(); ++p) {
+                //     csum += add(data, i, payload[p]);
+                // }
+                // add(data, i, ~csum);
+                // uart::startSend(i);
             }
             static inline void resetServo() {
-                volatile uint8_t* const data = uart::outputBuffer();
-                uint8_t csum = 0;
-                uint8_t i = 0;
-                add(data, i, 0xff);
-                add(data, i, 0xff);
-                csum += add(data, i, mId);
-                csum += add(data, i, 2); // len = 1(cmd) + 1(cs)
-                csum += add(data, i, CmdReset);
-                add(data, i, ~csum);
-                uart::startSend(i);
+                uart::fillSendBuffer([](auto& data){
+                    uint8_t csum = 0;
+                    uint8_t i = 0;
+                    etl::assign(data[i++], 0xff);
+                    etl::assign(data[i++], 0xff);
+                    csum += etl::assign(data[i++], mId);
+                    csum += etl::assign(data[i++], 2); // len = 1(cmd) + 1(cs)
+                    csum += etl::assign(data[i++], CmdReset);
+                    etl::assign(data[i++], ~csum);
+                    return i;
+                });
+                // volatile uint8_t* const data = uart::outputBuffer();
+                // uint8_t csum = 0;
+                // uint8_t i = 0;
+                // add(data, i, 0xff);
+                // add(data, i, 0xff);
+                // csum += add(data, i, mId);
+                // csum += add(data, i, 2); // len = 1(cmd) + 1(cs)
+                // csum += add(data, i, CmdReset);
+                // add(data, i, ~csum);
+                // uart::startSend(i);
             }
             static inline bool validityCheck(const volatile uint8_t* const data, const uint16_t size) {
                 if (data[0] != 0xff) {
@@ -363,51 +389,100 @@ namespace External::WaveShare {
             }
             static inline void readReply() {
                 [[maybe_unused]] Debug::Scoped<tp> tp;
-                ++mReceivedPackets;
-                const uint8_t id = uart::readBuffer()[2];
-                const uint8_t len = uart::readBuffer()[3];
-                mLastError = uart::readBuffer()[4];
-                uint8_t csum = id + len + mLastError;
-                const uint8_t dataLength = len - 2;
-                for(uint8_t i = 0; i < dataLength; ++i) {
-                    csum += uart::readBuffer()[5 + i];
-                }
-                if (uart::readBuffer()[3 + len] != (~csum & 0xff)) {
-                    ++mReadErrorCount;
-                }
-                else {
-                    if (const auto c = std::exchange(mLastServoCommand, ServoCommand::None); c == ServoCommand::ReadFwHw) {
-                        if (dataLength == 4) {
-                            mFW.first  = uart::readBuffer()[5];
-                            mFW.second = uart::readBuffer()[6];
-                            mHW.first  = uart::readBuffer()[7];
-                            mHW.second = uart::readBuffer()[8];
-                        }
-                        else {
-                            ++mReadErrorCount;
-                        }
+
+                uart::readBuffer([](const auto& data){
+                    ++mReceivedPackets;
+                    const uint8_t id = data[2];
+                    const uint8_t len = data[3];
+                    mLastError = data[4];
+                    uint8_t csum = id + len + mLastError;
+                    const uint8_t dataLength = len - 2;
+                    for(uint8_t i = 0; i < dataLength; ++i) {
+                        csum += data[5 + i];
                     }
-                    else if (c == ServoCommand::ReadPosition) {
-                        if (dataLength == 2) {
-                            const uint8_t lb = uart::readBuffer()[5];
-                            const uint8_t hb = uart::readBuffer()[6];
-                            int16_t p = 0;
-                            if (hb & 0x80) {
-                                p = -(((hb & 0x7f) << 8) + lb);
-                            }
-                            else {
-                                p =  (((hb & 0x7f) << 8) + lb);
-                            }
-                            mActualPos = normalize(p - mOffset);
-                        }
-                        else {
-                            ++mReadErrorCount;
-                        }
-                    }
-                    else {
+                    if (data[3 + len] != (~csum & 0xff)) {
                         ++mReadErrorCount;
                     }
-                }
+                    else {
+                        if (const auto c = std::exchange(mLastServoCommand, ServoCommand::None); c == ServoCommand::ReadFwHw) {
+                            if (dataLength == 4) {
+                                mFW.first  = data[5];
+                                mFW.second = data[6];
+                                mHW.first  = data[7];
+                                mHW.second = data[8];
+                            }
+                            else {
+                                ++mReadErrorCount;
+                            }
+                        }
+                        else if (c == ServoCommand::ReadPosition) {
+                            if (dataLength == 2) {
+                                const uint8_t lb = data[5];
+                                const uint8_t hb = data[6];
+                                int16_t p = 0;
+                                if (hb & 0x80) {
+                                    p = -(((hb & 0x7f) << 8) + lb);
+                                }
+                                else {
+                                    p =  (((hb & 0x7f) << 8) + lb);
+                                }
+                                mActualPos = normalize(p - mOffset);
+                            }
+                            else {
+                                ++mReadErrorCount;
+                            }
+                        }
+                        else {
+                            ++mReadErrorCount;
+                        }
+                    }
+                });
+
+                // ++mReceivedPackets;
+                // const uint8_t id = uart::readBuffer()[2];
+                // const uint8_t len = uart::readBuffer()[3];
+                // mLastError = uart::readBuffer()[4];
+                // uint8_t csum = id + len + mLastError;
+                // const uint8_t dataLength = len - 2;
+                // for(uint8_t i = 0; i < dataLength; ++i) {
+                //     csum += uart::readBuffer()[5 + i];
+                // }
+                // if (uart::readBuffer()[3 + len] != (~csum & 0xff)) {
+                //     ++mReadErrorCount;
+                // }
+                // else {
+                //     if (const auto c = std::exchange(mLastServoCommand, ServoCommand::None); c == ServoCommand::ReadFwHw) {
+                //         if (dataLength == 4) {
+                //             mFW.first  = uart::readBuffer()[5];
+                //             mFW.second = uart::readBuffer()[6];
+                //             mHW.first  = uart::readBuffer()[7];
+                //             mHW.second = uart::readBuffer()[8];
+                //         }
+                //         else {
+                //             ++mReadErrorCount;
+                //         }
+                //     }
+                //     else if (c == ServoCommand::ReadPosition) {
+                //         if (dataLength == 2) {
+                //             const uint8_t lb = uart::readBuffer()[5];
+                //             const uint8_t hb = uart::readBuffer()[6];
+                //             int16_t p = 0;
+                //             if (hb & 0x80) {
+                //                 p = -(((hb & 0x7f) << 8) + lb);
+                //             }
+                //             else {
+                //                 p =  (((hb & 0x7f) << 8) + lb);
+                //             }
+                //             mActualPos = normalize(p - mOffset);
+                //         }
+                //         else {
+                //             ++mReadErrorCount;
+                //         }
+                //     }
+                //     else {
+                //         ++mReadErrorCount;
+                //     }
+                // }
             }
             static inline bool mActive = false;
             static inline etl::Event<Event> mEvent;

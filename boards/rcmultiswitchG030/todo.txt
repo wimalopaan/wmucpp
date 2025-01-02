@@ -1,5 +1,7 @@
 todo:
 -----
+* crsf units
+* watchdog
 * statt Expo: PWM Duty Max Scaling 1/0.1/0.01
 * Telemetrie (state-machine): für neue Hardware mit Spannungssensor
 

@@ -443,8 +443,17 @@ namespace Mcu::Stm {
                     }
                 }
             }
+            static inline auto fillSendBuffer(const auto f)
+                    requires((Config::mode != Uarts::Mode::RxOnly) && (useSingleTxBuffer)) {
+                const uint16_t n = f(mWriteBuffer1);
+                startSend(n);
+            }
             static inline auto outputBuffer() requires(Config::mode != Uarts::Mode::RxOnly) {
                 return mActiveWriteBuffer;
+            }
+            static inline auto readBuffer(const auto f)
+                    requires((Config::mode != Uarts::Mode::TxOnly) && (std::is_same_v<adapter, void>)) {
+                f(std::span{mActiveReadBuffer, (size_t)*mActiveReadCount});
             }
             static inline auto readBuffer()
                     requires((Config::mode != Uarts::Mode::TxOnly) && (std::is_same_v<adapter, void>)) {
@@ -459,6 +468,9 @@ namespace Mcu::Stm {
                     if ((mcuUart->CR1 & USART_CR1_TE) && (mcuUart->ISR & USART_ISR_TC)) {
                         mcuUart->ICR = USART_ICR_TCCF;
                         f();
+                        if constexpr(Config::mode == Uarts::Mode::HalfDuplex) {
+                            rxEnable<true>();
+                        }
                     }
                 }
                 static inline void onIdle(const auto f)
@@ -532,7 +544,7 @@ namespace Mcu::Stm {
             static inline void periodic()
                     requires (useDma && !std::is_same_v<adapter, void> && (Config::mode != Uarts::Mode::TxOnly)) {
                 const auto [hasData, count] = Mcu::Arm::Atomic::access([]{
-                    return std::pair{std::exchange(mBufferHasData, false), readCount()};
+                    return std::pair{std::exchange(mBufferHasData, false), *mActiveReadCount};
                 });
                 if (hasData) {
                     for(uint16_t i = 0; i < count; ++i) {

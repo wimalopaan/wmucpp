@@ -80,7 +80,6 @@ struct Telemetry {
     private:
     static inline uint8_t mFrameCounter = 0;
     static inline uint16_t mInfoID = 6001;
-    // static inline std::array<uint8_t, RC::Protokoll::Crsf::V4::maxMessageSize> mMessage;
     static inline uint16_t mDataID = 6000;
     static inline std::array<uint16_t, 10> mValues{};
     static inline std::array<int8_t, 2> mTurns{};

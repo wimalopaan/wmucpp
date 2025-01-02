@@ -22,7 +22,7 @@
 namespace Util {
     using namespace std::literals::chrono_literals;
 
-    template<typename Out, typename ValueType, typename Timer, typename tp, auto Size = 64>
+    template<typename Out, typename ValueType, typename Timer, typename tp, auto Size = 64, auto FifoSize = 32>
     struct MessageBuffer {
         using systemTimer = Timer;
         using value_type = ValueType;
@@ -44,7 +44,7 @@ namespace Util {
         template<typename M>
         class Transaction {
             friend M;
-            explicit Transaction(Entry& d, const uint8_t type) : mEntry(d) {
+            explicit Transaction(Entry& d, const uint8_t type) : mEntry{d} {
                 mEntry.message[0] = 0xc8;
                 mEntry.message[2] = type;
                 mEntry.length = 3;
@@ -84,11 +84,10 @@ namespace Util {
             }
         };
         static inline void create_back(const uint8_t type, const auto f) {
-            auto fp = [&](Entry& d) {
+            mFifo.create_back([&](Entry& d) {
                 Transaction<MessageBuffer> w(d, type);
                 f(w);
-            };
-            mFifo.create_back(fp);
+            });
         }
 
         static inline constexpr External::Tick<systemTimer> interMessageTicks{1ms};
@@ -133,19 +132,21 @@ namespace Util {
         }
         private:
         static inline void send() {
-            if (mFifo.size() > 0) {
-                volatile value_type* const data = Out::outputBuffer();
-                const auto& m = mFifo.front();
-                for(uint8_t i = 0; i < m.length; ++i) {
-                    data[i] = m.message[i];
+            Out::fillSendBuffer([&](auto& data){
+                if (mFifo.size() > 0) {
+                    const auto& m = mFifo.front();
+                    static_assert(m.message.size() == data.size());
+                    for(uint8_t i = 0; i < m.length; ++i) {
+                        data[i] = m.message[i];
+                    }
+                    mFifo.pop_front();
+                    return m.length;
                 }
-                Out::startSend(m.length);
-                mFifo.pop_front();
-            }
+            });
         }
         static inline etl::Event<Event> mEvent;
         static inline External::Tick<systemTimer> mStateTick{1ms};
         static inline State mState = State::Idle;
-        static inline etl::FiFo<Entry> mFifo;
+        static inline etl::FiFo<Entry, FifoSize> mFifo;
     };
 }

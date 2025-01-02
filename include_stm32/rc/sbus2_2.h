@@ -148,7 +148,7 @@ namespace RC::Protokoll::SBus2 {
                     if (mRequestIndex >= request.size()) {
                         mRequestIndex = 0;
                     }
-                    sendFrame();
+                    fillSendFrame();
                     mState = State::ReceiveSlots;
                     break;
                 case State::ReceiveSlots:
@@ -174,42 +174,75 @@ namespace RC::Protokoll::SBus2 {
                 return mSlots;
             }
             private:
-            static inline void sendFrame() {
-                fillFrame();
-                uart::startSend(25);
-            }
-            static inline void fillFrame() {
-                auto outFrame = uart::outputBuffer();
-                outFrame[0] = start_byte;
-                outFrame[1] = (output[0] & 0x07FF);
-                outFrame[2] = ((output[0] & 0x07FF) >> 8 | (output[1] & 0x07FF) << 3);
-                outFrame[3] = ((output[1] & 0x07FF) >> 5 | (output[2] & 0x07FF) << 6);
-                outFrame[4] = ((output[2] & 0x07FF) >> 2);
-                outFrame[5] = ((output[2] & 0x07FF) >> 10 | (output[3] & 0x07FF) << 1);
-                outFrame[6] = ((output[3] & 0x07FF) >> 7 | (output[4] & 0x07FF) << 4);
-                outFrame[7] = ((output[4] & 0x07FF) >> 4 | (output[5] & 0x07FF) << 7);
-                outFrame[8] = ((output[5] & 0x07FF) >> 1);
-                outFrame[9] = ((output[5] & 0x07FF) >> 9 | (output[6] & 0x07FF) << 2);
-                outFrame[10] = ((output[6] & 0x07FF) >> 6 | (output[7] & 0x07FF) << 5);
-                outFrame[11] = ((output[7] & 0x07FF) >> 3);
-                outFrame[12] = ((output[8] & 0x07FF));
-                outFrame[13] = ((output[8] & 0x07FF) >> 8 | (output[9] & 0x07FF) << 3);
-                outFrame[14] = ((output[9] & 0x07FF) >> 5 | (output[10] & 0x07FF) << 6);
-                outFrame[15] = ((output[10] & 0x07FF) >> 2);
-                outFrame[16] = ((output[10] & 0x07FF) >> 10 | (output[11] & 0x07FF) << 1);
-                outFrame[17] = ((output[11] & 0x07FF) >> 7 | (output[12] & 0x07FF) << 4);
-                outFrame[18] = ((output[12] & 0x07FF) >> 4 | (output[13] & 0x07FF) << 7);
-                outFrame[19] = ((output[13] & 0x07FF) >> 1);
-                outFrame[20] = ((output[13] & 0x07FF) >> 9 | (output[14] & 0x07FF) << 2);
-                outFrame[21] = ((output[14] & 0x07FF) >> 6 | (output[15] & 0x07FF) << 5);
-                outFrame[22] = ((output[15] & 0x07FF) >> 3);
-                outFrame[23] = (mFlagsAndSwitches); // Flags byte
-                if (mUseSbus2) {
-                    outFrame[24] = (request[mRequestIndex]); // Telem-Request
-                }
-                else {
-                    outFrame[24] = 0x04;
-                }
+            // static inline void sendFrame() {
+            //     fillFrame();
+            //     uart::startSend(25);
+            // }
+            static inline void fillSendFrame() {
+                uart::fillSendBuffer([](auto& outFrame){
+                    outFrame[0] = start_byte;
+                    outFrame[1] = (output[0] & 0x07FF);
+                    outFrame[2] = ((output[0] & 0x07FF) >> 8 | (output[1] & 0x07FF) << 3);
+                    outFrame[3] = ((output[1] & 0x07FF) >> 5 | (output[2] & 0x07FF) << 6);
+                    outFrame[4] = ((output[2] & 0x07FF) >> 2);
+                    outFrame[5] = ((output[2] & 0x07FF) >> 10 | (output[3] & 0x07FF) << 1);
+                    outFrame[6] = ((output[3] & 0x07FF) >> 7 | (output[4] & 0x07FF) << 4);
+                    outFrame[7] = ((output[4] & 0x07FF) >> 4 | (output[5] & 0x07FF) << 7);
+                    outFrame[8] = ((output[5] & 0x07FF) >> 1);
+                    outFrame[9] = ((output[5] & 0x07FF) >> 9 | (output[6] & 0x07FF) << 2);
+                    outFrame[10] = ((output[6] & 0x07FF) >> 6 | (output[7] & 0x07FF) << 5);
+                    outFrame[11] = ((output[7] & 0x07FF) >> 3);
+                    outFrame[12] = ((output[8] & 0x07FF));
+                    outFrame[13] = ((output[8] & 0x07FF) >> 8 | (output[9] & 0x07FF) << 3);
+                    outFrame[14] = ((output[9] & 0x07FF) >> 5 | (output[10] & 0x07FF) << 6);
+                    outFrame[15] = ((output[10] & 0x07FF) >> 2);
+                    outFrame[16] = ((output[10] & 0x07FF) >> 10 | (output[11] & 0x07FF) << 1);
+                    outFrame[17] = ((output[11] & 0x07FF) >> 7 | (output[12] & 0x07FF) << 4);
+                    outFrame[18] = ((output[12] & 0x07FF) >> 4 | (output[13] & 0x07FF) << 7);
+                    outFrame[19] = ((output[13] & 0x07FF) >> 1);
+                    outFrame[20] = ((output[13] & 0x07FF) >> 9 | (output[14] & 0x07FF) << 2);
+                    outFrame[21] = ((output[14] & 0x07FF) >> 6 | (output[15] & 0x07FF) << 5);
+                    outFrame[22] = ((output[15] & 0x07FF) >> 3);
+                    outFrame[23] = (mFlagsAndSwitches); // Flags byte
+                    if (mUseSbus2) {
+                        outFrame[24] = (request[mRequestIndex]); // Telem-Request
+                    }
+                    else {
+                        outFrame[24] = 0x04;
+                    }
+                    return 25;
+                });
+                // auto outFrame = uart::outputBuffer();
+                // outFrame[0] = start_byte;
+                // outFrame[1] = (output[0] & 0x07FF);
+                // outFrame[2] = ((output[0] & 0x07FF) >> 8 | (output[1] & 0x07FF) << 3);
+                // outFrame[3] = ((output[1] & 0x07FF) >> 5 | (output[2] & 0x07FF) << 6);
+                // outFrame[4] = ((output[2] & 0x07FF) >> 2);
+                // outFrame[5] = ((output[2] & 0x07FF) >> 10 | (output[3] & 0x07FF) << 1);
+                // outFrame[6] = ((output[3] & 0x07FF) >> 7 | (output[4] & 0x07FF) << 4);
+                // outFrame[7] = ((output[4] & 0x07FF) >> 4 | (output[5] & 0x07FF) << 7);
+                // outFrame[8] = ((output[5] & 0x07FF) >> 1);
+                // outFrame[9] = ((output[5] & 0x07FF) >> 9 | (output[6] & 0x07FF) << 2);
+                // outFrame[10] = ((output[6] & 0x07FF) >> 6 | (output[7] & 0x07FF) << 5);
+                // outFrame[11] = ((output[7] & 0x07FF) >> 3);
+                // outFrame[12] = ((output[8] & 0x07FF));
+                // outFrame[13] = ((output[8] & 0x07FF) >> 8 | (output[9] & 0x07FF) << 3);
+                // outFrame[14] = ((output[9] & 0x07FF) >> 5 | (output[10] & 0x07FF) << 6);
+                // outFrame[15] = ((output[10] & 0x07FF) >> 2);
+                // outFrame[16] = ((output[10] & 0x07FF) >> 10 | (output[11] & 0x07FF) << 1);
+                // outFrame[17] = ((output[11] & 0x07FF) >> 7 | (output[12] & 0x07FF) << 4);
+                // outFrame[18] = ((output[12] & 0x07FF) >> 4 | (output[13] & 0x07FF) << 7);
+                // outFrame[19] = ((output[13] & 0x07FF) >> 1);
+                // outFrame[20] = ((output[13] & 0x07FF) >> 9 | (output[14] & 0x07FF) << 2);
+                // outFrame[21] = ((output[14] & 0x07FF) >> 6 | (output[15] & 0x07FF) << 5);
+                // outFrame[22] = ((output[15] & 0x07FF) >> 3);
+                // outFrame[23] = (mFlagsAndSwitches); // Flags byte
+                // if (mUseSbus2) {
+                //     outFrame[24] = (request[mRequestIndex]); // Telem-Request
+                // }
+                // else {
+                //     outFrame[24] = 0x04;
+                // }
             }
             static inline volatile bool mActive = false;
             static inline volatile bool mUseSbus2 = false;
