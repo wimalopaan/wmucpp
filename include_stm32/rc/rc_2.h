@@ -339,8 +339,8 @@ namespace RC {
                         etl::serializeBE<U>(def, c);
                         etl::push_back_ntbs_or_emptyString(unitString, c);
                     }
-                    template<typename C>
-                    inline void serialize(C& c, const Lua::CmdStep step = Lua::CmdStep::Idle) {
+                    template<typename C, typename PC>
+                    inline void serialize(C& c, const PC& params, const Lua::CmdStep step = Lua::CmdStep::Idle, const uint8_t index = 0xff) {
                         c.push_back((uint8_t)parent);
                         c.push_back((uint8_t)type);
                         etl::push_back_ntbs_or_emptyString(name, c);
@@ -369,7 +369,25 @@ namespace RC {
                             c.push_back(units); // max.length
                         }
                         else if (typ == Type::Folder) {
-                            etl::push_back_ntbs_or_emptyString(options, c);
+                            std::array<uint8_t, 32> children;
+                            uint8_t k = 0;
+                            for(uint8_t i = 0; (i < params.size()) && (k < children.size()); ++i) {
+                                if (params[i].parent == index) {
+                                    if (index == 0) {
+                                        if (i != 0) { // don't list root folder itself
+                                            children[k++] = i;
+                                        }
+                                    }
+                                    else {
+                                        children[k++] = i;
+                                    }
+                                }
+                            }
+                            for(uint8_t i = 0; i < k; ++i) {
+                                c.push_back(children[i]);
+                            }
+                            c.push_back((uint8_t)0xff);
+                            // etl::push_back_ntbs_or_emptyString(options, c);
                         }
                         else if (typ == Type::Info) {
                             etl::push_back_ntbs_or_emptyString(options, c);

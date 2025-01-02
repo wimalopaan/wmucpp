@@ -116,7 +116,8 @@ namespace RC {
                             d.push_back(mSrc);
                             d.push_back(index);
                             d.push_back((uint8_t)0); // no chunks follow
-                            callback::parameter(index).serialize(d, Lua::CmdStep(step));
+                            // callback::parameter(index).serialize(d, Lua::CmdStep(step));
+                            callback::serialize(index, d, Lua::CmdStep(step));
                         });
                     }
                     static inline void sendParameterInfo(const uint8_t index, const uint8_t chunk) {
@@ -128,13 +129,15 @@ namespace RC {
                                     d.push_back(mSrc);
                                     d.push_back(index);
                                     d.push_back((uint8_t)0); // no chunks follow
-                                    callback::parameter(index).serialize(d);
+                                    // callback::parameter(index).serialize(d);
+                                    callback::serialize(index, d);
                                 });
                             }
                             else {
                                 messageBuffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ParamEntry, [&](auto& d){
                                     mChunkBuffer.clear();
-                                    callback::parameter(index).serialize(mChunkBuffer);
+                                    // callback::parameter(index).serialize(mChunkBuffer);
+                                    callback::serialize(index, mChunkBuffer);
                                     uint16_t s = mChunkBuffer.size();
                                     const uint8_t chunksToFollow = mChunkBuffer.chunks() - 1;
                                     d.push_back(mDest);

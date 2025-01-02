@@ -289,6 +289,10 @@ struct CrsfCallback {
             }
         }
     }
+    static inline void serialize(const uint8_t index, auto& buffer, const RC::Protokoll::Crsf::V4::Lua::CmdStep step = RC::Protokoll::Crsf::V4::Lua::CmdStep::Idle) {
+        params[index].serialize(buffer, params, step, index);
+    }
+
     static inline void callbacks(const bool eepromMode = false) {
         const bool prevMode = mEepromMode;
         mEepromMode = eepromMode;
@@ -374,7 +378,7 @@ private:
 
         parent = addParent(p, Param_t{0, PType::Folder, "Output 0"});
         addNode(p, Param_t{parent, PType::Info, "Output 0 : ", &mName[0]});
-        addNode(p, Param_t{parent, PType::Str, "Alias", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &eeprom.outputs[0].name[0]}); // not supported by elrsv3.lua?
+        addNode(p, Param_t{.parent = parent, .type = PType::Str, .name = "Alias", .units = 16, .stringValue = &eeprom.outputs[0].name[0]}); // not supported by elrsv3.lua?
         addNode(p, Param_t{parent, PType::Sel, "PWM Mode", "Off;On;Remote", &eeprom.outputs[0].pwm, 0, 2, [](const uint8_t v){Meta::nth_element<0, bsws>::pwm(v); return true;}});
         addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "PWM Duty", .value_ptr = &eeprom.outputs[0].pwmDuty, .min = 1, .max = 99, .cb = [](const uint8_t v){Meta::nth_element<0, bsws>::duty((eeprom.outputs[0].pwm == 2)?0:v); return true;}, .unitString = "%"});
         addNode(p, Param_t{parent, PType::U8,  "PWM Expo", nullptr, &eeprom.outputs[0].pwmScale, 0, 100, [](const uint8_t v){Meta::nth_element<0, bsws>::expo(v); return true;}});
