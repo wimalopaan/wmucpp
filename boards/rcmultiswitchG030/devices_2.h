@@ -170,9 +170,11 @@ struct Devices2<SW20, CrsfCallback, MCU> {
         using systemTimer = Devices2::systemTimer;
         using clock = Devices2::clock;
         using dmaChRW  = csrfInDmaChannelComponent1;
-        using debug = Devices2::debug;
+        using debug = void;
+        // using debug = Devices2::debug;
         using tp = tp1;
-        using callback = CrsfCallback<CrsfCallbackConfig, debug>;
+        // using callback = CrsfCallback<CrsfCallbackConfig, debug>;
+        using callback = CrsfCallback<CrsfCallbackConfig, void>;
         static inline constexpr uint8_t fifoSize = 8;
     };
 

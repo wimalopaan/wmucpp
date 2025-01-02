@@ -128,6 +128,7 @@ template<typename Config, typename SwitchCallback,
 struct CrsfCallback {
     using trace = Trace;
     using debug = trace;
+    // using debug::_;
     using Param_t = RC::Protokoll::Crsf::V4::Parameter<uint8_t>;
     using PType = Param_t::Type;
 
@@ -264,22 +265,23 @@ struct CrsfCallback {
         return 0;
     }
     static inline void command(const auto payload, const uint8_t ) {
-        const uint8_t destAddress = payload[0];
-        const uint8_t srcAddress = payload[1];
-        const uint8_t realm = payload[2];
-        const uint8_t cmd = payload[3];
-        const uint8_t address = (uint8_t)payload[4];
+        // IO::outl<trace>("# Cmd ");
+        const uint8_t destAddress = payload[3];
+        const uint8_t srcAddress = payload[4];
+        const uint8_t realm = payload[5];
+        const uint8_t cmd = payload[6];
+        const uint8_t address = (uint8_t)payload[7];
         if ((srcAddress == (uint8_t)RC::Protokoll::Crsf::V4::Address::Handset) && (destAddress >= 0xc0) && (destAddress <= 0xcf)) {
             if (realm == (uint8_t)RC::Protokoll::Crsf::V4::CommandType::Switch) {
                 if (eeprom.address == address) {
                     if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set) {
-                        const uint8_t sw = (uint8_t)payload[5];
+                        const uint8_t sw = (uint8_t)payload[8];
                         IO::outl<trace>("# Cmd Set: ", address, " sw: ", sw);
                         SwitchCallback::set(sw);
                     }
                     else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Prop) {
-                        const uint8_t ch = (uint8_t)payload[5];
-                        const uint8_t duty = (uint8_t)payload[6];
+                        const uint8_t ch = (uint8_t)payload[8];
+                        const uint8_t duty = (uint8_t)payload[9];
                         IO::outl<trace>("# Cmd Prop: ", address, " ch: ", ch, " d: ", duty);
                         SwitchCallback::prop(ch, duty);
                     }
@@ -370,20 +372,20 @@ private:
         addNode(p, Param_t{parent, PType::U8, "Response Slot", nullptr, &eeprom.response_slot, 0, 15, [](const uint8_t v){crsf::output::telemetrySlot(v); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Config resp.", "Button;Allways on", &eeprom.telemetry, 0, 1});
 
-        // parent = addParent(p, Param_t{0, PType::Folder, &eeprom.outputs[0].name[0]});
         parent = addParent(p, Param_t{0, PType::Folder, "Output 0"});
         addNode(p, Param_t{parent, PType::Info, "Output 0 : ", &mName[0]});
-        // addNode(p, Param_t{parent, PType::Str, "Alias", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &eeprom.outputs[0].name[0]}); // not supported by elrsv3.lua?
+        addNode(p, Param_t{parent, PType::Str, "Alias", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &eeprom.outputs[0].name[0]}); // not supported by elrsv3.lua?
         addNode(p, Param_t{parent, PType::Sel, "PWM Mode", "Off;On;Remote", &eeprom.outputs[0].pwm, 0, 2, [](const uint8_t v){Meta::nth_element<0, bsws>::pwm(v); return true;}});
-        addNode(p, Param_t{parent, PType::U8,  "PWM Duty", nullptr, &eeprom.outputs[0].pwmDuty, 1, 99, [](const uint8_t v){Meta::nth_element<0, bsws>::duty((eeprom.outputs[0].pwm == 2)?0:v); return true;}});
+        addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "PWM Duty", .value_ptr = &eeprom.outputs[0].pwmDuty, .min = 1, .max = 99, .cb = [](const uint8_t v){Meta::nth_element<0, bsws>::duty((eeprom.outputs[0].pwm == 2)?0:v); return true;}, .unitString = "%"});
         addNode(p, Param_t{parent, PType::U8,  "PWM Expo", nullptr, &eeprom.outputs[0].pwmScale, 0, 100, [](const uint8_t v){Meta::nth_element<0, bsws>::expo(v); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Intervall Mode", "Off;On", &eeprom.outputs[0].blink, 0, 1, [](const uint8_t v){Meta::nth_element<0, bsws>::blink(v); return true;}});
-        addNode(p, Param_t{parent, PType::U8,  "Intervall(on)[0.1s]", nullptr, &eeprom.outputs[0].blinkOnTime, 1, 255, [](const uint8_t v){Meta::nth_element<0, bsws>::on_dezi(v); return true;}});
-        addNode(p, Param_t{parent, PType::U8,  "Intervall(off)[0.1s]", nullptr, &eeprom.outputs[0].blinkOffTime, 1, 255, [](const uint8_t v){Meta::nth_element<0, bsws>::off_dezi(v); return true;}});
+        addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "Intervall(on)", .value_ptr = &eeprom.outputs[0].blinkOnTime, .min = 1, .max = 255, .cb = [](const uint8_t v){Meta::nth_element<0, bsws>::on_dezi(v); return true;}, .unitString = " *0.1s"});
+        addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "Intervall(off)", .value_ptr = &eeprom.outputs[0].blinkOffTime, .min = 1, .max = 255, .cb = [](const uint8_t v){Meta::nth_element<0, bsws>::off_dezi(v); return true;}, .unitString = " *0.1s"});
         addNode(p, Param_t{parent, PType::Sel, "Test", "Off;On", nullptr, 0, 1, [](const uint8_t v){Meta::nth_element<0, bsws>::on(v); return false;}});
 
         parent = addParent(p, Param_t{0, PType::Folder, "Output 1"});
         addNode(p, Param_t{parent, PType::Info, "Output 1 : ", &mName[0]});
+        addNode(p, Param_t{parent, PType::Str, "Alias", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &eeprom.outputs[0].name[1]}); // not supported by elrsv3.lua?
         addNode(p, Param_t{parent, PType::Sel, "PWM Mode", "Off;On;Remote", &eeprom.outputs[1].pwm, 0, 2, [](const uint8_t v){Meta::nth_element<1, bsws>::pwm(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "PWM Duty", nullptr, &eeprom.outputs[1].pwmDuty, 1, 99, [](const uint8_t v){Meta::nth_element<1, bsws>::duty((eeprom.outputs[1].pwm == 2)?0:v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "PWM Expo", nullptr, &eeprom.outputs[1].pwmScale, 0, 100, [](const uint8_t v){Meta::nth_element<1, bsws>::expo(v); return true;}});
@@ -394,6 +396,7 @@ private:
 
         parent = addParent(p, Param_t{0, PType::Folder, "Output 2"});
         addNode(p, Param_t{parent, PType::Info, "Output 2 : ", &mName[0]});
+        addNode(p, Param_t{parent, PType::Str, "Alias", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &eeprom.outputs[0].name[2]}); // not supported by elrsv3.lua?
         addNode(p, Param_t{parent, PType::Sel, "PWM Mode", "Off;On;Remote", &eeprom.outputs[2].pwm, 0, 2, [](const uint8_t v){Meta::nth_element<2, bsws>::pwm(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "PWM Duty", nullptr, &eeprom.outputs[2].pwmDuty, 1, 99, [](const uint8_t v){Meta::nth_element<2, bsws>::duty((eeprom.outputs[2].pwm == 2)?0:v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "PWM Expo", nullptr, &eeprom.outputs[2].pwmScale, 0, 100, [](const uint8_t v){Meta::nth_element<2, bsws>::expo(v); return true;}});
@@ -404,6 +407,7 @@ private:
 
         parent = addParent(p, Param_t{0, PType::Folder, "Output 3"});
         addNode(p, Param_t{parent, PType::Info, "Output 3 : ", &mName[0]});
+        addNode(p, Param_t{parent, PType::Str, "Alias", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &eeprom.outputs[0].name[3]}); // not supported by elrsv3.lua?
         addNode(p, Param_t{parent, PType::Sel, "PWM Mode", "Off;On;Remote", &eeprom.outputs[3].pwm, 0, 2, [](const uint8_t v){Meta::nth_element<3, bsws>::pwm(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "PWM Duty", nullptr, &eeprom.outputs[3].pwmDuty, 1, 99, [](const uint8_t v){Meta::nth_element<3, bsws>::duty((eeprom.outputs[3].pwm == 2)?0:v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "PWM Expo", nullptr, &eeprom.outputs[3].pwmScale, 0, 100, [](const uint8_t v){Meta::nth_element<3, bsws>::expo(v); return true;}});
@@ -414,6 +418,7 @@ private:
 
         parent = addParent(p, Param_t{0, PType::Folder, "Output 4"});
         addNode(p, Param_t{parent, PType::Info, "Output 4 : ", &mName[0]});
+        addNode(p, Param_t{parent, PType::Str, "Alias", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &eeprom.outputs[0].name[4]}); // not supported by elrsv3.lua?
         addNode(p, Param_t{parent, PType::Sel, "PWM Mode", "Off;On;Remote", &eeprom.outputs[4].pwm, 0, 2, [](const uint8_t v){Meta::nth_element<4, bsws>::pwm(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "PWM Duty", nullptr, &eeprom.outputs[4].pwmDuty, 1, 99, [](const uint8_t v){Meta::nth_element<4, bsws>::duty((eeprom.outputs[4].pwm == 2)?0:v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "PWM Expo", nullptr, &eeprom.outputs[4].pwmScale, 0, 100, [](const uint8_t v){Meta::nth_element<4, bsws>::expo(v); return true;}});
@@ -424,6 +429,7 @@ private:
 
         parent = addParent(p, Param_t{0, PType::Folder, "Output 5"});
         addNode(p, Param_t{parent, PType::Info, "Output 5 : ", &mName[0]});
+        addNode(p, Param_t{parent, PType::Str, "Alias", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &eeprom.outputs[0].name[5]}); // not supported by elrsv3.lua?
         addNode(p, Param_t{parent, PType::Sel, "PWM Mode", "Off;On;Remote", &eeprom.outputs[5].pwm, 0, 2, [](const uint8_t v){Meta::nth_element<5, bsws>::pwm(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "PWM Duty", nullptr, &eeprom.outputs[5].pwmDuty, 1, 99, [](const uint8_t v){Meta::nth_element<5, bsws>::duty((eeprom.outputs[5].pwm == 2)?0:v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "PWM Expo", nullptr, &eeprom.outputs[5].pwmScale, 0, 100, [](const uint8_t v){Meta::nth_element<5, bsws>::expo(v); return true;}});
@@ -434,6 +440,7 @@ private:
 
         parent = addParent(p, Param_t{0, PType::Folder, "Output 6"});
         addNode(p, Param_t{parent, PType::Info, "Output 6 : ", &mName[0]});
+        addNode(p, Param_t{parent, PType::Str, "Alias", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &eeprom.outputs[0].name[6]}); // not supported by elrsv3.lua?
         addNode(p, Param_t{parent, PType::Sel, "PWM Mode", "Off;On;Remote", &eeprom.outputs[6].pwm, 0, 2, [](const uint8_t v){Meta::nth_element<6, bsws>::pwm(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "PWM Duty", nullptr, &eeprom.outputs[6].pwmDuty, 1, 99, [](const uint8_t v){Meta::nth_element<6, bsws>::duty((eeprom.outputs[6].pwm == 2)?0:v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "PWM Expo", nullptr, &eeprom.outputs[6].pwmScale, 0, 100, [](const uint8_t v){Meta::nth_element<6, bsws>::expo(v); return true;}});
@@ -444,6 +451,7 @@ private:
 
         parent = addParent(p, Param_t{0, PType::Folder, "Output 7"});
         addNode(p, Param_t{parent, PType::Info, "Output 7 : ", &mName[0]});
+        addNode(p, Param_t{parent, PType::Str, "Alias", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &eeprom.outputs[0].name[7]}); // not supported by elrsv3.lua?
         addNode(p, Param_t{parent, PType::Sel, "PWM Mode", "Off;On;Remote", &eeprom.outputs[7].pwm, 0, 2, [](const uint8_t v){Meta::nth_element<7, bsws>::pwm(v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "PWM Duty", nullptr, &eeprom.outputs[7].pwmDuty, 1, 99, [](const uint8_t v){Meta::nth_element<7, bsws>::duty((eeprom.outputs[7].pwm == 2)?0:v); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "PWM Expo", nullptr, &eeprom.outputs[7].pwmScale, 0, 100, [](const uint8_t v){Meta::nth_element<7, bsws>::expo(v); return true;}});
@@ -492,7 +500,8 @@ struct GFSM {
     using bsws = devs::bsws;
 
     enum class State : uint8_t {Undefined, Init,
-                                RunNoTelemetry, RunWithTelemetry};
+                                RunNoTelemetry, RunWithTelemetry,
+                                NotConnected};
 
     enum class Event : uint8_t {None, ConnectionLost, DirectConnected, ReceiverConnected};
 
@@ -517,17 +526,16 @@ struct GFSM {
             const uint8_t mask = (0x01 << i);
             Meta::visitAt<bsws>(i, [&]<typename SW>(Meta::Wrapper<SW>){
                 if (sw & mask) {
-                    IO::outl<debug>("# on: ", i);
+                    // IO::outl<debug>("# on: ", i);
                     SW::event(SW::Event::On);
                 }
                 else {
-                    IO::outl<debug>("# off: ", i);
+                    // IO::outl<debug>("# off: ", i);
                     SW::event(SW::Event::Off);
                 }
             });
         }
     }
-
     static inline void init() {
         devs::init();
         if constexpr(!std::is_same_v<debug, void>) {
@@ -598,17 +606,21 @@ struct GFSM {
             break;
         case State::RunNoTelemetry:
             mStateTick.on(debugTicks, []{
-                IO::outl<debug>("# ch0: ", crsf_pa::value(0));
+                IO::outl<debug>("# ch0: ", crsf_pa::value(0), " cp: ", crsf_pa::template channelPackages<false>(), " lp: ", crsf_pa::template linkPackages<false>());
+                // IO::outl<debug>("# ch0: ", crsf_pa::value(0));
             });
 #ifdef USE_BUTTON
             if (const auto e = btn::event(); e == btn::Press::Long) {
                 mState = State::RunWithTelemetry;
             }
 #endif
+            if (mEvent.is(Event::ConnectionLost)) {
+                mState = State::NotConnected;
+            }
             break;
         case State::RunWithTelemetry:
             mStateTick.on(debugTicks, []{
-                IO::outl<debug>("# ch0: ", crsf_pa::value(0));
+                IO::outl<debug>("# ch0: ", crsf_pa::value(0), " cp: ", crsf_pa::template channelPackages<false>(), " lp: ", crsf_pa::template linkPackages<false>());
             });
 #ifdef USE_BUTTON
             if (const auto e = btn::event(); e == btn::Press::Long) {
@@ -621,6 +633,20 @@ struct GFSM {
                 }
             }
 #endif
+            if (mEvent.is(Event::ConnectionLost)) {
+                IO::outl<debug>("# E CL");
+                mState = State::NotConnected;
+            }
+            break;
+        case State::NotConnected:
+            if (mEvent.is(Event::ReceiverConnected) || mEvent.is(Event::DirectConnected)) {
+                if (Storage::eeprom.telemetry) {
+                    mState = State::RunWithTelemetry;
+                }
+                else {
+                    mState = State::RunNoTelemetry;
+                }
+            }
             break;
         }
         if (oldState != mState) {
@@ -635,6 +661,7 @@ struct GFSM {
                 IO::outl<debug>("# Run NT");
                 IO::outl<debug>("# adr: ", Storage::eeprom.address);
                 crsf_out::enableReply(false);
+                led::count(1);
                 led::event(led::Event::Slow);
                 break;
             case State::RunWithTelemetry:
@@ -648,6 +675,12 @@ struct GFSM {
                 else {
                     led::event(led::Event::Steady);
                 }
+                break;
+            case State::NotConnected:
+                IO::outl<debug>("# Run NC");
+                led::count(1);
+                led::event(led::Event::Fast);
+                break;
             }
         }
     }

@@ -139,6 +139,8 @@ namespace RC {
                 namespace SwitchCommand {
                     inline static constexpr std::byte Set{0x01};
                     inline static constexpr std::byte Prop{0x02};
+                    inline static constexpr std::byte RequestTelemetry{0x03};
+                    inline static constexpr std::byte RequestTelemetryItem{0x04};
                 }
                 namespace CcCommand {
                     inline static constexpr std::byte SetAltData{0x01}; // Index: [0, 255], value 8bit
@@ -146,10 +148,12 @@ namespace RC {
                     inline static constexpr std::byte SetChannel{0x03}; // Index: [0, 63], value 16bit
                 }
                 namespace PacketIndex {
-                    inline static constexpr uint8_t address = 0;
+                    // inline static constexpr uint8_t address = 0;
                     inline static constexpr uint8_t sync = 0;
                     inline static constexpr uint8_t length = 1;
                     inline static constexpr uint8_t type = 2;
+                    inline static constexpr uint8_t dest = 3;
+                    inline static constexpr uint8_t src = 4;
                 }
                 static inline constexpr uint8_t  maxMessageSize = 64;
                 static inline constexpr uint8_t  minMessageSize = 4;

@@ -582,7 +582,6 @@ namespace Mcu::Stm {
                 return brrPresc;
             }
             static inline tx_fifo_t mTxFifo;
-
             static inline rx_buffer_t mReadBuffer1;
             static inline rx_buffer_t mReadBuffer2;
             static inline storage_t* volatile mActiveReadBuffer = &mReadBuffer1[0];

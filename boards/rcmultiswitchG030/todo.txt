@@ -1,5 +1,6 @@
 todo:
 -----
+* crsf: FOLDER: send children IDs (as TBS specs)
 * crsf units
 * watchdog
 * statt Expo: PWM Duty Max Scaling 1/0.1/0.01
