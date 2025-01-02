@@ -105,9 +105,8 @@ struct Devices2<SW20, CrsfCallback, MCU> {
     // Taster
 #ifdef USE_BUTTON
     using button = Mcu::Stm::Pin<gpioa, 1, MCU>;
-    // using btn = External::Button<button, systemTimer, External::Tick<systemTimer>{300ms}.raw(),
-    //                              External::Tick<systemTimer>{3000ms}.raw(), debug>;
-    using btn = External::Button<button, systemTimer, 300, 3000, debug>;
+    using btn = External::Button<button, systemTimer, External::Tick<systemTimer>{300ms}.raw(),
+                                 External::Tick<systemTimer>{3000ms}.raw(), debug>;
 #endif
 #ifdef USE_TP1
     using tp1 = Mcu::Stm::Pin<gpioa, 3, MCU>;

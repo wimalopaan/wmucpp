@@ -301,7 +301,7 @@ private:
     static inline bool mEepromMode = false;
     static inline constexpr uint32_t mSerialNumber{1234};
     static inline constexpr uint32_t mHWVersion{1};
-    static inline constexpr uint32_t mSWVersion{13};
+    static inline constexpr uint32_t mSWVersion{15};
     static inline constexpr auto mVersionString = [](){
         std::array<char, 16> s{};
         auto [ptr, e] = std::to_chars(std::begin(s), std::end(s), mHWVersion);
@@ -352,10 +352,12 @@ private:
 #ifndef TEST1
         auto parent = addParent(p, Param_t{0, PType::Folder, "Global"});
         addNode(p, Param_t{parent, PType::U8, "Address", nullptr, &eeprom.address, 0, 255, setAddress});
-        addNode(p, Param_t{parent, PType::U8, "PWM Freq G1 (O3,2)[100Hz]", nullptr, &eeprom.pwm1, 1, 200, [](const uint8_t v){Meta::nth_element<0, pwms>::freqCenties(v); return true;}});
-        addNode(p, Param_t{parent, PType::U8, "PWM Freq G2 (O1,4,5,6)[100Hz]", nullptr, &eeprom.pwm2, 1, 200, [](const uint8_t v){Meta::nth_element<1, pwms>::freqCenties(v); return true;}});
-        addNode(p, Param_t{parent, PType::U8, "PWM Freq G3 (O7)[100Hz]", nullptr, &eeprom.pwm3, 1, 200, [](const uint8_t v){Meta::nth_element<2, pwms>::freqCenties(v); return true;}});
-        addNode(p, Param_t{parent, PType::U8, "PWM Freq G4 (O0)[100Hz]", nullptr, &eeprom.pwm4, 1, 200, [](const uint8_t v){Meta::nth_element<3, pwms>::freqCenties(v); return true;}});
+
+        addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "PWM f G1 (O3,2)", .value_ptr= &eeprom.pwm1, .min = 1, .max = 200, .cb = [](const uint8_t v){Meta::nth_element<0, pwms>::freqCenties(v); return true;}, .def = 10, .unitString = " *100Hz"});
+        addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "PWM f G2 (O1,4,5,6)", .value_ptr = &eeprom.pwm2, .min = 1, .max = 200, .cb = [](const uint8_t v){Meta::nth_element<1, pwms>::freqCenties(v); return true;}, .def = 10, .unitString = " *100Hz"});
+        addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "PWM f G3 (O7)", .value_ptr = &eeprom.pwm3, .min = 1, .max = 200, .cb = [](const uint8_t v){Meta::nth_element<2, pwms>::freqCenties(v); return true;}, .def = 10, .unitString = " *100Hz"});
+        addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "PWM f G4 (O0)", .value_ptr = &eeprom.pwm4, .min = 1, .max = 200, .cb = [](const uint8_t v){Meta::nth_element<3, pwms>::freqCenties(v); return true;}, .def = 10, .unitString = " *100Hz"});
+
         addNode(p, Param_t{parent, PType::U8, "CRSF Address", nullptr, &eeprom.crsf_address, 0xc0, 0xcf, [](const uint8_t v){
                                if (!mEepromMode) {
                                    const uint8_t slot = 2 * (v - 0xc0);
@@ -632,13 +634,13 @@ struct GFSM {
             case State::RunNoTelemetry:
                 IO::outl<debug>("# Run NT");
                 IO::outl<debug>("# adr: ", Storage::eeprom.address);
-                // crsf_out::enableReply(false);
+                crsf_out::enableReply(false);
                 led::event(led::Event::Slow);
                 break;
             case State::RunWithTelemetry:
                 IO::outl<debug>("# Run WT");
                 IO::outl<debug>("# adr: ", Storage::eeprom.address);
-                // crsf_out::enableReply(true);
+                crsf_out::enableReply(true);
                 if (Storage::eeprom.telemetry) {
                     led::count(2);
                     led::event(led::Event::Slow);
