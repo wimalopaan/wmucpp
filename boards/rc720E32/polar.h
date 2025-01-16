@@ -5,7 +5,7 @@
 #include <numbers>
 
 #include "fastmath.h"
-#include "util.h"
+#include "etl/util.h"
 
 template<uint8_t N, typename PA, typename NVM>
 struct Polar {
@@ -36,7 +36,7 @@ struct Polar {
             return mLastPhi;
         }
         else {
-            return mLastPhi = normalize<4096>(p);
+            return mLastPhi = etl::normalize<4096>(p);
         }
     }
     static inline uint16_t amp() {

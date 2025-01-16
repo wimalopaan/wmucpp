@@ -76,7 +76,7 @@ ifndef OPTFLAGS
 OPTFLAGS += -O2
 endif
 
-CXXFLAGS += $(OPTFLAGS) -std=c++23 # -pedantic
+CXXFLAGS += $(OPTFLAGS) -std=c++26 # -pedantic
 CXXFLAGS += -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics #-Wgnu-string-literal-operator-template
 CXXFLAGS += -funsigned-char -funsigned-bitfields -fshort-enums 
 CXXFLAGS += -ffunction-sections  -fdata-sections # seperate sections -> see --gc-sections 

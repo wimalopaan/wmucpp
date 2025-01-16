@@ -3,13 +3,58 @@
 #include <cstdint>
 #include "ressources.h"
 
+template<typename Mpx, typename Pin, typename Debug = void>
+struct MpxAdapter {
+    static inline constexpr uint8_t channel = Mpx::channel;
+    static inline constexpr uint8_t af = Mcu::Stm::AlternateFunctions::mapper_v<Pin, Mpx, Mcu::Stm::AlternateFunctions::CC<channel>>;
+    static inline void init() {
+        IO::outl<Debug>("Mpx init");
+        RessourceCount<Mpx>::acquire([]{
+            IO::outl<Debug>("Mpx acquire");
+            Mpx::init(); // only if first channel
+        });
+        Pin::afunction(af);
+    }
+    static inline void reset() {
+        IO::outl<Debug>("Mpx reset");
+        RessourceCount<Mpx>::release([]{
+            IO::outl<Debug>("Mpx release");
+            // Mpx::reset(); // only if last channel
+        });
+        Pin::analog();
+    }
+    static inline std::pair<uint8_t, uint8_t> hwVersion() {
+        return {255, 255};
+    }
+    static inline std::pair<uint8_t, uint8_t> fwVersion() {
+        return {255, 255};
+    }
+    static inline uint16_t turns() {
+        return 0;
+    }
+    static inline uint16_t actualPos() {
+        return 0;
+    }
+    static inline void speed(uint16_t) {
+    }
+    static inline void offset(uint16_t) {
+    }
+    static inline void zero() {
+    }
+    static inline void update() {
+    }
+    static inline void periodic() {
+    }
+    static inline void ratePeriodic() {
+    }
+};
+
 template<typename Pwm, typename Pin, uint8_t Channel, typename Storage, typename EEpromOffsetIndex, typename Debug = void>
 struct PwmAdapter {
     static_assert(Channel >= 1);
     using pwm = Pwm;
 
     static inline constexpr uint8_t af = Mcu::Stm::AlternateFunctions::mapper_v<Pin, pwm, Mcu::Stm::AlternateFunctions::CC<Channel>>;
-
 
     template<typename T>
     struct getValue {

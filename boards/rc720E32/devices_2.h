@@ -50,6 +50,8 @@
 #include "rc/sumdv3_2.h"
 #include "crsfchannelcollector.h"
 
+#include "multiplex_pulses.h"
+
 struct SW01;
 
 template<typename HW, typename Config, typename MCU = DefaultMcu>
@@ -206,6 +208,16 @@ struct Devices<SW01, Config, MCU> {
     using srv1_fb = FeedbackAdapter<0, adc, fb1_pin, debug>;
     using srv1_feetech = Feetech<0, polar1, srv1_fb, srv1_pwm, systemTimer, debug>;
 
+    // time-multiplex for old analog switch-modules
+    struct MpxConfig1;
+    using mpx1 = Mcu::Stm::Cppm::MultiplexGenerator<3, MpxConfig1, clock>;
+    struct MpxConfig1 {
+        using clock = Devices::clock;
+        using dmaCh = srv1DmaChannelComponent;
+        static inline constexpr uint8_t channel = 3;
+    };
+    using ppm_mpx1 = MpxAdapter<mpx1, srv1_pin, debug>;
+
     // Fehler auf Platine
     // ESC2: PB2 : Uart3-TX (AF4)
     // verbinden mit PA8 : TIM1-CH1 (AF2): Uart1-TX PA9 erscheint als OpenDrain hier???
@@ -247,6 +259,16 @@ struct Devices<SW01, Config, MCU> {
     using fb2_pin = Mcu::Stm::Pin<gpioa, 5, MCU>;
     using srv2_fb = FeedbackAdapter<1, adc, fb2_pin>;
     using srv2_feetech = Feetech<1, polar2, srv2_fb, srv2_pwm, systemTimer, debug>;
+
+    // time-multiplex for old analog switch-modules
+    // TIM14: no DMA capability
+    // struct MpxConfig2;
+    // using ppm_mpx2 = Mcu::Stm::Cppm::MultiplexGenerator<14, MpxConfig2>;
+    // struct MpxConfig2 {
+    //     using clock = Devices::clock;
+    //     using dmaCh = void;
+    //     static inline constexpr uint8_t channel = 1;
+    // };
 
     // Uart4: CRSF-FD / AUX
     using auxrx = Mcu::Stm::Pin<gpioa, 1, MCU>; // AF4
@@ -402,6 +424,8 @@ struct Devices<SW01, Config, MCU> {
         using polars = Devices::polars;
         using esc32ascii_1 = Devices::esc32ascii_1;
         using esc32ascii_2 = Devices::esc32ascii_2;
+        using mpx1 = Devices::mpx1;
+        using messageBuffer = crsfBuffer;
         using tp = void;
     };
 

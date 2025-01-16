@@ -107,7 +107,16 @@ namespace RC {
                     static inline void telemetrySlot(const uint8_t s) {
                         mSlotNumber = s;
                     }
-                    static inline void sendRadioID1() {
+                    static inline void sendRadioID() {
+                        messageBuffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::RadioID, [&](auto& d){
+                            d.push_back(mDest);
+                            d.push_back(mSrc);
+                            d.push_back(uint8_t{0x10});
+                            uint32_t pint = 20 * 10'000; //20ms
+                            etl::serializeBE(pint, d);
+                            uint32_t pshift= 30030;
+                            etl::serializeBE(pshift, d);
+                        });
                     }
                     static inline void sendCommandResponse(const uint8_t index, const uint8_t step) {
                         IO::outl<debug>("# CR adr: ", mDest, " src: ", mSrc, " i: ", index, " st: ", step);

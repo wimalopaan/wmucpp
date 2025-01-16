@@ -1,17 +1,19 @@
 todo:
 -----
-* crsf: FOLDER: send children IDs (as TBS specs)
 * crsf units
+* name of module (top-level)
+* remote config items (ls, type, ...)
 * watchdog
 * statt Expo: PWM Duty Max Scaling 1/0.1/0.01
 * Telemetrie (state-machine): für neue Hardware mit Spannungssensor
 
 details:
 -----
-* DMA Usart
 
 done:
 -----
+* DMA Usart
+* crsf: FOLDER: send children IDs (as TBS specs)
 * proportional Modus
 * EEprom read: CRSF-Adresse überschreibt Slot -> Einstellung geht verloren
 * Slots um Faktor 2 auseinander legen

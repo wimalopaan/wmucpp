@@ -15,6 +15,7 @@ namespace Mcu::Stm {
     namespace Dma {
 
         namespace V2 {
+
             template<uint8_t N, typename Config, typename MCU = DefaultMcu>
             struct Channel {
                 static_assert((N >= 1) && (N <= 8));
@@ -51,8 +52,18 @@ namespace Mcu::Stm {
                         else {
                             static_assert(false);
                         }
-                        if constexpr(Config::memoryIncrement) {
-                            ccr |= DMA_CCR_MINC;
+                        // if constexpr(Config::memoryIncrement) {
+                        //     ccr |= DMA_CCR_MINC;
+                        // }
+                        if constexpr(requires(Config){Config::memoryIncrement;}) {
+                            if constexpr(Config::memoryIncrement) {
+                                ccr |= DMA_CCR_MINC;
+                            }
+                        }
+                        if constexpr(requires(Config){Config::circular;}) {
+                            if constexpr(Config::circular) {
+                                ccr |= DMA_CCR_CIRC;
+                            }
                         }
                         return ccr;
                     }();

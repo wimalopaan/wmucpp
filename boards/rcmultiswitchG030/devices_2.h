@@ -82,7 +82,6 @@ struct Devices2<SW20, CrsfCallback, MCU> {
     using csrfInDmaChannelComponent1 = Mcu::Components::DmaChannel<typename dma1::component_t, 1>;
     struct CrsfConfig;
     using crsf = RC::Protokoll::Crsf::V4::Master<2, CrsfConfig, MCU>;
-    using crsfBuffer = crsf::messageBuffer;
 
 #ifdef SERIAL_DEBUG
     using debugtx = Mcu::Stm::Pin<gpiob, 6, MCU>;
@@ -92,7 +91,7 @@ struct Devices2<SW20, CrsfCallback, MCU> {
         using pin = debugtx;
         using clock = Devices2::clock;
         static inline constexpr bool rxtxswap = false;
-        static inline constexpr uint16_t bufferSize = 256;
+        static inline constexpr uint16_t bufferSize = 128;
     };
 #else
     using debug = void;
@@ -163,7 +162,6 @@ struct Devices2<SW20, CrsfCallback, MCU> {
         using timer = systemTimer;
         using crsf = Devices2::crsf;
     };
-
     struct CrsfConfig {
         using txpin = crsftx;
         using rxpin = txpin; // half-duplex
@@ -177,7 +175,6 @@ struct Devices2<SW20, CrsfCallback, MCU> {
         // using callback = CrsfCallback<CrsfCallbackConfig, void>;
         static inline constexpr uint8_t fifoSize = 8;
     };
-
     static inline void init() {
         clock::init();
         systemTimer::init();
@@ -197,7 +194,6 @@ struct Devices2<SW20, CrsfCallback, MCU> {
 #ifdef USE_TP1
         tp1::template dir<Mcu::Output>();
 #endif
-
         crsf::init();
 
         sw0::template dir<Mcu::Output>();

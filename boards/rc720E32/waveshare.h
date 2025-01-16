@@ -4,7 +4,7 @@
 
 #include "usart.h"
 #include "output.h"
-#include "util.h"
+#include "etl/util.h"
 
 using namespace std::literals::chrono_literals;
 

@@ -6,10 +6,43 @@
 struct EEProm {
     using eeprom_value_t = uint16_t;
 
+    consteval EEProm() = default;
+
     struct Pair {
         eeprom_value_t first;
         eeprom_value_t second;
     };
+    struct Switch {
+        std::array<char, 16> name;
+        uint8_t ls = 0;
+        uint8_t type = 0;
+        uint8_t flags = 0;
+    };
+
+    std::array<Switch, 8> switches1 = []{
+        std::array<Switch, 8> sw{};
+        etl::copy("Output 0", sw[0].name);
+        etl::copy("Output 1", sw[1].name);
+        etl::copy("Output 2", sw[2].name);
+        etl::copy("Output 3", sw[3].name);
+        etl::copy("Output 4", sw[4].name);
+        etl::copy("Output 5", sw[5].name);
+        etl::copy("Output 6", sw[6].name);
+        etl::copy("Output 7", sw[7].name);
+        return sw;
+    }();
+    std::array<Switch, 8> switches2 = []{
+        std::array<Switch, 8> sw{};
+        etl::copy("Output 0", sw[0].name);
+        etl::copy("Output 1", sw[1].name);
+        etl::copy("Output 2", sw[2].name);
+        etl::copy("Output 3", sw[3].name);
+        etl::copy("Output 4", sw[4].name);
+        etl::copy("Output 5", sw[5].name);
+        etl::copy("Output 6", sw[6].name);
+        etl::copy("Output 7", sw[7].name);
+        return sw;
+    }();
 
     // Generell
     eeprom_value_t mode = 0;
@@ -19,6 +52,9 @@ struct EEProm {
 #else
     eeprom_value_t address = 0xc8;
 #endif
+
+    eeprom_value_t switchAddress1 = 0;
+    eeprom_value_t switchAddress2 = 1;
 
     eeprom_value_t input_stream = 0; // CRSF, Pulse
 
@@ -48,7 +84,13 @@ struct EEProm {
     eeprom_value_t crsf_hd_mode = 0;
 #endif
     eeprom_value_t crsf_fd_aux_mode = 0;
+
+#ifdef TEST_EEPROM
+    std::array<eeprom_value_t, 2> out_mode_srv{3, 2};
+#else
     std::array<eeprom_value_t, 2> out_mode_srv{2, 2};
+#endif
+
 #ifdef TEST_EEPROM
     // std::array<eeprom_value_t, 2> out_mode_esc{2, 0}; // Esc32 Ascii
     std::array<eeprom_value_t, 2> out_mode_esc{3, 0}; // VEsc
@@ -60,4 +102,5 @@ struct EEProm {
     std::array<eeprom_value_t, 2> esc_mid{50, 50}; // [0...200]
 
     eeprom_value_t prerun_check = 1;
+
 };

@@ -21,7 +21,10 @@ struct Telemetry {
             buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ArduPilot, [&](auto& d){
                 d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
                 d.push_back((uint8_t)storage::eeprom.address);
-                d.push_back(mDataID);
+                d.push_back(mAppID);
+
+                d.push_back(uint8_t{0x01});
+
                 d.push_back(mValues);
                 d.push_back(mTurns);
                 d.push_back(mFlags);
@@ -32,7 +35,9 @@ struct Telemetry {
             buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ArduPilot, [&](auto& d){
                 d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
                 d.push_back((uint8_t)storage::eeprom.address);
-                d.push_back(mInfoID);
+                d.push_back(mAppID);
+
+                d.push_back(uint8_t{0x02});
 
                 d.push_back(servos::fwVersion(0));
                 d.push_back(servos::hwVersion(0));
@@ -79,8 +84,7 @@ struct Telemetry {
     }
     private:
     static inline uint8_t mFrameCounter = 0;
-    static inline uint16_t mInfoID = 6001;
-    static inline uint16_t mDataID = 6000;
+    static inline uint16_t mAppID = 6000;
     static inline std::array<uint16_t, 10> mValues{};
     static inline std::array<int8_t, 2> mTurns{};
     static inline uint8_t mFlags = 0;

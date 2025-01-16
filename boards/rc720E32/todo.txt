@@ -11,6 +11,10 @@ Hardware
 
 Prio 0
 ------
+* use only one appid for tunneling packages to one widget
+** appid 6000 -> Schottel
+** appid 6010 -> MultiSwitch
+* implement CRSF_SUBCMD_SWITCH_SET4
 * watchdog
 * use additional CRC in command frames as describe by TBS
 * correct packaging of ArduPilot frames
@@ -50,6 +54,8 @@ Prio 3
 
 Done:
 ------
+* understand switch command
+* time-multiplex switch-encoder
 * info-packet: show RC720 fw version
 * Escape32
 ** remove parameters that do no fit into crsf U8/I8

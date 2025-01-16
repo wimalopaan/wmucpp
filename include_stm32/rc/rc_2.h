@@ -137,10 +137,12 @@ namespace RC {
                     inline static constexpr std::byte SelectID{0x05};
                 }
                 namespace SwitchCommand {
-                    inline static constexpr std::byte Set{0x01};
+                    inline static constexpr std::byte Set{0x01}; // 2-state switches (1 byte payload)
                     inline static constexpr std::byte Prop{0x02};
                     inline static constexpr std::byte RequestTelemetry{0x03};
                     inline static constexpr std::byte RequestTelemetryItem{0x04};
+                    inline static constexpr std::byte RequestConfigItem{0x05};
+                    inline static constexpr std::byte Set4{0x06}; // 4-state switches (2-bytes payload)
                 }
                 namespace CcCommand {
                     inline static constexpr std::byte SetAltData{0x01}; // Index: [0, 255], value 8bit

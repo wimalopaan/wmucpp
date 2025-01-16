@@ -12,6 +12,9 @@ struct ServoOutputs {
     using servo1_ft = devs::srv1_feetech;
     using servo2_ft = devs::srv2_feetech;
 
+    using servo1_mpx = devs::ppm_mpx1;
+    // using servo2_mpx = devs::ppm_mpx2;
+
     template<uint8_t N>
     static inline void offset(const uint16_t o) {
         static_assert(N <= 1);
@@ -67,7 +70,10 @@ struct ServoOutputs {
         static_assert(N <= 1);
         using srv_ws_t = std::conditional_t<(N == 0), Servo<servo1_ws>, Servo<servo2_ws>>;
         using srv_ft_t = std::conditional_t<(N == 0), Servo<servo1_ft>, Servo<servo2_ft>>;
+        // using srv_mpx_t = std::conditional_t<(N == 0), Servo<servo1_mpx>, Servo<servo2_mpx>>;
+        using srv_mpx_t = Servo<servo1_mpx>;
         static_assert(sizeof(srv_ft_t) == sizeof(srv_ws_t));
+        static_assert(sizeof(srv_ft_t) == sizeof(srv_mpx_t));
 
         switch(s) {
         case 0: // analog FB
@@ -82,7 +88,13 @@ struct ServoOutputs {
             servos[N] = nullptr;
             servos[N] = std::make_unique<srv_ws_t>();
             break;
-        case 3: // none
+        case 3: // cppm-mpx
+            servos[N] = nullptr;
+            if constexpr(N == 0) {
+                servos[N] = std::make_unique<srv_mpx_t>();
+            }
+            break;
+        case 4: // none
             servos[N] = nullptr;
             break;
         default:

@@ -4,7 +4,7 @@
 
 #include "usart_2.h"
 #include "output.h"
-#include "util.h"
+#include "etl/util.h"
 #include "debug_pin.h"
 
 using namespace std::literals::chrono_literals;
@@ -102,7 +102,7 @@ namespace External::WaveShare {
                 mPhi = polar::phi();
             }
             static inline void offset(const uint16_t o) {
-                mOffset = normalize<4096>(o);
+                mOffset = etl::normalize<4096>(o);
             }
             static inline uint16_t offset() {
                 return mOffset;
@@ -288,7 +288,7 @@ namespace External::WaveShare {
             }
             static inline void setPosition() {
                 std::array<uint8_t, 6> payload;
-                const uint16_t po = normalize<4096>(mPhi + mOffset);
+                const uint16_t po = etl::normalize<4096>(mPhi + mOffset);
                 int16_t d = po - mLastPos;
                 if (d >= 2048) {
                     mTurns -= 1;
@@ -426,7 +426,7 @@ namespace External::WaveShare {
                                 else {
                                     p =  (((hb & 0x7f) << 8) + lb);
                                 }
-                                mActualPos = normalize(p - mOffset);
+                                mActualPos = etl::normalize(p - mOffset);
                             }
                             else {
                                 ++mReadErrorCount;

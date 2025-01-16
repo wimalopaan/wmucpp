@@ -17,8 +17,10 @@ struct CrsfCallback {
     using relays = Config::relays;
     using auxes = Config::auxes;
     using mapper = Config::mapper;
-
     using polars = Config::polars;
+
+    using mpx1 = Config::mpx1;
+    using messageBuffer = Config::messageBuffer;
 
     using src = Config::src;
     using input  = src::input;
@@ -174,6 +176,59 @@ struct CrsfCallback {
                     }
                 }
             }
+            else if (realm == (uint8_t)RC::Protokoll::Crsf::V4::CommandType::Switch) {
+                if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set) {
+                    const uint8_t swAddress = data[7];
+                    const uint8_t sw = data[8];
+                    if (eeprom.switchAddress1 == swAddress) {
+                        IO::outl<debug>("# Switch set address: ", swAddress, " v: ", sw);
+                        for(uint8_t i = 0; i < 4; ++i) {
+                            const uint8_t s = (sw >> (2 * i)) & 0b11;
+                            mpx1::set(i, s);
+                        }
+
+                    }
+                    else if (eeprom.switchAddress2 == swAddress) {
+                        IO::outl<debug>("# Switch set address: ", swAddress, " v: ", sw);
+                        for(uint8_t i = 0; i < 4; ++i) {
+                            const uint8_t s = (sw >> (2 * i)) & 0b11;
+                            mpx1::set(i + 4, s);
+                        }
+                    }
+                }
+                else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::RequestConfigItem) {
+                    const uint8_t swAddress = data[7];
+                    const uint8_t item = data[8];
+                    const uint16_t mDataId = 6010;
+                    if (eeprom.switchAddress1 == swAddress) {
+                        IO::outl<debug>("# Cmd Req: ", item, " adr: ", swAddress, " name: ", eeprom.switches1[item].name);
+                        messageBuffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ArduPilot, [&](auto& d){
+                            d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
+                            d.push_back((uint8_t)eeprom.address);
+                            d.push_back(mDataId);
+                            d.push_back((uint8_t)eeprom.switchAddress1);
+                            d.push_back(item);
+                            etl::push_back_ntbs(&eeprom.switches1[item].name[0], d);
+                            d.push_back(eeprom.switches1[item].ls);
+                            d.push_back(eeprom.switches1[item].type);
+                        });
+                    }
+                    else if (eeprom.switchAddress2 == swAddress) {
+                        IO::outl<debug>("# Cmd Req: ", item, " adr: ", swAddress);
+                        messageBuffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ArduPilot, [&](auto& d){
+                            d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
+                            d.push_back((uint8_t)eeprom.address);
+                            d.push_back(mDataId);
+                            d.push_back((uint8_t)eeprom.switchAddress2);
+                            d.push_back(item);
+                            etl::push_back_ntbs(&eeprom.switches2[item].name[0], d);
+                            d.push_back(eeprom.switches2[item].ls);
+                            d.push_back(eeprom.switches2[item].type);
+                        });
+
+                    }
+                }
+            }
         }
     }
     static inline void callbacks(const bool eepromMode = false) {
@@ -187,6 +242,9 @@ struct CrsfCallback {
             }
         }
         mEepromMode = prevMode;
+    }
+    static inline void serialize(const uint8_t index, auto& buffer, const RC::Protokoll::Crsf::V4::Lua::CmdStep step = RC::Protokoll::Crsf::V4::Lua::CmdStep::Idle) {
+        params[index].serialize(buffer, params, step, index);
     }
 private:
     static inline name_t mName = []{
@@ -276,7 +334,7 @@ private:
         addNode(p, Param_t{parent, PType::U8, "Schottel 2: l/r", nullptr, &eeprom.channels[1].second, 0, 15, [](const store_t){return true;}});
 
         parent = addParent(p, Param_t{0, PType::Folder, "Outputs"});
-        addNode(p, Param_t{parent, PType::Sel, "Srv1 Out", "PWM/Analog;PWM/PWM;Serial/WaveShare;None", &eeprom.out_mode_srv[0], 0, 3, [](const store_t s){servos::template servo<0>(s); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Srv1 Out", "PWM/Analog;PWM/PWM;Serial/WaveShare;MultiSwitch/Graupner-A;None", &eeprom.out_mode_srv[0], 0, 4, [](const store_t s){servos::template servo<0>(s); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Srv1 Fb", "Analog;PWM;WaveShare;None", &eeprom.out_mode_srv[0], 0, 3});
 #ifdef ESCAPE32_ASCII
         addNode(p, Param_t{parent, PType::Sel, "Esc1 Out", "PWM/-;ESCape32/Serial;ESCape32/Ascii;VEsc/Serial;None", &eeprom.out_mode_esc[0], 0, 4, [](const store_t s){escs::template esc<0>(s); if (s == 2) {hide(mESCape321Folder, mESCape321End, false);} else {hide(mESCape321Folder, mESCape321End, true);} return true;}});
@@ -341,7 +399,7 @@ private:
         parent = addParent(p, Param_t{0, PType::Folder, "CRSF"});
         addNode(p, Param_t{parent, PType::U8,  "CRSF Address", nullptr, &eeprom.address, 192, 207, [](const store_t a){updateName(mName); src::address(std::byte(a)); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Mode (not persistant)", "Full;Fwd Only", nullptr, 0, 1, [](const store_t){return false;}});
-        parent = addParent(p, Param_t{0, PType::Folder, "Special"});
+        parent = addParent(p, Param_t{0, PType::Folder, "Advanced"});
         addNode(p, Param_t{parent, PType::Sel, "Crsf-HD/SBus", "SBus/Out;Crsf;SBus2/Master;CPPM/N;CPPM/P;CombinedPWMChannels/P;IBus/In;SBus/In;SumDV3/In;None", &eeprom.crsf_hd_mode, 0, 9, [](const store_t r){relays::set(r); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Crsf-FD/Aux", "Crsf;GPS;None", &eeprom.crsf_fd_aux_mode, 0, 1, [](const store_t a){
                                auxes::set(a);
@@ -352,6 +410,9 @@ private:
         mServoAddressCommand = p.size() - 1;
         addNode(p, Param_t{parent, PType::U8,  "Servo ID to set", nullptr, nullptr, 1, 16, [](const store_t){return false;}});
 #endif
+        addNode(p, Param_t{parent, PType::U8,  "Switch Address 1", nullptr, &eeprom.switchAddress1, 0, 255, [](const store_t){return true;}});
+        addNode(p, Param_t{parent, PType::U8,  "Switch Address 2", nullptr, &eeprom.switchAddress2, 0, 255, [](const store_t){return true;}});
+
         return p;
     }();
 };
