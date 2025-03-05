@@ -115,12 +115,6 @@ namespace Mcu::Stm {
                         cr2 |= I2C_CR2_START;
                         return cr2;
                     }();
-                    // MODIFY_REG(mcuI2c->CR2, I2C_CR2_NBYTES_Msk, (1 << I2C_CR2_NBYTES_Pos));
-                    // MODIFY_REG(mcuI2c->CR2, I2C_CR2_SADD_Msk, (mAddress << 1) << I2C_CR2_SADD_Pos);
-                    // mcuI2c->CR2 |= I2C_CR2_AUTOEND;
-                    // mcuI2c->CR2 &= ~I2C_CR2_ADD10;
-                    // mcuI2c->CR2 &= ~I2C_CR2_RD_WRN;
-                    // mcuI2c->CR2 |= I2C_CR2_START;
                     mState = State::ReadAdressWait;
                     break;
                 case State::ReadAdressWait:
@@ -159,12 +153,6 @@ namespace Mcu::Stm {
                         cr2 |= I2C_CR2_START;
                         return cr2;
                     }();
-                    // MODIFY_REG(mcuI2c->CR2, I2C_CR2_NBYTES_Msk, (mCount << I2C_CR2_NBYTES_Pos));
-                    // MODIFY_REG(mcuI2c->CR2, I2C_CR2_SADD_Msk, (mAddress << 1) << I2C_CR2_SADD_Pos);
-                    // mcuI2c->CR2 |= I2C_CR2_AUTOEND;
-                    // mcuI2c->CR2 &= ~I2C_CR2_ADD10;
-                    // mcuI2c->CR2 |= I2C_CR2_RD_WRN; // read
-                    // mcuI2c->CR2 |= I2C_CR2_START;
                     mState = State::ReadAdressWait2;
                     mIndex = 0;
                     break;
@@ -212,13 +200,6 @@ namespace Mcu::Stm {
                         cr2 |= I2C_CR2_STOP;
                         return cr2;
                     }();
-                    // MODIFY_REG(mcuI2c->CR2, I2C_CR2_NBYTES_Msk, (0 << I2C_CR2_NBYTES_Pos));
-                    // MODIFY_REG(mcuI2c->CR2, I2C_CR2_SADD_Msk, (mScanSlaveAddress << 1) << I2C_CR2_SADD_Pos);
-                    // mcuI2c->CR2 |= I2C_CR2_AUTOEND;
-                    // mcuI2c->CR2 &= ~I2C_CR2_ADD10;
-                    // mcuI2c->CR2 &= ~I2C_CR2_RD_WRN;
-                    // mcuI2c->CR2 |= I2C_CR2_START;
-                    // mcuI2c->CR2 |= I2C_CR2_STOP;
                     mState = State::ScanWaitBusy;
                     break;
                 case State::ScanWaitBusy:
@@ -264,17 +245,6 @@ namespace Mcu::Stm {
                         cr2 |= I2C_CR2_START;
                         return cr2;
                     }();
-
-                    // MODIFY_REG(mcuI2c->CR2, I2C_CR2_NBYTES_Msk, (mCount << I2C_CR2_NBYTES_Pos));
-                    // MODIFY_REG(mcuI2c->CR2, I2C_CR2_SADD_Msk, (mAddress << 1) << I2C_CR2_SADD_Pos);
-
-                    // mcuI2c->CR2 |= I2C_CR2_AUTOEND;
-                    // mcuI2c->CR2 &= ~I2C_CR2_ADD10;
-                    // mcuI2c->CR2 &= ~I2C_CR2_RD_WRN;
-                    
-                    // mcuI2c->CR2 &= ~I2C_CR2_STOP;
-                    // mcuI2c->CR2 |= I2C_CR2_START;
-                    
                     mIndex = 0;
                     mState = State::WriteWaitAdress;
                 }
@@ -420,7 +390,7 @@ namespace Mcu::Stm {
             static inline uint16_t errors() {
                 return mErrors;
             }
-            // private:
+            private:
             static inline void setPresent(const Address a) {
                 const uint8_t index = a.value / 8;
                 const uint8_t bit = a.value % 8;

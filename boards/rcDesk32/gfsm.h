@@ -94,7 +94,7 @@ struct GFSM {
                 });
             });
             mStateTick.on(debugTicks, []{
-                IO::outl<debug>("# i2c state:", (uint8_t)i2c::mState, " ", i2c::mIsr, " ", i2c::errors());
+                // IO::outl<debug>("# i2c state:", (uint8_t)i2c::mState, " ", i2c::mIsr, " ", i2c::errors());
             });
             break;
         }
