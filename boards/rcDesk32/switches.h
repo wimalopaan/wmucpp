@@ -34,6 +34,11 @@ namespace External {
         }
         static inline void init() {
             (PCAs::init(), ...);
+            for(auto& pca: mSwStates) {
+                for(auto& sw : pca) {
+                    sw = 1;
+                }
+            }
         }
         static inline void periodic() {
             (PCAs::periodic(), ...);

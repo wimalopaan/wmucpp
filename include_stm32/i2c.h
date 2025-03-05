@@ -121,6 +121,9 @@ namespace Mcu::Stm {
                     if (mcuI2c->ISR & I2C_ISR_TXIS) {
                         mState = State::ReadWriteCommand;
                     }
+                    if (mcuI2c->ISR & I2C_ISR_STOPF) {
+                        mState = State::ReadWriteCommand;
+                    }
                     if (mcuI2c->ISR & I2C_ISR_NACKF) {
                         mState = State::ReadError;
                     }
@@ -175,7 +178,7 @@ namespace Mcu::Stm {
                 case State::ReadData:
                     mData[mIndex++] = (std::byte)mcuI2c->RXDR;
                     if (mIndex == mCount) {
-                        mcuI2c->CR2 |= I2C_CR2_STOP;
+                        // mcuI2c->CR2 |= I2C_CR2_STOP;
                         mState = State::ReadDataComplete;
                     }
                     else {
@@ -277,6 +280,9 @@ namespace Mcu::Stm {
                     break;
                 case State::WriteWaitData:
                     if (mcuI2c->ISR & I2C_ISR_TXIS) {
+                        mState = State::WriteData;
+                    }
+                    if (mcuI2c->ISR & I2C_ISR_STOPF) {
                         mState = State::WriteData;
                     }
                     if (mcuI2c->ISR & I2C_ISR_NACKF) {
@@ -390,7 +396,7 @@ namespace Mcu::Stm {
             static inline uint16_t errors() {
                 return mErrors;
             }
-            private:
+            // private:
             static inline void setPresent(const Address a) {
                 const uint8_t index = a.value / 8;
                 const uint8_t bit = a.value % 8;

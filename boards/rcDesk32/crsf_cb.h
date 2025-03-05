@@ -183,7 +183,10 @@ private:
         addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
         addNode(p, Param_t{0, PType::U8,  "CRSF Address", nullptr, &eeprom.address, 192, 207, [](const uint8_t a){updateName(mName); src::address(std::byte(a)); return true;}});
         addNode(p, Param_t{0, PType::U8,  "Controller Number", nullptr, &eeprom.controllerNumber, 0, 8, [](const uint8_t){return true;}});
-        addNode(p, Param_t{0, PType::Sel,  "Bluetooth", "off;on", &eeprom.bluetooth, 0, 8, [](const uint8_t){return true;}});
+        addNode(p, Param_t{0, PType::Sel, "Bluetooth", "off;on", &eeprom.bluetooth, 0, 8, [](const uint8_t){return true;}});
+        auto parent = addParent(p, Param_t{0, PType::Folder, "I2C"});
+        addNode(p, Param_t{parent, PType::Command, "I2C scan", "Scanning...", nullptr, 0, 0, [](const uint8_t){return false;}});
+        parent = addParent(p, Param_t{0, PType::Folder, "Devices"});
         return p;
     }();
 };
