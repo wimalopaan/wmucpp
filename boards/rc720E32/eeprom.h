@@ -1,5 +1,7 @@
 #pragma once
 
+#include "etl/algorithm.h"
+
 #include <cstdint>
 #include <array>
 
@@ -19,19 +21,9 @@ struct EEProm {
         uint8_t flags = 0;
     };
 
-    std::array<Switch, 8> switches1 = []{
-        std::array<Switch, 8> sw{};
-        etl::copy("Output 0", sw[0].name);
-        etl::copy("Output 1", sw[1].name);
-        etl::copy("Output 2", sw[2].name);
-        etl::copy("Output 3", sw[3].name);
-        etl::copy("Output 4", sw[4].name);
-        etl::copy("Output 5", sw[5].name);
-        etl::copy("Output 6", sw[6].name);
-        etl::copy("Output 7", sw[7].name);
-        return sw;
-    }();
-    std::array<Switch, 8> switches2 = []{
+    uint8_t config_counter = 0;
+
+    std::array<Switch, 8> switches = []{
         std::array<Switch, 8> sw{};
         etl::copy("Output 0", sw[0].name);
         etl::copy("Output 1", sw[1].name);
@@ -53,8 +45,7 @@ struct EEProm {
     eeprom_value_t address = 0xc8;
 #endif
 
-    eeprom_value_t switchAddress1 = 0;
-    eeprom_value_t switchAddress2 = 1;
+    eeprom_value_t switchAddress = 0;
 
     eeprom_value_t input_stream = 0; // CRSF, Pulse
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "usart_2.h"
+#include "mcu/alternate.h"
 
 template<uint8_t N, typename Config, typename MCU = DefaultMcu>
 struct SerialBuffered {

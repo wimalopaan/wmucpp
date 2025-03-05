@@ -82,6 +82,9 @@ namespace Util {
             inline void push_back(const uint16_t v) {
                 etl::serializeBE(v, *this);
             }
+            inline void push_back(const uint32_t v) {
+                etl::serializeBE(v, *this);
+            }
         };
         static inline void create_back(const uint8_t type, const auto f) {
             mFifo.create_back([&](Entry& d) {

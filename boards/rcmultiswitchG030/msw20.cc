@@ -9,6 +9,9 @@
 #define SERIAL_DEBUG
 #define NDEBUG
 
+#define HW_VERSION 1
+#define SW_VERSION 13
+
 #include <cstdint>
 #include <array>
 
@@ -222,6 +225,18 @@ struct CrsfCallback {
                         IO::outl<trace>("# Cmd Set: ", address, " sw: ", sw);
                         SwitchCallback::set(sw);
                     }
+                    else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set4) {
+                        const uint16_t sw = (((uint16_t)payload[8]) << 8) + payload[9];
+                        IO::outl<trace>("# Cmd Set4: ", address, " sw: ", sw);
+                        uint8_t sw8 = 0;
+                        for(uint8_t i = 0; i < 8; ++i) {
+                            const uint8_t s = (sw >> (2 * i)) & 0b11;
+                            if (s > 0) {
+                                sw8 |= (1 << i);
+                            }
+                        }
+                        SwitchCallback::set(sw8);
+                    }
                     else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Prop) {
                         const uint8_t ch = (uint8_t)payload[8];
                         const uint8_t duty = (uint8_t)payload[9];
@@ -230,16 +245,30 @@ struct CrsfCallback {
                     }
                     else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::RequestConfigItem) {
                         const uint8_t item = (uint8_t)payload[8];
-                        IO::outl<trace>("# Cmd Req: ", item);
+                        IO::outl<trace>("# Cmd Req CI: ", item);
                         messageBuffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ArduPilot, [&](auto& d){
                             d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
                             d.push_back((uint8_t)eeprom.crsf_address);
-                            d.push_back(mDataId);
+                            d.push_back(RC::Protokoll::Crsf::V4::ArduPilotTunnel::Switch::AppId);
                             d.push_back((uint8_t)eeprom.address);
+                            d.push_back(RC::Protokoll::Crsf::V4::ArduPilotTunnel::Switch::Type::ConfigItem);
                             d.push_back(item);
                             etl::push_back_ntbs(&eeprom.outputs[item].name[0], d);
                             d.push_back(eeprom.outputs[item].ls);
                             d.push_back(eeprom.outputs[item].type);
+                        });
+                    }
+                    else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::RequestDeviceInfo) {
+                        IO::outl<trace>("# Cmd Req DI");
+                        messageBuffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ArduPilot, [&](auto& d){
+                            d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
+                            d.push_back((uint8_t)eeprom.crsf_address);
+                            d.push_back(RC::Protokoll::Crsf::V4::ArduPilotTunnel::Switch::AppId);
+                            d.push_back((uint8_t)eeprom.address);
+                            d.push_back(RC::Protokoll::Crsf::V4::ArduPilotTunnel::Switch::Type::DeviceInfo);
+                            d.push_back(RC::Protokoll::Crsf::V4::SwitchCommand::Set); // use this protocol as set protocol
+                            d.push_back(uint8_t{HW_VERSION});
+                            d.push_back(uint8_t{SW_VERSION});
                         });
                     }
                 }
@@ -260,8 +289,6 @@ struct CrsfCallback {
         mEepromMode = prevMode;
     }
 private:
-    static inline constexpr uint16_t mDataId = 6010;
-
     static inline bool mEepromMode = false;
     static inline constexpr uint32_t mSerialNumber{1234};
     static inline constexpr uint32_t mHWVersion{1};

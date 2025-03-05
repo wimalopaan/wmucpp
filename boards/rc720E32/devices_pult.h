@@ -23,14 +23,8 @@
 #include "adc.h"
 #include "blinker.h"
 
-#include "rc/rc_2.h"
-#include "rc/crsf_2.h"
-
-#include "crsf_cb.h"
-
 #include "pcal6408.h"
 #include "switches.h"
-#include "radio.h"
 
 #include "eeprom.h"
 
@@ -51,12 +45,7 @@ struct Devices<SW01, Config, MCU> {
     using dma1 = Mcu::Stm::Dma::Controller<1, MCU>;
     using dma2 = Mcu::Stm::Dma::Controller<2, MCU>;
 
-    using storage = Config::storage;
-
     // Ubersicht: Pins
-
-    // Tlm2: PB9 : TIM17-CH1, TIM4-CH4
-    using tp1 = Mcu::Stm::Pin<gpiob, 9, MCU>;
 
     // Uebersicht: DMA
 
@@ -66,8 +55,9 @@ struct Devices<SW01, Config, MCU> {
     // adc
     // using adcDmaChannel     = Mcu::Stm::Dma::Channel<dma1, 3, MCU>;
     // half-duplex
-    using esc1DmaChannelComponent = Mcu::Components::DmaChannel<typename dma2::component_t, 5>;
-    // using esc2DmaChannelComponent = Mcu::Components::DmaChannel<typename dma2::component_t, 4>;
+    using srv1DmaChannelComponent = Mcu::Components::DmaChannel<typename dma1::component_t, 4>;
+    // I2C
+    // using i2cDmaChannel     = Mcu::Stm::Dma::Channel<dma1, 5, MCU>;
 
     // Uebersicht: UART
     // Uart 1: CRSF-IN
@@ -82,14 +72,6 @@ struct Devices<SW01, Config, MCU> {
     // Usart 1: CRSF
     using crsftx = Mcu::Stm::Pin<gpioa, 9, MCU>; // AF1
     using crsfrx = Mcu::Stm::Pin<gpioa, 10, MCU>; // AF1
-
-    struct CrsfConfig;
-    using crsf_in = RC::Protokoll::Crsf::V4::Master<1, CrsfConfig, MCU>;
-
-    // Usart 2: Radio
-    using esc1_pin = Mcu::Stm::Pin<gpioa, 2, MCU>;
-    struct SerialConfig1;
-    using radio = HwExtension<2, SerialConfig1, MCU>;
 
     // debug auf LPUART1 (PA3 AF(6), RX<->TX tauschen) : Telemetry-1
 #ifdef SERIAL_DEBUG
@@ -118,6 +100,7 @@ struct Devices<SW01, Config, MCU> {
     using auxtx = Mcu::Stm::Pin<gpioa, 0, MCU>; // AF4
 
     // I2C-3
+
     using sda3 = Mcu::Stm::Pin<gpiob, 4, MCU>;
     using scl3 = Mcu::Stm::Pin<gpiob, 3, MCU>;
     using i2c3 = Mcu::Stm::I2C::Master<3, 16, debug, MCU>;
@@ -126,34 +109,6 @@ struct Devices<SW01, Config, MCU> {
     static inline constexpr Mcu::Stm::I2C::Address pcaAdr1{0x21};
     using pca0 = External::PCAL6408<i2c3, pcaAdr1, systemTimer>;
     using pca1 = External::PCAL6408<i2c3, pcaAdr0, systemTimer>;
-
-    struct SerialConfig1 {
-        using clock = Devices::clock;
-        using systemTimer = Devices::systemTimer;
-        using dmaChComponent = esc1DmaChannelComponent;
-        using pin = esc1_pin;
-        using debug = void;
-        using tp = void;
-    };
-    struct CrsfCallbackConfig {
-        using storage = Config::storage;
-        using timer = systemTimer;
-        using src = crsf_in;
-        using tp = void;
-        using debug = Devices::debug;
-    };
-    struct CrsfConfig {
-        using rxpin = crsfrx;
-        using txpin = crsftx;
-        using systemTimer = Devices::systemTimer;
-        using clock = Devices::clock;
-        using dmaChRead  = csrfInDmaChannelComponent1;
-        using dmaChWrite = csrfInDmaChannelComponent2;
-        using debug = Devices::debug;
-        using tp = void;
-        using callback = CrsfCallback<CrsfCallbackConfig, debug>;
-        static inline constexpr uint8_t fifoSize = 16;
-    };
 
     static inline void init() {
         clock::init();
@@ -173,8 +128,6 @@ struct Devices<SW01, Config, MCU> {
         debug::init();
 #endif
 
-        crsf_in::init();
-
         sda3::openDrain();
         scl3::openDrain();
         sda3::afunction(6);
@@ -184,7 +137,7 @@ struct Devices<SW01, Config, MCU> {
         // adc::init();
         // adc::oversample(8); // 256
 
-        tp1::template dir<Mcu::Output>();
+        // tp1::template dir<Mcu::Output>();
         // tp3::template dir<Mcu::Output>();
     }
 };

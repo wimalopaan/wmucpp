@@ -142,7 +142,8 @@ namespace RC {
                     inline static constexpr std::byte RequestTelemetry{0x03};
                     inline static constexpr std::byte RequestTelemetryItem{0x04};
                     inline static constexpr std::byte RequestConfigItem{0x05};
-                    inline static constexpr std::byte Set4{0x06}; // 4-state switches (2-bytes payload)
+                    inline static constexpr std::byte RequestDeviceInfo{0x06};
+                    inline static constexpr std::byte Set4{0x07}; // 4-state switches (2-bytes payload)
                 }
                 namespace CcCommand {
                     inline static constexpr std::byte SetAltData{0x01}; // Index: [0, 255], value 8bit
@@ -156,6 +157,22 @@ namespace RC {
                     inline static constexpr uint8_t type = 2;
                     inline static constexpr uint8_t dest = 3;
                     inline static constexpr uint8_t src = 4;
+                }
+                namespace ArduPilotTunnel {
+                    namespace Schottel {
+                        inline static constexpr uint16_t AppId = 6000;
+                        namespace Type {
+                            inline static constexpr uint8_t CombinedTelemetry = 0x00;
+                            inline static constexpr uint8_t DeviceInfo = 0x01;
+                        }
+                    }
+                    namespace Switch {
+                        inline static constexpr uint16_t AppId = 6010;
+                        namespace Type {
+                            inline static constexpr uint8_t ConfigItem = 0x00;
+                            inline static constexpr uint8_t DeviceInfo = 0x01;
+                        }
+                    }
                 }
                 static inline constexpr uint8_t  maxMessageSize = 64;
                 static inline constexpr uint8_t  minMessageSize = 4;

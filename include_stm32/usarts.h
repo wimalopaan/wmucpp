@@ -1,5 +1,7 @@
 #pragma once
 
+#include "components.h"
+
 namespace Mcu::Stm {
     namespace Uarts {
         enum class Mode : uint8_t {TxOnly, RxOnly, HalfDuplex, FullDuplex};

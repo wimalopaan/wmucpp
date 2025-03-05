@@ -13,8 +13,7 @@
 #include <cstdint>
 #include <chrono>
 
-#include "devices.h"
-#include "gfsm.h"
+#include "devices_pult.h"
 
 using namespace std::literals::chrono_literals;
 
@@ -33,17 +32,29 @@ struct Storage {
 };
 
 struct DevsConfig {
-    using storage = Storage;
 };
 using devs = Devices<SW01, DevsConfig, Mcu::Stm::Stm32G0B1>;
-using gfsm = GFSM<devs>;
 
+template <typename Devs>
+struct GFSM {
+    static inline void init() {
+
+    }
+    static inline void periodic() {
+
+    }
+    static inline void ratePeriodic() {
+
+    }
+};
+
+using gfsm = GFSM<devs>;
 int main() {
     Storage::init();
     gfsm::init();
 
-    NVIC_EnableIRQ(USART1_IRQn);
-    NVIC_EnableIRQ(USART2_LPUART2_IRQn);
+    // NVIC_EnableIRQ(USART1_IRQn);
+    // NVIC_EnableIRQ(USART2_LPUART2_IRQn);
     // NVIC_EnableIRQ(USART3_4_5_6_LPUART1_IRQn);
     // NVIC_EnableIRQ(DMA1_Channel2_3_IRQn);
     // NVIC_EnableIRQ(DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQn);
@@ -58,24 +69,7 @@ int main() {
         });
     }
 }
-
 extern "C" {
-void USART1_IRQHandler() {
-    using crsf_in = devs::crsf_in;
-    static_assert(crsf_in::number == 1);
-    crsf_in::Isr::onIdle([]{
-    });
-    crsf_in::Isr::onTransferComplete([]{
-    });
-}
-void USART2_LPUART2_IRQHandler(){
-    using radio = devs::radio;
-    static_assert(radio::uart::number == 2);
-    radio::Isr::onTransferComplete([]{
-    });
-    radio::Isr::onIdle([]{
-    });
-}
 
 extern int _end;
 static unsigned char *heap = NULL;

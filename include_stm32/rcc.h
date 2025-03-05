@@ -8,6 +8,8 @@
 #include <type_traits>
 #include <concepts>
 
+#include "components.h"
+
 namespace Mcu {
     namespace Stm {
         template<>

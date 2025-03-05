@@ -15,7 +15,7 @@ struct GFSM {
     using devs = Devs;
     using debug = devs::debug;
     using systemTimer = devs::systemTimer;
-    // using storage = devs::storage;
+    using storage = devs::storage;
     using i2c = devs::i2c3;
 
     using radio = devs::radio;
@@ -25,6 +25,10 @@ struct GFSM {
     using led1 = devs::ledBlinker1;
     using led2 = devs::ledBlinker2;
 
+    using crsf_in = devs::crsf_in;
+    using crsf_in_pa = crsf_in::input;
+    using crsf_in_responder = crsf_in::output;
+
     enum class State : uint8_t {Undefined, Init, I2CScan, Run};
 
     static inline void init() {
@@ -33,24 +37,26 @@ struct GFSM {
         radio::init();
     }
     static inline void periodic() {
+        devs::tp1::toggle();
         if constexpr(!std::is_same_v<debug, void>) {
             debug::periodic();
         }
         i2c::periodic();
         switches::periodic();
         radio::periodic();
+        crsf_in::periodic();
     }
 
     static inline constexpr External::Tick<systemTimer> initTicks{500ms};
+    static inline constexpr External::Tick<systemTimer> debugTicks{500ms};
     static inline constexpr External::Tick<systemTimer> switchesTicks{20ms};
 
     static inline void ratePeriodic() {
         led1::ratePeriodic();
         led2::ratePeriodic();
-
         i2c::ratePeriodic();
-
         radio::ratePeriodic();
+        crsf_in::ratePeriodic();
 
         ++mStateTick;
         const auto oldState = mState;
@@ -76,18 +82,19 @@ struct GFSM {
                     if (index < 32) {
                         const uint8_t wIndex1 = 2 * index;
                         const uint8_t wIndex2 = 2 * index + 1;
-                        const uint64_t mask1 = (1 << wIndex1);
-                        const uint64_t mask2 = (1 << wIndex2);
+                        const uint64_t mask1 = (1UL << wIndex1);
+                        const uint64_t mask2 = (1UL << wIndex2);
                         const bool on1 = (newState == 0);
                         const bool on2 = (newState == 2);
 
                         mSwitchesState = (mSwitchesState & ~mask1) | (on1 ? mask1 : 0);
                         mSwitchesState = (mSwitchesState & ~mask2) | (on2 ? mask2 : 0);
-
                         radio::set(mSwitchesState);
                     }
-                    // IO::outl<debug>("# Switches ", mSwitchesState);
                 });
+            });
+            mStateTick.on(debugTicks, []{
+                IO::outl<debug>("# i2c state:", (uint8_t)i2c::mState, " ", i2c::mIsr, " ", i2c::errors());
             });
             break;
         }
@@ -113,18 +120,16 @@ struct GFSM {
                 }
                 break;
             case State::Run:
+                led1::event(led1::Event::Slow);
                 IO::outl<debug>("# Run");
                 break;
             }
         }
-
     }
     private:
     static inline uint64_t mSwitchesState = 0;
-
     static inline External::Tick<systemTimer> mStateTick;
     static inline External::Tick<systemTimer> mSwitchesTick;
     static inline State mState{State::Undefined};
-
 };
 

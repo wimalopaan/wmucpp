@@ -137,6 +137,7 @@ struct HwExtension {
     }
     private:
     static inline void send() {
+        // alternate sending switches and props
         uart::fillSendBuffer([](auto& data){
             data[0] = 0xaa;
             data[1] = mControllerNumber;
@@ -145,7 +146,8 @@ struct HwExtension {
 
             uint8_t cs = 0;
             for(uint8_t i = 0; i < 8; ++i) {
-                cs += data[4 + i] = (mSwitches >> (i * 8));
+                data[4 + i] = (mSwitches >> (i * 8));
+                cs += data[4 + i];
             }
             data[4 + 8] = cs;
             return 4 + 8 + 1;

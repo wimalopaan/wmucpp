@@ -5,6 +5,7 @@
 
 #include "mcu/mcu.h"
 #include "meta.h"
+#include "uuid.h"
 #include "i2c.h"
 #include "tick.h"
 #include "rc/crsf_2.h"
@@ -215,7 +216,7 @@ struct GFSM {
                 IO::outl<debug>("# Undef");
                 break;
             case State::Init:
-                IO::outl<debug>("# Init");
+                IO::outl<debug>("# Init uuid: ", uuid);
                 led1::event(led1::Event::Steady);
                 break;
             case State::Calib:
@@ -265,6 +266,7 @@ struct GFSM {
     static inline void nextBaudrate() {
         crsf_in::nextBaudrate();
     }
+    static inline const uint32_t uuid = Mcu::Stm::Uuid::get();
     static inline uint8_t mActiceBaudrateIndex{0};
     static inline std::array<uint32_t, 2> mBaudrates{420'000, 921'000};
     static inline Event mEvent = Event::None;

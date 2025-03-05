@@ -3,6 +3,7 @@
 #include "mcu/eeprom.h"
 #include "meta.h"
 #include "eeprom.h"
+#include "uuid.h"
 #include "rc/rc_2.h"
 #include "rc/crsf_2.h"
 
@@ -177,55 +178,53 @@ struct CrsfCallback {
                 }
             }
             else if (realm == (uint8_t)RC::Protokoll::Crsf::V4::CommandType::Switch) {
-                if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set) {
+                if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set4) {
                     const uint8_t swAddress = data[7];
-                    const uint8_t sw = data[8];
-                    if (eeprom.switchAddress1 == swAddress) {
-                        IO::outl<debug>("# Switch set address: ", swAddress, " v: ", sw);
-                        for(uint8_t i = 0; i < 4; ++i) {
+                    const uint16_t sw = (data[8] << 8) + data[9];
+                    if (eeprom.switchAddress == swAddress) {
+                        IO::outl<debug>("# Switch set4 address: ", swAddress, " v: ", sw);
+                        for(uint8_t i = 0; i < 8; ++i) {
                             const uint8_t s = (sw >> (2 * i)) & 0b11;
                             mpx1::set(i, s);
                         }
-
                     }
-                    else if (eeprom.switchAddress2 == swAddress) {
-                        IO::outl<debug>("# Switch set address: ", swAddress, " v: ", sw);
-                        for(uint8_t i = 0; i < 4; ++i) {
-                            const uint8_t s = (sw >> (2 * i)) & 0b11;
-                            mpx1::set(i + 4, s);
-                        }
+                }
+                else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::RequestDeviceInfo) {
+                    const uint8_t swAddress = data[7];
+                    if (eeprom.switchAddress == swAddress) {
+                        IO::outl<debug>("# Cmd ReqDevInfo adr: ", swAddress);
+                        messageBuffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ArduPilot, [&](auto& d){
+                            d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
+                            d.push_back((uint8_t)eeprom.address);
+                            d.push_back(RC::Protokoll::Crsf::V4::ArduPilotTunnel::Switch::AppId);
+                            d.push_back((uint8_t)eeprom.switchAddress);
+                            d.push_back(RC::Protokoll::Crsf::V4::ArduPilotTunnel::Switch::Type::DeviceInfo);
+
+                            d.push_back(uuid);
+                            d.push_back(eeprom.config_counter);
+
+                            d.push_back(RC::Protokoll::Crsf::V4::SwitchCommand::Set4); // use this protocol as set protocol
+                            d.push_back(uint8_t{HW_VERSION});
+                            d.push_back(uint8_t{SW_VERSION});
+                        });
                     }
                 }
                 else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::RequestConfigItem) {
                     const uint8_t swAddress = data[7];
                     const uint8_t item = data[8];
-                    const uint16_t mDataId = 6010;
-                    if (eeprom.switchAddress1 == swAddress) {
-                        IO::outl<debug>("# Cmd Req: ", item, " adr: ", swAddress, " name: ", eeprom.switches1[item].name);
+                    if (eeprom.switchAddress == swAddress) {
+                        IO::outl<debug>("# Cmd Req: ", item, " adr: ", swAddress, " name: ", eeprom.switches[item].name);
                         messageBuffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ArduPilot, [&](auto& d){
                             d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
                             d.push_back((uint8_t)eeprom.address);
-                            d.push_back(mDataId);
-                            d.push_back((uint8_t)eeprom.switchAddress1);
+                            d.push_back(RC::Protokoll::Crsf::V4::ArduPilotTunnel::Switch::AppId);
+                            d.push_back((uint8_t)eeprom.switchAddress);
+                            d.push_back(RC::Protokoll::Crsf::V4::ArduPilotTunnel::Switch::Type::ConfigItem);
                             d.push_back(item);
-                            etl::push_back_ntbs(&eeprom.switches1[item].name[0], d);
-                            d.push_back(eeprom.switches1[item].ls);
-                            d.push_back(eeprom.switches1[item].type);
+                            etl::push_back_ntbs(&eeprom.switches[item].name[0], d);
+                            d.push_back(eeprom.switches[item].ls);
+                            d.push_back(eeprom.switches[item].type);
                         });
-                    }
-                    else if (eeprom.switchAddress2 == swAddress) {
-                        IO::outl<debug>("# Cmd Req: ", item, " adr: ", swAddress);
-                        messageBuffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ArduPilot, [&](auto& d){
-                            d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
-                            d.push_back((uint8_t)eeprom.address);
-                            d.push_back(mDataId);
-                            d.push_back((uint8_t)eeprom.switchAddress2);
-                            d.push_back(item);
-                            etl::push_back_ntbs(&eeprom.switches2[item].name[0], d);
-                            d.push_back(eeprom.switches2[item].ls);
-                            d.push_back(eeprom.switches2[item].type);
-                        });
-
                     }
                 }
             }
@@ -410,10 +409,10 @@ private:
         mServoAddressCommand = p.size() - 1;
         addNode(p, Param_t{parent, PType::U8,  "Servo ID to set", nullptr, nullptr, 1, 16, [](const store_t){return false;}});
 #endif
-        addNode(p, Param_t{parent, PType::U8,  "Switch Address 1", nullptr, &eeprom.switchAddress1, 0, 255, [](const store_t){return true;}});
-        addNode(p, Param_t{parent, PType::U8,  "Switch Address 2", nullptr, &eeprom.switchAddress2, 0, 255, [](const store_t){return true;}});
+        addNode(p, Param_t{parent, PType::U8,  "Switch Address", nullptr, &eeprom.switchAddress, 0, 255, [](const store_t){return true;}});
 
         return p;
     }();
+    static inline const uint32_t uuid = Mcu::Stm::Uuid::get();
 };
 

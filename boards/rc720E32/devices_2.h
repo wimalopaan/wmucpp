@@ -49,8 +49,8 @@
 #include "rc/sbus_2.h"
 #include "rc/sumdv3_2.h"
 #include "crsfchannelcollector.h"
-
 #include "multiplex_pulses.h"
+#include "uuid.h"
 
 struct SW01;
 

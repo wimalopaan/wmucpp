@@ -5,8 +5,14 @@
 #include "meta.h"
 
 #include "mcu/mcu.h"
+#include "mcu/mcu_traits.h"
+#include "mcu/arm.h"
+#include "clock.h"
 #include "timer.h"
+#include "units.h"
+#include "output.h"
 #include "concepts.h"
+#include "gpio.h"
 #include "tick.h"
 
 namespace External {
@@ -17,13 +23,16 @@ namespace External {
         static inline void startRead(auto f) {
             Meta::visitAt<pcas>(mActual, [&]<typename P>(Meta::Wrapper<P>){
                                     if (P::isIdle()) {
+
                                         for(uint8_t i = 0; i < 8; ++i) {
                                             if (auto v = P::switchValue(i); v != mSwStates[mActual][i]) {
                                                 mSwStates[mActual][i] = v;
                                                 f(mActual * 8 + i, v);
                                             }
                                         }
-                                        if (++mActual >= numberOfPCAs) {
+
+                                        ++mActual;
+                                        if (mActual >= numberOfPCAs) {
                                             mActual = 0;
                                         }
                                     }
@@ -32,6 +41,7 @@ namespace External {
                                        P::startRead();
                                 });
         }
+
         static inline void init() {
             (PCAs::init(), ...);
         }
@@ -49,3 +59,4 @@ namespace External {
         static inline std::array<std::array<uint8_t, 8>, numberOfPCAs> mSwStates;
     };
 }
+

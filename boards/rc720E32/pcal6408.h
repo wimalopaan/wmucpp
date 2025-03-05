@@ -16,16 +16,15 @@
 #include "tick.h"
 #include "i2c.h"
 
-#include "etl/event.h"
-
 namespace External {
     using namespace etl::literals;
+
+
     template<typename Device, Mcu::Stm::I2C::Address address, typename systemTimer>
     struct PCAL6408 {
         using dev = Device;
         enum class State : uint8_t {Init, Setup, SetupWait, Idle,
                                     WritePullupOn, WritePullupOnWait, WritePulldownOn, WritePulldownOnWait,
-                                    StartRead1, StartRead2,
                                     Read1, Read2};
 
         enum class Event : uint8_t {None, Start};
@@ -54,7 +53,7 @@ namespace External {
                 break;
             case State::Setup:
                 if (dev::isIdle()) {
-                    dev::write(address, {pupdEnableReg, std::byte{0xff}});
+                    dev::write(address, {pupdEnableReg, 0xff});
                     mState = State::SetupWait;
                 }
                 break;
@@ -65,29 +64,20 @@ namespace External {
                 break;
             case State::Idle:
                 if (dev::isIdle()) {
-                    mEvent.on(Event::Start, []{
+                    if (std::exchange(mEvent, Event::None) == Event::Start) {
                         mState = State::WritePullupOn;
-                    });
+                    }
                 }
                 break;
             case State::WritePullupOn:
-                dev::write(address, {pupdSelectReg, std::byte{0xff}});
+                dev::write(address, {pupdSelectReg, 0xff});
                 mState = State::WritePullupOnWait;
                 break;
             case State::WritePullupOnWait:
                 if (dev::isIdle()) {
-                    // if (dev::errors() > 0) {
-                    //     mState = State::Idle;
-                    // }
-                    // else {
-                    //     mState = State::StartRead1;
-                    // }
-                    mState = State::StartRead1;
+                    dev::read(address, inputReg, 1);
+                    mState = State::Read1;
                 }
-                break;
-            case State::StartRead1:
-                dev::read(address, inputReg, 1);
-                mState = State::Read1;
                 break;
             case State::Read1:
                 if (dev::readDataAvailable()) {
@@ -96,23 +86,14 @@ namespace External {
                 }
                 break;
             case State::WritePulldownOn:
-                dev::write(address, {pupdSelectReg, std::byte{0x00}});
+                dev::write(address, {pupdSelectReg, 0x00});
                 mState = State::WritePulldownOnWait;
                 break;
             case State::WritePulldownOnWait:
                 if (dev::isIdle()) {
-                    // if (dev::errors() > 0) {
-                    //     mState = State::Idle;
-                    // }
-                    // else {
-                    //     mState = State::StartRead2;
-                    // }
-                    mState = State::StartRead2;
+                    dev::read(address, inputReg, 1);
+                    mState = State::Read2;
                 }
-                break;
-            case State::StartRead2:
-                dev::read(address, inputReg, 1);
-                mState = State::Read2;
                 break;
             case State::Read2:
                 if (dev::readDataAvailable()) {
@@ -122,6 +103,7 @@ namespace External {
                 break;
             }
             if (oldState != mState) {
+
             }
         }
         static inline bool isIdle() {
@@ -145,7 +127,7 @@ namespace External {
             }
         }
         private:
-        static inline etl::Event<Event> mEvent;
+        static inline Event mEvent{Event::None};
         static inline std::byte mValuePU{};
         static inline std::byte mValuePD{};
         static inline External::Tick<systemTimer> mStateTick;
