@@ -3,6 +3,8 @@
 #include <etl/event.h>
 #include <etl/algorithm.h>
 
+#include "rc/rc_2.h"
+
 using namespace std::literals::chrono_literals;
 
 template<uint8_t N, typename Config, typename MCU = DefaultMcu>
@@ -11,6 +13,8 @@ struct HwExtension {
     using systemTimer = Config::systemTimer;
     using debug = Config::debug;
     using dmaChComponent = Config::dmaChComponent;
+    using input = Config::input;
+    using storage = Config::storage;
     using pin = Config::pin;
     using tp = Config::tp;
 
@@ -60,6 +64,8 @@ struct HwExtension {
         pin::analog();
     }
 
+    static inline constexpr auto& eeprom = storage::eeprom;
+
     enum class State : uint8_t {Init, Run};
     enum class Event : uint8_t {None, ReceiveComplete, Send};
 
@@ -82,6 +88,7 @@ struct HwExtension {
     }
 
     static inline constexpr External::Tick<systemTimer> initTicks{1000ms};
+    static inline constexpr External::Tick<systemTimer> masterTicks{100ms};
 
     static inline void ratePeriodic() {
         const auto oldState = mState;
@@ -93,6 +100,11 @@ struct HwExtension {
             });
             break;
         case State::Run:
+            if (eeprom.controllerNumber == 0) {
+                mStateTick.on(masterTicks, []{
+                    send();
+                });
+            }
             break;
         }
         if (oldState != mState) {
@@ -137,21 +149,45 @@ struct HwExtension {
     }
     private:
     static inline void send() {
-        // alternate sending switches and props
-        uart::fillSendBuffer([](auto& data){
-            data[0] = 0xaa;
-            data[1] = mControllerNumber;
-            data[2] = 0x00; // type
-            data[3] = 0x08; // length
+        static bool sendSwitches = true;
+        if (sendSwitches) {
+            uart::fillSendBuffer([](auto& data){
+                data[0] = 0xaa;
+                data[1] = eeprom.controllerNumber;
+                data[2] = 0x00; // type
+                data[3] = 0x08; // length
 
-            uint8_t cs = 0;
-            for(uint8_t i = 0; i < 8; ++i) {
-                data[4 + i] = (mSwitches >> (i * 8));
-                cs += data[4 + i];
-            }
-            data[4 + 8] = cs;
-            return 4 + 8 + 1;
-        });
+                uint8_t cs = 0;
+                for(uint8_t i = 0; i < 8; ++i) {
+                    data[4 + i] = (mSwitches >> (i * 8));
+                    cs += data[4 + i];
+                }
+                data[4 + 8] = cs;
+                return 4 + 8 + 1;
+            });
+        }
+        else {
+            uart::fillSendBuffer([](auto& data){
+                data[0] = 0xaa;
+                data[1] = eeprom.controllerNumber;
+                data[2] = 0x01; // type
+                data[3] = 32; // 16 16bit values
+
+                uint8_t cs = 0;
+                for(uint8_t i = 0; i < 16; ++i) {
+                    const uint16_t v = input::value(i) + 1024 - RC::Protokoll::Crsf::V4::mid;
+                    const uint8_t lsb = v;
+                    const uint8_t msb = v >> 8;
+                    data[2 * i + 4] = lsb;
+                    cs += lsb;
+                    data[2 * i + 1 + 4] = msb;
+                    cs += msb;
+                }
+                data[4 + 32] = cs;
+                return 4 + 32 + 1;
+            });
+        }
+        sendSwitches = !sendSwitches;
     }
     static inline bool validityCheck(const volatile uint8_t* const data, const uint16_t size) {
         if (size < 6) {
@@ -175,13 +211,12 @@ struct HwExtension {
     static inline void readReply() {
         uart::readBuffer([&](const auto& data){
             const uint8_t inController = data[1];
-            if ((inController + 1) == mControllerNumber) {
+            if ((inController + 1) == eeprom.controllerNumber) {
                 mEvent = Event::Send;
             }
         });
     }
     static inline uint64_t mSwitches = 0;
-    static inline uint8_t mControllerNumber = 1;
     static inline uint16_t mErrorCount = 0;
     static inline etl::Event<Event> mEvent;
     static inline volatile State mState = State::Init;

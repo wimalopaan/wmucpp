@@ -2,6 +2,7 @@ ToDo
 ============
 * Master-Mode (Controller number == 0)
 * Prop values
+* prop values alternating to switch values
 * ELRS-client mode
 
 LUA Widget
