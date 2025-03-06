@@ -196,6 +196,7 @@ boards/rcDesk32/radio.h
 boards/rcDesk32/startup_g0b1.s
 boards/rcDesk32/switches.h
 boards/rcDesk32/system_g0.cc
+boards/rcDesk32/todo.txt
 boards/rcFocG4/G431L6234_01/Makefile
 boards/rcFocG4/G431L6234_01/foc01.cc
 boards/rcFocG4/G431L6234_01/link_g431.ld

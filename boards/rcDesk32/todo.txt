@@ -1,0 +1,13 @@
+ToDo
+============
+* Master-Mode (Controller number == 0)
+* Prop values
+* ELRS-client mode
+
+LUA Widget
+============
+* Display prop values
+* dialog to add prop mapping
+
+Done
+============
