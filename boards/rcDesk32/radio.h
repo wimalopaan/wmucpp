@@ -1,3 +1,21 @@
+/*
+ * WMuCpp - Bare Metal C++
+ * Copyright (C) 2016 - 2025 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #pragma once
 
 #include <etl/event.h>
@@ -167,25 +185,49 @@ struct HwExtension {
             });
         }
         else {
-            uart::fillSendBuffer([](auto& data){
-                data[0] = 0xaa;
-                data[1] = eeprom.controllerNumber;
-                data[2] = 0x01; // type
-                data[3] = 32; // 16 16bit values
+            if (eeprom.prop8mode) {
+                uart::fillSendBuffer([](auto& data){
+                    data[0] = 0xaa;
+                    data[1] = eeprom.controllerNumber;
+                    data[2] = 0x01; // type
+                    data[3] = 16; // 16 8-bit values
 
-                uint8_t cs = 0;
-                for(uint8_t i = 0; i < 16; ++i) {
-                    const uint16_t v = input::value(i) + 1024 - RC::Protokoll::Crsf::V4::mid;
-                    const uint8_t lsb = v;
-                    const uint8_t msb = v >> 8;
-                    data[2 * i + 4] = lsb;
-                    cs += lsb;
-                    data[2 * i + 1 + 4] = msb;
-                    cs += msb;
-                }
-                data[4 + 32] = cs;
-                return 4 + 32 + 1;
-            });
+                    uint8_t cs = 0;
+                    for(uint8_t i = 0; i < 16; ++i) {
+                        const int vc = input::value(i) - RC::Protokoll::Crsf::V4::mid;
+                        const int vcn = (vc + vc / 8 + vc / 32);
+                        const int v = std::clamp(vcn + 128, 0, 255);
+                        const uint8_t lsb = v;
+                        data[i + 4] = lsb;
+                        cs += lsb;
+                    }
+                    data[4 + 16] = cs;
+                    return 4 + 16 + 1;
+                });
+            }
+            else {
+                uart::fillSendBuffer([](auto& data){
+                    data[0] = 0xaa;
+                    data[1] = eeprom.controllerNumber;
+                    data[2] = 0x02; // type
+                    data[3] = 32; // 16 16-bit values
+
+                    uint8_t cs = 0;
+                    for(uint8_t i = 0; i < 16; ++i) {
+                        const int vc = input::value(i) - RC::Protokoll::Crsf::V4::mid;
+                        const int vcn = (vc + vc / 4); // * 1.25
+                        const int v = std::clamp(vcn + 1024, 0, 2048);
+                        const uint8_t lsb = v;
+                        const uint8_t msb = v >> 8;
+                        data[2 * i + 4] = lsb;
+                        cs += lsb;
+                        data[2 * i + 1 + 4] = msb;
+                        cs += msb;
+                    }
+                    data[4 + 32] = cs;
+                    return 4 + 32 + 1;
+                });
+            }
         }
         sendSwitches = !sendSwitches;
     }
