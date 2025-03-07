@@ -82,7 +82,6 @@ struct EEProm {
 struct Storage {
     static inline void init() {
         std::memcpy(&eeprom, &eeprom_flash, sizeof(EEProm));
-        // eeprom = eeprom_flash; // not working: needs volatile
     }
     static inline void reset() {
         eeprom = EEProm{};
