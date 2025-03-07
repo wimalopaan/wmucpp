@@ -28,7 +28,7 @@
 #define NDEBUG
 
 #define HW_VERSION 1
-#define SW_VERSION 13
+#define SW_VERSION 15
 
 #include <cstdint>
 #include <array>
@@ -308,8 +308,8 @@ struct CrsfCallback {
 private:
     static inline bool mEepromMode = false;
     static inline constexpr uint32_t mSerialNumber{1234};
-    static inline constexpr uint32_t mHWVersion{1};
-    static inline constexpr uint32_t mSWVersion{15};
+    static inline constexpr uint32_t mHWVersion{HW_VERSION};
+    static inline constexpr uint32_t mSWVersion{SW_VERSION};
     static inline constexpr auto mVersionString = [](){
         std::array<char, 16> s{};
         auto [ptr, e] = std::to_chars(std::begin(s), std::end(s), mHWVersion);
