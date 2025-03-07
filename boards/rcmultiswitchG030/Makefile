@@ -1,3 +1,22 @@
+# -*- mode: makefile-gmake; -*-
+#
+# WMuCpp - Bare Metal C++ 
+# Copyright (C) 2016 - 2025 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 # LD_PRELOAD=/usr/local/lib/libstlink.so /usr/local/bin/st-flash --reset --connect-under-reset write cc01.bin  0x8000000
 # LD_PRELOAD=/usr/local/lib/libstlink.so /usr/local/bin/st-trace --trace=24000000     
 
@@ -31,7 +50,7 @@ targets += system_g0.o
 #targets += msw09.elf msw09.bin
 #targets += msw10.elf msw10.bin
 #targets += msw11.elf msw11.bin
-targets += msw12.elf msw12.bin
+#targets += msw12.elf msw12.bin
 targets += msw20.elf msw20.bin
 
 #targets += msw99.elf msw99.bin
