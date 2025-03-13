@@ -4,3 +4,4 @@ image:
 
 tasks:
   - init: echo 'Welcome!'
+  - command: git clone --recursive https://github.com/STMicroelectronics/STM32CubeG0.git /workspace/STM32CubeG0 && git clone --recursive https://github.com/STMicroelectronics/STM32CubeG4.git /workspace/STM32CubeG4
