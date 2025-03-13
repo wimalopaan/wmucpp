@@ -34,7 +34,7 @@ RUN git clone https://aur.archlinux.org/yay-bin.git /tmp/yay-bin && \
 	cd && rm -rf /tmp/yay-bin
 
 # Personal dir dotfiles
-ADD home /home/
+#ADD home /home/
 
 # Personal uploader scripts
-ADD root/bin /usr/local/bin/
+#ADD root/bin /usr/local/bin/
