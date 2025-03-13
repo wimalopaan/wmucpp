@@ -7,6 +7,7 @@ RUN pacman -S --noconfirm \
     7zip \
 	arm-none-eabi-gcc \
 	arm-none-eabi-newlib \
+	avr-gcc \
 	base-devel \
 	bc \
 	cpio \
