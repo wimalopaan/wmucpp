@@ -1,3 +1,5 @@
+.gitpod.yml
+Dockerfile
 Makefile.arm.include
 Makefile.include
 bluetooth.txt

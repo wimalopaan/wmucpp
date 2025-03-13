@@ -26,7 +26,7 @@ struct EEProm {
     uint8_t mode = 0;
     uint8_t prop8mode = 0; // send prop values as 8-bit
     uint8_t address = 0xc8;
-    uint8_t controllerNumber = 0;
+    uint8_t controllerNumber = 1;
     uint8_t bluetooth = 0;
     uint8_t crsf_in = 1;
 };
