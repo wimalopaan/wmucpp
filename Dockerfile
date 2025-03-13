@@ -6,6 +6,7 @@ RUN pacman -Syu --noconfirm
 RUN pacman -S --noconfirm \
     7zip \
 	arm-none-eabi-gcc \
+	arm-none-eabi-newlib \
 	base-devel \
 	bc \
 	cpio \
@@ -32,6 +33,10 @@ RUN git clone https://aur.archlinux.org/yay-bin.git /tmp/yay-bin && \
     cd /tmp/yay-bin && \
 	makepkg -si --noconfirm && \
 	cd && rm -rf /tmp/yay-bin
+
+RUN git clone --recursive https://github.com/STMicroelectronics/STM32CubeG0.git /workspace/STM32CubeG0
+
+RUN git clone --recursive https://github.com/STMicroelectronics/STM32CubeG4.git /workspace/STM32CubeG4
 
 # Personal dir dotfiles
 #ADD home /home/
