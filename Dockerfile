@@ -8,6 +8,7 @@ RUN pacman -S --noconfirm \
 	arm-none-eabi-gcc \
 	arm-none-eabi-newlib \
 	avr-gcc \
+	avr-libc \
 	base-devel \
 	bc \
 	cpio \
