@@ -79,11 +79,11 @@ namespace AVR {
         
     } //!Util
 
-    template<typename CN, AVR::Concepts::ProtocolAdapter PA = External::Hal::NullProtocollAdapter<>, etl::Concepts::NamedFlag useISR = etl::NamedFlag<true>,
+    template<typename CN, typename  PA = External::Hal::NullProtocollAdapter<>, etl::Concepts::NamedFlag useISR = etl::NamedFlag<true>,
              etl::Concepts::NamedConstant RecvQLength = ReceiveQueueLength<64>, 
              etl::Concepts::NamedConstant SendQLength = SendQueueLength<64>, typename MCU = DefaultMcuType> class Usart;
     
-    template<AVR::Concepts::ComponentNumber CN, AVR::Concepts::ProtocolAdapter PA, etl::Concepts::NamedFlag useISR,
+    template<AVR::Concepts::ComponentNumber CN, typename PA, etl::Concepts::NamedFlag useISR,
              etl::Concepts::NamedConstant RecvQLength, etl::Concepts::NamedConstant SendQLength , AVR::Concepts::AtMega MCU >
     class Usart<CN, PA, useISR, RecvQLength, SendQLength, MCU> final : public UsartBase<MCU, CN::value> {
         

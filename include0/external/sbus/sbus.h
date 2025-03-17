@@ -26,7 +26,7 @@ namespace External {
             using namespace std::literals::chrono;
             using namespace External::Units::literals;
             
-            template<auto N, typename Timer, typename Dbg = void>
+            template<auto N, typename Timer, typename Dbg = void, typename Callback = void>
             struct ProtocollAdapter {
                 enum class State : uint8_t {Undefined, Data, GotEnd, WaitEnd};
 
@@ -114,7 +114,12 @@ namespace External {
                     case State::WaitEnd:
                         if (b == end_byte) {
                             mState = State::GotEnd;
-                            decode();
+                            if constexpr (std::is_same_v<Callback, void>) {
+                                decode();
+                            }
+                            else {
+                                Callback::decode(mData);
+                            }
                             ++mPackages;
                         }
                         else {
