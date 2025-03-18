@@ -1,100 +1,56 @@
 #define NDEBUG
 #define AUTO_BUS
 
+#define DEFAULT_ADDRESS 0
+
+#define USE_ELRS
+//#define USE_AFHDS2A
+//#define USE_FRSKY
+
 #include "board.h"
+#include "leds.h"
 
 template<typename Config>
 struct SBusCommandCallback {
     using debug = Config::debug;
-
-    static inline uint8_t lastCommand = 0;
+    using leds = Config::leds;
 
     static inline void decode(const std::array<uint8_t, 23>& data) {
         const uint16_t ch16 = (uint16_t) ((data[20]>>5 | data[21]<<3) & 0x07FF);
-        const uint16_t n = (ch16 >= 172) ? (ch16 - 172) : 0;
+#ifdef USE_ELRS
+        static constexpr uint16_t value0 = 172;
+        const uint16_t n = (ch16 >= value0) ? (ch16 - value0) : 0;
         const uint8_t  v = (n >> 4);
-
+#endif
+#ifdef USE_AFHDS2A
+        static constexpr uint16_t value0 = 220;
+        const uint16_t n = (ch16 >= value0) ? (ch16 - value0) : 0;
+        const uint16_t n2 = n + (n >> 6);
+        const uint8_t  v = (n2 >> 4);
+#endif
         const uint8_t address = (v >> 4) & 0b11;
         const uint8_t sw      = (v >> 1) & 0b111;
         const uint8_t state   = v & 0b1;
 
-        if (v != lastCommand) {
-            lastCommand = v;
-            etl::outl<debug>("v: "_pgm, v, etl::Char{' '}, address, etl::Char{' '}, sw, etl::Char{' '}, state);
-            set(sw, (state == 1));
-        }
-    }
-    static inline void set(const uint8_t led, const bool on) {
-        if (led == 0) {
-            if (on) {
-                led0::on();
-            }
-            else {
-                led0::off();
-            }
-        }
-        else if (led == 1) {
-            if (on) {
-                led1::on();
-            }
-            else {
-                led1::off();
-            }
-        }
-        else if (led == 2) {
-            if (on) {
-                led2::on();
-            }
-            else {
-                led2::off();
-            }
-        }
-        else if (led == 3) {
-            if (on) {
-                led3::on();
-            }
-            else {
-                led3::off();
-            }
-        }
-        else if (led == 4) {
-            if (on) {
-                led4::on();
-            }
-            else {
-                led4::off();
-            }
-        }
-        else if (led == 5) {
-            if (on) {
-                led5::on();
-            }
-            else {
-                led5::off();
-            }
-        }
-        else if (led == 6) {
-            if (on) {
-                led6::on();
-            }
-            else {
-                led6::off();
-            }
-        }
-        else if (led == 7) {
-            if (on) {
-                led7::on();
-            }
-            else {
-                led7::off();
+        if (v != mLastCommand) {
+            mLastCommand = v;
+            etl::outl<debug>("ch16: "_pgm, ch16, ", adr: "_pgm, address, " sw: "_pgm, sw, ", state: "_pgm, state);
+            if (address == mAddress) {
+                const bool on = (state == 1);
+                leds::set(sw, on);
             }
         }
     }
+    private:
+    static inline uint8_t mLastCommand = 0;
+    static inline uint8_t mAddress = DEFAULT_ADDRESS;
 };
 
 template<typename Config>
 struct Devices {
     struct CallbackConfig;
+
+    using leds = Leds<ledList>;
 
     using cb = SBusCommandCallback<CallbackConfig>;
 
@@ -106,42 +62,29 @@ struct Devices {
 
     struct CallbackConfig {
         using debug = terminal;
+        using leds = Devices::leds;
     };
-
     static inline void init() {
-        led0::dir<AVR::Output>();
-        led1::dir<AVR::Output>();
-        led2::dir<AVR::Output>();
-        led3::dir<AVR::Output>();
-        led4::dir<AVR::Output>();
-        led5::dir<AVR::Output>();
-        led6::dir<AVR::Output>();
-        led7::dir<AVR::Output>();
-
+        leds::init();
         servo::template init<AVR::BaudRate<100000>, FullDuplex, true, 1>(); // 8E2
         servo::rxInvert(true);
     }
     static inline void periodic() {
         servo::periodic();
     }
-
-    static constexpr External::Tick<systemTimer> debugTicks{500_ms};
-
     static inline void ratePeriodic() {
         servo_pa::ratePeriodic();
         ++mStateTicks;
-
         mStateTicks.on(debugTicks, []{
-            etl::outl<terminal>("x"_pgm);
+            etl::outl<terminal>("tick"_pgm);
         });
     }
-
+    private:
+    static constexpr External::Tick<systemTimer> debugTicks{500_ms};
     inline static External::Tick<systemTimer> mStateTicks;
-
 };
 
-struct DevsConfig {
-};
+struct DevsConfig {};
 using devices = Devices<DevsConfig>;
 
 int main() {
@@ -152,7 +95,6 @@ int main() {
     systemTimer::init();
 
     devices::init();
-
     while(true) {
         devices::periodic();
         systemTimer::periodic([&]{

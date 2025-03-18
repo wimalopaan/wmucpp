@@ -682,6 +682,7 @@ boards/rcmultiswitch/doc/Makefile
 boards/rcmultiswitch/doc/rcmultiswitch.adoc
 boards/rcmultiswitch/doc/rcmultiswitch_h.adoc
 boards/rcmultiswitch/fsm.h
+boards/rcmultiswitch/leds.h
 boards/rcmultiswitch/multi8d.cc
 boards/rcmultiswitch/multi8hott.cc
 boards/rcmultiswitch/multi8man.cc

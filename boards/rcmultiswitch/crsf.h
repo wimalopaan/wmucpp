@@ -423,7 +423,6 @@ namespace Crsf {
                     (b == Crsf::Address::TX) ||
                     (b == Crsf::Address::Broadcast))
                 {
-                    mAddress = b;
                     mState = State::GotAddress;
                 }
                 break;
@@ -456,7 +455,7 @@ namespace Crsf {
                                 const std::byte command = mData[3];
                                 if (command == Crsf::SwitchCommand::Set) {
                                     if (mData[4] == mModuleAddress) {
-                                        etl::outl<dbg>("set"_pgm, mData[5]);
+                                        etl::outl<dbg>("set: "_pgm, mData[5]);
                                         cb::set(mData[5]);
                                     }
                                 }
@@ -470,7 +469,7 @@ namespace Crsf {
                                                 sw8 |= std::byte(1 << i);
                                             }
                                         }
-                                        etl::outl<dbg>("set4"_pgm, sw8);
+                                        etl::outl<dbg>("set4: "_pgm, sw8);
                                         cb::set(sw8);
                                     }
                                 }
@@ -504,11 +503,14 @@ namespace Crsf {
         }
         static inline void ratePeriodic() {}
 
+        static inline uint16_t commandPackages() {
+            return mCommandPackagesCounter;
+        }
+
         private:
         inline static CRC8 csum;
         inline static State mState = State::Undefined;
         inline static std::array<std::byte, maxMessageSize> mData;
-        inline static std::byte mAddress{};
         inline static std::byte mModuleAddress{};
         inline static uint8_t mPayloadIndex{};
         inline static uint8_t mLength{};

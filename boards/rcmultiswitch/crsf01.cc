@@ -3,9 +3,28 @@
 
 #include "board.h"
 #include "crsf.h"
+#include "leds.h"
 
-template<typename ComCb>
+template<typename Leds>
+struct CrsfCommandCallback {
+    static inline void set(const std::byte data) {
+        std::byte mask = 0b1_B;
+        for(uint8_t i = 0; i < 8; ++i) {
+            if (std::any(data & mask)) {
+                Leds::set(i, true);
+            }
+            else {
+                Leds::set(i, false);
+            }
+            mask <<= 1;
+        }
+    }
+};
+
+template<typename Config>
 struct Devices {
+    using leds = Leds<ledList>;
+
     struct CrsfAdapterConfig;
     using crsf_pa = Crsf::Adapter<CrsfAdapterConfig>;
     using crsf = AVR::Usart<usart0Position, crsf_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
@@ -15,86 +34,32 @@ struct Devices {
 
     struct CrsfAdapterConfig {
         using debug = terminal;
-        using cb = ComCb;
+        using cb = CrsfCommandCallback<leds>;
     };
 
     static inline void init() {
+        leds::init();
         crsf::template init<BaudRate<420000>>();
-
-        led0::dir<AVR::Output>();
-        led1::dir<AVR::Output>();
-        led2::dir<AVR::Output>();
-        led3::dir<AVR::Output>();
-        led4::dir<AVR::Output>();
-        led5::dir<AVR::Output>();
-        led6::dir<AVR::Output>();
-        led7::dir<AVR::Output>();
     }
     static inline void periodic() {
         crsf::periodic();
     }
     static inline void ratePeriodic() {
         crsf_pa::ratePeriodic();
+        ++mStateTicks;
+        mStateTicks.on(debugTicks, []{
+            etl::outl<terminal>("cp: "_pgm, crsf_pa::commandPackages());
+        });
     }
+    private:
+    static constexpr External::Tick<systemTimer> debugTicks{500_ms};
+    inline static External::Tick<systemTimer> mStateTicks;
 };
 
-struct CrsfCommandCallback {
-    static inline void set(const std::byte data) {
-        if (std::any(data & 0x01_B)) {
-            led0::on();
-        }
-        else {
-            led0::off();
-        }
-        if (std::any(data & 0x02_B)) {
-            led1::on();
-        }
-        else {
-            led1::off();
-        }
-        if (std::any(data & 0x04_B)) {
-            led2::on();
-        }
-        else {
-            led2::off();
-        }
-        if (std::any(data & 0x08_B)) {
-            led3::on();
-        }
-        else {
-            led3::off();
-        }
-        if (std::any(data & 0x10_B)) {
-            led4::on();
-        }
-        else {
-            led4::off();
-        }
-        if (std::any(data & 0x20_B)) {
-            led5::on();
-        }
-        else {
-            led5::off();
-        }
-        if (std::any(data & 0x40_B)) {
-            led6::on();
-        }
-        else {
-            led6::off();
-        }
-        if (std::any(data & 0x80_B)) {
-            led7::on();
-        }
-        else {
-            led7::off();
-        }
-    }
-};
-
-using devices = Devices<CrsfCommandCallback>;
+struct DevsConfig {};
+using devices = Devices<DevsConfig>;
 
 int main() {
-
     portmux1::init();
     ccp::unlock([]{
         clock::prescale<1>();
