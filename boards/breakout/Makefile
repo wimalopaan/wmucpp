@@ -53,5 +53,6 @@ targets += da01.hex
 targets += da02.hex
 targets += si5351.hex
 targets += fsk00.hex
+#targets += mswitch01.hex
 
 -include ../../Makefile.avr0.include

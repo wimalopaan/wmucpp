@@ -1,0 +1,38 @@
+#pragma once
+
+template<typename Config>
+struct SBusCommandCallback {
+    using debug = Config::debug;
+    using leds = Config::leds;
+
+    static inline void decode(const std::array<uint8_t, 23>& data) {
+        const uint16_t ch16 = (uint16_t) ((data[20]>>5 | data[21]<<3) & 0x07FF);
+#ifdef USE_ELRS
+        static constexpr uint16_t value0 = 172;
+        const uint16_t n = (ch16 >= value0) ? (ch16 - value0) : 0;
+        const uint8_t  v = (n >> 4);
+#endif
+#ifdef USE_AFHDS2A
+        static constexpr uint16_t value0 = 220;
+        const uint16_t n = (ch16 >= value0) ? (ch16 - value0) : 0;
+        const uint16_t n2 = n + (n >> 6);
+        const uint8_t  v = (n2 >> 4);
+#endif
+        const uint8_t address = (v >> 4) & 0b11;
+        const uint8_t sw      = (v >> 1) & 0b111;
+        const uint8_t state   = v & 0b1;
+
+        if (v != mLastCommand) {
+            mLastCommand = v;
+            etl::outl<debug>("ch16: "_pgm, ch16, ", adr: "_pgm, address, " sw: "_pgm, sw, ", state: "_pgm, state);
+            if (address == mAddress) {
+                const bool on = (state == 1);
+                leds::set(sw, on);
+            }
+        }
+    }
+    private:
+    static inline uint8_t mLastCommand = 0;
+    static inline uint8_t mAddress = DEFAULT_ADDRESS;
+};
+

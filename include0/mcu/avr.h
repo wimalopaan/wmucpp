@@ -2,15 +2,15 @@
 
 #if __has_include(<avr/io.h>)
 # include <avr/io.h>
-# undef _MMIO_BYTE
-# define _MMIO_BYTE(adr) ((uintptr_t)(adr))
-# define _MMIO_BYTE_CHANGED
+// # undef _MMIO_BYTE
+// # define _MMIO_BYTE(adr) ((uintptr_t)(adr))
+// # define _MMIO_BYTE_CHANGED
 
 # ifdef ADC
 #  undef ADC
 # endif
-
 #endif
+
 #if __has_include(<util/twi.h>)
 # include <util/twi.h>
 #endif
@@ -18,7 +18,7 @@
 # include <avr/interrupt.h>
 #endif
 #if __has_include(<avr/pgmspace.h>)
-# include <avr/pgmspace.h>
+// # include <avr/pgmspace.h>
 #endif
 
 #ifndef __AVR_ARCH__ 

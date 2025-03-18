@@ -279,22 +279,22 @@ namespace Crsf {
         const char* unitString = nullptr;
         uint8_t prec = 1;
         uint32_t fstep = 1;
-        inline uint16_t size() const {
-            uint16_t l = 4 * sizeof(T) + 1 + 1 + 1; // 4(value, default, min, max) + type + parent + units
-            if (name) {
-                l += strlen(name) + 1;
-            }
-            if (options) {
-                l += strlen(options) + 1;
-            }
-            if (stringValue) {
-                l += strlen(stringValue) + 1;
-            }
-            if (unitString) {
-                l += strlen(unitString) + 1;
-            }
-            return l;
-        }
+        // inline uint16_t size() const {
+        //     uint16_t l = 4 * sizeof(T) + 1 + 1 + 1; // 4(value, default, min, max) + type + parent + units
+        //     if (name) {
+        //         l += strlen(name) + 1;
+        //     }
+        //     if (options) {
+        //         l += strlen(options) + 1;
+        //     }
+        //     if (stringValue) {
+        //         l += strlen(stringValue) + 1;
+        //     }
+        //     if (unitString) {
+        //         l += strlen(unitString) + 1;
+        //     }
+        //     return l;
+        // }
         // template<typename U, typename C>
         // inline void serializeNumerical(C& c) {
         //     etl::serializeBE<U>(value(), c);
