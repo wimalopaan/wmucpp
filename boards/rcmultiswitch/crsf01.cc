@@ -1,6 +1,8 @@
 #define NDEBUG
 #define AUTO_BUS
 
+#define DEFAULT_ADDRESS 0
+
 #include "board.h"
 #include "crsf.h"
 #include "leds.h"
@@ -39,6 +41,7 @@ struct Devices {
 
     static inline void init() {
         leds::init();
+        crsf_pa::address(std::byte{DEFAULT_ADDRESS});
         crsf::template init<BaudRate<420000>>();
     }
     static inline void periodic() {

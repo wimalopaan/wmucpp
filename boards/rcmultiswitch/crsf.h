@@ -506,7 +506,9 @@ namespace Crsf {
         static inline uint16_t commandPackages() {
             return mCommandPackagesCounter;
         }
-
+        static inline void address(const std::byte adr) {
+            mModuleAddress = adr;
+        }
         private:
         inline static CRC8 csum;
         inline static State mState = State::Undefined;
