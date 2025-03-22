@@ -1,3 +1,21 @@
+/*
+ * WMuCpp - Bare Metal C++
+ * Copyright (C) 2016 - 2025 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #pragma once
 
 #include <mcu/avr.h>
@@ -80,18 +98,16 @@ namespace  {
     constexpr auto dt = 2_ms;
 #ifdef AUTO_BUS
     constexpr auto fRtc = 1000_Hz; // 1ms
-#endif
-#ifdef USE_HOTT
+#elif defined(USE_HOTT)
     constexpr auto fRtc = 500_Hz;
-#endif
-#ifdef USE_SBUS
+#elif defined(USE_SBUS)
     constexpr auto fRtc = 1000_Hz;
-#endif
-#ifdef USE_IBUS
+#elif defined(USE_IBUS)
     constexpr auto fRtc = 128_Hz;
-#endif
-#ifdef USE_PPM
+#elif defined(USE_PPM)
     constexpr auto fRtc = 128_Hz;
+#else
+    constexpr auto fRtc = 1000_Hz; // 1ms
 #endif
     
     constexpr double Ro = 4'700;

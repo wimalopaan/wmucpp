@@ -1,9 +1,32 @@
+/*
+ * WMuCpp - Bare Metal C++
+ * Copyright (C) 2016 - 2025 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #define NDEBUG
 
-// #define INPUT_CRSF
-#define INPUT_SBUS
+#define INPUT_CRSF
+// #define INPUT_SBUS
 
 #define DEFAULT_ADDRESS 0
+
+#define CRSF_BAUDRATE 420'000
+#define SBUS_BAUDRATE 100'000
+
+// #define SBUS_INVERT
 
 #define USE_ELRS
 //#define USE_AFHDS2A
@@ -47,6 +70,7 @@ using systemTimer = SystemTimer<Component::Rtc<0>, fRtc>;
 using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Default>;
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position>>;
 
+#if defined(__AVR_AVR128DA32__)
 using led7 = Pin<Port<D>, 7>;
 using led6 = Pin<Port<D>, 6>;
 using led5 = Pin<Port<D>, 5>;
@@ -57,6 +81,20 @@ using led1 = Pin<Port<D>, 1>;
 using led0 = Pin<Port<D>, 0>;
 
 using tp   = Pin<Port<A>, 7>;
+
+#elif defined(__AVR_ATtiny1614__)
+using led7 = Pin<Port<A>, 4>;
+using led6 = Pin<Port<A>, 5>;
+using led5 = Pin<Port<A>, 6>;
+using led4 = Pin<Port<A>, 7>;
+using led3 = Pin<Port<A>, 1>;
+using led2 = Pin<Port<A>, 2>;
+using led1 = Pin<Port<B>, 1>;
+using led0 = Pin<Port<B>, 0>;
+
+using tp   = Pin<Port<A>, 3>;
+#endif
+
 
 using ledList = Meta::List<led0, led1, led2, led3, led4, led5, led6, led7>;
 
@@ -85,7 +123,7 @@ namespace Crsf {
             leds::init();
             tp::dir<Output>();
             crsf_pa::address(std::byte{DEFAULT_ADDRESS});
-            crsf::template init<BaudRate<420000>>();
+            crsf::template init<BaudRate<CRSF_BAUDRATE>>();
         }
         static inline void periodic() {
             tp::toggle();
@@ -123,8 +161,10 @@ namespace Sbus {
         static inline void init() {
             leds::init();
             tp::dir<Output>();
-            servo::template init<AVR::BaudRate<100000>, FullDuplex, true, 1>(); // 8E2
+            servo::template init<AVR::BaudRate<SBUS_BAUDRATE>, FullDuplex, true, 1>(); // 8E2
+#ifndef SBUS_INVERT
             servo::rxInvert(true);
+#endif
         }
         static inline void periodic() {
             tp::toggle();
@@ -155,7 +195,13 @@ using devices = Sbus::Devices<DevsConfig>;
 int main() {
     portmux::init();
     ccp::unlock([]{
+#if defined(__AVR_AVR128DA32__)
         clock::template init<Project::Config::fMcuMhz>();
+#elif defined(__AVR_ATtiny1614__)
+        clock::prescale<2>();
+#else
+#error "wrong MCU"
+#endif
     });
     systemTimer::init();
 

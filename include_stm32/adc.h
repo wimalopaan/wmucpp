@@ -27,12 +27,12 @@ namespace Mcu::Stm {
 
     template<typename T>
     concept isTriggerSource = requires(T t) {
-        {T::trgo()};
-    };
+    {T::trgo()};
+};
     template<typename T>
     concept isClockDivider = requires(T t) {
-        {T::clockDivider};
-    };
+    {T::clockDivider};
+};
 
     template<typename C>
     struct isContinousSampling : std::false_type {};
@@ -51,14 +51,310 @@ namespace Mcu::Stm {
 #endif
     }
 
+    namespace V4 {
+#define TEMPSENSOR_CAL1_ADDR               ((uint16_t*) (0x1FFF75A8UL))
+#define TEMPSENSOR_CAL2_ADDR               ((uint16_t*) (0x1FFF75CAUL))
+#define TEMPSENSOR_CAL1_TEMP               (30L)
+#define TEMPSENSOR_CAL2_TEMP               (110L)
+
+        static inline float adc2Temp(const uint16_t v) {
+            return (float)(TEMPSENSOR_CAL2_TEMP - TEMPSENSOR_CAL1_TEMP) / (*TEMPSENSOR_CAL2_ADDR - *TEMPSENSOR_CAL1_ADDR) * (v - *TEMPSENSOR_CAL1_ADDR) + TEMPSENSOR_CAL1_TEMP;
+        }
+
+        template<uint8_t N, typename Config, typename MCU = DefaultMcu> struct Adc;
+        template<uint8_t N, typename Config, typename MCU>
+        requires ((N >= 1) && (N <= 2))
+        struct Adc<N, Config, MCU> {
+            static inline /*constexpr */ ADC_TypeDef* const mcuAdc = reinterpret_cast<ADC_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Adc<N, MCU>>::value);
+            static inline /*constexpr */ ADC_Common_TypeDef* const mcuAdcCommon = reinterpret_cast<ADC_Common_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Adc<N, MCU>>::common);
+
+            static inline constexpr uint8_t number = N;
+#ifdef STM32G4
+            static inline constexpr std::array<uint8_t, 4> sqr1Positions{ADC_SQR1_SQ1_Pos, ADC_SQR1_SQ2_Pos, ADC_SQR1_SQ3_Pos, ADC_SQR1_SQ4_Pos};
+            static inline constexpr std::array<uint8_t, 5> sqr2Positions{ADC_SQR2_SQ5_Pos, ADC_SQR2_SQ6_Pos, ADC_SQR2_SQ7_Pos, ADC_SQR2_SQ8_Pos, ADC_SQR2_SQ9_Pos};
+#endif
+            using channels_list = Config::channels;
+            static inline constexpr uint8_t nChannels = channels_list::size();
+            static_assert(nChannels <= 9);
+            static_assert(nChannels > 0);
+
+            using dmaChComponent = Config::dmaChannel;
+            struct dmaChConfig {
+                using controller = Mcu::Stm::Dma::Controller<dmaChComponent::controller::number_t::value>;
+                using value_t = uint16_t;
+                static inline constexpr bool memoryIncrement = true;
+            };
+            using dmaChannel = Mcu::Stm::Dma::V2::Channel<dmaChComponent::number_t::value, dmaChConfig>;
+
+            using dmaStorage = std::array<volatile uint16_t, nChannels>;
+
+            using trigger = Config::trigger;
+
+            using isrConfig = Config::isrConfig;
+
+            static inline void wait_us(const uint32_t us) {
+                volatile uint32_t w = us * 170;
+                while(w != 0) {
+                    w = w - 1;
+                }
+            }
+
+#ifdef STM32G4
+            static inline void init() {
+                RCC->CCIPR |= 0x02 << RCC_CCIPR_ADC12SEL_Pos; // System Clock
+                RCC->AHB2ENR |= RCC_AHB2ENR_ADC12EN;
+
+                MODIFY_REG(mcuAdc->CR , ADC_CR_DEEPPWD_Msk, 0x00 << ADC_CR_DEEPPWD_Pos);
+                mcuAdc->CR |= ADC_CR_ADVREGEN;
+
+                wait_us(100); // really???
+
+                mcuAdc->ISR = ADC_ISR_ADRDY; // clear flag
+
+                MODIFY_REG(mcuAdcCommon->CCR, ADC_CCR_PRESC_Msk, (0b0010 << ADC_CCR_PRESC_Pos)); // 170 / 4 = 42,5 MHz
+
+                mcuAdcCommon->CCR |= ADC_CCR_VSENSESEL; // temp
+                mcuAdcCommon->CCR |= ADC_CCR_VREFEN; // temp
+
+                MODIFY_REG(mcuAdc->CFGR , ADC_CFGR_RES_Msk, (0x00 << ADC_CFGR_RES_Pos)); // 12 bit
+
+                if constexpr(!std::is_same_v<TriggerSource, NoTriggerSource>) {
+                    // TriggerSource::_;
+                    // std::integral_constant<uint16_t, TriggerSource::trgo()>::_;
+                    MODIFY_REG(mcuAdc->CFGR , ADC_CFGR_EXTSEL_Msk, (TriggerSource::trgo() << ADC_CFGR_EXTSEL_Pos));
+                    MODIFY_REG(mcuAdc->CFGR , ADC_CFGR_EXTEN_Msk, (0b10 << ADC_CFGR_EXTEN_Pos)); // falling
+                    // MODIFY_REG(mcuAdc->CFGR , ADC_CFGR_EXTEN_Msk, (0b11 << ADC_CFGR_EXTEN_Pos)); // both
+                }
+
+                if constexpr(!std::is_same_v<DmaChannel, void>) {
+                    DmaChannel::init();
+                    DmaChannel::template msize<uint16_t>();
+                    DmaChannel::template psize<uint16_t>();
+
+                    DmaChannel::mcuDmaChannel->CCR |= DMA_CCR_MINC;
+                    DmaChannel::mcuDmaChannel->CCR |= DMA_CCR_CIRC;
+                    DmaChannel::mcuDmaChannel->CCR &= ~DMA_CCR_DIR;
+                    DmaChannel::mcuDmaChannel->CNDTR = nChannels;
+                    DmaChannel::mcuDmaChannel->CPAR = (uint32_t)(&mcuAdc->DR);
+                    DmaChannel::mcuDmaChannel->CMAR = (uint32_t)&mData[0];
+                    DmaChannel::enable();
+
+                    DmaChannel::mcuDmaMux->CCR = Mcu::Stm::Adcs::Properties<N>::dmamux_src & DMAMUX_CxCR_DMAREQ_ID_Msk;
+                    DmaChannel::mcuDmaMux->CCR |= DMAMUX_CxCR_EGE;
+
+                    DmaChannel::mcuDmaChannel->CCR |= DMA_CCR_EN;
+
+                    mcuAdc->CFGR |= ADC_CFGR_DMACFG;
+                    mcuAdc->CFGR |= ADC_CFGR_DMAEN;
+                }
+
+                mcuAdc->SQR1 = []{
+                    uint32_t r = (nChannels - 1) << ADC_SQR1_L_Pos;
+                    for(uint8_t i{0}; i < std::min(nChannels, uint8_t{4}); ++i) {
+                        r |= (channels[i] << sqr1Positions[i]);
+                    }
+                    return r;
+                }();
+
+                if constexpr(nChannels > 4) {
+                    mcuAdc->SQR2 = []{
+                        uint32_t r = 0;
+                        for(uint8_t i{4}; i < nChannels; ++i) {
+                            r |= (channels[i] << sqr2Positions[i - 4]);
+                        }
+                        return r;
+                    }();
+                }
+                if constexpr(!std::is_same_v<ISRConfig, void>) {
+                    if constexpr(Meta::contains_v<ISRConfig, EndOfSequence>) {
+                        mcuAdc->IER |= ADC_IER_EOSIE;
+                    }
+                    if constexpr(Meta::contains_v<ISRConfig, EndOfConversion>) {
+                        mcuAdc->IER |= ADC_IER_EOCIE;
+                    }
+                }
+
+                mcuAdc->CR |= ADC_CR_ADCAL;
+                while(mcuAdc->CR & ADC_CR_ADCAL);
+
+                wait_us(1); // 4 clock cycles needed (see Datasheet)
+
+                mcuAdc->CR |= ADC_CR_ADEN;
+            }
+#endif
+#ifdef STM32G0
+            static inline void reset() {
+                RCC->APBRSTR2 = RCC_APBRSTR2_ADCRST;
+                RCC->APBRSTR2 &= ~RCC_APBRSTR2_ADCRST;
+            }
+            static inline void init() {
+                RCC->APBENR2 |= RCC_APBENR2_ADCEN;
+                mcuAdc->CR |= ADC_CR_ADVREGEN;
+
+                wait_us(100);
+
+                mcuAdc->ISR = -1;
+
+                mcuAdcCommon->CCR = [] consteval {
+                        uint32_t r = 0;
+                        if constexpr(isClockDivider<trigger>) {
+                            static constexpr uint16_t values[16] = {1, 2, 4, 6, 8, 10, 12, 16, 32, 64, 128, 256};
+                            static constexpr uint8_t bits = [&]{
+                                for(uint8_t i = 0; i < std::size(values); ++i) {
+                                    if (values[i] == trigger::clockDivider) {
+                                        return i;
+                                    }
+                                }
+                                assert(false);
+                            }();
+                            // std::integral_constant<uint8_t, bits>::_;
+                            r |= (bits << ADC_CCR_PRESC_Pos); // 64 / 4 = 42,5 MHz
+                        }
+                        else {
+                            r |= (0b0010 << ADC_CCR_PRESC_Pos); // 64 / 4 = 42,5 MHz
+                        }
+                        r |= ADC_CCR_VREFEN;
+                        r |= ADC_CCR_TSEN;
+                        return r;
+                }();
+
+                // if constexpr(isClockDivider<trigger>) {
+                //     static constexpr uint16_t values[16] = {1, 2, 4, 6, 8, 10, 12, 16, 32, 64, 128, 256};
+                //     static constexpr uint8_t bits = [&]{
+                //         for(uint8_t i = 0; i < std::size(values); ++i) {
+                //             if (values[i] == trigger::clockDivider) {
+                //                 return i;
+                //             }
+                //         }
+                //         assert(false);
+                //     }();
+                //     // std::integral_constant<uint8_t, bits>::_;
+                //     MODIFY_REG(mcuAdcCommon->CCR, ADC_CCR_PRESC_Msk, (bits << ADC_CCR_PRESC_Pos)); // 64 / 4 = 42,5 MHz
+                // }
+                // else {
+                //     MODIFY_REG(mcuAdcCommon->CCR, ADC_CCR_PRESC_Msk, (0b0010 << ADC_CCR_PRESC_Pos)); // 64 / 4 = 42,5 MHz
+                // }
+                // mcuAdcCommon->CCR |= ADC_CCR_VREFEN; // temp
+
+                mcuAdc->CFGR1 = []consteval{
+                        uint32_t r = 0;
+                        r |= (0x00 << ADC_CFGR1_RES_Pos);
+                        if constexpr(isTriggerSource<trigger>) {
+                            // TriggerSource::_;
+                            // std::integral_constant<uint16_t, TriggerSource::trgo()>::_;
+                            r |= (trigger::trgo() << ADC_CFGR1_EXTSEL_Pos);
+                            r |= (0b10 << ADC_CFGR1_EXTEN_Pos); // falling
+                        }
+                        if constexpr(isContinousSampling<trigger>::value) {
+                            r |= ADC_CFGR1_CONT;
+                        }
+                        r |= (ADC_CFGR1_DMACFG | ADC_CFGR1_DMAEN);
+                        return r;
+                }();
+
+                // MODIFY_REG(mcuAdc->CFGR1, ADC_CFGR1_RES_Msk, (0x00 << ADC_CFGR1_RES_Pos)); // 12 bit
+
+                // if constexpr(isTriggerSource<trigger>) {
+                //     // TriggerSource::_;
+                //     // std::integral_constant<uint16_t, TriggerSource::trgo()>::_;
+                //     MODIFY_REG(mcuAdc->CFGR1, ADC_CFGR1_EXTSEL_Msk, (trigger::trgo() << ADC_CFGR1_EXTSEL_Pos));
+                //     MODIFY_REG(mcuAdc->CFGR1, ADC_CFGR1_EXTEN_Msk, (0b10 << ADC_CFGR1_EXTEN_Pos)); // falling
+                //     // MODIFY_REG(mcuAdc->CFGR , ADC_CFGR_EXTEN_Msk, (0b11 << ADC_CFGR_EXTEN_Pos)); // both
+                // }
+                // if constexpr(isContinousSampling<trigger>::value) {
+                //     mcuAdc->CFGR1 |= ADC_CFGR1_CONT;
+                // }
+
+                mcuAdc->CHSELR = []<auto... CC>(std::integer_sequence<auto, CC...>) consteval {
+                        return ((uint32_t{1} << CC) | ...);
+                    }(channels_list{});
+
+                dmaChannel::init();
+                dmaChannel::startRead(nChannels, (uint32_t)&mcuAdc->DR, &mData[0], Mcu::Stm::Adcs::Properties<N>::dmamux_src);
+
+                // mcuAdc->CFGR1 |= (ADC_CFGR1_DMACFG | ADC_CFGR1_DMAEN);
+
+                mcuAdc->IER = [] consteval {
+                        uint32_t r = 0;
+                        if constexpr(Meta::contains_v<isrConfig, EndOfSequence>) {
+                            r |= ADC_IER_EOSIE;
+                        }
+                        if constexpr(Meta::contains_v<isrConfig, EndOfConversion>) {
+                            r |= ADC_IER_EOCIE;
+                        }
+                        return r;
+                }();
+
+                mcuAdc->CR |= ADC_CR_ADCAL;
+                while(mcuAdc->CR & ADC_CR_ADCAL);
+
+                wait_us(1); // Just to be safe
+
+                mcuAdc->CR |= ADC_CR_ADEN;
+            }
+#endif
+            struct Isr {
+                static inline void onEnd(auto f) {
+                    if constexpr(Meta::contains_v<isrConfig, EndOfSequence>) {
+                        if (mcuAdc->ISR & ADC_ISR_EOS) {
+                            mcuAdc->ISR = ADC_ISR_EOS;
+                            f();
+                        }
+                    }
+                    if constexpr(Meta::contains_v<isrConfig, EndOfConversion>) {
+                        if (mcuAdc->ISR & ADC_ISR_EOC) {
+                            mcuAdc->ISR = ADC_ISR_EOC;
+                            f();
+                        }
+                    }
+                }
+            };
+#ifdef STM32G0
+            static inline void oversample(const uint8_t n) {
+                if (n > 0) {
+                    const uint8_t r = n - 1;
+                    MODIFY_REG(mcuAdc->CFGR2, (ADC_CFGR2_OVSE_Msk | ADC_CFGR2_OVSS_Msk | ADC_CFGR2_OVSR_Msk),
+                               (1 << ADC_CFGR2_OVSE_Pos) | (n << ADC_CFGR2_OVSS_Pos) | (r << ADC_CFGR2_OVSR_Pos));
+                }
+            }
+#endif
+            static inline void start() {
+                mcuAdc->CR |= ADC_CR_ADSTART;
+            }
+            static inline bool ready() {
+                return mcuAdc->ISR & ADC_ISR_ADRDY;
+            }
+            static inline bool busy() {
+                return !((mcuAdc->ISR & ADC_ISR_EOC) || (mcuAdc->ISR & ADC_ISR_EOS));
+            }
+            static inline bool gotSequence() {
+                return (mcuAdc->ISR & ADC_ISR_EOS);
+            }
+            static inline void whenSequenceComplete(auto f) {
+                if (mcuAdc->ISR & ADC_ISR_EOS) {
+                    mcuAdc->ISR = ADC_ISR_EOS;
+                    f();
+                }
+            }
+            static inline uint16_t value() {
+                return mcuAdc->DR;
+            }
+            static inline const auto& values() {
+                return mData;
+            }
+            private:
+            static inline dmaStorage mData;
+        };
+    }
+
 #ifdef USE_MCU_STM_V3
     inline
 #endif
     namespace V3 {
-        #define TEMPSENSOR_CAL1_ADDR               ((uint16_t*) (0x1FFF75A8UL))
-        #define TEMPSENSOR_CAL2_ADDR               ((uint16_t*) (0x1FFF75CAUL))
-        #define TEMPSENSOR_CAL1_TEMP               (30L)
-        #define TEMPSENSOR_CAL2_TEMP               (110L)
+#define TEMPSENSOR_CAL1_ADDR               ((uint16_t*) (0x1FFF75A8UL))
+#define TEMPSENSOR_CAL2_ADDR               ((uint16_t*) (0x1FFF75CAUL))
+#define TEMPSENSOR_CAL1_TEMP               (30L)
+#define TEMPSENSOR_CAL2_TEMP               (110L)
 
         static inline float adc2Temp(const uint16_t v) {
             return (float)(TEMPSENSOR_CAL2_TEMP - TEMPSENSOR_CAL1_TEMP) / (*TEMPSENSOR_CAL2_ADDR - *TEMPSENSOR_CAL1_ADDR) * (v - *TEMPSENSOR_CAL1_ADDR) + TEMPSENSOR_CAL1_TEMP;
@@ -179,10 +475,10 @@ namespace Mcu::Stm {
                 RCC->APBRSTR2 &= ~RCC_APBRSTR2_ADCRST;
             }
             static inline void init() {
-//                RCC->CCIPR |= 0x02 << RCC_CCIPR_ADC12SEL_Pos; // System Clock
+                //                RCC->CCIPR |= 0x02 << RCC_CCIPR_ADC12SEL_Pos; // System Clock
                 RCC->APBENR2 |= RCC_APBENR2_ADCEN;
 
-//                MODIFY_REG(mcuAdc->CR , ADC_CR_DEEPPWD_Msk, 0x00 << ADC_CR_DEEPPWD_Pos);
+                //                MODIFY_REG(mcuAdc->CR , ADC_CR_DEEPPWD_Msk, 0x00 << ADC_CR_DEEPPWD_Pos);
                 mcuAdc->CR |= ADC_CR_ADVREGEN;
 
                 wait_us(100);

@@ -71,6 +71,13 @@ namespace Mcu::Stm {
             struct Impl<Pin<A, 0>, Usart<102>, TX, MCU> : std::integral_constant<uint8_t, 4> {};
             template<Mcu::Stm::G0xx MCU>
             struct Impl<Pin<A, 2>, Usart<2>, TX, MCU> : std::integral_constant<uint8_t, 1> {};
+
+            template<Mcu::Stm::G0xx MCU>
+            struct Impl<Pin<A, 14>, Usart<2>, TX, MCU> : std::integral_constant<uint8_t, 1> {};
+            template<Mcu::Stm::G0xx MCU>
+            struct Impl<Pin<A, 15>, Usart<2>, RX, MCU> : std::integral_constant<uint8_t, 1> {};
+
+
             template<Mcu::Stm::G0xx MCU>
             struct Impl<Pin<A, 4>, Usart<6>, TX, MCU> : std::integral_constant<uint8_t, 3> {};
 
@@ -101,6 +108,12 @@ namespace Mcu::Stm {
             struct Impl<Pin<B, 0>, Usart<5>, TX, MCU> : std::integral_constant<uint8_t, 8> {};
 
             template<Mcu::Stm::G0xx MCU>
+            struct Impl<Pin<B, 8>, Usart<6>, TX, MCU> : std::integral_constant<uint8_t, 8> {};
+            template<Mcu::Stm::G0xx MCU>
+            struct Impl<Pin<B, 9>, Usart<6>, RX, MCU> : std::integral_constant<uint8_t, 8> {};
+
+
+            template<Mcu::Stm::G0xx MCU>
             struct Impl<Pin<B, 2>, Usart<3>, TX, MCU> : std::integral_constant<uint8_t, 4> {};
 
             template<Mcu::Stm::G0xx MCU>
@@ -113,6 +126,20 @@ namespace Mcu::Stm {
 
             template<Mcu::Stm::G0xx MCU>
             struct Impl<Pin<A, 3>, Usart<101>, TX, MCU> : std::integral_constant<uint8_t, 6> {};
+            template<Mcu::Stm::G0xx MCU>
+            struct Impl<Pin<B, 10>, Usart<101>, RX, MCU> : std::integral_constant<uint8_t, 1> {};
+            template<Mcu::Stm::G0xx MCU>
+            struct Impl<Pin<B, 11>, Usart<101>, TX, MCU> : std::integral_constant<uint8_t, 1> {};
+
+            template<Mcu::Stm::G0xx MCU>
+            struct Impl<Pin<B, 6>, I2C<1>, SCL, MCU> : std::integral_constant<uint8_t, 6> {};
+            template<Mcu::Stm::G0xx MCU>
+            struct Impl<Pin<B, 7>, I2C<1>, SDA, MCU> : std::integral_constant<uint8_t, 6> {};
+
+            template<Mcu::Stm::G0xx MCU>
+            struct Impl<Pin<B, 13>, I2C<2>, SCL, MCU> : std::integral_constant<uint8_t, 6> {};
+            template<Mcu::Stm::G0xx MCU>
+            struct Impl<Pin<B, 14>, I2C<2>, SDA, MCU> : std::integral_constant<uint8_t, 6> {};
 
             template<Mcu::Stm::G0xx MCU>
             struct Impl<Pin<B, 3>, I2C<3>, SCL, MCU> : std::integral_constant<uint8_t, 6> {};

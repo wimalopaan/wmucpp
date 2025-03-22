@@ -148,7 +148,7 @@ struct CrsfCallback {
     }
     static inline void whenParameterChanged(auto f) {
     }
-    static inline void command(const auto& data, const uint8_t /*payload*/) {
+    static inline void command(const auto& /*data*/, const uint8_t /*payload*/) {
     }
     static inline void callbacks(const bool eepromMode = false) {
         const bool prevMode = mEepromMode;

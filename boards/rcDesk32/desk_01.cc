@@ -16,17 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define USE_MCU_STM_V3
-#define USE_CRSF_V3
+#define NDEBUG
 
-#define SERIAL_DEBUG // enable debug on esc-tlm-1
+#define SERIAL_DEBUG
+// #define USE_SWD
 
 #define SW_VERSION 1
 #define HW_VERSION 1
-
-#define USE_RC720
-
-#define NDEBUG
 
 #include <cstdint>
 #include <chrono>
@@ -39,60 +35,67 @@ using namespace std::literals::chrono_literals;
 struct Storage {
     static inline void init() {
         std::memcpy(&eeprom, &eeprom_flash, sizeof(EEProm));
-        // eeprom = eeprom_flash; // not working: needs volatile
     }
     static inline void reset() {
         eeprom = EEProm{};
     }
-    __attribute__((__section__(".eeprom")))
-    static inline const EEProm eeprom_flash;
-    __attribute__ ((aligned (8)))
-    static inline EEProm eeprom;
+    __attribute__((__section__(".eeprom"))) static inline const EEProm eeprom_flash;
+    __attribute__ ((aligned (8))) static inline EEProm eeprom;
 };
 
 struct DevsConfig {
     using storage = Storage;
 };
-using devs = Devices<SW01, DevsConfig, Mcu::Stm::Stm32G0B1>;
+using devs = Devices<Desk01, DevsConfig, Mcu::Stm::Stm32G0B1>;
 using gfsm = GFSM<devs>;
 
 int main() {
     Storage::init();
     gfsm::init();
 
-    NVIC_EnableIRQ(USART1_IRQn);
+    // NVIC_EnableIRQ(USART1_IRQn);
     NVIC_EnableIRQ(USART2_LPUART2_IRQn);
-    // NVIC_EnableIRQ(USART3_4_5_6_LPUART1_IRQn);
+    NVIC_EnableIRQ(USART3_4_5_6_LPUART1_IRQn);
     // NVIC_EnableIRQ(DMA1_Channel2_3_IRQn);
     // NVIC_EnableIRQ(DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQn);
-    // NVIC_EnableIRQ(ADC1_COMP_IRQn);
+    NVIC_EnableIRQ(ADC1_COMP_IRQn);
     // NVIC_EnableIRQ(TIM3_TIM4_IRQn);
     __enable_irq();
 
     while(true) {
         gfsm::periodic();
-        devs::systemTimer::periodic([]{
+        devs::systemTimer::periodic([] static {
             gfsm::ratePeriodic();
         });
     }
 }
 
 extern "C" {
-void USART1_IRQHandler() {
+void ADC1_COMP_IRQHandler() {
+    using adc = devs::adc;
+    static_assert(adc::number == 1);
+    adc::Isr::onEnd([] static {});
+}
+// void DMA1_Channel2_3_IRQHandler() {
+//     using adc = devs::adc;
+//     using adcDma = adc::dmaChannel;
+//     static_assert(adcDma::number == 3);
+//     // adcDma::onTransferComplete([] static {});
+// }
+void USART3_4_5_6_LPUART1_IRQHandler() {
     using crsf_in = devs::crsf_in;
-    static_assert(crsf_in::number == 1);
-    crsf_in::Isr::onIdle([]{
-    });
-    crsf_in::Isr::onTransferComplete([]{
-    });
+    static_assert(crsf_in::number == 6);
+    crsf_in::Isr::onIdle([] static {});
+    crsf_in::Isr::onTransferComplete([] static {});
 }
 void USART2_LPUART2_IRQHandler(){
-    using radio = devs::radio;
-    static_assert(radio::uart::number == 2);
-    radio::Isr::onTransferComplete([]{
-    });
-    radio::Isr::onIdle([]{
-    });
+#ifndef USE_SWD
+    using aux1 = devs::aux1;
+    static_assert(aux1::uart::number == 2);
+    aux1::Isr::onTransferComplete([] static {});
+    aux1::Isr::onIdle([] static {});
+#endif
+
 }
 
 extern int _end;

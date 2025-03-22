@@ -1,7 +1,25 @@
+/*
+ * WMuCpp - Bare Metal C++
+ * Copyright (C) 2016 - 2025 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #define NDEBUG
-#define AUTO_BUS
 
 #define DEFAULT_ADDRESS 0
+#define BAUDRATE 420'000
 
 #include "board.h"
 #include "crsf.h"
@@ -27,7 +45,7 @@ struct Devices {
     static inline void init() {
         leds::init();
         crsf_pa::address(std::byte{DEFAULT_ADDRESS});
-        crsf::template init<BaudRate<420000>>();
+        crsf::template init<BaudRate<BAUDRATE>>();
     }
     static inline void periodic() {
         crsf::periodic();

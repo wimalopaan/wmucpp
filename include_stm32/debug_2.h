@@ -27,7 +27,7 @@ struct SerialBuffered {
         using ValueType = unsigned char;
         static inline constexpr auto mode = Mcu::Stm::Uarts::Mode::TxOnly;
         static inline constexpr uint32_t baudrate = 115'200;
-        static inline constexpr bool rxtxswap = Config::rxtxswap;
+        static inline constexpr bool rxtxswap = Mcu::Stm::V4::detail::getSwap_v<Config>;
         static inline constexpr bool fifo = []{
             if (N <= 3) return true;
             if (N >= 101) return true;

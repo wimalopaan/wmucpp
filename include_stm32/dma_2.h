@@ -52,9 +52,6 @@ namespace Mcu::Stm {
                         else {
                             static_assert(false);
                         }
-                        // if constexpr(Config::memoryIncrement) {
-                        //     ccr |= DMA_CCR_MINC;
-                        // }
                         if constexpr(requires(Config){Config::memoryIncrement;}) {
                             if constexpr(Config::memoryIncrement) {
                                 ccr |= DMA_CCR_MINC;

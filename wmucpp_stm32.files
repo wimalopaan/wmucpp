@@ -188,6 +188,7 @@ boards/rcCrsfSwitch/system_g0.cc
 boards/rcCrsfSwitch/todo.txt
 boards/rcDesk32/Makefile
 boards/rcDesk32/crsf_cb.h
+boards/rcDesk32/desk_01.cc
 boards/rcDesk32/devices.h
 boards/rcDesk32/eeprom.h
 boards/rcDesk32/gfsm.h
