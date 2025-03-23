@@ -18,21 +18,21 @@
 
 #define NDEBUG
 
-#define INPUT_CRSF
-// #define INPUT_SBUS
+//#define INPUT_CRSF // input via CRSF (ELRS only)
+#define INPUT_SBUS // input via SBUS (optional for ELRS, mandatory for other rc-link)
 
-#define DEFAULT_ADDRESS 0
+#define DEFAULT_ADDRESS 0 // values: 0 ... 3
+
+// #define SBUS_INVERT // to receive SBus as "normal" uninverted serial data
+
+#define USE_ELRS // SBus input only (see above)
+//#define USE_AFHDS2A // SBus input only (see above)
+//#define USE_ACCST // SBus input only (see above)
+
+// #define DEBUG_OUTPUT // debug output via same uart as receiving data (same baudrate)
 
 #define CRSF_BAUDRATE 420'000
 #define SBUS_BAUDRATE 100'000
-
-// #define SBUS_INVERT
-
-#define USE_ELRS
-//#define USE_AFHDS2A
-//#define USE_FRSKY
-
-#define DEBUG_OUTPUT
 
 #include <mcu/avr.h>
 #include <mcu/internals/ccp.h>
@@ -80,7 +80,8 @@ using led2 = Pin<Port<D>, 2>;
 using led1 = Pin<Port<D>, 1>;
 using led0 = Pin<Port<D>, 0>;
 
-using tp   = Pin<Port<A>, 7>;
+using tp = NoPin;
+// using tp   = Pin<Port<A>, 7>;
 
 #elif defined(__AVR_ATtiny1614__)
 using led7 = Pin<Port<A>, 4>;
@@ -92,7 +93,8 @@ using led2 = Pin<Port<A>, 2>;
 using led1 = Pin<Port<B>, 1>;
 using led0 = Pin<Port<B>, 0>;
 
-using tp   = Pin<Port<A>, 3>;
+using tp = NoPin;
+// using tp   = Pin<Port<A>, 3>;
 #endif
 
 
@@ -160,7 +162,7 @@ namespace Sbus {
         };
         static inline void init() {
             leds::init();
-            tp::dir<Output>();
+            tp::template dir<Output>();
             servo::template init<AVR::BaudRate<SBUS_BAUDRATE>, FullDuplex, true, 1>(); // 8E2
 #ifndef SBUS_INVERT
             servo::rxInvert(true);

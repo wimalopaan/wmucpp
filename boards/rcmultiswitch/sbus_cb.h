@@ -36,6 +36,9 @@ struct SBusCommandCallback {
         const uint16_t n2 = n + (n >> 6);
         const uint8_t  v = (n2 >> 4);
 #endif
+#ifdef USE_ACCST
+#error "yet unimplemented"
+#endif
         const uint8_t address = (v >> 4) & 0b11;
         const uint8_t sw      = (v >> 1) & 0b111;
         const uint8_t state   = v & 0b1;
