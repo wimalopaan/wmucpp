@@ -16,7 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define NDEBUG
+#define NDEBUG // don't change (enables assertions)
+
+// to modify the output-to-pin mapping, see below
 
 //#define INPUT_CRSF // input via CRSF (ELRS only)
 #define INPUT_SBUS // input via SBUS (optional for ELRS, mandatory for other rc-link)
@@ -70,7 +72,8 @@ using systemTimer = SystemTimer<Component::Rtc<0>, fRtc>;
 using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Default>;
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position>>;
 
-#if defined(__AVR_AVR128DA32__)
+#if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
+// output-to-pin
 using led7 = Pin<Port<D>, 7>;
 using led6 = Pin<Port<D>, 6>;
 using led5 = Pin<Port<D>, 5>;
@@ -81,9 +84,10 @@ using led1 = Pin<Port<D>, 1>;
 using led0 = Pin<Port<D>, 0>;
 
 using tp = NoPin;
-// using tp   = Pin<Port<A>, 7>;
+// using tp   = Pin<Port<A>, 7>; // enables toggling this pin on every loop run
 
 #elif defined(__AVR_ATtiny1614__)
+// output-to-pin
 using led7 = Pin<Port<A>, 4>;
 using led6 = Pin<Port<A>, 5>;
 using led5 = Pin<Port<A>, 6>;
@@ -94,7 +98,7 @@ using led1 = Pin<Port<B>, 1>;
 using led0 = Pin<Port<B>, 0>;
 
 using tp = NoPin;
-// using tp   = Pin<Port<A>, 3>;
+// using tp   = Pin<Port<A>, 3>; // enables toggling this pin on every loop run
 #endif
 
 

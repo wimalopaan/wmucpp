@@ -1,7 +1,7 @@
 # -*- mode: makefile-gmake; -*-
 #
 # WMuCpp - Bare Metal C++
-# Copyright (C) 2016, 2017, 2018 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+# Copyright (C) 2016 - 2025 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,11 +19,11 @@
 
 # ~/.local/bin/pymcuprog write --erase -d avr128da32 -t uart -u /dev/ttyUSB0 -f mswitch01.hex
 
-#MCU = avr128da32
-#F_OSC = 32000000
+MCU = avr128da32
+F_OSC = 32000000
 
-MCU = attiny1614
-F_OSC = 10000000 # for use with 3.3V
+#MCU = attiny1614
+#F_OSC = 10000000 # for use with 3.3V
 
 subdirs =
 
