@@ -20,8 +20,8 @@
 
 // to modify the output-to-pin mapping, see below
 
-//#define INPUT_CRSF // input via CRSF (ELRS only)
-#define INPUT_SBUS // input via SBUS (optional for ELRS, mandatory for other rc-link)
+#define INPUT_CRSF // input via CRSF (ELRS only)
+//#define INPUT_SBUS // input via SBUS (optional for ELRS, mandatory for other rc-link)
 
 #define DEFAULT_ADDRESS 0 // values: 0 ... 3
 

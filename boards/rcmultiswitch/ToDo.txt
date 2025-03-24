@@ -1,5 +1,0 @@
-* Lernmodus
-** gerlernte Adresse an den Ausgängen anzeigen
-
-* SBus/Ibus
-** vereinheitlichen zu multi8d.cc (multi8dsbus.cc raus)

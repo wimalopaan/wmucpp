@@ -22,7 +22,7 @@
 
 #define USE_ELRS
 //#define USE_AFHDS2A
-//#define USE_FRSKY
+//#define USE_ACCST
 
 #include "board.h"
 #include "leds.h"
