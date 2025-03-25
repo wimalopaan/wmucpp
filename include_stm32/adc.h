@@ -83,6 +83,7 @@ namespace Mcu::Stm {
                 using controller = Mcu::Stm::Dma::Controller<dmaChComponent::controller::number_t::value>;
                 using value_t = uint16_t;
                 static inline constexpr bool memoryIncrement = true;
+                static inline constexpr bool circular = true;
             };
             using dmaChannel = Mcu::Stm::Dma::V2::Channel<dmaChComponent::number_t::value, dmaChConfig>;
 
@@ -199,7 +200,7 @@ namespace Mcu::Stm {
                         uint32_t r = 0;
                         if constexpr(isClockDivider<trigger>) {
                             static constexpr uint16_t values[16] = {1, 2, 4, 6, 8, 10, 12, 16, 32, 64, 128, 256};
-                            static constexpr uint8_t bits = [&]{
+                            static constexpr uint32_t bits = [&]{
                                 for(uint8_t i = 0; i < std::size(values); ++i) {
                                     if (values[i] == trigger::clockDivider) {
                                         return i;
@@ -211,68 +212,53 @@ namespace Mcu::Stm {
                             r |= (bits << ADC_CCR_PRESC_Pos); // 64 / 4 = 42,5 MHz
                         }
                         else {
-                            r |= (0b0010 << ADC_CCR_PRESC_Pos); // 64 / 4 = 42,5 MHz
+                            r |= (0b0010UL << ADC_CCR_PRESC_Pos); // 64 / 4 = 42,5 MHz
                         }
                         r |= ADC_CCR_VREFEN;
                         r |= ADC_CCR_TSEN;
                         return r;
                 }();
 
-                // if constexpr(isClockDivider<trigger>) {
-                //     static constexpr uint16_t values[16] = {1, 2, 4, 6, 8, 10, 12, 16, 32, 64, 128, 256};
-                //     static constexpr uint8_t bits = [&]{
-                //         for(uint8_t i = 0; i < std::size(values); ++i) {
-                //             if (values[i] == trigger::clockDivider) {
-                //                 return i;
-                //             }
-                //         }
-                //         assert(false);
-                //     }();
-                //     // std::integral_constant<uint8_t, bits>::_;
-                //     MODIFY_REG(mcuAdcCommon->CCR, ADC_CCR_PRESC_Msk, (bits << ADC_CCR_PRESC_Pos)); // 64 / 4 = 42,5 MHz
-                // }
-                // else {
-                //     MODIFY_REG(mcuAdcCommon->CCR, ADC_CCR_PRESC_Msk, (0b0010 << ADC_CCR_PRESC_Pos)); // 64 / 4 = 42,5 MHz
-                // }
-                // mcuAdcCommon->CCR |= ADC_CCR_VREFEN; // temp
+                mcuAdc->CHSELR = []<auto... CC>(std::integer_sequence<auto, CC...>) consteval {
+                        if constexpr(sizeof...(CC) <= 8) {
+                            uint32_t r = 0;
+                            const std::array<uint8_t, sizeof...(CC)> channels{CC...};
+                            for(uint8_t i = 0; i < 8; ++i) {
+                                if (i < channels.size()) {
+                                    r |= (uint32_t(channels[i] & 0x0f) << (4 * i));
+                                }
+                                else {
+                                    r |= (uint32_t{0b1111} << (4 * i));
+                                }
+                            }
+                            return r;
+                        }
+                        else {
+                            return ((uint32_t{1} << CC) | ...);
+                        }
+                    }(channels_list{});
 
-                mcuAdc->CFGR1 = []consteval{
+                mcuAdc->CFGR1 = [] consteval {
                         uint32_t r = 0;
                         r |= (0x00 << ADC_CFGR1_RES_Pos);
                         if constexpr(isTriggerSource<trigger>) {
-                            // TriggerSource::_;
-                            // std::integral_constant<uint16_t, TriggerSource::trgo()>::_;
                             r |= (trigger::trgo() << ADC_CFGR1_EXTSEL_Pos);
-                            r |= (0b10 << ADC_CFGR1_EXTEN_Pos); // falling
+                            r |= (0b10UL << ADC_CFGR1_EXTEN_Pos); // falling
                         }
                         if constexpr(isContinousSampling<trigger>::value) {
                             r |= ADC_CFGR1_CONT;
                         }
                         r |= (ADC_CFGR1_DMACFG | ADC_CFGR1_DMAEN);
+                        if constexpr(nChannels <= 8) {
+                            r |= ADC_CFGR1_CHSELRMOD;
+                        }
                         return r;
                 }();
 
-                // MODIFY_REG(mcuAdc->CFGR1, ADC_CFGR1_RES_Msk, (0x00 << ADC_CFGR1_RES_Pos)); // 12 bit
-
-                // if constexpr(isTriggerSource<trigger>) {
-                //     // TriggerSource::_;
-                //     // std::integral_constant<uint16_t, TriggerSource::trgo()>::_;
-                //     MODIFY_REG(mcuAdc->CFGR1, ADC_CFGR1_EXTSEL_Msk, (trigger::trgo() << ADC_CFGR1_EXTSEL_Pos));
-                //     MODIFY_REG(mcuAdc->CFGR1, ADC_CFGR1_EXTEN_Msk, (0b10 << ADC_CFGR1_EXTEN_Pos)); // falling
-                //     // MODIFY_REG(mcuAdc->CFGR , ADC_CFGR_EXTEN_Msk, (0b11 << ADC_CFGR_EXTEN_Pos)); // both
-                // }
-                // if constexpr(isContinousSampling<trigger>::value) {
-                //     mcuAdc->CFGR1 |= ADC_CFGR1_CONT;
-                // }
-
-                mcuAdc->CHSELR = []<auto... CC>(std::integer_sequence<auto, CC...>) consteval {
-                        return ((uint32_t{1} << CC) | ...);
-                    }(channels_list{});
+                while(!(mcuAdc->ISR & ADC_ISR_CCRDY));
 
                 dmaChannel::init();
                 dmaChannel::startRead(nChannels, (uint32_t)&mcuAdc->DR, &mData[0], Mcu::Stm::Adcs::Properties<N>::dmamux_src);
-
-                // mcuAdc->CFGR1 |= (ADC_CFGR1_DMACFG | ADC_CFGR1_DMAEN);
 
                 mcuAdc->IER = [] consteval {
                         uint32_t r = 0;

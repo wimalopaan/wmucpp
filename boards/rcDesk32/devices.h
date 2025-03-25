@@ -41,16 +41,15 @@
 #include "meta.h"
 #include "adc.h"
 #include "blinker.h"
-
 #include "rc/rc_2.h"
 #include "rc/crsf_2.h"
+#include "rc/sbus2_2.h"
+#include "rc/spacemouse.h"
 
 #include "crsf_cb.h"
-
 #include "pcal6408.h"
 #include "switches.h"
-#include "radio.h"
-
+#include "hwext.h"
 #include "eeprom.h"
 
 struct SW01;
@@ -63,6 +62,9 @@ template<typename Config, typename MCU>
 struct Devices<Desk01, Config, MCU> {
     using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<64_MHz, 2'000_Hz, Mcu::Stm::HSI>>;
     using systemTimer = Mcu::Stm::SystemTimer<clock, Mcu::UseInterrupts<false>, MCU>;
+
+    using auxes1 = Config::auxes1;
+    using auxes2 = Config::auxes2;
 
     using gpioa = Mcu::Stm::GPIO<Mcu::Stm::A, MCU>;
     using gpiob = Mcu::Stm::GPIO<Mcu::Stm::B, MCU>;
@@ -81,8 +83,8 @@ struct Devices<Desk01, Config, MCU> {
     using led2 = Mcu::Stm::Pin<gpiod, 0, MCU>;
 
     // using bus_tx = Mcu::Stm::Pin<gpiof, 2, MCU>; // also reset
-    // using bus_rx = Mcu::Stm::Pin<gpioc, 7, MCU>;
-
+    using bus_rx = Mcu::Stm::Pin<gpioc, 7, MCU>;
+    using tp = bus_rx;
     using sm2_tx = Mcu::Stm::Pin<gpioa, 0, MCU>;
     using sm2_rx = Mcu::Stm::Pin<gpioa, 1, MCU>;
 
@@ -138,31 +140,56 @@ struct Devices<Desk01, Config, MCU> {
     using csrfDmaChannel2 = Mcu::Components::DmaChannel<typename dma1::component_t, 2>;
     // adc
     using adcDmaChannel = Mcu::Components::DmaChannel<typename dma1::component_t, 3>;
-    // using adcDmaChannel   = Mcu::Stm::Dma::Channel<dma1, 3>;
     // half-duplex
-    using aux1DmaChannel = Mcu::Components::DmaChannel<typename dma2::component_t, 5>;
+    using aux1DmaChannel = Mcu::Components::DmaChannel<typename dma1::component_t, 4>;
+    using aux2DmaChannel = Mcu::Components::DmaChannel<typename dma1::component_t, 5>;
+
+    using sm1DmaChannel = Mcu::Components::DmaChannel<typename dma1::component_t, 6>;
+    using sm2DmaChannel = Mcu::Components::DmaChannel<typename dma1::component_t, 7>;
 
     // ADC
     struct AdcConfig {
         using channels = std::integer_sequence<uint8_t, 2, 3, 4, 6, 7, 9>;
-        using mode = Mcu::Stm::ContinousSampling<16>;
         using dmaChannel = adcDmaChannel;
-        using trigger = Mcu::Stm::ContinousSampling<16>;
+        using trigger = Mcu::Stm::ContinousSampling<2>;
         using isrConfig = Meta::List<Mcu::Stm::EndOfSequence>;
     };
     using adc = Mcu::Stm::V4::Adc<1, AdcConfig>;
-    // using adc = Mcu::Stm::V3::Adc<1, Meta::NList<2, 3, 4, 6, 7, 9>, Mcu::Stm::ContinousSampling<16>, adcDmaChannel, std::array<uint16_t, 6>, Meta::List<Mcu::Stm::EndOfSequence>>;
 
+    // USARTS
     // Usart 2: radio aux1
 #ifndef USE_SWD
     struct Aux1Config;
-    using aux1 = HwExtension<2, Aux1Config, MCU>;
+    using hwext1 = HwExtension<2, Aux1Config, MCU>;
+    struct SBus1Config;
+    using sbus1 = RC::Protokoll::SBus2::V4::Master<2, SBus1Config, MCU>;
 #endif
+
+    // Usart 3: radio aux2
+
+    struct Aux2Config;
+    using hwext2 = HwExtension<3, Aux2Config, MCU>;
+    struct SBus2Config;
+    using sbus2 = RC::Protokoll::SBus2::V4::Master<3, SBus2Config, MCU>;
+
+    // Usart 4: spacemouse 2
+
+    struct SM2Config;
+    using sm2 = RC::Protokoll::SpaceMouse::Input<4, SM2Config, MCU>;
+
+    // Usart 5: spacemouse 1
+
+    struct SM1Config;
+    using sm1 = RC::Protokoll::SpaceMouse::Input<5, SM1Config, MCU>;
+
     // Usart 6: ELRX receiver
     struct CrsfConfig;
     using crsf_in = RC::Protokoll::Crsf::V4::Master<6, CrsfConfig, MCU>;
 
+
+
 #ifdef SERIAL_DEBUG
+    // LPUart1
     struct DebugConfig;
     using debug = SerialBuffered<101, DebugConfig>;
     struct DebugConfig {
@@ -202,6 +229,31 @@ struct Devices<Desk01, Config, MCU> {
     using pca2 = External::V2::PCAL6408<i2c2, pcaAdr1, systemTimer>;
     using pca3 = External::V2::PCAL6408<i2c2, pcaAdr0, systemTimer>;
 
+    struct Sw1Config {
+        using timer = systemTimer;
+        using pcas = Meta::List<pca0, pca1>;
+        using debug = Devices::debug;
+        using callback = struct {
+            static inline void set(const uint8_t index, const bool state) {
+                hwext1::set(index, state);
+                hwext2::set(index, state);
+            }
+        };
+    };
+    using switches1 = External::Switches<Sw1Config>;
+    struct Sw2Config {
+        using timer = systemTimer;
+        using pcas = Meta::List<pca2, pca3>;
+        using debug = Devices::debug;
+        using callback = struct {
+            static inline void set(const uint8_t index, const bool state) {
+                hwext1::set(index + 32, state);
+                hwext2::set(index + 32, state);
+            }
+        };
+    };
+    using switches2 = External::Switches<Sw2Config>;
+
 #ifndef USE_SWD
     struct Aux1Config {
         using clock = Devices::clock;
@@ -210,15 +262,63 @@ struct Devices<Desk01, Config, MCU> {
         using pin = aux1_tx;
         using input = crsf_in::input;
         using storage = Devices::storage;
-        using debug = void;
+        using debug = Devices::debug;
+        using tp = void;
+    };
+    struct SBus1Config {
+        using clock = Devices::clock;
+        using debug = Devices::debug;
+        using dmaChComponent = aux1DmaChannel;
+        using systemTimer = Devices::systemTimer;
+        using adapter = void;
+        using pin = aux1_tx;
         using tp = void;
     };
 #endif
+    struct Aux2Config {
+        using clock = Devices::clock;
+        using systemTimer = Devices::systemTimer;
+        using dmaChComponent = aux2DmaChannel;
+        using pin = aux2_tx;
+        using input = crsf_in::input;
+        using storage = Devices::storage;
+        using debug = Devices::debug;
+        using tp = void;
+    };
+    struct SBus2Config {
+        using clock = Devices::clock;
+        using debug = Devices::debug;
+        using dmaChComponent = aux2DmaChannel;
+        using systemTimer = Devices::systemTimer;
+        using adapter = void;
+        using pin = aux2_tx;
+        using tp = void;
+    };
+    struct SM1Config {
+        using clock = Devices::clock;
+        using debug = Devices::debug;
+        using dmaChComponent = sm1DmaChannel;
+        using systemTimer = Devices::systemTimer;
+        using adapter = void;
+        using pin = sm1_rx;
+        using tp = void;
+    };
+    struct SM2Config {
+        using clock = Devices::clock;
+        using debug = Devices::debug;
+        using dmaChComponent = sm2DmaChannel;
+        using systemTimer = Devices::systemTimer;
+        using adapter = void;
+        using pin = sm2_rx;
+        using tp = void;
+    };
+
     struct CrsfCallbackConfig {
         using storage = Config::storage;
         using timer = systemTimer;
         using src = crsf_in;
-        // using aux1 = Devices::aux1;
+        using auxes1 = Devices::auxes1;
+        using auxes2 = Devices::auxes2;
         using tp = void;
         using debug = Devices::debug;
     };
@@ -251,6 +351,8 @@ struct Devices<Desk01, Config, MCU> {
         led1::template dir<Mcu::Output>();
         led2::template dir<Mcu::Output>();
 
+        tp::template dir<Mcu::Output>();
+
 #ifdef SERIAL_DEBUG
         debug::init();
 #endif
@@ -259,9 +361,13 @@ struct Devices<Desk01, Config, MCU> {
 
         adc::init();
         adc::oversample(8); // 256
+        adc::start();
 
         i2c1::init();
         i2c2::init();
+
+        sm1::init();
+        sm2::init();
     }
 };
 

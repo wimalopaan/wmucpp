@@ -66,7 +66,9 @@ namespace RC::Protokoll::SBus2 {
             static inline constexpr uint8_t af = Mcu::Stm::AlternateFunctions::mapper_v<pin, uart, Mcu::Stm::AlternateFunctions::TX>;
 
             static inline void update() {
-                std::copy(std::begin(src::values()), std::end(src::values()), std::begin(output));
+                if constexpr(!std::is_same_v<src, void>) {
+                    std::copy(std::begin(src::values()), std::end(src::values()), std::begin(output));
+                }
             }
             static inline void set(const uint8_t channel, const uint16_t value) {
                 output[channel] = value;

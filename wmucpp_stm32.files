@@ -192,10 +192,13 @@ boards/rcDesk32/desk_01.cc
 boards/rcDesk32/devices.h
 boards/rcDesk32/eeprom.h
 boards/rcDesk32/gfsm.h
+boards/rcDesk32/hwext.h
 boards/rcDesk32/link_g0b1.ld
 boards/rcDesk32/pcal6408.h
+boards/rcDesk32/port_aux1.h
+boards/rcDesk32/port_aux2.h
+boards/rcDesk32/port_iface.h
 boards/rcDesk32/pult_01.cc
-boards/rcDesk32/radio.h
 boards/rcDesk32/startup_g0b1.s
 boards/rcDesk32/switches.h
 boards/rcDesk32/system_g0.cc
@@ -236,6 +239,7 @@ boards/rcVarioprop/V01/var09.cc
 boards/rcVarioprop/V01/var10.cc
 boards/rcVarioprop/V01/var11.cc
 boards/rcVarioprop/V01/var12.cc
+boards/rcdesk/spacemouse.cc
 boards/rcmultiadapterG030/Makefile
 boards/rcmultiadapterG030/devices.h
 boards/rcmultiadapterG030/ma01.cc
@@ -599,6 +603,7 @@ include_stm32/rc/sbus22.h
 include_stm32/rc/sbus2_2.h
 include_stm32/rc/sbus2_types.h
 include_stm32/rc/sbus_2.h
+include_stm32/rc/spacemouse.h
 include_stm32/rc/sport.h
 include_stm32/rc/sumdv3_2.h
 include_stm32/rc/vesc.h

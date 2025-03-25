@@ -38,12 +38,14 @@ struct GFSM {
     using systemTimer = devs::systemTimer;
     using storage = devs::storage;
     using i2c1 = devs::i2c1;
-    using switches1 = External::Switches<typename devs::pca0, typename devs::pca1>;
     using i2c2 = devs::i2c2;
-    using switches2 = External::Switches<typename devs::pca2, typename devs::pca3>;
-#ifndef USE_SWD
-    using aux1 = devs::aux1;
-#endif
+    using switches1 = devs::switches1;
+    using switches2 = devs::switches2;
+
+    using auxes1 = devs::auxes1;
+    using auxes2 = devs::auxes2;
+
+    using adc = devs::adc;
 
     using led1 = devs::ledBlinker1;
     using led2 = devs::ledBlinker2;
@@ -54,13 +56,15 @@ struct GFSM {
 
     enum class State : uint8_t {Undefined, Init, I2CScan, Run};
 
+    static inline void updateFromEeprom() {
+        using cb = crsf_in::callback;
+        cb::callbacks(true);
+    }
+
     static inline void init() {
         devs::init();
         switches1::init();
         switches2::init();
-#ifndef USE_SWD
-        aux1::init();
-#endif
     }
     static inline void periodic() {
         if constexpr(!std::is_same_v<debug, void>) {
@@ -70,24 +74,23 @@ struct GFSM {
         i2c2::periodic();
         switches1::periodic();
         switches2::periodic();
-#ifndef USE_SWD
-        aux1::periodic();
-#endif
+        auxes1::periodic();
+        auxes2::periodic();
+
         crsf_in::periodic();
     }
 
     static inline constexpr External::Tick<systemTimer> initTicks{500ms};
     static inline constexpr External::Tick<systemTimer> debugTicks{500ms};
-    static inline constexpr External::Tick<systemTimer> switchesTicks{20ms};
 
     static inline void ratePeriodic() {
         led1::ratePeriodic();
         led2::ratePeriodic();
         i2c1::ratePeriodic();
         i2c2::ratePeriodic();
-#ifndef USE_SWD
-        aux1::ratePeriodic();
-#endif
+        auxes1::ratePeriodic();
+        auxes2::ratePeriodic();
+
         crsf_in::ratePeriodic();
 
         ++mStateTick;
@@ -109,31 +112,9 @@ struct GFSM {
         case State::Run:
             switches1::ratePeriodic();
             switches2::ratePeriodic();
-            (++mSwitchesTick).on(switchesTicks, [] static {
-                switches1::startRead([](const uint8_t index, const uint8_t newState) static {
-                    IO::outl<debug>("# Switch1 ", index, " ", newState);
-                    if (index < 32) {
-                        const uint8_t wIndex1 = 2 * index;
-                        const uint8_t wIndex2 = 2 * index + 1;
-                        const uint64_t mask1 = (1UL << wIndex1);
-                        const uint64_t mask2 = (1UL << wIndex2);
-                        const bool on1 = (newState == 0);
-                        const bool on2 = (newState == 2);
-
-                        mSwitchesState = (mSwitchesState & ~mask1) | (on1 ? mask1 : 0);
-                        mSwitchesState = (mSwitchesState & ~mask2) | (on2 ? mask2 : 0);
-                                 #ifndef USE_SWD
-                        aux1::set(mSwitchesState);
-                                 #endif
-
-                    }
-                });
-                switches2::startRead([](const uint8_t index, const uint8_t newState) static {
-                    IO::outl<debug>("# Switch2 ", index, " ", newState);
-                });
-            });
             mStateTick.on(debugTicks, []{
-                IO::outl<debug>("# i2c state:", (uint8_t)i2c1::mState, " ", i2c1::mIsr, " ", i2c1::errors());
+                // IO::outl<debug>("# i2c state:", (uint8_t)i2c1::mState, " ", i2c1::mIsr, " ", i2c1::errors());
+                IO::outl<debug>("# adc v0:", adc::values()[0], " v1:", adc::values()[1], " v2:", adc::values()[2]);
             });
             break;
         }
@@ -175,9 +156,7 @@ struct GFSM {
         }
     }
     private:
-    static inline uint64_t mSwitchesState = 0;
     static inline External::Tick<systemTimer> mStateTick;
-    static inline External::Tick<systemTimer> mSwitchesTick;
     static inline State mState{State::Undefined};
 };
 #endif

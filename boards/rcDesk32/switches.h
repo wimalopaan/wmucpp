@@ -28,10 +28,17 @@
 #include "tick.h"
 
 namespace External {
-    template<typename... PCAs>
+    template<typename Config>
     struct Switches {
-        using pcas = Meta::List<PCAs...>;
-        static inline constexpr uint8_t numberOfPCAs = sizeof...(PCAs);
+        using pcas = Config::pcas;
+        using timer = Config::timer;
+        using debug = Config::debug;
+        using callback = Config::callback;
+
+        static inline constexpr uint8_t numberOfPCAs = Meta::size_v<pcas>;
+
+        static inline constexpr External::Tick<timer> switchesTicks{20ms};
+
         static inline void startRead(auto f) {
             Meta::visitAt<pcas>(mActual, [&]<typename P>(Meta::Wrapper<P>){
                                     if (P::isIdle()) {
@@ -51,7 +58,9 @@ namespace External {
                                 });
         }
         static inline void init() {
-            (PCAs::init(), ...);
+            Meta::visit<pcas>([]<typename P>(Meta::Wrapper<P>) static {
+                                  P::init();
+                              });
             for(auto& pca: mSwStates) {
                 for(auto& sw : pca) {
                     sw = 1;
@@ -59,16 +68,36 @@ namespace External {
             }
         }
         static inline void periodic() {
-            (PCAs::periodic(), ...);
-
+            Meta::visit<pcas>([]<typename P>(Meta::Wrapper<P>) static {
+                                  P::periodic();
+                              });
         }
         static inline void ratePeriodic() {
-            Meta::visitAt<pcas>(mActual, []<typename P>(Meta::Wrapper<P>){
+            Meta::visitAt<pcas>(mActual, []<typename P>(Meta::Wrapper<P>) static {
                 P::ratePeriodic();
             });
+            (++mStateTick).on(switchesTicks, [] static {
+                                  startRead([](const uint8_t index, const uint8_t newState) static {
+                                      IO::outl<debug>("# Switch1 ", index, " ", newState);
+                                      set(index, newState);
+                                  });
+
+                              });
         }
         private:
+
+        static inline void set(const uint8_t index, const uint8_t state) {
+            if (index < 32) {
+                const uint8_t wIndex1 = 2 * index;
+                const uint8_t wIndex2 = 2 * index + 1;
+                const bool on1 = (state == 0);
+                const bool on2 = (state == 2);
+                callback::set(wIndex1, on1);
+                callback::set(wIndex2, on2);
+            }
+        }
         static inline uint8_t mActual{};
+        static inline External::Tick<timer> mStateTick;
         static inline std::array<std::array<uint8_t, 8>, numberOfPCAs> mSwStates;
     };
 }

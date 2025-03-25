@@ -34,6 +34,9 @@ struct CrsfCallback {
     using PType = Param_t::Type;
     using src = Config::src;
 
+    using auxes1 = Config::auxes1;
+    using auxes2 = Config::auxes2;
+
     static inline constexpr auto& eeprom = storage::eeprom;
     static inline constexpr auto& eeprom_flash = storage::eeprom_flash;
     static inline constexpr const char* const title = "RC-Desk32@";
@@ -201,6 +204,9 @@ private:
         addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
         addNode(p, Param_t{0, PType::U8,  "CRSF Address", nullptr, &eeprom.address, 192, 207, [](const uint8_t a){updateName(mName); src::address(std::byte(a)); return true;}});
         addNode(p, Param_t{0, PType::U8,  "Controller Number", nullptr, &eeprom.controllerNumber, 0, 8, [](const uint8_t){return true;}});
+        addNode(p, Param_t{0, PType::Sel, "Aux1", "SBus2;Hw/Ext;Off", &eeprom.aux1mode, 0, 2, [](const uint8_t v){auxes1::set(v); return true;}});
+        addNode(p, Param_t{0, PType::Sel, "Aux2", "SBus2;Hw/Ext;Off", &eeprom.aux2mode, 0, 2, [](const uint8_t v){auxes2::set(v); return true;}});
+
         addNode(p, Param_t{0, PType::Sel, "Bluetooth", "off;on", &eeprom.bluetooth, 0, 1, [](const uint8_t){return true;}});
         addNode(p, Param_t{0, PType::Sel, "CRSF Channels", "off;on", &eeprom.crsf_in, 0, 1, [](const uint8_t){return true;}});
         auto parent = addParent(p, Param_t{0, PType::Folder, "I2C"});

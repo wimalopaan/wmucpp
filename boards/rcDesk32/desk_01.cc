@@ -29,6 +29,8 @@
 
 #include "devices.h"
 #include "gfsm.h"
+#include "port_aux1.h"
+#include "port_aux2.h"
 
 using namespace std::literals::chrono_literals;
 
@@ -43,15 +45,21 @@ struct Storage {
     __attribute__ ((aligned (8))) static inline EEProm eeprom;
 };
 
+struct DevsConfig;
+using devs = Devices<Desk01, DevsConfig, Mcu::Stm::Stm32G0B1>;
+
 struct DevsConfig {
     using storage = Storage;
+    using auxes1 = Auxes1<devs>;
+    using auxes2 = Auxes2<devs>;
 };
-using devs = Devices<Desk01, DevsConfig, Mcu::Stm::Stm32G0B1>;
+
 using gfsm = GFSM<devs>;
 
 int main() {
     Storage::init();
     gfsm::init();
+    gfsm::updateFromEeprom();
 
     // NVIC_EnableIRQ(USART1_IRQn);
     NVIC_EnableIRQ(USART2_LPUART2_IRQn);
@@ -74,7 +82,9 @@ extern "C" {
 void ADC1_COMP_IRQHandler() {
     using adc = devs::adc;
     static_assert(adc::number == 1);
-    adc::Isr::onEnd([] static {});
+    adc::Isr::onEnd([] static {
+                        devs::tp::toggle();
+                    });
 }
 // void DMA1_Channel2_3_IRQHandler() {
 //     using adc = devs::adc;
@@ -87,15 +97,38 @@ void USART3_4_5_6_LPUART1_IRQHandler() {
     static_assert(crsf_in::number == 6);
     crsf_in::Isr::onIdle([] static {});
     crsf_in::Isr::onTransferComplete([] static {});
+
+    using sbus2 = devs::sbus2;
+    static_assert(sbus2::uart::number == 3);
+    sbus2::Isr::onIdle([] static {});
+    sbus2::Isr::onTransferComplete([] static {});
+
+    using hwext2 = devs::hwext2;
+    static_assert(hwext2::uart::number == 3);
+    hwext2::Isr::onIdle([] static {});
+    hwext2::Isr::onTransferComplete([] static {});
+
+    using sm1 = devs::sm1;
+    static_assert(sm1::uart::number == 5);
+    sm1::Isr::onIdle([] static {});
+
+    using sm2 = devs::sm2;
+    static_assert(sm2::uart::number == 4);
+    sm2::Isr::onIdle([] static {});
+
 }
 void USART2_LPUART2_IRQHandler(){
 #ifndef USE_SWD
-    using aux1 = devs::aux1;
-    static_assert(aux1::uart::number == 2);
-    aux1::Isr::onTransferComplete([] static {});
-    aux1::Isr::onIdle([] static {});
-#endif
+    using sbus1 = devs::sbus1;
+    static_assert(sbus1::uart::number == 2);
+    sbus1::Isr::onIdle([] static {});
+    sbus1::Isr::onTransferComplete([] static {});
 
+    using hwext1 = devs::hwext1;
+    static_assert(hwext1::uart::number == 2);
+    hwext1::Isr::onTransferComplete([] static {});
+    hwext1::Isr::onIdle([] static {});
+#endif
 }
 
 extern int _end;
