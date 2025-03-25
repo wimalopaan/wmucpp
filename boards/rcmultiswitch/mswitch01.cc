@@ -20,16 +20,16 @@
 
 // to modify the output-to-pin mapping, see below
 
-#define INPUT_CRSF // input via CRSF (ELRS only)
-//#define INPUT_SBUS // input via SBUS (optional for ELRS, mandatory for other rc-link)
+// #define INPUT_CRSF // input via CRSF (ELRS only)
+#define INPUT_SBUS // input via SBUS (optional for ELRS, mandatory for other rc-link)
 
 #define DEFAULT_ADDRESS 0 // values: 0 ... 3
 
 // #define SBUS_INVERT // to receive SBus as "normal" uninverted serial data
 
-#define USE_ELRS // SBus input only (see above)
-//#define USE_AFHDS2A // SBus input only (see above)
-//#define USE_ACCST // SBus input only (see above)
+// #define USE_ELRS // SBus input only (see above)
+// #define USE_AFHDS2A // SBus input only (see above)
+#define USE_ACCST // SBus input only (see above)
 
 // #define DEBUG_OUTPUT // debug output via same uart as receiving data (same baudrate)
 
@@ -180,7 +180,15 @@ namespace Sbus {
             servo_pa::ratePeriodic();
             ++mStateTicks;
             mStateTicks.on(debugTicks, []{
-                etl::outl<terminal>("tick"_pgm);
+#if defined(USE_ELRS)
+            etl::outl<terminal>("elrs"_pgm);
+#elif defined(USE_AFHDS2A)
+            etl::outl<terminal>("afhds2a"_pgm);
+#elif defined(USE_ACCST)
+            etl::outl<terminal>("accst"_pgm);
+#else
+#error "wrong protocol"
+#endif
             });
         }
         private:

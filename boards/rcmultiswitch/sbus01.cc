@@ -18,11 +18,13 @@
 
 #define NDEBUG
 
-#define DEFAULT_ADDRESS 0
+#define DEFAULT_ADDRESS 0 // must match address value in edgetx widget config
 
-// #define USE_ELRS
-// #define USE_AFHDS2A
-#define USE_ACCST
+// #define USE_ELRS // sbus input over ELRS rc-link
+// #define USE_AFHDS2A // sbus input over AFHDS2A rc-link
+#define USE_ACCST // sbus input over ACCST rc-link
+
+#define DEBUG_OUTPUT
 
 #include "board.h"
 #include "leds.h"
@@ -37,7 +39,11 @@ struct Devices {
     using servo_pa = External::SBus::Servo::ProtocollAdapter<0, systemTimer, void, cb>;
     using servo = AVR::Usart<usart0Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
 
+#ifdef DEBUG_OUTPUT
     using terminalDevice = servo;
+#else
+    using terminalDevice = void;
+#endif
     using terminal = etl::basic_ostream<terminalDevice>;
 
     struct CallbackConfig {
@@ -56,7 +62,15 @@ struct Devices {
         servo_pa::ratePeriodic();
         ++mStateTicks;
         mStateTicks.on(debugTicks, []{
-            etl::outl<terminal>("tick"_pgm);
+#if defined(USE_ELRS)
+            etl::outl<terminal>("elrs"_pgm);
+#elif defined(USE_AFHDS2A)
+            etl::outl<terminal>("afhds2a"_pgm);
+#elif defined(USE_ACCST)
+            etl::outl<terminal>("accst"_pgm);
+#else
+#error "wrong protocol"
+#endif
         });
     }
     private:
