@@ -35,7 +35,9 @@ struct SBusCommandCallback {
         const uint16_t n2 = n + (n >> 6);
         const uint8_t  v = (n2 >> 4);
 #elif defined(USE_ACCST)
-#error "yet unimplemented"
+        static constexpr uint16_t value0 = 172;
+        const uint16_t n = (ch16 >= value0) ? (ch16 - value0 + 1) : 0;
+        const uint8_t  v = (n >> 4);
 #elif
 #error "wrong protocol"
 #endif

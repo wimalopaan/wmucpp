@@ -20,9 +20,9 @@
 
 #define DEFAULT_ADDRESS 0
 
-#define USE_ELRS
-//#define USE_AFHDS2A
-//#define USE_ACCST
+// #define USE_ELRS
+// #define USE_AFHDS2A
+#define USE_ACCST
 
 #include "board.h"
 #include "leds.h"
