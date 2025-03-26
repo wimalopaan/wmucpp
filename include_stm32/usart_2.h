@@ -546,7 +546,7 @@ namespace Mcu::Stm {
             }
             static inline void periodic()
                     requires (useDma && !std::is_same_v<adapter, void> && (Config::mode != Uarts::Mode::TxOnly)) {
-                const auto [hasData, count] = Mcu::Arm::Atomic::access([]{
+                const auto [hasData, count] = Mcu::Arm::Atomic::access([] static {
                     return std::pair{std::exchange(mBufferHasData, false), *mActiveReadCount};
                 });
                 if (hasData) {
