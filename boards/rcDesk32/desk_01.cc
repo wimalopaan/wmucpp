@@ -111,10 +111,12 @@ void USART3_4_5_6_LPUART1_IRQHandler() {
     using sm1 = devs::sm1;
     static_assert(sm1::uart::number == 5);
     sm1::Isr::onIdle([] static {});
+    sm1::Isr::onTransferComplete([] static {});
 
     using sm2 = devs::sm2;
     static_assert(sm2::uart::number == 4);
     sm2::Isr::onIdle([] static {});
+    sm2::Isr::onTransferComplete([] static {});
 
 }
 void USART2_LPUART2_IRQHandler(){

@@ -69,6 +69,7 @@ namespace External {
                     r |= (0b011 << TIM_SMCR_SMS_Pos);
                     return r;
             }();
+            mcuTimer->ARR = Config::max;
             mcuTimer->CR1 |= TIM_CR1_CEN;
         }
 #endif

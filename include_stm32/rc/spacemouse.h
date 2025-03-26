@@ -21,7 +21,8 @@ namespace RC::Protokoll::SpaceMouse {
         using clock = Config::clock;
         using systemTimer = Config::systemTimer;
         using debug = Config::debug;
-        using pin = Config::pin;
+        using pin_rx = Config::pin_rx;
+        using pin_tx = Config::pin_tx;
         using tp = Config::tp;
 
         using axis_t = std::array<uint16_t, 6>;
@@ -36,22 +37,30 @@ namespace RC::Protokoll::SpaceMouse {
         struct UartConfig {
             using Clock = clock;
             using ValueType = uint8_t;
-            static inline constexpr auto mode = Mcu::Stm::Uarts::Mode::RxOnly;
+            static inline constexpr auto mode = Mcu::Stm::Uarts::Mode::HalfDuplex;
+            static inline constexpr bool RxTxLinesDifferent = !std::is_same_v<pin_rx, pin_tx>;
             static inline constexpr uint32_t baudrate = 38'400;
             using DmaChComponent = Config::dmaChComponent;
             struct Rx {
-                static inline constexpr bool enable = true;
+                static inline constexpr bool enable = false;
                 static inline constexpr size_t size = 16;
                 static inline constexpr size_t idleMinSize = 4;
             };
+            struct Tx {
+                static inline constexpr bool enable = true;
+                static inline constexpr bool singleBuffer = true;
+                static inline constexpr size_t size = 4;
+            };
             struct Isr {
                 static inline constexpr bool idle = true;
+                static inline constexpr bool txComplete = true;
             };
             using tp = Config::tp;
         };
         using uart = Mcu::Stm::V4::Uart<N, UartConfig, MCU>;
         static inline void init() {
-            static constexpr uint8_t af = Mcu::Stm::AlternateFunctions::mapper_v<pin, uart, Mcu::Stm::AlternateFunctions::RX>;
+            static constexpr uint8_t rx_af = Mcu::Stm::AlternateFunctions::mapper_v<pin_rx, uart, Mcu::Stm::AlternateFunctions::RX>;
+            static constexpr uint8_t tx_af = Mcu::Stm::AlternateFunctions::mapper_v<pin_tx, uart, Mcu::Stm::AlternateFunctions::TX>;
             IO::outl<debug>("# SpMouse init ", N);
             for(auto& v: mAxis) {
                 v = midValue;
@@ -63,8 +72,10 @@ namespace RC::Protokoll::SpaceMouse {
                 mActive = true;
                 uart::init();
             });
-            pin::afunction(af);
-            pin::template pullup<true>();
+            pin_rx::afunction(rx_af);
+            pin_rx::template pullup<true>();
+            pin_tx::afunction(tx_af);
+            pin_tx::template pullup<true>();
         }
         static inline void reset() {
             IO::outl<debug>("# SpMouse reset ", N);
@@ -72,61 +83,70 @@ namespace RC::Protokoll::SpaceMouse {
                 uart::reset();
                 mActive = false;
             });
-            pin::analog();
+            pin_rx::analog();
+            pin_tx::analog();
         }
-        enum class State : uint8_t {Init, Run};
+
+        enum class State : uint8_t {Init, Receive, Request};
         enum class Event : uint8_t {None, ReceiveComplete};
+
         static inline void event(const Event e) {
             mEvent = e;
         }
         static inline void periodic() {
+            const auto oldState = mState;
             switch(mState) {
             case State::Init:
                 break;
-            case State::Run:
+            case State::Receive:
                 if (mEvent.is(Event::ReceiveComplete)) {
                     readReply();
+                    mState = State::Request;
                 }
                 break;
+            case State::Request:
+                break;
             }
+            stateTransition(oldState);
         }
         static inline constexpr External::Tick<systemTimer> initTicks{1000ms};
+        static inline constexpr External::Tick<systemTimer> waitTicks{20ms};
         static inline void ratePeriodic() {
             const auto oldState = mState;
             ++mStateTick;
             switch(mState) {
             case State::Init:
                 mStateTick.on(initTicks, []{
-                    mState = State::Run;
+                    mState = State::Request;
                 });
                 break;
-            case State::Run:
+            case State::Receive:
+                mStateTick.on(waitTicks, []{
+                    mState = State::Request;
+                });
+                break;
+            case State::Request:
+                mState = State::Receive;
                 break;
             }
-            if (oldState != mState) {
-                mStateTick.reset();
-                switch(mState) {
-                case State::Init:
-                    break;
-                case State::Run:
-                    IO::outl<debug>("# IBus Run");
-                    uart::template rxEnable<true>();
-                    break;
-                }
-            }
+            stateTransition(oldState);
         }
         struct Isr {
+            static inline void onTransferComplete(const auto f) {
+                if (mActive) {
+                    uart::Isr::onTransferComplete(f);
+                }
+            }
             static inline void onIdle(const auto f) {
                 if (mActive) {
-                    const auto f2 = [&](const volatile uint8_t* const data, const uint16_t size){
+                    uart::Isr::onIdle([&](const volatile uint8_t* const data, const uint16_t size) {
                         f();
                         if (validityCheck(data, size)) {
                             event(Event::ReceiveComplete);
                             return true;
                         }
                         return false;
-                    };
-                    uart::Isr::onIdle(f2);
+                    });
                 }
             }
         };
@@ -137,6 +157,27 @@ namespace RC::Protokoll::SpaceMouse {
             return mErrorCount;
         }
         private:
+        static inline void stateTransition(const State oldState) {
+            if (oldState != mState) {
+                mStateTick.reset();
+                switch(mState) {
+                case State::Init:
+                    break;
+                case State::Receive:
+                    break;
+                case State::Request:
+                    requestData();
+                    break;
+                }
+            }
+        }
+        static inline void requestData() {
+            uart::fillSendBuffer([](auto& data){
+                uint8_t n = 0;
+                data[n++] = 0xac;
+                return n;
+            });
+        }
         static inline bool validityCheck(const volatile uint8_t* const data, const uint16_t n) {
             if (data[0] != startSymbol) {
                 return false;
@@ -167,7 +208,8 @@ namespace RC::Protokoll::SpaceMouse {
         }
         static inline void decode(const auto& data) {
             for(uint8_t axis = 0; auto& v: mAxis) {
-                v = (data[2 * axis] << 7) + (data[2 * axis + 1]);
+                v = (data[2 * axis + 1] << 7) + (data[2 * axis + 2]);
+                ++axis;
             }
         }
         static inline volatile bool mActive = false;

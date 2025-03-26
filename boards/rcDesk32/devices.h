@@ -209,6 +209,7 @@ struct Devices<Desk01, Config, MCU> {
         using pin_a = incr1_a;
         using pin_b = incr1_b;
         using pin_t = incr1_t;
+        static inline constexpr uint32_t max = 255;
     };
     using enc1 = External::Encoder<3, Enc1Config>;
 
@@ -216,6 +217,7 @@ struct Devices<Desk01, Config, MCU> {
         using pin_a = incr2_a;
         using pin_b = incr2_b;
         using pin_t = incr2_t;
+        static inline constexpr uint32_t max = 255;
     };
     using enc2 = External::Encoder<2, Enc2Config>;
 
@@ -315,7 +317,8 @@ struct Devices<Desk01, Config, MCU> {
         using dmaChComponent = sm1DmaChannel;
         using systemTimer = Devices::systemTimer;
         using adapter = void;
-        using pin = sm1_rx;
+        using pin_rx = sm1_rx;
+        using pin_tx = sm1_tx;
         using tp = void;
     };
     struct SM2Config {
@@ -324,7 +327,8 @@ struct Devices<Desk01, Config, MCU> {
         using dmaChComponent = sm2DmaChannel;
         using systemTimer = Devices::systemTimer;
         using adapter = void;
-        using pin = sm2_rx;
+        using pin_rx = sm2_rx;
+        using pin_tx = sm2_tx;
         using tp = void;
     };
 

@@ -50,6 +50,9 @@ struct GFSM {
     using enc1 = devs::enc1;
     using enc2 = devs::enc2;
 
+    using sm1 = devs::sm1;
+    using sm2 = devs::sm2;
+
     using led1 = devs::ledBlinker1;
     using led2 = devs::ledBlinker2;
 
@@ -79,7 +82,8 @@ struct GFSM {
         switches2::periodic();
         auxes1::periodic();
         auxes2::periodic();
-
+        sm1::periodic();
+        sm2::periodic();
         crsf_in::periodic();
     }
 
@@ -93,7 +97,8 @@ struct GFSM {
         i2c2::ratePeriodic();
         auxes1::ratePeriodic();
         auxes2::ratePeriodic();
-
+        sm1::ratePeriodic();
+        sm2::ratePeriodic();
         crsf_in::ratePeriodic();
 
         ++mStateTick;
@@ -117,8 +122,9 @@ struct GFSM {
             switches2::ratePeriodic();
             mStateTick.on(debugTicks, []{
                 // IO::outl<debug>("# i2c state:", (uint8_t)i2c1::mState, " ", i2c1::mIsr, " ", i2c1::errors());
-                IO::outl<debug>("# adc v0:", adc::values()[0], " v1:", adc::values()[1], " v2:", adc::values()[2]);
-                IO::outl<debug>("# enc1:", enc1::value());
+                IO::outl<debug>("# adc v0:", adc::values()[0], " v1:", adc::values()[1], " v2:", adc::values()[2], "# enc1:", enc1::value(), " enc2:", enc2::value());
+                IO::outl<debug>("# sm1 v0:", sm1::value(0), " v1:", sm1::value(1), " v2:", sm1::value(2), " v3:", sm1::value(3), " v4:", sm1::value(4), " v5:", sm1::value(5));
+                IO::outl<debug>("# sm1 v0:", sm2::value(0), " v1:", sm2::value(1), " v2:", sm2::value(2), " v3:", sm2::value(3), " v4:", sm2::value(4), " v5:", sm2::value(5));
             });
             break;
         }

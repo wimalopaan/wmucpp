@@ -319,7 +319,9 @@ namespace Mcu::Stm {
                 mcuUart->CR3 = []consteval{
                     uint32_t cr3 = (USART_CR3_OVRDIS | USART_CR3_DMAR | USART_CR3_DMAT);
                     if constexpr(Config::mode == Uarts::Mode::HalfDuplex) {
-                        cr3 |= USART_CR3_HDSEL;
+                        if constexpr(!detail::getRxTxLinesDifferent_v<Config>) {
+                            cr3 |= USART_CR3_HDSEL;
+                        }
                     }
                     return cr3;
                 }();

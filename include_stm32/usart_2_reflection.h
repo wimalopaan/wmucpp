@@ -203,6 +203,18 @@ namespace Mcu::Stm {
             };
             template<typename T>
             using getAdapter_t = getAdapter<T>::type;
+
+            template<typename T>
+            struct getRxTxLinesDifferent{
+                static inline constexpr bool value{false};
+            };
+            template<typename T>
+            requires(requires(T x){T::RxTxLinesDifferent;})
+            struct getRxTxLinesDifferent<T>{
+                static inline constexpr bool value = T::RxTxLinesDifferent;
+            };
+            template<typename T>
+            static inline constexpr bool getRxTxLinesDifferent_v = getRxTxLinesDifferent<T>::value;
         }
     }
 }
