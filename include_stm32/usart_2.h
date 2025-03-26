@@ -25,6 +25,7 @@ struct UartConfig {
     static inline constexpr bool invert = true;                              // optional
     static inline constexpr auto parity = Mcu::Stm::Uarts::Parity::Even;     // optional
     static inline constexpr Mode mode = Mode::HalfDuplex; // TxOnly, RxOnly, HalfDuplex, FullDuplex
+    static inline constexpr bool RxTxLinesDifferent = false; // HalfDuplex-Only
     static inline constexpr uint32_t baudrate = 115'200;
     struct Rx {
         static inline constexpr bool enable = false;
