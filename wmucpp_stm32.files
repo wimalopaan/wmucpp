@@ -553,6 +553,7 @@ include_stm32/dmas_6.h
 include_stm32/dmas_7.h
 include_stm32/dmas_8.h
 include_stm32/dsp.h
+include_stm32/encoder.h
 include_stm32/etl/algorithm.h
 include_stm32/etl/circularbuffer.h
 include_stm32/etl/event.h

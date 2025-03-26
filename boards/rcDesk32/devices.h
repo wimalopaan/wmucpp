@@ -45,6 +45,7 @@
 #include "rc/crsf_2.h"
 #include "rc/sbus2_2.h"
 #include "rc/spacemouse.h"
+#include "encoder.h"
 
 #include "crsf_cb.h"
 #include "pcal6408.h"
@@ -95,12 +96,12 @@ struct Devices<Desk01, Config, MCU> {
     using ana5 = Mcu::Stm::Pin<gpioa, 7, MCU>;
     using ana6 = Mcu::Stm::Pin<gpiob, 1, MCU>;
 
-    using incr2_a = Mcu::Stm::Pin<gpioa, 5, MCU>;
-    using incr2_b = Mcu::Stm::Pin<gpiob, 3, MCU>;
+    using incr2_a = Mcu::Stm::Pin<gpioa, 5, MCU>; // tim2_ch1 (af2)
+    using incr2_b = Mcu::Stm::Pin<gpiob, 3, MCU>; // tim2_ch2 (af2)
     using incr2_t = Mcu::Stm::Pin<gpiod, 1, MCU>;
 
-    using incr1_a = Mcu::Stm::Pin<gpioc, 6, MCU>;
-    using incr1_b = Mcu::Stm::Pin<gpiob, 5, MCU>;
+    using incr1_a = Mcu::Stm::Pin<gpioc, 6, MCU>; // tim3_ch1 (af1)
+    using incr1_b = Mcu::Stm::Pin<gpiob, 5, MCU>; // tim3_ch2 (af1)
     using incr1_t = Mcu::Stm::Pin<gpiob, 4, MCU>;
 
     using aux2_rx = Mcu::Stm::Pin<gpiob, 0, MCU>;
@@ -203,6 +204,20 @@ struct Devices<Desk01, Config, MCU> {
 
     using ledBlinker1 = External::Blinker<led1, systemTimer>;
     using ledBlinker2 = External::Blinker<led2, systemTimer>;
+
+    struct Enc1Config {
+        using pin_a = incr1_a;
+        using pin_b = incr1_b;
+        using pin_t = incr1_t;
+    };
+    using enc1 = External::Encoder<3, Enc1Config>;
+
+    struct Enc2Config {
+        using pin_a = incr2_a;
+        using pin_b = incr2_b;
+        using pin_t = incr2_t;
+    };
+    using enc2 = External::Encoder<2, Enc2Config>;
 
     // I2C-1
     struct I2C1Config {
@@ -352,6 +367,15 @@ struct Devices<Desk01, Config, MCU> {
         led2::template dir<Mcu::Output>();
 
         tp::template dir<Mcu::Output>();
+
+        button1::template dir<Mcu::Input>();
+        button2::template dir<Mcu::Input>();
+        button1::pullup();
+        button2::pullup();
+
+        enc1::init();
+        enc2::init();
+
 
 #ifdef SERIAL_DEBUG
         debug::init();

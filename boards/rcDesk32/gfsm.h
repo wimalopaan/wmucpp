@@ -47,6 +47,9 @@ struct GFSM {
 
     using adc = devs::adc;
 
+    using enc1 = devs::enc1;
+    using enc2 = devs::enc2;
+
     using led1 = devs::ledBlinker1;
     using led2 = devs::ledBlinker2;
 
@@ -115,6 +118,7 @@ struct GFSM {
             mStateTick.on(debugTicks, []{
                 // IO::outl<debug>("# i2c state:", (uint8_t)i2c1::mState, " ", i2c1::mIsr, " ", i2c1::errors());
                 IO::outl<debug>("# adc v0:", adc::values()[0], " v1:", adc::values()[1], " v2:", adc::values()[2]);
+                IO::outl<debug>("# enc1:", enc1::value());
             });
             break;
         }

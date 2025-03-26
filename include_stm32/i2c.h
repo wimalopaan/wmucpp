@@ -125,10 +125,10 @@ namespace Mcu::Stm {
                         break;
                     case State::ReadWriteAdress:
                         mcuI2c->ICR = -1;
-                        mcuI2c->CR2 = []{
+                        mcuI2c->CR2 = [] {
                             uint32_t cr2 = 0;
-                            MODIFY_REG(cr2, I2C_CR2_NBYTES_Msk, (1 << I2C_CR2_NBYTES_Pos));
-                            MODIFY_REG(cr2, I2C_CR2_SADD_Msk, (mAddress << 1) << I2C_CR2_SADD_Pos);
+                            cr2 |= (1 << I2C_CR2_NBYTES_Pos);
+                            cr2 |= ((mAddress << 1) << I2C_CR2_SADD_Pos);
                             cr2 |= I2C_CR2_AUTOEND;
                             cr2 |= I2C_CR2_START;
                             return cr2;
@@ -165,10 +165,10 @@ namespace Mcu::Stm {
                         }
                         break;
                     case State::ReadWriteAdress2:
-                        mcuI2c->CR2 = []{
+                        mcuI2c->CR2 = [] {
                             uint32_t cr2 = 0;
-                            MODIFY_REG(cr2, I2C_CR2_NBYTES_Msk, (mCount << I2C_CR2_NBYTES_Pos));
-                            MODIFY_REG(cr2, I2C_CR2_SADD_Msk, (mAddress << 1) << I2C_CR2_SADD_Pos);
+                            cr2 |= (mCount << I2C_CR2_NBYTES_Pos);
+                            cr2 |= ((mAddress << 1) << I2C_CR2_SADD_Pos);
                             cr2 |= I2C_CR2_AUTOEND;
                             cr2 |= I2C_CR2_RD_WRN; // read
                             cr2 |= I2C_CR2_START;
@@ -212,10 +212,10 @@ namespace Mcu::Stm {
                         mState = State::Idle;
                         break;
                     case State::ScanStart:
-                        mcuI2c->CR2 = []{
+                        mcuI2c->CR2 = [] {
                             uint32_t cr2 = 0;
-                            MODIFY_REG(cr2, I2C_CR2_NBYTES_Msk, (0 << I2C_CR2_NBYTES_Pos));
-                            MODIFY_REG(cr2, I2C_CR2_SADD_Msk, (mScanSlaveAddress << 1) << I2C_CR2_SADD_Pos);
+                            cr2 |= ((0 << I2C_CR2_NBYTES_Pos));
+                            cr2 |= ((mScanSlaveAddress << 1) << I2C_CR2_SADD_Pos);
                             cr2 |= I2C_CR2_AUTOEND;
                             cr2 |= I2C_CR2_START;
                             cr2 |= I2C_CR2_STOP;
@@ -258,10 +258,10 @@ namespace Mcu::Stm {
                     {
                         // IO::outl<Debug>("I2C WA: ",  mAddress, " ", mCount);
                         mcuI2c->ICR = -1;
-                        mcuI2c->CR2 = []{
+                        mcuI2c->CR2 = [] {
                             uint32_t cr2 = 0;
-                            MODIFY_REG(cr2, I2C_CR2_NBYTES_Msk, (mCount << I2C_CR2_NBYTES_Pos));
-                            MODIFY_REG(cr2, I2C_CR2_SADD_Msk, (mAddress << 1) << I2C_CR2_SADD_Pos);
+                            cr2 |= ((mCount << I2C_CR2_NBYTES_Pos));
+                            cr2 |= ((mAddress << 1) << I2C_CR2_SADD_Pos);
                             cr2 |= I2C_CR2_AUTOEND;
                             cr2 |= I2C_CR2_START;
                             return cr2;
