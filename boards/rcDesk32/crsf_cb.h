@@ -37,6 +37,9 @@ struct CrsfCallback {
     using auxes1 = Config::auxes1;
     using auxes2 = Config::auxes2;
 
+    using smes1 = Config::smes1;
+    using smes2 = Config::smes2;
+
     static inline constexpr auto& eeprom = storage::eeprom;
     static inline constexpr auto& eeprom_flash = storage::eeprom_flash;
     static inline constexpr const char* const title = "RC-Desk32@";
@@ -197,19 +200,48 @@ private:
     static inline void addNode(auto& c, const RC::Protokoll::Crsf::V4::Parameter<T>& p) {
         c.push_back(p);
     }
-    using params_t = etl::FixedVector<Param_t, 32>;
+    using params_t = etl::FixedVector<Param_t, 128>;
     static inline params_t params = []{
         params_t p;
         addNode(p, Param_t{0, PType::Folder, ""});
         addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
         addNode(p, Param_t{0, PType::U8,  "CRSF Address", nullptr, &eeprom.address, 192, 207, [](const uint8_t a){updateName(mName); src::address(std::byte(a)); return true;}});
         addNode(p, Param_t{0, PType::U8,  "Controller Number", nullptr, &eeprom.controllerNumber, 0, 8, [](const uint8_t){return true;}});
-        addNode(p, Param_t{0, PType::Sel, "Aux1", "SBus2;Hw/Ext;Off", &eeprom.aux1mode, 0, 2, [](const uint8_t v){auxes1::set(v); return true;}});
-        addNode(p, Param_t{0, PType::Sel, "Aux2", "SBus2;Hw/Ext;Off", &eeprom.aux2mode, 0, 2, [](const uint8_t v){auxes2::set(v); return true;}});
+        addNode(p, Param_t{0, PType::Sel, "Aux1", "SBus2;Inv.SBus2;Hw/Ext;Off", &eeprom.aux1mode, 0, 3, [](const uint8_t v){auxes1::set(v); return true;}});
+        addNode(p, Param_t{0, PType::Sel, "Aux2", "SBus2;Inv.SBus2;Hw/Ext;Off", &eeprom.aux2mode, 0, 3, [](const uint8_t v){auxes2::set(v); return true;}});
+        addNode(p, Param_t{0, PType::Sel, "Sm1", "SpaceMouse;Off", &eeprom.sm1mode, 0, 1, [](const uint8_t v){smes1::set(v); return true;}});
+        addNode(p, Param_t{0, PType::Sel, "Sm2", "SpaceMouse;Off", &eeprom.sm2mode, 0, 1, [](const uint8_t v){smes2::set(v); return true;}});
+        auto parent = addParent(p, Param_t{0, PType::Folder, "Analog1"});
+        addNode(p, Param_t{parent, PType::Sel, "Stream", "SBus;Hw/Ext;Off", &eeprom.analogMaps[0].stream, 0, 2, [](const uint8_t){return true;}});
+        addNode(p, Param_t{parent, PType::U8,  "Position", nullptr, &eeprom.analogMaps[0].position, 1, 16, [](const uint8_t){return true;}});
+        parent = addParent(p, Param_t{0, PType::Folder, "Analog2"});
+        addNode(p, Param_t{parent, PType::Sel, "Stream", "SBus;Hw/Ext;Off", &eeprom.analogMaps[1].stream, 0, 2, [](const uint8_t){return true;}});
+        addNode(p, Param_t{parent, PType::U8,  "Position", nullptr, &eeprom.analogMaps[1].position, 1, 16, [](const uint8_t){return true;}});
 
-        addNode(p, Param_t{0, PType::Sel, "Bluetooth", "off;on", &eeprom.bluetooth, 0, 1, [](const uint8_t){return true;}});
-        addNode(p, Param_t{0, PType::Sel, "CRSF Channels", "off;on", &eeprom.crsf_in, 0, 1, [](const uint8_t){return true;}});
-        auto parent = addParent(p, Param_t{0, PType::Folder, "I2C"});
+        parent = addParent(p, Param_t{0, PType::Folder, "SpaceMouse1"});
+        addNode(p, Param_t{parent, PType::Sel, "Stream", "SBus;Hw/Ext;Off", &eeprom.smMaps[0].stream, 0, 2, [](const uint8_t){return true;}});
+        addNode(p, Param_t{parent, PType::U8,  "Position", nullptr, &eeprom.smMaps[0].position, 1, 16, [](const uint8_t){return true;}});
+        parent = addParent(p, Param_t{0, PType::Folder, "SpaceMouse2"});
+        addNode(p, Param_t{parent, PType::Sel, "Stream", "SBus;Hw/Ext;Off", &eeprom.smMaps[1].stream, 0, 2, [](const uint8_t){return true;}});
+        addNode(p, Param_t{parent, PType::U8,  "Position", nullptr, &eeprom.smMaps[1].position, 1, 16, [](const uint8_t){return true;}});
+
+        parent = addParent(p, Param_t{0, PType::Folder, "Incrementals"});
+        addNode(p, Param_t{parent, PType::Sel, "Stream1", "SBus;Hw/Ext;Off", &eeprom.incMaps[0].stream, 0, 2, [](const uint8_t){return true;}});
+        addNode(p, Param_t{parent, PType::U8,  "Position1", nullptr, &eeprom.incMaps[0].position, 1, 16, [](const uint8_t){return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Stream2", "SBus;Hw/Ext;Off", &eeprom.incMaps[1].stream, 0, 2, [](const uint8_t){return true;}});
+        addNode(p, Param_t{parent, PType::U8,  "Position2", nullptr, &eeprom.incMaps[1].position, 1, 16, [](const uint8_t){return true;}});
+
+        parent = addParent(p, Param_t{0, PType::Folder, "BlueTooth"});
+        addNode(p, Param_t{parent, PType::Sel, "Bluetooth", "off;on", &eeprom.bluetooth, 0, 1, [](const uint8_t){return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Stream", "SBus;Hw/Ext;Off", &eeprom.bluetoothMap.stream, 0, 2, [](const uint8_t){return true;}});
+        addNode(p, Param_t{parent, PType::U8,  "Position", nullptr, &eeprom.bluetoothMap.position, 1, 16, [](const uint8_t){return true;}});
+
+        parent = addParent(p, Param_t{0, PType::Folder, "Receiver"});
+        addNode(p, Param_t{parent, PType::Sel, "CRSF Channels", "off;on", &eeprom.crsf_in, 0, 1, [](const uint8_t){return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Stream", "SBus;Hw/Ext;Off", &eeprom.crsfInMap.stream, 0, 2, [](const uint8_t){return true;}});
+        addNode(p, Param_t{parent, PType::U8,  "Position", nullptr, &eeprom.crsfInMap.position, 1, 16, [](const uint8_t){return true;}});
+
+        parent = addParent(p, Param_t{0, PType::Folder, "I2C"});
         addNode(p, Param_t{parent, PType::Command, "I2C scan", "Scanning...", nullptr, 0, 0, [](const uint8_t){return false;}});
         parent = addParent(p, Param_t{0, PType::Folder, "Devices"});
         return p;

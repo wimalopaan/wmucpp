@@ -103,6 +103,16 @@ namespace RC::Protokoll::SBus2 {
             static inline void activateSBus2(const bool a) {
                 mUseSbus2 = a;
             }
+            static inline void invert(const bool inv) {
+                if (inv) {
+                    uart::template invert<true>();
+                    pin::template pulldown<true>();
+
+                } else {
+                    uart::template invert<false>();
+                    pin::template pullup<true>();
+                }
+            }
             struct Isr {
                 static inline void onTransferComplete(const auto f) {
                     if (mActive) {
@@ -210,7 +220,8 @@ namespace RC::Protokoll::SBus2 {
                         outFrame[24] = (request[mRequestIndex]); // Telem-Request
                     }
                     else {
-                        outFrame[24] = 0x04;
+                        // outFrame[24] = 0x04;
+                        outFrame[24] = 0x00;
                     }
                     return 25;
                 });

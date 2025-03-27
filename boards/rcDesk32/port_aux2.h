@@ -19,7 +19,14 @@ struct Auxes2 {
             mAux = std::make_unique<Aux<sbus2>>();
         }
             break;
-        case 1: // hwext
+        case 1: // inv sbus
+        {
+            mAux = nullptr;
+            mAux = std::make_unique<Aux<sbus2>>();
+            sbus2::invert(false);
+        }
+            break;
+        case 2: // hwext
         {
             mAux = nullptr;
             mAux = std::make_unique<Aux<hwext2>>();

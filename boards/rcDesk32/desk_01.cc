@@ -31,6 +31,8 @@
 #include "gfsm.h"
 #include "port_aux1.h"
 #include "port_aux2.h"
+#include "port_sm1.h"
+#include "port_sm2.h"
 
 using namespace std::literals::chrono_literals;
 
@@ -52,6 +54,8 @@ struct DevsConfig {
     using storage = Storage;
     using auxes1 = Auxes1<devs>;
     using auxes2 = Auxes2<devs>;
+    using smes1 = Smes1<devs>;
+    using smes2 = Smes2<devs>;
 };
 
 using gfsm = GFSM<devs>;

@@ -198,6 +198,8 @@ boards/rcDesk32/pcal6408.h
 boards/rcDesk32/port_aux1.h
 boards/rcDesk32/port_aux2.h
 boards/rcDesk32/port_iface.h
+boards/rcDesk32/port_sm1.h
+boards/rcDesk32/port_sm2.h
 boards/rcDesk32/pult_01.cc
 boards/rcDesk32/startup_g0b1.s
 boards/rcDesk32/switches.h

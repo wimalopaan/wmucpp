@@ -67,6 +67,9 @@ struct Devices<Desk01, Config, MCU> {
     using auxes1 = Config::auxes1;
     using auxes2 = Config::auxes2;
 
+    using smes1 = Config::smes1;
+    using smes2 = Config::smes2;
+
     using gpioa = Mcu::Stm::GPIO<Mcu::Stm::A, MCU>;
     using gpiob = Mcu::Stm::GPIO<Mcu::Stm::B, MCU>;
     using gpioc = Mcu::Stm::GPIO<Mcu::Stm::C, MCU>;
@@ -338,6 +341,8 @@ struct Devices<Desk01, Config, MCU> {
         using src = crsf_in;
         using auxes1 = Devices::auxes1;
         using auxes2 = Devices::auxes2;
+        using smes1 = Devices::smes1;
+        using smes2 = Devices::smes2;
         using tp = void;
         using debug = Devices::debug;
     };
@@ -396,6 +401,10 @@ struct Devices<Desk01, Config, MCU> {
 
         sm1::init();
         sm2::init();
+
+        bt_pwr::template dir<Mcu::Output>();
+        bt_pwr::reset();
+
     }
 };
 

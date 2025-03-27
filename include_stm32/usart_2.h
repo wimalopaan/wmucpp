@@ -517,6 +517,17 @@ namespace Mcu::Stm {
                     }
                 }
             };
+            template<bool Inv>
+            static inline void invert() {
+                mcuUart->CR1 &= ~USART_CR1_UE;
+                if constexpr(Inv) {
+                    mcuUart->CR2 |= (USART_CR2_TXINV | USART_CR2_RXINV);
+                }
+                else {
+                    mcuUart->CR2 &= ~(USART_CR2_TXINV | USART_CR2_RXINV);
+                }
+                mcuUart->CR1 |= USART_CR1_UE;
+            }
             template<bool Disable = true>
             static inline void baud(const uint32_t baud) {
                 const auto [brr, presc] = calcBRR(baud);
