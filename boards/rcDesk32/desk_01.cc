@@ -65,7 +65,7 @@ int main() {
     gfsm::init();
     gfsm::updateFromEeprom();
 
-    // NVIC_EnableIRQ(USART1_IRQn);
+    NVIC_EnableIRQ(USART1_IRQn);
     NVIC_EnableIRQ(USART2_LPUART2_IRQn);
     NVIC_EnableIRQ(USART3_4_5_6_LPUART1_IRQn);
     // NVIC_EnableIRQ(DMA1_Channel2_3_IRQn);
@@ -90,12 +90,13 @@ void ADC1_COMP_IRQHandler() {
                         devs::tp::toggle();
                     });
 }
-// void DMA1_Channel2_3_IRQHandler() {
-//     using adc = devs::adc;
-//     using adcDma = adc::dmaChannel;
-//     static_assert(adcDma::number == 3);
-//     // adcDma::onTransferComplete([] static {});
-// }
+void USART1_IRQHandler() {
+    using bt = devs::bt;
+    static_assert(bt::uart::number == 1);
+    bt::Isr::onIdle([] static {});
+    bt::Isr::onTransferComplete([] static {});
+}
+
 void USART3_4_5_6_LPUART1_IRQHandler() {
     using crsf_in = devs::crsf_in;
     static_assert(crsf_in::number == 6);

@@ -220,7 +220,8 @@ namespace Mcu::Stm {
                 }();
 
                 mcuAdc->CHSELR = []<auto... CC>(std::integer_sequence<auto, CC...>) consteval {
-                        if constexpr(sizeof...(CC) <= 8) {
+                        if constexpr(false) {
+                        // if constexpr(sizeof...(CC) <= 8) {
                             uint32_t r = 0;
                             const std::array<uint8_t, sizeof...(CC)> channels{CC...};
                             for(uint8_t i = 0; i < 8; ++i) {
@@ -249,9 +250,9 @@ namespace Mcu::Stm {
                             r |= ADC_CFGR1_CONT;
                         }
                         r |= (ADC_CFGR1_DMACFG | ADC_CFGR1_DMAEN);
-                        if constexpr(nChannels <= 8) {
-                            r |= ADC_CFGR1_CHSELRMOD;
-                        }
+                        // if constexpr(nChannels <= 8) {
+                        //     r |= ADC_CFGR1_CHSELRMOD;
+                        // }
                         return r;
                 }();
 

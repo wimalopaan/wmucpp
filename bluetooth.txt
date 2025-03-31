@@ -14,6 +14,8 @@
 
 * JDY-10 (BLE)
 
+* https://pypi.org/project/ble-serial/
+
 0) falls venv nicht da: python -m venv ble-venv
 1) source ble-venv/bin/activate
 2) ble-scan

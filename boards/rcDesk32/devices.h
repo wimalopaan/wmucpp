@@ -46,6 +46,7 @@
 #include "rc/sbus2_2.h"
 #include "rc/spacemouse.h"
 #include "encoder.h"
+#include "bluetooth/jdy10.h"
 
 #include "crsf_cb.h"
 #include "pcal6408.h"
@@ -151,6 +152,9 @@ struct Devices<Desk01, Config, MCU> {
     using sm1DmaChannel = Mcu::Components::DmaChannel<typename dma1::component_t, 6>;
     using sm2DmaChannel = Mcu::Components::DmaChannel<typename dma1::component_t, 7>;
 
+    using btRxDmaChannel = Mcu::Components::DmaChannel<typename dma2::component_t, 1>;
+    using btTxDmaChannel = Mcu::Components::DmaChannel<typename dma2::component_t, 2>;
+
     // ADC
     struct AdcConfig {
         using channels = std::integer_sequence<uint8_t, 2, 3, 4, 6, 7, 9>;
@@ -161,6 +165,11 @@ struct Devices<Desk01, Config, MCU> {
     using adc = Mcu::Stm::V4::Adc<1, AdcConfig>;
 
     // USARTS
+
+    // Usart 1: Bluetooth
+    struct BtConfig;
+    using bt = External::Bluetooth::Jdy10<1, BtConfig, MCU>;
+
     // Usart 2: radio aux1
 #ifndef USE_SWD
     struct Aux1Config;
@@ -186,11 +195,9 @@ struct Devices<Desk01, Config, MCU> {
     struct SM1Config;
     using sm1 = RC::Protokoll::SpaceMouse::Input<5, SM1Config, MCU>;
 
-    // Usart 6: ELRX receiver
+    // Usart 6: ELRS receiver
     struct CrsfConfig;
     using crsf_in = RC::Protokoll::Crsf::V4::Master<6, CrsfConfig, MCU>;
-
-
 
 #ifdef SERIAL_DEBUG
     // LPUart1
@@ -255,8 +262,8 @@ struct Devices<Desk01, Config, MCU> {
         using debug = Devices::debug;
         using callback = struct {
             static inline void set(const uint8_t index, const bool state) {
-                hwext1::set(index, state);
-                hwext2::set(index, state);
+                hwext1::setSw(index, state);
+                hwext2::setSw(index, state);
             }
         };
     };
@@ -267,8 +274,8 @@ struct Devices<Desk01, Config, MCU> {
         using debug = Devices::debug;
         using callback = struct {
             static inline void set(const uint8_t index, const bool state) {
-                hwext1::set(index + 32, state);
-                hwext2::set(index + 32, state);
+                hwext1::setSw(index + 32, state);
+                hwext2::setSw(index + 32, state);
             }
         };
     };
@@ -334,7 +341,19 @@ struct Devices<Desk01, Config, MCU> {
         using pin_tx = sm2_tx;
         using tp = void;
     };
-
+    struct BtConfig {
+        using clock = Devices::clock;
+        using debug = Devices::debug;
+        using dmaRxChComponent = btRxDmaChannel;
+        using dmaTxChComponent = btTxDmaChannel;
+        using systemTimer = Devices::systemTimer;
+        using pin_rx = bt_rx;
+        using pin_tx = bt_tx;
+        using pin_en = bt_en;
+        using pin_pwr = bt_pwr;
+        using pin_status = bt_status;
+        using tp = void;
+    };
     struct CrsfCallbackConfig {
         using storage = Config::storage;
         using timer = systemTimer;
@@ -385,7 +404,6 @@ struct Devices<Desk01, Config, MCU> {
         enc1::init();
         enc2::init();
 
-
 #ifdef SERIAL_DEBUG
         debug::init();
 #endif
@@ -402,9 +420,7 @@ struct Devices<Desk01, Config, MCU> {
         sm1::init();
         sm2::init();
 
-        bt_pwr::template dir<Mcu::Output>();
-        bt_pwr::reset();
-
+        bt::init();
     }
 };
 

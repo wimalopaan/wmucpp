@@ -31,6 +31,13 @@ using namespace std::literals::chrono_literals;
 
 #ifndef USE_RC720
 
+template<typename... PP>
+struct Distributor {
+    static inline void set(const uint8_t i, const uint16_t v) {
+        (PP::set(i, v), ...);
+    }
+};
+
 template <typename Devs>
 struct GFSM {
     using devs = Devs;
@@ -45,6 +52,10 @@ struct GFSM {
     using auxes1 = devs::auxes1;
     using auxes2 = devs::auxes2;
 
+    using dist_hw = Distributor<typename devs::hwext1, typename devs::hwext2>;
+
+    using dist_sb = Distributor<typename devs::sbus1, typename devs::sbus2>;
+
     using adc = devs::adc;
 
     using enc1 = devs::enc1;
@@ -52,6 +63,8 @@ struct GFSM {
 
     using sm1 = devs::sm1;
     using sm2 = devs::sm2;
+
+    using bt = devs::bt;
 
     using led1 = devs::ledBlinker1;
     using led2 = devs::ledBlinker2;
@@ -85,6 +98,7 @@ struct GFSM {
         sm1::periodic();
         sm2::periodic();
         crsf_in::periodic();
+        bt::periodic();
     }
 
     static inline constexpr External::Tick<systemTimer> initTicks{500ms};
@@ -100,6 +114,7 @@ struct GFSM {
         sm1::ratePeriodic();
         sm2::ratePeriodic();
         crsf_in::ratePeriodic();
+        bt::ratePeriodic();
 
         ++mStateTick;
         const auto oldState = mState;
@@ -122,10 +137,12 @@ struct GFSM {
             switches2::ratePeriodic();
             mStateTick.on(debugTicks, []{
                 // IO::outl<debug>("# i2c state:", (uint8_t)i2c1::mState, " ", i2c1::mIsr, " ", i2c1::errors());
-                IO::outl<debug>("# adc v0:", adc::values()[0], " v1:", adc::values()[1], " v2:", adc::values()[2], "# enc1:", enc1::value(), " enc2:", enc2::value());
-                IO::outl<debug>("# sm1 v0:", sm1::value(0), " v1:", sm1::value(1), " v2:", sm1::value(2), " v3:", sm1::value(3), " v4:", sm1::value(4), " v5:", sm1::value(5));
-                IO::outl<debug>("# sm1 v0:", sm2::value(0), " v1:", sm2::value(1), " v2:", sm2::value(2), " v3:", sm2::value(3), " v4:", sm2::value(4), " v5:", sm2::value(5));
+                IO::outl<debug>("# adc v0:", adc::values()[0], " v1:", adc::values()[1], " v2:", adc::values()[2], " v3:", adc::values()[3], " v4:", adc::values()[4], " v5:", adc::values()[5]);
+                // IO::outl<debug>("# enc1:", enc1::value(), " enc2:", enc2::value());
+                // IO::outl<debug>("# sm1 v0:", sm1::value(0), " v1:", sm1::value(1), " v2:", sm1::value(2), " v3:", sm1::value(3), " v4:", sm1::value(4), " v5:", sm1::value(5));
+                // IO::outl<debug>("# sm1 v0:", sm2::value(0), " v1:", sm2::value(1), " v2:", sm2::value(2), " v3:", sm2::value(3), " v4:", sm2::value(4), " v5:", sm2::value(5));
             });
+            update();
             break;
         }
         if (oldState != mState) {
@@ -166,6 +183,65 @@ struct GFSM {
         }
     }
     private:
+    static inline void update() {
+        static uint8_t n = 1;
+        switch(n) {
+        case 1:
+            updateAnalogs();
+            break;
+        case 2:
+            updateSMs();
+            break;
+        case 3:
+            updateInc();
+            break;
+        case 4:
+            updateCrsf();
+            break;
+        default:
+            n = 0;
+            break;
+        }
+        ++n;
+    }
+    static inline void updateAnalog(const uint8_t i, const uint8_t off = 0) {
+        if (storage::eeprom.analogMaps[i].stream == 0) {
+            for(uint8_t i = 0; i < 3; ++i) {
+                dist_sb::set(storage::eeprom.analogMaps[i].position + i, adc::values()[i + off]);
+            }
+        }
+        else if (storage::eeprom.analogMaps[i].stream == 1) {
+            for(uint8_t i = 0; i < 3; ++i) {
+                dist_hw::set(storage::eeprom.analogMaps[i].position + i, adc::values()[i + off]);
+            }
+        }
+    }
+    static inline void updateAnalogs() {
+        updateAnalog(0, 0);
+        updateAnalog(1, 3);
+    }
+    static inline void updateSM(const uint8_t i, const auto f) {
+        if (storage::eeprom.smMaps[i].stream == 0) {
+            for(uint8_t i = 0; i < 6; ++i) {
+                dist_sb::set(storage::eeprom.smMaps[i].position + i, f(i));
+            }
+        }
+        else if (storage::eeprom.smMaps[i].stream == 1) {
+            for(uint8_t i = 0; i < 6; ++i) {
+                dist_hw::set(storage::eeprom.smMaps[i].position + i, f(i));
+            }
+        }
+    }
+    static inline void updateSMs() {
+        updateSM(0, [](const uint8_t i){return sm1::value(i);});
+        updateSM(1, [](const uint8_t i){return sm2::value(i);});
+    }
+    static inline void updateInc() {
+
+    }
+    static inline void updateCrsf() {
+
+    }
     static inline External::Tick<systemTimer> mStateTick;
     static inline State mState{State::Undefined};
 };

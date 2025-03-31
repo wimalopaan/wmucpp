@@ -25,7 +25,7 @@ template<uint8_t Size = 3>
 struct Map {
     uint8_t stream = 0; // trainer; vcontrols;off
     uint8_t position = 0;
-    std::array<bool, Size> enable{};
+    // std::array<bool, Size> enable{};
 };
 template<>
 struct Map<0> {
@@ -43,12 +43,12 @@ struct EEProm {
     uint8_t sm2mode = 0; // sm;off
 
     std::array<Map<3>, 2> analogMaps{
-        Map<3>{1, 0, {true, true, true}},
-        Map<3>{1, 3, {true, true, true}}
+        Map<3>{1, 0},
+        Map<3>{1, 3}
     };
     std::array<Map<6>, 2> smMaps{
-        Map<6>{0, 0, {true, true, true, true, true, true}},
-        Map<6>{0, 7, {true, true, true, true, true, true}}
+        Map<6>{0, 0},
+        Map<6>{0, 7}
     };
     std::array<Map<0>, 2> incMaps{
         Map<0>{1, 6},

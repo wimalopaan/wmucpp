@@ -31,7 +31,7 @@ struct HwExtension {
     using systemTimer = Config::systemTimer;
     using debug = Config::debug;
     using dmaChComponent = Config::dmaChComponent;
-    using input = Config::input;
+    // using input = Config::input;
     using storage = Config::storage;
     using pin = Config::pin;
     using tp = Config::tp;
@@ -63,6 +63,9 @@ struct HwExtension {
     static inline void init() {
         static constexpr uint8_t af = Mcu::Stm::AlternateFunctions::mapper_v<pin, uart, Mcu::Stm::AlternateFunctions::TX>;
         IO::outl<debug>("# HwExt init");
+        for(auto& v : mValues) {
+            v = RC::Protokoll::Crsf::V4::mid;
+        }
         Mcu::Arm::Atomic::access([]{
             mState = State::Init;
             mErrorCount = 0;
@@ -162,15 +165,19 @@ struct HwExtension {
     static inline auto errorCount() {
         return mErrorCount;
     }
-    static inline void set(const uint64_t sw) {
+    static inline void setSw(const uint64_t sw) {
         IO::outl<debug>("# set: ", sw);
         mSwitches = sw;
     }
-    static inline void set(const uint8_t sw, const bool on) {
+    static inline void setSw(const uint8_t sw, const bool on) {
         IO::outl<debug>("# set2: ", sw, " ", (uint8_t)on);
         const uint64_t mask = (uint64_t{1} << sw);
         mSwitches = (mSwitches & ~mask) | (on ? mask : 0);
     }
+    static inline void set(const uint8_t i, const uint16_t v) {
+        mValues[i] = v;
+    }
+
     private:
     static inline void send() {
         static bool sendSwitches = true;
@@ -200,7 +207,7 @@ struct HwExtension {
 
                     uint8_t cs = 0;
                     for(uint8_t i = 0; i < 16; ++i) {
-                        const int vc = input::value(i) - RC::Protokoll::Crsf::V4::mid;
+                        const int vc = mValues[i] - RC::Protokoll::Crsf::V4::mid;
                         const int vcn = (vc + vc / 8 + vc / 32);
                         const int v = std::clamp(vcn + 128, 0, 255);
                         const uint8_t lsb = v;
@@ -220,7 +227,7 @@ struct HwExtension {
 
                     uint8_t cs = 0;
                     for(uint8_t i = 0; i < 16; ++i) {
-                        const int vc = input::value(i) - RC::Protokoll::Crsf::V4::mid;
+                        const int vc = mValues[i] - RC::Protokoll::Crsf::V4::mid;
                         const int vcn = (vc + vc / 4); // * 1.25
                         const int v = std::clamp(vcn + 1024, 0, 2048);
                         const uint8_t lsb = v;
@@ -265,6 +272,7 @@ struct HwExtension {
         });
     }
     static inline uint64_t mSwitches = 0;
+    static inline std::array<uint16_t, 16> mValues{};
     static inline uint16_t mErrorCount = 0;
     static inline etl::Event<Event> mEvent;
     static inline volatile State mState = State::Init;

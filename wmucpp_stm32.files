@@ -536,6 +536,7 @@ include_stm32/atomic.h
 include_stm32/bldc.h
 include_stm32/blinker.h
 include_stm32/bluetooth/hc05.h
+include_stm32/bluetooth/jdy10.h
 include_stm32/button.h
 include_stm32/byte.h
 include_stm32/clock.h
