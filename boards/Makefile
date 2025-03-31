@@ -22,7 +22,7 @@ F_OSC = 20000000
 
 #subdirs = rcsensor unimaxi clock anano i2cIR i2cWS2812 rcsensorled03 rcsensorled10 blmc tx ppmmatrix breakout hott
 #subdirs = unimaxi rcsensorled clock anano i2cIR i2cWS2812 rcsensorled03 rcsensorled10 blmc tx ppmmatrix
-subdirs = rc720E32
+subdirs = rc720E32 rcDesk32 rcmultiswitchG030
 
 #targets +=  
 

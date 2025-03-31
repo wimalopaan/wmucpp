@@ -17,7 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-all: doc example host test projects boards tools
+#all: doc example host test projects boards tools
+all: boards
 
 .PHONY: test example clean host doc projects boards
 
@@ -44,7 +45,6 @@ tools:
 
 clean:
 	make -C doc clean
-	make -C example clean
 	make -C test clean
 	make -C host clean
 	make -C projects clean
