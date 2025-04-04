@@ -342,7 +342,7 @@ namespace External {
 
             static inline std::pair<uint8_t, uint8_t> morseLookup(const char c) {
                 for(const Entry& e : lut) {
-                    if (c == e.letter) {
+                    if (std::toupper(c) == e.letter) {
                         return {e.pattern, e.length};
                     }
                 }
