@@ -61,11 +61,11 @@ struct SW99; // test
 
 using namespace std::literals::chrono_literals;
 
-template<typename HW, template<typename, typename> typename CrsfCallback, typename MCU = DefaultMcu>
+template<typename HW, template<typename, typename> typename CrsfCallback, typename Storage, typename MCU = DefaultMcu>
 struct Devices2;
 
-template<template<typename, typename> typename CrsfCallback, typename MCU>
-struct Devices2<SW20, CrsfCallback, MCU> {
+template<template<typename, typename> typename CrsfCallback, typename Storage, typename MCU>
+struct Devices2<SW20, CrsfCallback, Storage, MCU> {
     using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<64_MHz, 2'000_Hz, Mcu::Stm::HSI>>;
     using systemTimer = Mcu::Stm::SystemTimer<clock, Mcu::UseInterrupts<false>, MCU>;
 
@@ -91,7 +91,7 @@ struct Devices2<SW20, CrsfCallback, MCU> {
         using pin = debugtx;
         using clock = Devices2::clock;
         static inline constexpr bool rxtxswap = false;
-        static inline constexpr uint16_t bufferSize = 128;
+        static inline constexpr uint16_t bufferSize = 64;
     };
 #else
     using debug = void;
@@ -105,7 +105,7 @@ struct Devices2<SW20, CrsfCallback, MCU> {
 #ifdef USE_BUTTON
     using button = Mcu::Stm::Pin<gpioa, 1, MCU>;
     using btn = External::Button<button, systemTimer, External::Tick<systemTimer>{300ms}.raw(),
-                                 External::Tick<systemTimer>{3000ms}.raw(), debug>;
+                                 External::Tick<systemTimer>{3000ms}.raw(), void>;
 #endif
 #ifdef USE_TP1
     using tp1 = Mcu::Stm::Pin<gpioa, 3, MCU>;
@@ -145,6 +145,26 @@ struct Devices2<SW20, CrsfCallback, MCU> {
     using adap6 = Local::PwmAdapter<pwm3, 4, false, false, debug1>;
     using adap7 = Local::PwmAdapter<pwm14, 1, false, true, debug1>;
 
+#ifdef USE_MORSE
+    struct BConfig {
+        using timer = systemTimer;
+        using debug = void;
+        static inline constexpr auto& text = Storage::eeprom.morse_text;
+    };
+    struct BConfigDebug {
+        using timer = systemTimer;
+        using debug = Devices2::debug;
+        static inline constexpr auto& text = Storage::eeprom.morse_text;
+    };
+    using bsw0 = External::Morse::BlinkerWithPwm<sw0, BConfigDebug, adap0>;
+    using bsw1 = External::Morse::BlinkerWithPwm<sw1, BConfig, adap1>;
+    using bsw2 = External::Morse::BlinkerWithPwm<sw2, BConfig, adap2>;
+    using bsw3 = External::Morse::BlinkerWithPwm<sw3, BConfig, adap3>;
+    using bsw4 = External::Morse::BlinkerWithPwm<sw4, BConfig, adap4>;
+    using bsw5 = External::Morse::BlinkerWithPwm<sw5, BConfig, adap5>;
+    using bsw6 = External::Morse::BlinkerWithPwm<sw6, BConfig, adap6>;
+    using bsw7 = External::Morse::BlinkerWithPwm<sw7, BConfig, adap7>;
+#else
     using bsw0 = External::BlinkerWithPwm<sw0, systemTimer, adap0, debug1>;
     using bsw1 = External::BlinkerWithPwm<sw1, systemTimer, adap1, debug1>;
     using bsw2 = External::BlinkerWithPwm<sw2, systemTimer, adap2, debug1>;
@@ -153,6 +173,8 @@ struct Devices2<SW20, CrsfCallback, MCU> {
     using bsw5 = External::BlinkerWithPwm<sw5, systemTimer, adap5, debug1>;
     using bsw6 = External::BlinkerWithPwm<sw6, systemTimer, adap6, debug1>;
     using bsw7 = External::BlinkerWithPwm<sw7, systemTimer, adap7, debug1>;
+#endif
+
 
     using bsws = Meta::List<bsw0, bsw1, bsw2, bsw3, bsw4, bsw5, bsw6, bsw7>;
 
