@@ -73,7 +73,7 @@ namespace External {
             static inline constexpr auto& text = Config::text;
 
             enum class State : uint8_t {Off, On, IntervallOff, IntervallOn, PwmMode,
-                                        MorseStart, MorseNext, MorseDah, MorseDit, MorseGap};
+                                        MorseStart, MorseNext, MorseDah, MorseDit, MorseGap, MorseIGap};
             enum class Event : uint8_t {None, Off, On, PwmModeOn, PwmModeOff};
             enum class Blink : uint8_t {Steady, Blink, Morse};
 
@@ -99,6 +99,22 @@ namespace External {
                 else if (b == 2) {
                     mBlinkMode = Blink::Morse;
                 }
+            }
+            static inline void morse_dit_dezi(const uint8_t b) {
+                IO::outl<Debug>("Pin: ", Pin::number, " dit: ", b);
+                morseDitTicks = External::Tick<Timer>::fromRaw(b * 200);
+            }
+            static inline void morse_dah_dezi(const uint8_t b) {
+                IO::outl<Debug>("Pin: ", Pin::number, " dah: ", b);
+                morseDahTicks = External::Tick<Timer>::fromRaw(b * 200);
+            }
+            static inline void morse_gap_dezi(const uint8_t b) {
+                IO::outl<Debug>("Pin: ", Pin::number, " gap: ", b);
+                morseGapTicks = External::Tick<Timer>::fromRaw(b * 200);
+            }
+            static inline void morse_igap_dezi(const uint8_t b) {
+                IO::outl<Debug>("Pin: ", Pin::number, " igap: ", b);
+                morseIGapTicks = External::Tick<Timer>::fromRaw(b * 200);
             }
             static inline void on_dezi(const uint8_t b) {
                 IO::outl<Debug>("Pin: ", Pin::number, " Ion: ", b);
@@ -212,7 +228,7 @@ namespace External {
                               mState = State::Off;
                           }
                           else {
-                                mState = State::MorseStart;
+                                mState = State::MorseIGap;
                         }
                       }
                       else {
@@ -220,6 +236,11 @@ namespace External {
                           mState = State::MorseNext;
                       }
                       });
+                    break;
+                case State::MorseIGap:
+                    mStateTick.on(morseIGapTicks, [] static {
+                                     mState = State::MorseStart;
+                                  });
                     break;
                 case State::On:
                     mEvent.on(Event::Off, [] static {mState = State::Off;});
@@ -290,6 +311,11 @@ namespace External {
                         Pin::reset();
                         Pin::template dir<Mcu::Output>();
                         break;
+                    case State::MorseIGap:
+                        IO::outl<Debug>("Pin: ", Pin::number, " MoIGap");
+                        Pin::reset();
+                        Pin::template dir<Mcu::Output>();
+                        break;
                     case State::On:
                         IO::outl<Debug>("Pin: ", Pin::number, " On");
                         on();
@@ -354,13 +380,12 @@ namespace External {
             static inline External::Tick<Timer> morseDitTicks{200ms};
             static inline External::Tick<Timer> morseDahTicks{600ms};
             static inline External::Tick<Timer> morseGapTicks{200ms};
+            static inline External::Tick<Timer> morseIGapTicks{200ms};
             static inline External::Tick<Timer> onTicks{100ms};
             static inline External::Tick<Timer> offTicks{100ms};
             static inline External::Tick<Timer> mStateTick;
         };
-
     }
-
 
     template<typename Pin, typename Timer, typename Debug = void>
     struct Blinker {

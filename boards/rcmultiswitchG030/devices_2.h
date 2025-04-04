@@ -156,7 +156,7 @@ struct Devices2<SW20, CrsfCallback, Storage, MCU> {
         using debug = Devices2::debug;
         static inline constexpr auto& text = Storage::eeprom.morse_text;
     };
-    using bsw0 = External::Morse::BlinkerWithPwm<sw0, BConfigDebug, adap0>;
+    using bsw0 = External::Morse::BlinkerWithPwm<sw0, BConfig, adap0>;
     using bsw1 = External::Morse::BlinkerWithPwm<sw1, BConfig, adap1>;
     using bsw2 = External::Morse::BlinkerWithPwm<sw2, BConfig, adap2>;
     using bsw3 = External::Morse::BlinkerWithPwm<sw3, BConfig, adap3>;

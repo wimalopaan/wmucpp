@@ -2,16 +2,19 @@ todo:
 -----
 * crsf units
 * name of module (top-level)
-* remote config items (ls, type, ...)
 * watchdog
 * statt Expo: PWM Duty Max Scaling 1/0.1/0.01
 * Telemetrie (state-machine): für neue Hardware mit Spannungssensor
+* use stm32G051 instead of stm32G030/1
 
 details:
 -----
 
 done:
 -----
+* morse parameters
+* check channel mapping???
+* remote config items (ls, type, ...) (AUTO_CONF)
 * DMA Usart
 * crsf: FOLDER: send children IDs (as TBS specs)
 * proportional Modus
@@ -30,6 +33,7 @@ done:
 * Adresse auswerten?
 * Led blinken: kein Signal, keine Commands, Active-Mode
 * simple Bedienung über elrsv3 (z.B. für FlySky i6x)
+
 
 open:
 -----

@@ -25,7 +25,7 @@
 #define USE_MORSE
 #define USE_EEPROM_TEST
 #define USE_BUTTON
-// #define SERIAL_DEBUG
+// #define SERIAL_DEBUG // use with care (e.g. with USE_MORSE) because of RAM overflow
 #define NDEBUG
 
 #define HW_VERSION 1
@@ -82,9 +82,10 @@ struct EEProm {
     std::array<Output, 8> outputs{};
 #ifdef USE_MORSE
     std::array<char, 64> morse_text{};
-    uint8_t morse_dit = 2;
-    uint8_t morse_dah = 5;
+    uint8_t morse_dit = 3;
+    uint8_t morse_dah = 6;
     uint8_t morse_gap = 3;
+    uint8_t morse_igap = 3;
 #endif
 };
 
@@ -529,9 +530,25 @@ private:
 #ifdef USE_MORSE
         parent = addParent(p, Param_t{0, PType::Folder, "Morse"});
         addNode(p, Param_t{parent, PType::Str, "Text", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &eeprom.morse_text[0]}); // not supported by elrsv3.lua?
-        addNode(p, Param_t{parent, PType::U8,  "Dit duration", nullptr, &eeprom.morse_dit, 1, 10, [](const uint8_t v){return true;}, 1, 0, 1, nullptr, " [100ms]"});
-        addNode(p, Param_t{parent, PType::U8,  "Dah duration", nullptr, &eeprom.morse_dah, 1, 10, [](const uint8_t v){return true;}, 1, 0, 1, nullptr, " [100ms]"});
-        addNode(p, Param_t{parent, PType::U8,  "Gap duration", nullptr, &eeprom.morse_gap, 1, 10, [](const uint8_t v){return true;}, 1, 0, 1, nullptr, " [100ms]"});
+        addNode(p, Param_t{parent, PType::U8,  "Dit duration", nullptr, &eeprom.morse_dit, 1, 10, [](const uint8_t v){
+                               Meta::visit<bsws>([&]<typename T>(Meta::Wrapper<T>){
+                                   T::morse_dit_dezi(v);
+                               }); return true;}, 1, 0, 1, nullptr, " [100ms]"});
+        addNode(p, Param_t{parent, PType::U8,  "Dah duration", nullptr, &eeprom.morse_dah, 1, 10, [](const uint8_t v){
+                               Meta::visit<bsws>([&]<typename T>(Meta::Wrapper<T>){
+                                   T::morse_dah_dezi(v);
+                               });
+                               return true;}, 1, 0, 1, nullptr, " [100ms]"});
+        addNode(p, Param_t{parent, PType::U8,  "Intra S. Gap dur.", nullptr, &eeprom.morse_gap, 1, 10, [](const uint8_t v){
+                               Meta::visit<bsws>([&]<typename T>(Meta::Wrapper<T>){
+                                   T::morse_gap_dezi(v);
+                               });
+                               return true;}, 1, 0, 1, nullptr, " [100ms]"});
+        addNode(p, Param_t{parent, PType::U8,  "Inter S. Gap dur.", nullptr, &eeprom.morse_igap, 1, 10, [](const uint8_t v){
+                               Meta::visit<bsws>([&]<typename T>(Meta::Wrapper<T>){
+                                   T::morse_igap_dezi(v);
+                               });
+                               return true;}, 1, 0, 1, nullptr, " [100ms]"});
 #endif
         parent = addParent(p, Param_t{0, PType::Folder, "Operate"});
         addNode(p, Param_t{parent, PType::Sel, "Output 0", "Off;On", 0, 0, 1, [](const uint8_t v){Meta::nth_element<0, bsws>::on(v); return false;}});
