@@ -41,17 +41,17 @@
 #include "meta.h"
 #include "adc.h"
 #include "blinker.h"
+#include "encoder.h"
+#include "pcal6408.h"
+#include "bluetooth/jdy10.h"
 #include "rc/rc_2.h"
 #include "rc/crsf_2.h"
 #include "rc/sbus2_2.h"
 #include "rc/spacemouse.h"
-#include "encoder.h"
-#include "bluetooth/jdy10.h"
+#include "rc/hwext.h"
 
 #include "crsf_cb.h"
-#include "pcal6408.h"
 #include "switches.h"
-#include "hwext.h"
 #include "eeprom.h"
 
 struct SW01;
@@ -173,7 +173,7 @@ struct Devices<Desk01, Config, MCU> {
     // Usart 2: radio aux1
 #ifndef USE_SWD
     struct Aux1Config;
-    using hwext1 = HwExtension<2, Aux1Config, MCU>;
+    using hwext1 = External::EdgeTx::HwExtension<2, Aux1Config, MCU>;
     struct SBus1Config;
     using sbus1 = RC::Protokoll::SBus2::V4::Master<2, SBus1Config, MCU>;
 #endif
@@ -181,7 +181,7 @@ struct Devices<Desk01, Config, MCU> {
     // Usart 3: radio aux2
 
     struct Aux2Config;
-    using hwext2 = HwExtension<3, Aux2Config, MCU>;
+    using hwext2 = External::EdgeTx::HwExtension<3, Aux2Config, MCU>;
     struct SBus2Config;
     using sbus2 = RC::Protokoll::SBus2::V4::Master<3, SBus2Config, MCU>;
 
@@ -476,7 +476,7 @@ struct Devices<SW01, Config, MCU> {
     // Usart 2: Radio
     using esc1_pin = Mcu::Stm::Pin<gpioa, 2, MCU>;
     struct SerialConfig1;
-    using radio = HwExtension<2, SerialConfig1, MCU>;
+    using radio = External::EdgeTx::HwExtension<2, SerialConfig1, MCU>;
 
     // debug auf LPUART1 (PA3 AF(6), RX<->TX tauschen) : Telemetry-1
 #ifdef SERIAL_DEBUG

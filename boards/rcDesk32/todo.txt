@@ -1,14 +1,14 @@
 ToDo
 ============
-* Master-Mode (Controller number == 0)
-* Prop values
-* prop values alternating to switch values
-* ELRS-client mode
 
 LUA Widget
 ============
-* Display prop values
-* dialog to add prop mapping
 
 Done
 ============
+* ELRS-client mode
+* Prop values
+* prop values alternating to switch values
+* Master-Mode (Controller number == 0)
+* Display prop values
+* dialog to add prop mapping

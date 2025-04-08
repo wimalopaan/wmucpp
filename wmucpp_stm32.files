@@ -192,9 +192,7 @@ boards/rcDesk32/desk_01.cc
 boards/rcDesk32/devices.h
 boards/rcDesk32/eeprom.h
 boards/rcDesk32/gfsm.h
-boards/rcDesk32/hwext.h
 boards/rcDesk32/link_g0b1.ld
-boards/rcDesk32/pcal6408.h
 boards/rcDesk32/port_aux1.h
 boards/rcDesk32/port_aux2.h
 boards/rcDesk32/port_iface.h
