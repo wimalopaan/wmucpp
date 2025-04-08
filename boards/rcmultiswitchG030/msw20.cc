@@ -16,20 +16,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define USE_MCU_STM_V3
-#define USE_CRSF_V2
-
-// #define TEST1
-// #define USE_TP1
+// #define TEST1 // use only test elrs menu
+// #define USE_TP1 // enable test point
 // #define USE_AUTO_CONF
 #define USE_MORSE
-#define USE_EEPROM_TEST
+#define USE_EEPROM_TEST // switches telemetry default on (instead off)
 #define USE_BUTTON
 // #define SERIAL_DEBUG // use with care (e.g. with USE_MORSE) because of RAM overflow
-#define NDEBUG
+
+#define NDEBUG // do not change: dev option
 
 #define HW_VERSION 1
-#define SW_VERSION 17
+#define SW_VERSION 18
 
 #include <cstdint>
 #include <array>
@@ -60,9 +58,11 @@ struct EEProm {
         uint8_t blinkOnTime = 1;
         uint8_t blinkOffTime = 1;
         std::array<char, 16> name;
+#if USE_AUTO_CONF
         uint8_t ls = 0;
         uint8_t type = 0;
         uint8_t flags = 0;
+#endif
     };
 
     uint8_t magic = EEPROM_MAGIC;
@@ -270,6 +270,7 @@ struct CrsfCallback {
                         IO::outl<trace>("# Cmd Prop: ", address, " ch: ", ch, " d: ", duty);
                         SwitchCallback::prop(ch, duty);
                     }
+#if USE_AUTO_CONF
                     else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::RequestConfigItem) {
                         const uint8_t item = (uint8_t)payload[8];
                         IO::outl<trace>("# Cmd Req CI: ", item);
@@ -298,6 +299,7 @@ struct CrsfCallback {
                             d.push_back(uint8_t{SW_VERSION});
                         });
                     }
+#endif
                 }
             }
         }
