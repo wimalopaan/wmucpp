@@ -562,7 +562,7 @@ private:
         addNode(p, Param_t{parent, PType::Sel, "Output 6", "Off;On", 0, 0, 1, [](const uint8_t v){Meta::nth_element<6, bsws>::on(v); return false;}});
         addNode(p, Param_t{parent, PType::Sel, "Output 7", "Off;On", 0, 0, 1, [](const uint8_t v){Meta::nth_element<7, bsws>::on(v); return false;}});
 #endif
-        if (p.size() >= p.capacity) {
+        if (p.size() >= p.capacity()) {
             void f();
             f();
         }
