@@ -37,6 +37,9 @@ namespace Mcu::Stm {
 #if defined(STM32G031xx) // DMA1: 5 Channels
 # include "dmas_5.h"
 #endif
+#if defined(STM32G051xx) // DMA1: 7 Channels
+# include "dmas_7.h"
+#endif
 #if defined(STM32G0B1xx) // DMA1: 7 Channels
 # include "dmas_7.h"
 #endif

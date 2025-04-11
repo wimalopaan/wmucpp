@@ -5,6 +5,7 @@ namespace Mcu::Stm {
     struct Stm32G473;
     struct Stm32G030;
     struct Stm32G031;
+    struct Stm32G051;
     struct Stm32G0B1;
 }
 #if defined(STM32G431xx)
@@ -19,6 +20,9 @@ namespace Mcu::Stm {
 #elif defined(STM32G031xx)
 # include <stm32g0xx.h>
   using DefaultMcu = Mcu::Stm::Stm32G031;
+#elif defined(STM32G051xx)
+# include <stm32g0xx.h>
+  using DefaultMcu = Mcu::Stm::Stm32G051;
 #elif defined(STM32G0B1xx)
 # include <stm32g0xx.h>
   using DefaultMcu = Mcu::Stm::Stm32G0B1;

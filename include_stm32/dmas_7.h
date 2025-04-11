@@ -55,6 +55,7 @@ namespace Mcu::Stm {
         static inline constexpr uintptr_t mux = DMAMUX1_Channel6_BASE;
     };
 
+#ifdef DMA2_BASE
     template<>
     struct Address<Mcu::Components::DmaChannel<Mcu::Components::Dma<2>, 1>> {
         static inline constexpr uintptr_t value = DMA2_Channel1_BASE;
@@ -80,4 +81,5 @@ namespace Mcu::Stm {
         static inline constexpr uintptr_t value = DMA2_Channel5_BASE;
         static inline constexpr uintptr_t mux = DMAMUX1_Channel11_BASE;
     };
+#endif
 }
