@@ -58,7 +58,7 @@ struct EEProm {
         uint8_t blinkOnTime = 1;
         uint8_t blinkOffTime = 1;
         std::array<char, 16> name;
-#if USE_AUTO_CONF
+#ifdef USE_AUTO_CONF
         uint8_t ls = 0;
         uint8_t type = 0;
         uint8_t flags = 0;
@@ -270,7 +270,7 @@ struct CrsfCallback {
                         IO::outl<trace>("# Cmd Prop: ", address, " ch: ", ch, " d: ", duty);
                         SwitchCallback::prop(ch, duty);
                     }
-#if USE_AUTO_CONF
+#ifdef USE_AUTO_CONF
                     else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::RequestConfigItem) {
                         const uint8_t item = (uint8_t)payload[8];
                         IO::outl<trace>("# Cmd Req CI: ", item);
