@@ -214,6 +214,12 @@ boards/rcFocG4/G431Mp6543_01/link_g431.ld
 boards/rcFocG4/G431Mp6543_01/startup_g431.s
 boards/rcFocG4/G431Mp6543_01/system_g4.cc
 boards/rcFocG4/Makefile
+boards/rcLed4x4/Makefile
+boards/rcLed4x4/devices.h
+boards/rcLed4x4/led00.cc
+boards/rcLed4x4/link_g051.ld
+boards/rcLed4x4/startup_g051.s
+boards/rcLed4x4/system_g0.cc
 boards/rcVarioprop/Makefile
 boards/rcVarioprop/V01/Makefile
 boards/rcVarioprop/V01/buzzer.h
