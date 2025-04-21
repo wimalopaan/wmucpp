@@ -21,16 +21,12 @@
 #include <cstdint>
 #include <array>
 
-template<uint8_t Size = 3>
+enum class Stream : uint8_t {Trainer, VControls, Off};
+
 struct Map {
-    uint8_t stream = 0; // trainer; vcontrols;off
+    Stream stream = Stream::Off; // trainer;vcontrols;off
     uint8_t position = 0;
-    // std::array<bool, Size> enable{};
-};
-template<>
-struct Map<0> {
-    uint8_t stream = 0; // trainer; vcontrols;off
-    uint8_t position = 0;
+    uint8_t count = 0;
 };
 
 struct EEProm {
@@ -42,26 +38,27 @@ struct EEProm {
     uint8_t sm1mode = 0; // sm;off
     uint8_t sm2mode = 0; // sm;off
 
-    std::array<Map<3>, 2> analogMaps{
-        Map<3>{1, 0},
-        Map<3>{1, 3}
+    std::array<Map, 2> analogMaps{
+        Map{Stream::VControls, 0, 3},
+        Map{Stream::VControls, 3, 3}
     };
-    std::array<Map<6>, 2> smMaps{
-        Map<6>{0, 0},
-        Map<6>{0, 7}
+    std::array<Map, 2> smMaps{
+        Map{Stream::Trainer, 0, 6},
+        Map{Stream::Trainer, 7, 6}
     };
-    std::array<Map<0>, 2> incMaps{
-        Map<0>{1, 6},
-        Map<0>{1, 7}
+    std::array<Map, 2> incMaps{
+        Map{Stream::VControls, 6, 1},
+        Map{Stream::VControls, 7, 1}
     };
 
-    Map<0> bluetoothMap;
-    Map<0> crsfInMap;
+    uint8_t bluetooth = 1;
+    Map bluetoothMap{Stream::VControls, 8, 4};
+
+    uint8_t crsf_in = 0;
+    Map crsfInMap{Stream::VControls, 12, 4};
 
     uint8_t mode = 0;
     uint8_t prop8mode = 0; // send prop values as 8-bit
     uint8_t address = 0xc8;
     uint8_t controllerNumber = 1;
-    uint8_t bluetooth = 1;
-    uint8_t crsf_in = 1;
 };

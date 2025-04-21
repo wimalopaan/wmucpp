@@ -42,6 +42,7 @@ namespace External::Bluetooth {
         using pin_pwr = Config::pin_pwr;
         using pin_status = Config::pin_status;
         using tp = Config::tp;
+        using swcallback = Config::swcallback;
 
         struct UartConfig {
             using Clock = clock;
@@ -90,6 +91,7 @@ namespace External::Bluetooth {
             pin_pwr::template dir<Mcu::Output>();
 
             pin_status::template dir<Mcu::Input>();
+            pin_status::template pullup<true>();
         }
         static inline void reset() {
             IO::outl<debug>("# BT reset ", N);
@@ -118,6 +120,24 @@ namespace External::Bluetooth {
                 break;
             }
         }
+        static inline void setLed(const uint8_t index, const bool state) {
+            uart::fillSendBuffer([&](auto& data){
+                uint8_t n = 0;
+                data[n++] = 'l';
+                data[n++] = '0' + ((index / 10) % 10);
+                data[n++] = '0' + (index % 10);
+                data[n++] = ' ';
+                if (state) {
+                    data[n++] = '1';
+                }
+                else {
+                    data[n++] = '0';
+                }
+                data[n++] = '\r';
+                return n;
+            });
+        }
+
         static inline constexpr External::Tick<systemTimer> initTicks{1000ms};
         static inline constexpr External::Tick<systemTimer> waitTicks{20ms};
 
@@ -153,6 +173,9 @@ namespace External::Bluetooth {
                 }
             }
         };
+        static inline const auto& values() {
+            return mValues;
+        }
     private:
         static inline bool validityCheck(const volatile uint8_t* const data, const uint16_t n) {
             if (n < 4) {
@@ -196,10 +219,28 @@ namespace External::Bluetooth {
                 }
                 IO::outl<debug>("# BT s:", symbol, " n:", number, " v:", value);
 
+                if (std::tolower(symbol) == 'p') {
+                    if (number < mValues.size()) {
+                        mValues[number] = value;
+                    }
+                }
+                else if (std::tolower(symbol) == 't') {
+                    if (number < 64) {
+                        const uint64_t mask = (uint64_t{1} << number);
+                        mSwitches ^= mask;
+                        if (mSwitches & mask) {
+                            swcallback::set(number, true);
+                        }
+                        else {
+                            swcallback::set(number, false);
+                        }
+                    }
+                }
             });
         }
+        static inline uint64_t mSwitches = 0;
         static inline uint8_t startSymbol = '$';
-
+        static inline std::array<uint16_t, 16> mValues{};
         static inline volatile bool mActive = false;
         static inline uint16_t mErrorCount = 0;
         static inline uint16_t mPackagesCount = 0;

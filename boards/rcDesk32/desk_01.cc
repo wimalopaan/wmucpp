@@ -21,7 +21,7 @@
 #define SERIAL_DEBUG
 // #define USE_SWD
 
-#define SW_VERSION 1
+#define SW_VERSION 2
 #define HW_VERSION 1
 
 #include <cstdint>
@@ -158,5 +158,20 @@ int _getpid(void) {
     return -1;
 }
 
+#ifndef NDEBUG
+void _close(int){
+}
+void _lseek(int){
+}
+void _read(int){
+}
+void _write(int){
+}
+void _fstat(int){
+}
+void _isatty(int){
+}
+
+#endif
 }
 

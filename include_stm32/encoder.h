@@ -30,6 +30,8 @@
 #include "meta.h"
 
 #include "timer.h"
+#include "tick.h"
+#include "button.h"
 
 namespace External {
     using namespace Units::literals;
@@ -42,6 +44,10 @@ namespace External {
         using pin_a = Config::pin_a;
         using pin_b = Config::pin_b;
         using pin_t = Config::pin_t;
+
+        using systemTimer = Config::systemTimer;
+
+        using button = External::Button<pin_t, systemTimer, External::Tick<systemTimer>{300ms}.raw(), External::Tick<systemTimer>{3000ms}.raw()>;
 
 #ifdef STM32G0
         static inline void init() {
@@ -58,8 +64,8 @@ namespace External {
                 static_assert(false);
             }
 
-            pin_a::template dir<Mcu::Input>();
-            pin_b::template dir<Mcu::Input>();
+            // pin_a::template dir<Mcu::Input>();
+            // pin_b::template dir<Mcu::Input>();
             pin_t::template dir<Mcu::Input>();
 
             pin_a::pullup();
@@ -68,6 +74,9 @@ namespace External {
 
             static constexpr uint8_t pina_af = Mcu::Stm::AlternateFunctions::mapper_v<pin_a, Encoder, Mcu::Stm::AlternateFunctions::CC<1>>;
             static constexpr uint8_t pinb_af = Mcu::Stm::AlternateFunctions::mapper_v<pin_b, Encoder, Mcu::Stm::AlternateFunctions::CC<2>>;
+
+            // std::integral_constant<uint8_t, pina_af>::_;
+            // std::integral_constant<uint8_t, pinb_af>::_;
 
             pin_a::afunction(pina_af);
             pin_b::afunction(pinb_af);

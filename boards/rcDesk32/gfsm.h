@@ -138,7 +138,7 @@ struct GFSM {
             mStateTick.on(debugTicks, []{
                 // IO::outl<debug>("# i2c state:", (uint8_t)i2c1::mState, " ", i2c1::mIsr, " ", i2c1::errors());
                 IO::outl<debug>("# adc v0:", adc::values()[0], " v1:", adc::values()[1], " v2:", adc::values()[2], " v3:", adc::values()[3], " v4:", adc::values()[4], " v5:", adc::values()[5]);
-                // IO::outl<debug>("# enc1:", enc1::value(), " enc2:", enc2::value());
+                IO::outl<debug>("# enc1:", enc1::value(), " enc2:", enc2::value());
                 // IO::outl<debug>("# sm1 v0:", sm1::value(0), " v1:", sm1::value(1), " v2:", sm1::value(2), " v3:", sm1::value(3), " v4:", sm1::value(4), " v5:", sm1::value(5));
                 // IO::outl<debug>("# sm1 v0:", sm2::value(0), " v1:", sm2::value(1), " v2:", sm2::value(2), " v3:", sm2::value(3), " v4:", sm2::value(4), " v5:", sm2::value(5));
             });
@@ -182,6 +182,11 @@ struct GFSM {
             }
         }
     }
+
+    static inline void setSw(const uint8_t index, const bool state) {
+        bt::setLed(index, state);
+    }
+
     private:
     static inline void update() {
         static uint8_t n = 1;
@@ -198,6 +203,9 @@ struct GFSM {
         case 4:
             updateCrsf();
             break;
+        case 5:
+            updateBluetooth();
+            break;
         default:
             n = 0;
             break;
@@ -205,12 +213,12 @@ struct GFSM {
         ++n;
     }
     static inline void updateAnalog(const uint8_t i, const uint8_t off = 0) {
-        if (storage::eeprom.analogMaps[i].stream == 0) {
+        if (storage::eeprom.analogMaps[i].stream == Stream::Trainer) {
             for(uint8_t i = 0; i < 3; ++i) {
                 dist_sb::set(storage::eeprom.analogMaps[i].position + i, adc::values()[i + off]);
             }
         }
-        else if (storage::eeprom.analogMaps[i].stream == 1) {
+        else if (storage::eeprom.analogMaps[i].stream == Stream::VControls) {
             for(uint8_t i = 0; i < 3; ++i) {
                 dist_hw::set(storage::eeprom.analogMaps[i].position + i, adc::values()[i + off]);
             }
@@ -221,12 +229,12 @@ struct GFSM {
         updateAnalog(1, 3);
     }
     static inline void updateSM(const uint8_t i, const auto f) {
-        if (storage::eeprom.smMaps[i].stream == 0) {
+        if (storage::eeprom.smMaps[i].stream == Stream::Trainer) {
             for(uint8_t i = 0; i < 6; ++i) {
                 dist_sb::set(storage::eeprom.smMaps[i].position + i, f(i));
             }
         }
-        else if (storage::eeprom.smMaps[i].stream == 1) {
+        else if (storage::eeprom.smMaps[i].stream == Stream::VControls) {
             for(uint8_t i = 0; i < 6; ++i) {
                 dist_hw::set(storage::eeprom.smMaps[i].position + i, f(i));
             }
@@ -237,10 +245,46 @@ struct GFSM {
         updateSM(1, [](const uint8_t i){return sm2::value(i);});
     }
     static inline void updateInc() {
-
+        if (storage::eeprom.incMaps[0].stream == Stream::Trainer) {
+            dist_sb::set(storage::eeprom.incMaps[0].position, enc1::value());
+        }
+        else if (storage::eeprom.incMaps[0].stream == Stream::VControls) {
+            dist_hw::set(storage::eeprom.incMaps[0].position, enc1::value());
+        }
+        if (storage::eeprom.incMaps[1].stream == Stream::Trainer) {
+            dist_sb::set(storage::eeprom.incMaps[1].position + 1, enc2::value());
+        }
+        else if (storage::eeprom.incMaps[1].stream == Stream::VControls) {
+            dist_hw::set(storage::eeprom.incMaps[1].position + 1, enc2::value());
+        }
     }
     static inline void updateCrsf() {
-
+        if (storage::eeprom.crsf_in > 0) {
+            if (storage::eeprom.crsfInMap.stream == Stream::Trainer) {
+                for(uint8_t i = 0; i < storage::eeprom.crsfInMap.count; ++i) {
+                    dist_sb::set(storage::eeprom.crsfInMap.position + i, crsf_in_pa::values()[i]);
+                }
+            }
+            else if (storage::eeprom.crsfInMap.stream == Stream::VControls) {
+                for(uint8_t i = 0; i < storage::eeprom.crsfInMap.count; ++i) {
+                    dist_hw::set(storage::eeprom.crsfInMap.position + i, crsf_in_pa::values()[i]);
+                }
+            }
+        }
+    }
+    static inline void updateBluetooth() {
+        if (storage::eeprom.bluetooth > 0) {
+            if (storage::eeprom.bluetoothMap.stream == Stream::Trainer) {
+                for(uint8_t i = 0; i < storage::eeprom.bluetoothMap.count; ++i) {
+                    dist_sb::set(storage::eeprom.bluetoothMap.position + i, bt::values()[i]);
+                }
+            }
+            else if (storage::eeprom.bluetoothMap.stream == Stream::VControls) {
+                for(uint8_t i = 0; i < storage::eeprom.bluetoothMap.count; ++i) {
+                    dist_hw::set(storage::eeprom.bluetoothMap.position + i, bt::values()[i]);
+                }
+            }
+        }
     }
     static inline External::Tick<systemTimer> mStateTick;
     static inline State mState{State::Undefined};
