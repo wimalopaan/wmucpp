@@ -121,10 +121,14 @@ namespace External::Bluetooth {
             }
         }
         static inline void setLed(const uint8_t index, const bool state) {
+            IO::outl<debug>("# BT set led: ", index, " ", (uint8_t)state);
             uart::fillSendBuffer([&](auto& data){
                 uint8_t n = 0;
+                data[n++] = '$';
                 data[n++] = 'l';
-                data[n++] = '0' + ((index / 10) % 10);
+                if (index >= 10) {
+                    data[n++] = '0' + ((index / 10) % 10);
+                }
                 data[n++] = '0' + (index % 10);
                 data[n++] = ' ';
                 if (state) {
@@ -133,7 +137,7 @@ namespace External::Bluetooth {
                 else {
                     data[n++] = '0';
                 }
-                data[n++] = '\r';
+                data[n++] = '\n';
                 return n;
             });
         }
