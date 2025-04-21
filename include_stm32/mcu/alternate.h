@@ -21,12 +21,18 @@ namespace Mcu::Stm {
 
         struct SDA;
         struct SCL;
+
+        struct MISO;
+        struct MOSI;
+        struct SCLK;
+        struct CS;
         
         namespace detail {
             using Mcu::Components::Pin;
             using Mcu::Components::Timer;
             using Mcu::Components::Usart;
             using Mcu::Components::I2C;
+            using Mcu::Components::SPI;
             
             template<typename PinComponent, typename PeriComponent, typename Function, typename MCU>
             struct Impl;
@@ -72,8 +78,8 @@ namespace Mcu::Stm {
             struct Impl<Pin<C, 6>, Timer<3>, CC<1>, MCU> : std::integral_constant<uint8_t, 1> {};
             template<Mcu::Stm::G0xx MCU>
             struct Impl<Pin<B, 5>, Timer<3>, CC<2>, MCU> : std::integral_constant<uint8_t, 1> {};
-
-
+            template<Mcu::Stm::G0xx MCU>
+            struct Impl<Pin<B, 4>, Timer<3>, CC<1>, MCU> : std::integral_constant<uint8_t, 1> {};
 
             template<Mcu::Stm::G0xx MCU>
             struct Impl<Pin<A, 2>, Timer<2>, CC<3>, MCU> : std::integral_constant<uint8_t, 2> {};
@@ -166,6 +172,15 @@ namespace Mcu::Stm {
             struct Impl<Pin<B, 3>, I2C<3>, SCL, MCU> : std::integral_constant<uint8_t, 6> {};
             template<Mcu::Stm::G0xx MCU>
             struct Impl<Pin<B, 4>, I2C<3>, SDA, MCU> : std::integral_constant<uint8_t, 6> {};
+
+            template<Mcu::Stm::G0xx MCU>
+            struct Impl<Pin<A, 7>, SPI<1>, MOSI, MCU> : std::integral_constant<uint8_t, 0> {};
+            template<Mcu::Stm::G0xx MCU>
+            struct Impl<Pin<A, 6>, SPI<1>, MISO, MCU> : std::integral_constant<uint8_t, 0> {};
+            template<Mcu::Stm::G0xx MCU>
+            struct Impl<Pin<A, 1>, SPI<1>, SCLK, MCU> : std::integral_constant<uint8_t, 0> {};
+            template<Mcu::Stm::G0xx MCU>
+            struct Impl<Pin<A, 4>, SPI<1>, CS, MCU> : std::integral_constant<uint8_t, 0> {};
         }
         
         template<typename Pin, typename Peripherie, typename Function, typename MCU = DefaultMcu>
