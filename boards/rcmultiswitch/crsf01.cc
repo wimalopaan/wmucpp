@@ -18,7 +18,7 @@
 
 #define NDEBUG
 
-#define DEFAULT_ADDRESS 0
+#define DEFAULT_ADDRESS 0 // must match value in widget
 #define BAUDRATE 420'000
 
 #include "board.h"

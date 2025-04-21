@@ -18,13 +18,13 @@
 
 #define NDEBUG
 
-#define DEFAULT_ADDRESS 0 // must match address value in edgetx widget config
+#define DEFAULT_ADDRESS 0 // (values: 0 ... 3) must match address value in edgetx widget config
 
-// #define USE_ELRS // sbus input over ELRS rc-link
+#define USE_ELRS // sbus input over ELRS rc-link
 // #define USE_AFHDS2A // sbus input over AFHDS2A rc-link
-#define USE_ACCST // sbus input over ACCST rc-link
+// #define USE_ACCST // sbus input over ACCST rc-link
 
-#define DEBUG_OUTPUT
+// #define DEBUG_OUTPUT
 
 #include "board.h"
 #include "leds.h"

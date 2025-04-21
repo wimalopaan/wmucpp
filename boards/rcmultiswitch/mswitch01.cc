@@ -23,13 +23,13 @@
 // #define INPUT_CRSF // input via CRSF (ELRS only)
 #define INPUT_SBUS // input via SBUS (optional for ELRS, mandatory for other rc-link)
 
-#define DEFAULT_ADDRESS 0 // values: 0 ... 3
+#define DEFAULT_ADDRESS 0 // values: 0 ... 3 (must match value in widget)
 
 // #define SBUS_INVERT // to receive SBus as "normal" uninverted serial data
 
-// #define USE_ELRS // SBus input only (see above)
+#define USE_ELRS // SBus input only (see above)
 // #define USE_AFHDS2A // SBus input only (see above)
-#define USE_ACCST // SBus input only (see above)
+// #define USE_ACCST // SBus input only (see above)
 
 // #define DEBUG_OUTPUT // debug output via same uart as receiving data (same baudrate)
 
