@@ -189,6 +189,7 @@ boards/rcCrsfSwitch/todo.txt
 boards/rcDesk32/Makefile
 boards/rcDesk32/crsf_cb.h
 boards/rcDesk32/desk_01.cc
+boards/rcDesk32/desk_02.cc
 boards/rcDesk32/devices.h
 boards/rcDesk32/eeprom.h
 boards/rcDesk32/gfsm.h
@@ -218,6 +219,7 @@ boards/rcLed4x4/Makefile
 boards/rcLed4x4/devices.h
 boards/rcLed4x4/led00.cc
 boards/rcLed4x4/link_g051.ld
+boards/rcLed4x4/pca9745.h
 boards/rcLed4x4/startup_g051.s
 boards/rcLed4x4/system_g0.cc
 boards/rcVarioprop/Makefile
@@ -249,6 +251,11 @@ boards/rcdesk/spacemouse.cc
 boards/rcmultiadapterG030/Makefile
 boards/rcmultiadapterG030/devices.h
 boards/rcmultiadapterG030/ma01.cc
+boards/rcmultiswitch/Makefile
+boards/rcmultiswitch/crsf01.cc
+boards/rcmultiswitch/mswitch01.cc
+boards/rcmultiswitch/sbus01.cc
+boards/rcmultiswitch/sbus_cb.h
 boards/rcmultiswitchG030/Makefile
 boards/rcmultiswitchG030/Makefile.G051
 boards/rcmultiswitchG030/adapter.h
