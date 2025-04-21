@@ -162,6 +162,7 @@ namespace RC {
                     inline static constexpr std::byte RequestConfigItem{0x05};
                     inline static constexpr std::byte RequestDeviceInfo{0x06};
                     inline static constexpr std::byte Set4{0x07}; // 4-state switches (2-bytes payload)
+                    inline static constexpr std::byte InterModule{0x08}; // a module sends trigger to another module (address)
                 }
                 namespace CcCommand {
                     inline static constexpr std::byte SetAltData{0x01}; // Index: [0, 255], value 8bit

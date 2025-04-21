@@ -1,11 +1,13 @@
 todo:
 -----
+* running light mode: parameter: speed, activate-output, activate-next address, (pwm)
+* running light mode: crsf command messages
 * crsf units
 * name of module (top-level)
 * watchdog
 * statt Expo: PWM Duty Max Scaling 1/0.1/0.01
 * Telemetrie (state-machine): für neue Hardware mit Spannungssensor
-* use stm32G051 instead of stm32G030/1
+* use stm32G051 instead of stm32G030/1 (more flash and RAM)
 
 details:
 -----
