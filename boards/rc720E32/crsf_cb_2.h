@@ -225,6 +225,8 @@ struct CrsfCallback {
                 else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set64) {
                     const uint8_t swAddress = data[7];
                     const uint8_t swGroup = (data[8] & 0x07);
+                    // const uint16_t sw = (data[8] << 8) + data[9];
+                    // todo: 2bit state
                     const uint8_t swSwitches = data[9];
                     if (eeprom.switchAddress == swAddress) {
                         IO::outl<debug>("# Switch set64 address: ", swAddress, " v: ", swSwitches, " g: ", swGroup);

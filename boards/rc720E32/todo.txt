@@ -11,10 +11,11 @@ Hardware
 
 Prio 0
 ------
+* implement SET64 (e.g. SumDV3 for Beier USM-RC)
+* implement SBus-Switch state input (like super-simple-multiswitch)
 * use only one appid for tunneling packages to one widget
 ** appid 6000 -> Schottel
 ** appid 6010 -> MultiSwitch
-* implement CRSF_SUBCMD_SWITCH_SET4
 * watchdog
 * use additional CRC in command frames as describe by TBS
 * correct packaging of ArduPilot frames
@@ -54,6 +55,7 @@ Prio 3
 
 Done:
 ------
+* implement CRSF_SUBCMD_SWITCH_SET4
 * understand switch command
 * time-multiplex switch-encoder
 * info-packet: show RC720 fw version
