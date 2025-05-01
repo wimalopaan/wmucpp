@@ -49,6 +49,7 @@ struct Storage {
 
 struct DevsConfig;
 using devs = Devices<Desk01, DevsConfig, Mcu::Stm::Stm32G0B1>;
+using gfsm = GFSM<devs>;
 
 struct DevsConfig {
     using storage = Storage;
@@ -56,9 +57,9 @@ struct DevsConfig {
     using auxes2 = Auxes2<devs>;
     using smes1 = Smes1<devs>;
     using smes2 = Smes2<devs>;
+    using gfsm = ::gfsm;
 };
 
-using gfsm = GFSM<devs>;
 
 int main() {
     Storage::init();

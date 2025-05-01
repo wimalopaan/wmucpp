@@ -447,6 +447,8 @@ struct Devices<Desk01, Config, MCU> {
     using smes1 = Config::smes1;
     using smes2 = Config::smes2;
 
+    using gfsm = Config::gfsm;
+
     using gpioa = Mcu::Stm::GPIO<Mcu::Stm::A, MCU>;
     using gpiob = Mcu::Stm::GPIO<Mcu::Stm::B, MCU>;
     using gpioc = Mcu::Stm::GPIO<Mcu::Stm::C, MCU>;
@@ -731,6 +733,13 @@ struct Devices<Desk01, Config, MCU> {
         using pin_pwr = bt_pwr;
         using pin_status = bt_status;
         using tp = void;
+        using swcallback = struct {
+            static inline void set(const uint8_t index, const bool state) {
+                hwext1::setSw(index, state);
+                hwext2::setSw(index, state);
+                gfsm::setSw(index, state);
+            }
+        };
     };
     struct CrsfCallbackConfig {
         using storage = Config::storage;

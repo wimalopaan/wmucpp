@@ -136,6 +136,7 @@ struct GFSM {
             switches1::ratePeriodic();
             switches2::ratePeriodic();
             mStateTick.on(debugTicks, []{
+                bt::setLed(99, true); // connection led
                 // IO::outl<debug>("# i2c state:", (uint8_t)i2c1::mState, " ", i2c1::mIsr, " ", i2c1::errors());
                 IO::outl<debug>("# adc v0:", adc::values()[0], " v1:", adc::values()[1], " v2:", adc::values()[2], " v3:", adc::values()[3], " v4:", adc::values()[4], " v5:", adc::values()[5]);
                 IO::outl<debug>("# enc1:", enc1::value(), " enc2:", enc2::value());
