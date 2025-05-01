@@ -404,11 +404,11 @@ struct Devices<SW01, Config, MCU> {
     using sbus_in = SBusInput<102, SBusConfig, MCU>;
 #endif
 
-    struct Sumdv3Config;
+    struct Sumdv3InConfig;
 #ifdef USE_UART_2
     using sumdv3_in = RC::Protokoll::SumDV3::V2::Input<102, Sumdv3Config, MCU>;
 #else
-    using sumdv3_in = SumDV3Input<102, Sumdv3Config, MCU>;
+    using sumdv3_in = SumDV3Input<102, Sumdv3InConfig, MCU>;
 #endif
 
     using pulse_pin = Mcu::Stm::Pin<gpiob, 6, MCU>;
@@ -469,7 +469,7 @@ struct Devices<SW01, Config, MCU> {
         using debug = void;
         using tp = void;
     };
-    struct Sumdv3Config {
+    struct Sumdv3InConfig {
         using pin = sbus_crsf_pin;
         using clock = Devices::clock;
         using systemTimer = Devices::systemTimer;

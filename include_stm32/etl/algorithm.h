@@ -86,6 +86,19 @@ namespace etl {
         lhs = rhs;
         return rhs;
     }
+
+    static inline uint8_t assignH(volatile uint8_t& lhs, const uint16_t rhs) {
+        const uint8_t v = (rhs >> 8);
+        lhs = v;
+        return v;
+    }
+    static inline uint8_t assignL(volatile uint8_t& lhs, const uint16_t rhs) {
+        const uint8_t v = (rhs & 0xff);
+        lhs = v;
+        return v;
+    }
+
+
     template<typename C>
     constexpr void push_back_ntbs(const char* s, C& c) {
         do {

@@ -32,6 +32,7 @@ struct Relays {
     using ibus_in = devs::ibus_in;
     using sbus_in = devs::sbus_in;
     using sumdv3_in = devs::sumdv3_in;
+    using sumdv3_out = devs::sumdv3_out;
 
     // std::integral_constant<uint8_t, sizeof(Relay<sbus>)>::_;
     static_assert(sizeof(Relay<sbus>) == sizeof(Relay<relay>));
@@ -97,9 +98,13 @@ struct Relays {
             mRelay = nullptr;
             mRelay = std::make_unique<Relay<sbus_in>>();
             break;
-        case 8: // sumdv3
+        case 8: // sumdv3-in
             mRelay = nullptr;
             mRelay = std::make_unique<Relay<sumdv3_in>>();
+            break;
+        case 9: // sumdv3-out
+            mRelay = nullptr;
+            mRelay = std::make_unique<Relay<sumdv3_out>>();
             break;
         default:
             mRelay = nullptr;

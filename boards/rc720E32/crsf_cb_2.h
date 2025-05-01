@@ -39,6 +39,8 @@ struct CrsfCallback {
     using polars = Config::polars;
 
     using mpx1 = Config::mpx1;
+    using sumdv3 = Config::sumdv3;
+
     using messageBuffer = Config::messageBuffer;
 
     using src = Config::src;
@@ -196,7 +198,19 @@ struct CrsfCallback {
                 }
             }
             else if (realm == (uint8_t)RC::Protokoll::Crsf::V4::CommandType::Switch) {
-                if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set4) {
+                if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set) {
+                    const uint8_t swAddress = data[7];
+                    const uint16_t sw = data[8];
+                    if (eeprom.switchAddress == swAddress) {
+                        IO::outl<debug>("# Switch set address: ", swAddress, " v: ", sw);
+                        for(uint8_t i = 0; i < 8; ++i) {
+                            const uint8_t s = (sw >> i) & 0b01;
+                            mpx1::set(i, s);
+                            sumdv3::setSwitch(i, s);
+                        }
+                    }
+                }
+                else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set4) {
                     const uint8_t swAddress = data[7];
                     const uint16_t sw = (data[8] << 8) + data[9];
                     if (eeprom.switchAddress == swAddress) {
@@ -204,6 +218,21 @@ struct CrsfCallback {
                         for(uint8_t i = 0; i < 8; ++i) {
                             const uint8_t s = (sw >> (2 * i)) & 0b11;
                             mpx1::set(i, s);
+                            sumdv3::setSwitch(i, s);
+                        }
+                    }
+                }
+                else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set64) {
+                    const uint8_t swAddress = data[7];
+                    const uint8_t swGroup = (data[8] & 0x07);
+                    const uint8_t swSwitches = data[9];
+                    if (eeprom.switchAddress == swAddress) {
+                        IO::outl<debug>("# Switch set64 address: ", swAddress, " v: ", swSwitches, " g: ", swGroup);
+                        for(uint8_t i = 0; i < 8; ++i) {
+                            const uint8_t n = swGroup * 8 + i;
+                            const uint8_t s = (swSwitches >> i) & 0b01;
+                            mpx1::set(n, s);
+                            sumdv3::setSwitch(n, s);
                         }
                     }
                 }
@@ -417,7 +446,7 @@ private:
         addNode(p, Param_t{parent, PType::U8,  "CRSF Address", nullptr, &eeprom.address, 192, 207, [](const store_t a){updateName(mName); src::address(std::byte(a)); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Mode (not persistant)", "Full;Fwd Only", nullptr, 0, 1, [](const store_t){return false;}});
         parent = addParent(p, Param_t{0, PType::Folder, "Advanced"});
-        addNode(p, Param_t{parent, PType::Sel, "Crsf-HD/SBus", "SBus/Out;Crsf;SBus2/Master;CPPM/N;CPPM/P;CombinedPWMChannels/P;IBus/In;SBus/In;SumDV3/In;None", &eeprom.crsf_hd_mode, 0, 9, [](const store_t r){relays::set(r); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Crsf-HD/SBus", "SBus/Out;Crsf;SBus2/Master;CPPM/N;CPPM/P;CombinedPWMChannels/P;IBus/In;SBus/In;SumDV3/In;SumDV3/Out;None", &eeprom.crsf_hd_mode, 0, 10, [](const store_t r){relays::set(r); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Crsf-FD/Aux", "Crsf;GPS;None", &eeprom.crsf_fd_aux_mode, 0, 1, [](const store_t a){
                                auxes::set(a);
                                return true;}});
