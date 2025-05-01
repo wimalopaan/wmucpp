@@ -188,11 +188,6 @@ namespace RC::Protokoll::SumDV3 {
                         crc += etl::assign(data[i++], mSwitches[4]);
                         crc += etl::assign(data[i++], mSwitches[7]);
                         crc += etl::assign(data[i++], mSwitches[6]);
-
-
-                        // for(uint8_t s = 0; s < mSwitches.size(); ++s) {
-                        //     crc += etl::assign(data[i++], mSwitches[s]);
-                        // }
                     }
                     crc += etl::assign(data[i++], fCode);
                     crc += etl::assign(data[i++], 0); // res
