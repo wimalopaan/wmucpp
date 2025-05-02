@@ -55,7 +55,12 @@ struct EEProm {
     }();
 
     // Generell
+#ifdef TEST_EEPROM
+    eeprom_value_t mode = 1;
+#else
     eeprom_value_t mode = 0;
+#endif
+
     // CRSF
 #ifdef CRSF_ADDRESS
     eeprom_value_t address = CRSF_ADDRESS;
@@ -88,7 +93,7 @@ struct EEProm {
     eeprom_value_t phi2_ch = 3;
 
 #ifdef TEST_EEPROM
-    eeprom_value_t crsf_hd_mode = 1;
+    eeprom_value_t crsf_hd_mode = 9;
 #else
     eeprom_value_t crsf_hd_mode = 0;
 #endif

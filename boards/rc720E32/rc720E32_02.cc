@@ -17,20 +17,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define USE_CRSF_V3
-
+// #define USE_CRSF_V3
 #define ESCAPE32_ASCII // enable ESCape32 ascii configuration parameter menu
 // #define ESCAPE32_U8 // use only 8bit capable parameters
-#define SERVO_CALIBRATION // enable snalog feedback servo calibration
+#define SERVO_CALIBRATION // enable analog feedback servo calibration
 #define SERVO_ADDRESS_SET // eanble setting waveshare servo IDs
 #define CRSF_ADDRESS 192
 #define SERIAL_DEBUG // enable debug on esc-tlm-1
 #define TEST_EEPROM // fill eeprom with test setup
 
-#define USE_UART_2
-// #define USE_EXTRA_FORWARDS // old
+#define USE_UART_2 // obsolete, should be removed in future versions
 
-#define SW_VERSION 7
+#define SW_VERSION 8
 #define HW_VERSION 2
 
 #define NDEBUG
