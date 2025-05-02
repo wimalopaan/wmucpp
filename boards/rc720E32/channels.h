@@ -52,6 +52,11 @@ struct ChannelCallback {
             telemetry::rpm(1, escs::rpm(1));
 
             relays::update();
+
+            for(uint8_t i = 0; i < 16; ++i) {
+                relays::setChannel(i, pa::value(i));
+            }
+
             auxes::update();
         }
         else if (eeprom.mode == 0) { // Schottel-Mode
