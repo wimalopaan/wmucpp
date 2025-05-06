@@ -210,6 +210,38 @@ struct CrsfCallback {
                         }
                     }
                 }
+                else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set4M) {
+                    const uint8_t count = data[7];
+                    for(uint8_t i = 0; i < count; ++i) {
+                        const uint8_t swAddress = data[8 + 3 * i];
+                        const uint16_t sw = (data[9 + 3 * i] << 8) + data[10 + 3 * i];
+                        IO::outl<debug>("# Switch set4M: ", i, " adr: ", swAddress);
+                        if (eeprom.switchAddressContiguous == 0) {
+                            if (eeprom.switchAddress == swAddress) {
+                                IO::outl<debug>("# Switch set4M adr: ", swAddress, " v: ", sw);
+                                for(uint8_t k = 0; k < 8; ++k) {
+                                    const uint8_t s = (sw >> (2 * k)) & 0b11;
+                                    mpx1::set(k, s);
+                                    sumdv3::setSwitch(k, s);
+                                }
+                            }
+                        }
+                        else {
+                            const uint8_t minAdr = eeprom.switchAddress;
+                            const uint8_t maxAdr = eeprom.switchAddress + 7;
+                            if ((swAddress >= minAdr) && (swAddress <= maxAdr)) {
+                                IO::outl<debug>("# Switch set4M adr: ", swAddress, " v: ", sw);
+                                const uint8_t swGroup = swAddress - minAdr;
+                                for(uint8_t k = 0; k < 8; ++k) {
+                                    const uint8_t n = swGroup * 8 + k;
+                                    const uint8_t s = (sw >> (2 * k)) & 0b11;
+                                    mpx1::set(n, s);
+                                    sumdv3::setSwitch(n, s);
+                                }
+                            }
+                        }
+                    }
+                }
                 else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set4) {
                     const uint8_t swAddress = data[7];
                     const uint16_t sw = (data[8] << 8) + data[9];
@@ -459,6 +491,7 @@ private:
         addNode(p, Param_t{parent, PType::U8,  "Servo ID to set", nullptr, nullptr, 1, 16, [](const store_t){return false;}});
 #endif
         addNode(p, Param_t{parent, PType::U8,  "Switch Address", nullptr, &eeprom.switchAddress, 0, 255, [](const store_t){return true;}});
+        addNode(p, Param_t{parent, PType::U8,  "Contiguous Switch Addresses", nullptr, &eeprom.switchAddressContiguous, 0, 1, [](const store_t){return true;}});
 
         return p;
     }();

@@ -162,8 +162,9 @@ namespace RC {
                     inline static constexpr std::byte RequestConfigItem{0x05};
                     inline static constexpr std::byte RequestDeviceInfo{0x06};
                     inline static constexpr std::byte Set4{0x07}; // 4-state switches (2-bytes payload)
-                    inline static constexpr std::byte Set64{0x08}; // 2-state switches (2-bytes payload: [group, switches], group: 0...3)
-                    inline static constexpr std::byte InterModule{0x09}; // a module sends trigger to another module (address)
+                    inline static constexpr std::byte Set64{0x08}; // 4-state switches (3-bytes payload: [group, switches(16bit)], group: 0...3)
+                    inline static constexpr std::byte Set4M{0x09}; // 4-state switches multiple
+                    inline static constexpr std::byte InterModule{0x10}; // a module sends trigger to another module (address)
                 }
                 namespace CcCommand {
                     inline static constexpr std::byte SetAltData{0x01}; // Index: [0, 255], value 8bit
@@ -616,6 +617,8 @@ namespace RC {
                     static constexpr uint16_t CenterValue = 0x2ee0; // 12000
                     static constexpr uint16_t MaxValue = 0x3b60; // 15200
                     static constexpr uint16_t ExtendedHigh = 0x41a0; // 16800
+                    static constexpr uint16_t Amp = MaxValue - MinValue;
+                    static constexpr uint16_t Span = Amp / 2;
 
                     struct Crc16 {
                         inline void reset() {

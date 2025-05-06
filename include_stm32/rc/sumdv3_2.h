@@ -70,7 +70,9 @@ namespace RC::Protokoll::SumDV3 {
 
             static inline void set(const uint8_t channel, const uint16_t value) {
                 if (channel < mChannels.size()) {
-                    mChannels[channel] = (value - RC::Protokoll::Crsf::V4::mid) + RC::Protokoll::Hott::SumDV3::V2::CenterValue;
+                    const int32_t d = (value - RC::Protokoll::Crsf::V4::mid);
+                    const int32_t scaled = (d * RC::Protokoll::Hott::SumDV3::V2::Span) / RC::Protokoll::Crsf::V4::span;
+                    mChannels[channel] = scaled + RC::Protokoll::Hott::SumDV3::V2::CenterValue;
                 }
             }
             static inline void setSwitch(const uint8_t n, const uint8_t state) {

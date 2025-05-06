@@ -69,6 +69,11 @@ struct EEProm {
 #endif
 
     eeprom_value_t switchAddress = 0;
+#ifdef TEST_EEPROM
+    eeprom_value_t switchAddressContiguous = 1;
+#else
+    eeprom_value_t switchAddressContiguous = 0;
+#endif
 
     eeprom_value_t input_stream = 0; // CRSF, Pulse
 
