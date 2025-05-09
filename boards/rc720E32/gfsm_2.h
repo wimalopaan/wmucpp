@@ -124,6 +124,7 @@ struct GFSM {
         (++mPackagesCheckTick).on(packagesCheckTicks, []{
             const uint16_t ch_p = crsf_in_pa::template channelPackages<true>();
             const uint16_t l_p = crsf_in_pa::template linkPackages<true>();
+            IO::outl<debug>("ch_p:", ch_p, " l_p:", l_p);
             if (ch_p > 0) {
                 if  (l_p == 0) {
                     event(Event::DirectConnected);
