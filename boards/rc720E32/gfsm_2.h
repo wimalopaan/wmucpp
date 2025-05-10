@@ -286,8 +286,6 @@ struct GFSM {
         crsf_in::nextBaudrate();
     }
     static inline const uint32_t uuid = Mcu::Stm::Uuid::get();
-    static inline uint8_t mActiceBaudrateIndex{0};
-    static inline std::array<uint32_t, 2> mBaudrates{420'000, 921'000};
     static inline Event mEvent = Event::None;
     static inline External::Tick<systemTimer> mPackagesCheckTick;
     static inline External::Tick<systemTimer> mDirectTick;
