@@ -1,7 +1,10 @@
 todo:
 -----
+* check baud rates (e.g. also 400kb for TBS)
 * running light mode: parameter: speed, activate-output, activate-next address, (pwm)
 * running light mode: crsf command messages
+* running light mode: problem: half-duplex-bus arbitration,
+                      reliable only possible with CRSF-switch project sending arbitration tokens
 * crsf units
 * name of module (top-level)
 * watchdog
@@ -35,7 +38,6 @@ done:
 * Adresse auswerten?
 * Led blinken: kein Signal, keine Commands, Active-Mode
 * simple Bedienung über elrsv3 (z.B. für FlySky i6x)
-
 
 open:
 -----

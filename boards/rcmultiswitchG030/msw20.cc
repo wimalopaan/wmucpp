@@ -595,7 +595,7 @@ struct GFSM {
     using bsw7 = devs::bsw7;
     using bsws = devs::bsws;
 
-    enum class State : uint8_t {Undefined, Init,
+    enum class State : uint8_t {Undefined, Init, CheckBaudrate,
                                 RunNoTelemetry, RunWithTelemetry,
                                 NotConnected};
 
@@ -604,6 +604,7 @@ struct GFSM {
     static inline constexpr External::Tick<systemTimer> packagesCheckTicks{300ms};
     static inline constexpr External::Tick<systemTimer> initTicks{500ms};
     static inline constexpr External::Tick<systemTimer> debugTicks{500ms};
+    static inline constexpr External::Tick<systemTimer> baudCheckTicks{1000ms};
 
     static inline void update(const bool eepromMode = true) {
         crsfCallback::callbacks(eepromMode);
@@ -696,6 +697,27 @@ struct GFSM {
                 }
             });
             break;
+        case State::CheckBaudrate:
+            if (mEvent.is(Event::ReceiverConnected)) {
+                if (Storage::eeprom.telemetry) {
+                    mState = State::RunWithTelemetry;
+                }
+                else {
+                    mState = State::RunNoTelemetry;
+                }
+            }
+            else if (mEvent.is(Event::DirectConnected)) {
+                if (Storage::eeprom.telemetry) {
+                    mState = State::RunWithTelemetry;
+                }
+                else {
+                    mState = State::RunNoTelemetry;
+                }
+            }
+            mStateTick.on(baudCheckTicks, []{
+                nextBaudrate();
+            });
+            break;
         case State::RunNoTelemetry:
             mStateTick.on(debugTicks, []{
                 IO::outl<debug>("# ch0: ", crsf_pa::value(0), " cp: ", crsf_pa::template channelPackages<false>(), " lp: ", crsf_pa::template linkPackages<false>());
@@ -739,6 +761,9 @@ struct GFSM {
                     mState = State::RunNoTelemetry;
                 }
             }
+            else if (mEvent.is(Event::ConnectionLost)) {
+                mState = State::CheckBaudrate;
+            }
             break;
         }
         if (oldState != mState) {
@@ -748,6 +773,12 @@ struct GFSM {
                 break;
             case State::Init:
                 IO::outl<debug>("# Init eep magic: ", Storage::eeprom.magic);
+                break;
+            case State::CheckBaudrate:
+                IO::outl<debug>("# Ck Baud");
+                // led1::event(led1::Event::Steady);
+                // led2::event(led2::Event::Steady);
+                nextBaudrate();
                 break;
             case State::RunNoTelemetry:
                 IO::outl<debug>("# Run NT");
@@ -777,6 +808,9 @@ struct GFSM {
         }
     }
     private:
+    static inline void nextBaudrate() {
+        crsf::nextBaudrate();
+    }
     static inline etl::Event<Event> mEvent;
     static inline External::Tick<systemTimer> mPackagesCheckTick;
     static inline External::Tick<systemTimer> mStateTick;
