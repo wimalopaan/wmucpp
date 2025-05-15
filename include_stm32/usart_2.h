@@ -13,6 +13,9 @@
 #include "usarts.h"
 #include "usart_2_reflection.h"
 #include "dma_2.h"
+#include "exti.h"
+#include "output.h"
+#include "timer.h"
 
 #if 0
 struct UartConfig {
@@ -177,6 +180,172 @@ namespace Mcu::Stm {
 
         template<uint8_t N, typename Config, typename MCU = DefaultMcu>
         using LpUart = Uart<N + 100, Config, MCU>;
+
+        // software UART: read-only
+        // uses EXTI
+        template<typename Config, typename MCU>
+        struct Uart<0, Config, MCU> {
+            using clock = Config::Clock;
+            using debug = Config::debug;
+            using pin = Config::pin;
+            using gpio = pin::gpio_t;
+            using port = gpio::port_t;
+            using tp = Config::tp;
+            static inline constexpr uint8_t N = pin::number;
+            static inline constexpr uint8_t exti_n = pin::number / 4;
+            static inline constexpr uint8_t exti_s = pin::number % 4;
+
+            static inline constexpr uint8_t map = Mcu::Stm::ExtI::Map<port>::value;
+
+            static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Timer<Config::timerN>>::value);
+            static inline constexpr uint16_t bitPeriod = (clock::config::frequency.value / Config::baudrate);
+            // using std::integral_constant<uint16_t, bitPeriod>::_;
+
+            static inline constexpr uint8_t numberOfBits = []{
+                if constexpr(detail::getParity_v<Config> == Uarts::Parity::Even) {
+                    return 10;
+                }
+                else if constexpr(detail::getParity_v<Config> == Uarts::Parity::Odd) {
+                    return 10;
+                }
+                else {
+                    return 9;
+                }
+            }();
+            // using std::integral_constant<uint16_t, numberOfBits>::_;
+
+            static inline void init() {
+                IO::outl<debug>("# Uart 0 (Soft): ", N, ", ", exti_n, ", ", exti_s, ", ", map);
+                Mcu::Stm::Timers::powerUp<Config::timerN>();
+                if constexpr(exti_n < 4) {
+                    EXTI->EXTICR[exti_n] = map << (exti_s * 8);
+                }
+                else {
+                    static_assert(false);
+                }
+                EXTI->RTSR1 = 0x01 << N;
+                EXTI->IMR1 = 0x01 << N;
+                mcuTimer->PSC = 0; // prescaler == 1
+                mcuTimer->ARR = bitPeriod;
+                mcuTimer->DIER |= TIM_DIER_UIE;
+                mcuTimer->EGR |= TIM_EGR_UG;
+                mcuTimer->CR1 |= TIM_CR1_URS;
+                mByteCount1 = 0;
+                mByteCount2 = 0;
+                mState = State::Idle;
+            }
+            static inline void reset() {
+                Mcu::Stm::Timers::reset<Config::timerN>();
+                // reset EXTI
+            }
+            template<bool Enable>
+            static inline void rxEnable() {}
+            static inline auto readBuffer(const auto f) {
+                if (mActiveDataPtr == &mData1[0]) {
+                    f(mData2);
+                }
+                else {
+                    f(mData1);
+                }
+            }
+            static inline void onParityGood(auto f) {
+                if (!mParityErrorSave) {
+                    f();
+                }
+                mParityErrorSave = false;
+            }
+
+            enum class State : uint8_t {Idle, Receiving};
+
+            static inline auto ratePeriodic() {
+                if (mState == State::Receiving) {
+                    mRateCount = mRateCount + 1;
+                    if (mRateCount >= 2) {
+                        if constexpr(!std::is_same_v<tp, void>) {
+                            tp::set();
+                        }
+                        const auto d_ptr = mActiveDataPtr;
+                        const auto d_s = *mActiveByteCount;
+                        if (mActiveDataPtr == &mData1[0]) {
+                            mActiveDataPtr = &mData2[0];
+                            mActiveByteCount = &mByteCount2;
+                        }
+                        else {
+                            mActiveDataPtr = &mData1[0];
+                            mActiveByteCount = &mByteCount1;
+                        }
+                        *mActiveByteCount = 0;
+                        mParityErrorSave = mParityError;
+                        mParityError = false;
+                        Config::callback::idle(d_ptr, d_s);
+                        mState = State::Idle;
+                        if constexpr(!std::is_same_v<tp, void>) {
+                            tp::reset();
+                        }
+                    }
+                }
+            }
+            struct Isr {
+                static inline void edge() {
+                    mState = State::Receiving;
+                    EXTI->RPR1 = 0x01 << N;
+                    mRateCount = 0;
+                    mBitCount = 0;
+                    mFrame = 0;
+                    mParity = false;
+                    mcuTimer->ARR = ((bitPeriod / 2) * 6) / 10;
+                    mcuTimer->CNT = 0;
+                    mcuTimer->CR1 |= TIM_CR1_CEN;
+                    EXTI->IMR1 = 0;
+                }
+                static inline void period() {
+                    if constexpr(!std::is_same_v<tp, void>) {
+                        tp::set();
+                    }
+                    const bool bit = Config::invert ? !pin::read() : pin::read();
+                    mcuTimer->SR = ~TIM_SR_UIF;
+                    mcuTimer->ARR = bitPeriod - 1;
+                    // lsb first
+                    mFrame = (mFrame >> 1);
+                    if (bit) {
+                        mFrame = mFrame | (0b1 << (numberOfBits - 1));
+                        mParity = !mParity;
+                    }
+                    mBitCount = mBitCount + 1;
+                    if (mBitCount >= numberOfBits) {
+                        mcuTimer->CR1 &= ~TIM_CR1_CEN;
+                        EXTI->IMR1 = 0x01 << N;
+                        if constexpr(detail::getParity_v<Config> == Uarts::Parity::Even) {
+                            mParityError |= (mParity != (mFrame & 0b01));
+                        }
+                        else if constexpr(detail::getParity_v<Config> == Uarts::Parity::Odd) {
+                            mParityError |= (mParity == (mFrame & 0b01));
+                        }
+                        if (*mActiveByteCount < mData1.size()) {
+                            mActiveDataPtr[*mActiveByteCount] = (mFrame >> 1) & 0xff; // omit parity and start bit
+                            *mActiveByteCount = *mActiveByteCount + 1;
+                        }
+                    }
+                    if constexpr(!std::is_same_v<tp, void>) {
+                        tp::reset();
+                    }
+                }
+            };
+            private:
+            static inline std::array<volatile uint8_t, Config::Rx::size> mData1;
+            static inline std::array<volatile uint8_t, Config::Rx::size> mData2;
+            static inline volatile uint8_t* mActiveDataPtr = &mData1[0];
+            static inline volatile uint8_t mByteCount1 = 0;
+            static inline volatile uint8_t mByteCount2 = 0;
+            static inline volatile uint8_t* mActiveByteCount = &mByteCount1;
+            static inline volatile State mState = State::Idle;
+            static inline volatile bool mParityErrorSave = false;
+            static inline volatile bool mParityError = false;
+            static inline volatile bool mParity = false;
+            static inline volatile uint16_t mFrame = 0;
+            static inline volatile uint8_t mBitCount = 0;
+            static inline volatile uint16_t mRateCount = 0;
+        };
 
         template<uint8_t N, typename Config, typename MCU>
         requires (

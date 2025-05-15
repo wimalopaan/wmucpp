@@ -118,6 +118,42 @@ namespace Mcu::Stm {
         }
 #endif
 
+#ifdef STM32G0
+        template<uint8_t TimerNumber, typename MCU = DefaultMcu>
+        requires(G0xx<MCU>)
+        void reset() {
+            const auto rcc = Mcu::Stm::Address<Mcu::Components::Rcc>::value;
+            if constexpr (TimerNumber == 1) {
+                rcc->APBRSTR2 |= RCC_APBRSTR2_TIM1RST;
+                rcc->APBRSTR2 &= ~RCC_APBRSTR2_TIM1RST;
+            }
+            else if constexpr (TimerNumber == 2) {
+                RCC->APBRSTR1 |= RCC_APBRSTR1_TIM2RST;
+                RCC->APBRSTR1 &= ~RCC_APBRSTR1_TIM2RST;
+            }
+            else if constexpr (TimerNumber == 3) {
+                RCC->APBRSTR1 |= RCC_APBRSTR1_TIM3RST;
+                RCC->APBRSTR1 &= ~RCC_APBRSTR1_TIM3RST;
+            }
+            else if constexpr (TimerNumber == 4) {
+                RCC->APBRSTR1 |= RCC_APBRSTR1_TIM4RST;
+                RCC->APBRSTR1 &= ~RCC_APBRSTR1_TIM4RST;
+            }
+            else if constexpr (TimerNumber == 6) {
+                RCC->APBRSTR1 |= RCC_APBRSTR1_TIM6RST;
+                RCC->APBRSTR1 &= ~RCC_APBRSTR1_TIM6RST;
+            }
+            else if constexpr (TimerNumber == 7) {
+                RCC->APBRSTR1 |= RCC_APBRSTR1_TIM7RST;
+                RCC->APBRSTR1 &= ~RCC_APBRSTR1_TIM7RST;
+            }
+            else {
+                static_assert(false);
+            }
+        }
+#endif
+
+
 #ifdef STM32G4
         template<uint8_t TimerNumber>
         void powerUp() {
@@ -143,6 +179,32 @@ namespace Mcu::Stm {
             }
             else if constexpr(TimerNumber == 7) {
                 RCC->APB1ENR1 |= RCC_APB1ENR1_TIM7EN;
+            }
+            else {
+                static_assert(false);
+            }
+        }
+#endif
+#ifdef STM32G0
+        template<uint8_t TimerNumber>
+        void powerUp() {
+            if constexpr (TimerNumber == 1) {
+                RCC->APBENR2 |= RCC_APBENR2_TIM1EN;
+            }
+            else if constexpr (TimerNumber == 2) {
+                RCC->APBENR1 |= RCC_APBENR1_TIM2EN;
+            }
+            else if constexpr (TimerNumber == 3) {
+                RCC->APBENR1 |= RCC_APBENR1_TIM3EN;
+            }
+            else if constexpr (TimerNumber == 4) {
+                RCC->APBENR1 |= RCC_APBENR1_TIM4EN;
+            }
+            else if constexpr(TimerNumber == 6) {
+                RCC->APBENR1 |= RCC_APBENR1_TIM6EN;
+            }
+            else if constexpr(TimerNumber == 7) {
+                RCC->APBENR1 |= RCC_APBENR1_TIM7EN;
             }
             else {
                 static_assert(false);

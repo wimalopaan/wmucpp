@@ -30,10 +30,8 @@
 #include "mcu/arm.h"
 #include "debug_2.h"
 #include "components.h"
-// #include "dma.h"
 #include "dma_2.h"
 #include "usart_2.h"
-// #include "usart.h"
 #include "i2c.h"
 #include "units.h"
 #include "output.h"
@@ -51,11 +49,13 @@
 #include "rc/waveshare_2.h"
 #include "rc/ibus_2.h"
 #include "rc/sumdv3_2.h"
+#include "rc/sport_2.h"
 #include "pwm.h"
 #include "adc.h"
 #include "blinker.h"
 #include "adapter.h"
 #include "crsf_cb_2.h"
+#include "sport_cb.h"
 #include "eeprom.h"
 #include "fbservo.h"
 #include "polar.h"
@@ -78,7 +78,7 @@ template<typename Config, typename MCU>
 struct Devices<SW01, Config, MCU> {
     using storage = Config::storage;
 
-    using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<64_MHz, 2'000_Hz, Mcu::Stm::HSI>>;
+    using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<64_MHz, 4'000_Hz, Mcu::Stm::HSI>>;
     using systemTimer = Mcu::Stm::SystemTimer<clock, Mcu::UseInterrupts<false>, MCU>;
 
     using gpioa = Mcu::Stm::GPIO<Mcu::Stm::A, MCU>;
@@ -102,8 +102,12 @@ struct Devices<SW01, Config, MCU> {
     // half-duplex
     using srv1DmaChannel    = Mcu::Stm::Dma::Channel<dma1, 4, MCU>;
     using srv1DmaChannelComponent = Mcu::Components::DmaChannel<typename dma1::component_t, 4>;
-    // I2C
+
+    // I2C: exclusive to software uart
     using i2cDmaChannel     = Mcu::Stm::Dma::Channel<dma1, 5, MCU>;
+    // Software UART: exclusive to I2C
+    using swuartDmaChannel     = Mcu::Stm::Dma::Channel<dma1, 5, MCU>;
+
     // half-duplex
     using sbus1DmaChannel   = Mcu::Stm::Dma::Channel<dma1, 6, MCU>;
     using sbus1DmaChannelComponent = Mcu::Components::DmaChannel<typename dma1::component_t, 6>;
@@ -129,11 +133,11 @@ struct Devices<SW01, Config, MCU> {
     // Uart 1: CRSF-IN
     // Uart 2: ESC1
     // Uart 3: ESC2
-    // Uart 4: CRSF-FD, GPS, AUX
+    // Uart 4: CRSF-FD, GPS, AUX, S.Port
     // Uart 5: Srv1
     // Uart 6: Srv2
     // LPUart 1: Debug
-    // LPUart 2: CRSF-HD, SBus(2)
+    // LPUart 2: CRSF-HD, SBus(2), SBus-In, IBus-In, Cppm-In, SumDV3-Out
 
     // Usart 1: CRSF
     using crsftx = Mcu::Stm::Pin<gpioa, 9, MCU>; // AF1
@@ -294,6 +298,13 @@ struct Devices<SW01, Config, MCU> {
 #ifdef USE_UART_2
     struct RelayAuxConfig;
     using relay_aux = RC::Protokoll::Crsf::V4::PacketRelay<4, RelayAuxConfig, MCU>;
+
+    struct SPortAuxConfig;
+    using sport_aux = RC::Protokoll::SPort::V2::Master::Serial<4, SPortAuxConfig, MCU>;
+
+    struct SBusSoftUartConfig;
+    using sbus_aux = RC::Protokoll::SBus::V2::Input<0, SBusSoftUartConfig, MCU>;
+
 #else
     struct RelayDebug;
     using relay_aux = PacketRelay<4, true, auxtx, crsf_in, crsfBuffer, relayAuxDmaChannel, systemTimer, clock, RelayDebug, MCU>;
@@ -375,6 +386,34 @@ struct Devices<SW01, Config, MCU> {
         using src = crsf_in::input;
         using dest = crsfBuffer;
     };
+    struct SBusSoftUartConfig {
+        // static inline constexpr bool additionalChecks = true;
+        using pin = auxrx;
+        using clock = Devices::clock;
+        using systemTimer = Devices::systemTimer;
+        static inline constexpr uint8_t timerN = 1;
+        using dmaChComponent = void;
+        using debug = Devices::debug;
+        using tp = tp1;
+    };
+    struct SPortCallbackConfig;
+    struct SPortAuxConfig {
+        using pin = auxtx;
+        using clock = Devices::clock;
+        using systemTimer = Devices::systemTimer;
+        using dmaChComponent = relayAuxDmaChannelComponent;
+        using debug = Devices::debug;
+        using tp = void;
+        using callback = SPortCallback<SPortCallbackConfig>;
+    };
+    struct SPortCallbackConfig {
+        using debug = Devices::debug;
+        using storage = Config::storage;
+        using timer = systemTimer;
+        using mpx1 = Devices::mpx1;
+        using sumdv3 = Devices::sumdv3_out;
+        using tp = void;
+    };
     struct IBusConfig {
         using pin = sbus_crsf_pin;
         using clock = Devices::clock;
@@ -421,9 +460,10 @@ struct Devices<SW01, Config, MCU> {
     };
 
     struct InputConfig {
+        using debug = Devices::debug;
         using stream1 = crsf_in::input;
         using stream2 = Config::relays; // relay connector
-        using stream3 = void; // aux
+        using stream3 = sbus_aux; // aux
     };
 
     struct PulseConfig {

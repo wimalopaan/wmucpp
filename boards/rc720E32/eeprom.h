@@ -75,7 +75,11 @@ struct EEProm {
     eeprom_value_t switchAddressContiguous = 0;
 #endif
 
+#ifdef TEST_EEPROM
+    eeprom_value_t input_stream = 2;
+#else
     eeprom_value_t input_stream = 0; // CRSF, Pulse
+#endif
 
     // Input channels
     std::array<Pair, 2> channels{{{0, 1}, {2, 3}}};
@@ -102,7 +106,14 @@ struct EEProm {
 #else
     eeprom_value_t crsf_hd_mode = 0;
 #endif
-    eeprom_value_t crsf_fd_aux_mode = 0;
+    eeprom_value_t crsf_fd_aux_mode = 2;
+
+    eeprom_value_t sport_physicalID_telemetry = 0;
+    eeprom_value_t sport_physicalID_switch = 0;
+
+    eeprom_value_t sport_appId_telemetry = 0;
+    eeprom_value_t sport_appId_switch = 0;
+
 
 #ifdef TEST_EEPROM
     std::array<eeprom_value_t, 2> out_mode_srv{3, 2};
@@ -112,7 +123,7 @@ struct EEProm {
 
 #ifdef TEST_EEPROM
     // std::array<eeprom_value_t, 2> out_mode_esc{2, 0}; // Esc32 Ascii
-    std::array<eeprom_value_t, 2> out_mode_esc{3, 0}; // VEsc
+    std::array<eeprom_value_t, 2> out_mode_esc{4, 4}; // VEsc
 #else
     std::array<eeprom_value_t, 2> out_mode_esc{0, 0};
 #endif

@@ -80,13 +80,35 @@ int main() {
     gfsm::init();
     gfsm::updateFromEeprom();
 
+    const uint8_t defaultIntPrio = 1;
+
     NVIC_EnableIRQ(USART1_IRQn);
+    NVIC_SetPriority(USART1_IRQn, defaultIntPrio);
+
     NVIC_EnableIRQ(USART2_LPUART2_IRQn);
+    NVIC_SetPriority(USART2_LPUART2_IRQn, defaultIntPrio);
+
     NVIC_EnableIRQ(USART3_4_5_6_LPUART1_IRQn);
+    NVIC_SetPriority(USART3_4_5_6_LPUART1_IRQn, defaultIntPrio);
+
     NVIC_EnableIRQ(DMA1_Channel2_3_IRQn);
+    NVIC_SetPriority(DMA1_Channel2_3_IRQn, defaultIntPrio);
+
     NVIC_EnableIRQ(DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQn);
+    NVIC_SetPriority(DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQn, defaultIntPrio);
+
     NVIC_EnableIRQ(ADC1_COMP_IRQn);
+    NVIC_SetPriority(ADC1_COMP_IRQn, defaultIntPrio);
+
     NVIC_EnableIRQ(TIM3_TIM4_IRQn);
+    NVIC_SetPriority(TIM3_TIM4_IRQn, defaultIntPrio);
+
+    NVIC_EnableIRQ(TIM1_BRK_UP_TRG_COM_IRQn);
+    NVIC_SetPriority(TIM1_BRK_UP_TRG_COM_IRQn, 0);
+
+    NVIC_EnableIRQ(EXTI0_1_IRQn);
+    NVIC_SetPriority(EXTI0_1_IRQn, 0);
+
     __enable_irq();
 
     while(true) {
@@ -97,6 +119,18 @@ int main() {
     }
 }
 extern "C" {
+
+void TIM1_BRK_UP_TRG_COM_IRQHandler() {
+    using sbus_aux = devs::sbus_aux;
+    using swuart = sbus_aux::uart;
+    swuart::Isr::period();
+}
+void EXTI0_1_IRQHandler() {
+    using sbus_aux = devs::sbus_aux;
+    using swuart = sbus_aux::uart;
+    swuart::Isr::edge();
+}
+
 void TIM3_TIM4_IRQHandler() {
     using pulse_in = devs::pulse_in;
     static_assert(pulse_in::timerNumber == 4);
@@ -329,6 +363,12 @@ void USART3_4_5_6_LPUART1_IRQHandler(){
             relay::event(relay::Event::ReceiveComplete);
         });
     #endif
+        using sport = devs::sport_aux;
+        static_assert(sport::uart::number == 4);
+        sport::Isr::onTransferComplete([]{
+        });
+        sport::Isr::onIdle([]{
+        });
     }
 }
 void USART1_IRQHandler() {
@@ -337,8 +377,8 @@ void USART1_IRQHandler() {
     crsf_in::Isr::onIdle([]{
     });
     crsf_in::Isr::onTransferComplete([]{
-        devs::tp3::set();
-        devs::tp3::reset();
+        // devs::tp3::set();
+        // devs::tp3::reset();
     });
 }
 

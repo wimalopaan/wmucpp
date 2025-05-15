@@ -80,6 +80,7 @@ boards/rc720E32/rc720E32_02.cc
 boards/rc720E32/ressources.h
 boards/rc720E32/sbus.h
 boards/rc720E32/sbus_2.h
+boards/rc720E32/sport_cb.h
 boards/rc720E32/startup_g0b1.s
 boards/rc720E32/sumdv3.h
 boards/rc720E32/sumdv3_2.h
@@ -624,6 +625,7 @@ include_stm32/rc/sbus2_types.h
 include_stm32/rc/sbus_2.h
 include_stm32/rc/spacemouse.h
 include_stm32/rc/sport.h
+include_stm32/rc/sport_2.h
 include_stm32/rc/sumdv3_2.h
 include_stm32/rc/vesc.h
 include_stm32/rc/vesc_2.h

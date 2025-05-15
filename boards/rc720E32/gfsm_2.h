@@ -67,6 +67,8 @@ struct GFSM {
 
     using i2c = devs::i2c;
 
+    using sbus_aux = devs::sbus_aux;
+
     static inline void init() {
         devs::init();
 #ifdef CRSF_ADDRESS
@@ -124,9 +126,10 @@ struct GFSM {
         (++mPackagesCheckTick).on(packagesCheckTicks, []{
             const uint16_t ch_p = crsf_in_pa::template channelPackages<true>();
             const uint16_t l_p = crsf_in_pa::template linkPackages<true>();
-            IO::outl<debug>("ch_p:", ch_p, " l_p:", l_p);
-            if (ch_p > 0) {
-                if  (l_p == 0) {
+            const uint16_t sb = sbus_aux::packageCount();
+            // IO::outl<debug>("ch_p:", ch_p, " l_p:", l_p, " sb:", sb);
+            if ((ch_p > 0) || (sb > 0)) {
+                if  ((l_p == 0) && (sb == 0)) {
                     event(Event::DirectConnected);
                 }
                 else {
@@ -180,6 +183,12 @@ struct GFSM {
             else if (e == Event::ConnectionLost) {
                 mState = State::CheckBaudrate;
             }
+            // (++mUpdateTick).on(updateTicks, []{
+            //     channelCallback::update();
+            // });
+            // mStateTick.on(debugTicks, []{
+            //     IO::outl<debug>("sbus aux: ", sbus_aux::value(0));
+            // });
             break;
         case State::RunConnected:
             if (const Event e = std::exchange(mEvent, Event::None); e == Event::ConnectionLost) {
@@ -198,8 +207,9 @@ struct GFSM {
                 telemetry::next();
             });
             mStateTick.on(debugTicks, []{
+                IO::outl<debug>("# sbus aux: ", sbus_aux::value(0));
                 // IO::outl<debug>("_end:", &_end, " _ebss:", &_ebss, " heap:", heap);
-                IO::outl<debug>("ch0: ", crsf_in_pa::value(0), " phi0: ", polar1::phi(), " amp0: ", polar1::amp(), " a0: ", Servos::actualPos(0), " t0: ", Servos::turns(0), " phi1: ", polar2::phi(), " amp1: ", polar2::amp(), " a1: ", Servos::actualPos(1), " t1: ", Servos::turns(1));
+                // IO::outl<debug>("ch0: ", crsf_in_pa::value(0), " phi0: ", polar1::phi(), " amp0: ", polar1::amp(), " a0: ", Servos::actualPos(0), " t0: ", Servos::turns(0), " phi1: ", polar2::phi(), " amp1: ", polar2::amp(), " a1: ", Servos::actualPos(1), " t1: ", Servos::turns(1));
             });
             break;
         case State::DirectMode:

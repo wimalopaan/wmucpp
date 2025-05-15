@@ -26,6 +26,8 @@ struct Auxes {
     using devs = Devs;
     using debug = devs::debug;
     using relay = devs::relay_aux;
+    using sport = devs::sport_aux;
+    using sbus_in = devs::sbus_aux;
     // using gps = devs::gps;
 
     static inline void set(const uint8_t r) {
@@ -33,13 +35,21 @@ struct Auxes {
         switch(r) {
         case 0: // crsf
             mRelay = nullptr;
+            mDevice2 = nullptr;
             mRelay = std::make_unique<Relay<relay>>();
             break;
         case 1: // gps
             mRelay = nullptr;
+            mDevice2 = nullptr;
             break;
-        case 2: // none
+        case 2: // SBus In
             mRelay = nullptr;
+            mRelay = std::make_unique<Relay<sbus_in>>();
+            mDevice2 = std::make_unique<Device<sport>>();
+            break;
+        case 3: // none
+            mRelay = nullptr;
+            mDevice2 = nullptr;
             break;
         default:
             break;
@@ -77,12 +87,19 @@ struct Auxes {
         if (mRelay) {
             mRelay->periodic();
         }
+        if (mDevice2) {
+            mDevice2->periodic();
+        }
     }
     static inline void ratePeriodic() {
         if (mRelay) {
             mRelay->ratePeriodic();
         }
+        if (mDevice2) {
+            mDevice2->ratePeriodic();
+        }
     }
     private:
     static inline std::unique_ptr<IRelay> mRelay{};
+    static inline std::unique_ptr<IDevice> mDevice2{};
 };

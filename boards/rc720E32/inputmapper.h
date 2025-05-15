@@ -20,8 +20,11 @@
 
 #include <cstdint>
 
+#include "output.h"
+
 template<typename Config>
 struct InputMapper {
+    using debug = Config::debug;
     using stream1 = Config::stream1;
     using stream2 = Config::stream2;
     using stream3 = Config::stream3;
@@ -51,6 +54,7 @@ struct InputMapper {
         }
     }
     static inline void stream(const uint8_t s) {
+        IO::outl<debug>("Input Mapper: ", s);
         mStream = s;
     }
     private:

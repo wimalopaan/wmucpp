@@ -77,7 +77,7 @@ namespace RC {
         namespace Crsf {
             namespace V4 {
                 static inline constexpr uint32_t baudrate{420'000};
-                static inline constexpr std::array<uint32_t, 2> baudrates{420'000, 921'000};
+                static inline constexpr std::array<uint32_t, 3> baudrates{400'000, 420'000, 921'000};
                 namespace Address {
                     inline static constexpr std::byte StartByte{0xc8};
                     inline static constexpr std::byte Broadcast{0x00};
@@ -654,6 +654,7 @@ namespace RC {
             using namespace etl::literals;
 
             namespace V2 {
+                static constexpr uint32_t baudrate{57'600};
                 enum class SensorId : uint8_t { ID1  = 0x00, ID2  = 0xA1, ID3  = 0x22, ID4  = 0x83, ID5  = 0xE4, ID6  = 0x45, ID7  = 0xC6,
                                                 ID8  = 0x67, ID9  = 0x48, ID10 = 0xE9, ID11 = 0x6A, ID12 = 0xCB, ID13 = 0xAC, ID14 = 0x0D,
                                                 ID15 = 0x8E, ID16 = 0x2F, ID17 = 0xD0, ID18 = 0x71, ID19 = 0xF2, ID20 = 0x53, ID21 = 0x34,

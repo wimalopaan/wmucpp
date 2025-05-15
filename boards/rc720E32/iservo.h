@@ -225,3 +225,19 @@ struct Esc: IEsc {
     }
 };
 
+template<typename D>
+struct Device : IDevice {
+    Device() {
+        D::init();
+    }
+    ~Device() {
+        D::reset();
+    }
+    virtual void periodic() {
+        D::periodic();
+    }
+    virtual void ratePeriodic() {
+        D::ratePeriodic();
+    }
+};
+
