@@ -80,7 +80,10 @@ int main() {
     gfsm::init();
     gfsm::updateFromEeprom();
 
-    const uint8_t defaultIntPrio = 1;
+    static constexpr uint8_t defaultIntPrio = 1;
+    static constexpr uint8_t swUartIntPrio  = 0;
+
+    static_assert(swUartIntPrio < defaultIntPrio);
 
     NVIC_EnableIRQ(USART1_IRQn);
     NVIC_SetPriority(USART1_IRQn, defaultIntPrio);
@@ -104,10 +107,10 @@ int main() {
     NVIC_SetPriority(TIM3_TIM4_IRQn, defaultIntPrio);
 
     NVIC_EnableIRQ(TIM1_BRK_UP_TRG_COM_IRQn);
-    NVIC_SetPriority(TIM1_BRK_UP_TRG_COM_IRQn, 0);
+    NVIC_SetPriority(TIM1_BRK_UP_TRG_COM_IRQn, swUartIntPrio);
 
     NVIC_EnableIRQ(EXTI0_1_IRQn);
-    NVIC_SetPriority(EXTI0_1_IRQn, 0);
+    NVIC_SetPriority(EXTI0_1_IRQn, swUartIntPrio);
 
     __enable_irq();
 
