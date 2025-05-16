@@ -11,6 +11,8 @@ Hardware
 
 Prio 0
 ------
+* S.Port @ AUX Telemetry (ESC, Servos, ...)
+* S.Port / SBus @ AUX -> CRSF Relay (Switch / Channels)
 * implement SET64 (e.g. SumDV3 for Beier USM-RC)
 * implement SBus-Switch state input (like super-simple-multiswitch)
 * use only one appid for tunneling packages to one widget
@@ -39,22 +41,24 @@ Prio 0
 Prio 1
 ------
 * GPS: adaption of protocol-parser to dma-pattern
+** velocity -> Telemetry
 ** maybe F9P support: yaw from GPS (moving baseline)
 
 Prio 2
 ------
 * HOTT-Telemetrie
-* S.Port
 * IBus-Telemetrie
 
 Prio 3
 ------
 * I2C
 ** interface to e.g. GY-271, BMM150
-* disable/enable Schottel-computations via menu -> general CruiseController
+** IMU MPU6050
 
 Done:
 ------
+* disable/enable Schottel-computations via menu -> general CruiseController
+* S.Port / SBus @ Aux (via Software-UART)
 * implement CRSF_SUBCMD_SWITCH_SET4
 * understand switch command
 * time-multiplex switch-encoder

@@ -38,16 +38,14 @@ struct SPortCallback {
         const uint16_t appId = data[1] + (data[2] << 8);
         const uint32_t value = data[3] + (data[4] << 8) + (data[5] << 16) + (data[6] << 24);
         IO::outl<debug>("# SPort cb: ", command, ", ", appId, ", ", value);
-        const uint8_t address = (appId >> 8);
 
+        const uint8_t swGroup = (appId & 0xff);
         for(uint8_t i = 0; i < 8; ++i) {
+            const uint8_t n = swGroup * 8 + i;
             const uint8_t s = (value >> (2 * i)) & 0b11;
-            mpx1::set(i, s);
-            sumdv3::setSwitch(i, s);
+            mpx1::set(n, s);
+            sumdv3::setSwitch(n, s);
         }
-
     }
     private:
-    // static inline uint16_t mSW_0_31 = 0x5100;
-    // static inline uint16_t mSW_32_63 = 0xac01;
 };

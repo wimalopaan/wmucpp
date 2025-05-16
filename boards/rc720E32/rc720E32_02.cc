@@ -123,11 +123,13 @@ int main() {
 }
 extern "C" {
 
+// software-uart
 void TIM1_BRK_UP_TRG_COM_IRQHandler() {
     using sbus_aux = devs::sbus_aux;
     using swuart = sbus_aux::uart;
     swuart::Isr::period();
 }
+// software-uart
 void EXTI0_1_IRQHandler() {
     using sbus_aux = devs::sbus_aux;
     using swuart = sbus_aux::uart;

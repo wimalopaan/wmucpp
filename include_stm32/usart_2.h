@@ -237,6 +237,8 @@ namespace Mcu::Stm {
             static inline void reset() {
                 Mcu::Stm::Timers::reset<Config::timerN>();
                 // reset EXTI
+                EXTI->RTSR1 &= ~(0x01 << N);
+                EXTI->IMR1  &= ~(0x01 << N);
             }
             template<bool Enable>
             static inline void rxEnable() {}

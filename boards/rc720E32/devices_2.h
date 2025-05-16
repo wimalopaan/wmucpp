@@ -393,8 +393,8 @@ struct Devices<SW01, Config, MCU> {
         using systemTimer = Devices::systemTimer;
         static inline constexpr uint8_t timerN = 1;
         using dmaChComponent = void;
-        using debug = Devices::debug;
-        using tp = tp1;
+        using debug = void;
+        using tp = void;
     };
     struct SPortCallbackConfig;
     struct SPortAuxConfig {
@@ -402,7 +402,7 @@ struct Devices<SW01, Config, MCU> {
         using clock = Devices::clock;
         using systemTimer = Devices::systemTimer;
         using dmaChComponent = relayAuxDmaChannelComponent;
-        using debug = Devices::debug;
+        using debug = void;
         using tp = void;
         using callback = SPortCallback<SPortCallbackConfig>;
     };
@@ -607,6 +607,8 @@ struct Devices<SW01, Config, MCU> {
         gpiob::init();
         gpioc::init();
 
+        sport_aux::setValue1(1000 * HW_VERSION + SW_VERSION);
+
         led1::template dir<Mcu::Output>();
         led2::template dir<Mcu::Output>();
 
@@ -621,7 +623,6 @@ struct Devices<SW01, Config, MCU> {
         debugrx::template pullup<true>();
 #endif
 #endif
-
         crsf_in::init();
 
         sda3::openDrain();

@@ -220,6 +220,12 @@ namespace RC::Protokoll::SPort::V2 {
             static inline void setAppID1(const uint8_t id){
                 mValueID1 = (id << 8);
             }
+            static inline void setValue0(const uint32_t v){
+                mValue0 = v;
+            }
+            static inline void setValue1(const uint32_t v){
+                mValue1 = v;
+            }
             private:
             static inline bool readRequest() {
                 bool sendReply = false;
