@@ -35,7 +35,7 @@ namespace RC::Protokoll::SPort::V2 {
         uint8_t value() const {
             return (0xff - mValue);
         }
-    private:
+        private:
         uint16_t mValue{};
     };
 
@@ -51,7 +51,7 @@ namespace RC::Protokoll::SPort::V2 {
                 else {
                     return std::pair{b, true};
                 }
-            break;
+                break;
             case State::Stuff:
                 mState = State::Normal;
                 if (b == 0x5d_B) {
@@ -60,11 +60,11 @@ namespace RC::Protokoll::SPort::V2 {
                 else if (b == 0x5e_B) {
                     return std::pair{0x7e_B, true};
                 }
-            break;
+                break;
             }
             return std::pair{b, false};
         }
-    private:
+        private:
         State mState{State::Normal};
     };
     namespace Master {
@@ -208,30 +208,49 @@ namespace RC::Protokoll::SPort::V2 {
                     }
                 }
             };
-
+            static inline void setPhysID0(const uint8_t id){
+                mPhysicalID0 = RC::Protokoll::SPort::V2::getDataId(id);
+            }
+            static inline void setPhysID1(const uint8_t id){
+                mPhysicalID1 = RC::Protokoll::SPort::V2::getDataId(id);
+            }
+            static inline void setAppID0(const uint8_t id){
+                mValueID0 = (id << 8);
+            }
+            static inline void setAppID1(const uint8_t id){
+                mValueID1 = (id << 8);
+            }
             private:
-
             static inline bool readRequest() {
-                bool ok = false;
+                bool sendReply = false;
                 uart::readBuffer([&](const auto& data){
                     if (data[1] == mPhysicalID0) {
-                        // IO::outl<debug>("# SPort req 0");
-                        ok = true;
+                        if (data.size() == 2) {
+                            sendReply = true;
+                            mActualValueID = mValueID0;
+                            mActualValue = mValue0;
+                        }
+                        else {
+                            CheckSum csum;
+                            for(uint8_t i = 2; i < 9; ++i) {
+                                csum += data[i];
+                            }
+                            if (csum.value() == data[9]) {
+                                callback::command(&data[2]);
+                            }
+                            mActualValueID = 0;
+                        }
                     }
                     else if (data[1] == mPhysicalID1) {
-                        CheckSum csum;
-                        for(uint8_t i = 2; i < 9; ++i) {
-                            csum += data[i];
-                        }
-                        if (csum.value() == data[9]) {
-                            // IO::outl<debug>("# SPort req 1: ", data[2], ", ", data[3], ", ", data[4]);
-                            callback::command(&data[2]);
+                        if (data.size() == 2) {
+                            sendReply = true;
+                            mActualValueID = mValueID1;
+                            mActualValue = mValue1;
                         }
                     }
                 });
-                return ok;
+                return sendReply;
             }
-
             inline static void stuffResponse(const uint8_t b, auto& data, uint8_t& i, CheckSum& cs) {
                 cs += b;
                 if (b == 0x7e) {
@@ -246,37 +265,41 @@ namespace RC::Protokoll::SPort::V2 {
                     data[i++] = b;
                 }
             }
-
             static inline void sendReply() {
-                uart::template rxEnable<false>();
-                uart::fillSendBuffer([&](auto& data){
-                    CheckSum csum;
-                    uint8_t i = 0;
-                    stuffResponse(0x10, data, i, csum);
-                    stuffResponse(mValueID0 & 0xff, data, i, csum);
-                    stuffResponse((mValueID0 >> 8) & 0xff, data, i, csum);
-                    stuffResponse((mValue0 >> 0) & 0xff, data, i, csum);
-                    stuffResponse((mValue0 >> 8) & 0xff, data, i, csum);
-                    stuffResponse((mValue0 >> 16) & 0xff, data, i, csum);
-                    stuffResponse((mValue0 >> 24) & 0xff, data, i, csum);
-                    stuffResponse((mValue0 >> 24) & 0xff, data, i, csum);
-                    data[i++] = csum.value();
-                    return i;
-                });
+                if (mActualValueID > 0) {
+                    uart::template rxEnable<false>();
+                    uart::fillSendBuffer([&](auto& data){
+                        CheckSum csum;
+                        uint8_t i = 0;
+                        stuffResponse(0x10, data, i, csum);
+                        stuffResponse((mActualValueID & 0xff), data, i, csum);
+                        stuffResponse((mActualValueID >> 8) & 0xff, data, i, csum);
+                        stuffResponse((mActualValue >> 0) & 0xff, data, i, csum);
+                        stuffResponse((mActualValue >> 8) & 0xff, data, i, csum);
+                        stuffResponse((mActualValue >> 16) & 0xff, data, i, csum);
+                        stuffResponse((mActualValue >> 24) & 0xff, data, i, csum);
+                        stuffResponse((mActualValue >> 24) & 0xff, data, i, csum);
+                        data[i++] = csum.value();
+                        return i;
+                    });
+                }
             }
-
             static inline bool validityCheck(const volatile uint8_t* const data, const uint16_t size) {
-                // IO::outl<debug>("# val chk ", size, " d0:", data[0], " d1:", data[1]);
                 return (size >= 2) && (data[0] == 0x7e);
             }
+            static inline uint16_t mActualValueID = 0;
+            static inline uint32_t mActualValue = 0;
+
             static inline bool mActive = false;
             static inline etl::Event<Event> mEvent;
             static inline State mState{State::Init};
             static inline External::Tick<systemTimer> mStateTick;
-            static inline uint8_t mPhysicalID0 = (uint8_t)RC::Protokoll::SPort::V2::sensor_ids[0];
-            static inline uint8_t mPhysicalID1 = (uint8_t)RC::Protokoll::SPort::V2::sensor_ids[27];
+            static inline uint8_t mPhysicalID0 = RC::Protokoll::SPort::V2::getDataId(0x00);
+            static inline uint8_t mPhysicalID1 = RC::Protokoll::SPort::V2::getDataId(0x01);
             static inline uint16_t mValueID0 = (uint16_t)RC::Protokoll::SPort::V2::ValueId::DIY;
+            static inline uint16_t mValueID1 = (uint16_t)RC::Protokoll::SPort::V2::ValueId::DIY2;
             static inline uint32_t mValue0 = 1234;
+            static inline uint32_t mValue1 = 2345;
         };
     }
 }

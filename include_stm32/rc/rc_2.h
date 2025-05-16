@@ -686,6 +686,16 @@ namespace RC {
                     DIY     = 0x5100, // 255: DIY (State Info)
                     DIY2    = 0x5200, // 255: DIY (State Info)
                 };
+                static inline uint8_t bit(const uint8_t x, const uint8_t index) {
+                    return (((x) >> index) & 0x01);
+                }
+                static inline uint8_t getDataId(const uint8_t physicalId) {
+                    uint8_t result = physicalId;
+                    result += (bit(physicalId, 0) ^ bit(physicalId, 1) ^ bit(physicalId, 2)) << 5;
+                    result += (bit(physicalId, 2) ^ bit(physicalId, 3) ^ bit(physicalId, 4)) << 6;
+                    result += (bit(physicalId, 0) ^ bit(physicalId, 2) ^ bit(physicalId, 4)) << 7;
+                    return result;
+                }
             }
         }
     }

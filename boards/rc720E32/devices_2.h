@@ -496,6 +496,7 @@ struct Devices<SW01, Config, MCU> {
         using esc32ascii_2 = Devices::esc32ascii_2;
         using mpx1 = Devices::mpx1;
         using sumdv3 = Devices::sumdv3_out;
+        using sport_aux = Devices::sport_aux;
         using messageBuffer = crsfBuffer;
         using tp = void;
     };

@@ -41,6 +41,8 @@ struct CrsfCallback {
     using mpx1 = Config::mpx1;
     using sumdv3 = Config::sumdv3;
 
+    using sport_aux = Config::sport_aux;
+
     using messageBuffer = Config::messageBuffer;
 
     using src = Config::src;
@@ -492,6 +494,13 @@ private:
 #endif
         addNode(p, Param_t{parent, PType::U8,  "Switch Address", nullptr, &eeprom.switchAddress, 0, 255, [](const store_t){return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Contiguous Switch Addresses", nullptr, &eeprom.switchAddressContiguous, 0, 1, [](const store_t){return true;}});
+
+        parent = addParent(p, Param_t{0, PType::Folder, "S.Port"});
+        addNode(p, Param_t{parent, PType::U8,  "Physical-ID", nullptr, &eeprom.sport_physicalId_switch, 0, 0x1b, [](const store_t a){sport_aux::setPhysID0(a); return true;}});
+        addNode(p, Param_t{parent, PType::U8,  "App-ID Switch", nullptr, &eeprom.sport_appId_switch, 0x00, 0xff, [](const store_t a){sport_aux::setAppID0(a); return true;}});
+        addNode(p, Param_t{parent, PType::U8,  "Physical-ID", nullptr, &eeprom.sport_physicalId_telemetry, 0, 0x1b, [](const store_t a){sport_aux::setPhysID1(a); return true;}});
+        addNode(p, Param_t{parent, PType::U8,  "App-ID Telemetry", nullptr, &eeprom.sport_appId_telemetry, 0x00, 0xff, [](const store_t a){sport_aux::setAppID1(a); return true;}});
+
 
         return p;
     }();

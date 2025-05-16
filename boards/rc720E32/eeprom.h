@@ -23,6 +23,8 @@
 #include <cstdint>
 #include <array>
 
+#include "rc/rc_2.h"
+
 struct EEProm {
     using eeprom_value_t = uint16_t;
 
@@ -108,12 +110,11 @@ struct EEProm {
 #endif
     eeprom_value_t crsf_fd_aux_mode = 2;
 
-    eeprom_value_t sport_physicalID_telemetry = 0;
-    eeprom_value_t sport_physicalID_switch = 0;
+    eeprom_value_t sport_physicalId_switch = 0;
+    eeprom_value_t sport_physicalId_telemetry = 1;
 
-    eeprom_value_t sport_appId_telemetry = 0;
-    eeprom_value_t sport_appId_switch = 0;
-
+    eeprom_value_t sport_appId_switch = ((uint16_t)RC::Protokoll::SPort::V2::ValueId::DIY) >> 8;
+    eeprom_value_t sport_appId_telemetry = ((uint16_t)RC::Protokoll::SPort::V2::ValueId::DIY2) >> 8;
 
 #ifdef TEST_EEPROM
     std::array<eeprom_value_t, 2> out_mode_srv{3, 2};
