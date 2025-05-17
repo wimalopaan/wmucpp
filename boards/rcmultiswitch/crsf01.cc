@@ -24,6 +24,7 @@
 #define DEFAULT_ADDRESS 0 // must match value in widget
 #define BAUDRATE 420'000
 
+#define SBUS_IBUS_NO_WARN
 #include "board.h"
 #include "crsf.h"
 #include "crsf_cb.h"

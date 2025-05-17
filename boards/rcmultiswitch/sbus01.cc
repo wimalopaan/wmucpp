@@ -30,6 +30,7 @@
 
 // #define DEBUG_OUTPUT
 
+#define SBUS_IBUS_NO_WARN
 #include "board.h"
 #include "leds.h"
 #include "sbus_cb.h"
