@@ -25,11 +25,12 @@
 
 #define DEFAULT_ADDRESS 0 // values: 0 ... 3 (must match value in widget)
 
-// #define SBUS_INVERT // to receive SBus as "normal" uninverted serial data
+// #define SBUS_INVERT // to receive SBus as "normal" uninverted serial data (invert SBUS means: invert an already inverted signal -> normal signal)
 
+// use one(!) of the following options exclusively
 #define USE_ELRS // SBus input only (see above)
-// #define USE_AFHDS2A // SBus input only (see above)
-// #define USE_ACCST // SBus input only (see above)
+// #define USE_AFHDS2A // SBus input only (see above) (using 4in1 MPM RF-module)
+// #define USE_ACCST // SBus input only (see above) (using 4in1 MPM RF-module)
 
 // #define DEBUG_OUTPUT // debug output via same uart as receiving data (same baudrate)
 

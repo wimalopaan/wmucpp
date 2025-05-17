@@ -189,19 +189,19 @@ namespace etl {
         value_type mValue{};
     };
 
-    inline /*constexpr*/ consteval FixedPoint<int16_t, 4> operator"" _fp(const long double v) {
+    inline /*constexpr*/ consteval FixedPoint<int16_t, 4> operator""_fp(const long double v) {
         return FixedPoint<int16_t, 4>{(double)v};
     }
-    inline /*constexpr*/ consteval FixedPoint<int16_t, 4> operator"" _Qs11_4(const long double v) {
+    inline /*constexpr*/ consteval FixedPoint<int16_t, 4> operator""_Qs11_4(const long double v) {
         return FixedPoint<int16_t, 4>{(double)v};
     }
-    inline /*constexpr*/ consteval FixedPoint<uint16_t, 8> operator"" _Qu8_8(const long double v) {
+    inline /*constexpr*/ consteval FixedPoint<uint16_t, 8> operator""_Qu8_8(const long double v) {
         return FixedPoint<uint16_t, 8>{(double)v};
     }
-    inline /*constexpr*/ consteval FixedPoint<int16_t, 12> operator"" _Qs3_12(const long double v) {
+    inline /*constexpr*/ consteval FixedPoint<int16_t, 12> operator""_Qs3_12(const long double v) {
         return FixedPoint<int16_t, 12>{(double)v};
     }
-    inline /*constexpr*/ consteval FixedPoint<uint8_t, 7> operator"" _Qu1_7(const long double v) {
+    inline /*constexpr*/ consteval FixedPoint<uint8_t, 7> operator""_Qu1_7(const long double v) {
         return FixedPoint<uint8_t, 7>{(double)v};
     }
 

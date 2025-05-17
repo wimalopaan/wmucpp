@@ -253,11 +253,11 @@ namespace External {
             using hertz = External::Units::hertz;
             using megahertz = External::Units::megahertz;
             
-            constexpr hertz operator"" _Hz(unsigned long long v) {
+            constexpr hertz operator""_Hz(unsigned long long v) {
                 return hertz{static_cast<uint32_t>(v)};
             }
             
-            constexpr megahertz operator"" _MHz(unsigned long long v) {
+            constexpr megahertz operator""_MHz(unsigned long long v) {
                 return megahertz{static_cast<uint8_t>(v)};
             }
             

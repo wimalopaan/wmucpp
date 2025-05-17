@@ -27,15 +27,15 @@ namespace std {
             
             using namespace std::chrono;
             
-            constexpr milliseconds operator"" _ms(unsigned long long v) {
+            constexpr milliseconds operator""_ms(unsigned long long v) {
                 return milliseconds{static_cast<uint16_t>(v)};
             }
             
-            constexpr microseconds operator"" _us(unsigned long long v) {
+            constexpr microseconds operator""_us(unsigned long long v) {
                 return microseconds{static_cast<uint16_t>(v)};
             }
             
-            constexpr seconds operator"" _s(unsigned long long v) {
+            constexpr seconds operator""_s(unsigned long long v) {
                 return seconds{static_cast<uint16_t>(v)};
             }
             

@@ -16,13 +16,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// This file is for the old multiswitch PCBs
+// The pinout of the outputs is defined in "board.h"
+
 #define NDEBUG
 
 #define DEFAULT_ADDRESS 0 // (values: 0 ... 3) must match address value in edgetx widget config
 
+// use one(!) of the following options exclusively
 #define USE_ELRS // sbus input over ELRS rc-link
-// #define USE_AFHDS2A // sbus input over AFHDS2A rc-link
-// #define USE_ACCST // sbus input over ACCST rc-link
+// #define USE_AFHDS2A // sbus input over AFHDS2A rc-link (using 4in1 MPM RF-module)
+// #define USE_ACCST // sbus input over ACCST rc-link (using 4in1 MPM RF-module)
 
 // #define DEBUG_OUTPUT
 

@@ -42,12 +42,12 @@ subdirs =
 #targets += test00.elf test00.hex test00.S
 #targets += test01.elf test01.hex
 #targets += test10.elf test10.hex
-targets += multi8d.hex
+#targets += multi8d.hex
 #targets += multi8dsbus.hex # not needed anymore
-targets += multi8mk4.hex
-targets += multi8hott.hex
-targets += multi8man.hex
-targets += auto8d.hex
+#targets += multi8mk4.hex
+#targets += multi8hott.hex
+#targets += multi8man.hex
+#targets += auto8d.hex
 targets += crsf01.hex
 targets += sbus01.hex
 

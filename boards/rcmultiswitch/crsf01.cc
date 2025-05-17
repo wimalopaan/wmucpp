@@ -16,6 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// This file is for the old multiswitch PCBs
+// The pinout of the outputs is defined in "board.h"
+
 #define NDEBUG
 
 #define DEFAULT_ADDRESS 0 // must match value in widget

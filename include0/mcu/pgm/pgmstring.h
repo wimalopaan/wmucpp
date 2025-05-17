@@ -36,7 +36,7 @@ namespace AVR::Pgm {
 }
 
 template<typename C, C... CC>
-consteval AVR::Pgm::String<C, CC...> operator"" _pgm();
+consteval AVR::Pgm::String<C, CC...> operator""_pgm();
 
 namespace AVR::Pgm {
     class StringView final {
@@ -130,7 +130,7 @@ namespace AVR::Pgm {
 }
 
 template<typename C, C... CC>
-consteval AVR::Pgm::String<C, CC...> operator"" _pgm(){
+consteval AVR::Pgm::String<C, CC...> operator""_pgm(){
     return AVR::Pgm::String<C, CC...>{};
 }
 
