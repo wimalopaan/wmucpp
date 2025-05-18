@@ -171,7 +171,7 @@ namespace External::EdgeTx {
             mSwitches = sw;
         }
         static inline void setSw(const uint8_t sw, const bool on) {
-            IO::outl<debug>("# set2: ", sw, " ", (uint8_t)on);
+            // IO::outl<debug>("# set2: ", sw, " ", (uint8_t)on);
             const uint64_t mask = (uint64_t{1} << sw);
             mSwitches = (mSwitches & ~mask) | (on ? mask : 0);
         }

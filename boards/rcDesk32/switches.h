@@ -78,14 +78,21 @@ namespace External {
             });
             (++mStateTick).on(switchesTicks, [] static {
                                   startRead([](const uint8_t index, const uint8_t newState) static {
-                                      IO::outl<debug>("# Switch1 ", index, " ", newState);
+                                      IO::outl<debug>("# Switch ", index, " ", newState);
                                       set(index, newState);
                                   });
 
                               });
         }
-        private:
+        static inline void activate(const Mcu::Stm::I2C::Address a) {
+            Meta::visit<pcas>([&]<typename P>(Meta::Wrapper<P>) {
+                                  if (P::address() == a) {
+                                      P::activate(true);
+                                  }
+            });
+        }
 
+        private:
         static inline void set(const uint8_t index, const uint8_t state) {
             if (index < 32) {
                 const uint8_t wIndex1 = 2 * index;

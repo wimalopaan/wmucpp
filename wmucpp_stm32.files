@@ -602,6 +602,7 @@ include_stm32/motor/bldc.h
 include_stm32/motor/foc.h
 include_stm32/opamp.h
 include_stm32/output.h
+include_stm32/pcal6408.h
 include_stm32/pwm.h
 include_stm32/pwm_dma.h
 include_stm32/ranged.h

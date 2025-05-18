@@ -41,7 +41,6 @@ namespace Mcu::Stm {
             constexpr bool operator==(const Address& rhs) const {
                 return value == rhs.value;
             }
-            
             using value_type = uint8_t;
             value_type value{};
         };
@@ -102,9 +101,14 @@ namespace Mcu::Stm {
                     else {
                         static_assert(false);
                     }
+
                     // mcuI2c->TIMINGR  = 0x10B17DB5; // CubeMx 100KHz@64MHz
-                    mcuI2c->TIMINGR  = 0x20705378; // CubeMx 100KHz@64MHz + Anafilter + Digfilter 0b0001
-                    mcuI2c->CR1 |= I2C_CR1_PE | I2C_CR1_ANFOFF | (0b0001 << I2C_CR1_DNF_Pos);
+
+                    // mcuI2c->TIMINGR  = 0x20705378; // CubeMx 100KHz@64MHz + Anafilter + Digfilter 0b0001
+                    // mcuI2c->CR1 |= I2C_CR1_PE | (0b0001 << I2C_CR1_DNF_Pos);
+
+                    mcuI2c->TIMINGR  = 0x10b075ae; // CubeMx 100KHz@64MHz + Anafilter + Digfilter 0b1111
+                    mcuI2c->CR1 |= I2C_CR1_PE | (0b1111 << I2C_CR1_DNF_Pos);
 
                     static constexpr uint8_t sdaaf = Mcu::Stm::AlternateFunctions::mapper_v<sda_pin, Master, Mcu::Stm::AlternateFunctions::SDA>;
                     sda_pin::afunction(sdaaf);
@@ -117,7 +121,8 @@ namespace Mcu::Stm {
                                              WriteAdress = 10, WriteWaitAdress, WriteData, WriteWaitData, WriteWaitComplete, WriteError,
                                              ScanStart = 20, ScanWaitBusy, ScanWaitAck, ScanNext, ScanEnd,
                                              ReadWriteAdress = 30, ReadAdressWait, ReadWriteCommand, ReadWriteComplete,
-                                             ReadWriteAdress2 = 40, ReadAdressWait2, ReadDataWait, ReadData, ReadDataComplete, ReadError
+                                             ReadWriteAdress2 = 40, ReadAdressWait2, ReadDataWait, ReadData, ReadDataComplete, ReadError,
+                                             ReEnable = 50
                                            };
 
                 static inline void periodic() {
@@ -137,33 +142,39 @@ namespace Mcu::Stm {
                         mState = State::ReadAdressWait;
                         break;
                     case State::ReadAdressWait:
-                        if (mcuI2c->ISR & I2C_ISR_TXIS) {
+                    {
+                        const uint32_t isr = mcuI2c->ISR;
+                        if (isr & I2C_ISR_TXIS) {
                             mState = State::ReadWriteCommand;
                         }
-                        if (mcuI2c->ISR & I2C_ISR_STOPF) {
+                        if (isr & I2C_ISR_STOPF) {
                             mState = State::ReadWriteCommand;
                         }
-                        if (mcuI2c->ISR & I2C_ISR_NACKF) {
+                        if (isr & I2C_ISR_NACKF) {
                             mState = State::ReadError;
                         }
+                    }
                         break;
                     case State::ReadWriteCommand:
                         mcuI2c->TXDR = (uint32_t)mData[0];
                         mState = State::ReadWriteComplete;
                         break;
                     case State::ReadWriteComplete:
-                        if (mcuI2c->ISR & I2C_ISR_TXIS) {
+                    {
+                        const uint32_t isr = mcuI2c->ISR;
+                        if (isr & I2C_ISR_TXIS) {
                             mState = State::ReadWriteAdress2;
                         }
-                        if (mcuI2c->ISR & I2C_ISR_TC) {
+                        if (isr & I2C_ISR_TC) {
                             mState = State::ReadWriteAdress2;
                         }
-                        if (mcuI2c->ISR & I2C_ISR_STOPF) {
+                        if (isr & I2C_ISR_STOPF) {
                             mState = State::ReadWriteAdress2;
                         }
-                        if (mcuI2c->ISR & I2C_ISR_NACKF) {
+                        if (isr & I2C_ISR_NACKF) {
                             mState = State::ReadError;
                         }
+                    }
                         break;
                     case State::ReadWriteAdress2:
                         mcuI2c->CR2 = [] {
@@ -179,15 +190,18 @@ namespace Mcu::Stm {
                         mIndex = 0;
                         break;
                     case State::ReadAdressWait2:
-                        if (mcuI2c->ISR & I2C_ISR_TXIS) {
+                    {
+                        const uint32_t isr = mcuI2c->ISR;
+                        if (isr & I2C_ISR_TXIS) {
                             mState = State::ReadDataWait;
                         }
-                        if (mcuI2c->ISR & I2C_ISR_NACKF) {
+                        if (isr & I2C_ISR_NACKF) {
                             mState = State::ReadError;
                         }
-                        if (mcuI2c->ISR & I2C_ISR_RXNE) {
+                        if (isr & I2C_ISR_RXNE) {
                             mState = State::ReadData;
                         }
+                    }
                         break;
                     case State::ReadDataWait:
                         if (mcuI2c->ISR & I2C_ISR_RXNE) {
@@ -274,7 +288,6 @@ namespace Mcu::Stm {
                     case State::WriteWaitAdress:
                     {
                         // IO::outl<Debug>("I2C WWA");
-                        mIsr = mcuI2c->ISR;
                         const uint32_t isr = mcuI2c->ISR;
                         if (isr & I2C_ISR_TXIS) {
                             mState = State::WriteData;
@@ -298,15 +311,18 @@ namespace Mcu::Stm {
                         }
                         break;
                     case State::WriteWaitData:
-                        if (mcuI2c->ISR & I2C_ISR_TXIS) {
+                    {
+                        const uint32_t isr = mcuI2c->ISR;
+                        if (isr & I2C_ISR_TXIS) {
                             mState = State::WriteData;
                         }
-                        if (mcuI2c->ISR & I2C_ISR_STOPF) {
+                        if (isr & I2C_ISR_STOPF) {
                             mState = State::WriteData;
                         }
-                        if (mcuI2c->ISR & I2C_ISR_NACKF) {
+                        if (isr & I2C_ISR_NACKF) {
                             mState = State::WriteError;
                         }
+                    }
                         break;
                     case State::WriteWaitComplete:
                         if (mcuI2c->ISR & I2C_ISR_TC) {
@@ -319,6 +335,9 @@ namespace Mcu::Stm {
                     case State::WriteError:
                         ++mErrors;
                         mcuI2c->ICR = -1;
+                        mState = State::ReEnable;
+                        break;
+                    case State::ReEnable:
                         mState = State::Idle;
                         break;
                     }
@@ -415,7 +434,10 @@ namespace Mcu::Stm {
                 static inline uint16_t errors() {
                     return mErrors;
                 }
-                // private:
+                static inline void clearErrors() {
+                    mErrors = 0;
+                }
+                private:
                 static inline void setPresent(const Address a) {
                     const uint8_t index = a.value / 8;
                     const uint8_t bit = a.value % 8;
@@ -428,8 +450,6 @@ namespace Mcu::Stm {
                 }
                 static inline uint8_t mScanSlaveAddress{0};
                 static inline void(*mCallBack)(Address) = nullptr;
-
-                static inline uint32_t mIsr;
 
                 static inline uint8_t mAddress{0};
                 static inline uint8_t mCount{0};

@@ -40,25 +40,35 @@ namespace External {
     using namespace etl::literals;
 
     namespace V2 {
-        template<typename Device, Mcu::Stm::I2C::Address address, typename systemTimer>
+        template<typename Device, Mcu::Stm::I2C::Address Adr, typename systemTimer, typename Debug = void>
         struct PCAL6408 {
             using dev = Device;
+            using debug = Debug;
             enum class State : uint8_t {Init, Setup, SetupWait, Idle,
                                         WritePullupOn, WritePullupOnWait, WritePulldownOn, WritePulldownOnWait,
                                         StartRead1, StartRead2,
-                                        Read1, Read2};
+                                        Read1, Read2,
+                                        Stop};
 
             enum class Event : uint8_t {None, Start};
 
             static inline constexpr External::Tick<systemTimer> initTicks{500ms};
+            static inline constexpr External::Tick<systemTimer> waitTicks{5ms};
 
             static inline constexpr std::byte pupdEnableReg{0x43};
             static inline constexpr std::byte pupdSelectReg{0x44};
             static inline constexpr std::byte inputReg{0x00};
 
             static inline void init() {
+                mActive = false;
             }
             static inline void periodic() {
+            }
+            static inline Mcu::Stm::I2C::Address address() {
+                return Adr;
+            }
+            static inline void activate(const bool on) {
+                mActive = on;
             }
             static inline void startRead() {
                 mEvent = Event::Start;
@@ -69,12 +79,15 @@ namespace External {
                 switch(mState) {
                 case State::Init:
                     mStateTick.on(initTicks, []{
+                        dev::clearErrors();
                         mState = State::Setup;
                     });
                     break;
+                case State::Stop:
+                    break;
                 case State::Setup:
                     if (dev::isIdle()) {
-                        dev::write(address, {pupdEnableReg, std::byte{0xff}});
+                        dev::write(Adr, {pupdEnableReg, std::byte{0xff}});
                         mState = State::SetupWait;
                     }
                     break;
@@ -84,14 +97,14 @@ namespace External {
                     }
                     break;
                 case State::Idle:
-                    if (dev::isIdle()) {
+                    if (mActive && dev::isIdle()) {
                         mEvent.on(Event::Start, []{
                             mState = State::WritePullupOn;
                         });
                     }
                     break;
                 case State::WritePullupOn:
-                    dev::write(address, {pupdSelectReg, std::byte{0xff}});
+                    dev::write(Adr, {pupdSelectReg, std::byte{0xff}});
                     mState = State::WritePullupOnWait;
                     break;
                 case State::WritePullupOnWait:
@@ -106,7 +119,7 @@ namespace External {
                     }
                     break;
                 case State::StartRead1:
-                    dev::read(address, inputReg, 1);
+                    dev::read(Adr, inputReg, 1);
                     mState = State::Read1;
                     break;
                 case State::Read1:
@@ -114,9 +127,12 @@ namespace External {
                         mValuePU = dev::readData()[0];
                         mState = State::WritePulldownOn;
                     }
+                    mStateTick.on(waitTicks, []{
+                        mState = State::Idle;
+                    });
                     break;
                 case State::WritePulldownOn:
-                    dev::write(address, {pupdSelectReg, std::byte{0x00}});
+                    dev::write(Adr, {pupdSelectReg, std::byte{0x00}});
                     mState = State::WritePulldownOnWait;
                     break;
                 case State::WritePulldownOnWait:
@@ -131,7 +147,7 @@ namespace External {
                     }
                     break;
                 case State::StartRead2:
-                    dev::read(address, inputReg, 1);
+                    dev::read(Adr, inputReg, 1);
                     mState = State::Read2;
                     break;
                 case State::Read2:
@@ -139,9 +155,54 @@ namespace External {
                         mValuePD = dev::readData()[0];
                         mState = State::Idle;
                     }
+                    mStateTick.on(waitTicks, []{
+                        mState = State::Idle;
+                    });
                     break;
                 }
                 if (oldState != mState) {
+                    mStateTick.reset();
+                    switch(mState) {
+                    case State::Init:
+                        IO::outl<debug>("# Pca Init ", Adr.value);
+                        break;
+                    case State::Stop:
+                        IO::outl<debug>("# Pca Stop ", Adr.value);
+                        break;
+                    case State::Setup:
+                        IO::outl<debug>("# Pca Setup ", Adr.value);
+                        break;
+                    case State::SetupWait:
+                        IO::outl<debug>("# Pca SuWait ", Adr.value);
+                        break;
+                    case State::Idle:
+                        IO::outl<debug>("# Pca Idle ", Adr.value);
+                        break;
+                    case State::WritePullupOn:
+                        IO::outl<debug>("# Pca WPup ", Adr.value);
+                        break;
+                    case State::WritePullupOnWait:
+                        IO::outl<debug>("# Pca WPupW ", Adr.value);
+                        break;
+                    case State::StartRead1:
+                        IO::outl<debug>("# Pca SR1 ", Adr.value);
+                        break;
+                    case State::Read1:
+                        IO::outl<debug>("# Pca R1 ", Adr.value);
+                        break;
+                    case State::WritePulldownOn:
+                        IO::outl<debug>("# Pca WPdn ", Adr.value);
+                        break;
+                    case State::WritePulldownOnWait:
+                        IO::outl<debug>("# Pca WPdnW ", Adr.value);
+                        break;
+                    case State::StartRead2:
+                        IO::outl<debug>("# Pca SR2 ", Adr.value);
+                        break;
+                    case State::Read2:
+                        IO::outl<debug>("# Pca R2 ", Adr.value);
+                        break;
+                    }
                 }
             }
             static inline bool isIdle() {
@@ -165,6 +226,7 @@ namespace External {
                 }
             }
             private:
+            static inline bool mActive = false;
             static inline etl::Event<Event> mEvent;
             static inline std::byte mValuePU{};
             static inline std::byte mValuePD{};
@@ -190,8 +252,12 @@ namespace External {
         static inline constexpr std::byte inputReg{0x00};
 
         static inline void init() {
+            mActive = false;
         }
         static inline void periodic() {
+        }
+        static inline void activate(const bool on) {
+            mActive = on;
         }
         static inline void startRead() {
             mEvent = Event::Start;
@@ -217,7 +283,7 @@ namespace External {
                 }
                 break;
             case State::Idle:
-                if (dev::isIdle()) {
+                if (mActive && dev::isIdle()) {
                     mEvent.on(Event::Start, []{
                         mState = State::WritePullupOn;
                     });
@@ -298,6 +364,7 @@ namespace External {
             }
         }
         private:
+        static inline bool mActive = false;
         static inline etl::Event<Event> mEvent;
         static inline std::byte mValuePU{};
         static inline std::byte mValuePD{};

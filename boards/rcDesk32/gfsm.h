@@ -138,8 +138,8 @@ struct GFSM {
             mStateTick.on(debugTicks, []{
                 bt::setLed(99, true); // connection led
                 // IO::outl<debug>("# i2c state:", (uint8_t)i2c1::mState, " ", i2c1::mIsr, " ", i2c1::errors());
-                IO::outl<debug>("# adc v0:", adc::values()[0], " v1:", adc::values()[1], " v2:", adc::values()[2], " v3:", adc::values()[3], " v4:", adc::values()[4], " v5:", adc::values()[5]);
-                IO::outl<debug>("# enc1:", enc1::value(), " enc2:", enc2::value());
+                // IO::outl<debug>("# adc v0:", adc::values()[0], " v1:", adc::values()[1], " v2:", adc::values()[2], " v3:", adc::values()[3], " v4:", adc::values()[4], " v5:", adc::values()[5]);
+                // IO::outl<debug>("# enc1:", enc1::value(), " enc2:", enc2::value());
                 // IO::outl<debug>("# sm1 v0:", sm1::value(0), " v1:", sm1::value(1), " v2:", sm1::value(2), " v3:", sm1::value(3), " v4:", sm1::value(4), " v5:", sm1::value(5));
                 // IO::outl<debug>("# sm1 v0:", sm2::value(0), " v1:", sm2::value(1), " v2:", sm2::value(2), " v3:", sm2::value(3), " v4:", sm2::value(4), " v5:", sm2::value(5));
             });
@@ -160,7 +160,8 @@ struct GFSM {
             case State::I2CScan:
                 IO::outl<debug>("# I2C Scan");
                 if (i2c1::scan([](const Mcu::Stm::I2C::Address a){
-                              IO::outl<debug>("I2C1: ", a.value);
+                               IO::outl<debug>("# I2C1: ", a.value);
+                               switches1::activate(a);
                             })) {
                     IO::outl<debug>("# i2c1 scan start");
                 }
@@ -168,7 +169,8 @@ struct GFSM {
                     IO::outl<debug>("# i2c1 scan failed");
                 }
                 if (i2c2::scan([](const Mcu::Stm::I2C::Address a){
-                              IO::outl<debug>("I2C2: ", a.value);
+                               IO::outl<debug>("# I2C2: ", a.value);
+                               switches2::activate(a);
                             })) {
                     IO::outl<debug>("# i2c2 scan start");
                 }

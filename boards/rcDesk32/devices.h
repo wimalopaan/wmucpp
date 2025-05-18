@@ -631,10 +631,12 @@ struct Devices<Desk01, Config, MCU> {
 
     static inline constexpr Mcu::Stm::I2C::Address pcaAdr0{0x20};
     static inline constexpr Mcu::Stm::I2C::Address pcaAdr1{0x21};
-    using pca0 = External::V2::PCAL6408<i2c1, pcaAdr1, systemTimer>;
-    using pca1 = External::V2::PCAL6408<i2c1, pcaAdr0, systemTimer>;
-    using pca2 = External::V2::PCAL6408<i2c2, pcaAdr1, systemTimer>;
-    using pca3 = External::V2::PCAL6408<i2c2, pcaAdr0, systemTimer>;
+
+    using pca_debug = void;
+    using pca0 = External::V2::PCAL6408<i2c1, pcaAdr0, systemTimer, pca_debug >;
+    using pca1 = External::V2::PCAL6408<i2c1, pcaAdr1, systemTimer, pca_debug >;
+    using pca2 = External::V2::PCAL6408<i2c2, pcaAdr0, systemTimer, pca_debug >;
+    using pca3 = External::V2::PCAL6408<i2c2, pcaAdr1, systemTimer, pca_debug >;
 
     struct Sw1Config {
         using timer = systemTimer;
