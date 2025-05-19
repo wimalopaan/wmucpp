@@ -171,11 +171,30 @@ struct CrsfCallback {
     static inline void serialize(const uint8_t index, auto& buffer, const RC::Protokoll::Crsf::V4::Lua::CmdStep step = RC::Protokoll::Crsf::V4::Lua::CmdStep::Idle) {
         params[index].serialize(buffer, params, step, index);
     }
+    static inline void setI2CDev(const uint8_t bus, const uint8_t dev, const uint8_t adr) {
+        if (bus < mI2CDevs.size()) {
+            if (dev < mI2CDevs[bus].size()) {
+                auto r = std::to_chars(std::begin(mI2CDevs[bus][dev]), std::end(mI2CDevs[bus][dev]), adr);
+                *r.ptr = '\0';
+            }
+        }
+    }
 private:
     static inline name_t mName = []{
         name_t name{};
         updateName(name);
         return name;
+    }();
+
+    using i2c_strings_t = std::array<std::array<std::array<char, 16>, 2>, 2>;
+    static inline auto mI2CDevs = []{
+        i2c_strings_t s;
+        for(auto& b : s) {
+            for(auto& d : b) {
+                strcpy(&d[0], "---");
+            }
+        }
+        return s;
     }();
 
     static inline bool mEepromMode = false;
@@ -200,7 +219,7 @@ private:
     static inline void addNode(auto& c, const RC::Protokoll::Crsf::V4::Parameter<T>& p) {
         c.push_back(p);
     }
-    using params_t = etl::FixedVector<Param_t, 128>;
+    using params_t = etl::FixedVector<Param_t, 60>;
     static inline params_t params = [] {
         params_t p;
         addNode(p, Param_t{0, PType::Folder, "root"});
@@ -244,7 +263,10 @@ private:
         addNode(p, Param_t{parent, PType::U8,  "Count", nullptr, &eeprom.crsfInMap.count, 0, 16, [](const uint8_t){return true;}});
 
         parent = addParent(p, Param_t{0, PType::Folder, "I2C"});
-        addNode(p, Param_t{parent, PType::Command, "I2C scan", "Scanning...", nullptr, 0, 0, [](const uint8_t){return false;}});
+        addNode(p, Param_t{parent, PType::Info, "Bus1", &mI2CDevs[0][0][0]});
+        addNode(p, Param_t{parent, PType::Info, "Bus1", &mI2CDevs[0][1][0]});
+        addNode(p, Param_t{parent, PType::Info, "Bus2", &mI2CDevs[1][0][0]});
+        addNode(p, Param_t{parent, PType::Info, "Bus2", &mI2CDevs[1][1][0]});
 
         parent = addParent(p, Param_t{0, PType::Folder, "Settings"});
         addNode(p, Param_t{parent, PType::Command, "Calibate", "Calibrate...", nullptr, 0, 0, [](const uint8_t){return false;}});

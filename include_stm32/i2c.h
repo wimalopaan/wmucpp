@@ -55,14 +55,11 @@ namespace Mcu::Stm {
                     )
             struct Master<N, Config, MCU> {
                 static inline /*constexpr */ I2C_TypeDef* const mcuI2c = reinterpret_cast<I2C_TypeDef*>(Mcu::Stm::Address<Mcu::Components::I2C<N>>::value);
-
                 static inline constexpr size_t size = Config::size;
-
                 using sda_pin = Config::sda_pin;
                 using scl_pin = Config::scl_pin;
-
                 using component_t = Mcu::Components::I2C<N>;
-
+                using debug = Config::debug;
     #ifdef STM32G4
                 static inline void init() {
                     if constexpr(N == 1) {
@@ -211,7 +208,6 @@ namespace Mcu::Stm {
                     case State::ReadData:
                         mData[mIndex++] = (std::byte)mcuI2c->RXDR;
                         if (mIndex == mCount) {
-                            // mcuI2c->CR2 |= I2C_CR2_STOP;
                             mState = State::ReadDataComplete;
                         }
                         else {
@@ -224,7 +220,7 @@ namespace Mcu::Stm {
                     case State::ReadError:
                         ++mErrors;
                         mcuI2c->ICR = -1;
-                        mState = State::Idle;
+                        mState = State::ReEnable;
                         break;
                     case State::ScanStart:
                         mcuI2c->CR2 = [] {
@@ -246,7 +242,6 @@ namespace Mcu::Stm {
                             mState = State::ScanNext;
                         }
                         else {
-                        // else if (mcuI2c->ISR & I2C_ISR_TXIS) {
                             if (mCallBack) {
                                 mCallBack(Address{mScanSlaveAddress});
                             }
@@ -271,7 +266,7 @@ namespace Mcu::Stm {
                         break;
                     case State::WriteAdress:
                     {
-                        // IO::outl<Debug>("I2C WA: ",  mAddress, " ", mCount);
+                        IO::outl<debug>("I2C WA: ",  mAddress, " ", mCount);
                         mcuI2c->ICR = -1;
                         mcuI2c->CR2 = [] {
                             uint32_t cr2 = 0;
@@ -287,7 +282,7 @@ namespace Mcu::Stm {
                         break;
                     case State::WriteWaitAdress:
                     {
-                        // IO::outl<Debug>("I2C WWA");
+                        IO::outl<debug>("I2C WWA");
                         const uint32_t isr = mcuI2c->ISR;
                         if (isr & I2C_ISR_TXIS) {
                             mState = State::WriteData;
@@ -301,7 +296,7 @@ namespace Mcu::Stm {
                     }
                         break;
                     case State::WriteData:
-                        // IO::outl<Debug>("I2C WD");
+                        IO::outl<debug>("I2C WD");
                         mcuI2c->TXDR = (uint32_t)mData[mIndex++];
                         if (mIndex == mCount) {
                             mState = State::WriteWaitComplete;
@@ -371,7 +366,7 @@ namespace Mcu::Stm {
                 }
 
                 inline static bool write(const I2C::Address adr, const std::pair<std::byte, std::byte>& data) {
-                    // IO::outl<Debug>("I2C write: ", adr.value);
+                    IO::outl<debug>("I2C write: ", adr.value);
                     if (mState != State::Idle) {
                         return false;
                     }
@@ -385,7 +380,7 @@ namespace Mcu::Stm {
                     return true;
                 }
                 inline static bool read(const I2C::Address adr, const std::byte command, const uint8_t length) {
-                    // IO::outl<Debug>("I2C read: ", adr.value);
+                    IO::outl<debug>("I2C read: ", adr.value);
                     if (mState != State::Idle) {
                         return false;
                     }
@@ -398,27 +393,25 @@ namespace Mcu::Stm {
                     return true;
                 }
                 inline static const auto& readData(){
-                    // IO::outl<Debug>("I2C readData");
+                    IO::outl<debug>("I2C readData");
                     mState = State::Idle;
                     return mData;
                 }
                 inline static bool readDataAvailable() {
-                    // IO::outl<Debug>("I2C readDataAvail");
+                    IO::outl<debug>("I2C readDataAvail");
                     return mState == State::ReadDataComplete;
                 }
 
                 template<auto L, typename V>
                 requires (L < size)
                 inline static bool write(const I2C::Address adr, const V offset, const std::array<V, L>& data) {
-                    // IO::outl<Debug>("I2C write array: ", adr.value);
+                    IO::outl<debug>("I2C write array: ", adr.value);
                     if (mState != State::Idle) {
                         return false;
                     }
                     mIndex = 0;
                     mErrors = 0;
                     mData[0] = (std::byte)offset;
-                    // const auto last = std::copy(std::begin(data), std::end(data), std::begin(mData) + 1);
-                    // std::copy(std::begin(data), std::end(data), std::begin(mData) + 1);
                     std::copy(std::begin(data), std::end(data), (V*)(&mData[0] + 1));
                     mCount = L + 1;
                     mAddress = adr.value;

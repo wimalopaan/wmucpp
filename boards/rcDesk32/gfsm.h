@@ -72,6 +72,7 @@ struct GFSM {
     using crsf_in = devs::crsf_in;
     using crsf_in_pa = crsf_in::input;
     using crsf_in_responder = crsf_in::output;
+    using crsf_cb = crsf_in::callback;
 
     enum class State : uint8_t {Undefined, Init, I2CScan, Run};
 
@@ -160,8 +161,10 @@ struct GFSM {
             case State::I2CScan:
                 IO::outl<debug>("# I2C Scan");
                 if (i2c1::scan([](const Mcu::Stm::I2C::Address a){
+                               static uint8_t n = 0;
                                IO::outl<debug>("# I2C1: ", a.value);
                                switches1::activate(a);
+                               crsf_cb::setI2CDev(0, n++, a.value);
                             })) {
                     IO::outl<debug>("# i2c1 scan start");
                 }
@@ -169,8 +172,10 @@ struct GFSM {
                     IO::outl<debug>("# i2c1 scan failed");
                 }
                 if (i2c2::scan([](const Mcu::Stm::I2C::Address a){
+                               static uint8_t n = 0;
                                IO::outl<debug>("# I2C2: ", a.value);
                                switches2::activate(a);
+                               crsf_cb::setI2CDev(1, n++, a.value);
                             })) {
                     IO::outl<debug>("# i2c2 scan start");
                 }

@@ -38,7 +38,10 @@ targets += startup_g0b1.o
 targets += system_g0.o
 
 #targets += pult_01.elf pult_01.bin
+
+# Hardware Version 1
 targets += desk_01.elf desk_01.bin
+# Hardware Version 2
 targets += desk_02.elf desk_02.bin
 
 -include ../../Makefile.arm.include

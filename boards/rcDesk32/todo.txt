@@ -1,5 +1,6 @@
 ToDo
 ============
+* analog calibration
 
 LUA Widget
 ============

@@ -55,8 +55,8 @@
 #include "eeprom.h"
 
 struct SW01;
-struct Desk01;
-struct Desk02;
+struct Desk01; // Hardware Version 1
+struct Desk02; // Hardware Version 2
 
 template<typename HW, typename Config, typename MCU = DefaultMcu>
 struct Devices;
@@ -241,7 +241,7 @@ struct Devices<Desk02, Config, MCU> {
         using sda_pin = i2c1_sda;
         using scl_pin = i2c1_scl;
         static inline constexpr size_t size = 16;
-        using debug = Devices::debug;
+        using debug = void;
     };
     using i2c1 = Mcu::Stm::I2C::V2::Master<1, I2C1Config>;
 
@@ -250,16 +250,18 @@ struct Devices<Desk02, Config, MCU> {
         using sda_pin = i2c2_sda;
         using scl_pin = i2c2_scl;
         static inline constexpr size_t size = 16;
-        using debug = Devices::debug;
+        using debug = void;
     };
     using i2c2 = Mcu::Stm::I2C::V2::Master<2, I2C2Config>;
 
     static inline constexpr Mcu::Stm::I2C::Address pcaAdr0{0x20};
     static inline constexpr Mcu::Stm::I2C::Address pcaAdr1{0x21};
-    using pca0 = External::V2::PCAL6408<i2c1, pcaAdr1, systemTimer>;
-    using pca1 = External::V2::PCAL6408<i2c1, pcaAdr0, systemTimer>;
-    using pca2 = External::V2::PCAL6408<i2c2, pcaAdr1, systemTimer>;
-    using pca3 = External::V2::PCAL6408<i2c2, pcaAdr0, systemTimer>;
+
+    using pca_debug = void;
+    using pca0 = External::V2::PCAL6408<i2c1, pcaAdr0, systemTimer, pca_debug>;
+    using pca1 = External::V2::PCAL6408<i2c1, pcaAdr1, systemTimer, pca_debug>;
+    using pca2 = External::V2::PCAL6408<i2c2, pcaAdr0, systemTimer, pca_debug>;
+    using pca3 = External::V2::PCAL6408<i2c2, pcaAdr1, systemTimer, pca_debug>;
 
     struct Sw1Config {
         using timer = systemTimer;
@@ -616,7 +618,7 @@ struct Devices<Desk01, Config, MCU> {
         using sda_pin = i2c1_sda;
         using scl_pin = i2c1_scl;
         static inline constexpr size_t size = 16;
-        using debug = Devices::debug;
+        using debug = void;
     };
     using i2c1 = Mcu::Stm::I2C::V2::Master<1, I2C1Config>;
 
@@ -625,7 +627,7 @@ struct Devices<Desk01, Config, MCU> {
         using sda_pin = i2c2_sda;
         using scl_pin = i2c2_scl;
         static inline constexpr size_t size = 16;
-        using debug = Devices::debug;
+        using debug = void;
     };
     using i2c2 = Mcu::Stm::I2C::V2::Master<2, I2C2Config>;
 
@@ -633,10 +635,10 @@ struct Devices<Desk01, Config, MCU> {
     static inline constexpr Mcu::Stm::I2C::Address pcaAdr1{0x21};
 
     using pca_debug = void;
-    using pca0 = External::V2::PCAL6408<i2c1, pcaAdr0, systemTimer, pca_debug >;
-    using pca1 = External::V2::PCAL6408<i2c1, pcaAdr1, systemTimer, pca_debug >;
-    using pca2 = External::V2::PCAL6408<i2c2, pcaAdr0, systemTimer, pca_debug >;
-    using pca3 = External::V2::PCAL6408<i2c2, pcaAdr1, systemTimer, pca_debug >;
+    using pca0 = External::V2::PCAL6408<i2c1, pcaAdr0, systemTimer, pca_debug>;
+    using pca1 = External::V2::PCAL6408<i2c1, pcaAdr1, systemTimer, pca_debug>;
+    using pca2 = External::V2::PCAL6408<i2c2, pcaAdr0, systemTimer, pca_debug>;
+    using pca3 = External::V2::PCAL6408<i2c2, pcaAdr1, systemTimer, pca_debug>;
 
     struct Sw1Config {
         using timer = systemTimer;
