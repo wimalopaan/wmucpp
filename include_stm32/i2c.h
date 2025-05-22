@@ -514,11 +514,9 @@ namespace Mcu::Stm {
                     mCallBack = cb;
                     return true;
                 }
-
                 inline static bool write(const I2C::Address adr, const std::pair<uint8_t, uint8_t>& data) {
                     return write(adr, std::pair{std::byte{data.first}, std::byte{data.second}});
                 }
-
                 inline static bool write(const I2C::Address adr, const std::pair<std::byte, std::byte>& data) {
                     IO::outl<debug>("I2C write: ", adr.value);
                     if (mState != State::Idle) {
@@ -529,6 +527,19 @@ namespace Mcu::Stm {
                     mErrors = 0;
                     mData[0] = data.first;
                     mData[1] = data.second;
+                    mAddress = adr.value;
+                    mState = State::WriteAdress;
+                    return true;
+                }
+                inline static bool write(const I2C::Address adr, const uint8_t data) {
+                    IO::outl<debug>("I2C write: ", adr.value);
+                    if (mState != State::Idle) {
+                        return false;
+                    }
+                    mIndex = 0;
+                    mCount = 1;
+                    mErrors = 0;
+                    mData[0] = std::byte{data};
                     mAddress = adr.value;
                     mState = State::WriteAdress;
                     return true;

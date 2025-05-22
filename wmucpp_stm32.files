@@ -605,6 +605,7 @@ include_stm32/output.h
 include_stm32/pcal6408.h
 include_stm32/pwm.h
 include_stm32/pwm_dma.h
+include_stm32/qmc5883l.h
 include_stm32/ranged.h
 include_stm32/rc.h
 include_stm32/rc/cppm.h

@@ -19,7 +19,6 @@
 #pragma once
 
 #include "etl/algorithm.h"
-
 #include "rc/crsf_2.h"
 
 template<typename Buffer, typename Storage, typename Servos, typename Escs, typename Debug>

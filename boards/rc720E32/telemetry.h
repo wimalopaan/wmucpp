@@ -18,11 +18,8 @@
 
 #pragma once
 
-#ifdef USE_UART_2
+// #ifdef USE_UART_2
 #include "rc/crsf_2.h"
-#else
-#include "rc/crsf.h"
-#endif
 
 template<typename Buffer, typename Storage, typename Servos, typename Escs, typename Debug>
 struct Telemetry {

@@ -66,6 +66,7 @@ struct GFSM {
     using srv2_waveshare = devs::srv2_waveshare;
 
     using i2c = devs::i2c;
+    using compass = devs::qmc5883l;
 
     using sbus_aux = devs::sbus_aux;
     using gps_aux = devs::gps_aux;
@@ -76,6 +77,8 @@ struct GFSM {
         crsf_in::address(std::byte(CRSF_ADDRESS));
 #endif
         crsf_in_responder::telemetrySlot(0);
+
+        // compass::activate(true);
     }
 
     enum class Event : uint8_t {None, ConnectionLost, DirectConnected, ReceiverConnected};
@@ -99,6 +102,7 @@ struct GFSM {
             debug::periodic();
         }
         i2c::periodic();
+        compass::periodic();
         crsf_in::periodic();
         Servos::periodic();
         Escs::periodic();
@@ -121,6 +125,7 @@ struct GFSM {
         led1::ratePeriodic();
         led2::ratePeriodic();
         i2c::ratePeriodic();
+        compass::ratePeriodic();
         crsf_in::ratePeriodic();
         Servos::ratePeriodic();
         Escs::ratePeriodic();
@@ -209,6 +214,7 @@ struct GFSM {
             });
             (++mTelemetryTick).on(telemetryTicks, []{
                 telemetry::next();
+                compass::startRead();
             });
             (++mGpsCheckTick).on(gpsCheckTicks, []{
                 if (gps_aux::packages() == 0) {
@@ -216,6 +222,7 @@ struct GFSM {
                 }
             });
             mStateTick.on(debugTicks, []{
+                IO::outl<debug>("# x: ", compass::mX, " y: ", compass::mY, " z: ", compass::mZ, " a: ", compass::mA);
                 IO::outl<debug>("# gps pkg: ", gps_aux::packages(), " RMC t: ", gps_aux::RMC::mTime,
                                 " sat: ", gps_aux::GSV::mSatCount,
                                 " lat: ", gps_aux::RMC::mLatitude, " lon: ", gps_aux::RMC::mLongitude, " date: ", gps_aux::RMC::mDate,
