@@ -45,6 +45,160 @@ namespace Mcu::Stm {
             value_type value{};
         };
 
+        namespace Util {
+            /* ======================================================================
+             * The function calculates optimal timing of the I2C bus
+             *
+             * @PAram pclk1_hz    - PCLK frequency (Hz)
+             * @PAram i2c_freq_hz - target I2C clock frequency (Hz)
+             * @retvalue          - timing register value
+             * ======================================================================*/
+            uint32_t I2C_calculate_timing(const uint32_t pclk1_hz, const uint32_t i2c_freq_hz)
+            {
+                const uint32_t clock_period_ns = 1000000000 / pclk1_hz;
+                const uint32_t i2c_period_ns   = 1000000000 / i2c_freq_hz;
+                const uint32_t af_delay_ns     = 50; // Analog filter delay (ns)
+
+                // Determine speed mode limits & digital filter delay (ns)
+                uint32_t tlow_min, thigh_min, tsudat_min, dfn;
+
+                if (i2c_freq_hz <= 100000) {
+                    tlow_min   = i2c_period_ns * 470 >> 10;
+                    thigh_min  = i2c_period_ns * 400 >> 10;
+                    tsudat_min = 250;
+                    dfn = 4;
+                } else if (i2c_freq_hz <= 400000) {
+                    tlow_min   = i2c_period_ns * 540 >> 10;
+                    thigh_min  = i2c_period_ns * 250 >> 10;
+                    tsudat_min = 100;
+                    dfn = 2;
+                }  else if (i2c_freq_hz <= 1000000) {
+                    tlow_min   = i2c_period_ns * 520 >> 10;
+                    thigh_min  = i2c_period_ns * 270 >> 10;
+                    tsudat_min = 50;
+                    dfn = 0;
+                } else {
+                    return 0;
+                }
+
+                const uint32_t filter_delay_ns = af_delay_ns + (dfn * clock_period_ns);
+                const uint32_t sdadel_min_ns = filter_delay_ns;
+                const uint32_t sdadel_max_ns = i2c_period_ns >> 2;
+                const uint32_t scldel_min_ns = tsudat_min + filter_delay_ns;
+
+                // Target period with 20% margin
+                const uint32_t period_max = i2c_period_ns + (i2c_period_ns / 5);
+                const uint32_t period_min = i2c_period_ns - (i2c_period_ns / 5);
+
+                uint32_t tmp_presc  = 0;
+                uint32_t tmp_scldel = 0;
+                uint32_t tmp_sdadel = 0;
+                uint32_t tmp_sclh   = 0;
+                uint32_t tmp_scll   = 0;
+                uint32_t tmp_error  = UINT32_MAX;
+
+                // Binary search helper function for SCLH and SCLL
+                for (uint32_t presc = 0; presc < 16; presc++) {
+                    const uint32_t ti2cclk = clock_period_ns * (presc + 1);
+
+                    for (uint32_t scldel = 0; scldel < 16; scldel++) {
+                        const uint32_t tscldel = (scldel + 1) * ti2cclk;
+                        if (tscldel < scldel_min_ns) continue;
+
+                        for (uint32_t sdadel = 0; sdadel < 16; sdadel++) {
+                            const uint32_t tsdadel = sdadel * ti2cclk;
+                            if (tsdadel < sdadel_min_ns || tsdadel > sdadel_max_ns) continue;
+
+                            const uint32_t tsync = filter_delay_ns + 2 * ti2cclk;
+
+                            // Binary search for SCLH
+                            uint32_t sclh_min = (thigh_min - filter_delay_ns + ti2cclk - 1) / ti2cclk - 1;
+                            if (sclh_min >= 256) continue;
+                            uint32_t sclh_max = 255;
+
+                            while (sclh_min <= sclh_max) {
+                                const uint32_t sclh = (sclh_min + sclh_max) >> 1;
+                                const uint32_t tsclh = (sclh + 1) * ti2cclk;
+                                const uint32_t thigh = tsclh + filter_delay_ns;
+
+                                if (thigh < thigh_min) {
+                                    sclh_min = sclh + 1;
+                                    continue;
+                                }
+
+                                if (ti2cclk >= thigh) {
+                                    sclh_min = sclh + 1;
+                                    continue;
+                                }
+
+                                // Binary search for SCLL
+                                uint32_t scll_min = (tlow_min - filter_delay_ns + ti2cclk - 1) / ti2cclk - 1;
+                                if (scll_min >= 256) {
+                                    sclh_min = sclh + 1;
+                                    continue;
+                                }
+                                uint32_t scll_max = 255;
+
+                                while (scll_min <= scll_max) {
+                                    const uint32_t scll = (scll_min + scll_max) >> 1;
+                                    const uint32_t tscll = (scll + 1) * ti2cclk;
+                                    const uint32_t tlow = tscll + filter_delay_ns;
+
+                                    if (tlow < tlow_min) {
+                                        scll_min = scll + 1;
+                                        continue;
+                                    }
+
+                                    if (ti2cclk >= (tlow - filter_delay_ns) / 4) {
+                                        scll_min = scll + 1;
+                                        continue;
+                                    }
+
+                                    const uint32_t ttotal = tscll + tsclh + 2 * tsync;
+
+                                    if (ttotal < period_min) {
+                                        scll_min = scll + 1;
+                                        continue;
+                                    }
+
+                                    if (ttotal > period_max) {
+                                        scll_max = scll - 1;
+                                        continue;
+                                    }
+
+                                    // Calculate error
+                                    const uint32_t error = (ttotal > i2c_period_ns)
+                                        ? ttotal - i2c_period_ns
+                                        : i2c_period_ns - ttotal;
+
+                                    // Update if better timing found
+                                    if (error < tmp_error) {
+                                        tmp_error  = error;
+                                        tmp_presc  = presc;
+                                        tmp_scldel = scldel;
+                                        tmp_sdadel = sdadel;
+                                        tmp_sclh   = sclh;
+                                        tmp_scll   = scll;
+                                    }
+
+                                    // Try to find better error by decreasing SCLL
+                                    scll_max = scll - 1;
+                                }
+                                // Try to find better error by decreasing SCLH
+                                sclh_max = sclh - 1;
+                            }
+                        }
+                    }
+                }
+
+                if (tmp_error == UINT32_MAX) {
+                    return 0;
+                }
+
+                return (tmp_presc << 28) | (tmp_scldel << 20) | (tmp_sdadel << 16) | (tmp_sclh << 8) | tmp_scll;
+            }
+        }
+
         namespace V2 {
             template<uint8_t N, typename Config, typename MCU = DefaultMcu> struct Master;
             template<uint8_t N, typename Config, typename MCU>

@@ -28,7 +28,7 @@
 
 #define USE_UART_2 // obsolete, should be removed in future versions
 
-#define SW_VERSION 8
+#define SW_VERSION 9
 #define HW_VERSION 2
 
 #define NDEBUG
@@ -374,6 +374,12 @@ void USART3_4_5_6_LPUART1_IRQHandler(){
         });
         sport::Isr::onIdle([]{
         });
+        using gps = devs::gps_aux;
+        static_assert(gps::uart::number == 4);
+        // gps::Isr::onTransferComplete([]{
+        // });
+        gps::Isr::onIdle([]{
+        });
     }
 }
 void USART1_IRQHandler() {
@@ -406,6 +412,23 @@ void _kill(int, int) {
 int _getpid(void) {
     return -1;
 }
+
+// strtof()
+#ifndef NDEBUG
+void _close(int){
+}
+void _lseek(int){
+}
+void _read(int){
+}
+void _write(int){
+}
+void _fstat(int){
+}
+void _isatty(int){
+}
+
+#endif
 
 }
 

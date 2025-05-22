@@ -615,6 +615,7 @@ include_stm32/rc/crsf_2_output.h
 include_stm32/rc/escape.h
 include_stm32/rc/escape_2.h
 include_stm32/rc/gps.h
+include_stm32/rc/gps_2.h
 include_stm32/rc/ibus_2.h
 include_stm32/rc/rc.h
 include_stm32/rc/rc_2.h

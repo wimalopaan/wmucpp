@@ -31,6 +31,10 @@ namespace etl {
         return (static_cast<uint8_t>(c) - '0');
     }
 
+    constexpr inline int32_t littleEndianI32(const uint8_t* const data) {
+        return data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24);
+    }
+
     template<auto L>
     inline static float from_chars(const std::array<char, L>& str) {
         float value = 0;
@@ -59,8 +63,6 @@ namespace etl {
         }
         return value;
     }
-
-
     template<typename T>
     bool equalStore(T& a, const T& b) {
         const bool result = (a == b);
@@ -97,8 +99,6 @@ namespace etl {
         lhs = v;
         return v;
     }
-
-
     template<typename C>
     constexpr void push_back_ntbs(const char* s, C& c) {
         do {
@@ -137,7 +137,6 @@ namespace etl {
         }
         return true;
     }
-    
     template<uint8_t Number, typename T>
     constexpr inline std::byte nth_byte(const T v);
     
@@ -192,7 +191,6 @@ namespace etl {
             (c.push_back(nth_byte<II>(v)), ...);
         }(std::make_index_sequence<sizeof(T)>{});
     }
-
     template<typename T, typename C>
     constexpr void serializeBE(const T v, C& c) {
         [&]<auto... II>(std::index_sequence<II...>){

@@ -50,6 +50,7 @@
 #include "rc/ibus_2.h"
 #include "rc/sumdv3_2.h"
 #include "rc/sport_2.h"
+#include "rc/gps_2.h"
 #include "pwm.h"
 #include "adc.h"
 #include "blinker.h"
@@ -305,6 +306,9 @@ struct Devices<SW01, Config, MCU> {
     struct SBusSoftUartConfig;
     using sbus_aux = RC::Protokoll::SBus::V2::Input<0, SBusSoftUartConfig, MCU>;
 
+    struct GPSAuxConfig;
+    using gps_aux = External::GPS::V2::Input<4, GPSAuxConfig, MCU>;
+
 #else
     struct RelayDebug;
     using relay_aux = PacketRelay<4, true, auxtx, crsf_in, crsfBuffer, relayAuxDmaChannel, systemTimer, clock, RelayDebug, MCU>;
@@ -360,7 +364,15 @@ struct Devices<SW01, Config, MCU> {
 
     using sda3 = Mcu::Stm::Pin<gpiob, 4, MCU>;
     using scl3 = Mcu::Stm::Pin<gpiob, 3, MCU>;
-    using i2c = Mcu::Stm::I2C::Master<3, 16, debug, MCU>;
+
+    struct I2C3Config {
+        using sda_pin = sda3;
+        using scl_pin = scl3;
+        static inline constexpr size_t size = 16;
+        using debug = void;
+    };
+
+    using i2c = Mcu::Stm::I2C::V2::Master<3, I2C3Config>;
 
     struct RelayConfig {
         using pin = sbus_crsf_pin;
@@ -385,6 +397,14 @@ struct Devices<SW01, Config, MCU> {
         using tp = tp1;
         using src = crsf_in::input;
         using dest = crsfBuffer;
+    };
+    struct GPSAuxConfig {
+        using pin = auxrx;
+        using clock = Devices::clock;
+        using systemTimer = Devices::systemTimer;
+        using dmaChComponent = relayAuxDmaChannelComponent;
+        using debug = Devices::debug;
+        using tp = tp1;
     };
     struct SBusSoftUartConfig {
         // static inline constexpr bool additionalChecks = true;
@@ -629,6 +649,7 @@ struct Devices<SW01, Config, MCU> {
         scl3::openDrain();
         sda3::afunction(6);
         scl3::afunction(6);
+
         i2c::init();
 
         // adc::init();

@@ -108,7 +108,7 @@ struct EEProm {
 #else
     eeprom_value_t crsf_hd_mode = 0;
 #endif
-    eeprom_value_t crsf_fd_aux_mode = 2;
+    eeprom_value_t crsf_fd_aux_mode = 1;
 
     eeprom_value_t sport_physicalId_switch = 0;
     eeprom_value_t sport_physicalId_telemetry = 1;

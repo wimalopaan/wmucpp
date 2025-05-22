@@ -68,6 +68,7 @@ struct GFSM {
     using i2c = devs::i2c;
 
     using sbus_aux = devs::sbus_aux;
+    using gps_aux = devs::gps_aux;
 
     static inline void init() {
         devs::init();
@@ -97,6 +98,7 @@ struct GFSM {
         if constexpr(!std::is_same_v<debug, void>) {
             debug::periodic();
         }
+        i2c::periodic();
         crsf_in::periodic();
         Servos::periodic();
         Escs::periodic();
@@ -113,10 +115,12 @@ struct GFSM {
 
     static inline constexpr External::Tick<systemTimer> packagesCheckTicks{300ms};
     static inline constexpr External::Tick<systemTimer> baudCheckTicks{1000ms};
+    static inline constexpr External::Tick<systemTimer> gpsCheckTicks{3000ms};
 
     static inline void ratePeriodic() {
         led1::ratePeriodic();
         led2::ratePeriodic();
+        i2c::ratePeriodic();
         crsf_in::ratePeriodic();
         Servos::ratePeriodic();
         Escs::ratePeriodic();
@@ -157,7 +161,7 @@ struct GFSM {
                     mStateTick.reset();
                 }
             });
-            mState = State::RunUnconnected;
+            mState = State::I2CScan;
             break;
         case State::Calib:
             mState = State::RunUnconnected;
@@ -206,8 +210,20 @@ struct GFSM {
             (++mTelemetryTick).on(telemetryTicks, []{
                 telemetry::next();
             });
+            (++mGpsCheckTick).on(gpsCheckTicks, []{
+                if (gps_aux::packages() == 0) {
+                    gps_aux::nextBaudrate();
+                }
+            });
             mStateTick.on(debugTicks, []{
-                IO::outl<debug>("# sbus aux: ", sbus_aux::value(0));
+                IO::outl<debug>("# gps pkg: ", gps_aux::packages(), " RMC t: ", gps_aux::RMC::mTime,
+                                " sat: ", gps_aux::GSV::mSatCount,
+                                " lat: ", gps_aux::RMC::mLatitude, " lon: ", gps_aux::RMC::mLongitude, " date: ", gps_aux::RMC::mDate,
+                                " speed: ", gps_aux::VTG::mSpeed, " head: ", gps_aux::VTG::mHeading / 100);
+                IO::outl<debug>("# ublox npkg: ", gps_aux::UBlox::mNavPackages, " stat pkg: ", gps_aux::UBlox::mStatusPackages, " flags: ", gps_aux::UBlox::mFlags, " lon: ", gps_aux::UBlox::mLongitude, " lat: ", gps_aux::UBlox::mLatitude,
+                                " speed: ", gps_aux::UBlox::mSpeed,
+                                " head: ", gps_aux::UBlox::mHeading / 100, " headM: ", gps_aux::UBlox::mHeadingM / 100);
+                // IO::outl<debug>("# sbus aux: ", sbus_aux::value(0));
                 // IO::outl<debug>("_end:", &_end, " _ebss:", &_ebss, " heap:", heap);
                 // IO::outl<debug>("ch0: ", crsf_in_pa::value(0), " phi0: ", polar1::phi(), " amp0: ", polar1::amp(), " a0: ", Servos::actualPos(0), " t0: ", Servos::turns(0), " phi1: ", polar2::phi(), " amp1: ", polar2::amp(), " a1: ", Servos::actualPos(1), " t1: ", Servos::turns(1));
             });
@@ -298,6 +314,7 @@ struct GFSM {
     static inline const uint32_t uuid = Mcu::Stm::Uuid::get();
     static inline Event mEvent = Event::None;
     static inline External::Tick<systemTimer> mPackagesCheckTick;
+    static inline External::Tick<systemTimer> mGpsCheckTick;
     static inline External::Tick<systemTimer> mDirectTick;
     static inline External::Tick<systemTimer> mUpdateTick;
     static inline External::Tick<systemTimer> mTelemetryTick;
