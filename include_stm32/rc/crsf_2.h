@@ -50,6 +50,54 @@ namespace RC {
                 using namespace std::literals::chrono_literals;
                 using namespace etl::literals;
 
+                namespace Util {
+                    template<typename PContainer, uint8_t MaxStringParamLength = 16>
+                    static inline bool setParameter(PContainer& params, const uint8_t index, const auto data, const uint8_t paylength) {
+                        using Param_t = typename PContainer::value_type;
+                        if (index == 0) return false;
+                        if (index < params.size()) {
+                            bool mustSave = true;
+                            if (params[index].type == Param_t::Str) {
+                                // IO::outl<debug>("# String");
+                                if (params[index].stringValue) {
+                                    for(uint8_t i = 0; (i < MaxStringParamLength) && (i < paylength); ++i) {
+                                        params[index].stringValue[i] = data[i];
+                                        if (data[i] == '\0') {
+                                            break;
+                                        }
+                                    }
+                                    params[index].stringValue[paylength] = '\0';
+                                }
+                            }
+                            else {
+                                typename Param_t::value_type value{};
+                                if (params[index].type <= Param_t::I8) {
+                                    value = data[0];
+                                    // IO::outl<debug>("# I8: v: ", value);
+                                }
+                                else if (params[index].type <= Param_t::I16) {
+                                    value = (data[0] << 8) + data[1];
+                                    // IO::outl<debug>("# I16: v: ", value);
+                                }
+                                else if (params[index].type <= Param_t::F32) {
+                                    value = (data[3] << 24) + (data[2] << 16) + (data[1] << 8) + data[0];
+                                    // IO::outl<debug>("# F32: v: ", value);
+                                }
+                                else if (params[index].type == Param_t::Sel) {
+                                    value = data[0];
+                                    // IO::outl<debug>("# Sel: v: ", value);
+                                }
+                                params[index].value(value);
+                                if (params[index].cb) {
+                                    mustSave = params[index].cb(value);
+                                }
+                            }
+                            return mustSave;
+                        }
+                        return false;
+                    }
+                }
+
                 template<uint8_t N, typename Config, typename MCU = DefaultMcu>
                 struct Master {
                     static inline constexpr uint8_t number = N;
@@ -117,7 +165,7 @@ namespace RC {
                     using uart = Mcu::Stm::V4::Uart<N, uartConfig, MCU>;
 
                     public:
-                    using messageBuffer = Util::MessageBuffer<uart, value_t, systemTimer, tp, RC::Protokoll::Crsf::V4::maxMessageSize, fifoSize>;
+                    using messageBuffer = ::Util::MessageBuffer<uart, value_t, systemTimer, tp, RC::Protokoll::Crsf::V4::maxMessageSize, fifoSize>;
                     using input  = RC::Protokoll::Crsf::V4::Input<Master>;
 
                     static inline constexpr uint16_t chunkBufferSize = 256;
@@ -244,12 +292,16 @@ namespace RC {
                         switch(type){
                         case RC::Protokoll::Crsf::V4::Type::Link:
                             input::decodeLink(data + 3);
-                            callback::gotLinkStats();
+                            if constexpr(requires(){callback::gotLinkStats();}) {
+                                callback::gotLinkStats();
+                            }
                             break;
                         case RC::Protokoll::Crsf::V4::Type::Channels:
                             input::decodeChannels(data + 3);
                             output::nextSlot();
-                            callback::gotChannels();
+                            if constexpr(requires(){callback::gotChannels();}){
+                                callback::gotChannels();
+                            }
                             break;
                         case RC::Protokoll::Crsf::V4::Type::Ping:
                             if (const uint8_t dest = data[3]; ((dest == (uint8_t)Address::Broadcast) || (dest == mAddress))) {
@@ -257,7 +309,9 @@ namespace RC {
                                 output::resetSlot();
                                 output::setDestination((std::byte)src);
                                 output::event(output::Event::SendDeviceInfo);
-                                callback::forwardPacket(data, paylength + 2);
+                                if constexpr(requires(){callback::forwardPacket(data, 0);}) {
+                                    callback::forwardPacket(data, paylength + 2);
+                                }
                             }
                             break;
                         case RC::Protokoll::Crsf::V4::Type::Info:
@@ -273,7 +327,9 @@ namespace RC {
                                 output::sendParameterInfo(pIndex, pChunk);
                             }
                             else {
-                                callback::forwardPacket(data, paylength + 2);
+                                if constexpr(requires(){callback::forwardPacket(data, 0);}) {
+                                    callback::forwardPacket(data, paylength + 2);
+                                }
                             }
                             break;
                         case RC::Protokoll::Crsf::V4::Type::ParamWrite:
@@ -290,13 +346,16 @@ namespace RC {
                                 }
                             }
                             else {
-                                callback::forwardPacket(data, paylength + 2);
+                                if constexpr(requires(){callback::forwardPacket(data, 0);}) {
+                                    callback::forwardPacket(data, paylength + 2);
+                                }
                             }
                             break;
                         case RC::Protokoll::Crsf::V4::Type::Command:
-                            callback::forwardPacket(data, paylength + 2);
+                            if constexpr(requires(){callback::forwardPacket(data, 0);}) {
+                                callback::forwardPacket(data, paylength + 2);
+                            }
                             if (const uint8_t dest = data[3]; mCommandNoAddressCheck || (dest == mAddress)) {
-                                // const uint8_t src = data[4];
                                 callback::command(data, paylength);
                             }
                             break;

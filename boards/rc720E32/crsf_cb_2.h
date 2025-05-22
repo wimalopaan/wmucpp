@@ -483,7 +483,7 @@ private:
         addNode(p, Param_t{parent, PType::Sel, "Mode (not persistant)", "Full;Fwd Only", nullptr, 0, 1, [](const store_t){return false;}});
         parent = addParent(p, Param_t{0, PType::Folder, "Advanced"});
         addNode(p, Param_t{parent, PType::Sel, "Crsf-HD/SBus", "SBus/Out;Crsf;SBus2/Master;CPPM/N;CPPM/P;CombinedPWMChannels/P;IBus/In;SBus/In;SumDV3/In;SumDV3/Out;None", &eeprom.crsf_hd_mode, 0, 10, [](const store_t r){relays::set(r); return true;}});
-        addNode(p, Param_t{parent, PType::Sel, "Crsf-FD/Aux", "Crsf;GPS;None", &eeprom.crsf_fd_aux_mode, 0, 1, [](const store_t a){
+        addNode(p, Param_t{parent, PType::Sel, "Crsf-FD/Aux", "Crsf;GPS;SBus/S.Port;None", &eeprom.crsf_fd_aux_mode, 0, 3, [](const store_t a){
                                auxes::set(a);
                                return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Inject (SBus)", "Yes;No", &eeprom.inject, 0, 1, [](const store_t){return true;}});
