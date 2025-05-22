@@ -46,26 +46,14 @@ struct CrsfCallback {
 
     using name_t = std::array<char, 32>;
 
-    static inline constexpr void disableTelemetry() {
-    }
-    static inline constexpr void gotLinkStats() {
-    }
-    static inline constexpr void gotChannels() {
-    }
-    static inline constexpr void forwardPacket(const auto /*data*/, const uint16_t /*length*/) {
-    }
-    static inline constexpr void ratePeriodic() {
-    }
     static inline constexpr void updateName(name_t& n) {
         strncpy(&n[0], title, n.size());
         auto r = std::to_chars(std::begin(n) + strlen(title), std::end(n), eeprom.address);
         *r.ptr++ = '\0';
     }
-
     static inline void update() {
         updateName(mName);
     }
-
     static inline void save() {
         if (auto [ok, err] = Mcu::Stm32::savecfg(eeprom, eeprom_flash); ok) {
             IO::outl<debug>("# EEPROM OK");
@@ -75,52 +63,11 @@ struct CrsfCallback {
         }
     }
     static inline void setParameterValue(const uint8_t index, const auto data, const uint8_t paylength) {
-        IO::outl<debug>("# SetPV i: ", index, " size: ", params.size());
-        if (index == 0) return;
-        if (index < params.size()) {
-            mLastChangedParameter = index;
-            bool mustSave = true;
-            if (params[index].type == Param_t::Str) {
-                IO::outl<debug>("# String");
-                if (params[index].stringValue) {
-                    for(uint8_t i = 0; (i < 16) && (i < paylength); ++i) {
-                        params[index].stringValue[i] = data[i];
-                        if (data[i] == '\0') {
-                            break;
-                        }
-                    }
-                    params[index].stringValue[paylength] = '\0';
-                }
-            }
-            else {
-                Param_t::value_type value{};
-                if (params[index].type <= Param_t::I8) {
-                    value = data[0];
-                    IO::outl<debug>("# I8: v: ", value);
-                }
-                else if (params[index].type <= Param_t::I16) {
-                    value = (data[0] << 8) + data[1];
-                    IO::outl<debug>("# I16: v: ", value);
-
-                }
-                else if (params[index].type <= Param_t::F32) {
-                    value = (data[3] << 24) + (data[2] << 16) + (data[1] << 8) + data[0];
-                    IO::outl<debug>("# F32: v: ", value);
-                }
-                else if (params[index].type == Param_t::Sel) {
-                    value = data[0];
-                    IO::outl<debug>("# Sel: v: ", value);
-                }
-                params[index].value(value);
-                if (params[index].cb) {
-                    mustSave = params[index].cb(value);
-                }
-            }
-            update();
-            if (mustSave) {
+            IO::outl<debug>("# SetPV i: ", index, " size: ", params.size());
+            if (RC::Protokoll::Crsf::V4::Util::setParameter(params, index, data, paylength)) {
                 save();
             }
-        }
+            update();
     }
     static inline Param_t parameter(const uint8_t index) {
         if (index < params.size()) {
@@ -186,7 +133,7 @@ private:
         return name;
     }();
 
-    using i2c_strings_t = std::array<std::array<std::array<char, 16>, 2>, 2>;
+    using i2c_strings_t = std::array<std::array<std::array<char, 16>, 4>, 2>;
     static inline auto mI2CDevs = []{
         i2c_strings_t s;
         for(auto& b : s) {
@@ -198,7 +145,6 @@ private:
     }();
 
     static inline bool mEepromMode = false;
-    static inline uint8_t mLastChangedParameter{};
     static inline constexpr uint32_t mSerialNumber{1234};
     static inline constexpr uint32_t mHWVersion{HW_VERSION};
     static inline constexpr uint32_t mSWVersion{SW_VERSION};
@@ -219,7 +165,7 @@ private:
     static inline void addNode(auto& c, const RC::Protokoll::Crsf::V4::Parameter<T>& p) {
         c.push_back(p);
     }
-    using params_t = etl::FixedVector<Param_t, 60>;
+    using params_t = etl::FixedVector<Param_t, 128>;
     static inline params_t params = [] {
         params_t p;
         addNode(p, Param_t{0, PType::Folder, "root"});
@@ -263,14 +209,22 @@ private:
         addNode(p, Param_t{parent, PType::U8,  "Count", nullptr, &eeprom.crsfInMap.count, 0, 16, [](const uint8_t){return true;}});
 
         parent = addParent(p, Param_t{0, PType::Folder, "I2C"});
+        // for(uint8_t k = 0; k < 4; ++k) {
+        //     addNode(p, Param_t{parent, PType::Info, "Bus1", &mI2CDevs[0][k][0]});
+        // }
         addNode(p, Param_t{parent, PType::Info, "Bus1", &mI2CDevs[0][0][0]});
         addNode(p, Param_t{parent, PType::Info, "Bus1", &mI2CDevs[0][1][0]});
+        addNode(p, Param_t{parent, PType::Info, "Bus1", &mI2CDevs[0][2][0]});
+        addNode(p, Param_t{parent, PType::Info, "Bus1", &mI2CDevs[0][3][0]});
         addNode(p, Param_t{parent, PType::Info, "Bus2", &mI2CDevs[1][0][0]});
         addNode(p, Param_t{parent, PType::Info, "Bus2", &mI2CDevs[1][1][0]});
+        addNode(p, Param_t{parent, PType::Info, "Bus2", &mI2CDevs[1][2][0]});
+        addNode(p, Param_t{parent, PType::Info, "Bus2", &mI2CDevs[1][3][0]});
 
         parent = addParent(p, Param_t{0, PType::Folder, "Settings"});
         addNode(p, Param_t{parent, PType::Command, "Calibate", "Calibrate...", nullptr, 0, 0, [](const uint8_t){return false;}});
 
+        // detects overflow by calling undefined function f();
         if (p.size() >= p.capacity()) {
             void f();
             f();
