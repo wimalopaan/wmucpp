@@ -235,7 +235,7 @@ namespace External::GPS {
                 }
                 static inline void parseNavPvt(const uint8_t* const data) {
                     ++mNavPackages;
-                    mYear = data[4] + data[5] << 8;
+                    mYear = data[4] + (data[5] << 8);
                     mMonth = data[7];
                     mDay = data[8];
                     mFlags = data[21];
