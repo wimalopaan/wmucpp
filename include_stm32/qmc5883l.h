@@ -18,10 +18,6 @@
 
 #pragma once
 
-#include <cstring>
-
-#include "meta.h"
-
 #include "mcu/mcu.h"
 #include "mcu/mcu_traits.h"
 #include "mcu/arm.h"
@@ -30,11 +26,11 @@
 #include "units.h"
 #include "output.h"
 #include "concepts.h"
-#include "gpio.h"
 #include "tick.h"
 #include "i2c.h"
-
 #include "etl/event.h"
+
+// todo: add range detect
 
 namespace External {
     using namespace etl::literals;
@@ -79,16 +75,16 @@ namespace External {
                 break;
             case State::Setup:
                 if (dev::isIdle()) {
-                    mStateTick.on(waitTicks, []{
-                        dev::write(Adr, {0x0B, 0x01});
+                    mStateTick.on(waitTicks, []{ // without timeout seems not to work
+                        dev::write(Adr, {0x0B, 0x01}); // see datasheet: set/reset
                         mState = State::SetupWait1;
                     });
                 }
                 break;
             case State::SetupWait1:
                 if (dev::isIdle()) {
-                    mStateTick.on(waitTicks, []{
-                        dev::write(Adr, {0x09, 0b0001'0101});
+                    mStateTick.on(waitTicks, []{ // without timeout seems not to work
+                        dev::write(Adr, {0x09, 0b0000'0101}); // OSR=512, RNG=2G, ODR=50Hz, Mode=continuous
                         mState = State::SetupWait2;
                     });
                 }
@@ -117,7 +113,7 @@ namespace External {
                     mX = (uint8_t)c[0] + ((uint8_t)c[1] << 8);
                     mY = (uint8_t)c[2] + ((uint8_t)c[3] << 8);
                     mZ = (uint8_t)c[4] + ((uint8_t)c[5] << 8);
-                    mA = std::atan2(mY, mX) * 1800;
+                    mA = std::atan2(mY, mX) * 1800; // maybe filter
                 }
                 mStateTick.on(waitTicks, []{
                     mState = State::Idle;
@@ -154,7 +150,16 @@ namespace External {
         static inline bool isIdle() {
             return mState == State::Idle;
         }
-        // private:
+        static inline int32_t x() {
+            return mX;
+        }
+        static inline int32_t y() {
+            return mY;
+        }
+        static inline int32_t z() {
+            return mZ;
+        }
+        private:
         // static inline bool mActive = false;
         static inline int32_t mA = 0;
         static inline int16_t mX = 0;

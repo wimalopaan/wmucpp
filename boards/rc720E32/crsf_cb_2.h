@@ -328,6 +328,13 @@ struct CrsfCallback {
     static inline void serialize(const uint8_t index, auto& buffer, const RC::Protokoll::Crsf::V4::Lua::CmdStep step = RC::Protokoll::Crsf::V4::Lua::CmdStep::Idle) {
         params[index].serialize(buffer, params, step, index);
     }
+    static inline void setI2CDev(const uint8_t dev, const uint8_t adr) {
+        if (dev < mI2CDevs.size()) {
+            auto r = std::to_chars(std::begin(mI2CDevs[dev]), std::end(mI2CDevs[dev]), adr);
+            *r.ptr = '\0';
+        }
+    }
+
 private:
     static inline name_t mName = []{
         name_t name{};
@@ -391,6 +398,16 @@ private:
         "... End"
     };
     static inline uint8_t mServoAddressCommand;
+
+    using i2c_strings_t = std::array<std::array<char, 16>, 4>;
+    static inline auto mI2CDevs = []{
+        i2c_strings_t s;
+        for(auto& d : s) {
+            strcpy(&d[0], "---");
+        }
+        return s;
+    }();
+
 
     static inline std::array<char, 16> mDeadLowString{'a'};
 
@@ -501,6 +518,11 @@ private:
         addNode(p, Param_t{parent, PType::U8,  "Physical-ID", nullptr, &eeprom.sport_physicalId_telemetry, 0, 0x1b, [](const store_t a){sport_aux::setPhysID1(a); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "App-ID Telemetry", nullptr, &eeprom.sport_appId_telemetry, 0x00, 0xff, [](const store_t a){sport_aux::setAppID1(a); return true;}});
 
+        parent = addParent(p, Param_t{0, PType::Folder, "I2C"});
+        addNode(p, Param_t{parent, PType::Info, "Bus1", &mI2CDevs[0][0]});
+        addNode(p, Param_t{parent, PType::Info, "Bus1", &mI2CDevs[1][0]});
+        addNode(p, Param_t{parent, PType::Info, "Bus1", &mI2CDevs[2][0]});
+        addNode(p, Param_t{parent, PType::Info, "Bus1", &mI2CDevs[3][0]});
 
         return p;
     }();

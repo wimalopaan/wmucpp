@@ -124,7 +124,11 @@ namespace etl {
             return max;
         }(std::make_index_sequence<std::tuple_size_v<C> - 1>{});
     }   
+    // template<typename T>
+    // constexpr T maximum(const T v, ...) {
+    //     T max;
 
+    // }
     template<typename C>
     inline consteval bool isSet(const C& c) {
         using size_type = C::size_type;

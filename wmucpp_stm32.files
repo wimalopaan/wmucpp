@@ -44,6 +44,7 @@ boards/rc720/version.h
 boards/rc720E32/Makefile
 boards/rc720E32/adapter.h
 boards/rc720E32/channels.h
+boards/rc720E32/compass.h
 boards/rc720E32/crsf_cb.h
 boards/rc720E32/crsf_cb_2.h
 boards/rc720E32/crsfchannelcollector.h

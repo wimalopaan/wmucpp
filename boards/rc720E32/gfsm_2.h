@@ -28,6 +28,8 @@
 #include "tick.h"
 #include "rc/crsf_2.h"
 
+#include "compass.h"
+
 using namespace std::literals::chrono_literals;
 
 template<typename Devices, typename Servos, typename Escs, typename Relays, typename Auxes>
@@ -42,6 +44,7 @@ struct GFSM {
     using crsf_in_pa = crsf_in::input;
     using crsf_in_responder = crsf_in::output;
     using crsfBuffer = devs::crsfBuffer;
+    using crsf_cb = crsf_in::callback;
 
     using led1 = devs::ledBlinker1;
     using led2 = devs::ledBlinker2;
@@ -66,7 +69,8 @@ struct GFSM {
     using srv2_waveshare = devs::srv2_waveshare;
 
     using i2c = devs::i2c;
-    using compass = devs::qmc5883l;
+    using magnetometer = devs::qmc5883l;
+    using compass = Compass<magnetometer, systemTimer>;
 
     using sbus_aux = devs::sbus_aux;
     using gps_aux = devs::gps_aux;
@@ -77,8 +81,6 @@ struct GFSM {
         crsf_in::address(std::byte(CRSF_ADDRESS));
 #endif
         crsf_in_responder::telemetrySlot(0);
-
-        // compass::activate(true);
     }
 
     enum class Event : uint8_t {None, ConnectionLost, DirectConnected, ReceiverConnected};
@@ -214,7 +216,6 @@ struct GFSM {
             });
             (++mTelemetryTick).on(telemetryTicks, []{
                 telemetry::next();
-                compass::startRead();
             });
             (++mGpsCheckTick).on(gpsCheckTicks, []{
                 if (gps_aux::packages() == 0) {
@@ -222,7 +223,8 @@ struct GFSM {
                 }
             });
             mStateTick.on(debugTicks, []{
-                IO::outl<debug>("# x: ", compass::mX, " y: ", compass::mY, " z: ", compass::mZ, " a: ", compass::mA);
+                const int16_t a = compass::a();
+                IO::outl<debug>("# x: ", compass::x(), " y: ", compass::y(), " z: ", compass::z(), " a: ", a);
                 IO::outl<debug>("# gps pkg: ", gps_aux::packages(), " RMC t: ", gps_aux::RMC::mTime,
                                 " sat: ", gps_aux::GSV::mSatCount,
                                 " lat: ", gps_aux::RMC::mLatitude, " lon: ", gps_aux::RMC::mLongitude, " date: ", gps_aux::RMC::mDate,
@@ -303,7 +305,9 @@ struct GFSM {
             case State::I2CScan:
                 IO::outl<debug>("# I2CScan");
                 if (i2c::scan([](const Mcu::Stm::I2C::Address a){
+                              static uint8_t n = 0;
                               IO::outl<debug>("I2C: ", a.value);
+                              crsf_cb::setI2CDev(n++, a.value);
                             })) {
                     IO::outl<debug>("# i2c scan start");
                 }
