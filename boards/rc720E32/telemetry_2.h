@@ -31,25 +31,20 @@ struct Telemetry {
 
     static inline constexpr uint8_t infoRate = 100;
 
+    static inline void push(const uint8_t type, auto f) {
+        buffer::create_back(type, [&](auto& d){
+            f(d);
+        });
+    }
     static inline void next() {
         using namespace RC::Protokoll::Crsf::V4;
-        mCounter = 0;
+        ++mFrameCounter;
         if (mFrameCounter < infoRate) {
-            buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::Gps, [&](auto& d){
-                d.push_back(mLatitude);
-                d.push_back(mLongitude);
-                d.push_back(mSpeed);
-                d.push_back(mCourse);
-                d.push_back(mAltitude);
-                d.push_back(mSatCount);
-            });
             buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ArduPilot, [&](auto& d){
                 d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
                 d.push_back((uint8_t)storage::eeprom.address);
                 d.push_back(ArduPilotTunnel::Schottel::AppId);
-
                 d.push_back(ArduPilotTunnel::Schottel::Type::CombinedTelemetry); // packet type
-
                 d.push_back(mValues);
                 d.push_back(mTurns);
                 d.push_back(mFlags);
@@ -61,9 +56,7 @@ struct Telemetry {
                 d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
                 d.push_back((uint8_t)storage::eeprom.address);
                 d.push_back(ArduPilotTunnel::Schottel::AppId);
-
                 d.push_back(ArduPilotTunnel::Schottel::Type::DeviceInfo); // packet type
-
                 d.push_back(servos::fwVersion(0));
                 d.push_back(servos::hwVersion(0));
                 d.push_back(servos::fwVersion(1));
@@ -107,33 +100,11 @@ struct Telemetry {
             mFlags &= ~(0x01 << n);
         }
     }
-    static inline void latitude(const int32_t v) {
-        mLatitude = v;
-    }
-    static inline void longitude(const int32_t v) {
-        mLongitude = v;
-    }
-    static inline void speed(const int16_t v) {
-        mSpeed = v;
-    }
-    static inline void course(const int16_t v) {
-        mCourse = v;
-    }
-    static inline void satCount(const uint8_t v) {
-        mSatCount = v;
-    }
     private:
-    static inline int32_t mLatitude = 0;
-    static inline int32_t mLongitude = 0;
-    static inline int16_t mSpeed = 0;
-    static inline int16_t mCourse = 0;
-    static inline uint16_t mAltitude = 1000;
-    static inline uint8_t mSatCount = 0;
-
     static inline uint8_t mFrameCounter = 0;
     static inline std::array<uint16_t, 10> mValues{};
     static inline std::array<int8_t, 2> mTurns{};
     static inline uint8_t mFlags = 0;
-    static inline uint8_t mCounter = 0;
+    // static inline uint8_t mCounter = 0;
 };
 

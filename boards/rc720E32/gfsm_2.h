@@ -215,11 +215,14 @@ struct GFSM {
                 channelCallback::update();
             });
             (++mTelemetryTick).on(telemetryTicks, []{
-                telemetry::latitude(gps_aux::UBlox::mLatitude);
-                telemetry::longitude(gps_aux::UBlox::mLongitude);
-                telemetry::speed(gps_aux::UBlox::mSpeed);
-                telemetry::course(int16_t((compass::a() - 180) * 100));
-                telemetry::satCount(gps_aux::UBlox::mSatCount);
+                telemetry::push((uint8_t)RC::Protokoll::Crsf::V4::Type::Gps, [](auto& d){
+                        d.push_back((int32_t)gps_aux::UBlox::mLatitude);
+                        d.push_back((int32_t)gps_aux::UBlox::mLongitude);
+                        d.push_back((uint16_t)gps_aux::UBlox::mSpeed);
+                        d.push_back(int16_t((compass::a() - 180) * 100));
+                        d.push_back(uint16_t(1000));
+                        d.push_back((uint8_t)gps_aux::UBlox::mSatCount);
+                });
                 telemetry::next();
             });
             (++mGpsCheckTick).on(gpsCheckTicks, []{
