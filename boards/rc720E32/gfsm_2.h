@@ -115,7 +115,7 @@ struct GFSM {
 
     static inline constexpr External::Tick<systemTimer> initTicks{500ms};
     static inline constexpr External::Tick<systemTimer> debugTicks{500ms};
-    static inline constexpr External::Tick<systemTimer> telemetryTicks{100ms};
+    static inline constexpr External::Tick<systemTimer> telemetryTicks{20ms};
     static inline constexpr External::Tick<systemTimer> updateTicks{20ms};
     static inline constexpr External::Tick<systemTimer> directTicks{1000ms};
 
@@ -215,6 +215,11 @@ struct GFSM {
                 channelCallback::update();
             });
             (++mTelemetryTick).on(telemetryTicks, []{
+                telemetry::latitude(gps_aux::UBlox::mLatitude);
+                telemetry::longitude(gps_aux::UBlox::mLongitude);
+                telemetry::speed(gps_aux::UBlox::mSpeed);
+                telemetry::course(int16_t((compass::a() - 180) * 100));
+                telemetry::satCount(gps_aux::UBlox::mSatCount);
                 telemetry::next();
             });
             (++mGpsCheckTick).on(gpsCheckTicks, []{

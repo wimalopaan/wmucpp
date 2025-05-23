@@ -164,7 +164,14 @@ namespace etl {
     constexpr inline std::byte nth_byte<1, uint16_t>(const uint16_t v) {
         return std::byte(v >> 8);
     }
-    
+    template<>
+    constexpr inline std::byte nth_byte<0, int16_t>(const int16_t v) {
+        return std::byte(v);
+    }
+    template<>
+    constexpr inline std::byte nth_byte<1, int16_t>(const int16_t v) {
+        return std::byte(v >> 8);
+    }
     template<>
     constexpr inline std::byte nth_byte<0, uint32_t>(const uint32_t v) {
         return std::byte(v);
@@ -181,6 +188,24 @@ namespace etl {
     constexpr inline std::byte nth_byte<3, uint32_t>(const uint32_t v) {
         return std::byte(v >> 24);
     }
+    template<>
+    constexpr inline std::byte nth_byte<0, int32_t>(const int32_t v) {
+        return std::byte(v);
+    }
+    template<>
+    constexpr inline std::byte nth_byte<1, int32_t>(const int32_t v) {
+        return std::byte(v >> 8);
+    }
+    template<>
+    constexpr inline std::byte nth_byte<2, int32_t>(const int32_t v) {
+        return std::byte(v >> 16);
+    }
+    template<>
+    constexpr inline std::byte nth_byte<3, int32_t>(const int32_t v) {
+        return std::byte(v >> 24);
+    }
+
+
     template<>
     constexpr inline std::byte nth_byte<0, int>(const int v) {
         return std::byte(v);

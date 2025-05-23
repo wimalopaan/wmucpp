@@ -82,7 +82,13 @@ namespace Util {
             inline void push_back(const uint16_t v) {
                 etl::serializeBE(v, *this);
             }
+            inline void push_back(const int16_t v) {
+                etl::serializeBE(v, *this);
+            }
             inline void push_back(const uint32_t v) {
+                etl::serializeBE(v, *this);
+            }
+            inline void push_back(const int32_t v) {
                 etl::serializeBE(v, *this);
             }
         };

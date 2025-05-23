@@ -34,8 +34,15 @@ struct Telemetry {
     static inline void next() {
         using namespace RC::Protokoll::Crsf::V4;
         mCounter = 0;
-        CRC8 crc;
-        if (++mFrameCounter < infoRate) {
+        if (mFrameCounter < infoRate) {
+            buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::Gps, [&](auto& d){
+                d.push_back(mLatitude);
+                d.push_back(mLongitude);
+                d.push_back(mSpeed);
+                d.push_back(mCourse);
+                d.push_back(mAltitude);
+                d.push_back(mSatCount);
+            });
             buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ArduPilot, [&](auto& d){
                 d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
                 d.push_back((uint8_t)storage::eeprom.address);
@@ -100,7 +107,29 @@ struct Telemetry {
             mFlags &= ~(0x01 << n);
         }
     }
+    static inline void latitude(const int32_t v) {
+        mLatitude = v;
+    }
+    static inline void longitude(const int32_t v) {
+        mLongitude = v;
+    }
+    static inline void speed(const int16_t v) {
+        mSpeed = v;
+    }
+    static inline void course(const int16_t v) {
+        mCourse = v;
+    }
+    static inline void satCount(const uint8_t v) {
+        mSatCount = v;
+    }
     private:
+    static inline int32_t mLatitude = 0;
+    static inline int32_t mLongitude = 0;
+    static inline int16_t mSpeed = 0;
+    static inline int16_t mCourse = 0;
+    static inline uint16_t mAltitude = 1000;
+    static inline uint8_t mSatCount = 0;
+
     static inline uint8_t mFrameCounter = 0;
     static inline std::array<uint16_t, 10> mValues{};
     static inline std::array<int8_t, 2> mTurns{};
