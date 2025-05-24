@@ -64,14 +64,16 @@ using escoutputs = EscOutputs<devs>;
 using relayoutputs = Relays<devs>;
 using auxoutputs = Auxes<devs>;
 
+using gfsm = GFSM<devs, servooutputs, escoutputs, relayoutputs, auxoutputs>;
+
 struct DevsConfig {
     using storage = Storage;
     using servos = servooutputs;
     using escs = escoutputs;
     using relays = relayoutputs;
     using auxes = auxoutputs;
+    using compass = gfsm::compass;
 };
-using gfsm = GFSM<devs, servooutputs, escoutputs, relayoutputs, auxoutputs>;
 
 int main() {
     Storage::init();

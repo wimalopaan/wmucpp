@@ -304,6 +304,9 @@ namespace RC {
                             }
                             break;
                         case RC::Protokoll::Crsf::V4::Type::Ping:
+                            if constexpr(requires(){callback::disableTelemetry();}) {
+                                callback::disableTelemetry();
+                            }
                             if (const uint8_t dest = data[3]; ((dest == (uint8_t)Address::Broadcast) || (dest == mAddress))) {
                                 const uint8_t src = data[4];
                                 output::resetSlot();
@@ -319,6 +322,9 @@ namespace RC {
                         case RC::Protokoll::Crsf::V4::Type::ParamEntry:
                             break;
                         case RC::Protokoll::Crsf::V4::Type::ParamRead:
+                            if constexpr(requires(){callback::disableTelemetry();}) {
+                                callback::disableTelemetry();
+                            }
                             if (const uint8_t dest = data[3]; (dest == mAddress)) {
                                 const uint8_t src = data[4];
                                 const uint8_t pIndex = data[5];
@@ -333,6 +339,9 @@ namespace RC {
                             }
                             break;
                         case RC::Protokoll::Crsf::V4::Type::ParamWrite:
+                            if constexpr(requires(){callback::disableTelemetry();}) {
+                                callback::disableTelemetry();
+                            }
                             if (const uint8_t dest = data[3]; (dest == mAddress)) {
                                 const uint8_t src = data[4];
                                 const uint8_t pIndex = data[5];

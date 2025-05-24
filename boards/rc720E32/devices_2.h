@@ -429,7 +429,7 @@ struct Devices<SW01, Config, MCU> {
 
     using polars = Meta::List<polar1, polar2>;
 
-    using telem = Telemetry<crsfBuffer, storage, typename Config::servos, typename Config::escs, debug>;
+    using telem = Telemetry<crsfBuffer, storage, typename Config::servos, typename Config::escs, systemTimer, debug>;
 
     using channelCallback = ChannelCallback<polars, typename Config::servos, typename Config::escs, typename Config::relays, typename Config::auxes, telem, storage>;
 
@@ -450,6 +450,7 @@ struct Devices<SW01, Config, MCU> {
         using sumdv3 = Devices::sumdv3_out;
         using sport_aux = Devices::sport_aux;
         using messageBuffer = crsfBuffer;
+        using compass = Config::compass;
         using tp = void;
     };
 

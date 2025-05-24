@@ -43,6 +43,9 @@ struct CrsfCallback {
 
     using sport_aux = Config::sport_aux;
 
+    using compass = Config::compass;
+    using telemetry = Config::telemetry;
+
     using messageBuffer = Config::messageBuffer;
 
     using src = Config::src;
@@ -72,6 +75,8 @@ struct CrsfCallback {
     static inline State mStreamState{State::Undefined};
 
     static inline constexpr void disableTelemetry() {
+        IO::outl<debug>("# disable telemetry");
+        telemetry::disableWithAutoOn();
     }
     static inline constexpr void gotLinkStats() {
     }
@@ -366,27 +371,55 @@ private:
         c.push_back(p);
     }
 
+    static inline const char* const setServoZeroPosText = "Zeroing";
     static inline bool setZeroPosition(const uint16_t) {
         return true;
     }
 
-    static inline std::array<const char*, 6> mCalibratingTexts {
+    static inline std::array<const char*, 6> mCompassCalibTexts {
         "Calibrate",
         "Start ...",
-        "Measure Rm, Lm ...",
-        "Measure Km (CW) ...",
-        "Measure Km (CCW) ...",
+        "Calib: move all axes ...",
         "Finished calibrating"
     };
-    static inline bool calibCallback(const uint8_t v) {
-        IO::outl<debug>("# calibCallback v: ", v, " s: ");
-        // if (s < std::size(mCalibratingTexts)) {
-        //     params[mCalibCommand].mOptions = mCalibratingTexts[s];
-        // }
-        // return res;
-        return false;
+
+    // Step         Result(bool)    Next-Step       Action
+    // Click        false           Executing       start task
+    //              true            AskConfirm
+    // Confirmed    false           Executing       start task
+    // Cancel       false                           cancel task
+    // Update       false           Idle
+    //              true            Executing
+
+    static inline bool compassCalibCb(const uint8_t v) {
+        IO::outl<debug>("# compassCalibCb v: ", v);
+        const RC::Protokoll::Crsf::V4::Lua::CmdStep step{v};
+        bool res = false;
+        switch(step) {
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Click:
+            params[mCompassCalibCommand].options = mCompassCalibTexts[1];
+            res = true;
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Confirmed:
+            params[mCompassCalibCommand].options = mCompassCalibTexts[2];
+            compass::startCalibrate();
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Cancel:
+            params[mCompassCalibCommand].options = mCompassCalibTexts[3];
+            compass::stopCalibrate();
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Query:
+            params[mCompassCalibCommand].options = mCompassCalibTexts[2];
+            res = true;
+            break;
+        default:
+            break;
+        }
+        return res;
     }
-    static inline uint8_t mCalibCommand{};
+    static inline uint8_t mServoCalibCommand = 0;
+    static inline uint8_t mServoAddressCommand = 0;
+    static inline uint8_t mCompassCalibCommand = 0;
     static inline uint8_t mESCape321Folder{};
     static inline uint8_t mESCape321End{};
     static inline uint8_t mESCape322Folder{};
@@ -397,7 +430,18 @@ private:
         "Start ...",
         "... End"
     };
-    static inline uint8_t mServoAddressCommand;
+    static inline bool setServoAdrCb(const uint8_t) {
+        return false;
+    }
+
+    static inline std::array<const char*, 6> mServoCalibTexts {
+        "Set Address",
+        "Start ...",
+        "... End"
+    };
+    static inline bool servoCalibCb(const uint8_t) {
+        return false;
+    }
 
     using i2c_strings_t = std::array<std::array<char, 16>, 4>;
     static inline auto mI2CDevs = []{
@@ -407,7 +451,6 @@ private:
         }
         return s;
     }();
-
 
     static inline std::array<char, 16> mDeadLowString{'a'};
 
@@ -463,8 +506,8 @@ private:
         addNode(p, Param_t{parent, PType::U8,  "Sch2 ESC PWM Mid", nullptr, &eeprom.esc_mid[1], 0, 200, [](const store_t){return true;}});
         addNode(p, Param_t{parent, PType::U16,  "Sch2 Servo zPosition", nullptr,  &eeprom.offset2, 0, 359, [](const store_t v){servos::template offset<1>((uint32_t{v} * 4096) / 360); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Sch2 Servo Speed", nullptr, &eeprom.speed2, 1, 100, [](const store_t v){servos::template speed<1>(34 * v); return true;}});
-        addNode(p, Param_t{parent, PType::Command, "Act. Pos. as zPos 1", mCalibratingTexts[0], nullptr, 0, 0, [](const store_t v){return setZeroPosition(v);}});
-        addNode(p, Param_t{parent, PType::Command, "Act. Pos. as zPos 2", mCalibratingTexts[0], nullptr, 0, 0, [](const store_t v){return setZeroPosition(v);}});
+        addNode(p, Param_t{parent, PType::Command, "Act. Pos. as zPos 1", setServoZeroPosText, nullptr, 0, 0, [](const store_t v){return setZeroPosition(v);}});
+        addNode(p, Param_t{parent, PType::Command, "Act. Pos. as zPos 2", setServoZeroPosText, nullptr, 0, 0, [](const store_t v){return setZeroPosition(v);}});
 
 #ifdef ESCAPE32_ASCII
         parent = addParent(p, Param_t{0, PType(PType::Folder | PType::Hidden), "ESCape32 1"});
@@ -490,8 +533,8 @@ private:
 
 #ifdef SERVO_CALIBRATION
         parent = addParent(p, Param_t{0, PType::Folder, "Calibration"});
-        mCalibCommand = parent;
-        addNode(p, Param_t{parent, PType::Command, "Calibrate", mCalibratingTexts[0], nullptr, 0, 0, [](const store_t v){return calibCallback(v);}});
+        mServoCalibCommand = parent;
+        addNode(p, Param_t{parent, PType::Command, "Calibrate", mServoCalibTexts[0], nullptr, 0, 0, [](const store_t v){return servoCalibCb(v);}});
         addNode(p, Param_t{parent, PType::Info, "Srv1 DeadL", &mDeadLowString[0]});
 #endif
 
@@ -505,7 +548,7 @@ private:
                                return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Inject (SBus)", "Yes;No", &eeprom.inject, 0, 1, [](const store_t){return true;}});
 #ifdef SERVO_ADDRESS_SET
-        addNode(p, Param_t{parent, PType::Command, "Set Servo ID", mServoAddressTexts[0], nullptr, 0, 0, [](const store_t v){return calibCallback(v);}});
+        addNode(p, Param_t{parent, PType::Command, "Set Servo ID", mServoAddressTexts[0], nullptr, 0, 0, [](const store_t v){return setServoAdrCb(v);}});
         mServoAddressCommand = p.size() - 1;
         addNode(p, Param_t{parent, PType::U8,  "Servo ID to set", nullptr, nullptr, 1, 16, [](const store_t){return false;}});
 #endif
@@ -519,10 +562,14 @@ private:
         addNode(p, Param_t{parent, PType::U8,  "App-ID Telemetry", nullptr, &eeprom.sport_appId_telemetry, 0x00, 0xff, [](const store_t a){sport_aux::setAppID1(a); return true;}});
 
         parent = addParent(p, Param_t{0, PType::Folder, "I2C"});
-        addNode(p, Param_t{parent, PType::Info, "Bus1", &mI2CDevs[0][0]});
-        addNode(p, Param_t{parent, PType::Info, "Bus1", &mI2CDevs[1][0]});
-        addNode(p, Param_t{parent, PType::Info, "Bus1", &mI2CDevs[2][0]});
-        addNode(p, Param_t{parent, PType::Info, "Bus1", &mI2CDevs[3][0]});
+        addNode(p, Param_t{parent, PType::Info, "Address 0:", &mI2CDevs[0][0]});
+        addNode(p, Param_t{parent, PType::Info, "Address 0:", &mI2CDevs[1][0]});
+        addNode(p, Param_t{parent, PType::Info, "Address 0:", &mI2CDevs[2][0]});
+        addNode(p, Param_t{parent, PType::Info, "Address 0:", &mI2CDevs[3][0]});
+
+        parent = addParent(p, Param_t{0, PType::Folder, "Compass"});
+        addNode(p, Param_t{parent, PType::Command, "Calibrate", mCompassCalibTexts[0], nullptr, 0, 0, [](const store_t v){return compassCalibCb(v);}, 200});
+        mCompassCalibCommand = p.size() - 1;
 
         return p;
     }();

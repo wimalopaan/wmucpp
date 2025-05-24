@@ -70,7 +70,19 @@ struct GFSM {
 
     using i2c = devs::i2c;
     using magnetometer = devs::qmc5883l;
-    using compass = Compass<magnetometer, systemTimer>;
+
+    struct CalibClient {
+        static inline void update() {
+            event(Event::CompassCalibUpdate);
+        }
+        static inline void start() {
+            event(Event::CompassCalibStart);
+        }
+        static inline void end() {
+            event(Event::CompassCalibEnd);
+        }
+    };
+    using compass = Compass<magnetometer, systemTimer, CalibClient>;
 
     using sbus_aux = devs::sbus_aux;
     using gps_aux = devs::gps_aux;
@@ -83,9 +95,12 @@ struct GFSM {
         crsf_in_responder::telemetrySlot(0);
     }
 
-    enum class Event : uint8_t {None, ConnectionLost, DirectConnected, ReceiverConnected};
+    enum class Event : uint8_t {None, ConnectionLost, DirectConnected, ReceiverConnected,
+                                CompassCalibStart, CompassCalibEnd, CompassCalibUpdate};
 
-    enum class State : uint8_t {Undefined, Init, Calib,
+    enum class State : uint8_t {Undefined, Init,
+                                Calib,
+                                CompassCalib, CompassCalibUdated,
                                 I2CScan,
                                 RunConnected, RunUnconnected, DirectMode, CheckBaudrate};
 
@@ -123,12 +138,15 @@ struct GFSM {
     static inline constexpr External::Tick<systemTimer> baudCheckTicks{1000ms};
     static inline constexpr External::Tick<systemTimer> gpsCheckTicks{3000ms};
 
+    static inline constexpr External::Tick<systemTimer> calibLedTicks{100ms};
+
     static inline void ratePeriodic() {
         led1::ratePeriodic();
         led2::ratePeriodic();
         i2c::ratePeriodic();
         compass::ratePeriodic();
         crsf_in::ratePeriodic();
+        telemetry::ratePeriodic();
         Servos::ratePeriodic();
         Escs::ratePeriodic();
         Relays::ratePeriodic();
@@ -211,6 +229,10 @@ struct GFSM {
             else if (e == Event::ConnectionLost) {
                 mState = State::CheckBaudrate;
             }
+            else if (e == Event::CompassCalibStart) {
+                led1::event(led1::Event::Medium);
+                mState = State::CompassCalib;
+            }
             (++mUpdateTick).on(updateTicks, []{
                 channelCallback::update();
             });
@@ -220,7 +242,7 @@ struct GFSM {
                         d.push_back((int32_t)gps_aux::ublox::mLongitude);
                         d.push_back((uint16_t)gps_aux::ublox::mSpeed);
                         d.push_back(int16_t((compass::a() - 180) * 100));
-                        d.push_back(uint16_t(1000));
+                        d.push_back(uint16_t(gps_aux::ublox::mAltitude / 1000 + 1000));
                         d.push_back((uint8_t)gps_aux::ublox::mSatCount);
                 });
                 telemetry::next();
@@ -233,13 +255,13 @@ struct GFSM {
             mStateTick.on(debugTicks, []{
                 const int16_t a = compass::a();
                 IO::outl<debug>("# x: ", compass::x(), " y: ", compass::y(), " z: ", compass::z(), " a: ", a);
-                IO::outl<debug>("# gps pkg: ", gps_aux::packages(), " RMC t: ", gps_aux::rmc::mTime,
-                                " sat: ", gps_aux::gsv::mSatCount,
-                                " lat: ", gps_aux::rmc::mLatitude, " lon: ", gps_aux::rmc::mLongitude, " date: ", gps_aux::rmc::mDate,
-                                " speed: ", gps_aux::vtg::mSpeed, " head: ", gps_aux::vtg::mHeading / 100);
-                IO::outl<debug>("# ublox npkg: ", gps_aux::ublox::mNavPackages, " stat pkg: ", gps_aux::ublox::mStatusPackages, " flags: ", gps_aux::ublox::mFlags, " lon: ", gps_aux::ublox::mLongitude, " lat: ", gps_aux::ublox::mLatitude,
-                                " speed: ", gps_aux::ublox::mSpeed,
-                                " head: ", gps_aux::ublox::mHeading / 100, " headM: ", gps_aux::ublox::mHeadingM / 100);
+                // IO::outl<debug>("# gps pkg: ", gps_aux::packages(), " RMC t: ", gps_aux::rmc::mTime,
+                //                 " sat: ", gps_aux::gsv::mSatCount,
+                //                 " lat: ", gps_aux::rmc::mLatitude, " lon: ", gps_aux::rmc::mLongitude, " date: ", gps_aux::rmc::mDate,
+                //                 " speed: ", gps_aux::vtg::mSpeed, " head: ", gps_aux::vtg::mHeading / 100);
+                // IO::outl<debug>("# ublox npkg: ", gps_aux::ublox::mNavPackages, " stat pkg: ", gps_aux::ublox::mStatusPackages, " flags: ", gps_aux::ublox::mFlags, " lon: ", gps_aux::ublox::mLongitude, " lat: ", gps_aux::ublox::mLatitude,
+                //                 " speed: ", gps_aux::ublox::mSpeed,
+                //                 " head: ", gps_aux::ublox::mHeading / 100, " headM: ", gps_aux::ublox::mHeadingM / 100);
                 // IO::outl<debug>("# sbus aux: ", sbus_aux::value(0));
                 // IO::outl<debug>("_end:", &_end, " _ebss:", &_ebss, " heap:", heap);
                 // IO::outl<debug>("ch0: ", crsf_in_pa::value(0), " phi0: ", polar1::phi(), " amp0: ", polar1::amp(), " a0: ", Servos::actualPos(0), " t0: ", Servos::turns(0), " phi1: ", polar2::phi(), " amp1: ", polar2::amp(), " a1: ", Servos::actualPos(1), " t1: ", Servos::turns(1));
@@ -263,6 +285,22 @@ struct GFSM {
                 crsf_in::address(RC::Protokoll::Crsf::V4::Address::TX);
                 crsf_in_responder::sendRadioID();
                 // IO::outl<debug>("# send Radio ID");
+            });
+            break;
+        case State::CompassCalib:
+            if (const Event e = std::exchange(mEvent, Event::None); e == Event::CompassCalibEnd) {
+                mState = State::RunConnected;
+            }
+            else if (e == Event::CompassCalibUpdate) {
+                mState = State::CompassCalibUdated;
+            }
+            mStateTick.on(debugTicks, []{
+                compass::template debugInfo<debug>();
+            });
+            break;
+        case State::CompassCalibUdated:
+            mStateTick.on(calibLedTicks, []{
+                mState = State::CompassCalib;
             });
             break;
         case State::I2CScan:
@@ -309,6 +347,14 @@ struct GFSM {
                 IO::outl<debug>("# DMode");
                 led1::event(led1::Event::Fast);
                 led2::event(led2::Event::Fast);
+                break;
+            case State::CompassCalib:
+                IO::outl<debug>("# CompassCalib");
+                led2::event(led2::Event::Off);
+                break;
+            case State::CompassCalibUdated:
+                IO::outl<debug>("# CompassCalibUpdated");
+                led2::event(led2::Event::Steady);
                 break;
             case State::I2CScan:
                 IO::outl<debug>("# I2CScan");

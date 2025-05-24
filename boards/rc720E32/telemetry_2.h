@@ -20,23 +20,71 @@
 
 #include "etl/algorithm.h"
 #include "rc/crsf_2.h"
+#include "tick.h"
+#include "output.h"
 
-template<typename Buffer, typename Storage, typename Servos, typename Escs, typename Debug>
+template<typename Buffer, typename Storage, typename Servos, typename Escs, typename SystemTimer, typename Debug>
 struct Telemetry {
     using debug = Debug;
+    using systemTimer = SystemTimer;
     using buffer = Buffer;
     using storage = Storage;
     using servos = Servos;
     using escs = Escs;
 
-    static inline constexpr uint8_t infoRate = 100;
+    static inline constexpr uint8_t infoRate = 100; // out of many telem. packets an info packet (ArduPilot-Tunnel) is send
+    using tick_t = External::Tick<systemTimer, uint32_t>;
+    static inline constexpr tick_t autoOnTicks{30'000ms};
+
+    enum class State : uint8_t {On, TempOff};
+    enum class Event : uint8_t {None, OffWithAutoOn};
+
+    static inline void ratePeriodic() {
+        const auto oldState = mState;
+        ++mStateTick;
+        switch(mState) {
+        case State::On:
+            mEvent.on(Event::OffWithAutoOn, []{
+                mState = State::TempOff;
+            });
+            break;
+        case State::TempOff:
+            mEvent.on(Event::OffWithAutoOn, []{
+               mStateTick.reset();
+            });
+            mStateTick.on(autoOnTicks, []{
+                mState = State::On;
+            });
+            break;
+        }
+        if (oldState != mState) {
+            mStateTick.reset();
+            switch(mState) {
+            case State::On:
+                IO::outl<debug>("# Telemetry: On");
+                break;
+            case State::TempOff:
+                IO::outl<debug>("# Telemetry: TempOff");
+                break;
+            }
+        }
+    }
+
+    static inline void event(const Event e) {
+        mEvent = e;
+    }
+    static inline void disableWithAutoOn() {
+        event(Event::OffWithAutoOn);
+    }
 
     static inline void push(const uint8_t type, auto f) {
+        if (mState != State::On) return;
         buffer::create_back(type, [&](auto& d){
             f(d);
         });
     }
     static inline void next() {
+        if (mState != State::On) return;
         using namespace RC::Protokoll::Crsf::V4;
         ++mFrameCounter;
         if (mFrameCounter < infoRate) {
@@ -105,6 +153,8 @@ struct Telemetry {
     static inline std::array<uint16_t, 10> mValues{};
     static inline std::array<int8_t, 2> mTurns{};
     static inline uint8_t mFlags = 0;
-    // static inline uint8_t mCounter = 0;
+    static inline tick_t mStateTick;
+    static inline etl::Event<Event> mEvent;
+    static inline State mState = State::On;
 };
 

@@ -450,16 +450,16 @@ namespace RC {
                                 etl::push_back_ntbs_or_emptyString(options, c);
                                 break;
                             case Lua::CmdStep::Executing:
+                                break;
+                            case Lua::CmdStep::AskConfirm:
+                                break;
+                            case Lua::CmdStep::Confirmed:
                                 if (cb) {
                                     cb((value_type)Lua::CmdStep::Confirmed);
                                 }
                                 c.push_back((uint8_t)Lua::CmdStep::Executing);
                                 c.push_back((uint8_t)def); // timeout
                                 etl::push_back_ntbs_or_emptyString(options, c);
-                                break;
-                            case Lua::CmdStep::AskConfirm:
-                                break;
-                            case Lua::CmdStep::Confirmed:
                                 break;
                             case Lua::CmdStep::Cancel:
                                 if (cb) {

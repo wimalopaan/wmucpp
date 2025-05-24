@@ -64,6 +64,7 @@ namespace External::GPS {
                     mSatCount = data[23];
                     mLongitude = etl::littleEndianI32(&data[24]);
                     mLatitude  = etl::littleEndianI32(&data[28]);
+                    mAltitude = etl::littleEndianI32(&data[36]);
                     mSpeed = etl::littleEndianI32(&data[60]); // mm/s
                     mSpeed *= 3600; // mm/h
                     mSpeed /= (1000 * 100); // 1/10 km/h
@@ -73,6 +74,7 @@ namespace External::GPS {
                 static inline uint8_t mFlags = 0;
                 static inline int32_t mLongitude = 0;
                 static inline int32_t mLatitude  = 0;
+                static inline int32_t mAltitude  = 0;
                 static inline int32_t mSpeed = 0;
                 static inline int32_t mHeading = 0;
                 static inline int32_t mHeadingM = 0;
