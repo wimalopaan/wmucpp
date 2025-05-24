@@ -36,6 +36,188 @@
 
 namespace External::GPS {
     namespace V2 {
+        namespace Protocols {
+            struct UBlox {
+                static inline uint16_t parse(const uint8_t* const data) {
+                    const uint8_t msgClass = data[2];
+                    const uint8_t msgId    = data[3];
+                    const uint16_t msgLen = data[4] + (data[5] << 8);
+
+                    if ((msgClass == 0x01) && (msgId == 0x07)) {
+                        parseNavPvt(data + 6);
+                    }
+                    else if ((msgClass == 0x10) && (msgId == 0x10)) {
+                        parseEsfStatus(data + 6);
+                    }
+                    return 6 + msgLen + 2; // offset points to next byte after this message
+                }
+                // private:
+                static inline void parseEsfStatus(const uint8_t* const /*data*/) {
+                    ++mStatusPackages;
+                }
+                static inline void parseNavPvt(const uint8_t* const data) {
+                    ++mNavPackages;
+                    mYear = data[4] + (data[5] << 8);
+                    mMonth = data[7];
+                    mDay = data[8];
+                    mFlags = data[21];
+                    mSatCount = data[23];
+                    mLongitude = etl::littleEndianI32(&data[24]);
+                    mLatitude  = etl::littleEndianI32(&data[28]);
+                    mSpeed = etl::littleEndianI32(&data[60]); // mm/s
+                    mSpeed *= 3600; // mm/h
+                    mSpeed /= (1000 * 100); // 1/10 km/h
+                    mHeadingM = etl::littleEndianI32(&data[64]) / 1000; // 1/100 degree
+                    mHeading = etl::littleEndianI32(&data[84]) / 1000;
+                }
+                static inline uint8_t mFlags = 0;
+                static inline int32_t mLongitude = 0;
+                static inline int32_t mLatitude  = 0;
+                static inline int32_t mSpeed = 0;
+                static inline int32_t mHeading = 0;
+                static inline int32_t mHeadingM = 0;
+                static inline uint16_t mYear = 0;
+                static inline uint8_t mMonth = 0;
+                static inline uint8_t mDay = 0;
+                static inline uint8_t mSatCount = 0;
+                static inline uint16_t mNavPackages = 0;
+                static inline uint16_t mStatusPackages = 0;
+            };
+            namespace NMEA {
+                namespace Util {
+                    template<uint8_t NFrac = 1>
+                    static inline int32_t toNumber(const char* const data, const char* const end) {
+                        int32_t num = 0;
+                        uint8_t nFrac = 0;
+                        bool frac = false;
+                        for(uint8_t i = 0; i < (end - data); ++i) {
+                            const char c = data[i];
+                            if (std::isdigit(c)) {
+                                num *= 10;
+                                num += etl::asDigit(c);
+                                if (frac) {
+                                    ++nFrac;
+                                    if (nFrac >= NFrac) {
+                                        break;
+                                    }
+                                }
+                            }
+                            else if (c == '.') {
+                                frac = true;
+                            }
+                        }
+                        return num;
+                    }
+                    template<bool Longitude = false>
+                    static inline int32_t toCrsfDegree(const char* const data, const char* const end) {
+                        static constexpr uint8_t offset = Longitude ? 1 : 0;
+                        const int32_t deg = [&]{
+                            if constexpr(Longitude) {
+                                return etl::asDigit(data[0]) * 100 + etl::asDigit(data[1]) * 10 + etl::asDigit(data[2]);
+                            }
+                            else {
+                                return etl::asDigit(data[0]) * 10 + etl::asDigit(data[1]);
+                            }
+                        }();
+                        int32_t min = etl::asDigit(data[2 + offset]) * 10 + etl::asDigit(data[3 + offset]);;
+                        uint8_t nMinFrac = 0;
+                        if (data[4 + offset] == '.') {
+                            for(uint8_t i = 0; i < (end - &data[5 + offset]); ++i) {
+                                ++nMinFrac;
+                                min *= 10;
+                                min += etl::asDigit(data[5 + i + offset]);
+                            }
+                        }
+                        int32_t deziLat = (min * 100) / 60;
+                        for(uint8_t i = 0; i < (5 - nMinFrac); ++i) {
+                            deziLat *= 10;
+                        }
+                        return deg * 10'000'000L + deziLat;
+                    }
+                }
+                struct RMC {
+                    static inline void parseFields(const char* const data, const char* const end, const uint8_t field) {
+                        if (field == 1) {
+                            for(uint8_t i = 0; (i < (end - data)) && (i < mTime.size()); ++i) {
+                                mTime[i] = data[i];
+                            }
+                        }
+                        else if (field == 2) {
+                            if (data[0] == 'A') {
+                                mTimeValid = true;
+                            }
+                            else {
+                                mTimeValid = false;
+                            }
+                        }
+                        else if (field == 3) {
+                            mLatitude = Util::toCrsfDegree<false>(data, end);
+                        }
+                        else if (field == 4) {
+                            if (data[0] == 'N') {
+                                mLatNorth = true;
+                            }
+                            else if (data[0] == 'S') {
+                                mLatNorth = false;
+                            }
+                        }
+                        else if (field == 5) {
+                            mLongitude = Util::toCrsfDegree<true>(data, end);
+                        }
+                        else if (field == 5) {
+                            if (data[0] == 'W') {
+                                mLonWest = true;
+                            }
+                            else if (data[0] == 'E') {
+                                mLonWest = false;
+                            }
+                        }
+                        else if (field == 9) {
+                            for(uint8_t i = 0; (i < (end - data)) && (i < mDate.size()); ++i) {
+                                mDate[i] = data[i];
+                            }
+                        }
+                    }
+                    static inline std::array<char, 6> mTime{};
+                    static inline std::array<char, 6> mDate{};
+                    static inline bool mTimeValid = false;
+                    static inline int32_t mLatitude = 0;
+                    static inline bool mLatNorth = true;
+                    static inline int32_t mLongitude = 0;
+                    static inline bool mLonWest = true;
+                };
+                struct VTG {
+                    static inline void parseFields(const char* const data, const char* const end, const uint8_t field) {
+                        if (field == 1) {
+                            mHeading = Util::toNumber<2>(data, end);
+                        }
+                        else if (field == 7) {
+                            mSpeed = Util::toNumber<1>(data, end);
+                        }
+                    }
+                    static inline int32_t mHeading = 0;
+                    static inline int16_t mSpeed = 0;
+                };
+                struct GSV {
+                    static inline void parseFields(const char* const data, const char* const end, const uint8_t field) {
+                        if (field == 3) {
+                            mSatCount = Util::toNumber<0>(data, end);
+                        }
+                    }
+                    static inline uint8_t mSatCount = 0;
+                };
+                static inline uint16_t skipSentence(const auto& data, const uint16_t offset) {
+                    uint16_t i = offset;
+                    while(i < data.size()) {
+                        if (std::strncmp((const char*)&data[i], "\r\n", 2) == 0) {
+                            return i + 2;
+                        }
+                        ++i;
+                    }
+                    return i;
+                }
+            }
+        }
         template<uint8_t N, typename Config, typename MCU = DefaultMcu>
         struct Input {
             using clock = Config::clock;
@@ -43,6 +225,12 @@ namespace External::GPS {
             using debug = Config::debug;
             using pin = Config::pin;
             using tp = Config::tp;
+
+            using ublox = Protocols::UBlox;
+
+            using rmc = Protocols::NMEA::RMC;
+            using vtg = Protocols::NMEA::VTG;
+            using gsv = Protocols::NMEA::GSV;
 
             static inline constexpr std::array<uint32_t, 2> baudrates{9600, 115200};
 
@@ -157,7 +345,7 @@ namespace External::GPS {
                 mPackagesCount = 0;
                 return p;
             }
-            // private:
+            private:
             static inline bool validityCheck(const volatile uint8_t* const data, const uint16_t n) {
                 if (data[0] == '$') { // NMEA
                     if (data[1] != 'G') {
@@ -215,53 +403,6 @@ namespace External::GPS {
                 }
                 return data.size();
             }
-            struct UBlox {
-                static inline uint16_t parse(const uint8_t* const data) {
-                    const uint8_t msgClass = data[2];
-                    const uint8_t msgId    = data[3];
-                    const uint16_t msgLen = data[4] + (data[5] << 8);
-
-                    if ((msgClass == 0x01) && (msgId == 0x07)) {
-                        parseNavPvt(data + 6);
-                    }
-                    else if ((msgClass == 0x10) && (msgId == 0x10)) {
-                        parseEsfStatus(data + 6);
-                    }
-                    return 6 + msgLen + 2; // offset points after message
-                }
-                // private:
-                static inline void parseEsfStatus(const uint8_t* const data) {
-                    ++mStatusPackages;
-                }
-                static inline void parseNavPvt(const uint8_t* const data) {
-                    ++mNavPackages;
-                    mYear = data[4] + (data[5] << 8);
-                    mMonth = data[7];
-                    mDay = data[8];
-                    mFlags = data[21];
-                    mSatCount = data[23];
-                    mLongitude = etl::littleEndianI32(&data[24]);
-                    mLatitude  = etl::littleEndianI32(&data[28]);
-                    mSpeed = etl::littleEndianI32(&data[60]); // mm/s
-                    mSpeed *= 3600; // mm/h
-                    mSpeed /= (1000 * 100); // 1/10 km/h
-                    mHeadingM = etl::littleEndianI32(&data[64]) / 1000; // 1/100 degree
-                    mHeading = etl::littleEndianI32(&data[84]) / 1000;
-                }
-                static inline uint8_t mFlags = 0;
-                static inline int32_t mLongitude = 0;
-                static inline int32_t mLatitude  = 0;
-                static inline int32_t mSpeed = 0;
-                static inline int32_t mHeading = 0;
-                static inline int32_t mHeadingM = 0;
-                static inline uint16_t mYear = 0;
-                static inline uint8_t mMonth = 0;
-                static inline uint8_t mDay = 0;
-                static inline uint8_t mSatCount = 0;
-                static inline uint16_t mNavPackages = 0;
-                static inline uint16_t mStatusPackages = 0;
-            };
-
             static inline void readReply() {
                 uart::readBuffer([](const auto& data){
                     ++mPackagesCount;
@@ -269,156 +410,26 @@ namespace External::GPS {
                     while(i < data.size()) {
                         if (data[i] == '$') {
                             if (std::strncmp((const char*)&data[i + 3], "RMC", 3) == 0) {
-                                i = analyze<RMC>(data, i + 7);
+                                i = analyze<rmc>(data, i + 7);
                             }
                             else if (std::strncmp((const char*)&data[i + 3], "VTG", 3) == 0) {
-                                i = analyze<VTG>(data, i + 7);
+                                i = analyze<vtg>(data, i + 7);
                             }
                             else if (std::strncmp((const char*)&data[i + 3], "GSV", 3) == 0) {
-                                i = analyze<GSV>(data, i + 7);
+                                i = analyze<gsv>(data, i + 7);
                             }
                             else {
-                                i = skipSentence(data, i);
+                                i = Protocols::NMEA::skipSentence(data, i);
                             }
                         }
                         else if ((data[i] == 0xb5) && (data[i + 1] == 0x62)) {
-                            i += UBlox::parse((const uint8_t*)&data[i]);
+                            i += ublox::parse((const uint8_t*)&data[i]);
                         }
                         else {
                             ++i;
                         }
                     }
                 });
-            }
-            template<uint8_t NFrac = 1>
-            static inline int32_t toNumber(const char* const data, const char* const end) {
-                int32_t num = 0;
-                uint8_t nFrac = 0;
-                bool frac = false;
-                for(uint8_t i = 0; i < (end - data); ++i) {
-                    const char c = data[i];
-                    if (std::isdigit(c)) {
-                        num *= 10;
-                        num += etl::asDigit(c);
-                        if (frac) {
-                            ++nFrac;
-                            if (nFrac >= NFrac) {
-                                break;
-                            }
-                        }
-                    }
-                    else if (c == '.') {
-                        frac = true;
-                    }
-                }
-                return num;
-            }
-            template<bool Longitude = false>
-            static inline int32_t toCrsfDegree(const char* const data, const char* const end) {
-                static constexpr uint8_t offset = Longitude ? 1 : 0;
-                const int32_t deg = [&]{
-                    if constexpr(Longitude) {
-                        return etl::asDigit(data[0]) * 100 + etl::asDigit(data[1]) * 10 + etl::asDigit(data[2]);
-                    }
-                    else {
-                        return etl::asDigit(data[0]) * 10 + etl::asDigit(data[1]);
-                    }
-                }();
-                int32_t min = etl::asDigit(data[2 + offset]) * 10 + etl::asDigit(data[3 + offset]);;
-                uint8_t nMinFrac = 0;
-                if (data[4 + offset] == '.') {
-                    for(uint8_t i = 0; i < (end - &data[5 + offset]); ++i) {
-                        ++nMinFrac;
-                        min *= 10;
-                        min += etl::asDigit(data[5 + i + offset]);
-                    }
-                }
-                int32_t deziLat = (min * 100) / 60;
-                for(uint8_t i = 0; i < (5 - nMinFrac); ++i) {
-                    deziLat *= 10;
-                }
-                return deg * 10'000'000L + deziLat;
-            }
-            struct RMC {
-                static inline void parseFields(const char* const data, const char* const end, const uint8_t field) {
-                    if (field == 1) {
-                        for(uint8_t i = 0; (i < (end - data)) && (i < mTime.size()); ++i) {
-                            mTime[i] = data[i];
-                        }
-                    }
-                    else if (field == 2) {
-                        if (data[0] == 'A') {
-                            mTimeValid = true;
-                        }
-                        else {
-                            mTimeValid = false;
-                        }
-                    }
-                    else if (field == 3) {
-                        mLatitude = toCrsfDegree<false>(data, end);
-                    }
-                    else if (field == 4) {
-                        if (data[0] == 'N') {
-                            mLatNorth = true;
-                        }
-                        else if (data[0] == 'S') {
-                            mLatNorth = false;
-                        }
-                    }
-                    else if (field == 5) {
-                        mLongitude = toCrsfDegree<true>(data, end);
-                    }
-                    else if (field == 5) {
-                        if (data[0] == 'W') {
-                            mLonWest = true;
-                        }
-                        else if (data[0] == 'E') {
-                            mLonWest = false;
-                        }
-                    }
-                    else if (field == 9) {
-                        for(uint8_t i = 0; (i < (end - data)) && (i < mDate.size()); ++i) {
-                            mDate[i] = data[i];
-                        }
-                    }
-                }
-                static inline std::array<char, 6> mTime{};
-                static inline std::array<char, 6> mDate{};
-                static inline bool mTimeValid = false;
-                static inline int32_t mLatitude = 0;
-                static inline bool mLatNorth = true;
-                static inline int32_t mLongitude = 0;
-                static inline bool mLonWest = true;
-            };
-            struct VTG {
-                static inline void parseFields(const char* const data, const char* const end, const uint8_t field) {
-                    if (field == 1) {
-                        mHeading = toNumber<2>(data, end);
-                    }
-                    else if (field == 7) {
-                        mSpeed = toNumber<1>(data, end);
-                    }
-                }
-                static inline int32_t mHeading = 0;
-                static inline int16_t mSpeed = 0;
-            };
-            struct GSV {
-                static inline void parseFields(const char* const data, const char* const end, const uint8_t field) {
-                    if (field == 3) {
-                        mSatCount = toNumber<0>(data, end);
-                    }
-                }
-                static inline uint8_t mSatCount = 0;
-            };
-            static inline uint16_t skipSentence(const auto& data, const uint16_t offset) {
-                uint16_t i = offset;
-                while(i < data.size()) {
-                    if (std::strncmp((const char*)&data[i], "\r\n", 2) == 0) {
-                        return i + 2;
-                    }
-                    ++i;
-                }
-                return i;
             }
             static inline volatile bool mActive = false;
             static inline std::array<uint16_t, RC::Protokoll::IBus::V2::numberOfChannels> mChannels; // sbus

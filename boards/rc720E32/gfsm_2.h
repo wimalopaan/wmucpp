@@ -216,12 +216,12 @@ struct GFSM {
             });
             (++mTelemetryTick).on(telemetryTicks, []{
                 telemetry::push((uint8_t)RC::Protokoll::Crsf::V4::Type::Gps, [](auto& d){
-                        d.push_back((int32_t)gps_aux::UBlox::mLatitude);
-                        d.push_back((int32_t)gps_aux::UBlox::mLongitude);
-                        d.push_back((uint16_t)gps_aux::UBlox::mSpeed);
+                        d.push_back((int32_t)gps_aux::ublox::mLatitude);
+                        d.push_back((int32_t)gps_aux::ublox::mLongitude);
+                        d.push_back((uint16_t)gps_aux::ublox::mSpeed);
                         d.push_back(int16_t((compass::a() - 180) * 100));
                         d.push_back(uint16_t(1000));
-                        d.push_back((uint8_t)gps_aux::UBlox::mSatCount);
+                        d.push_back((uint8_t)gps_aux::ublox::mSatCount);
                 });
                 telemetry::next();
             });
@@ -233,13 +233,13 @@ struct GFSM {
             mStateTick.on(debugTicks, []{
                 const int16_t a = compass::a();
                 IO::outl<debug>("# x: ", compass::x(), " y: ", compass::y(), " z: ", compass::z(), " a: ", a);
-                IO::outl<debug>("# gps pkg: ", gps_aux::packages(), " RMC t: ", gps_aux::RMC::mTime,
-                                " sat: ", gps_aux::GSV::mSatCount,
-                                " lat: ", gps_aux::RMC::mLatitude, " lon: ", gps_aux::RMC::mLongitude, " date: ", gps_aux::RMC::mDate,
-                                " speed: ", gps_aux::VTG::mSpeed, " head: ", gps_aux::VTG::mHeading / 100);
-                IO::outl<debug>("# ublox npkg: ", gps_aux::UBlox::mNavPackages, " stat pkg: ", gps_aux::UBlox::mStatusPackages, " flags: ", gps_aux::UBlox::mFlags, " lon: ", gps_aux::UBlox::mLongitude, " lat: ", gps_aux::UBlox::mLatitude,
-                                " speed: ", gps_aux::UBlox::mSpeed,
-                                " head: ", gps_aux::UBlox::mHeading / 100, " headM: ", gps_aux::UBlox::mHeadingM / 100);
+                IO::outl<debug>("# gps pkg: ", gps_aux::packages(), " RMC t: ", gps_aux::rmc::mTime,
+                                " sat: ", gps_aux::gsv::mSatCount,
+                                " lat: ", gps_aux::rmc::mLatitude, " lon: ", gps_aux::rmc::mLongitude, " date: ", gps_aux::rmc::mDate,
+                                " speed: ", gps_aux::vtg::mSpeed, " head: ", gps_aux::vtg::mHeading / 100);
+                IO::outl<debug>("# ublox npkg: ", gps_aux::ublox::mNavPackages, " stat pkg: ", gps_aux::ublox::mStatusPackages, " flags: ", gps_aux::ublox::mFlags, " lon: ", gps_aux::ublox::mLongitude, " lat: ", gps_aux::ublox::mLatitude,
+                                " speed: ", gps_aux::ublox::mSpeed,
+                                " head: ", gps_aux::ublox::mHeading / 100, " headM: ", gps_aux::ublox::mHeadingM / 100);
                 // IO::outl<debug>("# sbus aux: ", sbus_aux::value(0));
                 // IO::outl<debug>("_end:", &_end, " _ebss:", &_ebss, " heap:", heap);
                 // IO::outl<debug>("ch0: ", crsf_in_pa::value(0), " phi0: ", polar1::phi(), " amp0: ", polar1::amp(), " a0: ", Servos::actualPos(0), " t0: ", Servos::turns(0), " phi1: ", polar2::phi(), " amp1: ", polar2::amp(), " a1: ", Servos::actualPos(1), " t1: ", Servos::turns(1));

@@ -80,6 +80,7 @@ template<typename Config, typename MCU>
 struct Devices<SW01, Config, MCU> {
     using storage = Config::storage;
 
+    // periodic clock: 4KHz: needed for the sw-uart
     using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<64_MHz, 4'000_Hz, Mcu::Stm::HSI>>;
     using systemTimer = Mcu::Stm::SystemTimer<clock, Mcu::UseInterrupts<false>, MCU>;
 
@@ -273,6 +274,7 @@ struct Devices<SW01, Config, MCU> {
     using sport_aux = RC::Protokoll::SPort::V2::Master::Serial<4, SPortAuxConfig, MCU>;
 
     struct SBusSoftUartConfig;
+    // UART# 0: software uart
     using sbus_aux = RC::Protokoll::SBus::V2::Input<0, SBusSoftUartConfig, MCU>;
 
     struct GPSAuxConfig;
