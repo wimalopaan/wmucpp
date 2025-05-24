@@ -8,12 +8,12 @@ Hardware
 ** bridge 2:
 ** bridge 3:
 * HW_02:
+* HW_03:
+** remove button
+** use G4/Hx with floating-point support
 
 Prio 0
 ------
-* S.Port @ AUX Telemetry (ESC, Servos, ...)
-* S.Port / SBus @ AUX -> CRSF Relay (Switch / Channels)
-* implement SET64 (e.g. SumDV3 for Beier USM-RC)
 * implement SBus-Switch state input (like super-simple-multiswitch)
 * use only one appid for tunneling packages to one widget
 ** appid 6000 -> Schottel
@@ -40,8 +40,6 @@ Prio 0
 
 Prio 1
 ------
-* GPS: adaption of protocol-parser to dma-pattern
-** velocity -> Telemetry
 ** maybe F9P support: yaw from GPS (moving baseline)
 
 Prio 2
@@ -51,12 +49,16 @@ Prio 2
 
 Prio 3
 ------
-* I2C
-** interface to e.g. GY-271, BMM150
-** IMU MPU6050
+* IMU MPU6050
 
 Done:
 ------
+* S.Port @ AUX Telemetry (ESC, Servos, ...)
+* S.Port / SBus @ AUX -> CRSF Relay (Switch / Channels)
+* I2C
+** QMC5883L
+* GPS: adaption of protocol-parser to dma-pattern
+** velocity -> Telemetry
 * disable/enable Schottel-computations via menu -> general CruiseController
 * S.Port / SBus @ Aux (via Software-UART)
 * implement CRSF_SUBCMD_SWITCH_SET4
