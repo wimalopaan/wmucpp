@@ -12,8 +12,20 @@ Hardware
 ** remove button
 ** use G4/Hx with floating-point support
 
+* General
+------
+* Flash-Layout (https://community.st.com/t5/stm32-mcus-embedded-software/procedures-for-developing-an-stm32-bootloader-app/td-p/382076)
+** 1) Page 0: Jump-main + EEProm
+** 2) Page 1...: main()
+
 Prio 0
 ------
+* telemetry temp. off -> LED blink code
+* calibration of QMC5883L data (normalize) -> LED blink code
+* tilt compensation via accelometer (mpu6050)
+* gps: bidirectional, send config messages to module (e.g. frequency of messages and wichh messages e.g. 0x01/0x04 to get HDOP, see edgetx/gps
+** for NMEA messages send e.g. $PUBX,40,RMC messages to disable
+* I2C bus: implement bus arbiter (time slot based)
 * implement SBus-Switch state input (like super-simple-multiswitch)
 * use only one appid for tunneling packages to one widget
 ** appid 6000 -> Schottel
@@ -53,6 +65,8 @@ Prio 3
 
 Done:
 ------
+* disable telemetry if config-protocol command issued for 30secs
+* gps: altitude
 * S.Port @ AUX Telemetry (ESC, Servos, ...)
 * S.Port / SBus @ AUX -> CRSF Relay (Switch / Channels)
 * I2C
