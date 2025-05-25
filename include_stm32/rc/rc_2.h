@@ -89,17 +89,27 @@ namespace RC {
                 namespace Type {
                     // simple
                     inline static constexpr std::byte Gps{0x02};
+                    inline static constexpr std::byte GpsTime{0x03};
+                    inline static constexpr std::byte GpsExtended{0x06};
                     inline static constexpr std::byte Vario{0x07};
                     inline static constexpr std::byte Battery{0x08};
                     inline static constexpr std::byte Baro{0x09};
+                    inline static constexpr std::byte AirSpeed{0x0a};
                     inline static constexpr std::byte HeartBeat{0x0b};
+                    inline static constexpr std::byte Rpm{0x0c};
+                    inline static constexpr std::byte Temp{0x0d};
+                    inline static constexpr std::byte Cells{0x0e};
+                    inline static constexpr std::byte VtxTelem{0x10};
                     inline static constexpr std::byte Link{0x14};
                     inline static constexpr std::byte Channels{0x16};
                     inline static constexpr std::byte SubsetChannels{0x17};
+                    inline static constexpr std::byte ChannelsPacket{0x18};
                     inline static constexpr std::byte LinkStatsRx{0x1c};
                     inline static constexpr std::byte LinkStatsTx{0x1d};
-                    inline static constexpr std::byte Altitude{0x1e};
+                    inline static constexpr std::byte Attitude{0x1e};
+                    inline static constexpr std::byte MavLinkFC{0x1f};
                     inline static constexpr std::byte FlightMode{0x21};
+                    inline static constexpr std::byte EspNow{0x22};
                     // extended
                     inline static constexpr std::byte Ping{0x28};
                     inline static constexpr std::byte Info{0x29};
