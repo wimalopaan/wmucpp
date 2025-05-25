@@ -1,6 +1,5 @@
 todo:
 -----
-* check baud rates (e.g. also 400kb for TBS)
 * running light mode: parameter: speed, activate-output, activate-next address, (pwm)
 * running light mode: crsf command messages
 * running light mode: problem: half-duplex-bus arbitration,
@@ -9,14 +8,19 @@ todo:
 * name of module (top-level)
 * watchdog
 * statt Expo: PWM Duty Max Scaling 1/0.1/0.01
-* Telemetrie (state-machine): für neue Hardware mit Spannungssensor
 * use stm32G051 instead of stm32G030/1 (more flash and RAM)
+
+questionable:
+-------------
+* Telemetrie (state-machine): für neue Hardware mit Spannungssensor
 
 details:
 -----
 
 done:
 -----
+* implement SET4M protocol
+* check baud rates (e.g. also 400kb for TBS)
 * morse parameters
 * check channel mapping???
 * remote config items (ls, type, ...) (AUTO_CONF)
