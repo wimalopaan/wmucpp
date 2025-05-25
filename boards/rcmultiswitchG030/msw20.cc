@@ -258,7 +258,7 @@ struct CrsfCallback {
                             for(uint8_t k = 0; k < 8; ++k) {
                                 const uint8_t s = (sw >> (2 * k)) & 0b11;
                                 if (s > 0) {
-                                    sw8 |= (1 << i);
+                                    sw8 |= (1 << k);
                                 }
                             }
                             SwitchCallback::set(sw8);
