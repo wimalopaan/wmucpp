@@ -131,14 +131,6 @@ struct CrsfCallback {
 
     static inline State mStreamState{State::Undefined};
 
-    static inline constexpr void disableTelemetry() {
-    }
-    static inline constexpr void gotLinkStats() {
-    }
-    static inline constexpr void gotChannels() {
-    }
-    static inline constexpr void forwardPacket(const auto /*data*/, const uint16_t /*length*/) {
-    }
     static inline constexpr void ratePeriodic() {
     }
     static inline constexpr void updateName(name_t& n) {
