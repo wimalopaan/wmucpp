@@ -179,16 +179,17 @@ struct CrsfCallback {
     }();
 
     static inline bool sendCalibrateEvent(const uint8_t v) {
-        if (v == 1) {
-            return true; // ask confirm
+        if (v == 1) { // click
+            return true; // ask confirm (3)
         }
-        else if (v == 4) {
+        // Executing (2)
+        else if (v == 4) {  // confirmed
             return notifier::startCalibrate();
         }
-        else if (v == 5) {
+        else if (v == 5) { // cancel
             return notifier::abortCalibrate();
         }
-        else if (v == 6) {
+        else if (v == 6) { // status update
             return notifier::isCalibrating();
         }
         return false;
