@@ -1,6 +1,10 @@
 ToDo
 ============
 * analog calibration
+* integrate GPS (UART)
+* integrate compass (QMC5833L)
+* intergate accelerometer (MPU6050, MPU6250)
+* deliver (modified) GPS data (ublox proto) with tilt-compensated compass data injected
 
 LUA Widget
 ============
