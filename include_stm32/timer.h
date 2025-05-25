@@ -127,26 +127,34 @@ namespace Mcu::Stm {
                 rcc->APBRSTR2 |= RCC_APBRSTR2_TIM1RST;
                 rcc->APBRSTR2 &= ~RCC_APBRSTR2_TIM1RST;
             }
+#ifdef RCC_APBRSTR1_TIM2RST
             else if constexpr (TimerNumber == 2) {
                 RCC->APBRSTR1 |= RCC_APBRSTR1_TIM2RST;
                 RCC->APBRSTR1 &= ~RCC_APBRSTR1_TIM2RST;
             }
+#endif
             else if constexpr (TimerNumber == 3) {
                 RCC->APBRSTR1 |= RCC_APBRSTR1_TIM3RST;
                 RCC->APBRSTR1 &= ~RCC_APBRSTR1_TIM3RST;
             }
+#ifdef RCC_APBRSTR1_TIM4RST
             else if constexpr (TimerNumber == 4) {
                 RCC->APBRSTR1 |= RCC_APBRSTR1_TIM4RST;
                 RCC->APBRSTR1 &= ~RCC_APBRSTR1_TIM4RST;
             }
+#endif
+#ifdef RCC_APBRSTR1_TIM6RST
             else if constexpr (TimerNumber == 6) {
                 RCC->APBRSTR1 |= RCC_APBRSTR1_TIM6RST;
                 RCC->APBRSTR1 &= ~RCC_APBRSTR1_TIM6RST;
             }
+#endif
+#ifdef RCC_APBRSTR1_TIM7RST
             else if constexpr (TimerNumber == 7) {
                 RCC->APBRSTR1 |= RCC_APBRSTR1_TIM7RST;
                 RCC->APBRSTR1 &= ~RCC_APBRSTR1_TIM7RST;
             }
+#endif
             else {
                 static_assert(false);
             }
@@ -166,9 +174,11 @@ namespace Mcu::Stm {
             else if constexpr (TimerNumber == 3) {
                 RCC->APB1ENR1 |= RCC_APB1ENR1_TIM3EN;
             }
+#ifdef RCC_APB1ENR1_TIM4EN
             else if constexpr (TimerNumber == 4) {
                 RCC->APB1ENR1 |= RCC_APB1ENR1_TIM4EN;
             }
+#endif
 #ifdef RCC_APB1ENR1_TIM5EN
             else if constexpr(TimerNumber == 5) {
                 RCC->APB1ENR1 |= RCC_APB1ENR1_TIM5EN;
@@ -191,21 +201,29 @@ namespace Mcu::Stm {
             if constexpr (TimerNumber == 1) {
                 RCC->APBENR2 |= RCC_APBENR2_TIM1EN;
             }
+#ifdef RCC_APBENR1_TIM2EN
             else if constexpr (TimerNumber == 2) {
                 RCC->APBENR1 |= RCC_APBENR1_TIM2EN;
             }
+#endif
             else if constexpr (TimerNumber == 3) {
                 RCC->APBENR1 |= RCC_APBENR1_TIM3EN;
             }
+#ifdef RCC_APBENR1_TIM4EN
             else if constexpr (TimerNumber == 4) {
                 RCC->APBENR1 |= RCC_APBENR1_TIM4EN;
             }
+#endif
+#ifdef RCC_APBENR1_TIM6EN
             else if constexpr(TimerNumber == 6) {
                 RCC->APBENR1 |= RCC_APBENR1_TIM6EN;
             }
+#endif
+#ifdef RCC_APBENR1_TIM7EN
             else if constexpr(TimerNumber == 7) {
                 RCC->APBENR1 |= RCC_APBENR1_TIM7EN;
             }
+#endif
             else {
                 static_assert(false);
             }
