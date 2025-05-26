@@ -34,17 +34,18 @@ namespace External {
     using namespace etl::literals;
 
     template<typename Device, Mcu::Stm::I2C::Address Adr, typename systemTimer, typename Debug = void>
-    struct QMC5883L {
+    struct MPU6050 {
         using dev = Device;
         using debug = Debug;
         enum class State : uint8_t {Init,
-                                    Setup, SetupWait1, SetupWait2,
+                                    Setup,
+                                    SetupWait,
                                     StartRead, Read,
                                     Idle};
 
         enum class Event : uint8_t {None, Start};
 
-        static inline constexpr External::Tick<systemTimer> initTicks{10ms};
+        static inline constexpr External::Tick<systemTimer> initTicks{50ms};
         static inline constexpr External::Tick<systemTimer> waitTicks{5ms};
 
         static inline void init() {
@@ -74,20 +75,12 @@ namespace External {
             case State::Setup:
                 if (dev::isIdle()) {
                     mStateTick.on(waitTicks, []{ // without timeout seems not to work
-                        dev::write(Adr, {0x0B, 0x01}); // see datasheet: set/reset
-                        mState = State::SetupWait1;
+                        dev::write(Adr, {0x6B, 0x00}); // see datasheet
+                        mState = State::SetupWait;
                     });
                 }
                 break;
-            case State::SetupWait1:
-                if (dev::isIdle()) {
-                    mStateTick.on(waitTicks, []{ // without timeout seems not to work
-                        dev::write(Adr, {0x09, 0b0000'0101}); // OSR=512, RNG=2G, ODR=50Hz, Mode=continuous
-                        mState = State::SetupWait2;
-                    });
-                }
-                break;
-            case State::SetupWait2:
+            case State::SetupWait:
                 if (dev::isIdle()) {
                     mState = State::Idle;
                 }
@@ -101,20 +94,20 @@ namespace External {
                 break;
             case State::StartRead:
                 if (dev::isIdle()) {
-                    dev::read(Adr, std::byte{0x00}, 6);
+                    dev::read(Adr, std::byte{0x3b}, 6);
                     mState = State::Read;
                 }
                 break;
             case State::Read:
                 if (dev::readDataAvailable()) {
                     const auto& c = dev::readData();
-                    mX = (uint16_t)c[0] + ((uint16_t)c[1] << 8);
-                    mY = (uint16_t)c[2] + ((uint16_t)c[3] << 8);
-                    mZ = (uint16_t)c[4] + ((uint16_t)c[5] << 8);
-                    IO::outl<debug>("# Qmc5883 x: ", mX);
+                    mAccX = (uint8_t)c[1] + ((uint8_t)c[0] << 8);
+                    mAccY = (uint8_t)c[3] + ((uint8_t)c[2] << 8);
+                    mAccZ = (uint8_t)c[5] + ((uint8_t)c[4] << 8);
                     mState = State::Idle;
                 }
                 mStateTick.on(waitTicks, []{
+                    mState = State::Idle;
                 });
                 break;
             }
@@ -122,25 +115,22 @@ namespace External {
                 mStateTick.reset();
                 switch(mState) {
                 case State::Init:
-                    IO::outl<debug>("# Qmc5883 Init ", Adr.value);
+                    IO::outl<debug>("# MPU6050 Init ", Adr.value);
                     break;
                 case State::Setup:
-                    IO::outl<debug>("# Qmc5883 Setup ", Adr.value);
+                    IO::outl<debug>("# MPU6050 Setup ", Adr.value);
                     break;
-                case State::SetupWait1:
-                    IO::outl<debug>("# Qmc5883 SuWait1 ", Adr.value);
-                    break;
-                case State::SetupWait2:
-                    IO::outl<debug>("# Qmc5883 SuWait2 ", Adr.value);
+                case State::SetupWait:
+                    IO::outl<debug>("# MPU6050 SuWait2 ", Adr.value);
                     break;
                 case State::StartRead:
-                    IO::outl<debug>("# Qmc5883 StRead ", Adr.value);
+                    IO::outl<debug>("# MPU6050 StRead ", Adr.value);
                     break;
                 case State::Read:
-                    IO::outl<debug>("# Qmc5883 Read ", Adr.value);
+                    IO::outl<debug>("# MPU6050 Read ", Adr.value);
                     break;
                 case State::Idle:
-                    IO::outl<debug>("# Qmc5883 Idle ", Adr.value);
+                    IO::outl<debug>("# MPU6050 Idle ", Adr.value);
                     break;
                 }
             }
@@ -151,20 +141,20 @@ namespace External {
         static inline bool isIdle() {
             return mState == State::Idle;
         }
-        static inline int32_t x() {
-            return mX;
+        static inline int32_t accX() {
+            return mAccX;
         }
-        static inline int32_t y() {
-            return mY;
+        static inline int32_t accY() {
+            return mAccY;
         }
-        static inline int32_t z() {
-            return mZ;
+        static inline int32_t accZ() {
+            return mAccZ;
         }
         private:
         // static inline bool mActive = false;
-        static inline int16_t mX = 0;
-        static inline int16_t mY = 0;
-        static inline int16_t mZ = 0;
+        static inline int16_t mAccX = 0;
+        static inline int16_t mAccY = 0;
+        static inline int16_t mAccZ = 0;
         static inline etl::Event<Event> mEvent;
         static inline External::Tick<systemTimer> mStateTick;
         static inline State mState{State::Init};
