@@ -70,6 +70,7 @@
 #include "multiplex_pulses.h"
 #include "uuid.h"
 #include "qmc5883l.h"
+#include "mpu6050.h"
 
 struct SW01;
 
@@ -318,9 +319,10 @@ struct Devices<SW01, Config, MCU> {
     using i2c = Mcu::Stm::I2C::V2::Master<3, I2C3Config>;
 
     static inline constexpr Mcu::Stm::I2C::Address qmcAdr{0x0d};
-
     using qmc5883l = External::QMC5883L<i2c, qmcAdr, systemTimer, void>;
 
+    static inline constexpr Mcu::Stm::I2C::Address mpu6050Adr{0x68};
+    using mpu6050 = External::MPU6050<i2c, mpu6050Adr, systemTimer, void>;
 
     struct RelayConfig {
         using pin = sbus_crsf_pin;
@@ -566,6 +568,7 @@ struct Devices<SW01, Config, MCU> {
         // adc::oversample(8); // 256
 
         qmc5883l::init();
+        mpu6050::init();
 
         tp1::template dir<Mcu::Output>();
         tp3::template dir<Mcu::Output>();

@@ -10,7 +10,7 @@ Hardware
 * HW_02:
 * HW_03:
 ** remove button
-** use G4/Hx with floating-point support
+** use H523 with floating-point support
 
 * General
 ------

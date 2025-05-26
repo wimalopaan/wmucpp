@@ -25,13 +25,15 @@ struct FastMath {
     static inline constexpr float pi_2 = std::numbers::pi_v<float> / 2.0f;
     static inline constexpr float pi_4 = std::numbers::pi_v<float> / 4.0f;
 
-    template<auto Max = 820, auto Res = 4096>
+    // [0, Res] : Res -> 2pi
+    template<uint16_t Max = 820, uint16_t Res = 4096>
     static inline uint16_t uatan2(const int16_t y, const int16_t x) {
-        static constexpr auto atan_lut = []consteval{
+        static constexpr auto atan_lut = [] consteval {
             std::array<uint16_t, Max + 1> lut;
             for(uint16_t i = 0; i < lut.size(); ++i) {
                 lut[i] = (std::atan((float)i / Max) / pi_4) * Res / 8;
             }
+            lut[Max] = Res / 8;
             return lut;
         }();
 
@@ -87,8 +89,119 @@ struct FastMath {
             }
         }
     }
+    // [-Res, Res] : Res -> pi
+    template<uint16_t Max = 820, uint16_t Res = 2000>
+    static inline int16_t atan2(const int16_t y, const int16_t x) {
+        static constexpr auto atan_lut = []consteval{
+            std::array<uint16_t, Max + 1> lut;
+            for(uint16_t i = 0; i < lut.size(); ++i) {
+                lut[i] = (std::atan((float)i / Max) / pi_4) * Res / 4;
+            }
+            lut[Max] = Res / 4;
+            return lut;
+        }();
+
+        if (x == 0) {
+            if (y > 0) {
+                return Res / 2;
+            }
+            else if (y < 0) {
+                return -Res / 2;
+            }
+            else { // y == 0
+                return 0;
+            }
+        }
+        else { // x != 0
+            const uint16_t xa = std::abs(x);
+            const uint16_t ya = std::abs(y);
+            if (x > 0) {
+                if (y >= 0) { // Q1
+                    if (xa >= ya) {
+                        return atan_lut[(ya * Max) / xa];
+                    }
+                    else {
+                        return (Res / 2) - atan_lut[(xa * Max) / ya];
+                    }
+                }
+                else { // Q4
+                    if (xa >= ya) {
+                        return -atan_lut[(ya * Max) / xa];
+                    }
+                    else {
+                        return -(Res / 2) + atan_lut[(xa * Max) / ya];
+                    }
+                }
+            }
+            else {
+                if (y >= 0) { // Q2
+                    if (xa >= ya) {
+                        return Res - atan_lut[(ya * Max) / xa];
+                    }
+                    else {
+                        return (Res / 2) + atan_lut[(xa * Max) / ya];
+                    }
+                }
+                else { // Q3
+                    if (xa >= ya) {
+                        return -Res + atan_lut[(ya * Max) / xa];
+                    }
+                    else {
+                        return -(Res / 2) - atan_lut[(xa * Max) / ya];
+                    }
+                }
+            }
+        }
+    }
+
+    // [-Max, Max] -> [-Res, Res]
+    template<uint16_t Max = (pi * 1000), uint16_t Res = 1000>
+    static inline int16_t cos(const int16_t x) {
+        static constexpr auto cos_lut = [] consteval {
+            std::array<int16_t, Max + 1> lut;
+            for(uint16_t i = 0; i < lut.size(); ++i) {
+                lut[i] = std::cos((i * pi) / Max) * Res;
+            }
+            lut[Max] = -Res;
+            return lut;
+        }();
+
+        const uint16_t xa = std::abs(x);
+        return cos_lut[xa];
+    }
+    // [-Max, Max] -> [-Res, Res]
+    template<uint16_t Max = (pi * 1000), uint16_t Res = 1000>
+    static inline int16_t sin(const int16_t x) {
+        static constexpr auto sin_lut = [] consteval {
+            std::array<int16_t, Max + 1> lut;
+            for(uint16_t i = 0; i < lut.size(); ++i) {
+                lut[i] = std::sin((i * pi) / Max) * Res;
+            }
+            lut[Max] = 0;
+            return lut;
+        }();
+
+        if (x >= 0) {
+            return sin_lut[x];
+        }
+        else {
+            return -sin_lut[-x];
+        }
+    }
+
+
     static inline unsigned usqrt4(const unsigned val) {
         unsigned a, b;
+        if (val < 2) return val; /* avoid div/0 */
+        a = val / 3;
+        b = val / a; a = (a+b) /2;
+        b = val / a; a = (a+b) /2;
+        b = val / a; a = (a+b) /2;
+        b = val / a; a = (a+b) /2;
+        return a;
+    }
+    static inline uint32_t usqrt(const uint32_t val) {
+        uint32_t a, b;
         if (val < 2) return val; /* avoid div/0 */
         a = val / 3;
         b = val / a; a = (a+b) /2;

@@ -46,6 +46,9 @@ namespace etl {
             }
             return false;
         }
+        explicit operator bool() const {
+            return mEvent != T::None;
+        }
         private:
         T mEvent = T::None;
     };

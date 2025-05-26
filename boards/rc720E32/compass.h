@@ -3,75 +3,229 @@
 #include "etl/algorithm.h"
 #include "fastmath.h"
 #include "tick.h"
+#include "etl/event.h"
 
 using namespace std::literals::chrono_literals;
 
-struct ExpMeanInt {
-    explicit ExpMeanInt(const int32_t n, const int32_t d) : mN{n}, mD{d} {}
-    inline int32_t process(const int32_t v) {
+// todo: move to dsp.h
+template<typename T = int32_t>
+struct ExpMean {
+    explicit ExpMean(const T n, const T d) : mN{n}, mD{d} {}
+    inline T process(const T v) {
         mValue = (mValue * mN) / mD + (v * (mD - mN)) / mD;
         return mValue;
     }
-    inline int32_t value() const {
+    inline T value() const {
         return mValue;
     }
-    inline void setN(const int32_t n) {
+    inline void setN(const T n) {
         mN = n;
     }
     private:
-    int32_t mN = 100;
-    int32_t mD = 100;
-    int32_t mValue = 0;
+    T mN = 100;
+    T mD = 100;
+    T mValue = 0;
 };
-template<typename Dev, typename systemTimer, typename Client>
+
+// todo: re-add calibration
+// todo: use Config type
+template<typename Dev, typename systemTimer, typename Client, typename Accelerometer, typename tp>
 struct Compass {
     using dev = Dev;
+    using acc = Accelerometer;
 
-    static inline constexpr External::Tick<systemTimer> updateTicks{20ms};
+    // all inits must be done in this time slot
+    // todo: I2C devs must specify the time for init
+    static inline constexpr External::Tick<systemTimer> initTicks{200ms};
+    static inline constexpr External::Tick<systemTimer> idleTicks{10ms};
+
+    enum class State : uint8_t {Init, Idle, ReadMagneto, ReadAccel, CalibMagneto};
+    enum class Event : uint8_t {None, StartCalibrate, StopCalibrate};
 
     static inline void startCalibrate() {
         mXrange = MinMax{};
         mYrange = MinMax{};
         mZrange = MinMax{};
-        mCalibrating = true;
         Client::start();
+        mEvent = Event::StartCalibrate;
     }
     static inline void stopCalibrate() {
-        mCalibrating = false;
         Client::end();
+        mEvent = Event::StopCalibrate;
     }
     static inline void periodic() {
         dev::periodic();
+        acc::periodic();
     }
     static inline void ratePeriodic() {
         dev::ratePeriodic();
-        (++mTicks).on(updateTicks, []{
-            mX.process(dev::x());
-            mY.process(dev::y());
-            mZ.process(dev::z());
-            if (mCalibrating) {
-                mXrange.add(dev::x(), []{Client::update();});
-                mYrange.add(dev::y(), []{Client::update();});
-                mZrange.add(dev::z(), []{Client::update();});
+        acc::ratePeriodic();
+        const auto oldState = mState;
+        ++mStateTicks;
+        switch(mState) {
+        case State::Init:
+            mStateTicks.on(initTicks, []{
+               mState = State::Idle;
+            });
+            break;
+        case State::CalibMagneto:
+            if (mEvent.is(Event::StopCalibrate)) {
+                mState = State::Idle;
             }
-            dev::startRead();
-        });
+            else {
+                if (dev::isIdle() && !dev::isPendingEvent()) {
+                    mXrange.add(dev::x(), []{Client::update();});
+                    mYrange.add(dev::y(), []{Client::update();});
+                    mZrange.add(dev::z(), []{Client::update();});
+                    calculateCalibration();
+                    dev::startRead();
+                }
+            }
+            break;
+        case State::Idle:
+            if (mEvent.is(Event::StartCalibrate)) {
+                dev::startRead();
+                mState = State::CalibMagneto;
+            }
+            else {
+                mStateTicks.on(idleTicks, []{
+                    dev::startRead();
+                    mState = State::ReadMagneto;
+                });
+            }
+            break;
+        case State::ReadMagneto:
+            if (dev::isIdle() && !dev::isPendingEvent()) {
+                mX.process(dev::x());
+                mY.process(dev::y());
+                mZ.process(dev::z());
+                mState = State::ReadAccel;
+                acc::startRead();
+            }
+            break;
+        case State::ReadAccel:
+            if (acc::isIdle() && !acc::isPendingEvent()) {
+                mAccX.process(acc::accX());
+                mAccY.process(acc::accY());
+                mAccZ.process(acc::accZ());
+                mState = State::Idle;
+            }
+            break;
+        }
+        if (oldState != mState) {
+            mStateTicks.reset();
+        }
     }
     static inline int16_t x() {
-        return mX.value();
+        return mXCalib.calc(mX.value());
     }
     static inline int16_t y() {
-        return mY.value();
+        return mYCalib.calc(mY.value());
     }
     static inline int16_t z() {
-        return mZ.value();
+        return mZCalib.calc(mZ.value());
+    }
+    static inline int16_t accX() {
+        return mAccX.value();
+    }
+    static inline int16_t accY() {
+        return mAccY.value();
+    }
+    static inline int16_t accZ() {
+        return mAccZ.value();
     }
     static inline int16_t a() {
         return FastMath::uatan2<1000, 360>(mY.value(), mX.value());
     }
+
+    static inline constexpr uint16_t ipi = FastMath::pi * 1000;
+    static inline constexpr int16_t scale = 1000;
+
+    static inline std::pair<int16_t, int16_t> pitchRoll_I() {
+        const int16_t ax = accX();
+        const int16_t ay = accY();
+        const int16_t az = accZ();
+        const uint32_t ax2 = ax * ax;
+        const uint32_t ay2 = ay * ay;
+        const uint32_t az2 = az * az;
+
+        const int16_t sq_zy = std::sqrt(az2 + ay2);
+        const int16_t sq_zx = std::sqrt(az2 + ax2);
+        // const int16_t sq_zy = FastMath::usqrt(az2 + ay2);
+        // const int16_t sq_zx = FastMath::usqrt(az2 + ax2);
+
+        const int16_t pitch = -FastMath::atan2<scale, ipi>(ax, sq_zy);
+        const int16_t roll  = FastMath::atan2<scale, ipi>(ay, sq_zx);
+
+        if (az >= 0) {
+            return {pitch, roll};
+        }
+        else {
+            return {-pitch, -roll};
+        }
+    }
+    // static inline std::pair<float, float> pitchRoll() {
+    //     const float ax = accX();
+    //     const float ay = accY();
+    //     const float az = accZ();
+    //     const float ax2 = ax * ax;
+    //     const float ay2 = ay * ay;
+    //     const float az2 = az * az;
+
+    //     const float sq_zy = std::sqrt(az2 + ay2);
+    //     const float sq_zx = std::sqrt(az2 + ax2);
+
+    //     const float pitch = -std::atan2(ax, sq_zy);
+    //     const float roll  = std::atan2(ay, sq_zx);
+
+    //     if (az >= 0) {
+    //         return {pitch, roll};
+    //     }
+    //     else {
+    //         return {-pitch, -roll};
+    //     }
+    // }
+    // // 452µs
+    // static inline int16_t aComp() {
+    //     tp::set();
+    //     const float mag_x = x();
+    //     const float mag_y = y();
+    //     const float mag_z = z();
+
+    //     const auto [p, r] = pitchRoll();
+
+    //     const float X_h = mag_x * std::cos(p) + mag_z * std::sin(p);
+    //     const float Y_h = mag_x * std::sin(r) * std::sin(p) + mag_y * std::cos(r) - mag_z * std::sin(r) * std::cos(p);
+    //     const float azimuth = std::atan2(Y_h, X_h);
+
+    //     tp::reset();
+    //     return azimuth * 1000;
+    // }
+
+    static inline int16_t aComp_I() {
+        tp::set();
+        const int16_t mag_x = x();
+        const int16_t mag_y = y();
+        const int16_t mag_z = z();
+
+        const auto [p, r] = pitchRoll_I();
+
+        const int16_t X_h = (mag_x * FastMath::cos<ipi, scale>(p) + mag_z * FastMath::sin<ipi, scale>(p)) / scale;
+        const int16_t Y_h = ((mag_x * FastMath::sin<ipi, scale>(r) * FastMath::sin<ipi, scale>(p)) / scale +
+                             mag_y * FastMath::cos<ipi, scale>(r) -
+                             (mag_z * FastMath::sin<ipi, scale>(r) * FastMath::cos<ipi, scale>(p)) / scale) / scale;
+        const int16_t azimuth = FastMath::atan2<scale, ipi>(Y_h, X_h);
+
+        tp::reset();
+        return azimuth;
+    }
+
     template<typename Debug>
     static inline void debugInfo() {
         IO::outl<Debug>("# compass", " xmin: ", mXrange.min, " xmax: ", mXrange.max, " ymin: ", mYrange.min, " ymax: ", mYrange.max, " zmin: ", mZrange.min, " zmax: ", mZrange.max);
+        mXCalib.template debugInfo<Debug>();
+        mYCalib.template debugInfo<Debug>();
+        mZCalib.template debugInfo<Debug>();
     }
     private:
     struct MinMax {
@@ -85,20 +239,61 @@ struct Compass {
                 notify();
             }
         }
-        void operator+=(const int16_t v) {
-            if (v < min) min = v;
-            if (v > max) max = v;
-        }
         int16_t min = 0;
         int16_t max = 0;
     };
-    static inline bool mCalibrating = false;
+    struct Calib {
+        explicit Calib(const MinMax& mm = MinMax{}) {
+            if ((mm.max - mm.min) > 2000) {
+                mean = (mm.max + mm.min) / 2;
+                d = (mm.max - mm.min) / 2;
+            }
+        }
+        int16_t calc(const int16_t v) {
+            if (d != 0) {
+                const int16_t v0 = v - mean;
+                return (v0 * int32_t(1000)) / d;
+            }
+            else {
+                return v;
+            }
+        }
+        template<typename Debug>
+        void debugInfo() {
+            IO::outl<Debug>("# mean: ", mean, " d: ", d);
+        }
+        explicit operator bool() const {
+            return (d != 0);
+        }
+        private:
+        int16_t mean = 0;
+        int16_t d = 0;
+    };
+    static inline void calculateCalibration() {
+        mXCalib = Calib{mXrange};
+        mYCalib = Calib{mYrange};
+        mZCalib = Calib{mZrange};
+        if (!(mXCalib && mYCalib && mYCalib)) {
+            mXCalib = Calib{};
+            mYCalib = Calib{};
+            mZCalib = Calib{};
+        }
+    }
     static inline MinMax mXrange;
     static inline MinMax mYrange;
     static inline MinMax mZrange;
-    static inline ExpMeanInt mX{90, 100};
-    static inline ExpMeanInt mY{90, 100};
-    static inline ExpMeanInt mZ{90, 100};
-    static inline External::Tick<systemTimer> mTicks;
+    static inline Calib mXCalib;
+    static inline Calib mYCalib;
+    static inline Calib mZCalib;
 
+    static inline ExpMean mX{90, 100};
+    static inline ExpMean mY{90, 100};
+    static inline ExpMean mZ{90, 100};
+    static inline ExpMean mAccX{90, 100};
+    static inline ExpMean mAccY{90, 100};
+    static inline ExpMean mAccZ{90, 100};
+
+    static inline etl::Event<Event> mEvent;
+    static inline State mState = State::Init;
+    static inline External::Tick<systemTimer> mStateTicks;
 };

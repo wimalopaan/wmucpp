@@ -601,6 +601,7 @@ include_stm32/meta.h
 include_stm32/motor/bdc.h
 include_stm32/motor/bldc.h
 include_stm32/motor/foc.h
+include_stm32/mpu6050.h
 include_stm32/opamp.h
 include_stm32/output.h
 include_stm32/pcal6408.h

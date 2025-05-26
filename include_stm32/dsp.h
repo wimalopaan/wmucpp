@@ -63,54 +63,51 @@ namespace Dsp {
     }
 
     namespace Butterworth {
-
-    template<uint8_t N, typename T = float>
-    struct LowPass {
-        using NVT = std::remove_volatile_t<T>;
-        constexpr float fs() {
-            return mFs;
-        }
-        constexpr void fs(const NVT f) {
-            setup(f, mFc);
-        }
-        constexpr void fc(const NVT f) {
-            setup(mFs, f);
-        }
-        constexpr void setup(const NVT fs, const NVT fc) {
-            mFs = fs;
-            mFc = fc;
-            const float w = 2 * std::numbers::pi * fc / fs;
-            for(uint8_t i{0}; i < N; ++i) {
-                uint8_t k = N - i - 1;
-                const float phi = std::numbers::pi / (4.0 * N) * (k * 2 + 1);
-                const float alpha = sin(w) * cos(phi);
-                b[i][0] = (1.0 - cos(w)) / (2 * (1.0 + alpha));
-                b[i][1] = (1 - cos(w)) / (1.0 + alpha);
-                b[i][2] = (1.0 - cos(w)) / (2 * (1.0 + alpha));
-                a[i][0] = 1;
-                a[i][1] = -2 * cos(w) / (1.0 + alpha);
-                a[i][2] = (1.0 - alpha) / (1.0 + alpha);
+        template<uint8_t N, typename T = float>
+        struct LowPass {
+            using NVT = std::remove_volatile_t<T>;
+            constexpr float fs() {
+                return mFs;
             }
-        }
-        constexpr float process(NVT v) {
-            for(uint8_t i{0}; i < N; ++i) {
-                w[i][0] = v - a[i][1] * w[i][1] - a[i][2] * w[i][2];
-                v = b[i][0] * w[i][0] + b[i][1] * w[i][1] + b[i][2] * w[i][2];
-                w[i][2] = w[i][1];
-                w[i][1] = w[i][0];
+            constexpr void fs(const NVT f) {
+                setup(f, mFc);
             }
-            return v;
-        }
-    private:
-        T mFs{20'000};
-        T mFc{1'000};
-        std::array<std::array<T, 3>, N> w;
-        std::array<std::array<T, 3>, N> a;
-        std::array<std::array<T, 3>, N> b;
-    };
-
+            constexpr void fc(const NVT f) {
+                setup(mFs, f);
+            }
+            constexpr void setup(const NVT fs, const NVT fc) {
+                mFs = fs;
+                mFc = fc;
+                const float w = 2 * std::numbers::pi * fc / fs;
+                for(uint8_t i{0}; i < N; ++i) {
+                    uint8_t k = N - i - 1;
+                    const float phi = std::numbers::pi / (4.0 * N) * (k * 2 + 1);
+                    const float alpha = sin(w) * cos(phi);
+                    b[i][0] = (1.0 - cos(w)) / (2 * (1.0 + alpha));
+                    b[i][1] = (1 - cos(w)) / (1.0 + alpha);
+                    b[i][2] = (1.0 - cos(w)) / (2 * (1.0 + alpha));
+                    a[i][0] = 1;
+                    a[i][1] = -2 * cos(w) / (1.0 + alpha);
+                    a[i][2] = (1.0 - alpha) / (1.0 + alpha);
+                }
+            }
+            constexpr float process(NVT v) {
+                for(uint8_t i{0}; i < N; ++i) {
+                    w[i][0] = v - a[i][1] * w[i][1] - a[i][2] * w[i][2];
+                    v = b[i][0] * w[i][0] + b[i][1] * w[i][1] + b[i][2] * w[i][2];
+                    w[i][2] = w[i][1];
+                    w[i][1] = w[i][0];
+                }
+                return v;
+            }
+        private:
+            T mFs{20'000};
+            T mFc{1'000};
+            std::array<std::array<T, 3>, N> w;
+            std::array<std::array<T, 3>, N> a;
+            std::array<std::array<T, 3>, N> b;
+        };
     }
-
     template<typename Config>
     struct ExpMax {
         constexpr explicit ExpMax(const float f) : f{f} {}
@@ -142,8 +139,6 @@ namespace Dsp {
         float f{};
         float min{};
     };
-
-
     template<typename Config = void>
     struct ExpMean {
         constexpr explicit ExpMean(const float f = 0.0f) : f{f} {}
@@ -153,7 +148,6 @@ namespace Dsp {
             const float out = process((float)v);
             return etl::ranged_NaN<L, U>(out);
         }
-
         constexpr float process(const float v) volatile {
             mean = f * v + (1.0 - f) * mean;
             return mean;
@@ -171,8 +165,6 @@ namespace Dsp {
         float f{};
         float mean{};
     };
-
-
     template<typename Config>
     struct HystereseThreshold {
         HystereseThreshold(const float f) : mMean{f}, mMax{0.1f * f}, mMin{0.1f * f} {}

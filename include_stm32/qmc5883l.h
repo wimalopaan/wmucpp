@@ -115,6 +115,7 @@ namespace External {
                     mState = State::Idle;
                 }
                 mStateTick.on(waitTicks, []{
+                    mState = State::Idle;
                 });
                 break;
             }

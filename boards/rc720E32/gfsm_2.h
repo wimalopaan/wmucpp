@@ -70,6 +70,7 @@ struct GFSM {
 
     using i2c = devs::i2c;
     using magnetometer = devs::qmc5883l;
+    using accelerometer = devs::mpu6050;
 
     struct CalibClient {
         static inline void update() {
@@ -82,7 +83,7 @@ struct GFSM {
             event(Event::CompassCalibEnd);
         }
     };
-    using compass = Compass<magnetometer, systemTimer, CalibClient>;
+    using compass = Compass<magnetometer, systemTimer, CalibClient, accelerometer, typename devs::tp1>;
 
     using sbus_aux = devs::sbus_aux;
     using gps_aux = devs::gps_aux;
@@ -254,7 +255,14 @@ struct GFSM {
             });
             mStateTick.on(debugTicks, []{
                 const int16_t a = compass::a();
-                IO::outl<debug>("# x: ", compass::x(), " y: ", compass::y(), " z: ", compass::z(), " a: ", a);
+                IO::outl<debug>("# x: ", compass::x(), " y: ", compass::y(), " z: ", compass::z(), " a: ", a, " ax: ", compass::accX(), " ay: ", compass::accY(), " az: ", compass::accZ());
+                // IO::outl<debug>("# ac: ", compass::aComp());
+                // const auto prf = compass::pitchRoll();
+                // IO::outl<debug>("# pf: ", (int16_t)(prf.first * 1000), " rf: ", (int16_t)(prf.second * 1000));
+                // const auto pri = compass::pitchRoll_I();
+                // IO::outl<debug>("# pi: ", pri.first, " ri: ", pri.second);
+                IO::outl<debug>("# aci: ", compass::aComp_I());
+
                 // IO::outl<debug>("# gps pkg: ", gps_aux::packages(), " RMC t: ", gps_aux::rmc::mTime,
                 //                 " sat: ", gps_aux::gsv::mSatCount,
                 //                 " lat: ", gps_aux::rmc::mLatitude, " lon: ", gps_aux::rmc::mLongitude, " date: ", gps_aux::rmc::mDate,
@@ -349,11 +357,11 @@ struct GFSM {
                 led2::event(led2::Event::Fast);
                 break;
             case State::CompassCalib:
-                IO::outl<debug>("# CompassCalib");
+                // IO::outl<debug>("# CompassCalib");
                 led2::event(led2::Event::Off);
                 break;
             case State::CompassCalibUdated:
-                IO::outl<debug>("# CompassCalibUpdated");
+                // IO::outl<debug>("# CompassCalibUpdated");
                 led2::event(led2::Event::Steady);
                 break;
             case State::I2CScan:
