@@ -28,15 +28,19 @@ struct ExpMean {
     T mValue = 0;
 };
 
-// todo: use Config type
-template<typename Dev, typename systemTimer, typename Client, typename Accelerometer, typename Storage, typename tp>
+// template<typename Dev, typename systemTimer, typename Client, typename Accelerometer, typename Storage, typename tp>
+template<typename Config>
 struct Compass {
-    using dev = Dev;
-    using acc = Accelerometer;
-    using storage = Storage;
+    using magnetometer = Config::magnetometer;
+    using acc = Config::accelerometer;
+    using storage = Config::storage;
+    using client = Config::client;
+    using systemTimer = Config::timer;
+    using tp = Config::tp;
+    using debug = Config::debug;
 
     // all inits must be done in this time slot
-    // todo: I2C devs must specify the time for init
+    // todo: I2C magnetometers must specify the time for init
     static inline constexpr External::Tick<systemTimer> initTicks{200ms};
     static inline constexpr External::Tick<systemTimer> idleTicks{10ms};
 
@@ -47,7 +51,7 @@ struct Compass {
     static inline constexpr int16_t scale = 1000;
     static inline constexpr uint16_t ipi = FastMath::pi * scale;
 
-    static inline constexpr auto& eeprom = Storage::eeprom;
+    static inline constexpr auto& eeprom = storage::eeprom;
 
     static inline void init() {
         mXCalib = Calib{eeprom.compass_calib[0].mean, eeprom.compass_calib[0].d};
@@ -59,7 +63,7 @@ struct Compass {
         mXrange = MinMax{};
         mYrange = MinMax{};
         mZrange = MinMax{};
-        Client::start();
+        client::start();
         mEvent = Event::StartCalibrate;
     }
     static inline void stopCalibrate() {
@@ -71,18 +75,18 @@ struct Compass {
             eeprom.compass_calib[2].mean = mZCalib.mean;
             eeprom.compass_calib[2].d    = mZCalib.d;
         }
-        Client::end();
+        client::end();
         mEvent = Event::StopCalibrate;
     }
     static inline bool isCalibrating() {
         return (mState == State::CalibMagneto);
     }
     static inline void periodic() {
-        dev::periodic();
+        magnetometer::periodic();
         acc::periodic();
     }
     static inline void ratePeriodic() {
-        dev::ratePeriodic();
+        magnetometer::ratePeriodic();
         acc::ratePeriodic();
         const auto oldState = mState;
         ++mStateTicks;
@@ -97,32 +101,32 @@ struct Compass {
                 mState = State::Idle;
             }
             else {
-                if (dev::isIdle() && !dev::isPendingEvent()) {
-                    mXrange.add(dev::x(), []{Client::update();});
-                    mYrange.add(dev::y(), []{Client::update();});
-                    mZrange.add(dev::z(), []{Client::update();});
+                if (magnetometer::isIdle() && !magnetometer::isPendingEvent()) {
+                    mXrange.add(magnetometer::x(), []{client::update();});
+                    mYrange.add(magnetometer::y(), []{client::update();});
+                    mZrange.add(magnetometer::z(), []{client::update();});
                     calculateCalibration();
-                    dev::startRead();
+                    magnetometer::startRead();
                 }
             }
             break;
         case State::Idle:
             if (mEvent.is(Event::StartCalibrate)) {
-                dev::startRead();
+                magnetometer::startRead();
                 mState = State::CalibMagneto;
             }
             else {
                 mStateTicks.on(idleTicks, []{
-                    dev::startRead();
+                    magnetometer::startRead();
                     mState = State::ReadMagneto;
                 });
             }
             break;
         case State::ReadMagneto:
-            if (dev::isIdle() && !dev::isPendingEvent()) {
-                mX.process(dev::x());
-                mY.process(dev::y());
-                mZ.process(dev::z());
+            if (magnetometer::isIdle() && !magnetometer::isPendingEvent()) {
+                mX.process(magnetometer::x());
+                mY.process(magnetometer::y());
+                mZ.process(magnetometer::z());
                 mState = State::ReadAccel;
                 acc::startRead();
             }
@@ -159,7 +163,7 @@ struct Compass {
         return mAccZ.value();
     }
     static inline int16_t a() {
-        return FastMath::uatan2<scale, 360>(mY.value(), mX.value());
+        return FastMath::uatan2<scale, ipi>(mY.value(), mX.value());
     }
     static inline std::pair<int16_t, int16_t> pitchRoll_I() {
         const int16_t ax = accX();
@@ -168,15 +172,10 @@ struct Compass {
         const uint32_t ax2 = ax * ax;
         const uint32_t ay2 = ay * ay;
         const uint32_t az2 = az * az;
-
-        const int16_t sq_zy = std::sqrt(az2 + ay2);
-        const int16_t sq_zx = std::sqrt(az2 + ax2);
-        // const int16_t sq_zy = FastMath::usqrt(az2 + ay2);
-        // const int16_t sq_zx = FastMath::usqrt(az2 + ax2);
-
+        const int16_t sq_zy = FastMath::isqrt(az2 + ay2);
+        const int16_t sq_zx = FastMath::isqrt(az2 + ax2);
         const int16_t pitch = -FastMath::atan2<scale, ipi>(ax, sq_zy);
         const int16_t roll  = FastMath::atan2<scale, ipi>(ay, sq_zx);
-
         if (az >= 0) {
             return {pitch, roll};
         }
@@ -222,7 +221,7 @@ struct Compass {
     //     return azimuth * 1000;
     // }
 
-    // 100µs
+    // 34µs
     static inline int16_t aComp_I() {
         tp::set();
         const int16_t mag_x = x();

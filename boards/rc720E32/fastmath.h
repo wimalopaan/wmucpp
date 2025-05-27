@@ -188,8 +188,6 @@ struct FastMath {
             return -sin_lut[-x];
         }
     }
-
-
     static inline unsigned usqrt4(const unsigned val) {
         unsigned a, b;
         if (val < 2) return val; /* avoid div/0 */
@@ -200,15 +198,15 @@ struct FastMath {
         b = val / a; a = (a+b) /2;
         return a;
     }
-    static inline uint32_t usqrt(const uint32_t val) {
-        uint32_t a, b;
-        if (val < 2) return val; /* avoid div/0 */
-        a = val / 3;
-        b = val / a; a = (a+b) /2;
-        b = val / a; a = (a+b) /2;
-        b = val / a; a = (a+b) /2;
-        b = val / a; a = (a+b) /2;
-        return a;
+    static inline unsigned isqrt(unsigned long val) {
+        unsigned long temp, g=0, b = 0x8000, bshft = 15;
+        do {
+            if (val >= (temp = (((g << 1) + b)<<bshft--))) {
+                g += b;
+                val -= temp;
+            }
+        } while (b >>= 1);
+        return g;
     }
 };
 

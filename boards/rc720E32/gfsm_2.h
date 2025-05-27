@@ -85,7 +85,16 @@ struct GFSM {
             event(Event::CompassCalibEnd);
         }
     };
-    using compass = Compass<magnetometer, systemTimer, CalibClient, accelerometer, storage, typename devs::tp1>;
+    struct CompassConfig {
+        using magnetometer = GFSM::magnetometer;
+        using timer = GFSM::systemTimer;
+        using client = CalibClient;
+        using accelerometer = GFSM::accelerometer;
+        using storage = GFSM::storage;
+        using tp = devs::tp1;
+        using debug = GFSM::debug;
+    };
+    using compass = Compass<CompassConfig>;
 
     using sbus_aux = devs::sbus_aux;
     using gps_aux = devs::gps_aux;
