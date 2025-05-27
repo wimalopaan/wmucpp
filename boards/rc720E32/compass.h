@@ -41,7 +41,7 @@ struct Compass {
     static inline constexpr External::Tick<systemTimer> idleTicks{10ms};
 
     enum class State : uint8_t {Init, Idle, ReadMagneto, ReadAccel, CalibMagneto};
-    enum class Event : uint8_t {None, StartCalibrate, StopCalibrate};
+    enum     class Event : uint8_t {None, StartCalibrate, StopCalibrate};
 
     // scale all integer operations (lack of floating point)
     static inline constexpr int16_t scale = 1000;
@@ -63,14 +63,19 @@ struct Compass {
         mEvent = Event::StartCalibrate;
     }
     static inline void stopCalibrate() {
-        eeprom.compass_calib[0].mean = mXCalib.mean;
-        eeprom.compass_calib[0].d    = mXCalib.d;
-        eeprom.compass_calib[1].mean = mYCalib.mean;
-        eeprom.compass_calib[1].d    = mYCalib.d;
-        eeprom.compass_calib[2].mean = mZCalib.mean;
-        eeprom.compass_calib[2].d    = mZCalib.d;
+        if (mXCalib && mYCalib && mYCalib) {
+            eeprom.compass_calib[0].mean = mXCalib.mean;
+            eeprom.compass_calib[0].d    = mXCalib.d;
+            eeprom.compass_calib[1].mean = mYCalib.mean;
+            eeprom.compass_calib[1].d    = mYCalib.d;
+            eeprom.compass_calib[2].mean = mZCalib.mean;
+            eeprom.compass_calib[2].d    = mZCalib.d;
+        }
         Client::end();
         mEvent = Event::StopCalibrate;
+    }
+    static inline bool isCalibrating() {
+        return (mState == State::CalibMagneto);
     }
     static inline void periodic() {
         dev::periodic();
@@ -259,7 +264,7 @@ struct Compass {
         int16_t max = 0;
     };
     struct Calib {
-        explicit Calib(const uint16_t m, const uint16_t d) : mean{m}, d{d} {}
+        explicit Calib(const int16_t m, const int16_t d) : mean{m}, d{d} {}
         explicit Calib(const MinMax& mm = MinMax{}) {
             if ((mm.max - mm.min) > 2000) {
                 mean = (mm.max + mm.min) / 2;

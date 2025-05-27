@@ -96,6 +96,8 @@ struct GFSM {
         crsf_in::address(std::byte(CRSF_ADDRESS));
 #endif
         crsf_in_responder::telemetrySlot(0);
+
+        compass::init();
     }
 
     enum class Event : uint8_t {None, ConnectionLost, DirectConnected, ReceiverConnected,
@@ -112,8 +114,8 @@ struct GFSM {
     }
 
     static inline void updateFromEeprom() {
-        using cb = crsf_in::callback;
-        cb::callbacks(true);
+        crsf_cb::callbacks(true);
+        crsf_cb::update();
     }
 
     static inline void periodic() {
@@ -142,6 +144,7 @@ struct GFSM {
     static inline constexpr External::Tick<systemTimer> gpsCheckTicks{3000ms};
 
     static inline constexpr External::Tick<systemTimer> calibLedTicks{100ms};
+    static inline constexpr External::Tick<systemTimer> calibMaxDuration{15000ms};
 
     static inline void ratePeriodic() {
         led1::ratePeriodic();
@@ -311,8 +314,8 @@ struct GFSM {
             else if (e == Event::CompassCalibUpdate) {
                 mState = State::CompassCalibUdated;
             }
-            mStateTick.on(debugTicks, []{
-                // compass::template debugInfo<debug>();
+            mStateTick.on(calibMaxDuration, []{
+                compass::stopCalibrate();
             });
             break;
         case State::CompassCalibUdated:

@@ -58,9 +58,6 @@ struct CrsfCallback {
     using Param_t = RC::Protokoll::Crsf::V4::Parameter<store_t>;
     using PType = Param_t::Type;
 
-    // std::integral_constant<uint8_t, sizeof(RC::Protokoll::Crsf::V4::Parameter<uint8_t>)>::_; // 44
-    // std::integral_constant<uint8_t, sizeof(RC::Protokoll::Crsf::V4::Parameter<store_t>)>::_; // 48
-
     using esc32ascii_1 = Config::esc32ascii_1;
     using esc32ascii_2 = Config::esc32ascii_2;
 
@@ -107,51 +104,10 @@ struct CrsfCallback {
     }
     static inline void setParameterValue(const uint8_t index, const auto data, const uint8_t paylength) {
         IO::outl<debug>("# SetPV i: ", index, " size: ", params.size());
-        if (index == 0) return;
-        if (index < params.size()) {
-            mLastChangedParameter = index;
-            bool mustSave = true;
-            if (params[index].type == Param_t::Str) {
-                IO::outl<debug>("# String");
-                if (params[index].stringValue) {
-                    for(uint8_t i = 0; (i < 16) && (i < paylength); ++i) {
-                        params[index].stringValue[i] = data[i];
-                        if (data[i] == '\0') {
-                            break;
-                        }
-                    }
-                    params[index].stringValue[paylength] = '\0';
-                }
-            }
-            else {
-                Param_t::value_type value{};
-                if (params[index].type <= Param_t::I8) {
-                    value = data[0];
-                    IO::outl<debug>("# I8: v: ", value);
-                }
-                else if (params[index].type <= Param_t::I16) {
-                    value = (data[0] << 8) + data[1];
-                    IO::outl<debug>("# I16: v: ", value);
-
-                }
-                else if (params[index].type <= Param_t::F32) {
-                    value = (data[3] << 24) + (data[2] << 16) + (data[1] << 8) + data[0];
-                    IO::outl<debug>("# F32: v: ", value);
-                }
-                else if (params[index].type == Param_t::Sel) {
-                    value = data[0];
-                    IO::outl<debug>("# Sel: v: ", value);
-                }
-                params[index].value(value);
-                if (params[index].cb) {
-                    mustSave = params[index].cb(value);
-                }
-            }
-            update();
-            if (mustSave) {
-                save();
-            }
+        if (RC::Protokoll::Crsf::V4::Util::setParameter(params, index, data, paylength)) {
+            save();
         }
+        update();
     }
     static inline Param_t parameter(const uint8_t index) {
         if (index < params.size()) {
@@ -179,15 +135,6 @@ struct CrsfCallback {
     }
     static inline uint8_t numberOfParameters() {
         return params.size() - 1;
-    }
-    static inline uint8_t protocolVersion() {
-        return 0;
-    }
-    static inline void whenParameterChanged(auto f) {
-        if (mLastChangedParameter > 0) {
-            f(mLastChangedParameter);
-            mLastChangedParameter = 0;
-        }
     }
     static inline void command(const auto& data, const uint8_t /*payload*/) {
         const uint8_t destAddress = data[3];
@@ -338,7 +285,6 @@ struct CrsfCallback {
             *r.ptr = '\0';
         }
     }
-
 private:
     static inline name_t mName = []{
         name_t name{};
@@ -347,7 +293,6 @@ private:
     }();
 
     static inline bool mEepromMode = false;
-    static inline uint8_t mLastChangedParameter{};
     static inline constexpr uint32_t mSerialNumber{1234};
     static inline constexpr uint32_t mHWVersion{HW_VERSION};
     static inline constexpr uint32_t mSWVersion{SW_VERSION};
@@ -406,7 +351,7 @@ private:
             break;
         case RC::Protokoll::Crsf::V4::Lua::CmdStep::Query:
             params[mCompassCalibCommand].options = mCompassCalibTexts[2];
-            res = true;
+            res = compass::isCalibrating();
             break;
         default:
             break;

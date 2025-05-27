@@ -201,7 +201,12 @@ namespace RC {
                             etl::serializeBE(callback::hwVersion(), d);
                             etl::serializeBE(callback::swVersion(), d);
                             etl::serializeBE(callback::numberOfParameters(), d);
-                            etl::serializeBE(callback::protocolVersion(), d);
+                            if constexpr(requires(){callback::protocolVersion();}) {
+                                etl::serializeBE(callback::protocolVersion(), d);
+                            }
+                            else {
+                                etl::serializeBE(uint8_t{0}, d);
+                            }
                         });
                     }
                     static inline ChunkBuffer<Master::chunkBufferSize, chunkSize, 4> mChunkBuffer;

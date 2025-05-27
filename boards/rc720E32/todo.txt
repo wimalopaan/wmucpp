@@ -20,8 +20,14 @@ Hardware
 
 Prio 0
 ------
+* Refactoring:
+** extract CRSF-command handling to namespace CRSF::Util
+** unify SET/SET4/SET4M/SET64 and ArduPilot-tunneling
+** general state-machine:
+*** introduce sub-states
+*** e.g. subdevide states "RunConnected" or "RunDisconnected" into main-state with common actions
+* telemetry temp. off -> LED blink code -> substate
 * CRSF-HD on ESC-Out (maybe also CRSF-FD: ESC/Tlm)
-* telemetry temp. off -> LED blink code
 * gps: bidirectional, send config messages to module (e.g. frequency of messages and which messages e.g. 0x01/0x04 to get HDOP, see edgetx/gps
 ** for NMEA messages send e.g. $PUBX,40,RMC messages to disable
 * I2C bus: implement bus arbiter (time slot based)
@@ -63,6 +69,7 @@ Prio 3
 
 Done:
 ------
+* auto-off compass calib mode (15s)
 * CRSF-telemetry: Attitude (yaw, roll, pitch), GPS (heading over ground)
 * Display compass calibration data
 * calibration of QMC5883L data (normalize) -> LED blink code
