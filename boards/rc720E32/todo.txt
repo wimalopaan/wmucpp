@@ -20,13 +20,11 @@ Hardware
 
 Prio 0
 ------
+* CRSF-HD on ESC-Out (maybe also CRSF-FD: ESC/Tlm)
 * telemetry temp. off -> LED blink code
-* calibration of QMC5883L data (normalize) -> LED blink code
-* tilt compensation via accelometer (mpu6050)
-* gps: bidirectional, send config messages to module (e.g. frequency of messages and wichh messages e.g. 0x01/0x04 to get HDOP, see edgetx/gps
+* gps: bidirectional, send config messages to module (e.g. frequency of messages and which messages e.g. 0x01/0x04 to get HDOP, see edgetx/gps
 ** for NMEA messages send e.g. $PUBX,40,RMC messages to disable
 * I2C bus: implement bus arbiter (time slot based)
-* implement SBus-Switch state input (like super-simple-multiswitch)
 * use only one appid for tunneling packages to one widget
 ** appid 6000 -> Schottel
 ** appid 6010 -> MultiSwitch
@@ -52,7 +50,8 @@ Prio 0
 
 Prio 1
 ------
-** maybe F9P support: yaw from GPS (moving baseline)
+* implement SBus-Switch state input (like super-simple-multiswitch)
+* maybe F9P support: yaw from GPS (moving baseline)
 
 Prio 2
 ------
@@ -61,10 +60,13 @@ Prio 2
 
 Prio 3
 ------
-* IMU MPU6050
 
 Done:
 ------
+* CRSF-telemetry: Attitude (yaw, roll, pitch), GPS (heading over ground)
+* Display compass calibration data
+* calibration of QMC5883L data (normalize) -> LED blink code
+* tilt compensation via accelometer (mpu6050)
 * disable telemetry if config-protocol command issued for 30secs
 * gps: altitude
 * S.Port @ AUX Telemetry (ESC, Servos, ...)

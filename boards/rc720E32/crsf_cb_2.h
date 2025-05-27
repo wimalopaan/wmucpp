@@ -93,11 +93,10 @@ struct CrsfCallback {
         auto r = std::to_chars(std::begin(n) + strlen(title), std::end(n), eeprom.address);
         *r.ptr++ = '\0';
     }
-
     static inline void update() {
         updateName(mName);
+        updateCalib(mCalTexts);
     }
-
     static inline void save() {
         if (auto [ok, err] = Mcu::Stm32::savecfg(eeprom, eeprom_flash); ok) {
             IO::outl<debug>("# EEPROM OK");
@@ -360,7 +359,6 @@ private:
         *r.ptr = '\0';
         return s;
     }();
-
     template<typename T>
     static inline uint8_t addParent(auto& c, const RC::Protokoll::Crsf::V4::Parameter<T>& p) {
         c.push_back(p);
@@ -370,12 +368,10 @@ private:
     static inline void addNode(auto& c, const RC::Protokoll::Crsf::V4::Parameter<T>& p) {
         c.push_back(p);
     }
-
     static inline const char* const setServoZeroPosText = "Zeroing";
     static inline bool setZeroPosition(const uint16_t) {
         return true;
     }
-
     static inline std::array<const char*, 6> mCompassCalibTexts {
         "Calibrate",
         "Start ...",
@@ -449,6 +445,18 @@ private:
         for(auto& d : s) {
             strcpy(&d[0], "---");
         }
+        return s;
+    }();
+
+    using cal_strings_t = std::array<std::array<char, 64>, 3>;
+    static inline constexpr void updateCalib(cal_strings_t& t) {
+        for(uint8_t i = 0; ((i < t.size()) && (i < eeprom.compass_calib.size())); ++i) {
+            snprintf(&t[i][0], t[i].size(), "[m: %d, s: %d]", eeprom.compass_calib[i].mean, eeprom.compass_calib[i].d);
+        }
+    }
+    static inline auto mCalTexts = []{
+        cal_strings_t s;
+        updateCalib(s);
         return s;
     }();
 
@@ -563,13 +571,16 @@ private:
 
         parent = addParent(p, Param_t{0, PType::Folder, "I2C"});
         addNode(p, Param_t{parent, PType::Info, "Address 0:", &mI2CDevs[0][0]});
-        addNode(p, Param_t{parent, PType::Info, "Address 0:", &mI2CDevs[1][0]});
-        addNode(p, Param_t{parent, PType::Info, "Address 0:", &mI2CDevs[2][0]});
-        addNode(p, Param_t{parent, PType::Info, "Address 0:", &mI2CDevs[3][0]});
+        addNode(p, Param_t{parent, PType::Info, "Address 1:", &mI2CDevs[1][0]});
+        addNode(p, Param_t{parent, PType::Info, "Address 2:", &mI2CDevs[2][0]});
+        addNode(p, Param_t{parent, PType::Info, "Address 3:", &mI2CDevs[3][0]});
 
         parent = addParent(p, Param_t{0, PType::Folder, "Compass"});
         addNode(p, Param_t{parent, PType::Command, "Calibrate", mCompassCalibTexts[0], nullptr, 0, 0, [](const store_t v){return compassCalibCb(v);}, 200});
         mCompassCalibCommand = p.size() - 1;
+        addNode(p, Param_t{parent, PType::Info, "Cal. x-axis", &mCalTexts[0][0]});
+        addNode(p, Param_t{parent, PType::Info, "Cal. y-axis", &mCalTexts[1][0]});
+        addNode(p, Param_t{parent, PType::Info, "Cal. z-axis", &mCalTexts[2][0]});
 
         return p;
     }();

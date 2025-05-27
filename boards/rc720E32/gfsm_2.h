@@ -80,10 +80,12 @@ struct GFSM {
             event(Event::CompassCalibStart);
         }
         static inline void end() {
+            crsf_cb::update();
+            crsf_cb::save();
             event(Event::CompassCalibEnd);
         }
     };
-    using compass = Compass<magnetometer, systemTimer, CalibClient, accelerometer, typename devs::tp1>;
+    using compass = Compass<magnetometer, systemTimer, CalibClient, accelerometer, storage, typename devs::tp1>;
 
     using sbus_aux = devs::sbus_aux;
     using gps_aux = devs::gps_aux;
@@ -242,9 +244,17 @@ struct GFSM {
                         d.push_back((int32_t)gps_aux::ublox::mLatitude);
                         d.push_back((int32_t)gps_aux::ublox::mLongitude);
                         d.push_back((uint16_t)gps_aux::ublox::mSpeed);
-                        d.push_back(int16_t((compass::a() - 180) * 100));
+                        // d.push_back(int16_t((compass::aComp_I() * 100)));
+                        d.push_back(int16_t(gps_aux::ublox::mHeading / 100));
                         d.push_back(uint16_t(gps_aux::ublox::mAltitude / 1000 + 1000));
                         d.push_back((uint8_t)gps_aux::ublox::mSatCount);
+                });
+                telemetry::push((uint8_t)RC::Protokoll::Crsf::V4::Type::Attitude, [](auto& d){
+                    const auto [pitch, roll] = compass::pitchRoll_I();
+                    const int16_t yaw = compass::aComp_I();
+                    d.push_back((int16_t)(pitch * 10));
+                    d.push_back((int16_t)(roll * 10));
+                    d.push_back((int16_t)(yaw * 10));
                 });
                 telemetry::next();
             });
@@ -254,14 +264,13 @@ struct GFSM {
                 }
             });
             mStateTick.on(debugTicks, []{
-                const int16_t a = compass::a();
-                IO::outl<debug>("# x: ", compass::x(), " y: ", compass::y(), " z: ", compass::z(), " a: ", a, " ax: ", compass::accX(), " ay: ", compass::accY(), " az: ", compass::accZ());
-                // IO::outl<debug>("# ac: ", compass::aComp());
+                IO::outl<debug>("# x: ", compass::x(), " y: ", compass::y(), " z: ", compass::z(), " ax: ", compass::accX(), " ay: ", compass::accY(), " az: ", compass::accZ());
                 // const auto prf = compass::pitchRoll();
                 // IO::outl<debug>("# pf: ", (int16_t)(prf.first * 1000), " rf: ", (int16_t)(prf.second * 1000));
                 // const auto pri = compass::pitchRoll_I();
                 // IO::outl<debug>("# pi: ", pri.first, " ri: ", pri.second);
-                IO::outl<debug>("# aci: ", compass::aComp_I());
+                // IO::outl<debug>("# a: ", compass::a() - 180);
+                // IO::outl<debug>("# aci: ", compass::aComp_I());
 
                 // IO::outl<debug>("# gps pkg: ", gps_aux::packages(), " RMC t: ", gps_aux::rmc::mTime,
                 //                 " sat: ", gps_aux::gsv::mSatCount,
@@ -303,7 +312,7 @@ struct GFSM {
                 mState = State::CompassCalibUdated;
             }
             mStateTick.on(debugTicks, []{
-                compass::template debugInfo<debug>();
+                // compass::template debugInfo<debug>();
             });
             break;
         case State::CompassCalibUdated:

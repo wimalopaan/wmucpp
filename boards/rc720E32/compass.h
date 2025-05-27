@@ -4,6 +4,7 @@
 #include "fastmath.h"
 #include "tick.h"
 #include "etl/event.h"
+#include "eeprom.h"
 
 using namespace std::literals::chrono_literals;
 
@@ -27,12 +28,12 @@ struct ExpMean {
     T mValue = 0;
 };
 
-// todo: re-add calibration
 // todo: use Config type
-template<typename Dev, typename systemTimer, typename Client, typename Accelerometer, typename tp>
+template<typename Dev, typename systemTimer, typename Client, typename Accelerometer, typename Storage, typename tp>
 struct Compass {
     using dev = Dev;
     using acc = Accelerometer;
+    using storage = Storage;
 
     // all inits must be done in this time slot
     // todo: I2C devs must specify the time for init
@@ -42,6 +43,18 @@ struct Compass {
     enum class State : uint8_t {Init, Idle, ReadMagneto, ReadAccel, CalibMagneto};
     enum class Event : uint8_t {None, StartCalibrate, StopCalibrate};
 
+    // scale all integer operations (lack of floating point)
+    static inline constexpr int16_t scale = 1000;
+    static inline constexpr uint16_t ipi = FastMath::pi * scale;
+
+    static inline constexpr auto& eeprom = Storage::eeprom;
+
+    static inline void init() {
+        mXCalib = Calib{eeprom.compass_calib[0].mean, eeprom.compass_calib[0].d};
+        mYCalib = Calib{eeprom.compass_calib[1].mean, eeprom.compass_calib[1].d};
+        mZCalib = Calib{eeprom.compass_calib[2].mean, eeprom.compass_calib[2].d};
+    }
+
     static inline void startCalibrate() {
         mXrange = MinMax{};
         mYrange = MinMax{};
@@ -50,6 +63,12 @@ struct Compass {
         mEvent = Event::StartCalibrate;
     }
     static inline void stopCalibrate() {
+        eeprom.compass_calib[0].mean = mXCalib.mean;
+        eeprom.compass_calib[0].d    = mXCalib.d;
+        eeprom.compass_calib[1].mean = mYCalib.mean;
+        eeprom.compass_calib[1].d    = mYCalib.d;
+        eeprom.compass_calib[2].mean = mZCalib.mean;
+        eeprom.compass_calib[2].d    = mZCalib.d;
         Client::end();
         mEvent = Event::StopCalibrate;
     }
@@ -135,12 +154,8 @@ struct Compass {
         return mAccZ.value();
     }
     static inline int16_t a() {
-        return FastMath::uatan2<1000, 360>(mY.value(), mX.value());
+        return FastMath::uatan2<scale, 360>(mY.value(), mX.value());
     }
-
-    static inline constexpr uint16_t ipi = FastMath::pi * 1000;
-    static inline constexpr int16_t scale = 1000;
-
     static inline std::pair<int16_t, int16_t> pitchRoll_I() {
         const int16_t ax = accX();
         const int16_t ay = accY();
@@ -202,6 +217,7 @@ struct Compass {
     //     return azimuth * 1000;
     // }
 
+    // 100µs
     static inline int16_t aComp_I() {
         tp::set();
         const int16_t mag_x = x();
@@ -215,18 +231,18 @@ struct Compass {
                              mag_y * FastMath::cos<ipi, scale>(r) -
                              (mag_z * FastMath::sin<ipi, scale>(r) * FastMath::cos<ipi, scale>(p)) / scale) / scale;
         const int16_t azimuth = FastMath::atan2<scale, ipi>(Y_h, X_h);
+        // const int16_t azimuth = FastMath::atan2<scale, 180>(Y_h, X_h);
 
         tp::reset();
         return azimuth;
     }
-
-    template<typename Debug>
-    static inline void debugInfo() {
-        IO::outl<Debug>("# compass", " xmin: ", mXrange.min, " xmax: ", mXrange.max, " ymin: ", mYrange.min, " ymax: ", mYrange.max, " zmin: ", mZrange.min, " zmax: ", mZrange.max);
-        mXCalib.template debugInfo<Debug>();
-        mYCalib.template debugInfo<Debug>();
-        mZCalib.template debugInfo<Debug>();
-    }
+    // template<typename Debug>
+    // static inline void debugInfo() {
+    //     IO::outl<Debug>("# compass", " xmin: ", mXrange.min, " xmax: ", mXrange.max, " ymin: ", mYrange.min, " ymax: ", mYrange.max, " zmin: ", mZrange.min, " zmax: ", mZrange.max);
+    //     mXCalib.template debugInfo<Debug>();
+    //     mYCalib.template debugInfo<Debug>();
+    //     mZCalib.template debugInfo<Debug>();
+    // }
     private:
     struct MinMax {
         void add(const int16_t v, auto notify) {
@@ -243,6 +259,7 @@ struct Compass {
         int16_t max = 0;
     };
     struct Calib {
+        explicit Calib(const uint16_t m, const uint16_t d) : mean{m}, d{d} {}
         explicit Calib(const MinMax& mm = MinMax{}) {
             if ((mm.max - mm.min) > 2000) {
                 mean = (mm.max + mm.min) / 2;
@@ -252,20 +269,19 @@ struct Compass {
         int16_t calc(const int16_t v) {
             if (d != 0) {
                 const int16_t v0 = v - mean;
-                return (v0 * int32_t(1000)) / d;
+                return (v0 * int32_t(scale)) / d;
             }
             else {
                 return v;
             }
         }
-        template<typename Debug>
-        void debugInfo() {
-            IO::outl<Debug>("# mean: ", mean, " d: ", d);
-        }
+        // template<typename Debug>
+        // void debugInfo() {
+        //     IO::outl<Debug>("# mean: ", mean, " d: ", d);
+        // }
         explicit operator bool() const {
             return (d != 0);
         }
-        private:
         int16_t mean = 0;
         int16_t d = 0;
     };
