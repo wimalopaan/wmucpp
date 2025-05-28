@@ -71,6 +71,7 @@
 #include "uuid.h"
 #include "qmc5883l.h"
 #include "mpu6050.h"
+#include "bluetooth/jdy10.h"
 
 struct SW01;
 
@@ -281,6 +282,9 @@ struct Devices<SW01, Config, MCU> {
     struct GPSAuxConfig;
     using gps_aux = External::GPS::V2::Input<4, GPSAuxConfig, MCU>;
 
+    struct BtConfig;
+    using bt = External::Bluetooth::Simple<4, BtConfig, MCU>;
+
     // LPUart2: Sbus, CRSF-HD
     using sbus_crsf_pin = Mcu::Stm::Pin<gpioc, 6, MCU>;
     struct SBus1Config;
@@ -352,6 +356,22 @@ struct Devices<SW01, Config, MCU> {
         using debug = Devices::debug;
         using tp = tp1;
     };
+    struct BtConfig {
+        using clock = Devices::clock;
+        using debug = Devices::debug;
+        using dmaChComponent = relayAuxDmaChannelComponent;
+        using systemTimer = Devices::systemTimer;
+        using pin_rx = auxrx;
+        using pin_tx = auxtx;
+        using tp = void;
+        using swcallback = struct {
+            static inline void set(const uint8_t index, const bool state) {
+                IO::outl<debug>("# BT set:", index, " s:", (uint8_t)state);
+                bt::setLed(index, state);
+                sumdv3_out::setSwitch(index, state);
+            }
+        };
+    };
     struct SBusSoftUartConfig {
         // static inline constexpr bool additionalChecks = true;
         using pin = auxrx;
@@ -418,6 +438,7 @@ struct Devices<SW01, Config, MCU> {
         using stream1 = crsf_in::input;
         using stream2 = Config::relays; // relay connector
         using stream3 = sbus_aux; // aux
+        using stream4 = bt; // aux
     };
 
     struct PulseConfig {
@@ -555,12 +576,6 @@ struct Devices<SW01, Config, MCU> {
         debug::init();
 #endif
         crsf_in::init();
-
-        // move to I2C init
-        sda3::openDrain();
-        scl3::openDrain();
-        sda3::afunction(6);
-        scl3::afunction(6);
 
         i2c::init();
 

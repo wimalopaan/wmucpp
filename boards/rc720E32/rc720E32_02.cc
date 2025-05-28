@@ -26,7 +26,7 @@
 #define SERIAL_DEBUG // enable debug on esc-tlm-1
 #define TEST_EEPROM // fill eeprom with test setup
 
-#define SW_VERSION 11
+#define SW_VERSION 12
 #define HW_VERSION 2
 
 #define NDEBUG
@@ -264,6 +264,12 @@ void USART3_4_5_6_LPUART1_IRQHandler(){
         // gps::Isr::onTransferComplete([]{
         // });
         gps::Isr::onIdle([]{
+        });
+        using bt = devs::bt;
+        static_assert(bt::uart::number == 4);
+        bt::Isr::onTransferComplete([]{
+        });
+        bt::Isr::onIdle([]{
         });
     }
 }

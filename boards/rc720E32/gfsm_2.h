@@ -216,6 +216,12 @@ struct GFSM {
             mStateTick.on(baudCheckTicks, []{
                 nextBaudrate();
             });
+            (++mUpdateTick).on(updateTicks, []{
+                channelCallback::update();
+            });
+            mStateTick.on(debugTicks, []{
+                IO::outl<debug>("input 0: ", devs::inputs::value(0));
+            });
             break;
         case State::RunUnconnected:
             if (const Event e = std::exchange(mEvent, Event::None); e == Event::ReceiverConnected) {
@@ -227,12 +233,12 @@ struct GFSM {
             else if (e == Event::ConnectionLost) {
                 mState = State::CheckBaudrate;
             }
-            // (++mUpdateTick).on(updateTicks, []{
-            //     channelCallback::update();
-            // });
-            // mStateTick.on(debugTicks, []{
-            //     IO::outl<debug>("sbus aux: ", sbus_aux::value(0));
-            // });
+            (++mUpdateTick).on(updateTicks, []{
+                channelCallback::update();
+            });
+            mStateTick.on(debugTicks, []{
+                IO::outl<debug>("input 0: ", devs::inputs::value(0));
+            });
             break;
         case State::RunConnected:
             if (const Event e = std::exchange(mEvent, Event::None); e == Event::ConnectionLost) {
@@ -336,6 +342,9 @@ struct GFSM {
             if (i2c::isIdle()) {
                 mState = State::RunUnconnected;
             }
+            mStateTick.on(debugTicks, []{
+                IO::outl<debug>("# i2c state: ", (uint8_t)i2c::mState);
+            });
             break;
         }
         if (oldState != mState) {

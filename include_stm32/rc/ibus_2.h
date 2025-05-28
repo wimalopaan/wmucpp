@@ -153,7 +153,7 @@ namespace RC::Protokoll::IBus {
             private:
             static inline uint16_t ibus2sbus(const uint16_t ib) {
                 const int ic = std::clamp(ib, RC::Protokoll::IBus::V2::min, RC::Protokoll::IBus::V2::max);
-                const int sb = ((uint32_t)(ic - RC::Protokoll::IBus::V2::min) * RC::Protokoll::SBus::V2::amp) / RC::Protokoll::IBus::V2::amp + RC::Protokoll::SBus::V2::min;
+                const uint16_t sb = ((uint32_t)(ic - RC::Protokoll::IBus::V2::min) * RC::Protokoll::SBus::V2::amp) / RC::Protokoll::IBus::V2::amp + RC::Protokoll::SBus::V2::min;
                 return std::clamp(sb, RC::Protokoll::SBus::V2::min, RC::Protokoll::SBus::V2::max);
             }
             static inline void decode_s(const auto& data) {

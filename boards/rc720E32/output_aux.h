@@ -29,6 +29,7 @@ struct Auxes {
     using sport = devs::sport_aux;
     using sbus_in = devs::sbus_aux;
     using gps = devs::gps_aux;
+    using bt = devs::bt;
 
     static inline void set(const uint8_t r) {
         IO::outl<debug>("# aux ", r);
@@ -48,7 +49,12 @@ struct Auxes {
             mRelay = std::make_unique<Relay<sbus_in>>();
             mDevice2 = std::make_unique<Device<sport>>();
             break;
-        case 3: // none
+        case 3: // bt
+            mRelay = nullptr;
+            mRelay = std::make_unique<Relay<bt>>();
+            mDevice2 = nullptr;
+            break;
+        case 4: // none
             mRelay = nullptr;
             mDevice2 = nullptr;
             break;

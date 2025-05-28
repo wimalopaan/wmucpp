@@ -603,11 +603,11 @@ namespace RC {
                 static inline constexpr std::byte frameLost = 0x04_B;
                 static inline constexpr std::byte failSafe = 0x08_B;
 
-                inline static constexpr int min = 172;
-                inline static constexpr int max = 1811;
-                inline static constexpr int span = (max - min) / 2;
-                inline static constexpr int amp = (max - min);
-                inline static constexpr int mid = (max + min) / 2;
+                inline static constexpr uint16_t min = 172;
+                inline static constexpr uint16_t max = 1811;
+                inline static constexpr uint16_t span = (max - min) / 2;
+                inline static constexpr uint16_t amp = (max - min);
+                inline static constexpr uint16_t mid = (max + min) / 2;
 
                 using value_type = etl::ranged<min, max>;
                 using index_type = etl::ranged<0, 15>;

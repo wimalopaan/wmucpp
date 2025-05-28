@@ -386,6 +386,7 @@ namespace Mcu::Stm {
                             cr2 |= I2C_CR2_STOP;
                             return cr2;
                         }();
+                        mBusyCounter = 0;
                         mState = State::ScanWaitBusy;
                         break;
                     case State::ScanWaitBusy:
@@ -491,11 +492,17 @@ namespace Mcu::Stm {
                         break;
                     }
                 }
+                static inline uint8_t mBusyCounter = 0;
                 static inline void ratePeriodic() {
                     switch(mState) {
                     case State::ScanWaitBusy:
                         if (!(mcuI2c->ISR & I2C_ISR_BUSY)) {
                             mState = State::ScanWaitAck;
+                        }
+                        else {
+                            if (++mBusyCounter > 2) {
+                                mState = State::ScanNext;
+                            }
                         }
                         break;
                     default:
@@ -595,7 +602,7 @@ namespace Mcu::Stm {
                 static inline void clearErrors() {
                     mErrors = 0;
                 }
-                private:
+                // private:
                 static inline void setPresent(const Address a) {
                     const uint8_t index = a.value / 8;
                     const uint8_t bit = a.value % 8;
@@ -994,7 +1001,6 @@ namespace Mcu::Stm {
             static inline std::array<uint8_t, 128 / 8> mPresent{};
         };
     }
-    
     template<>
     struct Address<Mcu::Components::I2C<1>> {
         static inline constexpr uintptr_t value = I2C1_BASE;

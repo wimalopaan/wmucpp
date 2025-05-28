@@ -20,6 +20,7 @@ Hardware
 
 Prio 0
 ------
+* BlueTooth/Aux <- RoboRemo (simple HC-05 connect or via BLE-Adapter), selectable baudrate (9600/115200)
 * Refactoring:
 ** extract CRSF-command handling to namespace CRSF::Util
 ** unify SET/SET4/SET4M/SET64 and ArduPilot-tunneling

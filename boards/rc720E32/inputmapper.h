@@ -28,6 +28,7 @@ struct InputMapper {
     using stream1 = Config::stream1;
     using stream2 = Config::stream2;
     using stream3 = Config::stream3;
+    using stream4 = Config::stream4;
 
     static inline constexpr uint16_t mid = stream1::mid;
     static inline constexpr uint16_t amp = stream1::amp;
@@ -47,6 +48,9 @@ struct InputMapper {
             else {
                 return mid;
             }
+            break;
+        case 3: // BT
+            return stream4::value(ch);
             break;
         default:
             return mid;
