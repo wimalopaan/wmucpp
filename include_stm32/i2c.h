@@ -232,6 +232,11 @@ namespace Mcu::Stm {
                     mcuI2c->TIMINGR = 0x30A0A7FB; // CubeMX 100KHz
                     mcuI2c->CR1 |= I2C_CR1_PE;
 
+                    sda_pin::openDrain();
+                    scl_pin::openDrain();
+                    sda_pin::template pullup<true>();
+                    scl_pin::template pullup<true>();
+
                     static constexpr uint8_t sdaaf = Mcu::Stm::AlternateFunctions::mapper_v<sda_pin, Master, Mcu::Stm::AlternateFunctions::SDA>;
                     sda_pin::afunction(sdaaf);
                     static constexpr uint8_t sclaf = Mcu::Stm::AlternateFunctions::mapper_v<sda_pin, Master, Mcu::Stm::AlternateFunctions::SDA>;
@@ -261,6 +266,11 @@ namespace Mcu::Stm {
                     mcuI2c->TIMINGR  = 0x10b075ae; // CubeMx 100KHz@64MHz + Anafilter + Digfilter 0b1111
                     mcuI2c->CR1 |= I2C_CR1_PE | (0b1111 << I2C_CR1_DNF_Pos);
 
+                    sda_pin::openDrain();
+                    scl_pin::openDrain();
+                    sda_pin::template pullup<true>();
+                    scl_pin::template pullup<true>();
+
                     static constexpr uint8_t sdaaf = Mcu::Stm::AlternateFunctions::mapper_v<sda_pin, Master, Mcu::Stm::AlternateFunctions::SDA>;
                     sda_pin::afunction(sdaaf);
                     static constexpr uint8_t sclaf = Mcu::Stm::AlternateFunctions::mapper_v<sda_pin, Master, Mcu::Stm::AlternateFunctions::SDA>;
@@ -270,7 +280,7 @@ namespace Mcu::Stm {
 
                 enum class State : uint8_t { Idle = 0,
                                              WriteAdress = 10, WriteWaitAdress, WriteData, WriteWaitData, WriteWaitComplete, WriteError,
-                                             ScanStart = 20, ScanWaitBusy, ScanWaitAck, ScanNext, ScanEnd,
+                                             ScanStart = 20, ScanWaitBusy, ScanWaitAck, ScanNext, ScanEnd, ScanWaitExtra,
                                              ReadWriteAdress = 30, ReadAdressWait, ReadWriteCommand, ReadWriteComplete,
                                              ReadWriteAdress2 = 40, ReadAdressWait2, ReadDataWait, ReadData, ReadDataComplete, ReadError,
                                              ReEnable = 50
@@ -407,17 +417,18 @@ namespace Mcu::Stm {
                     case State::ScanNext:
                         if (mScanSlaveAddress >= Address::highest) {
                             mcuI2c->CR1 &= ~I2C_CR1_PE;
+                            mBusyCounter = 0;
                             mState = State::ScanEnd;
                         }
                         else {
                             ++mScanSlaveAddress;
-                            mState = State::ScanStart;
+                            mBusyCounter = 0;
+                            mState = State::ScanWaitExtra;
                         }
                         break;
+                    case State::ScanWaitExtra:
+                        break;
                     case State::ScanEnd:
-                        mCallBack = nullptr;
-                        mcuI2c->CR1 |= I2C_CR1_PE;
-                        mState = State::Idle;
                         break;
                     case State::WriteAdress:
                     {
@@ -503,6 +514,18 @@ namespace Mcu::Stm {
                             if (++mBusyCounter > 2) {
                                 mState = State::ScanNext;
                             }
+                        }
+                        break;
+                    case State::ScanWaitExtra:
+                        if (++mBusyCounter > 2) {
+                            mState = State::ScanStart;
+                        }
+                        break;
+                    case State::ScanEnd:
+                        if (++mBusyCounter > 2) {
+                            mCallBack = nullptr;
+                            mcuI2c->CR1 |= I2C_CR1_PE;
+                            mState = State::Idle;
                         }
                         break;
                     default:

@@ -409,16 +409,16 @@ private:
     static inline void btBaudrate(const store_t v) {
         switch(v) {
         case 0:
-            bluetooth::uart::baud(9600);
+            bluetooth::baud(9600);
             break;
         case 1:
-            bluetooth::uart::baud(57600);
+            bluetooth::baud(57600);
             break;
         case 2:
-            bluetooth::uart::baud(115200);
+            bluetooth::baud(115200);
             break;
         default:
-            bluetooth::uart::baud(9600);
+            bluetooth::baud(9600);
             break;
         }
     }

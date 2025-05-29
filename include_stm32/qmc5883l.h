@@ -44,7 +44,7 @@ namespace External {
 
         enum class Event : uint8_t {None, Start};
 
-        static inline constexpr External::Tick<systemTimer> initTicks{10ms};
+        static inline constexpr External::Tick<systemTimer> initTicks{700ms};
         static inline constexpr External::Tick<systemTimer> waitTicks{5ms};
 
         static inline void init() {

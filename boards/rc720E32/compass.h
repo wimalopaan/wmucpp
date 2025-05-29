@@ -41,10 +41,11 @@ struct Compass {
 
     // all inits must be done in this time slot
     // todo: I2C magnetometers must specify the time for init
-    static inline constexpr External::Tick<systemTimer> initTicks{200ms};
+    static inline constexpr External::Tick<systemTimer> initTicks{1000ms};
     static inline constexpr External::Tick<systemTimer> idleTicks{10ms};
+    static inline constexpr External::Tick<systemTimer> waitTicks{1ms};
 
-    enum class State : uint8_t {Init, Idle, ReadMagneto, ReadAccel, CalibMagneto};
+    enum class State : uint8_t {Init, Idle, ReadMagneto, ReadAccel, CalibMagneto, WaitBetween};
     enum     class Event : uint8_t {None, StartCalibrate, StopCalibrate};
 
     // scale all integer operations (lack of floating point)
@@ -127,9 +128,14 @@ struct Compass {
                 mX.process(magnetometer::x());
                 mY.process(magnetometer::y());
                 mZ.process(magnetometer::z());
-                mState = State::ReadAccel;
-                acc::startRead();
+                mState = State::WaitBetween;
             }
+            break;
+        case State::WaitBetween:
+            mStateTicks.on(waitTicks, []{
+                acc::startRead();
+                mState = State::ReadAccel;
+            });
             break;
         case State::ReadAccel:
             if (acc::isIdle() && !acc::isPendingEvent()) {
