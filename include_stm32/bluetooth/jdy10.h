@@ -93,6 +93,11 @@ namespace External::Bluetooth {
         enum class Event : uint8_t {None, ReceiveComplete};
         enum class State : uint8_t {Init, Receive};
 
+        static inline void baud(const uint32_t br) {
+            if (mActive) {
+                uart::baud(br);
+            }
+        }
         static inline void update() {
         }
         static inline void event(const Event e) {
