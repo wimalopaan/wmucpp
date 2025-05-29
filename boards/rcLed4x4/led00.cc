@@ -68,8 +68,13 @@ struct EEProm {
     uint8_t magic = EEPROM_MAGIC;
 
     uint8_t address = 0;
+#ifdef USE_EEPROM_TEST
+    uint8_t crsf_address = 0xcf;
+    uint8_t response_slot = 16; // formula?
+#else
     uint8_t crsf_address = 0xc8;
     uint8_t response_slot = 8;
+#endif
 #ifdef USE_EEPROM_TEST
     uint8_t telemetry = 1;
 #else
@@ -117,7 +122,7 @@ struct CrsfCallback {
     static inline constexpr auto& eeprom = Storage::eeprom;
     static inline constexpr auto& eeprom_flash = Storage::eeprom_flash;
 
-    static inline constexpr const char* const title = "MultiSwitch-E@";
+    static inline constexpr const char* const title = "Led4x4-E@";
 
     using name_t = std::array<char, 32>;
 
@@ -617,7 +622,7 @@ struct Setter;
 template<typename L, typename T>
 using CrsfCallback_WithSetter = CrsfCallback<L, Setter, T>;
 
-using devs = Devices2<SW20, CrsfCallback_WithSetter, Storage>;
+using devs = Devices<Led01, CrsfCallback_WithSetter, Storage>;
 using gfsm = GFSM<devs>;
 
 struct Setter {
@@ -634,7 +639,8 @@ int main() {
     gfsm::init();
     gfsm::update(true);
 
-    NVIC_EnableIRQ(USART2_IRQn);
+    NVIC_EnableIRQ(USART1_IRQn);
+    NVIC_EnableIRQ(SPI1_IRQn);
     __enable_irq();
 
     while(true) {
@@ -647,19 +653,17 @@ int main() {
 
 extern "C" {
 
-void USART2_IRQHandler(){
+void USART1_IRQHandler(){
     using crsf = devs::crsf;
-    static_assert(crsf::number == 2);
-    crsf::Isr::onTransferComplete([]{
-        // devs::tp1::set();
-        // devs::tp1::reset();
-    });
-    crsf::Isr::onIdle([]{
-        // devs::tp1::set();
-        // devs::tp1::reset();
-    });
+    static_assert(crsf::number == 1);
+    crsf::Isr::onTransferComplete([]{});
+    crsf::Isr::onIdle([]{});
 }
-
+void SPI1_IRQHandler(){
+    using spi = devs::pca9745::spi;
+    static_assert(spi::number == 1);
+    spi::Isr::onTransferComplete([]{});
+}
 void HardFault_Handler() {
     while(true) {
 #ifdef USE_TP1
