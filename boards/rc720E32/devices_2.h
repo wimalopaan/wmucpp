@@ -474,6 +474,7 @@ struct Devices<SW01, Config, MCU> {
         using sport_aux = Devices::sport_aux;
         using messageBuffer = crsfBuffer;
         using compass = Config::compass;
+        using bluetooth = Devices::bt;
         using tp = void;
     };
 

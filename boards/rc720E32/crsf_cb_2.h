@@ -43,6 +43,7 @@ struct CrsfCallback {
 
     using sport_aux = Config::sport_aux;
 
+    using bluetooth = Config::bluetooth;
     using compass = Config::compass;
     using telemetry = Config::telemetry;
 
@@ -405,6 +406,23 @@ private:
         return s;
     }();
 
+    static inline void btBaudrate(const store_t v) {
+        switch(v) {
+        case 0:
+            bluetooth::uart::baud(9600);
+            break;
+        case 1:
+            bluetooth::uart::baud(57600);
+            break;
+        case 2:
+            bluetooth::uart::baud(115200);
+            break;
+        default:
+            bluetooth::uart::baud(9600);
+            break;
+        }
+    }
+
     static inline std::array<char, 16> mDeadLowString{'a'};
 
     static inline void hide(const uint8_t n, const bool b) {
@@ -526,6 +544,9 @@ private:
         addNode(p, Param_t{parent, PType::Info, "Cal. x-axis", &mCalTexts[0][0]});
         addNode(p, Param_t{parent, PType::Info, "Cal. y-axis", &mCalTexts[1][0]});
         addNode(p, Param_t{parent, PType::Info, "Cal. z-axis", &mCalTexts[2][0]});
+
+        parent = addParent(p, Param_t{0, PType::Folder, "BlueTooth"});
+        addNode(p, Param_t{parent, PType::Sel, "Buadrate", "9600;57600;115200", &eeprom.bt_baudrate, 0, 2, [](const store_t v){ btBaudrate(v); return true;}});
 
         return p;
     }();
