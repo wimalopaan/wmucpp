@@ -20,7 +20,6 @@ General
 
 Bugs
 ----
-* after rx unconnect, no return to state connected
 
 Prio 0
 ------
@@ -72,6 +71,10 @@ Prio 2
 
 Prio 3
 ------
+
+Done bugs:
+----------
+* after rx unconnect, no return to state connected
 
 Done:
 ------
