@@ -21,16 +21,28 @@
 namespace etl {
     template<typename T>
     struct Event {
+        struct OrEvent {
+            explicit OrEvent(Event<T>& e) : mEvent{e}{}
+            OrEvent thenOn(const T which, const auto f) {
+                if (mEvent.is(which)) {
+                    f();
+                }
+                return OrEvent{mEvent};
+            }
+            Event<T>& mEvent;
+        };
+
         void operator=(const T e) volatile {
             mEvent = e;
         }
         void operator=(const T e) {
             mEvent = e;
         }
-        void on(const T which, const auto f) {
+        OrEvent on(const T which, const auto f) {
             if (is(which)) {
                 f();
             }
+            return OrEvent{*this};
         }
         bool is(const T which) {
             if (mEvent == which) {

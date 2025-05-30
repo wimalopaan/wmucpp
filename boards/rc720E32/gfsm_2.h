@@ -207,12 +207,11 @@ struct GFSM {
             mState = State::RunUnconnected;
             break;
         case State::CheckBaudrate:
-            if (const Event e = std::exchange(mEvent, Event::None); e == Event::ReceiverConnected) {
+            mEvent.on(Event::ReceiverConnected, []{
                 mState = State::RunConnected;
-            }
-            else if (e == Event::DirectConnected) {
+            }).thenOn(Event::ReceiverConnected, []{
                 mState = State::DirectMode;
-            }
+            });
             mStateTick.on(baudCheckTicks, []{
                 nextBaudrate();
             });
@@ -221,15 +220,13 @@ struct GFSM {
             });
             break;
         case State::RunUnconnected:
-            if (const Event e = std::exchange(mEvent, Event::None); e == Event::ReceiverConnected) {
+            mEvent.on(Event::ReceiverConnected, []{
                 mState = State::RunConnected;
-            }
-            else if (e == Event::DirectConnected) {
+            }).thenOn(Event::DirectConnected, []{
                 mState = State::DirectMode;
-            }
-            else if (e == Event::ConnectionLost) {
+            }).thenOn(Event::ConnectionLost, []{
                 mState = State::CheckBaudrate;
-            }
+            });
             (++mUpdateTick).on(updateTicks, []{
                 channelCallback::update();
             });
@@ -238,19 +235,14 @@ struct GFSM {
             });
             break;
         case State::RunConnected:
-            if (const Event e = std::exchange(mEvent, Event::None); e == Event::ConnectionLost) {
+            mEvent.on(Event::ConnectionLost, []{
                 mState = State::RunUnconnected;
-            }
-            else if (e == Event::DirectConnected) {
+            }).thenOn(Event::DirectConnected, []{
                 mState = State::DirectMode;
-            }
-            else if (e == Event::ConnectionLost) {
-                mState = State::CheckBaudrate;
-            }
-            else if (e == Event::CompassCalibStart) {
+            }).thenOn(Event::CompassCalibStart, []{
                 led1::event(led1::Event::Medium);
                 mState = State::CompassCalib;
-            }
+            });
             (++mUpdateTick).on(updateTicks, []{
                 channelCallback::update();
             });
@@ -300,15 +292,11 @@ struct GFSM {
             });
             break;
         case State::DirectMode:
-            if (const Event e = std::exchange(mEvent, Event::None); e == Event::ConnectionLost) {
+            mEvent.on(Event::ConnectionLost, []{
                 mState = State::RunUnconnected;
-            }
-            else if (e == Event::ReceiverConnected) {
-                mState = State::RunUnconnected;
-            }
-            else if (e == Event::ConnectionLost) {
-                mState = State::CheckBaudrate;
-            }
+            }).thenOn(Event::ReceiverConnected, []{
+                mState = State::RunConnected;
+            });
             (++mUpdateTick).on(updateTicks, []{
                 channelCallback::update();
             });
@@ -320,12 +308,11 @@ struct GFSM {
             });
             break;
         case State::CompassCalib:
-            if (const Event e = std::exchange(mEvent, Event::None); e == Event::CompassCalibEnd) {
+            mEvent.on(Event::CompassCalibEnd, []{
                 mState = State::RunConnected;
-            }
-            else if (e == Event::CompassCalibUpdate) {
+            }).thenOn(Event::CompassCalibUpdate, []{
                 mState = State::CompassCalibUdated;
-            }
+            });
             mStateTick.on(calibMaxDuration, []{
                 compass::stopCalibrate();
             });
@@ -412,7 +399,7 @@ struct GFSM {
         crsf_in::nextBaudrate();
     }
     static inline const uint32_t uuid = Mcu::Stm::Uuid::get();
-    static inline Event mEvent = Event::None;
+    static inline etl::Event<Event> mEvent;
     static inline External::Tick<systemTimer> mPackagesCheckTick;
     static inline External::Tick<systemTimer> mGpsCheckTick;
     static inline External::Tick<systemTimer> mDirectTick;
