@@ -219,9 +219,6 @@ struct GFSM {
             (++mUpdateTick).on(updateTicks, []{
                 channelCallback::update();
             });
-            mStateTick.on(debugTicks, []{
-                IO::outl<debug>("input 0: ", devs::inputs::value(0));
-            });
             break;
         case State::RunUnconnected:
             if (const Event e = std::exchange(mEvent, Event::None); e == Event::ReceiverConnected) {

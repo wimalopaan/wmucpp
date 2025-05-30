@@ -208,7 +208,10 @@ namespace RC {
                     static inline void clearAll() {
                         uart::clearAll();
                     }
-                    static inline uint32_t nextBaudrate() {
+                    static inline void nextBaudrate() {
+                        if (!mActive) {
+                            return;
+                        }
                         static uint8_t index = 0;
                         if (++index >= RC::Protokoll::Crsf::V4::baudrates.size()) {
                             index = 0;
@@ -216,7 +219,7 @@ namespace RC {
                         const uint32_t br = RC::Protokoll::Crsf::V4::baudrates[index];
                         IO::outl<debug>("# nextbaud: ", br);
                         uart::baud(br);
-                        return br;
+                        return;
                     }
                     struct Isr {
                         static inline void onTransferComplete(const auto f) {
