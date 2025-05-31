@@ -39,6 +39,7 @@ struct IEsc : IDevice {
     virtual std::pair<uint8_t, uint8_t> hwVersion() = 0;
     virtual uint16_t current() = 0;
     virtual uint16_t rpm() = 0;
+    virtual uint16_t voltage() = 0;
     virtual void set(uint16_t) = 0;
     virtual void update() = 0;
     virtual ~IEsc(){}
@@ -210,6 +211,14 @@ struct Esc: IEsc {
     }
     virtual uint16_t rpm() {
         return E::rpm();
+    }
+    virtual uint16_t voltage() {
+        if constexpr(requires(){E::voltage();}) {
+            return E::voltage();
+        }
+        else {
+            return 0;
+        }
     }
     virtual void set(const uint16_t s) {
         E::set(s);

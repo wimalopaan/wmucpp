@@ -96,6 +96,12 @@ struct EscOutputs {
         }
         return 0;
     }
+    static inline uint16_t voltage(const uint8_t n) {
+        if ((n < escs.size()) && escs[n]) {
+            return escs[n]->voltage();
+        }
+        return 0;
+    }
     static inline void set(const uint8_t n, const uint16_t v) {
         if ((n < escs.size()) && escs[n]) {
             escs[n]->set(v);

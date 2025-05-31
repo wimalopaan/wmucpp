@@ -139,6 +139,7 @@ struct EEProm {
     std::array<CompassCalibData, 3> compass_calib{};
 
     eeprom_value_t bt_baudrate = 0; // 9600
+    eeprom_value_t bt_telem_voltage = 1;
 
     eeprom_value_t prerun_check = 1;
 };

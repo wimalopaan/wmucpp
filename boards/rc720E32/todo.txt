@@ -24,6 +24,7 @@ Bugs
 Prio 0
 ------
 * send telemetry values also to bluetooth (display on RoboRemo)
+** use fixed roboremo names, activate via menu
 * fix changing uart baud rate if inactive (bluetooth)
 * Refactoring:
 ** extract CRSF-command handling to namespace CRSF::Util

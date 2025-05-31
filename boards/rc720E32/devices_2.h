@@ -432,7 +432,6 @@ struct Devices<SW01, Config, MCU> {
         using debug = Devices::debug;
         using tp = void;
     };
-
     struct InputConfig {
         using debug = Devices::debug;
         using stream1 = crsf_in::input;

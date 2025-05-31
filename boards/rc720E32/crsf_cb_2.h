@@ -546,7 +546,8 @@ private:
         addNode(p, Param_t{parent, PType::Info, "Cal. z-axis", &mCalTexts[2][0]});
 
         parent = addParent(p, Param_t{0, PType::Folder, "BlueTooth"});
-        addNode(p, Param_t{parent, PType::Sel, "Buadrate", "9600;57600;115200", &eeprom.bt_baudrate, 0, 2, [](const store_t v){ btBaudrate(v); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Baudrate", "9600;57600;115200", &eeprom.bt_baudrate, 0, 2, [](const store_t v){ btBaudrate(v); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Telm. Voltage", "off;on", &eeprom.bt_telem_voltage, 0, 1, [](const store_t){return true;}});
 
         return p;
     }();

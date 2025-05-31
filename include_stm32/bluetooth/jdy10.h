@@ -98,6 +98,13 @@ namespace External::Bluetooth {
                 uart::baud(br);
             }
         }
+        static inline void sendValue(const char* const name, const uint16_t value){
+            if (mActive) {
+                uart::fillSendBuffer([&](auto& data){
+                    return (sprintf((char*)&data[0], "%c%s %d%c", startSymbol, name, value, endSymbol));
+                });
+            }
+        }
         static inline void update() {
         }
         static inline void event(const Event e) {
