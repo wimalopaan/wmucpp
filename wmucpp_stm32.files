@@ -218,11 +218,15 @@ boards/rcFocG4/G431Mp6543_01/startup_g431.s
 boards/rcFocG4/G431Mp6543_01/system_g4.cc
 boards/rcFocG4/Makefile
 boards/rcLed4x4/Makefile
+boards/rcLed4x4/crsf_cb.h
 boards/rcLed4x4/devices.h
+boards/rcLed4x4/eeprom.h
+boards/rcLed4x4/gfsm.h
 boards/rcLed4x4/led00.cc
 boards/rcLed4x4/link_g051.ld
 boards/rcLed4x4/pca9745.h
 boards/rcLed4x4/startup_g051.s
+boards/rcLed4x4/storage.h
 boards/rcLed4x4/system_g0.cc
 boards/rcVarioprop/Makefile
 boards/rcVarioprop/V01/Makefile
@@ -567,6 +571,7 @@ include_stm32/debug_pin.h
 include_stm32/dma.h
 include_stm32/dma_2.h
 include_stm32/dma_controller.h
+include_stm32/dma_dual_2.h
 include_stm32/dmas.h
 include_stm32/dmas_5.h
 include_stm32/dmas_6.h

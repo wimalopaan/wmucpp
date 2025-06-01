@@ -28,12 +28,11 @@
 #include "components.h"
 #include "dmas.h"
 #include "dma_controller.h"
+#include "dma_dual_2.h"
 
 namespace Mcu::Stm {
     namespace Dma {
-
         namespace V2 {
-
             template<uint8_t N, typename Config, typename MCU = DefaultMcu>
             struct Channel {
                 static_assert((N >= 1) && (N <= 8));
@@ -78,6 +77,14 @@ namespace Mcu::Stm {
                         if constexpr(requires(Config){Config::circular;}) {
                             if constexpr(Config::circular) {
                                 ccr |= DMA_CCR_CIRC;
+                            }
+                        }
+                        if constexpr(requires(Config){typename Config::Isr;}) {
+                            using Isr = Config::Isr;
+                            if constexpr(requires(Isr){Isr::txComplete;}) {
+                                if constexpr(Isr::txComplete) {
+                                    ccr |= DMA_CCR_TCIE;
+                                }
                             }
                         }
                         return ccr;
@@ -155,12 +162,12 @@ namespace Mcu::Stm {
                     }
                     return false;
                 }
-                // static inline void onTransferComplete(auto f) {
-                //     if (controller::mcuDma->ISR & (0x1UL << (4 * (N - 1) + 1))) {
-                //         clearTransferCompleteIF();
-                //         f();
-                //     }
-                // }
+                static inline void onTransferComplete(auto f) {
+                    if (controller::mcuDma->ISR & (0x1UL << (4 * (N - 1) + 1))) {
+                        clearTransferCompleteIF();
+                        f();
+                    }
+                }
             };
         }
 
