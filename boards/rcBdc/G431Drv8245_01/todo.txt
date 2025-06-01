@@ -4,6 +4,8 @@ Tests:
 
 ToDo
 -----
+* use new uart interface
+* usa dma-channel component definition
 * temperature (MCU) wrong (may MCU calib values wrong?)
 * menu: telemetry: choose motor current / mean source current
 * menu: current offset calibrate
