@@ -222,7 +222,7 @@ struct GFSM {
             (++mBluetoothTick).on(bluetoothTicks, []{
                 static bool heartbeat = true;
                 if (heartbeat) {
-                    bt::sendValue("l99", 1);
+                    bt::sendValue("heartbeat", 1);
                 }
                 else {
                     bt::sendValue("voltage", Escs::voltage(0));
