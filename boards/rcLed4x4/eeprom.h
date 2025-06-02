@@ -35,23 +35,27 @@ struct EEProm {
 #endif
     }
     struct Output {
-        uint8_t pwm = 0;
-        uint8_t pwmDuty = 1;
-        uint8_t pwmScale = 0;
-        uint8_t blink = 0;
-        uint8_t blinkOnTime = 1;
-        uint8_t blinkOffTime = 1;
+        uint8_t pwm = 128;
+        uint8_t iref = 128;
+        uint8_t group = 0;
+        uint8_t control = 0;
         std::array<char, 16> name;
-#ifdef USE_AUTO_CONF
-        uint8_t ls = 0;
-        uint8_t type = 0;
-        uint8_t flags = 0;
-#endif
+    };
+    struct Group {
+        uint8_t iref = 128;
+        uint8_t ramp = 0;
+        uint8_t rate = 0;
+        uint8_t stepTime = 0;
+        uint8_t holdOnTime = 1;
+        uint8_t holdOffTime = 1;
     };
 
     uint8_t magic = EEPROM_MAGIC;
 
-    uint8_t address = 0;
+    uint8_t address1 = 0;
+    uint8_t address2 = 0;
+    uint8_t address3 = 0;
+
 #ifdef USE_EEPROM_TEST
     uint8_t crsf_address = 0xcf;
     uint8_t response_slot = 16; // formula?
@@ -64,13 +68,9 @@ struct EEProm {
 #else
     uint8_t telemetry = 0;
 #endif
-    std::array<Output, 8> outputs{};
-#ifdef USE_MORSE
-    std::array<char, 64> morse_text{};
-    uint8_t morse_dit = 3;
-    uint8_t morse_dah = 6;
-    uint8_t morse_gap = 3;
-    uint8_t morse_igap = 3;
-#endif
+
+    std::array<Output, 16> outputs{};
+    std::array<Group,  4> groups{};
 };
+static_assert(sizeof(EEProm) < 2048);
 

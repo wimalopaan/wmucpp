@@ -155,17 +155,6 @@ struct GFSM {
                     mState = State::RunNoTelemetry;
                 }
             }
-            mStateTick.on(debugTicks, []{
-                static bool s = false;
-                if (s) {
-                    pca::ledPwm(1, 0);
-                }
-                else {
-                    // pca::ledPwm(0, 0);
-                    pca::ledPwm(1, 64);
-                }
-                s = !s;
-            });
             break;
         }
         if (oldState != mState) {
@@ -178,14 +167,14 @@ struct GFSM {
                 break;
             case State::RunNoTelemetry:
                 IO::outl<debug>("# Run NT");
-                IO::outl<debug>("# adr: ", storage::eeprom.address);
+                IO::outl<debug>("# adr: ", storage::eeprom.address1);
                 crsf_out::enableReply(false);
                 led::count(1);
                 led::event(led::Event::Slow);
                 break;
             case State::RunWithTelemetry:
                 IO::outl<debug>("# Run WT");
-                IO::outl<debug>("# adr: ", storage::eeprom.address);
+                IO::outl<debug>("# adr: ", storage::eeprom.address1);
                 crsf_out::enableReply(true);
                 if (storage::eeprom.telemetry) {
                     led::count(2);
@@ -199,27 +188,6 @@ struct GFSM {
                 IO::outl<debug>("# Run NC");
                 led::count(1);
                 led::event(led::Event::Fast);
-
-                pca::ledGradationMode(0, true);
-                pca::ledGroup(0, 0);
-
-                pca::groupRampUp(0, true);
-                pca::groupRampDown(0, true);
-
-                pca::groupRampRate(0, 0);
-                pca::groupStepTime(0, 0);
-                pca::groupHoldTime(0, 2);
-
-                pca::groupIRef(0, 255);
-
-                pca::groupStart(0);
-
-                pca::ledPwm(0, 64);
-                pca::ledControl(0, 0b11);
-
-                pca::ledPwm(2, 10);
-                pca::ledPwm(3, 20);
-
                 break;
             }
         }

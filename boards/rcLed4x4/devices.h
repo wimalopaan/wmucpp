@@ -142,10 +142,11 @@ struct Devices<Led01, Config, MCU> {
         using timer = systemTimer;
         using crsf = Devices::crsf;
         using storage = Devices::storage;
+        using pca = pca9745;
         using switchcallback = struct {
                 static inline void set(const uint8_t) {
                 }
-                static inline void prop(const uint8_t /*channel*/, const uint8_t /*duty*/) {
+                static inline void setIndex(const uint8_t /*index*/, const bool /*on*/) {
                 }
             };
     };

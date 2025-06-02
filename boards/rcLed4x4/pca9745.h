@@ -98,18 +98,20 @@ namespace External {
         }
         static inline void ledControl(const uint8_t led, const uint8_t control) {
             const uint8_t ledByte = led / 4;
-            const uint8_t ledShift = led % 4;
+            const uint8_t ledShift = 2 * (led % 4);
             const uint8_t ledMask = (0b11 << ledShift);
             mLedControl[ledByte] = (mLedControl[ledByte] & ~ledMask) | ((control << ledShift) & ledMask);
             mFifo.push_back(Command{uint8_t(0x02 + ledByte), mLedControl[ledByte]});
         }
-
         static inline void ledPwm(const uint8_t led, const uint8_t pwm) {
             mFifo.push_back(Command{uint8_t(0x08 + led), pwm});
         }
+        static inline void ledIRef(const uint8_t led, const uint8_t iref) {
+            mFifo.push_back(Command{uint8_t(0x18 + led), iref});
+        }
         static inline void ledGroup(const uint8_t led, const uint8_t group) {
             const uint8_t ledByte = led / 4;
-            const uint8_t ledShift = led % 4;
+            const uint8_t ledShift = 2* (led % 4);
             const uint8_t ledMask = (0b11 << ledShift);
             mLedGroups[ledByte] = (mLedGroups[ledByte] & ~ledMask) | ((group << ledShift) & ledMask);
             mFifo.push_back(Command{uint8_t(0x3a + ledByte), mLedGroups[ledByte]});
@@ -125,6 +127,12 @@ namespace External {
                 mLedModes[ledByte] = mLedModes[ledByte] & ~ledMask;
             }
             mFifo.push_back(Command{uint8_t(0x38 + ledByte), mLedModes[ledByte]});
+        }
+        static inline void groupRamp(const uint8_t group, const uint8_t upDown) {
+            const uint8_t mask = 0b1100'0000;
+            mGroupRamp[group] = (mGroupRamp[group] & ~mask) | ((upDown << 6) & mask);
+            mFifo.push_back(Command{uint8_t(0x28 + (4 * group)), mGroupRamp[group]});
+
         }
         static inline void groupRampUp(const uint8_t group, const bool on) {
             const uint8_t mask = 0b1000'0000;
@@ -154,16 +162,39 @@ namespace External {
         static inline void groupStepTime(const uint8_t group, const uint8_t time) {
             mFifo.push_back(Command{uint8_t(0x29 + (4 * group)), uint8_t((time & 0b0011'1111) | 0b0100'0000)});
         }
-        static inline void groupHoldTime(const uint8_t group, const uint8_t time) {
-            mFifo.push_back(Command{uint8_t(0x2a + (4 * group)), uint8_t((time & 0b0011'1111) | 0b1100'0000)});
+        static inline void groupHoldOnTime(const uint8_t group, const uint8_t time) {
+            const uint8_t mask = 0b0011'1000;
+            mGroupHold[group] = (mGroupHold[group] & ~mask) | ((time << 3) & mask) | 0xb1100'0000;
+            mFifo.push_back(Command{uint8_t(0x2a + (4 * group)), mGroupHold[group]});
+        }
+        static inline void groupHoldOffTime(const uint8_t group, const uint8_t time) {
+            const uint8_t mask = 0b0000'0111;
+            mGroupHold[group] = (mGroupHold[group] & ~mask) | ((time << 0) & mask) | 0xb1100'0000;
+            mFifo.push_back(Command{uint8_t(0x2a + (4 * group)), mGroupHold[group]});
         }
         static inline void groupIRef(const uint8_t group, const uint8_t iref) {
             mFifo.push_back(Command{uint8_t(0x2b + (4 * group)), iref});
         }
         static inline void groupStart(const uint8_t group) {
-            mFifo.push_back(Command{uint8_t(0x3e), uint8_t(0b11 << group)});
+            const uint8_t mask = (0b10 << (2 * group));
+            mGroupControl = (mGroupControl | mask);
+            mFifo.push_back(Command{uint8_t(0x3e), mGroupControl});
         }
-
+        static inline void groupStop(const uint8_t group) {
+            const uint8_t mask = (0b10 << (2 * group));
+            mGroupControl = (mGroupControl & ~mask);
+            mFifo.push_back(Command{uint8_t(0x3e), mGroupControl});
+        }
+        static inline void groupContinous(const uint8_t group, const bool cont) {
+            const uint8_t mask = (0b01 << (2 * group));
+            if (cont) {
+                mGroupControl = (mGroupControl & ~mask) | (0b01 << (2 * group));
+            }
+            else {
+                mGroupControl = (mGroupControl & ~mask);
+            }
+            mFifo.push_back(Command{uint8_t(0x3e), mGroupControl});
+        }
         static inline void periodic() {
             mEvent.on(Event::TransferComplete, []{
                 IO::outl<debug>("# PCA9745 TC -> Idle");
@@ -201,13 +232,6 @@ namespace External {
                     IO::outl<debug>("# PCA9745 Setup");
                     mFifo.push_back(Command{0x00, 0x00});
                     mFifo.push_back(Command{0x01, 0x14});
-                    for(uint8_t i = 0; i < 16; ++i) {
-                        mFifo.push_back(Command{uint8_t(0x18 + i), 0x7f}); // current
-                    }
-                    mFifo.push_back(Command{0x02, 0b1010'1010}); // individual brightness
-                    mFifo.push_back(Command{0x03, 0b1010'1010});
-                    mFifo.push_back(Command{0x04, 0b1010'1010});
-                    mFifo.push_back(Command{0x05, 0b1010'1010});
                     break;
                 case State::Idle:
                     IO::outl<debug>("# PCA9745 Idle");
@@ -243,9 +267,11 @@ namespace External {
         };
         private:
         static inline std::array<uint8_t, 2> mLedModes{};
-        static inline std::array<uint8_t, 4> mLedControl{0b1010'1010, 0b1010'1010, 0b1010'1010, 0b1010'1010};
+        static inline std::array<uint8_t, 4> mLedControl{};
         static inline std::array<uint8_t, 4> mLedGroups{};
         static inline std::array<uint8_t, 4> mGroupRamp{};
+        static inline std::array<uint8_t, 4> mGroupHold{};
+        static inline uint8_t mGroupControl = 0;
         static inline etl::FiFo<Command, 256> mFifo;
         static inline bool mActive = false;
         static inline etl::Event<Event> mEvent;

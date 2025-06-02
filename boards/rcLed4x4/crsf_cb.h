@@ -33,7 +33,8 @@ struct CrsfCallback {
 
     using switchcallback = Config::switchcallback;
 
-    // static_assert(sizeof(EEProm) < 2048);
+    using pca = Config::pca;
+
     static inline constexpr auto& eeprom = storage::eeprom;
     static inline constexpr auto& eeprom_flash = storage::eeprom_flash;
 
@@ -49,7 +50,7 @@ struct CrsfCallback {
     }
     static inline constexpr void updateName(name_t& n) {
         strncpy(&n[0], title, n.size());
-        auto r = std::to_chars(std::begin(n) + strlen(title), std::end(n), eeprom.address);
+        auto r = std::to_chars(std::begin(n) + strlen(title), std::end(n), eeprom.address1);
         *r.ptr++ = ':';
         r = std::to_chars(r.ptr, std::end(n), eeprom.crsf_address);
         *r.ptr++ = '\0';
@@ -112,7 +113,7 @@ struct CrsfCallback {
         const uint8_t address = (uint8_t)payload[7];
         if ((srcAddress == (uint8_t)RC::Protokoll::Crsf::V4::Address::Handset) && (destAddress >= 0xc0) && (destAddress <= 0xcf)) {
             if (realm == (uint8_t)RC::Protokoll::Crsf::V4::CommandType::Switch) {
-                if (eeprom.address == address) {
+                if (eeprom.address1 == address) {
                     if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set) {
                         const uint8_t sw = (uint8_t)payload[8];
                         IO::outl<trace>("# Cmd Set: ", address, " sw: ", sw);
@@ -133,39 +134,22 @@ struct CrsfCallback {
                     else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Prop) {
                         const uint8_t ch = (uint8_t)payload[8];
                         const uint8_t duty = (uint8_t)payload[9];
-                        IO::outl<trace>("# Cmd Prop: ", address, " ch: ", ch, " d: ", duty);
-                        switchcallback::prop(ch, duty);
+                        if constexpr(requires(){switchcallback::prop(ch, duty);}) {
+                            IO::outl<trace>("# Cmd Prop: ", address, " ch: ", ch, " d: ", duty);
+                            switchcallback::prop(ch, duty);
+                        }
+                        else {
+                            IO::outl<trace>("# Cmd Prop: not implemented");
+                        }
                     }
-#ifdef USE_AUTO_CONF
-                    else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::RequestConfigItem) {
-                        const uint8_t item = (uint8_t)payload[8];
-                        IO::outl<trace>("# Cmd Req CI: ", item);
-                        messageBuffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ArduPilot, [&](auto& d){
-                            d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
-                            d.push_back((uint8_t)eeprom.crsf_address);
-                            d.push_back(RC::Protokoll::Crsf::V4::ArduPilotTunnel::Switch::AppId);
-                            d.push_back((uint8_t)eeprom.address);
-                            d.push_back(RC::Protokoll::Crsf::V4::ArduPilotTunnel::Switch::Type::ConfigItem);
-                            d.push_back(item);
-                            etl::push_back_ntbs(&eeprom.outputs[item].name[0], d);
-                            d.push_back(eeprom.outputs[item].ls);
-                            d.push_back(eeprom.outputs[item].type);
-                        });
-                    }
-                    else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::RequestDeviceInfo) {
-                        IO::outl<trace>("# Cmd Req DI");
-                        messageBuffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ArduPilot, [&](auto& d){
-                            d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
-                            d.push_back((uint8_t)eeprom.crsf_address);
-                            d.push_back(RC::Protokoll::Crsf::V4::ArduPilotTunnel::Switch::AppId);
-                            d.push_back((uint8_t)eeprom.address);
-                            d.push_back(RC::Protokoll::Crsf::V4::ArduPilotTunnel::Switch::Type::DeviceInfo);
-                            d.push_back(RC::Protokoll::Crsf::V4::SwitchCommand::Set); // use this protocol as set protocol
-                            d.push_back(uint8_t{HW_VERSION});
-                            d.push_back(uint8_t{SW_VERSION});
-                        });
-                    }
-#endif
+                }
+                else if (eeprom.address2 == address) {
+                    // out 8-17
+                }
+                else if (eeprom.address3 == address) {
+                    // group 0-3
+                    // 0-3: single shot
+                    // 4-7: continous
                 }
             }
         }
@@ -202,16 +186,38 @@ private:
         return name;
     }();
 
-    static inline uint8_t addParent(auto& c, const Param_t& p) {
+    static inline constexpr uint8_t addParent(auto& c, const Param_t& p) {
         c.push_back(p);
         return c.size() - 1;
     }
-    static inline void addNode(auto& c, const Param_t& p) {
+    static inline constexpr void addNode(auto& c, const Param_t& p) {
         c.push_back(p);
     }
-    static inline bool setAddress(const uint8_t) {
+    static inline constexpr bool setAddress(const uint8_t) {
         update();
         return true;
+    }
+    // need to write the lambdas without capture: capturing lambdas cannot be converted to function pointer
+    // so we need to write the whole thing as template
+    template<uint8_t index>
+    static inline constexpr void addOutput(auto& p, const uint8_t parent, const char* const name) {
+        const uint8_t parent2 = addParent(p, Param_t{parent, PType::Folder, name});
+        addNode(p, Param_t{parent2, PType::Info, name, &mName[0]});
+        addNode(p, Param_t{.parent = parent2, .type = PType::U8, .name = "PWM", .value_ptr = &eeprom.outputs[index].pwm, .min = 1, .max = 255, .cb = [](const uint8_t v){pca::ledPwm(index, v); return true;}});
+        addNode(p, Param_t{.parent = parent2, .type = PType::U8, .name = "Current", .value_ptr = &eeprom.outputs[index].iref, .min = 1, .max = 255, .cb = [](const uint8_t v){pca::ledIRef(index, v); return true;}});
+        addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name = "Group", .options = "None;0;1;2;3", .value_ptr = &eeprom.outputs[index].group, .min = 0, .max = 4, .cb = [](const uint8_t v){if (v  == 0) {pca::ledGradationMode(index, false);} else {pca::ledGradationMode(index, true); pca::ledGroup(index, (v - 1));} return true;}});
+        addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name = "Control", .options = "Off;Full;Individual;Group", .value_ptr = &eeprom.outputs[index].control, .min = 0, .max = 3, .cb = [](const uint8_t v){pca::ledControl(index, (v & 0x03)); return true;}});
+        addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name = "Test", .options = "Off;On", .min = 0, .max = 1, .cb = [](const uint8_t v){switchcallback::setIndex(index, (v > 0)); return false;}});
+    }
+    template<uint8_t index>
+    static inline constexpr void addGroup(auto& p, const uint8_t parent, const char* const name) {
+        const uint8_t parent2 = addParent(p, Param_t{parent, PType::Folder, name});
+        addNode(p, Param_t{.parent = parent2, .type = PType::U8, .name = "Current", .value_ptr = &eeprom.groups[index].iref, .min = 1, .max = 255, .cb = [](const uint8_t v){pca::groupIRef(index, v); return true;}});
+        addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name = "Ramp", .options = "Off;Down;Up;Both", .value_ptr = &eeprom.groups[index].ramp, .min = 0, .max = 3, .cb = [](const uint8_t v){pca::groupRamp(index, v); return true;}});
+        addNode(p, Param_t{.parent = parent2, .type = PType::U8, .name = "Rate", .value_ptr = &eeprom.groups[index].rate, .min = 0, .max = 63, .cb = [](const uint8_t v){pca::groupRampRate(index, v); return true;}});
+        addNode(p, Param_t{.parent = parent2, .type = PType::U8, .name = "Step time", .value_ptr = &eeprom.groups[index].stepTime, .min = 0, .max = 63, .cb = [](const uint8_t v){pca::groupStepTime(index, v); return true;}});
+        addNode(p, Param_t{.parent = parent2, .type = PType::U8, .name = "Hold On time", .value_ptr = &eeprom.groups[index].holdOnTime, .min = 0, .max = 7, .cb = [](const uint8_t v){pca::groupHoldOnTime(index, v); return true;}});
+        addNode(p, Param_t{.parent = parent2, .type = PType::U8, .name = "Hold Off time", .value_ptr = &eeprom.groups[index].holdOffTime, .min = 0, .max = 7, .cb = [](const uint8_t v){pca::groupHoldOffTime(index, v); return true;}});
     }
 #ifdef TEST1
     static inline auto mNameTest = []{
@@ -220,27 +226,16 @@ private:
         return a;
     }();
 #endif
-#ifdef USE_AUTO_CONF
     using params_t = etl::FixedVector<Param_t, 200>;
-#else
-    using params_t = etl::FixedVector<Param_t, 125>;
-#endif
-    static inline params_t params = []{
+
+    static inline params_t params = [] {
         params_t p;
         addNode(p, Param_t{0, PType::Folder, ""}); // unvisible top folder
         addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
-#ifdef TEST1
-        // String-type not supported by elrsv3.lua (Issue 2859)
-        addNode(p, Param_t{0, PType::Str, "Name", nullptr, nullptr, 0, 0, nullptr, 0, 8, 0, &mNameTest[0]}); // maxlen 8
-        addNode(p, Param_t{0, PType::U8, "Address", nullptr, &eeprom.address, 0, 255, [](const uint8_t){return true;}});
-        // addNode(p, Param_t{0, PType(PType::Str | PType::Hidden), "N0", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &mNameTest[0]});
-        // addNode(p, Param_t{0, PType(PType::Str | PType::Hidden), "N2", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &mNameTest[0]});
-        // addNode(p, Param_t{0, PType(PType::Str | PType::Hidden), "N3", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &mNameTest[0]});
-        // addNode(p, Param_t{0, PType(PType::U8 | PType::Hidden), "HiddenInfo", nullptr, nullptr, 0, 255});
-#endif
-#ifndef TEST1
         auto parent = addParent(p, Param_t{0, PType::Folder, "Global"});
-        addNode(p, Param_t{parent, PType::U8, "Address", nullptr, &eeprom.address, 0, 255, setAddress});
+        addNode(p, Param_t{parent, PType::U8, "Address Out 0-7", nullptr, &eeprom.address1, 0, 255, setAddress});
+        addNode(p, Param_t{parent, PType::U8, "Address Out 8-15", nullptr, &eeprom.address2, 0, 255, setAddress});
+        addNode(p, Param_t{parent, PType::U8, "Address Grp 0-3", nullptr, &eeprom.address3, 0, 255, setAddress});
 
         addNode(p, Param_t{parent, PType::U8, "CRSF Address", nullptr, &eeprom.crsf_address, 0xc0, 0xcf, [](const uint8_t v){
                                if (!mEepromMode) {
@@ -254,24 +249,37 @@ private:
         addNode(p, Param_t{parent, PType::U8, "Response Slot", nullptr, &eeprom.response_slot, 0, 15, [](const uint8_t v){crsf::output::telemetrySlot(v); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Config resp.", "Button;Allways on", &eeprom.telemetry, 0, 1});
 
-        parent = addParent(p, Param_t{0, PType::Folder, "Output 0"});
-        addNode(p, Param_t{parent, PType::Info, "Output 0 : ", &mName[0]});
-        addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "PWM Duty", .value_ptr = &eeprom.outputs[0].pwmDuty, .min = 1, .max = 99, .cb = [](const uint8_t){return true;}, .unitString = "%"});
-        addNode(p, Param_t{parent, PType::Sel, "Test", "Off;On", nullptr, 0, 1, [](const uint8_t){return false;}});
+        parent = addParent(p, Param_t{0, PType::Folder, "Group 0"});
+        addOutput<0>(p, parent, "Output 0");
+        addOutput<1>(p, parent, "Output 1");
+        addOutput<2>(p, parent, "Output 2");
+        addOutput<3>(p, parent, "Output 3");
+        addGroup<0>(p, parent, "Group 0");
 
-        parent = addParent(p, Param_t{0, PType::Folder, "Operate"});
-        addNode(p, Param_t{parent, PType::Sel, "Output 0", "Off;On", 0, 0, 1, [](const uint8_t){return false;}});
-        addNode(p, Param_t{parent, PType::Sel, "Output 1", "Off;On", 0, 0, 1, [](const uint8_t){return false;}});
-        addNode(p, Param_t{parent, PType::Sel, "Output 2", "Off;On", 0, 0, 1, [](const uint8_t){return false;}});
-        addNode(p, Param_t{parent, PType::Sel, "Output 3", "Off;On", 0, 0, 1, [](const uint8_t){return false;}});
-        addNode(p, Param_t{parent, PType::Sel, "Output 4", "Off;On", 0, 0, 1, [](const uint8_t){return false;}});
-        addNode(p, Param_t{parent, PType::Sel, "Output 5", "Off;On", 0, 0, 1, [](const uint8_t){return false;}});
-        addNode(p, Param_t{parent, PType::Sel, "Output 6", "Off;On", 0, 0, 1, [](const uint8_t){return false;}});
-        addNode(p, Param_t{parent, PType::Sel, "Output 7", "Off;On", 0, 0, 1, [](const uint8_t){return false;}});
-#endif
+        parent = addParent(p, Param_t{0, PType::Folder, "Group 1"});
+        addOutput<4>(p, parent, "Output 4");
+        addOutput<5>(p, parent, "Output 5");
+        addOutput<6>(p, parent, "Output 6");
+        addOutput<7>(p, parent, "Output 7");
+        addGroup<1>(p, parent, "Group 1");
+
+        parent = addParent(p, Param_t{0, PType::Folder, "Group 2"});
+        addOutput<8>(p, parent, "Output 8");
+        addOutput<9>(p, parent, "Output 9");
+        addOutput<10>(p, parent, "Output 10");
+        addOutput<11>(p, parent, "Output 11");
+        addGroup<2>(p, parent, "Group 2");
+
+        parent = addParent(p, Param_t{0, PType::Folder, "Group 3"});
+        addOutput<12>(p, parent, "Output 12");
+        addOutput<13>(p, parent, "Output 13");
+        addOutput<14>(p, parent, "Output 14");
+        addOutput<15>(p, parent, "Output 15");
+        addGroup<3>(p, parent, "Group 3");
+
         if (p.size() >= p.capacity()) {
-            void f();
-            f();
+            void fp();
+            fp();
         }
         return p;
     }();
