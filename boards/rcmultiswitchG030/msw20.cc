@@ -230,7 +230,7 @@ struct CrsfCallback {
     static inline uint8_t protocolVersion() {
         return 0;
     }
-    static inline void command(const auto payload, const uint8_t ) {
+    static inline void command(const auto payload, [[maybe_unused]] const uint8_t paylength) {
         const uint8_t destAddress = payload[3];
         const uint8_t srcAddress = payload[4];
         const uint8_t realm = payload[5];
