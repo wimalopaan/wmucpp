@@ -32,6 +32,7 @@ struct IServo : IDevice {
     virtual void offset(uint16_t) = 0;
     virtual void zero() = 0;
     virtual void update() = 0;
+    virtual void set(uint16_t) = 0;
     virtual ~IServo(){}
 };
 struct IEsc : IDevice {
@@ -167,19 +168,36 @@ struct Servo : IServo {
         return S::hwVersion();
     }
     virtual int8_t turns() {
-        return S::turns();
+        if constexpr(requires(){S::turns();}) {
+            return S::turns();
+        }
+        return 0;
     }
     virtual uint16_t actualPos() {
-        return S::actualPos();
+        if constexpr(requires(){S::actualPos();}) {
+            return S::actualPos();
+        }
+        return 0;
     }
     virtual void speed( const uint16_t s) {
-        S::speed(s);
+        if constexpr(requires(){S::speed(s);}) {
+            S::speed(s);
+        }
     }
     virtual void offset( const uint16_t o) {
-        S::offset(o);
+        if constexpr(requires(){S::offset(o);}) {
+            S::offset(o);
+        }
     }
     virtual void zero() {
-        S::zero();
+        if constexpr(requires(){S::zero();}) {
+            S::zero();
+        }
+    }
+    virtual void set(const uint16_t s) {
+        if constexpr(requires(){S::set(s);}) {
+            S::set(s);
+        }
     }
     virtual void update() {
         S::update();

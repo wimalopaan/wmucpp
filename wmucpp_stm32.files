@@ -89,6 +89,7 @@ boards/rc720E32/switches.h
 boards/rc720E32/system_g0.cc
 boards/rc720E32/telemetry.h
 boards/rc720E32/telemetry_2.h
+boards/rc720E32/telemetry_bt.h
 boards/rc720E32/todo.txt
 boards/rc720E32/util.h
 boards/rc720E32/uuid.h

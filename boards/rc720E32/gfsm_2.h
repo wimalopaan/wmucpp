@@ -73,6 +73,7 @@ struct GFSM {
     using accelerometer = devs::mpu6050;
 
     using bt = devs::bt;
+    using telem_bt = devs::telem_bt;
 
     struct CalibClient {
         static inline void update() {
@@ -154,8 +155,6 @@ struct GFSM {
     static inline constexpr External::Tick<systemTimer> baudCheckTicks{1000ms};
     static inline constexpr External::Tick<systemTimer> gpsCheckTicks{3000ms};
 
-    static inline constexpr External::Tick<systemTimer> bluetoothTicks{1000ms};
-
     static inline constexpr External::Tick<systemTimer> calibLedTicks{100ms};
     static inline constexpr External::Tick<systemTimer> calibMaxDuration{15000ms};
 
@@ -166,6 +165,7 @@ struct GFSM {
         compass::ratePeriodic();
         crsf_in::ratePeriodic();
         telemetry::ratePeriodic();
+        telem_bt::ratePeriodic();
         Servos::ratePeriodic();
         Escs::ratePeriodic();
         Relays::ratePeriodic();
@@ -219,16 +219,6 @@ struct GFSM {
             mStateTick.on(baudCheckTicks, []{
                 nextBaudrate();
             });
-            (++mBluetoothTick).on(bluetoothTicks, []{
-                static bool heartbeat = true;
-                if (heartbeat) {
-                    bt::sendValue("heartbeat", 1);
-                }
-                else {
-                    bt::sendValue("voltage", Escs::voltage(0));
-                }
-                heartbeat = !heartbeat;
-            });
             (++mUpdateTick).on(updateTicks, []{
                 channelCallback::update();
             });
@@ -243,9 +233,6 @@ struct GFSM {
             });
             (++mUpdateTick).on(updateTicks, []{
                 channelCallback::update();
-            });
-            (++mBluetoothTick).on(bluetoothTicks, []{
-                bt::sendValue("$voltage", Escs::voltage(0));
             });
             mStateTick.on(debugTicks, []{
                 IO::outl<debug>("input 0: ", devs::inputs::value(0));
@@ -417,7 +404,6 @@ struct GFSM {
     }
     static inline const uint32_t uuid = Mcu::Stm::Uuid::get();
     static inline etl::Event<Event> mEvent;
-    static inline External::Tick<systemTimer> mBluetoothTick;
     static inline External::Tick<systemTimer> mPackagesCheckTick;
     static inline External::Tick<systemTimer> mGpsCheckTick;
     static inline External::Tick<systemTimer> mDirectTick;

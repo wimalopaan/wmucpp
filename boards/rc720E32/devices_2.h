@@ -63,6 +63,7 @@
 #include "channels.h"
 #include "package_relay_2.h"
 #include "telemetry_2.h"
+#include "telemetry_bt.h"
 #include "iservo.h"
 #include "pulse_input.h"
 #include "inputmapper.h"
@@ -452,6 +453,15 @@ struct Devices<SW01, Config, MCU> {
     using polars = Meta::List<polar1, polar2>;
 
     using telem = Telemetry<crsfBuffer, storage, typename Config::servos, typename Config::escs, systemTimer, debug>;
+
+    struct BtTelemConfig {
+        using debug = Devices::debug;
+        using timer = systemTimer;
+        using dev = bt;
+        using storage = Devices::storage;
+        using sources = typename Config::escs;
+    };
+    using telem_bt = External::Bluetooth::Telemetry<BtTelemConfig>;
 
     using channelCallback = ChannelCallback<polars, typename Config::servos, typename Config::escs, typename Config::relays, typename Config::auxes, telem, storage>;
 

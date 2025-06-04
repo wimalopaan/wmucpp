@@ -105,50 +105,25 @@ namespace External::Bluetooth {
                 });
             }
         }
-        static inline void update() {
+        static inline void sendString(const char* const name){
+            if (mActive) {
+                uart::fillSendBuffer([&](auto& data){
+                    return (sprintf((char*)&data[0], "%c%s%c", startSymbol, name, endSymbol));
+                });
+            }
         }
+        static inline void update() {}
         static inline void event(const Event e) {
             mEvent = e;
         }
+        static inline constexpr External::Tick<systemTimer> initTicks{1000ms};
+
         static inline void periodic() {
-            // const auto oldState = mState;
-            switch(mState) {
-            case State::Init:
-                break;
-            case State::Receive:
-                if (mEvent.is(Event::ReceiveComplete)) {
-                    readReply();
-                }
-                break;
-            }
-        }
-        static inline void setLed(const uint8_t index, const bool state) {
-            IO::outl<debug>("# BT set led: ", index, " ", (uint8_t)state);
-            uart::fillSendBuffer([&](auto& data){
-                uint8_t n = 0;
-                data[n++] = '$';
-                data[n++] = 'l';
-                if ((index >= 10) || sendPreceedingZeros) {
-                    data[n++] = '0' + ((index / 10) % 10);
-                }
-                data[n++] = '0' + (index % 10);
-                data[n++] = ' ';
-                if (state) {
-                    data[n++] = '1';
-                }
-                else {
-                    data[n++] = '0';
-                }
-                data[n++] = endSymbol;
-                return n;
+            mEvent.on(Event::ReceiveComplete, []{
+                readReply();
             });
         }
-
-        static inline constexpr External::Tick<systemTimer> initTicks{1000ms};
-        static inline constexpr External::Tick<systemTimer> waitTicks{20ms};
-
         static inline void ratePeriodic() {
-            // const auto oldState = mState;
             ++mStateTick;
             switch(mState) {
             case State::Init:
@@ -179,6 +154,27 @@ namespace External::Bluetooth {
                 }
             }
         };
+        static inline void setLed(const uint8_t index, const bool state) {
+            IO::outl<debug>("# BT set led: ", index, " ", (uint8_t)state);
+            uart::fillSendBuffer([&](auto& data){
+                uint8_t n = 0;
+                data[n++] = '$';
+                data[n++] = 'l';
+                if ((index >= 10) || sendPreceedingZeros) {
+                    data[n++] = '0' + ((index / 10) % 10);
+                }
+                data[n++] = '0' + (index % 10);
+                data[n++] = ' ';
+                if (state) {
+                    data[n++] = '1';
+                }
+                else {
+                    data[n++] = '0';
+                }
+                data[n++] = endSymbol;
+                return n;
+            });
+        }
         static inline uint16_t value(const uint8_t ch) {
             if (ch < 16) {
                 return std::clamp(mValues[ch], RC::Protokoll::SBus::V2::min, RC::Protokoll::SBus::V2::max);
@@ -270,14 +266,10 @@ namespace External::Bluetooth {
         static inline volatile bool mActive = false;
         static inline uint16_t mErrorCount = 0;
         static inline uint16_t mPackagesCount = 0;
-        static inline volatile etl::Event<Event> mEvent;
+        static inline etl::Event<volatile Event> mEvent;
         static inline volatile State mState = State::Init;
         static inline External::Tick<systemTimer> mStateTick;
     };
-
-
-
-
 
     template<uint8_t N, typename Config, typename MCU = DefaultMcu>
     struct Jdy10 {

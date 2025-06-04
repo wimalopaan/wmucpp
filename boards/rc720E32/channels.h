@@ -46,6 +46,9 @@ struct ChannelCallback {
             escs::set(0, pa::value(eeprom.channels[0].first));
             escs::set(1, pa::value(eeprom.channels[1].first));
 
+            servos::set(0, pa::value(eeprom.channels[0].second));
+            servos::set(1, pa::value(eeprom.channels[1].second));
+
             telemetry::current(0, escs::current(0));
             telemetry::rpm(0, escs::rpm(0));
             telemetry::current(1, escs::current(1));

@@ -51,6 +51,100 @@ namespace RC {
                 using namespace etl::literals;
 
                 namespace Util {
+
+                    template<typename Config>
+                    static inline void command(const auto payload, [[maybe_unused]] const uint8_t paylength) {
+                        using debug = Config::debug;
+                        using switchCb8 = Config::switchCallback;
+                        using propCb = Config::propCallback;
+                        static constexpr uint8_t ownAddress = Config::address;
+
+                        const uint8_t destAddress = payload[3];
+                        const uint8_t srcAddress = payload[4];
+                        const uint8_t realm = payload[5];
+                        const uint8_t cmd = payload[6];
+                        if ((srcAddress == (uint8_t)RC::Protokoll::Crsf::V4::Address::Handset) && (destAddress >= 0xc0) && (destAddress <= 0xcf)) {
+                            if (realm == (uint8_t)RC::Protokoll::Crsf::V4::CommandType::Switch) {
+                                if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set4M) {
+                                    const uint8_t count = payload[7];
+                                    for(uint8_t i = 0; i < count; ++i) {
+                                        const uint8_t swAddress = payload[8 + 3 * i];
+                                        const uint16_t sw = (payload[9 + 3 * i] << 8) + payload[10 + 3 * i];
+                                        IO::outl<debug>("# Switch set4M: ", i, " adr: ", swAddress);
+                                        if (ownAddress == swAddress) {
+                                            IO::outl<debug>("# Switch set4M adr: ", swAddress, " v: ", sw);
+                                            uint8_t sw8 = 0;
+                                            for(uint8_t k = 0; k < 8; ++k) {
+                                                const uint8_t s = (sw >> (2 * k)) & 0b11;
+                                                if (s > 0) {
+                                                    sw8 |= (1 << k);
+                                                }
+                                            }
+                                            switchCb8::set(sw8);
+                                        }
+                                    }
+                                }
+                                else {
+                                    const uint8_t address = (uint8_t)payload[7];
+                                    if (ownAddress == address) {
+                                        if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set) {
+                                            const uint8_t sw = (uint8_t)payload[8];
+                                            IO::outl<debug>("# Cmd Set: ", address, " sw: ", sw);
+                                            switchCb8::set(sw);
+                                        }
+                                        else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set4) {
+                                            const uint16_t sw = (((uint16_t)payload[8]) << 8) + payload[9];
+                                            IO::outl<debug>("# Cmd Set4: ", address, " sw: ", sw);
+                                            uint8_t sw8 = 0;
+                                            for(uint8_t i = 0; i < 8; ++i) {
+                                                const uint8_t s = (sw >> (2 * i)) & 0b11;
+                                                if (s > 0) {
+                                                    sw8 |= (1 << i);
+                                                }
+                                            }
+                                            switchCb8::set(sw8);
+                                        }
+                                        else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Prop) {
+                                            const uint8_t ch = (uint8_t)payload[8];
+                                            const uint8_t duty = (uint8_t)payload[9];
+                                            IO::outl<debug>("# Cmd Prop: ", address, " ch: ", ch, " d: ", duty);
+                                            propCb::prop(ch, duty);
+                                        }
+                // #ifdef USE_AUTO_CONF
+                //                         else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::RequestConfigItem) {
+                //                             const uint8_t item = (uint8_t)payload[8];
+                //                             IO::outl<trace>("# Cmd Req CI: ", item);
+                //                             messageBuffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ArduPilot, [&](auto& d){
+                //                                 d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
+                //                                 d.push_back((uint8_t)eeprom.crsf_address);
+                //                                 d.push_back(RC::Protokoll::Crsf::V4::ArduPilotTunnel::Switch::AppId);
+                //                                 d.push_back((uint8_t)eeprom.address);
+                //                                 d.push_back(RC::Protokoll::Crsf::V4::ArduPilotTunnel::Switch::Type::ConfigItem);
+                //                                 d.push_back(item);
+                //                                 etl::push_back_ntbs(&eeprom.outputs[item].name[0], d);
+                //                                 d.push_back(eeprom.outputs[item].ls);
+                //                                 d.push_back(eeprom.outputs[item].type);
+                //                             });
+                //                         }
+                //                         else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::RequestDeviceInfo) {
+                //                             IO::outl<trace>("# Cmd Req DI");
+                //                             messageBuffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ArduPilot, [&](auto& d){
+                //                                 d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
+                //                                 d.push_back((uint8_t)eeprom.crsf_address);
+                //                                 d.push_back(RC::Protokoll::Crsf::V4::ArduPilotTunnel::Switch::AppId);
+                //                                 d.push_back((uint8_t)eeprom.address);
+                //                                 d.push_back(RC::Protokoll::Crsf::V4::ArduPilotTunnel::Switch::Type::DeviceInfo);
+                //                                 d.push_back(RC::Protokoll::Crsf::V4::SwitchCommand::Set); // use this protocol as set protocol
+                //                                 d.push_back(uint8_t{HW_VERSION});
+                //                                 d.push_back(uint8_t{SW_VERSION});
+                //                             });
+                //                         }
+                // #endif
+                                    }
+                                }
+                            }
+                        }
+                    }
                     template<typename PContainer, uint8_t MaxStringParamLength = 16>
                     static inline bool setParameter(PContainer& params, const uint8_t index, const auto data, const uint8_t paylength) {
                         using Param_t = typename PContainer::value_type;

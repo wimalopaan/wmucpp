@@ -23,8 +23,10 @@ Bugs
 
 Prio 0
 ------
+* "normal" servo support
 * send telemetry values also to bluetooth (display on RoboRemo)
 ** use fixed roboremo names, activate via menu
+** voltage threshold -> roboremo alarm/item
 * fix changing uart baud rate if inactive (bluetooth)
 * Refactoring:
 ** extract CRSF-command handling to namespace CRSF::Util

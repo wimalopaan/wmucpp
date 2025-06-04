@@ -30,6 +30,9 @@ struct ServoOutputs {
     using servo1_ft = devs::srv1_feetech;
     using servo2_ft = devs::srv2_feetech;
 
+    using srv1_pwm = devs::srv1_pwm;
+    using srv2_pwm = devs::srv2_pwm;
+
     using servo1_mpx = devs::ppm_mpx1;
     // using servo2_mpx = devs::ppm_mpx2;
 
@@ -81,6 +84,11 @@ struct ServoOutputs {
         }
         return {};
     }
+    static inline void set(const uint8_t n, const uint16_t v) {
+        if ((n < servos.size()) && servos[n]) {
+            servos[n]->set(v);
+        }
+    }
 
     template<uint8_t N>
     static inline void servo(const uint8_t s) {
@@ -88,6 +96,7 @@ struct ServoOutputs {
         static_assert(N <= 1);
         using srv_ws_t = std::conditional_t<(N == 0), Servo<servo1_ws>, Servo<servo2_ws>>;
         using srv_ft_t = std::conditional_t<(N == 0), Servo<servo1_ft>, Servo<servo2_ft>>;
+        using srv_pwm = std::conditional_t<(N == 0), Servo<srv1_pwm>, Servo<srv2_pwm>>;
         // using srv_mpx_t = std::conditional_t<(N == 0), Servo<servo1_mpx>, Servo<servo2_mpx>>;
         using srv_mpx_t = Servo<servo1_mpx>;
         static_assert(sizeof(srv_ft_t) == sizeof(srv_ws_t));
@@ -106,13 +115,17 @@ struct ServoOutputs {
             servos[N] = nullptr;
             servos[N] = std::make_unique<srv_ws_t>();
             break;
-        case 3: // cppm-mpx
+        case 3: // pwm
+            servos[N] = nullptr;
+            servos[N] = std::make_unique<srv_pwm>();
+            break;
+        case 4: // cppm-mpx
             servos[N] = nullptr;
             if constexpr(N == 0) {
                 servos[N] = std::make_unique<srv_mpx_t>();
             }
             break;
-        case 4: // none
+        case 5: // none
             servos[N] = nullptr;
             break;
         default:

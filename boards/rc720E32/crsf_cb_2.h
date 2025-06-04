@@ -447,7 +447,7 @@ private:
         addNode(p, Param_t{parent, PType::U8, "Schottel 2: l/r", nullptr, &eeprom.channels[1].second, 0, 15, [](const store_t){return true;}});
 
         parent = addParent(p, Param_t{0, PType::Folder, "Outputs"});
-        addNode(p, Param_t{parent, PType::Sel, "Srv1 Out", "PWM/Analog;PWM/PWM;Serial/WaveShare;MultiSwitch/Graupner-A;None", &eeprom.out_mode_srv[0], 0, 4, [](const store_t s){servos::template servo<0>(s); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Srv1 Out", "PWM/Analog;PWM/PWM;Serial/WaveShare;PWM/None;MultiSwitch/Graupner-A;None", &eeprom.out_mode_srv[0], 0, 5, [](const store_t s){servos::template servo<0>(s); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Srv1 Fb", "Analog;PWM;WaveShare;None", &eeprom.out_mode_srv[0], 0, 3});
 #ifdef ESCAPE32_ASCII
         addNode(p, Param_t{parent, PType::Sel, "Esc1 Out", "PWM/-;ESCape32/Serial;ESCape32/Ascii;VEsc/Serial;None", &eeprom.out_mode_esc[0], 0, 4, [](const store_t s){escs::template esc<0>(s); if (s == 2) {hide(mESCape321Folder, mESCape321End, false);} else {hide(mESCape321Folder, mESCape321End, true);} return true;}});
@@ -459,7 +459,7 @@ private:
 #else
         addNode(p, Param_t{parent, PType::Sel, "Esc1 Tlm", "S.Port;VEsc/Bidirectional", &eeprom.tlm_mode_esc[0], 0, 4, [](const store_t){return true;}});
 #endif
-        addNode(p, Param_t{parent, PType::Sel, "Srv2 Out", "PWM/Analog;PWM/PWM;Serial/WaveShare;None", &eeprom.out_mode_srv[1], 0, 3, [](const store_t s){servos::template servo<1>(s); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Srv2 Out", "PWM/Analog;PWM/PWM;Serial/WaveShare;PWM/None;None", &eeprom.out_mode_srv[1], 0, 4, [](const store_t s){servos::template servo<1>(s); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Srv2 Fb", "Analog;PWM;WaveShare;None", &eeprom.out_mode_srv[1], 0, 3});
 #ifdef ESCAPE32_ASCII
         addNode(p, Param_t{parent, PType::Sel, "Esc2 Out", "PWM/-;ESCape32/Serial;ESCape32/Ascii;VEsc/Serial;None", &eeprom.out_mode_esc[1], 0, 4, [](const store_t s){escs::template esc<1>(s); if (s == 2) {hide(mESCape322Folder, false);} return true;}});
@@ -547,7 +547,9 @@ private:
 
         parent = addParent(p, Param_t{0, PType::Folder, "BlueTooth"});
         addNode(p, Param_t{parent, PType::Sel, "Baudrate", "9600;57600;115200", &eeprom.bt_baudrate, 0, 2, [](const store_t v){ btBaudrate(v); return true;}});
-        addNode(p, Param_t{parent, PType::Sel, "Telm. Voltage", "off;on", &eeprom.bt_telem_voltage, 0, 1, [](const store_t){return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Telm. Voltage 0", "off;on", &eeprom.bt_telem_voltage0, 0, 1, [](const store_t){return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Telm. Voltage 1", "off;on", &eeprom.bt_telem_voltage1, 0, 1, [](const store_t){return true;}});
+        addNode(p, Param_t{.parent = parent, .type = PType::U16, .name = "Voltage Alarm", .value_ptr = &eeprom.bt_telem_voltage_thresh, .min = 0, .max = 300, .cb = [](const store_t){return true;}, .unitString = " *0.1V"});
 
         return p;
     }();
