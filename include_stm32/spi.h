@@ -91,17 +91,17 @@ namespace Mcu::Stm {
                     mcuSpi->CR1 = [] consteval {
                             uint32_t r = 0;
                             r |= (SPI_CR1_MSTR);
-                            r |= (0b101 << SPI_CR1_BR_Pos); // div 64
+                            // r |= (0b101 << SPI_CR1_BR_Pos); // div 64
                             bool found = false;
-                            // for(const auto& b : clockDividerBits) {
-                            //     if (b.first == clockDivider) {
-                            //         r |= ((b.second & 0b111) << SPI_CR1_BR_Pos);
-                            //         found = true;
-                            //         break;
-                            //     }
-                            // }
-                            // void f();
-                            // if (!found) f();
+                            for(const auto& b : clockDividerBits) {
+                                if (b.first == clockDivider) {
+                                    r |= ((b.second & 0b111) << SPI_CR1_BR_Pos);
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            void f();
+                            if (!found) f();
                             r |= SPI_CR1_SPE;
                             return r;
                     }();
