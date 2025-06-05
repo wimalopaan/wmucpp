@@ -53,8 +53,8 @@ struct EEProm {
     uint8_t magic = EEPROM_MAGIC;
 
     uint8_t address1 = 0;
-    uint8_t address2 = 0;
-    uint8_t address3 = 0;
+    uint8_t address2 = 1;
+    uint8_t address3 = 2;
 
 #ifdef USE_EEPROM_TEST
     uint8_t crsf_address = 0xcf;
