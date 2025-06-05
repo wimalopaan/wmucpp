@@ -23,10 +23,7 @@ Bugs
 
 Prio 0
 ------
-* "normal" servo support
-* send telemetry values also to bluetooth (display on RoboRemo)
-** use fixed roboremo names, activate via menu
-** voltage threshold -> roboremo alarm/item
+* "normal" servo support: needs major refactor of input management
 * fix changing uart baud rate if inactive (bluetooth)
 * Refactoring:
 ** extract CRSF-command handling to namespace CRSF::Util
@@ -81,6 +78,9 @@ Done bugs:
 
 Done:
 ------
+* send telemetry values also to bluetooth (display on RoboRemo)
+** use fixed roboremo names, activate via menu
+** voltage threshold -> roboremo alarm/item
 * BlueTooth/Aux <- RoboRemo (simple HC-05 connect or via BLE-Adapter), selectable baudrate (9600/115200)
 * auto-off compass calib mode (15s)
 * CRSF-telemetry: Attitude (yaw, roll, pitch), GPS (heading over ground)
