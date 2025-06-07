@@ -34,6 +34,9 @@ namespace etl {
     constexpr inline int32_t littleEndianI32(const uint8_t* const data) {
         return data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24);
     }
+    constexpr inline uint32_t littleEndianU32(const uint8_t* const data) {
+        return data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24);
+    }
 
     template<auto L>
     inline static float from_chars(const std::array<char, L>& str) {
