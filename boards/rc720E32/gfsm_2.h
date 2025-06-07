@@ -153,7 +153,7 @@ struct GFSM {
 
     static inline constexpr External::Tick<systemTimer> packagesCheckTicks{300ms};
     static inline constexpr External::Tick<systemTimer> baudCheckTicks{1000ms};
-    static inline constexpr External::Tick<systemTimer> gpsCheckTicks{3000ms};
+    static inline constexpr External::Tick<systemTimer> gpsCheckTicks{5000ms};
 
     static inline constexpr External::Tick<systemTimer> calibLedTicks{100ms};
     static inline constexpr External::Tick<systemTimer> calibMaxDuration{15000ms};
@@ -269,9 +269,10 @@ struct GFSM {
                 });
                 telemetry::next();
             });
+            static uint16_t gps_pp = 0;
             (++mGpsCheckTick).on(gpsCheckTicks, []{
-                if (gps_aux::packages() == 0) {
-                    gps_aux::nextBaudrate();
+                if ((gps_pp = gps_aux::packages()) == 0) {
+                    // gps_aux::nextBaudrate();
                 }
             });
             mStateTick.on(debugTicks, []{
@@ -290,6 +291,8 @@ struct GFSM {
                 // IO::outl<debug>("# ublox npkg: ", gps_aux::ublox::mNavPackages, " stat pkg: ", gps_aux::ublox::mStatusPackages, " flags: ", gps_aux::ublox::mFlags, " lon: ", gps_aux::ublox::mLongitude, " lat: ", gps_aux::ublox::mLatitude,
                 //                 " speed: ", gps_aux::ublox::mSpeed,
                 //                 " head: ", gps_aux::ublox::mHeading / 100, " headM: ", gps_aux::ublox::mHeadingM / 100);
+                IO::outl<debug>("# ublox flags: ", gps_aux::ublox::mFlags, " lon: ", gps_aux::ublox::mLongitude, " lat: ", gps_aux::ublox::mLatitude, " fix: ", gps_aux::ublox::mFix, " hacc: ", gps_aux::ublox::mHAcc, " sats: ", gps_aux::ublox::mSatCount, " hdop: ", gps_aux::ublox::mHDop, " vc: ", gps_aux::mVCount);
+                IO::outl<debug>("# ublox ack: ", gps_aux::ublox::mAckPackages, " nack: ", gps_aux::ublox::mNAckPackages, " sw: ", &gps_aux::ublox::mSWVersion[0], " hw: ", &gps_aux::ublox::mHWVersion[0], " ext0: ", &gps_aux::ublox::mExtensions[0][0], " ext1: ", &gps_aux::ublox::mExtensions[1][0]);
                 // IO::outl<debug>("# sbus aux: ", sbus_aux::value(0));
                 // IO::outl<debug>("_end:", &_end, " _ebss:", &_ebss, " heap:", heap);
                 // IO::outl<debug>("ch0: ", crsf_in_pa::value(0), " phi0: ", polar1::phi(), " amp0: ", polar1::amp(), " a0: ", Servos::actualPos(0), " t0: ", Servos::turns(0), " phi1: ", polar2::phi(), " amp1: ", polar2::amp(), " a1: ", Servos::actualPos(1), " t1: ", Servos::turns(1));

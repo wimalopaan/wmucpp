@@ -87,37 +87,41 @@ struct Telemetry {
         if (mState != State::On) return;
         using namespace RC::Protokoll::Crsf::V4;
         ++mFrameCounter;
-        if (mFrameCounter < infoRate) {
-            buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ArduPilot, [&](auto& d){
-                d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
-                d.push_back((uint8_t)storage::eeprom.address);
-                d.push_back(ArduPilotTunnel::Schottel::AppId);
-                d.push_back(ArduPilotTunnel::Schottel::Type::CombinedTelemetry); // packet type
-                d.push_back(mValues);
-                d.push_back(mTurns);
-                d.push_back(mFlags);
-            });
+        if (storage::eeprom.mode == 0) { // Schottel
+            if (mFrameCounter < infoRate) {
+                buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ArduPilot, [&](auto& d){
+                    d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
+                    d.push_back((uint8_t)storage::eeprom.address);
+                    d.push_back(ArduPilotTunnel::Schottel::AppId);
+                    d.push_back(ArduPilotTunnel::Schottel::Type::CombinedTelemetry); // packet type
+                    d.push_back(mValues);
+                    d.push_back(mTurns);
+                    d.push_back(mFlags);
+                });
+            }
+            else {
+                mFrameCounter = 0;
+                buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ArduPilot, [&](auto& d){
+                    d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
+                    d.push_back((uint8_t)storage::eeprom.address);
+                    d.push_back(ArduPilotTunnel::Schottel::AppId);
+                    d.push_back(ArduPilotTunnel::Schottel::Type::DeviceInfo); // packet type
+                    d.push_back(servos::fwVersion(0));
+                    d.push_back(servos::hwVersion(0));
+                    d.push_back(servos::fwVersion(1));
+                    d.push_back(servos::hwVersion(1));
+
+                    d.push_back(escs::fwVersion(0));
+                    d.push_back(escs::hwVersion(0));
+                    d.push_back(escs::fwVersion(1));
+                    d.push_back(escs::hwVersion(1));
+
+                    d.push_back((uint8_t)SW_VERSION);
+                    d.push_back((uint8_t)HW_VERSION);
+                });
+            }
         }
-        else {
-            mFrameCounter = 0;
-            buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ArduPilot, [&](auto& d){
-                d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
-                d.push_back((uint8_t)storage::eeprom.address);
-                d.push_back(ArduPilotTunnel::Schottel::AppId);
-                d.push_back(ArduPilotTunnel::Schottel::Type::DeviceInfo); // packet type
-                d.push_back(servos::fwVersion(0));
-                d.push_back(servos::hwVersion(0));
-                d.push_back(servos::fwVersion(1));
-                d.push_back(servos::hwVersion(1));
-
-                d.push_back(escs::fwVersion(0));
-                d.push_back(escs::hwVersion(0));
-                d.push_back(escs::fwVersion(1));
-                d.push_back(escs::hwVersion(1));
-
-                d.push_back((uint8_t)SW_VERSION);
-                d.push_back((uint8_t)HW_VERSION);
-            });
+        if (storage::eeprom.mode == 1) { // CC
         }
     }
     template<auto N>

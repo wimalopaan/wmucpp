@@ -261,8 +261,8 @@ void USART3_4_5_6_LPUART1_IRQHandler(){
         });
         using gps = devs::gps_aux;
         static_assert(gps::uart::number == 4);
-        // gps::Isr::onTransferComplete([]{
-        // });
+        gps::Isr::onTransferComplete([]{
+        });
         gps::Isr::onIdle([]{
         });
         using bt = devs::bt;

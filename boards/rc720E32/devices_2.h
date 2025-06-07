@@ -350,7 +350,8 @@ struct Devices<SW01, Config, MCU> {
         using dest = crsfBuffer;
     };
     struct GPSAuxConfig {
-        using pin = auxrx;
+        using pin_rx = auxrx;
+        using pin_tx = auxtx;
         using clock = Devices::clock;
         using systemTimer = Devices::systemTimer;
         using dmaChComponent = relayAuxDmaChannelComponent;

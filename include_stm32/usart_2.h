@@ -483,6 +483,7 @@ namespace Mcu::Stm {
                 if constexpr(Config::mode == Uarts::Mode::HalfDuplex) {
                     rxEnable<false>();
                 }
+                // mcuUart->ICR = USART_ICR_TCCF;
                 dmaChRW::startWrite(n, (uint32_t)&mcuUart->TDR, mActiveWriteBuffer, Uarts::Properties<N>::dmamux_tx_src);
                 if constexpr(!useSingleTxBuffer) {
                     if (mActiveWriteBuffer == &mWriteBuffer1[0]) {
@@ -517,9 +518,19 @@ namespace Mcu::Stm {
                         requires(Config::mode != Uarts::Mode::RxOnly) {
                     if ((mcuUart->CR1 & USART_CR1_TE) && (mcuUart->ISR & USART_ISR_TC)) {
                         mcuUart->ICR = USART_ICR_TCCF;
-                        f();
-                        if constexpr(Config::mode == Uarts::Mode::HalfDuplex) {
-                            rxEnable<true>();
+                        if constexpr(requires(){{f()} -> std::convertible_to<bool>;}) {
+                            const bool e = f();
+                            if constexpr(Config::mode == Uarts::Mode::HalfDuplex) {
+                                if (e) {
+                                    rxEnable<true>();
+                                }
+                            }
+                        }
+                        else {
+                            f();
+                            if constexpr(Config::mode == Uarts::Mode::HalfDuplex) {
+                                rxEnable<true>();
+                            }
                         }
                     }
                 }
