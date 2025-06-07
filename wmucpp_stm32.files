@@ -229,6 +229,7 @@ boards/rcLed4x4/pca9745.h
 boards/rcLed4x4/startup_g051.s
 boards/rcLed4x4/storage.h
 boards/rcLed4x4/system_g0.cc
+boards/rcLed4x4/todo.txt
 boards/rcVarioprop/Makefile
 boards/rcVarioprop/V01/Makefile
 boards/rcVarioprop/V01/buzzer.h
