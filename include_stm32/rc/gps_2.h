@@ -51,24 +51,29 @@ namespace External::GPS {
                     const uint8_t msgClass = data[2];
                     const uint8_t msgId    = data[3];
                     const uint16_t msgLen = data[4] + (data[5] << 8);
-
-                    if ((msgClass == 0x01) && (msgId == 0x07)) {
-                        parseNavPvt(data + 6);
+                    CheckSum cs;
+                    for(uint16_t i = 2; i < (msgLen + 6); ++i) {
+                        cs += data[i];
                     }
-                    else if ((msgClass == 0x10) && (msgId == 0x10)) {
-                        parseEsfStatus(data + 6);
-                    }
-                    else if ((msgClass == 0x01) && (msgId == 0x04)) { // DOP
-                        parseDOP(data + 6);
-                    }
-                    else if ((msgClass == 0x0a) && (msgId == 0x04)) { // Version
-                        parseVersion(data + 6, msgLen);
-                    }
-                    else if ((msgClass == 0x05) && (msgId == 0x01)) { // Ack
-                        parseAck(data + 6);
-                    }
-                    else if ((msgClass == 0x05) && (msgId == 0x00)) { // NAck
-                        parseNAck(data + 6);
+                    if ((cs.ck_a == data[msgLen + 6]) && (cs.ck_b == data[msgLen + 7])) {
+                        if ((msgClass == 0x01) && (msgId == 0x07)) {
+                            parseNavPvt(data + 6);
+                        }
+                        else if ((msgClass == 0x10) && (msgId == 0x10)) {
+                            parseEsfStatus(data + 6);
+                        }
+                        else if ((msgClass == 0x01) && (msgId == 0x04)) { // DOP
+                            parseDOP(data + 6);
+                        }
+                        else if ((msgClass == 0x0a) && (msgId == 0x04)) { // Version
+                            parseVersion(data + 6, msgLen);
+                        }
+                        else if ((msgClass == 0x05) && (msgId == 0x01)) { // Ack
+                            parseAck(data + 6);
+                        }
+                        else if ((msgClass == 0x05) && (msgId == 0x00)) { // NAck
+                            parseNAck(data + 6);
+                        }
                     }
                     return 6 + msgLen + 2; // offset points to next byte after this message
                 }
