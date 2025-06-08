@@ -295,6 +295,8 @@ host/bdc/Makefile
 host/bdc/expfit01.cc
 host/bdc/test00.cc
 host/bdc/testDSP01.cc
+host/gps/Makefile
+host/gps/test.cc
 include0/config.h
 include0/etl/algorithm.h
 include0/etl/bitfield.h
