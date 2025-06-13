@@ -9,7 +9,8 @@ namespace External::Bluetooth {
     struct Telemetry {
         using debug = Config::debug;
         using timer = Config::timer;
-        using dev = Config::dev;
+        using dev1 = Config::dev1;
+        using dev2 = Config::dev2;
         using storage = Config::storage;
         using sources = Config::sources;
 
@@ -48,7 +49,12 @@ namespace External::Bluetooth {
                 case State::Wait:
                     break;
                 case State::HeartBeat:
-                    dev::sendValue("hb", 1);
+                    if (dev1::isActive()) {
+                        dev1::sendValue("hb", 1);
+                    }
+                    else if (dev2::isActive()) {
+                        dev2::sendValue("hb", 1);
+                    }
                     break;
                 case State::Values:
                     sendNextValue();
@@ -61,10 +67,20 @@ namespace External::Bluetooth {
             static u_int8_t item = 0;
             switch(item++) {
             case 0:
-                dev::sendValue("volt0", sources::voltage(0));
+                if (dev1::isActive()) {
+                    dev1::sendValue("volt0", sources::voltage(0));
+                }
+                else if (dev2::isActive()) {
+                    dev2::sendValue("volt0", sources::voltage(0));
+                }
                 break;
             case 1:
-                dev::sendValue("volt1", sources::voltage(1));
+                if (dev1::isActive()) {
+                    dev1::sendValue("volt1", sources::voltage(1));
+                }
+                else if (dev2::isActive()) {
+                    dev2::sendValue("volt1", sources::voltage(1));
+                }
                 break;
             case 2:
             {
@@ -76,7 +92,12 @@ namespace External::Bluetooth {
                     alarm = true;
                 }
                 if (alarm) {
-                    dev::sendString("alarm 800 200");
+                    if (dev1::isActive()) {
+                        dev1::sendString("alarm 800 200");
+                    }
+                    else if (dev2::isActive()) {
+                        dev2::sendString("alarm 800 200");
+                    }
                 }
             }
                 item = 0;

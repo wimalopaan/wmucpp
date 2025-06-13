@@ -242,7 +242,9 @@ struct Devices<SW01, Config, MCU> {
     using bt2 = External::Bluetooth::Simple<3, BtConfig2, MCU>;
 
     // Tlm2: PB9 : TIM17-CH1, TIM4-CH4
-    using tp1 = Mcu::Stm::Pin<gpiob, 9, MCU>;
+    using tlm2 = Mcu::Stm::Pin<gpiob, 9, MCU>;
+    // using tp1 = tlm2;
+    using tp1 = void;
 
     // Srv2: PA4 : TIM14-CH1 (AF4), Uart6-TX (AF3)
     using srv2_pin = Mcu::Stm::Pin<gpioa, 4, MCU>;
@@ -338,7 +340,7 @@ struct Devices<SW01, Config, MCU> {
         using systemTimer = Devices::systemTimer;
         using dmaChComponent = relay1DmaChannelComponent;
         using debug = void;
-        using tp = tp1;
+        using tp = void;
         using src = crsf_in::input;
         using dest = crsfBuffer;
     };
@@ -348,7 +350,7 @@ struct Devices<SW01, Config, MCU> {
         using systemTimer = Devices::systemTimer;
         using dmaChComponent = relayAuxDmaChannelComponent;
         using debug = void;
-        using tp = tp1;
+        using tp = void;
         using src = crsf_in::input;
         using dest = crsfBuffer;
     };
@@ -359,7 +361,7 @@ struct Devices<SW01, Config, MCU> {
         using systemTimer = Devices::systemTimer;
         using dmaChComponent = relayAuxDmaChannelComponent;
         using debug = Devices::debug;
-        using tp = tp1;
+        using tp = void;
     };
     struct BtConfig {
         using clock = Devices::clock;
@@ -372,6 +374,22 @@ struct Devices<SW01, Config, MCU> {
         using swcallback = struct {
             static inline void set(const uint8_t index, const bool state) {
                 IO::outl<debug>("# BT set:", index, " s:", (uint8_t)state);
+                bt::setLed(index, state);
+                sumdv3_out::setSwitch(index, state);
+            }
+        };
+    };
+    struct BtConfig2 {
+        using clock = Devices::clock;
+        using debug = Devices::debug;
+        using dmaChComponent = esc2DmaChannelComponent;
+        using systemTimer = Devices::systemTimer;
+        using pin_tx = esc2_pin_1;
+        using pin_rx = tlm2;
+        using tp = void;
+        using swcallback = struct {
+            static inline void set(const uint8_t index, const bool state) {
+                IO::outl<debug>("# BT2 set:", index, " s:", (uint8_t)state);
                 bt::setLed(index, state);
                 sumdv3_out::setSwitch(index, state);
             }
@@ -443,6 +461,7 @@ struct Devices<SW01, Config, MCU> {
         using stream2 = Config::relays; // relay connector
         using stream3 = sbus_aux; // aux
         using stream4 = bt; // aux
+        using stream5 = bt2; // esc2 pins
     };
 
     struct PulseConfig {
@@ -461,7 +480,8 @@ struct Devices<SW01, Config, MCU> {
     struct BtTelemConfig {
         using debug = Devices::debug;
         using timer = systemTimer;
-        using dev = bt;
+        using dev1 = bt;
+        using dev2 = bt2;
         using storage = Devices::storage;
         using sources = typename Config::escs;
     };
@@ -499,7 +519,7 @@ struct Devices<SW01, Config, MCU> {
         using dmaChRead  = csrfInDmaChannelComponent1;
         using dmaChWrite = csrfInDmaChannelComponent2;
         using debug = Devices::debug;
-        using tp = tp1;
+        using tp = void;
         using callback = CrsfCallback<CrsfCallbackConfig, debug>;
         static inline constexpr uint8_t fifoSize = 16;
     };
@@ -599,7 +619,7 @@ struct Devices<SW01, Config, MCU> {
         qmc5883l::init();
         mpu6050::init();
 
-        tp1::template dir<Mcu::Output>();
+        // tp1::template dir<Mcu::Output>();
         tp3::template dir<Mcu::Output>();
     }
 };

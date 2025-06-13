@@ -112,6 +112,9 @@ namespace External::Bluetooth {
                 });
             }
         }
+        static inline bool isActive() {
+            return mActive;
+        }
         static inline void update() {}
         static inline void event(const Event e) {
             mEvent = e;

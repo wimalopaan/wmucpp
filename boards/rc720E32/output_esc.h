@@ -33,6 +33,7 @@ struct EscOutputs {
     using esc32ascii_2 = devs::esc32ascii_2;
     using vesc_1 = devs::vesc_1;
     using vesc_2 = devs::vesc_2;
+    using bt2 = devs::bt2;
 
     template<uint8_t N>
     static inline void esc(const uint8_t e) {
@@ -42,6 +43,7 @@ struct EscOutputs {
         using esc_esc32_t = std::conditional_t<(N == 0), Esc<esc32_1>, Esc<esc32_2>>;
         using esc_esc32ascii_t = std::conditional_t<(N == 0), Esc<esc32ascii_1>, Esc<esc32ascii_2>>;
         using esc_vesc_t = std::conditional_t<(N == 0), Esc<vesc_1>, Esc<vesc_2>>;
+        using bt2_t = std::conditional_t<(N == 0), void, Esc<bt2>>;
 
         // std::integral_constant<uint8_t, sizeof(esc_pwm_t)>::_;
         static_assert(sizeof(esc_pwm_t) == sizeof(esc_esc32_t));
@@ -67,6 +69,12 @@ struct EscOutputs {
             break;
         case 4: // None
             escs[N] = nullptr;
+            break;
+        case 5: // BT
+            escs[N] = nullptr;
+            if constexpr(N == 1) {
+                escs[N] = std::make_unique<bt2_t>();
+            }
             break;
         default:
             break;

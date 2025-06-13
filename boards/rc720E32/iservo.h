@@ -219,16 +219,36 @@ struct Esc: IEsc {
         E::reset();
     }
     virtual std::pair<uint8_t, uint8_t> fwVersion() {
-        return E::fwVersion();
+        if constexpr(requires(){E::fwVersion();}) {
+            return E::fwVersion();
+        }
+        else {
+            return {};
+        }
     }
     virtual std::pair<uint8_t, uint8_t> hwVersion() {
-        return E::hwVersion();
+        if constexpr(requires(){E::hwVersion();}) {
+            return E::hwVersion();
+        }
+        else {
+            return {};
+        }
     }
     virtual uint16_t current() {
-        return E::current();
+        if constexpr(requires(){E::current();}) {
+            return E::current();
+        }
+        else {
+            return 0;
+        }
     }
     virtual uint16_t rpm() {
-        return E::rpm();
+        if constexpr(requires(){E::rpm();}) {
+            return E::rpm();
+        }
+        else {
+            return 0;
+        }
     }
     virtual uint16_t voltage() {
         if constexpr(requires(){E::voltage();}) {
@@ -239,7 +259,9 @@ struct Esc: IEsc {
         }
     }
     virtual void set(const uint16_t s) {
-        E::set(s);
+        if constexpr(requires(){E::set(s);}) {
+            return E::set(s);
+        }
     }
     virtual void update() {
         E::update();

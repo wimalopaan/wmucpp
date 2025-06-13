@@ -5,6 +5,7 @@
 #include "tick.h"
 #include "etl/event.h"
 #include "eeprom.h"
+#include "debug_pin.h"
 
 using namespace std::literals::chrono_literals;
 
@@ -229,7 +230,8 @@ struct Compass {
 
     // 34µs
     static inline int16_t aComp_I() {
-        tp::set();
+        [[maybe_unused]] Debug::Scoped<tp> _tp;
+
         const int16_t mag_x = x();
         const int16_t mag_y = y();
         const int16_t mag_z = z();
@@ -243,7 +245,6 @@ struct Compass {
         const int16_t azimuth = FastMath::atan2<scale, ipi>(Y_h, X_h);
         // const int16_t azimuth = FastMath::atan2<scale, 180>(Y_h, X_h);
 
-        tp::reset();
         return azimuth;
     }
     // template<typename Debug>

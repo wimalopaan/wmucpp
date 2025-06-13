@@ -78,10 +78,10 @@ namespace External::GPS {
                     return 6 + msgLen + 2; // offset points to next byte after this message
                 }
                 // private:
-                static inline void parseAck(const uint8_t* const data) {
+                static inline void parseAck(const uint8_t* const /*data*/) {
                     ++mAckPackages;
                 }
-                static inline void parseNAck(const uint8_t* const data) {
+                static inline void parseNAck(const uint8_t* const /*data*/) {
                     ++mNAckPackages;
                 }
                 static inline void parseDOP(const uint8_t* const data) {

@@ -228,6 +228,11 @@ void USART3_4_5_6_LPUART1_IRQHandler(){
         vesc_2::Isr::onTransferComplete([]{});
         vesc_2::Isr::onIdle([]{});
 
+        using bt2 = devs::bt2;
+        static_assert(bt2::uart::number == 3);
+        bt2::Isr::onTransferComplete([]{});
+        bt2::Isr::onIdle([]{});
+
         esc32_2::uart::mcuUart->ICR = -1;
     }
     {

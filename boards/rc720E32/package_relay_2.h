@@ -100,11 +100,10 @@ namespace RC::Protokoll::Crsf {
                     break;
                 case State::Run:
                     if (mEvent.is(Event::ReceiveComplete)) {
-                        tp::set();
+                        [[maybe_unused]] Debug::Scoped<tp> _tp;
                         uart::readBuffer([](const auto& data){
                             dest::enqueue(data);
                         });
-                        tp::reset();
                     }
                     break;
                 }
