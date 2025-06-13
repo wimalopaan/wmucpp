@@ -41,6 +41,7 @@ struct IEsc : IDevice {
     virtual uint16_t current() = 0;
     virtual uint16_t rpm() = 0;
     virtual uint16_t voltage() = 0;
+    virtual uint16_t temp() = 0;
     virtual void set(uint16_t) = 0;
     virtual void update() = 0;
     virtual ~IEsc(){}
@@ -253,6 +254,14 @@ struct Esc: IEsc {
     virtual uint16_t voltage() {
         if constexpr(requires(){E::voltage();}) {
             return E::voltage();
+        }
+        else {
+            return 0;
+        }
+    }
+    virtual uint16_t temp() {
+        if constexpr(requires(){E::temp();}) {
+            return E::temp();
         }
         else {
             return 0;

@@ -122,7 +122,7 @@ struct Telemetry {
             }
         }
         else if (storage::eeprom.mode == 1) { // CC
-            if (mFrameCounter > 1) mFrameCounter = 0;
+            if (mFrameCounter > 2) mFrameCounter = 0;
             switch(mFrameCounter) {
             case 0:
                 buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::Rpm, [&](auto& d){
@@ -149,6 +149,13 @@ struct Telemetry {
                     d.push_back(uint8_t(0));
                 });
                 break;
+            case 2:
+                buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::Temp, [&](auto& d){
+                    d.push_back(uint8_t{1});
+                    d.push_back(temp(0));
+                    d.push_back(temp(1));
+                });
+                break;
             }
 
         }
@@ -169,6 +176,12 @@ struct Telemetry {
     }
     static inline void voltage(const uint8_t n, const uint16_t v) {
         mVoltage[n] = v;
+    }
+    static inline uint16_t temp(const uint8_t n) {
+        return mTemp[n];
+    }
+    static inline void temp(const uint8_t n, const uint16_t t) {
+        mTemp[n] = t;
     }
     static inline uint16_t current(const uint8_t n) {
         return mValues[5 * n + 3] / 10;
@@ -198,6 +211,7 @@ struct Telemetry {
     static inline std::array<uint16_t, 10> mValues{};
     static inline std::array<int8_t, 2> mTurns{};
     static inline std::array<uint16_t, 2> mVoltage{};
+    static inline std::array<uint16_t, 2> mTemp{};
     static inline uint8_t mFlags = 0;
     static inline tick_t mStateTick;
     static inline etl::Event<Event> mEvent;

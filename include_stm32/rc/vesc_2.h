@@ -199,6 +199,9 @@ namespace RC::VESC {
                 static inline uint16_t voltage() {
                     return protocol_adapter::mTelem.mVoltage;
                 }
+                static inline uint16_t temp() {
+                    return protocol_adapter::mTelem.mTemperature;
+                }
                 static inline std::pair<uint8_t, uint8_t> hwVersion() {
                     return {};
                 }
