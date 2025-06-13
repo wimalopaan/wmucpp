@@ -408,7 +408,7 @@ namespace RC::VESC {
                 static inline uint8_t mVersionMajor;
                 static inline uint8_t mVersionMinor;
                 static inline uint16_t mRpm{};
-                static inline uint8_t mPolePairs{7};
+                static inline uint8_t mPolePairs{1};
                 static inline bool mUseMotorCurrent = false;
                 static inline uint16_t mCurrent{};
                 static inline int32_t mThrottle{};
