@@ -1,5 +1,6 @@
 todo:
 -----
+* increase output current by grouping outputs together
 * running light mode: parameter: speed, activate-output, activate-next address, (pwm)
 * running light mode: crsf command messages
 * running light mode: problem: half-duplex-bus arbitration,
