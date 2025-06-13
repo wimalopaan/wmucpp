@@ -238,6 +238,9 @@ struct Devices<SW01, Config, MCU> {
     struct VEscConfig2;
     using vesc_2 = RC::VESC::Master::V5::Serial<3, VEscConfig2, MCU>;
 
+    struct BtConfig2;
+    using bt2 = External::Bluetooth::Simple<3, BtConfig2, MCU>;
+
     // Tlm2: PB9 : TIM17-CH1, TIM4-CH4
     using tp1 = Mcu::Stm::Pin<gpiob, 9, MCU>;
 

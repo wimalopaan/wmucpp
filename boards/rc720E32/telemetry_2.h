@@ -121,7 +121,36 @@ struct Telemetry {
                 });
             }
         }
-        if (storage::eeprom.mode == 1) { // CC
+        else if (storage::eeprom.mode == 1) { // CC
+            if (mFrameCounter > 1) mFrameCounter = 0;
+            switch(mFrameCounter) {
+            case 0:
+                buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::Rpm, [&](auto& d){
+                    d.push_back(uint8_t{1});
+                    const uint16_t rpm1 = rpm(0);
+                    d.push_back(uint8_t{0});
+                    d.push_back(uint8_t(rpm1 >> 8));
+                    d.push_back(uint8_t(rpm1 & 0xff));
+                    const uint16_t rpm2 = rpm(1);
+                    d.push_back(uint8_t{0});
+                    d.push_back(uint8_t(rpm2 >> 8));
+                    d.push_back(uint8_t(rpm2 & 0xff));
+                });
+                break;
+            case 1:
+                buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::Battery, [&](auto& d){
+                    d.push_back(voltage(0));
+                    d.push_back(current(0));
+
+                    d.push_back(uint8_t(0));
+                    d.push_back(uint8_t(0));
+                    d.push_back(uint8_t(0));
+
+                    d.push_back(uint8_t(0));
+                });
+                break;
+            }
+
         }
     }
     template<auto N>
@@ -135,8 +164,20 @@ struct Telemetry {
     static inline void actual(const uint8_t n, const uint16_t a) {
         mValues[5 * n + 2] = a;
     }
+    static inline uint16_t voltage(const uint8_t n) {
+        return mVoltage[n];
+    }
+    static inline void voltage(const uint8_t n, const uint16_t v) {
+        mVoltage[n] = v;
+    }
+    static inline uint16_t current(const uint8_t n) {
+        return mValues[5 * n + 3] / 10;
+    }
     static inline void current(const uint8_t n, const uint16_t c) {
         mValues[5 * n + 3] = c;
+    }
+    static inline uint16_t rpm(const uint8_t n) {
+        return mValues[5 * n + 4];
     }
     static inline void rpm(const uint8_t n, const uint16_t r) {
         mValues[5 * n + 4] = r;
@@ -156,6 +197,7 @@ struct Telemetry {
     static inline uint8_t mFrameCounter = 0;
     static inline std::array<uint16_t, 10> mValues{};
     static inline std::array<int8_t, 2> mTurns{};
+    static inline std::array<uint16_t, 2> mVoltage{};
     static inline uint8_t mFlags = 0;
     static inline tick_t mStateTick;
     static inline etl::Event<Event> mEvent;

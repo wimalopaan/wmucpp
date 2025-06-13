@@ -78,7 +78,7 @@ struct EEProm {
 #endif
 
 #ifdef TEST_EEPROM
-    eeprom_value_t input_stream = 2;
+    eeprom_value_t input_stream = 0;
 #else
     eeprom_value_t input_stream = 0; // CRSF, Pulse
 #endif
@@ -104,7 +104,7 @@ struct EEProm {
     eeprom_value_t phi2_ch = 3;
 
 #ifdef TEST_EEPROM
-    eeprom_value_t crsf_hd_mode = 9;
+    eeprom_value_t crsf_hd_mode = 1;
 #else
     eeprom_value_t crsf_hd_mode = 0;
 #endif
@@ -117,14 +117,14 @@ struct EEProm {
     eeprom_value_t sport_appId_telemetry = ((uint16_t)RC::Protokoll::SPort::V2::ValueId::DIY2) >> 8;
 
 #ifdef TEST_EEPROM
-    std::array<eeprom_value_t, 2> out_mode_srv{3, 2};
+    std::array<eeprom_value_t, 2> out_mode_srv{3, 3};
 #else
-    std::array<eeprom_value_t, 2> out_mode_srv{2, 2};
+    std::array<eeprom_value_t, 2> out_mode_srv{3, 3};
 #endif
 
 #ifdef TEST_EEPROM
     // std::array<eeprom_value_t, 2> out_mode_esc{2, 0}; // Esc32 Ascii
-    std::array<eeprom_value_t, 2> out_mode_esc{4, 4}; // VEsc
+    std::array<eeprom_value_t, 2> out_mode_esc{3, 3}; // VEsc
 #else
     std::array<eeprom_value_t, 2> out_mode_esc{0, 0};
 #endif
@@ -136,7 +136,11 @@ struct EEProm {
         int16_t mean = 0;
         int16_t d = 0;
     };
-    std::array<CompassCalibData, 3> compass_calib{};
+    std::array<CompassCalibData, 3> compass_calib{{
+        {.mean = -850, .d = 5860},
+        {.mean = -705, .d = 6230},
+        {.mean =  -10, .d = 6177}
+    }};
 
     eeprom_value_t bt_baudrate = 0; // 9600
     eeprom_value_t bt_telem_voltage0 = 1;
