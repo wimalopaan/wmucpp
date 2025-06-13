@@ -440,7 +440,7 @@ private:
         addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
         addNode(p, Param_t{0, PType::Sel,  "Mode", "Dual-Schottel-Controller;Cruise-Controller", &eeprom.mode, 0, 1, [](const store_t){return true;}});
         uint8_t parent = addParent(p, Param_t{0, PType::Folder, "Channels"});
-        addNode(p, Param_t{.parent = parent, .type = PType::Sel, .name = "Stream", .options = "Main/CRSF;Alternative;SBus/Aux;Bluetooth/Aux", .value_ptr = &eeprom.input_stream, .max = 3, .cb = [](const store_t s){mapper::stream(s); return true;}});
+        addNode(p, Param_t{.parent = parent, .type = PType::Sel, .name = "Stream", .options = "Main/CRSF;Alternative;SBus;Bluetooth", .value_ptr = &eeprom.input_stream, .max = 3, .cb = [](const store_t s){mapper::stream(s); return true;}});
         addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "Schottel 1: f/b", .value_ptr = &eeprom.channels[0].first, .max = 15, .cb = [](const store_t){return true;}});
         addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "Schottel 1: l/r", .value_ptr = &eeprom.channels[0].second, .max = 15, .cb = [](const store_t){return true;}});
         addNode(p, Param_t{parent, PType::U8, "Schottel 2: f/b", nullptr, &eeprom.channels[1].first, 0, 15, [](const store_t){return true;}});
