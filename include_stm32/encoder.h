@@ -51,18 +51,19 @@ namespace External {
 
 #ifdef STM32G0
         static inline void init() {
-            if constexpr(N == 1) {
-                RCC->APBENR2 |= RCC_APBENR2_TIM1EN;
-            }
-            else if constexpr(N == 2) {
-                RCC->APBENR1 |= RCC_APBENR1_TIM2EN;
-            }
-            else if constexpr(N == 3) {
-                RCC->APBENR1 |= RCC_APBENR1_TIM3EN;
-            }
-            else {
-                static_assert(false);
-            }
+            Mcu::Stm::Timers::powerUp<N>();
+            // if constexpr(N == 1) {
+            //     RCC->APBENR2 |= RCC_APBENR2_TIM1EN;
+            // }
+            // else if constexpr(N == 2) {
+            //     RCC->APBENR1 |= RCC_APBENR1_TIM2EN;
+            // }
+            // else if constexpr(N == 3) {
+            //     RCC->APBENR1 |= RCC_APBENR1_TIM3EN;
+            // }
+            // else {
+            //     static_assert(false);
+            // }
 
             // pin_a::template dir<Mcu::Input>();
             // pin_b::template dir<Mcu::Input>();
@@ -100,6 +101,12 @@ namespace External {
             mcuTimer->CR1 |= TIM_CR1_CEN;
         }
 #endif
+        static inline void reset() {
+            Mcu::Stm::Timers::reset<N>();
+            pin_a::analog();
+            pin_b::analog();
+            pin_t::analog();
+        }
         static inline uint32_t value() {
             return mcuTimer->CNT;
         }

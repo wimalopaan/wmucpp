@@ -44,39 +44,6 @@ struct GFSM {
     using debug = devs::debug;
     using systemTimer = devs::systemTimer;
     using storage = devs::storage;
-    using i2c1 = devs::i2c1;
-    using i2c2 = devs::i2c2;
-    using switches1 = devs::switches1;
-    using switches2 = devs::switches2;
-
-    using auxes1 = devs::auxes1;
-    using auxes2 = devs::auxes2;
-
-#ifdef USE_SWD
-    using dist_hw = Distributor<typename devs::hwext2>;
-    using dist_sb = Distributor<typename devs::sbus2>;
-#else
-    using dist_hw = Distributor<typename devs::hwext1, typename devs::hwext2>;
-    using dist_sb = Distributor<typename devs::sbus1, typename devs::sbus2>;
-#endif
-
-    using adc = devs::adc;
-
-    using enc1 = devs::enc1;
-    using enc2 = devs::enc2;
-
-    using sm1 = devs::sm1;
-    using sm2 = devs::sm2;
-
-    using bt = devs::bt;
-
-    using led1 = devs::ledBlinker1;
-    using led2 = devs::ledBlinker2;
-
-    using crsf_in = devs::crsf_in;
-    using crsf_in_pa = crsf_in::input;
-    using crsf_in_responder = crsf_in::output;
-    using crsf_cb = crsf_in::callback;
 
 #ifndef USE_SWD
     using pulse_in = devs::pulse_in;
@@ -87,46 +54,21 @@ struct GFSM {
     enum class State : uint8_t {Undefined, Init, I2CScan, Run};
 
     static inline void updateFromEeprom() {
-        using cb = crsf_in::callback;
-        cb::callbacks(true);
     }
 
     static inline void init() {
         devs::init();
-        switches1::init();
-        switches2::init();
     }
     static inline void periodic() {
         if constexpr(!std::is_same_v<debug, void>) {
             debug::periodic();
         }
-        i2c1::periodic();
-        i2c2::periodic();
-        switches1::periodic();
-        switches2::periodic();
-        auxes1::periodic();
-        auxes2::periodic();
-        sm1::periodic();
-        sm2::periodic();
-        crsf_in::periodic();
-        bt::periodic();
     }
 
     static inline constexpr External::Tick<systemTimer> initTicks{500ms};
     static inline constexpr External::Tick<systemTimer> debugTicks{500ms};
 
     static inline void ratePeriodic() {
-        led1::ratePeriodic();
-        led2::ratePeriodic();
-        i2c1::ratePeriodic();
-        i2c2::ratePeriodic();
-        auxes1::ratePeriodic();
-        auxes2::ratePeriodic();
-        sm1::ratePeriodic();
-        sm2::ratePeriodic();
-        crsf_in::ratePeriodic();
-        bt::ratePeriodic();
-
         ++mStateTick;
         const auto oldState = mState;
         switch(mState) {
@@ -139,29 +81,13 @@ struct GFSM {
             });
             break;
         case State::I2CScan:
-            if (i2c1::isIdle()) {
-                mState = State::Run;
-            }
             break;
         case State::Run:
-            switches1::ratePeriodic();
-            switches2::ratePeriodic();
             mStateTick.on(debugTicks, []{
-                bt::setLed(99, true); // connection led
-                // IO::outl<debug>("# i2c state:", (uint8_t)i2c1::mState, " ", i2c1::mIsr, " ", i2c1::errors());
-                // IO::outl<debug>("# adc v0:", adc::values()[0], " v1:", adc::values()[1], " v2:", adc::values()[2], " v3:", adc::values()[3], " v4:", adc::values()[4], " v5:", adc::values()[5]);
-                // IO::outl<debug>("# enc1:", enc1::value(), " enc2:", enc2::value());
-                // IO::outl<debug>("# sm1 v0:", sm1::value(0), " v1:", sm1::value(1), " v2:", sm1::value(2), " v3:", sm1::value(3), " v4:", sm1::value(4), " v5:", sm1::value(5));
-                // IO::outl<debug>("# sm1 v0:", sm2::value(0), " v1:", sm2::value(1), " v2:", sm2::value(2), " v3:", sm2::value(3), " v4:", sm2::value(4), " v5:", sm2::value(5));
 #ifndef USE_SWD
                 IO::out<debug>("# pulse:");
                 for(uint8_t i = 0; i < 8; ++i) {
                     IO::out<debug>(" v[", i, "]:", pulse_in::value(i));
-                }
-                IO::outl<debug>();
-                IO::out<debug>("# sw1:");
-                for(uint8_t i = 0; i < 8; ++i) {
-                    IO::out<debug>(" sw[", i, "]:", (uint8_t)pulse_in::mSwChannels[0].values[i]);
                 }
                 IO::outl<debug>();
 #endif
@@ -177,36 +103,11 @@ struct GFSM {
                 break;
             case State::Init:
                 IO::outl<debug>("# Init");
-                led1::event(led1::Event::Steady);
-                led2::event(led2::Event::Steady);
                 break;
             case State::I2CScan:
                 IO::outl<debug>("# I2C Scan");
-                if (i2c1::scan([](const Mcu::Stm::I2C::Address a){
-                               static uint8_t n = 0;
-                               IO::outl<debug>("# I2C1: ", a.value);
-                               switches1::activate(a);
-                               crsf_cb::setI2CDev(0, n++, a.value);
-                            })) {
-                    IO::outl<debug>("# i2c1 scan start");
-                }
-                else {
-                    IO::outl<debug>("# i2c1 scan failed");
-                }
-                if (i2c2::scan([](const Mcu::Stm::I2C::Address a){
-                               static uint8_t n = 0;
-                               IO::outl<debug>("# I2C2: ", a.value);
-                               switches2::activate(a);
-                               crsf_cb::setI2CDev(1, n++, a.value);
-                            })) {
-                    IO::outl<debug>("# i2c2 scan start");
-                }
-                else {
-                    IO::outl<debug>("# i2c2 scan failed");
-                }
                 break;
             case State::Run:
-                led1::event(led1::Event::Slow);
                 IO::outl<debug>("# Run");
                 break;
             }
@@ -214,7 +115,6 @@ struct GFSM {
     }
 
     static inline void setSw(const uint8_t index, const bool state) {
-        bt::setLed(index, state);
     }
 
     private:
@@ -245,12 +145,10 @@ struct GFSM {
     static inline void updateAnalog(const uint8_t i, const uint8_t off = 0) {
         if (storage::eeprom.analogMaps[i].stream == Stream::Trainer) {
             for(uint8_t i = 0; i < 3; ++i) {
-                dist_sb::set(storage::eeprom.analogMaps[i].position + i, adc::values()[i + off]);
             }
         }
         else if (storage::eeprom.analogMaps[i].stream == Stream::VControls) {
             for(uint8_t i = 0; i < 3; ++i) {
-                dist_hw::set(storage::eeprom.analogMaps[i].position + i, adc::values()[i + off]);
             }
         }
     }
@@ -261,60 +159,20 @@ struct GFSM {
     static inline void updateSM(const uint8_t i, const auto f) {
         if (storage::eeprom.smMaps[i].stream == Stream::Trainer) {
             for(uint8_t i = 0; i < 6; ++i) {
-                dist_sb::set(storage::eeprom.smMaps[i].position + i, f(i));
             }
         }
         else if (storage::eeprom.smMaps[i].stream == Stream::VControls) {
             for(uint8_t i = 0; i < 6; ++i) {
-                dist_hw::set(storage::eeprom.smMaps[i].position + i, f(i));
             }
         }
     }
     static inline void updateSMs() {
-        updateSM(0, [](const uint8_t i){return sm1::value(i);});
-        updateSM(1, [](const uint8_t i){return sm2::value(i);});
     }
     static inline void updateInc() {
-        if (storage::eeprom.incMaps[0].stream == Stream::Trainer) {
-            dist_sb::set(storage::eeprom.incMaps[0].position, enc1::value());
-        }
-        else if (storage::eeprom.incMaps[0].stream == Stream::VControls) {
-            dist_hw::set(storage::eeprom.incMaps[0].position, enc1::value());
-        }
-        if (storage::eeprom.incMaps[1].stream == Stream::Trainer) {
-            dist_sb::set(storage::eeprom.incMaps[1].position + 1, enc2::value());
-        }
-        else if (storage::eeprom.incMaps[1].stream == Stream::VControls) {
-            dist_hw::set(storage::eeprom.incMaps[1].position + 1, enc2::value());
-        }
     }
     static inline void updateCrsf() {
-        if (storage::eeprom.crsf_in > 0) {
-            if (storage::eeprom.crsfInMap.stream == Stream::Trainer) {
-                for(uint8_t i = 0; i < storage::eeprom.crsfInMap.count; ++i) {
-                    dist_sb::set(storage::eeprom.crsfInMap.position + i, crsf_in_pa::values()[i]);
-                }
-            }
-            else if (storage::eeprom.crsfInMap.stream == Stream::VControls) {
-                for(uint8_t i = 0; i < storage::eeprom.crsfInMap.count; ++i) {
-                    dist_hw::set(storage::eeprom.crsfInMap.position + i, crsf_in_pa::values()[i]);
-                }
-            }
-        }
     }
     static inline void updateBluetooth() {
-        if (storage::eeprom.bluetooth > 0) {
-            if (storage::eeprom.bluetoothMap.stream == Stream::Trainer) {
-                for(uint8_t i = 0; i < storage::eeprom.bluetoothMap.count; ++i) {
-                    dist_sb::set(storage::eeprom.bluetoothMap.position + i, bt::values()[i]);
-                }
-            }
-            else if (storage::eeprom.bluetoothMap.stream == Stream::VControls) {
-                for(uint8_t i = 0; i < storage::eeprom.bluetoothMap.count; ++i) {
-                    dist_hw::set(storage::eeprom.bluetoothMap.position + i, bt::values()[i]);
-                }
-            }
-        }
     }
     static inline External::Tick<systemTimer> mStateTick;
     static inline State mState{State::Undefined};

@@ -20,8 +20,10 @@
 
 // to modify the output-to-pin mapping, see below
 
+// use one(!) of the following options exclusively
 // #define INPUT_CRSF // input via CRSF (ELRS only)
 #define INPUT_SBUS // input via SBUS (optional for ELRS, mandatory for other rc-link)
+//#define INPUT_SPORT // input via SPort (Phy-ID / App-ID see below)
 
 #define DEFAULT_ADDRESS 0 // values: 0 ... 3 (must match value in widget)
 
@@ -36,6 +38,10 @@
 
 #define CRSF_BAUDRATE 420'000
 #define SBUS_BAUDRATE 100'000
+#define SPORT_BAUDRATE 56'800
+
+#define SPORT_PHY 0x00
+#define SPORT_APP 0x51
 
 #include <mcu/avr.h>
 #include <mcu/internals/ccp.h>

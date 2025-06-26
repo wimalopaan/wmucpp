@@ -56,6 +56,11 @@ namespace Mcu::Stm {
         };
 #endif
 #ifdef STM32G0B1xx
+        template<> struct Properties<2> {
+            using value_type = uint16_t;
+            static inline constexpr std::array<uint8_t, 4> dmamux_src{26, 27, 28, 29};
+            static inline constexpr uint8_t dmaUpdate_src{31};
+        };
         template<> struct Properties<3> {
             using value_type = uint16_t;
             static inline constexpr std::array<uint8_t, 4> dmamux_src{32, 33, 34, 35};

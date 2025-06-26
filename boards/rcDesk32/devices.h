@@ -53,10 +53,13 @@
 #include "crsf_cb.h"
 #include "switches.h"
 #include "eeprom.h"
+#include "pulse_input.h"
 
 struct SW01;
 struct Desk01; // Hardware Version 1
 struct Desk02; // Hardware Version 2
+
+struct Test;
 
 template<typename HW, typename Config, typename MCU = DefaultMcu>
 struct Devices;
@@ -71,6 +74,9 @@ struct Devices<Desk02, Config, MCU> {
 
     using smes1 = Config::smes1;
     using smes2 = Config::smes2;
+
+    using encs1 = Config::encs1;
+    using encs2 = Config::encs2;
 
     using gfsm = Config::gfsm;
 
@@ -96,9 +102,12 @@ struct Devices<Desk02, Config, MCU> {
     using sm2_tx = Mcu::Stm::Pin<gpioa, 0, MCU>;
     using sm2_rx = Mcu::Stm::Pin<gpioa, 1, MCU>;
 
+#if defined(USE_TESTPOINT)
+#else
     using ana1 = Mcu::Stm::Pin<gpioa, 2, MCU>;
     using ana2 = Mcu::Stm::Pin<gpioa, 3, MCU>;
     using ana3 = Mcu::Stm::Pin<gpioa, 4, MCU>;
+#endif
     using ana4 = Mcu::Stm::Pin<gpioa, 6, MCU>;
     using ana5 = Mcu::Stm::Pin<gpioa, 7, MCU>;
     using ana6 = Mcu::Stm::Pin<gpiob, 1, MCU>;
@@ -114,7 +123,12 @@ struct Devices<Desk02, Config, MCU> {
     using aux2_rx = Mcu::Stm::Pin<gpiob, 0, MCU>;
     using aux2_tx = Mcu::Stm::Pin<gpiob, 2, MCU>;
 
+#if defined(USE_TESTPOINT)
+    using tp1 = Mcu::Stm::Pin<gpiob, 10, MCU>;
+#else
     using button1 = Mcu::Stm::Pin<gpiob, 10, MCU>;
+    using tp1 = void;
+#endif
     using button2 = Mcu::Stm::Pin<gpiob, 12, MCU>;
 
     using debug_tx = Mcu::Stm::Pin<gpiob, 11, MCU>;
@@ -133,8 +147,8 @@ struct Devices<Desk02, Config, MCU> {
 
 #ifndef USE_SWD
     using aux1_tx = Mcu::Stm::Pin<gpioa, 14, MCU>;
-    using aux1_rx = Mcu::Stm::Pin<gpioa, 15, MCU>;
 #endif
+    using aux1_rx = Mcu::Stm::Pin<gpioa, 15, MCU>;
 
     using sm1_rx = Mcu::Stm::Pin<gpiod, 2, MCU>;
     using sm1_tx = Mcu::Stm::Pin<gpiod, 3, MCU>;
@@ -179,6 +193,10 @@ struct Devices<Desk02, Config, MCU> {
     using hwext1 = External::EdgeTx::HwExtension<2, Aux1Config, MCU>;
     struct SBus1Config;
     using sbus1 = RC::Protokoll::SBus2::V4::Master<2, SBus1Config, MCU>;
+
+    // potential conflict with enc2 (using timer 2 also)
+    struct PulseConfig;
+    using pulse_in = Pulse::CppmIn<2, PulseConfig, MCU>; // TIM2-CH1
 #endif
 
     // Usart 3: radio aux2
@@ -269,8 +287,10 @@ struct Devices<Desk02, Config, MCU> {
         using debug = Devices::debug;
         using callback = struct {
             static inline void set(const uint8_t index, const bool state) {
+#ifndef USE_SWD
                 hwext1::setSw(index, state);
                 hwext2::setSw(index, state);
+#endif
             }
         };
     };
@@ -281,8 +301,10 @@ struct Devices<Desk02, Config, MCU> {
         using debug = Devices::debug;
         using callback = struct {
             static inline void set(const uint8_t index, const bool state) {
+#ifndef USE_SWD
                 hwext1::setSw(index + 32, state);
                 hwext2::setSw(index + 32, state);
+#endif
             }
         };
     };
@@ -307,6 +329,17 @@ struct Devices<Desk02, Config, MCU> {
         using adapter = void;
         using pin = aux1_tx;
         using tp = void;
+    };
+    struct PulseConfig {
+        using pin = aux1_rx;
+        // using pin = aux2_rx;
+        // using pin = incr1_a;
+        using clock = Devices::clock;
+        using timer = systemTimer;
+        using dmaCh = aux1DmaChannel;
+        using debug = Devices::debug;
+        static inline constexpr bool startPositive = true;
+        using tp = tp1;
     };
 #endif
     struct Aux2Config {
@@ -362,9 +395,11 @@ struct Devices<Desk02, Config, MCU> {
         using tp = void;
         using swcallback = struct {
             static inline void set(const uint8_t index, const bool state) {
+#ifndef USE_SWD
                 hwext1::setSw(index, state);
                 hwext2::setSw(index, state);
                 gfsm::setSw(index, state);
+#endif
             }
         };
     };
@@ -376,6 +411,8 @@ struct Devices<Desk02, Config, MCU> {
         using auxes2 = Devices::auxes2;
         using smes1 = Devices::smes1;
         using smes2 = Devices::smes2;
+        using encs1 = Devices::encs1;
+        using encs2 = Devices::encs2;
         using tp = void;
         using debug = Devices::debug;
     };
@@ -408,18 +445,21 @@ struct Devices<Desk02, Config, MCU> {
         led1::template dir<Mcu::Output>();
         led2::template dir<Mcu::Output>();
 
+#if defined(USE_TESTPOINT)
+        tp1::template dir<Mcu::Output>();
+#else
         button1::template dir<Mcu::Input>();
-        button2::template dir<Mcu::Input>();
         button1::pullup();
+#endif
+        button2::template dir<Mcu::Input>();
         button2::pullup();
 
-        enc1::init();
-        enc2::init();
+        // enc1::init();
+        // enc2::init();
 
 #ifdef SERIAL_DEBUG
         debug::init();
 #endif
-
         crsf_in::init();
 
         adc::init();
@@ -429,12 +469,188 @@ struct Devices<Desk02, Config, MCU> {
         i2c1::init();
         i2c2::init();
 
-        sm1::init();
-        sm2::init();
-
         bt::init();
     }
 };
+
+template<typename Config, typename MCU>
+struct Devices<Test, Config, MCU> {
+    using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<64_MHz, 2'000_Hz, Mcu::Stm::HSI>>;
+    using systemTimer = Mcu::Stm::SystemTimer<clock, Mcu::UseInterrupts<false>, MCU>;
+
+    using gfsm = Config::gfsm;
+
+    using gpioa = Mcu::Stm::GPIO<Mcu::Stm::A, MCU>;
+    using gpiob = Mcu::Stm::GPIO<Mcu::Stm::B, MCU>;
+    using gpioc = Mcu::Stm::GPIO<Mcu::Stm::C, MCU>;
+    using gpiod = Mcu::Stm::GPIO<Mcu::Stm::D, MCU>;
+    using gpiof = Mcu::Stm::GPIO<Mcu::Stm::F, MCU>;
+
+    using dma1 = Mcu::Stm::Dma::Controller<1, MCU>;
+    using dma2 = Mcu::Stm::Dma::Controller<2, MCU>;
+
+    using storage = Config::storage;
+
+    // Ubersicht: Pins
+
+    using led1 = Mcu::Stm::Pin<gpioc, 13, MCU>;
+    using led2 = Mcu::Stm::Pin<gpiod, 0, MCU>;
+
+    using bus_tx = Mcu::Stm::Pin<gpioc, 7, MCU>;
+    using bus_rx = Mcu::Stm::Pin<gpioc, 6, MCU>;
+
+    using sm2_tx = Mcu::Stm::Pin<gpioa, 0, MCU>;
+    using sm2_rx = Mcu::Stm::Pin<gpioa, 1, MCU>;
+
+#if defined(USE_TESTPOINT)
+#else
+    using ana1 = Mcu::Stm::Pin<gpioa, 2, MCU>;
+    using ana2 = Mcu::Stm::Pin<gpioa, 3, MCU>;
+    using ana3 = Mcu::Stm::Pin<gpioa, 4, MCU>;
+#endif
+    using ana4 = Mcu::Stm::Pin<gpioa, 6, MCU>;
+    using ana5 = Mcu::Stm::Pin<gpioa, 7, MCU>;
+    using ana6 = Mcu::Stm::Pin<gpiob, 1, MCU>;
+
+    using incr2_a = Mcu::Stm::Pin<gpioa, 5, MCU>; // tim2_ch1 (af2)
+    using incr2_b = Mcu::Stm::Pin<gpiob, 3, MCU>; // tim2_ch2 (af2)
+    using incr2_t = Mcu::Stm::Pin<gpiod, 1, MCU>;
+
+    using incr1_a = Mcu::Stm::Pin<gpiob, 4, MCU>; // tim3_ch1 (af1)
+    using incr1_b = Mcu::Stm::Pin<gpiob, 5, MCU>; // tim3_ch2 (af1)
+    using incr1_t = Mcu::Stm::Pin<gpioa, 12, MCU>;
+
+    using aux2_rx = Mcu::Stm::Pin<gpiob, 0, MCU>;
+    using aux2_tx = Mcu::Stm::Pin<gpiob, 2, MCU>;
+
+#if defined(USE_TESTPOINT)
+    using tp1 = Mcu::Stm::Pin<gpiob, 10, MCU>;
+#else
+    using button1 = Mcu::Stm::Pin<gpiob, 10, MCU>;
+    using tp1 = void;
+#endif
+    using button2 = Mcu::Stm::Pin<gpiob, 12, MCU>;
+
+    using debug_tx = Mcu::Stm::Pin<gpiob, 11, MCU>;
+
+    using crsf_rx = Mcu::Stm::Pin<gpiob, 9, MCU>;
+    using crsf_tx = Mcu::Stm::Pin<gpiob, 8, MCU>;
+
+    using i2c2_scl = Mcu::Stm::Pin<gpiob, 13, MCU>;
+    using i2c2_sda = Mcu::Stm::Pin<gpiob, 14, MCU>;
+
+    using bt_en = Mcu::Stm::Pin<gpiob, 15, MCU>;
+    using bt_pwr = Mcu::Stm::Pin<gpioa, 8, MCU>;
+    using bt_tx = Mcu::Stm::Pin<gpioa, 9, MCU>;
+    using bt_rx = Mcu::Stm::Pin<gpioa, 10, MCU>;
+    using bt_status = Mcu::Stm::Pin<gpioa, 11, MCU>;
+
+#ifndef USE_SWD
+    using aux1_tx = Mcu::Stm::Pin<gpioa, 14, MCU>;
+#endif
+    using aux1_rx = Mcu::Stm::Pin<gpioa, 15, MCU>;
+
+    using sm1_rx = Mcu::Stm::Pin<gpiod, 2, MCU>;
+    using sm1_tx = Mcu::Stm::Pin<gpiod, 3, MCU>;
+
+    using i2c1_scl = Mcu::Stm::Pin<gpiob, 6, MCU>;
+    using i2c1_sda = Mcu::Stm::Pin<gpiob, 7, MCU>;
+
+    // Uebersicht: DMA
+    // crsf (RX)
+    using csrfDmaChannel1 = Mcu::Components::DmaChannel<typename dma1::component_t, 1>;
+    using csrfDmaChannel2 = Mcu::Components::DmaChannel<typename dma1::component_t, 2>;
+    // adc
+    using adcDmaChannel = Mcu::Components::DmaChannel<typename dma1::component_t, 3>;
+    // half-duplex
+    using aux1DmaChannel = Mcu::Components::DmaChannel<typename dma1::component_t, 4>;
+    using aux2DmaChannel = Mcu::Components::DmaChannel<typename dma1::component_t, 5>;
+
+    using sm1DmaChannel = Mcu::Components::DmaChannel<typename dma1::component_t, 6>;
+    using sm2DmaChannel = Mcu::Components::DmaChannel<typename dma1::component_t, 7>;
+
+    using btRxDmaChannel = Mcu::Components::DmaChannel<typename dma2::component_t, 1>;
+    using btTxDmaChannel = Mcu::Components::DmaChannel<typename dma2::component_t, 2>;
+
+    // Usart 2: radio aux1
+#ifndef USE_SWD
+    struct PulseConfig;
+    using pulse_in = Pulse::CppmIn<2, PulseConfig, MCU>; // TIM2-CH1
+    // using pulse_in = Pulse::CppmIn<3, PulseConfig, MCU>; // TIM3-CH3
+#endif
+
+#ifdef SERIAL_DEBUG
+    // LPUart1
+    struct DebugConfig;
+    using debug = SerialBuffered<101, DebugConfig>;
+    struct DebugConfig {
+        static inline constexpr uint16_t bufferSize = 1024;
+        using pin = debug_tx;
+        using clock = Devices::clock;
+    };
+#else
+    using debug = void;
+#endif
+
+#ifndef USE_SWD
+    struct PulseConfig {
+        using pin = aux1_rx;
+        // using pin = aux2_rx;
+        // using pin = incr1_a;
+        using clock = Devices::clock;
+        using timer = systemTimer;
+        using dmaCh = aux1DmaChannel;
+        using debug = Devices::debug;
+        static inline constexpr bool startPositive = true;
+        using tp = tp1;
+    };
+#endif
+    static inline void init() {
+        clock::init();
+        systemTimer::init();
+
+        dma1::init();
+        dma2::init();
+
+        gpioa::init();
+        gpiob::init();
+        gpioc::init();
+        gpiod::init();
+        gpiof::init();
+
+        // led1::template dir<Mcu::Output>();
+        // led2::template dir<Mcu::Output>();
+
+#if defined(USE_TESTPOINT)
+        tp1::template dir<Mcu::Output>();
+#else
+        button1::template dir<Mcu::Input>();
+        button1::pullup();
+#endif
+        // button2::template dir<Mcu::Input>();
+        // button2::pullup();
+
+        // enc1::init();
+        // enc2::init();
+
+#ifdef SERIAL_DEBUG
+        debug::init();
+#endif
+        // crsf_in::init();
+
+        // adc::init();
+        // adc::oversample(8); // 256
+        // adc::start();
+
+        // i2c1::init();
+        // i2c2::init();
+
+        // bt::init();
+
+        pulse_in::init();
+    }
+};
+
 
 
 
@@ -556,6 +772,9 @@ struct Devices<Desk01, Config, MCU> {
     using hwext1 = External::EdgeTx::HwExtension<2, Aux1Config, MCU>;
     struct SBus1Config;
     using sbus1 = RC::Protokoll::SBus2::V4::Master<2, SBus1Config, MCU>;
+
+    struct PulseConfig;
+    using pulse_in = Pulse::CppmIn<2, PulseConfig, MCU>; // TIM2-CH1
 #endif
 
     // Usart 3: radio aux2
@@ -646,8 +865,10 @@ struct Devices<Desk01, Config, MCU> {
         using debug = Devices::debug;
         using callback = struct {
             static inline void set(const uint8_t index, const bool state) {
+#ifndef USE_SWD
                 hwext1::setSw(index, state);
                 hwext2::setSw(index, state);
+#endif
             }
         };
     };
@@ -658,8 +879,11 @@ struct Devices<Desk01, Config, MCU> {
         using debug = Devices::debug;
         using callback = struct {
             static inline void set(const uint8_t index, const bool state) {
+#ifndef USE_SWD
                 hwext1::setSw(index + 32, state);
                 hwext2::setSw(index + 32, state);
+#endif
+
             }
         };
     };
@@ -683,6 +907,14 @@ struct Devices<Desk01, Config, MCU> {
         using systemTimer = Devices::systemTimer;
         using adapter = void;
         using pin = aux1_tx;
+        using tp = void;
+    };
+    struct PulseConfig {
+        using pin = aux1_rx;
+        using clock = Devices::clock;
+        using timer = systemTimer;
+        using dmaCh = aux1DmaChannel;
+        using debug = Devices::debug;
         using tp = void;
     };
 #endif
@@ -739,9 +971,11 @@ struct Devices<Desk01, Config, MCU> {
         using tp = void;
         using swcallback = struct {
             static inline void set(const uint8_t index, const bool state) {
+#ifndef USE_SWD
                 hwext1::setSw(index, state);
                 hwext2::setSw(index, state);
                 gfsm::setSw(index, state);
+#endif
             }
         };
     };

@@ -20,10 +20,14 @@ struct Aux: IAux {
     //     A::update();
     // }
     virtual void periodic() {
-        A::periodic();
+        if constexpr(requires(){A::periodic();}) {
+            A::periodic();
+        }
     }
     virtual void ratePeriodic() {
-        A::ratePeriodic();
+        if constexpr(requires(){A::ratePeriodic();}) {
+            A::ratePeriodic();
+        }
     }
 };
 
@@ -42,10 +46,36 @@ struct Sm: ISm{
     //     S::update();
     // }
     virtual void periodic() {
-        S::periodic();
+        if constexpr(requires(){S::periodic();}) {
+            S::periodic();
+        }
     }
     virtual void ratePeriodic() {
-        S::ratePeriodic();
+        if constexpr(requires(){S::ratePeriodic();}) {
+            S::ratePeriodic();
+        }
     }
 };
 
+struct IEnc : PortDevice {
+    // virtual void update() = 0;
+};
+template<typename E>
+struct Enc: IEnc {
+    Enc() {
+        E::init();
+    }
+    ~Enc() {
+        E::reset();
+    }
+    virtual void periodic() {
+        if constexpr(requires(){E::periodic();}) {
+            E::periodic();
+        }
+    }
+    virtual void ratePeriodic() {
+        if constexpr(requires(){E::ratePeriodic();}) {
+            E::ratePeriodic();
+        }
+    }
+};

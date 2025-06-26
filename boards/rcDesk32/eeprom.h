@@ -31,12 +31,18 @@ struct Map {
 
 struct EEProm {
     consteval EEProm() = default;
-
-    uint8_t aux1mode = 1; // sbus;inverted-sbus;hwext;off
-    uint8_t aux2mode = 2; // sbus;inverted-sbus;hwext;off
+#if defined(USE_TEST_EEPROM)
+    uint8_t aux1mode = 3; // sbus;inverted-sbus;hwext;cppmin;off
+#else
+    uint8_t aux1mode = 1; // sbus;inverted-sbus;hwext;cppmin;off
+#endif
+    uint8_t aux2mode = 3; // sbus;inverted-sbus;hwext;off
     uint8_t busmode = 0;
-    uint8_t sm1mode = 0; // sm;off
-    uint8_t sm2mode = 0; // sm;off
+    uint8_t sm1mode = 1; // sm;off
+    uint8_t sm2mode = 1; // sm;off
+
+    uint8_t enc1mode = 1;
+    uint8_t enc2mode = 1;
 
     std::array<Map, 2> analogMaps{
         Map{Stream::VControls, 0, 3},

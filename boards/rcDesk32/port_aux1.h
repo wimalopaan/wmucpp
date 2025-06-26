@@ -9,8 +9,9 @@ struct Auxes1 {
 
 #ifndef USE_SWD
     using hwext1 = Devs::hwext1;
-#endif
+    using pulse_in = Devs::pulse_in;
     using sbus1 = Devs::sbus1;
+#endif
 
     static inline void set(const uint8_t a) {
         IO::outl<debug>("# Auxes1 ", a);
@@ -35,7 +36,17 @@ struct Auxes1 {
         case 2: // hwext
         {
             mAux = nullptr;
+#ifndef USE_SWD
             mAux = std::make_unique<Aux<hwext1>>();
+#endif
+        }
+            break;
+        case 3: // cppm/in
+        {
+            mAux = nullptr;
+#ifndef USE_SWD
+            mAux = std::make_unique<Aux<pulse_in>>();
+#endif
         }
             break;
         default:

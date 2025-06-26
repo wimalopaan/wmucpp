@@ -51,6 +51,12 @@ namespace etl {
         inline constexpr const T* end() const {
             return &data[mSize];
         }
+        inline constexpr T* begin() {
+            return &data[0];
+        }
+        inline constexpr T* end() {
+            return &data[mSize];
+        }
         inline constexpr void reserve(size_type s) {
             assert(s <= Capacity);
             mSize = std::min(s, Capacity);
