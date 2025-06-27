@@ -78,6 +78,8 @@ struct Devices<Desk02, Config, MCU> {
     using encs1 = Config::encs1;
     using encs2 = Config::encs2;
 
+    using busses = Config::busses;
+
     using gfsm = Config::gfsm;
 
     using gpioa = Mcu::Stm::GPIO<Mcu::Stm::A, MCU>;
@@ -172,6 +174,9 @@ struct Devices<Desk02, Config, MCU> {
     using btRxDmaChannel = Mcu::Components::DmaChannel<typename dma2::component_t, 1>;
     using btTxDmaChannel = Mcu::Components::DmaChannel<typename dma2::component_t, 2>;
 
+    using busDmaChannel1 = Mcu::Components::DmaChannel<typename dma2::component_t, 3>;
+    using busDmaChannel2 = Mcu::Components::DmaChannel<typename dma2::component_t, 4>;
+
     // ADC
     struct AdcConfig {
         using channels = std::integer_sequence<uint8_t, 2, 3, 4, 6, 7, 9>;
@@ -219,6 +224,10 @@ struct Devices<Desk02, Config, MCU> {
     // Usart 6: ELRS receiver
     struct CrsfConfig;
     using crsf_in = RC::Protokoll::Crsf::V4::Master<6, CrsfConfig, MCU>;
+
+    // LPUart2: Bus / Relay
+    struct BusCrsfConfig;
+    using bus_crsf = RC::Protokoll::Crsf::V4::Master<102, BusCrsfConfig, MCU>;
 
 #ifdef SERIAL_DEBUG
     // LPUart1
@@ -413,6 +422,7 @@ struct Devices<Desk02, Config, MCU> {
         using smes2 = Devices::smes2;
         using encs1 = Devices::encs1;
         using encs2 = Devices::encs2;
+        using busses= Devices::busses;
         using tp = void;
         using debug = Devices::debug;
     };
@@ -426,6 +436,48 @@ struct Devices<Desk02, Config, MCU> {
         using debug = Devices::debug;
         using tp = void;
         using callback = CrsfCallback<CrsfCallbackConfig, debug>;
+        static inline constexpr uint8_t fifoSize = 16;
+    };
+    struct BusCrsfConfig {
+        using rxpin = bus_tx;
+        using txpin = bus_rx;
+        using systemTimer = Devices::systemTimer;
+        using clock = Devices::clock;
+        using dmaChRead  = busDmaChannel1;
+        using dmaChWrite = busDmaChannel2;
+        using debug = Devices::debug;
+        using tp = void;
+        using callback = struct {
+            using Param_t = RC::Protokoll::Crsf::V4::Parameter<uint8_t>;
+            using PType = Param_t::Type;
+            static inline Param_t parameter(const uint8_t index) {
+                return {};
+            }
+            static inline void serialize(uint8_t, auto&, RC::Protokoll::Crsf::V4::Lua::CmdStep = RC::Protokoll::Crsf::V4::Lua::CmdStep::Idle) {
+            }
+            static inline bool isCommand(const uint8_t) {
+                return false;
+            }
+            static inline void setParameterValue(uint8_t, auto, uint8_t) {
+            }
+            static inline void command(const auto& /*data*/, const uint8_t /*payload*/) {
+            }
+            static inline const char* name() {
+                return "";
+            }
+            static inline uint32_t serialNumber() {
+                return 0;
+            }
+            static inline uint32_t hwVersion() {
+                return 0;
+            }
+            static inline uint32_t swVersion() {
+                return 0;
+            }
+            static inline uint8_t numberOfParameters() {
+                return 0;
+            }
+        };
         static inline constexpr uint8_t fifoSize = 16;
     };
 

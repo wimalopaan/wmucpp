@@ -24,7 +24,7 @@
 #define SERIAL_DEBUG
 // #define USE_SWD
 
-#define SW_VERSION 4
+#define SW_VERSION 5
 #define HW_VERSION 2
 
 #include <cstdint>
@@ -38,6 +38,7 @@
 #include "port_sm2.h"
 #include "port_enc1.h"
 #include "port_enc2.h"
+#include "port_bus.h"
 
 using namespace std::literals::chrono_literals;
 
@@ -64,6 +65,7 @@ struct DevsConfig {
     using smes2 = Smes2<devs>;
     using encs1 = Enc1s<devs>;
     using encs2 = Enc2s<devs>;
+    using busses = Busses<devs>;
     using gfsm = ::gfsm;
 };
 
@@ -98,11 +100,11 @@ void TIM2_IRQHandler() {
     pulse_in::Isr::onCapture([]{});
 #endif
 }
-void TIM3_TIM4_IRQHandler() {
-    // using pulse_in = devs::pulse_in;
-    // static_assert(pulse_in::timerNumber == 3);
-    // pulse_in::Isr::onCapture([]{});
-}
+// void TIM3_TIM4_IRQHandler() {
+//     // using pulse_in = devs::pulse_in;
+//     // static_assert(pulse_in::timerNumber == 3);
+//     // pulse_in::Isr::onCapture([]{});
+// }
 void ADC1_COMP_IRQHandler() {
     using adc = devs::adc;
     static_assert(adc::number == 1);
@@ -142,7 +144,6 @@ void USART3_4_5_6_LPUART1_IRQHandler() {
     static_assert(sm2::uart::number == 4);
     sm2::Isr::onIdle([] static {});
     sm2::Isr::onTransferComplete([] static {});
-
 }
 void USART2_LPUART2_IRQHandler(){
 #ifndef USE_SWD
@@ -156,6 +157,10 @@ void USART2_LPUART2_IRQHandler(){
     hwext1::Isr::onTransferComplete([] static {});
     hwext1::Isr::onIdle([] static {});
 #endif
+    using bus_crsf = devs::bus_crsf;
+    static_assert(bus_crsf::number == 102);
+    bus_crsf::Isr::onIdle([] static {});
+    bus_crsf::Isr::onTransferComplete([] static {});
 }
 
 extern int _end;

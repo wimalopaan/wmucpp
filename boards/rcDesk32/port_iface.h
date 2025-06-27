@@ -79,3 +79,26 @@ struct Enc: IEnc {
         }
     }
 };
+
+struct IBus : PortDevice {
+    // virtual void update() = 0;
+};
+template<typename B>
+struct Bus: IBus {
+    Bus() {
+        B::init();
+    }
+    ~Bus() {
+        B::reset();
+    }
+    virtual void periodic() {
+        if constexpr(requires(){B::periodic();}) {
+            B::periodic();
+        }
+    }
+    virtual void ratePeriodic() {
+        if constexpr(requires(){B::ratePeriodic();}) {
+            B::ratePeriodic();
+        }
+    }
+};

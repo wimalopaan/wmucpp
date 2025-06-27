@@ -26,6 +26,7 @@
 #include "i2c.h"
 #include "tick.h"
 #include "switches.h"
+#include "rc/rc_2.h"
 
 using namespace std::literals::chrono_literals;
 
@@ -82,6 +83,8 @@ struct GFSM {
     using pulse_in = devs::pulse_in;
 #endif
 
+    using bus_crsf = devs::bus_crsf;
+
     using tp1 = devs::tp1;
 
     enum class State : uint8_t {Undefined, Init, I2CScan, Run};
@@ -92,6 +95,22 @@ struct GFSM {
     }
 
     static inline void init() {
+        busChannels.packed.ch0 = 992;
+        busChannels.packed.ch1 = 992;
+        busChannels.packed.ch2 = 992;
+        busChannels.packed.ch3 = 992;
+        busChannels.packed.ch4 = 992;
+        busChannels.packed.ch5 = 992;
+        busChannels.packed.ch6 = 992;
+        busChannels.packed.ch7 = 992;
+        busChannels.packed.ch8 = 992;
+        busChannels.packed.ch9 = 992;
+        busChannels.packed.ch10 = 992;
+        busChannels.packed.ch11 = 992;
+        busChannels.packed.ch12 = 992;
+        busChannels.packed.ch13 = 992;
+        busChannels.packed.ch14 = 992;
+        busChannels.packed.ch15 = 992;
         devs::init();
         switches1::init();
         switches2::init();
@@ -110,10 +129,38 @@ struct GFSM {
         sm2::periodic();
         crsf_in::periodic();
         bt::periodic();
+        bus_crsf::periodic();
     }
 
     static inline constexpr External::Tick<systemTimer> initTicks{500ms};
     static inline constexpr External::Tick<systemTimer> debugTicks{500ms};
+    static inline constexpr External::Tick<systemTimer> telemTicks{5ms};
+
+    union CRSF_Packet {
+        struct __attribute__((packed)) {
+            unsigned ch0 : 11;
+            unsigned ch1 : 11;
+            unsigned ch2 : 11;
+            unsigned ch3 : 11;
+            unsigned ch4 : 11;
+            unsigned ch5 : 11;
+            unsigned ch6 : 11;
+            unsigned ch7 : 11;
+            unsigned ch8 : 11;
+            unsigned ch9 : 11;
+            unsigned ch10 : 11;
+            unsigned ch11 : 11;
+            unsigned ch12 : 11;
+            unsigned ch13 : 11;
+            unsigned ch14 : 11;
+            unsigned ch15 : 11;
+        } packed;
+        std::array<uint8_t, 22> raw;
+    } ;
+    static inline CRSF_Packet busChannels{};
+    static inline uint64_t swichtes{};
+
+    static inline uint32_t exp0{};
 
     static inline void ratePeriodic() {
         led1::ratePeriodic();
@@ -126,6 +173,7 @@ struct GFSM {
         sm2::ratePeriodic();
         crsf_in::ratePeriodic();
         bt::ratePeriodic();
+        bus_crsf::ratePeriodic();
 
         ++mStateTick;
         const auto oldState = mState;
@@ -167,6 +215,58 @@ struct GFSM {
 #endif
             });
             update();
+            (++mTelemTick).on(telemTicks, []{
+                using bus_buf = bus_crsf::messageBuffer;
+                bus_buf::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::Channels, [](auto& d){
+                    exp0 = (90 * exp0 + 10 * pulse_in::value(0)) / 100;
+                    busChannels.packed.ch0 = exp0;
+                    busChannels.packed.ch1 = pulse_in::value(1);
+                    busChannels.packed.ch2 = pulse_in::value(2);
+                    busChannels.packed.ch3 = pulse_in::value(3);
+                    busChannels.packed.ch4 = pulse_in::value(4);
+                    busChannels.packed.ch5 = pulse_in::value(5);
+                    d.push_back(busChannels.raw);
+                });
+                uint64_t s{};
+                for(uint8_t i = 0; i < 8; ++i) {
+                    if (pulse_in::mSwChannels[0].values[i] == 1) {
+                        s |= (uint64_t{0b01} << (4 * i));
+                    }
+                    else if (pulse_in::mSwChannels[0].values[i] == 2) {
+                        s |= (uint64_t{0b01} << (4 * i + 2));
+                    }
+                }
+                for(uint8_t i = 0; i < 8; ++i) {
+                    if (pulse_in::mSwChannels[1].values[i] == 1) {
+                        s |= (uint64_t{0b01} << (4 * i + 32));
+                    }
+                    else if (pulse_in::mSwChannels[1].values[i] == 2) {
+                        s |= (uint64_t{0b01} << (4 * i + 2 + 32));
+                    }
+                }
+                if (s != swichtes) {
+                    swichtes = s;
+                    bus_buf::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::Command, [](auto& d){
+                        d.push_back((uint8_t)0xc8);
+                        d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
+                        d.push_back(RC::Protokoll::Crsf::V4::CommandType::Switch);
+                        d.push_back(RC::Protokoll::Crsf::V4::SwitchCommand::Set4M);
+                        d.push_back((uint8_t)4);
+                        d.push_back((uint8_t)240);
+                        uint16_t sw = swichtes & 0xffff;
+                        d.push_back(sw);
+                        d.push_back((uint8_t)241);
+                        sw = (swichtes >> 16) & 0xffff;
+                        d.push_back(sw);
+                        d.push_back((uint8_t)242);
+                        sw = (swichtes >> 32) & 0xffff;
+                        d.push_back(sw);
+                        d.push_back((uint8_t)243);
+                        sw = (swichtes >> 48) & 0xffff;
+                        d.push_back(sw);
+                    });
+                }
+            });
             break;
         }
         if (oldState != mState) {
@@ -317,6 +417,7 @@ struct GFSM {
         }
     }
     static inline External::Tick<systemTimer> mStateTick;
+    static inline External::Tick<systemTimer> mTelemTick;
     static inline State mState{State::Undefined};
 };
 #endif

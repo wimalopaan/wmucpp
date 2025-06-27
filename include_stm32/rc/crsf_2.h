@@ -193,6 +193,11 @@ namespace RC {
                 }
 
                 template<uint8_t N, typename Config, typename MCU = DefaultMcu>
+                struct Generator {
+
+                };
+
+                template<uint8_t N, typename Config, typename MCU = DefaultMcu>
                 struct Master {
                     static inline constexpr uint8_t number = N;
                     using clock = Config::clock;
@@ -301,6 +306,13 @@ namespace RC {
                     }
                     static inline void clearAll() {
                         uart::clearAll();
+                    }
+                    static inline void baud(const uint32_t br) {
+                        if (!mActive) {
+                            return;
+                        }
+                        IO::outl<debug>("# baud: ", br);
+                        uart::baud(br);
                     }
                     static inline void nextBaudrate() {
                         if (!mActive) {

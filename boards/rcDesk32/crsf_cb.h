@@ -43,6 +43,8 @@ struct CrsfCallback {
     using encs1 = Config::encs1;
     using encs2 = Config::encs2;
 
+    using busses = Config::busses;
+
     static inline constexpr auto& eeprom = storage::eeprom;
     static inline constexpr auto& eeprom_flash = storage::eeprom_flash;
     static inline constexpr const char* const title = "RC-Desk32@";
@@ -191,6 +193,8 @@ private:
                                }
                                encs2::set(v);
                                return true;}});
+        addNode(p, Param_t{0, PType::Sel, "Bus", "CRSF;Off", &eeprom.busmode, 0, 1, [](const uint8_t v){busses::set(v); return true;}});
+
         auto parent = addParent(p, Param_t{0, PType::Folder, "Analog1"});
         addNode(p, Param_t{parent, PType::Sel, "Stream", "SBus;Hw/Ext;Off", (uint8_t*)&eeprom.analogMaps[0].stream, 0, 2, [](const uint8_t){return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Position", nullptr, &eeprom.analogMaps[0].position, 1, 16, [](const uint8_t){return true;}});

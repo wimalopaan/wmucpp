@@ -200,6 +200,7 @@ boards/rcDesk32/gfsm_test.h
 boards/rcDesk32/link_g0b1.ld
 boards/rcDesk32/port_aux1.h
 boards/rcDesk32/port_aux2.h
+boards/rcDesk32/port_bus.h
 boards/rcDesk32/port_enc1.h
 boards/rcDesk32/port_enc2.h
 boards/rcDesk32/port_iface.h
