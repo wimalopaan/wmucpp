@@ -1,5 +1,8 @@
 ToDo
 ============
+* CRSF relay mode
+* CRSF address rewrite for RX-as-TX
+* CPPM-in analog calibration
 * analog calibration
 * integrate GPS (UART)
 * integrate compass (QMC5833L)
