@@ -191,6 +191,7 @@ boards/rcCrsfSwitch/system_g0.cc
 boards/rcCrsfSwitch/todo.txt
 boards/rcDesk32/Makefile
 boards/rcDesk32/crsf_cb.h
+boards/rcDesk32/crsf_router.h
 boards/rcDesk32/desk_01.cc
 boards/rcDesk32/desk_02.cc
 boards/rcDesk32/devices.h
@@ -198,6 +199,7 @@ boards/rcDesk32/eeprom.h
 boards/rcDesk32/gfsm.h
 boards/rcDesk32/gfsm_test.h
 boards/rcDesk32/link_g0b1.ld
+boards/rcDesk32/package_relay.h
 boards/rcDesk32/port_aux1.h
 boards/rcDesk32/port_aux2.h
 boards/rcDesk32/port_bus.h
@@ -635,6 +637,7 @@ include_stm32/rc/escape_2.h
 include_stm32/rc/gps.h
 include_stm32/rc/gps_2.h
 include_stm32/rc/ibus_2.h
+include_stm32/rc/messagebuffer_2.h
 include_stm32/rc/rc.h
 include_stm32/rc/rc_2.h
 include_stm32/rc/roboremo.h

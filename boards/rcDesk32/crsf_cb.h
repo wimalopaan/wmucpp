@@ -45,6 +45,8 @@ struct CrsfCallback {
 
     using busses = Config::busses;
 
+    using forwarder = Config::forward;
+
     static inline constexpr auto& eeprom = storage::eeprom;
     static inline constexpr auto& eeprom_flash = storage::eeprom_flash;
     static inline constexpr const char* const title = "RC-Desk32@";
@@ -104,9 +106,10 @@ struct CrsfCallback {
     static inline uint8_t protocolVersion() {
         return 0;
     }
-    static inline void whenParameterChanged(auto f) {
-    }
     static inline void command(const auto& /*data*/, const uint8_t /*payload*/) {
+    }
+    static inline constexpr void forwardPacket(auto& data, const uint16_t length) {
+        busses::forwardPacket(data, length);
     }
     static inline void callbacks(const bool eepromMode = false) {
         const bool prevMode = mEepromMode;
@@ -195,7 +198,11 @@ private:
                                return true;}});
         addNode(p, Param_t{0, PType::Sel, "Bus", "CRSF;Off", &eeprom.busmode, 0, 1, [](const uint8_t v){busses::set(v); return true;}});
 
-        auto parent = addParent(p, Param_t{0, PType::Folder, "Analog1"});
+        auto parent = addParent(p, Param_t{0, PType::Folder, "Bus"});
+        addNode(p, Param_t{parent, PType::U8,  "TX Rewrite Address", nullptr, &eeprom.tx_rewrite_address, 192, 207, [](const uint8_t a){forwarder::txAddress(a); return true;}});
+        addNode(p, Param_t{parent, PType::U8,  "RX Rewrite Address", nullptr, &eeprom.rx_rewrite_address, 192, 207, [](const uint8_t a){forwarder::rxAddress(a); return true;}});
+
+        parent = addParent(p, Param_t{0, PType::Folder, "Analog1"});
         addNode(p, Param_t{parent, PType::Sel, "Stream", "SBus;Hw/Ext;Off", (uint8_t*)&eeprom.analogMaps[0].stream, 0, 2, [](const uint8_t){return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Position", nullptr, &eeprom.analogMaps[0].position, 1, 16, [](const uint8_t){return true;}});
         parent = addParent(p, Param_t{0, PType::Folder, "Analog2"});

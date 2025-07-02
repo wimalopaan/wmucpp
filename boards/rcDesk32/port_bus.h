@@ -24,7 +24,7 @@
 template<typename Devs>
 struct Busses {
     using debug = Devs::debug;
-    using bus_crsf = Devs::bus_crsf;
+    using relay_bus = Devs::relay_bus;
 
     static inline void set(const uint8_t a) {
         IO::outl<debug>("# Bus ", a);
@@ -32,8 +32,8 @@ struct Busses {
         case 0: // crsf
         {
             mBus = nullptr;
-            mBus = std::make_unique<Bus<bus_crsf>>();
-            bus_crsf::baud(400'000);
+            mBus = std::make_unique<Bus<relay_bus>>();
+            relay_bus::baud(400'000);
         }
             break;
         default:
@@ -50,6 +50,11 @@ struct Busses {
     static inline void ratePeriodic() {
         if (mBus) {
             mBus->ratePeriodic();
+        }
+    }
+    static inline constexpr void forwardPacket(const auto data, const uint16_t length) {
+        if (mBus) {
+            mBus->forwardPacket(data, length);
         }
     }
     private:

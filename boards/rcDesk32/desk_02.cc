@@ -77,11 +77,8 @@ int main() {
     NVIC_EnableIRQ(USART1_IRQn);
     NVIC_EnableIRQ(USART2_LPUART2_IRQn);
     NVIC_EnableIRQ(USART3_4_5_6_LPUART1_IRQn);
-    // NVIC_EnableIRQ(DMA1_Channel2_3_IRQn);
-    // NVIC_EnableIRQ(DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQn);
     NVIC_EnableIRQ(ADC1_COMP_IRQn);
     NVIC_EnableIRQ(TIM2_IRQn);
-    // NVIC_EnableIRQ(TIM3_TIM4_IRQn);
     __enable_irq();
 
     while(true) {
@@ -100,11 +97,6 @@ void TIM2_IRQHandler() {
     pulse_in::Isr::onCapture([]{});
 #endif
 }
-// void TIM3_TIM4_IRQHandler() {
-//     // using pulse_in = devs::pulse_in;
-//     // static_assert(pulse_in::timerNumber == 3);
-//     // pulse_in::Isr::onCapture([]{});
-// }
 void ADC1_COMP_IRQHandler() {
     using adc = devs::adc;
     static_assert(adc::number == 1);
@@ -157,10 +149,10 @@ void USART2_LPUART2_IRQHandler(){
     hwext1::Isr::onTransferComplete([] static {});
     hwext1::Isr::onIdle([] static {});
 #endif
-    using bus_crsf = devs::bus_crsf;
-    static_assert(bus_crsf::number == 102);
-    bus_crsf::Isr::onIdle([] static {});
-    bus_crsf::Isr::onTransferComplete([] static {});
+    using relay_bus = devs::relay_bus;
+    static_assert(relay_bus::uart::number == 102);
+    relay_bus::Isr::onIdle([] static {});
+    relay_bus::Isr::onTransferComplete([] static {});
 }
 
 extern int _end;

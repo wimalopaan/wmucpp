@@ -55,6 +55,8 @@
 #include "eeprom.h"
 #include "pulse_input.h"
 
+#include "package_relay.h"
+
 struct SW01;
 struct Desk01; // Hardware Version 1
 struct Desk02; // Hardware Version 2
@@ -226,8 +228,8 @@ struct Devices<Desk02, Config, MCU> {
     using crsf_in = RC::Protokoll::Crsf::V4::Master<6, CrsfConfig, MCU>;
 
     // LPUart2: Bus / Relay
-    struct BusCrsfConfig;
-    using bus_crsf = RC::Protokoll::Crsf::V4::Master<102, BusCrsfConfig, MCU>;
+    struct RelayBusConfig;
+    using relay_bus = RC::Protokoll::Crsf::V4::PacketRelay<102, RelayBusConfig, MCU>;
 
 #ifdef SERIAL_DEBUG
     // LPUart1
@@ -423,6 +425,7 @@ struct Devices<Desk02, Config, MCU> {
         using encs1 = Devices::encs1;
         using encs2 = Devices::encs2;
         using busses= Devices::busses;
+        using forward = relay_bus;
         using tp = void;
         using debug = Devices::debug;
     };
@@ -436,6 +439,19 @@ struct Devices<Desk02, Config, MCU> {
         using debug = Devices::debug;
         using tp = void;
         using callback = CrsfCallback<CrsfCallbackConfig, debug>;
+        static inline constexpr uint8_t fifoSize = 16;
+    };
+    struct RelayBusConfig {
+        using src = pulse_in;
+        using dest = crsf_in::messageBuffer;
+        using rxpin = bus_tx;
+        using txpin = bus_rx;
+        using systemTimer = Devices::systemTimer;
+        using clock = Devices::clock;
+        using dmaChRead  = busDmaChannel1;
+        using dmaChWrite = busDmaChannel2;
+        using debug = Devices::debug;
+        using tp = void;
         static inline constexpr uint8_t fifoSize = 16;
     };
     struct BusCrsfConfig {

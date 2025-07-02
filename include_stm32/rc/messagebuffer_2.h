@@ -29,7 +29,7 @@ namespace Util {
         struct Entry {
             using value_type = ValueType;
             static inline constexpr uint8_t size = Size;
-            void operator=(const std::span<volatile value_type>& s) {
+            void operator=(const std::span<const volatile value_type>& s) {
                 length = std::min((uint8_t)s.size(), size);
                 for(uint8_t i = 0; i < length; ++i) {
                     message[i] = s[i];

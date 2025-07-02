@@ -182,7 +182,6 @@ namespace RC {
                     inline static constexpr std::byte SetChannel{0x03}; // Index: [0, 63], value 16bit
                 }
                 namespace PacketIndex {
-                    // inline static constexpr uint8_t address = 0;
                     inline static constexpr uint8_t sync = 0;
                     inline static constexpr uint8_t length = 1;
                     inline static constexpr uint8_t type = 2;
@@ -310,6 +309,56 @@ namespace RC {
                     }
                     out[n++] = crc;
                     return n;
+                }
+                template<typename T>
+                static inline void pack(const std::array<uint16_t, 16>& channels, T& out) {
+                    Channels packed;
+                    packed.ch0 = channels[0];
+                    packed.ch1 = channels[1];
+                    packed.ch2 = channels[2];
+                    packed.ch3 = channels[3];
+                    packed.ch4 = channels[4];
+                    packed.ch5 = channels[5];
+                    packed.ch6 = channels[6];
+                    packed.ch7 = channels[7];
+                    packed.ch8 = channels[8];
+                    packed.ch9 = channels[9];
+                    packed.ch10 = channels[10];
+                    packed.ch11 = channels[11];
+                    packed.ch12 = channels[12];
+                    packed.ch13 = channels[13];
+                    packed.ch14 = channels[14];
+                    packed.ch15 = channels[15];
+
+                    const uint8_t* const ptr = (uint8_t*)&packed;
+                    for(uint8_t i = 0; i < sizeof(Channels); ++i) {
+                        out.push_back(ptr[i]);
+                    }
+                }
+                template<typename E, typename T>
+                static inline void pack(const std::array<E, 16>& channels, T& out) {
+                    Channels packed;
+                    packed.ch0 = channels[0].value();
+                    packed.ch1 = channels[1].value();
+                    packed.ch2 = channels[2].value();
+                    packed.ch3 = channels[3].value();
+                    packed.ch4 = channels[4].value();
+                    packed.ch5 = channels[5].value();
+                    packed.ch6 = channels[6].value();
+                    packed.ch7 = channels[7].value();
+                    packed.ch8 = channels[8].value();
+                    packed.ch9 = channels[9].value();
+                    packed.ch10 = channels[10].value();
+                    packed.ch11 = channels[11].value();
+                    packed.ch12 = channels[12].value();
+                    packed.ch13 = channels[13].value();
+                    packed.ch14 = channels[14].value();
+                    packed.ch15 = channels[15].value();
+
+                    const uint8_t* const ptr = (uint8_t*)&packed;
+                    for(uint8_t i = 0; i < sizeof(Channels); ++i) {
+                        out.push_back(ptr[i]);
+                    }
                 }
                 namespace Lua {
                     enum class CmdStep : uint8_t {

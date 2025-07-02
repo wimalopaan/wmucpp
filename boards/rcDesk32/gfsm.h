@@ -83,7 +83,7 @@ struct GFSM {
     using pulse_in = devs::pulse_in;
 #endif
 
-    using bus_crsf = devs::bus_crsf;
+    using relay_bus = devs::relay_bus;
 
     using tp1 = devs::tp1;
 
@@ -129,7 +129,7 @@ struct GFSM {
         sm2::periodic();
         crsf_in::periodic();
         bt::periodic();
-        bus_crsf::periodic();
+        relay_bus::periodic();
     }
 
     static inline constexpr External::Tick<systemTimer> initTicks{500ms};
@@ -173,7 +173,7 @@ struct GFSM {
         sm2::ratePeriodic();
         crsf_in::ratePeriodic();
         bt::ratePeriodic();
-        bus_crsf::ratePeriodic();
+        relay_bus::ratePeriodic();
 
         ++mStateTick;
         const auto oldState = mState;
@@ -216,17 +216,7 @@ struct GFSM {
             });
             update();
             (++mTelemTick).on(telemTicks, []{
-                using bus_buf = bus_crsf::messageBuffer;
-                bus_buf::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::Channels, [](auto& d){
-                    exp0 = (90 * exp0 + 10 * pulse_in::value(0)) / 100;
-                    busChannels.packed.ch0 = exp0;
-                    busChannels.packed.ch1 = pulse_in::value(1);
-                    busChannels.packed.ch2 = pulse_in::value(2);
-                    busChannels.packed.ch3 = pulse_in::value(3);
-                    busChannels.packed.ch4 = pulse_in::value(4);
-                    busChannels.packed.ch5 = pulse_in::value(5);
-                    d.push_back(busChannels.raw);
-                });
+                using bus_buf = relay_bus::messageBuffer;
                 uint64_t s{};
                 for(uint8_t i = 0; i < 8; ++i) {
                     if (pulse_in::mSwChannels[0].values[i] == 1) {

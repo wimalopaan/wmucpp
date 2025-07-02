@@ -375,7 +375,7 @@ namespace RC {
                     private:
                     static inline bool validityCheck(const volatile uint8_t* const data, const uint16_t) {
                         if (const uint8_t s = data[0]; ((s != (uint8_t)RC::Protokoll::Crsf::V4::Address::StartByte) &&
-                                                        (s != (uint8_t)RC::Protokoll::Crsf::V4::Address::TX))) {
+                                                        (s != (uint8_t)RC::Protokoll::Crsf::V4::Address::Handset))) {
                             return false;
                         }
                         if (const uint8_t l = data[1]; l > RC::Protokoll::Crsf::V4::maxPayloadSize) {
@@ -421,9 +421,9 @@ namespace RC {
                                 output::resetSlot();
                                 output::setDestination((std::byte)src);
                                 output::event(output::Event::SendDeviceInfo);
-                                if constexpr(requires(){callback::forwardPacket(data, 0);}) {
+                                // if constexpr(requires(){callback::forwardPacket(data, 0);}) {
                                     callback::forwardPacket(data, paylength + 2);
-                                }
+                                // }
                             }
                             break;
                         case RC::Protokoll::Crsf::V4::Type::Info:

@@ -99,7 +99,7 @@ struct Enc: IEnc {
 };
 
 struct IBus : PortDevice {
-    // virtual void update() = 0;
+    virtual void forwardPacket(volatile uint8_t* data, const uint16_t length) = 0;
 };
 template<typename B>
 struct Bus: IBus {
@@ -117,6 +117,11 @@ struct Bus: IBus {
     virtual void ratePeriodic() {
         if constexpr(requires(){B::ratePeriodic();}) {
             B::ratePeriodic();
+        }
+    }
+    virtual void forwardPacket(volatile uint8_t* data, const uint16_t length) {
+        if constexpr(requires(){B::forwardPacket(data, length);}) {
+            B::forwardPacket(data, length);
         }
     }
 };

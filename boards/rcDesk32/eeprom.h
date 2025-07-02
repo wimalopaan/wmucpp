@@ -67,4 +67,7 @@ struct EEProm {
     uint8_t prop8mode = 0; // send prop values as 8-bit
     uint8_t address = 0xc8;
     uint8_t controllerNumber = 0;
+
+    uint8_t tx_rewrite_address = 0xce;
+    uint8_t rx_rewrite_address = 0xcf;
 };

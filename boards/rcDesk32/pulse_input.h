@@ -27,10 +27,36 @@
 #include "etl/event.h"
 #include "etl/fixedvector.h"
 #include "timer.h"
+#include "rc/rc_2.h"
 
 using namespace std::literals::chrono_literals;
 
 namespace Pulse {
+
+    template<typename T = int32_t>
+    struct ExpMean {
+        ExpMean() = default;
+        explicit ExpMean(const T n, const T d) : mN{n}, mD{d} {}
+        inline T process(const T v) {
+            mValue = (mValue * mN) / mD + (v * (mD - mN)) / mD;
+            return mValue;
+        }
+        inline T value() const {
+            return mValue;
+        }
+        inline void setN(const T n) {
+            mN = n;
+        }
+        inline void set(const T v) {
+            mValue = v;
+        }
+        private:
+        T mN = 90;
+        T mD = 100;
+        T mValue = 0;
+    };
+
+
     template<auto TimerNumber, typename Config, typename MCU = DefaultMcu>
     struct CppmIn {
         using pin = Config::pin;
@@ -45,14 +71,14 @@ namespace Pulse {
 
         static inline constexpr uint8_t af = Mcu::Stm::AlternateFunctions::mapper_v<pin, CppmIn<TimerNumber, Config, MCU>, Mcu::Stm::AlternateFunctions::CC<1>>;
 
-        static inline constexpr uint16_t onems = 1640;
+        static inline constexpr uint16_t onems = RC::Protokoll::SBus::V2::amp;
         static inline constexpr uint16_t mid = onems + onems / 2;
         static inline constexpr uint16_t period = onems * 20;
         static inline constexpr uint16_t prescaler = (clock::config::frequency.value / period) / 50;
 
         static inline constexpr uint16_t sd = onems / 3;
-        static inline constexpr uint16_t t1 = 992 - sd / 2;
-        static inline constexpr uint16_t t2 = 992 + sd / 2;
+        static inline constexpr uint16_t t1 = RC::Protokoll::SBus::V2::mid - sd / 2;
+        static inline constexpr uint16_t t2 = RC::Protokoll::SBus::V2::mid + sd / 2;
 
         using timer_value_t = std::conditional_t<(timerNumber == 2), uint32_t, uint16_t>;
 
@@ -169,25 +195,15 @@ namespace Pulse {
                 startDmaSequence();
             });
         }
+        static inline const auto& values() {
+            return mValues;
+        }
         static inline uint16_t value(const uint8_t ch) {
             if (ch < 8) {
-                const uint8_t index = ch + 1;
-                if (mPeriod) {
-                    const int s = mData[index].first - onems + 172;
-                    if (ch < 6) {
-                        return std::clamp(s, 172, 1812);
-                    }
-                    else {
-                        return s;
-                    }
-                }
-                else {
-                    const int s = mData[index].second - onems + 172;
-                    return std::clamp(s, 172, 1812);
-                }
+                return mValues[ch].value();
             }
             else {
-                return 992;
+                return RC::Protokoll::SBus::V2::mid;
             }
         }
         // private:
@@ -196,8 +212,25 @@ namespace Pulse {
             uint8_t index = 0;
             std::array<uint8_t, 8> values{};
         };
-
-        static inline void decode() {
+        static inline void decodeChannels() {
+            for(uint8_t i = 0; i < 8; ++i) {
+                const uint8_t index = i + 1;
+                if (mPeriod) {
+                    const uint16_t s = mData[index].first - onems + RC::Protokoll::SBus::V2::min;
+                    if (i < 6) {
+                        mValues[i].process(std::clamp(s, RC::Protokoll::SBus::V2::min, RC::Protokoll::SBus::V2::max));
+                    }
+                    else {
+                        mValues[i].set(s);
+                    }
+                }
+                else {
+                    const uint16_t s = mData[index].second - onems + RC::Protokoll::SBus::V2::min;
+                    mValues[i].process(std::clamp(s, RC::Protokoll::SBus::V2::min, RC::Protokoll::SBus::V2::max));
+                }
+            }
+        }
+        static inline void decodeSwitches() {
             for(auto& sd : mSwChannels) {
                 if (value(sd.channel) < 172) {
                     sd.index = 0;
@@ -218,12 +251,17 @@ namespace Pulse {
                 }
             }
         }
+        static inline void decode() {
+            decodeChannels();
+            decodeSwitches();
+        }
         static inline void startDmaSequence() {
             dmaCh::startRead(2 * mData.size(), (uint32_t)&mcuTimer->DMAR, &mData[0].first, Mcu::Stm::Timers::Properties<TimerNumber>::dmamux_src[0]);
         }
         static inline std::array<std::pair<volatile timer_value_t, volatile timer_value_t>, 16> mData; // first pair is invalid (old counter values)
         static inline bool mPeriod = true;
         static inline volatile bool mActive = false;
+        static inline std::array<ExpMean<uint16_t>, 16> mValues;
         static inline etl::FixedVector<SwitchData, 4> mSwChannels{SwitchData{6, 0}, SwitchData{7, 0}};
         static inline etl::Event<Event> mEvent;
     };
