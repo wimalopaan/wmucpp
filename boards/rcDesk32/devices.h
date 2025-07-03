@@ -56,6 +56,7 @@
 #include "pulse_input.h"
 
 #include "package_relay.h"
+#include "pulse_switch_cb.h"
 
 struct SW01;
 struct Desk01; // Hardware Version 1
@@ -343,14 +344,13 @@ struct Devices<Desk02, Config, MCU> {
     };
     struct PulseConfig {
         using pin = aux1_rx;
-        // using pin = aux2_rx;
-        // using pin = incr1_a;
         using clock = Devices::clock;
         using timer = systemTimer;
         using dmaCh = aux1DmaChannel;
         using debug = Devices::debug;
         static inline constexpr bool startPositive = true;
-        using tp = tp1;
+        using tp = void;
+        using switchCallback = SwitchCallback<pulse_in, typename relay_bus::messageBuffer>;
     };
 #endif
     struct Aux2Config {
@@ -426,6 +426,7 @@ struct Devices<Desk02, Config, MCU> {
         using encs2 = Devices::encs2;
         using busses= Devices::busses;
         using forward = relay_bus;
+        using pulse_in = Devices::pulse_in;
         using tp = void;
         using debug = Devices::debug;
     };
@@ -450,6 +451,7 @@ struct Devices<Desk02, Config, MCU> {
         using clock = Devices::clock;
         using dmaChRead  = busDmaChannel1;
         using dmaChWrite = busDmaChannel2;
+        using storage = Devices::storage;
         using debug = Devices::debug;
         using tp = void;
         static inline constexpr uint8_t fifoSize = 16;

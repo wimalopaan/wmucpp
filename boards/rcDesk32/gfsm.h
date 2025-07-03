@@ -95,22 +95,6 @@ struct GFSM {
     }
 
     static inline void init() {
-        busChannels.packed.ch0 = 992;
-        busChannels.packed.ch1 = 992;
-        busChannels.packed.ch2 = 992;
-        busChannels.packed.ch3 = 992;
-        busChannels.packed.ch4 = 992;
-        busChannels.packed.ch5 = 992;
-        busChannels.packed.ch6 = 992;
-        busChannels.packed.ch7 = 992;
-        busChannels.packed.ch8 = 992;
-        busChannels.packed.ch9 = 992;
-        busChannels.packed.ch10 = 992;
-        busChannels.packed.ch11 = 992;
-        busChannels.packed.ch12 = 992;
-        busChannels.packed.ch13 = 992;
-        busChannels.packed.ch14 = 992;
-        busChannels.packed.ch15 = 992;
         devs::init();
         switches1::init();
         switches2::init();
@@ -135,32 +119,6 @@ struct GFSM {
     static inline constexpr External::Tick<systemTimer> initTicks{500ms};
     static inline constexpr External::Tick<systemTimer> debugTicks{500ms};
     static inline constexpr External::Tick<systemTimer> telemTicks{5ms};
-
-    union CRSF_Packet {
-        struct __attribute__((packed)) {
-            unsigned ch0 : 11;
-            unsigned ch1 : 11;
-            unsigned ch2 : 11;
-            unsigned ch3 : 11;
-            unsigned ch4 : 11;
-            unsigned ch5 : 11;
-            unsigned ch6 : 11;
-            unsigned ch7 : 11;
-            unsigned ch8 : 11;
-            unsigned ch9 : 11;
-            unsigned ch10 : 11;
-            unsigned ch11 : 11;
-            unsigned ch12 : 11;
-            unsigned ch13 : 11;
-            unsigned ch14 : 11;
-            unsigned ch15 : 11;
-        } packed;
-        std::array<uint8_t, 22> raw;
-    } ;
-    static inline CRSF_Packet busChannels{};
-    static inline uint64_t swichtes{};
-
-    static inline uint32_t exp0{};
 
     static inline void ratePeriodic() {
         led1::ratePeriodic();
@@ -209,54 +167,12 @@ struct GFSM {
                 IO::outl<debug>();
                 IO::out<debug>("# sw1:");
                 for(uint8_t i = 0; i < 8; ++i) {
-                    IO::out<debug>(" sw[", i, "]:", (uint8_t)pulse_in::mSwChannels[0].values[i]);
+                    IO::out<debug>(" sw[", i, "]:", (uint8_t)pulse_in::switches()[0].values[i]);
                 }
                 IO::outl<debug>();
 #endif
             });
             update();
-            (++mTelemTick).on(telemTicks, []{
-                using bus_buf = relay_bus::messageBuffer;
-                uint64_t s{};
-                for(uint8_t i = 0; i < 8; ++i) {
-                    if (pulse_in::mSwChannels[0].values[i] == 1) {
-                        s |= (uint64_t{0b01} << (4 * i));
-                    }
-                    else if (pulse_in::mSwChannels[0].values[i] == 2) {
-                        s |= (uint64_t{0b01} << (4 * i + 2));
-                    }
-                }
-                for(uint8_t i = 0; i < 8; ++i) {
-                    if (pulse_in::mSwChannels[1].values[i] == 1) {
-                        s |= (uint64_t{0b01} << (4 * i + 32));
-                    }
-                    else if (pulse_in::mSwChannels[1].values[i] == 2) {
-                        s |= (uint64_t{0b01} << (4 * i + 2 + 32));
-                    }
-                }
-                if (s != swichtes) {
-                    swichtes = s;
-                    bus_buf::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::Command, [](auto& d){
-                        d.push_back((uint8_t)0xc8);
-                        d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
-                        d.push_back(RC::Protokoll::Crsf::V4::CommandType::Switch);
-                        d.push_back(RC::Protokoll::Crsf::V4::SwitchCommand::Set4M);
-                        d.push_back((uint8_t)4);
-                        d.push_back((uint8_t)240);
-                        uint16_t sw = swichtes & 0xffff;
-                        d.push_back(sw);
-                        d.push_back((uint8_t)241);
-                        sw = (swichtes >> 16) & 0xffff;
-                        d.push_back(sw);
-                        d.push_back((uint8_t)242);
-                        sw = (swichtes >> 32) & 0xffff;
-                        d.push_back(sw);
-                        d.push_back((uint8_t)243);
-                        sw = (swichtes >> 48) & 0xffff;
-                        d.push_back(sw);
-                    });
-                }
-            });
             break;
         }
         if (oldState != mState) {

@@ -36,6 +36,7 @@ namespace RC::Protokoll::Crsf {
             using dest = Config::dest;
             using clock = Config::clock;
             using systemTimer = Config::systemTimer;
+            using storage = Config::storage;
             using debug = Config::debug;
             using rxpin = Config::rxpin;
             using txpin = Config::txpin;
@@ -164,6 +165,26 @@ namespace RC::Protokoll::Crsf {
                                     IO::outl<debug>("# rewrite from TX");
                                     if (data[RC::Protokoll::Crsf::V4::PacketIndex::src] == (uint8_t)RC::Protokoll::Crsf::V4::Address::TX) {
                                         data[RC::Protokoll::Crsf::V4::PacketIndex::src] = mRewriteTxAddress;
+                                        if (data[RC::Protokoll::Crsf::V4::PacketIndex::type] == (uint8_t)RC::Protokoll::Crsf::V4::Type::Info) {
+                                            bool end = false;
+                                            for(uint8_t i = 0; i < 16; ++i) {
+                                                if (data[RC::Protokoll::Crsf::V4::PacketIndex::payload + i] == '\0') {
+                                                    break;
+                                                }
+                                                if (!end && (i < storage::eeprom.txname.size())) {
+                                                    if (storage::eeprom.txname[i] == '\0') {
+                                                        data[RC::Protokoll::Crsf::V4::PacketIndex::payload + i] = '.';
+                                                        end = true;
+                                                    }
+                                                    else {
+                                                        data[RC::Protokoll::Crsf::V4::PacketIndex::payload + i] = storage::eeprom.txname[i];
+                                                    }
+                                                }
+                                                else {
+                                                    data[RC::Protokoll::Crsf::V4::PacketIndex::payload + i] = '.';
+                                                }
+                                            }
+                                        }
                                     }
                                     else if (data[RC::Protokoll::Crsf::V4::PacketIndex::src] == (uint8_t)RC::Protokoll::Crsf::V4::Address::RX) {
                                         data[RC::Protokoll::Crsf::V4::PacketIndex::src] = mRewriteRxAddress;
@@ -217,7 +238,6 @@ namespace RC::Protokoll::Crsf {
                     if (mActive) {
                         const auto fEnable = [&]{
                             f();
-                            // uart::template rxEnable<true>();
                             mTxEvent = TxEvent::TransmitComplete;
                         };
                         uart::Isr::onTransferComplete(fEnable);

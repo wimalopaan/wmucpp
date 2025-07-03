@@ -30,7 +30,9 @@ struct Map {
 };
 
 struct EEProm {
-    consteval EEProm() = default;
+    constexpr EEProm() {
+        etl::copy("DeskTX", txname);
+    }
 #if defined(USE_TEST_EEPROM)
     uint8_t aux1mode = 3; // sbus;inverted-sbus;hwext;cppmin;off
 #else
@@ -70,4 +72,8 @@ struct EEProm {
 
     uint8_t tx_rewrite_address = 0xce;
     uint8_t rx_rewrite_address = 0xcf;
+
+    uint8_t cppm_exp_n = 90;
+
+    std::array<char, 8> txname{};
 };

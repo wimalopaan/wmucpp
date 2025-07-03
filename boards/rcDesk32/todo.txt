@@ -1,7 +1,5 @@
 ToDo
 ============
-* CRSF relay mode
-* CRSF address rewrite for RX-as-TX
 * CPPM-in analog calibration
 * analog calibration
 * integrate GPS (UART)
@@ -14,6 +12,8 @@ LUA Widget
 
 Done
 ============
+* CRSF relay mode
+* CRSF address rewrite for RX-as-TX
 * ELRS-client mode
 * Prop values
 * prop values alternating to switch values

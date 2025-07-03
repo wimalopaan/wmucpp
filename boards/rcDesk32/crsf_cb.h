@@ -44,8 +44,9 @@ struct CrsfCallback {
     using encs2 = Config::encs2;
 
     using busses = Config::busses;
-
     using forwarder = Config::forward;
+
+    using pulse_in = Config::pulse_in;
 
     static inline constexpr auto& eeprom = storage::eeprom;
     static inline constexpr auto& eeprom_flash = storage::eeprom_flash;
@@ -246,6 +247,9 @@ private:
         addNode(p, Param_t{parent, PType::Info, "Bus2", &mI2CDevs[1][1][0]});
         addNode(p, Param_t{parent, PType::Info, "Bus2", &mI2CDevs[1][2][0]});
         addNode(p, Param_t{parent, PType::Info, "Bus2", &mI2CDevs[1][3][0]});
+
+        parent = addParent(p, Param_t{0, PType::Folder, "CPPM/In"});
+        addNode(p, Param_t{parent, PType::U8,  "Exp N", nullptr, &eeprom.cppm_exp_n, 1, 99, [](const uint8_t v){pulse_in::setExpN(v); return true;}});
 
         parent = addParent(p, Param_t{0, PType::Folder, "Settings"});
         addNode(p, Param_t{parent, PType::Command, "Calibate", "Calibrate...", nullptr, 0, 0, [](const uint8_t){return false;}});

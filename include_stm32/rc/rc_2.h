@@ -187,6 +187,7 @@ namespace RC {
                     inline static constexpr uint8_t type = 2;
                     inline static constexpr uint8_t dest = 3;
                     inline static constexpr uint8_t src = 4;
+                    inline static constexpr uint8_t payload = 5;
                 }
                 namespace ArduPilotTunnel {
                     namespace Schottel {

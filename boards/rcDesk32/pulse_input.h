@@ -65,6 +65,8 @@ namespace Pulse {
         using tp = Config::tp;
         using debug = Config::debug;
 
+        using switchCallback = Config::switchCallback;
+
         static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Timer<TimerNumber>>::value);
         static inline constexpr uint8_t timerNumber = TimerNumber;
         using component_t = Mcu::Components::Timer<TimerNumber>;
@@ -100,6 +102,8 @@ namespace Pulse {
             IO::outl<debug>("# CppmIn init");
             Mcu::Stm::Timers::powerUp<2>();
             mActive = true;
+
+            setExpN(90);
 
             mcuTimer->PSC = prescaler;
             mcuTimer->ARR = period;
@@ -170,6 +174,11 @@ namespace Pulse {
                 }
             }
         };
+        static inline void setExpN(const uint8_t n) {
+            for(auto& exp: mValues) {
+                exp.setN(n);
+            }
+        }
         template<bool Positive = true, bool enable = true>
         static inline void startPositive() {
             if constexpr(enable) {
@@ -195,6 +204,9 @@ namespace Pulse {
                 startDmaSequence();
             });
         }
+        static inline const auto& switches() {
+            return mSwChannels;
+        }
         static inline const auto& values() {
             return mValues;
         }
@@ -206,22 +218,30 @@ namespace Pulse {
                 return RC::Protokoll::SBus::V2::mid;
             }
         }
-        // private:
+        private:
         struct SwitchData {
             uint8_t channel = 0;
             uint8_t index = 0;
             std::array<uint8_t, 8> values{};
         };
+        static inline bool isSwitchChannel(const uint8_t ch) {
+            for(const SwitchData& swd: mSwChannels) {
+                if (ch == swd.channel) {
+                    return true;
+                }
+            }
+            return false;
+        }
         static inline void decodeChannels() {
             for(uint8_t i = 0; i < 8; ++i) {
                 const uint8_t index = i + 1;
                 if (mPeriod) {
                     const uint16_t s = mData[index].first - onems + RC::Protokoll::SBus::V2::min;
-                    if (i < 6) {
-                        mValues[i].process(std::clamp(s, RC::Protokoll::SBus::V2::min, RC::Protokoll::SBus::V2::max));
+                    if (isSwitchChannel(i)) {
+                        mValues[i].set(s);
                     }
                     else {
-                        mValues[i].set(s);
+                        mValues[i].process(std::clamp(s, RC::Protokoll::SBus::V2::min, RC::Protokoll::SBus::V2::max));
                     }
                 }
                 else {
@@ -231,24 +251,37 @@ namespace Pulse {
             }
         }
         static inline void decodeSwitches() {
+            bool changed = false;
             for(auto& sd : mSwChannels) {
-                if (value(sd.channel) < 172) {
+                if (value(sd.channel) < RC::Protokoll::SBus::V2::min) {
                     sd.index = 0;
                 }
                 else {
                     if (sd.index < sd.values.size()) {
                         if (value(sd.channel) < t1) {
-                            sd.values[sd.index] = 1;
+                            if (sd.values[sd.index] != 1) {
+                                changed = true;
+                                sd.values[sd.index] = 1;
+                            }
                         }
-                        else if (value(6) > t2) {
-                            sd.values[sd.index] = 2;
+                        else if (value(sd.channel) > t2) {
+                            if (sd.values[sd.index] != 2) {
+                                changed = true;
+                                sd.values[sd.index] = 2;
+                            }
                         }
                         else {
-                            sd.values[sd.index] = 0;
+                            if (sd.values[sd.index] != 0) {
+                                changed = true;
+                                sd.values[sd.index] = 0;
+                            }
                         }
                     }
                     ++sd.index;
                 }
+            }
+            if (changed) {
+                switchCallback::update();
             }
         }
         static inline void decode() {

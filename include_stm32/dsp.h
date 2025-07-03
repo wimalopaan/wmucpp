@@ -196,7 +196,6 @@ namespace Dsp {
         ExpMin<void> mMin{0.0001};
     };
 
-
     template<typename Config>
     struct StepLimiter {
         constexpr uint16_t process(const uint16_t v) {
