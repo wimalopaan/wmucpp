@@ -24,7 +24,7 @@
 #define SERIAL_DEBUG
 // #define USE_SWD
 
-#define SW_VERSION 5
+#define SW_VERSION 6
 #define HW_VERSION 2
 
 #include <cstdint>
