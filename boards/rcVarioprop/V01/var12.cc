@@ -56,7 +56,7 @@ struct CrsfCallback {
     static inline constexpr void gotChannels() {
     }
 
-    static inline void setParameter(const uint8_t index, const uint8_t value) {
+    static inline void setParameter(const uint8_t index, const uint8_t value, auto, auto) {
         // IO::outl<trace>("SetP adr: ", index, " v: ", value);
         if ((index >= 1) && (index <= params.size())) {
             params[index - 1].value(value);

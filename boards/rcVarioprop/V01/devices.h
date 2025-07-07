@@ -206,7 +206,7 @@ struct Devices<Var02, Config, Mcu::Stm::Stm32G431> {
     // Timer 3
     using cppm = Mcu::Stm::Cppm::Generator<3, cppmDmaChannel, clock, MCU>;
 
-    using dac = Mcu::Stm::Dac<1, MCU>;
+    using dac = Mcu::Stm::V3::Dac<1, MCU>;
     // Timer 6
     using pulse = Mcu::Stm::Cppm::RollOnOff<6, dacDmaChannel, dac, clock, MCU>;
 

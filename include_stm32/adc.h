@@ -25,6 +25,8 @@
 #include "mcu/mcu_traits.h"
 #include "components.h"
 
+#include "dma_dual_2.h"
+
 #include <type_traits>
 #include <concepts>
 
@@ -118,7 +120,8 @@ namespace Mcu::Stm {
                 }
             }
 
-#ifdef STM32G4
+// #ifdef STM32G4
+#if 0
             static inline void init() {
                 RCC->CCIPR |= 0x02 << RCC_CCIPR_ADC12SEL_Pos; // System Clock
                 RCC->AHB2ENR |= RCC_AHB2ENR_ADC12EN;
@@ -597,7 +600,7 @@ namespace Mcu::Stm {
             static inline const auto& values() {
                 return mData;
             }
-            private:
+            // private:
             static inline DmaStorage mData;
             static_assert(nChannels <= mData.size());
         };

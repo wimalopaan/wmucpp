@@ -62,12 +62,24 @@ namespace Mcu::Stm {
                 static inline void reset() {
                     const auto rcc = Mcu::Stm::Address<Mcu::Components::Rcc>::value;
                     if constexpr(N == 1) {
+#ifdef STM32G0
                         rcc->APBRSTR2 |= RCC_APBRSTR2_USART1RST;
                         rcc->APBRSTR2 &= ~RCC_APBRSTR2_USART1RST;
+#endif
+#ifdef STM32G4
+                        rcc->APB2RSTR |= RCC_APB2RSTR_USART1RST;
+                        rcc->APB2RSTR &= ~RCC_APB2RSTR_USART1RST;
+#endif
                     }
                     else if constexpr(N == 2) {
+#ifdef STM32G0
                         rcc->APBRSTR1 |= RCC_APBRSTR1_USART2RST;
                         rcc->APBRSTR1 &= ~RCC_APBRSTR1_USART2RST;
+#endif
+#ifdef STM32G4
+                        rcc->APB1RSTR1 |= RCC_APB1RSTR1_USART2RST;
+                        rcc->APB1RSTR1 &= ~RCC_APB1RSTR1_USART2RST;
+#endif
                     }
 #ifdef STM32G0B1xx
                     else if constexpr(N == 3) {

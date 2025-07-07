@@ -439,8 +439,14 @@ namespace Mcu::Stm {
                 static inline void reset() {
                     const auto rcc = Mcu::Stm::Address<Mcu::Components::Rcc>::value;
                     if constexpr (TimerNumber == 1) {
+#ifdef STM32G0xx
                         rcc->APBRSTR2 = RCC_APBRSTR2_TIM1RST;
                         rcc->APBRSTR2 &= ~RCC_APBRSTR2_TIM1RST;
+#endif
+#ifdef STM32G4
+                        RCC->APB2RSTR = RCC_APB2RSTR_TIM1RST;
+                        RCC->APB2RSTR &= RCC_APB2RSTR_TIM1RST;
+#endif
                     }
 #ifdef STM32G0B1xx
                     else if constexpr (TimerNumber == 2) {
@@ -449,8 +455,14 @@ namespace Mcu::Stm {
                     }
 #endif
                     else if constexpr (TimerNumber == 3) {
+#ifdef STM32G0xx
                         rcc->APBRSTR1 = RCC_APBRSTR1_TIM3RST;
                         rcc->APBRSTR1 &= ~RCC_APBRSTR1_TIM3RST;
+#endif
+#ifdef STM32G4
+                        RCC->APB1RSTR1 = RCC_APB1RSTR1_TIM3RST;
+                        RCC->APB1RSTR1 &= RCC_APB1RSTR1_TIM3RST;
+#endif
                     }
 #ifdef STM32G0B1xx
                     else if constexpr (TimerNumber == 4) {
@@ -463,8 +475,14 @@ namespace Mcu::Stm {
                     }
 #endif
                     else if constexpr (TimerNumber == 17) {
+#ifdef STM32G0xx
                         rcc->APBRSTR2 = RCC_APBRSTR2_TIM17RST;
                         rcc->APBRSTR2 &= ~RCC_APBRSTR2_TIM17RST;
+#endif
+#ifdef STM32G4
+                        rcc->APB2RSTR = RCC_APB2RSTR_TIM17RST;
+                        rcc->APB2RSTR &= ~RCC_APB2RSTR_TIM17RST;
+#endif
                     }
                     else {
                         static_assert(false);
