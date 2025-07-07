@@ -132,7 +132,7 @@ namespace Pulse {
             mcuTimer->CCMR2 |= (0b0110 << TIM_CCMR2_OC3M_Pos); // pwm3
             mcuTimer->CCMR2 |= TIM_CCMR2_OC3PE;
             mcuTimer->CCER |= TIM_CCER_CC3E;
-            mcuTimer->CCR3 = onems * 4;
+            mcuTimer->CCR3 = onems * 4; // pause between pulse trains
 
             // mcuTimer->DIER |= TIM_DIER_CC1IE; // Test
             // mcuTimer->DIER |= TIM_DIER_CC2IE; // Test
@@ -174,6 +174,17 @@ namespace Pulse {
                 }
             }
         };
+        static inline bool mIsCalibrating = false;
+        static inline void startCalibrate() {
+            resetCalibrationData();
+            mIsCalibrating = true;
+        }
+        static inline void stopCalibrate() {
+            mIsCalibrating = false;
+        }
+        static inline bool isCalibrating() {
+            return mIsCalibrating;
+        }
         static inline void setExpN(const uint8_t n) {
             for(auto& exp: mValues) {
                 exp.setN(n);
@@ -219,6 +230,11 @@ namespace Pulse {
             }
         }
         private:
+        static inline void resetCalibrationData() {
+            for(MinMax& mm: mMinMax) {
+                mm = MinMax{};
+            }
+        }
         struct SwitchData {
             uint8_t channel = 0;
             uint8_t index = 0;
@@ -297,5 +313,6 @@ namespace Pulse {
         static inline std::array<ExpMean<uint16_t>, 16> mValues;
         static inline etl::FixedVector<SwitchData, 4> mSwChannels{SwitchData{6, 0}, SwitchData{7, 0}};
         static inline etl::Event<Event> mEvent;
+        static inline std::array<MinMax, 16> mMinMax{};
     };
 }

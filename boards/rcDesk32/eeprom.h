@@ -28,6 +28,10 @@ struct Map {
     uint8_t position = 0;
     uint8_t count = 0;
 };
+struct MinMax {
+    uint16_t min = RC::Protokoll::SBus::V2::amp; // 1ms
+    uint16_t max = 2 * RC::Protokoll::SBus::V2::amp; // 2ms
+};
 
 struct EEProm {
     constexpr EEProm() {
@@ -74,6 +78,7 @@ struct EEProm {
     uint8_t rx_rewrite_address = 0xcf;
 
     uint8_t cppm_exp_n = 90;
+    std::array<MinMax, 16> cppm_calib{};
 
     std::array<char, 8> txname{};
 };

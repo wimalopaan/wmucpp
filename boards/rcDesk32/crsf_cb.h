@@ -136,6 +136,50 @@ struct CrsfCallback {
         }
     }
 private:
+    static inline uint8_t mPulsesCalibCommand;
+
+    static inline std::array<const char*, 6> mPulsesCalibTexts {
+        "Calibrate",
+        "Start ...",
+        "Calib: move all sticks/pots ...",
+        "Finished calibrating"
+    };
+
+    // Step         Result(bool)    Next-Step       Action
+    // Click        false           Executing       start task
+    //              true            AskConfirm
+    // Confirmed    false           Executing       start task
+    // Cancel       false                           cancel task
+    // Update       false           Idle
+    //              true            Executing
+
+    static inline bool pulsesCalibCb(const uint8_t v) {
+        IO::outl<debug>("# pulsesCalibCb v: ", v);
+        const RC::Protokoll::Crsf::V4::Lua::CmdStep step{v};
+        bool res = false;
+        switch(step) {
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Click:
+            params[mPulsesCalibCommand].options = mPulsesCalibTexts[1];
+            res = true;
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Confirmed:
+            params[mPulsesCalibCommand].options = mPulsesCalibTexts[2];
+            pulse_in::startCalibrate();
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Cancel:
+            params[mPulsesCalibCommand].options = mPulsesCalibTexts[3];
+            pulse_in::stopCalibrate();
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Query:
+            params[mPulsesCalibCommand].options = mPulsesCalibTexts[2];
+            res = pulse_in::isCalibrating();
+            break;
+        default:
+            break;
+        }
+        return res;
+    }
+
     static inline name_t mName = []{
         name_t name{};
         updateName(name);
@@ -202,6 +246,7 @@ private:
         auto parent = addParent(p, Param_t{0, PType::Folder, "Bus"});
         addNode(p, Param_t{parent, PType::U8,  "TX Rewrite Address", nullptr, &eeprom.tx_rewrite_address, 192, 207, [](const uint8_t a){forwarder::txAddress(a); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "RX Rewrite Address", nullptr, &eeprom.rx_rewrite_address, 192, 207, [](const uint8_t a){forwarder::rxAddress(a); return true;}});
+        addNode(p, Param_t{parent, PType::Str, "TX Rewrite Name", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &eeprom.txname[0]});
 
         parent = addParent(p, Param_t{0, PType::Folder, "Analog1"});
         addNode(p, Param_t{parent, PType::Sel, "Stream", "SBus;Hw/Ext;Off", (uint8_t*)&eeprom.analogMaps[0].stream, 0, 2, [](const uint8_t){return true;}});
@@ -250,6 +295,8 @@ private:
 
         parent = addParent(p, Param_t{0, PType::Folder, "CPPM/In"});
         addNode(p, Param_t{parent, PType::U8,  "Exp N", nullptr, &eeprom.cppm_exp_n, 1, 99, [](const uint8_t v){pulse_in::setExpN(v); return true;}});
+        addNode(p, Param_t{parent, PType::Command, "Calibrate", mPulsesCalibTexts[0], nullptr, 0, 0, [](const uint8_t v){return pulsesCalibCb(v);}, 200});
+        mPulsesCalibCommand = p.size() - 1;
 
         parent = addParent(p, Param_t{0, PType::Folder, "Settings"});
         addNode(p, Param_t{parent, PType::Command, "Calibate", "Calibrate...", nullptr, 0, 0, [](const uint8_t){return false;}});

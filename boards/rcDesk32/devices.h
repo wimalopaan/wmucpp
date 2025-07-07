@@ -452,50 +452,8 @@ struct Devices<Desk02, Config, MCU> {
         using dmaChRead  = busDmaChannel1;
         using dmaChWrite = busDmaChannel2;
         using storage = Devices::storage;
-        using debug = Devices::debug;
+        using debug = void;
         using tp = void;
-        static inline constexpr uint8_t fifoSize = 16;
-    };
-    struct BusCrsfConfig {
-        using rxpin = bus_tx;
-        using txpin = bus_rx;
-        using systemTimer = Devices::systemTimer;
-        using clock = Devices::clock;
-        using dmaChRead  = busDmaChannel1;
-        using dmaChWrite = busDmaChannel2;
-        using debug = Devices::debug;
-        using tp = void;
-        using callback = struct {
-            using Param_t = RC::Protokoll::Crsf::V4::Parameter<uint8_t>;
-            using PType = Param_t::Type;
-            static inline Param_t parameter(const uint8_t index) {
-                return {};
-            }
-            static inline void serialize(uint8_t, auto&, RC::Protokoll::Crsf::V4::Lua::CmdStep = RC::Protokoll::Crsf::V4::Lua::CmdStep::Idle) {
-            }
-            static inline bool isCommand(const uint8_t) {
-                return false;
-            }
-            static inline void setParameterValue(uint8_t, auto, uint8_t) {
-            }
-            static inline void command(const auto& /*data*/, const uint8_t /*payload*/) {
-            }
-            static inline const char* name() {
-                return "";
-            }
-            static inline uint32_t serialNumber() {
-                return 0;
-            }
-            static inline uint32_t hwVersion() {
-                return 0;
-            }
-            static inline uint32_t swVersion() {
-                return 0;
-            }
-            static inline uint8_t numberOfParameters() {
-                return 0;
-            }
-        };
         static inline constexpr uint8_t fifoSize = 16;
     };
 
@@ -523,9 +481,6 @@ struct Devices<Desk02, Config, MCU> {
 #endif
         button2::template dir<Mcu::Input>();
         button2::pullup();
-
-        // enc1::init();
-        // enc2::init();
 
 #ifdef SERIAL_DEBUG
         debug::init();
