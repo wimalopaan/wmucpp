@@ -23,6 +23,9 @@ Bugs
 
 Prio 0
 ------
+* add mcp23017 / TLC59108(F) support for switch output
+* add SBus-out on servo/esc outputs
+* for SBus-out: selectable range: 1-16 or 17-32 (requires crsfch.lua on radio)
 * set pole pairs via menu for rpm (esc 1 and 2)
 * report esc1/2 temperature
 * "normal" servo support: needs major refactor of input management
@@ -55,7 +58,6 @@ Prio 0
 * VEsc: slew-rate for throttle (crsf parameter)
 * modes: Dual-Schottel, Passthru
 * make dma, timer, usart summary with hw-connections
-* for SBus-out: selectable range: 1-16 or 17-32 (requires crsfch.lua on radio)
 * crsf-command popups: useful texts
 
 Prio 1
