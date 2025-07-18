@@ -1802,6 +1802,7 @@ gcc/base/lib/gcc/avr/12.0.1/device-specs/specs-avr128da32
 gcc/base/lib/gcc/avr/12.0.1/device-specs/specs-avr128da48
 gcc/base/lib/gcc/avr/13.0.0/device-specs/specs-avr128da32
 gcc/base/lib/gcc/avr/13.0.0/device-specs/specs-avr128da48
+host/Makefile
 host/bdc/Makefile
 host/bdc/test00.cc
 host/modA.cxx
@@ -1816,6 +1817,7 @@ host/p00a.c
 host/p00b.c
 host/rdiv.cc
 host/rswitch.cc
+host/sbus_decode.cc
 host/sdr/Makefile
 host/sdr/demod_fsk_01.cc
 host/sdr/demod_fsk_bp_01.cc

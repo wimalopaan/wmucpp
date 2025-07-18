@@ -88,6 +88,7 @@ subdirs += gps
 #targets += test400
 #targets += test401
 #targets += p00a
+targets += sbus_decode
 
 #test400: modA.o test400.o
 #	$(LINK.cc) $^
