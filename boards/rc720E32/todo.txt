@@ -21,8 +21,14 @@ General
 Bugs
 ----
 
+Ideas
+-----
+* Esc1/2, Srv1/2: Sbus and (maybe) Fb1/fb2 also Sbus (via some kind of bridge or hw bridge)
+
 Prio 0
 ------
+* EByte E32-170T30D relay mode
+* SumDv3: option to swap ch1-16 and ch17-32
 * add mcp23017 / TLC59108(F) support for switch output
 * add SBus-out on servo/esc outputs
 * for SBus-out: selectable range: 1-16 or 17-32 (requires crsfch.lua on radio)

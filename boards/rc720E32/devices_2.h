@@ -196,6 +196,9 @@ struct Devices<SW01, Config, MCU> {
     struct VEscConfig1;
     using vesc_1 = RC::VESC::Master::V5::Serial<2, VEscConfig1, MCU>;
 
+    struct Esc1SbusConfig;
+    using esc1_sbus = RC::Protokoll::SBus2::V4::Master<2, Esc1SbusConfig, MCU>;
+
     // Tlm1: PA3 : Uart2-RX (AF1), TIM2-CH4 (AF2), TIM15-CH2 (AF5)
 
     // Srv1: PB0 : TIM3-CH3 (AF1), TIM1-CH2N(AF2), Uart3-RX (AF4), Uart5-TX (AF8)
@@ -237,6 +240,9 @@ struct Devices<SW01, Config, MCU> {
 
     struct VEscConfig2;
     using vesc_2 = RC::VESC::Master::V5::Serial<3, VEscConfig2, MCU>;
+
+    struct Esc2SbusConfig;
+    using esc2_sbus = RC::Protokoll::SBus2::V4::Master<3, Esc2SbusConfig, MCU>;
 
     struct BtConfig2;
     using bt2 = External::Bluetooth::Simple<3, BtConfig2, MCU>;
@@ -568,7 +574,6 @@ struct Devices<SW01, Config, MCU> {
         using debug = void;
         using tp = void;
     };
-
     struct VEscConfig1 {
         using clock = Devices::clock;
         using systemTimer = Devices::systemTimer;
@@ -577,12 +582,30 @@ struct Devices<SW01, Config, MCU> {
         using debug = void;
         using tp = void;
     };
+    struct Esc1SbusConfig {
+        using clock = Devices::clock;
+        using debug = void;
+        using dmaChComponent = esc1DmaChannelComponent;
+        using systemTimer = Devices::systemTimer;
+        using adapter = crsf_in::input;
+        using pin = esc1_pin;
+        using tp = void;
+    };
     struct VEscConfig2 {
         using clock = Devices::clock;
         using systemTimer = Devices::systemTimer;
         using dmaChComponent = esc2DmaChannelComponent;
         using pin = esc2_pin_1;
         using debug = void;
+        using tp = void;
+    };
+    struct Esc2SbusConfig {
+        using clock = Devices::clock;
+        using debug = void;
+        using dmaChComponent = esc2DmaChannelComponent;
+        using systemTimer = Devices::systemTimer;
+        using adapter = crsf_in::input;
+        using pin = esc2_pin_1;
         using tp = void;
     };
     struct RelayDebug {

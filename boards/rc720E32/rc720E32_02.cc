@@ -26,7 +26,7 @@
 #define SERIAL_DEBUG // enable debug on esc-tlm-1
 #define TEST_EEPROM // fill eeprom with test setup
 
-#define SW_VERSION 14
+#define SW_VERSION 15
 #define HW_VERSION 2
 
 #define NDEBUG
@@ -178,6 +178,13 @@ void USART2_LPUART2_IRQHandler(){
         });
         vesc_1::Isr::onIdle([]{
         });
+        using esc1_sbus = devs::esc1_sbus;
+        static_assert(esc1_sbus::uart::number == 2);
+        esc1_sbus::Isr::onTransferComplete([]{
+        });
+        esc1_sbus::Isr::onIdle([]{
+        });
+
         esc32_1::uart::mcuUart->ICR = -1;
     }
     {
@@ -227,6 +234,13 @@ void USART3_4_5_6_LPUART1_IRQHandler(){
         static_assert(vesc_2::uart::number == 3);
         vesc_2::Isr::onTransferComplete([]{});
         vesc_2::Isr::onIdle([]{});
+
+        using esc2_sbus = devs::esc2_sbus;
+        static_assert(esc2_sbus::uart::number == 3);
+        esc2_sbus::Isr::onTransferComplete([]{
+        });
+        esc2_sbus::Isr::onIdle([]{
+        });
 
         using bt2 = devs::bt2;
         static_assert(bt2::uart::number == 3);

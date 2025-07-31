@@ -33,6 +33,10 @@ struct EscOutputs {
     using esc32ascii_2 = devs::esc32ascii_2;
     using vesc_1 = devs::vesc_1;
     using vesc_2 = devs::vesc_2;
+
+    using esc1_sbus = devs::esc1_sbus;
+    using esc2_sbus = devs::esc2_sbus;
+
     using bt2 = devs::bt2;
 
     template<uint8_t N>
@@ -44,6 +48,7 @@ struct EscOutputs {
         using esc_esc32ascii_t = std::conditional_t<(N == 0), Esc<esc32ascii_1>, Esc<esc32ascii_2>>;
         using esc_vesc_t = std::conditional_t<(N == 0), Esc<vesc_1>, Esc<vesc_2>>;
         using bt2_t = std::conditional_t<(N == 0), void, Esc<bt2>>;
+        using esc_sbus_t = std::conditional_t<(N == 0), Esc<esc1_sbus>, Esc<esc2_sbus>>;
 
         // std::integral_constant<uint8_t, sizeof(esc_pwm_t)>::_;
         static_assert(sizeof(esc_pwm_t) == sizeof(esc_esc32_t));
@@ -67,10 +72,14 @@ struct EscOutputs {
             escs[N] = nullptr;
             escs[N] = std::make_unique<esc_vesc_t>();
             break;
-        case 4: // None
+        case 4: // sbus
+            escs[N] = nullptr;
+            escs[N] = std::make_unique<esc_sbus_t>();
+            break;
+        case 5: // None
             escs[N] = nullptr;
             break;
-        case 5: // BT
+        case 6: // BT
             escs[N] = nullptr;
             if constexpr(N == 1) {
                 escs[N] = std::make_unique<bt2_t>();
