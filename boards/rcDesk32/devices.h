@@ -229,8 +229,8 @@ struct Devices<Desk02, Config, MCU> {
     using crsf_in = RC::Protokoll::Crsf::V4::Master<6, CrsfConfig, MCU>;
 
     // LPUart2: Bus / Relay
-    struct RelayBusConfig;
-    using relay_bus = RC::Protokoll::Crsf::V4::PacketRelay<102, RelayBusConfig, MCU>;
+    struct RelayBusFullDuplexConfig;
+    using relay_bus = RC::Protokoll::Crsf::V4::PacketRelay<102, RelayBusFullDuplexConfig, MCU>;
 
 #ifdef SERIAL_DEBUG
     // LPUart1
@@ -442,7 +442,7 @@ struct Devices<Desk02, Config, MCU> {
         using callback = CrsfCallback<CrsfCallbackConfig, debug>;
         static inline constexpr uint8_t fifoSize = 16;
     };
-    struct RelayBusConfig {
+    struct RelayBusFullDuplexConfig {
         using src = pulse_in;
         using dest = crsf_in::messageBuffer;
         using rxpin = bus_tx;

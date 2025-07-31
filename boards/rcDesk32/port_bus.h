@@ -29,11 +29,19 @@ struct Busses {
     static inline void set(const uint8_t a) {
         IO::outl<debug>("# Bus ", a);
         switch(a) {
-        case 0: // crsf
+        case 0: // crsf-fd
         {
             mBus = nullptr;
             mBus = std::make_unique<Bus<relay_bus>>();
             relay_bus::baud(400'000);
+        }
+            break;
+        case 1: // crsf-hd
+        {
+            mBus = nullptr;
+            mBus = std::make_unique<Bus<relay_bus>>();
+            relay_bus::baud(400'000);
+            relay_bus::setHalfDuplex(true);
         }
             break;
         default:

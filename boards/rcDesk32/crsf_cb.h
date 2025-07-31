@@ -241,7 +241,7 @@ private:
                                }
                                encs2::set(v);
                                return true;}});
-        addNode(p, Param_t{0, PType::Sel, "Bus", "CRSF;Off", &eeprom.busmode, 0, 1, [](const uint8_t v){busses::set(v); return true;}});
+        addNode(p, Param_t{0, PType::Sel, "Bus", "CRSF/FD;CRSF/HD;Off", &eeprom.busmode, 0, 2, [](const uint8_t v){busses::set(v); return true;}});
 
         auto parent = addParent(p, Param_t{0, PType::Folder, "Bus"});
         addNode(p, Param_t{parent, PType::U8,  "TX Rewrite Address", nullptr, &eeprom.tx_rewrite_address, 192, 207, [](const uint8_t a){forwarder::txAddress(a); return true;}});

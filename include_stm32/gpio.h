@@ -135,8 +135,14 @@ namespace Mcu::Stm {
         static inline void toggle() {
             mcuGpio->BSRR = (mcuGpio->ODR ^ (0x01UL << N)) | (0x01UL << (N + 16));
         }
+        template<bool OD = true>
         static inline void openDrain() {
-            mcuGpio->OTYPER |= (0x01 << N);
+            if constexpr(OD) {
+                mcuGpio->OTYPER |= (0x01 << N);
+            }
+            else {
+                mcuGpio->OTYPER &= ~(0x11 << N);
+            }
         }
         static inline void afunction(const uint8_t f) {
             auto temp = mcuGpio->MODER;

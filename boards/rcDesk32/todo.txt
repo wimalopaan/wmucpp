@@ -16,6 +16,7 @@ LUA Widget
 
 Done
 ============
+* CRSF half-duplex relay
 * CRSF relay mode
 * CRSF address rewrite for RX-as-TX
 * ELRS-client mode

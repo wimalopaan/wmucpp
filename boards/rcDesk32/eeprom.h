@@ -35,7 +35,7 @@ struct MinMax {
 
 struct EEProm {
     constexpr EEProm() {
-        etl::copy("DeskTX", txname);
+        etl::copy("RelayTX", txname);
     }
 #if defined(USE_TEST_EEPROM)
     uint8_t aux1mode = 3; // sbus;inverted-sbus;hwext;cppmin;off
@@ -43,7 +43,7 @@ struct EEProm {
     uint8_t aux1mode = 1; // sbus;inverted-sbus;hwext;cppmin;off
 #endif
     uint8_t aux2mode = 3; // sbus;inverted-sbus;hwext;off
-    uint8_t busmode = 0; // crsf;off
+    uint8_t busmode = 1; // crsf-fd;crsf-hd;off
     uint8_t sm1mode = 1; // sm;off
     uint8_t sm2mode = 1; // sm;off
 

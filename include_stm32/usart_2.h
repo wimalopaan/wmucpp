@@ -575,23 +575,60 @@ namespace Mcu::Stm {
                     }
                 }
             };
+            template<bool Disable = true>
+            static inline void halfDuplex(const bool on = true)
+                    requires(Config::mode == Uarts::Mode::FullDuplex)
+            {
+                if constexpr(Disable) {
+                    if constexpr(detail::getTxComplete_v<detail::getIsr_t<Config>>) {
+                        mcuUart->CR1 &= ~(USART_CR1_UE | USART_CR1_TCIE);
+                    }
+                    else {
+                        mcuUart->CR1 &= ~USART_CR1_UE;
+                    }
+                }
+                if (on) {
+                    mcuUart->CR3 |= USART_CR3_HDSEL;
+                }
+                else {
+                    mcuUart->CR3 &= ~USART_CR3_HDSEL;
+                }
+                if constexpr(Disable) {
+                    if constexpr(detail::getTxComplete_v<detail::getIsr_t<Config>>) {
+                        mcuUart->CR1 |= (USART_CR1_UE | USART_CR1_TCIE);
+                    }
+                    else {
+                        mcuUart->CR1 |= USART_CR1_UE;
+                    }
+                }
+            }
             template<bool Inv>
             static inline void invert() {
-                mcuUart->CR1 &= ~USART_CR1_UE;
+                if constexpr(detail::getTxComplete_v<detail::getIsr_t<Config>>) {
+                    mcuUart->CR1 &= ~(USART_CR1_UE | USART_CR1_TCIE);
+                }
+                else {
+                    mcuUart->CR1 &= ~USART_CR1_UE;
+                }
                 if constexpr(Inv) {
                     mcuUart->CR2 |= (USART_CR2_TXINV | USART_CR2_RXINV);
                 }
                 else {
                     mcuUart->CR2 &= ~(USART_CR2_TXINV | USART_CR2_RXINV);
                 }
-                mcuUart->CR1 |= USART_CR1_UE;
+                if constexpr(detail::getTxComplete_v<detail::getIsr_t<Config>>) {
+                    mcuUart->CR1 |= (USART_CR1_UE | USART_CR1_TCIE);
+                }
+                else {
+                    mcuUart->CR1 |= USART_CR1_UE;
+                }
             }
             template<bool Disable = true>
             static inline void baud(const uint32_t baud) {
                 const auto [brr, presc] = calcBRR(baud);
                 if constexpr(Disable) {
                     if constexpr(detail::getTxComplete_v<detail::getIsr_t<Config>>) {
-                        mcuUart->CR1 &= (~USART_CR1_UE | ~USART_CR1_TCIE);
+                        mcuUart->CR1 &= ~(USART_CR1_UE | USART_CR1_TCIE);
                     }
                     else {
                         mcuUart->CR1 &= ~USART_CR1_UE;

@@ -135,6 +135,23 @@ namespace RC::Protokoll::Crsf {
                 IO::outl<debug>("# Relay Bus baud: ", br);
                 uart::baud(br);
             }
+            static inline void setHalfDuplex(const bool on = true)
+                requires(!halfDuplex)
+            {
+                if (!mActive) {
+                    return;
+                }
+                IO::outl<debug>("# Relay Bus half duplex: ", (uint8_t)on);
+                uart::halfDuplex(on);
+            }
+            static inline void invert() {
+                if (!mActive) {
+                    return;
+                }
+                IO::outl<debug>("# Relay Bus invert");
+                uart::template invert<true>();
+                txpin::template pulldown<true>();
+            }
             static inline void txAddress(const uint8_t adr) {
                 mRewriteTxAddress = adr;
             }
