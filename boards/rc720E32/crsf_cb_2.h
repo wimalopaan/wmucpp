@@ -461,7 +461,7 @@ private:
         addNode(p, Param_t{parent, PType::U8, "Schottel 2: l/r", nullptr, &eeprom.channels[1].second, 0, 15, [](const store_t){return true;}});
 
         parent = addParent(p, Param_t{0, PType::Folder, "Outputs"});
-        addNode(p, Param_t{parent, PType::Sel, "Srv1 Out", "PWM/Analog;PWM/PWM;Serial/WaveShare;PWM/None;S.Port/None;MultiSwitch-Graupner-A;None", &eeprom.out_mode_srv[0], 0, 6, [](const store_t s){servos::template servo<0>(s); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Srv1 Out", "PWM/Analog;PWM/PWM;Serial/WaveShare;PWM/None;S.Port-Master/None;MultiSwitch-Graupner-A;None", &eeprom.out_mode_srv[0], 0, 6, [](const store_t s){servos::template servo<0>(s); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Srv1 Fb", "Analog;PWM;WaveShare;None;None;None;None", &eeprom.out_mode_srv[0], 0, 6});
 #ifdef ESCAPE32_ASCII
         addNode(p, Param_t{parent, PType::Sel, "Esc1 Out", "PWM/-;ESCape32/Serial;ESCape32/Ascii;VEsc/Serial;SBus;None", &eeprom.out_mode_esc[0], 0, 5, [](const store_t s){escs::template esc<0>(s); if (s == 2) {hide(mESCape321Folder, mESCape321End, false);} else {hide(mESCape321Folder, mESCape321End, true);} return true;}});
@@ -476,7 +476,7 @@ private:
 
         addNode(p, Param_t{parent, PType::Sel, "Esc1 Slaves (Tlm1,Fb1)", "Off;On", &eeprom.esc_slave[0], 0, 1, [](const store_t v){if (v == 0) {esc1_slave::reset();} else {esc1_slave::init();} return true;}});
 
-        addNode(p, Param_t{parent, PType::Sel, "Srv2 Out", "PWM/Analog;PWM/PWM;Serial/WaveShare;PWM/None;S.Port/None;None", &eeprom.out_mode_srv[1], 0, 5, [](const store_t s){servos::template servo<1>(s); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Srv2 Out", "PWM/Analog;PWM/PWM;Serial/WaveShare;PWM/None;S.Port-Master/None;None", &eeprom.out_mode_srv[1], 0, 5, [](const store_t s){servos::template servo<1>(s); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Srv2 Fb", "Analog;PWM;WaveShare;None;None;None", &eeprom.out_mode_srv[1], 0, 5});
 #ifdef ESCAPE32_ASCII
         addNode(p, Param_t{parent, PType::Sel, "Esc2 Out", "PWM/-;ESCape32/Serial;ESCape32/Ascii;VEsc/Serial;SBus;None;Bluetooth", &eeprom.out_mode_esc[1], 0, 6, [](const store_t s){escs::template esc<1>(s); if (s == 2) {hide(mESCape322Folder, false);} return true;}});
