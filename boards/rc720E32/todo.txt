@@ -23,10 +23,11 @@ Bugs
 
 Ideas
 -----
-* Esc1/2, Srv1/2: Sbus and (maybe) Fb1/fb2 also Sbus (via some kind of bridge or hw bridge)
 
 Prio 0
 ------
+* add s.port master
+* telemetry transfor from s.port-masters to s.port-aux and to crsf-telemetry
 * EByte E32-170T30D relay mode
 * SumDv3: option to swap ch1-16 and ch17-32
 * add mcp23017 / TLC59108(F) support for switch output
@@ -92,6 +93,8 @@ Done bugs:
 
 Done:
 ------
+* add exti-slave on fb1,tlm1 and fb2,tlm2 (to duplicate sbus on esc1,esc2)
+* add sbus on esc1, esc2
 * bluetooth on servo connector
 * use "acceptable" magnetometer scalings in eeprom
 * gps: bidirectional, send config messages to module (e.g. frequency of messages and which messages e.g. 0x01/0x04 to get HDOP, see edgetx/gps
