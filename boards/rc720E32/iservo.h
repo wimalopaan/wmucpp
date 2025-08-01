@@ -163,10 +163,20 @@ struct Servo : IServo {
         S::reset();
     }
     virtual std::pair<uint8_t, uint8_t> fwVersion() {
-        return S::fwVersion();
+        if constexpr(requires(){S::fwVersion();}) {
+            return S::fwVersion();
+        }
+        else {
+            return {};
+        }
     }
     virtual std::pair<uint8_t, uint8_t> hwVersion() {
-        return S::hwVersion();
+        if constexpr(requires(){S::hwVersion();}) {
+            return S::hwVersion();
+        }
+        else {
+            return {};
+        }
     }
     virtual int8_t turns() {
         if constexpr(requires(){S::turns();}) {
@@ -201,7 +211,9 @@ struct Servo : IServo {
         }
     }
     virtual void update() {
-        S::update();
+        if constexpr(requires(){S::update();}) {
+            S::update();
+        }
     }
     virtual void periodic() {
         S::periodic();

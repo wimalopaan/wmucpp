@@ -74,6 +74,14 @@
 #include "mpu6050.h"
 #include "bluetooth/jdy10.h"
 
+#include "exti_slave.h"
+
+template<typename Config>
+struct SPortTelemetryCallback {
+    static inline void command(const volatile uint8_t* const /*data*/) {
+    }
+};
+
 struct SW01;
 
 template<typename HW, typename Config, typename MCU = DefaultMcu>
@@ -199,7 +207,11 @@ struct Devices<SW01, Config, MCU> {
     struct Esc1SbusConfig;
     using esc1_sbus = RC::Protokoll::SBus2::V4::Master<2, Esc1SbusConfig, MCU>;
 
+    struct Exti1Config;
+    using esc1_slave = ExtiSlave<Exti1Config, MCU>;
+
     // Tlm1: PA3 : Uart2-RX (AF1), TIM2-CH4 (AF2), TIM15-CH2 (AF5)
+    using tlm1 = Mcu::Stm::Pin<gpioa, 3, MCU>;
 
     // Srv1: PB0 : TIM3-CH3 (AF1), TIM1-CH2N(AF2), Uart3-RX (AF4), Uart5-TX (AF8)
     using srv1_pin = Mcu::Stm::Pin<gpiob, 0, MCU>;
@@ -208,6 +220,9 @@ struct Devices<SW01, Config, MCU> {
 
     struct WS1Config;
     using srv1_waveshare = External::WaveShare::V2::Servo<5, WS1Config, MCU>;
+
+    struct Srv1SPortConfig;
+    using srv1_sport = RC::Protokoll::SPort::V2::Client::Serial<5, Srv1SPortConfig, MCU>;
 
     // Fb1:  PA6 : TIM3-CH1 (AF1), TIM16-CH1(AF5), ADC-IN6
     using fb1_pin = Mcu::Stm::Pin<gpioa, 6, MCU>;
@@ -224,6 +239,13 @@ struct Devices<SW01, Config, MCU> {
         static inline constexpr uint8_t channel = 3;
     };
     using ppm_mpx1 = MpxAdapter<mpx1, srv1_pin, debug>;
+
+    struct Exti1Config {
+        using pin = esc1_pin;
+        using debug = Devices::debug;
+        using slaves = Meta::List<fb1_pin, tlm1>;
+        using init = void;
+    };
 
     // Fehler auf Platine
     // ESC2: PB2 : Uart3-TX (AF4)
@@ -244,6 +266,9 @@ struct Devices<SW01, Config, MCU> {
     struct Esc2SbusConfig;
     using esc2_sbus = RC::Protokoll::SBus2::V4::Master<3, Esc2SbusConfig, MCU>;
 
+    struct Exti2Config;
+    using esc2_slave = ExtiSlave<Exti2Config, MCU>;
+
     struct BtConfig2;
     using bt2 = External::Bluetooth::Simple<3, BtConfig2, MCU>;
 
@@ -259,6 +284,9 @@ struct Devices<SW01, Config, MCU> {
 
     struct WS2Config;
     using srv2_waveshare = External::WaveShare::V2::Servo<6, WS2Config, MCU>;
+
+    struct Srv2SPortConfig;
+    using srv2_sport = RC::Protokoll::SPort::V2::Client::Serial<6, Srv2SPortConfig, MCU>;
 
     // Fehler auf Platine (PWM Messung): mit PB5 (TIM3-CH2) verbinden
     // Fb2:  PA5 : ADC-IN5
@@ -277,6 +305,17 @@ struct Devices<SW01, Config, MCU> {
     //     static inline constexpr uint8_t channel = 1;
     // };
 
+    struct Exti2Config {
+        using pin = esc2_pin;
+        using debug = Devices::debug;
+        using slaves = Meta::List<fb2_pin, tlm2>;
+        using init = struct {
+            static inline void start() {
+                pin::template dir<Mcu::Input>();
+            }
+        };
+    };
+
     // Uart4: CRSF-FD / AUX
     using auxrx = Mcu::Stm::Pin<gpioa, 1, MCU>; // AF4
     using auxtx = Mcu::Stm::Pin<gpioa, 0, MCU>; // AF4
@@ -285,7 +324,7 @@ struct Devices<SW01, Config, MCU> {
     using relay_aux = RC::Protokoll::Crsf::V4::PacketRelay<4, RelayAuxConfig, MCU>;
 
     struct SPortAuxConfig;
-    using sport_aux = RC::Protokoll::SPort::V2::Master::Serial<4, SPortAuxConfig, MCU>;
+    using sport_aux = RC::Protokoll::SPort::V2::Client::Serial<4, SPortAuxConfig, MCU>;
 
     struct SBusSoftUartConfig;
     // UART# 0: software uart
@@ -366,7 +405,7 @@ struct Devices<SW01, Config, MCU> {
         using clock = Devices::clock;
         using systemTimer = Devices::systemTimer;
         using dmaChComponent = relayAuxDmaChannelComponent;
-        using debug = Devices::debug;
+        using debug = void;
         using tp = void;
     };
     struct BtConfig {
@@ -411,7 +450,7 @@ struct Devices<SW01, Config, MCU> {
         using debug = void;
         using tp = void;
     };
-    struct SPortCallbackConfig;
+    struct SPortAuxCallbackConfig;
     struct SPortAuxConfig {
         using pin = auxtx;
         using clock = Devices::clock;
@@ -419,9 +458,9 @@ struct Devices<SW01, Config, MCU> {
         using dmaChComponent = relayAuxDmaChannelComponent;
         using debug = void;
         using tp = void;
-        using callback = SPortCallback<SPortCallbackConfig>;
+        using callback = SPortSwitchCallback<SPortAuxCallbackConfig>;
     };
-    struct SPortCallbackConfig {
+    struct SPortAuxCallbackConfig {
         using debug = Devices::debug;
         using storage = Config::storage;
         using timer = systemTimer;
@@ -469,7 +508,6 @@ struct Devices<SW01, Config, MCU> {
         using stream4 = bt; // aux
         using stream5 = bt2; // esc2 pins
     };
-
     struct PulseConfig {
         using pin = pulse_pin;
         using clock = Devices::clock;
@@ -514,6 +552,8 @@ struct Devices<SW01, Config, MCU> {
         using messageBuffer = crsfBuffer;
         using compass = Config::compass;
         using bluetooth = Devices::bt;
+        using esc1_slave = Devices::esc1_slave;
+        using esc2_slave = Devices::esc2_slave;
         using tp = void;
     };
 
@@ -548,6 +588,16 @@ struct Devices<SW01, Config, MCU> {
         using dbg = void;
         using storage = Devices::storage;
     };
+    struct Srv1SPortCallbackConfig;
+    struct Srv1SPortConfig {
+        using pin = srv1_pin;
+        using clock = Devices::clock;
+        using systemTimer = Devices::systemTimer;
+        using dmaChComponent = srv1DmaChannelComponent;
+        using debug = void;
+        using tp = void;
+        using callback = SPortTelemetryCallback<Srv1SPortCallbackConfig>;
+    };
     struct WS2Config {
         using pin = srv2_pin;
         using polar = polar2;
@@ -557,6 +607,16 @@ struct Devices<SW01, Config, MCU> {
         using tp = void;
         using dbg = void;
         using storage = Devices::storage;
+    };
+    struct Srv2SPortCallbackConfig;
+    struct Srv2SPortConfig {
+        using pin = srv2_pin;
+        using clock = Devices::clock;
+        using systemTimer = Devices::systemTimer;
+        using dmaChComponent = srv2DmaChannelComponent;
+        using debug = void;
+        using tp = void;
+        using callback = SPortTelemetryCallback<Srv2SPortCallbackConfig>;
     };
     struct SerialConfig1 {
         using clock = Devices::clock;

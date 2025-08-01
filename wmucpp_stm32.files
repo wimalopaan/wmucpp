@@ -53,6 +53,7 @@ boards/rc720E32/devices.h
 boards/rc720E32/devices_2.h
 boards/rc720E32/devices_pult.h
 boards/rc720E32/eeprom.h
+boards/rc720E32/exti_slave.h
 boards/rc720E32/fastmath.h
 boards/rc720E32/fbservo.h
 boards/rc720E32/gfsm.h

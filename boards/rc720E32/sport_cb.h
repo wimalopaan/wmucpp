@@ -24,7 +24,7 @@
 #include "rc/rc_2.h"
 
 template<typename Config>
-struct SPortCallback {
+struct SPortSwitchCallback {
     using debug = Config::debug;
     using timer = Config::timer;
     using tp = Config::tp;

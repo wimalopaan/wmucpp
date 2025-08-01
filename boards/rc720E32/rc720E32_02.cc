@@ -112,6 +112,12 @@ int main() {
     NVIC_EnableIRQ(EXTI0_1_IRQn);
     NVIC_SetPriority(EXTI0_1_IRQn, swUartIntPrio);
 
+    NVIC_EnableIRQ(EXTI2_3_IRQn);
+    NVIC_SetPriority(EXTI2_3_IRQn, swUartIntPrio);
+
+    NVIC_EnableIRQ(EXTI4_15_IRQn);
+    NVIC_SetPriority(EXTI4_15_IRQn, swUartIntPrio);
+
     __enable_irq();
 
     while(true) {
@@ -135,7 +141,16 @@ void EXTI0_1_IRQHandler() {
     using swuart = sbus_aux::uart;
     swuart::Isr::edge();
 }
-
+void EXTI2_3_IRQHandler() {
+    using esc1_slave = devs::esc1_slave;
+    static_assert(esc1_slave::N == 2);
+    esc1_slave::Isr::edge();
+}
+void EXTI4_15_IRQHandler() {
+    using esc2_slave = devs::esc2_slave;
+    static_assert(esc2_slave::N == 7);
+    esc2_slave::Isr::edge();
+}
 void TIM3_TIM4_IRQHandler() {
     using pulse_in = devs::pulse_in;
     static_assert(pulse_in::timerNumber == 4);
@@ -263,6 +278,22 @@ void USART3_4_5_6_LPUART1_IRQHandler(){
         ws2::Isr::onTransferComplete([]{
         });
         ws2::Isr::onIdle([]{
+        });
+    }
+    {
+        using sport1 = devs::srv1_sport;
+        static_assert(sport1::uart::number == 5);
+        sport1::Isr::onTransferComplete([]{
+        });
+        sport1::Isr::onIdle([]{
+        });
+    }
+    {
+        using sport2 = devs::srv2_sport;
+        static_assert(sport2::uart::number == 6);
+        sport2::Isr::onTransferComplete([]{
+        });
+        sport2::Isr::onIdle([]{
         });
     }
     {

@@ -30,6 +30,9 @@ struct ServoOutputs {
     using servo1_ft = devs::srv1_feetech;
     using servo2_ft = devs::srv2_feetech;
 
+    using servo1_sport = devs::srv1_sport;
+    using servo2_sport = devs::srv2_sport;
+
     using srv1_pwm = devs::srv1_pwm;
     using srv2_pwm = devs::srv2_pwm;
 
@@ -97,6 +100,7 @@ struct ServoOutputs {
         using srv_ws_t = std::conditional_t<(N == 0), Servo<servo1_ws>, Servo<servo2_ws>>;
         using srv_ft_t = std::conditional_t<(N == 0), Servo<servo1_ft>, Servo<servo2_ft>>;
         using srv_pwm = std::conditional_t<(N == 0), Servo<srv1_pwm>, Servo<srv2_pwm>>;
+        using srv_sport = std::conditional_t<(N == 0), Servo<servo1_sport>, Servo<servo2_sport>>;
         // using srv_mpx_t = std::conditional_t<(N == 0), Servo<servo1_mpx>, Servo<servo2_mpx>>;
         using srv_mpx_t = Servo<servo1_mpx>;
         static_assert(sizeof(srv_ft_t) == sizeof(srv_ws_t));
@@ -119,13 +123,17 @@ struct ServoOutputs {
             servos[N] = nullptr;
             servos[N] = std::make_unique<srv_pwm>();
             break;
-        case 4: // cppm-mpx
+        case 4: // S.port
+            servos[N] = nullptr;
+            servos[N] = std::make_unique<srv_sport>();
+            break;
+        case 5: // cppm-mpx
             servos[N] = nullptr;
             if constexpr(N == 0) {
                 servos[N] = std::make_unique<srv_mpx_t>();
             }
             break;
-        case 5: // none
+        case 6: // none
             servos[N] = nullptr;
             break;
         default:

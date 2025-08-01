@@ -102,6 +102,44 @@ namespace RC::Protokoll::SPort::V2 {
             };
 
             using uart = Mcu::Stm::V4::Uart<N, UartConfig, MCU>;
+        };
+
+    }
+    namespace Client {
+        template<uint8_t N, typename Config, typename MCU = DefaultMcu>
+        struct Serial {
+            using clock = Config::clock;
+            using systemTimer = Config::systemTimer;
+            using debug = Config::debug;
+            using dmaChComponent = Config::dmaChComponent;
+            using pin = Config::pin;
+            using tp = Config::tp;
+            using callback = Config::callback;
+
+            struct UartConfig {
+                using Clock = Config::clock;
+                using ValueType = uint8_t;
+                using DmaChComponent = dmaChComponent;
+                static inline constexpr auto mode = Mcu::Stm::Uarts::Mode::HalfDuplex;
+                static inline constexpr uint32_t baudrate = RC::Protokoll::SPort::V2::baudrate;
+                static inline constexpr bool invert = true;                              // optional
+                struct Rx {
+                    static inline constexpr size_t size = 16;
+                    static inline constexpr size_t idleMinSize = 2;
+                };
+                struct Tx {
+                    static inline constexpr bool singleBuffer = true;
+                    static inline constexpr size_t size = 16;
+                    static inline constexpr bool enable = true;
+                };
+                struct Isr {
+                    static inline constexpr bool idle = true;
+                    static inline constexpr bool txComplete = true;
+                };
+                using tp = Config::tp;
+            };
+
+            using uart = Mcu::Stm::V4::Uart<N, UartConfig, MCU>;
 
             static inline void init() {
                 using pin = Config::pin;

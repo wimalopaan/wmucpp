@@ -98,8 +98,8 @@ namespace Mcu::Stm {
                 else {
                     static_assert(false);
                 }
-                EXTI->RTSR1 = 0x01 << N;
-                EXTI->IMR1 = 0x01 << N;
+                EXTI->RTSR1 |= (0x01 << N);
+                EXTI->IMR1  |= (0x01 << N);
                 mcuTimer->PSC = 0; // prescaler == 1
                 mcuTimer->ARR = bitPeriod;
                 mcuTimer->DIER |= TIM_DIER_UIE;
@@ -165,7 +165,7 @@ namespace Mcu::Stm {
             struct Isr {
                 static inline void edge() {
                     mState = State::Receiving;
-                    EXTI->RPR1 = 0x01 << N;
+                    EXTI->RPR1 = (0x01 << N);
                     mRateCount = 0;
                     mBitCount = 0;
                     mFrame = 0;
@@ -173,7 +173,7 @@ namespace Mcu::Stm {
                     mcuTimer->ARR = ((bitPeriod / 2) * 6) / 10;
                     mcuTimer->CNT = 0;
                     mcuTimer->CR1 |= TIM_CR1_CEN;
-                    EXTI->IMR1 = 0;
+                    EXTI->IMR1 &= ~(0x01 << N);
                 }
                 static inline void period() {
                     if constexpr(!std::is_same_v<tp, void>) {
@@ -191,7 +191,7 @@ namespace Mcu::Stm {
                     mBitCount = mBitCount + 1;
                     if (mBitCount >= numberOfBits) {
                         mcuTimer->CR1 &= ~TIM_CR1_CEN;
-                        EXTI->IMR1 = 0x01 << N;
+                        EXTI->IMR1 = (0x01 << N);
                         if constexpr(detail::getParity_v<Config> == Uarts::Parity::Even) {
                             mParityError |= (mParity != (mFrame & 0b01));
                         }

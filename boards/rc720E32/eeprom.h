@@ -122,6 +122,8 @@ struct EEProm {
     std::array<eeprom_value_t, 2> out_mode_srv{3, 3};
 #endif
 
+    std::array<eeprom_value_t, 2> esc_slave{0, 0};
+
 #ifdef TEST_EEPROM
     // std::array<eeprom_value_t, 2> out_mode_esc{2, 0}; // Esc32 Ascii
     std::array<eeprom_value_t, 2> out_mode_esc{3, 3}; // VEsc
