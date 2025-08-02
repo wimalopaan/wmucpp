@@ -70,7 +70,7 @@ namespace RC::Protokoll::SBus2 {
                     std::copy(std::begin(src::values()), std::end(src::values()), std::begin(output));
                 }
             }
-            static inline void set(const uint8_t channel, const uint16_t value) {
+            static inline void setChannel(const uint8_t channel, const uint16_t value) {
                 output[channel] = value;
             }
             static inline void init() {

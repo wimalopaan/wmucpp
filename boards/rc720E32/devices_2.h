@@ -648,7 +648,7 @@ struct Devices<SW01, Config, MCU> {
         using debug = void;
         using dmaChComponent = esc1DmaChannelComponent;
         using systemTimer = Devices::systemTimer;
-        using adapter = crsf_in::input;
+        using adapter = void;
         using pin = esc1_pin;
         using tp = void;
     };
@@ -665,7 +665,7 @@ struct Devices<SW01, Config, MCU> {
         using debug = void;
         using dmaChComponent = esc2DmaChannelComponent;
         using systemTimer = Devices::systemTimer;
-        using adapter = crsf_in::input;
+        using adapter = void;
         using pin = esc2_pin_1;
         using tp = void;
     };

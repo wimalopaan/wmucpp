@@ -175,7 +175,7 @@ namespace External::EdgeTx {
             const uint64_t mask = (uint64_t{1} << sw);
             mSwitches = (mSwitches & ~mask) | (on ? mask : 0);
         }
-        static inline void set(const uint8_t i, const uint16_t v) {
+        static inline void setChannel(const uint8_t i, const uint16_t v) {
             mValues[i] = v;
         }
 

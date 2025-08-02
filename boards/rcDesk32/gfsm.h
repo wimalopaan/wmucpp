@@ -35,7 +35,7 @@ using namespace std::literals::chrono_literals;
 template<typename... PP>
 struct Distributor {
     static inline void set(const uint8_t i, const uint16_t v) {
-        (PP::set(i, v), ...);
+        (PP::setChannel(i, v), ...);
     }
 };
 
