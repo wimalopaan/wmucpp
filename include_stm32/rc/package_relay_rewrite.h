@@ -27,7 +27,7 @@ using namespace std::literals::chrono_literals;
 namespace RC::Protokoll::Crsf {
     namespace V4 {
         template<uint8_t N, typename Config, typename MCU = DefaultMcu>
-        struct PacketRelay {
+        struct PacketRelayRewrite {
             // N: Uart
             // src: update(): read channel from src -> Uart
             // dest: onIdle: uart-packet -> dest (buffer)

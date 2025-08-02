@@ -49,13 +49,12 @@
 #include "rc/sbus2_2.h"
 #include "rc/spacemouse.h"
 #include "rc/hwext.h"
+#include "rc/package_relay_rewrite.h"
 
 #include "crsf_cb.h"
 #include "switches.h"
 #include "eeprom.h"
 #include "pulse_input.h"
-
-#include "package_relay.h"
 #include "pulse_switch_cb.h"
 
 struct SW01;
@@ -230,7 +229,7 @@ struct Devices<Desk02, Config, MCU> {
 
     // LPUart2: Bus / Relay
     struct RelayBusFullDuplexConfig;
-    using relay_bus = RC::Protokoll::Crsf::V4::PacketRelay<102, RelayBusFullDuplexConfig, MCU>;
+    using relay_bus = RC::Protokoll::Crsf::V4::PacketRelayRewrite<102, RelayBusFullDuplexConfig, MCU>;
 
 #ifdef SERIAL_DEBUG
     // LPUart1

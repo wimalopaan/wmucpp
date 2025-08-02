@@ -28,6 +28,7 @@ Prio 0
 ------
 * add s.port master
 * telemetry transfor from s.port-masters to s.port-aux and to crsf-telemetry
+* crsf relay for ELRS-relay (from rcDesk32)
 * EByte E32-170T30D relay mode
 * SumDv3: option to swap ch1-16 and ch17-32
 * add mcp23017 / TLC59108(F) support for switch output

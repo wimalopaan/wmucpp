@@ -62,6 +62,8 @@ struct ChannelCallback {
 
             for(uint8_t i = 0; i < 16; ++i) {
                 relays::setChannel(i, pa::value(i));
+                escs::setChannel(0, i, pa::value(i));
+                escs::setChannel(1, i, pa::value(i));
             }
 
             auxes::update();

@@ -15,7 +15,6 @@
 #include "units.h"
 #include "tick.h"
 #include "usart_2.h"
-
 #include "rc_2.h"
 
 namespace RC::Protokoll::SPort::V2 {
@@ -84,7 +83,7 @@ namespace RC::Protokoll::SPort::V2 {
                 using DmaChComponent = dmaChComponent;
                 static inline constexpr auto mode = Mcu::Stm::Uarts::Mode::HalfDuplex;
                 static inline constexpr uint32_t baudrate = RC::Protokoll::SPort::V2::baudrate;
-                static inline constexpr bool invert = true;                              // optional
+                static inline constexpr bool invert = true;
                 struct Rx {
                     static inline constexpr size_t size = 16;
                     static inline constexpr size_t idleMinSize = 2;
@@ -100,10 +99,247 @@ namespace RC::Protokoll::SPort::V2 {
                 };
                 using tp = Config::tp;
             };
-
             using uart = Mcu::Stm::V4::Uart<N, UartConfig, MCU>;
-        };
 
+            static inline void init() {
+                using pin = Config::pin;
+                static constexpr uint8_t af = Mcu::Stm::AlternateFunctions::mapper_v<pin, uart, Mcu::Stm::AlternateFunctions::TX>;
+                IO::outl<debug>("# SPort Master init ", N);
+                Mcu::Arm::Atomic::access([]{
+                    mState = State::Init;
+                    mEvent = Event::None;
+                    mStateTick.reset();
+                    mActive = true;
+                    for(auto& r: mRequestCounters) {
+                        r = 0;
+                    }
+                    mLastOnlineIndex = -1;
+                    mLastOfflineIndex = -1;
+                    uart::init();
+                });
+                pin::afunction(af);
+                pin::template pulldown<true>();
+            }
+            static inline void reset() {
+                IO::outl<debug>("# SPort reset");
+                Mcu::Arm::Atomic::access([]{
+                    uart::reset();
+                    mActive = false;
+                });
+            }
+
+            enum class Event : uint8_t {None, ReadReply, StartReceive};
+            enum class State : uint8_t {Init, ReceiveOnline, ReceiveOffline, RequestOnline, RequestOffline, WaitOnline, WaitOffline};
+
+            static inline constexpr External::Tick<systemTimer> initTicks{100ms};
+            static inline constexpr External::Tick<systemTimer> slotTicks{12ms};
+            static inline constexpr External::Tick<systemTimer> waitTicks{4ms};
+
+            static inline void event(const Event e) {
+                mEvent = e;
+            }
+            static inline void periodic() {
+                const State oldState = mState;
+                switch(mState) {
+                case State::Init:
+                    break;
+                case State::RequestOnline:
+                    mEvent.on(Event::StartReceive, []{
+                        mState = State::ReceiveOnline;
+                    });
+                    break;
+                case State::RequestOffline:
+                    mEvent.on(Event::StartReceive, []{
+                        mState = State::ReceiveOffline;
+                    });
+                    break;
+                case State::ReceiveOnline:
+                    mEvent.on(Event::ReadReply, []{
+                        if constexpr(!std::is_same_v<tp, void>) {
+                            tp::set();
+                            tp::reset();
+                        }
+                        mRequestCounters[mLastOnlineIndex] = 3;
+                        readReply();
+                        mState = State::WaitOnline;
+                    });
+                    break;
+                case State::ReceiveOffline:
+                    mEvent.on(Event::ReadReply, []{
+                        mRequestCounters[mLastOfflineIndex] = 3;
+                        mLastOnlineIndex = mLastOfflineIndex;
+                        mLastOfflineIndex = -1;
+                        readReply();
+                        mState = State::WaitOnline;
+                    });
+                    break;
+                case State::WaitOffline:
+                    break;
+                case State::WaitOnline:
+                    break;
+                }
+                if (oldState != mState) {
+                    mStateTick.reset();
+                    switch(mState) {
+                    case State::Init:
+                        break;
+                    case State::RequestOnline:
+                        break;
+                    case State::RequestOffline:
+                        break;
+                    case State::ReceiveOffline:
+                        break;
+                    case State::ReceiveOnline:
+                        break;
+                    case State::WaitOffline:
+                        break;
+                    case State::WaitOnline:
+                        break;
+                    }
+                }
+            }
+            static inline void ratePeriodic() {
+                const State oldState = mState;
+                ++mStateTick;
+                switch(mState) {
+                case State::Init:
+                    mStateTick.on(initTicks, []{
+                        mState = State::RequestOffline;
+                    });
+                    break;
+                case State::RequestOnline:
+                    mStateTick.on(waitTicks, []{
+                        mState = State::RequestOffline;
+                    });
+                    break;
+                case State::RequestOffline:
+                    mStateTick.on(waitTicks, []{
+                        mState = State::RequestOnline;
+                    });
+                    break;
+                case State::ReceiveOnline:
+                    mStateTick.on(slotTicks, []{
+                        if (mRequestCounters[mLastOnlineIndex] > 0) {
+                            --mRequestCounters[mLastOnlineIndex];
+                            mState = State::RequestOffline;
+                        }
+                        else {
+                            mLastOfflineIndex = mLastOnlineIndex;
+                            mLastOnlineIndex = -1;
+                            mState = State::RequestOnline;
+                        }
+                    });
+                    break;
+                case State::ReceiveOffline:
+                    mStateTick.on(slotTicks, []{
+                        mState = State::RequestOnline;
+                    });
+                    break;
+                case State::WaitOnline:
+                    mStateTick.on(waitTicks, []{
+                        mState = State::RequestOffline;
+                    });
+                    break;
+                case State::WaitOffline:
+                    mStateTick.on(waitTicks, []{
+                        mState = State::RequestOnline;
+                    });
+                    break;
+                }
+                if (oldState != mState) {
+                    mStateTick.reset();
+                    switch(mState) {
+                    case State::Init:
+                        break;
+                    case State::RequestOnline:
+                        uart::fillSendBuffer([&](auto& data){
+                            data[0] = 0x7e;
+                            for(uint8_t i = 0; i < mRequestCounters.size(); ++i) {
+                                const uint8_t k = (i + mLastOnlineIndex + 1) % mRequestCounters.size();
+                                if ((k != mLastOfflineIndex) && (mRequestCounters[k] > 0)) {
+                                     data[1] = (uint8_t)RC::Protokoll::SPort::V2::sensor_ids[k];
+                                     --mRequestCounters[k];
+                                     mLastOnlineIndex = k;
+                                     return 2;
+                                }
+                            }
+                            return 0;
+                        });
+                        break;
+                    case State::RequestOffline:
+                        uart::fillSendBuffer([&](auto& data){
+                            data[0] = 0x7e;
+                            for(uint8_t i = 0; i < mRequestCounters.size(); ++i) {
+                                const uint8_t k = (i + mLastOfflineIndex + 1) % mRequestCounters.size();
+                                if ((k != mLastOnlineIndex) && (mRequestCounters[k] == 0)) {
+                                     data[1] = (uint8_t)RC::Protokoll::SPort::V2::sensor_ids[k];
+                                     mLastOfflineIndex = k;
+                                     return 2;
+                                }
+                            }
+                            return 0;
+                        });
+                        break;                if constexpr(!std::is_same_v<tp, void>) {
+                            tp::set();
+                            tp::reset();
+                        }
+
+                    case State::ReceiveOffline:
+                        break;
+                    case State::ReceiveOnline:
+                        break;
+                    case State::WaitOffline:
+                        break;
+                    case State::WaitOnline:
+                        break;
+                    }
+                }
+            }
+            struct Isr {
+                static inline void onIdle(const auto f) {
+                    if (mActive) {
+                        const auto f2 = [&](const volatile uint8_t* const data, const uint16_t size){
+                            f();
+                            if (validityCheck(data, size)) {
+                                event(Event::ReadReply);
+                                return true;
+                            }
+                            return false;
+                        };
+                        uart::Isr::onIdle(f2);
+                    }
+                }
+                static inline void onTransferComplete(const auto f) {
+                    if (mActive) {
+                        const auto fEnable = [&]{
+                            f();
+                            uart::template rxEnable<true>();
+                            event(Event::StartReceive);
+                        };
+                        uart::Isr::onTransferComplete(fEnable);
+                    }
+                }
+            };
+        private:
+            static inline void readReply() {
+                uart::readBuffer([&](const auto& /*data*/){});
+            }
+            static inline bool validityCheck(const volatile uint8_t* const data, const uint16_t size) {
+                if constexpr(!std::is_same_v<tp, void>) {
+                    tp::set();
+                    tp::reset();
+                }
+                return true;
+                // return (size >= 2) && (data[0] == 0x10);
+            }
+            static inline bool mActive = false;
+            static inline etl::Event<Event> mEvent;
+            static inline State mState{State::Init};
+            static inline External::Tick<systemTimer> mStateTick;
+            static inline int8_t mLastOnlineIndex = -1;
+            static inline int8_t mLastOfflineIndex = -1;
+            static inline std::array<uint8_t, RC::Protokoll::SPort::V2::sensor_ids.size()> mRequestCounters{};
+        };
     }
     namespace Client {
         template<uint8_t N, typename Config, typename MCU = DefaultMcu>
@@ -144,7 +380,7 @@ namespace RC::Protokoll::SPort::V2 {
             static inline void init() {
                 using pin = Config::pin;
                 static constexpr uint8_t af = Mcu::Stm::AlternateFunctions::mapper_v<pin, uart, Mcu::Stm::AlternateFunctions::TX>;
-                IO::outl<debug>("# SPort init ", N);
+                IO::outl<debug>("# SPort Client init ", N);
                 Mcu::Arm::Atomic::access([]{
                     mState = State::Init;
                     mEvent = Event::None;
@@ -321,7 +557,6 @@ namespace RC::Protokoll::SPort::V2 {
                         stuffResponse((mActualValue >> 0) & 0xff, data, i, csum);
                         stuffResponse((mActualValue >> 8) & 0xff, data, i, csum);
                         stuffResponse((mActualValue >> 16) & 0xff, data, i, csum);
-                        stuffResponse((mActualValue >> 24) & 0xff, data, i, csum);
                         stuffResponse((mActualValue >> 24) & 0xff, data, i, csum);
                         data[i++] = csum.value();
                         return i;

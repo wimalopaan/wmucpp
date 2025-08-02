@@ -51,6 +51,10 @@
 #include "rc/sumdv3_2.h"
 #include "rc/sport_2.h"
 #include "rc/gps_2.h"
+#include "rc/package_relay_2.h"
+#include "rc/package_relay_rewrite.h"
+#include "rc/multiplex_pulses.h"
+#include "exti_slave.h"
 #include "pwm.h"
 #include "adc.h"
 #include "blinker.h"
@@ -61,20 +65,17 @@
 #include "fbservo.h"
 #include "polar.h"
 #include "channels.h"
-#include "package_relay_2.h"
 #include "telemetry_2.h"
 #include "telemetry_bt.h"
 #include "iservo.h"
 #include "pulse_input.h"
 #include "inputmapper.h"
 #include "crsfchannelcollector.h"
-#include "multiplex_pulses.h"
 #include "uuid.h"
 #include "qmc5883l.h"
 #include "mpu6050.h"
 #include "bluetooth/jdy10.h"
 
-#include "exti_slave.h"
 
 template<typename Config>
 struct SPortTelemetryCallback {
@@ -222,7 +223,7 @@ struct Devices<SW01, Config, MCU> {
     using srv1_waveshare = External::WaveShare::V2::Servo<5, WS1Config, MCU>;
 
     struct Srv1SPortConfig;
-    using srv1_sport = RC::Protokoll::SPort::V2::Client::Serial<5, Srv1SPortConfig, MCU>;
+    using srv1_sport = RC::Protokoll::SPort::V2::Master::Serial<5, Srv1SPortConfig, MCU>;
 
     // Fb1:  PA6 : TIM3-CH1 (AF1), TIM16-CH1(AF5), ADC-IN6
     using fb1_pin = Mcu::Stm::Pin<gpioa, 6, MCU>;
@@ -286,7 +287,7 @@ struct Devices<SW01, Config, MCU> {
     using srv2_waveshare = External::WaveShare::V2::Servo<6, WS2Config, MCU>;
 
     struct Srv2SPortConfig;
-    using srv2_sport = RC::Protokoll::SPort::V2::Client::Serial<6, Srv2SPortConfig, MCU>;
+    using srv2_sport = RC::Protokoll::SPort::V2::Master::Serial<6, Srv2SPortConfig, MCU>;
 
     // Fehler auf Platine (PWM Messung): mit PB5 (TIM3-CH2) verbinden
     // Fb2:  PA5 : ADC-IN5
@@ -594,8 +595,8 @@ struct Devices<SW01, Config, MCU> {
         using clock = Devices::clock;
         using systemTimer = Devices::systemTimer;
         using dmaChComponent = srv1DmaChannelComponent;
-        using debug = void;
-        using tp = void;
+        using debug = Devices::debug;
+        using tp = tp3;
         using callback = SPortTelemetryCallback<Srv1SPortCallbackConfig>;
     };
     struct WS2Config {

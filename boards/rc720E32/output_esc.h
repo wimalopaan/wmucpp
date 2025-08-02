@@ -130,6 +130,11 @@ struct EscOutputs {
             escs[n]->set(v);
         }
     }
+    static inline void setChannel(const uint8_t n, const uint8_t ch, const uint16_t v) {
+        if ((n < escs.size()) && escs[n]) {
+            escs[n]->setChannel(ch, v);
+        }
+    }
     static inline void periodic() {
         for(const auto& e : escs) {
             if (e) {

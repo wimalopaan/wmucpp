@@ -199,7 +199,7 @@ boards/rcDesk32/eeprom.h
 boards/rcDesk32/gfsm.h
 boards/rcDesk32/gfsm_test.h
 boards/rcDesk32/link_g0b1.ld
-boards/rcDesk32/package_relay.h
+boards/rcDesk32/package_relay_rewrite.h
 boards/rcDesk32/port_aux1.h
 boards/rcDesk32/port_aux2.h
 boards/rcDesk32/port_bus.h
@@ -640,6 +640,7 @@ include_stm32/rc/gps.h
 include_stm32/rc/gps_2.h
 include_stm32/rc/ibus_2.h
 include_stm32/rc/messagebuffer_2.h
+include_stm32/rc/package_relay_2.h
 include_stm32/rc/rc.h
 include_stm32/rc/rc_2.h
 include_stm32/rc/roboremo.h

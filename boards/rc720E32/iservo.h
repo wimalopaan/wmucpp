@@ -43,6 +43,7 @@ struct IEsc : IDevice {
     virtual uint16_t voltage() = 0;
     virtual uint16_t temp() = 0;
     virtual void set(uint16_t) = 0;
+    virtual void setChannel(const uint8_t, const uint16_t) = 0;
     virtual void update() = 0;
     virtual ~IEsc(){}
 };
@@ -284,6 +285,12 @@ struct Esc: IEsc {
             return E::set(s);
         }
     }
+    virtual void setChannel(const uint8_t ch, const uint16_t v) {
+        if constexpr(requires(){E::setChannel(ch, v);}) {
+            E::setChannel(ch, v);
+        }
+    }
+
     virtual void update() {
         E::update();
     }

@@ -497,7 +497,9 @@ namespace Mcu::Stm {
             static inline auto fillSendBuffer(const auto f)
                     requires((Config::mode != Uarts::Mode::RxOnly) && (useSingleTxBuffer)) {
                 const uint16_t n = f(mWriteBuffer1);
-                startSend(n);
+                if (n > 0) {
+                    startSend(n);
+                }
             }
             static inline auto outputBuffer() requires(Config::mode != Uarts::Mode::RxOnly) {
                 return mActiveWriteBuffer;
