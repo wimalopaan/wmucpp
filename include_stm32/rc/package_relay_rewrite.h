@@ -277,7 +277,7 @@ namespace RC::Protokoll::Crsf {
             static inline bool isExtendedPacket(const volatile uint8_t* const data, const uint16_t length) {
                 return (length >= 6) && (data[RC::Protokoll::Crsf::V4::PacketIndex::type] >= (uint8_t)RC::Protokoll::Crsf::V4::Type::Ping);
             }
-            static inline void forwardPacket(/*const*/ volatile uint8_t* const data, const uint16_t length) {
+            static inline void forwardPacket(volatile uint8_t* const data, const uint16_t length) {
                 if (mActive) {
                     IO::outl<debug>("# fw to TX");
                     if (isExtendedPacket(data, length)) {
@@ -311,10 +311,13 @@ namespace RC::Protokoll::Crsf {
                 return false;
             }
             static inline void update() { // channels to dest
-                messageBuffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::Channels, [](auto& ta){
-                    RC::Protokoll::Crsf::V4::pack(src::values(), ta);
-                });
+                if (mSource) {
+                    messageBuffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::Channels, [](auto& ta){
+                        RC::Protokoll::Crsf::V4::pack(src::values(), ta);
+                    });
+                }
             }
+            static inline volatile bool mSource = false;
             static inline volatile bool mActive = false;
             static inline volatile etl::Event<RxEvent> mRxEvent;
             static inline volatile etl::Event<TxEvent> mTxEvent;

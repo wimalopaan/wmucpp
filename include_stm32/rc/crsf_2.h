@@ -396,7 +396,7 @@ namespace RC {
                         }
                         return false;
                     }
-                    static inline void analyze(auto data, const uint8_t paylength) {
+                    static inline void analyze(volatile uint8_t* const data, const uint8_t paylength) {
                         const std::byte type = (std::byte)data[2];
                         switch(type){
                         case RC::Protokoll::Crsf::V4::Type::Link:
@@ -411,6 +411,9 @@ namespace RC {
                             if constexpr(requires(){callback::gotChannels();}){
                                 callback::gotChannels();
                             }
+                            if constexpr(requires(){callback::forwardPacket(data, 0);}) {
+                                callback::forwardPacket(data, paylength + 2);
+                            }
                             break;
                         case RC::Protokoll::Crsf::V4::Type::Ping:
                             if constexpr(requires(){callback::disableTelemetry();}) {
@@ -421,9 +424,9 @@ namespace RC {
                                 output::resetSlot();
                                 output::setDestination((std::byte)src);
                                 output::event(output::Event::SendDeviceInfo);
-                                // if constexpr(requires(){callback::forwardPacket(data, 0);}) {
+                                if constexpr(requires(){callback::forwardPacket(data, 0);}) {
                                     callback::forwardPacket(data, paylength + 2);
-                                // }
+                                }
                             }
                             break;
                         case RC::Protokoll::Crsf::V4::Type::Info:
