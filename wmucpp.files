@@ -693,6 +693,7 @@ boards/rcmultiswitch/multi8man.cc
 boards/rcmultiswitch/multi8mk4.cc
 boards/rcmultiswitch/sbus01.cc
 boards/rcmultiswitch/sbus_cb.h
+boards/rcmultiswitch/sport_cb.h
 boards/rcmultiswitch/switch.h
 boards/rcmultiswitch/swout.h
 boards/rcmultiswitch/test00.cc
@@ -2354,8 +2355,13 @@ include_stm32/rc/crsf_2_output.h
 include_stm32/rc/escape.h
 include_stm32/rc/escape_2.h
 include_stm32/rc/gps.h
+include_stm32/rc/gps_2.h
+include_stm32/rc/hwext.h
 include_stm32/rc/ibus_2.h
 include_stm32/rc/messagebuffer_2.h
+include_stm32/rc/multiplex_pulses.h
+include_stm32/rc/package_relay_2.h
+include_stm32/rc/package_relay_rewrite.h
 include_stm32/rc/rc.h
 include_stm32/rc/rc_2.h
 include_stm32/rc/roboremo.h
@@ -2364,7 +2370,9 @@ include_stm32/rc/sbus22.h
 include_stm32/rc/sbus2_2.h
 include_stm32/rc/sbus2_types.h
 include_stm32/rc/sbus_2.h
+include_stm32/rc/spacemouse.h
 include_stm32/rc/sport.h
+include_stm32/rc/sport_2.h
 include_stm32/rc/sumdv3_2.h
 include_stm32/rc/vesc.h
 include_stm32/rc/vesc_2.h

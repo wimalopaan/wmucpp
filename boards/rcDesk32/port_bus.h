@@ -60,7 +60,7 @@ struct Busses {
             mBus->ratePeriodic();
         }
     }
-    static inline constexpr void forwardPacket(const auto data, const uint16_t length) {
+    static inline constexpr void forwardPacket(volatile uint8_t* const data, const uint16_t length) {
         if (mBus) {
             mBus->forwardPacket(data, length);
         }

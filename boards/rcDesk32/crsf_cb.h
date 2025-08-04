@@ -109,7 +109,7 @@ struct CrsfCallback {
     }
     static inline void command(const auto& /*data*/, const uint8_t /*payload*/) {
     }
-    static inline constexpr void forwardPacket(auto& data, const uint16_t length) {
+    static inline constexpr void forwardPacket(volatile uint8_t* const data, const uint16_t length) {
         busses::forwardPacket(data, length);
     }
     static inline void callbacks(const bool eepromMode = false) {

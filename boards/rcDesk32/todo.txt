@@ -1,5 +1,7 @@
 ToDo
 ============
+* CRSF relay: select source (RX forward, analog, bt)
+* centralize all inputs as source for outputs (hwext, sbus, relay)
 * wait for bind of receiver max. 60s (link-stats package)
   send test packages,
   if these packages are received, send receiver enter bind more command
