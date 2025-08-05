@@ -392,7 +392,6 @@ namespace IBus2 {
                         mValid = false;
                     });
                 }
-                
                 inline static void resetStats() {
                     mPackagesCounter = 0;
                 }
@@ -418,7 +417,7 @@ namespace IBus2 {
         }
         
         
-        template<auto N = 0, typename Dbg = void>
+        template<auto N = 0, typename Dbg = void, typename Callback = void>
         struct ProtocollAdapter {
             // AFHDS2A: 14 channels
             // there should be an update to 16 / 18 channels
@@ -499,6 +498,9 @@ namespace IBus2 {
                         ++mPackagesCounter;
                         if constexpr (!std::is_same_v<Dbg, void>) {
                             Dbg::toggle();
+                        }
+                        if constexpr(!std::is_same_v<Callback, void>) {
+                            Callback::decode(*active);
                         }
                         using std::swap;
                         swap(active, inactive);

@@ -21,11 +21,12 @@
 // to modify the output-to-pin mapping, see below
 
 // use one(!) of the following options exclusively
-// ATTENTION: in case of CRSF / SBUS input is via PA1 (RX UART0)
+// ATTENTION: in case of CRSF / SBUS / IBUS input is via PA1 (RX UART0)
 // #define INPUT_CRSF // input via CRSF (ELRS only)
+#define INPUT_IBUS
 // #define INPUT_SBUS // input via SBUS (optional for ELRS, mandatory for other rc-link)
 // ATTENTION: in case of S.Port input is via PA0 (TX UART0 half-duplex)
- #define INPUT_SPORT // input via SPort (Phy-ID / App-ID see below)
+// #define INPUT_SPORT // input via SPort (Phy-ID / App-ID see below)
 
 #define DEFAULT_ADDRESS 0 // values: 0 ... 3 (must match value in widget)
 
@@ -40,6 +41,7 @@
                      // on avr128da28: uses USART1
 
 #define CRSF_BAUDRATE 420'000
+#define IBUS_BAUDRATE 115'200
 #define SBUS_BAUDRATE 100'000
 #define SPORT_BAUDRATE 57'600
 
@@ -66,6 +68,7 @@
 #include <external/solutions/tick.h>
 #include <external/sbus/sbus.h>
 #include <external/sbus/sport.h>
+#include <external/ibus/ibus2.h>
 
 #include <etl/output.h>
 #include <etl/meta.h>
@@ -74,6 +77,7 @@
 #include "crsf_cb.h"
 #include "sbus_cb.h"
 #include "sport_cb.h"
+#include "ibus_cb.h"
 #include "leds.h"
 
 using namespace AVR;
@@ -184,7 +188,63 @@ namespace Crsf {
         inline static External::Tick<systemTimer> mStateTicks;
     };
 }
+namespace Ibus {
+    template<typename Config>
+    struct Devices {
+        using leds = Leds<ledList>;
 
+        struct CallbackConfig;
+        using cb = IBusCommandCallback<CallbackConfig>;
+        using ibus_pa = IBus2::Servo::ProtocollAdapter<0, void, cb>;
+        using ibus = AVR::Usart<usart0Position, ibus_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<0>>;
+
+#ifdef DEBUG_OUTPUT
+#if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
+        using terminalDevice = AVR::Usart<usart1Position, External::Hal::NullProtocollAdapter<>, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<1>, AVR::SendQueueLength<256>>;
+#else
+        using terminalDevice = ibus;
+#endif
+#else
+        using terminalDevice = void;
+#endif
+        using terminal = etl::basic_ostream<terminalDevice>;
+
+        struct CallbackConfig {
+            using debug = terminal;
+            using leds = Devices::leds;
+        };
+
+        static inline void init() {
+            portmux::init();
+            leds::init();
+            tp::dir<Output>();
+            ibus::template init<BaudRate<IBUS_BAUDRATE>>();
+#if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
+#ifdef DEBUG_OUTPUT
+            terminalDevice::template init<BaudRate<DEBUG_BAUDRATE>>();
+#endif
+#endif
+        }
+        static inline void periodic() {
+            // tp::toggle();
+            ibus::periodic();
+#if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
+#ifdef DEBUG_OUTPUT
+            terminalDevice::periodic();
+#endif
+#endif
+        }
+        static inline void ratePeriodic() {
+            ibus_pa::ratePeriodic();
+            (++mStateTicks).on(debugTicks, [] static {
+                etl::outl<terminal>("ibus p: "_pgm, ibus_pa::packages());
+            });
+        }
+        private:
+        static constexpr External::Tick<systemTimer> debugTicks{500_ms};
+        inline static External::Tick<systemTimer> mStateTicks;
+    };
+}
 namespace Sbus {
     template<typename Config>
     struct Devices {
@@ -320,6 +380,9 @@ namespace SPort {
 struct DevsConfig {};
 #ifdef INPUT_CRSF
 using devices = Crsf::Devices<DevsConfig>;
+#endif
+#ifdef INPUT_IBUS
+using devices = Ibus::Devices<DevsConfig>;
 #endif
 #ifdef INPUT_SBUS
 using devices = Sbus::Devices<DevsConfig>;
