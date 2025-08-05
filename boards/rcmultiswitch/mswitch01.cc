@@ -50,7 +50,7 @@
 // So, be sure to delete the sensor prior to use the lvglMultiSwitchWidget!
 // #define SPORT_NORESPONSE
 
-#define SPORT_PHY External::SPort2::SensorId::ID1
+#define SPORT_PHY External::SPort2::SensorId::ID1 // be aware, that ID1 equals 0 in the widget setup, ID2 equals 1, and so forth ...
 #define SPORT_APP 0x51 // dec: 81
 
 #include <mcu/avr.h>
