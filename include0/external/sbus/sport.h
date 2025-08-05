@@ -46,37 +46,30 @@ namespace External {
             DIY2    = 0x5200, // 255: DIY (State Info)
         };
 
-        template<SensorId ID, template<typename> typename Uart, typename Timer, typename ProviderList = Meta::List<>>
+        template<SensorId ID, template<typename> typename Uart, typename Timer, typename ProviderList = Meta::List<>, typename Callback = void, typename tp = NoPin>
         struct Sensor;
 
-        template<SensorId ID, template<typename> typename Uart, typename Timer, typename... Providers>
-        struct Sensor<ID, Uart, Timer, Meta::List<Providers...>> {
-            //            inline static constexpr External::Tick<Timer> mResponseDelay{10};
-            //            inline static constexpr External::Tick<Timer> mResponseDelay{2_ms};
-            //                        std::integral_constant<uint16_t, mResponseDelay.value>::_;
-            //            static_assert(mResponseDelay.value > 0);
-            
+        template<SensorId ID, template<typename> typename Uart, typename Timer, typename... Providers, typename Callback, typename tp>
+        struct Sensor<ID, Uart, Timer, Meta::List<Providers...>, Callback, tp> {
             using providerList = Meta::List<Providers...>;
             inline static constexpr auto numberOfProviders = sizeof...(Providers);
-            //            std::integral_constant<uint8_t, numberOfProviders>::_;
-            
-            
             static_assert(numberOfProviders > 0, "need at least one provider");
             
             using index_type = etl::uint_ranged_circular<uint8_t, 0, numberOfProviders - 1>;
-            
-            enum class State : uint8_t {Init, Request, ReplyWait, Reply, WaitReplyComplete};
-            
-            inline static void maxProvider(uint8_t) {
-                
-            }
-            
+
+            enum class State : uint8_t {Init, Request, ReplyWait, IdleWait,
+                                        Command,
+                                        Reply, WaitReplyComplete};
+
+            struct ProtocollAdapter;
+            using uart = Uart<ProtocollAdapter>;
+            static_assert(uart::sendQLength >= 16);
+
             struct ProtocollAdapter {
-                //                using requests_t = std::conditional_t<uart::useInterrupts, volatile uint8_t, uint8_t>;
-                //                using requests_t = volatile uint8_t;
+                inline static constexpr External::Tick<Timer> idleTicks{1_ms};
                 using requests_t = uint8_t;
-                
                 static inline bool process(const std::byte b) {
+                    static CheckSum cs;
                     switch(mState) {
                     case State::Init: 
                         if (b == 0x7e_B) {
@@ -85,79 +78,123 @@ namespace External {
                         break;
                     case State::Request: 
                         if (b == mPhysId) {
-                            mRequests = mRequests + 1;
-                            mState = State::ReplyWait;
+                            ++mRequests;
+                            mState = State::IdleWait;
+                            mStateTick.reset();
                         }
                         else {
                             mState = State::Init;
                         }
                         break;
+                    case State::IdleWait:
+                        if ((b == 0x31_B) || (b == 0x10_B)) {
+                            cs = CheckSum{};
+                            cs += b;
+                            mCount = 0;
+                            mData[mCount++] = b;
+                            mState = State::Command;
+                        }
+                        break;
                     case State::ReplyWait:
+                        break;
+                    case State::Command:
+                        if (mCount == mData.size()) {
+                            if (cs == b) {
+                                ++mCommands;
+                                if constexpr(!std::is_same_v<Callback, void>) {
+                                    Callback::decode(mData);
+                                }
+                            }
+                            else {
+                                tp::toggle();
+                                ++mErrors;
+                            }
+                            mState = State::Init;
+                        }
+                        else {
+                            cs += b;
+                            mData[mCount++] = b;
+                        }
+                        break;
                     case State::Reply:
+                        break;
                     case State::WaitReplyComplete:
+                        break;
                     default:
                         break;
                     }
                     return true;
                 }
+                inline static void ratePeriodic() {
+                    ++mStateTick;
+                    switch(mState) {
+                    case State::IdleWait:
+                        mStateTick.on(idleTicks, []{
+#ifdef SPORT_NORESPONSE
+                            mState = State::Init;
+#else
+                            mState = State::ReplyWait;
+#endif
+                        });
+                        break;
+                    case State::Init:
+                    case State::Command:
+                    case State::Reply:
+                    case State::ReplyWait:
+                    case State::Request:
+                    case State::WaitReplyComplete:
+                    default:
+                        break;
+                    }
+                }
                 inline static void id(const SensorId v) {
                     mPhysId = std::byte(v);
                 }
-                inline static void ratePeriodic() {}
-                
                 inline static uint8_t requests() {
                     return mRequests;
                 }
+                inline static uint8_t commands() {
+                    return mCommands;
+                }
+                inline static uint8_t errors() {
+                    return mErrors;
+                }
             private:
-                static inline std::byte mPhysId{ID};
+                static inline std::array<std::byte, 7> mData{};
+                static inline uint8_t mCount = 0;
+                static inline External::Tick<Timer> mStateTick;
+                static inline std::byte mPhysId{std::byte(ID)};
                 static inline requests_t mRequests{};
+                static inline requests_t mCommands{};
+                static inline requests_t mErrors{};
             };
-            
-            using uart = Uart<ProtocollAdapter>;   
-            static_assert(uart::sendQLength >= 16);
-            
-            inline static constexpr bool useInterrupts = uart::useInterrupts;
-            using tick_type = std::conditional_t<useInterrupts, volatile External::Tick<Timer>, External::Tick<Timer>>;
-            using state_type = std::conditional_t<useInterrupts, volatile State, State>;
-            
             static inline void init() {
-                if constexpr(std::is_same_v<typename uart::component_type, void>) {
-                    uart::template init<AVR::HalfDuplex>();
-                }
-                else {
-                    uart::template init<AVR::BaudRate<57600>, AVR::FullDuplex, false>(); // no pullup
-                    uart::rxInvert(true); // SPort Protocoll
-                }
+                uart::template initHDInv<AVR::BaudRate<57600>>();
             }
-            template<bool B = true>
-            static inline void enable() {
-                uart::template rxEnable<B>();
-            }
-            
             static inline void ratePeriodic() {
+                ProtocollAdapter::ratePeriodic();
             }
-            
             static inline void periodic() {
-                if constexpr(!std::is_same_v<typename uart::component_type, void>) {
-                    uart::periodic();
-                }            
+                uart::periodic();
                 switch(mState) {
                 case State::ReplyWait:
                     mState = State::Reply;    
-                    uart::template rxEnable<false>();
-                    break;
+                    uart::enableTransmit();
+                break;
                 case State::Reply:
                     reply();
                     mState = State::WaitReplyComplete;
                     break;
                 case State::WaitReplyComplete:
                     if (uart::isIdle()) {
-                        uart::template rxEnable<true>();
+                        uart::enableReceive();
                         mState = State::Init;
                     }
                     break;
                 case State::Init:
                 case State::Request:
+                case State::Command:
+                case State::IdleWait:
                 default:
                     break;
                 }
@@ -168,6 +205,9 @@ namespace External {
                     mValue += uint8_t(b);
                     mValue += mValue >> 8;
                     mValue &= 0x00ff;
+                }
+                bool operator==(const std::byte rhs) {
+                    return (rhs == value());
                 }
                 std::byte value() const {
                     return etl::nth_byte<0>(0xff - mValue);
@@ -200,24 +240,6 @@ namespace External {
                 stuffResponse(etl::nth_byte<0>(static_cast<t>(b)), cs);
                 stuffResponse(etl::nth_byte<1>(static_cast<t>(b)), cs);
             }
-            inline static void stuffResponse_old(const std::byte b, CheckSum& cs) {
-                if (b == 0x7e_B) {
-                    cs += 0x7d_B;
-                    uart::put(0x7d_B);
-                    cs += 0x5e_B;
-                    uart::put(0x5e_B);
-                }
-                else if (b == 0x7d_B) {
-                    cs += 0x7d_B;
-                    uart::put(0x7d_B);
-                    cs += 0x5d_B;
-                    uart::put(0x5d_B);
-                }
-                else {
-                    cs += b;
-                    uart::put(b);
-                }
-            }
             inline static void stuffResponse(const std::byte b, CheckSum& cs) {
                 cs += b;
                 if (b == 0x7e_B) {
@@ -234,7 +256,7 @@ namespace External {
             }
         private:            
             inline static index_type mActualProvider;
-            inline static state_type mState{State::Init};
+            inline static State mState{State::Init};
         };
     }
     namespace SPort {

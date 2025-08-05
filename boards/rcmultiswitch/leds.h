@@ -26,11 +26,18 @@ struct Leds<Meta::List<L...>> {
     using list = Meta::List<L...>;
     static inline void init() {
         (L::template dir<AVR::Output>(), ...);
+        allOff();
     }
     static inline void set(const uint8_t led, const bool on) {
         Meta::visitAt<list>(led, [&]<typename LL>(Meta::Wrapper<LL>){
                                    LL::onOff(on);
                                });
+    }
+    static inline void allOff() {
+        Meta::visit<list>([&]<typename LL>(Meta::Wrapper<LL>){
+                                   LL::onOff(false);
+                               });
+
     }
 };
 

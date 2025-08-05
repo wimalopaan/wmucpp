@@ -352,6 +352,9 @@ namespace AVR {
         inline static void lbmeDisable() {
             mcu_usart()->ctrla.template clear<ctrla_t::lbme, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
         }
+        inline static void lbmeEnable() {
+            mcu_usart()->ctrla.template add<ctrla_t::lbme, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
+        }
         inline static void txOpenDrain() {
             mcu_usart()->ctrlb.template add<ctrlb_t::odme, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
         }
@@ -365,7 +368,43 @@ namespace AVR {
         inline static void txPinPullup() {
             txpin::template pullup<on>(); 
         }
-        
+        inline static void enableTransmit() {
+            rxEnable<false>();
+            txPinEnable();
+        }
+        inline static void enableReceive() {
+            txPinDisable();
+            rxEnable<true>();
+        }
+        template<etl::Concepts::NamedConstant Baud>
+        inline static void initHDInv() {
+            using namespace etl;
+            static_assert(Baud::value >= 2400, "USART should use a valid baud rate >= 2400");
+
+            txpin::on();
+            mcu_usart()->ctrla.template add<ctrla_t::lbme, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
+
+            if constexpr (Baud::value > 100000) {
+                constexpr auto ubrr = ubrrValue2(Config::fMcu.value, Baud::value);
+                mcu_usart()->ctrlb.template add<ctrlb_t::rxm0, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
+                *mcu_usart()->baud = ubrr;
+            }
+            else {
+                constexpr auto ubrr = ubrrValue(Config::fMcu.value, Baud::value);
+                mcu_usart()->ctrlb.template clear<ctrlb_t::rxm0, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
+                *mcu_usart()->baud = ubrr;
+            }
+
+            mcu_usart()->ctrlc.template set<ctrlc_t::xfer8bit | ctrlc_t::noparity | ctrlc_t::xfer1stopbit>();
+            mcu_usart()->ctrlb.template add<ctrlb_t::txen | ctrlb_t::rxen, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
+
+            // if constexpr(std::is_same_v<Mode, HalfDuplex>) {
+            //     mcu_usart()->ctrlb.template clear<ctrlb_t::txen, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
+            //     mcu_usart()->ctrlb.template add<ctrlb_t::txen | ctrlb_t::rxen, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
+            // }
+            txInvert(true);
+        }
+
         template<etl::Concepts::NamedConstant Baud, typename Mode = FullDuplex, bool pullUp = true, auto flags = 0>
         inline static void init() {
             using namespace etl;
@@ -382,7 +421,7 @@ namespace AVR {
                     txpin::template pullup<true>(); 
                 }
                 txpin::on();
-//                txpin::template dir<Output>();
+               // txpin::template dir<Output>();
                 mcu_usart()->ctrlb.template add<ctrlb_t::odme, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
                 mcu_usart()->ctrla.template add<ctrla_t::lbme, etl::DisbaleInterrupt<etl::NoDisableEnable>>();
             }
