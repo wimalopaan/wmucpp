@@ -22,9 +22,9 @@
 
 // use one(!) of the following options exclusively
 // ATTENTION: in case of CRSF / SBUS / IBUS input is via PA1 (RX UART0)
-// #define INPUT_CRSF // input via CRSF (ELRS only)
-#define INPUT_IBUS
-// #define INPUT_SBUS // input via SBUS (optional for ELRS, mandatory for other rc-link)
+// #define INPUT_CRSF // input via CRSF (ELRS only) (no rc-channel needed)
+#define INPUT_IBUS // input via IBUS (use subprotocol IBUS16 in 4in1-MPM) on channel 16
+// #define INPUT_SBUS // input via SBUS (optional for ELRS, mandatory for other rc-link) on channel 16
 // ATTENTION: in case of S.Port input is via PA0 (TX UART0 half-duplex)
 // #define INPUT_SPORT // input via SPort (Phy-ID / App-ID see below)
 
@@ -54,6 +54,9 @@
 
 #define SPORT_PHY External::SPort2::SensorId::ID1 // be aware, that ID1 equals 0 in the widget setup, ID2 equals 1, and so forth ...
 #define SPORT_APP 0x51 // dec: 81
+
+// ToDo:
+// * byte-stuffing (S.Port) for incoming packets
 
 #include <mcu/avr.h>
 #include <mcu/internals/ccp.h>
