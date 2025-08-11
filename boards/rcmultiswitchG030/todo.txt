@@ -1,5 +1,6 @@
 todo:
 -----
+* support addressable LEDs (WS1812, APA102)
 * increase output current by grouping outputs together
 * running light mode: parameter: speed, activate-output, activate-next address, (pwm)
 * running light mode: crsf command messages
