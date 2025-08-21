@@ -17,8 +17,8 @@
  */
 
 // select one of the following hardware definitions
-// #define HW_MSW10 // MultiSwitch_10 (32K)
-#define HW_NUCLEO // STM Nucleo G031K8 (64K) (incl. ST-Link)
+#define HW_MSW10 // MultiSwitch_10 (32K)
+// #define HW_NUCLEO // STM Nucleo G031K8 (64K) (incl. ST-Link)
 // #define HW_WEACT // WeAct G031F8 (64K)
 
 // #define TEST1 // use only test elrs menu
