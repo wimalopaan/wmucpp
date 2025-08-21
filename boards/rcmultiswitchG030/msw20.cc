@@ -872,7 +872,7 @@ int main() {
     NVIC_EnableIRQ(TIM3_IRQn);
     NVIC_EnableIRQ(USART2_IRQn);
 #endif
-#ifdef HW_NUCLEO
+#if defined(HW_NUCLEO) || defined(HW_WEACT)
     NVIC_EnableIRQ(USART1_IRQn);
 #endif
     NVIC_EnableIRQ(HardFault_IRQn);
@@ -902,7 +902,7 @@ void USART2_IRQHandler(){
     });
 }
 #endif
-#ifdef HW_NUCLEO
+#if defined(HW_NUCLEO) || defined(HW_WEACT)
 void USART1_IRQHandler(){
     using crsf = devs::crsf;
     static_assert(crsf::number == 1);
