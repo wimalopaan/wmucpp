@@ -1,5 +1,8 @@
 todo:
 -----
+* add compiletime option for stm-nucleo/stm-dev (WeAct) board: https://de.aliexpress.com/item/1005005748198584.html?spm=a2g0o.productlist.main.1.4b102c32TbhBoR&algo_pvid=9662fc36-b486-42fd-a4bc-e391b60d033d&algo_exp_id=9662fc36-b486-42fd-a4bc-e391b60d033d-0&pdp_ext_f=%7B%22order%22%3A%22354%22%2C%22eval%22%3A%221%22%7D&pdp_npi=6%40dis%21EUR%212.15%211.89%21%21%2117.58%2115.45%21%40211b680e17556157425447084e2595%2112000035303134775%21sea%21DE%212540746190%21X%211%210%21n_tag%3A-29919%3Bm03_new_user%3A-29895&curPageLogUid=KMlLyEeG3ge2&utparam-url=scene%3Asearch%7Cquery_from%3A%7Cx_object_id%3A1005005748198584%7C_p_origin_prod%3A
+** layout
+** full-duplex with open-drain (crsf)
 * support addressable LEDs (WS1812, APA102)
 * increase output current by grouping outputs together
 * running light mode: parameter: speed, activate-output, activate-next address, (pwm)

@@ -430,7 +430,7 @@ namespace Mcu {
             static inline constexpr uintptr_t value = TIM2_BASE;
         };
 #endif
-#ifdef STM32G0B1xx
+#ifdef TIM2_BASE
         template<>
         struct Address<Mcu::Components::Timer<2>> {
             static inline constexpr uintptr_t value = TIM2_BASE;

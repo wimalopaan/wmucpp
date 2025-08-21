@@ -47,7 +47,7 @@ struct SerialBuffered {
         static inline constexpr uint32_t baudrate = 115'200;
         static inline constexpr bool rxtxswap = Mcu::Stm::V4::detail::getSwap_v<Config>;
         static inline constexpr bool fifo = []{
-#if defined(STM32G051xx) || defined(STM32G030xx)
+#if defined(STM32G051xx) || defined(STM32G030xx) || defined(STM32G031xx)
             if (N <= 1) return true;
 #else
             if (N <= 3) return true;

@@ -49,6 +49,8 @@
 #include "button.h"
 
 struct Nucleo;
+struct WeAct;
+
 struct SW01;
 struct SW10; // board: RCMultiSwitchSmall10
 struct SW11; // board: RCMultiSwitchSmall10 // wrong dma (does not work with GPIO on G0xx!)
@@ -241,3 +243,182 @@ struct Devices2<SW20, CrsfCallback, Storage, MCU> {
     }
 };
 
+template<template<typename, typename> typename CrsfCallback, typename Storage, typename MCU>
+struct Devices2<Nucleo, CrsfCallback, Storage, MCU> {
+    using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<64_MHz, 2'000_Hz, Mcu::Stm::HSI>>;
+    using systemTimer = Mcu::Stm::SystemTimer<clock, Mcu::UseInterrupts<false>, MCU>;
+
+    using gpioa = Mcu::Stm::GPIO<Mcu::Stm::A, MCU>;
+    using gpiob = Mcu::Stm::GPIO<Mcu::Stm::B, MCU>;
+    using gpioc = Mcu::Stm::GPIO<Mcu::Stm::C, MCU>;
+
+    using dma1 = Mcu::Stm::Dma::Controller<1, MCU>;
+
+    // CRSF TX
+    using crsftx = Mcu::Stm::Pin<gpioa, 9, MCU>;
+    using crsfrx = Mcu::Stm::Pin<gpioa, 10, MCU>;
+
+    // Usart 1: CRSF
+    using csrfInDmaChannelComponent1 = Mcu::Components::DmaChannel<typename dma1::component_t, 1>;
+    using csrfInDmaChannelComponent2 = Mcu::Components::DmaChannel<typename dma1::component_t, 2>;
+    struct CrsfConfig;
+    using crsf = RC::Protokoll::Crsf::V4::Master<1, CrsfConfig, MCU>;
+
+#ifdef SERIAL_DEBUG
+    using debugtx = Mcu::Stm::Pin<gpioa, 2, MCU>;
+    struct DebugConfig;
+    using debug = SerialBuffered<2, DebugConfig, MCU>;
+    struct DebugConfig {
+        using pin = debugtx;
+        using clock = Devices2::clock;
+        static inline constexpr bool rxtxswap = false;
+        static inline constexpr uint16_t bufferSize = 64;
+    };
+#else
+    using debug = void;
+#endif
+
+    // Led
+    using led = Mcu::Stm::Pin<gpioc, 6, MCU>;
+    using ledBlinker = External::Blinker<led, systemTimer>;
+
+    // Taster
+#ifdef USE_BUTTON
+    using button = Mcu::Stm::Pin<gpiob, 6, MCU>;
+    using btn = External::Button<button, systemTimer, External::Tick<systemTimer>{300ms}.raw(),
+                                 External::Tick<systemTimer>{3000ms}.raw(), void>;
+#endif
+#ifdef USE_TP1
+    using tp1 = Mcu::Stm::Pin<gpiob, 4, MCU>;
+#else
+    using tp1 = void;
+#endif
+    using sw0 = Mcu::Stm::Pin<gpioa, 7, MCU>;
+    using sw1 = Mcu::Stm::Pin<gpioa, 6, MCU>;
+    using sw2 = Mcu::Stm::Pin<gpioa, 11, MCU>;
+    using sw3 = Mcu::Stm::Pin<gpioa, 8, MCU>;
+    using sw4 = Mcu::Stm::Pin<gpioa, 5, MCU>;
+    using sw5 = Mcu::Stm::Pin<gpioa, 4, MCU>;
+    using sw6 = Mcu::Stm::Pin<gpioa, 1, MCU>;
+    using sw7 = Mcu::Stm::Pin<gpiob, 3, MCU>;
+
+    using pwm3 = Mcu::Stm::V2::Pwm::Simple<3, clock>;
+    using pwm1 = Mcu::Stm::V2::Pwm::Simple<1, clock>;
+    using pwm14 = Mcu::Stm::V2::Pwm::Simple<14, clock>;
+    using pwm2 = Mcu::Stm::V2::Pwm::Simple<2, clock>;
+
+    // s0 : pa7  : tim3 ch2
+    // s1 : pa6  : tim3 ch1
+    // s2 : pa11 : tim1 ch4
+    // (s3 : pa12 : isr)
+    // s3 : pa8  : tim1 ch1
+    // s4 : pa5  : tim2 ch1
+    // s5 : pa4  : tim14 ch1
+    // s6 : pa1  : tim2 ch2
+    // (s7 : pa0  : isr)
+    // s7 : pb3  : tim1 ch2
+
+    using debug1 = void;
+    using adap0 = Local::PwmAdapter<pwm3, 2, false, true, debug1>;
+    using adap1 = Local::PwmAdapter<pwm3, 1, false, true, debug1>;
+    using adap2 = Local::PwmAdapter<pwm1, 4, false, true, debug1>;
+    using adap3 = Local::PwmAdapter<pwm1, 1, false, true, debug1>;
+    using adap4 = Local::PwmAdapter<pwm2, 1, false, true, debug1>;
+    using adap5 = Local::PwmAdapter<pwm14, 1, false, true, debug1>;
+    using adap6 = Local::PwmAdapter<pwm2, 2, false, true, debug1>;
+    using adap7 = Local::PwmAdapter<pwm1, 2, false, true, debug1>;
+
+#ifdef USE_MORSE
+    struct BConfig {
+        using timer = systemTimer;
+        using debug = void;
+        static inline constexpr auto& text = Storage::eeprom.morse_text;
+    };
+    struct BConfigDebug {
+        using timer = systemTimer;
+        using debug = Devices2::debug;
+        static inline constexpr auto& text = Storage::eeprom.morse_text;
+    };
+    using bsw0 = External::Morse::BlinkerWithPwm<sw0, BConfig, adap0>;
+    using bsw1 = External::Morse::BlinkerWithPwm<sw1, BConfig, adap1>;
+    using bsw2 = External::Morse::BlinkerWithPwm<sw2, BConfig, adap2>;
+    using bsw3 = External::Morse::BlinkerWithPwm<sw3, BConfig, adap3>;
+    using bsw4 = External::Morse::BlinkerWithPwm<sw4, BConfig, adap4>;
+    using bsw5 = External::Morse::BlinkerWithPwm<sw5, BConfig, adap5>;
+    using bsw6 = External::Morse::BlinkerWithPwm<sw6, BConfig, adap6>;
+    using bsw7 = External::Morse::BlinkerWithPwm<sw7, BConfig, adap7>;
+#else
+    using bsw0 = External::BlinkerWithPwm<sw0, systemTimer, adap0, debug1>;
+    using bsw1 = External::BlinkerWithPwm<sw1, systemTimer, adap1, debug1>;
+    using bsw2 = External::BlinkerWithPwm<sw2, systemTimer, adap2, debug1>;
+    using bsw3 = External::BlinkerWithPwm<sw3, systemTimer, adap3, debug1>;
+    using bsw4 = External::BlinkerWithPwm<sw4, systemTimer, adap4, debug1>;
+    using bsw5 = External::BlinkerWithPwm<sw5, systemTimer, adap5, debug1>;
+    using bsw6 = External::BlinkerWithPwm<sw6, systemTimer, adap6, debug1>;
+    using bsw7 = External::BlinkerWithPwm<sw7, systemTimer, adap7, debug1>;
+#endif
+
+
+    using bsws = Meta::List<bsw0, bsw1, bsw2, bsw3, bsw4, bsw5, bsw6, bsw7>;
+
+    struct CrsfCallbackConfig {
+        using bswList = bsws;
+        using pwmList = Meta::List<pwm1, pwm3, pwm14, pwm2>;
+        using timer = systemTimer;
+        using crsf = Devices2::crsf;
+    };
+    struct CrsfConfig {
+        using txpin = crsftx;
+        using rxpin = crsfrx; // full-duplex
+        using systemTimer = Devices2::systemTimer;
+        using clock = Devices2::clock;
+        using dmaChRead  = csrfInDmaChannelComponent1;
+        using dmaChWrite  = csrfInDmaChannelComponent2;
+        // using debug = void;
+        using debug = Devices2::debug;
+        using tp = tp1;
+        using callback = CrsfCallback<CrsfCallbackConfig, debug>;
+        // using callback = CrsfCallback<CrsfCallbackConfig, void>;
+        static inline constexpr uint8_t fifoSize = 8;
+    };
+    static inline void init() {
+        clock::init();
+        systemTimer::init();
+
+        gpioa::init();
+        gpiob::init();
+        gpioc::init();
+
+        dma1::init();
+
+        led::template dir<Mcu::Output>();
+        ledBlinker::event(ledBlinker::Event::Off);
+
+#ifdef USE_BUTTON
+        btn::init();
+#endif
+#ifdef USE_TP1
+        tp1::template dir<Mcu::Output>();
+#endif
+        crsf::init();
+
+        sw0::template dir<Mcu::Output>();
+        sw1::template dir<Mcu::Output>();
+        sw2::template dir<Mcu::Output>();
+        sw3::template dir<Mcu::Output>();
+        sw4::template dir<Mcu::Output>();
+        sw5::template dir<Mcu::Output>();
+        sw6::template dir<Mcu::Output>();
+        sw7::template dir<Mcu::Output>();
+
+        pwm3::duty1(100);
+        pwm3::duty2(100);
+        pwm3::duty3(100);
+        pwm3::duty4(100);
+
+        pwm3::init();
+        pwm1::init();
+        pwm14::init();
+        pwm2::init();
+    }
+};

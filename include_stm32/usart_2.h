@@ -227,6 +227,7 @@ namespace Mcu::Stm {
         template<uint8_t N, typename Config, typename MCU>
         requires (
                 ((N >= 1) && (N <= 2) && std::is_same_v<Stm32G030, MCU>) ||
+                ((N >= 1) && (N <= 2) && std::is_same_v<Stm32G031, MCU>) ||
                 ((N >= 1) && (N <= 2) && std::is_same_v<Stm32G051, MCU>) ||
                 ((N >= 1) && (N <= 6) && std::is_same_v<Stm32G0B1, MCU>) ||
                 ((N >= 1) && (N <= 3) && std::is_same_v<Stm32G431, MCU>) ||

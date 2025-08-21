@@ -18,6 +18,7 @@ namespace Mcu {
         template<> struct isG4xx<Stm32G473> : std::true_type {};
 
         template<> struct isG0xx<Stm32G030> : std::true_type {};
+        template<> struct isG0xx<Stm32G031> : std::true_type {};
         template<> struct isG0xx<Stm32G0B1> : std::true_type {};
         template<> struct isG0xx<Stm32G051> : std::true_type {};
 

@@ -76,6 +76,9 @@ namespace Mcu::Stm {
                     if constexpr (TimerNumber == 1) {
                         RCC->APBENR2 |= RCC_APBENR2_TIM1EN;
                     }
+                    else if constexpr (TimerNumber == 2) {
+                        RCC->APBENR1 |= RCC_APBENR1_TIM2EN;
+                    }
                     else if constexpr (TimerNumber == 3) {
                         RCC->APBENR1 |= RCC_APBENR1_TIM3EN;
                     }

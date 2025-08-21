@@ -16,18 +16,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// select one of the following hardware definitions
+// #define HW_MSW10 // MultiSwitch_10 (32K)
+#define HW_NUCLEO // STM Nucleo G031K8 (64K) (incl. ST-Link)
+// #define HW_WEACT // WeAct G031F8 (64K)
+
 // #define TEST1 // use only test elrs menu
 // #define USE_TP1 // enable test point
 // #define USE_AUTO_CONF
 #define USE_MORSE
 #define USE_EEPROM_TEST // switches telemetry default on (instead off)
 #define USE_BUTTON
-// #define SERIAL_DEBUG // use with care (e.g. with USE_MORSE) because of RAM overflow
+#define SERIAL_DEBUG // use with care (e.g. with USE_MORSE) because of RAM overflow
 
 #define NDEBUG // do not change: dev option
+// #define HW_NUCLEO
+// #define HW_WEACT
 
 #define HW_VERSION 1
-#define SW_VERSION 19
+#define SW_VERSION 20
 
 #include <cstdint>
 #include <array>
@@ -836,7 +843,15 @@ struct Setter;
 template<typename L, typename T>
 using CrsfCallback_WithSetter = CrsfCallback<L, Setter, T>;
 
+#ifdef HW_MSW10
 using devs = Devices2<SW20, CrsfCallback_WithSetter, Storage>;
+#endif
+#ifdef HW_NUCLEO
+using devs = Devices2<Nucleo, CrsfCallback_WithSetter, Storage>;
+#endif
+#ifdef HW_WEACT
+using devs = Devices2<WeAct, CrsfCallback_WithSetter, Storage>;
+#endif
 using gfsm = GFSM<devs>;
 
 struct Setter {
@@ -853,8 +868,13 @@ int main() {
     gfsm::init();
     gfsm::update(true);
 
+#ifdef HW_MSW10
     NVIC_EnableIRQ(TIM3_IRQn);
     NVIC_EnableIRQ(USART2_IRQn);
+#endif
+#ifdef HW_NUCLEO
+    NVIC_EnableIRQ(USART1_IRQn);
+#endif
     NVIC_EnableIRQ(HardFault_IRQn);
     __enable_irq();
 
@@ -868,6 +888,7 @@ int main() {
 
 extern "C" {
 
+#ifdef HW_MSW10
 void USART2_IRQHandler(){
     using crsf = devs::crsf;
     static_assert(crsf::number == 2);
@@ -880,7 +901,23 @@ void USART2_IRQHandler(){
         // devs::tp1::reset();
     });
 }
+#endif
+#ifdef HW_NUCLEO
+void USART1_IRQHandler(){
+    using crsf = devs::crsf;
+    static_assert(crsf::number == 1);
+    crsf::Isr::onTransferComplete([]{
+        // devs::tp1::set();
+        // devs::tp1::reset();
+    });
+    crsf::Isr::onIdle([]{
+        // devs::tp1::set();
+        // devs::tp1::reset();
+    });
+}
+#endif
 
+#ifdef HW_MSW10
 void TIM3_IRQHandler() {
     if (TIM3->SR & TIM_SR_UIF) {
         TIM3->SR = ~TIM_SR_UIF;
@@ -896,6 +933,7 @@ void TIM3_IRQHandler() {
         devs::bsw6::reset();
     }
 }
+#endif
 
 void HardFault_Handler() {
     while(true) {

@@ -274,11 +274,13 @@ boards/rcmultiswitch/mswitch01.cc
 boards/rcmultiswitch/sbus01.cc
 boards/rcmultiswitch/sbus_cb.h
 boards/rcmultiswitchG030/Makefile
+boards/rcmultiswitchG030/Makefile.G031
 boards/rcmultiswitchG030/Makefile.G051
 boards/rcmultiswitchG030/adapter.h
 boards/rcmultiswitchG030/devices.h
 boards/rcmultiswitchG030/devices_2.h
 boards/rcmultiswitchG030/link_g030.ld
+boards/rcmultiswitchG030/link_g031.ld
 boards/rcmultiswitchG030/link_g051.ld
 boards/rcmultiswitchG030/msw01.cc
 boards/rcmultiswitchG030/msw02.cc
@@ -296,6 +298,7 @@ boards/rcmultiswitchG030/msw20.cc
 boards/rcmultiswitchG030/msw21.cc
 boards/rcmultiswitchG030/msw99.cc
 boards/rcmultiswitchG030/startup_g030.s
+boards/rcmultiswitchG030/startup_g031.s
 boards/rcmultiswitchG030/startup_g051.s
 boards/rcmultiswitchG030/system_g0.cc
 boards/rcmultiswitchG030/todo.txt
