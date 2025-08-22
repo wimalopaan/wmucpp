@@ -1,5 +1,10 @@
+bugs:
+-----
+* pwm settings wrong for nucleo/weact (due to different mappings compared to custom board)
+
 todo:
 -----
+* nucleo/weact boards: check pwm grouping for crsf menu settings
 * support addressable LEDs (WS1812, APA102)
 * increase output current by grouping outputs together
 * running light mode: parameter: speed, activate-output, activate-next address, (pwm)
