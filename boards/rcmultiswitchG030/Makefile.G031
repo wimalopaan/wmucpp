@@ -30,7 +30,7 @@ CPPFLAGS += -I../../../STM32CubeG0/Drivers/CMSIS/Device/ST/STM32G0xx/Include
 CPPFLAGS += -I../../../STM32CubeG0/Drivers/STM32G0xx_HAL_Driver/Inc
 CPPFLAGS += -DSTM32G031xx
 
-CXXFLAGS += -g
+#CXXFLAGS += -g
 OPTFLAGS = -Os
 
 LDSCRIPT = link_g031.ld

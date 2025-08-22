@@ -30,7 +30,7 @@ CPPFLAGS += -I../../../STM32CubeG0/Drivers/CMSIS/Device/ST/STM32G0xx/Include
 CPPFLAGS += -I../../../STM32CubeG0/Drivers/STM32G0xx_HAL_Driver/Inc
 CPPFLAGS += -DSTM32G051xx
 
-CXXFLAGS += -g
+#CXXFLAGS += -g
 OPTFLAGS = -Os
 
 LDSCRIPT = link_g051.ld
@@ -38,7 +38,6 @@ LOADLIBES += startup_g051.o system_g0.o
 
 targets += startup_g051.o
 targets += system_g0.o
-
 targets += msw21.elf msw21.bin
 
 -include ../../Makefile.arm.include
