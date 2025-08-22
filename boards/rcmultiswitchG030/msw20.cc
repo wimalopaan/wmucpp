@@ -23,18 +23,16 @@
 
 // #define TEST1 // use only test elrs menu
 // #define USE_TP1 // enable test point
-// #define USE_AUTO_CONF
+// #define USE_AUTO_CONF // (deprecated, not fully implemented also in lvglMultiSwitch widget)
 #define USE_MORSE
 #define USE_EEPROM_TEST // switches telemetry default on (instead off)
 #define USE_BUTTON
-#define SERIAL_DEBUG // use with care (e.g. with USE_MORSE) because of RAM overflow
+// #define SERIAL_DEBUG // use with care (e.g. with USE_MORSE) because of RAM overflow
 
 #define NDEBUG // do not change: dev option
-// #define HW_NUCLEO
-// #define HW_WEACT
 
-#define HW_VERSION 1
-#define SW_VERSION 20
+#define HW_VERSION 1 // version of own pcb (not nucleo or weact)
+#define SW_VERSION 21
 
 #include <cstdint>
 #include <array>
