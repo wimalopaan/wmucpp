@@ -451,7 +451,7 @@ struct Devices2<WeAct, CrsfCallback, Storage, MCU> {
     struct DebugConfig {
         using pin = debugtx;
         using clock = Devices2::clock;
-        static inline constexpr bool rxtxswap = false;
+        static inline constexpr bool rxtxswap = true;
         static inline constexpr uint16_t bufferSize = 64;
     };
 #else
@@ -459,17 +459,17 @@ struct Devices2<WeAct, CrsfCallback, Storage, MCU> {
 #endif
 
     // Led
-    using led = Mcu::Stm::Pin<gpiob, 7, MCU>;
+    using led = Mcu::Stm::Pin<gpioa, 4, MCU>;
     using ledBlinker = External::Blinker<led, systemTimer>;
 
     // Taster
 #ifdef USE_BUTTON
-    using button = Mcu::Stm::Pin<gpiob, 6, MCU>;
+    using button = Mcu::Stm::Pin<gpioa, 14, MCU>;
     using btn = External::Button<button, systemTimer, External::Tick<systemTimer>{300ms}.raw(),
                                  External::Tick<systemTimer>{3000ms}.raw(), void>;
 #endif
 #ifdef USE_TP1
-    using tp1 = Mcu::Stm::Pin<gpioa, 13, MCU>;
+    using tp1 = Mcu::Stm::Pin<gpiob, 7, MCU>;
 #else
     using tp1 = void;
 #endif
@@ -477,7 +477,7 @@ struct Devices2<WeAct, CrsfCallback, Storage, MCU> {
     using sw1 = Mcu::Stm::Pin<gpioa, 1, MCU>;
     using sw2 = Mcu::Stm::Pin<gpioa, 2, MCU>;
     using sw3 = Mcu::Stm::Pin<gpioa, 3, MCU>;
-    using sw4 = Mcu::Stm::Pin<gpioa, 4, MCU>;
+    using sw4 = Mcu::Stm::Pin<gpiob, 6, MCU>;
     using sw5 = Mcu::Stm::Pin<gpioa, 6, MCU>;
     using sw6 = Mcu::Stm::Pin<gpioa, 7, MCU>;
     using sw7 = Mcu::Stm::Pin<gpioa, 8, MCU>;
@@ -491,7 +491,7 @@ struct Devices2<WeAct, CrsfCallback, Storage, MCU> {
     // s1 : pa1  : tim2 ch2
     // s2 : pa2  : tim2 ch3
     // s3 : pa3  : tim2 ch4
-    // s4 : pa4  : tim14 ch1
+    // s4 : pb6  : tim1 ch3
     // s5 : pa6  : tim3 ch1
     // s6 : pa7  : tim3 ch2
     // s7 : pa8  : tim1 ch1
@@ -501,7 +501,7 @@ struct Devices2<WeAct, CrsfCallback, Storage, MCU> {
     using adap1 = Local::PwmAdapter<pwm2, 2, false, true, debug1>;
     using adap2 = Local::PwmAdapter<pwm2, 3, false, true, debug1>;
     using adap3 = Local::PwmAdapter<pwm2, 4, false, true, debug1>;
-    using adap4 = Local::PwmAdapter<pwm14, 1, false, true, debug1>;
+    using adap4 = Local::PwmAdapter<pwm1, 3, false, true, debug1>;
     using adap5 = Local::PwmAdapter<pwm3, 1, false, true, debug1>;
     using adap6 = Local::PwmAdapter<pwm3, 2, false, true, debug1>;
     using adap7 = Local::PwmAdapter<pwm1, 1, false, true, debug1>;
@@ -595,7 +595,7 @@ struct Devices2<WeAct, CrsfCallback, Storage, MCU> {
 
         pwm3::init();
         pwm1::init();
-        pwm14::init();
+        // pwm14::init();
         pwm2::init();
     }
 };
