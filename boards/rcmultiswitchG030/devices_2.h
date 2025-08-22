@@ -484,7 +484,7 @@ struct Devices2<WeAct, CrsfCallback, Storage, MCU> {
 
     using pwm3 = Mcu::Stm::V2::Pwm::Simple<3, clock>;
     using pwm1 = Mcu::Stm::V2::Pwm::Simple<1, clock>;
-    using pwm14 = Mcu::Stm::V2::Pwm::Simple<14, clock>;
+    // using pwm14 = Mcu::Stm::V2::Pwm::Simple<14, clock>;
     using pwm2 = Mcu::Stm::V2::Pwm::Simple<2, clock>;
 
     // s0 : pa0  : tim2 ch1
@@ -540,7 +540,7 @@ struct Devices2<WeAct, CrsfCallback, Storage, MCU> {
 
     struct CrsfCallbackConfig {
         using bswList = bsws;
-        using pwmList = Meta::List<pwm1, pwm3, pwm14, pwm2>;
+        using pwmList = Meta::List<pwm1, pwm3, pwm2>;
         using timer = systemTimer;
         using crsf = Devices2::crsf;
     };

@@ -17,9 +17,11 @@
  */
 
 // select one of the following hardware definitions
+// ATTENTION: use Makefile
 #define HW_MSW10 // MultiSwitch_10 (32K)
+// ATTENTION: use Makefile.G031
 // #define HW_NUCLEO // STM Nucleo G031K8 (64K) (incl. ST-Link)
- // #define HW_WEACT // WeAct G031F8 (64K)
+// #define HW_WEACT // WeAct G031F8 (64K)
 
 // #define TEST1 // use only test elrs menu
 // #define USE_TP1 // enable test point
@@ -394,10 +396,23 @@ private:
         auto parent = addParent(p, Param_t{0, PType::Folder, "Global"});
         addNode(p, Param_t{parent, PType::U8, "Address", nullptr, &eeprom.address, 0, 255, setAddress});
 
+#ifdef HW_MSW10
         addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "PWM f G1 (O3,2)", .value_ptr= &eeprom.pwm1, .min = 1, .max = 200, .cb = [](const uint8_t v){Meta::nth_element<0, pwms>::freqCenties(v); return true;}, .def = 10, .unitString = " *100Hz"});
         addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "PWM f G2 (O1,4,5,6)", .value_ptr = &eeprom.pwm2, .min = 1, .max = 200, .cb = [](const uint8_t v){Meta::nth_element<1, pwms>::freqCenties(v); return true;}, .def = 10, .unitString = " *100Hz"});
         addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "PWM f G3 (O7)", .value_ptr = &eeprom.pwm3, .min = 1, .max = 200, .cb = [](const uint8_t v){Meta::nth_element<2, pwms>::freqCenties(v); return true;}, .def = 10, .unitString = " *100Hz"});
         addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "PWM f G4 (O0)", .value_ptr = &eeprom.pwm4, .min = 1, .max = 200, .cb = [](const uint8_t v){Meta::nth_element<3, pwms>::freqCenties(v); return true;}, .def = 10, .unitString = " *100Hz"});
+#endif
+#ifdef HW_NUCLEO
+        addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "PWM f G1 (O2,3,7)", .value_ptr= &eeprom.pwm1, .min = 1, .max = 200, .cb = [](const uint8_t v){Meta::nth_element<0, pwms>::freqCenties(v); return true;}, .def = 10, .unitString = " *100Hz"});
+        addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "PWM f G2 (O0,1)", .value_ptr = &eeprom.pwm2, .min = 1, .max = 200, .cb = [](const uint8_t v){Meta::nth_element<1, pwms>::freqCenties(v); return true;}, .def = 10, .unitString = " *100Hz"});
+        addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "PWM f G3 (O5)", .value_ptr = &eeprom.pwm3, .min = 1, .max = 200, .cb = [](const uint8_t v){Meta::nth_element<2, pwms>::freqCenties(v); return true;}, .def = 10, .unitString = " *100Hz"});
+        addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "PWM f G4 (O4,6)", .value_ptr = &eeprom.pwm4, .min = 1, .max = 200, .cb = [](const uint8_t v){Meta::nth_element<3, pwms>::freqCenties(v); return true;}, .def = 10, .unitString = " *100Hz"});
+#endif
+#ifdef HW_WEACT
+        addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "PWM f G1 (O4,7)", .value_ptr= &eeprom.pwm1, .min = 1, .max = 200, .cb = [](const uint8_t v){Meta::nth_element<0, pwms>::freqCenties(v); return true;}, .def = 10, .unitString = " *100Hz"});
+        addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "PWM f G2 (O5,6)", .value_ptr = &eeprom.pwm2, .min = 1, .max = 200, .cb = [](const uint8_t v){Meta::nth_element<1, pwms>::freqCenties(v); return true;}, .def = 10, .unitString = " *100Hz"});
+        addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "PWM f G3 (O0,1,2,3)", .value_ptr = &eeprom.pwm3, .min = 1, .max = 200, .cb = [](const uint8_t v){Meta::nth_element<2, pwms>::freqCenties(v); return true;}, .def = 10, .unitString = " *100Hz"});
+#endif
 
         addNode(p, Param_t{parent, PType::U8, "CRSF Address", nullptr, &eeprom.crsf_address, 0xc0, 0xcf, [](const uint8_t v){
                                if (!mEepromMode) {
