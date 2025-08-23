@@ -458,9 +458,20 @@ struct Devices2<WeAct, CrsfCallback, Storage, MCU> {
     using debug = void;
 #endif
 
+    template<typename Pin>
+    struct Inverter {
+        static inline void set() {
+            Pin::reset();
+        }
+        static inline void reset() {
+            Pin::set();
+        }
+    };
+
     // Led
     using led = Mcu::Stm::Pin<gpioa, 4, MCU>;
-    using ledBlinker = External::Blinker<led, systemTimer>;
+    using iLed = Inverter<led>;
+    using ledBlinker = External::Blinker<iLed, systemTimer>;
 
     // Taster
 #ifdef USE_BUTTON
@@ -567,6 +578,9 @@ struct Devices2<WeAct, CrsfCallback, Storage, MCU> {
         gpioc::init();
 
         dma1::init();
+
+        SYSCFG->CFGR1 |= SYSCFG_CFGR1_PA12_RMP;
+        SYSCFG->CFGR1 |= SYSCFG_CFGR1_PA11_RMP;
 
         led::template dir<Mcu::Output>();
         ledBlinker::event(ledBlinker::Event::Off);
