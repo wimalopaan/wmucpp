@@ -4,6 +4,7 @@ bugs:
 todo:
 -----
 * unify all Makefiles to one, then using different targets
+* make option to use crsf-tx-line open-drain (to parallel multiple non-custom boards like nucleo / weact)
 * support addressable LEDs (WS1812, APA102)
 * increase output current by grouping outputs together
 * running light mode: parameter: speed, activate-output, activate-next address, (pwm)
