@@ -33,8 +33,16 @@
 
 #define NDEBUG // do not change: dev option
 
+#if defined(HW_MSW10)
 #define HW_VERSION 1 // version of own pcb (not nucleo or weact)
-#define SW_VERSION 21
+#elif defined(HW_NUCLEO)
+#define HW_VERSION 10
+#elif defined(HW_WEACT)
+#define HW_VERSION 11
+#else
+#error "wrong hardware definition"
+#endif
+#define SW_VERSION 22
 
 #include <cstdint>
 #include <array>

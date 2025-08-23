@@ -458,26 +458,21 @@ struct Devices2<WeAct, CrsfCallback, Storage, MCU> {
     using debug = void;
 #endif
 
-    template<typename Pin>
-    struct Inverter {
-        static inline void set() {
-            Pin::reset();
-        }
-        static inline void reset() {
-            Pin::set();
-        }
-    };
-
     // Led
     using led = Mcu::Stm::Pin<gpioa, 4, MCU>;
-    using iLed = Inverter<led>;
-    using ledBlinker = External::Blinker<iLed, systemTimer>;
+    using invLed = Mcu::Stm::Gpio::Inverter<led>;
+    using ledBlinker = External::Blinker<invLed, systemTimer>;
 
     // Taster
 #ifdef USE_BUTTON
+#ifdef SERIAL_DEBUG
+#warning "button disabled (pin collision)"
+#undef USE_BUTTON
+#else
     using button = Mcu::Stm::Pin<gpioa, 14, MCU>;
     using btn = External::Button<button, systemTimer, External::Tick<systemTimer>{300ms}.raw(),
                                  External::Tick<systemTimer>{3000ms}.raw(), void>;
+#endif
 #endif
 #ifdef USE_TP1
     using tp1 = Mcu::Stm::Pin<gpiob, 7, MCU>;
@@ -495,7 +490,6 @@ struct Devices2<WeAct, CrsfCallback, Storage, MCU> {
 
     using pwm3 = Mcu::Stm::V2::Pwm::Simple<3, clock>;
     using pwm1 = Mcu::Stm::V2::Pwm::Simple<1, clock>;
-    // using pwm14 = Mcu::Stm::V2::Pwm::Simple<14, clock>;
     using pwm2 = Mcu::Stm::V2::Pwm::Simple<2, clock>;
 
     // s0 : pa0  : tim2 ch1

@@ -1,10 +1,9 @@
 bugs:
 -----
-* pwm settings wrong for nucleo/weact (due to different mappings compared to custom board)
 
 todo:
 -----
-* nucleo/weact boards: check pwm grouping for crsf menu settings
+* unify all Makefiles to one, then using different targets
 * support addressable LEDs (WS1812, APA102)
 * increase output current by grouping outputs together
 * running light mode: parameter: speed, activate-output, activate-next address, (pwm)
@@ -26,6 +25,8 @@ details:
 
 done:
 -----
+* nucleo/weact boards: check pwm grouping for crsf menu settings
+* pwm settings wrong for nucleo/weact (due to different mappings compared to custom board)
 * add compiletime option for stm-nucleo/stm-dev (WeAct) board: https://de.aliexpress.com/item/1005005748198584.html
 ** layout
 ** full-duplex with open-drain (crsf)

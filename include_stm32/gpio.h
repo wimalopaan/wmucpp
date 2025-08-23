@@ -164,5 +164,16 @@ namespace Mcu::Stm {
             }
         }
     };
-    
+
+    namespace Gpio {
+        template<typename Pin>
+        struct Inverter {
+            static inline void set() {
+                Pin::reset();
+            }
+            static inline void reset() {
+                Pin::set();
+            }
+        };
+    }
 }

@@ -39,5 +39,10 @@ LOADLIBES += startup_g031.o system_g0.o
 targets += startup_g031.o
 targets += system_g0.o
 targets += msw20.elf msw20.bin
+targets += system031
+
+system031: system_g0.o startup_g031.o
+
+g031: system031 msw20.bin
 
 -include ../../Makefile.arm.include

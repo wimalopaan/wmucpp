@@ -41,4 +41,16 @@ targets += system_g0.o
 
 targets += msw20.elf msw20.bin
 
+system030: system_g0.o startup_g030.o
+
+g030: system030
+	make -f Makefile msw20.bin
+	
+g031:
+	make -f Makefile.G031 g031
+	
+g051:
+	make -f Makefile.G051 g051
+	
+
 -include ../../Makefile.arm.include
