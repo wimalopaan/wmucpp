@@ -3,8 +3,6 @@ bugs:
 
 todo:
 -----
-* unify all Makefiles to one, then using different targets
-* make option to use crsf-tx-line open-drain (to parallel multiple non-custom boards like nucleo / weact)
 * support addressable LEDs (WS1812, APA102)
 * increase output current by grouping outputs together
 * running light mode: parameter: speed, activate-output, activate-next address, (pwm)
@@ -26,6 +24,8 @@ details:
 
 done:
 -----
+* unify all Makefiles to one, then using different targets
+* make option to use crsf-tx-line open-drain (to parallel multiple non-custom boards like nucleo / weact)
 * nucleo/weact boards: check pwm grouping for crsf menu settings
 * pwm settings wrong for nucleo/weact (due to different mappings compared to custom board)
 * add compiletime option for stm-nucleo/stm-dev (WeAct) board: https://de.aliexpress.com/item/1005005748198584.html

@@ -369,7 +369,11 @@ struct Devices2<Nucleo, CrsfCallback, Storage, MCU> {
     };
     struct CrsfConfig {
         using txpin = crsftx;
+#ifdef CRSF_HALFDUPLEX
+        using rxpin = txpin;
+#else
         using rxpin = crsfrx; // full-duplex
+#endif
         using systemTimer = Devices2::systemTimer;
         using clock = Devices2::clock;
         using dmaChRead  = csrfInDmaChannelComponent1;
@@ -401,7 +405,10 @@ struct Devices2<Nucleo, CrsfCallback, Storage, MCU> {
         tp1::template dir<Mcu::Output>();
 #endif
         crsf::init();
-
+#ifdef CRSF_TX_OPENDRAIN
+        crsftx::template openDrain<true>();
+        crsftx::template pullUp<true>();
+#endif
         sw0::template dir<Mcu::Output>();
         sw1::template dir<Mcu::Output>();
         sw2::template dir<Mcu::Output>();
@@ -551,7 +558,11 @@ struct Devices2<WeAct, CrsfCallback, Storage, MCU> {
     };
     struct CrsfConfig {
         using txpin = crsftx;
+#ifdef CRSF_HALFDUPLEX
+        using rxpin = txpin;
+#else
         using rxpin = crsfrx; // full-duplex
+#endif
         using systemTimer = Devices2::systemTimer;
         using clock = Devices2::clock;
         using dmaChRead  = csrfInDmaChannelComponent1;
@@ -586,6 +597,10 @@ struct Devices2<WeAct, CrsfCallback, Storage, MCU> {
         tp1::template dir<Mcu::Output>();
 #endif
         crsf::init();
+#ifdef CRSF_TX_OPENDRAIN
+        crsftx::template openDrain<true>();
+        crsftx::template pullUp<true>();
+#endif
 
         sw0::template dir<Mcu::Output>();
         sw1::template dir<Mcu::Output>();

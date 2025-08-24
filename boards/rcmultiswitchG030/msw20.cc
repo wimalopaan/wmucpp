@@ -30,6 +30,8 @@
 #define USE_EEPROM_TEST // switches telemetry default on (instead off)
 #define USE_BUTTON
 // #define SERIAL_DEBUG // use with care (e.g. with USE_MORSE) because of RAM overflow
+// #define CRSF_TX_OPENDRAIN // only HW_NUCLEO / HW_WEACT: make tx pin open-drain to parallelize in two-wire mode
+// #define CRSF_HALFDUPLEX // only NW_NUCLEO / HW_WEACT: make crsf uart one-wire halfduplex (txpin), custom board is allways half-duplex
 
 #define NDEBUG // do not change: dev option
 
@@ -42,7 +44,7 @@
 #else
 #error "wrong hardware definition"
 #endif
-#define SW_VERSION 22
+#define SW_VERSION 23
 
 #include <cstdint>
 #include <array>
