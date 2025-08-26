@@ -473,7 +473,6 @@ struct Devices2<WeAct, CrsfCallback, Storage, MCU> {
     // Taster
 #ifdef USE_BUTTON
 #ifdef SERIAL_DEBUG
-#warning "button disabled (pin collision)"
 #undef USE_BUTTON
 #else
     using button = Mcu::Stm::Pin<gpioa, 14, MCU>;

@@ -36,13 +36,22 @@
 #define NDEBUG // do not change: dev option
 
 #if defined(HW_MSW10)
-#define HW_VERSION 1 // version of own pcb (not nucleo or weact)
+# define HW_VERSION 1 // version of own pcb (not nucleo or weact)
 #elif defined(HW_NUCLEO)
-#define HW_VERSION 10
+# define HW_VERSION 10
 #elif defined(HW_WEACT)
-#define HW_VERSION 11
+# define HW_VERSION 11
+# ifdef USE_BUTTON
+#  warning "button on pin PA14 disables SWD programming -> use NRST to reset when start programming"
+#  ifdef SERIAL_DEBUG
+#   warning "button disabled (pin collision)"
+#  endif
+# endif
+# ifdef SERIAL_DEBUG
+#  warning "serial out pn PA14 disables SWD programming -> use NRST to reset when start programming"
+# endif
 #else
-#error "wrong hardware definition"
+# error "wrong hardware definition"
 #endif
 #define SW_VERSION 23
 
