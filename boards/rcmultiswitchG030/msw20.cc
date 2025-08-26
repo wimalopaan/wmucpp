@@ -28,7 +28,7 @@
 // #define USE_AUTO_CONF // (deprecated, not fully implemented also in lvglMultiSwitch widget)
 #define USE_MORSE
 #define USE_EEPROM_TEST // switches telemetry default on (instead off)
-#define USE_BUTTON
+// #define USE_BUTTON
 // #define SERIAL_DEBUG // use with care (e.g. with USE_MORSE) because of RAM overflow
 // #define CRSF_TX_OPENDRAIN // only HW_NUCLEO / HW_WEACT: make tx pin open-drain to parallelize in two-wire mode
 // #define CRSF_HALFDUPLEX // only NW_NUCLEO / HW_WEACT: make crsf uart one-wire halfduplex (txpin), custom board is allways half-duplex
