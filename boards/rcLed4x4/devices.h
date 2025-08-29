@@ -145,6 +145,7 @@ struct Devices<Led01, Config, MCU> {
         using pca = pca9745;
         using switchcallback = struct swcb {
                 static inline std::array<bool, 16> prevSwitchState{};
+                static inline std::array<uint8_t, 4> groupCount{};
                 static inline void setGroupIndex(const uint8_t index, const bool on) {
                     if (on) {
                         pca::groupStart(index);
@@ -180,6 +181,7 @@ struct Devices<Led01, Config, MCU> {
                             if ((group > 0) && !prevSwitchState[index]) {
                                 if (storage::eeprom.groups[group - 1].mode == 0) {
                                     pca::groupStart(group - 1);
+                                    groupCount[group - 1] += 1;
                                 }
                                 else {
                                     pca::groupHoldRampRestore(group - 1);
@@ -196,7 +198,10 @@ struct Devices<Led01, Config, MCU> {
                             const uint8_t group = storage::eeprom.outputs[index].group;
                             if ((group > 0) && prevSwitchState[index]) {
                                 if (storage::eeprom.groups[group - 1].mode == 0) {
-                                    pca::groupStop(group - 1);
+                                    groupCount[group - 1] -= 1;
+                                    if (groupCount[group - 1] == 0) {
+                                        pca::groupStop(group - 1);
+                                    }
                                 }
                                 else {
                                     pca::groupStop(group - 1);
