@@ -148,8 +148,23 @@ struct CrsfCallback {
                 }
                 else if (eeprom.address3 == address) {
                     // group 0-3
-                    // 0-3: single shot
-                    // 4-7: continous
+                    if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set) {
+                        const uint8_t sw = (uint8_t)payload[8];
+                        IO::outl<trace>("# Cmd Set Group: ", address, " sw: ", sw);
+                        switchcallback::setGroup(sw);
+                    }
+                    else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set4) {
+                        const uint16_t sw = (((uint16_t)payload[8]) << 8) + payload[9];
+                        IO::outl<trace>("# Cmd Set4 Group: ", address, " sw: ", sw);
+                        uint8_t sw8 = 0;
+                        for(uint8_t i = 0; i < 8; ++i) {
+                            const uint8_t s = (sw >> (2 * i)) & 0b11;
+                            if (s > 0) {
+                                sw8 |= (1 << i);
+                            }
+                        }
+                        switchcallback::setGroup(sw8);
+                    }
                 }
             }
         }
@@ -206,7 +221,8 @@ private:
         addNode(p, Param_t{.parent = parent2, .type = PType::U8, .name = "PWM", .value_ptr = &eeprom.outputs[index].pwm, .min = 1, .max = 255, .cb = [](const uint8_t v){pca::ledPwm(index, v); return true;}});
         addNode(p, Param_t{.parent = parent2, .type = PType::U8, .name = "Current", .value_ptr = &eeprom.outputs[index].iref, .min = 1, .max = 255, .cb = [](const uint8_t v){pca::ledIRef(index, v); return true;}});
         addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name = "Group", .options = "None;0;1;2;3", .value_ptr = &eeprom.outputs[index].group, .min = 0, .max = 4, .cb = [](const uint8_t v){if (v  == 0) {pca::ledGradationMode(index, false);} else {pca::ledGradationMode(index, true); pca::ledGroup(index, (v - 1));} return true;}});
-        addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name = "Control", .options = "Off;Full;Individual;Group", .value_ptr = &eeprom.outputs[index].control, .min = 0, .max = 3, .cb = [](const uint8_t v){pca::ledControl(index, (v & 0x03)); return true;}});
+        addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name = "Gr Start", .options = "Off;On", .value_ptr = &eeprom.outputs[index].groupStart, .min = 0, .max = 1, .cb = [](const uint8_t){return true;}});
+        addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name = "Control", .options = "Off;Full;Individual;Group", .value_ptr = &eeprom.outputs[index].control, .min = 1, .max = 3, .cb = [](const uint8_t){return true;}});
         addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name = "Test", .options = "Off;On", .min = 0, .max = 1, .cb = [](const uint8_t v){switchcallback::setIndex(index, (v > 0)); return false;}});
     }
     template<uint8_t index>
@@ -216,8 +232,11 @@ private:
         addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name = "Ramp", .options = "Off;Down;Up;Both", .value_ptr = &eeprom.groups[index].ramp, .min = 0, .max = 3, .cb = [](const uint8_t v){pca::groupRamp(index, v); return true;}});
         addNode(p, Param_t{.parent = parent2, .type = PType::U8, .name = "Rate", .value_ptr = &eeprom.groups[index].rate, .min = 0, .max = 63, .cb = [](const uint8_t v){pca::groupRampRate(index, v); return true;}});
         addNode(p, Param_t{.parent = parent2, .type = PType::U8, .name = "Step time", .value_ptr = &eeprom.groups[index].stepTime, .min = 0, .max = 63, .cb = [](const uint8_t v){pca::groupStepTime(index, v); return true;}});
+        addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name = "Hold", .options = "On;Off", .value_ptr = &eeprom.groups[index].hold, .min = 0, .max = 1, .cb = [](const uint8_t v){pca::groupHold(index, (v == 0)); return true;}});
         addNode(p, Param_t{.parent = parent2, .type = PType::U8, .name = "Hold On time", .value_ptr = &eeprom.groups[index].holdOnTime, .min = 0, .max = 7, .cb = [](const uint8_t v){pca::groupHoldOnTime(index, v); return true;}});
         addNode(p, Param_t{.parent = parent2, .type = PType::U8, .name = "Hold Off time", .value_ptr = &eeprom.groups[index].holdOffTime, .min = 0, .max = 7, .cb = [](const uint8_t v){pca::groupHoldOffTime(index, v); return true;}});
+        addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name = "Mode", .options = "Continous;Single", .value_ptr = &eeprom.groups[index].mode, .min = 0, .max = 1, .cb = [](const uint8_t v){pca::groupContinous(index, (v == 0)); return true;}});
+        addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name = "Test", .options = "Off;On", .min = 0, .max = 1, .cb = [](const uint8_t v){switchcallback::setGroupIndex(index, (v > 0)); return false;}});
     }
 #ifdef TEST1
     static inline auto mNameTest = []{
@@ -233,6 +252,8 @@ private:
         addNode(p, Param_t{0, PType::Folder, ""}); // unvisible top folder
         addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
         auto parent = addParent(p, Param_t{0, PType::Folder, "Global"});
+        addNode(p, Param_t{.parent = parent, .type = PType::Sel, .name = "LED Exp.Br.", .options = "Off;On", .value_ptr = &eeprom.use_exp, .min = 0, .max = 1, .cb = [](const uint8_t v){pca::exponentialBrightness(v); return true;}});
+
         addNode(p, Param_t{parent, PType::U8, "Address Out 0-7", nullptr, &eeprom.address1, 0, 255, setAddress});
         addNode(p, Param_t{parent, PType::U8, "Address Out 8-15", nullptr, &eeprom.address2, 0, 255, setAddress});
         addNode(p, Param_t{parent, PType::U8, "Address Grp 0-3", nullptr, &eeprom.address3, 0, 255, setAddress});

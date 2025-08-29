@@ -47,7 +47,24 @@ struct GFSM {
     static inline constexpr External::Tick<systemTimer> debugTicks{500ms};
 
     static inline void update(const bool eepromMode = true) {
+        IO::outl<debug>("# update");
         crsfCallback::callbacks(eepromMode);
+
+        // pca::ledIRef(0, 16);
+        // pca::ledPwm(0, 16);
+        // pca::ledControl(0, 1);
+
+        // pca::groupIRef(0, 255);
+        // pca::groupHoldOnTime(0, 4);
+        // pca::groupHoldOffTime(0, 4);
+        // pca::groupRampUp(0, true);
+        // pca::groupRampDown(0, true);
+        // pca::groupRampRate(0, 1);
+        // pca::groupStepTime(0, 0);
+        // pca::ledGradationMode(0, true);
+        // pca::groupContinous(0, true);
+        // pca::groupStart(0);
+        // pca::exponentialBrightness(true);
     }
     static inline void prop(const uint8_t channel, const uint8_t duty) {
         IO::outl<debug>("# prop: ", channel, " duty: ", duty);
@@ -128,7 +145,7 @@ struct GFSM {
             break;
         case State::RunWithTelemetry:
             mStateTick.on(debugTicks, []{
-                IO::outl<debug>("# ch0: ", crsf_pa::value(0), " psize: ", crsfCallback::numberOfParameters(), " cp: ", crsf_pa::template channelPackages<false>(), " lp: ", crsf_pa::template linkPackages<false>());
+                // IO::outl<debug>("# ch0: ", crsf_pa::value(0), " psize: ", crsfCallback::numberOfParameters(), " cp: ", crsf_pa::template channelPackages<false>(), " lp: ", crsf_pa::template linkPackages<false>());
             });
 #ifdef USE_BUTTON
             if (const auto e = btn::event(); e == btn::Press::Long) {

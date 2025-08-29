@@ -38,7 +38,8 @@ struct EEProm {
         uint8_t pwm = 128;
         uint8_t iref = 128;
         uint8_t group = 0;
-        uint8_t control = 0;
+        uint8_t groupStart = 0;
+        uint8_t control = 1;
         std::array<char, 16> name;
     };
     struct Group {
@@ -46,8 +47,10 @@ struct EEProm {
         uint8_t ramp = 0;
         uint8_t rate = 0;
         uint8_t stepTime = 0;
+        uint8_t hold = 0;
         uint8_t holdOnTime = 1;
         uint8_t holdOffTime = 1;
+        uint8_t mode = 0;
     };
 
     uint8_t magic = EEPROM_MAGIC;
@@ -55,6 +58,8 @@ struct EEProm {
     uint8_t address1 = 0;
     uint8_t address2 = 1;
     uint8_t address3 = 2;
+
+    uint8_t use_exp = 0;
 
 #ifdef USE_EEPROM_TEST
     uint8_t crsf_address = 0xcf;

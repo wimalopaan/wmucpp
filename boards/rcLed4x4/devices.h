@@ -89,7 +89,7 @@ struct Devices<Led01, Config, MCU> {
     struct DebugConfig {
         using pin = debugtx;
         using clock = Devices::clock;
-        static inline constexpr uint16_t bufferSize = 64;
+        static inline constexpr uint16_t bufferSize = 2048;
     };
 #else
     using debug = void;
@@ -143,10 +143,69 @@ struct Devices<Led01, Config, MCU> {
         using crsf = Devices::crsf;
         using storage = Devices::storage;
         using pca = pca9745;
-        using switchcallback = struct {
-                static inline void set(const uint8_t) {
+        using switchcallback = struct swcb {
+                static inline std::array<bool, 16> prevSwitchState{};
+                static inline void setGroupIndex(const uint8_t index, const bool on) {
+                    if (on) {
+                        pca::groupStart(index);
+                    }
+                    else {
+                        pca::groupStop(index);
+                    }
                 }
-                static inline void setIndex(const uint8_t /*index*/, const bool /*on*/) {
+                static inline void setGroup(const uint8_t state8) {
+                    for(uint8_t i = 0; i < 4; ++i) {
+                        if (state8 & (1 << i)) {
+                            pca::groupStart(i);
+                        }
+                        else {
+                            pca::groupStop(i);
+                        }
+                    }
+                }
+                static inline void set(const uint8_t state8) {
+                    for(uint8_t i = 0; i < 8; ++i) {
+                        if (state8 & (1 << i)) {
+                            setIndex(i, true);
+                        }
+                        else {
+                            setIndex(i, false);
+                        }
+                    }
+                }
+                static inline void setIndex(const uint8_t index, const bool on) {
+                    if (on) {
+                        if (storage::eeprom.outputs[index].groupStart > 0) {
+                            const uint8_t group = storage::eeprom.outputs[index].group;
+                            if ((group > 0) && !prevSwitchState[index]) {
+                                if (storage::eeprom.groups[group - 1].mode == 0) {
+                                    pca::groupStart(group - 1);
+                                }
+                                else {
+                                    pca::groupHoldRampRestore(group - 1);
+                                    pca::groupStart(group - 1);
+                                }
+                            }
+                        }
+                        pca::ledControl(index, storage::eeprom.outputs[index].control);
+                        prevSwitchState[index] = true;
+                    }
+                    else {
+                        pca::ledControl(index, 0);
+                        if (storage::eeprom.outputs[index].groupStart > 0) {
+                            const uint8_t group = storage::eeprom.outputs[index].group;
+                            if ((group > 0) && prevSwitchState[index]) {
+                                if (storage::eeprom.groups[group - 1].mode == 0) {
+                                    pca::groupStop(group - 1);
+                                }
+                                else {
+                                    pca::groupStop(group - 1);
+                                    pca::groupClear(group - 1);
+                                }
+                            }
+                        }
+                        prevSwitchState[index] = false;
+                    }
                 }
             };
     };
