@@ -30,7 +30,12 @@ namespace IO {
                 Device::put(c);
             };   
         }
-        
+        template<typename Device>
+        inline constexpr void out_impl(const std::byte& v) {
+            std::array<char, 16> buffer{};
+            std::to_chars(std::begin(buffer), std::end(buffer), uint8_t(v), 16);
+            out_impl<Device>(buffer);
+        }
         template<typename Device, typename T>
         requires ((std::is_signed_v<T> || std::is_unsigned_v<T>) && std::is_integral_v<T>)
         inline constexpr void out_impl(const T& v) {
