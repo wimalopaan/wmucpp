@@ -1,5 +1,13 @@
+* HW
+------
+* lower the Rext value (4k7 -> 1K)
+
 * ToDo
 ------
+* special functions
+** set/inc/dec pwm of all outputs
+** set/inc/dec pwm of all groups
 
 * Done
 ------
+* Set4M Proto

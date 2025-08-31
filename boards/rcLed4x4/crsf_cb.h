@@ -113,57 +113,117 @@ struct CrsfCallback {
         const uint8_t address = (uint8_t)payload[7];
         if ((srcAddress == (uint8_t)RC::Protokoll::Crsf::V4::Address::Handset) && (destAddress >= 0xc0) && (destAddress <= 0xcf)) {
             if (realm == (uint8_t)RC::Protokoll::Crsf::V4::CommandType::Switch) {
-                if (eeprom.address1 == address) {
-                    if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set) {
-                        const uint8_t sw = (uint8_t)payload[8];
-                        IO::outl<trace>("# Cmd Set: ", address, " sw: ", sw);
-                        switchcallback::set(sw);
-                    }
-                    else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set4) {
-                        const uint16_t sw = (((uint16_t)payload[8]) << 8) + payload[9];
-                        IO::outl<trace>("# Cmd Set4: ", address, " sw: ", sw);
-                        uint8_t sw8 = 0;
-                        for(uint8_t i = 0; i < 8; ++i) {
-                            const uint8_t s = (sw >> (2 * i)) & 0b11;
-                            if (s > 0) {
-                                sw8 |= (1 << i);
+                if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set4M) {
+                    const uint8_t count = payload[7];
+                    for(uint8_t i = 0; i < count; ++i) {
+                        const uint8_t swAddress = payload[8 + 3 * i];
+                        const uint16_t sw = (payload[9 + 3 * i] << 8) + payload[10 + 3 * i];
+                        IO::outl<debug>("# Switch set4M: ", i, " adr: ", swAddress);
+                        if (eeprom.address1 == swAddress) {
+                            IO::outl<debug>("# Switch set4M adr: ", swAddress, " v: ", sw);
+                            uint8_t sw8 = 0;
+                            for(uint8_t k = 0; k < 8; ++k) {
+                                const uint8_t s = (sw >> (2 * k)) & 0b11;
+                                if (s > 0) {
+                                    sw8 |= (1 << k);
+                                }
                             }
+                            switchcallback::set(sw8);
                         }
-                        switchcallback::set(sw8);
-                    }
-                    else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Prop) {
-                        const uint8_t ch = (uint8_t)payload[8];
-                        const uint8_t duty = (uint8_t)payload[9];
-                        if constexpr(requires(){switchcallback::prop(ch, duty);}) {
-                            IO::outl<trace>("# Cmd Prop: ", address, " ch: ", ch, " d: ", duty);
-                            switchcallback::prop(ch, duty);
-                        }
-                        else {
-                            IO::outl<trace>("# Cmd Prop: not implemented");
+                        else if (eeprom.address2 == swAddress) {
+                            IO::outl<debug>("# Switch set4M adr: ", swAddress, " v: ", sw);
+                            uint8_t sw8 = 0;
+                            for(uint8_t k = 0; k < 8; ++k) {
+                                const uint8_t s = (sw >> (2 * k)) & 0b11;
+                                if (s > 0) {
+                                    sw8 |= (1 << k);
+                                }
+                            }
+                            switchcallback::set2(sw8);
                         }
                     }
                 }
-                else if (eeprom.address2 == address) {
-                    // out 8-17
-                }
-                else if (eeprom.address3 == address) {
-                    // group 0-3
-                    if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set) {
-                        const uint8_t sw = (uint8_t)payload[8];
-                        IO::outl<trace>("# Cmd Set Group: ", address, " sw: ", sw);
-                        switchcallback::setGroup(sw);
-                    }
-                    else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set4) {
-                        const uint16_t sw = (((uint16_t)payload[8]) << 8) + payload[9];
-                        IO::outl<trace>("# Cmd Set4 Group: ", address, " sw: ", sw);
-                        uint8_t sw8 = 0;
-                        for(uint8_t i = 0; i < 8; ++i) {
-                            const uint8_t s = (sw >> (2 * i)) & 0b11;
-                            if (s > 0) {
-                                sw8 |= (1 << i);
+                else {
+                    if (eeprom.address1 == address) {
+                        if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set) {
+                            const uint8_t sw = (uint8_t)payload[8];
+                            IO::outl<trace>("# Cmd Set: ", address, " sw: ", sw);
+                            switchcallback::set(sw);
+                        }
+                        else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set4) {
+                            const uint16_t sw = (((uint16_t)payload[8]) << 8) + payload[9];
+                            IO::outl<trace>("# Cmd Set4: ", address, " sw: ", sw);
+                            uint8_t sw8 = 0;
+                            for(uint8_t i = 0; i < 8; ++i) {
+                                const uint8_t s = (sw >> (2 * i)) & 0b11;
+                                if (s > 0) {
+                                    sw8 |= (1 << i);
+                                }
+                            }
+                            switchcallback::set(sw8);
+                        }
+                        else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Prop) {
+                            const uint8_t ch = (uint8_t)payload[8];
+                            const uint8_t duty = (uint8_t)payload[9];
+                            if constexpr(requires(){switchcallback::prop(ch, duty);}) {
+                                IO::outl<trace>("# Cmd Prop: ", address, " ch: ", ch, " d: ", duty);
+                                switchcallback::prop(ch, duty);
+                            }
+                            else {
+                                IO::outl<trace>("# Cmd Prop: not implemented");
                             }
                         }
-                        switchcallback::setGroup(sw8);
+                    }
+                    else if (eeprom.address2 == address) {
+                        // out 8-17
+                        if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set) {
+                            const uint8_t sw = (uint8_t)payload[8];
+                            IO::outl<trace>("# Cmd Set: ", address, " sw: ", sw);
+                            switchcallback::set2(sw);
+                        }
+                        else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set4) {
+                            const uint16_t sw = (((uint16_t)payload[8]) << 8) + payload[9];
+                            IO::outl<trace>("# Cmd Set4: ", address, " sw: ", sw);
+                            uint8_t sw8 = 0;
+                            for(uint8_t i = 0; i < 8; ++i) {
+                                const uint8_t s = (sw >> (2 * i)) & 0b11;
+                                if (s > 0) {
+                                    sw8 |= (1 << i);
+                                }
+                            }
+                            switchcallback::set2(sw8);
+                        }
+                        else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Prop) {
+                            const uint8_t ch = (uint8_t)payload[8];
+                            const uint8_t duty = (uint8_t)payload[9];
+                            if constexpr(requires(){switchcallback::prop2(ch, duty);}) {
+                                IO::outl<trace>("# Cmd Prop: ", address, " ch: ", ch, " d: ", duty);
+                                switchcallback::prop2(ch, duty);
+                            }
+                            else {
+                                IO::outl<trace>("# Cmd Prop: not implemented");
+                            }
+                        }
+                    }
+                    else if (eeprom.address3 == address) {
+                        // group 0-3
+                        if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set) {
+                            const uint8_t sw = (uint8_t)payload[8];
+                            IO::outl<trace>("# Cmd Set Group: ", address, " sw: ", sw);
+                            switchcallback::setGroup(sw);
+                        }
+                        else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set4) {
+                            const uint16_t sw = (((uint16_t)payload[8]) << 8) + payload[9];
+                            IO::outl<trace>("# Cmd Set4 Group: ", address, " sw: ", sw);
+                            uint8_t sw8 = 0;
+                            for(uint8_t i = 0; i < 8; ++i) {
+                                const uint8_t s = (sw >> (2 * i)) & 0b11;
+                                if (s > 0) {
+                                    sw8 |= (1 << i);
+                                }
+                            }
+                            switchcallback::setGroup(sw8);
+                        }
                     }
                 }
             }

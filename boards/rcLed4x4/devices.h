@@ -124,7 +124,8 @@ struct Devices<Led01, Config, MCU> {
 
     struct PcaConfig {
         using systemTimer = Devices::systemTimer;
-        using debug = Devices::debug;
+        using debug = void;
+        // using debug = Devices::debug;
         using cs = spi_cs;
         using miso = spi_miso;
         using mosi = spi_mosi;
@@ -171,6 +172,16 @@ struct Devices<Led01, Config, MCU> {
                         }
                         else {
                             setIndex(i, false);
+                        }
+                    }
+                }
+                static inline void set2(const uint8_t state8) {
+                    for(uint8_t i = 0; i < 8; ++i) {
+                        if (state8 & (1 << i)) {
+                            setIndex(i + 8, true);
+                        }
+                        else {
+                            setIndex(i + 8, false);
                         }
                     }
                 }
