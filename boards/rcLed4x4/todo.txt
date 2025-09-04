@@ -12,6 +12,7 @@
 
 * Done
 ------
+* abbreviate texts (for b&w)
 * virtual switches (8)
 ** each: up to 4 real outputs
 * Set4M Proto

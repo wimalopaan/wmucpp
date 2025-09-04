@@ -351,15 +351,15 @@ private:
     static inline params_t params = [] {
         params_t p;
         addNode(p, Param_t{0, PType::Folder, ""}); // unvisible top folder
-        addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
+        addNode(p, Param_t{0, PType::Info, "Ver (HW/SW)", &mVersionString[0]});
         auto parent = addParent(p, Param_t{0, PType::Folder, "Global"});
         addNode(p, Param_t{.parent = parent, .type = PType::Sel, .name = "LED Exp.Br.", .options = "Off;On", .value_ptr = &eeprom.use_exp, .min = 0, .max = 1, .cb = [](const uint8_t v){pca::exponentialBrightness(v); return true;}});
         addNode(p, Param_t{.parent = parent, .type = PType::Sel, .name = "Virtuals", .options = "Off;On", .value_ptr = &eeprom.use_virtuals, .min = 0, .max = 1, .cb = [](const uint8_t){return true;}});
 
-        addNode(p, Param_t{parent, PType::U8, "Address Out 0-7", nullptr, &eeprom.address1, 0, 255, setAddress});
-        addNode(p, Param_t{parent, PType::U8, "Address Out 8-15", nullptr, &eeprom.address2, 0, 255, setAddress});
-        addNode(p, Param_t{parent, PType::U8, "Address Grp 0-3", nullptr, &eeprom.address3, 0, 255, setAddress});
-        addNode(p, Param_t{parent, PType::U8, "Address Virtuals", nullptr, &eeprom.address4, 0, 255, setAddress});
+        addNode(p, Param_t{parent, PType::U8, "Adr Out 0-7", nullptr, &eeprom.address1, 0, 255, setAddress});
+        addNode(p, Param_t{parent, PType::U8, "Adr Out 8-15", nullptr, &eeprom.address2, 0, 255, setAddress});
+        addNode(p, Param_t{parent, PType::U8, "Adr Grp 0-3", nullptr, &eeprom.address3, 0, 255, setAddress});
+        addNode(p, Param_t{parent, PType::U8, "Adr Virtuals", nullptr, &eeprom.address4, 0, 255, setAddress});
 
         addNode(p, Param_t{parent, PType::U8, "CRSF Address", nullptr, &eeprom.crsf_address, 0xc0, 0xcf, [](const uint8_t v){
                                if (!mEepromMode) {
