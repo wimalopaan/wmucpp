@@ -141,6 +141,17 @@ struct CrsfCallback {
                             }
                             switchcallback::set2(sw8);
                         }
+                        else if (eeprom.address4 == swAddress) {
+                            IO::outl<debug>("# Virt set4M adr: ", swAddress, " v: ", sw);
+                            uint8_t sw8 = 0;
+                            for(uint8_t k = 0; k < 8; ++k) {
+                                const uint8_t s = (sw >> (2 * k)) & 0b11;
+                                if (s > 0) {
+                                    sw8 |= (1 << k);
+                                }
+                            }
+                            switchcallback::setVirtual(sw8);
+                        }
                     }
                 }
                 else {
@@ -225,6 +236,27 @@ struct CrsfCallback {
                             switchcallback::setGroup(sw8);
                         }
                     }
+                    else if (eeprom.address4 == address) {
+                        // virtual out 0 - 7
+                        if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set) {
+                            const uint8_t sw = (uint8_t)payload[8];
+                            IO::outl<trace>("# Cmd Virt: ", address, " sw: ", sw);
+                            switchcallback::setVirtual(sw);
+                        }
+                        else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set4) {
+                            const uint16_t sw = (((uint16_t)payload[8]) << 8) + payload[9];
+                            IO::outl<trace>("# Cmd Set4 Virt: ", address, " sw: ", sw);
+                            uint8_t sw8 = 0;
+                            for(uint8_t i = 0; i < 8; ++i) {
+                                const uint8_t s = (sw >> (2 * i)) & 0b11;
+                                if (s > 0) {
+                                    sw8 |= (1 << i);
+                                }
+                            }
+                            switchcallback::setVirtual(sw8);
+                        }
+                    }
+
                 }
             }
         }
@@ -298,6 +330,15 @@ private:
         addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name = "Mode", .options = "Continous;Single", .value_ptr = &eeprom.groups[index].mode, .min = 0, .max = 1, .cb = [](const uint8_t v){pca::groupContinous(index, (v == 0)); return true;}});
         addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name = "Test", .options = "Off;On", .min = 0, .max = 1, .cb = [](const uint8_t v){switchcallback::setGroupIndex(index, (v > 0)); return false;}});
     }
+    template<uint8_t index>
+    static inline constexpr void addVirtual(auto& p, const uint8_t parent, const char* const name) {
+        const uint8_t parent2 = addParent(p, Param_t{parent, PType::Folder, name});
+        addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 0", .value_ptr = &eeprom.virtuals[index].member[0], .min = uint8_t(-1), .max = 15, .cb = [](const uint8_t){return true;}, .def = 0});
+        addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 1", .value_ptr = &eeprom.virtuals[index].member[1], .min = uint8_t(-1), .max = 15, .cb = [](const uint8_t){return true;}, .def = 0});
+        addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 2", .value_ptr = &eeprom.virtuals[index].member[2], .min = uint8_t(-1), .max = 15, .cb = [](const uint8_t){return true;}, .def = 0});
+        addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 3", .value_ptr = &eeprom.virtuals[index].member[3], .min = uint8_t(-1), .max = 15, .cb = [](const uint8_t){return true;}, .def = 0});
+        addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name = "Test", .options = "Off;On", .min = 0, .max = 1, .cb = [](const uint8_t v){switchcallback::setVirtualIndex(index, (v > 0)); return false;}});
+    }
 #ifdef TEST1
     static inline auto mNameTest = []{
         std::array<char, 32> a;
@@ -305,7 +346,7 @@ private:
         return a;
     }();
 #endif
-    using params_t = etl::FixedVector<Param_t, 200>;
+    using params_t = etl::FixedVector<Param_t, 240>;
 
     static inline params_t params = [] {
         params_t p;
@@ -313,10 +354,12 @@ private:
         addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
         auto parent = addParent(p, Param_t{0, PType::Folder, "Global"});
         addNode(p, Param_t{.parent = parent, .type = PType::Sel, .name = "LED Exp.Br.", .options = "Off;On", .value_ptr = &eeprom.use_exp, .min = 0, .max = 1, .cb = [](const uint8_t v){pca::exponentialBrightness(v); return true;}});
+        addNode(p, Param_t{.parent = parent, .type = PType::Sel, .name = "Virtuals", .options = "Off;On", .value_ptr = &eeprom.use_virtuals, .min = 0, .max = 1, .cb = [](const uint8_t){return true;}});
 
         addNode(p, Param_t{parent, PType::U8, "Address Out 0-7", nullptr, &eeprom.address1, 0, 255, setAddress});
         addNode(p, Param_t{parent, PType::U8, "Address Out 8-15", nullptr, &eeprom.address2, 0, 255, setAddress});
         addNode(p, Param_t{parent, PType::U8, "Address Grp 0-3", nullptr, &eeprom.address3, 0, 255, setAddress});
+        addNode(p, Param_t{parent, PType::U8, "Address Virtuals", nullptr, &eeprom.address4, 0, 255, setAddress});
 
         addNode(p, Param_t{parent, PType::U8, "CRSF Address", nullptr, &eeprom.crsf_address, 0xc0, 0xcf, [](const uint8_t v){
                                if (!mEepromMode) {
@@ -330,33 +373,45 @@ private:
         addNode(p, Param_t{parent, PType::U8, "Response Slot", nullptr, &eeprom.response_slot, 0, 15, [](const uint8_t v){crsf::output::telemetrySlot(v); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Config resp.", "Button;Allways on", &eeprom.telemetry, 0, 1});
 
-        parent = addParent(p, Param_t{0, PType::Folder, "Group 0"});
+        parent = addParent(p, Param_t{0, PType::Folder, "Outputs 0-3"});
         addOutput<0>(p, parent, "Output 0");
         addOutput<1>(p, parent, "Output 1");
         addOutput<2>(p, parent, "Output 2");
         addOutput<3>(p, parent, "Output 3");
-        addGroup<0>(p, parent, "Group 0");
 
-        parent = addParent(p, Param_t{0, PType::Folder, "Group 1"});
+        parent = addParent(p, Param_t{0, PType::Folder, "Outputs 4-7"});
         addOutput<4>(p, parent, "Output 4");
         addOutput<5>(p, parent, "Output 5");
         addOutput<6>(p, parent, "Output 6");
         addOutput<7>(p, parent, "Output 7");
-        addGroup<1>(p, parent, "Group 1");
 
-        parent = addParent(p, Param_t{0, PType::Folder, "Group 2"});
+        parent = addParent(p, Param_t{0, PType::Folder, "Outputs 8-11"});
         addOutput<8>(p, parent, "Output 8");
         addOutput<9>(p, parent, "Output 9");
         addOutput<10>(p, parent, "Output 10");
         addOutput<11>(p, parent, "Output 11");
-        addGroup<2>(p, parent, "Group 2");
 
-        parent = addParent(p, Param_t{0, PType::Folder, "Group 3"});
+        parent = addParent(p, Param_t{0, PType::Folder, "Outputs 12-15"});
         addOutput<12>(p, parent, "Output 12");
         addOutput<13>(p, parent, "Output 13");
         addOutput<14>(p, parent, "Output 14");
         addOutput<15>(p, parent, "Output 15");
+
+        parent = addParent(p, Param_t{0, PType::Folder, "Groups"});
+        addGroup<0>(p, parent, "Group 0");
+        addGroup<1>(p, parent, "Group 1");
+        addGroup<2>(p, parent, "Group 2");
         addGroup<3>(p, parent, "Group 3");
+
+        parent = addParent(p, Param_t{0, PType::Folder, "Virtuals"});
+        addVirtual<0>(p, parent, "Virtual 0");
+        addVirtual<1>(p, parent, "Virtual 1");
+        addVirtual<2>(p, parent, "Virtual 2");
+        addVirtual<3>(p, parent, "Virtual 3");
+        addVirtual<4>(p, parent, "Virtual 4");
+        addVirtual<5>(p, parent, "Virtual 5");
+        addVirtual<6>(p, parent, "Virtual 6");
+        addVirtual<7>(p, parent, "Virtual 7");
 
         if (p.size() >= p.capacity()) {
             void fp();

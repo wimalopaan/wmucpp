@@ -165,23 +165,67 @@ struct Devices<Led01, Config, MCU> {
                         }
                     }
                 }
+                static inline void setVirtualIndex(const uint8_t i, const bool on) {
+                    if (on) {
+                        for(uint8_t k = 0; k < storage::eeprom.virtuals[i].member.size(); ++k) {
+                            if (storage::eeprom.virtuals[i].member[k] >= 0) {
+                                setIndex(storage::eeprom.virtuals[i].member[k], true);
+                            }
+                        }
+                    }
+                    else {
+                        for(uint8_t k = 0; k < storage::eeprom.virtuals[i].member.size(); ++k) {
+                            if (storage::eeprom.virtuals[i].member[k] >= 0) {
+                                setIndex(storage::eeprom.virtuals[i].member[k], false);
+                            }
+                        }
+                    }
+                }
+                static inline void setVirtual(const uint8_t state8) {
+                    if (storage::eeprom.use_virtuals > 0) {
+                        for(uint8_t i = 0; i < 8; ++i) {
+                            if (state8 & (1 << i)) {
+                                setVirtualIndex(i, true);
+                            }
+                            else {
+                                setVirtualIndex(i, false);
+                            }
+                        }
+                    }
+                }
+                static inline bool isMemberOfVirtual(const uint8_t i) {
+                    for(uint8_t v = 0; v < storage::eeprom.virtuals.size(); ++v) {
+                        for(uint8_t k = 0; k < storage::eeprom.virtuals[v].member.size(); ++k) {
+                            if (i == storage::eeprom.virtuals[v].member[k]) {
+                                return true;
+                            }
+                        }
+                    }
+                    return false;
+                }
                 static inline void set(const uint8_t state8) {
                     for(uint8_t i = 0; i < 8; ++i) {
-                        if (state8 & (1 << i)) {
-                            setIndex(i, true);
-                        }
-                        else {
-                            setIndex(i, false);
+                        const bool use = (storage::eeprom.use_virtuals == 0) || !isMemberOfVirtual(i);
+                        if (use) {
+                            if (state8 & (1 << i)) {
+                                setIndex(i, true);
+                            }
+                            else {
+                                setIndex(i, false);
+                            }
                         }
                     }
                 }
                 static inline void set2(const uint8_t state8) {
                     for(uint8_t i = 0; i < 8; ++i) {
-                        if (state8 & (1 << i)) {
-                            setIndex(i + 8, true);
-                        }
-                        else {
-                            setIndex(i + 8, false);
+                        const bool use = (storage::eeprom.use_virtuals == 0) || !isMemberOfVirtual(i + 8);
+                        if (use) {
+                            if (state8 & (1 << i)) {
+                                setIndex(i + 8, true);
+                            }
+                            else {
+                                setIndex(i + 8, false);
+                            }
                         }
                     }
                 }

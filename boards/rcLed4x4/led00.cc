@@ -27,7 +27,7 @@
 #define NDEBUG // do not change: dev option
 
 #define HW_VERSION 1
-#define SW_VERSION 2
+#define SW_VERSION 4
 
 #include <cstdint>
 #include <array>

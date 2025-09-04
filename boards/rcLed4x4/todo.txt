@@ -4,10 +4,17 @@
 
 * ToDo
 ------
+* group: on/off single ramps
+* implement 4-state switches (SET4 / SET4M proto) -> LED states (off, full, individual, group)
 * special functions
 ** set/inc/dec pwm of all outputs
 ** set/inc/dec pwm of all groups
 
 * Done
 ------
+* virtual switches (8)
+** each: up to 4 real outputs
 * Set4M Proto
+* menu structure
+** socket0: led 0-3, socket1: led 4-7, socket2: led 8-11, socket3: led 12-15
+** groups: group0, group1, group2, group3

@@ -52,14 +52,19 @@ struct EEProm {
         uint8_t holdOffTime = 1;
         uint8_t mode = 0;
     };
+    struct Virtual {
+        std::array<uint8_t, 4> member{uint8_t(-1), uint8_t(-1), uint8_t(-1), uint8_t(-1)};
+    };
 
     uint8_t magic = EEPROM_MAGIC;
 
-    uint8_t address1 = 0;
-    uint8_t address2 = 1;
-    uint8_t address3 = 2;
+    uint8_t address1 = 0; // switches 0 - 7
+    uint8_t address2 = 1; // switches 8 - 15
+    uint8_t address3 = 2; // groups (whatever that will mean in the future)
+    uint8_t address4 = 3; // virtual switches
 
     uint8_t use_exp = 0;
+    uint8_t use_virtuals = 0;
 
 #ifdef USE_EEPROM_TEST
     uint8_t crsf_address = 0xcf;
@@ -76,6 +81,7 @@ struct EEProm {
 
     std::array<Output, 16> outputs{};
     std::array<Group,  4> groups{};
+    std::array<Virtual, 8> virtuals{};
 };
 static_assert(sizeof(EEProm) < 2048);
 
