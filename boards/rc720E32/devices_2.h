@@ -558,6 +558,7 @@ struct Devices<SW01, Config, MCU> {
         using bluetooth = Devices::bt;
         using esc1_slave = Devices::esc1_slave;
         using esc2_slave = Devices::esc2_slave;
+        using ws2812b_1 = Devices::ws2812b_1;
         using tp = void;
     };
 
@@ -600,7 +601,7 @@ struct Devices<SW01, Config, MCU> {
         using timer = systemTimer;
         using clock = Devices::clock;
         using tp = void;
-        using debug = Devices::debug;
+        using debug = void;
         using storage = Devices::storage;
     };
     struct Srv1SPortCallbackConfig;

@@ -28,6 +28,7 @@ namespace External {
 
         static inline constexpr uint8_t channel = Config::channel;
         static inline constexpr uint8_t numLeds = Config::numLeds;
+        static_assert(numLeds <= 64);
 
         static inline constexpr Units::hertz frequency{800'000};
         static inline constexpr uint16_t period = (clock::config::frequency.value / frequency.value); // 1250ns
@@ -119,6 +120,25 @@ namespace External {
                 mColors[led] = color;
             }
         }
+        static inline void on(const uint8_t led, const bool on) {
+            if (led < mColors.size()) {
+                const uint64_t mask = uint64_t{1} << led;
+                if (on) {
+                    mLedState |= mask;
+                }
+                else {
+                    mLedState &= ~mask;
+                }
+                IO::outl<debug>("# WS2812 on: ", led, " ", (uint8_t)on, " ", mLedState, " ", (uint8_t)isOn(led));
+            }
+        }
+        static inline bool isOn(const uint8_t led) {
+            if (led < mColors.size()) {
+                const uint64_t mask = uint64_t{1} << led;
+                return mLedState & mask;
+            }
+            return false;
+        }
         static inline void periodic() {
             switch(mState) {
                 case State::Idle:
@@ -172,35 +192,48 @@ namespace External {
         static inline void fillData() {
             uint16_t i = 0;
             for(uint16_t l = 0; l < mColors.size(); ++l) {
-                uint8_t mask = 1;
-                for(uint8_t b = 0; b < 8; ++b) {
-                    if (mColors[l].red & mask) {
-                        mData[i++] = t_high;
+                if (isOn(l)) {
+                    uint8_t mask = 1;
+                    for(uint8_t b = 0; b < 8; ++b) {
+                        if (mColors[l].red & mask) {
+                            mData[i++] = t_high;
+                        }
+                        else {
+                            mData[i++] = t_low;
+                        }
+                        mask <<= 1;
                     }
-                    else {
-                        mData[i++] = t_low;
+                    mask = 1;
+                    for(uint8_t b = 0; b < 8; ++b) {
+                        if (mColors[l].green & mask) {
+                            mData[i++] = t_high;
+                        }
+                        else {
+                            mData[i++] = t_low;
+                        }
+                        mask <<= 1;
                     }
-                    mask <<= 1;
+                    mask = 1;
+                    for(uint8_t b = 0; b < 8; ++b) {
+                        if (mColors[l].blue & mask) {
+                            mData[i++] = t_high;
+                        }
+                        else {
+                            mData[i++] = t_low;
+                        }
+                        mask <<= 1;
+                    }
                 }
-                mask = 1;
-                for(uint8_t b = 0; b < 8; ++b) {
-                    if (mColors[l].green & mask) {
-                        mData[i++] = t_high;
-                    }
-                    else {
+                else {
+                    for(uint8_t b = 0; b < 8; ++b) {
                         mData[i++] = t_low;
                     }
-                    mask <<= 1;
-                }
-                mask = 1;
-                for(uint8_t b = 0; b < 8; ++b) {
-                    if (mColors[l].blue & mask) {
-                        mData[i++] = t_high;
-                    }
-                    else {
+                    for(uint8_t b = 0; b < 8; ++b) {
                         mData[i++] = t_low;
                     }
-                    mask <<= 1;
+                    for(uint8_t b = 0; b < 8; ++b) {
+                        mData[i++] = t_low;
+                    }
                 }
             }
         }
@@ -222,5 +255,6 @@ namespace External {
         static inline bool mActive = false;
         static inline std::array<ColorRGB, numLeds> mColors{};
         static inline std::array<volatile value_type, 3 * (numLeds + 1) * 8> mData{};
+        static inline uint64_t mLedState{};
     };
 }

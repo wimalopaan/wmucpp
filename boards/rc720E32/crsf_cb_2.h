@@ -50,6 +50,8 @@ struct CrsfCallback {
     using compass = Config::compass;
     using telemetry = Config::telemetry;
 
+    using ws2812b_1 = Config::ws2812b_1;
+
     using messageBuffer = Config::messageBuffer;
 
     using src = Config::src;
@@ -186,6 +188,8 @@ struct CrsfCallback {
                         else {
                             const uint8_t minAdr = eeprom.switchAddress;
                             const uint8_t maxAdr = eeprom.switchAddress + 7;
+                            const uint8_t minLedAddress = eeprom.switchAddress + 8;
+                            const uint8_t maxLedAddress = eeprom.switchAddress + 8 + 7;
                             if ((swAddress >= minAdr) && (swAddress <= maxAdr)) {
                                 IO::outl<debug>("# Switch set4M adr: ", swAddress, " v: ", sw);
                                 const uint8_t swGroup = swAddress - minAdr;
@@ -194,6 +198,15 @@ struct CrsfCallback {
                                     const uint8_t s = (sw >> (2 * k)) & 0b11;
                                     mpx1::set(n, s);
                                     sumdv3::setSwitch(n, s);
+                                }
+                            }
+                            else if ((swAddress >= minLedAddress) && (swAddress <= maxLedAddress)) {
+                                IO::outl<debug>("# Switch set4M adr: ", swAddress, " v: ", sw);
+                                const uint8_t swGroup = swAddress - minLedAddress;
+                                for(uint8_t k = 0; k < 8; ++k) {
+                                    const uint8_t n = swGroup * 8 + k;
+                                    const uint8_t s = (sw >> (2 * k)) & 0b11;
+                                    ws2812b_1::on(n, s);
                                 }
                             }
                         }
@@ -224,6 +237,23 @@ struct CrsfCallback {
                             const uint8_t s = (swSwitches >> i) & 0b01;
                             mpx1::set(n, s);
                             sumdv3::setSwitch(n, s);
+                        }
+                    }
+                }
+                else if (cmd == 0x0a) { // setRGB
+                    const uint8_t minLedAddress = eeprom.switchAddress + 8;
+                    const uint8_t maxLedAddress = eeprom.switchAddress + 8 + 7;
+                    const uint8_t swAddress = data[7];
+                    const uint8_t count = data[8];
+                    if ((swAddress >= minLedAddress) && (swAddress <= maxLedAddress) && (count <= 8)) {
+                        IO::outl<debug>("# Switch setRGB address: ", swAddress);
+                        const uint8_t swGroup = (swAddress - minLedAddress) & 0x07;;
+                        for(uint8_t i = 0; i < count; ++i) {
+                            const uint8_t out = (data[9 + 2 * i] >> 4) & 0x07;
+                            const uint8_t r = ((data[9 + 2 * i]) & 0x0f) << 4;
+                            const uint8_t g = ((data[10 + 2 * i] >> 4) & 0x0f) << 4;
+                            const uint8_t b = ((data[10 + 2 * i]) & 0x0f) << 4;
+                            ws2812b_1::set(swGroup * 8 + out, typename ws2812b_1::ColorRGB{r, g, b});
                         }
                     }
                 }

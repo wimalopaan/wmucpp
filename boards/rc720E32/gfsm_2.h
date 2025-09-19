@@ -251,6 +251,7 @@ struct GFSM {
             });
             (++mUpdateTick).on(updateTicks, []{
                 channelCallback::update();
+                ws2812b_1::sendColors();
             });
             (++mTelemetryTick).on(telemetryTicks, []{
                 telemetry::push((uint8_t)RC::Protokoll::Crsf::V4::Type::Gps, [](auto& d){
@@ -278,10 +279,6 @@ struct GFSM {
                 }
             });
             mStateTick.on(debugTicks, []{
-                for(uint8_t i = 0; i < 64; ++i) {
-                    ws2812b_1::set(i, typename ws2812b_1::ColorRGB{2 * i, 12, 12});
-                }
-                ws2812b_1::sendColors();
                 // IO::outl<debug>("# x: ", compass::x(), " y: ", compass::y(), " z: ", compass::z(), " ax: ", compass::accX(), " ay: ", compass::accY(), " az: ", compass::accZ());
                 // const auto prf = compass::pitchRoll();
                 // IO::outl<debug>("# pf: ", (int16_t)(prf.first * 1000), " rf: ", (int16_t)(prf.second * 1000));
