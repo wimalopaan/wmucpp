@@ -27,10 +27,9 @@ Ideas
 
 Prio 0
 ------
+* test WS2812B output on other than srv1
+* extend set-proto to all rgb-led addresses
 * use std::variant<> instead of heap-allocated wrapper objects
-* support addressable LEDs (WS1812, APA102) (use timer/dma)
-** ws2812B
-** switch color protocol (setRGB)
 * add s.port master
 * telemetry transfor from s.port-masters to s.port-aux and to crsf-telemetry
 * crsf relay for ELRS-relay (from rcDesk32)
@@ -100,6 +99,9 @@ Done bugs:
 
 Done:
 ------
+* support addressable LEDs (WS1812, APA102) (use timer/dma)
+** ws2812B
+** switch color protocol (setRGB)
 * add exti-slave on fb1,tlm1 and fb2,tlm2 (to duplicate sbus on esc1,esc2)
 * add sbus on esc1, esc2
 * bluetooth on servo connector
