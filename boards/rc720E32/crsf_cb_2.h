@@ -213,6 +213,7 @@ struct CrsfCallback {
                     }
                 }
                 else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set4) {
+                    const uint8_t minLedAddress = eeprom.switchAddress + 8;
                     const uint8_t swAddress = data[7];
                     const uint16_t sw = (data[8] << 8) + data[9];
                     if (eeprom.switchAddress == swAddress) {
@@ -221,6 +222,13 @@ struct CrsfCallback {
                             const uint8_t s = (sw >> (2 * i)) & 0b11;
                             mpx1::set(i, s);
                             sumdv3::setSwitch(i, s);
+                        }
+                    }
+                    else if (minLedAddress == swAddress) {
+                        IO::outl<debug>("# Switch set4 address: ", swAddress, " v: ", sw);
+                        for(uint8_t i = 0; i < 8; ++i) {
+                            const uint8_t s = (sw >> (2 * i)) & 0b11;
+                            ws2812b_1::on(i, s);
                         }
                     }
                 }
