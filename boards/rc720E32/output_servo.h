@@ -39,6 +39,8 @@ struct ServoOutputs {
     using servo1_mpx = devs::ppm_mpx1;
     // using servo2_mpx = devs::ppm_mpx2;
 
+    using ws2812b_1 = devs::ws2812b_1;
+
     template<uint8_t N>
     static inline void offset(const uint16_t o) {
         static_assert(N <= 1);
@@ -53,15 +55,12 @@ struct ServoOutputs {
             servos[N]->speed(s);
         }
     }
-    static inline void update(/*const uint8_t n*/) {
+    static inline void update() {
         for(const auto& s : servos) {
             if (s) {
                 s->update();
             }
         }
-        // if ((n < servos.size()) && servos[n]) {
-        //     servos[n]->update();
-        // }
     }
     static inline int8_t turns(const uint8_t n) {
         if ((n < servos.size()) && servos[n]) {
@@ -103,6 +102,9 @@ struct ServoOutputs {
         using srv_sport = std::conditional_t<(N == 0), Servo<servo1_sport>, Servo<servo2_sport>>;
         // using srv_mpx_t = std::conditional_t<(N == 0), Servo<servo1_mpx>, Servo<servo2_mpx>>;
         using srv_mpx_t = Servo<servo1_mpx>;
+
+        using srv_ws2812b_t = Servo<ws2812b_1>;
+
         static_assert(sizeof(srv_ft_t) == sizeof(srv_ws_t));
         static_assert(sizeof(srv_ft_t) == sizeof(srv_mpx_t));
 
@@ -133,7 +135,13 @@ struct ServoOutputs {
                 servos[N] = std::make_unique<srv_mpx_t>();
             }
             break;
-        case 6: // none
+        case 6: // ws2812
+            servos[N] = nullptr;
+            if constexpr(N == 0) {
+                servos[N] = std::make_unique<srv_ws2812b_t>();
+            }
+            break;
+        case 7: // none
             servos[N] = nullptr;
             break;
         default:

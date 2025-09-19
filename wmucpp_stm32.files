@@ -96,6 +96,7 @@ boards/rc720E32/util.h
 boards/rc720E32/uuid.h
 boards/rc720E32/waveshare.h
 boards/rc720E32/waveshare_2.h
+boards/rc720E32/ws2812b.h
 boards/rcBdc/G431Drv8245_01/Makefile
 boards/rcBdc/G431Drv8245_01/cmsis.h
 boards/rcBdc/G431Drv8245_01/comparator.h
@@ -310,6 +311,9 @@ host/bdc/testDSP01.cc
 host/gps/Makefile
 host/gps/test.cc
 host/sbus_decode.cc
+host/tools/rdiv.cc
+host/tools/rswitch.cc
+host/tools/rtsdtr.c
 include0/config.h
 include0/etl/algorithm.h
 include0/etl/bitfield.h

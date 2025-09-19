@@ -23,14 +23,20 @@ Bugs
 
 Ideas
 -----
+* SBUS2 (32 channels): https://github.com/iNavFlight/inav/pull/10270
 
 Prio 0
 ------
+* use std::variant<> instead of heap-allocated wrapper objects
+* support addressable LEDs (WS1812, APA102) (use timer/dma)
+** ws2812B
+** switch color protocol (setRGB)
 * add s.port master
 * telemetry transfor from s.port-masters to s.port-aux and to crsf-telemetry
 * crsf relay for ELRS-relay (from rcDesk32)
 * EByte E32-170T30D relay mode
 * SumDv3: option to swap ch1-16 and ch17-32
+* support addressable LEDs like WS1812 / APA102 (as multiswitch)
 * add mcp23017 / TLC59108(F) support for switch output
 * add SBus-out on servo/esc outputs
 * for SBus-out: selectable range: 1-16 or 17-32 (requires crsfch.lua on radio)

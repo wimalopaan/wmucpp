@@ -436,7 +436,7 @@ private:
             hide(i, b);
         }
     }
-    using params_t = etl::FixedVector<Param_t, 200>;
+    using params_t = etl::FixedVector<Param_t, 255>;
     static inline params_t params = []{
         params_t p;
         addNode(p, Param_t{0, PType::Folder, ""});
@@ -461,7 +461,7 @@ private:
         addNode(p, Param_t{parent, PType::U8, "Schottel 2: l/r", nullptr, &eeprom.channels[1].second, 0, 15, [](const store_t){return true;}});
 
         parent = addParent(p, Param_t{0, PType::Folder, "Outputs"});
-        addNode(p, Param_t{parent, PType::Sel, "Srv1 Out", "PWM/Analog;PWM/PWM;Serial/WaveShare;PWM/None;S.Port-Master/None;MultiSwitch-Graupner-A;None", &eeprom.out_mode_srv[0], 0, 6, [](const store_t s){servos::template servo<0>(s); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Srv1 Out", "PWM/Analog;PWM/PWM;Serial/WaveShare;PWM/None;S.Port-Master/None;MultiSwitch-Graupner-A;WS2812B;None", &eeprom.out_mode_srv[0], 0, 7, [](const store_t s){servos::template servo<0>(s); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Srv1 Fb", "Analog;PWM;WaveShare;None;None;None;None", &eeprom.out_mode_srv[0], 0, 6});
 #ifdef ESCAPE32_ASCII
         addNode(p, Param_t{parent, PType::Sel, "Esc1 Out", "PWM/-;ESCape32/Serial;ESCape32/Ascii;VEsc/Serial;SBus;None", &eeprom.out_mode_esc[0], 0, 5, [](const store_t s){escs::template esc<0>(s); if (s == 2) {hide(mESCape321Folder, mESCape321End, false);} else {hide(mESCape321Folder, mESCape321End, true);} return true;}});
@@ -509,16 +509,16 @@ private:
         }(std::make_index_sequence<esc32ascii_1::params().size()>{});
         mESCape321End = p.size() - 1;
 
-        // parent = addParent(p, Param_t{0, PType(PType::Folder | PType::Hidden), "ESCape32 2"});
-        // mESCape322Folder = parent;
-        // addNode(p, Param_t{parent, PType::Command, "Beep", nullptr, nullptr, 0, 0, [](const store_t){esc32ascii_1::beep(); return false;}});
-        // addNode(p, Param_t{parent, PType::Command, "Save", nullptr, nullptr, 0, 0, [](const store_t){esc32ascii_1::save(); return false;}});
+        parent = addParent(p, Param_t{0, PType(PType::Folder | PType::Hidden), "ESCape32 2"});
+        mESCape322Folder = parent;
+        addNode(p, Param_t{parent, PType::Command, "Beep", nullptr, nullptr, 0, 0, [](const store_t){esc32ascii_1::beep(); return false;}});
+        addNode(p, Param_t{parent, PType::Command, "Save", nullptr, nullptr, 0, 0, [](const store_t){esc32ascii_1::save(); return false;}});
 
-        // [&]<size_t... II>(std::integer_sequence<size_t, II...>){
-        //     (addNode(p, Param_t{parent, PType::U16, esc32ascii_2::params()[II].name, nullptr, &esc32ascii_2::params()[II].value, esc32ascii_2::params()[II].min, esc32ascii_2::params()[II].max, [](const store_t v){esc32ascii_2::setParam(II, v); return false;}}), ...);
-        // }(std::make_index_sequence<esc32ascii_2::params().size()>{});
+        [&]<size_t... II>(std::integer_sequence<size_t, II...>){
+            (addNode(p, Param_t{parent, PType::U16, esc32ascii_2::params()[II].name, nullptr, &esc32ascii_2::params()[II].value, esc32ascii_2::params()[II].min, esc32ascii_2::params()[II].max, [](const store_t v){esc32ascii_2::setParam(II, v); return false;}}), ...);
+        }(std::make_index_sequence<esc32ascii_2::params().size()>{});
 
-        // mESCape322End = p.size() - 1;
+        mESCape322End = p.size() - 1;
 #endif
 
 #ifdef SERVO_CALIBRATION

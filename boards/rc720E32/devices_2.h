@@ -75,7 +75,7 @@
 #include "qmc5883l.h"
 #include "mpu6050.h"
 #include "bluetooth/jdy10.h"
-
+#include "ws2812b.h"
 
 template<typename Config>
 struct SPortTelemetryCallback {
@@ -218,6 +218,9 @@ struct Devices<SW01, Config, MCU> {
     using srv1_pin = Mcu::Stm::Pin<gpiob, 0, MCU>;
     using pwm3 = Mcu::Stm::V2::Pwm::Servo<3, clock>;
     using srv1_pwm = PwmAdapter<pwm3, srv1_pin, 3, storage, void>;
+
+    struct WS2812B_Config_1;
+    using ws2812b_1 = External::WS2812B<3, WS2812B_Config_1, MCU>;
 
     struct WS1Config;
     using srv1_waveshare = External::WaveShare::V2::Servo<5, WS1Config, MCU>;
@@ -587,6 +590,17 @@ struct Devices<SW01, Config, MCU> {
         using clk = clock;
         using tp = void;
         using dbg = void;
+        using storage = Devices::storage;
+    };
+    struct WS2812B_Config_1 {
+        using pin = srv1_pin;
+        static inline constexpr uint8_t channel = 3;
+        static inline constexpr uint8_t numLeds = 64;
+        using dmaChWComponent = srv1DmaChannelComponent;
+        using timer = systemTimer;
+        using clock = Devices::clock;
+        using tp = void;
+        using debug = Devices::debug;
         using storage = Devices::storage;
     };
     struct Srv1SPortCallbackConfig;

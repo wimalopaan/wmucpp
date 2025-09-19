@@ -75,6 +75,8 @@ struct GFSM {
     using bt = devs::bt;
     using telem_bt = devs::telem_bt;
 
+    using ws2812b_1 = devs::ws2812b_1;
+
     struct CalibClient {
         static inline void update() {
             event(Event::CompassCalibUpdate);
@@ -276,6 +278,10 @@ struct GFSM {
                 }
             });
             mStateTick.on(debugTicks, []{
+                for(uint8_t i = 0; i < 64; ++i) {
+                    ws2812b_1::set(i, typename ws2812b_1::ColorRGB{2 * i, 12, 12});
+                }
+                ws2812b_1::sendColors();
                 // IO::outl<debug>("# x: ", compass::x(), " y: ", compass::y(), " z: ", compass::z(), " ax: ", compass::accX(), " ay: ", compass::accY(), " az: ", compass::accZ());
                 // const auto prf = compass::pitchRoll();
                 // IO::outl<debug>("# pf: ", (int16_t)(prf.first * 1000), " rf: ", (int16_t)(prf.second * 1000));

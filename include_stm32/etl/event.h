@@ -31,6 +31,16 @@ namespace etl {
             }
             Event<T>& mEvent;
         };
+        struct OrEventVol {
+            explicit OrEventVol(volatile Event<T>& e) : mEvent{e}{}
+            OrEvent thenOn(const T which, const auto f) {
+                if (mEvent.is(which)) {
+                    f();
+                }
+                return OrEvent{mEvent};
+            }
+            volatile Event<T>& mEvent;
+        };
 
         void operator=(const T e) volatile {
             mEvent = e;
@@ -43,6 +53,12 @@ namespace etl {
                 f();
             }
             return OrEvent{*this};
+        }
+        OrEventVol on(const T which, const auto f) volatile {
+            if (is(which)) {
+                f();
+            }
+            return OrEventVol{*this};
         }
         bool is(const T which) {
             if (mEvent == which) {

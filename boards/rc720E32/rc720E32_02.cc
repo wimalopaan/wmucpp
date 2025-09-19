@@ -1,4 +1,3 @@
-#define USE_MCU_STM_V3
 /*
  * WMuCpp - Bare Metal C++
  * Copyright (C) 2016 - 2025 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
@@ -97,8 +96,8 @@ int main() {
     NVIC_EnableIRQ(DMA1_Channel2_3_IRQn);
     NVIC_SetPriority(DMA1_Channel2_3_IRQn, defaultIntPrio);
 
-    // NVIC_EnableIRQ(DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQn);
-    // NVIC_SetPriority(DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQn, defaultIntPrio);
+    NVIC_EnableIRQ(DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQn);
+    NVIC_SetPriority(DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQn, defaultIntPrio);
 
     NVIC_EnableIRQ(ADC1_COMP_IRQn);
     NVIC_SetPriority(ADC1_COMP_IRQn, defaultIntPrio);
@@ -171,8 +170,13 @@ void DMA1_Channel2_3_IRQHandler() {
     adcDma::onTransferComplete([]{
     });
 }
-// void DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQHandler() {
-// }
+void DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQHandler() {
+    using ws2812b_1 = devs::ws2812b_1;
+    using ws2812b_1_dma = ws2812b_1::dmaChW;
+    static_assert(ws2812b_1_dma::number == 4);
+    ws2812b_1::Isr::onTransferComplete([]{
+    });
+}
 void USART2_LPUART2_IRQHandler(){
     {
         using esc32_1 = devs::esc32_1;
