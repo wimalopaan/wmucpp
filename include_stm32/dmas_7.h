@@ -82,4 +82,21 @@ namespace Mcu::Stm {
         static inline constexpr uintptr_t mux = DMAMUX1_Channel11_BASE;
     };
 #endif
+    template<>
+    struct Address<Mcu::Components::DmaRequestGenerator<0>> {
+        static inline constexpr uintptr_t value = DMAMUX1_RequestGenerator0_BASE;
+    };
+    template<>
+    struct Address<Mcu::Components::DmaRequestGenerator<1>> {
+        static inline constexpr uintptr_t value = DMAMUX1_RequestGenerator1_BASE;
+    };
+    template<>
+    struct Address<Mcu::Components::DmaRequestGenerator<2>> {
+        static inline constexpr uintptr_t value = DMAMUX1_RequestGenerator2_BASE;
+    };
+    template<>
+    struct Address<Mcu::Components::DmaRequestGenerator<3>> {
+        static inline constexpr uintptr_t value = DMAMUX1_RequestGenerator3_BASE;
+    };
+
 }

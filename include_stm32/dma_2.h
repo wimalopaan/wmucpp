@@ -34,6 +34,21 @@ namespace Mcu::Stm {
     namespace Dma {
         namespace V2 {
             template<uint8_t N, typename Config, typename MCU = DefaultMcu>
+            struct RequestGenerator {
+                static_assert((N >= 0) && (N < 4));
+                static_assert(Config::count >= 1);
+                using component_t = Mcu::Components::DmaRequestGenerator<N>;
+                static inline /*constexpr */ DMAMUX_RequestGen_TypeDef* const mcuDmaMuxRegGen = reinterpret_cast<DMAMUX_RequestGen_TypeDef*>(Mcu::Stm::Address<component_t>::value);
+                static inline constexpr uint8_t mux = N + 1;
+
+                static inline void init() {
+                    mcuDmaMuxRegGen->RGCR = ((Config::count - 1)<< DMAMUX_RGxCR_GNBREQ_Pos) |
+                            (0b10 << DMAMUX_RGxCR_GPOL_Pos) |
+                            (Config::trg << DMAMUX_RGxCR_SIG_ID_Pos) |
+                            DMAMUX_RGxCR_GE;
+                }
+            };
+            template<uint8_t N, typename Config, typename MCU = DefaultMcu>
             struct Channel {
                 static_assert((N >= 1) && (N <= 8));
                 using controller = Config::controller;
@@ -41,6 +56,7 @@ namespace Mcu::Stm {
                 using contr_comp_t = controller::component_t;
                 using component_t = Mcu::Components::DmaChannel<contr_comp_t, N>;
                 using value_t = Config::value_t;
+                using debug = Config::debug;
 
                 static inline /*constexpr */ DMA_Channel_TypeDef* const mcuDmaChannel = reinterpret_cast<DMA_Channel_TypeDef*>(Mcu::Stm::Address<component_t>::value);
                 static inline /*constexpr */ DMAMUX_Channel_TypeDef* const mcuDmaMux = reinterpret_cast<DMAMUX_Channel_TypeDef*>(Mcu::Stm::Address<component_t>::mux);
@@ -52,6 +68,7 @@ namespace Mcu::Stm {
     #endif
     #ifdef STM32G0
                 static inline void init() {
+                    IO::outl<debug>("# DmaCh Init: ", N, " C: ", contr_comp_t::number_t::value);
                     mcuDmaChannel->CCR = []{
                         uint32_t ccr = 0;
                         if constexpr(sizeof(value_t) == 1) {
@@ -91,6 +108,7 @@ namespace Mcu::Stm {
                     }();
                 }
                 static inline void reset() {
+                    IO::outl<debug>("# DmaCh reset: ", N, " C: ", contr_comp_t::number_t::value);
                     mcuDmaChannel->CCR = 0;
                 }
     #endif
@@ -109,7 +127,7 @@ namespace Mcu::Stm {
                 static inline void clearMux() {
                     MODIFY_REG(mcuDmaMux->CCR, DMAMUX_CxCR_DMAREQ_ID_Msk, 0);
                 }
-                static inline void startRead(const size_t size, const uint32_t pAdr, volatile value_t* mAdr, uint8_t mux) {
+                static inline void startRead(const size_t size, const uint32_t pAdr, volatile value_t* const mAdr, const uint8_t mux) {
                     mcuDmaChannel->CCR &= ~DMA_CCR_EN;
                     MODIFY_REG(mcuDmaMux->CCR, DMAMUX_CxCR_DMAREQ_ID_Msk, mux << DMAMUX_CxCR_DMAREQ_ID_Pos);
                     mcuDmaChannel->CNDTR = size;
@@ -122,7 +140,7 @@ namespace Mcu::Stm {
                         return ccr;
                     }();
                 }
-                static inline void startWrite(const size_t size, const uint32_t pAdr, volatile value_t* mAdr, uint8_t mux) {
+                static inline void startWrite(const size_t size, const uint32_t pAdr, volatile const value_t* const mAdr, const uint8_t mux) {
                     mcuDmaChannel->CCR &= ~DMA_CCR_EN;
                     MODIFY_REG(mcuDmaMux->CCR, DMAMUX_CxCR_DMAREQ_ID_Msk, mux << DMAMUX_CxCR_DMAREQ_ID_Pos);
                     clearAllFlags();

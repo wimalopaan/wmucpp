@@ -133,6 +133,8 @@ struct Devices<SW01, Config, MCU> {
     // half-duplex
     using esc1DmaChannelComponent = Mcu::Components::DmaChannel<typename dma2::component_t, 5>;
 
+    using srv2RegGen = Mcu::Components::DmaRequestGenerator<0>;
+
     // Uebersicht: UART
     // Uart 1: CRSF-IN
     // Uart 2: ESC1
@@ -238,6 +240,7 @@ struct Devices<SW01, Config, MCU> {
     struct MpxConfig1;
     using mpx1 = Mcu::Stm::Cppm::MultiplexGenerator<3, MpxConfig1, clock>;
     struct MpxConfig1 {
+        using debug = Devices::debug;
         using clock = Devices::clock;
         using dmaCh = srv1DmaChannelComponent;
         static inline constexpr uint8_t channel = 3;
@@ -283,11 +286,15 @@ struct Devices<SW01, Config, MCU> {
 
     // Srv2: PA4 : TIM14-CH1 (AF4), Uart6-TX (AF3)
     using srv2_pin = Mcu::Stm::Pin<gpioa, 4, MCU>;
-    using pwm14 = Mcu::Stm::V2::Pwm::Servo<14, clock>;
-    using srv2_pwm = PwmAdapter<pwm14, srv2_pin, 1, storage, void>;
+    using pwm14 = Mcu::Stm::V2::Pwm::Servo<14, clock, debug>;
+    using srv2_pwm = PwmAdapter<pwm14, srv2_pin, 1, storage, void, debug>;
 
     struct WS2Config;
     using srv2_waveshare = External::WaveShare::V2::Servo<6, WS2Config, MCU>;
+
+    // not possible for tim14?
+    struct WS2812B_Config_2;
+    using ws2812b_2 = External::WS2812B<14, WS2812B_Config_2, MCU>;
 
     struct Srv2SPortConfig;
     using srv2_sport = RC::Protokoll::SPort::V2::Master::Serial<6, Srv2SPortConfig, MCU>;
@@ -598,6 +605,7 @@ struct Devices<SW01, Config, MCU> {
         static inline constexpr uint8_t channel = 3;
         static inline constexpr uint8_t numLeds = 64;
         using dmaChWComponent = srv1DmaChannelComponent;
+        using dmaReqGenComponent = void;
         using timer = systemTimer;
         using clock = Devices::clock;
         using tp = void;
@@ -622,6 +630,18 @@ struct Devices<SW01, Config, MCU> {
         using clk = clock;
         using tp = void;
         using dbg = void;
+        using storage = Devices::storage;
+    };
+    struct WS2812B_Config_2 {
+        using pin = srv2_pin;
+        static inline constexpr uint8_t channel = 1;
+        static inline constexpr uint8_t numLeds = 64;
+        using dmaChWComponent = srv2DmaChannelComponent;
+        using dmaReqGenComponent = srv2RegGen;
+        using timer = systemTimer;
+        using clock = Devices::clock;
+        using tp = void;
+        using debug = void;
         using storage = Devices::storage;
     };
     struct Srv2SPortCallbackConfig;

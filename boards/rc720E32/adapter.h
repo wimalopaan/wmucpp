@@ -93,17 +93,17 @@ struct PwmAdapter {
         }
     }
     static inline void init() {
-        IO::outl<Debug>("PWMA", Channel, " init");
+        IO::outl<Debug>("# PWMA ", Channel, " init");
         RessourceCount<pwm>::acquire([]{
-            IO::outl<Debug>("PWMA", Channel, " acquire");
+            IO::outl<Debug>("# PWMA ", Channel, " acquire");
             pwm::init(); // only if first channel
         });
         Pin::afunction(af);
     }
     static inline void reset() {
-        IO::outl<Debug>("PWMA", Channel, " reset");
+        IO::outl<Debug>("# PWMA ", Channel, " reset");
         RessourceCount<pwm>::release([]{
-            IO::outl<Debug>("PWMA", Channel, " release");
+            IO::outl<Debug>("# PWMA ", Channel, " release");
             pwm::reset(); // only if last channel
         });
         Pin::analog();

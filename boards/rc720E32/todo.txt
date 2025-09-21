@@ -27,6 +27,7 @@ Ideas
 
 Prio 0
 ------
+* add mpx output on srv2 (limitations on TIM14)
 * test WS2812B output on other than srv1
 * extend set-proto to all rgb-led addresses
 * use std::variant<> instead of heap-allocated wrapper objects

@@ -76,6 +76,7 @@ struct GFSM {
     using telem_bt = devs::telem_bt;
 
     using ws2812b_1 = devs::ws2812b_1;
+    using ws2812b_2 = devs::ws2812b_2;
 
     struct CalibClient {
         static inline void update() {
@@ -252,6 +253,7 @@ struct GFSM {
             (++mUpdateTick).on(updateTicks, []{
                 channelCallback::update();
                 ws2812b_1::sendColors();
+                ws2812b_2::sendColors();
             });
             (++mTelemetryTick).on(telemetryTicks, []{
                 telemetry::push((uint8_t)RC::Protokoll::Crsf::V4::Type::Gps, [](auto& d){

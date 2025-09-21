@@ -73,6 +73,7 @@ namespace Mcu::Stm {
         };
         template<> struct Properties<14> {
             using value_type = uint16_t;
+            enum class Trigger : uint8_t {OC = 22};
         };
 #endif
 
@@ -160,6 +161,12 @@ namespace Mcu::Stm {
                 RCC->APBRSTR1 &= ~RCC_APBRSTR1_TIM7RST;
             }
 #endif
+#ifdef RCC_APBRSTR2_TIM14RST
+            else if constexpr (TimerNumber == 14) {
+                RCC->APBRSTR2 |= RCC_APBRSTR2_TIM14RST;
+                RCC->APBRSTR2 &= ~RCC_APBRSTR2_TIM14RST;
+            }
+#endif
             else {
                 static_assert(false);
             }
@@ -227,6 +234,11 @@ namespace Mcu::Stm {
 #ifdef RCC_APBENR1_TIM7EN
             else if constexpr(TimerNumber == 7) {
                 RCC->APBENR1 |= RCC_APBENR1_TIM7EN;
+            }
+#endif
+#ifdef RCC_APBENR2_TIM14EN
+            else if constexpr(TimerNumber == 14) {
+                RCC->APBENR2 |= RCC_APBENR2_TIM14EN;
             }
 #endif
             else {

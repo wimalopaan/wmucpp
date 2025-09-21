@@ -20,20 +20,25 @@ namespace Mcu::Stm {
 #ifdef USE_MCU_STM_V2
     inline
 #endif
-        namespace V2 {
+    namespace V3 {
         namespace Pwm {
+            template<uint8_t TimerNumber, typename Config, typename MCU = DefaultMcu>
+            struct Simple {
 
+            };
+        }
+    }
+    namespace V2 {
+        namespace Pwm {
             template<uint8_t TimerNumber, typename Clock, typename MCU = DefaultMcu>
             struct Simple {
                 static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Timer<TimerNumber>>::value);
 
                 using component_t = Mcu::Components::Timer<TimerNumber>;
 
-
                 static inline constexpr uint16_t period = 1640;
                 static inline uint32_t freq  = 20000;
                 static inline uint16_t prescaler = (Clock::config::frequency.value / (freq * period));
-
 #ifdef STM32G4
                 static inline void init() {
                     if constexpr (TimerNumber == 1) {
@@ -160,7 +165,6 @@ namespace Mcu::Stm {
                     }
                     mcuTimer->DIER |= TIM_DIER_UDE;
                 }
-
                 static inline void frequency(const uint16_t f) {
                     freq = f;
                     prescaler = (Clock::config::frequency.value / (freq * period));
@@ -170,7 +174,6 @@ namespace Mcu::Stm {
                 static inline void freqCenties(const uint8_t centies) {
                     frequency(centies * 100U);
                 }
-
                 static inline void duty1(const uint16_t v) {
                     mcuTimer->CCR1 = v;
                 }
@@ -183,7 +186,6 @@ namespace Mcu::Stm {
                 static inline void duty4(const uint16_t v) {
                     mcuTimer->CCR4 = v;
                 }
-
                 constexpr static inline uint8_t trgo() {
                     if constexpr(TimerNumber == 3) {
                         return 4; // tim3-trgo
@@ -389,8 +391,9 @@ namespace Mcu::Stm {
                 // static inline std::array<value_type, MaxLength>  mValues{};
             };
 
-            template<uint8_t TimerNumber, typename Clock, typename MCU = DefaultMcu>
+            template<uint8_t TimerNumber, typename Clock, typename Debug = void, typename MCU = DefaultMcu>
             struct Servo {
+                using debug = Debug;
                 // static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Timer<TimerNumber, void, void, MCU>>::value);
                 static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Timer<TimerNumber>>::value);
 
@@ -442,6 +445,7 @@ namespace Mcu::Stm {
                 }
 #endif
                 static inline void reset() {
+                    IO::outl<debug>("# PWM reset ", TimerNumber);
                     const auto rcc = Mcu::Stm::Address<Mcu::Components::Rcc>::value;
                     if constexpr (TimerNumber == 1) {
 #ifdef STM32G0xx
@@ -495,6 +499,7 @@ namespace Mcu::Stm {
                 }
 #ifdef STM32G0
                 static inline void init() {
+                    IO::outl<debug>("# PWM init ", TimerNumber);
                     if constexpr (TimerNumber == 1) {
                         RCC->APBENR2 |= RCC_APBENR2_TIM1EN;
                     }

@@ -68,6 +68,10 @@ namespace Mcu::Components {
         using number_t = std::integral_constant<uint8_t, N>;
     };
     template<uint8_t N>
+    struct DmaRequestGenerator{
+        using number_t = std::integral_constant<uint8_t, N>;
+    };
+    template<uint8_t N>
     struct Comparator {
         using number_t = std::integral_constant<uint8_t, N>;
     };

@@ -267,6 +267,7 @@ namespace Mcu::Stm {
             using tx_fifo_t = std::conditional_t<useDma, struct Dummy, etl::FiFo<value_t, detail::getSize_v<detail::getTx_t<Config>>>>;
 
             struct dmaChConfig {
+                using debug = void;
                 using value_t = Uart::value_t;
                 static inline constexpr bool memoryIncrement = true;
             };

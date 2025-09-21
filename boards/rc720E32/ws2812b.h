@@ -16,12 +16,23 @@
 #include "dma_2.h"
 
 namespace External {
+    namespace detail {
+        template<typename ReqGenComp, typename Config>
+        struct makeRequestGenerator {
+            using type = Mcu::Stm::Dma::V2::RequestGenerator<ReqGenComp::number_t::value, Config>;
+        };
+        template<typename Config>
+        struct makeRequestGenerator<void, Config> {
+            using type = void;
+        };
+    }
     template<uint8_t TimerNumber, typename Config, typename MCU>
     struct WS2812B {
         static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Timer<TimerNumber>>::value);
         using component_t = Mcu::Components::Timer<TimerNumber>;
 
         using dmaChWComp = Config::dmaChWComponent;
+        using dmaReqGenComp = Config::dmaReqGenComponent;
         using debug = Config::debug;
         using clock = Config::clock;
         using value_type = Mcu::Stm::Timers::Properties<TimerNumber>::value_type;
@@ -46,6 +57,7 @@ namespace External {
         };
 
         struct dmaWConfig {
+            using debug = Config::debug;
             using controller = Mcu::Stm::Dma::Controller<dmaChWComp::controller::number_t::value>;
             using value_t = value_type;
             static inline constexpr bool memoryIncrement = true;
@@ -54,6 +66,12 @@ namespace External {
             };
         };
         using dmaChW = Mcu::Stm::Dma::V2::Channel<dmaChWComp::number_t::value, dmaWConfig>;
+
+        struct ReqGenConfig {
+            static inline constexpr uint8_t count = 1;
+            static inline constexpr uint8_t trg = (uint8_t)Mcu::Stm::Timers::Properties<TimerNumber>::Trigger::OC;
+        };
+        using dmaReqGen = detail::makeRequestGenerator<dmaReqGenComp, ReqGenConfig>::type;
 
         static inline constexpr uint8_t number = dmaChW::number;
 
@@ -75,6 +93,11 @@ namespace External {
 
             dmaChW::init();
 
+            if constexpr(TimerNumber == 14) {
+                static_assert(channel == 1);
+                dmaReqGen::init();
+            }
+
             if constexpr(channel == 1) {
                 mcuTimer->CCMR1 |= (0b0110 << TIM_CCMR1_OC1M_Pos); // pwm1
                 mcuTimer->CCER |= TIM_CCER_CC1E;
@@ -94,9 +117,14 @@ namespace External {
             else {
                 static_assert(false);
             }
-            mcuTimer->DIER |= TIM_DIER_UDE;
-            mcuTimer->EGR |= TIM_EGR_UG;
+            if constexpr(TimerNumber == 14) {
+                // no UDE
+            }
+            else {
+                mcuTimer->DIER |= TIM_DIER_UDE;
+            }
             mcuTimer->CR1 |= TIM_CR1_ARPE;
+            mcuTimer->EGR |= TIM_EGR_UG;
             pin::afunction(af);
         }
         static inline void reset() {
@@ -110,12 +138,12 @@ namespace External {
             pin::analog();
         }
         static inline void sendColors() {
-            IO::outl<debug>("# WS2812 sendColors");
             if (mActive) {
+                // IO::outl<debug>("# WS2812 sendColors");
                 mEvent = Event::StartTransfer;
             }
         }
-        static inline void set(const uint8_t led, const ColorRGB color) {
+        static inline void setColor(const uint8_t led, const ColorRGB color) {
             if (led < mColors.size()) {
                 mColors[led] = color;
             }
@@ -163,10 +191,12 @@ namespace External {
         struct Isr {
             static inline void onTransferComplete(const auto f) {
                 if (mActive) {
-                    stopTimer();
-                    dmaChW::clearTransferCompleteIF();
-                    f();
-                    event(Event::SendComplete);
+                    dmaChW::onTransferComplete([&]{
+                        // IO::outl<debug>("# WS2812 isr");
+                        stopTimer();
+                        f();
+                        event(Event::SendComplete);
+                    });
                 }
             }
         };
@@ -236,25 +266,32 @@ namespace External {
                     }
                 }
             }
+            mData[i++] = 0;
         }
         static inline void startTimer() {
-            ccrReg<TimerNumber>() = 0;
+            ccrReg<channel>() = mData[0];
+            mcuTimer->CNT = mData[0] + 1;
             mcuTimer->CR1 |= TIM_CR1_CEN;
         }
         static inline void stopTimer() {
             mcuTimer->CR1 &= ~TIM_CR1_CEN;
         }
         static inline void startDma() {
-            dmaChW::startWrite(mData.size(), (uint32_t)& ccrReg<channel>(), &mData[0], Mcu::Stm::Timers::Properties<TimerNumber>::dmaUpdate_src);
+            if constexpr(TimerNumber == 14) {
+                dmaChW::startWrite(mData.size() - 1, (uint32_t)& ccrReg<channel>(), &mData[1], dmaReqGen::mux);
+            }
+            else {
+                dmaChW::startWrite(mData.size() - 1, (uint32_t)& ccrReg<channel>(), &mData[1], Mcu::Stm::Timers::Properties<TimerNumber>::dmaUpdate_src);
+            }
         }
         static inline void event(const Event e) {
             mEvent = e;
         }
         static inline volatile etl::Event<Event> mEvent;
         static inline volatile State mState = State::Idle;
-        static inline bool mActive = false;
+        static inline volatile bool mActive = false;
         static inline std::array<ColorRGB, numLeds> mColors{};
-        static inline std::array<volatile value_type, 3 * (numLeds + 1) * 8> mData{};
+        static inline std::array<volatile value_type, 3 * numLeds * 8 + 1> mData{};
         static inline uint64_t mLedState{};
     };
 }

@@ -37,6 +37,7 @@ namespace Mcu::Stm::Dma {
             struct dmaChConfig;
             using dmaChRW = Mcu::Stm::Dma::V2::Channel<Ch_RW::number_t::value, dmaChConfig>;
             struct dmaChConfig {
+                using debug = Config::debug;
                 using controller = Mcu::Stm::Dma::Controller<Ch_RW::controller::number_t::value>;
                 using value_t = DualChannel::value_t;
                 static inline constexpr bool memoryIncrement = true;
@@ -76,12 +77,14 @@ namespace Mcu::Stm::Dma {
         struct DualChannel<void, Ch_R, Ch_W, Config> {
             using value_t = Config::value_t;
             struct dmaRConfig {
+                using debug = Config::debug;
                 using controller = Mcu::Stm::Dma::Controller<Ch_R::controller::number_t::value>;
                 using value_t = DualChannel::value_t;
                 static inline constexpr bool memoryIncrement = true;
             };
             using dmaChR = Mcu::Stm::Dma::V2::Channel<Ch_R::number_t::value, dmaRConfig>;
             struct dmaWConfig {
+                using debug = Config::debug;
                 using controller = Mcu::Stm::Dma::Controller<Ch_W::controller::number_t::value>;
                 using value_t = DualChannel::value_t;
                 static inline constexpr bool memoryIncrement = true;
@@ -155,6 +158,7 @@ namespace Mcu::Stm::Dma {
         struct DualChannel<void, void, Ch_W, Config> {
             using value_t = Config::value_t;
             struct dmaWConfig {
+                using debug = Config::debug;
                 using controller = Mcu::Stm::Dma::Controller<Ch_W::controller::number_t::value>;
                 using value_t = DualChannel::value_t;
                 static inline constexpr bool memoryIncrement = true;

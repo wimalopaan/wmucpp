@@ -171,10 +171,16 @@ void DMA1_Channel2_3_IRQHandler() {
     });
 }
 void DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQHandler() {
+    // IO::outl<devs::debug>("IRQ2");
     using ws2812b_1 = devs::ws2812b_1;
     using ws2812b_1_dma = ws2812b_1::dmaChW;
     static_assert(ws2812b_1_dma::number == 4);
     ws2812b_1::Isr::onTransferComplete([]{
+    });
+    using ws2812b_2 = devs::ws2812b_2;
+    using ws2812b_2_dma = ws2812b_2::dmaChW;
+    static_assert(ws2812b_2_dma::number == 3);
+    ws2812b_2::Isr::onTransferComplete([]{
     });
 }
 void USART2_LPUART2_IRQHandler(){

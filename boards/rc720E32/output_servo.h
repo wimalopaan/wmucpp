@@ -40,6 +40,7 @@ struct ServoOutputs {
     // using servo2_mpx = devs::ppm_mpx2;
 
     using ws2812b_1 = devs::ws2812b_1;
+    using ws2812b_2 = devs::ws2812b_2;
 
     template<uint8_t N>
     static inline void offset(const uint16_t o) {
@@ -103,7 +104,7 @@ struct ServoOutputs {
         // using srv_mpx_t = std::conditional_t<(N == 0), Servo<servo1_mpx>, Servo<servo2_mpx>>;
         using srv_mpx_t = Servo<servo1_mpx>;
 
-        using srv_ws2812b_t = Servo<ws2812b_1>;
+        using srv_ws2812b_t = std::conditional_t<(N == 0), Servo<ws2812b_1>, Servo<ws2812b_2>>;
 
         static_assert(sizeof(srv_ft_t) == sizeof(srv_ws_t));
         static_assert(sizeof(srv_ft_t) == sizeof(srv_mpx_t));
@@ -137,9 +138,7 @@ struct ServoOutputs {
             break;
         case 6: // ws2812
             servos[N] = nullptr;
-            if constexpr(N == 0) {
-                servos[N] = std::make_unique<srv_ws2812b_t>();
-            }
+            servos[N] = std::make_unique<srv_ws2812b_t>();
             break;
         case 7: // none
             servos[N] = nullptr;
