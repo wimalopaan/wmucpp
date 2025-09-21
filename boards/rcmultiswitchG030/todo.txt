@@ -3,7 +3,7 @@ bugs:
 
 todo:
 -----
-* support addressable LEDs (WS1812, APA102)
+* add virtual switches as group of outputs
 * increase output current by grouping outputs together
 * running light mode: parameter: speed, activate-output, activate-next address, (pwm)
 * running light mode: crsf command messages
@@ -63,6 +63,7 @@ open:
 
 impossible:
 -----
+* support addressable LEDs (WS1812, APA102)
 * DMA für PWM statt ISR, geht nicht (GPIO nicht DMA fähig auf G0xx)
 
 error:
