@@ -29,6 +29,7 @@
 #include "dmas.h"
 #include "dma_controller.h"
 #include "dma_dual_2.h"
+#include "output.h"
 
 namespace Mcu::Stm {
     namespace Dma {

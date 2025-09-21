@@ -13,6 +13,7 @@
 
 #include "timer.h"
 #include "dma.h"
+#include "output.h"
 
 namespace Mcu::Stm {
     using namespace Units::literals;

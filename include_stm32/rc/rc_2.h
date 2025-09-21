@@ -174,12 +174,14 @@ namespace RC {
                     inline static constexpr std::byte Set4{0x07}; // 4-state switches (2-bytes payload)
                     inline static constexpr std::byte Set64{0x08}; // 4-state switches (3-bytes payload: [group, switches(16bit)], group: 0...3)
                     inline static constexpr std::byte Set4M{0x09}; // 4-state switches multiple
+                    inline static constexpr std::byte SetRGB{0x0a}; // set 8 rgb leds (3x8bit each : 24 bytes payload)
                     inline static constexpr std::byte InterModule{0x10}; // a module sends trigger to another module (address)
                 }
                 namespace CcCommand {
                     inline static constexpr std::byte SetAltData{0x01}; // Index: [0, 255], value 8bit
                     inline static constexpr std::byte SetAltChunk{0x02};
-                    inline static constexpr std::byte SetChannel{0x03}; // Index: [0, 63], value 16bit
+                    inline static constexpr std::byte SetChannel{0x03}; // 16channels, 8bit
+                    inline static constexpr std::byte SetChannelExtended{0x04}; // flag-byte + 16channels, 8bit
                 }
                 namespace PacketIndex {
                     inline static constexpr uint8_t sync = 0;

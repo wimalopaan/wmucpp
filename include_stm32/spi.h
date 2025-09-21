@@ -53,6 +53,7 @@ namespace Mcu::Stm {
             static inline constexpr bool rxOnly = std::is_same_v<Ch_W, void> && !std::is_same_v<Ch_R, void>;
 
             struct dmaWConfig {
+                using debug = Config::debug;
                 using value_t = value_type;
                 using controller = Mcu::Stm::Dma::Controller<Ch_W::controller::number_t::value>;
                 static inline constexpr bool memoryIncrement = true;

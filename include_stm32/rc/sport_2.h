@@ -279,7 +279,8 @@ namespace RC::Protokoll::SPort::V2 {
                             }
                             return 0;
                         });
-                        break;                if constexpr(!std::is_same_v<tp, void>) {
+                        break;
+                        if constexpr(!std::is_same_v<tp, void>) {
                             tp::set();
                             tp::reset();
                         }
@@ -322,15 +323,17 @@ namespace RC::Protokoll::SPort::V2 {
             };
         private:
             static inline void readReply() {
-                uart::readBuffer([&](const auto& /*data*/){});
+                uart::readBuffer([&](const auto& /*data*/){
+
+                });
             }
             static inline bool validityCheck(const volatile uint8_t* const data, const uint16_t size) {
                 if constexpr(!std::is_same_v<tp, void>) {
                     tp::set();
                     tp::reset();
                 }
-                return true;
-                // return (size >= 2) && (data[0] == 0x10);
+                // calc checksum
+                return (size >= 2) && (data[0] == 0x10);
             }
             static inline bool mActive = false;
             static inline etl::Event<Event> mEvent;
@@ -407,7 +410,6 @@ namespace RC::Protokoll::SPort::V2 {
             static inline void event(const Event e) {
                 mEvent = e;
             }
-
             static inline void periodic() {
                 switch(mState) {
                 case State::Init:
@@ -428,7 +430,6 @@ namespace RC::Protokoll::SPort::V2 {
                     break;
                 }
             }
-
             static inline void ratePeriodic() {
                 const auto oldState = mState;
                 ++mStateTick;

@@ -100,6 +100,7 @@ namespace Mcu::Stm {
 
             using dmaChComponent = Config::dmaChannel;
             struct dmaChConfig {
+                using debug = Config::debug;
                 using controller = Mcu::Stm::Dma::Controller<dmaChComponent::controller::number_t::value>;
                 using value_t = uint16_t;
                 static inline constexpr bool memoryIncrement = true;
