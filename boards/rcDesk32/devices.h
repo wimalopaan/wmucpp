@@ -181,6 +181,7 @@ struct Devices<Desk02, Config, MCU> {
 
     // ADC
     struct AdcConfig {
+        using debug = void;
         using channels = std::integer_sequence<uint8_t, 2, 3, 4, 6, 7, 9>;
         using dmaChannel = adcDmaChannel;
         using trigger = Mcu::Stm::ContinousSampling<2>;

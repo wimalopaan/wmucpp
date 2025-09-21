@@ -38,6 +38,7 @@ namespace External {
         using txDmaComponent = Config::txDmaComponent;
 
         struct SpiConfig {
+            using debug = Config::debug;
             static inline constexpr size_t clockDivider = 64;
             using value_type = uint16_t;
             static inline constexpr size_t size = 256;

@@ -86,6 +86,7 @@ namespace Pulse {
 
         using dmaChComponent = Config::dmaCh;
         struct dmaChConfig {
+            using debug = Config::debug;
             using controller = Mcu::Stm::Dma::Controller<dmaChComponent::controller::number_t::value>;
             using value_t = timer_value_t;
             static inline constexpr bool memoryIncrement = true;

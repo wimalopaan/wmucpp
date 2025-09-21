@@ -4,6 +4,7 @@
 
 * ToDo
 ------
+* flicker mode (us police mode)
 * group: on/off single ramps
 * implement 4-state switches (SET4 / SET4M proto) -> LED states (off, full, individual, group)
 * special functions
