@@ -44,10 +44,18 @@ namespace Mcu::Stm {
 
                 static inline void init() {
                     mcuDmaMuxRegGen->RGCR = ((Config::count - 1)<< DMAMUX_RGxCR_GNBREQ_Pos) |
-                            (0b10 << DMAMUX_RGxCR_GPOL_Pos) |
+                            (0b01 << DMAMUX_RGxCR_GPOL_Pos) |
                             (Config::trg << DMAMUX_RGxCR_SIG_ID_Pos) |
                             DMAMUX_RGxCR_GE;
                 }
+            };
+            template<typename ReqGenComp, typename Config>
+            struct makeRequestGenerator {
+                using type = RequestGenerator<ReqGenComp::number_t::value, Config>;
+            };
+            template<typename Config>
+            struct makeRequestGenerator<void, Config> {
+                using type = void;
             };
             template<uint8_t N, typename Config, typename MCU = DefaultMcu>
             struct Channel {

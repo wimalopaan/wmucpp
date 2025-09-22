@@ -239,12 +239,6 @@ struct Devices<SW01, Config, MCU> {
     // time-multiplex for old analog switch-modules
     struct MpxConfig1;
     using mpx1 = Mcu::Stm::Cppm::MultiplexGenerator<3, MpxConfig1, clock>;
-    struct MpxConfig1 {
-        using debug = Devices::debug;
-        using clock = Devices::clock;
-        using dmaCh = srv1DmaChannelComponent;
-        static inline constexpr uint8_t channel = 3;
-    };
     using ppm_mpx1 = MpxAdapter<mpx1, srv1_pin, debug>;
 
     struct Exti1Config {
@@ -292,7 +286,6 @@ struct Devices<SW01, Config, MCU> {
     struct WS2Config;
     using srv2_waveshare = External::WaveShare::V2::Servo<6, WS2Config, MCU>;
 
-    // not possible for tim14?
     struct WS2812B_Config_2;
     using ws2812b_2 = External::WS2812B<14, WS2812B_Config_2, MCU>;
 
@@ -307,14 +300,9 @@ struct Devices<SW01, Config, MCU> {
     using srv2_feetech = Feetech<1, polar2, srv2_fb, srv2_pwm, systemTimer, debug>;
 
     // time-multiplex for old analog switch-modules
-    // TIM14: no DMA capability
-    // struct MpxConfig2;
-    // using ppm_mpx2 = Mcu::Stm::Cppm::MultiplexGenerator<14, MpxConfig2>;
-    // struct MpxConfig2 {
-    //     using clock = Devices::clock;
-    //     using dmaCh = void;
-    //     static inline constexpr uint8_t channel = 1;
-    // };
+    // TIM14: need dma request generator
+    struct MpxConfig2;
+    using ppm_mpx2 = Mcu::Stm::Cppm::MultiplexGenerator<14, MpxConfig2>;
 
     struct Exti2Config {
         using pin = esc2_pin;
@@ -612,6 +600,14 @@ struct Devices<SW01, Config, MCU> {
         using debug = void;
         using storage = Devices::storage;
     };
+    struct MpxConfig1 {
+        using pin = srv1_pin;
+        using debug = Devices::debug;
+        using clock = Devices::clock;
+        using dmaCh = srv1DmaChannelComponent;
+        using dmaReqGenComponent = void;
+        static inline constexpr uint8_t channel = 3;
+    };
     struct Srv1SPortCallbackConfig;
     struct Srv1SPortConfig {
         using pin = srv1_pin;
@@ -643,6 +639,14 @@ struct Devices<SW01, Config, MCU> {
         using tp = void;
         using debug = void;
         using storage = Devices::storage;
+    };
+    struct MpxConfig2 {
+        using pin = srv2_pin;
+        using debug = Devices::debug;
+        using clock = Devices::clock;
+        using dmaCh = srv2DmaChannelComponent;
+        using dmaReqGenComponent = srv2RegGen;
+        static inline constexpr uint8_t channel = 1;
     };
     struct Srv2SPortCallbackConfig;
     struct Srv2SPortConfig {

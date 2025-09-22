@@ -16,16 +16,6 @@
 #include "dma_2.h"
 
 namespace External {
-    namespace detail {
-        template<typename ReqGenComp, typename Config>
-        struct makeRequestGenerator {
-            using type = Mcu::Stm::Dma::V2::RequestGenerator<ReqGenComp::number_t::value, Config>;
-        };
-        template<typename Config>
-        struct makeRequestGenerator<void, Config> {
-            using type = void;
-        };
-    }
     template<uint8_t TimerNumber, typename Config, typename MCU>
     struct WS2812B {
         static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Timer<TimerNumber>>::value);
@@ -71,7 +61,7 @@ namespace External {
             static inline constexpr uint8_t count = 1;
             static inline constexpr uint8_t trg = (uint8_t)Mcu::Stm::Timers::Properties<TimerNumber>::Trigger::OC;
         };
-        using dmaReqGen = detail::makeRequestGenerator<dmaReqGenComp, ReqGenConfig>::type;
+        using dmaReqGen = Mcu::Stm::Dma::V2::makeRequestGenerator<dmaReqGenComp, ReqGenConfig>::type;
 
         static inline constexpr uint8_t number = dmaChW::number;
 

@@ -514,7 +514,7 @@ private:
 
         addNode(p, Param_t{parent, PType::Sel, "Esc1 Slaves (Tlm1,Fb1)", "Off;On", &eeprom.esc_slave[0], 0, 1, [](const store_t v){if (v == 0) {esc1_slave::reset();} else {esc1_slave::init();} return true;}});
 
-        addNode(p, Param_t{parent, PType::Sel, "Srv2 Out", "PWM/Analog;PWM/PWM;Serial/WaveShare;PWM/None;S.Port-Master/None;None;WS2812B;None", &eeprom.out_mode_srv[1], 0, 7, [](const store_t s){servos::template servo<1>(s); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Srv2 Out", "PWM/Analog;PWM/PWM;Serial/WaveShare;PWM/None;S.Port-Master/None;MultiSwitch-Graupner-A;WS2812B;None", &eeprom.out_mode_srv[1], 0, 7, [](const store_t s){servos::template servo<1>(s); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Srv2 Fb", "Analog;PWM;WaveShare;None;None;None;None;None", &eeprom.out_mode_srv[1], 0, 7});
 #ifdef ESCAPE32_ASCII
         addNode(p, Param_t{parent, PType::Sel, "Esc2 Out", "PWM/-;ESCape32/Serial;ESCape32/Ascii;VEsc/Serial;SBus;None;Bluetooth", &eeprom.out_mode_esc[1], 0, 6, [](const store_t s){escs::template esc<1>(s); if (s == 2) {hide(mESCape322Folder, false);} return true;}});

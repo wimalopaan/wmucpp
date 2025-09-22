@@ -45,7 +45,12 @@ namespace Mcu::Stm {
             using clock = Config::clock;
             using value_type = Mcu::Stm::Timers::Properties<TimerNumber>::value_type;
 
+            using pin = Config::pin;
+            using debug = Config::debug;
+
             using dmaChComponent = Config::dmaCh;
+            using dmaReqGenComp = Config::dmaReqGenComponent;
+
             struct dmaChConfig;
             using dmaCh = Mcu::Stm::Dma::V2::Channel<dmaChComponent::number_t::value, dmaChConfig>;
             struct dmaChConfig {
@@ -55,6 +60,11 @@ namespace Mcu::Stm {
                 static inline constexpr bool memoryIncrement = true;
                 static inline constexpr bool circular = true;
             };
+            struct ReqGenConfig {
+                static inline constexpr uint8_t count = 1;
+                static inline constexpr uint8_t trg = (uint8_t)Mcu::Stm::Timers::Properties<TimerNumber>::Trigger::OC;
+            };
+            using dmaReqGen = Mcu::Stm::Dma::V2::makeRequestGenerator<dmaReqGenComp, ReqGenConfig>::type;
 
             static inline constexpr uint8_t  channel = Config::channel;
             static inline constexpr uint16_t onems = 1000;
@@ -69,44 +79,8 @@ namespace Mcu::Stm {
             static inline constexpr uint16_t prescaler = (clock::config::frequency.value / 1'000'000) - 1;
 
             static inline void init() {
-#ifdef STM32G4
-                if constexpr (TimerNumber == 1) {
-                    RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
-                }
-                else if constexpr (TimerNumber == 2) {
-                    RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN;
-                }
-                else if constexpr (TimerNumber == 3) {
-                    RCC->APB1ENR1 |= RCC_APB1ENR1_TIM3EN;
-                }
-                else if constexpr (TimerNumber == 4) {
-                    RCC->APB1ENR1 |= RCC_APB1ENR1_TIM4EN;
-                }
-                else if constexpr (TimerNumber == 16) {
-                    RCC->APB1ENR1 |= RCC_APB2ENR_TIM16EN;
-                }
-                else {
-                    static_assert(false);
-                }
-#endif
-#ifdef STM32G0
-                if constexpr (TimerNumber == 1) {
-                    RCC->APBENR2 |= RCC_APBENR2_TIM1EN;
-                }
-                else if constexpr (TimerNumber == 3) {
-                    RCC->APBENR1 |= RCC_APBENR1_TIM3EN;
-                }
-                // no DMA
-                // else if constexpr (TimerNumber == 14) {
-                //     RCC->APBENR2 |= RCC_APBENR2_TIM14EN;
-                // }
-                else if constexpr (TimerNumber == 17) {
-                    RCC->APBENR2 |= RCC_APBENR2_TIM17EN;
-                }
-                else {
-                    static_assert(false);
-                }
-#endif
+                IO::outl<debug>("# MPX init: ", TimerNumber);
+                Mcu::Stm::Timers::template powerUp<TimerNumber>();
                 mcuTimer->PSC = prescaler;
                 mcuTimer->ARR = frame;
                 ccrReg<channel>() = onems + halfms;
@@ -117,8 +91,19 @@ namespace Mcu::Stm {
                 for(uint8_t i = channels; i < pulses; ++i) {
                     arr[i] = sync;
                 }
+                ccrReg<channel>() = arr[0];
+                mcuTimer->CNT = 0;
+
                 dmaCh::init();
-                dmaCh::startWrite(pulses, (uint32_t)& ccrReg<channel>(), &arr[0], Mcu::Stm::Timers::Properties<TimerNumber>::dmaUpdate_src);
+
+                if constexpr(TimerNumber == 14) {
+                    static_assert(channel == 1);
+                    dmaReqGen::init();
+                    dmaCh::startWrite(pulses, (uint32_t)& ccrReg<channel>(), &arr[0], dmaReqGen::mux);
+                }
+                else {
+                    dmaCh::startWrite(pulses, (uint32_t)& ccrReg<channel>(), &arr[0], Mcu::Stm::Timers::Properties<TimerNumber>::dmaUpdate_src);
+                }
 
                 if constexpr(channel == 1) {
                     mcuTimer->CCMR1 |= (0b0110 << TIM_CCMR1_OC1M_Pos); // pwm1
@@ -139,10 +124,26 @@ namespace Mcu::Stm {
                 else {
                     static_assert(false);
                 }
-                mcuTimer->DIER |= TIM_DIER_UDE;
-                mcuTimer->EGR |= TIM_EGR_UG;
+                if constexpr(TimerNumber == 14) {
+                    // no UDE
+                }
+                else {
+                    mcuTimer->DIER |= TIM_DIER_UDE;
+                }
                 mcuTimer->CR1 |= TIM_CR1_ARPE;
+                mcuTimer->EGR |= TIM_EGR_UG;
                 mcuTimer->CR1 |= TIM_CR1_CEN;
+                static constexpr uint8_t af = Mcu::Stm::AlternateFunctions::mapper_v<pin, MultiplexGenerator<TimerNumber, Config, MCU>, Mcu::Stm::AlternateFunctions::CC<channel>>;
+                pin::afunction(af);
+            }
+            static inline void reset() {
+                IO::outl<debug>("# MPX reset: ", TimerNumber);
+                Mcu::Arm::Atomic::access([]{
+                    Mcu::Stm::Timers::template reset<TimerNumber>();
+                    dmaCh::reset();
+                    mActive = false;
+                });
+                pin::analog();
             }
             static inline void set(const uint8_t channel, const uint8_t state) {
                 if (channel >= 8) return;
@@ -156,6 +157,7 @@ namespace Mcu::Stm {
                 arr[channel] = v;
             }
             private:
+            static inline volatile bool mActive = false;
             template<uint8_t Ch>
             static inline volatile uint32_t& ccrReg() {
                 if constexpr(Ch == 1) {

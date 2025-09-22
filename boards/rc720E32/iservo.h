@@ -217,10 +217,14 @@ struct Servo : IServo {
         }
     }
     virtual void periodic() {
-        S::periodic();
+        if constexpr(requires(){S::periodic();}) {
+            S::periodic();
+        }
     }
     virtual void ratePeriodic() {
-        S::ratePeriodic();
+        if constexpr(requires(){S::ratePeriodic();}) {
+            S::ratePeriodic();
+        }
     }
 };
 
