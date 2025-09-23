@@ -30,6 +30,11 @@
 #include <type_traits>
 #include <concepts>
 
+#define TEMPSENSOR_CAL1_ADDR               ((uint16_t*) (0x1FFF75A8UL))
+#define TEMPSENSOR_CAL2_ADDR               ((uint16_t*) (0x1FFF75CAUL))
+#define TEMPSENSOR_CAL1_TEMP               (30L)
+#define TEMPSENSOR_CAL2_TEMP               (130L)
+
 namespace Mcu::Stm {
     using namespace Units::literals;
 
@@ -72,13 +77,8 @@ namespace Mcu::Stm {
     }
 
     namespace V4 {
-#define TEMPSENSOR_CAL1_ADDR               ((uint16_t*) (0x1FFF75A8UL))
-#define TEMPSENSOR_CAL2_ADDR               ((uint16_t*) (0x1FFF75CAUL))
-#define TEMPSENSOR_CAL1_TEMP               (30L)
-#define TEMPSENSOR_CAL2_TEMP               (110L)
-
         static inline float adc2Temp(const uint16_t v) {
-            return (float)(TEMPSENSOR_CAL2_TEMP - TEMPSENSOR_CAL1_TEMP) / (*TEMPSENSOR_CAL2_ADDR - *TEMPSENSOR_CAL1_ADDR) * (v - *TEMPSENSOR_CAL1_ADDR) + TEMPSENSOR_CAL1_TEMP;
+            return ((float)(TEMPSENSOR_CAL2_TEMP - TEMPSENSOR_CAL1_TEMP) / (*TEMPSENSOR_CAL2_ADDR - *TEMPSENSOR_CAL1_ADDR)) * (v - *TEMPSENSOR_CAL1_ADDR) + TEMPSENSOR_CAL1_TEMP;
         }
 
         template<uint8_t N, typename Config, typename MCU = DefaultMcu> struct Adc;
@@ -278,10 +278,19 @@ namespace Mcu::Stm {
                         return r;
                 }();
 
+                if constexpr(requires(){Config::slowChannel;}) {
+                    static_assert(Config::slowChannel < 19);
+                    mcuAdc->SMPR = [] consteval {
+                        uint32_t r = 0;
+                        r |= (0xb1UL << (Config::slowChannel + ADC_SMPR_SMPSEL0_Pos));
+                        r |= ((Config::slowSampleTime & 0b111) << ADC_SMPR_SMP2_Pos);
+                        return r;
+                    }();
+                }
+
                 while(!(mcuAdc->ISR & ADC_ISR_CCRDY));
 
                 dmaChannel::init();
-                dmaChannel::startRead(nChannels, (uint32_t)&mcuAdc->DR, &mData[0], Mcu::Stm::Adcs::Properties<N>::dmamux_src);
 
                 mcuAdc->IER = [] consteval {
                         uint32_t r = 0;
@@ -328,6 +337,8 @@ namespace Mcu::Stm {
             }
 #endif
             static inline void start() {
+                dmaChannel::clearAllFlags();
+                dmaChannel::startRead(nChannels, (uint32_t)&mcuAdc->DR, &mData[0], Mcu::Stm::Adcs::Properties<N>::dmamux_src);
                 mcuAdc->CR |= ADC_CR_ADSTART;
             }
             static inline bool ready() {
@@ -360,10 +371,10 @@ namespace Mcu::Stm {
     inline
 #endif
     namespace V3 {
-#define TEMPSENSOR_CAL1_ADDR               ((uint16_t*) (0x1FFF75A8UL))
-#define TEMPSENSOR_CAL2_ADDR               ((uint16_t*) (0x1FFF75CAUL))
-#define TEMPSENSOR_CAL1_TEMP               (30L)
-#define TEMPSENSOR_CAL2_TEMP               (110L)
+// #define TEMPSENSOR_CAL1_ADDR               ((uint16_t*) (0x1FFF75A8UL))
+// #define TEMPSENSOR_CAL2_ADDR               ((uint16_t*) (0x1FFF75CAUL))
+// #define TEMPSENSOR_CAL1_TEMP               (30L)
+// #define TEMPSENSOR_CAL2_TEMP               (110L)
 
         static inline float adc2Temp(const uint16_t v) {
             return (float)(TEMPSENSOR_CAL2_TEMP - TEMPSENSOR_CAL1_TEMP) / (*TEMPSENSOR_CAL2_ADDR - *TEMPSENSOR_CAL1_ADDR) * (v - *TEMPSENSOR_CAL1_ADDR) + TEMPSENSOR_CAL1_TEMP;

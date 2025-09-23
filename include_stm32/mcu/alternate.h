@@ -93,6 +93,9 @@ namespace Mcu::Stm {
             struct Impl<Pin<B, 5>, Timer<3>, CC<2>, MCU> : std::integral_constant<uint8_t, 1> {};
             template<Mcu::Stm::G0xx MCU>
             struct Impl<Pin<B, 4>, Timer<3>, CC<1>, MCU> : std::integral_constant<uint8_t, 1> {};
+            template<Mcu::Stm::G0xx MCU>
+            struct Impl<Pin<B, 1>, Timer<3>, CC<4>, MCU> : std::integral_constant<uint8_t, 1> {};
+
 
             template<Mcu::Stm::G0xx MCU>
             struct Impl<Pin<A, 0>, Usart<4>, TX, MCU> : std::integral_constant<uint8_t, 4> {};
@@ -155,7 +158,6 @@ namespace Mcu::Stm {
             template<Mcu::Stm::G0xx MCU>
             struct Impl<Pin<B, 9>, Usart<6>, RX, MCU> : std::integral_constant<uint8_t, 8> {};
 
-
             template<Mcu::Stm::G0xx MCU>
             struct Impl<Pin<B, 2>, Usart<3>, TX, MCU> : std::integral_constant<uint8_t, 4> {};
             template<Mcu::Stm::G0xx MCU>
@@ -163,6 +165,8 @@ namespace Mcu::Stm {
 
             template<Mcu::Stm::G0xx MCU>
             struct Impl<Pin<B, 6>, Usart<1>, TX, MCU> : std::integral_constant<uint8_t, 0> {};
+            template<Mcu::Stm::G0xx MCU>
+            struct Impl<Pin<B, 7>, Usart<1>, RX, MCU> : std::integral_constant<uint8_t, 0> {};
 
             template<Mcu::Stm::G0xx MCU>
             struct Impl<Pin<A, 9>, Usart<1>, TX, MCU> : std::integral_constant<uint8_t, 1> {};
@@ -170,7 +174,9 @@ namespace Mcu::Stm {
             struct Impl<Pin<A, 10>, Usart<1>, RX, MCU> : std::integral_constant<uint8_t, 1> {};
 
             template<Mcu::Stm::G0xx MCU>
-            struct Impl<Pin<A, 3>, Usart<101>, TX, MCU> : std::integral_constant<uint8_t, 6> {};
+            struct Impl<Pin<A, 3>, Usart<101>, RX, MCU> : std::integral_constant<uint8_t, 6> {};
+            template<Mcu::Stm::G0xx MCU>
+            struct Impl<Pin<A, 2>, Usart<101>, TX, MCU> : std::integral_constant<uint8_t, 6> {};
             template<Mcu::Stm::G0xx MCU>
             struct Impl<Pin<B, 10>, Usart<101>, RX, MCU> : std::integral_constant<uint8_t, 1> {};
             template<Mcu::Stm::G0xx MCU>

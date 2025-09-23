@@ -1,5 +1,6 @@
 bugs:
 -----
+* prop mode (remote) does not work
 
 todo:
 -----

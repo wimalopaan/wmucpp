@@ -18,8 +18,9 @@
 
 // select one of the following hardware definitions
 // ATTENTION: use Makefile
-#define HW_MSW10 // MultiSwitch_10 (32K)
+// #define HW_MSW10 // MultiSwitch_10 (32K)
 // ATTENTION: use Makefile.G031
+#define HW_MSW11 // MultiSwitch_11 (64k)
 // #define HW_NUCLEO // STM Nucleo G031K8 (64K) (incl. ST-Link)
 // #define HW_WEACT // WeAct G031F8 (64K)
 
@@ -29,14 +30,16 @@
 #define USE_MORSE
 #define USE_EEPROM_TEST // switches telemetry default on (instead off)
 // #define USE_BUTTON
-// #define SERIAL_DEBUG // use with care (e.g. with USE_MORSE) because of RAM overflow
-// #define CRSF_TX_OPENDRAIN // only HW_NUCLEO / HW_WEACT: make tx pin open-drain to parallelize in two-wire mode
-// #define CRSF_HALFDUPLEX // only NW_NUCLEO / HW_WEACT: make crsf uart one-wire halfduplex (txpin), custom board is allways half-duplex
+#define SERIAL_DEBUG // use with care (e.g. with USE_MORSE) because of RAM overflow
+// #define CRSF_TX_OPENDRAIN // only HW_NUCLEO / HW_WEACT / HW_MSW11 : make tx pin open-drain to parallelize in two-wire mode
+// #define CRSF_HALFDUPLEX // only NW_NUCLEO / HW_WEACT / HW_MSW11 : make crsf uart one-wire halfduplex (txpin), custom board is allways half-duplex
 
 #define NDEBUG // do not change: dev option
 
 #if defined(HW_MSW10)
-# define HW_VERSION 1 // version of own pcb (not nucleo or weact)
+# define HW_VERSION 1 // version of own pcb (not nucleo nor weact)
+#elif defined(HW_MSW11)
+# define HW_VERSION 2 // version 2 of own pcb (not nucleo nor weact)
 #elif defined(HW_NUCLEO)
 # define HW_VERSION 10
 #elif defined(HW_WEACT)
@@ -53,7 +56,7 @@
 #else
 # error "wrong hardware definition"
 #endif
-#define SW_VERSION 23
+#define SW_VERSION 24
 
 #include <cstdint>
 #include <array>
@@ -144,6 +147,9 @@ struct CrsfCallback {
     using timer = Config::timer;
     using crsf = Config::crsf;
     using messageBuffer = crsf::messageBuffer;
+#ifdef HW_MSW11
+    using telemetry = Config::telemetry;
+#endif
 
     static_assert(sizeof(EEProm) < 2048);
     static inline constexpr auto& eeprom = Storage::eeprom;
@@ -156,6 +162,13 @@ struct CrsfCallback {
     enum class State : uint8_t {Undefined, GotStats, GotChannels};
 
     static inline State mStreamState{State::Undefined};
+
+#ifdef HW_MSW11
+    static inline constexpr void disableTelemetry() {
+        IO::outl<debug>("# disable telemetry");
+        telemetry::disableWithAutoOn();
+    }
+#endif
 
     static inline constexpr void ratePeriodic() {
     }
@@ -432,6 +445,10 @@ private:
         addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "PWM f G2 (O5,6)", .value_ptr = &eeprom.pwm2, .min = 1, .max = 200, .cb = [](const uint8_t v){Meta::nth_element<1, pwms>::freqCenties(v); return true;}, .def = 10, .unitString = " *100Hz"});
         addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "PWM f G3 (O0,1,2,3)", .value_ptr = &eeprom.pwm3, .min = 1, .max = 200, .cb = [](const uint8_t v){Meta::nth_element<2, pwms>::freqCenties(v); return true;}, .def = 10, .unitString = " *100Hz"});
 #endif
+#ifdef HW_MSW11
+        addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "PWM f G1 (O0,1,2,3)", .value_ptr = &eeprom.pwm3, .min = 1, .max = 200, .cb = [](const uint8_t v){Meta::nth_element<0, pwms>::freqCenties(v); return true;}, .def = 10, .unitString = " *100Hz"});
+        addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "PWM f G2 (O4,5,6,7)", .value_ptr= &eeprom.pwm1, .min = 1, .max = 200, .cb = [](const uint8_t v){Meta::nth_element<1, pwms>::freqCenties(v); return true;}, .def = 10, .unitString = " *100Hz"});
+#endif
 
         addNode(p, Param_t{parent, PType::U8, "CRSF Address", nullptr, &eeprom.crsf_address, 0xc0, 0xcf, [](const uint8_t v){
                                if (!mEepromMode) {
@@ -634,6 +651,11 @@ struct GFSM {
     using btn = devs::btn;
 #endif
 
+#ifdef HW_MSW11
+    using adc = devs::adc;
+    using telemetry = devs::telemetry;
+#endif
+
     using debug = devs::debug;
     using crsfCallback = crsf::callback;
 
@@ -705,6 +727,9 @@ struct GFSM {
         led::ratePeriodic();
 #ifdef USE_BUTTON
         btn::ratePeriodic();
+#endif
+#ifdef HW_MSW11
+        telemetry::ratePeriodic();
 #endif
         (++mPackagesCheckTick).on(packagesCheckTicks, []{
             const uint16_t ch_p = crsf_pa::template channelPackages<true>();
@@ -786,7 +811,17 @@ struct GFSM {
             break;
         case State::RunWithTelemetry:
             mStateTick.on(debugTicks, []{
-                IO::outl<debug>("# ch0: ", crsf_pa::value(0), " psize: ", crsfCallback::numberOfParameters(), " cp: ", crsf_pa::template channelPackages<false>(), " lp: ", crsf_pa::template linkPackages<false>());
+#ifdef HW_MSW11
+                const int16_t t = Mcu::Stm::V4::adc2Temp((adc::values()[0] * devs::Vref_n) / devs::Vcal_n);
+                const uint16_t v = adc::values()[1] * (devs::r1 + devs::r2) * devs::Vref_n / (devs::Vref_d * 4096 * devs::r1 / 10); // 100mV
+
+                IO::outl<debug>("# adc: ", adc::values()[0], " ", adc::values()[1], " ", v, " ", t);
+
+                telemetry::voltage(v);
+                telemetry::temp(t);
+                telemetry::next();
+#endif
+                // IO::outl<debug>("# ch0: ", crsf_pa::value(0), " psize: ", crsfCallback::numberOfParameters(), " cp: ", crsf_pa::template channelPackages<false>(), " lp: ", crsf_pa::template linkPackages<false>());
             });
 #ifdef USE_BUTTON
             if (const auto e = btn::event(); e == btn::Press::Long) {
@@ -842,6 +877,9 @@ struct GFSM {
             case State::RunWithTelemetry:
                 IO::outl<debug>("# Run WT");
                 IO::outl<debug>("# adr: ", Storage::eeprom.address);
+#ifdef HW_MSW11
+                adc::start();
+#endif
                 crsf_out::enableReply(true);
                 if (Storage::eeprom.telemetry) {
                     led::count(2);
@@ -878,6 +916,9 @@ using CrsfCallback_WithSetter = CrsfCallback<L, Setter, T>;
 #ifdef HW_MSW10
 using devs = Devices2<SW20, CrsfCallback_WithSetter, Storage>;
 #endif
+#ifdef HW_MSW11
+using devs = Devices2<SW21, CrsfCallback_WithSetter, Storage>;
+#endif
 #ifdef HW_NUCLEO
 using devs = Devices2<Nucleo, CrsfCallback_WithSetter, Storage>;
 #endif
@@ -904,7 +945,7 @@ int main() {
     NVIC_EnableIRQ(TIM3_IRQn);
     NVIC_EnableIRQ(USART2_IRQn);
 #endif
-#if defined(HW_NUCLEO) || defined(HW_WEACT)
+#if defined(HW_NUCLEO) || defined(HW_WEACT) || defined(HW_MSW11)
     NVIC_EnableIRQ(USART1_IRQn);
 #endif
     NVIC_EnableIRQ(HardFault_IRQn);
@@ -934,7 +975,7 @@ void USART2_IRQHandler(){
     });
 }
 #endif
-#if defined(HW_NUCLEO) || defined(HW_WEACT)
+#if defined(HW_NUCLEO) || defined(HW_WEACT) || defined(HW_MSW11)
 void USART1_IRQHandler(){
     using crsf = devs::crsf;
     static_assert(crsf::number == 1);
