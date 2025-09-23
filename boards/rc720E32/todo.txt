@@ -27,9 +27,7 @@ Ideas
 
 Prio 0
 ------
-* add mpx output on srv2 (limitations on TIM14)
-* test WS2812B output on other than srv1
-* extend set-proto to all rgb-led addresses
+* add switch for RGB or GRB byte-order WS2812B leds
 * use std::variant<> instead of heap-allocated wrapper objects
 * add s.port master
 * telemetry transfor from s.port-masters to s.port-aux and to crsf-telemetry
@@ -100,6 +98,9 @@ Done bugs:
 
 Done:
 ------
+* add mpx output on srv2 (limitations on TIM14)
+* test WS2812B output on other than srv1
+* extend set-proto to all rgb-led addresses
 * support addressable LEDs (WS1812, APA102) (use timer/dma)
 ** ws2812B
 ** switch color protocol (setRGB)
