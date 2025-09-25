@@ -28,4 +28,5 @@ struct EEProm {
     std::array<char, 8> txname{};
 
     uint8_t address = 0xc0;
+    uint8_t commandBroadcastAddress = 0xc8; // command packages with this dest-address are routed to all interfaces
 };

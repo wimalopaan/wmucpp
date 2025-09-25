@@ -181,6 +181,7 @@ namespace RC::Protokoll::Crsf {
             static inline constexpr External::Tick<systemTimer> updateTicks{10ms};
 
             static inline void periodic() {
+                using namespace RC::Protokoll::Crsf::V4;
                 if (!mActive) return;
                 messageBuffer::periodic();
 
@@ -193,51 +194,51 @@ namespace RC::Protokoll::Crsf {
                         uart::readBuffer([](const auto& data){
                             // IO::outl<debug>("# receive");
                             if (isExtendedPacket(&data.front(), data.size())) {
-                                if (data[RC::Protokoll::Crsf::V4::PacketIndex::type] != (uint8_t)RC::Protokoll::Crsf::V4::Type::RadioID) {
+                                if (data[PacketIndex::type] != (uint8_t)Type::RadioID) {
                                     if constexpr(std::is_same_v<router, void>) {
-                                        if (data[RC::Protokoll::Crsf::V4::PacketIndex::src] == (uint8_t)RC::Protokoll::Crsf::V4::Address::TX) {
+                                        if (data[PacketIndex::src] == (uint8_t)Address::TX) {
                                             IO::outl<debug>("# rewrite from TX");
-                                            data[RC::Protokoll::Crsf::V4::PacketIndex::src] = mRewriteTxAddress;
-                                            if (data[RC::Protokoll::Crsf::V4::PacketIndex::type] == (uint8_t)RC::Protokoll::Crsf::V4::Type::Info) {
+                                            data[PacketIndex::src] = mRewriteTxAddress;
+                                            if (data[PacketIndex::type] == (uint8_t)Type::Info) {
                                                 bool end = false;
                                                 for(uint8_t i = 0; i < 16; ++i) {
-                                                    if (data[RC::Protokoll::Crsf::V4::PacketIndex::payload + i] == '\0') {
+                                                    if (data[PacketIndex::payload + i] == '\0') {
                                                         break;
                                                     }
                                                     if (!end && (i < storage::eeprom.txname.size())) {
                                                         if (storage::eeprom.txname[i] == '\0') {
-                                                            data[RC::Protokoll::Crsf::V4::PacketIndex::payload + i] = '.';
+                                                            data[PacketIndex::payload + i] = '.';
                                                             end = true;
                                                         }
                                                         else {
-                                                            data[RC::Protokoll::Crsf::V4::PacketIndex::payload + i] = storage::eeprom.txname[i];
+                                                            data[PacketIndex::payload + i] = storage::eeprom.txname[i];
                                                         }
                                                     }
                                                     else {
-                                                        data[RC::Protokoll::Crsf::V4::PacketIndex::payload + i] = '.';
+                                                        data[PacketIndex::payload + i] = '.';
                                                     }
                                                 }
                                             }
                                         }
-                                        else if (data[RC::Protokoll::Crsf::V4::PacketIndex::src] == (uint8_t)RC::Protokoll::Crsf::V4::Address::RX) {
+                                        else if (data[PacketIndex::src] == (uint8_t)Address::RX) {
                                             IO::outl<debug>("# rewrite from RX");
-                                            data[RC::Protokoll::Crsf::V4::PacketIndex::src] = mRewriteRxAddress;
+                                            data[PacketIndex::src] = mRewriteRxAddress;
                                         }
-                                        if (data[RC::Protokoll::Crsf::V4::PacketIndex::dest] == (uint8_t)RC::Protokoll::Crsf::V4::Address::TX) {
+                                        if (data[PacketIndex::dest] == (uint8_t)Address::TX) {
                                             IO::outl<debug>("# rewrite To TX");
-                                            data[RC::Protokoll::Crsf::V4::PacketIndex::dest] = (uint8_t)RC::Protokoll::Crsf::V4::Address::Handset;
+                                            data[PacketIndex::dest] = (uint8_t)Address::Handset;
                                         }
                                         IO::outl<debug>("# route");
-                                        data[0] = (uint8_t)RC::Protokoll::Crsf::V4::Address::StartByte;
+                                        data[0] = (uint8_t)Address::StartByte;
                                         recalculateCRC(data);
                                         dest::enqueue(data);
                                     }
                                     else { // with router
-                                        const uint8_t srcAddr = data[RC::Protokoll::Crsf::V4::PacketIndex::src];
+                                        const uint8_t srcAddr = data[PacketIndex::src];
                                         const uint8_t rewSrcAddr = router::backwardSrcAddress(Config::id, srcAddr);
                                         IO::outl<debug>("# route: ", srcAddr, " -> ", rewSrcAddr);
-                                        data[RC::Protokoll::Crsf::V4::PacketIndex::src] = rewSrcAddr;
-                                        data[0] = (uint8_t)RC::Protokoll::Crsf::V4::Address::StartByte;
+                                        data[PacketIndex::src] = rewSrcAddr;
+                                        data[0] = (uint8_t)Address::StartByte;
                                         recalculateCRC(data);
                                         dest::enqueue(data);
                                     }
@@ -307,35 +308,37 @@ namespace RC::Protokoll::Crsf {
                 return (length >= 6) && (data[RC::Protokoll::Crsf::V4::PacketIndex::type] >= (uint8_t)RC::Protokoll::Crsf::V4::Type::Ping);
             }
             static inline void forwardPacket(volatile uint8_t* const data, const uint16_t length) {
+                using namespace RC::Protokoll::Crsf::V4;
                 if (mActive) {
                     // IO::outl<debug>("# fw to TX");
                     if (isExtendedPacket(data, length)) {
                         if constexpr(std::is_same_v<router, void>) {
                             // IO::outl<debug>("# rewrite to TX");
-                            if (data[RC::Protokoll::Crsf::V4::PacketIndex::dest] == mRewriteTxAddress) {
-                                data[RC::Protokoll::Crsf::V4::PacketIndex::dest] = (uint8_t)RC::Protokoll::Crsf::V4::Address::TX;
+                            if (data[PacketIndex::dest] == mRewriteTxAddress) {
+                                data[PacketIndex::dest] = (uint8_t)Address::TX;
                             }
-                            else if (data[RC::Protokoll::Crsf::V4::PacketIndex::dest] == mRewriteRxAddress) {
-                                data[RC::Protokoll::Crsf::V4::PacketIndex::dest] = (uint8_t)RC::Protokoll::Crsf::V4::Address::RX;
+                            else if (data[PacketIndex::dest] == mRewriteRxAddress) {
+                                data[PacketIndex::dest] = (uint8_t)Address::RX;
                             }
                             recalculateCRC(data);
                             messageBuffer::enqueue(std::span{data, length});
                         }
                         else { // with router
-                            if (data[RC::Protokoll::Crsf::V4::PacketIndex::dest] == 0) { // broadcast
+                            if ((data[PacketIndex::dest] == 0) || // broadcast
+                                ((data[PacketIndex::dest] == storage::eeprom.commandBroadcastAddress) && (data[PacketIndex::type] == (uint8_t)Type::Command)))  { // pseudo-broadcast
                                 messageBuffer::enqueue(std::span{data, length});
                             }
                             else {
-                                const uint8_t rewriteDestAdr = router::forwardDestAddress(Config::id, data[RC::Protokoll::Crsf::V4::PacketIndex::dest]);
+                                const uint8_t rewriteDestAdr = router::forwardDestAddress(Config::id, data[PacketIndex::dest]);
                                 if (rewriteDestAdr > 0) {
-                                    data[RC::Protokoll::Crsf::V4::PacketIndex::dest] = rewriteDestAdr;
+                                    data[PacketIndex::dest] = rewriteDestAdr;
                                     recalculateCRC(data);
                                     messageBuffer::enqueue(std::span{data, length});
                                 }
                             }
                         }
                     }
-                    else {
+                    else { // not extended package
                         messageBuffer::enqueue(std::span{data, length});
                     }
                 }
@@ -343,23 +346,23 @@ namespace RC::Protokoll::Crsf {
             private:
             static inline void recalculateCRC(auto& data) {
                 CRC8 crc;
-                const uint8_t len = data[RC::Protokoll::Crsf::V4::PacketIndex::length];
+                const uint8_t len = data[PacketIndex::length];
                 for(uint8_t i = 0; i < len - 1; ++i) {
-                    crc += data[i + RC::Protokoll::Crsf::V4::PacketIndex::type];
+                    crc += data[i + PacketIndex::type];
                 }
-                data[len + RC::Protokoll::Crsf::V4::PacketIndex::type - 1] = crc;
+                data[len + PacketIndex::type - 1] = crc;
             }
 
             static inline bool validityCheck(const volatile uint8_t* const data, const uint16_t) {
-                if ((data[0] == (uint8_t)RC::Protokoll::Crsf::V4::Address::StartByte) ||
-                    (data[0] == (uint8_t)RC::Protokoll::Crsf::V4::Address::Handset)) {
+                if ((data[0] == (uint8_t)Address::StartByte) ||
+                    (data[0] == (uint8_t)Address::Handset)) {
                     return true;
                 }
                 return false;
             }
             static inline void update() { // channels to dest
                 if (mSource) {
-                    messageBuffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::Channels, [](auto& ta){
+                    messageBuffer::create_back((uint8_t)Type::Channels, [](auto& ta){
                         RC::Protokoll::Crsf::V4::pack(src::values(), ta);
                     });
                 }

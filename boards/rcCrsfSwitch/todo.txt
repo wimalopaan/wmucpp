@@ -1,22 +1,21 @@
+bugs:
+
+* learning addresses / setup routing table on power-up (without TBS agent or elrsV3.lua)
+* widget send commands allways to dest=0xc8 -> no routing takes place
+** widget should use broadcast address 0x00 for commands
+** elrs V4: routing of command packages with broadcast destination, does it work?
+
 todo:
 
-* Routing
-
-from RX:
-- Channel -> @all
-- Link -> @all
-- Ping -> @all
-  ping-broadcast: got unscrambled reply: assume only one device
-                  scrambled: continue ping with specific address
-
-- extended (Param, Command): ->  #Connector (according to address [0x20, ...]
-                                 with extended address rewriting (to 0xc8, or specific address)
-
-from Dev:
-- telemtry: -> in queue of switch -> RX
-- extended: rewrite source-address: [0x20, ...] according to connector-number
-
-from Switch:
-- telemtry request: command 0xf0
+* menu: range of rewrite addresses
+* indication of table overrun
+* menu: display routing table
+* self-refresh to detect stale devices
+* add special cases for TX-module / RX / Handset
+* add cross-routing to other modules (routing between modules, not to receiver)
 
 done:
+
+* basic routing
+** workaround: use 0xc8 as quasi-broadcast for commands
+** menu: set quasi-broadcast address

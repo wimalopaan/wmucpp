@@ -155,7 +155,7 @@ struct CrsfCallback {
         addNode(p, Param_t{0, PType::Folder, "root"});
         addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
         addNode(p, Param_t{0, PType::U8,  "CRSF Address", nullptr, &eeprom.address, 192, 207, [](const uint8_t){updateName(mName); return true;}});
-
+        addNode(p, Param_t{0, PType::U8,  "Command B-Address", nullptr, &eeprom.commandBroadcastAddress, 192, 207, [](const uint8_t){return true;}});
         return p;
     }();
 };
