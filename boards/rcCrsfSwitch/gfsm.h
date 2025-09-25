@@ -46,7 +46,9 @@ struct GFSM {
     enum class Event : uint8_t {None, ConnectionLost, DirectConnected, ReceiverConnected};
 
     enum class State : uint8_t {Undefined, Init,
-                                RunConnected, RunUnconnected, DirectMode, CheckBaudrate};
+                                RunConnected, RunUnconnected, DirectMode,
+                                CheckBaudrate,
+                                UpdateRouting};
 
     static inline constexpr External::Tick<systemTimer> initTicks{500ms};
     static inline constexpr External::Tick<systemTimer> debugTicks{500ms};
@@ -56,10 +58,19 @@ struct GFSM {
     static inline constexpr External::Tick<systemTimer> packagesCheckTicks{300ms};
     static inline constexpr External::Tick<systemTimer> baudCheckTicks{1000ms};
 
+    static inline std::array<uint8_t, 6> pingPacket {0xc8, 0x04, 0x28, 0x00, 0xea, 0x54};
+    static inline uint8_t pingCounter = 0;
+    static inline constexpr uint8_t maxPingCount = 3;
+
+    static inline void sendPings() {
+        crsf_hd1::forwardPacket(&pingPacket[0], pingPacket.size());
+        crsf_hd2::forwardPacket(&pingPacket[0], pingPacket.size());
+        crsf_hd3::forwardPacket(&pingPacket[0], pingPacket.size());
+        crsf_hd5::forwardPacket(&pingPacket[0], pingPacket.size());
+    }
     static inline void event(const Event e) {
         mEvent = e;
     }
-
     static inline void init() {
         devs::init();
     }
@@ -102,7 +113,17 @@ struct GFSM {
             break;
         case State::Init:
             mStateTick.on(initTicks, []{
+                pingCounter = 0;
+                mState = State::UpdateRouting;
+            });
+            break;
+        case State::UpdateRouting:
+            if (pingCounter > maxPingCount) {
                 mState = State::CheckBaudrate;
+            }
+            mStateTick.on(initTicks, []{
+                sendPings();
+                ++pingCounter;
             });
             break;
         case State::CheckBaudrate:
@@ -186,6 +207,9 @@ struct GFSM {
             case State::DirectMode:
                 IO::outl<debug>("# DMode");
                 led::event(led::Event::Fast);
+                break;
+            case State::UpdateRouting:
+                IO::outl<debug>("# Ping");
                 break;
             }
         }

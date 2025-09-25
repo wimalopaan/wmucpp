@@ -326,6 +326,7 @@ namespace RC::Protokoll::Crsf {
                         else { // with router
                             if ((data[PacketIndex::dest] == 0) || // broadcast
                                 ((data[PacketIndex::dest] == storage::eeprom.commandBroadcastAddress) && (data[PacketIndex::type] == (uint8_t)Type::Command)))  { // pseudo-broadcast
+                                IO::outl<debug>("# ping: ", data[PacketIndex::dest]);
                                 messageBuffer::enqueue(std::span{data, length});
                             }
                             else {
