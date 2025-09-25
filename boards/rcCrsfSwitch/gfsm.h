@@ -57,10 +57,11 @@ struct GFSM {
     static inline constexpr External::Tick<systemTimer> directTicks{1000ms};
     static inline constexpr External::Tick<systemTimer> packagesCheckTicks{300ms};
     static inline constexpr External::Tick<systemTimer> baudCheckTicks{1000ms};
+    static inline constexpr External::Tick<systemTimer> pingTicks{50ms};
 
     static inline std::array<uint8_t, 6> pingPacket {0xc8, 0x04, 0x28, 0x00, 0xea, 0x54};
     static inline uint8_t pingCounter = 0;
-    static inline constexpr uint8_t maxPingCount = 3;
+    static inline constexpr uint8_t maxPingCount = 20 * 3;
 
     static inline void sendPings() {
         crsf_hd1::forwardPacket(&pingPacket[0], pingPacket.size());
@@ -121,7 +122,7 @@ struct GFSM {
             if (pingCounter > maxPingCount) {
                 mState = State::CheckBaudrate;
             }
-            mStateTick.on(initTicks, []{
+            mStateTick.on(pingTicks, []{
                 sendPings();
                 ++pingCounter;
             });
