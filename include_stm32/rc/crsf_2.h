@@ -419,6 +419,7 @@ namespace RC {
                             if constexpr(requires(){callback::disableTelemetry();}) {
                                 callback::disableTelemetry();
                             }
+                            input::decodePing(data + 3);
                             if (const uint8_t dest = data[3]; ((dest == (uint8_t)Address::Broadcast) || (dest == mAddress))) {
                                 const uint8_t src = data[4];
                                 output::resetSlot();

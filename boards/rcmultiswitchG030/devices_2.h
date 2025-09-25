@@ -235,13 +235,13 @@ struct Devices2<SW21, CrsfCallback, Storage, MCU> {
         using clock = Devices2::clock;
         using dmaChRead  = csrfInDmaChannelComponent1;
         using dmaChWrite  = csrfInDmaChannelComponent2;
+        using dmaChRW  = csrfInDmaChannelComponent1;
         using debug = void;
         // using debug = Devices2::debug;
         using tp = tp1;
         using callback = CrsfCallback<CrsfCallbackConfig, debug>;
         // using callback = CrsfCallback<CrsfCallbackConfig, void>;
         static inline constexpr uint8_t fifoSize = 8;
-        // static inline constexpr bool rxtxswap = true;
     };
     static inline void init() {
         clock::init();
@@ -784,6 +784,7 @@ struct Devices2<WeAct, CrsfCallback, Storage, MCU> {
         using systemTimer = Devices2::systemTimer;
         using clock = Devices2::clock;
         using dmaChRead  = csrfInDmaChannelComponent1;
+        using dmaChRW  = csrfInDmaChannelComponent1;
         using dmaChWrite  = csrfInDmaChannelComponent2;
         // using debug = void;
         using debug = Devices2::debug;
@@ -836,7 +837,6 @@ struct Devices2<WeAct, CrsfCallback, Storage, MCU> {
 
         pwm3::init();
         pwm1::init();
-        // pwm14::init();
         pwm2::init();
     }
 };

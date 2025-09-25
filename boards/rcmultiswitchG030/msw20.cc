@@ -18,9 +18,9 @@
 
 // select one of the following hardware definitions
 // ATTENTION: use Makefile
-// #define HW_MSW10 // MultiSwitch_10 (32K)
+#define HW_MSW10 // MultiSwitch_10 (32K)
 // ATTENTION: use Makefile.G031
-#define HW_MSW11 // MultiSwitch_11 (64k)
+// #define HW_MSW11 // MultiSwitch_11 (64k)
 // #define HW_NUCLEO // STM Nucleo G031K8 (64K) (incl. ST-Link)
 // #define HW_WEACT // WeAct G031F8 (64K)
 
@@ -30,7 +30,7 @@
 #define USE_MORSE
 #define USE_EEPROM_TEST // switches telemetry default on (instead off)
 // #define USE_BUTTON
-#define SERIAL_DEBUG // use with care (e.g. with USE_MORSE) because of RAM overflow
+// #define SERIAL_DEBUG // use with care (e.g. with USE_MORSE) because of RAM overflow
 // #define CRSF_TX_OPENDRAIN // only HW_NUCLEO / HW_WEACT / HW_MSW11 : make tx pin open-drain to parallelize in two-wire mode
 // #define CRSF_HALFDUPLEX // only NW_NUCLEO / HW_WEACT / HW_MSW11 : make crsf uart one-wire halfduplex (txpin), custom board is allways half-duplex
 
@@ -676,7 +676,7 @@ struct GFSM {
     enum class Event : uint8_t {None, ConnectionLost, DirectConnected, ReceiverConnected};
 
     static inline constexpr External::Tick<systemTimer> packagesCheckTicks{300ms};
-    static inline constexpr External::Tick<systemTimer> initTicks{500ms};
+    static inline constexpr External::Tick<systemTimer> initTicks{100ms};
     static inline constexpr External::Tick<systemTimer> debugTicks{500ms};
     static inline constexpr External::Tick<systemTimer> baudCheckTicks{1000ms};
 
@@ -734,7 +734,8 @@ struct GFSM {
         (++mPackagesCheckTick).on(packagesCheckTicks, []{
             const uint16_t ch_p = crsf_pa::template channelPackages<true>();
             const uint16_t l_p = crsf_pa::template linkPackages<true>();
-            if (ch_p > 0) {
+            const uint16_t p_p = crsf_pa::template pingPackages<true>();
+            if ((ch_p > 0) || (p_p > 0)) {
                 if  (l_p == 0) {
                     event(Event::DirectConnected);
                 }

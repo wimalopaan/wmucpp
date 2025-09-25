@@ -1,15 +1,16 @@
 bugs:
 -----
-* prop mode (remote) does not work
 
 todo:
 -----
+* respond to crsf-ping if in unconnected mode (switch to connected if received ping)
 * add virtual switches as group of outputs
 * increase output current by grouping outputs together
 * running light mode: parameter: speed, activate-output, activate-next address, (pwm)
 * running light mode: crsf command messages
 * running light mode: problem: half-duplex-bus arbitration,
                       reliable only possible with CRSF-switch project sending arbitration tokens
+                      or doing the crsf-switch the routing
 * crsf units
 * name of module (top-level)
 * watchdog
@@ -25,6 +26,7 @@ details:
 
 done:
 -----
+* prop mode (remote) does not work
 * unify all Makefiles to one, then using different targets
 * make option to use crsf-tx-line open-drain (to parallel multiple non-custom boards like nucleo / weact)
 * nucleo/weact boards: check pwm grouping for crsf menu settings

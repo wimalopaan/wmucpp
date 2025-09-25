@@ -62,6 +62,17 @@ namespace RC {
                         return RC::Protokoll::Crsf::V4::mid;
                     }
                     template<bool Reset = false>
+                    static inline uint16_t pingPackages() {
+                        if constexpr(Reset) {
+                            const auto v = mPingPackagesCounter;
+                            mPingPackagesCounter = 0;
+                            return v;
+                        }
+                        else {
+                            return mPingPackagesCounter;
+                        }
+                    }
+                    template<bool Reset = false>
                     static inline uint16_t linkPackages() {
                         if constexpr(Reset) {
                             const auto v = mLinkPackagesCounter;
@@ -84,6 +95,9 @@ namespace RC {
                         }
                     }
                     private:
+                    static inline void decodePing(auto) {
+                        ++mPingPackagesCounter;
+                    }
                     static inline void decodeLink(auto) {
                         ++mLinkPackagesCounter;
                     }
@@ -108,6 +122,7 @@ namespace RC {
                         mChannels[14] = ch.ch14;
                         mChannels[15] = ch.ch15;
                     }
+                    static inline uint16_t mPingPackagesCounter{};
                     static inline uint16_t mLinkPackagesCounter{};
                     static inline uint16_t mChannelsPackagesCounter{};
                     inline static values_t mChannels;
