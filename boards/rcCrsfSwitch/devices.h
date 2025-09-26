@@ -70,6 +70,8 @@ struct Devices<SW01, Config, MCU> {
     using csrfHd3DmaChannelComponent = Mcu::Components::DmaChannel<typename dma1::component_t, 5>;
     using csrfHd4DmaChannelComponent = Mcu::Components::DmaChannel<typename dma1::component_t, 6>;
     using csrfHd5DmaChannelComponent = Mcu::Components::DmaChannel<typename dma1::component_t, 7>;
+    using csrfHd6DmaChannelComponent = Mcu::Components::DmaChannel<typename dma2::component_t, 1>;
+    using csrfHd7DmaChannelComponent = Mcu::Components::DmaChannel<typename dma2::component_t, 2>;
 
     // CRSF TX
     using crsftx = Mcu::Stm::Pin<gpioa, 9, MCU>;
@@ -113,11 +115,15 @@ struct Devices<SW01, Config, MCU> {
 
     // USART 6: CRSF HD6
     using crsf_hd6_rxtx = Mcu::Stm::Pin<gpioa, 4, MCU>;
+    struct CrsfHd6Config;
+    using crsf_hd6 = RC::Protokoll::Crsf::V4::PacketRelayRewrite<6, CrsfHd6Config, MCU>;
 
     // LPUART 2: CRSF HD7
     using crsf_hd7_rxtx = Mcu::Stm::Pin<gpiob, 6, MCU>;
+    struct CrsfHd7Config;
+    using crsf_hd7 = RC::Protokoll::Crsf::V4::PacketRelayRewrite<102, CrsfHd7Config, MCU>;
 
-    using crsf_ifaces = Meta::List<crsf_hd1, crsf_hd2, crsf_hd3, crsf_hd5>;
+    using crsf_ifaces = Meta::List<crsf_hd1, crsf_hd2, crsf_hd3, crsf_hd5, crsf_hd6, crsf_hd7>;
 
     // Led
     using led = Mcu::Stm::Pin<gpiob, 9, MCU>;
@@ -138,10 +144,6 @@ struct Devices<SW01, Config, MCU> {
         using crsf = Devices::crsf_in;
         using storage = Devices::storage;
         using crsf_ifaces = Devices::crsf_ifaces;
-        // using crsf_hd1 = Devices::crsf_hd1;
-        // using crsf_hd2 = Devices::crsf_hd2;
-        // using crsf_hd3 = Devices::crsf_hd3;
-        // using crsf_hd5 = Devices::crsf_hd5;
     };
     struct CrsfInConfig {
         using txpin = crsftx;
@@ -217,6 +219,36 @@ struct Devices<SW01, Config, MCU> {
         using tp = void;
         static inline constexpr uint8_t fifoSize = 16;
     };
+    struct CrsfHd6Config {
+        using router = Devices::router;
+        static inline constexpr uint8_t id = 6;
+        using src = crsf_in::input;
+        using dest = crsf_in::messageBuffer;
+        using rxpin = crsf_hd6_rxtx;
+        using txpin = crsf_hd6_rxtx;
+        using systemTimer = Devices::systemTimer;
+        using clock = Devices::clock;
+        using dmaChRead  = csrfHd6DmaChannelComponent;
+        using storage = Devices::storage;
+        using debug = Devices::debug1;
+        using tp = void;
+        static inline constexpr uint8_t fifoSize = 16;
+    };
+    struct CrsfHd7Config {
+        using router = Devices::router;
+        static inline constexpr uint8_t id = 7;
+        using src = crsf_in::input;
+        using dest = crsf_in::messageBuffer;
+        using rxpin = crsf_hd7_rxtx;
+        using txpin = crsf_hd7_rxtx;
+        using systemTimer = Devices::systemTimer;
+        using clock = Devices::clock;
+        using dmaChRead  = csrfHd7DmaChannelComponent;
+        using storage = Devices::storage;
+        using debug = Devices::debug1;
+        using tp = void;
+        static inline constexpr uint8_t fifoSize = 16;
+    };
 
     static inline void init() {
         clock::init();
@@ -247,6 +279,12 @@ struct Devices<SW01, Config, MCU> {
 
         crsf_hd5::init();
         crsf_hd5::baud(420'000);
+
+        crsf_hd6::init();
+        crsf_hd6::baud(420'000);
+
+        crsf_hd7::init();
+        crsf_hd7::baud(420'000);
     }
 };
 

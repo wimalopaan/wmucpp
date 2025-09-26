@@ -85,6 +85,11 @@ void USART2_LPUART2_IRQHandler() {
     static_assert(crsf_hd2::uart::number == 2);
     crsf_hd2::Isr::onIdle([] static {});
     crsf_hd2::Isr::onTransferComplete([] static {});
+
+    using crsf_hd7 = devs::crsf_hd7;
+    static_assert(crsf_hd7::uart::number == 102);
+    crsf_hd7::Isr::onIdle([] static {});
+    crsf_hd7::Isr::onTransferComplete([] static {});
 }
 void USART3_4_5_6_LPUART1_IRQHandler() {
     using crsf_hd1 = devs::crsf_hd1;
@@ -101,6 +106,11 @@ void USART3_4_5_6_LPUART1_IRQHandler() {
     static_assert(crsf_hd5::uart::number == 5);
     crsf_hd5::Isr::onIdle([] static {});
     crsf_hd5::Isr::onTransferComplete([] static {});
+
+    using crsf_hd6 = devs::crsf_hd6;
+    static_assert(crsf_hd6::uart::number == 6);
+    crsf_hd6::Isr::onIdle([] static {});
+    crsf_hd6::Isr::onTransferComplete([] static {});
 }
 
 
