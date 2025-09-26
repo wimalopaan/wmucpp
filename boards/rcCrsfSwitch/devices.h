@@ -117,6 +117,8 @@ struct Devices<SW01, Config, MCU> {
     // LPUART 2: CRSF HD7
     using crsf_hd7_rxtx = Mcu::Stm::Pin<gpiob, 6, MCU>;
 
+    using crsf_ifaces = Meta::List<crsf_hd1, crsf_hd2, crsf_hd3, crsf_hd5>;
+
     // Led
     using led = Mcu::Stm::Pin<gpiob, 9, MCU>;
     using ledBlinker = External::Blinker<led, systemTimer>;
@@ -125,11 +127,13 @@ struct Devices<SW01, Config, MCU> {
     using router = Router<RouterConfig>;
     struct RouterConfig {
         using storage = Devices::storage;
-        using debug = Devices::debug;
+        // using debug = Devices::debug;
+        using debug = void;
     };
 
     struct CrsfInCallbackConfig {
-        using debug = Devices::debug;
+        using debug = void;
+        // using debug = Devices::debug;
         using timer = systemTimer;
         using crsf = Devices::crsf_in;
         using storage = Devices::storage;
@@ -145,11 +149,13 @@ struct Devices<SW01, Config, MCU> {
         using clock = Devices::clock;
         using dmaChRead  = csrfInDmaChannelComponent1;
         using dmaChWrite  = csrfInDmaChannelComponent2;
-        using debug = Devices::debug;
+        using debug = void;
+        // using debug = Devices::debug;
         using tp = void;
         using callback = CrsfCallback<CrsfInCallbackConfig>;
         static inline constexpr uint8_t fifoSize = 8;
     };
+    using debug1 = void;
     struct CrsfHd1Config {
         using router = Devices::router;
         static inline constexpr uint8_t id = 1;
@@ -161,7 +167,7 @@ struct Devices<SW01, Config, MCU> {
         using clock = Devices::clock;
         using dmaChRead  = csrfHd1DmaChannelComponent;
         using storage = Devices::storage;
-        using debug = Devices::debug;
+        using debug = Devices::debug1;
         using tp = void;
         static inline constexpr uint8_t fifoSize = 16;
     };
@@ -176,7 +182,7 @@ struct Devices<SW01, Config, MCU> {
         using clock = Devices::clock;
         using dmaChRead  = csrfHd2DmaChannelComponent;
         using storage = Devices::storage;
-        using debug = Devices::debug;
+        using debug = Devices::debug1;
         using tp = void;
         static inline constexpr uint8_t fifoSize = 16;
     };
@@ -191,7 +197,7 @@ struct Devices<SW01, Config, MCU> {
         using clock = Devices::clock;
         using dmaChRead  = csrfHd3DmaChannelComponent;
         using storage = Devices::storage;
-        using debug = Devices::debug;
+        using debug = Devices::debug1;
         using tp = void;
         static inline constexpr uint8_t fifoSize = 16;
     };
@@ -206,7 +212,7 @@ struct Devices<SW01, Config, MCU> {
         using clock = Devices::clock;
         using dmaChRead  = csrfHd5DmaChannelComponent;
         using storage = Devices::storage;
-        using debug = Devices::debug;
+        using debug = Devices::debug1;
         using tp = void;
         static inline constexpr uint8_t fifoSize = 16;
     };

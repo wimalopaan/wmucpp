@@ -431,6 +431,7 @@ namespace External {
                 break;
             }
         }
+        static inline void periodic() {}
 
         static inline void ratePeriodic() {
             const Event e = std::exchange(mEvent, Event::None);

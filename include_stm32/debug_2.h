@@ -45,6 +45,7 @@ struct SerialBuffered {
     static inline void periodic() {
         uart::periodic();
     }
+    static inline void ratePeriodic(){}
     private:
     struct UartConfig {
         using Clock = Config::clock;

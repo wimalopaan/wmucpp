@@ -38,10 +38,13 @@ struct GFSM {
     using led = devs::ledBlinker;
 
     using crsf_in = devs::crsf_in;
+
     using crsf_hd1 = devs::crsf_hd1;
     using crsf_hd2 = devs::crsf_hd2;
     using crsf_hd3 = devs::crsf_hd3;
     using crsf_hd5 = devs::crsf_hd5;
+
+    using crsf_ifaces = devs::crsf_ifaces;
 
     enum class Event : uint8_t {None, ConnectionLost, DirectConnected, ReceiverConnected};
 
@@ -57,17 +60,33 @@ struct GFSM {
     static inline constexpr External::Tick<systemTimer> directTicks{1000ms};
     static inline constexpr External::Tick<systemTimer> packagesCheckTicks{300ms};
     static inline constexpr External::Tick<systemTimer> baudCheckTicks{1000ms};
-    static inline constexpr External::Tick<systemTimer> pingTicks{50ms};
+    static inline constexpr External::Tick<systemTimer> pingTicks{500ms};
+
+    static inline auto rcPacket = []{
+        std::array<uint8_t, 26> d{};
+        std::array<uint16_t, 16> a{};
+        std::fill(std::begin(a), std::end(a), RC::Protokoll::Crsf::V4::mid);
+        RC::Protokoll::Crsf::V4::pack(a, d);
+        return d;
+    }();
+    static inline void sendRCFrame() {
+        Meta::visit<crsf_ifaces>([](auto P) static {decltype(P)::type::forwardPacket(&rcPacket[0], rcPacket.size());});
+        // crsf_hd1::forwardPacket(&rcPacket[0], rcPacket.size());
+        // crsf_hd2::forwardPacket(&rcPacket[0], rcPacket.size());
+        // crsf_hd3::forwardPacket(&rcPacket[0], rcPacket.size());
+        // crsf_hd5::forwardPacket(&rcPacket[0], rcPacket.size());
+    }
 
     static inline std::array<uint8_t, 6> pingPacket {0xc8, 0x04, 0x28, 0x00, 0xea, 0x54};
     static inline uint8_t pingCounter = 0;
-    static inline constexpr uint8_t maxPingCount = 20 * 3;
+    static inline constexpr uint8_t maxPingCount = 5;
 
     static inline void sendPings() {
-        crsf_hd1::forwardPacket(&pingPacket[0], pingPacket.size());
-        crsf_hd2::forwardPacket(&pingPacket[0], pingPacket.size());
-        crsf_hd3::forwardPacket(&pingPacket[0], pingPacket.size());
-        crsf_hd5::forwardPacket(&pingPacket[0], pingPacket.size());
+        Meta::visit<crsf_ifaces>([](auto P) static {decltype(P)::type::forwardPacket(&pingPacket[0], pingPacket.size());});
+        // crsf_hd1::forwardPacket(&pingPacket[0], pingPacket.size());
+        // crsf_hd2::forwardPacket(&pingPacket[0], pingPacket.size());
+        // crsf_hd3::forwardPacket(&pingPacket[0], pingPacket.size());
+        // crsf_hd5::forwardPacket(&pingPacket[0], pingPacket.size());
     }
     static inline void event(const Event e) {
         mEvent = e;
@@ -75,21 +94,30 @@ struct GFSM {
     static inline void init() {
         devs::init();
     }
+
+    using periodics = Meta::concat<crsf_ifaces, Meta::List<debug, crsf_in, led>>;
+
     static inline void periodic() {
-        debug::periodic();
-        crsf_in::periodic();
-        crsf_hd1::periodic();
-        crsf_hd2::periodic();
-        crsf_hd3::periodic();
-        crsf_hd5::periodic();
+        // debug::periodic();
+        // crsf_in::periodic();
+
+        Meta::visit<periodics>([](auto P) static {decltype(P)::type::periodic(); });
+        // Meta::visit<crsf_ifaces>([](auto P){decltype(P)::type::periodic(); });
+        // crsf_hd1::periodic();
+        // crsf_hd2::periodic();
+        // crsf_hd3::periodic();
+        // crsf_hd5::periodic();
     }
     static inline void ratePeriodic() {
-        led::ratePeriodic();
-        crsf_in::ratePeriodic();
-        crsf_hd1::ratePeriodic();
-        crsf_hd2::ratePeriodic();
-        crsf_hd3::ratePeriodic();
-        crsf_hd5::ratePeriodic();
+        // led::ratePeriodic();
+        // crsf_in::ratePeriodic();
+
+        Meta::visit<periodics>([](auto P) static {decltype(P)::type::ratePeriodic(); });
+        // Meta::visit<crsf_ifaces>([](auto P){decltype(P)::type::ratePeriodic(); });
+        // crsf_hd1::ratePeriodic();
+        // crsf_hd2::ratePeriodic();
+        // crsf_hd3::ratePeriodic();
+        // crsf_hd5::ratePeriodic();
         (++mPackagesCheckTick).on(packagesCheckTicks, []{
             const uint16_t ch_p = crsf_in::input::template channelPackages<true>();
             const uint16_t l_p = crsf_in::input::template linkPackages<true>();
@@ -122,9 +150,12 @@ struct GFSM {
             if (pingCounter > maxPingCount) {
                 mState = State::CheckBaudrate;
             }
-            mStateTick.on(pingTicks, []{
+            (++mPingTick).on(pingTicks, []{
                 sendPings();
                 ++pingCounter;
+            });
+            (++mUpdateTick).on(updateTicks, []{
+                sendRCFrame();
             });
             break;
         case State::CheckBaudrate:
@@ -137,7 +168,7 @@ struct GFSM {
                 nextBaudrate();
             });
             (++mUpdateTick).on(updateTicks, []{
-                // channelCallback::update();
+                sendRCFrame();
             });
             break;
         case State::RunUnconnected:
@@ -203,6 +234,7 @@ struct GFSM {
             case State::RunConnected:
                 IO::outl<debug>("# Run con");
                 crsf_in::address(std::byte(storage::eeprom.address));
+                led::count(2);
                 led::event(led::Event::Slow);
                 break;
             case State::DirectMode:
@@ -211,6 +243,7 @@ struct GFSM {
                 break;
             case State::UpdateRouting:
                 IO::outl<debug>("# Ping");
+                led::event(led::Event::Medium);
                 break;
             }
         }
@@ -223,6 +256,7 @@ struct GFSM {
     static inline External::Tick<systemTimer> mDirectTick;
     static inline External::Tick<systemTimer> mUpdateTick;
     static inline External::Tick<systemTimer> mTelemetryTick;
+    static inline External::Tick<systemTimer> mPingTick;
     static inline External::Tick<systemTimer> mStateTick;
     static inline State mState{State::Undefined};
 

@@ -278,7 +278,7 @@ namespace RC {
                 }
                 template<typename T, auto L>
                 static inline uint8_t pack(const std::array<uint16_t, 16>& channels, std::array<T, L>& out) {
-                    static_assert(L > 26);
+                    static_assert(L >= 26);
                     Channels packed;
                     packed.ch0 = channels[0];
                     packed.ch1 = channels[1];
@@ -339,8 +339,10 @@ namespace RC {
                     }
                 }
                 template<typename E, typename T>
-                static inline void pack(const std::array<E, 16>& channels, T& out) {
+                static inline constexpr void pack(const std::array<E, 16>& channels, T& out) {
                     Channels packed;
+                    static_assert(sizeof(packed) == 26);
+
                     packed.ch0 = channels[0].value();
                     packed.ch1 = channels[1].value();
                     packed.ch2 = channels[2].value();
@@ -358,7 +360,8 @@ namespace RC {
                     packed.ch14 = channels[14].value();
                     packed.ch15 = channels[15].value();
 
-                    const uint8_t* const ptr = (uint8_t*)&packed;
+                    const uint8_t* const ptr = (const uint8_t*)&packed;
+                    // const uint8_t* const ptr = std::bit_cast<const uint8_t*>(&packed);
                     for(uint8_t i = 0; i < sizeof(Channels); ++i) {
                         out.push_back(ptr[i]);
                     }
