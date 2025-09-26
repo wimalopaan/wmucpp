@@ -71,10 +71,6 @@ struct GFSM {
     }();
     static inline void sendRCFrame() {
         Meta::visit<crsf_ifaces>([](auto P) static {decltype(P)::type::forwardPacket(&rcPacket[0], rcPacket.size());});
-        // crsf_hd1::forwardPacket(&rcPacket[0], rcPacket.size());
-        // crsf_hd2::forwardPacket(&rcPacket[0], rcPacket.size());
-        // crsf_hd3::forwardPacket(&rcPacket[0], rcPacket.size());
-        // crsf_hd5::forwardPacket(&rcPacket[0], rcPacket.size());
     }
 
     static inline std::array<uint8_t, 6> pingPacket {0xc8, 0x04, 0x28, 0x00, 0xea, 0x54};
@@ -83,10 +79,6 @@ struct GFSM {
 
     static inline void sendPings() {
         Meta::visit<crsf_ifaces>([](auto P) static {decltype(P)::type::forwardPacket(&pingPacket[0], pingPacket.size());});
-        // crsf_hd1::forwardPacket(&pingPacket[0], pingPacket.size());
-        // crsf_hd2::forwardPacket(&pingPacket[0], pingPacket.size());
-        // crsf_hd3::forwardPacket(&pingPacket[0], pingPacket.size());
-        // crsf_hd5::forwardPacket(&pingPacket[0], pingPacket.size());
     }
     static inline void event(const Event e) {
         mEvent = e;
@@ -98,26 +90,11 @@ struct GFSM {
     using periodics = Meta::concat<crsf_ifaces, Meta::List<debug, crsf_in, led>>;
 
     static inline void periodic() {
-        // debug::periodic();
-        // crsf_in::periodic();
-
         Meta::visit<periodics>([](auto P) static {decltype(P)::type::periodic(); });
-        // Meta::visit<crsf_ifaces>([](auto P){decltype(P)::type::periodic(); });
-        // crsf_hd1::periodic();
-        // crsf_hd2::periodic();
-        // crsf_hd3::periodic();
-        // crsf_hd5::periodic();
     }
     static inline void ratePeriodic() {
-        // led::ratePeriodic();
-        // crsf_in::ratePeriodic();
-
         Meta::visit<periodics>([](auto P) static {decltype(P)::type::ratePeriodic(); });
-        // Meta::visit<crsf_ifaces>([](auto P){decltype(P)::type::ratePeriodic(); });
-        // crsf_hd1::ratePeriodic();
-        // crsf_hd2::ratePeriodic();
-        // crsf_hd3::ratePeriodic();
-        // crsf_hd5::ratePeriodic();
+
         (++mPackagesCheckTick).on(packagesCheckTicks, []{
             const uint16_t ch_p = crsf_in::input::template channelPackages<true>();
             const uint16_t l_p = crsf_in::input::template linkPackages<true>();

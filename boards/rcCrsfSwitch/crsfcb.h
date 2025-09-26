@@ -31,10 +31,7 @@ struct CrsfCallback {
     using Param_t = RC::Protokoll::Crsf::V4::Parameter<uint8_t>;
     using PType = Param_t::Type;
 
-    using crsf_hd1 = Config::crsf_hd1;
-    using crsf_hd2 = Config::crsf_hd2;
-    using crsf_hd3 = Config::crsf_hd3;
-    using crsf_hd5 = Config::crsf_hd5;
+    using crsf_ifaces = Config::crsf_ifaces;
 
     using storage = Config::storage;
     static inline constexpr auto& eeprom = storage::eeprom;
@@ -99,10 +96,7 @@ struct CrsfCallback {
     static inline void command(const auto& /*data*/, const uint8_t /*payload*/) {
     }
     static inline constexpr void forwardPacket(volatile uint8_t* const data, const uint16_t length) {
-        crsf_hd1::forwardPacket(data, length);
-        crsf_hd2::forwardPacket(data, length);
-        crsf_hd3::forwardPacket(data, length);
-        crsf_hd5::forwardPacket(data, length);
+        Meta::visit<crsf_ifaces>([&](auto P) {decltype(P)::type::forwardPacket(data, length);});
     }
     static inline void callbacks(const bool eepromMode = false) {
         const bool prevMode = mEepromMode;

@@ -137,10 +137,11 @@ struct Devices<SW01, Config, MCU> {
         using timer = systemTimer;
         using crsf = Devices::crsf_in;
         using storage = Devices::storage;
-        using crsf_hd1 = Devices::crsf_hd1;
-        using crsf_hd2 = Devices::crsf_hd2;
-        using crsf_hd3 = Devices::crsf_hd3;
-        using crsf_hd5 = Devices::crsf_hd5;
+        using crsf_ifaces = Devices::crsf_ifaces;
+        // using crsf_hd1 = Devices::crsf_hd1;
+        // using crsf_hd2 = Devices::crsf_hd2;
+        // using crsf_hd3 = Devices::crsf_hd3;
+        // using crsf_hd5 = Devices::crsf_hd5;
     };
     struct CrsfInConfig {
         using txpin = crsftx;
