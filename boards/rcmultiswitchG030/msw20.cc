@@ -18,7 +18,7 @@
 
 // select one of the following hardware definitions
 // ATTENTION: use Makefile
-#define HW_MSW10 // MultiSwitch_10 (32K)
+ #define HW_MSW10 // MultiSwitch_10 (32K)
 // ATTENTION: use Makefile.G031
 // #define HW_MSW11 // MultiSwitch_11 (64k)
 // #define HW_NUCLEO // STM Nucleo G031K8 (64K) (incl. ST-Link)
@@ -822,7 +822,7 @@ struct GFSM {
 
                 // IO::outl<debug>("# adc: ", adc::values()[0], " ", adc::values()[1], " ", v, " ", t);
 
-                telemetry::voltage(v);
+                telemetry::voltage(v * 100);
                 telemetry::temp(t * 10);
                 telemetry::next();
 #endif
