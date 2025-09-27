@@ -274,12 +274,12 @@ struct CrsfCallback {
         return 0;
     }
     static inline void command(const auto payload, [[maybe_unused]] const uint8_t paylength) {
-        const uint8_t destAddress = payload[3];
+        // const uint8_t destAddress = payload[3];
         const uint8_t srcAddress = payload[4];
         const uint8_t realm = payload[5];
         const uint8_t cmd = payload[6];
         const uint8_t address = (uint8_t)payload[7];
-        if ((srcAddress == (uint8_t)RC::Protokoll::Crsf::V4::Address::Handset) && (destAddress >= 0xc0) && (destAddress <= 0xcf)) {
+        if (srcAddress == (uint8_t)RC::Protokoll::Crsf::V4::Address::Handset) {
             if (realm == (uint8_t)RC::Protokoll::Crsf::V4::CommandType::Switch) {
                 if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set4M) {
                     const uint8_t count = payload[7];

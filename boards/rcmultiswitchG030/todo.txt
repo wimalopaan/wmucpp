@@ -25,6 +25,7 @@ details:
 
 done:
 -----
+* accept broadcast 0x00 command packages (not only range 0xc0-0xcf)
 * check for half-duplex or full-duplex connection
 * respond to crsf-ping if in unconnected mode (switch to connected if received ping)
 * prop mode (remote) does not work

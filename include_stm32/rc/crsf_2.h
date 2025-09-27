@@ -486,7 +486,7 @@ namespace RC {
                             if constexpr(requires(){callback::forwardPacket(data, 0);}) {
                                 callback::forwardPacket(data, paylength + 2);
                             }
-                            if (const uint8_t dest = data[3]; mCommandNoAddressCheck || (dest == mAddress)) {
+                            if (const uint8_t dest = data[3]; mCommandNoAddressCheck || (dest == mAddress) || (dest == 0x00)) {
                                 callback::command(data, paylength);
                             }
                             break;
