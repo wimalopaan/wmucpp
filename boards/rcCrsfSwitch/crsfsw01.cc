@@ -18,7 +18,7 @@
 
 #define NDEBUG
 
-#define SW_VERSION 1
+#define SW_VERSION 2
 #define HW_VERSION 1
 
 #include <cstdint>

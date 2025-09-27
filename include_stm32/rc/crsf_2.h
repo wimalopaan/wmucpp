@@ -307,6 +307,14 @@ namespace RC {
                     static inline void clearAll() {
                         uart::clearAll();
                     }
+                    static inline void setHalfDuplex(const bool on) {
+                        if constexpr (halfDuplex) {
+                            return;
+                        }
+                        else {
+                            uart::halfDuplex(on);
+                        }
+                    }
                     static inline void baud(const uint32_t br) {
                         if (!mActive) {
                             return;
@@ -314,9 +322,9 @@ namespace RC {
                         IO::outl<debug>("# baud: ", br);
                         uart::baud(br);
                     }
-                    static inline void nextBaudrate() {
+                    static inline bool nextBaudrate() {
                         if (!mActive) {
-                            return;
+                            return false;
                         }
                         static uint8_t index = 0;
                         if (++index >= RC::Protokoll::Crsf::V4::baudrates.size()) {
@@ -325,7 +333,8 @@ namespace RC {
                         const uint32_t br = RC::Protokoll::Crsf::V4::baudrates[index];
                         IO::outl<debug>("# nextbaud: ", br);
                         uart::baud(br);
-                        return;
+
+                        return (index == 0);
                     }
                     struct Isr {
                         static inline void onTransferComplete(const auto f) {

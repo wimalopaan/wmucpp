@@ -244,6 +244,10 @@ namespace RC::Protokoll::Crsf {
                                     }
                                 }
                             }
+                            else {
+                                IO::outl<debug>("# telem");
+                                dest::enqueue(data);
+                            }
                         });
                     }
                     else if (mTxEvent.is(TxEvent::TransmitComplete)) {
