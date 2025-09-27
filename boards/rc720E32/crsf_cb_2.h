@@ -143,17 +143,17 @@ struct CrsfCallback {
         return params.size() - 1;
     }
     static inline void command(const auto& data, const uint8_t /*payload*/) {
-        const uint8_t destAddress = data[3];
+        // const uint8_t destAddress = data[3];
         const uint8_t srcAddress = data[4];
         const uint8_t realm = data[5];
         const uint8_t cmd = data[6];
-        if ((srcAddress == (uint8_t)RC::Protokoll::Crsf::V4::Address::Handset) && (destAddress >= 0xc0) && (destAddress <= 0xcf)) {
+        if (srcAddress == (uint8_t)RC::Protokoll::Crsf::V4::Address::Handset) {
             if (realm == (uint8_t)RC::Protokoll::Crsf::V4::CommandType::Schottel) {
-                if (eeprom.address == destAddress) {
+                // if (eeprom.address == destAddress) {
                     if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SchottelCommand::Reset) {
-                        IO::outl<debug>("# Cmd Reset: ", destAddress);
+                        // IO::outl<debug>("# Cmd Reset: ", destAddress);
                         servos::zero();
-                    }
+                    // }
                 }
             }
             else if (realm == (uint8_t)RC::Protokoll::Crsf::V4::CommandType::Switch) {
