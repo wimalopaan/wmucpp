@@ -108,8 +108,10 @@ struct EEProm {
 #else
     uint8_t telemetry = 0;
 #endif
+#ifdef HW_MSW11
     uint8_t cells_id = 1;
     uint8_t temp_id = 1;
+#endif
     std::array<Output, 8> outputs{};
 #ifdef USE_MORSE
     std::array<char, 64> morse_text{};
@@ -461,8 +463,10 @@ private:
                                crsf::address(std::byte{v});
                                return true;
                            }});
+#ifdef HW_MSW11
         addNode(p, Param_t{parent, PType::U8, "Cells Id", nullptr, &eeprom.cells_id, 0, 255, [](const uint8_t){return true;}});
         addNode(p, Param_t{parent, PType::U8, "Temp Id", nullptr, &eeprom.temp_id, 0, 255, [](const uint8_t){return true;}});
+#endif
         addNode(p, Param_t{parent, PType::U8, "Response Slot", nullptr, &eeprom.response_slot, 0, 15, [](const uint8_t v){crsf::output::telemetrySlot(v); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Config resp.", "Button;Allways on", &eeprom.telemetry, 0, 1});
 
