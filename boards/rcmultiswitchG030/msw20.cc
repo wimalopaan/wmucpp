@@ -56,7 +56,7 @@
 #else
 # error "wrong hardware definition"
 #endif
-#define SW_VERSION 24
+#define SW_VERSION 25
 
 #include <cstdint>
 #include <array>
@@ -108,6 +108,8 @@ struct EEProm {
 #else
     uint8_t telemetry = 0;
 #endif
+    uint8_t cells_id = 1;
+    uint8_t temp_id = 1;
     std::array<Output, 8> outputs{};
 #ifdef USE_MORSE
     std::array<char, 64> morse_text{};
@@ -459,6 +461,8 @@ private:
                                crsf::address(std::byte{v});
                                return true;
                            }});
+        addNode(p, Param_t{parent, PType::U8, "Cells Id", nullptr, &eeprom.cells_id, 0, 255, [](const uint8_t){return true;}});
+        addNode(p, Param_t{parent, PType::U8, "Temp Id", nullptr, &eeprom.temp_id, 0, 255, [](const uint8_t){return true;}});
         addNode(p, Param_t{parent, PType::U8, "Response Slot", nullptr, &eeprom.response_slot, 0, 15, [](const uint8_t v){crsf::output::telemetrySlot(v); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Config resp.", "Button;Allways on", &eeprom.telemetry, 0, 1});
 
@@ -816,10 +820,10 @@ struct GFSM {
                 const int16_t t = Mcu::Stm::V4::adc2Temp((adc::values()[0] * devs::Vref_n) / devs::Vcal_n);
                 const uint16_t v = adc::values()[1] * (devs::r1 + devs::r2) * devs::Vref_n / (devs::Vref_d * 4096 * devs::r1 / 10); // 100mV
 
-                IO::outl<debug>("# adc: ", adc::values()[0], " ", adc::values()[1], " ", v, " ", t);
+                // IO::outl<debug>("# adc: ", adc::values()[0], " ", adc::values()[1], " ", v, " ", t);
 
                 telemetry::voltage(v);
-                telemetry::temp(t);
+                telemetry::temp(t * 10);
                 telemetry::next();
 #endif
                 // IO::outl<debug>("# ch0: ", crsf_pa::value(0), " psize: ", crsfCallback::numberOfParameters(), " cp: ", crsf_pa::template channelPackages<false>(), " lp: ", crsf_pa::template linkPackages<false>());
@@ -864,8 +868,8 @@ struct GFSM {
                 break;
             case State::CheckBaudrate:
                 IO::outl<debug>("# Ck Baud");
-                // led1::event(led1::Event::Steady);
-                // led2::event(led2::Event::Steady);
+                led::count(1);
+                led::event(led::Event::Medium);
                 nextBaudrate();
                 break;
             case State::RunNoTelemetry:
@@ -900,7 +904,11 @@ struct GFSM {
     }
     private:
     static inline void nextBaudrate() {
-        crsf::nextBaudrate();
+        static bool halfDuplex = false;
+        if (crsf::nextBaudrate()) {
+            halfDuplex = !halfDuplex;
+            crsf::setHalfDuplex(halfDuplex);
+        }
     }
     static inline etl::Event<Event> mEvent;
     static inline External::Tick<systemTimer> mPackagesCheckTick;
