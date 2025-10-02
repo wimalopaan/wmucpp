@@ -90,7 +90,8 @@ namespace External {
 
             static inline constexpr auto& text = Config::text;
 
-            enum class State : uint8_t {Off, On, IntervallOff, IntervallOn, PwmMode,
+            enum class State : uint8_t {Off, On, IntervallOff, IntervallOn, IntervallGap,
+                                        PwmMode,
                                         MorseStart, MorseNext, MorseDah, MorseDit, MorseGap, MorseIGap};
             enum class Event : uint8_t {None, Off, On, PwmModeOn, PwmModeOff};
             enum class Blink : uint8_t {Steady, Blink, Morse};
@@ -107,7 +108,7 @@ namespace External {
                 mEvent = e;
             }
             static inline void blink(const uint8_t b) {
-                IO::outl<Debug>("Pin: ", Pin::number, " Blink: ", b);
+                IO::outl<Debug>("# Pin: ", Pin::number, " Blink: ", b);
                 if (b == 0) {
                     mBlinkMode = Blink::Steady;
                 }
@@ -119,31 +120,40 @@ namespace External {
                 }
             }
             static inline void morse_dit_dezi(const uint8_t b) {
-                IO::outl<Debug>("Pin: ", Pin::number, " dit: ", b);
+                IO::outl<Debug>("# Pin: ", Pin::number, " dit: ", b);
                 morseDitTicks = External::Tick<Timer>::fromRaw(b * 200);
             }
             static inline void morse_dah_dezi(const uint8_t b) {
-                IO::outl<Debug>("Pin: ", Pin::number, " dah: ", b);
+                IO::outl<Debug>("# Pin: ", Pin::number, " dah: ", b);
                 morseDahTicks = External::Tick<Timer>::fromRaw(b * 200);
             }
             static inline void morse_gap_dezi(const uint8_t b) {
-                IO::outl<Debug>("Pin: ", Pin::number, " gap: ", b);
+                IO::outl<Debug>("# Pin: ", Pin::number, " gap: ", b);
                 morseGapTicks = External::Tick<Timer>::fromRaw(b * 200);
             }
             static inline void morse_igap_dezi(const uint8_t b) {
-                IO::outl<Debug>("Pin: ", Pin::number, " igap: ", b);
+                IO::outl<Debug>("# Pin: ", Pin::number, " igap: ", b);
                 morseIGapTicks = External::Tick<Timer>::fromRaw(b * 200);
             }
             static inline void on_dezi(const uint8_t b) {
-                IO::outl<Debug>("Pin: ", Pin::number, " Ion: ", b);
-                onTicks = External::Tick<Timer>::fromRaw(b * 200);
+                IO::outl<Debug>("# Pin: ", Pin::number, " Ion: ", b);
+                onTicks = External::Tick<Timer>::fromRaw(b * 100);
             }
             static inline void off_dezi(const uint8_t b) {
-                IO::outl<Debug>("Pin: ", Pin::number, " Ioff: ", b);
-                offTicks = External::Tick<Timer>::fromRaw(b * 200);
+                IO::outl<Debug>("# Pin: ", Pin::number, " Ioff: ", b);
+                offTicks = External::Tick<Timer>::fromRaw(b * 100);
+            }
+            static inline void flash_count(const uint8_t c) {
+                if (c > 0) {
+                    IO::outl<Debug>("# Pin: ", Pin::number, " count: ", c);
+                    flashCount = c;
+                }
+                else {
+                    flashCount = 1;
+                }
             }
             static inline void pwm(const uint8_t p) {
-                IO::outl<Debug>("Pin: ", Pin::number, " pwm: ", p);
+                IO::outl<Debug>("# Pin: ", Pin::number, " pwm: ", p);
                 mEvent = Event::None;
                 mUsePwm = p;
                 if (p == 0) {
@@ -162,7 +172,7 @@ namespace External {
             static inline void expo(const uint8_t) {}
             static inline void duty(const uint8_t d) {
                 if constexpr(!std::is_same_v<Pwm, void>) {
-                    IO::outl<Debug>("Pin: ", Pin::number, " duty: ", d, " state: ", (uint8_t)mState);
+                    IO::outl<Debug>("# Pin: ", Pin::number, " duty: ", d, " state: ", (uint8_t)mState);
                     if constexpr(!std::is_same_v<Pwm, void>) {
                         using pol_t = Pwm::polarity_t;
                         if constexpr(std::is_same_v<pol_t, Mcu::Stm::AlternateFunctions::Negativ>) {
@@ -198,6 +208,7 @@ namespace External {
                 case State::Off:
                     if (mEvent.is(Event::On)) {
                         if (mBlinkMode == Blink::Blink) {
+                            remaingFlashCount = flashCount;
                             mState = State::IntervallOn;
                         }
                         else if (mBlinkMode == Blink::Morse) {
@@ -263,6 +274,7 @@ namespace External {
                 case State::On:
                     mEvent.on(Event::Off, [] static {mState = State::Off;});
                     if (mBlinkMode == Blink::Blink) {
+                        remaingFlashCount = flashCount;
                         mState = State::IntervallOn;
                     }
                     break;
@@ -270,6 +282,7 @@ namespace External {
                     mEvent.on(Event::Off, [] static {mState = State::Off;});
                     mStateTick.on(offTicks, []{
                         if (mBlinkMode == Blink::Blink) {
+                            remaingFlashCount = flashCount;
                             mState = State::IntervallOn;
                         }
                         else {
@@ -280,8 +293,27 @@ namespace External {
                 case State::IntervallOn:
                     mEvent.on(Event::Off, [] static {mState = State::Off;});
                     mStateTick.on(onTicks, [] static {
+                        if (remaingFlashCount > 0) {
+                            --remaingFlashCount;
+                        }
                         if (mBlinkMode == Blink::Blink) {
-                            mState = State::IntervallOff;
+                            if (remaingFlashCount == 0) {
+                                mState = State::IntervallOff;
+                            }
+                            else {
+                                mState = State::IntervallGap;
+                            }
+                        }
+                        else {
+                            mState = State::On;
+                        }
+                    });
+                    break;
+                case State::IntervallGap:
+                    mEvent.on(Event::Off, [] static {mState = State::Off;});
+                    mStateTick.on(onTicks, [] static {
+                        if (mBlinkMode == Blink::Blink) {
+                            mState = State::IntervallOn;
                         }
                         else {
                             mState = State::On;
@@ -299,13 +331,13 @@ namespace External {
                     mStateTick.reset();
                     switch(mState) {
                     case State::Off:
-                        IO::outl<Debug>("Pin: ", Pin::number, " Off");
+                        IO::outl<Debug>("# Pin: ", Pin::number, " Off");
                         Pin::reset();
                         Pin::template dir<Mcu::Output>();
                         break;
                     case State::MorseStart:
                     {
-                        IO::outl<Debug>("Pin: ", Pin::number, " MoStart");
+                        IO::outl<Debug>("# Pin: ", Pin::number, " MoStart");
                         const auto [pattern, length] = morseLookup(text[morseState.charIndex]);
                         morseState.actualPattern = pattern;
                         morseState.signsLeft = length;
@@ -314,41 +346,42 @@ namespace External {
                     }
                         break;
                     case State::MorseNext:
-                        IO::outl<Debug>("Pin: ", Pin::number, " MoNext");
+                        IO::outl<Debug>("# Pin: ", Pin::number, " MoNext");
                         break;
                     case State::MorseDah:
-                        IO::outl<Debug>("Pin: ", Pin::number, " MoDah");
+                        IO::outl<Debug>("# Pin: ", Pin::number, " MoDah");
                         on();
                         break;
                     case State::MorseDit:
-                        IO::outl<Debug>("Pin: ", Pin::number, " MoDit");
+                        IO::outl<Debug>("# Pin: ", Pin::number, " MoDit");
                         on();
                         break;
                     case State::MorseGap:
-                        IO::outl<Debug>("Pin: ", Pin::number, " MoGap");
+                        IO::outl<Debug>("# Pin: ", Pin::number, " MoGap");
                         Pin::reset();
                         Pin::template dir<Mcu::Output>();
                         break;
                     case State::MorseIGap:
-                        IO::outl<Debug>("Pin: ", Pin::number, " MoIGap");
+                        IO::outl<Debug>("# Pin: ", Pin::number, " MoIGap");
                         Pin::reset();
                         Pin::template dir<Mcu::Output>();
                         break;
                     case State::On:
-                        IO::outl<Debug>("Pin: ", Pin::number, " On");
+                        IO::outl<Debug>("# Pin: ", Pin::number, " On");
                         on();
                         break;
                     case State::IntervallOff:
-                        IO::outl<Debug>("Pin: ", Pin::number, " IntOff");
+                    case State::IntervallGap:
+                        IO::outl<Debug>("# Pin: ", Pin::number, " IntOff");
                         Pin::reset();
                         Pin::template dir<Mcu::Output>();
                         break;
                     case State::IntervallOn:
-                        IO::outl<Debug>("Pin: ", Pin::number, " IntOn");
+                        IO::outl<Debug>("# Pin: ", Pin::number, " IntOn");
                         on();
                         break;
                     case State::PwmMode:
-                        IO::outl<Debug>("Pin: ", Pin::number, " PwmMode");
+                        IO::outl<Debug>("# Pin: ", Pin::number, " PwmMode");
                         mUsePwm = true;
                         duty(0);
                         on();
@@ -374,7 +407,7 @@ namespace External {
                             using pol_t = Pwm::polarity_t;
                             static constexpr uint8_t af = Mcu::Stm::AlternateFunctions::mapper_v<Pin, Pwm, Mcu::Stm::AlternateFunctions::CC<Pwm::channel, pol_t>>;
                             Pin::afunction(af);
-                            IO::outl<Debug>("Pin: ", Pin::number, " af: ", af);
+                            IO::outl<Debug>("# Pin: ", Pin::number, " af: ", af);
                         }
                         else {
                             Pin::set();
@@ -401,6 +434,8 @@ namespace External {
             static inline External::Tick<Timer> morseIGapTicks{200ms};
             static inline External::Tick<Timer> onTicks{100ms};
             static inline External::Tick<Timer> offTicks{100ms};
+            static inline uint8_t flashCount = 1;
+            static inline uint8_t remaingFlashCount = flashCount;
             static inline External::Tick<Timer> mStateTick;
         };
     }

@@ -3,6 +3,7 @@ bugs:
 
 todo:
 -----
+* send inputs as ArduPilot tunnel messages
 * add virtual switches as group of outputs
 * increase output current by grouping outputs together
 * running light mode: parameter: speed, activate-output, activate-next address, (pwm)
@@ -18,13 +19,15 @@ todo:
 
 questionable:
 -------------
-* Telemetrie (state-machine): für neue Hardware mit Spannungssensor
 
 details:
 -----
 
 done:
 -----
+* Multiple flash (add parameter: blinkCount, name: "Intervall(count)")
+* Telemetrie (state-machine): für neue Hardware mit Spannungssensor (HW_MSW11)
+* switch to connected mode even if only link-stat packages are received
 * accept broadcast 0x00 command packages (not only range 0xc0-0xcf)
 * check for half-duplex or full-duplex connection
 * respond to crsf-ping if in unconnected mode (switch to connected if received ping)
