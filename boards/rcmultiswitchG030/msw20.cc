@@ -30,6 +30,7 @@
 #define USE_MORSE
 #define USE_OPERATE_MENU
 #define USE_VIRTUALS
+#define USE_PATTERNS
 #define USE_EEPROM_TEST // switches telemetry default on (instead off)
 // #define USE_BUTTON
 // #define SERIAL_DEBUG // use with care (e.g. with USE_MORSE) because of RAM overflow
@@ -58,9 +59,14 @@
 #else
 # error "wrong hardware definition"
 #endif
-// #define USE_RESPONSE_SLOT // enables arbitration (slot after link-stat)
 
-#define SW_VERSION 26
+#ifdef HW_MSW10
+# define USE_RESPONSE_SLOT // enables arbitration (slot after link-stat), important for half-duplex without crsf-switch/router
+# undef USE_VIRTUALS
+# undef USE_PATTERNS
+#endif
+
+#define SW_VERSION 27
 
 #include <cstdint>
 #include <array>
@@ -120,6 +126,9 @@ struct EEProm {
 #ifdef HW_MSW11
     uint8_t cells_id = 1;
     uint8_t temp_id = 1;
+#ifdef USE_VIRTUALS
+    uint8_t use_virtuals = 1;
+#endif
 #endif
     std::array<Output, 8> outputs{};
 #ifdef USE_MORSE
@@ -137,6 +146,7 @@ struct EEProm {
     std::array<Virtual, 4> virtuals{};
     std::array<uint8_t, 4> pattern{};
 #endif
+
 };
 
 struct Storage {
@@ -315,6 +325,19 @@ struct CrsfCallback {
                             }
                             SwitchCallback::set(sw8);
                         }
+#ifdef USE_VIRTUALS
+                        else if ((eeprom.address + 1) == swAddress) {
+                            IO::outl<debug>("# V set4M adr: ", swAddress, " v: ", sw);
+                            uint8_t sw8 = 0;
+                            for(uint8_t k = 0; k < 8; ++k) {
+                                const uint8_t s = (sw >> (2 * k)) & 0b11;
+                                if (s > 0) {
+                                    sw8 |= (1 << k);
+                                }
+                            }
+                            SwitchCallback::setVirtual(sw8);
+                        }
+#endif
                     }
                 }
                 else {
@@ -373,6 +396,33 @@ struct CrsfCallback {
                         }
 #endif
                     }
+#ifdef USE_VIRTUALS
+                    else if ((eeprom.address + 1) == address) {
+                        if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set) {
+                            const uint8_t sw = (uint8_t)payload[8];
+                            IO::outl<trace>("# Cmd Set: ", address, " sw: ", sw);
+                            SwitchCallback::setVirtual(sw);
+                        }
+                        else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set4) {
+                            const uint16_t sw = (((uint16_t)payload[8]) << 8) + payload[9];
+                            IO::outl<trace>("# Cmd Set4: ", address, " sw: ", sw);
+                            uint8_t sw8 = 0;
+                            for(uint8_t i = 0; i < 8; ++i) {
+                                const uint8_t s = (sw >> (2 * i)) & 0b11;
+                                if (s > 0) {
+                                    sw8 |= (1 << i);
+                                }
+                            }
+                            SwitchCallback::setVirtual(sw8);
+                        }
+                        else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Prop) {
+                            const uint8_t ch = (uint8_t)payload[8];
+                            const uint8_t duty = (uint8_t)payload[9];
+                            IO::outl<trace>("# Cmd Prop: ", address, " ch: ", ch, " d: ", duty);
+                            SwitchCallback::propVirtual(ch, duty);
+                        }
+                    }
+#endif
                 }
             }
         }
@@ -420,10 +470,10 @@ private:
     template<uint8_t index>
     static inline constexpr void addVirtual(auto& p, const uint8_t parent, const char* const name) {
         const uint8_t parent2 = addParent(p, Param_t{parent, PType::Folder, name});
-        addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 0", .value_ptr = &eeprom.virtuals[index].member[0], .min = uint8_t(-1), .max = 15, .cb = [](const uint8_t){return true;}, .def = 0});
-        addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 1", .value_ptr = &eeprom.virtuals[index].member[1], .min = uint8_t(-1), .max = 15, .cb = [](const uint8_t){return true;}, .def = 0});
-        // addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 2", .value_ptr = &eeprom.virtuals[index].member[2], .min = uint8_t(-1), .max = 15, .cb = [](const uint8_t){return true;}, .def = 0});
-        // addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 3", .value_ptr = &eeprom.virtuals[index].member[3], .min = uint8_t(-1), .max = 15, .cb = [](const uint8_t){return true;}, .def = 0});
+        addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 0", .value_ptr = &eeprom.virtuals[index].member[0], .min = uint8_t(-1), .max = 7, .cb = [](const uint8_t){return true;}, .def = 0});
+        addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 1", .value_ptr = &eeprom.virtuals[index].member[1], .min = uint8_t(-1), .max = 7, .cb = [](const uint8_t){return true;}, .def = 0});
+        addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 2", .value_ptr = &eeprom.virtuals[index].member[2], .min = uint8_t(-1), .max = 7, .cb = [](const uint8_t){return true;}, .def = 0});
+        addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 3", .value_ptr = &eeprom.virtuals[index].member[3], .min = uint8_t(-1), .max = 7, .cb = [](const uint8_t){return true;}, .def = 0});
         // addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name = "Test", .options = "Off;On", .min = 0, .max = 1, .cb = [](const uint8_t v){switchcallback::setVirtualIndex(index, (v > 0)); return false;}});
     }
 #endif
@@ -671,19 +721,21 @@ private:
 #ifdef USE_VIRTUALS
         parent = addParent(p, Param_t{0, PType::Folder, "Virtuals"});
         uint8_t parent2 = addParent(p, Param_t{parent, PType::Folder, "Virtual 0"});
-        addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 0", .value_ptr = &eeprom.virtuals[0].member[0], .min = uint8_t(-1), .max = 15, .cb = [](const uint8_t){return true;}, .def = 0});
-        addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 1", .value_ptr = &eeprom.virtuals[0].member[1], .min = uint8_t(-1), .max = 15, .cb = [](const uint8_t){return true;}, .def = 0});
+        addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 0", .value_ptr = &eeprom.virtuals[0].member[0], .min = uint8_t(-1), .max = 7, .cb = [](const uint8_t){return true;}, .def = 0});
+        addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 1", .value_ptr = &eeprom.virtuals[0].member[1], .min = uint8_t(-1), .max = 7, .cb = [](const uint8_t){return true;}, .def = 0});
         parent2 = addParent(p, Param_t{parent, PType::Folder, "Virtual 1"});
-        addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 0", .value_ptr = &eeprom.virtuals[1].member[0], .min = uint8_t(-1), .max = 15, .cb = [](const uint8_t){return true;}, .def = 0});
-        addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 1", .value_ptr = &eeprom.virtuals[1].member[1], .min = uint8_t(-1), .max = 15, .cb = [](const uint8_t){return true;}, .def = 0});
+        addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 0", .value_ptr = &eeprom.virtuals[1].member[0], .min = uint8_t(-1), .max = 7, .cb = [](const uint8_t){return true;}, .def = 0});
+        addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 1", .value_ptr = &eeprom.virtuals[1].member[1], .min = uint8_t(-1), .max = 7, .cb = [](const uint8_t){return true;}, .def = 0});
         parent2 = addParent(p, Param_t{parent, PType::Folder, "Virtual 2"});
-        addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 0", .value_ptr = &eeprom.virtuals[2].member[0], .min = uint8_t(-1), .max = 15, .cb = [](const uint8_t){return true;}, .def = 0});
-        addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 1", .value_ptr = &eeprom.virtuals[2].member[1], .min = uint8_t(-1), .max = 15, .cb = [](const uint8_t){return true;}, .def = 0});
+        addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 0", .value_ptr = &eeprom.virtuals[2].member[0], .min = uint8_t(-1), .max = 7, .cb = [](const uint8_t){return true;}, .def = 0});
+        addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 1", .value_ptr = &eeprom.virtuals[2].member[1], .min = uint8_t(-1), .max = 7, .cb = [](const uint8_t){return true;}, .def = 0});
         parent2 = addParent(p, Param_t{parent, PType::Folder, "Virtual 3"});
-        addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 0", .value_ptr = &eeprom.virtuals[3].member[0], .min = uint8_t(-1), .max = 15, .cb = [](const uint8_t){return true;}, .def = 0});
-        addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 1", .value_ptr = &eeprom.virtuals[3].member[1], .min = uint8_t(-1), .max = 15, .cb = [](const uint8_t){return true;}, .def = 0});
+        addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 0", .value_ptr = &eeprom.virtuals[3].member[0], .min = uint8_t(-1), .max = 7, .cb = [](const uint8_t){return true;}, .def = 0});
+        addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 1", .value_ptr = &eeprom.virtuals[3].member[1], .min = uint8_t(-1), .max = 7, .cb = [](const uint8_t){return true;}, .def = 0});
+#ifdef USE_PATTERNS
         parent = addParent(p, Param_t{0, PType::Folder, "Pattern"});
         addNode(p, Param_t{parent, PType::Sel, "Pattern Virt. 4", "Off;Run", &eeprom.pattern[0], 0, 1, [](const uint8_t){return true;}});
+#endif
 #endif
 #endif
 #ifdef USE_OPERATE_MENU
@@ -699,8 +751,8 @@ private:
 #endif
 #endif
         if (p.size() >= p.capacity()) {
-            void f();
-            f();
+            void fp();
+            fp(); // compile-time check (call to undefined function)
         }
         return p;
     }();
@@ -750,6 +802,18 @@ struct GFSM {
     static inline void update(const bool eepromMode = true) {
         crsfCallback::callbacks(eepromMode);
     }
+#ifdef USE_VIRTUALS
+    static inline bool isMemberOfVirtual(const uint8_t i) {
+        for(uint8_t v = 0; v < Storage::eeprom.virtuals.size(); ++v) {
+            for(uint8_t k = 0; k < Storage::eeprom.virtuals[v].member.size(); ++k) {
+                if (i == Storage::eeprom.virtuals[v].member[k]) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+#endif
     static inline void prop(const uint8_t channel, const uint8_t duty) {
         IO::outl<debug>("# prop: ", channel, " duty: ", duty);
         if (channel < 8) {
@@ -758,22 +822,58 @@ struct GFSM {
                                 });
         }
     }
+    static inline void propVirtual(const uint8_t /*channel*/, const uint8_t /*duty*/) {
+    }
     static inline void set(const uint8_t sw) {
         // IO::outl<debug>("# set: ", sw);
         for(uint8_t i = 0; i < 8; ++i) {
-            const uint8_t mask = (0x01 << i);
-            Meta::visitAt<bsws>(i, [&]<typename SW>(Meta::Wrapper<SW>){
-                if (sw & mask) {
-                    // IO::outl<debug>("# on: ", i);
-                    SW::event(SW::Event::On);
-                }
-                else {
-                    // IO::outl<debug>("# off: ", i);
-                    SW::event(SW::Event::Off);
-                }
-            });
+#ifdef USE_VIRTUALS
+            const bool use = (Storage::eeprom.use_virtuals == 0) || !isMemberOfVirtual(i);
+#else
+            const bool use = true;
+#endif
+            if (use) {
+                const uint8_t mask = (0x01 << i);
+                setIndex(i, (sw & mask));
+            }
         }
     }
+    static inline void setIndex(const uint8_t index, const bool on) {
+        Meta::visitAt<bsws>(index, [&]<typename SW>(Meta::Wrapper<SW>){
+            if (on) {
+                IO::outl<debug>("# on: ", index);
+                SW::event(SW::Event::On);
+            }
+            else {
+                IO::outl<debug>("# off: ", index);
+                SW::event(SW::Event::Off);
+            }
+        });
+    }
+#ifdef USE_VIRTUALS
+    static inline void setVirtualIndex(const uint8_t i, const bool on) {
+        if (i < Storage::eeprom.virtuals.size()) {
+            IO::outl<debug>("# sVI: ", i, " ", uint8_t(on));
+            for(uint8_t k = 0; k < Storage::eeprom.virtuals[i].member.size(); ++k) {
+                if (Storage::eeprom.virtuals[i].member[k] >= 0) {
+                    setIndex(Storage::eeprom.virtuals[i].member[k], on);
+                }
+            }
+        }
+    }
+    static inline void setVirtual(const uint8_t state8) {
+        if (Storage::eeprom.use_virtuals > 0) {
+            for(uint8_t i = 0; i < 8; ++i) {
+                if (state8 & (1 << i)) {
+                    setVirtualIndex(i, true);
+                }
+                else {
+                    setVirtualIndex(i, false);
+                }
+            }
+        }
+    }
+#endif
     static inline void init() {
         devs::init();
         if constexpr(!std::is_same_v<debug, void>) {
@@ -1006,6 +1106,14 @@ struct Setter {
     static inline void prop(const uint8_t channel, const uint8_t duty) {
         gfsm::prop(channel, duty);
     }
+#ifdef USE_VIRTUALS
+    static inline void setVirtual(const uint8_t sw) {
+        gfsm::setVirtual(sw);
+    }
+    static inline void propVirtual(const uint8_t channel, const uint8_t duty) {
+        gfsm::propVirtual(channel, duty);
+    }
+#endif
 };
 
 int main() {

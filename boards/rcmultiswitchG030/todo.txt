@@ -3,8 +3,8 @@ bugs:
 
 todo:
 -----
+* make flash work with non-MORSE
 * send inputs as ArduPilot tunnel messages
-* add virtual switches as group of outputs
 * increase output current by grouping outputs together
 * running light mode: parameter: speed, activate-output, activate-next address, (pwm)
 * running light mode: crsf command messages
@@ -25,6 +25,7 @@ details:
 
 done:
 -----
+* add virtual switches as group of outputs
 * Multiple flash (add parameter: blinkCount, name: "Intervall(count)")
 * Telemetrie (state-machine): für neue Hardware mit Spannungssensor (HW_MSW11)
 * switch to connected mode even if only link-stat packages are received

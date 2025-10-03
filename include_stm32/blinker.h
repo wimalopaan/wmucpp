@@ -602,7 +602,8 @@ namespace External {
                 mEvent = e;
             }
         }
-
+        static inline void flash_count(const uint8_t c) {
+        }
         static inline void blink(const uint8_t b) {
             IO::outl<Debug>("Pin: ", Pin::number, " Blink: ", b);
             mBlink = b;

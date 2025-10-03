@@ -99,7 +99,7 @@ struct Devices2<SW21, CrsfCallback, Storage, MCU> {
         using pin = debugtx;
         using clock = Devices2::clock;
         static inline constexpr bool rxtxswap = true;
-        static inline constexpr uint16_t bufferSize = 512;
+        static inline constexpr uint16_t bufferSize = 256;
     };
 #else
     using debug = void;
@@ -188,12 +188,7 @@ struct Devices2<SW21, CrsfCallback, Storage, MCU> {
 #ifdef USE_MORSE
     struct BConfig {
         using timer = systemTimer;
-        using debug = void;
-        static inline constexpr auto& text = Storage::eeprom.morse_text;
-    };
-    struct BConfigDebug {
-        using timer = systemTimer;
-        using debug = Devices2::debug;
+        using debug = debug1;
         static inline constexpr auto& text = Storage::eeprom.morse_text;
     };
     using bsw0 = External::Morse::BlinkerWithPwm<sw0, BConfig, adap0>;
