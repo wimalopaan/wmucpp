@@ -17,6 +17,8 @@ namespace Mcu::Stm {
     using namespace Units::literals;
 
     namespace Timers {
+        enum class SyncMode : uint8_t {None, Master, Slave};
+
         template<uint8_t N> struct Properties;
 #ifdef STM32G4
         template<> struct Properties<2> {

@@ -8,7 +8,6 @@ hardware:
 
 todo:
 -----
-* increase output current by grouping outputs together (timer-synchronization for pwm)
 * unify stm32 g031/g051/g071/g0b1 variants
 * make flash work with non-MORSE
 * send inputs as ArduPilot tunnel messages (for e.g. inputs)
@@ -17,8 +16,6 @@ todo:
 * running light mode: problem: half-duplex-bus arbitration,
                       reliable only possible with CRSF-switch project sending arbitration tokens
                       or doing the crsf-switch the routing
-* unify crsf units (use ms instead of dezi seconds)
-* name of module (top-level)
 * watchdog
 * statt Expo: PWM Duty Max Scaling 1/0.1/0.01
 * serial-bootloader (maybe OTA) (maybe use ESCape32-tool)
@@ -32,6 +29,8 @@ details:
 
 done:
 -----
+* unify crsf units (use ms instead of dezi seconds)
+* increase output current by grouping outputs together (timer-synchronization for pwm)
 * use eeprom-setting for enabling virtuals
 * introduce virtuals / patterns address
 * simplify code (parameters like rcLed4x4, etc.)

@@ -23,9 +23,153 @@ namespace Mcu::Stm {
 #endif
     namespace V3 {
         namespace Pwm {
+            namespace Reflection {
+                template<typename Config>
+                struct getMaster {
+                    using type = void;
+                };
+                template<typename Config> requires(requires(Config){typename Config::master;})
+                struct getMaster<Config> {
+                    using type = Config::master;
+                };
+                template<typename Config>
+                using getMaster_t = getMaster<Config>::type;
+            }
             template<uint8_t TimerNumber, typename Config, typename MCU = DefaultMcu>
             struct Simple {
+                using clock = Config::clock;
 
+                static inline constexpr auto syncMode = []{
+                    if constexpr(requires(){Config::syncMode;}) {
+                        return Config::syncMode;
+                    }
+                    return Mcu::Stm::Timers::SyncMode::None;
+                }();
+
+                using master = Mcu::Stm::V3::Pwm::Reflection::getMaster_t<Config>;
+
+                static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Timer<TimerNumber>>::value);
+
+                using component_t = Mcu::Components::Timer<TimerNumber>;
+
+                static inline constexpr uint16_t period = 1640;
+                static inline uint32_t freq  = 20000;
+                static inline uint16_t prescaler = (clock::config::frequency.value / (freq * period));
+#ifdef STM32G0
+                static inline void init() {
+                    Mcu::Stm::Timers::powerUp<TimerNumber>();
+                    mcuTimer->PSC = prescaler;
+                    mcuTimer->ARR = period;
+                    mcuTimer->CCMR1 |= (0b0110 << TIM_CCMR1_OC1M_Pos); // pwm1
+                    mcuTimer->CCMR1 |= (0b0110 << TIM_CCMR1_OC2M_Pos); // pwm2
+                    mcuTimer->CCMR2 |= (0b0110 << TIM_CCMR2_OC3M_Pos); // pwm3
+                    mcuTimer->CCMR2 |= (0b0110 << TIM_CCMR2_OC4M_Pos); // pwm4
+                    mcuTimer->CCER |= TIM_CCER_CC1E;
+                    mcuTimer->CCER |= TIM_CCER_CC2E;
+                    mcuTimer->CCER |= TIM_CCER_CC3E;
+                    mcuTimer->CCER |= TIM_CCER_CC4E;
+
+                    if constexpr ((TimerNumber == 1) || (TimerNumber == 17)) {
+                        mcuTimer->BDTR |= TIM_BDTR_MOE;
+                        mcuTimer->CCER |= TIM_CCER_CC1E;
+                    }
+                    if constexpr ((TimerNumber == 17)) { // hack
+                        mcuTimer->CCER |= TIM_CCER_CC1NE;
+                    }
+                    mcuTimer->CCR1 = 0;
+                    mcuTimer->CCR2 = 0;
+                    mcuTimer->CCR3 = 0;
+                    mcuTimer->CCR4 = 0;
+                    mcuTimer->CR1 |= TIM_CR1_ARPE;
+
+                    if constexpr(syncMode == Mcu::Stm::Timers::SyncMode::None) {
+                        mcuTimer->CR2 |= (0b010 << TIM_CR2_MMS_Pos); // update as trigger-output
+                        mcuTimer->CR1 |= TIM_CR1_CEN;
+                    }
+                    else if constexpr(syncMode == Mcu::Stm::Timers::SyncMode::Master) {
+                        mcuTimer->CR2 |= (0b000 << TIM_CR2_MMS_Pos); // enable as trigger-output
+                        mcuTimer->SMCR |= (0b1 << TIM_SMCR_MSM_Pos);
+                    }
+                    else if constexpr(syncMode == Mcu::Stm::Timers::SyncMode::Slave) {
+                        if constexpr(TimerNumber == 3) {
+                            if constexpr(master::component_t::number_t::value == 2) {
+                                mcuTimer->SMCR |= (0b0110 << TIM_SMCR_SMS_Pos) | (0b00001 << TIM_SMCR_TS_Pos); // ITR1 as trigger
+                            }
+                            else {
+                                static_assert(false);
+                            }
+                        }
+                        else {
+                            static_assert(false);
+                        }
+                    }
+                }
+#endif
+                static inline void start() requires(syncMode == Mcu::Stm::Timers::SyncMode::Master){
+                    mcuTimer->CR1 |= TIM_CR1_CEN;
+                }
+                static inline void reset() {
+                    Mcu::Stm::Timers::reset<TimerNumber>();
+                }
+                template<auto Channel>
+                static inline void enableInts() {
+                    if constexpr(Channel == 1) {
+                        mcuTimer->DIER |= TIM_DIER_CC1IE;
+                    }
+                    else if constexpr(Channel == 2) {
+                        mcuTimer->DIER |= TIM_DIER_CC2IE;
+                    }
+                    else if constexpr(Channel == 3) {
+                        mcuTimer->DIER |= TIM_DIER_CC3IE;
+                    }
+                    else if constexpr(Channel == 4) {
+                        mcuTimer->DIER |= TIM_DIER_CC4IE;
+                    }
+                    else {
+                        static_assert(false);
+                    }
+                    mcuTimer->DIER |= TIM_DIER_UIE;
+                }
+                template<auto Channel>
+                static inline void enableDma() {
+                    if constexpr(Channel == 1) {
+                        mcuTimer->DIER |= TIM_DIER_CC1DE;
+                    }
+                    else if constexpr(Channel == 2) {
+                        mcuTimer->DIER |= TIM_DIER_CC2DE;
+                    }
+                    else if constexpr(Channel == 3) {
+                        mcuTimer->DIER |= TIM_DIER_CC3DE;
+                    }
+                    else if constexpr(Channel == 4) {
+                        mcuTimer->DIER |= TIM_DIER_CC4DE;
+                    }
+                    else {
+                        static_assert(false);
+                    }
+                    mcuTimer->DIER |= TIM_DIER_UDE;
+                }
+                static inline void frequency(const uint16_t f) {
+                    freq = f;
+                    prescaler = (clock::config::frequency.value / (freq * period));
+                    mcuTimer->PSC = prescaler;
+                    mcuTimer->EGR |= TIM_EGR_UG;
+                }
+                static inline void freqCenties(const uint8_t centies) {
+                    frequency(centies * 100U);
+                }
+                static inline void duty1(const uint16_t v) {
+                    mcuTimer->CCR1 = v;
+                }
+                static inline void duty2(const uint16_t v) {
+                    mcuTimer->CCR2 = v;
+                }
+                static inline void duty3(const uint16_t v) {
+                    mcuTimer->CCR3 = v;
+                }
+                static inline void duty4(const uint16_t v) {
+                    mcuTimer->CCR4 = v;
+                }
             };
         }
     }
