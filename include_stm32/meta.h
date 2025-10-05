@@ -407,7 +407,9 @@ namespace Meta {
             template<typename I, typename C>
             inline static constexpr void at(const I index, const C& callable) {
                 if (index == I{0}) {
-                    callable(Wrapper<first>{});
+                    if constexpr(!std::is_same_v<first, void>) {
+                        callable(Wrapper<first>{});
+                    }
                 }
                 else {
                     visit<Meta::rest<List>>::at(I(index - 1), callable);

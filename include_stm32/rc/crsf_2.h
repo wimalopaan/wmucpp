@@ -49,9 +49,70 @@ namespace RC {
             namespace V4 {
                 using namespace std::literals::chrono_literals;
                 using namespace etl::literals;
-
                 namespace Util {
-
+                    template<typename Config>
+                    struct SwitchDecoder {
+                        using debug = Config::debug;
+                        using callback = Config::callback;
+                        using storage = Config::storage;
+                        static inline void process(const auto payload, [[maybe_unused]] const uint8_t paylength) {
+                            [[maybe_unused]] const uint8_t destAddress = payload[3];
+                            const uint8_t srcAddress = payload[4];
+                            const uint8_t realm = payload[5];
+                            const uint8_t cmd = payload[6];
+                            if (srcAddress == (uint8_t)RC::Protokoll::Crsf::V4::Address::Handset) {
+                                if (realm == (uint8_t)RC::Protokoll::Crsf::V4::CommandType::Switch) {
+                                    if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set4M) {
+                                        const uint8_t count = payload[7];
+                                        for(uint8_t i = 0; i < count; ++i) {
+                                            const uint8_t address = payload[8 + 3 * i];
+                                            const uint16_t sw = (payload[9 + 3 * i] << 8) + payload[10 + 3 * i];
+                                            IO::outl<debug>("# Switch set4M: ", i, " adr: ", address);
+                                            const auto result = std::find(std::begin(storage::eeprom.addresses),
+                                                                          std::end(storage::eeprom.addresses),
+                                                                          address);
+                                            if (result != std::end(storage::eeprom.addresses)) {
+                                                const uint8_t adrIndex = std::distance(std::begin(storage::eeprom.addresses), result);
+                                                IO::outl<debug>("# Switch set4M adr: ", address, " i: ", adrIndex);
+                                                for(uint8_t k = 0; k < 8; ++k) {
+                                                    const uint8_t s = (sw >> (2 * k)) & 0b11;
+                                                    callback::setIndex(adrIndex, k, s > 0);
+                                                }
+                                            }
+                                        }
+                                    }
+                                    else {
+                                        const uint8_t address = (uint8_t)payload[7];
+                                        const auto result = std::find(std::begin(storage::eeprom.addresses),
+                                                                      std::end(storage::eeprom.addresses),
+                                                                      address);
+                                        if (result != std::end(storage::eeprom.addresses)) {
+                                            const uint8_t adrIndex = std::distance(std::begin(storage::eeprom.addresses), result);
+                                            if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set) {
+                                                const uint8_t sw = (uint8_t)payload[8];
+                                                IO::outl<debug>("# Cmd Set: ", address, " sw: ", sw);
+                                                callback::set(adrIndex, sw);
+                                            }
+                                            else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set4) {
+                                                const uint16_t sw = (((uint16_t)payload[8]) << 8) + payload[9];
+                                                IO::outl<debug>("# Cmd Set4: ", address, " sw: ", sw);
+                                                for(uint8_t i = 0; i < 8; ++i) {
+                                                    const uint8_t s = (sw >> (2 * i)) & 0b11;
+                                                    callback::setIndex(adrIndex, i, s > 0);
+                                                }
+                                            }
+                                            else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Prop) {
+                                                const uint8_t ch = (uint8_t)payload[8];
+                                                const uint8_t duty = (uint8_t)payload[9];
+                                                IO::outl<debug>("# Cmd Prop: ", address, " ch: ", ch, " d: ", duty);
+                                                callback::prop(adrIndex, ch, duty);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    };
                     template<typename Config>
                     static inline void command(const auto payload, [[maybe_unused]] const uint8_t paylength) {
                         using debug = Config::debug;

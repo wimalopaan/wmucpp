@@ -1,20 +1,27 @@
 bugs:
 -----
 
+hardware:
+---------
+
+* connector???
+
 todo:
 -----
+* increase output current by grouping outputs together (timer-synchronization for pwm)
+* unify stm32 g031/g051/g071/g0b1 variants
 * make flash work with non-MORSE
 * send inputs as ArduPilot tunnel messages
-* increase output current by grouping outputs together
 * running light mode: parameter: speed, activate-output, activate-next address, (pwm)
 * running light mode: crsf command messages
 * running light mode: problem: half-duplex-bus arbitration,
                       reliable only possible with CRSF-switch project sending arbitration tokens
                       or doing the crsf-switch the routing
-* crsf units
+* unify crsf units (use ms instead of dezi seconds)
 * name of module (top-level)
 * watchdog
 * statt Expo: PWM Duty Max Scaling 1/0.1/0.01
+* serial-bootloader (maybe OTA) (maybe use ESCape32-tool)
 * use stm32G051 instead of stm32G030/1 (more flash and RAM)
 
 questionable:
@@ -25,6 +32,9 @@ details:
 
 done:
 -----
+* use eeprom-setting for enabling virtuals
+* introduce virtuals / patterns address
+* simplify code (parameters like rcLed4x4, etc.)
 * add virtual switches as group of outputs
 * Multiple flash (add parameter: blinkCount, name: "Intervall(count)")
 * Telemetrie (state-machine): für neue Hardware mit Spannungssensor (HW_MSW11)

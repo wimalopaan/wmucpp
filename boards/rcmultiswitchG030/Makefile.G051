@@ -39,10 +39,11 @@ LOADLIBES += startup_g051.o system_g0.o
 targets += startup_g051.o
 targets += system_g0.o
 targets += msw21.elf msw21.bin
+targets += msw30.elf msw30.bin
 targets += system051
 
 system051: system_g0.o startup_g051.o
 
-g051: system051 msw21.bin
+g051: system051 msw21.bin msw30.bin
 
 -include ../../Makefile.arm.include
