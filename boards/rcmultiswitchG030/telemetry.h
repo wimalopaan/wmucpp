@@ -93,14 +93,6 @@ struct Telemetry {
     static inline void next() {
         if (mState != State::On) return;
         using namespace RC::Protokoll::Crsf::V4;
-        // buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::Battery, [&](auto& d){
-        //     d.push_back(mVoltage);
-        //     d.push_back(uint16_t(0));
-        //     d.push_back(uint8_t(0));
-        //     d.push_back(uint8_t(0));
-        //     d.push_back(uint8_t(0));
-        //     d.push_back(uint8_t(0));
-        // });
         buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::Temp, [&](auto& d){
             d.push_back(uint8_t(storage::eeprom.temp_id));
             d.push_back(mTemp);

@@ -11,7 +11,7 @@ todo:
 * increase output current by grouping outputs together (timer-synchronization for pwm)
 * unify stm32 g031/g051/g071/g0b1 variants
 * make flash work with non-MORSE
-* send inputs as ArduPilot tunnel messages
+* send inputs as ArduPilot tunnel messages (for e.g. inputs)
 * running light mode: parameter: speed, activate-output, activate-next address, (pwm)
 * running light mode: crsf command messages
 * running light mode: problem: half-duplex-bus arbitration,
