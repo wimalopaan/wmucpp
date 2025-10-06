@@ -18,9 +18,9 @@
 
 // select one of the following hardware definitions
 // ATTENTION: use Makefile
-//#define HW_MSW10 // MultiSwitch_10 (32K)
+#define HW_MSW10 // MultiSwitch_10 (32K)
 // ATTENTION: use Makefile.G031
-#define HW_MSW11 // MultiSwitch_11 (64k)
+// #define HW_MSW11 // MultiSwitch_11 (64k)
 // #define HW_NUCLEO // STM Nucleo G031K8 (64K) (incl. ST-Link)
 // #define HW_WEACT // WeAct G031F8 (64K)
 
@@ -126,9 +126,9 @@ struct EEProm {
 #ifdef HW_MSW11
     uint8_t cells_id = 1;
     uint8_t temp_id = 1;
+#endif
 #ifdef USE_VIRTUALS
     uint8_t use_virtuals = 1;
-#endif
 #endif
     std::array<Output, 8> outputs{};
 #ifdef USE_MORSE
@@ -139,7 +139,7 @@ struct EEProm {
     uint8_t morse_igap = 3;
 #endif
 
-#ifdef HW_MSW11
+#ifdef USE_VIRTUALS
     struct Virtual {
         std::array<uint8_t, 4> member{uint8_t(-1), uint8_t(-1), uint8_t(-1), uint8_t(-1)};
     };
