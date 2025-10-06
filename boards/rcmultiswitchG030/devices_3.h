@@ -898,7 +898,7 @@ struct Devices<WeAct, Config, MCU> {
         crsf::init();
 #ifdef CRSF_TX_OPENDRAIN
         crsftx::template openDrain<true>();
-        crsftx::template pullUp<true>();
+        crsftx::template pullup<true>();
 #endif
 
         sw0::template dir<Mcu::Output>();
