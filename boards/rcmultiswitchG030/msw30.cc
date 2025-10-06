@@ -34,6 +34,7 @@
 // #define SERIAL_DEBUG // use with care (e.g. with USE_MORSE) because of RAM overflow
 // #define CRSF_TX_OPENDRAIN // only HW_NUCLEO / HW_WEACT / HW_MSW11 : make tx pin open-drain to parallelize in two-wire mode
 // #define CRSF_HALFDUPLEX // only NW_NUCLEO / HW_WEACT / HW_MSW11 : make crsf uart one-wire halfduplex (txpin), custom board is allways half-duplex
+// #define USE_RESPONSE_SLOT // enables arbitration (slot after link-stat), important for half-duplex without crsf-switch/router
 
 #define NDEBUG // do not change: dev option
 
