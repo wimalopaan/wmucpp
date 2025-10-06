@@ -44,3 +44,14 @@ RUN sed -i '/E_ROOT/d' /usr/bin/makepkg
 
 # Personal uploader scripts
 #ADD root/bin /usr/local/bin/
+
+ARG USERNAME=csp
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+
+# Create the user
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME 
+
+USER $USERNAME
+
