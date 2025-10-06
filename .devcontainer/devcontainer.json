@@ -3,5 +3,8 @@
   "build": {
     "dockerfile": "Dockerfile"
   },
+  "postCreateCommand": {
+    "git1": "git clone --recursive https://github.com/STMicroelectronics/STM32CubeG0.git"
+  }
 }
 
