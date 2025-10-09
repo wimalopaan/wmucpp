@@ -688,6 +688,7 @@ boards/rcmultiswitch/fsm.h
 boards/rcmultiswitch/ibus_cb.h
 boards/rcmultiswitch/leds.h
 boards/rcmultiswitch/mswitch01.cc
+boards/rcmultiswitch/mswitch02.cc
 boards/rcmultiswitch/multi8d.cc
 boards/rcmultiswitch/multi8hott.cc
 boards/rcmultiswitch/multi8man.cc
@@ -779,6 +780,15 @@ boards/rcsensorled10_avr0/test30.cc
 boards/rcsensorled10_avr0/test31.cc
 boards/rcsensorled10_avr0/test40.cc
 boards/rcsensorled10_avr0/test41.cc
+boards/rcsupersimplemultiswitch/Makefile
+boards/rcsupersimplemultiswitch/crc.h
+boards/rcsupersimplemultiswitch/crsf.h
+boards/rcsupersimplemultiswitch/crsf_cb.h
+boards/rcsupersimplemultiswitch/ibus_cb.h
+boards/rcsupersimplemultiswitch/leds.h
+boards/rcsupersimplemultiswitch/sbus_cb.h
+boards/rcsupersimplemultiswitch/sport_cb.h
+boards/rcsupersimplemultiswitch/ssmsw01.cc
 boards/rcswitch/Makefile
 boards/rcswitch/hw.h
 boards/rcswitch/readme.txt
@@ -2327,6 +2337,7 @@ include/util/outputparameter.h
 include/util/rational.h
 include/util/sort.h
 include/util/static_container.h
+include0/etl/event.h
 include0/etl/fsm.h
 include0/external/hott/generator.h
 include0/external/solutions/si5351.h
@@ -2337,6 +2348,7 @@ include0/mcu/common/components/twi.h
 include0/mcu/internals/twi.h
 include_stm32/bluetooth/hc05.h
 include_stm32/etl/algorithm.h
+include_stm32/etl/event.h
 include_stm32/etl/fifo.h
 include_stm32/etl/fixedvector.h
 include_stm32/etl/ranged.h
