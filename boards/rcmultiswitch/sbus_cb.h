@@ -38,7 +38,7 @@ struct SBusCommandCallback {
         static constexpr uint16_t value0 = 172;
         const uint16_t n = (ch16 >= value0) ? (ch16 - value0 + 1) : 0;
         const uint8_t  v = (n >> 4);
-#elif
+#else
 #error "wrong protocol"
 #endif
         const uint8_t address = (v >> 4) & 0b11;
