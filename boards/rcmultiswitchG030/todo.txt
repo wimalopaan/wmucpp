@@ -8,6 +8,7 @@ hardware:
 
 todo:
 -----
+* more easily config, e.g. USE_RESPONSE_SLOT for CRSF_TX_OPENDRAIN
 * unify stm32 g031/g051/g071/g0b1 variants
 * make flash work with non-MORSE
 * send inputs as ArduPilot tunnel messages (for e.g. inputs)
@@ -23,6 +24,7 @@ todo:
 
 questionable:
 -------------
+* rethink timer synchronization: must use same period (f), same duty, start together -> how to configure/ensure
 
 details:
 -----

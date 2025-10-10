@@ -782,9 +782,22 @@ struct Devices<WeAct, Config, MCU> {
     using sw6 = Mcu::Stm::Pin<gpioa, 7, MCU>;
     using sw7 = Mcu::Stm::Pin<gpioa, 8, MCU>;
 
-    using pwm3 = Mcu::Stm::V2::Pwm::Simple<3, clock>;
-    using pwm1 = Mcu::Stm::V2::Pwm::Simple<1, clock>;
-    using pwm2 = Mcu::Stm::V2::Pwm::Simple<2, clock>;
+    struct MasterPwmConfig;
+    struct SlavePwmConfig;
+
+    using pwm2 = Mcu::Stm::V3::Pwm::Simple<2, MasterPwmConfig>;
+    using pwm1 = Mcu::Stm::V3::Pwm::Simple<1, SlavePwmConfig>;
+    using pwm3 = Mcu::Stm::V3::Pwm::Simple<3, SlavePwmConfig>;
+
+    struct MasterPwmConfig {
+        using clock = Devices::clock;
+        static inline constexpr auto syncMode = Mcu::Stm::Timers::SyncMode::Master;
+    };
+    struct SlavePwmConfig {
+        using clock = Devices::clock;
+        static inline constexpr auto syncMode = Mcu::Stm::Timers::SyncMode::Slave;
+        using master = pwm2;
+    };
 
     // s0 : pa0  : tim2 ch1
     // s1 : pa1  : tim2 ch2
@@ -910,13 +923,10 @@ struct Devices<WeAct, Config, MCU> {
         sw6::template dir<Mcu::Output>();
         sw7::template dir<Mcu::Output>();
 
-        pwm3::duty1(100);
-        pwm3::duty2(100);
-        pwm3::duty3(100);
-        pwm3::duty4(100);
-
+        pwm2::init();
         pwm3::init();
         pwm1::init();
-        pwm2::init();
+
+        pwm2::start(); // synchron with pwm1 and pwm3;
     }
 };

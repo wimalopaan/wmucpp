@@ -80,6 +80,8 @@ namespace Mcu::Stm {
                     mcuTimer->CCR2 = 0;
                     mcuTimer->CCR3 = 0;
                     mcuTimer->CCR4 = 0;
+                    mcuTimer->CNT = 0;
+
                     mcuTimer->CR1 |= TIM_CR1_ARPE;
 
                     if constexpr(syncMode == Mcu::Stm::Timers::SyncMode::None) {
@@ -87,13 +89,38 @@ namespace Mcu::Stm {
                         mcuTimer->CR1 |= TIM_CR1_CEN;
                     }
                     else if constexpr(syncMode == Mcu::Stm::Timers::SyncMode::Master) {
-                        mcuTimer->CR2 |= (0b000 << TIM_CR2_MMS_Pos); // enable as trigger-output
-                        mcuTimer->SMCR |= (0b1 << TIM_SMCR_MSM_Pos);
+                        mcuTimer->CR2 |= (0b001 << TIM_CR2_MMS_Pos); // enable as trigger-output
+                        mcuTimer->SMCR = (0b1 << TIM_SMCR_MSM_Pos);
                     }
                     else if constexpr(syncMode == Mcu::Stm::Timers::SyncMode::Slave) {
                         if constexpr(TimerNumber == 3) {
                             if constexpr(master::component_t::number_t::value == 2) {
-                                mcuTimer->SMCR |= (0b0110 << TIM_SMCR_SMS_Pos) | (0b00001 << TIM_SMCR_TS_Pos); // ITR1 as trigger
+                                mcuTimer->SMCR = (0b0110 << TIM_SMCR_SMS_Pos) | (0b00001 << TIM_SMCR_TS_Pos); // ITR1 as trigger
+                            }
+                            else if constexpr(master::component_t::number_t::value == 1) {
+                                mcuTimer->SMCR = (0b0110 << TIM_SMCR_SMS_Pos) | (0b00000 << TIM_SMCR_TS_Pos); // ITR0 as trigger
+                            }
+                            else {
+                                static_assert(false);
+                            }
+                        }
+                        else if constexpr(TimerNumber == 2) {
+                            if constexpr(master::component_t::number_t::value == 3) {
+                                mcuTimer->SMCR = (0b0110 << TIM_SMCR_SMS_Pos) | (0b00010 << TIM_SMCR_TS_Pos); // ITR2 as trigger
+                            }
+                            else if constexpr(master::component_t::number_t::value == 1) {
+                                mcuTimer->SMCR = (0b0110 << TIM_SMCR_SMS_Pos) | (0b00000 << TIM_SMCR_TS_Pos); // ITR0 as trigger
+                            }
+                            else {
+                                static_assert(false);
+                            }
+                        }
+                        else if constexpr(TimerNumber == 1) {
+                            if constexpr(master::component_t::number_t::value == 2) {
+                                mcuTimer->SMCR = (0b0110 << TIM_SMCR_SMS_Pos) | (0b00001 << TIM_SMCR_TS_Pos); // ITR1 as trigger
+                            }
+                            else if constexpr(master::component_t::number_t::value == 3) {
+                                mcuTimer->SMCR = (0b0110 << TIM_SMCR_SMS_Pos) | (0b00010 << TIM_SMCR_TS_Pos); // ITR2 as trigger
                             }
                             else {
                                 static_assert(false);
