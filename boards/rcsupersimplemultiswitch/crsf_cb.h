@@ -34,12 +34,12 @@ struct CrsfCommandCallback {
             mask <<= 1;
         }
     }
-    static inline void setIndex(const uint8_t adrIndex, const uint8_t i, const bool on) {
+    static inline void setIndex(const int8_t adrIndex, const uint8_t i, const bool on) {
         if (adrIndex == 0) {
             Leds::set(i, on);
         }
         else if (adrIndex == 1) {
-            if constexpr(!std::is_same_v<Leds, void>) {
+            if constexpr(!std::is_same_v<Leds2, void>) {
                 Leds2::set(i, on);
             }
         }

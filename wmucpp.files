@@ -701,6 +701,7 @@ boards/rcmultiswitch/swout.h
 boards/rcmultiswitch/test00.cc
 boards/rcmultiswitch/test01.cc
 boards/rcmultiswitch/test10.cc
+boards/rcmultiswitchG030/telemetry.h
 boards/rcquadc/Makefile
 boards/rcquadc/atmega4808_01.cc
 boards/rcquadc/avr128da32_01.cc
@@ -781,14 +782,17 @@ boards/rcsensorled10_avr0/test31.cc
 boards/rcsensorled10_avr0/test40.cc
 boards/rcsensorled10_avr0/test41.cc
 boards/rcsupersimplemultiswitch/Makefile
+boards/rcsupersimplemultiswitch/command.h
 boards/rcsupersimplemultiswitch/crc.h
 boards/rcsupersimplemultiswitch/crsf.h
 boards/rcsupersimplemultiswitch/crsf_cb.h
 boards/rcsupersimplemultiswitch/ibus_cb.h
 boards/rcsupersimplemultiswitch/leds.h
+boards/rcsupersimplemultiswitch/link.h
 boards/rcsupersimplemultiswitch/sbus_cb.h
 boards/rcsupersimplemultiswitch/sport_cb.h
 boards/rcsupersimplemultiswitch/ssmsw01.cc
+boards/rcsupersimplemultiswitch/telemetry.h
 boards/rcswitch/Makefile
 boards/rcswitch/hw.h
 boards/rcswitch/readme.txt

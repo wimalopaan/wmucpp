@@ -16,17 +16,27 @@ namespace Crsf {
     namespace Type {
         // simple
         inline static constexpr std::byte Gps{0x02};
+        inline static constexpr std::byte GpsTime{0x03};
+        inline static constexpr std::byte GpsExtended{0x06};
         inline static constexpr std::byte Vario{0x07};
         inline static constexpr std::byte Battery{0x08};
         inline static constexpr std::byte Baro{0x09};
+        inline static constexpr std::byte AirSpeed{0x0a};
         inline static constexpr std::byte HeartBeat{0x0b};
+        inline static constexpr std::byte Rpm{0x0c};
+        inline static constexpr std::byte Temp{0x0d};
+        inline static constexpr std::byte Cells{0x0e};
+        inline static constexpr std::byte VtxTelem{0x10};
         inline static constexpr std::byte Link{0x14};
         inline static constexpr std::byte Channels{0x16};
         inline static constexpr std::byte SubsetChannels{0x17};
+        inline static constexpr std::byte ChannelsPacket{0x18};
         inline static constexpr std::byte LinkStatsRx{0x1c};
         inline static constexpr std::byte LinkStatsTx{0x1d};
-        inline static constexpr std::byte Altitude{0x1e};
+        inline static constexpr std::byte Attitude{0x1e};
+        inline static constexpr std::byte MavLinkFC{0x1f};
         inline static constexpr std::byte FlightMode{0x21};
+        inline static constexpr std::byte EspNow{0x22};
         // extended
         inline static constexpr std::byte Ping{0x28};
         inline static constexpr std::byte Info{0x29};
@@ -215,28 +225,23 @@ namespace Crsf {
 
     template<typename Config>
     struct Adapter {
-        using dbg = Config::debug;
-        using cb =  Config::cb;
-        enum class State : uint8_t {Undefined,
-                                    GotAddress, GotLength,
-                                    Data, Command};
+        using debug = Config::debug;
+        using decoder = Config::decoder;
+
+        enum class State : uint8_t {Undefined, GotAddress, GotLength, Data};
 
         static inline bool process(const std::byte b) {
             ++mBytesCounter;
             switch(mState) {
             case State::Undefined:
                 csum.reset();
-                if ((b == Crsf::Address::StartByte) ||
-                    (b == Crsf::Address::TX) ||
-                    (b == Crsf::Address::Broadcast))
-                {
+                if (b == Crsf::Address::StartByte) {
                     mState = State::GotAddress;
                 }
                 break;
             case State::GotAddress:
                 if ((static_cast<uint8_t>(b) > 2) && (static_cast<uint8_t>(b) <= mData.size())) {
                     mLength = static_cast<uint8_t>(b) - 2; // only payload (not including type and crc)
-                    mPayloadIndex = 0;
                     mState = State::GotLength;
                 }
                 else {
@@ -245,109 +250,54 @@ namespace Crsf {
                 break;
             case State::GotLength:
                 csum += b;
-                if (b == Crsf::Type::Command) {
-                    mState = State::Command;
-                }
-                else {
-                    mState = State::Data;
-                }
+                mType = b;
+                mPayloadIndex = 0;
+                mState = State::Data;
                 break;
-            case State::Command:
-                if (mPayloadIndex >= mLength) {
-                    if (csum == b) {
-                        ++mCommandPackagesCounter;
-                        ++mPackagesCounter;
-                        if (mData[0] == Crsf::Address::Controller) {
-                            if (mData[2] == Crsf::CommandType::Switch) {
-                                const std::byte command = mData[3];
-                                if (command == Crsf::SwitchCommand::Set) {
-                                    if (mData[4] == mModuleAddress) {
-                                        etl::outl<dbg>("set: "_pgm, mData[5]);
-                                        cb::set(mData[5]);
-                                    }
-                                }
-                                else if (command == Crsf::SwitchCommand::Set4) {
-                                    const uint8_t address = (uint8_t)mData[4];
-                                    const uint8_t adrIndex = address - (uint8_t)mModuleAddress;
-                                    const uint16_t sw = (((uint16_t)mData[5]) << 8) + (uint8_t)mData[6];
-                                    etl::outl<dbg>("set4: "_pgm, address);
-                                    for(uint8_t i = 0; i < 8; ++i) {
-                                        const uint8_t s = (sw >> (2 * i)) & 0b11;
-                                        cb::setIndex(adrIndex, i, (s > 0));
-                                    }
-                                }
-                                else if (command == Crsf::SwitchCommand::Set4M) {
-                                    const uint8_t count = (uint8_t)mData[4];
-                                    for(uint8_t i = 0; i < count; ++i) {
-                                        const uint8_t address = (uint8_t)mData[5 + 3 * i];
-                                        const uint16_t sw = ((uint16_t)mData[6 + 3 * i] << 8) + (uint8_t)mData[7 + 3 * i];
-                                        etl::outl<dbg>("set4M: "_pgm, i, " adr: "_pgm, address);
-                                        const uint8_t adrIndex = address - (uint8_t)mModuleAddress;
-                                        etl::outl<dbg>("set4M adr: "_pgm, address, " i: "_pgm, adrIndex);
-                                        for(uint8_t k = 0; k < 8; ++k) {
-                                            const uint8_t s = (sw >> (2 * k)) & 0b11;
-                                            cb::setIndex(adrIndex, k, s > 0);
-                                        }
-                                    }
-
-                                }
-                            }
-                        }
-                    }
-                    mState = State::Undefined;
-                }
-                else {
-                    csum += b;
-                    mData[mPayloadIndex] = b;
-                    ++mPayloadIndex;
-                }
-            break;
             case State::Data:
                 if (mPayloadIndex >= mLength) {
                     if (csum == b) {
-                        ++mDataPackagesCounter;
                         ++mPackagesCounter;
-                        // decode
+                        []<auto... II>(std::index_sequence<II...>) {
+                            (Meta::nth_element<II, decoder>::decode(mType, mData) || ...); // break if true
+                        }(std::make_index_sequence<Meta::size_v<decoder>>{});
                     }
                     mState = State::Undefined;
                 }
                 else {
                     csum += b;
-                    ++mPayloadIndex;
+                    if (mPayloadIndex < mData.size()) {
+                        mData[mPayloadIndex++] = b;
+                    }
+                    else {
+                        mState = State::Undefined;
+                    }
                 }
-            break;
+                break;
             }
             return true;
         }
-        static inline void ratePeriodic() {}
-
+        static inline void ratePeriodic() {
+        }
         template<bool Reset = true>
-        static inline uint16_t commandPackages() {
+        static inline uint16_t packages() {
             if constexpr(Reset) {
-                const auto c = mCommandPackagesCounter;
-                mCommandPackagesCounter = 0;
+                const auto c = mPackagesCounter;
+                mPackagesCounter = 0;
                 return c;
             }
             else {
-                return mCommandPackagesCounter;
+                return mPackagesCounter;
             }
         }
-        static inline void address(const uint8_t adr) {
-            mModuleAddress = (std::byte)adr;
-        }
-        static inline uint8_t address() {
-            return (uint8_t)mModuleAddress;
-        }
         private:
-        inline static CRC8 csum;
+        inline static CRC8 csum{};
         inline static State mState = State::Undefined;
         inline static std::array<std::byte, maxMessageSize> mData;
-        inline static std::byte mModuleAddress{DEFAULT_ADDRESS};
         inline static uint8_t mPayloadIndex{};
         inline static uint8_t mLength{};
+        inline static std::byte mType{};
         inline static uint16_t mPackagesCounter{};
-        inline static uint16_t mCommandPackagesCounter{};
-        inline static uint16_t mDataPackagesCounter{};
         inline static uint16_t mBytesCounter{};
     };
 }

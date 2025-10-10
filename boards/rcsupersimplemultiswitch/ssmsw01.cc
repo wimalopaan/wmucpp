@@ -39,7 +39,7 @@
 // #define USE_AFHDS2A // SBus input only (see above) (using 4in1 MPM RF-module)
 // #define USE_ACCST // SBus input only (see above) (using 4in1 MPM RF-module)
 
-#define DEBUG_OUTPUT // on attiny1614: CRSF/SBUS only: debug output via same uart as receiving data (same baudrate), S.Port is half-duplex -> no debug possible
+//#define DEBUG_OUTPUT // on attiny1614: CRSF/SBUS only: debug output via same uart as receiving data (same baudrate), S.Port is half-duplex -> no debug possible
                         // on avr128da28: uses USART1 (same as input on SSMSW01)
 
 #define CRSF_BAUDRATE 420'000
@@ -93,6 +93,9 @@
 #include "sport_cb.h"
 #include "ibus_cb.h"
 #include "leds.h"
+#include "command.h"
+#include "link.h"
+#include "telemetry.h"
 
 using namespace AVR;
 using namespace std::literals::chrono;
@@ -222,9 +225,32 @@ namespace Crsf {
 #endif
         using terminal = etl::basic_ostream<terminalDevice>;
 
+        using commandCallback = CrsfCommandCallback<leds, leds2>;
+
+        struct TelemetryConfig;
+        using telemetry = Telemetry<TelemetryConfig>;
+
+        struct CommandDecoderConfig;
+        using commandDecoder = Crsf::Command<CommandDecoderConfig>;
+
+        struct LinkDecoderConfig;
+        using linkDecoder = Crsf::Link<LinkDecoderConfig>;
+
         struct CrsfAdapterConfig {
-            using debug = terminal;
-            using cb = CrsfCommandCallback<leds, leds2>;
+                using debug = etl::basic_ostream<void>;
+                using decoder = Meta::List<commandDecoder, linkDecoder>;
+        };
+        struct CommandDecoderConfig {
+                using debug = etl::basic_ostream<void>;
+                using callback = commandCallback;
+        };
+        struct LinkDecoderConfig {
+                using debug = terminal;
+                using callback = telemetry;
+        };
+        struct TelemetryConfig {
+                using debug = terminal;
+                using crsf = Devices::crsf;
         };
 
         enum class State : uint8_t {Undefined, Init, Connected, NotConnected};
@@ -274,10 +300,12 @@ namespace Crsf {
             crsf_pa::ratePeriodic();
             ++mStateTicks;
             (++mDebugTicks).on(debugTicks, [] static {
+#ifdef USE_SSMSW01
                 etl::outl<terminal>("adc0: "_pgm, adcController::value(adc_i_t{0}));
+#endif
             });
             (++mCheckTicks).on(checkTicks, [] static {
-                const uint8_t cp = crsf_pa::commandPackages();
+                const uint8_t cp = crsf_pa::packages();
                 if (cp > 0) {
                         mEvent = Event::Connect;
                 }
@@ -316,30 +344,36 @@ namespace Crsf {
                             break;
                     case State::Init:
                             etl::outl<terminal>("Init"_pgm);
+#ifdef USE_SSMSW01
                             blinker::steady();
+#endif
                     {
 #ifdef USE_SSMSW01
 # ifdef USE_ADR_PINS
                             const uint8_t a0 = adr0::isActive();
                             const uint8_t a1 = adr0::isActive();
                             const uint8_t address = DEFAULT_ADDRESS + (2 * a1 + a0) * 2;
-                            crsf_pa::address(address);
+                            commandDecoder::address(address);
 # else
-                            crsf_pa::address(DEFAULT_ADDRESS);
+                            commandDecoder::address(DEFAULT_ADDRESS);
 # endif
 #else
-                            crsf_pa::address(DEFAULT_ADDRESS);
+                            commandDecoder::address(DEFAULT_ADDRESS);
 #endif
-                            etl::outl<terminal>("Adr: "_pgm, crsf_pa::address());
+                            etl::outl<terminal>("Adr: "_pgm, commandDecoder::address());
                     }
                             break;
                     case State::Connected:
                             etl::outl<terminal>("Connected"_pgm);
+#ifdef USE_SSMSW01
                             blinker::blink(blinker::count_type{2});
+#endif
                             break;
                     case State::NotConnected:
                             etl::outl<terminal>("NotConnected"_pgm);
+#ifdef USE_SSMSW01
                             blinker::blink(blinker::count_type{1});
+#endif
                             break;
                     }
             }
