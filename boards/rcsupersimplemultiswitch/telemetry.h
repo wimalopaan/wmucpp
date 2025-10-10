@@ -15,46 +15,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #pragma once
 
-template<typename Device>
-struct MessageBuilder {
-    using device = Device;
-    explicit MessageBuilder(std::array<std::byte, Crsf::maxMessageSize>& buffer,
-                            const std::byte type) : mBuffer(buffer) {
-        mBuffer[0] = 0xc8_B;
-        mLength = 3;
-        mBuffer[1] = std::byte(mLength);
-        mBuffer[2] = type;
+#include <array>
 
-    }
-    ~MessageBuilder() {
-        const uint8_t length = mLength + 1; // incl. CRC
-        mBuffer[1] = std::byte(length - 2); // without: startbyte and length, including CRC
-        CRC8 csum;
-        for(int8_t i = 0; i < length - 2 - 1; ++i) { // without CRC
-            csum += mBuffer[i + 2];
-        }
-        mBuffer[length - 1] = csum;
-        for(uint8_t i = 0; i < length; ++i) {
-            device::put(mBuffer[i]);
-        }
-    }
-    void push_back(const uint8_t d) {
-        mBuffer[mLength++] = std::byte(d);
-    }
-    void push_back(const uint16_t d) {
-        mBuffer[mLength++] = std::byte(d >> 8);
-        mBuffer[mLength++] = std::byte(d);
-    }
-    void push_back(const int16_t d) {
-        mBuffer[mLength++] = std::byte(d >> 8);
-        mBuffer[mLength++] = std::byte(d);
-    }
-    private:
-    uint8_t mLength{};
-    std::array<std::byte, Crsf::maxMessageSize>& mBuffer;
-};
+#include "messagebuilder.h"
 
 template<typename Config>
 struct Telemetry {
@@ -77,6 +43,15 @@ struct Telemetry {
             mCounter = 0;
         }
     }
+    static inline void temperature(const int16_t t) {
+        mTemp = t;
+    }
+    static inline void voltage(const uint16_t v) {
+        mVoltage = v;
+    }
+    static inline void status(const uint8_t b) {
+        mBits = b;
+    }
     private:
     static inline void sendTemperature() {
         etl::outl<debug>("send temp"_pgm);
@@ -87,7 +62,8 @@ struct Telemetry {
     static inline void sendBits() {
         etl::outl<debug>("send bits"_pgm);
         MessageBuilder<crsf> b(mMessage, Crsf::Type::PassThru);
-        b.push_back(mAppId);
+        b.push_back(Crsf::PassThru::SubType::Switch);
+        b.push_back(Crsf::PassThru::AppId::Status);
         b.push_back(mBits);
     }
     static inline void sendVoltage() {
@@ -104,5 +80,6 @@ struct Telemetry {
     static inline int16_t mTemp{0};
     static inline uint16_t mVoltage{0};
     static inline uint16_t mAppId{6000};
+    static inline uint16_t mSubType{0xa0};
     static inline uint8_t mBits{0};
 };

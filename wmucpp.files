@@ -786,13 +786,18 @@ boards/rcsupersimplemultiswitch/command.h
 boards/rcsupersimplemultiswitch/crc.h
 boards/rcsupersimplemultiswitch/crsf.h
 boards/rcsupersimplemultiswitch/crsf_cb.h
+boards/rcsupersimplemultiswitch/devices.h
+boards/rcsupersimplemultiswitch/gfsm.h
 boards/rcsupersimplemultiswitch/ibus_cb.h
 boards/rcsupersimplemultiswitch/leds.h
 boards/rcsupersimplemultiswitch/link.h
+boards/rcsupersimplemultiswitch/messagebuilder.h
 boards/rcsupersimplemultiswitch/sbus_cb.h
 boards/rcsupersimplemultiswitch/sport_cb.h
 boards/rcsupersimplemultiswitch/ssmsw01.cc
+boards/rcsupersimplemultiswitch/stdcomp.h
 boards/rcsupersimplemultiswitch/telemetry.h
+boards/rcsupersimplemultiswitch/todo.txt
 boards/rcswitch/Makefile
 boards/rcswitch/hw.h
 boards/rcswitch/readme.txt
@@ -2734,3 +2739,4 @@ include0/mcu/tinyavr2/components2.h
 include0/std/compare
 include0/std/coroutine
 include1/wmucpp.h
+include_stm32/usart_2_reflection.h

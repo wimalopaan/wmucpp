@@ -96,13 +96,16 @@
 #include "command.h"
 #include "link.h"
 #include "telemetry.h"
+#include "stdcomp.h"
+
+#include "devices.h"
 
 using namespace AVR;
 using namespace std::literals::chrono;
 using namespace External::Units::literals;
 
 namespace  {
-    constexpr auto fRtc = 2000_Hz; // 500µs resolution
+    constexpr auto fRtc = 2000_Hz; // timing 500µs resolution
 }
 
 using ccp = Cpu::Ccp<>;
@@ -143,11 +146,12 @@ using tp = NoPin;
 
 using ledPin  = Pin<Port<F>, 0>;
 using led     = ActiveHigh<ledPin, Output>;
-using in0     = Pin<Port<F>, 6>;
+using in0Pin  = Pin<Port<F>, 6>;
+using in0     = ActiveLow<in0Pin, Input>;
 using aVBatt  = Pin<Port<F>, 1>;
 using blinker = External::Blinker2<led, systemTimer, 100_ms, 2000_ms>;
 
-using adc = AVR::Adc<AVR::Component::Adc<0>, AVR::Resolution<12>, AVR::Vref::V4_096>;
+using adc = AVR::Adc<AVR::Component::Adc<0>, AVR::Resolution<12>, AVR::Vref::V2_048>;
 using adcController = External::Hal::AdcController<adc, Meta::NList<17, 0x42>>; // 0x42 = temp
 using adc_i_t = adcController::index_type;
 
@@ -250,27 +254,24 @@ namespace Crsf {
         };
         struct TelemetryConfig {
                 using debug = terminal;
+#ifdef DEBUG_OUTPUT
+                using crsf = void;
+#else
                 using crsf = Devices::crsf;
+#endif
         };
 
         enum class State : uint8_t {Undefined, Init, Connected, NotConnected};
         enum class Event : uint8_t {None, Connect, Unconnect};
 
+        using components = StandardComponents<portmux, leds, leds2, in0, blinker,
+                           adcController, adr0, adr1, crsf, terminalDevice>;
+
         static inline void init() {
-            portmux::init();
-            leds::init();
-#ifdef USE_SSMSW01
-            leds2::init();
-            in0::dir<Input>();
-            blinker::init();
-            adcController::init();
-#ifdef USE_ADR_PINS
-            adr0::init();
-            adr1::init();
-#endif
-#endif
+            components::init();
             tp::dir<Output>();
             crsf::template init<BaudRate<CRSF_BAUDRATE>>();
+
 #if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
 # ifdef DEBUG_OUTPUT
             if constexpr (!std::is_same_v<terminalDevice, crsf> && !std::is_same_v<terminalDevice, void>) {
@@ -281,27 +282,15 @@ namespace Crsf {
         }
         static inline void periodic() {
             tp::toggle();
-            crsf::periodic();
-#ifdef USE_SSMSW01
-            adcController::periodic();
-#endif
-#if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
-# ifdef DEBUG_OUTPUT
-            if constexpr (!std::is_same_v<terminalDevice, crsf> && !std::is_same_v<terminalDevice, void>) {
-                terminalDevice::periodic();
-            }
-# endif
-#endif
+            components::periodic();
         }
         static inline void ratePeriodic() {
-#ifdef USE_SSMSW01
-            blinker::ratePeriodic();
-#endif
-            crsf_pa::ratePeriodic();
+            components::ratePeriodic();
             ++mStateTicks;
             (++mDebugTicks).on(debugTicks, [] static {
 #ifdef USE_SSMSW01
-                etl::outl<terminal>("adc0: "_pgm, adcController::value(adc_i_t{0}));
+                etl::outl<terminal>("adc0: "_pgm, adcController::value(adc_i_t{0}),
+                                        "adc1: "_pgm, adcController::value(adc_i_t{1}));
 #endif
             });
             (++mCheckTicks).on(checkTicks, [] static {
@@ -329,6 +318,10 @@ namespace Crsf {
             case State::Connected:
                     mEvent.on(Event::Unconnect, []{
                             mState = State::NotConnected;
+                    });
+                    mStateTicks.on(telemetryTicks, []{
+                            telemetry::voltage(adcController::value(adc_i_t{0}));
+                            telemetry::temperature(adcController::value(adc_i_t{1}));
                     });
                 break;
             case State::NotConnected:
@@ -381,6 +374,7 @@ namespace Crsf {
         }
         private:
         static constexpr External::Tick<systemTimer> debugTicks{500_ms};
+        static constexpr External::Tick<systemTimer> telemetryTicks{100_ms};
         static constexpr External::Tick<systemTimer> checkTicks{3000_ms};
         inline static External::Tick<systemTimer> mStateTicks;
         inline static External::Tick<systemTimer> mCheckTicks;
@@ -579,6 +573,7 @@ namespace SPort {
     };
 }
 struct DevsConfig {};
+
 #ifdef INPUT_CRSF
 using devices = Crsf::Devices<DevsConfig>;
 #endif

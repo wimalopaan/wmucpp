@@ -1,0 +1,20 @@
+todo:
+======
+
+* blinkpattern
+** 1x no serial packages at all
+** 2x normal (command received)
+** 3x only linkstat or rc-channels
+
+* scaling of adc
+** temp
+** voltage
+
+* sending of status bits
+** passthru frames
+
+* gfsm structure
+** with telemetry
+** no telemetry
+
+

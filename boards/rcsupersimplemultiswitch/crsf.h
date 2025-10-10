@@ -95,6 +95,17 @@ namespace Crsf {
         inline static constexpr std::byte PassThru{0x7f};
         inline static constexpr std::byte ArduPilot{0x80};
     }
+    namespace PassThru {
+        namespace SubType {
+            inline static constexpr std::byte Switch{0xa1};
+        }
+        namespace AppId {
+            inline static constexpr uint16_t Status{6100};
+        }
+    }
+    namespace ArduPilot {
+
+    }
     namespace CommandType {
         // inline static constexpr std::byte bind{0x01}; // bind
         inline static constexpr std::byte rx{0x10}; // receiver command
