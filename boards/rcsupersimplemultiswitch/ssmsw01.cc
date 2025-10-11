@@ -40,7 +40,7 @@
 // #define USE_ACCST // SBus input only (see above) (using 4in1 MPM RF-module)
 
 //#define DEBUG_OUTPUT // on attiny1614: CRSF/SBUS only: debug output via same uart as receiving data (same baudrate), S.Port is half-duplex -> no debug possible
-                        // on avr128da28: uses USART1 (same as input on SSMSW01)
+// on avr128da28: uses USART1 (same as input on SSMSW01)
 
 #define CRSF_BAUDRATE 420'000
 #define IBUS_BAUDRATE 115'200
@@ -97,8 +97,6 @@
 #include "link.h"
 #include "telemetry.h"
 #include "stdcomp.h"
-
-#include "devices.h"
 
 using namespace AVR;
 using namespace std::literals::chrono;
@@ -229,7 +227,8 @@ namespace Crsf {
 #endif
         using terminal = etl::basic_ostream<terminalDevice>;
 
-        using commandCallback = CrsfCommandCallback<leds, leds2>;
+        using ledGroups = Meta::List<Devices::leds, Devices::leds2>;
+        using commandCallback = CrsfCommandCallback<ledGroups>;
 
         struct TelemetryConfig;
         using telemetry = Telemetry<TelemetryConfig>;
@@ -241,23 +240,23 @@ namespace Crsf {
         using linkDecoder = Crsf::Link<LinkDecoderConfig>;
 
         struct CrsfAdapterConfig {
-                using debug = etl::basic_ostream<void>;
-                using decoder = Meta::List<commandDecoder, linkDecoder>;
+            using debug = etl::basic_ostream<void>;
+            using decoder = Meta::List<commandDecoder, linkDecoder>;
         };
         struct CommandDecoderConfig {
-                using debug = etl::basic_ostream<void>;
-                using callback = commandCallback;
+            using debug = etl::basic_ostream<void>;
+            using callback = commandCallback;
         };
         struct LinkDecoderConfig {
-                using debug = terminal;
-                using callback = telemetry;
+            using debug = terminal;
+            using callback = telemetry;
         };
         struct TelemetryConfig {
-                using debug = terminal;
+            using debug = terminal;
 #ifdef DEBUG_OUTPUT
-                using crsf = void;
+            using crsf = void;
 #else
-                using crsf = Devices::crsf;
+            using crsf = Devices::crsf;
 #endif
         };
 
@@ -265,7 +264,7 @@ namespace Crsf {
         enum class Event : uint8_t {None, Connect, Unconnect};
 
         using components = StandardComponents<portmux, leds, leds2, in0, blinker,
-                           adcController, adr0, adr1, crsf, terminalDevice>;
+        adcController, adr0, adr1, crsf, terminalDevice>;
 
         static inline void init() {
             components::init();
@@ -288,87 +287,87 @@ namespace Crsf {
             components::ratePeriodic();
             ++mStateTicks;
             (++mDebugTicks).on(debugTicks, [] static {
-#ifdef USE_SSMSW01
-                etl::outl<terminal>("adc0: "_pgm, adcController::value(adc_i_t{0}),
-                                        "adc1: "_pgm, adcController::value(adc_i_t{1}));
-#endif
-            });
+                       #ifdef USE_SSMSW01
+                                   etl::outl<terminal>("adc0: "_pgm, adcController::value(adc_i_t{0}),
+                                   "adc1: "_pgm, adcController::value(adc_i_t{1}));
+                       #endif
+                               });
             (++mCheckTicks).on(checkTicks, [] static {
-                const uint8_t cp = crsf_pa::packages();
-                if (cp > 0) {
-                        mEvent = Event::Connect;
-                }
-                else {
-                        mEvent = Event::Unconnect;
-                }
-            });
+                                   const uint8_t cp = crsf_pa::packages();
+                                   if (cp > 0) {
+                                       mEvent = Event::Connect;
+                                   }
+                                   else {
+                                       mEvent = Event::Unconnect;
+                                   }
+                               });
 
             const auto oldState = mState;
             switch(mState) {
             case State::Undefined:
-                    mState = State::Init;
+                mState = State::Init;
                 break;
             case State::Init:
-                    mEvent.on(Event::Connect, []{
-                            mState = State::Connected;
-                    }).thenOn(Event::Unconnect, []{
-                            mState = State::NotConnected;
-                    });
+                mEvent.on(Event::Connect, []{
+                    mState = State::Connected;
+                }).thenOn(Event::Unconnect, []{
+                    mState = State::NotConnected;
+                });
                 break;
             case State::Connected:
-                    mEvent.on(Event::Unconnect, []{
-                            mState = State::NotConnected;
-                    });
-                    mStateTicks.on(telemetryTicks, []{
-                            telemetry::voltage(adcController::value(adc_i_t{0}));
-                            telemetry::temperature(adcController::value(adc_i_t{1}));
-                    });
+                mEvent.on(Event::Unconnect, []{
+                    mState = State::NotConnected;
+                });
+                mStateTicks.on(telemetryTicks, []{
+                    telemetry::voltage(adcController::value(adc_i_t{0}));
+                    telemetry::temperature(adcController::value(adc_i_t{1}));
+                });
                 break;
             case State::NotConnected:
-                    mEvent.on(Event::Connect, []{
-                            mState = State::Connected;
-                    });
+                mEvent.on(Event::Connect, []{
+                    mState = State::Connected;
+                });
                 break;
             }
             if (oldState != mState) {
-                    mStateTicks.reset();
-                    switch(mState) {
-                    case State::Undefined:
-                            break;
-                    case State::Init:
-                            etl::outl<terminal>("Init"_pgm);
+                mStateTicks.reset();
+                switch(mState) {
+                case State::Undefined:
+                    break;
+                case State::Init:
+                    etl::outl<terminal>("Init"_pgm);
 #ifdef USE_SSMSW01
-                            blinker::steady();
+                    blinker::steady();
 #endif
-                    {
+                {
 #ifdef USE_SSMSW01
 # ifdef USE_ADR_PINS
-                            const uint8_t a0 = adr0::isActive();
-                            const uint8_t a1 = adr0::isActive();
-                            const uint8_t address = DEFAULT_ADDRESS + (2 * a1 + a0) * 2;
-                            commandDecoder::address(address);
+                    const uint8_t a0 = adr0::isActive();
+                    const uint8_t a1 = adr0::isActive();
+                    const uint8_t address = DEFAULT_ADDRESS + (2 * a1 + a0) * 2;
+                    commandDecoder::address(address);
 # else
-                            commandDecoder::address(DEFAULT_ADDRESS);
+                    commandDecoder::address(DEFAULT_ADDRESS);
 # endif
 #else
-                            commandDecoder::address(DEFAULT_ADDRESS);
+                    commandDecoder::address(DEFAULT_ADDRESS);
 #endif
-                            etl::outl<terminal>("Adr: "_pgm, commandDecoder::address());
-                    }
-                            break;
-                    case State::Connected:
-                            etl::outl<terminal>("Connected"_pgm);
+                    etl::outl<terminal>("Adr: "_pgm, commandDecoder::address());
+                }
+                    break;
+                case State::Connected:
+                    etl::outl<terminal>("Connected"_pgm);
 #ifdef USE_SSMSW01
-                            blinker::blink(blinker::count_type{2});
+                    blinker::blink(blinker::count_type{2});
 #endif
-                            break;
-                    case State::NotConnected:
-                            etl::outl<terminal>("NotConnected"_pgm);
+                    break;
+                case State::NotConnected:
+                    etl::outl<terminal>("NotConnected"_pgm);
 #ifdef USE_SSMSW01
-                            blinker::blink(blinker::count_type{1});
+                    blinker::blink(blinker::count_type{1});
 #endif
-                            break;
-                    }
+                    break;
+                }
             }
 
         }
@@ -432,8 +431,8 @@ namespace Ibus {
         static inline void ratePeriodic() {
             ibus_pa::ratePeriodic();
             (++mStateTicks).on(debugTicks, [] static {
-                etl::outl<terminal>("ibus p: "_pgm, ibus_pa::packages());
-            });
+                                   etl::outl<terminal>("ibus p: "_pgm, ibus_pa::packages());
+                               });
         }
         private:
         static constexpr External::Tick<systemTimer> debugTicks{500_ms};
@@ -492,11 +491,11 @@ namespace Sbus {
             ++mStateTicks;
             mStateTicks.on(debugTicks, []{
 #if defined(USE_ELRS)
-            etl::outl<terminal>("elrs"_pgm);
+                etl::outl<terminal>("elrs"_pgm);
 #elif defined(USE_AFHDS2A)
-            etl::outl<terminal>("afhds2a"_pgm);
+                etl::outl<terminal>("afhds2a"_pgm);
 #elif defined(USE_ACCST)
-            etl::outl<terminal>("accst"_pgm);
+                etl::outl<terminal>("accst"_pgm);
 #else
 #error "wrong protocol"
 #endif
@@ -604,7 +603,7 @@ int main() {
     while(true) {
         devices::periodic();
         systemTimer::periodic([] static {
-            devices::ratePeriodic();
-        });
+                                  devices::ratePeriodic();
+                              });
     }
 }

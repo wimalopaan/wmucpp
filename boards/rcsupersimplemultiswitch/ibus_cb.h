@@ -21,9 +21,11 @@
 template<typename Config>
 struct IBusCommandCallback {
     using debug = Config::debug;
-    using leds = Config::leds;
+    using ledGroups = Config::ledGroups;
+    using leds = Meta::nth_element<0, ledGroups>;
 
     static inline void decode(const std::array<std::byte, 28>& data) {
+        ++mCommandPackagesCounter;
         static constexpr uint8_t chi = 15;
         const std::byte h1 = data[6 * (chi - 14) + 1] & 0xf0_B;
         const std::byte h2 = data[6 * (chi - 14) + 3] & 0xf0_B;
@@ -47,8 +49,15 @@ struct IBusCommandCallback {
             }
         }
     }
+    static inline void address(const uint8_t adr) {
+        mAddress = adr;
+    }
+    static inline uint8_t address() {
+        return mAddress;
+    }
     private:
     static inline uint8_t mLastCommand = 0;
+    static inline uint16_t mCommandPackagesCounter = 0;
     static inline uint8_t mAddress = DEFAULT_ADDRESS;
 };
 

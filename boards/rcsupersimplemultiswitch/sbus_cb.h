@@ -16,12 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+
 #pragma once
 
 template<typename Config>
 struct SBusCommandCallback {
     using debug = Config::debug;
-    using leds = Config::leds;
+    using ledGroups = Config::ledGroups;
+    using leds = Meta::nth_element<0, ledGroups>;
 
     static inline void decode(const std::array<uint8_t, 23>& data) {
         const uint16_t ch16 = (uint16_t) ((data[20]>>5 | data[21]<<3) & 0x07FF);
@@ -53,6 +55,12 @@ struct SBusCommandCallback {
                 leds::set(sw, on);
             }
         }
+    }
+    static inline void address(const uint8_t adr) {
+        mAddress = adr;
+    }
+    static inline uint8_t address() {
+        return mAddress;
     }
     private:
     static inline uint8_t mLastCommand = 0;

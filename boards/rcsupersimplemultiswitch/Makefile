@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# ~/.local/bin/pymcuprog write --erase -d avr128da32 -t uart -u /dev/ttyUSB0 -f ssmsw01.hex
+# ~/.local/bin/pymcuprog write --erase -d avr128da28 -t uart -u /dev/ttyUSB0 -f ssmsw01.hex
 
 MCU = avr128da32
 F_OSC = 32000000
@@ -30,5 +30,6 @@ F_OSC = 32000000
 subdirs =
 
 targets += ssmsw01.hex
+targets += ssmsw02.hex
 
 -include ../../Makefile.avr0.include

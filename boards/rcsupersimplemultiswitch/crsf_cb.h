@@ -18,30 +18,37 @@
 
 #pragma once
 
+#include "etl/meta.h"
+
 #include "crsf.h"
 
-template<typename Leds, typename Leds2 = void>
+template<typename LedGroups>
 struct CrsfCommandCallback {
+    using ledGroups = LedGroups;
+    using ledsAdr0 = Meta::nth_element<0, ledGroups>;
+
     static inline void set(const std::byte data) {
         std::byte mask = 0b1_B;
         for(uint8_t i = 0; i < 8; ++i) {
             if (std::any(data & mask)) {
-                Leds::set(i, true);
+                ledsAdr0::set(i, true);
             }
             else {
-                Leds::set(i, false);
+                ledsAdr0::set(i, false);
             }
             mask <<= 1;
         }
     }
     static inline void setIndex(const int8_t adrIndex, const uint8_t i, const bool on) {
         if (adrIndex == 0) {
-            Leds::set(i, on);
+            ledsAdr0::set(i, on);
         }
         else if (adrIndex == 1) {
-            if constexpr(!std::is_same_v<Leds2, void>) {
-                Leds2::set(i, on);
+            if constexpr(Meta::size_v<ledGroups> > 0) {
+                using ledsAdr1 = Meta::nth_element<1, ledGroups>;
+                ledsAdr1::set(i, on);
             }
+
         }
     }
 };
