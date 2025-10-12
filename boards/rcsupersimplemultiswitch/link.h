@@ -27,11 +27,9 @@ namespace Crsf {
             if (type != Crsf::Type::Link) {
                 return false;
             }
-            ++mPackagesCounter;
             callback::gotLink();
             return true;
         }
         private:
-        static inline uint16_t mPackagesCounter{};
     };
 }

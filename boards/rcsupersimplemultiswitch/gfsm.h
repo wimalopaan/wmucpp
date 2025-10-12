@@ -33,6 +33,8 @@ namespace Gfsm {
         using telemetry = devs::input::telemetry;
         using decoder = devs::input::commandDecoder;
 
+        using in0 = devs::in0;
+
         enum class State : uint8_t {Undefined, Init, Connected, NotConnected};
         enum class Event : uint8_t {None, Connect, Unconnect};
 
@@ -80,6 +82,8 @@ namespace Gfsm {
                 mStateTicks.on(telemetryTicks, []{
                     telemetry::voltage(adc::value(adc_i_t{0}));
                     telemetry::temperature(adc::value(adc_i_t{1}));
+                    const uint8_t s = (in0::isActive() ? 0b0000'0001 : 0b0000'0000);
+                    telemetry::status(s);
                 });
                 break;
             case State::NotConnected:

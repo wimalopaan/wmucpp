@@ -31,16 +31,16 @@ struct Telemetry {
         switch(mCounter) {
         case 0:
             sendBits();
+            ++mCounter;
             break;
         case 1:
             sendTemperature();
+            ++mCounter;
             break;
         case 2:
             sendVoltage();
-            break;
-        }
-        if (++mCounter >= mMax) {
             mCounter = 0;
+            break;
         }
     }
     static inline void temperature(const int16_t t) {
@@ -62,6 +62,8 @@ struct Telemetry {
     static inline void sendBits() {
         etl::outl<debug>("send bits"_pgm);
         MessageBuilder<crsf> b(mMessage, Crsf::Type::PassThru);
+        b.push_back(Crsf::Address::Handset);
+        b.push_back(Crsf::Address::Controller);
         b.push_back(Crsf::PassThru::SubType::Switch);
         b.push_back(Crsf::PassThru::AppId::Status);
         b.push_back(mBits);
@@ -73,8 +75,6 @@ struct Telemetry {
         b.push_back(mVoltage);
     }
     static inline uint8_t mCounter{};
-    static inline uint8_t mMax{5};
-
     static inline std::array<std::byte, Crsf::maxMessageSize> mMessage{};
     static inline uint8_t mId{0};
     static inline int16_t mTemp{0};

@@ -126,7 +126,8 @@ struct Devices<SSMSW01, Config> {
     using terminalDevice = input::terminalDevice;
     using terminal = input::terminal;
 
-    using components = StandardComponents<clock, systemTimer, portmux, leds, leds2, in0, blinker, adcController, adr0, adr1, serial, terminalDevice>;
+    using components = StandardComponents<clock, systemTimer, portmux, leds, leds2,
+                        in0, blinker, adcController, adr0, adr1, input, serial, terminalDevice>;
 
     static inline void init() {
         tp::dir<Output>();

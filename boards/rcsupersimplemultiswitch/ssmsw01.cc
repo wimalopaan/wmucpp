@@ -321,6 +321,8 @@ namespace Crsf {
                 mStateTicks.on(telemetryTicks, []{
                     telemetry::voltage(adcController::value(adc_i_t{0}));
                     telemetry::temperature(adcController::value(adc_i_t{1}));
+                    const uint8_t s = (in0::isActive() ? 0b0000'0001 : 0b0000'0000);
+                    telemetry::status(s);
                 });
                 break;
             case State::NotConnected:
@@ -369,7 +371,6 @@ namespace Crsf {
                     break;
                 }
             }
-
         }
         private:
         static constexpr External::Tick<systemTimer> debugTicks{500_ms};
