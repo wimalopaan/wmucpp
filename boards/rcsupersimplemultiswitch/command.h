@@ -28,7 +28,6 @@ namespace Crsf {
             if (type != Crsf::Type::Command) {
                 return false;
             }
-            ++mCommandPackagesCounter;
             if ((data[0] == Crsf::Address::Controller) || (data[0] == Crsf::Address::Broadcast)) {
                 if (data[2] == Crsf::CommandType::Switch) {
                     const std::byte command = data[3];
@@ -68,17 +67,6 @@ namespace Crsf {
             }
             return false;
         }
-        template<bool Reset = true>
-        static inline uint16_t commandPackages() {
-            if constexpr(Reset) {
-                const auto c = mCommandPackagesCounter;
-                mCommandPackagesCounter = 0;
-                return c;
-            }
-            else {
-                return mCommandPackagesCounter;
-            }
-        }
         static inline void address(const uint8_t adr) {
             mModuleAddress = (std::byte)adr;
         }
@@ -86,7 +74,6 @@ namespace Crsf {
             return (uint8_t)mModuleAddress;
         }
     private:
-        static inline uint16_t mCommandPackagesCounter{};
         inline static std::byte mModuleAddress{DEFAULT_ADDRESS};
     };
 }

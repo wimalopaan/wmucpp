@@ -81,7 +81,7 @@ namespace Gfsm {
                 });
                 mStateTicks.on(telemetryTicks, []{
                     telemetry::voltage(adc::value(adc_i_t{0}));
-                    telemetry::temperature(adc::value(adc_i_t{1}));
+                    telemetry::temperature(adc::value(adc_i_t{1}) / 10);
                     const uint8_t s = (in0::isActive() ? 0b0000'0001 : 0b0000'0000);
                     telemetry::status(s);
                 });

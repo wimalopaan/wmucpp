@@ -1,15 +1,16 @@
 todo:
 ======
-
+* modify status bits according to address
 * blinkpattern
 ** 1x no serial packages at all
 ** 2x normal (command received)
 ** 3x only linkstat or rc-channels
-
 * scaling of adc
-** temp
+** temp (fix also sample time of adc)
 ** voltage
 
+done:
+=====
 * sending of status bits
 ** passthru frames
 

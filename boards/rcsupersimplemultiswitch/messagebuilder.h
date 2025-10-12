@@ -19,6 +19,7 @@
 #pragma once
 
 #include <array>
+#include "crsf.h"
 #include "crc.h"
 
 template<typename Device>
@@ -26,11 +27,9 @@ struct MessageBuilder {
     using device = Device;
     explicit MessageBuilder(std::array<std::byte, Crsf::maxMessageSize>& buffer,
                             const std::byte type) : mBuffer(buffer) {
-        mBuffer[0] = 0xc8_B;
+        mBuffer[0] = Crsf::Address::StartByte;
         mLength = 3;
-        mBuffer[1] = std::byte(mLength);
         mBuffer[2] = type;
-
     }
     ~MessageBuilder() {
         const uint8_t length = mLength + 1; // incl. CRC
@@ -40,28 +39,25 @@ struct MessageBuilder {
             csum += mBuffer[i + 2];
         }
         mBuffer[length - 1] = csum;
-        for(uint8_t i = 0; i < length; ++i) {
-            if constexpr(!std::is_same_v<device, void>) {
+        if constexpr(!std::is_same_v<device, void>) {
+            for(uint8_t i = 0; i < length; ++i) {
                 device::put(mBuffer[i]);
             }
         }
     }
-    void push_back(const uint8_t d) {
-        mBuffer[mLength++] = std::byte(d);
+    template<typename T>
+    void push_back(const T d) {
+        [&]<auto... II>(std::index_sequence<II...>){
+            (push_back(etl::nth_byte<sizeof(T) - II - 1>(d)), ...);
+        }(std::make_index_sequence<sizeof(T)>{});
     }
     void push_back(const std::byte d) {
-        mBuffer[mLength++] = d;
-    }
-    void push_back(const uint16_t d) {
-        mBuffer[mLength++] = std::byte(d >> 8);
-        mBuffer[mLength++] = std::byte(d);
-    }
-    void push_back(const int16_t d) {
-        mBuffer[mLength++] = std::byte(d >> 8);
-        mBuffer[mLength++] = std::byte(d);
+        if (mLength < mBuffer.size()) {
+            mBuffer[mLength++] = d;
+        }
     }
     private:
-    uint8_t mLength{};
+    uint8_t mLength{0};
     std::array<std::byte, Crsf::maxMessageSize>& mBuffer;
 };
 
