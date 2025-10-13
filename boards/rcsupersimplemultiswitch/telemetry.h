@@ -52,6 +52,9 @@ struct Telemetry {
     static inline void status(const uint8_t b) {
         mBits = b;
     }
+    static inline void address(const uint8_t a) {
+        mAddress = a;
+    }
     private:
     static inline void sendTemperature() {
         etl::outl<debug>("send temp"_pgm);
@@ -66,6 +69,7 @@ struct Telemetry {
         b.push_back(Crsf::Address::Controller);
         b.push_back(Crsf::PassThru::SubType::Switch);
         b.push_back(Crsf::PassThru::AppId::Status);
+        b.push_back(mAddress);
         b.push_back(mBits);
     }
     static inline void sendVoltage() {
@@ -81,5 +85,6 @@ struct Telemetry {
     static inline uint16_t mVoltage{0};
     static inline uint16_t mAppId{6000};
     static inline uint16_t mSubType{0xa0};
+    static inline uint8_t mAddress{0};
     static inline uint8_t mBits{0};
 };

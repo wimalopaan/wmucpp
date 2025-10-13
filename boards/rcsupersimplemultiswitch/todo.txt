@@ -1,6 +1,5 @@
 todo:
 ======
-* modify status bits according to address
 * blinkpattern
 ** 1x no serial packages at all
 ** 2x normal (command received)
@@ -11,6 +10,8 @@ todo:
 
 done:
 =====
+* modity passthru message: include address
+* modify crsf-address according to address-pins
 * sending of status bits
 ** passthru frames
 

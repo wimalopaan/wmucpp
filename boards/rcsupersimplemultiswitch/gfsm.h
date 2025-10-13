@@ -105,6 +105,7 @@ namespace Gfsm {
                     const uint8_t a1 = adr0::isActive();
                     const uint8_t address = DEFAULT_ADDRESS + (2 * a1 + a0) * 2;
                     decoder::address(address);
+                    telemetry::address(address);
                     etl::outl<terminal>("Adr: "_pgm, decoder::address());
                 }
                     break;
