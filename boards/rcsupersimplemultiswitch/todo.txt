@@ -1,3 +1,11 @@
+limitations:
+============
+* does not use the RESPONSE_SLOT algorithm (and no open-drain tx-line),
+therefore only one module should send telemetry data ro the RX.
+If modules are parallelized only one should be connected its tx-line to the receivers-rx line.
+Alternative two modules using telemetry can be connected to different serial connections of
+the receiver, or the CRSF-switch/router has to be used.
+
 todo:
 ======
 * blinkpattern
