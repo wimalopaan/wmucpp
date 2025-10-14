@@ -100,7 +100,6 @@ struct Devices<SW21, Config, MCU> {
     using debug = void;
 #endif
 
-#ifdef HW_MSW11
     using adcDmaChannel = Mcu::Components::DmaChannel<typename dma1::component_t, 3>;
 
     using vin = Mcu::Stm::Pin<gpioa, 5, MCU>; // adc in5
@@ -130,26 +129,20 @@ struct Devices<SW21, Config, MCU> {
         using storage = Devices::storage;
     };
     using telemetry = Telemetry<TelemConfig>;
-#else
-    using adc = void;
-    using telemetry = void;
-#endif
+
     // Led
     using led = Mcu::Stm::Pin<gpioc, 15, MCU>;
     using ledBlinker = External::Blinker<led, systemTimer>;
 
     // Taster
 #ifdef USE_BUTTON
-# ifdef SERIAL_DEBUG
-#  undef USE_BUTTON
-    using btn = void;
-# else
-    using button = Mcu::Stm::Pin<gpioa, 9, MCU>;
+    using button = Mcu::Stm::Pin<gpioa, 11, MCU>;
     using btn = External::Button<button, systemTimer, External::Tick<systemTimer>{300ms}.raw(),
                                  External::Tick<systemTimer>{3000ms}.raw(), void>;
-# endif
+    using in0 = void;
 #else
     using btn = void;
+    using in0 = Mcu::Stm::Pin<gpioa, 11, MCU>;
 #endif
 
 #ifdef USE_TP1
@@ -278,6 +271,9 @@ struct Devices<SW21, Config, MCU> {
 
 #ifdef USE_BUTTON
         btn::init();
+#else
+        in0::template dir<Mcu::Input>();
+        in0::template pullup<true>();
 #endif
 #ifdef USE_TP1
         tp1::template dir<Mcu::Output>();
@@ -301,11 +297,8 @@ struct Devices<SW21, Config, MCU> {
         pwm3::init();
         pwm2::start(); //synchron with pwm3;
 
-#ifdef HW_MSW11
         adc::init();
         adc::oversample(7);
-#endif
-
     }
 };
 

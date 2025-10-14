@@ -191,6 +191,14 @@ namespace RC {
                     inline static constexpr uint8_t src = 4;
                     inline static constexpr uint8_t payload = 5;
                 }
+                namespace PassThru {
+                    namespace SubType {
+                        inline static constexpr std::byte Switch{0xa1};
+                    }
+                    namespace AppId {
+                        inline static constexpr uint16_t Status{6100};
+                    }
+                }
                 namespace ArduPilotTunnel {
                     namespace Schottel {
                         inline static constexpr uint16_t AppId = 6000;

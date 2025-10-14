@@ -4,14 +4,11 @@ bugs:
 hardware:
 ---------
 
-* connector???
-
 todo:
 -----
 * more easily config, e.g. USE_RESPONSE_SLOT for CRSF_TX_OPENDRAIN
 * unify stm32 g031/g051/g071/g0b1 variants
 * make flash work with non-MORSE
-* send inputs as ArduPilot tunnel messages (for e.g. inputs)
 * running light mode: parameter: speed, activate-output, activate-next address, (pwm)
 * running light mode: crsf command messages
 * running light mode: problem: half-duplex-bus arbitration,
@@ -31,6 +28,7 @@ details:
 
 done:
 -----
+* send inputs as ArduPilot tunnel messages (for e.g. inputs)
 * unify crsf units (use ms instead of dezi seconds)
 * increase output current by grouping outputs together (timer-synchronization for pwm)
 * use eeprom-setting for enabling virtuals

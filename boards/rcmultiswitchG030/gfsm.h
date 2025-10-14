@@ -34,6 +34,7 @@ struct GFSM {
     using btn = devs::btn;
     using adc = devs::adc;
     using telemetry = devs::telemetry;
+    using in0 = devs::in0;
 
     using bsws = devs::bsws;
 
@@ -50,6 +51,7 @@ struct GFSM {
     static inline constexpr External::Tick<systemTimer> initTicks{100ms};
     static inline constexpr External::Tick<systemTimer> debugTicks{500ms};
     static inline constexpr External::Tick<systemTimer> baudCheckTicks{1000ms};
+    static inline constexpr External::Tick<systemTimer> telemTicks{100ms};
 
     static inline void update(const bool eepromMode = true) {
         crsfCallback::callbacks(eepromMode);
@@ -133,6 +135,11 @@ struct GFSM {
                     const uint16_t v = adc::values()[1] * (devs::r1 + devs::r2) * devs::Vref_n / (devs::Vref_d * 4096 * devs::r1 / 10); // 100mV
                     telemetry::voltage(v * 100);
                     telemetry::temp(t * 10);
+                    if constexpr(!std::is_same_v<in0, void>) {
+                        const uint8_t s = (!in0::read() ? 0b0000'0001 : 0b0000'0000);
+                        telemetry::status(s);
+                        IO::outl<debug>("# ino: ", s);
+                    }
                     telemetry::next();
                 });
             }

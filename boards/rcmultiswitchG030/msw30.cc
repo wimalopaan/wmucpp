@@ -20,9 +20,9 @@
 // ATTENTION: use Makefile
 // #define HW_MSW10 // MultiSwitch_10 (32K)
 // ATTENTION: use Makefile.G031
-// #define HW_MSW11 // MultiSwitch_11 (64k)
+#define HW_MSW11 // MultiSwitch_11 (64k)
 // #define HW_NUCLEO // STM Nucleo G031K8 (64K) (incl. ST-Link)
-#define HW_WEACT // WeAct G031F8 (64K)
+// #define HW_WEACT // WeAct G031F8 (64K)
 
 // #define USE_TP1 // enable test point
 #define USE_MORSE
@@ -30,7 +30,7 @@
 #define USE_VIRTUALS
 #define USE_PATTERNS
 #define USE_TELEMETRY // switches telemetry default on (instead off)
-// #define USE_BUTTON
+// #define USE_BUTTON // HW_MSW11: if button is unused, the button pin is used as input (status bit)
 // #define SERIAL_DEBUG // use with care (e.g. with USE_MORSE) because of RAM overflow
 // #define CRSF_TX_OPENDRAIN // only HW_NUCLEO / HW_WEACT / HW_MSW11 : make tx pin open-drain to parallelize in two-wire mode
 // #define CRSF_HALFDUPLEX // only NW_NUCLEO / HW_WEACT / HW_MSW11 : make crsf uart one-wire halfduplex (txpin), custom board is allways half-duplex
@@ -65,7 +65,7 @@
 # undef USE_PATTERNS
 #endif
 
-#define SW_VERSION 30
+#define SW_VERSION 31
 
 #include <cstdint>
 #include <array>

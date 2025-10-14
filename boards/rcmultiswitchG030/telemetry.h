@@ -45,7 +45,9 @@ struct Telemetry {
     static inline void temp(const int16_t t) {
         mTemp = t;
     }
-
+    static inline void status(const uint8_t bits) {
+        mStatusBits = bits;
+    }
     static inline void ratePeriodic() {
         const auto oldState = mState;
         ++mStateTick;
@@ -76,14 +78,12 @@ struct Telemetry {
             }
         }
     }
-
     static inline void event(const Event e) {
         mEvent = e;
     }
     static inline void disableWithAutoOn() {
         event(Event::OffWithAutoOn);
     }
-
     static inline void push(const uint8_t type, auto f) {
         if (mState != State::On) return;
         buffer::create_back(type, [&](auto& d){
@@ -101,11 +101,19 @@ struct Telemetry {
             d.push_back(uint8_t(storage::eeprom.cells_id));
             d.push_back(mVoltage);
         });
+        buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::PassThru, [&](auto& d){
+            d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
+            d.push_back(storage::eeprom.crsf_address);
+            d.push_back(RC::Protokoll::Crsf::V4::PassThru::SubType::Switch);
+            d.push_back(RC::Protokoll::Crsf::V4::PassThru::AppId::Status);
+            d.push_back(storage::eeprom.addresses[0]);
+            d.push_back(mStatusBits);
+        });
     }
     private:
     static inline uint16_t mVoltage{};
     static inline int16_t mTemp{};
-    static inline uint8_t mFlags = 0;
+    static inline uint8_t mStatusBits = 0;
     static inline tick_t mStateTick;
     static inline etl::Event<Event> mEvent;
     static inline State mState = State::On;
