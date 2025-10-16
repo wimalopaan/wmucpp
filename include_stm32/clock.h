@@ -103,7 +103,10 @@ namespace Mcu::Stm {
             
             RCC->CR |= RCC_CR_HSION;
             while (!(RCC->CR & RCC_CR_HSIRDY));
-            
+
+            RCC->CR &= ~RCC_CR_PLLON;
+            while (RCC->CR & RCC_CR_PLLRDY);
+
             RCC->PLLCFGR = (Config::pllM << RCC_PLLCFGR_PLLM_Pos) 
                             | (Config::pllR << RCC_PLLCFGR_PLLR_Pos)
                             | (Config::pllN << RCC_PLLCFGR_PLLN_Pos)
@@ -121,6 +124,10 @@ namespace Mcu::Stm {
             MODIFY_REG(RCC->CFGR, RCC_CFGR_HPRE_Msk, RCC_CFGR_HPRE_DIV1);            
             MODIFY_REG(RCC->CFGR, RCC_CFGR_PPRE1_Msk, RCC_CFGR_PPRE1_DIV1);            
             MODIFY_REG(RCC->CFGR, RCC_CFGR_PPRE2_Msk, RCC_CFGR_PPRE2_DIV1);            
+
+            // mco
+            // MODIFY_REG(RCC->CFGR, RCC_CFGR_MCOPRE_Msk, 0b100 << RCC_CFGR_MCOPRE_Pos); // div 16
+            // MODIFY_REG(RCC->CFGR, RCC_CFGR_MCOSEL_Msk, 0b0001 << RCC_CFGR_MCOSEL_Pos); // sysclk
         }
 #endif
     };

@@ -72,7 +72,45 @@ namespace Mcu::Stm {
 
     #ifdef STM32G4
                 static inline void init() {
+                    IO::outl<debug>("# DmaCh Init: ", N, " C: ", contr_comp_t::number_t::value);
                     RCC->AHB1ENR |= RCC_AHB1ENR_DMAMUX1EN;
+                    mcuDmaChannel->CCR = []{
+                        uint32_t ccr = 0;
+                        if constexpr(sizeof(value_t) == 1) {
+                            ccr |= (0b00 << DMA_CCR_MSIZE_Pos);
+                            ccr |= (0b00 << DMA_CCR_PSIZE_Pos);
+                        }
+                        else if constexpr(sizeof(value_t) == 2) {
+                            ccr |= (0b01 << DMA_CCR_MSIZE_Pos);
+                            ccr |= (0b01 << DMA_CCR_PSIZE_Pos);
+                        }
+                        else if constexpr(sizeof(value_t) == 4) {
+                            ccr |= (0b10 << DMA_CCR_MSIZE_Pos);
+                            ccr |= (0b10 << DMA_CCR_PSIZE_Pos);
+                        }
+                        else {
+                            static_assert(false);
+                        }
+                        if constexpr(requires(Config){Config::memoryIncrement;}) {
+                            if constexpr(Config::memoryIncrement) {
+                                ccr |= DMA_CCR_MINC;
+                            }
+                        }
+                        if constexpr(requires(Config){Config::circular;}) {
+                            if constexpr(Config::circular) {
+                                ccr |= DMA_CCR_CIRC;
+                            }
+                        }
+                        if constexpr(requires(Config){typename Config::Isr;}) {
+                            using Isr = Config::Isr;
+                            if constexpr(requires(Isr){Isr::txComplete;}) {
+                                if constexpr(Isr::txComplete) {
+                                    ccr |= DMA_CCR_TCIE;
+                                }
+                            }
+                        }
+                        return ccr;
+                    }();
                 }
     #endif
     #ifdef STM32G0
@@ -163,7 +201,6 @@ namespace Mcu::Stm {
                         return ccr;
                     }();
                 }
-
                 static inline void enable(const bool on = true) {
                     if (on) {
                         mcuDmaChannel->CCR |= DMA_CCR_EN;
@@ -197,7 +234,5 @@ namespace Mcu::Stm {
                 }
             };
         }
-
-
     }
 }

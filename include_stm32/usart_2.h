@@ -89,6 +89,7 @@ namespace Mcu::Stm {
             }();
             // using std::integral_constant<uint16_t, numberOfBits>::_;
 
+#ifdef STM32G0
             static inline void init() {
                 IO::outl<debug>("# Uart 0 (Soft): ", N, ", ", exti_n, ", ", exti_s, ", ", map);
                 Mcu::Stm::Timers::powerUp<Config::timerN>();
@@ -109,6 +110,7 @@ namespace Mcu::Stm {
                 mByteCount2 = 0;
                 mState = State::Idle;
             }
+#endif
             static inline void reset() {
                 Mcu::Stm::Timers::reset<Config::timerN>();
                 // reset EXTI
@@ -163,6 +165,7 @@ namespace Mcu::Stm {
                 }
             }
             struct Isr {
+#ifdef STM32G0
                 static inline void edge() {
                     mState = State::Receiving;
                     EXTI->RPR1 = (0x01 << N);
@@ -175,6 +178,7 @@ namespace Mcu::Stm {
                     mcuTimer->CR1 |= TIM_CR1_CEN;
                     EXTI->IMR1 &= ~(0x01 << N);
                 }
+#endif
                 static inline void period() {
                     if constexpr(!std::is_same_v<tp, void>) {
                         tp::set();
@@ -280,6 +284,7 @@ namespace Mcu::Stm {
                     dmaChRW::reset();
                 }
                 const auto rcc = Mcu::Stm::Address<Mcu::Components::Rcc>::value;
+#ifdef STM32G0
                 if constexpr(N == 1) {
                     rcc->APBRSTR2 |= RCC_APBRSTR2_USART1RST;
                     rcc->APBRSTR2 &= ~RCC_APBRSTR2_USART1RST;
@@ -288,7 +293,16 @@ namespace Mcu::Stm {
                     rcc->APBRSTR1 |= RCC_APBRSTR1_USART2RST;
                     rcc->APBRSTR1 &= ~RCC_APBRSTR1_USART2RST;
                 }
-#ifdef STM32G0B1xx
+#elif defined(STM32G4)
+                if constexpr(N == 1) {
+                    rcc->APB2RSTR |= RCC_APB2RSTR_USART1RST;
+                    rcc->APB2RSTR &= ~RCC_APB2RSTR_USART1RST;
+                }
+                else if constexpr(N == 2) {
+                    rcc->APB1RSTR1 |= RCC_APB1RSTR1_USART2RST;
+                    rcc->APB1RSTR1 &= ~RCC_APB1RSTR1_USART2RST;
+                }
+#elif defined(STM32G0B1xx)
                 else if constexpr(N == 3) {
                     rcc->APBRSTR1 |= RCC_APBRSTR1_USART3RST;
                     rcc->APBRSTR1 &= ~RCC_APBRSTR1_USART3RST;
@@ -319,14 +333,23 @@ namespace Mcu::Stm {
                 }
 
             }
-#ifdef STM32G0
             static inline void init() {
                 if constexpr (N == 1) {
+#ifdef STM32G0
                     RCC->APBENR2 |= RCC_APBENR2_USART1EN;
                     RCC->CCIPR |= 0x01 << RCC_CCIPR_USART1SEL_Pos;
+#elif defined(STM32G4)
+                    RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
+                    RCC->CCIPR |= 0x01 << RCC_CCIPR_USART1SEL_Pos;
+#endif
                 }
                 else if constexpr (N == 2) {
+#ifdef STM32G0
                     RCC->APBENR1 |= RCC_APBENR1_USART2EN;
+#elif defined(STM32G4)
+                    RCC->APB1ENR1 |= RCC_APB1ENR1_USART2EN;
+                    RCC->CCIPR |= 0x01 << RCC_CCIPR_USART2SEL_Pos;
+#endif
 #ifdef STM32G0B1xx
                     RCC->CCIPR |= 0x01 << RCC_CCIPR_USART2SEL_Pos;
 #endif
@@ -413,6 +436,12 @@ namespace Mcu::Stm {
                         if constexpr (N == 1) {
                             cr1 |= USART_CR1_FIFOEN;
                         }
+        #ifdef STM32G4
+                        if constexpr (N == 2) {
+                            cr1 |= USART_CR1_FIFOEN;
+                        }
+        #endif
+
 #ifdef STM32G0B1xx
                         else if constexpr((N == 2) || (N == 3)) {
                             cr1 |= USART_CR1_FIFOEN;
@@ -430,7 +459,6 @@ namespace Mcu::Stm {
                 mcuUart->ICR = -1;
                 mcuUart->CR1 |= USART_CR1_UE;
             }
-#endif
             static inline void onParityError(const auto f) requires(Config::mode != Uarts::Mode::TxOnly) {
                 if (mcuUart->ISR & USART_ISR_PE) {
                     mcuUart->ICR = USART_ICR_PECF;

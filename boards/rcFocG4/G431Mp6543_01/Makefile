@@ -11,6 +11,8 @@ CPPFLAGS += -I../../../../STM32CubeG4/Drivers/CMSIS/Device/ST/STM32G4xx/Include
 CPPFLAGS += -I../../../../STM32CubeG4/Drivers/STM32G4xx_HAL_Driver/Inc
 CPPFLAGS += -DSTM32G431xx
 
+OPTFLAGS = -Os
+
 LDSCRIPT = link_g431.ld
 LOADLIBES += startup_g431.o system_g4.o
 
