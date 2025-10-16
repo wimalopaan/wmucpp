@@ -93,6 +93,7 @@ struct Telemetry {
     static inline void next() {
         if (mState != State::On) return;
         using namespace RC::Protokoll::Crsf::V4;
+#ifdef HW_MSW11
         buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::Temp, [&](auto& d){
             d.push_back(uint8_t(storage::eeprom.temp_id));
             d.push_back(mTemp);
@@ -101,6 +102,7 @@ struct Telemetry {
             d.push_back(uint8_t(storage::eeprom.cells_id));
             d.push_back(mVoltage);
         });
+#endif
         buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::PassThru, [&](auto& d){
             d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
             d.push_back(storage::eeprom.crsf_address);

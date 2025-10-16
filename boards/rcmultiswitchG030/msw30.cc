@@ -18,11 +18,11 @@
 
 // select one of the following hardware definitions
 // ATTENTION: use Makefile
-// #define HW_MSW10 // MultiSwitch_10 (32K)
+//#define HW_MSW10 // MultiSwitch_10 (32K)
 // ATTENTION: use Makefile.G031
-#define HW_MSW11 // MultiSwitch_11 (64k)
-// #define HW_NUCLEO // STM Nucleo G031K8 (64K) (incl. ST-Link)
-// #define HW_WEACT // WeAct G031F8 (64K)
+// #define HW_MSW11 // MultiSwitch_11 (64k)
+//#define HW_NUCLEO // STM Nucleo G031K8 (64K) (incl. ST-Link)
+#define HW_WEACT // WeAct G031F8 (64K)
 
 // #define USE_TP1 // enable test point
 #define USE_MORSE

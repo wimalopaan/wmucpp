@@ -35,6 +35,7 @@ struct GFSM {
     using adc = devs::adc;
     using telemetry = devs::telemetry;
     using in0 = devs::in0;
+    using in1 = devs::in1;
 
     using bsws = devs::bsws;
 
@@ -129,17 +130,27 @@ struct GFSM {
             });
             break;
         case State::RunWithTelemetry:
-            if constexpr(!std::is_same_v<adc, void> && !std::is_same_v<telemetry, void>) {
+            if constexpr(!std::is_same_v<telemetry, void>) {
                 mStateTick.on(debugTicks, []{
-                    const int16_t t = Mcu::Stm::V4::adc2Temp((adc::values()[0] * devs::Vref_n) / devs::Vcal_n);
-                    const uint16_t v = adc::values()[1] * (devs::r1 + devs::r2) * devs::Vref_n / (devs::Vref_d * 4096 * devs::r1 / 10); // 100mV
-                    telemetry::voltage(v * 100);
-                    telemetry::temp(t * 10);
-                    if constexpr(!std::is_same_v<in0, void>) {
-                        const uint8_t s = (!in0::read() ? 0b0000'0001 : 0b0000'0000);
-                        telemetry::status(s);
-                        IO::outl<debug>("# ino: ", s);
+                    if constexpr(!std::is_same_v<adc, void>) {
+                        const int16_t t = Mcu::Stm::V4::adc2Temp((adc::values()[0] * devs::Vref_n) / devs::Vcal_n);
+                        const uint16_t v = adc::values()[1] * (devs::r1 + devs::r2) * devs::Vref_n / (devs::Vref_d * 4096 * devs::r1 / 10); // 100mV
+                        telemetry::voltage(v * 100);
+                        telemetry::temp(t * 10);
                     }
+                    uint8_t s = 0;
+                    if constexpr(!std::is_same_v<in0, void>) {
+                        if (!in0::read()) {
+                            s |= 0b0000'0001;
+                        }
+                    }
+                    if constexpr(!std::is_same_v<in1, void>) {
+                        if (!in1::read()) {
+                            s |= 0b0000'0010;
+                        }
+                    }
+                    IO::outl<debug>("# status: ", s);
+                    telemetry::status(s);
                     telemetry::next();
                 });
             }

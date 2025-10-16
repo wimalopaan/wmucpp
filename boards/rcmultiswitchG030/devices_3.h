@@ -140,9 +140,11 @@ struct Devices<SW21, Config, MCU> {
     using btn = External::Button<button, systemTimer, External::Tick<systemTimer>{300ms}.raw(),
                                  External::Tick<systemTimer>{3000ms}.raw(), void>;
     using in0 = void;
+    using in1 = void;
 #else
     using btn = void;
     using in0 = Mcu::Stm::Pin<gpioa, 11, MCU>;
+    using in1 = void;
 #endif
 
 #ifdef USE_TP1
@@ -353,6 +355,8 @@ struct Devices<SW20, Config, MCU> {
 #else
     using btn = void;
 #endif
+    using in0 = void;
+    using in1 = void;
 #ifdef USE_TP1
     using tp1 = Mcu::Stm::Pin<gpioa, 3, MCU>;
 #else
@@ -551,6 +555,8 @@ struct Devices<Nucleo, Config, MCU> {
 #else
     using btn = void;
 #endif
+    using in0 = void;
+    using in1 = void;
 #ifdef USE_TP1
     using tp1 = Mcu::Stm::Pin<gpiob, 4, MCU>;
 #else
@@ -725,6 +731,7 @@ struct Devices<WeAct, Config, MCU> {
     using csrfInDmaChannelComponent2 = Mcu::Components::DmaChannel<typename dma1::component_t, 2>;
     struct CrsfConfig;
     using crsf = RC::Protokoll::Crsf::V4::Master<1, CrsfConfig, MCU>;
+    using crsfBuffer = crsf::messageBuffer;
 
 #ifdef SERIAL_DEBUG
     using debugtx = Mcu::Stm::Pin<gpioa, 14, MCU>;
@@ -742,7 +749,14 @@ struct Devices<WeAct, Config, MCU> {
 
     using adc = void;
 
-    using telemetry = void;
+    struct TelemConfig {
+        using debug = Devices::debug;
+        using timer = systemTimer;
+        using clock = Devices::clock;
+        using messagebuffer = crsfBuffer;
+        using storage = Devices::storage;
+    };
+    using telemetry = Telemetry<TelemConfig>;
 
     // Led
     using led = Mcu::Stm::Pin<gpioa, 4, MCU>;
@@ -760,9 +774,12 @@ struct Devices<WeAct, Config, MCU> {
 # endif
 #else
     using btn = void;
+    using in0 = Mcu::Stm::Pin<gpioa, 5, MCU>;
+    using in1 = Mcu::Stm::Pin<gpiob, 7, MCU>;
 #endif
 #ifdef USE_TP1
-    using tp1 = Mcu::Stm::Pin<gpiob, 7, MCU>;
+    // using tp1 = Mcu::Stm::Pin<gpiob, 7, MCU>;
+    using tp1 = void;
 #else
     using tp1 = void;
 #endif
@@ -897,6 +914,11 @@ struct Devices<WeAct, Config, MCU> {
 
 #ifdef USE_BUTTON
         btn::init();
+#else
+        in0::template dir<Mcu::Input>();
+        in0::template pullup<true>();
+        in1::template dir<Mcu::Input>();
+        in1::template pullup<true>();
 #endif
 #ifdef USE_TP1
         tp1::template dir<Mcu::Output>();
