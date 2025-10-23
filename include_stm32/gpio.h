@@ -175,5 +175,17 @@ namespace Mcu::Stm {
                 Pin::set();
             }
         };
+		template<typename Pin>
+		struct ActiveHigh {
+			static inline void init() {
+				Pin::template dir<Mcu::Output>();
+			}
+			static inline void set() {
+                Pin::set();
+            }
+            static inline void reset() {
+                Pin::reset();
+            }
+		};
     }
 }

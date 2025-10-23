@@ -18,7 +18,9 @@ LOADLIBES += startup_g431.o system_g4.o
 
 targets += startup_g431.o
 targets += system_g4.o
-
 targets += foc01.elf foc01.bin
+
+flash: foc01.bin
+	st-flash --reset --connect-under-reset write foc01.bin 0x8000000 
 
 -include ../../../Makefile.arm.include

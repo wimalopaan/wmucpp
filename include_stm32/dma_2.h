@@ -165,6 +165,15 @@ namespace Mcu::Stm {
                 static inline volatile value_t* memoryAddress() {
                     return (volatile value_t*)mcuDmaChannel->CMAR;
                 }
+				template<bool On = true>
+				static inline void circular() {
+					if constexpr(On) {
+						mcuDmaChannel->CCR |= DMA_CCR_CIRC;
+					}
+					else {
+						mcuDmaChannel->CCR &= ~DMA_CCR_CIRC;
+					}
+				}
                 static inline uint32_t counter() {
                     return mcuDmaChannel->CNDTR;
                 }

@@ -446,6 +446,9 @@ namespace External {
 
         enum class Event : uint8_t {None, Off, Steady, Slow, Medium, Fast};
 
+		static inline void init() {
+			Pin::template dir<Mcu::Output>();
+		}
         static inline void event(const Event e) {
             IO::outl<Debug>("B E: ", (uint8_t)e);
             mEvent = e;
@@ -467,7 +470,6 @@ namespace External {
             }
         }
         static inline void periodic() {}
-
         static inline void ratePeriodic() {
             const Event e = std::exchange(mEvent, Event::None);
             const auto oldState = mState;

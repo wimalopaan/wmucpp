@@ -38,12 +38,18 @@
 #include "concepts.h"
 #include "clock.h"
 #include "gpio.h"
+#include "dac.h"
+#include "adc.h"
+#include "opamp.h"
 #include "tick.h"
 #include "meta.h"
 #include "rc/rc_2.h"
 #include "rc/crsf_2.h"
+#include "stdapp/stdcomp.h"
 #include "blinker.h"
 #include "debug_2.h"
+#include "ams5048.h"
+#include "focservo.h"
 
 #include "crsf_cb.h"
 
@@ -56,14 +62,11 @@ struct Devices;
 
 template<typename Config, typename MCU>
 struct Devices<Foc01, Config, MCU> {
-    using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<170_MHz, 2'000_Hz, Mcu::Stm::HSI>, MCU>;
+    using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<170_MHz, 8'000_Hz, Mcu::Stm::HSI>, MCU>;
     using systemTimer = Mcu::Stm::SystemTimer<clock, Mcu::UseInterrupts<false>, MCU>;
 
-#ifdef USE_GNUPLOT
-    using trace = Arm::Trace<clock, 10_MHz, 4096>;
-#else
+    //debug?
     using trace = Arm::V3::Trace<clock, 10_MHz, 1024>;
-#endif
 
     using gpioa = Mcu::Stm::GPIO<Mcu::Stm::A, MCU>;
     using gpiob = Mcu::Stm::GPIO<Mcu::Stm::B, MCU>;
@@ -75,7 +78,9 @@ struct Devices<Foc01, Config, MCU> {
     using dma1 = Mcu::Stm::Dma::Controller<1, MCU>;
     using csrfInDmaChannelComponent1 = Mcu::Components::DmaChannel<typename dma1::component_t, 1>;
     using spiDmaChannelComponent1 = Mcu::Components::DmaChannel<typename dma1::component_t, 2>;
-    // using spiDmaChannelComponent2 = Mcu::Components::DmaChannel<typename dma1::component_t, 3>;
+    using spiDmaChannelComponent2 = Mcu::Components::DmaChannel<typename dma1::component_t, 3>;
+	using adc1DmaChannel = Mcu::Stm::Dma::Channel<dma1, 4, MCU>;
+	using adc2DmaChannel = Mcu::Stm::Dma::Channel<dma1, 5, MCU>;
 
     // CRSF TX
     using crsftx = Mcu::Stm::Pin<gpioa, 9, MCU>;
@@ -100,28 +105,61 @@ struct Devices<Foc01, Config, MCU> {
 #endif
 
     // Led
-    using led = Mcu::Stm::Pin<gpioa, 6, MCU>;
-    using ledBlinker = External::Blinker<led, systemTimer>;
+    using ledPin = Mcu::Stm::Pin<gpioa, 6, MCU>;
+    using led = External::Blinker<ledPin, systemTimer>;
 
-    using tp = Mcu::Stm::Pin<gpioa, 4, MCU>;
+    // Testpin
+    using tp = Mcu::Stm::Gpio::ActiveHigh<Mcu::Stm::Pin<gpioa, 8, MCU>>;
 
     // using mco = Mcu::Stm::Pin<gpioa, 8, MCU>;
 
+	struct PwmConfig;
+	using pwm = Mcu::Stm::V3::Pwm::ThreePhases<4, PwmConfig>;
+	using pwm1 = Mcu::Stm::Pin<gpiob, 6, MCU>;
+	using pwm2 = Mcu::Stm::Pin<gpiob, 7, MCU>;
+	using pwm3 = Mcu::Stm::Pin<gpiob, 8, MCU>;
+	
     // SPI 2:
-
     using spi_cs = Mcu::Stm::Pin<gpiof, 0, MCU>; // Tauschen mit ENA (PF0 -> PA12)
     using spi_miso = Mcu::Stm::Pin<gpioa, 10, MCU>;
     using spi_mosi = Mcu::Stm::Pin<gpioa, 11, MCU>;
     using spi_clk = Mcu::Stm::Pin<gpiof, 1, MCU>;
 
     using mps_fault = Mcu::Stm::Pin<gpioa, 5, MCU>;
-    using mps_enable = Mcu::Stm::Pin<gpioa, 12, MCU>;
+    using mps_enable = Mcu::Stm::Pin<gpioa, 7, MCU>;
     using mps_sleep = Mcu::Stm::Pin<gpiob, 4, MCU>;
+
+	struct AmsConfig;
+	using ams5048 = External::AMS5048<2, AmsConfig>;
+
+	struct ServoConfig;
+	using servo = FocServo<ServoConfig>;
+	
+	using dac = Mcu::Stm::V3::Dac<1, MCU>;
+	
+    using adc1DmaStorage = std::array<volatile uint16_t, 4>;
+	using adc2DmaStorage = std::array<volatile uint16_t, 4>;
+    using adc1 = Mcu::Stm::V3::Adc<1, Meta::NList<13>, pwm, adc1DmaChannel, adc1DmaStorage, Meta::List<Mcu::Stm::EndOfSequence>, MCU>; // opamp1
+	using adc2 = Mcu::Stm::V3::Adc<2, Meta::NList<16, 18>, pwm, adc2DmaChannel, adc2DmaStorage, Meta::List<Mcu::Stm::EndOfSequence>, MCU>; // opamp1
+
+	using soa = Mcu::Stm::Pin<gpioa, 0, MCU>;
+	using soa2 = Mcu::Stm::Pin<gpiob, 0, MCU>;
+	using sob = Mcu::Stm::Pin<gpioa, 1, MCU>;
+	using soc = Mcu::Stm::Pin<gpioa, 2, MCU>;
+	// using isense = Mcu::Stm::Pin<gpioa, 3, MCU>;
+	using soc2 = Mcu::Stm::Pin<gpioa, 3, MCU>;
+	
+	using follow1 = Mcu::Stm::V2::Follower<1, 1, MCU>;
+	using follow2 = Mcu::Stm::V2::Follower<2, 2, MCU>;
+	using follow3 = Mcu::Stm::V2::Follower<3, 2, MCU>;
+	
+    using components = StandardComponents<trace, debug, crsf, led, ams5048, servo>;
 
     struct CrsfCallbackConfig {
         using timer = systemTimer;
         using crsf = Devices::crsf;
         using storage = Devices::storage;
+		using servo = Devices::servo;
     };
     struct CrsfConfig {
         using txpin = crsftx;
@@ -129,32 +167,85 @@ struct Devices<Foc01, Config, MCU> {
         using systemTimer = Devices::systemTimer;
         using clock = Devices::clock;
         using dmaChRW  = csrfInDmaChannelComponent1;
-        // using debug = void;
-        using debug = Devices::debug;
-        using tp = tp;
-        using callback = CrsfCallback<CrsfCallbackConfig, debug>;
-        // using callback = CrsfCallback<CrsfCallbackConfig, void>;
+        using debug = void;
+        using tp = void;
+        using callback = CrsfCallback<CrsfCallbackConfig, Devices::debug>;
         static inline constexpr uint8_t fifoSize = 8;
     };
+	struct PwmConfig {
+		using debug = Devices::debug;
+		using clock = Devices::clock;
+		using systemTimer = Devices::systemTimer;
+		using pin1 = pwm1;
+		using pin2 = pwm2;
+		using pin3 = pwm3;
+	};
+	struct AmsConfig {
+        using systemTimer = Devices::systemTimer;
+        using debug = void;
+        // using debug = Devices::debug;
+		using tp = void;
+        using cs = spi_cs;
+        using miso = spi_miso;
+        using mosi = spi_mosi;
+        using clk = spi_clk;
+        using txDmaComponent = spiDmaChannelComponent1;
+        using rxDmaComponent = spiDmaChannelComponent2;
+    };
+	struct AdcAdapter {
+		template<uint8_t Ch>
+		static inline uint16_t value() {
+			if constexpr(Ch == 0) {
+				return adc1::values()[0] - 2048;
+			}
+			else if constexpr (Ch == 1) {
+				return adc2::values()[0] - 2048;
+			}
+			else if constexpr (Ch == 2) {
+				return adc2::values()[1] - 2048;
+			}
+			else {
+				static_assert(false);
+			}
+		}
+	};
+	struct ServoConfig {
+		using debug = Devices::debug;
+		using timer = systemTimer;
+		using pwm = Devices::pwm;
+		using sensor = Devices::ams5048;
+		using input = Devices::crsf::input;
+		using adc = AdcAdapter;
+	};
+	
     static inline void init() {
-        clock::init();
-        systemTimer::init();
+		StandardComponents<clock, systemTimer, gpioa, gpiob, gpioc, gpiof, 
+				adc1, adc2, dma1, pwm, dac, follow1, follow2, follow3, tp>::init();
+		components::init();
+		
+		led::event(led::Event::Steady);
 
-        gpioa::init();
-        gpiob::init();
-        gpioc::init();
-        gpiof::init();
-
-        dma1::init();
-
-        led::template dir<Mcu::Output>();
-        ledBlinker::event(ledBlinker::Event::Steady);
-
-        tp::template dir<Mcu::Output>();
-
-        // mco::afunction(0);
-
-        crsf::init();
+		mps_sleep::template dir<Mcu::Output>();
+		mps_sleep::set();
+		mps_enable::template dir<Mcu::Output>();
+		mps_enable::set();
+		
+		dac::set(2048);
+		
+		soa::analog();
+		soa2::analog();
+		sob::analog();
+		soc::analog();
+		soc2::analog();
+		// isense::analog();
+		adc1::start();
+		adc2::start();
+    }
+    static inline void periodic() {
+        components::periodic();
+    }
+    static inline void ratePeriodic() {
+        components::ratePeriodic();
     }
 };
 

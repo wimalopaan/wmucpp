@@ -11,6 +11,30 @@
 namespace Mcu::Stm {
     using namespace Units::literals;
 
+	namespace V2 {
+		template<uint8_t N, uint8_t INP, typename MCU = DefaultMcu>
+		struct Follower {
+			static inline /*constexpr */ OPAMP_TypeDef* const mcuOpamp = reinterpret_cast<OPAMP_TypeDef*>(Mcu::Stm::Address<Follower<N, INP, MCU>>::value);
+			static inline void init() {
+				mcuOpamp->CSR |= (OPAMP_CSR_VMSEL_1 | OPAMP_CSR_VMSEL_0); // Follower
+				if constexpr(INP == 1) {
+					mcuOpamp->CSR |= (0b01 << OPAMP_CSR_VPSEL_Pos); 
+				}
+				else if constexpr(INP == 2) {
+					mcuOpamp->CSR |= (0b10 << OPAMP_CSR_VPSEL_Pos); 					
+				}
+				else {
+					static_assert(false);
+				}
+				// mcuOpamp->CSR |= (OPAMP_CSR_VPSEL_1 | OPAMP_CSR_VPSEL_0); 
+				// mcuOpamp->CSR |= OPAMP_CSR_FORCEVP; // test
+				mcuOpamp->CSR |= OPAMP_CSR_OPAMPINTEN;
+				mcuOpamp->CSR |= OPAMP_CSR_OPAMPxEN;
+			}        
+		};    
+		
+	}
+	
     template<uint8_t N, typename MCU = void>
     struct Follower {
         static inline /*constexpr */ OPAMP_TypeDef* const mcuOpamp = reinterpret_cast<OPAMP_TypeDef*>(Mcu::Stm::Address<Follower<N, MCU>>::value);
@@ -72,6 +96,18 @@ namespace Mcu::Stm {
     };
     template<G4xx MCU>
     struct Address<Follower<3, MCU>> {
+        static inline constexpr uintptr_t value = OPAMP3_BASE;        
+    };
+	template<uint8_t INP, G4xx MCU>
+    struct Address<V2::Follower<1, INP, MCU>> {
+        static inline constexpr uintptr_t value = OPAMP1_BASE;        
+    };
+	template<uint8_t INP, G4xx MCU>
+    struct Address<V2::Follower<2, INP, MCU>> {
+        static inline constexpr uintptr_t value = OPAMP2_BASE;        
+    };
+	template<uint8_t INP, G4xx MCU>
+    struct Address<V2::Follower<3, INP, MCU>> {
         static inline constexpr uintptr_t value = OPAMP3_BASE;        
     };
 }

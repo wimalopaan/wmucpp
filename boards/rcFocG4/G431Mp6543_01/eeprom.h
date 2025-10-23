@@ -22,6 +22,22 @@
 
 struct EEProm {
     uint32_t magic = EEPROM_MAGIC;
+	
+	uint8_t crsf_address = 0xc8;
+	uint8_t switch_address = 0;
+	uint8_t response_slot = 0;
+	
+	uint8_t mode = 0;
+	
+	struct ServoParams {
+		uint8_t max_throw = 100;
+		uint8_t max_speed = 100;
+		uint8_t max_force = 100;
+		uint8_t auto_stop = 0;
+	};
+
+	std::array<ServoParams, 4> mode_params{};
+	
 };
 static_assert(sizeof(EEProm) < 2048);
 

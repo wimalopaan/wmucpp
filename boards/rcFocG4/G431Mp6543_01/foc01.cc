@@ -27,47 +27,57 @@
 #include "storage.h"
 #include "gfsm.h"
 
+#include "stdapp/scheduler.h"
+
 struct DevsConfig;
-using devs = Devices<Foc01, DevsConfig, Mcu::Stm::Stm32G431>;
+using devs = Devices<Foc01, DevsConfig>;
 using gfsm = GFSM<devs>;
+
+struct AppConfig;
+using app = Scheduler<AppConfig>;
 
 struct DevsConfig {
     using storage = Storage;
 };
+struct AppConfig {
+    using fsm = gfsm;
+    using timer = devs::systemTimer;
+};
 
 int main() {
     Storage::init();
-    gfsm::init();
-    gfsm::update(true);
-
-    NVIC_EnableIRQ(USART1_IRQn);
-    // NVIC_EnableIRQ(SPI1_IRQn);
-    // NVIC_EnableIRQ(DMA1_Channel2_3_IRQn);
-    __enable_irq();
-
-    while(true) {
-        gfsm::periodic();
-        devs::systemTimer::periodic([]{
-            gfsm::ratePeriodic();
-        });
-    }
+    app::main([]{
+		gfsm::update(true);
+        NVIC_EnableIRQ(USART1_IRQn);
+		NVIC_EnableIRQ(ADC1_2_IRQn);
+    });
 }
 
 extern "C" {
 
+void ADC1_2_IRQHandler() {
+	using adc1 = devs::adc1;
+	adc1::whenSequenceComplete([]{
+		devs::tp::set();
+		devs::tp::reset();
+	});
+	using adc2 = devs::adc2;
+	adc2::whenSequenceComplete([]{
+		devs::tp::set();
+		devs::tp::reset();
+	});
+}
 void USART1_IRQHandler(){
     using crsf = devs::crsf;
     static_assert(crsf::number == 1);
     crsf::Isr::onTransferComplete([]{});
     crsf::Isr::onIdle([]{});
 }
-void DMA1_Channel2_3_IRQHandler() {
-}
 void HardFault_Handler() {
     while(true) {
-#ifdef USE_TP1
-        devs::tp1::set();
-        devs::tp1::reset();
+#ifdef USE_TP
+        devs::tp::set();
+        devs::tp::reset();
 #endif
     }
 }

@@ -31,10 +31,12 @@ struct CrsfCallback {
     using messageBuffer = crsf::messageBuffer;
     using storage = Config::storage;
 
+	using servo = Config::servo;
+	
     static inline constexpr auto& eeprom = storage::eeprom;
     static inline constexpr auto& eeprom_flash = storage::eeprom_flash;
 
-    static inline constexpr const char* const title = "Led4x4-E@";
+    static inline constexpr const char* const title = "ServoFOC@";
 
     using name_t = std::array<char, 32>;
 
@@ -42,10 +44,12 @@ struct CrsfCallback {
 
     static inline State mStreamState{State::Undefined};
 
-    static inline constexpr void ratePeriodic() {
-    }
-    static inline constexpr void updateName(name_t& n) {
+	static inline constexpr void updateName(name_t& n) {
         strncpy(&n[0], title, n.size());
+        auto r = std::to_chars(std::begin(n) + strlen(title), std::end(n), storage::eeprom.switch_address);
+        *r.ptr++ = ':';
+        r = std::to_chars(r.ptr, std::end(n), storage::eeprom.crsf_address);
+        *r.ptr++ = '\0';
     }
     static inline void update() {
         updateName(mName);
@@ -97,8 +101,6 @@ struct CrsfCallback {
     static inline uint8_t protocolVersion() {
         return 0;
     }
-    static inline void command(const auto /*payload*/, const uint8_t ) {
-    }
     static inline void serialize(const uint8_t index, auto& buffer, const RC::Protokoll::Crsf::V4::Lua::CmdStep step = RC::Protokoll::Crsf::V4::Lua::CmdStep::Idle) {
         params[index].serialize(buffer, params, step, index);
     }
@@ -142,14 +144,41 @@ private:
         update();
         return true;
     }
-    using params_t = etl::FixedVector<Param_t, 10>;
+    using params_t = etl::FixedVector<Param_t, 50>;
 
     static inline params_t params = [] {
         params_t p;
         addNode(p, Param_t{0, PType::Folder, ""}); // unvisible top folder
         addNode(p, Param_t{0, PType::Info, "Ver (HW/SW)", &mVersionString[0]});
-        auto parent = addParent(p, Param_t{0, PType::Folder, "Global"});
+        auto parent = addParent(p, Param_t{0, PType::Folder, "Crsf"});
+		addNode(p, Param_t{parent, PType::U8, "Address", nullptr, &eeprom.switch_address, 0, 255, [](const uint8_t){update(); return true;}});
+		addNode(p, Param_t{parent, PType::U8, "CRSF Addr", nullptr, &storage::eeprom.crsf_address, 0xc0, 0xcf, [](const uint8_t v){
+                               if (!mEepromMode) {
+                                   const uint8_t slot = 2 * (v - 0xc0);
+                                   storage::eeprom.response_slot = slot;
+                                   crsf::output::telemetrySlot(slot);
+                               }
+                               crsf::address(std::byte{v});
+                               return true;
+                           }});
+		addNode(p, Param_t{.parent = parent, .type = PType::Sel, .name = "Mode", .options = "Servo;Winch;Crane;Custom", .value_ptr = &eeprom.mode, .min = 0, .max = 3, .cb = [](const uint8_t v){servo::preset(v); return true;}});
 
+		parent = addParent(p, Param_t{0, PType::Folder, "Servo"});
+		addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "Angle", .value_ptr = &eeprom.mode_params[0].max_throw, .min = 1, .max = 250, .cb = [](const uint8_t v){servo::maxThrow(v); return true;}, .def = 100});
+		addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "Speed", .value_ptr = &eeprom.mode_params[0].max_speed, .min = 1, .max = 250, .cb = [](const uint8_t v){servo::speed(v); return true;}, .def = 100});
+		
+		parent = addParent(p, Param_t{0, PType::Folder, "Winch"});
+		addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "Force", .value_ptr = &eeprom.mode_params[1].max_force, .min = 1, .max = 250, .cb = [](const uint8_t v){servo::force(v); return true;}, .def = 100});
+		addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "Speed", .value_ptr = &eeprom.mode_params[1].max_speed, .min = 1, .max = 250, .cb = [](const uint8_t v){servo::speed(v); return true;}, .def = 100});
+
+		parent = addParent(p, Param_t{0, PType::Folder, "Crane"});
+		addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "Angle", .value_ptr = &eeprom.mode_params[2].max_throw, .min = 1, .max = 250, .cb = [](const uint8_t v){servo::maxThrow(v); return true;}, .def = 100});
+		addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "Speed", .value_ptr = &eeprom.mode_params[2].max_speed, .min = 1, .max = 250, .cb = [](const uint8_t v){servo::speed(v); return true;}, .def = 100});
+		addNode(p, Param_t{.parent = parent, .type = PType::Sel, .name = "Stop", .options = "On;Off", .value_ptr = &eeprom.mode_params[2].auto_stop, .min = 0, .max = 1, .cb = [](const uint8_t v){servo::preset(v); return true;}});
+
+		// parent = addParent(p, Param_t{0, PType::Folder, "Custom"});
+		// addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "Angle", .value_ptr = &eeprom.mode_params[3].max_throw, .min = 1, .max = 250, .cb = [](const uint8_t v){servo::maxThrow(v); return true;}, .def = 100});
+		// addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "Speed", .value_ptr = &eeprom.mode_params[3].max_speed, .min = 1, .max = 250, .cb = [](const uint8_t v){servo::speed(v); return true;}, .def = 100});
 
         if (p.size() >= p.capacity()) {
             void fp();

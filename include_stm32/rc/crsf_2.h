@@ -548,7 +548,9 @@ namespace RC {
                                 callback::forwardPacket(data, paylength + 2);
                             }
                             if (const uint8_t dest = data[3]; mCommandNoAddressCheck || (dest == mAddress) || (dest == 0x00)) {
-                                callback::command(data, paylength);
+								if constexpr(requires(){callback::command(data, paylength);}) {
+									callback::command(data, paylength);
+								}
                             }
                             break;
                         }

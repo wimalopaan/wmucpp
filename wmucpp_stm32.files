@@ -251,12 +251,15 @@ boards/rcFocG4/G431L6234_01/link_g431.ld
 boards/rcFocG4/G431L6234_01/startup_g431.s
 boards/rcFocG4/G431L6234_01/system_g4.cc
 boards/rcFocG4/G431Mp6543_01/Makefile
+boards/rcFocG4/G431Mp6543_01/ams5048.h
 boards/rcFocG4/G431Mp6543_01/crsf_cb.h
 boards/rcFocG4/G431Mp6543_01/devices.h
 boards/rcFocG4/G431Mp6543_01/eeprom.h
 boards/rcFocG4/G431Mp6543_01/foc01.cc
+boards/rcFocG4/G431Mp6543_01/focservo.h
 boards/rcFocG4/G431Mp6543_01/gfsm.h
 boards/rcFocG4/G431Mp6543_01/link_g431.ld
+boards/rcFocG4/G431Mp6543_01/pid.h
 boards/rcFocG4/G431Mp6543_01/startup_g431.s
 boards/rcFocG4/G431Mp6543_01/storage.h
 boards/rcFocG4/G431Mp6543_01/system_g4.cc
@@ -732,6 +735,8 @@ include_stm32/si5351.h
 include_stm32/spi.h
 include_stm32/ssd1306.h
 include_stm32/stackstring.h
+include_stm32/stdapp/scheduler.h
+include_stm32/stdapp/stdcomp.h
 include_stm32/tick.h
 include_stm32/timer.h
 include_stm32/tlc59108.h

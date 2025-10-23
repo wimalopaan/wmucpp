@@ -30,6 +30,36 @@
 #include "etl/algorithm.h"
 
 namespace Dsp {
+	namespace V2 {
+		template<typename T = float>
+		struct ExpMean {
+			constexpr explicit ExpMean(const T f = 0.0f) : f{f} {}
+	
+			template<auto L, auto U>
+			constexpr etl::ranged_NaN<L, U> process(const etl::ranged_NaN<L, U> v) volatile {
+				const float out = process((T)v);
+				return etl::ranged_NaN<L, U>(out);
+			}
+			constexpr T process(const T v) volatile {
+				mean = f * v + (1.0 - f) * mean;
+				return mean;
+			}
+			constexpr void set(const T m) volatile {
+				mean = m;
+			}
+			constexpr void factor(const T factor) volatile {
+				f = factor;
+			}
+			constexpr T value() const volatile {
+				return mean;
+			}
+		private:
+			T f{};
+			T mean{};
+		};
+	}
+	
+	
     struct IQ {
         float i{};
         float q{};

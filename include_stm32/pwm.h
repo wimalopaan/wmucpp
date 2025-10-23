@@ -35,6 +35,118 @@ namespace Mcu::Stm {
                 template<typename Config>
                 using getMaster_t = getMaster<Config>::type;
             }
+			template<uint8_t TimerNumber, typename Config, typename MCU = DefaultMcu>
+            struct ThreePhases {
+				using debug = Config::debug;
+                using clock = Config::clock;
+				using pin1 = Config::pin1;
+				using pin2 = Config::pin2;
+				using pin3 = Config::pin3;
+				
+                static inline /*constexpr */ TIM_TypeDef* const mcuTimer = reinterpret_cast<TIM_TypeDef*>(Mcu::Stm::Address<Mcu::Components::Timer<TimerNumber>>::value);
+
+                using component_t = Mcu::Components::Timer<TimerNumber>;
+
+                static inline constexpr uint16_t period = 4096;
+                static inline constexpr uint32_t freq  = 32000;
+                static inline constexpr uint16_t prescaler = (clock::config::frequency.value / (freq * period));
+				static inline constexpr uint16_t twopi = (1 << 14);
+				static inline constexpr uint16_t pi = twopi / 2;
+				
+				static inline uint16_t mPolepairs = 1;
+
+				static inline void init() {
+                    Mcu::Stm::Timers::powerUp<TimerNumber>();
+                    mcuTimer->PSC = prescaler;
+                    mcuTimer->ARR = period;
+                    mcuTimer->CCMR1 |= (0b0110 << TIM_CCMR1_OC1M_Pos); // pwm1
+                    mcuTimer->CCMR1 |= (0b0110 << TIM_CCMR1_OC2M_Pos); // pwm2
+                    mcuTimer->CCMR2 |= (0b0110 << TIM_CCMR2_OC3M_Pos); // pwm3
+                    mcuTimer->CCMR2 |= (0b0110 << TIM_CCMR2_OC4M_Pos); // pwm4
+                    mcuTimer->CCER |= TIM_CCER_CC1E;
+                    mcuTimer->CCER |= TIM_CCER_CC2E;
+                    mcuTimer->CCER |= TIM_CCER_CC3E;
+					mcuTimer->CCER |= TIM_CCER_CC4E;
+
+                    if constexpr (TimerNumber == 1) {
+                        mcuTimer->BDTR |= TIM_BDTR_MOE;
+                    }
+
+					mcuTimer->CCR1 = 0;
+                    mcuTimer->CCR2 = 0;
+                    mcuTimer->CCR3 = 0;
+                    mcuTimer->CCR4 = 0;
+
+					mcuTimer->CR2 |= (0b111 << TIM_CR2_MMS_Pos); //ch4 trigger
+					
+					mcuTimer->CR1 = (0x01 << TIM_CR1_CMS_Pos) | TIM_CR1_ARPE | TIM_CR1_CEN;
+					
+					static constexpr uint8_t af1 = Mcu::Stm::AlternateFunctions::mapper_v<pin1, ThreePhases, Mcu::Stm::AlternateFunctions::CC<1>>;
+					pin1::afunction(af1);					
+					static constexpr uint8_t af2 = Mcu::Stm::AlternateFunctions::mapper_v<pin2, ThreePhases, Mcu::Stm::AlternateFunctions::CC<2>>;
+					pin2::afunction(af2);					
+					static constexpr uint8_t af3 = Mcu::Stm::AlternateFunctions::mapper_v<pin3, ThreePhases, Mcu::Stm::AlternateFunctions::CC<3>>;
+					pin3::afunction(af3);					
+                }
+				static inline constexpr uint8_t trgo() {
+					return 0b0101;		
+				}
+                static inline void reset() {
+                    Mcu::Stm::Timers::reset<TimerNumber>();
+                }
+				static inline void polepairs(const uint8_t pp) {
+					mPolepairs = pp;
+				}
+				static inline uint8_t polepairs() {
+					return mPolepairs;
+				}
+				static inline void power(const uint8_t percent) {
+					const uint16_t p = ((period - 1) * percent) / 100;
+					if (p < period) {
+						mPower = p;
+					}
+				}
+				static inline void iangle(const int32_t a) {
+					uint32_t h = std::abs(a) & (twopi - 1);
+					if (a < 0) {
+						h = twopi - h;
+					}
+					const uint16_t a1 = phase<0>(a);
+					uint16_t max = a1;
+					const uint16_t a2 = phase<1>(a);
+					if (a2 > max) max = a2;
+					const uint16_t a3 = phase<2>(a);
+					if (a3 > max) max = a3;
+					mcuTimer->CCR1 = a1;
+					mcuTimer->CCR2 = a2;
+					mcuTimer->CCR3 = a3;
+					mcuTimer->CCR4 = std::max((9 * max) / 10, 1);
+				}
+                static inline void duty1(const uint16_t v) {
+					const uint16_t ccr = (v * (period - 1)) / 100;
+					if (ccr < period) {
+						mcuTimer->CCR1 = ccr;
+					}
+                }
+                static inline void duty2(const uint16_t v) {
+					const uint16_t ccr = (v * (period - 1)) / 100;
+					if (ccr < period) {
+						mcuTimer->CCR2 = ccr;
+					}
+                }
+                static inline void duty3(const uint16_t v) {
+					const uint16_t ccr = (v * (period - 1)) / 100;
+					if (ccr < period) {
+						mcuTimer->CCR3 = ccr;
+					}
+                }
+				private:
+				template<uint8_t Phase>
+				static inline uint16_t phase(int32_t a) {
+					return (1 + std::sin(a * std::numbers::pi_v<float> / pi + (2.0f * Phase * std::numbers::pi_v<float> / 3.0f))) * mPower / 2;
+				}
+				static inline uint16_t mPower = period / 10;
+            };
             template<uint8_t TimerNumber, typename Config, typename MCU = DefaultMcu>
             struct Simple {
                 using clock = Config::clock;

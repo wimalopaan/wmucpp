@@ -28,8 +28,14 @@ struct GFSM {
     using crsf = devs::crsf;
     using crsf_out = crsf::output;
     using crsf_pa = crsf::input;
-    using led = devs::ledBlinker;
+    using led = devs::led;
     using tp = devs::tp;
+	using pwm = devs::pwm;
+	using ams5048 = devs::ams5048;
+	using adc = devs::AdcAdapter;
+	using servo = devs::servo;
+
+    using components = devs::components;
 
     using debug = devs::debug;
     using crsfCallback = crsf::callback;
@@ -43,45 +49,38 @@ struct GFSM {
     static inline constexpr External::Tick<systemTimer> packagesCheckTicks{300ms};
     static inline constexpr External::Tick<systemTimer> initTicks{500ms};
     static inline constexpr External::Tick<systemTimer> debugTicks{500ms};
+	static inline constexpr External::Tick<systemTimer> amsTicks{100ms};
 
     static inline void update(const bool eepromMode = true) {
         IO::outl<debug>("# update");
-        // crsfCallback::callbacks(eepromMode);
+        crsfCallback::callbacks(eepromMode);
     }
     static inline void init() {
         devs::init();
-        if constexpr(!std::is_same_v<debug, void>) {
-            debug::init();
-        }
     }
     static inline void event(const Event e) {
         mEvent = e;
     }
     static inline void periodic() {
-        // tp::toggle();
-        crsf::periodic();
-        if constexpr(!std::is_same_v<debug, void>) {
-            debug::periodic();
-        }
+        devs::periodic();
     }
     static inline void ratePeriodic() {
-        crsf::ratePeriodic();
-        led::ratePeriodic();
-        // (++mPackagesCheckTick).on(packagesCheckTicks, []{
-        //     const uint16_t ch_p = crsf_pa::template channelPackages<true>();
-        //     const uint16_t l_p = crsf_pa::template linkPackages<true>();
-        //     if (ch_p > 0) {
-        //         if  (l_p == 0) {
-        //             event(Event::DirectConnected);
-        //         }
-        //         else {
-        //             event(Event::ReceiverConnected);
-        //         }
-        //     }
-        //     else {
-        //         event(Event::ConnectionLost);
-        //     }
-        // });
+        devs::ratePeriodic();
+        (++mPackagesCheckTick).on(packagesCheckTicks, []{
+            const uint16_t ch_p = crsf_pa::template channelPackages<true>();
+            const uint16_t l_p = crsf_pa::template linkPackages<true>();
+            if (ch_p > 0) {
+                if  (l_p == 0) {
+                    event(Event::DirectConnected);
+                }
+                else {
+                    event(Event::ReceiverConnected);
+                }
+            }
+            else {
+                event(Event::ConnectionLost);
+            }
+        });
 
         ++mStateTick;
         const auto oldState = mState;
@@ -97,13 +96,14 @@ struct GFSM {
             });
             break;
         case State::RunWithTelemetry:
+			servo::angle(crsf_pa::value(0));
             mStateTick.on(debugTicks, []{
-                IO::outl<debug>("# ch0: ", crsf_pa::value(0), " psize: ", crsfCallback::numberOfParameters(), " cp: ", crsf_pa::template channelPackages<false>(), " lp: ", crsf_pa::template linkPackages<false>());
+                IO::outl<debug>("# ch0: ", crsf_pa::value(0), " ams: ", ams5048::value());
+				int16_t i1 = adc::template value<0>();
+				int16_t i2 = adc::template value<1>();
+				int16_t i3 = adc::template value<2>();
+				IO::outl<debug>("# soa: ", i1, " sob: ", i2, " soc: ", i3, " tot: ", (i1 + i2 + i3), " m: ", servo::imean());
             });
-            if (mEvent.is(Event::ConnectionLost)) {
-                IO::outl<debug>("# E CL");
-                mState = State::NotConnected;
-            }
             break;
         case State::NotConnected:
             if (mEvent.is(Event::ReceiverConnected) || mEvent.is(Event::DirectConnected)) {
@@ -137,6 +137,7 @@ struct GFSM {
     private:
     static inline etl::Event<Event> mEvent;
     static inline External::Tick<systemTimer> mPackagesCheckTick;
+	static inline External::Tick<systemTimer> mAmsCheckTick;
     static inline External::Tick<systemTimer> mStateTick;
     static inline External::Tick<systemTimer> mDebugTick;
     static inline State mState = State::Undefined;
