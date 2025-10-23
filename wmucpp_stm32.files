@@ -211,6 +211,7 @@ boards/rcCC/small_02/vesc.h
 boards/rcCrsfSwitch/Makefile
 boards/rcCrsfSwitch/crsfcb.h
 boards/rcCrsfSwitch/crsfsw01.cc
+boards/rcCrsfSwitch/crsfsw10.cc
 boards/rcCrsfSwitch/devices.h
 boards/rcCrsfSwitch/eeprom.h
 boards/rcCrsfSwitch/gfsm.h

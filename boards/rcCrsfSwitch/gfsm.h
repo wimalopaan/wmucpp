@@ -39,10 +39,11 @@ struct GFSM {
 
     using crsf_in = devs::crsf_in;
 
-    using crsf_hd1 = devs::crsf_hd1;
-    using crsf_hd2 = devs::crsf_hd2;
-    using crsf_hd3 = devs::crsf_hd3;
-    using crsf_hd5 = devs::crsf_hd5;
+ //    using crsf_1 = devs::crsf_1;
+ //    using crsf_2 = devs::crsf_2;
+ //    using crsf_3 = devs::crsf_3;
+	// using crsf_4 = devs::crsf_4;
+    // using crsf_5 = devs::crsf_5;
 
     using crsf_ifaces = devs::crsf_ifaces;
 

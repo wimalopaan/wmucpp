@@ -17,6 +17,7 @@ LOADLIBES += startup_g0b1.o system_g0.o
 targets += startup_g0b1.o
 targets += system_g0.o
 
-targets += crsfsw01.elf crsfsw01.bin
+#targets += crsfsw01.elf crsfsw01.bin
+targets += crsfsw10.elf crsfsw10.bin
 
 -include ../../Makefile.arm.include

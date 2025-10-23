@@ -19,7 +19,9 @@
 #define NDEBUG
 
 #define SW_VERSION 2
-#define HW_VERSION 1
+#define HW_VERSION 2
+
+// #define USE_DEBUG
 
 #include <cstdint>
 #include <chrono>
@@ -44,15 +46,13 @@ struct DevsConfig {
     using storage = Storage;
 };
 
-using devs = Devices<SW01, DevsConfig, Mcu::Stm::Stm32G0B1>;
+using devs = Devices<SW10, DevsConfig, Mcu::Stm::Stm32G0B1>;
 using gfsm = GFSM<devs>;
 
 int main() {
     gfsm::init();
 
     static constexpr uint8_t defaultIntPrio = 1;
-
-//    static_assert(swUartIntPrio < defaultIntPrio);
 
     NVIC_EnableIRQ(USART1_IRQn);
     NVIC_SetPriority(USART1_IRQn, defaultIntPrio);
@@ -85,11 +85,6 @@ void USART2_LPUART2_IRQHandler() {
     static_assert(crsf_2::uart::number == 2);
     crsf_2::Isr::onIdle([] static {});
     crsf_2::Isr::onTransferComplete([] static {});
-
-    using crsf_7 = devs::crsf_7;
-    static_assert(crsf_7::uart::number == 102);
-    crsf_7::Isr::onIdle([] static {});
-    crsf_7::Isr::onTransferComplete([] static {});
 }
 void USART3_4_5_6_LPUART1_IRQHandler() {
     using crsf_1 = devs::crsf_1;
@@ -102,6 +97,13 @@ void USART3_4_5_6_LPUART1_IRQHandler() {
     crsf_3::Isr::onIdle([] static {});
     crsf_3::Isr::onTransferComplete([] static {});
 
+#ifndef USE_DEBUG
+	using crsf_4 = devs::crsf_4;
+    static_assert(crsf_4::uart::number == 4);
+    crsf_4::Isr::onIdle([] static {});
+    crsf_4::Isr::onTransferComplete([] static {});
+#endif
+	
     using crsf_5 = devs::crsf_5;
     static_assert(crsf_5::uart::number == 5);
     crsf_5::Isr::onIdle([] static {});

@@ -66,6 +66,7 @@ namespace RC::Protokoll::Crsf {
                     using ValueType = uint8_t;
                     static inline constexpr auto mode = Mcu::Stm::Uarts::Mode::HalfDuplex;
                     static inline constexpr uint32_t baudrate = RC::Protokoll::Crsf::V4::baudrate;
+					static inline constexpr bool rxtxswap = Mcu::Stm::V4::detail::getSwap_v<Config>;
                     using DmaChComponent = Config::dmaChRead;
                     struct Rx {
                         static inline constexpr bool enable = true;
@@ -122,8 +123,14 @@ namespace RC::Protokoll::Crsf {
                     mRxEvent = RxEvent::None;
                     mTxEvent = TxEvent::None;
                 });
-                static uint8_t txaf = Mcu::Stm::AlternateFunctions::mapper_v<txpin, uart, Mcu::Stm::AlternateFunctions::TX>;
-                txpin::afunction(txaf);
+				if constexpr (Mcu::Stm::V4::detail::getSwap_v<Config>) {
+					static uint8_t txaf = Mcu::Stm::AlternateFunctions::mapper_v<txpin, uart, Mcu::Stm::AlternateFunctions::RX>;
+					txpin::afunction(txaf);					
+				}
+				else {
+					static uint8_t txaf = Mcu::Stm::AlternateFunctions::mapper_v<txpin, uart, Mcu::Stm::AlternateFunctions::TX>;
+					txpin::afunction(txaf);
+				}
                 txpin::template pullup<true>();
                 if constexpr(!halfDuplex) {
                     static uint8_t rxaf = Mcu::Stm::AlternateFunctions::mapper_v<rxpin, uart, Mcu::Stm::AlternateFunctions::RX>;
@@ -344,6 +351,9 @@ namespace RC::Protokoll::Crsf {
                         }
                     }
                     else { // not extended package
+						if (data[PacketIndex::type] == (uint8_t)Type::Link) {
+							IO::outl<debug>("# fw lstat");							
+						}
                         messageBuffer::enqueue(std::span{data, length});
                     }
                 }

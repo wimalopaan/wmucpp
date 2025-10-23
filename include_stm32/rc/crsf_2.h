@@ -474,6 +474,9 @@ namespace RC {
                             if constexpr(requires(){callback::gotLinkStats();}) {
                                 callback::gotLinkStats();
                             }
+							if constexpr(requires(){callback::forwardPacket(data, 0);}) {
+                                callback::forwardPacket(data, paylength + 2);
+                            }
                             break;
                         case RC::Protokoll::Crsf::V4::Type::Channels:
                             input::decodeChannels(data + 3);
