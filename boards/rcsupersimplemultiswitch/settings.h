@@ -50,6 +50,6 @@
 #define SPORT_PHY External::SPort2::SensorId::ID1 // be aware, that ID1 equals 0 in the widget setup, ID2 equals 1, and so forth ...
 #define SPORT_APP 0x51 // dec: 81
 
-#define USE_ACTIVE_LOW_OUPUTS
+// #define USE_ACTIVE_LOW_OUPUTS
 
 

@@ -42,9 +42,7 @@ namespace detail {
 
 template<typename... Comp>
 struct StandardComponents {
-
     using clist = Meta::unique<Meta::filter<Meta::nonVoid, Meta::List<Comp...>>>;
-
     using initList = Meta::filter<detail::hasInit, clist>;
     using periodicList = Meta::filter<detail::hasPeriodic, clist>;
     using ratePeriodicList = Meta::filter<detail::hasRatePeriodic, clist>;
