@@ -88,7 +88,6 @@ namespace Mcu::Stm {
                 }
             }();
             // using std::integral_constant<uint16_t, numberOfBits>::_;
-
 #ifdef STM32G0
             static inline void init() {
                 IO::outl<debug>("# Uart 0 (Soft): ", N, ", ", exti_n, ", ", exti_s, ", ", map);
@@ -293,7 +292,8 @@ namespace Mcu::Stm {
                     rcc->APBRSTR1 |= RCC_APBRSTR1_USART2RST;
                     rcc->APBRSTR1 &= ~RCC_APBRSTR1_USART2RST;
                 }
-#elif defined(STM32G4)
+#endif
+#if defined(STM32G4)
                 if constexpr(N == 1) {
                     rcc->APB2RSTR |= RCC_APB2RSTR_USART1RST;
                     rcc->APB2RSTR &= ~RCC_APB2RSTR_USART1RST;
@@ -302,7 +302,8 @@ namespace Mcu::Stm {
                     rcc->APB1RSTR1 |= RCC_APB1RSTR1_USART2RST;
                     rcc->APB1RSTR1 &= ~RCC_APB1RSTR1_USART2RST;
                 }
-#elif defined(STM32G0B1xx)
+#endif
+#if defined(STM32G0B1xx)
                 else if constexpr(N == 3) {
                     rcc->APBRSTR1 |= RCC_APBRSTR1_USART3RST;
                     rcc->APBRSTR1 &= ~RCC_APBRSTR1_USART3RST;
@@ -331,7 +332,6 @@ namespace Mcu::Stm {
                 else {
                     static_assert(false);
                 }
-
             }
             static inline void init() {
                 if constexpr (N == 1) {
@@ -388,7 +388,6 @@ namespace Mcu::Stm {
                         dmaChRW::startRead(Config::Rx::size, (uint32_t)&mcuUart->RDR, mActiveReadBuffer, Uarts::Properties<N>::dmamux_rx_src);
                     }
                 }
-
                 mcuUart->CR3 = []consteval{
                     uint32_t cr3 = (USART_CR3_OVRDIS | USART_CR3_DMAR | USART_CR3_DMAT);
                     if constexpr(Config::mode == Uarts::Mode::HalfDuplex) {
@@ -436,12 +435,11 @@ namespace Mcu::Stm {
                         if constexpr (N == 1) {
                             cr1 |= USART_CR1_FIFOEN;
                         }
-        #ifdef STM32G4
+#ifdef STM32G4
                         if constexpr (N == 2) {
                             cr1 |= USART_CR1_FIFOEN;
                         }
-        #endif
-
+#endif
 #ifdef STM32G0B1xx
                         else if constexpr((N == 2) || (N == 3)) {
                             cr1 |= USART_CR1_FIFOEN;
