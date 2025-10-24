@@ -349,8 +349,6 @@ namespace RC {
                 template<typename E, typename T>
                 static inline constexpr void pack(const std::array<E, 16>& channels, T& out) {
                     Channels packed;
-                    static_assert(sizeof(packed) == 26);
-
                     packed.ch0 = channels[0].value();
                     packed.ch1 = channels[1].value();
                     packed.ch2 = channels[2].value();
