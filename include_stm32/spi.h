@@ -68,7 +68,7 @@ namespace Mcu::Stm {
             };
             static inline constexpr uint16_t clockDivider = Config::clockDivider;
 
-			static_assert(!(Config::useNSS && Config::useFallingEdge), "STM32 can't use that comination");
+			static_assert(!(Config::useNSS && Config::useFallingEdge), "STM32 can't use that combination");
 			
             using value_type = Config::value_type;
             using Ch_R = Config::rxDmaComponent;
@@ -149,11 +149,11 @@ namespace Mcu::Stm {
 								break;
 							}
 						}
+						void f();
+						if (!found) f();
 						if constexpr(Config::useFallingEdge) {
 							r |= SPI_CR1_CPHA;
 						}
-						void f();
-						if (!found) f();
 						r |= SPI_CR1_SPE;
 						return r;
 				}();

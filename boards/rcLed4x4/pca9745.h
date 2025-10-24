@@ -42,6 +42,8 @@ namespace External {
             static inline constexpr size_t clockDivider = 64;
             using value_type = uint16_t;
             static inline constexpr size_t size = 256;
+			static inline constexpr bool useNSS = true;
+			static inline constexpr bool useFallingEdge = false;
             struct Isr {
                 static inline constexpr bool txComplete = true;
             };
