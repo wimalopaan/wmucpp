@@ -134,6 +134,8 @@ struct EEProm {
 
     std::array<eeprom_value_t, 2> esc_mid{50, 50}; // [0...200]
 
+	eeprom_value_t mpx_mode = 1;
+	
     struct CompassCalibData {
         int16_t mean = 0;
         int16_t d = 0;

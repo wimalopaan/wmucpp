@@ -582,6 +582,7 @@ private:
 #endif
         addNode(p, Param_t{parent, PType::U8,  "Switch Address", nullptr, &eeprom.switchAddress, 0, 255, [](const store_t){return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Contiguous Switch Addresses", nullptr, &eeprom.switchAddressContiguous, 0, 1, [](const store_t){return true;}});
+		addNode(p, Param_t{parent, PType::Sel, "MPX-Switch Mode", "8(tri);16(bi)", &eeprom.mpx_mode, 0, 1, [](const store_t v){mpx1::modeTriState(v == 0); return true;}});
 
         parent = addParent(p, Param_t{0, PType::Folder, "S.Port"});
         addNode(p, Param_t{parent, PType::U8,  "Physical-ID", nullptr, &eeprom.sport_physicalId_switch, 0, 0x1b, [](const store_t a){sport_aux::setPhysID0(a); return true;}});

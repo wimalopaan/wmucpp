@@ -145,16 +145,48 @@ namespace Mcu::Stm {
                 });
                 pin::analog();
             }
+			static inline void modeTriState(const bool on) {
+				m3StateMode = on;
+			}
             static inline void set(const uint8_t channel, const uint8_t state) {
-                if (channel >= 8) return;
-                uint16_t v = off;
-                if (state == 1) {
-                    v += amp;
-                }
-                else if (state == 2) {
-                    v -= amp;
-                }
-                arr[channel] = v;
+				if (m3StateMode) {
+					if (channel >= 8) return;
+					uint16_t v = off;
+					if (state == 1) {
+						v += amp;
+					}
+					else if (state == 2) {
+						v -= amp;
+					}
+					arr[channel] = v;
+				}
+				else {
+					if (channel >= 16) return;
+					const uint8_t out = channel / 2;
+					const uint8_t sel = channel % 2;
+					uint16_t v = off;
+					if (state > 0) {
+						if (sel > 0) {
+							if (arr[out] == off) {
+								v += amp;
+							}
+							else {
+								v = arr[out];
+							}
+						}
+						else {
+							v -= amp;
+						}
+					}
+					else {
+						if (sel > 0) {
+							if (arr[out] != off) {
+								v = arr[out];
+							}
+						}
+					}
+					arr[out] = v;
+				}
             }
             private:
             static inline volatile bool mActive = false;
@@ -176,6 +208,7 @@ namespace Mcu::Stm {
                     static_assert(false);
                 }
             }
+			static inline bool m3StateMode = true;
             static inline std::array<volatile value_type, pulses> arr{};
         };
     }
