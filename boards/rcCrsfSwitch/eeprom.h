@@ -29,4 +29,7 @@ struct EEProm {
 
     uint8_t address = 0xc0;
     uint8_t commandBroadcastAddress = 0xc8; // command packages with this dest-address are routed to all interfaces
+	
+	std::array<uint8_t, 6> forwardLinkStats  = {1, 1, 1, 1, 1, 1};
+	std::array<uint8_t, 6> forwardRCChannels = {1, 1, 1, 1, 1, 1};
 };

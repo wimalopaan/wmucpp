@@ -179,7 +179,12 @@ namespace RC::Protokoll::Crsf {
             static inline void rxAddress(const uint8_t adr) {
                 mRewriteRxAddress = adr;
             }
-
+			static inline void activateLinkStats(const bool on) {
+				mSendLinkStats = on;
+			}
+			static inline void activateChannels(const bool on) {
+				mSendRCChannels = on;
+			}
             enum class RxEvent : uint8_t {None, ReceiveComplete};
             enum class TxEvent : uint8_t {None, TransmitComplete};
             enum class State : uint8_t {Init, Run};
@@ -352,9 +357,18 @@ namespace RC::Protokoll::Crsf {
                     }
                     else { // not extended package
 						if (data[PacketIndex::type] == (uint8_t)Type::Link) {
-							IO::outl<debug>("# fw lstat");							
+							if (mSendLinkStats) {
+								messageBuffer::enqueue(std::span{data, length});
+							}
 						}
-                        messageBuffer::enqueue(std::span{data, length});
+						else if (data[PacketIndex::type] == (uint8_t)Type::Channels) {
+							if (mSendRCChannels) {
+								messageBuffer::enqueue(std::span{data, length});
+							}
+						}
+						else {
+							messageBuffer::enqueue(std::span{data, length});
+						}
                     }
                 }
             }
@@ -382,7 +396,9 @@ namespace RC::Protokoll::Crsf {
                     });
                 }
             }
-            static inline volatile bool mSource = false;
+			static inline volatile bool mSendLinkStats  = true;
+			static inline volatile bool mSendRCChannels = true;
+			static inline volatile bool mSource = false;
             static inline volatile bool mActive = false;
             static inline volatile etl::Event<RxEvent> mRxEvent;
             static inline volatile etl::Event<TxEvent> mTxEvent;

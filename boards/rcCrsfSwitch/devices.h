@@ -139,7 +139,7 @@ struct Devices<SW10, Config, MCU> {
 #ifdef USE_DEBUG
 	using crsf_ifaces = Meta::List<crsf_1, crsf_2, crsf_3, crsf_5, crsf_6>;
 #else
-    using crsf_ifaces = Meta::List<crsf_1, crsf_2, crsf_3, crsf_4, crsf_5, crsf_6>;
+    using crsf_ifaces = Meta::List<crsf_2, crsf_1, crsf_3, crsf_4, crsf_5, crsf_6>;
 #endif
 	
     // Led

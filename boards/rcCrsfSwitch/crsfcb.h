@@ -96,7 +96,9 @@ struct CrsfCallback {
     static inline void command(const auto& /*data*/, const uint8_t /*payload*/) {
     }
     static inline constexpr void forwardPacket(volatile uint8_t* const data, const uint16_t length) {
-        Meta::visit<crsf_ifaces>([&](auto P) {decltype(P)::type::forwardPacket(data, length);});
+        Meta::visit<crsf_ifaces>([&](auto P) {
+			decltype(P)::type::forwardPacket(data, length);
+		});
     }
     static inline void callbacks(const bool eepromMode = false) {
         const bool prevMode = mEepromMode;
@@ -143,6 +145,12 @@ struct CrsfCallback {
         c.push_back(p);
     }
 
+	template<uint8_t index>
+    static inline constexpr void addOutput(auto& p, const uint8_t parent, const char* const name) {
+        const uint8_t parent2 = addParent(p, Param_t{parent, PType::Folder, name});
+		addNode(p, Param_t{parent2, PType::Sel, "Forward LinkStat Pkgs", "Off;On", &eeprom.forwardLinkStats[index], 0, 1, [](const uint8_t v){Meta::nth_element<index, crsf_ifaces>::activateLinkStats(v > 0); return false;}});
+		addNode(p, Param_t{parent2, PType::Sel, "Forward RC-Channels Pkgs", "Off;On", &eeprom.forwardRCChannels[index], 0, 1, [](const uint8_t v){Meta::nth_element<index, crsf_ifaces>::activateChannels(v > 0); return false;}});
+	}
     using params_t = etl::FixedVector<Param_t, 128>;
     static inline params_t params = [] {
         params_t p;
@@ -150,6 +158,12 @@ struct CrsfCallback {
         addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
         addNode(p, Param_t{0, PType::U8,  "CRSF Address", nullptr, &eeprom.address, 192, 207, [](const uint8_t){updateName(mName); return true;}});
         addNode(p, Param_t{0, PType::U8,  "Command B-Address", nullptr, &eeprom.commandBroadcastAddress, 192, 207, [](const uint8_t){return true;}});
+		addOutput<0>(p, 0, "Port HD1");
+		addOutput<0>(p, 0, "Port HD2");
+		addOutput<0>(p, 0, "Port FD1");
+		addOutput<0>(p, 0, "Port FD2");
+		addOutput<0>(p, 0, "Port FD3");
+		addOutput<0>(p, 0, "Port FD4");
         return p;
     }();
 };

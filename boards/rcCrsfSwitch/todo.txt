@@ -1,8 +1,8 @@
 bugs:
 
 todo:
-
-* add all interfaces
+=====
+* select which type of packages should be routed (rc-channels, link-stats)
 * menu: range of rewrite addresses
 * indication of table overrun
 * menu: display routing table
@@ -11,13 +11,14 @@ todo:
 * add cross-routing to other modules (routing between modules, not to receiver)
 
 problems:
-
+=====
 * widget send commands allways to dest=0xc8 -> no routing takes place
 ** widget should use broadcast address 0x00 for commands
-** elrs V4: routing of command packages with broadcast destination, does it work?
+** elrs V4: routing of command packages with broadcast destination, does it work? (yes)
 
 done:
-
+=====
+* add all interfaces
 * learning addresses / setup routing table on power-up (without TBS agent or elrsV3.lua)
 ** startup state: send rc-channels (0 channel values) together with ping packets (and maybe link-stats) interleaved
 * basic routing
