@@ -42,6 +42,7 @@ struct CrsfCallback {
     using esc2_slave = Config::esc2_slave;
 
     using mpx1 = Config::mpx1;
+	using mpx2 = Config::mpx2;
     using sumdv3 = Config::sumdv3;
 
     using sport_aux = Config::sport_aux;
@@ -51,6 +52,7 @@ struct CrsfCallback {
     using telemetry = Config::telemetry;
 
     using ws2812b_1 = Config::ws2812b_1;
+	using ws2812b_2 = Config::ws2812b_2;
 
     using messageBuffer = Config::messageBuffer;
 
@@ -165,6 +167,7 @@ struct CrsfCallback {
                         for(uint8_t i = 0; i < 8; ++i) {
                             const uint8_t s = (sw >> i) & 0b01;
                             mpx1::set(i, s);
+							mpx2::set(i, s);
                             sumdv3::setSwitch(i, s);
                         }
                     }
@@ -181,6 +184,7 @@ struct CrsfCallback {
                                 for(uint8_t k = 0; k < 8; ++k) {
                                     const uint8_t s = (sw >> (2 * k)) & 0b11;
                                     mpx1::set(k, s);
+									mpx2::set(k, s);
                                     sumdv3::setSwitch(k, s);
                                 }
                             }
@@ -197,6 +201,7 @@ struct CrsfCallback {
                                     const uint8_t n = swGroup * 8 + k;
                                     const uint8_t s = (sw >> (2 * k)) & 0b11;
                                     mpx1::set(n, s);
+									mpx2::set(n, s);
                                     sumdv3::setSwitch(n, s);
                                 }
                             }
@@ -207,6 +212,7 @@ struct CrsfCallback {
                                     const uint8_t n = swGroup * 8 + k;
                                     const uint8_t s = (sw >> (2 * k)) & 0b11;
                                     ws2812b_1::on(n, s);
+									ws2812b_2::on(n, s);
                                 }
                             }
                         }
@@ -221,6 +227,7 @@ struct CrsfCallback {
                         for(uint8_t i = 0; i < 8; ++i) {
                             const uint8_t s = (sw >> (2 * i)) & 0b11;
                             mpx1::set(i, s);
+							mpx2::set(i, s);
                             sumdv3::setSwitch(i, s);
                         }
                     }
@@ -229,6 +236,7 @@ struct CrsfCallback {
                         for(uint8_t i = 0; i < 8; ++i) {
                             const uint8_t s = (sw >> (2 * i)) & 0b11;
                             ws2812b_1::on(i, s);
+							ws2812b_2::on(i, s);
                         }
                     }
                 }
@@ -244,6 +252,7 @@ struct CrsfCallback {
                             const uint8_t n = swGroup * 8 + i;
                             const uint8_t s = (swSwitches >> i) & 0b01;
                             mpx1::set(n, s);
+							mpx2::set(n, s);
                             sumdv3::setSwitch(n, s);
                         }
                     }
@@ -262,6 +271,7 @@ struct CrsfCallback {
                             const uint8_t g = ((data[10 + 2 * i] >> 4) & 0x0f) << 4;
                             const uint8_t b = ((data[10 + 2 * i]) & 0x0f) << 4;
                             ws2812b_1::setColor(swGroup * 8 + out, typename ws2812b_1::ColorRGB{r, g, b});
+							ws2812b_2::setColor(swGroup * 8 + out, typename ws2812b_2::ColorRGB{r, g, b});
                         }
                     }
                 }
@@ -582,7 +592,7 @@ private:
 #endif
         addNode(p, Param_t{parent, PType::U8,  "Switch Address", nullptr, &eeprom.switchAddress, 0, 255, [](const store_t){return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Contiguous Switch Addresses", nullptr, &eeprom.switchAddressContiguous, 0, 1, [](const store_t){return true;}});
-		addNode(p, Param_t{parent, PType::Sel, "MPX-Switch Mode", "8(tri);16(bi)", &eeprom.mpx_mode, 0, 1, [](const store_t v){mpx1::modeTriState(v == 0); return true;}});
+		addNode(p, Param_t{parent, PType::Sel, "MPX-Switch Mode", "8(tri);16(bi)", &eeprom.mpx_mode, 0, 1, [](const store_t v){mpx1::modeTriState(v == 0); mpx2::modeTriState(v == 0); return true;}});
 
         parent = addParent(p, Param_t{0, PType::Folder, "S.Port"});
         addNode(p, Param_t{parent, PType::U8,  "Physical-ID", nullptr, &eeprom.sport_physicalId_switch, 0, 0x1b, [](const store_t a){sport_aux::setPhysID0(a); return true;}});

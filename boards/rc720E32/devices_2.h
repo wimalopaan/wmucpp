@@ -546,6 +546,7 @@ struct Devices<SW01, Config, MCU> {
         using esc32ascii_1 = Devices::esc32ascii_1;
         using esc32ascii_2 = Devices::esc32ascii_2;
         using mpx1 = Devices::mpx1;
+		using mpx2 = Devices::ppm_mpx2;
         using sumdv3 = Devices::sumdv3_out;
         using sport_aux = Devices::sport_aux;
         using messageBuffer = crsfBuffer;
@@ -554,6 +555,7 @@ struct Devices<SW01, Config, MCU> {
         using esc1_slave = Devices::esc1_slave;
         using esc2_slave = Devices::esc2_slave;
         using ws2812b_1 = Devices::ws2812b_1;
+		using ws2812b_2 = Devices::ws2812b_2;
         using tp = void;
     };
 
