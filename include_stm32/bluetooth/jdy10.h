@@ -80,6 +80,9 @@ namespace External::Bluetooth {
             pin_rx::template pullup<true>();
             pin_tx::afunction(tx_af);
             pin_tx::template pullup<true>();
+			for(auto& v : mValues) {
+				v = RC::Protokoll::Crsf::V4::mid;
+			}
         }
         static inline void reset() {
             IO::outl<debug>("# BT reset ", N);
@@ -247,6 +250,9 @@ namespace External::Bluetooth {
                         else {
                             swcallback::set(number, false);
                         }
+						if constexpr(requires(){swcallback::state(mSwitches);}) {
+							swcallback::state(mSwitches);
+						}
                     }
                 }
                 else if (std::tolower(symbol) == 'm') {

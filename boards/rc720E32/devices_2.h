@@ -432,9 +432,21 @@ struct Devices<SW01, Config, MCU> {
         using pin_rx = tlm2;
         using tp = void;
         using swcallback = struct {
+			static inline void state(const uint64_t s) {
+				if (storage::eeprom.inject_bt_switches > 0) {
+					std::array<uint8_t, 6> set{};
+					set[0] = storage::eeprom.inject_bt_crsf;
+					set[1] = (uint8_t)RC::Protokoll::Crsf::V4::Address::Handset;
+					set[2] = (uint8_t)RC::Protokoll::Crsf::V4::CommandType::Switch;
+					set[3] = (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set;
+					set[4] = storage::eeprom.inject_bt_address;
+					set[5] = (s & 0xff);
+					relay1::inject((uint8_t)RC::Protokoll::Crsf::V4::Type::Command, set);
+				}
+			}	
             static inline void set(const uint8_t index, const bool state) {
                 IO::outl<debug>("# BT2 set:", index, " s:", (uint8_t)state);
-                bt::setLed(index, state);
+                bt2::setLed(index, state);
                 sumdv3_out::setSwitch(index, state);
             }
         };

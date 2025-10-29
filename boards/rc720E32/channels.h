@@ -97,9 +97,11 @@ struct ChannelCallback {
 
             telemetry::current(0, escs::current(0));
             telemetry::rpm(0, escs::rpm(0));
+			telemetry::voltage(0, escs::voltage(0));
 
             telemetry::current(1, escs::current(1));
             telemetry::rpm(1, escs::rpm(1));
+			telemetry::voltage(1, escs::voltage(1));
 
             relays::update();
             if (eeprom.inject) {

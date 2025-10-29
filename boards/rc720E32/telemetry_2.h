@@ -76,7 +76,6 @@ struct Telemetry {
     static inline void disableWithAutoOn() {
         event(Event::OffWithAutoOn);
     }
-
     static inline void push(const uint8_t type, auto f) {
         if (mState != State::On) return;
         buffer::create_back(type, [&](auto& d){
@@ -85,81 +84,116 @@ struct Telemetry {
     }
     static inline void next() {
         if (mState != State::On) return;
+		// IO::outl<debug>("# next");
         using namespace RC::Protokoll::Crsf::V4;
-        ++mFrameCounter;
         if (storage::eeprom.mode == 0) { // Schottel
-            if (mFrameCounter < infoRate) {
-                buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ArduPilot, [&](auto& d){
-                    d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
-                    d.push_back((uint8_t)storage::eeprom.address);
-                    d.push_back(ArduPilotTunnel::Schottel::AppId);
-                    d.push_back(ArduPilotTunnel::Schottel::Type::CombinedTelemetry); // packet type
-                    d.push_back(mValues);
-                    d.push_back(mTurns);
-                    d.push_back(mFlags);
-                });
-            }
-            else {
-                mFrameCounter = 0;
-                buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ArduPilot, [&](auto& d){
-                    d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
-                    d.push_back((uint8_t)storage::eeprom.address);
-                    d.push_back(ArduPilotTunnel::Schottel::AppId);
-                    d.push_back(ArduPilotTunnel::Schottel::Type::DeviceInfo); // packet type
-                    d.push_back(servos::fwVersion(0));
-                    d.push_back(servos::hwVersion(0));
-                    d.push_back(servos::fwVersion(1));
-                    d.push_back(servos::hwVersion(1));
-
-                    d.push_back(escs::fwVersion(0));
-                    d.push_back(escs::hwVersion(0));
-                    d.push_back(escs::fwVersion(1));
-                    d.push_back(escs::hwVersion(1));
-
-                    d.push_back((uint8_t)SW_VERSION);
-                    d.push_back((uint8_t)HW_VERSION);
-                });
+			switch(mFrameCounter) {
+            case 0:
+				sendRmp();
+				++mFrameCounter;
+                break;
+            case 1:
+				sendBattery();
+				++mFrameCounter;
+                break;
+            case 2:
+				sendTemp();
+				++mFrameCounter;
+                break;
+			case 3:
+				sendSchottel();
+				++mFrameCounter;
+				break;
+			case 4:
+				sendVersionInfo();				
+				++mFrameCounter;
+				break;
+			default:
+				mFrameCounter = 0;
+				break;
             }
         }
         else if (storage::eeprom.mode == 1) { // CC
-            if (mFrameCounter > 2) mFrameCounter = 0;
             switch(mFrameCounter) {
             case 0:
-                buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::Rpm, [&](auto& d){
-                    d.push_back(uint8_t{1});
-                    const uint16_t rpm1 = rpm(0);
-                    d.push_back(uint8_t{0});
-                    d.push_back(uint8_t(rpm1 >> 8));
-                    d.push_back(uint8_t(rpm1 & 0xff));
-                    const uint16_t rpm2 = rpm(1);
-                    d.push_back(uint8_t{0});
-                    d.push_back(uint8_t(rpm2 >> 8));
-                    d.push_back(uint8_t(rpm2 & 0xff));
-                });
+				sendRmp();
+				++mFrameCounter;
                 break;
             case 1:
-                buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::Battery, [&](auto& d){
-                    d.push_back(voltage(0));
-                    d.push_back(current(0));
-
-                    d.push_back(uint8_t(0));
-                    d.push_back(uint8_t(0));
-                    d.push_back(uint8_t(0));
-
-                    d.push_back(uint8_t(0));
-                });
+				sendBattery();
+				++mFrameCounter;
                 break;
             case 2:
-                buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::Temp, [&](auto& d){
-                    d.push_back(uint8_t{1});
-                    d.push_back(temp(0));
-                    d.push_back(temp(1));
-                });
+				sendTemp();
+				++mFrameCounter;
                 break;
+			default:
+				mFrameCounter = 0;
+				break;
             }
-
         }
     }
+	static inline void sendSchottel() {
+		buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ArduPilot, [&](auto& d){
+			d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
+			d.push_back((uint8_t)storage::eeprom.address);
+			d.push_back(RC::Protokoll::Crsf::V4::ArduPilotTunnel::Schottel::AppId);
+			d.push_back(RC::Protokoll::Crsf::V4::ArduPilotTunnel::Schottel::Type::CombinedTelemetry); // packet type
+			d.push_back(mValues);
+			d.push_back(mTurns);
+			d.push_back(mFlags);
+		});
+	}
+	static inline void sendVersionInfo() {
+		buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ArduPilot, [&](auto& d){
+			d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
+			d.push_back((uint8_t)storage::eeprom.address);
+			d.push_back(RC::Protokoll::Crsf::V4::ArduPilotTunnel::Schottel::AppId);
+			d.push_back(RC::Protokoll::Crsf::V4::ArduPilotTunnel::Schottel::Type::DeviceInfo); // packet type
+			d.push_back(servos::fwVersion(0));
+			d.push_back(servos::hwVersion(0));
+			d.push_back(servos::fwVersion(1));
+			d.push_back(servos::hwVersion(1));
+
+			d.push_back(escs::fwVersion(0));
+			d.push_back(escs::hwVersion(0));
+			d.push_back(escs::fwVersion(1));
+			d.push_back(escs::hwVersion(1));
+
+			d.push_back((uint8_t)SW_VERSION);
+			d.push_back((uint8_t)HW_VERSION);
+		});		
+	}
+	static inline void sendTemp() {
+		buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::Temp, [&](auto& d){
+			d.push_back(uint8_t(storage::eeprom.telemetry_id));
+			d.push_back(temp(0));
+			d.push_back(temp(1));
+		});		
+	}
+	static inline void sendRmp() {
+		buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::Rpm, [&](auto& d){
+			d.push_back(uint8_t(storage::eeprom.telemetry_id));
+			const uint16_t rpm1 = rpm(0);
+			d.push_back(uint8_t{0});
+			d.push_back(uint8_t(rpm1 >> 8));
+			d.push_back(uint8_t(rpm1 & 0xff));
+			const uint16_t rpm2 = rpm(1);
+			d.push_back(uint8_t{0});
+			d.push_back(uint8_t(rpm2 >> 8));
+			d.push_back(uint8_t(rpm2 & 0xff));
+		});		
+	}
+	static inline void sendBattery() {
+		buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::Battery, [&](auto& d){
+			d.push_back(voltage(0));
+			d.push_back(current(0));
+			d.push_back(uint8_t(0));
+			d.push_back(uint8_t(0));
+			d.push_back(uint8_t(0));
+			d.push_back(uint8_t(0));
+		});		
+	}
     template<auto N>
     static inline void phi(const uint16_t p) {
         mValues[5 * N] = p;

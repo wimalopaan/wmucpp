@@ -619,6 +619,10 @@ private:
         addNode(p, Param_t{parent, PType::Sel, "Telm. Voltage 1", "off;on", &eeprom.bt_telem_voltage1, 0, 1, [](const store_t){return true;}});
         addNode(p, Param_t{.parent = parent, .type = PType::U16, .name = "Voltage Alarm", .value_ptr = &eeprom.bt_telem_voltage_thresh, .min = 0, .max = 300, .cb = [](const store_t){return true;}, .unitString = " *0.1V"});
 
+		addNode(p, Param_t{parent, PType::Sel, "Switch inject", "off;on", &eeprom.inject_bt_switches, 0, 1, [](const store_t){return true;}});
+		addNode(p, Param_t{parent, PType::U8,  "Switch CRSF Adr", nullptr, &eeprom.inject_bt_crsf, 0xc0, 0xcf, [](const store_t){return true;}});
+		addNode(p, Param_t{parent, PType::U8,  "Switch Adr", nullptr, &eeprom.inject_bt_address, 0, 255, [](const store_t){return true;}});
+		
         return p;
     }();
     static inline const uint32_t uuid = Mcu::Stm::Uuid::get();

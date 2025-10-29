@@ -119,6 +119,7 @@ namespace RC {
                     inline static constexpr std::byte Command{0x32};
                     inline static constexpr std::byte RadioID{0x3a};
 
+#ifdef USE_CRSF_CUSTOM
                     inline static constexpr std::byte Custom1{0x40}; // pack type / instance-nr in payload
                     inline static constexpr std::byte Custom2{0x41}; // pack type / instance-nr in payload
                     inline static constexpr std::byte Custom3{0x42}; // pack type / instance-nr in payload
@@ -137,7 +138,7 @@ namespace RC {
                     inline static constexpr std::byte Diy2{0x51};
                     inline static constexpr std::byte Diy3{0x52};
                     inline static constexpr std::byte Diy4{0x53};
-
+#endif
                     inline static constexpr std::byte KissReq{0x78};
                     inline static constexpr std::byte KissResp{0x79};
 
@@ -372,6 +373,20 @@ namespace RC {
                         out.push_back(ptr[i]);
                     }
                 }
+				template<typename P, typename T>
+                static inline constexpr void pack(const std::byte type, const P& payload, T& out) {
+					uint8_t i = 0;
+					out[i++] = 0xc8;
+                    out[i++] = (sizeof(P) + 2);
+                    out[i++] = (uint8_t)type;
+                    CRC8 crc;
+                    crc += type;
+                    for(uint8_t k = 0; k < sizeof(P); ++k) {
+                        crc += payload[k];
+                        out[i++] = payload[k];
+                    }
+                    out[i++] = crc;
+				}
                 namespace Lua {
                     enum class CmdStep : uint8_t {
                         Idle = 0,

@@ -160,13 +160,18 @@ namespace RC::Protokoll::Crsf {
                 }
                 return true;
             }
+			template<typename P>
+			static inline void inject(const uint8_t type, const P& payload) {
+				uart::fillSendBuffer([&](auto& data){
+                    RC::Protokoll::Crsf::V4::pack((std::byte)type, payload, data);
+                    return std::size(payload) + 4;
+                });
+			}
             static inline void update() { // channels to dest
                 uart::fillSendBuffer([](auto& data){
                     RC::Protokoll::Crsf::V4::pack(src::values(), data);
                     return 26;
                 });
-                // RC::Protokoll::Crsf::V4::pack(src::values(), uart::outputBuffer());
-                // uart::startSend(26);
             }
 #ifdef USE_EXTRA_FORWARDS
             template<typename C>

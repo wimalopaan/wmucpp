@@ -27,6 +27,8 @@ Ideas
 
 Prio 0
 ------
+* add ws2812B to SBUS out port
+* fix the telemetry mess: use telemetry ID, enable/disable Batt-telemetry
 * add switch for RGB or GRB byte-order WS2812B leds
 * use std::variant<> instead of heap-allocated wrapper objects
 * add s.port master
@@ -34,7 +36,6 @@ Prio 0
 * crsf relay for ELRS-relay (from rcDesk32)
 * EByte E32-170T30D relay mode
 * SumDv3: option to swap ch1-16 and ch17-32
-* support addressable LEDs like WS1812 / APA102 (as multiswitch)
 * add mcp23017 / TLC59108(F) support for switch output
 * add SBus-out on servo/esc outputs
 * for SBus-out: selectable range: 1-16 or 17-32 (requires crsfch.lua on radio)
@@ -98,6 +99,7 @@ Done bugs:
 
 Done:
 ------
+* support addressable LEDs like WS1812 / APA102 (as multiswitch)
 * add mpx output on srv2 (limitations on TIM14)
 * test WS2812B output on other than srv1
 * extend set-proto to all rgb-led addresses

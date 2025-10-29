@@ -65,6 +65,9 @@ struct GFSM {
     using esc32ascii_1 = devs::esc32ascii_1;
     using esc32ascii_2 = devs::esc32ascii_2;
 
+	using esc32_1 = devs::esc32_1;
+	using esc32_2 = devs::esc32_2;
+	
     using srv1_waveshare = devs::srv1_waveshare;
     using srv2_waveshare = devs::srv2_waveshare;
 
@@ -301,6 +304,7 @@ struct GFSM {
                 // IO::outl<debug>("# sbus aux: ", sbus_aux::value(0));
                 // IO::outl<debug>("_end:", &_end, " _ebss:", &_ebss, " heap:", heap);
                 // IO::outl<debug>("ch0: ", crsf_in_pa::value(0), " phi0: ", polar1::phi(), " amp0: ", polar1::amp(), " a0: ", Servos::actualPos(0), " t0: ", Servos::turns(0), " phi1: ", polar2::phi(), " amp1: ", polar2::amp(), " a1: ", Servos::actualPos(1), " t1: ", Servos::turns(1));
+				IO::outl<debug>("ec: ", esc32_1::errorCount(), " rpm: ", esc32_1::rpm());
             });
             break;
         case State::DirectMode:

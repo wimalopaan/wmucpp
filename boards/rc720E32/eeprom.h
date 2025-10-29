@@ -135,6 +135,8 @@ struct EEProm {
     std::array<eeprom_value_t, 2> esc_mid{50, 50}; // [0...200]
 
 	eeprom_value_t mpx_mode = 1;
+
+	eeprom_value_t telemetry_id = 7;
 	
     struct CompassCalibData {
         int16_t mean = 0;
@@ -151,5 +153,9 @@ struct EEProm {
     eeprom_value_t bt_telem_voltage1 = 1;
     eeprom_value_t bt_telem_voltage_thresh = 100; // 10.0V
 
+	eeprom_value_t inject_bt_switches = 1; // forward BT switches to relays 
+	eeprom_value_t inject_bt_crsf = 0xc8; // crsf dest address for fowarding 
+	eeprom_value_t inject_bt_address  = 0; // use this switch address to forward
+	
     eeprom_value_t prerun_check = 1;
 };
