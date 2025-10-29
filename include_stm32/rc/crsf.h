@@ -73,6 +73,8 @@ namespace RC {
                 inline static constexpr std::byte Battery{0x08};
                 inline static constexpr std::byte Baro{0x09};
                 inline static constexpr std::byte HeartBeat{0x0b};
+				inline static constexpr std::byte Rpm{0x0c};
+				inline static constexpr std::byte Temp{0x0d};
                 inline static constexpr std::byte Link{0x14};
                 inline static constexpr std::byte Channels{0x16};
                 inline static constexpr std::byte SubsetChannels{0x17};
@@ -88,7 +90,7 @@ namespace RC {
                 inline static constexpr std::byte ParamWrite{0x2d};
                 inline static constexpr std::byte Command{0x32};
                 inline static constexpr std::byte RadioID{0x3a};
-
+#ifdef USE_CRSF_CUSTOM
                 inline static constexpr std::byte Custom1{0x40}; // pack type / instance-nr in payload
                 inline static constexpr std::byte Custom2{0x41}; // pack type / instance-nr in payload
                 inline static constexpr std::byte Custom3{0x42}; // pack type / instance-nr in payload
@@ -107,7 +109,7 @@ namespace RC {
                 inline static constexpr std::byte Diy2{0x51};
                 inline static constexpr std::byte Diy3{0x52};
                 inline static constexpr std::byte Diy4{0x53};
-
+#endif
                 inline static constexpr std::byte KissReq{0x78};
                 inline static constexpr std::byte KissResp{0x79};
 

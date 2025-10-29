@@ -10,7 +10,7 @@
 #define DEFAULT_INERTIA 9
 #define DEFAULT_RL_CALIB_PWM 0
 
-#define NDEBUG
+#define NDEBUG 
 
 namespace Mcu::Stm {
     inline namespace V3{}

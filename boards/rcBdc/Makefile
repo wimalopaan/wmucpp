@@ -17,7 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-subdirs += G431Drv8245_01 G431Drv8245_02 G431_50A_01
+subdirs += G431_50A_01
+#subdirs += G431Drv8245_01 G431Drv8245_02 G431_50A_01
 
 -include ../../Makefile.include
 

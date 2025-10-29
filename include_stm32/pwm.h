@@ -3,6 +3,7 @@
 #include <type_traits>
 #include <concepts>
 #include <array>
+#include <cmath>
 
 #include "mcu/mcu.h"
 #include "mcu/mcu_traits.h"

@@ -8,7 +8,10 @@ struct CrsfTelemetry {
     using out = Out;
     static inline constexpr External::Tick<Timer> telemTicks{100ms};
 
-    enum class State : uint8_t {Idle, Gps, Batt, Temp1, Temp2, Rpm1, Rpm2};
+    enum class State : uint8_t {Idle, Gps, Batt,
+								Temp, Rpm,
+								// Temp1, Temp2, Rpm1, Rpm2
+							   };
     enum class Event : uint8_t {None, SendNext};
 
     static inline void event(const Event e) {
