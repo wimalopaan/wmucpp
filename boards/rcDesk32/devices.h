@@ -445,6 +445,7 @@ struct Devices<Desk02, Config, MCU> {
     struct RelayBusFullDuplexConfig {
         using src = pulse_in;
         using dest = crsf_in::messageBuffer;
+		using bcastInterfaces = Meta::List<>;
         using rxpin = bus_tx;
         using txpin = bus_rx;
         using systemTimer = Devices::systemTimer;
