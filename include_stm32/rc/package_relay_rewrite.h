@@ -187,6 +187,9 @@ namespace RC::Protokoll::Crsf {
 			static inline void activateChannels(const bool on) {
 				mSendRCChannels = on;
 			}
+			static inline void activateBroadcast(const bool on) {
+				mSendBCast = on;
+			}
             enum class RxEvent : uint8_t {None, ReceiveComplete};
             enum class TxEvent : uint8_t {None, TransmitComplete};
             enum class State : uint8_t {Init, Run};
@@ -346,7 +349,7 @@ namespace RC::Protokoll::Crsf {
                             messageBuffer::enqueue(std::span{data, length});
                         }
                         else { // with router
-                            if ((data[PacketIndex::dest] == 0) || // broadcast
+                            if (((data[PacketIndex::dest] == 0) && mSendBCast) || // broadcast
                                 ((data[PacketIndex::dest] == storage::eeprom.commandBroadcastAddress) && (data[PacketIndex::type] == (uint8_t)Type::Command)))  { // pseudo-broadcast
                                 IO::outl<debug>("# ping: ", data[PacketIndex::dest]);
                                 messageBuffer::enqueue(std::span{data, length});
@@ -402,6 +405,7 @@ namespace RC::Protokoll::Crsf {
                     });
                 }
             }
+			static inline volatile bool mSendBCast  = true;
 			static inline volatile bool mSendLinkStats  = true;
 			static inline volatile bool mSendRCChannels = true;
 			static inline volatile bool mSource = false;

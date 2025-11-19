@@ -32,4 +32,5 @@ struct EEProm {
 	
 	std::array<uint8_t, 6> forwardLinkStats  = {1, 1, 1, 1, 1, 1};
 	std::array<uint8_t, 6> forwardRCChannels = {1, 1, 1, 1, 1, 1};
+	std::array<uint8_t, 6> forwardBCast      = {1, 1, 1, 1, 1, 1};
 };

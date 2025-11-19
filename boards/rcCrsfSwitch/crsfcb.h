@@ -148,8 +148,9 @@ struct CrsfCallback {
 	template<uint8_t index>
     static inline constexpr void addOutput(auto& p, const uint8_t parent, const char* const name) {
         const uint8_t parent2 = addParent(p, Param_t{parent, PType::Folder, name});
-		addNode(p, Param_t{parent2, PType::Sel, "Forward LinkStat Pkgs", "Off;On", &eeprom.forwardLinkStats[index], 0, 1, [](const uint8_t v){Meta::nth_element<index, crsf_ifaces>::activateLinkStats(v > 0); return false;}});
-		addNode(p, Param_t{parent2, PType::Sel, "Forward RC-Channels Pkgs", "Off;On", &eeprom.forwardRCChannels[index], 0, 1, [](const uint8_t v){Meta::nth_element<index, crsf_ifaces>::activateChannels(v > 0); return false;}});
+		addNode(p, Param_t{parent2, PType::Sel, "Fwd LinkStat Pkgs", "Off;On", &eeprom.forwardLinkStats[index], 0, 1, [](const uint8_t v){Meta::nth_element<index, crsf_ifaces>::activateLinkStats(v > 0); return false;}});
+		addNode(p, Param_t{parent2, PType::Sel, "Fwd RC-Channels Pkgs", "Off;On", &eeprom.forwardRCChannels[index], 0, 1, [](const uint8_t v){Meta::nth_element<index, crsf_ifaces>::activateChannels(v > 0); return false;}});
+		addNode(p, Param_t{parent2, PType::Sel, "Fwd BCast Pkgs", "Off;On", &eeprom.forwardBCast[index], 0, 1, [](const uint8_t v){Meta::nth_element<index, crsf_ifaces>::activateBroadcast(v > 0); return false;}});
 	}
     using params_t = etl::FixedVector<Param_t, 128>;
     static inline params_t params = [] {
