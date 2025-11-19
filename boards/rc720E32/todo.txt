@@ -27,8 +27,7 @@ Ideas
 
 Prio 0
 ------
-* add messagebuffer to packet-relay
-* add ws2812B to SBUS out port
+* add messagebuffer to packet-relay (for injection of messages)
 * fix the telemetry mess: use telemetry ID, enable/disable Batt-telemetry
 * add switch for RGB or GRB byte-order WS2812B leds
 * use std::variant<> instead of heap-allocated wrapper objects
@@ -87,6 +86,10 @@ Prio 2
 
 Prio 3
 ------
+
+not possible:
+-------------
+* add ws2812B to SBUS out port (not possible, not timer channel output)
 
 not needed anymore
 ------------------
