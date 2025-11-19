@@ -56,10 +56,33 @@ namespace RC {
                         using callback = Config::callback;
                         using storage = Config::storage;
                         static inline void process(const auto payload, [[maybe_unused]] const uint8_t paylength) {
-                            [[maybe_unused]] const uint8_t destAddress = payload[3];
+                            const uint8_t destAddress = payload[3];
                             const uint8_t srcAddress = payload[4];
                             const uint8_t realm = payload[5];
                             const uint8_t cmd = payload[6];
+							if (destAddress == (uint8_t)RC::Protokoll::Crsf::V4::Address::Broadcast) {
+								if (realm == (uint8_t)RC::Protokoll::Crsf::V4::CommandType::Switch) {
+                                    if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::InterModulePatternStart) {
+										const uint8_t address = (uint8_t)payload[7];
+										const uint8_t pattern = (uint8_t)payload[8];
+										const auto result = std::find(std::begin(storage::eeprom.addresses),
+                                                                      std::end(storage::eeprom.addresses),
+                                                                      address);
+                                        if (result != std::end(storage::eeprom.addresses)) {
+                                            const uint8_t adrIndex = std::distance(std::begin(storage::eeprom.addresses), result);
+											if constexpr(requires(){callback::patternStart(adrIndex, pattern);}) {
+												callback::patternStart(adrIndex, pattern);
+											}
+										}
+									}
+									else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::InterModulePatternStopAll) {
+										const uint8_t group = (uint8_t)payload[7];
+										if constexpr(requires(){callback::patternStopAll(group);}) {
+											callback::patternStopAll(group);
+										}
+									}
+								}
+							}
                             if (srcAddress == (uint8_t)RC::Protokoll::Crsf::V4::Address::Handset) {
                                 if (realm == (uint8_t)RC::Protokoll::Crsf::V4::CommandType::Switch) {
                                     if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set4M) {
@@ -275,6 +298,7 @@ namespace RC {
 
                     template<bool fullDuplex, typename M>
                     struct UartConfig {
+						static inline constexpr bool RxTxLinesDifferent = !std::is_same_v<rxpin, txpin>;
                         using Clock = clock;
                         using ValueType = Master::value_t;
                         static inline constexpr auto mode = Mcu::Stm::Uarts::Mode::FullDuplex;
@@ -299,6 +323,7 @@ namespace RC {
                     };
                     template<typename M>
                     struct UartConfig<false, M> {
+						static inline constexpr bool RxTxLinesDifferent = !std::is_same_v<rxpin, txpin>;
                         using Clock = clock;
                         using ValueType = Master::value_t;
                         static inline constexpr auto mode = Mcu::Stm::Uarts::Mode::HalfDuplex;

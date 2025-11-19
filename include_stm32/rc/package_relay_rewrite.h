@@ -56,6 +56,8 @@ namespace RC::Protokoll::Crsf {
 
             using router = Reflection::getRouter_t<Config>;
 
+			using bcastIfaces = Config::bcastInterfaces;
+			
             static inline constexpr uint8_t fifoSize = Config::fifoSize;
 
             static inline constexpr bool halfDuplex = std::is_same_v<rxpin, txpin>;
@@ -253,6 +255,10 @@ namespace RC::Protokoll::Crsf {
                                         data[0] = (uint8_t)Address::StartByte;
                                         recalculateCRC(data);
                                         dest::enqueue(data);
+										
+										Meta::visit<bcastIfaces>([&]<typename IF>(Meta::Wrapper<IF>){
+														IF::forwardPacket(&data[0], data.size());
+													});
                                     }
                                 }
                             }

@@ -18,7 +18,7 @@
 
 #define NDEBUG
 
-#define SW_VERSION 2
+#define SW_VERSION 3
 #define HW_VERSION 2
 
 // #define USE_DEBUG

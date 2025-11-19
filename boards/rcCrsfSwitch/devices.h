@@ -178,6 +178,7 @@ struct Devices<SW10, Config, MCU> {
     using debug1 = void;
     struct CrsfHd1Config {
         using router = Devices::router;
+		using bcastInterfaces = Meta::List<crsf_2, crsf_3, crsf_4, crsf_5, crsf_6>;
         static inline constexpr uint8_t id = 1;
         using src = crsf_in::input;
         using dest = crsf_in::messageBuffer;
@@ -193,6 +194,7 @@ struct Devices<SW10, Config, MCU> {
     };
     struct CrsfHd2Config {
         using router = Devices::router;
+		using bcastInterfaces = Meta::List<crsf_1, crsf_3, crsf_4, crsf_5, crsf_6>;
         static inline constexpr uint8_t id = 2;
         using src = crsf_in::input;
         using dest = crsf_in::messageBuffer;
@@ -209,6 +211,7 @@ struct Devices<SW10, Config, MCU> {
     };
     struct CrsfFD3Config {
         using router = Devices::router;
+		using bcastInterfaces = Meta::List<crsf_1, crsf_2, crsf_4, crsf_5, crsf_6>;
         static inline constexpr uint8_t id = 3;
         using src = crsf_in::input;
         using dest = crsf_in::messageBuffer;
@@ -225,6 +228,7 @@ struct Devices<SW10, Config, MCU> {
     };
 	struct CrsfFD4Config {
         using router = Devices::router;
+		using bcastInterfaces = Meta::List<crsf_1, crsf_2, crsf_3, crsf_5, crsf_6>;
         static inline constexpr uint8_t id = 4;
         using src = crsf_in::input;
         using dest = crsf_in::messageBuffer;
@@ -241,6 +245,7 @@ struct Devices<SW10, Config, MCU> {
     };
     struct CrsfFD5Config {
         using router = Devices::router;
+		using bcastInterfaces = Meta::List<crsf_1, crsf_2, crsf_3, crsf_4, crsf_6>;
         static inline constexpr uint8_t id = 5;
         using src = crsf_in::input;
         using dest = crsf_in::messageBuffer;
@@ -257,6 +262,7 @@ struct Devices<SW10, Config, MCU> {
     };
     struct CrsfFD6Config {
         using router = Devices::router;
+		using bcastInterfaces = Meta::List<crsf_1, crsf_2, crsf_3, crsf_4, crsf_5>;
         static inline constexpr uint8_t id = 6;
         using src = crsf_in::input;
         using dest = crsf_in::messageBuffer;
