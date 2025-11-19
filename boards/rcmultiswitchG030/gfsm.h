@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <tick.h>
+
 using namespace std::literals::chrono_literals;
 
 template<typename Devices>
@@ -36,8 +38,8 @@ struct GFSM {
     using telemetry = devs::telemetry;
     using in0 = devs::in0;
     using in1 = devs::in1;
-
     using bsws = devs::bsws;
+	using patgen = devs::patgen;
 
     enum class State : uint8_t {Undefined, Init, CheckBaudrate,
                                 RunNoTelemetry, RunWithTelemetry,
@@ -73,7 +75,7 @@ struct GFSM {
         });
     }
     static inline void ratePeriodic() {
-        using ratePeriodics = Meta::concat<bsws, Meta::List<crsf, led, btn, telemetry>>;
+        using ratePeriodics = Meta::concat<bsws, Meta::List<crsf, led, btn, telemetry, patgen>>;
         Meta::visit<ratePeriodics>([](const auto w){
             decltype(w)::type::ratePeriodic();
         });

@@ -25,7 +25,20 @@ struct SwitchCallback {
     using storage = Config::storage;
     using debug = Config::debug;
     using bsws = Config::bsws;
+	using patgen = Config::patgen;
 
+#ifdef USE_PATTERNS
+	static inline void patternStart(const uint8_t adrIndex, const uint8_t pattern) {
+		if ((adrIndex == EEProm::AdrIndex::Virtual) && (pattern == 4)) {
+			patgen::event(patgen::Event::Chain);			
+		}
+	}
+	static inline void patternStopAll(const uint8_t group) {
+		if ((group > 0) && (group == storage::eeprom.pattern[0].group)) {
+			patgen::event(patgen::Event::Stop, false);					
+		}
+	}
+#endif
     static inline void prop(const uint8_t adrIndex, const uint8_t channel, const uint8_t duty) {
         if ((adrIndex == EEProm::AdrIndex::Switch) && (channel < 8)) {
                 IO::outl<debug>("# prop: ", channel, " duty: ", duty);
@@ -64,7 +77,24 @@ struct SwitchCallback {
 #endif
     }
     private:
+	static inline bool isMemberOfPattern(const uint8_t swIndex) {
+#ifdef USE_PATTERNS
+		if (storage::eeprom.pattern[0].type > 0) {
+			for(const uint8_t m : storage::eeprom.pattern[0].member) {
+				if (m > 0) {
+					if ((m - 1) == swIndex) {
+						return true;
+					}
+				}
+			}
+		}
+#endif
+		return false;
+	}
     static inline void setIndex(const uint8_t swIndex, const bool on) {
+		if (isMemberOfPattern(swIndex)) {
+			return;
+		}
         Meta::visitAt<bsws>(swIndex, [&]<typename SW>(Meta::Wrapper<SW>){
                                 SW::event(on ? SW::Event::On : SW::Event::Off);
                             });
@@ -78,6 +108,17 @@ struct SwitchCallback {
                 }
             }
         }
+		else { // higher virtuals are pattern
+			const uint8_t pattern = (i - storage::eeprom.virtuals.size());
+			if (pattern == 0) {
+				if (on) {
+					patgen::event(patgen::Event::Start);
+				}
+				else {
+					patgen::event(patgen::Event::Stop);
+				}
+			}
+		}
     }
     static inline bool isMemberOfVirtual(const uint8_t i) {
         for(uint8_t v = 0; v < storage::eeprom.virtuals.size(); ++v) {

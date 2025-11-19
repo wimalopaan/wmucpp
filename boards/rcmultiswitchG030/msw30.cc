@@ -21,11 +21,12 @@
 //#define HW_MSW10 // MultiSwitch_10 (32K)
 // ATTENTION: use Makefile.G031
 #define HW_MSW11 // MultiSwitch_11 (64k)
+//#define HW_MSW12 // MultiSwitch_12 (64k)
 //#define HW_NUCLEO // STM Nucleo G031K8 (64K) (incl. ST-Link)
-// #define HW_WEACT // WeAct G031F8 (64K)
-
+//#define HW_WEACT // WeAct G031F8 (64K)
+ 
 // #define USE_TP1 // enable test point
-#define USE_MORSE
+// #define USE_MORSE
 #define USE_OPERATE_MENU
 #define USE_VIRTUALS
 #define USE_PATTERNS
@@ -37,11 +38,13 @@
 // #define USE_RESPONSE_SLOT // enables arbitration (slot after link-stat), important for half-duplex without crsf-switch/router
 
 #define NDEBUG // do not change: dev option
-
+ 
 #if defined(HW_MSW10)
 # define HW_VERSION 1 // version of own pcb (not nucleo nor weact)
 #elif defined(HW_MSW11)
 # define HW_VERSION 2 // version 2 of own pcb (not nucleo nor weact)
+#elif defined(HW_MSW12)
+# define HW_VERSION 3 // version 3 of own pcb (not nucleo nor weact)
 #elif defined(HW_NUCLEO)
 # define HW_VERSION 10
 #elif defined(HW_WEACT)
@@ -65,7 +68,7 @@
 # undef USE_PATTERNS
 #endif
 
-#define SW_VERSION 31
+#define SW_VERSION 32
 
 #include <cstdint>
 #include <array>

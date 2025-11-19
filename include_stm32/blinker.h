@@ -587,7 +587,7 @@ namespace External {
 
     template<typename Pin, typename Timer, typename Pwm = void, typename Debug = void>
     struct BlinkerWithPwm {
-        enum class State : uint8_t {Off, On, IntervallOff, IntervallOn, PwmMode};
+        enum class State : uint8_t {Off, On, IntervallOff, IntervallOn, IntervallGap, PwmMode};
 
         enum class Event : uint8_t {None, Off, On, PwmModeOn, PwmModeOff};
 
@@ -605,6 +605,13 @@ namespace External {
             }
         }
         static inline void flash_count(const uint8_t c) {
+			if (c > 0) {
+				IO::outl<Debug>("# Pin: ", Pin::number, " count: ", c);
+				flashCount = c;
+			}
+			else {
+				flashCount = 1;
+			}
         }
         static inline void blink(const uint8_t b) {
             IO::outl<Debug>("Pin: ", Pin::number, " Blink: ", b);
@@ -688,6 +695,7 @@ namespace External {
                     mState = State::Off;
                 }
                 if (mBlink) {
+					remaingFlashCount = flashCount;
                     mState = State::IntervallOn;
                 }
                 break;
@@ -697,6 +705,7 @@ namespace External {
                 }
                 mStateTick.on(offTicks, []{
                     if (mBlink) {
+						remaingFlashCount = flashCount;
                         mState = State::IntervallOn;
                     }
                     else {
@@ -709,14 +718,35 @@ namespace External {
                     mState = State::Off;
                 }
                 mStateTick.on(onTicks, []{
+					if (remaingFlashCount > 0) {
+						--remaingFlashCount;
+					}
                     if (mBlink) {
-                        mState = State::IntervallOff;
+						if (remaingFlashCount == 0) {
+							mState = State::IntervallOff;
+						}
+						else {
+							mState = State::IntervallGap;
+						}
                     }
                     else {
                         mState = State::On;
                     }
                 });
                 break;
+			case State::IntervallGap:
+				if (const Event e = std::exchange(mEvent, Event::None); e == Event::Off) {
+                    mState = State::Off;
+                }
+				mStateTick.on(onTicks, [] static {
+					if (mBlink) {
+						mState = State::IntervallOn;
+					}
+					else {
+						mState = State::On;
+					}
+				});
+				break;				
             case State::PwmMode:
                 if (const Event e = std::exchange(mEvent, Event::None); e == Event::PwmModeOff) {
                     mUsePwm = false;
@@ -736,6 +766,7 @@ namespace External {
                     IO::outl<Debug>("Pin: ", Pin::number, " On");
                     on();
                     break;
+				case State::IntervallGap:
                 case State::IntervallOff:
                     IO::outl<Debug>("Pin: ", Pin::number, " IntOff");
                     Pin::reset();
@@ -785,6 +816,8 @@ namespace External {
         static inline bool mBlink{false};
         static inline External::Tick<Timer> onTicks{100ms};
         static inline External::Tick<Timer> offTicks{100ms};
+		static inline uint8_t flashCount = 1;
+		static inline uint8_t remaingFlashCount = flashCount;		
         static inline External::Tick<Timer> mStateTick;
     };
 

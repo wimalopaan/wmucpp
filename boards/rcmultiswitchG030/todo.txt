@@ -3,17 +3,14 @@ bugs:
 
 hardware:
 ---------
+* add stn32g0b1 support
 
 todo:
 -----
+* pattern: add virtual support
 * more easily config, e.g. USE_RESPONSE_SLOT for CRSF_TX_OPENDRAIN
 * unify stm32 g031/g051/g071/g0b1 variants
 * make flash work with non-MORSE
-* running light mode: parameter: speed, activate-output, activate-next address, (pwm)
-* running light mode: crsf command messages
-* running light mode: problem: half-duplex-bus arbitration,
-                      reliable only possible with CRSF-switch project sending arbitration tokens
-                      or doing the crsf-switch the routing
 * watchdog
 * statt Expo: PWM Duty Max Scaling 1/0.1/0.01
 * serial-bootloader (maybe OTA) (maybe use ESCape32-tool)
@@ -28,6 +25,11 @@ details:
 
 done:
 -----
+* running light mode: parameter: speed, activate-output, activate-next address, (pwm)
+* running light mode: crsf command messages
+* running light mode: problem: half-duplex-bus arbitration,
+                      reliable only possible with CRSF-switch project sending arbitration tokens
+                      or doing the crsf-switch the routing
 * send inputs as ArduPilot tunnel messages (for e.g. inputs)
 * unify crsf units (use ms instead of dezi seconds)
 * increase output current by grouping outputs together (timer-synchronization for pwm)

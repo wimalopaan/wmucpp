@@ -22,9 +22,9 @@
 
 #include "etl/fixedvector.h"
 #include "etl/stackstring.h"
+#include "etl/algorithm.h"
 
 #include "meta.h"
-#include "etl/algorithm.h"
 #include "mcu/mcu.h"
 #include "mcu/mcu_traits.h"
 #include "mcu/arm.h"
@@ -51,6 +51,7 @@
 
 #include "crsf_cb.h"
 #include "switch_cb.h"
+#include "pattern.h"
 
 struct Nucleo;
 struct WeAct;
@@ -83,7 +84,6 @@ struct Devices<SW21, Config, MCU> {
     using csrfInDmaChannelComponent2 = Mcu::Components::DmaChannel<typename dma1::component_t, 2>;
     struct CrsfConfig;
     using crsf = RC::Protokoll::Crsf::V4::Master<1, CrsfConfig, MCU>;
-
     using crsfBuffer = crsf::messageBuffer;
 
 #ifdef SERIAL_DEBUG
@@ -164,6 +164,7 @@ struct Devices<SW21, Config, MCU> {
 
     struct MasterPwmConfig;
     struct SlavePwmConfig;
+	
     using pwm2 = Mcu::Stm::V3::Pwm::Simple<2, MasterPwmConfig>;
     using pwm3 = Mcu::Stm::V3::Pwm::Simple<3, SlavePwmConfig>;
     struct MasterPwmConfig {
@@ -222,12 +223,24 @@ struct Devices<SW21, Config, MCU> {
 
     using bsws = Meta::List<bsw0, bsw1, bsw2, bsw3, bsw4, bsw5, bsw6, bsw7>;
 
+	struct PatGenConfig;
+	using patgen = External::Pattern::Generator<0, PatGenConfig>;
+	
+	struct PatGenConfig {
+		using timer = systemTimer;
+		using storage = Devices::storage;
+        using debug = Devices::debug;
+		using outputs = bsws;
+		using messagebuffer = crsfBuffer;
+	};
+	
     struct SwitchCallbackConfig;
 
     struct SwitchCallbackConfig {
         using debug = Devices::debug;
         using storage = Devices::storage;
         using bsws = Devices::bsws;
+		using patgen = Devices::patgen;
     };
 
     struct CrsfCallbackConfig {
@@ -239,6 +252,7 @@ struct Devices<SW21, Config, MCU> {
         using crsf = Devices::crsf;
         using telemetry = Devices::telemetry;
         using switchCallback = SwitchCallback<SwitchCallbackConfig>;
+		using patgen = Devices::patgen;
     };
     struct CrsfConfig {
         using txpin = crsftx;
@@ -732,7 +746,7 @@ struct Devices<WeAct, Config, MCU> {
     struct CrsfConfig;
     using crsf = RC::Protokoll::Crsf::V4::Master<1, CrsfConfig, MCU>;
     using crsfBuffer = crsf::messageBuffer;
-
+	
 #ifdef SERIAL_DEBUG
     using debugtx = Mcu::Stm::Pin<gpioa, 14, MCU>;
     struct DebugConfig;
@@ -860,12 +874,24 @@ struct Devices<WeAct, Config, MCU> {
 
     using bsws = Meta::List<bsw0, bsw1, bsw2, bsw3, bsw4, bsw5, bsw6, bsw7>;
 
+	struct PatGenConfig;
+	using patgen = External::Pattern::Generator<0, PatGenConfig>;
+	
+	struct PatGenConfig {
+		using timer = systemTimer;
+		using storage = Devices::storage;
+        using debug = Devices::debug;
+		using outputs = bsws;
+		using messagebuffer = crsfBuffer;
+	};
+	
     struct SwitchCallbackConfig;
 
     struct SwitchCallbackConfig {
         using debug = Devices::debug;
         using storage = Devices::storage;
         using bsws = Devices::bsws;
+		using patgen = Devices::patgen;
     };
 
     struct CrsfCallbackConfig {
@@ -877,6 +903,7 @@ struct Devices<WeAct, Config, MCU> {
         using crsf = Devices::crsf;
         using telemetry = Devices::telemetry;
         using switchCallback = SwitchCallback<SwitchCallbackConfig>;
+		using patgen = Devices::patgen;
     };
     struct CrsfConfig {
         using txpin = crsftx;
@@ -888,26 +915,27 @@ struct Devices<WeAct, Config, MCU> {
         using systemTimer = Devices::systemTimer;
         using clock = Devices::clock;
         using dmaChRead  = csrfInDmaChannelComponent1;
+		using dmaChWrite  = csrfInDmaChannelComponent2;
         using dmaChRW  = csrfInDmaChannelComponent1;
-        using dmaChWrite  = csrfInDmaChannelComponent2;
-        // using debug = void;
-        using debug = Devices::debug;
+        using debug = void;
+        // using debug = Devices::debug;
         using tp = tp1;
         using callback = CrsfCallback<CrsfCallbackConfig>;
         static inline constexpr uint8_t fifoSize = 8;
     };
     static inline void init() {
         clock::init();
-        systemTimer::init();
+
+		SYSCFG->CFGR1 |= SYSCFG_CFGR1_PA12_RMP; // PA10 (crsf rx)
+        SYSCFG->CFGR1 |= SYSCFG_CFGR1_PA11_RMP; // PA9 (crsf tx)
+		
+		systemTimer::init();
 
         gpioa::init();
         gpiob::init();
         gpioc::init();
 
         dma1::init();
-
-        SYSCFG->CFGR1 |= SYSCFG_CFGR1_PA12_RMP;
-        SYSCFG->CFGR1 |= SYSCFG_CFGR1_PA11_RMP;
 
         led::template dir<Mcu::Output>();
         ledBlinker::event(ledBlinker::Event::Off);

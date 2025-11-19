@@ -340,6 +340,7 @@ boards/rcmultiswitchG030/msw20.cc
 boards/rcmultiswitchG030/msw21.cc
 boards/rcmultiswitchG030/msw30.cc
 boards/rcmultiswitchG030/msw99.cc
+boards/rcmultiswitchG030/pattern.h
 boards/rcmultiswitchG030/startup_g030.s
 boards/rcmultiswitchG030/startup_g031.s
 boards/rcmultiswitchG030/startup_g051.s
