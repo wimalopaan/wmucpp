@@ -8,6 +8,7 @@ the receiver, or the CRSF-switch/router has to be used.
 
 todo:
 ======
+* swap rx/tx (allow for standard cable on 3 pins): set usart to half-duplex for sbus/ibus
 * blinkpattern
 ** 1x no serial packages at all
 ** 2x normal (command received)
