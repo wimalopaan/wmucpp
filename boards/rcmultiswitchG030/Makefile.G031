@@ -38,7 +38,7 @@ LOADLIBES += startup_g031.o system_g0.o
 
 targets += startup_g031.o
 targets += system_g0.o
-targets += msw20.elf msw20.bin
+#targets += msw20.elf msw20.bin
 targets += msw30.elf msw30.bin
 targets += system031
 

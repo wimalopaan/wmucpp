@@ -43,6 +43,6 @@ targets += system0b1
 
 system0b1: system_g0.o startup_g0b1.o
 
-g0b1: system0b1 msw20.bin msw30.bin
+g0b1: system0b1 msw30.bin
 
 -include ../../Makefile.arm.include
