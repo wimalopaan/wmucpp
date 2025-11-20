@@ -415,7 +415,7 @@ namespace IO {
         inline constexpr void out_impl(const char* p);
         
         template<typename Device, typename T>
-        requires ((std::is_signed_v<T> || std::is_unsigned_v<T>)) 
+		requires ((std::is_signed_v<T> || std::is_unsigned_v<T>) && std::is_integral_v<T>)
         inline constexpr void out_impl(const T& v);
         
         template<typename Device, auto L, auto U>
