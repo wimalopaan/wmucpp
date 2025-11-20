@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++
- * Copyright (C) 2019 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2019 - 2025 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,16 +29,51 @@ struct SwitchCallback {
 	using patgen1 = Config::patgen1;
 	using patgen2 = Config::patgen2;
 	using patgen3 = Config::patgen3;
+	using plist = Meta::List<patgen0, patgen1, patgen2, patgen3>;
 
 #ifdef USE_PATTERNS
 	static inline void patternStart(const uint8_t adrIndex, const uint8_t pattern) {
-		if ((adrIndex == EEProm::AdrIndex::Virtual) && (pattern == 4)) {
-			patgen0::event(patgen0::Event::Chain);			
+		if (adrIndex == EEProm::AdrIndex::Virtual) {
+			if (pattern == 4) {
+				patgen0::event(patgen0::Event::Chain);			
+			}
+			else if (pattern == 5) {
+				if constexpr(!std::is_same_v<patgen1, void>) {
+					patgen1::event(patgen1::Event::Chain);			
+				}
+			}
+			else if (pattern == 6) {
+				if constexpr(!std::is_same_v<patgen2, void>) {
+					patgen2::event(patgen2::Event::Chain);			
+				}
+			}
+			else if (pattern == 7) {
+				if constexpr(!std::is_same_v<patgen3, void>) {
+					patgen3::event(patgen3::Event::Chain);			
+				}
+			}
 		}
 	}
 	static inline void patternStopAll(const uint8_t group) {
-		if ((group > 0) && (group == storage::eeprom.pattern[0].group)) {
-			patgen0::event(patgen0::Event::Stop, false);					
+		if (group > 0) {
+			if (group == storage::eeprom.pattern[0].group) {	
+				patgen0::event(patgen0::Event::Stop, false);				
+			}
+			else if (group == storage::eeprom.pattern[1].group) {	
+				if constexpr(!std::is_same_v<patgen1, void>) {
+					patgen1::event(patgen1::Event::Stop, false);				
+				}
+			}
+			else if (group == storage::eeprom.pattern[2].group) {	
+				if constexpr(!std::is_same_v<patgen2, void>) {
+					patgen2::event(patgen2::Event::Stop, false);				
+				}
+			}
+			else if (group == storage::eeprom.pattern[3].group) {	
+				if constexpr(!std::is_same_v<patgen3, void>) {
+					patgen3::event(patgen3::Event::Stop, false);				
+				}
+			}
 		}
 	}
 #endif
@@ -82,14 +117,16 @@ struct SwitchCallback {
     private:
 	static inline bool isMemberOfPattern(const uint8_t swIndex) {
 #ifdef USE_PATTERNS
-		if (storage::eeprom.pattern[0].type > 0) {
-			for(const uint8_t m : storage::eeprom.pattern[0].member) {
-				if (m > 0) {
-					if ((m - 1) == swIndex) {
-						return true;
+		for(uint8_t i = 0; i < 4; ++i) {
+			if (storage::eeprom.pattern[i].type > 0) {
+				for(const uint8_t m : storage::eeprom.pattern[i].member) {
+					if (m > 0) {
+						if ((m - 1) == swIndex) {
+							return true;
+						}
 					}
 				}
-			}
+			}			
 		}
 #endif
 		return false;
@@ -119,6 +156,36 @@ struct SwitchCallback {
 				}
 				else {
 					patgen0::event(patgen0::Event::Stop);
+				}
+			}
+			else if (pattern == 1) {
+				if constexpr(!std::is_same_v<patgen1, void>) {
+					if (on) {
+						patgen1::event(patgen1::Event::Start);
+					}
+					else {
+						patgen1::event(patgen1::Event::Stop);
+					}
+				}
+			}
+			else if (pattern == 2) {
+				if constexpr(!std::is_same_v<patgen2, void>) {
+					if (on) {
+						patgen2::event(patgen2::Event::Start);
+					}
+					else {
+						patgen2::event(patgen2::Event::Stop);
+					}
+				}
+			}
+			else if (pattern == 3) {
+				if constexpr(!std::is_same_v<patgen3, void>) {
+					if (on) {
+						patgen3::event(patgen3::Event::Start);
+					}
+					else {
+						patgen3::event(patgen3::Event::Stop);
+					}
 				}
 			}
 		}

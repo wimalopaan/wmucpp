@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++
- * Copyright (C) 2019 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2019 - 2025 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -212,6 +212,11 @@ struct Devices2<SW21, CrsfCallback, Storage, MCU> {
 
     using bsws = Meta::List<bsw0, bsw1, bsw2, bsw3, bsw4, bsw5, bsw6, bsw7>;
 
+	using patgen0 = void;
+	using patgen1 = void;
+	using patgen2 = void;
+	using patgen3 = void;
+	
     struct CrsfCallbackConfig {
         using bswList = bsws;
         using pwmList = Meta::List<pwm3, pwm2>;
@@ -391,9 +396,13 @@ struct Devices2<SW20, CrsfCallback, Storage, MCU> {
     using bsw7 = External::BlinkerWithPwm<sw7, systemTimer, adap7, debug1>;
 #endif
 
-
     using bsws = Meta::List<bsw0, bsw1, bsw2, bsw3, bsw4, bsw5, bsw6, bsw7>;
 
+	using patgen0 = void;
+	using patgen1 = void;
+	using patgen2 = void;
+	using patgen3 = void;
+	
     struct CrsfCallbackConfig {
         using bswList = bsws;
         using pwmList = Meta::List<pwm1, pwm3, pwm14, pwm17>;

@@ -40,6 +40,9 @@ struct GFSM {
     using in1 = devs::in1;
     using bsws = devs::bsws;
 	using patgen0 = devs::patgen0;
+	using patgen1 = devs::patgen1;
+	using patgen2 = devs::patgen2;
+	using patgen3 = devs::patgen3;
 
     enum class State : uint8_t {Undefined, Init, CheckBaudrate,
                                 RunNoTelemetry, RunWithTelemetry,
@@ -75,7 +78,7 @@ struct GFSM {
         });
     }
     static inline void ratePeriodic() {
-        using ratePeriodics = Meta::concat<bsws, Meta::List<crsf, led, btn, telemetry, patgen0>>;
+        using ratePeriodics = Meta::concat<bsws, Meta::List<crsf, led, btn, telemetry, patgen0, patgen1, patgen2, patgen3>>;
         Meta::visit<ratePeriodics>([](const auto w){
             decltype(w)::type::ratePeriodic();
         });

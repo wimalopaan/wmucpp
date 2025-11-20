@@ -18,15 +18,15 @@
 
 // select one of the following hardware definitions
 // ATTENTION: use Makefile
-//#define HW_MSW10 // MultiSwitch_10 (32K)
+// #define HW_MSW10 // MultiSwitch_10 (32K)
 // ATTENTION: use Makefile.G031
-//#define HW_MSW11 // MultiSwitch_11 (64k)
+// #define HW_MSW11 // MultiSwitch_11 (64k)
 #define HW_MSW12 // MultiSwitch_12 (64k) (EasyEda OSHWLAB)
 //#define HW_NUCLEO // STM Nucleo G031K8 (64K) (incl. ST-Link)
 //#define HW_WEACT // WeAct G031F8 (64K)
  
 // #define USE_TP1 // enable test point
-#define USE_MORSE
+// #define USE_MORSE
 #define USE_OPERATE_MENU
 #define USE_VIRTUALS
 #define USE_PATTERNS
@@ -39,8 +39,23 @@
 
 #define NDEBUG // do not change: dev option
  
-#if defined(HW_MSW12) && !defined(SERIAL_DEBUG)
-# define SERIAL_DEBUG
+// STM32G0B1: capable of all features
+#if defined(HW_MSW12)
+# if !defined(SERIAL_DEBUG)
+#  define SERIAL_DEBUG
+# endif
+# if !defined(USE_MORSE)
+#  define USE_MORSE
+# endif
+# if !defined(USE_OPERATE_MENU)
+#  define USE_OPERATE_MENU
+# endif
+# if !defined(USE_VIRTUALS)
+#  define USE_VIRTUALS
+# endif
+# if !defined(USE_PATTERNS)
+#  define USE_PATTERNS
+# endif
 #endif
 
 #if defined(HW_MSW10)

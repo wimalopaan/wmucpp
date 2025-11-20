@@ -1,6 +1,6 @@
 /*
  * WMuCpp - Bare Metal C++
- * Copyright (C) 2019 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ * Copyright (C) 2019 - 2025 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -702,16 +702,24 @@ struct Devices<SW20, Config, MCU> {
     using bsw6 = External::BlinkerWithPwm<sw6, systemTimer, adap6, debug1>;
     using bsw7 = External::BlinkerWithPwm<sw7, systemTimer, adap7, debug1>;
 #endif
-
-
+	
     using bsws = Meta::List<bsw0, bsw1, bsw2, bsw3, bsw4, bsw5, bsw6, bsw7>;
 
+	using patgen0 = void;
+	using patgen1 = void;
+	using patgen2 = void;
+	using patgen3 = void;
+	
     struct SwitchCallbackConfig;
 
     struct SwitchCallbackConfig {
         using debug = Devices::debug;
         using storage = Devices::storage;
         using bsws = Devices::bsws;
+		using patgen0 = Devices::patgen0;
+		using patgen1 = Devices::patgen1;
+		using patgen2 = Devices::patgen2;
+		using patgen3 = Devices::patgen3;
     };
 
     struct CrsfCallbackConfig {
@@ -723,6 +731,10 @@ struct Devices<SW20, Config, MCU> {
         using crsf = Devices::crsf;
         using telemetry = Devices::telemetry;
         using switchCallback = SwitchCallback<SwitchCallbackConfig>;
+		using patgen0 = Devices::patgen0;
+		using patgen1 = Devices::patgen1;
+		using patgen2 = Devices::patgen2;
+		using patgen3 = Devices::patgen3;
     };
     struct CrsfConfig {
         using txpin = crsftx;
