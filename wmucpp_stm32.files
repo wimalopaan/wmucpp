@@ -314,6 +314,7 @@ boards/rcmultiswitch/sbus_cb.h
 boards/rcmultiswitchG030/Makefile
 boards/rcmultiswitchG030/Makefile.G031
 boards/rcmultiswitchG030/Makefile.G051
+boards/rcmultiswitchG030/Makefile.G0B1
 boards/rcmultiswitchG030/adapter.h
 boards/rcmultiswitchG030/crsf_cb.h
 boards/rcmultiswitchG030/devices.h
@@ -324,6 +325,7 @@ boards/rcmultiswitchG030/gfsm.h
 boards/rcmultiswitchG030/link_g030.ld
 boards/rcmultiswitchG030/link_g031.ld
 boards/rcmultiswitchG030/link_g051.ld
+boards/rcmultiswitchG030/link_g0b1.ld
 boards/rcmultiswitchG030/msw01.cc
 boards/rcmultiswitchG030/msw02.cc
 boards/rcmultiswitchG030/msw03.cc
@@ -344,6 +346,7 @@ boards/rcmultiswitchG030/pattern.h
 boards/rcmultiswitchG030/startup_g030.s
 boards/rcmultiswitchG030/startup_g031.s
 boards/rcmultiswitchG030/startup_g051.s
+boards/rcmultiswitchG030/startup_g0b1.s
 boards/rcmultiswitchG030/switch_cb.h
 boards/rcmultiswitchG030/system_g0.cc
 boards/rcmultiswitchG030/telemetry.h

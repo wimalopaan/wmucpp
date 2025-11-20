@@ -25,17 +25,20 @@ struct SwitchCallback {
     using storage = Config::storage;
     using debug = Config::debug;
     using bsws = Config::bsws;
-	using patgen = Config::patgen;
+	using patgen0 = Config::patgen0;
+	using patgen1 = Config::patgen1;
+	using patgen2 = Config::patgen2;
+	using patgen3 = Config::patgen3;
 
 #ifdef USE_PATTERNS
 	static inline void patternStart(const uint8_t adrIndex, const uint8_t pattern) {
 		if ((adrIndex == EEProm::AdrIndex::Virtual) && (pattern == 4)) {
-			patgen::event(patgen::Event::Chain);			
+			patgen0::event(patgen0::Event::Chain);			
 		}
 	}
 	static inline void patternStopAll(const uint8_t group) {
 		if ((group > 0) && (group == storage::eeprom.pattern[0].group)) {
-			patgen::event(patgen::Event::Stop, false);					
+			patgen0::event(patgen0::Event::Stop, false);					
 		}
 	}
 #endif
@@ -112,10 +115,10 @@ struct SwitchCallback {
 			const uint8_t pattern = (i - storage::eeprom.virtuals.size());
 			if (pattern == 0) {
 				if (on) {
-					patgen::event(patgen::Event::Start);
+					patgen0::event(patgen0::Event::Start);
 				}
 				else {
-					patgen::event(patgen::Event::Stop);
+					patgen0::event(patgen0::Event::Stop);
 				}
 			}
 		}

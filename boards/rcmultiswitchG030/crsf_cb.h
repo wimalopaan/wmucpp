@@ -43,7 +43,10 @@ struct CrsfCallback {
     using crsf = Config::crsf;
     using messageBuffer = crsf::messageBuffer;
     using telemetry = Config::telemetry;
-	using patgen = Config::patgen;
+	using patgen0 = Config::patgen0;
+	using patgen1 = Config::patgen1;
+	using patgen2 = Config::patgen2;
+	using patgen3 = Config::patgen3;
 
     static inline constexpr const char* const title = "MultiSwitch-E@";
     using name_t = std::array<char, 32>;
@@ -139,10 +142,10 @@ private:
 		uint8_t l = 0;
 		for(const auto& m : storage::eeprom.pattern[0].member) {
 			if (m > 0) {
-				patgen::outputPosition(m - 1, l++);
+				patgen0::outputPosition(m - 1, l++);
 			}
 		}
-		patgen::length(l);
+		patgen0::length(l);
 	}
     static inline constexpr uint8_t addParent(auto& c, const Param_t& p) {
         c.push_back(p);
@@ -151,6 +154,31 @@ private:
     static inline constexpr void addNode(auto& c, const Param_t& p) {
         c.push_back(p);
     }
+#ifdef USE_PATTERNS
+	template<uint8_t index>
+    static inline constexpr void addPattern(auto& p, const uint8_t parent, const char* const name) {
+		using plist = Meta::List<patgen0, patgen1, patgen2, patgen3>;
+		using patgen = Meta::nth_element<index, plist>;
+		const uint8_t parent2 = addParent(p, Param_t{parent, PType::Folder, name});
+		addNode(p, Param_t{parent2, PType::Sel, "Pattern", "Off;Cont-LR;Cont-RL;Cont-LRL;Single-LR;Single-RL;Single-LRL", &storage::eeprom.pattern[index].type, 0, 7, [](const uint8_t v){patgen::setMode(v); return true;}});
+		addNode(p, Param_t{parent2, PType::U8,  "On", nullptr, &storage::eeprom.pattern[index].onTime, 1, 255, [](const uint8_t v){patgen::ontime(10*v); return true;}, 100, 0, 1, nullptr, "[*10ms]"});
+		addNode(p, Param_t{parent2, PType::U8,  "Off", nullptr, &storage::eeprom.pattern[index].offTime, 1, 255, [](const uint8_t v){patgen::offtime(10*v); return true;}, 10, 0, 1, nullptr, "[*10ms]"});
+	
+		addNode(p, Param_t{parent2, PType::Sel, "Member 0", "None;Out0;Out1;Out2;Out3;Out4;Out5;Out6;Out7", &storage::eeprom.pattern[index].member[0], 0, 8, [](const uint8_t){setPattern(); return true;}});
+		addNode(p, Param_t{parent2, PType::Sel, "Member 1", "None;Out0;Out1;Out2;Out3;Out4;Out5;Out6;Out7", &storage::eeprom.pattern[index].member[1], 0, 8, [](const uint8_t){setPattern(); return true;}});
+		addNode(p, Param_t{parent2, PType::Sel, "Member 2", "None;Out0;Out1;Out2;Out3;Out4;Out5;Out6;Out7", &storage::eeprom.pattern[index].member[2], 0, 8, [](const uint8_t){setPattern(); return true;}});
+		addNode(p, Param_t{parent2, PType::Sel, "Member 3", "None;Out0;Out1;Out2;Out3;Out4;Out5;Out6;Out7", &storage::eeprom.pattern[index].member[3], 0, 8, [](const uint8_t){setPattern(); return true;}});
+		addNode(p, Param_t{parent2, PType::Sel, "Member 4", "None;Out0;Out1;Out2;Out3;Out4;Out5;Out6;Out7", &storage::eeprom.pattern[index].member[4], 0, 8, [](const uint8_t){setPattern(); return true;}});
+		addNode(p, Param_t{parent2, PType::Sel, "Member 5", "None;Out0;Out1;Out2;Out3;Out4;Out5;Out6;Out7", &storage::eeprom.pattern[index].member[5], 0, 8, [](const uint8_t){setPattern(); return true;}});
+		addNode(p, Param_t{parent2, PType::Sel, "Member 6", "None;Out0;Out1;Out2;Out3;Out4;Out5;Out6;Out7", &storage::eeprom.pattern[index].member[6], 0, 8, [](const uint8_t){setPattern(); return true;}});
+		addNode(p, Param_t{parent2, PType::Sel, "Member 7", "None;Out0;Out1;Out2;Out3;Out4;Out5;Out6;Out7", &storage::eeprom.pattern[index].member[7], 0, 8, [](const uint8_t){setPattern(); return true;}});
+	
+		addNode(p, Param_t{parent2, PType::U8,  "Next Address", nullptr, &storage::eeprom.pattern[index].next_address, 0, 255, [](const uint8_t){return true;}});
+		addNode(p, Param_t{parent2, PType::U8,  "Group", nullptr, &storage::eeprom.pattern[index].group, 0, 255, [](const uint8_t){return true;}});
+	
+		addNode(p, Param_t{parent2, PType::Sel, "Test", "Off;On", nullptr, 0, 1, [](const uint8_t v){patgen::event((v == 0) ? patgen::Event::Stop : patgen::Event::Start); return false;}});
+	}
+#endif
 #ifdef USE_VIRTUALS
     template<uint8_t index>
     static inline constexpr void addVirtual(auto& p, const uint8_t parent, const char* const name) {
@@ -175,7 +203,11 @@ private:
         addNode(p, Param_t{parent2, PType::Sel, "Test", "Off;On", nullptr, 0, 1, [](const uint8_t v){Meta::nth_element<index, bsws>::on(v); return false;}});
     }
     static inline auto params = []{
+#ifdef HW_MSW12
+		etl::FixedVector<Param_t, 250> p;
+#else
         etl::FixedVector<Param_t, 137> p;
+#endif
 		// etl::FixedVector<Param_t, 132> p;
         addNode(p, Param_t{0, PType::Folder, ""}); // unvisible top folder
         addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
@@ -267,24 +299,13 @@ private:
         addVirtual<3>(p, parent, "Virtual 3");
 #endif
 #ifdef USE_PATTERNS
-        parent = addParent(p, Param_t{0, PType::Folder, "Pattern"});
-        addNode(p, Param_t{parent, PType::Sel, "Pattern Virt. 4", "Off;Cont-LR;Cont-RL;Cont-LRL;Single-LR;Single-RL;Single-LRL", &storage::eeprom.pattern[0].type, 0, 7, [](const uint8_t v){patgen::setMode(v); return true;}});
-		addNode(p, Param_t{parent, PType::U8,  "On", nullptr, &storage::eeprom.pattern[0].onTime, 1, 255, [](const uint8_t v){patgen::ontime(10*v); return true;}, 100, 0, 1, nullptr, "[*10ms]"});
-		addNode(p, Param_t{parent, PType::U8,  "Off", nullptr, &storage::eeprom.pattern[0].offTime, 1, 255, [](const uint8_t v){patgen::offtime(10*v); return true;}, 10, 0, 1, nullptr, "[*10ms]"});
-
-		addNode(p, Param_t{parent, PType::Sel, "Member 0", "None;Out0;Out1;Out2;Out3;Out4;Out5;Out6;Out7", &storage::eeprom.pattern[0].member[0], 0, 8, [](const uint8_t){setPattern(); return true;}});
-		addNode(p, Param_t{parent, PType::Sel, "Member 1", "None;Out0;Out1;Out2;Out3;Out4;Out5;Out6;Out7", &storage::eeprom.pattern[0].member[1], 0, 8, [](const uint8_t){setPattern(); return true;}});
-		addNode(p, Param_t{parent, PType::Sel, "Member 2", "None;Out0;Out1;Out2;Out3;Out4;Out5;Out6;Out7", &storage::eeprom.pattern[0].member[2], 0, 8, [](const uint8_t){setPattern(); return true;}});
-		addNode(p, Param_t{parent, PType::Sel, "Member 3", "None;Out0;Out1;Out2;Out3;Out4;Out5;Out6;Out7", &storage::eeprom.pattern[0].member[3], 0, 8, [](const uint8_t){setPattern(); return true;}});
-		addNode(p, Param_t{parent, PType::Sel, "Member 4", "None;Out0;Out1;Out2;Out3;Out4;Out5;Out6;Out7", &storage::eeprom.pattern[0].member[4], 0, 8, [](const uint8_t){setPattern(); return true;}});
-		addNode(p, Param_t{parent, PType::Sel, "Member 5", "None;Out0;Out1;Out2;Out3;Out4;Out5;Out6;Out7", &storage::eeprom.pattern[0].member[5], 0, 8, [](const uint8_t){setPattern(); return true;}});
-		addNode(p, Param_t{parent, PType::Sel, "Member 6", "None;Out0;Out1;Out2;Out3;Out4;Out5;Out6;Out7", &storage::eeprom.pattern[0].member[6], 0, 8, [](const uint8_t){setPattern(); return true;}});
-		addNode(p, Param_t{parent, PType::Sel, "Member 7", "None;Out0;Out1;Out2;Out3;Out4;Out5;Out6;Out7", &storage::eeprom.pattern[0].member[7], 0, 8, [](const uint8_t){setPattern(); return true;}});
-
-		addNode(p, Param_t{parent, PType::U8,  "Next Address", nullptr, &storage::eeprom.pattern[0].next_address, 0, 255, [](const uint8_t){return true;}});
-		addNode(p, Param_t{parent, PType::U8,  "Group", nullptr, &storage::eeprom.pattern[0].group, 0, 255, [](const uint8_t){return true;}});
-
-		addNode(p, Param_t{parent, PType::Sel, "Test", "Off;On", nullptr, 0, 1, [](const uint8_t v){patgen::event((v == 0) ? patgen::Event::Stop : patgen::Event::Start); return false;}});
+		parent = addParent(p, Param_t{0, PType::Folder, "Pattern"});
+		addPattern<0>(p, parent, "Pattern Virt. 5");
+# ifdef HW_MSW12
+		addPattern<1>(p, parent, "Pattern Virt. 6");
+		addPattern<2>(p, parent, "Pattern Virt. 5");
+		addPattern<3>(p, parent, "Pattern Virt. 8");
+# endif
 #endif
 #ifdef USE_OPERATE_MENU
         parent = addParent(p, Param_t{0, PType::Folder, "Operate"});
