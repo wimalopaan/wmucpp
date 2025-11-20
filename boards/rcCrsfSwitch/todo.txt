@@ -2,13 +2,12 @@ bugs:
 
 todo:
 =====
-* select which type of packages should be routed (rc-channels, link-stats)
+* menu: option to swap rx/tx uart lines (for outgoing: layout like receiver)
 * menu: range of rewrite addresses
 * indication of table overrun
 * menu: display routing table
 * self-refresh to detect stale devices
 * add special cases for TX-module / RX / Handset
-* add cross-routing to other modules (routing between modules, not to receiver)
 
 problems:
 =====
@@ -18,6 +17,8 @@ problems:
 
 done:
 =====
+* add cross-routing to other modules (routing between modules, not to receiver)
+* select which type of packages should be routed (rc-channels, link-stats)
 * add all interfaces
 * learning addresses / setup routing table on power-up (without TBS agent or elrsV3.lua)
 ** startup state: send rc-channels (0 channel values) together with ping packets (and maybe link-stats) interleaved
