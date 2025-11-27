@@ -35,6 +35,9 @@ struct GFSM {
     using pca = devs::pca9745;
     using debug = devs::debug;
     using crsfCallback = crsf::callback;
+	
+	using adc = devs::adc;
+	using telemetry = devs::telemetry;
 
     enum class State : uint8_t {Undefined, Init,
                                 RunNoTelemetry, RunWithTelemetry,
@@ -120,7 +123,10 @@ struct GFSM {
             });
             break;
         case State::Init:
-            mStateTick.on(initTicks, []{
+#ifdef HW_LED2
+			mState = State::RunWithTelemetry;
+#else
+			mStateTick.on(initTicks, []{
                 if (storage::eeprom.telemetry) {
                     mState = State::RunWithTelemetry;
                 }
@@ -128,6 +134,7 @@ struct GFSM {
                     mState = State::RunNoTelemetry;
                 }
             });
+#endif
             break;
         case State::RunNoTelemetry:
             mStateTick.on(debugTicks, []{
@@ -144,9 +151,16 @@ struct GFSM {
             }
             break;
         case State::RunWithTelemetry:
-            mStateTick.on(debugTicks, []{
-                // IO::outl<debug>("# ch0: ", crsf_pa::value(0), " psize: ", crsfCallback::numberOfParameters(), " cp: ", crsf_pa::template channelPackages<false>(), " lp: ", crsf_pa::template linkPackages<false>());
-            });
+			mStateTick.on(debugTicks, []{
+				IO::outl<debug>("# ch0: ", crsf_pa::value(0));
+				if constexpr(!std::is_same_v<adc, void>) {
+					const int16_t t = Mcu::Stm::V4::adc2Temp((adc::values()[0] * devs::Vref_n) / devs::Vcal_n);
+					const uint16_t v = adc::values()[1] * (devs::r1 + devs::r2) * devs::Vref_n / (devs::Vref_d * 4096 * devs::r1 / 10); // 100mV
+					telemetry::voltage(v * 100);
+					telemetry::temp(t * 10);
+				}
+				telemetry::next();
+			});
 #ifdef USE_BUTTON
             if (const auto e = btn::event(); e == btn::Press::Long) {
                 if (storage::eeprom.telemetry) {
@@ -165,12 +179,17 @@ struct GFSM {
             break;
         case State::NotConnected:
             if (mEvent.is(Event::ReceiverConnected) || mEvent.is(Event::DirectConnected)) {
-                if (storage::eeprom.telemetry) {
+#ifdef HW_LED2
+				mState = State::RunWithTelemetry;
+#else
+				
+				if (storage::eeprom.telemetry) {
                     mState = State::RunWithTelemetry;
                 }
                 else {
                     mState = State::RunNoTelemetry;
                 }
+#endif
             }
             break;
         }
@@ -193,13 +212,18 @@ struct GFSM {
                 IO::outl<debug>("# Run WT");
                 IO::outl<debug>("# adr: ", storage::eeprom.address1);
                 crsf_out::enableReply(true);
-                if (storage::eeprom.telemetry) {
+#ifdef HW_LED2
+				led::count(2);
+				led::event(led::Event::Slow);
+#else
+				if (storage::eeprom.telemetry) {
                     led::count(2);
                     led::event(led::Event::Slow);
                 }
                 else {
                     led::event(led::Event::Steady);
                 }
+#endif
                 break;
             case State::NotConnected:
                 IO::outl<debug>("# Run NC");

@@ -174,6 +174,21 @@ namespace Mcu::Stm {
             static inline void reset() {
                 Pin::set();
             }
+			template<bool PUP>
+			static inline void pullup() {
+				Pin::template pullup<PUP>();
+			}
+			template<bool PD>
+			static inline void pulldown() {
+				Pin::template pulldown<PD>();
+			}
+			template<typename D>
+			static inline void dir() {
+				Pin::template dir<D>();
+			}
+			static inline bool read() {
+				return !Pin::read();
+			}
         };
 		template<typename Pin>
 		struct ActiveHigh {

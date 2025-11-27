@@ -73,12 +73,13 @@ struct EEProm {
     uint8_t crsf_address = 0xc8;
     uint8_t response_slot = 8;
 #endif
-#ifdef USE_EEPROM_TEST
+#ifndef HW_LED2
     uint8_t telemetry = 1;
-#else
-    uint8_t telemetry = 0;
 #endif
 
+	uint8_t temp_id = 1;	
+	uint8_t cells_id = 1;
+	
     std::array<Output, 16> outputs{};
     std::array<Group,  4> groups{};
     std::array<Virtual, 8> virtuals{};

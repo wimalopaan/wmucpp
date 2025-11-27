@@ -1,9 +1,15 @@
 * HW
 ------
+* design with uqfn32
 * lower the Rext value (4k7 -> 1K)
 
 * ToDo
 ------
+* add watchdog
+* add reset parameters command
+* add restart command (NVIC_SystemReset)
+* add NDEBUG=false mode with assertions using reset vector NVIC_SystemReset()
+* display reset cause and count (.noinit section variables)
 * flicker mode (us police mode)
 * group: on/off single ramps
 * implement 4-state switches (SET4 / SET4M proto) -> LED states (off, full, individual, group)

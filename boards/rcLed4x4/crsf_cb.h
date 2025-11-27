@@ -256,7 +256,6 @@ struct CrsfCallback {
                             switchcallback::setVirtual(sw8);
                         }
                     }
-
                 }
             }
         }
@@ -339,14 +338,8 @@ private:
         addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 3", .value_ptr = &eeprom.virtuals[index].member[3], .min = uint8_t(-1), .max = 15, .cb = [](const uint8_t){return true;}, .def = 0});
         addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name = "Test", .options = "Off;On", .min = 0, .max = 1, .cb = [](const uint8_t v){switchcallback::setVirtualIndex(index, (v > 0)); return false;}});
     }
-#ifdef TEST1
-    static inline auto mNameTest = []{
-        std::array<char, 32> a;
-        strcpy(&a[0], "bla");
-        return a;
-    }();
-#endif
-    using params_t = etl::FixedVector<Param_t, 240>;
+
+	using params_t = etl::FixedVector<Param_t, 240>;
 
     static inline params_t params = [] {
         params_t p;
@@ -370,8 +363,10 @@ private:
                                crsf::address(std::byte{v});
                                return true;
                            }});
-        addNode(p, Param_t{parent, PType::U8, "Response Slot", nullptr, &eeprom.response_slot, 0, 15, [](const uint8_t v){crsf::output::telemetrySlot(v); return true;}});
+#ifndef HW_LED2
+		addNode(p, Param_t{parent, PType::U8, "Response Slot", nullptr, &eeprom.response_slot, 0, 15, [](const uint8_t v){crsf::output::telemetrySlot(v); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Config resp.", "Button;Allways on", &eeprom.telemetry, 0, 1});
+#endif
 
         parent = addParent(p, Param_t{0, PType::Folder, "Outputs 0-3"});
         addOutput<0>(p, parent, "Output 0");

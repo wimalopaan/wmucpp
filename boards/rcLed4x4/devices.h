@@ -32,6 +32,7 @@
 #include "components.h"
 #include "pwm.h"
 #include "pwm_dma.h"
+#include "adc.h"
 #include "usart.h"
 #include "units.h"
 #include "output.h"
@@ -48,15 +49,162 @@
 #include "button.h"
 
 #include "pca9745.h"
-
 #include "crsf_cb.h"
+#include "telemetry.h"
+#include "switch_cb.h"
 
 struct Led01; // board: Led4x4
+struct Led10; // board: Led4x4 (EasyEda, G0B1)
 
 using namespace std::literals::chrono_literals;
 
 template<typename HW, typename Config, typename MCU = DefaultMcu>
 struct Devices;
+
+template<typename Config, typename MCU>
+struct Devices<Led10, Config, MCU> {
+    using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<64_MHz, 2'000_Hz, Mcu::Stm::HSI>>;
+    using systemTimer = Mcu::Stm::SystemTimer<clock, Mcu::UseInterrupts<false>, MCU>;
+
+    using gpioa = Mcu::Stm::GPIO<Mcu::Stm::A, MCU>;
+    using gpiob = Mcu::Stm::GPIO<Mcu::Stm::B, MCU>;
+    using gpioc = Mcu::Stm::GPIO<Mcu::Stm::C, MCU>;
+
+    using storage = Config::storage;
+
+    using dma1 = Mcu::Stm::Dma::Controller<1, MCU>;
+    using csrfInDmaChannelComponent1 = Mcu::Components::DmaChannel<typename dma1::component_t, 1>;
+	using csrfInDmaChannelComponent2 = Mcu::Components::DmaChannel<typename dma1::component_t, 2>;
+    using spiDmaChannelComponent1 = Mcu::Components::DmaChannel<typename dma1::component_t, 3>;
+    // using spiDmaChannelComponent2 = Mcu::Components::DmaChannel<typename dma1::component_t, 4>;
+	using adcDmaChannel = Mcu::Components::DmaChannel<typename dma1::component_t, 5>;
+
+    // CRSF TX
+    using crsftx = Mcu::Stm::Pin<gpioa, 9, MCU>;
+	using crsfrx = Mcu::Stm::Pin<gpioa, 10, MCU>;
+
+    // Usart 1: CRSF
+    struct CrsfConfig;
+    using crsf = RC::Protokoll::Crsf::V4::Master<1, CrsfConfig, MCU>;
+
+#ifdef SERIAL_DEBUG
+    // Usart 2: Debug
+    using debugtx = Mcu::Stm::Pin<gpioa, 2, MCU>;
+    struct DebugConfig;
+    using debug = SerialBuffered<2, DebugConfig, MCU>;
+    struct DebugConfig {
+        using pin = debugtx;
+        using clock = Devices::clock;
+        static inline constexpr uint16_t bufferSize = 2048;
+    };
+#else
+    using debug = void;
+#endif
+
+    // Led
+    using led = Mcu::Stm::Pin<gpiob, 2, MCU>;
+    using ledBlinker = External::Blinker<led, systemTimer>;
+
+	using vin = Mcu::Stm::Pin<gpioa, 0, MCU>; // adc in0
+    // ADC
+    struct AdcConfig {
+        using debug = void;
+        using channels = std::integer_sequence<uint8_t, 0, 12>; // temp channel 12
+        using dmaChannel = adcDmaChannel;
+        using trigger = Mcu::Stm::ContinousSampling<256>;
+        using isrConfig = Meta::List<>;
+        static inline constexpr uint8_t slowChannel = 12; // temp
+        static inline constexpr uint8_t slowSampleTime = 7;
+    };
+    using adc = Mcu::Stm::V4::Adc<1, AdcConfig>;
+	
+	static inline uint32_t r1 = 1'000;
+    static inline uint32_t r2 = 12'000;
+    static inline uint32_t Vref_n = 33;
+    static inline uint32_t Vref_d = 10;
+    static inline uint32_t Vcal_n = 30;
+
+    struct TelemConfig {
+        using debug = Devices::debug;
+        using timer = systemTimer;
+        using clock = Devices::clock;
+        using messagebuffer = crsf::messageBuffer;
+        using storage = Devices::storage;
+    };
+    using telemetry = Telemetry<TelemConfig>;
+	
+    // SPI 1: PCA
+    using spi_cs = Mcu::Stm::Pin<gpioa, 4, MCU>;
+    using spi_miso = Mcu::Stm::Pin<gpioa, 6, MCU>;
+    using spi_mosi = Mcu::Stm::Pin<gpioa, 7, MCU>;
+    using spi_clk = Mcu::Stm::Pin<gpioa, 5, MCU>;
+
+    using pca_oe = Mcu::Stm::Pin<gpiob, 0, MCU>;
+    using pca_reset = Mcu::Stm::Pin<gpiob, 1, MCU>;
+
+    struct PcaConfig {
+        using systemTimer = Devices::systemTimer;
+        using debug = void;
+        // using debug = Devices::debug;
+        using cs = spi_cs;
+        using miso = spi_miso;
+        using mosi = spi_mosi;
+        using clk = spi_clk;
+        using oe = pca_oe;
+        using reset = pca_reset;
+        using txDmaComponent = spiDmaChannelComponent1;
+        // using rxDmaComponent = spiDmaChannelComponent2;
+    };
+    using pca9745 = External::PCA9745<1, PcaConfig>;
+
+	struct SwitchCallbackConfig {
+		using pca = Devices::pca9745;
+		using storage = Devices::storage;
+	};
+    struct CrsfCallbackConfig {
+        using timer = systemTimer;
+        using crsf = Devices::crsf;
+        using storage = Devices::storage;
+        using pca = pca9745;
+		using switchcallback = SwitchCallback<SwitchCallbackConfig>;
+    };
+    struct CrsfConfig {
+        using txpin = crsftx;
+        using rxpin = crsfrx; 
+        using systemTimer = Devices::systemTimer;
+        using clock = Devices::clock;
+        using dmaChRead  = csrfInDmaChannelComponent1;
+		using dmaChWrite = csrfInDmaChannelComponent2;
+        // using debug = void;
+        using debug = Devices::debug;
+        using tp = void;
+        using callback = CrsfCallback<CrsfCallbackConfig, debug>;
+        // using callback = CrsfCallback<CrsfCallbackConfig, void>;
+        static inline constexpr uint8_t fifoSize = 8;
+    };
+    static inline void init() {
+        clock::init();
+        systemTimer::init();
+
+        gpioa::init();
+        gpiob::init();
+        gpioc::init();
+
+        dma1::init();
+
+        led::template dir<Mcu::Output>();
+        ledBlinker::event(ledBlinker::Event::Off);
+
+        crsf::init();
+
+        pca9745::init();
+
+		adc::init();
+        adc::oversample(7);
+		
+		adc::start();
+	}
+};
 
 template<typename Config, typename MCU>
 struct Devices<Led01, Config, MCU> {

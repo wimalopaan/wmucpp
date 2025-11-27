@@ -243,6 +243,8 @@ namespace Mcu::Stm {
             struct Impl<Pin<A, 1>, SPI<1>, SCLK, MCU> : std::integral_constant<uint8_t, 0> {};
             template<Mcu::Stm::G0xx MCU>
             struct Impl<Pin<A, 4>, SPI<1>, CS, MCU> : std::integral_constant<uint8_t, 0> {};
+			template<Mcu::Stm::G0xx MCU>
+            struct Impl<Pin<A, 5>, SPI<1>, SCLK, MCU> : std::integral_constant<uint8_t, 0> {};
         }
         
         template<typename Pin, typename Peripherie, typename Function, typename MCU = DefaultMcu>

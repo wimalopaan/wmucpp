@@ -34,8 +34,14 @@ namespace External {
         static inline constexpr auto shortPressTicks = External::Tick<Timer>::fromRaw(ShortPressTicks);
         static inline constexpr auto longPressTicks = External::Tick<Timer>::fromRaw(LongPressTicks);
 
+		template<bool PullUp = true>
         static inline void init() {
-            Pin::template pullup<true>();
+			if constexpr(PullUp) {
+				Pin::template pullup<true>();
+			}
+			else {
+				Pin::template pulldown<true>();
+			}
             Pin::template dir<Mcu::Input>();
         }
         static inline void ratePeriodic() {

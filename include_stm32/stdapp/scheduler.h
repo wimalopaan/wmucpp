@@ -1,17 +1,17 @@
 #pragma once
 
+#include "mcu/mcu.h"
+
 template<typename Config>
 struct Scheduler {
-    private:
     using fsm = Config::fsm;
     using timer = Config::timer;
-    public:
     [[noreturn]]static inline void main(auto irqEnable) {
         fsm::init();
-        fsm::update(true);
-
+		if constexpr(requires(){fsm::update(true);}) {
+			fsm::update(true);
+		}
         irqEnable();
-
         __enable_irq();
         while(true) {
             fsm::periodic();
