@@ -93,7 +93,7 @@ struct Telemetry {
     static inline void next() {
         if (mState != State::On) return;
         using namespace RC::Protokoll::Crsf::V4;
-#ifdef HW_MSW11
+#if defined(HW_MSW11) || defined(HW_MSW12)
         buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::Temp, [&](auto& d){
             d.push_back(uint8_t(storage::eeprom.temp_id));
             d.push_back(mTemp);

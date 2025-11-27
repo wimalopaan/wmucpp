@@ -81,7 +81,7 @@ struct EEProm {
 #else
     uint8_t telemetry = 0;
 #endif
-#ifdef HW_MSW11
+#if defined(HW_MSW11) || defined(HW_MSW12)
     uint8_t cells_id = 1;
     uint8_t temp_id = 1;
 #endif
