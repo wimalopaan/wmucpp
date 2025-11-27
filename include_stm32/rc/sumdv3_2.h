@@ -16,6 +16,8 @@
 
 namespace RC::Protokoll::SumDV3 {
     namespace V2 {
+		using namespace etl::literals;
+		using namespace std::literals::chrono_literals;
 
         template<uint8_t N, typename Config, typename MCU = DefaultMcu>
         struct Output {

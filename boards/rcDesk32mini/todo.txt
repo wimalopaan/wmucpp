@@ -1,0 +1,7 @@
+
+ToDo:
+=====
+* state machine / button events
+* analog calibration
+* config protocol -> widget
+

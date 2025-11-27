@@ -231,7 +231,7 @@ namespace RC::Protokoll::SBus2 {
             static inline volatile uint8_t mRequestIndex{ 0 };
             static inline State mState{ State::SendFrame };
             static inline uint8_t mFlagsAndSwitches{};
-            static inline std::array<uint16_t, 16> output;
+            static inline std::array<volatile uint16_t, 16> output;
             static inline External::Tick<systemTimer> mStateTicks{};
             // static inline volatile etl::Event<Event> mEvent;
         };

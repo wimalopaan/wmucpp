@@ -10,6 +10,7 @@
 #include "byte.h"
 #include "etl/algorithm.h"
 #include "etl/ranged.h"
+#include "etl/event.h"
 #include "units.h"
 #include "tick.h"
 #include "rc/rc_2.h"
@@ -17,6 +18,119 @@
 
 namespace RC::Protokoll::SBus {
     namespace V2 {
+		using namespace etl::literals;
+		using namespace std::literals::chrono_literals;
+		
+		template<uint8_t N, typename Config, typename MCU = DefaultMcu>
+        struct Output {
+			using clock = Config::clock;
+            using debug = Config::debug;
+            using dmaChComponent = Config::dmaChComponent;
+            using systemTimer = Config::systemTimer;
+            using pin = Config::pin;
+            using tp = Config::tp;
+
+            struct UartConfig {
+                using Clock = clock;
+                using ValueType = uint8_t;
+                using DmaChComponent = dmaChComponent;
+                static inline constexpr bool invert = true;
+                static inline constexpr auto parity = Mcu::Stm::Uarts::Parity::Even;
+                static inline constexpr auto mode = Mcu::Stm::Uarts::Mode::TxOnly;
+                static inline constexpr uint32_t baudrate = 100'000;
+                struct Tx {
+                    static inline constexpr bool singleBuffer = true;
+                    static inline constexpr bool enable = true;
+                    static inline constexpr size_t size = 26;
+                };
+            };
+
+            using uart = Mcu::Stm::V4::Uart<N, UartConfig, MCU>;
+            static inline constexpr uint8_t af = Mcu::Stm::AlternateFunctions::mapper_v<pin, uart, Mcu::Stm::AlternateFunctions::TX>;
+
+            static inline void setChannel(const uint8_t channel, const uint16_t value) {
+                output[channel] = value;
+            }
+            static inline void init() {
+                IO::outl<debug>("# Sbus Output ", N, " init");
+                for(auto& v : output) {
+                    v = RC::Protokoll::SBus::V2::mid;
+                }
+                Mcu::Arm::Atomic::access([]{
+                    uart::init();
+                    mActive = true;
+                });
+                pin::afunction(af);
+                pin::template pulldown<true>();
+            }
+            static inline void reset() {
+                IO::outl<debug>("# Sbus2 ", N, " reset");
+                Mcu::Arm::Atomic::access([]{
+                    uart::reset();
+                    mActive = false;
+                });
+                pin::analog();
+            }
+
+            static constexpr External::Tick<systemTimer> timeoutTicks{ 14ms };
+
+            static inline void invert(const bool inv) {
+				if (!mActive) return;
+                if (inv) {
+                    uart::template invert<true>();
+                    pin::template pulldown<true>();
+
+                } else {
+                    uart::template invert<false>();
+                    pin::template pullup<true>();
+                }
+            }
+            inline static void ratePeriodic() {
+				if (!mActive) return;
+                ++mStateTick;
+				mStateTick.on(timeoutTicks, []{
+					fillSendFrame();
+				});
+            }
+            private:
+            static inline void fillSendFrame() {
+                uart::fillSendBuffer([](auto& outFrame){
+                    outFrame[0] = 0x0f;
+                    outFrame[1] = (output[0] & 0x07FF);
+                    outFrame[2] = ((output[0] & 0x07FF) >> 8 | (output[1] & 0x07FF) << 3);
+                    outFrame[3] = ((output[1] & 0x07FF) >> 5 | (output[2] & 0x07FF) << 6);
+                    outFrame[4] = ((output[2] & 0x07FF) >> 2);
+                    outFrame[5] = ((output[2] & 0x07FF) >> 10 | (output[3] & 0x07FF) << 1);
+                    outFrame[6] = ((output[3] & 0x07FF) >> 7 | (output[4] & 0x07FF) << 4);
+                    outFrame[7] = ((output[4] & 0x07FF) >> 4 | (output[5] & 0x07FF) << 7);
+                    outFrame[8] = ((output[5] & 0x07FF) >> 1);
+                    outFrame[9] = ((output[5] & 0x07FF) >> 9 | (output[6] & 0x07FF) << 2);
+                    outFrame[10] = ((output[6] & 0x07FF) >> 6 | (output[7] & 0x07FF) << 5);
+                    outFrame[11] = ((output[7] & 0x07FF) >> 3);
+                    outFrame[12] = ((output[8] & 0x07FF));
+                    outFrame[13] = ((output[8] & 0x07FF) >> 8 | (output[9] & 0x07FF) << 3);
+                    outFrame[14] = ((output[9] & 0x07FF) >> 5 | (output[10] & 0x07FF) << 6);
+                    outFrame[15] = ((output[10] & 0x07FF) >> 2);
+                    outFrame[16] = ((output[10] & 0x07FF) >> 10 | (output[11] & 0x07FF) << 1);
+                    outFrame[17] = ((output[11] & 0x07FF) >> 7 | (output[12] & 0x07FF) << 4);
+                    outFrame[18] = ((output[12] & 0x07FF) >> 4 | (output[13] & 0x07FF) << 7);
+                    outFrame[19] = ((output[13] & 0x07FF) >> 1);
+                    outFrame[20] = ((output[13] & 0x07FF) >> 9 | (output[14] & 0x07FF) << 2);
+                    outFrame[21] = ((output[14] & 0x07FF) >> 6 | (output[15] & 0x07FF) << 5);
+                    outFrame[22] = ((output[15] & 0x07FF) >> 3);
+                    outFrame[23] = (mFlagsAndSwitches); // Flags byte
+					outFrame[24] = 0x00;
+                    return 25;
+                });
+            }
+            static inline volatile bool mActive = false;
+            static inline uint8_t mFlagsAndSwitches{};
+			static inline std::array<volatile uint16_t, 16> output;
+			static inline External::Tick<systemTimer> mStateTick;			
+		};
+		
+		
+		
         template<uint8_t N, typename Config, typename MCU = DefaultMcu>
         struct Input {
             using clock = Config::clock;
