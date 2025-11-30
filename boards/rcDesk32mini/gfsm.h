@@ -164,7 +164,7 @@ struct GFSM {
 				}
 				if constexpr(!std::is_same_v<crsf, void>) {
 					crsf::init();
-					crsf::baud(400'000);
+					crsf::baud(RC::Protokoll::Crsf::V4::baudrateHandset);
 					crsf::activateSource(true);
 				}
                 break;

@@ -104,22 +104,31 @@ struct Devices<WeAct, Config, MCU> {
 # warning "wrong protocol selection"
 #endif
 
+#ifdef SERIAL_DEBUG
     using debugtx = Mcu::Stm::Pin<gpioa, 2, MCU>; 
     struct DebugConfig;
     using debug = SerialBuffered<2, DebugConfig, MCU>;
-
+#else
+	using debug = void;
+#endif
+	
     using vin0 = Mcu::Stm::Pin<gpioa, 0, MCU>; // adc in0
 	using vin1 = Mcu::Stm::Pin<gpioa, 1, MCU>; // adc in1
-	// using vin2 = Mcu::Stm::Pin<gpioa, 2, MCU>; // adc in2 -> debugtx
-	using vin2 = Mcu::Stm::Pin<gpioa, 3, MCU>; // adc in3
+#ifndef SERIAL_DEBUG
+	using vin2 = Mcu::Stm::Pin<gpioa, 2, MCU>; // adc in2 -> debugtx
+#endif
+	using vin3 = Mcu::Stm::Pin<gpioa, 3, MCU>; // adc in3
 	// using vin3 = Mcu::Stm::Pin<gpioa, 4, MCU>; // adc in4 -> LED
 	using vin4 = Mcu::Stm::Pin<gpioa, 5, MCU>; // adc in5
 	using vin5 = Mcu::Stm::Pin<gpioa, 6, MCU>; // adc in6
 	using vin6 = Mcu::Stm::Pin<gpioa, 7, MCU>; // adc in7
 	using vin7 = Mcu::Stm::Pin<gpioa, 8, MCU>; // adc in8
-	
-	using analogs = Meta::List<vin0, vin1, vin2, vin4, vin5, vin6, vin7>;
 
+#ifdef SERIAL_DEBUG
+	using analogs = Meta::List<vin0, vin1, vin3, vin4, vin5, vin6, vin7>;
+#else	
+	using analogs = Meta::List<vin0, vin1, vin2, vin3, vin4, vin5, vin6, vin7>;
+#endif
 	struct AdcConfig;
     using adc = Mcu::Stm::V4::Adc<1, AdcConfig>;
 	
@@ -172,11 +181,13 @@ struct Devices<WeAct, Config, MCU> {
 	
 	using digitals = Meta::List<d0, d1, d2, d3>;
 	
+#ifdef SERIAL_DEBUG
 	struct DebugConfig {
         using pin = debugtx;
         using clock = Devices::clock;
         static inline constexpr uint16_t bufferSize = 256;
     };
+#endif
 	struct HwExtConfig {
         using clock = Devices::clock;
         using systemTimer = Devices::systemTimer;
@@ -263,15 +274,6 @@ struct Devices<WeAct, Config, MCU> {
 								  DI::template dir<Mcu::Input>();
 								  DI::template pullup<true>();
 							  });
-		// d0::template dir<Mcu::Input>();
-		// d0::template pullup<true>();
-		// d1::template dir<Mcu::Input>();
-		// d1::template pullup<true>();
-		// d2::template dir<Mcu::Input>();
-		// d2::template pullup<true>();
-		// d3::template dir<Mcu::Input>();
-		// d3::template pullup<true>();
-
 		Meta::visit<analogs>([]<typename VI>(Meta::Wrapper<VI>){
 								 VI::analog();
 							 });
@@ -279,8 +281,8 @@ struct Devices<WeAct, Config, MCU> {
 		adc::init();
 		adc::start();
 
-		if constexpr(!std::is_same_v<debug, void>) {
-            debug::init();
-        }
+#ifdef SERIAL_DEBUG
+		debug::init();
+#endif
     }
 };

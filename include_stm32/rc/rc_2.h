@@ -79,6 +79,7 @@ namespace RC {
         namespace Crsf {
             namespace V4 {
                 static inline constexpr uint32_t baudrate{420'000};
+				static inline constexpr uint32_t baudrateHandset{400'000};
                 static inline constexpr std::array<uint32_t, 3> baudrates{400'000, 420'000, 921'000};
                 namespace Address {
                     inline static constexpr std::byte StartByte{0xc8};

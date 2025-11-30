@@ -22,6 +22,8 @@
 #define USE_CRSF
 // #define USE_INVERT_SERIAL
 
+#define SERIAL_DEBUG
+
 //#define USE_BUTTON // disables SWD, use reset button then
 
 #define NDEBUG // do not change: dev option
