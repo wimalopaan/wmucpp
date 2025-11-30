@@ -175,6 +175,9 @@ namespace RC::Protokoll::Crsf {
                 uart::template invert<true>();
                 txpin::template pulldown<true>();
             }
+			static inline void activateSource(const bool b) {
+				mSource = b;
+			}
             static inline void txAddress(const uint8_t adr) {
                 mRewriteTxAddress = adr;
             }
@@ -195,7 +198,8 @@ namespace RC::Protokoll::Crsf {
             enum class State : uint8_t {Init, Run};
 
             static inline constexpr External::Tick<systemTimer> initTicks{100ms};
-            static inline constexpr External::Tick<systemTimer> updateTicks{10ms};
+            // static inline constexpr External::Tick<systemTimer> updateTicks{10ms};
+			static inline constexpr External::Tick<systemTimer> updateTicks{5ms};
 
             static inline void periodic() {
                 using namespace RC::Protokoll::Crsf::V4;
@@ -208,68 +212,76 @@ namespace RC::Protokoll::Crsf {
                 case State::Run:
                     if (mRxEvent.is(RxEvent::ReceiveComplete)) {
                         [[maybe_unused]] Debug::Scoped<tp> _tp;
-                        uart::readBuffer([](const auto& data){
-                            // IO::outl<debug>("# receive");
-                            if (isExtendedPacket(&data.front(), data.size())) {
-                                if (data[PacketIndex::type] != (uint8_t)Type::RadioID) {
-                                    if constexpr(std::is_same_v<router, void>) {
-                                        if (data[PacketIndex::src] == (uint8_t)Address::TX) {
-                                            IO::outl<debug>("# rewrite from TX");
-                                            data[PacketIndex::src] = mRewriteTxAddress;
-                                            if (data[PacketIndex::type] == (uint8_t)Type::Info) {
-                                                bool end = false;
-                                                for(uint8_t i = 0; i < 16; ++i) {
-                                                    if (data[PacketIndex::payload + i] == '\0') {
-                                                        break;
-                                                    }
-                                                    if (!end && (i < storage::eeprom.txname.size())) {
-                                                        if (storage::eeprom.txname[i] == '\0') {
-                                                            data[PacketIndex::payload + i] = '.';
-                                                            end = true;
-                                                        }
-                                                        else {
-                                                            data[PacketIndex::payload + i] = storage::eeprom.txname[i];
-                                                        }
-                                                    }
-                                                    else {
-                                                        data[PacketIndex::payload + i] = '.';
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        else if (data[PacketIndex::src] == (uint8_t)Address::RX) {
-                                            IO::outl<debug>("# rewrite from RX");
-                                            data[PacketIndex::src] = mRewriteRxAddress;
-                                        }
-                                        if (data[PacketIndex::dest] == (uint8_t)Address::TX) {
-                                            IO::outl<debug>("# rewrite To TX");
-                                            data[PacketIndex::dest] = (uint8_t)Address::Handset;
-                                        }
-                                        IO::outl<debug>("# route");
-                                        data[0] = (uint8_t)Address::StartByte;
-                                        recalculateCRC(data);
-                                        dest::enqueue(data);
-                                    }
-                                    else { // with router
-                                        const uint8_t srcAddr = data[PacketIndex::src];
-                                        const uint8_t rewSrcAddr = router::backwardSrcAddress(Config::id, srcAddr);
-                                        IO::outl<debug>("# route: ", srcAddr, " -> ", rewSrcAddr);
-                                        data[PacketIndex::src] = rewSrcAddr;
-                                        data[0] = (uint8_t)Address::StartByte;
-                                        recalculateCRC(data);
-                                        dest::enqueue(data);
-										
-										Meta::visit<bcastIfaces>([&]<typename IF>(Meta::Wrapper<IF>){
-														IF::forwardPacket(&data[0], data.size());
-													});
-                                    }
-                                }
-                            }
-                            else {
-                                IO::outl<debug>("# telem");
-                                dest::enqueue(data);
-                            }
-                        });
+						if constexpr(!std::is_same_v<dest, void>) {
+							uart::readBuffer([](const auto& data){
+								// IO::outl<debug>("# receive");
+								if (isExtendedPacket(&data.front(), data.size())) {
+									if (data[PacketIndex::type] != (uint8_t)Type::RadioID) {
+										if constexpr(std::is_same_v<router, void>) {
+											if (data[PacketIndex::src] == (uint8_t)Address::TX) {
+												IO::outl<debug>("# rewrite from TX");
+												data[PacketIndex::src] = mRewriteTxAddress;
+												if constexpr(requires(){storage::eeprom.txname[0];}) {
+													if (data[PacketIndex::type] == (uint8_t)Type::Info) {
+														bool end = false;
+														for(uint8_t i = 0; i < 16; ++i) {
+															if (data[PacketIndex::payload + i] == '\0') {
+																break;
+															}
+															if (!end && (i < storage::eeprom.txname.size())) {
+																if (storage::eeprom.txname[i] == '\0') {
+																	data[PacketIndex::payload + i] = '.';
+																	end = true;
+																}
+																else {
+																	data[PacketIndex::payload + i] = storage::eeprom.txname[i];
+																}
+															}
+															else {
+																data[PacketIndex::payload + i] = '.';
+															}
+														}
+													}
+												}
+											}
+											else if (data[PacketIndex::src] == (uint8_t)Address::RX) {
+												IO::outl<debug>("# rewrite from RX");
+												data[PacketIndex::src] = mRewriteRxAddress;
+											}
+											if (data[PacketIndex::dest] == (uint8_t)Address::TX) {
+												IO::outl<debug>("# rewrite To TX");
+												data[PacketIndex::dest] = (uint8_t)Address::Handset;
+											}
+											IO::outl<debug>("# route");
+											data[0] = (uint8_t)Address::StartByte;
+											recalculateCRC(data);
+											if constexpr(!std::is_same_v<dest, void>) {
+												dest::enqueue(data);
+											}
+										}
+										else { // with router
+											const uint8_t srcAddr = data[PacketIndex::src];
+											const uint8_t rewSrcAddr = router::backwardSrcAddress(Config::id, srcAddr);
+											IO::outl<debug>("# route: ", srcAddr, " -> ", rewSrcAddr);
+											data[PacketIndex::src] = rewSrcAddr;
+											data[0] = (uint8_t)Address::StartByte;
+											recalculateCRC(data);
+											dest::enqueue(data);
+											
+											Meta::visit<bcastIfaces>([&]<typename IF>(Meta::Wrapper<IF>){
+															IF::forwardPacket(&data[0], data.size());
+														});
+										}
+									}
+								}
+								else {
+									IO::outl<debug>("# telem");
+									if constexpr(!std::is_same_v<dest, void>) {
+										dest::enqueue(data);
+									}
+								}
+							});
+						}
                     }
                     else if (mTxEvent.is(TxEvent::TransmitComplete)) {
                         messageBuffer::event(messageBuffer::Event::TransmitComplete);
