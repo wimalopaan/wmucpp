@@ -19,6 +19,7 @@
 #pragma once
 
 #include <algorithm>
+#include "output.h"
 #include "eeprom.h"
 
 template<typename Config>

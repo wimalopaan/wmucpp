@@ -1,7 +1,14 @@
 
 ToDo:
 =====
+* preprocessor structure (USE_...)
+* CRSF-Output (with CRSF MultiSwitch Support)
+** CH1-8:  analog input (maybe also 3-pos switches)
+** CH9-12: binary switches (maybe usefull on PWM ELRS Empfänger: set output to on/off)
+
+Done:
+=====
 * state machine / button events
 * analog calibration
 * config protocol -> widget
-
+* support for 3-pos switches

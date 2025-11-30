@@ -33,10 +33,13 @@ struct GFSM {
     using led = devs::ledBlinker;
     using btn = devs::btn;
     using adc = devs::adc;
+	using adap = devs::adcAdapter;
+	using digitals = devs::digitals;
+	
 	using hwext = devs::hwext;
 	using sbus = devs::sbus;
-	using digitals = devs::digitals;
 	using modcom = devs::modcom;
+	using crsf = devs::crsf;
 
     enum class State : uint8_t {Undefined, Init, Run, CheckSerial, Calibration};
 
@@ -108,6 +111,7 @@ struct GFSM {
 			break;
 		case State::Calibration:
 			mEvent.on(Event::ButtonPress, []{
+				save();
 				mState = State::Run;
 			}).thenOn(Event::StartNormal, []{
 				save();
@@ -142,22 +146,35 @@ struct GFSM {
 			case State::CheckSerial:
                 IO::outl<debug>("# CheckSerial");
 				led::event(led::Event::Steady);
-				modcom::init();
-				modcom::setStatus(1);
+				if constexpr(!std::is_same_v<modcom, void>) {
+					modcom::init();
+					modcom::setStatus(1);
+				}
                 break;
             case State::Run:
                 IO::outl<debug>("# Run");
 				led::count(2);
 				led::event(led::Event::Slow);
-				modcom::reset();
-				sbus::init();
-				sbus::invert(false); // TX16s can only read inverted SBUS (normal polarity) 
+				if constexpr(!std::is_same_v<modcom, void>) {
+					modcom::reset();
+				}
+				if constexpr(!std::is_same_v<sbus, void>) {
+					sbus::init();
+					sbus::invert(false); // TX16s can only read inverted SBUS (normal polarity) 
+				}
+				if constexpr(!std::is_same_v<crsf, void>) {
+					crsf::init();
+					crsf::baud(400'000);
+					crsf::activateSource(true);
+				}
                 break;
 			case State::Calibration:
 				IO::outl<debug>("# Calib");
 				led::count(1);
 				led::event(led::Event::Fast);
-				modcom::setStatus(2);
+				if constexpr(!std::is_same_v<modcom, void>) {
+					modcom::setStatus(2);
+				}
 				startCalibration();
 				break;
             }
@@ -201,11 +218,20 @@ struct GFSM {
 			IO::out<debug>(" ", v);
 		}
 		IO::outl<debug>();		
+		IO::out<debug>("sbus:");
+		for(const auto& v: adap::values()) {
+			IO::out<debug>(" ", v);
+		}
+		IO::outl<debug>();		
 	}
 	static inline void update() {
 		mStateTick.on(telemTicks, []{
 			for(uint8_t i = 0; const auto& v : adc::values()) {
-				modcom::setValue(i, v);
+				if constexpr(!std::is_same_v<crsf, void>) {
+				}
+				if constexpr(!std::is_same_v<modcom, void>) {
+					modcom::setValue(i, v);
+				}
 				if constexpr(!std::is_same_v<hwext, void>) {
 					hwext::setChannel(i++, v);
 				}
@@ -217,7 +243,9 @@ struct GFSM {
 			uint8_t i = 0;
 			Meta::visit<digitals>([&]<typename DI>(Meta::Wrapper<DI>){
 									  const bool in = DI::read();
-									  modcom::setSwitch(i, in);
+									  if constexpr(!std::is_same_v<modcom, void>) {
+										  modcom::setSwitch(i, in);
+									  }
 									  if constexpr(!std::is_same_v<hwext, void>) {
 											hwext::setSwitch(i, in);						  
 									  }

@@ -16,12 +16,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// use one(!) of the following protocol selection
 // #define USE_HWEXT // otherwise SBUS-output is used
-#define USE_BUTTON // disables SWD, use reset button then
+// #define USE_SBUS
+#define USE_CRSF
+// #define USE_INVERT_SERIAL
+
+//#define USE_BUTTON // disables SWD, use reset button then
 
 #define NDEBUG // do not change: dev option
  
-#define SW_VERSION 1
+#define SW_VERSION 2
 
 #include <cstdint>
 #include <array>
@@ -57,23 +62,27 @@ int main() {
 }
 
 extern "C" {
-
 void USART1_IRQHandler(){
-#ifdef USE_HWEXT
+#if defined(USE_HWEXT)
 	using hwext = devs::hwext;
 	static_assert(hwext::uart::number == 1);
 	hwext::Isr::onTransferComplete([]{});
 	hwext::Isr::onIdle([]{});
-#else
+#elif defined(USE_SBUS)
 	using sbus = devs::sbus;
 	static_assert(sbus::uart::number == 1);
-	// sbus::Isr::onTransferComplete([]{});
-	// sbus::Isr::onIdle([]{});
 
 	using modcom = devs::modcom;
 	static_assert(modcom::number == 1);
 	modcom::Isr::onTransferComplete([]{});
 	modcom::Isr::onIdle([]{});
+#elif defined(USE_CRSF)
+	using crsf = devs::crsf;
+	static_assert(crsf::uart::number == 1);
+	crsf::Isr::onTransferComplete([]{});
+	crsf::Isr::onIdle([]{});
+#else
+# warning "wrong protocol selection"
 #endif
 }
 }

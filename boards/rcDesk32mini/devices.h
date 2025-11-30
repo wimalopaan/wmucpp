@@ -46,6 +46,7 @@
 #include "rc/sumdv3_2.h"
 #include "rc/crsf_2.h"
 #include "rc/hwext.h"
+#include "rc/package_relay_rewrite.h"
 #include "stdapp/stdcomp.h"
 #include "blinker.h"
 #include "debug_2.h"
@@ -79,17 +80,28 @@ struct Devices<WeAct, Config, MCU> {
 
 	using gfsm = Config::gfsm;
 	
-#ifdef USE_HWEXT
+#if defined(USE_HWEXT)
 	struct HwExtConfig;
     using hwext = External::EdgeTx::HwExtension<1, HwExtConfig, MCU>;
 	using sbus = void;
-#else
+	using modcom = void;
+	using crsf = void;
+#elif defined(USE_SBUS)
 	using hwext = void;
 	struct SBusConfig;
 	using sbus = RC::Protokoll::SBus::V2::Output<1, SBusConfig, MCU>;
 	
 	struct ModComConfig;
 	using modcom = External::EdgeTx::ModuleCom<1, ModComConfig, MCU>;
+	using crsf = void;
+#elif defined(USE_CRSF)
+	using hwext = void;
+	using sbus = void;
+	using modcom = void;
+	struct CrsfConfig;
+    using crsf = RC::Protokoll::Crsf::V4::PacketRelayRewrite<1, CrsfConfig, MCU>;
+#else
+# warning "wrong protocol selection"
 #endif
 
     using debugtx = Mcu::Stm::Pin<gpioa, 2, MCU>; 
@@ -110,7 +122,35 @@ struct Devices<WeAct, Config, MCU> {
 
 	struct AdcConfig;
     using adc = Mcu::Stm::V4::Adc<1, AdcConfig>;
-
+	
+	template<typename Adc>
+	struct AdcAdapter {
+		using adc = Adc;
+		static inline constexpr uint8_t size = Adc::nChannels;
+		static inline const auto& values() {
+			return mValues;
+		}
+		static inline void ratePeriodic() {
+			adcToSbus();
+		}
+		private:
+		static inline void adcToSbus() {
+			for(uint8_t i = 0; i < std::min((uint8_t)storage::eeprom.calibration.size(), size); ++i) {
+				const int32_t v1 = (adc::values()[i] - storage::eeprom.calibration[i].mid);
+				const int32_t sb = (v1 * RC::Protokoll::SBus::V2::amp) / storage::eeprom.calibration[i].span + RC::Protokoll::SBus::V2::mid;
+				mValues[i] = std::clamp(sb, (int32_t)RC::Protokoll::SBus::V2::min, (int32_t)RC::Protokoll::SBus::V2::max);
+			}
+		}
+		static inline auto mValues = []{
+			std::array<uint16_t, 16> a;
+			for(auto& v: a) {
+				v = RC::Protokoll::Crsf::V4::mid;
+			}
+			return a;
+		}();
+	};
+	using adcAdapter = AdcAdapter<adc>;
+	
 	// Led
     using led = Mcu::Stm::Pin<gpioa, 4, MCU>;
     using invLed = Mcu::Stm::Gpio::Inverter<led>;
@@ -175,8 +215,23 @@ struct Devices<WeAct, Config, MCU> {
 		using callback = gfsm;
 		using storage = Devices::storage;
 	};
+	struct CrsfConfig {
+        using src = adcAdapter;
+        using dest = void;
+		using bcastInterfaces = Meta::List<>;
+        using rxpin = rx;
+        using txpin = tx;
+        using systemTimer = Devices::systemTimer;
+        using clock = Devices::clock;
+        using dmaChRead  = auxDmaChannel1;
+        using dmaChWrite = auxDmaChannel2;
+        using storage = Devices::storage;
+        using debug = Devices::debug;
+        using tp = void;
+        static inline constexpr uint8_t fifoSize = 16;
+    };
 	
-	using periodics = StandardComponents<debug, sbus, modcom, ledBlinker, btn>;
+	using periodics = StandardComponents<debug, sbus, modcom, crsf, ledBlinker, btn, adcAdapter>;
 	
 	static inline void periodic() {
         periodics::periodic();
@@ -204,14 +259,18 @@ struct Devices<WeAct, Config, MCU> {
         btn::template init<false>();
 #endif
 		
-		d0::template dir<Mcu::Input>();
-		d0::template pullup<true>();
-		d1::template dir<Mcu::Input>();
-		d1::template pullup<true>();
-		d2::template dir<Mcu::Input>();
-		d2::template pullup<true>();
-		d3::template dir<Mcu::Input>();
-		d3::template pullup<true>();
+		Meta::visit<digitals>([]<typename DI>(Meta::Wrapper<DI>){
+								  DI::template dir<Mcu::Input>();
+								  DI::template pullup<true>();
+							  });
+		// d0::template dir<Mcu::Input>();
+		// d0::template pullup<true>();
+		// d1::template dir<Mcu::Input>();
+		// d1::template pullup<true>();
+		// d2::template dir<Mcu::Input>();
+		// d2::template pullup<true>();
+		// d3::template dir<Mcu::Input>();
+		// d3::template pullup<true>();
 
 		Meta::visit<analogs>([]<typename VI>(Meta::Wrapper<VI>){
 								 VI::analog();
