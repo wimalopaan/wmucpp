@@ -307,7 +307,7 @@ private:
 		addPattern<0>(p, parent, "Pattern Virt. 5");
 # ifdef HW_MSW12
 		addPattern<1>(p, parent, "Pattern Virt. 6");
-		addPattern<2>(p, parent, "Pattern Virt. 5");
+		addPattern<2>(p, parent, "Pattern Virt. 7");
 		addPattern<3>(p, parent, "Pattern Virt. 8");
 # endif
 #endif
