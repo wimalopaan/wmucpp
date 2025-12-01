@@ -122,6 +122,11 @@ struct CrsfCallback {
         mEepromMode = prevMode;
     }
 private:
+	static inline bool resetAllParameter(const uint8_t s) {
+		IO::outl<debug>("# reset all");
+		storage::reset();
+		return false;
+	}
     static inline bool mEepromMode = false;
     static inline constexpr uint32_t mSerialNumber{1234};
     static inline constexpr uint32_t mHWVersion{HW_VERSION};
@@ -321,6 +326,10 @@ private:
         addNode(p, Param_t{parent, PType::Sel, "Output 5", "Off;On", 0, 0, 1, [](const uint8_t v){Meta::nth_element<5, bsws>::on(v); return false;}});
         addNode(p, Param_t{parent, PType::Sel, "Output 6", "Off;On", 0, 0, 1, [](const uint8_t v){Meta::nth_element<6, bsws>::on(v); return false;}});
         addNode(p, Param_t{parent, PType::Sel, "Output 7", "Off;On", 0, 0, 1, [](const uint8_t v){Meta::nth_element<7, bsws>::on(v); return false;}});
+#endif
+#ifdef USE_RESET_COMMAND
+		parent = addParent(p, Param_t{0, PType::Folder, "Reset"});
+		addNode(p, Param_t{parent, PType::Command, "Reset all", "Reset", nullptr, 0, 0, [](const uint8_t v){return resetAllParameter(v);}});
 #endif
         if (p.size() >= p.capacity()) {
             void fp();

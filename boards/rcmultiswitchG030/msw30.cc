@@ -30,6 +30,7 @@
 #define USE_OPERATE_MENU
 #define USE_VIRTUALS
 #define USE_PATTERNS
+#define USE_RESET_COMMAND
 #define USE_TELEMETRY // switches telemetry default on (instead off)
 // #define USE_BUTTON // HW_MSW11: if button is unused, the button pin is used as input (status bit)
 // #define SERIAL_DEBUG // use with care (e.g. with USE_MORSE) because of RAM overflow (stm32g0b1: ok)
@@ -87,7 +88,7 @@
 # undef USE_PATTERNS
 #endif
 
-#define SW_VERSION 33
+#define SW_VERSION 34
 
 #include <cstdint>
 #include <array>
