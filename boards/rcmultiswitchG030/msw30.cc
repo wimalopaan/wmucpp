@@ -21,15 +21,15 @@
 // #define HW_MSW10 // MultiSwitch_10 (32K)
 // ATTENTION: use Makefile.G031
 // #define HW_MSW11 // MultiSwitch_11 (64k)
-#define HW_MSW12 // MultiSwitch_12 (64k) (EasyEda OSHWLAB)
+// #define HW_MSW12 // MultiSwitch_12 (64k) (EasyEda OSHWLAB)
 //#define HW_NUCLEO // STM Nucleo G031K8 (64K) (incl. ST-Link)
-//#define HW_WEACT // WeAct G031F8 (64K)
+#define HW_WEACT // WeAct G031F8 (64K)
  
 // #define USE_TP1 // enable test point
 // #define USE_MORSE
 #define USE_OPERATE_MENU
 #define USE_VIRTUALS
-#define USE_PATTERNS
+// #define USE_PATTERNS
 #define USE_RESET_COMMAND
 #define USE_TELEMETRY // switches telemetry default on (instead off)
 // #define USE_BUTTON // HW_MSW11: if button is unused, the button pin is used as input (status bit)
@@ -56,6 +56,9 @@
 # endif
 # if !defined(USE_PATTERNS)
 #  define USE_PATTERNS
+# endif
+# if !defined(USE_RESET_COMMAND)
+#  define USE_RESET_COMMAND
 # endif
 #endif
 

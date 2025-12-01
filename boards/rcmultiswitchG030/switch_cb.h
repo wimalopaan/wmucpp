@@ -115,7 +115,7 @@ struct SwitchCallback {
 #endif
     }
     private:
-	static inline bool isMemberOfPattern(const uint8_t swIndex) {
+	static inline bool isMemberOfPattern([[maybe_unused]] const uint8_t swIndex) {
 #ifdef USE_PATTERNS
 		for(uint8_t i = 0; i < 4; ++i) {
 			if (storage::eeprom.pattern[i].type > 0) {
