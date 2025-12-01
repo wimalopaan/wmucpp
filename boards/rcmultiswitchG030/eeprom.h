@@ -105,7 +105,7 @@ struct EEProm {
 #endif
 #ifdef USE_PATTERNS
 	struct Pattern {
-		uint8_t type = 1;
+		uint8_t type = 0;
 		std::array<uint8_t, 8> member{1, 2, 3, 4, 5, 6, 7, 8};
 		uint8_t onTime = 33; // time 10 ms
 		uint8_t offTime = 1;
