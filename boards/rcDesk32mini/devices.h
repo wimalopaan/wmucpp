@@ -51,7 +51,7 @@
 #include "blinker.h"
 #include "debug_2.h"
 #include "button.h"
-
+#include "adcadapter.h"
 
 struct WeAct;
 
@@ -132,33 +132,8 @@ struct Devices<WeAct, Config, MCU> {
 	struct AdcConfig;
     using adc = Mcu::Stm::V4::Adc<1, AdcConfig>;
 	
-	template<typename Adc>
-	struct AdcAdapter {
-		using adc = Adc;
-		static inline constexpr uint8_t size = Adc::nChannels;
-		static inline const auto& values() {
-			return mValues;
-		}
-		static inline void ratePeriodic() {
-			adcToSbus();
-		}
-		private:
-		static inline void adcToSbus() {
-			for(uint8_t i = 0; i < std::min((uint8_t)storage::eeprom.calibration.size(), size); ++i) {
-				const int32_t v1 = (adc::values()[i] - storage::eeprom.calibration[i].mid);
-				const int32_t sb = (v1 * RC::Protokoll::SBus::V2::amp) / storage::eeprom.calibration[i].span + RC::Protokoll::SBus::V2::mid;
-				mValues[i] = std::clamp(sb, (int32_t)RC::Protokoll::SBus::V2::min, (int32_t)RC::Protokoll::SBus::V2::max);
-			}
-		}
-		static inline auto mValues = []{
-			std::array<uint16_t, 16> a;
-			for(auto& v: a) {
-				v = RC::Protokoll::Crsf::V4::mid;
-			}
-			return a;
-		}();
-	};
-	using adcAdapter = AdcAdapter<adc>;
+	struct AdcAdapterConfig;
+	using adcAdapter = AdcAdapter<AdcAdapterConfig>;
 	
 	// Led
     using led = Mcu::Stm::Pin<gpioa, 4, MCU>;
@@ -209,7 +184,12 @@ struct Devices<WeAct, Config, MCU> {
     };
 	struct AdcConfig {
         using debug = void;
-        using channels = std::integer_sequence<uint8_t, 0, 1, 3, 5, 6, 7, 8>;
+#ifdef SERIAL_DEBUG
+		using channels = std::integer_sequence<uint8_t, 0, 1, 3, 5, 6, 7, 8>;
+#else
+        using channels = std::integer_sequence<uint8_t, 0, 1, 2, 3, 5, 6, 7, 8>;
+#endif
+		static_assert(Meta::size_v<analogs> == channels::size());
         using dmaChannel = adcDmaChannel;
         using trigger = Mcu::Stm::ContinousSampling<2>;
         using isrConfig = Meta::List<>;
@@ -241,6 +221,10 @@ struct Devices<WeAct, Config, MCU> {
         using tp = void;
         static inline constexpr uint8_t fifoSize = 16;
     };
+	struct AdcAdapterConfig {
+		using adc = Devices::adc;
+		using storage = Devices::storage;
+	};
 	
 	using periodics = StandardComponents<debug, sbus, modcom, crsf, ledBlinker, btn, adcAdapter>;
 	

@@ -247,6 +247,7 @@ boards/rcDesk32/system_g0.cc
 boards/rcDesk32/test.cc
 boards/rcDesk32/todo.txt
 boards/rcDesk32mini/Makefile.G031
+boards/rcDesk32mini/adcadapter.h
 boards/rcDesk32mini/devices.h
 boards/rcDesk32mini/eeprom.h
 boards/rcDesk32mini/gfsm.h

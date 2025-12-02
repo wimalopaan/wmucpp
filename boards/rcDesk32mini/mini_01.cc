@@ -22,13 +22,21 @@
 #define USE_CRSF
 // #define USE_INVERT_SERIAL
 
-#define SERIAL_DEBUG
+#define INJECT_DIGITAL_START 4 // first channel to inject digitals into CRSF / SBUS
+#define SWITCH_ADDRESS 0 // only valid for CSRF (using switch protocol extension)
+
+// use broadcast for switch command
+#define CRSF_SWITCH_COMMAND_ADDRESS RC::Protokoll::Crsf::V4::Address::Broadcast 
+// if the above is not working for some weird reason (older ELRS?)
+// #define CRSF_SWITCH_COMMAND_ADDRESS RC::Protokoll::Crsf::V4::Address::Controller
+
+// #define SERIAL_DEBUG // disables PA2 analog input
 
 //#define USE_BUTTON // disables SWD, use reset button then
 
 #define NDEBUG // do not change: dev option
  
-#define SW_VERSION 2
+#define SW_VERSION 3
 
 #include <cstdint>
 #include <array>

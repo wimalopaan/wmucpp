@@ -42,7 +42,6 @@ struct GFSM {
 	using crsf = devs::crsf;
 
     enum class State : uint8_t {Undefined, Init, Run, CheckSerial, Calibration};
-
     enum class Event : uint8_t {None, ButtonPress, HeartBeat, StartCalib, StopCalib, StartNormal};
 
     static inline constexpr External::Tick<systemTimer> initTicks{100ms};
@@ -51,19 +50,15 @@ struct GFSM {
 	static inline constexpr External::Tick<systemTimer> waitTicks{5000ms};
 
 	static inline void heartbeat(){
-		IO::outl<debug>("HB:");
 		mEvent = Event::HeartBeat;
 	}
 	static inline void startNormal(){
-		IO::outl<debug>("StartNormal:");
 		mEvent = Event::StartNormal;
 	}
 	static inline void startCalib(){
-		IO::outl<debug>("StartCal:");
 		mEvent = Event::StartCalib;
 	}
 	static inline void stopCalib(){
-		IO::outl<debug>("StopCal:");
 		mEvent = Event::StopCalib;		
 	}
     static inline void init() {
@@ -158,14 +153,17 @@ struct GFSM {
 				if constexpr(!std::is_same_v<modcom, void>) {
 					modcom::reset();
 				}
-				if constexpr(!std::is_same_v<sbus, void>) {
+				else if constexpr(!std::is_same_v<sbus, void>) {
 					sbus::init();
 					sbus::invert(false); // TX16s can only read inverted SBUS (normal polarity) 
 				}
-				if constexpr(!std::is_same_v<crsf, void>) {
+				else if constexpr(!std::is_same_v<crsf, void>) {
 					crsf::init();
 					crsf::baud(RC::Protokoll::Crsf::V4::baudrateHandset);
 					crsf::activateSource(true);
+				}
+				else {
+					static_assert("wrong protocol");
 				}
                 break;
 			case State::Calibration:
@@ -241,8 +239,15 @@ struct GFSM {
 				}
 			}				
 			uint8_t i = 0;
+			uint8_t newSwitchState = 0;
 			Meta::visit<digitals>([&]<typename DI>(Meta::Wrapper<DI>){
 									  const bool in = DI::read();
+									  if constexpr(!std::is_same_v<adap, void>) {
+										  adap::injectChannel(INJECT_DIGITAL_START + i, in ? RC::Protokoll::SBus::V2::max : RC::Protokoll::SBus::V2::min);						  										  
+									  }
+									  if constexpr(!std::is_same_v<crsf, void>) {
+										  newSwitchState |= (!in ? (0b01 << i) : 0b00);
+									  }
 									  if constexpr(!std::is_same_v<modcom, void>) {
 										  modcom::setSwitch(i, in);
 									  }
@@ -250,10 +255,36 @@ struct GFSM {
 											hwext::setSwitch(i, in);						  
 									  }
 									  if constexpr(!std::is_same_v<sbus, void>) {
-											sbus::setChannel(8 + i, in ? RC::Protokoll::SBus::V2::max : 0);						  
+											sbus::setChannel(INJECT_DIGITAL_START + i, in ? RC::Protokoll::SBus::V2::max : RC::Protokoll::SBus::V2::min);						  
 									  }
 									  ++i;
 								  });
+			if constexpr(!std::is_same_v<crsf, void>) {
+				if (newSwitchState != mSwState) {
+					IO::outl<debug>("switch: ", newSwitchState);
+					uint8_t i = 1;
+					mSwitchPacket[i++] = 0;
+					mSwitchPacket[i++] = (uint8_t)RC::Protokoll::Crsf::V4::Type::Command;
+					mSwitchPacket[i++] = (uint8_t)CRSF_SWITCH_COMMAND_ADDRESS;
+					mSwitchPacket[i++] = (uint8_t)RC::Protokoll::Crsf::V4::Address::Handset;
+					mSwitchPacket[i++] = (uint8_t)RC::Protokoll::Crsf::V4::CommandType::Switch;
+					mSwitchPacket[i++] = (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set;
+					mSwitchPacket[i++] = SWITCH_ADDRESS; 
+					mSwitchPacket[i++] = newSwitchState;
+					
+					CRC8BA csum8ba;
+					for(uint8_t k = 2; k < i; ++k) {
+						csum8ba += mSwitchPacket[k];
+					}
+					
+					mSwitchPacket[i++] = csum8ba; // crc_ba
+					mSwitchPacket[i++] = 0; // crc
+					mSwitchPacket[1] = i - 2;
+					mSwState = newSwitchState;
+					crsf::forwardPacket(&mSwitchPacket[0], i);
+				}
+			}
+			
 		});		
 	}
 	static inline uint16_t adcToSbus(const uint8_t input, const uint16_t v) {
@@ -268,6 +299,8 @@ struct GFSM {
             }
         }
     }
+	static inline uint8_t mSwState = 0;
+	static inline std::array<uint8_t, 16> mSwitchPacket{(uint8_t)RC::Protokoll::Crsf::V4::Address::StartByte};
     static inline etl::Event<Event> mEvent;
     static inline External::Tick<systemTimer> mStateTick;
     static inline External::Tick<systemTimer> mDebugTick;
