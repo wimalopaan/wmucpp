@@ -198,8 +198,7 @@ namespace RC::Protokoll::Crsf {
             enum class State : uint8_t {Init, Run};
 
             static inline constexpr External::Tick<systemTimer> initTicks{100ms};
-            // static inline constexpr External::Tick<systemTimer> updateTicks{10ms};
-			static inline constexpr External::Tick<systemTimer> updateTicks{5ms};
+            static inline constexpr External::Tick<systemTimer> updateTicks{10ms};
 
             static inline void periodic() {
                 using namespace RC::Protokoll::Crsf::V4;
@@ -347,10 +346,10 @@ namespace RC::Protokoll::Crsf {
             static inline void forwardPacket(volatile uint8_t* const data, const uint16_t length) {
                 using namespace RC::Protokoll::Crsf::V4;
                 if (mActive) {
-                    // IO::outl<debug>("# fw to TX");
+                    IO::outl<debug>("# fw to TX");
                     if (isExtendedPacket(data, length)) {
                         if constexpr(std::is_same_v<router, void>) {
-                            // IO::outl<debug>("# rewrite to TX");
+                            IO::outl<debug>("# rewrite to TX");
                             if (data[PacketIndex::dest] == mRewriteTxAddress) {
                                 data[PacketIndex::dest] = (uint8_t)Address::TX;
                             }
