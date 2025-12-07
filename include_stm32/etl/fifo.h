@@ -22,6 +22,7 @@
 #include <optional>
 #include <type_traits>
 #include <limits>
+#include <algorithm>
 
 #include "traits.h"
 
