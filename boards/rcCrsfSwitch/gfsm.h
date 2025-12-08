@@ -23,6 +23,8 @@
 
 #include "mcu/mcu.h"
 #include "meta.h"
+#include "stdapp/stdcomp.h"
+
 #include "tick.h"
 #include "rc/crsf_2.h"
 
@@ -88,13 +90,16 @@ struct GFSM {
         devs::init();
     }
 
-    using periodics = Meta::concat<crsf_ifaces, Meta::List<debug, crsf_in, led>>;
+    using periodicsList = Meta::concat<crsf_ifaces, Meta::List<debug, crsf_in, led>>;
+    using periodics = StandardComponents<periodicsList>;
 
     static inline void periodic() {
-        Meta::visit<periodics>([](auto P) static {decltype(P)::type::periodic(); });
+        periodics::periodic();
+//        Meta::visit<periodics>([](auto P) static {decltype(P)::type::periodic(); });
     }
     static inline void ratePeriodic() {
-        Meta::visit<periodics>([](auto P) static {decltype(P)::type::ratePeriodic(); });
+        periodics::ratePeriodic();
+//        Meta::visit<periodics>([](auto P) static {decltype(P)::type::ratePeriodic(); });
 
         (++mPackagesCheckTick).on(packagesCheckTicks, []{
             const uint16_t ch_p = crsf_in::input::template channelPackages<true>();

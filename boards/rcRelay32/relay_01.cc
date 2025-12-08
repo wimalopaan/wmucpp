@@ -29,7 +29,6 @@
 #include <algorithm>
 
 #include "stdapp/scheduler.h"
-
 #include "devices.h"
 #include "gfsm.h"
 #include "storage.h"
@@ -52,6 +51,8 @@ struct AppConfig {
 };
 int main() {
     DevsConfig::storage::init();
+    gfsm::updateFromEeprom();
+
     app::main([]{
         NVIC_EnableIRQ(USART1_IRQn);
         NVIC_EnableIRQ(USART2_IRQn);

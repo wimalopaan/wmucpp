@@ -33,10 +33,11 @@ struct CrsfCallback {
     using Param_t = RC::Protokoll::Crsf::V4::Parameter<uint8_t>;
     using PType = Param_t::Type;
     using relay = Config::relay;
+    using src = Config::src;
 
     static inline constexpr auto& eeprom = storage::eeprom;
     static inline constexpr auto& eeprom_flash = storage::eeprom_flash;
-    static inline constexpr const char* const title = "RC-Desk32@";
+    static inline constexpr const char* const title = "RC-Relay32@";
 
     using name_t = std::array<char, 32>;
 
@@ -111,7 +112,9 @@ struct CrsfCallback {
         mEepromMode = prevMode;
     }
     static inline void serialize(const uint8_t index, auto& buffer, const RC::Protokoll::Crsf::V4::Lua::CmdStep step = RC::Protokoll::Crsf::V4::Lua::CmdStep::Idle) {
-        params[index].serialize(buffer, params, step, index);
+        if (index < params.size()) {
+            params[index].serialize(buffer, params, step, index);
+        }
     }
 private:
     static inline uint8_t mPulsesCalibCommand;
@@ -163,9 +166,9 @@ private:
         params_t p;
         addNode(p, Param_t{0, PType::Folder, "root"});
         addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
-        addNode(p, Param_t{0, PType::U8,  "CRSF Address", nullptr, &eeprom.address, 192, 207, [](const uint8_t){
+        addNode(p, Param_t{0, PType::U8,  "CRSF Address", nullptr, &eeprom.address, 192, 207, [](const uint8_t a){
                                updateName(mName);
-                                // src::address(std::byte(a));
+                                src::address(std::byte(a));
                     return true;}});
 
         // auto parent = addParent(p, Param_t{0, PType::Folder, "Bus"});

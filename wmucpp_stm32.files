@@ -224,7 +224,6 @@ boards/rcCrsfSwitch/devices.h
 boards/rcCrsfSwitch/eeprom.h
 boards/rcCrsfSwitch/gfsm.h
 boards/rcCrsfSwitch/link_g0b1.ld
-boards/rcCrsfSwitch/router.h
 boards/rcCrsfSwitch/startup_g0b1.s
 boards/rcCrsfSwitch/system_g0.cc
 boards/rcCrsfSwitch/todo.txt
@@ -758,6 +757,7 @@ include_stm32/rc/package_relay_rewrite.h
 include_stm32/rc/rc.h
 include_stm32/rc/rc_2.h
 include_stm32/rc/roboremo.h
+include_stm32/rc/router.h
 include_stm32/rc/sbus2.h
 include_stm32/rc/sbus22.h
 include_stm32/rc/sbus2_2.h

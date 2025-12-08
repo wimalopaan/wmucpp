@@ -137,6 +137,9 @@ namespace RC {
                         });
                     }
                     static inline void sendCommandResponse(const uint8_t index, const uint8_t step) {
+                        if (index > callback::numberOfParameters()) {
+                            return;
+                        }
                         IO::outl<debug>("# CR adr: ", mDest, " src: ", mSrc, " i: ", index, " st: ", step);
                         messageBuffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ParamEntry, [&](auto& d){
                             d.push_back(mDest);
@@ -148,6 +151,9 @@ namespace RC {
                         });
                     }
                     static inline void sendParameterInfo(const uint8_t index, const uint8_t chunk) {
+                        if (index > callback::numberOfParameters()) {
+                            return;
+                        }
                         IO::outl<debug>("# PI adr: ", mDest, " src: ", mSrc, " i: ", index, " c: ", chunk, " s: ", callback::parameter(index).size());
                         if (chunk == 0) {
                             if (const uint16_t psize = (callback::parameter(index).size() + 4); psize <= chunkSize) {

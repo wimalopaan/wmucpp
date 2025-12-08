@@ -403,11 +403,17 @@ namespace RC::Protokoll::Crsf {
             }
 
             static inline bool validityCheck(const volatile uint8_t* const data, const uint16_t) {
-                if ((data[0] == (uint8_t)Address::StartByte) ||
-                    (data[0] == (uint8_t)Address::Handset)) {
-                    return true;
+                if (const uint8_t s = data[0]; ((s != (uint8_t)RC::Protokoll::Crsf::V4::Address::StartByte) &&
+                                                (s != (uint8_t)RC::Protokoll::Crsf::V4::Address::Handset))) {
+                    return false;
                 }
-                return false;
+                if (const uint8_t l = data[1]; l > RC::Protokoll::Crsf::V4::maxPayloadSize) {
+                    return false;
+                }
+                if (const uint8_t t = data[2]; t > (uint8_t)RC::Protokoll::Crsf::V4::Type::Command) {
+                    return false;
+                }
+                return true;
             }
             static inline void update() { // channels to dest
                 if (mSource) {

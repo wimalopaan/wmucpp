@@ -63,3 +63,27 @@ struct StandardComponents {
         }(std::make_index_sequence<Meta::size_v<ratePeriodicList>>{});
     }
 };
+
+template<typename... Comp>
+struct StandardComponents<Meta::List<Comp... >> {
+    using clist = Meta::unique<Meta::filter<Meta::nonVoid, Meta::List<Comp...>>>;
+    using initList = Meta::filter<detail::hasInit, clist>;
+    using periodicList = Meta::filter<detail::hasPeriodic, clist>;
+    using ratePeriodicList = Meta::filter<detail::hasRatePeriodic, clist>;
+
+    static inline void init() {
+        []<auto... II>(std::index_sequence<II...>){
+            (Meta::nth_element<II, initList>::init(), ...);
+        }(std::make_index_sequence<Meta::size_v<initList>>{});
+    }
+    static inline void periodic() {
+        []<auto... II>(std::index_sequence<II...>){
+            (Meta::nth_element<II, periodicList>::periodic(), ...);
+        }(std::make_index_sequence<Meta::size_v<periodicList>>{});
+    }
+    static inline void ratePeriodic() {
+        []<auto... II>(std::index_sequence<II...>){
+            (Meta::nth_element<II, ratePeriodicList>::ratePeriodic(), ...);
+        }(std::make_index_sequence<Meta::size_v<ratePeriodicList>>{});
+    }
+};

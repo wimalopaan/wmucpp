@@ -26,6 +26,12 @@
 struct EEProm {
     uint32_t magic = EEPROM_MAGIC;
 
-    uint8_t address = 0xc8;
+    constexpr EEProm() {
+        etl::copy("RelayTX", txname);
+    }
+    std::array<char, 8> txname{};
+
+    uint8_t address = 0xcf;
+    uint8_t commandBroadcastAddress = 0xc8; // command packages with this dest-address are routed to all interfaces
 
 };

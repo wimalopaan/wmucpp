@@ -46,6 +46,7 @@
 #include "rc/sumdv3_2.h"
 #include "rc/crsf_2.h"
 #include "rc/hwext.h"
+#include "rc/router.h"
 #include "rc/package_relay_rewrite.h"
 #include "stdapp/stdcomp.h"
 #include "blinker.h"
@@ -92,6 +93,14 @@ struct Devices<WeAct, Config, MCU> {
     using crsf = RC::Protokoll::Crsf::V4::Master<2, CrsfConfig, MCU>;
     using crsf_in = crsf::input;
 
+    struct RouterConfig;
+    using router = Router<RouterConfig>;
+    struct RouterConfig {
+        using storage = Devices::storage;
+        // using debug = Devices::debug;
+        using debug = void;
+    };
+
 #ifdef SERIAL_DEBUG
     using debugtx = Mcu::Stm::Pin<gpioa, 2, MCU>; 
     struct DebugConfig;
@@ -122,6 +131,8 @@ struct Devices<WeAct, Config, MCU> {
     };
 #endif
     struct RelayConfig {
+        // using router = Devices::router;
+        // static inline constexpr uint8_t id = 1;
         using src = crsf_in;
         using dest = crsf::messageBuffer;
 		using bcastInterfaces = Meta::List<>;
@@ -137,6 +148,7 @@ struct Devices<WeAct, Config, MCU> {
         static inline constexpr uint8_t fifoSize = 16;
     };
     struct CrsfCallbackConfig;
+    using crsf_cb = CrsfCallback<CrsfCallbackConfig, debug>;
     struct CrsfConfig {
         using rxpin = inputrx;
         using txpin = inputtx;
@@ -146,10 +158,11 @@ struct Devices<WeAct, Config, MCU> {
         using dmaChWrite = crsfDmaChannel2;
         using debug = Devices::debug;
         using tp = void;
-        using callback = CrsfCallback<CrsfCallbackConfig, debug>;
+        using callback = crsf_cb;
         static inline constexpr uint8_t fifoSize = 16;
     };
     struct CrsfCallbackConfig {
+        using src = Devices::crsf;
         using storage = Config::storage;
         using timer = systemTimer;
         using relay = Devices::relay;

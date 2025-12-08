@@ -41,7 +41,7 @@
 #include "rc/package_relay_rewrite.h"
 
 #include "crsfcb.h"
-#include "router.h"
+#include "rc/router.h"
 
 struct SW01;
 struct SW10;

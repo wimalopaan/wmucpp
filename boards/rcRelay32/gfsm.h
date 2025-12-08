@@ -33,6 +33,7 @@ struct GFSM {
     using led = devs::ledBlinker;
     using btn = devs::btn;
 	using crsf = devs::crsf;
+    using crsf_cb = devs::crsf_cb;
     using relay = devs::relay;
 
     enum class State : uint8_t {Undefined, Init, Run};
@@ -41,6 +42,11 @@ struct GFSM {
     static inline constexpr External::Tick<systemTimer> initTicks{100ms};
     static inline constexpr External::Tick<systemTimer> debugTicks{500ms};
     static inline constexpr External::Tick<systemTimer> telemTicks{10ms};
+
+    static inline void updateFromEeprom() {
+        crsf_cb::callbacks(true);
+        crsf_cb::update();
+    }
 
     static inline void init() {
         devs::init();
