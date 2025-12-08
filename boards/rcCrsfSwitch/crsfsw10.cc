@@ -51,6 +51,7 @@ using gfsm = GFSM<devs>;
 
 int main() {
     gfsm::init();
+    gfsm::updateFromEeprom();
 
     static constexpr uint8_t defaultIntPrio = 1;
 

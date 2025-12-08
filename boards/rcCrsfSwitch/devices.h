@@ -161,7 +161,9 @@ struct Devices<SW10, Config, MCU> {
         using crsf = Devices::crsf_in;
         using storage = Devices::storage;
         using crsf_ifaces = Devices::crsf_ifaces;
+        using src = Devices::crsf_in;
     };
+    using crsf_cb = CrsfCallback<CrsfInCallbackConfig>;
     struct CrsfInConfig {
         using txpin = crsftx;
         using rxpin = crsfrx;
@@ -172,7 +174,7 @@ struct Devices<SW10, Config, MCU> {
         using debug = void;
         // using debug = Devices::debug;
         using tp = void;
-        using callback = CrsfCallback<CrsfInCallbackConfig>;
+        using callback = crsf_cb;
         static inline constexpr uint8_t fifoSize = 8;
     };
     using debug1 = void;

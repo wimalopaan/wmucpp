@@ -36,16 +36,9 @@ struct GFSM {
     using systemTimer = devs::systemTimer;
     using debug = devs::debug;
     using storage = devs::storage;
-
     using led = devs::ledBlinker;
-
     using crsf_in = devs::crsf_in;
-
- //    using crsf_1 = devs::crsf_1;
- //    using crsf_2 = devs::crsf_2;
- //    using crsf_3 = devs::crsf_3;
-	// using crsf_4 = devs::crsf_4;
-    // using crsf_5 = devs::crsf_5;
+    using crsf_cb = devs::crsf_cb;
 
     using crsf_ifaces = devs::crsf_ifaces;
 
@@ -88,6 +81,11 @@ struct GFSM {
     }
     static inline void init() {
         devs::init();
+    }
+
+    static inline void updateFromEeprom() {
+        crsf_cb::callbacks(true);
+        crsf_cb::update();
     }
 
     using periodicsList = Meta::concat<crsf_ifaces, Meta::List<debug, crsf_in, led>>;

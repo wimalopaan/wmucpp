@@ -30,6 +30,7 @@ struct CrsfCallback {
     using timer = Config::timer;
     using Param_t = RC::Protokoll::Crsf::V4::Parameter<uint8_t>;
     using PType = Param_t::Type;
+    using src = Config::src;
 
     using crsf_ifaces = Config::crsf_ifaces;
 
@@ -113,7 +114,9 @@ struct CrsfCallback {
         mEepromMode = prevMode;
     }
     static inline void serialize(const uint8_t index, auto& buffer, const RC::Protokoll::Crsf::V4::Lua::CmdStep step = RC::Protokoll::Crsf::V4::Lua::CmdStep::Idle) {
-        params[index].serialize(buffer, params, step, index);
+        if (index < params.size()) {
+            params[index].serialize(buffer, params, step, index);
+        }
     }
 
     private:
@@ -157,7 +160,7 @@ struct CrsfCallback {
         params_t p;
         addNode(p, Param_t{0, PType::Folder, "root"});
         addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
-        addNode(p, Param_t{0, PType::U8,  "CRSF Address", nullptr, &eeprom.address, 192, 207, [](const uint8_t){updateName(mName); return true;}});
+        addNode(p, Param_t{0, PType::U8,  "CRSF Address", nullptr, &eeprom.address, 192, 207, [](const uint8_t a){updateName(mName); src::address(std::byte(a)); return true;}});
         addNode(p, Param_t{0, PType::U8,  "Command B-Address", nullptr, &eeprom.commandBroadcastAddress, 192, 207, [](const uint8_t){return true;}});
 		addOutput<0>(p, 0, "Port HD1");
 		addOutput<0>(p, 0, "Port HD2");
