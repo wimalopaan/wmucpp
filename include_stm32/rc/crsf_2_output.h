@@ -138,6 +138,7 @@ namespace RC {
                     }
                     static inline void sendCommandResponse(const uint8_t index, const uint8_t step) {
                         if (index > callback::numberOfParameters()) {
+                            IO::outl<debug>("# wrong param number");
                             return;
                         }
                         IO::outl<debug>("# CR adr: ", mDest, " src: ", mSrc, " i: ", index, " st: ", step);
@@ -146,12 +147,12 @@ namespace RC {
                             d.push_back(mSrc);
                             d.push_back(index);
                             d.push_back((uint8_t)0); // no chunks follow
-                            // callback::parameter(index).serialize(d, Lua::CmdStep(step));
                             callback::serialize(index, d, Lua::CmdStep(step));
                         });
                     }
                     static inline void sendParameterInfo(const uint8_t index, const uint8_t chunk) {
                         if (index > callback::numberOfParameters()) {
+                            IO::outl<debug>("# wrong param number");
                             return;
                         }
                         IO::outl<debug>("# PI adr: ", mDest, " src: ", mSrc, " i: ", index, " c: ", chunk, " s: ", callback::parameter(index).size());
@@ -162,14 +163,12 @@ namespace RC {
                                     d.push_back(mSrc);
                                     d.push_back(index);
                                     d.push_back((uint8_t)0); // no chunks follow
-                                    // callback::parameter(index).serialize(d);
                                     callback::serialize(index, d);
                                 });
                             }
                             else {
                                 messageBuffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ParamEntry, [&](auto& d){
                                     mChunkBuffer.clear();
-                                    // callback::parameter(index).serialize(mChunkBuffer);
                                     callback::serialize(index, mChunkBuffer);
                                     uint16_t s = mChunkBuffer.size();
                                     const uint8_t chunksToFollow = mChunkBuffer.chunks() - 1;
@@ -177,7 +176,6 @@ namespace RC {
                                     d.push_back(mSrc);
                                     d.push_back(index);
                                     d.push_back(chunksToFollow);
-                                    // mChunkBuffer.serializeChunk(d, 0);
                                     int l = mChunkBuffer.serializeChunk(d, 0);
                                     IO::outl<debug>("# A p: ", index, " c: ", chunk, " cf: ", chunksToFollow, " l: ", l, " s: ", s);;
                                 });
@@ -191,8 +189,6 @@ namespace RC {
                                 d.push_back(index);
                                 d.push_back(chunksToFollow);
                                 mChunkBuffer.serializeChunk(d, chunk);
-                                // int l = mChunkBuffer.serializeChunk(d, chunk);
-                                // IO::outl<debug>("# B p: ", index, " c: ", chunk, " cf: ", chunksToFollow, " l: ", l);;
                             });
                         }
                     }

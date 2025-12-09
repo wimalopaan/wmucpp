@@ -56,10 +56,154 @@
 #include "crsf_cb.h"
 
 struct WeAct;
+struct WeAct_Debug;
 
 using namespace std::literals::chrono_literals;
 
 template<typename HW, typename Config, typename MCU = DefaultMcu> struct Devices;
+
+template<typename Config, typename MCU>
+struct Devices<WeAct_Debug, Config, MCU> {
+    using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<64_MHz, 2'000_Hz, Mcu::Stm::HSI>>;
+    using systemTimer = Mcu::Stm::SystemTimer<clock, Mcu::UseInterrupts<false>, MCU>;
+
+    using storage = Config::storage;
+
+    using gpioa = Mcu::Stm::GPIO<Mcu::Stm::A, MCU>;
+    using gpiob = Mcu::Stm::GPIO<Mcu::Stm::B, MCU>;
+    using gpioc = Mcu::Stm::GPIO<Mcu::Stm::C, MCU>;
+
+    using dma1 = Mcu::Stm::Dma::Controller<1, MCU>;
+    using auxDmaChannel1 = Mcu::Components::DmaChannel<typename dma1::component_t, 1>;
+    using auxDmaChannel2 = Mcu::Components::DmaChannel<typename dma1::component_t, 2>;
+    using crsfDmaChannel1 = Mcu::Components::DmaChannel<typename dma1::component_t, 3>;
+    using crsfDmaChannel2 = Mcu::Components::DmaChannel<typename dma1::component_t, 4>;
+
+    using relaytx = Mcu::Stm::Pin<gpioa, 9, MCU>;
+    using relayrx = Mcu::Stm::Pin<gpioa, 10, MCU>;
+
+    using gfsm = Config::gfsm;
+
+    struct RelayConfig;
+    using relay = RC::Protokoll::Crsf::V4::PacketRelayRewrite<1, RelayConfig, MCU>;
+
+    using inputtx = Mcu::Stm::Pin<gpioa, 2, MCU>;
+    using inputrx = Mcu::Stm::Pin<gpioa, 3, MCU>;
+
+    struct CrsfConfig;
+    using crsf = RC::Protokoll::Crsf::V4::Master<2, CrsfConfig, MCU>;
+    using crsf_in = crsf::input;
+
+    struct RouterConfig;
+    using router = Router<RouterConfig>;
+    struct RouterConfig {
+        using storage = Devices::storage;
+        // using debug = Devices::debug;
+        using debug = void;
+    };
+
+#ifdef SERIAL_DEBUG
+    using debugtx = Mcu::Stm::Pin<gpioa, 2, MCU>;
+    struct DebugConfig;
+    using debug = SerialBuffered<2, DebugConfig, MCU>;
+#else
+    using debug = void;
+#endif
+
+    // Led
+    using led = Mcu::Stm::Pin<gpioa, 4, MCU>;
+    using invLed = Mcu::Stm::Gpio::Inverter<led>;
+    using ledBlinker = External::Blinker<invLed, systemTimer>;
+
+#ifdef USE_BUTTON
+    using button = Mcu::Stm::Pin<gpioa, 14, MCU>;
+    using buttonInv = Mcu::Stm::Gpio::Inverter<button>;
+    using btn = External::Button<buttonInv, systemTimer, External::Tick<systemTimer>{300ms}.raw(),
+                                 External::Tick<systemTimer>{3000ms}.raw(), void>;
+#else
+    using btn = void;
+#endif
+
+#ifdef SERIAL_DEBUG
+    struct DebugConfig {
+        using pin = debugtx;
+        using clock = Devices::clock;
+        static inline constexpr uint16_t bufferSize = 256;
+    };
+#endif
+    struct RelayConfig {
+        // using router = Devices::router;
+        // static inline constexpr uint8_t id = 1;
+        using src = crsf_in;
+        using dest = crsf::messageBuffer;
+        using bcastInterfaces = Meta::List<>;
+        using rxpin = relayrx;
+        using txpin = relaytx;
+        using systemTimer = Devices::systemTimer;
+        using clock = Devices::clock;
+        using dmaChRead  = auxDmaChannel1;
+        using dmaChWrite = auxDmaChannel2;
+        using storage = Devices::storage;
+        using debug = Devices::debug;
+        using tp = void;
+        static inline constexpr uint8_t fifoSize = 16;
+    };
+    struct CrsfCallbackConfig;
+    using crsf_cb = CrsfCallback<CrsfCallbackConfig, debug>;
+    struct CrsfConfig {
+        using rxpin = inputrx;
+        using txpin = inputtx;
+        using systemTimer = Devices::systemTimer;
+        using clock = Devices::clock;
+        using dmaChRead  = crsfDmaChannel1;
+        using dmaChWrite = crsfDmaChannel2;
+        using debug = Devices::debug;
+        using tp = void;
+        using callback = crsf_cb;
+        static inline constexpr uint8_t fifoSize = 16;
+    };
+    struct CrsfCallbackConfig {
+        using src = Devices::crsf;
+        using storage = Config::storage;
+        using timer = systemTimer;
+        using relay = Devices::relay;
+        using tp = void;
+        using debug = Devices::debug;
+    };
+
+    using periodics = StandardComponents<debug, crsf, relay, ledBlinker, btn>;
+
+    static inline void periodic() {
+        periodics::periodic();
+    }
+    static inline void ratePeriodic() {
+        periodics::ratePeriodic();
+    }
+    static inline void init() {
+        clock::init();
+
+        SYSCFG->CFGR1 |= (SYSCFG_CFGR1_PA12_RMP | SYSCFG_CFGR1_PA11_RMP); // PA9 (tx), PA10 (rx)
+
+        systemTimer::init();
+
+        gpioa::init();
+        gpiob::init();
+        gpioc::init();
+
+        dma1::init();
+
+        led::template dir<Mcu::Output>();
+        ledBlinker::event(ledBlinker::Event::Off);
+
+#ifdef USE_BUTTON
+        btn::template init<false>();
+#endif
+
+#ifdef SERIAL_DEBUG
+        debug::init();
+#endif
+    }
+};
 
 template<typename Config, typename MCU>
 struct Devices<WeAct, Config, MCU> {

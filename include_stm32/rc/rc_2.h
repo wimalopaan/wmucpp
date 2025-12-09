@@ -153,6 +153,8 @@ namespace RC {
 
                     inline static constexpr std::byte PassThru{0x7f};
                     inline static constexpr std::byte ArduPilot{0x80};
+
+                    inline static constexpr std::byte Last = ArduPilot;
                 }
                 namespace CommandType {
                     // inline static constexpr std::byte bind{0x01}; // bind

@@ -16,13 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//#define SERIAL_DEBUG
+#define SERIAL_DEBUG
 
 //#define USE_BUTTON // disables SWD, use reset button then
 
 #define NDEBUG // do not change: dev option
  
-#define SW_VERSION 1
+#define SW_VERSION 2
 
 #include <cstdint>
 #include <array>
@@ -34,7 +34,11 @@
 #include "storage.h"
 
 struct DevsConfig;
+#ifdef SERIAL_DEBUG
+using devs = Devices<WeAct_Debug, DevsConfig>;
+#else
 using devs = Devices<WeAct, DevsConfig>;
+#endif
 
 using gfsm = GFSM<devs>;
 

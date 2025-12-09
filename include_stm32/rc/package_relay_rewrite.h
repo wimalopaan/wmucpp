@@ -410,7 +410,7 @@ namespace RC::Protokoll::Crsf {
                 if (const uint8_t l = data[1]; l > RC::Protokoll::Crsf::V4::maxPayloadSize) {
                     return false;
                 }
-                if (const uint8_t t = data[2]; t > (uint8_t)RC::Protokoll::Crsf::V4::Type::Command) {
+                if (const uint8_t t = data[2]; t > (uint8_t)RC::Protokoll::Crsf::V4::Type::Last) {
                     return false;
                 }
                 return true;
