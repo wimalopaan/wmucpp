@@ -202,9 +202,11 @@ namespace RC {
                 namespace PassThru {
                     namespace SubType {
                         inline static constexpr std::byte Switch{0xa1};
+						inline static constexpr std::byte LinkStat{0x01};
                     }
                     namespace AppId {
                         inline static constexpr uint16_t Status{6100};
+						inline static constexpr uint16_t Telem{6200};
                     }
                 }
                 namespace ArduPilotTunnel {

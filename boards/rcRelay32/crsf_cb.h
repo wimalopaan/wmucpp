@@ -142,8 +142,8 @@ private:
 
     static inline bool mEepromMode = false;
     static inline constexpr uint32_t mSerialNumber{1234};
-    static inline constexpr uint32_t mHWVersion{1};
-    static inline constexpr uint32_t mSWVersion{1};
+    static inline constexpr uint32_t mHWVersion{HW_VERSION};
+    static inline constexpr uint32_t mSWVersion{SW_VERSION};
     static inline constexpr auto mVersionString = [](){
         std::array<char, 16> s{};
         auto [ptr, e] = std::to_chars(std::begin(s), std::end(s), mHWVersion);
@@ -167,15 +167,16 @@ private:
         addNode(p, Param_t{0, PType::Folder, "root"});
         addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
         addNode(p, Param_t{0, PType::U8,  "CRSF Address", nullptr, &eeprom.address, 192, 207, [](const uint8_t a){
-                               updateName(mName);
-                                src::address(std::byte(a));
+                               updateName(mName); src::address(std::byte(a));
                     return true;}});
 
-        // auto parent = addParent(p, Param_t{0, PType::Folder, "Bus"});
-        // addNode(p, Param_t{parent, PType::U8,  "TX Rewrite Address", nullptr, &eeprom.tx_rewrite_address, 192, 207, [](const uint8_t a){forwarder::txAddress(a); return true;}});
-        // addNode(p, Param_t{parent, PType::U8,  "RX Rewrite Address", nullptr, &eeprom.rx_rewrite_address, 192, 207, [](const uint8_t a){forwarder::rxAddress(a); return true;}});
-        // addNode(p, Param_t{parent, PType::Str, "TX Rewrite Name", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &eeprom.txname[0]});
+        addNode(p, Param_t{0, PType::U8,  "TX Rewrite Address", nullptr, &eeprom.tx_rewrite_address, 192, 207, [](const uint8_t a){relay::txAddress(a); return true;}});
+        addNode(p, Param_t{0, PType::U8,  "RX Rewrite Address", nullptr, &eeprom.rx_rewrite_address, 192, 207, [](const uint8_t a){relay::rxAddress(a); return true;}});
+        addNode(p, Param_t{0, PType::Str, "TX Rewrite Name", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &eeprom.txname[0]});
 
+		addNode(p, Param_t{0, PType::Sel, "Rewrite Name", "Off;On", &eeprom.rewrite_name, 0, 1, [](const uint8_t v){relay::rewriteName(v == 1); return true;}});
+		addNode(p, Param_t{0, PType::Sel, "LinkStat Tunnel", "Off;On", &eeprom.forward_link_stats_as_tunnel_package, 0, 1, [](const uint8_t v){relay::tunnelLinkStat(v == 1); return true;}});
+		
         // detects overflow by calling undefined function f();
         if (p.size() >= p.capacity()) {
             void f();

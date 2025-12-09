@@ -200,6 +200,13 @@ namespace RC::Protokoll::Crsf {
             static inline constexpr External::Tick<systemTimer> initTicks{100ms};
             static inline constexpr External::Tick<systemTimer> updateTicks{10ms};
 
+			static inline void rewriteName(const bool on) {
+				mDoRewriteName = on;
+			}
+			static inline void tunnelLinkStat(const bool on) {
+				mTunnelLinkStat = on;
+			}
+			
             static inline void periodic() {
                 using namespace RC::Protokoll::Crsf::V4;
                 if (!mActive) return;
@@ -221,7 +228,7 @@ namespace RC::Protokoll::Crsf {
 												IO::outl<debug>("# rewrite from TX");
 												data[PacketIndex::src] = mRewriteTxAddress;
 												if constexpr(requires(){storage::eeprom.txname[0];}) {
-													if (data[PacketIndex::type] == (uint8_t)Type::Info) {
+													if (mDoRewriteName && (data[PacketIndex::type] == (uint8_t)Type::Info)) {
 														bool end = false;
 														for(uint8_t i = 0; i < 16; ++i) {
 															if (data[PacketIndex::payload + i] == '\0') {
@@ -280,6 +287,17 @@ namespace RC::Protokoll::Crsf {
 											if (mSendLinkStats) {
 												IO::outl<debug>("# return link stats");
 												dest::enqueue(data);
+											}
+											if (mTunnelLinkStat) {
+												IO::outl<debug>("# tunnel link stats");
+												dest::create_back((uint8_t)Type::PassThru, [&](auto& ta){
+													ta.push_back(PassThru::AppId::Telem);
+													ta.push_back(PassThru::SubType::LinkStat);
+													
+													for(uint8_t i = PacketIndex::type; i < (data.size() - 1); ++i) {
+														ta.push_back(data[i]);
+													}
+												});
 											}
 										}
 										else {
@@ -441,7 +459,9 @@ namespace RC::Protokoll::Crsf {
             static inline volatile State mState = State::Init;
             static inline External::Tick<systemTimer> mStateTick;
             static inline uint8_t mRewriteTxAddress = 0xce;
-            static inline uint8_t mRewriteRxAddress = 0xcd;
+            static inline uint8_t mRewriteRxAddress = 0xcf;
+			static inline bool mDoRewriteName = false; 
+			static inline bool mTunnelLinkStat = false; 
         };
     }
 }

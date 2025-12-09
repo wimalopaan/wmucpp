@@ -31,7 +31,13 @@ struct EEProm {
     }
     std::array<char, 8> txname{};
 
-    uint8_t address = 0xcf;
+	uint8_t rewrite_name = 0;
+	uint8_t forward_link_stats_as_tunnel_package = 0;
+	
+	
+    uint8_t address = 0xcd;
     uint8_t commandBroadcastAddress = 0xc8; // command packages with this dest-address are routed to all interfaces
 
+	uint8_t tx_rewrite_address = 0xce;
+	uint8_t rx_rewrite_address = 0xcf;
 };
