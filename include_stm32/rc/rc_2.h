@@ -225,8 +225,8 @@ namespace RC {
                 }
                 static inline constexpr uint8_t  maxMessageSize = 64;
                 static inline constexpr uint8_t  minMessageSize = 4;
-                static inline constexpr uint8_t  maxPayloadSize = 60;
-                static inline constexpr uint8_t  maxExtendedPayloadSize = 58;
+                static inline constexpr uint8_t  maxPayloadSize = 62;
+                static inline constexpr uint8_t  maxExtendedPayloadSize = 60;
 
                 static inline constexpr uint8_t  ValueBits = 11;
                 static inline constexpr uint16_t ValueMask = ((1 << ValueBits) - 1);

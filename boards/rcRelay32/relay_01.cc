@@ -35,7 +35,7 @@
 
 struct DevsConfig;
 #ifdef SERIAL_DEBUG
-using devs = Devices<WeAct_Debug, DevsConfig>;
+using devs = Devices<Nucleo, DevsConfig>;
 #else
 using devs = Devices<WeAct, DevsConfig>;
 #endif

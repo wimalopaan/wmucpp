@@ -246,6 +246,8 @@ namespace Mcu::Stm {
             using clock_t = Config::Clock;
             using adapter = detail::getAdapter_t<Config>;
             using tp = detail::getTp_t<Config>;
+			
+			// std::integral_constant<bool, detail::getFifo_v<Config>>::_;
 
             static inline constexpr bool hasTx = detail::hasTx<Config>;
             static inline constexpr bool hasRx = detail::hasRx<Config>;
@@ -368,15 +370,21 @@ namespace Mcu::Stm {
                 else if constexpr (N == 6) {
                     RCC->APBENR1 |= RCC_APBENR1_USART6EN;
                 }
+				else if constexpr (N == 102) {
+					RCC->APBENR1 |= RCC_APBENR1_LPUART2EN;
+					RCC->CCIPR |= 0x01 << RCC_CCIPR_LPUART2SEL_Pos;
+				}
+#endif
                 else if constexpr (N == 101) {
+#ifdef STM32G0
                     RCC->APBENR1 |= RCC_APBENR1_LPUART1EN;
                     RCC->CCIPR |= 0x01 << RCC_CCIPR_LPUART1SEL_Pos;
-                }
-                else if constexpr (N == 102) {
-                    RCC->APBENR1 |= RCC_APBENR1_LPUART2EN;
-                    RCC->CCIPR |= 0x01 << RCC_CCIPR_LPUART2SEL_Pos;
-                }
+#elif defined(STM32G4)
+                    RCC->APB1ENR2 |= RCC_APB1ENR2_LPUART1EN;
+                    RCC->CCIPR |= 0x01 << RCC_CCIPR_LPUART1SEL_Pos;
 #endif
+
+                }
                 else {
                     static_assert(false);
                 }
@@ -444,10 +452,13 @@ namespace Mcu::Stm {
                         else if constexpr((N == 2) || (N == 3)) {
                             cr1 |= USART_CR1_FIFOEN;
                         }
-                        else if constexpr((N == 101) || (N == 102)) {
+                        else if constexpr(N == 102) {
                             cr1 |= USART_CR1_FIFOEN;
                         }
-#endif
+		#endif
+						else if constexpr(N == 101) {
+                            cr1 |= USART_CR1_FIFOEN;
+                        }
                         else {
                             static_assert(false);
                         }

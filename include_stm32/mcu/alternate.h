@@ -73,10 +73,29 @@ namespace Mcu::Stm {
 			
             template<Mcu::Stm::G4xx MCU>
             struct Impl<Pin<A, 9>, Usart<1>, TX, MCU> : std::integral_constant<uint8_t, 7> {};
+			template<Mcu::Stm::G4xx MCU>
+            struct Impl<Pin<A, 10>, Usart<1>, RX, MCU> : std::integral_constant<uint8_t, 7> {};
 
+			template<Mcu::Stm::G4xx MCU>
+            struct Impl<Pin<A, 14>, Usart<2>, TX, MCU> : std::integral_constant<uint8_t, 7> {};
             template<Mcu::Stm::G4xx MCU>
             struct Impl<Pin<A, 15>, Usart<2>, RX, MCU> : std::integral_constant<uint8_t, 7> {};
 
+			template<Mcu::Stm::G4xx MCU>
+            struct Impl<Pin<A, 2>, Usart<2>, TX, MCU> : std::integral_constant<uint8_t, 7> {};
+            template<Mcu::Stm::G4xx MCU>
+            struct Impl<Pin<A, 3>, Usart<2>, RX, MCU> : std::integral_constant<uint8_t, 7> {};
+
+			template<Mcu::Stm::G4xx MCU>
+            struct Impl<Pin<B, 3>, Usart<2>, TX, MCU> : std::integral_constant<uint8_t, 7> {};
+            template<Mcu::Stm::G4xx MCU>
+            struct Impl<Pin<B, 4>, Usart<2>, RX, MCU> : std::integral_constant<uint8_t, 7> {};
+			
+			template<Mcu::Stm::G4xx MCU>
+            struct Impl<Pin<A, 2>, Usart<101>, TX, MCU> : std::integral_constant<uint8_t, 12> {};
+            template<Mcu::Stm::G4xx MCU>
+            struct Impl<Pin<A, 3>, Usart<101>, RX, MCU> : std::integral_constant<uint8_t, 12> {};
+			
 			template<Mcu::Stm::G4xx MCU>
             struct Impl<Pin<A, 10>, SPI<2>, MISO, MCU> : std::integral_constant<uint8_t, 5> {};
 			template<Mcu::Stm::G4xx MCU>

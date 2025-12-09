@@ -56,15 +56,15 @@
 #include "crsf_cb.h"
 
 struct WeAct;
-struct WeAct_Debug;
+struct Nucleo;
 
 using namespace std::literals::chrono_literals;
 
 template<typename HW, typename Config, typename MCU = DefaultMcu> struct Devices;
 
 template<typename Config, typename MCU>
-struct Devices<WeAct_Debug, Config, MCU> {
-    using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<64_MHz, 2'000_Hz, Mcu::Stm::HSI>>;
+struct Devices<Nucleo, Config, MCU> {
+    using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<60_MHz, 2'000_Hz, Mcu::Stm::HSI>>;
     using systemTimer = Mcu::Stm::SystemTimer<clock, Mcu::UseInterrupts<false>, MCU>;
 
     using storage = Config::storage;
@@ -87,8 +87,8 @@ struct Devices<WeAct_Debug, Config, MCU> {
     struct RelayConfig;
     using relay = RC::Protokoll::Crsf::V4::PacketRelayRewrite<1, RelayConfig, MCU>;
 
-    using inputtx = Mcu::Stm::Pin<gpioa, 2, MCU>;
-    using inputrx = Mcu::Stm::Pin<gpioa, 3, MCU>;
+    using inputtx = Mcu::Stm::Pin<gpiob, 3, MCU>;
+    using inputrx = Mcu::Stm::Pin<gpiob, 4, MCU>;
 
     struct CrsfConfig;
     using crsf = RC::Protokoll::Crsf::V4::Master<2, CrsfConfig, MCU>;
@@ -105,15 +105,15 @@ struct Devices<WeAct_Debug, Config, MCU> {
 #ifdef SERIAL_DEBUG
     using debugtx = Mcu::Stm::Pin<gpioa, 2, MCU>;
     struct DebugConfig;
-    using debug = SerialBuffered<2, DebugConfig, MCU>;
+    using debug = SerialBuffered<101, DebugConfig, MCU>;
 #else
     using debug = void;
 #endif
 
     // Led
-    using led = Mcu::Stm::Pin<gpioa, 4, MCU>;
-    using invLed = Mcu::Stm::Gpio::Inverter<led>;
-    using ledBlinker = External::Blinker<invLed, systemTimer>;
+    using led = Mcu::Stm::Pin<gpiob, 8, MCU>;
+    // using invLed = Mcu::Stm::Gpio::Inverter<led>;
+    using ledBlinker = External::Blinker<led, systemTimer>;
 
 #ifdef USE_BUTTON
     using button = Mcu::Stm::Pin<gpioa, 14, MCU>;
@@ -182,8 +182,10 @@ struct Devices<WeAct_Debug, Config, MCU> {
     static inline void init() {
         clock::init();
 
-        SYSCFG->CFGR1 |= (SYSCFG_CFGR1_PA12_RMP | SYSCFG_CFGR1_PA11_RMP); // PA9 (tx), PA10 (rx)
+//        SYSCFG->CFGR1 |= (SYSCFG_CFGR1_PA12_RMP | SYSCFG_CFGR1_PA11_RMP); // PA9 (tx), PA10 (rx)
 
+		SET_BIT(PWR->CR3, PWR_CR3_UCPD_DBDIS);
+		
         systemTimer::init();
 
         gpioa::init();
@@ -325,7 +327,9 @@ struct Devices<WeAct, Config, MCU> {
 	static inline void init() {
         clock::init();
 
+#ifdef SYSCFG_CFGR1_PA12_RMP
 		SYSCFG->CFGR1 |= (SYSCFG_CFGR1_PA12_RMP | SYSCFG_CFGR1_PA11_RMP); // PA9 (tx), PA10 (rx)
+#endif
 		
 		systemTimer::init();
 

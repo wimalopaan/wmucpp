@@ -77,6 +77,7 @@ struct GFSM {
         case State::Run:
 			update();
 			(++mDebugTick).on(debugTicks, []{
+				// IO::outl<debug>("# p", crsf::input::channelPackages());
 			});
             break;
         }
@@ -97,6 +98,8 @@ struct GFSM {
                 relay::init();
                 relay::baud(RC::Protokoll::Crsf::V4::baudrateHandset);
                 relay::activateSource(true);
+				relay::activateLinkStats(false);
+				relay::activateChannels(false);
                 break;
             }
         }

@@ -213,8 +213,8 @@ namespace RC::Protokoll::Crsf {
                         [[maybe_unused]] Debug::Scoped<tp> _tp;
 						if constexpr(!std::is_same_v<dest, void>) {
 							uart::readBuffer([](const auto& data){
-								// IO::outl<debug>("# receive");
 								if (isExtendedPacket(&data.front(), data.size())) {
+									// IO::outl<debug>("# receive");
 									if (data[PacketIndex::type] != (uint8_t)Type::RadioID) {
 										if constexpr(std::is_same_v<router, void>) {
 											if (data[PacketIndex::src] == (uint8_t)Address::TX) {
@@ -244,11 +244,11 @@ namespace RC::Protokoll::Crsf {
 												}
 											}
 											else if (data[PacketIndex::src] == (uint8_t)Address::RX) {
-												IO::outl<debug>("# rewrite from RX");
+												IO::outl<debug>("# rewrite from RX, dest: ", data[PacketIndex::dest]);
 												data[PacketIndex::src] = mRewriteRxAddress;
 											}
 											if (data[PacketIndex::dest] == (uint8_t)Address::TX) {
-												IO::outl<debug>("# rewrite To TX");
+												IO::outl<debug>("# rewrite to Handset, dest: ", data[PacketIndex::dest]);
 												data[PacketIndex::dest] = (uint8_t)Address::Handset;
 											}
 											IO::outl<debug>("# route");
@@ -274,7 +274,7 @@ namespace RC::Protokoll::Crsf {
 									}
 								}
 								else {
-									IO::outl<debug>("# telem");
+									// IO::outl<debug>("# telem");
 									if constexpr(!std::is_same_v<dest, void>) {
 										dest::enqueue(data);
 									}
@@ -346,14 +346,15 @@ namespace RC::Protokoll::Crsf {
             static inline void forwardPacket(volatile uint8_t* const data, const uint16_t length) {
                 using namespace RC::Protokoll::Crsf::V4;
                 if (mActive) {
-                    IO::outl<debug>("# fw to TX");
+                    // IO::outl<debug>("# fw to TX");
                     if (isExtendedPacket(data, length)) {
                         if constexpr(std::is_same_v<router, void>) {
-                            IO::outl<debug>("# rewrite to TX");
                             if (data[PacketIndex::dest] == mRewriteTxAddress) {
+								IO::outl<debug>("# rewrite to TX, src: ", data[PacketIndex::src], " l: ", length);
                                 data[PacketIndex::dest] = (uint8_t)Address::TX;
                             }
                             else if (data[PacketIndex::dest] == mRewriteRxAddress) {
+								IO::outl<debug>("# rewrite to RX, src: ", data[PacketIndex::src], " l: ", length);
                                 data[PacketIndex::dest] = (uint8_t)Address::RX;
                             }
                             recalculateCRC(data);
@@ -432,7 +433,7 @@ namespace RC::Protokoll::Crsf {
             static inline volatile State mState = State::Init;
             static inline External::Tick<systemTimer> mStateTick;
             static inline uint8_t mRewriteTxAddress = 0xce;
-            static inline uint8_t mRewriteRxAddress = 0xcf;
+            static inline uint8_t mRewriteRxAddress = 0xcd;
         };
     }
 }
