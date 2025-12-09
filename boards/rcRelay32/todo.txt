@@ -1,6 +1,8 @@
 
 ToDo:
 =====
+* configure relay telemetry (actual all except link stats) is send
+* encapsulte secondary link stat packages
 
 Done:
 =====

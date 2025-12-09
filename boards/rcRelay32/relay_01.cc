@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define SERIAL_DEBUG
+// #define SERIAL_DEBUG
 
 //#define USE_BUTTON // disables SWD, use reset button then
 
@@ -32,13 +32,10 @@
 #include "devices.h"
 #include "gfsm.h"
 #include "storage.h"
-
+ 
 struct DevsConfig;
-#ifdef SERIAL_DEBUG
-using devs = Devices<Nucleo, DevsConfig>;
-#else
+// using devs = Devices<Nucleo, DevsConfig>;
 using devs = Devices<WeAct, DevsConfig>;
-#endif
 
 using gfsm = GFSM<devs>;
 

@@ -276,7 +276,15 @@ namespace RC::Protokoll::Crsf {
 								else {
 									// IO::outl<debug>("# telem");
 									if constexpr(!std::is_same_v<dest, void>) {
-										dest::enqueue(data);
+										if (data[PacketIndex::type] == (uint8_t)Type::Link) {
+											if (mSendLinkStats) {
+												IO::outl<debug>("# return link stats");
+												dest::enqueue(data);
+											}
+										}
+										else {
+											dest::enqueue(data);
+										}
 									}
 								}
 							});

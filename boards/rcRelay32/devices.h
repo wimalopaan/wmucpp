@@ -184,7 +184,9 @@ struct Devices<Nucleo, Config, MCU> {
 
 //        SYSCFG->CFGR1 |= (SYSCFG_CFGR1_PA12_RMP | SYSCFG_CFGR1_PA11_RMP); // PA9 (tx), PA10 (rx)
 
+#ifdef PWR_CR3_UCPD_DBDIS
 		SET_BIT(PWR->CR3, PWR_CR3_UCPD_DBDIS);
+#endif
 		
         systemTimer::init();
 
