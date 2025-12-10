@@ -1,6 +1,8 @@
 
 ToDo:
 =====
+* add half-duplex relay mode
+* adc input: voltage, temperature
 
 Done:
 =====
