@@ -100,6 +100,9 @@ struct GFSM {
                 relay::activateSource(true);
 				relay::activateLinkStats(false);
 				relay::activateChannels(false);
+                if (storage::eeprom.half_duplex > 0) {
+                    relay::setHalfDuplex(true);
+                }
                 break;
             }
         }
