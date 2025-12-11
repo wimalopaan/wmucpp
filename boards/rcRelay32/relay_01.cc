@@ -16,14 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// #define SERIAL_DEBUG
-
-//#define USE_BUTTON // disables SWD, use reset button then
+// #define SERIAL_DEBUG // disables SWD (use with care, or if you know what you are doing)
 
 #define NDEBUG // do not change: dev option
  
 #define HW_VERSION 1
-#define SW_VERSION 3
+#define SW_VERSION 4
 
 #include <cstdint>
 #include <array>

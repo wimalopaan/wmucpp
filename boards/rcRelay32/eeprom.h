@@ -40,4 +40,6 @@ struct EEProm {
 
 	uint8_t tx_rewrite_address = 0xce;
 	uint8_t rx_rewrite_address = 0xcf;
+
+    uint8_t half_duplex = 0;
 };

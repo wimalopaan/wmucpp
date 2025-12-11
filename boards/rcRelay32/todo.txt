@@ -1,10 +1,10 @@
 
 ToDo:
 =====
-* add half-duplex relay mode
 * adc input: voltage, temperature
 
 Done:
 =====
+* add half-duplex relay mode
 * configure relay telemetry (actual all except link stats) is send
 * encapsulte secondary link stat packages

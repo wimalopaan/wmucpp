@@ -18,8 +18,8 @@
 
 // use one(!) of the following protocol selection
 // #define USE_HWEXT // otherwise SBUS-output is used
-// #define USE_SBUS
-#define USE_CRSF
+#define USE_SBUS
+// #define USE_CRSF
 // #define USE_INVERT_SERIAL
 
 #define INJECT_DIGITAL_START 4 // first channel to inject digitals into CRSF / SBUS

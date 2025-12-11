@@ -176,7 +176,9 @@ private:
 
 		addNode(p, Param_t{0, PType::Sel, "Rewrite Name", "Off;On", &eeprom.rewrite_name, 0, 1, [](const uint8_t v){relay::rewriteName(v == 1); return true;}});
 		addNode(p, Param_t{0, PType::Sel, "LinkStat Tunnel", "Off;On", &eeprom.forward_link_stats_as_tunnel_package, 0, 1, [](const uint8_t v){relay::tunnelLinkStat(v == 1); return true;}});
-		
+
+        addNode(p, Param_t{0, PType::Sel, "Half-Duplex", "Off;On", &eeprom.half_duplex, 0, 1, [](const uint8_t v){relay::setHalfDuplex(v == 1); return true;}});
+
         // detects overflow by calling undefined function f();
         if (p.size() >= p.capacity()) {
             void f();
