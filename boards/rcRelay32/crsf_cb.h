@@ -94,8 +94,6 @@ struct CrsfCallback {
     static inline uint8_t protocolVersion() {
         return 0;
     }
-    // static inline void command(const auto& /*data*/, const uint8_t /*payload*/) {
-    // }
     static inline constexpr void forwardPacket(volatile uint8_t* const data, const uint16_t length) {
         relay::forwardPacket(data, length);
     }
@@ -173,9 +171,10 @@ private:
         addNode(p, Param_t{0, PType::U8,  "TX Rewrite Address", nullptr, &eeprom.tx_rewrite_address, 192, 207, [](const uint8_t a){relay::txAddress(a); return true;}});
         addNode(p, Param_t{0, PType::U8,  "RX Rewrite Address", nullptr, &eeprom.rx_rewrite_address, 192, 207, [](const uint8_t a){relay::rxAddress(a); return true;}});
         addNode(p, Param_t{0, PType::Str, "TX Rewrite Name", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &eeprom.txname[0]});
-
 		addNode(p, Param_t{0, PType::Sel, "Rewrite Name", "Off;On", &eeprom.rewrite_name, 0, 1, [](const uint8_t v){relay::rewriteName(v == 1); return true;}});
-		addNode(p, Param_t{0, PType::Sel, "LinkStat Tunnel", "Off;On", &eeprom.forward_link_stats_as_tunnel_package, 0, 1, [](const uint8_t v){relay::tunnelLinkStat(v == 1); return true;}});
+
+        addNode(p, Param_t{0, PType::Sel, "LinkStat Tunnel", "Off;On", &eeprom.forward_link_stats_as_tunnel_package, 0, 1, [](const uint8_t v){relay::tunnelLinkStat(v == 1); return true;}});
+        addNode(p, Param_t{0, PType::Sel, "Telemetry Tunnel", "Off;On", &eeprom.telemetry_tunnel, 0, 1, [](const uint8_t v){relay::tunnelTelemetry(v == 1); return true;}});
 
         addNode(p, Param_t{0, PType::Sel, "Half-Duplex", "Off;On", &eeprom.half_duplex, 0, 1, [](const uint8_t v){relay::setHalfDuplex(v == 1); return true;}});
 

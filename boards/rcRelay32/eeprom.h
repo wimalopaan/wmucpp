@@ -42,4 +42,5 @@ struct EEProm {
 	uint8_t rx_rewrite_address = 0xcf;
 
     uint8_t half_duplex = 0;
+    uint8_t telemetry_tunnel = 0;
 };

@@ -2,6 +2,10 @@ bugs:
 
 todo:
 =====
+* add support for external tx-module (or rx-as-tx)
+** for half-duplex or full-duplex
+** menu option: name replacement, addresses, telemetry tunnel
+* telemetry tunnel for telemetry messages
 * menu: option to swap rx/tx uart lines (for outgoing: layout like receiver)
 * menu: range of rewrite addresses
 * indication of table overrun

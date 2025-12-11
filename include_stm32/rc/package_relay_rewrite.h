@@ -206,7 +206,9 @@ namespace RC::Protokoll::Crsf {
 			static inline void tunnelLinkStat(const bool on) {
 				mTunnelLinkStat = on;
 			}
-			
+            static inline void tunnelTelemetry(const bool on) {
+                mTunnelTelemetry = on;
+            }
             static inline void periodic() {
                 using namespace RC::Protokoll::Crsf::V4;
                 if (!mActive) return;
@@ -293,7 +295,6 @@ namespace RC::Protokoll::Crsf {
 												dest::create_back((uint8_t)Type::PassThru, [&](auto& ta){
 													ta.push_back(PassThru::AppId::Telem);
 													ta.push_back(PassThru::SubType::LinkStat);
-													
 													for(uint8_t i = PacketIndex::type; i < (data.size() - 1); ++i) {
 														ta.push_back(data[i]);
 													}
@@ -301,7 +302,19 @@ namespace RC::Protokoll::Crsf {
 											}
 										}
 										else {
-											dest::enqueue(data);
+                                            if (mTunnelTelemetry) {
+                                                IO::outl<debug>("# tunnel telemtry");
+                                                dest::create_back((uint8_t)Type::PassThru, [&](auto& ta){
+                                                    ta.push_back(PassThru::AppId::Telem);
+                                                    ta.push_back(PassThru::SubType::Telemetry);
+                                                    for(uint8_t i = PacketIndex::type; i < (data.size() - 1); ++i) {
+                                                        ta.push_back(data[i]);
+                                                    }
+                                                });
+                                            }
+                                            else {
+                                                dest::enqueue(data);
+                                            }
 										}
 									}
 								}
@@ -461,7 +474,8 @@ namespace RC::Protokoll::Crsf {
             static inline uint8_t mRewriteTxAddress = 0xce;
             static inline uint8_t mRewriteRxAddress = 0xcf;
 			static inline bool mDoRewriteName = false; 
-			static inline bool mTunnelLinkStat = false; 
+            static inline bool mTunnelLinkStat = false;
+            static inline bool mTunnelTelemetry = false;
         };
     }
 }

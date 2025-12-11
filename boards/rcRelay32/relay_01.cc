@@ -19,9 +19,16 @@
 // #define SERIAL_DEBUG // disables SWD (use with care, or if you know what you are doing)
 
 #define NDEBUG // do not change: dev option
- 
+
+// #define USE_NUCLEO_431
+
 #define HW_VERSION 1
-#define SW_VERSION 4
+#define SW_VERSION 6
+
+#ifdef USE_NUCLEO_431
+# undef  SERIAL_DEBUG
+# define SERIAL_DEBUG
+#endif
 
 #include <cstdint>
 #include <array>
@@ -33,8 +40,11 @@
 #include "storage.h"
  
 struct DevsConfig;
-// using devs = Devices<Nucleo, DevsConfig>;
+#ifdef USE_NUCLEO_431
+using devs = Devices<Nucleo, DevsConfig>;
+#else
 using devs = Devices<WeAct, DevsConfig>;
+#endif
 
 using gfsm = GFSM<devs>;
 
@@ -51,7 +61,6 @@ struct AppConfig {
 };
 int main() {
     DevsConfig::storage::init();
-    gfsm::updateFromEeprom();
 
     app::main([]{
         NVIC_EnableIRQ(USART1_IRQn);

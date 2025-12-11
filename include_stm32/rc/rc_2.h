@@ -203,6 +203,7 @@ namespace RC {
                     namespace SubType {
                         inline static constexpr std::byte Switch{0xa1};
 						inline static constexpr std::byte LinkStat{0x01};
+                        inline static constexpr std::byte Telemetry{0x02};
                     }
                     namespace AppId {
                         inline static constexpr uint16_t Status{6100};

@@ -1,10 +1,17 @@
+Bugs:
+=====
+* telemetry tunnel for telemetry messages
 
 ToDo:
 =====
+* correct docu (RX and TX interchanged, A11 for half-duplex TX module)
 * adc input: voltage, temperature
+* adapt to own stm32g031 board
 
 Done:
 =====
+* blink pattern for no-input signal (single flash)
+* move update-from-eeprom to later state, and move crsf/relay init to early state
 * add half-duplex relay mode
 * configure relay telemetry (actual all except link stats) is send
 * encapsulte secondary link stat packages

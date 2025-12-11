@@ -196,7 +196,7 @@ struct Devices<Nucleo, Config, MCU> {
 
         dma1::init();
 
-        led::template dir<Mcu::Output>();
+        ledBlinker::init();
         ledBlinker::event(ledBlinker::Event::Off);
 
 #ifdef USE_BUTTON
@@ -206,6 +206,14 @@ struct Devices<Nucleo, Config, MCU> {
 #ifdef SERIAL_DEBUG
         debug::init();
 #endif
+
+        crsf::init();
+        crsf::baud(RC::Protokoll::Crsf::V4::baudrate);
+        relay::init();
+        relay::baud(RC::Protokoll::Crsf::V4::baudrateHandset);
+        relay::activateSource(true);
+        relay::activateLinkStats(false);
+        relay::activateChannels(false);
     }
 };
 
@@ -341,7 +349,7 @@ struct Devices<WeAct, Config, MCU> {
 
         dma1::init();
 
-        led::template dir<Mcu::Output>();
+        ledBlinker::init();
         ledBlinker::event(ledBlinker::Event::Off);
 
 #ifdef USE_BUTTON
@@ -351,5 +359,12 @@ struct Devices<WeAct, Config, MCU> {
 #ifdef SERIAL_DEBUG
 		debug::init();
 #endif
+        crsf::init();
+        crsf::baud(RC::Protokoll::Crsf::V4::baudrate);
+        relay::init();
+        relay::baud(RC::Protokoll::Crsf::V4::baudrateHandset);
+        relay::activateSource(true);
+        relay::activateLinkStats(false);
+        relay::activateChannels(false);
     }
 };

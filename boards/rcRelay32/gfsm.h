@@ -33,23 +33,25 @@ struct GFSM {
     using led = devs::ledBlinker;
     using btn = devs::btn;
 	using crsf = devs::crsf;
+    using crsf_in = devs::crsf_in;
     using crsf_cb = devs::crsf_cb;
     using relay = devs::relay;
 
-    enum class State : uint8_t {Undefined, Init, Run};
-    enum class Event : uint8_t {None, ButtonPress};
+    enum class State : uint8_t {Undefined, Init, Run, UnConnected};
+    enum class Event : uint8_t {None, ButtonPress, ConnectionLost, DirectConnected, ReceiverConnected};
 
-    static inline constexpr External::Tick<systemTimer> initTicks{100ms};
+    static inline constexpr External::Tick<systemTimer> initTicks{500ms};
     static inline constexpr External::Tick<systemTimer> debugTicks{500ms};
     static inline constexpr External::Tick<systemTimer> telemTicks{10ms};
+    static inline constexpr External::Tick<systemTimer> packagesCheckTicks{300ms};
 
     static inline void updateFromEeprom() {
         crsf_cb::callbacks(true);
         crsf_cb::update();
     }
-
     static inline void init() {
         devs::init();
+        updateFromEeprom();
     }
     static inline void event(const Event e) {
         mEvent = e;
@@ -61,6 +63,22 @@ struct GFSM {
 		devs::ratePeriodic();
         checkButton();
 
+        (++mPackagesCheckTick).on(packagesCheckTicks, []{
+            const uint16_t ch_p = crsf_in::template channelPackages<true>();
+            const uint16_t l_p = crsf_in::template linkPackages<true>();
+            if ((ch_p > 0)) {
+                if  ((l_p == 0)) {
+                    event(Event::DirectConnected);
+                }
+                else {
+                    event(Event::ReceiverConnected);
+                }
+            }
+            else {
+                event(Event::ConnectionLost);
+            }
+        });
+
         ++mStateTick;
         const auto oldState = mState;
         switch(mState) {
@@ -70,14 +88,24 @@ struct GFSM {
             });
             break;
         case State::Init:
-            mStateTick.on(initTicks, []{
+            mEvent.on(Event::ReceiverConnected, []{
+                mState = State::Run;
+                }).thenOn(Event::ConnectionLost, []{
+                    mState = State::UnConnected;
+            });
+            break;
+        case State::UnConnected:
+            mEvent.on(Event::ReceiverConnected, []{
                 mState = State::Run;
             });
             break;
         case State::Run:
-			update();
+            mEvent.on(Event::ConnectionLost, []{
+                mState = State::UnConnected;
+            });
+            update();
 			(++mDebugTick).on(debugTicks, []{
-				// IO::outl<debug>("# p", crsf::input::channelPackages());
+                IO::outl<debug>("# p", crsf_in::channelPackages());
 			});
             break;
         }
@@ -88,35 +116,23 @@ struct GFSM {
                 break;
             case State::Init:
                 IO::outl<debug>("# Init eep magic: ", storage::eeprom.magic);
+                led::event(led::Event::Steady);
+                break;
+            case State::UnConnected:
+                IO::outl<debug>("# UnCon");
+                led::count(1);
+                led::event(led::Event::Fast);
                 break;
             case State::Run:
                 IO::outl<debug>("# Run");
 				led::count(2);
 				led::event(led::Event::Slow);
-                crsf::init();
-                crsf::baud(RC::Protokoll::Crsf::V4::baudrate);
-                relay::init();
-                relay::baud(RC::Protokoll::Crsf::V4::baudrateHandset);
-                relay::activateSource(true);
-				relay::activateLinkStats(false);
-				relay::activateChannels(false);
-                if (storage::eeprom.half_duplex > 0) {
-                    relay::setHalfDuplex(true);
-                }
                 break;
             }
         }
     }
     private:
-	static inline void save() {
-        if (const auto [ok, err] = Mcu::Stm32::savecfg(storage::eeprom, storage::eeprom_flash); ok) {
-            IO::outl<debug>("# EEPROM OK");
-        }
-        else {
-            IO::outl<debug>("# EEPROM NOK: ", err);
-        }
-    }
-	static inline void update() {
+    static inline void update() {
 		mStateTick.on(telemTicks, []{
 		});		
 	}
@@ -130,5 +146,6 @@ struct GFSM {
     static inline etl::Event<Event> mEvent;
     static inline External::Tick<systemTimer> mStateTick;
     static inline External::Tick<systemTimer> mDebugTick;
+    static inline External::Tick<systemTimer> mPackagesCheckTick;
     static inline State mState = State::Undefined;
 };
