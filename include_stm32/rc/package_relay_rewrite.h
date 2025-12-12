@@ -299,8 +299,8 @@ namespace RC::Protokoll::Crsf {
                                             else {
                                                 if (mTunnelLinkStat) {
                                                     if (++mTypeCounter[data[PacketIndex::type]] >= mForwardRate) {
-                                                        IO::outl<debug>("# tunnel link stats, size: ", data.size());
                                                         mTypeCounter[data[PacketIndex::type]] = 0;
+                                                        IO::outl<debug>("# tunnel link stats, size: ", data.size());
                                                         dest::create_back((uint8_t)Type::PassThru, [&](auto& ta){
                                                             ta.push_back(Address::Handset);
                                                             ta.push_back(storage::eeprom.address);
@@ -318,8 +318,8 @@ namespace RC::Protokoll::Crsf {
                                             if (mForwardTelemetry) {
                                                 if (mTunnelTelemetry) {
                                                     if (++mTypeCounter[data[PacketIndex::type]] >= mForwardRate) {
-                                                        IO::outl<debug>("# tunnel telemtry, size: ", data.size(), " t: ", data[PacketIndex::type]);
                                                         mTypeCounter[data[PacketIndex::type]] = 0;
+                                                        IO::outl<debug>("# tunnel telemtry, size: ", data.size(), " t: ", data[PacketIndex::type]);
                                                         dest::create_back((uint8_t)Type::PassThru, [&](auto& ta){
                                                             ta.push_back(Address::Handset);
                                                             ta.push_back(storage::eeprom.address);
@@ -332,8 +332,11 @@ namespace RC::Protokoll::Crsf {
                                                     }
                                                 }
                                                 else {
-                                                    IO::outl<debug>("# telemtry, size: ", data.size());
-                                                    dest::enqueue(data);
+                                                    if (++mTypeCounter[data[PacketIndex::type]] >= mForwardRate) {
+                                                        mTypeCounter[data[PacketIndex::type]] = 0;
+                                                        IO::outl<debug>("# telemtry, size: ", data.size());
+                                                        dest::enqueue(data);
+                                                    }
                                                 }
                                             }
 										}
