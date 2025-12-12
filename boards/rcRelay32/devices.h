@@ -228,7 +228,6 @@ struct Devices<Nucleo, Config, MCU> {
 
         adc::init();
         adc::start();
-
     }
 };
 
@@ -248,6 +247,11 @@ struct Devices<WeAct, Config, MCU> {
 	using auxDmaChannel2 = Mcu::Components::DmaChannel<typename dma1::component_t, 2>;
     using crsfDmaChannel1 = Mcu::Components::DmaChannel<typename dma1::component_t, 3>;
     using crsfDmaChannel2 = Mcu::Components::DmaChannel<typename dma1::component_t, 4>;
+    using adcDmaChannel  = Mcu::Components::DmaChannel<typename dma1::component_t, 5>;
+
+    struct AdcConfig;
+    using adc = Mcu::Stm::V4::Adc<1, AdcConfig>;
+
 
     using relaytx = Mcu::Stm::Pin<gpioa, 9, MCU>;
     using relayrx = Mcu::Stm::Pin<gpioa, 10, MCU>;
@@ -340,6 +344,13 @@ struct Devices<WeAct, Config, MCU> {
         using tp = void;
         using debug = Devices::debug;
     };
+    struct AdcConfig {
+        using debug = void;
+        using channels = std::integer_sequence<uint8_t, 5>;
+        using dmaChannel = adcDmaChannel;
+        using trigger = Mcu::Stm::ContinousSampling<2>;
+        using isrConfig = Meta::List<>;
+    };
 
     using periodics = StandardComponents<debug, crsf, relay, ledBlinker, btn>;
 	
@@ -382,5 +393,7 @@ struct Devices<WeAct, Config, MCU> {
         relay::activateLinkStats(false);
         relay::activateChannels(false);
 
+        adc::init();
+        adc::start();
     }
 };

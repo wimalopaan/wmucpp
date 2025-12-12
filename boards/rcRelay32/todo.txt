@@ -3,7 +3,6 @@ Bugs:
 
 ToDo:
 =====
-* explicit failsafe mode (menu: hold, forward, zero, ...)
 * refactor packet_relay_rewrite
 * correct docu (RX and TX interchanged, A11 for half-duplex TX module)
 * adc input: voltage, temperature
@@ -12,6 +11,7 @@ ToDo:
 
 Done:
 =====
+* explicit failsafe mode (menu: hold, forward, zero, ...)
 * failsafe: switch off relay if no input anymore
 * blink pattern for no-input signal (single flash)
 * telemetry tunnel for telemetry messages

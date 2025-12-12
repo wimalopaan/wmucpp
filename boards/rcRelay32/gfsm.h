@@ -103,7 +103,9 @@ struct GFSM {
                 break;
             case State::UnConnected:
                 IO::outl<debug>("# UnCon");
-                relay::enable(false);
+                if (storage::eeprom.failsafe_mode == 0) {
+                    relay::enable(false);
+                }
                 led::count(1);
                 led::event(led::Event::Fast);
                 break;

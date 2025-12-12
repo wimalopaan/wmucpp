@@ -34,6 +34,8 @@ struct EEProm {
 	uint8_t rewrite_name = 0;
 	uint8_t forward_link_stats_as_tunnel_package = 0;
 
+    uint8_t failsafe_mode = 0;
+
     uint8_t address = 0xcd;
     uint8_t commandBroadcastAddress = 0xc8; // command packages with this dest-address are routed to all interfaces
 
