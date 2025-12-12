@@ -522,6 +522,11 @@ namespace Mcu::Stm {
                 if constexpr(Config::mode == Uarts::Mode::HalfDuplex) {
                     rxEnable<false>();
                 }
+                if constexpr(Config::mode == Uarts::Mode::FullDuplex) {
+                    if (mHalfDuplex) {
+                        rxEnable<false>();
+                    }
+                }
                 // mcuUart->ICR = USART_ICR_TCCF;
                 dmaChRW::startWrite(n, (uint32_t)&mcuUart->TDR, mActiveWriteBuffer, Uarts::Properties<N>::dmamux_tx_src);
                 if constexpr(!useSingleTxBuffer) {
@@ -566,11 +571,23 @@ namespace Mcu::Stm {
                                     rxEnable<true>();
                                 }
                             }
+                            if constexpr(Config::mode == Uarts::Mode::FullDuplex) {
+                                if (mHalfDuplex) {
+                                    if (e) {
+                                        rxEnable<true>();
+                                    }
+                                }
+                            }
                         }
                         else {
                             f();
                             if constexpr(Config::mode == Uarts::Mode::HalfDuplex) {
                                 rxEnable<true>();
+                            }
+                            if constexpr(Config::mode == Uarts::Mode::FullDuplex) {
+                                if (mHalfDuplex) {
+                                        rxEnable<true>();
+                                }
                             }
                         }
                     }
@@ -634,6 +651,7 @@ namespace Mcu::Stm {
                 else {
                     mcuUart->CR3 &= ~USART_CR3_HDSEL;
                 }
+                mHalfDuplex = on;
                 if constexpr(Disable) {
                     if constexpr(detail::getTxComplete_v<detail::getIsr_t<Config>>) {
                         mcuUart->CR1 |= (USART_CR1_UE | USART_CR1_TCIE);
@@ -742,6 +760,7 @@ namespace Mcu::Stm {
             static inline tx_buffer_t mWriteBuffer1;
             static inline tx_buffer2_t mWriteBuffer2;
             static inline storage_t* volatile mActiveWriteBuffer = &mWriteBuffer1[0];
+            static inline bool mHalfDuplex = false;
         };
     }
 }
