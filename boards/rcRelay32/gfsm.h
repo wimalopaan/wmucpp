@@ -42,7 +42,6 @@ struct GFSM {
 
     static inline constexpr External::Tick<systemTimer> initTicks{500ms};
     static inline constexpr External::Tick<systemTimer> debugTicks{500ms};
-    static inline constexpr External::Tick<systemTimer> telemTicks{10ms};
     static inline constexpr External::Tick<systemTimer> packagesCheckTicks{300ms};
 
     static inline void updateFromEeprom() {
@@ -62,22 +61,7 @@ struct GFSM {
     static inline void ratePeriodic() {
 		devs::ratePeriodic();
         checkButton();
-
-        (++mPackagesCheckTick).on(packagesCheckTicks, []{
-            const uint16_t ch_p = crsf_in::template channelPackages<true>();
-            const uint16_t l_p = crsf_in::template linkPackages<true>();
-            if ((ch_p > 0)) {
-                if  ((l_p == 0)) {
-                    event(Event::DirectConnected);
-                }
-                else {
-                    event(Event::ReceiverConnected);
-                }
-            }
-            else {
-                event(Event::ConnectionLost);
-            }
-        });
+        checkPackages();
 
         ++mStateTick;
         const auto oldState = mState;
@@ -103,7 +87,6 @@ struct GFSM {
             mEvent.on(Event::ConnectionLost, []{
                 mState = State::UnConnected;
             });
-            update();
 			(++mDebugTick).on(debugTicks, []{
                 IO::outl<debug>("# p", crsf_in::channelPackages());
 			});
@@ -132,10 +115,23 @@ struct GFSM {
         }
     }
     private:
-    static inline void update() {
-		mStateTick.on(telemTicks, []{
-		});		
-	}
+    static inline void checkPackages() {
+        (++mPackagesCheckTick).on(packagesCheckTicks, []{
+            const uint16_t ch_p = crsf_in::template channelPackages<true>();
+            const uint16_t l_p = crsf_in::template linkPackages<true>();
+            if ((ch_p > 0)) {
+                if  ((l_p == 0)) {
+                    event(Event::DirectConnected);
+                }
+                else {
+                    event(Event::ReceiverConnected);
+                }
+            }
+            else {
+                event(Event::ConnectionLost);
+            }
+        });
+    }
     static inline void checkButton() {
         if constexpr(!std::is_same_v<btn, void>) {
             if (const auto e = btn::event(); e == btn::Press::Long) {

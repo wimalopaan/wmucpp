@@ -1,16 +1,19 @@
 Bugs:
 =====
-* telemetry tunnel for telemetry messages
 
 ToDo:
 =====
+* refactor packet_relay_rewrite
 * correct docu (RX and TX interchanged, A11 for half-duplex TX module)
 * adc input: voltage, temperature
+* make LUA-widget to grab tunneled telemetry
 * adapt to own stm32g031 board
 
 Done:
 =====
 * blink pattern for no-input signal (single flash)
+* telemetry tunnel for telemetry messages
+** maybe too much load? store/forward using slower rate?
 * move update-from-eeprom to later state, and move crsf/relay init to early state
 * add half-duplex relay mode
 * configure relay telemetry (actual all except link stats) is send

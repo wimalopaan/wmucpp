@@ -193,6 +193,9 @@ namespace RC::Protokoll::Crsf {
 			static inline void activateBroadcast(const bool on) {
 				mSendBCast = on;
 			}
+            static inline void telemetryRate(const uint8_t r) {
+                mForwardRate = r;
+            }
             enum class RxEvent : uint8_t {None, ReceiveComplete};
             enum class TxEvent : uint8_t {None, TransmitComplete};
             enum class State : uint8_t {Init, Run};
@@ -208,6 +211,9 @@ namespace RC::Protokoll::Crsf {
 			}
             static inline void tunnelTelemetry(const bool on) {
                 mTunnelTelemetry = on;
+            }
+            static inline void forwardTelemetry(const bool on) {
+                mForwardTelemetry = on;
             }
             static inline void periodic() {
                 using namespace RC::Protokoll::Crsf::V4;
@@ -290,30 +296,45 @@ namespace RC::Protokoll::Crsf {
 												IO::outl<debug>("# return link stats");
 												dest::enqueue(data);
 											}
-											if (mTunnelLinkStat) {
-												IO::outl<debug>("# tunnel link stats");
-												dest::create_back((uint8_t)Type::PassThru, [&](auto& ta){
-													ta.push_back(PassThru::AppId::Telem);
-													ta.push_back(PassThru::SubType::LinkStat);
-													for(uint8_t i = PacketIndex::type; i < (data.size() - 1); ++i) {
-														ta.push_back(data[i]);
-													}
-												});
-											}
+                                            else {
+                                                if (mTunnelLinkStat) {
+                                                    if (++mTypeCounter[data[PacketIndex::type]] >= mForwardRate) {
+                                                        IO::outl<debug>("# tunnel link stats, size: ", data.size());
+                                                        mTypeCounter[data[PacketIndex::type]] = 0;
+                                                        dest::create_back((uint8_t)Type::PassThru, [&](auto& ta){
+                                                            ta.push_back(Address::Handset);
+                                                            ta.push_back(storage::eeprom.address);
+                                                            ta.push_back(PassThru::AppId::Telem);
+                                                            ta.push_back(PassThru::SubType::LinkStat);
+                                                            for(uint8_t i = PacketIndex::type; i < (data.size() - 1); ++i) {
+                                                                ta.push_back(data[i]);
+                                                            }
+                                                        });
+                                                    }
+                                                }
+                                            }
 										}
 										else {
-                                            if (mTunnelTelemetry) {
-                                                IO::outl<debug>("# tunnel telemtry");
-                                                dest::create_back((uint8_t)Type::PassThru, [&](auto& ta){
-                                                    ta.push_back(PassThru::AppId::Telem);
-                                                    ta.push_back(PassThru::SubType::Telemetry);
-                                                    for(uint8_t i = PacketIndex::type; i < (data.size() - 1); ++i) {
-                                                        ta.push_back(data[i]);
+                                            if (mForwardTelemetry) {
+                                                if (mTunnelTelemetry) {
+                                                    if (++mTypeCounter[data[PacketIndex::type]] >= mForwardRate) {
+                                                        IO::outl<debug>("# tunnel telemtry, size: ", data.size(), " t: ", data[PacketIndex::type]);
+                                                        mTypeCounter[data[PacketIndex::type]] = 0;
+                                                        dest::create_back((uint8_t)Type::PassThru, [&](auto& ta){
+                                                            ta.push_back(Address::Handset);
+                                                            ta.push_back(storage::eeprom.address);
+                                                            ta.push_back(PassThru::AppId::Telem);
+                                                            ta.push_back(PassThru::SubType::Telemetry);
+                                                            for(uint8_t i = PacketIndex::type; i < (data.size() - 1); ++i) {
+                                                                ta.push_back(data[i]);
+                                                            }
+                                                        });
                                                     }
-                                                });
-                                            }
-                                            else {
-                                                dest::enqueue(data);
+                                                }
+                                                else {
+                                                    IO::outl<debug>("# telemtry, size: ", data.size());
+                                                    dest::enqueue(data);
+                                                }
                                             }
 										}
 									}
@@ -476,6 +497,9 @@ namespace RC::Protokoll::Crsf {
 			static inline bool mDoRewriteName = false; 
             static inline bool mTunnelLinkStat = false;
             static inline bool mTunnelTelemetry = false;
+            static inline bool mForwardTelemetry = true;
+            static inline uint8_t mForwardRate = 2;
+            static inline std::array<uint8_t, (uint8_t)Type::Ping> mTypeCounter{};
         };
     }
 }
