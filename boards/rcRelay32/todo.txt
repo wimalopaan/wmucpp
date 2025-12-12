@@ -3,6 +3,7 @@ Bugs:
 
 ToDo:
 =====
+* explicit failsafe mode (menu: hold, forward, zero, ...)
 * refactor packet_relay_rewrite
 * correct docu (RX and TX interchanged, A11 for half-duplex TX module)
 * adc input: voltage, temperature
