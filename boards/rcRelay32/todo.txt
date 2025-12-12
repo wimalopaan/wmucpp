@@ -11,6 +11,7 @@ ToDo:
 
 Done:
 =====
+* failsafe: switch off relay if no input anymore
 * blink pattern for no-input signal (single flash)
 * telemetry tunnel for telemetry messages
 ** maybe too much load? store/forward using slower rate?

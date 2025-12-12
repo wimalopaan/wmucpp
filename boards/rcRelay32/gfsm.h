@@ -103,11 +103,13 @@ struct GFSM {
                 break;
             case State::UnConnected:
                 IO::outl<debug>("# UnCon");
+                relay::enable(false);
                 led::count(1);
                 led::event(led::Event::Fast);
                 break;
             case State::Run:
                 IO::outl<debug>("# Run");
+                relay::enable(true);
 				led::count(2);
 				led::event(led::Event::Slow);
                 break;

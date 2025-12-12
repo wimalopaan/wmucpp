@@ -175,7 +175,10 @@ namespace RC::Protokoll::Crsf {
                 uart::template invert<true>();
                 txpin::template pulldown<true>();
             }
-			static inline void activateSource(const bool b) {
+            static inline void enable(const bool b) {
+                mEnabled = b;
+            }
+            static inline void activateSource(const bool b) {
 				mSource = b;
 			}
             static inline void txAddress(const uint8_t adr) {
@@ -408,7 +411,7 @@ namespace RC::Protokoll::Crsf {
             }
             static inline void forwardPacket(volatile uint8_t* const data, const uint16_t length) {
                 using namespace RC::Protokoll::Crsf::V4;
-                if (mActive) {
+                if (mActive && mEnabled) {
                     // IO::outl<debug>("# fw to TX");
                     if (isExtendedPacket(data, length)) {
                         if constexpr(std::is_same_v<router, void>) {
@@ -480,13 +483,14 @@ namespace RC::Protokoll::Crsf {
                 return true;
             }
             static inline void update() { // channels to dest
-                if (mSource) {
+                if (mSource && mEnabled) {
                     messageBuffer::create_back((uint8_t)Type::Channels, [](auto& ta){
                         RC::Protokoll::Crsf::V4::pack(src::values(), ta);
                     });
                 }
             }
-			static inline volatile bool mSendBCast  = true;
+            static inline volatile bool mEnabled  = true;
+            static inline volatile bool mSendBCast  = true;
 			static inline volatile bool mSendLinkStats  = true;
 			static inline volatile bool mSendRCChannels = true;
 			static inline volatile bool mSource = false;

@@ -23,7 +23,7 @@
 // #define USE_NUCLEO_431
 
 #define HW_VERSION 1
-#define SW_VERSION 7
+#define SW_VERSION 8
 
 #ifdef USE_NUCLEO_431
 # undef  SERIAL_DEBUG
