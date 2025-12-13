@@ -3,6 +3,7 @@ Bugs:
 
 ToDo:
 =====
+* wathdog (show watchdog counter in menu)
 * refactor packet_relay_rewrite
 * correct docu (RX and TX interchanged, A11 for half-duplex TX module)
 * adc input: voltage, temperature

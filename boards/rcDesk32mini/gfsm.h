@@ -153,17 +153,22 @@ struct GFSM {
 				if constexpr(!std::is_same_v<modcom, void>) {
 					modcom::reset();
 				}
-				else if constexpr(!std::is_same_v<sbus, void>) {
-					sbus::init();
-					sbus::invert(false); // TX16s can only read inverted SBUS (normal polarity) 
+                if constexpr(!std::is_same_v<sbus, void>) {
+                    static_assert(std::is_same_v<crsf, void>);
+                    static_assert(std::is_same_v<hwext, void>);
+                    sbus::init();
+#ifdef SBUS_SERIAL_INVERT
+                    sbus::invert(true);
+#else
+                    sbus::invert(false); // TX16s can only read inverted SBUS (normal polarity)
+#endif
 				}
-				else if constexpr(!std::is_same_v<crsf, void>) {
-					crsf::init();
+                if constexpr(!std::is_same_v<crsf, void>) {
+                    static_assert(std::is_same_v<sbus, void>);
+                    static_assert(std::is_same_v<hwext, void>);
+                    crsf::init();
 					crsf::baud(RC::Protokoll::Crsf::V4::baudrateHandset);
 					crsf::activateSource(true);
-				}
-				else {
-					static_assert("wrong protocol");
 				}
                 break;
 			case State::Calibration:

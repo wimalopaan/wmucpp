@@ -16,23 +16,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// use one(!) of the following protocol selection
-// #define USE_HWEXT // otherwise SBUS-output is used
-#define USE_SBUS
-// #define USE_CRSF
-// #define USE_INVERT_SERIAL
+// reads 8 analog inputs (A0...A3, A5...A8) (A4 of the WeAct board is used for the LED)
+// reads 4 digital inputs (B6, B7, C14, C15)
+// produces a 16-channel RC data stream (CRSF, SBUS, HW-Extension) (see below)
+// injects the digitals in the RC data stream (see below)
+// if using CRSF, the digitals are also transported as CRSF-switch-protocol extension
 
-#define INJECT_DIGITAL_START 4 // first channel to inject digitals into CRSF / SBUS
+// use one(!) of the following protocol selection exclusively
+// #define USE_HWEXT // otherwise SBUS-output is used
+#define USE_SBUS // according SBUS inversion see below
+// #define USE_CRSF
+
+#define INJECT_DIGITAL_START 8 // first channel to inject digitals into CRSF / SBUS (counting from 0)
 #define SWITCH_ADDRESS 0 // only valid for CSRF (using switch protocol extension)
 
+// #define SBUS_SERIAL_INVERT // SBUS is an inverted serial protocol, but the TX16s can read only ininverted serial signals
+
 // use broadcast for switch command
-#define CRSF_SWITCH_COMMAND_ADDRESS RC::Protokoll::Crsf::V4::Address::Broadcast 
-// if the above is not working for some weird reason (older ELRS?)
+#define CRSF_SWITCH_COMMAND_ADDRESS RC::Protokoll::Crsf::V4::Address::Broadcast
+// if the above is not working for some weird reason (older ELRS?), use the following
 // #define CRSF_SWITCH_COMMAND_ADDRESS RC::Protokoll::Crsf::V4::Address::Controller
 
 // #define SERIAL_DEBUG // disables PA2 analog input
 
-//#define USE_BUTTON // disables SWD, use reset button then
+//#define USE_BUTTON // disables SWD (use with care and know what you are doing), use reset button then
 
 #define NDEBUG // do not change: dev option
  
