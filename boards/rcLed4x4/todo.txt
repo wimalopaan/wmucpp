@@ -5,6 +5,7 @@
 
 * ToDo
 ------
+* add slave-switch protocol (like Set):
 * add watchdog
 * add reset parameters command
 * add restart command (NVIC_SystemReset)
