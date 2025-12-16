@@ -211,7 +211,7 @@ private:
         addNode(p, Param_t{.parent = parent2, .type = PType::U8, .name = "Intervall(off)", .value_ptr = &storage::eeprom.outputs[index].blinkOffTime, .min = 1, .max = 255, .cb = [](const uint8_t v){Meta::nth_element<index, bsws>::off_dezi(v); return true;}, .unitString = "*50ms"});
         addNode(p, Param_t{.parent = parent2, .type = PType::U8, .name = "Intervall(count)", .value_ptr = &storage::eeprom.outputs[index].flashCount, .min = 1, .max = 4, .cb = [](const uint8_t v){Meta::nth_element<index, bsws>::flash_count(v); return true;}});
 #ifdef USE_SLAVE_COMMAND
-        addNode(p, Param_t{parent2, PType::Sel, "Slave", "Off;On", nullptr, 0, 1, [](const uint8_t v){storage::eeprom.outputs[index].slaveEnable = v; return true;}});
+        addNode(p, Param_t{parent2, PType::Sel, "Slave", "Off;On", &storage::eeprom.outputs[index].slaveEnable, 0, 1, [](const uint8_t){return true;}});
 #endif
         addNode(p, Param_t{parent2, PType::Sel, "Test", "Off;On", nullptr, 0, 1, [](const uint8_t v){Meta::nth_element<index, bsws>::on(v); return false;}});
     }
@@ -273,7 +273,7 @@ private:
 
 #ifdef USE_SLAVE_COMMAND
         addNode(p, Param_t{parent, PType::Sel, "Slave Cmd", "Off;On", &storage::eeprom.slaveSend, 0, 1, [](const uint8_t v){slave::active(v == 1); return true;}});
-        addNode(p, Param_t{parent, PType::U8, "Master", nullptr, &storage::eeprom.master, 0xc0, 0xcf, [](const uint8_t){return true;}});
+        addNode(p, Param_t{parent, PType::U8, "Master", nullptr, &storage::eeprom.master, 0, 255, [](const uint8_t){return true;}});
 #endif
 
         addOutput<0>(p, 0, "Output 0");
