@@ -178,6 +178,11 @@ namespace RC::Protokoll::Crsf {
             static inline void enable(const bool b) {
                 mEnabled = b;
             }
+            static inline void activateRouter(const bool b)
+                requires(!std::is_same_v<router, void>)
+            {
+                mUseRouter = b;
+            }
             static inline void activateSource(const bool b) {
 				mSource = b;
 			}
@@ -218,6 +223,10 @@ namespace RC::Protokoll::Crsf {
             static inline void forwardTelemetry(const bool on) {
                 mForwardTelemetry = on;
             }
+            static inline void insertRoute(const uint8_t srcAddr) {
+                IO::outl<debug>("# iRoute: ", Config::id, " src: ", srcAddr);
+                router::backwardSrcAddress(Config::id, srcAddr, true);
+            }
             static inline void periodic() {
                 using namespace RC::Protokoll::Crsf::V4;
                 if (!mActive) return;
@@ -229,124 +238,7 @@ namespace RC::Protokoll::Crsf {
                 case State::Run:
                     if (mRxEvent.is(RxEvent::ReceiveComplete)) {
                         [[maybe_unused]] Debug::Scoped<tp> _tp;
-						if constexpr(!std::is_same_v<dest, void>) {
-							uart::readBuffer([](const auto& data){
-								if (isExtendedPacket(&data.front(), data.size())) {
-									// IO::outl<debug>("# receive");
-									if (data[PacketIndex::type] != (uint8_t)Type::RadioID) {
-										if constexpr(std::is_same_v<router, void>) {
-											if (data[PacketIndex::src] == (uint8_t)Address::TX) {
-												IO::outl<debug>("# rewrite from TX");
-												data[PacketIndex::src] = mRewriteTxAddress;
-												if constexpr(requires(){storage::eeprom.txname[0];}) {
-													if (mDoRewriteName && (data[PacketIndex::type] == (uint8_t)Type::Info)) {
-														bool end = false;
-														for(uint8_t i = 0; i < 16; ++i) {
-															if (data[PacketIndex::payload + i] == '\0') {
-																break;
-															}
-															if (!end && (i < storage::eeprom.txname.size())) {
-																if (storage::eeprom.txname[i] == '\0') {
-																	data[PacketIndex::payload + i] = '.';
-																	end = true;
-																}
-																else {
-																	data[PacketIndex::payload + i] = storage::eeprom.txname[i];
-																}
-															}
-															else {
-																data[PacketIndex::payload + i] = '.';
-															}
-														}
-													}
-												}
-											}
-											else if (data[PacketIndex::src] == (uint8_t)Address::RX) {
-												IO::outl<debug>("# rewrite from RX, dest: ", data[PacketIndex::dest]);
-												data[PacketIndex::src] = mRewriteRxAddress;
-											}
-											if (data[PacketIndex::dest] == (uint8_t)Address::TX) {
-												IO::outl<debug>("# rewrite to Handset, dest: ", data[PacketIndex::dest]);
-												data[PacketIndex::dest] = (uint8_t)Address::Handset;
-											}
-											IO::outl<debug>("# route");
-											data[0] = (uint8_t)Address::StartByte;
-											recalculateCRC(data);
-											if constexpr(!std::is_same_v<dest, void>) {
-												dest::enqueue(data);
-											}
-										}
-										else { // with router
-											const uint8_t srcAddr = data[PacketIndex::src];
-											const uint8_t rewSrcAddr = router::backwardSrcAddress(Config::id, srcAddr);
-											IO::outl<debug>("# route: ", srcAddr, " -> ", rewSrcAddr);
-											data[PacketIndex::src] = rewSrcAddr;
-											data[0] = (uint8_t)Address::StartByte;
-											recalculateCRC(data);
-											dest::enqueue(data);
-											
-											Meta::visit<bcastIfaces>([&]<typename IF>(Meta::Wrapper<IF>){
-															IF::forwardPacket(&data[0], data.size());
-														});
-										}
-									}
-								}
-								else {
-									// IO::outl<debug>("# telem");
-									if constexpr(!std::is_same_v<dest, void>) {
-										if (data[PacketIndex::type] == (uint8_t)Type::Link) {
-											if (mSendLinkStats) {
-												IO::outl<debug>("# return link stats");
-												dest::enqueue(data);
-											}
-                                            else {
-                                                if (mTunnelLinkStat) {
-                                                    if (++mTypeCounter[data[PacketIndex::type]] >= mForwardRate) {
-                                                        mTypeCounter[data[PacketIndex::type]] = 0;
-                                                        IO::outl<debug>("# tunnel link stats, size: ", data.size());
-                                                        dest::create_back((uint8_t)Type::PassThru, [&](auto& ta){
-                                                            ta.push_back(Address::Handset);
-                                                            ta.push_back(storage::eeprom.address);
-                                                            ta.push_back(PassThru::AppId::Telem);
-                                                            ta.push_back(PassThru::SubType::LinkStat);
-                                                            for(uint8_t i = PacketIndex::type; i < (data.size() - 1); ++i) {
-                                                                ta.push_back(data[i]);
-                                                            }
-                                                        });
-                                                    }
-                                                }
-                                            }
-										}
-										else {
-                                            if (mForwardTelemetry) {
-                                                if (mTunnelTelemetry) {
-                                                    if (++mTypeCounter[data[PacketIndex::type]] >= mForwardRate) {
-                                                        mTypeCounter[data[PacketIndex::type]] = 0;
-                                                        IO::outl<debug>("# tunnel telemtry, size: ", data.size(), " t: ", data[PacketIndex::type]);
-                                                        dest::create_back((uint8_t)Type::PassThru, [&](auto& ta){
-                                                            ta.push_back(Address::Handset);
-                                                            ta.push_back(storage::eeprom.address);
-                                                            ta.push_back(PassThru::AppId::Telem);
-                                                            ta.push_back(PassThru::SubType::Telemetry);
-                                                            for(uint8_t i = PacketIndex::type; i < (data.size() - 1); ++i) {
-                                                                ta.push_back(data[i]);
-                                                            }
-                                                        });
-                                                    }
-                                                }
-                                                else {
-                                                    if (++mTypeCounter[data[PacketIndex::type]] >= mForwardRate) {
-                                                        mTypeCounter[data[PacketIndex::type]] = 0;
-                                                        IO::outl<debug>("# telemtry, size: ", data.size());
-                                                        dest::enqueue(data);
-                                                    }
-                                                }
-                                            }
-										}
-									}
-								}
-							});
-						}
+                        handleIncoming();
                     }
                     else if (mTxEvent.is(TxEvent::TransmitComplete)) {
                         messageBuffer::event(messageBuffer::Event::TransmitComplete);
@@ -415,30 +307,14 @@ namespace RC::Protokoll::Crsf {
                     // IO::outl<debug>("# fw to TX");
                     if (isExtendedPacket(data, length)) {
                         if constexpr(std::is_same_v<router, void>) {
-                            if (data[PacketIndex::dest] == mRewriteTxAddress) {
-								IO::outl<debug>("# rewrite to TX, src: ", data[PacketIndex::src], " l: ", length);
-                                data[PacketIndex::dest] = (uint8_t)Address::TX;
-                            }
-                            else if (data[PacketIndex::dest] == mRewriteRxAddress) {
-								IO::outl<debug>("# rewrite to RX, src: ", data[PacketIndex::src], " l: ", length);
-                                data[PacketIndex::dest] = (uint8_t)Address::RX;
-                            }
-                            recalculateCRC(data);
-                            messageBuffer::enqueue(std::span{data, length});
+                            rewriteOutgoing(data, length);
                         }
                         else { // with router
-                            if (((data[PacketIndex::dest] == 0) && mSendBCast) || // broadcast
-                                ((data[PacketIndex::dest] == storage::eeprom.commandBroadcastAddress) && (data[PacketIndex::type] == (uint8_t)Type::Command)))  { // pseudo-broadcast
-                                IO::outl<debug>("# ping: ", data[PacketIndex::dest]);
-                                messageBuffer::enqueue(std::span{data, length});
+                            if (mUseRouter) {
+                                routeOutgoing(data, length);
                             }
                             else {
-                                const uint8_t rewriteDestAdr = router::forwardDestAddress(Config::id, data[PacketIndex::dest]);
-                                if (rewriteDestAdr > 0) {
-                                    data[PacketIndex::dest] = rewriteDestAdr;
-                                    recalculateCRC(data);
-                                    messageBuffer::enqueue(std::span{data, length});
-                                }
+                                rewriteOutgoing(data, length);
                             }
                         }
                     }
@@ -460,6 +336,183 @@ namespace RC::Protokoll::Crsf {
                 }
             }
             private:
+            static inline void routeOutgoing(volatile uint8_t* const data, const uint16_t length) {
+                if (((data[PacketIndex::dest] == 0) && mSendBCast) || // broadcast
+                    ((data[PacketIndex::dest] == storage::eeprom.commandBroadcastAddress) && (data[PacketIndex::type] == (uint8_t)Type::Command)))  { // pseudo-broadcast
+                    IO::outl<debug>("# ping: ", data[PacketIndex::dest]);
+                    messageBuffer::enqueue(std::span{data, length});
+                }
+                else {
+                    const uint8_t rewriteDestAdr = router::forwardDestAddress(Config::id, data[PacketIndex::dest]);
+                    if (rewriteDestAdr > 0) {
+                        data[PacketIndex::dest] = rewriteDestAdr;
+                        recalculateCRC(data);
+                        messageBuffer::enqueue(std::span{data, length});
+                    }
+                }
+            }
+            static inline void rewriteOutgoing(volatile uint8_t* const data, const uint16_t length) {
+                if (data[PacketIndex::dest] == mRewriteTxAddress) {
+                    IO::outl<debug>("# rewrite to TX, src: ", data[PacketIndex::src], " l: ", length);
+                    data[PacketIndex::dest] = (uint8_t)Address::TX;
+                }
+                else if (data[PacketIndex::dest] == mRewriteRxAddress) {
+                    IO::outl<debug>("# rewrite to RX, src: ", data[PacketIndex::src], " l: ", length);
+                    data[PacketIndex::dest] = (uint8_t)Address::RX;
+                }
+                recalculateCRC(data);
+                messageBuffer::enqueue(std::span{data, length});
+            }
+            static inline void handleIncoming() {
+                if constexpr(!std::is_same_v<dest, void>) {
+                    uart::readBuffer([](const auto& data){
+                        if (isExtendedPacket(&data.front(), data.size())) {
+                            // IO::outl<debug>("# receive");
+                            if (data[PacketIndex::type] != (uint8_t)Type::RadioID) {
+                                if constexpr(std::is_same_v<router, void>) {
+                                    rewriteIncoming(data);
+                                }
+                                else { // with router
+                                    if (mUseRouter) {
+                                        // rewriteRxTxSource(data);
+                                        rewriteDestination(data);
+                                        if (data[PacketIndex::src] == (uint8_t)Address::TX) {
+                                            rewriteName(data);
+                                        }
+                                        routeIncoming(data);
+                                    }
+                                    else {
+                                        rewriteIncoming(data);
+                                    }
+                                }
+                            }
+                        }
+                        else {
+                            // IO::outl<debug>("# telem");
+                            if constexpr(!std::is_same_v<dest, void>) {
+                                if (data[PacketIndex::type] == (uint8_t)Type::Link) {
+                                    if (mSendLinkStats) {
+                                        IO::outl<debug>("# return link stats");
+                                        dest::enqueue(data);
+                                    }
+                                    else {
+                                        if (mTunnelLinkStat) {
+                                            if (++mTypeCounter[data[PacketIndex::type]] >= mForwardRate) {
+                                                mTypeCounter[data[PacketIndex::type]] = 0;
+                                                IO::outl<debug>("# tunnel link stats, size: ", data.size());
+                                                dest::create_back((uint8_t)Type::PassThru, [&](auto& ta){
+                                                    ta.push_back(Address::Handset);
+                                                    ta.push_back(storage::eeprom.address);
+                                                    ta.push_back(PassThru::AppId::Telem);
+                                                    ta.push_back(PassThru::SubType::LinkStat);
+                                                    for(uint8_t i = PacketIndex::type; i < (data.size() - 1); ++i) {
+                                                        ta.push_back(data[i]);
+                                                    }
+                                                });
+                                            }
+                                        }
+                                    }
+                                }
+                                else {
+                                    if (mForwardTelemetry) {
+                                        if (mTunnelTelemetry) {
+                                            if (++mTypeCounter[data[PacketIndex::type]] >= mForwardRate) {
+                                                mTypeCounter[data[PacketIndex::type]] = 0;
+                                                IO::outl<debug>("# tunnel telemtry, size: ", data.size(), " t: ", data[PacketIndex::type]);
+                                                dest::create_back((uint8_t)Type::PassThru, [&](auto& ta){
+                                                    ta.push_back(Address::Handset);
+                                                    ta.push_back(storage::eeprom.address);
+                                                    ta.push_back(PassThru::AppId::Telem);
+                                                    ta.push_back(PassThru::SubType::Telemetry);
+                                                    for(uint8_t i = PacketIndex::type; i < (data.size() - 1); ++i) {
+                                                        ta.push_back(data[i]);
+                                                    }
+                                                });
+                                            }
+                                        }
+                                        else {
+                                            if (++mTypeCounter[data[PacketIndex::type]] >= mForwardRate) {
+                                                mTypeCounter[data[PacketIndex::type]] = 0;
+                                                IO::outl<debug>("# telemtry, size: ", data.size());
+                                                dest::enqueue(data);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+            static inline void routeIncoming(auto& data) {
+                const uint8_t srcAddr = data[PacketIndex::src];
+                const uint8_t rewSrcAddr = router::backwardSrcAddress(Config::id, srcAddr);
+                IO::outl<debug>("# route: ", srcAddr, " -> ", rewSrcAddr);
+                data[PacketIndex::src] = rewSrcAddr;
+                data[0] = (uint8_t)Address::StartByte;
+                recalculateCRC(data);
+                dest::enqueue(data);
+
+                Meta::visit<bcastIfaces>([&]<typename IF>(Meta::Wrapper<IF>){
+                    IF::forwardPacket(&data[0], data.size());
+                });
+            }
+            static inline void rewriteDestination(auto& data) {
+                if (data[PacketIndex::dest] == (uint8_t)Address::TX) {
+                    IO::outl<debug>("# rewrite to Handset, dest: ", data[PacketIndex::dest]);
+                    data[PacketIndex::dest] = (uint8_t)Address::Handset;
+                }
+            }
+            static inline void rewriteName(auto& data) {
+                if constexpr(requires(){storage::eeprom.txname[0];}) {
+                    if (mDoRewriteName && (data[PacketIndex::type] == (uint8_t)Type::Info)) {
+                        bool end = false;
+                        for(uint8_t i = 0; i < 16; ++i) {
+                            if (data[PacketIndex::payload + i] == '\0') {
+                                break;
+                            }
+                            if (!end && (i < storage::eeprom.txname.size())) {
+                                if (storage::eeprom.txname[i] == '\0') {
+                                    data[PacketIndex::payload + i] = '.';
+                                    end = true;
+                                }
+                                else {
+                                    data[PacketIndex::payload + i] = storage::eeprom.txname[i];
+                                }
+                            }
+                            else {
+                                data[PacketIndex::payload + i] = '.';
+                            }
+                        }
+                    }
+                }
+            }
+            static inline void rewriteRxTxSource(auto& data) {
+                if (data[PacketIndex::src] == (uint8_t)Address::TX) {
+                    IO::outl<debug>("# rewrite from TX");
+                    data[PacketIndex::src] = mRewriteTxAddress;
+                    rewriteName(data);
+                }
+                else if (data[PacketIndex::src] == (uint8_t)Address::RX) {
+                    IO::outl<debug>("# rewrite from RX, dest: ", data[PacketIndex::dest]);
+                    data[PacketIndex::src] = mRewriteRxAddress;
+                }
+            }
+            static inline void rewriteIncoming(auto& data) {
+                rewriteRxTxSource(data);
+                rewriteDestination(data);
+                if constexpr(std::is_same_v<router, void>) {
+                    IO::outl<debug>("# route");
+                }
+                else {
+                    IO::outl<debug>("# route id: ", Config::id);
+                }
+                data[0] = (uint8_t)Address::StartByte;
+                recalculateCRC(data);
+                if constexpr(!std::is_same_v<dest, void>) {
+                    dest::enqueue(data);
+                }
+            }
             static inline void recalculateCRC(auto& data) {
                 CRC8 crc;
                 const uint8_t len = data[PacketIndex::length];
@@ -495,6 +548,7 @@ namespace RC::Protokoll::Crsf {
 			static inline volatile bool mSendRCChannels = true;
 			static inline volatile bool mSource = false;
             static inline volatile bool mActive = false;
+            static inline volatile bool mUseRouter = true;
             static inline volatile etl::Event<RxEvent> mRxEvent;
             static inline volatile etl::Event<TxEvent> mTxEvent;
             static inline volatile State mState = State::Init;

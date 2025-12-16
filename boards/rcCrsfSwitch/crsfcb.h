@@ -151,10 +151,30 @@ struct CrsfCallback {
 	template<uint8_t index>
     static inline constexpr void addOutput(auto& p, const uint8_t parent, const char* const name) {
         const uint8_t parent2 = addParent(p, Param_t{parent, PType::Folder, name});
-		addNode(p, Param_t{parent2, PType::Sel, "Fwd LinkStat Pkgs", "Off;On", &eeprom.forwardLinkStats[index], 0, 1, [](const uint8_t v){Meta::nth_element<index, crsf_ifaces>::activateLinkStats(v > 0); return false;}});
-		addNode(p, Param_t{parent2, PType::Sel, "Fwd RC-Channels Pkgs", "Off;On", &eeprom.forwardRCChannels[index], 0, 1, [](const uint8_t v){Meta::nth_element<index, crsf_ifaces>::activateChannels(v > 0); return false;}});
-		addNode(p, Param_t{parent2, PType::Sel, "Fwd BCast Pkgs", "Off;On", &eeprom.forwardBCast[index], 0, 1, [](const uint8_t v){Meta::nth_element<index, crsf_ifaces>::activateBroadcast(v > 0); return false;}});
-	}
+        addNode(p, Param_t{parent2, PType::Sel, "Fwd LinkStat Pkgs", "Off;On", &eeprom.outputParams[index].forwardLinkStats, 0, 1, [](const uint8_t v){Meta::nth_element<index, crsf_ifaces>::activateLinkStats(v > 0); return true;}});
+        addNode(p, Param_t{parent2, PType::Sel, "Fwd RC-Channels Pkgs", "Off;On", &eeprom.outputParams[index].forwardRCChannels, 0, 1, [](const uint8_t v){Meta::nth_element<index, crsf_ifaces>::activateChannels(v > 0); return true;}});
+        addNode(p, Param_t{parent2, PType::Sel, "Fwd BCast Pkgs", "Off;On", &eeprom.outputParams[index].forwardBCast, 0, 1, [](const uint8_t v){Meta::nth_element<index, crsf_ifaces>::activateBroadcast(v > 0); return true;}});
+
+        addNode(p, Param_t{parent2, PType::Sel, "Relay", "Off;On", &eeprom.outputParams[index].asRelay, 0, 1, [](const uint8_t v){
+                               if (v > 0) {
+                                Meta::nth_element<index, crsf_ifaces>::insertRoute((uint8_t)RC::Protokoll::Crsf::V4::Address::RX);
+                                Meta::nth_element<index, crsf_ifaces>::insertRoute((uint8_t)RC::Protokoll::Crsf::V4::Address::TX);
+                                   }
+                                return true;}});
+        addNode(p, Param_t{parent2, PType::Sel, "Baudrate", "400k;420k", &eeprom.outputParams[index].baudrate, 0, 1, [](const uint8_t v){Meta::nth_element<index, crsf_ifaces>::baud((v == 0) ? 400'000 : 420'000); return true;}});
+
+
+        addNode(p, Param_t{parent2, PType::Str, "TX Rewrite Name", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &eeprom.outputParams[index].tx_name[0]});
+        addNode(p, Param_t{parent2, PType::Sel, "Rewrite Name", "Off;On", &eeprom.outputParams[index].rewrite_name, 0, 1, [](const uint8_t v){Meta::nth_element<index, crsf_ifaces>::rewriteName(v == 1); return true;}});
+
+        addNode(p, Param_t{parent2, PType::Sel, "LinkStat Tunnel", "Off;On", &eeprom.outputParams[index].forward_link_stats_as_tunnel_package, 0, 1, [](const uint8_t v){Meta::nth_element<index, crsf_ifaces>::tunnelLinkStat(v == 1); return true;}});
+        addNode(p, Param_t{parent2, PType::Sel, "Failsafe", "Forward;Hold", &eeprom.outputParams[index].failsafe_mode, 0, 1, [](const uint8_t){return true;}});
+
+        addNode(p, Param_t{parent2, PType::Sel, "Forward Telemetry", "Off;On", &eeprom.outputParams[index].telemetry_forward, 0, 1, [](const uint8_t v){Meta::nth_element<index, crsf_ifaces>::forwardTelemetry(v == 1); return true;}});
+        addNode(p, Param_t{parent2, PType::U8,  "Forward Rate", nullptr, &eeprom.outputParams[index].telemetry_rate, 1, 10, [](const uint8_t a){Meta::nth_element<index, crsf_ifaces>::telemetryRate(a); return true;}});
+        addNode(p, Param_t{parent2, PType::Sel, "Telemetry Tunnel", "Off;On", &eeprom.outputParams[index].telemetry_tunnel, 0, 1, [](const uint8_t v){Meta::nth_element<index, crsf_ifaces>::tunnelTelemetry(v == 1); return true;}});
+
+    }
     using params_t = etl::FixedVector<Param_t, 128>;
     static inline params_t params = [] {
         params_t p;
@@ -163,11 +183,11 @@ struct CrsfCallback {
         addNode(p, Param_t{0, PType::U8,  "CRSF Address", nullptr, &eeprom.address, 192, 207, [](const uint8_t a){updateName(mName); src::address(std::byte(a)); return true;}});
         addNode(p, Param_t{0, PType::U8,  "Command B-Address", nullptr, &eeprom.commandBroadcastAddress, 192, 207, [](const uint8_t){return true;}});
 		addOutput<0>(p, 0, "Port HD1");
-		addOutput<0>(p, 0, "Port HD2");
-		addOutput<0>(p, 0, "Port FD1");
-		addOutput<0>(p, 0, "Port FD2");
-		addOutput<0>(p, 0, "Port FD3");
-		addOutput<0>(p, 0, "Port FD4");
+        addOutput<1>(p, 0, "Port HD2");
+        addOutput<2>(p, 0, "Port FD1");
+        addOutput<3>(p, 0, "Port FD2");
+        addOutput<4>(p, 0, "Port FD3");
+        addOutput<5>(p, 0, "Port FD4");
         return p;
     }();
 };

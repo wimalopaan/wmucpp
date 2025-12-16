@@ -93,11 +93,9 @@ struct GFSM {
 
     static inline void periodic() {
         periodics::periodic();
-//        Meta::visit<periodics>([](auto P) static {decltype(P)::type::periodic(); });
     }
     static inline void ratePeriodic() {
         periodics::ratePeriodic();
-//        Meta::visit<periodics>([](auto P) static {decltype(P)::type::ratePeriodic(); });
 
         (++mPackagesCheckTick).on(packagesCheckTicks, []{
             const uint16_t ch_p = crsf_in::input::template channelPackages<true>();

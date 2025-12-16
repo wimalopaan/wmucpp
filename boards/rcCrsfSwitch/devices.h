@@ -114,6 +114,27 @@ struct Devices<SW10, Config, MCU> {
     using crsf_4 = RC::Protokoll::Crsf::V4::PacketRelayRewrite<4, CrsfFD4Config, MCU>;
 	using debug = void;
 #else
+    using crsf_4 = struct Dummy {
+        static inline void init(){}
+        static inline void periodic(){}
+        static inline void ratePeriodic(){}
+        static inline void baud(auto) {}
+        static inline void forwardPacket(auto, auto) {}
+        static inline void enable(const bool) {}
+        static inline void activateRouter(const bool){}
+        static inline void activateSource(const bool) {}
+        static inline void txAddress(const uint8_t) {}
+        static inline void rxAddress(const uint8_t) {}
+        static inline void activateLinkStats(const bool) {}
+        static inline void activateChannels(const bool) {}
+        static inline void activateBroadcast(const bool) {}
+        static inline void telemetryRate(const uint8_t) {}
+        static inline void insertRoute(const uint8_t) {}
+        static inline void rewriteName(auto) {}
+        static inline void tunnelLinkStat(auto) {}
+        static inline void forwardTelemetry(auto) {}
+        static inline void tunnelTelemetry(auto) {}
+    };
 	using debugtx = crsf_fd4_tx;
     struct DebugConfig;
     using debug = SerialBuffered<4, DebugConfig, MCU>;
@@ -137,7 +158,8 @@ struct Devices<SW10, Config, MCU> {
     using crsf_6 = RC::Protokoll::Crsf::V4::PacketRelayRewrite<6, CrsfFD6Config, MCU>;
 
 #ifdef USE_DEBUG
-	using crsf_ifaces = Meta::List<crsf_1, crsf_2, crsf_3, crsf_5, crsf_6>;
+    // using crsf_ifaces = Meta::List<crsf_1, crsf_2, crsf_3, crsf_5, crsf_6>;
+    using crsf_ifaces = Meta::List<crsf_2, crsf_1, crsf_3, crsf_4, crsf_5, crsf_6>;
 #else
     using crsf_ifaces = Meta::List<crsf_2, crsf_1, crsf_3, crsf_4, crsf_5, crsf_6>;
 #endif
@@ -146,12 +168,21 @@ struct Devices<SW10, Config, MCU> {
     using led = Mcu::Stm::Pin<gpiob, 2, MCU>;
     using ledBlinker = External::Blinker<led, systemTimer>;
 
+    template<auto N>
+    struct StorageAdapter {
+        static inline struct E {
+            static inline auto& address = Devices::storage::eeprom.address;
+            static inline auto& commandBroadcastAddress = Devices::storage::eeprom.commandBroadcastAddress;
+            static inline auto& txname  = Devices::storage::eeprom.outputParams[N].tx_name;
+        } eeprom;
+    };
+
     struct RouterConfig;
     using router = Router<RouterConfig>;
     struct RouterConfig {
         using storage = Devices::storage;
-        // using debug = Devices::debug;
-        using debug = void;
+        using debug = Devices::debug;
+        // using debug = void;
     };
 
     struct CrsfInCallbackConfig {
@@ -189,7 +220,8 @@ struct Devices<SW10, Config, MCU> {
         using systemTimer = Devices::systemTimer;
         using clock = Devices::clock;
         using dmaChRead  = csrfHd1DmaChannelComponent;
-        using storage = Devices::storage;
+        // using storage = Devices::storage;
+        using storage =  StorageAdapter<0>;
         using debug = Devices::debug1;
         using tp = void;
         static inline constexpr uint8_t fifoSize = 16;
@@ -206,7 +238,8 @@ struct Devices<SW10, Config, MCU> {
         using systemTimer = Devices::systemTimer;
         using clock = Devices::clock;
         using dmaChRead  = csrfHd2DmaChannelComponent;
-        using storage = Devices::storage;
+        // using storage = Devices::storage;
+        using storage =  StorageAdapter<1>;
         using debug = Devices::debug1;
         using tp = void;
         static inline constexpr uint8_t fifoSize = 16;
@@ -223,7 +256,8 @@ struct Devices<SW10, Config, MCU> {
         using clock = Devices::clock;
         using dmaChRead  = csrfFd3DmaChannelComponent1;
 		using dmaChWrite = csrfFd3DmaChannelComponent2;
-        using storage = Devices::storage;
+        // using storage = Devices::storage;
+        using storage =  StorageAdapter<2>;
         using debug = Devices::debug1;
         using tp = void;
         static inline constexpr uint8_t fifoSize = 16;
@@ -240,7 +274,8 @@ struct Devices<SW10, Config, MCU> {
         using clock = Devices::clock;
         using dmaChRead  = csrfFd4DmaChannelComponent1;
 		using dmaChWrite = csrfFd4DmaChannelComponent2;
-        using storage = Devices::storage;
+        // using storage = Devices::storage;
+        using storage =  StorageAdapter<3>;
         using debug = Devices::debug1;
         using tp = void;
         static inline constexpr uint8_t fifoSize = 16;
@@ -257,7 +292,8 @@ struct Devices<SW10, Config, MCU> {
         using clock = Devices::clock;
         using dmaChRead  = csrfFd5DmaChannelComponent1;
 		using dmaChWrite = csrfFd5DmaChannelComponent2;
-        using storage = Devices::storage;
+        // using storage = Devices::storage;
+        using storage =  StorageAdapter<4>;
         using debug = Devices::debug;
         using tp = void;
         static inline constexpr uint8_t fifoSize = 16;
@@ -274,7 +310,8 @@ struct Devices<SW10, Config, MCU> {
         using clock = Devices::clock;
         using dmaChRead  = csrfFd6DmaChannelComponent1;
 		using dmaChWrite  = csrfFd6DmaChannelComponent2;
-        using storage = Devices::storage;
+        // using storage = Devices::storage;
+        using storage =  StorageAdapter<5>;
         using debug = Devices::debug1;
         using tp = void;
         static inline constexpr uint8_t fifoSize = 16;
@@ -297,26 +334,15 @@ struct Devices<SW10, Config, MCU> {
         crsf_in::baud(420'000);
 
         crsf_1::init();
-        // crsf_1::baud(420'000);
-
         crsf_2::init();
-        // crsf_2::baud(420'000);
-
         crsf_3::init();
-        // crsf_3::baud(420'000);
-
 #ifdef USE_DEBUG
         debug::init();
 #else
 		crsf_4::init();
-        // crsf_4::baud(420'000);
 #endif
-		
         crsf_5::init();
-        // crsf_5::baud(420'000);
-
         crsf_6::init();
-        // crsf_6::baud(420'000);
     }
 };
 

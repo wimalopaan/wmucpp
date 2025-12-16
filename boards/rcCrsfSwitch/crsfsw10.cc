@@ -18,7 +18,7 @@
 
 #define NDEBUG
 
-#define SW_VERSION 4
+#define SW_VERSION 6
 #define HW_VERSION 2
 
 // #define USE_DEBUG
@@ -50,6 +50,7 @@ using devs = Devices<SW10, DevsConfig, Mcu::Stm::Stm32G0B1>;
 using gfsm = GFSM<devs>;
 
 int main() {
+    Storage::init();
     gfsm::init();
     gfsm::updateFromEeprom();
 

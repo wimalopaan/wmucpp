@@ -81,7 +81,14 @@ namespace RC {
 											callback::patternStopAll(group);
 										}
 									}
-								}
+                                    else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::InterModuleSlaveSet) {
+                                        const uint8_t master = (uint8_t)payload[7];
+                                        const uint8_t state = (uint8_t)payload[8];
+                                        if constexpr(requires(){callback::slaveSet(state, master);}) {
+                                            callback::slaveSet(state, master);
+                                        }
+                                    }
+                                }
 							}
                             if (srcAddress == (uint8_t)RC::Protokoll::Crsf::V4::Address::Handset) {
                                 if (realm == (uint8_t)RC::Protokoll::Crsf::V4::CommandType::Switch) {

@@ -66,9 +66,11 @@ struct Router {
         }
         return false;
     }
-    static inline uint8_t createRewriteAddress(const uint8_t a) {
-        if (!hasRewriteAddress(a)) {
-            return a;
+    static inline uint8_t createRewriteAddress(const uint8_t a, const bool unconditionally = false) {
+        if (!unconditionally) {
+            // if (!hasRewriteAddress(a)) {
+            //     return a;
+            // }
         }
         for(uint8_t rew = minRewriteAddress; rew <= maxRewriteAddress; ++rew) {
             if (!hasRewriteAddress(rew)) {
@@ -78,31 +80,32 @@ struct Router {
         overrun = true;
         return a;
     }
-    static inline uint8_t insertRewriteEntry(const uint8_t id, const uint8_t a) {
+    static inline uint8_t insertRewriteEntry(const uint8_t id, const uint8_t a, const bool unconditionally = false) {
         const int8_t nextFreeIndex = freeIndex();
         if (nextFreeIndex < 0) {
+            IO::outl<debug>("# Router overrun");
             overrun = true;
             return a;
         }
         mMap[nextFreeIndex].id = id;
         mMap[nextFreeIndex].orig = a;
-        mMap[nextFreeIndex].rew = createRewriteAddress(a);
+        mMap[nextFreeIndex].rew = createRewriteAddress(a, unconditionally);
 
         IO::outl<debug>("# Router i: ", id, " ", a, " ", mMap[nextFreeIndex].rew);
 
         return mMap[nextFreeIndex].rew;
     }
-    static inline uint8_t backwardSrcAddress(const uint8_t id, const uint8_t a) {
+    static inline uint8_t backwardSrcAddress(const uint8_t id, const uint8_t a, const bool unconditionally = false) {
         const auto e = entry(id, a);
         IO::outl<debug>("# router bw e: ", e.first, " ", e.second);
         if (e.first == 0) { // not present or present at other interface
-            return insertRewriteEntry(id, a);
+            return insertRewriteEntry(id, a, unconditionally);
         }
         else { // found on this interface
             return e.second;
         }
     }
-    // private:
+    private:
     static inline bool overrun = false;
     static inline uint8_t minRewriteAddress = 0xc0;
     static inline uint8_t maxRewriteAddress = 0xcf;
@@ -111,5 +114,5 @@ struct Router {
         uint8_t orig = 0;
         uint8_t rew  = 0;
     };
-    static inline std::array<Entry, 16> mMap{};
+    static inline std::array<Entry, 64> mMap{};
 };

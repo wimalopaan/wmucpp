@@ -182,8 +182,9 @@ namespace RC {
                     inline static constexpr std::byte Set4M{0x09}; // 4-state switches multiple
                     inline static constexpr std::byte SetRGB{0x0a}; // set 8 rgb leds (3x8bit each : 24 bytes payload)
                     inline static constexpr std::byte InterModule{0x10}; // a module sends trigger to another module (address)
-					inline static constexpr std::byte InterModulePatternStart{0x11}; 
-					inline static constexpr std::byte InterModulePatternStopAll{0x12}; 
+                    inline static constexpr std::byte InterModulePatternStart{0x11};
+                    inline static constexpr std::byte InterModulePatternStopAll{0x12};
+                    inline static constexpr std::byte InterModuleSlaveSet{0x13}; // like Set
                 }
                 namespace CcCommand {
                     inline static constexpr std::byte SetAltData{0x01}; // Index: [0, 255], value 8bit
