@@ -49,6 +49,9 @@ struct CrsfCallback {
 	using patgen3 = Config::patgen3;
 	using plist = Meta::List<patgen0, patgen1, patgen2, patgen3>;
 
+    using slave = Config::slave;
+
+
     static inline constexpr const char* const title = "MultiSwitch-E@";
     using name_t = std::array<char, 32>;
 
@@ -122,7 +125,7 @@ struct CrsfCallback {
         mEepromMode = prevMode;
     }
 private:
-	static inline bool resetAllParameter(const uint8_t s) {
+    static inline bool resetAllParameter() {
 		IO::outl<debug>("# reset all");
 		storage::reset();
 		return false;
@@ -207,6 +210,9 @@ private:
         addNode(p, Param_t{.parent = parent2, .type = PType::U8, .name = "Intervall(on)", .value_ptr = &storage::eeprom.outputs[index].blinkOnTime, .min = 1, .max = 255, .cb = [](const uint8_t v){Meta::nth_element<index, bsws>::on_dezi(v); return true;}, .unitString = "*50ms"});
         addNode(p, Param_t{.parent = parent2, .type = PType::U8, .name = "Intervall(off)", .value_ptr = &storage::eeprom.outputs[index].blinkOffTime, .min = 1, .max = 255, .cb = [](const uint8_t v){Meta::nth_element<index, bsws>::off_dezi(v); return true;}, .unitString = "*50ms"});
         addNode(p, Param_t{.parent = parent2, .type = PType::U8, .name = "Intervall(count)", .value_ptr = &storage::eeprom.outputs[index].flashCount, .min = 1, .max = 4, .cb = [](const uint8_t v){Meta::nth_element<index, bsws>::flash_count(v); return true;}});
+#ifdef USE_SLAVE_COMMAND
+        addNode(p, Param_t{parent2, PType::Sel, "Slave", "Off;On", nullptr, 0, 1, [](const uint8_t v){storage::eeprom.outputs[index].slaveEnable = v; return true;}});
+#endif
         addNode(p, Param_t{parent2, PType::Sel, "Test", "Off;On", nullptr, 0, 1, [](const uint8_t v){Meta::nth_element<index, bsws>::on(v); return false;}});
     }
     static inline auto params = []{
@@ -263,6 +269,11 @@ private:
 #ifdef USE_RESPONSE_SLOT
         addNode(p, Param_t{parent, PType::U8, "Response Slot", nullptr, &storage::eeprom.response_slot, 0, 15, [](const uint8_t v){crsf::output::telemetrySlot(v); return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Config resp.", "Button;Allways on", &storage::eeprom.telemetry, 0, 1});
+#endif
+
+#ifdef USE_SLAVE_COMMAND
+        addNode(p, Param_t{parent, PType::Sel, "Slave Cmd", "Off;On", &storage::eeprom.slaveSend, 0, 1, [](const uint8_t v){slave::active(v == 1); return true;}});
+        addNode(p, Param_t{parent, PType::U8, "Master", nullptr, &storage::eeprom.master, 0xc0, 0xcf, [](const uint8_t){return true;}});
 #endif
 
         addOutput<0>(p, 0, "Output 0");
@@ -329,7 +340,12 @@ private:
 #endif
 #ifdef USE_RESET_COMMAND
 		parent = addParent(p, Param_t{0, PType::Folder, "Reset"});
-		addNode(p, Param_t{parent, PType::Command, "Reset all", "Reset", nullptr, 0, 0, [](const uint8_t v){return resetAllParameter(v);}});
+        addNode(p, Param_t{parent, PType::Command, "Reset all", "Reset", nullptr, 0, 0, [](const uint8_t){
+                               if (!mEepromMode) {
+                                   return resetAllParameter();
+                               }
+                               return false;
+                           }});
 #endif
         if (p.size() >= p.capacity()) {
             void fp();

@@ -114,7 +114,29 @@ struct SwitchCallback {
         }
 #endif
     }
+#ifdef USE_SLAVE_COMMAND
+    static inline void slaveSet(const uint8_t p, const uint8_t master) {
+        if (master != storage::eeprom.master) {
+            return;
+        }
+        for(uint8_t i = 0; i < 8; ++i) {
+            if (isSlave(i)) {
+                const uint8_t mask = (1 << i);
+                Meta::visitAt<bsws>(i, [&]<typename SW>(Meta::Wrapper<SW>){
+                    SW::event((p & mask) ? SW::Event::On : SW::Event::Off);
+                });
+            }
+        }
+    }
+#endif
     private:
+    static inline bool isSlave([[maybe_unused]] const uint8_t swIndex) {
+#ifdef USE_SLAVE_COMMAND
+        return (storage::eeprom.outputs[swIndex].slaveEnable > 0);
+#else
+        return false;
+#endif
+    }
 	static inline bool isMemberOfPattern([[maybe_unused]] const uint8_t swIndex) {
 #ifdef USE_PATTERNS
 		for(uint8_t i = 0; i < 4; ++i) {
@@ -135,6 +157,9 @@ struct SwitchCallback {
 		if (isMemberOfPattern(swIndex)) {
 			return;
 		}
+        if (isSlave(swIndex)) {
+            return;
+        }
         Meta::visitAt<bsws>(swIndex, [&]<typename SW>(Meta::Wrapper<SW>){
                                 SW::event(on ? SW::Event::On : SW::Event::Off);
                             });

@@ -46,6 +46,9 @@ struct EEProm {
         uint8_t blinkOnTime = 1;
         uint8_t blinkOffTime = 2;
         uint8_t flashCount = 1;
+#ifdef USE_SLAVE_COMMAND
+        uint8_t slaveEnable = 0;
+#endif
         std::array<char, 16> name;
     };
 
@@ -113,6 +116,11 @@ struct EEProm {
 		uint8_t group = 1; 
 	};
     std::array<External::Pattern::EEProm, 4> pattern{};
+#endif
+
+#ifdef USE_SLAVE_COMMAND
+    uint8_t slaveSend = 0;
+    uint8_t master = 0;
 #endif
 
 };

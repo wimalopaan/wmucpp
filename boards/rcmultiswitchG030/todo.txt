@@ -8,15 +8,12 @@ hardware:
 todo:
 -----
 * add watchdog
-* add reset parameters command
 * add restart command (NVIC_SystemReset)
 * add NDEBUG=false mode with assertions using reset vector NVIC_SystemReset()
 * display reset cause and count (.noinit section variables)
 * pattern: add virtual support
 * more easily config, e.g. USE_RESPONSE_SLOT for CRSF_TX_OPENDRAIN
 * unify stm32 g031/g051/g071/g0b1 variants
-* make flash work with non-MORSE
-* watchdog
 * statt Expo: PWM Duty Max Scaling 1/0.1/0.01
 * serial-bootloader (maybe OTA) (maybe use ESCape32-tool)
 
@@ -29,7 +26,11 @@ details:
 
 done:
 -----
-* add stn32g0b1 support
+* add slave-switch protocol (like Set):
+** add option to sendout the slave-switch protocol (broadcast)
+** add option to receive the slave-switch protocol per output
+* add reset parameters command
+* add stm32g0b1 support
 * use stm32G0B1 instead of stm32G030/1 (more flash and RAM)
 * running light mode: parameter: speed, activate-output, activate-next address, (pwm)
 * running light mode: crsf command messages

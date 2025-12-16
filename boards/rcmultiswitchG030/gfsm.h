@@ -43,6 +43,7 @@ struct GFSM {
 	using patgen1 = devs::patgen1;
 	using patgen2 = devs::patgen2;
 	using patgen3 = devs::patgen3;
+    using slave = devs::ssp;
 
     enum class State : uint8_t {Undefined, Init, CheckBaudrate,
                                 RunNoTelemetry, RunWithTelemetry,
