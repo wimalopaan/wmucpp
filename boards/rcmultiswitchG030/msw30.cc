@@ -17,7 +17,7 @@
  */
 
 // select one(!) of the following hardware definitions
-// #define HW_MSW10 // MultiSwitch_10 (32K), ATTENTION: use Makefile
+//#define HW_MSW10 // MultiSwitch_10 (32K), ATTENTION: use Makefile
 #define HW_MSW11 // MultiSwitch_11 (64k), ATTENTION: use Makefile.G031
 //#define HW_MSW12 // MultiSwitch_12 (64k) (EasyEda OSHWLAB) mit G0B1: Makefile.G0B1
 //#define HW_NUCLEO // STM Nucleo G031K8 (64K) (incl. ST-Link), ATTENTION: use Makefile.G031
@@ -96,7 +96,6 @@
 # define USE_RESPONSE_SLOT // enables arbitration (slot after link-stat), important for half-duplex without crsf-switch/router
 # undef USE_VIRTUALS
 # undef USE_PATTERNS
-# undef USE_SLAVE_COMMAND
 #endif
 
 #define SW_VERSION 35

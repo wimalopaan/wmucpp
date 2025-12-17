@@ -375,16 +375,18 @@ namespace Mcu::Stm {
 					RCC->CCIPR |= 0x01 << RCC_CCIPR_LPUART2SEL_Pos;
 				}
 #endif
+#if defined(STM32G0) && defined(RCC_APBENR1_LPUART1EN)
                 else if constexpr (N == 101) {
-#ifdef STM32G0
                     RCC->APBENR1 |= RCC_APBENR1_LPUART1EN;
                     RCC->CCIPR |= 0x01 << RCC_CCIPR_LPUART1SEL_Pos;
-#elif defined(STM32G4)
+                }
+#endif
+#if defined(STM32G4)
+                else if constexpr (N == 101) {
                     RCC->APB1ENR2 |= RCC_APB1ENR2_LPUART1EN;
                     RCC->CCIPR |= 0x01 << RCC_CCIPR_LPUART1SEL_Pos;
-#endif
-
                 }
+#endif
                 else {
                     static_assert(false);
                 }
