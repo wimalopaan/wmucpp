@@ -1,26 +1,22 @@
 bugs:
+=====
 
 todo:
 =====
-* add support for external tx-module (or rx-as-tx)
-** for half-duplex or full-duplex
-** menu option: name replacement, addresses, telemetry tunnel
-* telemetry tunnel for telemetry messages
+* failsafe mode
 * menu: option to swap rx/tx uart lines (for outgoing: layout like receiver)
 * menu: range of rewrite addresses
 * indication of table overrun
 * menu: display routing table
 * self-refresh to detect stale devices
-* add special cases for TX-module / RX / Handset
-
-problems:
-=====
-* widget send commands allways to dest=0xc8 -> no routing takes place
-** widget should use broadcast address 0x00 for commands
-** elrs V4: routing of command packages with broadcast destination, does it work? (yes)
 
 done:
 =====
+* add support for external tx-module (or rx-as-tx)
+** for half-duplex or full-duplex
+** menu option: name replacement, addresses, telemetry tunnel
+* telemetry tunnel for telemetry messages
+* add special cases for TX-module / RX / Handset
 * add cross-routing to other modules (routing between modules, not to receiver)
 * select which type of packages should be routed (rc-channels, link-stats)
 * add all interfaces
@@ -29,3 +25,6 @@ done:
 * basic routing
 ** workaround: use 0xc8 as quasi-broadcast for commands
 ** menu: set quasi-broadcast address
+
+problems:
+=====
