@@ -40,6 +40,7 @@ struct EEProm {
         uint8_t group = 0;
         uint8_t groupStart = 0;
         uint8_t control = 1;
+        uint8_t slaveEnable = 0;
         std::array<char, 16> name;
     };
     struct Group {
@@ -62,6 +63,8 @@ struct EEProm {
     uint8_t address2 = 1; // switches 8 - 15
     uint8_t address3 = 2; // groups (whatever that will mean in the future)
     uint8_t address4 = 3; // virtual switches
+
+    uint8_t master = 0; // slave mode master
 
     uint8_t use_exp = 0;
     uint8_t use_virtuals = 0;

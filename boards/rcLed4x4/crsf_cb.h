@@ -106,11 +106,44 @@ struct CrsfCallback {
         return 0;
     }
     static inline void command(const auto payload, const uint8_t ) {
-        // const uint8_t destAddress = payload[3];
+        const uint8_t destAddress = payload[3];
         const uint8_t srcAddress = payload[4];
         const uint8_t realm = payload[5];
         const uint8_t cmd = payload[6];
         const uint8_t address = (uint8_t)payload[7];
+
+        // todo: intermodule broadcast
+
+        if (destAddress == (uint8_t)RC::Protokoll::Crsf::V4::Address::Broadcast) {
+            if (realm == (uint8_t)RC::Protokoll::Crsf::V4::CommandType::Switch) {
+                if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::InterModulePatternStart) {
+                    // const uint8_t address = (uint8_t)payload[7];
+                    // const uint8_t pattern = (uint8_t)payload[8];
+                    // const auto result = std::find(std::begin(storage::eeprom.addresses),
+                    //                               std::end(storage::eeprom.addresses),
+                    //                               address);
+                    // if (result != std::end(storage::eeprom.addresses)) {
+                    //     const uint8_t adrIndex = std::distance(std::begin(storage::eeprom.addresses), result);
+                    //     if constexpr(requires(){switchcallback::patternStart(adrIndex, pattern);}) {
+                    //         switchcallback::patternStart(adrIndex, pattern);
+                    //     }
+                    // }
+                }
+                else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::InterModulePatternStopAll) {
+                    const uint8_t group = (uint8_t)payload[7];
+                    if constexpr(requires(){switchcallback::patternStopAll(group);}) {
+                        switchcallback::patternStopAll(group);
+                    }
+                }
+                else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::InterModuleSlaveSet) {
+                    const uint8_t master = (uint8_t)payload[7];
+                    const uint8_t state = (uint8_t)payload[8];
+                    if constexpr(requires(){switchcallback::slaveSet(state, master);}) {
+                        switchcallback::slaveSet(state, master);
+                    }
+                }
+            }
+        }
         if (srcAddress == (uint8_t)RC::Protokoll::Crsf::V4::Address::Handset) {
             if (realm == (uint8_t)RC::Protokoll::Crsf::V4::CommandType::Switch) {
                 if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set4M) {

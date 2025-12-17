@@ -9,7 +9,21 @@ struct SwitchCallback {
 	
 	static inline std::array<bool, 16> prevSwitchState{};
 	static inline std::array<uint8_t, 4> groupCount{};
-	static inline void setGroupIndex(const uint8_t index, const bool on) {
+
+    static inline void slaveSet(const uint8_t p, const uint8_t master) {
+        if (master != storage::eeprom.master) {
+            return;
+        }
+        for(uint8_t i = 0; i < 8; ++i) {
+            if (isSlave(i)) {
+                setIndex(i, p);
+            }
+        }
+    }
+    static inline bool isSlave([[maybe_unused]] const uint8_t swIndex) {
+        return (storage::eeprom.outputs[swIndex].slaveEnable > 0);
+    }
+    static inline void setGroupIndex(const uint8_t index, const bool on) {
 		if (on) {
 			pca::groupStart(index);
 		}
