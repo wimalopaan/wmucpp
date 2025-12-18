@@ -11,6 +11,14 @@ boards/WeActG031/link_g031.ld
 boards/WeActG031/off.cc
 boards/WeActG031/startup_g031.s
 boards/WeActG031/system_g0.cc
+boards/WmG0B1/Makefile.G0B1
+boards/WmG0B1/blinky.cc
+boards/WmG0B1/devices.h
+boards/WmG0B1/gfsm.h
+boards/WmG0B1/link_g0b1.ld
+boards/WmG0B1/off.cc
+boards/WmG0B1/startup_g0b1.s
+boards/WmG0B1/system_g0.cc
 boards/dds2/fsk00.cc
 boards/dds2/test02.cc
 boards/dds2/test03.cc

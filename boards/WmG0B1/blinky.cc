@@ -1,0 +1,46 @@
+/*
+ * WMuCpp - Bare Metal C++
+ * Copyright (C) 2019 - 2025 Wilhelm Meier <wilhelm.wm.meier@googlemail.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#define NDEBUG // do not change: dev option
+ 
+#include "stdapp/scheduler.h"
+#include "devices.h"
+#include "gfsm.h"
+
+struct DevsConfig;
+using devs = Devices<WeAct, DevsConfig>;
+using gfsm = GFSM<devs>;
+
+struct AppConfig;
+using app = Scheduler<AppConfig>;
+
+struct DevsConfig {
+	using gfsm = ::gfsm;
+};
+struct AppConfig {
+	using fsm = gfsm;
+	using timer = devs::systemTimer;
+};
+int main() {
+    app::main<false>([]{});
+}
+
+void __assert_func (const char *, int, const char *, const char *){
+    while(true) {
+    }
+}
