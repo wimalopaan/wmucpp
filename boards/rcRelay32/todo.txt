@@ -3,6 +3,7 @@ Bugs:
 
 ToDo:
 =====
+* enable telemetry tunnel type specific -> menu options for all types of sensors
 * wathdog (show watchdog counter in menu)
 * refactor packet_relay_rewrite
 * correct docu (RX and TX interchanged, A11 for half-duplex TX module)

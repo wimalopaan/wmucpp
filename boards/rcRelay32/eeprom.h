@@ -21,6 +21,8 @@
 #include <cstdint>
 #include <array>
 
+#include "rc/rc_2.h"
+
 #define EEPROM_MAGIC 42
 
 struct EEProm {
@@ -28,11 +30,14 @@ struct EEProm {
 
     constexpr EEProm() {
         etl::copy("RelayTX", txname);
+        for(auto& m : telemetryMode) {
+            m = 1;
+        }
     }
     std::array<char, 8> txname{};
 
 	uint8_t rewrite_name = 0;
-	uint8_t forward_link_stats_as_tunnel_package = 0;
+    uint8_t link_stat_mode = 2; // transform
 
     uint8_t failsafe_mode = 0;
 
@@ -44,7 +49,7 @@ struct EEProm {
 
     uint8_t half_duplex = 0;
 
-    uint8_t telemetry_tunnel = 0;
-    uint8_t telemetry_forward = 0;
     uint8_t telemetry_rate = 2;
+
+    std::array<uint8_t, (uint8_t)RC::Protokoll::Crsf::V4::Type::Ping> telemetryMode{};
 };

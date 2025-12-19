@@ -159,7 +159,11 @@ private:
     static inline void addNode(auto& c, const RC::Protokoll::Crsf::V4::Parameter<T>& p) {
         c.push_back(p);
     }
-    using params_t = etl::FixedVector<Param_t, 16>;
+    template<auto type>
+    static inline void addForward(auto& p, const uint8_t parent, const char* const name) {
+        addNode(p, Param_t{parent, PType::Sel, name, "Off;Forward;Tunnel", &eeprom.telemetryMode[type], 0, 2, [](const uint8_t v){relay::forwardTelemetryMode(type, v); return true;}});
+    }
+    using params_t = etl::FixedVector<Param_t, 32>;
     static inline params_t params = [] {
         params_t p;
         addNode(p, Param_t{0, PType::Folder, "root"});
@@ -173,12 +177,29 @@ private:
         addNode(p, Param_t{0, PType::Str, "TX Rewrite Name", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &eeprom.txname[0]});
 		addNode(p, Param_t{0, PType::Sel, "Rewrite Name", "Off;On", &eeprom.rewrite_name, 0, 1, [](const uint8_t v){relay::rewriteName(v == 1); return true;}});
 
-        addNode(p, Param_t{0, PType::Sel, "LinkStat Tunnel", "Off;On", &eeprom.forward_link_stats_as_tunnel_package, 0, 1, [](const uint8_t v){relay::tunnelLinkStat(v == 1); return true;}});
+        addNode(p, Param_t{0, PType::Sel, "LinkStat", "Off;Forward;Transform;Tunnel", &eeprom.link_stat_mode, 0, 3, [](const uint8_t v){relay::linkStatMode(v); return true;}});
         addNode(p, Param_t{0, PType::Sel, "Failsafe", "Forward;Hold", &eeprom.failsafe_mode, 0, 1, [](const uint8_t){return true;}});
 
-        addNode(p, Param_t{0, PType::Sel, "Forward Telemetry", "Off;On", &eeprom.telemetry_forward, 0, 1, [](const uint8_t v){relay::forwardTelemetry(v == 1); return true;}});
-        addNode(p, Param_t{0, PType::U8,  "Forward Rate", nullptr, &eeprom.telemetry_rate, 1, 10, [](const uint8_t a){relay::telemetryRate(a); return true;}});
-        addNode(p, Param_t{0, PType::Sel, "Telemetry Tunnel", "Off;On", &eeprom.telemetry_tunnel, 0, 1, [](const uint8_t v){relay::tunnelTelemetry(v == 1); return true;}});
+        const uint8_t parent = addParent(p, Param_t{0, PType::Folder, "Telemetry forwarding"});
+        addNode(p, Param_t{parent, PType::U8,  "Forward Rate", nullptr, &eeprom.telemetry_rate, 1, 10, [](const uint8_t a){relay::telemetryRate(a); return true;}});
+        addForward<0x02>(p, parent, "GPS");
+        addForward<0x03>(p, parent, "GPS Time");
+        addForward<0x06>(p, parent, "GPS Ext");
+        addForward<0x07>(p, parent, "Vario");
+        addForward<0x08>(p, parent, "Battery");
+        addForward<0x09>(p, parent, "Barometer");
+        addForward<0x0a>(p, parent, "Airspeed");
+        addForward<0x0b>(p, parent, "Heartbeat");
+        addForward<0x0c>(p, parent, "RPM");
+        addForward<0x0d>(p, parent, "Temperature");
+        addForward<0x0e>(p, parent, "Voltages");
+        addForward<0x10>(p, parent, "VTX Telemetry");
+        addForward<0x1c>(p, parent, "Link RX");
+        addForward<0x1d>(p, parent, "Link TX");
+        addForward<0x1e>(p, parent, "Attitude");
+        addForward<0x1f>(p, parent, "MAVLink FC");
+        addForward<0x21>(p, parent, "Flight Mode");
+        addForward<0x22>(p, parent, "ESP Now");
 
         addNode(p, Param_t{0, PType::Sel, "Half-Duplex", "Off;On", &eeprom.half_duplex, 0, 1, [](const uint8_t v){relay::setHalfDuplex(v == 1); return true;}});
 

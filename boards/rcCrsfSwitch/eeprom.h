@@ -29,6 +29,11 @@ struct EEProm {
         etl::copy("RelayTX4", outputParams[3].tx_name);
         etl::copy("RelayTX5", outputParams[4].tx_name);
         etl::copy("RelayTX6", outputParams[5].tx_name);
+        for(auto& op : outputParams) {
+            for(auto& m : op.telemetryMode) {
+                m = 1; // forward
+            }
+        }
     }
 
     uint8_t address = 0xc0;
@@ -41,10 +46,10 @@ struct EEProm {
         uint8_t asRelay           = 0;
         uint8_t baudrate          = 1;
         std::array<char, 16>       tx_name{};
-        uint8_t forward_link_stats_as_tunnel_package = 1;
-        uint8_t failsafe_mode       = 1;
-        uint8_t telemetry_forward   = 1;
-        uint8_t telemetry_tunnel    = 1;
+        uint8_t link_stat_mode    = 2; // transform
+        uint8_t failsafe_mode     = 1;
+
+        std::array<uint8_t, (uint8_t)RC::Protokoll::Crsf::V4::Type::Ping> telemetryMode{};
         uint8_t telemetry_rate      = 2;
         uint8_t rewrite_name        = 1;
     };

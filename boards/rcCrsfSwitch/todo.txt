@@ -4,6 +4,7 @@ bugs:
 todo:
 =====
 * failsafe mode
+* enable telemetry tunnel type specific -> menu options for all types of sensors
 * menu: option to swap rx/tx uart lines (for outgoing: layout like receiver)
 * menu: range of rewrite addresses
 * indication of table overrun

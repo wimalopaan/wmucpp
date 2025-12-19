@@ -214,14 +214,13 @@ namespace RC::Protokoll::Crsf {
 			static inline void rewriteName(const bool on) {
 				mDoRewriteName = on;
 			}
-			static inline void tunnelLinkStat(const bool on) {
-				mTunnelLinkStat = on;
-			}
-            static inline void tunnelTelemetry(const bool on) {
-                mTunnelTelemetry = on;
+            static inline void linkStatMode(const uint8_t m) {
+                mLinkStatMode = m;
             }
-            static inline void forwardTelemetry(const bool on) {
-                mForwardTelemetry = on;
+            static inline void forwardTelemetryMode(const uint8_t type, const uint8_t mode) {
+                if (type < mTelemetryForwardMode.size()) {
+                    mTelemetryForwardMode[type] = mode;
+                }
             }
             static inline void insertRoute(const uint8_t srcAddr) {
                 IO::outl<debug>("# iRoute: ", Config::id, " src: ", srcAddr);
@@ -391,14 +390,42 @@ namespace RC::Protokoll::Crsf {
                             // IO::outl<debug>("# telem");
                             if constexpr(!std::is_same_v<dest, void>) {
                                 if (data[PacketIndex::type] == (uint8_t)Type::Link) {
-                                    if (mSendLinkStats) {
-                                        IO::outl<debug>("# return link stats");
-                                        dest::enqueue(data);
-                                    }
-                                    else {
-                                        if (mTunnelLinkStat) {
-                                            if (++mTypeCounter[data[PacketIndex::type]] >= mForwardRate) {
-                                                mTypeCounter[data[PacketIndex::type]] = 0;
+                                    if (mLinkStatMode > 0) {
+                                        if (++mTypeCounter[data[PacketIndex::type]] >= mForwardRate) {
+                                            mTypeCounter[data[PacketIndex::type]] = 0;
+                                            if (mLinkStatMode == 1) { // forward
+                                                IO::outl<debug>("# return link stats");
+                                                dest::enqueue(data);
+                                            }
+                                            else if (mLinkStatMode == 2) { // transform
+                                                const uint8_t up_rssi1 = data[PacketIndex::type + 1 + 0];
+                                                const uint8_t up_rssi2 = data[PacketIndex::type + 1 + 1];
+                                                const uint8_t up_link_qly  = data[PacketIndex::type + 1 + 2];
+                                                const uint8_t up_snr  = data[PacketIndex::type + 1 + 3];
+                                                // const uint8_t active_ant  = data[PacketIndex::type + 1 + 4];
+                                                const uint8_t rf_profile  = data[PacketIndex::type + 1 + 5];
+                                                const uint8_t up_rf_power  = data[PacketIndex::type + 1 + 6]; // not correctly displayed in EdgeTx (missing lookup)
+                                                const uint8_t dn_rssi  = data[PacketIndex::type + 1 + 7];
+                                                const uint8_t dn_link_qly  = data[PacketIndex::type + 1 + 8];
+                                                const uint8_t dn_snr  = data[PacketIndex::type + 1 + 9];
+                                                IO::outl<debug>("# link rx tx: ", data.size());
+                                                dest::create_back((uint8_t)Type::LinkStatsRx, [&](auto& ta){
+                                                    ta.push_back(dn_rssi);
+                                                    ta.push_back(dn_link_qly);
+                                                    ta.push_back(dn_link_qly); // ???
+                                                    ta.push_back(dn_snr);
+                                                    ta.push_back(up_rf_power);
+                                                });
+                                                dest::create_back((uint8_t)Type::LinkStatsTx, [&](auto& ta){
+                                                    ta.push_back(std::min(up_rssi1, up_rssi2)); // makes sense?
+                                                    ta.push_back(up_link_qly);
+                                                    ta.push_back(up_link_qly); // ???
+                                                    ta.push_back(up_snr);
+                                                    ta.push_back(uint8_t(0)); // ???
+                                                    ta.push_back(rf_profile); // ???
+                                                });
+                                            }
+                                            else if (mLinkStatMode == 3) { // tunnel
                                                 IO::outl<debug>("# tunnel link stats, size: ", data.size());
                                                 dest::create_back((uint8_t)Type::PassThru, [&](auto& ta){
                                                     ta.push_back(Address::Handset);
@@ -414,10 +441,11 @@ namespace RC::Protokoll::Crsf {
                                     }
                                 }
                                 else {
-                                    if (mForwardTelemetry) {
-                                        if (mTunnelTelemetry) {
-                                            if (++mTypeCounter[data[PacketIndex::type]] >= mForwardRate) {
-                                                mTypeCounter[data[PacketIndex::type]] = 0;
+                                    const uint8_t telemtype = data[PacketIndex::type];
+                                    if (const uint8_t mode = mTelemetryForwardMode[telemtype]; mode > 0) {
+                                        if (++mTypeCounter[telemtype] >= mForwardRate) {
+                                            mTypeCounter[telemtype] = 0;
+                                            if (mode == 2) {
                                                 IO::outl<debug>("# tunnel telemtry, size: ", data.size(), " t: ", data[PacketIndex::type]);
                                                 dest::create_back((uint8_t)Type::PassThru, [&](auto& ta){
                                                     ta.push_back(Address::Handset);
@@ -429,10 +457,7 @@ namespace RC::Protokoll::Crsf {
                                                     }
                                                 });
                                             }
-                                        }
-                                        else {
-                                            if (++mTypeCounter[data[PacketIndex::type]] >= mForwardRate) {
-                                                mTypeCounter[data[PacketIndex::type]] = 0;
+                                            else if (mode == 1) {
                                                 IO::outl<debug>("# telemtry, size: ", data.size());
                                                 dest::enqueue(data);
                                             }
@@ -556,9 +581,8 @@ namespace RC::Protokoll::Crsf {
             static inline uint8_t mRewriteTxAddress = 0xce;
             static inline uint8_t mRewriteRxAddress = 0xcf;
 			static inline bool mDoRewriteName = false; 
-            static inline bool mTunnelLinkStat = false;
-            static inline bool mTunnelTelemetry = false;
-            static inline bool mForwardTelemetry = true;
+            static inline uint8_t mLinkStatMode = 1; // 0=Off; 1=Forward; 2=Transform; 3=Tunnel
+            static inline std::array<uint8_t, (uint8_t)Type::Ping> mTelemetryForwardMode{}; // 0=Off; 1=Forward; 2=Tunnel
             static inline uint8_t mForwardRate = 2;
             static inline std::array<uint8_t, (uint8_t)Type::Ping> mTypeCounter{};
         };
