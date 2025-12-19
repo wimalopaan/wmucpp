@@ -25,7 +25,7 @@
 // use one(!) of the following protocol selection exclusively
 // #define USE_HWEXT // otherwise SBUS-output is used
 #define USE_SBUS // according SBUS inversion see below
-// #define USE_CRSF
+//#define USE_CRSF
 
 #define INJECT_DIGITAL_START 8 // first channel to inject digitals into CRSF / SBUS (counting from 0)
 #define SWITCH_ADDRESS 0 // only valid for CSRF (using switch protocol extension)
@@ -39,11 +39,11 @@
 
 // #define SERIAL_DEBUG // disables PA2 analog input
 
-//#define USE_BUTTON // disables SWD (use with care and know what you are doing), use reset button then
+// #define USE_BUTTON // disables SWD (use with care and know what you are doing), use reset button then
 
 #define NDEBUG // do not change: dev option
  
-#define SW_VERSION 3
+#define SW_VERSION 4
 
 #include <cstdint>
 #include <array>

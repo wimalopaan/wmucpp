@@ -142,7 +142,7 @@ struct Devices<WeAct, Config, MCU> {
 
 #ifdef USE_BUTTON
 	using button = Mcu::Stm::Pin<gpioa, 14, MCU>;
-	using buttonInv = Mcu::Stm::Gpio::Inverter<button>;
+    using buttonInv = Mcu::Stm::Gpio::Inverter<button, true>;
     using btn = External::Button<buttonInv, systemTimer, External::Tick<systemTimer>{300ms}.raw(),
                                  External::Tick<systemTimer>{3000ms}.raw(), void>;
 #else

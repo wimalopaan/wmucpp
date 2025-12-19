@@ -166,7 +166,7 @@ namespace Mcu::Stm {
     };
 
     namespace Gpio {
-        template<typename Pin>
+        template<typename Pin, bool PullupDownSwap = false>
         struct Inverter {
             static inline void set() {
                 Pin::reset();
@@ -176,11 +176,21 @@ namespace Mcu::Stm {
             }
 			template<bool PUP>
 			static inline void pullup() {
-				Pin::template pullup<PUP>();
+                if constexpr(PullupDownSwap) {
+                    Pin::template pulldown<PUP>();
+                }
+                else {
+                    Pin::template pullup<PUP>();
+                }
 			}
 			template<bool PD>
 			static inline void pulldown() {
-				Pin::template pulldown<PD>();
+                if constexpr(PullupDownSwap) {
+                    Pin::template pullup<PD>();
+                }
+                else {
+                    Pin::template pulldown<PD>();
+                }
 			}
 			template<typename D>
 			static inline void dir() {
