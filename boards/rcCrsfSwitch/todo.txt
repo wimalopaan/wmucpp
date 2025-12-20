@@ -3,16 +3,18 @@ bugs:
 
 todo:
 =====
+* allow more baudrates for relay (e.g. 115200Bd for IR-Connection)
 * failsafe mode
-* enable telemetry tunnel type specific -> menu options for all types of sensors
+* watchdog
 * menu: option to swap rx/tx uart lines (for outgoing: layout like receiver)
-* menu: range of rewrite addresses
 * indication of table overrun
 * menu: display routing table
 * self-refresh to detect stale devices
 
 done:
 =====
+* menu: range of rewrite addresses
+* enable telemetry tunnel type specific -> menu options for all types of sensors
 * add support for external tx-module (or rx-as-tx)
 ** for half-duplex or full-duplex
 ** menu option: name replacement, addresses, telemetry tunnel

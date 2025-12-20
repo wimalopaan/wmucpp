@@ -3,6 +3,7 @@ Bugs:
 
 ToDo:
 =====
+* allow more baudrates (e.g. 115200Bd for IR-Connection)
 * watchdog (show watchdog counter in menu)
 * correct docu (RX and TX interchanged, A11 for half-duplex TX module)
 * adc input: voltage, temperature
