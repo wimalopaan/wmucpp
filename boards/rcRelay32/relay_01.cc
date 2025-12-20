@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// #define USE_WEACT
-#define USE_WMG0B1
+#define USE_WEACT
+//#define USE_WMG0B1
 // #define USE_NUCLEO_431 // dev board
 
 #define SERIAL_DEBUG // only for WMG0B1
