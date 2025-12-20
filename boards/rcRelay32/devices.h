@@ -360,13 +360,18 @@ struct Devices<Wmg0b1, Config, MCU> {
     struct AdcConfig;
     using adc = Mcu::Stm::V4::Adc<1, AdcConfig>;
 
-    using relaytx = Mcu::Stm::Pin<gpioa, 2, MCU>;
-    using relayrx = Mcu::Stm::Pin<gpioa, 3, MCU>;
-
     using gfsm = Config::gfsm;
 
     struct RelayConfig;
+#ifdef ALTERNATE_PINS
+    using relaytx = Mcu::Stm::Pin<gpioa, 4, MCU>;
+    using relayrx = Mcu::Stm::Pin<gpiob, 9, MCU>;
+    using relay = RC::Protokoll::Crsf::V4::PacketRelayRewrite<6, RelayConfig, MCU>;
+#else
+    using relaytx = Mcu::Stm::Pin<gpioa, 2, MCU>;
+    using relayrx = Mcu::Stm::Pin<gpioa, 3, MCU>;
     using relay = RC::Protokoll::Crsf::V4::PacketRelayRewrite<2, RelayConfig, MCU>;
+#endif
 
     using inputtx = Mcu::Stm::Pin<gpioa, 9, MCU>;
     using inputrx = Mcu::Stm::Pin<gpioa, 10, MCU>;

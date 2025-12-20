@@ -16,11 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define USE_WEACT
-//#define USE_WMG0B1
+// #define USE_WEACT
+#define USE_WMG0B1
 // #define USE_NUCLEO_431 // dev board
 
 #define SERIAL_DEBUG // only for WMG0B1
+
+#define ALTERNATE_PINS // WmG0B1 only
 
 #define NDEBUG // do not change: dev option
 
@@ -76,7 +78,11 @@ int main() {
 #if defined(USE_WEACT) || defined(USE_NUCLEO_431)
         NVIC_EnableIRQ(USART2_IRQn);
 #elif defined(USE_WMG0B1)
+#ifdef ALTERNATE_PINS
+        NVIC_EnableIRQ(USART3_4_5_6_LPUART1_IRQn);
+#else
         NVIC_EnableIRQ(USART2_LPUART2_IRQn);
+#endif
 #else
 # warning "wrong board definition"
 #endif
@@ -109,12 +115,21 @@ void USART2_IRQHandler(){
     crsf::Isr::onIdle([]{});
 }
 #elif defined(USE_WMG0B1)
+# ifdef ALTERNATE_PINS
+void USART3_4_5_6_LPUART1_IRQHandler() {
+    using relay = devs::relay;
+    static_assert(relay::uart::number == 6);
+    relay::Isr::onTransferComplete([]{});
+    relay::Isr::onIdle([]{});
+}
+# else
 void USART2_LPUART2_IRQHandler() {
     using relay = devs::relay;
     static_assert(relay::uart::number == 2);
     relay::Isr::onTransferComplete([]{});
     relay::Isr::onIdle([]{});
 }
+# endif
 #else
 # warning "wrong board definition"
 #endif
