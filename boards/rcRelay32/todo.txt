@@ -3,7 +3,7 @@ Bugs:
 
 ToDo:
 =====
-* wathdog (show watchdog counter in menu)
+* watchdog (show watchdog counter in menu)
 * correct docu (RX and TX interchanged, A11 for half-duplex TX module)
 * adc input: voltage, temperature
 
