@@ -3,16 +3,16 @@ Bugs:
 
 ToDo:
 =====
-* enable telemetry tunnel type specific -> menu options for all types of sensors
 * wathdog (show watchdog counter in menu)
-* refactor packet_relay_rewrite
 * correct docu (RX and TX interchanged, A11 for half-duplex TX module)
 * adc input: voltage, temperature
-* make LUA-widget to grab tunneled telemetry
-* adapt to own stm32g031 board
 
 Done:
 =====
+* adapt to own stm32g0b1 board
+* make LUA-widget to grab tunneled telemetry
+* refactor packet_relay_rewrite
+* enable telemetry tunnel type specific -> menu options for all types of sensors
 * explicit failsafe mode (menu: hold, forward, zero, ...)
 * failsafe: switch off relay if no input anymore
 * blink pattern for no-input signal (single flash)

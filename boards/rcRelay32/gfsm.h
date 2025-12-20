@@ -31,14 +31,13 @@ struct GFSM {
     using storage = devs::storage;
     using systemTimer = devs::systemTimer;
     using led = devs::ledBlinker;
-    using btn = devs::btn;
 	using crsf = devs::crsf;
     using crsf_in = devs::crsf_in;
     using crsf_cb = devs::crsf_cb;
     using relay = devs::relay;
 
     enum class State : uint8_t {Undefined, Init, Run, UnConnected};
-    enum class Event : uint8_t {None, ButtonPress, ConnectionLost, DirectConnected, ReceiverConnected};
+    enum class Event : uint8_t {None, ConnectionLost, DirectConnected, ReceiverConnected};
 
     static inline constexpr External::Tick<systemTimer> initTicks{500ms};
     static inline constexpr External::Tick<systemTimer> debugTicks{500ms};
@@ -60,7 +59,6 @@ struct GFSM {
     }
     static inline void ratePeriodic() {
 		devs::ratePeriodic();
-        checkButton();
         checkPackages();
 
         ++mStateTick;
@@ -135,13 +133,6 @@ struct GFSM {
                 event(Event::ConnectionLost);
             }
         });
-    }
-    static inline void checkButton() {
-        if constexpr(!std::is_same_v<btn, void>) {
-            if (const auto e = btn::event(); e == btn::Press::Long) {
-                event(Event::ButtonPress);
-            }
-        }
     }
     static inline etl::Event<Event> mEvent;
     static inline External::Tick<systemTimer> mStateTick;
