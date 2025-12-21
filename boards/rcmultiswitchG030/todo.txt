@@ -7,6 +7,7 @@ hardware:
 
 todo:
 -----
+* option to select IrDa-SIR mode
 * add watchdog
 * add restart command (NVIC_SystemReset)
 * add NDEBUG=false mode with assertions using reset vector NVIC_SystemReset()

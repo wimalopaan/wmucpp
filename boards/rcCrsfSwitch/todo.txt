@@ -4,6 +4,7 @@ bugs:
 todo:
 =====
 * allow more baudrates for relay (e.g. 115200Bd for IR-Connection)
+* option to select IrDa-SIR mode
 * failsafe mode
 * watchdog
 * menu: option to swap rx/tx uart lines (for outgoing: layout like receiver)
