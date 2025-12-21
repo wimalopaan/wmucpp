@@ -7,6 +7,7 @@ hardware:
 
 todo:
 -----
+* add WmG0B1 support
 * option to select IrDa-SIR mode
 * add watchdog
 * add restart command (NVIC_SystemReset)
