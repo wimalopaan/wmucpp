@@ -16,13 +16,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//#define USE_WEACT
-#define USE_WMG0B1
+#define USE_WEACT
+//#define USE_WMG0B1
 // #define USE_NUCLEO_431 // dev board
 
-// #define SERIAL_DEBUG // only for WMG0B1
+#define SERIAL_DEBUG // only for WMG0B1
 
-//#define ALTERNATE_PINS // WmG0B1 only
+// #define ALTERNATE_PINS // WmG0B1 only
+#define USE_IRDA
+
+// #define USE_IRDA_TX_INVERT // for testing only (or direct connection)
 
 #define NDEBUG // do not change: dev option
 
@@ -36,7 +39,12 @@
 #else
 # warning "wrong board definition"
 #endif
-#define SW_VERSION 10
+#define SW_VERSION 13
+
+#ifdef ALTERNATE_PINS
+# warning "IrDA disabled"
+# undef USE_IRDA
+#endif
 
 #include <cstdint>
 #include <array>

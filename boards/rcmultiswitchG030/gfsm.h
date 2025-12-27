@@ -32,6 +32,7 @@ struct GFSM {
     using crsf_out = crsf::output;
     using crsf_pa = crsf::input;
     using crsfCallback = crsf::callback;
+    using messageBuffer = devs::crsfBuffer;
     using led = devs::ledBlinker;
     using btn = devs::btn;
     using adc = devs::adc;
@@ -231,11 +232,53 @@ struct GFSM {
         }
     }
     private:
+    enum class BaudState : uint8_t {FullDuplex, HalfDuplex,
+#ifdef USE_IRDA
+                                         IRDA
+#endif
+        };
+    static inline BaudState baudState = BaudState::FullDuplex;
+
     static inline void nextBaudrate() {
-        static bool halfDuplex = false;
-        if (crsf::nextBaudrate()) {
-            halfDuplex = !halfDuplex;
-            crsf::setHalfDuplex(halfDuplex);
+        switch(baudState) {
+        case BaudState::FullDuplex:
+            if (crsf::nextBaudrate()) {
+                crsf::setHalfDuplex(true);
+                baudState = BaudState::HalfDuplex;
+            }
+            break;
+        case BaudState::HalfDuplex:
+            if (crsf::nextBaudrate()) {
+                crsf::setHalfDuplex(false);
+#ifdef USE_IRDA
+                messageBuffer::freeRun(false);
+                IO::outl<debug>("# FreeRun false");
+                baudState = BaudState::IRDA;
+#ifdef USE_IRDA_TX_INVERT
+                const bool txinvert = true;
+#else
+                const bool txinvert = false;
+#endif
+#ifdef USE_IRDA_RX_INVERT
+                const bool rxinvert = true;
+#else
+                const bool rxinvert = false;
+#endif
+                crsf::setIrDA(true, txinvert, rxinvert);
+                // crsf_out::telemetrySlot(1);
+#else
+                baudState = BaudState::FullDuplex;
+#endif
+            }
+            break;
+#ifdef USE_IRDA
+        case BaudState::IRDA:
+            crsf::setIrDA(false);
+            messageBuffer::freeRun(true);
+            IO::outl<debug>("# FreeRun true");
+            baudState = BaudState::FullDuplex;
+            break;
+#endif
         }
     }
     static inline void checkPackages() {
@@ -243,6 +286,7 @@ struct GFSM {
             const uint16_t ch_p = crsf_pa::template channelPackages<true>();
             const uint16_t l_p = crsf_pa::template linkPackages<true>();
             const uint16_t p_p = crsf_pa::template pingPackages<true>();
+            // IO::outl<debug>("ch_p: ", ch_p);
             if ((ch_p > 0) || (p_p > 0) || (l_p > 0)) {
                 if  (l_p == 0) {
                     event(Event::DirectConnected);

@@ -19,7 +19,7 @@
 // select one(!) of the following hardware definitions
 //#define HW_MSW10 // MultiSwitch_10 (32K), ATTENTION: use Makefile
 #define HW_MSW11 // MultiSwitch_11 (64k), ATTENTION: use Makefile.G031
-//#define HW_MSW12 // MultiSwitch_12 (64k) (EasyEda OSHWLAB) mit G0B1: Makefile.G0B1
+// #define HW_MSW12 // MultiSwitch_12 (64k) (EasyEda OSHWLAB) mit G0B1: Makefile.G0B1
 //#define HW_NUCLEO // STM Nucleo G031K8 (64K) (incl. ST-Link), ATTENTION: use Makefile.G031
 //#define HW_WEACT // WeAct G031F8 (64K), ATTENTION: use Makefile.G031
 
@@ -33,11 +33,15 @@
 #define USE_RESET_COMMAND
 #define USE_TELEMETRY // switches telemetry default on (instead off)
 // #define USE_BUTTON // HW_MSW11: if button is unused, the button pin is used as input (status bit)
+// #define USE_IRDA
 // #define SERIAL_DEBUG // use with care (e.g. with USE_MORSE) because of RAM overflow (stm32g0b1: ok)
 // #define CRSF_TX_OPENDRAIN // only HW_NUCLEO / HW_WEACT / HW_MSW11 / HW_MSW12 : make tx pin open-drain to parallelize in two-wire mode
 // #define CRSF_HALFDUPLEX // only NW_NUCLEO / HW_WEACT / HW_MSW11 / HW_MSW12 : make crsf uart one-wire halfduplex (txpin), custom board is allways half-duplex
 // #define USE_RESPONSE_SLOT // enables arbitration (slot after link-stat), important for half-duplex without crsf-switch/router
 // #define USE_TP1 // enable test point
+
+//#define USE_IRDA_TX_INVERT // for testing purpose (or direct connection)
+#define USE_IRDA_RX_INVERT // depending of the polarity of the irda-sensor
 
 #define NDEBUG // do not change: dev option
  
@@ -66,6 +70,9 @@
 # endif
 # if !defined(USE_TELEMETRY)
 #  define USE_TELEMETRY
+# endif
+# if !defined(USE_IRDA)
+#  define USE_IRDA
 # endif
 #endif
 
@@ -98,7 +105,7 @@
 # undef USE_PATTERNS
 #endif
 
-#define SW_VERSION 35
+#define SW_VERSION 36
 
 #include <cstdint>
 #include <array>

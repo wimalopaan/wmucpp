@@ -202,7 +202,23 @@ private:
         addForward<0x22>(p, parent, "ESP Now");
 
         addNode(p, Param_t{0, PType::Sel, "Half-Duplex", "Off;On", &eeprom.half_duplex, 0, 1, [](const uint8_t v){relay::setHalfDuplex(v == 1); return true;}});
-
+#ifdef USE_IRDA
+        addNode(p, Param_t{0, PType::Sel, "IrDA", "Off;On", &eeprom.irda, 0, 1, [](const uint8_t v){
+                                if (v == 0) {
+                                    relay::baud(RC::Protokoll::Crsf::V4::baudrateHandset);
+                                    relay::setIrDA(false);
+                                    relay::updateRate(10ms);
+                                }
+                                else {
+                                    relay::updateRate(40ms);
+#ifdef USE_IRDA_TX_INVERT
+                                    relay::setIrDA(true, true);
+#else
+                                    relay::setIrDA(true);
+#endif
+                                }
+                                return true;}});
+#endif
         // detects overflow by calling undefined function f();
         if (p.size() >= p.capacity()) {
             void f();

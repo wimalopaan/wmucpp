@@ -429,6 +429,40 @@ namespace RC {
                         IO::outl<debug>("# baud: ", br);
                         uart::baud(br);
                     }
+#ifdef USE_IRDA
+                    static inline void setIrDA(const bool on, const bool txinvert = false, const bool rxinvert = false) {
+                        if (!mActive) {
+                            return;
+                        }
+                        if (on) {
+                            IO::outl<debug>("# IrDA on");
+                            if (txinvert) {
+                                txpin::template pulldown<false>();
+                                txpin::template pullup<true>();
+                            }
+                            else {
+                                txpin::template pullup<false>();
+                                txpin::template pulldown<true>();
+                            }
+                            if (rxinvert) {
+                                rxpin::template pullup<false>();
+                                rxpin::template pulldown<true>();
+                            }
+                            else {
+                                rxpin::template pullup<true>();
+                                rxpin::template pulldown<false>();
+                            }
+                        }
+                        else {
+                            IO::outl<debug>("# IrDA off");
+                            txpin::template pulldown<false>();
+                            txpin::template pullup<true>();
+                            rxpin::template pulldown<false>();
+                            rxpin::template pullup<true>();
+                        }
+                        uart::template irda<true>(on, txinvert, rxinvert);
+                    }
+#endif
                     static inline bool nextBaudrate() {
                         if (!mActive) {
                             return false;
@@ -564,6 +598,9 @@ namespace RC {
                                 const uint8_t src = data[4];
                                 const uint8_t pIndex = data[5];
                                 const uint8_t pChunk = data[6];
+#ifdef USE_IRDA
+                                output::resetSlot();
+#endif
                                 output::setDestination((std::byte)src);
                                 output::sendParameterInfo(pIndex, pChunk);
                             }

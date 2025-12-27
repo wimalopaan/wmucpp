@@ -334,6 +334,10 @@ struct Devices<SW22, Config, MCU> {
         led::template dir<Mcu::Output>();
         ledBlinker::event(ledBlinker::Event::Off);
 
+#ifdef SERIAL_DEBUG
+        debug::init();
+#endif
+
 #ifdef USE_BUTTON
         btn::init();
 #else

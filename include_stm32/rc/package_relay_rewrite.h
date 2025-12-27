@@ -177,6 +177,46 @@ namespace RC::Protokoll::Crsf {
                 uart::template invert<true>();
                 txpin::template pulldown<true>();
             }
+#ifdef USE_IRDA
+            static inline void setIrDA(const bool on, const bool txinvert = false) {
+                if (!mActive) {
+                    return;
+                }
+                if (on) {
+                    IO::outl<debug>("# IrDA on");
+                    if (txinvert) {
+                        txpin::template pulldown<false>();
+                        txpin::template pullup<true>();
+                    }
+                    else {
+                        txpin::template pullup<false>();
+                        txpin::template pulldown<true>();
+                    }
+                    rxpin::template pullup<true>();
+                    rxpin::template pulldown<false>();
+                }
+                else {
+                    IO::outl<debug>("# IrDA off");
+                    txpin::template pulldown<false>();
+                    txpin::template pullup<true>();
+                    rxpin::template pulldown<false>();
+                    rxpin::template pullup<true>();
+                }
+                uart::template irda<true>(on, txinvert);
+
+                // if (on) {
+                //     IO::outl<debug>("# IrDA on");
+                //     txpin::template pullup<false>();
+                //     txpin::template pulldown<true>();
+                // }
+                // else {
+                //     IO::outl<debug>("# IrDA off");
+                //     txpin::template pulldown<false>();
+                //     txpin::template pullup<true>();
+                // }
+                // uart::template irda<true>(on);
+            }
+#endif
             static inline void enable(const bool b) {
                 mEnabled = b;
             }
@@ -206,12 +246,22 @@ namespace RC::Protokoll::Crsf {
             static inline void telemetryRate(const uint8_t r) {
                 mForwardRate = r;
             }
+            static inline void channelsRate(const uint8_t r) {
+                mChannelsRate = r;
+            }
+            static inline void linkStatRate(const uint8_t r) {
+                mLinkStatRate = r;
+            }
             enum class RxEvent : uint8_t {None, ReceiveComplete};
             enum class TxEvent : uint8_t {None, TransmitComplete};
             enum class State : uint8_t {Init, Run};
 
             static inline constexpr External::Tick<systemTimer> initTicks{100ms};
-            static inline constexpr External::Tick<systemTimer> updateTicks{10ms};
+            static inline External::Tick<systemTimer> updateTicks{10ms};
+
+            static inline void updateRate(const auto r) {
+                updateTicks = r;
+            }
 
 			static inline void rewriteName(const bool on) {
 				mDoRewriteName = on;
@@ -291,11 +341,13 @@ namespace RC::Protokoll::Crsf {
                         const auto f2 = [&](const volatile uint8_t* const data, const uint16_t size){
                             [[maybe_unused]] Debug::Scoped<tp1> tp1;
                             f();
+                            IO::outl<debug>("# onIdle: ", size);
                             if (validityCheck(data, size)) {
                                 [[maybe_unused]] Debug::Scoped<tp> tp;
                                 mRxEvent = RxEvent::ReceiveComplete;
                                 return true;
                             }
+                            // return true;
                             return false;
                         };
                         uart::Isr::onIdle(f2);
@@ -326,16 +378,25 @@ namespace RC::Protokoll::Crsf {
                     else { // not extended package
 						if (data[PacketIndex::type] == (uint8_t)Type::Link) {
 							if (mSendLinkStats) {
-								messageBuffer::enqueue(std::span{data, length});
+                                if (++mLinkStatCounter >= mLinkStatRate) {
+                                    messageBuffer::enqueue(std::span{data, length});
+                                    mLinkStatCounter = 0;
+                                }
 							}
 						}
 						else if (data[PacketIndex::type] == (uint8_t)Type::Channels) {
 							if (mSendRCChannels) {
-								messageBuffer::enqueue(std::span{data, length});
+                                if (++mChannelsCounter >= mChannelsRate) {
+                                    messageBuffer::enqueue(std::span{data, length});
+                                    mChannelsCounter = 0;
+                                }
 							}
 						}
 						else {
-							messageBuffer::enqueue(std::span{data, length});
+                            if (++mOtherCounter >= mOtherRate) {
+                                messageBuffer::enqueue(std::span{data, length});
+                                mOtherCounter = 0;
+                            }
 						}
                     }
                 }
@@ -623,6 +684,12 @@ namespace RC::Protokoll::Crsf {
             static inline std::array<uint8_t, (uint8_t)Type::Ping> mTelemetryForwardMode{}; // 0=Off; 1=Forward; 2=Tunnel
             static inline uint8_t mForwardRate = 2;
             static inline std::array<uint8_t, (uint8_t)Type::Ping> mTypeCounter{};
+            static inline uint8_t mChannelsRate = 1;
+            static inline uint8_t mChannelsCounter = 0;
+            static inline uint8_t mLinkStatRate = 1;
+            static inline uint8_t mLinkStatCounter = 0;
+            static inline uint8_t mOtherRate = 1;
+            static inline uint8_t mOtherCounter = 0;
         };
     }
 }

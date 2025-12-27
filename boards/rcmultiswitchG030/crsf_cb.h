@@ -51,7 +51,6 @@ struct CrsfCallback {
 
     using slave = Config::slave;
 
-
     static inline constexpr const char* const title = "MultiSwitch-E@";
     using name_t = std::array<char, 32>;
 
@@ -60,6 +59,13 @@ struct CrsfCallback {
         IO::outl<debug>("# disable telemetry");
         telemetry::disableWithAutoOn();
     }
+#ifdef USE_IRDA
+    static inline void gotChannels() {
+        // IO::outl<debug>("# got channels");
+        messageBuffer::sendNext();
+    }
+#endif
+
     static inline constexpr void updateName(name_t& n) {
         strncpy(&n[0], title, n.size());
         auto r = std::to_chars(std::begin(n) + strlen(title), std::end(n), storage::eeprom.addresses[EEProm::AdrIndex::Switch]);

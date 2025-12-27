@@ -388,13 +388,6 @@ struct Devices<Wmg0b1, Config, MCU> {
     using crsf = RC::Protokoll::Crsf::V4::Master<1, CrsfConfig, MCU>;
     using crsf_in = crsf::input;
 
-    struct RouterConfig;
-    using router = Router<RouterConfig>;
-    struct RouterConfig {
-        using storage = Devices::storage;
-        using debug = void;
-    };
-
 #ifdef SERIAL_DEBUG
     using debugtx = Mcu::Stm::Pin<gpiob, 3, MCU>;
     struct DebugConfig;

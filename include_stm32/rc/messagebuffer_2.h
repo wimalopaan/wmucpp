@@ -104,6 +104,20 @@ namespace Util {
         enum class State : uint8_t {Idle, Wait, Send};
         enum class Event : uint8_t {None, TransmitComplete};
 
+#ifdef USE_IRDA
+        enum class ResponseEvent : uint8_t {None, Send};
+
+        static inline void freeRun(const bool on) {
+            mFreeRun = on;
+        }
+        static inline void sendNext() {
+            mResponseEvent = ResponseEvent::Send;
+        }
+        static inline void clearEvent() {
+            mResponseEvent = ResponseEvent::None;
+        }
+#endif
+
         static inline void event(const Event e) {
             mEvent = e;
         }
@@ -111,8 +125,21 @@ namespace Util {
             switch (mState) {
             case State::Idle:
                 if (!mFifo.empty()) {
+#ifdef USE_IRDA
+                    if (mFreeRun) {
+                        send();
+                        mState = State::Send;
+                    }
+                    else {
+                        mResponseEvent.on(ResponseEvent::Send, []{
+                            send();
+                            mState = State::Send;
+                        });
+                    }
+#else
                     send();
                     mState = State::Send;
+#endif
                 }
                 break;
             case State::Send:
@@ -135,6 +162,9 @@ namespace Util {
             case State::Wait:
                 mStateTick.on(interMessageTicks, []{
                     mState = State::Idle;
+#ifdef USE_IRDA
+                    mResponseEvent = ResponseEvent::None;
+#endif
                 });
                 break;
             }
@@ -153,7 +183,11 @@ namespace Util {
                 });
             }
         }
+        static inline bool mFreeRun = true;
         static inline etl::Event<Event> mEvent;
+#ifdef USE_IRDA
+        static inline etl::Event<ResponseEvent> mResponseEvent;
+#endif
         static inline External::Tick<systemTimer> mStateTick{1ms};
         static inline State mState = State::Idle;
         static inline etl::FiFo<Entry, FifoSize> mFifo;
