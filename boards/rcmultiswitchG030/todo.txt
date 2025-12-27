@@ -7,8 +7,6 @@ hardware:
 
 todo:
 -----
-* add WmG0B1 support
-* option to select IrDa-SIR mode
 * add watchdog
 * add restart command (NVIC_SystemReset)
 * add NDEBUG=false mode with assertions using reset vector NVIC_SystemReset()
@@ -28,6 +26,8 @@ details:
 
 done:
 -----
+* add WmG0B1 support
+* option to select IrDa-SIR mode
 * add slave-switch protocol (like Set):
 ** add option to sendout the slave-switch protocol (broadcast)
 ** add option to receive the slave-switch protocol per output

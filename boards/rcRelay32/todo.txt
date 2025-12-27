@@ -3,14 +3,14 @@ Bugs:
 
 ToDo:
 =====
-* allow more baudrates (e.g. 115200Bd for IR-Connection)
-* option to select IrDa-SIR mode
 * watchdog (show watchdog counter in menu)
 * correct docu (RX and TX interchanged, A11 for half-duplex TX module)
 * adc input: voltage, temperature
 
 Done:
 =====
+* allow more baudrates (e.g. 115200Bd for IR-Connection)
+* option to select IrDa-SIR mode
 * adapt to own stm32g0b1 board
 * make LUA-widget to grab tunneled telemetry
 * refactor packet_relay_rewrite
