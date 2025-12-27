@@ -138,9 +138,14 @@ struct Devices<SW22, Config, MCU> {
 
     using btn = void;
     using in0 = Mcu::Stm::Pin<gpiob, 9, MCU>;
-	using in1 = Mcu::Stm::Pin<gpioc, 14, MCU>;
 
+#ifdef USE_TP1
+    using tp1 = Mcu::Stm::Pin<gpioc, 14, MCU>;
+    using in1 = void;
+#else
+    using in1 = Mcu::Stm::Pin<gpioc, 14, MCU>;
     using tp1 = void;
+#endif
 
     using sw0 = Mcu::Stm::Pin<gpioa, 0, MCU>;
     using sw1 = Mcu::Stm::Pin<gpioa, 1, MCU>;
@@ -276,6 +281,7 @@ struct Devices<SW22, Config, MCU> {
 		using patgen1 = Devices::patgen1;
 		using patgen2 = Devices::patgen2;
 		using patgen3 = Devices::patgen3;
+        using crsf = Devices::crsf;
     };
 
     struct CrsfCallbackConfig {
@@ -305,8 +311,8 @@ struct Devices<SW22, Config, MCU> {
         using dmaChRead  = csrfInDmaChannelComponent1;
         using dmaChWrite  = csrfInDmaChannelComponent2;
         using dmaChRW  = csrfInDmaChannelComponent1;
-        using debug = void;
-        // using debug = Devices::debug;
+        // using debug = void;
+        using debug = Devices::debug;
         using tp = tp1;
         using callback = CrsfCallback<CrsfCallbackConfig>;
         static inline constexpr uint8_t fifoSize = 8;
@@ -321,6 +327,10 @@ struct Devices<SW22, Config, MCU> {
 
         dma1::init();
 
+#ifdef SERIAL_DEBUG
+        debug::init();
+#endif
+
         led::template dir<Mcu::Output>();
         ledBlinker::event(ledBlinker::Event::Off);
 
@@ -329,18 +339,14 @@ struct Devices<SW22, Config, MCU> {
 #else
         in0::template dir<Mcu::Input>();
         in0::template pullup<true>();
-		in1::template dir<Mcu::Input>();
+#ifndef USE_TP1
+        in1::template dir<Mcu::Input>();
         in1::template pullup<true>();
+#endif
 #endif
 #ifdef USE_TP1
         tp1::template dir<Mcu::Output>();
 #endif
-        crsf::init();
-#ifdef CRSF_TX_OPENDRAIN
-        crsftx::template openDrain<true>();
-        crsftx::template pullUp<true>();
-#endif
-
         sw0::template dir<Mcu::Output>();
         sw1::template dir<Mcu::Output>();
         sw2::template dir<Mcu::Output>();
@@ -356,6 +362,12 @@ struct Devices<SW22, Config, MCU> {
 
         adc::init();
         adc::oversample(7);
+
+        crsf::init();
+#ifdef CRSF_TX_OPENDRAIN
+        crsftx::template openDrain<true>();
+        crsftx::template pullUp<true>();
+#endif
     }
 };
 
@@ -586,6 +598,7 @@ struct Devices<SW21, Config, MCU> {
 		using patgen1 = Devices::patgen1;
 		using patgen2 = Devices::patgen2;
 		using patgen3 = Devices::patgen3;
+        using crsf = Devices::crsf;
     };
 
     struct CrsfCallbackConfig {
@@ -848,6 +861,7 @@ struct Devices<SW20, Config, MCU> {
 		using patgen1 = Devices::patgen1;
 		using patgen2 = Devices::patgen2;
 		using patgen3 = Devices::patgen3;
+        using crsf = Devices::crsf;
     };
 
     struct CrsfCallbackConfig {
@@ -1054,6 +1068,7 @@ struct Devices<Nucleo, Config, MCU> {
         using debug = Devices::debug;
         using storage = Devices::storage;
         using bsws = Devices::bsws;
+        using crsf = Devices::crsf;
     };
 
     struct CrsfCallbackConfig {
@@ -1197,8 +1212,8 @@ struct Devices<WeAct, Config, MCU> {
     using in1 = Mcu::Stm::Pin<gpiob, 7, MCU>;
 #endif
 #ifdef USE_TP1
-    // using tp1 = Mcu::Stm::Pin<gpiob, 7, MCU>;
-    using tp1 = void;
+    using tp1 = Mcu::Stm::Pin<gpiob, 7, MCU>;
+    // using tp1 = void;
 #else
     using tp1 = void;
 #endif
@@ -1303,6 +1318,7 @@ struct Devices<WeAct, Config, MCU> {
 		using patgen1 = Devices::patgen1;
 		using patgen2 = Devices::patgen2;
 		using patgen3 = Devices::patgen3;
+        using crsf = Devices::crsf;
     };
 
     struct CrsfCallbackConfig {

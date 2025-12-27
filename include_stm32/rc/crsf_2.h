@@ -90,7 +90,22 @@ namespace RC {
                                     }
                                 }
 							}
-                            if (srcAddress == (uint8_t)RC::Protokoll::Crsf::V4::Address::Handset) {
+                            if (srcAddress == (uint8_t)RC::Protokoll::Crsf::V4::Address::RX) {
+                                if (realm == (uint8_t)RC::Protokoll::Crsf::V4::CommandType::general) {
+                                    if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::GeneralCommand::speed) {
+                                        uint8_t port = (uint8_t)payload[7];
+                                        uint32_t baud = (uint8_t)payload[8];
+                                        baud = baud * 256 + (uint8_t)payload[9];
+                                        baud = baud * 256 + (uint8_t)payload[10];
+                                        baud = baud * 256 + (uint8_t)payload[11];
+                                        // if constexpr(requires(){callback::baud(port, baud);}) {
+                                            callback::baud(port, baud);
+                                        // }
+
+                                    }
+                                }
+                            }
+                            else if (srcAddress == (uint8_t)RC::Protokoll::Crsf::V4::Address::Handset) {
                                 if (realm == (uint8_t)RC::Protokoll::Crsf::V4::CommandType::Switch) {
                                     if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set4M) {
                                         const uint8_t count = payload[7];
@@ -378,7 +393,6 @@ namespace RC {
                             static constexpr uint8_t txaf = Mcu::Stm::AlternateFunctions::mapper_v<txpin, uart, Mcu::Stm::AlternateFunctions::TX>;
                             txpin::afunction(txaf);
                             txpin::template pullup<true>();
-
                         }
                         else {
                             static constexpr uint8_t rxaf = Mcu::Stm::AlternateFunctions::mapper_v<rxpin, uart, Mcu::Stm::AlternateFunctions::RX>;
@@ -483,12 +497,15 @@ namespace RC {
                         if (const uint8_t l = data[1]; l > RC::Protokoll::Crsf::V4::maxPayloadSize) {
                             return false;
                         }
+                        else if (l < RC::Protokoll::Crsf::V4::minPayloadSize) {
+                            return false;
+                        }
                         if (const uint8_t t = data[2]; t > (uint8_t)RC::Protokoll::Crsf::V4::Type::Last) {
                             return false;
                         }
                         return true;
                     }
-                    static inline bool crcCheck(auto data, const uint8_t paylength) {
+                    static inline bool crcCheck(const auto& data, const uint8_t paylength) {
                         CRC8 csum;
                         for(int8_t i = 0; i < paylength - 1; ++i) {
                             csum += data[i + 2];
@@ -592,9 +609,10 @@ namespace RC {
                     }
                     static inline void readReply() {
                         uart::readBuffer([&](const auto& data){
-                            uint8_t offset = 0;
+                            uint16_t offset = 0;
                             do { // analyze all packages in one contiguous frame
                                 const uint8_t paylength = std::min((uint8_t)data[1 + offset], maxPayloadSize);
+                                // IO::outl<debug>("# rply: ", paylength);
                                 if (!crcCheck(&data[offset], paylength)) {
                                     return;
                                 }

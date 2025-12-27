@@ -455,6 +455,8 @@ struct Devices<Desk02, Config, MCU> {
         using storage = Devices::storage;
         using debug = void;
         using tp = void;
+        using tp1 = void;
+        using tp2 = void;
         static inline constexpr uint8_t fifoSize = 16;
     };
 

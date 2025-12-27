@@ -186,7 +186,12 @@ private:
 		addNode(p, Param_t{parent2, PType::U8,  "Next Address", nullptr, &storage::eeprom.pattern[index].next_address, 0, 255, [](const uint8_t){return true;}});
 		addNode(p, Param_t{parent2, PType::U8,  "Group", nullptr, &storage::eeprom.pattern[index].group, 0, 255, [](const uint8_t){return true;}});
 	
-		addNode(p, Param_t{parent2, PType::Sel, "Test", "Off;On", nullptr, 0, 1, [](const uint8_t v){patgen::event((v == 0) ? patgen::Event::Stop : patgen::Event::Start); return false;}});
+        addNode(p, Param_t{parent2, PType::Sel, "Test", "Off;On", nullptr, 0, 1, [](const uint8_t v){
+                               if (!mEepromMode) {
+                                   patgen::event((v == 0) ? patgen::Event::Stop : patgen::Event::Start);
+                               }
+                               return false;
+                           }});
 	}
 #endif
 #ifdef USE_VIRTUALS

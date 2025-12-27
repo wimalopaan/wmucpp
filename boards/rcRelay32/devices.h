@@ -268,6 +268,8 @@ struct Devices<WeAct, Config, MCU> {
         using storage = Devices::storage;
         using debug = Devices::debug;
         using tp = void;
+        using tp1 = void;
+        using tp2 = void;
         static inline constexpr uint8_t fifoSize = 16;
     };
     struct CrsfCallbackConfig;
@@ -376,6 +378,12 @@ struct Devices<Wmg0b1, Config, MCU> {
     using inputtx = Mcu::Stm::Pin<gpioa, 9, MCU>;
     using inputrx = Mcu::Stm::Pin<gpioa, 10, MCU>;
 
+#ifdef USE_TP
+    using tp = Mcu::Stm::Pin<gpiob, 4, MCU>;
+    using tp1 = Mcu::Stm::Pin<gpiob, 6, MCU>;
+    using tp2 = Mcu::Stm::Pin<gpiob, 7, MCU>;
+#endif
+
     struct CrsfConfig;
     using crsf = RC::Protokoll::Crsf::V4::Master<1, CrsfConfig, MCU>;
     using crsf_in = crsf::input;
@@ -420,7 +428,15 @@ struct Devices<Wmg0b1, Config, MCU> {
         using dmaChWrite = auxDmaChannel2;
         using storage = Devices::storage;
         using debug = Devices::debug;
+#ifdef USE_TP
+        using tp = Devices::tp;
+        using tp1 = Devices::tp1;
+        using tp2 = Devices::tp2;
+#else
         using tp = void;
+        using tp1 = void;
+        using tp2 = void;
+#endif
         static inline constexpr uint8_t fifoSize = 16;
     };
     struct CrsfCallbackConfig;
@@ -491,5 +507,11 @@ struct Devices<Wmg0b1, Config, MCU> {
 
         adc::init();
         adc::start();
+
+#ifdef USE_TP
+        tp::template dir<Mcu::Output>();
+        tp1::template dir<Mcu::Output>();
+        tp2::template dir<Mcu::Output>();
+#endif
     }
 };

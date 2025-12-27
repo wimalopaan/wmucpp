@@ -53,6 +53,8 @@ namespace RC::Protokoll::Crsf {
             using rxpin = Config::rxpin;
             using txpin = Config::txpin;
             using tp = Config::tp;
+            using tp1 = Config::tp1;
+            using tp2 = Config::tp2;
 
             using router = Reflection::getRouter_t<Config>;
 
@@ -107,7 +109,7 @@ namespace RC::Protokoll::Crsf {
                         static inline constexpr bool idle = true;
                         static inline constexpr bool txComplete = true;
                     };
-                    using tp = Config::tp;
+                    using tp = Config::tp2;
                 };
             };
 
@@ -236,10 +238,11 @@ namespace RC::Protokoll::Crsf {
                     break;
                 case State::Run:
                     if (mRxEvent.is(RxEvent::ReceiveComplete)) {
-                        [[maybe_unused]] Debug::Scoped<tp> _tp;
+                        IO::outl<debug>("# RX E");
+                        // [[maybe_unused]] Debug::Scoped<tp> _tp;
                         handleIncoming();
                     }
-                    else if (mTxEvent.is(TxEvent::TransmitComplete)) {
+                    if (mTxEvent.is(TxEvent::TransmitComplete)) {
                         messageBuffer::event(messageBuffer::Event::TransmitComplete);
                     }
                     break;
@@ -286,8 +289,10 @@ namespace RC::Protokoll::Crsf {
                 static inline void onIdle(const auto f) {
                     if (mActive) {
                         const auto f2 = [&](const volatile uint8_t* const data, const uint16_t size){
+                            [[maybe_unused]] Debug::Scoped<tp1> tp1;
                             f();
                             if (validityCheck(data, size)) {
+                                [[maybe_unused]] Debug::Scoped<tp> tp;
                                 mRxEvent = RxEvent::ReceiveComplete;
                                 return true;
                             }
@@ -303,8 +308,9 @@ namespace RC::Protokoll::Crsf {
             static inline void forwardPacket(volatile uint8_t* const data, const uint16_t length) {
                 using namespace RC::Protokoll::Crsf::V4;
                 if (mActive && mEnabled) {
-                    // IO::outl<debug>("# fw to TX");
+                    //IO::outl<debug>("# fw to TX");
                     if (isExtendedPacket(data, length)) {
+                        IO::outl<debug>("# ext. fw to TX");
                         if constexpr(std::is_same_v<router, void>) {
                             rewriteOutgoing(data, length);
                         }
@@ -365,8 +371,13 @@ namespace RC::Protokoll::Crsf {
             static inline void handleIncoming() {
                 if constexpr(!std::is_same_v<dest, void>) {
                     uart::readBuffer([](const auto& data){
+                        const uint8_t paylength = std::min((uint8_t)data[1], maxPayloadSize);
+                        if (!crcCheck(&data[0], paylength)) {
+                            IO::outl<debug>("# wrong crc");
+                            return;
+                        }
                         if (isExtendedPacket(&data.front(), data.size())) {
-                            // IO::outl<debug>("# receive");
+                            IO::outl<debug>("# receive: ", paylength, " ", data.size());
                             if (data[PacketIndex::type] != (uint8_t)Type::RadioID) {
                                 if constexpr(std::is_same_v<router, void>) {
                                     rewriteIncoming(data);
@@ -386,13 +397,19 @@ namespace RC::Protokoll::Crsf {
                                 }
                             }
                         }
-                        else {
+                        else { // type < Ping
                             // IO::outl<debug>("# telem");
                             if constexpr(!std::is_same_v<dest, void>) {
-                                if (data[PacketIndex::type] == (uint8_t)Type::Link) {
+                                const uint8_t type = data[PacketIndex::type];
+
+                                if (type >= (uint8_t)Type::Ping) {
+                                    IO::outl<debug>("# wrong type");
+                                    return;
+                                }
+
+                                if (type == (uint8_t)Type::Link) {
                                     if (mLinkStatMode > 0) {
-                                        if (++mTypeCounter[data[PacketIndex::type]] >= mForwardRate) {
-                                            mTypeCounter[data[PacketIndex::type]] = 0;
+                                        if (shouldSendtelemetry(type)) {
                                             if (mLinkStatMode == 1) { // forward
                                                 IO::outl<debug>("# return link stats");
                                                 dest::enqueue(data);
@@ -441,10 +458,8 @@ namespace RC::Protokoll::Crsf {
                                     }
                                 }
                                 else {
-                                    const uint8_t telemtype = data[PacketIndex::type];
-                                    if (const uint8_t mode = mTelemetryForwardMode[telemtype]; mode > 0) {
-                                        if (++mTypeCounter[telemtype] >= mForwardRate) {
-                                            mTypeCounter[telemtype] = 0;
+                                    if (const uint8_t mode = mTelemetryForwardMode[type]; mode > 0) {
+                                        if (shouldSendtelemetry(type)) {
                                             if (mode == 2) {
                                                 IO::outl<debug>("# tunnel telemtry, size: ", data.size(), " t: ", data[PacketIndex::type]);
                                                 dest::create_back((uint8_t)Type::PassThru, [&](auto& ta){
@@ -469,6 +484,15 @@ namespace RC::Protokoll::Crsf {
                     });
                 }
             }
+            static inline bool shouldSendtelemetry(const uint8_t type) {
+                if (type < mTypeCounter.size()) {
+                    if (++mTypeCounter[type] >= mForwardRate) {
+                        mTypeCounter[type] = 0;
+                        return true;
+                    }
+                }
+                return false;
+            }
             static inline void routeIncoming(auto& data) {
                 const uint8_t srcAddr = data[PacketIndex::src];
                 const uint8_t rewSrcAddr = router::backwardSrcAddress(Config::id, srcAddr);
@@ -478,6 +502,7 @@ namespace RC::Protokoll::Crsf {
                 recalculateCRC(data);
                 dest::enqueue(data);
 
+                // better: send only to ifaces where the dest address is
                 Meta::visit<bcastIfaces>([&]<typename IF>(Meta::Wrapper<IF>){
                     IF::forwardPacket(&data[0], data.size());
                 });
@@ -527,10 +552,10 @@ namespace RC::Protokoll::Crsf {
                 rewriteRxTxSource(data);
                 rewriteDestination(data);
                 if constexpr(std::is_same_v<router, void>) {
-                    IO::outl<debug>("# route");
+                    IO::outl<debug>("# rew in");
                 }
                 else {
-                    IO::outl<debug>("# route id: ", Config::id);
+                    IO::outl<debug>("# rew id: ", Config::id);
                 }
                 data[0] = (uint8_t)Address::StartByte;
                 recalculateCRC(data);
@@ -555,10 +580,23 @@ namespace RC::Protokoll::Crsf {
                 if (const uint8_t l = data[1]; l > RC::Protokoll::Crsf::V4::maxPayloadSize) {
                     return false;
                 }
+                else if (l < RC::Protokoll::Crsf::V4::minPayloadSize) {
+                    return false;
+                }
                 if (const uint8_t t = data[2]; t > (uint8_t)RC::Protokoll::Crsf::V4::Type::Last) {
                     return false;
                 }
                 return true;
+            }
+            static inline bool crcCheck(const auto& data, const uint8_t paylength) {
+                CRC8 csum;
+                for(int8_t i = 0; i < paylength - 1; ++i) {
+                    csum += data[i + 2];
+                }
+                if (csum == data[paylength - 1 + 2]) {
+                    return true;
+                }
+                return false;
             }
             static inline void update() { // channels to dest
                 if (mSource && mEnabled) {
@@ -567,13 +605,13 @@ namespace RC::Protokoll::Crsf {
                     });
                 }
             }
-            static inline volatile bool mEnabled  = true;
-            static inline volatile bool mSendBCast  = true;
-			static inline volatile bool mSendLinkStats  = true;
-			static inline volatile bool mSendRCChannels = true;
-			static inline volatile bool mSource = false;
+            static inline bool mEnabled  = true;
+            static inline bool mSendBCast  = true;
+            static inline bool mSendLinkStats  = true;
+            static inline bool mSendRCChannels = true;
+            static inline bool mSource = false;
+            static inline bool mUseRouter = true;
             static inline volatile bool mActive = false;
-            static inline volatile bool mUseRouter = true;
             static inline volatile etl::Event<RxEvent> mRxEvent;
             static inline volatile etl::Event<TxEvent> mTxEvent;
             static inline volatile State mState = State::Init;

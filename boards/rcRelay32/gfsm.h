@@ -35,6 +35,7 @@ struct GFSM {
     using crsf_in = devs::crsf_in;
     using crsf_cb = devs::crsf_cb;
     using relay = devs::relay;
+    using rbuffer = relay::messageBuffer;
 
     enum class State : uint8_t {Undefined, Init, Run, UnConnected};
     enum class Event : uint8_t {None, ConnectionLost, DirectConnected, ReceiverConnected};
@@ -132,6 +133,21 @@ struct GFSM {
             else {
                 event(Event::ConnectionLost);
             }
+            const uint16_t fe = relay::uart::frameErrors();
+            if (fe > 0) {
+                IO::outl<debug>("# send baudrate");
+                sendSetBaudrate();
+            }
+        });
+    }
+    static inline void sendSetBaudrate() {
+        rbuffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::Command, [&](auto& d){
+            d.push_back(RC::Protokoll::Crsf::V4::Address::Broadcast);
+            d.push_back(RC::Protokoll::Crsf::V4::Address::RX);
+            d.push_back(RC::Protokoll::Crsf::V4::CommandType::general);
+            d.push_back(RC::Protokoll::Crsf::V4::GeneralCommand::speed);
+            d.push_back(uint8_t(0));
+            d.push_back(RC::Protokoll::Crsf::V4::baudrateHandset);
         });
     }
     static inline etl::Event<Event> mEvent;

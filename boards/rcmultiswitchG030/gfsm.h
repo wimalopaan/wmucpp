@@ -44,6 +44,7 @@ struct GFSM {
 	using patgen2 = devs::patgen2;
 	using patgen3 = devs::patgen3;
     using slave = devs::ssp;
+    using tp1 = devs::tp1;
 
     enum class State : uint8_t {Undefined, Init, CheckBaudrate,
                                 RunNoTelemetry, RunWithTelemetry,
@@ -65,9 +66,6 @@ struct GFSM {
     }
     static inline void init() {
         devs::init();
-        if constexpr(!std::is_same_v<debug, void>) {
-            debug::init();
-        }
     }
     static inline void event(const Event e) {
         mEvent = e;

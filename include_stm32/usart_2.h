@@ -16,6 +16,7 @@
 #include "exti.h"
 #include "output.h"
 #include "timer.h"
+#include "debug_pin.h"
 
 #if 0
 struct UartConfig {
@@ -561,6 +562,11 @@ namespace Mcu::Stm {
             static inline uint16_t readCount() requires(Config::mode != Uarts::Mode::TxOnly) {
                 return *mActiveReadCount;
             }
+            static inline uint16_t frameErrors() {
+                const uint16_t fe = mFrameErrors;
+                mFrameErrors = 0;
+                return fe;
+            }
             struct Isr {
                 static inline void onTransferComplete(const auto f)
                         requires(Config::mode != Uarts::Mode::RxOnly) {
@@ -606,14 +612,14 @@ namespace Mcu::Stm {
                     if (mcuUart->ISR & USART_ISR_IDLE) {
                         mcuUart->ICR = USART_ICR_IDLECF;
                         if (const uint16_t nRead = (Config::Rx::size - dmaChRW::counter()); nRead >= Config::Rx::idleMinSize) {
+                            // Debug::Scoped<tp> _;
                             // f() -> bool, only reconfigure if parsing ok
                             if (!std::is_same_v<adapter, void> || // if adapter != void: allways call the following
                                 f(dmaChRW::memoryAddress(), nRead) ||
                                 (nRead == Config::Rx::size)
                                 ) {
-                                mcuUart->RQR = USART_RQR_RXFRQ; // clear fifo
                                 mcuUart->CR3 &= ~USART_CR3_DMAR; // clear pending request
-                                mcuUart->CR3 |= USART_CR3_DMAR;
+                                mcuUart->RQR = USART_RQR_RXFRQ; // clear fifo
                                 dmaChRW::reConfigure([&]{
                                     if (dmaChRW::memoryAddress() == &mReadBuffer1[0]) {
                                         dmaChRW::memoryAddress(&mReadBuffer2[0]);
@@ -629,8 +635,40 @@ namespace Mcu::Stm {
                                     }
                                     dmaChRW::size(Config::Rx::size);
                                 });
+                                mcuUart->CR3 |= USART_CR3_DMAR;
+                                mBufferHasData = true;
                             }
-                            mBufferHasData = true;
+                            else {
+                                mcuUart->CR3 &= ~USART_CR3_DMAR; // clear pending request
+                                mcuUart->RQR = USART_RQR_RXFRQ; // clear fifo
+                                dmaChRW::reConfigure([&]{
+                                    if (dmaChRW::memoryAddress() == &mReadBuffer1[0]) {
+                                        dmaChRW::memoryAddress(&mReadBuffer2[0]);
+                                        mActiveReadBuffer = &mReadBuffer1[0];
+                                        mCount1 = 0;
+                                        mActiveReadCount = &mCount1;
+                                    }
+                                    else {
+                                        dmaChRW::memoryAddress(&mReadBuffer1[0]);
+                                        mActiveReadBuffer = &mReadBuffer2[0];
+                                        mCount2 = 0;
+                                        mActiveReadCount = &mCount2;
+                                    }
+                                    dmaChRW::size(Config::Rx::size);
+                                });
+                                mcuUart->CR3 |= USART_CR3_DMAR;
+                            }
+                        }
+                        else {
+                            Debug::Scoped<tp> _;
+                            if (mcuUart->ISR & USART_ISR_FE) {
+                                mFrameErrors = mFrameErrors + 1;
+                            }
+                            mcuUart->ICR = -1; // clear all flags
+                            mcuUart->CR3 &= ~USART_CR3_DMAR; // clear pending request
+                            mcuUart->RQR = USART_RQR_RXFRQ; // clear fifo
+                            dmaChRW::startRead(Config::Rx::size, (uint32_t)&mcuUart->RDR, mActiveReadBuffer, Uarts::Properties<N>::dmamux_rx_src);
+                            mcuUart->CR3 |= USART_CR3_DMAR;
                         }
                     }
                 }
@@ -755,6 +793,7 @@ namespace Mcu::Stm {
             static inline rx_buffer_t mReadBuffer1;
             static inline rx_buffer_t mReadBuffer2;
             static inline storage_t* volatile mActiveReadBuffer = &mReadBuffer1[0];
+            static inline volatile uint16_t mFrameErrors = 0;
             static inline volatile uint16_t mCount1 = 0;
             static inline volatile uint16_t mCount2 = 0;
             static inline bool volatile mBufferHasData = false;
@@ -762,7 +801,7 @@ namespace Mcu::Stm {
             static inline tx_buffer_t mWriteBuffer1;
             static inline tx_buffer2_t mWriteBuffer2;
             static inline storage_t* volatile mActiveWriteBuffer = &mWriteBuffer1[0];
-            static inline bool mHalfDuplex = false;
+            static inline volatile bool mHalfDuplex = false;
         };
     }
 }

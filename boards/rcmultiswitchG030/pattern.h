@@ -58,8 +58,8 @@ namespace External::Pattern {
 			if (pos < size) {
 				mOutsInSequence[pos] = out;		
 			}
-		}	
-		static inline void event(const Event e, const bool propagate = true) {
+        }
+        static inline void event(const Event e, const bool propagate = true) {
 			if (e == Event::Stop) {
 				if (propagate) {
 					sendStop();

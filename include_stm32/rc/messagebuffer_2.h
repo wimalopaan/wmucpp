@@ -141,8 +141,8 @@ namespace Util {
         }
         private:
         static inline void send() {
-            Out::fillSendBuffer([&](auto& data){
-                if (mFifo.size() > 0) {
+            if (mFifo.size() > 0) {
+                Out::fillSendBuffer([&](auto& data){
                     const auto& m = mFifo.front();
                     static_assert(m.message.size() == data.size());
                     for(uint8_t i = 0; i < m.length; ++i) {
@@ -150,8 +150,8 @@ namespace Util {
                     }
                     mFifo.pop_front();
                     return m.length;
-                }
-            });
+                });
+            }
         }
         static inline etl::Event<Event> mEvent;
         static inline External::Tick<systemTimer> mStateTick{1ms};

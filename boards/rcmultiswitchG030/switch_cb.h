@@ -24,12 +24,24 @@ template<typename Config>
 struct SwitchCallback {
     using storage = Config::storage;
     using debug = Config::debug;
+    using crsf = Config::crsf;
     using bsws = Config::bsws;
 	using patgen0 = Config::patgen0;
 	using patgen1 = Config::patgen1;
 	using patgen2 = Config::patgen2;
 	using patgen3 = Config::patgen3;
 	using plist = Meta::List<patgen0, patgen1, patgen2, patgen3>;
+
+    static inline void baud(const uint8_t port, const uint32_t b) {
+        for(const auto& bd: RC::Protokoll::Crsf::V4::baudrates) {
+            if (bd == b) {
+                IO::outl<debug>("# baud: ", b, " p: ", port);
+                crsf::baud(b);
+                return;
+            }
+        }
+        IO::outl<debug>("# wrong baud: ", b);
+    }
 
 #ifdef USE_PATTERNS
 	static inline void patternStart(const uint8_t adrIndex, const uint8_t pattern) {

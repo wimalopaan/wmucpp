@@ -224,6 +224,8 @@ struct Devices<SW10, Config, MCU> {
         using storage =  StorageAdapter<0>;
         using debug = Devices::debug1;
         using tp = void;
+        using tp1 = void;
+        using tp2 = void;
         static inline constexpr uint8_t fifoSize = 16;
     };
     struct CrsfHd2Config {
@@ -242,6 +244,8 @@ struct Devices<SW10, Config, MCU> {
         using storage =  StorageAdapter<1>;
         using debug = Devices::debug1;
         using tp = void;
+        using tp1 = void;
+        using tp2 = void;
         static inline constexpr uint8_t fifoSize = 16;
     };
     struct CrsfFD3Config {
@@ -260,6 +264,8 @@ struct Devices<SW10, Config, MCU> {
         using storage =  StorageAdapter<2>;
         using debug = Devices::debug1;
         using tp = void;
+        using tp1 = void;
+        using tp2 = void;
         static inline constexpr uint8_t fifoSize = 16;
     };
 	struct CrsfFD4Config {
@@ -278,6 +284,8 @@ struct Devices<SW10, Config, MCU> {
         using storage =  StorageAdapter<3>;
         using debug = Devices::debug1;
         using tp = void;
+        using tp1 = void;
+        using tp2 = void;
         static inline constexpr uint8_t fifoSize = 16;
     };
     struct CrsfFD5Config {
@@ -296,6 +304,8 @@ struct Devices<SW10, Config, MCU> {
         using storage =  StorageAdapter<4>;
         using debug = Devices::debug;
         using tp = void;
+        using tp1 = void;
+        using tp2 = void;
         static inline constexpr uint8_t fifoSize = 16;
     };
     struct CrsfFD6Config {
@@ -314,6 +324,8 @@ struct Devices<SW10, Config, MCU> {
         using storage =  StorageAdapter<5>;
         using debug = Devices::debug1;
         using tp = void;
+        using tp1 = void;
+        using tp2 = void;
         static inline constexpr uint8_t fifoSize = 16;
     };
 

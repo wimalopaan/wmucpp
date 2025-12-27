@@ -29,7 +29,7 @@
 #define USE_OPERATE_MENU
 #define USE_VIRTUALS
 // #define USE_PATTERNS
-#define USE_SLAVE_COMMAND
+// #define USE_SLAVE_COMMAND
 #define USE_RESET_COMMAND
 #define USE_TELEMETRY // switches telemetry default on (instead off)
 // #define USE_BUTTON // HW_MSW11: if button is unused, the button pin is used as input (status bit)
@@ -44,7 +44,7 @@
 // STM32G0B1: capable of all features
 #if defined(HW_MSW12)
 # if !defined(SERIAL_DEBUG)
-#  define SERIAL_DEBUG
+#   define SERIAL_DEBUG
 # endif
 # if !defined(USE_MORSE)
 #  define USE_MORSE

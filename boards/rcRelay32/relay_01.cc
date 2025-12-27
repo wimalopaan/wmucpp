@@ -16,13 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// #define USE_WEACT
+//#define USE_WEACT
 #define USE_WMG0B1
 // #define USE_NUCLEO_431 // dev board
 
-#define SERIAL_DEBUG // only for WMG0B1
+// #define SERIAL_DEBUG // only for WMG0B1
 
-#define ALTERNATE_PINS // WmG0B1 only
+//#define ALTERNATE_PINS // WmG0B1 only
 
 #define NDEBUG // do not change: dev option
 
@@ -30,6 +30,7 @@
 # define HW_VERSION 1
 #elif defined(USE_WMG0B1)
 # define HW_VERSION 2
+// # define USE_TP
 #elif defined(USE_NUCLEO_431)
 # define HW_VERSION 3
 #else

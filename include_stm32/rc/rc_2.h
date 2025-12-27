@@ -164,6 +164,10 @@ namespace RC {
                     inline static constexpr std::byte Switch{0xa1}; // MultiSwitch
                     inline static constexpr std::byte Schottel{0xa2}; // RC720E32
                 }
+                namespace GeneralCommand {
+                    inline static constexpr std::byte speed{0x70}; // set baudrate
+                    inline static constexpr std::byte speedAck{0x71}; // acknolegde baudrate
+                }
                 namespace SchottelCommand {
                     inline static constexpr std::byte Reset{0x01};
                 }
@@ -230,6 +234,7 @@ namespace RC {
                 static inline constexpr uint8_t  maxMessageSize = 64;
                 static inline constexpr uint8_t  minMessageSize = 4;
                 static inline constexpr uint8_t  maxPayloadSize = 62;
+                static inline constexpr uint8_t  minPayloadSize = 2;
                 static inline constexpr uint8_t  maxExtendedPayloadSize = 60;
 
                 static inline constexpr uint8_t  ValueBits = 11;
