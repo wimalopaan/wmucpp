@@ -167,37 +167,36 @@ struct CrsfCallback {
                                 return true;}});
         addNode(p, Param_t{parent2, PType::Sel, "Baudrate", "400k;420k", &eeprom.outputParams[index].baudrate, 0, 1, [](const uint8_t v){Meta::nth_element<index, crsf_ifaces>::baud((v == 0) ? 400'000 : 420'000); return true;}});
 
-
         addNode(p, Param_t{parent2, PType::Str, "TX Rewrite Name", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &eeprom.outputParams[index].tx_name[0]});
         addNode(p, Param_t{parent2, PType::Sel, "Rewrite Name", "Off;On", &eeprom.outputParams[index].rewrite_name, 0, 1, [](const uint8_t v){Meta::nth_element<index, crsf_ifaces>::rewriteName(v == 1); return true;}});
 
         addNode(p, Param_t{parent2, PType::Sel, "LinkStat", "Off;Forward;Transform;Tunnel", &eeprom.outputParams[index].link_stat_mode, 0, 3, [](const uint8_t v){Meta::nth_element<index, crsf_ifaces>::linkStatMode(v); return true;}});
         addNode(p, Param_t{parent2, PType::Sel, "Failsafe", "Forward;Hold", &eeprom.outputParams[index].failsafe_mode, 0, 1, [](const uint8_t){return true;}});
 
-
-        const uint8_t parent3 = addParent(p, Param_t{parent2, PType::Folder, "Telemetry forwarding"});
-        addNode(p, Param_t{parent3, PType::U8,  "Forward Rate", nullptr, &eeprom.outputParams[index].telemetry_rate, 1, 10, [](const uint8_t a){Meta::nth_element<index, crsf_ifaces>::telemetryRate(a); return true;}});
-        addForward<0x02, index>(p, parent3, "GPS");
-        addForward<0x03, index>(p, parent3, "GPS Time");
-        addForward<0x06, index>(p, parent3, "GPS Ext");
-        addForward<0x07, index>(p, parent3, "Vario");
-        addForward<0x08, index>(p, parent3, "Battery");
-        addForward<0x09, index>(p, parent3, "Barometer");
-        addForward<0x0a, index>(p, parent3, "Airspeed");
-        addForward<0x0b, index>(p, parent3, "Heartbeat");
-        addForward<0x0c, index>(p, parent3, "RPM");
-        addForward<0x0d, index>(p, parent3, "Temperature");
-        addForward<0x0e, index>(p, parent3, "Voltages");
-        addForward<0x10, index>(p, parent3, "VTX Telemetry");
-        addForward<0x1c, index>(p, parent3, "Link RX");
-        addForward<0x1d, index>(p, parent3, "Link TX");
-        addForward<0x1e, index>(p, parent3, "Attitude");
-        addForward<0x1f, index>(p, parent3, "MAVLink FC");
-        addForward<0x21, index>(p, parent3, "Flight Mode");
-        addForward<0x22, index>(p, parent3, "ESP Now");
-
+        if constexpr(index < 5) {
+            const uint8_t parent3 = addParent(p, Param_t{parent2, PType::Folder, "Telemetry forwarding"});
+            addNode(p, Param_t{parent3, PType::U8,  "Forward Rate", nullptr, &eeprom.outputParams[index].telemetry_rate, 1, 10, [](const uint8_t a){Meta::nth_element<index, crsf_ifaces>::telemetryRate(a); return true;}});
+            addForward<0x02, index>(p, parent3, "GPS");
+            addForward<0x03, index>(p, parent3, "GPS Time");
+            addForward<0x06, index>(p, parent3, "GPS Ext");
+            addForward<0x07, index>(p, parent3, "Vario");
+            addForward<0x08, index>(p, parent3, "Battery");
+            addForward<0x09, index>(p, parent3, "Barometer");
+            addForward<0x0a, index>(p, parent3, "Airspeed");
+            addForward<0x0b, index>(p, parent3, "Heartbeat");
+            addForward<0x0c, index>(p, parent3, "RPM");
+            addForward<0x0d, index>(p, parent3, "Temperature");
+            addForward<0x0e, index>(p, parent3, "Voltages");
+            addForward<0x10, index>(p, parent3, "VTX Telemetry");
+            addForward<0x1c, index>(p, parent3, "Link RX");
+            addForward<0x1d, index>(p, parent3, "Link TX");
+            addForward<0x1e, index>(p, parent3, "Attitude");
+            addForward<0x1f, index>(p, parent3, "MAVLink FC");
+            addForward<0x21, index>(p, parent3, "Flight Mode");
+            addForward<0x22, index>(p, parent3, "ESP Now");
+        }
     }
-    using params_t = etl::FixedVector<Param_t, 128>;
+    using params_t = etl::FixedVector<Param_t, 254>;
     static inline params_t params = [] {
         params_t p;
         addNode(p, Param_t{0, PType::Folder, "root"});
@@ -210,6 +209,12 @@ struct CrsfCallback {
         addOutput<3>(p, 0, "Port FD2");
         addOutput<4>(p, 0, "Port FD3");
         addOutput<5>(p, 0, "Port FD4");
+
+        if (p.size() >= p.capacity()) {
+            void fp();
+            fp(); // compile-time check (call to undefined function)
+        }
+
         return p;
     }();
 };

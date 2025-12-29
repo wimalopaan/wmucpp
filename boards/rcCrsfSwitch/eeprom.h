@@ -54,5 +54,4 @@ struct EEProm {
         uint8_t rewrite_name        = 1;
     };
     std::array<OutputParam, 6> outputParams = {};
-
 };
