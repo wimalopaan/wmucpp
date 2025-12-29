@@ -3,9 +3,7 @@ bugs:
 
 todo:
 =====
-* allow more baudrates for relay (e.g. 115200Bd for IR-Connection)
-* option to select IrDa-SIR mode
-* failsafe mode
+* failsafe mode for relay port
 * watchdog
 * menu: option to swap rx/tx uart lines (for outgoing: layout like receiver)
 * indication of table overrun
@@ -14,6 +12,8 @@ todo:
 
 done:
 =====
+* option to select IrDa-SIR mode
+* allow more baudrates for relay (e.g. 115200Bd for IR-Connection)
 * menu: range of rewrite addresses
 * enable telemetry tunnel type specific -> menu options for all types of sensors
 * add support for external tx-module (or rx-as-tx)
