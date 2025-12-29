@@ -4,6 +4,7 @@ bugs:
 hardware:
 ---------
 * uqfn32 version
+* solder-jumper to connect external power to JST-GH
 
 todo:
 -----

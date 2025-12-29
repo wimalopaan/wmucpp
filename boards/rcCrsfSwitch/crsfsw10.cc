@@ -18,7 +18,9 @@
 
 #define NDEBUG
 
-#define SW_VERSION 6
+#define USE_IRDA
+
+#define SW_VERSION 7
 #define HW_VERSION 2
 
 // #define USE_DEBUG

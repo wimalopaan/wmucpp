@@ -393,9 +393,8 @@ namespace Mcu::Stm {
                 }
 
                 baud<false>(Config::baudrate);
-#ifdef USE_IRDA
+
                 mcuUart->GTPR = (0x01 << USART_GTPR_PSC_Pos); // used for IrDA mode
-#endif
 
                 if constexpr(useDma) {
                     dmaChRW::init();
@@ -705,7 +704,6 @@ namespace Mcu::Stm {
                     }
                 }
             }
-#ifdef USE_IRDA
             template<bool Disable = true>
             static inline void irda(const bool on = true, const bool txinvert = false, const bool rxinvert = false)
                 requires(Config::mode == Uarts::Mode::FullDuplex)
@@ -743,7 +741,6 @@ namespace Mcu::Stm {
                     }
                 }
             }
-#endif
             template<bool Inv>
             static inline void invert() {
                 if constexpr(detail::getTxComplete_v<detail::getIsr_t<Config>>) {

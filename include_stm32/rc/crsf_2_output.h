@@ -118,9 +118,7 @@ namespace RC {
                     }
                     static inline void resetSlot() {
                         mActualSlot = 0;
-#ifdef USE_IRDA
                         messageBuffer::clearEvent();
-#endif
                     }
                     static inline void setDestination(const std::byte d) {
                         mDest = (uint8_t)d;

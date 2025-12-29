@@ -98,8 +98,8 @@ struct CrsfCallback {
     }
     static inline constexpr void forwardPacket(volatile uint8_t* const data, const uint16_t length) {
         Meta::visit<crsf_ifaces>([&](auto P) {
-			decltype(P)::type::forwardPacket(data, length);
-		});
+            decltype(P)::type::forwardPacket(data, length);
+        });
     }
     static inline void callbacks(const bool eepromMode = false) {
         const bool prevMode = mEepromMode;
@@ -152,7 +152,7 @@ struct CrsfCallback {
         addNode(p, Param_t{parent, PType::Sel, name, "Off;Forward;Tunnel", &eeprom.outputParams[index].telemetryMode[type], 0, 2, [](const uint8_t v){Meta::nth_element<index, crsf_ifaces>::forwardTelemetryMode(type, v); return true;}});
     }
 
-	template<uint8_t index>
+    template<uint8_t index>
     static inline constexpr void addOutput(auto& p, const uint8_t parent, const char* const name) {
         const uint8_t parent2 = addParent(p, Param_t{parent, PType::Folder, name});
         addNode(p, Param_t{parent2, PType::Sel, "Fwd LinkStat Pkgs", "Off;On", &eeprom.outputParams[index].forwardLinkStats, 0, 1, [](const uint8_t v){Meta::nth_element<index, crsf_ifaces>::activateLinkStats(v > 0); return true;}});
@@ -173,7 +173,7 @@ struct CrsfCallback {
         addNode(p, Param_t{parent2, PType::Sel, "LinkStat", "Off;Forward;Transform;Tunnel", &eeprom.outputParams[index].link_stat_mode, 0, 3, [](const uint8_t v){Meta::nth_element<index, crsf_ifaces>::linkStatMode(v); return true;}});
         addNode(p, Param_t{parent2, PType::Sel, "Failsafe", "Forward;Hold", &eeprom.outputParams[index].failsafe_mode, 0, 1, [](const uint8_t){return true;}});
 
-        if constexpr(index < 5) {
+        if constexpr((index != 1) && (index < 5)) {
             const uint8_t parent3 = addParent(p, Param_t{parent2, PType::Folder, "Telemetry forwarding"});
             addNode(p, Param_t{parent3, PType::U8,  "Forward Rate", nullptr, &eeprom.outputParams[index].telemetry_rate, 1, 10, [](const uint8_t a){Meta::nth_element<index, crsf_ifaces>::telemetryRate(a); return true;}});
             addForward<0x02, index>(p, parent3, "GPS");
@@ -195,6 +195,23 @@ struct CrsfCallback {
             addForward<0x21, index>(p, parent3, "Flight Mode");
             addForward<0x22, index>(p, parent3, "ESP Now");
         }
+        if constexpr(!Meta::nth_element<index, crsf_ifaces>::halfDuplex){
+            addNode(p, Param_t{parent2, PType::Sel, "IrDA", "Off;On", &eeprom.outputParams[index].irda, 0, 1, [](const uint8_t v){
+                                   if (v == 0) {
+                                       Meta::nth_element<index, crsf_ifaces>::baud(RC::Protokoll::Crsf::V4::baudrateHandset);
+                                       Meta::nth_element<index, crsf_ifaces>::setIrDA(false);
+                                       Meta::nth_element<index, crsf_ifaces>::updateRate(10ms);
+                                   }
+                                   else {
+                                       Meta::nth_element<index, crsf_ifaces>::updateRate(40ms);
+#ifdef USE_IRDA_TX_INVERT
+                                       Meta::nth_element<index, crsf_ifaces>::setIrDA(true, true);
+#else
+                                       Meta::nth_element<index, crsf_ifaces>::setIrDA(true);
+#endif
+                                   }
+                                   return true;}});
+        }
     }
     using params_t = etl::FixedVector<Param_t, 254>;
     static inline params_t params = [] {
@@ -203,7 +220,7 @@ struct CrsfCallback {
         addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
         addNode(p, Param_t{0, PType::U8,  "CRSF Address", nullptr, &eeprom.address, 192, 207, [](const uint8_t a){updateName(mName); src::address(std::byte(a)); return true;}});
         addNode(p, Param_t{0, PType::U8,  "Command B-Address", nullptr, &eeprom.commandBroadcastAddress, 192, 207, [](const uint8_t){return true;}});
-		addOutput<0>(p, 0, "Port HD1");
+        addOutput<0>(p, 0, "Port HD1");
         addOutput<1>(p, 0, "Port HD2");
         addOutput<2>(p, 0, "Port FD1");
         addOutput<3>(p, 0, "Port FD2");

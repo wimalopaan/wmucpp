@@ -52,6 +52,7 @@ struct EEProm {
         std::array<uint8_t, (uint8_t)RC::Protokoll::Crsf::V4::Type::Ping> telemetryMode{};
         uint8_t telemetry_rate      = 2;
         uint8_t rewrite_name        = 1;
+        uint8_t irda                = 0;
     };
     std::array<OutputParam, 6> outputParams = {};
 };

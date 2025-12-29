@@ -177,8 +177,9 @@ namespace RC::Protokoll::Crsf {
                 uart::template invert<true>();
                 txpin::template pulldown<true>();
             }
-#ifdef USE_IRDA
-            static inline void setIrDA(const bool on, const bool txinvert = false) {
+            static inline void setIrDA(const bool on, const bool txinvert = false)
+                requires(requires{uart::template irda<true>(true, true);} && !halfDuplex)
+            {
                 if (!mActive) {
                     return;
                 }
@@ -203,20 +204,7 @@ namespace RC::Protokoll::Crsf {
                     rxpin::template pullup<true>();
                 }
                 uart::template irda<true>(on, txinvert);
-
-                // if (on) {
-                //     IO::outl<debug>("# IrDA on");
-                //     txpin::template pullup<false>();
-                //     txpin::template pulldown<true>();
-                // }
-                // else {
-                //     IO::outl<debug>("# IrDA off");
-                //     txpin::template pulldown<false>();
-                //     txpin::template pullup<true>();
-                // }
-                // uart::template irda<true>(on);
             }
-#endif
             static inline void enable(const bool b) {
                 mEnabled = b;
             }
