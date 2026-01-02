@@ -8,6 +8,9 @@ hardware:
 
 todo:
 -----
+* failsafe mode: hold;off;set
+* failsafe start: disconnect;allways
+* failsafe set
 * add watchdog
 * add restart command (NVIC_SystemReset)
 * add NDEBUG=false mode with assertions using reset vector NVIC_SystemReset()
