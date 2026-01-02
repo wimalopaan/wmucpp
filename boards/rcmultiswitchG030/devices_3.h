@@ -1230,6 +1230,48 @@ struct Devices<WeAct, Config, MCU> {
     using sw6 = Mcu::Stm::Pin<gpioa, 7, MCU>;
     using sw7 = Mcu::Stm::Pin<gpioa, 8, MCU>;
 
+    struct SlaveSwitchProtocolConfig {
+        using debug = Devices::debug;
+        using timer = systemTimer;
+        using clock = Devices::clock;
+#ifdef USE_SLAVE_COMMAND
+        using messagebuffer = crsfBuffer;
+#else
+        using messagebuffer = void;
+#endif
+        using storage = Devices::storage;
+    };
+    using ssp = SlaveSwitchProtocol<SlaveSwitchProtocolConfig>;
+
+    template<auto N, typename Pin, typename Callback>
+    struct SlaveProtocolAdapter {
+        static inline constexpr auto number = Pin::number;
+        using component_t = Pin::component_t;
+        static inline constexpr void afunction(const uint8_t af) {
+            Pin::afunction(af);
+        }
+        static inline constexpr void set() {
+            Pin::set();
+            Callback::set(N);
+        }
+        static inline constexpr void reset() {
+            Pin::reset();
+            Callback::reset(N);
+        }
+        template<typename D>
+        static inline void dir() {
+            Pin::template dir<D>();
+        }
+    };
+    using spa0 = SlaveProtocolAdapter<0, sw0, ssp>;
+    using spa1 = SlaveProtocolAdapter<1, sw1, ssp>;
+    using spa2 = SlaveProtocolAdapter<2, sw2, ssp>;
+    using spa3 = SlaveProtocolAdapter<3, sw3, ssp>;
+    using spa4 = SlaveProtocolAdapter<4, sw4, ssp>;
+    using spa5 = SlaveProtocolAdapter<5, sw5, ssp>;
+    using spa6 = SlaveProtocolAdapter<6, sw6, ssp>;
+    using spa7 = SlaveProtocolAdapter<7, sw7, ssp>;
+
     struct MasterPwmConfig;
     struct SlavePwmConfig;
 
@@ -1277,23 +1319,23 @@ struct Devices<WeAct, Config, MCU> {
         using debug = Devices::debug;
         static inline constexpr auto& text = storage::eeprom.morse_text;
     };
-    using bsw0 = External::Morse::BlinkerWithPwm<sw0, BConfig, adap0>;
-    using bsw1 = External::Morse::BlinkerWithPwm<sw1, BConfig, adap1>;
-    using bsw2 = External::Morse::BlinkerWithPwm<sw2, BConfig, adap2>;
-    using bsw3 = External::Morse::BlinkerWithPwm<sw3, BConfig, adap3>;
-    using bsw4 = External::Morse::BlinkerWithPwm<sw4, BConfig, adap4>;
-    using bsw5 = External::Morse::BlinkerWithPwm<sw5, BConfig, adap5>;
-    using bsw6 = External::Morse::BlinkerWithPwm<sw6, BConfig, adap6>;
-    using bsw7 = External::Morse::BlinkerWithPwm<sw7, BConfig, adap7>;
+    using bsw0 = External::Morse::BlinkerWithPwm<spa0, BConfig, adap0>;
+    using bsw1 = External::Morse::BlinkerWithPwm<spa1, BConfig, adap1>;
+    using bsw2 = External::Morse::BlinkerWithPwm<spa2, BConfig, adap2>;
+    using bsw3 = External::Morse::BlinkerWithPwm<spa3, BConfig, adap3>;
+    using bsw4 = External::Morse::BlinkerWithPwm<spa4, BConfig, adap4>;
+    using bsw5 = External::Morse::BlinkerWithPwm<spa5, BConfig, adap5>;
+    using bsw6 = External::Morse::BlinkerWithPwm<spa6, BConfig, adap6>;
+    using bsw7 = External::Morse::BlinkerWithPwm<spa7, BConfig, adap7>;
 #else
-    using bsw0 = External::BlinkerWithPwm<sw0, systemTimer, adap0, debug1>;
-    using bsw1 = External::BlinkerWithPwm<sw1, systemTimer, adap1, debug1>;
-    using bsw2 = External::BlinkerWithPwm<sw2, systemTimer, adap2, debug1>;
-    using bsw3 = External::BlinkerWithPwm<sw3, systemTimer, adap3, debug1>;
-    using bsw4 = External::BlinkerWithPwm<sw4, systemTimer, adap4, debug1>;
-    using bsw5 = External::BlinkerWithPwm<sw5, systemTimer, adap5, debug1>;
-    using bsw6 = External::BlinkerWithPwm<sw6, systemTimer, adap6, debug1>;
-    using bsw7 = External::BlinkerWithPwm<sw7, systemTimer, adap7, debug1>;
+    using bsw0 = External::BlinkerWithPwm<spa0, systemTimer, adap0, debug1>;
+    using bsw1 = External::BlinkerWithPwm<spa1, systemTimer, adap1, debug1>;
+    using bsw2 = External::BlinkerWithPwm<spa2, systemTimer, adap2, debug1>;
+    using bsw3 = External::BlinkerWithPwm<spa3, systemTimer, adap3, debug1>;
+    using bsw4 = External::BlinkerWithPwm<spa4, systemTimer, adap4, debug1>;
+    using bsw5 = External::BlinkerWithPwm<spa5, systemTimer, adap5, debug1>;
+    using bsw6 = External::BlinkerWithPwm<spa6, systemTimer, adap6, debug1>;
+    using bsw7 = External::BlinkerWithPwm<spa7, systemTimer, adap7, debug1>;
 #endif
 
     using bsws = Meta::List<bsw0, bsw1, bsw2, bsw3, bsw4, bsw5, bsw6, bsw7>;
@@ -1338,6 +1380,7 @@ struct Devices<WeAct, Config, MCU> {
 		using patgen1 = Devices::patgen1;
 		using patgen2 = Devices::patgen2;
 		using patgen3 = Devices::patgen3;
+        using slave = Devices::ssp;
     };
     struct CrsfConfig {
         using txpin = crsftx;
