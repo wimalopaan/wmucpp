@@ -1,9 +1,10 @@
-
 ToDo:
 =====
 
 Done:
 =====
+* Option to control 2x LED (for S.Frog sticks)
+** use as status LED (e.g. calibration)
 * preprocessor structure (USE_...)
 * CRSF-Output (with CRSF MultiSwitch Support)
 ** CH1-8:  analog input (maybe also 3-pos switches)

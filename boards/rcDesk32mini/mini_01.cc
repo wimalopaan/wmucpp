@@ -22,15 +22,26 @@
 // injects the digitals in the RC data stream (see below)
 // if using CRSF, the digitals are also transported as CRSF-switch-protocol extension
 
+// using bootPress (pressing (d0 & d3) or (d1 & d2)) one can reach calibration mode at boot time
+// first stage: sampling mid position
+// led fast flash 1x
+// then press d0 or d1
+// second stage: move all analogs to full extend
+// led fast flash 2x
+// then press d0 or d1
+// run-stage is reached
+
 // use one(!) of the following protocol selection exclusively
 // #define USE_HWEXT // otherwise SBUS-output is used
 #define USE_SBUS // according SBUS inversion see below
 //#define USE_CRSF
 
+#define USE_SFROG // make A3, A8 outputs for Stick-LEDs
+
 #define INJECT_DIGITAL_START 8 // first channel to inject digitals into CRSF / SBUS (counting from 0)
 #define SWITCH_ADDRESS 0 // only valid for CSRF (using switch protocol extension)
 
-// #define SBUS_SERIAL_INVERT // SBUS is an inverted serial protocol, but the TX16s can read only ininverted serial signals
+// #define SBUS_SERIAL_INVERT // SBUS is an inverted serial protocol, but the TX16s can read only uninverted serial signals
 
 // use broadcast for switch command
 #define CRSF_SWITCH_COMMAND_ADDRESS RC::Protokoll::Crsf::V4::Address::Broadcast
@@ -43,7 +54,7 @@
 
 #define NDEBUG // do not change: dev option
  
-#define SW_VERSION 4
+#define SW_VERSION 5
 
 #include <cstdint>
 #include <array>
@@ -56,7 +67,11 @@
 #include "storage.h"
 
 struct DevsConfig;
+#ifdef USE_SFROG
+using devs = Devices<WeAct_SFrog, DevsConfig>;
+#else
 using devs = Devices<WeAct, DevsConfig>;
+#endif
 
 using gfsm = GFSM<devs>;
 

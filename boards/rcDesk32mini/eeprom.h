@@ -30,7 +30,7 @@ struct EEProm {
 		uint16_t min = 0;
 		uint16_t max = 4095;
 		uint16_t mid = 2048;
-		uint16_t span = max - min;
+        // uint16_t span = max - min;
 	};
 	
 	std::array<CalibValues, 8> calibration{};

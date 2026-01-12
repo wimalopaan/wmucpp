@@ -458,7 +458,7 @@ namespace External {
                 offTicks = 5000ms;
                 break;
             case Event::Medium:
-                onTicks = 500ms;
+                onTicks = 100ms;
                 offTicks = 1200ms;
                 break;
             case Event::Fast:

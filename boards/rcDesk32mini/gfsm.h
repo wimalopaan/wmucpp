@@ -35,13 +35,16 @@ struct GFSM {
     using adc = devs::adc;
 	using adap = devs::adcAdapter;
 	using digitals = devs::digitals;
-	
+
+    using led1 = devs::ledBlinker1;
+    using led2 = devs::ledBlinker2;
+
 	using hwext = devs::hwext;
 	using sbus = devs::sbus;
 	using modcom = devs::modcom;
 	using crsf = devs::crsf;
 
-    enum class State : uint8_t {Undefined, Init, Run, CheckSerial, Calibration};
+    enum class State : uint8_t {Undefined, Init, Run, CheckSerial, Calibration1, Calibration2, BootPress, BootPressRelease};
     enum class Event : uint8_t {None, ButtonPress, HeartBeat, StartCalib, StopCalib, StartNormal};
 
     static inline constexpr External::Tick<systemTimer> initTicks{100ms};
@@ -83,15 +86,30 @@ struct GFSM {
             });
             break;
         case State::Init:
-            mStateTick.on(initTicks, []{
-				mState = State::CheckSerial;
-            });
+            if (devs::bootPress()) {
+                mState = State::BootPress;
+            }
+            else {
+                mStateTick.on(initTicks, []{
+                    mState = State::CheckSerial;
+                });
+            }
+            break;
+        case State::BootPress:
+            if (!devs::bootPress()) {
+                mState = State::BootPressRelease;
+            }
+            break;
+        case State::BootPressRelease:
+            if (devs::bootRelease()) {
+                mState = State::Calibration1;
+            }
             break;
 		case State::CheckSerial:
 			mEvent.on(Event::HeartBeat, []{
 				mWaitTick.reset();
 			}).thenOn(Event::StartCalib, []{
-				mState = State::Calibration;
+                mState = State::Calibration1;
 			}).thenOn(Event::StartNormal, []{
 				save();
 				mState = State::Run;
@@ -104,16 +122,39 @@ struct GFSM {
 				print();
 			});
 			break;
-		case State::Calibration:
-			mEvent.on(Event::ButtonPress, []{
-				save();
-				mState = State::Run;
-			}).thenOn(Event::StartNormal, []{
-				save();
-				mState = State::Run;
-			}).thenOn(Event::StopCalib, []{
-				mState = State::CheckSerial;
-			});
+        case State::Calibration1:
+            if (devs::press1()) {
+                storeMid();
+                mState = State::Calibration2;
+            }
+            else {
+                mEvent.on(Event::ButtonPress, []{
+                          storeMid();
+                          mState = State::Calibration2;
+                      }).thenOn(Event::StartNormal, []{
+                        storeMid();
+                        mState = State::Calibration2;
+                    }).thenOn(Event::StopCalib, []{
+                        mState = State::CheckSerial;
+                    });
+            }
+            break;
+        case State::Calibration2:
+            if (devs::press1()) {
+                save();
+                mState = State::Run;
+            }
+            else {
+                mEvent.on(Event::ButtonPress, []{
+                          save();
+                          mState = State::Run;
+                      }).thenOn(Event::StartNormal, []{
+                        save();
+                        mState = State::Run;
+                    }).thenOn(Event::StopCalib, []{
+                        mState = State::CheckSerial;
+                    });
+            }
 			calibration();
 			update();
 			(++mDebugTick).on(debugTicks, []{
@@ -122,7 +163,7 @@ struct GFSM {
 			break;
         case State::Run:
 			mEvent.on(Event::ButtonPress, []{
-				mState = State::Calibration;
+                mState = State::Calibration1;
 			});
 			update();
 			(++mDebugTick).on(debugTicks, []{
@@ -138,7 +179,16 @@ struct GFSM {
             case State::Init:
                 IO::outl<debug>("# Init eep magic: ", storage::eeprom.magic);
                 break;
-			case State::CheckSerial:
+            case State::BootPress:
+                IO::outl<debug>("# BootPress");
+                led1::event(led1::Event::Steady);
+                led2::event(led2::Event::Steady);
+                break;
+            case State::BootPressRelease:
+                IO::outl<debug>("# BootPressRelease");
+                led::event(led::Event::Off);
+                break;
+            case State::CheckSerial:
                 IO::outl<debug>("# CheckSerial");
 				led::event(led::Event::Steady);
 				if constexpr(!std::is_same_v<modcom, void>) {
@@ -150,7 +200,13 @@ struct GFSM {
                 IO::outl<debug>("# Run");
 				led::count(2);
 				led::event(led::Event::Slow);
-				if constexpr(!std::is_same_v<modcom, void>) {
+                if constexpr(!std::is_same_v<led1, void>) {
+                    led1::count(1);
+                    led1::event(led1::Event::Medium);
+                    led2::count(1);
+                    led2::event(led2::Event::Medium);
+                }
+                if constexpr(!std::is_same_v<modcom, void>) {
 					modcom::reset();
 				}
                 if constexpr(!std::is_same_v<sbus, void>) {
@@ -171,15 +227,40 @@ struct GFSM {
 					crsf::activateSource(true);
 				}
                 break;
-			case State::Calibration:
-				IO::outl<debug>("# Calib");
+            case State::Calibration1:
+                IO::outl<debug>("# Calib1");
 				led::count(1);
-				led::event(led::Event::Fast);
-				if constexpr(!std::is_same_v<modcom, void>) {
+                led::event(led::Event::Fast);
+                if constexpr(!std::is_same_v<led1, void>) {
+                    led1::count(2);
+                    led1::event(led1::Event::Medium);
+                    led2::count(2);
+                    led2::event(led2::Event::Medium);
+                }
+                if constexpr(!std::is_same_v<modcom, void>) {
 					modcom::setStatus(2);
 				}
-				startCalibration();
+                if constexpr(!std::is_same_v<sbus, void>) {
+                    static_assert(std::is_same_v<crsf, void>);
+                    static_assert(std::is_same_v<hwext, void>);
+                    sbus::init();
+#ifdef SBUS_SERIAL_INVERT
+                    sbus::invert(true);
+#else
+                    sbus::invert(false); // TX16s can only read inverted SBUS (normal polarity)
+#endif
+                }
+                startCalibration();
 				break;
+            case State::Calibration2:
+                IO::outl<debug>("# Calib2");
+                led::count(2);
+                led::event(led::Event::Fast);
+                if constexpr(!std::is_same_v<led1, void>) {
+                    led1::count(3);
+                    led2::count(3);
+                }
+                break;
             }
         }
     }
@@ -193,15 +274,21 @@ struct GFSM {
         }
     }
 	static inline void startCalibration() {
-		const uint16_t delta = 16;
+        const uint16_t delta = 160;
 		const uint16_t mid   = 2048;
 		for(auto& c : storage::eeprom.calibration) {
 			c.max = mid + delta;
 			c.min = mid - delta;
 			c.mid = mid;
-			c.span = 2 * delta;
+            // c.span = 2 * delta;
 		}
 	}
+    static inline void storeMid() {
+        for(uint8_t i = 0; const auto& v : adc::values()) {
+            storage::eeprom.calibration[i].mid = v;
+            ++i;
+        }
+    }
 	static inline void calibration() {
 		for(uint8_t i = 0; const auto& v : adc::values()) {
 			if (v > storage::eeprom.calibration[i].max) {
@@ -210,8 +297,8 @@ struct GFSM {
 			if (v < storage::eeprom.calibration[i].min) {
 				storage::eeprom.calibration[i].min = v;
 			}			
-			storage::eeprom.calibration[i].span = storage::eeprom.calibration[i].max - storage::eeprom.calibration[i].min;
-			storage::eeprom.calibration[i].mid = (storage::eeprom.calibration[i].max + storage::eeprom.calibration[i].min) / 2;
+            // storage::eeprom.calibration[i].span = storage::eeprom.calibration[i].max - storage::eeprom.calibration[i].min;
+            // storage::eeprom.calibration[i].mid = (storage::eeprom.calibration[i].max + storage::eeprom.calibration[i].min) / 2;
 			++i;
 		}
 	}
@@ -289,14 +376,21 @@ struct GFSM {
 					crsf::forwardPacket(&mSwitchPacket[0], i);
 				}
 			}
-			
 		});		
 	}
-	static inline uint16_t adcToSbus(const uint8_t input, const uint16_t v) {
-		const int32_t v1 = (v - storage::eeprom.calibration[input].mid);
-		const int32_t sb = (v1 * RC::Protokoll::SBus::V2::amp) / storage::eeprom.calibration[input].span + RC::Protokoll::SBus::V2::mid;
-		return std::clamp(sb, (int32_t)RC::Protokoll::SBus::V2::min, (int32_t)RC::Protokoll::SBus::V2::max);
-	}
+    static inline uint16_t adcToSbus(const uint8_t input, const uint16_t v) {
+        const int32_t v1 = (v - storage::eeprom.calibration[input].mid);
+
+        int32_t sb = 0;
+        if (v1 >= 0) {
+            sb = (v1 * RC::Protokoll::SBus::V2::span) / (storage::eeprom.calibration[input].max - storage::eeprom.calibration[input].mid) + RC::Protokoll::SBus::V2::mid;
+        }
+        else {
+            sb = (v1 * RC::Protokoll::SBus::V2::span) / (storage::eeprom.calibration[input].mid - storage::eeprom.calibration[input].min) + RC::Protokoll::SBus::V2::mid;
+        }
+        // const int32_t sb = (v1 * RC::Protokoll::SBus::V2::amp) / storage::eeprom.calibration[input].span + RC::Protokoll::SBus::V2::mid;
+        return std::clamp(sb, (int32_t)RC::Protokoll::SBus::V2::min, (int32_t)RC::Protokoll::SBus::V2::max);
+    }
     static inline void checkButton() {
         if constexpr(!std::is_same_v<btn, void>) {
             if (const auto e = btn::event(); e == btn::Press::Long) {

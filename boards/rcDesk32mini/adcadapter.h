@@ -45,7 +45,14 @@ struct AdcAdapter {
 		for(uint8_t i = 0; i < std::min((uint8_t)storage::eeprom.calibration.size(), size); ++i) {
 			if (!injectionChannel[i]) {
 				const int32_t v1 = (adc::values()[i] - storage::eeprom.calibration[i].mid);
-				const int32_t sb = (v1 * RC::Protokoll::SBus::V2::amp) / storage::eeprom.calibration[i].span + RC::Protokoll::SBus::V2::mid;
+                int32_t sb = 0;
+                if (v1 >= 0) {
+                    sb = (v1 * RC::Protokoll::SBus::V2::span) / (storage::eeprom.calibration[i].max - storage::eeprom.calibration[i].mid) + RC::Protokoll::SBus::V2::mid;
+                }
+                else {
+                    sb = (v1 * RC::Protokoll::SBus::V2::span) / (storage::eeprom.calibration[i].mid - storage::eeprom.calibration[i].min) + RC::Protokoll::SBus::V2::mid;
+                }
+                // const int32_t sb = (v1 * RC::Protokoll::SBus::V2::amp) / storage::eeprom.calibration[i].span + RC::Protokoll::SBus::V2::mid;
 				mValues[i] = std::clamp(sb, (int32_t)RC::Protokoll::SBus::V2::min, (int32_t)RC::Protokoll::SBus::V2::max);
 			}
 		}
