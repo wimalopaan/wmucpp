@@ -3,6 +3,7 @@ bugs:
 
 todo:
 =====
+* escape32 menu
 * failsafe mode for relay port
 * watchdog
 * menu: option to swap rx/tx uart lines (for outgoing: layout like receiver)
