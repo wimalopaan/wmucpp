@@ -19,6 +19,7 @@
 // #define USE_MORSE
 // #define USE_EEPROM_TEST // switches telemetry default on (instead off)
 #define SERIAL_DEBUG
+
 #define HW_LED2
 
 #define NDEBUG // do not change: dev option

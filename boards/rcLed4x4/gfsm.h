@@ -40,7 +40,10 @@ struct GFSM {
 	using telemetry = devs::telemetry;
 
     enum class State : uint8_t {Undefined, Init,
-                                RunNoTelemetry, RunWithTelemetry,
+#ifndef HW_LED2
+                                RunNoTelemetry,
+#endif
+                                RunWithTelemetry,
                                 NotConnected};
 
     enum class Event : uint8_t {None, ConnectionLost, DirectConnected, ReceiverConnected};
@@ -136,6 +139,7 @@ struct GFSM {
             });
 #endif
             break;
+#ifndef HW_LED2
         case State::RunNoTelemetry:
             mStateTick.on(debugTicks, []{
                 IO::outl<debug>("# ch0: ", crsf_pa::value(0), " cp: ", crsf_pa::template channelPackages<false>(), " lp: ", crsf_pa::template linkPackages<false>());
@@ -150,6 +154,7 @@ struct GFSM {
                 mState = State::NotConnected;
             }
             break;
+#endif
         case State::RunWithTelemetry:
 			mStateTick.on(debugTicks, []{
 				IO::outl<debug>("# ch0: ", crsf_pa::value(0));
@@ -181,8 +186,7 @@ struct GFSM {
             if (mEvent.is(Event::ReceiverConnected) || mEvent.is(Event::DirectConnected)) {
 #ifdef HW_LED2
 				mState = State::RunWithTelemetry;
-#else
-				
+#else				
 				if (storage::eeprom.telemetry) {
                     mState = State::RunWithTelemetry;
                 }
@@ -201,6 +205,7 @@ struct GFSM {
             case State::Init:
                 IO::outl<debug>("# Init eep magic: ", storage::eeprom.magic);
                 break;
+#ifndef HW_LED2
             case State::RunNoTelemetry:
                 IO::outl<debug>("# Run NT");
                 IO::outl<debug>("# adr: ", storage::eeprom.address1);
@@ -208,6 +213,7 @@ struct GFSM {
                 led::count(1);
                 led::event(led::Event::Slow);
                 break;
+#endif
             case State::RunWithTelemetry:
                 IO::outl<debug>("# Run WT");
                 IO::outl<debug>("# adr: ", storage::eeprom.address1);
