@@ -18,8 +18,8 @@
 
 // select one(!) of the following hardware definitions
 //#define HW_MSW10 // MultiSwitch_10 (32K), ATTENTION: use Makefile
-#define HW_MSW11 // MultiSwitch_11 (64k), ATTENTION: use Makefile.G031
-//#define HW_MSW12 // MultiSwitch_12 (64k) (EasyEda OSHWLAB) mit G0B1: Makefile.G0B1
+//#define HW_MSW11 // MultiSwitch_11 (64k), ATTENTION: use Makefile.G031
+#define HW_MSW12 // MultiSwitch_12 (64k) (EasyEda OSHWLAB) mit G0B1: Makefile.G0B1
 //#define HW_NUCLEO // STM Nucleo G031K8 (64K) (incl. ST-Link), ATTENTION: use Makefile.G031
 //#define HW_WEACT // WeAct G031F8 (64K), ATTENTION: use Makefile.G031
 
@@ -43,10 +43,14 @@
 //#define USE_IRDA_TX_INVERT // for testing purpose (or direct connection)
 #define USE_IRDA_RX_INVERT // depending of the polarity of the irda-sensor
 
+// debugging settings
+
+#define NO_DEFAULTS_MSW12
+
 #define NDEBUG // do not change: dev option
  
 // STM32G0B1: capable of all features
-#if defined(HW_MSW12)
+#if defined(HW_MSW12) && !defined(NO_DEFAULTS_MSW12)
 # if !defined(SERIAL_DEBUG)
 #   define SERIAL_DEBUG
 # endif
