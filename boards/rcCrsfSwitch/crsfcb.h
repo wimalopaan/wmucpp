@@ -195,10 +195,11 @@ struct CrsfCallback {
             addForward<0x21, index>(p, parent3, "Flight Mode");
             addForward<0x22, index>(p, parent3, "ESP Now");
         }
-        if constexpr(!Meta::nth_element<index, crsf_ifaces>::halfDuplex){
+        if constexpr(!Meta::nth_element<index, crsf_ifaces>::halfDuplex) {
+#ifdef USE_IRDA
             addNode(p, Param_t{parent2, PType::Sel, "IrDA", "Off;On", &eeprom.outputParams[index].irda, 0, 1, [](const uint8_t v){
                                    if (v == 0) {
-                                       Meta::nth_element<index, crsf_ifaces>::baud(RC::Protokoll::Crsf::V4::baudrateHandset);
+                                       Meta::nth_element<index, crsf_ifaces>::baud(RC::Protokoll::Crsf::V4::baudrate);
                                        Meta::nth_element<index, crsf_ifaces>::setIrDA(false);
                                        Meta::nth_element<index, crsf_ifaces>::updateRate(10ms);
                                    }
@@ -211,6 +212,7 @@ struct CrsfCallback {
 #endif
                                    }
                                    return true;}});
+#endif
         }
     }
     using params_t = etl::FixedVector<Param_t, 254>;
