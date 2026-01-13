@@ -227,8 +227,12 @@ private:
         addNode(p, Param_t{parent2, PType::Sel, "Test", "Off;On", nullptr, 0, 1, [](const uint8_t v){Meta::nth_element<index, bsws>::on(v); return false;}});
     }
     static inline auto params = []{
-#ifdef HW_MSW12
+#if defined(HW_MSW12)
+#if defined(NO_DEFAULT_FEATURES)
+        etl::FixedVector<Param_t, 150> p;
+#else
 		etl::FixedVector<Param_t, 250> p;
+#endif
 #else
         etl::FixedVector<Param_t, 137> p;
 #endif

@@ -18,8 +18,9 @@
 
 // select one(!) of the following hardware definitions
 //#define HW_MSW10 // MultiSwitch_10 (32K), ATTENTION: use Makefile
-#define HW_MSW11 // MultiSwitch_11 (64k), ATTENTION: use Makefile.G031
-//#define HW_MSW12 // MultiSwitch_12 (64k) (EasyEda OSHWLAB) mit G0B1: Makefile.G0B1
+//#define HW_MSW11 // MultiSwitch_11 (64k), ATTENTION: use Makefile.G031
+#define HW_MSW12 // MultiSwitch_12 (64k) (EasyEda OSHWLAB) mit G0B1: Makefile.G0B1
+#define HW_MSW12_G051
 //#define HW_NUCLEO // STM Nucleo G031K8 (64K) (incl. ST-Link), ATTENTION: use Makefile.G031
 //#define HW_WEACT // WeAct G031F8 (64K), ATTENTION: use Makefile.G031
 
@@ -46,8 +47,13 @@
 #define CRSF_NO_HALFDUPLEX
 #define CRSF_LESS_BAUDRATES
 
+#ifdef HW_MSW12_G051
+# define NO_DEFAULT_FEATURES
+#endif
+
 #define NDEBUG // do not change: dev option
- 
+
+#ifndef NO_DEFAULT_FEATURES
 // STM32G0B1: capable of all features
 #if defined(HW_MSW12)
 # if !defined(SERIAL_DEBUG)
@@ -77,6 +83,7 @@
 # if !defined(USE_IRDA)
 #  define USE_IRDA
 # endif
+#endif
 #endif
 
 #if defined(HW_MSW10)
