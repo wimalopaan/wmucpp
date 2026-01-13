@@ -243,7 +243,9 @@ struct GFSM {
         switch(baudState) {
         case BaudState::FullDuplex:
             if (crsf::nextBaudrate()) {
+#ifndef CRSF_NO_HALFDUPLEX
                 crsf::setHalfDuplex(true);
+#endif
                 baudState = BaudState::HalfDuplex;
             }
             break;

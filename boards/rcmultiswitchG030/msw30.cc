@@ -43,6 +43,9 @@
 //#define USE_IRDA_TX_INVERT // for testing purpose (or direct connection)
 #define USE_IRDA_RX_INVERT // depending of the polarity of the irda-sensor
 
+#define CRSF_NO_HALFDUPLEX
+#define CRSF_LESS_BAUDRATES
+
 #define NDEBUG // do not change: dev option
  
 // STM32G0B1: capable of all features
