@@ -8,6 +8,8 @@ hardware:
 
 todo:
 -----
+* compile-time option to swap rx/tx for input
+* visualize half-duplex (e.g. slow flash 3x heartbeat)
 * failsafe mode: hold;off;set
 * failsafe start: disconnect;allways
 * failsafe set

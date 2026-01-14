@@ -3,6 +3,7 @@ bugs:
 
 todo:
 =====
+* compile-time option to swap rx/tx for RX
 * escape32 menu
 * failsafe mode for relay port
 * watchdog
