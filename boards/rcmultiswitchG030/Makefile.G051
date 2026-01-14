@@ -44,6 +44,6 @@ targets += system051
 
 system051: system_g0.o startup_g051.o
 
-g051: system051 msw21.bin msw30.bin
+g051: system051 msw30.bin
 
 -include ../../Makefile.arm.include

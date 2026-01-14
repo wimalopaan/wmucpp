@@ -20,7 +20,7 @@
 //#define HW_MSW10 // MultiSwitch_10 (32K), ATTENTION: use Makefile
 //#define HW_MSW11 // MultiSwitch_11 (64k), ATTENTION: use Makefile.G031
 #define HW_MSW12 // MultiSwitch_12 (64k) (EasyEda OSHWLAB) mit G0B1: Makefile.G0B1 (enables all features)
-#define HW_MSW12_G051 // if above board is populated with G051 instead of G0B1
+// #define HW_MSW12_G051 // if above board is populated with G051 instead of G0B1
 //#define HW_NUCLEO // STM Nucleo G031K8 (64K) (incl. ST-Link), ATTENTION: use Makefile.G031
 //#define HW_WEACT // WeAct G031F8 (64K), ATTENTION: use Makefile.G031
 
@@ -53,6 +53,35 @@
  
 // STM32G0B1: capable of all features
 #if defined(HW_MSW12) && !defined(NO_DEFAULTS_MSW12)
+
+#if defined(HW_MSW12_G051)
+# if !defined(SERIAL_DEBUG)
+#   define SERIAL_DEBUG
+# endif
+# if !defined(USE_MORSE)
+#  define USE_MORSE
+# endif
+# if !defined(USE_OPERATE_MENU)
+#  define USE_OPERATE_MENU
+# endif
+# if !defined(USE_VIRTUALS)
+#  define USE_VIRTUALS
+# endif
+# if !defined(USE_PATTERNS)
+#  define USE_PATTERNS
+# endif
+# if !defined(USE_RESET_COMMAND)
+#  define USE_RESET_COMMAND
+# endif
+# if !defined(USE_SLAVE_COMMAND)
+#  define USE_SLAVE_COMMAND
+# endif
+# if !defined(USE_TELEMETRY)
+#  define USE_TELEMETRY
+# endif
+
+#else // HW_MSW12_G051
+
 # if !defined(SERIAL_DEBUG)
 #   define SERIAL_DEBUG
 # endif
@@ -80,6 +109,7 @@
 # if !defined(USE_IRDA)
 #  define USE_IRDA
 # endif
+#endif
 #endif
 
 #if defined(HW_MSW10)

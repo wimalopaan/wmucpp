@@ -229,7 +229,7 @@ private:
     static inline auto params = []{
 #ifdef HW_MSW12
 # ifdef HW_MSW12_G051
-        etl::FixedVector<Param_t, 250> p;
+        etl::FixedVector<Param_t, 210> p;
 # else
 		etl::FixedVector<Param_t, 250> p;
 # endif
