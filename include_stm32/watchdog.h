@@ -58,8 +58,8 @@ private:
     static inline void reset() {
         IWDG->KR = 0x0000aaaa;
     }
-    __attribute__((section(".noinit")))
+    __attribute__((__section__(".noinit")))
     static inline volatile uint8_t pin_count;
-    __attribute__((section(".noinit")))
+    __attribute__((__section__(".noinit")))
     static inline volatile uint8_t wdg_count;
 };
