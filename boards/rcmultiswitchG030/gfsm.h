@@ -96,33 +96,23 @@ struct GFSM {
             break;
         case State::Init:
             mStateTick.on(initTicks, []{
-                if (storage::eeprom.telemetry) {
-                    mState = State::RunWithTelemetry;
-                }
-                else {
-                    mState = State::RunNoTelemetry;
-                }
+                mState = State::CheckBaudrate;
             });
             break;
         case State::CheckBaudrate:
-            mEvent.on(Event::ReceiverConnected, []{
+            if (mEvent.is(Event::ReceiverConnected) || mEvent.is(Event::DirectConnected)) {
                 if (storage::eeprom.telemetry) {
                     mState = State::RunWithTelemetry;
                 }
                 else {
                     mState = State::RunNoTelemetry;
                 }
-            }).thenOn(Event::DirectConnected, []{
-                if (storage::eeprom.telemetry) {
-                    mState = State::RunWithTelemetry;
-                }
-                else {
-                    mState = State::RunNoTelemetry;
-                }
-            });
-            mStateTick.on(baudCheckTicks, []{
-                nextBaudrate();
-            });
+            }
+            else {
+                mStateTick.on(baudCheckTicks, []{
+                    nextBaudrate();
+                });
+            }
             break;
         case State::RunNoTelemetry:
             mStateTick.on(debugTicks, []{
@@ -182,9 +172,6 @@ struct GFSM {
                     mState = State::RunNoTelemetry;
                 }
             }
-            else if (mEvent.is(Event::ConnectionLost)) {
-                mState = State::CheckBaudrate;
-            }
             break;
         }
         if (oldState != mState) {
@@ -199,7 +186,8 @@ struct GFSM {
                 IO::outl<debug>("# Ck Baud");
                 led::count(1);
                 led::event(led::Event::Medium);
-                nextBaudrate();
+                // nextBaudrate();
+                mEvent = Event::None;
                 break;
             case State::RunNoTelemetry:
                 IO::outl<debug>("# Run NT");
@@ -232,6 +220,7 @@ struct GFSM {
                 IO::outl<debug>("# Run NC");
                 led::count(1);
                 led::event(led::Event::Fast);
+                crsfCallback::activateFailsafePattern();
                 break;
             }
         }
@@ -292,7 +281,7 @@ struct GFSM {
             const uint16_t l_p = crsf_pa::template linkPackages<true>();
             const uint16_t p_p = crsf_pa::template pingPackages<true>();
             // IO::outl<debug>("ch_p: ", ch_p);
-            if ((ch_p > 0) || (p_p > 0) || (l_p > 0)) {
+            if ((ch_p > 10) || (p_p > 0) || (l_p > 3)) {
                 if  (l_p == 0) {
                     event(Event::DirectConnected);
                 }

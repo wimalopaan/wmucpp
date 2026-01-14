@@ -66,6 +66,19 @@ struct CrsfCallback {
     }
 #endif
 
+#ifdef USE_FAILSAFE
+    static inline void activateFailsafePattern() {
+        if (storage::eeprom.failsafe_mode == 1) {
+            switchCallback::set(0, 0);
+        }
+        else if (storage::eeprom.failsafe_mode == 2) {
+            for(uint8_t i = 0; i < storage::eeprom.failsafe_pattern.size(); ++i) {
+                switchCallback::setIndex(0, i, (storage::eeprom.failsafe_pattern[i] > 0));
+            }
+        }
+    }
+#endif
+
     static inline constexpr void updateName(name_t& n) {
         strncpy(&n[0], title, n.size());
         auto r = std::to_chars(std::begin(n) + strlen(title), std::end(n), storage::eeprom.addresses[EEProm::AdrIndex::Switch]);
@@ -299,6 +312,19 @@ private:
         addOutput<5>(p, 0, "Output 5");
         addOutput<6>(p, 0, "Output 6");
         addOutput<7>(p, 0, "Output 7");
+
+#ifdef USE_FAILSAFE
+        parent = addParent(p, Param_t{0, PType::Folder, "Failsafe"});
+        addNode(p, Param_t{parent, PType::Sel, "Mode", "Hold;All-Off;Set", &storage::eeprom.failsafe_mode, 0, 2, [](const uint8_t){return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Set Output 0", "Off;On", &storage::eeprom.failsafe_pattern[0], 0, 1, [](const uint8_t){return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Set Output 1", "Off;On", &storage::eeprom.failsafe_pattern[1], 0, 1, [](const uint8_t){return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Set Output 2", "Off;On", &storage::eeprom.failsafe_pattern[2], 0, 1, [](const uint8_t){return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Set Output 3", "Off;On", &storage::eeprom.failsafe_pattern[3], 0, 1, [](const uint8_t){return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Set Output 4", "Off;On", &storage::eeprom.failsafe_pattern[4], 0, 1, [](const uint8_t){return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Set Output 5", "Off;On", &storage::eeprom.failsafe_pattern[5], 0, 1, [](const uint8_t){return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Set Output 6", "Off;On", &storage::eeprom.failsafe_pattern[6], 0, 1, [](const uint8_t){return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Set Output 7", "Off;On", &storage::eeprom.failsafe_pattern[7], 0, 1, [](const uint8_t){return true;}});
+#endif
 
 #ifdef USE_MORSE
         parent = addParent(p, Param_t{0, PType::Folder, "Morse"});

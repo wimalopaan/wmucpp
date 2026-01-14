@@ -5,7 +5,6 @@ todo:
 =====
 * compile-time option to swap rx/tx for RX
 * escape32 menu
-* failsafe mode for relay port
 * watchdog
 * menu: option to swap rx/tx uart lines (for outgoing: layout like receiver)
 * indication of table overrun
@@ -14,6 +13,7 @@ todo:
 
 done:
 =====
+* failsafe mode for relay port
 * option to select IrDa-SIR mode
 * allow more baudrates for relay (e.g. 115200Bd for IR-Connection)
 * menu: range of rewrite addresses

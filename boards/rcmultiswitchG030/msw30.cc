@@ -31,6 +31,7 @@
 #define USE_VIRTUALS
 // #define USE_PATTERNS
 // #define USE_SLAVE_COMMAND
+#define USE_FAILSAFE
 #define USE_RESET_COMMAND
 #define USE_TELEMETRY // switches telemetry default on (instead off)
 // #define USE_BUTTON // HW_MSW11: if button is unused, the button pin is used as input (status bit)
@@ -108,6 +109,9 @@
 # endif
 # if !defined(USE_IRDA)
 #  define USE_IRDA
+# endif
+# if !defined(USE_FAILSAFE)
+#  define USE_FAILSAFE
 # endif
 #endif
 #endif

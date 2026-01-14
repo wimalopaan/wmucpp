@@ -9,10 +9,6 @@ hardware:
 todo:
 -----
 * compile-time option to swap rx/tx for input
-* visualize half-duplex (e.g. slow flash 3x heartbeat)
-* failsafe mode: hold;off;set
-* failsafe start: disconnect;allways
-* failsafe set
 * add watchdog
 * add restart command (NVIC_SystemReset)
 * add NDEBUG=false mode with assertions using reset vector NVIC_SystemReset()
@@ -32,6 +28,11 @@ details:
 
 done:
 -----
+* failsafe mode: hold;off;set
+* failsafe start: disconnect;allways
+* failsafe set
+* visualize half-duplex (e.g. slow flash 3x heartbeat)
+* add G051 support
 * add WmG0B1 support
 * option to select IrDa-SIR mode
 * add slave-switch protocol (like Set):

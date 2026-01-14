@@ -140,26 +140,25 @@ struct GFSM {
         case State::CheckBaudrate:
             mEvent.on(Event::ReceiverConnected, []{
                 mState = State::RunConnected;
-            }).thenOn(Event::ReceiverConnected, []{
+            }).thenOn(Event::DirectConnected, []{
                 mState = State::DirectMode;
             });
             mStateTick.on(baudCheckTicks, []{
                 nextBaudrate();
             });
-            (++mUpdateTick).on(updateTicks, []{
-                sendRCFrame();
-            });
+            // (++mUpdateTick).on(updateTicks, []{
+            //     sendRCFrame();
+            // });
             break;
         case State::RunUnconnected:
             mEvent.on(Event::ReceiverConnected, []{
                 mState = State::RunConnected;
             }).thenOn(Event::DirectConnected, []{
                 mState = State::DirectMode;
-            }).thenOn(Event::ConnectionLost, []{
-                mState = State::CheckBaudrate;
+            // }).thenOn(Event::ConnectionLost, []{
+            //     mState = State::CheckBaudrate;
             });
             (++mUpdateTick).on(updateTicks, []{
-                // channelCallback::update();
             });
             mStateTick.on(debugTicks, []{
             });
@@ -208,10 +207,13 @@ struct GFSM {
                 break;
             case State::RunUnconnected:
                 IO::outl<debug>("# Run Unc");
+                enableRelayPorts(false);
+                led::count(1);
                 led::event(led::Event::Fast);
                 break;
             case State::RunConnected:
                 IO::outl<debug>("# Run con");
+                enableRelayPorts(true);
                 crsf_in::address(std::byte(storage::eeprom.address));
                 led::count(2);
                 led::event(led::Event::Slow);
@@ -227,6 +229,23 @@ struct GFSM {
             }
         }
     }
+private:
+    static inline void enableRelayPorts(const bool on) {
+        for(uint8_t p = 0; p < storage::eeprom.outputParams.size(); ++p) {
+            if (storage::eeprom.outputParams[p].failsafe_mode == 0) {
+                Meta::visitAt<crsf_ifaces>(p, [&](auto P) {
+                    decltype(P)::type::enable(on);
+                });
+            }
+            else {
+                if (on) {
+                    Meta::visitAt<crsf_ifaces>(p, [&](auto P) {
+                        decltype(P)::type::enable(on);
+                    });
+                }
+            }
+        }
+    }
     static inline void nextBaudrate() {
         crsf_in::nextBaudrate();
     }
@@ -238,6 +257,5 @@ struct GFSM {
     static inline External::Tick<systemTimer> mPingTick;
     static inline External::Tick<systemTimer> mStateTick;
     static inline State mState{State::Undefined};
-
 };
 

@@ -123,5 +123,9 @@ struct EEProm {
     uint8_t master = 0;
 #endif
 
+#ifdef USE_FAILSAFE
+    uint8_t failsafe_mode    = 0; // 0: hold; 1: all_off, 2: set
+    std::array<uint8_t, 8> failsafe_pattern = {0}; // on/off if mode == 2
+#endif
 };
 static_assert(sizeof(EEProm) < 2048);
