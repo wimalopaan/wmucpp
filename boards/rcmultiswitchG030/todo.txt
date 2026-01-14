@@ -9,10 +9,8 @@ hardware:
 todo:
 -----
 * compile-time option to swap rx/tx for input
-* add watchdog
 * add restart command (NVIC_SystemReset)
 * add NDEBUG=false mode with assertions using reset vector NVIC_SystemReset()
-* display reset cause and count (.noinit section variables)
 * pattern: add virtual support
 * more easily config, e.g. USE_RESPONSE_SLOT for CRSF_TX_OPENDRAIN
 * unify stm32 g031/g051/g071/g0b1 variants
@@ -28,6 +26,8 @@ details:
 
 done:
 -----
+* add watchdog
+* display reset cause and count (.noinit section variables)
 * failsafe mode: hold;off;set
 * failsafe start: disconnect;allways
 * failsafe set

@@ -34,6 +34,7 @@
 #include "adc.h"
 #include "pwm_dma.h"
 #include "usart.h"
+#include "watchdog.h"
 #include "units.h"
 #include "output.h"
 #include "concepts.h"
@@ -68,6 +69,11 @@ template<typename Config, typename MCU>
 struct Devices<SW22, Config, MCU> {
     using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<64_MHz, 2'000_Hz, Mcu::Stm::HSI>>;
     using systemTimer = Mcu::Stm::SystemTimer<clock, Mcu::UseInterrupts<false>, MCU>;
+
+    struct WdgConfig {
+        static inline constexpr uint32_t reload = 500;
+    };
+    using watchDog = WatchDog<WdgConfig>;
 
     using storage = Config::storage;
 
@@ -285,6 +291,7 @@ struct Devices<SW22, Config, MCU> {
     };
 
     struct CrsfCallbackConfig {
+        using watchdog = Devices::watchDog;
         using storage = Devices::storage;
         using debug = Devices::debug;
         using bswList = bsws;
@@ -372,6 +379,7 @@ struct Devices<SW22, Config, MCU> {
         crsftx::template openDrain<true>();
         crsftx::template pullUp<true>();
 #endif
+        watchDog::init();
     }
 };
 

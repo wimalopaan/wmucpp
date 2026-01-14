@@ -804,3 +804,4 @@ include_stm32/usart.h
 include_stm32/usart_2.h
 include_stm32/usart_2_reflection.h
 include_stm32/usarts.h
+include_stm32/watchdog.h

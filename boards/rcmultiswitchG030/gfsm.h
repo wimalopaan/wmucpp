@@ -28,6 +28,7 @@ struct GFSM {
     using debug = devs::debug;
     using storage = devs::storage;
     using systemTimer = devs::systemTimer;
+    using watchDog = devs::watchDog;
     using crsf = devs::crsf;
     using crsf_out = crsf::output;
     using crsf_pa = crsf::input;
@@ -78,6 +79,8 @@ struct GFSM {
         });
     }
     static inline void ratePeriodic() {
+        watchDog::ratePeriodic();
+
         using ratePeriodics = Meta::concat<bsws, Meta::List<crsf, led, btn, telemetry, patgen0, patgen1, patgen2, patgen3>>;
         Meta::visit<ratePeriodics>([](const auto w){
             decltype(w)::type::ratePeriodic();

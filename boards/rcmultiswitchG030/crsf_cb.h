@@ -23,6 +23,7 @@
 
 template<typename Config>
 struct CrsfCallback {
+    using watchdog = Config::watchdog;
     using storage = Config::storage;
     using debug = Config::debug;
 
@@ -113,6 +114,7 @@ struct CrsfCallback {
         return &mName[0];
     }
     static inline uint32_t serialNumber() {
+        makeWdgString();
         return mSerialNumber;
     }
     static inline uint32_t hwVersion() {
@@ -153,6 +155,16 @@ private:
     static inline constexpr uint32_t mSerialNumber{1234};
     static inline constexpr uint32_t mHWVersion{HW_VERSION};
     static inline constexpr uint32_t mSWVersion{SW_VERSION};
+
+    static inline std::array<char, 16> mWdgString = {};
+
+    static inline void makeWdgString() {
+        auto [ptr, e] = std::to_chars(std::begin(mWdgString), std::end(mWdgString), watchdog::pinResets());
+        *ptr++ = ':';
+        auto r = std::to_chars(ptr, std::end(mWdgString), watchdog::wdgResets());
+        *r.ptr = '\0';
+    }
+
     static inline constexpr auto mVersionString = [](){
         std::array<char, 16> s{};
         auto [ptr, e] = std::to_chars(std::begin(s), std::end(s), mHWVersion);
@@ -242,7 +254,7 @@ private:
     static inline auto params = []{
 #ifdef HW_MSW12
 # ifdef HW_MSW12_G051
-        etl::FixedVector<Param_t, 210> p;
+        etl::FixedVector<Param_t, 215> p;
 # else
 		etl::FixedVector<Param_t, 250> p;
 # endif
@@ -252,6 +264,7 @@ private:
 		// etl::FixedVector<Param_t, 132> p;
         addNode(p, Param_t{0, PType::Folder, ""}); // unvisible top folder
         addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
+        addNode(p, Param_t{0, PType::Info, "Watchdog", &mWdgString[0]});
         auto parent = addParent(p, Param_t{0, PType::Folder, "Global"});
         addNode(p, Param_t{parent, PType::U8, "Switch Addr", nullptr, &storage::eeprom.addresses[EEProm::AdrIndex::Switch], 0, 255, [](const uint8_t){update(); return true;}});
 #ifdef USE_VIRTUALS
