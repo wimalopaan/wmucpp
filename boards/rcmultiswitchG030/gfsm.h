@@ -216,7 +216,12 @@ struct GFSM {
                 }
                 crsf_out::enableReply(true);
                 if (storage::eeprom.telemetry) {
-                    led::count(2);
+                    if (crsf::isHalfDuplex()) {
+                        led::count(3);
+                    }
+                    else {
+                        led::count(2);
+                    }
                     led::event(led::Event::Slow);
                 }
                 else {

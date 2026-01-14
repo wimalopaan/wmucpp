@@ -676,6 +676,11 @@ namespace Mcu::Stm {
                     }
                 }
             };
+            static inline bool halfDuplex()
+                requires(Config::mode == Uarts::Mode::FullDuplex)
+            {
+                return mHalfDuplex;
+            }
             template<bool Disable = true>
             static inline void halfDuplex(const bool on = true)
                     requires(Config::mode == Uarts::Mode::FullDuplex)

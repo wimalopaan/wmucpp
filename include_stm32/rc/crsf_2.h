@@ -414,13 +414,15 @@ namespace RC {
                     static inline void clearAll() {
                         uart::clearAll();
                     }
-                    static inline void setHalfDuplex(const bool on) {
-                        if constexpr (halfDuplex) {
-                            return;
-                        }
-                        else {
-                            uart::halfDuplex(on);
-                        }
+                    static inline bool isHalfDuplex()
+                        requires(!halfDuplex)
+                    {
+                        return uart::halfDuplex();
+                    }
+                    static inline void setHalfDuplex(const bool on)
+                        requires(!halfDuplex)
+                    {
+                        uart::halfDuplex(on);
                     }
                     static inline void baud(const uint32_t br) {
                         if (!mActive) {
