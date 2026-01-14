@@ -229,7 +229,7 @@ private:
     static inline auto params = []{
 #ifdef HW_MSW12
 # ifdef HW_MSW12_G051
-        etl::FixedVector<Param_t, 150> p;
+        etl::FixedVector<Param_t, 250> p;
 # else
 		etl::FixedVector<Param_t, 250> p;
 # endif
@@ -261,7 +261,7 @@ private:
         addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "PWM f G2 (O5,6)", .value_ptr = &storage::eeprom.pwm2, .min = 1, .max = 200, .cb = [](const uint8_t v){Meta::nth_element<1, pwms>::freqCenties(v); return true;}, .def = 10, .unitString = " *100Hz"});
         addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "PWM f G3 (O0,1,2,3)", .value_ptr = &storage::eeprom.pwm3, .min = 1, .max = 200, .cb = [](const uint8_t v){Meta::nth_element<2, pwms>::freqCenties(v); return true;}, .def = 10, .unitString = " *100Hz"});
 #endif
-#ifdef HW_MSW11
+#if defined(HW_MSW11) || defined(HW_MSW12)
         addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "PWM f G1 (O0,1,2,3)", .value_ptr = &storage::eeprom.pwm3, .min = 1, .max = 200, .cb = [](const uint8_t v){Meta::nth_element<0, pwms>::freqCenties(v); return true;}, .def = 10, .unitString = " *100Hz"});
         addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "PWM f G2 (O4,5,6,7)", .value_ptr= &storage::eeprom.pwm1, .min = 1, .max = 200, .cb = [](const uint8_t v){Meta::nth_element<1, pwms>::freqCenties(v); return true;}, .def = 10, .unitString = " *100Hz"});
 #endif
@@ -277,7 +277,7 @@ private:
                                crsf::address(std::byte{v});
                                return true;
                            }});
-#ifdef HW_MSW11
+#if defined(HW_MSW11) || defined(HW_MSW12)
         addNode(p, Param_t{parent, PType::U8, "Cells Id", nullptr, &storage::eeprom.cells_id, 0, 255, [](const uint8_t){return true;}});
         addNode(p, Param_t{parent, PType::U8, "Temp Id", nullptr, &storage::eeprom.temp_id, 0, 255, [](const uint8_t){return true;}});
 #endif

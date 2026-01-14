@@ -19,7 +19,7 @@
 // select one(!) of the following hardware definitions
 //#define HW_MSW10 // MultiSwitch_10 (32K), ATTENTION: use Makefile
 //#define HW_MSW11 // MultiSwitch_11 (64k), ATTENTION: use Makefile.G031
-#define HW_MSW12 // MultiSwitch_12 (64k) (EasyEda OSHWLAB) mit G0B1: Makefile.G0B1
+#define HW_MSW12 // MultiSwitch_12 (64k) (EasyEda OSHWLAB) mit G0B1: Makefile.G0B1 (enables all features)
 #define HW_MSW12_G051 // if above board is populated with G051 instead of G0B1
 //#define HW_NUCLEO // STM Nucleo G031K8 (64K) (incl. ST-Link), ATTENTION: use Makefile.G031
 //#define HW_WEACT // WeAct G031F8 (64K), ATTENTION: use Makefile.G031
@@ -44,9 +44,9 @@
 //#define USE_IRDA_TX_INVERT // for testing purpose (or direct connection)
 #define USE_IRDA_RX_INVERT // depending of the polarity of the irda-sensor
 
-// debugging settings
+// debugging settings (do not change)
 
-#define NO_DEFAULTS_MSW12
+//#define NO_DEFAULTS_MSW12
 #define CRSF_LESS_BAUDRATES
 
 #define NDEBUG // do not change: dev option
@@ -111,7 +111,7 @@
 # undef USE_PATTERNS
 #endif
 
-#define SW_VERSION 36
+#define SW_VERSION 37
 
 #include <cstdint>
 #include <array>
