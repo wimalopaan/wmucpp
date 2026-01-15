@@ -6,6 +6,7 @@
 
 * ToDo
 ------
+* watchdog
 * add slave-switch protocol (like Set):
 * add watchdog
 * add reset parameters command

@@ -3,9 +3,9 @@ bugs:
 
 todo:
 =====
-* compile-time option to swap rx/tx for RX
-* escape32 menu
 * watchdog
+* compile-time option to swap rx/tx for RX
+* escape32 support menu
 * menu: option to swap rx/tx uart lines (for outgoing: layout like receiver)
 * indication of table overrun
 * menu: display routing table
