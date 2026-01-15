@@ -43,7 +43,7 @@
 // #define USE_TP1 // enable test point
 
 //#define USE_IRDA_TX_INVERT // for testing purpose (or direct connection)
-#define USE_IRDA_RX_INVERT // depending of the polarity of the irda-sensor
+#define USE_IRDA_RX_INVERT // depending on the polarity of the irda-sensor
 
 // debugging settings (do not change)
 
