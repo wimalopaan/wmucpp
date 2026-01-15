@@ -26,7 +26,14 @@
 #include "units.h"
 #include "concepts.h"
 #include "rcc.h"
-#include "atomic.h"
+
+// avoids linker warning
+__attribute__((__section__(".noinit")))
+static inline volatile uint8_t pin_count;
+__attribute__((__section__(".noinit")))
+static inline volatile uint8_t wdg_count;
+__attribute__((__section__(".noinit")))
+static inline volatile uint32_t test_count;
 
 template<typename Config>
 struct WatchDog {
@@ -35,6 +42,7 @@ struct WatchDog {
         if (RCC->CSR & RCC_CSR_PWRRSTF) {
             pin_count = 0;
             wdg_count = 0;
+            test_count = 0;
             RCC->CSR = RCC_CSR_RMVF;
         }
         else {
@@ -72,12 +80,22 @@ struct WatchDog {
     static inline uint8_t wdgResets() {
         return wdg_count;
     }
+    static inline uint32_t testCount() {
+        return test_count;
+    }
+    static inline void testLoop() {
+        test_count = 0;
+        while(true) {
+            test_count = test_count + 1;
+        }
+    }
 private:
     static inline void reset() {
         IWDG->KR = 0x0000aaaa;
     }
-    __attribute__((__section__(".noinit")))
-    static inline volatile uint8_t pin_count;
-    __attribute__((__section__(".noinit")))
-    static inline volatile uint8_t wdg_count;
+    // produces linker warning: SHF_GROUP
+    // __attribute__((__section__(".noinit")))
+    // static inline volatile uint8_t pin_count;
+    // __attribute__((__section__(".noinit")))
+    // static inline volatile uint8_t wdg_count;
 };
