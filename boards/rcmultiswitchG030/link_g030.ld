@@ -143,6 +143,13 @@ SECTIONS
 
   } >RAM AT> FLASH
 
+  .noinit (NOLOAD) :
+  {
+      . = ALIGN(4);
+      KEEP (*(*.noinit*))
+      . = ALIGN(4);
+  } > RAM
+
   /* Uninitialized data section into "RAM" Ram type memory */
   . = ALIGN(4);
   .bss :

@@ -107,10 +107,11 @@ SECTIONS
 	_edata = .;        /* define a global symbol at data end */
   } >RAM AT> FLASH
 
-  . = ALIGN(4);
   .noinit (NOLOAD) :
   {
+      . = ALIGN(4);
       KEEP (*(*.noinit*))
+      . = ALIGN(4);
   } > RAM
 
   /* Uninitialized data section */

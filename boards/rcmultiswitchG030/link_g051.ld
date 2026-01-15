@@ -142,24 +142,12 @@ SECTIONS
 
   } >RAM AT> FLASH
 
-
-/*  .noinit (NOLOAD):
-  {
-          . = ALIGN(4);
-          _start_of_noinit = .;
-          *(.noinit)
-          *(.noinit.*)
-          . = ALIGN(4);
-          _end_of_noinit = .;
-  } >RAM*/
-
-
-  . = ALIGN(4);
   .noinit (NOLOAD) :
   {
+      . = ALIGN(4);
       KEEP (*(*.noinit*))
+      . = ALIGN(4);
   } > RAM
-
 
   /* Uninitialized data section into "RAM" Ram type memory */
   . = ALIGN(4);
