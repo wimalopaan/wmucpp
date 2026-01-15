@@ -47,8 +47,9 @@
 
 // debugging settings (do not change)
 
-//#define NO_DEFAULTS_MSW12
 #define CRSF_LESS_BAUDRATES
+//#define NO_DEFAULTS_MSW12
+// #define USE_WATCHDOG_TEST
 
 #define NDEBUG // do not change: dev option
  
@@ -145,7 +146,7 @@
 # undef USE_PATTERNS
 #endif
 
-#define SW_VERSION 38
+#define SW_VERSION 39
 
 #include <cstdint>
 #include <array>
@@ -173,7 +174,7 @@ struct Storage {
         }
     }
     __attribute__((__section__(".eeprom"))) static inline const EEProm eeprom_flash{};
-    __attribute__ ((aligned (8))) static inline EEProm eeprom;
+    __attribute__((aligned (8))) static inline EEProm eeprom;
 };
 
 struct DevsConfig;

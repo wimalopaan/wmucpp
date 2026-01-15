@@ -79,7 +79,9 @@ struct GFSM {
         });
     }
     static inline void ratePeriodic() {
-        watchDog::ratePeriodic();
+        if constexpr(!std::is_same_v<watchDog, void>) {
+            watchDog::ratePeriodic();
+        }
 
         using ratePeriodics = Meta::concat<bsws, Meta::List<crsf, led, btn, telemetry, patgen0, patgen1, patgen2, patgen3>>;
         Meta::visit<ratePeriodics>([](const auto w){

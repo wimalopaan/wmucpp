@@ -114,7 +114,9 @@ struct CrsfCallback {
         return &mName[0];
     }
     static inline uint32_t serialNumber() {
-        makeWdgString();
+        if constexpr(!std::is_same_v<watchdog, void>) {
+            makeWdgString();
+        }
         return mSerialNumber;
     }
     static inline uint32_t hwVersion() {
@@ -158,11 +160,20 @@ private:
 
     static inline std::array<char, 16> mWdgString = {};
 
-    static inline void makeWdgString() {
+    static inline void makeWdgString()
+        requires(!std::is_same_v<watchdog, void>)
+    {
+#ifdef USE_WATCHDOG_TEST
+        auto [ptr, e] = std::to_chars(std::begin(mWdgString), std::end(mWdgString), watchdog::testCount());
+        *ptr++ = ':';
+        auto r = std::to_chars(ptr, std::end(mWdgString), watchdog::wdgResets());
+        *r.ptr = '\0';
+#else
         auto [ptr, e] = std::to_chars(std::begin(mWdgString), std::end(mWdgString), watchdog::pinResets());
         *ptr++ = ':';
         auto r = std::to_chars(ptr, std::end(mWdgString), watchdog::wdgResets());
         *r.ptr = '\0';
+#endif
     }
 
     static inline constexpr auto mVersionString = [](){
@@ -400,6 +411,16 @@ private:
                                }
                                return false;
                            }});
+#ifdef USE_WATCHDOG_TEST
+        if constexpr(!std::is_same_v<watchdog, void>) {
+            addNode(p, Param_t{parent, PType::Command, "Watchdog Test", "Watchdog Test", nullptr, 0, 0, [](const uint8_t){
+                               if (!mEepromMode) {
+                                       watchdog::testLoop();
+                               }
+                                return false;
+                               }});
+        }
+#endif
 #endif
         if (p.size() >= p.capacity()) {
             void fp();

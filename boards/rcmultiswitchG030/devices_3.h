@@ -387,6 +387,10 @@ template<typename Config, typename MCU>
 struct Devices<SW21, Config, MCU> {
     using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<64_MHz, 2'000_Hz, Mcu::Stm::HSI>>;
     using systemTimer = Mcu::Stm::SystemTimer<clock, Mcu::UseInterrupts<false>, MCU>;
+    struct WdgConfig {
+        static inline constexpr uint32_t reload = 500;
+    };
+    using watchDog = WatchDog<WdgConfig>;
 
     using storage = Config::storage;
 
@@ -614,6 +618,7 @@ struct Devices<SW21, Config, MCU> {
     };
 
     struct CrsfCallbackConfig {
+        using watchdog = Devices::watchDog;
         using storage = Devices::storage;
         using debug = Devices::debug;
         using bswList = bsws;
@@ -696,6 +701,7 @@ template<typename Config, typename MCU>
 struct Devices<SW20, Config, MCU> {
     using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<64_MHz, 2'000_Hz, Mcu::Stm::HSI>>;
     using systemTimer = Mcu::Stm::SystemTimer<clock, Mcu::UseInterrupts<false>, MCU>;
+    using watchDog = void;
 
     using storage = Config::storage;
 
@@ -951,6 +957,7 @@ template<typename Config, typename MCU>
 struct Devices<Nucleo, Config, MCU> {
     using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<64_MHz, 2'000_Hz, Mcu::Stm::HSI>>;
     using systemTimer = Mcu::Stm::SystemTimer<clock, Mcu::UseInterrupts<false>, MCU>;
+    using watchDog = void;
 
     using storage = Config::storage;
 
@@ -1159,6 +1166,10 @@ template<typename Config, typename MCU>
 struct Devices<WeAct, Config, MCU> {
     using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<64_MHz, 2'000_Hz, Mcu::Stm::HSI>>;
     using systemTimer = Mcu::Stm::SystemTimer<clock, Mcu::UseInterrupts<false>, MCU>;
+    struct WdgConfig {
+        static inline constexpr uint32_t reload = 500;
+    };
+    using watchDog = WatchDog<WdgConfig>;
 
     using storage = Config::storage;
 
@@ -1376,6 +1387,7 @@ struct Devices<WeAct, Config, MCU> {
     };
 
     struct CrsfCallbackConfig {
+        using watchdog = Devices::watchDog;
         using debug = Devices::debug;
         using storage = Devices::storage;
         using bswList = bsws;
