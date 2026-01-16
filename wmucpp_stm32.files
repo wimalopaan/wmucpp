@@ -292,6 +292,7 @@ boards/rcFocG4/G431Mp6543_01/storage.h
 boards/rcFocG4/G431Mp6543_01/system_g4.cc
 boards/rcFocG4/Makefile
 boards/rcLed4x4/Makefile
+boards/rcLed4x4/Makefile.G051
 boards/rcLed4x4/Makefile.G0B1
 boards/rcLed4x4/crsf_cb.h
 boards/rcLed4x4/devices.h
