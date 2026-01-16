@@ -30,7 +30,7 @@ CPPFLAGS += -I../../../STM32CubeG0/Drivers/CMSIS/Device/ST/STM32G0xx/Include
 CPPFLAGS += -I../../../STM32CubeG0/Drivers/STM32G0xx_HAL_Driver/Inc
 CPPFLAGS += -DSTM32G051xx
 
-CXXFLAGS += -g
+#CXXFLAGS += -g
 OPTFLAGS = -Os
 
 LDSCRIPT = link_g051.ld
@@ -38,7 +38,11 @@ LOADLIBES += startup_g051.o system_g0.o
 
 targets += startup_g051.o
 targets += system_g0.o
+targets += led10.elf led10.bin
+targets += system051
 
-targets += led00.elf led00.bin
+system051: system_g0.o startup_g051.o
+
+g051: system051 led10.bin
 
 -include ../../Makefile.arm.include
