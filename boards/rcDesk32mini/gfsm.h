@@ -43,6 +43,7 @@ struct GFSM {
 	using sbus = devs::sbus;
 	using modcom = devs::modcom;
 	using crsf = devs::crsf;
+    using sumdv3 = devs::sumdv3;
 
     enum class State : uint8_t {Undefined, Init, Run, CheckSerial, Calibration1, Calibration2, BootPress, BootPressRelease};
     enum class Event : uint8_t {None, ButtonPress, HeartBeat, StartCalib, StopCalib, StartNormal};
@@ -86,8 +87,15 @@ struct GFSM {
             });
             break;
         case State::Init:
-            if (devs::bootPress()) {
-                mState = State::BootPress;
+            if constexpr(requires{devs::bootPress();}) {
+                if (devs::bootPress()) {
+                    mState = State::BootPress;
+                }
+                else {
+                    mStateTick.on(initTicks, []{
+                        mState = State::CheckSerial;
+                    });
+                }
             }
             else {
                 mStateTick.on(initTicks, []{
@@ -96,12 +104,22 @@ struct GFSM {
             }
             break;
         case State::BootPress:
-            if (!devs::bootPress()) {
-                mState = State::BootPressRelease;
+            if constexpr(requires{devs::bootPress();}) {
+                if (!devs::bootPress()) {
+                    mState = State::BootPressRelease;
+                }
+            }
+            else {
+                mState = State::CheckSerial;
             }
             break;
         case State::BootPressRelease:
-            if (devs::bootRelease()) {
+            if constexpr(requires{devs::bootPress();}) {
+                if (devs::bootRelease()) {
+                    mState = State::Calibration1;
+                }
+            }
+            else {
                 mState = State::Calibration1;
             }
             break;
@@ -123,9 +141,22 @@ struct GFSM {
 			});
 			break;
         case State::Calibration1:
-            if (devs::press1()) {
-                storeMid();
-                mState = State::Calibration2;
+            if constexpr(requires{devs::press1();}) {
+                if (devs::press1()) {
+                    storeMid();
+                    mState = State::Calibration2;
+                }
+                else {
+                    mEvent.on(Event::ButtonPress, []{
+                              storeMid();
+                              mState = State::Calibration2;
+                          }).thenOn(Event::StartNormal, []{
+                            storeMid();
+                            mState = State::Calibration2;
+                        }).thenOn(Event::StopCalib, []{
+                            mState = State::CheckSerial;
+                        });
+                }
             }
             else {
                 mEvent.on(Event::ButtonPress, []{
@@ -140,9 +171,22 @@ struct GFSM {
             }
             break;
         case State::Calibration2:
-            if (devs::press1()) {
-                save();
-                mState = State::Run;
+            if constexpr(requires{devs::press1();}) {
+                if (devs::press1()) {
+                    save();
+                    mState = State::Run;
+                }
+                else {
+                    mEvent.on(Event::ButtonPress, []{
+                              save();
+                              mState = State::Run;
+                          }).thenOn(Event::StartNormal, []{
+                            save();
+                            mState = State::Run;
+                        }).thenOn(Event::StopCalib, []{
+                            mState = State::CheckSerial;
+                        });
+                }
             }
             else {
                 mEvent.on(Event::ButtonPress, []{
@@ -181,8 +225,10 @@ struct GFSM {
                 break;
             case State::BootPress:
                 IO::outl<debug>("# BootPress");
-                led1::event(led1::Event::Steady);
-                led2::event(led2::Event::Steady);
+                if constexpr(!std::is_same_v<led1, void>) {
+                    led1::event(led1::Event::Steady);
+                    led2::event(led2::Event::Steady);
+                }
                 break;
             case State::BootPressRelease:
                 IO::outl<debug>("# BootPressRelease");
@@ -329,7 +375,11 @@ struct GFSM {
 					const uint16_t scaled = adcToSbus(i, v);
 					sbus::setChannel(i++, scaled);
 				}
-			}				
+                if constexpr(!std::is_same_v<sumdv3, void>) {
+                    const uint16_t scaled = adcToSbus(i, v);
+                    sumdv3::set(i++, scaled);
+                }
+            }
 			uint8_t i = 0;
 			uint8_t newSwitchState = 0;
 			Meta::visit<digitals>([&]<typename DI>(Meta::Wrapper<DI>){
@@ -349,7 +399,11 @@ struct GFSM {
 									  if constexpr(!std::is_same_v<sbus, void>) {
 											sbus::setChannel(INJECT_DIGITAL_START + i, in ? RC::Protokoll::SBus::V2::max : RC::Protokoll::SBus::V2::min);						  
 									  }
-									  ++i;
+                                      if constexpr(!std::is_same_v<sumdv3, void>) {
+                                          sumdv3::set(INJECT_DIGITAL_START + i, in ? RC::Protokoll::SBus::V2::max : RC::Protokoll::SBus::V2::min);
+                                          sumdv3::setSwitch(i, in ? 0 : 1);
+                                      }
+                                      ++i;
 								  });
 			if constexpr(!std::is_same_v<crsf, void>) {
 				if (newSwitchState != mSwState) {

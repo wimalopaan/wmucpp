@@ -87,6 +87,7 @@ struct Devices<WeAct_SFrog, Config, MCU> {
     using sbus = void;
     using modcom = void;
     using crsf = void;
+    using sumdv3 = void;
 #elif defined(USE_SBUS)
     using hwext = void;
     struct SBusConfig;
@@ -95,12 +96,21 @@ struct Devices<WeAct_SFrog, Config, MCU> {
     struct ModComConfig;
     using modcom = External::EdgeTx::ModuleCom<1, ModComConfig, MCU>;
     using crsf = void;
+    using sumdv3 = void;
 #elif defined(USE_CRSF)
     using hwext = void;
     using sbus = void;
     using modcom = void;
     struct CrsfConfig;
     using crsf = RC::Protokoll::Crsf::V4::PacketRelayRewrite<1, CrsfConfig, MCU>;
+    using sumdv3 = void;
+#elif defined(USE_SUMDV3)
+    using hwext = void;
+    using sbus = void;
+    using modcom = void;
+    using crsf = void;
+    struct SumDV3Config;
+    using sumdv3 = RC::Protokoll::SumDV3::V2::Output<1, SumDV3Config, MCU>;
 #else
 # warning "wrong protocol selection"
 #endif
@@ -189,6 +199,15 @@ struct Devices<WeAct_SFrog, Config, MCU> {
         using tp = void;
     };
     struct SBusConfig {
+        using clock = Devices::clock;
+        using debug = Devices::debug;
+        using dmaChComponent = auxDmaChannel1;
+        using systemTimer = Devices::systemTimer;
+        using adapter = void;
+        using pin = tx;
+        using tp = void;
+    };
+    struct SumDV3Config{
         using clock = Devices::clock;
         using debug = Devices::debug;
         using dmaChComponent = auxDmaChannel1;
@@ -351,6 +370,13 @@ struct Devices<WeAct, Config, MCU> {
 	using modcom = void;
 	struct CrsfConfig;
     using crsf = RC::Protokoll::Crsf::V4::PacketRelayRewrite<1, CrsfConfig, MCU>;
+#elif defined(USE_SUMDV3)
+    using hwext = void;
+    using sbus = void;
+    using modcom = void;
+    using crsf = void;
+    struct SumDV3Config;
+    using sumdv3 = RC::Protokoll::SumDV3::V2::Output<1, SumDV3Config, MCU>;
 #else
 # warning "wrong protocol selection"
 #endif
@@ -436,7 +462,16 @@ struct Devices<WeAct, Config, MCU> {
         using pin = tx;
         using tp = void;
     };
-	struct AdcConfig {
+    struct SumDV3Config{
+        using clock = Devices::clock;
+        using debug = Devices::debug;
+        using dmaChComponent = auxDmaChannel1;
+        using systemTimer = Devices::systemTimer;
+        using adapter = void;
+        using pin = tx;
+        using tp = void;
+    };
+    struct AdcConfig {
         using debug = void;
 #ifdef SERIAL_DEBUG
 		using channels = std::integer_sequence<uint8_t, 0, 1, 3, 5, 6, 7, 8>;
@@ -482,12 +517,6 @@ struct Devices<WeAct, Config, MCU> {
 	
 	using periodics = StandardComponents<debug, sbus, modcom, crsf, ledBlinker, btn, adcAdapter>;
 
-    static inline bool press1() {
-        return !d1::read() || !d0::read();
-    }
-    static inline bool bootPress() {
-        return (!d1::read() && !d2::read()) || (!d0::read() && !d3::read());
-    }
     static inline void periodic() {
         periodics::periodic();
     }

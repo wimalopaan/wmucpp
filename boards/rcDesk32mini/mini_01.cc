@@ -22,6 +22,7 @@
 // injects the digitals in the RC data stream (see below)
 // if using CRSF, the digitals are also transported as CRSF-switch-protocol extension
 
+// for SFrog-mode:
 // using bootPress (pressing (d0 & d3) or (d1 & d2)) one can reach calibration mode at boot time
 // first stage: sampling mid position
 // led fast flash 1x
@@ -34,7 +35,8 @@
 // use one(!) of the following protocol selection exclusively
 // #define USE_HWEXT // otherwise SBUS-output is used
 #define USE_SBUS // according SBUS inversion see below
-//#define USE_CRSF
+// #define USE_CRSF
+// #define USE_SUMDV3
 
 #define USE_SFROG // make A3, A8 outputs for Stick-LEDs
 
@@ -113,6 +115,9 @@ void USART1_IRQHandler(){
 	static_assert(crsf::uart::number == 1);
 	crsf::Isr::onTransferComplete([]{});
 	crsf::Isr::onIdle([]{});
+#elif defined(USE_SUMDV3)
+    using sumdv3 = devs::sumdv3;
+    static_assert(sumdv3::uart::number == 1);
 #else
 # warning "wrong protocol selection"
 #endif
