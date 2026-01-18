@@ -270,7 +270,7 @@ private:
 		etl::FixedVector<Param_t, 250> p;
 # endif
 #else
-        etl::FixedVector<Param_t, 137> p;
+        etl::FixedVector<Param_t, 132> p;
 #endif
 		// etl::FixedVector<Param_t, 132> p;
         addNode(p, Param_t{0, PType::Folder, ""}); // unvisible top folder

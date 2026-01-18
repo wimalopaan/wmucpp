@@ -225,7 +225,9 @@ struct GFSM {
                 IO::outl<debug>("# Run NC");
                 led::count(1);
                 led::event(led::Event::Fast);
-                crsfCallback::activateFailsafePattern();
+                if constexpr(requires{crsfCallback::activateFailsafePattern();}) {
+                    crsfCallback::activateFailsafePattern();
+                }
                 break;
             }
         }
