@@ -215,25 +215,6 @@ namespace RC::Protokoll::IBus {
                         ++mErrorCount;
                     }
                 });
-                // const volatile uint8_t* const data = uart::readBuffer();
-                // uint8_t i = 0;
-                // CheckSum cs;
-                // if ((cs += data[i++]) != 0x20) return;
-                // if ((cs += data[i++]) != 0x40) return;
-
-                // for(uint8_t k = 0; k < 28; ++k) {
-                //     cs += data[i++];
-                // }
-                // cs.lowByte(data[i++]);
-                // cs.highByte(data[i++]);
-                // if (cs) {
-                //     for(uint8_t k = 0; k < 18; ++k) {
-                //         decode(k);
-                //     }
-                // }
-                // else {
-                //     ++mErrorCount;
-                // }
             }
             static inline volatile bool mActive = false;
             static inline std::array<uint16_t, RC::Protokoll::IBus::V2::numberOfChannels> mChannels; // sbus
